@@ -525,4 +525,12 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
 int read_raw_ref(const char *refname, unsigned char *sha1,
 		 struct strbuf *referent, unsigned int *type);
 
+/* refs backends */
+struct ref_storage_be {
+	struct ref_storage_be *next;
+	const char *name;
+};
+
+extern struct ref_storage_be refs_be_files;
+
 #endif /* REFS_REFS_INTERNAL_H */
