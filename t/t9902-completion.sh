@@ -491,7 +491,7 @@ test_expect_success 'git --help completion' '
 test_expect_success 'setup for ref completion' '
 	echo content >file1 &&
 	echo more >file2 &&
-	git add . &&
+	git add file1 file2 &&
 	git commit -m one &&
 	git branch mybranch &&
 	git tag mytag
@@ -522,7 +522,7 @@ test_expect_success '<ref>: completes paths' '
 
 test_expect_success 'complete tree filename with spaces' '
 	echo content >"name with spaces" &&
-	git add . &&
+	git add "name with spaces" &&
 	git commit -m spaces &&
 	test_completion "git show HEAD:nam" <<-\EOF
 	name with spaces Z
@@ -531,7 +531,7 @@ test_expect_success 'complete tree filename with spaces' '
 
 test_expect_success 'complete tree filename with metacharacters' '
 	echo content >"name with \${meta}" &&
-	git add . &&
+	git add "name with \${meta}" &&
 	git commit -m meta &&
 	test_completion "git show HEAD:nam" <<-\EOF
 	name with ${meta} Z
