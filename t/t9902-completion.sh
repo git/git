@@ -124,15 +124,22 @@ invalid_variable_name='${foo.bar}'
 
 actual="$TRASH_DIRECTORY/actual"
 
+if test_have_prereq MINGW
+then
+	ROOT="$(pwd -W)"
+else
+	ROOT="$(pwd)"
+fi
+
 test_expect_success 'setup for __gitdir tests' '
 	mkdir -p subdir/subsubdir &&
 	git init otherrepo
 '
 
 test_expect_success '__gitdir - from command line (through $__git_dir)' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" >expected &&
+	echo "$ROOT/otherrepo/.git" >expected &&
 	(
-		__git_dir="$TRASH_DIRECTORY/otherrepo/.git" &&
+		__git_dir="$ROOT/otherrepo/.git" &&
 		__gitdir >"$actual"
 	) &&
 	test_cmp expected "$actual"
@@ -157,7 +164,7 @@ test_expect_success '__gitdir - .git directory in cwd' '
 '
 
 test_expect_success '__gitdir - .git directory in parent' '
-	echo "$(pwd -P)/.git" >expected &&
+	echo "$ROOT/.git" >expected &&
 	(
 		cd subdir/subsubdir &&
 		__gitdir >"$actual"
@@ -175,7 +182,7 @@ test_expect_success '__gitdir - cwd is a .git directory' '
 '
 
 test_expect_success '__gitdir - parent is a .git directory' '
-	echo "$(pwd -P)/.git" >expected &&
+	echo "$ROOT/.git" >expected &&
 	(
 		cd .git/refs/heads &&
 		__gitdir >"$actual"
@@ -184,9 +191,9 @@ test_expect_success '__gitdir - parent is a .git directory' '
 '
 
 test_expect_success '__gitdir - $GIT_DIR set while .git directory in cwd' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" >expected &&
+	echo "$ROOT/otherrepo/.git" >expected &&
 	(
-		GIT_DIR="$TRASH_DIRECTORY/otherrepo/.git" &&
+		GIT_DIR="$ROOT/otherrepo/.git" &&
 		export GIT_DIR &&
 		__gitdir >"$actual"
 	) &&
@@ -194,9 +201,9 @@ test_expect_success '__gitdir - $GIT_DIR set while .git directory in cwd' '
 '
 
 test_expect_success '__gitdir - $GIT_DIR set while .git directory in parent' '
-	echo "$TRASH_DIRECTORY/otherrepo/.git" >expected &&
+	echo "$ROOT/otherrepo/.git" >expected &&
 	(
-		GIT_DIR="$TRASH_DIRECTORY/otherrepo/.git" &&
+		GIT_DIR="$ROOT/otherrepo/.git" &&
 		export GIT_DIR &&
 		cd subdir &&
 		__gitdir >"$actual"
@@ -206,24 +213,15 @@ test_expect_success '__gitdir - $GIT_DIR set while .git directory in parent' '
 
 test_expect_success '__gitdir - non-existing $GIT_DIR' '
 	(
-		GIT_DIR="$TRASH_DIRECTORY/non-existing" &&
+		GIT_DIR="$ROOT/non-existing" &&
 		export GIT_DIR &&
 		test_must_fail __gitdir
 	)
 '
 
-function pwd_P_W () {
-	if test_have_prereq MINGW
-	then
-		pwd -W
-	else
-		pwd -P
-	fi
-}
-
 test_expect_success '__gitdir - gitfile in cwd' '
-	echo "$(pwd_P_W)/otherrepo/.git" >expected &&
-	echo "gitdir: $(pwd_P_W)/otherrepo/.git" >subdir/.git &&
+	echo "$ROOT/otherrepo/.git" >expected &&
+	echo "gitdir: $ROOT/otherrepo/.git" >subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
 		cd subdir &&
@@ -233,8 +231,8 @@ test_expect_success '__gitdir - gitfile in cwd' '
 '
 
 test_expect_success '__gitdir - gitfile in parent' '
-	echo "$(pwd_P_W)/otherrepo/.git" >expected &&
-	echo "gitdir: $(pwd_P_W)/otherrepo/.git" >subdir/.git &&
+	echo "$ROOT/otherrepo/.git" >expected &&
+	echo "gitdir: $ROOT/otherrepo/.git" >subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
 		cd subdir/subsubdir &&
@@ -244,7 +242,7 @@ test_expect_success '__gitdir - gitfile in parent' '
 '
 
 test_expect_success SYMLINKS '__gitdir - resulting path avoids symlinks' '
-	echo "$(pwd -P)/otherrepo/.git" >expected &&
+	echo "$ROOT/otherrepo/.git" >expected &&
 	mkdir otherrepo/dir &&
 	test_when_finished "rm -rf otherrepo/dir" &&
 	ln -s otherrepo/dir link &&
@@ -259,7 +257,7 @@ test_expect_success SYMLINKS '__gitdir - resulting path avoids symlinks' '
 test_expect_success '__gitdir - not a git repository' '
 	(
 		cd subdir/subsubdir &&
-		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY" &&
+		GIT_CEILING_DIRECTORIES="$ROOT" &&
 		export GIT_CEILING_DIRECTORIES &&
 		test_must_fail __gitdir
 	)
