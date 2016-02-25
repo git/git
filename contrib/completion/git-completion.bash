@@ -338,12 +338,13 @@ __git_tags ()
 # Lists refs from the local (by default) or from a remote repository.
 # It accepts 0, 1 or 2 arguments:
 # 1: The remote to lists refs from (optional; ignored, if set but empty).
+#    Can be the name of a configured remote, a path, or a URL.
 # 2: In addition to local refs, list unique branches from refs/remotes/ for
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
 __git_refs ()
 {
 	local i hash dir="$(__gitdir)" track="${2-}"
-	local from_local=y remote="${1-}"
+	local from_local=y remote="${1-}" named_remote=n
 	local format refs
 
 	if [ -z "$dir" ] && [ -z "$remote" ]; then
@@ -355,6 +356,7 @@ __git_refs ()
 			# configured remote takes precedence over a
 			# local directory with the same name
 			from_local=n
+			named_remote=y
 		else
 			if [ -d "$remote/.git" ]; then
 				dir="$remote/.git"
@@ -411,9 +413,21 @@ __git_refs ()
 		done
 		;;
 	*)
-		echo "HEAD"
-		git --git-dir="$dir" for-each-ref --format="%(refname:short)" -- \
-			"refs/remotes/$remote/" 2>/dev/null | sed -e "s#^$remote/##"
+		if [ "$named_remote" = y ]; then
+			echo "HEAD"
+			git --git-dir="$dir" for-each-ref --format="%(refname:short)" -- \
+				"refs/remotes/$remote/" 2>/dev/null | sed -e "s#^$remote/##"
+		else
+			git --git-dir="$dir" ls-remote "$remote" HEAD \
+				'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null |
+			while read -r hash i; do
+				case "$i" in
+				*^{})	;;
+				refs/*)	echo "${i#refs/*/}" ;;
+				*)	echo "$i" ;;
+				esac
+			done
+		fi
 		;;
 	esac
 }

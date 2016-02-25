@@ -543,7 +543,7 @@ test_expect_success '__git_refs - configured remote - remote name matches a dire
 	test_cmp expected "$actual"
 '
 
-test_expect_failure '__git_refs - URL remote' '
+test_expect_success '__git_refs - URL remote' '
 	cat >expected <<-EOF &&
 	HEAD
 	branch
@@ -568,7 +568,7 @@ test_expect_success '__git_refs - URL remote - full refs' '
 	test_cmp expected "$actual"
 '
 
-test_expect_failure '__git_refs - non-existing remote' '
+test_expect_success '__git_refs - non-existing remote' '
 	(
 		cur= &&
 		__git_refs non-existing >"$actual"
@@ -584,7 +584,7 @@ test_expect_success '__git_refs - non-existing remote - full refs' '
 	test_must_be_empty "$actual"
 '
 
-test_expect_failure '__git_refs - non-existing URL remote' '
+test_expect_success '__git_refs - non-existing URL remote' '
 	(
 		cur= &&
 		__git_refs "file://$ROOT/non-existing" >"$actual"
