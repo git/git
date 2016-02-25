@@ -312,35 +312,25 @@ __git_ls_files_helper ()
 #    slash.
 __git_index_files ()
 {
-	local dir="$(__gitdir)" root="${2-.}" file
+	local root="${2-.}" file
 
-	if [ -d "$dir" ]; then
-		__git_ls_files_helper "$root" "$1" |
-		while read -r file; do
-			case "$file" in
-			?*/*) echo "${file%%/*}" ;;
-			*) echo "$file" ;;
-			esac
-		done | sort | uniq
-	fi
+	__git_ls_files_helper "$root" "$1" |
+	while read -r file; do
+		case "$file" in
+		?*/*) echo "${file%%/*}" ;;
+		*) echo "$file" ;;
+		esac
+	done | sort | uniq
 }
 
 __git_heads ()
 {
-	local dir="$(__gitdir)"
-	if [ -d "$dir" ]; then
-		__git for-each-ref --format='%(refname:short)' refs/heads
-		return
-	fi
+	__git for-each-ref --format='%(refname:short)' refs/heads
 }
 
 __git_tags ()
 {
-	local dir="$(__gitdir)"
-	if [ -d "$dir" ]; then
-		__git for-each-ref --format='%(refname:short)' refs/tags
-		return
-	fi
+	__git for-each-ref --format='%(refname:short)' refs/tags
 }
 
 # Lists refs from the local (by default) or from a remote repository.
