@@ -66,7 +66,7 @@ __gitdir ()
 __git ()
 {
 	git ${__git_C_args:+"${__git_C_args[@]}"} \
-		${__git_dir:+--git-dir="$__git_dir"} "$@"
+		${__git_dir:+--git-dir="$__git_dir"} "$@" 2>/dev/null
 }
 
 # The following function is based on code from:
@@ -300,7 +300,7 @@ __git_ls_files_helper ()
 	else
 		# NOTE: $2 is not quoted in order to support multiple options
 		__git -C "$1" ls-files --exclude-standard $2
-	fi 2>/dev/null
+	fi
 }
 
 
@@ -412,7 +412,7 @@ __git_refs ()
 	fi
 	case "$cur" in
 	refs|refs/*)
-		__git ls-remote "$remote" "$cur*" 2>/dev/null | \
+		__git ls-remote "$remote" "$cur*" | \
 		while read -r hash i; do
 			case "$i" in
 			*^{}) ;;
@@ -424,10 +424,10 @@ __git_refs ()
 		if [ "$named_remote" = y ]; then
 			echo "HEAD"
 			__git for-each-ref --format="%(refname:short)" -- \
-				"refs/remotes/$remote/" 2>/dev/null | sed -e "s#^$remote/##"
+				"refs/remotes/$remote/" | sed -e "s#^$remote/##"
 		else
 			__git ls-remote "$remote" HEAD \
-				'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' 2>/dev/null |
+				'refs/tags/*' 'refs/heads/*' 'refs/remotes/*' |
 			while read -r hash i; do
 				case "$i" in
 				*^{})	;;
@@ -453,7 +453,7 @@ __git_refs2 ()
 __git_refs_remotes ()
 {
 	local i hash
-	__git ls-remote "$1" 'refs/heads/*' 2>/dev/null | \
+	__git ls-remote "$1" 'refs/heads/*' | \
 	while read -r hash i; do
 		echo "$i:refs/remotes/$1/${i#refs/heads/}"
 	done
@@ -529,7 +529,7 @@ __git_complete_revlist_file ()
 		*)   pfx="$ref:$pfx" ;;
 		esac
 
-		__gitcomp_nl "$(__git ls-tree "$ls" 2>/dev/null \
+		__gitcomp_nl "$(__git ls-tree "$ls" \
 				| sed '/^100... blob /{
 				           s,^.*	,,
 				           s,$, ,
@@ -807,7 +807,7 @@ __git_compute_porcelain_commands ()
 __git_get_config_variables ()
 {
 	local section="$1" i IFS=$'\n'
-	for i in $(__git config --name-only --get-regexp "^$section\..*" 2>/dev/null); do
+	for i in $(__git config --name-only --get-regexp "^$section\..*"); do
 		echo "${i#$section.}"
 	done
 }
@@ -825,7 +825,7 @@ __git_aliases ()
 # __git_aliased_command requires 1 argument
 __git_aliased_command ()
 {
-	local word cmdline=$(__git config --get "alias.$1" 2>/dev/null)
+	local word cmdline=$(__git config --get "alias.$1")
 	for word in $cmdline; do
 		case "$word" in
 		\!gitk|gitk)
@@ -1780,9 +1780,7 @@ _git_send_email ()
 {
 	case "$prev" in
 	--to|--cc|--bcc|--from)
-		__gitcomp "
-		$(__git send-email --dump-aliases 2>/dev/null)
-		"
+		__gitcomp "$(__git send-email --dump-aliases)"
 		return
 		;;
 	esac
@@ -1812,9 +1810,7 @@ _git_send_email ()
 		return
 		;;
 	--to=*|--cc=*|--bcc=*|--from=*)
-		__gitcomp "
-		$(__git send-email --dump-aliases 2>/dev/null)
-		" "" "${cur#--*=}"
+		__gitcomp "$(__git send-email --dump-aliases)" "" "${cur#--*=}"
 		return
 		;;
 	--*)
@@ -1858,7 +1854,7 @@ __git_config_get_set_variables ()
 		c=$((--c))
 	done
 
-	__git config $config_file --name-only --list 2>/dev/null
+	__git config $config_file --name-only --list
 }
 
 _git_config ()
