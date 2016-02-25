@@ -40,6 +40,7 @@ __gitdir ()
 {
 	if [ -z "${1-}" ]; then
 		if [ -n "${__git_dir-}" ]; then
+			test -d "$__git_dir" || return 1
 			echo "$__git_dir"
 		elif [ -n "${GIT_DIR-}" ]; then
 			test -d "${GIT_DIR-}" || return 1

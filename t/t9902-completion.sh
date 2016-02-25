@@ -211,6 +211,14 @@ test_expect_success '__gitdir - $GIT_DIR set while .git directory in parent' '
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__gitdir - non-existing path in $__git_dir' '
+	(
+		__git_dir="non-existing" &&
+		test_must_fail __gitdir >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
 test_expect_success '__gitdir - non-existing $GIT_DIR' '
 	(
 		GIT_DIR="$ROOT/non-existing" &&
