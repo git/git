@@ -128,7 +128,7 @@ test_expect_success 'bogus object offset (v2, no msb)' '
 	test_must_fail git index-pack --verify $pack
 '
 
-test_expect_failure 'bogus offset into v2 extended table' '
+test_expect_success 'bogus offset into v2 extended table' '
 	do_pack $object --index-version=2 &&
 	munge $idx $(ofs_table 1) "\377\0\0\0" &&
 	clear_base &&
