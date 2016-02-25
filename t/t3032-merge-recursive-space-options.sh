@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='merge-recursive options
+test_description='merge-recursive space options
 
 * [master] Clarify
  ! [remote] Remove cruft

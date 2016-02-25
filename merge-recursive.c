@@ -2094,8 +2094,10 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->renormalize = 0;
 	else if (!strcmp(s, "no-renames"))
 		o->detect_rename = 0;
-	else if (!strcmp(s, "find-renames"))
+	else if (!strcmp(s, "find-renames")) {
 		o->detect_rename = 1;
+		o->rename_score = 0;
+	}
 	else if (skip_prefix(s, "find-renames=", &arg) ||
 		 skip_prefix(s, "rename-threshold=", &arg)) {
 		if ((o->rename_score = parse_rename_score(&arg)) == -1 || *arg != 0)
