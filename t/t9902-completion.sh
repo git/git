@@ -629,7 +629,7 @@ test_expect_success '__git_refs - unique remote branches for git checkout DWIMer
 	test_cmp expected "$actual"
 '
 
-test_expect_failure '__git_refs - not in a git repository' '
+test_expect_success '__git_refs - not in a git repository' '
 	(
 		GIT_CEILING_DIRECTORIES="$ROOT" &&
 		export GIT_CEILING_DIRECTORIES &&

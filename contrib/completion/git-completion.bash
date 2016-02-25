@@ -346,6 +346,10 @@ __git_refs ()
 	local from_local=y remote="${1-}"
 	local format refs
 
+	if [ -z "$dir" ] && [ -z "$remote" ]; then
+		return
+	fi
+
 	if [ -n "$remote" ]; then
 		if __git_is_configured_remote "$remote"; then
 			# configured remote takes precedence over a
