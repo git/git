@@ -378,6 +378,15 @@ test_expect_success '__git_remotes - list remotes from $GIT_DIR/remotes and from
 	test_cmp expect actual
 '
 
+test_expect_success '__git_is_configured_remote' '
+	test_when_finished "git remote remove remote_1" &&
+	git remote add remote_1 git://remote_1 &&
+	test_when_finished "git remote remove remote_2" &&
+	git remote add remote_2 git://remote_2 &&
+	verbose __git_is_configured_remote remote_2 &&
+	test_must_fail __git_is_configured_remote non-existent
+'
+
 test_expect_success 'setup for ref completion' '
 	echo content >file1 &&
 	echo more >file2 &&
@@ -519,7 +528,7 @@ test_expect_success '__git_refs - configured remote - full refs - repo given on 
 	test_cmp expected "$actual"
 '
 
-test_expect_failure '__git_refs - configured remote - remote name matches a directory' '
+test_expect_success '__git_refs - configured remote - remote name matches a directory' '
 	cat >expected <<-EOF &&
 	HEAD
 	branch

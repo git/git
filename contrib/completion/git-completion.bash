@@ -347,12 +347,18 @@ __git_refs ()
 	local format refs
 
 	if [ -n "$remote" ]; then
-		if [ -d "$remote/.git" ]; then
-			dir="$remote/.git"
-		elif [ -d "$remote" ]; then
-			dir="$remote"
-		else
+		if __git_is_configured_remote "$remote"; then
+			# configured remote takes precedence over a
+			# local directory with the same name
 			from_local=n
+		else
+			if [ -d "$remote/.git" ]; then
+				dir="$remote/.git"
+			elif [ -d "$remote" ]; then
+				dir="$remote"
+			else
+				from_local=n
+			fi
 		fi
 	fi
 
@@ -432,6 +438,18 @@ __git_remotes ()
 	local d="$(__gitdir)"
 	test -d "$d/remotes" && ls -1 "$d/remotes"
 	git --git-dir="$d" remote
+}
+
+# Returns true if $1 matches the name of a configured remote, false otherwise.
+__git_is_configured_remote ()
+{
+	local remote
+	for remote in $(__git_remotes); do
+		if [ "$remote" = "$1" ]; then
+			return 0
+		fi
+	done
+	return 1
 }
 
 __git_list_merge_strategies ()
