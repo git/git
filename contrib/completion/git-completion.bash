@@ -34,26 +34,35 @@ case "$COMP_WORDBREAKS" in
 *)   COMP_WORDBREAKS="$COMP_WORDBREAKS:"
 esac
 
+# Discovers the path to the git repository taking any '--git-dir=<path>' and
+# '-C <path>' options into account and stores it in the $__git_repo_path
+# variable.
+__git_find_repo_path ()
+{
+	if [ -n "${__git_C_args-}" ]; then
+		__git_repo_path="$(git "${__git_C_args[@]}" \
+			${__git_dir:+--git-dir="$__git_dir"} \
+			rev-parse --absolute-git-dir 2>/dev/null)"
+	elif [ -n "${__git_dir-}" ]; then
+		test -d "$__git_dir" &&
+		__git_repo_path="$__git_dir"
+	elif [ -n "${GIT_DIR-}" ]; then
+		test -d "${GIT_DIR-}" &&
+		__git_repo_path="$GIT_DIR"
+	elif [ -d .git ]; then
+		__git_repo_path=.git
+	else
+		__git_repo_path="$(git rev-parse --git-dir 2>/dev/null)"
+	fi
+}
+
 # __gitdir accepts 0 or 1 arguments (i.e., location)
 # returns location of .git repo
 __gitdir ()
 {
 	if [ -z "${1-}" ]; then
-		if [ -n "${__git_C_args-}" ]; then
-			git "${__git_C_args[@]}" \
-				${__git_dir:+--git-dir="$__git_dir"} \
-				rev-parse --absolute-git-dir 2>/dev/null
-		elif [ -n "${__git_dir-}" ]; then
-			test -d "$__git_dir" || return 1
-			echo "$__git_dir"
-		elif [ -n "${GIT_DIR-}" ]; then
-			test -d "${GIT_DIR-}" || return 1
-			echo "$GIT_DIR"
-		elif [ -d .git ]; then
-			echo .git
-		else
-			git rev-parse --git-dir 2>/dev/null
-		fi
+		__git_find_repo_path || return 1
+		echo "$__git_repo_path"
 	elif [ -d "$1/.git" ]; then
 		echo "$1/.git"
 	else
@@ -2641,7 +2650,7 @@ _git_whatchanged ()
 
 __git_main ()
 {
-	local i c=1 command __git_dir
+	local i c=1 command __git_dir __git_repo_path
 	local __git_C_args C_args_count=0
 
 	while [ $c -lt $cword ]; do
@@ -2710,6 +2719,7 @@ __gitk_main ()
 {
 	__git_has_doubledash && return
 
+	local __git_repo_path
 	local g="$(__gitdir)"
 	local merge=""
 	if [ -f "$g/MERGE_HEAD" ]; then

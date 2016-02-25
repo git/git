@@ -147,19 +147,25 @@ test_expect_success '__gitdir - from command line (through $__git_dir)' '
 
 test_expect_success '__gitdir - repo as argument' '
 	echo "otherrepo/.git" >expected &&
-	__gitdir "otherrepo" >"$actual" &&
+	(
+		__gitdir "otherrepo" >"$actual"
+	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success '__gitdir - remote as argument' '
 	echo "remote" >expected &&
-	__gitdir "remote" >"$actual" &&
+	(
+		__gitdir "remote" >"$actual"
+	) &&
 	test_cmp expected "$actual"
 '
 
 test_expect_success '__gitdir - .git directory in cwd' '
 	echo ".git" >expected &&
-	__gitdir >"$actual" &&
+	(
+		__gitdir >"$actual"
+	) &&
 	test_cmp expected "$actual"
 '
 
@@ -455,7 +461,9 @@ test_expect_success '__git_remotes - list remotes from $GIT_DIR/remotes and from
 	git remote add remote_in_config_1 git://remote_1 &&
 	test_when_finished "git remote remove remote_in_config_2" &&
 	git remote add remote_in_config_2 git://remote_2 &&
-	__git_remotes >actual &&
+	(
+		__git_remotes >actual
+	) &&
 	test_cmp expect actual
 '
 
@@ -464,8 +472,10 @@ test_expect_success '__git_is_configured_remote' '
 	git remote add remote_1 git://remote_1 &&
 	test_when_finished "git remote remove remote_2" &&
 	git remote add remote_2 git://remote_2 &&
-	verbose __git_is_configured_remote remote_2 &&
-	test_must_fail __git_is_configured_remote non-existent
+	(
+		verbose __git_is_configured_remote remote_2 &&
+		test_must_fail __git_is_configured_remote non-existent
+	)
 '
 
 test_expect_success 'setup for ref completion' '
