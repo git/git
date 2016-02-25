@@ -23,6 +23,9 @@ Torvalds with help of a group of hackers around the net.
 
 Please read the file [INSTALL][] for installation instructions.
 
+Many Git online resources are accessible from http://git-scm.com/
+including full documentation and Git related tools.
+
 See [Documentation/gittutorial.txt][] to get started, then see
 [Documentation/giteveryday.txt][] for a useful minimum set of commands, and
 [Documentation/git-commandname.txt][] for documentation of each command.
@@ -34,9 +37,6 @@ commandname".
 CVS users may also want to read [Documentation/gitcvs-migration.txt][]
 ("man gitcvs-migration" or "git help cvs-migration" if git is
 installed).
-
-Many Git online resources are accessible from http://git-scm.com/
-including full documentation and Git related tools.
 
 The user discussion and development of Git take place on the Git
 mailing list -- everyone is welcome to post bug reports, feature
