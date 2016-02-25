@@ -39,7 +39,11 @@ esac
 __gitdir ()
 {
 	if [ -z "${1-}" ]; then
-		if [ -n "${__git_dir-}" ]; then
+		if [ -n "${__git_C_args-}" ]; then
+			git "${__git_C_args[@]}" \
+				${__git_dir:+--git-dir="$__git_dir"} \
+				rev-parse --absolute-git-dir 2>/dev/null
+		elif [ -n "${__git_dir-}" ]; then
 			test -d "$__git_dir" || return 1
 			echo "$__git_dir"
 		elif [ -n "${GIT_DIR-}" ]; then
@@ -286,10 +290,10 @@ __git_ls_files_helper ()
 	local dir="$(__gitdir)"
 
 	if [ "$2" == "--committable" ]; then
-		git --git-dir="$dir" -C "$1" diff-index --name-only --relative HEAD
+		git ${__git_C_args:+"${__git_C_args[@]}"} --git-dir="$dir" -C "$1" diff-index --name-only --relative HEAD
 	else
 		# NOTE: $2 is not quoted in order to support multiple options
-		git --git-dir="$dir" -C "$1" ls-files --exclude-standard $2
+		git ${__git_C_args:+"${__git_C_args[@]}"} --git-dir="$dir" -C "$1" ls-files --exclude-standard $2
 	fi 2>/dev/null
 }
 
@@ -521,7 +525,7 @@ __git_complete_revlist_file ()
 		*)   pfx="$ref:$pfx" ;;
 		esac
 
-		__gitcomp_nl "$(git --git-dir="$(__gitdir)" ls-tree "$ls" 2>/dev/null \
+		__gitcomp_nl "$(git ${__git_C_args:+"${__git_C_args[@]}"} --git-dir="$(__gitdir)" ls-tree "$ls" 2>/dev/null \
 				| sed '/^100... blob /{
 				           s,^.*	,,
 				           s,$, ,
@@ -2650,6 +2654,7 @@ _git_whatchanged ()
 __git_main ()
 {
 	local i c=1 command __git_dir
+	local __git_C_args C_args_count=0
 
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -2658,7 +2663,11 @@ __git_main ()
 		--git-dir)   ((c++)) ; __git_dir="${words[c]}" ;;
 		--bare)      __git_dir="." ;;
 		--help) command="help"; break ;;
-		-c|-C|--work-tree|--namespace) ((c++)) ;;
+		-c|--work-tree|--namespace) ((c++)) ;;
+		-C)	__git_C_args[C_args_count++]=-C
+			((c++))
+			__git_C_args[C_args_count++]="${words[c]}"
+			;;
 		-*) ;;
 		*) command="$i"; break ;;
 		esac

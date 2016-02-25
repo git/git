@@ -211,6 +211,87 @@ test_expect_success '__gitdir - $GIT_DIR set while .git directory in parent' '
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__gitdir - from command line while "git -C"' '
+	echo "$ROOT/.git" >expected &&
+	(
+		__git_dir="$ROOT/.git" &&
+		__git_C_args=(-C otherrepo) &&
+		__gitdir >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - relative dir from command line and "git -C"' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd subdir &&
+		__git_dir="otherrepo/.git" &&
+		__git_C_args=(-C ..) &&
+		__gitdir >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - $GIT_DIR set while "git -C"' '
+	echo "$ROOT/.git" >expected &&
+	(
+		GIT_DIR="$ROOT/.git" &&
+		export GIT_DIR &&
+		__git_C_args=(-C otherrepo) &&
+		__gitdir >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - relative dir in $GIT_DIR and "git -C"' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd subdir &&
+		GIT_DIR="otherrepo/.git" &&
+		export GIT_DIR &&
+		__git_C_args=(-C ..) &&
+		__gitdir >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - "git -C" while .git directory in cwd' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		__git_C_args=(-C otherrepo) &&
+		__gitdir >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - "git -C" while cwd is a .git directory' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd .git &&
+		__git_C_args=(-C .. -C otherrepo) &&
+		__gitdir >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - "git -C" while .git directory in parent' '
+	echo "$ROOT/otherrepo/.git" >expected &&
+	(
+		cd subdir &&
+		__git_C_args=(-C .. -C otherrepo) &&
+		__gitdir >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__gitdir - non-existing path in "git -C"' '
+	(
+		__git_C_args=(-C non-existing) &&
+		test_must_fail __gitdir >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
 test_expect_success '__gitdir - non-existing path in $__git_dir' '
 	(
 		__git_dir="non-existing" &&
@@ -772,6 +853,12 @@ test_expect_success 'checkout completes ref names' '
 	master Z
 	mybranch Z
 	mytag Z
+	EOF
+'
+
+test_expect_success 'git -C <path> checkout uses the right repo' '
+	test_completion "git -C subdir -C subsubdir -C .. -C ../otherrepo checkout b" <<-\EOF
+	branch Z
 	EOF
 '
 
