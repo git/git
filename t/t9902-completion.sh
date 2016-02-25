@@ -754,7 +754,12 @@ test_expect_success 'general options plus command' '
 	test_completion "git --namespace=foo check" "checkout " &&
 	test_completion "git --paginate check" "checkout " &&
 	test_completion "git --info-path check" "checkout " &&
-	test_completion "git --no-replace-objects check" "checkout "
+	test_completion "git --no-replace-objects check" "checkout " &&
+	test_completion "git --git-dir some/path check" "checkout " &&
+	test_completion "git -c conf.var=value check" "checkout " &&
+	test_completion "git -C some/path check" "checkout " &&
+	test_completion "git --work-tree some/path check" "checkout " &&
+	test_completion "git --namespace name/space check" "checkout "
 '
 
 test_expect_success 'git --help completion' '
