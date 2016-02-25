@@ -342,9 +342,21 @@ __git_tags ()
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
 __git_refs ()
 {
-	local i hash dir="$(__gitdir "${1-}")" track="${2-}"
+	local i hash dir="$(__gitdir)" track="${2-}"
+	local from_local=y remote="${1-}"
 	local format refs
-	if [ -d "$dir" ]; then
+
+	if [ -n "$remote" ]; then
+		if [ -d "$remote/.git" ]; then
+			dir="$remote/.git"
+		elif [ -d "$remote" ]; then
+			dir="$remote"
+		else
+			from_local=n
+		fi
+	fi
+
+	if [ "$from_local" = y ] && [ -d "$dir" ]; then
 		case "$cur" in
 		refs|refs/*)
 			format="refname"
@@ -380,7 +392,7 @@ __git_refs ()
 	fi
 	case "$cur" in
 	refs|refs/*)
-		git ls-remote "$dir" "$cur*" 2>/dev/null | \
+		git --git-dir="$dir" ls-remote "$remote" "$cur*" 2>/dev/null | \
 		while read -r hash i; do
 			case "$i" in
 			*^{}) ;;
@@ -390,8 +402,8 @@ __git_refs ()
 		;;
 	*)
 		echo "HEAD"
-		git for-each-ref --format="%(refname:short)" -- \
-			"refs/remotes/$dir/" 2>/dev/null | sed -e "s#^$dir/##"
+		git --git-dir="$dir" for-each-ref --format="%(refname:short)" -- \
+			"refs/remotes/$remote/" 2>/dev/null | sed -e "s#^$remote/##"
 		;;
 	esac
 }
