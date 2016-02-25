@@ -159,6 +159,25 @@ stats_ascii () {
 
 }
 
+
+# contruct the attr/ returned by git ls-files --eol
+# Take none (=empty), one or two args
+attr_ascii () {
+	case $1,$2 in
+	-text,*)   echo "-text" ;;
+	text,)     echo "text" ;;
+	text,lf)   echo "text eol=lf" ;;
+	text,crlf) echo "text eol=crlf" ;;
+	auto,)     echo "text=auto" ;;
+	auto,lf)   echo "text=auto eol=lf" ;;
+	auto,crlf) echo "text=auto eol=crlf" ;;
+	lf,)       echo "text eol=lf" ;;
+	crlf,)     echo "text eol=crlf" ;;
+	,) echo "" ;;
+	*) echo invalid_attr "$1,$2" ;;
+	esac
+}
+
 check_files_in_repo () {
 	crlf=$1
 	attr=$2
@@ -228,15 +247,15 @@ checkout_files () {
 	test_expect_success "ls-files --eol attr=$attr $ident $aeol core.autocrlf=$crlf core.eol=$ceol" '
 		test_when_finished "rm expect actual" &&
 		sort <<-EOF >expect &&
-		i/crlf w/$(stats_ascii $crlfname) crlf_false_attr__CRLF.txt
-		i/mixed w/$(stats_ascii $lfmixcrlf) crlf_false_attr__CRLF_mix_LF.txt
-		i/lf w/$(stats_ascii $lfname) crlf_false_attr__LF.txt
-		i/-text w/$(stats_ascii $lfmixcr) crlf_false_attr__LF_mix_CR.txt
-		i/-text w/$(stats_ascii $crlfnul) crlf_false_attr__CRLF_nul.txt
-		i/-text w/$(stats_ascii $crlfnul) crlf_false_attr__LF_nul.txt
+		i/crlf w/$(stats_ascii $crlfname) attr/$(attr_ascii $attr $aeol) crlf_false_attr__CRLF.txt
+		i/mixed w/$(stats_ascii $lfmixcrlf) attr/$(attr_ascii $attr $aeol) crlf_false_attr__CRLF_mix_LF.txt
+		i/lf w/$(stats_ascii $lfname) attr/$(attr_ascii $attr $aeol) crlf_false_attr__LF.txt
+		i/-text w/$(stats_ascii $lfmixcr) attr/$(attr_ascii $attr $aeol) crlf_false_attr__LF_mix_CR.txt
+		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__CRLF_nul.txt
+		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__LF_nul.txt
 		EOF
 		git ls-files --eol crlf_false_attr__* |
-		sed -e "s!attr/[^	]*!!g" -e "s/	/ /g" -e "s/  */ /g" |
+		sed -e "s/	/ /g" -e "s/  */ /g" |
 		sort >actual &&
 		test_cmp expect actual
 	'
