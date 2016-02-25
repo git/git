@@ -332,9 +332,11 @@ __git_tags ()
 	fi
 }
 
-# __git_refs accepts 0, 1 (to pass to __gitdir), or 2 arguments
-# presence of 2nd argument means use the guess heuristic employed
-# by checkout for tracking branches
+# Lists refs from the local (by default) or from a remote repository.
+# It accepts 0, 1 or 2 arguments:
+# 1: The remote to lists refs from (optional; ignored, if set but empty).
+# 2: In addition to local refs, list unique branches from refs/remotes/ for
+#    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
 __git_refs ()
 {
 	local i hash dir="$(__gitdir "${1-}")" track="${2-}"
