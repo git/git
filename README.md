@@ -1,5 +1,5 @@
-Git - the stupid content tracker
-================================
+Git - fast, scalable, distributed revision control system
+=========================================================
 
 "git" can mean anything, depending on your mood.
 
