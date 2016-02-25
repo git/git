@@ -102,7 +102,7 @@ test_expect_success \
 
 test_expect_success \
     'adding another file' \
-    'cp "$TEST_DIRECTORY"/../README path0/README &&
+    'cp "$TEST_DIRECTORY"/../README.md path0/README &&
      git add path0/README &&
      git commit -m add2 -a'
 
