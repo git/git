@@ -39,6 +39,11 @@ esac
 # variable.
 __git_find_repo_path ()
 {
+	if [ -n "$__git_repo_path" ]; then
+		# we already know where it is
+		return
+	fi
+
 	if [ -n "${__git_C_args-}" ]; then
 		__git_repo_path="$(git "${__git_C_args[@]}" \
 			${__git_dir:+--git-dir="$__git_dir"} \
@@ -56,6 +61,7 @@ __git_find_repo_path ()
 	fi
 }
 
+# Deprecated: use __git_find_repo_path() and $__git_repo_path instead
 # __gitdir accepts 0 or 1 arguments (i.e., location)
 # returns location of .git repo
 __gitdir ()
@@ -350,9 +356,12 @@ __git_tags ()
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
 __git_refs ()
 {
-	local i hash dir="$(__gitdir)" track="${2-}"
+	local i hash dir track="${2-}"
 	local from_local=y remote="${1-}" named_remote=n
 	local format refs
+
+	__git_find_repo_path
+	dir="$__git_repo_path"
 
 	if [ -z "$dir" ] && [ -z "$remote" ]; then
 		return
@@ -460,8 +469,8 @@ __git_refs_remotes ()
 
 __git_remotes ()
 {
-	local d="$(__gitdir)"
-	test -d "$d/remotes" && ls -1 "$d/remotes"
+	__git_find_repo_path
+	test -d "$__git_repo_path/remotes" && ls -1 "$__git_repo_path/remotes"
 	__git remote
 }
 
@@ -915,8 +924,8 @@ __git_whitespacelist="nowarn warn error error-all fix"
 
 _git_am ()
 {
-	local dir="$(__gitdir)"
-	if [ -d "$dir"/rebase-apply ]; then
+	__git_find_repo_path
+	if [ -d "$__git_repo_path"/rebase-apply ]; then
 		__gitcomp "--skip --continue --resolved --abort"
 		return
 	fi
@@ -999,7 +1008,8 @@ _git_bisect ()
 	local subcommands="start bad good skip reset visualize replay log run"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
-		if [ -f "$(__gitdir)"/BISECT_START ]; then
+		__git_find_repo_path
+		if [ -f "$__git_repo_path"/BISECT_START ]; then
 			__gitcomp "$subcommands"
 		else
 			__gitcomp "replay start"
@@ -1104,8 +1114,8 @@ _git_cherry ()
 
 _git_cherry_pick ()
 {
-	local dir="$(__gitdir)"
-	if [ -f "$dir"/CHERRY_PICK_HEAD ]; then
+	__git_find_repo_path
+	if [ -f "$__git_repo_path"/CHERRY_PICK_HEAD ]; then
 		__gitcomp "--continue --quit --abort"
 		return
 	fi
@@ -1486,10 +1496,10 @@ __git_log_date_formats="relative iso8601 rfc2822 short local default raw"
 _git_log ()
 {
 	__git_has_doubledash && return
+	__git_find_repo_path
 
-	local g="$(__gitdir)"
 	local merge=""
-	if [ -f "$g/MERGE_HEAD" ]; then
+	if [ -f "$__git_repo_path/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
 	case "$cur" in
@@ -1727,11 +1737,12 @@ _git_push ()
 
 _git_rebase ()
 {
-	local dir="$(__gitdir)"
-	if [ -f "$dir"/rebase-merge/interactive ]; then
+	__git_find_repo_path
+	if [ -f "$__git_repo_path"/rebase-merge/interactive ]; then
 		__gitcomp "--continue --skip --abort --edit-todo"
 		return
-	elif [ -d "$dir"/rebase-apply ] || [ -d "$dir"/rebase-merge ]; then
+	elif [ -d "$__git_repo_path"/rebase-apply ] || \
+	     [ -d "$__git_repo_path"/rebase-merge ]; then
 		__gitcomp "--continue --skip --abort"
 		return
 	fi
@@ -2355,8 +2366,8 @@ _git_reset ()
 
 _git_revert ()
 {
-	local dir="$(__gitdir)"
-	if [ -f "$dir"/REVERT_HEAD ]; then
+	__git_find_repo_path
+	if [ -f "$__git_repo_path"/REVERT_HEAD ]; then
 		__gitcomp "--continue --quit --abort"
 		return
 	fi
@@ -2720,9 +2731,10 @@ __gitk_main ()
 	__git_has_doubledash && return
 
 	local __git_repo_path
-	local g="$(__gitdir)"
+	__git_find_repo_path
+
 	local merge=""
-	if [ -f "$g/MERGE_HEAD" ]; then
+	if [ -f "$__git_repo_path/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
 	case "$cur" in
