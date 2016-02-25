@@ -136,7 +136,7 @@ test_expect_success 'bogus offset into v2 extended table' '
 	test_must_fail git index-pack --verify $pack
 '
 
-test_expect_failure 'bogus offset inside v2 extended table' '
+test_expect_success 'bogus offset inside v2 extended table' '
 	# We need two objects here, so we can plausibly require
 	# an extended table (if the first object were larger than 2^31).
 	do_pack "$object $(git rev-parse HEAD)" --index-version=2 &&
