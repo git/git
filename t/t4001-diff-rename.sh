@@ -124,7 +124,7 @@ test_expect_success 'test diff.renames=false' '
 
 test_expect_success 'test diff.renames unset' '
 	git diff --cached $tree >current &&
-	compare_diff_patch current no-rename
+	compare_diff_patch current expected
 '
 
 test_expect_success 'favour same basenames over different ones' '
