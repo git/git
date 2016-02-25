@@ -2666,6 +2666,14 @@ __git_main ()
 	done
 
 	if [ -z "$command" ]; then
+		case "$prev" in
+		--git-dir|-C|--work-tree)
+			return
+			;;
+		-c|--namespace)
+			return
+			;;
+		esac
 		case "$cur" in
 		--*)   __gitcomp "
 			--paginate
