@@ -35,7 +35,7 @@ exit 1
 
 check_entries () {
 	# $1 == directory, $2 == expected
-	grep '^/' "$1/CVS/Entries" | sort | cut -d/ -f2,3,5 >actual
+	sed -ne '/^\//p' "$1/CVS/Entries" | sort | cut -d/ -f2,3,5 >actual
 	if test -z "$2"
 	then
 		>expected
