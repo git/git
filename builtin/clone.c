@@ -740,7 +740,7 @@ static int checkout(void)
 
 static int write_one_config(const char *key, const char *value, void *data)
 {
-	return git_config_set_multivar(key, value ? value : "true", "^$", 0);
+	return git_config_set_multivar_gently(key, value ? value : "true", "^$", 0);
 }
 
 static void write_config(struct string_list *config)

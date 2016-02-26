@@ -970,6 +970,15 @@ test_expect_success 'get-url on new remote' '
 	echo foo | get_url_test --push --all someremote
 '
 
+test_expect_success 'remote set-url with locked config' '
+	test_when_finished "rm -f .git/config.lock" &&
+	git config --get-all remote.someremote.url >expect &&
+	>.git/config.lock &&
+	test_must_fail git remote set-url someremote baz &&
+	git config --get-all remote.someremote.url >actual &&
+	cmp expect actual
+'
+
 test_expect_success 'remote set-url bar' '
 	git remote set-url someremote bar &&
 	echo bar >expect &&
