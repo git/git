@@ -349,10 +349,26 @@ extern void diff_no_index(struct rev_info *, int, const char **);
 
 extern int index_differs_from(const char *def, int diff_flags);
 
+/*
+ * Fill the contents of the filespec "df", respecting any textconv defined by
+ * its userdiff driver.  The "driver" parameter must come from a
+ * previous call to get_textconv(), and therefore should either be NULL or have
+ * textconv enabled.
+ *
+ * Note that the memory ownership of the resulting buffer depends on whether
+ * the driver field is NULL. If it is, then the memory belongs to the filespec
+ * struct. If it is non-NULL, then "outbuf" points to a newly allocated buffer
+ * that should be freed by the caller.
+ */
 extern size_t fill_textconv(struct userdiff_driver *driver,
 			    struct diff_filespec *df,
 			    char **outbuf);
 
+/*
+ * Look up the userdiff driver for the given filespec, and return it if
+ * and only if it has textconv enabled (otherwise return NULL). The result
+ * can be passed to fill_textconv().
+ */
 extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 
 extern int parse_rename_score(const char **cp_p);
