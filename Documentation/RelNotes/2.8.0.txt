@@ -110,6 +110,33 @@ UI, Workflows & Features
  * You can now set http.[<url>.]pinnedpubkey to specify the pinned
    public key when building with recent enough versions of libcURL.
 
+ * The configuration system has been taught to phrase where it found a
+   bad configuration variable in a better way in its error messages.
+   "git config" learnt a new "--show-origin" option to indicate where
+   the values come from.
+
+ * The "credential-cache" daemon process used to run in whatever
+   directory it happened to start in, but this made umount(2)ing the
+   filesystem that houses the repository harder; now the process
+   chdir()s to the directory that house its own socket on startup.
+
+ * When "git submodule update" did not result in fetching the commit
+   object in the submodule that is referenced by the superproject, the
+   command learned to retry another fetch, specifically asking for
+   that commit that may not be connected to the refs it usually
+   fetches.
+
+ * "git merge-recursive" learned "--no-renames" option to disable its
+   rename detection logic.
+
+ * Across the transition at around Git version 2.0, the user used to
+   get a pretty loud warning when running "git push" without setting
+   push.default configuration variable.  We no longer warn, given that
+   the transition is over long time ago.
+
+ * README has been renamed to README.md and its contents got tweaked
+   slightly to make it easier on the eyes.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -178,6 +205,34 @@ Performance, Internal Implementation, Development Support etc.
 
  * Help those who debug http(s) part of the system.
    (merge 0054045 sp/remote-curl-ssl-strerror later to maint).
+
+ * The internal API to interact with "remote.*" configuration
+   variables has been streamlined.
+
+ * The ref-filter's format-parsing code has been refactored, in
+   preparation for "branch --format" and friends.
+
+ * Traditionally, the tests that try commands that work on the
+   contents in the working tree were named with "worktree" in their
+   filenames, but with the recent addition of "git worktree"
+   subcommand, whose tests are also named similarly, it has become
+   harder to tell them apart.  The traditional tests have been renamed
+   to use "work-tree" instead in an attempt to differentiate them.
+   (merge 5549029 mg/work-tree-tests later to maint).
+
+ * Many codepaths forget to check return value from git_config_set();
+   the function is made to die() to make sure we do not proceed when
+   setting a configuration variable failed.
+   (merge 3d18064 ps/config-error later to maint).
+
+ * Handling of errors while writing into our internal asynchronous
+   process has been made more robust, which reduces flakiness in our
+   tests.
+   (merge 43f3afc jk/epipe-in-async later to maint).
+
+ * There is a new DEVELOPER knob that enables many compiler warning
+   options in the Makefile.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -320,4 +375,44 @@ notes for details).
    broken in 2.6.0 timeframe when the command was rewritten in C.
    (merge 708b8cc jc/am-i-v-fix later to maint).
 
+ * "git merge-tree" used to mishandle "both sides added" conflict with
+   its own "create a fake ancestor file that has the common parts of
+   what both sides have added and do a 3-way merge" logic; this has
+   been updated to use the usual "3-way merge with an empty blob as
+   the fake common ancestor file" approach used in the rest of the
+   system.
+   (merge 907681e jk/no-diff-emit-common later to maint).
+
+ * The memory ownership rule of fill_textconv() API, which was a bit
+   tricky, has been documented a bit better.
+   (merge a64e6a4 jk/more-comments-on-textconv later to maint).
+
+ * Update various codepaths to avoid manually-counted malloc().
+   (merge 08c95df jk/tighten-alloc later to maint).
+
+ * The documentation did not clearly state that the 'simple' mode is
+   now the default for "git push" when push.default configuration is
+   not set.
+   (merge f6b1fb3 mm/push-simple-doc later to maint).
+
+ * Recent versions of GNU grep are pickier when their input contains
+   arbitrary binary data, which some of our tests uses.  Rewrite the
+   tests to sidestep the problem.
+   (merge 3b1442d jk/grep-binary-workaround-in-test later to maint).
+
+ * A helper function "git submodule" uses since v2.7.0 to list the
+   modules that match the pathspec argument given to its subcommands
+   (e.g. "submodule add <repo> <path>") has been fixed.
+   (merge 2b56bb7 sb/submodule-module-list-fix later to maint).
+
+ * "git config section.var value" to set a value in per-repository
+   configuration file failed when it was run outside any repository,
+   but didn't say the reason correctly.
+   (merge 638fa62 js/config-set-in-non-repository later to maint).
+
  * Other minor clean-ups and documentation updates
+   (merge f459823 ak/extract-argv0-last-dir-sep later to maint).
+   (merge 63ca1c0 ak/git-strip-extension-from-dashed-command later to maint).
+   (merge 4867f11 ps/plug-xdl-merge-leak later to maint).
+   (merge 4938686 dt/initial-ref-xn-commit-doc later to maint).
+   (merge 9537f21 ma/update-hooks-sample-typofix later to maint).
