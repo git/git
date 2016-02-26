@@ -1113,8 +1113,9 @@ commit.template::
 credential.helper::
 	Specify an external helper to be called when a username or
 	password credential is needed; the helper may consult external
-	storage to avoid prompting the user for the credentials. See
-	linkgit:gitcredentials[7] for details.
+	storage to avoid prompting the user for the credentials. Note
+	that multiple helpers may be defined. See linkgit:gitcredentials[7]
+	for details.
 
 credential.useHttpPath::
 	When acquiring credentials, consider the "path" component of an http
