@@ -171,6 +171,11 @@ For C programs:
 
  - We try to keep to at most 80 characters per line.
 
+ - As a Git developer we assume you have a reasonably modern compiler
+   and we recommend you to enable the DEVELOPER makefile knob to
+   ensure your patch is clear of all compiler warnings we care about,
+   by e.g. "echo DEVELOPER=1 >>config.mak".
+
  - We try to support a wide range of C compilers to compile Git with,
    including old ones. That means that you should not use C99
    initializers, even if a lot of compilers grok it.
