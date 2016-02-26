@@ -622,7 +622,7 @@ static void *pool_alloc(size_t len)
 			return xmalloc(len);
 		}
 		total_allocd += sizeof(struct mem_pool) + mem_pool_alloc;
-		p = xmalloc(sizeof(struct mem_pool) + mem_pool_alloc);
+		p = xmalloc(st_add(sizeof(struct mem_pool), mem_pool_alloc));
 		p->next_pool = mem_pool;
 		p->next_free = (char *) p->space;
 		p->end = p->next_free + mem_pool_alloc;
@@ -814,7 +814,8 @@ static struct tree_entry *new_tree_entry(void)
 	if (!avail_tree_entry) {
 		unsigned int n = tree_entry_alloc;
 		total_allocd += n * sizeof(struct tree_entry);
-		avail_tree_entry = e = xmalloc(n * sizeof(struct tree_entry));
+		ALLOC_ARRAY(e, n);
+		avail_tree_entry = e;
 		while (n-- > 1) {
 			*((void**)e) = e + 1;
 			e++;
@@ -864,15 +865,12 @@ static void start_packfile(void)
 {
 	static char tmp_file[PATH_MAX];
 	struct packed_git *p;
-	int namelen;
 	struct pack_header hdr;
 	int pack_fd;
 
 	pack_fd = odb_mkstemp(tmp_file, sizeof(tmp_file),
 			      "pack/tmp_pack_XXXXXX");
-	namelen = strlen(tmp_file) + 2;
-	p = xcalloc(1, sizeof(*p) + namelen);
-	xsnprintf(p->pack_name, namelen, "%s", tmp_file);
+	FLEX_ALLOC_STR(p, pack_name, tmp_file);
 	p->pack_fd = pack_fd;
 	p->do_not_close = 1;
 	pack_file = sha1fd(pack_fd, p->pack_name);
@@ -898,7 +896,7 @@ static const char *create_index(void)
 	struct object_entry_pool *o;
 
 	/* Build the table of object IDs. */
-	idx = xmalloc(object_count * sizeof(*idx));
+	ALLOC_ARRAY(idx, object_count);
 	c = idx;
 	for (o = blocks; o; o = o->next_pool)
 		for (e = o->next_free; e-- != o->entries;)

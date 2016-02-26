@@ -53,7 +53,8 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 	int osz = 1 << orig->alloc_log2;
 	int sz = osz << 1;
 
-	new = xmalloc(sizeof(*orig) + sizeof(struct spanhash) * sz);
+	new = xmalloc(st_add(sizeof(*orig),
+			     st_mult(sizeof(struct spanhash), sz)));
 	new->alloc_log2 = orig->alloc_log2 + 1;
 	new->free = INITIAL_FREE(new->alloc_log2);
 	memset(new->data, 0, sizeof(struct spanhash) * sz);
@@ -130,7 +131,8 @@ static struct spanhash_top *hash_chars(struct diff_filespec *one)
 	int is_text = !diff_filespec_is_binary(one);
 
 	i = INITIAL_HASH_SIZE;
-	hash = xmalloc(sizeof(*hash) + sizeof(struct spanhash) * (1<<i));
+	hash = xmalloc(st_add(sizeof(*hash),
+			      st_mult(sizeof(struct spanhash), 1<<i)));
 	hash->alloc_log2 = i;
 	hash->free = INITIAL_FREE(i);
 	memset(hash->data, 0, sizeof(struct spanhash) * (1<<i));

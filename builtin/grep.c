@@ -365,17 +365,17 @@ static void append_path(struct grep_opt *opt, const void *data, size_t len)
 static void run_pager(struct grep_opt *opt, const char *prefix)
 {
 	struct string_list *path_list = opt->output_priv;
-	const char **argv = xmalloc(sizeof(const char *) * (path_list->nr + 1));
+	struct child_process child = CHILD_PROCESS_INIT;
 	int i, status;
 
 	for (i = 0; i < path_list->nr; i++)
-		argv[i] = path_list->items[i].string;
-	argv[path_list->nr] = NULL;
+		argv_array_push(&child.args, path_list->items[i].string);
+	child.dir = prefix;
+	child.use_shell = 1;
 
-	status = run_command_v_opt_cd_env(argv, RUN_USING_SHELL, prefix, NULL);
+	status = run_command(&child);
 	if (status)
 		exit(status);
-	free(argv);
 }
 
 static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int cached)

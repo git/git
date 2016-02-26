@@ -44,10 +44,14 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 	 * keep track of them with alias pointers, always sorting from "from"
 	 * to "to".
 	 */
-	struct revindex_entry *tmp = xmalloc(n * sizeof(*tmp));
-	struct revindex_entry *from = entries, *to = tmp;
+	struct revindex_entry *tmp, *from, *to;
 	int bits;
-	unsigned *pos = xmalloc(BUCKETS * sizeof(*pos));
+	unsigned *pos;
+
+	ALLOC_ARRAY(pos, BUCKETS);
+	ALLOC_ARRAY(tmp, n);
+	from = entries;
+	to = tmp;
 
 	/*
 	 * If (max >> bits) is zero, then we know that the radix digit we are
@@ -121,7 +125,7 @@ static void create_pack_revindex(struct packed_git *p)
 	unsigned i;
 	const char *index = p->index_data;
 
-	p->revindex = xmalloc(sizeof(*p->revindex) * (num_ent + 1));
+	ALLOC_ARRAY(p->revindex, num_ent + 1);
 	index += 4 * 256;
 
 	if (p->index_version > 1) {

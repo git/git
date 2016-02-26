@@ -892,12 +892,11 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 	response = xstrfmt("%s %s", user, hex);
 	resp_len = strlen(response) + 1;
 
-	response_64 = xmalloc(ENCODED_SIZE(resp_len) + 1);
+	response_64 = xmallocz(ENCODED_SIZE(resp_len));
 	encoded_len = EVP_EncodeBlock((unsigned char *)response_64,
 				      (unsigned char *)response, resp_len);
 	if (encoded_len < 0)
 		die("EVP_EncodeBlock error");
-	response_64[encoded_len] = '\0';
 	return (char *)response_64;
 }
 
@@ -1188,7 +1187,7 @@ static void lf_to_crlf(struct strbuf *msg)
 		j++;
 	}
 
-	new = xmalloc(j + 1);
+	new = xmallocz(j);
 
 	/*
 	 * Second pass: write the new string.  Note that this loop is

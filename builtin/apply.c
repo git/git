@@ -2632,7 +2632,7 @@ static void update_image(struct image *img,
 	insert_count = postimage->len;
 
 	/* Adjust the contents */
-	result = xmalloc(img->len + insert_count - remove_count + 1);
+	result = xmalloc(st_add3(st_sub(img->len, remove_count), insert_count, 1));
 	memcpy(result, img->buf, applied_at);
 	memcpy(result + applied_at, postimage->buf, postimage->len);
 	memcpy(result + applied_at + postimage->len,

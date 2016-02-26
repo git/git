@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "quote.h"
+#include "argv-array.h"
 #define MAX_ARGS	32
 
 static const char *argv_exec_path;
@@ -105,32 +106,25 @@ void setup_path(void)
 	strbuf_release(&new_path);
 }
 
-const char **prepare_git_cmd(const char **argv)
+const char **prepare_git_cmd(struct argv_array *out, const char **argv)
 {
-	int argc;
-	const char **nargv;
-
-	for (argc = 0; argv[argc]; argc++)
-		; /* just counting */
-	nargv = xmalloc(sizeof(*nargv) * (argc + 2));
-
-	nargv[0] = "git";
-	for (argc = 0; argv[argc]; argc++)
-		nargv[argc + 1] = argv[argc];
-	nargv[argc + 1] = NULL;
-	return nargv;
+	argv_array_push(out, "git");
+	argv_array_pushv(out, argv);
+	return out->argv;
 }
 
 int execv_git_cmd(const char **argv) {
-	const char **nargv = prepare_git_cmd(argv);
-	trace_argv_printf(nargv, "trace: exec:");
+	struct argv_array nargv = ARGV_ARRAY_INIT;
+
+	prepare_git_cmd(&nargv, argv);
+	trace_argv_printf(nargv.argv, "trace: exec:");
 
 	/* execvp() can only ever return if it fails */
-	sane_execvp("git", (char **)nargv);
+	sane_execvp("git", (char **)nargv.argv);
 
 	trace_printf("trace: exec failed: %s\n", strerror(errno));
 
-	free(nargv);
+	argv_array_clear(&nargv);
 	return -1;
 }
 

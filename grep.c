@@ -1741,7 +1741,7 @@ static int grep_source_load_file(struct grep_source *gs)
 	i = open(filename, O_RDONLY);
 	if (i < 0)
 		goto err_ret;
-	data = xmalloc(size + 1);
+	data = xmallocz(size);
 	if (st.st_size != read_in_full(i, data, size)) {
 		error(_("'%s': short read %s"), filename, strerror(errno));
 		close(i);
@@ -1749,7 +1749,6 @@ static int grep_source_load_file(struct grep_source *gs)
 		return -1;
 	}
 	close(i);
-	data[size] = 0;
 
 	gs->buf = data;
 	gs->size = size;

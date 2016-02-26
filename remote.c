@@ -917,7 +917,7 @@ static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,
 		const char *name)
 {
 	size_t len = strlen(name);
-	struct ref *ref = xcalloc(1, sizeof(struct ref) + prefixlen + len + 1);
+	struct ref *ref = xcalloc(1, st_add4(sizeof(*ref), prefixlen, len, 1));
 	memcpy(ref->name, prefix, prefixlen);
 	memcpy(ref->name + prefixlen, name, len);
 	return ref;
@@ -934,9 +934,9 @@ struct ref *copy_ref(const struct ref *ref)
 	size_t len;
 	if (!ref)
 		return NULL;
-	len = strlen(ref->name);
-	cpy = xmalloc(sizeof(struct ref) + len + 1);
-	memcpy(cpy, ref, sizeof(struct ref) + len + 1);
+	len = st_add3(sizeof(struct ref), strlen(ref->name), 1);
+	cpy = xmalloc(len);
+	memcpy(cpy, ref, len);
 	cpy->next = NULL;
 	cpy->symref = xstrdup_or_null(ref->symref);
 	cpy->remote_status = xstrdup_or_null(ref->remote_status);
@@ -2122,16 +2122,13 @@ static int one_local_ref(const char *refname, const struct object_id *oid,
 {
 	struct ref ***local_tail = cb_data;
 	struct ref *ref;
-	int len;
 
 	/* we already know it starts with refs/ to get here */
 	if (check_refname_format(refname + 5, 0))
 		return 0;
 
-	len = strlen(refname) + 1;
-	ref = xcalloc(1, sizeof(*ref) + len);
+	ref = alloc_ref(refname);
 	oidcpy(&ref->new_oid, oid);
-	memcpy(ref->name, refname, len);
 	**local_tail = ref;
 	*local_tail = &ref->next;
 	return 0;
