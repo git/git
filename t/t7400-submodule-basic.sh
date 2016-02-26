@@ -999,5 +999,30 @@ test_expect_success 'submodule add clone shallow submodule' '
 	)
 '
 
+test_expect_success 'submodule helper list is not confused by common prefixes' '
+	mkdir -p dir1/b &&
+	(
+		cd dir1/b &&
+		git init &&
+		echo hi >testfile2 &&
+		git add . &&
+		git commit -m "test1"
+	) &&
+	mkdir -p dir2/b &&
+	(
+		cd dir2/b &&
+		git init &&
+		echo hello >testfile1 &&
+		git add .  &&
+		git commit -m "test2"
+	) &&
+	git submodule add /dir1/b dir1/b &&
+	git submodule add /dir2/b dir2/b &&
+	git commit -m "first submodule commit" &&
+	git submodule--helper list dir1/b |cut -c51- >actual &&
+	echo "dir1/b" >expect &&
+	test_cmp expect actual
+'
+
 
 test_done
