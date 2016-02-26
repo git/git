@@ -325,10 +325,6 @@ extern char *gitdirname(char *);
 #define _PATH_DEFPATH "/usr/local/bin:/usr/bin:/bin"
 #endif
 
-#ifndef STRIP_EXTENSION
-#define STRIP_EXTENSION ""
-#endif
-
 #ifndef has_dos_drive_prefix
 static inline int git_has_dos_drive_prefix(const char *path)
 {
