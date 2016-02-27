@@ -236,8 +236,8 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	strip_suffix_mem(start, &len, is_bundle ? ".bundle" : ".git");
 
 	if (!len || (len == 1 && *start == '/'))
-	    die("No directory name could be guessed.\n"
-		"Please specify a directory on the command line");
+		die(_("No directory name could be guessed.\n"
+		      "Please specify a directory on the command line"));
 
 	if (is_bare)
 		dir = xstrfmt("%.*s.git", (int)len, start);
@@ -644,7 +644,7 @@ static void update_remote_refs(const struct ref *refs,
 		if (create_symref(head_ref.buf,
 				  remote_head_points_at->peer_ref->name,
 				  msg) < 0)
-			die("unable to update %s", head_ref.buf);
+			die(_("unable to update %s"), head_ref.buf);
 		strbuf_release(&head_ref);
 	}
 }
@@ -656,7 +656,7 @@ static void update_head(const struct ref *our, const struct ref *remote,
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
 		/* Local default branch link */
 		if (create_symref("HEAD", our->name, NULL) < 0)
-			die("unable to update HEAD");
+			die(_("unable to update HEAD"));
 		if (!option_bare) {
 			update_ref(msg, "HEAD", our->old_oid.hash, NULL, 0,
 				   UPDATE_REFS_DIE_ON_ERR);
@@ -750,7 +750,7 @@ static void write_config(struct string_list *config)
 	for (i = 0; i < config->nr; i++) {
 		if (git_config_parse_parameter(config->items[i].string,
 					       write_one_config, NULL) < 0)
-			die("unable to write parameters to config file");
+			die(_("unable to write parameters to config file"));
 	}
 }
 
