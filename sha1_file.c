@@ -1042,7 +1042,7 @@ unsigned char *use_pack(struct packed_git *p,
 	if (offset > (p->pack_size - 20))
 		die("offset beyond end of packfile (truncated pack?)");
 	if (offset < 0)
-		die("offset before end of packfile (broken .idx?)");
+		die(_("offset before end of packfile (broken .idx?)"));
 
 	if (!win || !in_window(win, offset)) {
 		if (win)
@@ -2367,11 +2367,11 @@ void check_pack_index_ptr(const struct packed_git *p, const void *vptr)
 	const unsigned char *start = p->index_data;
 	const unsigned char *end = start + p->index_size;
 	if (ptr < start)
-		die("offset before start of pack index for %s (corrupt index?)",
+		die(_("offset before start of pack index for %s (corrupt index?)"),
 		    p->pack_name);
 	/* No need to check for underflow; .idx files must be at least 8 bytes */
 	if (ptr >= end - 8)
-		die("offset beyond end of pack index for %s (truncated index?)",
+		die(_("offset beyond end of pack index for %s (truncated index?)"),
 		    p->pack_name);
 }
 
