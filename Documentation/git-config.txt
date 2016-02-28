@@ -86,8 +86,7 @@ OPTIONS
 	found and the last value if multiple key values were found.
 
 --get-all::
-	Like get, but does not fail if the number of values for the key
-	is not exactly one.
+	Like get, but returns all values for a multi-valued key.
 
 --get-regexp::
 	Like --get-all, but interprets the name as a regular expression and
