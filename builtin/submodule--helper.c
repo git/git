@@ -187,7 +187,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	const char *const git_submodule_helper_usage[] = {
 		N_("git submodule--helper clone [--prefix=<path>] [--quiet] "
 		   "[--reference <repository>] [--name <name>] [--url <url>]"
-		   "[--depth <depth>] [--] [<path>...]"),
+		   "[--depth <depth>] [--path <path>]"),
 		NULL
 	};
 
