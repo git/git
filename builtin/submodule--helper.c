@@ -180,8 +180,8 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 
 	const char *const git_submodule_helper_usage[] = {
 		N_("git submodule--helper clone [--prefix=<path>] [--quiet] "
-		   "[--reference <repository>] [--name <name>] [--url <url>]"
-		   "[--depth <depth>] [--path <path>]"),
+		   "[--reference <repository>] [--name <name>] [--depth <depth>] "
+		   "--url <url> --path <path>"),
 		NULL
 	};
 
@@ -191,7 +191,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	if (!path || !*path)
 		die(_("submodule--helper: unspecified or empty --path"));
 
-	if (argc)
+	if (argc || !url)
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
 
