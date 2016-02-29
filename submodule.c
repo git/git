@@ -705,8 +705,7 @@ static int get_next_submodule(struct child_process *cp,
 	return 0;
 }
 
-static int fetch_start_failure(struct child_process *cp,
-			       struct strbuf *err,
+static int fetch_start_failure(struct strbuf *err,
 			       void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;
@@ -716,8 +715,8 @@ static int fetch_start_failure(struct child_process *cp,
 	return 0;
 }
 
-static int fetch_finish(int retvalue, struct child_process *cp,
-			struct strbuf *err, void *cb, void *task_cb)
+static int fetch_finish(int retvalue, struct strbuf *err,
+			void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;
 
