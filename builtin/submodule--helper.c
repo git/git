@@ -515,6 +515,10 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
 
+	if (argc)
+		usage_with_options(git_submodule_helper_usage,
+				   module_clone_options);
+
 	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
 	sm_gitdir = xstrdup(absolute_path(sb.buf));
 	strbuf_reset(&sb);
