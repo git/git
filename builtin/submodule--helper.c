@@ -515,7 +515,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
 
-	if (argc)
+	if (argc || !url)
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
 
