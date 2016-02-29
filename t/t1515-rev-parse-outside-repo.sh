@@ -27,14 +27,14 @@ test_expect_success 'rev-parse --sq-quote' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'rev-parse --local-env-vars' '
+test_expect_success 'rev-parse --local-env-vars' '
 	git rev-parse --local-env-vars >actual &&
 	# we do not want to depend on the complete list here,
 	# so just look for something plausible
 	grep ^GIT_DIR actual
 '
 
-test_expect_failure 'rev-parse --resolve-git-dir' '
+test_expect_success 'rev-parse --resolve-git-dir' '
 	git init --separate-git-dir repo dir &&
 	test_must_fail git rev-parse --resolve-git-dir . &&
 	echo "$(pwd)/repo" >expect &&

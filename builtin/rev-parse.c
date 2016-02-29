@@ -505,6 +505,7 @@ N_("git rev-parse --parseopt [<options>] -- [<args>...]\n"
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
+	int did_repo_setup = 0;
 	int has_dashdash = 0;
 	int output_prefix = 0;
 	unsigned char sha1[20];
@@ -528,10 +529,39 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	prefix = setup_git_directory();
-	git_config(git_default_config, NULL);
+	/* No options; just report on whether we're in a git repo or not. */
+	if (argc == 1) {
+		setup_git_directory();
+		git_config(git_default_config, NULL);
+		return 0;
+	}
+
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
+
+		if (!strcmp(arg, "--local-env-vars")) {
+			int i;
+			for (i = 0; local_repo_env[i]; i++)
+				printf("%s\n", local_repo_env[i]);
+			continue;
+		}
+		if (!strcmp(arg, "--resolve-git-dir")) {
+			const char *gitdir = argv[++i];
+			if (!gitdir)
+				die("--resolve-git-dir requires an argument");
+			gitdir = resolve_gitdir(gitdir);
+			if (!gitdir)
+				die("not a gitdir '%s'", argv[i]);
+			puts(gitdir);
+			continue;
+		}
+
+		/* The rest of the options require a git repository. */
+		if (!did_repo_setup) {
+			prefix = setup_git_directory();
+			git_config(git_default_config, NULL);
+			did_repo_setup = 1;
+		}
 
 		if (!strcmp(arg, "--git-path")) {
 			if (!argv[i + 1])
@@ -706,12 +736,6 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				add_ref_exclusion(&ref_excludes, arg + 10);
 				continue;
 			}
-			if (!strcmp(arg, "--local-env-vars")) {
-				int i;
-				for (i = 0; local_repo_env[i]; i++)
-					printf("%s\n", local_repo_env[i]);
-				continue;
-			}
 			if (!strcmp(arg, "--show-toplevel")) {
 				const char *work_tree = get_git_work_tree();
 				if (work_tree)
@@ -764,16 +788,6 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--git-common-dir")) {
 				puts(get_git_common_dir());
-				continue;
-			}
-			if (!strcmp(arg, "--resolve-git-dir")) {
-				const char *gitdir = argv[++i];
-				if (!gitdir)
-					die("--resolve-git-dir requires an argument");
-				gitdir = resolve_gitdir(gitdir);
-				if (!gitdir)
-					die("not a gitdir '%s'", argv[i]);
-				puts(gitdir);
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {
