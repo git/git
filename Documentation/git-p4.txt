@@ -553,6 +553,17 @@ git-p4.keepEmptyCommits::
 	A changelist that contains only excluded files will be imported
 	as an empty commit if this boolean option is set to true.
 
+git-p4.mapUser::
+	Map a P4 user to a name and email address in Git. Use a string
+	with the following format to create a mapping:
++
+-------------
+git config --add git-p4.mapUser "p4user = First Last <mail@address.com>"
+-------------
++
+A mapping will override any user information from P4. Mappings for
+multiple P4 user can be defined.
+
 Submit variables
 ~~~~~~~~~~~~~~~~
 git-p4.detectRenames::
