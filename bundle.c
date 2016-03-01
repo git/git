@@ -102,6 +102,18 @@ int is_bundle(const char *path, int quiet)
 	return (fd >= 0);
 }
 
+void release_bundle_header(struct bundle_header *header)
+{
+	int i;
+
+	for (i = 0; i < header->prerequisites.nr; i++)
+		free(header->prerequisites.list[i].name);
+	free(header->prerequisites.list);
+	for (i = 0; i < header->references.nr; i++)
+		free(header->references.list[i].name);
+	free(header->references.list);
+}
+
 static int list_refs(struct ref_list *r, int argc, const char **argv)
 {
 	int i;

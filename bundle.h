@@ -23,5 +23,6 @@ int verify_bundle(struct bundle_header *header, int verbose);
 int unbundle(struct bundle_header *header, int bundle_fd, int flags);
 int list_bundle_refs(struct bundle_header *header,
 		int argc, const char **argv);
+void release_bundle_header(struct bundle_header *);
 
 #endif
