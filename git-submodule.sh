@@ -4,6 +4,8 @@
 #
 # Copyright (c) 2007 Lars Hjemli
 
+script_dir="$(dirname "$0")"
+
 dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="[--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
@@ -15,9 +17,9 @@ USAGE="[--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <re
    or: $dashless [--quiet] sync [--recursive] [--] [<path>...]"
 OPTIONS_SPEC=
 SUBDIRECTORY_OK=Yes
-. git-sh-setup
-. git-sh-i18n
-. git-parse-remote
+. "$script_dir"/git-sh-setup
+. "$script_dir"/git-sh-i18n
+. "$script_dir"/git-parse-remote
 require_work_tree
 wt_prefix=$(git rev-parse --show-prefix)
 cd_to_toplevel
