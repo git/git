@@ -902,35 +902,18 @@ struct parallel_processes {
 	struct strbuf buffered_output; /* of finished children */
 };
 
-static int default_start_failure(struct child_process *cp,
-				 struct strbuf *err,
+static int default_start_failure(struct strbuf *err,
 				 void *pp_cb,
 				 void *pp_task_cb)
 {
-	int i;
-
-	strbuf_addstr(err, "Starting a child failed:");
-	for (i = 0; cp->argv[i]; i++)
-		strbuf_addf(err, " %s", cp->argv[i]);
-
 	return 0;
 }
 
 static int default_task_finished(int result,
-				 struct child_process *cp,
 				 struct strbuf *err,
 				 void *pp_cb,
 				 void *pp_task_cb)
 {
-	int i;
-
-	if (!result)
-		return 0;
-
-	strbuf_addf(err, "A child failed with return code %d:", result);
-	for (i = 0; cp->argv[i]; i++)
-		strbuf_addf(err, " %s", cp->argv[i]);
-
 	return 0;
 }
 
@@ -1048,8 +1031,7 @@ static int pp_start_one(struct parallel_processes *pp)
 	pp->children[i].process.no_stdin = 1;
 
 	if (start_command(&pp->children[i].process)) {
-		code = pp->start_failure(&pp->children[i].process,
-					 &pp->children[i].err,
+		code = pp->start_failure(&pp->children[i].err,
 					 pp->data,
 					 &pp->children[i].data);
 		strbuf_addbuf(&pp->buffered_output, &pp->children[i].err);
@@ -1117,7 +1099,7 @@ static int pp_collect_finished(struct parallel_processes *pp)
 
 		code = finish_command(&pp->children[i].process);
 
-		code = pp->task_finished(code, &pp->children[i].process,
+		code = pp->task_finished(code,
 					 &pp->children[i].err, pp->data,
 					 &pp->children[i].data);
 
