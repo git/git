@@ -21,8 +21,13 @@ static void add_to_ref_list(const unsigned char *sha1, const char *name,
 	list->nr++;
 }
 
-static int parse_bundle_header(int fd, struct bundle_header *header,
-			       const char *report_path)
+void init_bundle_header(struct bundle_header *header, const char *name)
+{
+	memset(header, '\0', sizeof(*header));
+	header->filename = xstrdup(name);
+}
+
+static int parse_bundle_header(int fd, struct bundle_header *header, int quiet)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int status = 0;
@@ -30,9 +35,9 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 	/* The bundle header begins with the signature */
 	if (strbuf_getwholeline_fd(&buf, fd, '\n') ||
 	    strcmp(buf.buf, bundle_signature)) {
-		if (report_path)
+		if (!quiet)
 			error(_("'%s' does not look like a v2 bundle file"),
-			      report_path);
+			      header->filename);
 		status = -1;
 		goto abort;
 	}
@@ -57,7 +62,7 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		if (get_sha1_hex(buf.buf, sha1) ||
 		    (buf.len > 40 && !isspace(buf.buf[40])) ||
 		    (!is_prereq && buf.len <= 40)) {
-			if (report_path)
+			if (!quiet)
 				error(_("unrecognized header: %s%s (%d)"),
 				      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
 			status = -1;
@@ -79,13 +84,13 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 	return fd;
 }
 
-int read_bundle_header(const char *path, struct bundle_header *header)
+int read_bundle_header(struct bundle_header *header)
 {
-	int fd = open(path, O_RDONLY);
+	int fd = open(header->filename, O_RDONLY);
 
 	if (fd < 0)
-		return error(_("could not open '%s'"), path);
-	return parse_bundle_header(fd, header, path);
+		return error(_("could not open '%s'"), header->filename);
+	return parse_bundle_header(fd, header, 0);
 }
 
 int is_bundle(const char *path, int quiet)
@@ -96,7 +101,7 @@ int is_bundle(const char *path, int quiet)
 	if (fd < 0)
 		return 0;
 	memset(&header, 0, sizeof(header));
-	fd = parse_bundle_header(fd, &header, quiet ? NULL : path);
+	fd = parse_bundle_header(fd, &header, quiet);
 	if (fd >= 0)
 		close(fd);
 	return (fd >= 0);
@@ -112,6 +117,8 @@ void release_bundle_header(struct bundle_header *header)
 	for (i = 0; i < header->references.nr; i++)
 		free(header->references.list[i].name);
 	free(header->references.list);
+
+	free(header->filename);
 }
 
 static int list_refs(struct ref_list *r, int argc, const char **argv)

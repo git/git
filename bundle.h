@@ -10,12 +10,14 @@ struct ref_list {
 };
 
 struct bundle_header {
+	char *filename;
 	struct ref_list prerequisites;
 	struct ref_list references;
 };
 
 int is_bundle(const char *path, int quiet);
-int read_bundle_header(const char *path, struct bundle_header *header);
+void init_bundle_header(struct bundle_header *, const char *filename);
+int read_bundle_header(struct bundle_header *header);
 int create_bundle(struct bundle_header *header, const char *path,
 		int argc, const char **argv);
 int verify_bundle(struct bundle_header *header, int verbose);
