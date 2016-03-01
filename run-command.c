@@ -902,7 +902,7 @@ struct parallel_processes {
 	struct strbuf buffered_output; /* of finished children */
 };
 
-static int default_start_failure(struct strbuf *err,
+static int default_start_failure(struct strbuf *out,
 				 void *pp_cb,
 				 void *pp_task_cb)
 {
@@ -910,7 +910,7 @@ static int default_start_failure(struct strbuf *err,
 }
 
 static int default_task_finished(int result,
-				 struct strbuf *err,
+				 struct strbuf *out,
 				 void *pp_cb,
 				 void *pp_task_cb)
 {
