@@ -1069,7 +1069,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(quoted);
 	}
 
-	wargs = xmalloc_array(st_add(st_mult(2, args.len), 1), sizeof(wchar_t));
+	ALLOC_ARRAY(wargs, st_add(st_mult(2, args.len), 1));
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
 
