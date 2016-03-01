@@ -74,14 +74,14 @@ static void remote_ref_atom_parser(struct used_atom *atom, const char *arg)
 static void body_atom_parser(struct used_atom *atom, const char *arg)
 {
 	if (arg)
-		die("%%(body) does not take arguments");
+		die(_("%%(body) does not take arguments"));
 	atom->u.contents.option = C_BODY_DEP;
 }
 
 static void subject_atom_parser(struct used_atom *atom, const char *arg)
 {
 	if (arg)
-		die("%%(subject) does not take arguments");
+		die(_("%%(subject) does not take arguments"));
 	atom->u.contents.option = C_SUB;
 }
 
@@ -241,7 +241,7 @@ int parse_ref_filter_atom(const char *atom, const char *ep)
 	if (*sp == '*' && sp < ep)
 		sp++; /* deref */
 	if (ep <= sp)
-		die("malformed field name: %.*s", (int)(ep-atom), atom);
+		die(_("malformed field name: %.*s"), (int)(ep-atom), atom);
 
 	/* Do we have the atom already used elsewhere? */
 	for (i = 0; i < used_atom_cnt; i++) {
@@ -267,7 +267,7 @@ int parse_ref_filter_atom(const char *atom, const char *ep)
 	}
 
 	if (ARRAY_SIZE(valid_atom) <= i)
-		die("unknown field name: %.*s", (int)(ep-atom), atom);
+		die(_("unknown field name: %.*s"), (int)(ep-atom), atom);
 
 	/* Add it in, including the deref prefix */
 	at = used_atom_cnt;
@@ -421,7 +421,7 @@ int verify_ref_format(const char *format)
 		int at;
 
 		if (!ep)
-			return error("malformed format string %s", sp);
+			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
 		at = parse_ref_filter_atom(sp + 2, ep);
 		cp = ep + 1;
@@ -875,12 +875,12 @@ static const char *strip_ref_components(const char *refname, const char *nr_arg)
 	const char *start = refname;
 
 	if (nr < 1 || *end != '\0')
-		die(":strip= requires a positive integer argument");
+		die(_(":strip= requires a positive integer argument"));
 
 	while (remaining) {
 		switch (*start++) {
 		case '\0':
-			die("ref '%s' does not have %ld components to :strip",
+			die(_("ref '%s' does not have %ld components to :strip"),
 			    refname, nr);
 		case '/':
 			remaining--;
@@ -1043,7 +1043,7 @@ static void populate_value(struct ref_array_item *ref)
 			else if (skip_prefix(formatp, "strip=", &arg))
 				refname = strip_ref_components(refname, arg);
 			else
-				die("unknown %.*s format %s",
+				die(_("unknown %.*s format %s"),
 				    (int)(formatp - name), name, formatp);
 		}
 
@@ -1063,10 +1063,10 @@ static void populate_value(struct ref_array_item *ref)
  need_obj:
 	buf = get_obj(ref->objectname, &obj, &size, &eaten);
 	if (!buf)
-		die("missing object %s for %s",
+		die(_("missing object %s for %s"),
 		    sha1_to_hex(ref->objectname), ref->refname);
 	if (!obj)
-		die("parse_object_buffer failed on %s for %s",
+		die(_("parse_object_buffer failed on %s for %s"),
 		    sha1_to_hex(ref->objectname), ref->refname);
 
 	grab_values(ref->value, 0, obj, buf, size);
@@ -1094,10 +1094,10 @@ static void populate_value(struct ref_array_item *ref)
 	 */
 	buf = get_obj(tagged, &obj, &size, &eaten);
 	if (!buf)
-		die("missing object %s for %s",
+		die(_("missing object %s for %s"),
 		    sha1_to_hex(tagged), ref->refname);
 	if (!obj)
-		die("parse_object_buffer failed on %s for %s",
+		die(_("parse_object_buffer failed on %s for %s"),
 		    sha1_to_hex(tagged), ref->refname);
 	grab_values(ref->value, 1, obj, buf, size);
 	if (!eaten)
@@ -1370,12 +1370,12 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 	unsigned int kind;
 
 	if (flag & REF_BAD_NAME) {
-		warning("ignoring ref with broken name %s", refname);
+		warning(_("ignoring ref with broken name %s"), refname);
 		return 0;
 	}
 
 	if (flag & REF_ISBROKEN) {
-		warning("ignoring broken ref %s", refname);
+		warning(_("ignoring broken ref %s"), refname);
 		return 0;
 	}
 
