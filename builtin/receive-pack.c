@@ -21,7 +21,10 @@
 #include "sigchain.h"
 #include "fsck.h"
 
-static const char receive_pack_usage[] = "git receive-pack <git-dir>";
+static const char * const receive_pack_usage[] = {
+	N_("git receive-pack <git-dir>"),
+	NULL
+};
 
 enum deny_action {
 	DENY_UNCONFIGURED,
@@ -49,7 +52,7 @@ static int quiet;
 static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
 static int auto_gc = 1;
-static int fix_thin = 1;
+static int reject_thin;
 static int stateless_rpc;
 static const char *service_dir;
 static const char *head_name;
@@ -1548,7 +1551,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (fsck_objects)
 			argv_array_pushf(&child.args, "--strict%s",
 				fsck_msg_types.buf);
-		if (fix_thin)
+		if (!reject_thin)
 			argv_array_push(&child.args, "--fix-thin");
 		child.out = -1;
 		child.err = err_fd;
@@ -1707,45 +1710,29 @@ static int delete_only(struct command *commands)
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
 	int advertise_refs = 0;
-	int i;
 	struct command *commands;
 	struct sha1_array shallow = SHA1_ARRAY_INIT;
 	struct sha1_array ref = SHA1_ARRAY_INIT;
 	struct shallow_info si;
 
+	struct option options[] = {
+		OPT__QUIET(&quiet, N_("quiet")),
+		OPT_HIDDEN_BOOL(0, "stateless-rpc", &stateless_rpc, NULL),
+		OPT_HIDDEN_BOOL(0, "advertise-refs", &advertise_refs, NULL),
+		OPT_HIDDEN_BOOL(0, "reject-thin-pack-for-testing", &reject_thin, NULL),
+		OPT_END()
+	};
+
 	packet_trace_identity("receive-pack");
 
-	argv++;
-	for (i = 1; i < argc; i++) {
-		const char *arg = *argv++;
+	argc = parse_options(argc, argv, prefix, options, receive_pack_usage, 0);
 
-		if (*arg == '-') {
-			if (!strcmp(arg, "--quiet")) {
-				quiet = 1;
-				continue;
-			}
+	if (argc > 1)
+		usage_msg_opt(_("Too many arguments."), receive_pack_usage, options);
+	if (argc == 0)
+		usage_msg_opt(_("You must specify a directory."), receive_pack_usage, options);
 
-			if (!strcmp(arg, "--advertise-refs")) {
-				advertise_refs = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--stateless-rpc")) {
-				stateless_rpc = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--reject-thin-pack-for-testing")) {
-				fix_thin = 0;
-				continue;
-			}
-
-			usage(receive_pack_usage);
-		}
-		if (service_dir)
-			usage(receive_pack_usage);
-		service_dir = arg;
-	}
-	if (!service_dir)
-		usage(receive_pack_usage);
+	service_dir = argv[0];
 
 	setup_path();
 
