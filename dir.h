@@ -27,7 +27,7 @@ struct exclude {
 	int nowildcardlen;
 	const char *base;
 	int baselen;
-	int flags;
+	unsigned flags;		/* EXC_FLAG_* */
 
 	/*
 	 * Counting starts from 1 for line numbers in ignore files,
@@ -152,10 +152,10 @@ struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, 
  * attr.c:path_matches()
  */
 extern int match_basename(const char *, int,
-			  const char *, int, int, int);
+			  const char *, int, int, unsigned);
 extern int match_pathname(const char *, int,
 			  const char *, int,
-			  const char *, int, int, int);
+			  const char *, int, int, unsigned);
 
 extern struct exclude *last_exclude_matching(struct dir_struct *dir,
 					     const char *name, int *dtype);
@@ -167,7 +167,7 @@ extern struct exclude_list *add_exclude_list(struct dir_struct *dir,
 extern int add_excludes_from_file_to_list(const char *fname, const char *base, int baselen,
 					  struct exclude_list *el, int check_index);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
-extern void parse_exclude_pattern(const char **string, int *patternlen, int *flags, int *nowildcardlen);
+extern void parse_exclude_pattern(const char **string, int *patternlen, unsigned *flags, int *nowildcardlen);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *el, int srcpos);
 extern void clear_exclude_list(struct exclude_list *el);

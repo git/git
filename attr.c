@@ -124,7 +124,7 @@ struct pattern {
 	const char *pattern;
 	int patternlen;
 	int nowildcardlen;
-	int flags;		/* EXC_FLAG_* */
+	unsigned flags;		/* EXC_FLAG_* */
 };
 
 /*
