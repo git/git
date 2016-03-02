@@ -1950,8 +1950,8 @@ msgstr "Keine Kommandos ausgeführt."
 #, c-format
 msgid "Last command done (%d command done):"
 msgid_plural "Last commands done (%d commands done):"
-msgstr[0] "Letztes Kommando ausgeführt (%d Kommando ausgeführt):"
-msgstr[1] "Letzte Kommandos ausgeführt (%d Kommandos ausgeführt):"
+msgstr[0] "Zuletzt ausgeführtes Kommando (%d Kommando ausgeführt):"
+msgstr[1] "Zuletzt ausgeführte Kommandos (%d Kommandos ausgeführt):"
 
 #: wt-status.c:1119
 #, c-format
