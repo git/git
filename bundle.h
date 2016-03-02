@@ -10,7 +10,11 @@ struct ref_list {
 };
 
 struct bundle_header {
+	int version;
 	char *filename;
+	char *datafile;
+	size_t size;
+	unsigned char csum[GIT_SHA1_RAWSZ];
 	struct ref_list prerequisites;
 	struct ref_list references;
 };
