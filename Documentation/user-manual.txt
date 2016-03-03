@@ -2134,7 +2134,7 @@ browsing the repository using gitweb. The default server when using
 instaweb is lighttpd.
 
 See the file gitweb/INSTALL in the Git source tree and
-linkgit:gitweb[1] for instructions on details setting up a permament
+linkgit:gitweb[1] for instructions on details setting up a permanent
 installation with a CGI or Perl capable server.
 
 [[how-to-get-a-git-repository-with-minimal-history]]
