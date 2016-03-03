@@ -1617,7 +1617,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 			die(_("packfile name '%s' does not end with '.pack'"),
 			    pack_name);
 		strbuf_add(&keep_name_buf, pack_name, len);
-		strbuf_addstr(&keep_name_buf, ".idx");
+		strbuf_addstr(&keep_name_buf, ".keep");
 		keep_name = keep_name_buf.buf;
 	}
 	if (verify) {
