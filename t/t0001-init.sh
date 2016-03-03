@@ -88,19 +88,17 @@ test_expect_success 'plain nested in bare through aliased command' '
 '
 
 test_expect_success 'No extra GIT_* on alias scripts' '
-	(
-		env | sed -ne "/^GIT_/s/=.*//p" &&
-		echo GIT_PREFIX &&        # setup.c
-		echo GIT_TEXTDOMAINDIR    # wrapper-for-bin.sh
-	) | sort | uniq >expected &&
-	cat <<-\EOF >script &&
-	#!/bin/sh
-	env | sed -ne "/^GIT_/s/=.*//p" | sort >actual
-	exit 0
+	write_script script <<-\EOF &&
+	env |
+		sed -n \
+			-e "/^GIT_PREFIX=/d" \
+			-e "/^GIT_TEXTDOMAINDIR=/d" \
+			-e "/^GIT_/s/=.*//p" |
+		sort
 	EOF
-	chmod 755 script &&
+	./script >expected &&
 	git config alias.script \!./script &&
-	( mkdir sub && cd sub && git script ) &&
+	( mkdir sub && cd sub && git script >../actual ) &&
 	test_cmp expected actual
 '
 
