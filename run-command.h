@@ -159,8 +159,7 @@ typedef int (*get_next_task_fn)(struct child_process *cp,
  * To send a signal to other child processes for abortion, return
  * the negative signal number.
  */
-typedef int (*start_failure_fn)(struct child_process *cp,
-				struct strbuf *err,
+typedef int (*start_failure_fn)(struct strbuf *err,
 				void *pp_cb,
 				void *pp_task_cb);
 
@@ -179,7 +178,6 @@ typedef int (*start_failure_fn)(struct child_process *cp,
  * the negative signal number.
  */
 typedef int (*task_finished_fn)(int result,
-				struct child_process *cp,
 				struct strbuf *err,
 				void *pp_cb,
 				void *pp_task_cb);
@@ -193,9 +191,8 @@ typedef int (*task_finished_fn)(int result,
  * (both stdout and stderr) is routed to stderr in a manner that output
  * from different tasks does not interleave.
  *
- * If start_failure_fn or task_finished_fn are NULL, default handlers
- * will be used. The default handlers will print an error message on
- * error without issuing an emergency stop.
+ * start_failure_fn and task_finished_fn can be NULL to omit any
+ * special handling.
  */
 int run_processes_parallel(int n,
 			   get_next_task_fn,

@@ -41,7 +41,6 @@ static int no_job(struct child_process *cp,
 }
 
 static int task_finished(int result,
-			 struct child_process *cp,
 			 struct strbuf *err,
 			 void *pp_cb,
 			 void *pp_task_cb)
