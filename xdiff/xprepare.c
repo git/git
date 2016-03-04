@@ -304,7 +304,7 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		return -1;
 	}
 
-	if (!(xpp->flags & XDF_HISTOGRAM_DIFF))
+	if (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)
 		xdl_free_classifier(&cf);
 
 	return 0;
