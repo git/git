@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2016, #01; Wed, 2)
-X-master-at: f02fbc4f9433937ee0463d0342d6d7d97e1f6f1e
-X-next-at: 391b917453d3b3cca00e679379036ed0e6d85125
+Subject: What's cooking in git.git (Mar 2016, #02; Fri, 4)
+X-master-at: ab5d01a29eb7380ceab070f0807c2939849c44bc
+X-next-at: 19dcece4e85c9fe888a1ab646b626fa6039c184c
 
-What's cooking in git.git (Mar 2016, #01; Wed, 2)
+What's cooking in git.git (Mar 2016, #02; Fri, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-v2.8-rc1 at around the end of this week.
+v2.8-rc1 has been tagged.  There still is a known regression around
+"git status" (and "ls-files -o") relative to 2.7.2, which we may end
+up resolving by reverting a topic.  We'll see.
 
 Again, the topics that have not been cooked sufficiently in 'next'
 at this point will not be considered for 2.8 final, even though I
@@ -29,7 +31,47 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* jk/pack-idx-corruption-safety (2016-02-27) 4 commits
+  (merged to 'next' on 2016-03-01 at 49e08d3)
+ + sha1_file.c: mark strings for translation
+  (merged to 'next' on 2016-02-26 at ef0d6de)
+ + use_pack: handle signed off_t overflow
+ + nth_packed_object_offset: bounds-check extended offset
+ + t5313: test bounds-checks of corrupted/malicious pack/idx files
+
+ The code to read the pack data using the offsets stored in the pack
+ idx file has been made more carefully check the validity of the
+ data in the idx.
+
+
+* jk/tighten-alloc (2016-02-29) 1 commit
+  (merged to 'next' on 2016-03-01 at f4df936)
+ + compat/mingw: brown paper bag fix for 50a6c8e
+
+
+* js/pthread-exit-emu-windows (2016-03-02) 1 commit
+  (merged to 'next' on 2016-03-02 at 391b917)
+ + Mark win32's pthread_exit() as NORETURN
+
+
+* mg/httpd-tests-update-for-apache-2.4 (2016-02-25) 1 commit
+  (merged to 'next' on 2016-03-01 at d2f7e8c)
+ + t/lib-httpd: load mod_unixd
+ (this branch is used by jk/submodule-c-credential.)
+
+ The way the test scripts configure the Apache web server has been
+ updated to work also for Apache 2.4 running on RedHat derived
+ distros.
+
+
+* nd/clear-gitenv-upon-use-of-alias (2016-03-03) 1 commit
+  (merged to 'next' on 2016-03-03 at 1c1c50f)
+ + t0001: fix GIT_* environment variable check under --valgrind
+
+ Hotfix for a test breakage made between 2.7 and 'master'.
+
 
 * nd/i18n-2.8.0 (2016-02-29) 4 commits
   (merged to 'next' on 2016-03-01 at cdf4675)
@@ -37,121 +79,6 @@ repositories listed at
  + ref-filter.c: mark strings for translation
  + builtin/clone.c: mark strings for translation
  + builtin/checkout.c: mark strings for translation
-
- Will merge to 'master' by 2.8-rc1
-
-
-* mm/readme-markdown (2016-02-27) 1 commit
-  (merged to 'next' on 2016-03-01 at 81f3858)
- + README.md: don't take 'commandname' literally
-
- The top-level README file has been updated to be more appropriate
- for the sign on the front door to welcome new acquaintances to Git
- by toning down inside jokes and making it into MarkDown.
-
- Will merge to 'master' after 2.8 final
-
-
-* gf/fetch-pack-direct-object-fetch (2016-03-01) 1 commit
- - fetch-pack: fix object_id of exact sha1
-
- Fetching of history by naming a commit object name directly didn't
- work across remote-curl transport.
-
- Will merge to 'next'.
-
-
-* jk/add-i-highlight (2016-02-28) 1 commit
- - add--interactive: allow custom diff highlighting programs
-
- Will merge to 'next'.
-
-
-* jk/config-get-urlmatch (2016-02-28) 3 commits
- - Documentation/git-config: fix --get-all description
- - Documentation/git-config: use bulleted list for exit codes
- - config: fail if --get-urlmatch finds no value
-
- "git config --get-urlmatch", unlike other variants of the "git
- config --get" family, did not signal error with its exit status
- when there was no matching configuration.
-
- Will merge to 'next'.
-
-
-* jk/rev-parse-local-env-vars (2016-02-29) 2 commits
- - rev-parse: let some options run outside repository
- - t1515: add tests for rev-parse out-of-repo helpers
-
- The "--local-env-vars" and "--resolve-git-dir" options of "git
- rev-parse" failed to work outside a repository when the command's
- option parsing was rewritten in 1.8.5 era.
-
- Will merge to 'next'.
-
-
-* sg/completion-updates (2016-02-28) 21 commits
- - completion: cache the path to the repository
- - completion: extract repository discovery from __gitdir()
- - completion: don't guard git executions with __gitdir()
- - completion: consolidate silencing errors from git commands
- - completion: don't use __gitdir() for git commands
- - completion: respect 'git -C <path>'
- - completion: fix completion after 'git -C <path>'
- - completion: don't offer commands when 'git --opt' needs an argument
- - rev-parse: add '--absolute-git-dir' option
- - completion: list short refs from a remote given as a URL
- - completion: don't list 'HEAD' when trying refs completion outside of a repo
- - completion: list refs from remote when remote's name matches a directory
- - completion: respect 'git --git-dir=<path>' when listing remote refs
- - completion: fix most spots not respecting 'git --git-dir=<path>'
- - completion: ensure that the repository path given on the command line exists
- - completion tests: add tests for the __git_refs() helper function
- - completion tests: check __gitdir()'s output in the error cases
- - completion tests: consolidate getting path of current working directory
- - completion tests: make the $cur variable local to the test helper functions
- - completion tests: don't add test cruft to the test repository
- - completion: improve __git_refs()'s in-code documentation
-
- Will be rerolled.
- ($gmane/287839)
-
-
-* tb/avoid-gcc-on-darwin-10-6 (2016-02-28) 1 commit
-  (merged to 'next' on 2016-03-01 at e8dd08a)
- + config.mak.uname: use clang for Mac OS X 10.6
-
- Out of maintenance gcc on OSX 10.6 fails to compile the code in
- 'master'; work it around by using clang by default on the platform.
-
- Will merge to 'master' by 2.8-rc1
-
-
-* jk/tighten-alloc (2016-02-29) 1 commit
-  (merged to 'next' on 2016-03-01 at f4df936)
- + compat/mingw: brown paper bag fix for 50a6c8e
-
- Will merge to 'master' by 2.8-rc1
-
-
-* js/pthread-exit-emu-windows (2016-03-02) 1 commit
-  (merged to 'next' on 2016-03-02 at 391b917)
- + Mark win32's pthread_exit() as NORETURN
-
- Will merge to 'master' by 2.8-rc1
-
-
-* jx/http-no-proxy (2016-02-29) 1 commit
- - http: honor no_http env variable to bypass proxy
-
- Needs review.
-
-
-* mm/lockfile-error-message (2016-03-01) 2 commits
- - lockfile: improve error message when lockfile exists
- - lockfile: mark strings for translation
-
- Will merge to 'next'.
 
 
 * sb/submodule-parallel-fetch (2016-03-01) 1 commit
@@ -163,33 +90,51 @@ repositories listed at
  child process terminates to avoid misuse of the child-process
  structure that has already been cleaned up.
 
- Will merge to 'master' by 2.8-rc1
+
+* tb/avoid-gcc-on-darwin-10-6 (2016-02-28) 1 commit
+  (merged to 'next' on 2016-03-01 at e8dd08a)
+ + config.mak.uname: use clang for Mac OS X 10.6
+
+ Out of maintenance gcc on OSX 10.6 fails to compile the code in
+ 'master'; work it around by using clang by default on the platform.
+
+--------------------------------------------------
+[New Topics]
+
+* sb/rebase-summary (2016-03-02) 1 commit
+  (merged to 'next' on 2016-03-04 at d40714d)
+ + Documentation: reword rebase summary
+
+ Will merge to 'master' by 2.8-rc2.
 
 
-* ss/exc-flag-is-a-collection-of-bits (2016-03-01) 1 commit
- - dir: store EXC_FLAG_* values in unsigned integers
+* jc/index-pack (2016-03-03) 2 commits
+ - index-pack: add a helper function to derive .idx/.keep filename
+ - Merge branch 'jc/maint-index-pack-keep' into jc/index-pack
+ (this branch is used by jc/bundle; uses jc/maint-index-pack-keep; is tangled with jc/index-pack-clone-bundle.)
+
+ Code clean-up.
 
  Will merge to 'next'.
 
 
-* jc/bundle (2016-03-02) 4 commits
- - bundle v3: the beginning
- - bundle: keep a copy of bundle file name in the in-core bundle header
- - bundle: plug resource leak
- - bundle doc: 'verify' is not about verifying the bundle
+* jc/maint-index-pack-keep (2016-03-03) 1 commit
+  (merged to 'next' on 2016-03-04 at bc1d37a)
+ + index-pack: correct --keep[=<msg>]
+ (this branch is used by jc/bundle, jc/index-pack and jc/index-pack-clone-bundle.)
 
- The beginning of "split bundle", which could be one of the
- ingredients to allow "git clone" traffic off of the core server
- network to CDN.
+ "git index-pack --keep[=<msg>] pack-$name.pack" simply did not work.
+
+ Will merge to 'master' after 2.8 final.
 
 
-* ss/receive-pack-parse-options (2016-03-01) 1 commit
- - builtin/receive-pack.c: use parse_options API
+* js/close-packs-before-gc (2016-03-04) 1 commit
+  (merged to 'next' on 2016-03-04 at fe6f6ed)
+ + t5510: do not leave changed cwd
 
- The command line argument parser for "receive-pack" has been
- rewritten to use parse-options.
+ A small future-proofing of a test added recently.
 
- Will merge to 'next'.
+ Will merge to 'master' by 2.8-rc2.
 
 --------------------------------------------------
 [Stalled]
@@ -265,15 +210,142 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mm/readme-markdown (2016-02-27) 1 commit
+  (merged to 'next' on 2016-03-01 at 81f3858)
+ + README.md: don't take 'commandname' literally
+
+ The top-level README file has been updated to be more appropriate
+ for the sign on the front door to welcome new acquaintances to Git
+ by toning down inside jokes and making it into MarkDown.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* gf/fetch-pack-direct-object-fetch (2016-03-01) 1 commit
+  (merged to 'next' on 2016-03-04 at 49199e0)
+ + fetch-pack: fix object_id of exact sha1
+
+ Fetching of history by naming a commit object name directly didn't
+ work across remote-curl transport.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jk/add-i-highlight (2016-02-28) 1 commit
+  (merged to 'next' on 2016-03-04 at 4ac3aa1)
+ + add--interactive: allow custom diff highlighting programs
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jk/config-get-urlmatch (2016-02-28) 3 commits
+  (merged to 'next' on 2016-03-04 at feeb192)
+ + Documentation/git-config: fix --get-all description
+ + Documentation/git-config: use bulleted list for exit codes
+ + config: fail if --get-urlmatch finds no value
+
+ "git config --get-urlmatch", unlike other variants of the "git
+ config --get" family, did not signal error with its exit status
+ when there was no matching configuration.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jk/rev-parse-local-env-vars (2016-02-29) 2 commits
+  (merged to 'next' on 2016-03-04 at a0300d5)
+ + rev-parse: let some options run outside repository
+ + t1515: add tests for rev-parse out-of-repo helpers
+
+ The "--local-env-vars" and "--resolve-git-dir" options of "git
+ rev-parse" failed to work outside a repository when the command's
+ option parsing was rewritten in 1.8.5 era.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* sg/completion-updates (2016-02-28) 21 commits
+ - completion: cache the path to the repository
+ - completion: extract repository discovery from __gitdir()
+ - completion: don't guard git executions with __gitdir()
+ - completion: consolidate silencing errors from git commands
+ - completion: don't use __gitdir() for git commands
+ - completion: respect 'git -C <path>'
+ - completion: fix completion after 'git -C <path>'
+ - completion: don't offer commands when 'git --opt' needs an argument
+ - rev-parse: add '--absolute-git-dir' option
+ - completion: list short refs from a remote given as a URL
+ - completion: don't list 'HEAD' when trying refs completion outside of a repo
+ - completion: list refs from remote when remote's name matches a directory
+ - completion: respect 'git --git-dir=<path>' when listing remote refs
+ - completion: fix most spots not respecting 'git --git-dir=<path>'
+ - completion: ensure that the repository path given on the command line exists
+ - completion tests: add tests for the __git_refs() helper function
+ - completion tests: check __gitdir()'s output in the error cases
+ - completion tests: consolidate getting path of current working directory
+ - completion tests: make the $cur variable local to the test helper functions
+ - completion tests: don't add test cruft to the test repository
+ - completion: improve __git_refs()'s in-code documentation
+
+ Will be rerolled.
+ ($gmane/287839)
+
+
+* jx/http-no-proxy (2016-02-29) 1 commit
+ - http: honor no_http env variable to bypass proxy
+
+ Needs review.
+
+
+* mm/lockfile-error-message (2016-03-01) 2 commits
+  (merged to 'next' on 2016-03-04 at 04ed7e6)
+ + lockfile: improve error message when lockfile exists
+ + lockfile: mark strings for translation
+
+ Will merge to 'master' after 2.8 final.
+
+
+* ss/exc-flag-is-a-collection-of-bits (2016-03-01) 1 commit
+  (merged to 'next' on 2016-03-04 at 5ea48c7)
+ + dir: store EXC_FLAG_* values in unsigned integers
+
+ Will merge to 'master' after 2.8 final.
+
+
+
+* jc/bundle (2016-03-03) 6 commits
+ - index-pack: --clone-bundle option
+ - Merge branch 'jc/index-pack' into jc/bundle
+ - bundle v3: the beginning
+ - bundle: keep a copy of bundle file name in the in-core bundle header
+ - bundle: plug resource leak
+ - bundle doc: 'verify' is not about verifying the bundle
+ (this branch uses jc/index-pack and jc/maint-index-pack-keep; is tangled with jc/index-pack-clone-bundle.)
+
+ The beginning of "split bundle", which could be one of the
+ ingredients to allow "git clone" traffic off of the core server
+ network to CDN.
+
+
+* ss/receive-pack-parse-options (2016-03-01) 1 commit
+  (merged to 'next' on 2016-03-04 at c577ea7)
+ + builtin/receive-pack.c: use parse_options API
+
+ The command line argument parser for "receive-pack" has been
+ rewritten to use parse-options.
+
+ Will merge to 'master' after 2.8 final.
+
+
 * jk/credential-clear-config (2016-02-26) 1 commit
- - credential: let empty credential specs reset helper list
+  (merged to 'next' on 2016-03-04 at f7b26b7)
+ + credential: let empty credential specs reset helper list
 
  The credential.helper configuration variable is cumulative and
  there is no good way to override it from the command line.  As
  a special case, giving an empty string as its value now serves
  as the signal to clear the values specified in various files.
 
- Will merge to 'next'.
+ Will merge to 'master' after 2.8 final.
 
 
 * jk/submodule-c-credential (2016-03-01) 6 commits
@@ -283,25 +355,12 @@ repositories listed at
  - submodule: fix submodule--helper clone usage
  - submodule: check argc count for git submodule--helper clone
  - submodule: don't pass empty string arguments to submodule--helper clone
- (this branch uses mg/httpd-tests-update-for-apache-2.4.)
 
  "git -c credential.<var>=<value> submodule" can now be used to
  propagate configuration variables related to credential helper
  down to the submodules.
 
  Will merge to 'next'.
-
-
-* mg/httpd-tests-update-for-apache-2.4 (2016-02-25) 1 commit
-  (merged to 'next' on 2016-03-01 at d2f7e8c)
- + t/lib-httpd: load mod_unixd
- (this branch is used by jk/submodule-c-credential.)
-
- The way the test scripts configure the Apache web server has been
- updated to work also for Apache 2.4 running on RedHat derived
- distros.
-
- Will merge to 'master' by 2.8-rc1
 
 
 * nd/shallow-deepen (2016-02-23) 25 commits
@@ -342,21 +401,6 @@ repositories listed at
  Needs review.
 
 
-* jk/pack-idx-corruption-safety (2016-02-27) 4 commits
-  (merged to 'next' on 2016-03-01 at 49e08d3)
- + sha1_file.c: mark strings for translation
-  (merged to 'next' on 2016-02-26 at ef0d6de)
- + use_pack: handle signed off_t overflow
- + nth_packed_object_offset: bounds-check extended offset
- + t5313: test bounds-checks of corrupted/malicious pack/idx files
-
- The code to read the pack data using the offsets stored in the pack
- idx file has been made more carefully check the validity of the
- data in the idx.
-
- Will merge to 'master' by 2.8-rc1
-
-
 * mm/diff-renames-default (2016-02-25) 5 commits
   (merged to 'next' on 2016-02-25 at 947c399)
  + diff: activate diff.renames by default
@@ -368,7 +412,7 @@ repositories listed at
  The end-user facing Porcelain level commands like "diff" and "log"
  now enables the rename detection by default.
 
- Will merge to 'master' after 2.8 final
+ Will merge to 'master' after 2.8 final.
 
 
 * mp/upload-pack-use-embedded-args (2016-02-25) 1 commit
@@ -379,13 +423,13 @@ repositories listed at
  the command line to run pack-objects instead of using a separate
  array of strings.
 
- Will merge to 'master' after 2.8 final
+ Will merge to 'master' after 2.8 final.
 
 
 * sb/submodule-init (2016-03-01) 2 commits
  - submodule: port init from shell to C
  - submodule: port resolve_relative_url from shell to C
- (this branch uses sb/submodule-parallel-fetch and sb/submodule-parallel-update.)
+ (this branch uses sb/submodule-parallel-update.)
 
  Update of "git submodule" to move pieces of logic to C continues.
 
@@ -451,7 +495,7 @@ repositories listed at
  - fetching submodules: respect `submodule.fetchJobs` config option
  - submodule-config: drop check against NULL
  - submodule-config: keep update strategy around
- (this branch is used by sb/submodule-init; uses sb/submodule-parallel-fetch.)
+ (this branch is used by sb/submodule-init.)
 
  A major part of "git submodule update" has been ported to C to take
  advantage of the recently added framework to run download tasks in
