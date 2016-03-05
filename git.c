@@ -15,7 +15,6 @@ const char git_more_info_string[] =
 	   "concept guides. See 'git help <command>' or 'git help <concept>'\n"
 	   "to read about a specific subcommand or concept.");
 
-static struct startup_info git_startup_info;
 static int use_pager = -1;
 static char *orig_cwd;
 static const char *env_names[] = {
@@ -636,8 +635,6 @@ int main(int argc, char **av)
 	const char **argv = (const char **) av;
 	const char *cmd;
 	int done_help = 0;
-
-	startup_info = &git_startup_info;
 
 	cmd = git_extract_argv0_path(argv[0]);
 	if (!cmd)

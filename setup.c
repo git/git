@@ -7,6 +7,9 @@ static int inside_work_tree = -1;
 static int work_tree_config_is_bogus;
 static struct string_list unknown_extensions = STRING_LIST_INIT_DUP;
 
+static struct startup_info the_startup_info;
+struct startup_info *startup_info = &the_startup_info;
+
 /*
  * The input parameter must contain an absolute path, and it must already be
  * normalized.
@@ -905,10 +908,9 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	else
 		setenv(GIT_PREFIX_ENVIRONMENT, "", 1);
 
-	if (startup_info) {
-		startup_info->have_repository = !nongit_ok || !*nongit_ok;
-		startup_info->prefix = prefix;
-	}
+	startup_info->have_repository = !nongit_ok || !*nongit_ok;
+	startup_info->prefix = prefix;
+
 	return prefix;
 }
 
