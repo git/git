@@ -986,7 +986,9 @@ int check_repository_format_version(const char *var, const char *value, void *cb
 
 int check_repository_format(void)
 {
-	return check_repository_format_gently(get_git_dir(), NULL);
+	check_repository_format_gently(get_git_dir(), NULL);
+	startup_info->have_repository = 1;
+	return 0;
 }
 
 /*
