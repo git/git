@@ -55,6 +55,10 @@ test_expect_success 'empty stream succeeds' '
 	git fast-import </dev/null
 '
 
+test_expect_success 'truncated stream complains' '
+	echo "tag foo" | test_must_fail git fast-import
+'
+
 test_expect_success 'A: create pack from stdin' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
