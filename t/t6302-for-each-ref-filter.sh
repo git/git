@@ -17,6 +17,8 @@ test_expect_success 'setup some history and refs' '
 	test_commit three &&
 	git checkout -b side &&
 	test_commit four &&
+	git tag -m "An annotated tag" annotated-tag &&
+	git tag -m "Annonated doubly" doubly-annotated-tag annotated-tag &&
 	git tag -s -m "A signed tag" signed-tag &&
 	git tag -s -m "Signed doubly" doubly-signed-tag signed-tag &&
 	git checkout master &&
@@ -36,6 +38,7 @@ test_expect_success 'filtering with --points-at' '
 test_expect_success 'check signed tags with --points-at' '
 	sed -e "s/Z$//" >expect <<-\EOF &&
 	refs/heads/side Z
+	refs/tags/annotated-tag four
 	refs/tags/four Z
 	refs/tags/signed-tag four
 	EOF
@@ -58,6 +61,8 @@ test_expect_success 'filtering with --merged' '
 test_expect_success 'filtering with --no-merged' '
 	cat >expect <<-\EOF &&
 	refs/heads/side
+	refs/tags/annotated-tag
+	refs/tags/doubly-annotated-tag
 	refs/tags/doubly-signed-tag
 	refs/tags/four
 	refs/tags/signed-tag
@@ -71,6 +76,8 @@ test_expect_success 'filtering with --contains' '
 	refs/heads/master
 	refs/heads/side
 	refs/odd/spot
+	refs/tags/annotated-tag
+	refs/tags/doubly-annotated-tag
 	refs/tags/doubly-signed-tag
 	refs/tags/four
 	refs/tags/signed-tag
@@ -90,6 +97,8 @@ test_expect_success 'left alignment is default' '
 	refname is refs/heads/master  |refs/heads/master
 	refname is refs/heads/side    |refs/heads/side
 	refname is refs/odd/spot      |refs/odd/spot
+	refname is refs/tags/annotated-tag|refs/tags/annotated-tag
+	refname is refs/tags/doubly-annotated-tag|refs/tags/doubly-annotated-tag
 	refname is refs/tags/doubly-signed-tag|refs/tags/doubly-signed-tag
 	refname is refs/tags/four     |refs/tags/four
 	refname is refs/tags/one      |refs/tags/one
@@ -106,6 +115,8 @@ test_expect_success 'middle alignment' '
 	| refname is refs/heads/master |refs/heads/master
 	|  refname is refs/heads/side  |refs/heads/side
 	|   refname is refs/odd/spot   |refs/odd/spot
+	|refname is refs/tags/annotated-tag|refs/tags/annotated-tag
+	|refname is refs/tags/doubly-annotated-tag|refs/tags/doubly-annotated-tag
 	|refname is refs/tags/doubly-signed-tag|refs/tags/doubly-signed-tag
 	|  refname is refs/tags/four   |refs/tags/four
 	|   refname is refs/tags/one   |refs/tags/one
@@ -122,6 +133,8 @@ test_expect_success 'right alignment' '
 	|  refname is refs/heads/master|refs/heads/master
 	|    refname is refs/heads/side|refs/heads/side
 	|      refname is refs/odd/spot|refs/odd/spot
+	|refname is refs/tags/annotated-tag|refs/tags/annotated-tag
+	|refname is refs/tags/doubly-annotated-tag|refs/tags/doubly-annotated-tag
 	|refname is refs/tags/doubly-signed-tag|refs/tags/doubly-signed-tag
 	|     refname is refs/tags/four|refs/tags/four
 	|      refname is refs/tags/one|refs/tags/one
@@ -137,6 +150,8 @@ cat >expect <<-\EOF
 |       refname is refs/heads/master       |refs/heads/master
 |        refname is refs/heads/side        |refs/heads/side
 |         refname is refs/odd/spot         |refs/odd/spot
+|    refname is refs/tags/annotated-tag    |refs/tags/annotated-tag
+|refname is refs/tags/doubly-annotated-tag |refs/tags/doubly-annotated-tag
 |  refname is refs/tags/doubly-signed-tag  |refs/tags/doubly-signed-tag
 |        refname is refs/tags/four         |refs/tags/four
 |         refname is refs/tags/one         |refs/tags/one
@@ -182,6 +197,8 @@ test_expect_success 'alignment with format quote' "
 	|'      '\''master| A U Thor'\''      '|
 	|'       '\''side| A U Thor'\''       '|
 	|'     '\''odd/spot| A U Thor'\''     '|
+	|'      '\''annotated-tag| '\''       '|
+	|'   '\''doubly-annotated-tag| '\''   '|
 	|'    '\''doubly-signed-tag| '\''     '|
 	|'       '\''four| A U Thor'\''       '|
 	|'       '\''one| A U Thor'\''        '|
@@ -198,6 +215,8 @@ test_expect_success 'nested alignment with quote formatting' "
 	|'         master               '|
 	|'           side               '|
 	|'       odd/spot               '|
+	|'  annotated-tag               '|
+	|'doubly-annotated-tag          '|
 	|'doubly-signed-tag             '|
 	|'           four               '|
 	|'            one               '|
@@ -214,6 +233,8 @@ test_expect_success 'check `%(contents:lines=1)`' '
 	master |three
 	side |four
 	odd/spot |three
+	annotated-tag |An annotated tag
+	doubly-annotated-tag |Annonated doubly
 	doubly-signed-tag |Signed doubly
 	four |four
 	one |one
@@ -230,6 +251,8 @@ test_expect_success 'check `%(contents:lines=0)`' '
 	master |
 	side |
 	odd/spot |
+	annotated-tag |
+	doubly-annotated-tag |
 	doubly-signed-tag |
 	four |
 	one |
@@ -246,6 +269,8 @@ test_expect_success 'check `%(contents:lines=99999)`' '
 	master |three
 	side |four
 	odd/spot |three
+	annotated-tag |An annotated tag
+	doubly-annotated-tag |Annonated doubly
 	doubly-signed-tag |Signed doubly
 	four |four
 	one |one
