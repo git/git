@@ -5,11 +5,14 @@ test_description='test for-each-refs usage of ref-filter APIs'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
-if ! test_have_prereq GPG
-then
-	skip_all="skipping for-each-ref tests, GPG not available"
-	test_done
-fi
+test_prepare_expect () {
+	if test_have_prereq GPG
+	then
+		cat
+	else
+		sed '/signed/d'
+	fi
+}
 
 test_expect_success 'setup some history and refs' '
 	test_commit one &&
@@ -19,8 +22,11 @@ test_expect_success 'setup some history and refs' '
 	test_commit four &&
 	git tag -m "An annotated tag" annotated-tag &&
 	git tag -m "Annonated doubly" doubly-annotated-tag annotated-tag &&
-	git tag -s -m "A signed tag" signed-tag &&
-	git tag -s -m "Signed doubly" doubly-signed-tag signed-tag &&
+	if test_have_prereq GPG
+	then
+		git tag -s -m "A signed tag" signed-tag &&
+		git tag -s -m "Signed doubly" doubly-signed-tag signed-tag
+	fi &&
 	git checkout master &&
 	git update-ref refs/odd/spot master
 '
@@ -36,7 +42,7 @@ test_expect_success 'filtering with --points-at' '
 '
 
 test_expect_success 'check signed tags with --points-at' '
-	sed -e "s/Z$//" >expect <<-\EOF &&
+	test_prepare_expect <<-\EOF | sed -e "s/Z$//" >expect &&
 	refs/heads/side Z
 	refs/tags/annotated-tag four
 	refs/tags/four Z
@@ -59,7 +65,7 @@ test_expect_success 'filtering with --merged' '
 '
 
 test_expect_success 'filtering with --no-merged' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	refs/heads/side
 	refs/tags/annotated-tag
 	refs/tags/doubly-annotated-tag
@@ -72,7 +78,7 @@ test_expect_success 'filtering with --no-merged' '
 '
 
 test_expect_success 'filtering with --contains' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	refs/heads/master
 	refs/heads/side
 	refs/odd/spot
@@ -93,7 +99,7 @@ test_expect_success '%(color) must fail' '
 '
 
 test_expect_success 'left alignment is default' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	refname is refs/heads/master  |refs/heads/master
 	refname is refs/heads/side    |refs/heads/side
 	refname is refs/odd/spot      |refs/odd/spot
@@ -111,7 +117,7 @@ test_expect_success 'left alignment is default' '
 '
 
 test_expect_success 'middle alignment' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	| refname is refs/heads/master |refs/heads/master
 	|  refname is refs/heads/side  |refs/heads/side
 	|   refname is refs/odd/spot   |refs/odd/spot
@@ -129,7 +135,7 @@ test_expect_success 'middle alignment' '
 '
 
 test_expect_success 'right alignment' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	|  refname is refs/heads/master|refs/heads/master
 	|    refname is refs/heads/side|refs/heads/side
 	|      refname is refs/odd/spot|refs/odd/spot
@@ -146,7 +152,7 @@ test_expect_success 'right alignment' '
 	test_cmp expect actual
 '
 
-cat >expect <<-\EOF
+test_prepare_expect >expect <<-\EOF
 |       refname is refs/heads/master       |refs/heads/master
 |        refname is refs/heads/side        |refs/heads/side
 |         refname is refs/odd/spot         |refs/odd/spot
@@ -193,7 +199,7 @@ EOF
 # Individual atoms inside %(align:...) and %(end) must not be quoted.
 
 test_expect_success 'alignment with format quote' "
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	|'      '\''master| A U Thor'\''      '|
 	|'       '\''side| A U Thor'\''       '|
 	|'     '\''odd/spot| A U Thor'\''     '|
@@ -211,7 +217,7 @@ test_expect_success 'alignment with format quote' "
 "
 
 test_expect_success 'nested alignment with quote formatting' "
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	|'         master               '|
 	|'           side               '|
 	|'       odd/spot               '|
@@ -229,7 +235,7 @@ test_expect_success 'nested alignment with quote formatting' "
 "
 
 test_expect_success 'check `%(contents:lines=1)`' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	master |three
 	side |four
 	odd/spot |three
@@ -247,7 +253,7 @@ test_expect_success 'check `%(contents:lines=1)`' '
 '
 
 test_expect_success 'check `%(contents:lines=0)`' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	master |
 	side |
 	odd/spot |
@@ -265,7 +271,7 @@ test_expect_success 'check `%(contents:lines=0)`' '
 '
 
 test_expect_success 'check `%(contents:lines=99999)`' '
-	cat >expect <<-\EOF &&
+	test_prepare_expect >expect <<-\EOF &&
 	master |three
 	side |four
 	odd/spot |three
