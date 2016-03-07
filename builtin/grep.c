@@ -522,12 +522,14 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 }
 
 static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
-			  int exc_std)
+			  int exc_std, int use_index)
 {
 	struct dir_struct dir;
 	int i, hit = 0;
 
 	memset(&dir, 0, sizeof(dir));
+	if (!use_index)
+		dir.flags |= DIR_NO_GITLINKS;
 	if (exc_std)
 		setup_standard_excludes(&dir);
 
@@ -902,7 +904,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
 		if (list.nr)
 			die(_("--no-index or --untracked cannot be used with revs."));
-		hit = grep_directory(&opt, &pathspec, use_exclude);
+		hit = grep_directory(&opt, &pathspec, use_exclude, use_index);
 	} else if (0 <= opt_exclude) {
 		die(_("--[no-]exclude-standard cannot be used for tracked contents."));
 	} else if (!list.nr) {
