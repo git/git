@@ -290,11 +290,16 @@ configuration variable documented in linkgit:git-config[1].
 	what changes the commit has.
 	Note that this diff output doesn't have its
 	lines prefixed with '#'. This diff will not be a part
-	of the commit message.
+	of the commit message. To activate this option permanently, the
+	configuration variable `commit.verbose` can be set to true.
 +
 If specified twice, show in addition the unified diff between
 what would be committed and the worktree files, i.e. the unstaged
 changes to tracked files.
+
+--override-verbose::
+	Disable verbose for the commit if you have activated it
+	permanently in the configuration variable `commit.verbose`.
 
 -q::
 --quiet::
