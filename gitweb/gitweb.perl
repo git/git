@@ -926,6 +926,7 @@ sub evaluate_query_params {
 # now read PATH_INFO and update the parameter list for missing parameters
 sub evaluate_path_info {
 	return if defined $input_params{'project'};
+	printf STDERR "path_info='$path_info'\n" if $DEBUG;
 	return if !$path_info;
 	$path_info =~ s,^/+,,;
 	return if !$path_info;
@@ -7405,6 +7406,24 @@ sub git_snapshot {
 	if (!@snapshot_fmts) {
 		die_error(403, "Snapshots not allowed");
 	}
+
+	if ($DEBUG) {
+		my $v; my $i;
+		printf STDERR "path_info='".$path_info."'\n";
+		printf STDERR "input_params: { ";
+		foreach $i (keys (%input_params)) {
+			$v = $input_params{$i};
+			if (defined ($v)) {
+				if ($i eq "extra_options" ) {
+					printf STDERR "  '$i' => [".@{$v}."] ; ";
+				} else {
+				printf STDERR "  '$i' => '$v' ; ";
+				}
+			}
+		}
+		printf STDERR "} \n";
+	}
+
 	# default to first supported snapshot format
 	$format ||= $snapshot_fmts[0];
 	if ($format !~ m/^[a-z0-9]+$/) {
@@ -7435,6 +7454,13 @@ sub git_snapshot {
 
 	my ($name, $prefix) = snapshot_name($project, $hash);
 	my $filename = "$name$known_snapshot_formats{$format}{'suffix'}";
+
+	if ($DEBUG) {
+		# name of the tarball to generate
+		if (defined $filename)  { printf STDERR "filename='$filename'\n"; }
+		# value of the 'f=' URL parameter
+		if (defined $file_name) { printf STDERR "file_name='$file_name'\n"; }
+	}
 
 	my %co = parse_commit($hash);
 	exit_if_unmodified_since($co{'committer_epoch'}) if %co;
@@ -7467,13 +7493,16 @@ sub git_snapshot {
 		%co ? (-last_modified => $latest_date{'rfc2822'}) : (),
 		-status => '200 OK');
 
+	printf STDERR "Starting git-archive: $cmd\n" if $DEBUG;
 	open my $fd, "-|", $cmd
 		or die_error(500, "Execute git-archive failed");
+	printf STDERR "Started git-archive...\n" if $DEBUG;
 	local *FCGI::Stream::PRINT = $FCGI_Stream_PRINT_raw;
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 	close $fd;
+	printf STDERR "Finished posting output of git-archive...\n" if $DEBUG;
 }
 
 sub git_log_generic {
