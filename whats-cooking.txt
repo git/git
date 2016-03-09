@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2016, #02; Fri, 4)
+Subject: What's cooking in git.git (Mar 2016, #03; Wed, 9)
 X-master-at: ab5d01a29eb7380ceab070f0807c2939849c44bc
-X-next-at: 19dcece4e85c9fe888a1ab646b626fa6039c184c
+X-next-at: 56288600415de8e2277476281e1838ff7e19dd4d
 
-What's cooking in git.git (Mar 2016, #02; Fri, 4)
+What's cooking in git.git (Mar 2016, #03; Wed, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-v2.8-rc1 has been tagged.  There still is a known regression around
-"git status" (and "ls-files -o") relative to 2.7.2, which we may end
-up resolving by reverting a topic.  We'll see.
+Hopefully 2.8-rc2 tomorrow.
 
 Again, the topics that have not been cooked sufficiently in 'next'
 at this point will not be considered for 2.8 final, even though I
@@ -31,110 +29,84 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/pack-idx-corruption-safety (2016-02-27) 4 commits
-  (merged to 'next' on 2016-03-01 at 49e08d3)
- + sha1_file.c: mark strings for translation
-  (merged to 'next' on 2016-02-26 at ef0d6de)
- + use_pack: handle signed off_t overflow
- + nth_packed_object_offset: bounds-check extended offset
- + t5313: test bounds-checks of corrupted/malicious pack/idx files
-
- The code to read the pack data using the offsets stored in the pack
- idx file has been made more carefully check the validity of the
- data in the idx.
-
-
-* jk/tighten-alloc (2016-02-29) 1 commit
-  (merged to 'next' on 2016-03-01 at f4df936)
- + compat/mingw: brown paper bag fix for 50a6c8e
-
-
-* js/pthread-exit-emu-windows (2016-03-02) 1 commit
-  (merged to 'next' on 2016-03-02 at 391b917)
- + Mark win32's pthread_exit() as NORETURN
-
-
-* mg/httpd-tests-update-for-apache-2.4 (2016-02-25) 1 commit
-  (merged to 'next' on 2016-03-01 at d2f7e8c)
- + t/lib-httpd: load mod_unixd
- (this branch is used by jk/submodule-c-credential.)
-
- The way the test scripts configure the Apache web server has been
- updated to work also for Apache 2.4 running on RedHat derived
- distros.
-
-
-* nd/clear-gitenv-upon-use-of-alias (2016-03-03) 1 commit
-  (merged to 'next' on 2016-03-03 at 1c1c50f)
- + t0001: fix GIT_* environment variable check under --valgrind
-
- Hotfix for a test breakage made between 2.7 and 'master'.
-
-
-* nd/i18n-2.8.0 (2016-02-29) 4 commits
-  (merged to 'next' on 2016-03-01 at cdf4675)
- + trailer.c: mark strings for translation
- + ref-filter.c: mark strings for translation
- + builtin/clone.c: mark strings for translation
- + builtin/checkout.c: mark strings for translation
-
-
-* sb/submodule-parallel-fetch (2016-03-01) 1 commit
-  (merged to 'next' on 2016-03-01 at b47ab6e)
- + run-command: do not pass child process data into callbacks
- (this branch is used by sb/submodule-init and sb/submodule-parallel-update.)
-
- Simplify the two callback functions that are triggered when the
- child process terminates to avoid misuse of the child-process
- structure that has already been cleaned up.
-
-
-* tb/avoid-gcc-on-darwin-10-6 (2016-02-28) 1 commit
-  (merged to 'next' on 2016-03-01 at e8dd08a)
- + config.mak.uname: use clang for Mac OS X 10.6
-
- Out of maintenance gcc on OSX 10.6 fails to compile the code in
- 'master'; work it around by using clang by default on the platform.
-
---------------------------------------------------
 [New Topics]
 
-* sb/rebase-summary (2016-03-02) 1 commit
-  (merged to 'next' on 2016-03-04 at d40714d)
- + Documentation: reword rebase summary
-
- Will merge to 'master' by 2.8-rc2.
+* cc/doc-recommend-performance-trace-to-file (2016-03-07) 1 commit
+ - Documentation: talk about pager in api-trace.txt
 
 
-* jc/index-pack (2016-03-03) 2 commits
- - index-pack: add a helper function to derive .idx/.keep filename
- - Merge branch 'jc/maint-index-pack-keep' into jc/index-pack
- (this branch is used by jc/bundle; uses jc/maint-index-pack-keep; is tangled with jc/index-pack-clone-bundle.)
+* da/mergetool-delete-delete-conflict (2016-03-09) 3 commits
+ - t7610-mergetool: add test cases for tempfile behavior
+ - mergetool: support delete/delete conflicts
+ - mergetool: honor tempfile configuration when resolving delete conflicts
 
- Code clean-up.
+
+* es/test-gpg-tags (2016-03-06) 4 commits
+ - t6302: skip only signed tags rather than all tests when GPG is missing
+ - t6302: also test annotated in addition to signed tags
+ - t6302: normalize names and descriptions of signed tags
+ - lib-gpg: drop unnecessary "missing GPG" warning
+
+ A test for tags has been restructured so that more parts of it can
+ easily be run on a platform without a working GnuPG.
 
  Will merge to 'next'.
 
 
-* jc/maint-index-pack-keep (2016-03-03) 1 commit
-  (merged to 'next' on 2016-03-04 at bc1d37a)
- + index-pack: correct --keep[=<msg>]
- (this branch is used by jc/bundle, jc/index-pack and jc/index-pack-clone-bundle.)
+* jk/getwholeline-getdelim-empty (2016-03-05) 1 commit
+ - strbuf_getwholeline: NUL-terminate getdelim buffer on error
 
- "git index-pack --keep[=<msg>] pack-$name.pack" simply did not work.
+ strbuf_getwholeline() did not NUL-terminate the buffer on certain
+ corner cases in its error codepath.
 
- Will merge to 'master' after 2.8 final.
+ Will merge to 'next'.
 
 
-* js/close-packs-before-gc (2016-03-04) 1 commit
-  (merged to 'next' on 2016-03-04 at fe6f6ed)
- + t5510: do not leave changed cwd
+* jk/startup-info (2016-03-07) 6 commits
+ - use setup_git_directory() in test-* programs
+ - grep: turn off gitlink detection for --no-index
+ - mailmap: do not resolve blobs in a non-repository
+ - remote: don't resolve HEAD in non-repository
+ - setup: set startup_info->have_repository more reliably
+ - setup: make startup_info available everywhere
 
- A small future-proofing of a test added recently.
+ The startup_info data, which records if we are working inside a
+ repository (among other things), are now uniformly available to Git
+ subcommand implementations, and Git avoids attempting to touch
+ references when we are not in a repository.
 
- Will merge to 'master' by 2.8-rc2.
+ Will merge to 'next'.
+
+
+* rj/xdiff-prepare-plug-leak-on-error-codepath (2016-03-04) 2 commits
+ - xdiff/xprepare: fix a memory leak
+ - xdiff/xprepare: use the XDF_DIFF_ALG() macro to access flag bits
+
+ A small memory leak in an error codepath has been plugged in xdiff
+ code.
+
+ Will merge to 'next'.
+
+
+* jc/exclusion-doc (2016-03-08) 1 commit
+ - gitignore: document that unignoring a directory unignores everything in it
+
+ Will merge to 'next' and then to 'master' before 2.8 final.
+
+
+* jc/sane-grep (2016-03-08) 2 commits
+ - rebase-i: clarify "is this commit relevant?" test
+ - sane_grep: pass "-a" if grep accepts it
+
+ Recent versions of GNU grep is pickier than before to decide if a
+ file is "binary" and refuse to give line-oriented hits when we
+ expect it to, unless explicitly told with "-a" option.  As our
+ scripted Porcelains use sane_grep wrapper for line-oriented data,
+ even when the line may contain non-ASCII payload we took from
+ end-user data, use "grep -a" to implement sane_grep wrapper when
+ using an implementation of "grep" that takes the "-a" option.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -210,6 +182,42 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* sb/rebase-summary (2016-03-02) 1 commit
+  (merged to 'next' on 2016-03-04 at d40714d)
+ + Documentation: reword rebase summary
+
+ Will merge to 'master' by 2.8-rc2.
+
+
+* jc/index-pack (2016-03-03) 2 commits
+ - index-pack: add a helper function to derive .idx/.keep filename
+ - Merge branch 'jc/maint-index-pack-keep' into jc/index-pack
+ (this branch is used by jc/bundle; uses jc/maint-index-pack-keep; is tangled with jc/index-pack-clone-bundle.)
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jc/maint-index-pack-keep (2016-03-03) 1 commit
+  (merged to 'next' on 2016-03-04 at bc1d37a)
+ + index-pack: correct --keep[=<msg>]
+ (this branch is used by jc/bundle, jc/index-pack and jc/index-pack-clone-bundle.)
+
+ "git index-pack --keep[=<msg>] pack-$name.pack" simply did not work.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* js/close-packs-before-gc (2016-03-04) 1 commit
+  (merged to 'next' on 2016-03-04 at fe6f6ed)
+ + t5510: do not leave changed cwd
+
+ A small future-proofing of a test added recently.
+
+ Will merge to 'master' by 2.8-rc2.
+
+
 * mm/readme-markdown (2016-02-27) 1 commit
   (merged to 'next' on 2016-03-01 at 81f3858)
  + README.md: don't take 'commandname' literally
@@ -221,7 +229,9 @@ repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* gf/fetch-pack-direct-object-fetch (2016-03-01) 1 commit
+* gf/fetch-pack-direct-object-fetch (2016-03-05) 2 commits
+  (merged to 'next' on 2016-03-06 at 5628860)
+ + fetch-pack: update the documentation for "<refs>..." arguments
   (merged to 'next' on 2016-03-04 at 49199e0)
  + fetch-pack: fix object_id of exact sha1
 
@@ -309,7 +319,6 @@ repositories listed at
  + dir: store EXC_FLAG_* values in unsigned integers
 
  Will merge to 'master' after 2.8 final.
-
 
 
 * jc/bundle (2016-03-03) 6 commits
@@ -447,12 +456,14 @@ repositories listed at
  Needs a better explanation.
 
 
-* cn/deprecate-ssh-git-url (2016-02-15) 1 commit
+* cn/deprecate-ssh-git-url (2016-03-09) 1 commit
  - Disown ssh+git and git+ssh
 
- Needs toning down by replacing the condescendence with an
- explanation and enlightenment.
- ($gmane/286222)
+ The two alternative ways to spell "ssh://" transport have been
+ deprecated for a long time.  The last mention of them has finally
+ removed from the documentation.
+
+ Will merge to 'next'.
 
 
 * ss/commit-dry-run-resolve-merge-to-no-op (2016-02-17) 1 commit
@@ -561,7 +572,8 @@ repositories listed at
  ($gmane/275680).
 
 
-* jc/rerere-multi (2016-02-08) 7 commits
+* jc/rerere-multi (2016-03-09) 8 commits
+ - rerere: gc and clear
  - rerere: do use multiple variants
  - t4200: rerere a merge with two identical conflicts
  - rerere: allow multiple variants to exist
@@ -574,7 +586,7 @@ repositories listed at
  signature that have to be resolved in different ways, but there was
  no way to record these separate resolutions.
 
- Needs further work on forget/gc.
+ May need further work on forget.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
