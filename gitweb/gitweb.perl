@@ -7423,6 +7423,14 @@ sub git_snapshot {
 		git_cmd(), 'archive',
 		"--format=$known_snapshot_formats{$format}{'format'}",
 		"--prefix=$prefix/", $hash);
+	if ($file_name) {
+		# To fetch several pathnames use space-separation, e.g.
+		# "...git-web?p=proj.git;a=snapshot;f=file1%20file2"
+		# To fetch pathnames with spaces, escape them, e.g.
+		# "...git-web?p=proj.git;a=snapshot;f=file\%20name"
+		$cmd .= " " . $file_name;
+	}
+
 	if (exists $known_snapshot_formats{$format}{'compressor'}) {
 		$cmd .= ' | ' . quote_command(@{$known_snapshot_formats{$format}{'compressor'}});
 	}
