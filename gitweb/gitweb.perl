@@ -78,6 +78,11 @@ sub evaluate_uri {
 	our $home_link = $my_uri || "/";
 }
 
+# Request parameters
+our ($action, $project, $DEBUG, $file_name, $file_parent, $hash, $hash_parent, $hash_base,
+     $hash_parent_base, @extra_options, $page, $searchtype, $search_use_regexp,
+     $searchtext, $search_regexp, $project_filter);
+
 # core git executable to use
 # this can just be "git" if your webserver has a sensible PATH
 our $GIT = "++GIT_BINDIR++/git";
@@ -838,6 +843,7 @@ our %input_params = ();
 our @cgi_param_mapping = (
 	project => "p",
 	action => "a",
+	debug => "debug",
 	file_name => "f",
 	file_parent => "fp",
 	hash => "h",
@@ -1068,9 +1074,6 @@ sub evaluate_path_info {
 	}
 }
 
-our ($action, $project, $file_name, $file_parent, $hash, $hash_parent, $hash_base,
-     $hash_parent_base, @extra_options, $page, $searchtype, $search_use_regexp,
-     $searchtext, $search_regexp, $project_filter);
 sub evaluate_and_validate_params {
 	our $action = $input_params{'action'};
 	if (defined $action) {
@@ -1086,6 +1089,23 @@ sub evaluate_and_validate_params {
 			undef $project;
 			die_error(404, "No such project");
 		}
+	}
+
+	our $DEBUG = $input_params{'debug'};
+	if (defined $DEBUG) {
+		if ( $DEBUG =~ /^([Yy][Ee][Ss]|[Oo][Nn]|1|[Tt][Rr][Uu][Ee])$/ ) {
+			if ( defined($ENV{'GITWEB_MAY_DEBUG'}) && $ENV{'GITWEB_MAY_DEBUG'} eq "yes" ) {
+				$DEBUG = 1; #true
+			} else {
+				printf STDERR "Invalid action parameter: DEBUG=$DEBUG was requested but server-side GITWEB_MAY_DEBUG=yes is not set\n";
+				die_error(403, "Invalid action parameter: DEBUG was requested but server-side GITWEB_MAY_DEBUG=yes is not set");
+				$DEBUG = 0; #false
+			}
+		} else {
+			$DEBUG = 0; #false
+		}
+	} else {
+		$DEBUG = 0;	# false
 	}
 
 	our $project_filter = $input_params{'project_filter'};
