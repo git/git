@@ -7397,6 +7397,15 @@ sub git_snapshot {
 		die_error(403, "Unsupported snapshot format");
 	}
 
+	if (!defined($hash)) {
+		$hash="";
+		if ( $file_name && $file_name =~ /^([^:]*):(.*)$/ ) {
+			$hash = "$1";
+			$file_name = "$2";
+		}
+		if ( $hash eq "") { $hash = "HEAD"; }
+		printf STDERR "Defaulted hash to '$hash' ('h=' URL argument was missing)\n";
+	}
 	my $type = git_get_type("$hash^{}");
 	if (!$type) {
 		die_error(404, 'Object does not exist');
