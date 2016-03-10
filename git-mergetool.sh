@@ -126,7 +126,12 @@ resolve_deleted_merge () {
 		case "$ans" in
 		[mMcC]*)
 			git add -- "$MERGED"
-			cleanup_temp_files --save-backup
+			if test "$merge_keep_backup" = "true"
+			then
+				cleanup_temp_files --save-backup
+			else
+				cleanup_temp_files
+			fi
 			return 0
 			;;
 		[dD]*)
@@ -135,6 +140,10 @@ resolve_deleted_merge () {
 			return 0
 			;;
 		[aA]*)
+			if test "$merge_keep_temporaries" = "false"
+			then
+				cleanup_temp_files
+			fi
 			return 1
 			;;
 		esac
