@@ -282,8 +282,14 @@ merge_file () {
 		return
 	fi
 
-	mv -- "$MERGED" "$BACKUP"
-	cp -- "$BACKUP" "$MERGED"
+	if test -f "$MERGED"
+	then
+		mv -- "$MERGED" "$BACKUP"
+		cp -- "$BACKUP" "$MERGED"
+	fi
+	# Create a parent directory to handle delete/delete conflicts
+	# where the base's directory no longer exists.
+	mkdir -p "$(dirname "$MERGED")"
 
 	checkout_staged_file 1 "$MERGED" "$BASE"
 	checkout_staged_file 2 "$MERGED" "$LOCAL"
@@ -295,7 +301,9 @@ merge_file () {
 		describe_file "$local_mode" "local" "$LOCAL"
 		describe_file "$remote_mode" "remote" "$REMOTE"
 		resolve_deleted_merge
-		return
+		status=$?
+		rmdir -p "$(dirname "$MERGED")" 2>/dev/null
+		return $status
 	fi
 
 	if is_symlink "$local_mode" || is_symlink "$remote_mode"
