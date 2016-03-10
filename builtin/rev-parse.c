@@ -763,7 +763,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--git-common-dir")) {
-				puts(get_git_common_dir());
+				const char *pfx = prefix ? prefix : "";
+				puts(prefix_filename(pfx, strlen(pfx), get_git_common_dir()));
 				continue;
 			}
 			if (!strcmp(arg, "--resolve-git-dir")) {
