@@ -43,6 +43,19 @@ void sq_quote_buf(struct strbuf *dst, const char *src)
 	free(to_free);
 }
 
+void sq_quotef(struct strbuf *dst, const char *fmt, ...)
+{
+	struct strbuf src = STRBUF_INIT;
+
+	va_list ap;
+	va_start(ap, fmt);
+	strbuf_vaddf(&src, fmt, ap);
+	va_end(ap);
+
+	sq_quote_buf(dst, src.buf);
+	strbuf_release(&src);
+}
+
 void sq_quote_argv(struct strbuf *dst, const char** argv, size_t maxlen)
 {
 	int i;
