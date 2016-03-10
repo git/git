@@ -7487,21 +7487,61 @@ sub git_snapshot {
 		%latest_date = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
 	}
 
-	print $cgi->header(
-		-type => $known_snapshot_formats{$format}{'type'},
-		-content_disposition => 'inline; filename="' . $filename . '"',
-		%co ? (-last_modified => $latest_date{'rfc2822'}) : (),
-		-status => '200 OK');
-
 	printf STDERR "Starting git-archive: $cmd\n" if $DEBUG;
-	open my $fd, "-|", $cmd
-		or die_error(500, "Execute git-archive failed");
+	my $fd;
+	if ( ! open $fd, "-|", $cmd ) {
+		print $cgi->header(-status => '500 Execute git-archive failed');
+		die_error(500, "Execute git-archive failed");
+		return;
+	}
 	printf STDERR "Started git-archive...\n" if $DEBUG;
-	local *FCGI::Stream::PRINT = $FCGI_Stream_PRINT_raw;
-	binmode STDOUT, ':raw';
-	print <$fd>;
-	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+	my $tempByte;
+	my $readSize = read ($fd, $tempByte, 1);
+	my $retCode = 200;
+	if ( defined $readSize ) {
+		if ( $readSize > 0 ) {
+			print $cgi->header(
+				-type => $known_snapshot_formats{$format}{'type'},
+				-content_disposition => 'inline; filename="' . $filename . '"',
+				%co ? (-last_modified => $latest_date{'rfc2822'}) : (),
+				-status => '200 OK' );
+			local *FCGI::Stream::PRINT = $FCGI_Stream_PRINT_raw;
+			binmode STDOUT, ':raw';
+			print $tempByte;
+			if ( ! print <$fd> ) {
+				$retCode = 503;
+			}
+			binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+		} else {
+			$retCode = 404;
+		}
+	} else {
+		$readSize = -1;
+		$retCode = 500;
+	}
+
 	close $fd;
+	my $retError = "" ;
+	if ( ($? >> 8) != 0 ) {
+		$retCode = 500;
+		if ( $readSize == 0 ) {
+			# We had empty but not failed read - re-inspect stderr
+			$retError = `$cmd 2>&1`;
+			if ( $retError =~ /did not match any/ ) {
+				$retCode = 404;
+			}
+		}
+	}
+	if ( $retError ne "" ) {
+		$retError = "<br/><pre>$retError</pre><br/>";
+	}
+
+	if ( $retCode == 404 ) {
+		die_error(404, "Not Found - maybe requested objects absent in git path?" . "$retError");
+	} elsif ( $retCode == 500 ) {
+		die_error(500, "Failed to transmit output from git-archive" . "$retError");
+	}
+
 	printf STDERR "Finished posting output of git-archive...\n" if $DEBUG;
 }
 

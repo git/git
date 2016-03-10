@@ -156,21 +156,21 @@ test_expect_success 'snapshot certain objects: have expected content in master b
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
-test_expect_success 'snapshot certain objects: have expected content in master branch - subdir name is required in requested nested path (bad path - empty output)' '
+test_expect_success 'snapshot certain objects: have expected content in master branch - subdir name is required in requested nested path (bad path - empty output and/or HTTP-404)' '
 	rm -f gitweb.body file_list &&
 	BRANCH=master &&
 	gitweb_run "p=.git;a=snapshot;h=$BRANCH;sf=tar;f=third" &&
-	[ ! -s gitweb.body ]
+	[ ! -s gitweb.body -o -n "`head -1 gitweb.headers | egrep "^Status: 404 "`" ]
 '
-test_debug 'cat gitweb.headers && cat file_list'
+test_debug 'cat gitweb.headers && ls -la gitweb.body file_list || true'
 
-test_expect_success 'snapshot certain objects: have expected content in master branch - correct subdir name is required in requested nested path (bad path - empty output)' '
+test_expect_success 'snapshot certain objects: have expected content in master branch - correct subdir name is required in requested nested path (bad path - empty output and/or HTTP-404)' '
 	rm -f gitweb.body file_list &&
 	BRANCH=master &&
 	gitweb_run "p=.git;a=snapshot;h=$BRANCH;sf=tar;f=dir1/third" &&
-	[ ! -s gitweb.body ]
+	[ ! -s gitweb.body -o -n "`head -1 gitweb.headers | egrep "^Status: 404 "`" ]
 '
-test_debug 'cat gitweb.headers && cat file_list'
+test_debug 'cat gitweb.headers && ls -la gitweb.body file_list || true'
 
 test_expect_success 'snapshot certain objects: have expected content in master branch - can request filenames with spaces (backslash + HTML-escape)' '
 	rm -f gitweb.body file_list &&
@@ -223,21 +223,21 @@ test_expect_success 'snapshot certain objects: have only expected content in ref
 '
 test_debug 'cat gitweb.headers && cat file_list'
 
-test_expect_success 'snapshot certain objects: have expected content in xx/test branch - request for only absent subdir dir2/ fails (empty output)' '
+test_expect_success 'snapshot certain objects: have expected content in xx/test branch - request for only absent subdir dir2/ fails (empty output and/or HTTP-404)' '
 	rm -f gitweb.body file_list &&
 	BRANCH=xx/test &&
 	gitweb_run "p=.git;a=snapshot;h=$BRANCH;sf=tar;f=dir2" &&
-        [ ! -s "gitweb.body" ]
+	[ ! -s gitweb.body -o -n "`head -1 gitweb.headers | egrep "^Status: 404 "`" ]
 '
-test_debug 'cat gitweb.headers'
+test_debug 'cat gitweb.headers && ls -la gitweb.body file_list || true'
 
-test_expect_success 'snapshot certain objects: have expected content in xx/test branch - request for file /foo and absent subdir dir2/ also fails (empty output)' '
+test_expect_success 'snapshot certain objects: have expected content in xx/test branch - request for file /foo and absent subdir dir2/ also fails (empty output and/or HTTP-404)' '
 	rm -f gitweb.body file_list &&
 	BRANCH=xx/test &&
 	gitweb_run "p=.git;a=snapshot;h=$BRANCH;sf=tar;f=dir2%20foo" &&
-        [ ! -s "gitweb.body" ]
+	[ ! -s gitweb.body -o -n "`head -1 gitweb.headers | egrep "^Status: 404 "`" ]
 '
-test_debug 'cat gitweb.headers'
+test_debug 'cat gitweb.headers && ls -la gitweb.body file_list || true'
 
 test_expect_success 'snapshot certain objects: have expected content in xx/test branch - have /foo file (and only it)' '
 	rm -f gitweb.body file_list &&
