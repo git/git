@@ -96,4 +96,59 @@ test_expect_success 'verbose diff is stripped out with set core.commentChar' '
 	test_i18ngrep "Aborting commit due to empty commit message." err
 '
 
+test_expect_success 'commit.verbose true and --verbose omitted' '
+	git -c commit.verbose=true commit --amend
+'
+
+test_expect_success 'commit.verbose true and --verbose' '
+	(
+		GIT_EDITOR=cat &&
+		export GIT_EDITOR &&
+		git -c commit.verbose=true commit --amend --verbose
+	) &&
+	grep "^diff --git" .git/COMMIT_EDITMSG >out &&
+	wc -l out | grep "1"
+'
+
+test_expect_success 'commit.verbose true and -v -v' '
+	(
+		GIT_EDITOR=cat &&
+		export GIT_EDITOR &&
+		git -c commit.verbose=true commit --amend -v -v
+	) &&
+	grep "# Changes not staged for commit" .git/COMMIT_EDITMSG >out &&
+	wc -l out | grep "2"
+'
+
+test_expect_success 'commit.verbose true and --no-verbose' '
+	test_must_fail git -c commit.verbose=true commit --amend --no-verbose
+'
+
+test_expect_success 'commit.verbose false and --verbose' '
+	git -c commit.verbose=false commit --amend --verbose
+'
+
+test_expect_success 'commit.verbose false and -v -v' '
+	(
+		GIT_EDITOR=cat &&
+		export GIT_EDITOR &&
+		git -c commit.verbose=false commit --amend -v -v
+	) &&
+	grep "# Changes not staged for commit" .git/COMMIT_EDITMSG >out &&
+	wc -l out | grep "2"
+'
+
+test_expect_success 'commit.verbose false and --verbose omitted' '
+	test_must_fail git -c commit.verbose=false commit --amend
+'
+
+test_expect_success 'commit.verbose false and --no-verbose' '
+	test_must_fail git -c commit.verbose=false commit --amend --no-verbose
+'
+
+test_expect_success 'status ignores commit.verbose=true' '
+	git -c commit.verbose=true status >actual &&
+	! grep "^diff --git" actual
+'
+
 test_done
