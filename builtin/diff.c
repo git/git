@@ -318,6 +318,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 
 	if (!no_index)
 		gitmodules_config();
+	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
 
 	init_revisions(&rev, prefix);
