@@ -253,6 +253,41 @@ test_expect_success 'snapshot certain objects: have expected content in xx/test 
 test_debug 'cat gitweb.headers && cat file_list'
 
 # ----------------------------------------------------------------------
+# optional debugging in log, if allowed on server and requested by user
+
+test_expect_success 'snapshot: debugging logged as forbidden when not defined in server environment' '
+	rm -f gitweb.body gitweb.log gitweb.headers gitweb.output &&
+	gitweb_run "p=.git;a=snapshot;h=master;sf=tar;debug=yes" &&
+	grep "GITWEB_MAY_DEBUG=yes is not set" < gitweb.log >/dev/null
+'
+test_debug 'cat gitweb.headers gitweb.log'
+
+test_expect_success 'snapshot: debugging logged as forbidden when not allowed in server environment' '
+	rm -f gitweb.body gitweb.log gitweb.headers gitweb.output &&
+	GITWEB_MAY_DEBUG=xxx && export GITWEB_MAY_DEBUG &&
+	gitweb_run "p=.git;a=snapshot;h=master;sf=tar;debug=yes" &&
+	grep "GITWEB_MAY_DEBUG=yes is not set" < gitweb.log >/dev/null
+'
+test_debug 'cat gitweb.headers gitweb.log'
+
+test_expect_success 'snapshot: debugging present when allowed in server environment' '
+	rm -f gitweb.body gitweb.log gitweb.headers gitweb.output &&
+	GITWEB_MAY_DEBUG=yes && export GITWEB_MAY_DEBUG &&
+	gitweb_run "p=.git;a=snapshot;h=master;sf=tar;debug=yes" &&
+	! grep "GITWEB_MAY_DEBUG=yes is not set" < gitweb.log >/dev/null &&
+	grep "git-archive" < gitweb.log >/dev/null
+'
+test_debug 'cat gitweb.headers gitweb.log'
+
+test_expect_success 'snapshot: debugging absent when not allowed in server environment' '
+	rm -f gitweb.body gitweb.log gitweb.headers gitweb.output &&
+	GITWEB_MAY_DEBUG=xxx && export GITWEB_MAY_DEBUG &&
+	gitweb_run "p=.git;a=snapshot;h=master;sf=tar;debug=yes" &&
+	! grep "git-archive" < gitweb.log >/dev/null
+'
+test_debug 'cat gitweb.headers gitweb.log'
+
+# ----------------------------------------------------------------------
 # forks of projects
 
 test_expect_success 'forks: setup' '
