@@ -1887,6 +1887,14 @@ interactive.singleKey::
 	setting is silently ignored if portable keystroke input
 	is not available; requires the Perl module Term::ReadKey.
 
+interactive.diffFilter::
+	When an interactive command (such as `git add --patch`) shows
+	a colorized diff, git will pipe the diff through the shell
+	command defined by this configuration variable. The command may
+	mark up the diff further for human consumption, provided that it
+	retains a one-to-one correspondence with the lines in the
+	original diff. Defaults to disabled (no filtering).
+
 log.abbrevCommit::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
 	linkgit:git-whatchanged[1] assume `--abbrev-commit`. You may
