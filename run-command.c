@@ -633,6 +633,11 @@ int in_async(void)
 	return !pthread_equal(main_thread, pthread_self());
 }
 
+void NORETURN async_exit(int code)
+{
+	pthread_exit((void *)(intptr_t)code);
+}
+
 #else
 
 static struct {
@@ -676,6 +681,11 @@ static int process_is_async;
 int in_async(void)
 {
 	return process_is_async;
+}
+
+void NORETURN async_exit(int code)
+{
+	exit(code);
 }
 
 #endif
