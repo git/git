@@ -281,6 +281,11 @@ notes for details).
    listing and sparse checkout selection areas in 2.7.0; the change
    that is responsible for the regression has been reverted.
 
+ * Another try to improve the ignore mechanism that lets you say "this
+   is excluded" and then later say "oh, no, this part (that is a
+   subset of the previous part) is not excluded".  This has still a
+   known limitation, though.
+
  * Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
    (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
    done.  This however did not work well if the repository is set to
@@ -371,10 +376,6 @@ notes for details).
  * "git rev-parse --git-common-dir" used in the worktree feature
    misbehaved when run from a subdirectory.
    (merge 17f1365 nd/git-common-dir-fix later to maint).
-
- * Another try to add support to the ignore mechanism that lets you
-   say "this is excluded" and then later say "oh, no, this part (that
-   is a subset of the previous part) is not excluded".
 
  * "git worktree add -B <branchname>" did not work.
 
