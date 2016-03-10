@@ -50,6 +50,8 @@ int main(int argc, char **argv)
 	if (argc < 2)
 		return 1;
 
+	setup_git_directory();
+
 	if (!strcmp(argv[1], "run-twice")) {
 		printf("1st\n");
 		if (!run_revision_walk())

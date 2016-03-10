@@ -6,6 +6,8 @@ int main(int ac, char **av)
 	unsigned char hash1[20], hash2[20], shifted[20];
 	struct tree *one, *two;
 
+	setup_git_directory();
+
 	if (get_sha1(av[1], hash1))
 		die("cannot parse %s as an object name", av[1]);
 	if (get_sha1(av[2], hash2))
