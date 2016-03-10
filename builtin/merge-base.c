@@ -252,7 +252,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	if (argc < 2)
 		usage_with_options(merge_base_usage, options);
 
-	rev = xmalloc(argc * sizeof(*rev));
+	ALLOC_ARRAY(rev, argc);
 	while (argc-- > 0)
 		rev[rev_nr++] = get_commit_reference(*argv++);
 	return show_merge_base(rev, rev_nr, show_all);

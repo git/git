@@ -20,16 +20,6 @@
 #ifndef __EWOK_BITMAP_H__
 #define __EWOK_BITMAP_H__
 
-#ifndef ewah_malloc
-#	define ewah_malloc xmalloc
-#endif
-#ifndef ewah_realloc
-#	define ewah_realloc xrealloc
-#endif
-#ifndef ewah_calloc
-#	define ewah_calloc xcalloc
-#endif
-
 struct strbuf;
 typedef uint64_t eword_t;
 #define BITS_IN_EWORD (sizeof(eword_t) * 8)

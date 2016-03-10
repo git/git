@@ -685,7 +685,7 @@ char *xstrdup_tolower(const char *string)
 	size_t len, i;
 
 	len = strlen(string);
-	result = xmalloc(len + 1);
+	result = xmallocz(len);
 	for (i = 0; i < len; i++)
 		result[i] = tolower(string[i]);
 	result[i] = '\0';

@@ -1889,7 +1889,7 @@ static int git_config_parse_key_1(const char *key, char **store_key, int *basele
 	 * Validate the key and while at it, lower case it for matching.
 	 */
 	if (store_key)
-		*store_key = xmalloc(strlen(key) + 1);
+		*store_key = xmallocz(strlen(key));
 
 	dot = 0;
 	for (i = 0; key[i]; i++) {
@@ -1913,8 +1913,6 @@ static int git_config_parse_key_1(const char *key, char **store_key, int *basele
 		if (store_key)
 			(*store_key)[i] = c;
 	}
-	if (store_key)
-		(*store_key)[i] = 0;
 
 	return 0;
 

@@ -122,7 +122,7 @@ static int add_submodule_odb(const char *path)
 	struct strbuf objects_directory = STRBUF_INIT;
 	struct alternate_object_database *alt_odb;
 	int ret = 0;
-	int alloc;
+	size_t alloc;
 
 	strbuf_git_path_submodule(&objects_directory, path, "objects/");
 	if (!is_directory(objects_directory.buf)) {
@@ -137,8 +137,8 @@ static int add_submodule_odb(const char *path)
 					objects_directory.len))
 			goto done;
 
-	alloc = objects_directory.len + 42; /* for "12/345..." sha1 */
-	alt_odb = xmalloc(sizeof(*alt_odb) + alloc);
+	alloc = st_add(objects_directory.len, 42); /* for "12/345..." sha1 */
+	alt_odb = xmalloc(st_add(sizeof(*alt_odb), alloc));
 	alt_odb->next = alt_odb_list;
 	xsnprintf(alt_odb->base, alloc, "%s", objects_directory.buf);
 	alt_odb->name = alt_odb->base + objects_directory.len;

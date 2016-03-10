@@ -624,7 +624,7 @@ static struct object_entry **compute_write_order(void)
 {
 	unsigned int i, wo_end, last_untagged;
 
-	struct object_entry **wo = xmalloc(to_pack.nr_objects * sizeof(*wo));
+	struct object_entry **wo;
 	struct object_entry *objects = to_pack.objects;
 
 	for (i = 0; i < to_pack.nr_objects; i++) {
@@ -657,6 +657,7 @@ static struct object_entry **compute_write_order(void)
 	 * Give the objects in the original recency order until
 	 * we see a tagged tip.
 	 */
+	ALLOC_ARRAY(wo, to_pack.nr_objects);
 	for (i = wo_end = 0; i < to_pack.nr_objects; i++) {
 		if (objects[i].tagged)
 			break;
@@ -769,7 +770,7 @@ static void write_pack_file(void)
 
 	if (progress > pack_to_stdout)
 		progress_state = start_progress(_("Writing objects"), nr_result);
-	written_list = xmalloc(to_pack.nr_objects * sizeof(*written_list));
+	ALLOC_ARRAY(written_list, to_pack.nr_objects);
 	write_order = compute_write_order();
 
 	do {
@@ -2129,7 +2130,7 @@ static void prepare_pack(int window, int depth)
 	if (!to_pack.nr_objects || !window || !depth)
 		return;
 
-	delta_list = xmalloc(to_pack.nr_objects * sizeof(*delta_list));
+	ALLOC_ARRAY(delta_list, to_pack.nr_objects);
 	nr_deltas = n = 0;
 
 	for (i = 0; i < to_pack.nr_objects; i++) {

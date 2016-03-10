@@ -32,7 +32,7 @@ void syslog(int priority, const char *fmt, ...)
 		return;
 	}
 
-	str = malloc(str_len + 1);
+	str = malloc(st_add(str_len, 1));
 	if (!str) {
 		warning("malloc failed: '%s'", strerror(errno));
 		return;
@@ -43,7 +43,7 @@ void syslog(int priority, const char *fmt, ...)
 	va_end(ap);
 
 	while ((pos = strstr(str, "%1")) != NULL) {
-		str = realloc(str, ++str_len + 1);
+		str = realloc(str, st_add(++str_len, 1));
 		if (!str) {
 			warning("realloc failed: '%s'", strerror(errno));
 			return;

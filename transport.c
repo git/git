@@ -1306,7 +1306,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 		 * This condition shouldn't be met in a non-deepening fetch
 		 * (see builtin/fetch.c:quickfetch()).
 		 */
-		heads = xmalloc(nr_refs * sizeof(*heads));
+		ALLOC_ARRAY(heads, nr_refs);
 		for (rm = refs; rm; rm = rm->next)
 			heads[nr_heads++] = rm;
 	}
@@ -1350,7 +1350,7 @@ int transport_disconnect(struct transport *transport)
  */
 char *transport_anonymize_url(const char *url)
 {
-	char *anon_url, *scheme_prefix, *anon_part;
+	char *scheme_prefix, *anon_part;
 	size_t anon_len, prefix_len = 0;
 
 	anon_part = strchr(url, '@');
@@ -1384,10 +1384,8 @@ char *transport_anonymize_url(const char *url)
 			goto literal_copy;
 		prefix_len = scheme_prefix - url + 3;
 	}
-	anon_url = xcalloc(1, 1 + prefix_len + anon_len);
-	memcpy(anon_url, url, prefix_len);
-	memcpy(anon_url + prefix_len, anon_part, anon_len);
-	return anon_url;
+	return xstrfmt("%.*s%.*s", (int)prefix_len, url,
+		       (int)anon_len, anon_part);
 literal_copy:
 	return xstrdup(url);
 }

@@ -939,7 +939,7 @@ static int setup_with_upstream(const char ***argv)
 	if (!branch->merge_nr)
 		die(_("No default upstream defined for the current branch."));
 
-	args = xcalloc(branch->merge_nr + 1, sizeof(char *));
+	args = xcalloc(st_add(branch->merge_nr, 1), sizeof(char *));
 	for (i = 0; i < branch->merge_nr; i++) {
 		if (!branch->merge[i]->dst)
 			die(_("No remote-tracking branch for %s from %s"),
