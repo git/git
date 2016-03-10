@@ -96,4 +96,33 @@ test_expect_success 'verbose diff is stripped out with set core.commentChar' '
 	test_i18ngrep "Aborting commit due to empty commit message." err
 '
 
+test_expect_success 'commit.verbose true and --verbose omitted' '
+	git -c commit.verbose=true commit --amend
+'
+
+test_expect_success 'commit.verbose true and --no-verbose' '
+	test_must_fail git -c commit.verbose=true commit --amend --no-verbose
+'
+
+test_expect_success 'commit.verbose false and --verbose' '
+	git -c commit.verbose=false commit --amend --verbose
+'
+
+test_expect_success 'commit.verbose false and --verbose omitted' '
+	test_must_fail git -c commit.verbose=false commit --amend
+'
+
+test_expect_success 'commit.verbose true and --verbose' '
+	git -c commit.verbose=true commit --amend --verbose
+'
+
+test_expect_success 'commit.verbose false and --no-verbose' '
+	test_must_fail git -c commit.verbose=false commit --amend --no-verbose
+'
+
+test_expect_success 'status ignores commit.verbose=true' '
+	git -c commit.verbose=true status >actual &&
+	! grep "^diff --git" actual
+'
+
 test_done
