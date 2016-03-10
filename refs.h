@@ -109,6 +109,11 @@ extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
  *   If this succeeds, the ref updates will have taken place and
  *   the transaction cannot be rolled back.
  *
+ * - Instead of `ref_transaction_commit`, use
+ *   `initial_ref_transaction_commit()` if the ref database is known
+ *   to be empty (e.g. during clone).  This is likely to be much
+ *   faster.
+ *
  * - At any time call `ref_transaction_free()` to discard the
  *   transaction and free associated resources.  In particular,
  *   this rolls back the transaction if it has not been
@@ -124,6 +129,13 @@ extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
  *
  * The message is appended to err without first clearing err.
  * err will not be '\n' terminated.
+ *
+ * Caveats
+ * -------
+ *
+ * Note that no locks are taken, and no refs are read, until
+ * `ref_transaction_commit` is called.  So `ref_transaction_verify`
+ * won't report a verification failure until the commit is attempted.
  */
 struct ref_transaction;
 
