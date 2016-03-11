@@ -29,7 +29,6 @@ int repository_format_version;
 int repository_format_precious_objects;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
-int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
 const char *apply_default_ignorewhitespace;
 const char *git_attributes_file;
@@ -324,4 +323,16 @@ const char *get_log_output_encoding(void)
 const char *get_commit_output_encoding(void)
 {
 	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+}
+
+static int the_shared_repository = PERM_UMASK;
+
+void set_shared_repository(int value)
+{
+	the_shared_repository = value;
+}
+
+int get_shared_repository(void)
+{
+	return the_shared_repository;
 }
