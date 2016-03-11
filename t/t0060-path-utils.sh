@@ -19,6 +19,13 @@ relative_path() {
 	"test \"\$(test-path-utils relative_path '$1' '$2')\" = '$expected'"
 }
 
+test_submodule_relative_url() {
+	test_expect_success "test_submodule_relative_url: $1 $2 $3 => $4" "
+		actual=\$(git submodule--helper resolve-relative-url-test '$1' '$2' '$3') &&
+		test \"\$actual\" = '$4'
+	"
+}
+
 test_git_path() {
 	test_expect_success "git-path $1 $2 => $3" "
 		$1 git rev-parse --git-path $2 >actual &&
@@ -297,5 +304,40 @@ test_git_path GIT_COMMON_DIR=bar hooks/me                 bar/hooks/me
 test_git_path GIT_COMMON_DIR=bar config                   bar/config
 test_git_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
 test_git_path GIT_COMMON_DIR=bar shallow                  bar/shallow
+
+test_submodule_relative_url "(null)" "../foo/bar" "../sub/a/b/c" "../foo/sub/a/b/c"
+test_submodule_relative_url "../../../" "../foo/bar" "../sub/a/b/c" "../../../../foo/sub/a/b/c"
+test_submodule_relative_url "(null)" "../foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "../" "../foo/bar" "../submodule" "../../foo/submodule"
+test_submodule_relative_url "(null)" "../foo/submodule" "../submodule" "../foo/submodule"
+test_submodule_relative_url "../" "../foo/submodule" "../submodule" "../../foo/submodule"
+test_submodule_relative_url "(null)" "../foo" "../submodule" "../submodule"
+test_submodule_relative_url "../" "../foo" "../submodule" "../../submodule"
+test_submodule_relative_url "(null)" "./foo/bar" "../submodule" "foo/submodule"
+test_submodule_relative_url "../" "./foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "(null)" "./foo" "../submodule" "submodule"
+test_submodule_relative_url "../" "./foo" "../submodule" "../submodule"
+test_submodule_relative_url "(null)" "//somewhere else/repo" "../subrepo" "//somewhere else/subrepo"
+test_submodule_relative_url "(null)" "/u//trash directory.t7406-submodule-update/subsuper_update_r" "../subsubsuper_update_r" "/u//trash directory.t7406-submodule-update/subsubsuper_update_r"
+test_submodule_relative_url "(null)" "/u//trash directory.t7406-submodule-update/super_update_r2" "../subsuper_update_r" "/u//trash directory.t7406-submodule-update/subsuper_update_r"
+test_submodule_relative_url "(null)" "/u/trash directory.t3600-rm/." "../." "/u/trash directory.t3600-rm/."
+test_submodule_relative_url "(null)" "/u/trash directory.t3600-rm" "./." "/u/trash directory.t3600-rm/."
+test_submodule_relative_url "(null)" "/u/trash directory.t7400-submodule-basic/addtest" "../repo" "/u/trash directory.t7400-submodule-basic/repo"
+test_submodule_relative_url "../" "/u/trash directory.t7400-submodule-basic/addtest" "../repo" "/u/trash directory.t7400-submodule-basic/repo"
+test_submodule_relative_url "(null)" "/u/trash directory.t7400-submodule-basic" "./å äö" "/u/trash directory.t7400-submodule-basic/å äö"
+test_submodule_relative_url "(null)" "/u/trash directory.t7403-submodule-sync/." "../submodule" "/u/trash directory.t7403-submodule-sync/submodule"
+test_submodule_relative_url "(null)" "/u/trash directory.t7407-submodule-foreach/submodule" "../submodule" "/u/trash directory.t7407-submodule-foreach/submodule"
+test_submodule_relative_url "(null)" "/u/trash directory.t7409-submodule-detached-worktree/home2/../remote" "../bundle1" "/u/trash directory.t7409-submodule-detached-worktree/home2/../bundle1"
+test_submodule_relative_url "(null)" "/u/trash directory.t7613-merge-submodule/submodule_update_repo" "./." "/u/trash directory.t7613-merge-submodule/submodule_update_repo/."
+test_submodule_relative_url "(null)" "file:///tmp/repo" "../subrepo" "file:///tmp/subrepo"
+test_submodule_relative_url "(null)" "foo/bar" "../submodule" "foo/submodule"
+test_submodule_relative_url "../" "foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "(null)" "foo" "../submodule" "submodule"
+test_submodule_relative_url "../" "foo" "../submodule" "../submodule"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../subrepo" "helper:://hostname/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname/repo" "../subrepo" "ssh://hostname/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname:22/repo" "../subrepo" "ssh://hostname:22/subrepo"
+test_submodule_relative_url "(null)" "user@host:path/to/repo" "../subrepo" "user@host:path/to/subrepo"
+test_submodule_relative_url "(null)" "user@host:repo" "../subrepo" "user@host:subrepo"
 
 test_done
