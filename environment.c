@@ -326,13 +326,22 @@ const char *get_commit_output_encoding(void)
 }
 
 static int the_shared_repository = PERM_UMASK;
+static int need_shared_repository_from_config = 1;
 
 void set_shared_repository(int value)
 {
 	the_shared_repository = value;
+	need_shared_repository_from_config = 0;
 }
 
 int get_shared_repository(void)
 {
+	if (need_shared_repository_from_config) {
+		const char *var = "core.sharedrepository";
+		const char *value;
+		if (!git_config_get_value(var, &value))
+			the_shared_repository = git_config_perm(var, value);
+		need_shared_repository_from_config = 0;
+	}
 	return the_shared_repository;
 }
