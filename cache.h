@@ -750,6 +750,30 @@ extern int grafts_replace_parents;
 extern int repository_format_version;
 extern int repository_format_precious_objects;
 
+struct repository_format {
+	int version;
+	int precious_objects;
+	int is_bare;
+	char *work_tree;
+	struct string_list unknown_extensions;
+};
+
+/*
+ * Read the repository format characteristics from the config file "path" into
+ * "format" struct. Returns the numeric version. On error, -1 is returned,
+ * format->version is set to -1, and all other fields in the struct are
+ * undefined.
+ */
+int read_repository_format(struct repository_format *format, const char *path);
+
+/*
+ * Verify that the repository described by repository_format is something we
+ * can read. If it is, return 0. Otherwise, return -1, and "err" will describe
+ * any errors encountered.
+ */
+int verify_repository_format(const struct repository_format *format,
+			     struct strbuf *err);
+
 /*
  * Check the repository format version in the path found in get_git_dir(),
  * and die if it is a version we don't understand. Generally one would
