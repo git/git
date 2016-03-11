@@ -719,6 +719,33 @@ int rerere_remaining(struct string_list *merge_rr)
 }
 
 /*
+ * Try using the given conflict resolution "ID" to see
+ * if that recorded conflict resolves cleanly what we
+ * got in the "cur".
+ */
+static int try_merge(const struct rerere_id *id, const char *path,
+		     mmfile_t *cur, mmbuffer_t *result)
+{
+	int ret;
+	mmfile_t base = {NULL, 0}, other = {NULL, 0};
+
+	if (read_mmfile(&base, rerere_path(id, "preimage")) ||
+	    read_mmfile(&other, rerere_path(id, "postimage")))
+		ret = 1;
+	else
+		/*
+		 * A three-way merge. Note that this honors user-customizable
+		 * low-level merge driver settings.
+		 */
+		ret = ll_merge(result, path, &base, NULL, cur, "", &other, "", NULL);
+
+	free(base.ptr);
+	free(other.ptr);
+
+	return ret;
+}
+
+/*
  * Find the conflict identified by "id"; the change between its
  * "preimage" (i.e. a previous contents with conflict markers) and its
  * "postimage" (i.e. the corresponding contents with conflicts
@@ -732,30 +759,20 @@ static int merge(const struct rerere_id *id, const char *path)
 {
 	FILE *f;
 	int ret;
-	mmfile_t cur = {NULL, 0}, base = {NULL, 0}, other = {NULL, 0};
+	mmfile_t cur = {NULL, 0};
 	mmbuffer_t result = {NULL, 0};
 
 	/*
 	 * Normalize the conflicts in path and write it out to
 	 * "thisimage" temporary file.
 	 */
-	if (handle_file(path, NULL, rerere_path(id, "thisimage")) < 0) {
+	if ((handle_file(path, NULL, rerere_path(id, "thisimage")) < 0) ||
+	    read_mmfile(&cur, rerere_path(id, "thisimage"))) {
 		ret = 1;
 		goto out;
 	}
 
-	if (read_mmfile(&cur, rerere_path(id, "thisimage")) ||
-	    read_mmfile(&base, rerere_path(id, "preimage")) ||
-	    read_mmfile(&other, rerere_path(id, "postimage"))) {
-		ret = 1;
-		goto out;
-	}
-
-	/*
-	 * A three-way merge. Note that this honors user-customizable
-	 * low-level merge driver settings.
-	 */
-	ret = ll_merge(&result, path, &base, NULL, &cur, "", &other, "", NULL);
+	ret = try_merge(id, path, &cur, &result);
 	if (ret)
 		goto out;
 
@@ -781,8 +798,6 @@ static int merge(const struct rerere_id *id, const char *path)
 
 out:
 	free(cur.ptr);
-	free(base.ptr);
-	free(other.ptr);
 	free(result.ptr);
 
 	return ret;
@@ -1085,29 +1100,16 @@ int rerere_forget(struct pathspec *pathspec)
  * Garbage collection support
  */
 
-/*
- * Note that this is not reentrant but is used only one-at-a-time
- * so it does not matter right now.
- */
-static struct rerere_id *dirname_to_id(const char *name)
-{
-	static struct rerere_id id;
-	id.collection = find_rerere_dir(name);
-	return &id;
-}
-
-static time_t rerere_created_at(const char *dir_name)
+static time_t rerere_created_at(struct rerere_id *id)
 {
 	struct stat st;
-	struct rerere_id *id = dirname_to_id(dir_name);
 
 	return stat(rerere_path(id, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
-static time_t rerere_last_used_at(const char *dir_name)
+static time_t rerere_last_used_at(struct rerere_id *id)
 {
 	struct stat st;
-	struct rerere_id *id = dirname_to_id(dir_name);
 
 	return stat(rerere_path(id, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
@@ -1117,15 +1119,28 @@ static time_t rerere_last_used_at(const char *dir_name)
  */
 static void unlink_rr_item(struct rerere_id *id)
 {
-	unlink(rerere_path(id, "thisimage"));
-	unlink(rerere_path(id, "preimage"));
-	unlink(rerere_path(id, "postimage"));
-	/*
-	 * NEEDSWORK: what if this rmdir() fails?  Wouldn't we then
-	 * assume that we already have preimage recorded in
-	 * do_plain_rerere()?
-	 */
-	rmdir(rerere_path(id, NULL));
+	unlink_or_warn(rerere_path(id, "thisimage"));
+	remove_variant(id);
+	id->collection->status[id->variant] = 0;
+}
+
+static void prune_one(struct rerere_id *id, time_t now,
+		      int cutoff_resolve, int cutoff_noresolve)
+{
+	time_t then;
+	int cutoff;
+
+	then = rerere_last_used_at(id);
+	if (then)
+		cutoff = cutoff_resolve;
+	else {
+		then = rerere_created_at(id);
+		if (!then)
+			return;
+		cutoff = cutoff_noresolve;
+	}
+	if (then < now - cutoff * 86400)
+		unlink_rr_item(id);
 }
 
 void rerere_gc(struct string_list *rr)
@@ -1133,8 +1148,8 @@ void rerere_gc(struct string_list *rr)
 	struct string_list to_remove = STRING_LIST_INIT_DUP;
 	DIR *dir;
 	struct dirent *e;
-	int i, cutoff;
-	time_t now = time(NULL), then;
+	int i;
+	time_t now = time(NULL);
 	int cutoff_noresolve = 15;
 	int cutoff_resolve = 60;
 
@@ -1149,25 +1164,32 @@ void rerere_gc(struct string_list *rr)
 		die_errno("unable to open rr-cache directory");
 	/* Collect stale conflict IDs ... */
 	while ((e = readdir(dir))) {
+		struct rerere_dir *rr_dir;
+		struct rerere_id id;
+		int now_empty;
+
 		if (is_dot_or_dotdot(e->d_name))
 			continue;
+		rr_dir = find_rerere_dir(e->d_name);
+		if (!rr_dir)
+			continue; /* or should we remove e->d_name? */
 
-		then = rerere_last_used_at(e->d_name);
-		if (then) {
-			cutoff = cutoff_resolve;
-		} else {
-			then = rerere_created_at(e->d_name);
-			if (!then)
-				continue;
-			cutoff = cutoff_noresolve;
+		now_empty = 1;
+		for (id.variant = 0, id.collection = rr_dir;
+		     id.variant < id.collection->status_nr;
+		     id.variant++) {
+			prune_one(&id, now, cutoff_resolve, cutoff_noresolve);
+			if (id.collection->status[id.variant])
+				now_empty = 0;
 		}
-		if (then < now - cutoff * 86400)
+		if (now_empty)
 			string_list_append(&to_remove, e->d_name);
 	}
 	closedir(dir);
-	/* ... and then remove them one-by-one */
+
+	/* ... and then remove the empty directories */
 	for (i = 0; i < to_remove.nr; i++)
-		unlink_rr_item(dirname_to_id(to_remove.items[i].string));
+		rmdir(git_path("rr-cache/%s", to_remove.items[i].string));
 	string_list_clear(&to_remove, 0);
 	rollback_lock_file(&write_lock);
 }
@@ -1188,8 +1210,10 @@ void rerere_clear(struct string_list *merge_rr)
 
 	for (i = 0; i < merge_rr->nr; i++) {
 		struct rerere_id *id = merge_rr->items[i].util;
-		if (!has_rerere_resolution(id))
+		if (!has_rerere_resolution(id)) {
 			unlink_rr_item(id);
+			rmdir(rerere_path(id, NULL));
+		}
 	}
 	unlink_or_warn(git_path_merge_rr());
 	rollback_lock_file(&write_lock);
