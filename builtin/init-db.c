@@ -95,6 +95,8 @@ static void copy_templates(const char *template_dir)
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf template_path = STRBUF_INIT;
 	size_t template_len;
+	struct repository_format template_format;
+	struct strbuf err = STRBUF_INIT;
 	DIR *dir;
 	char *to_free = NULL;
 
@@ -121,17 +123,18 @@ static void copy_templates(const char *template_dir)
 
 	/* Make sure that template is from the correct vintage */
 	strbuf_addstr(&template_path, "config");
-	repository_format_version = 0;
-	git_config_from_file(check_repository_format_version,
-			     template_path.buf, NULL);
+	read_repository_format(&template_format, template_path.buf);
 	strbuf_setlen(&template_path, template_len);
 
-	if (repository_format_version &&
-	    repository_format_version != GIT_REPO_VERSION) {
-		warning(_("not copying templates of "
-			"a wrong format version %d from '%s'"),
-			repository_format_version,
-			template_dir);
+	/*
+	 * No mention of version at all is OK, but anything else should be
+	 * verified.
+	 */
+	if (template_format.version >= 0 &&
+	    verify_repository_format(&template_format, &err) < 0) {
+		warning(_("not copying templates from '%s': %s"),
+			  template_dir, err.buf);
+		strbuf_release(&err);
 		goto close_free_return;
 	}
 
