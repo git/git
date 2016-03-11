@@ -388,27 +388,26 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 			data->precious_objects = git_config_bool(var, value);
 		else
 			string_list_append(&data->unknown_extensions, ext);
+	} else if (strcmp(var, "core.bare") == 0) {
+		data->is_bare = git_config_bool(var, value);
+	} else if (strcmp(var, "core.worktree") == 0) {
+		if (!value)
+			return config_error_nonbool(var);
+		data->work_tree = xstrdup(value);
 	}
 	return 0;
 }
-
-static int read_repository_format_1(struct repository_format *, config_fn_t,
-				    const char *);
 
 static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 	struct repository_format candidate;
-	config_fn_t fn;
+	int has_common;
 
-	if (get_common_dir(&sb, gitdir))
-		fn = check_repo_format;
-	else
-		fn = check_repository_format_version;
-
+	has_common = get_common_dir(&sb, gitdir);
 	strbuf_addstr(&sb, "/config");
-	read_repository_format_1(&candidate, fn, sb.buf);
+	read_repository_format(&candidate, sb.buf);
 	strbuf_release(&sb);
 
 	/*
@@ -432,34 +431,32 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 	repository_format_version = candidate.version;
 	repository_format_precious_objects = candidate.precious_objects;
 	string_list_clear(&candidate.unknown_extensions, 0);
-	if (candidate.is_bare != -1) {
-		is_bare_repository_cfg = candidate.is_bare;
-		if (is_bare_repository_cfg == 1)
+	if (!has_common) {
+		if (candidate.is_bare != -1) {
+			is_bare_repository_cfg = candidate.is_bare;
+			if (is_bare_repository_cfg == 1)
+				inside_work_tree = -1;
+		}
+		if (candidate.work_tree) {
+			free(git_work_tree_cfg);
+			git_work_tree_cfg = candidate.work_tree;
 			inside_work_tree = -1;
-	}
-	if (candidate.work_tree) {
-		free(git_work_tree_cfg);
-		git_work_tree_cfg = candidate.work_tree;
-		inside_work_tree = -1;
+		}
+	} else {
+		free(candidate.work_tree);
 	}
 
 	return 0;
 }
 
-static int read_repository_format_1(struct repository_format *format,
-				    config_fn_t fn, const char *path)
+int read_repository_format(struct repository_format *format, const char *path)
 {
 	memset(format, 0, sizeof(*format));
 	format->version = -1;
 	format->is_bare = -1;
 	string_list_init(&format->unknown_extensions, 1);
-	git_config_from_file(fn, path, format);
+	git_config_from_file(check_repo_format, path, format);
 	return format->version;
-}
-
-int read_repository_format(struct repository_format *format, const char *path)
-{
-	return read_repository_format_1(format, check_repository_format_version, path);
 }
 
 int verify_repository_format(const struct repository_format *format,
@@ -997,22 +994,6 @@ int git_config_perm(const char *var, const char *value)
 	 * x flags for directories are handled separately.
 	 */
 	return -(i & 0666);
-}
-
-int check_repository_format_version(const char *var, const char *value, void *cb)
-{
-	struct repository_format *data = cb;
-	int ret = check_repo_format(var, value, cb);
-	if (ret)
-		return ret;
-	if (strcmp(var, "core.bare") == 0) {
-		data->is_bare = git_config_bool(var, value);
-	} else if (strcmp(var, "core.worktree") == 0) {
-		if (!value)
-			return config_error_nonbool(var);
-		data->work_tree = xstrdup(value);
-	}
-	return 0;
 }
 
 void check_repository_format(void)
