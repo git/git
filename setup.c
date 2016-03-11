@@ -982,9 +982,9 @@ int check_repository_format_version(const char *var, const char *value, void *cb
 	return 0;
 }
 
-int check_repository_format(void)
+void check_repository_format(void)
 {
-	return check_repository_format_gently(get_git_dir(), NULL);
+	check_repository_format_gently(get_git_dir(), NULL);
 }
 
 /*
