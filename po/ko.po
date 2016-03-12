@@ -57,8 +57,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-02-28 20:31+0800\n"
-"PO-Revision-Date: 2016-03-03 13:07+0900\n"
+"POT-Creation-Date: 2016-03-12 22:05+0800\n"
+"PO-Revision-Date: 2016-03-13 02:29+0900\n"
 "Last-Translator: Changwoo Ryu <cwryu@debian.org>\n"
 "Language-Team: Git Korean translation <http://github.com/changwoo/git-l10n-"
 "ko>\n"
@@ -1165,6 +1165,16 @@ msgstr "인식할 수 없는 색: %%(color:%s)"
 msgid "unrecognized format: %%(%s)"
 msgstr "알 수 없는 형식: %%(%s)"
 
+#: ref-filter.c:77
+#, c-format
+msgid "%%(body) does not take arguments"
+msgstr "%%(body)에 인자를 받지 않습니다"
+
+#: ref-filter.c:84
+#, c-format
+msgid "%%(subject) does not take arguments"
+msgstr "%%(subject)에 인자를 받지 않습니다"
+
 #: ref-filter.c:101
 #, c-format
 msgid "positive value expected contents:lines=%s"
@@ -1205,15 +1215,64 @@ msgstr "인식할 수 없는 %%(align) 인자:%s"
 msgid "positive width expected with the %%(align) atom"
 msgstr "%%(align) 아톰에 너비가 0보다 커야 합니다"
 
+#: ref-filter.c:244
+#, c-format
+msgid "malformed field name: %.*s"
+msgstr "잘못된 형식의 필드 이름: %.*s"
+
+#: ref-filter.c:270
+#, c-format
+msgid "unknown field name: %.*s"
+msgstr "알 수 없는 필드 이름: %.*s"
+
 #: ref-filter.c:372
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "형식: %%(end) 아톰이 대응되는 아톰 없이 사용되었습니다"
 
+#: ref-filter.c:424
+#, c-format
+msgid "malformed format string %s"
+msgstr "잘못된 형식의 문자열 %s"
+
+#: ref-filter.c:878
+msgid ":strip= requires a positive integer argument"
+msgstr ":strip= 명령에는 0보다 큰 정수 인자가 필요합니다"
+
+#: ref-filter.c:883
+#, c-format
+msgid "ref '%s' does not have %ld components to :strip"
+msgstr "'%s' 레퍼런스에 :strip할 구성 요소 %ld개가 없습니다"
+
+#: ref-filter.c:1046
+#, c-format
+msgid "unknown %.*s format %s"
+msgstr "알 수 없는 %.*s 형식 %s"
+
+#: ref-filter.c:1066 ref-filter.c:1097
+#, c-format
+msgid "missing object %s for %s"
+msgstr "없는 오브젝트 %s, %s에 대해"
+
+#: ref-filter.c:1069 ref-filter.c:1100
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "%s에 parse_object_buffer 실패 (%s에 대해)"
+
 #: ref-filter.c:1311
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "'%s'에 잘못된 형식의 오브젝트"
+
+#: ref-filter.c:1373
+#, c-format
+msgid "ignoring ref with broken name %s"
+msgstr "망가진 이름 %s에 레퍼런스를 무시합니다"
+
+#: ref-filter.c:1378
+#, c-format
+msgid "ignoring broken ref %s"
+msgstr "망가진 레퍼런스 %s 무시"
 
 #: ref-filter.c:1651
 #, c-format
@@ -1620,6 +1679,20 @@ msgstr "빈 헤드로 커밋을 빼올 수 없습니다."
 msgid "failed to read %s"
 msgstr "%s을(를) 읽는데 실패했습니다"
 
+#: sha1_file.c:1080
+msgid "offset before end of packfile (broken .idx?)"
+msgstr "오프셋이 묶음 파일 앞입니다 (망가진 .idx?)"
+
+#: sha1_file.c:2459
+#, c-format
+msgid "offset before start of pack index for %s (corrupt index?)"
+msgstr "오프셋이 %s의 묶음 인덱스 시작보다 앞입니다 (망가진 인덱스?)"
+
+#: sha1_file.c:2463
+#, c-format
+msgid "offset beyond end of pack index for %s (truncated index?)"
+msgstr "오프셋이 %s의 묶음 인덱스 끝보다 뒤입니다 (망가진 인덱스?)"
+
 #: sha1_name.c:462
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
@@ -1665,6 +1738,11 @@ msgstr "%s에 대한 .gitmodules 항목을 제거할 수 없습니다"
 #: submodule.c:118
 msgid "staging updated .gitmodules failed"
 msgstr "업데이트한 .gitmodules를 커밋할 사항으로 표시하는데 실패"
+
+#: trailer.c:237
+#, c-format
+msgid "running trailer command '%s' failed"
+msgstr "트레일러 명령 '%s' 실행 실패"
 
 #: trailer.c:492 trailer.c:496 trailer.c:500 trailer.c:554 trailer.c:558
 #: trailer.c:562
@@ -4141,6 +4219,10 @@ msgstr "'%s'에 대해 reflog할 수 없습니다: %s\n"
 msgid "HEAD is now at"
 msgstr "HEAD의 현재 위치는"
 
+#: builtin/checkout.c:665 builtin/clone.c:659
+msgid "unable to update HEAD"
+msgstr "HEAD를 업데이트할 수 없습니다"
+
 #: builtin/checkout.c:669
 #, c-format
 msgid "Reset branch '%s'\n"
@@ -4656,6 +4738,14 @@ msgstr "IPv4 주소만 사용합니다"
 msgid "use IPv6 addresses only"
 msgstr "IPv6 주소만 사용합니다"
 
+#: builtin/clone.c:239
+msgid ""
+"No directory name could be guessed.\n"
+"Please specify a directory on the command line"
+msgstr ""
+"디렉터리 이름을 알아낼 수 없습니다.\n"
+"명령행에서 디렉터리를 지정하십시오"
+
 #: builtin/clone.c:305
 #, c-format
 msgid "reference repository '%s' as a linked checkout is not supported yet."
@@ -4731,6 +4821,11 @@ msgstr "연결을 확인하는 중입니다..."
 msgid "remote did not send all necessary objects"
 msgstr "리모트에서 필요한 오브젝트를 모두 보내지 않았습니다"
 
+#: builtin/clone.c:647
+#, c-format
+msgid "unable to update %s"
+msgstr "%s을(를) 업데이트할 수 없습니다"
+
 #: builtin/clone.c:696
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr "리모트 HEAD가 없는 레퍼런스를 참고하므로, 체크아웃할 수 없습니다.\n"
@@ -4738,6 +4833,10 @@ msgstr "리모트 HEAD가 없는 레퍼런스를 참고하므로, 체크아웃�
 #: builtin/clone.c:727
 msgid "unable to checkout working tree"
 msgstr "작업 폴더를 체크아웃할 수 없습니다"
+
+#: builtin/clone.c:753
+msgid "unable to write parameters to config file"
+msgstr "파라미터를 설정 파일에 쓸 수 없습니다"
 
 #: builtin/clone.c:816
 msgid "cannot repack to clean up"
@@ -6966,53 +7065,53 @@ msgstr "인덱스 파일을 저장할 수 없습니다"
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "잘못된 pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1479 builtin/index-pack.c:1663
+#: builtin/index-pack.c:1479 builtin/index-pack.c:1664
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "스레드 기능이 없습니다. %s 무시"
 
-#: builtin/index-pack.c:1537
+#: builtin/index-pack.c:1538
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "기존 '%s' 묶음 파일을 열 수 없습니다"
 
-#: builtin/index-pack.c:1539
+#: builtin/index-pack.c:1540
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "'%s'에 대한 기존 묶음 idx 파일을 열 수 없습니다"
 
-#: builtin/index-pack.c:1586
+#: builtin/index-pack.c:1587
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "델타 아님: 오브젝트 %d개"
 
-#: builtin/index-pack.c:1593
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "체인 길이 = %d: 오브젝트 %lu개"
 
-#: builtin/index-pack.c:1623
+#: builtin/index-pack.c:1624
 msgid "Cannot come back to cwd"
 msgstr "현재 디렉터리로 돌아올 수 없습니다"
 
-#: builtin/index-pack.c:1675 builtin/index-pack.c:1678
-#: builtin/index-pack.c:1690 builtin/index-pack.c:1694
+#: builtin/index-pack.c:1676 builtin/index-pack.c:1679
+#: builtin/index-pack.c:1691 builtin/index-pack.c:1695
 #, c-format
 msgid "bad %s"
 msgstr "잘못된 %s"
 
-#: builtin/index-pack.c:1708
+#: builtin/index-pack.c:1709
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin 옵션은 --stdin 옵션과 같이 쓸 수 없습니다"
 
-#: builtin/index-pack.c:1712 builtin/index-pack.c:1721
+#: builtin/index-pack.c:1713 builtin/index-pack.c:1722
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "'%s' 묶음파일 이름이 '.pack'으로 끝나지 않습니다"
 
-#: builtin/index-pack.c:1729
+#: builtin/index-pack.c:1730
 msgid "--verify with no packfile name given"
 msgstr "--verify 옵션에 묶음파일 이름을 지정하지 않았습니다"
 
@@ -7140,7 +7239,9 @@ msgstr "작업 폴더 '%s'에 접근할 수 없습니다"
 msgid ""
 "git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
 "<token>[(=|:)<value>])...] [<file>...]"
-msgstr "git interpret-trailers [--in-place] [--trim-empty] [(--trailer <토큰>[(=|:)<값>])...] [<파일>...]"
+msgstr ""
+"git interpret-trailers [--in-place] [--trim-empty] [(--trailer <토큰>[(=|:)<"
+"값>])...] [<파일>...]"
 
 #: builtin/interpret-trailers.c:26
 msgid "edit files in place"
@@ -11147,7 +11248,7 @@ msgstr ""
 "목록을 볼 수 있습니다. 특정 하위 명령어나 개념에 대해 읽어 보려면 'git help\n"
 "<명령>' 또는 'git help <개념>' 명령을 실행하십시오."
 
-#: http.c:320
+#: http.c:321
 msgid "Public key pinning not supported with cURL < 7.44.0"
 msgstr "공개 키 고정은 cURL 7.44.0 앞 버전에서는 지원하지 않습니다"
 
@@ -11232,8 +11333,8 @@ msgid "Update remote refs along with associated objects"
 msgstr "원격 레퍼런스 및 그와 관련된 오브젝트를 업데이트합니다"
 
 #: common-cmds.h:32
-msgid "Forward-port local commits to the updated upstream head"
-msgstr "로컬 커밋을 업데이트된 업스트림 head 다음에 맞춰 넣습니다"
+msgid "Reapply commits on top of another base tip"
+msgstr "커밋을 다른 베이스 끝의 최상위에서 적용합니다"
 
 #: common-cmds.h:33
 msgid "Reset current HEAD to the specified state"
