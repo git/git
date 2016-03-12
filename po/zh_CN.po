@@ -135,8 +135,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-02-28 20:31+0800\n"
-"PO-Revision-Date: 2016-03-06 22:12+0800\n"
+"POT-Creation-Date: 2016-03-12 22:05+0800\n"
+"PO-Revision-Date: 2016-03-16 00:02+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -1250,6 +1250,16 @@ msgstr "未能识别的颜色：%%(color:%s)"
 msgid "unrecognized format: %%(%s)"
 msgstr "未能识别的格式：%%(%s)"
 
+#: ref-filter.c:77
+#, c-format
+msgid "%%(body) does not take arguments"
+msgstr "%%(body) 不带参数"
+
+#: ref-filter.c:84
+#, c-format
+msgid "%%(subject) does not take arguments"
+msgstr "%%(subject) 不带参数"
+
 #: ref-filter.c:101
 #, c-format
 msgid "positive value expected contents:lines=%s"
@@ -1290,15 +1300,64 @@ msgstr "未能识别的 %%(align) 参数：%s"
 msgid "positive width expected with the %%(align) atom"
 msgstr "元素 %%(align) 需要一个正数的宽度"
 
+#: ref-filter.c:244
+#, c-format
+msgid "malformed field name: %.*s"
+msgstr "非法的字段名：%.*s"
+
+#: ref-filter.c:270
+#, c-format
+msgid "unknown field name: %.*s"
+msgstr "未知的字段名：%.*s"
+
 #: ref-filter.c:372
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "格式：使用了 %%(end) 元素却没有它的对应元素"
 
+#: ref-filter.c:424
+#, c-format
+msgid "malformed format string %s"
+msgstr "非法的格式化字符串 %s"
+
+#: ref-filter.c:878
+msgid ":strip= requires a positive integer argument"
+msgstr ":strip= 需要一个正整型参数"
+
+#: ref-filter.c:883
+#, c-format
+msgid "ref '%s' does not have %ld components to :strip"
+msgstr "引用 '%s' 没有提供要脱掉的 %ld 个组件"
+
+#: ref-filter.c:1046
+#, c-format
+msgid "unknown %.*s format %s"
+msgstr "未知 %.*s 格式 %s"
+
+#: ref-filter.c:1066 ref-filter.c:1097
+#, c-format
+msgid "missing object %s for %s"
+msgstr "丢失 %2$s 的对象 %1$s"
+
+#: ref-filter.c:1069 ref-filter.c:1100
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "parse_object_buffer 失败于 %2$s 的 %1$s"
+
 #: ref-filter.c:1311
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "非法的对象于 '%s'"
+
+#: ref-filter.c:1373
+#, c-format
+msgid "ignoring ref with broken name %s"
+msgstr "忽略带有错误名称 %s 的引用"
+
+#: ref-filter.c:1378
+#, c-format
+msgid "ignoring broken ref %s"
+msgstr "忽略损坏的引用 %s"
 
 #: ref-filter.c:1651
 #, c-format
@@ -1708,6 +1767,20 @@ msgstr "不能拣选到空分支"
 msgid "failed to read %s"
 msgstr "无法读取 %s"
 
+#: sha1_file.c:1080
+msgid "offset before end of packfile (broken .idx?)"
+msgstr "偏移量在包文件结束之前（损坏的 .idx？）"
+
+#: sha1_file.c:2459
+#, c-format
+msgid "offset before start of pack index for %s (corrupt index?)"
+msgstr "偏移量在 %s 的包索引开始之前（损坏的索引？）"
+
+#: sha1_file.c:2463
+#, c-format
+msgid "offset beyond end of pack index for %s (truncated index?)"
+msgstr "偏移量越过了 %s 的包索引的结尾（截断的索引？）"
+
 #: sha1_name.c:462
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
@@ -1751,6 +1824,11 @@ msgstr "无法移除 %s 的 .gitmodules 条目"
 #: submodule.c:118
 msgid "staging updated .gitmodules failed"
 msgstr "将更新后 .gitmodules 添加暂存区失败"
+
+#: trailer.c:237
+#, c-format
+msgid "running trailer command '%s' failed"
+msgstr "执行 trailer 命令 '%s' 失败"
 
 #: trailer.c:492 trailer.c:496 trailer.c:500 trailer.c:554 trailer.c:558
 #: trailer.c:562
@@ -4236,6 +4314,10 @@ msgstr "不能对 '%s' 执行 reflog 操作：%s\n"
 msgid "HEAD is now at"
 msgstr "HEAD 目前位于"
 
+#: builtin/checkout.c:665 builtin/clone.c:659
+msgid "unable to update HEAD"
+msgstr "不能更新 HEAD"
+
 #: builtin/checkout.c:669
 #, c-format
 msgid "Reset branch '%s'\n"
@@ -4759,6 +4841,14 @@ msgstr "只使用 IPv4 地址"
 msgid "use IPv6 addresses only"
 msgstr "只使用 IPv6 地址"
 
+#: builtin/clone.c:239
+msgid ""
+"No directory name could be guessed.\n"
+"Please specify a directory on the command line"
+msgstr ""
+"无法猜到目录名。\n"
+"请在命令行提供一个目录"
+
 #: builtin/clone.c:305
 #, c-format
 msgid "reference repository '%s' as a linked checkout is not supported yet."
@@ -4833,6 +4923,11 @@ msgstr "检查连接... "
 msgid "remote did not send all necessary objects"
 msgstr "远程没有发送所有必须的对象"
 
+#: builtin/clone.c:647
+#, c-format
+msgid "unable to update %s"
+msgstr "不能更新 %s"
+
 #: builtin/clone.c:696
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr "远程 HEAD 指向一个不存在的引用，无法检出。\n"
@@ -4840,6 +4935,10 @@ msgstr "远程 HEAD 指向一个不存在的引用，无法检出。\n"
 #: builtin/clone.c:727
 msgid "unable to checkout working tree"
 msgstr "不能检出工作区"
+
+#: builtin/clone.c:753
+msgid "unable to write parameters to config file"
+msgstr "无法将参数写入配置文件"
 
 #: builtin/clone.c:816
 msgid "cannot repack to clean up"
@@ -7054,55 +7153,55 @@ msgstr "无法存储索引文件"
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "坏的 pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1479 builtin/index-pack.c:1663
+#: builtin/index-pack.c:1479 builtin/index-pack.c:1664
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "没有线程支持，忽略 %s"
 
-#: builtin/index-pack.c:1537
+#: builtin/index-pack.c:1538
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "无法打开现存包文件 '%s'"
 
-#: builtin/index-pack.c:1539
+#: builtin/index-pack.c:1540
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "无法为 %s 打开包索引文件"
 
-#: builtin/index-pack.c:1586
+#: builtin/index-pack.c:1587
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "非 delta：%d 个对象"
 msgstr[1] "非 delta：%d 个对象"
 
-#: builtin/index-pack.c:1593
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "链长 = %d: %lu 对象"
 msgstr[1] "链长 = %d: %lu 对象"
 
-#: builtin/index-pack.c:1623
+#: builtin/index-pack.c:1624
 msgid "Cannot come back to cwd"
 msgstr "无法返回当前工作目录"
 
-#: builtin/index-pack.c:1675 builtin/index-pack.c:1678
-#: builtin/index-pack.c:1690 builtin/index-pack.c:1694
+#: builtin/index-pack.c:1676 builtin/index-pack.c:1679
+#: builtin/index-pack.c:1691 builtin/index-pack.c:1695
 #, c-format
 msgid "bad %s"
 msgstr "错误选项 %s"
 
-#: builtin/index-pack.c:1708
+#: builtin/index-pack.c:1709
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin 不能和 --stdin 同时使用"
 
-#: builtin/index-pack.c:1712 builtin/index-pack.c:1721
+#: builtin/index-pack.c:1713 builtin/index-pack.c:1722
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "包文件名 '%s' 没有以 '.pack' 结尾"
 
-#: builtin/index-pack.c:1729
+#: builtin/index-pack.c:1730
 msgid "--verify with no packfile name given"
 msgstr "--verify 没有提供包文件名参数"
 
@@ -7229,7 +7328,9 @@ msgstr "不能访问工作区 '%s'"
 msgid ""
 "git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
 "<token>[(=|:)<value>])...] [<file>...]"
-msgstr "git interpret-trailers [--in-place] [--trim-empty] [(--trailer <键>[(=|:)<值>])...] [<文件>...]"
+msgstr ""
+"git interpret-trailers [--in-place] [--trim-empty] [(--trailer <键>[(=|:)<值"
+">])...] [<文件>...]"
 
 #: builtin/interpret-trailers.c:26
 msgid "edit files in place"
@@ -11194,7 +11295,7 @@ msgstr ""
 "查看 'git help <命令>' 或 'git help <概念>' 以获取给定子命令或概念的\n"
 "帮助。"
 
-#: http.c:320
+#: http.c:321
 msgid "Public key pinning not supported with cURL < 7.44.0"
 msgstr "不支持公钥文件锁定，因为 cURL < 7.44.0"
 
@@ -11279,8 +11380,8 @@ msgid "Update remote refs along with associated objects"
 msgstr "更新远程引用和相关的对象"
 
 #: common-cmds.h:32
-msgid "Forward-port local commits to the updated upstream head"
-msgstr "本地提交转移至更新后的上游分支中"
+msgid "Reapply commits on top of another base tip"
+msgstr "在另一个分支上重新应用提交"
 
 #: common-cmds.h:33
 msgid "Reset current HEAD to the specified state"
@@ -12077,6 +12178,9 @@ msgstr "无法递归进子模组路径 '$sm_path'"
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "为 '$displaypath' 同步子模组 url"
 
+#~ msgid "Forward-port local commits to the updated upstream head"
+#~ msgstr "本地提交转移至更新后的上游分支中"
+
 #~ msgid "unable to parse format"
 #~ msgstr "不能解析格式"
 
@@ -12210,9 +12314,6 @@ msgstr "为 '$displaypath' 同步子模组 url"
 
 #~ msgid "unable to parse value '%s' for option %s"
 #~ msgstr "不能解析选项 %1$s 的值 '%2$s'"
-
-#~ msgid "unable to resolve HEAD"
-#~ msgstr "不能解析 HEAD"
 
 #~ msgid "-b and -B are mutually exclusive"
 #~ msgstr "-b 和 -B 互斥"
