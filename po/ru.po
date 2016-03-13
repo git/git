@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Russian Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-02-28 20:31+0800\n"
-"PO-Revision-Date: 2016-03-02 15:33+0000\n"
+"POT-Creation-Date: 2016-03-12 22:05+0800\n"
+"PO-Revision-Date: 2016-03-12 23:44+0000\n"
 "Last-Translator: Dimitriy Ryazantcev <DJm00n@mail.ru>\n"
 "Language-Team: Russian (http://www.transifex.com/djm00n/git-po-ru/language/ru/)\n"
 "MIME-Version: 1.0\n"
@@ -986,7 +986,7 @@ msgstr "-КОЛИЧЕСТВО"
 #: parse-options-cb.c:108
 #, c-format
 msgid "malformed object name '%s'"
-msgstr "Поврежденное имя объекта «%s»"
+msgstr "Неправильное имя объекта «%s»"
 
 #: path.c:752
 #, c-format
@@ -1111,6 +1111,16 @@ msgstr "неопознанный цвет: %%(color:%s)"
 msgid "unrecognized format: %%(%s)"
 msgstr "неопознанный формат: %%(%s)"
 
+#: ref-filter.c:77
+#, c-format
+msgid "%%(body) does not take arguments"
+msgstr "%%(body) не принимает аргументов"
+
+#: ref-filter.c:84
+#, c-format
+msgid "%%(subject) does not take arguments"
+msgstr "%%(subject) не принимает аргументов"
+
 #: ref-filter.c:101
 #, c-format
 msgid "positive value expected contents:lines=%s"
@@ -1151,15 +1161,64 @@ msgstr "неопознанный аргумент %%(align): %s"
 msgid "positive width expected with the %%(align) atom"
 msgstr "ожидается положительная ширина с указанием частицы %%(align)"
 
+#: ref-filter.c:244
+#, c-format
+msgid "malformed field name: %.*s"
+msgstr "неправильное имя поля: %.*s"
+
+#: ref-filter.c:270
+#, c-format
+msgid "unknown field name: %.*s"
+msgstr "неизвестное имя поля: %.*s"
+
 #: ref-filter.c:372
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "формат: частица %%(end) использована без соответствующей частицы"
 
+#: ref-filter.c:424
+#, c-format
+msgid "malformed format string %s"
+msgstr "неправильная строка формата %s"
+
+#: ref-filter.c:878
+msgid ":strip= requires a positive integer argument"
+msgstr ":strip= требует наличия положительного целого аргумента"
+
+#: ref-filter.c:883
+#, c-format
+msgid "ref '%s' does not have %ld components to :strip"
+msgstr "ссылка «%s» не содержит %ld компонент для :strip"
+
+#: ref-filter.c:1046
+#, c-format
+msgid "unknown %.*s format %s"
+msgstr "неизвестный %.*s формат %s"
+
+#: ref-filter.c:1066 ref-filter.c:1097
+#, c-format
+msgid "missing object %s for %s"
+msgstr "не найден объект %s для %s"
+
+#: ref-filter.c:1069 ref-filter.c:1100
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "сбой при выполнении parse_object_buffer на %s для %s"
+
 #: ref-filter.c:1311
 #, c-format
 msgid "malformed object at '%s'"
-msgstr "Поврежденный объект «%s»"
+msgstr "Повреждённый объект «%s»"
+
+#: ref-filter.c:1373
+#, c-format
+msgid "ignoring ref with broken name %s"
+msgstr "игнорирую ссылку с неправильным именем %s"
+
+#: ref-filter.c:1378
+#, c-format
+msgid "ignoring broken ref %s"
+msgstr "игнорирую неправильную ссылку %s"
 
 #: ref-filter.c:1651
 #, c-format
@@ -1169,7 +1228,7 @@ msgstr "format: пропущена частица %%(end)"
 #: ref-filter.c:1705
 #, c-format
 msgid "malformed object name %s"
-msgstr "плохое имя объекта %s"
+msgstr "неправильное имя объекта %s"
 
 #: remote.c:745
 #, c-format
@@ -1486,7 +1545,7 @@ msgstr "Неправильное значение %s: %s"
 #: sequencer.c:795
 #, c-format
 msgid "Malformed options sheet: %s"
-msgstr "Испорченная карта с опциями: %s"
+msgstr "Повреждённая карта с опциями: %s"
 
 #: sequencer.c:814
 msgid "a cherry-pick or revert is already in progress"
@@ -1565,6 +1624,20 @@ msgstr "Нельзя отобрать лучшее в пустую ветку"
 msgid "failed to read %s"
 msgstr "не удалось прочитать %s"
 
+#: sha1_file.c:1080
+msgid "offset before end of packfile (broken .idx?)"
+msgstr "сдвиг до конца файла пакета (возможно, повреждён файл .idx?)"
+
+#: sha1_file.c:2459
+#, c-format
+msgid "offset before start of pack index for %s (corrupt index?)"
+msgstr "сдвиг до начала индекса пакета для %s (повреждён индекс?)"
+
+#: sha1_file.c:2463
+#, c-format
+msgid "offset beyond end of pack index for %s (truncated index?)"
+msgstr "сдвиг за пределами индекса пакета для %s (обрезан индекс?)"
+
 #: sha1_name.c:462
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
@@ -1600,6 +1673,11 @@ msgstr "Не удалось удалить запись в .gitmodules для %s
 #: submodule.c:118
 msgid "staging updated .gitmodules failed"
 msgstr "сбой индексирования обновленного .gitmodules"
+
+#: trailer.c:237
+#, c-format
+msgid "running trailer command '%s' failed"
+msgstr "сбой при запуске команды завершителя «%s»"
 
 #: trailer.c:492 trailer.c:496 trailer.c:500 trailer.c:554 trailer.c:558
 #: trailer.c:562
@@ -2346,7 +2424,7 @@ msgstr "«%s» был удален перехватчиком applypatch-msg"
 #: builtin/am.c:548 builtin/notes.c:300
 #, c-format
 msgid "Malformed input line: '%s'."
-msgstr "Плохая строка ввода: «%s»."
+msgstr "Неправильная строка ввода: «%s»."
 
 #: builtin/am.c:585 builtin/notes.c:315
 #, c-format
@@ -4027,6 +4105,10 @@ msgstr "Не удалось создать журнал ссылок для «%s
 msgid "HEAD is now at"
 msgstr "HEAD сейчас на"
 
+#: builtin/checkout.c:665 builtin/clone.c:659
+msgid "unable to update HEAD"
+msgstr "не удалось обновить HEAD"
+
 #: builtin/checkout.c:669
 #, c-format
 msgid "Reset branch '%s'\n"
@@ -4514,6 +4596,12 @@ msgstr "использовать только IPv4 адреса"
 msgid "use IPv6 addresses only"
 msgstr "использовать только IPv6 адреса"
 
+#: builtin/clone.c:239
+msgid ""
+"No directory name could be guessed.\n"
+"Please specify a directory on the command line"
+msgstr "Имя каталога не может быть угадано.\nУкажите имя каталога с помощью параметра командной строки"
+
 #: builtin/clone.c:305
 #, c-format
 msgid "reference repository '%s' as a linked checkout is not supported yet."
@@ -4585,6 +4673,11 @@ msgstr "Проверка соединения… "
 msgid "remote did not send all necessary objects"
 msgstr "внешний репозиторий прислал не все необходимые объекты"
 
+#: builtin/clone.c:647
+#, c-format
+msgid "unable to update %s"
+msgstr "не удалось обновить %s"
+
 #: builtin/clone.c:696
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr "внешний HEAD ссылается на несуществующую ссылку, нельзя перейти на такую версию.\n"
@@ -4592,6 +4685,10 @@ msgstr "внешний HEAD ссылается на несуществующую
 #: builtin/clone.c:727
 msgid "unable to checkout working tree"
 msgstr "не удалось перейти на версию в рабочем каталоге"
+
+#: builtin/clone.c:753
+msgid "unable to write parameters to config file"
+msgstr "не удалось записать параметры в файл конфигурации"
 
 #: builtin/clone.c:816
 msgid "cannot repack to clean up"
@@ -4832,11 +4929,11 @@ msgstr "у коммита «%s» отсутствует автор в загол
 #: builtin/commit.c:582
 #, c-format
 msgid "commit '%s' has malformed author line"
-msgstr "у коммита «%s» автор в неверном формате"
+msgstr "у коммита «%s» строка автора в неправильном формате"
 
 #: builtin/commit.c:601
 msgid "malformed --author parameter"
-msgstr "параметр --author в неверном формате"
+msgstr "параметр --author в неправильном формате"
 
 #: builtin/commit.c:609
 #, c-format
@@ -6733,22 +6830,22 @@ msgstr "не удалось сохранить файл индекса"
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "плохой pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1479 builtin/index-pack.c:1663
+#: builtin/index-pack.c:1479 builtin/index-pack.c:1664
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "нет поддержки потоков, игнорирование %s"
 
-#: builtin/index-pack.c:1537
+#: builtin/index-pack.c:1538
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Не удалось открыть существующий файл пакета «%s»"
 
-#: builtin/index-pack.c:1539
+#: builtin/index-pack.c:1540
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Не удалось открыть существующий файл индекса для «%s»"
 
-#: builtin/index-pack.c:1586
+#: builtin/index-pack.c:1587
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
@@ -6757,7 +6854,7 @@ msgstr[1] "не дельты: %d объекта"
 msgstr[2] "не дельты: %d объектов"
 msgstr[3] "не дельты: %d объектов"
 
-#: builtin/index-pack.c:1593
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
@@ -6766,26 +6863,26 @@ msgstr[1] "длина цепочки = %d: %lu объекта"
 msgstr[2] "длина цепочки = %d: %lu объектов"
 msgstr[3] "длина цепочки = %d: %lu объектов"
 
-#: builtin/index-pack.c:1623
+#: builtin/index-pack.c:1624
 msgid "Cannot come back to cwd"
 msgstr "Не удалось вернуться в текущий рабочий каталог"
 
-#: builtin/index-pack.c:1675 builtin/index-pack.c:1678
-#: builtin/index-pack.c:1690 builtin/index-pack.c:1694
+#: builtin/index-pack.c:1676 builtin/index-pack.c:1679
+#: builtin/index-pack.c:1691 builtin/index-pack.c:1695
 #, c-format
 msgid "bad %s"
 msgstr "плохой %s"
 
-#: builtin/index-pack.c:1708
+#: builtin/index-pack.c:1709
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin нельзя использовать без --stdin"
 
-#: builtin/index-pack.c:1712 builtin/index-pack.c:1721
+#: builtin/index-pack.c:1713 builtin/index-pack.c:1722
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "имя пакета «%s» не оканчивается на «.pack»"
 
-#: builtin/index-pack.c:1729
+#: builtin/index-pack.c:1730
 msgid "--verify with no packfile name given"
 msgstr "--verify без указания имени файла пакета"
 
@@ -9517,7 +9614,7 @@ msgstr "плохая метка слияния в коммите «%s»"
 #: builtin/replace.c:357
 #, c-format
 msgid "malformed mergetag in commit '%s'"
-msgstr "поврежденная метка слияния в коммите «%s»"
+msgstr "повреждённая метка слияния в коммите «%s»"
 
 #: builtin/replace.c:368
 #, c-format
@@ -10759,7 +10856,7 @@ msgid ""
 "to read about a specific subcommand or concept."
 msgstr "«git help -а» и «git help -g» выводит список доступных подкоманд и\nнекоторые руководства по темам. Запустите «git help <команда>» или\n«git help <термин>», чтобы прочесть о конкретных подкоманде или теме."
 
-#: http.c:320
+#: http.c:321
 msgid "Public key pinning not supported with cURL < 7.44.0"
 msgstr "Public key pinning не поддерживается с cURL < 7.44.0"
 
@@ -10844,8 +10941,8 @@ msgid "Update remote refs along with associated objects"
 msgstr "Обновление внешних ссылок и связанных объектов"
 
 #: common-cmds.h:32
-msgid "Forward-port local commits to the updated upstream head"
-msgstr "Перемещение локальных коммитов над обновленной вышестоящей веткой"
+msgid "Reapply commits on top of another base tip"
+msgstr "Повторно применить коммиты над верхушкой другой ветки"
 
 #: common-cmds.h:33
 msgid "Reset current HEAD to the specified state"
