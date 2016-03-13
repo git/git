@@ -417,6 +417,7 @@ static int urlmatch_collect_fn(const char *var, const char *value, void *cb)
 
 static int get_urlmatch(const char *var, const char *url)
 {
+	int ret;
 	char *section_tail;
 	struct string_list_item *item;
 	struct urlmatch_config config = { STRING_LIST_INIT_DUP };
@@ -443,6 +444,8 @@ static int get_urlmatch(const char *var, const char *url)
 	git_config_with_options(urlmatch_config_entry, &config,
 				&given_config_source, respect_includes);
 
+	ret = !values.nr;
+
 	for_each_string_list_item(item, &values) {
 		struct urlmatch_current_candidate_value *matched = item->util;
 		struct strbuf buf = STRBUF_INIT;
@@ -459,7 +462,7 @@ static int get_urlmatch(const char *var, const char *url)
 	free(config.url.url);
 
 	free((void *)config.section);
-	return 0;
+	return ret;
 }
 
 static char *default_user_config(void)

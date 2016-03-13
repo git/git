@@ -1588,25 +1588,25 @@ static int run_fallback_merge_recursive(const struct am_state *state,
 					unsigned char *our_tree,
 					unsigned char *his_tree)
 {
-	struct child_process cp = CHILD_PROCESS_INIT;
+	const unsigned char *bases[1] = {orig_tree};
+	struct merge_options o;
+	struct commit *result;
+	char *his_tree_name;
 	int status;
 
-	cp.git_cmd = 1;
+	init_merge_options(&o);
 
-	argv_array_pushf(&cp.env_array, "GITHEAD_%s=%.*s",
-			 sha1_to_hex(his_tree), linelen(state->msg), state->msg);
+	o.gently = 1;
+	o.branch1 = "HEAD";
+	his_tree_name = xstrfmt("%.*s", linelen(state->msg), state->msg);
+	o.branch2 = his_tree_name;
+
 	if (state->quiet)
-		argv_array_push(&cp.env_array, "GIT_MERGE_VERBOSITY=0");
+		o.verbosity = 0;
 
-	argv_array_push(&cp.args, "merge-recursive");
-	argv_array_push(&cp.args, sha1_to_hex(orig_tree));
-	argv_array_push(&cp.args, "--");
-	argv_array_push(&cp.args, sha1_to_hex(our_tree));
-	argv_array_push(&cp.args, sha1_to_hex(his_tree));
+	status = merge_recursive_generic(&o, our_tree, his_tree, 1, bases, &result);
+	free(his_tree_name);
 
-	status = run_command(&cp) ? (-1) : 0;
-	discard_cache();
-	read_cache();
 	return status;
 }
 

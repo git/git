@@ -905,6 +905,33 @@ test_expect_success 'inside git repository but with --no-index' '
 	)
 '
 
+test_expect_success 'grep --no-index descends into repos, but not .git' '
+	rm -fr non &&
+	mkdir -p non/git &&
+	(
+		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+
+		echo magic >file &&
+		git init repo &&
+		(
+			cd repo &&
+			echo magic >file &&
+			git add file &&
+			git commit -m foo &&
+			echo magic >.git/file
+		) &&
+
+		cat >expect <<-\EOF &&
+		file
+		repo/file
+		EOF
+		git grep -l --no-index magic >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'setup double-dash tests' '
 cat >double-dash <<EOF &&
 --
