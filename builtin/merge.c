@@ -1187,6 +1187,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	else
 		head_commit = lookup_commit_or_die(head_sha1, "HEAD");
 
+	init_diff_ui_defaults();
 	git_config(git_merge_config, NULL);
 
 	if (branch_mergeoptions)

@@ -1113,8 +1113,9 @@ commit.template::
 credential.helper::
 	Specify an external helper to be called when a username or
 	password credential is needed; the helper may consult external
-	storage to avoid prompting the user for the credentials. See
-	linkgit:gitcredentials[7] for details.
+	storage to avoid prompting the user for the credentials. Note
+	that multiple helpers may be defined. See linkgit:gitcredentials[7]
+	for details.
 
 credential.useHttpPath::
 	When acquiring credentials, consider the "path" component of an http
@@ -1885,6 +1886,14 @@ interactive.singleKey::
 	linkgit:git-reset[1], and linkgit:git-stash[1]. Note that this
 	setting is silently ignored if portable keystroke input
 	is not available; requires the Perl module Term::ReadKey.
+
+interactive.diffFilter::
+	When an interactive command (such as `git add --patch`) shows
+	a colorized diff, git will pipe the diff through the shell
+	command defined by this configuration variable. The command may
+	mark up the diff further for human consumption, provided that it
+	retains a one-to-one correspondence with the lines in the
+	original diff. Defaults to disabled (no filtering).
 
 log.abbrevCommit::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
