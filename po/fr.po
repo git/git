@@ -6197,7 +6197,7 @@ msgstr "convertir en un dépôt complet"
 
 #: builtin/fetch.c:122 builtin/log.c:1236
 msgid "dir"
-msgstr "dir"
+msgstr "répertoire"
 
 #: builtin/fetch.c:123
 msgid "prepend this to submodule path output"
