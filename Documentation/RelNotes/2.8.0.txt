@@ -16,7 +16,9 @@ UI, Workflows & Features
    the source repository has packed references for a long time, and
    nobody noticed nor complained about it.
 
- * "branch --delete" has "branch -d" but "push --delete" does not.
+ * "push" learned that its "--delete" option can be shortened to
+   "-d", just like "branch --delete" and "branch -d" are the same
+   thing.
 
  * "git blame" learned to produce the progress eye-candy when it takes
    too much time before emitting the first line of the result.
@@ -131,8 +133,8 @@ UI, Workflows & Features
 
  * Across the transition at around Git version 2.0, the user used to
    get a pretty loud warning when running "git push" without setting
-   push.default configuration variable.  We no longer warn, given that
-   the transition is over long time ago.
+   push.default configuration variable.  We no longer warn because the
+   transition was completed a long time ago.
 
  * README has been renamed to README.md and its contents got tweaked
    slightly to make it easier on the eyes.
@@ -143,8 +145,8 @@ Performance, Internal Implementation, Development Support etc.
  * Add a framework to spawn a group of processes in parallel, and use
    it to run "git fetch --recurse-submodules" in parallel.
 
- * A slight update to the Makefile to mark "phoney" targets
-   as such correctly.
+ * A slight update to the Makefile to mark ".PHONY" targets as such
+   correctly.
 
  * In-core storage of the reverse index for .pack files (which lets
    you go from a pack offset to an object name) has been streamlined.
@@ -187,14 +189,8 @@ Performance, Internal Implementation, Development Support etc.
  * Some calls to strcpy(3) triggers a false warning from static
    analysers that are less intelligent than humans, and reducing the
    number of these false hits helps us notice real issues.  A few
-   calls to strcpy(3) in test-path-utils that are already safe has
-   been rewritten to avoid false wanings.
-
- * Some calls to strcpy(3) triggers a false warning from static
-   analysers that are less intelligent than humans, and reducing the
-   number of these false hits helps us notice real issues.  A few
-   calls to strcpy(3) in "git rerere" that are already safe has been
-   rewritten to avoid false wanings.
+   calls to strcpy(3) in a couple of protrams that are already safe
+   has been rewritten to avoid false warnings.
 
  * The "name_path" API was an attempt to reduce the need to construct
    the full path out of a series of path components while walking a
@@ -334,7 +330,7 @@ notes for details).
  * dirname() emulation has been added, as Msys2 lacks it.
 
  * The underlying machinery used by "ls-files -o" and other commands
-   have been taught not to create empty submodule ref cache for a
+   has been taught not to create empty submodule ref cache for a
    directory that is not a submodule.  This removes a ton of wasted
    CPU cycles.
 
