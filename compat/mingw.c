@@ -6,6 +6,8 @@
 #include "../run-command.h"
 #include "../cache.h"
 
+#define HCAST(type, handle) ((type)(intptr_t)handle)
+
 static const int delay[] = { 0, 1, 10, 20, 40 };
 
 int err_win_to_posix(DWORD winerr)
@@ -691,13 +693,13 @@ int pipe(int filedes[2])
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
-	filedes[0] = _open_osfhandle((int)h[0], O_NOINHERIT);
+	filedes[0] = _open_osfhandle(HCAST(int, h[0]), O_NOINHERIT);
 	if (filedes[0] < 0) {
 		CloseHandle(h[0]);
 		CloseHandle(h[1]);
 		return -1;
 	}
-	filedes[1] = _open_osfhandle((int)h[1], O_NOINHERIT);
+	filedes[1] = _open_osfhandle(HCAST(int, h[1]), O_NOINHERIT);
 	if (filedes[1] < 0) {
 		close(filedes[0]);
 		CloseHandle(h[1]);
@@ -1846,7 +1848,8 @@ void mingw_open_html(const char *unixpath)
 		die("cannot run browser");
 
 	printf("Launching default browser to display HTML ...\n");
-	r = (int)ShellExecute(NULL, "open", htmlpath, NULL, "\\", SW_SHOWNORMAL);
+	r = HCAST(int, ShellExecute(NULL, "open", htmlpath,
+				NULL, "\\", SW_SHOWNORMAL));
 	FreeLibrary(shell32);
 	/* see the MSDN documentation referring to the result codes here */
 	if (r <= 32) {
