@@ -4545,7 +4545,7 @@ msgstr "style"
 
 #: builtin/checkout.c:1154
 msgid "conflict style (merge or diff3)"
-msgstr "style de conflit (fusion ou diff3)"
+msgstr "style de conflit (merge (fusion) ou diff3)"
 
 #: builtin/checkout.c:1157
 msgid "do not limit pathspecs to sparse entries only"
