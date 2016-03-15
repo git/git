@@ -86,9 +86,12 @@ test_expect_success 'test left-hand-side only globbing' '
 	test_cmp expect.two output.two
 	'
 
-echo "Only one set of wildcard directories" \
-     "(e.g. '*' or '*/*/*') is supported: 'branches/*/t/*'" > expect.three
-echo "" >> expect.three
+test_expect_success 'prepare test disallow multi-globs' "
+cat >expect.three <<EOF
+Only one set of wildcards (e.g. '*' or '*/*/*') is supported: branches/*/t/*
+
+EOF
+	"
 
 test_expect_success 'test disallow multi-globs' '
 	git config --add svn-remote.three.url "$svnrepo" &&

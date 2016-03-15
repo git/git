@@ -135,9 +135,12 @@ test_expect_success 'test another branch' '
 	test_cmp expect.four output.four
 	'
 
-echo "Only one set of wildcard directories" \
-     "(e.g. '*' or '*/*/*') is supported: 'branches/*/t/*'" > expect.three
-echo "" >> expect.three
+test_expect_success 'prepare test disallow multiple globs' "
+cat >expect.three <<EOF
+Only one set of wildcards (e.g. '*' or '*/*/*') is supported: branches/*/t/*
+
+EOF
+	"
 
 test_expect_success 'test disallow multiple globs' '
 	git config --add svn-remote.three.url "$svnrepo" &&
