@@ -132,6 +132,8 @@ static void credential_getpass(struct credential *c)
 {
 	if (!c->username)
 		c->username = credential_ask_one("Username", c,
+						 (getenv("GIT_ASKPASS") ?
+						  PROMPT_ASKPASS : 0) |
 						 PROMPT_ECHO);
 	if (!c->password)
 		c->password = credential_ask_one("Password", c,
