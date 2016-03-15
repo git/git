@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-03-12 22:05+0800\n"
+"POT-Creation-Date: 2016-03-16 00:16+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2209,6 +2209,10 @@ msgstr ""
 
 #: wt-status.c:1677 wt-status.c:1685
 msgid "behind "
+msgstr ""
+
+#: wt-status.c:1680 wt-status.c:1683
+msgid "ahead "
 msgstr ""
 
 #: compat/precompose_utf8.c:57 builtin/clone.c:413
