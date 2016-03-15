@@ -2945,7 +2945,7 @@ msgstr "utiliser l'horodatage actuel pour la date d'auteur"
 #: builtin/am.c:2321 builtin/commit.c:1593 builtin/merge.c:225
 #: builtin/pull.c:159 builtin/revert.c:92 builtin/tag.c:355
 msgid "key-id"
-msgstr "id de clé"
+msgstr "id-clé"
 
 #: builtin/am.c:2322
 msgid "GPG-sign commits"
