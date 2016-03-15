@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Russian Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-03-12 22:05+0800\n"
-"PO-Revision-Date: 2016-03-12 23:44+0000\n"
+"POT-Creation-Date: 2016-03-16 00:16+0800\n"
+"PO-Revision-Date: 2016-03-15 18:54+0000\n"
 "Last-Translator: Dimitriy Ryazantcev <DJm00n@mail.ru>\n"
 "Language-Team: Russian (http://www.transifex.com/djm00n/git-po-ru/language/ru/)\n"
 "MIME-Version: 1.0\n"
@@ -2251,6 +2251,10 @@ msgstr "исчез"
 #: wt-status.c:1677 wt-status.c:1685
 msgid "behind "
 msgstr "позади"
+
+#: wt-status.c:1680 wt-status.c:1683
+msgid "ahead "
+msgstr "впереди "
 
 #: compat/precompose_utf8.c:57 builtin/clone.c:413
 #, c-format
