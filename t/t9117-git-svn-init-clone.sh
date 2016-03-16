@@ -119,7 +119,7 @@ test_expect_success 'clone with -s/-T/-b/-t and --prefix "" still works' '
 	rm -f warning
 	'
 
-test_expect_failure 'init with -T as a full url works' '
+test_expect_success 'init with -T as a full url works' '
 	test ! -d project &&
 	git svn init -T "$svnrepo"/project/trunk project &&
 	rm -rf project
