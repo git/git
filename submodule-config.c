@@ -392,8 +392,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		struct hashmap_iter iter;
 		struct submodule_entry *entry;
 
-		hashmap_iter_init(&cache->for_name, &iter);
-		entry = hashmap_iter_next(&iter);
+		entry = hashmap_iter_first(&cache->for_name, &iter);
 		if (!entry)
 			return NULL;
 		return entry->config;
