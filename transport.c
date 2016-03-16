@@ -678,8 +678,9 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		|| starts_with(url, "file://")
 		|| starts_with(url, "git://")
 		|| starts_with(url, "ssh://")
-		|| starts_with(url, "git+ssh://")
-		|| starts_with(url, "ssh+git://")) {
+		|| starts_with(url, "git+ssh://") /* deprecated - do not use */
+		|| starts_with(url, "ssh+git://") /* deprecated - do not use */
+		) {
 		/*
 		 * These are builtin smart transports; "allowed" transports
 		 * will be checked individually in git_connect.

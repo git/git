@@ -1129,7 +1129,7 @@ of clones and fetches.
 	    connection (or proxy, if configured)
 
 	  - `ssh`: git over ssh (including `host:path` syntax,
-	    `git+ssh://`, etc).
+	    `ssh://`, etc).
 
 	  - `http`: git over http, both "smart http" and "dumb http".
 	    Note that this does _not_ include `https`; if you want both,
