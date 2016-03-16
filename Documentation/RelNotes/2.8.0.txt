@@ -236,6 +236,23 @@ Performance, Internal Implementation, Development Support etc.
  * Out of maintenance gcc on OSX 10.6 fails to compile the code in
    'master'; work it around by using clang by default on the platform.
 
+ * The "name_path" API was an attempt to reduce the need to construct
+   the full path out of a series of path components while walking a
+   tree hierarchy, but over time made less efficient because the path
+   needs to be flattened, e.g. to be compared with another path that
+   is already flat, in many cases.  The API has been removed and its
+   users have been rewritten to simplify the overall code complexity.
+   This incidentally also closes some heap-corruption holes.
+
+ * Recent versions of GNU grep is pickier than before to decide if a
+   file is "binary" and refuse to give line-oriented hits when we
+   expect it to, unless explicitly told with "-a" option.  As our
+   scripted Porcelains use sane_grep wrapper for line-oriented data,
+   even when the line may contain non-ASCII payload we took from
+   end-user data, use "grep -a" to implement sane_grep wrapper when
+   using an implementation of "grep" that takes the "-a" option.
+
+
 
 Also contains various documentation updates and code clean-ups.
 
