@@ -42,6 +42,11 @@ people using 80-column terminals.
 	verbatim; this means that invalid sequences in the original
 	commit may be copied to the output.
 
+--expand-tabs::
+	Perform a tab expansion (replace each tab with enough spaces
+	to fill to the next display column that is multiple of 8)
+	in the log message before showing it in the output.
+
 ifndef::git-rev-list[]
 --notes[=<ref>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
