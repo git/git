@@ -73,7 +73,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-03-12 22:05+0800\n"
+"POT-Creation-Date: 2016-03-16 00:16+0800\n"
 "PO-Revision-Date: 2016-03-14 20:26+0100\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
@@ -1752,7 +1752,8 @@ msgstr "offset avant le début de l'index de paquet pour %s (index corrompu ?)"
 #: sha1_file.c:2463
 #, c-format
 msgid "offset beyond end of pack index for %s (truncated index?)"
-msgstr "offset au delà de la fin de l'index de paquet pour %s (index tronqué ?)"
+msgstr ""
+"offset au delà de la fin de l'index de paquet pour %s (index tronqué ?)"
 
 #: sha1_name.c:462
 msgid ""
@@ -2412,6 +2413,10 @@ msgstr "disparue"
 #: wt-status.c:1677 wt-status.c:1685
 msgid "behind "
 msgstr "derrière "
+
+#: wt-status.c:1680 wt-status.c:1683
+msgid "ahead "
+msgstr "devant "
 
 #: compat/precompose_utf8.c:57 builtin/clone.c:413
 #, c-format
@@ -12806,9 +12811,6 @@ msgstr "Synchronisation de l'URL sous-module pour '$displaypath'"
 
 #~ msgid "bug"
 #~ msgstr "bogue"
-
-#~ msgid "ahead "
-#~ msgstr "devant "
 
 #~ msgid ", behind "
 #~ msgstr ", derrière "
