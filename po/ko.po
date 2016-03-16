@@ -57,8 +57,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-03-12 22:05+0800\n"
-"PO-Revision-Date: 2016-03-13 02:29+0900\n"
+"POT-Creation-Date: 2016-03-16 00:16+0800\n"
+"PO-Revision-Date: 2016-03-16 10:30+0900\n"
 "Last-Translator: Changwoo Ryu <cwryu@debian.org>\n"
 "Language-Team: Git Korean translation <http://github.com/changwoo/git-l10n-"
 "ko>\n"
@@ -2330,7 +2330,11 @@ msgstr "없음"
 
 #: wt-status.c:1677 wt-status.c:1685
 msgid "behind "
-msgstr "뒤에: "
+msgstr "다음 뒤에: "
+
+#: wt-status.c:1680 wt-status.c:1683
+msgid "ahead "
+msgstr "다음 앞에: "
 
 #: compat/precompose_utf8.c:57 builtin/clone.c:413
 #, c-format
