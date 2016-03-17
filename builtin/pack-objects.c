@@ -2284,21 +2284,11 @@ static void show_commit(struct commit *commit, void *data)
 		index_commit_for_bitmap(commit);
 }
 
-static void show_object(struct object *obj,
-			const struct name_path *path, const char *last,
-			void *data)
+static void show_object(struct object *obj, const char *name, void *data)
 {
-	char *name = path_name(path, last);
-
 	add_preferred_base_object(name);
 	add_object_entry(obj->sha1, obj->type, name, 0);
 	obj->flags |= OBJECT_ADDED;
-
-	/*
-	 * We will have generated the hash from the name,
-	 * but not saved a pointer to it - we can free it
-	 */
-	free((char *)name);
 }
 
 static void show_edge(struct commit *commit)
@@ -2480,8 +2470,7 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 }
 
 static void record_recent_object(struct object *obj,
-				 const struct name_path *path,
-				 const char *last,
+				 const char *name,
 				 void *data)
 {
 	sha1_array_append(&recent_objects, obj->sha1);
