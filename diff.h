@@ -221,8 +221,8 @@ struct combine_diff_path {
 	} parent[FLEX_ARRAY];
 };
 #define combine_diff_path_size(n, l) \
-	(sizeof(struct combine_diff_path) + \
-	 sizeof(struct combine_diff_parent) * (n) + (l) + 1)
+	st_add4(sizeof(struct combine_diff_path), (l), 1, \
+		st_mult(sizeof(struct combine_diff_parent), (n)))
 
 extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			      int dense, struct rev_info *);

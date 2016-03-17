@@ -52,9 +52,10 @@ Documentation for older releases are available here:
   link:RelNotes/2.5.1.txt[2.5.1],
   link:RelNotes/2.5.0.txt[2.5].
 
-* link:v2.4.10/git.html[documentation for release 2.4.10]
+* link:v2.4.11/git.html[documentation for release 2.4.11]
 
 * release notes for
+  link:RelNotes/2.4.11.txt[2.4.11],
   link:RelNotes/2.4.10.txt[2.4.10],
   link:RelNotes/2.4.9.txt[2.4.9],
   link:RelNotes/2.4.8.txt[2.4.8],
