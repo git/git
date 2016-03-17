@@ -153,8 +153,9 @@ msgid ""
 msgstr ""
 "\n"
 "Nachdem Sie die Fehlerursache behoben haben, können Sie\n"
-"die Tracking-Informationen mit\"git branch --set-upstream-to=%s%s%s\"erneut "
-"setzen."
+"die Tracking-Informationen mit\n"
+"\"git branch --set-upstream-to=%s%s%s\"\n"
+"erneut setzen."
 
 #: branch.c:67
 #, c-format
