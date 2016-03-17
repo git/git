@@ -771,7 +771,6 @@ test_expect_success 'rebase-i history with funny messages' '
 	test_cmp expect actual
 '
 
-
 test_expect_success 'prepare for rebase -i --exec' '
 	git checkout master &&
 	git checkout -b execute &&
@@ -779,7 +778,6 @@ test_expect_success 'prepare for rebase -i --exec' '
 	test_commit two_exec main.txt two_exec &&
 	test_commit three_exec main.txt three_exec
 '
-
 
 test_expect_success 'running "git rebase -i --exec git show HEAD"' '
 	set_fake_editor &&
@@ -793,7 +791,6 @@ test_expect_success 'running "git rebase -i --exec git show HEAD"' '
 	test_cmp expected actual
 '
 
-
 test_expect_success 'running "git rebase --exec git show HEAD -i"' '
 	git reset --hard execute &&
 	set_fake_editor &&
@@ -806,7 +803,6 @@ test_expect_success 'running "git rebase --exec git show HEAD -i"' '
 	sed -e "1,9d" expect >expected &&
 	test_cmp expected actual
 '
-
 
 test_expect_success 'running "git rebase -ix git show HEAD"' '
 	git reset --hard execute &&
@@ -835,7 +831,6 @@ test_expect_success 'rebase -ix with several <CMD>' '
 	test_cmp expected actual
 '
 
-
 test_expect_success 'rebase -ix with several instances of --exec' '
 	git reset --hard execute &&
 	set_fake_editor &&
@@ -849,7 +844,6 @@ test_expect_success 'rebase -ix with several instances of --exec' '
 	sed -e "1,11d" expect >expected &&
 	test_cmp expected actual
 '
-
 
 test_expect_success 'rebase -ix with --autosquash' '
 	git reset --hard execute &&
