@@ -876,15 +876,14 @@ test_expect_success 'rebase -ix with --autosquash' '
 	test_cmp expected actual
 '
 
-
-test_expect_success 'rebase --exec without -i shows error message' '
+test_expect_success 'rebase --exec works without -i ' '
 	git reset --hard execute &&
-	set_fake_editor &&
-	test_must_fail git rebase --exec "git show HEAD" HEAD~2 2>actual &&
-	echo "The --exec option must be used with the --interactive option" >expected &&
-	test_i18ncmp expected actual
+	rm -rf exec_output &&
+	EDITOR="echo >invoked_editor" git rebase --exec "echo a line >>exec_output"  HEAD~2 2>actual &&
+	test_i18ngrep  "Successfully rebased and updated" actual &&
+	test_line_count = 2 exec_output &&
+	test_path_is_missing invoked_editor
 '
-
 
 test_expect_success 'rebase -i --exec without <CMD>' '
 	git reset --hard execute &&
