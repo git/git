@@ -148,43 +148,7 @@ excluded, the following conditions must be met:
    be in the same .gitignore file.
 
  - The directory part in the re-include rules must be literal (i.e. no
-   wildcards and has to start with a `/`).
-
-A re-inclusion of a directory makes all files in the directory
-unignored.  For example, suppose you have files `.gitignore`,
-`dir/file1`, `dir/file2`, and `dir/file3`, and have the following in
-your `.gitignore`:
-
-----------------
-# .gitignore is not mentioned in .gitignore
-*
-!/dir
-# dir/file1 is not mentioned in .gitignore
-dir/file2
-!dir/file3
-----------------
-
-Then:
-
- - `.gitignore` gets ignored, because it matches the `*` at the top
-   level;
-
- - `dir/file1` does not get ignored, because `/dir` marks everything
-   underneath `dir/` directory to be 're-included' unless otherwise
-   specified;
-
- - `dir/file2` gets ignored, because `dir/file2` matches it.
-
- - `dir/file3` does not get ignored, because `!dir/file3` matches it.
-   Note that the entry `!dir/file3` is redundant because everything
-   underneath `dir/` is marked to be 're-included' already.
-
-Some earlier versions of Git treated `!/dir` above differently in
-that it did not cause the paths under it unignored (but merely told
-Git that patterns that begin with dir/ should not be ignored), but
-this has been corrected to be consistent with `/dir` that says "the
-directory `dir/` and everything below are ignored."
-
+   wildcards)
 
 EXAMPLES
 --------
