@@ -86,6 +86,7 @@ static char *opt_verify_signatures;
 static struct argv_array opt_strategies = ARGV_ARRAY_INIT;
 static struct argv_array opt_strategy_opts = ARGV_ARRAY_INIT;
 static char *opt_gpg_sign;
+static int opt_allow_unrelated_histories;
 
 /* Options passed to git-fetch */
 static char *opt_all;
@@ -155,6 +156,9 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU('S', "gpg-sign", &opt_gpg_sign, N_("key-id"),
 		N_("GPG sign commit"),
 		PARSE_OPT_OPTARG),
+	OPT_SET_INT(0, "allow-unrelated-histories",
+		    &opt_allow_unrelated_histories,
+		    N_("allow merging unrelated histories"), 1),
 
 	/* Options passed to git-fetch */
 	OPT_GROUP(N_("Options related to fetching")),
@@ -603,6 +607,8 @@ static int run_merge(void)
 	argv_array_pushv(&args, opt_strategy_opts.argv);
 	if (opt_gpg_sign)
 		argv_array_push(&args, opt_gpg_sign);
+	if (opt_allow_unrelated_histories > 0)
+		argv_array_push(&args, "--allow-unrelated-histories");
 
 	argv_array_push(&args, "FETCH_HEAD");
 	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
