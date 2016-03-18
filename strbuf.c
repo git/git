@@ -364,19 +364,19 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 	strbuf_grow(sb, hint ? hint : 8192);
 	for (;;) {
-		ssize_t cnt;
+		ssize_t want = sb->alloc - sb->len - 1;
+		ssize_t got = read_in_full(fd, sb->buf + sb->len, want);
 
-		cnt = xread(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
-		if (cnt < 0) {
+		if (got < 0) {
 			if (oldalloc == 0)
 				strbuf_release(sb);
 			else
 				strbuf_setlen(sb, oldlen);
 			return -1;
 		}
-		if (!cnt)
+		sb->len += got;
+		if (got < want)
 			break;
-		sb->len += cnt;
 		strbuf_grow(sb, 8192);
 	}
 
@@ -526,9 +526,10 @@ int strbuf_getwholeline_fd(struct strbuf *sb, int fd, int term)
 	return 0;
 }
 
-int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
+ssize_t strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
 {
-	int fd, len;
+	int fd;
+	ssize_t len;
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
@@ -708,4 +709,37 @@ char *xstrfmt(const char *fmt, ...)
 	va_end(ap);
 
 	return ret;
+}
+
+void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm)
+{
+	size_t hint = 128;
+	size_t len;
+
+	if (!*fmt)
+		return;
+
+	strbuf_grow(sb, hint);
+	len = strftime(sb->buf + sb->len, sb->alloc - sb->len, fmt, tm);
+
+	if (!len) {
+		/*
+		 * strftime reports "0" if it could not fit the result in the buffer.
+		 * Unfortunately, it also reports "0" if the requested time string
+		 * takes 0 bytes. So our strategy is to munge the format so that the
+		 * output contains at least one character, and then drop the extra
+		 * character before returning.
+		 */
+		struct strbuf munged_fmt = STRBUF_INIT;
+		strbuf_addf(&munged_fmt, "%s ", fmt);
+		while (!len) {
+			hint *= 2;
+			strbuf_grow(sb, hint);
+			len = strftime(sb->buf + sb->len, sb->alloc - sb->len,
+				       munged_fmt.buf, tm);
+		}
+		strbuf_release(&munged_fmt);
+		len--; /* drop munged space */
+	}
+	strbuf_setlen(sb, sb->len + len);
 }

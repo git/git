@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 #include "remote.h"
 #include "strbuf.h"
 #include "url.h"

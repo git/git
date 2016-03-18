@@ -95,6 +95,21 @@ test_expect_success 'am --abort will keep the local commits intact' '
 	test_cmp expect actual
 '
 
+test_expect_success 'am --abort will keep dirty index intact' '
+	git reset --hard initial &&
+	echo dirtyfile >dirtyfile &&
+	cp dirtyfile dirtyfile.expected &&
+	git add dirtyfile &&
+	test_must_fail git am 0001-*.patch &&
+	test_cmp_rev initial HEAD &&
+	test_path_is_file dirtyfile &&
+	test_cmp dirtyfile.expected dirtyfile &&
+	git am --abort &&
+	test_cmp_rev initial HEAD &&
+	test_path_is_file dirtyfile &&
+	test_cmp dirtyfile.expected dirtyfile
+'
+
 test_expect_success 'am -3 stops on conflict on unborn branch' '
 	git checkout -f --orphan orphan &&
 	git reset &&
@@ -151,6 +166,30 @@ test_expect_success 'am --abort on unborn branch will keep local commits intact'
 	git am --abort &&
 	git rev-parse HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'am --skip leaves index stat info alone' '
+	git checkout -f --orphan skip-stat-info &&
+	git reset &&
+	test_commit skip-should-be-untouched &&
+	test-chmtime =0 skip-should-be-untouched.t &&
+	git update-index --refresh &&
+	git diff-files --exit-code --quiet &&
+	test_must_fail git am 0001-*.patch &&
+	git am --skip &&
+	git diff-files --exit-code --quiet
+'
+
+test_expect_success 'am --abort leaves index stat info alone' '
+	git checkout -f --orphan abort-stat-info &&
+	git reset &&
+	test_commit abort-should-be-untouched &&
+	test-chmtime =0 abort-should-be-untouched.t &&
+	git update-index --refresh &&
+	git diff-files --exit-code --quiet &&
+	test_must_fail git am 0001-*.patch &&
+	git am --abort &&
+	git diff-files --exit-code --quiet
 '
 
 test_done

@@ -200,7 +200,6 @@ static int execv_shell_cmd(const char **argv)
 #endif
 
 #ifndef GIT_WINDOWS_NATIVE
-static int child_err = 2;
 static int child_notifier = -1;
 
 static void notify_parent(void)
@@ -211,17 +210,6 @@ static void notify_parent(void)
 	 * otherwise, finish_command will still report the error.
 	 */
 	xwrite(child_notifier, "", 1);
-}
-
-static NORETURN void die_child(const char *err, va_list params)
-{
-	vwritef(child_err, "fatal: ", err, params);
-	exit(128);
-}
-
-static void error_child(const char *err, va_list params)
-{
-	vwritef(child_err, "error: ", err, params);
 }
 #endif
 
@@ -362,11 +350,10 @@ fail_pipe:
 		 * in subsequent call paths use the parent's stderr.
 		 */
 		if (cmd->no_stderr || need_err) {
-			child_err = dup(2);
+			int child_err = dup(2);
 			set_cloexec(child_err);
+			set_error_handle(fdopen(child_err, "w"));
 		}
-		set_die_routine(die_child);
-		set_error_routine(error_child);
 
 		close(notify_pipe[0]);
 		set_cloexec(notify_pipe[1]);
@@ -797,11 +784,13 @@ int finish_async(struct async *async)
 
 const char *find_hook(const char *name)
 {
-	const char *path = git_path("hooks/%s", name);
-	if (access(path, X_OK) < 0)
-		path = NULL;
+	static struct strbuf path = STRBUF_INIT;
 
-	return path;
+	strbuf_reset(&path);
+	strbuf_git_path(&path, "hooks/%s", name);
+	if (access(path.buf, X_OK) < 0)
+		return NULL;
+	return path.buf;
 }
 
 int run_hook_ve(const char *const *env, const char *name, va_list args)

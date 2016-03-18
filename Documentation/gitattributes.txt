@@ -527,6 +527,8 @@ patterns are available:
 
 - `fortran` suitable for source code in the Fortran language.
 
+- `fountain` suitable for Fountain documents.
+
 - `html` suitable for HTML/XHTML documents.
 
 - `java` suitable for source code in the Java language.

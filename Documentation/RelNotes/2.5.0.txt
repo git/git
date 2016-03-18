@@ -46,8 +46,8 @@ UI, Workflows & Features
    rely on symbolic links and make sharing of objects and refs safer
    by making the borrowee and borrowers aware of each other.
 
-   Consider this as still an experimental feature; the UI will likely
-   to change.
+   Consider this as still an experimental feature; its UI is still
+   likely to change.
 
  * Tweak the sample "store" backend of the credential helper to honor
    XDG configuration file locations when specified.
@@ -126,8 +126,6 @@ UI, Workflows & Features
 
  * "git send-email" learned the alias file format used by the sendmail
    program (in a simplified form; we obviously do not feed pipes).
-
- * "git am" learned am.threeWay configuration variable.
 
  * Traditionally, external low-level 3-way merge drivers are expected
    to produce their results based solely on the contents of the three
@@ -210,6 +208,8 @@ Performance, Internal Implementation, Development Support etc.
  * "git pull" has become more aware of the options meant for
    underlying "git fetch" and then learned to use parse-options
    parser.
+
+ * Clarify in the Makefile a guideline to decide use of USE_NSEC.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -472,6 +472,60 @@ notes for details).
    support the capability.
    (merge eb86a50 me/fetch-into-shallow-safety later to maint).
 
+ * "git rebase" did not exit with failure when format-patch it invoked
+   failed for whatever reason.
+   (merge 60d708b cb/rebase-am-exit-code later to maint).
+
+ * Fix a small bug in our use of umask() return value.
+   (merge 3096b2e jk/fix-refresh-utime later to maint).
+
+ * An ancient test framework enhancement to allow color was not
+   entirely correct; this makes it work even when tput needs to read
+   from the ~/.terminfo under the user's real HOME directory.
+   (merge d5c1b7c rh/test-color-avoid-terminfo-in-original-home later to maint).
+
+ * A minor bugfix when pack bitmap is used with "rev-list --count".
+   (merge c8a70d3 jk/rev-list-no-bitmap-while-pruning later to maint).
+
+ * "git config" failed to update the configuration file when the
+   underlying filesystem is incapable of renaming a file that is still
+   open.
+   (merge 7a64592 kb/config-unmap-before-renaming later to maint).
+
+ * Avoid possible ssize_t to int truncation.
+   (merge 6c8afe4 mh/strbuf-read-file-returns-ssize-t later to maint).
+
+ * When you say "!<ENTER>" while running say "git log", you'd confuse
+   yourself in the resulting shell, that may look as if you took
+   control back to the original shell you spawned "git log" from but
+   that isn't what is happening.  To that new shell, we leaked
+   GIT_PAGER_IN_USE environment variable that was meant as a local
+   communication between the original "Git" and subprocesses that was
+   spawned by it after we launched the pager, which caused many
+   "interesting" things to happen, e.g. "git diff | cat" still paints
+   its output in color by default.
+
+   Stop leaking that environment variable to the pager's half of the
+   fork; we only need it on "Git" side when we spawn the pager.
+   (merge 124b519 jc/unexport-git-pager-in-use-in-pager later to maint).
+
+ * Abandoning an already applied change in "git rebase -i" with
+   "--continue" left CHERRY_PICK_HEAD and confused later steps.
+   (merge 0e0aff4 js/rebase-i-clean-up-upon-continue-to-skip later to maint).
+
+ * We used to ask libCURL to use the most secure authentication method
+   available when talking to an HTTP proxy only when we were told to
+   talk to one via configuration variables.  We now ask libCURL to
+   always use the most secure authentication method, because the user
+   can tell libCURL to use an HTTP proxy via an environment variable
+   without using configuration variables.
+   (merge 5841520 et/http-proxyauth later to maint).
+
+ * A fix to a minor regression to "git fsck" in v2.2 era that started
+   complaining about a body-less tag object when it lacks a separator
+   empty line after its header to separate it with a non-existent body.
+   (merge 84d18c0 jc/fsck-retire-require-eoh later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
@@ -500,3 +554,10 @@ notes for details).
    (merge 34b935c es/osx-header-pollutes-mask-macro later to maint).
    (merge ab7fade jc/prompt-document-ps1-state-separator later to maint).
    (merge 25f600e mm/describe-doc later to maint).
+   (merge 83fe167 mm/branch-doc-updates later to maint).
+   (merge 75d2e5a ls/hint-rev-list-count later to maint).
+   (merge edc8f71 cb/subtree-tests-update later to maint).
+   (merge 5330e6e sb/p5310-and-chain later to maint).
+   (merge c4ac525 tb/checkout-doc later to maint).
+   (merge e479c5f jk/pretty-encoding-doc later to maint).
+   (merge 7e837c6 ss/clone-guess-dir-name-simplify later to maint).

@@ -56,7 +56,7 @@ for repack in '' true; do
 
 	test_expect_success "disable reflogs ($title)" '
 		git config core.logallrefupdates false &&
-		rm -rf .git/logs
+		git reflog expire --expire=all --all
 	'
 
 	test_expect_success "setup basic history ($title)" '

@@ -251,4 +251,66 @@ test_expect_success 'rebase --merge (L/U)' '
 	check_encoding 2 8859
 '
 
+test_expect_success 'am (U/U)' '
+	# Apply UTF-8 patches with UTF-8 commitencoding
+	git config i18n.commitencoding UTF-8 &&
+	. "$TEST_DIRECTORY"/t3901-utf8.txt &&
+
+	git reset --hard master &&
+	git am out-u1 out-u2 &&
+
+	check_encoding 2
+'
+
+test_expect_success !MINGW 'am (L/L)' '
+	# Apply ISO-8859-1 patches with ISO-8859-1 commitencoding
+	git config i18n.commitencoding ISO8859-1 &&
+	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
+
+	git reset --hard master &&
+	git am out-l1 out-l2 &&
+
+	check_encoding 2 8859
+'
+
+test_expect_success 'am (U/L)' '
+	# Apply ISO-8859-1 patches with UTF-8 commitencoding
+	git config i18n.commitencoding UTF-8 &&
+	. "$TEST_DIRECTORY"/t3901-utf8.txt &&
+	git reset --hard master &&
+
+	# am specifies --utf8 by default.
+	git am out-l1 out-l2 &&
+
+	check_encoding 2
+'
+
+test_expect_success 'am --no-utf8 (U/L)' '
+	# Apply ISO-8859-1 patches with UTF-8 commitencoding
+	git config i18n.commitencoding UTF-8 &&
+	. "$TEST_DIRECTORY"/t3901-utf8.txt &&
+
+	git reset --hard master &&
+	git am --no-utf8 out-l1 out-l2 2>err &&
+
+	# commit-tree will warn that the commit message does not contain valid UTF-8
+	# as mailinfo did not convert it
+	grep "did not conform" err &&
+
+	check_encoding 2
+'
+
+test_expect_success !MINGW 'am (L/U)' '
+	# Apply UTF-8 patches with ISO-8859-1 commitencoding
+	git config i18n.commitencoding ISO8859-1 &&
+	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
+
+	git reset --hard master &&
+	# mailinfo will re-code the commit message to the charset specified by
+	# i18n.commitencoding
+	git am out-u1 out-u2 &&
+
+	check_encoding 2 8859
+'
+
 test_done

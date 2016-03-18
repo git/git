@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "refs.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"

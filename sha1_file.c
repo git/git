@@ -404,13 +404,46 @@ void read_info_alternates(const char * relative_base, int depth)
 void add_to_alternates_file(const char *reference)
 {
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int fd = hold_lock_file_for_append(lock, git_path("objects/info/alternates"), LOCK_DIE_ON_ERROR);
-	const char *alt = mkpath("%s\n", reference);
-	write_or_die(fd, alt, strlen(alt));
-	if (commit_lock_file(lock))
-		die("could not close alternates file");
-	if (alt_odb_tail)
-		link_alt_odb_entries(alt, strlen(alt), '\n', NULL, 0);
+	char *alts = git_pathdup("objects/info/alternates");
+	FILE *in, *out;
+
+	hold_lock_file_for_update(lock, alts, LOCK_DIE_ON_ERROR);
+	out = fdopen_lock_file(lock, "w");
+	if (!out)
+		die_errno("unable to fdopen alternates lockfile");
+
+	in = fopen(alts, "r");
+	if (in) {
+		struct strbuf line = STRBUF_INIT;
+		int found = 0;
+
+		while (strbuf_getline(&line, in, '\n') != EOF) {
+			if (!strcmp(reference, line.buf)) {
+				found = 1;
+				break;
+			}
+			fprintf_or_die(out, "%s\n", line.buf);
+		}
+
+		strbuf_release(&line);
+		fclose(in);
+
+		if (found) {
+			rollback_lock_file(lock);
+			lock = NULL;
+		}
+	}
+	else if (errno != ENOENT)
+		die_errno("unable to read alternates file");
+
+	if (lock) {
+		fprintf_or_die(out, "%s\n", reference);
+		if (commit_lock_file(lock))
+			die_errno("unable to move new alternates file into place");
+		if (alt_odb_tail)
+			link_alt_odb_entries(reference, strlen(reference), '\n', NULL, 0);
+	}
+	free(alts);
 }
 
 int foreach_alt_odb(alt_odb_fn fn, void *cb)
@@ -443,6 +476,7 @@ void prepare_alt_odb(void)
 	read_info_alternates(get_object_directory(), 0);
 }
 
+/* Returns 1 if we have successfully freshened the file, 0 otherwise. */
 static int freshen_file(const char *fn)
 {
 	struct utimbuf t;
@@ -450,11 +484,18 @@ static int freshen_file(const char *fn)
 	return !utime(fn, &t);
 }
 
+/*
+ * All of the check_and_freshen functions return 1 if the file exists and was
+ * freshened (if freshening was requested), 0 otherwise. If they return
+ * 0, you should not assume that it is safe to skip a write of the object (it
+ * either does not exist on disk, or has a stale mtime and may be subject to
+ * pruning).
+ */
 static int check_and_freshen_file(const char *fn, int freshen)
 {
 	if (access(fn, F_OK))
 		return 0;
-	if (freshen && freshen_file(fn))
+	if (freshen && !freshen_file(fn))
 		return 0;
 	return 1;
 }
@@ -1453,7 +1494,10 @@ int git_open_noatime(const char *name)
 	static int sha1_file_open_flag = O_NOATIME;
 
 	for (;;) {
-		int fd = open(name, O_RDONLY | sha1_file_open_flag);
+		int fd;
+
+		errno = 0;
+		fd = open(name, O_RDONLY | sha1_file_open_flag);
 		if (fd >= 0)
 			return fd;
 
@@ -2900,11 +2944,8 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
 
 /*
  * Move the just written object into its final resting place.
- * NEEDSWORK: this should be renamed to finalize_temp_file() as
- * "moving" is only a part of what it does, when no patch between
- * master to pu changes the call sites of this function.
  */
-int move_temp_to_file(const char *tmpfile, const char *filename)
+int finalize_object_file(const char *tmpfile, const char *filename)
 {
 	int ret = 0;
 
@@ -3077,7 +3118,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 				tmp_file, strerror(errno));
 	}
 
-	return move_temp_to_file(tmp_file, filename);
+	return finalize_object_file(tmp_file, filename);
 }
 
 static int freshen_loose_object(const unsigned char *sha1)
@@ -3575,14 +3616,19 @@ int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
 {
 	struct packed_git *p;
 	int r = 0;
+	int pack_errors = 0;
 
 	prepare_packed_git();
 	for (p = packed_git; p; p = p->next) {
 		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
 			continue;
+		if (open_pack_index(p)) {
+			pack_errors = 1;
+			continue;
+		}
 		r = for_each_object_in_pack(p, cb, data);
 		if (r)
 			break;
 	}
-	return r;
+	return r ? r : pack_errors;
 }

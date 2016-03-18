@@ -1,6 +1,9 @@
 #ifndef GPG_INTERFACE_H
 #define GPG_INTERFACE_H
 
+#define GPG_VERIFY_VERBOSE	1
+#define GPG_VERIFY_RAW		2
+
 struct signature_check {
 	char *payload;
 	char *gpg_output;
@@ -27,5 +30,8 @@ extern int verify_signed_buffer(const char *payload, size_t payload_size, const 
 extern int git_gpg_config(const char *, const char *, void *);
 extern void set_signing_key(const char *);
 extern const char *get_signing_key(void);
+extern int check_signature(const char *payload, size_t plen,
+	const char *signature, size_t slen, struct signature_check *sigc);
+void print_signature_buffer(const struct signature_check *sigc, unsigned flags);
 
 #endif

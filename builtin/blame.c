@@ -6,6 +6,7 @@
  */
 
 #include "cache.h"
+#include "refs.h"
 #include "builtin.h"
 #include "blob.h"
 #include "commit.h"
@@ -50,7 +51,7 @@ static int xdl_opts;
 static int abbrev = -1;
 static int no_whole_file_rename;
 
-static enum date_mode blame_date_mode = DATE_ISO8601;
+static struct date_mode blame_date_mode = { DATE_ISO8601 };
 static size_t blame_date_width;
 
 static struct string_list mailmap;
@@ -1827,7 +1828,7 @@ static const char *format_time(unsigned long time, const char *tz_str,
 		size_t time_width;
 		int tz;
 		tz = atoi(tz_str);
-		time_str = show_date(time, tz, blame_date_mode);
+		time_str = show_date(time, tz, &blame_date_mode);
 		strbuf_addstr(&time_buf, time_str);
 		/*
 		 * Add space paddings to time_buf to display a fixed width
@@ -2187,7 +2188,7 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "blame.date")) {
 		if (!value)
 			return config_error_nonbool(var);
-		blame_date_mode = parse_date_format(value);
+		parse_date_format(value, &blame_date_mode);
 		return 0;
 	}
 
@@ -2226,20 +2227,19 @@ static struct commit_list **append_parent(struct commit_list **tail, const unsig
 static void append_merge_parents(struct commit_list **tail)
 {
 	int merge_head;
-	const char *merge_head_file = git_path("MERGE_HEAD");
 	struct strbuf line = STRBUF_INIT;
 
-	merge_head = open(merge_head_file, O_RDONLY);
+	merge_head = open(git_path_merge_head(), O_RDONLY);
 	if (merge_head < 0) {
 		if (errno == ENOENT)
 			return;
-		die("cannot open '%s' for reading", merge_head_file);
+		die("cannot open '%s' for reading", git_path_merge_head());
 	}
 
 	while (!strbuf_getwholeline_fd(&line, merge_head, '\n')) {
 		unsigned char sha1[20];
 		if (line.len < 40 || get_sha1_hex(line.buf, sha1))
-			die("unknown line in '%s': %s", merge_head_file, line.buf);
+			die("unknown line in '%s': %s", git_path_merge_head(), line.buf);
 		tail = append_parent(tail, sha1);
 	}
 	close(merge_head);
@@ -2569,13 +2569,13 @@ parse_done:
 
 	if (cmd_is_annotate) {
 		output_option |= OUTPUT_ANNOTATE_COMPAT;
-		blame_date_mode = DATE_ISO8601;
+		blame_date_mode.type = DATE_ISO8601;
 	} else {
 		blame_date_mode = revs.date_mode;
 	}
 
 	/* The maximum width used to show the dates */
-	switch (blame_date_mode) {
+	switch (blame_date_mode.type) {
 	case DATE_RFC2822:
 		blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
 		break;
@@ -2603,6 +2603,9 @@ parse_done:
 	case DATE_LOCAL:
 	case DATE_NORMAL:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
+		break;
+	case DATE_STRFTIME:
+		blame_date_width = strlen(show_date(0, 0, &blame_date_mode)) + 1; /* add the null */
 		break;
 	}
 	blame_date_width -= 1; /* strip the null */

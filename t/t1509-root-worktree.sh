@@ -125,7 +125,7 @@ fi
 ONE_SHA1=d00491fd7e5bb6fa28c517a0bb32b8b506539d4d
 
 test_expect_success 'setup' '
-	rm -rf /foo
+	rm -rf /foo &&
 	mkdir /foo &&
 	mkdir /foo/bar &&
 	echo 1 > /foo/foome &&
@@ -218,7 +218,7 @@ unset GIT_WORK_TREE
 
 test_expect_success 'go to /' 'cd /'
 test_expect_success 'setup' '
-	rm -rf /.git
+	rm -rf /.git &&
 	echo "Initialized empty Git repository in /.git/" > expected &&
 	git init > result &&
 	test_cmp expected result
@@ -241,8 +241,8 @@ say "auto bare gitdir"
 
 # DESTROYYYYY!!!!!
 test_expect_success 'setup' '
-	rm -rf /refs /objects /info /hooks
-	rm /*
+	rm -rf /refs /objects /info /hooks &&
+	rm -f /expected /ls.expected /me /result &&
 	cd / &&
 	echo "Initialized empty Git repository in /" > expected &&
 	git init --bare > result &&

@@ -311,8 +311,8 @@ Each line of options has this format:
 `<opt-spec>`::
 	its format is the short option character, then the long option name
 	separated by a comma. Both parts are not required, though at least one
-	is necessary. `h,help`, `dry-run` and `f` are all three correct
-	`<opt-spec>`.
+	is necessary. May not contain any of the `<flags>` characters.
+	`h,help`, `dry-run` and `f` are examples of correct `<opt-spec>`.
 
 `<flags>`::
 	`<flags>` are of `*`, `=`, `?` or `!`.

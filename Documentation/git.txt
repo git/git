@@ -43,9 +43,18 @@ unreleased) version of Git, that is available from the 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v2.4.5/git.html[documentation for release 2.4.5]
+* link:v2.5.1/git.html[documentation for release 2.5.1]
 
 * release notes for
+  link:RelNotes/2.5.1.txt[2.5.1],
+  link:RelNotes/2.5.0.txt[2.5].
+
+* link:v2.4.8/git.html[documentation for release 2.4.8]
+
+* release notes for
+  link:RelNotes/2.4.8.txt[2.4.8],
+  link:RelNotes/2.4.7.txt[2.4.7],
+  link:RelNotes/2.4.6.txt[2.4.6],
   link:RelNotes/2.4.5.txt[2.4.5],
   link:RelNotes/2.4.4.txt[2.4.4],
   link:RelNotes/2.4.3.txt[2.4.3],
@@ -773,7 +782,7 @@ The Git Repository
 ~~~~~~~~~~~~~~~~~~
 These environment variables apply to 'all' core Git commands. Nb: it
 is worth noting that they may be used/overridden by SCMS sitting above
-Git so take care if using Cogito etc.
+Git so take care if using a foreign front-end.
 
 'GIT_INDEX_FILE'::
 	This environment allows the specification of an alternate
@@ -844,7 +853,7 @@ Git so take care if using Cogito etc.
 	normally in $GIT_DIR will be taken from this path
 	instead. Worktree-specific files such as HEAD or index are
 	taken from $GIT_DIR. See linkgit:gitrepository-layout[5] and
-	the section 'MULTIPLE CHECKOUT MODE' in linkgit:checkout[1]
+	linkgit:git-worktree[1] for
 	details. This variable has lower precedence than other path
 	variables such as GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY...
 
@@ -1002,8 +1011,19 @@ Unsetting the variable, or setting it to empty, "0" or
 	Enables trace messages for all packets coming in or out of a
 	given program. This can help with debugging object negotiation
 	or other protocol issues. Tracing is turned off at a packet
-	starting with "PACK".
+	starting with "PACK" (but see 'GIT_TRACE_PACKFILE' below).
 	See 'GIT_TRACE' for available trace output options.
+
+'GIT_TRACE_PACKFILE'::
+	Enables tracing of packfiles sent or received by a
+	given program. Unlike other trace output, this trace is
+	verbatim: no headers, and no quoting of binary data. You almost
+	certainly want to direct into a file (e.g.,
+	`GIT_TRACE_PACKFILE=/tmp/my.pack`) rather than displaying it on
+	the terminal or mixing it with other trace output.
++
+Note that this is currently only implemented for the client side
+of clones and fetches.
 
 'GIT_TRACE_PERFORMANCE'::
 	Enables performance related trace messages, e.g. total execution

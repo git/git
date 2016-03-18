@@ -92,7 +92,7 @@ static void hdr_int(const char *name, uintmax_t value)
 
 static void hdr_date(const char *name, unsigned long when)
 {
-	const char *value = show_date(when, 0, DATE_RFC2822);
+	const char *value = show_date(when, 0, DATE_MODE(RFC2822));
 	hdr_str(name, value);
 }
 
@@ -164,7 +164,7 @@ static void send_strbuf(const char *type, struct strbuf *buf)
 
 static void send_local_file(const char *the_type, const char *name)
 {
-	const char *p = git_path("%s", name);
+	char *p = git_pathdup("%s", name);
 	size_t buf_alloc = 8192;
 	char *buf = xmalloc(buf_alloc);
 	int fd;
@@ -191,6 +191,7 @@ static void send_local_file(const char *the_type, const char *name)
 	}
 	close(fd);
 	free(buf);
+	free(p);
 }
 
 static void get_text_file(char *name)

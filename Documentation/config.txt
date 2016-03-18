@@ -1250,6 +1250,25 @@ filter.<driver>.smudge::
 	object to a worktree file upon checkout.  See
 	linkgit:gitattributes[5] for details.
 
+fsck.<msg-id>::
+	Allows overriding the message type (error, warn or ignore) of a
+	specific message ID such as `missingEmail`.
++
+For convenience, fsck prefixes the error/warning with the message ID,
+e.g.  "missingEmail: invalid author/committer line - missing email" means
+that setting `fsck.missingEmail = ignore` will hide that issue.
++
+This feature is intended to support working with legacy repositories
+which cannot be repaired without disruptive changes.
+
+fsck.skipList::
+	The path to a sorted list of object names (i.e. one SHA-1 per
+	line) that are known to be broken in a non-fatal way and should
+	be ignored. This feature is useful when an established project
+	should be accepted despite early commits containing errors that
+	can be safely ignored such as invalid committer email addresses.
+	Note: corrupt objects cannot be skipped with this setting.
+
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
@@ -1288,28 +1307,34 @@ gc.packRefs::
 gc.pruneExpire::
 	When 'git gc' is run, it will call 'prune --expire 2.weeks.ago'.
 	Override the grace period with this config variable.  The value
-	"now" may be used to disable this  grace period and always prune
-	unreachable objects immediately.
+	"now" may be used to disable this grace period and always prune
+	unreachable objects immediately, or "never" may be used to
+	suppress pruning.
 
-gc.pruneWorktreesExpire::
-	When 'git gc' is run, it will call
-	'prune --worktrees --expire 3.months.ago'.
-	Override the grace period with this config variable. The value
-	"now" may be used to disable the grace period and prune
-	$GIT_DIR/worktrees immediately.
+gc.worktreePruneExpire::
+	When 'git gc' is run, it calls
+	'git worktree prune --expire 3.months.ago'.
+	This config variable can be used to set a different grace
+	period. The value "now" may be used to disable the grace
+	period and prune $GIT_DIR/worktrees immediately, or "never"
+	may be used to suppress pruning.
 
 gc.reflogExpire::
 gc.<pattern>.reflogExpire::
 	'git reflog expire' removes reflog entries older than
-	this time; defaults to 90 days.  With "<pattern>" (e.g.
+	this time; defaults to 90 days. The value "now" expires all
+	entries immediately, and "never" suppresses expiration
+	altogether. With "<pattern>" (e.g.
 	"refs/stash") in the middle the setting applies only to
 	the refs that match the <pattern>.
 
 gc.reflogExpireUnreachable::
-gc.<ref>.reflogExpireUnreachable::
+gc.<pattern>.reflogExpireUnreachable::
 	'git reflog expire' removes reflog entries older than
 	this time and are not reachable from the current tip;
-	defaults to 30 days.  With "<pattern>" (e.g. "refs/stash")
+	defaults to 30 days. The value "now" expires all entries
+	immediately, and "never" suppresses expiration altogether.
+	With "<pattern>" (e.g. "refs/stash")
 	in the middle, the setting applies only to the refs that
 	match the <pattern>.
 
@@ -1583,6 +1608,29 @@ http.cookieFile::
 http.saveCookies::
 	If set, store cookies received during requests to the file specified by
 	http.cookieFile. Has no effect if http.cookieFile is unset.
+
+http.sslVersion::
+	The SSL version to use when negotiating an SSL connection, if you
+	want to force the default.  The available and default version
+	depend on whether libcurl was built against NSS or OpenSSL and the
+	particular configuration of the crypto library in use. Internally
+	this sets the 'CURLOPT_SSL_VERSION' option; see the libcurl
+	documentation for more details on the format of this option and
+	for the ssl version supported. Actually the possible values of
+	this option are:
+
+	- sslv2
+	- sslv3
+	- tlsv1
+	- tlsv1.0
+	- tlsv1.1
+	- tlsv1.2
+
++
+Can be overridden by the 'GIT_SSL_VERSION' environment variable.
+To force git to use libcurl's default ssl version and ignore any
+explicit http.sslversion option, set 'GIT_SSL_VERSION' to the
+empty string.
 
 http.sslCipherList::
   A list of SSL ciphers to use when negotiating an SSL connection.
@@ -2169,6 +2217,22 @@ rebase.autoStash::
 	successful rebase might result in non-trivial conflicts.
 	Defaults to false.
 
+rebase.missingCommitsCheck::
+	If set to "warn", git rebase -i will print a warning if some
+	commits are removed (e.g. a line was deleted), however the
+	rebase will still proceed. If set to "error", it will print
+	the previous warning and stop the rebase, 'git rebase
+	--edit-todo' can then be used to correct the error. If set to
+	"ignore", no checking is done.
+	To drop a commit without warning or error, use the `drop`
+	command in the todo-list.
+	Defaults to "ignore".
+
+rebase.instructionFormat
+	A format string, as specified in linkgit:git-log[1], to be used for
+	the instruction list during an interactive rebase.  The format will automatically
+	have the long commit hash prepended to the format.
+
 receive.advertiseAtomic::
 	By default, git-receive-pack will advertise the atomic push
 	capability to its clients. If you don't want to this capability
@@ -2204,6 +2268,28 @@ receive.fsckObjects::
 	broken link. The result of an abort are only dangling objects.
 	Defaults to false. If not set, the value of `transfer.fsckObjects`
 	is used instead.
+
+receive.fsck.<msg-id>::
+	When `receive.fsckObjects` is set to true, errors can be switched
+	to warnings and vice versa by configuring the `receive.fsck.<msg-id>`
+	setting where the `<msg-id>` is the fsck message ID and the value
+	is one of `error`, `warn` or `ignore`. For convenience, fsck prefixes
+	the error/warning with the message ID, e.g. "missingEmail: invalid
+	author/committer line - missing email" means that setting
+	`receive.fsck.missingEmail = ignore` will hide that issue.
++
+This feature is intended to support working with legacy repositories
+which would not pass pushing when `receive.fsckObjects = true`, allowing
+the host to accept repositories with certain known issues but still catch
+other issues.
+
+receive.fsck.skipList::
+	The path to a sorted list of object names (i.e. one SHA-1 per
+	line) that are known to be broken in a non-fatal way and should
+	be ignored. This feature is useful when an established project
+	should be accepted despite early commits containing errors that
+	can be safely ignored such as invalid committer email addresses.
+	Note: corrupt objects cannot be skipped with this setting.
 
 receive.unpackLimit::
 	If the number of objects received in a push is below this
@@ -2250,13 +2336,10 @@ receive.denyNonFastForwards::
 	set when initializing a shared repository.
 
 receive.hideRefs::
-	String(s) `receive-pack` uses to decide which refs to omit
-	from its initial advertisement.  Use more than one
-	definitions to specify multiple prefix strings. A ref that
-	are under the hierarchies listed on the value of this
-	variable is excluded, and is hidden when responding to `git
-	push`, and an attempt to update or delete a hidden ref by
-	`git push` is rejected.
+	This variable is the same as `transfer.hideRefs`, but applies
+	only to `receive-pack` (and so affects pushes, but not fetches).
+	An attempt to update or delete a hidden ref by `git push` is
+	rejected.
 
 receive.updateServerInfo::
 	If set to true, git-receive-pack will run git-update-server-info
@@ -2544,9 +2627,18 @@ transfer.fsckObjects::
 	Defaults to false.
 
 transfer.hideRefs::
-	This variable can be used to set both `receive.hideRefs`
-	and `uploadpack.hideRefs` at the same time to the same
-	values.  See entries for these other variables.
+	String(s) `receive-pack` and `upload-pack` use to decide which
+	refs to omit from their initial advertisements.  Use more than
+	one definition to specify multiple prefix strings. A ref that is
+	under the hierarchies listed in the value of this variable is
+	excluded, and is hidden when responding to `git push` or `git
+	fetch`.  See `receive.hideRefs` and `uploadpack.hideRefs` for
+	program-specific versions of this config.
++
+You may also include a `!` in front of the ref name to negate the entry,
+explicitly exposing it, even if an earlier entry marked it as hidden.
+If you have multiple hideRefs values, later entries override earlier ones
+(and entries in more-specific config files override less-specific ones).
 
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
@@ -2561,13 +2653,10 @@ uploadarchive.allowUnreachable::
 	`false`.
 
 uploadpack.hideRefs::
-	String(s) `upload-pack` uses to decide which refs to omit
-	from its initial advertisement.  Use more than one
-	definitions to specify multiple prefix strings. A ref that
-	are under the hierarchies listed on the value of this
-	variable is excluded, and is hidden from `git ls-remote`,
-	`git fetch`, etc.  An attempt to fetch a hidden ref by `git
-	fetch` will fail.  See also `uploadpack.allowTipSHA1InWant`.
+	This variable is the same as `transfer.hideRefs`, but applies
+	only to `upload-pack` (and so affects only fetches, not pushes).
+	An attempt to fetch a hidden ref by `git fetch` will fail.  See
+	also `uploadpack.allowTipSHA1InWant`.
 
 uploadpack.allowTipSHA1InWant::
 	When `uploadpack.hideRefs` is in effect, allow `upload-pack`

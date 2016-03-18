@@ -235,7 +235,9 @@ out:
 	return result;
 }
 
-static int write_pack_data(int bundle_fd, struct lock_file *lock, struct rev_info *revs)
+
+/* Write the pack data to bundle_fd, then close it if it is > 1. */
+static int write_pack_data(int bundle_fd, struct rev_info *revs)
 {
 	struct child_process pack_objects = CHILD_PROCESS_INIT;
 	int i;
@@ -249,13 +251,6 @@ static int write_pack_data(int bundle_fd, struct lock_file *lock, struct rev_inf
 	pack_objects.git_cmd = 1;
 	if (start_command(&pack_objects))
 		return error(_("Could not spawn pack-objects"));
-
-	/*
-	 * start_command closed bundle_fd if it was > 1
-	 * so set the lock fd to -1 so commit_lock_file()
-	 * won't fail trying to close it.
-	 */
-	lock->fd = -1;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *object = revs->pending.objects[i].item;
@@ -416,9 +411,20 @@ int create_bundle(struct bundle_header *header, const char *path,
 	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
 		bundle_fd = 1;
-	else
+	else {
 		bundle_fd = hold_lock_file_for_update(&lock, path,
 						      LOCK_DIE_ON_ERROR);
+
+		/*
+		 * write_pack_data() will close the fd passed to it,
+		 * but commit_lock_file() will also try to close the
+		 * lockfile's fd. So make a copy of the file
+		 * descriptor to avoid trying to close it twice.
+		 */
+		bundle_fd = dup(bundle_fd);
+		if (bundle_fd < 0)
+			die_errno("unable to dup file descriptor");
+	}
 
 	/* write signature */
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
@@ -445,7 +451,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 		return -1;
 
 	/* write pack */
-	if (write_pack_data(bundle_fd, &lock, &revs))
+	if (write_pack_data(bundle_fd, &revs))
 		return -1;
 
 	if (!bundle_to_stdout) {

@@ -31,6 +31,7 @@ diffpatterns="
 	cpp
 	csharp
 	fortran
+	fountain
 	html
 	java
 	matlab

@@ -78,6 +78,7 @@ void setup_pager(void)
 		argv_array_push(&pager_process.env_array, "LESS=FRX");
 	if (!getenv("LV"))
 		argv_array_push(&pager_process.env_array, "LV=-c");
+	argv_array_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
 

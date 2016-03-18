@@ -20,6 +20,7 @@ static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static git_SHA_CTX ctx;
+static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 
 /*
  * When running under --strict mode, objects whose reachability are
@@ -178,7 +179,7 @@ static void write_cached_object(struct object *obj, struct obj_buffer *obj_buf)
  * that have reachability requirements and calls this function.
  * Verify its reachability and validity recursively and write it out.
  */
-static int check_object(struct object *obj, int type, void *data)
+static int check_object(struct object *obj, int type, void *data, struct fsck_options *options)
 {
 	struct obj_buffer *obj_buf;
 
@@ -203,10 +204,10 @@ static int check_object(struct object *obj, int type, void *data)
 	obj_buf = lookup_object_buffer(obj);
 	if (!obj_buf)
 		die("Whoops! Cannot find object '%s'", sha1_to_hex(obj->sha1));
-	if (fsck_object(obj, obj_buf->buffer, obj_buf->size, 1,
-			fsck_error_function))
+	if (fsck_object(obj, obj_buf->buffer, obj_buf->size, &fsck_options))
 		die("Error in object");
-	if (fsck_walk(obj, check_object, NULL))
+	fsck_options.walk = check_object;
+	if (fsck_walk(obj, NULL, &fsck_options))
 		die("Error on reachable objects of %s", sha1_to_hex(obj->sha1));
 	write_cached_object(obj, obj_buf);
 	return 0;
@@ -217,7 +218,7 @@ static void write_rest(void)
 	unsigned i;
 	for (i = 0; i < nr_objects; i++) {
 		if (obj_list[i].obj)
-			check_object(obj_list[i].obj, OBJ_ANY, NULL);
+			check_object(obj_list[i].obj, OBJ_ANY, NULL, NULL);
 	}
 }
 
@@ -527,6 +528,11 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--strict")) {
 				strict = 1;
+				continue;
+			}
+			if (skip_prefix(arg, "--strict=", &arg)) {
+				strict = 1;
+				fsck_set_msg_types(&fsck_options, arg);
 				continue;
 			}
 			if (starts_with(arg, "--pack_header=")) {

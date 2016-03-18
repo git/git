@@ -231,9 +231,9 @@ static struct option builtin_merge_options[] = {
 /* Cleans up metadata that is uninteresting after a succeeded merge. */
 static void drop_save(void)
 {
-	unlink(git_path("MERGE_HEAD"));
-	unlink(git_path("MERGE_MSG"));
-	unlink(git_path("MERGE_MODE"));
+	unlink(git_path_merge_head());
+	unlink(git_path_merge_msg());
+	unlink(git_path_merge_mode());
 }
 
 static int save_state(unsigned char *stash)
@@ -338,7 +338,7 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
 	struct pretty_print_context ctx = {0};
 
 	printf(_("Squash commit -- not updating HEAD\n"));
-	filename = git_path("SQUASH_MSG");
+	filename = git_path_squash_msg();
 	fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
 		die_errno(_("Could not write to '%s'"), filename);
@@ -754,7 +754,7 @@ static void add_strategies(const char *string, unsigned attr)
 
 static void write_merge_msg(struct strbuf *msg)
 {
-	const char *filename = git_path("MERGE_MSG");
+	const char *filename = git_path_merge_msg();
 	int fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
 		die_errno(_("Could not open '%s' for writing"),
@@ -766,7 +766,7 @@ static void write_merge_msg(struct strbuf *msg)
 
 static void read_merge_msg(struct strbuf *msg)
 {
-	const char *filename = git_path("MERGE_MSG");
+	const char *filename = git_path_merge_msg();
 	strbuf_reset(msg);
 	if (strbuf_read_file(msg, filename, 0) < 0)
 		die_errno(_("Could not read from '%s'"), filename);
@@ -799,10 +799,10 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 		strbuf_commented_addf(&msg, _(merge_editor_comment), comment_line_char);
 	write_merge_msg(&msg);
 	if (run_commit_hook(0 < option_edit, get_index_file(), "prepare-commit-msg",
-			    git_path("MERGE_MSG"), "merge", NULL))
+			    git_path_merge_msg(), "merge", NULL))
 		abort_commit(remoteheads, NULL);
 	if (0 < option_edit) {
-		if (launch_editor(git_path("MERGE_MSG"), NULL, NULL))
+		if (launch_editor(git_path_merge_msg(), NULL, NULL))
 			abort_commit(remoteheads, NULL);
 	}
 	read_merge_msg(&msg);
@@ -865,7 +865,7 @@ static int suggest_conflicts(void)
 	FILE *fp;
 	struct strbuf msgbuf = STRBUF_INIT;
 
-	filename = git_path("MERGE_MSG");
+	filename = git_path_merge_msg();
 	fp = fopen(filename, "a");
 	if (!fp)
 		die_errno(_("Could not open '%s' for writing"), filename);
@@ -967,7 +967,7 @@ static void write_merge_state(struct commit_list *remoteheads)
 		}
 		strbuf_addf(&buf, "%s\n", sha1_to_hex(sha1));
 	}
-	filename = git_path("MERGE_HEAD");
+	filename = git_path_merge_head();
 	fd = open(filename, O_WRONLY | O_CREAT, 0666);
 	if (fd < 0)
 		die_errno(_("Could not open '%s' for writing"), filename);
@@ -977,7 +977,7 @@ static void write_merge_state(struct commit_list *remoteheads)
 	strbuf_addch(&merge_msg, '\n');
 	write_merge_msg(&merge_msg);
 
-	filename = git_path("MERGE_MODE");
+	filename = git_path_merge_mode();
 	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0)
 		die_errno(_("Could not open '%s' for writing"), filename);
@@ -1070,7 +1070,7 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
 	if (!merge_names)
 		merge_names = &fetch_head_file;
 
-	filename = git_path("FETCH_HEAD");
+	filename = git_path_fetch_head();
 	fd = open(filename, O_RDONLY);
 	if (fd < 0)
 		die_errno(_("could not open '%s' for reading"), filename);
@@ -1204,7 +1204,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		int nargc = 2;
 		const char *nargv[] = {"reset", "--merge", NULL};
 
-		if (!file_exists(git_path("MERGE_HEAD")))
+		if (!file_exists(git_path_merge_head()))
 			die(_("There is no merge to abort (MERGE_HEAD missing)."));
 
 		/* Invoke 'git reset --merge' */
@@ -1215,7 +1215,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (read_cache_unmerged())
 		die_resolve_conflict("merge");
 
-	if (file_exists(git_path("MERGE_HEAD"))) {
+	if (file_exists(git_path_merge_head())) {
 		/*
 		 * There is no unmerged entry, don't advise 'git
 		 * add/rm <file>', just 'git commit'.
@@ -1226,7 +1226,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		else
 			die(_("You have not concluded your merge (MERGE_HEAD exists)."));
 	}
-	if (file_exists(git_path("CHERRY_PICK_HEAD"))) {
+	if (file_exists(git_path_cherry_pick_head())) {
 		if (advice_resolve_conflict)
 			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 			    "Please, commit your changes before you merge."));

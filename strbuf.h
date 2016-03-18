@@ -345,6 +345,11 @@ __attribute__((format (printf,2,0)))
 extern void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 
 /**
+ * Add the time specified by `tm`, as formatted by `strftime`.
+ */
+extern void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm);
+
+/**
  * Read a given size of data from a FILE* pointer to the buffer.
  *
  * NOTE: The buffer is rewound if the read fails. If -1 is returned,
@@ -365,7 +370,7 @@ extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);
  * Read the contents of a file, specified by its path. The third argument
  * can be used to give a hint about the file size, to avoid reallocs.
  */
-extern int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint);
+extern ssize_t strbuf_read_file(struct strbuf *sb, const char *path, size_t hint);
 
 /**
  * Read the target of a symbolic link, specified by its path.  The third

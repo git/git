@@ -160,7 +160,7 @@ static int branch_merged(int kind, const char *name,
 }
 
 static int check_branch_commit(const char *branchname, const char *refname,
-			       unsigned char *sha1, struct commit *head_rev,
+			       const unsigned char *sha1, struct commit *head_rev,
 			       int kinds, int force)
 {
 	struct commit *rev = lookup_commit_reference(sha1);
@@ -253,7 +253,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			continue;
 		}
 
-		if (delete_ref(name, sha1, REF_NODEREF)) {
+		if (delete_ref(name, is_null_sha1(sha1) ? NULL : sha1,
+			       REF_NODEREF)) {
 			error(remote_branch
 			      ? _("Error deleting remote-tracking branch '%s'")
 			      : _("Error deleting branch '%s'"),

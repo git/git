@@ -75,6 +75,7 @@ static int nr_threads;
 static int from_stdin;
 static int strict;
 static int do_fsck_object;
+static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 static int verbose;
 static int show_stat;
 static int check_self_contained_and_connected;
@@ -192,7 +193,7 @@ static void cleanup_thread(void)
 #endif
 
 
-static int mark_link(struct object *obj, int type, void *data)
+static int mark_link(struct object *obj, int type, void *data, struct fsck_options *options)
 {
 	if (!obj)
 		return -1;
@@ -838,10 +839,9 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			if (!obj)
 				die(_("invalid %s"), typename(type));
 			if (do_fsck_object &&
-			    fsck_object(obj, buf, size, 1,
-				    fsck_error_function))
+			    fsck_object(obj, buf, size, &fsck_options))
 				die(_("Error in object"));
-			if (fsck_walk(obj, mark_link, NULL))
+			if (fsck_walk(obj, NULL, &fsck_options))
 				die(_("Not all child objects of %s are reachable"), sha1_to_hex(obj->sha1));
 
 			if (obj->type == OBJ_TREE) {
@@ -1227,7 +1227,7 @@ static void resolve_deltas(void)
  * - append objects to convert thin pack to full pack if required
  * - write the final 20-byte SHA-1
  */
-static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved);
+static void fix_unresolved_deltas(struct sha1file *f);
 static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned char *pack_sha1)
 {
 	if (nr_ref_deltas + nr_ofs_deltas == nr_resolved_deltas) {
@@ -1249,7 +1249,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		memset(objects + nr_objects + 1, 0,
 		       nr_unresolved * sizeof(*objects));
 		f = sha1fd(output_fd, curr_pack);
-		fix_unresolved_deltas(f, nr_unresolved);
+		fix_unresolved_deltas(f);
 		strbuf_addf(&msg, _("completed with %d local objects"),
 			    nr_objects - nr_objects_initial);
 		stop_progress_msg(&progress, msg.buf);
@@ -1331,10 +1331,10 @@ static int delta_pos_compare(const void *_a, const void *_b)
 	return a->obj_no - b->obj_no;
 }
 
-static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
+static void fix_unresolved_deltas(struct sha1file *f)
 {
 	struct ref_delta_entry **sorted_by_pos;
-	int i, n = 0;
+	int i;
 
 	/*
 	 * Since many unresolved deltas may well be themselves base objects
@@ -1346,12 +1346,12 @@ static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
 	 * before deltas depending on them, a good heuristic is to start
 	 * resolving deltas in the same order as their position in the pack.
 	 */
-	sorted_by_pos = xmalloc(nr_unresolved * sizeof(*sorted_by_pos));
+	sorted_by_pos = xmalloc(nr_ref_deltas * sizeof(*sorted_by_pos));
 	for (i = 0; i < nr_ref_deltas; i++)
-		sorted_by_pos[n++] = &ref_deltas[i];
-	qsort(sorted_by_pos, n, sizeof(*sorted_by_pos), delta_pos_compare);
+		sorted_by_pos[i] = &ref_deltas[i];
+	qsort(sorted_by_pos, nr_ref_deltas, sizeof(*sorted_by_pos), delta_pos_compare);
 
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < nr_ref_deltas; i++) {
 		struct ref_delta_entry *d = sorted_by_pos[i];
 		enum object_type type;
 		struct base_data *base_obj = alloc_base_data();
@@ -1421,7 +1421,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 				 get_object_directory(), sha1_to_hex(sha1));
 			final_pack_name = name;
 		}
-		if (move_temp_to_file(curr_pack_name, final_pack_name))
+		if (finalize_object_file(curr_pack_name, final_pack_name))
 			die(_("cannot store pack file"));
 	} else if (from_stdin)
 		chmod(final_pack_name, 0444);
@@ -1432,7 +1432,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 				 get_object_directory(), sha1_to_hex(sha1));
 			final_index_name = name;
 		}
-		if (move_temp_to_file(curr_index_name, final_index_name))
+		if (finalize_object_file(curr_index_name, final_index_name))
 			die(_("cannot store index file"));
 	} else
 		chmod(final_index_name, 0444);
@@ -1615,6 +1615,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		usage(index_pack_usage);
 
 	check_replace_refs = 0;
+	fsck_options.walk = mark_link;
 
 	reset_pack_idx_option(&opts);
 	git_config(git_index_pack_config, &opts);
@@ -1632,6 +1633,10 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 			} else if (!strcmp(arg, "--strict")) {
 				strict = 1;
 				do_fsck_object = 1;
+			} else if (skip_prefix(arg, "--strict=", &arg)) {
+				strict = 1;
+				do_fsck_object = 1;
+				fsck_set_msg_types(&fsck_options, arg);
 			} else if (!strcmp(arg, "--check-self-contained-and-connected")) {
 				strict = 1;
 				check_self_contained_and_connected = 1;

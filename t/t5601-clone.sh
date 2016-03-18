@@ -496,4 +496,11 @@ test_expect_success 'shallow clone locally' '
 	( cd ddsstt && git fsck )
 '
 
+test_expect_success 'GIT_TRACE_PACKFILE produces a usable pack' '
+	rm -rf dst.git &&
+	GIT_TRACE_PACKFILE=$PWD/tmp.pack git clone --no-local --bare src dst.git &&
+	git init --bare replay.git &&
+	git -C replay.git index-pack -v --stdin <tmp.pack
+'
+
 test_done

@@ -490,7 +490,8 @@ static int fetch_with_import(struct transport *transport,
 		else
 			private = xstrdup(name);
 		if (private) {
-			read_ref(private, posn->old_sha1);
+			if (read_ref(private, posn->old_sha1) < 0)
+				die("Could not read ref %s", private);
 			free(private);
 		}
 	}
@@ -1019,7 +1020,10 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 		if (eon) {
 			if (has_attribute(eon + 1, "unchanged")) {
 				(*tail)->status |= REF_STATUS_UPTODATE;
-				read_ref((*tail)->name, (*tail)->old_sha1);
+				if (read_ref((*tail)->name,
+					     (*tail)->old_sha1) < 0)
+					die(N_("Could not read ref %s"),
+					    (*tail)->name);
 			}
 		}
 		tail = &((*tail)->next);

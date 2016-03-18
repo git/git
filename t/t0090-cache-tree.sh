@@ -199,6 +199,30 @@ test_expect_success 'checkout -B gives cache-tree' '
 	test_cache_tree
 '
 
+test_expect_success 'merge --ff-only maintains cache-tree' '
+	git checkout current &&
+	git checkout -b changes &&
+	test_commit llamas &&
+	test_commit pachyderm &&
+	test_cache_tree &&
+	git checkout current &&
+	test_cache_tree &&
+	git merge --ff-only changes &&
+	test_cache_tree
+'
+
+test_expect_success 'merge maintains cache-tree' '
+	git checkout current &&
+	git checkout -b changes2 &&
+	test_commit alpacas &&
+	test_cache_tree &&
+	git checkout current &&
+	test_commit struthio &&
+	test_cache_tree &&
+	git merge changes2 &&
+	test_cache_tree
+'
+
 test_expect_success 'partial commit gives cache-tree' '
 	git checkout -b partial no-children &&
 	test_commit one &&

@@ -12,7 +12,7 @@ delete objects that cannot be recovered.
 
 test_expect_success 'disable reflogs' '
 	git config core.logallrefupdates false &&
-	rm -rf .git/logs
+	git reflog expire --expire=all --all
 '
 
 test_expect_success 'create history reachable only from a bogus-named ref' '

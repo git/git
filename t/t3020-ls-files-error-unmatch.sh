@@ -22,7 +22,7 @@ test_expect_success \
     'test_must_fail git ls-files --error-unmatch foo bar-does-not-match'
 
 test_expect_success \
-    'git ls-files --error-unmatch should succeed eith matched paths.' \
+    'git ls-files --error-unmatch should succeed with matched paths.' \
     'git ls-files --error-unmatch foo bar'
 
 test_done

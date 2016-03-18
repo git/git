@@ -397,6 +397,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 #define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
 #define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
+#define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
 #define GITATTRIBUTES_FILE ".gitattributes"
 #define INFOATTRIBUTES_FILE "info/attributes"
 #define ATTRIBUTE_MACRO_PREFIX "[attr]"
@@ -446,7 +447,17 @@ extern int get_common_dir(struct strbuf *sb, const char *gitdir);
 extern const char *get_git_namespace(void);
 extern const char *strip_namespace(const char *namespaced_ref);
 extern const char *get_git_work_tree(void);
-extern const char *read_gitfile(const char *path);
+
+#define READ_GITFILE_ERR_STAT_FAILED 1
+#define READ_GITFILE_ERR_NOT_A_FILE 2
+#define READ_GITFILE_ERR_OPEN_FAILED 3
+#define READ_GITFILE_ERR_READ_FAILED 4
+#define READ_GITFILE_ERR_INVALID_FORMAT 5
+#define READ_GITFILE_ERR_NO_PATH 6
+#define READ_GITFILE_ERR_NOT_A_REPO 7
+#define READ_GITFILE_ERR_TOO_LARGE 8
+extern const char *read_gitfile_gently(const char *path, int *return_error_code);
+#define read_gitfile(path) read_gitfile_gently((path), NULL)
 extern const char *resolve_gitdir(const char *suspect);
 extern void set_git_work_tree(const char *tree);
 
@@ -585,8 +596,6 @@ extern void update_index_if_able(struct index_state *, struct lock_file *);
 extern int hold_locked_index(struct lock_file *, int);
 extern void set_alternate_index_output(const char *);
 
-extern int delete_ref(const char *, const unsigned char *sha1, unsigned int flags);
-
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
 extern int trust_ctime;
@@ -622,6 +631,7 @@ extern unsigned long pack_size_limit_cfg;
  * been sought but there were none.
  */
 extern int check_replace_refs;
+extern char *git_replace_ref_base;
 
 extern int fsync_object_files;
 extern int core_preload_index;
@@ -698,21 +708,58 @@ extern int check_repository_format(void);
 #define DATA_CHANGED    0x0020
 #define TYPE_CHANGED    0x0040
 
+/*
+ * Return a statically allocated filename, either generically (mkpath), in
+ * the repository directory (git_path), or in a submodule's repository
+ * directory (git_path_submodule). In all cases, note that the result
+ * may be overwritten by another call to _any_ of the functions. Consider
+ * using the safer "dup" or "strbuf" formats below (in some cases, the
+ * unsafe versions have already been removed).
+ */
+extern const char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+extern const char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+
 extern char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 extern void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
+extern void strbuf_git_path_submodule(struct strbuf *sb, const char *path,
+				      const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
 extern char *git_pathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
 extern char *mkpathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
-
-/* Return a statically allocated filename matching the sha1 signature */
-extern const char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern const char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern const char *git_path_submodule(const char *path, const char *fmt, ...)
+extern char *git_pathdup_submodule(const char *path, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
+
 extern void report_linked_checkout_garbage(void);
+
+/*
+ * You can define a static memoized git path like:
+ *
+ *    static GIT_PATH_FUNC(git_path_foo, "FOO");
+ *
+ * or use one of the global ones below.
+ */
+#define GIT_PATH_FUNC(func, filename) \
+	const char *func(void) \
+	{ \
+		static char *ret; \
+		if (!ret) \
+			ret = git_pathdup(filename); \
+		return ret; \
+	}
+
+const char *git_path_cherry_pick_head(void);
+const char *git_path_revert_head(void);
+const char *git_path_squash_msg(void);
+const char *git_path_merge_msg(void);
+const char *git_path_merge_rr(void);
+const char *git_path_merge_mode(void);
+const char *git_path_merge_head(void);
+const char *git_path_fetch_head(void);
+const char *git_path_shallow(void);
 
 /*
  * Return the name of the file in the local object database that would
@@ -935,7 +982,7 @@ extern int do_check_packed_object_crc;
 
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
-extern int move_temp_to_file(const char *tmpfile, const char *filename);
+extern int finalize_object_file(const char *tmpfile, const char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 
@@ -1020,76 +1067,10 @@ extern int get_oid_hex(const char *hex, struct object_id *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern char *oid_to_hex(const struct object_id *oid);	/* same static buffer as sha1_to_hex */
-extern int read_ref_full(const char *refname, int resolve_flags,
-			 unsigned char *sha1, int *flags);
-extern int read_ref(const char *refname, unsigned char *sha1);
 
-/*
- * Resolve a reference, recursively following symbolic refererences.
- *
- * Store the referred-to object's name in sha1 and return the name of
- * the non-symbolic reference that ultimately pointed at it.  The
- * return value, if not NULL, is a pointer into either a static buffer
- * or the input ref.
- *
- * If the reference cannot be resolved to an object, the behavior
- * depends on the RESOLVE_REF_READING flag:
- *
- * - If RESOLVE_REF_READING is set, return NULL.
- *
- * - If RESOLVE_REF_READING is not set, clear sha1 and return the name of
- *   the last reference name in the chain, which will either be a non-symbolic
- *   reference or an undefined reference.  If this is a prelude to
- *   "writing" to the ref, the return value is the name of the ref
- *   that will actually be created or changed.
- *
- * If the RESOLVE_REF_NO_RECURSE flag is passed, only resolves one
- * level of symbolic reference.  The value stored in sha1 for a symbolic
- * reference will always be null_sha1 in this case, and the return
- * value is the reference that the symref refers to directly.
- *
- * If flags is non-NULL, set the value that it points to the
- * combination of REF_ISPACKED (if the reference was found among the
- * packed references), REF_ISSYMREF (if the initial reference was a
- * symbolic reference), REF_BAD_NAME (if the reference name is ill
- * formed --- see RESOLVE_REF_ALLOW_BAD_NAME below), and REF_ISBROKEN
- * (if the ref is malformed or has a bad name). See refs.h for more detail
- * on each flag.
- *
- * If ref is not a properly-formatted, normalized reference, return
- * NULL.  If more than MAXDEPTH recursive symbolic lookups are needed,
- * give up and return NULL.
- *
- * RESOLVE_REF_ALLOW_BAD_NAME allows resolving refs even when their
- * name is invalid according to git-check-ref-format(1).  If the name
- * is bad then the value stored in sha1 will be null_sha1 and the two
- * flags REF_ISBROKEN and REF_BAD_NAME will be set.
- *
- * Even with RESOLVE_REF_ALLOW_BAD_NAME, names that escape the refs/
- * directory and do not consist of all caps and underscores cannot be
- * resolved. The function returns NULL for such ref names.
- * Caps and underscores refers to the special refs, such as HEAD,
- * FETCH_HEAD and friends, that all live outside of the refs/ directory.
- */
-#define RESOLVE_REF_READING 0x01
-#define RESOLVE_REF_NO_RECURSE 0x02
-#define RESOLVE_REF_ALLOW_BAD_NAME 0x04
-extern const char *resolve_ref_unsafe(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
-extern char *resolve_refdup(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
-
-extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
-extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 extern int interpret_branch_name(const char *str, int len, struct strbuf *);
 extern int get_sha1_mb(const char *str, unsigned char *sha1);
 
-/*
- * Return true iff abbrev_name is a possible abbreviation for
- * full_name according to the rules defined by ref_rev_parse_rules in
- * refs.c.
- */
-extern int refname_match(const char *abbrev_name, const char *full_name);
-
-extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 extern int validate_headref(const char *ref);
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
@@ -1105,18 +1086,30 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 extern struct object *peel_to_type(const char *name, int namelen,
 				   struct object *o, enum object_type);
 
-enum date_mode {
-	DATE_NORMAL = 0,
-	DATE_RELATIVE,
-	DATE_SHORT,
-	DATE_LOCAL,
-	DATE_ISO8601,
-	DATE_ISO8601_STRICT,
-	DATE_RFC2822,
-	DATE_RAW
+struct date_mode {
+	enum date_mode_type {
+		DATE_NORMAL = 0,
+		DATE_RELATIVE,
+		DATE_SHORT,
+		DATE_LOCAL,
+		DATE_ISO8601,
+		DATE_ISO8601_STRICT,
+		DATE_RFC2822,
+		DATE_STRFTIME,
+		DATE_RAW
+	} type;
+	const char *strftime_fmt;
 };
 
-const char *show_date(unsigned long time, int timezone, enum date_mode mode);
+/*
+ * Convenience helper for passing a constant type, like:
+ *
+ *   show_date(t, tz, DATE_MODE(NORMAL));
+ */
+#define DATE_MODE(t) date_mode_from_type(DATE_##t)
+struct date_mode *date_mode_from_type(enum date_mode_type type);
+
+const char *show_date(unsigned long time, int timezone, const struct date_mode *mode);
 void show_date_relative(unsigned long time, int tz, const struct timeval *now,
 			struct strbuf *timebuf);
 int parse_date(const char *date, struct strbuf *out);
@@ -1126,7 +1119,7 @@ void datestamp(struct strbuf *out);
 #define approxidate(s) approxidate_careful((s), NULL)
 unsigned long approxidate_careful(const char *, int *);
 unsigned long approxidate_relative(const char *date, const struct timeval *now);
-enum date_mode parse_date_format(const char *format);
+void parse_date_format(const char *format, struct date_mode *mode);
 int date_overflows(unsigned long date);
 
 #define IDENT_STRICT	       1
@@ -1163,7 +1156,8 @@ extern int split_ident_line(struct ident_split *, const char *, int);
  * the ident_split. It will also sanity-check the values and produce
  * a well-known sentinel date if they appear bogus.
  */
-const char *show_ident_date(const struct ident_split *id, enum date_mode mode);
+const char *show_ident_date(const struct ident_split *id,
+			    const struct date_mode *mode);
 
 /*
  * Compare split idents for equality or strict ordering. Note that we

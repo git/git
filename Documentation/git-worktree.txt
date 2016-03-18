@@ -1,0 +1,176 @@
+git-worktree(1)
+===============
+
+NAME
+----
+git-worktree - Manage multiple working trees
+
+
+SYNOPSIS
+--------
+[verse]
+'git worktree add' [-f] [--detach] [-b <new-branch>] <path> [<branch>]
+'git worktree prune' [-n] [-v] [--expire <expire>]
+
+DESCRIPTION
+-----------
+
+Manage multiple working trees attached to the same repository.
+
+A git repository can support multiple working trees, allowing you to check
+out more than one branch at a time.  With `git worktree add` a new working
+tree is associated with the repository.  This new working tree is called a
+"linked working tree" as opposed to the "main working tree" prepared by "git
+init" or "git clone".  A repository has one main working tree (if it's not a
+bare repository) and zero or more linked working trees.
+
+When you are done with a linked working tree you can simply delete it.
+The working tree's administrative files in the repository (see
+"DETAILS" below) will eventually be removed automatically (see
+`gc.worktreePruneExpire` in linkgit:git-config[1]), or you can run
+`git worktree prune` in the main or any linked working tree to
+clean up any stale administrative files.
+
+If you move a linked working tree to another file system, or
+within a file system that does not support hard links, you need to run
+at least one git command inside the linked working tree
+(e.g. `git status`) in order to update its administrative files in the
+repository so that they do not get automatically pruned.
+
+If a linked working tree is stored on a portable device or network share
+which is not always mounted, you can prevent its administrative files from
+being pruned by creating a file named 'locked' alongside the other
+administrative files, optionally containing a plain text reason that
+pruning should be suppressed. See section "DETAILS" for more information.
+
+COMMANDS
+--------
+add <path> [<branch>]::
+
+Create `<path>` and checkout `<branch>` into it. The new working directory
+is linked to the current repository, sharing everything except working
+directory specific files such as HEAD, index, etc.
++
+If `<branch>` is omitted and neither `-b` nor `-B` nor `--detached` used,
+then, as a convenience, a new branch based at HEAD is created automatically,
+as if `-b $(basename <path>)` was specified.
+
+prune::
+
+Prune working tree information in $GIT_DIR/worktrees.
+
+OPTIONS
+-------
+
+-f::
+--force::
+	By default, `add` refuses to create a new working tree when `<branch>`
+	is already checked out by another working tree. This option overrides
+	that safeguard.
+
+-b <new-branch>::
+-B <new-branch>::
+	With `add`, create a new branch named `<new-branch>` starting at
+	`<branch>`, and check out `<new-branch>` into the new working tree.
+	If `<branch>` is omitted, it defaults to HEAD.
+	By default, `-b` refuses to create a new branch if it already
+	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
+	`<branch>`.
+
+--detach::
+	With `add`, detach HEAD in the new working tree. See "DETACHED HEAD"
+	in linkgit:git-checkout[1].
+
+-n::
+--dry-run::
+	With `prune`, do not remove anything; just report what it would
+	remove.
+
+-v::
+--verbose::
+	With `prune`, report all removals.
+
+--expire <time>::
+	With `prune`, only expire unused working trees older than <time>.
+
+DETAILS
+-------
+Each linked working tree has a private sub-directory in the repository's
+$GIT_DIR/worktrees directory.  The private sub-directory's name is usually
+the base name of the linked working tree's path, possibly appended with a
+number to make it unique.  For example, when `$GIT_DIR=/path/main/.git` the
+command `git worktree add /path/other/test-next next` creates the linked
+working tree in `/path/other/test-next` and also creates a
+`$GIT_DIR/worktrees/test-next` directory (or `$GIT_DIR/worktrees/test-next1`
+if `test-next` is already taken).
+
+Within a linked working tree, $GIT_DIR is set to point to this private
+directory (e.g. `/path/main/.git/worktrees/test-next` in the example) and
+$GIT_COMMON_DIR is set to point back to the main working tree's $GIT_DIR
+(e.g. `/path/main/.git`). These settings are made in a `.git` file located at
+the top directory of the linked working tree.
+
+Path resolution via `git rev-parse --git-path` uses either
+$GIT_DIR or $GIT_COMMON_DIR depending on the path. For example, in the
+linked working tree `git rev-parse --git-path HEAD` returns
+`/path/main/.git/worktrees/test-next/HEAD` (not
+`/path/other/test-next/.git/HEAD` or `/path/main/.git/HEAD`) while `git
+rev-parse --git-path refs/heads/master` uses
+$GIT_COMMON_DIR and returns `/path/main/.git/refs/heads/master`,
+since refs are shared across all working trees.
+
+See linkgit:gitrepository-layout[5] for more information. The rule of
+thumb is do not make any assumption about whether a path belongs to
+$GIT_DIR or $GIT_COMMON_DIR when you need to directly access something
+inside $GIT_DIR. Use `git rev-parse --git-path` to get the final path.
+
+To prevent a $GIT_DIR/worktrees entry from being pruned (which
+can be useful in some situations, such as when the
+entry's working tree is stored on a portable device), add a file named
+'locked' to the entry's directory. The file contains the reason in
+plain text. For example, if a linked working tree's `.git` file points
+to `/path/main/.git/worktrees/test-next` then a file named
+`/path/main/.git/worktrees/test-next/locked` will prevent the
+`test-next` entry from being pruned.  See
+linkgit:gitrepository-layout[5] for details.
+
+EXAMPLES
+--------
+You are in the middle of a refactoring session and your boss comes in and
+demands that you fix something immediately. You might typically use
+linkgit:git-stash[1] to store your changes away temporarily, however, your
+working tree is in such a state of disarray (with new, moved, and removed
+files, and other bits and pieces strewn around) that you don't want to risk
+disturbing any of it. Instead, you create a temporary linked working tree to
+make the emergency fix, remove it when done, and then resume your earlier
+refactoring session.
+
+------------
+$ git worktree add -b emergency-fix ../temp master
+$ pushd ../temp
+# ... hack hack hack ...
+$ git commit -a -m 'emergency fix for boss'
+$ popd
+$ rm -rf ../temp
+$ git worktree prune
+------------
+
+BUGS
+----
+Multiple checkout in general is still experimental, and the support
+for submodules is incomplete. It is NOT recommended to make multiple
+checkouts of a superproject.
+
+git-worktree could provide more automation for tasks currently
+performed manually, such as:
+
+- `remove` to remove a linked working tree and its administrative files (and
+  warn if the working tree is dirty)
+- `mv` to move or rename a working tree and update its administrative files
+- `list` to list linked working trees
+- `lock` to prevent automatic pruning of administrative files (for instance,
+  for a working tree on a portable device)
+
+GIT
+---
+Part of the linkgit:git[1] suite

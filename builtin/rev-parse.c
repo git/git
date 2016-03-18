@@ -371,6 +371,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 					N_("output in stuck long form")),
 		OPT_END(),
 	};
+	static const char * const flag_chars = "*=?!";
 
 	struct strbuf sb = STRBUF_INIT, parsed = STRBUF_INIT;
 	const char **usage = NULL;
@@ -400,7 +401,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	/* parse: (<short>|<short>,<long>|<long>)[*=?!]*<arghint>? SP+ <help> */
 	while (strbuf_getline(&sb, stdin, '\n') != EOF) {
 		const char *s;
-		const char *end;
+		const char *help;
 		struct option *o;
 
 		if (!sb.len)
@@ -410,45 +411,23 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		memset(opts + onb, 0, sizeof(opts[onb]));
 
 		o = &opts[onb++];
-		s = strchr(sb.buf, ' ');
-		if (!s || *sb.buf == ' ') {
+		help = strchr(sb.buf, ' ');
+		if (!help || *sb.buf == ' ') {
 			o->type = OPTION_GROUP;
 			o->help = xstrdup(skipspaces(sb.buf));
 			continue;
 		}
 
 		o->type = OPTION_CALLBACK;
-		o->help = xstrdup(skipspaces(s));
+		o->help = xstrdup(skipspaces(help));
 		o->value = &parsed;
 		o->flags = PARSE_OPT_NOARG;
 		o->callback = &parseopt_dump;
 
-		/* Possible argument name hint */
-		end = s;
-		while (s > sb.buf && strchr("*=?!", s[-1]) == NULL)
-			--s;
-		if (s != sb.buf && s != end)
-			o->argh = xmemdupz(s, end - s);
-		if (s == sb.buf)
-			s = end;
-
-		while (s > sb.buf && strchr("*=?!", s[-1])) {
-			switch (*--s) {
-			case '=':
-				o->flags &= ~PARSE_OPT_NOARG;
-				break;
-			case '?':
-				o->flags &= ~PARSE_OPT_NOARG;
-				o->flags |= PARSE_OPT_OPTARG;
-				break;
-			case '!':
-				o->flags |= PARSE_OPT_NONEG;
-				break;
-			case '*':
-				o->flags |= PARSE_OPT_HIDDEN;
-				break;
-			}
-		}
+		/* name(s) */
+		s = strpbrk(sb.buf, flag_chars);
+		if (s == NULL)
+			s = help;
 
 		if (s - sb.buf == 1) /* short option only */
 			o->short_name = *sb.buf;
@@ -458,6 +437,30 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 			o->short_name = *sb.buf;
 			o->long_name = xmemdupz(sb.buf + 2, s - sb.buf - 2);
 		}
+
+		/* flags */
+		while (s < help) {
+			switch (*s++) {
+			case '=':
+				o->flags &= ~PARSE_OPT_NOARG;
+				continue;
+			case '?':
+				o->flags &= ~PARSE_OPT_NOARG;
+				o->flags |= PARSE_OPT_OPTARG;
+				continue;
+			case '!':
+				o->flags |= PARSE_OPT_NONEG;
+				continue;
+			case '*':
+				o->flags |= PARSE_OPT_HIDDEN;
+				continue;
+			}
+			s--;
+			break;
+		}
+
+		if (s < help)
+			o->argh = xmemdupz(s, help - s);
 	}
 	strbuf_release(&sb);
 

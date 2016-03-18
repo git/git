@@ -56,6 +56,7 @@ SYNOPSIS
 	     [ --reverse ]
 	     [ --walk-reflogs ]
 	     [ --no-walk ] [ --do-walk ]
+	     [ --count ]
 	     [ --use-bitmap-index ]
 	     <commit>... [ \-- <paths>... ]
 

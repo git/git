@@ -227,6 +227,24 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 	test_cmp expected actual
 '
 
+test_expect_success 'Check format of strftime date fields' '
+	echo "my date is 2006-07-03" >expected &&
+	git for-each-ref \
+	  --format="%(authordate:format:my date is %Y-%m-%d)" \
+	  refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'exercise strftime with odd fields' '
+	echo >expected &&
+	git for-each-ref --format="%(authordate:format:)" refs/heads >actual &&
+	test_cmp expected actual &&
+	long="long format -- $_z40$_z40$_z40$_z40$_z40$_z40$_z40" &&
+	echo $long >expected &&
+	git for-each-ref --format="%(authordate:format:$long)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<\EOF
 refs/heads/master
 refs/remotes/origin/master
