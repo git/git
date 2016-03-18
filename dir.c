@@ -53,8 +53,6 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path, int len);
 
-static struct trace_key trace_exclude = TRACE_KEY_INIT(EXCLUDE);
-
 /* helper string functions with support for the ignore_case flag */
 int strcmp_icase(const char *a, const char *b)
 {
@@ -516,7 +514,6 @@ void add_exclude(const char *string, const char *base,
 	x->baselen = baselen;
 	x->flags = flags;
 	x->srcpos = srcpos;
-	string_list_init(&x->sticky_paths, 1);
 	ALLOC_GROW(el->excludes, el->nr + 1, el->alloc);
 	el->excludes[el->nr++] = x;
 	x->el = el;
@@ -557,10 +554,8 @@ void clear_exclude_list(struct exclude_list *el)
 {
 	int i;
 
-	for (i = 0; i < el->nr; i++) {
-		string_list_clear(&el->excludes[i]->sticky_paths, 0);
+	for (i = 0; i < el->nr; i++)
 		free(el->excludes[i]);
-	}
 	free(el->excludes);
 	free(el->filebuf);
 
@@ -875,120 +870,13 @@ int match_pathname(const char *pathname, int pathlen,
 		 * then our prefix match is all we need; we
 		 * do not need to call fnmatch at all.
 		 */
-		if (!patternlen && (!namelen || *name == '/'))
+		if (!patternlen && !namelen)
 			return 1;
 	}
 
 	return fnmatch_icase_mem(pattern, patternlen,
 				 name, namelen,
 				 WM_PATHNAME) == 0;
-}
-
-static void add_sticky(struct exclude *exc, const char *pathname, int pathlen)
-{
-	struct strbuf sb = STRBUF_INIT;
-	int i;
-
-	for (i = exc->sticky_paths.nr - 1; i >= 0; i--) {
-		const char *sticky = exc->sticky_paths.items[i].string;
-		int len = strlen(sticky);
-
-		if (pathlen < len && sticky[pathlen] == '/' &&
-		    !strncmp(pathname, sticky, pathlen))
-			return;
-	}
-
-	strbuf_add(&sb, pathname, pathlen);
-	string_list_append_nodup(&exc->sticky_paths, strbuf_detach(&sb, NULL));
-}
-
-static int match_sticky(struct exclude *exc, const char *pathname, int pathlen, int dtype)
-{
-	int i;
-
-	for (i = exc->sticky_paths.nr - 1; i >= 0; i--) {
-		const char *sticky = exc->sticky_paths.items[i].string;
-		int len = strlen(sticky);
-
-		if (pathlen == len && dtype == DT_DIR &&
-		    !strncmp(pathname, sticky, len))
-			return 1;
-
-		if (pathlen > len && pathname[len] == '/' &&
-		    !strncmp(pathname, sticky, len))
-			return 1;
-	}
-
-	return 0;
-}
-
-static inline int different_decisions(const struct exclude *a,
-				      const struct exclude *b)
-{
-	return (a->flags & EXC_FLAG_NEGATIVE) != (b->flags & EXC_FLAG_NEGATIVE);
-}
-
-/*
- * Return non-zero if pathname is a directory and an ancestor of the
- * literal path in a pattern.
- */
-static int match_directory_part(const char *pathname, int pathlen,
-				int *dtype, struct exclude *x)
-{
-	const char	*base	    = x->base;
-	int		 baselen    = x->baselen ? x->baselen - 1 : 0;
-	const char	*pattern    = x->pattern;
-	int		 prefix	    = x->nowildcardlen;
-	int		 patternlen = x->patternlen;
-
-	if (*dtype == DT_UNKNOWN)
-		*dtype = get_dtype(NULL, pathname, pathlen);
-	if (*dtype != DT_DIR)
-		return 0;
-
-	if (*pattern == '/') {
-		pattern++;
-		patternlen--;
-		prefix--;
-	}
-
-	if (baselen) {
-		if (((pathlen < baselen && base[pathlen] == '/') ||
-		     pathlen == baselen) &&
-		    !strncmp_icase(pathname, base, pathlen))
-			return 1;
-		pathname += baselen + 1;
-		pathlen  -= baselen + 1;
-	}
-
-
-	if (prefix &&
-	    (((pathlen < prefix && pattern[pathlen] == '/') ||
-	      pathlen == prefix) &&
-	     !strncmp_icase(pathname, pattern, pathlen)))
-		return 1;
-
-	return 0;
-}
-
-static struct exclude *should_descend(const char *pathname, int pathlen,
-				      int *dtype, struct exclude_list *el,
-				      struct exclude *exc)
-{
-	int i;
-
-	for (i = el->nr - 1; 0 <= i; i--) {
-		struct exclude *x = el->excludes[i];
-
-		if (x == exc)
-			break;
-
-		if (!(x->flags & EXC_FLAG_NODIR) &&
-		    different_decisions(x, exc) &&
-		    match_directory_part(pathname, pathlen, dtype, x))
-			return x;
-	}
-	return NULL;
 }
 
 /*
@@ -1004,31 +892,15 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 						       struct exclude_list *el)
 {
 	struct exclude *exc = NULL; /* undecided */
-	int i, maybe_descend = 0;
+	int i;
 
 	if (!el->nr)
 		return NULL;	/* undefined */
-
-	trace_printf_key(&trace_exclude, "exclude: from %s\n", el->src);
 
 	for (i = el->nr - 1; 0 <= i; i--) {
 		struct exclude *x = el->excludes[i];
 		const char *exclude = x->pattern;
 		int prefix = x->nowildcardlen;
-
-		if (!maybe_descend && i < el->nr - 1 &&
-		    different_decisions(x, el->excludes[i+1]))
-			maybe_descend = 1;
-
-		if (x->sticky_paths.nr) {
-			if (*dtype == DT_UNKNOWN)
-				*dtype = get_dtype(NULL, pathname, pathlen);
-			if (match_sticky(x, pathname, pathlen, *dtype)) {
-				exc = x;
-				break;
-			}
-			continue;
-		}
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
@@ -1056,45 +928,6 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 			break;
 		}
 	}
-
-	if (!exc) {
-		trace_printf_key(&trace_exclude, "exclude: %.*s => n/a\n",
-				 pathlen, pathname);
-		return NULL;
-	}
-
-	/*
-	 * We have found a matching pattern "exc" that may exclude whole
-	 * directory. We also found that there may be a pattern that matches
-	 * something inside the directory and reincludes stuff.
-	 *
-	 * Go through the patterns again, find that pattern and double check.
-	 * If it's true, return "undecided" and keep descending in. "exc" is
-	 * marked sticky so that it continues to match inside the directory.
-	 */
-	if (!(exc->flags & EXC_FLAG_NEGATIVE) && maybe_descend) {
-		struct exclude *x;
-
-		if (*dtype == DT_UNKNOWN)
-			*dtype = get_dtype(NULL, pathname, pathlen);
-
-		if (*dtype == DT_DIR &&
-		    (x = should_descend(pathname, pathlen, dtype, el, exc))) {
-			add_sticky(exc, pathname, pathlen);
-			trace_printf_key(&trace_exclude,
-					 "exclude: %.*s vs %s at line %d => %s,"
-					 " forced open by %s at line %d => n/a\n",
-					 pathlen, pathname, exc->pattern, exc->srcpos,
-					 exc->flags & EXC_FLAG_NEGATIVE ? "no" : "yes",
-					 x->pattern, x->srcpos);
-			return NULL;
-		}
-	}
-
-	trace_printf_key(&trace_exclude, "exclude: %.*s vs %s at line %d => %s%s\n",
-			 pathlen, pathname, exc->pattern, exc->srcpos,
-			 exc->flags & EXC_FLAG_NEGATIVE ? "no" : "yes",
-			 exc->sticky_paths.nr ? " (stuck)" : "");
 	return exc;
 }
 
@@ -1840,12 +1673,8 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	struct cached_dir cdir;
 	enum path_treatment state, subdir_state, dir_state = path_none;
 	struct strbuf path = STRBUF_INIT;
-	static int level = 0;
 
 	strbuf_add(&path, base, baselen);
-
-	trace_printf_key(&trace_exclude, "exclude: [%d] enter '%.*s'\n",
-			 level++, baselen, base);
 
 	if (open_cached_dir(&cdir, dir, untracked, &path, check_only))
 		goto out;
@@ -1910,8 +1739,6 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	}
 	close_cached_dir(&cdir);
  out:
-	trace_printf_key(&trace_exclude, "exclude: [%d] leave '%.*s'\n",
-			 --level, baselen, base);
 	strbuf_release(&path);
 
 	return dir_state;
@@ -2148,25 +1975,6 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	return root;
 }
 
-static void clear_sticky(struct dir_struct *dir)
-{
-	struct exclude_list_group *g;
-	struct exclude_list *el;
-	struct exclude *x;
-	int i, j, k;
-
-	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
-		g = &dir->exclude_list_group[i];
-		for (j = g->nr - 1; j >= 0; j--) {
-			el = &g->el[j];
-			for (k = el->nr - 1; 0 <= k; k--) {
-				x = el->excludes[k];
-				string_list_clear(&x->sticky_paths, 0);
-			}
-		}
-	}
-}
-
 int read_directory(struct dir_struct *dir, const char *path, int len, const struct pathspec *pathspec)
 {
 	struct path_simplify *simplify;
@@ -2186,12 +1994,6 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;
-
-	/*
-	 * Stay on the safe side. if read_directory() has run once on
-	 * "dir", some sticky flag may have been left. Clear them all.
-	 */
-	clear_sticky(dir);
 
 	/*
 	 * exclude patterns are treated like positive ones in

@@ -4,7 +4,6 @@
 /* See Documentation/technical/api-directory-listing.txt */
 
 #include "strbuf.h"
-#include "string-list.h"
 
 struct dir_entry {
 	unsigned int len;
@@ -35,8 +34,6 @@ struct exclude {
 	 * and from -1 decrementing for patterns from CLI args.
 	 */
 	int srcpos;
-
-	struct string_list sticky_paths;
 };
 
 /*

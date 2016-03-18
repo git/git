@@ -82,12 +82,12 @@ PATTERN FORMAT
 
  - An optional prefix "`!`" which negates the pattern; any
    matching file excluded by a previous pattern will become
-   included again.
+   included again. It is not possible to re-include a file if a parent
+   directory of that file is excluded. Git doesn't list excluded
+   directories for performance reasons, so any patterns on contained
+   files have no effect, no matter where they are defined.
    Put a backslash ("`\`") in front of the first "`!`" for patterns
    that begin with a literal "`!`", for example, "`\!important!.txt`".
-   It is possible to re-include a file if a parent directory of that
-   file is excluded if certain conditions are met. See section NOTES
-   for detail.
 
  - If the pattern ends with a slash, it is removed for the
    purpose of the following description, but it would only find
@@ -140,15 +140,6 @@ not tracked by Git remain untracked.
 
 To stop tracking a file that is currently tracked, use
 'git rm --cached'.
-
-To re-include files or directories when their parent directory is
-excluded, the following conditions must be met:
-
- - The rules to exclude a directory and re-include a subset back must
-   be in the same .gitignore file.
-
- - The directory part in the re-include rules must be literal (i.e. no
-   wildcards)
 
 EXAMPLES
 --------
