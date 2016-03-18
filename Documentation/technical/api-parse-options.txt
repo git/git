@@ -144,8 +144,10 @@ There are some macros to easily define options:
 
 `OPT_COUNTUP(short, long, &int_var, description)`::
 	Introduce a count-up option.
-	`int_var` is incremented on each use of `--option`, and
-	reset to zero with `--no-option`.
+	If the `int_var` is negative and `--option` is absent,
+	then it will retain its value. Otherwise it will first set
+	`int_var` to 0 and then increment it on each use of `--option`,
+	and reset to zero with `--no-option`.
 
 `OPT_BIT(short, long, &int_var, description, mask)`::
 	Introduce a boolean option.
