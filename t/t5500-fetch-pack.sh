@@ -259,7 +259,8 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		test_must_fail git pull --depth 4 .. A
+		git fetch --depth 4 .. A
+		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
 
@@ -279,9 +280,10 @@ test_expect_success 'clone shallow depth count' '
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
+		git prune &&
 		git count-objects -v
 	) > count.shallow &&
-	grep "^count: 55" count.shallow
+	grep "^count: 54" count.shallow
 '
 
 test_expect_success 'fetch --no-shallow on full repo' '

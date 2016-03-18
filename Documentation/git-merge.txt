@@ -98,6 +98,19 @@ commit or stash your changes before running 'git merge'.
 'git merge --abort' is equivalent to 'git reset --merge' when
 `MERGE_HEAD` is present.
 
+--allow-unrelated-histories::
+	By default, `git merge` command refuses to merge histories
+	that do not share a common ancestor.  This option can be
+	used to override this safety when merging histories of two
+	projects that started their lives independently.  As that is
+	a very rare occasion, no configuration variable to enable
+	this by default exists and will not be added, and the list
+	of options at the top of this documentation does not mention
+	this option.  Also `git pull` does not pass this option down
+	to `git merge` (instead, you `git fetch` first, examine what
+	you will be merging and then `git merge` locally with this
+	option).
+
 <commit>...::
 	Commits, usually other branch heads, to merge into our branch.
 	Specifying more than one commit will create a merge with

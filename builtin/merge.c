@@ -64,6 +64,7 @@ static int option_renormalize;
 static int verbosity;
 static int allow_rerere_auto;
 static int abort_current_merge;
+static int allow_unrelated_histories;
 static int show_progress = -1;
 static int default_to_upstream = 1;
 static const char *sign_commit;
@@ -221,6 +222,8 @@ static struct option builtin_merge_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOL(0, "abort", &abort_current_merge,
 		N_("abort the current in-progress merge")),
+	OPT_BOOL(0, "allow-unrelated-histories", &allow_unrelated_histories,
+		 N_("allow merging unrelated histories")),
 	OPT_SET_INT(0, "progress", &show_progress, N_("force progress reporting"), 1),
 	{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, N_("key-id"),
 	  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
@@ -1397,9 +1400,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	update_ref("updating ORIG_HEAD", "ORIG_HEAD", head_commit->object.oid.hash,
 		   NULL, 0, UPDATE_REFS_DIE_ON_ERR);
 
-	if (remoteheads && !common)
-		; /* No common ancestors found. We need a real merge. */
-	else if (!remoteheads ||
+	if (remoteheads && !common) {
+		/* No common ancestors found. */
+		if (!allow_unrelated_histories)
+			die(_("refusing to merge unrelated histories"));
+		/* otherwise, we need a real merge. */
+	} else if (!remoteheads ||
 		 (!remoteheads->next && !common->next &&
 		  common->item == remoteheads->item)) {
 		/*
