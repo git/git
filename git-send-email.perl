@@ -621,6 +621,8 @@ if (@rev_list_opts) {
 	push @files, $repo->command('format-patch', '-o', tempdir(CLEANUP => 1), @rev_list_opts);
 }
 
+@files = handle_backup_files(@files);
+
 if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
@@ -1724,6 +1726,44 @@ sub validate_patch {
 		}
 	}
 	return;
+}
+
+sub handle_backup {
+	my ($last, $lastlen, $file, $known_suffix) = @_;
+	my ($suffix, $skip);
+
+	$skip = 0;
+	if (defined $last &&
+	    ($lastlen < length($file)) &&
+	    (substr($file, 0, $lastlen) eq $last) &&
+	    ($suffix = substr($file, $lastlen)) !~ /^[a-z0-9]/i) {
+		if (defined $known_suffix && $suffix eq $known_suffix) {
+			print "Skipping $file with backup suffix '$known_suffix'.\n";
+			$skip = 1;
+		} else {
+			my $answer = ask("Do you really want to send $file? (y|N): ",
+					 valid_re => qr/^(?:y|n)/i,
+					 default => 'n');
+			$skip = ($answer ne 'y');
+			if ($skip) {
+				$known_suffix = $suffix;
+			}
+		}
+	}
+	return ($skip, $known_suffix);
+}
+
+sub handle_backup_files {
+	my @file = @_;
+	my ($last, $lastlen, $known_suffix, $skip, @result);
+	for my $file (@file) {
+		($skip, $known_suffix) = handle_backup($last, $lastlen,
+						       $file, $known_suffix);
+		push @result, $file unless $skip;
+		$last = $file;
+		$lastlen = length($file);
+	}
+	return @result;
 }
 
 sub file_has_nonascii {
