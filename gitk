@@ -9824,14 +9824,18 @@ proc readresetstat {fd} {
 
 # context menu for a head
 proc headmenu {x y id head} {
-    global headmenuid headmenuhead headctxmenu mainhead
+    global headmenuid headmenuhead headctxmenu mainhead headids
 
     stopfinding
     set headmenuid $id
     set headmenuhead $head
     array set state {0 normal 1 normal 2 normal}
     if {[string match "remotes/*" $head]} {
-	array set state {0 disabled 1 disabled 2 disabled}
+	set localhead [string range $head [expr [string last / $head] + 1] end]
+	if {[info exists headids($localhead)]} {
+	    set state(0) disabled
+	}
+	array set state {1 disabled 2 disabled}
     }
     if {$head eq $mainhead} {
 	array set state {0 disabled 2 disabled}
@@ -9847,11 +9851,27 @@ proc cobranch {} {
     global showlocalchanges
 
     # check the tree is clean first??
+    set newhead $headmenuhead
+    set command [list | git checkout]
+    if {[string match "remotes/*" $newhead]} {
+	set remote $newhead
+	set newhead [string range $newhead [expr [string last / $newhead] + 1] end]
+	# The following check is redundant - the menu option should
+	# be disabled to begin with...
+	if {[info exists headids($newhead)]} {
+	    error_popup [mc "A local branch named %s exists already" $newhead]
+	    return
+	}
+	lappend command -b $newhead --track $remote
+    } else {
+	lappend command $newhead
+    }
+    lappend command 2>@1
     nowbusy checkout [mc "Checking out"]
     update
     dohidelocalchanges
     if {[catch {
-	set fd [open [list | git checkout $headmenuhead 2>@1] r]
+	set fd [open $command r]
     } err]} {
 	notbusy checkout
 	error_popup $err
@@ -9859,12 +9879,12 @@ proc cobranch {} {
 	    dodiffindex
 	}
     } else {
-	filerun $fd [list readcheckoutstat $fd $headmenuhead $headmenuid]
+	filerun $fd [list readcheckoutstat $fd $newhead $headmenuid]
     }
 }
 
 proc readcheckoutstat {fd newhead newheadid} {
-    global mainhead mainheadid headids showlocalchanges progresscoords
+    global mainhead mainheadid headids idheads showlocalchanges progresscoords
     global viewmainheadid curview
 
     if {[gets $fd line] >= 0} {
@@ -9879,8 +9899,14 @@ proc readcheckoutstat {fd newhead newheadid} {
     notbusy checkout
     if {[catch {close $fd} err]} {
 	error_popup $err
+	return
     }
     set oldmainid $mainheadid
+    if {! [info exists headids($newhead)]} {
+	set headids($newhead) $newheadid
+	lappend idheads($newheadid) $newhead
+	addedhead $newheadid $newhead
+    }
     set mainhead $newhead
     set mainheadid $newheadid
     set viewmainheadid($curview) $newheadid
