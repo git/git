@@ -6,7 +6,7 @@
 static void create_directories(const char *path, int path_len,
 			       const struct checkout *state)
 {
-	char *buf = xmalloc(path_len + 1);
+	char *buf = xmallocz(path_len);
 	int len = 0;
 
 	while (len < path_len) {

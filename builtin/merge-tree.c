@@ -174,7 +174,7 @@ static struct merge_list *create_entry(unsigned stage, unsigned mode, const unsi
 
 static char *traverse_path(const struct traverse_info *info, const struct name_entry *n)
 {
-	char *path = xmalloc(traverse_path_len(info, n) + 1);
+	char *path = xmallocz(traverse_path_len(info, n));
 	return make_traverse_path(path, info, n);
 }
 

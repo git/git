@@ -78,7 +78,7 @@ extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
 #define pthread_equal(t1, t2) ((t1).tid == (t2).tid)
 extern pthread_t pthread_self(void);
 
-static inline int pthread_exit(void *ret)
+static inline void NORETURN pthread_exit(void *ret)
 {
 	ExitThread((DWORD)(intptr_t)ret);
 }

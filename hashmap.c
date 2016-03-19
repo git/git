@@ -256,10 +256,9 @@ const void *memintern(const void *data, size_t len)
 	e = hashmap_get(&map, &key, data);
 	if (!e) {
 		/* not found: create it */
-		e = xmallocz(sizeof(struct pool_entry) + len);
+		FLEX_ALLOC_MEM(e, data, data, len);
 		hashmap_entry_init(e, key.ent.hash);
 		e->len = len;
-		memcpy(e->data, data, len);
 		hashmap_add(&map, e);
 	}
 	return e->data;

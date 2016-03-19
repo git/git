@@ -25,7 +25,8 @@ test_expect_success 'push to update (protected)' '
 	(
 		cd dst &&
 		test_commit D &&
-		test_must_fail git push --force-with-lease=master:master origin master
+		test_must_fail git push --force-with-lease=master:master origin master 2>err &&
+		grep "stale info" err
 	) &&
 	git ls-remote . refs/heads/master >expect &&
 	git ls-remote src refs/heads/master >actual &&
@@ -37,7 +38,8 @@ test_expect_success 'push to update (protected, forced)' '
 	(
 		cd dst &&
 		test_commit D &&
-		git push --force --force-with-lease=master:master origin master
+		git push --force --force-with-lease=master:master origin master 2>err &&
+		grep "forced update" err
 	) &&
 	git ls-remote dst refs/heads/master >expect &&
 	git ls-remote src refs/heads/master >actual &&
@@ -101,7 +103,8 @@ test_expect_success 'push to update (allowed, tracking)' '
 	(
 		cd dst &&
 		test_commit D &&
-		git push --force-with-lease=master origin master
+		git push --force-with-lease=master origin master 2>err &&
+		! grep "forced update" err
 	) &&
 	git ls-remote dst refs/heads/master >expect &&
 	git ls-remote src refs/heads/master >actual &&
@@ -114,7 +117,8 @@ test_expect_success 'push to update (allowed even though no-ff)' '
 		cd dst &&
 		git reset --hard HEAD^ &&
 		test_commit D &&
-		git push --force-with-lease=master origin master
+		git push --force-with-lease=master origin master 2>err &&
+		grep "forced update" err
 	) &&
 	git ls-remote dst refs/heads/master >expect &&
 	git ls-remote src refs/heads/master >actual &&
@@ -147,7 +151,8 @@ test_expect_success 'push to delete (allowed)' '
 	setup_srcdst_basic &&
 	(
 		cd dst &&
-		git push --force-with-lease=master origin :master
+		git push --force-with-lease=master origin :master 2>err &&
+		grep deleted err
 	) &&
 	>expect &&
 	git ls-remote src refs/heads/master >actual &&

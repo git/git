@@ -171,8 +171,8 @@ static void queue_directory(const unsigned char *sha1,
 		unsigned mode, int stage, struct archiver_context *c)
 {
 	struct directory *d;
-	size_t len = base->len + 1 + strlen(filename) + 1;
-	d = xmalloc(sizeof(*d) + len);
+	size_t len = st_add4(base->len, 1, strlen(filename), 1);
+	d = xmalloc(st_add(sizeof(*d), len));
 	d->up	   = c->bottom;
 	d->baselen = base->len;
 	d->mode	   = mode;

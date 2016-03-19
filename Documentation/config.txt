@@ -308,6 +308,15 @@ core.trustctime::
 	crawlers and some backup systems).
 	See linkgit:git-update-index[1]. True by default.
 
+core.untrackedCache::
+	Determines what to do about the untracked cache feature of the
+	index. It will be kept, if this variable is unset or set to
+	`keep`. It will automatically be added if set to `true`. And
+	it will automatically be removed, if set to `false`. Before
+	setting it to `true`, you should check that mtime is working
+	properly on your system.
+	See linkgit:git-update-index[1]. `keep` by default.
+
 core.checkStat::
 	Determines which stat fields to match between the index
 	and work tree. The user can set this to 'default' or
@@ -1639,6 +1648,12 @@ http.proxyAuthMethod::
 * `ntlm` - NTLM authentication (compare the --ntlm option of `curl(1)`)
 --
 
+http.emptyAuth::
+	Attempt authentication without seeking a username or password.  This
+	can be used to attempt GSS-Negotiate authentication without specifying
+	a username in the URL, as libcurl normally requires a username for
+	authentication.
+
 http.cookieFile::
 	File containing previously stored cookie lines which should be used
 	in the Git http session, if they match the server. The file format
@@ -1717,6 +1732,14 @@ http.sslCAPath::
 	Path containing files with the CA certificates to verify the peer
 	with when fetching or pushing over HTTPS. Can be overridden
 	by the 'GIT_SSL_CAPATH' environment variable.
+
+http.pinnedpubkey::
+	Public key of the https service. It may either be the filename of
+	a PEM or DER encoded public key file or a string starting with
+	'sha256//' followed by the base64 encoded sha256 hash of the
+	public key. See also libcurl 'CURLOPT_PINNEDPUBLICKEY'. git will
+	exit with an error if this option is set but not supported by
+	cURL.
 
 http.sslTry::
 	Attempt to use AUTH SSL/TLS and encrypted data transfers
@@ -2113,7 +2136,7 @@ pack.indexVersion::
 	larger than 2 GB.
 +
 If you have an old Git that does not understand the version 2 `*.idx` file,
-cloning or fetching over a non native protocol (e.g. "http" and "rsync")
+cloning or fetching over a non native protocol (e.g. "http")
 that will copy both `*.pack` file and corresponding `*.idx` file from the
 other side may give you a repository that cannot be accessed with your
 older version of Git. If the `*.pack` file is smaller than 2 GB, however,
@@ -2820,6 +2843,16 @@ user.name::
 	Your full name to be recorded in any newly created commits.
 	Can be overridden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
 	environment variables.  See linkgit:git-commit-tree[1].
+
+user.useConfigOnly::
+	Instruct Git to avoid trying to guess defaults for 'user.email'
+	and 'user.name', and instead retrieve the values only from the
+	configuration. For example, if you have multiple email addresses
+	and would like to use a different one for each repository, then
+	with this configuration option set to `true` in the global config
+	along with a name, Git will prompt you to set up an email before
+	making new commits in a newly cloned repository.
+	Defaults to `false`.
 
 user.signingKey::
 	If linkgit:git-tag[1] or linkgit:git-commit[1] is not selecting the

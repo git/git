@@ -199,7 +199,8 @@ void fsck_set_msg_type(struct fsck_options *options,
 
 	if (!options->msg_type) {
 		int i;
-		int *msg_type = xmalloc(sizeof(int) * FSCK_MSG_MAX);
+		int *msg_type;
+		ALLOC_ARRAY(msg_type, FSCK_MSG_MAX);
 		for (i = 0; i < FSCK_MSG_MAX; i++)
 			msg_type[i] = fsck_msg_type(i, options);
 		options->msg_type = msg_type;

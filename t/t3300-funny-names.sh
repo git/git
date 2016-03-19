@@ -13,6 +13,7 @@ tree, index, and tree objects.
 
 HT='	'
 
+test_have_prereq MINGW ||
 echo 2>/dev/null > "Name with an${HT}HT"
 if ! test -f "Name with an${HT}HT"
 then

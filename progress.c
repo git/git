@@ -247,7 +247,7 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
 		size_t len = strlen(msg) + 5;
 		struct throughput *tp = progress->throughput;
 
-		bufp = (len < sizeof(buf)) ? buf : xmalloc(len + 1);
+		bufp = (len < sizeof(buf)) ? buf : xmallocz(len);
 		if (tp) {
 			unsigned int rate = !tp->avg_misecs ? 0 :
 					tp->avg_bytes / tp->avg_misecs;

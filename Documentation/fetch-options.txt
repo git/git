@@ -158,3 +158,11 @@ endif::git-pull[]
 	by default when it is attached to a terminal, unless -q
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
+
+-4::
+--ipv4::
+	Use IPv4 addresses only, ignoring IPv6 addresses.
+
+-6::
+--ipv6::
+	Use IPv6 addresses only, ignoring IPv4 addresses.

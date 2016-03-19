@@ -454,6 +454,39 @@ static inline time_t filetime_to_time_t(const FILETIME *ft)
 	return (time_t)(filetime_to_hnsec(ft) / 10000000);
 }
 
+/**
+ * Verifies that safe_create_leading_directories() would succeed.
+ */
+static int has_valid_directory_prefix(wchar_t *wfilename)
+{
+	int n = wcslen(wfilename);
+
+	while (n > 0) {
+		wchar_t c = wfilename[--n];
+		DWORD attributes;
+
+		if (!is_dir_sep(c))
+			continue;
+
+		wfilename[n] = L'\0';
+		attributes = GetFileAttributesW(wfilename);
+		wfilename[n] = c;
+		if (attributes == FILE_ATTRIBUTE_DIRECTORY ||
+				attributes == FILE_ATTRIBUTE_DEVICE)
+			return 1;
+		if (attributes == INVALID_FILE_ATTRIBUTES)
+			switch (GetLastError()) {
+			case ERROR_PATH_NOT_FOUND:
+				continue;
+			case ERROR_FILE_NOT_FOUND:
+				/* This implies parent directory exists. */
+				return 1;
+			}
+		return 0;
+	}
+	return 1;
+}
+
 /* We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
  * this case, we strip the trailing slashes and stat again.
@@ -514,6 +547,12 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 	case ERROR_NOT_ENOUGH_MEMORY:
 		errno = ENOMEM;
 		break;
+	case ERROR_PATH_NOT_FOUND:
+		if (!has_valid_directory_prefix(wfilename)) {
+			errno = ENOTDIR;
+			break;
+		}
+		/* fallthru */
 	default:
 		errno = ENOENT;
 		break;
@@ -771,7 +810,7 @@ static const char *quote_arg(const char *arg)
 		return arg;
 
 	/* insert \ where necessary */
-	d = q = xmalloc(len+n+3);
+	d = q = xmalloc(st_add3(len, n, 3));
 	*d++ = '"';
 	while (*arg) {
 		if (*arg == '"')
@@ -854,7 +893,7 @@ static char **get_path_split(void)
 	if (!n)
 		return NULL;
 
-	path = xmalloc((n+1)*sizeof(char *));
+	ALLOC_ARRAY(path, n + 1);
 	p = envpath;
 	i = 0;
 	do {
@@ -939,7 +978,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 		i++;
 
 	/* copy the environment, leaving space for changes */
-	tmpenv = xmalloc((size + i) * sizeof(char*));
+	ALLOC_ARRAY(tmpenv, size + i);
 	memcpy(tmpenv, environ, size * sizeof(char*));
 
 	/* merge supplied environment changes into the temporary environment */
@@ -1030,7 +1069,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(quoted);
 	}
 
-	wargs = xmalloc((2 * args.len + 1) * sizeof(wchar_t));
+	ALLOC_ARRAY(wargs, st_add(st_mult(2, args.len), 1));
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
 
@@ -1129,7 +1168,7 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 		int argc = 0;
 		const char **argv2;
 		while (argv[argc]) argc++;
-		argv2 = xmalloc(sizeof(*argv) * (argc+1));
+		ALLOC_ARRAY(argv2, argc + 1);
 		argv2[0] = (char *)cmd;	/* full path to the script file */
 		memcpy(&argv2[1], &argv[1], sizeof(*argv) * argc);
 		pid = mingw_spawnv(prog, argv2, 1);
@@ -1603,7 +1642,12 @@ repeat:
 	if (gle == ERROR_ACCESS_DENIED &&
 	    (attrs = GetFileAttributesW(wpnew)) != INVALID_FILE_ATTRIBUTES) {
 		if (attrs & FILE_ATTRIBUTE_DIRECTORY) {
-			errno = EISDIR;
+			DWORD attrsold = GetFileAttributesW(wpold);
+			if (attrsold == INVALID_FILE_ATTRIBUTES ||
+			    !(attrsold & FILE_ATTRIBUTE_DIRECTORY))
+				errno = EISDIR;
+			else if (!_wrmdir(wpnew))
+				goto repeat;
 			return -1;
 		}
 		if ((attrs & FILE_ATTRIBUTE_READONLY) &&
@@ -2047,6 +2091,37 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
 	return -1;
 }
 
+static void setup_windows_environment()
+{
+	char *tmp = getenv("TMPDIR");
+
+	/* on Windows it is TMP and TEMP */
+	if (!tmp) {
+		if (!(tmp = getenv("TMP")))
+			tmp = getenv("TEMP");
+		if (tmp) {
+			setenv("TMPDIR", tmp, 1);
+			tmp = getenv("TMPDIR");
+		}
+	}
+
+	if (tmp) {
+		/*
+		 * Convert all dir separators to forward slashes,
+		 * to help shell commands called from the Git
+		 * executable (by not mistaking the dir separators
+		 * for escape characters).
+		 */
+		for (; *tmp; tmp++)
+			if (*tmp == '\\')
+				*tmp = '/';
+	}
+
+	/* simulate TERM to enable auto-color (see color.c) */
+	if (!getenv("TERM"))
+		setenv("TERM", "cygwin", 1);
+}
+
 /*
  * Disable MSVCRT command line wildcard expansion (__getmainargs called from
  * mingw startup code, see init.c in mingw runtime).
@@ -2125,19 +2200,7 @@ void mingw_startup()
 	qsort(environ, i, sizeof(char*), compareenv);
 
 	/* fix Windows specific environment settings */
-
-	/* on Windows it is TMP and TEMP */
-	if (!mingw_getenv("TMPDIR")) {
-		const char *tmp = mingw_getenv("TMP");
-		if (!tmp)
-			tmp = mingw_getenv("TEMP");
-		if (tmp)
-			setenv("TMPDIR", tmp, 1);
-	}
-
-	/* simulate TERM to enable auto-color (see color.c) */
-	if (!getenv("TERM"))
-		setenv("TERM", "cygwin", 1);
+	setup_windows_environment();
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);

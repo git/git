@@ -315,8 +315,8 @@ void prepare_shallow_info(struct shallow_info *info, struct sha1_array *sa)
 	info->shallow = sa;
 	if (!sa)
 		return;
-	info->ours = xmalloc(sizeof(*info->ours) * sa->nr);
-	info->theirs = xmalloc(sizeof(*info->theirs) * sa->nr);
+	ALLOC_ARRAY(info->ours, sa->nr);
+	ALLOC_ARRAY(info->theirs, sa->nr);
 	for (i = 0; i < sa->nr; i++) {
 		if (has_sha1_file(sa->sha1[i])) {
 			struct commit_graft *graft;
@@ -389,7 +389,7 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 	unsigned int i, nr;
 	struct commit_list *head = NULL;
 	int bitmap_nr = (info->nr_bits + 31) / 32;
-	int bitmap_size = bitmap_nr * sizeof(uint32_t);
+	size_t bitmap_size = st_mult(bitmap_nr, sizeof(uint32_t));
 	uint32_t *tmp = xmalloc(bitmap_size); /* to be freed before return */
 	uint32_t *bitmap = paint_alloc(info);
 	struct commit *c = lookup_commit_reference_gently(sha1, 1);
@@ -487,7 +487,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	struct paint_info pi;
 
 	trace_printf_key(&trace_shallow, "shallow: assign_shallow_commits_to_refs\n");
-	shallow = xmalloc(sizeof(*shallow) * (info->nr_ours + info->nr_theirs));
+	ALLOC_ARRAY(shallow, info->nr_ours + info->nr_theirs);
 	for (i = 0; i < info->nr_ours; i++)
 		shallow[nr_shallow++] = info->ours[i];
 	for (i = 0; i < info->nr_theirs; i++)

@@ -77,11 +77,47 @@ test_expect_success 'make a commit to test rebase' '
 	'
 
 test_expect_success 'git svn rebase works inside a fresh-cloned repository' '
-	cd test-rebase &&
+	(
+		cd test-rebase &&
 		git svn rebase &&
 		test -e test-rebase-main &&
 		test -e test-rebase
-	'
+	)'
+
+# Without this, LC_ALL=C as set in test-lib.sh, and Cygwin converts
+# non-ASCII characters in filenames unexpectedly, and causes errors.
+# https://cygwin.com/cygwin-ug-net/using-specialnames.html#pathnames-specialchars
+# > Some characters are disallowed in filenames on Windows filesystems. ...
+# ...
+# > ... All of the above characters, except for the backslash, are converted
+# > to special UNICODE characters in the range 0xf000 to 0xf0ff (the
+# > "Private use area") when creating or accessing files.
+prepare_a_utf8_locale
+test_expect_success UTF8 'svn.pathnameencoding=cp932 new file on dcommit' '
+	LC_ALL=$a_utf8_locale &&
+	export LC_ALL &&
+	neq=$(printf "\201\202") &&
+	git config svn.pathnameencoding cp932 &&
+	echo neq >"$neq" &&
+	git add "$neq" &&
+	git commit -m "neq" &&
+	git svn dcommit
+'
+
+# See the comment on the above test for setting of LC_ALL.
+test_expect_success 'svn.pathnameencoding=cp932 rename on dcommit' '
+	LC_ALL=$a_utf8_locale &&
+	export LC_ALL &&
+	inf=$(printf "\201\207") &&
+	git config svn.pathnameencoding cp932 &&
+	echo inf >"$inf" &&
+	git add "$inf" &&
+	git commit -m "inf" &&
+	git svn dcommit &&
+	git mv "$inf" inf &&
+	git commit -m "inf rename" &&
+	git svn dcommit
+'
 
 stop_httpd
 

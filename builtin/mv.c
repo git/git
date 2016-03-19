@@ -24,7 +24,8 @@ static const char **internal_copy_pathspec(const char *prefix,
 					   int count, unsigned flags)
 {
 	int i;
-	const char **result = xmalloc((count + 1) * sizeof(const char *));
+	const char **result;
+	ALLOC_ARRAY(result, count + 1);
 	memcpy(result, pathspec, count * sizeof(const char *));
 	result[count] = NULL;
 	for (i = 0; i < count; i++) {
@@ -47,9 +48,9 @@ static const char **internal_copy_pathspec(const char *prefix,
 
 static const char *add_slash(const char *path)
 {
-	int len = strlen(path);
+	size_t len = strlen(path);
 	if (path[len - 1] != '/') {
-		char *with_slash = xmalloc(len + 2);
+		char *with_slash = xmalloc(st_add(len, 2));
 		memcpy(with_slash, path, len);
 		with_slash[len++] = '/';
 		with_slash[len] = 0;

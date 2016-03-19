@@ -164,7 +164,7 @@ static void display_table(const struct string_list *list,
 	data.colopts = colopts;
 	data.opts = *opts;
 
-	data.len = xmalloc(sizeof(*data.len) * list->nr);
+	ALLOC_ARRAY(data.len, list->nr);
 	for (i = 0; i < list->nr; i++)
 		data.len[i] = item_length(colopts, list->items[i].string);
 
@@ -173,9 +173,8 @@ static void display_table(const struct string_list *list,
 	if (colopts & COL_DENSE)
 		shrink_columns(&data);
 
-	empty_cell = xmalloc(initial_width + 1);
+	empty_cell = xmallocz(initial_width);
 	memset(empty_cell, ' ', initial_width);
-	empty_cell[initial_width] = '\0';
 	for (y = 0; y < data.rows; y++) {
 		for (x = 0; x < data.cols; x++)
 			if (display_cell(&data, initial_width, empty_cell, x, y))

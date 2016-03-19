@@ -2060,6 +2060,7 @@ _git_config ()
 		core.sparseCheckout
 		core.symlinks
 		core.trustctime
+		core.untrackedCache
 		core.warnAmbiguousRefs
 		core.whitespace
 		core.worktree
@@ -2414,8 +2415,8 @@ _git_stash ()
 		show,--*|branch,--*)
 			;;
 		branch,*)
-		  if [ $cword -eq 3 ]; then
-			__gitcomp_nl "$(__git_refs)";
+			if [ $cword -eq 3 ]; then
+				__gitcomp_nl "$(__git_refs)";
 			else
 				__gitcomp_nl "$(git --git-dir="$(__gitdir)" stash list \
 						| sed -n -e 's/:.*//p')"

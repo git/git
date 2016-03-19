@@ -48,7 +48,7 @@ static int has_rerere_resolution(const struct rerere_id *id)
 static struct rerere_id *new_rerere_id_hex(char *hex)
 {
 	struct rerere_id *id = xmalloc(sizeof(*id));
-	strcpy(id->hex, hex);
+	xsnprintf(id->hex, sizeof(id->hex), "%s", hex);
 	return id;
 }
 
@@ -904,7 +904,7 @@ int rerere_forget(struct pathspec *pathspec)
 static struct rerere_id *dirname_to_id(const char *name)
 {
 	static struct rerere_id id;
-	strcpy(id.hex, name);
+	xsnprintf(id.hex, sizeof(id.hex), "%s", name);
 	return &id;
 }
 

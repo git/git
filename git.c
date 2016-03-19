@@ -25,14 +25,14 @@ static const char *env_names[] = {
 	GIT_PREFIX_ENVIRONMENT
 };
 static char *orig_env[4];
-static int saved_env_before_alias;
+static int save_restore_env_balance;
 
 static void save_env_before_alias(void)
 {
 	int i;
-	if (saved_env_before_alias)
-		return;
-	saved_env_before_alias = 1;
+
+	assert(save_restore_env_balance == 0);
+	save_restore_env_balance = 1;
 	orig_cwd = xgetcwd();
 	for (i = 0; i < ARRAY_SIZE(env_names); i++) {
 		orig_env[i] = getenv(env_names[i]);
@@ -44,6 +44,9 @@ static void save_env_before_alias(void)
 static void restore_env(int external_alias)
 {
 	int i;
+
+	assert(save_restore_env_balance == 1);
+	save_restore_env_balance = 0;
 	if (!external_alias && orig_cwd && chdir(orig_cwd))
 		die_errno("could not move to %s", orig_cwd);
 	free(orig_cwd);
@@ -51,10 +54,12 @@ static void restore_env(int external_alias)
 		if (external_alias &&
 		    !strcmp(env_names[i], GIT_PREFIX_ENVIRONMENT))
 			continue;
-		if (orig_env[i])
+		if (orig_env[i]) {
 			setenv(env_names[i], orig_env[i], 1);
-		else
+			free(orig_env[i]);
+		} else {
 			unsetenv(env_names[i]);
+		}
 	}
 }
 
@@ -242,20 +247,16 @@ static int handle_alias(int *argcp, const char ***argv)
 	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
 		if (alias_string[0] == '!') {
-			const char **alias_argv;
-			int argc = *argcp, i;
+			struct child_process child = CHILD_PROCESS_INIT;
 
 			commit_pager_choice();
 			restore_env(1);
 
-			/* build alias_argv */
-			alias_argv = xmalloc(sizeof(*alias_argv) * (argc + 1));
-			alias_argv[0] = alias_string + 1;
-			for (i = 1; i < argc; ++i)
-				alias_argv[i] = (*argv)[i];
-			alias_argv[argc] = NULL;
+			child.use_shell = 1;
+			argv_array_push(&child.args, alias_string + 1);
+			argv_array_pushv(&child.args, (*argv) + 1);
 
-			ret = run_command_v_opt(alias_argv, RUN_USING_SHELL);
+			ret = run_command(&child);
 			if (ret >= 0)   /* normal exit */
 				exit(ret);
 
@@ -508,21 +509,25 @@ int is_builtin(const char *s)
 	return !!get_builtin(s);
 }
 
+#ifdef STRIP_EXTENSION
+static void strip_extension(const char **argv)
+{
+	size_t len;
+
+	if (strip_suffix(argv[0], STRIP_EXTENSION, &len))
+		argv[0] = xmemdupz(argv[0], len);
+}
+#else
+#define strip_extension(cmd)
+#endif
+
 static void handle_builtin(int argc, const char **argv)
 {
-	const char *cmd = argv[0];
-	int i;
-	static const char ext[] = STRIP_EXTENSION;
+	const char *cmd;
 	struct cmd_struct *builtin;
 
-	if (sizeof(ext) > 1) {
-		i = strlen(argv[0]) - strlen(ext);
-		if (i > 0 && !strcmp(argv[0] + i, ext)) {
-			char *argv0 = xstrdup(argv[0]);
-			argv[0] = cmd = argv0;
-			argv0[i] = '\0';
-		}
-	}
+	strip_extension(argv);
+	cmd = argv[0];
 
 	/* Turn "git cmd --help" into "git help cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
@@ -531,16 +536,8 @@ static void handle_builtin(int argc, const char **argv)
 	}
 
 	builtin = get_builtin(cmd);
-	if (builtin) {
-		/*
-		 * XXX: if we can figure out cases where it is _safe_
-		 * to do, we can avoid spawning a new process when
-		 * saved_env_before_alias is true
-		 * (i.e. setup_git_dir* has been run once)
-		 */
-		if (!saved_env_before_alias)
-			exit(run_builtin(builtin, argc, argv));
-	}
+	if (builtin)
+		exit(run_builtin(builtin, argc, argv));
 }
 
 static void execv_dashed_external(const char **argv)
@@ -584,8 +581,17 @@ static int run_argv(int *argcp, const char ***argv)
 	int done_alias = 0;
 
 	while (1) {
-		/* See if it's a builtin */
-		handle_builtin(*argcp, *argv);
+		/*
+		 * If we tried alias and futzed with our environment,
+		 * it no longer is safe to invoke builtins directly in
+		 * general.  We have to spawn them as dashed externals.
+		 *
+		 * NEEDSWORK: if we can figure out cases
+		 * where it is safe to do, we can avoid spawning a new
+		 * process.
+		 */
+		if (!done_alias)
+			handle_builtin(*argcp, *argv);
 
 		/* .. then try the external ones */
 		execv_dashed_external(*argv);

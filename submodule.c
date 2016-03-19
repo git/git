@@ -69,7 +69,7 @@ int update_path_in_gitmodules(const char *oldpath, const char *newpath)
 	strbuf_addstr(&entry, "submodule.");
 	strbuf_addstr(&entry, submodule->name);
 	strbuf_addstr(&entry, ".path");
-	if (git_config_set_in_file(".gitmodules", entry.buf, newpath) < 0) {
+	if (git_config_set_in_file_gently(".gitmodules", entry.buf, newpath) < 0) {
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not update .gitmodules entry %s"), entry.buf);
 		strbuf_release(&entry);
@@ -123,7 +123,7 @@ static int add_submodule_odb(const char *path)
 	struct strbuf objects_directory = STRBUF_INIT;
 	struct alternate_object_database *alt_odb;
 	int ret = 0;
-	int alloc;
+	size_t alloc;
 
 	strbuf_git_path_submodule(&objects_directory, path, "objects/");
 	if (!is_directory(objects_directory.buf)) {
@@ -138,8 +138,8 @@ static int add_submodule_odb(const char *path)
 					objects_directory.len))
 			goto done;
 
-	alloc = objects_directory.len + 42; /* for "12/345..." sha1 */
-	alt_odb = xmalloc(sizeof(*alt_odb) + alloc);
+	alloc = st_add(objects_directory.len, 42); /* for "12/345..." sha1 */
+	alt_odb = xmalloc(st_add(sizeof(*alt_odb), alloc));
 	alt_odb->next = alt_odb_list;
 	xsnprintf(alt_odb->base, alloc, "%s", objects_directory.buf);
 	alt_odb->name = alt_odb->base + objects_directory.len;
@@ -705,8 +705,7 @@ static int get_next_submodule(struct child_process *cp,
 	return 0;
 }
 
-static int fetch_start_failure(struct child_process *cp,
-			       struct strbuf *err,
+static int fetch_start_failure(struct strbuf *err,
 			       void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;
@@ -716,8 +715,8 @@ static int fetch_start_failure(struct child_process *cp,
 	return 0;
 }
 
-static int fetch_finish(int retvalue, struct child_process *cp,
-			struct strbuf *err, void *cb, void *task_cb)
+static int fetch_finish(int retvalue, struct strbuf *err,
+			void *cb, void *task_cb)
 {
 	struct submodule_parallel_fetch *spf = cb;
 
@@ -1087,11 +1086,9 @@ void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir)
 	/* Update core.worktree setting */
 	strbuf_reset(&file_name);
 	strbuf_addf(&file_name, "%s/config", git_dir);
-	if (git_config_set_in_file(file_name.buf, "core.worktree",
-				   relative_path(real_work_tree, git_dir,
-						 &rel_path)))
-		die(_("Could not set core.worktree in %s"),
-		    file_name.buf);
+	git_config_set_in_file(file_name.buf, "core.worktree",
+			       relative_path(real_work_tree, git_dir,
+					     &rel_path));
 
 	strbuf_release(&file_name);
 	strbuf_release(&rel_path);

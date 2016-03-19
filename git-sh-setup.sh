@@ -168,11 +168,11 @@ git_pager() {
 }
 
 sane_grep () {
-	GREP_OPTIONS= LC_ALL=C grep "$@"
+	GREP_OPTIONS= LC_ALL=C grep @@SANE_TEXT_GREP@@ "$@"
 }
 
 sane_egrep () {
-	GREP_OPTIONS= LC_ALL=C egrep "$@"
+	GREP_OPTIONS= LC_ALL=C egrep @@SANE_TEXT_GREP@@ "$@"
 }
 
 is_bare_repository () {

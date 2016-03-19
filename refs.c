@@ -124,7 +124,7 @@ int refname_is_safe(const char *refname)
 		char *buf;
 		int result;
 
-		buf = xmalloc(strlen(refname) + 1);
+		buf = xmallocz(strlen(refname));
 		/*
 		 * Does the refname try to escape refs/?
 		 * For example: refs/foo/../bar is safe but refs/foo/../../bar
@@ -761,10 +761,8 @@ void ref_transaction_free(struct ref_transaction *transaction)
 static struct ref_update *add_update(struct ref_transaction *transaction,
 				     const char *refname)
 {
-	size_t len = strlen(refname) + 1;
-	struct ref_update *update = xcalloc(1, sizeof(*update) + len);
-
-	memcpy((char *)update->refname, refname, len); /* includes NUL */
+	struct ref_update *update;
+	FLEX_ALLOC_STR(update, refname, refname);
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
 	transaction->updates[transaction->nr++] = update;
 	return update;
@@ -908,7 +906,7 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 			/* -2 for strlen("%.*s") - strlen("%s"); +1 for NUL */
 			total_len += strlen(ref_rev_parse_rules[nr_rules]) - 2 + 1;
 
-		scanf_fmts = xmalloc(nr_rules * sizeof(char *) + total_len);
+		scanf_fmts = xmalloc(st_add(st_mult(nr_rules, sizeof(char *)), total_len));
 
 		offset = 0;
 		for (i = 0; i < nr_rules; i++) {
