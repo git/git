@@ -2664,6 +2664,7 @@ proc makewindow {} {
     set headctxmenu .headctxmenu
     makemenu $headctxmenu {
 	{mc "Check out this branch" command cobranch}
+	{mc "Rename this branch" command mvbranch}
 	{mc "Remove this branch" command rmbranch}
 	{mc "Copy branch name" command {clipboard clear; clipboard append $headmenuhead}}
     }
@@ -9452,26 +9453,58 @@ proc wrcomcan {} {
 }
 
 proc mkbranch {} {
-    global rowmenuid mkbrtop NS
+    global NS rowmenuid
 
-    set top .makebranch
+    set top .branchdialog
+
+    set val(name) ""
+    set val(id) $rowmenuid
+    set val(command) [list mkbrgo $top]
+
+    set ui(title) [mc "Create branch"]
+    set ui(accept) [mc "Create"]
+
+    branchdia $top val ui
+}
+
+proc mvbranch {} {
+    global NS
+    global headmenuid headmenuhead
+
+    set top .branchdialog
+
+    set val(name) $headmenuhead
+    set val(id) $headmenuid
+    set val(command) [list mvbrgo $top $headmenuhead]
+
+    set ui(title) [mc "Rename branch %s" $headmenuhead]
+    set ui(accept) [mc "Rename"]
+
+    branchdia $top val ui
+}
+
+proc branchdia {top valvar uivar} {
+    global NS
+    upvar $valvar val $uivar ui
+
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Create new branch"]
+    ${NS}::label $top.title -text $ui(title)
     grid $top.title - -pady 10
     ${NS}::label $top.id -text [mc "ID:"]
     ${NS}::entry $top.sha1 -width 40
-    $top.sha1 insert 0 $rowmenuid
+    $top.sha1 insert 0 $val(id)
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
     ${NS}::label $top.nlab -text [mc "Name:"]
     ${NS}::entry $top.name -width 40
+    $top.name insert 0 $val(name)
     grid $top.nlab $top.name -sticky w
     ${NS}::frame $top.buts
-    ${NS}::button $top.buts.go -text [mc "Create"] -command [list mkbrgo $top]
+    ${NS}::button $top.buts.go -text $ui(accept) -command $val(command)
     ${NS}::button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
-    bind $top <Key-Return> [list mkbrgo $top]
+    bind $top <Key-Return> $val(command)
     bind $top <Key-Escape> "catch {destroy $top}"
     grid $top.buts.go $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
@@ -9521,6 +9554,46 @@ proc mkbrgo {top} {
 	    addedhead $id $name
 	    redrawtags $id
 	}
+	dispneartags 0
+	run refill_reflist
+    }
+}
+
+proc mvbrgo {top prevname} {
+    global headids idheads mainhead mainheadid
+
+    set name [$top.name get]
+    set id [$top.sha1 get]
+    set cmdargs {}
+    if {$name eq $prevname} {
+	catch {destroy $top}
+	return
+    }
+    if {$name eq {}} {
+	error_popup [mc "Please specify a new name for the branch"] $top
+	return
+    }
+    catch {destroy $top}
+    lappend cmdargs -m $prevname $name
+    nowbusy renamebranch
+    update
+    if {[catch {
+	eval exec git branch $cmdargs
+    } err]} {
+	notbusy renamebranch
+	error_popup $err
+    } else {
+	notbusy renamebranch
+	removehead $id $prevname
+	removedhead $id $prevname
+	set headids($name) $id
+	lappend idheads($id) $name
+	addedhead $id $name
+	if {$prevname eq $mainhead} {
+	    set mainhead $name
+	    set mainheadid $id
+	}
+	redrawtags $id
 	dispneartags 0
 	run refill_reflist
     }
@@ -9756,15 +9829,16 @@ proc headmenu {x y id head} {
     stopfinding
     set headmenuid $id
     set headmenuhead $head
-    set state normal
+    array set state {0 normal 1 normal 2 normal}
     if {[string match "remotes/*" $head]} {
-	set state disabled
+	array set state {0 disabled 1 disabled 2 disabled}
     }
     if {$head eq $mainhead} {
-	set state disabled
+	array set state {0 disabled 2 disabled}
     }
-    $headctxmenu entryconfigure 0 -state $state
-    $headctxmenu entryconfigure 1 -state $state
+    foreach i {0 1 2} {
+	$headctxmenu entryconfigure $i -state $state($i)
+    }
     tk_popup $headctxmenu $x $y
 }
 
