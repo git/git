@@ -515,7 +515,7 @@ git-p4.pathEncoding::
 	Git expects paths encoded as UTF-8. Use this config to tell git-p4
 	what encoding Perforce had used for the paths. This encoding is used
 	to transcode the paths to UTF-8. As an example, Perforce on Windows
-	often uses “cp1252” to encode path names.
+	often uses "cp1252" to encode path names.
 
 git-p4.largeFileSystem::
 	Specify the system that is used for large (binary) files. Please note
