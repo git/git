@@ -397,7 +397,7 @@ preceding SP is also omitted.  Currently, no commands pass any
 'extra-info'.
 
 The hook always runs after the automatic note copying (see
-"notes.rewrite.<command>" in linkgit:git-config.txt[1]) has happened, and
+"notes.rewrite.<command>" in linkgit:git-config[1]) has happened, and
 thus has access to these notes.
 
 The following command-specific comments apply:
