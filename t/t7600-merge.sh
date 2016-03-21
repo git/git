@@ -33,9 +33,11 @@ printf '%s\n' 1 2 3 4 5 6 7 8 9 >file
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >file.1
 printf '%s\n' 1 2 3 4 '5 X' 6 7 8 9 >file.5
 printf '%s\n' 1 2 3 4 5 6 7 8 '9 X' >file.9
+printf '%s\n' 1 2 3 4 5 6 7 8 '9 Y' >file.9y
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >result.1
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
+printf '%s\n' 1 2 3 4 5 6 7 8 '9 Z' >result.9z
 >empty
 
 create_merge_msgs () {
@@ -128,6 +130,12 @@ test_expect_success 'setup' '
 	git tag c2 &&
 	c2=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
+	cp file.9y file &&
+	git add file &&
+	test_tick &&
+	git commit -m "commit 7" &&
+	git tag c7 &&
+	git reset --hard "$c0" &&
 	cp file.9 file &&
 	git add file &&
 	test_tick &&
@@ -216,6 +224,26 @@ test_expect_success 'merge c1 with c2' '
 	git merge c2 &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2
+'
+
+test_expect_success 'merge --squash c3 with c7' '
+	git reset --hard c3 &&
+	test_must_fail git merge --squash c7 &&
+	cat result.9z >file &&
+	git commit --no-edit -a &&
+
+	{
+		cat <<-EOF
+		Squashed commit of the following:
+
+		$(git show -s c7)
+
+		# Conflicts:
+		#	file
+		EOF
+	} >expect &&
+	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
+	test_cmp expect actual
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
