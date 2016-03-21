@@ -1327,17 +1327,17 @@ msgstr ":strip= 需要一个正整型参数"
 #: ref-filter.c:883
 #, c-format
 msgid "ref '%s' does not have %ld components to :strip"
-msgstr "引用 '%s' 没有提供要脱掉的 %ld 个组件"
+msgstr "引用 '%s' 未提供用于 :strip 的 %ld 个组件"
 
 #: ref-filter.c:1046
 #, c-format
 msgid "unknown %.*s format %s"
-msgstr "未知 %.*s 格式 %s"
+msgstr "未知的 %.*s 格式 %s"
 
 #: ref-filter.c:1066 ref-filter.c:1097
 #, c-format
 msgid "missing object %s for %s"
-msgstr "丢失 %2$s 的对象 %1$s"
+msgstr "缺失 %2$s 的对象 %1$s"
 
 #: ref-filter.c:1069 ref-filter.c:1100
 #, c-format
@@ -1779,7 +1779,7 @@ msgstr "偏移量在 %s 的包索引开始之前（损坏的索引？）"
 #: sha1_file.c:2463
 #, c-format
 msgid "offset beyond end of pack index for %s (truncated index?)"
-msgstr "偏移量越过了 %s 的包索引的结尾（截断的索引？）"
+msgstr "偏移量越过了 %s 的包索引的结尾（被截断的索引？）"
 
 #: sha1_name.c:462
 msgid ""
@@ -4851,7 +4851,7 @@ msgid ""
 "Please specify a directory on the command line"
 msgstr ""
 "无法猜到目录名。\n"
-"请在命令行提供一个目录"
+"请在命令行指定一个目录"
 
 #: builtin/clone.c:305
 #, c-format

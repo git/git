@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.8.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-02-28 20:31+0800\n"
-"PO-Revision-Date: 2016-03-04 15:19+0100\n"
+"POT-Creation-Date: 2016-03-16 00:16+0800\n"
+"PO-Revision-Date: 2016-03-15 22:35+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -1129,6 +1129,16 @@ msgstr "okänd färg: %%(color:%s)"
 msgid "unrecognized format: %%(%s)"
 msgstr "okänt format: %%(%s)"
 
+#: ref-filter.c:77
+#, c-format
+msgid "%%(body) does not take arguments"
+msgstr "%%(body) tar inte argument"
+
+#: ref-filter.c:84
+#, c-format
+msgid "%%(subject) does not take arguments"
+msgstr "%%(subject) tar inte argument"
+
 #: ref-filter.c:101
 #, c-format
 msgid "positive value expected contents:lines=%s"
@@ -1169,15 +1179,64 @@ msgstr "okänt %%(align)-argument: %s"
 msgid "positive width expected with the %%(align) atom"
 msgstr "positiv bredd förväntad med atomen %%(align)"
 
+#: ref-filter.c:244
+#, c-format
+msgid "malformed field name: %.*s"
+msgstr "felformat fältnamn: %.*s"
+
+#: ref-filter.c:270
+#, c-format
+msgid "unknown field name: %.*s"
+msgstr "okänt fältnamn: %.*s"
+
 #: ref-filter.c:372
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "format: atomen %%(end) använd utan motsvarande atom"
 
+#: ref-filter.c:424
+#, c-format
+msgid "malformed format string %s"
+msgstr "felformad formatsträng %s"
+
+#: ref-filter.c:878
+msgid ":strip= requires a positive integer argument"
+msgstr ":strip= kräver ett positivt heltalsargument"
+
+#: ref-filter.c:883
+#, c-format
+msgid "ref '%s' does not have %ld components to :strip"
+msgstr "referensen \"%s\" har inte %ld komponenter för :strip"
+
+#: ref-filter.c:1046
+#, c-format
+msgid "unknown %.*s format %s"
+msgstr "okänt \"%.*s\"-format %s"
+
+#: ref-filter.c:1066 ref-filter.c:1097
+#, c-format
+msgid "missing object %s for %s"
+msgstr "objektet %s saknas för %s"
+
+#: ref-filter.c:1069 ref-filter.c:1100
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "parse_object_buffer misslyckades på %s för %s"
+
 #: ref-filter.c:1311
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "felformat objekt vid \"%s\""
+
+#: ref-filter.c:1373
+#, c-format
+msgid "ignoring ref with broken name %s"
+msgstr "ignorerar referens med trasigt namn %s"
+
+#: ref-filter.c:1378
+#, c-format
+msgid "ignoring broken ref %s"
+msgstr "ignorerar trasig referens %s"
 
 #: ref-filter.c:1651
 #, c-format
@@ -1590,6 +1649,20 @@ msgstr "Kan inte göra \"cherry-pick\" i ett tomt huvud"
 msgid "failed to read %s"
 msgstr "misslyckades läsa %s"
 
+#: sha1_file.c:1080
+msgid "offset before end of packfile (broken .idx?)"
+msgstr "offset före slutet av packfilen (trasig .idx?)"
+
+#: sha1_file.c:2459
+#, c-format
+msgid "offset before start of pack index for %s (corrupt index?)"
+msgstr "offset före slutet av packindex för %s (trasigt index?)"
+
+#: sha1_file.c:2463
+#, c-format
+msgid "offset beyond end of pack index for %s (truncated index?)"
+msgstr "offset borton slutet av packindex för %s (trunkerat index?)"
+
 #: sha1_name.c:462
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
@@ -1636,6 +1709,11 @@ msgstr "Kunde inte ta bort .gitmodules-posten för %s"
 #: submodule.c:118
 msgid "staging updated .gitmodules failed"
 msgstr "misslyckades köa uppdaterad .gitmodules"
+
+#: trailer.c:237
+#, c-format
+msgid "running trailer command '%s' failed"
+msgstr "misslyckades utföra \"trailer\"-kommandot \"%s\""
 
 #: trailer.c:492 trailer.c:496 trailer.c:500 trailer.c:554 trailer.c:558
 #: trailer.c:562
@@ -2229,6 +2307,10 @@ msgstr "försvunnen"
 #: wt-status.c:1677 wt-status.c:1685
 msgid "behind "
 msgstr "efter "
+
+#: wt-status.c:1680 wt-status.c:1683
+msgid "ahead "
+msgstr "före "
 
 #: compat/precompose_utf8.c:57 builtin/clone.c:413
 #, c-format
@@ -4118,6 +4200,10 @@ msgstr "Kan inte skapa referenslogg för \"%s\": %s\n"
 msgid "HEAD is now at"
 msgstr "HEAD är nu på"
 
+#: builtin/checkout.c:665 builtin/clone.c:659
+msgid "unable to update HEAD"
+msgstr "kan inte uppdatera HEAD"
+
 #: builtin/checkout.c:669
 #, c-format
 msgid "Reset branch '%s'\n"
@@ -4647,6 +4733,14 @@ msgstr "använd endast IPv4-adresser"
 msgid "use IPv6 addresses only"
 msgstr "använd endast IPv6-adresser"
 
+#: builtin/clone.c:239
+msgid ""
+"No directory name could be guessed.\n"
+"Please specify a directory on the command line"
+msgstr ""
+"Kunde inte gissa katalognamn.\n"
+"Ange en katalog på kommandoraden"
+
 #: builtin/clone.c:305
 #, c-format
 msgid "reference repository '%s' as a linked checkout is not supported yet."
@@ -4723,6 +4817,11 @@ msgstr "Kontrollerar om vi fick alla objekt..."
 msgid "remote did not send all necessary objects"
 msgstr "fjärren sände inte alla nödvändiga objekt"
 
+#: builtin/clone.c:647
+#, c-format
+msgid "unable to update %s"
+msgstr "kan inte uppdatera %s"
+
 #: builtin/clone.c:696
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
@@ -4731,6 +4830,10 @@ msgstr ""
 #: builtin/clone.c:727
 msgid "unable to checkout working tree"
 msgstr "kunde inte checka ut arbetskatalogen"
+
+#: builtin/clone.c:753
+msgid "unable to write parameters to config file"
+msgstr "kunde inte skriva parametrar till konfigurationsfilen"
 
 #: builtin/clone.c:816
 msgid "cannot repack to clean up"
@@ -6967,55 +7070,55 @@ msgstr "kan inte spara indexfil"
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "felaktig pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1479 builtin/index-pack.c:1663
+#: builtin/index-pack.c:1479 builtin/index-pack.c:1664
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "trådstöd saknas, ignorerar %s"
 
-#: builtin/index-pack.c:1537
+#: builtin/index-pack.c:1538
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Kan inte öppna befintlig paketfil \"%s\""
 
-#: builtin/index-pack.c:1539
+#: builtin/index-pack.c:1540
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Kan inte öppna befintlig paket-idx-fil för \"%s\""
 
-#: builtin/index-pack.c:1586
+#: builtin/index-pack.c:1587
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "icke-delta: %d objekt"
 msgstr[1] "icke-delta: %d objekt"
 
-#: builtin/index-pack.c:1593
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "kedjelängd = %d: %lu objekt"
 msgstr[1] "kedjelängd = %d: %lu objekt"
 
-#: builtin/index-pack.c:1623
+#: builtin/index-pack.c:1624
 msgid "Cannot come back to cwd"
 msgstr "Kan inte gå tillbaka till arbetskatalogen (cwd)"
 
-#: builtin/index-pack.c:1675 builtin/index-pack.c:1678
-#: builtin/index-pack.c:1690 builtin/index-pack.c:1694
+#: builtin/index-pack.c:1676 builtin/index-pack.c:1679
+#: builtin/index-pack.c:1691 builtin/index-pack.c:1695
 #, c-format
 msgid "bad %s"
 msgstr "felaktig %s"
 
-#: builtin/index-pack.c:1708
+#: builtin/index-pack.c:1709
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin kan inte användas med --stdin"
 
-#: builtin/index-pack.c:1712 builtin/index-pack.c:1721
+#: builtin/index-pack.c:1713 builtin/index-pack.c:1722
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "paketfilnamnet \"%s\" slutar inte med \".pack\""
 
-#: builtin/index-pack.c:1729
+#: builtin/index-pack.c:1730
 msgid "--verify with no packfile name given"
 msgstr "--verify angavs utan paketfilnamn"
 
@@ -11174,7 +11277,7 @@ msgstr ""
 "några konceptvägledningar. Se \"git help <kommando>\" eller \"git help\n"
 "<koncept>\" för att läsa mer om specifika underkommandon och koncept."
 
-#: http.c:320
+#: http.c:321
 msgid "Public key pinning not supported with cURL < 7.44.0"
 msgstr "Fastnålning av öppen nyckel stöds inte av cURL < 7.44.0"
 
@@ -11259,8 +11362,8 @@ msgid "Update remote refs along with associated objects"
 msgstr "Uppdatera fjärr-referenser och tillhörande objekt"
 
 #: common-cmds.h:32
-msgid "Forward-port local commits to the updated upstream head"
-msgstr "Framåtanpassa lokala kommandon på uppdaterat uppströmshuvud"
+msgid "Reapply commits on top of another base tip"
+msgstr "Applicera incheckningar på nytt ovanpå en annan bastopp"
 
 #: common-cmds.h:33
 msgid "Reset current HEAD to the specified state"
@@ -12083,6 +12186,9 @@ msgstr "Misslyckades rekursera in i undermodulsökvägen \"$sm_path\""
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Synkroniserar undermodul-url för \"$displaypath\""
 
+#~ msgid "Forward-port local commits to the updated upstream head"
+#~ msgstr "Framåtanpassa lokala kommandon på uppdaterat uppströmshuvud"
+
 #~ msgid "unable to parse format"
 #~ msgstr "kan inte tolka formatet"
 
@@ -12225,9 +12331,6 @@ msgstr "Synkroniserar undermodul-url för \"$displaypath\""
 #~ msgid "unable to parse value '%s' for option %s"
 #~ msgstr "kunde inte tolka värdet \"%s\" för flaggan %s"
 
-#~ msgid "unable to resolve HEAD"
-#~ msgstr "kan inte bestämma HEAD"
-
 #~ msgid "-b and -B are mutually exclusive"
 #~ msgstr "-b och -B kan inte användas samtidigt"
 
@@ -12297,9 +12400,6 @@ msgstr "Synkroniserar undermodul-url för \"$displaypath\""
 #~ msgid "prune .git/worktrees"
 #~ msgstr "rensa .git/worktrees"
 
-#~ msgid "--worktrees does not take extra arguments"
-#~ msgstr "--worktrees tar inte ytterligare argument"
-
 #~ msgid "The most commonly used git commands are:"
 #~ msgstr "De mest använda git-kommandona är:"
 
@@ -12329,9 +12429,6 @@ msgstr "Synkroniserar undermodul-url för \"$displaypath\""
 
 #~ msgid "force creation (when already exists)"
 #~ msgstr "tvinga skapande (när den redan finns)"
-
-#~ msgid "Malformed ident string: '%s'"
-#~ msgstr "Felaktig indragningssträng: \"%s\""
 
 #~ msgid "slot"
 #~ msgstr "plats"
@@ -12389,9 +12486,6 @@ msgstr "Synkroniserar undermodul-url för \"$displaypath\""
 
 #~ msgid "bug"
 #~ msgstr "programfel"
-
-#~ msgid "ahead "
-#~ msgstr "före "
 
 #~ msgid ", behind "
 #~ msgstr ", efter "
@@ -12675,9 +12769,6 @@ msgstr "Synkroniserar undermodul-url för \"$displaypath\""
 
 #~ msgid "# Changed but not updated:"
 #~ msgstr "# Ändrade men inte uppdaterade:"
-
-#~ msgid "path '%s' does not have all 3 versions"
-#~ msgstr "sökvägen \"%s\" har inte alla 3 versionerna"
 
 #~ msgid "git checkout: we do not like '%s' as a branch name."
 #~ msgstr "git checkout: vi tycker inte om \"%s\" som namn på en gren."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-02-28 20:31+0800\n"
+"POT-Creation-Date: 2016-03-16 00:16+0800\n"
 "PO-Revision-Date: 2015-01-21 15:01+0800\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German <>\n"
@@ -153,8 +153,8 @@ msgid ""
 msgstr ""
 "\n"
 "Nachdem Sie die Fehlerursache behoben haben, können Sie\n"
-"die Tracking-Informationen mit"
-"\"git branch --set-upstream-to=%s%s%s\""
+"die Tracking-Informationen mit\n"
+"\"git branch --set-upstream-to=%s%s%s\"\n"
 "erneut setzen."
 
 #: branch.c:67
@@ -588,7 +588,8 @@ msgstr "Fehler beim Sammeln von Namen und Informationen zum Kernel"
 
 #: dir.c:2123
 msgid "Untracked cache is disabled on this system or location."
-msgstr "Cache für unversionierte Dateien ist auf diesem System oder\n"
+msgstr ""
+"Cache für unversionierte Dateien ist auf diesem System oder\n"
 "für dieses Verzeichnis deaktiviert."
 
 #: gpg-interface.c:166 gpg-interface.c:237
@@ -1149,6 +1150,16 @@ msgstr "nicht erkannte Farbe: %%(color:%s)"
 msgid "unrecognized format: %%(%s)"
 msgstr "nicht erkanntes Format: %%(%s)"
 
+#: ref-filter.c:77
+#, c-format
+msgid "%%(body) does not take arguments"
+msgstr "%%(body) akzeptiert keine Argumente"
+
+#: ref-filter.c:84
+#, c-format
+msgid "%%(subject) does not take arguments"
+msgstr "%%(subject) akzeptiert keine Argumente"
+
 #: ref-filter.c:101
 #, c-format
 msgid "positive value expected contents:lines=%s"
@@ -1189,15 +1200,64 @@ msgstr "nicht erkanntes %%(align) Argument: %s"
 msgid "positive width expected with the %%(align) atom"
 msgstr "Positive Breitenangabe für %%(align) erwartet"
 
+#: ref-filter.c:244
+#, c-format
+msgid "malformed field name: %.*s"
+msgstr "Fehlerhafter Feldname: %.*s"
+
+#: ref-filter.c:270
+#, c-format
+msgid "unknown field name: %.*s"
+msgstr "Unbekannter Feldname: %.*s"
+
 #: ref-filter.c:372
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "Format: %%(end) Atom ohne zugehöriges Atom verwendet"
 
+#: ref-filter.c:424
+#, c-format
+msgid "malformed format string %s"
+msgstr "Fehlerhafter Formatierungsstring %s"
+
+#: ref-filter.c:878
+msgid ":strip= requires a positive integer argument"
+msgstr ":strip= erfordert eine positive Ganzzahl als Argument"
+
+#: ref-filter.c:883
+#, c-format
+msgid "ref '%s' does not have %ld components to :strip"
+msgstr "Referenz '%s' hat keine %ld Komponenten für :strip"
+
+#: ref-filter.c:1046
+#, c-format
+msgid "unknown %.*s format %s"
+msgstr "Unbekanntes %.*s Format %s"
+
+#: ref-filter.c:1066 ref-filter.c:1097
+#, c-format
+msgid "missing object %s for %s"
+msgstr "Objekt %s fehlt für %s"
+
+#: ref-filter.c:1069 ref-filter.c:1100
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "parse_object_buffer bei %s für %s fehlgeschlagen"
+
 #: ref-filter.c:1311
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "fehlerhaftes Objekt bei '%s'"
+
+#: ref-filter.c:1373
+#, c-format
+msgid "ignoring ref with broken name %s"
+msgstr "Ignoriere Referenz mit fehlerhaftem Namen %s"
+
+#: ref-filter.c:1378
+#, c-format
+msgid "ignoring broken ref %s"
+msgstr "Ignoriere fehlerhafte Referenz %s"
 
 #: ref-filter.c:1651
 #, c-format
@@ -1619,6 +1679,20 @@ msgstr "Kann nicht als allerersten Commit einen Cherry-Pick ausführen."
 msgid "failed to read %s"
 msgstr "Fehler beim Lesen von %s"
 
+#: sha1_file.c:1080
+msgid "offset before end of packfile (broken .idx?)"
+msgstr "Offset vor Ende der Packdatei (fehlerhafte Indexdatei?)"
+
+#: sha1_file.c:2459
+#, c-format
+msgid "offset before start of pack index for %s (corrupt index?)"
+msgstr "Offset vor Beginn des Pack-Index für %s (beschädigter Index?)"
+
+#: sha1_file.c:2463
+#, c-format
+msgid "offset beyond end of pack index for %s (truncated index?)"
+msgstr "Offset hinter Ende des Pack-Index für %s (abgeschnittener Index?)"
+
 #: sha1_name.c:462
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
@@ -1668,6 +1742,11 @@ msgstr "Konnte Eintrag '%s' nicht aus .gitmodules entfernen"
 #: submodule.c:118
 msgid "staging updated .gitmodules failed"
 msgstr "Konnte aktualisierte .gitmodules-Datei nicht zum Commit vormerken"
+
+#: trailer.c:237
+#, c-format
+msgid "running trailer command '%s' failed"
+msgstr "Ausführen des Anhang-Befehls '%s' fehlgeschlagen"
 
 #: trailer.c:492 trailer.c:496 trailer.c:500 trailer.c:554 trailer.c:558
 #: trailer.c:562
@@ -2295,6 +2374,10 @@ msgstr "entfernt"
 #: wt-status.c:1677 wt-status.c:1685
 msgid "behind "
 msgstr "hinterher "
+
+#: wt-status.c:1680 wt-status.c:1683
+msgid "ahead "
+msgstr "voraus "
 
 #: compat/precompose_utf8.c:57 builtin/clone.c:413
 #, c-format
@@ -4241,6 +4324,10 @@ msgstr "Kann \"reflog\" für '%s' nicht durchführen: %s\n"
 msgid "HEAD is now at"
 msgstr "HEAD ist jetzt bei"
 
+#: builtin/checkout.c:665 builtin/clone.c:659
+msgid "unable to update HEAD"
+msgstr "Konnte HEAD nicht aktualisieren."
+
 #: builtin/checkout.c:669
 #, c-format
 msgid "Reset branch '%s'\n"
@@ -4772,6 +4859,14 @@ msgstr "nur IPv4-Adressen benutzen"
 msgid "use IPv6 addresses only"
 msgstr "nur IPv6-Adressen benutzen"
 
+#: builtin/clone.c:239
+msgid ""
+"No directory name could be guessed.\n"
+"Please specify a directory on the command line"
+msgstr ""
+"Konnte keinen Verzeichnisnamen erraten.\n"
+"Bitte geben Sie ein Verzeichnis auf der Befehlszeile an."
+
 #: builtin/clone.c:305
 #, c-format
 msgid "reference repository '%s' as a linked checkout is not supported yet."
@@ -4851,6 +4946,11 @@ msgstr "Prüfe Konnektivität ... "
 msgid "remote did not send all necessary objects"
 msgstr "Remote-Repository hat nicht alle erforderlichen Objekte gesendet."
 
+#: builtin/clone.c:647
+#, c-format
+msgid "unable to update %s"
+msgstr "kann %s nicht aktualisieren"
+
 #: builtin/clone.c:696
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
@@ -4860,6 +4960,10 @@ msgstr ""
 #: builtin/clone.c:727
 msgid "unable to checkout working tree"
 msgstr "Arbeitsverzeichnis konnte nicht ausgecheckt werden"
+
+#: builtin/clone.c:753
+msgid "unable to write parameters to config file"
+msgstr "konnte Parameter nicht in Konfigurationsdatei schreiben"
 
 #: builtin/clone.c:816
 msgid "cannot repack to clean up"
@@ -5743,7 +5847,9 @@ msgstr "beachtet \"include\"-Direktiven beim Nachschlagen"
 
 #: builtin/config.c:86
 msgid "show origin of config (file, standard input, blob, command line)"
-msgstr "Ursprung der Konfiguration anzeigen (Datei, Standard-Eingabe, Blob, Befehlszeile)"
+msgstr ""
+"Ursprung der Konfiguration anzeigen (Datei, Standard-Eingabe, Blob, "
+"Befehlszeile)"
 
 #: builtin/config.c:328
 msgid "unable to parse default color value"
@@ -7153,55 +7259,55 @@ msgstr "Kann Indexdatei nicht speichern"
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "\"pack.indexversion=%<PRIu32>\" ist ungültig"
 
-#: builtin/index-pack.c:1479 builtin/index-pack.c:1663
+#: builtin/index-pack.c:1479 builtin/index-pack.c:1664
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "keine Unterstützung von Threads, '%s' wird ignoriert"
 
-#: builtin/index-pack.c:1537
+#: builtin/index-pack.c:1538
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Kann existierende Paketdatei '%s' nicht öffnen"
 
-#: builtin/index-pack.c:1539
+#: builtin/index-pack.c:1540
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Kann existierende Indexdatei für Paket '%s' nicht öffnen"
 
-#: builtin/index-pack.c:1586
+#: builtin/index-pack.c:1587
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "kein Unterschied: %d Objekt"
 msgstr[1] "kein Unterschied: %d Objekte"
 
-#: builtin/index-pack.c:1593
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "Länge der Objekt-Liste = %d: %lu Objekt"
 msgstr[1] "Länge der Objekt-Liste = %d: %lu Objekte"
 
-#: builtin/index-pack.c:1623
+#: builtin/index-pack.c:1624
 msgid "Cannot come back to cwd"
 msgstr "Kann nicht zurück zu Arbeitsverzeichnis wechseln"
 
-#: builtin/index-pack.c:1675 builtin/index-pack.c:1678
-#: builtin/index-pack.c:1690 builtin/index-pack.c:1694
+#: builtin/index-pack.c:1676 builtin/index-pack.c:1679
+#: builtin/index-pack.c:1691 builtin/index-pack.c:1695
 #, c-format
 msgid "bad %s"
 msgstr "%s ist ungültig"
 
-#: builtin/index-pack.c:1708
+#: builtin/index-pack.c:1709
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "Die Option --fix-thin kann nicht ohne --stdin verwendet werden."
 
-#: builtin/index-pack.c:1712 builtin/index-pack.c:1721
+#: builtin/index-pack.c:1713 builtin/index-pack.c:1722
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "Name der Paketdatei '%s' endet nicht mit '.pack'"
 
-#: builtin/index-pack.c:1729
+#: builtin/index-pack.c:1730
 msgid "--verify with no packfile name given"
 msgstr "Die Option --verify wurde ohne Namen der Paketdatei angegeben."
 
@@ -7779,7 +7885,8 @@ msgstr "url.<Basis>.insteadOf berücksichtigen"
 
 #: builtin/ls-remote.c:62
 msgid "exit with exit code 2 if no matching refs are found"
-msgstr "mit Rückkehrwert 2 beenden, wenn keine übereinstimmenden Referenzen\n"
+msgstr ""
+"mit Rückkehrwert 2 beenden, wenn keine übereinstimmenden Referenzen\n"
 "gefunden wurden"
 
 #: builtin/ls-remote.c:64
@@ -8653,8 +8760,8 @@ msgstr "Objekte von der Standard-Eingabe lesen"
 #: builtin/notes.c:483
 msgid "load rewriting config for <command> (implies --stdin)"
 msgstr ""
-"Konfiguration für <Befehl> zum Umschreiben von Commits laden "
-"(impliziert --stdin)"
+"Konfiguration für <Befehl> zum Umschreiben von Commits laden (impliziert --"
+"stdin)"
 
 #: builtin/notes.c:501
 msgid "too few parameters"
@@ -11276,7 +11383,8 @@ msgstr "Cache für unversionierte Dateien aktivieren oder deaktivieren"
 
 #: builtin/update-index.c:1012
 msgid "test if the filesystem supports untracked cache"
-msgstr "prüfen ob das Dateisystem einen Cache für unversionierte Dateien unterstützt"
+msgstr ""
+"prüfen ob das Dateisystem einen Cache für unversionierte Dateien unterstützt"
 
 #: builtin/update-index.c:1014
 msgid "enable untracked cache without testing the filesystem"
@@ -11471,9 +11579,10 @@ msgstr ""
 "oder 'git help <Konzept>', um mehr über einen spezifischen Befehl oder\n"
 "Konzept zu erfahren."
 
-#: http.c:320
+#: http.c:321
 msgid "Public key pinning not supported with cURL < 7.44.0"
-msgstr "Das Anheften des öffentlichen Schlüssels wird mit cURL < 7.44.0\n"
+msgstr ""
+"Das Anheften des öffentlichen Schlüssels wird mit cURL < 7.44.0\n"
 "nicht unterstützt."
 
 #: common-cmds.h:9
@@ -11565,8 +11674,8 @@ msgid "Update remote refs along with associated objects"
 msgstr "Remote-Referenzen mitsamt den verbundenen Objekten aktualisieren"
 
 #: common-cmds.h:32
-msgid "Forward-port local commits to the updated upstream head"
-msgstr "lokale Commits auf einem aktuellerem Upstream-Branch neu aufbauen"
+msgid "Reapply commits on top of another base tip"
+msgstr "Wiederholtes Anwenden von Commits auf anderem Basis-Commit"
 
 #: common-cmds.h:33
 msgid "Reset current HEAD to the specified state"
@@ -12413,6 +12522,9 @@ msgstr "Fehler bei Rekursion in Submodul-Pfad '$sm_path'"
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Synchronisiere Submodul-URL für '$displaypath'"
 
+#~ msgid "Forward-port local commits to the updated upstream head"
+#~ msgstr "lokale Commits auf einem aktuellerem Upstream-Branch neu aufbauen"
+
 #~ msgid "unable to parse format"
 #~ msgstr "Konnte Format nicht parsen."
 
@@ -12559,9 +12671,6 @@ msgstr "Synchronisiere Submodul-URL für '$displaypath'"
 #~ msgid "unable to parse value '%s' for option %s"
 #~ msgstr "konnte Wert '%s' für Option %s nicht parsen"
 
-#~ msgid "unable to resolve HEAD"
-#~ msgstr "Konnte HEAD nicht auflösen."
-
 #~ msgid "-b and -B are mutually exclusive"
 #~ msgstr "-b und -B schließen sich gegenseitig aus"
 
@@ -12641,9 +12750,6 @@ msgstr "Synchronisiere Submodul-URL für '$displaypath'"
 #~ "Informationen zu nicht mehr existierenden Arbeitsverzeichnissen in .git/"
 #~ "worktrees entfernen"
 
-#~ msgid "--worktrees does not take extra arguments"
-#~ msgstr "--worktrees akzeptiert keine weiteren Argumente"
-
 #~ msgid "The most commonly used git commands are:"
 #~ msgstr "Die allgemein verwendeten Git-Kommandos sind:"
 
@@ -12673,9 +12779,6 @@ msgstr "Synchronisiere Submodul-URL für '$displaypath'"
 
 #~ msgid "force creation (when already exists)"
 #~ msgstr "Branch auch erzeugen, wenn dieser bereits existiert"
-
-#~ msgid "Malformed ident string: '%s'"
-#~ msgstr "Fehlerhafter Ident-String: '%s'"
 
 #~ msgid "slot"
 #~ msgstr "Slot"
@@ -12725,9 +12828,6 @@ msgstr "Synchronisiere Submodul-URL für '$displaypath'"
 
 #~ msgid "bug"
 #~ msgstr "Fehler"
-
-#~ msgid "ahead "
-#~ msgstr "voraus "
 
 #~ msgid ", behind "
 #~ msgstr ", hinterher "
