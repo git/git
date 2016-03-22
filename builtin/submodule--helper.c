@@ -37,9 +37,9 @@ static int module_list_compute(int argc, const char **argv,
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
 
-		if (!S_ISGITLINK(ce->ce_mode) ||
-		    !match_pathspec(pathspec, ce->name, ce_namelen(ce),
-				    0, ps_matched, 1))
+		if (!match_pathspec(pathspec, ce->name, ce_namelen(ce),
+				    0, ps_matched, 1) ||
+		    !S_ISGITLINK(ce->ce_mode))
 			continue;
 
 		ALLOC_GROW(list->entries, list->nr + 1, list->alloc);
