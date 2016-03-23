@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2016, #03; Wed, 9)
-X-master-at: ab5d01a29eb7380ceab070f0807c2939849c44bc
-X-next-at: 56288600415de8e2277476281e1838ff7e19dd4d
+Subject: What's cooking in git.git (Mar 2016, #04; Wed, 23)
+X-master-at: 7e4ba3686ab04b2fdcb80f52e8784c9bebdb0401
+X-next-at: 1d10413e4d0f096b6f69b97671787e9ea977e5f1
 
-What's cooking in git.git (Mar 2016, #03; Wed, 9)
+What's cooking in git.git (Mar 2016, #04; Wed, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,91 +12,262 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Hopefully 2.8-rc2 tomorrow.
+Three more minor fix-up topics are to be merged by 2.8 final, but we
+are almost there.
 
-Again, the topics that have not been cooked sufficiently in 'next'
-at this point will not be considered for 2.8 final, even though I
-might later succumb to the temptation to pick up ones that look
-trivially correct.  Those who have their topics merged to 'master'
-since v2.7 are expected to focus on responding to regressions and
-remaining bugs in their topics in 'master', and strongly encouraged
-to actively hunt for regressions and remaining bugs there, not in a
-random shiny new feature, during the pre-release period.
-
-You can find the changes described here in the integration branches of the
-repositories listed at
+You can find the changes described here in the integration branches
+of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
 [New Topics]
 
-* cc/doc-recommend-performance-trace-to-file (2016-03-07) 1 commit
- - Documentation: talk about pager in api-trace.txt
+* jk/check-repository-format (2016-03-11) 10 commits
+ - verify_repository_format: mark messages for translation
+ - setup: drop repository_format_version global
+ - setup: unify repository version callbacks
+ - init: use setup.c's repo version verification
+ - setup: refactor repo format reading and verification
+ - config: drop git_config_early
+ - check_repository_format_gently: stop using git_config_early
+ - lazily load core.sharedrepository
+ - wrap shared_repository global in get/set accessors
+ - setup: document check_repository_format()
+
+ The repository set-up sequence has been streamlined (the biggest
+ change is that there is no longer git_config_early()), so that we
+ do not attempt to look into refs/* when we know we do not have a
+ Git repository.
 
 
-* da/mergetool-delete-delete-conflict (2016-03-09) 3 commits
- - t7610-mergetool: add test cases for tempfile behavior
- - mergetool: support delete/delete conflicts
- - mergetool: honor tempfile configuration when resolving delete conflicts
+* mj/pull-rebase-autostash (2016-03-21) 2 commits
+  (merged to 'next' on 2016-03-23 at ebf1afa)
+ + pull --rebase: add --[no-]autostash flag
+ + git-pull.c: introduce git_pull_config()
+
+ "git pull --rebase" learned "--[no-]autostash" option, so that
+ the rebase.autostash configuration variable set to true can be
+ overridden from the command line.
+
+ Will merge to 'master' after 2.8 final.
 
 
-* es/test-gpg-tags (2016-03-06) 4 commits
- - t6302: skip only signed tags rather than all tests when GPG is missing
- - t6302: also test annotated in addition to signed tags
- - t6302: normalize names and descriptions of signed tags
- - lib-gpg: drop unnecessary "missing GPG" warning
+* pb/commit-verbose-config (2016-03-14) 1 commit
+ - commit: add a commit.verbose config variable
+ (this branch uses pb/t7502-drop-dup.)
 
- A test for tags has been restructured so that more parts of it can
- easily be run on a platform without a working GnuPG.
+ "git commit" learned to pay attention to "commit.verbose"
+ configuration variable and act as if "--verbose" option was given
+ from the command line.
+
+
+* pb/t7502-drop-dup (2016-03-11) 1 commit
+  (merged to 'next' on 2016-03-15 at 037c877)
+ + t/t7502 : drop duplicate test
+ (this branch is used by pb/commit-verbose-config.)
+
+ Code clean-up.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* ss/commit-squash-msg (2016-03-21) 1 commit
+  (merged to 'next' on 2016-03-23 at 0b72631)
+ + commit: do not lose SQUASH_MSG contents
+
+ When "git merge --squash" stopped due to conflict, the concluding
+ "git commit" failed to read in the SQUASH_MSG that shows the log
+ messages from all the squashed commits.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* ls/p4-map-user (2016-03-15) 1 commit
+  (merged to 'next' on 2016-03-23 at 9e0a4f5)
+ + git-p4: map a P4 user to Git author name and email address
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jc/merge-refuse-new-root (2016-03-23) 1 commit
+  (merged to 'next' on 2016-03-23 at d7da4cf)
+ + merge: refuse to create too cool a merge by default
+
+ "git merge" used to allow merging two branches that have no common
+ base by default, which led to a brand new history of an existing
+ project created and then get pulled by an unsuspecting maintainer,
+ which allowed an unnecessary parallel history merged into the
+ existing project.  The command has been taught not to allow this by
+ default, with an escape hatch "--allow-unrelated-histories" option
+ to be used in a rare event that merges histories of two projects
+ that started their lives independently.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jc/rerere-multi-wip (2016-03-21) 1 commit
+ . WIP forget
+ (this branch uses jc/rerere-multi.)
+
+
+* jk/credential-cache-comment-exit (2016-03-18) 1 commit
+  (merged to 'next' on 2016-03-23 at d2b8cc7)
+ + credential-cache--daemon: clarify "exit" action semantics
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jk/send-email-rtrim-mailrc-alias (2016-03-18) 1 commit
+  (merged to 'next' on 2016-03-23 at 74f1f44)
+ + send-email: ignore trailing whitespace in mailrc alias file
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jk/test-httpd-config-nosystem (2016-03-18) 1 commit
+  (merged to 'next' on 2016-03-23 at 245263b)
+ + t/lib-httpd: pass through GIT_CONFIG_NOSYSTEM env
+
+ Will merge to 'master' after 2.8 final.
+
+
+* lt/pretty-expand-tabs (2016-03-17) 4 commits
+ - pretty-print: add --pretty=noexpand
+ - pretty-print: further abstract out pp_handle_indent()
+ - pretty-print: simplify the interaction between pp_handle_indent() and its caller
+ - pretty-print: de-tabify indented logs to make things line up properly
+
+ Needs a UI rework.
+
+
+* sb/clone-shallow-passthru (2016-03-23) 3 commits
+ - clone: add t5614 to test cloning submodules with shallowness involved
+ - submodule clone: pass along `local` option
+ - clone: add `--shallow-submodules` flag
+ (this branch uses sb/submodule-parallel-update; is tangled with sb/submodule-init.)
+
+ "git clone" learned "--shallow-submodules" option.
+
+ Needs review.
+
+
+* sb/clone-t57-t56 (2016-03-16) 1 commit
+  (merged to 'next' on 2016-03-23 at 5df850d)
+ + clone tests: rename t57* => t56*
+
+ Rename bunch of tests on "git clone" for better organization.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* sb/rebase-x (2016-03-18) 2 commits
+  (merged to 'next' on 2016-03-23 at ef8861b)
+ + t3404: cleanup double empty lines between tests
+ + rebase: decouple --exec from --interactive
+
+ "git rebase -x" can be used without passing "-i" option.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* cc/apply (2016-03-22) 2 commits
+ - apply: remove unused call to free() in gitdiff_{old,new}name()
+ - builtin/apply: get rid of useless 'name' variable
+
+ Code clean-up.
 
  Will merge to 'next'.
 
 
-* jk/getwholeline-getdelim-empty (2016-03-05) 1 commit
- - strbuf_getwholeline: NUL-terminate getdelim buffer on error
+* dt/index-helper (2016-03-23) 18 commits
+ - SQUASH - minimum compilation fix
+ - read-cache: config for waiting for index-helper
+ - index-helper: optionally automatically run
+ - index-helper: autorun mode
+ - index-helper: don't run if already running
+ - index-helper: kill mode
+ - unpack-trees: preserve index extensions
+ - update-index: enable/disable watchman support
+ - index-helper: use watchman to avoid refreshing index with lstat()
+ - Add watchman support to reduce index refresh cost
+ - read-cache: invalidate untracked cache data when reading WAMA
+ - read-cache: add watchman 'WAMA' extension
+ - index-helper: add --detach
+ - daemonize(): set a flag before exiting the main process
+ - index-helper: add --strict
+ - index-helper: new daemon for caching index and related stuff
+ - read-cache: allow to keep mmap'd memory after reading
+ - read-cache.c: fix constness of verify_hdr()
 
- strbuf_getwholeline() did not NUL-terminate the buffer on certain
- corner cases in its error codepath.
+
+* js/mingw-tests-2.8 (2016-03-23) 4 commits
+  (merged to 'next' on 2016-03-23 at aeec80e)
+ + mingw: skip some tests in t9115 due to file name issues
+ + t1300: fix the new --show-origin tests on Windows
+ + t1300-repo-config: make it resilient to being run via 'sh -x'
+ + config --show-origin: report paths with forward slashes
+
+ Will merge to 'master' by 2.8-final.
+
+
+* jv/merge-nothing-into-void (2016-03-23) 1 commit
+  (merged to 'next' on 2016-03-23 at 40b905d)
+ + merge: fix NULL pointer dereference when merging nothing into void
+
+ "git merge FETCH_HEAD" dereferenced NULL pointer when merging
+ nothing into an unborn history (which is arguably unusual usage,
+ which perhaps was the reason why nobody noticed it).
+
+ Will merge to 'master' after 2.8 final.
+
+
+* la/tag-force-signing-annotated-tags (2016-03-22) 1 commit
+ - tag: add the option to force signing of annotated tags
+
+ "git tag" can create an annotated tag without explicitly given an
+ "-a" (or "-s") option (i.e. when a tag message is given).  A new
+ configuration variable, tag.forceSignAnnotated, can be used to tell
+ the command to create signed tag in such a situation.
 
  Will merge to 'next'.
 
 
-* jk/startup-info (2016-03-07) 6 commits
- - use setup_git_directory() in test-* programs
- - grep: turn off gitlink detection for --no-index
- - mailmap: do not resolve blobs in a non-repository
- - remote: don't resolve HEAD in non-repository
- - setup: set startup_info->have_repository more reliably
- - setup: make startup_info available everywhere
+* ls/p4-doc-markup (2016-03-23) 2 commits
+  (merged to 'next' on 2016-03-23 at 94a6275)
+ + Documentation: fix git-p4 AsciiDoc formatting
+ + Documentation: use ASCII quotation marks in git-p4
 
- The startup_info data, which records if we are working inside a
- repository (among other things), are now uniformly available to Git
- subcommand implementations, and Git avoids attempting to touch
- references when we are not in a repository.
-
- Will merge to 'next'.
+ Will merge to 'master' by 2.8-final.
 
 
-* rj/xdiff-prepare-plug-leak-on-error-codepath (2016-03-04) 2 commits
- - xdiff/xprepare: fix a memory leak
- - xdiff/xprepare: use the XDF_DIFF_ALG() macro to access flag bits
+* sb/submodule-module-list-pathspec-fix (2016-03-22) 1 commit
+  (merged to 'next' on 2016-03-23 at 67fe17c)
+ + submodule: fix regression for deinit without submodules
 
- A small memory leak in an error codepath has been plugged in xdiff
- code.
+ Will merge to 'master' by 2.8-final.
 
- Will merge to 'next'.
+--------------------------------------------------
+[Graduated to "master"]
+
+* cn/deprecate-ssh-git-url (2016-03-09) 1 commit
+  (merged to 'next' on 2016-03-15 at c52f11c)
+ + Disown ssh+git and git+ssh
+
+ The two alternative ways to spell "ssh://" transport have been
+ deprecated for a long time.  The last mention of them has finally
+ removed from the documentation.
 
 
 * jc/exclusion-doc (2016-03-08) 1 commit
- - gitignore: document that unignoring a directory unignores everything in it
+  (merged to 'next' on 2016-03-10 at 19173ff)
+ + gitignore: document that unignoring a directory unignores everything in it
 
- Will merge to 'next' and then to 'master' before 2.8 final.
 
-
-* jc/sane-grep (2016-03-08) 2 commits
- - rebase-i: clarify "is this commit relevant?" test
- - sane_grep: pass "-a" if grep accepts it
+* jc/sane-grep (2016-03-10) 2 commits
+  (merged to 'next' on 2016-03-15 at 98d08a4)
+ + rebase-i: clarify "is this commit relevant?" test
+ + sane_grep: pass "-a" if grep accepts it
 
  Recent versions of GNU grep is pickier than before to decide if a
  file is "binary" and refuse to give line-oriented hits when we
@@ -106,7 +277,25 @@ repositories listed at
  end-user data, use "grep -a" to implement sane_grep wrapper when
  using an implementation of "grep" that takes the "-a" option.
 
- Will merge to 'next'.
+
+* js/close-packs-before-gc (2016-03-04) 1 commit
+  (merged to 'next' on 2016-03-04 at fe6f6ed)
+ + t5510: do not leave changed cwd
+
+ A small future-proofing of a test added recently.
+
+
+* jx/http-no-proxy (2016-02-29) 1 commit
+  (merged to 'next' on 2016-03-10 at 989305b)
+ + http: honor no_http env variable to bypass proxy
+
+ A small regression fix to keep no_proxy environment variable
+ working.
+
+
+* sb/rebase-summary (2016-03-02) 1 commit
+  (merged to 'next' on 2016-03-04 at d40714d)
+ + Documentation: reword rebase summary
 
 --------------------------------------------------
 [Stalled]
@@ -182,21 +371,84 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* sb/rebase-summary (2016-03-02) 1 commit
-  (merged to 'next' on 2016-03-04 at d40714d)
- + Documentation: reword rebase summary
+* cc/doc-recommend-performance-trace-to-file (2016-03-07) 1 commit
+  (merged to 'next' on 2016-03-23 at 086b9f2)
+ + Documentation: talk about pager in api-trace.txt
 
- Will merge to 'master' by 2.8-rc2.
+ Will merge to 'master' after 2.8 final.
+
+
+* da/mergetool-delete-delete-conflict (2016-03-10) 2 commits
+  (merged to 'next' on 2016-03-15 at 281a81a)
+ + mergetool: honor tempfile configuration when resolving delete conflicts
+ + mergetool: support delete/delete conflicts
+
+ "git mergetool" did not work well with conflicts that both sides
+ deleted.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* es/test-gpg-tags (2016-03-06) 4 commits
+  (merged to 'next' on 2016-03-15 at 617119f)
+ + t6302: skip only signed tags rather than all tests when GPG is missing
+ + t6302: also test annotated in addition to signed tags
+ + t6302: normalize names and descriptions of signed tags
+ + lib-gpg: drop unnecessary "missing GPG" warning
+
+ A test for tags has been restructured so that more parts of it can
+ easily be run on a platform without a working GnuPG.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jk/getwholeline-getdelim-empty (2016-03-05) 1 commit
+  (merged to 'next' on 2016-03-15 at e70d4bd)
+ + strbuf_getwholeline: NUL-terminate getdelim buffer on error
+
+ strbuf_getwholeline() did not NUL-terminate the buffer on certain
+ corner cases in its error codepath.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* jk/startup-info (2016-03-07) 6 commits
+  (merged to 'next' on 2016-03-15 at eb95e5f)
+ + use setup_git_directory() in test-* programs
+ + grep: turn off gitlink detection for --no-index
+ + mailmap: do not resolve blobs in a non-repository
+ + remote: don't resolve HEAD in non-repository
+ + setup: set startup_info->have_repository more reliably
+ + setup: make startup_info available everywhere
+
+ The startup_info data, which records if we are working inside a
+ repository (among other things), are now uniformly available to Git
+ subcommand implementations, and Git avoids attempting to touch
+ references when we are not in a repository.
+
+ Will merge to 'master' after 2.8 final.
+
+
+* rj/xdiff-prepare-plug-leak-on-error-codepath (2016-03-04) 2 commits
+  (merged to 'next' on 2016-03-15 at f72755e)
+ + xdiff/xprepare: fix a memory leak
+ + xdiff/xprepare: use the XDF_DIFF_ALG() macro to access flag bits
+
+ A small memory leak in an error codepath has been plugged in xdiff
+ code.
+
+ Will merge to 'master' after 2.8 final.
 
 
 * jc/index-pack (2016-03-03) 2 commits
- - index-pack: add a helper function to derive .idx/.keep filename
- - Merge branch 'jc/maint-index-pack-keep' into jc/index-pack
+  (merged to 'next' on 2016-03-15 at 42efaa7)
+ + index-pack: add a helper function to derive .idx/.keep filename
+ + Merge branch 'jc/maint-index-pack-keep' into jc/index-pack
  (this branch is used by jc/bundle; uses jc/maint-index-pack-keep; is tangled with jc/index-pack-clone-bundle.)
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master' after 2.8 final.
 
 
 * jc/maint-index-pack-keep (2016-03-03) 1 commit
@@ -207,15 +459,6 @@ repositories listed at
  "git index-pack --keep[=<msg>] pack-$name.pack" simply did not work.
 
  Will merge to 'master' after 2.8 final.
-
-
-* js/close-packs-before-gc (2016-03-04) 1 commit
-  (merged to 'next' on 2016-03-04 at fe6f6ed)
- + t5510: do not leave changed cwd
-
- A small future-proofing of a test added recently.
-
- Will merge to 'master' by 2.8-rc2.
 
 
 * mm/readme-markdown (2016-02-27) 1 commit
@@ -300,12 +543,6 @@ repositories listed at
  ($gmane/287839)
 
 
-* jx/http-no-proxy (2016-02-29) 1 commit
- - http: honor no_http env variable to bypass proxy
-
- Needs review.
-
-
 * mm/lockfile-error-message (2016-03-01) 2 commits
   (merged to 'next' on 2016-03-04 at 04ed7e6)
  + lockfile: improve error message when lockfile exists
@@ -357,19 +594,22 @@ repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* jk/submodule-c-credential (2016-03-01) 6 commits
- - git: submodule honor -c credential.* from command line
- - quote: implement sq_quotef()
- - submodule: fix segmentation fault in submodule--helper clone
- - submodule: fix submodule--helper clone usage
- - submodule: check argc count for git submodule--helper clone
- - submodule: don't pass empty string arguments to submodule--helper clone
+* jk/submodule-c-credential (2016-03-23) 7 commits
+  (merged to 'next' on 2016-03-23 at 952367a)
+ + git_config_push_parameter: handle empty GIT_CONFIG_PARAMETERS
+  (merged to 'next' on 2016-03-15 at 81df5b1)
+ + git: submodule honor -c credential.* from command line
+ + quote: implement sq_quotef()
+ + submodule: fix segmentation fault in submodule--helper clone
+ + submodule: fix submodule--helper clone usage
+ + submodule: check argc count for git submodule--helper clone
+ + submodule: don't pass empty string arguments to submodule--helper clone
 
  "git -c credential.<var>=<value> submodule" can now be used to
  propagate configuration variables related to credential helper
  down to the submodules.
 
- Will merge to 'next'.
+ Will merge to 'master' after 2.8 final.
 
 
 * nd/shallow-deepen (2016-02-23) 25 commits
@@ -435,14 +675,15 @@ repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* sb/submodule-init (2016-03-01) 2 commits
+* sb/submodule-init (2016-03-15) 2 commits
  - submodule: port init from shell to C
  - submodule: port resolve_relative_url from shell to C
- (this branch uses sb/submodule-parallel-update.)
+ (this branch uses sb/submodule-parallel-update; is tangled with sb/clone-shallow-passthru.)
 
  Update of "git submodule" to move pieces of logic to C continues.
 
  Needs review.
+ ($gmane/288824)
 
 
 * az/p4-bare-no-rebase (2016-02-19) 1 commit
@@ -454,16 +695,6 @@ repositories listed at
  side effect of not rebasing is.
 
  Needs a better explanation.
-
-
-* cn/deprecate-ssh-git-url (2016-03-09) 1 commit
- - Disown ssh+git and git+ssh
-
- The two alternative ways to spell "ssh://" transport have been
- deprecated for a long time.  The last mention of them has finally
- removed from the documentation.
-
- Will merge to 'next'.
 
 
 * ss/commit-dry-run-resolve-merge-to-no-op (2016-02-17) 1 commit
@@ -496,23 +727,24 @@ repositories listed at
 
 
 * sb/submodule-parallel-update (2016-03-01) 10 commits
- - clone: allow an explicit argument for parallel submodule clones
- - submodule update: expose parallelism to the user
- - submodule helper: remove double 'fatal: ' prefix
- - git submodule update: have a dedicated helper for cloning
- - run_processes_parallel: rename parameters for the callbacks
- - run_processes_parallel: treat output of children as byte array
- - submodule update: direct error message to stderr
- - fetching submodules: respect `submodule.fetchJobs` config option
- - submodule-config: drop check against NULL
- - submodule-config: keep update strategy around
- (this branch is used by sb/submodule-init.)
+  (merged to 'next' on 2016-03-15 at a8bf6c5)
+ + clone: allow an explicit argument for parallel submodule clones
+ + submodule update: expose parallelism to the user
+ + submodule helper: remove double 'fatal: ' prefix
+ + git submodule update: have a dedicated helper for cloning
+ + run_processes_parallel: rename parameters for the callbacks
+ + run_processes_parallel: treat output of children as byte array
+ + submodule update: direct error message to stderr
+ + fetching submodules: respect `submodule.fetchJobs` config option
+ + submodule-config: drop check against NULL
+ + submodule-config: keep update strategy around
+ (this branch is used by sb/clone-shallow-passthru and sb/submodule-init.)
 
  A major part of "git submodule update" has been ported to C to take
  advantage of the recently added framework to run download tasks in
  parallel.
 
- Will merge to 'next'.
+ Will merge to 'master' after 2.8 final.
 
 
 * dt/refs-backend-lmdb (2016-02-25) 45 commits
@@ -572,7 +804,9 @@ repositories listed at
  ($gmane/275680).
 
 
-* jc/rerere-multi (2016-03-09) 8 commits
+* jc/rerere-multi (2016-03-15) 10 commits
+ - rerere: split code to call ll_merge() further
+ - rerere: move code related to "forget" together
  - rerere: gc and clear
  - rerere: do use multiple variants
  - t4200: rerere a merge with two identical conflicts
@@ -581,6 +815,7 @@ repositories listed at
  - rerere: handle leftover rr-cache/$ID directory and postimage files
  - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
  - rerere: split conflict ID further
+ (this branch is used by jc/rerere-multi-wip.)
 
  "git rerere" can encounter two or more files with the same conflict
  signature that have to be resolved in different ways, but there was
