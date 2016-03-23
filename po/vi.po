@@ -8,10 +8,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git v2.8.0-rc0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-02-28 20:31+0800\n"
-"PO-Revision-Date: 2016-02-29 07:44+0700\n"
+"POT-Creation-Date: 2016-03-16 00:16+0800\n"
+"PO-Revision-Date: 2016-03-21 07:14+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
-"Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
+"Language-Team: Vietnamese <gnome-vi-list@gnome.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1124,6 +1124,16 @@ msgstr "không nhận ra màu: %%(màu:%s)"
 msgid "unrecognized format: %%(%s)"
 msgstr "không nhận ra định dạng: %%(%s)"
 
+#: ref-filter.c:77
+#, c-format
+msgid "%%(body) does not take arguments"
+msgstr "%%(body) không nhận các đối số"
+
+#: ref-filter.c:84
+#, c-format
+msgid "%%(subject) does not take arguments"
+msgstr "%%(subject) không nhận các đối số"
+
 #: ref-filter.c:101
 #, c-format
 msgid "positive value expected contents:lines=%s"
@@ -1164,15 +1174,64 @@ msgstr "đối số không được thừa nhận %%(align): %s"
 msgid "positive width expected with the %%(align) atom"
 msgstr "cần giá trị độ rộng dương với nguyên tử %%(align)"
 
+#: ref-filter.c:244
+#, c-format
+msgid "malformed field name: %.*s"
+msgstr "tên trường dị hình: %.*s"
+
+#: ref-filter.c:270
+#, c-format
+msgid "unknown field name: %.*s"
+msgstr "không hiểu tên trường: %.*s"
+
 #: ref-filter.c:372
 #, c-format
 msgid "format: %%(end) atom used without corresponding atom"
 msgstr "định dạng: nguyên tử %%(end) được dùng mà không có nguyên tử tương ứng"
 
+#: ref-filter.c:424
+#, c-format
+msgid "malformed format string %s"
+msgstr "chuỗi định dạng dị hình %s"
+
+#: ref-filter.c:878
+msgid ":strip= requires a positive integer argument"
+msgstr ":strip= cần một đối số nguyên dương"
+
+#: ref-filter.c:883
+#, c-format
+msgid "ref '%s' does not have %ld components to :strip"
+msgstr "tham chiếu “%s” không có %ld thành phần để mà :strip"
+
+#: ref-filter.c:1046
+#, c-format
+msgid "unknown %.*s format %s"
+msgstr "Không hiểu định dạng %.*s %s"
+
+#: ref-filter.c:1066 ref-filter.c:1097
+#, c-format
+msgid "missing object %s for %s"
+msgstr "thiếu đối tượng %s cho %s"
+
+#: ref-filter.c:1069 ref-filter.c:1100
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "parse_object_buffer gặp lỗi trên %s cho %s"
+
 #: ref-filter.c:1311
 #, c-format
 msgid "malformed object at '%s'"
 msgstr "đối tượng dị hình tại “%s”"
+
+#: ref-filter.c:1373
+#, c-format
+msgid "ignoring ref with broken name %s"
+msgstr "đang lờ đi tham chiếu với tên hỏng %s"
+
+#: ref-filter.c:1378
+#, c-format
+msgid "ignoring broken ref %s"
+msgstr "đang lờ đi tham chiếu hỏng %s"
 
 #: ref-filter.c:1651
 #, c-format
@@ -1587,6 +1646,21 @@ msgstr "Không thể cherry-pick vào một đầu (head) trống rỗng"
 msgid "failed to read %s"
 msgstr "gặp lỗi khi đọc %s"
 
+#: sha1_file.c:1080
+msgid "offset before end of packfile (broken .idx?)"
+msgstr "vị trí tương đối trước điểm kết thúc của tập tin gói (.idx hỏng à?)"
+
+#: sha1_file.c:2459
+#, c-format
+msgid "offset before start of pack index for %s (corrupt index?)"
+msgstr "vị trí tương đối nằm trước chỉ mục gói cho %s (mục lục bị hỏng à?)"
+
+#: sha1_file.c:2463
+#, c-format
+msgid "offset beyond end of pack index for %s (truncated index?)"
+msgstr ""
+"vị trí tương đối vượt quá cuối của chỉ mục gói cho %s (mục lục bị cắt cụt à?)"
+
 #: sha1_name.c:462
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
@@ -1635,6 +1709,11 @@ msgstr "Không thể gỡ bỏ mục .gitmodules dành cho %s"
 #: submodule.c:118
 msgid "staging updated .gitmodules failed"
 msgstr "gặp lỗi khi tổ chức .gitmodules đã cập nhật"
+
+#: trailer.c:237
+#, c-format
+msgid "running trailer command '%s' failed"
+msgstr "chạy lệnh kéo theo “%s” gặp lỗi"
 
 #: trailer.c:492 trailer.c:496 trailer.c:500 trailer.c:554 trailer.c:558
 #: trailer.c:562
@@ -2245,6 +2324,10 @@ msgstr "đã ra đi"
 #: wt-status.c:1677 wt-status.c:1685
 msgid "behind "
 msgstr "đằng sau "
+
+#: wt-status.c:1680 wt-status.c:1683
+msgid "ahead "
+msgstr "phía trước "
 
 #: compat/precompose_utf8.c:57 builtin/clone.c:413
 #, c-format
@@ -4149,6 +4232,10 @@ msgstr "Không thể thực hiện reflog cho “%s”: %s\n"
 msgid "HEAD is now at"
 msgstr "HEAD hiện giờ tại"
 
+#: builtin/checkout.c:665 builtin/clone.c:659
+msgid "unable to update HEAD"
+msgstr "không thể cập nhật HEAD"
+
 #: builtin/checkout.c:669
 #, c-format
 msgid "Reset branch '%s'\n"
@@ -4667,6 +4754,14 @@ msgstr "chỉ dùng địa chỉ IPv4"
 msgid "use IPv6 addresses only"
 msgstr "chỉ dùng địa chỉ IPv6"
 
+#: builtin/clone.c:239
+msgid ""
+"No directory name could be guessed.\n"
+"Please specify a directory on the command line"
+msgstr ""
+"Không đoán được thư mục tên là gì.\n"
+"Vui lòng chỉ định tên một thư mục trên dòng lệnh"
+
 #: builtin/clone.c:305
 #, c-format
 msgid "reference repository '%s' as a linked checkout is not supported yet."
@@ -4741,6 +4836,11 @@ msgstr "Đang kiểm tra kết nối… "
 msgid "remote did not send all necessary objects"
 msgstr "máy chủ đã không gửi tất cả các đối tượng cần thiết"
 
+#: builtin/clone.c:647
+#, c-format
+msgid "unable to update %s"
+msgstr "không thể cập nhật %s"
+
 #: builtin/clone.c:696
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr "refers HEAD máy chủ  chỉ đến ref không tồn tại, không thể lấy ra.\n"
@@ -4748,6 +4848,10 @@ msgstr "refers HEAD máy chủ  chỉ đến ref không tồn tại, không th�
 #: builtin/clone.c:727
 msgid "unable to checkout working tree"
 msgstr "không thể lấy ra (checkout) cây làm việc"
+
+#: builtin/clone.c:753
+msgid "unable to write parameters to config file"
+msgstr "không thể ghi các tham số vào tập tin cấu hình"
 
 #: builtin/clone.c:816
 msgid "cannot repack to clean up"
@@ -7018,53 +7122,53 @@ msgstr "không thể lưu trữ tập tin ghi mục lục"
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "sai pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1479 builtin/index-pack.c:1663
+#: builtin/index-pack.c:1479 builtin/index-pack.c:1664
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "không hỗ trợ đa tuyến, bỏ qua %s"
 
-#: builtin/index-pack.c:1537
+#: builtin/index-pack.c:1538
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Không thể mở tập tin gói đã sẵn có “%s”"
 
-#: builtin/index-pack.c:1539
+#: builtin/index-pack.c:1540
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Không thể mở tập tin idx của gói cho “%s”"
 
-#: builtin/index-pack.c:1586
+#: builtin/index-pack.c:1587
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "không delta: %d đối tượng"
 
-#: builtin/index-pack.c:1593
+#: builtin/index-pack.c:1594
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "chiều dài xích = %d: %lu đối tượng"
 
-#: builtin/index-pack.c:1623
+#: builtin/index-pack.c:1624
 msgid "Cannot come back to cwd"
 msgstr "Không thể quay lại cwd"
 
-#: builtin/index-pack.c:1675 builtin/index-pack.c:1678
-#: builtin/index-pack.c:1690 builtin/index-pack.c:1694
+#: builtin/index-pack.c:1676 builtin/index-pack.c:1679
+#: builtin/index-pack.c:1691 builtin/index-pack.c:1695
 #, c-format
 msgid "bad %s"
 msgstr "%s sai"
 
-#: builtin/index-pack.c:1708
+#: builtin/index-pack.c:1709
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin không thể được dùng mà không có --stdin"
 
-#: builtin/index-pack.c:1712 builtin/index-pack.c:1721
+#: builtin/index-pack.c:1713 builtin/index-pack.c:1722
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "tên tập tin tập tin gói “%s” không được kết thúc bằng đuôi “.pack”"
 
-#: builtin/index-pack.c:1729
+#: builtin/index-pack.c:1730
 msgid "--verify with no packfile name given"
 msgstr "dùng tùy chọn --verify mà không đưa ra tên packfile"
 
@@ -11254,7 +11358,7 @@ msgstr ""
 "hướng dẫn về khái niệm. Xem “git help <lệnh>” hay “git help <khái-niệm>”\n"
 "để xem các đặc tả cho lệnh hay khái niệm cụ thể."
 
-#: http.c:320
+#: http.c:321
 msgid "Public key pinning not supported with cURL < 7.44.0"
 msgstr "Chốt khóa công không được hỗ trợ với cURL < 7.44.0"
 
@@ -11341,9 +11445,8 @@ msgid "Update remote refs along with associated objects"
 msgstr "Cập nhật th.chiếu máy chủ cùng với các đối tượng liên quan đến nó"
 
 #: common-cmds.h:32
-msgid "Forward-port local commits to the updated upstream head"
-msgstr ""
-"Chuyển tiếp những lần chuyển giao nội bộ tới head thượng nguồn đã cập nhật"
+msgid "Reapply commits on top of another base tip"
+msgstr "Thu hoạch các lần chuyển giao trên đỉnh của đầu mút cơ sở khác"
 
 #: common-cmds.h:33
 msgid "Reset current HEAD to the specified state"
@@ -12174,6 +12277,10 @@ msgstr "Gặp lỗi khi đệ quy vào trong đường dẫn mô-đun-con “$sm
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Url Mô-đun-con đồng bộ hóa cho “$displaypath”"
 
+#~ msgid "Forward-port local commits to the updated upstream head"
+#~ msgstr ""
+#~ "Chuyển tiếp những lần chuyển giao nội bộ tới head thượng nguồn đã cập nhật"
+
 #~ msgid "unable to parse format"
 #~ msgstr "không thể phân tích định dạng"
 
@@ -12311,9 +12418,6 @@ msgstr "Url Mô-đun-con đồng bộ hóa cho “$displaypath”"
 #~ msgid "unable to parse value '%s' for option %s"
 #~ msgstr "không thể phân tích giá trị “%s” cho tùy chọn %s"
 
-#~ msgid "unable to resolve HEAD"
-#~ msgstr "không thể phân giải HEAD"
-
 #~ msgid "-b and -B are mutually exclusive"
 #~ msgstr "-b và -B loại từ lẫn nhau."
 
@@ -12383,9 +12487,6 @@ msgstr "Url Mô-đun-con đồng bộ hóa cho “$displaypath”"
 #~ msgid "prune .git/worktrees"
 #~ msgstr "xén .git/worktrees"
 
-#~ msgid "--worktrees does not take extra arguments"
-#~ msgstr "--worktrees không nhận các đối số thêm"
-
 #~ msgid "The most commonly used git commands are:"
 #~ msgstr "Những lệnh git hay được dùng nhất là:"
 
@@ -12415,9 +12516,6 @@ msgstr "Url Mô-đun-con đồng bộ hóa cho “$displaypath”"
 
 #~ msgid "force creation (when already exists)"
 #~ msgstr "ép buộc tạo (khi đã có nhánh cùng tên)"
-
-#~ msgid "Malformed ident string: '%s'"
-#~ msgstr "Chuỗi thụt lề đầu dòng dị hình: “%s”"
 
 #~ msgid "slot"
 #~ msgstr "khe"
@@ -12466,9 +12564,6 @@ msgstr "Url Mô-đun-con đồng bộ hóa cho “$displaypath”"
 
 #~ msgid "bug"
 #~ msgstr "lỗi"
-
-#~ msgid "ahead "
-#~ msgstr "phía trước "
 
 #~ msgid ", behind "
 #~ msgstr ", đằng sau "
