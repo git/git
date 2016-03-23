@@ -1205,6 +1205,9 @@ test_expect_success POSIXPERM,PERL 'preserves existing permissions' '
 	  "die q(badrename) if ((stat(q(.git/config)))[2] & 07777) != 0600"
 '
 
+! test_have_prereq MINGW ||
+HOME="$(pwd)" # convert to Windows path
+
 test_expect_success 'set up --show-origin tests' '
 	INCLUDE_DIR="$HOME/include" &&
 	mkdir -p "$INCLUDE_DIR" &&
@@ -1304,7 +1307,7 @@ test_expect_success 'set up custom config file' '
 	EOF
 '
 
-test_expect_success '--show-origin escape special file name characters' '
+test_expect_success !MINGW '--show-origin escape special file name characters' '
 	cat >expect <<-\EOF &&
 		file:"file\" (dq) and spaces.conf"	user.custom=true
 	EOF
@@ -1333,7 +1336,7 @@ test_expect_success '--show-origin stdin with file include' '
 	test_cmp expect output
 '
 
-test_expect_success '--show-origin blob' '
+test_expect_success !MINGW '--show-origin blob' '
 	cat >expect <<-\EOF &&
 		blob:a9d9f9e555b5c6f07cbe09d3f06fe3df11e09c08	user.custom=true
 	EOF
@@ -1342,7 +1345,7 @@ test_expect_success '--show-origin blob' '
 	test_cmp expect output
 '
 
-test_expect_success '--show-origin blob ref' '
+test_expect_success !MINGW '--show-origin blob ref' '
 	cat >expect <<-\EOF &&
 		blob:"master:file\" (dq) and spaces.conf"	user.custom=true
 	EOF
