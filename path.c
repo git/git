@@ -584,6 +584,9 @@ char *expand_user_path(const char *path)
 			if (!home)
 				goto return_null;
 			strbuf_addstr(&user_path, home);
+#ifdef GIT_WINDOWS_NATIVE
+			convert_slashes(user_path.buf);
+#endif
 		} else {
 			struct passwd *pw = getpw_str(username, username_len);
 			if (!pw)

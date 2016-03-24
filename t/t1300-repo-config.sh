@@ -699,17 +699,13 @@ test_expect_success 'invalid unit' '
 	echo 1auto >expect &&
 	git config aninvalid.unit >actual &&
 	test_cmp expect actual &&
-	cat >expect <<-\EOF &&
-	fatal: bad numeric config value '\''1auto'\'' for '\''aninvalid.unit'\'' in file .git/config: invalid unit
-	EOF
 	test_must_fail git config --int --get aninvalid.unit 2>actual &&
-	test_i18ncmp expect actual
+	test_i18ngrep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
 '
 
 test_expect_success 'invalid stdin config' '
-	echo "fatal: bad config line 1 in standard input " >expect &&
 	echo "[broken" | test_must_fail git config --list --file - >output 2>&1 &&
-	test_cmp expect output
+	test_i18ngrep "bad config line 1 in standard input" output
 '
 
 cat > expect << EOF
@@ -1209,6 +1205,9 @@ test_expect_success POSIXPERM,PERL 'preserves existing permissions' '
 	  "die q(badrename) if ((stat(q(.git/config)))[2] & 07777) != 0600"
 '
 
+! test_have_prereq MINGW ||
+HOME="$(pwd)" # convert to Windows path
+
 test_expect_success 'set up --show-origin tests' '
 	INCLUDE_DIR="$HOME/include" &&
 	mkdir -p "$INCLUDE_DIR" &&
@@ -1308,7 +1307,7 @@ test_expect_success 'set up custom config file' '
 	EOF
 '
 
-test_expect_success '--show-origin escape special file name characters' '
+test_expect_success !MINGW '--show-origin escape special file name characters' '
 	cat >expect <<-\EOF &&
 		file:"file\" (dq) and spaces.conf"	user.custom=true
 	EOF
@@ -1337,7 +1336,7 @@ test_expect_success '--show-origin stdin with file include' '
 	test_cmp expect output
 '
 
-test_expect_success '--show-origin blob' '
+test_expect_success !MINGW '--show-origin blob' '
 	cat >expect <<-\EOF &&
 		blob:a9d9f9e555b5c6f07cbe09d3f06fe3df11e09c08	user.custom=true
 	EOF
@@ -1346,7 +1345,7 @@ test_expect_success '--show-origin blob' '
 	test_cmp expect output
 '
 
-test_expect_success '--show-origin blob ref' '
+test_expect_success !MINGW '--show-origin blob ref' '
 	cat >expect <<-\EOF &&
 		blob:"master:file\" (dq) and spaces.conf"	user.custom=true
 	EOF

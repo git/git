@@ -396,6 +396,12 @@ static inline char *mingw_find_last_dir_sep(const char *path)
 			ret = (char *)path;
 	return ret;
 }
+static inline void convert_slashes(char *path)
+{
+	for (; *path; path++)
+		if (*path == '\\')
+			*path = '/';
+}
 #define find_last_dir_sep mingw_find_last_dir_sep
 int mingw_offset_1st_component(const char *path);
 #define offset_1st_component mingw_offset_1st_component
