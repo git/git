@@ -1345,8 +1345,8 @@ _git_help ()
 	__git_compute_all_commands
 	__gitcomp "$__git_all_commands $(__git_aliases)
 		attributes cli core-tutorial cvs-migration
-		diffcore gitk glossary hooks ignore modules
-		namespaces repository-layout tutorial tutorial-2
+		diffcore everyday gitk glossary hooks ignore modules
+		namespaces repository-layout revisions tutorial tutorial-2
 		workflows
 		"
 }
