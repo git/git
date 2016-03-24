@@ -515,20 +515,18 @@ git-p4.pathEncoding::
 	Git expects paths encoded as UTF-8. Use this config to tell git-p4
 	what encoding Perforce had used for the paths. This encoding is used
 	to transcode the paths to UTF-8. As an example, Perforce on Windows
-	often uses “cp1252” to encode path names.
+	often uses "cp1252" to encode path names.
 
 git-p4.largeFileSystem::
 	Specify the system that is used for large (binary) files. Please note
 	that large file systems do not support the 'git p4 submit' command.
-	Only Git LFS [1] is implemented right now. Download
-	and install the Git LFS command line extension to use this option
-	and configure it like this:
+	Only Git LFS is implemented right now (see https://git-lfs.github.com/
+	for more information). Download and install the Git LFS command line
+	extension to use this option and configure it like this:
 +
 -------------
 git config       git-p4.largeFileSystem GitLFS
 -------------
-+
-	[1] https://git-lfs.github.com/
 
 git-p4.largeFileExtensions::
 	All files matching a file extension in the list will be processed
