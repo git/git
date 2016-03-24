@@ -849,6 +849,19 @@ test_expect_success 'set up a second submodule' '
 	git commit -m "submodule example2 added"
 '
 
+test_expect_success 'submodule deinit works on repository without submodules' '
+	test_when_finished "rm -rf newdirectory" &&
+	mkdir newdirectory &&
+	(
+		cd newdirectory &&
+		git init &&
+		>file &&
+		git add file &&
+		git commit -m "repo should not be empty"
+		git submodule deinit .
+	)
+'
+
 test_expect_success 'submodule deinit should remove the whole submodule section from .git/config' '
 	git config submodule.example.foo bar &&
 	git config submodule.example2.frotz nitfol &&
