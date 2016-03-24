@@ -21,6 +21,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Reads the supplied diff output (i.e. "a patch") and applies it to files.
+When running from a subdirectory in a repository, patched paths
+outside the directory are ignored.
 With the `--index` option the patch is also applied to the index, and
 with the `--cached` option the patch is only applied to the index.
 Without these options, the command applies the patch only to files,
