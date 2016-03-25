@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2016, #04; Wed, 23)
-X-master-at: 7e4ba3686ab04b2fdcb80f52e8784c9bebdb0401
-X-next-at: 1d10413e4d0f096b6f69b97671787e9ea977e5f1
+Subject: What's cooking in git.git (Mar 2016, #05; Fri, 25)
+X-master-at: 56331f8727b0c2e7dc713b728eaf1e5843422cb7
+X-next-at: c3ac548d2fb4b8da98e72b99d0acbff724a0e004
 
-What's cooking in git.git (Mar 2016, #04; Wed, 23)
+What's cooking in git.git (Mar 2016, #05; Fri, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,6 +22,185 @@ of the repositories listed at
 
 --------------------------------------------------
 [New Topics]
+
+* ak/use-hashmap-iter-first-in-submodule-config (2016-03-23) 1 commit
+ - submodule-config: use hashmap_iter_first()
+
+ Minor code cleanup.
+
+ Will merge to 'next'.
+
+
+* ky/branch-d-worktree (2016-03-25) 1 commit
+ - branch -d: refuse deleting a branch which is currently checked out
+
+ When "git worktree" feature is in use, "git branch -d" allowed
+ deletion of a branch that is checked out in another worktree
+
+ Will merge to 'next'.
+
+
+* ky/branch-m-worktree (2016-03-25) 4 commits
+ - branch -m: update all per-worktree HEADs
+ - refs: add create_symref_common_dir as a variation of create_symref
+ - refs: add REF_COMMON_DIR flag
+ - refs: add new flag RESOLVE_REF_COMMON_DIR to resolve_ref_unsafe
+
+ When "git worktree" feature is in use, "git branch -m" renamed a
+ branch that is checked out in another worktree without adjusting
+ the HEAD symbolic ref for the worktree.
+
+ Needs review.
+
+
+* nd/apply-doc (2016-03-24) 2 commits
+ - git-apply.txt: mention the behavior inside a subdir
+ - git-apply.txt: remove a space
+
+ Will merge to 'next'.
+
+
+* nd/apply-report-skip (2016-03-24) 1 commit
+ - apply: report patch skipping in verbose mode
+
+ "git apply -v" learned to report paths in the patch that were
+ skipped via --include/--exclude mechanism or being outside the
+ current working directory.
+
+ Will merge to 'next'.
+
+
+* pb/opt-cmdmode-doc (2016-03-25) 1 commit
+ - api-parse-options.txt: document OPT_CMDMODE()
+
+ Minor API documentation update.
+
+
+* rt/completion-help (2016-03-24) 2 commits
+ - completion: add 'revisions' and 'everyday' to 'git help'
+ - completion: add option '--guides' to 'git help'
+
+ Shell completion (in contrib/) updates.
+
+
+* rt/rebase-i-shorten-stop-report (2016-03-24) 1 commit
+ - rebase-i: print abbreviated hash when stop for editing
+
+ The commit object name reported when "rebase -i" stops has been
+ shortened.
+
+ Needs a better explanation.
+
+
+* sb/submodule-helper-prefix (2016-03-25) 5 commits
+ - submodule--helper clone: lose the extra prefix option
+ - submodule sync: test syncing one submodule
+ - submodule update: add test for recursive from non root dir
+ - submodule--helper list: lose the extra prefix option
+ - submodule: prepare recursive path from non root directory
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* js/mingw-tests-2.8 (2016-03-23) 4 commits
+  (merged to 'next' on 2016-03-23 at aeec80e)
+ + mingw: skip some tests in t9115 due to file name issues
+ + t1300: fix the new --show-origin tests on Windows
+ + t1300-repo-config: make it resilient to being run via 'sh -x'
+ + config --show-origin: report paths with forward slashes
+
+ Last-minute tweaks to test to pass on Windows.
+
+
+* ls/p4-doc-markup (2016-03-23) 2 commits
+  (merged to 'next' on 2016-03-23 at 94a6275)
+ + Documentation: fix git-p4 AsciiDoc formatting
+ + Documentation: use ASCII quotation marks in git-p4
+
+ Trivially OK doc cleanup.
+
+
+* sb/submodule-module-list-pathspec-fix (2016-03-22) 1 commit
+  (merged to 'next' on 2016-03-23 at 67fe17c)
+ + submodule: fix regression for deinit without submodules
+
+ A fix to a small regression in module_list helper that was
+ rewritten in C in 2.7.x timeframe.
+
+
+--------------------------------------------------
+[Stalled]
+
+* ec/annotate-deleted (2015-11-20) 1 commit
+ - annotate: skip checking working tree if a revision is provided
+
+ Usability fix for annotate-specific "<file> <rev>" syntax with deleted
+ files.
+
+ Waiting for review.
+
+
+* dg/subtree-rebase-test (2016-01-19) 1 commit
+ - contrib/subtree: Add a test for subtree rebase that loses commits
+
+ Reviewed up to v5.
+ Will be rerolled.
+ ($gmane/284426)
+
+
+* js/am-3-merge-recursive-direct (2015-10-12) 2 commits
+ - am: make a direct call to merge_recursive
+ - merge_recursive_options: introduce the "gently" flag
+
+ The merge_recursive_generic() function has been made a bit safer to
+ call from inside a process.  "git am -3" was taught to make a direct
+ call to the function when falling back to three-way merge.
+
+ Being able to make a direct call would be good in general, but as a
+ performance thing, the change needs to be backed up by numbers.
+
+ Needs review.
+
+ I haven't gone through the "gently" change with fine toothed comb;
+ I can see that the change avoids calling die(), but I haven't made
+ sure that the program states (e.g. what's in the in-core index) are
+ adjusted sensibly when it returns to the caller instead of dying,
+ or the codepaths that used to die() are free of resource leaks.
+ The original code certainly did not care the program states at the
+ point of dying exactly because it knew it is going to exit, but now
+ they have to care, and they need to be audited.
+
+
+* dk/gc-more-wo-pack (2016-01-13) 4 commits
+ - gc: clean garbage .bitmap files from pack dir
+ - t5304: ensure non-garbage files are not deleted
+ - t5304: test .bitmap garbage files
+ - prepare_packed_git(): find more garbage
+
+ Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
+ .bitmap and .keep files.
+
+ Waiting for a reroll.
+ ($gmane/284368).
+
+
+* jc/diff-b-m (2015-02-23) 5 commits
+ . WIPWIP
+ . WIP: diff-b-m
+ - diffcore-rename: allow easier debugging
+ - diffcore-rename.c: add locate_rename_src()
+ - diffcore-break: allow debugging
+
+ "git diff -B -M" produced incorrect patch when the postimage of a
+ completely rewritten file is similar to the preimage of a removed
+ file; such a resulting file must not be expressed as a rename from
+ other place.
+
+ The fix in this patch is broken, unfortunately.
+ Will discard.
+
+--------------------------------------------------
+[Cooking]
 
 * jk/check-repository-format (2016-03-11) 10 commits
  - verify_repository_format: mark messages for translation
@@ -132,13 +311,15 @@ of the repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* lt/pretty-expand-tabs (2016-03-17) 4 commits
- - pretty-print: add --pretty=noexpand
+* lt/pretty-expand-tabs (2016-03-23) 5 commits
+ - pretty-print: teach "--no-expand-tabs" option to "git log"
+ - pretty-print: limit expand-tabs to selected --pretty formats
  - pretty-print: further abstract out pp_handle_indent()
  - pretty-print: simplify the interaction between pp_handle_indent() and its caller
  - pretty-print: de-tabify indented logs to make things line up properly
 
- Needs a UI rework.
+ May need a UI rework.
+ Needs reordering.
 
 
 * sb/clone-shallow-passthru (2016-03-23) 3 commits
@@ -172,12 +353,13 @@ of the repositories listed at
 
 
 * cc/apply (2016-03-22) 2 commits
- - apply: remove unused call to free() in gitdiff_{old,new}name()
- - builtin/apply: get rid of useless 'name' variable
+  (merged to 'next' on 2016-03-24 at 70623f2)
+ + apply: remove unused call to free() in gitdiff_{old,new}name()
+ + builtin/apply: get rid of useless 'name' variable
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master' after 2.8 final.
 
 
 * dt/index-helper (2016-03-23) 18 commits
@@ -201,16 +383,6 @@ of the repositories listed at
  - read-cache.c: fix constness of verify_hdr()
 
 
-* js/mingw-tests-2.8 (2016-03-23) 4 commits
-  (merged to 'next' on 2016-03-23 at aeec80e)
- + mingw: skip some tests in t9115 due to file name issues
- + t1300: fix the new --show-origin tests on Windows
- + t1300-repo-config: make it resilient to being run via 'sh -x'
- + config --show-origin: report paths with forward slashes
-
- Will merge to 'master' by 2.8-final.
-
-
 * jv/merge-nothing-into-void (2016-03-23) 1 commit
   (merged to 'next' on 2016-03-23 at 40b905d)
  + merge: fix NULL pointer dereference when merging nothing into void
@@ -223,153 +395,16 @@ of the repositories listed at
 
 
 * la/tag-force-signing-annotated-tags (2016-03-22) 1 commit
- - tag: add the option to force signing of annotated tags
+  (merged to 'next' on 2016-03-24 at 424da3f)
+ + tag: add the option to force signing of annotated tags
 
  "git tag" can create an annotated tag without explicitly given an
  "-a" (or "-s") option (i.e. when a tag message is given).  A new
  configuration variable, tag.forceSignAnnotated, can be used to tell
  the command to create signed tag in such a situation.
 
- Will merge to 'next'.
+ Will merge to 'master' after 2.8 final.
 
-
-* ls/p4-doc-markup (2016-03-23) 2 commits
-  (merged to 'next' on 2016-03-23 at 94a6275)
- + Documentation: fix git-p4 AsciiDoc formatting
- + Documentation: use ASCII quotation marks in git-p4
-
- Will merge to 'master' by 2.8-final.
-
-
-* sb/submodule-module-list-pathspec-fix (2016-03-22) 1 commit
-  (merged to 'next' on 2016-03-23 at 67fe17c)
- + submodule: fix regression for deinit without submodules
-
- Will merge to 'master' by 2.8-final.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* cn/deprecate-ssh-git-url (2016-03-09) 1 commit
-  (merged to 'next' on 2016-03-15 at c52f11c)
- + Disown ssh+git and git+ssh
-
- The two alternative ways to spell "ssh://" transport have been
- deprecated for a long time.  The last mention of them has finally
- removed from the documentation.
-
-
-* jc/exclusion-doc (2016-03-08) 1 commit
-  (merged to 'next' on 2016-03-10 at 19173ff)
- + gitignore: document that unignoring a directory unignores everything in it
-
-
-* jc/sane-grep (2016-03-10) 2 commits
-  (merged to 'next' on 2016-03-15 at 98d08a4)
- + rebase-i: clarify "is this commit relevant?" test
- + sane_grep: pass "-a" if grep accepts it
-
- Recent versions of GNU grep is pickier than before to decide if a
- file is "binary" and refuse to give line-oriented hits when we
- expect it to, unless explicitly told with "-a" option.  As our
- scripted Porcelains use sane_grep wrapper for line-oriented data,
- even when the line may contain non-ASCII payload we took from
- end-user data, use "grep -a" to implement sane_grep wrapper when
- using an implementation of "grep" that takes the "-a" option.
-
-
-* js/close-packs-before-gc (2016-03-04) 1 commit
-  (merged to 'next' on 2016-03-04 at fe6f6ed)
- + t5510: do not leave changed cwd
-
- A small future-proofing of a test added recently.
-
-
-* jx/http-no-proxy (2016-02-29) 1 commit
-  (merged to 'next' on 2016-03-10 at 989305b)
- + http: honor no_http env variable to bypass proxy
-
- A small regression fix to keep no_proxy environment variable
- working.
-
-
-* sb/rebase-summary (2016-03-02) 1 commit
-  (merged to 'next' on 2016-03-04 at d40714d)
- + Documentation: reword rebase summary
-
---------------------------------------------------
-[Stalled]
-
-* ec/annotate-deleted (2015-11-20) 1 commit
- - annotate: skip checking working tree if a revision is provided
-
- Usability fix for annotate-specific "<file> <rev>" syntax with deleted
- files.
-
- Waiting for review.
-
-
-* dg/subtree-rebase-test (2016-01-19) 1 commit
- - contrib/subtree: Add a test for subtree rebase that loses commits
-
- Reviewed up to v5.
- Will be rerolled.
- ($gmane/284426)
-
-
-* js/am-3-merge-recursive-direct (2015-10-12) 2 commits
- - am: make a direct call to merge_recursive
- - merge_recursive_options: introduce the "gently" flag
-
- The merge_recursive_generic() function has been made a bit safer to
- call from inside a process.  "git am -3" was taught to make a direct
- call to the function when falling back to three-way merge.
-
- Being able to make a direct call would be good in general, but as a
- performance thing, the change needs to be backed up by numbers.
-
- Needs review.
-
- I haven't gone through the "gently" change with fine toothed comb;
- I can see that the change avoids calling die(), but I haven't made
- sure that the program states (e.g. what's in the in-core index) are
- adjusted sensibly when it returns to the caller instead of dying,
- or the codepaths that used to die() are free of resource leaks.
- The original code certainly did not care the program states at the
- point of dying exactly because it knew it is going to exit, but now
- they have to care, and they need to be audited.
-
-
-* dk/gc-more-wo-pack (2016-01-13) 4 commits
- - gc: clean garbage .bitmap files from pack dir
- - t5304: ensure non-garbage files are not deleted
- - t5304: test .bitmap garbage files
- - prepare_packed_git(): find more garbage
-
- Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
- .bitmap and .keep files.
-
- Waiting for a reroll.
- ($gmane/284368).
-
-
-* jc/diff-b-m (2015-02-23) 5 commits
- . WIPWIP
- . WIP: diff-b-m
- - diffcore-rename: allow easier debugging
- - diffcore-rename.c: add locate_rename_src()
- - diffcore-break: allow debugging
-
- "git diff -B -M" produced incorrect patch when the postimage of a
- completely rewritten file is similar to the preimage of a removed
- file; such a resulting file must not be expressed as a rename from
- other place.
-
- The fix in this patch is broken, unfortunately.
- Will discard.
-
---------------------------------------------------
-[Cooking]
 
 * cc/doc-recommend-performance-trace-to-file (2016-03-07) 1 commit
   (merged to 'next' on 2016-03-23 at 086b9f2)
