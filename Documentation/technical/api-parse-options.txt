@@ -231,6 +231,13 @@ There are some macros to easily define options:
 	pass the command-line option, which can be specified multiple times,
 	to another command.
 
+`OPT_CMDMODE(short, long, &int_var, description, enum_val)`::
+	Define an "operation mode" option, only one of which in the same
+	group of "operating mode" options that share the same `int_var`
+	can be given by the user. `enum_val` is set to `int_var` when the
+	option is used, but an error is reported if other "operating mode"
+	option has already set its value to the same `int_var`.
+
 
 The last element of the array must be `OPT_END()`.
 
