@@ -564,8 +564,17 @@ write_terms () {
 	then
 		die "$(gettext "please use two different terms")"
 	fi
-	check_term_format "$TERM_BAD" bad
-	check_term_format "$TERM_GOOD" good
+	echo "TERM_BAD: $TERM_BAD"
+	echo "TERM_GOOD: $TERM_GOOD"
+	git bisect--helper --check-term-format "$TERM_BAD" bad
+	echo $?
+	git bisect--helper --check-term-format "$TERM_GOOD" good
+	echo $?
+	# check_term_format "$TERM_BAD" bad
+	# echo $?
+	# check_term_format "$TERM_GOOD" good
+	# echo $?
+	echo "It does not come here"
 	printf '%s\n%s\n' "$TERM_BAD" "$TERM_GOOD" >"$GIT_DIR/BISECT_TERMS"
 }
 
@@ -573,6 +582,7 @@ check_term_format () {
 	term=$1
 	git check-ref-format refs/bisect/"$term" ||
 	die "$(eval_gettext "'\$term' is not a valid term")"
+	echo "THis is PurE shit"
 	case "$term" in
 	help|start|terms|skip|next|reset|visualize|replay|log|run)
 		die "$(eval_gettext "can't use the builtin command '\$term' as a term")"
