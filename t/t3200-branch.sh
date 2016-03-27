@@ -126,7 +126,28 @@ test_expect_success 'git branch -M foo bar should fail when bar is checked out' 
 test_expect_success 'git branch -M baz bam should succeed when baz is checked out' '
 	git checkout -b baz &&
 	git branch bam &&
-	git branch -M baz bam
+	git branch -M baz bam &&
+	test $(git rev-parse --abbrev-ref HEAD) = bam
+'
+
+test_expect_success 'git branch -M baz bam should succeed when baz is checked out as linked working tree' '
+	git checkout master &&
+	git worktree add -b baz bazdir &&
+	git worktree add -f bazdir2 baz &&
+	git branch -M baz bam &&
+	test $(git -C bazdir rev-parse --abbrev-ref HEAD) = bam &&
+	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam
+'
+
+test_expect_success 'git branch -M baz bam should succeed within a worktree in which baz is checked out' '
+	git checkout -b baz &&
+	git worktree add -f bazdir3 baz &&
+	(
+		cd bazdir3 &&
+		git branch -M baz bam &&
+		test $(git rev-parse --abbrev-ref HEAD) = bam
+	) &&
+	test $(git rev-parse --abbrev-ref HEAD) = bam
 '
 
 test_expect_success 'git branch -M master should work when master is checked out' '
