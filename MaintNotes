@@ -1,3 +1,4 @@
+To: git@vger.kernel.org
 Subject: A note from the maintainer
 
 Welcome to the Git development community.
@@ -134,7 +135,7 @@ named with three dotted decimal digits (e.g. "1.8.5"), but recently we
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 2.7.0 done on Jan 4th, 2016. You can expect
+The last such release was 2.8.0 done on Mar 28th, 2016. You can expect
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
@@ -145,8 +146,8 @@ are cut from it.  The maintenance releases used to be named with four
 dotted decimal, named after the feature release they are updates to
 (e.g. "1.8.5.1" was the first maintenance release for "1.8.5" feature
 release).  These days, maintenance releases are named by incrementing
-the last digit of three-dotted decimal name (e.g. "2.6.3" is the
-third maintenance release for the "2.6" series).
+the last digit of three-dotted decimal name (e.g. "2.7.4" is the
+fourth maintenance release for the "2.7" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
