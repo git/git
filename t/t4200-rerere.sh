@@ -536,6 +536,16 @@ test_expect_success 'multiple identical conflicts' '
 	test_cmp file1.expect file1 &&
 	test_cmp file2.expect file2 &&
 
+	# Forget resolution for file2
+	git rerere forget file2 &&
+	echo file2 >expect &&
+	git rerere status >actual &&
+	test_cmp expect actual &&
+	count_pre_post 2 1 &&
+
+	# file2 already has correct resolution, so record it again
+	git rerere &&
+
 	# Pretend that the resolutions are old again
 	find .git/rr-cache/ -type f | xargs test-chmtime -172800 &&
 
