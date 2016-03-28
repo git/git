@@ -34,7 +34,7 @@ UI, Workflows & Features
    have a place to store the updated notes tree, iow, a ref).
 
  * "git grep" by default does not fall back to its "--no-index"
-   behaviour outside a directory under Git's control (otherwise the
+   behavior outside a directory under Git's control (otherwise the
    user may by mistake end up running a huge recursive search); with a
    new configuration (set in $HOME/.gitconfig--by definition this
    cannot be set in the config file per project), this safety can be
@@ -55,7 +55,7 @@ UI, Workflows & Features
 
  * Many commands that read files that are expected to contain text
    that is generated (or can be edited) by the end user to control
-   their behaviour (e.g. "git grep -f <filename>") have been updated
+   their behavior (e.g. "git grep -f <filename>") have been updated
    to be more tolerant to lines that are terminated with CRLF (they
    used to treat such a line to contain payload that ends with CR,
    which is usually not what the users expect).
@@ -187,7 +187,7 @@ Performance, Internal Implementation, Development Support etc.
    with expectations that are not satisfiable on Git for Windows.
 
  * Some calls to strcpy(3) triggers a false warning from static
-   analysers that are less intelligent than humans, and reducing the
+   analyzers that are less intelligent than humans, and reducing the
    number of these false hits helps us notice real issues.  A few
    calls to strcpy(3) in a couple of protrams that are already safe
    has been rewritten to avoid false warnings.
@@ -281,7 +281,7 @@ notes for details).
  * "git send-email" was confused by escaped quotes stored in the alias
    files saved by "mutt", which has been corrected.
 
- * A few unportable C construct have been spotted by clang compiler
+ * A few non-portable C construct have been spotted by clang compiler
    and have been fixed.
 
  * The documentation has been updated to hint the connection between
@@ -349,10 +349,10 @@ notes for details).
  * "git worktree" had a broken code that attempted to auto-fix
    possible inconsistency that results from end-users moving a
    worktree to different places without telling Git (the original
-   repository needs to maintain backpointers to its worktrees, but
-   "mv" run by end-users who are not familiar with that fact will
-   obviously not adjust them), which actually made things worse
-   when triggered.
+   repository needs to maintain back-pointers to its worktrees,
+   but "mv" run by end-users who are not familiar with that fact
+   will obviously not adjust them), which actually made things
+   worse when triggered.
 
  * The low-level merge machinery has been taught to use CRLF line
    termination when inserting conflict markers to merged contents that
