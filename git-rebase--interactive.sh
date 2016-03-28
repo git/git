@@ -1068,6 +1068,10 @@ git_rebase__interactive () {
 
 case "$action" in
 continue)
+	if test ! -d "$rewritten"
+	then
+		exec git rebase--helper ${force_rebase:+--no-ff} --continue
+	fi
 	# do we have anything to commit?
 	if git diff-index --cached --quiet HEAD --
 	then
@@ -1127,6 +1131,10 @@ first and then run 'git rebase --continue' again.")"
 skip)
 	git rerere clear
 
+	if test ! -d "$rewritten"
+	then
+		exec git rebase--helper ${force_rebase:+--no-ff} --continue
+	fi
 	do_rest
 	return 0
 	;;
@@ -1313,6 +1321,11 @@ expand_todo_ids
 test -d "$rewritten" || test -n "$force_rebase" || skip_unnecessary_picks
 
 checkout_onto
+if test -z "$rebase_root" && test ! -d "$rewritten"
+then
+	require_clean_work_tree "rebase"
+	exec git rebase--helper ${force_rebase:+--no-ff} --continue
+fi
 do_rest
 
 }
