@@ -9,7 +9,7 @@ git-worktree - Manage multiple working trees
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] [--detach] [-b <new-branch>] <path> [<branch>]
+'git worktree add' [-f] [--detach] [--checkout] [-b <new-branch>] <path> [<branch>]
 'git worktree prune' [-n] [-v] [--expire <expire>]
 'git worktree list' [--porcelain]
 
@@ -86,6 +86,12 @@ OPTIONS
 --detach::
 	With `add`, detach HEAD in the new working tree. See "DETACHED HEAD"
 	in linkgit:git-checkout[1].
+
+--[no-]checkout::
+	By default, `add` checks out `<branch>`, however, `--no-checkout` can
+	be used to suppress checkout in order to make customizations,
+	such as configuring sparse-checkout. See "Sparse checkout"
+	in linkgit:git-read-tree[1].
 
 -n::
 --dry-run::
