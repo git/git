@@ -89,11 +89,11 @@ static void setup_commit_formats(void)
 {
 	struct cmt_fmt_map builtin_formats[] = {
 		{ "raw",	CMIT_FMT_RAW,		0,	0 },
-		{ "medium",	CMIT_FMT_MEDIUM,	0,	1 },
+		{ "medium",	CMIT_FMT_MEDIUM,	0,	8 },
 		{ "short",	CMIT_FMT_SHORT,		0,	0 },
 		{ "email",	CMIT_FMT_EMAIL,		0,	0 },
-		{ "fuller",	CMIT_FMT_FULLER,	0,	1 },
-		{ "full",	CMIT_FMT_FULL,		0,	1 },
+		{ "fuller",	CMIT_FMT_FULLER,	0,	8 },
+		{ "full",	CMIT_FMT_FULL,		0,	8 },
 		{ "oneline",	CMIT_FMT_ONELINE,	1,	0 }
 	};
 	commit_formats_len = ARRAY_SIZE(builtin_formats);
@@ -1645,7 +1645,7 @@ static int pp_utf8_width(const char *start, const char *end)
 	return width;
 }
 
-static void strbuf_add_tabexpand(struct strbuf *sb,
+static void strbuf_add_tabexpand(struct strbuf *sb, int tabwidth,
 				 const char *line, int linelen)
 {
 	const char *tab;
@@ -1666,7 +1666,7 @@ static void strbuf_add_tabexpand(struct strbuf *sb,
 		strbuf_add(sb, line, tab - line);
 
 		/* .. and the de-tabified tab */
-		strbuf_addchars(sb, ' ', 8 - (width % 8));
+		strbuf_addchars(sb, ' ', tabwidth - (width % tabwidth));
 
 		/* Skip over the printed part .. */
 		linelen -= tab + 1 - line;
@@ -1692,7 +1692,7 @@ static void pp_handle_indent(struct pretty_print_context *pp,
 {
 	strbuf_addchars(sb, ' ', indent);
 	if (pp->expand_tabs_in_log)
-		strbuf_add_tabexpand(sb, line, linelen);
+		strbuf_add_tabexpand(sb, pp->expand_tabs_in_log, line, linelen);
 	else
 		strbuf_add(sb, line, linelen);
 }
@@ -1723,7 +1723,8 @@ void pp_remainder(struct pretty_print_context *pp,
 		if (indent)
 			pp_handle_indent(pp, sb, indent, line, linelen);
 		else if (pp->expand_tabs_in_log)
-			strbuf_add_tabexpand(sb, line, linelen);
+			strbuf_add_tabexpand(sb, pp->expand_tabs_in_log,
+					     line, linelen);
 		else
 			strbuf_add(sb, line, linelen);
 		strbuf_addch(sb, '\n');
