@@ -38,7 +38,7 @@ proc tools_create_item {parent args} {
 }
 
 proc tools_populate_one {fullname} {
-	global tools_menubar tools_menutbl tools_id
+	global tools_menubar tools_menutbl tools_id repo_config
 
 	if {![info exists tools_id]} {
 		set tools_id 0
@@ -61,9 +61,19 @@ proc tools_populate_one {fullname} {
 		}
 	}
 
-	tools_create_item $parent command \
+	if {[info exists repo_config(guitool.$fullname.accelerator)] && [info exists repo_config(guitool.$fullname.accelerator-label)]} {
+		set accele_key $repo_config(guitool.$fullname.accelerator)
+		set accel_label $repo_config(guitool.$fullname.accelerator-label)
+		tools_create_item $parent command \
 		-label [lindex $names end] \
-		-command [list tools_exec $fullname]
+		-command [list tools_exec $fullname] \
+		-accelerator $accel_label
+		bind . $accele_key [list tools_exec $fullname]
+	} else {
+		tools_create_item $parent command \
+			-label [lindex $names end] \
+			-command [list tools_exec $fullname]
+	}
 }
 
 proc tools_exec {fullname} {
