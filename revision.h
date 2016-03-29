@@ -133,7 +133,6 @@ struct rev_info {
 			show_notes_given:1,
 			show_signature:1,
 			pretty_given:1,
-			expand_tabs_in_log:1,
 			abbrev_commit:1,
 			abbrev_commit_given:1,
 			zero_commit:1,
@@ -149,6 +148,8 @@ struct rev_info {
 			linear:1;
 
 	struct date_mode date_mode;
+	int		expand_tabs_in_log; /* unset if negative */
+	int		expand_tabs_in_log_default;
 
 	unsigned int	abbrev;
 	enum cmit_fmt	commit_format;

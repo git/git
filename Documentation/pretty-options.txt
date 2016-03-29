@@ -43,9 +43,15 @@ people using 80-column terminals.
 	commit may be copied to the output.
 
 --expand-tabs::
+--no-expand-tabs::
 	Perform a tab expansion (replace each tab with enough spaces
 	to fill to the next display column that is multiple of 8)
 	in the log message before showing it in the output.
++
+By default, tabs are expanded in pretty formats that indent the log
+message by 4 spaces (i.e.  'medium', which is the default, 'full',
+and 'fuller').  `--no-expand-tabs` option can be used to disable
+this.
 
 ifndef::git-rev-list[]
 --notes[=<ref>]::
