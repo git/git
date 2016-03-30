@@ -63,6 +63,10 @@ test_expect_success 'setup a submodule tree' '
 	 git submodule add ../none none &&
 	 test_tick &&
 	 git commit -m "none"
+	) &&
+	git clone . recursivesuper &&
+	( cd recursivesuper
+	 git submodule add ../super super
 	)
 '
 
@@ -93,6 +97,35 @@ test_expect_success 'submodule update from subdirectory' '
 	 cd ../submodule &&
 	 ! compare_head
 	)
+'
+
+supersha1=$(git -C super rev-parse HEAD)
+mergingsha1=$(git -C super/merging rev-parse HEAD)
+nonesha1=$(git -C super/none rev-parse HEAD)
+rebasingsha1=$(git -C super/rebasing rev-parse HEAD)
+submodulesha1=$(git -C super/submodule rev-parse HEAD)
+pwd=$(pwd)
+
+cat <<EOF >expect
+Submodule path '../super': checked out '$supersha1'
+Submodule 'merging' ($pwd/merging) registered for path '../super/merging'
+Submodule 'none' ($pwd/none) registered for path '../super/none'
+Submodule 'rebasing' ($pwd/rebasing) registered for path '../super/rebasing'
+Submodule 'submodule' ($pwd/submodule) registered for path '../super/submodule'
+Submodule path '../super/merging': checked out '$mergingsha1'
+Submodule path '../super/none': checked out '$nonesha1'
+Submodule path '../super/rebasing': checked out '$rebasingsha1'
+Submodule path '../super/submodule': checked out '$submodulesha1'
+EOF
+
+test_expect_success 'submodule update --init --recursive from subdirectory' '
+	git -C recursivesuper/super reset --hard HEAD^ &&
+	(cd recursivesuper &&
+	 mkdir tmp &&
+	 cd tmp &&
+	 git submodule update --init --recursive ../super >../../actual
+	) &&
+	test_cmp expect actual
 '
 
 apos="'";
