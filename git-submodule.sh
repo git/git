@@ -413,8 +413,8 @@ cmd_foreach()
 		die_if_unmatched "$mode"
 		if test -e "$sm_path"/.git
 		then
-			displaypath=$(relative_path "$sm_path")
-			say "$(eval_gettext "Entering '\$prefix\$displaypath'")"
+			displaypath=$(relative_path "$prefix$sm_path")
+			say "$(eval_gettext "Entering '\$displaypath'")"
 			name=$(git submodule--helper name "$sm_path")
 			(
 				prefix="$prefix$sm_path/"
@@ -434,7 +434,7 @@ cmd_foreach()
 					cmd_foreach "--recursive" "$@"
 				fi
 			) <&3 3<&- ||
-			die "$(eval_gettext "Stopping at '\$prefix\$displaypath'; script returned non-zero status.")"
+			die "$(eval_gettext "Stopping at '\$displaypath'; script returned non-zero status.")"
 		fi
 	done
 }
