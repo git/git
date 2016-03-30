@@ -277,6 +277,27 @@ test_expect_success 'ensure "status --cached --recursive" preserves the --cached
 	test_cmp expect actual
 '
 
+nested2sha1=$(git -C clone3/nested1/nested2 rev-parse HEAD)
+
+cat > expect <<EOF
+ $nested1sha1 ../nested1 (heads/master)
++$nested2sha1 ../nested1/nested2 (file2)
+ $nested3sha1 ../nested1/nested2/nested3 (heads/master)
+ $submodulesha1 ../nested1/nested2/nested3/submodule (heads/master)
+ $sub1sha1 ../sub1 ($sub1sha1_short)
+ $sub2sha1 ../sub2 ($sub2sha1_short)
+ $sub3sha1 ../sub3 (heads/master)
+EOF
+
+test_expect_success 'test "status --recursive" from sub directory' '
+	(
+		cd clone3 &&
+		mkdir tmp && cd tmp &&
+		git submodule status --recursive > ../../actual
+	) &&
+	test_cmp expect actual
+'
+
 test_expect_success 'use "git clone --recursive" to checkout all submodules' '
 	git clone --recursive super clone4 &&
 	(
