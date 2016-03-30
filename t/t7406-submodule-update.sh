@@ -379,6 +379,26 @@ test_expect_success 'submodule update - command in .git/config catches failure -
 	test_cmp actual expect
 '
 
+cat << EOF >expect
+Execution of 'false $submodulesha1' failed in submodule path '../super/submodule'
+Failed to recurse into submodule path '../super'
+EOF
+
+test_expect_success 'recursive submodule update - command in .git/config catches failure -- subdirectory' '
+	(cd recursivesuper &&
+	 git submodule update --remote super &&
+	 git add super &&
+	 git commit -m "update to latest to have more than one commit in submodules"
+	) &&
+	git -C recursivesuper/super config submodule.submodule.update "!false" &&
+	git -C recursivesuper/super/submodule reset --hard $submodulesha1^ &&
+	(cd recursivesuper &&
+	 mkdir -p tmp && cd tmp &&
+	 test_must_fail git submodule update --recursive ../super 2>../../actual
+	) &&
+	test_cmp actual expect
+'
+
 test_expect_success 'submodule init does not copy command into .git/config' '
 	(cd super &&
 	 H=$(git ls-files -s submodule | cut -d" " -f2) &&
