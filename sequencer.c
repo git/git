@@ -112,6 +112,8 @@ static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
 static GIT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
 static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
 static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
+static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
+static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
 
 /* We will introduce the 'interactive rebase' mode later */
 static inline int is_rebase_i(const struct replay_opts *opts)
@@ -1408,6 +1410,26 @@ static int read_populate_opts(struct replay_opts *opts)
 
 		if (file_exists(rebase_path_verbose()))
 			opts->verbose = 1;
+
+		if (read_oneliner(&buf, rebase_path_strategy(), 0)) {
+			opts->strategy =
+				sequencer_entrust(opts,
+						  strbuf_detach(&buf, NULL));
+			if (read_oneliner(&buf,
+					  rebase_path_strategy_opts(), 0)) {
+				int i;
+				opts->xopts_nr = split_cmdline(buf.buf,
+					&opts->xopts);
+				for (i = 0; i < opts->xopts_nr; i++)
+					skip_prefix(opts->xopts[i], "--",
+						    &opts->xopts[i]);
+				if (opts->xopts_nr)
+					sequencer_entrust(opts,
+						strbuf_detach(&buf, NULL));
+				else
+					strbuf_release(&buf);
+			}
+		}
 
 		return 0;
 	}
