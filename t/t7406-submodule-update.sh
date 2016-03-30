@@ -344,16 +344,39 @@ test_expect_success 'submodule update - command in .git/config' '
 	)
 '
 
+cat << EOF >expect
+Execution of 'false $submodulesha1' failed in submodule path 'submodule'
+EOF
+
 test_expect_success 'submodule update - command in .git/config catches failure' '
 	(cd super &&
 	 git config submodule.submodule.update "!false"
 	) &&
 	(cd super/submodule &&
-	  git reset --hard HEAD^
+	  git reset --hard $submodulesha1^
 	) &&
 	(cd super &&
-	 test_must_fail git submodule update submodule
-	)
+	 test_must_fail git submodule update submodule 2>../actual
+	) &&
+	test_cmp actual expect
+'
+
+cat << EOF >expect
+Execution of 'false $submodulesha1' failed in submodule path '../submodule'
+EOF
+
+test_expect_success 'submodule update - command in .git/config catches failure -- subdirectory' '
+	(cd super &&
+	 git config submodule.submodule.update "!false"
+	) &&
+	(cd super/submodule &&
+	  git reset --hard $submodulesha1^
+	) &&
+	(cd super &&
+	 mkdir tmp && cd tmp &&
+	 test_must_fail git submodule update ../submodule 2>../../actual
+	) &&
+	test_cmp actual expect
 '
 
 test_expect_success 'submodule init does not copy command into .git/config' '
