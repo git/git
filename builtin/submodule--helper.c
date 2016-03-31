@@ -194,6 +194,9 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, module_clone_options,
 			     git_submodule_helper_usage, 0);
 
+	if (!path || !*path)
+		die(_("submodule--helper: unspecified or empty --path"));
+
 	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
 	sm_gitdir = strbuf_detach(&sb, NULL);
 
@@ -215,10 +218,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	if (safe_create_leading_directories_const(path) < 0)
 		die(_("could not create directory '%s'"), path);
 
-	if (path && *path)
-		strbuf_addf(&sb, "%s/.git", path);
-	else
-		strbuf_addstr(&sb, ".git");
+	strbuf_addf(&sb, "%s/.git", path);
 
 	if (safe_create_leading_directories_const(sb.buf) < 0)
 		die(_("could not create leading directories of '%s'"), sb.buf);
