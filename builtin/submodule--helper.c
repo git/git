@@ -157,8 +157,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	const char *reference = NULL, *depth = NULL;
 	int quiet = 0;
 	FILE *submodule_dot_git;
-	char *sm_gitdir_rel, *p, *path = NULL;
-	const char *sm_gitdir;
+	char *p, *path = NULL, *sm_gitdir;
 	struct strbuf rel_path = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
 
@@ -199,8 +198,8 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		die(_("submodule--helper: unspecified or empty --path"));
 
 	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
-	sm_gitdir_rel = strbuf_detach(&sb, NULL);
-	sm_gitdir = absolute_path(sm_gitdir_rel);
+	sm_gitdir = xstrdup(absolute_path(sb.buf));
+	strbuf_reset(&sb);
 
 	if (!is_absolute_path(path)) {
 		strbuf_addf(&sb, "%s/%s", get_git_work_tree(), path);
@@ -245,7 +244,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			       relative_path(path, sm_gitdir, &rel_path));
 	strbuf_release(&sb);
 	strbuf_release(&rel_path);
-	free(sm_gitdir_rel);
+	free(sm_gitdir);
 	free(path);
 	free(p);
 	return 0;
