@@ -818,7 +818,7 @@ test_expect_success 'submodule add --name allows to replace a submodule with ano
 	)
 '
 
-test_expect_failure 'recursive relative submodules stay relative' '
+test_expect_success 'recursive relative submodules stay relative' '
 	test_when_finished "rm -rf super clone2 subsub sub3" &&
 	mkdir subsub &&
 	(

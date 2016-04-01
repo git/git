@@ -153,11 +153,12 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 
 static int module_clone(int argc, const char **argv, const char *prefix)
 {
-	const char *path = NULL, *name = NULL, *url = NULL;
+	const char *name = NULL, *url = NULL;
 	const char *reference = NULL, *depth = NULL;
 	int quiet = 0;
 	FILE *submodule_dot_git;
-	char *sm_gitdir, *cwd, *p;
+	char *sm_gitdir_rel, *p, *path = NULL;
+	const char *sm_gitdir;
 	struct strbuf rel_path = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
 
@@ -198,7 +199,14 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		die(_("submodule--helper: unspecified or empty --path"));
 
 	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
-	sm_gitdir = strbuf_detach(&sb, NULL);
+	sm_gitdir_rel = strbuf_detach(&sb, NULL);
+	sm_gitdir = absolute_path(sm_gitdir_rel);
+
+	if (!is_absolute_path(path)) {
+		strbuf_addf(&sb, "%s/%s", get_git_work_tree(), path);
+		path = strbuf_detach(&sb, NULL);
+	} else
+		path = xstrdup(path);
 
 	if (!file_exists(sm_gitdir)) {
 		if (safe_create_leading_directories_const(sm_gitdir) < 0)
@@ -229,24 +237,16 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	strbuf_reset(&sb);
 	strbuf_reset(&rel_path);
 
-	cwd = xgetcwd();
 	/* Redirect the worktree of the submodule in the superproject's config */
-	if (!is_absolute_path(sm_gitdir)) {
-		strbuf_addf(&sb, "%s/%s", cwd, sm_gitdir);
-		free(sm_gitdir);
-		sm_gitdir = strbuf_detach(&sb, NULL);
-	}
-
-	strbuf_addf(&sb, "%s/%s", cwd, path);
 	p = git_pathdup_submodule(path, "config");
 	if (!p)
 		die(_("could not get submodule directory for '%s'"), path);
 	git_config_set_in_file(p, "core.worktree",
-			       relative_path(sb.buf, sm_gitdir, &rel_path));
+			       relative_path(path, sm_gitdir, &rel_path));
 	strbuf_release(&sb);
 	strbuf_release(&rel_path);
-	free(sm_gitdir);
-	free(cwd);
+	free(sm_gitdir_rel);
+	free(path);
 	free(p);
 	return 0;
 }
