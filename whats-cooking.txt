@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2016, #05; Fri, 25)
-X-master-at: 56331f8727b0c2e7dc713b728eaf1e5843422cb7
-X-next-at: c3ac548d2fb4b8da98e72b99d0acbff724a0e004
+Subject: What's cooking in git.git (Apr 2016, #01; Fri, 1)
+X-master-at: 90f7b16b3adc78d4bbabbd426fb69aa78c714f71
+X-next-at: 9d4de1f0cb995171390ad99185bae1b0cbc1de70
 
-What's cooking in git.git (Mar 2016, #05; Fri, 25)
+What's cooking in git.git (Apr 2016, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Three more minor fix-up topics are to be merged by 2.8 final, but we
-are almost there.
+There are quite a few topics that have been cooking in 'next' during
+the pre-2.8 freeze period that are ready to be merged to 'master';
+the first batch will be merged early next week, and then the tip of
+'next' will be rebuilt on top sometime mid next week.  Let's start
+looking at new shiny toys after all that happens.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,109 +26,179 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ak/use-hashmap-iter-first-in-submodule-config (2016-03-23) 1 commit
- - submodule-config: use hashmap_iter_first()
+* jn/mergetools-examdiff (2016-03-28) 2 commits
+ - mergetools: add support for ExamDiff
+ - mergetools: create mergetool_find_win32_cmd() helper function for winmerge
 
- Minor code cleanup.
+ "git mergetools" learned to drive ExamDiff.
 
- Will merge to 'next'.
-
-
-* ky/branch-d-worktree (2016-03-25) 1 commit
- - branch -d: refuse deleting a branch which is currently checked out
-
- When "git worktree" feature is in use, "git branch -d" allowed
- deletion of a branch that is checked out in another worktree
-
- Will merge to 'next'.
+ Waiting for an Ack by the area expert.
 
 
-* ky/branch-m-worktree (2016-03-25) 4 commits
- - branch -m: update all per-worktree HEADs
- - refs: add create_symref_common_dir as a variation of create_symref
- - refs: add REF_COMMON_DIR flag
- - refs: add new flag RESOLVE_REF_COMMON_DIR to resolve_ref_unsafe
+* kn/for-each-tag-branch (2016-03-30) 1 commit
+ - for-each-ref: fix description of '--contains' in manpage
 
- When "git worktree" feature is in use, "git branch -m" renamed a
- branch that is checked out in another worktree without adjusting
- the HEAD symbolic ref for the worktree.
-
- Needs review.
-
-
-* nd/apply-doc (2016-03-24) 2 commits
- - git-apply.txt: mention the behavior inside a subdir
- - git-apply.txt: remove a space
+ Docfix.
 
  Will merge to 'next'.
 
 
-* nd/apply-report-skip (2016-03-24) 1 commit
- - apply: report patch skipping in verbose mode
+* kn/ref-filter-branch-list (2016-03-30) 16 commits
+ . branch: implement '--format' option
+ . branch: use ref-filter printing APIs
+ . branch, tag: use porcelain output
+ . ref-filter: allow porcelain to translate messages in the output
+ . ref-filter: add support for %(refname:dir) and %(refname:base)
+ . ref-filter: introduce refname_atom_parser()
+ . ref-filter: introduce symref_atom_parser()
+ . ref-filter: make "%(symref)" atom work with the ':short' modifier
+ . ref-filter: add support for %(upstream:track,nobracket)
+ . ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
+ . ref-filter: introduce format_ref_array_item()
+ . ref-filter: move get_head_description() from branch.c
+ . ref-filter: modify "%(objectname:short)" to take length
+ . ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
+ . ref-filter: include reference to 'used_atom' within 'atom_value'
+ . ref-filter: implement %(if), %(then), and %(else) atoms
 
- "git apply -v" learned to report paths in the patch that were
- skipped via --include/--exclude mechanism or being outside the
- current working directory.
+ The code to list branches in "git branch" has been consolidated
+ with the more generic ref-filter API.
+
+ Will be rerolled.
+
+
+* oa/doc-diff-check (2016-03-29) 1 commit
+ - Documentation: git diff --check detects conflict markers
+
+ Docfix.
 
  Will merge to 'next'.
 
 
-* pb/opt-cmdmode-doc (2016-03-25) 1 commit
- - api-parse-options.txt: document OPT_CMDMODE()
+* rz/worktree-no-checkout (2016-03-29) 1 commit
+ - worktree: add: introduce --checkout option
 
- Minor API documentation update.
+ "git worktree add" can be given "--no-checkout" option to only
+ create an empty worktree without checking out the files.
 
-
-* rt/completion-help (2016-03-24) 2 commits
- - completion: add 'revisions' and 'everyday' to 'git help'
- - completion: add option '--guides' to 'git help'
-
- Shell completion (in contrib/) updates.
+ Will merge to 'next'.
 
 
-* rt/rebase-i-shorten-stop-report (2016-03-24) 1 commit
- - rebase-i: print abbreviated hash when stop for editing
+* sb/misc-cleanups (2016-04-01) 4 commits
+ - credential-cache, send_request: close fd when done
+ - bundle: don't leak an fd in case of early return
+ - abbrev_sha1_in_line: don't leak memory
+ - notes: don't leak memory in git_config_get_notes_strategy
 
- The commit object name reported when "rebase -i" stops has been
- shortened.
+ Assorted minor clean-ups.
 
- Needs a better explanation.
-
-
-* sb/submodule-helper-prefix (2016-03-25) 5 commits
- - submodule--helper clone: lose the extra prefix option
- - submodule sync: test syncing one submodule
- - submodule update: add test for recursive from non root dir
- - submodule--helper list: lose the extra prefix option
- - submodule: prepare recursive path from non root directory
-
---------------------------------------------------
-[Graduated to "master"]
-
-* js/mingw-tests-2.8 (2016-03-23) 4 commits
-  (merged to 'next' on 2016-03-23 at aeec80e)
- + mingw: skip some tests in t9115 due to file name issues
- + t1300: fix the new --show-origin tests on Windows
- + t1300-repo-config: make it resilient to being run via 'sh -x'
- + config --show-origin: report paths with forward slashes
-
- Last-minute tweaks to test to pass on Windows.
+ Will merge to 'next'.
 
 
-* ls/p4-doc-markup (2016-03-23) 2 commits
-  (merged to 'next' on 2016-03-23 at 94a6275)
- + Documentation: fix git-p4 AsciiDoc formatting
- + Documentation: use ASCII quotation marks in git-p4
+* sb/submodule-helper-clone-regression-fix (2016-04-01) 6 commits
+ - submodule--helper, module_clone: catch fprintf failure
+ - submodule--helper: do not borrow absolute_path() result for too long
+ - submodule--helper, module_clone: always operate on absolute paths
+ - submodule--helper clone: create the submodule path just once
+ - submodule--helper: fix potential NULL-dereference
+ - recursive submodules: test for relative paths
 
- Trivially OK doc cleanup.
+ A partial rewrite of "git submodule" in the 2.7 timeframe changed
+ the way the gitdir: pointer in the submodules point at the real
+ repository location to use absolute paths by accident.  This has
+ been corrected.
+
+ Any further comments?  Otherwise will merge to 'next'.
 
 
-* sb/submodule-module-list-pathspec-fix (2016-03-22) 1 commit
-  (merged to 'next' on 2016-03-23 at 67fe17c)
- + submodule: fix regression for deinit without submodules
+* sb/submodule-path-misc-bugs (2016-03-30) 6 commits
+ - t7407: make expectation as clear as possible
+ - submodule update: test recursive path reporting from subdirectory
+ - submodule update: align reporting path for custom command execution
+ - submodule status: correct path handling in recursive submodules
+ - submodule update --init: correct path handling in recursive submodules
+ - submodule foreach: correct path display in recursive submodules
 
- A fix to a small regression in module_list helper that was
- rewritten in C in 2.7.x timeframe.
+ "git submodule" reports the paths of submodules the command
+ recurses into, but this was incorrect when the command was not run
+ from the root level of the superproject.
+
+ Any further comments?  Otherwise will merge to 'next'.
+
+
+* sg/diff-multiple-identical-renames (2016-03-30) 1 commit
+ - diffcore: fix iteration order of identical files during rename detection
+
+ "git diff -M" used to work better when two originally identical
+ files A and B got renamed to X/A and X/B by pairing A to X/A and B
+ to X/B, but this was broken in 2.0 timeframe.
+
+ Will merge to 'next'.
+
+
+* sk/send-pack-all-fix (2016-03-31) 1 commit
+ - git-send-pack: fix --all option when used with directory
+
+ "git send-pack --all <there>" was broken when its command line
+ option parsing was written in 2.6 timeframe.
+
+ Will merge to 'next'.
+
+
+* ss/msvc (2016-03-30) 2 commits
+ - MSVC: use shipped headers instead of fallback definitions
+ - MSVC: vsnprintf in Visual Studio 2015 doesn't need SNPRINTF_SIZE_CORR any more
+
+ Will merge to 'next'.
+
+
+* xy/format-patch-base (2016-03-31) 4 commits
+ - format-patch: introduce format.base configuration
+ - format-patch: introduce --base=auto option
+ - format-patch: add '--base' option to record base tree info
+ - patch-ids: make commit_patch_id() a public helper function
+
+ "git format-patch" learned a new "--base" option to record what
+ (public, well-known) commit the original series was built on in
+ its output.
+
+ Will be rerolled.
+ ($gmane/290365)
+
+
+* da/user-useconfigonly (2016-04-01) 2 commits
+ - ident: give "please tell me" message upon useConfigOnly error
+ - ident: check for useConfigOnly before auto-detection of name/email
+
+ The "user.useConfigOnly" configuration variable makes it an error
+ if users do not explicitly set user.name and user.email.  However,
+ its check was not done early enough and allowed another error to
+ trigger, reporting that the default value we guessed from the
+ system setting was unusable.  This was a suboptimal end-user
+ experience as we want the users to set user.name/user.email without
+ relying on the auto-detection at all.
+
+ Waiting for Acks.
+ ($gmane/290340)
+
+
+* tb/safe-crlf-output-fix (2016-04-01) 7 commits
+ - convert.c: more safer crlf handling with text attribute
+ - correct blame for files commited with CRLF
+ - convert: unify the "auto" handling of CRLF
+ - t0027: test cases for combined attributes
+ - convert: allow core.autocrlf=input and core.eol=crlf
+ - convert.c: stream and early out
+ - read-cache: factor out get_sha1_from_index() helper
+
+ The "safe CRLF" facility disables line-end conversion from CRLF to
+ LF when checking in if the blob registered to the index already
+ contains CR, but some codepaths like "git blame" did not know this,
+ and instead assumed that only the configuration and attribute
+ settings determined how the data from the working tree is converted.
+
+ Comments sent.
+ ($gmane/290548)
 
 
 --------------------------------------------------
@@ -202,6 +275,75 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ak/use-hashmap-iter-first-in-submodule-config (2016-03-23) 1 commit
+ - submodule-config: use hashmap_iter_first()
+
+ Minor code cleanup.
+
+ Will merge to 'next'.
+
+
+* ky/branch-d-worktree (2016-03-29) 1 commit
+ - branch -d: refuse deleting a branch which is currently checked out
+
+ When "git worktree" feature is in use, "git branch -d" allowed
+ deletion of a branch that is checked out in another worktree
+
+ Will merge to 'next'.
+
+
+* ky/branch-m-worktree (2016-03-28) 2 commits
+ - branch -m: update all per-worktree HEADs
+ - refs: add a new function set_worktree_head_symref
+
+ When "git worktree" feature is in use, "git branch -m" renamed a
+ branch that is checked out in another worktree without adjusting
+ the HEAD symbolic ref for the worktree.
+
+ Needs review by "refs" area experts.
+
+
+* nd/apply-doc (2016-03-24) 2 commits
+ - git-apply.txt: mention the behavior inside a subdir
+ - git-apply.txt: remove a space
+
+ Will merge to 'next'.
+
+
+* nd/apply-report-skip (2016-03-24) 1 commit
+ - apply: report patch skipping in verbose mode
+
+ "git apply -v" learned to report paths in the patch that were
+ skipped via --include/--exclude mechanism or being outside the
+ current working directory.
+
+ Will merge to 'next'.
+
+
+* pb/opt-cmdmode-doc (2016-03-25) 1 commit
+ - api-parse-options.txt: document OPT_CMDMODE()
+
+ Minor API documentation update.
+
+
+* rt/completion-help (2016-03-24) 2 commits
+ - completion: add 'revisions' and 'everyday' to 'git help'
+ - completion: add option '--guides' to 'git help'
+
+ Shell completion (in contrib/) updates.
+
+ Will merge to 'next'.
+
+
+* rt/rebase-i-shorten-stop-report (2016-03-28) 1 commit
+ - rebase-i: print an abbreviated hash when stop for editing
+
+ The commit object name reported when "rebase -i" stops has been
+ shortened.
+
+ Will merge to 'next'.
+
+
 * jk/check-repository-format (2016-03-11) 10 commits
  - verify_repository_format: mark messages for translation
  - setup: drop repository_format_version global
@@ -219,8 +361,15 @@ of the repositories listed at
  do not attempt to look into refs/* when we know we do not have a
  Git repository.
 
+ Will merge to 'next'.
 
-* mj/pull-rebase-autostash (2016-03-21) 2 commits
+
+* mj/pull-rebase-autostash (2016-03-29) 7 commits
+ - t5520: test --[no-]autostash with pull.rebase=true
+ - t5520: modify tests to reduce common code
+ - t5520: use test_i18ngrep instead of test_cmp
+ - t5520: explicitly unset rebase.autostash
+ - t5520: use consistent capitalization in test titles
   (merged to 'next' on 2016-03-23 at ebf1afa)
  + pull --rebase: add --[no-]autostash flag
  + git-pull.c: introduce git_pull_config()
@@ -229,7 +378,7 @@ of the repositories listed at
  the rebase.autostash configuration variable set to true can be
  overridden from the command line.
 
- Will merge to 'master' after 2.8 final.
+ Will merge to 'next'.
 
 
 * pb/commit-verbose-config (2016-03-14) 1 commit
@@ -237,8 +386,10 @@ of the repositories listed at
  (this branch uses pb/t7502-drop-dup.)
 
  "git commit" learned to pay attention to "commit.verbose"
- configuration variable and act as if "--verbose" option was given
- from the command line.
+ configuration variable and act as if "--verbose" option was
+ given from the command line.
+
+ Will merge to 'next'.
 
 
 * pb/t7502-drop-dup (2016-03-11) 1 commit
@@ -285,11 +436,6 @@ of the repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* jc/rerere-multi-wip (2016-03-21) 1 commit
- . WIP forget
- (this branch uses jc/rerere-multi.)
-
-
 * jk/credential-cache-comment-exit (2016-03-18) 1 commit
   (merged to 'next' on 2016-03-23 at d2b8cc7)
  + credential-cache--daemon: clarify "exit" action semantics
@@ -311,15 +457,12 @@ of the repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* lt/pretty-expand-tabs (2016-03-23) 5 commits
- - pretty-print: teach "--no-expand-tabs" option to "git log"
- - pretty-print: limit expand-tabs to selected --pretty formats
- - pretty-print: further abstract out pp_handle_indent()
- - pretty-print: simplify the interaction between pp_handle_indent() and its caller
- - pretty-print: de-tabify indented logs to make things line up properly
+* lt/pretty-expand-tabs (2016-03-30) 3 commits
+ - pretty: allow tweaking tabwidth in --expand-tabs
+ - pretty: enable --expand-tabs by default for selected pretty formats
+ - pretty: expand tabs in indented logs to make things line up properly
 
- May need a UI rework.
- Needs reordering.
+ Needs tests.
 
 
 * sb/clone-shallow-passthru (2016-03-23) 3 commits
@@ -352,14 +495,16 @@ of the repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* cc/apply (2016-03-22) 2 commits
+* cc/apply (2016-04-01) 4 commits
+ - builtin/apply: free patch when parse_chunk() fails
+ - builtin/apply: handle parse_binary() failure
   (merged to 'next' on 2016-03-24 at 70623f2)
  + apply: remove unused call to free() in gitdiff_{old,new}name()
  + builtin/apply: get rid of useless 'name' variable
 
  Code clean-up.
 
- Will merge to 'master' after 2.8 final.
+ Will merge to 'next'.
 
 
 * dt/index-helper (2016-03-23) 18 commits
@@ -496,7 +641,8 @@ of the repositories listed at
  Will merge to 'master' after 2.8 final.
 
 
-* mm/readme-markdown (2016-02-27) 1 commit
+* mm/readme-markdown (2016-04-01) 2 commits
+ - git.spec: use README.md, not README
   (merged to 'next' on 2016-03-01 at 81f3858)
  + README.md: don't take 'commandname' literally
 
@@ -504,7 +650,7 @@ of the repositories listed at
  for the sign on the front door to welcome new acquaintances to Git
  by toning down inside jokes and making it into MarkDown.
 
- Will merge to 'master' after 2.8 final.
+ Will merge to 'next'.
 
 
 * gf/fetch-pack-direct-object-fetch (2016-03-05) 2 commits
@@ -711,8 +857,8 @@ of the repositories listed at
 
 
 * sb/submodule-init (2016-03-15) 2 commits
- - submodule: port init from shell to C
- - submodule: port resolve_relative_url from shell to C
+ . submodule: port init from shell to C
+ . submodule: port resolve_relative_url from shell to C
  (this branch uses sb/submodule-parallel-update; is tangled with sb/clone-shallow-passthru.)
 
  Update of "git submodule" to move pieces of logic to C continues.
@@ -839,7 +985,8 @@ of the repositories listed at
  ($gmane/275680).
 
 
-* jc/rerere-multi (2016-03-15) 10 commits
+* jc/rerere-multi (2016-03-28) 11 commits
+ - rerere: adjust 'forget' to multi-variant world order
  - rerere: split code to call ll_merge() further
  - rerere: move code related to "forget" together
  - rerere: gc and clear
@@ -850,13 +997,12 @@ of the repositories listed at
  - rerere: handle leftover rr-cache/$ID directory and postimage files
  - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
  - rerere: split conflict ID further
- (this branch is used by jc/rerere-multi-wip.)
 
  "git rerere" can encounter two or more files with the same conflict
  signature that have to be resolved in different ways, but there was
  no way to record these separate resolutions.
 
- May need further work on forget.
+ Need to send out the final round of review as this should be now complete.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
