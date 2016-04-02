@@ -317,15 +317,13 @@ test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
 '
 
 test_expect_success 'pull --autostash (without --rebase) should error out' '
-	test_must_fail git pull --autostash . copy 2>actual &&
-	echo "fatal: --[no-]autostash option is only valid with --rebase." >expect &&
-	test_i18ncmp actual expect
+	test_must_fail git pull --autostash . copy 2>err &&
+	test_i18ngrep "only valid with --rebase" err
 '
 
 test_expect_success 'pull --no-autostash (without --rebase) should error out' '
-	test_must_fail git pull --no-autostash . copy 2>actual &&
-	echo "fatal: --[no-]autostash option is only valid with --rebase." >expect &&
-	test_i18ncmp actual expect
+	test_must_fail git pull --no-autostash . copy 2>err &&
+	test_i18ngrep "only valid with --rebase" err
 '
 
 test_expect_success 'pull.rebase' '
