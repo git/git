@@ -19,6 +19,14 @@ test_pull_autostash () {
 	test "$(cat file)" = "modified again"
 }
 
+test_pull_autostash_fail () {
+	git reset --hard before-rebase &&
+	echo dirty >new_file &&
+	git add new_file &&
+	test_must_fail git pull "$@" . copy 2>err &&
+	test_i18ngrep "uncommitted changes." err
+}
+
 test_expect_success setup '
 	echo file >file &&
 	git add file &&
@@ -277,29 +285,17 @@ test_expect_success 'pull --rebase --autostash & rebase.autostash unset' '
 
 test_expect_success 'pull --rebase --no-autostash & rebase.autostash=true' '
 	test_config rebase.autostash true &&
-	git reset --hard before-rebase &&
-	echo dirty >new_file &&
-	git add new_file &&
-	test_must_fail git pull --rebase --no-autostash . copy 2>err &&
-	test_i18ngrep "Cannot pull with rebase: Your index contains uncommitted changes." err
+	test_pull_autostash_fail --rebase --no-autostash
 '
 
 test_expect_success 'pull --rebase --no-autostash & rebase.autostash=false' '
 	test_config rebase.autostash false &&
-	git reset --hard before-rebase &&
-	echo dirty >new_file &&
-	git add new_file &&
-	test_must_fail git pull --rebase --no-autostash . copy 2>err &&
-	test_i18ngrep "Cannot pull with rebase: Your index contains uncommitted changes." err
+	test_pull_autostash_fail --rebase --no-autostash
 '
 
 test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
 	test_unconfig rebase.autostash &&
-	git reset --hard before-rebase &&
-	echo dirty >new_file &&
-	git add new_file &&
-	test_must_fail git pull --rebase --no-autostash . copy 2>err &&
-	test_i18ngrep "Cannot pull with rebase: Your index contains uncommitted changes." err
+	test_pull_autostash_fail --rebase --no-autostash
 '
 
 test_expect_success 'pull --autostash (without --rebase) should error out' '
