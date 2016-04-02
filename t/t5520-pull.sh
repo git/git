@@ -314,6 +314,16 @@ test_expect_success 'pull.rebase' '
 	test new = "$(git show HEAD:file2)"
 '
 
+test_expect_success 'pull --autostash & pull.rebase=true' '
+	test_config pull.rebase true &&
+	test_pull_autostash --autostash
+'
+
+test_expect_success 'pull --no-autostash & pull.rebase=true' '
+	test_config pull.rebase true &&
+	test_pull_autostash_fail --no-autostash
+'
+
 test_expect_success 'branch.to-rebase.rebase' '
 	git reset --hard before-rebase &&
 	test_config branch.to-rebase.rebase true &&
