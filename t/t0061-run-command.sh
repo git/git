@@ -210,4 +210,10 @@ test_expect_success MINGW 'verify curlies are quoted properly' '
 	test_cmp expect actual
 '
 
+test_expect_success MINGW 'can spawn with argv[0] containing spaces' '
+	cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" ./ &&
+	test_must_fail "$PWD/test-fake-ssh$X" 2>err &&
+	grep TRASH_DIRECTORY err
+'
+
 test_done
