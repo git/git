@@ -267,7 +267,7 @@ test_expect_success 'pull --rebase --autostash & rebase.autostash=true' '
 	test "$(cat file)" = "modified again"
 '
 
-test_expect_success 'pull --rebase --autostash & rebase.autoStash=false' '
+test_expect_success 'pull --rebase --autostash & rebase.autostash=false' '
 	test_config rebase.autostash false &&
 	git reset --hard before-rebase &&
 	echo dirty >new_file &&
@@ -278,7 +278,7 @@ test_expect_success 'pull --rebase --autostash & rebase.autoStash=false' '
 	test "$(cat file)" = "modified again"
 '
 
-test_expect_success 'pull --rebase: --autostash & rebase.autoStash unset' '
+test_expect_success 'pull --rebase: --autostash & rebase.autostash unset' '
 	git reset --hard before-rebase &&
 	echo dirty >new_file &&
 	git add new_file &&
