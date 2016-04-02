@@ -279,6 +279,7 @@ test_expect_success 'pull --rebase --autostash & rebase.autostash=false' '
 '
 
 test_expect_success 'pull --rebase: --autostash & rebase.autostash unset' '
+	test_unconfig rebase.autostash &&
 	git reset --hard before-rebase &&
 	echo dirty >new_file &&
 	git add new_file &&
@@ -307,6 +308,7 @@ test_expect_success 'pull --rebase --no-autostash & rebase.autostash=false' '
 '
 
 test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
+	test_unconfig rebase.autostash &&
 	git reset --hard before-rebase &&
 	echo dirty >new_file &&
 	git add new_file &&
