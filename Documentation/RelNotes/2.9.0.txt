@@ -1,0 +1,84 @@
+Git 2.9 Release Notes
+=====================
+
+Backward compatibility note
+---------------------------
+
+The end-user facing Porcelain level commands in the "git diff" and
+"git log" by default enables the rename detection; you can still use
+"diff.renames" configuration variable to disable this.
+
+
+Updates since v2.8
+------------------
+
+UI, Workflows & Features
+
+ * The end-user facing Porcelain level commands like "diff" and "log"
+   now enables the rename detection by default.
+
+ * The credential.helper configuration variable is cumulative and
+   there is no good way to override it from the command line.  As
+   a special case, giving an empty string as its value now serves
+   as the signal to clear the values specified in various files.
+
+ * A new "interactive.diffFilter" configuration can be used to
+   customize the diff shown in "git add -i" session.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The embedded args argv-array in the child process is used to build
+   the command line to run pack-objects instead of using a separate
+   array of strings.
+   (merge 65a3629 mp/upload-pack-use-embedded-args later to maint).
+
+ * A test for tags has been restructured so that more parts of it can
+   easily be run on a platform without a working GnuPG.
+   (merge 618310a es/test-gpg-tags later to maint).
+
+ * The startup_info data, which records if we are working inside a
+   repository (among other things), are now uniformly available to Git
+   subcommand implementations, and Git avoids attempting to touch
+   references when we are not in a repository.
+   (merge 11e6b3f jk/startup-info later to maint).
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.8
+----------------
+
+Unless otherwise noted, all the fixes since v2.8 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * "git config --get-urlmatch", unlike other variants of the "git
+   config --get" family, did not signal error with its exit status
+   when there was no matching configuration.
+   (merge 24990b2 jk/config-get-urlmatch later to maint).
+
+ * The "--local-env-vars" and "--resolve-git-dir" options of "git
+   rev-parse" failed to work outside a repository when the command's
+   option parsing was rewritten in 1.8.5 era.
+   (merge fc7d47f jk/rev-parse-local-env-vars later to maint).
+
+ * "git index-pack --keep[=<msg>] pack-$name.pack" simply did not work.
+   (merge 0e94242 jc/maint-index-pack-keep later to maint).
+
+ * Fetching of history by naming a commit object name directly didn't
+   work across remote-curl transport.
+   (merge 754ecb1 gf/fetch-pack-direct-object-fetch later to maint).
+
+ * A small memory leak in an error codepath has been plugged in xdiff
+   code.
+   (merge 87f1625 rj/xdiff-prepare-plug-leak-on-error-codepath later to maint).
+
+ * strbuf_getwholeline() did not NUL-terminate the buffer on certain
+   corner cases in its error codepath.
+   (merge b709043 jk/getwholeline-getdelim-empty later to maint).
+
+ * Other minor clean-ups and documentation updates
+   (merge aed7480 mm/lockfile-error-message later to maint).
+   (merge bfee614 jc/index-pack later to maint).
