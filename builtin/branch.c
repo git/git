@@ -393,22 +393,25 @@ static void format_and_print_ref_item(struct ref_array_item *item, int maxwidth,
 	int current = 0;
 	int color;
 	struct strbuf out = STRBUF_INIT, name = STRBUF_INIT;
-	const char *prefix = "";
+	const char *prefix_to_show = "";
+	const char *prefix_to_skip = NULL;
 	const char *desc = item->refname;
 	char *to_free = NULL;
 
 	switch (item->kind) {
 	case FILTER_REFS_BRANCHES:
-		skip_prefix(desc, "refs/heads/", &desc);
+		prefix_to_skip = "refs/heads/";
+		skip_prefix(desc, prefix_to_skip, &desc);
 		if (!filter->detached && !strcmp(desc, head))
 			current = 1;
 		else
 			color = BRANCH_COLOR_LOCAL;
 		break;
 	case FILTER_REFS_REMOTES:
-		skip_prefix(desc, "refs/remotes/", &desc);
+		prefix_to_skip = "refs/remotes/";
+		skip_prefix(desc, prefix_to_skip, &desc);
 		color = BRANCH_COLOR_REMOTE;
-		prefix = remote_prefix;
+		prefix_to_show = remote_prefix;
 		break;
 	case FILTER_REFS_DETACHED_HEAD:
 		desc = to_free = get_head_description();
@@ -425,7 +428,7 @@ static void format_and_print_ref_item(struct ref_array_item *item, int maxwidth,
 		color = BRANCH_COLOR_CURRENT;
 	}
 
-	strbuf_addf(&name, "%s%s", prefix, desc);
+	strbuf_addf(&name, "%s%s", prefix_to_show, desc);
 	if (filter->verbose) {
 		int utf8_compensation = strlen(name.buf) - utf8_strwidth(name.buf);
 		strbuf_addf(&out, "%c %s%-*s%s", c, branch_get_color(color),
@@ -436,8 +439,10 @@ static void format_and_print_ref_item(struct ref_array_item *item, int maxwidth,
 			    name.buf, branch_get_color(BRANCH_COLOR_RESET));
 
 	if (item->symref) {
-		skip_prefix(item->symref, "refs/remotes/", &desc);
-		strbuf_addf(&out, " -> %s", desc);
+		const char *symref = item->symref;
+		if (prefix_to_skip)
+			skip_prefix(symref, prefix_to_skip, &symref);
+		strbuf_addf(&out, " -> %s", symref);
 	}
 	else if (filter->verbose)
 		/* " f7c0c00 [ahead 58, behind 197] vcs-svn: drop obj_pool.h" */
