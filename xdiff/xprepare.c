@@ -301,10 +301,11 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 		xdl_free_ctx(&xe->xdf2);
 		xdl_free_ctx(&xe->xdf1);
+		xdl_free_classifier(&cf);
 		return -1;
 	}
 
-	if (!(xpp->flags & XDF_HISTOGRAM_DIFF))
+	if (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)
 		xdl_free_classifier(&cf);
 
 	return 0;
