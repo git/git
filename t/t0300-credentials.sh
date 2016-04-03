@@ -298,4 +298,15 @@ test_expect_success 'helpers can abort the process' '
 	test_cmp expect stdout
 '
 
+test_expect_success 'empty helper spec resets helper list' '
+	test_config credential.helper "verbatim file file" &&
+	check fill "" "verbatim cmdline cmdline" <<-\EOF
+	--
+	username=cmdline
+	password=cmdline
+	--
+	verbatim: get
+	EOF
+'
+
 test_done
