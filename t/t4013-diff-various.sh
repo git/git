@@ -90,6 +90,8 @@ test_expect_success setup '
 	git commit -m "Rearranged lines in dir/sub" &&
 	git checkout master &&
 
+	git config diff.renames false &&
+
 	git show-branch
 '
 
