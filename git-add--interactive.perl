@@ -45,6 +45,7 @@ my ($diff_new_color) =
 my $normal_color = $repo->get_color("", "reset");
 
 my $diff_algorithm = $repo->config('diff.algorithm');
+my $diff_filter = $repo->config('interactive.difffilter');
 
 my $use_readkey = 0;
 my $use_termcap = 0;
@@ -754,7 +755,14 @@ sub parse_diff {
 	my @diff = run_cmd_pipe("git", @diff_cmd, "--", $path);
 	my @colored = ();
 	if ($diff_use_color) {
-		@colored = run_cmd_pipe("git", @diff_cmd, qw(--color --), $path);
+		my @display_cmd = ("git", @diff_cmd, qw(--color --), $path);
+		if (defined $diff_filter) {
+			# quotemeta is overkill, but sufficient for shell-quoting
+			my $diff = join(' ', map { quotemeta } @display_cmd);
+			@display_cmd = ("$diff | $diff_filter");
+		}
+
+		@colored = run_cmd_pipe(@display_cmd);
 	}
 	my (@hunk) = { TEXT => [], DISPLAY => [], TYPE => 'header' };
 
@@ -765,7 +773,7 @@ sub parse_diff {
 		}
 		push @{$hunk[-1]{TEXT}}, $diff[$i];
 		push @{$hunk[-1]{DISPLAY}},
-			($diff_use_color ? $colored[$i] : $diff[$i]);
+			(@colored ? $colored[$i] : $diff[$i]);
 	}
 	return @hunk;
 }
