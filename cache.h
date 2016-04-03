@@ -1771,7 +1771,7 @@ int split_cmdline(char *cmdline, const char ***argv);
 /* Takes a negative value returned by split_cmdline */
 const char *split_cmdline_strerror(int cmdline_errno);
 
-/* git.c */
+/* setup.c */
 struct startup_info {
 	int have_repository;
 	const char *prefix;
