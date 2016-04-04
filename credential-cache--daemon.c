@@ -126,8 +126,17 @@ static void serve_one_client(FILE *in, FILE *out)
 			fprintf(out, "password=%s\n", e->item.password);
 		}
 	}
-	else if (!strcmp(action.buf, "exit"))
+	else if (!strcmp(action.buf, "exit")) {
+		/*
+		 * It's important that we clean up our socket first, and then
+		 * signal the client only once we have finished the cleanup.
+		 * Calling exit() directly does this, because we clean up in
+		 * our atexit() handler, and then signal the client when our
+		 * process actually ends, which closes the socket and gives
+		 * them EOF.
+		 */
 		exit(0);
+	}
 	else if (!strcmp(action.buf, "erase"))
 		remove_credential(&c);
 	else if (!strcmp(action.buf, "store")) {
