@@ -753,4 +753,14 @@ test_expect_success 'merge detects mod-256 conflicts (resolve)' '
 	test_must_fail git merge -s resolve master
 '
 
+test_expect_success 'merge nothing into void' '
+	git init void &&
+	(
+		cd void &&
+		git remote add up .. &&
+		git fetch up &&
+		test_must_fail git merge FETCH_HEAD
+	)
+'
+
 test_done
