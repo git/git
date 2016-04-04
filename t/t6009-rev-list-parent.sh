@@ -47,7 +47,9 @@ test_expect_success 'setup roots, merges and octopuses' '
 	git checkout -b yetanotherbranch four &&
 	test_commit eight &&
 	git checkout master &&
-	test_merge normalmerge newroot &&
+	test_tick &&
+	git merge --allow-unrelated-histories -m normalmerge newroot &&
+	git tag normalmerge &&
 	test_tick &&
 	git merge -m tripus sidebranch anotherbranch &&
 	git tag tripus &&

@@ -176,7 +176,8 @@ test_expect_success 'up-to-date merge without common ancestor' '
 	test_tick &&
 	(
 		cd repo1 &&
-		git pull ../repo2 master
+		git fetch ../repo2 master &&
+		git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
 

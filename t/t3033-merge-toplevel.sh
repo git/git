@@ -19,6 +19,8 @@ test_expect_success setup '
 	test_commit three &&
 	git checkout right &&
 	test_commit four &&
+	git checkout --orphan five &&
+	test_commit five &&
 	git checkout master
 '
 
@@ -131,6 +133,20 @@ test_expect_success 'merge FETCH_HEAD octopus non-fast-forward' '
 	git rev-parse HEAD^1 HEAD^2 HEAD^3 | sort >actual &&
 	git rev-parse two three four | sort >expect &&
 	test_cmp expect actual
+'
+
+# two-project merge
+test_expect_success 'refuse two-project merge by default' '
+	t3033_reset &&
+	git reset --hard four &&
+	test_must_fail git merge five
+'
+
+test_expect_success 'two-project merge with --allow-unrelated-histories' '
+	t3033_reset &&
+	git reset --hard four &&
+	git merge --allow-unrelated-histories five &&
+	git diff --exit-code five
 '
 
 test_done
