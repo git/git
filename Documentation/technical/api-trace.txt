@@ -28,7 +28,7 @@ static struct trace_key trace_foo = TRACE_KEY_INIT(FOO);
 
 static void trace_print_foo(const char *message)
 {
-	trace_print_key(&trace_foo, message);
+	trace_printf_key(&trace_foo, "%s", message);
 }
 ------------
 +
