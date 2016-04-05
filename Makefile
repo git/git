@@ -2211,10 +2211,10 @@ sparse: $(SP_OBJ)
 check: common-cmds.h
 	@if sparse; \
 	then \
-		echo 2>&1 "Use 'make sparse' instead"; \
+		echo >&2 "Use 'make sparse' instead"; \
 		$(MAKE) --no-print-directory sparse; \
 	else \
-		echo 2>&1 "Did you mean 'make test'?"; \
+		echo >&2 "Did you mean 'make test'?"; \
 		exit 1; \
 	fi
 
