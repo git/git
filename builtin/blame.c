@@ -2275,6 +2275,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	unsigned mode;
 	struct strbuf msg = STRBUF_INIT;
 
+	read_cache();
 	time(&now);
 	commit = alloc_commit_node();
 	commit->object.parsed = 1;
