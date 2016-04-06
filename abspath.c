@@ -167,7 +167,6 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 	strbuf_add(&path, pfx, pfx_len);
 	strbuf_addstr(&path, arg);
 #else
-	char *p;
 	/* don't add prefix to absolute paths, but still replace '\' by '/' */
 	strbuf_reset(&path);
 	if (is_absolute_path(arg))
@@ -175,9 +174,7 @@ const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 	else if (pfx_len)
 		strbuf_add(&path, pfx, pfx_len);
 	strbuf_addstr(&path, arg);
-	for (p = path.buf + pfx_len; *p; p++)
-		if (*p == '\\')
-			*p = '/';
+	convert_slashes(path.buf + pfx_len);
 #endif
 	return path.buf;
 }
