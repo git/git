@@ -22,7 +22,6 @@ use warnings;
 use Term::ReadLine;
 use Getopt::Long;
 use Text::ParseWords;
-use Data::Dumper;
 use Term::ANSIColor;
 use File::Temp qw/ tempdir tempfile /;
 use File::Spec::Functions qw(catfile);
