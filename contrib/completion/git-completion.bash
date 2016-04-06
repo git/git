@@ -1458,6 +1458,7 @@ _git_log ()
 			--relative-date --date=
 			--pretty= --format= --oneline
 			--show-signature
+			--cherry-mark
 			--cherry-pick
 			--graph
 			--decorate --decorate=
