@@ -25,6 +25,20 @@ UI, Workflows & Features
  * A new "interactive.diffFilter" configuration can be used to
    customize the diff shown in "git add -i" session.
 
+ * "git p4" now allows P4 author names to be mapped to Git author
+   names.
+
+ * "git rebase -x" can be used without passing "-i" option.
+
+ * "git -c credential.<var>=<value> submodule" can now be used to
+   propagate configuration variables related to credential helper
+   down to the submodules.
+
+ * "git tag" can create an annotated tag without explicitly given an
+   "-a" (or "-s") option (i.e. when a tag message is given).  A new
+   configuration variable, tag.forceSignAnnotated, can be used to tell
+   the command to create signed tag in such a situation.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -35,13 +49,26 @@ Performance, Internal Implementation, Development Support etc.
 
  * A test for tags has been restructured so that more parts of it can
    easily be run on a platform without a working GnuPG.
-   (merge 618310a es/test-gpg-tags later to maint).
 
  * The startup_info data, which records if we are working inside a
    repository (among other things), are now uniformly available to Git
    subcommand implementations, and Git avoids attempting to touch
    references when we are not in a repository.
    (merge 11e6b3f jk/startup-info later to maint).
+
+ * The command line argument parser for "receive-pack" has been
+   rewritten to use parse-options.
+
+ * A major part of "git submodule update" has been ported to C to take
+   advantage of the recently added framework to run download tasks in
+   parallel.
+
+ * Rename bunch of tests on "git clone" for better organization.
+   (merge 8fbb03a sb/clone-t57-t56 later to maint).
+
+ * The tests that involve running httpd leaked the system-wide
+   configuration in /etc/gitconfig to the tested environment.
+   (merge 1fad503 jk/test-httpd-config-nosystem later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -79,6 +106,28 @@ notes for details).
    corner cases in its error codepath.
    (merge b709043 jk/getwholeline-getdelim-empty later to maint).
 
+ * "git mergetool" did not work well with conflicts that both sides
+   deleted.
+   (merge a298604 da/mergetool-delete-delete-conflict later to maint).
+
+ * "git send-email" had trouble parsing alias file in mailrc format
+   when lines in it had trailing whitespaces on them.
+   (merge a277d1e jk/send-email-rtrim-mailrc-alias later to maint).
+
+ * When "git merge --squash" stopped due to conflict, the concluding
+   "git commit" failed to read in the SQUASH_MSG that shows the log
+   messages from all the squashed commits.
+   (merge b64c1e0 ss/commit-squash-msg later to maint).
+
+ * "git merge FETCH_HEAD" dereferenced NULL pointer when merging
+   nothing into an unborn history (which is arguably unusual usage,
+   which perhaps was the reason why nobody noticed it).
+   (merge b84e65d jv/merge-nothing-into-void later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge aed7480 mm/lockfile-error-message later to maint).
    (merge bfee614 jc/index-pack later to maint).
+   (merge f870899 ss/exc-flag-is-a-collection-of-bits later to maint).
+   (merge dde7891 pb/t7502-drop-dup later to maint).
+   (merge 3bd1b51 cc/doc-recommend-performance-trace-to-file later to maint).
+   (merge 7d5e9c9 jk/credential-cache-comment-exit later to maint).
