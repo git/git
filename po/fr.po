@@ -6135,7 +6135,7 @@ msgstr "git fetch --all [<options>]"
 
 #: builtin/fetch.c:92 builtin/pull.c:166
 msgid "fetch from all remotes"
-msgstr "récupérer depuis tous le dépôts distants"
+msgstr "récupérer depuis tous les dépôts distants"
 
 #: builtin/fetch.c:94 builtin/pull.c:169
 msgid "append to .git/FETCH_HEAD instead of overwriting"
