@@ -248,6 +248,7 @@ do
 		;;
 	--exec=*)
 		cmd="${cmd}exec ${1#--exec=}${LF}"
+		test -z "$interactive_rebase" && interactive_rebase=implied
 		;;
 	--interactive)
 		interactive_rebase=explicit
@@ -347,12 +348,6 @@ do
 	shift
 done
 test $# -gt 2 && usage
-
-if test -n "$cmd" &&
-   test "$interactive_rebase" != explicit
-then
-	die "$(gettext "The --exec option must be used with the --interactive option")"
-fi
 
 if test -n "$action"
 then
