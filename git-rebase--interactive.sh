@@ -548,7 +548,8 @@ do_next () {
 
 		mark_action_done
 		do_pick $sha1 "$rest"
-		warn "Stopped at $sha1... $rest"
+		sha1_abbrev=$(git rev-parse --short $sha1)
+		warn "Stopped at $sha1_abbrev... $rest"
 		exit_with_patch $sha1 0
 		;;
 	squash|s|fixup|f)
