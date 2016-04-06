@@ -148,6 +148,8 @@ struct rev_info {
 			linear:1;
 
 	struct date_mode date_mode;
+	int		expand_tabs_in_log; /* unset if negative */
+	int		expand_tabs_in_log_default;
 
 	unsigned int	abbrev;
 	enum cmit_fmt	commit_format;

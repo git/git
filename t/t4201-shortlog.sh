@@ -115,7 +115,7 @@ EOF
 '
 
 test_expect_success !MINGW 'shortlog from non-git directory' '
-	git log HEAD >log &&
+	git log --no-expand-tabs HEAD >log &&
 	GIT_DIR=non-existing git shortlog -w <log >out &&
 	test_cmp expect out
 '
