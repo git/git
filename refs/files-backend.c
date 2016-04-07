@@ -1421,17 +1421,20 @@ static int resolve_missing_loose_ref(const char *refname,
  *   refname will still be valid and unchanged.
  */
 static int read_raw_ref(const char *refname, unsigned char *sha1,
-			struct strbuf *symref, struct strbuf *sb_path,
-			struct strbuf *sb_contents, int *flags)
+			struct strbuf *symref, int *flags)
 {
+	struct strbuf sb_contents = STRBUF_INIT;
+	struct strbuf sb_path = STRBUF_INIT;
 	const char *path;
 	const char *buf;
 	struct stat st;
 	int fd;
+	int ret = -1;
+	int save_errno;
 
-	strbuf_reset(sb_path);
-	strbuf_git_path(sb_path, "%s", refname);
-	path = sb_path->buf;
+	strbuf_reset(&sb_path);
+	strbuf_git_path(&sb_path, "%s", refname);
+	path = sb_path.buf;
 
 stat_ref:
 	/*
@@ -1446,36 +1449,38 @@ stat_ref:
 
 	if (lstat(path, &st) < 0) {
 		if (errno != ENOENT)
-			return -1;
+			goto out;
 		if (resolve_missing_loose_ref(refname, sha1, flags)) {
 			errno = ENOENT;
-			return -1;
+			goto out;
 		}
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	/* Follow "normalized" - ie "refs/.." symlinks by hand */
 	if (S_ISLNK(st.st_mode)) {
-		strbuf_reset(sb_contents);
-		if (strbuf_readlink(sb_contents, path, 0) < 0) {
+		strbuf_reset(&sb_contents);
+		if (strbuf_readlink(&sb_contents, path, 0) < 0) {
 			if (errno == ENOENT || errno == EINVAL)
 				/* inconsistent with lstat; retry */
 				goto stat_ref;
 			else
-				return -1;
+				goto out;
 		}
-		if (starts_with(sb_contents->buf, "refs/") &&
-		    !check_refname_format(sb_contents->buf, 0)) {
-			strbuf_swap(sb_contents, symref);
+		if (starts_with(sb_contents.buf, "refs/") &&
+		    !check_refname_format(sb_contents.buf, 0)) {
+			strbuf_swap(&sb_contents, symref);
 			*flags |= REF_ISSYMREF;
-			return 0;
+			ret = 0;
+			goto out;
 		}
 	}
 
 	/* Is it a directory? */
 	if (S_ISDIR(st.st_mode)) {
 		errno = EISDIR;
-		return -1;
+		goto out;
 	}
 
 	/*
@@ -1488,18 +1493,18 @@ stat_ref:
 			/* inconsistent with lstat; retry */
 			goto stat_ref;
 		else
-			return -1;
+			goto out;
 	}
-	strbuf_reset(sb_contents);
-	if (strbuf_read(sb_contents, fd, 256) < 0) {
+	strbuf_reset(&sb_contents);
+	if (strbuf_read(&sb_contents, fd, 256) < 0) {
 		int save_errno = errno;
 		close(fd);
 		errno = save_errno;
-		return -1;
+		goto out;
 	}
 	close(fd);
-	strbuf_rtrim(sb_contents);
-	buf = sb_contents->buf;
+	strbuf_rtrim(&sb_contents);
+	buf = sb_contents.buf;
 	if (starts_with(buf, "ref:")) {
 		buf += 4;
 		while (isspace(*buf))
@@ -1508,7 +1513,8 @@ stat_ref:
 		strbuf_reset(symref);
 		strbuf_addstr(symref, buf);
 		*flags |= REF_ISSYMREF;
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	/*
@@ -1519,10 +1525,17 @@ stat_ref:
 	    (buf[40] != '\0' && !isspace(buf[40]))) {
 		*flags |= REF_ISBROKEN;
 		errno = EINVAL;
-		return -1;
+		goto out;
 	}
 
-	return 0;
+	ret = 0;
+
+out:
+	save_errno = errno;
+	strbuf_release(&sb_path);
+	strbuf_release(&sb_contents);
+	errno = save_errno;
+	return ret;
 }
 
 /* This function needs to return a meaningful errno on failure */
@@ -1530,9 +1543,7 @@ static const char *resolve_ref_1(const char *refname,
 				 int resolve_flags,
 				 unsigned char *sha1,
 				 int *flags,
-				 struct strbuf *sb_refname,
-				 struct strbuf *sb_path,
-				 struct strbuf *sb_contents)
+				 struct strbuf *sb_refname)
 {
 	int symref_count;
 
@@ -1559,8 +1570,7 @@ static const char *resolve_ref_1(const char *refname,
 	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
 		int read_flags = 0;
 
-		if (read_raw_ref(refname, sha1, sb_refname,
-				 sb_path, sb_contents, &read_flags)) {
+		if (read_raw_ref(refname, sha1, sb_refname, &read_flags)) {
 			*flags |= read_flags;
 			if (errno != ENOENT || (resolve_flags & RESOLVE_REF_READING))
 				return NULL;
@@ -1604,8 +1614,6 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 			       unsigned char *sha1, int *flags)
 {
 	static struct strbuf sb_refname = STRBUF_INIT;
-	struct strbuf sb_contents = STRBUF_INIT;
-	struct strbuf sb_path = STRBUF_INIT;
 	int unused_flags;
 	const char *ret;
 
@@ -1613,9 +1621,7 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 		flags = &unused_flags;
 
 	ret = resolve_ref_1(refname, resolve_flags, sha1, flags,
-			    &sb_refname, &sb_path, &sb_contents);
-	strbuf_release(&sb_path);
-	strbuf_release(&sb_contents);
+			    &sb_refname);
 	return ret;
 }
 
