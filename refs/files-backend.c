@@ -1539,13 +1539,15 @@ out:
 }
 
 /* This function needs to return a meaningful errno on failure */
-static const char *resolve_ref_1(const char *refname,
-				 int resolve_flags,
-				 unsigned char *sha1,
-				 int *flags,
-				 struct strbuf *sb_refname)
+const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
+			       unsigned char *sha1, int *flags)
 {
+	static struct strbuf sb_refname = STRBUF_INIT;
+	int unused_flags;
 	int symref_count;
+
+	if (!flags)
+		flags = &unused_flags;
 
 	*flags = 0;
 
@@ -1570,7 +1572,7 @@ static const char *resolve_ref_1(const char *refname,
 	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
 		int read_flags = 0;
 
-		if (read_raw_ref(refname, sha1, sb_refname, &read_flags)) {
+		if (read_raw_ref(refname, sha1, &sb_refname, &read_flags)) {
 			*flags |= read_flags;
 			if (errno != ENOENT || (resolve_flags & RESOLVE_REF_READING))
 				return NULL;
@@ -1590,7 +1592,7 @@ static const char *resolve_ref_1(const char *refname,
 			return refname;
 		}
 
-		refname = sb_refname->buf;
+		refname = sb_refname.buf;
 		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
 			hashclr(sha1);
 			return refname;
@@ -1608,21 +1610,6 @@ static const char *resolve_ref_1(const char *refname,
 
 	errno = ELOOP;
 	return NULL;
-}
-
-const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-			       unsigned char *sha1, int *flags)
-{
-	static struct strbuf sb_refname = STRBUF_INIT;
-	int unused_flags;
-	const char *ret;
-
-	if (!flags)
-		flags = &unused_flags;
-
-	ret = resolve_ref_1(refname, resolve_flags, sha1, flags,
-			    &sb_refname);
-	return ret;
 }
 
 /*
