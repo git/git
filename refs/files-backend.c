@@ -1400,8 +1400,8 @@ static const char *resolve_ref_1(const char *refname,
 				 struct strbuf *sb_path,
 				 struct strbuf *sb_contents)
 {
-	int depth = MAXDEPTH;
 	int bad_name = 0;
+	int symref_count;
 
 	if (flags)
 		*flags = 0;
@@ -1425,16 +1425,12 @@ static const char *resolve_ref_1(const char *refname,
 		 */
 		bad_name = 1;
 	}
-	for (;;) {
+
+	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
 		const char *path;
 		struct stat st;
 		char *buf;
 		int fd;
-
-		if (--depth < 0) {
-			errno = ELOOP;
-			return NULL;
-		}
 
 		strbuf_reset(sb_path);
 		strbuf_git_path(sb_path, "%s", refname);
@@ -1566,6 +1562,9 @@ static const char *resolve_ref_1(const char *refname,
 			bad_name = 1;
 		}
 	}
+
+	errno = ELOOP;
+	return NULL;
 }
 
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
