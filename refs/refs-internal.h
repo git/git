@@ -197,4 +197,13 @@ const char *find_descendant_ref(const char *dirname,
 
 int rename_ref_available(const char *oldname, const char *newname);
 
+
+/* Include broken references in a do_for_each_ref*() iteration: */
+#define DO_FOR_EACH_INCLUDE_BROKEN 0x01
+
+/*
+ * The common backend for the for_each_*ref* functions
+ */
+int do_for_each_ref(const char *submodule, const char *base,
+		    each_ref_fn fn, int trim, int flags, void *cb_data);
 #endif /* REFS_REFS_INTERNAL_H */

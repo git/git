@@ -513,9 +513,6 @@ static void sort_ref_dir(struct ref_dir *dir)
 	dir->sorted = dir->nr = i;
 }
 
-/* Include broken references in a do_for_each_ref*() iteration: */
-#define DO_FOR_EACH_INCLUDE_BROKEN 0x01
-
 /*
  * Return true iff the reference described by entry can be resolved to
  * an object in the database.  Emit a warning if the referred-to
@@ -1727,10 +1724,13 @@ static int do_for_each_entry(struct ref_cache *refs, const char *base,
  * value, stop the iteration and return that value; otherwise, return
  * 0.
  */
-static int do_for_each_ref(struct ref_cache *refs, const char *base,
-			   each_ref_fn fn, int trim, int flags, void *cb_data)
+int do_for_each_ref(const char *submodule, const char *base,
+		    each_ref_fn fn, int trim, int flags, void *cb_data)
 {
 	struct ref_entry_cb data;
+	struct ref_cache *refs;
+
+	refs = get_ref_cache(submodule);
 	data.base = base;
 	data.trim = trim;
 	data.flags = flags;
@@ -1743,58 +1743,6 @@ static int do_for_each_ref(struct ref_cache *refs, const char *base,
 		data.flags |= DO_FOR_EACH_INCLUDE_BROKEN;
 
 	return do_for_each_entry(refs, base, do_one_ref, &data);
-}
-
-int for_each_ref(each_ref_fn fn, void *cb_data)
-{
-	return do_for_each_ref(&ref_cache, "", fn, 0, 0, cb_data);
-}
-
-int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
-{
-	return do_for_each_ref(get_ref_cache(submodule), "", fn, 0, 0, cb_data);
-}
-
-int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data)
-{
-	return do_for_each_ref(&ref_cache, prefix, fn, strlen(prefix), 0, cb_data);
-}
-
-int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data, unsigned int broken)
-{
-	unsigned int flag = 0;
-
-	if (broken)
-		flag = DO_FOR_EACH_INCLUDE_BROKEN;
-	return do_for_each_ref(&ref_cache, prefix, fn, 0, flag, cb_data);
-}
-
-int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-		each_ref_fn fn, void *cb_data)
-{
-	return do_for_each_ref(get_ref_cache(submodule), prefix, fn, strlen(prefix), 0, cb_data);
-}
-
-int for_each_replace_ref(each_ref_fn fn, void *cb_data)
-{
-	return do_for_each_ref(&ref_cache, git_replace_ref_base, fn,
-			       strlen(git_replace_ref_base), 0, cb_data);
-}
-
-int for_each_namespaced_ref(each_ref_fn fn, void *cb_data)
-{
-	struct strbuf buf = STRBUF_INIT;
-	int ret;
-	strbuf_addf(&buf, "%srefs/", get_git_namespace());
-	ret = do_for_each_ref(&ref_cache, buf.buf, fn, 0, 0, cb_data);
-	strbuf_release(&buf);
-	return ret;
-}
-
-int for_each_rawref(each_ref_fn fn, void *cb_data)
-{
-	return do_for_each_ref(&ref_cache, "", fn, 0,
-			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
 static void unlock_ref(struct ref_lock *lock)
