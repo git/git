@@ -484,9 +484,11 @@ extern struct ref_iterator *current_ref_iter;
 int do_for_each_ref_iterator(struct ref_iterator *iter,
 			     each_ref_fn fn, void *cb_data);
 
+struct ref_store;
+
 /*
- * Read the specified reference from the filesystem or packed refs
- * file, non-recursively. Set type to describe the reference, and:
+ * Read a reference from the specified reference store, non-recursively.
+ * Set type to describe the reference, and:
  *
  * - If refname is the name of a normal reference, fill in sha1
  *   (leaving referent unchanged).
@@ -522,7 +524,8 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
  * - in all other cases, referent will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
-int read_raw_ref(const char *refname, unsigned char *sha1,
+int read_raw_ref(struct ref_store *ref_store,
+		 const char *refname, unsigned char *sha1,
 		 struct strbuf *referent, unsigned int *type);
 
 /* refs backends */
