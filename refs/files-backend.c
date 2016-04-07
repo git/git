@@ -1383,8 +1383,7 @@ static int resolve_missing_loose_ref(const char *refname,
 	entry = get_packed_ref(refname);
 	if (entry) {
 		hashcpy(sha1, entry->u.value.oid.hash);
-		if (flags)
-			*flags |= REF_ISPACKED;
+		*flags |= REF_ISPACKED;
 		return 0;
 	}
 	/* refname is not a packed reference. */
@@ -1403,12 +1402,10 @@ static const char *resolve_ref_1(const char *refname,
 	int bad_name = 0;
 	int symref_count;
 
-	if (flags)
-		*flags = 0;
+	*flags = 0;
 
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-		if (flags)
-			*flags |= REF_BAD_NAME;
+		*flags |= REF_BAD_NAME;
 
 		if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
 		    !refname_is_safe(refname)) {
@@ -1458,8 +1455,7 @@ static const char *resolve_ref_1(const char *refname,
 			}
 			if (bad_name) {
 				hashclr(sha1);
-				if (flags)
-					*flags |= REF_ISBROKEN;
+				*flags |= REF_ISBROKEN;
 			}
 			return refname;
 		}
@@ -1478,8 +1474,7 @@ static const char *resolve_ref_1(const char *refname,
 			    !check_refname_format(sb_contents->buf, 0)) {
 				strbuf_swap(sb_refname, sb_contents);
 				refname = sb_refname->buf;
-				if (flags)
-					*flags |= REF_ISSYMREF;
+				*flags |= REF_ISSYMREF;
 				if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
 					hashclr(sha1);
 					return refname;
@@ -1526,20 +1521,17 @@ static const char *resolve_ref_1(const char *refname,
 			 */
 			if (get_sha1_hex(sb_contents->buf, sha1) ||
 			    (sb_contents->buf[40] != '\0' && !isspace(sb_contents->buf[40]))) {
-				if (flags)
-					*flags |= REF_ISBROKEN;
+				*flags |= REF_ISBROKEN;
 				errno = EINVAL;
 				return NULL;
 			}
 			if (bad_name) {
 				hashclr(sha1);
-				if (flags)
-					*flags |= REF_ISBROKEN;
+				*flags |= REF_ISBROKEN;
 			}
 			return refname;
 		}
-		if (flags)
-			*flags |= REF_ISSYMREF;
+		*flags |= REF_ISSYMREF;
 		buf = sb_contents->buf + 4;
 		while (isspace(*buf))
 			buf++;
@@ -1551,8 +1543,7 @@ static const char *resolve_ref_1(const char *refname,
 			return refname;
 		}
 		if (check_refname_format(buf, REFNAME_ALLOW_ONELEVEL)) {
-			if (flags)
-				*flags |= REF_ISBROKEN;
+			*flags |= REF_ISBROKEN;
 
 			if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
 			    !refname_is_safe(buf)) {
@@ -1573,7 +1564,11 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 	static struct strbuf sb_refname = STRBUF_INIT;
 	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
+	int unused_flags;
 	const char *ret;
+
+	if (!flags)
+		flags = &unused_flags;
 
 	ret = resolve_ref_1(refname, resolve_flags, sha1, flags,
 			    &sb_refname, &sb_path, &sb_contents);
