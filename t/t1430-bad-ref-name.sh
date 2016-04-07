@@ -148,7 +148,7 @@ test_expect_success 'rev-parse skips symref pointing to broken name' '
 	git branch shadow one &&
 	cp .git/refs/heads/master .git/refs/heads/broken...ref &&
 	git symbolic-ref refs/tags/shadow refs/heads/broken...ref &&
-
+	test_when_finished "rm -f .git/refs/tags/shadow" &&
 	git rev-parse --verify one >expect &&
 	git rev-parse --verify shadow >actual 2>err &&
 	test_cmp expect actual &&
