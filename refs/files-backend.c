@@ -1426,7 +1426,6 @@ static const char *resolve_ref_1(const char *refname,
 	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
 		const char *path;
 		struct stat st;
-		char *buf;
 		int fd;
 
 		strbuf_reset(sb_path);
@@ -1532,21 +1531,21 @@ static const char *resolve_ref_1(const char *refname,
 			return refname;
 		}
 		*flags |= REF_ISSYMREF;
-		buf = sb_contents->buf + 4;
-		while (isspace(*buf))
-			buf++;
+		refname = sb_contents->buf + 4;
+		while (isspace(*refname))
+			refname++;
 		strbuf_reset(sb_refname);
-		strbuf_addstr(sb_refname, buf);
+		strbuf_addstr(sb_refname, refname);
 		refname = sb_refname->buf;
 		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
 			hashclr(sha1);
 			return refname;
 		}
-		if (check_refname_format(buf, REFNAME_ALLOW_ONELEVEL)) {
+		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
 			*flags |= REF_ISBROKEN;
 
 			if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
-			    !refname_is_safe(buf)) {
+			    !refname_is_safe(refname)) {
 				errno = EINVAL;
 				return NULL;
 			}
