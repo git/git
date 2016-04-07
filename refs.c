@@ -1216,13 +1216,14 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 }
 
 /* This function needs to return a meaningful errno on failure */
-const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-			       unsigned char *sha1, int *flags)
+static const char *resolve_ref_recursively(struct ref_store *refs,
+					   const char *refname,
+					   int resolve_flags,
+					   unsigned char *sha1, int *flags)
 {
 	static struct strbuf sb_refname = STRBUF_INIT;
 	int unused_flags;
 	int symref_count;
-	struct ref_store *refs = get_ref_store(NULL);
 
 	if (!flags)
 		flags = &unused_flags;
@@ -1289,6 +1290,13 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 
 	errno = ELOOP;
 	return NULL;
+}
+
+const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
+			       unsigned char *sha1, int *flags)
+{
+	return resolve_ref_recursively(get_ref_store(NULL), refname,
+				       resolve_flags, sha1, flags);
 }
 
 /* A pointer to the ref_store for the main repository: */
