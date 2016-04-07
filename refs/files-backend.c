@@ -1399,19 +1399,17 @@ static const char *resolve_ref_1(const char *refname,
 				 struct strbuf *sb_path,
 				 struct strbuf *sb_contents)
 {
-	int bad_name = 0;
 	int symref_count;
 
 	*flags = 0;
 
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-		*flags |= REF_BAD_NAME;
-
 		if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
 		    !refname_is_safe(refname)) {
 			errno = EINVAL;
 			return NULL;
 		}
+
 		/*
 		 * dwim_ref() uses REF_ISBROKEN to distinguish between
 		 * missing refs and refs that were present but invalid,
@@ -1420,7 +1418,7 @@ static const char *resolve_ref_1(const char *refname,
 		 * We don't know whether the ref exists, so don't set
 		 * REF_ISBROKEN yet.
 		 */
-		bad_name = 1;
+		*flags |= REF_BAD_NAME;
 	}
 
 	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
@@ -1452,7 +1450,7 @@ static const char *resolve_ref_1(const char *refname,
 				}
 				hashclr(sha1);
 			}
-			if (bad_name) {
+			if (*flags & REF_BAD_NAME) {
 				hashclr(sha1);
 				*flags |= REF_ISBROKEN;
 			}
@@ -1524,7 +1522,7 @@ static const char *resolve_ref_1(const char *refname,
 				errno = EINVAL;
 				return NULL;
 			}
-			if (bad_name) {
+			if (*flags & REF_BAD_NAME) {
 				hashclr(sha1);
 				*flags |= REF_ISBROKEN;
 			}
@@ -1548,8 +1546,7 @@ static const char *resolve_ref_1(const char *refname,
 				return NULL;
 			}
 
-			*flags |= REF_ISBROKEN;
-			bad_name = 1;
+			*flags |= REF_ISBROKEN | REF_BAD_NAME;
 		}
 	}
 
