@@ -1269,8 +1269,6 @@ static struct ref_dir *get_loose_refs(struct ref_cache *refs)
 	return get_ref_dir(refs->loose);
 }
 
-/* We allow "recursive" symbolic refs. Only within reason, though */
-#define MAXDEPTH 5
 #define MAXREFLEN (1024)
 
 /*
@@ -1300,7 +1298,7 @@ static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
 	char buffer[128], *p;
 	char *path;
 
-	if (recursion > MAXDEPTH || strlen(refname) > MAXREFLEN)
+	if (recursion > SYMREF_MAXDEPTH || strlen(refname) > MAXREFLEN)
 		return -1;
 	path = *refs->name
 		? git_pathdup_submodule(refs->name, "%s", refname)
@@ -1420,8 +1418,8 @@ static int resolve_missing_loose_ref(const char *refname,
  * - in all other cases, symref will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
-static int read_raw_ref(const char *refname, unsigned char *sha1,
-			struct strbuf *symref, unsigned int *flags)
+int read_raw_ref(const char *refname, unsigned char *sha1,
+		 struct strbuf *symref, unsigned int *flags)
 {
 	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
@@ -1536,80 +1534,6 @@ out:
 	strbuf_release(&sb_contents);
 	errno = save_errno;
 	return ret;
-}
-
-/* This function needs to return a meaningful errno on failure */
-const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
-			       unsigned char *sha1, int *flags)
-{
-	static struct strbuf sb_refname = STRBUF_INIT;
-	int unused_flags;
-	int symref_count;
-
-	if (!flags)
-		flags = &unused_flags;
-
-	*flags = 0;
-
-	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-		if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
-		    !refname_is_safe(refname)) {
-			errno = EINVAL;
-			return NULL;
-		}
-
-		/*
-		 * dwim_ref() uses REF_ISBROKEN to distinguish between
-		 * missing refs and refs that were present but invalid,
-		 * to complain about the latter to stderr.
-		 *
-		 * We don't know whether the ref exists, so don't set
-		 * REF_ISBROKEN yet.
-		 */
-		*flags |= REF_BAD_NAME;
-	}
-
-	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
-		unsigned int read_flags = 0;
-
-		if (read_raw_ref(refname, sha1, &sb_refname, &read_flags)) {
-			*flags |= read_flags;
-			if (errno != ENOENT || (resolve_flags & RESOLVE_REF_READING))
-				return NULL;
-			hashclr(sha1);
-			if (*flags & REF_BAD_NAME)
-				*flags |= REF_ISBROKEN;
-			return refname;
-		}
-
-		*flags |= read_flags;
-
-		if (!(read_flags & REF_ISSYMREF)) {
-			if (*flags & REF_BAD_NAME) {
-				hashclr(sha1);
-				*flags |= REF_ISBROKEN;
-			}
-			return refname;
-		}
-
-		refname = sb_refname.buf;
-		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
-			hashclr(sha1);
-			return refname;
-		}
-		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-			if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
-			    !refname_is_safe(refname)) {
-				errno = EINVAL;
-				return NULL;
-			}
-
-			*flags |= REF_ISBROKEN | REF_BAD_NAME;
-		}
-	}
-
-	errno = ELOOP;
-	return NULL;
 }
 
 /*
