@@ -147,7 +147,7 @@ test_expect_success 'rev-parse skips symref pointing to broken name' '
 	test_when_finished "rm -f .git/refs/heads/broken...ref" &&
 	git branch shadow one &&
 	cp .git/refs/heads/master .git/refs/heads/broken...ref &&
-	git symbolic-ref refs/tags/shadow refs/heads/broken...ref &&
+	printf "ref: refs/heads/broken...ref\n" >.git/refs/tags/shadow &&
 	test_when_finished "rm -f .git/refs/tags/shadow" &&
 	git rev-parse --verify one >expect &&
 	git rev-parse --verify shadow >actual 2>err &&
@@ -156,7 +156,7 @@ test_expect_success 'rev-parse skips symref pointing to broken name' '
 '
 
 test_expect_success 'update-ref --no-deref -d can delete reference to broken name' '
-	git symbolic-ref refs/heads/badname refs/heads/broken...ref &&
+	printf "ref: refs/heads/broken...ref\n" >.git/refs/heads/badname &&
 	test_when_finished "rm -f .git/refs/heads/badname" &&
 	test_path_is_file .git/refs/heads/badname &&
 	git update-ref --no-deref -d refs/heads/badname >output 2>error &&
