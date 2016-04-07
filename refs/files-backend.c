@@ -1372,7 +1372,7 @@ static struct ref_entry *get_packed_ref(const char *refname)
  */
 static int resolve_missing_loose_ref(const char *refname,
 				     unsigned char *sha1,
-				     int *flags)
+				     unsigned int *flags)
 {
 	struct ref_entry *entry;
 
@@ -1421,7 +1421,7 @@ static int resolve_missing_loose_ref(const char *refname,
  *   refname will still be valid and unchanged.
  */
 static int read_raw_ref(const char *refname, unsigned char *sha1,
-			struct strbuf *symref, int *flags)
+			struct strbuf *symref, unsigned int *flags)
 {
 	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
@@ -1570,7 +1570,7 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 	}
 
 	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
-		int read_flags = 0;
+		unsigned int read_flags = 0;
 
 		if (read_raw_ref(refname, sha1, &sb_refname, &read_flags)) {
 			*flags |= read_flags;
