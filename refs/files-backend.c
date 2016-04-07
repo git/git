@@ -1542,13 +1542,13 @@ static const char *resolve_ref_1(const char *refname,
 			return refname;
 		}
 		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-			*flags |= REF_ISBROKEN;
-
 			if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) ||
 			    !refname_is_safe(refname)) {
 				errno = EINVAL;
 				return NULL;
 			}
+
+			*flags |= REF_ISBROKEN;
 			bad_name = 1;
 		}
 	}
