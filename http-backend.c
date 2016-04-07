@@ -484,9 +484,9 @@ static int show_head_ref(const char *refname, const struct object_id *oid,
 		const char *target = resolve_ref_unsafe(refname,
 							RESOLVE_REF_READING,
 							unused.hash, NULL);
-		const char *target_nons = strip_namespace(target);
 
-		strbuf_addf(buf, "ref: %s\n", target_nons);
+		if (target)
+			strbuf_addf(buf, "ref: %s\n", strip_namespace(target));
 	} else {
 		strbuf_addf(buf, "%s\n", oid_to_hex(oid));
 	}
