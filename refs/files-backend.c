@@ -1390,6 +1390,141 @@ static int resolve_missing_loose_ref(const char *refname,
 	return -1;
 }
 
+/*
+ * Read a raw ref from the filesystem or packed refs file.
+ *
+ * If the ref is a sha1, fill in sha1 and return 0.
+ *
+ * If the ref is symbolic, fill in *symref with the referrent
+ * (e.g. "refs/heads/master") and return 0.  The caller is responsible
+ * for validating the referrent.  Set REF_ISSYMREF in flags.
+ *
+ * If the ref doesn't exist, set errno to ENOENT and return -1.
+ *
+ * If the ref exists but is neither a symbolic ref nor a sha1, it is
+ * broken. Set REF_ISBROKEN in flags, set errno to EINVAL, and return
+ * -1.
+ *
+ * If there is another error reading the ref, set errno appropriately and
+ * return -1.
+ *
+ * Backend-specific flags might be set in flags as well, regardless of
+ * outcome.
+ *
+ * sb_path is workspace: the caller should allocate and free it.
+ *
+ * It is OK for refname to point into symref. In this case:
+ * - if the function succeeds with REF_ISSYMREF, symref will be
+ *   overwritten and the memory pointed to by refname might be changed
+ *   or even freed.
+ * - in all other cases, symref will be untouched, and therefore
+ *   refname will still be valid and unchanged.
+ */
+static int read_raw_ref(const char *refname, unsigned char *sha1,
+			struct strbuf *symref, struct strbuf *sb_path,
+			struct strbuf *sb_contents, int *flags)
+{
+	const char *path;
+	const char *buf;
+	struct stat st;
+	int fd;
+
+	strbuf_reset(sb_path);
+	strbuf_git_path(sb_path, "%s", refname);
+	path = sb_path->buf;
+
+stat_ref:
+	/*
+	 * We might have to loop back here to avoid a race
+	 * condition: first we lstat() the file, then we try
+	 * to read it as a link or as a file.  But if somebody
+	 * changes the type of the file (file <-> directory
+	 * <-> symlink) between the lstat() and reading, then
+	 * we don't want to report that as an error but rather
+	 * try again starting with the lstat().
+	 */
+
+	if (lstat(path, &st) < 0) {
+		if (errno != ENOENT)
+			return -1;
+		if (resolve_missing_loose_ref(refname, sha1, flags)) {
+			errno = ENOENT;
+			return -1;
+		}
+		return 0;
+	}
+
+	/* Follow "normalized" - ie "refs/.." symlinks by hand */
+	if (S_ISLNK(st.st_mode)) {
+		strbuf_reset(sb_contents);
+		if (strbuf_readlink(sb_contents, path, 0) < 0) {
+			if (errno == ENOENT || errno == EINVAL)
+				/* inconsistent with lstat; retry */
+				goto stat_ref;
+			else
+				return -1;
+		}
+		if (starts_with(sb_contents->buf, "refs/") &&
+		    !check_refname_format(sb_contents->buf, 0)) {
+			strbuf_swap(sb_contents, symref);
+			*flags |= REF_ISSYMREF;
+			return 0;
+		}
+	}
+
+	/* Is it a directory? */
+	if (S_ISDIR(st.st_mode)) {
+		errno = EISDIR;
+		return -1;
+	}
+
+	/*
+	 * Anything else, just open it and try to use it as
+	 * a ref
+	 */
+	fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		if (errno == ENOENT)
+			/* inconsistent with lstat; retry */
+			goto stat_ref;
+		else
+			return -1;
+	}
+	strbuf_reset(sb_contents);
+	if (strbuf_read(sb_contents, fd, 256) < 0) {
+		int save_errno = errno;
+		close(fd);
+		errno = save_errno;
+		return -1;
+	}
+	close(fd);
+	strbuf_rtrim(sb_contents);
+	buf = sb_contents->buf;
+	if (starts_with(buf, "ref:")) {
+		buf += 4;
+		while (isspace(*buf))
+			buf++;
+
+		strbuf_reset(symref);
+		strbuf_addstr(symref, buf);
+		*flags |= REF_ISSYMREF;
+		return 0;
+	}
+
+	/*
+	 * Please note that FETCH_HEAD has additional
+	 * data after the sha.
+	 */
+	if (get_sha1_hex(buf, sha1) ||
+	    (buf[40] != '\0' && !isspace(buf[40]))) {
+		*flags |= REF_ISBROKEN;
+		errno = EINVAL;
+		return -1;
+	}
+
+	return 0;
+}
+
 /* This function needs to return a meaningful errno on failure */
 static const char *resolve_ref_1(const char *refname,
 				 int resolve_flags,
@@ -1422,34 +1557,22 @@ static const char *resolve_ref_1(const char *refname,
 	}
 
 	for (symref_count = 0; symref_count < MAXDEPTH; symref_count++) {
-		const char *path;
-		struct stat st;
-		int fd;
+		int read_flags = 0;
 
-		strbuf_reset(sb_path);
-		strbuf_git_path(sb_path, "%s", refname);
-		path = sb_path->buf;
-
-		/*
-		 * We might have to loop back here to avoid a race
-		 * condition: first we lstat() the file, then we try
-		 * to read it as a link or as a file.  But if somebody
-		 * changes the type of the file (file <-> directory
-		 * <-> symlink) between the lstat() and reading, then
-		 * we don't want to report that as an error but rather
-		 * try again starting with the lstat().
-		 */
-	stat_ref:
-		if (lstat(path, &st) < 0) {
-			if (errno != ENOENT)
+		if (read_raw_ref(refname, sha1, sb_refname,
+				 sb_path, sb_contents, &read_flags)) {
+			*flags |= read_flags;
+			if (errno != ENOENT || (resolve_flags & RESOLVE_REF_READING))
 				return NULL;
-			if (resolve_missing_loose_ref(refname, sha1, flags)) {
-				if (resolve_flags & RESOLVE_REF_READING) {
-					errno = ENOENT;
-					return NULL;
-				}
-				hashclr(sha1);
-			}
+			hashclr(sha1);
+			if (*flags & REF_BAD_NAME)
+				*flags |= REF_ISBROKEN;
+			return refname;
+		}
+
+		*flags |= read_flags;
+
+		if (!(read_flags & REF_ISSYMREF)) {
 			if (*flags & REF_BAD_NAME) {
 				hashclr(sha1);
 				*flags |= REF_ISBROKEN;
@@ -1457,83 +1580,6 @@ static const char *resolve_ref_1(const char *refname,
 			return refname;
 		}
 
-		/* Follow "normalized" - ie "refs/.." symlinks by hand */
-		if (S_ISLNK(st.st_mode)) {
-			strbuf_reset(sb_contents);
-			if (strbuf_readlink(sb_contents, path, 0) < 0) {
-				if (errno == ENOENT || errno == EINVAL)
-					/* inconsistent with lstat; retry */
-					goto stat_ref;
-				else
-					return NULL;
-			}
-			if (starts_with(sb_contents->buf, "refs/") &&
-			    !check_refname_format(sb_contents->buf, 0)) {
-				strbuf_swap(sb_refname, sb_contents);
-				refname = sb_refname->buf;
-				*flags |= REF_ISSYMREF;
-				if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
-					hashclr(sha1);
-					return refname;
-				}
-				continue;
-			}
-		}
-
-		/* Is it a directory? */
-		if (S_ISDIR(st.st_mode)) {
-			errno = EISDIR;
-			return NULL;
-		}
-
-		/*
-		 * Anything else, just open it and try to use it as
-		 * a ref
-		 */
-		fd = open(path, O_RDONLY);
-		if (fd < 0) {
-			if (errno == ENOENT)
-				/* inconsistent with lstat; retry */
-				goto stat_ref;
-			else
-				return NULL;
-		}
-		strbuf_reset(sb_contents);
-		if (strbuf_read(sb_contents, fd, 256) < 0) {
-			int save_errno = errno;
-			close(fd);
-			errno = save_errno;
-			return NULL;
-		}
-		close(fd);
-		strbuf_rtrim(sb_contents);
-
-		/*
-		 * Is it a symbolic ref?
-		 */
-		if (!starts_with(sb_contents->buf, "ref:")) {
-			/*
-			 * Please note that FETCH_HEAD has a second
-			 * line containing other data.
-			 */
-			if (get_sha1_hex(sb_contents->buf, sha1) ||
-			    (sb_contents->buf[40] != '\0' && !isspace(sb_contents->buf[40]))) {
-				*flags |= REF_ISBROKEN;
-				errno = EINVAL;
-				return NULL;
-			}
-			if (*flags & REF_BAD_NAME) {
-				hashclr(sha1);
-				*flags |= REF_ISBROKEN;
-			}
-			return refname;
-		}
-		*flags |= REF_ISSYMREF;
-		refname = sb_contents->buf + 4;
-		while (isspace(*refname))
-			refname++;
-		strbuf_reset(sb_refname);
-		strbuf_addstr(sb_refname, refname);
 		refname = sb_refname->buf;
 		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
 			hashclr(sha1);
