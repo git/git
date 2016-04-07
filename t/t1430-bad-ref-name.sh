@@ -42,7 +42,7 @@ test_expect_success 'git branch shows badly named ref as warning' '
 	cp .git/refs/heads/master .git/refs/heads/broken...ref &&
 	test_when_finished "rm -f .git/refs/heads/broken...ref" &&
 	git branch >output 2>error &&
-	grep -e "broken\.\.\.ref" error &&
+	test_i18ngrep -e "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
 	! grep -e "broken\.\.\.ref" output
 '
 
@@ -152,21 +152,25 @@ test_expect_success 'rev-parse skips symref pointing to broken name' '
 	git rev-parse --verify one >expect &&
 	git rev-parse --verify shadow >actual 2>err &&
 	test_cmp expect actual &&
-	test_i18ngrep "ignoring.*refs/tags/shadow" err
+	test_i18ngrep "ignoring dangling symref refs/tags/shadow" err
 '
 
 test_expect_success 'update-ref --no-deref -d can delete reference to broken name' '
 	git symbolic-ref refs/heads/badname refs/heads/broken...ref &&
 	test_when_finished "rm -f .git/refs/heads/badname" &&
 	test_path_is_file .git/refs/heads/badname &&
-	git update-ref --no-deref -d refs/heads/badname &&
-	test_path_is_missing .git/refs/heads/badname
+	git update-ref --no-deref -d refs/heads/badname >output 2>error &&
+	test_path_is_missing .git/refs/heads/badname &&
+	test_must_be_empty output &&
+	test_must_be_empty error
 '
 
 test_expect_success 'update-ref -d can delete broken name' '
 	cp .git/refs/heads/master .git/refs/heads/broken...ref &&
 	test_when_finished "rm -f .git/refs/heads/broken...ref" &&
-	git update-ref -d refs/heads/broken...ref &&
+	git update-ref -d refs/heads/broken...ref >output 2>error &&
+	test_must_be_empty output &&
+	test_must_be_empty error &&
 	git branch >output 2>error &&
 	! grep -e "broken\.\.\.ref" error &&
 	! grep -e "broken\.\.\.ref" output
@@ -175,7 +179,9 @@ test_expect_success 'update-ref -d can delete broken name' '
 test_expect_success 'update-ref -d cannot delete non-ref in .git dir' '
 	echo precious >.git/my-private-file &&
 	echo precious >expect &&
-	test_must_fail git update-ref -d my-private-file &&
+	test_must_fail git update-ref -d my-private-file >output 2>error &&
+	test_must_be_empty output &&
+	test_i18ngrep -e "cannot lock .*: unable to resolve reference" error &&
 	test_cmp expect .git/my-private-file
 '
 
