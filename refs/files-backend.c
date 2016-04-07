@@ -1490,25 +1490,6 @@ static void unlock_ref(struct ref_lock *lock)
 
 #define MAXREFLEN (1024)
 
-/*
- * Called by resolve_gitlink_ref_recursive() after it failed to read
- * from the loose refs in refs. Find <refname> in the packed-refs file
- * for the submodule.
- */
-static int resolve_gitlink_packed_ref(struct files_ref_store *refs,
-				      const char *refname, unsigned char *sha1)
-{
-	struct ref_entry *ref;
-	struct ref_dir *dir = get_packed_refs(refs);
-
-	ref = find_ref(dir, refname);
-	if (ref == NULL)
-		return -1;
-
-	hashcpy(sha1, ref->u.value.oid.hash);
-	return 0;
-}
-
 static int resolve_gitlink_ref_recursive(struct files_ref_store *refs,
 					 const char *refname, unsigned char *sha1,
 					 int recursion)
@@ -1524,8 +1505,11 @@ static int resolve_gitlink_ref_recursive(struct files_ref_store *refs,
 		: git_pathdup("%s", refname);
 	fd = open(path, O_RDONLY);
 	free(path);
-	if (fd < 0)
-		return resolve_gitlink_packed_ref(refs, refname, sha1);
+	if (fd < 0) {
+		unsigned int flags;
+
+		return resolve_packed_ref(refs, refname, sha1, &flags);
+	}
 
 	len = read(fd, buffer, sizeof(buffer)-1);
 	close(fd);
