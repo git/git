@@ -200,8 +200,8 @@ test_expect_success '--amend --edit of empty message' '
 	test_cmp expect msg
 '
 
-test_expect_failure '--amend to set message to empty' '
-	echo batá >file &&
+test_expect_success '--amend to set message to empty' '
+	echo bata >file &&
 	git add file &&
 	git commit -m "unamended" &&
 	git commit --amend --allow-empty-message -m "" &&
@@ -210,7 +210,7 @@ test_expect_failure '--amend to set message to empty' '
 	test_cmp expect msg
 '
 
-test_expect_failure '--amend to set empty message needs --allow-empty-message' '
+test_expect_success '--amend to set empty message needs --allow-empty-message' '
 	echo conga >file &&
 	git add file &&
 	git commit -m "unamended" &&
