@@ -298,6 +298,10 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 	}
 
 	ctx = SSL_CTX_new(meth);
+	if (!ctx) {
+		ssl_socket_perror("SSL_CTX_new");
+		return -1;
+	}
 
 	if (verify)
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
