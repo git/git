@@ -71,7 +71,7 @@ test_expect_success setup '
 	note J &&
 
 	git checkout master &&
-	test_tick && git merge -m "Coolest" unrelated &&
+	test_tick && git merge --allow-unrelated-histories -m "Coolest" unrelated &&
 	note K &&
 
 	echo "Immaterial" >elif &&
