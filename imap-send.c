@@ -890,7 +890,7 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 
 	/* response: "<user> <digest in hex>" */
 	response = xstrfmt("%s %s", user, hex);
-	resp_len = strlen(response) + 1;
+	resp_len = strlen(response);
 
 	response_64 = xmallocz(ENCODED_SIZE(resp_len));
 	encoded_len = EVP_EncodeBlock((unsigned char *)response_64,
