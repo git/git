@@ -476,4 +476,61 @@ test_expect_success '--no-list resets list' '
 	test_cmp expect output
 '
 
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: 3
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success 'multiple quiet levels' '
+	test-parse-options -q -q -q >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: 0
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success '--no-quiet sets quiet to 0' '
+	test-parse-options -q -q -q --no-quiet >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: 0
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success '--no-verbose sets verbose to 0' '
+	test-parse-options --no-verbose >output 2> output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
 test_done
