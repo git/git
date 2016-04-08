@@ -1211,6 +1211,7 @@ struct todo_list {
 	struct strbuf buf;
 	struct todo_item *items;
 	int nr, alloc, current;
+	int done_nr, total_nr;
 };
 
 #define TODO_LIST_INIT { STRBUF_INIT }
@@ -1327,6 +1328,17 @@ static int parse_insn_buffer(char *buf, struct todo_list *todo_list)
 	return res;
 }
 
+static int count_commands(struct todo_list *todo_list)
+{
+	int count = 0, i;
+
+	for (i = 0; i < todo_list->nr; i++)
+		if (todo_list->items[i].command != TODO_COMMENT)
+			count++;
+
+	return count;
+}
+
 static int read_populate_todo(struct todo_list *todo_list,
 			struct replay_opts *opts)
 {
@@ -1367,6 +1379,21 @@ static int read_populate_todo(struct todo_list *todo_list,
 				return error(_("cannot cherry-pick during a revert."));
 			else
 				return error(_("cannot revert during a cherry-pick."));
+	}
+
+	if (is_rebase_i(opts)) {
+		struct todo_list done = TODO_LIST_INIT;
+
+		if (strbuf_read_file(&done.buf, rebase_path_done(), 0) > 0 &&
+				!parse_insn_buffer(done.buf.buf, &done))
+			todo_list->done_nr = count_commands(&done);
+		else
+			todo_list->done_nr = 0;
+
+		todo_list->total_nr = todo_list->done_nr
+			+ count_commands(todo_list);
+
+		todo_list_release(&done);
 	}
 
 	return 0;
@@ -1919,6 +1946,11 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 		if (save_todo(todo_list, opts))
 			return -1;
 		if (is_rebase_i(opts)) {
+			if (item->command != TODO_COMMENT)
+				fprintf(stderr, "Rebasing (%d/%d)%s",
+					++(todo_list->done_nr),
+					todo_list->total_nr,
+					opts->verbose ? "\n" : "\r");
 			unlink(rebase_path_message());
 			unlink(rebase_path_author_script());
 			unlink(rebase_path_stopped_sha());
