@@ -287,11 +287,7 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	if (use_tls_only)
-		meth = TLSv1_method();
-	else
-		meth = SSLv23_method();
-
+	meth = SSLv23_method();
 	if (!meth) {
 		ssl_socket_perror("SSLv23_method");
 		return -1;
@@ -302,6 +298,9 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 		ssl_socket_perror("SSL_CTX_new");
 		return -1;
 	}
+
+	if (use_tls_only)
+		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	if (verify)
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
