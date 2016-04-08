@@ -1095,11 +1095,6 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 				srvc->pass = xstrdup(cred.password);
 		}
 
-		if (CAP(NOLOGIN)) {
-			fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host);
-			goto bail;
-		}
-
 		if (srvc->auth_method) {
 			struct imap_cmd_cb cb;
 
@@ -1123,6 +1118,11 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 				goto bail;
 			}
 		} else {
+			if (CAP(NOLOGIN)) {
+				fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n",
+					srvc->user, srvc->host);
+				goto bail;
+			}
 			if (!imap->buf.sock.ssl)
 				imap_warn("*** IMAP Warning *** Password is being "
 					  "sent in the clear\n");
