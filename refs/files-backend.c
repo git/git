@@ -2898,7 +2898,6 @@ int set_worktree_head_symref(const char *gitdir, const char *target)
 {
 	static struct lock_file head_lock;
 	struct ref_lock *lock;
-	struct strbuf err = STRBUF_INIT;
 	struct strbuf head_path = STRBUF_INIT;
 	const char *head_rel;
 	int ret;
@@ -2906,6 +2905,8 @@ int set_worktree_head_symref(const char *gitdir, const char *target)
 	strbuf_addf(&head_path, "%s/HEAD", absolute_path(gitdir));
 	if (hold_lock_file_for_update(&head_lock, head_path.buf,
 				      LOCK_NO_DEREF) < 0) {
+		struct strbuf err = STRBUF_INIT;
+		unable_to_lock_message(head_path.buf, errno, &err);
 		error("%s", err.buf);
 		strbuf_release(&err);
 		strbuf_release(&head_path);
