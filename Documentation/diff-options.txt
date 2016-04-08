@@ -286,8 +286,8 @@ endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 --check::
-	Warn if changes introduce whitespace errors.  What are
-	considered whitespace errors is controlled by `core.whitespace`
+	Warn if changes introduce conflict markers or whitespace errors.
+	What are considered whitespace errors is controlled by `core.whitespace`
 	configuration.  By default, trailing whitespaces (including
 	lines that solely consist of whitespaces) and a space character
 	that is immediately followed by a tab character inside the
