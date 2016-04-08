@@ -8,6 +8,10 @@ The end-user facing Porcelain level commands in the "git diff" and
 "git log" by default enables the rename detection; you can still use
 "diff.renames" configuration variable to disable this.
 
+Merging two branches that have no common ancestor with "git merge" is
+by default forbidden now to prevent creating such an unusual merge by
+mistake.
+
 
 Updates since v2.8
 ------------------
@@ -38,6 +42,21 @@ UI, Workflows & Features
    "-a" (or "-s") option (i.e. when a tag message is given).  A new
    configuration variable, tag.forceSignAnnotated, can be used to tell
    the command to create signed tag in such a situation.
+
+ * "git merge" used to allow merging two branches that have no common
+   base by default, which led to a brand new history of an existing
+   project created and then get pulled by an unsuspecting maintainer,
+   which allowed an unnecessary parallel history merged into the
+   existing project.  The command has been taught not to allow this by
+   default, with an escape hatch "--allow-unrelated-histories" option
+   to be used in a rare event that merges histories of two projects
+   that started their lives independently.
+   (merge e379fdf jc/merge-refuse-new-root later to maint).
+
+ * "git apply -v" learned to report paths in the patch that were
+   skipped via --include/--exclude mechanism or being outside the
+   current working directory.
+   (merge 3f57944 nd/apply-report-skip later to maint).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -70,6 +89,8 @@ Performance, Internal Implementation, Development Support etc.
    configuration in /etc/gitconfig to the tested environment.
    (merge 1fad503 jk/test-httpd-config-nosystem later to maint).
 
+ * Build updates for MSVC.
+   (merge 0ef60af ss/msvc later to maint).
 
 Also contains various documentation updates and code clean-ups.
 
@@ -131,3 +152,6 @@ notes for details).
    (merge dde7891 pb/t7502-drop-dup later to maint).
    (merge 3bd1b51 cc/doc-recommend-performance-trace-to-file later to maint).
    (merge 7d5e9c9 jk/credential-cache-comment-exit later to maint).
+   (merge 16a86d4 nd/apply-doc later to maint).
+   (merge c3f6b85 pb/opt-cmdmode-doc later to maint).
+   (merge 30211fb oa/doc-diff-check later to maint).
