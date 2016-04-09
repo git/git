@@ -1790,6 +1790,26 @@ static int is_final_fixup(struct todo_list *todo_list)
 	return 1;
 }
 
+static const char *reflog_message(struct replay_opts *opts,
+	const char *sub_action, const char *fmt, ...)
+{
+	va_list ap;
+	static struct strbuf buf = STRBUF_INIT;
+
+	va_start(ap, fmt);
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, action_name(opts));
+	if (sub_action)
+		strbuf_addf(&buf, " (%s)", sub_action);
+	if (fmt) {
+		strbuf_addstr(&buf, ": ");
+		strbuf_vaddf(&buf, fmt, ap);
+	}
+	va_end(ap);
+
+	return buf.buf;
+}
+
 static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 {
 	int res = 0;
@@ -1857,6 +1877,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 
 		if (read_oneliner(&head_ref, rebase_path_head_name(), 0) &&
 				starts_with(head_ref.buf, "refs/")) {
+			const char *msg;
 			unsigned char head[20], orig[20];
 			int res;
 
@@ -1872,23 +1893,21 @@ cleanup_head_ref:
 				res = error(_("could not read orig-head"));
 				goto cleanup_head_ref;
 			}
-			strbuf_addf(&buf, "rebase -i (finish): %s onto ",
-				head_ref.buf);
 			if (!read_oneliner(&buf, rebase_path_onto(), 0)) {
 				res = error(_("could not read 'onto'"));
 				goto cleanup_head_ref;
 			}
-			if (update_ref(buf.buf, head_ref.buf, head, orig,
+			msg = reflog_message(opts, "finish", "%s onto %s",
+				head_ref.buf, buf.buf);
+			if (update_ref(msg, head_ref.buf, head, orig,
 					REF_NODEREF, UPDATE_REFS_MSG_ON_ERR)) {
 				res = error(_("could not update %s"),
 					head_ref.buf);
 				goto cleanup_head_ref;
 			}
-			strbuf_reset(&buf);
-			strbuf_addf(&buf,
-				"rebase -i (finish): returning to %s",
+			msg = reflog_message(opts, "finish", "returning to %s",
 				head_ref.buf);
-			if (create_symref("HEAD", head_ref.buf, buf.buf)) {
+			if (create_symref("HEAD", head_ref.buf, msg)) {
 				res = error(_("could not update HEAD to %s"),
 					head_ref.buf);
 				goto cleanup_head_ref;
