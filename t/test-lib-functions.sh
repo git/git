@@ -711,11 +711,17 @@ test_must_be_empty () {
 	fi
 }
 
-# Tests that its two parameters refer to the same revision
+# Tests that the first parameter refers to the same revision
+# of at least one other parameter
 test_cmp_rev () {
-	git rev-parse --verify "$1" >expect.rev &&
-	git rev-parse --verify "$2" >actual.rev &&
-	test_cmp expect.rev actual.rev
+	hash1="$(git rev-parse --verify "$1")" || return
+	shift
+	for rev
+	do
+		hash2="$(git rev-parse --verify "$rev")" || return
+		test "$hash1" = "$hash2" && return 0
+	done
+	return 1
 }
 
 # Print a sequence of numbers or letters in increasing order.  This is
