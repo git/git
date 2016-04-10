@@ -38,11 +38,11 @@ static inline struct node_data *node_data(struct commit *elem)
 	return (struct node_data *)elem->util;
 }
 
-static int count_distance(struct commit_list *entry)
+static int count_distance(struct commit *elem)
 {
 	int nr = 0;
 	struct commit_list *todo = NULL;
-	commit_list_append(entry->item, &todo);
+	commit_list_append(elem, &todo);
 	marker++;
 
 	while (todo) {
@@ -77,18 +77,18 @@ static int count_interesting_parents(struct commit *commit)
 	return count;
 }
 
-static inline int halfway(struct commit_list *p, int nr)
+static inline int halfway(struct commit *commit, int nr)
 {
 	/*
 	 * Don't short-cut something we are not going to return!
 	 */
-	if (p->item->object.flags & TREESAME)
+	if (commit->object.flags & TREESAME)
 		return 0;
 	/*
 	 * 2 and 3 are halfway of 5.
 	 * 3 is halfway of 6 but 2 and 4 are not.
 	 */
-	switch (2 * node_data(p->item)->weight - nr) {
+	switch (2 * node_data(commit)->weight - nr) {
 	case -1: case 0: case 1:
 		return 1;
 	default:
@@ -280,10 +280,10 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	for (p = list; p; p = p->next) {
 		if (!(p->item->object.flags & UNINTERESTING)
 		 && (node_data(p->item)->weight == -2)) {
-			node_data(p->item)->weight = count_distance(p);
+			node_data(p->item)->weight = count_distance(p->item);
 
 			/* Does it happen to be at exactly half-way? */
-			if (!find_all && halfway(p, nr))
+			if (!find_all && halfway(p->item, nr))
 				return p;
 			counted++;
 		}
@@ -321,7 +321,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			}
 
 			/* Does it happen to be at exactly half-way? */
-			if (!find_all && halfway(p, nr))
+			if (!find_all && halfway(p->item, nr))
 				return p;
 		}
 	}
