@@ -101,8 +101,6 @@ static inline int halfway(struct commit_list *p, int nr)
 	 */
 	if (p->item->object.flags & TREESAME)
 		return 0;
-	if (DEBUG_BISECT)
-		return 0;
 	/*
 	 * 2 and 3 are halfway of 5.
 	 * 3 is halfway of 6 but 2 and 4 are not.
