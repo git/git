@@ -70,7 +70,7 @@ static inline int distance_direction(struct commit *commit)
 	return 0;
 }
 
-static int count_distance(struct commit *elem)
+static int compute_weight(struct commit *elem)
 {
 	int nr = 0;
 	struct commit_list *todo = NULL;
@@ -93,6 +93,7 @@ static int count_distance(struct commit *elem)
 		}
 	}
 
+	node_data(elem)->weight = nr;
 	return nr;
 }
 
@@ -241,7 +242,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list)
  * be computed.
  *
  * weight = -2 means it has more than one parent and its distance is
- * unknown.  After running count_distance() first, they will get zero
+ * unknown.  After running compute_weight() first, they will get zero
  * or positive distance.
  */
 static struct commit_list *do_find_bisection(struct commit_list *list,
@@ -286,7 +287,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	 * If you have only one parent in the resulting set
 	 * then you can reach one commit more than that parent
 	 * can reach.  So we do not have to run the expensive
-	 * count_distance() for single strand of pearls.
+	 * compute_weight() for single strand of pearls.
 	 *
 	 * However, if you have more than one parent, you cannot
 	 * just add their distance and one for yourself, since
@@ -299,7 +300,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	for (p = list; p; p = p->next) {
 		if (!(p->item->object.flags & UNINTERESTING)
 		 && (node_data(p->item)->weight == -2)) {
-			node_data(p->item)->weight = count_distance(p->item);
+			compute_weight(p->item);
 
 			/* Does it happen to be at exactly half-way? */
 			if (!find_all && halfway(p->item))
@@ -308,7 +309,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		}
 	}
 
-	show_list("bisection 2 count_distance", counted, list);
+	show_list("bisection 2 compute_weight", counted, list);
 
 	while (counted < total) {
 		for (p = list; p; p = p->next) {
