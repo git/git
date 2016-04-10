@@ -105,7 +105,7 @@ test_expect_success 'recursive' '
 	test_must_fail git merge -s recursive C^0
 '
 
-test_expect_failure 'octopus, unrelated file touched' '
+test_expect_success 'octopus, unrelated file touched' '
 	git reset --hard &&
 	git checkout B^0 &&
 
@@ -114,7 +114,7 @@ test_expect_failure 'octopus, unrelated file touched' '
 	test_must_fail git merge C^0 D^0
 '
 
-test_expect_failure 'octopus, related file removed' '
+test_expect_success 'octopus, related file removed' '
 	git reset --hard &&
 	git checkout B^0 &&
 
@@ -123,7 +123,7 @@ test_expect_failure 'octopus, related file removed' '
 	test_must_fail git merge C^0 D^0
 '
 
-test_expect_failure 'octopus, related file modified' '
+test_expect_success 'octopus, related file modified' '
 	git reset --hard &&
 	git checkout B^0 &&
 
