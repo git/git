@@ -27,6 +27,8 @@ static int total;
 
 static unsigned marker;
 
+static struct commit_list *best_bisection;
+
 struct node_data {
 	int weight;
 	unsigned marked;
@@ -71,6 +73,14 @@ static inline int distance_direction(struct commit *commit)
 	 * 3 is halfway of 6 but 2 and 4 are not.
 	 */
 	return 0;
+}
+
+static inline void update_best_bisection(struct commit *commit)
+{
+	if (distance_direction(commit) >= 0
+	 && node_data(commit)->weight > node_data(best_bisection->item)->weight) {
+		best_bisection->item = commit;
+	}
 }
 
 static int compute_weight(struct commit *elem)
@@ -152,29 +162,6 @@ static void show_list(const char *debug, int counted,
 	}
 }
 #endif /* DEBUG_BISECT */
-
-static struct commit_list *best_bisection(struct commit_list *list)
-{
-	struct commit_list *p, *best;
-	int best_distance = -1;
-
-	best = list;
-	for (p = list; p; p = p->next) {
-		int distance;
-		unsigned flags = p->item->object.flags;
-
-		if (flags & TREESAME)
-			continue;
-		distance = get_distance(p->item);
-		if (distance > best_distance) {
-			best = p;
-			best_distance = distance;
-		}
-	}
-
-	best->next = NULL;
-	return best;
-}
 
 struct commit_dist {
 	struct commit *commit;
@@ -402,6 +389,8 @@ static void traversal_up_to_merges(struct commit_list *queue,
 				}
 			}
 		}
+
+		update_best_bisection(top);
 	}
 }
 
@@ -457,8 +446,10 @@ static inline int find_new_queue_from_merges(struct commit_list **queue,
 static inline void compute_merge_weights(struct commit_list *merges)
 {
 	struct commit_list *p;
-	for (p = merges; p; p = p->next)
+	for (p = merges; p; p = p->next) {
 		compute_weight(p->item);
+		update_best_bisection(p->item);
+	}
 }
 
 static void bottom_up_traversal(struct commit_list *queue)
@@ -489,6 +480,9 @@ static void compute_relevant_weights(struct commit_list *list,
 {
 	struct commit_list *p;
 	struct commit_list *sources = build_reversed_dag(list, weights);
+
+	best_bisection = (struct commit_list *)xcalloc(1, sizeof(*best_bisection));
+	best_bisection->item = sources->item;
 
 	for (p = sources; p; p = p->next)
 		node_data(p->item)->weight = 1;
@@ -543,7 +537,7 @@ struct commit_list *find_bisection(struct commit_list *list,
 	} else {
 		int i;
 		compute_relevant_weights(list, weights);
-		best = best_bisection(list);
+		best = best_bisection;
 		for (i = 0; i < on_list; i++) /* cleanup */
 			free_commit_list(weights[i].children);
 	}
