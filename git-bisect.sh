@@ -334,16 +334,10 @@ bisect_next_check() {
 	*)
 		bad_syn=$(bisect_voc bad)
 		good_syn=$(bisect_voc good)
-		if test -s "$GIT_DIR/BISECT_START"
-		then
-
-			eval_gettextln "You need to give me at least one \$bad_syn and one \$good_syn revision.
-(You can use \"git bisect \$bad_syn\" and \"git bisect \$good_syn\" for that.)" >&2
-		else
-			eval_gettextln "You need to start by \"git bisect start\".
-You then need to give me at least one \$good_syn and one \$bad_syn revision.
-(You can use \"git bisect \$bad_syn\" and \"git bisect \$good_syn\" for that.)" >&2
-		fi
+		eval_gettextln "You need to give me at least one \$bad_syn revision.
+Use \"git bisect \$bad_syn\" for that. One \$good_syn revision is also helpful
+for bisecting (use \"git bisect \$good_syn\"). If you do not know one \$good_syn
+revision, you can use \"git bisect next\" to find one." >&2
 		exit 1 ;;
 	esac
 }
@@ -677,7 +671,6 @@ case "$#" in
 	skip)
 		bisect_skip "$@" ;;
 	next)
-		# Not sure we want "next" at the UI level anymore.
 		bisect_next "$@" ;;
 	visualize|view)
 		bisect_visualize "$@" ;;
