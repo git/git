@@ -46,6 +46,28 @@ static inline int get_distance(struct commit *commit, int total)
 	return distance;
 }
 
+/*
+ * Return -1 if the distance is falling.
+ * (A falling distance means that the distance of the
+ *  given commit is larger than the distance of its
+ *  child commits.)
+ * Return 0 if the distance is halfway.
+ * Return 1 if the distance is rising.
+ */
+static inline int distance_direction(struct commit *commit, int total)
+{
+	int doubled_diff = 2 * node_data(commit)->weight - total;
+	if (doubled_diff < -1)
+		return 1;
+	if (doubled_diff > 1)
+		return -1;
+	/*
+	 * 2 and 3 are halfway of 5.
+	 * 3 is halfway of 6 but 2 and 4 are not.
+	 */
+	return 0;
+}
+
 static int count_distance(struct commit *elem)
 {
 	int nr = 0;
@@ -92,16 +114,7 @@ static inline int halfway(struct commit *commit, int nr)
 	 */
 	if (commit->object.flags & TREESAME)
 		return 0;
-	/*
-	 * 2 and 3 are halfway of 5.
-	 * 3 is halfway of 6 but 2 and 4 are not.
-	 */
-	switch (2 * node_data(commit)->weight - nr) {
-	case -1: case 0: case 1:
-		return 1;
-	default:
-		return 0;
-	}
+	return !distance_direction(commit, nr);
 }
 
 #if !DEBUG_BISECT
