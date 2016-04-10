@@ -39,6 +39,8 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 TERM_BAD=bad
 TERM_GOOD=good
+IF_NO_GOOD=ask
+AUTONEXT=false
 
 bisect_head()
 {
@@ -312,11 +314,11 @@ bisect_next_check() {
 	,,*)
 		: have both $TERM_GOOD and $TERM_BAD - ok
 		;;
-	*,)
+	*,false)
 		# do not have both but not asked to fail - just report.
 		false
 		;;
-	t,,"$TERM_GOOD")
+	t,,ask)
 		# have bad (or new) but not good (or old).  we could bisect although
 		# this is less optimum.
 		eval_gettextln "Warning: bisecting only with a \$TERM_BAD commit." >&2
@@ -331,6 +333,9 @@ bisect_next_check() {
 		fi
 		: bisect without $TERM_GOOD...
 		;;
+	t,,true)
+		:
+		;;
 	*)
 		bad_syn=$(bisect_voc bad)
 		good_syn=$(bisect_voc good)
@@ -343,13 +348,13 @@ revision, you can use \"git bisect next\" to find one." >&2
 }
 
 bisect_auto_next() {
-	bisect_next_check && bisect_next || :
+	bisect_next_check $AUTONEXT && bisect_next || :
 }
 
 bisect_next() {
 	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
-	bisect_next_check $TERM_GOOD
+	bisect_next_check $IF_NO_GOOD
 
 	# Perform all bisection computation, display and checkout
 	git bisect--helper --next-all $(test -f "$GIT_DIR/BISECT_HEAD" && echo --no-checkout)
@@ -478,7 +483,9 @@ bisect_replay () {
 }
 
 bisect_run () {
-	bisect_next_check fail
+	bisect_next_check $IF_NO_GOOD
+	AUTONEXT=true
+	IF_NO_GOOD=true
 
 	while true
 	do
