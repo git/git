@@ -364,8 +364,8 @@ static inline void commit_list_insert_unique(struct commit *item,
 
 /* do a traversal on the reversed DAG (starting from commits in queue),
  * but stop at merge commits */
-static void traversal_up_to_merges(struct commit_list *queue,
-				   struct commit_list **merges)
+static int traversal_up_to_merges(struct commit_list *queue,
+				  struct commit_list **merges)
 {
 	assert(queue);
 	while (queue) {
@@ -391,7 +391,13 @@ static void traversal_up_to_merges(struct commit_list *queue,
 		}
 
 		update_best_bisection(top);
+		if (distance_direction(top) == 0) { // halfway
+			assert(!(top->object.flags & TREESAME));
+			free_commit_list(queue);
+			return 1;
+		}
 	}
+	return 0;
 }
 
 static inline int all_parents_are_visited(struct commit *merge)
@@ -455,10 +461,12 @@ static inline void compute_merge_weights(struct commit_list *merges)
 static void bottom_up_traversal(struct commit_list *queue)
 {
 	struct commit_list *merges = NULL;
-	traversal_up_to_merges(queue, &merges);
-	while (find_new_queue_from_merges(&queue, &merges)) {
+	int halfway_found = traversal_up_to_merges(queue, &merges);
+
+	while (!halfway_found
+	    && find_new_queue_from_merges(&queue, &merges)) {
 		compute_merge_weights(queue);
-		traversal_up_to_merges(queue, &merges);
+		halfway_found &= traversal_up_to_merges(queue, &merges);
 	}
 
 	/* cleanup */
