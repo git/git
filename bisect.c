@@ -38,6 +38,14 @@ static inline struct node_data *node_data(struct commit *elem)
 	return (struct node_data *)elem->util;
 }
 
+static inline int get_distance(struct commit *commit, int total)
+{
+	int distance = node_data(commit)->weight;
+	if (total - distance < distance)
+		distance = total - distance;
+	return distance;
+}
+
 static int count_distance(struct commit *elem)
 {
 	int nr = 0;
@@ -148,9 +156,7 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
 
 		if (flags & TREESAME)
 			continue;
-		distance = node_data(p->item)->weight;
-		if (nr - distance < distance)
-			distance = nr - distance;
+		distance = get_distance(p->item, nr);
 		if (distance > best_distance) {
 			best = p;
 			best_distance = distance;
@@ -188,9 +194,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 
 		if (flags & TREESAME)
 			continue;
-		distance = node_data(p->item)->weight;
-		if (nr - distance < distance)
-			distance = nr - distance;
+		distance = get_distance(p->item, nr);
 		array[cnt].commit = p->item;
 		array[cnt].distance = distance;
 		cnt++;
