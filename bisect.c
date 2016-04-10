@@ -179,6 +179,7 @@ static struct commit_list *best_bisection(struct commit_list *list)
 		}
 	}
 
+	best->next = NULL;
 	return best;
 }
 
@@ -245,9 +246,8 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list)
  * unknown.  After running compute_weight() first, they will get zero
  * or positive distance.
  */
-static struct commit_list *do_find_bisection(struct commit_list *list,
-					     struct node_data *weights,
-					     int find_all)
+static void compute_all_weights(struct commit_list *list,
+				struct node_data *weights)
 {
 	int n, counted;
 	struct commit_list *p;
@@ -301,10 +301,88 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		if (!(p->item->object.flags & UNINTERESTING)
 		 && (node_data(p->item)->weight == -2)) {
 			compute_weight(p->item);
+			counted++;
+		}
+	}
+
+	show_list("bisection 2 compute_weight", counted, list);
+
+	while (counted < total) {
+		for (p = list; p; p = p->next) {
+			struct commit_list *q;
+			unsigned flags = p->item->object.flags;
+
+			if (0 <= node_data(p->item)->weight)
+				continue;
+			for (q = p->item->parents; q; q = q->next) {
+				if (q->item->object.flags & UNINTERESTING)
+					continue;
+				if (0 <= node_data(q->item)->weight)
+					break;
+			}
+			if (!q)
+				continue;
+
+			/*
+			 * weight for p is unknown but q is known.
+			 * add one for p itself if p is to be counted,
+			 * otherwise inherit it from q directly.
+			 */
+			node_data(p->item)->weight = node_data(q->item)->weight;
+			if (!(flags & TREESAME)) {
+				node_data(p->item)->weight++;
+				counted++;
+				show_list("bisection 2 count one",
+					  counted, list);
+			}
+		}
+	}
+	show_list("bisection 2 counted all", counted, list);
+}
+
+/* At the moment this is basically the same as compute_all_weights()
+ * but with a halfway shortcut */
+static void compute_relevant_weights(struct commit_list *list,
+				     struct node_data *weights)
+{
+	int n, counted;
+	struct commit_list *p;
+
+	counted = 0;
+
+	for (n = 0, p = list; p; p = p->next) {
+		struct commit *commit = p->item;
+		unsigned flags = commit->object.flags;
+
+		commit->util = &weights[n++];
+		switch (count_interesting_parents(commit)) {
+		case 0:
+			if (!(flags & TREESAME)) {
+				node_data(commit)->weight = 1;
+				counted++;
+				show_list("bisection 2 count one",
+					  counted, list);
+			}
+			break;
+		case 1:
+			node_data(commit)->weight = -1;
+			break;
+		default:
+			node_data(commit)->weight = -2;
+			break;
+		}
+	}
+
+	show_list("bisection 2 initialize", counted, list);
+
+	for (p = list; p; p = p->next) {
+		if (!(p->item->object.flags & UNINTERESTING)
+		 && (node_data(p->item)->weight == -2)) {
+			compute_weight(p->item);
 
 			/* Does it happen to be at exactly half-way? */
-			if (!find_all && halfway(p->item))
-				return p;
+			if (halfway(p->item))
+				return;
 			counted++;
 		}
 	}
@@ -341,17 +419,11 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			}
 
 			/* Does it happen to be at exactly half-way? */
-			if (!find_all && halfway(p->item))
-				return p;
+			if (halfway(p->item))
+				return;
 		}
 	}
-
 	show_list("bisection 2 counted all", counted, list);
-
-	if (!find_all)
-		return best_bisection(list);
-	else
-		return best_bisection_sorted(list);
 }
 
 struct commit_list *find_bisection(struct commit_list *list,
@@ -364,6 +436,9 @@ struct commit_list *find_bisection(struct commit_list *list,
 
 	total = 0;
 	marker = 0;
+
+	if (!list)
+		return NULL;
 
 	show_list("bisection 2 entry", 0, list);
 
@@ -391,13 +466,16 @@ struct commit_list *find_bisection(struct commit_list *list,
 	*all = total;
 	weights = (struct node_data *)xcalloc(on_list, sizeof(*weights));
 
-	/* Do the real work of finding bisection commit. */
-	best = do_find_bisection(list, weights, find_all);
-	if (best) {
-		if (!find_all)
-			best->next = NULL;
-		*reaches = node_data(best->item)->weight;
+	if (find_all) {
+		compute_all_weights(list, weights);
+		best = best_bisection_sorted(list);
+	} else {
+		compute_relevant_weights(list, weights);
+		best = best_bisection(list);
 	}
+	assert(best);
+	*reaches = node_data(best->item)->weight;
+
 	free(weights);
 
 	return best;
