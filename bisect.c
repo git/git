@@ -984,6 +984,8 @@ int bisect_next_all(const char *prefix, int no_checkout)
 		exit(10);
 	}
 
+	free_commit_list(revs.commits);
+
 	nr = all - reaches - 1;
 	steps = estimate_bisect_steps(all);
 	printf("Bisecting: %d revision%s left to test after this "
