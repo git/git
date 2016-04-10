@@ -93,7 +93,7 @@ test_expect_success 'merge non-notes ref into empty notes ref (remote-notes/orig
 	git notes merge refs/remote-notes/origin/x &&
 	verify_notes v &&
 	# refs/remote-notes/origin/x and v should point to the same notes commit
-	test "$(git rev-parse refs/remote-notes/origin/x)" = "$(git rev-parse refs/notes/v)"
+	test_cmp_rev refs/remote-notes/origin/x refs/notes/v
 '
 
 test_expect_success 'merge notes into empty notes ref (x => y)' '
@@ -101,13 +101,13 @@ test_expect_success 'merge notes into empty notes ref (x => y)' '
 	git notes merge x &&
 	verify_notes y &&
 	# x and y should point to the same notes commit
-	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
+	test_cmp_rev refs/notes/x refs/notes/y
 '
 
 test_expect_success 'merge empty notes ref (z => y)' '
 	git notes merge z &&
 	# y should not change (still == x)
-	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
+	test_cmp_rev refs/notes/x refs/notes/y
 '
 
 test_expect_success 'change notes on other notes ref (y)' '
@@ -174,7 +174,7 @@ test_expect_success 'merge changed (y) into original (x) => Fast-forward' '
 	verify_notes x &&
 	verify_notes y &&
 	# x and y should point to same the notes commit
-	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
+	test_cmp_rev refs/notes/x refs/notes/y
 '
 
 test_expect_success 'merge empty notes ref (z => y)' '

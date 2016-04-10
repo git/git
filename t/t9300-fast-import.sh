@@ -368,7 +368,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 		git prune" &&
 	git fast-import <input &&
 	test -f .git/TEMP_TAG &&
-	test $(git rev-parse master) = $(git rev-parse TEMP_TAG^)
+	test_cmp_rev master TEMP_TAG^
 '
 
 test_expect_success 'B: accept empty committer' '
@@ -1110,7 +1110,7 @@ test_expect_success 'N: copy dirty subdirectory' '
 	INPUT_END
 
 	git fast-import <input &&
-	test $(git rev-parse N2^{tree}) = $(git rev-parse N3^{tree})
+	test_cmp_rev N2^{tree} N3^{tree}
 '
 
 test_expect_success 'N: copy directory by id' '
@@ -1507,7 +1507,7 @@ test_expect_success 'O: comments are all skipped' '
 	INPUT_END
 
 	git fast-import <input &&
-	test $(git rev-parse N3) = $(git rev-parse O1)
+	test_cmp_rev N3 O1
 '
 
 test_expect_success 'O: blank lines not necessary after data commands' '
@@ -1528,7 +1528,7 @@ test_expect_success 'O: blank lines not necessary after data commands' '
 	INPUT_END
 
 	git fast-import <input &&
-	test $(git rev-parse N3) = $(git rev-parse O2)
+	test_cmp_rev N3 O2
 '
 
 test_expect_success 'O: repack before next test' '
@@ -1575,7 +1575,7 @@ test_expect_success 'O: blank lines not necessary after other commands' '
 
 	git fast-import <input &&
 	test 8 = $(find .git/objects/pack -type f | wc -l) &&
-	test $(git rev-parse refs/tags/O3-2nd) = $(git rev-parse O3^) &&
+	test_cmp_rev refs/tags/O3-2nd O3^ &&
 	git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
 	test_cmp expect actual
 '
@@ -1721,7 +1721,7 @@ test_expect_success 'P: verbatim SHA gitlinks' '
 	git gc &&
 	git prune &&
 	git fast-import <input &&
-	test $(git rev-parse --verify subuse2) = $(git rev-parse --verify subuse1)
+	test_cmp_rev subuse2 subuse1
 '
 
 test_expect_success 'P: fail on inline gitlink' '

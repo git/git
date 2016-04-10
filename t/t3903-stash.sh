@@ -34,7 +34,7 @@ index 0cfbf08..00750ed 100644
 EOF
 
 test_expect_success 'parents of stash' '
-	test $(git rev-parse stash^) = $(git rev-parse HEAD) &&
+	test_cmp_rev stash^ HEAD &&
 	git diff stash^2..stash > output &&
 	test_cmp output expect
 '
@@ -188,7 +188,7 @@ test_expect_success 'stash branch' '
 	git commit file -m second &&
 	git stash branch stashbranch &&
 	test refs/heads/stashbranch = $(git symbolic-ref HEAD) &&
-	test $(git rev-parse HEAD) = $(git rev-parse master^) &&
+	test_cmp_rev HEAD master^ &&
 	git diff --cached > output &&
 	test_cmp output expect &&
 	git diff > output &&
@@ -653,7 +653,7 @@ test_expect_success 'stash where working directory contains "HEAD" file' '
 	git stash &&
 	git diff-files --quiet &&
 	git diff-index --cached --quiet HEAD &&
-	test "$(git rev-parse stash^)" = "$(git rev-parse HEAD)" &&
+	test_cmp_rev stash^ HEAD &&
 	git diff stash^..stash > output &&
 	test_cmp output expect
 '

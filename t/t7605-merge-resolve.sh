@@ -30,9 +30,8 @@ test_expect_success 'setup' '
 test_expect_success 'merge c1 to c2' '
 	git reset --hard c1 &&
 	git merge -s resolve c2 &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD^1)" &&
-	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
+	test_cmp_rev c1 HEAD^1 &&
+	test_cmp_rev c2 HEAD^2 &&
 	git diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&

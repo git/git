@@ -335,16 +335,16 @@ test_expect_success 'bisect skip only one range' '
 	git bisect reset &&
 	git bisect start $HASH7 $HASH1 &&
 	git bisect skip $HASH1..$HASH5 &&
-	test "$HASH6" = "$(git rev-parse --verify HEAD)" &&
+	test_cmp_rev HEAD $HASH6 &&
 	test_must_fail git bisect bad > my_bisect_log.txt &&
 	grep "first bad commit could be any of" my_bisect_log.txt
 '
 
 test_expect_success 'bisect skip many ranges' '
 	git bisect start $HASH7 $HASH1 &&
-	test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
+	test_cmp_rev HEAD $HASH4 &&
 	git bisect skip $HASH2 $HASH2.. ..$HASH5 &&
-	test "$HASH6" = "$(git rev-parse --verify HEAD)" &&
+	test_cmp_rev HEAD $HASH6 &&
 	test_must_fail git bisect bad > my_bisect_log.txt &&
 	grep "first bad commit could be any of" my_bisect_log.txt
 '
@@ -356,7 +356,7 @@ test_expect_success 'bisect starting with a detached HEAD' '
 	git bisect start &&
 	test $HEAD = $(cat .git/BISECT_START) &&
 	git bisect reset &&
-	test $HEAD = $(git rev-parse --verify HEAD)
+	test_cmp_rev "$HEAD" HEAD
 '
 
 test_expect_success 'bisect errors out if bad and good are mistaken' '
@@ -370,18 +370,15 @@ test_expect_success 'bisect does not create a "bisect" branch' '
 	git bisect reset &&
 	git bisect start $HASH7 $HASH1 &&
 	git branch bisect &&
-	rev_hash4=$(git rev-parse --verify HEAD) &&
-	test "$rev_hash4" = "$HASH4" &&
+	test_cmp_rev HEAD $HASH4 &&
 	git branch -D bisect &&
 	git bisect good &&
 	git branch bisect &&
-	rev_hash6=$(git rev-parse --verify HEAD) &&
-	test "$rev_hash6" = "$HASH6" &&
+	test_cmp_rev HEAD $HASH6 &&
 	git bisect good > my_bisect_log.txt &&
 	grep "$HASH7 is the first bad commit" my_bisect_log.txt &&
 	git bisect reset &&
-	rev_hash6=$(git rev-parse --verify bisect) &&
-	test "$rev_hash6" = "$HASH6" &&
+	test_cmp_rev bisect $HASH6 &&
 	git branch -D bisect
 '
 
@@ -481,7 +478,7 @@ test_expect_success 'optimized merge base checks' '
 	grep "$HASH4" my_bisect_log.txt &&
 	git bisect good > my_bisect_log2.txt &&
 	test -f ".git/BISECT_ANCESTORS_OK" &&
-	test "$HASH6" = $(git rev-parse --verify HEAD) &&
+	test_cmp_rev HEAD $HASH6 &&
 	git bisect bad > my_bisect_log3.txt &&
 	git bisect good "$A_HASH" > my_bisect_log4.txt &&
 	grep "merge base must be tested" my_bisect_log4.txt &&
@@ -524,8 +521,7 @@ test_expect_success '"parallel" side branch creation' '
 test_expect_success 'restricting bisection on one dir' '
 	git bisect reset &&
 	git bisect start HEAD $HASH1 -- dir1 &&
-	para1=$(git rev-parse --verify HEAD) &&
-	test "$para1" = "$PARA_HASH1" &&
+	test_cmp_rev HEAD "$PARA_HASH1" &&
 	git bisect bad > my_bisect_log.txt &&
 	grep "$PARA_HASH1 is the first bad commit" my_bisect_log.txt
 '
@@ -533,31 +529,24 @@ test_expect_success 'restricting bisection on one dir' '
 test_expect_success 'restricting bisection on one dir and a file' '
 	git bisect reset &&
 	git bisect start HEAD $HASH1 -- dir1 hello &&
-	para4=$(git rev-parse --verify HEAD) &&
-	test "$para4" = "$PARA_HASH4" &&
+	test_cmp_rev HEAD "$PARA_HASH4" &&
 	git bisect bad &&
-	hash3=$(git rev-parse --verify HEAD) &&
-	test "$hash3" = "$HASH3" &&
+	test_cmp_rev HEAD $HASH3 &&
 	git bisect good &&
-	hash4=$(git rev-parse --verify HEAD) &&
-	test "$hash4" = "$HASH4" &&
+	test_cmp_rev HEAD $HASH4 &&
 	git bisect good &&
-	para1=$(git rev-parse --verify HEAD) &&
-	test "$para1" = "$PARA_HASH1" &&
+	test_cmp_rev HEAD "$PARA_HASH1" &&
 	git bisect good > my_bisect_log.txt &&
 	grep "$PARA_HASH4 is the first bad commit" my_bisect_log.txt
 '
 
 test_expect_success 'skipping away from skipped commit' '
 	git bisect start $PARA_HASH7 $HASH1 &&
-	para4=$(git rev-parse --verify HEAD) &&
-	test "$para4" = "$PARA_HASH4" &&
-        git bisect skip &&
-	hash7=$(git rev-parse --verify HEAD) &&
-	test "$hash7" = "$HASH7" &&
-        git bisect skip &&
-	para3=$(git rev-parse --verify HEAD) &&
-	test "$para3" = "$PARA_HASH3"
+	test_cmp_rev HEAD "$PARA_HASH4" &&
+	git bisect skip &&
+	test_cmp_rev HEAD $HASH7 &&
+	git bisect skip &&
+	test_cmp_rev HEAD "$PARA_HASH3"
 '
 
 test_expect_success 'erroring out when using bad path parameters' '
@@ -644,56 +633,50 @@ test_expect_success 'bisect fails if tree is broken on trial commit' '
 	test_cmp expected.missing-tree.default error.txt
 '
 
-check_same()
-{
-	echo "Checking $1 is the same as $2" &&
-	test_cmp_rev "$1" "$2"
-}
-
 test_expect_success 'bisect: --no-checkout - start commit bad' '
 	git bisect reset &&
 	git bisect start BROKEN_HASH7 BROKEN_HASH4 --no-checkout &&
-	check_same BROKEN_HASH6 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH6 &&
 	git bisect reset
 '
 
 test_expect_success 'bisect: --no-checkout - trial commit bad' '
 	git bisect reset &&
 	git bisect start broken BROKEN_HASH4 --no-checkout &&
-	check_same BROKEN_HASH6 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH6 &&
 	git bisect reset
 '
 
 test_expect_success 'bisect: --no-checkout - target before breakage' '
 	git bisect reset &&
 	git bisect start broken BROKEN_HASH4 --no-checkout &&
-	check_same BROKEN_HASH6 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH6 &&
 	git bisect bad BISECT_HEAD &&
-	check_same BROKEN_HASH5 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH5 &&
 	git bisect bad BISECT_HEAD &&
-	check_same BROKEN_HASH5 bisect/bad &&
+	test_cmp_rev bisect/bad BROKEN_HASH5 &&
 	git bisect reset
 '
 
 test_expect_success 'bisect: --no-checkout - target in breakage' '
 	git bisect reset &&
 	git bisect start broken BROKEN_HASH4 --no-checkout &&
-	check_same BROKEN_HASH6 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH6 &&
 	git bisect bad BISECT_HEAD &&
-	check_same BROKEN_HASH5 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH5 &&
 	git bisect good BISECT_HEAD &&
-	check_same BROKEN_HASH6 bisect/bad &&
+	test_cmp_rev bisect/bad BROKEN_HASH6 &&
 	git bisect reset
 '
 
 test_expect_success 'bisect: --no-checkout - target after breakage' '
 	git bisect reset &&
 	git bisect start broken BROKEN_HASH4 --no-checkout &&
-	check_same BROKEN_HASH6 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH6 &&
 	git bisect good BISECT_HEAD &&
-	check_same BROKEN_HASH8 BISECT_HEAD &&
+	test_cmp_rev BISECT_HEAD BROKEN_HASH8 &&
 	git bisect good BISECT_HEAD &&
-	check_same BROKEN_HASH9 bisect/bad &&
+	test_cmp_rev bisect/bad BROKEN_HASH9 &&
 	git bisect reset
 '
 
@@ -708,7 +691,7 @@ test_expect_success 'bisect: demonstrate identification of damage boundary' "
 		rc=\$?
 		rm -f tmp.\$\$
 		test \$rc = 0' &&
-	check_same BROKEN_HASH6 bisect/bad &&
+	test_cmp_rev bisect/bad BROKEN_HASH6 &&
 	git bisect reset
 "
 
@@ -755,7 +738,7 @@ test_expect_success '"git bisect bad HEAD" behaves as "git bisect bad"' '
 	git bisect start HEAD $HASH1 &&
 	git bisect good HEAD &&
 	git bisect bad HEAD &&
-	test "$HASH6" = $(git rev-parse --verify HEAD) &&
+	test_cmp_rev HEAD $HASH6 &&
 	git bisect reset
 '
 
