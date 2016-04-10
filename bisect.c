@@ -23,6 +23,8 @@ static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
 static const char *term_bad;
 static const char *term_good;
 
+static int total;
+
 static unsigned marker;
 
 struct node_data {
@@ -38,7 +40,7 @@ static inline struct node_data *node_data(struct commit *elem)
 	return (struct node_data *)elem->util;
 }
 
-static inline int get_distance(struct commit *commit, int total)
+static inline int get_distance(struct commit *commit)
 {
 	int distance = node_data(commit)->weight;
 	if (total - distance < distance)
@@ -54,7 +56,7 @@ static inline int get_distance(struct commit *commit, int total)
  * Return 0 if the distance is halfway.
  * Return 1 if the distance is rising.
  */
-static inline int distance_direction(struct commit *commit, int total)
+static inline int distance_direction(struct commit *commit)
 {
 	int doubled_diff = 2 * node_data(commit)->weight - total;
 	if (doubled_diff < -1)
@@ -107,25 +109,25 @@ static int count_interesting_parents(struct commit *commit)
 	return count;
 }
 
-static inline int halfway(struct commit *commit, int nr)
+static inline int halfway(struct commit *commit)
 {
 	/*
 	 * Don't short-cut something we are not going to return!
 	 */
 	if (commit->object.flags & TREESAME)
 		return 0;
-	return !distance_direction(commit, nr);
+	return !distance_direction(commit);
 }
 
 #if !DEBUG_BISECT
-#define show_list(a,b,c,d) do { ; } while (0)
+#define show_list(a,b,c) do { ; } while (0)
 #else
-static void show_list(const char *debug, int counted, int nr,
+static void show_list(const char *debug, int counted,
 		      struct commit_list *list)
 {
 	struct commit_list *p;
 
-	fprintf(stderr, "%s (%d/%d)\n", debug, counted, nr);
+	fprintf(stderr, "%s (%d/%d)\n", debug, counted, total);
 
 	for (p = list; p; p = p->next) {
 		struct commit_list *pp;
@@ -157,7 +159,7 @@ static void show_list(const char *debug, int counted, int nr,
 }
 #endif /* DEBUG_BISECT */
 
-static struct commit_list *best_bisection(struct commit_list *list, int nr)
+static struct commit_list *best_bisection(struct commit_list *list)
 {
 	struct commit_list *p, *best;
 	int best_distance = -1;
@@ -169,7 +171,7 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
 
 		if (flags & TREESAME)
 			continue;
-		distance = get_distance(p->item, nr);
+		distance = get_distance(p->item);
 		if (distance > best_distance) {
 			best = p;
 			best_distance = distance;
@@ -195,10 +197,10 @@ static int compare_commit_dist(const void *a_, const void *b_)
 	return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
 }
 
-static struct commit_list *best_bisection_sorted(struct commit_list *list, int nr)
+static struct commit_list *best_bisection_sorted(struct commit_list *list)
 {
 	struct commit_list *p;
-	struct commit_dist *array = xcalloc(nr, sizeof(*array));
+	struct commit_dist *array = xcalloc(total, sizeof(*array));
 	int cnt, i;
 
 	for (p = list, cnt = 0; p; p = p->next) {
@@ -207,7 +209,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 
 		if (flags & TREESAME)
 			continue;
-		distance = get_distance(p->item, nr);
+		distance = get_distance(p->item);
 		array[cnt].commit = p->item;
 		array[cnt].distance = distance;
 		cnt++;
@@ -243,7 +245,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
  * or positive distance.
  */
 static struct commit_list *do_find_bisection(struct commit_list *list,
-					     int nr, struct node_data *weights,
+					     struct node_data *weights,
 					     int find_all)
 {
 	int n, counted;
@@ -262,7 +264,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 				node_data(commit)->weight = 1;
 				counted++;
 				show_list("bisection 2 count one",
-					  counted, nr, list);
+					  counted, list);
 			}
 			/*
 			 * otherwise, it is known not to reach any
@@ -278,7 +280,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		}
 	}
 
-	show_list("bisection 2 initialize", counted, nr, list);
+	show_list("bisection 2 initialize", counted, list);
 
 	/*
 	 * If you have only one parent in the resulting set
@@ -300,15 +302,15 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			node_data(p->item)->weight = count_distance(p->item);
 
 			/* Does it happen to be at exactly half-way? */
-			if (!find_all && halfway(p->item, nr))
+			if (!find_all && halfway(p->item))
 				return p;
 			counted++;
 		}
 	}
 
-	show_list("bisection 2 count_distance", counted, nr, list);
+	show_list("bisection 2 count_distance", counted, list);
 
-	while (counted < nr) {
+	while (counted < total) {
 		for (p = list; p; p = p->next) {
 			struct commit_list *q;
 			unsigned flags = p->item->object.flags;
@@ -334,40 +336,41 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 				node_data(p->item)->weight++;
 				counted++;
 				show_list("bisection 2 count one",
-					  counted, nr, list);
+					  counted, list);
 			}
 
 			/* Does it happen to be at exactly half-way? */
-			if (!find_all && halfway(p->item, nr))
+			if (!find_all && halfway(p->item))
 				return p;
 		}
 	}
 
-	show_list("bisection 2 counted all", counted, nr, list);
+	show_list("bisection 2 counted all", counted, list);
 
 	if (!find_all)
-		return best_bisection(list, nr);
+		return best_bisection(list);
 	else
-		return best_bisection_sorted(list, nr);
+		return best_bisection_sorted(list);
 }
 
 struct commit_list *find_bisection(struct commit_list *list,
 					  int *reaches, int *all,
 					  int find_all)
 {
-	int nr, on_list;
+	int on_list;
 	struct commit_list *p, *best, *next, *last;
 	struct node_data *weights;
 
+	total = 0;
 	marker = 0;
 
-	show_list("bisection 2 entry", 0, 0, list);
+	show_list("bisection 2 entry", 0, list);
 
 	/*
 	 * Count the number of total and tree-changing items on the
 	 * list, while reversing the list.
 	 */
-	for (nr = on_list = 0, last = NULL, p = list;
+	for (on_list = 0, last = NULL, p = list;
 	     p;
 	     p = next) {
 		unsigned flags = p->item->object.flags;
@@ -378,23 +381,24 @@ struct commit_list *find_bisection(struct commit_list *list,
 		p->next = last;
 		last = p;
 		if (!(flags & TREESAME))
-			nr++;
+			total++;
 		on_list++;
 	}
 	list = last;
-	show_list("bisection 2 sorted", 0, nr, list);
+	show_list("bisection 2 sorted", 0, list);
 
-	*all = nr;
+	*all = total;
 	weights = (struct node_data *)xcalloc(on_list, sizeof(*weights));
 
 	/* Do the real work of finding bisection commit. */
-	best = do_find_bisection(list, nr, weights, find_all);
+	best = do_find_bisection(list, weights, find_all);
 	if (best) {
 		if (!find_all)
 			best->next = NULL;
 		*reaches = node_data(best->item)->weight;
 	}
 	free(weights);
+
 	return best;
 }
 
@@ -931,7 +935,7 @@ int bisect_next_all(const char *prefix, int no_checkout)
 {
 	struct rev_info revs;
 	struct commit_list *tried;
-	int reaches = 0, all = 0, nr, steps;
+	int reaches = 0, nr, steps;
 	const unsigned char *bisect_rev;
 
 	read_bisect_terms(&term_bad, &term_good);
@@ -945,7 +949,7 @@ int bisect_next_all(const char *prefix, int no_checkout)
 
 	bisect_common(&revs);
 
-	revs.commits = find_bisection(revs.commits, &reaches, &all,
+	revs.commits = find_bisection(revs.commits, &reaches, &total,
 				       !!skipped_revs.nr);
 	revs.commits = managed_skipped(revs.commits, &tried);
 
@@ -963,7 +967,7 @@ int bisect_next_all(const char *prefix, int no_checkout)
 		exit(1);
 	}
 
-	if (!all) {
+	if (!total) {
 		fprintf(stderr, "No testable commit found.\n"
 			"Maybe you started with bad path parameters?\n");
 		exit(4);
@@ -982,8 +986,8 @@ int bisect_next_all(const char *prefix, int no_checkout)
 
 	free_commit_list(revs.commits);
 
-	nr = all - reaches - 1;
-	steps = estimate_bisect_steps(all);
+	nr = total - reaches - 1;
+	steps = estimate_bisect_steps(total);
 	printf("Bisecting: %d revision%s left to test after this "
 	       "(roughly %d step%s)\n", nr, (nr == 1 ? "" : "s"),
 	       steps, (steps == 1 ? "" : "s"));
