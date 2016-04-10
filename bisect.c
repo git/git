@@ -26,33 +26,23 @@ static const char *term_good;
 /* Remember to update object flag allocation in object.h */
 #define COUNTED		(1u<<16)
 
-/*
- * This is a truly stupid algorithm, but it's only
- * used for bisection, and we just don't care enough.
- *
- * We care just barely enough to avoid recursing for
- * non-merge entries.
- */
 static int count_distance(struct commit_list *entry)
 {
 	int nr = 0;
+	struct commit_list *todo = NULL;
+	commit_list_append(entry->item, &todo);
 
-	while (entry) {
-		struct commit *commit = entry->item;
-		struct commit_list *p;
+	while (todo) {
+		struct commit *commit = pop_commit(&todo);
 
-		if (commit->object.flags & (UNINTERESTING | COUNTED))
-			break;
-		if (!(commit->object.flags & TREESAME))
-			nr++;
-		commit->object.flags |= COUNTED;
-		p = commit->parents;
-		entry = p;
-		if (p) {
-			p = p->next;
-			while (p) {
-				nr += count_distance(p);
-				p = p->next;
+		if (!(commit->object.flags & (UNINTERESTING | COUNTED))) {
+			struct commit_list *p;
+			if (!(commit->object.flags & TREESAME))
+				nr++;
+			commit->object.flags |= COUNTED;
+
+			for (p = commit->parents; p; p = p->next) {
+				commit_list_insert(p->item, &todo);
 			}
 		}
 	}
@@ -287,7 +277,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	 * can reach.  So we do not have to run the expensive
 	 * count_distance() for single strand of pearls.
 	 *
-	 * However, if you have more than one parents, you cannot
+	 * However, if you have more than one parent, you cannot
 	 * just add their distance and one for yourself, since
 	 * they usually reach the same ancestor and you would
 	 * end up counting them twice that way.
@@ -296,17 +286,16 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 	 * way, and then fill the blanks using cheaper algorithm.
 	 */
 	for (p = list; p; p = p->next) {
-		if (p->item->object.flags & UNINTERESTING)
-			continue;
-		if (weight(p) != -2)
-			continue;
-		weight_set(p, count_distance(p));
-		clear_distance(list);
+		if (!(p->item->object.flags & UNINTERESTING)
+		 && (weight(p) == -2)) {
+			weight_set(p, count_distance(p));
+			clear_distance(list);
 
-		/* Does it happen to be at exactly half-way? */
-		if (!find_all && halfway(p, nr))
-			return p;
-		counted++;
+			/* Does it happen to be at exactly half-way? */
+			if (!find_all && halfway(p, nr))
+				return p;
+			counted++;
+		}
 	}
 
 	show_list("bisection 2 count_distance", counted, nr, list);
