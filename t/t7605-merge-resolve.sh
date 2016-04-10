@@ -43,7 +43,7 @@ merge_c1_to_c2_cmds='
 
 test_expect_success 'merge c1 to c2'        "$merge_c1_to_c2_cmds"
 
-test_expect_failure 'merge c1 to c2, again' "$merge_c1_to_c2_cmds"
+test_expect_success 'merge c1 to c2, again' "$merge_c1_to_c2_cmds"
 
 test_expect_success 'merge c2 to c3 (fails)' '
 	git reset --hard c2 &&
