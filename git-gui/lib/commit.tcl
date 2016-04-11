@@ -1,8 +1,13 @@
 # git-gui misc. commit reading/writing support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+set author_name ""
+set author_email ""
+set author_date ""
+
 proc load_last_commit {} {
 	global HEAD PARENT MERGE_HEAD commit_type ui_comm
+	global author_name author_email author_date
 	global repo_config
 
 	if {[llength $PARENT] == 0} {
@@ -34,6 +39,10 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 					lappend parents [string range $line 7 end]
 				} elseif {[string match {encoding *} $line]} {
 					set enc [string tolower [string range $line 9 end]]
+				} elseif {[regexp "author (.*)\\s<(.*)>\\s(\\d.*$)" $line all name email time]} {
+					set author_name $name
+					set author_email $email
+					set author_date $time
 				}
 			}
 			set msg [read $fd]
@@ -107,8 +116,12 @@ proc do_signoff {} {
 
 proc create_new_commit {} {
 	global commit_type ui_comm
+	global author_name author_email author_date
 
 	set commit_type normal
+	set author_name ""
+	set author_email ""
+	set author_date ""
 	$ui_comm delete 0.0 end
 	$ui_comm edit reset
 	$ui_comm edit modified false
@@ -327,6 +340,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	global ui_comm selected_commit_type
 	global file_states selected_paths rescan_active
 	global repo_config
+	global env author_name author_email author_date
 
 	gets $fd_wt tree_id
 	if {[catch {close $fd_wt} err]} {
@@ -366,6 +380,11 @@ A rescan will be automatically started now.
 		}
 	}
 
+	if {$author_name ne ""} {
+		set env(GIT_AUTHOR_NAME) $author_name
+		set env(GIT_AUTHOR_EMAIL) $author_email
+		set env(GIT_AUTHOR_DATE) $author_date
+	}
 	# -- Create the commit.
 	#
 	set cmd [list commit-tree $tree_id]
