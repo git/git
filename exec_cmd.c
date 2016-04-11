@@ -3,30 +3,27 @@
 #include "quote.h"
 #include "argv-array.h"
 #define MAX_ARGS	32
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
 
 static const char *argv_exec_path;
 static const char *argv0_path;
 
 char *system_path(const char *path)
 {
-#ifdef RUNTIME_PREFIX
-	static const char *prefix;
-#else
 	static const char *prefix = PREFIX;
-#endif
 	struct strbuf d = STRBUF_INIT;
 
 	if (is_absolute_path(path))
 		return xstrdup(path);
 
 #ifdef RUNTIME_PREFIX
-	assert(argv0_path);
-	assert(is_absolute_path(argv0_path));
-
-	if (!prefix &&
-	    !(prefix = strip_path_suffix(argv0_path, GIT_EXEC_PATH)) &&
-	    !(prefix = strip_path_suffix(argv0_path, BINDIR)) &&
-	    !(prefix = strip_path_suffix(argv0_path, "git"))) {
+	if (!argv0_path ||
+	    !is_absolute_path(argv0_path) ||
+	    (!(prefix = strip_path_suffix(argv0_path, GIT_EXEC_PATH)) &&
+	     !(prefix = strip_path_suffix(argv0_path, BINDIR)) &&
+	     !(prefix = strip_path_suffix(argv0_path, "git")))) {
 		prefix = PREFIX;
 		trace_printf("RUNTIME_PREFIX requested, "
 				"but prefix computation failed.  "
@@ -41,6 +38,8 @@ char *system_path(const char *path)
 const char *git_extract_argv0_path(const char *argv0)
 {
 	const char *slash;
+	char *to_resolve = NULL;
+	const char *resolved;
 
 	if (!argv0 || !*argv0)
 		return NULL;
@@ -48,11 +47,56 @@ const char *git_extract_argv0_path(const char *argv0)
 	slash = find_last_dir_sep(argv0);
 
 	if (slash) {
-		argv0_path = xstrndup(argv0, slash - argv0);
-		return slash + 1;
+		/* ... it's either an absolute path */
+		if (is_absolute_path(argv0)) {
+			argv0_path = xstrndup(argv0, slash - argv0);
+			return slash + 1;
+		}
+
+		/* ... or a relative path, in which case we have to make it
+		 * absolute first and do the whole thing again */
+		to_resolve = xstrdup(argv0);
+	} else {
+		/* argv0 is no path at all, just a name. Resolve it into a
+		 * path. Unfortunately, this gets system specific. */
+#if defined(__linux__)
+		struct stat st;
+		if (!stat("/proc/self/exe", &st))
+			to_resolve = xstrdup("/proc/self/exe");
+#elif defined(__APPLE__)
+		/* call with len == 0 queries the necessary buffer size */
+		uint32_t len = 0;
+		if(_NSGetExecutablePath(NULL, &len) != 0) {
+			to_resolve = malloc(len);
+			if (to_resolve) {
+				/* get the executable path now we have a buffer
+				 * of proper size */
+				if(_NSGetExecutablePath(to_resolve, &len) != 0) {
+					free(to_resolve);
+					return argv0;
+				}
+			}
+		}
+#endif
+
+		/* if to_resolve is still NULL here, something failed above or
+		 * we are on an unsupported system. system_path() will warn
+		 * and fall back to the static prefix */
+		if (!to_resolve)
+			return argv0;
 	}
 
-	return argv0;
+	/* resolve path from absolute to canonical */
+	resolved = real_path(to_resolve);
+	free(to_resolve);
+
+	slash = find_last_dir_sep(resolved);
+	if (!slash)
+		return argv0;
+
+	argv0_path = xstrndup(resolved, slash - resolved);
+	slash = xstrdup(slash + 1);
+	return slash;
 }
 
 void git_set_argv_exec_path(const char *exec_path)
