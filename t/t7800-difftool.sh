@@ -20,7 +20,7 @@ difftool_test_setup ()
 prompt_given ()
 {
 	prompt="$1"
-	test "$prompt" = "Launch 'test-tool' [Y/n]: branch"
+	test "$prompt" = "Launch 'test-tool' [Y/n]? branch"
 }
 
 # Create a file on master and change it on branch
