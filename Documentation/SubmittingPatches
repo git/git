@@ -117,29 +117,43 @@ without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
 
-(3) Generate your patch using Git tools out of your commits.
-
-
-Please make sure your patch does not add commented out debugging code,
-or include any extra files which do not relate to what your patch
-is trying to achieve. Make sure to review
-your patch after generating it, to ensure accuracy.  Before
-sending out, please make sure it cleanly applies to the "master"
-branch head.  If you are preparing a work based on "next" branch,
-that is fine, but please mark it as such.
-
-
-(4) Sending your patches.
+(3) Generate and send your patch to the Git mailing list
 
 People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
 a developer to be able to "quote" your changes, using standard
 e-mail tools, so that they may comment on specific portions of
 your code.  For this reason, each patch should be submitted
-"inline" in a separate message.
+"inline" (not as an attachment) in a separate message.
 
+There can be unexpected problems in sending patches:
 
+  . Webmail clients like Gmail generally corrupt whitespace in patches.
+  . messages using HTML-formatting (used by default in many webmail
+    clients) is automatically rejected by the Git mailing list server.
 
+Because of these factors, it's recommended that you use one of these
+specific methods to generate and send your patchs:
+
+  - Generate mail-ready patch files using "git format-patch" and
+    send them using "git send-email" to the Git mailing list.
+    See SubmittingPatchesByMUA for further details.
+
+  - Create a pull request on https://github.com/git/git and
+    use https://submitgit.herokuapp.com/ to send it as a patch series
+    to the mailing list.  Note that the PR is just the place where your
+    patch is born - discussion of the patch should still take place on
+    the Git mailing list.
+
+Please make sure to review your patch before sending it, to ensure that
+it:
+
+  . accurately reflects the change you want to make
+  . does not add commented-out debugging code, or include any extra
+    files which do not relate to what your patch is trying to achieve.
+  . cleanly applies to the "master" branch head.  If you are preparing
+    a work based on "next" branch, that is fine, but please mark it as
+    such.
 
 It is a common convention to prefix your subject line with
 [PATCH].  This lets people easily distinguish patches from other
@@ -186,7 +200,7 @@ patch.
      *2* The mailing list: git@vger.kernel.org
 
 
-(5) Sign your work
+(4) Sign your work
 
 To improve tracking of who did what, we've borrowed the
 "sign-off" procedure from the Linux kernel project on patches
