@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2016, #03; Thu, 7)
-X-master-at: 72d917a7f9a5123ef7c0d6db306bbc0d385227e2
-X-next-at: 209d99dbd5bc1cff6fe9618b5ae6dc65a6d421d9
+Subject: What's cooking in git.git (Apr 2016, #04; Tue, 12)
+X-master-at: 7b0d47b3b6b5b64e02a5aa06b0452cadcdb18355
+X-next-at: f4fac6784293189f836875527464b8e7b234cb96
 
-What's cooking in git.git (Apr 2016, #03; Thu, 7)
+What's cooking in git.git (Apr 2016, #04; Tue, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The 'master' branch now has the second batch of topics of this
+The 'master' branch now has the third batch of topics of this
 cycle.
 
 There are a handful of topics that are stuck; they are marked as
@@ -26,282 +26,212 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cc/doc-recommend-performance-trace-to-file (2016-03-07) 1 commit
-  (merged to 'next' on 2016-04-04 at 26f94c0)
- + Documentation: talk about pager in api-trace.txt
+* jc/merge-refuse-new-root (2016-03-23) 1 commit
+  (merged to 'next' on 2016-04-04 at cd70fd6)
+ + merge: refuse to create too cool a merge by default
 
  Originally merged to 'next' on 2016-03-23
+
+ "git merge" used to allow merging two branches that have no common
+ base by default, which led to a brand new history of an existing
+ project created and then get pulled by an unsuspecting maintainer,
+ which allowed an unnecessary parallel history merged into the
+ existing project.  The command has been taught not to allow this by
+ default, with an escape hatch "--allow-unrelated-histories" option
+ to be used in a rare event that merges histories of two projects
+ that started their lives independently.
+
+
+* nd/apply-doc (2016-03-24) 2 commits
+  (merged to 'next' on 2016-04-06 at f9bd355)
+ + git-apply.txt: mention the behavior inside a subdir
+ + git-apply.txt: remove a space
 
  A minor documentation update.
 
 
-* da/mergetool-delete-delete-conflict (2016-03-10) 2 commits
-  (merged to 'next' on 2016-04-04 at 34e645f)
- + mergetool: honor tempfile configuration when resolving delete conflicts
- + mergetool: support delete/delete conflicts
+* nd/apply-report-skip (2016-03-24) 1 commit
+  (merged to 'next' on 2016-04-06 at ae2c824)
+ + apply: report patch skipping in verbose mode
 
- Originally merged to 'next' on 2016-03-15
-
- "git mergetool" did not work well with conflicts that both sides
- deleted.
+ "git apply -v" learned to report paths in the patch that were
+ skipped via --include/--exclude mechanism or being outside the
+ current working directory.
 
 
-* jk/credential-cache-comment-exit (2016-03-18) 1 commit
-  (merged to 'next' on 2016-04-04 at 50427fe)
- + credential-cache--daemon: clarify "exit" action semantics
+* oa/doc-diff-check (2016-03-29) 1 commit
+  (merged to 'next' on 2016-04-06 at e3d6e8d)
+ + Documentation: git diff --check detects conflict markers
 
- Originally merged to 'next' on 2016-03-23
-
- A code clarification.
+ A minor documentation update.
 
 
-* jk/send-email-rtrim-mailrc-alias (2016-03-18) 1 commit
-  (merged to 'next' on 2016-04-04 at 4d54956)
- + send-email: ignore trailing whitespace in mailrc alias file
+* pb/opt-cmdmode-doc (2016-03-25) 1 commit
+  (merged to 'next' on 2016-04-06 at a5f3835)
+ + api-parse-options.txt: document OPT_CMDMODE()
 
- Originally merged to 'next' on 2016-03-23
-
- "git send-email" had trouble parsing alias file in mailrc format
- when lines in it had trailing whitespaces on them.
+ Minor API documentation update.
 
 
-* jk/submodule-c-credential (2016-03-23) 7 commits
-  (merged to 'next' on 2016-04-04 at 8de8e8c)
- + git_config_push_parameter: handle empty GIT_CONFIG_PARAMETERS
- + git: submodule honor -c credential.* from command line
- + quote: implement sq_quotef()
- + submodule: fix segmentation fault in submodule--helper clone
- + submodule: fix submodule--helper clone usage
- + submodule: check argc count for git submodule--helper clone
- + submodule: don't pass empty string arguments to submodule--helper clone
+* ss/msvc (2016-03-30) 2 commits
+  (merged to 'next' on 2016-04-06 at 4b53bce)
+ + MSVC: use shipped headers instead of fallback definitions
+ + MSVC: vsnprintf in Visual Studio 2015 doesn't need SNPRINTF_SIZE_CORR any more
 
- Originally merged to 'next' on 2016-03-23
-
- "git -c credential.<var>=<value> submodule" can now be used to
- propagate configuration variables related to credential helper
- down to the submodules.
-
-
-* jk/test-httpd-config-nosystem (2016-03-18) 1 commit
-  (merged to 'next' on 2016-04-04 at 5fa6274)
- + t/lib-httpd: pass through GIT_CONFIG_NOSYSTEM env
-
- Originally merged to 'next' on 2016-03-23
-
- The tests that involve running httpd leaked the system-wide
- configuration in /etc/gitconfig to the tested environment.
-
-
-* jv/merge-nothing-into-void (2016-03-23) 1 commit
-  (merged to 'next' on 2016-04-04 at aa37405)
- + merge: fix NULL pointer dereference when merging nothing into void
-
- Originally merged to 'next' on 2016-03-23
-
- "git merge FETCH_HEAD" dereferenced NULL pointer when merging
- nothing into an unborn history (which is arguably unusual usage,
- which perhaps was the reason why nobody noticed it).
-
-
-* la/tag-force-signing-annotated-tags (2016-03-22) 1 commit
-  (merged to 'next' on 2016-04-04 at a49ec4a)
- + tag: add the option to force signing of annotated tags
-
- Originally merged to 'next' on 2016-03-24
-
- "git tag" can create an annotated tag without explicitly given an
- "-a" (or "-s") option (i.e. when a tag message is given).  A new
- configuration variable, tag.forceSignAnnotated, can be used to tell
- the command to create signed tag in such a situation.
-
-
-* ls/p4-map-user (2016-03-15) 1 commit
-  (merged to 'next' on 2016-04-04 at a56b011)
- + git-p4: map a P4 user to Git author name and email address
-
- Originally merged to 'next' on 2016-03-23
-
- "git p4" now allows P4 author names to be mapped to Git author
- names.
-
-
-* pb/t7502-drop-dup (2016-03-11) 1 commit
-  (merged to 'next' on 2016-04-04 at 4799cad)
- + t/t7502 : drop duplicate test
- (this branch is used by pb/commit-verbose-config.)
-
- Originally merged to 'next' on 2016-03-15
-
- Code clean-up.
-
-
-* sb/clone-t57-t56 (2016-03-16) 1 commit
-  (merged to 'next' on 2016-04-04 at 5c20247)
- + clone tests: rename t57* => t56*
-
- Originally merged to 'next' on 2016-03-23
-
- Rename bunch of tests on "git clone" for better organization.
-
-
-* sb/rebase-x (2016-03-18) 2 commits
-  (merged to 'next' on 2016-04-04 at feda620)
- + t3404: cleanup double empty lines between tests
- + rebase: decouple --exec from --interactive
-
- Originally merged to 'next' on 2016-03-23
-
- "git rebase -x" can be used without passing "-i" option.
-
-
-* sb/submodule-parallel-update (2016-03-01) 10 commits
-  (merged to 'next' on 2016-04-04 at a0aea8d)
- + clone: allow an explicit argument for parallel submodule clones
- + submodule update: expose parallelism to the user
- + submodule helper: remove double 'fatal: ' prefix
- + git submodule update: have a dedicated helper for cloning
- + run_processes_parallel: rename parameters for the callbacks
- + run_processes_parallel: treat output of children as byte array
- + submodule update: direct error message to stderr
- + fetching submodules: respect `submodule.fetchJobs` config option
- + submodule-config: drop check against NULL
- + submodule-config: keep update strategy around
- (this branch is used by sb/clone-shallow-passthru and sb/submodule-init.)
-
- Originally merged to 'next' on 2016-03-15
-
- A major part of "git submodule update" has been ported to C to take
- advantage of the recently added framework to run download tasks in
- parallel.
-
-
-* ss/commit-squash-msg (2016-03-21) 1 commit
-  (merged to 'next' on 2016-04-04 at d389f19)
- + commit: do not lose SQUASH_MSG contents
-
- Originally merged to 'next' on 2016-03-23
-
- When "git merge --squash" stopped due to conflict, the concluding
- "git commit" failed to read in the SQUASH_MSG that shows the log
- messages from all the squashed commits.
-
-
-* ss/exc-flag-is-a-collection-of-bits (2016-03-01) 1 commit
-  (merged to 'next' on 2016-04-04 at 9f0207e)
- + dir: store EXC_FLAG_* values in unsigned integers
-
- Originally merged to 'next' on 2016-03-04
-
- Code clean-up.
-
-
-* ss/receive-pack-parse-options (2016-03-01) 1 commit
-  (merged to 'next' on 2016-04-04 at fd6ab4c)
- + builtin/receive-pack.c: use parse_options API
-
- Originally merged to 'next' on 2016-03-04
-
- The command line argument parser for "receive-pack" has been
- rewritten to use parse-options.
+ Build updates for MSVC.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/drop-git-spec-in (2016-04-06) 1 commit
- - Makefile: stop pretending to support rpmbuild
+* ad/commit-have-m-option (2016-04-07) 2 commits
+ - commit: do not ignore an empty message given by -m ''
+ - commit: --amend -m '' silently fails to wipe message
 
- As nobody maintains our in-tree git.spec.in and distros use their
- own spec file, we stopped pretending that we support "make rpm".
-
-
-* jc/makefile-redirection-stderr (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at e3f2ded)
- + Makefile: fix misdirected redirections
-
- A minor fix in the Makefile.
-
- Will merge to 'master'.
-
-
-* js/mingw-tests-2.8 (2016-04-04) 1 commit
-  (merged to 'next' on 2016-04-06 at f85a013)
- + Windows: shorten code by re-using convert_slashes()
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* ar/diff-args-osx-precompose (2016-04-05) 1 commit
- - diff: run arguments through precompose_argv
-
- Many commands normalize command line arguments from NFD to NFC
- variant of UTF-8 on OSX, but commands in the "diff" family did
- not, causing "git diff $path" to complain that no such path is
- known to Git.  They have been taught to do the normalization.
-
- Will be rerolled?
- ($gmane/290724)
-
-
-* ep/trace-doc-sample-fix (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at 0df7357)
- + api-trace.txt: fix typo
-
- Fix a typo in an example in the trace API documentation.
-
- Will merge to 'master'.
-
-
-* ew/send-email-readable-message-id (2016-04-06) 1 commit
- - send-email: more meaningful Message-ID
-
- "git send-email" now uses a more readable timestamps when
- formulating a message ID.
+ "git commit" misbehaved in a few minor ways when an empty message
+ is given via -m '', all of which has been corrected.
 
  Will merge to 'next'.
 
 
-* mg/complete-cherry-mark-to-log (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at 3002be6)
- + completion: complete --cherry-mark for git log
+* jc/xstrfmt-null-with-prec-0 (2016-04-07) 1 commit
+ - setup.c: do not feed NULL to "%.*s" even with precision 0
 
- The completion scripts (in contrib/) did not include the
- "--cherry-mark" option when completing "git log <HT>".
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* tb/blame-force-read-cache-to-workaround-safe-crlf (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at 263bba8)
- + correct blame for files commited with CRLF
+* dt/pre-refs-backend (2016-04-10) 24 commits
+ - refs: on symref reflog expire, lock symref not referrent
+ - refs: move resolve_ref_unsafe into common code
+ - show_head_ref(): check the result of resolve_ref_namespace()
+ - check_aliased_update(): check that dst_name is non-NULL
+ - checkout_paths(): remove unneeded flag variable
+ - cmd_merge(): remove unneeded flag variable
+ - fsck_head_link(): remove unneeded flag variable
+ - read_raw_ref(): change flags parameter to unsigned int
+ - files-backend: inline resolve_ref_1() into resolve_ref_unsafe()
+ - read_raw_ref(): manage own scratch space
+ - files-backend: break out ref reading
+ - resolve_ref_1(): eliminate local variable "bad_name"
+ - resolve_ref_1(): reorder code
+ - resolve_ref_1(): eliminate local variable
+ - resolve_ref_unsafe(): ensure flags is always set
+ - resolve_ref_unsafe(): use for loop to count up to MAXDEPTH
+ - resolve_missing_loose_ref(): simplify semantics
+ - t1430: improve test coverage of deletion of badly-named refs
+ - t1430: test for-each-ref in the presence of badly-named refs
+ - t1430: don't rely on symbolic-ref for creating broken symrefs
+ - t1430: clean up broken refs/tags/shadow
+ - t1430: test the output and error of some commands more carefully
+ - refs: move for_each_*ref* functions into common code
+ - refs: move head_ref{,_submodule} to the common code
+ (this branch uses jk/check-repository-format.)
 
- When running "git blame $path" with unnormalized data in the index
- for the path, the data in the working tree was blamed, even though
- "git add" would not have changed what is already in the index, due
- to "safe crlf" that disables the line-end conversion.  It has been
- corrected.
+ Code restructuring around the "refs" area to prepare for pluggable
+ refs backends.
 
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* st/verify-tag (2016-04-06) 3 commits
- - verify-tag: change variable name for readability
- - t7030: test verifying multiple tags
- - builtin/verify-tag.c: ignore SIGPIPE in gpg-interface
+* ky/imap-send (2016-04-08) 2 commits
+ - imap-send: fix CRAM-MD5 response calculation
+ - imap-send: check for NOLOGIN capability only when using LOGIN command
 
- Only the first three patches in a six-patch series.
+ Support for CRAM-MD5 authentication method in "git imap-send" did
+ not work well.
+
+ Will merge to 'next'.
 
 
-* ew/send-email-drop-data-dumper (2016-04-06) 1 commit
- - send-email: do not load Data::Dumper
+* ky/imap-send-openssl-1.1.0 (2016-04-08) 4 commits
+ - configure: remove checking for HMAC_CTX_cleanup
+ - imap-send: avoid deprecated TLSv1_method()
+ - imap-send: check NULL return of SSL_CTX_new()
+ - imap-send: use HMAC() function provided by OpenSSL
+
+ Upcoming OpenSSL 1.1.0 will break compilation b updating a few APIs
+ we use in imap-send, which has been adjusted for the change.
+
+ Will merge to 'next'.
+
+
+* jc/http-socks5h (2016-04-10) 1 commit
+ - http: differentiate socks5:// and socks5h://
+
+ The socks5:// proxy support added back in 2.6.4 days was not aware
+ that socks5h:// proxies behave differently.
+
+ Will merge to 'next'.
+
+
+* jc/send-email-skip-backup (2016-04-12) 1 commit
+ - send-email: detect and offer to skip backup files
+
+ A careless invocation of "git send-email directory/" after editing
+ 0001-change.patch with an editor often ends up sending both
+ 0001-change.patch and its backup file, 0001-change.patch~, causing
+ embarrassment and a minor confusion.  Detect such an input and
+ offer to skip the backup files when sending the patches out.
+
+ Needs review.
+
+
+* jk/do-not-printf-NULL (2016-04-10) 3 commits
+ - git_config_set_multivar_in_file: handle "unset" errors
+ - git_config_set_multivar_in_file: all non-zero returns are errors
+ - config: lower-case first word of error strings
+
+ "git config" had a codepath that tried to pass a NULL to
+ printf("%s"), which nobody seems to have noticed.
+
+ Will merge to 'next'.
+
+
+* jk/use-write-script-more (2016-04-12) 3 commits
+ - t3404: use write_script
+ - t1020: do not overuse printf and use write_script
+ - t5532: use write_script
 
  Code clean-up.
 
  Will merge to 'next'.
+
+
+* nf/mergetool-prompt (2016-04-12) 2 commits
+ - SQUASH???
+ - difftool/mergetool: make the form of yes/no questions consistent
+
+ UI consistency improvements.
+
+
+* va/i18n-misc-updates (2016-04-12) 4 commits
+ - i18n: builtin/rm.c: remove a comma ',' from string
+ - i18n: unpack-trees: mark strings for translation
+ - i18n: builtin/branch.c: mark option for translation
+ - i18n: index-pack: use plural string instead of normal one
+
+ Mark several messages for translation.
 
 --------------------------------------------------
 [Stalled]
+
+* tb/safe-crlf-output-fix (2016-04-01) 7 commits
+ . convert.c: more safer crlf handling with text attribute
+ . correct blame for files commited with CRLF
+ . convert: unify the "auto" handling of CRLF
+ . t0027: test cases for combined attributes
+ . convert: allow core.autocrlf=input and core.eol=crlf
+ . convert.c: stream and early out
+ . read-cache: factor out get_sha1_from_index() helper
+
+ The "safe CRLF" facility disables line-end conversion from CRLF to
+ LF when checking in if the blob registered to the index already
+ contains CR, but some codepaths like "git blame" did not know this,
+ and instead assumed that only the configuration and attribute
+ settings determined how the data from the working tree is converted.
+
+ Will be rerolled.
+ ($gmane/290637)
+
 
 * da/user-useconfigonly (2016-04-01) 2 commits
  - ident: give "please tell me" message upon useConfigOnly error
@@ -400,8 +330,7 @@ of the repositories listed at
 
  Update of "git submodule" to move pieces of logic to C continues.
 
- Needs review.
- ($gmane/288824)
+ Needs to be adjusted for the recent "prefix" fixes.
 
 
 * az/p4-bare-no-rebase (2016-02-19) 1 commit
@@ -442,56 +371,6 @@ of the repositories listed at
 
  Needs review.
  ($gmane/286137)
-
-
-* dt/refs-backend-lmdb (2016-02-25) 45 commits
- . SQUASH??? Minimum compilation band-aid
- . tests: add ref-storage argument
- . refs: tests for lmdb backend
- . refs: add LMDB refs storage backend
- . refs: break out resolve_ref_unsafe_submodule
- . config: read ref storage config on startup
- . refs: register ref storage backends
- . svn: learn ref-storage argument
- . clone: allow ref storage backend to be set for clone
- . refs: check submodules' ref storage config
- . init: allow alternate ref strorage to be set for new repos
- . refs: always handle non-normal refs in files backend
- . refs: resolve symbolic refs first
- . refs: on symref reflog expire, lock symref not referrent
- . refs: don't dereference on rename
- . refs: allow log-only updates
- . refs: move duplicate check to common code
- . refs: make lock generic
- . refs: handle non-normal ref renames
- . refs: add method to rename refs
- . refs: add methods to init refs db
- . refs: add method for delete_refs
- . refs: add method for initial ref transaction commit
- . refs: add methods for reflog
- . refs: add do_for_each_per_worktree_ref
- . refs: reduce the visibility of do_for_each_ref()
- . refs: add method for do_for_each_ref
- . refs: add methods for misc ref operations
- . refs: add a backend method structure with transaction functions
- . refs: move resolve_ref_unsafe into common code
- . files-backend: break out ref reading
- . refs: move for_each_*ref* functions into common code
- . refs: move head_ref{,_submodule} to the common code
- . Merge branch 'sb/submodule-parallel-update' into dt/refs-backend-lmdb
- . clone: allow an explicit argument for parallel submodule clones
- . submodule update: expose parallelism to the user
- . git submodule update: have a dedicated helper for cloning
- . run_processes_parallel: correctly terminate callbacks with an LF
- . run_processes_parallel: rename parameters for the callbacks
- . run-command: expose default_{start_failure, task_finished}
- . run_processes_parallel: treat output of children as byte array
- . submodule update: direct error message to stderr
- . fetching submodules: respect `submodule.fetchJobs` config option
- . submodule-config: drop check against NULL
- . submodule-config: keep update strategy around
-
- A reroll exists, but it seems that will further be rerolled.
 
 
 * ec/annotate-deleted (2015-11-20) 1 commit
@@ -565,6 +444,103 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/drop-git-spec-in (2016-04-06) 1 commit
+ - Makefile: stop pretending to support rpmbuild
+
+ As nobody maintains our in-tree git.spec.in and distros use their
+ own spec file, we stopped pretending that we support "make rpm".
+
+ Comments?
+
+
+* jc/makefile-redirection-stderr (2016-04-05) 1 commit
+  (merged to 'next' on 2016-04-06 at e3f2ded)
+ + Makefile: fix misdirected redirections
+
+ A minor fix in the Makefile.
+
+ Will merge to 'master'.
+
+
+* js/mingw-tests-2.8 (2016-04-04) 1 commit
+  (merged to 'next' on 2016-04-06 at f85a013)
+ + Windows: shorten code by re-using convert_slashes()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* ar/diff-args-osx-precompose (2016-04-05) 1 commit
+ - diff: run arguments through precompose_argv
+
+ Many commands normalize command line arguments from NFD to NFC
+ variant of UTF-8 on OSX, but commands in the "diff" family did
+ not, causing "git diff $path" to complain that no such path is
+ known to Git.  They have been taught to do the normalization.
+
+ Will be rerolled?
+ ($gmane/290724)
+
+
+* ep/trace-doc-sample-fix (2016-04-05) 1 commit
+  (merged to 'next' on 2016-04-06 at 0df7357)
+ + api-trace.txt: fix typo
+
+ Fix a typo in an example in the trace API documentation.
+
+ Will merge to 'master'.
+
+
+* ew/send-email-readable-message-id (2016-04-06) 1 commit
+ - send-email: more meaningful Message-ID
+
+ "git send-email" now uses a more readable timestamps when
+ formulating a message ID.
+
+ Will merge to 'next'.
+
+
+* mg/complete-cherry-mark-to-log (2016-04-05) 1 commit
+  (merged to 'next' on 2016-04-06 at 3002be6)
+ + completion: complete --cherry-mark for git log
+
+ The completion scripts (in contrib/) did not include the
+ "--cherry-mark" option when completing "git log <HT>".
+
+ Will merge to 'master'.
+
+
+* tb/blame-force-read-cache-to-workaround-safe-crlf (2016-04-05) 1 commit
+  (merged to 'next' on 2016-04-06 at 263bba8)
+ + correct blame for files commited with CRLF
+
+ When running "git blame $path" with unnormalized data in the index
+ for the path, the data in the working tree was blamed, even though
+ "git add" would not have changed what is already in the index, due
+ to "safe crlf" that disables the line-end conversion.  It has been
+ corrected.
+
+ Will merge to 'master'.
+
+
+* st/verify-tag (2016-04-06) 3 commits
+ - verify-tag: change variable name for readability
+ - t7030: test verifying multiple tags
+ - builtin/verify-tag.c: ignore SIGPIPE in gpg-interface
+
+ Only the first three patches in a six-patch series.
+ Needs further work.
+
+
+* ew/send-email-drop-data-dumper (2016-04-06) 1 commit
+ - send-email: do not load Data::Dumper
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
 * es/format-patch-doc-hide-no-patch (2016-04-04) 1 commit
   (merged to 'next' on 2016-04-06 at 25d79bb)
  + git-format-patch.txt: don't show -s as shorthand for multiple options
@@ -609,7 +585,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* kn/ref-filter-branch-list (2016-03-30) 16 commits
+* kn/ref-filter-branch-list (2016-04-12) 16 commits
  . branch: implement '--format' option
  . branch: use ref-filter printing APIs
  . branch, tag: use porcelain output
@@ -630,16 +606,8 @@ of the repositories listed at
  The code to list branches in "git branch" has been consolidated
  with the more generic ref-filter API.
 
- Will be rerolled.
-
-
-* oa/doc-diff-check (2016-03-29) 1 commit
-  (merged to 'next' on 2016-04-06 at e3d6e8d)
- + Documentation: git diff --check detects conflict markers
-
- A minor documentation update.
-
- Will merge to 'master'.
+ Rerolled but seems to lack jk/branch-shortening-funny-symrefs aka
+ $gmane/291295 yet.
 
 
 * rz/worktree-no-checkout (2016-03-29) 1 commit
@@ -677,7 +645,7 @@ of the repositories listed at
  repository location to use absolute paths by accident.  This has
  been corrected.
 
- Any further comments?  Otherwise will merge to 'next'.
+ Will merge to 'next'.
 
 
 * sb/submodule-path-misc-bugs (2016-03-30) 6 commits
@@ -716,17 +684,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ss/msvc (2016-03-30) 2 commits
-  (merged to 'next' on 2016-04-06 at 4b53bce)
- + MSVC: use shipped headers instead of fallback definitions
- + MSVC: vsnprintf in Visual Studio 2015 doesn't need SNPRINTF_SIZE_CORR any more
-
- Build updates for MSVC.
-
- Will merge to 'master'.
-
-
-* xy/format-patch-base (2016-03-31) 4 commits
+* xy/format-patch-base (2016-04-12) 4 commits
  - format-patch: introduce format.base configuration
  - format-patch: introduce --base=auto option
  - format-patch: add '--base' option to record base tree info
@@ -736,27 +694,8 @@ of the repositories listed at
  (public, well-known) commit the original series was built on in
  its output.
 
- Will be rerolled.
- ($gmane/290365)
-
-
-* tb/safe-crlf-output-fix (2016-04-01) 7 commits
- . convert.c: more safer crlf handling with text attribute
- . correct blame for files commited with CRLF
- . convert: unify the "auto" handling of CRLF
- . t0027: test cases for combined attributes
- . convert: allow core.autocrlf=input and core.eol=crlf
- . convert.c: stream and early out
- . read-cache: factor out get_sha1_from_index() helper
-
- The "safe CRLF" facility disables line-end conversion from CRLF to
- LF when checking in if the blob registered to the index already
- contains CR, but some codepaths like "git blame" did not know this,
- and instead assumed that only the configuration and attribute
- settings determined how the data from the working tree is converted.
-
- Will be rerolled.
- ($gmane/290637)
+ Review comments sent.
+ ($gmane/291198)
 
 
 * ak/use-hashmap-iter-first-in-submodule-config (2016-03-23) 1 commit
@@ -778,7 +717,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ky/branch-m-worktree (2016-04-04) 2 commits
+* ky/branch-m-worktree (2016-04-08) 3 commits
+  (merged to 'next' on 2016-04-08 at b673b5e)
+ + set_worktree_head_symref(): fix error message
   (merged to 'next' on 2016-04-06 at e7b285c)
  + branch -m: update all per-worktree HEADs
  + refs: add a new function set_worktree_head_symref
@@ -786,36 +727,6 @@ of the repositories listed at
  When "git worktree" feature is in use, "git branch -m" renamed a
  branch that is checked out in another worktree without adjusting
  the HEAD symbolic ref for the worktree.
-
- Will merge to 'master'.
-
-
-* nd/apply-doc (2016-03-24) 2 commits
-  (merged to 'next' on 2016-04-06 at f9bd355)
- + git-apply.txt: mention the behavior inside a subdir
- + git-apply.txt: remove a space
-
- A minor documentation update.
-
- Will merge to 'master'.
-
-
-* nd/apply-report-skip (2016-03-24) 1 commit
-  (merged to 'next' on 2016-04-06 at ae2c824)
- + apply: report patch skipping in verbose mode
-
- "git apply -v" learned to report paths in the patch that were
- skipped via --include/--exclude mechanism or being outside the
- current working directory.
-
- Will merge to 'master'.
-
-
-* pb/opt-cmdmode-doc (2016-03-25) 1 commit
-  (merged to 'next' on 2016-04-06 at a5f3835)
- + api-parse-options.txt: document OPT_CMDMODE()
-
- Minor API documentation update.
 
  Will merge to 'master'.
 
@@ -852,6 +763,7 @@ of the repositories listed at
  + lazily load core.sharedrepository
  + wrap shared_repository global in get/set accessors
  + setup: document check_repository_format()
+ (this branch is used by dt/pre-refs-backend.)
 
  The repository set-up sequence has been streamlined (the biggest
  change is that there is no longer git_config_early()), so that we
@@ -880,33 +792,20 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* pb/commit-verbose-config (2016-03-14) 1 commit
-  (merged to 'next' on 2016-04-06 at e5c744f)
- + commit: add a commit.verbose config variable
+* pb/commit-verbose-config (2016-04-12) 6 commits
+ . commit: add a commit.verbose config variable
+ . t7507-commit-verbose: improve test coverage by testing number of diffs
+ . parse-options.c: make OPTION_COUNTUP respect "unspecified" values
+ . t0040-parse-options: improve test coverage
+ . test-parse-options: print quiet as integer
+ . t0040-test-parse-options.sh: fix style issues
 
  "git commit" learned to pay attention to "commit.verbose"
  configuration variable and act as if "--verbose" option was
  given from the command line.
 
- Will merge to 'master'.
-
-
-* jc/merge-refuse-new-root (2016-03-23) 1 commit
-  (merged to 'next' on 2016-04-04 at cd70fd6)
- + merge: refuse to create too cool a merge by default
-
- Originally merged to 'next' on 2016-03-23
-
- "git merge" used to allow merging two branches that have no common
- base by default, which led to a brand new history of an existing
- project created and then get pulled by an unsuspecting maintainer,
- which allowed an unnecessary parallel history merged into the
- existing project.  The command has been taught not to allow this by
- default, with an escape hatch "--allow-unrelated-histories" option
- to be used in a rare event that merges histories of two projects
- that started their lives independently.
-
- Will merge to 'master'.
+ Old one reverted, will wait for reroll.
+ ($gmane/291303).
 
 
 * lt/pretty-expand-tabs (2016-04-04) 4 commits
@@ -937,8 +836,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dt/index-helper (2016-03-23) 18 commits
- - SQUASH - minimum compilation fix
+* dt/index-helper (2016-04-07) 16 commits
  - read-cache: config for waiting for index-helper
  - index-helper: optionally automatically run
  - index-helper: autorun mode
@@ -947,8 +845,7 @@ of the repositories listed at
  - unpack-trees: preserve index extensions
  - update-index: enable/disable watchman support
  - index-helper: use watchman to avoid refreshing index with lstat()
- - Add watchman support to reduce index refresh cost
- - read-cache: invalidate untracked cache data when reading WAMA
+ - add watchman support to reduce index refresh cost
  - read-cache: add watchman 'WAMA' extension
  - index-helper: add --detach
  - daemonize(): set a flag before exiting the main process
