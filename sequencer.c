@@ -640,10 +640,15 @@ int sequencer_commit(const char *defmsg, struct replay_opts *opts,
 {
 	char **env = NULL;
 	struct argv_array array;
-	int rc;
+	int opt = RUN_GIT_CMD, rc;
 	const char *value;
 
 	if (is_rebase_i(opts)) {
+		if (!edit) {
+			opt |= RUN_COMMAND_STDOUT_TO_STDERR;
+			opt |= RUN_HIDE_STDERR_ON_SUCCESS;
+		}
+
 		env = read_author_script();
 		if (!env) {
 			const char *gpg_opt = gpg_sign_opt_quoted(opts);
@@ -688,7 +693,7 @@ int sequencer_commit(const char *defmsg, struct replay_opts *opts,
 	if (opts->allow_empty_message)
 		argv_array_push(&array, "--allow-empty-message");
 
-	rc = run_command_v_opt_cd_env(array.argv, RUN_GIT_CMD, NULL,
+	rc = run_command_v_opt_cd_env(array.argv, opt, NULL,
 			(const char *const *)env);
 	argv_array_clear(&array);
 	free(env);
