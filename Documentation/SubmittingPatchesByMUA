@@ -1,0 +1,142 @@
+Learn to use format-patch and send-email if possible.  These commands
+are optimized for the workflow of sending patches, avoiding many ways
+your existing e-mail client that is optimized for "multipart/*" mime
+type e-mails to corrupt and render your patches unusable.
+
+Git based diff tools generate unidiff which is the preferred format.
+
+You do not have to be afraid to use -M option to "git diff" or
+"git format-patch", if your patch involves file renames.  The
+receiving end can handle them just fine.
+
+Multiple related patches should be grouped into their own e-mail
+thread to help readers find all parts of the series.  To that end,
+send them as replies to either an additional "cover letter" message
+(see below), the first patch, or the respective preceding patch.
+
+If your log message (including your name on the
+Signed-off-by line) is not writable in ASCII, make sure that
+you send off a message in the correct encoding.
+
+WARNING: Be wary of your MUAs word-wrap
+corrupting your patch.  Do not cut-n-paste your patch; you can
+lose tabs that way if you are not careful.
+
+Do not attach the patch as a MIME attachment, compressed or not.
+Do not let your e-mail client send quoted-printable.  Do not let
+your e-mail client send format=flowed which would destroy
+whitespaces in your patches. Many
+popular e-mail applications will not always transmit a MIME
+attachment as plain text, making it impossible to comment on
+your code.  A MIME attachment also takes a bit more time to
+process.  This does not decrease the likelihood of your
+MIME-attached change being accepted, but it makes it more likely
+that it will be postponed.
+
+Exception:  If your mailer is mangling patches then someone may ask
+you to re-send them using MIME, that is OK.
+
+Do not PGP sign your patch, at least for now.  Most likely, your
+maintainer or other people on the list would not have your PGP
+key and would not bother obtaining it anyway.  Your patch is not
+judged by who you are; a good patch from an unknown origin has a
+far better chance of being accepted than a patch from a known,
+respected origin that is done poorly or does incorrect things.
+
+If you really really really really want to do a PGP signed
+patch, format it as "multipart/signed", not a text/plain message
+that starts with '-----BEGIN PGP SIGNED MESSAGE-----'.  That is
+not a text/plain, it's something else.
+
+------------------------------------------------
+MUA specific hints
+
+Some of patches I receive or pick up from the list share common
+patterns of breakage.  Please make sure your MUA is set up
+properly not to corrupt whitespaces.
+
+See the DISCUSSION section of git-format-patch(1) for hints on
+checking your patch by mailing it to yourself and applying with
+git-am(1).
+
+While you are at it, check the resulting commit log message from
+a trial run of applying the patch.  If what is in the resulting
+commit is not exactly what you would want to see, it is very
+likely that your maintainer would end up hand editing the log
+message when he applies your patch.  Things like "Hi, this is my
+first patch.\n", if you really want to put in the patch e-mail,
+should come after the three-dash line that signals the end of the
+commit message.
+
+
+Pine
+----
+
+(Johannes Schindelin)
+
+I don't know how many people still use pine, but for those poor
+souls it may be good to mention that the quell-flowed-text is
+needed for recent versions.
+
+... the "no-strip-whitespace-before-send" option, too. AFAIK it
+was introduced in 4.60.
+
+(Linus Torvalds)
+
+And 4.58 needs at least this.
+
+---
+diff-tree 8326dd8350be64ac7fc805f6563a1d61ad10d32c (from e886a61f76edf5410573e92e38ce22974f9c40f1)
+Author: Linus Torvalds <torvalds@g5.osdl.org>
+Date:   Mon Aug 15 17:23:51 2005 -0700
+
+    Fix pine whitespace-corruption bug
+
+    There's no excuse for unconditionally removing whitespace from
+    the pico buffers on close.
+
+diff --git a/pico/pico.c b/pico/pico.c
+--- a/pico/pico.c
++++ b/pico/pico.c
+@@ -219,7 +219,9 @@ PICO *pm;
+	    switch(pico_all_done){	/* prepare for/handle final events */
+	      case COMP_EXIT :		/* already confirmed */
+		packheader();
++#if 0
+		stripwhitespace();
++#endif
+		c |= COMP_EXIT;
+		break;
+
+
+(Daniel Barkalow)
+
+> A patch to SubmittingPatches, MUA specific help section for
+> users of Pine 4.63 would be very much appreciated.
+
+Ah, it looks like a recent version changed the default behavior to do the
+right thing, and inverted the sense of the configuration option. (Either
+that or Gentoo did it.) So you need to set the
+"no-strip-whitespace-before-send" option, unless the option you have is
+"strip-whitespace-before-send", in which case you should avoid checking
+it.
+
+
+Thunderbird, KMail, GMail
+-------------------------
+
+See the MUA-SPECIFIC HINTS section of git-format-patch(1).
+
+Gnus
+----
+
+'|' in the *Summary* buffer can be used to pipe the current
+message to an external program, and this is a handy way to drive
+"git am".  However, if the message is MIME encoded, what is
+piped into the program is the representation you see in your
+*Article* buffer after unwrapping MIME.  This is often not what
+you would want for two reasons.  It tends to screw up non ASCII
+characters (most notably in people's names), and also
+whitespaces (fatal in patches).  Running 'C-u g' to display the
+message in raw form before using '|' to run the pipe can work
+this problem around.
