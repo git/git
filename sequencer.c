@@ -63,6 +63,8 @@ static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
  * command-line (and are only consumed, not modified, by the sequencer).
  */
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
+static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
+static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
 
 static inline int is_rebase_i(const struct replay_opts *opts)
 {
@@ -1121,6 +1123,9 @@ static int read_populate_opts(struct replay_opts *opts)
 		}
 		strbuf_release(&buf);
 
+		if (file_exists(rebase_path_verbose()))
+			opts->verbose = 1;
+
 		return 0;
 	}
 
@@ -1493,9 +1498,26 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 	}
 
 	if (is_rebase_i(opts)) {
+		struct strbuf buf = STRBUF_INIT;
+
 		/* Stopped in the middle, as planned? */
 		if (todo_list->current < todo_list->nr)
 			return 0;
+
+		if (opts->verbose) {
+			const char *argv[] = {
+				"diff-tree", "--stat", NULL, NULL
+			};
+
+			if (!read_oneliner(&buf, rebase_path_orig_head(), 0))
+				return error(_("could not read '%s'"),
+					rebase_path_orig_head());
+			strbuf_addstr(&buf, "..HEAD");
+			argv[2] = buf.buf;
+			run_command_v_opt(argv, RUN_GIT_CMD);
+			strbuf_reset(&buf);
+		}
+		strbuf_release(&buf);
 	}
 
 	/*
