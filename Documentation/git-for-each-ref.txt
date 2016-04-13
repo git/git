@@ -76,7 +76,7 @@ OPTIONS
 	specified commit (HEAD if not specified).
 
 --contains [<object>]::
-	Only list tags which contain the specified commit (HEAD if not
+	Only list refs which contain the specified commit (HEAD if not
 	specified).
 
 FIELD NAMES
