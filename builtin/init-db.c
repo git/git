@@ -95,6 +95,8 @@ static void copy_templates(const char *template_dir)
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf template_path = STRBUF_INIT;
 	size_t template_len;
+	struct repository_format template_format;
+	struct strbuf err = STRBUF_INIT;
 	DIR *dir;
 	char *to_free = NULL;
 
@@ -121,17 +123,18 @@ static void copy_templates(const char *template_dir)
 
 	/* Make sure that template is from the correct vintage */
 	strbuf_addstr(&template_path, "config");
-	repository_format_version = 0;
-	git_config_from_file(check_repository_format_version,
-			     template_path.buf, NULL);
+	read_repository_format(&template_format, template_path.buf);
 	strbuf_setlen(&template_path, template_len);
 
-	if (repository_format_version &&
-	    repository_format_version != GIT_REPO_VERSION) {
-		warning(_("not copying templates of "
-			"a wrong format version %d from '%s'"),
-			repository_format_version,
-			template_dir);
+	/*
+	 * No mention of version at all is OK, but anything else should be
+	 * verified.
+	 */
+	if (template_format.version >= 0 &&
+	    verify_repository_format(&template_format, &err) < 0) {
+		warning(_("not copying templates from '%s': %s"),
+			  template_dir, err.buf);
+		strbuf_release(&err);
 		goto close_free_return;
 	}
 
@@ -199,13 +202,13 @@ static int create_default_files(const char *template_path)
 
 	/* reading existing config may have overwrote it */
 	if (init_shared_repository != -1)
-		shared_repository = init_shared_repository;
+		set_shared_repository(init_shared_repository);
 
 	/*
 	 * We would have created the above under user's umask -- under
 	 * shared-repository settings, we would need to fix them up.
 	 */
-	if (shared_repository) {
+	if (get_shared_repository()) {
 		adjust_shared_perm(get_git_dir());
 		adjust_shared_perm(git_path_buf(&buf, "refs"));
 		adjust_shared_perm(git_path_buf(&buf, "refs/heads"));
@@ -370,7 +373,7 @@ int init_db(const char *template_dir, unsigned int flags)
 
 	create_object_directory();
 
-	if (shared_repository) {
+	if (get_shared_repository()) {
 		char buf[10];
 		/* We do not spell "group" and such, so that
 		 * the configuration can be read by older version
@@ -378,12 +381,12 @@ int init_db(const char *template_dir, unsigned int flags)
 		 * and compatibility values for PERM_GROUP and
 		 * PERM_EVERYBODY.
 		 */
-		if (shared_repository < 0)
+		if (get_shared_repository() < 0)
 			/* force to the mode value */
-			xsnprintf(buf, sizeof(buf), "0%o", -shared_repository);
-		else if (shared_repository == PERM_GROUP)
+			xsnprintf(buf, sizeof(buf), "0%o", -get_shared_repository());
+		else if (get_shared_repository() == PERM_GROUP)
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_GROUP);
-		else if (shared_repository == PERM_EVERYBODY)
+		else if (get_shared_repository() == PERM_EVERYBODY)
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
 			die("BUG: invalid value for shared_repository");
@@ -399,7 +402,7 @@ int init_db(const char *template_dir, unsigned int flags)
 		   "", and the last '%s%s' is the verbatim directory name. */
 		printf(_("%s%s Git repository in %s%s\n"),
 		       reinit ? _("Reinitialized existing") : _("Initialized empty"),
-		       shared_repository ? _(" shared") : "",
+		       get_shared_repository() ? _(" shared") : "",
 		       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 	}
 
@@ -494,8 +497,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 				 * and we know shared_repository should always be 0;
 				 * but just in case we play safe.
 				 */
-				saved = shared_repository;
-				shared_repository = 0;
+				saved = get_shared_repository();
+				set_shared_repository(0);
 				switch (safe_create_leading_directories_const(argv[0])) {
 				case SCLD_OK:
 				case SCLD_PERMS:
@@ -507,7 +510,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 					die_errno(_("cannot mkdir %s"), argv[0]);
 					break;
 				}
-				shared_repository = saved;
+				set_shared_repository(saved);
 				if (mkdir(argv[0], 0777) < 0)
 					die_errno(_("cannot mkdir %s"), argv[0]);
 				mkdir_tried = 1;
@@ -525,7 +528,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	}
 
 	if (init_shared_repository != -1)
-		shared_repository = init_shared_repository;
+		set_shared_repository(init_shared_repository);
 
 	/*
 	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
