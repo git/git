@@ -12,6 +12,10 @@ Merging two branches that have no common ancestor with "git merge" is
 by default forbidden now to prevent creating such an unusual merge by
 mistake.
 
+The output formats of "git log" that indents the commit log message by
+4 spaces now expands HT in the log message by default.  You can use
+the "--no-expand-tabs" option to disable this.
+
 
 Updates since v2.8
 ------------------
@@ -51,12 +55,30 @@ UI, Workflows & Features
    default, with an escape hatch "--allow-unrelated-histories" option
    to be used in a rare event that merges histories of two projects
    that started their lives independently.
-   (merge e379fdf jc/merge-refuse-new-root later to maint).
 
  * "git apply -v" learned to report paths in the patch that were
    skipped via --include/--exclude mechanism or being outside the
    current working directory.
-   (merge 3f57944 nd/apply-report-skip later to maint).
+
+ * Shell completion (in contrib/) updates.
+
+ * The commit object name reported when "rebase -i" stops has been
+   shortened.
+
+ * "git worktree add" can be given "--no-checkout" option to only
+   create an empty worktree without checking out the files.
+
+ * "git mergetools" learned to drive ExamDiff.
+
+ * "git pull --rebase" learned "--[no-]autostash" option, so that
+   the rebase.autostash configuration variable set to true can be
+   overridden from the command line.
+
+ * When "git log" shows the log message indented by 4-spaces, the
+   remainder of a line after a HT does not align in the way the author
+   originally intended.  The command now expands tabs by default in
+   such a case, and allows the users to override it with a new option,
+   "--no-expand-tabs".
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -91,6 +113,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Build updates for MSVC.
    (merge 0ef60af ss/msvc later to maint).
+
+ * The repository set-up sequence has been streamlined (the biggest
+   change is that there is no longer git_config_early()), so that we
+   do not attempt to look into refs/* when we know we do not have a
+   Git repository.
+   (merge 274db84 jk/check-repository-format later to maint).
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -145,6 +174,33 @@ notes for details).
    which perhaps was the reason why nobody noticed it).
    (merge b84e65d jv/merge-nothing-into-void later to maint).
 
+ * When "git worktree" feature is in use, "git branch -d" allowed
+   deletion of a branch that is checked out in another worktree,
+   which was wrong.
+   (merge f292244 ky/branch-d-worktree later to maint).
+
+ * "git diff -M" used to work better when two originally identical
+   files A and B got renamed to X/A and X/B by pairing A to X/A and B
+   to X/B, but this was broken in the 2.0 timeframe.
+   (merge ca4e3ca sg/diff-multiple-identical-renames later to maint).
+
+ * "git send-pack --all <there>" was broken when its command line
+   option parsing was written in the 2.6 timeframe.
+   (merge c677756 sk/send-pack-all-fix later to maint).
+
+ * "git format-patch --help" showed `-s` and `--no-patch` as if these
+   are valid options to the command.  We already hide `--patch` option
+   from the documentation, because format-patch is about showing the
+   diff, and the documentation now hides these options as well.
+   (merge b73a1bc es/format-patch-doc-hide-no-patch later to maint).
+
+ * When running "git blame $path" with unnormalized data in the index
+   for the path, the data in the working tree was blamed, even though
+   "git add" would not have changed what is already in the index, due
+   to "safe crlf" that disables the line-end conversion.  It has been
+   corrected.
+   (merge a08feb8 tb/blame-force-read-cache-to-workaround-safe-crlf later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge aed7480 mm/lockfile-error-message later to maint).
    (merge bfee614 jc/index-pack later to maint).
@@ -155,3 +211,10 @@ notes for details).
    (merge 16a86d4 nd/apply-doc later to maint).
    (merge c3f6b85 pb/opt-cmdmode-doc later to maint).
    (merge 30211fb oa/doc-diff-check later to maint).
+   (merge 01d98e8 ak/use-hashmap-iter-first-in-submodule-config later to maint).
+   (merge 8b5a3e9 kn/for-each-tag-branch later to maint).
+   (merge 9c60d9f sb/misc-cleanups later to maint).
+   (merge 7a6a44c cc/apply later to maint).
+   (merge 8e9b208 js/mingw-tests-2.8 later to maint).
+   (merge d55de70 jc/makefile-redirection-stderr later to maint).
+   (merge 4232b21 ep/trace-doc-sample-fix later to maint).
