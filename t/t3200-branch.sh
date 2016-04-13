@@ -403,6 +403,12 @@ test_expect_success 'test deleting branch without config' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'deleting currently checked out branch fails' '
+	git worktree add -b my7 my7 &&
+	test_must_fail git -C my7 branch -d my7 &&
+	test_must_fail git branch -d my7
+'
+
 test_expect_success 'test --track without .fetch entries' '
 	git branch --track my8 &&
 	test "$(git config branch.my8.remote)" &&
