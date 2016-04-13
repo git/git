@@ -765,6 +765,7 @@ enum todo_command {
 	TODO_PICK = 0,
 	TODO_REVERT,
 	TODO_EDIT,
+	TODO_REWORD,
 	TODO_FIXUP,
 	TODO_SQUASH,
 	/* commands that do something else than handling a single commit */
@@ -780,6 +781,7 @@ static struct {
 	{ 'p', "pick" },
 	{ 0,   "revert" },
 	{ 'e', "edit" },
+	{ 'r', "reword" },
 	{ 'f', "fixup" },
 	{ 's', "squash" },
 	{ 'x', "exec" },
@@ -1009,7 +1011,9 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		}
 	}
 
-	if (is_fixup(command)) {
+	if (command == TODO_REWORD)
+		edit = 1;
+	else if (is_fixup(command)) {
 		if (update_squash_messages(command, commit, opts))
 			return -1;
 		amend = 1;
@@ -1818,7 +1822,8 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 					item->arg_len, item->arg);
 			} else if (res && is_rebase_i(opts))
 				return res | error_with_patch(item->commit,
-					item->arg, item->arg_len, opts, res, 0);
+					item->arg, item->arg_len, opts, res,
+					item->command == TODO_REWORD);
 		} else if (item->command == TODO_EXEC) {
 			char *end_of_arg = (char *)(item->arg + item->arg_len);
 			int saved = *end_of_arg;
