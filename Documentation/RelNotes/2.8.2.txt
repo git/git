@@ -1,0 +1,17 @@
+Git v2.8.2 Release Notes
+========================
+
+Fixes since v2.8.1
+------------------
+
+ * The embedded args argv-array in the child process is used to build
+   the command line to run pack-objects instead of using a separate
+   array of strings.
+
+ * Bunch of tests on "git clone" has been renumbered for better
+   organization.
+
+ * The tests that involve running httpd leaked the system-wide
+   configuration in /etc/gitconfig to the tested environment.
+
+Also contains minor documentation updates and code clean-ups.
