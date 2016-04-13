@@ -16,8 +16,10 @@ struct pathspec;
  */
 extern void *RERERE_RESOLVED;
 
+struct rerere_dir;
 struct rerere_id {
-	char hex[41];
+	struct rerere_dir *collection;
+	int variant;
 };
 
 extern int setup_rerere(struct string_list *, int);
