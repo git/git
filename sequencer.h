@@ -61,6 +61,8 @@ int sequencer_commit(const char *defmsg, struct replay_opts *opts,
 int sequencer_make_script(int keep_empty, FILE *out,
 		int argc, const char **argv);
 
+int transform_todo_ids(int shorten_sha1s);
+
 extern const char sign_off_header[];
 
 void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
