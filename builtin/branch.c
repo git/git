@@ -369,12 +369,14 @@ static char *get_head_description(void)
 		strbuf_addf(&desc, _("(no branch, bisect started on %s)"),
 			    state.branch);
 	else if (state.detached_from) {
-		/* TRANSLATORS: make sure these match _("HEAD detached at ")
-		   and _("HEAD detached from ") in wt-status.c */
 		if (state.detached_at)
+			/* TRANSLATORS: make sure this matches
+			   "HEAD detached at " in wt-status.c */
 			strbuf_addf(&desc, _("(HEAD detached at %s)"),
 				state.detached_from);
 		else
+			/* TRANSLATORS: make sure this matches
+			   "HEAD detached from " in wt-status.c */
 			strbuf_addf(&desc, _("(HEAD detached from %s)"),
 				state.detached_from);
 	}
