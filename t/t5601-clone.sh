@@ -308,7 +308,7 @@ test_expect_success 'clone checking out a tag' '
 
 setup_ssh_wrapper () {
 	test_expect_success 'setup ssh wrapper' '
-		cp "$GIT_BUILD_DIR/test-fake-ssh$X" \
+		cp "$GIT_BUILD_DIR/t/helper/test-fake-ssh$X" \
 			"$TRASH_DIRECTORY/ssh-wrapper$X" &&
 		GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper$X" &&
 		export GIT_SSH &&
