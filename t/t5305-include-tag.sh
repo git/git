@@ -3,20 +3,20 @@
 test_description='git pack-object --include-tag'
 . ./test-lib.sh
 
-TRASH=`pwd`
+TRASH=$(pwd)
 
 test_expect_success setup '
 	echo c >d &&
 	git update-index --add d &&
-	tree=`git write-tree` &&
-	commit=`git commit-tree $tree </dev/null` &&
+	tree=$(git write-tree) &&
+	commit=$(git commit-tree $tree </dev/null) &&
 	echo "object $commit" >sig &&
 	echo "type commit" >>sig &&
 	echo "tag mytag" >>sig &&
 	echo "tagger $(git var GIT_COMMITTER_IDENT)" >>sig &&
 	echo >>sig &&
 	echo "our test tag" >>sig &&
-	tag=`git mktag <sig` &&
+	tag=$(git mktag <sig) &&
 	rm d sig &&
 	git update-ref refs/tags/mytag $tag && {
 		echo $tree &&

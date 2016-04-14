@@ -11,7 +11,7 @@ Leader:		Alex Henrie <alexhenrie24@gmail.com>
 
 Language:	de (German)
 Repository:	https://github.com/ralfth/git-po-de
-Leader:		Ralf Thielow <ralf.thielow@googlemail.com>
+Leader:		Ralf Thielow <ralf.thielow@gmail.com>
 Members:	Thomas Rast <tr@thomasrast.ch>
 		Jan Krüger <jk@jk.gs>
 		Christian Stimming <stimming@tuhh.de>
@@ -31,6 +31,10 @@ Language:	it (Italian)
 Repository:	https://github.com/quizzlo/git-po-it/
 Leader:		Marco Paolone <marcopaolone AT gmail.com>
 Members:	Stefano Lattarini <stefano.lattarini AT gmail.com>
+
+Language:	ko (Korean)
+Repository:	https://github.com/changwoo/git-l10n-ko/
+Leader:		Changwoo Ryu <cwryu@debian.org>
 
 Language:	pt_PT (Portuguese - Portugal)
 Repository:	https://github.com/marcomsousa/git-l10n-pt_PT/

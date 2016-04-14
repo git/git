@@ -25,69 +25,13 @@ volatile show_early_output_fn_t show_early_output;
 static const char *term_bad;
 static const char *term_good;
 
-char *path_name(const struct name_path *path, const char *name)
+void show_object_with_name(FILE *out, struct object *obj, const char *name)
 {
-	const struct name_path *p;
-	char *n, *m;
-	int nlen = strlen(name);
-	int len = nlen + 1;
-
-	for (p = path; p; p = p->up) {
-		if (p->elem_len)
-			len += p->elem_len + 1;
-	}
-	n = xmalloc(len);
-	m = n + len - (nlen + 1);
-	memcpy(m, name, nlen + 1);
-	for (p = path; p; p = p->up) {
-		if (p->elem_len) {
-			m -= p->elem_len + 1;
-			memcpy(m, p->elem, p->elem_len);
-			m[p->elem_len] = '/';
-		}
-	}
-	return n;
-}
-
-static int show_path_component_truncated(FILE *out, const char *name, int len)
-{
-	int cnt;
-	for (cnt = 0; cnt < len; cnt++) {
-		int ch = name[cnt];
-		if (!ch || ch == '\n')
-			return -1;
-		fputc(ch, out);
-	}
-	return len;
-}
-
-static int show_path_truncated(FILE *out, const struct name_path *path)
-{
-	int emitted, ours;
-
-	if (!path)
-		return 0;
-	emitted = show_path_truncated(out, path->up);
-	if (emitted < 0)
-		return emitted;
-	if (emitted)
-		fputc('/', out);
-	ours = show_path_component_truncated(out, path->elem, path->elem_len);
-	if (ours < 0)
-		return ours;
-	return ours || emitted;
-}
-
-void show_object_with_name(FILE *out, struct object *obj,
-			   const struct name_path *path, const char *component)
-{
-	struct name_path leaf;
-	leaf.up = (struct name_path *)path;
-	leaf.elem = component;
-	leaf.elem_len = strlen(component);
+	const char *p;
 
 	fprintf(out, "%s ", oid_to_hex(&obj->oid));
-	show_path_truncated(out, &leaf);
+	for (p = name; *p && *p != '\n'; p++)
+		fputc(*p, out);
 	fputc('\n', out);
 }
 
@@ -294,9 +238,8 @@ static struct commit *handle_commit(struct rev_info *revs,
 		/*
 		 * We'll handle the tagged object by looping or dropping
 		 * through to the non-tag handlers below. Do not
-		 * propagate data from the tag's pending entry.
+		 * propagate path data from the tag's pending entry.
 		 */
-		name = "";
 		path = NULL;
 		mode = 0;
 	}
@@ -541,7 +484,7 @@ struct treesame_state {
 static struct treesame_state *initialise_treesame(struct rev_info *revs, struct commit *commit)
 {
 	unsigned n = commit_list_count(commit->parents);
-	struct treesame_state *st = xcalloc(1, sizeof(*st) + n);
+	struct treesame_state *st = xcalloc(1, st_add(sizeof(*st), n));
 	st->nparents = n;
 	add_decoration(&revs->treesame, &commit->object, st);
 	return st;
@@ -1636,10 +1579,7 @@ static void append_prune_data(struct cmdline_pathspec *prune, const char **av)
 static void read_pathspec_from_stdin(struct rev_info *revs, struct strbuf *sb,
 				     struct cmdline_pathspec *prune)
 {
-	while (strbuf_getwholeline(sb, stdin, '\n') != EOF) {
-		int len = sb->len;
-		if (len && sb->buf[len - 1] == '\n')
-			sb->buf[--len] = '\0';
+	while (strbuf_getline(sb, stdin) != EOF) {
 		ALLOC_GROW(prune->path, prune->nr + 1, prune->alloc);
 		prune->path[prune->nr++] = xstrdup(sb->buf);
 	}
@@ -1656,10 +1596,8 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 	warn_on_object_refname_ambiguity = 0;
 
 	strbuf_init(&sb, 1000);
-	while (strbuf_getwholeline(&sb, stdin, '\n') != EOF) {
+	while (strbuf_getline(&sb, stdin) != EOF) {
 		int len = sb.len;
-		if (len && sb.buf[len - 1] == '\n')
-			sb.buf[--len] = '\0';
 		if (!len)
 			break;
 		if (sb.buf[0] == '-') {
@@ -2050,7 +1988,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--ignore-missing")) {
 		revs->ignore_missing = 1;
 	} else {
-		int opts = diff_opt_parse(&revs->diffopt, argv, argc);
+		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
 		if (!opts)
 			unkv[(*unkc)++] = arg;
 		return opts;

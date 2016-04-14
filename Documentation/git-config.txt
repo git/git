@@ -9,18 +9,18 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git config' [<file-option>] [type] [-z|--null] name [value [value_regex]]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] name [value [value_regex]]
 'git config' [<file-option>] [type] --add name value
 'git config' [<file-option>] [type] --replace-all name value [value_regex]
-'git config' [<file-option>] [type] [-z|--null] --get name [value_regex]
-'git config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
-'git config' [<file-option>] [type] [-z|--null] [--name-only] --get-regexp name_regex [value_regex]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] --get name [value_regex]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] --get-all name [value_regex]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] [--name-only] --get-regexp name_regex [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-urlmatch name URL
 'git config' [<file-option>] --unset name [value_regex]
 'git config' [<file-option>] --unset-all name [value_regex]
 'git config' [<file-option>] --rename-section old_name new_name
 'git config' [<file-option>] --remove-section name
-'git config' [<file-option>] [-z|--null] [--name-only] -l | --list
+'git config' [<file-option>] [--show-origin] [-z|--null] [--name-only] -l | --list
 'git config' [<file-option>] --get-color name [default]
 'git config' [<file-option>] --get-colorbool name [stdout-is-tty]
 'git config' [<file-option>] -e | --edit
@@ -194,6 +194,12 @@ See also <<FILES>>.
 	Output only the names of config variables for `--list` or
 	`--get-regexp`.
 
+--show-origin::
+	Augment the output of all queried config options with the
+	origin type (file, standard input, blob, command line) and
+	the actual origin (config file path, ref, or blob id if
+	applicable).
+
 --get-colorbool name [stdout-is-tty]::
 
 	Find the color setting for `name` (e.g. `color.diff`) and output
@@ -219,7 +225,9 @@ See also <<FILES>>.
 
 --[no-]includes::
 	Respect `include.*` directives in config files when looking up
-	values. Defaults to on.
+	values. Defaults to `off` when a specific file is given (e.g.,
+	using `--file`, `--global`, etc) and `on` when searching all
+	config files.
 
 [[FILES]]
 FILES

@@ -163,7 +163,7 @@ This option is only applicable when listing tags without annotation lines.
 	A string that interpolates `%(fieldname)` from the object
 	pointed at by a ref being shown.  The format is the same as
 	that of linkgit:git-for-each-ref[1].  When unspecified,
-	defaults to `%(refname:short)`.
+	defaults to `%(refname:strip=2)`.
 
 --[no-]merged [<commit>]::
 	Only list tags whose tips are reachable, or not reachable

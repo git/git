@@ -4,6 +4,9 @@ test_description=clone
 
 . ./test-lib.sh
 
+X=
+test_have_prereq !MINGW || X=.exe
+
 test_expect_success setup '
 
 	rm -fr .git &&
@@ -62,6 +65,29 @@ test_expect_success 'clone respects GIT_WORK_TREE' '
 	GIT_WORK_TREE=worktree git clone src bare &&
 	test -f bare/config &&
 	test -f worktree/file
+
+'
+
+test_expect_success 'clone from hooks' '
+
+	test_create_repo r0 &&
+	cd r0 &&
+	test_commit initial &&
+	cd .. &&
+	git init r1 &&
+	cd r1 &&
+	cat >.git/hooks/pre-commit <<-\EOF &&
+	#!/bin/sh
+	git clone ../r0 ../r2
+	exit 1
+	EOF
+	chmod u+x .git/hooks/pre-commit &&
+	: >file &&
+	git add file &&
+	test_must_fail git commit -m invoke-hook &&
+	cd .. &&
+	test_cmp r0/.git/HEAD r2/.git/HEAD &&
+	test_cmp r0/initial.t r2/initial.t
 
 '
 
@@ -221,7 +247,7 @@ test_expect_success 'clone separate gitdir' '
 '
 
 test_expect_success 'clone separate gitdir: output' '
-	echo "gitdir: `pwd`/realgitdir" >expected &&
+	echo "gitdir: $(pwd)/realgitdir" >expected &&
 	test_cmp expected dst/.git
 '
 
@@ -282,14 +308,9 @@ test_expect_success 'clone checking out a tag' '
 
 setup_ssh_wrapper () {
 	test_expect_success 'setup ssh wrapper' '
-		write_script "$TRASH_DIRECTORY/ssh-wrapper" <<-\EOF &&
-		echo >>"$TRASH_DIRECTORY/ssh-output" "ssh: $*" &&
-		# throw away all but the last argument, which should be the
-		# command
-		while test $# -gt 1; do shift; done
-		eval "$1"
-		EOF
-		GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper" &&
+		cp "$GIT_BUILD_DIR/test-fake-ssh$X" \
+			"$TRASH_DIRECTORY/ssh-wrapper$X" &&
+		GIT_SSH="$TRASH_DIRECTORY/ssh-wrapper$X" &&
 		export GIT_SSH &&
 		export TRASH_DIRECTORY &&
 		>"$TRASH_DIRECTORY"/ssh-output
@@ -297,8 +318,8 @@ setup_ssh_wrapper () {
 }
 
 copy_ssh_wrapper_as () {
-	cp "$TRASH_DIRECTORY/ssh-wrapper" "$1" &&
-	GIT_SSH="$1" &&
+	cp "$TRASH_DIRECTORY/ssh-wrapper$X" "${1%$X}$X" &&
+	GIT_SSH="${1%$X}$X" &&
 	export GIT_SSH
 }
 

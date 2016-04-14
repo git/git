@@ -92,7 +92,11 @@ refname::
 	The name of the ref (the part after $GIT_DIR/).
 	For a non-ambiguous short name of the ref append `:short`.
 	The option core.warnAmbiguousRefs is used to select the strict
-	abbreviation mode.
+	abbreviation mode. If `strip=<N>` is appended, strips `<N>`
+	slash-separated path components from the front of the refname
+	(e.g., `%(refname:strip=2)` turns `refs/tags/foo` into `foo`.
+	`<N>` must be a positive integer.  If a displayed ref has fewer
+	components than `<N>`, the command aborts with an error.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
@@ -129,18 +133,27 @@ color::
 
 align::
 	Left-, middle-, or right-align the content between
-	%(align:...) and %(end). The "align:" is followed by `<width>`
-	and `<position>` in any order separated by a comma, where the
-	`<position>` is either left, right or middle, default being
-	left and `<width>` is the total length of the content with
-	alignment. If the contents length is more than the width then
-	no alignment is performed. If used with '--quote' everything
-	in between %(align:...) and %(end) is quoted, but if nested
-	then only the topmost level performs quoting.
+	%(align:...) and %(end). The "align:" is followed by
+	`width=<width>` and `position=<position>` in any order
+	separated by a comma, where the `<position>` is either left,
+	right or middle, default being left and `<width>` is the total
+	length of the content with alignment. For brevity, the
+	"width=" and/or "position=" prefixes may be omitted, and bare
+	<width> and <position> used instead.  For instance,
+	`%(align:<width>,<position>)`. If the contents length is more
+	than the width then no alignment is performed. If used with
+	'--quote' everything in between %(align:...) and %(end) is
+	quoted, but if nested then only the topmost level performs
+	quoting.
 
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
+
+For commit and tag objects, the special `creatordate` and `creator`
+fields will correspond to the appropriate date or name-email-date tuple
+from the `committer` or `tagger` fields depending on the object type.
+These are intended for working on a mix of annotated and lightweight tags.
 
 Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,
@@ -153,8 +166,8 @@ line is 'contents:body', where body is all of the lines after the first
 blank line.  The optional GPG signature is `contents:signature`.  The
 first `N` lines of the message is obtained using `contents:lines=N`.
 
-For sorting purposes, fields with numeric values sort in numeric
-order (`objectsize`, `authordate`, `committerdate`, `taggerdate`).
+For sorting purposes, fields with numeric values sort in numeric order
+(`objectsize`, `authordate`, `committerdate`, `creatordate`, `taggerdate`).
 All other fields are used to sort in their byte-value order.
 
 There is also an option to sort by versions, this can be done by using

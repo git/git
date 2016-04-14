@@ -36,6 +36,7 @@
 static inline uintmax_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
+const struct object_id null_oid;
 
 /*
  * This is meant to hold a *small* number of objects that you would
@@ -252,7 +253,7 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 {
 	struct alternate_object_database *ent;
 	struct alternate_object_database *alt;
-	int pfxlen, entlen;
+	size_t pfxlen, entlen;
 	struct strbuf pathbuf = STRBUF_INIT;
 
 	if (!is_absolute_path(entry) && relative_base) {
@@ -272,8 +273,8 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	while (pfxlen && pathbuf.buf[pfxlen-1] == '/')
 		pfxlen -= 1;
 
-	entlen = pfxlen + 43; /* '/' + 2 hex + '/' + 38 hex + NUL */
-	ent = xmalloc(sizeof(*ent) + entlen);
+	entlen = st_add(pfxlen, 43); /* '/' + 2 hex + '/' + 38 hex + NUL */
+	ent = xmalloc(st_add(sizeof(*ent), entlen));
 	memcpy(ent->base, pathbuf.buf, pfxlen);
 	strbuf_release(&pathbuf);
 
@@ -395,7 +396,7 @@ void add_to_alternates_file(const char *reference)
 		struct strbuf line = STRBUF_INIT;
 		int found = 0;
 
-		while (strbuf_getline(&line, in, '\n') != EOF) {
+		while (strbuf_getline(&line, in) != EOF) {
 			if (!strcmp(reference, line.buf)) {
 				found = 1;
 				break;
@@ -1075,6 +1076,8 @@ unsigned char *use_pack(struct packed_git *p,
 		die("packfile %s cannot be accessed", p->pack_name);
 	if (offset > (p->pack_size - 20))
 		die("offset beyond end of packfile (truncated pack?)");
+	if (offset < 0)
+		die(_("offset before end of packfile (broken .idx?)"));
 
 	if (!win || !in_window(win, offset)) {
 		if (win)
@@ -1133,7 +1136,7 @@ unsigned char *use_pack(struct packed_git *p,
 
 static struct packed_git *alloc_packed_git(int extra)
 {
-	struct packed_git *p = xmalloc(sizeof(*p) + extra);
+	struct packed_git *p = xmalloc(st_add(sizeof(*p), extra));
 	memset(p, 0, sizeof(*p));
 	p->pack_fd = -1;
 	return p;
@@ -1167,7 +1170,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	 * ".pack" is long enough to hold any suffix we're adding (and
 	 * the use xsnprintf double-checks that)
 	 */
-	alloc = path_len + strlen(".pack") + 1;
+	alloc = st_add3(path_len, strlen(".pack"), 1);
 	p = alloc_packed_git(alloc);
 	memcpy(p->pack_name, path, path_len);
 
@@ -1195,7 +1198,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 {
 	const char *path = sha1_pack_name(sha1);
-	int alloc = strlen(path) + 1;
+	size_t alloc = st_add(strlen(path), 1);
 	struct packed_git *p = alloc_packed_git(alloc);
 
 	memcpy(p->pack_name, path, alloc); /* includes NUL */
@@ -1412,10 +1415,12 @@ static void mark_bad_packed_object(struct packed_git *p,
 {
 	unsigned i;
 	for (i = 0; i < p->num_bad_objects; i++)
-		if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
+		if (!hashcmp(sha1, p->bad_object_sha1 + GIT_SHA1_RAWSZ * i))
 			return;
-	p->bad_object_sha1 = xrealloc(p->bad_object_sha1, 20 * (p->num_bad_objects + 1));
-	hashcpy(p->bad_object_sha1 + 20 * p->num_bad_objects, sha1);
+	p->bad_object_sha1 = xrealloc(p->bad_object_sha1,
+				      st_mult(GIT_SHA1_RAWSZ,
+					      st_add(p->num_bad_objects, 1)));
+	hashcpy(p->bad_object_sha1 + GIT_SHA1_RAWSZ * p->num_bad_objects, sha1);
 	p->num_bad_objects++;
 }
 
@@ -1941,7 +1946,7 @@ static enum object_type packed_to_object_type(struct packed_git *p,
 		/* Push the object we're going to leave behind */
 		if (poi_stack_nr >= poi_stack_alloc && poi_stack == small_poi_stack) {
 			poi_stack_alloc = alloc_nr(poi_stack_nr);
-			poi_stack = xmalloc(sizeof(off_t)*poi_stack_alloc);
+			ALLOC_ARRAY(poi_stack, poi_stack_alloc);
 			memcpy(poi_stack, small_poi_stack, sizeof(off_t)*poi_stack_nr);
 		} else {
 			ALLOC_GROW(poi_stack, poi_stack_nr+1, poi_stack_alloc);
@@ -2307,7 +2312,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		if (delta_stack_nr >= delta_stack_alloc
 		    && delta_stack == small_delta_stack) {
 			delta_stack_alloc = alloc_nr(delta_stack_nr);
-			delta_stack = xmalloc(sizeof(*delta_stack)*delta_stack_alloc);
+			ALLOC_ARRAY(delta_stack, delta_stack_alloc);
 			memcpy(delta_stack, small_delta_stack,
 			       sizeof(*delta_stack)*delta_stack_nr);
 		} else {
@@ -2445,6 +2450,20 @@ const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 	}
 }
 
+void check_pack_index_ptr(const struct packed_git *p, const void *vptr)
+{
+	const unsigned char *ptr = vptr;
+	const unsigned char *start = p->index_data;
+	const unsigned char *end = start + p->index_size;
+	if (ptr < start)
+		die(_("offset before start of pack index for %s (corrupt index?)"),
+		    p->pack_name);
+	/* No need to check for underflow; .idx files must be at least 8 bytes */
+	if (ptr >= end - 8)
+		die(_("offset beyond end of pack index for %s (truncated index?)"),
+		    p->pack_name);
+}
+
 off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 {
 	const unsigned char *index = p->index_data;
@@ -2458,6 +2477,7 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 		if (!(off & 0x80000000))
 			return off;
 		index += p->num_objects * 4 + (off & 0x7fffffff) * 8;
+		check_pack_index_ptr(p, index);
 		return (((uint64_t)ntohl(*((uint32_t *)(index + 0)))) << 32) |
 				   ntohl(*((uint32_t *)(index + 4)));
 	}
@@ -3504,12 +3524,12 @@ static int for_each_file_in_obj_subdir(int subdir_nr,
 				break;
 		}
 	}
-	strbuf_setlen(path, baselen);
+	closedir(dir);
 
+	strbuf_setlen(path, baselen);
 	if (!r && subdir_cb)
 		r = subdir_cb(subdir_nr, path->buf, data);
 
-	closedir(dir);
 	return r;
 }
 

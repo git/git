@@ -406,7 +406,8 @@ void parse_pathspec(struct pathspec *pathspec,
 		n++;
 
 	pathspec->nr = n;
-	pathspec->items = item = xmalloc(sizeof(*item) * n);
+	ALLOC_ARRAY(pathspec->items, n);
+	item = pathspec->items;
 	pathspec->_raw = argv;
 	prefixlen = prefix ? strlen(prefix) : 0;
 
@@ -483,7 +484,7 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 {
 	*dst = *src;
-	dst->items = xmalloc(sizeof(struct pathspec_item) * dst->nr);
+	ALLOC_ARRAY(dst->items, dst->nr);
 	memcpy(dst->items, src->items,
 	       sizeof(struct pathspec_item) * dst->nr);
 }

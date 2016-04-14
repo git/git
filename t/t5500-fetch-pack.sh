@@ -14,7 +14,7 @@ test_description='Testing multi_ack pack fetching'
 add () {
 	name=$1 &&
 	text="$@" &&
-	branch=`echo $name | sed -e 's/^\(.\).*$/\1/'` &&
+	branch=$(echo $name | sed -e 's/^\(.\).*$/\1/') &&
 	parents="" &&
 
 	shift &&
@@ -50,18 +50,18 @@ pull_to_client () {
 			case "$heads" in *B*)
 			    echo $BTIP > .git/refs/heads/B;;
 			esac &&
-			git symbolic-ref HEAD refs/heads/`echo $heads \
-				| sed -e "s/^\(.\).*$/\1/"` &&
+			git symbolic-ref HEAD refs/heads/$(echo $heads \
+				| sed -e "s/^\(.\).*$/\1/") &&
 
 			git fsck --full &&
 
 			mv .git/objects/pack/pack-* . &&
-			p=`ls -1 pack-*.pack` &&
+			p=$(ls -1 pack-*.pack) &&
 			git unpack-objects <$p &&
 			git fsck --full &&
 
-			idx=`echo pack-*.idx` &&
-			pack_count=`git show-index <$idx | wc -l` &&
+			idx=$(echo pack-*.idx) &&
+			pack_count=$(git show-index <$idx | wc -l) &&
 			test $pack_count = $count &&
 			rm -f pack-*
 		)
@@ -132,13 +132,13 @@ test_expect_success 'single given branch clone' '
 
 test_expect_success 'clone shallow depth 1' '
 	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
-	test "`git --git-dir=shallow0/.git rev-list --count HEAD`" = 1
+	test "$(git --git-dir=shallow0/.git rev-list --count HEAD)" = 1
 '
 
 test_expect_success 'clone shallow depth 1 with fsck' '
 	git config --global fetch.fsckobjects true &&
 	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0fsck &&
-	test "`git --git-dir=shallow0fsck/.git rev-list --count HEAD`" = 1 &&
+	test "$(git --git-dir=shallow0fsck/.git rev-list --count HEAD)" = 1 &&
 	git config --global --unset fetch.fsckobjects
 '
 
@@ -147,7 +147,7 @@ test_expect_success 'clone shallow' '
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 2
+	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 2
 '
 
 test_expect_success 'clone shallow object count' '
@@ -273,7 +273,7 @@ test_expect_success 'additional simple shallow deepenings' '
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 11
+	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 11
 '
 
 test_expect_success 'clone shallow object count' '

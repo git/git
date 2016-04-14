@@ -88,7 +88,7 @@ char *prefix_path_gently(const char *prefix, int len,
 	const char *orig = path;
 	char *sanitized;
 	if (is_absolute_path(orig)) {
-		sanitized = xmalloc(strlen(path) + 1);
+		sanitized = xmallocz(strlen(path));
 		if (remaining_prefix)
 			*remaining_prefix = 0;
 		if (normalize_path_copy_len(sanitized, path, remaining_prefix)) {
@@ -139,9 +139,7 @@ int check_filename(const char *prefix, const char *arg)
 		if (arg[2] == '\0') /* ":/" is root dir, always exists */
 			return 1;
 		name = arg + 2;
-	} else if (!no_wildcard(arg))
-		return 1;
-	else if (prefix)
+	} else if (prefix)
 		name = prefix_filename(prefix, strlen(prefix), arg);
 	else
 		name = arg;
@@ -202,7 +200,7 @@ void verify_filename(const char *prefix,
 {
 	if (*arg == '-')
 		die("bad flag '%s' used after filename", arg);
-	if (check_filename(prefix, arg))
+	if (check_filename(prefix, arg) || !no_wildcard(arg))
 		return;
 	die_verify_filename(prefix, arg, diagnose_misspelt_rev);
 }
@@ -309,6 +307,23 @@ int is_git_directory(const char *suspect)
 	ret = 1;
 done:
 	strbuf_release(&path);
+	return ret;
+}
+
+int is_nonbare_repository_dir(struct strbuf *path)
+{
+	int ret = 0;
+	int gitfile_error;
+	size_t orig_path_len = path->len;
+	assert(orig_path_len != 0);
+	strbuf_complete(path, '/');
+	strbuf_addstr(path, ".git");
+	if (read_gitfile_gently(path->buf, &gitfile_error) || is_git_directory(path->buf))
+		ret = 1;
+	if (gitfile_error == READ_GITFILE_ERR_OPEN_FAILED ||
+	    gitfile_error == READ_GITFILE_ERR_READ_FAILED)
+		ret = 1;
+	strbuf_setlen(path, orig_path_len);
 	return ret;
 }
 
@@ -434,17 +449,6 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 	return ret;
 }
 
-static void update_linked_gitdir(const char *gitfile, const char *gitdir)
-{
-	struct strbuf path = STRBUF_INIT;
-	struct stat st;
-
-	strbuf_addf(&path, "%s/gitdir", gitdir);
-	if (stat(path.buf, &st) || st.st_mtime + 24 * 3600 < time(NULL))
-		write_file(path.buf, "%s", gitfile);
-	strbuf_release(&path);
-}
-
 /*
  * Try to read the location of the git directory from the .git file,
  * return path to git directory if found.
@@ -482,14 +486,13 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_OPEN_FAILED;
 		goto cleanup_return;
 	}
-	buf = xmalloc(st.st_size + 1);
+	buf = xmallocz(st.st_size);
 	len = read_in_full(fd, buf, st.st_size);
 	close(fd);
 	if (len != st.st_size) {
 		error_code = READ_GITFILE_ERR_READ_FAILED;
 		goto cleanup_return;
 	}
-	buf[len] = '\0';
 	if (!starts_with(buf, "gitdir: ")) {
 		error_code = READ_GITFILE_ERR_INVALID_FORMAT;
 		goto cleanup_return;
@@ -514,7 +517,6 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_NOT_A_REPO;
 		goto cleanup_return;
 	}
-	update_linked_gitdir(path, dir);
 	path = real_path(dir);
 
 cleanup_return:

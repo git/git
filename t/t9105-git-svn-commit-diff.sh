@@ -18,8 +18,8 @@ test_expect_success 'initialize repo' '
 	git commit -a -m "another"
 	'
 
-head=`git rev-parse --verify HEAD^0`
-prev=`git rev-parse --verify HEAD^1`
+head=$(git rev-parse --verify HEAD^0)
+prev=$(git rev-parse --verify HEAD^1)
 
 # the internals of the commit-diff command are the same as the regular
 # commit, so only a basic test of functionality is needed since we've

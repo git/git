@@ -47,7 +47,7 @@ static void msort_with_tmp(void *b, size_t n, size_t s,
 void git_qsort(void *b, size_t n, size_t s,
 	       int (*cmp)(const void *, const void *))
 {
-	const size_t size = n * s;
+	const size_t size = st_mult(n, s);
 	char buf[1024];
 
 	if (size < sizeof(buf)) {

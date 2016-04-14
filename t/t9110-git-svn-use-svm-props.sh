@@ -51,7 +51,7 @@ test_expect_success 'verify metadata for /dir' "
 
 test_expect_success 'find commit based on SVN revision number' "
         git svn find-rev r12 |
-	    grep `git rev-parse HEAD`
+	    grep $(git rev-parse HEAD)
         "
 
 test_expect_success 'empty rebase' "

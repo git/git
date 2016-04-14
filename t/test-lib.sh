@@ -907,9 +907,11 @@ yes () {
 		y="$*"
 	fi
 
-	while echo "$y"
+	i=0
+	while test $i -lt 99
 	do
-		:
+		echo "$y"
+		i=$(($i+1))
 	done
 }
 
@@ -998,7 +1000,7 @@ test_i18ngrep () {
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
 	case $(uname -s) in
-	CYGWIN*)
+	CYGWIN*|MINGW*)
 		false
 		;;
 	*)
@@ -1054,20 +1056,28 @@ test_lazy_prereq NOT_ROOT '
 	test "$uid" != 0
 '
 
-# On a filesystem that lacks SANITY, a file can be deleted even if
-# the containing directory doesn't have write permissions, or a file
-# can be accessed even if the containing directory doesn't have read
-# or execute permissions, causing our tests that validate that Git
-# works sensibly in such situations.
+# SANITY is about "can you correctly predict what the filesystem would
+# do by only looking at the permission bits of the files and
+# directories?"  A typical example of !SANITY is running the test
+# suite as root, where a test may expect "chmod -r file && cat file"
+# to fail because file is supposed to be unreadable after a successful
+# chmod.  In an environment (i.e. combination of what filesystem is
+# being used and who is running the tests) that lacks SANITY, you may
+# be able to delete or create a file when the containing directory
+# doesn't have write permissions, or access a file even if the
+# containing directory doesn't have read or execute permissions.
+
 test_lazy_prereq SANITY '
 	mkdir SANETESTD.1 SANETESTD.2 &&
 
 	chmod +w SANETESTD.1 SANETESTD.2 &&
 	>SANETESTD.1/x 2>SANETESTD.2/x &&
 	chmod -w SANETESTD.1 &&
+	chmod -r SANETESTD.1/x &&
 	chmod -rx SANETESTD.2 ||
 	error "bug in test sript: cannot prepare SANETESTD"
 
+	! test -r SANETESTD.1/x &&
 	! rm SANETESTD.1/x && ! test -f SANETESTD.2/x
 	status=$?
 

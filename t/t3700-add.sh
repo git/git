@@ -25,7 +25,7 @@ test_expect_success \
 	 echo foo >xfoo1 &&
 	 chmod 755 xfoo1 &&
 	 git add xfoo1 &&
-	 case "`git ls-files --stage xfoo1`" in
+	 case "$(git ls-files --stage xfoo1)" in
 	 100644" "*xfoo1) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	 esac'
@@ -33,7 +33,7 @@ test_expect_success \
 test_expect_success 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo1 &&
 	test_ln_s_add foo xfoo1 &&
-	case "`git ls-files --stage xfoo1`" in
+	case "$(git ls-files --stage xfoo1)" in
 	120000" "*xfoo1) echo pass;;
 	*) echo fail; git ls-files --stage xfoo1; (exit 1);;
 	esac
@@ -45,7 +45,7 @@ test_expect_success \
 	 echo foo >xfoo2 &&
 	 chmod 755 xfoo2 &&
 	 git update-index --add xfoo2 &&
-	 case "`git ls-files --stage xfoo2`" in
+	 case "$(git ls-files --stage xfoo2)" in
 	 100644" "*xfoo2) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	 esac'
@@ -53,7 +53,7 @@ test_expect_success \
 test_expect_success 'git add: filemode=0 should not get confused by symlink' '
 	rm -f xfoo2 &&
 	test_ln_s_add foo xfoo2 &&
-	case "`git ls-files --stage xfoo2`" in
+	case "$(git ls-files --stage xfoo2)" in
 	120000" "*xfoo2) echo pass;;
 	*) echo fail; git ls-files --stage xfoo2; (exit 1);;
 	esac
@@ -63,7 +63,7 @@ test_expect_success \
 	'git update-index --add: Test that executable bit is not used...' \
 	'git config core.filemode 0 &&
 	 test_ln_s_add xfoo2 xfoo3 &&	# runs git update-index --add
-	 case "`git ls-files --stage xfoo3`" in
+	 case "$(git ls-files --stage xfoo3)" in
 	 120000" "*xfoo3) echo pass;;
 	 *) echo fail; git ls-files --stage xfoo3; (exit 1);;
 	 esac'
@@ -173,14 +173,14 @@ test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over st
 
 test_expect_success 'git add --refresh' '
 	>foo && git add foo && git commit -a -m "commit all" &&
-	test -z "`git diff-index HEAD -- foo`" &&
+	test -z "$(git diff-index HEAD -- foo)" &&
 	git read-tree HEAD &&
-	case "`git diff-index HEAD -- foo`" in
+	case "$(git diff-index HEAD -- foo)" in
 	:100644" "*"M	foo") echo pass;;
 	*) echo fail; (exit 1);;
 	esac &&
 	git add --refresh -- foo &&
-	test -z "`git diff-index HEAD -- foo`"
+	test -z "$(git diff-index HEAD -- foo)"
 '
 
 test_expect_success 'git add --refresh with pathspec' '

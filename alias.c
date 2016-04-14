@@ -23,7 +23,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	int src, dst, count = 0, size = 16;
 	char quoted = 0;
 
-	*argv = xmalloc(sizeof(**argv) * size);
+	ALLOC_ARRAY(*argv, size);
 
 	/* split alias_string */
 	(*argv)[count++] = cmdline;

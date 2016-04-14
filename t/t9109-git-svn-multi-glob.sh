@@ -50,10 +50,10 @@ test_expect_success 'test refspec globbing' '
 	git log --pretty=oneline refs/remotes/tags/end | \
 	    sed -e "s/^.\{41\}//" > output.end &&
 	test_cmp expect.end output.end &&
-	test "`git rev-parse refs/remotes/tags/end~1`" = \
-		"`git rev-parse refs/remotes/branches/v1/start`" &&
-	test "`git rev-parse refs/remotes/branches/v1/start~2`" = \
-		"`git rev-parse refs/remotes/trunk`" &&
+	test "$(git rev-parse refs/remotes/tags/end~1)" = \
+		"$(git rev-parse refs/remotes/branches/v1/start)" &&
+	test "$(git rev-parse refs/remotes/branches/v1/start~2)" = \
+		"$(git rev-parse refs/remotes/trunk)" &&
 	test_must_fail git rev-parse refs/remotes/tags/end@3
 	'
 
@@ -75,12 +75,12 @@ test_expect_success 'test left-hand-side only globbing' '
 		svn_cmd commit -m "try to try"
 	) &&
 	git svn fetch two &&
-	test `git rev-list refs/remotes/two/tags/end | wc -l` -eq 6 &&
-	test `git rev-list refs/remotes/two/branches/v1/start | wc -l` -eq 3 &&
-	test `git rev-parse refs/remotes/two/branches/v1/start~2` = \
-	     `git rev-parse refs/remotes/two/trunk` &&
-	test `git rev-parse refs/remotes/two/tags/end~3` = \
-	     `git rev-parse refs/remotes/two/branches/v1/start` &&
+	test $(git rev-list refs/remotes/two/tags/end | wc -l) -eq 6 &&
+	test $(git rev-list refs/remotes/two/branches/v1/start | wc -l) -eq 3 &&
+	test $(git rev-parse refs/remotes/two/branches/v1/start~2) = \
+	     $(git rev-parse refs/remotes/two/trunk) &&
+	test $(git rev-parse refs/remotes/two/tags/end~3) = \
+	     $(git rev-parse refs/remotes/two/branches/v1/start) &&
 	git log --pretty=oneline refs/remotes/two/tags/end | \
 	    sed -e "s/^.\{41\}//" > output.two &&
 	test_cmp expect.two output.two
@@ -124,20 +124,23 @@ test_expect_success 'test another branch' '
 	git config --add svn-remote.four.tags \
 	                 "tags/*:refs/remotes/four/tags/*" &&
 	git svn fetch four &&
-	test `git rev-list refs/remotes/four/tags/next | wc -l` -eq 5 &&
-	test `git rev-list refs/remotes/four/branches/v2/start | wc -l` -eq 3 &&
-	test `git rev-parse refs/remotes/four/branches/v2/start~2` = \
-	     `git rev-parse refs/remotes/four/trunk` &&
-	test `git rev-parse refs/remotes/four/tags/next~2` = \
-	     `git rev-parse refs/remotes/four/branches/v2/start` &&
+	test $(git rev-list refs/remotes/four/tags/next | wc -l) -eq 5 &&
+	test $(git rev-list refs/remotes/four/branches/v2/start | wc -l) -eq 3 &&
+	test $(git rev-parse refs/remotes/four/branches/v2/start~2) = \
+	     $(git rev-parse refs/remotes/four/trunk) &&
+	test $(git rev-parse refs/remotes/four/tags/next~2) = \
+	     $(git rev-parse refs/remotes/four/branches/v2/start) &&
 	git log --pretty=oneline refs/remotes/four/tags/next | \
 	    sed -e "s/^.\{41\}//" > output.four &&
 	test_cmp expect.four output.four
 	'
 
-echo "Only one set of wildcard directories" \
-     "(e.g. '*' or '*/*/*') is supported: 'branches/*/t/*'" > expect.three
-echo "" >> expect.three
+test_expect_success 'prepare test disallow multiple globs' "
+cat >expect.three <<EOF
+Only one set of wildcards (e.g. '*' or '*/*/*') is supported: branches/*/t/*
+
+EOF
+	"
 
 test_expect_success 'test disallow multiple globs' '
 	git config --add svn-remote.three.url "$svnrepo" &&

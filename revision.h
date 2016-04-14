@@ -135,6 +135,7 @@ struct rev_info {
 			pretty_given:1,
 			abbrev_commit:1,
 			abbrev_commit_given:1,
+			zero_commit:1,
 			use_terminator:1,
 			missing_newline:1,
 			date_mode_explicit:1,
@@ -256,16 +257,9 @@ extern void put_revision_mark(const struct rev_info *revs,
 extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);
 
-struct name_path {
-	struct name_path *up;
-	int elem_len;
-	const char *elem;
-};
+char *path_name(struct strbuf *path, const char *name);
 
-char *path_name(const struct name_path *path, const char *name);
-
-extern void show_object_with_name(FILE *, struct object *,
-				  const struct name_path *, const char *);
+extern void show_object_with_name(FILE *, struct object *, const char *);
 
 extern void add_pending_object(struct rev_info *revs,
 			       struct object *obj, const char *name);

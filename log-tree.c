@@ -77,9 +77,8 @@ int parse_decorate_color_config(const char *var, const char *slot_name, const ch
 
 void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
 {
-	int nlen = strlen(name);
-	struct name_decoration *res = xmalloc(sizeof(*res) + nlen + 1);
-	memcpy(res->name, name, nlen + 1);
+	struct name_decoration *res;
+	FLEX_ALLOC_STR(res, name, name);
 	res->type = type;
 	res->next = add_decoration(&name_decoration, obj, res);
 }
@@ -342,7 +341,8 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 {
 	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
-	const char *name = oid_to_hex(&commit->object.oid);
+	const char *name = oid_to_hex(opt->zero_commit ?
+				      &null_oid : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 	if (opt->total > 0) {

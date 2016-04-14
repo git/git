@@ -1011,13 +1011,16 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	t->first_non_note = NULL;
 	t->prev_non_note = NULL;
 	t->ref = xstrdup_or_null(notes_ref);
+	t->update_ref = (flags & NOTES_INIT_WRITABLE) ? t->ref : NULL;
 	t->combine_notes = combine_notes;
 	t->initialized = 1;
 	t->dirty = 0;
 
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
-	    read_ref(notes_ref, object_sha1))
+	    get_sha1_treeish(notes_ref, object_sha1))
 		return;
+	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, object_sha1))
+		die("Cannot use notes ref %s", notes_ref);
 	if (get_tree_entry(object_sha1, "", sha1, &mode))
 		die("Failed to read notes tree referenced by %s (%s)",
 		    notes_ref, sha1_to_hex(object_sha1));
@@ -1027,15 +1030,15 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	load_subtree(t, &root_tree, t->root, 0);
 }
 
-struct notes_tree **load_notes_trees(struct string_list *refs)
+struct notes_tree **load_notes_trees(struct string_list *refs, int flags)
 {
 	struct string_list_item *item;
 	int counter = 0;
 	struct notes_tree **trees;
-	trees = xmalloc((refs->nr+1) * sizeof(struct notes_tree *));
+	ALLOC_ARRAY(trees, refs->nr + 1);
 	for_each_string_list_item(item, refs) {
 		struct notes_tree *t = xcalloc(1, sizeof(struct notes_tree));
-		init_notes(t, item->string, combine_notes_ignore, 0);
+		init_notes(t, item->string, combine_notes_ignore, flags);
 		trees[counter++] = t;
 	}
 	trees[counter] = NULL;
@@ -1071,7 +1074,7 @@ void init_display_notes(struct display_notes_opt *opt)
 						     item->string);
 	}
 
-	display_notes_trees = load_notes_trees(&display_notes_refs);
+	display_notes_trees = load_notes_trees(&display_notes_refs, 0);
 	string_list_clear(&display_notes_refs, 0);
 }
 
@@ -1302,4 +1305,14 @@ void expand_notes_ref(struct strbuf *sb)
 		strbuf_insert(sb, 0, "refs/", 5);
 	else
 		strbuf_insert(sb, 0, "refs/notes/", 11);
+}
+
+void expand_loose_notes_ref(struct strbuf *sb)
+{
+	unsigned char object[20];
+
+	if (get_sha1(sb->buf, object)) {
+		/* fallback to expand_notes_ref */
+		expand_notes_ref(sb);
+	}
 }

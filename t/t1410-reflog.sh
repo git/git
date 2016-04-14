@@ -62,18 +62,18 @@ test_expect_success setup '
 	git add . &&
 
 	test_tick && git commit -m rabbit &&
-	H=`git rev-parse --verify HEAD` &&
-	A=`git rev-parse --verify HEAD:A` &&
-	B=`git rev-parse --verify HEAD:A/B` &&
-	C=`git rev-parse --verify HEAD:C` &&
-	D=`git rev-parse --verify HEAD:A/D` &&
-	E=`git rev-parse --verify HEAD:A/B/E` &&
+	H=$(git rev-parse --verify HEAD) &&
+	A=$(git rev-parse --verify HEAD:A) &&
+	B=$(git rev-parse --verify HEAD:A/B) &&
+	C=$(git rev-parse --verify HEAD:C) &&
+	D=$(git rev-parse --verify HEAD:A/D) &&
+	E=$(git rev-parse --verify HEAD:A/B/E) &&
 	check_fsck &&
 
 	test_chmod +x C &&
 	git add C &&
 	test_tick && git commit -m dragon &&
-	L=`git rev-parse --verify HEAD` &&
+	L=$(git rev-parse --verify HEAD) &&
 	check_fsck &&
 
 	rm -f C A/B/E &&
@@ -81,15 +81,15 @@ test_expect_success setup '
 	echo horse >A/G &&
 	git add F A/G &&
 	test_tick && git commit -a -m sheep &&
-	F=`git rev-parse --verify HEAD:F` &&
-	G=`git rev-parse --verify HEAD:A/G` &&
-	I=`git rev-parse --verify HEAD:A` &&
-	J=`git rev-parse --verify HEAD` &&
+	F=$(git rev-parse --verify HEAD:F) &&
+	G=$(git rev-parse --verify HEAD:A/G) &&
+	I=$(git rev-parse --verify HEAD:A) &&
+	J=$(git rev-parse --verify HEAD) &&
 	check_fsck &&
 
 	rm -f A/G &&
 	test_tick && git commit -a -m monkey &&
-	K=`git rev-parse --verify HEAD` &&
+	K=$(git rev-parse --verify HEAD) &&
 	check_fsck &&
 
 	check_have A B C D E F G H I J K L &&
@@ -323,6 +323,19 @@ test_expect_success 'parsing reverse reflogs at BUFSIZ boundaries' '
 	git rev-parse reflogskip@{73} >actual &&
 	echo ${z38}03 >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'no segfaults for reflog containing non-commit sha1s' '
+	git update-ref --create-reflog -m "Creating ref" \
+		refs/tests/tree-in-reflog HEAD &&
+	git update-ref -m "Forcing tree" refs/tests/tree-in-reflog HEAD^{tree} &&
+	git update-ref -m "Restoring to commit" refs/tests/tree-in-reflog HEAD &&
+	git reflog refs/tests/tree-in-reflog
+'
+
+test_expect_failure 'reflog with non-commit entries displays all entries' '
+	git reflog refs/tests/tree-in-reflog >actual &&
+	test_line_count = 3 actual
 '
 
 test_done

@@ -245,7 +245,10 @@ find_latest_squash()
 		case "$a" in
 			START) sq="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
-			git-subtree-split:) sub="$b" ;;
+			git-subtree-split:)
+				sub="$(git rev-parse "$b^0")" ||
+				    die "could not rev-parse split hash $b from commit $sq"
+				;;
 			END)
 				if [ -n "$sub" ]; then
 					if [ -n "$main" ]; then
@@ -278,7 +281,10 @@ find_existing_splits()
 		case "$a" in
 			START) sq="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
-			git-subtree-split:) sub="$b" ;;
+			git-subtree-split:)
+				sub="$(git rev-parse "$b^0")" ||
+				    die "could not rev-parse split hash $b from commit $sq"
+				;;
 			END)
 				debug "  Main is: '$main'"
 				if [ -z "$main" -a -n "$sub" ]; then
@@ -479,8 +485,16 @@ copy_or_skip()
 			p="$p -p $parent"
 		fi
 	done
-	
-	if [ -n "$identical" ]; then
+
+	copycommit=
+	if [ -n "$identical" ] && [ -n "$nonidentical" ]; then
+		extras=$(git rev-list --count $identical..$nonidentical)
+		if [ "$extras" -ne 0 ]; then
+			# we need to preserve history along the other branch
+			copycommit=1
+		fi
+	fi
+	if [ -n "$identical" ] && [ -z "$copycommit" ]; then
 		echo $identical
 	else
 		copy_commit $rev $tree "$p" || exit $?

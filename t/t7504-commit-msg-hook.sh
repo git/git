@@ -179,7 +179,7 @@ EOF
 chmod +x "$HOOK"
 
 commit_msg_is () {
-	test "`git log --pretty=format:%s%b -1`" = "$1"
+	test "$(git log --pretty=format:%s%b -1)" = "$1"
 }
 
 test_expect_success 'hook edits commit message' '

@@ -503,12 +503,7 @@ void add_exclude(const char *string, const char *base,
 
 	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
 	if (flags & EXC_FLAG_MUSTBEDIR) {
-		char *s;
-		x = xmalloc(sizeof(*x) + patternlen + 1);
-		s = (char *)(x+1);
-		memcpy(s, string, patternlen);
-		s[patternlen] = '\0';
-		x->pattern = s;
+		FLEXPTR_ALLOC_MEM(x, pattern, string, patternlen);
 	} else {
 		x = xmalloc(sizeof(*x));
 		x->pattern = string;
@@ -564,9 +559,7 @@ void clear_exclude_list(struct exclude_list *el)
 	free(el->excludes);
 	free(el->filebuf);
 
-	el->nr = 0;
-	el->excludes = NULL;
-	el->filebuf = NULL;
+	memset(el, 0, sizeof(*el));
 }
 
 static void trim_trailing_spaces(char *buf)
@@ -627,10 +620,7 @@ static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
 	}
 
 	uc->dir_created++;
-	d = xmalloc(sizeof(*d) + len + 1);
-	memset(d, 0, sizeof(*d));
-	memcpy(d->name, name, len);
-	d->name[len] = '\0';
+	FLEX_ALLOC_MEM(d, name, name, len);
 
 	ALLOC_GROW(dir->dirs, dir->dirs_nr + 1, dir->dirs_alloc);
 	memmove(dir->dirs + first + 1, dir->dirs + first,
@@ -699,7 +689,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			return 0;
 		}
 		if (buf[size-1] != '\n') {
-			buf = xrealloc(buf, size+1);
+			buf = xrealloc(buf, st_add(size, 1));
 			buf[size++] = '\n';
 		}
 	} else {
@@ -713,7 +703,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			close(fd);
 			return 0;
 		}
-		buf = xmalloc(size+1);
+		buf = xmallocz(size);
 		if (read_in_full(fd, buf, size) != size) {
 			free(buf);
 			close(fd);
@@ -882,72 +872,11 @@ int match_pathname(const char *pathname, int pathlen,
 		 */
 		if (!patternlen && !namelen)
 			return 1;
-		/*
-		 * This can happen when we ignore some exclude rules
-		 * on directories in other to see if negative rules
-		 * may match. E.g.
-		 *
-		 * /abc
-		 * !/abc/def/ghi
-		 *
-		 * The pattern of interest is "/abc". On the first
-		 * try, we should match path "abc" with this pattern
-		 * in the "if" statement right above, but the caller
-		 * ignores it.
-		 *
-		 * On the second try with paths within "abc",
-		 * e.g. "abc/xyz", we come here and try to match it
-		 * with "/abc".
-		 */
-		if (!patternlen && namelen && *name == '/')
-			return 1;
 	}
 
 	return fnmatch_icase_mem(pattern, patternlen,
 				 name, namelen,
 				 WM_PATHNAME) == 0;
-}
-
-/*
- * Return non-zero if pathname is a directory and an ancestor of the
- * literal path in a (negative) pattern. This is used to keep
- * descending in "foo" and "foo/bar" when the pattern is
- * "!foo/bar/.gitignore". "foo/notbar" will not be descended however.
- */
-static int match_neg_path(const char *pathname, int pathlen, int *dtype,
-			  const char *base, int baselen,
-			  const char *pattern, int prefix, int patternlen,
-			  int flags)
-{
-	assert((flags & EXC_FLAG_NEGATIVE) && !(flags & EXC_FLAG_NODIR));
-
-	if (*dtype == DT_UNKNOWN)
-		*dtype = get_dtype(NULL, pathname, pathlen);
-	if (*dtype != DT_DIR)
-		return 0;
-
-	if (*pattern == '/') {
-		pattern++;
-		patternlen--;
-		prefix--;
-	}
-
-	if (baselen) {
-		if (((pathlen < baselen && base[pathlen] == '/') ||
-		     pathlen == baselen) &&
-		    !strncmp_icase(pathname, base, pathlen))
-			return 1;
-		pathname += baselen + 1;
-		pathlen  -= baselen + 1;
-	}
-
-
-	if (prefix &&
-	    ((pathlen < prefix && pattern[pathlen] == '/') &&
-	     !strncmp_icase(pathname, pattern, pathlen)))
-		return 1;
-
-	return 0;
 }
 
 /*
@@ -963,7 +892,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 						       struct exclude_list *el)
 {
 	struct exclude *exc = NULL; /* undecided */
-	int i, matched_negative_path = 0;
+	int i;
 
 	if (!el->nr)
 		return NULL;	/* undefined */
@@ -998,18 +927,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 			exc = x;
 			break;
 		}
-
-		if ((x->flags & EXC_FLAG_NEGATIVE) && !matched_negative_path &&
-		    match_neg_path(pathname, pathlen, dtype, x->base,
-				   x->baselen ? x->baselen - 1 : 0,
-				   exclude, prefix, x->patternlen, x->flags))
-			matched_negative_path = 1;
 	}
-	if (exc &&
-	    !(exc->flags & EXC_FLAG_NEGATIVE) &&
-	    !(exc->flags & EXC_FLAG_NODIR) &&
-	    matched_negative_path)
-		exc = NULL;
 	return exc;
 }
 
@@ -1241,10 +1159,8 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 {
 	struct dir_entry *ent;
 
-	ent = xmalloc(sizeof(*ent) + len + 1);
+	FLEX_ALLOC_MEM(ent, name, pathname, len);
 	ent->len = len;
-	memcpy(ent->name, pathname, len);
-	ent->name[len] = 0;
 	return ent;
 }
 
@@ -1913,29 +1829,65 @@ static const char *get_ident_string(void)
 		return sb.buf;
 	if (uname(&uts) < 0)
 		die_errno(_("failed to get kernel name and information"));
-	strbuf_addf(&sb, "Location %s, system %s %s %s", get_git_work_tree(),
-		    uts.sysname, uts.release, uts.version);
+	strbuf_addf(&sb, "Location %s, system %s", get_git_work_tree(),
+		    uts.sysname);
 	return sb.buf;
 }
 
 static int ident_in_untracked(const struct untracked_cache *uc)
 {
-	const char *end = uc->ident.buf + uc->ident.len;
-	const char *p   = uc->ident.buf;
+	/*
+	 * Previous git versions may have saved many NUL separated
+	 * strings in the "ident" field, but it is insane to manage
+	 * many locations, so just take care of the first one.
+	 */
 
-	for (p = uc->ident.buf; p < end; p += strlen(p) + 1)
-		if (!strcmp(p, get_ident_string()))
-			return 1;
-	return 0;
+	return !strcmp(uc->ident.buf, get_ident_string());
 }
 
-void add_untracked_ident(struct untracked_cache *uc)
+static void set_untracked_ident(struct untracked_cache *uc)
 {
-	if (ident_in_untracked(uc))
-		return;
+	strbuf_reset(&uc->ident);
 	strbuf_addstr(&uc->ident, get_ident_string());
-	/* this strbuf contains a list of strings, save NUL too */
+
+	/*
+	 * This strbuf used to contain a list of NUL separated
+	 * strings, so save NUL too for backward compatibility.
+	 */
 	strbuf_addch(&uc->ident, 0);
+}
+
+static void new_untracked_cache(struct index_state *istate)
+{
+	struct untracked_cache *uc = xcalloc(1, sizeof(*uc));
+	strbuf_init(&uc->ident, 100);
+	uc->exclude_per_dir = ".gitignore";
+	/* should be the same flags used by git-status */
+	uc->dir_flags = DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
+	set_untracked_ident(uc);
+	istate->untracked = uc;
+	istate->cache_changed |= UNTRACKED_CHANGED;
+}
+
+void add_untracked_cache(struct index_state *istate)
+{
+	if (!istate->untracked) {
+		new_untracked_cache(istate);
+	} else {
+		if (!ident_in_untracked(istate->untracked)) {
+			free_untracked_cache(istate->untracked);
+			new_untracked_cache(istate);
+		}
+	}
+}
+
+void remove_untracked_cache(struct index_state *istate)
+{
+	if (istate->untracked) {
+		free_untracked_cache(istate->untracked);
+		istate->untracked = NULL;
+		istate->cache_changed |= UNTRACKED_CHANGED;
+	}
 }
 
 static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *dir,
@@ -1995,7 +1947,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		return NULL;
 
 	if (!ident_in_untracked(dir->untracked)) {
-		warning(_("Untracked cache is disabled on this system."));
+		warning(_("Untracked cache is disabled on this system or location."));
 		return NULL;
 	}
 
@@ -2408,16 +2360,15 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 	struct ondisk_untracked_cache *ouc;
 	struct write_data wd;
 	unsigned char varbuf[16];
-	int len = 0, varint_len;
-	if (untracked->exclude_per_dir)
-		len = strlen(untracked->exclude_per_dir);
-	ouc = xmalloc(sizeof(*ouc) + len + 1);
+	int varint_len;
+	size_t len = strlen(untracked->exclude_per_dir);
+
+	FLEX_ALLOC_MEM(ouc, exclude_per_dir, untracked->exclude_per_dir, len);
 	stat_data_to_disk(&ouc->info_exclude_stat, &untracked->ss_info_exclude.stat);
 	stat_data_to_disk(&ouc->excludes_file_stat, &untracked->ss_excludes_file.stat);
 	hashcpy(ouc->info_exclude_sha1, untracked->ss_info_exclude.sha1);
 	hashcpy(ouc->excludes_file_sha1, untracked->ss_excludes_file.sha1);
 	ouc->dir_flags = htonl(untracked->dir_flags);
-	memcpy(ouc->exclude_per_dir, untracked->exclude_per_dir, len + 1);
 
 	varint_len = encode_varint(untracked->ident.len, varbuf);
 	strbuf_add(out, varbuf, varint_len);
@@ -2522,21 +2473,21 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	ud.untracked_alloc = value;
 	ud.untracked_nr	   = value;
 	if (ud.untracked_nr)
-		ud.untracked = xmalloc(sizeof(*ud.untracked) * ud.untracked_nr);
+		ALLOC_ARRAY(ud.untracked, ud.untracked_nr);
 	data = next;
 
 	next = data;
 	ud.dirs_alloc = ud.dirs_nr = decode_varint(&next);
 	if (next > end)
 		return -1;
-	ud.dirs = xmalloc(sizeof(*ud.dirs) * ud.dirs_nr);
+	ALLOC_ARRAY(ud.dirs, ud.dirs_nr);
 	data = next;
 
 	len = strlen((const char *)data);
 	next = data + len + 1;
 	if (next > rd->end)
 		return -1;
-	*untracked_ = untracked = xmalloc(sizeof(*untracked) + len);
+	*untracked_ = untracked = xmalloc(st_add(sizeof(*untracked), len));
 	memcpy(untracked, &ud, sizeof(ud));
 	memcpy(untracked->name, data, len + 1);
 	data = next;
@@ -2649,7 +2600,7 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	rd.data	      = next;
 	rd.end	      = end;
 	rd.index      = 0;
-	rd.ucd        = xmalloc(sizeof(*rd.ucd) * len);
+	ALLOC_ARRAY(rd.ucd, len);
 
 	if (read_one_dir(&uc->root, &rd) || rd.index != len)
 		goto done;

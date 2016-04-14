@@ -138,8 +138,8 @@ cherry-pick)
 	}'
 
 	logmsg=$(git show -s --pretty=raw --encoding="$encoding" "$commit")
-	set_author_env=`echo "$logmsg" |
-	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
+	set_author_env=$(echo "$logmsg" |
+	LANG=C LC_ALL=C sed -ne "$pick_author_script")
 	eval "$set_author_env"
 	export GIT_AUTHOR_NAME
 	export GIT_AUTHOR_EMAIL
@@ -160,9 +160,9 @@ cherry-pick)
 esac >.msg
 
 eval GITHEAD_$head=HEAD
-eval GITHEAD_$next='`git show -s \
+eval GITHEAD_$next='$(git show -s \
 	--pretty=oneline --encoding="$encoding" "$commit" |
-	sed -e "s/^[^ ]* //"`'
+	sed -e "s/^[^ ]* //")'
 export GITHEAD_$head GITHEAD_$next
 
 # This three way merge is an interesting one.  We are at

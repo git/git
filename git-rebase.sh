@@ -176,7 +176,7 @@ You can run "git stash pop" or "git stash drop" at any time.
 
 finish_rebase () {
 	apply_autostash &&
-	git gc --auto &&
+	{ git gc --auto || true; } &&
 	rm -rf "$state_dir"
 }
 

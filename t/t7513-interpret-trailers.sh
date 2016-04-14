@@ -326,6 +326,46 @@ test_expect_success 'with complex patch, args and --trim-empty' '
 	test_cmp expected actual
 '
 
+test_expect_success 'in-place editing with basic patch' '
+	cat basic_message >message &&
+	cat basic_patch >>message &&
+	cat basic_message >expected &&
+	echo >>expected &&
+	cat basic_patch >>expected &&
+	git interpret-trailers --in-place message &&
+	test_cmp expected message
+'
+
+test_expect_success 'in-place editing with additional trailer' '
+	cat basic_message >message &&
+	cat basic_patch >>message &&
+	cat basic_message >expected &&
+	echo >>expected &&
+	cat >>expected <<-\EOF &&
+		Reviewed-by: Alice
+	EOF
+	cat basic_patch >>expected &&
+	git interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
+	test_cmp expected message
+'
+
+test_expect_success 'in-place editing on stdin disallowed' '
+	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place < basic_message
+'
+
+test_expect_success 'in-place editing on non-existing file' '
+	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place nonexisting &&
+	test_path_is_missing nonexisting
+'
+
+test_expect_success POSIXPERM,SANITY "in-place editing doesn't clobber original file on error" '
+	cat basic_message >message &&
+	chmod -r message &&
+	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
+	chmod +r message &&
+	test_cmp message basic_message
+'
+
 test_expect_success 'using "where = before"' '
 	git config trailer.bug.where "before" &&
 	cat complex_message_body >expected &&

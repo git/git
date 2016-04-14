@@ -8,21 +8,14 @@
  */
 static int normalize_ceiling_entry(struct string_list_item *item, void *unused)
 {
-	const char *ceil = item->string;
-	int len = strlen(ceil);
-	char buf[PATH_MAX+1];
+	char *ceil = item->string;
 
-	if (len == 0)
+	if (!*ceil)
 		die("Empty path is not supported");
-	if (len > PATH_MAX)
-		die("Path \"%s\" is too long", ceil);
 	if (!is_absolute_path(ceil))
 		die("Path \"%s\" is not absolute", ceil);
-	if (normalize_path_copy(buf, ceil) < 0)
+	if (normalize_path_copy(ceil, ceil) < 0)
 		die("Path \"%s\" could not be normalized", ceil);
-	len = strlen(buf);
-	free(item->string);
-	item->string = xstrdup(buf);
 	return 1;
 }
 
@@ -39,10 +32,134 @@ static void normalize_argv_string(const char **var, const char *input)
 		die("Bad value: %s\n", input);
 }
 
+struct test_data {
+	const char *from;  /* input:  transform from this ... */
+	const char *to;    /* output: ... to this.            */
+	const char *alternative; /* output: ... or this.      */
+};
+
+static int test_function(struct test_data *data, char *(*func)(char *input),
+	const char *funcname)
+{
+	int failed = 0, i;
+	char buffer[1024];
+	char *to;
+
+	for (i = 0; data[i].to; i++) {
+		if (!data[i].from)
+			to = func(NULL);
+		else {
+			xsnprintf(buffer, sizeof(buffer), "%s", data[i].from);
+			to = func(buffer);
+		}
+		if (!strcmp(to, data[i].to))
+			continue;
+		if (!data[i].alternative)
+			error("FAIL: %s(%s) => '%s' != '%s'\n",
+				funcname, data[i].from, to, data[i].to);
+		else if (!strcmp(to, data[i].alternative))
+			continue;
+		else
+			error("FAIL: %s(%s) => '%s' != '%s', '%s'\n",
+				funcname, data[i].from, to, data[i].to,
+				data[i].alternative);
+		failed = 1;
+	}
+	return failed;
+}
+
+static struct test_data basename_data[] = {
+	/* --- POSIX type paths --- */
+	{ NULL,              "."    },
+	{ "",                "."    },
+	{ ".",               "."    },
+	{ "..",              ".."   },
+	{ "/",               "/"    },
+	{ "//",              "/", "//" },
+	{ "///",             "/", "//" },
+	{ "////",            "/", "//" },
+	{ "usr",             "usr"  },
+	{ "/usr",            "usr"  },
+	{ "/usr/",           "usr"  },
+	{ "/usr//",          "usr"  },
+	{ "/usr/lib",        "lib"  },
+	{ "usr/lib",         "lib"  },
+	{ "usr/lib///",      "lib"  },
+
+#if defined(__MINGW32__) || defined(_MSC_VER)
+	/* --- win32 type paths --- */
+	{ "\\usr",           "usr"  },
+	{ "\\usr\\",         "usr"  },
+	{ "\\usr\\\\",       "usr"  },
+	{ "\\usr\\lib",      "lib"  },
+	{ "usr\\lib",        "lib"  },
+	{ "usr\\lib\\\\\\",  "lib"  },
+	{ "C:/usr",          "usr"  },
+	{ "C:/usr",          "usr"  },
+	{ "C:/usr/",         "usr"  },
+	{ "C:/usr//",        "usr"  },
+	{ "C:/usr/lib",      "lib"  },
+	{ "C:usr/lib",       "lib"  },
+	{ "C:usr/lib///",    "lib"  },
+	{ "C:",              "."    },
+	{ "C:a",             "a"    },
+	{ "C:/",             "/"    },
+	{ "C:///",           "/"    },
+	{ "\\",              "\\", "/" },
+	{ "\\\\",            "\\", "/" },
+	{ "\\\\\\",          "\\", "/" },
+#endif
+	{ NULL,              NULL   }
+};
+
+static struct test_data dirname_data[] = {
+	/* --- POSIX type paths --- */
+	{ NULL,              "."      },
+	{ "",                "."      },
+	{ ".",               "."      },
+	{ "..",              "."      },
+	{ "/",               "/"      },
+	{ "//",              "/", "//" },
+	{ "///",             "/", "//" },
+	{ "////",            "/", "//" },
+	{ "usr",             "."      },
+	{ "/usr",            "/"      },
+	{ "/usr/",           "/"      },
+	{ "/usr//",          "/"      },
+	{ "/usr/lib",        "/usr"   },
+	{ "usr/lib",         "usr"    },
+	{ "usr/lib///",      "usr"    },
+
+#if defined(__MINGW32__) || defined(_MSC_VER)
+	/* --- win32 type paths --- */
+	{ "\\",              "\\"     },
+	{ "\\\\",            "\\\\"   },
+	{ "\\usr",           "\\"     },
+	{ "\\usr\\",         "\\"     },
+	{ "\\usr\\\\",       "\\"     },
+	{ "\\usr\\lib",      "\\usr"  },
+	{ "usr\\lib",        "usr"    },
+	{ "usr\\lib\\\\\\",  "usr"    },
+	{ "C:a",             "C:."    },
+	{ "C:/",             "C:/"    },
+	{ "C:///",           "C:/"    },
+	{ "C:/usr",          "C:/"    },
+	{ "C:/usr/",         "C:/"    },
+	{ "C:/usr//",        "C:/"    },
+	{ "C:/usr/lib",      "C:/usr" },
+	{ "C:usr/lib",       "C:usr"  },
+	{ "C:usr/lib///",    "C:usr"  },
+	{ "\\\\\\",          "\\"     },
+	{ "\\\\\\\\",        "\\"     },
+	{ "C:",              "C:.", "." },
+#endif
+	{ NULL,              NULL     }
+};
+
 int main(int argc, char **argv)
 {
 	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
-		char *buf = xmalloc(PATH_MAX + 1);
+		char *buf = xmallocz(strlen(argv[2]));
 		int rv = normalize_path_copy(buf, argv[2]);
 		if (rv)
 			buf = "++failed++";
@@ -132,6 +249,12 @@ int main(int argc, char **argv)
 		strbuf_release(&sb);
 		return 0;
 	}
+
+	if (argc == 2 && !strcmp(argv[1], "basename"))
+		return test_function(basename_data, basename, argv[1]);
+
+	if (argc == 2 && !strcmp(argv[1], "dirname"))
+		return test_function(dirname_data, dirname, argv[1]);
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");

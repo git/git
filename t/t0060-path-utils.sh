@@ -36,12 +36,21 @@ if test $rootoff = 2; then
 	rootoff=	# we are on Unix
 else
 	rootoff=$(($rootoff-1))
+	# In MSYS2, the root directory "/" is translated into a Windows
+	# directory *with* trailing slash. Let's test for that and adjust
+	# our expected longest ancestor length accordingly.
+	case "$(test-path-utils print_path /)" in
+	*/) rootslash=1;;
+	*) rootslash=0;;
+	esac
 fi
 
 ancestor() {
 	# We do some math with the expected ancestor length.
 	expected=$3
 	if test -n "$rootoff" && test "x$expected" != x-1; then
+		expected=$(($expected-$rootslash))
+		test $expected -lt 0 ||
 		expected=$(($expected+$rootoff))
 	fi
 	test_expect_success "longest ancestor: $1 $2 => $expected" \
@@ -58,6 +67,9 @@ case $(uname -s) in
 	test_set_prereq POSIX
 	;;
 esac
+
+test_expect_success basename 'test-path-utils basename'
+test_expect_success dirname 'test-path-utils dirname'
 
 norm_path "" ""
 norm_path . ""

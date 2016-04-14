@@ -27,9 +27,9 @@ test_bisection_diff()
 	# Test if bisection size is close to half of list size within
 	# tolerance.
 	#
-	_bisect_err=`expr $_list_size - $_bisection_size \* 2`
-	test "$_bisect_err" -lt 0 && _bisect_err=`expr 0 - $_bisect_err`
-	_bisect_err=`expr $_bisect_err / 2` ; # floor
+	_bisect_err=$(expr $_list_size - $_bisection_size \* 2)
+	test "$_bisect_err" -lt 0 && _bisect_err=$(expr 0 - $_bisect_err)
+	_bisect_err=$(expr $_bisect_err / 2) ; # floor
 
 	test_expect_success \
 	"bisection diff $_bisect_option $_head $* <= $_max_diff" \

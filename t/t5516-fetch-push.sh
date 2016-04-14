@@ -16,7 +16,7 @@ This test checks the following functionality:
 
 . ./test-lib.sh
 
-D=`pwd`
+D=$(pwd)
 
 mk_empty () {
 	repo_name="$1"
@@ -422,7 +422,7 @@ test_expect_success 'push tag with non-existent, incomplete dest' '
 test_expect_success 'push sha1 with non-existent, incomplete dest' '
 
 	mk_test testrepo &&
-	test_must_fail git push testrepo `git rev-parse master`:foo
+	test_must_fail git push testrepo $(git rev-parse master):foo
 
 '
 

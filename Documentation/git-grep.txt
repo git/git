@@ -23,6 +23,7 @@ SYNOPSIS
 	   [--break] [--heading] [-p | --show-function]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-W | --function-context]
+	   [--threads <num>]
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...]
 	   [ [--[no-]exclude-standard] [--cached | --no-index | --untracked] | <tree>...]
@@ -53,8 +54,16 @@ grep.extendedRegexp::
 	option is ignored when the 'grep.patternType' option is set to a value
 	other than 'default'.
 
+grep.threads::
+	Number of grep worker threads to use.  If unset (or set to 0),
+	8 threads are used by default (for now).
+
 grep.fullName::
 	If set to true, enable '--full-name' option by default.
+
+grep.fallbackToNoIndex::
+	If set to true, fall back to git grep --no-index if git grep
+	is executed outside of a git repository.  Defaults to false.
 
 
 OPTIONS
@@ -226,6 +235,10 @@ OPTIONS
 	function name up to the one before the next function name,
 	effectively showing the whole function in which the match was
 	found.
+
+--threads <num>::
+	Number of grep worker threads to use.
+	See `grep.threads` in 'CONFIGURATION' for more information.
 
 -f <file>::
 	Read patterns from <file>, one per line.

@@ -266,7 +266,7 @@ EOF
 '
 
 test_expect_success 'prune .git/shallow' '
-	SHA1=`echo hi|git commit-tree HEAD^{tree}` &&
+	SHA1=$(echo hi|git commit-tree HEAD^{tree}) &&
 	echo $SHA1 >.git/shallow &&
 	git prune --dry-run >out &&
 	grep $SHA1 .git/shallow &&

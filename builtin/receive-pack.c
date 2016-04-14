@@ -1031,7 +1031,6 @@ static void run_update_post_hook(struct command *commands)
 {
 	struct command *cmd;
 	int argc;
-	const char **argv;
 	struct child_process proc = CHILD_PROCESS_INIT;
 	const char *hook;
 
@@ -1044,21 +1043,16 @@ static void run_update_post_hook(struct command *commands)
 	if (!argc || !hook)
 		return;
 
-	argv = xmalloc(sizeof(*argv) * (2 + argc));
-	argv[0] = hook;
-
-	for (argc = 1, cmd = commands; cmd; cmd = cmd->next) {
+	argv_array_push(&proc.args, hook);
+	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string || cmd->did_not_exist)
 			continue;
-		argv[argc] = xstrdup(cmd->ref_name);
-		argc++;
+		argv_array_push(&proc.args, cmd->ref_name);
 	}
-	argv[argc] = NULL;
 
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
-	proc.argv = argv;
 
 	if (!start_command(&proc)) {
 		if (use_sideband)
@@ -1378,7 +1372,7 @@ static struct command **queue_command(struct command **tail,
 
 	refname = line + 82;
 	reflen = linelen - 82;
-	cmd = xcalloc(1, sizeof(struct command) + reflen + 1);
+	cmd = xcalloc(1, st_add3(sizeof(struct command), reflen, 1));
 	hashcpy(cmd->old_sha1, old_sha1);
 	hashcpy(cmd->new_sha1, new_sha1);
 	memcpy(cmd->ref_name, refname, reflen);
@@ -1597,8 +1591,7 @@ static void prepare_shallow_update(struct command *commands,
 {
 	int i, j, k, bitmap_size = (si->ref->nr + 31) / 32;
 
-	si->used_shallow = xmalloc(sizeof(*si->used_shallow) *
-				   si->shallow->nr);
+	ALLOC_ARRAY(si->used_shallow, si->shallow->nr);
 	assign_shallow_commits_to_refs(si, si->used_shallow, NULL);
 
 	si->need_reachability_test =
@@ -1618,7 +1611,7 @@ static void prepare_shallow_update(struct command *commands,
 				continue;
 			si->need_reachability_test[i]++;
 			for (k = 0; k < 32; k++)
-				if (si->used_shallow[i][j] & (1 << k))
+				if (si->used_shallow[i][j] & (1U << k))
 					si->shallow_ref[j * 32 + k]++;
 		}
 
@@ -1664,7 +1657,7 @@ static void update_shallow_info(struct command *commands,
 		return;
 	}
 
-	ref_status = xmalloc(sizeof(*ref_status) * ref->nr);
+	ALLOC_ARRAY(ref_status, ref->nr);
 	assign_shallow_commits_to_refs(si, NULL, ref_status);
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (is_null_sha1(cmd->new_sha1))
@@ -1796,6 +1789,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 				"gc", "--auto", "--quiet", NULL,
 			};
 			int opt = RUN_GIT_CMD | RUN_COMMAND_STDOUT_TO_STDERR;
+			close_all_packs();
 			run_command_v_opt(argv_gc_auto, opt);
 		}
 		if (auto_update_server_info)

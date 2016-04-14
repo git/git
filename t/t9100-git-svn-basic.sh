@@ -117,7 +117,7 @@ test_expect_success "$name" '
 
 
 name='remove executable bit from a file'
-test_expect_success "$name" '
+test_expect_success POSIXPERM "$name" '
 	rm -f "$GIT_DIR"/index &&
 	git checkout -f -b mybranch5 ${remotes_git_svn} &&
 	chmod -x exec.sh &&
@@ -130,7 +130,7 @@ test_expect_success "$name" '
 
 
 name='add executable bit back file'
-test_expect_success "$name" '
+test_expect_success POSIXPERM "$name" '
 	chmod +x exec.sh &&
 	git update-index exec.sh &&
 	git commit -m "$name" &&
@@ -141,7 +141,7 @@ test_expect_success "$name" '
 
 
 name='executable file becomes a symlink to file'
-test_expect_success "$name" '
+test_expect_success SYMLINKS "$name" '
 	rm exec.sh &&
 	ln -s file exec.sh &&
 	git update-index exec.sh &&
@@ -153,7 +153,7 @@ test_expect_success "$name" '
 
 name='new symlink is added to a file that was also just made executable'
 
-test_expect_success "$name" '
+test_expect_success POSIXPERM,SYMLINKS "$name" '
 	chmod +x file &&
 	ln -s file exec-2.sh &&
 	git update-index --add file exec-2.sh &&
@@ -165,7 +165,7 @@ test_expect_success "$name" '
 	test -h "$SVN_TREE"/exec-2.sh'
 
 name='modify a symlink to become a file'
-test_expect_success "$name" '
+test_expect_success POSIXPERM,SYMLINKS "$name" '
 	echo git help >help &&
 	rm exec-2.sh &&
 	cp help exec-2.sh &&
@@ -181,7 +181,8 @@ test_expect_success "$name" '
 name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
 LC_ALL="$GIT_SVN_LC_ALL"
 export LC_ALL
-test_expect_success UTF8 "$name" "
+# This test relies on the previous test, hence requires POSIXPERM,SYMLINKS
+test_expect_success UTF8,POSIXPERM,SYMLINKS "$name" "
 	echo '# hello' >> exec-2.sh &&
 	git update-index exec-2.sh &&
 	git commit -m 'éï∏' &&
@@ -214,7 +215,7 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-test_expect_success "$name" "test_cmp a expected"
+test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp a expected"
 
 test_expect_success 'exit if remote refs are ambigious' "
         git config --add svn-remote.svn.fetch \
@@ -265,18 +266,18 @@ test_expect_success 'able to dcommit to a subdirectory' "
 	git update-index --add d &&
 	git commit -m '/bar/d should be in the log' &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\" &&
 	mkdir newdir &&
 	echo new > newdir/dir &&
 	git update-index --add newdir/dir &&
 	git commit -m 'add a new directory' &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\" &&
 	echo foo >> newdir/dir &&
 	git update-index newdir/dir &&
 	git commit -m 'modify a file in new directory' &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\"
 	"
 
 test_expect_success 'dcommit should not fail with a touched file' '
@@ -295,7 +296,7 @@ test_expect_success 'able to set-tree to a subdirectory' "
 	git update-index d &&
 	git commit -m 'update /bar/d' &&
 	git svn set-tree -i bar HEAD &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\"
 	"
 
 test_expect_success 'git-svn works in a bare repository' '

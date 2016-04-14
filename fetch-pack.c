@@ -15,6 +15,7 @@
 #include "version.h"
 #include "prio-queue.h"
 #include "sha1-array.h"
+#include "sigchain.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -671,9 +672,12 @@ static int everything_local(struct fetch_pack_args *args,
 static int sideband_demux(int in, int out, void *data)
 {
 	int *xd = data;
+	int ret;
 
-	int ret = recv_sideband("fetch-pack", xd[0], out);
+	sigchain_push(SIGPIPE, SIG_IGN);
+	ret = recv_sideband("fetch-pack", xd[0], out);
 	close(out);
+	sigchain_pop(SIGPIPE);
 	return ret;
 }
 

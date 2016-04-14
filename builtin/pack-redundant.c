@@ -53,7 +53,7 @@ static inline struct llist_item *llist_item_get(void)
 		free_nodes = free_nodes->next;
 	} else {
 		int i = 1;
-		new = xmalloc(sizeof(struct llist_item) * BLKSIZE);
+		ALLOC_ARRAY(new, BLKSIZE);
 		for (; i < BLKSIZE; i++)
 			llist_item_put(&new[i]);
 	}

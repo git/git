@@ -21,7 +21,7 @@ test_valid_repo() {
 	test_line_count = 0 fsck.log
 }
 
-base_dir=`pwd`
+base_dir=$(pwd)
 
 test_expect_success 'preparing first repository' \
 'test_create_repo A && cd A &&

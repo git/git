@@ -146,13 +146,13 @@ esac
 reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
-	taglist=`IFS='	' &&
+	taglist=$(IFS='	' &&
 		  echo "$ls_remote_result" |
 		  git show-ref --exclude-existing=refs/tags/ |
 	          while read sha1 name
 		  do
 			echo ".${name}:${name}"
-		  done` || exit
+		  done) || exit
 	if test "$#" -gt 1
 	then
 		# remote URL plus explicit refspecs; we need to merge them.

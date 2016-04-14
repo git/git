@@ -124,42 +124,33 @@ static const char *action_name(const struct replay_opts *opts)
 
 struct commit_message {
 	char *parent_label;
-	const char *label;
-	const char *subject;
+	char *label;
+	char *subject;
 	const char *message;
 };
 
 static int get_message(struct commit *commit, struct commit_message *out)
 {
 	const char *abbrev, *subject;
-	int abbrev_len, subject_len;
-	char *q;
+	int subject_len;
 
-	if (!git_commit_encoding)
-		git_commit_encoding = "UTF-8";
-
-	out->message = logmsg_reencode(commit, NULL, git_commit_encoding);
+	out->message = logmsg_reencode(commit, NULL, get_commit_output_encoding());
 	abbrev = find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV);
-	abbrev_len = strlen(abbrev);
 
 	subject_len = find_commit_subject(out->message, &subject);
 
-	out->parent_label = xmalloc(strlen("parent of ") + abbrev_len +
-			      strlen("... ") + subject_len + 1);
-	q = out->parent_label;
-	q = mempcpy(q, "parent of ", strlen("parent of "));
-	out->label = q;
-	q = mempcpy(q, abbrev, abbrev_len);
-	q = mempcpy(q, "... ", strlen("... "));
-	out->subject = q;
-	q = mempcpy(q, subject, subject_len);
-	*q = '\0';
+	out->subject = xmemdupz(subject, subject_len);
+	out->label = xstrfmt("%s... %s", abbrev, out->subject);
+	out->parent_label = xstrfmt("parent of %s", out->label);
+
 	return 0;
 }
 
 static void free_message(struct commit *commit, struct commit_message *msg)
 {
 	free(msg->parent_label);
+	free(msg->label);
+	free(msg->subject);
 	unuse_commit_buffer(commit, msg->message);
 }
 
@@ -886,7 +877,7 @@ static int sequencer_rollback(struct replay_opts *opts)
 	if (!f)
 		return error(_("cannot open %s: %s"), git_path_head_file(),
 						strerror(errno));
-	if (strbuf_getline(&buf, f, '\n')) {
+	if (strbuf_getline_lf(&buf, f)) {
 		error(_("cannot read %s: %s"), git_path_head_file(),
 		      ferror(f) ?  strerror(errno) : _("unexpected end of file"));
 		fclose(f);

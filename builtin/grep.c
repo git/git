@@ -24,11 +24,11 @@ static char const * const grep_usage[] = {
 	NULL
 };
 
-static int use_threads = 1;
+#define GREP_NUM_THREADS_DEFAULT 8
+static int num_threads;
 
 #ifndef NO_PTHREADS
-#define THREADS 8
-static pthread_t threads[THREADS];
+static pthread_t *threads;
 
 /* We use one producer thread and THREADS consumer
  * threads. The producer adds struct work_items to 'todo' and the
@@ -63,13 +63,13 @@ static pthread_mutex_t grep_mutex;
 
 static inline void grep_lock(void)
 {
-	if (use_threads)
+	if (num_threads)
 		pthread_mutex_lock(&grep_mutex);
 }
 
 static inline void grep_unlock(void)
 {
-	if (use_threads)
+	if (num_threads)
 		pthread_mutex_unlock(&grep_mutex);
 }
 
@@ -206,7 +206,8 @@ static void start_threads(struct grep_opt *opt)
 		strbuf_init(&todo[i].out, 0);
 	}
 
-	for (i = 0; i < ARRAY_SIZE(threads); i++) {
+	threads = xcalloc(num_threads, sizeof(*threads));
+	for (i = 0; i < num_threads; i++) {
 		int err;
 		struct grep_opt *o = grep_opt_dup(opt);
 		o->output = strbuf_out;
@@ -238,11 +239,13 @@ static int wait_all(void)
 	pthread_cond_broadcast(&cond_add);
 	grep_unlock();
 
-	for (i = 0; i < ARRAY_SIZE(threads); i++) {
+	for (i = 0; i < num_threads; i++) {
 		void *h;
 		pthread_join(threads[i], &h);
 		hit |= (int) (intptr_t) h;
 	}
+
+	free(threads);
 
 	pthread_mutex_destroy(&grep_mutex);
 	pthread_mutex_destroy(&grep_read_mutex);
@@ -267,6 +270,14 @@ static int grep_cmd_config(const char *var, const char *value, void *cb)
 	int st = grep_config(var, value, cb);
 	if (git_color_default_config(var, value, cb) < 0)
 		st = -1;
+
+	if (!strcmp(var, "grep.threads")) {
+		num_threads = git_config_int(var, value);
+		if (num_threads < 0)
+			die(_("invalid number of threads specified (%d) for %s"),
+			    num_threads, var);
+	}
+
 	return st;
 }
 
@@ -294,7 +305,7 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1,
 	}
 
 #ifndef NO_PTHREADS
-	if (use_threads) {
+	if (num_threads) {
 		add_work(opt, GREP_SOURCE_SHA1, pathbuf.buf, path, sha1);
 		strbuf_release(&pathbuf);
 		return 0;
@@ -323,7 +334,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		strbuf_addstr(&buf, filename);
 
 #ifndef NO_PTHREADS
-	if (use_threads) {
+	if (num_threads) {
 		add_work(opt, GREP_SOURCE_FILE, buf.buf, filename, filename);
 		strbuf_release(&buf);
 		return 0;
@@ -354,17 +365,17 @@ static void append_path(struct grep_opt *opt, const void *data, size_t len)
 static void run_pager(struct grep_opt *opt, const char *prefix)
 {
 	struct string_list *path_list = opt->output_priv;
-	const char **argv = xmalloc(sizeof(const char *) * (path_list->nr + 1));
+	struct child_process child = CHILD_PROCESS_INIT;
 	int i, status;
 
 	for (i = 0; i < path_list->nr; i++)
-		argv[i] = path_list->items[i].string;
-	argv[path_list->nr] = NULL;
+		argv_array_push(&child.args, path_list->items[i].string);
+	child.dir = prefix;
+	child.use_shell = 1;
 
-	status = run_command_v_opt_cd_env(argv, RUN_USING_SHELL, prefix, NULL);
+	status = run_command(&child);
 	if (status)
 		exit(status);
-	free(argv);
 }
 
 static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int cached)
@@ -375,7 +386,7 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 
 	for (nr = 0; nr < active_nr; nr++) {
 		const struct cache_entry *ce = active_cache[nr];
-		if (!S_ISREG(ce->ce_mode))
+		if (!S_ISREG(ce->ce_mode) || ce_intent_to_add(ce))
 			continue;
 		if (!ce_path_match(ce, pathspec, NULL))
 			continue;
@@ -562,7 +573,7 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 	patterns = from_stdin ? stdin : fopen(arg, "r");
 	if (!patterns)
 		die_errno(_("cannot open '%s'"), arg);
-	while (strbuf_getline(&sb, patterns, '\n') == 0) {
+	while (strbuf_getline(&sb, patterns) == 0) {
 		/* ignore empty line like grep does */
 		if (sb.len == 0)
 			continue;
@@ -697,6 +708,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			N_("show <n> context lines before matches")),
 		OPT_INTEGER('A', "after-context", &opt.post_context,
 			N_("show <n> context lines after matches")),
+		OPT_INTEGER(0, "threads", &num_threads,
+			N_("use <n> worker threads")),
 		OPT_NUMBER_CALLBACK(&opt, N_("shortcut for -C NUM"),
 			context_callback),
 		OPT_BOOL('p', "show-function", &opt.funcname,
@@ -755,9 +768,15 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 	grep_commit_pattern_type(pattern_type_arg, &opt);
 
-	if (use_index && !startup_info->have_repository)
-		/* die the same way as if we did it at the beginning */
-		setup_git_directory();
+	if (use_index && !startup_info->have_repository) {
+		int fallback = 0;
+		git_config_get_bool("grep.fallbacktonoindex", &fallback);
+		if (fallback)
+			use_index = 0;
+		else
+			/* die the same way as if we did it at the beginning */
+			setup_git_directory();
+	}
 
 	/*
 	 * skip a -- separator; we know it cannot be
@@ -786,7 +805,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		opt.output_priv = &path_list;
 		opt.output = append_path;
 		string_list_append(&path_list, show_in_pager);
-		use_threads = 0;
 	}
 
 	if (!opt.pattern_list)
@@ -817,14 +835,18 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 #ifndef NO_PTHREADS
-	if (list.nr || cached || online_cpus() == 1)
-		use_threads = 0;
+	if (list.nr || cached || show_in_pager)
+		num_threads = 0;
+	else if (num_threads == 0)
+		num_threads = GREP_NUM_THREADS_DEFAULT;
+	else if (num_threads < 0)
+		die(_("invalid number of threads specified (%d)"), num_threads);
 #else
-	use_threads = 0;
+	num_threads = 0;
 #endif
 
 #ifndef NO_PTHREADS
-	if (use_threads) {
+	if (num_threads) {
 		if (!(opt.name_only || opt.unmatch_name_only || opt.count)
 		    && (opt.pre_context || opt.post_context ||
 			opt.file_break || opt.funcbody))
@@ -894,7 +916,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		hit = grep_objects(&opt, &pathspec, &list);
 	}
 
-	if (use_threads)
+	if (num_threads)
 		hit |= wait_all();
 	if (hit && show_in_pager)
 		run_pager(&opt, prefix);

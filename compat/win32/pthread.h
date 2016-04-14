@@ -18,7 +18,10 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-#define pthread_mutex_init(a,b) (InitializeCriticalSection((a)), 0)
+static inline int return_0(int i) {
+	return 0;
+}
+#define pthread_mutex_init(a,b) return_0((InitializeCriticalSection((a)), 0))
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
@@ -75,9 +78,9 @@ extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
 #define pthread_equal(t1, t2) ((t1).tid == (t2).tid)
 extern pthread_t pthread_self(void);
 
-static inline int pthread_exit(void *ret)
+static inline void NORETURN pthread_exit(void *ret)
 {
-	ExitThread((DWORD)ret);
+	ExitThread((DWORD)(intptr_t)ret);
 }
 
 typedef DWORD pthread_key_t;

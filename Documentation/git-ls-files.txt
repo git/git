@@ -12,6 +12,7 @@ SYNOPSIS
 'git ls-files' [-z] [-t] [-v]
 		(--[cached|deleted|others|ignored|stage|unmerged|killed|modified])*
 		(-[c|d|o|i|s|u|k|m])*
+		[--eol]
 		[-x <pattern>|--exclude=<pattern>]
 		[-X <file>|--exclude-from=<file>]
 		[--exclude-per-directory=<file>]
@@ -147,6 +148,24 @@ a space) at the start of each line:
 	possible for manual inspection; the exact format may change at
 	any time.
 
+--eol::
+	Show <eolinfo> and <eolattr> of files.
+	<eolinfo> is the file content identification used by Git when
+	the "text" attribute is "auto" (or not set and core.autocrlf is not false).
+	<eolinfo> is either "-text", "none", "lf", "crlf", "mixed" or "".
++
+"" means the file is not a regular file, it is not in the index or
+not accessible in the working tree.
++
+<eolattr> is the attribute that is used when checking out or committing,
+it is either "", "-text", "text", "text=auto", "text eol=lf", "text eol=crlf".
+Note: Currently Git does not support "text=auto eol=lf" or "text=auto eol=crlf",
+that may change in the future.
++
+Both the <eolinfo> in the index ("i/<eolinfo>")
+and in the working tree ("w/<eolinfo>") are shown for regular files,
+followed by the  ("attr/<eolattr>").
+
 \--::
 	Do not interpret any more arguments as options.
 
@@ -160,6 +179,9 @@ Output
 which case it outputs:
 
         [<tag> ]<mode> <object> <stage> <file>
+
+'git ls-files --eol' will show
+	i/<eolinfo><SPACES>w/<eolinfo><SPACES>attr/<eolattr><SPACE*><TAB><file>
 
 'git ls-files --unmerged' and 'git ls-files --stage' can be used to examine
 detailed information on unmerged paths.

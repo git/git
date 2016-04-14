@@ -1943,6 +1943,8 @@ proc confirm_popup {msg {owner .}} {
 }
 
 proc setoptions {} {
+    global use_ttk
+
     if {[tk windowingsystem] ne "win32"} {
         option add *Panedwindow.showHandle 1 startupFile
         option add *Panedwindow.sashRelief raised startupFile
@@ -1963,6 +1965,18 @@ proc setoptions {} {
     option add *Labelframe.font uifont startupFile
     option add *Spinbox.font textfont startupFile
     option add *Listbox.font mainfont startupFile
+}
+
+proc setttkstyle {} {
+    eval font configure TkDefaultFont [fontflags mainfont]
+    eval font configure TkTextFont [fontflags textfont]
+    eval font configure TkHeadingFont [fontflags mainfont]
+    eval font configure TkCaptionFont [fontflags mainfont] -weight bold
+    eval font configure TkTooltipFont [fontflags uifont]
+    eval font configure TkFixedFont   [fontflags textfont]
+    eval font configure TkIconFont    [fontflags uifont]
+    eval font configure TkMenuFont    [fontflags uifont]
+    eval font configure TkSmallCaptionFont [fontflags uifont]
 }
 
 # Make a menu and submenus.
@@ -2251,7 +2265,7 @@ proc makewindow {} {
 	set h [expr {[font metrics uifont -linespace] + 2}]
 	set progresscanv .tf.bar.progress
 	canvas $progresscanv -relief sunken -height $h -borderwidth 2
-	set progressitem [$progresscanv create rect -1 0 0 $h -fill green]
+	set progressitem [$progresscanv create rect -1 0 0 $h -fill lime]
 	set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
 	set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
     }
@@ -2347,6 +2361,9 @@ proc makewindow {} {
     ${NS}::frame .bleft.mid
     ${NS}::frame .bleft.bottom
 
+    # gap between sub-widgets
+    set wgap [font measure uifont "i"]
+
     ${NS}::button .bleft.top.search -text [mc "Search"] -command dosearch
     pack .bleft.top.search -side left -padx 5
     set sstring .bleft.top.sstring
@@ -2361,8 +2378,9 @@ proc makewindow {} {
 	-command changediffdisp -variable diffelide -value {0 1}
     ${NS}::radiobutton .bleft.mid.new -text [mc "New version"] \
 	-command changediffdisp -variable diffelide -value {1 0}
+
     ${NS}::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
-    pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
+    pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left -ipadx $wgap
     spinbox .bleft.mid.diffcontext -width 5 \
 	-from 0 -increment 1 -to 10000000 \
 	-validate all -validatecommand "diffcontextvalidate %P" \
@@ -2370,7 +2388,7 @@ proc makewindow {} {
     .bleft.mid.diffcontext set $diffcontext
     trace add variable diffcontextstring write diffcontextchange
     lappend entries .bleft.mid.diffcontext
-    pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left
+    pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left -ipadx $wgap
     ${NS}::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
 	-command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
@@ -3003,7 +3021,7 @@ proc bindall {event action} {
 }
 
 proc about {} {
-    global uifont NS
+    global bgcolor NS
     set w .about
     if {[winfo exists $w]} {
 	raise $w
@@ -3018,7 +3036,7 @@ Gitk - a commit viewer for git
 Copyright \u00a9 2005-2014 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License"] \
-	    -justify center -aspect 400 -border 2 -bg white -relief groove
+	    -justify center -aspect 400 -border 2 -bg $bgcolor -relief groove
     pack $w.m -side top -fill x -padx 2 -pady 2
     ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     pack $w.ok -side bottom
@@ -3029,7 +3047,7 @@ Use and redistribute under the terms of the GNU General Public License"] \
 }
 
 proc keys {} {
-    global NS
+    global bgcolor NS
     set w .keys
     if {[winfo exists $w]} {
 	raise $w
@@ -3085,7 +3103,7 @@ proc keys {} {
 [mc "<%s-minus>	Decrease font size" $M1T]
 [mc "<F5>		Update"]
 " \
-	    -justify left -bg white -border 2 -relief groove
+	    -justify left -bg $bgcolor -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
     ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     bind $w <Key-Escape> [list destroy $w]
@@ -3379,7 +3397,7 @@ set rectmask {
        0x00, 0x00, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f,
        0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0x00, 0x00};
 }
-image create bitmap reficon-H -background black -foreground green \
+image create bitmap reficon-H -background black -foreground lime \
     -data $rectdata -maskdata $rectmask
 image create bitmap reficon-o -background black -foreground "#ddddff" \
     -data $rectdata -maskdata $rectmask
@@ -12170,7 +12188,7 @@ if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "meld"
 }
 
-set colors {green red blue magenta darkgrey brown orange}
+set colors {lime red blue magenta darkgrey brown orange}
 if {[tk windowingsystem] eq "win32"} {
     set uicolor SystemButtonFace
     set uifgcolor SystemButtonText
@@ -12188,12 +12206,12 @@ if {[tk windowingsystem] eq "win32"} {
 }
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
-set mergecolors {red blue green purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
+set mergecolors {red blue lime purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
 set ignorespace 0
 set worddiff ""
 set markbgcolor "#e0e0ff"
 
-set headbgcolor green
+set headbgcolor lime
 set headfgcolor black
 set headoutlinecolor black
 set remotebgcolor #ffddaa
@@ -12208,7 +12226,7 @@ set linehoverfgcolor black
 set linehoveroutlinecolor black
 set mainheadcirclecolor yellow
 set workingfilescirclecolor red
-set indexcirclecolor green
+set indexcirclecolor lime
 set circlecolors {white blue gray blue blue}
 set linkfgcolor blue
 set circleoutlinecolor $fgcolor
@@ -12355,6 +12373,10 @@ if {![info exists have_ttk]} {
 }
 set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
+
+if {$use_ttk} {
+    setttkstyle
+}
 
 regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
 

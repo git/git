@@ -17,133 +17,6 @@
 #include "sha1-array.h"
 #include "sigchain.h"
 
-/* rsync support */
-
-/*
- * We copy packed-refs and refs/ into a temporary file, then read the
- * loose refs recursively (sorting whenever possible), and then inserting
- * those packed refs that are not yet in the list (not validating, but
- * assuming that the file is sorted).
- *
- * Appears refactoring this from refs.c is too cumbersome.
- */
-
-static int str_cmp(const void *a, const void *b)
-{
-	const char *s1 = a;
-	const char *s2 = b;
-
-	return strcmp(s1, s2);
-}
-
-/* path->buf + name_offset is expected to point to "refs/" */
-
-static int read_loose_refs(struct strbuf *path, int name_offset,
-		struct ref **tail)
-{
-	DIR *dir = opendir(path->buf);
-	struct dirent *de;
-	struct {
-		char **entries;
-		int nr, alloc;
-	} list;
-	int i, pathlen;
-
-	if (!dir)
-		return -1;
-
-	memset (&list, 0, sizeof(list));
-
-	while ((de = readdir(dir))) {
-		if (is_dot_or_dotdot(de->d_name))
-			continue;
-		ALLOC_GROW(list.entries, list.nr + 1, list.alloc);
-		list.entries[list.nr++] = xstrdup(de->d_name);
-	}
-	closedir(dir);
-
-	/* sort the list */
-
-	qsort(list.entries, list.nr, sizeof(char *), str_cmp);
-
-	pathlen = path->len;
-	strbuf_addch(path, '/');
-
-	for (i = 0; i < list.nr; i++, strbuf_setlen(path, pathlen + 1)) {
-		strbuf_addstr(path, list.entries[i]);
-		if (read_loose_refs(path, name_offset, tail)) {
-			int fd = open(path->buf, O_RDONLY);
-			char buffer[40];
-			struct ref *next;
-
-			if (fd < 0)
-				continue;
-			next = alloc_ref(path->buf + name_offset);
-			if (read_in_full(fd, buffer, 40) != 40 ||
-					get_oid_hex(buffer, &next->old_oid)) {
-				close(fd);
-				free(next);
-				continue;
-			}
-			close(fd);
-			(*tail)->next = next;
-			*tail = next;
-		}
-	}
-	strbuf_setlen(path, pathlen);
-
-	for (i = 0; i < list.nr; i++)
-		free(list.entries[i]);
-	free(list.entries);
-
-	return 0;
-}
-
-/* insert the packed refs for which no loose refs were found */
-
-static void insert_packed_refs(const char *packed_refs, struct ref **list)
-{
-	FILE *f = fopen(packed_refs, "r");
-	static char buffer[PATH_MAX];
-
-	if (!f)
-		return;
-
-	for (;;) {
-		int cmp = 0; /* assigned before used */
-		int len;
-
-		if (!fgets(buffer, sizeof(buffer), f)) {
-			fclose(f);
-			return;
-		}
-
-		if (!isxdigit(buffer[0]))
-			continue;
-		len = strlen(buffer);
-		if (len && buffer[len - 1] == '\n')
-			buffer[--len] = '\0';
-		if (len < 41)
-			continue;
-		while ((*list)->next &&
-				(cmp = strcmp(buffer + 41,
-				      (*list)->next->name)) > 0)
-			list = &(*list)->next;
-		if (!(*list)->next || cmp < 0) {
-			struct ref *next = alloc_ref(buffer + 41);
-			buffer[40] = '\0';
-			if (get_oid_hex(buffer, &next->old_oid)) {
-				warning ("invalid SHA-1: %s", buffer);
-				free(next);
-				continue;
-			}
-			next->next = (*list)->next;
-			(*list)->next = next;
-			list = &(*list)->next;
-		}
-	}
-}
-
 static void set_upstreams(struct transport *transport, struct ref *refs,
 	int pretend)
 {
@@ -190,205 +63,6 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 				localname + 11, remotename + 11,
 				transport->remote->name);
 	}
-}
-
-static const char *rsync_url(const char *url)
-{
-	if (!starts_with(url, "rsync://"))
-		skip_prefix(url, "rsync:", &url);
-	return url;
-}
-
-static struct ref *get_refs_via_rsync(struct transport *transport, int for_push)
-{
-	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
-	struct ref dummy = {NULL}, *tail = &dummy;
-	struct child_process rsync = CHILD_PROCESS_INIT;
-	const char *args[5];
-	int temp_dir_len;
-
-	if (for_push)
-		return NULL;
-
-	/* copy the refs to the temporary directory */
-
-	strbuf_addstr(&temp_dir, git_path("rsync-refs-XXXXXX"));
-	if (!mkdtemp(temp_dir.buf))
-		die_errno ("Could not make temporary directory");
-	temp_dir_len = temp_dir.len;
-
-	strbuf_addstr(&buf, rsync_url(transport->url));
-	strbuf_addstr(&buf, "/refs");
-
-	rsync.argv = args;
-	rsync.stdout_to_stderr = 1;
-	args[0] = "rsync";
-	args[1] = (transport->verbose > 1) ? "-rv" : "-r";
-	args[2] = buf.buf;
-	args[3] = temp_dir.buf;
-	args[4] = NULL;
-
-	if (run_command(&rsync))
-		die ("Could not run rsync to get refs");
-
-	strbuf_reset(&buf);
-	strbuf_addstr(&buf, rsync_url(transport->url));
-	strbuf_addstr(&buf, "/packed-refs");
-
-	args[2] = buf.buf;
-
-	if (run_command(&rsync))
-		die ("Could not run rsync to get refs");
-
-	/* read the copied refs */
-
-	strbuf_addstr(&temp_dir, "/refs");
-	read_loose_refs(&temp_dir, temp_dir_len + 1, &tail);
-	strbuf_setlen(&temp_dir, temp_dir_len);
-
-	tail = &dummy;
-	strbuf_addstr(&temp_dir, "/packed-refs");
-	insert_packed_refs(temp_dir.buf, &tail);
-	strbuf_setlen(&temp_dir, temp_dir_len);
-
-	if (remove_dir_recursively(&temp_dir, 0))
-		warning ("Error removing temporary directory %s.",
-				temp_dir.buf);
-
-	strbuf_release(&buf);
-	strbuf_release(&temp_dir);
-
-	return dummy.next;
-}
-
-static int fetch_objs_via_rsync(struct transport *transport,
-				int nr_objs, struct ref **to_fetch)
-{
-	struct child_process rsync = CHILD_PROCESS_INIT;
-
-	rsync.stdout_to_stderr = 1;
-	argv_array_push(&rsync.args, "rsync");
-	argv_array_push(&rsync.args, (transport->verbose > 1) ? "-rv" : "-r");
-	argv_array_push(&rsync.args, "--ignore-existing");
-	argv_array_push(&rsync.args, "--exclude");
-	argv_array_push(&rsync.args, "info");
-	argv_array_pushf(&rsync.args, "%s/objects/", rsync_url(transport->url));
-	argv_array_push(&rsync.args, get_object_directory());
-
-	/* NEEDSWORK: handle one level of alternates */
-	return run_command(&rsync);
-}
-
-static int write_one_ref(const char *name, const struct object_id *oid,
-			 int flags, void *data)
-{
-	struct strbuf *buf = data;
-	int len = buf->len;
-
-	/* when called via for_each_ref(), flags is non-zero */
-	if (flags && !starts_with(name, "refs/heads/") &&
-			!starts_with(name, "refs/tags/"))
-		return 0;
-
-	strbuf_addstr(buf, name);
-	if (safe_create_leading_directories(buf->buf) ||
-	    write_file_gently(buf->buf, "%s", oid_to_hex(oid)))
-		return error("problems writing temporary file %s: %s",
-			     buf->buf, strerror(errno));
-	strbuf_setlen(buf, len);
-	return 0;
-}
-
-static int write_refs_to_temp_dir(struct strbuf *temp_dir,
-				  int refspec_nr, const char **refspec)
-{
-	int i;
-
-	for (i = 0; i < refspec_nr; i++) {
-		struct object_id oid;
-		char *ref;
-
-		if (dwim_ref(refspec[i], strlen(refspec[i]), oid.hash, &ref) != 1)
-			return error("Could not get ref %s", refspec[i]);
-
-		if (write_one_ref(ref, &oid, 0, temp_dir)) {
-			free(ref);
-			return -1;
-		}
-		free(ref);
-	}
-	return 0;
-}
-
-static int rsync_transport_push(struct transport *transport,
-		int refspec_nr, const char **refspec, int flags)
-{
-	struct strbuf buf = STRBUF_INIT, temp_dir = STRBUF_INIT;
-	int result = 0, i;
-	struct child_process rsync = CHILD_PROCESS_INIT;
-	const char *args[10];
-
-	if (flags & TRANSPORT_PUSH_MIRROR)
-		return error("rsync transport does not support mirror mode");
-
-	/* first push the objects */
-
-	strbuf_addstr(&buf, rsync_url(transport->url));
-	strbuf_addch(&buf, '/');
-
-	rsync.argv = args;
-	rsync.stdout_to_stderr = 1;
-	i = 0;
-	args[i++] = "rsync";
-	args[i++] = "-a";
-	if (flags & TRANSPORT_PUSH_DRY_RUN)
-		args[i++] = "--dry-run";
-	if (transport->verbose > 1)
-		args[i++] = "-v";
-	args[i++] = "--ignore-existing";
-	args[i++] = "--exclude";
-	args[i++] = "info";
-	args[i++] = get_object_directory();
-	args[i++] = buf.buf;
-	args[i++] = NULL;
-
-	if (run_command(&rsync))
-		return error("Could not push objects to %s",
-				rsync_url(transport->url));
-
-	/* copy the refs to the temporary directory; they could be packed. */
-
-	strbuf_addstr(&temp_dir, git_path("rsync-refs-XXXXXX"));
-	if (!mkdtemp(temp_dir.buf))
-		die_errno ("Could not make temporary directory");
-	strbuf_addch(&temp_dir, '/');
-
-	if (flags & TRANSPORT_PUSH_ALL) {
-		if (for_each_ref(write_one_ref, &temp_dir))
-			return -1;
-	} else if (write_refs_to_temp_dir(&temp_dir, refspec_nr, refspec))
-		return -1;
-
-	i = 2;
-	if (flags & TRANSPORT_PUSH_DRY_RUN)
-		args[i++] = "--dry-run";
-	if (!(flags & TRANSPORT_PUSH_FORCE))
-		args[i++] = "--ignore-existing";
-	args[i++] = temp_dir.buf;
-	args[i++] = rsync_url(transport->url);
-	args[i++] = NULL;
-	if (run_command(&rsync))
-		result = error("Could not push to %s",
-				rsync_url(transport->url));
-
-	if (remove_dir_recursively(&temp_dir, 0))
-		warning ("Could not remove temporary directory %s.",
-				temp_dir.buf);
-
-	strbuf_release(&buf);
-	strbuf_release(&temp_dir);
-
-	return result;
 }
 
 struct bundle_transport_data {
@@ -481,17 +155,24 @@ static int set_git_option(struct git_transport_options *opts,
 	return 1;
 }
 
-static int connect_setup(struct transport *transport, int for_push, int verbose)
+static int connect_setup(struct transport *transport, int for_push)
 {
 	struct git_transport_data *data = transport->data;
+	int flags = transport->verbose > 0 ? CONNECT_VERBOSE : 0;
 
 	if (data->conn)
 		return 0;
 
+	switch (transport->family) {
+	case TRANSPORT_FAMILY_ALL: break;
+	case TRANSPORT_FAMILY_IPV4: flags |= CONNECT_IPV4; break;
+	case TRANSPORT_FAMILY_IPV6: flags |= CONNECT_IPV6; break;
+	}
+
 	data->conn = git_connect(data->fd, transport->url,
 				 for_push ? data->options.receivepack :
 				 data->options.uploadpack,
-				 verbose ? CONNECT_VERBOSE : 0);
+				 flags);
 
 	return 0;
 }
@@ -501,7 +182,7 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 	struct git_transport_data *data = transport->data;
 	struct ref *refs;
 
-	connect_setup(transport, for_push, 0);
+	connect_setup(transport, for_push);
 	get_remote_heads(data->fd[0], NULL, 0, &refs,
 			 for_push ? REF_NORMAL : 0,
 			 &data->extra_have,
@@ -536,7 +217,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.update_shallow = data->options.update_shallow;
 
 	if (!data->got_remote_heads) {
-		connect_setup(transport, 0, 0);
+		connect_setup(transport, 0);
 		get_remote_heads(data->fd[0], NULL, 0, &refs_tmp, 0,
 				 NULL, &data->shallow);
 		data->got_remote_heads = 1;
@@ -812,7 +493,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 
 	if (!data->got_remote_heads) {
 		struct ref *tmp_refs;
-		connect_setup(transport, 1, 0);
+		connect_setup(transport, 1);
 
 		get_remote_heads(data->fd[0], NULL, 0, &tmp_refs, REF_NORMAL,
 				 NULL, &data->shallow);
@@ -984,11 +665,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	if (helper) {
 		transport_helper_init(ret, helper);
 	} else if (starts_with(url, "rsync:")) {
-		transport_check_allowed("rsync");
-		ret->get_refs_list = get_refs_via_rsync;
-		ret->fetch = fetch_objs_via_rsync;
-		ret->push = rsync_transport_push;
-		ret->smart_options = NULL;
+		die("git-over-rsync is no longer supported");
 	} else if (url_is_local_not_ssh(url) && is_file(url) && is_bundle(url, 1)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		transport_check_allowed("file");
@@ -1001,8 +678,9 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		|| starts_with(url, "file://")
 		|| starts_with(url, "git://")
 		|| starts_with(url, "ssh://")
-		|| starts_with(url, "git+ssh://")
-		|| starts_with(url, "ssh+git://")) {
+		|| starts_with(url, "git+ssh://") /* deprecated - do not use */
+		|| starts_with(url, "ssh+git://") /* deprecated - do not use */
+		) {
 		/*
 		 * These are builtin smart transports; "allowed" transports
 		 * will be checked individually in git_connect.
@@ -1306,7 +984,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 		 * This condition shouldn't be met in a non-deepening fetch
 		 * (see builtin/fetch.c:quickfetch()).
 		 */
-		heads = xmalloc(nr_refs * sizeof(*heads));
+		ALLOC_ARRAY(heads, nr_refs);
 		for (rm = refs; rm; rm = rm->next)
 			heads[nr_heads++] = rm;
 	}
@@ -1350,7 +1028,7 @@ int transport_disconnect(struct transport *transport)
  */
 char *transport_anonymize_url(const char *url)
 {
-	char *anon_url, *scheme_prefix, *anon_part;
+	char *scheme_prefix, *anon_part;
 	size_t anon_len, prefix_len = 0;
 
 	anon_part = strchr(url, '@');
@@ -1384,10 +1062,8 @@ char *transport_anonymize_url(const char *url)
 			goto literal_copy;
 		prefix_len = scheme_prefix - url + 3;
 	}
-	anon_url = xcalloc(1, 1 + prefix_len + anon_len);
-	memcpy(anon_url, url, prefix_len);
-	memcpy(anon_url + prefix_len, anon_part, anon_len);
-	return anon_url;
+	return xstrfmt("%.*s%.*s", (int)prefix_len, url,
+		       (int)anon_len, anon_part);
 literal_copy:
 	return xstrdup(url);
 }

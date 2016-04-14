@@ -29,7 +29,7 @@ reset_to_sane
 
 test_expect_success 'symbolic-ref refuses bare sha1' '
 	echo content >file && git add file && git commit -m one &&
-	test_must_fail git symbolic-ref HEAD `git rev-parse HEAD`
+	test_must_fail git symbolic-ref HEAD $(git rev-parse HEAD)
 '
 reset_to_sane
 
@@ -90,6 +90,43 @@ test_expect_success LONG_REF 'we can parse long symbolic ref' '
 	echo $commit >expect &&
 	git rev-parse --verify HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref reports failure in exit code' '
+	test_when_finished "rm -f .git/HEAD.lock" &&
+	>.git/HEAD.lock &&
+	test_must_fail git symbolic-ref HEAD refs/heads/whatever
+'
+
+test_expect_success 'symbolic-ref writes reflog entry' '
+	git checkout -b log1 &&
+	test_commit one &&
+	git checkout -b log2  &&
+	test_commit two &&
+	git checkout --orphan orphan &&
+	git symbolic-ref -m create HEAD refs/heads/log1 &&
+	git symbolic-ref -m update HEAD refs/heads/log2 &&
+	cat >expect <<-\EOF &&
+	update
+	create
+	EOF
+	git log --format=%gs -g >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic-ref does not create ref d/f conflicts' '
+	git checkout -b df &&
+	test_commit df &&
+	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df &&
+	git pack-refs --all --prune &&
+	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df
+'
+
+test_expect_success 'symbolic-ref handles existing pointer to invalid name' '
+	head=$(git rev-parse HEAD) &&
+	git symbolic-ref HEAD refs/heads/outer &&
+	git update-ref refs/heads/outer/inner $head &&
+	git symbolic-ref HEAD refs/heads/unrelated
 '
 
 test_done

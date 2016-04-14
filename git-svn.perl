@@ -1745,11 +1745,12 @@ sub post_fetch_checkout {
 
 sub complete_svn_url {
 	my ($url, $path) = @_;
-	$path = canonicalize_path($path);
 
-	# If the path is not a URL...
-	if ($path !~ m#^[a-z\+]+://#) {
-		if (!defined $url || $url !~ m#^[a-z\+]+://#) {
+	if ($path =~ m#^[a-z\+]+://#i) { # path is a URL
+		$path = canonicalize_url($path);
+	} else {
+		$path = canonicalize_path($path);
+		if (!defined $url || $url !~ m#^[a-z\+]+://#i) {
 			fatal("E: '$path' is not a complete URL ",
 			      "and a separate URL is not specified");
 		}
@@ -1764,11 +1765,12 @@ sub complete_url_ls_init {
 		print STDERR "W: $switch not specified\n";
 		return;
 	}
-	$repo_path = canonicalize_path($repo_path);
-	if ($repo_path =~ m#^[a-z\+]+://#) {
+	if ($repo_path =~ m#^[a-z\+]+://#i) {
+		$repo_path = canonicalize_url($repo_path);
 		$ra = Git::SVN::Ra->new($repo_path);
 		$repo_path = '';
 	} else {
+		$repo_path = canonicalize_path($repo_path);
 		$repo_path =~ s#^/+##;
 		unless ($ra) {
 			fatal("E: '$repo_path' is not a complete URL ",

@@ -147,30 +147,6 @@ static int exclude_cb(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-/*
- * Return 1 if the given path is the root of a git repository or
- * submodule else 0. Will not return 1 for bare repositories with the
- * exception of creating a bare repository in "foo/.git" and calling
- * is_git_repository("foo").
- */
-static int is_git_repository(struct strbuf *path)
-{
-	int ret = 0;
-	int gitfile_error;
-	size_t orig_path_len = path->len;
-	assert(orig_path_len != 0);
-	strbuf_complete(path, '/');
-	strbuf_addstr(path, ".git");
-	if (read_gitfile_gently(path->buf, &gitfile_error) || is_git_directory(path->buf))
-		ret = 1;
-	if (gitfile_error == READ_GITFILE_ERR_OPEN_FAILED ||
-	    gitfile_error == READ_GITFILE_ERR_READ_FAILED)
-		ret = 1;  /* This could be a real .git file, take the
-			   * safe option and avoid cleaning */
-	strbuf_setlen(path, orig_path_len);
-	return ret;
-}
-
 static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		int dry_run, int quiet, int *dir_gone)
 {
@@ -182,7 +158,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 
 	*dir_gone = 1;
 
-	if ((force_flag & REMOVE_DIR_KEEP_NESTED_GIT) && is_git_repository(path)) {
+	if ((force_flag & REMOVE_DIR_KEEP_NESTED_GIT) && is_nonbare_repository_dir(path)) {
 		if (!quiet) {
 			quote_path_relative(path->buf, prefix, &quoted);
 			printf(dry_run ?  _(msg_would_skip_git_dir) : _(msg_skip_git_dir),
@@ -567,7 +543,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 	int eof = 0;
 	int i;
 
-	chosen = xmalloc(sizeof(int) * stuff->nr);
+	ALLOC_ARRAY(chosen, stuff->nr);
 	/* set chosen as uninitialized */
 	for (i = 0; i < stuff->nr; i++)
 		chosen[i] = -1;
@@ -594,7 +570,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 			       clean_get_color(CLEAN_COLOR_RESET));
 		}
 
-		if (strbuf_getline(&choice, stdin, '\n') != EOF) {
+		if (strbuf_getline_lf(&choice, stdin) != EOF) {
 			strbuf_trim(&choice);
 		} else {
 			eof = 1;
@@ -639,7 +615,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 				nr += chosen[i];
 		}
 
-		result = xcalloc(nr + 1, sizeof(int));
+		result = xcalloc(st_add(nr, 1), sizeof(int));
 		for (i = 0; i < stuff->nr && j < nr; i++) {
 			if (chosen[i])
 				result[j++] = i;
@@ -676,7 +652,7 @@ static int filter_by_patterns_cmd(void)
 		clean_print_color(CLEAN_COLOR_PROMPT);
 		printf(_("Input ignore patterns>> "));
 		clean_print_color(CLEAN_COLOR_RESET);
-		if (strbuf_getline(&confirm, stdin, '\n') != EOF)
+		if (strbuf_getline_lf(&confirm, stdin) != EOF)
 			strbuf_trim(&confirm);
 		else
 			putchar('\n');
@@ -774,7 +750,7 @@ static int ask_each_cmd(void)
 			qname = quote_path_relative(item->string, NULL, &buf);
 			/* TRANSLATORS: Make sure to keep [y/N] as is */
 			printf(_("Remove %s [y/N]? "), qname);
-			if (strbuf_getline(&confirm, stdin, '\n') != EOF) {
+			if (strbuf_getline_lf(&confirm, stdin) != EOF) {
 				strbuf_trim(&confirm);
 			} else {
 				putchar('\n');

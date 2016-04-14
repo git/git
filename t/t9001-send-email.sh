@@ -36,7 +36,7 @@ clean_fake_sendmail () {
 }
 
 test_expect_success $PREREQ 'Extract patches' '
-	patches=`git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1`
+	patches=$(git format-patch -s --cc="One <one@example.com>" --cc=two@example.com -n HEAD^1)
 '
 
 # Test no confirm early to ensure remaining tests will not hang
@@ -1151,7 +1151,7 @@ test_expect_success $PREREQ '--no-bcc overrides sendemail.bcc' '
 '
 
 test_expect_success $PREREQ 'patches To headers are used by default' '
-	patch=`git format-patch -1 --to="bodies@example.com"` &&
+	patch=$(git format-patch -1 --to="bodies@example.com") &&
 	test_when_finished "rm $patch" &&
 	git send-email \
 		--dry-run \
@@ -1162,7 +1162,7 @@ test_expect_success $PREREQ 'patches To headers are used by default' '
 '
 
 test_expect_success $PREREQ 'patches To headers are appended to' '
-	patch=`git format-patch -1 --to="bodies@example.com"` &&
+	patch=$(git format-patch -1 --to="bodies@example.com") &&
 	test_when_finished "rm $patch" &&
 	git send-email \
 		--dry-run \
@@ -1175,8 +1175,8 @@ test_expect_success $PREREQ 'patches To headers are appended to' '
 '
 
 test_expect_success $PREREQ 'To headers from files reset each patch' '
-	patch1=`git format-patch -1 --to="bodies@example.com"` &&
-	patch2=`git format-patch -1 --to="other@example.com" HEAD~` &&
+	patch1=$(git format-patch -1 --to="bodies@example.com") &&
+	patch2=$(git format-patch -1 --to="other@example.com" HEAD~) &&
 	test_when_finished "rm $patch1 && rm $patch2" &&
 	git send-email \
 		--dry-run \
@@ -1488,7 +1488,7 @@ test_cover_addresses () {
 	clean_fake_sendmail &&
 	rm -fr outdir &&
 	git format-patch --cover-letter -2 -o outdir &&
-	cover=`echo outdir/0000-*.patch` &&
+	cover=$(echo outdir/0000-*.patch) &&
 	mv $cover cover-to-edit.patch &&
 	perl -pe "s/^From:/$header: extra\@address.com\nFrom:/" cover-to-edit.patch >"$cover" &&
 	git send-email \
@@ -1525,6 +1525,21 @@ test_expect_success $PREREQ 'tocover adds To to all mail' '
 test_expect_success $PREREQ 'cccover adds Cc to all mail' '
 	test_config sendemail.cccover true &&
 	test_cover_addresses "Cc"
+'
+
+test_expect_success $PREREQ 'escaped quotes in sendemail.aliasfiletype=mutt' '
+	clean_fake_sendmail &&
+	echo "alias sbd \\\"Dot U. Sir\\\" <somebody@example.org>" >.mutt &&
+	git config --replace-all sendemail.aliasesfile "$(pwd)/.mutt" &&
+	git config sendemail.aliasfiletype mutt &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=sbd \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		outdir/0001-*.patch \
+		2>errors >out &&
+	grep "^!somebody@example\.org!$" commandline1 &&
+	grep -F "To: \"Dot U. Sir\" <somebody@example.org>" out
 '
 
 test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '

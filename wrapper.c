@@ -152,6 +152,9 @@ void *xcalloc(size_t nmemb, size_t size)
 {
 	void *ret;
 
+	if (unsigned_mult_overflows(nmemb, size))
+		die("data too large to fit into virtual memory space");
+
 	memory_limit_check(size * nmemb, 0);
 	ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
@@ -391,6 +394,19 @@ FILE *xfdopen(int fd, const char *mode)
 	return stream;
 }
 
+FILE *fopen_for_writing(const char *path)
+{
+	FILE *ret = fopen(path, "w");
+
+	if (!ret && errno == EPERM) {
+		if (!unlink(path))
+			ret = fopen(path, "w");
+		else
+			errno = EPERM;
+	}
+	return ret;
+}
+
 int xmkstemp(char *template)
 {
 	int fd;
@@ -615,18 +631,6 @@ int access_or_die(const char *path, int mode, unsigned flag)
 	if (ret && !access_error_is_ok(errno, flag))
 		die_errno(_("unable to access '%s'"), path);
 	return ret;
-}
-
-struct passwd *xgetpwuid_self(void)
-{
-	struct passwd *pw;
-
-	errno = 0;
-	pw = getpwuid(getuid());
-	if (!pw)
-		die(_("unable to look up current user in the passwd file: %s"),
-		    errno ? strerror(errno) : _("no such user"));
-	return pw;
 }
 
 char *xgetcwd(void)

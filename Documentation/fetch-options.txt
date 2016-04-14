@@ -8,10 +8,11 @@
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
 --depth=<depth>::
-	Deepen or shorten the history of a 'shallow' repository created by
-	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
-	to the specified number of commits from the tip of each remote
-	branch history. Tags for the deepened commits are not fetched.
+	Limit fetching to the specified number of commits from the tip of
+	each remote branch history. If fetching to a 'shallow' repository
+	created by `git clone` with `--depth=<depth>` option (see
+	linkgit:git-clone[1]), deepen or shorten the history to the specified
+	number of commits. Tags for the deepened commits are not fetched.
 
 --unshallow::
 	If the source repository is complete, convert a shallow
@@ -157,3 +158,11 @@ endif::git-pull[]
 	by default when it is attached to a terminal, unless -q
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
+
+-4::
+--ipv4::
+	Use IPv4 addresses only, ignoring IPv6 addresses.
+
+-6::
+--ipv6::
+	Use IPv6 addresses only, ignoring IPv4 addresses.

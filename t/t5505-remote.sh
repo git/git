@@ -51,6 +51,11 @@ test_expect_success setup '
 	git clone one test
 '
 
+test_expect_success 'add remote whose URL agrees with url.<...>.insteadOf' '
+	test_config url.git@host.com:team/repo.git.insteadOf myremote &&
+	git remote add myremote git@host.com:team/repo.git
+'
+
 test_expect_success C_LOCALE_OUTPUT 'remote information for the origin' '
 	(
 		cd test &&
@@ -85,7 +90,7 @@ test_expect_success C_LOCALE_OUTPUT 'check remote-tracking' '
 test_expect_success 'remote forces tracking branches' '
 	(
 		cd test &&
-		case `git config remote.second.fetch` in
+		case $(git config remote.second.fetch) in
 		+*) true ;;
 		 *) false ;;
 		esac
@@ -137,6 +142,39 @@ test_expect_success 'remove remote protects local branches' '
 		test_i18ncmp expect1 actual1 &&
 		test_i18ncmp expect2 actual2
 	)
+'
+
+test_expect_success 'remove errors out early when deleting non-existent branch' '
+	(
+		cd test &&
+		echo "fatal: No such remote: foo" >expect &&
+		test_must_fail git remote rm foo 2>actual &&
+		test_i18ncmp expect actual
+	)
+'
+
+test_expect_success 'rename errors out early when deleting non-existent branch' '
+	(
+		cd test &&
+		echo "fatal: No such remote: foo" >expect &&
+		test_must_fail git remote rename foo bar 2>actual &&
+		test_i18ncmp expect actual
+	)
+'
+
+test_expect_success 'add existing foreign_vcs remote' '
+	test_config remote.foo.vcs bar &&
+	echo "fatal: remote foo already exists." >expect &&
+	test_must_fail git remote add foo bar 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'add existing foreign_vcs remote' '
+	test_config remote.foo.vcs bar &&
+	test_config remote.bar.vcs bar &&
+	echo "fatal: remote bar already exists." >expect &&
+	test_must_fail git remote rename foo bar 2>actual &&
+	test_i18ncmp expect actual
 '
 
 cat >test/expect <<EOF
@@ -930,6 +968,15 @@ test_expect_success 'get-url on new remote' '
 	echo foo | get_url_test --all someremote &&
 	echo foo | get_url_test --push someremote &&
 	echo foo | get_url_test --push --all someremote
+'
+
+test_expect_success 'remote set-url with locked config' '
+	test_when_finished "rm -f .git/config.lock" &&
+	git config --get-all remote.someremote.url >expect &&
+	>.git/config.lock &&
+	test_must_fail git remote set-url someremote baz &&
+	git config --get-all remote.someremote.url >actual &&
+	cmp expect actual
 '
 
 test_expect_success 'remote set-url bar' '

@@ -57,7 +57,11 @@ The names of the output files are printed to standard
 output, unless the `--stdout` option is specified.
 
 If `-o` is specified, output files are created in <dir>.  Otherwise
-they are created in the current working directory.
+they are created in the current working directory. The default path
+can be set with the 'format.outputDirectory' configuration option.
+The `-o` option takes precedence over `format.outputDirectory`.
+To store patches in the current working directory even when
+`format.outputDirectory` points elsewhere, use `-o .`.
 
 By default, the subject of a single patch is "[PATCH] " followed by
 the concatenation of lines from the commit message up to the first blank
@@ -109,6 +113,7 @@ include::diff-options.txt[]
 --signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
+	See the signoff option in linkgit:git-commit[1] for more information.
 
 --stdout::
 	Print all commits to the standard output in mbox format,
@@ -255,6 +260,10 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
 	display a notice that those files changed.  Patches generated
 	using this option cannot be applied properly, but they are
 	still useful for code review.
+
+--zero-commit::
+  Output an all-zero hash in each patch's From header instead
+  of the hash of the commit.
 
 --root::
 	Treat the revision argument as a <revision range>, even if it

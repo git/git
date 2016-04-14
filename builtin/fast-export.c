@@ -880,7 +880,7 @@ static void export_marks(char *file)
 	FILE *f;
 	int e = 0;
 
-	f = fopen(file, "w");
+	f = fopen_for_writing(file);
 	if (!f)
 		die_errno("Unable to open marks file %s for writing.", file);
 
@@ -1021,7 +1021,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		const char **refspecs_str;
 		int i;
 
-		refspecs_str = xmalloc(sizeof(*refspecs_str) * refspecs_list.nr);
+		ALLOC_ARRAY(refspecs_str, refspecs_list.nr);
 		for (i = 0; i < refspecs_list.nr; i++)
 			refspecs_str[i] = refspecs_list.items[i].string;
 

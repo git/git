@@ -37,7 +37,7 @@ test_expect_success 'import authors with prog and file' '
 test_expect_success 'imported 6 revisions successfully' '
 	(
 		cd x
-		test "`git rev-list refs/remotes/git-svn | wc -l`" -eq 6
+		test "$(git rev-list refs/remotes/git-svn | wc -l)" -eq 6
 	)
 '
 

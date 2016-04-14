@@ -27,6 +27,7 @@ static int show_killed;
 static int show_valid_bit;
 static int line_terminator = '\n';
 static int debug_mode;
+static int show_eol;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -46,6 +47,23 @@ static const char *tag_killed = "";
 static const char *tag_modified = "";
 static const char *tag_skip_worktree = "";
 static const char *tag_resolve_undo = "";
+
+static void write_eolinfo(const struct cache_entry *ce, const char *path)
+{
+	if (!show_eol)
+		return;
+	else {
+		struct stat st;
+		const char *i_txt = "";
+		const char *w_txt = "";
+		const char *a_txt = get_convert_attr_ascii(path);
+		if (ce && S_ISREG(ce->ce_mode))
+			i_txt = get_cached_convert_stats_ascii(ce->name);
+		if (!lstat(path, &st) && S_ISREG(st.st_mode))
+			w_txt = get_wt_convert_stats_ascii(path);
+		printf("i/%-5s w/%-5s attr/%-17s\t", i_txt, w_txt, a_txt);
+	}
+}
 
 static void write_name(const char *name)
 {
@@ -68,6 +86,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 		return;
 
 	fputs(tag, stdout);
+	write_eolinfo(NULL, ent->name);
 	write_name(ent->name);
 }
 
@@ -170,6 +189,7 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 		       find_unique_abbrev(ce->sha1,abbrev),
 		       ce_stage(ce));
 	}
+	write_eolinfo(ce, ce->name);
 	write_name(ce->name);
 	if (debug_mode) {
 		const struct stat_data *sd = &ce->ce_stat_data;
@@ -359,14 +379,6 @@ static const char * const ls_files_usage[] = {
 	NULL
 };
 
-static int option_parse_z(const struct option *opt,
-			  const char *arg, int unset)
-{
-	line_terminator = unset ? '\n' : '\0';
-
-	return 0;
-}
-
 static int option_parse_exclude(const struct option *opt,
 				const char *arg, int unset)
 {
@@ -408,9 +420,9 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	struct exclude_list *el;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct option builtin_ls_files_options[] = {
-		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
-			N_("paths are separated with NUL character"),
-			PARSE_OPT_NOARG, option_parse_z },
+		/* Think twice before adding "--nul" synonym to this */
+		OPT_SET_INT('z', NULL, &line_terminator,
+			N_("paths are separated with NUL character"), '\0'),
 		OPT_BOOL('t', NULL, &show_tag,
 			N_("identify the file status with tags")),
 		OPT_BOOL('v', NULL, &show_valid_bit,
@@ -433,6 +445,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_BIT(0, "directory", &dir.flags,
 			N_("show 'other' directories' names only"),
 			DIR_SHOW_OTHER_DIRECTORIES),
+		OPT_BOOL(0, "eol", &show_eol, N_("show line endings of files")),
 		OPT_NEGBIT(0, "empty-directory", &dir.flags,
 			N_("don't show empty directories"),
 			DIR_HIDE_EMPTY_DIRECTORIES),

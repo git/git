@@ -10,31 +10,22 @@ static const char fetch_pack_usage[] =
 "[--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] "
 "[--no-progress] [--diag-url] [-v] [<host>:]<directory> [<refs>...]";
 
-static void add_sought_entry_mem(struct ref ***sought, int *nr, int *alloc,
-				 const char *name, int namelen)
+static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
+			     const char *name)
 {
-	struct ref *ref = xcalloc(1, sizeof(*ref) + namelen + 1);
+	struct ref *ref;
 	struct object_id oid;
-	const int chunksz = GIT_SHA1_HEXSZ + 1;
 
-	if (namelen > chunksz && name[chunksz - 1] == ' ' &&
-		!get_oid_hex(name, &oid)) {
-		oidcpy(&ref->old_oid, &oid);
-		name += chunksz;
-		namelen -= chunksz;
-	}
+	if (!get_oid_hex(name, &oid) && name[GIT_SHA1_HEXSZ] == ' ')
+		name += GIT_SHA1_HEXSZ + 1;
+	else
+		oidclr(&oid);
 
-	memcpy(ref->name, name, namelen);
-	ref->name[namelen] = '\0';
+	ref = alloc_ref(name);
+	oidcpy(&ref->old_oid, &oid);
 	(*nr)++;
 	ALLOC_GROW(*sought, *nr, *alloc);
 	(*sought)[*nr - 1] = ref;
-}
-
-static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
-			     const char *string)
-{
-	add_sought_entry_mem(sought, nr, alloc, string, strlen(string));
 }
 
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
@@ -158,7 +149,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		else {
 			/* read from stdin one ref per line, until EOF */
 			struct strbuf line = STRBUF_INIT;
-			while (strbuf_getline(&line, stdin, '\n') != EOF)
+			while (strbuf_getline_lf(&line, stdin) != EOF)
 				add_sought_entry(&sought, &nr_sought, &alloc_sought, line.buf);
 			strbuf_release(&line);
 		}

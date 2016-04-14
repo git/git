@@ -21,6 +21,7 @@ struct submodule {
 };
 
 int parse_fetch_recurse_submodules_arg(const char *opt, const char *arg);
+int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
 int parse_submodule_config_option(const char *var, const char *value);
 const struct submodule *submodule_from_name(const unsigned char *commit_sha1,
 		const char *name);

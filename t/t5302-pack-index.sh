@@ -14,21 +14,21 @@ test_expect_success \
      i=1 &&
      while test $i -le 100
      do
-         iii=`printf '%03i' $i`
+         iii=$(printf '%03i' $i)
          test-genrandom "bar" 200 > wide_delta_$iii &&
          test-genrandom "baz $iii" 50 >> wide_delta_$iii &&
          test-genrandom "foo"$i 100 > deep_delta_$iii &&
-         test-genrandom "foo"`expr $i + 1` 100 >> deep_delta_$iii &&
-         test-genrandom "foo"`expr $i + 2` 100 >> deep_delta_$iii &&
+         test-genrandom "foo"$(expr $i + 1) 100 >> deep_delta_$iii &&
+         test-genrandom "foo"$(expr $i + 2) 100 >> deep_delta_$iii &&
          echo $iii >file_$iii &&
          test-genrandom "$iii" 8192 >>file_$iii &&
          git update-index --add file_$iii deep_delta_$iii wide_delta_$iii &&
-         i=`expr $i + 1` || return 1
+         i=$(expr $i + 1) || return 1
      done &&
      { echo 101 && test-genrandom 100 8192; } >file_101 &&
      git update-index --add file_101 &&
-     tree=`git write-tree` &&
-     commit=`git commit-tree $tree </dev/null` && {
+     tree=$(git write-tree) &&
+     commit=$(git commit-tree $tree </dev/null) && {
 	 echo $tree &&
 	 git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
      } >obj-list &&
@@ -152,10 +152,10 @@ test_expect_success \
     '[index v1] 2) create a stealth corruption in a delta base reference' \
     '# This test assumes file_101 is a delta smaller than 16 bytes.
      # It should be against file_100 but we substitute its base for file_099
-     sha1_101=`git hash-object file_101` &&
-     sha1_099=`git hash-object file_099` &&
-     offs_101=`index_obj_offset 1.idx $sha1_101` &&
-     nr_099=`index_obj_nr 1.idx $sha1_099` &&
+     sha1_101=$(git hash-object file_101) &&
+     sha1_099=$(git hash-object file_099) &&
+     offs_101=$(index_obj_offset 1.idx $sha1_101) &&
+     nr_099=$(index_obj_nr 1.idx $sha1_099) &&
      chmod +w ".git/objects/pack/pack-${pack1}.pack" &&
      dd of=".git/objects/pack/pack-${pack1}.pack" seek=$(($offs_101 + 1)) \
         if=".git/objects/pack/pack-${pack1}.idx" \
@@ -193,10 +193,10 @@ test_expect_success \
     '[index v2] 2) create a stealth corruption in a delta base reference' \
     '# This test assumes file_101 is a delta smaller than 16 bytes.
      # It should be against file_100 but we substitute its base for file_099
-     sha1_101=`git hash-object file_101` &&
-     sha1_099=`git hash-object file_099` &&
-     offs_101=`index_obj_offset 1.idx $sha1_101` &&
-     nr_099=`index_obj_nr 1.idx $sha1_099` &&
+     sha1_101=$(git hash-object file_101) &&
+     sha1_099=$(git hash-object file_099) &&
+     offs_101=$(index_obj_offset 1.idx $sha1_101) &&
+     nr_099=$(index_obj_nr 1.idx $sha1_099) &&
      chmod +w ".git/objects/pack/pack-${pack1}.pack" &&
      dd of=".git/objects/pack/pack-${pack1}.pack" seek=$(($offs_101 + 1)) \
         if=".git/objects/pack/pack-${pack1}.idx" \
@@ -222,11 +222,11 @@ test_expect_success \
     'rm -f .git/objects/pack/* &&
      git index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
      git verify-pack ".git/objects/pack/pack-${pack1}.pack" &&
-     obj=`git hash-object file_001` &&
-     nr=`index_obj_nr ".git/objects/pack/pack-${pack1}.idx" $obj` &&
+     obj=$(git hash-object file_001) &&
+     nr=$(index_obj_nr ".git/objects/pack/pack-${pack1}.idx" $obj) &&
      chmod +w ".git/objects/pack/pack-${pack1}.idx" &&
      printf xxxx | dd of=".git/objects/pack/pack-${pack1}.idx" conv=notrunc \
-        bs=1 count=4 seek=$((8 + 256 * 4 + `wc -l <obj-list` * 20 + $nr * 4)) &&
+        bs=1 count=4 seek=$((8 + 256 * 4 + $(wc -l <obj-list) * 20 + $nr * 4)) &&
      ( while read obj
        do git cat-file -p $obj >/dev/null || exit 1
        done <obj-list ) &&
