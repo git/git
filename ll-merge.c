@@ -46,7 +46,9 @@ static int ll_binary_merge(const struct ll_merge_driver *drv_unused,
 	assert(opts);
 
 	/*
-	 * The tentative merge result is the or common ancestor for an internal merge.
+	 * The tentative merge result is the common ancestor for an
+	 * internal merge.  For the final merge, it is "ours" by
+	 * default but -Xours/-Xtheirs can tweak the choice.
 	 */
 	if (opts->virtual_ancestor) {
 		stolen = orig;
