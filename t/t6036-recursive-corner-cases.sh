@@ -217,7 +217,8 @@ test_expect_success 'git detects differently handled merges conflict' '
 		-L "" \
 		-L "Temporary merge branch 1" \
 		merged empty merge-me &&
-	test $(git rev-parse :1:new_a) = $(git hash-object merged)
+	sed -e "s/^\([<=>]\)/\1\1\1/" merged >merged-internal &&
+	test $(git rev-parse :1:new_a) = $(git hash-object merged-internal)
 '
 
 #
