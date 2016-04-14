@@ -427,6 +427,24 @@ test_expect_success 'fsck allows .Ňit' '
 	)
 '
 
+test_expect_success 'NUL in commit' '
+	rm -fr nul-in-commit &&
+	git init nul-in-commit &&
+	(
+		cd nul-in-commit &&
+		git commit --allow-empty -m "initial commitQNUL after message" &&
+		git cat-file commit HEAD >original &&
+		q_to_nul <original >munged &&
+		git hash-object -w -t commit --stdin <munged >name &&
+		git branch bad $(cat name) &&
+
+		test_must_fail git -c fsck.nulInCommit=error fsck 2>warn.1 &&
+		grep nulInCommit warn.1 &&
+		git fsck 2>warn.2 &&
+		grep nulInCommit warn.2
+	)
+'
+
 # create a static test repo which is broken by omitting
 # one particular object ($1, which is looked up via rev-parse
 # in the new repository).
