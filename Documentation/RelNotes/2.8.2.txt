@@ -14,4 +14,42 @@ Fixes since v2.8.1
  * The tests that involve running httpd leaked the system-wide
    configuration in /etc/gitconfig to the tested environment.
 
+ * "index-pack --keep=<msg>" was broken since v2.1.0 timeframe.
+
+ * "git config --get-urlmatch", unlike other variants of the "git
+   config --get" family, did not signal error with its exit status
+   when there was no matching configuration.
+
+ * The "--local-env-vars" and "--resolve-git-dir" options of "git
+   rev-parse" failed to work outside a repository when the command's
+   option parsing was rewritten in 1.8.5 era.
+
+ * Fetching of history by naming a commit object name directly didn't
+   work across remote-curl transport.
+
+ * A small memory leak in an error codepath has been plugged in xdiff
+   code.
+
+ * strbuf_getwholeline() did not NUL-terminate the buffer on certain
+   corner cases in its error codepath.
+
+ * The startup_info data, which records if we are working inside a
+   repository (among other things), are now uniformly available to Git
+   subcommand implementations, and Git avoids attempting to touch
+   references when we are not in a repository.
+
+ * "git mergetool" did not work well with conflicts that both sides
+   deleted.
+
+ * "git send-email" had trouble parsing alias file in mailrc format
+   when lines in it had trailing whitespaces on them.
+
+ * When "git merge --squash" stopped due to conflict, the concluding
+   "git commit" failed to read in the SQUASH_MSG that shows the log
+   messages from all the squashed commits.
+
+ * "git merge FETCH_HEAD" dereferenced NULL pointer when merging
+   nothing into an unborn history (which is arguably unusual usage,
+   which perhaps was the reason why nobody noticed it).
+
 Also contains minor documentation updates and code clean-ups.
