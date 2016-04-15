@@ -322,6 +322,7 @@ int set_git_dir_init(const char *git_dir, const char *real_git_dir,
 		set_git_dir(real_path(git_dir));
 		git_link = NULL;
 	}
+	startup_info->have_repository = 1;
 	return 0;
 }
 
