@@ -1144,6 +1144,9 @@ test_expect_success 'urlmatch' '
 		cookieFile = /tmp/cookie.txt
 	EOF
 
+	test_expect_code 1 git config --bool --get-urlmatch doesnt.exist https://good.example.com >actual &&
+	test_must_be_empty actual &&
+
 	echo true >expect &&
 	git config --bool --get-urlmatch http.SSLverify https://good.example.com >actual &&
 	test_cmp expect actual &&

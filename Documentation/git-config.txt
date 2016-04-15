@@ -58,13 +58,13 @@ that location (you can say '--local' but that is the default).
 This command will fail with non-zero status upon error.  Some exit
 codes are:
 
-. The config file is invalid (ret=3),
-. can not write to the config file (ret=4),
-. no section or name was provided (ret=2),
-. the section or key is invalid (ret=1),
-. you try to unset an option which does not exist (ret=5),
-. you try to unset/set an option for which multiple lines match (ret=5), or
-. you try to use an invalid regexp (ret=6).
+- The config file is invalid (ret=3),
+- can not write to the config file (ret=4),
+- no section or name was provided (ret=2),
+- the section or key is invalid (ret=1),
+- you try to unset an option which does not exist (ret=5),
+- you try to unset/set an option for which multiple lines match (ret=5), or
+- you try to use an invalid regexp (ret=6).
 
 On success, the command returns the exit code 0.
 
@@ -86,8 +86,7 @@ OPTIONS
 	found and the last value if multiple key values were found.
 
 --get-all::
-	Like get, but does not fail if the number of values for the key
-	is not exactly one.
+	Like get, but returns all values for a multi-valued key.
 
 --get-regexp::
 	Like --get-all, but interprets the name as a regular expression and
@@ -102,7 +101,7 @@ OPTIONS
 	given URL is returned (if no such key exists, the value for
 	section.key is used as a fallback).  When given just the
 	section as name, do so for all the keys in the section and
-	list them.
+	list them.  Returns error code 1 if no value is found.
 
 --global::
 	For writing options: write to global `~/.gitconfig` file
