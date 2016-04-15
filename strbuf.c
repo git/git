@@ -481,9 +481,15 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 	if (errno == ENOMEM)
 		die("Out of memory, getdelim failed");
 
-	/* Restore slopbuf that we moved out of the way before */
+	/*
+	 * Restore strbuf invariants; if getdelim left us with a NULL pointer,
+	 * we can just re-init, but otherwise we should make sure that our
+	 * length is empty, and that the result is NUL-terminated.
+	 */
 	if (!sb->buf)
 		strbuf_init(sb, 0);
+	else
+		strbuf_reset(sb);
 	return EOF;
 }
 #else
