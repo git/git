@@ -412,10 +412,10 @@ static inline int all_parents_are_visited(struct commit *merge)
 
 static struct commit *extract_merge_to_queue(struct commit_list **merges)
 {
-	assert(merges);
-
 	struct commit_list *p, *q;
 	struct commit *found;
+
+	assert(merges);
 
 	/* find a merge that is ready, i.e. all parents have been computed */
 	for (q = NULL, p = *merges; p && !all_parents_are_visited(p->item);
