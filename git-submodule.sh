@@ -46,79 +46,6 @@ prefix=
 custom_name=
 depth=
 
-# The function takes at most 2 arguments. The first argument is the
-# URL that navigates to the submodule origin repo. When relative, this URL
-# is relative to the superproject origin URL repo. The second up_path
-# argument, if specified, is the relative path that navigates
-# from the submodule working tree to the superproject working tree.
-#
-# The output of the function is the origin URL of the submodule.
-#
-# The output will either be an absolute URL or filesystem path (if the
-# superproject origin URL is an absolute URL or filesystem path,
-# respectively) or a relative file system path (if the superproject
-# origin URL is a relative file system path).
-#
-# When the output is a relative file system path, the path is either
-# relative to the submodule working tree, if up_path is specified, or to
-# the superproject working tree otherwise.
-resolve_relative_url ()
-{
-	remote=$(get_default_remote)
-	remoteurl=$(git config "remote.$remote.url") ||
-		remoteurl=$(pwd) # the repository is its own authoritative upstream
-	url="$1"
-	remoteurl=${remoteurl%/}
-	sep=/
-	up_path="$2"
-
-	case "$remoteurl" in
-	*:*|/*)
-		is_relative=
-		;;
-	./*|../*)
-		is_relative=t
-		;;
-	*)
-		is_relative=t
-		remoteurl="./$remoteurl"
-		;;
-	esac
-
-	while test -n "$url"
-	do
-		case "$url" in
-		../*)
-			url="${url#../}"
-			case "$remoteurl" in
-			*/*)
-				remoteurl="${remoteurl%/*}"
-				;;
-			*:*)
-				remoteurl="${remoteurl%:*}"
-				sep=:
-				;;
-			*)
-				if test -z "$is_relative" || test "." = "$remoteurl"
-				then
-					die "$(eval_gettext "cannot strip one component off url '\$remoteurl'")"
-				else
-					remoteurl=.
-				fi
-				;;
-			esac
-			;;
-		./*)
-			url="${url#./}"
-			;;
-		*)
-			break;;
-		esac
-	done
-	remoteurl="$remoteurl$sep${url%/}"
-	echo "${is_relative:+${up_path}}${remoteurl#./}"
-}
-
 # Resolve a path to be relative to another path.  This is intended for
 # converting submodule paths when git-submodule is run in a subdirectory
 # and only handles paths where the directory separator is '/'.
@@ -281,7 +208,7 @@ cmd_add()
 		die "$(gettext "Relative path can only be used from the toplevel of the working tree")"
 
 		# dereference source url relative to parent's url
-		realrepo=$(resolve_relative_url "$repo") || exit
+		realrepo=$(git submodule--helper resolve-relative-url "$repo") || exit
 		;;
 	*:*|/*)
 		# absolute url
@@ -485,7 +412,7 @@ cmd_init()
 			# Possibly a url relative to parent
 			case "$url" in
 			./*|../*)
-				url=$(resolve_relative_url "$url") || exit
+				url=$(git submodule--helper resolve-relative-url "$url") || exit
 				;;
 			esac
 			git config submodule."$name".url "$url" ||
@@ -1202,9 +1129,9 @@ cmd_sync()
 			# guarantee a trailing /
 			up_path=${up_path%/}/ &&
 			# path from submodule work tree to submodule origin repo
-			sub_origin_url=$(resolve_relative_url "$url" "$up_path") &&
+			sub_origin_url=$(git submodule--helper resolve-relative-url "$url" "$up_path") &&
 			# path from superproject work tree to submodule origin repo
-			super_config_url=$(resolve_relative_url "$url") || exit
+			super_config_url=$(git submodule--helper resolve-relative-url "$url") || exit
 			;;
 		*)
 			sub_origin_url="$url"
