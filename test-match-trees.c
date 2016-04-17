@@ -17,7 +17,7 @@ int main(int ac, char **av)
 	if (!two)
 		die("not a tree-ish %s", av[2]);
 
-	shift_tree(one->object.oid.hash, two->object.oid.hash, shifted.hash, -1);
+	shift_tree(&one->object.oid, &two->object.oid, &shifted, -1);
 	printf("shifted: %s\n", oid_to_hex(&shifted));
 
 	exit(0);

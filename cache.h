@@ -1738,8 +1738,8 @@ int add_files_to_cache(const char *prefix, const struct pathspec *pathspec, int 
 extern int diff_auto_refresh_index;
 
 /* match-trees.c */
-void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
-void shift_tree_by(const unsigned char *, const unsigned char *, unsigned char *, const char *);
+void shift_tree(const struct object_id *, const struct object_id *, struct object_id *, int);
+void shift_tree_by(const struct object_id *, const struct object_id *, struct object_id *, const char *);
 
 /*
  * whitespace rules.
