@@ -183,7 +183,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 
 	if (t) {
 		/* path present in resulting tree */
-		sha1 = tree_entry_extract(t, &path, &mode);
+		sha1 = tree_entry_extract(t, &path, &mode)->hash;
 		pathlen = tree_entry_len(&t->entry);
 		isdir = S_ISDIR(mode);
 	} else {

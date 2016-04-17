@@ -131,14 +131,14 @@ static void match_trees(const unsigned char *hash1,
 
 	while (one.size) {
 		const char *path;
-		const unsigned char *elem;
+		const struct object_id *elem;
 		unsigned mode;
 		int score;
 
 		elem = tree_entry_extract(&one, &path, &mode);
 		if (!S_ISDIR(mode))
 			goto next;
-		score = score_trees(elem, hash2);
+		score = score_trees(elem->hash, hash2);
 		if (*best_score < score) {
 			free(*best_match);
 			*best_match = xstrfmt("%s%s", base, path);
@@ -146,7 +146,7 @@ static void match_trees(const unsigned char *hash1,
 		}
 		if (recurse_limit) {
 			char *newbase = xstrfmt("%s%s/", base, path);
-			match_trees(elem, hash2, best_score, best_match,
+			match_trees(elem->hash, hash2, best_score, best_match,
 				    newbase, recurse_limit - 1);
 			free(newbase);
 		}
@@ -191,15 +191,15 @@ static int splice_tree(const unsigned char *hash1,
 	while (desc.size) {
 		const char *name;
 		unsigned mode;
-		const unsigned char *sha1;
+		const struct object_id *oid;
 
-		sha1 = tree_entry_extract(&desc, &name, &mode);
+		oid = tree_entry_extract(&desc, &name, &mode);
 		if (strlen(name) == toplen &&
 		    !memcmp(name, prefix, toplen)) {
 			if (!S_ISDIR(mode))
 				die("entry %s in tree %s is not a tree",
 				    name, sha1_to_hex(hash1));
-			rewrite_here = (unsigned char *) sha1;
+			rewrite_here = (unsigned char *) oid->hash;
 			break;
 		}
 		update_tree_entry(&desc);

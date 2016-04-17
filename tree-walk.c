@@ -433,10 +433,10 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 	int namelen = strlen(name);
 	while (t->size) {
 		const char *entry;
-		const unsigned char *sha1;
+		const struct object_id *oid;
 		int entrylen, cmp;
 
-		sha1 = tree_entry_extract(t, &entry, mode);
+		oid = tree_entry_extract(t, &entry, mode);
 		entrylen = tree_entry_len(&t->entry);
 		update_tree_entry(t);
 		if (entrylen > namelen)
@@ -447,7 +447,7 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (cmp < 0)
 			break;
 		if (entrylen == namelen) {
-			hashcpy(result, sha1);
+			hashcpy(result, oid->hash);
 			return 0;
 		}
 		if (name[entrylen] != '/')
@@ -455,10 +455,10 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (!S_ISDIR(*mode))
 			break;
 		if (++entrylen == namelen) {
-			hashcpy(result, sha1);
+			hashcpy(result, oid->hash);
 			return 0;
 		}
-		return get_tree_entry(sha1, name + entrylen, result, mode);
+		return get_tree_entry(oid->hash, name + entrylen, result, mode);
 	}
 	return -1;
 }

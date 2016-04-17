@@ -13,11 +13,11 @@ struct tree_desc {
 	unsigned int size;
 };
 
-static inline const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
+static inline const struct object_id *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
 {
 	*pathp = desc->entry.path;
 	*modep = desc->entry.mode;
-	return desc->entry.oid->hash;
+	return desc->entry.oid;
 }
 
 static inline int tree_entry_len(const struct name_entry *ne)

@@ -450,11 +450,11 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 	while (desc.size) {
 		unsigned mode;
 		const char *name;
-		const unsigned char *sha1;
+		const struct object_id *oid;
 
-		sha1 = tree_entry_extract(&desc, &name, &mode);
+		oid = tree_entry_extract(&desc, &name, &mode);
 
-		has_null_sha1 |= is_null_sha1(sha1);
+		has_null_sha1 |= is_null_oid(oid);
 		has_full_path |= !!strchr(name, '/');
 		has_empty_name |= !*name;
 		has_dot |= !strcmp(name, ".");
