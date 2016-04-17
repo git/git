@@ -2,7 +2,7 @@
 #define TREE_WALK_H
 
 struct name_entry {
-	const unsigned char *sha1;
+	const struct object_id *oid;
 	const char *path;
 	unsigned int mode;
 };
@@ -17,12 +17,12 @@ static inline const unsigned char *tree_entry_extract(struct tree_desc *desc, co
 {
 	*pathp = desc->entry.path;
 	*modep = desc->entry.mode;
-	return desc->entry.sha1;
+	return desc->entry.oid->hash;
 }
 
 static inline int tree_entry_len(const struct name_entry *ne)
 {
-	return (const char *)ne->sha1 - ne->path - 1;
+	return (const char *)ne->oid - ne->path - 1;
 }
 
 void update_tree_entry(struct tree_desc *);

@@ -104,7 +104,7 @@ static int score_trees(const unsigned char *hash1, const unsigned char *hash2)
 		else if (cmp > 0)
 			/* path2 does not appear in one */
 			score += score_missing(e2.mode, e2.path);
-		else if (hashcmp(e1.sha1, e2.sha1))
+		else if (oidcmp(e1.oid, e2.oid))
 			/* they are different */
 			score += score_differs(e1.mode, e2.mode, e1.path);
 		else

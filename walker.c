@@ -43,12 +43,12 @@ static int process_tree(struct walker *walker, struct tree *tree)
 		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode)) {
-			struct tree *tree = lookup_tree(entry.sha1);
+			struct tree *tree = lookup_tree(entry.oid->hash);
 			if (tree)
 				obj = &tree->object;
 		}
 		else {
-			struct blob *blob = lookup_blob(entry.sha1);
+			struct blob *blob = lookup_blob(entry.oid->hash);
 			if (blob)
 				obj = &blob->object;
 		}

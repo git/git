@@ -59,10 +59,10 @@ static void mark_tree_contents_uninteresting(struct tree *tree)
 	while (tree_entry(&desc, &entry)) {
 		switch (object_type(entry.mode)) {
 		case OBJ_TREE:
-			mark_tree_uninteresting(lookup_tree(entry.sha1));
+			mark_tree_uninteresting(lookup_tree(entry.oid->hash));
 			break;
 		case OBJ_BLOB:
-			mark_blob_uninteresting(lookup_blob(entry.sha1));
+			mark_blob_uninteresting(lookup_blob(entry.oid->hash));
 			break;
 		default:
 			/* Subproject commit - not in this repository */

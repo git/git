@@ -475,7 +475,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	for (i = 0; i < n; i++, dirmask >>= 1) {
 		const unsigned char *sha1 = NULL;
 		if (dirmask & 1)
-			sha1 = names[i].sha1;
+			sha1 = names[i].oid->hash;
 		buf[i] = fill_tree_descriptor(t+i, sha1);
 	}
 
@@ -591,7 +591,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info, con
 	ce->ce_mode = create_ce_mode(n->mode);
 	ce->ce_flags = create_ce_flags(stage);
 	ce->ce_namelen = len;
-	hashcpy(ce->sha1, n->sha1);
+	hashcpy(ce->sha1, n->oid->hash);
 	make_traverse_path(ce->name, info, n);
 
 	return ce;
