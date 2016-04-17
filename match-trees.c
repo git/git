@@ -48,17 +48,17 @@ static int score_matches(unsigned mode1, unsigned mode2, const char *path)
 }
 
 static void *fill_tree_desc_strict(struct tree_desc *desc,
-				   const unsigned char *hash)
+				   const struct object_id *hash)
 {
 	void *buffer;
 	enum object_type type;
 	unsigned long size;
 
-	buffer = read_sha1_file(hash, &type, &size);
+	buffer = read_sha1_file(hash->hash, &type, &size);
 	if (!buffer)
-		die("unable to read tree (%s)", sha1_to_hex(hash));
+		die("unable to read tree (%s)", oid_to_hex(hash));
 	if (type != OBJ_TREE)
-		die("%s is not a tree", sha1_to_hex(hash));
+		die("%s is not a tree", oid_to_hex(hash));
 	init_tree_desc(desc, buffer, size);
 	return buffer;
 }
@@ -73,7 +73,7 @@ static int base_name_entries_compare(const struct name_entry *a,
 /*
  * Inspect two trees, and give a score that tells how similar they are.
  */
-static int score_trees(const unsigned char *hash1, const unsigned char *hash2)
+static int score_trees(const struct object_id *hash1, const struct object_id *hash2)
 {
 	struct tree_desc one;
 	struct tree_desc two;
@@ -119,8 +119,8 @@ static int score_trees(const unsigned char *hash1, const unsigned char *hash2)
 /*
  * Match one itself and its subtrees with two and pick the best match.
  */
-static void match_trees(const unsigned char *hash1,
-			const unsigned char *hash2,
+static void match_trees(const struct object_id *hash1,
+			const struct object_id *hash2,
 			int *best_score,
 			char **best_match,
 			const char *base,
@@ -138,7 +138,7 @@ static void match_trees(const unsigned char *hash1,
 		elem = tree_entry_extract(&one, &path, &mode);
 		if (!S_ISDIR(mode))
 			goto next;
-		score = score_trees(elem->hash, hash2);
+		score = score_trees(elem, hash2);
 		if (*best_score < score) {
 			free(*best_match);
 			*best_match = xstrfmt("%s%s", base, path);
@@ -146,7 +146,7 @@ static void match_trees(const unsigned char *hash1,
 		}
 		if (recurse_limit) {
 			char *newbase = xstrfmt("%s%s/", base, path);
-			match_trees(elem->hash, hash2, best_score, best_match,
+			match_trees(elem, hash2, best_score, best_match,
 				    newbase, recurse_limit - 1);
 			free(newbase);
 		}
@@ -245,7 +245,7 @@ void shift_tree(const struct object_id *hash1,
 	if (!depth_limit)
 		depth_limit = 2;
 
-	add_score = del_score = score_trees(hash1->hash, hash2->hash);
+	add_score = del_score = score_trees(hash1, hash2);
 	add_prefix = xcalloc(1, 1);
 	del_prefix = xcalloc(1, 1);
 
@@ -253,13 +253,13 @@ void shift_tree(const struct object_id *hash1,
 	 * See if one's subtree resembles two; if so we need to prefix
 	 * two with a few fake trees to match the prefix.
 	 */
-	match_trees(hash1->hash, hash2->hash, &add_score, &add_prefix, "", depth_limit);
+	match_trees(hash1, hash2, &add_score, &add_prefix, "", depth_limit);
 
 	/*
 	 * See if two's subtree resembles one; if so we need to
 	 * pick only subtree of two.
 	 */
-	match_trees(hash2->hash, hash1->hash, &del_score, &del_prefix, "", depth_limit);
+	match_trees(hash2, hash1, &del_score, &del_prefix, "", depth_limit);
 
 	/* Assume we do not have to do any shifting */
 	oidcpy(shifted, hash2);
@@ -309,16 +309,16 @@ void shift_tree_by(const struct object_id *hash1,
 
 	if (candidate == 3) {
 		/* Both are plausible -- we need to evaluate the score */
-		int best_score = score_trees(hash1->hash, hash2->hash);
+		int best_score = score_trees(hash1, hash2);
 		int score;
 
 		candidate = 0;
-		score = score_trees(sub1.hash, hash2->hash);
+		score = score_trees(&sub1, hash2);
 		if (score > best_score) {
 			candidate = 1;
 			best_score = score;
 		}
-		score = score_trees(sub2.hash, hash1->hash);
+		score = score_trees(&sub2, hash1);
 		if (score > best_score)
 			candidate = 2;
 	}
