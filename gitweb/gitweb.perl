@@ -3935,6 +3935,9 @@ sub run_highlighter {
 
 	close $fd;
 	open $fd, quote_command(git_cmd(), "cat-file", "blob", $hash)." | ".
+	          "$^X -MEncode=is_utf8,encode_utf8,decode,FB_DEFAULT -plse ".
+	          q{'$_ = is_utf8($_) ? $_ : encode_utf8(decode($fe, $_, FB_DEFAULT));' }.
+	          '-- ' . quote_command("-fe=$fallback_encoding") . " | ".
 	          quote_command($highlight_bin).
 	          " --replace-tabs=8 --fragment --syntax $syntax |"
 		or die_error(500, "Couldn't open file or run syntax highlighter");
