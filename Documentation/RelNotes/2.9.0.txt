@@ -179,6 +179,11 @@ notes for details).
    which was wrong.
    (merge f292244 ky/branch-d-worktree later to maint).
 
+ * When "git worktree" feature is in use, "git branch -m" renamed a
+   branch that is checked out in another worktree without adjusting
+   the HEAD symbolic ref for the worktree.
+   (merge 18eb3a9 ky/branch-m-worktree later to maint).
+
  * "git diff -M" used to work better when two originally identical
    files A and B got renamed to X/A and X/B by pairing A to X/A and B
    to X/B, but this was broken in the 2.0 timeframe.
@@ -200,6 +205,13 @@ notes for details).
    to "safe crlf" that disables the line-end conversion.  It has been
    corrected.
    (merge a08feb8 tb/blame-force-read-cache-to-workaround-safe-crlf later to maint).
+
+ * A change back in version 2.7 to "git branch" broke display of a
+   symbolic ref in a non-standard place in the refs/ hierarchy (we
+   expect symbolic refs to appear in refs/remotes/*/HEAD to point at
+   the primary branch the remote has, and as .git/HEAD to point at the
+   branch we locally checked out).
+   (merge 95c38fb jk/branch-shortening-funny-symrefs later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge aed7480 mm/lockfile-error-message later to maint).
