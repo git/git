@@ -288,6 +288,21 @@ our %highlight_ext = (
 	(map { $_ => 'xml' } qw(xml xhtml html htm)),
 );
 
+# match by shebang
+our %highlight_shebang = (
+	# shebang regexp, see /etc/highlight/filetypes.conf
+	xml => qr@^\s*<\?xml\s+version=\"1\.0\"\s+[^(\?>)]*?>\s*$@,
+	(map {(
+		sh     => qr/${_}(?:[bd]ash|t?csh|[akz]?sh)/,
+		make   => qr/${_}make/,
+		awk    => qr/${_}[gnm]?awk/,
+		perl   => qr/${_}perl/,
+		python => qr/${_}python/,
+		ruby   => qr/${_}ruby/,
+		php    => qr/${_}php/,
+	)} qr|^#!\s*(?:/usr)?(?:/local)?/bin/(?:env\s+)?|),
+);
+
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
@@ -3913,11 +3928,18 @@ sub blob_contenttype {
 # guess file syntax for syntax highlighting; return undef if no highlighting
 # the name of syntax can (in the future) depend on syntax highlighter used
 sub guess_file_syntax {
-	my ($highlight, $mimetype, $file_name) = @_;
+	my ($highlight, $mimetype, $file_name, $shebang) = @_;
 	return undef unless ($highlight && defined $file_name);
 	my $basename = basename($file_name, '.in');
 	return $highlight_basename{$basename}
 		if exists $highlight_basename{$basename};
+
+	if (defined $shebang) {
+		for my $ft (keys %highlight_shebang) {
+			next if $shebang !~ $highlight_shebang{$ft};
+			return $ft;
+		}
+	}
 
 	$basename =~ /\.([^.]*)$/;
 	my $ext = $1 or return undef;
@@ -7047,8 +7069,12 @@ sub git_blob {
 	}
 
 	my $have_blame = gitweb_check_feature('blame');
-	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
-		or die_error(500, "Couldn't cat $file_name, $hash");
+	my $fd_opener = sub {
+		open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
+			or die_error(500, "Couldn't cat $file_name, $hash");
+		return $fd;
+	};
+	my $fd = $fd_opener->();
 	my $mimetype = blob_mimetype($fd, $file_name);
 	# use 'blob_plain' (aka 'raw') view for files that cannot be displayed
 	if ($mimetype !~ m!^(?:text/|image/(?:gif|png|jpeg)$)! && -B $fd) {
@@ -7059,9 +7085,14 @@ sub git_blob {
 	$have_blame &&= ($mimetype =~ m!^text/!);
 
 	my $highlight = gitweb_check_feature('highlight');
-	my $syntax = guess_file_syntax($highlight, $mimetype, $file_name);
-	$fd = run_highlighter($fd, $highlight, $syntax)
-		if $syntax;
+	my $syntax;
+	HIGHLIGHT: {
+		last HIGHLIGHT unless $highlight;
+		my $shebang = do { my $_fd = $fd_opener->(); <$_fd> };
+		$syntax = guess_file_syntax($highlight, $mimetype, $file_name, $shebang);
+		last HIGHLIGHT unless $syntax;
+		$fd = run_highlighter($fd, $highlight, $syntax);
+	}
 
 	git_header_html(undef, $expires);
 	my $formats_nav = '';
