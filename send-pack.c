@@ -518,6 +518,7 @@ int send_pack(struct send_pack_args *args,
 		demux.proc = sideband_demux;
 		demux.data = fd;
 		demux.out = -1;
+		demux.isolate_sigpipe = 1;
 		if (start_async(&demux))
 			die("send-pack: unable to fork off sideband demultiplexer");
 		in = demux.out;
