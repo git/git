@@ -33,7 +33,7 @@ fi
 # Older versions of perforce were available compiled natively for
 # cygwin.  Those do not accept native windows paths, so make sure
 # not to convert for them.
-native_path() {
+native_path () {
 	path="$1" &&
 	if test_have_prereq CYGWIN && ! p4 -V | grep -q CYGWIN
 	then
@@ -49,7 +49,7 @@ native_path() {
 # Attention: This function is not safe again against time offset updates
 # at runtime (e.g. via NTP). The 'clock_gettime(CLOCK_MONOTONIC)'
 # function could fix that but it is not in Python until 3.3.
-time_in_seconds() {
+time_in_seconds () {
 	python -c 'import time; print int(time.time())'
 }
 
@@ -75,7 +75,7 @@ git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
 
 # Sometimes "prove" seems to hang on exit because p4d is still running
-cleanup() {
+cleanup () {
 	if test -f "$pidfile"
 	then
 		kill -9 $(cat "$pidfile") 2>/dev/null && exit 255
@@ -89,7 +89,7 @@ trap cleanup EXIT
 TMPDIR="$TRASH_DIRECTORY"
 export TMPDIR
 
-start_p4d() {
+start_p4d () {
 	mkdir -p "$db" "$cli" "$git" &&
 	rm -f "$pidfile" &&
 	(
@@ -151,7 +151,7 @@ start_p4d() {
 	return 0
 }
 
-p4_add_user() {
+p4_add_user () {
 	name=$1 &&
 	p4 user -f -i <<-EOF
 	User: $name
@@ -160,7 +160,7 @@ p4_add_user() {
 	EOF
 }
 
-retry_until_success() {
+retry_until_success () {
 	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
 	until "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
 	do
@@ -168,7 +168,7 @@ retry_until_success() {
 	done
 }
 
-retry_until_fail() {
+retry_until_fail () {
 	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
 	until ! "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
 	do
@@ -176,7 +176,7 @@ retry_until_fail() {
 	done
 }
 
-kill_p4d() {
+kill_p4d () {
 	pid=$(cat "$pidfile")
 	retry_until_fail kill $pid
 	retry_until_fail kill -9 $pid
@@ -186,13 +186,13 @@ kill_p4d() {
 	retry_until_fail kill -9 $watchdog_pid
 }
 
-cleanup_git() {
+cleanup_git () {
 	retry_until_success rm -r "$git"
 	test_must_fail test -d "$git" &&
 	retry_until_success mkdir "$git"
 }
 
-marshal_dump() {
+marshal_dump () {
 	what=$1 &&
 	line=${2:-1} &&
 	cat >"$TRASH_DIRECTORY/marshal-dump.py" <<-EOF &&
@@ -208,7 +208,7 @@ marshal_dump() {
 #
 # Construct a client with this list of View lines
 #
-client_view() {
+client_view () {
 	(
 		cat <<-EOF &&
 		Client: $P4CLIENT
@@ -222,7 +222,7 @@ client_view() {
 	) | p4 client -i
 }
 
-is_cli_file_writeable() {
+is_cli_file_writeable () {
 	# cygwin version of p4 does not set read-only attr,
 	# will be marked 444 but -w is true
 	file="$1" &&
