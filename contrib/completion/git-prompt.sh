@@ -427,7 +427,7 @@ __git_ps1 ()
 			:
 		elif [ -h "$g/HEAD" ]; then
 			# symlink symbolic ref
-			b="$(git symbolic-ref HEAD 2>/dev/null)"
+			b="$(git symbolic-ref --quiet HEAD)"
 		else
 			local head=""
 			if ! __git_eread "$g/HEAD" head; then
