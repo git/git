@@ -86,7 +86,7 @@ strategy_args= diffstat= no_commit= squash= no_ff= ff_only=
 log_arg= verbosity= progress= recurse_submodules= verify_signatures=
 merge_args= edit= rebase_args= all= append= upload_pack= force= tags= prune=
 keep= depth= unshallow= update_shallow= refmap=
-curr_branch=$(git symbolic-ref -q HEAD)
+curr_branch=$(git symbolic-ref --quiet HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
 rebase=$(bool_or_string_config branch.$curr_branch_short.rebase)
 if test -z "$rebase"

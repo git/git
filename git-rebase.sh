@@ -524,7 +524,7 @@ case "$#" in
 	;;
 0)
 	# Do not need to switch branches, we are already on it.
-	if branch_name=$(git symbolic-ref -q HEAD)
+	if branch_name=$(git symbolic-ref --quiet HEAD)
 	then
 		head_name=$branch_name
 		branch_name=$(expr "z$branch_name" : 'zrefs/heads/\(.*\)')

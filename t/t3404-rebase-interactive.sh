@@ -130,7 +130,7 @@ test_expect_success 'no changes are a nop' '
 	git checkout branch2 &&
 	set_fake_editor &&
 	git rebase -i F &&
-	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
+	test "$(git symbolic-ref --quiet HEAD)" = "refs/heads/branch2" &&
 	test $(git rev-parse I) = $(git rev-parse HEAD)
 '
 
@@ -140,7 +140,7 @@ test_expect_success 'test the [branch] option' '
 	git commit -m "stop here" &&
 	set_fake_editor &&
 	git rebase -i F branch2 &&
-	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
+	test "$(git symbolic-ref --quiet HEAD)" = "refs/heads/branch2" &&
 	test $(git rev-parse I) = $(git rev-parse branch2) &&
 	test $(git rev-parse I) = $(git rev-parse HEAD)
 '
@@ -149,7 +149,7 @@ test_expect_success 'test --onto <branch>' '
 	git checkout -b test-onto branch2 &&
 	set_fake_editor &&
 	git rebase -i --onto branch1 F &&
-	test "$(git symbolic-ref -q HEAD)" = "refs/heads/test-onto" &&
+	test "$(git symbolic-ref --quiet HEAD)" = "refs/heads/test-onto" &&
 	test $(git rev-parse HEAD^) = $(git rev-parse branch1) &&
 	test $(git rev-parse I) = $(git rev-parse branch2)
 '
@@ -160,7 +160,7 @@ test_expect_success 'rebase on top of a non-conflicting commit' '
 	set_fake_editor &&
 	git rebase -i branch2 &&
 	test file6 = $(git diff --name-only original-branch1) &&
-	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
+	test "$(git symbolic-ref --quiet HEAD)" = "refs/heads/branch1" &&
 	test $(git rev-parse I) = $(git rev-parse branch2) &&
 	test $(git rev-parse I) = $(git rev-parse HEAD~2)
 '
@@ -210,7 +210,7 @@ test_expect_success 'stop on conflicting pick' '
 test_expect_success 'abort' '
 	git rebase --abort &&
 	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
-	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
+	test "$(git symbolic-ref --quiet HEAD)" = "refs/heads/branch1" &&
 	test_path_is_missing .git/rebase-merge
 '
 
