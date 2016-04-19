@@ -71,7 +71,7 @@ function info {
 # - Branches should only be fast-forwarded unless their pattern starts with '+'
 case "$1" in
   refs/tags/*)
-    git rev-parse --verify -q "$1" &&
+    git rev-parse --verify --quiet "$1" &&
     deny >/dev/null "You can't overwrite an existing tag"
     ;;
   refs/heads/*)

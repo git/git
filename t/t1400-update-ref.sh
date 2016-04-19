@@ -367,7 +367,7 @@ test_expect_success '-z fails without --stdin' '
 test_expect_success 'stdin works with no input' '
 	>stdin &&
 	git update-ref --stdin <stdin &&
-	git rev-parse --verify -q $m
+	git rev-parse --verify --quiet $m
 '
 
 test_expect_success 'stdin fails on empty line' '
@@ -557,28 +557,28 @@ test_expect_success 'stdin update ref fails with wrong old value' '
 	echo "update $c $m $m~1" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
 	grep "fatal: cannot lock ref '"'"'$c'"'"'" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin update ref fails with bad old value' '
 	echo "update $c $m does-not-exist" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
 	grep "fatal: update $c: invalid <oldvalue>: does-not-exist" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin create ref fails with bad new value' '
 	echo "create $c does-not-exist" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
 	grep "fatal: create $c: invalid <newvalue>: does-not-exist" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin create ref fails with zero new value' '
 	echo "create $c " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
 	grep "fatal: create $c: zero <newvalue>" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin update ref works with right old value' '
@@ -629,7 +629,7 @@ test_expect_success 'stdin delete symref works option no-deref' '
 	delete TESTSYMREF $b
 	EOF
 	git update-ref --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q TESTSYMREF &&
+	test_must_fail git rev-parse --verify --quiet TESTSYMREF &&
 	git rev-parse $m~1 >expect &&
 	git rev-parse $b >actual &&
 	test_cmp expect actual
@@ -638,7 +638,7 @@ test_expect_success 'stdin delete symref works option no-deref' '
 test_expect_success 'stdin delete ref works with right old value' '
 	echo "delete $b $m~1" >stdin &&
 	git update-ref --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q $b
+	test_must_fail git rev-parse --verify --quiet $b
 '
 
 test_expect_success 'stdin update/create/verify combination works' '
@@ -653,7 +653,7 @@ test_expect_success 'stdin update/create/verify combination works' '
 	test_cmp expect actual &&
 	git rev-parse $b >actual &&
 	test_cmp expect actual &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin verify succeeds for correct value' '
@@ -667,13 +667,13 @@ test_expect_success 'stdin verify succeeds for correct value' '
 test_expect_success 'stdin verify succeeds for missing reference' '
 	echo "verify refs/heads/missing $Z" >stdin &&
 	git update-ref --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q refs/heads/missing
+	test_must_fail git rev-parse --verify --quiet refs/heads/missing
 '
 
 test_expect_success 'stdin verify treats no value as missing' '
 	echo "verify refs/heads/missing" >stdin &&
 	git update-ref --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q refs/heads/missing
+	test_must_fail git rev-parse --verify --quiet refs/heads/missing
 '
 
 test_expect_success 'stdin verify fails for wrong value' '
@@ -714,7 +714,7 @@ test_expect_success 'stdin update refs works with identity updates' '
 	test_cmp expect actual &&
 	git rev-parse $b >actual &&
 	test_cmp expect actual &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin update refs fails with wrong old value' '
@@ -744,15 +744,15 @@ test_expect_success 'stdin delete refs works with packed and loose refs' '
 	update $c $E $m~1
 	EOF
 	git update-ref --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q $a &&
-	test_must_fail git rev-parse --verify -q $b &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $a &&
+	test_must_fail git rev-parse --verify --quiet $b &&
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin -z works on empty input' '
 	>stdin &&
 	git update-ref -z --stdin <stdin &&
-	git rev-parse --verify -q $m
+	git rev-parse --verify --quiet $m
 '
 
 test_expect_success 'stdin -z fails on empty line' '
@@ -820,7 +820,7 @@ test_expect_success 'stdin -z emits warning with empty new value' '
 	printf $F "update $a" "" "" >stdin &&
 	git update-ref -z --stdin <stdin 2>err &&
 	grep "warning: update $a: missing <newvalue>, treating as zero" err &&
-	test_must_fail git rev-parse --verify -q $a
+	test_must_fail git rev-parse --verify --quiet $a
 '
 
 test_expect_success 'stdin -z fails update with no new value' '
@@ -921,14 +921,14 @@ test_expect_success 'stdin -z update ref fails with wrong old value' '
 	printf $F "update $c" "$m" "$m~1" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: cannot lock ref '"'"'$c'"'"'" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin -z update ref fails with bad old value' '
 	printf $F "update $c" "$m" "does-not-exist" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: update $c: invalid <oldvalue>: does-not-exist" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin -z create ref fails when ref exists' '
@@ -946,14 +946,14 @@ test_expect_success 'stdin -z create ref fails with bad new value' '
 	printf $F "create $c" "does-not-exist" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: create $c: invalid <newvalue>: does-not-exist" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin -z create ref fails with empty new value' '
 	printf $F "create $c" "" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: create $c: missing <newvalue>" err &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin -z update ref works with right old value' '
@@ -998,7 +998,7 @@ test_expect_success 'stdin -z delete symref works option no-deref' '
 	git symbolic-ref TESTSYMREF $b &&
 	printf $F "option no-deref" "delete TESTSYMREF" "$b" >stdin &&
 	git update-ref -z --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q TESTSYMREF &&
+	test_must_fail git rev-parse --verify --quiet TESTSYMREF &&
 	git rev-parse $m~1 >expect &&
 	git rev-parse $b >actual &&
 	test_cmp expect actual
@@ -1007,7 +1007,7 @@ test_expect_success 'stdin -z delete symref works option no-deref' '
 test_expect_success 'stdin -z delete ref works with right old value' '
 	printf $F "delete $b" "$m~1" >stdin &&
 	git update-ref -z --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q $b
+	test_must_fail git rev-parse --verify --quiet $b
 '
 
 test_expect_success 'stdin -z update/create/verify combination works' '
@@ -1018,7 +1018,7 @@ test_expect_success 'stdin -z update/create/verify combination works' '
 	test_cmp expect actual &&
 	git rev-parse $b >actual &&
 	test_cmp expect actual &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin -z verify succeeds for correct value' '
@@ -1032,13 +1032,13 @@ test_expect_success 'stdin -z verify succeeds for correct value' '
 test_expect_success 'stdin -z verify succeeds for missing reference' '
 	printf $F "verify refs/heads/missing" "$Z" >stdin &&
 	git update-ref -z --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q refs/heads/missing
+	test_must_fail git rev-parse --verify --quiet refs/heads/missing
 '
 
 test_expect_success 'stdin -z verify treats no value as missing' '
 	printf $F "verify refs/heads/missing" "" >stdin &&
 	git update-ref -z --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q refs/heads/missing
+	test_must_fail git rev-parse --verify --quiet refs/heads/missing
 '
 
 test_expect_success 'stdin -z verify fails for wrong value' '
@@ -1075,7 +1075,7 @@ test_expect_success 'stdin -z update refs works with identity updates' '
 	test_cmp expect actual &&
 	git rev-parse $b >actual &&
 	test_cmp expect actual &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 test_expect_success 'stdin -z update refs fails with wrong old value' '
@@ -1097,9 +1097,9 @@ test_expect_success 'stdin -z delete refs works with packed and loose refs' '
 	git update-ref $c $m~1 &&
 	printf $F "delete $a" "$m" "update $b" "$Z" "$m" "update $c" "" "$m~1" >stdin &&
 	git update-ref -z --stdin <stdin &&
-	test_must_fail git rev-parse --verify -q $a &&
-	test_must_fail git rev-parse --verify -q $b &&
-	test_must_fail git rev-parse --verify -q $c
+	test_must_fail git rev-parse --verify --quiet $a &&
+	test_must_fail git rev-parse --verify --quiet $b &&
+	test_must_fail git rev-parse --verify --quiet $c
 '
 
 run_with_limited_open_files () {
@@ -1115,7 +1115,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches
 		echo "create refs/heads/$i HEAD"
 	done >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
-	git rev-parse --verify -q refs/heads/33
+	git rev-parse --verify --quiet refs/heads/33
 )
 '
 
@@ -1126,7 +1126,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction deleting branches
 		echo "delete refs/heads/$i HEAD"
 	done >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
-	test_must_fail git rev-parse --verify -q refs/heads/33
+	test_must_fail git rev-parse --verify --quiet refs/heads/33
 )
 '
 

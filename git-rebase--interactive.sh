@@ -641,7 +641,7 @@ do_next () {
 	*)
 		warn "Unknown command: $command $sha1 $rest"
 		fixtodo="Please fix this using 'git rebase --edit-todo'."
-		if git rev-parse --verify -q "$sha1" >/dev/null
+		if git rev-parse --verify --quiet "$sha1" >/dev/null
 		then
 			die_with_patch $sha1 "$fixtodo"
 		else

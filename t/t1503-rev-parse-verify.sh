@@ -75,7 +75,7 @@ test_expect_success 'fails silently when using -q' '
 	test_must_be_empty error &&
 	test_must_fail git rev-parse -q --verify foo 2>error &&
 	test_must_be_empty error &&
-	test_must_fail git rev-parse --verify -q HEAD bar 2>error &&
+	test_must_fail git rev-parse --verify --quiet HEAD bar 2>error &&
 	test_must_be_empty error &&
 	test_must_fail git rev-parse --quiet --verify baz HEAD 2>error &&
 	test_must_be_empty error &&
