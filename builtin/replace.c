@@ -475,6 +475,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		return replace_object(argv[0], argv[1], force);
 
 	case MODE_EDIT:
+		git_config(git_default_config, NULL);
 		if (argc != 1)
 			usage_msg_opt("-e needs exactly one argument",
 				      git_replace_usage, options);
