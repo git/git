@@ -63,6 +63,12 @@ ifndef::git-format-patch[]
 	Synonym for `-p --raw`.
 endif::git-format-patch[]
 
+--compaction-heuristic::
+--no-compaction-heuristic::
+	These are to help debugging and tuning an experimental
+	heuristic that shifts the hunk boundary in an attempt to
+	make the resulting patch easier to read.
+
 --minimal::
 	Spend extra time to make sure the smallest possible
 	diff is produced.
