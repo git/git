@@ -116,6 +116,7 @@ struct async {
 	int proc_in;
 	int proc_out;
 #endif
+	int isolate_sigpipe;
 };
 
 int start_async(struct async *async);
