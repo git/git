@@ -1064,7 +1064,12 @@ class GitLFS(LargeFileSystem):
         if pointerProcess.wait():
             os.remove(contentFile)
             die('git-lfs pointer command failed. Did you install the extension?')
-        pointerContents = [i+'\n' for i in pointerFile.split('\n')[2:][:-1]]
+        pointerLines = pointerFile.split('\n')
+        # In git-lfs < 1.2, the pointer output included some extraneous information
+        # this was removed in https://github.com/github/git-lfs/pull/1105
+        if pointerLines[0].startswith('Git LFS pointer for'):
+            pointerLines = pointerLines[2:]
+        pointerContents = [i+'\n' for i in pointerLines[:-1]]
         oid = pointerContents[1].split(' ')[1].split(':')[1][:-1]
         localLargeFile = os.path.join(
             os.getcwd(),
