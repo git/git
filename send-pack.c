@@ -531,8 +531,10 @@ int send_pack(struct send_pack_args *args,
 				close(out);
 			if (git_connection_is_socket(conn))
 				shutdown(fd[0], SHUT_WR);
-			if (use_sideband)
+			if (use_sideband) {
+				close(demux.out);
 				finish_async(&demux);
+			}
 			fd[1] = -1;
 			return -1;
 		}
@@ -551,11 +553,11 @@ int send_pack(struct send_pack_args *args,
 		packet_flush(out);
 
 	if (use_sideband && cmds_sent) {
+		close(demux.out);
 		if (finish_async(&demux)) {
 			error("error in sideband demultiplexer");
 			ret = -1;
 		}
-		close(demux.out);
 	}
 
 	if (ret < 0)
