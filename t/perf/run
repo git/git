@@ -45,7 +45,7 @@ run_dirs_helper () {
 		shift
 	fi
 	if [ ! -d "$mydir" ]; then
-		rev=$(git rev-parse --verify "$mydir" 2>/dev/null) ||
+		rev=$(git rev-parse --verify --quiet "$mydir") ||
 		die "'$mydir' is neither a directory nor a valid revision"
 		if [ ! -d build/$rev ]; then
 			unpack_git_rev $rev

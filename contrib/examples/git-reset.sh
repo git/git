@@ -75,7 +75,7 @@ else
 fi
 
 # Any resets update HEAD to the head being switched to.
-if orig=$(git rev-parse --verify HEAD 2>/dev/null)
+if orig=$(git rev-parse --verify --quiet HEAD)
 then
 	echo "$orig" >"$GIT_DIR/ORIG_HEAD"
 else

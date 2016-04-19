@@ -89,7 +89,7 @@ esac
 rev=$(git-rev-parse --verify "$@") &&
 commit=$(git-rev-parse --verify "$rev^0") ||
 	die "Not a single commit $@"
-prev=$(git-rev-parse --verify "$commit^1" 2>/dev/null) ||
+prev=$(git-rev-parse --verify --quiet "$commit^1") ||
 	die "Cannot run $me a root commit"
 git-rev-parse --verify "$commit^2" >/dev/null 2>&1 &&
 	die "Cannot run $me a multi-parent commit."

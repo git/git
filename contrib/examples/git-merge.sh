@@ -139,7 +139,7 @@ finish () {
 
 merge_name () {
 	remote="$1"
-	rh=$(git rev-parse --verify "$remote^0" 2>/dev/null) || return
+	rh=$(git rev-parse --verify --quiet "$remote^0") || return
 	if truname=$(expr "$remote" : '\(.*\)~[0-9]*$') &&
 		git show-ref -q --verify "refs/heads/$truname" 2>/dev/null
 	then
@@ -268,8 +268,8 @@ fi
 # have "-m" so it is an additional safety measure to check for it.
 
 if test -z "$have_message" &&
-	second_token=$(git rev-parse --verify "$2^0" 2>/dev/null) &&
-	head_commit=$(git rev-parse --verify "HEAD" 2>/dev/null) &&
+	second_token=$(git rev-parse --verify --quiet "$2^0") &&
+	head_commit=$(git rev-parse --verify --quiet "HEAD") &&
 	test "$second_token" = "$head_commit"
 then
 	merge_msg="$1"
@@ -329,7 +329,7 @@ set_reflog_action "merge $*"
 remoteheads=
 for remote
 do
-	remotehead=$(git rev-parse --verify "$remote"^0 2>/dev/null) ||
+	remotehead=$(git rev-parse --verify --quiet "$remote"^0) ||
 	    die "$remote - not something we can merge"
 	remoteheads="${remoteheads}$remotehead "
 	eval GITHEAD_$remotehead='"$remote"'

@@ -124,7 +124,7 @@ append_fetch_head () {
 # repository is always fine.
 if test -z "$update_head_ok" && test $(is_bare_repository) = false
 then
-	orig_head=$(git rev-parse --verify HEAD 2>/dev/null)
+	orig_head=$(git rev-parse --verify --quiet HEAD)
 fi
 
 # Allow --tags/--notags from remote.$1.tagopt
@@ -367,7 +367,7 @@ case "$orig_head" in
 '')
 	;;
 ?*)
-	curr_head=$(git rev-parse --verify HEAD 2>/dev/null)
+	curr_head=$(git rev-parse --verify --queit HEAD)
 	if test "$curr_head" != "$orig_head"
 	then
 	    git update-ref \

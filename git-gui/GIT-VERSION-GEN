@@ -41,7 +41,7 @@ then
 elif prefix="$(git rev-parse --show-prefix 2>/dev/null)"
    test -n "$prefix" &&
    head=$(git rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
-   tree=$(git rev-parse --verify "HEAD:$prefix" 2>/dev/null) &&
+   tree=$(git rev-parse --verify --quiet "HEAD:$prefix") &&
    VN=$(tree_search $head $tree)
    case "$VN" in
    gitgui-[0-9]*) : happy ;;
