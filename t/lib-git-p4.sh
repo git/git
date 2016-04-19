@@ -160,6 +160,15 @@ p4_add_user () {
 	EOF
 }
 
+p4_add_job () {
+	p4 job -f -i <<-EOF
+	Job: $1
+	Status: open
+	User: dummy
+	Description:
+	EOF
+}
+
 retry_until_success () {
 	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
 	until "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
