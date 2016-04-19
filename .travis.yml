@@ -23,7 +23,6 @@ env:
   global:
     - DEVELOPER=1
     - P4_VERSION="15.2"
-    - GIT_LFS_VERSION="1.1.0"
     - DEFAULT_TEST_TARGET=prove
     - GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
     - GIT_TEST_OPTS="--verbose --tee"
@@ -31,6 +30,14 @@ env:
     # t9810 occasionally fails on Travis CI OS X
     # t9816 occasionally fails with "TAP out of sequence errors" on Travis CI OS X
     - GIT_SKIP_TESTS="t9810 t9816"
+  matrix:
+    - GIT_LFS_VERSION="1.2.0"
+    - GIT_LFS_VERSION="1.1.0"
+
+matrix:
+  exclude:
+    - os: osx
+      env: GIT_LFS_VERSION="1.1.0"
 
 before_install:
   - >
