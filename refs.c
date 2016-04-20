@@ -1251,8 +1251,8 @@ static const char *resolve_ref_recursively(struct ref_store *refs,
 	for (symref_count = 0; symref_count < SYMREF_MAXDEPTH; symref_count++) {
 		unsigned int read_flags = 0;
 
-		if (read_raw_ref(refs, refname,
-				 sha1, &sb_refname, &read_flags)) {
+		if (refs->be->read_raw_ref(refs, refname,
+					   sha1, &sb_refname, &read_flags)) {
 			*flags |= read_flags;
 			if (errno != ENOENT || (resolve_flags & RESOLVE_REF_READING))
 				return NULL;
