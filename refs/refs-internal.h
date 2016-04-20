@@ -542,6 +542,12 @@ typedef int read_raw_ref_fn(struct ref_store *ref_store,
 			    const char *refname, unsigned char *sha1,
 			    struct strbuf *referent, unsigned int *type);
 
+typedef int verify_refname_available_fn(struct ref_store *ref_store,
+					const char *newname,
+					const struct string_list *extras,
+					const struct string_list *skip,
+					struct strbuf *err);
+
 struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
@@ -549,6 +555,7 @@ struct ref_storage_be {
 	ref_transaction_commit_fn *transaction_commit;
 
 	read_raw_ref_fn *read_raw_ref;
+	verify_refname_available_fn *verify_refname_available;
 };
 
 extern struct ref_storage_be refs_be_files;
