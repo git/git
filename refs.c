@@ -1428,6 +1428,13 @@ int pack_refs(unsigned int flags)
 	return refs->be->pack_refs(refs, flags);
 }
 
+int peel_ref(const char *refname, unsigned char *sha1)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->peel_ref(refs, refname, sha1);
+}
+
 int create_symref(const char *ref_target, const char *refs_heads_master,
 		  const char *logmsg)
 {
