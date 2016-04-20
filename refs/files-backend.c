@@ -1403,11 +1403,9 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
  * Return the ref_entry for the given refname from the packed
  * references.  If it does not exist, return NULL.
  */
-static struct ref_entry *get_packed_ref(const char *refname)
+static struct ref_entry *get_packed_ref(struct files_ref_store *refs,
+					const char *refname)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "get_packed_ref");
-
 	return find_ref(get_packed_refs(refs), refname);
 }
 
@@ -1418,13 +1416,16 @@ static int resolve_missing_loose_ref(const char *refname,
 				     unsigned char *sha1,
 				     unsigned int *flags)
 {
+	struct files_ref_store *refs =
+		get_files_ref_store(NULL, "resolve_missing_loose_ref");
+
 	struct ref_entry *entry;
 
 	/*
 	 * The loose reference file does not exist; check for a packed
 	 * reference.
 	 */
-	entry = get_packed_ref(refname);
+	entry = get_packed_ref(refs, refname);
 	if (entry) {
 		hashcpy(sha1, entry->u.value.oid.hash);
 		*flags |= REF_ISPACKED;
@@ -1836,6 +1837,7 @@ static enum peel_status peel_entry(struct ref_entry *entry, int repeel)
 
 int peel_ref(const char *refname, unsigned char *sha1)
 {
+	struct files_ref_store *refs = get_files_ref_store(NULL, "peel_ref");
 	int flag;
 	unsigned char base[20];
 
@@ -1860,7 +1862,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	 * have REF_KNOWS_PEELED.
 	 */
 	if (flag & REF_ISPACKED) {
-		struct ref_entry *r = get_packed_ref(refname);
+		struct ref_entry *r = get_packed_ref(refs, refname);
 		if (r) {
 			if (peel_entry(r, 0))
 				return -1;
@@ -2469,7 +2471,7 @@ static int repack_without_refs(struct string_list *refnames, struct strbuf *err)
 
 	/* Look for a packed ref */
 	for_each_string_list_item(refname, refnames) {
-		if (get_packed_ref(refname->string)) {
+		if (get_packed_ref(refs, refname->string)) {
 			needs_repacking = 1;
 			break;
 		}
