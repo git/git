@@ -440,6 +440,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 	};
 
 	check_replace_refs = 0;
+	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_replace_usage, 0);
 
