@@ -2354,10 +2354,10 @@ static void prune_refs(struct ref_to_prune *r)
 	}
 }
 
-int pack_refs(unsigned int flags)
+static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 {
 	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "pack_refs");
+		files_downcast(ref_store, 0, "pack_refs");
 	struct pack_refs_cb_data cbdata;
 
 	memset(&cbdata, 0, sizeof(cbdata));
@@ -4021,6 +4021,8 @@ struct ref_storage_be refs_be_files = {
 	"files",
 	files_ref_store_create,
 	files_transaction_commit,
+
+	files_pack_refs,
 
 	files_read_raw_ref,
 	files_verify_refname_available
