@@ -2215,13 +2215,13 @@ static int write_packed_entry_fn(struct ref_entry *entry, void *cb_data)
  * hold_lock_file_for_update(). Return 0 on success. On errors, set
  * errno appropriately and return a nonzero value.
  */
-static int lock_packed_refs(int flags)
+static int lock_packed_refs(struct files_ref_store *refs, int flags)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "lock_packed_refs");
 	static int timeout_configured = 0;
 	static int timeout_value = 1000;
 	struct packed_ref_cache *packed_ref_cache;
+
+	assert_main_repository(&refs->base, "lock_packed_refs");
 
 	if (!timeout_configured) {
 		git_config_get_int("core.packedrefstimeout", &timeout_value);
@@ -2251,15 +2251,15 @@ static int lock_packed_refs(int flags)
  * lock_packed_refs()). Return zero on success. On errors, set errno
  * and return a nonzero value
  */
-static int commit_packed_refs(void)
+static int commit_packed_refs(struct files_ref_store *refs)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "commit_packed_refs");
 	struct packed_ref_cache *packed_ref_cache =
 		get_packed_ref_cache(refs);
 	int error = 0;
 	int save_errno = 0;
 	FILE *out;
+
+	assert_main_repository(&refs->base, "commit_packed_refs");
 
 	if (!packed_ref_cache->lock)
 		die("internal error: packed-refs not locked");
@@ -2287,12 +2287,12 @@ static int commit_packed_refs(void)
  * in-memory packed reference cache.  (The packed-refs file will be
  * read anew if it is needed again after this function is called.)
  */
-static void rollback_packed_refs(void)
+static void rollback_packed_refs(struct files_ref_store *refs)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "rollback_packed_refs");
 	struct packed_ref_cache *packed_ref_cache =
 		get_packed_ref_cache(refs);
+
+	assert_main_repository(&refs->base, "rollback_packed_refs");
 
 	if (!packed_ref_cache->lock)
 		die("internal error: packed-refs not locked");
@@ -2439,13 +2439,13 @@ int pack_refs(unsigned int flags)
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.flags = flags;
 
-	lock_packed_refs(LOCK_DIE_ON_ERROR);
+	lock_packed_refs(refs, LOCK_DIE_ON_ERROR);
 	cbdata.packed_refs = get_packed_refs(refs);
 
 	do_for_each_entry_in_dir(get_loose_refs(refs), 0,
 				 pack_if_possible_fn, &cbdata);
 
-	if (commit_packed_refs())
+	if (commit_packed_refs(refs))
 		die_errno("unable to overwrite old ref-pack file");
 
 	prune_refs(cbdata.ref_to_prune);
@@ -2481,7 +2481,7 @@ static int repack_without_refs(struct string_list *refnames, struct strbuf *err)
 	if (!needs_repacking)
 		return 0; /* no refname exists in packed refs */
 
-	if (lock_packed_refs(0)) {
+	if (lock_packed_refs(refs, 0)) {
 		unable_to_lock_message(git_path("packed-refs"), errno, err);
 		return -1;
 	}
@@ -2496,12 +2496,12 @@ static int repack_without_refs(struct string_list *refnames, struct strbuf *err)
 		 * All packed entries disappeared while we were
 		 * acquiring the lock.
 		 */
-		rollback_packed_refs();
+		rollback_packed_refs(refs);
 		return 0;
 	}
 
 	/* Write what remains */
-	ret = commit_packed_refs();
+	ret = commit_packed_refs(refs);
 	if (ret)
 		strbuf_addf(err, "unable to overwrite old ref-pack file: %s",
 			    strerror(errno));
@@ -3919,7 +3919,7 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 		}
 	}
 
-	if (lock_packed_refs(0)) {
+	if (lock_packed_refs(refs, 0)) {
 		strbuf_addf(err, "unable to lock packed-refs file: %s",
 			    strerror(errno));
 		ret = TRANSACTION_GENERIC_ERROR;
@@ -3934,7 +3934,7 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 			add_packed_ref(refs, update->refname, update->new_sha1);
 	}
 
-	if (commit_packed_refs()) {
+	if (commit_packed_refs(refs)) {
 		strbuf_addf(err, "unable to commit packed-refs file: %s",
 			    strerror(errno));
 		ret = TRANSACTION_GENERIC_ERROR;
