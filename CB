@@ -1,0 +1,13 @@
+#!/bin/sh
+# Cull topic branches
+
+git for-each-ref --merged maint 'refs/heads/*/*' |
+while read commit type name
+do
+	git for-each-ref --count=1 --sort=version:refname \
+		--contains "$name" \
+		--format="%(taggerdate:iso) #%(refname:strip=2)	$name" \
+		refs/tags/
+done |
+sort |
+sed -e 's/[^#]*#//'
