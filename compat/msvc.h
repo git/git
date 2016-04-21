@@ -24,6 +24,8 @@ static __inline int strcasecmp (const char *s1, const char *s2)
 
 #undef ERROR
 
+typedef int sigset_t;
+
 #include "compat/mingw.h"
 
 #endif
