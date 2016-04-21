@@ -1430,6 +1430,7 @@ int read_raw_ref(const char *refname, unsigned char *sha1,
 	int ret = -1;
 	int save_errno;
 
+	*type = 0;
 	strbuf_reset(&sb_path);
 	strbuf_git_path(&sb_path, "%s", refname);
 	path = sb_path.buf;
