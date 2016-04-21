@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2016, #05; Mon, 18)
+Subject: What's cooking in git.git (Apr 2016, #06; Thu, 21)
 X-master-at: e6ac6e1f7d54584c2b03f073b5f329a37f4a9561
-X-next-at: c82888d429ec9129c13a7b821f0fb8d1c6d77bff
+X-next-at: 1352ede9d7e10ec5ebc541fb841397c8b165343a
 
-What's cooking in git.git (Apr 2016, #05; Mon, 18)
+What's cooking in git.git (Apr 2016, #06; Thu, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The 'master' branch now has the third batch of topics of this
-cycle.
+The 'master' branch now has the fifth batch of topics of this cycle.
 
 There are a handful of topics that are stuck; they are marked as
 "Needs review", "Needs an Ack", etc. in the following list.
@@ -24,310 +23,199 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ak/use-hashmap-iter-first-in-submodule-config (2016-03-23) 1 commit
-  (merged to 'next' on 2016-04-06 at 2aab890)
- + submodule-config: use hashmap_iter_first()
-
- Minor code cleanup.
-
-
-* cc/apply (2016-04-01) 4 commits
-  (merged to 'next' on 2016-04-06 at 2e23c44)
- + builtin/apply: free patch when parse_chunk() fails
- + builtin/apply: handle parse_binary() failure
- + apply: remove unused call to free() in gitdiff_{old,new}name()
- + builtin/apply: get rid of useless 'name' variable
-
- Minor code clean-up.
-
-
-* ep/trace-doc-sample-fix (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at 0df7357)
- + api-trace.txt: fix typo
-
- Fix a typo in an example in the trace API documentation.
-
-
-* es/format-patch-doc-hide-no-patch (2016-04-04) 1 commit
-  (merged to 'next' on 2016-04-06 at 25d79bb)
- + git-format-patch.txt: don't show -s as shorthand for multiple options
-
- "git format-patch --help" showed `-s` and `--no-patch` as if these
- are valid options to the command.  We already hide `--patch` option
- from the documentation, because format-patch is about showing the
- diff, and the documentation now hides these options as well.
-
-
-* jc/makefile-redirection-stderr (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at e3f2ded)
- + Makefile: fix misdirected redirections
-
- A minor fix in the Makefile.
-
-
-* jk/branch-shortening-funny-symrefs (2016-04-04) 1 commit
-  (merged to 'next' on 2016-04-06 at 1a3f8be)
- + branch: fix shortening of non-remote symrefs
-
- A change back in version 2.7 to "git branch" broke display of a
- symbolic ref in a non-standard place in the refs/ hierarchy (we
- expect symbolic refs to appear in refs/remotes/*/HEAD to point at
- the primary branch the remote has, and as .git/HEAD to point at the
- branch we locally checked out).
-
- Will merge down to maint-2.7.
-
-
-* jk/check-repository-format (2016-03-11) 10 commits
-  (merged to 'next' on 2016-04-06 at a0dada0)
- + verify_repository_format: mark messages for translation
- + setup: drop repository_format_version global
- + setup: unify repository version callbacks
- + init: use setup.c's repo version verification
- + setup: refactor repo format reading and verification
- + config: drop git_config_early
- + check_repository_format_gently: stop using git_config_early
- + lazily load core.sharedrepository
- + wrap shared_repository global in get/set accessors
- + setup: document check_repository_format()
- (this branch is used by dt/pre-refs-backend.)
-
- The repository set-up sequence has been streamlined (the biggest
- change is that there is no longer git_config_early()), so that we
- do not attempt to look into refs/* when we know we do not have a
- Git repository.
-
-
-* jn/mergetools-examdiff (2016-04-04) 2 commits
-  (merged to 'next' on 2016-04-06 at 819e858)
- + mergetools: add support for ExamDiff
- + mergetools: create mergetool_find_win32_cmd() helper function for winmerge
-
- "git mergetools" learned to drive ExamDiff.
-
-
-* js/mingw-tests-2.8 (2016-04-04) 1 commit
-  (merged to 'next' on 2016-04-06 at f85a013)
- + Windows: shorten code by re-using convert_slashes()
-
- Code clean-up.
-
-
-* kn/for-each-tag-branch (2016-03-30) 1 commit
-  (merged to 'next' on 2016-04-06 at 4595ad3)
- + for-each-ref: fix description of '--contains' in manpage
-
- A minor documentation update.
-
-
-* ky/branch-d-worktree (2016-03-29) 1 commit
-  (merged to 'next' on 2016-04-06 at 00f9bff)
- + branch -d: refuse deleting a branch which is currently checked out
-
- When "git worktree" feature is in use, "git branch -d" allowed
- deletion of a branch that is checked out in another worktree
-
-
-* ky/branch-m-worktree (2016-04-08) 3 commits
-  (merged to 'next' on 2016-04-08 at b673b5e)
- + set_worktree_head_symref(): fix error message
-  (merged to 'next' on 2016-04-06 at e7b285c)
- + branch -m: update all per-worktree HEADs
- + refs: add a new function set_worktree_head_symref
-
- When "git worktree" feature is in use, "git branch -m" renamed a
- branch that is checked out in another worktree without adjusting
- the HEAD symbolic ref for the worktree.
-
-
-* lt/pretty-expand-tabs (2016-04-04) 4 commits
-  (merged to 'next' on 2016-04-06 at 186ac2a)
- + pretty: test --expand-tabs
- + pretty: allow tweaking tabwidth in --expand-tabs
- + pretty: enable --expand-tabs by default for selected pretty formats
- + pretty: expand tabs in indented logs to make things line up properly
-
- When "git log" shows the log message indented by 4-spaces, the
- remainder of a line after a HT does not align in the way the author
- originally intended.  The command now expands tabs by default in
- such a case, and allows the users to override it with a new option,
- '--no-expand-tabs'.
-
-
-* mg/complete-cherry-mark-to-log (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at 3002be6)
- + completion: complete --cherry-mark for git log
-
- The completion scripts (in contrib/) did not include the
- "--cherry-mark" option when completing "git log <HT>".
-
-
-* mj/pull-rebase-autostash (2016-04-04) 9 commits
-  (merged to 'next' on 2016-04-06 at b4e4f31)
- + t5520: test --[no-]autostash with pull.rebase=true
- + t5520: reduce commom lines of code
- + t5520: factor out common "failing autostash" code
- + t5520: factor out common "successful autostash" code
- + t5520: use better test to check stderr output
- + t5520: ensure consistent test conditions
- + t5520: use consistent capitalization in test titles
- + pull --rebase: add --[no-]autostash flag
- + git-pull.c: introduce git_pull_config()
-
- "git pull --rebase" learned "--[no-]autostash" option, so that
- the rebase.autostash configuration variable set to true can be
- overridden from the command line.
-
-
-* rt/completion-help (2016-03-24) 2 commits
-  (merged to 'next' on 2016-04-06 at 8c3ee08)
- + completion: add 'revisions' and 'everyday' to 'git help'
- + completion: add option '--guides' to 'git help'
-
- Shell completion (in contrib/) updates.
-
-
-* rt/rebase-i-shorten-stop-report (2016-03-28) 1 commit
-  (merged to 'next' on 2016-04-06 at 7a766b7)
- + rebase-i: print an abbreviated hash when stop for editing
-
- The commit object name reported when "rebase -i" stops has been
- shortened.
-
-
-* rz/worktree-no-checkout (2016-03-29) 1 commit
-  (merged to 'next' on 2016-04-06 at e725216)
- + worktree: add: introduce --checkout option
-
- "git worktree add" can be given "--no-checkout" option to only
- create an empty worktree without checking out the files.
-
-
-* sb/misc-cleanups (2016-04-01) 4 commits
-  (merged to 'next' on 2016-04-06 at 4e63691)
- + credential-cache, send_request: close fd when done
- + bundle: don't leak an fd in case of early return
- + abbrev_sha1_in_line: don't leak memory
- + notes: don't leak memory in git_config_get_notes_strategy
-
- Assorted minor clean-ups.
-
-
-* sg/diff-multiple-identical-renames (2016-03-30) 1 commit
-  (merged to 'next' on 2016-04-06 at ac19e48)
- + diffcore: fix iteration order of identical files during rename detection
-
- "git diff -M" used to work better when two originally identical
- files A and B got renamed to X/A and X/B by pairing A to X/A and B
- to X/B, but this was broken in the 2.0 timeframe.
-
-
-* sk/send-pack-all-fix (2016-03-31) 1 commit
-  (merged to 'next' on 2016-04-06 at 31e1e1b)
- + git-send-pack: fix --all option when used with directory
-
- "git send-pack --all <there>" was broken when its command line
- option parsing was written in the 2.6 timeframe.
-
-
-* tb/blame-force-read-cache-to-workaround-safe-crlf (2016-04-05) 1 commit
-  (merged to 'next' on 2016-04-06 at 263bba8)
- + correct blame for files commited with CRLF
-
- When running "git blame $path" with unnormalized data in the index
- for the path, the data in the working tree was blamed, even though
- "git add" would not have changed what is already in the index, due
- to "safe crlf" that disables the line-end conversion.  It has been
- corrected.
-
---------------------------------------------------
 [New Topics]
 
-* en/merge-fixes (2016-04-12) 2 commits
- - merge-recursive: do not check working copy when creating a virtual merge base
- - merge-recursive: remove duplicate code
+* jd/p4-jobs-in-commit (2016-04-19) 2 commits
+ - git-p4: add P4 jobs to git commit message
+ - git-p4: clean-up code style in tests
 
- "merge-recursive" strategy incorrectly checked if a path that is
- involved in its internal merge exists in the working tree.
+ "git p4" learned to record P4 jobs in Git commit that imports from
+ the history in Perforce.
 
  Will merge to 'next'.
 
 
-* en/merge-octopus-fix (2016-04-12) 2 commits
-  (merged to 'next' on 2016-04-13 at 600b479)
- + merge-octopus: abort if index does not match HEAD
- + t6044: new merge testcases for when index doesn't match HEAD
+* js/replace-edit-use-editor-configuration (2016-04-20) 1 commit
+ - replace --edit: respect core.editor
 
- "merge-octopus" strategy did not ensure that the index is clean
- when merge begins.
+ "git replace -e" did not honour "core.editor" configuration.
 
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* en/merge-trivial-fix (2016-04-12) 2 commits
-  (merged to 'next' on 2016-04-13 at fb3ea86)
- + builtin/merge.c: fix a bug with trivial merges
- + t7605: add a testcase demonstrating a bug with trivial merges
+* ls/p4-lfs (2016-04-19) 2 commits
+ - git-p4: fix Git LFS pointer parsing
+ - travis-ci: update Git-LFS and P4 to the latest version
 
- When "git merge" notices that the merge can be resolved purely at
- the tree level (without having to merge blobs) and the resulting
- tree happens to already exist in the object store, it forgot to
- update the index, which lead to an inconsistent state for later
- operations.
-
- Will merge to 'master'.
+ Recent update to Git LFS broke "git p4" by changing the output from
+ its "lfs pointer" subcommand.
 
 
-* jc/fsck-nul-in-commit (2016-04-14) 2 commits
- - fsck: detect and warn a commit with embedded NUL
- - fsck_commit_buffer(): do not special case the last validation
+* sb/mv-submodule-fix (2016-04-19) 1 commit
+ - mv: allow moving nested submodules
 
- "git fsck" learned to catch NUL byte in a commit object as
- potential error and warn.
+ "git mv old new" did not adjust the path for a submodule that lives
+ as a subdirectory inside old/ directory correctly.
 
-
-* jc/ll-merge-internal (2016-04-14) 2 commits
- - ll-merge: use a longer conflict marker for internal merge
- - ll-merge: fix typo in comment
-
- RFC.
+ Will merge to 'next'.
 
 
-* jk/diff-compact-heuristic (2016-04-18) 2 commits
- - xdiff: implement empty line chunk heuristic
- - xdiff: add recs_match helper function
+* tb/convert-eol-autocrlf (2016-04-19) 4 commits
+ - convert.c: ident + core.autocrlf didn't work
+ - t0027: test cases for combined attributes
+ - convert: allow core.autocrlf=input and core.eol=crlf
+ - t0027: avoid false "unchanged" due to lstat() matching after a change
+
+ Setting core.autocrlf to 'input' and core.eol to 'crlf' used to be
+ rejected, but because the code gives precedence to core.autcrlf,
+ there is no need to, hence we no longer reject the combination.
+
+ Will merge to 'next'.
 
 
-* nd/test-helpers (2016-04-15) 2 commits
- - test helpers: move test-* to t/helper/ subdirectory
- - Makefile: clean *.o files we create
+* bc/object-id (2016-04-19) 6 commits
+ - match-trees: convert several leaf functions to use struct object_id
+ - tree-walk: convert tree_entry_extract() to use struct object_id
+ - struct name_entry: use struct object_id instead of unsigned char sha1[20]
+ - match-trees: convert shift_tree() and shift_tree_by() to use object_id
+ - test-match-trees: convert to use struct object_id
+ - sha1-name: introduce a get_oid() function
 
- Sources to many test helper binaries (and the generated helpers)
- have been moved to t/helper/ subdirectory to reduce clutter at the
- top level of the tree.
+ Will be rerolled.
+ ($gmane/291950)
+
+
+* ep/http-curl-trace (2016-04-20) 3 commits
+ - git.txt: document the new GIT_TRACE_CURL environment variable
+ - imap-send.c: introduce the GIT_TRACE_CURL enviroment variable
+ - http.c: implement the GIT_TRACE_CURL environment variable
+
+ HTTP transport gained an option to produce more detailed debugging
+ trace.
+
+ Still under discussion.
+ ($gmane/292074)
+
+
+* nd/worktree-various-heads (2016-04-20) 13 commits
+ - branch: do not rename a branch under bisect or rebase
+ - worktree.c: test if branch being bisected in another worktree
+ - wt-status.c: split bisect detection out of wt_status_get_state()
+ - worktree.c: test if branch being rebased in another worktree
+ - worktree.c: avoid referencing to worktrees[i] multiple times
+ - wt-status.c: make wt_status_check_rebase() work on any worktree
+ - SQUASH???
+ - wt-status.c: split rebase detection out of wt_status_get_state()
+ - path.c: refactor and add worktree_git_path()
+ - worktree.c: mark current worktree
+ - worktree.c: make find_shared_symref() return struct worktree *
+ - worktree.c: store "id" instead of "git_dir"
+ - path.c: add git_common_path() and strbuf_git_common_path()
+
+ The experimental "multiple worktree" feature gains more safety to
+ forbid operations on a branch that is checked out or being actively
+ worked on elsewhere, by noticing that e.g. it is being rebased.
+
+ Being reviewed.
+ ($gmane/292050)
+
+
+* bw/rebase-merge-entire-branch (2016-04-20) 1 commit
+ - git-rebase--merge: don't include absent parent as a base
+
+ "git rebase -m" could be asked to rebase an entire branch starting
+ from the root, but failed by assuming that there always is a parent
+ commit to the first commit on the branch.
+
+ Will merge to 'next'.
+
+
+* jk/push-client-deadlock-fix (2016-04-20) 5 commits
+ - t5504: drop sigpipe=ok from push tests
+ - fetch-pack: isolate sigpipe in demuxer thread
+ - send-pack: isolate sigpipe in demuxer thread
+ - run-command: teach async threads to ignore SIGPIPE
+ - send-pack: close demux pipe before finishing async process
+
+ "git push" from a corrupt repository that attempts to push a large
+ number of refs deadlocked waiting for a rejection from the
+ receiving end that will never come.
+
+ Will merge to 'next'.
+
+
+* jc/merge-refuse-new-root (2016-04-21) 2 commits
+ - pull: pass --allow-unrelated-histories to "git merge"
+ - t3033: avoid 'ambiguous refs' warning
+
+ "git pull" has been taught to pass --allow-unrelated-histories
+ option to underlying "git merge".
+
+ Will merge to 'next'.
+ 
 
 --------------------------------------------------
 [Stalled]
 
-* tb/safe-crlf-output-fix (2016-04-01) 7 commits
- . convert.c: more safer crlf handling with text attribute
- . correct blame for files commited with CRLF
- . convert: unify the "auto" handling of CRLF
- . t0027: test cases for combined attributes
- . convert: allow core.autocrlf=input and core.eol=crlf
- . convert.c: stream and early out
- . read-cache: factor out get_sha1_from_index() helper
+* ar/diff-args-osx-precompose (2016-04-05) 1 commit
+ - diff: run arguments through precompose_argv
 
- The "safe CRLF" facility disables line-end conversion from CRLF to
- LF when checking in if the blob registered to the index already
- contains CR, but some codepaths like "git blame" did not know this,
- and instead assumed that only the configuration and attribute
- settings determined how the data from the working tree is converted.
+ Many commands normalize command line arguments from NFD to NFC
+ variant of UTF-8 on OSX, but commands in the "diff" family did
+ not, causing "git diff $path" to complain that no such path is
+ known to Git.  They have been taught to do the normalization.
 
- Will be rerolled.
- ($gmane/290637)
+ Will be rerolled?
+ ($gmane/290724)
+
+
+* nd/shallow-deepen (2016-04-13) 26 commits
+ - fetch, upload-pack: --deepen=N extends shallow boundary by N commits
+ - upload-pack: add get_reachable_list()
+ - upload-pack: split check_unreachable() in two, prep for get_reachable_list()
+ - t5500, t5539: tests for shallow depth excluding a ref
+ - clone: define shallow clone boundary with --shallow-exclude
+ - fetch: define shallow boundary with --shallow-exclude
+ - upload-pack: support define shallow boundary by excluding revisions
+ - refs: add expand_ref()
+ - t5500, t5539: tests for shallow depth since a specific date
+ - clone: define shallow clone boundary based on time with --shallow-since
+ - fetch: define shallow boundary with --shallow-since
+ - upload-pack: add deepen-since to cut shallow repos based on time
+ - shallow.c: implement a generic shallow boundary finder based on rev-list
+ - fetch-pack: use a separate flag for fetch in deepening mode
+ - fetch-pack.c: mark strings for translating
+ - fetch-pack: use a common function for verbose printing
+ - fetch-pack: use skip_prefix() instead of starts_with()
+ - upload-pack: move rev-list code out of check_non_tip()
+ - upload-pack: tighten number parsing at "deepen" lines
+ - upload-pack: use skip_prefix() instead of starts_with()
+ - upload-pack: move "unshallow" sending code out of deepen()
+ - upload-pack: remove unused variable "backup"
+ - upload-pack: move "shallow" sending code out of deepen()
+ - upload-pack: move shallow deepen code out of receive_needs()
+ - transport-helper.c: refactor set_helper_option()
+ - remote-curl.c: convert fetch_git() to use argv_array
+
+ The existing "git fetch --depth=<n>" option was hard to use
+ correctly when making the history of an existing shallow clone
+ deeper.  A new option, "--deepen=<n>", has been added to make this
+ easier to use.  "git clone" also learned "--shallow-since=<date>"
+ and "--shallow-exclude=<tag>" options to make it easier to specify
+ "I am interested only in the recent N months worth of history" and
+ "Give me only the history since that version".
+
+ Needs review.
+
+
+* sb/clone-shallow-passthru (2016-04-13) 3 commits
+ - clone: add t5614 to test cloning submodules with shallowness involved
+ - clone: add `--shallow-submodules` flag
+ - submodule clone: pass along `local` option
+
+ "git clone" learned "--shallow-submodules" option.
+
+ Needs review.
 
 
 * da/user-useconfigonly (2016-04-01) 2 commits
@@ -484,6 +372,94 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* pb/commit-verbose-config (2016-04-19) 6 commits
+ - commit: add a commit.verbose config variable
+ - t7507-commit-verbose: improve test coverage by testing number of diffs
+ - parse-options.c: make OPTION_COUNTUP respect "unspecified" values
+ - t0040-parse-options: improve test coverage
+ - test-parse-options: print quiet as integer
+ - t0040-test-parse-options.sh: fix style issues
+
+ "git commit" learned to pay attention to "commit.verbose"
+ configuration variable and act as if "--verbose" option was
+ given from the command line.
+
+ Is this going to be rerolled?
+ ($gmane/291382)
+
+
+* en/merge-fixes (2016-04-12) 2 commits
+ - merge-recursive: do not check working copy when creating a virtual merge base
+ - merge-recursive: remove duplicate code
+
+ "merge-recursive" strategy incorrectly checked if a path that is
+ involved in its internal merge exists in the working tree.
+
+ Will merge to 'next'.
+
+
+* en/merge-octopus-fix (2016-04-12) 2 commits
+  (merged to 'next' on 2016-04-13 at 600b479)
+ + merge-octopus: abort if index does not match HEAD
+ + t6044: new merge testcases for when index doesn't match HEAD
+
+ "merge-octopus" strategy did not ensure that the index is clean
+ when merge begins.
+
+ Will merge to 'master'.
+
+
+* en/merge-trivial-fix (2016-04-12) 2 commits
+  (merged to 'next' on 2016-04-13 at fb3ea86)
+ + builtin/merge.c: fix a bug with trivial merges
+ + t7605: add a testcase demonstrating a bug with trivial merges
+
+ When "git merge" notices that the merge can be resolved purely at
+ the tree level (without having to merge blobs) and the resulting
+ tree happens to already exist in the object store, it forgot to
+ update the index, which lead to an inconsistent state for later
+ operations.
+
+ Will merge to 'master'.
+
+
+* jc/fsck-nul-in-commit (2016-04-14) 2 commits
+ - fsck: detect and warn a commit with embedded NUL
+ - fsck_commit_buffer(): do not special case the last validation
+
+ "git fsck" learned to catch NUL byte in a commit object as
+ potential error and warn.
+
+
+* jc/ll-merge-internal (2016-04-14) 2 commits
+ - ll-merge: use a longer conflict marker for internal merge
+ - ll-merge: fix typo in comment
+
+ RFC.
+
+
+* jk/diff-compact-heuristic (2016-04-19) 2 commits
+ - xdiff: implement empty line chunk heuristic
+ - xdiff: add recs_match helper function
+
+ Patch output from "git diff" and friends has been tweaked to be
+ more readable by using a blank line as a strong hint that the
+ contents before and after it belong to a logically separate unit.
+
+ Will merge to 'next'.
+
+
+* nd/test-helpers (2016-04-15) 2 commits
+ - test helpers: move test-* to t/helper/ subdirectory
+ - Makefile: clean *.o files we create
+
+ Sources to many test helper binaries (and the generated helpers)
+ have been moved to t/helper/ subdirectory to reduce clutter at the
+ top level of the tree.
+
+ Will merge to 'next'.
+
+
 * sb/submodule-init (2016-04-16) 4 commits
  - submodule: port init from shell to C
  - submodule: port resolve_relative_url from shell to C
@@ -493,54 +469,7 @@ of the repositories listed at
 
  Update of "git submodule" to move pieces of logic to C continues.
 
-
-* nd/shallow-deepen (2016-04-13) 26 commits
- - fetch, upload-pack: --deepen=N extends shallow boundary by N commits
- - upload-pack: add get_reachable_list()
- - upload-pack: split check_unreachable() in two, prep for get_reachable_list()
- - t5500, t5539: tests for shallow depth excluding a ref
- - clone: define shallow clone boundary with --shallow-exclude
- - fetch: define shallow boundary with --shallow-exclude
- - upload-pack: support define shallow boundary by excluding revisions
- - refs: add expand_ref()
- - t5500, t5539: tests for shallow depth since a specific date
- - clone: define shallow clone boundary based on time with --shallow-since
- - fetch: define shallow boundary with --shallow-since
- - upload-pack: add deepen-since to cut shallow repos based on time
- - shallow.c: implement a generic shallow boundary finder based on rev-list
- - fetch-pack: use a separate flag for fetch in deepening mode
- - fetch-pack.c: mark strings for translating
- - fetch-pack: use a common function for verbose printing
- - fetch-pack: use skip_prefix() instead of starts_with()
- - upload-pack: move rev-list code out of check_non_tip()
- - upload-pack: tighten number parsing at "deepen" lines
- - upload-pack: use skip_prefix() instead of starts_with()
- - upload-pack: move "unshallow" sending code out of deepen()
- - upload-pack: remove unused variable "backup"
- - upload-pack: move "shallow" sending code out of deepen()
- - upload-pack: move shallow deepen code out of receive_needs()
- - transport-helper.c: refactor set_helper_option()
- - remote-curl.c: convert fetch_git() to use argv_array
-
- The existing "git fetch --depth=<n>" option was hard to use
- correctly when making the history of an existing shallow clone
- deeper.  A new option, "--deepen=<n>", has been added to make this
- easier to use.  "git clone" also learned "--shallow-since=<date>"
- and "--shallow-exclude=<tag>" options to make it easier to specify
- "I am interested only in the recent N months worth of history" and
- "Give me only the history since that version".
-
- Needs review.
-
-
-* sb/clone-shallow-passthru (2016-04-13) 3 commits
- - clone: add t5614 to test cloning submodules with shallowness involved
- - clone: add `--shallow-submodules` flag
- - submodule clone: pass along `local` option
-
- "git clone" learned "--shallow-submodules" option.
-
- Needs review.
+ Will merge to 'next'.
 
 
 * ad/commit-have-m-option (2016-04-07) 2 commits
@@ -670,7 +599,10 @@ of the repositories listed at
  UI consistency improvements.
 
 
-* va/i18n-misc-updates (2016-04-13) 6 commits
+* va/i18n-misc-updates (2016-04-19) 9 commits
+ - i18n: builtin/pull.c: split strings marked for translation
+ - i18n: builtin/pull.c: mark placeholders for translation
+ - i18n: git-parse-remote.sh: mark strings for translation
  - i18n: branch: move comment for translators
  - i18n: branch: unmark string for translation
  - i18n: builtin/rm.c: remove a comma ',' from string
@@ -680,6 +612,8 @@ of the repositories listed at
 
  Mark several messages for translation.
 
+ Comments?  They looked all sensible to me.
+
 
 * jc/drop-git-spec-in (2016-04-06) 1 commit
  - Makefile: stop pretending to support rpmbuild
@@ -687,19 +621,7 @@ of the repositories listed at
  As nobody maintains our in-tree git.spec.in and distros use their
  own spec file, we stopped pretending that we support "make rpm".
 
- Comments?
-
-
-* ar/diff-args-osx-precompose (2016-04-05) 1 commit
- - diff: run arguments through precompose_argv
-
- Many commands normalize command line arguments from NFD to NFC
- variant of UTF-8 on OSX, but commands in the "diff" family did
- not, causing "git diff $path" to complain that no such path is
- known to Git.  They have been taught to do the normalization.
-
- Will be rerolled?
- ($gmane/290724)
+ Will merge to 'next'.
 
 
 * ew/send-email-readable-message-id (2016-04-06) 1 commit
@@ -712,16 +634,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* st/verify-tag (2016-04-18) 6 commits
+* st/verify-tag (2016-04-19) 6 commits
  - tag -v: verfy directly rather than exec-ing verify-tag
- - verify-tag: move verification code to tag.c
- - verify-tag: add sha1 argument to verify_tag()
- - verify-tag: change variable name for readability
+ - verify-tag: move tag verification code to tag.c
+ - verify-tag: prepare verify_tag for libification
+ - verify-tag: update variable name and type
  - t7030: test verifying multiple tags
  - builtin/verify-tag.c: ignore SIGPIPE in gpg-interface
 
- Saw review comments on this v6.
- Expecting a reroll.
+ Unify internal logic between "git tag -v" and "git verify-tag"
+ commands by making one directly call into the other.
+
+ Will merge to 'next'.
 
 
 * ew/send-email-drop-data-dumper (2016-04-06) 1 commit
@@ -807,20 +731,6 @@ of the repositories listed at
  ($gmane/291198)
 
 
-* pb/commit-verbose-config (2016-04-12) 6 commits
- . commit: add a commit.verbose config variable
- . t7507-commit-verbose: improve test coverage by testing number of diffs
- . parse-options.c: make OPTION_COUNTUP respect "unspecified" values
- . t0040-parse-options: improve test coverage
- . test-parse-options: print quiet as integer
- . t0040-test-parse-options.sh: fix style issues
-
- "git commit" learned to pay attention to "commit.verbose"
- configuration variable and act as if "--verbose" option was
- given from the command line.
- 
-
-
 * dt/index-helper (2016-04-14) 16 commits
  - read-cache: config for waiting for index-helper
  - index-helper: optionally automatically run
@@ -856,10 +766,21 @@ of the repositories listed at
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
- - config.mak.uname: Cygwin needs OBJECT_CREATION_USES_RENAMES
+  (merged to 'next' on 2016-04-19 at 1352ede)
+ + config.mak.uname: Cygwin needs OBJECT_CREATION_USES_RENAMES
 
- Will hold.
- ($gmane/275680).
+ On Cygwin, object creation uses the "create a temporary and then
+ rename it to the final name" pattern, not "create a temporary,
+ hardlink it to the final name and then unlink the temporary"
+ pattern.
+
+ This is necessary to use Git on Windows shared directories, and is
+ already enabled for the MinGW and plain Windows builds.  It also
+ has been used in Cygwin packaged versions of Git for quite a while.
+ See http://thread.gmane.org/gmane.comp.version-control.git/291853
+
+ Will merge to 'master'.
+ ($gmane/275680, $gmane/291853).
 
 
 * jc/rerere-multi (2016-04-06) 11 commits
