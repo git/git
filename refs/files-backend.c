@@ -1393,9 +1393,10 @@ static int resolve_missing_loose_ref(const char *refname,
  *
  * If the ref is a sha1, fill in sha1 and return 0.
  *
- * If the ref is symbolic, fill in *symref with the referrent
- * (e.g. "refs/heads/master") and return 0.  The caller is responsible
- * for validating the referrent.  Set REF_ISSYMREF in type.
+ * If the ref is symbolic, fill in *referent with the name of the
+ * branch to which it refers (e.g. "refs/heads/master") and return 0.
+ * The caller is responsible for validating the referent. Set
+ * REF_ISSYMREF in type.
  *
  * If the ref doesn't exist, set errno to ENOENT and return -1.
  *
@@ -1411,15 +1412,15 @@ static int resolve_missing_loose_ref(const char *refname,
  *
  * sb_path is workspace: the caller should allocate and free it.
  *
- * It is OK for refname to point into symref. In this case:
- * - if the function succeeds with REF_ISSYMREF, symref will be
+ * It is OK for refname to point into referent. In this case:
+ * - if the function succeeds with REF_ISSYMREF, referent will be
  *   overwritten and the memory pointed to by refname might be changed
  *   or even freed.
- * - in all other cases, symref will be untouched, and therefore
+ * - in all other cases, referent will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
 int read_raw_ref(const char *refname, unsigned char *sha1,
-		 struct strbuf *symref, unsigned int *type)
+		 struct strbuf *referent, unsigned int *type)
 {
 	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
@@ -1469,7 +1470,7 @@ stat_ref:
 		}
 		if (starts_with(sb_contents.buf, "refs/") &&
 		    !check_refname_format(sb_contents.buf, 0)) {
-			strbuf_swap(&sb_contents, symref);
+			strbuf_swap(&sb_contents, referent);
 			*type |= REF_ISSYMREF;
 			ret = 0;
 			goto out;
@@ -1518,8 +1519,8 @@ stat_ref:
 		while (isspace(*buf))
 			buf++;
 
-		strbuf_reset(symref);
-		strbuf_addstr(symref, buf);
+		strbuf_reset(referent);
+		strbuf_addstr(referent, buf);
 		*type |= REF_ISSYMREF;
 		ret = 0;
 		goto out;
