@@ -18,6 +18,8 @@
 
 #undef ERROR
 
+typedef int sigset_t;
+
 #include "compat/mingw.h"
 
 #endif
