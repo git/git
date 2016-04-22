@@ -19,6 +19,7 @@
 use 5.008;
 use strict;
 use warnings;
+use POSIX qw/strftime/;
 use Term::ReadLine;
 use Getopt::Long;
 use Text::ParseWords;
@@ -949,7 +950,7 @@ my ($message_id_stamp, $message_id_serial);
 sub make_message_id {
 	my $uniq;
 	if (!defined $message_id_stamp) {
-		$message_id_stamp = sprintf("%s-%s", time, $$);
+		$message_id_stamp = strftime("%Y%m%d%H%M%S.$$", gmtime(time));
 		$message_id_serial = 0;
 	}
 	$message_id_serial++;
@@ -964,7 +965,7 @@ sub make_message_id {
 		require Sys::Hostname;
 		$du_part = 'user@' . Sys::Hostname::hostname();
 	}
-	my $message_id_template = "<%s-git-send-email-%s>";
+	my $message_id_template = "<%s-%s>";
 	$message_id = sprintf($message_id_template, $uniq, $du_part);
 	#print "new message id = $message_id\n"; # Was useful for debugging
 }
