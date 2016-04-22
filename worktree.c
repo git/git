@@ -216,8 +216,8 @@ const char *get_worktree_git_dir(const struct worktree *wt)
 		return git_common_path("worktrees/%s", wt->id);
 }
 
-static int is_worktree_being_rebased(const struct worktree *wt,
-				     const char *target)
+int is_worktree_being_rebased(const struct worktree *wt,
+			      const char *target)
 {
 	struct wt_status_state state;
 	int found_rebase;
@@ -234,8 +234,8 @@ static int is_worktree_being_rebased(const struct worktree *wt,
 	return found_rebase;
 }
 
-static int is_worktree_being_bisected(const struct worktree *wt,
-				      const char *target)
+int is_worktree_being_bisected(const struct worktree *wt,
+			       const char *target)
 {
 	struct wt_status_state state;
 	int found_rebase;

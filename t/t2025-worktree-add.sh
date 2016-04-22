@@ -254,6 +254,10 @@ test_expect_success 'not allow to delete a branch under rebase' '
 	)
 '
 
+test_expect_success 'rename a branch under rebase not allowed' '
+	test_must_fail git branch -M under-rebase rebase-with-new-name
+'
+
 test_expect_success 'check out from current worktree branch ok' '
 	(
 		cd under-rebase &&
@@ -274,6 +278,10 @@ test_expect_success 'checkout a branch under bisect' '
 		test_must_fail git worktree add new-bisect under-bisect &&
 		! test -d new-bisect
 	)
+'
+
+test_expect_success 'rename a branch under bisect not allowed' '
+	test_must_fail git branch -M under-bisect bisect-with-new-name
 '
 
 test_done
