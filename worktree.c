@@ -234,6 +234,21 @@ static int is_worktree_being_rebased(const struct worktree *wt,
 	return found_rebase;
 }
 
+static int is_worktree_being_bisected(const struct worktree *wt,
+				      const char *target)
+{
+	struct wt_status_state state;
+	int found_rebase;
+
+	memset(&state, 0, sizeof(state));
+	found_rebase = wt_status_check_bisect(wt, &state) &&
+		state.branch &&
+		starts_with(target, "refs/heads/") &&
+		!strcmp(state.branch, target + strlen("refs/heads/"));
+	free(state.branch);
+	return found_rebase;
+}
+
 /*
  * note: this function should be able to detect shared symref even if
  * HEAD is temporarily detached (e.g. in the middle of rebase or
@@ -258,6 +273,10 @@ const struct worktree *find_shared_symref(const char *symref,
 
 		if (wt->is_detached && !strcmp(symref, "HEAD")) {
 			if (is_worktree_being_rebased(wt, target)) {
+				existing = wt;
+				break;
+			}
+			if (is_worktree_being_bisected(wt, target)) {
 				existing = wt;
 				break;
 			}

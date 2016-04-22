@@ -263,4 +263,17 @@ test_expect_success 'check out from current worktree branch ok' '
 	)
 '
 
+test_expect_success 'checkout a branch under bisect' '
+	git worktree add under-bisect &&
+	(
+		cd under-bisect &&
+		git bisect start &&
+		git bisect bad &&
+		git bisect good HEAD~2 &&
+		git worktree list | grep "under-bisect.*detached HEAD" &&
+		test_must_fail git worktree add new-bisect under-bisect &&
+		! test -d new-bisect
+	)
+'
+
 test_done
