@@ -1738,7 +1738,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 					    const unsigned char *old_sha1,
 					    const struct string_list *extras,
 					    const struct string_list *skip,
-					    unsigned int flags, int *type_p,
+					    unsigned int flags, int *type,
 					    struct strbuf *err)
 {
 	struct strbuf ref_file = STRBUF_INIT;
@@ -1746,7 +1746,6 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	const char *orig_refname = refname;
 	struct ref_lock *lock;
 	int last_errno = 0;
-	int type;
 	int lflags = 0;
 	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
 	int resolve_flags = 0;
@@ -1766,7 +1765,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	}
 
 	refname = resolve_ref_unsafe(refname, resolve_flags,
-				     lock->old_oid.hash, &type);
+				     lock->old_oid.hash, type);
 	if (!refname && errno == EISDIR) {
 		/*
 		 * we are trying to lock foo but we used to
@@ -1784,10 +1783,8 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 			goto error_return;
 		}
 		refname = resolve_ref_unsafe(orig_refname, resolve_flags,
-					     lock->old_oid.hash, &type);
+					     lock->old_oid.hash, type);
 	}
-	if (type_p)
-	    *type_p = type;
 	if (!refname) {
 		last_errno = errno;
 		if (last_errno != ENOTDIR ||
