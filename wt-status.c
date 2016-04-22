@@ -1360,15 +1360,11 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 	strbuf_release(&cb.buf);
 }
 
-void wt_status_get_state(struct wt_status_state *state,
-			 int get_detached_from)
+int wt_status_check_rebase(struct wt_status_state *state)
 {
 	struct stat st;
-	unsigned char sha1[20];
 
-	if (!stat(git_path_merge_head(), &st)) {
-		state->merge_in_progress = 1;
-	} else if (!stat(git_path("rebase-apply"), &st)) {
+	if (!stat(git_path("rebase-apply"), &st)) {
 		if (!stat(git_path("rebase-apply/applying"), &st)) {
 			state->am_in_progress = 1;
 			if (!stat(git_path("rebase-apply/patch"), &st) && !st.st_size)
@@ -1385,6 +1381,21 @@ void wt_status_get_state(struct wt_status_state *state,
 			state->rebase_in_progress = 1;
 		state->branch = read_and_strip_branch("rebase-merge/head-name");
 		state->onto = read_and_strip_branch("rebase-merge/onto");
+	} else
+		return 0;
+	return 1;
+}
+
+void wt_status_get_state(struct wt_status_state *state,
+			 int get_detached_from)
+{
+	struct stat st;
+	unsigned char sha1[20];
+
+	if (!stat(git_path_merge_head(), &st)) {
+		state->merge_in_progress = 1;
+	} else if (wt_status_check_rebase(state)) {
+		;		/* all set */
 	} else if (!stat(git_path_cherry_pick_head(), &st) &&
 			!get_sha1("CHERRY_PICK_HEAD", sha1)) {
 		state->cherry_pick_in_progress = 1;
