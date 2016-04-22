@@ -270,8 +270,8 @@ extern int remove_dir_recursively(struct strbuf *path, int flag);
 /* tries to remove the path with empty directories along it, ignores ENOENT */
 extern int remove_path(const char *path);
 
-extern int strcmp_icase(const char *a, const char *b);
-extern int strncmp_icase(const char *a, const char *b, size_t count);
+extern int fspathcmp(const char *a, const char *b);
+extern int fspathncmp(const char *a, const char *b, size_t count);
 extern int fnmatch_icase(const char *pattern, const char *string, int flags);
 
 /*
