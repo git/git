@@ -2,6 +2,7 @@
 #include "refs.h"
 #include "strbuf.h"
 #include "worktree.h"
+#include "dir.h"
 
 void free_worktrees(struct worktree **worktrees)
 {
@@ -94,6 +95,7 @@ static struct worktree *get_main_worktree(void)
 	worktree->is_bare = is_bare;
 	worktree->head_ref = NULL;
 	worktree->is_detached = is_detached;
+	worktree->is_current = 0;
 	add_head_info(&head_ref, worktree);
 
 done:
@@ -138,6 +140,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	worktree->is_bare = 0;
 	worktree->head_ref = NULL;
 	worktree->is_detached = is_detached;
+	worktree->is_current = 0;
 	add_head_info(&head_ref, worktree);
 
 done:
@@ -145,6 +148,25 @@ done:
 	strbuf_release(&worktree_path);
 	strbuf_release(&head_ref);
 	return worktree;
+}
+
+static void mark_current_worktree(struct worktree **worktrees)
+{
+	struct strbuf git_dir = STRBUF_INIT;
+	struct strbuf path = STRBUF_INIT;
+	int i;
+
+	strbuf_addstr(&git_dir, absolute_path(get_git_dir()));
+	for (i = 0; worktrees[i]; i++) {
+		struct worktree *wt = worktrees[i];
+		strbuf_addstr(&path, absolute_path(get_worktree_git_dir(wt)));
+		wt->is_current = !fspathcmp(git_dir.buf, path.buf);
+		strbuf_reset(&path);
+		if (wt->is_current)
+			break;
+	}
+	strbuf_release(&git_dir);
+	strbuf_release(&path);
 }
 
 struct worktree **get_worktrees(void)
@@ -178,6 +200,8 @@ struct worktree **get_worktrees(void)
 	}
 	ALLOC_GROW(list, counter + 1, alloc);
 	list[counter] = NULL;
+
+	mark_current_worktree(list);
 	return list;
 }
 

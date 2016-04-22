@@ -8,6 +8,7 @@ struct worktree {
 	unsigned char head_sha1[20];
 	int is_detached;
 	int is_bare;
+	int is_current;
 };
 
 /* Functions for acting on the information about worktrees. */
