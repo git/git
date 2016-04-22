@@ -357,6 +357,7 @@ ifeq ($(uname_S),Windows)
 	NEEDS_LIBICONV = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_MKDTEMP = YesPlease
+	NO_INTTYPES_H = YesPlease
 	# VS2015 with UCRT claims that snprintf and friends are C99 compliant,
 	# so we don't need this.
 	#
