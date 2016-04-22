@@ -102,6 +102,20 @@ extern int parse_whitespace_option(struct apply_state *state,
 extern int parse_ignorewhitespace_option(struct apply_state *state,
 					 const char *option);
 
+extern int apply_option_parse_exclude(const struct option *opt,
+				      const char *arg, int unset);
+extern int apply_option_parse_include(const struct option *opt,
+				      const char *arg, int unset);
+extern int apply_option_parse_p(const struct option *opt,
+				const char *arg,
+				int unset);
+extern int apply_option_parse_whitespace(const struct option *opt,
+					 const char *arg, int unset);
+extern int apply_option_parse_directory(const struct option *opt,
+					const char *arg, int unset);
+extern int apply_option_parse_space_change(const struct option *opt,
+					   const char *arg, int unset);
+
 extern int init_apply_state(struct apply_state *state,
 			    const char *prefix,
 			    struct lock_file *lock_file);
@@ -114,5 +128,10 @@ extern int check_apply_state(struct apply_state *state, int force_apply);
  */
 #define APPLY_OPT_INACCURATE_EOF	(1<<0) /* accept inaccurate eof */
 #define APPLY_OPT_RECOUNT		(1<<1) /* accept inaccurate line count */
+
+extern int apply_all_patches(struct apply_state *state,
+			     int argc,
+			     const char **argv,
+			     int options);
 
 #endif
