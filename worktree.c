@@ -191,13 +191,18 @@ const char *get_worktree_git_dir(const struct worktree *wt)
 		return git_common_path("worktrees/%s", wt->id);
 }
 
-char *find_shared_symref(const char *symref, const char *target)
+const struct worktree *find_shared_symref(const char *symref,
+					  const char *target)
 {
-	char *existing = NULL;
+	const struct worktree *existing = NULL;
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
-	struct worktree **worktrees = get_worktrees();
+	static struct worktree **worktrees;
 	int i = 0;
+
+	if (worktrees)
+		free_worktrees(worktrees);
+	worktrees = get_worktrees();
 
 	for (i = 0; worktrees[i]; i++) {
 		strbuf_reset(&path);
@@ -211,14 +216,13 @@ char *find_shared_symref(const char *symref, const char *target)
 		}
 
 		if (!strcmp(sb.buf, target)) {
-			existing = xstrdup(worktrees[i]->path);
+			existing = worktrees[i];
 			break;
 		}
 	}
 
 	strbuf_release(&path);
 	strbuf_release(&sb);
-	free_worktrees(worktrees);
 
 	return existing;
 }
