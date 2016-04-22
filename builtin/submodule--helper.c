@@ -196,11 +196,11 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 
 static int module_clone(int argc, const char **argv, const char *prefix)
 {
-	const char *path = NULL, *name = NULL, *url = NULL;
+	const char *name = NULL, *url = NULL;
 	const char *reference = NULL, *depth = NULL;
 	int quiet = 0;
 	FILE *submodule_dot_git;
-	char *sm_gitdir, *cwd, *p;
+	char *p, *path = NULL, *sm_gitdir;
 	struct strbuf rel_path = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
 
@@ -237,12 +237,19 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, module_clone_options,
 			     git_submodule_helper_usage, 0);
 
-	if (argc || !url || !path)
+	if (argc || !url || !path || !*path)
 		usage_with_options(git_submodule_helper_usage,
 				   module_clone_options);
 
 	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
-	sm_gitdir = strbuf_detach(&sb, NULL);
+	sm_gitdir = xstrdup(absolute_path(sb.buf));
+	strbuf_reset(&sb);
+
+	if (!is_absolute_path(path)) {
+		strbuf_addf(&sb, "%s/%s", get_git_work_tree(), path);
+		path = strbuf_detach(&sb, NULL);
+	} else
+		path = xstrdup(path);
 
 	if (!file_exists(sm_gitdir)) {
 		if (safe_create_leading_directories_const(sm_gitdir) < 0)
@@ -259,45 +266,30 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Write a .git file in the submodule to redirect to the superproject. */
-	if (safe_create_leading_directories_const(path) < 0)
-		die(_("could not create directory '%s'"), path);
-
-	if (path && *path)
-		strbuf_addf(&sb, "%s/.git", path);
-	else
-		strbuf_addstr(&sb, ".git");
-
+	strbuf_addf(&sb, "%s/.git", path);
 	if (safe_create_leading_directories_const(sb.buf) < 0)
 		die(_("could not create leading directories of '%s'"), sb.buf);
 	submodule_dot_git = fopen(sb.buf, "w");
 	if (!submodule_dot_git)
 		die_errno(_("cannot open file '%s'"), sb.buf);
 
-	fprintf(submodule_dot_git, "gitdir: %s\n",
-		relative_path(sm_gitdir, path, &rel_path));
+	fprintf_or_die(submodule_dot_git, "gitdir: %s\n",
+		       relative_path(sm_gitdir, path, &rel_path));
 	if (fclose(submodule_dot_git))
 		die(_("could not close file %s"), sb.buf);
 	strbuf_reset(&sb);
 	strbuf_reset(&rel_path);
 
-	cwd = xgetcwd();
 	/* Redirect the worktree of the submodule in the superproject's config */
-	if (!is_absolute_path(sm_gitdir)) {
-		strbuf_addf(&sb, "%s/%s", cwd, sm_gitdir);
-		free(sm_gitdir);
-		sm_gitdir = strbuf_detach(&sb, NULL);
-	}
-
-	strbuf_addf(&sb, "%s/%s", cwd, path);
 	p = git_pathdup_submodule(path, "config");
 	if (!p)
 		die(_("could not get submodule directory for '%s'"), path);
 	git_config_set_in_file(p, "core.worktree",
-			       relative_path(sb.buf, sm_gitdir, &rel_path));
+			       relative_path(path, sm_gitdir, &rel_path));
 	strbuf_release(&sb);
 	strbuf_release(&rel_path);
 	free(sm_gitdir);
-	free(cwd);
+	free(path);
 	free(p);
 	return 0;
 }
