@@ -357,7 +357,8 @@ int replace_each_worktree_head_symref(const char *oldref, const char *newref)
 		if (strcmp(oldref, worktrees[i]->head_ref))
 			continue;
 
-		if (set_worktree_head_symref(worktrees[i]->git_dir, newref)) {
+		if (set_worktree_head_symref(get_worktree_git_dir(worktrees[i]),
+					     newref)) {
 			ret = -1;
 			error(_("HEAD of working tree %s is not updated"),
 			      worktrees[i]->path);

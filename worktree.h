@@ -3,7 +3,7 @@
 
 struct worktree {
 	char *path;
-	char *git_dir;
+	char *id;
 	char *head_ref;
 	unsigned char head_sha1[20];
 	int is_detached;
@@ -21,6 +21,12 @@ struct worktree {
  * worktree(s).
  */
 extern struct worktree **get_worktrees(void);
+
+/*
+ * Return git dir of the worktree. Note that the path may be relative.
+ * If wt is NULL, git dir of current worktree is returned.
+ */
+extern const char *get_worktree_git_dir(const struct worktree *wt);
 
 /*
  * Free up the memory for worktree(s)
