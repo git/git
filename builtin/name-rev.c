@@ -10,6 +10,7 @@
 
 typedef struct rev_name {
 	const char *tip_name;
+	unsigned long taggerdate;
 	int generation;
 	int distance;
 } rev_name;
@@ -20,7 +21,8 @@ static long cutoff = LONG_MAX;
 #define MERGE_TRAVERSAL_WEIGHT 65535
 
 static void name_rev(struct commit *commit,
-		const char *tip_name, int generation, int distance,
+		const char *tip_name, unsigned long taggerdate,
+		int generation, int distance,
 		int deref)
 {
 	struct rev_name *name = (struct rev_name *)commit->util;
@@ -43,9 +45,12 @@ static void name_rev(struct commit *commit,
 		name = xmalloc(sizeof(rev_name));
 		commit->util = name;
 		goto copy_data;
-	} else if (name->distance > distance) {
+	} else if (name->taggerdate > taggerdate ||
+			(name->taggerdate == taggerdate &&
+			 name->distance > distance)) {
 copy_data:
 		name->tip_name = tip_name;
+		name->taggerdate = taggerdate;
 		name->generation = generation;
 		name->distance = distance;
 	} else
@@ -70,11 +75,11 @@ copy_data:
 				sprintf(new_name, "%.*s^%d", len, tip_name,
 						parent_number);
 
-			name_rev(parents->item, new_name, 0,
+			name_rev(parents->item, new_name, taggerdate, 0,
 				distance + MERGE_TRAVERSAL_WEIGHT, 0);
 		} else {
-			name_rev(parents->item, tip_name, generation + 1,
-				distance + 1, 0);
+			name_rev(parents->item, tip_name, taggerdate,
+				generation + 1, distance + 1, 0);
 		}
 	}
 }
@@ -144,6 +149,7 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	struct name_ref_data *data = cb_data;
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
+	unsigned long taggerdate = ULONG_MAX;
 
 	if (data->tags_only && !starts_with(path, "refs/tags/"))
 		return 0;
@@ -168,12 +174,13 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 			break; /* broken repository */
 		o = parse_object(t->tagged->sha1);
 		deref = 1;
+		taggerdate = t->date;
 	}
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 
 		path = name_ref_abbrev(path, can_abbreviate_output);
-		name_rev(commit, xstrdup(path), 0, 0, deref);
+		name_rev(commit, xstrdup(path), taggerdate, 0, 0, deref);
 	}
 	return 0;
 }
