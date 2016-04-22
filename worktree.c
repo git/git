@@ -229,10 +229,12 @@ const struct worktree *find_shared_symref(const char *symref,
 	worktrees = get_worktrees();
 
 	for (i = 0; worktrees[i]; i++) {
+		struct worktree *wt = worktrees[i];
+
 		strbuf_reset(&path);
 		strbuf_reset(&sb);
 		strbuf_addf(&path, "%s/%s",
-			    get_worktree_git_dir(worktrees[i]),
+			    get_worktree_git_dir(wt),
 			    symref);
 
 		if (parse_ref(path.buf, &sb, NULL)) {
@@ -240,7 +242,7 @@ const struct worktree *find_shared_symref(const char *symref,
 		}
 
 		if (!strcmp(sb.buf, target)) {
-			existing = worktrees[i];
+			existing = wt;
 			break;
 		}
 	}
