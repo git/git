@@ -15,6 +15,7 @@
 #include "column.h"
 #include "strbuf.h"
 #include "utf8.h"
+#include "worktree.h"
 
 static const char cut_line[] =
 "------------------------ >8 ------------------------\n";
@@ -1262,13 +1263,13 @@ static void show_bisect_in_progress(struct wt_status *s,
 /*
  * Extract branch information from rebase/bisect
  */
-static char *read_and_strip_branch(const char *path)
+static char *get_branch(const struct worktree *wt, const char *path)
 {
 	struct strbuf sb = STRBUF_INIT;
 	unsigned char sha1[20];
 	const char *branch_name;
 
-	if (strbuf_read_file(&sb, git_path("%s", path), 0) <= 0)
+	if (strbuf_read_file(&sb, worktree_git_path(wt, "%s", path), 0) <= 0)
 		goto got_nothing;
 
 	while (sb.len && sb.buf[sb.len - 1] == '\n')
@@ -1293,6 +1294,11 @@ static char *read_and_strip_branch(const char *path)
 got_nothing:
 	strbuf_release(&sb);
 	return NULL;
+}
+
+static char *read_and_strip_branch(const char *path)
+{
+	return get_branch(NULL, path);
 }
 
 struct grab_1st_switch_cbdata {
@@ -1360,27 +1366,28 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 	strbuf_release(&cb.buf);
 }
 
-int wt_status_check_rebase(struct wt_status_state *state)
+int wt_status_check_rebase(const struct worktree *wt,
+			   struct wt_status_state *state)
 {
 	struct stat st;
 
-	if (!stat(git_path("rebase-apply"), &st)) {
-		if (!stat(git_path("rebase-apply/applying"), &st)) {
+	if (!stat(worktree_git_path(wt, "rebase-apply"), &st)) {
+		if (!stat(worktree_git_path(wt, "rebase-apply/applying"), &st)) {
 			state->am_in_progress = 1;
-			if (!stat(git_path("rebase-apply/patch"), &st) && !st.st_size)
+			if (!stat(worktree_git_path(wt, "rebase-apply/patch"), &st) && !st.st_size)
 				state->am_empty_patch = 1;
 		} else {
 			state->rebase_in_progress = 1;
-			state->branch = read_and_strip_branch("rebase-apply/head-name");
-			state->onto = read_and_strip_branch("rebase-apply/onto");
+			state->branch = get_branch(wt, "rebase-apply/head-name");
+			state->onto = get_branch(wt, "rebase-apply/onto");
 		}
-	} else if (!stat(git_path("rebase-merge"), &st)) {
-		if (!stat(git_path("rebase-merge/interactive"), &st))
+	} else if (!stat(worktree_git_path(wt, "rebase-merge"), &st)) {
+		if (!stat(worktree_git_path(wt, "rebase-merge/interactive"), &st))
 			state->rebase_interactive_in_progress = 1;
 		else
 			state->rebase_in_progress = 1;
-		state->branch = read_and_strip_branch("rebase-merge/head-name");
-		state->onto = read_and_strip_branch("rebase-merge/onto");
+		state->branch = get_branch(wt, "rebase-merge/head-name");
+		state->onto = get_branch(wt, "rebase-merge/onto");
 	} else
 		return 0;
 	return 1;
@@ -1394,7 +1401,7 @@ void wt_status_get_state(struct wt_status_state *state,
 
 	if (!stat(git_path_merge_head(), &st)) {
 		state->merge_in_progress = 1;
-	} else if (wt_status_check_rebase(state)) {
+	} else if (wt_status_check_rebase(NULL, state)) {
 		;		/* all set */
 	} else if (!stat(git_path_cherry_pick_head(), &st) &&
 			!get_sha1("CHERRY_PICK_HEAD", sha1)) {
