@@ -1389,33 +1389,40 @@ static int resolve_missing_loose_ref(const char *refname,
 }
 
 /*
- * Read a raw ref from the filesystem or packed refs file.
+ * Read the specified reference from the filesystem or packed refs
+ * file, non-recursively. Set type to describe the reference, and:
  *
- * If the ref is a sha1, fill in sha1 and return 0.
+ * - If refname is the name of a normal reference, fill in sha1
+ *   (leaving referent unchanged).
  *
- * If the ref is symbolic, fill in *referent with the name of the
- * branch to which it refers (e.g. "refs/heads/master") and return 0.
- * The caller is responsible for validating the referent. Set
- * REF_ISSYMREF in type.
+ * - If refname is the name of a symbolic reference, write the full
+ *   name of the reference to which it refers (e.g.
+ *   "refs/heads/master") to referent and set the REF_ISSYMREF bit in
+ *   type (leaving sha1 unchanged). The caller is responsible for
+ *   validating that referent is a valid reference name.
  *
- * If the ref doesn't exist, set errno to ENOENT and return -1.
+ * WARNING: refname might be used as part of a filename, so it is
+ * important from a security standpoint that it be safe in the sense
+ * of refname_is_safe(). Moreover, for symrefs this function sets
+ * referent to whatever the repository says, which might not be a
+ * properly-formatted or even safe reference name. NEITHER INPUT NOR
+ * OUTPUT REFERENCE NAMES ARE VALIDATED WITHIN THIS FUNCTION.
  *
- * If the ref exists but is neither a symbolic ref nor a sha1, it is
- * broken. Set REF_ISBROKEN in type, set errno to EINVAL, and return
- * -1.
- *
- * If there is another error reading the ref, set errno appropriately and
- * return -1.
+ * Return 0 on success. If the ref doesn't exist, set errno to ENOENT
+ * and return -1. If the ref exists but is neither a symbolic ref nor
+ * a sha1, it is broken; set REF_ISBROKEN in type, set errno to
+ * EINVAL, and return -1. If there is another error reading the ref,
+ * set errno appropriately and return -1.
  *
  * Backend-specific flags might be set in type as well, regardless of
  * outcome.
  *
- * sb_path is workspace: the caller should allocate and free it.
+ * It is OK for refname to point into referent. If so:
  *
- * It is OK for refname to point into referent. In this case:
  * - if the function succeeds with REF_ISSYMREF, referent will be
- *   overwritten and the memory pointed to by refname might be changed
- *   or even freed.
+ *   overwritten and the memory formerly pointed to by it might be
+ *   changed or even freed.
+ *
  * - in all other cases, referent will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
