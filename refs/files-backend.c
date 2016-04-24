@@ -1516,6 +1516,16 @@ out:
 	return ret;
 }
 
+static void unlock_ref(struct ref_lock *lock)
+{
+	/* Do not free lock->lk -- atexit() still looks at them */
+	if (lock->lk)
+		rollback_lock_file(lock->lk);
+	free(lock->ref_name);
+	free(lock->orig_ref_name);
+	free(lock);
+}
+
 /*
  * Peel the entry (if possible) and return its new peel_status.  If
  * repeel is true, re-peel the entry even if there is an old peeled
@@ -1672,16 +1682,6 @@ int do_for_each_ref(const char *submodule, const char *base,
 		data.flags |= DO_FOR_EACH_INCLUDE_BROKEN;
 
 	return do_for_each_entry(refs, base, do_one_ref, &data);
-}
-
-static void unlock_ref(struct ref_lock *lock)
-{
-	/* Do not free lock->lk -- atexit() still looks at them */
-	if (lock->lk)
-		rollback_lock_file(lock->lk);
-	free(lock->ref_name);
-	free(lock->orig_ref_name);
-	free(lock);
 }
 
 /*
