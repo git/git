@@ -3051,6 +3051,88 @@ static int ref_update_reject_duplicates(struct string_list *refnames,
 	return 0;
 }
 
+/*
+ * Acquire all locks, verify old values if provided, check
+ * that new values are valid, and write new values to the
+ * lockfiles, ready to be activated. Only keep one lockfile
+ * open at a time to avoid running out of file descriptors.
+ */
+static int lock_ref_for_update(struct ref_update *update,
+			       struct ref_transaction *transaction,
+			       struct string_list *affected_refnames,
+			       struct strbuf *err)
+{
+	int ret;
+
+	if ((update->flags & REF_HAVE_NEW) &&
+	    is_null_sha1(update->new_sha1))
+		update->flags |= REF_DELETING;
+	update->lock = lock_ref_sha1_basic(
+			update->refname,
+			((update->flags & REF_HAVE_OLD) ?
+			 update->old_sha1 : NULL),
+			affected_refnames, NULL,
+			update->flags,
+			&update->type,
+			err);
+	if (!update->lock) {
+		char *reason;
+
+		ret = (errno == ENOTDIR)
+			? TRANSACTION_NAME_CONFLICT
+			: TRANSACTION_GENERIC_ERROR;
+		reason = strbuf_detach(err, NULL);
+		strbuf_addf(err, "cannot lock ref '%s': %s",
+			    update->refname, reason);
+		free(reason);
+		return ret;
+	}
+	if ((update->flags & REF_HAVE_NEW) &&
+	    !(update->flags & REF_DELETING) &&
+	    !(update->flags & REF_LOG_ONLY)) {
+		int overwriting_symref = ((update->type & REF_ISSYMREF) &&
+					  (update->flags & REF_NODEREF));
+
+		if (!overwriting_symref &&
+		    !hashcmp(update->lock->old_oid.hash, update->new_sha1)) {
+			/*
+			 * The reference already has the desired
+			 * value, so we don't need to write it.
+			 */
+		} else if (write_ref_to_lockfile(update->lock,
+						 update->new_sha1,
+						 err)) {
+			char *write_err = strbuf_detach(err, NULL);
+
+			/*
+			 * The lock was freed upon failure of
+			 * write_ref_to_lockfile():
+			 */
+			update->lock = NULL;
+			strbuf_addf(err,
+				    "cannot update the ref '%s': %s",
+				    update->refname, write_err);
+			free(write_err);
+			return TRANSACTION_GENERIC_ERROR;
+		} else {
+			update->flags |= REF_NEEDS_COMMIT;
+		}
+	}
+	if (!(update->flags & REF_NEEDS_COMMIT)) {
+		/*
+		 * We didn't call write_ref_to_lockfile(), so
+		 * the lockfile is still open. Close it to
+		 * free up the file descriptor:
+		 */
+		if (close_ref(update->lock)) {
+			strbuf_addf(err, "couldn't close '%s.lock'",
+				    update->refname);
+			return TRANSACTION_GENERIC_ERROR;
+		}
+	}
+	return 0;
+}
+
 int ref_transaction_commit(struct ref_transaction *transaction,
 			   struct strbuf *err)
 {
@@ -3088,74 +3170,10 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
-		if ((update->flags & REF_HAVE_NEW) &&
-		    is_null_sha1(update->new_sha1))
-			update->flags |= REF_DELETING;
-		update->lock = lock_ref_sha1_basic(
-				update->refname,
-				((update->flags & REF_HAVE_OLD) ?
-				 update->old_sha1 : NULL),
-				&affected_refnames, NULL,
-				update->flags,
-				&update->type,
-				err);
-		if (!update->lock) {
-			char *reason;
-
-			ret = (errno == ENOTDIR)
-				? TRANSACTION_NAME_CONFLICT
-				: TRANSACTION_GENERIC_ERROR;
-			reason = strbuf_detach(err, NULL);
-			strbuf_addf(err, "cannot lock ref '%s': %s",
-				    update->refname, reason);
-			free(reason);
+		ret = lock_ref_for_update(update, transaction,
+					  &affected_refnames, err);
+		if (ret)
 			goto cleanup;
-		}
-		if ((update->flags & REF_HAVE_NEW) &&
-		    !(update->flags & REF_DELETING) &&
-		    !(update->flags & REF_LOG_ONLY)) {
-			int overwriting_symref = ((update->type & REF_ISSYMREF) &&
-						  (update->flags & REF_NODEREF));
-
-			if (!overwriting_symref &&
-			    !hashcmp(update->lock->old_oid.hash, update->new_sha1)) {
-				/*
-				 * The reference already has the desired
-				 * value, so we don't need to write it.
-				 */
-			} else if (write_ref_to_lockfile(update->lock,
-							 update->new_sha1,
-							 err)) {
-				char *write_err = strbuf_detach(err, NULL);
-
-				/*
-				 * The lock was freed upon failure of
-				 * write_ref_to_lockfile():
-				 */
-				update->lock = NULL;
-				strbuf_addf(err,
-					    "cannot update the ref '%s': %s",
-					    update->refname, write_err);
-				free(write_err);
-				ret = TRANSACTION_GENERIC_ERROR;
-				goto cleanup;
-			} else {
-				update->flags |= REF_NEEDS_COMMIT;
-			}
-		}
-		if (!(update->flags & REF_NEEDS_COMMIT)) {
-			/*
-			 * We didn't call write_ref_to_lockfile(), so
-			 * the lockfile is still open. Close it to
-			 * free up the file descriptor:
-			 */
-			if (close_ref(update->lock)) {
-				strbuf_addf(err, "couldn't close '%s.lock'",
-					    update->refname);
-				ret = TRANSACTION_GENERIC_ERROR;
-				goto cleanup;
-			}
-		}
 	}
 
 	/* Perform updates first so live commits remain referenced */
