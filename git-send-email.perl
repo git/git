@@ -785,9 +785,10 @@ if (!defined $sender) {
 # But it's a no-op to run sanitize_address on an already sanitized address.
 $sender = sanitize_address($sender);
 
+my $to_whom = "To whom should the emails be sent (if anyone)?";
 my $prompting = 0;
 if (!@initial_to && !defined $to_cmd) {
-	my $to = ask("Who should the emails be sent to (if any)? ",
+	my $to = ask("$to_whom ",
 		     default => "",
 		     valid_re => qr/\@.*\./, confirm_only => 1);
 	push @initial_to, parse_address_line($to) if defined $to; # sanitized/validated later
@@ -885,7 +886,7 @@ sub validate_address {
 			cleanup_compose_files();
 			exit(0);
 		}
-		$address = ask("Who should the email be sent to (if any)? ",
+		$address = ask("$to_whom ",
 			default => "",
 			valid_re => qr/\@.*\./, confirm_only => 1);
 	}
