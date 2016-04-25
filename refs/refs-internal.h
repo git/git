@@ -50,6 +50,12 @@
 #define REF_LOG_ONLY 0x80
 
 /*
+ * Internal flag, meaning that the containing ref_update was via an
+ * update to HEAD.
+ */
+#define REF_UPDATE_VIA_HEAD 0x100
+
+/*
  * Return true iff refname is minimally safe. "Safe" here means that
  * deleting a loose reference by this name will not do any damage, for
  * example by causing a file that is not a reference to be deleted.
@@ -148,11 +154,12 @@ struct ref_update {
 	unsigned char old_sha1[20];
 	/*
 	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,
-	 * REF_DELETING, and REF_ISPRUNING:
+	 * REF_DELETING, REF_ISPRUNING, REF_LOG_ONLY, and
+	 * REF_UPDATE_VIA_HEAD:
 	 */
 	unsigned int flags;
 	struct ref_lock *lock;
-	int type;
+	unsigned int type;
 	char *msg;
 	const char refname[FLEX_ARRAY];
 };
