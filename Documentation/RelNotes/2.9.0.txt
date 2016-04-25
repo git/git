@@ -84,6 +84,11 @@ UI, Workflows & Features
    formulating a message ID.
    (merge f916ab0 ew/send-email-readable-message-id later to maint).
 
+ * "git rerere" can encounter two or more files with the same conflict
+   signature that have to be resolved in different ways, but there was
+   no way to record these separate resolutions.
+   (merge 890fca8 jc/rerere-multi later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -123,6 +128,9 @@ Performance, Internal Implementation, Development Support etc.
    do not attempt to look into refs/* when we know we do not have a
    Git repository.
    (merge 274db84 jk/check-repository-format later to maint).
+
+ * Code restructuring around the "refs" area to prepare for pluggable
+   refs backends.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -253,6 +261,20 @@ notes for details).
    has been used in Cygwin packaged versions of Git for quite a while.
    See http://thread.gmane.org/gmane.comp.version-control.git/291853
    (merge e53a64b ad/cygwin-wants-rename later to maint).
+
+ * "merge-octopus" strategy did not ensure that the index is clean
+   when merge begins.
+
+ * When "git merge" notices that the merge can be resolved purely at
+   the tree level (without having to merge blobs) and the resulting
+   tree happens to already exist in the object store, it forgot to
+   update the index, which lead to an inconsistent state for later
+   operations.
+
+ * "git submodule" reports the paths of submodules the command
+   recurses into, but this was incorrect when the command was not run
+   from the root level of the superproject.
+   (merge 2ab5660 sb/submodule-path-misc-bugs later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge aed7480 mm/lockfile-error-message later to maint).
