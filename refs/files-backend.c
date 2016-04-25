@@ -2299,8 +2299,8 @@ out:
 }
 
 int verify_refname_available(const char *newname,
-			     struct string_list *extras,
-			     struct string_list *skip,
+			     const struct string_list *extras,
+			     const struct string_list *skip,
 			     struct strbuf *err)
 {
 	struct ref_dir *packed_refs = get_packed_refs(&ref_cache);

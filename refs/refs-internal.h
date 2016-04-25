@@ -116,8 +116,8 @@ enum peel_status peel_object(const unsigned char *name, unsigned char *sha1);
  * extras and skip must be sorted.
  */
 int verify_refname_available(const char *newname,
-			     struct string_list *extras,
-			     struct string_list *skip,
+			     const struct string_list *extras,
+			     const struct string_list *skip,
 			     struct strbuf *err);
 
 /*
