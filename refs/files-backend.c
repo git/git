@@ -3436,33 +3436,45 @@ static int lock_ref_for_update(struct ref_update *update,
 
 	lock = update->lock;
 
-	if (read_ref_full(update->refname,
-			  mustexist ? RESOLVE_REF_READING : 0,
-			  lock->old_oid.hash, NULL)) {
-		if (update->flags & REF_HAVE_OLD) {
-			strbuf_addf(err, "cannot lock ref '%s': can't resolve old value",
-				    update->refname);
-			return TRANSACTION_GENERIC_ERROR;
-		} else {
-			hashclr(lock->old_oid.hash);
-		}
-	}
-	if ((update->flags & REF_HAVE_OLD) &&
-	    hashcmp(lock->old_oid.hash, update->old_sha1)) {
-		strbuf_addf(err, "cannot lock ref '%s': is at %s but expected %s",
-			    update->refname,
-			    sha1_to_hex(lock->old_oid.hash),
-			    sha1_to_hex(update->old_sha1));
-		return TRANSACTION_GENERIC_ERROR;
-	}
-
 	if (update->type & REF_ISSYMREF) {
+		if (read_ref_full(update->refname,
+				  mustexist ? RESOLVE_REF_READING : 0,
+				  lock->old_oid.hash, NULL)) {
+			if (update->flags & REF_HAVE_OLD) {
+				strbuf_addf(err, "cannot lock ref '%s': can't resolve old value",
+					    update->refname);
+				return TRANSACTION_GENERIC_ERROR;
+			} else {
+				hashclr(lock->old_oid.hash);
+			}
+		}
+		if ((update->flags & REF_HAVE_OLD) &&
+		    hashcmp(lock->old_oid.hash, update->old_sha1)) {
+			strbuf_addf(err, "cannot lock ref '%s': is at %s but expected %s",
+				    update->refname,
+				    sha1_to_hex(lock->old_oid.hash),
+				    sha1_to_hex(update->old_sha1));
+			return TRANSACTION_GENERIC_ERROR;
+		}
+
 		if (!(update->flags & REF_NODEREF)) {
 			ret = split_symref_update(update, referent.buf, transaction,
 						  affected_refnames, err);
 			if (ret)
 				return ret;
 		}
+	} else if ((update->flags & REF_HAVE_OLD) &&
+		   hashcmp(lock->old_oid.hash, update->old_sha1)) {
+		if (is_null_sha1(update->old_sha1))
+			strbuf_addf(err, "cannot lock ref '%s': reference already exists",
+				    update->refname);
+		else
+			strbuf_addf(err, "cannot lock ref '%s': is at %s but expected %s",
+				    update->refname,
+				    sha1_to_hex(lock->old_oid.hash),
+				    sha1_to_hex(update->old_sha1));
+
+		return TRANSACTION_GENERIC_ERROR;
 	}
 
 	if ((update->flags & REF_HAVE_NEW) &&
