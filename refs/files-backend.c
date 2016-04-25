@@ -3376,12 +3376,30 @@ static int split_symref_update(struct ref_update *update,
 			update->new_sha1, update->old_sha1,
 			update->msg);
 
-	/* Change the symbolic ref update to log only: */
+	new_update->parent_update = update;
+
+	/*
+	 * Change the symbolic ref update to log only. Also, it
+	 * doesn't need to check its old SHA-1 value, as that will be
+	 * done when new_update is processed.
+	 */
 	update->flags |= REF_LOG_ONLY | REF_NODEREF;
+	update->flags &= ~REF_HAVE_OLD;
 
 	item->util = new_update;
 
 	return 0;
+}
+
+/*
+ * Return the refname under which update was originally requested.
+ */
+static const char *original_update_refname(struct ref_update *update)
+{
+	while (update->parent_update)
+		update = update->parent_update;
+
+	return update->refname;
 }
 
 /*
@@ -3437,44 +3455,74 @@ static int lock_ref_for_update(struct ref_update *update,
 	lock = update->lock;
 
 	if (update->type & REF_ISSYMREF) {
-		if (read_ref_full(update->refname,
-				  mustexist ? RESOLVE_REF_READING : 0,
-				  lock->old_oid.hash, NULL)) {
-			if (update->flags & REF_HAVE_OLD) {
-				strbuf_addf(err, "cannot lock ref '%s': can't resolve old value",
-					    update->refname);
-				return TRANSACTION_GENERIC_ERROR;
-			} else {
-				hashclr(lock->old_oid.hash);
+		if (update->flags & REF_NODEREF) {
+			/*
+			 * We won't be reading the referent as part of
+			 * the transaction, so we have to read it here
+			 * to record and possibly check old_sha1:
+			 */
+			if (read_ref_full(update->refname,
+					  mustexist ? RESOLVE_REF_READING : 0,
+					  lock->old_oid.hash, NULL)) {
+				if (update->flags & REF_HAVE_OLD) {
+					strbuf_addf(err, "cannot lock ref '%s': "
+						    "can't resolve old value",
+						    update->refname);
+					return TRANSACTION_GENERIC_ERROR;
+				} else {
+					hashclr(lock->old_oid.hash);
+				}
 			}
-		}
-		if ((update->flags & REF_HAVE_OLD) &&
-		    hashcmp(lock->old_oid.hash, update->old_sha1)) {
-			strbuf_addf(err, "cannot lock ref '%s': is at %s but expected %s",
-				    update->refname,
-				    sha1_to_hex(lock->old_oid.hash),
-				    sha1_to_hex(update->old_sha1));
-			return TRANSACTION_GENERIC_ERROR;
-		}
+			if ((update->flags & REF_HAVE_OLD) &&
+			    hashcmp(lock->old_oid.hash, update->old_sha1)) {
+				strbuf_addf(err, "cannot lock ref '%s': "
+					    "is at %s but expected %s",
+					    update->refname,
+					    sha1_to_hex(lock->old_oid.hash),
+					    sha1_to_hex(update->old_sha1));
+				return TRANSACTION_GENERIC_ERROR;
+			}
 
-		if (!(update->flags & REF_NODEREF)) {
+		} else {
+			/*
+			 * Create a new update for the reference this
+			 * symref is pointing at. Also, we will record
+			 * and verify old_sha1 for this update as part
+			 * of processing the split-off update, so we
+			 * don't have to do it here.
+			 */
 			ret = split_symref_update(update, referent.buf, transaction,
 						  affected_refnames, err);
 			if (ret)
 				return ret;
 		}
-	} else if ((update->flags & REF_HAVE_OLD) &&
-		   hashcmp(lock->old_oid.hash, update->old_sha1)) {
-		if (is_null_sha1(update->old_sha1))
-			strbuf_addf(err, "cannot lock ref '%s': reference already exists",
-				    update->refname);
-		else
-			strbuf_addf(err, "cannot lock ref '%s': is at %s but expected %s",
-				    update->refname,
-				    sha1_to_hex(lock->old_oid.hash),
-				    sha1_to_hex(update->old_sha1));
+	} else {
+		struct ref_update *parent_update;
 
-		return TRANSACTION_GENERIC_ERROR;
+		/*
+		 * If this update is happening indirectly because of a
+		 * symref update, record the old SHA-1 in the parent
+		 * update:
+		 */
+		for (parent_update = update->parent_update;
+		     parent_update;
+		     parent_update = parent_update->parent_update) {
+			oidcpy(&parent_update->lock->old_oid, &lock->old_oid);
+		}
+
+		if ((update->flags & REF_HAVE_OLD) &&
+		    hashcmp(lock->old_oid.hash, update->old_sha1)) {
+			if (is_null_sha1(update->old_sha1))
+				strbuf_addf(err, "cannot lock ref '%s': reference already exists",
+					    original_update_refname(update));
+			else
+				strbuf_addf(err, "cannot lock ref '%s': is at %s but expected %s",
+					    original_update_refname(update),
+					    sha1_to_hex(lock->old_oid.hash),
+					    sha1_to_hex(update->old_sha1));
+
+			return TRANSACTION_GENERIC_ERROR;
+		}
 	}
 
 	if ((update->flags & REF_HAVE_NEW) &&
