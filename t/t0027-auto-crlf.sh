@@ -493,7 +493,7 @@ fi
 export CRLF_MIX_LF_CR MIX NL
 
 # Same handling with and without ident
-for id in ""
+for id in "" ident
 do
 	for ceol in lf crlf native
 	do
