@@ -143,24 +143,41 @@ int should_autocreate_reflog(const char *refname);
  * not exist before update.
  */
 struct ref_update {
+
 	/*
 	 * If (flags & REF_HAVE_NEW), set the reference to this value:
 	 */
 	unsigned char new_sha1[20];
+
 	/*
 	 * If (flags & REF_HAVE_OLD), check that the reference
 	 * previously had this value:
 	 */
 	unsigned char old_sha1[20];
+
 	/*
 	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,
 	 * REF_DELETING, REF_ISPRUNING, REF_LOG_ONLY, and
 	 * REF_UPDATE_VIA_HEAD:
 	 */
 	unsigned int flags;
+
 	struct ref_lock *lock;
 	unsigned int type;
 	char *msg;
+
+	/*
+	 * If this ref_update was split off of a symref update via
+	 * split_symref_update(), then this member points at that
+	 * update. This is used for two purposes:
+	 * 1. When reporting errors, we report the refname under which
+	 *    the update was originally requested.
+	 * 2. When we read the old value of this reference, we
+	 *    propagate it back to its parent update for recording in
+	 *    the latter's reflog.
+	 */
+	struct ref_update *parent_update;
+
 	const char refname[FLEX_ARRAY];
 };
 
