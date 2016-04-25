@@ -158,6 +158,20 @@ struct ref_update {
 };
 
 /*
+ * Add a ref_update with the specified properties to transaction, and
+ * return a pointer to the new object. This function does not verify
+ * that refname is well-formed. new_sha1 and old_sha1 are only
+ * dereferenced if the REF_HAVE_NEW and REF_HAVE_OLD bits,
+ * respectively, are set in flags.
+ */
+struct ref_update *ref_transaction_add_update(
+		struct ref_transaction *transaction,
+		const char *refname, unsigned int flags,
+		const unsigned char *new_sha1,
+		const unsigned char *old_sha1,
+		const char *msg);
+
+/*
  * Transaction states.
  * OPEN:   The transaction is in a valid state and can accept new updates.
  *         An OPEN transaction can be committed.
