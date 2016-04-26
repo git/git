@@ -210,6 +210,6 @@ int do_for_each_ref(const char *submodule, const char *base,
 		    each_ref_fn fn, int trim, int flags, void *cb_data);
 
 int read_raw_ref(const char *refname, unsigned char *sha1,
-		 struct strbuf *symref, unsigned int *flags);
+		 struct strbuf *symref, unsigned int *type);
 
 #endif /* REFS_REFS_INTERNAL_H */
