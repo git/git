@@ -58,10 +58,10 @@ that location (you can say '--local' but that is the default).
 This command will fail with non-zero status upon error.  Some exit
 codes are:
 
-- The config file is invalid (ret=3),
-- can not write to the config file (ret=4),
+- The section or key is invalid (ret=1),
 - no section or name was provided (ret=2),
-- the section or key is invalid (ret=1),
+- the config file is invalid (ret=3),
+- the config file cannot be written (ret=4),
 - you try to unset an option which does not exist (ret=5),
 - you try to unset/set an option for which multiple lines match (ret=5), or
 - you try to use an invalid regexp (ret=6).
