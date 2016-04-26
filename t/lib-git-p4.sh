@@ -198,9 +198,10 @@ marshal_dump() {
 	cat >"$TRASH_DIRECTORY/marshal-dump.py" <<-EOF &&
 	import marshal
 	import sys
+	instream = getattr(sys.stdin, 'buffer', sys.stdin)
 	for i in range($line):
-	    d = marshal.load(sys.stdin)
-	print d['$what']
+	    d = marshal.load(instream)
+	print(d[b'$what'].decode('utf-8'))
 	EOF
 	"$PYTHON_PATH" "$TRASH_DIRECTORY/marshal-dump.py"
 }
