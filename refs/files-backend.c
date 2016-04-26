@@ -1395,18 +1395,18 @@ static int resolve_missing_loose_ref(const char *refname,
  *
  * If the ref is symbolic, fill in *symref with the referrent
  * (e.g. "refs/heads/master") and return 0.  The caller is responsible
- * for validating the referrent.  Set REF_ISSYMREF in flags.
+ * for validating the referrent.  Set REF_ISSYMREF in type.
  *
  * If the ref doesn't exist, set errno to ENOENT and return -1.
  *
  * If the ref exists but is neither a symbolic ref nor a sha1, it is
- * broken. Set REF_ISBROKEN in flags, set errno to EINVAL, and return
+ * broken. Set REF_ISBROKEN in type, set errno to EINVAL, and return
  * -1.
  *
  * If there is another error reading the ref, set errno appropriately and
  * return -1.
  *
- * Backend-specific flags might be set in flags as well, regardless of
+ * Backend-specific flags might be set in type as well, regardless of
  * outcome.
  *
  * sb_path is workspace: the caller should allocate and free it.
@@ -1419,7 +1419,7 @@ static int resolve_missing_loose_ref(const char *refname,
  *   refname will still be valid and unchanged.
  */
 int read_raw_ref(const char *refname, unsigned char *sha1,
-		 struct strbuf *symref, unsigned int *flags)
+		 struct strbuf *symref, unsigned int *type)
 {
 	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
@@ -1448,7 +1448,7 @@ stat_ref:
 	if (lstat(path, &st) < 0) {
 		if (errno != ENOENT)
 			goto out;
-		if (resolve_missing_loose_ref(refname, sha1, flags)) {
+		if (resolve_missing_loose_ref(refname, sha1, type)) {
 			errno = ENOENT;
 			goto out;
 		}
@@ -1469,7 +1469,7 @@ stat_ref:
 		if (starts_with(sb_contents.buf, "refs/") &&
 		    !check_refname_format(sb_contents.buf, 0)) {
 			strbuf_swap(&sb_contents, symref);
-			*flags |= REF_ISSYMREF;
+			*type |= REF_ISSYMREF;
 			ret = 0;
 			goto out;
 		}
@@ -1482,7 +1482,7 @@ stat_ref:
 		 * ref is supposed to be, there could still be a
 		 * packed ref:
 		 */
-		if (resolve_missing_loose_ref(refname, sha1, flags)) {
+		if (resolve_missing_loose_ref(refname, sha1, type)) {
 			errno = EISDIR;
 			goto out;
 		}
@@ -1519,7 +1519,7 @@ stat_ref:
 
 		strbuf_reset(symref);
 		strbuf_addstr(symref, buf);
-		*flags |= REF_ISSYMREF;
+		*type |= REF_ISSYMREF;
 		ret = 0;
 		goto out;
 	}
@@ -1530,7 +1530,7 @@ stat_ref:
 	 */
 	if (get_sha1_hex(buf, sha1) ||
 	    (buf[40] != '\0' && !isspace(buf[40]))) {
-		*flags |= REF_ISBROKEN;
+		*type |= REF_ISBROKEN;
 		errno = EINVAL;
 		goto out;
 	}
