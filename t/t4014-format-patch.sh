@@ -1507,4 +1507,43 @@ test_expect_success 'format-patch --base errors out when base commit is not ance
 	test_cmp expected actual
 '
 
+test_expect_success 'format-patch --base=auto' '
+	git checkout -b upstream master &&
+	git checkout -b local upstream &&
+	git branch --set-upstream-to=upstream &&
+	test_commit N1 &&
+	test_commit N2 &&
+	git format-patch --stdout --base=auto -2 >patch &&
+	grep "^base-commit:" patch >actual &&
+	echo "base-commit: $(git rev-parse upstream)" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'format-patch errors out when history involves criss-cross' '
+	# setup criss-cross history
+	#
+	#   B---M1---D
+	#  / \ /
+	# A   X
+	#  \ / \
+	#   C---M2---E
+	#
+	git checkout master &&
+	test_commit A &&
+	git checkout -b xb master &&
+	test_commit B &&
+	git checkout -b xc master &&
+	test_commit C &&
+	git checkout -b xbc xb -- &&
+	git merge xc &&
+	git checkout -b xcb xc -- &&
+	git branch --set-upstream-to=xbc &&
+	git merge xb &&
+	git checkout xbc &&
+	test_commit D &&
+	git checkout xcb &&
+	test_commit E &&
+	test_must_fail 	git format-patch --base=auto -1
+'
+
 test_done
