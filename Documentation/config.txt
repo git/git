@@ -1258,6 +1258,10 @@ format.outputDirectory::
 	Set a custom directory to store the resulting files instead of the
 	current working directory.
 
+format.useAutoBase::
+	A boolean value which lets you enable the `--base=auto` option of
+	format-patch by default.
+
 filter.<driver>.clean::
 	The command which is used to convert the content of a worktree
 	file to a blob upon checkin.  See linkgit:gitattributes[5] for

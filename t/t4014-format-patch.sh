@@ -1546,4 +1546,23 @@ test_expect_success 'format-patch errors out when history involves criss-cross' 
 	test_must_fail 	git format-patch --base=auto -1
 '
 
+test_expect_success 'format-patch format.useAutoBaseoption' '
+	test_when_finished "git config --unset format.useAutoBase" &&
+	git checkout local &&
+	git config format.useAutoBase true &&
+	git format-patch --stdout -1 >patch &&
+	grep "^base-commit:" patch >actual &&
+	echo "base-commit: $(git rev-parse upstream)" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'format-patch --base overrides format.useAutoBase' '
+	test_when_finished "git config --unset format.useAutoBase" &&
+	git config format.useAutoBase true &&
+	git format-patch --stdout --base=HEAD~1 -1 >patch &&
+	grep "^base-commit:" patch >actual &&
+	echo "base-commit: $(git rev-parse HEAD~1)" >expected &&
+	test_cmp expected actual
+'
+
 test_done
