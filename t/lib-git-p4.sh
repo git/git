@@ -50,7 +50,7 @@ native_path() {
 # at runtime (e.g. via NTP). The 'clock_gettime(CLOCK_MONOTONIC)'
 # function could fix that but it is not in Python until 3.3.
 time_in_seconds() {
-	python -c 'import time; print int(time.time())'
+	(cd / && python -c 'import time; print(int(time.time()))')
 }
 
 # Try to pick a unique port: guess a large number, then hope
