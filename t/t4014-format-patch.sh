@@ -1460,4 +1460,51 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 	test_path_is_dir patchset
 '
 
+test_expect_success 'format-patch --base' '
+	git checkout side &&
+	git format-patch --stdout --base=HEAD~3 -1 >patch &&
+	grep "^base-commit:" patch >actual &&
+	grep "^prerequisite-patch-id:" patch >>actual &&
+	echo "base-commit: $(git rev-parse HEAD~3)" >expected &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --stable | awk "{print \$1}")" >>expected &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'format-patch --base errors out when base commit is in revision list' '
+	test_must_fail git format-patch --base=HEAD -2 &&
+	test_must_fail git format-patch --base=HEAD~1 -2 &&
+	git format-patch --stdout --base=HEAD~2 -2 >patch &&
+	grep "^base-commit:" patch >actual &&
+	echo "base-commit: $(git rev-parse HEAD~2)" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'format-patch --base errors out when base commit is not ancestor of revision list' '
+	# For history as below:
+	#
+	#    ---Q---P---Z---Y---*---X
+	#	 \             /
+	#	  ------------W
+	#
+	# If "format-patch Z..X" is given, P and Z can not be specified as the base commit
+	git checkout -b topic1 master &&
+	git rev-parse HEAD >commit-id-base &&
+	test_commit P &&
+	git rev-parse HEAD >commit-id-P &&
+	test_commit Z &&
+	git rev-parse HEAD >commit-id-Z &&
+	test_commit Y &&
+	git checkout -b topic2 master &&
+	test_commit W &&
+	git merge topic1 &&
+	test_commit X &&
+	test_must_fail git format-patch --base=$(cat commit-id-P) -3 &&
+	test_must_fail git format-patch --base=$(cat commit-id-Z) -3 &&
+	git format-patch --stdout --base=$(cat commit-id-base) -3 >patch &&
+	grep "^base-commit:" patch >actual &&
+	echo "base-commit: $(cat commit-id-base)" >expected &&
+	test_cmp expected actual
+'
+
 test_done
