@@ -14,8 +14,8 @@ SYNOPSIS
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch]
-	  [--recursive | --recurse-submodules] [--jobs <n>] [--] <repository>
-	  [<directory>]
+	  [--recursive | --recurse-submodules] [--[no-]shallow-submodules]
+	  [--jobs <n>] [--] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -191,7 +191,9 @@ objects from the source repository into a pack in the cloned repository.
 	Create a 'shallow' clone with a history truncated to the
 	specified number of commits. Implies `--single-branch` unless
 	`--no-single-branch` is given to fetch the histories near the
-	tips of all branches.
+	tips of all branches. This implies `--shallow-submodules`. If
+	you want to have a shallow superproject clone, but full submodules,
+	also pass `--no-shallow-submodules`.
 
 --[no-]single-branch::
 	Clone only the history leading to the tip of a single branch,
@@ -211,6 +213,9 @@ objects from the source repository into a pack in the cloned repository.
 	the clone is finished. This option is ignored if the cloned
 	repository does not have a worktree/checkout (i.e. if any of
 	`--no-checkout`/`-n`, `--bare`, or `--mirror` is given)
+
+--[no-]shallow-submodules::
+	All submodules which are cloned will be shallow with a depth of 1.
 
 --separate-git-dir=<git dir>::
 	Instead of placing the cloned repository where it is supposed
