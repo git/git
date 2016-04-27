@@ -1701,7 +1701,7 @@ static int verify_lock(struct ref_lock *lock,
 			  lock->old_oid.hash, NULL)) {
 		if (old_sha1) {
 			int save_errno = errno;
-			strbuf_addf(err, "can't verify ref %s", lock->ref_name);
+			strbuf_addf(err, "can't verify ref '%s'", lock->ref_name);
 			errno = save_errno;
 			return -1;
 		} else {
@@ -1710,7 +1710,7 @@ static int verify_lock(struct ref_lock *lock,
 		}
 	}
 	if (old_sha1 && hashcmp(lock->old_oid.hash, old_sha1)) {
-		strbuf_addf(err, "ref %s is at %s but expected %s",
+		strbuf_addf(err, "ref '%s' is at %s but expected %s",
 			    lock->ref_name,
 			    sha1_to_hex(lock->old_oid.hash),
 			    sha1_to_hex(old_sha1));
@@ -1790,7 +1790,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		if (last_errno != ENOTDIR ||
 		    !verify_refname_available_dir(orig_refname, extras, skip,
 						  get_loose_refs(&ref_cache), err))
-			strbuf_addf(err, "unable to resolve reference %s: %s",
+			strbuf_addf(err, "unable to resolve reference '%s': %s",
 				    orig_refname, strerror(last_errno));
 
 		goto error_return;
@@ -1828,7 +1828,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		/* fall through */
 	default:
 		last_errno = errno;
-		strbuf_addf(err, "unable to create directory for %s",
+		strbuf_addf(err, "unable to create directory for '%s'",
 			    ref_file.buf);
 		goto error_return;
 	}
@@ -2473,7 +2473,7 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 	strbuf_git_path(logfile, "logs/%s", refname);
 	if (force_create || should_autocreate_reflog(refname)) {
 		if (safe_create_leading_directories(logfile->buf) < 0) {
-			strbuf_addf(err, "unable to create directory for %s: "
+			strbuf_addf(err, "unable to create directory for '%s': "
 				    "%s", logfile->buf, strerror(errno));
 			return -1;
 		}
@@ -2487,7 +2487,7 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 
 		if (errno == EISDIR) {
 			if (remove_empty_directories(logfile)) {
-				strbuf_addf(err, "There are still logs under "
+				strbuf_addf(err, "there are still logs under "
 					    "'%s'", logfile->buf);
 				return -1;
 			}
@@ -2495,7 +2495,7 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 		}
 
 		if (logfd < 0) {
-			strbuf_addf(err, "unable to append to %s: %s",
+			strbuf_addf(err, "unable to append to '%s': %s",
 				    logfile->buf, strerror(errno));
 			return -1;
 		}
@@ -2564,13 +2564,13 @@ static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
 	result = log_ref_write_fd(logfd, old_sha1, new_sha1,
 				  git_committer_info(0), msg);
 	if (result) {
-		strbuf_addf(err, "unable to append to %s: %s", logfile->buf,
+		strbuf_addf(err, "unable to append to '%s': %s", logfile->buf,
 			    strerror(errno));
 		close(logfd);
 		return -1;
 	}
 	if (close(logfd)) {
-		strbuf_addf(err, "unable to append to %s: %s", logfile->buf,
+		strbuf_addf(err, "unable to append to '%s': %s", logfile->buf,
 			    strerror(errno));
 		return -1;
 	}
@@ -2611,14 +2611,14 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 	o = parse_object(sha1);
 	if (!o) {
 		strbuf_addf(err,
-			    "Trying to write ref %s with nonexistent object %s",
+			    "trying to write ref '%s' with nonexistent object %s",
 			    lock->ref_name, sha1_to_hex(sha1));
 		unlock_ref(lock);
 		return -1;
 	}
 	if (o->type != OBJ_COMMIT && is_branch(lock->ref_name)) {
 		strbuf_addf(err,
-			    "Trying to write non-commit object %s to branch %s",
+			    "trying to write non-commit object %s to branch '%s'",
 			    sha1_to_hex(sha1), lock->ref_name);
 		unlock_ref(lock);
 		return -1;
@@ -2628,7 +2628,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 	    write_in_full(fd, &term, 1) != 1 ||
 	    close_ref(lock) < 0) {
 		strbuf_addf(err,
-			    "Couldn't write %s", get_lock_file_path(lock->lk));
+			    "couldn't write '%s'", get_lock_file_path(lock->lk));
 		unlock_ref(lock);
 		return -1;
 	}
@@ -2649,7 +2649,7 @@ static int commit_ref_update(struct ref_lock *lock,
 	    (strcmp(lock->ref_name, lock->orig_ref_name) &&
 	     log_ref_write(lock->orig_ref_name, lock->old_oid.hash, sha1, logmsg, flags, err) < 0)) {
 		char *old_msg = strbuf_detach(err, NULL);
-		strbuf_addf(err, "Cannot update the ref '%s': %s",
+		strbuf_addf(err, "cannot update the ref '%s': %s",
 			    lock->ref_name, old_msg);
 		free(old_msg);
 		unlock_ref(lock);
@@ -2684,7 +2684,7 @@ static int commit_ref_update(struct ref_lock *lock,
 		}
 	}
 	if (commit_ref(lock)) {
-		strbuf_addf(err, "Couldn't set %s", lock->ref_name);
+		strbuf_addf(err, "couldn't set '%s'", lock->ref_name);
 		unlock_ref(lock);
 		return -1;
 	}
@@ -3033,7 +3033,7 @@ static int ref_update_reject_duplicates(struct string_list *refnames,
 	for (i = 1; i < n; i++)
 		if (!strcmp(refnames->items[i - 1].string, refnames->items[i].string)) {
 			strbuf_addf(err,
-				    "Multiple updates for ref '%s' not allowed.",
+				    "multiple updates for ref '%s' not allowed.",
 				    refnames->items[i].string);
 			return 1;
 		}
@@ -3137,7 +3137,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 			 * Close it to free up the file descriptor:
 			 */
 			if (close_ref(update->lock)) {
-				strbuf_addf(err, "Couldn't close %s.lock",
+				strbuf_addf(err, "couldn't close '%s.lock'",
 					    update->refname);
 				goto cleanup;
 			}
