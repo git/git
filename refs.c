@@ -136,11 +136,12 @@ int refname_is_safe(const char *refname)
 		free(buf);
 		return result;
 	}
-	while (*refname) {
+
+	do {
 		if (!isupper(*refname) && *refname != '_')
 			return 0;
 		refname++;
-	}
+	} while (*refname);
 	return 1;
 }
 
