@@ -282,5 +282,12 @@ test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
 	test_line_count = 100000 tags
 '
 
+test_expect_success 'custom http headers' '
+	test_must_fail git fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+	    fetch "$HTTPD_URL/smart_headers/repo.git"
+'
+
 stop_httpd
 test_done
