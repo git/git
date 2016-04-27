@@ -285,7 +285,7 @@ test_expect_success 'update-ref -d cannot delete non-ref in .git dir' '
 	echo precious >expect &&
 	test_must_fail git update-ref -d my-private-file >output 2>error &&
 	test_must_be_empty output &&
-	test_i18ngrep -e "cannot lock .*: unable to resolve reference" error &&
+	test_i18ngrep -e "refusing to update ref with bad name" error &&
 	test_cmp expect .git/my-private-file
 '
 
