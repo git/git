@@ -64,13 +64,6 @@ int strncmp_icase(const char *a, const char *b, size_t count)
 	return ignore_case ? strncasecmp(a, b, count) : strncmp(a, b, count);
 }
 
-int fnmatch_icase(const char *pattern, const char *string, int flags)
-{
-	return wildmatch(pattern, string,
-			 flags | (ignore_case ? WM_CASEFOLD : 0),
-			 NULL);
-}
-
 int git_fnmatch(const struct pathspec_item *item,
 		const char *pattern, const char *string,
 		int prefix)
