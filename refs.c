@@ -504,7 +504,7 @@ static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 	filename = git_path("%s", pseudoref);
 	fd = hold_lock_file_for_update(&lock, filename, LOCK_DIE_ON_ERROR);
 	if (fd < 0) {
-		strbuf_addf(err, "Could not open '%s' for writing: %s",
+		strbuf_addf(err, "could not open '%s' for writing: %s",
 			    filename, strerror(errno));
 		return -1;
 	}
@@ -515,14 +515,14 @@ static int write_pseudoref(const char *pseudoref, const unsigned char *sha1,
 		if (read_ref(pseudoref, actual_old_sha1))
 			die("could not read ref '%s'", pseudoref);
 		if (hashcmp(actual_old_sha1, old_sha1)) {
-			strbuf_addf(err, "Unexpected sha1 when writing %s", pseudoref);
+			strbuf_addf(err, "unexpected sha1 when writing '%s'", pseudoref);
 			rollback_lock_file(&lock);
 			goto done;
 		}
 	}
 
 	if (write_in_full(fd, buf.buf, buf.len) != buf.len) {
-		strbuf_addf(err, "Could not write to '%s'", filename);
+		strbuf_addf(err, "could not write to '%s'", filename);
 		rollback_lock_file(&lock);
 		goto done;
 	}
@@ -792,7 +792,7 @@ int ref_transaction_update(struct ref_transaction *transaction,
 
 	if (new_sha1 && !is_null_sha1(new_sha1) &&
 	    check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
-		strbuf_addf(err, "refusing to update ref with bad name %s",
+		strbuf_addf(err, "refusing to update ref with bad name '%s'",
 			    refname);
 		return -1;
 	}
