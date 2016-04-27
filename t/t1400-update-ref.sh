@@ -23,7 +23,7 @@ test_expect_success setup '
 m=refs/heads/master
 n_dir=refs/heads/gu
 n=$n_dir/fixes
-outside=foo
+outside=refs/foo
 
 test_expect_success \
 	"create $m" \
