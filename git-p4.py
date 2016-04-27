@@ -2320,6 +2320,15 @@ class P4Sync(Command, P4UserMap):
             fnum = fnum + 1
         return files
 
+    def extractJobsFromCommit(self, commit):
+        jobs = []
+        jnum = 0
+        while commit.has_key("job%s" % jnum):
+            job = commit["job%s" % jnum]
+            jobs.append(job)
+            jnum = jnum + 1
+        return jobs
+
     def stripRepoPath(self, path, prefixes):
         """When streaming files, this is called to map a p4 depot path
            to where it should go in git.  The prefixes are either
@@ -2665,6 +2674,7 @@ class P4Sync(Command, P4UserMap):
     def commit(self, details, files, branch, parent = ""):
         epoch = details["time"]
         author = details["user"]
+        jobs = self.extractJobsFromCommit(details)
 
         if self.verbose:
             print('commit into {0}'.format(branch))
@@ -2692,6 +2702,8 @@ class P4Sync(Command, P4UserMap):
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
+        if len(jobs) > 0:
+            self.gitStream.write("\nJobs: %s" % (' '.join(jobs)))
         self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s" %
                              (','.join(self.branchPrefixes), details["change"]))
         if len(details['options']) > 0:

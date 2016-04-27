@@ -47,23 +47,23 @@ test_expect_success 'Clone repo root path with all history' '
 		git init . &&
 		git p4 clone --use-client-spec --destination="$git" //depot@all &&
 		cat >expect <<-\EOF &&
-Remove file 4
-[git-p4: depot-paths = "//depot/": change = 6]
+		Remove file 4
+		[git-p4: depot-paths = "//depot/": change = 6]
 
-Remove file 3
-[git-p4: depot-paths = "//depot/": change = 5]
+		Remove file 3
+		[git-p4: depot-paths = "//depot/": change = 5]
 
-Add file 4
-[git-p4: depot-paths = "//depot/": change = 4]
+		Add file 4
+		[git-p4: depot-paths = "//depot/": change = 4]
 
-Add file 3
-[git-p4: depot-paths = "//depot/": change = 3]
+		Add file 3
+		[git-p4: depot-paths = "//depot/": change = 3]
 
-Add file 2
-[git-p4: depot-paths = "//depot/": change = 2]
+		Add file 2
+		[git-p4: depot-paths = "//depot/": change = 2]
 
-Add file 1
-[git-p4: depot-paths = "//depot/": change = 1]
+		Add file 1
+		[git-p4: depot-paths = "//depot/": change = 1]
 
 		EOF
 		git log --format=%B >actual &&
@@ -80,23 +80,23 @@ test_expect_success 'Clone repo subdir with all history but keep empty commits' 
 		git config git-p4.keepEmptyCommits true &&
 		git p4 clone --use-client-spec --destination="$git" //depot@all &&
 		cat >expect <<-\EOF &&
-Remove file 4
-[git-p4: depot-paths = "//depot/": change = 6]
+		Remove file 4
+		[git-p4: depot-paths = "//depot/": change = 6]
 
-Remove file 3
-[git-p4: depot-paths = "//depot/": change = 5]
+		Remove file 3
+		[git-p4: depot-paths = "//depot/": change = 5]
 
-Add file 4
-[git-p4: depot-paths = "//depot/": change = 4]
+		Add file 4
+		[git-p4: depot-paths = "//depot/": change = 4]
 
-Add file 3
-[git-p4: depot-paths = "//depot/": change = 3]
+		Add file 3
+		[git-p4: depot-paths = "//depot/": change = 3]
 
-Add file 2
-[git-p4: depot-paths = "//depot/": change = 2]
+		Add file 2
+		[git-p4: depot-paths = "//depot/": change = 2]
 
-Add file 1
-[git-p4: depot-paths = "//depot/": change = 1]
+		Add file 1
+		[git-p4: depot-paths = "//depot/": change = 1]
 
 		EOF
 		git log --format=%B >actual &&
@@ -112,14 +112,14 @@ test_expect_success 'Clone repo subdir with all history' '
 		git init . &&
 		git p4 clone --use-client-spec --destination="$git" --verbose //depot@all &&
 		cat >expect <<-\EOF &&
-Remove file 3
-[git-p4: depot-paths = "//depot/": change = 5]
+		Remove file 3
+		[git-p4: depot-paths = "//depot/": change = 5]
 
-Add file 3
-[git-p4: depot-paths = "//depot/": change = 3]
+		Add file 3
+		[git-p4: depot-paths = "//depot/": change = 3]
 
-Add file 1
-[git-p4: depot-paths = "//depot/": change = 1]
+		Add file 1
+		[git-p4: depot-paths = "//depot/": change = 1]
 
 		EOF
 		git log --format=%B >actual &&
