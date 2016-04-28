@@ -593,6 +593,25 @@ struct submodule_update_clone {
 	SUBMODULE_UPDATE_STRATEGY_INIT, 0, NULL, NULL, NULL, NULL, \
 	STRING_LIST_INIT_DUP, 0}
 
+
+static void next_submodule_warn_missing(struct submodule_update_clone *suc,
+		struct strbuf *out, const char *displaypath)
+{
+	/*
+	 * Only mention uninitialized submodules when their
+	 * paths have been specified.
+	 */
+	if (suc->warn_if_uninitialized) {
+		strbuf_addf(out,
+			_("Submodule path '%s' not initialized"),
+			displaypath);
+		strbuf_addch(out, '\n');
+		strbuf_addstr(out,
+			_("Maybe you want to use 'update --init'?"));
+		strbuf_addch(out, '\n');
+	}
+}
+
 /**
  * Determine whether 'ce' needs to be cloned. If so, prepare the 'child' to
  * run the clone. Returns 1 if 'ce' needs to be cloned, 0 otherwise.
@@ -627,6 +646,11 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	else
 		displaypath = ce->name;
 
+	if (!sub) {
+		next_submodule_warn_missing(suc, out, displaypath);
+		goto cleanup;
+	}
+
 	if (suc->update.type == SM_UPDATE_NONE
 	    || (suc->update.type == SM_UPDATE_UNSPECIFIED
 		&& sub->update_strategy.type == SM_UPDATE_NONE)) {
@@ -644,19 +668,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
 	git_config_get_string(sb.buf, &url);
 	if (!url) {
-		/*
-		 * Only mention uninitialized submodules when their
-		 * path have been specified
-		 */
-		if (suc->warn_if_uninitialized) {
-			strbuf_addf(out,
-				_("Submodule path '%s' not initialized"),
-				displaypath);
-			strbuf_addch(out, '\n');
-			strbuf_addstr(out,
-				_("Maybe you want to use 'update --init'?"));
-			strbuf_addch(out, '\n');
-		}
+		next_submodule_warn_missing(suc, out, displaypath);
 		goto cleanup;
 	}
 
