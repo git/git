@@ -2147,8 +2147,11 @@ pack.packSizeLimit::
 	The maximum size of a pack.  This setting only affects
 	packing to a file when repacking, i.e. the git:// protocol
 	is unaffected.  It can be overridden by the `--max-pack-size`
-	option of linkgit:git-repack[1]. The minimum size allowed is
-	limited to 1 MiB. The default is unlimited.
+	option of linkgit:git-repack[1].  Reaching this limit results
+	in the creation of multiple packfiles; which in turn prevents
+	bitmaps from being created.
+	The minimum size allowed is limited to 1 MiB.
+	The default is unlimited.
 	Common unit suffixes of 'k', 'm', or 'g' are
 	supported.
 
@@ -2548,8 +2551,9 @@ repack.writeBitmaps::
 	objects to disk (e.g., when `git repack -a` is run).  This
 	index can speed up the "counting objects" phase of subsequent
 	packs created for clones and fetches, at the cost of some disk
-	space and extra time spent on the initial repack.  Defaults to
-	false.
+	space and extra time spent on the initial repack.  This has
+	no effect if multiple packfiles are created.
+	Defaults to false.
 
 rerere.autoUpdate::
 	When set to true, `git-rerere` updates the index with the
