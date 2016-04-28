@@ -112,6 +112,17 @@ test_expect_success 'cmdline credential config passes to submodule via clone' '
 	expect_askpass pass user@host
 '
 
+test_expect_success 'cmdline credential config passes submodule via fetch' '
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone fetch --recurse-submodules &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    fetch --recurse-submodules &&
+	expect_askpass pass user@host
+'
+
 test_expect_success 'cmdline credential config passes submodule update' '
 	# advance the submodule HEAD so that a fetch is required
 	git commit --allow-empty -m foo &&
