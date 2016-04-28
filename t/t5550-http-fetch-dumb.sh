@@ -91,17 +91,21 @@ test_expect_success 'configured username does not override URL' '
 	expect_askpass pass user@host
 '
 
-test_expect_success 'cmdline credential config passes into submodules' '
+test_expect_success 'set up repo with http submodules' '
 	git init super &&
 	set_askpass user@host pass@host &&
 	(
 		cd super &&
 		git submodule add "$HTTPD_URL/auth/dumb/repo.git" sub &&
 		git commit -m "add submodule"
-	) &&
+	)
+'
+
+test_expect_success 'cmdline credential config passes to submodule via clone' '
 	set_askpass wrong pass@host &&
 	test_must_fail git clone --recursive super super-clone &&
 	rm -rf super-clone &&
+
 	set_askpass wrong pass@host &&
 	git -c "credential.$HTTPD_URL.username=user@host" \
 		clone --recursive super super-clone &&
