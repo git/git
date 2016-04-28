@@ -200,6 +200,7 @@ sanitize_submodule_env()
 	sanitized_config=$(git submodule--helper sanitize-config)
 	clear_local_git_env
 	GIT_CONFIG_PARAMETERS=$sanitized_config
+	export GIT_CONFIG_PARAMETERS
 }
 
 #
