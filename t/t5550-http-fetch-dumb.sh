@@ -103,7 +103,7 @@ test_expect_success 'cmdline credential config passes into submodules' '
 	test_must_fail git clone --recursive super super-clone &&
 	rm -rf super-clone &&
 	set_askpass wrong pass@host &&
-	git -c "credential.$HTTP_URL.username=user@host" \
+	git -c "credential.$HTTPD_URL.username=user@host" \
 		clone --recursive super super-clone &&
 	expect_askpass pass user@host
 '
