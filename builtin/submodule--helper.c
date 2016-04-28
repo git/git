@@ -127,7 +127,8 @@ static int module_name(int argc, const char **argv, const char *prefix)
  */
 static int submodule_config_ok(const char *var)
 {
-	if (starts_with(var, "credential."))
+	if (starts_with(var, "credential.") ||
+	    (starts_with(var, "http.") && ends_with(var, ".extraheader")))
 		return 1;
 	return 0;
 }
