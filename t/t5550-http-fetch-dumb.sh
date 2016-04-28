@@ -112,6 +112,23 @@ test_expect_success 'cmdline credential config passes to submodule via clone' '
 	expect_askpass pass user@host
 '
 
+test_expect_success 'cmdline credential config passes submodule update' '
+	# advance the submodule HEAD so that a fetch is required
+	git commit --allow-empty -m foo &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git" HEAD &&
+	sha1=$(git rev-parse HEAD) &&
+	git -C super-clone update-index --cacheinfo 160000,$sha1,sub &&
+
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone submodule update &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    submodule update &&
+	expect_askpass pass user@host
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&
