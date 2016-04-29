@@ -144,4 +144,25 @@ test_expect_success 'git pull --all --dry-run' '
 	)
 '
 
+test_expect_success 'git pull --allow-unrelated-histories' '
+	test_when_finished "rm -fr src dst" &&
+	git init src &&
+	(
+		cd src &&
+		test_commit one &&
+		test_commit two
+	) &&
+	git clone src dst &&
+	(
+		cd src &&
+		git checkout --orphan side HEAD^ &&
+		test_commit three
+	) &&
+	(
+		cd dst &&
+		test_must_fail git pull ../src side &&
+		git pull --allow-unrelated-histories ../src side
+	)
+'
+
 test_done

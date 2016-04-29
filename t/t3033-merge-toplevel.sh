@@ -19,7 +19,7 @@ test_expect_success setup '
 	test_commit three &&
 	git checkout right &&
 	test_commit four &&
-	git checkout --orphan five &&
+	git checkout --orphan newroot &&
 	test_commit five &&
 	git checkout master
 '
