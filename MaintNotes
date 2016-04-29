@@ -89,7 +89,16 @@ hints.
 
 If you think you found a security-sensitive issue and want to disclose
 it to us without announcing it to wider public, please contact us at
-our security mailing list <git-security@googlegroups.com>.
+our security mailing list <git-security@googlegroups.com>.  This is
+a closed list that is limited to people who need to know early about
+vulnerabilities, including:
+
+  - people triaging and fixing reported vulnerabilities
+  - people operating major git hosting sites with many users
+  - people packaging and distributing git to large numbers of people
+
+where these issues are discussed without risk of the information
+leaking out before we're ready to make public announcements.
 
 
 * Repositories and documentation.
