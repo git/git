@@ -77,6 +77,17 @@ test_expect_success 'favour same basenames even with minor differences' '
 	git show HEAD:path1 | sed "s/15/16/" > subdir/path1 &&
 	git status | test_i18ngrep "renamed: .*path1 -> subdir/path1"'
 
+test_expect_success 'two files with same basename and same content' '
+	git reset --hard &&
+	mkdir -p dir/A dir/B &&
+	cp path1 dir/A/file &&
+	cp path1 dir/B/file &&
+	git add dir &&
+	git commit -m 2 &&
+	git mv dir other-dir &&
+	git status | test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file"
+'
+
 test_expect_success 'setup for many rename source candidates' '
 	git reset --hard &&
 	for i in 0 1 2 3 4 5 6 7 8 9;
