@@ -52,4 +52,19 @@ Fixes since v2.8.1
    nothing into an unborn history (which is arguably unusual usage,
    which perhaps was the reason why nobody noticed it).
 
+ * Build updates for MSVC.
+
+ * "git diff -M" used to work better when two originally identical
+   files A and B got renamed to X/A and X/B by pairing A to X/A and B
+   to X/B, but this was broken in the 2.0 timeframe.
+
+ * "git send-pack --all <there>" was broken when its command line
+   option parsing was written in the 2.6 timeframe.
+
+ * When running "git blame $path" with unnormalized data in the index
+   for the path, the data in the working tree was blamed, even though
+   "git add" would not have changed what is already in the index, due
+   to "safe crlf" that disables the line-end conversion.  It has been
+   corrected.
+
 Also contains minor documentation updates and code clean-ups.
