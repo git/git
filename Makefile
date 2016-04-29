@@ -621,7 +621,7 @@ TEST_PROGRAMS_NEED_X += test-svn-fe
 TEST_PROGRAMS_NEED_X += test-urlmatch-normalization
 TEST_PROGRAMS_NEED_X += test-wildmatch
 
-TEST_PROGRAMS = $(patsubst %,%$X,$(TEST_PROGRAMS_NEED_X))
+TEST_PROGRAMS = $(patsubst %,t/helper/%$X,$(TEST_PROGRAMS_NEED_X))
 
 # List built-in command $C whose implementation cmd_$C() is not in
 # builtin/$C.o but is linked in as part of some other command.
@@ -1898,7 +1898,7 @@ VCSSVN_OBJS += vcs-svn/fast_export.o
 VCSSVN_OBJS += vcs-svn/svndiff.o
 VCSSVN_OBJS += vcs-svn/svndump.o
 
-TEST_OBJS := $(patsubst test-%$X,test-%.o,$(TEST_PROGRAMS))
+TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS))
 OBJECTS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
 	$(XDIFF_OBJS) \
 	$(VCSSVN_OBJS) \
@@ -2205,7 +2205,7 @@ bin-wrappers/%: wrap-for-bin.sh
 	@mkdir -p bin-wrappers
 	$(QUIET_GEN)sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	     -e 's|@@BUILD_DIR@@|$(shell pwd)|' \
-	     -e 's|@@PROG@@|$(@F)|' < $< > $@ && \
+	     -e 's|@@PROG@@|$(patsubst test-%,t/helper/test-%,$(@F))|' < $< > $@ && \
 	chmod +x $@
 
 # GNU make supports exporting all variables by "export" without parameters.
@@ -2225,25 +2225,25 @@ perf: all
 
 .PHONY: test perf
 
-test-ctype$X: ctype.o
+t/helper/test-ctype$X: ctype.o
 
-test-date$X: date.o ctype.o
+t/helper/test-date$X: date.o ctype.o
 
-test-delta$X: diff-delta.o patch-delta.o
+t/helper/test-delta$X: diff-delta.o patch-delta.o
 
-test-line-buffer$X: vcs-svn/lib.a
+t/helper/test-line-buffer$X: vcs-svn/lib.a
 
-test-parse-options$X: parse-options.o parse-options-cb.o
+t/helper/test-parse-options$X: parse-options.o parse-options-cb.o
 
-test-svn-fe$X: vcs-svn/lib.a
+t/helper/test-svn-fe$X: vcs-svn/lib.a
 
 .PRECIOUS: $(TEST_OBJS)
 
-test-%$X: test-%.o GIT-LDFLAGS $(GITLIBS)
+t/helper/test-%$X: t/helper/test-%.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(filter %.a,$^) $(LIBS)
 
-check-sha1:: test-sha1$X
-	./test-sha1.sh
+check-sha1:: t/helper/test-sha1$X
+	t/helper/test-sha1.sh
 
 SP_OBJ = $(patsubst %.o,%.sp,$(C_OBJ))
 
@@ -2450,8 +2450,8 @@ profile-clean:
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
 clean: profile-clean coverage-clean
-	$(RM) *.o *.res refs/*.o block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o
-	$(RM) xdiff/*.o vcs-svn/*.o ewah/*.o builtin/*.o
+	$(RM) *.res
+	$(RM) $(OBJECTS)
 	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(VCSSVN_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS) $(NO_INSTALL)
