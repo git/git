@@ -212,4 +212,18 @@ test_expect_success 'blame file with CRLF attributes text' '
 	grep "A U Thor" actual
 '
 
+test_expect_success 'blame file with CRLF core.autocrlf=true' '
+	git config core.autocrlf false &&
+	printf "testcase\r\n" >crlfinrepo &&
+	>.gitattributes &&
+	git add crlfinrepo &&
+	git commit -m "add crlfinrepo" &&
+	git config core.autocrlf true &&
+	mv crlfinrepo tmp &&
+	git checkout crlfinrepo &&
+	rm tmp &&
+	git blame crlfinrepo >actual &&
+	grep "A U Thor" actual
+'
+
 test_done
