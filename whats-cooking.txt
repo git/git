@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2016, #07; Mon, 25)
-X-master-at: 3ad15fd5e17bbb73fb1161ff4e9c3ed254d5b243
-X-next-at: 47c30140aa02f0c43ba32e2926b716ce2e74b57d
+Subject: What's cooking in git.git (Apr 2016, #08; Fri, 29)
+X-master-at: bbc61680168542cf6fd3ae637bde395c73b76f0f
+X-next-at: 5ace31314f460db9aef2f1e2e1bd58016b1541f1
 
-What's cooking in git.git (Apr 2016, #07; Mon, 25)
+What's cooking in git.git (Apr 2016, #08; Fri, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The 'master' branch now has the fifth batch of topics of this cycle.
+The 'master' branch now has the eighths batch of topics of this
+cycle.  On the 'maint' front, 2.8.2 is out.
 
 There are a handful of topics that are stuck; they are marked as
 "Needs review", "Needs an Ack", etc. in the following list.
@@ -25,220 +26,49 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ad/commit-have-m-option (2016-04-07) 2 commits
-  (merged to 'next' on 2016-04-13 at 74088c2)
- + commit: do not ignore an empty message given by -m ''
- + commit: --amend -m '' silently fails to wipe message
+* da/user-useconfigonly (2016-04-01) 2 commits
+  (merged to 'next' on 2016-04-22 at 26845a5)
+ + ident: give "please tell me" message upon useConfigOnly error
+ + ident: check for useConfigOnly before auto-detection of name/email
 
- "git commit" misbehaved in a few minor ways when an empty message
- is given via -m '', all of which has been corrected.
-
-
-* ad/cygwin-wants-rename (2015-08-07) 1 commit
-  (merged to 'next' on 2016-04-19 at 1352ede)
- + config.mak.uname: Cygwin needs OBJECT_CREATION_USES_RENAMES
-
- On Cygwin, object creation uses the "create a temporary and then
- rename it to the final name" pattern, not "create a temporary,
- hardlink it to the final name and then unlink the temporary"
- pattern.
-
- This is necessary to use Git on Windows shared directories, and is
- already enabled for the MinGW and plain Windows builds.  It also
- has been used in Cygwin packaged versions of Git for quite a while.
- See http://thread.gmane.org/gmane.comp.version-control.git/291853
- ($gmane/275680, $gmane/291853).
+ The "user.useConfigOnly" configuration variable makes it an error
+ if users do not explicitly set user.name and user.email.  However,
+ its check was not done early enough and allowed another error to
+ trigger, reporting that the default value we guessed from the
+ system setting was unusable.  This was a suboptimal end-user
+ experience as we want the users to set user.name/user.email without
+ relying on the auto-detection at all.
 
 
-* dt/pre-refs-backend (2016-04-10) 24 commits
-  (merged to 'next' on 2016-04-13 at 0a8f9dd)
- + refs: on symref reflog expire, lock symref not referrent
- + refs: move resolve_ref_unsafe into common code
- + show_head_ref(): check the result of resolve_ref_namespace()
- + check_aliased_update(): check that dst_name is non-NULL
- + checkout_paths(): remove unneeded flag variable
- + cmd_merge(): remove unneeded flag variable
- + fsck_head_link(): remove unneeded flag variable
- + read_raw_ref(): change flags parameter to unsigned int
- + files-backend: inline resolve_ref_1() into resolve_ref_unsafe()
- + read_raw_ref(): manage own scratch space
- + files-backend: break out ref reading
- + resolve_ref_1(): eliminate local variable "bad_name"
- + resolve_ref_1(): reorder code
- + resolve_ref_1(): eliminate local variable
- + resolve_ref_unsafe(): ensure flags is always set
- + resolve_ref_unsafe(): use for loop to count up to MAXDEPTH
- + resolve_missing_loose_ref(): simplify semantics
- + t1430: improve test coverage of deletion of badly-named refs
- + t1430: test for-each-ref in the presence of badly-named refs
- + t1430: don't rely on symbolic-ref for creating broken symrefs
- + t1430: clean up broken refs/tags/shadow
- + t1430: test the output and error of some commands more carefully
- + refs: move for_each_*ref* functions into common code
- + refs: move head_ref{,_submodule} to the common code
+* jc/merge-refuse-new-root (2016-04-21) 2 commits
+  (merged to 'next' on 2016-04-22 at 74eb957)
+ + pull: pass --allow-unrelated-histories to "git merge"
+ + t3033: avoid 'ambiguous refs' warning
 
- Code restructuring around the "refs" area to prepare for pluggable
- refs backends.
+ "git pull" has been taught to pass --allow-unrelated-histories
+ option to underlying "git merge".
 
 
-* en/merge-octopus-fix (2016-04-12) 2 commits
-  (merged to 'next' on 2016-04-13 at 600b479)
- + merge-octopus: abort if index does not match HEAD
- + t6044: new merge testcases for when index doesn't match HEAD
+* jk/push-client-deadlock-fix (2016-04-20) 5 commits
+  (merged to 'next' on 2016-04-22 at d59a2af)
+ + t5504: drop sigpipe=ok from push tests
+ + fetch-pack: isolate sigpipe in demuxer thread
+ + send-pack: isolate sigpipe in demuxer thread
+ + run-command: teach async threads to ignore SIGPIPE
+ + send-pack: close demux pipe before finishing async process
 
- "merge-octopus" strategy did not ensure that the index is clean
- when merge begins.
-
-
-* en/merge-trivial-fix (2016-04-12) 2 commits
-  (merged to 'next' on 2016-04-13 at fb3ea86)
- + builtin/merge.c: fix a bug with trivial merges
- + t7605: add a testcase demonstrating a bug with trivial merges
-
- When "git merge" notices that the merge can be resolved purely at
- the tree level (without having to merge blobs) and the resulting
- tree happens to already exist in the object store, it forgot to
- update the index, which lead to an inconsistent state for later
- operations.
+ "git push" from a corrupt repository that attempts to push a large
+ number of refs deadlocked; the thread to relay rejection notices
+ for these ref updates blocked on writing them to the main thread,
+ after the main thread at the receiving end notices that the push
+ failed and decides not to read these notices and return a failure.
 
 
-* ew/send-email-drop-data-dumper (2016-04-06) 1 commit
-  (merged to 'next' on 2016-04-13 at 180266c)
- + send-email: do not load Data::Dumper
+* js/replace-edit-use-editor-configuration (2016-04-20) 1 commit
+  (merged to 'next' on 2016-04-22 at 8df6d30)
+ + replace --edit: respect core.editor
 
- Code clean-up.
-
-
-* ew/send-email-readable-message-id (2016-04-06) 1 commit
-  (merged to 'next' on 2016-04-13 at 422959a)
- + send-email: more meaningful Message-ID
-
- "git send-email" now uses a more readable timestamps when
- formulating a message ID.
-
-
-* jc/http-socks5h (2016-04-10) 1 commit
-  (merged to 'next' on 2016-04-13 at eb27afc)
- + http: differentiate socks5:// and socks5h://
-
- The socks5:// proxy support added back in 2.6.4 days was not aware
- that socks5h:// proxies behave differently.
-
-
-* jc/rerere-multi (2016-04-06) 11 commits
-  (merged to 'next' on 2016-04-13 at 3db2753)
- + rerere: adjust 'forget' to multi-variant world order
- + rerere: split code to call ll_merge() further
- + rerere: move code related to "forget" together
- + rerere: gc and clear
- + rerere: do use multiple variants
- + t4200: rerere a merge with two identical conflicts
- + rerere: allow multiple variants to exist
- + rerere: delay the recording of preimage
- + rerere: handle leftover rr-cache/$ID directory and postimage files
- + rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
- + rerere: split conflict ID further
-
- "git rerere" can encounter two or more files with the same conflict
- signature that have to be resolved in different ways, but there was
- no way to record these separate resolutions.
-
-
-* jc/xstrfmt-null-with-prec-0 (2016-04-07) 1 commit
-  (merged to 'next' on 2016-04-13 at 2457462)
- + setup.c: do not feed NULL to "%.*s" even with precision 0
-
- Code cleanup.
-
-
-* jk/do-not-printf-NULL (2016-04-10) 3 commits
-  (merged to 'next' on 2016-04-13 at 60912e3)
- + git_config_set_multivar_in_file: handle "unset" errors
- + git_config_set_multivar_in_file: all non-zero returns are errors
- + config: lower-case first word of error strings
-
- "git config" had a codepath that tried to pass a NULL to
- printf("%s"), which nobody seems to have noticed.
-
-
-* jk/use-write-script-more (2016-04-12) 3 commits
-  (merged to 'next' on 2016-04-13 at d6718bf)
- + t3404: use write_script
- + t1020: do not overuse printf and use write_script
- + t5532: use write_script
-
- Code clean-up.
-
-
-* ky/imap-send (2016-04-13) 2 commits
-  (merged to 'next' on 2016-04-13 at 52cf493)
- + imap-send: fix CRAM-MD5 response calculation
- + imap-send: check for NOLOGIN capability only when using LOGIN command
-
- Support for CRAM-MD5 authentication method in "git imap-send" did
- not work well.
-
-
-* ky/imap-send-openssl-1.1.0 (2016-04-08) 4 commits
-  (merged to 'next' on 2016-04-13 at 49d2643)
- + configure: remove checking for HMAC_CTX_cleanup
- + imap-send: avoid deprecated TLSv1_method()
- + imap-send: check NULL return of SSL_CTX_new()
- + imap-send: use HMAC() function provided by OpenSSL
-
- Upcoming OpenSSL 1.1.0 will break compilation b updating a few APIs
- we use in imap-send, which has been adjusted for the change.
-
-
-* sb/submodule-helper-clone-regression-fix (2016-04-01) 6 commits
-  (merged to 'next' on 2016-04-13 at c6584bb)
- + submodule--helper, module_clone: catch fprintf failure
- + submodule--helper: do not borrow absolute_path() result for too long
- + submodule--helper, module_clone: always operate on absolute paths
- + submodule--helper clone: create the submodule path just once
- + submodule--helper: fix potential NULL-dereference
- + recursive submodules: test for relative paths
- (this branch is used by sb/submodule-init.)
-
- A partial rewrite of "git submodule" in the 2.7 timeframe changed
- the way the gitdir: pointer in the submodules point at the real
- repository location to use absolute paths by accident.  This has
- been corrected.
-
-
-* sb/submodule-path-misc-bugs (2016-03-30) 6 commits
-  (merged to 'next' on 2016-04-18 at 9daa5ce)
- + t7407: make expectation as clear as possible
- + submodule update: test recursive path reporting from subdirectory
- + submodule update: align reporting path for custom command execution
- + submodule status: correct path handling in recursive submodules
- + submodule update --init: correct path handling in recursive submodules
- + submodule foreach: correct path display in recursive submodules
- (this branch is used by sb/submodule-init.)
-
- "git submodule" reports the paths of submodules the command
- recurses into, but this was incorrect when the command was not run
- from the root level of the superproject.
-
---------------------------------------------------
-[New Topics]
-
-* js/name-rev-use-oldest-ref (2016-04-22) 1 commit
- - name-rev: include taggerdate in considering the best name
-
- "git describe --contains" often made a hard-to-justify choice of
- tag to give name to a given commit, because it tried to come up
- with a name with smallest number of hops from a tag, causing an old
- commit whose close descendant that is recently tagged were not
- described with respect to an old tag but with a newer tag.  It did
- not help that its computation of "hop" count was further tweaked to
- penalize being on a side branch of a merge.  The logic has been
- updated to favor using the tag with the oldest tagger date, which
- is a lot easier to explain to the end users: "We describe a commit
- in terms of the (chronologically) oldest tag that contains the
- commit."
-
- Will merge to 'next'.
+ "git replace -e" did not honour "core.editor" configuration.
 
 
 * js/win32-mmap (2016-04-22) 3 commits
@@ -247,69 +77,224 @@ of the repositories listed at
  + mmap(win32): avoid copy-on-write when it is unnecessary
  + win32mmap: set errno appropriately
 
- mmap emulation on Windows has been optimized.
+ mmap emulation on Windows has been optimized and work better without
+ consuming paging store when not needed.
+
+
+* nd/test-helpers (2016-04-15) 2 commits
+  (merged to 'next' on 2016-04-22 at 55ea5cd)
+ + test helpers: move test-* to t/helper/ subdirectory
+ + Makefile: clean *.o files we create
+
+ Sources to many test helper binaries (and the generated helpers)
+ have been moved to t/helper/ subdirectory to reduce clutter at the
+ top level of the tree.
+
+
+* sb/mv-submodule-fix (2016-04-19) 1 commit
+  (merged to 'next' on 2016-04-22 at 089e788)
+ + mv: allow moving nested submodules
+
+ "git mv old new" did not adjust the path for a submodule that lives
+ as a subdirectory inside old/ directory correctly.
+
+
+* st/verify-tag (2016-04-22) 6 commits
+  (merged to 'next' on 2016-04-22 at 98ba239)
+ + tag -v: verify directly rather than exec-ing verify-tag
+ + verify-tag: move tag verification code to tag.c
+ + verify-tag: prepare verify_tag for libification
+ + verify-tag: update variable name and type
+ + t7030: test verifying multiple tags
+ + builtin/verify-tag.c: ignore SIGPIPE in gpg-interface
+
+ Unify internal logic between "git tag -v" and "git verify-tag"
+ commands by making one directly call into the other.
+
+--------------------------------------------------
+[New Topics]
+
+* ab/hooks (2016-04-26) 4 commits
+ - hooks: allow customizing where the hook directory is
+ - githooks.txt: minor improvements to the grammar & phrasing
+ - githooks.txt: amend dangerous advice about 'update' hook ACL
+ - githooks.txt: improve the intro section
+
+ A new configuration variable core.hooksPath allows customizing
+ where the hook directory is.
+
+ Almost there.
+ ($gmane/292635)
+
+
+* jc/merge-impossible-no-commit (2016-04-26) 2 commits
+ - merge: warn --no-commit merge when no new commit is created
+ - merge: do not contaminate option_commit with --squash
+
+ "git merge --no-commit" silently succeeded when there is no need to
+ create any commit, either when you are more recent than the commit
+ you tried to merge, or you can fast-forward to the commit you tried
+ to merge.  The command gives a warning message in such cases.
+
+ Just tying loose ends in a discussion.  Unless somebody else
+ champions this topic, I'll drop it.
+
+
+* jk/fix-attribute-macro-in-2.5 (2016-04-25) 1 commit
+  (merged to 'next' on 2016-04-27 at 2e42613)
+ + remote.c: spell __attribute__ correctly
+
+ Code fixup.
 
  Will merge to 'master'.
 
 
-* nd/remove-unused (2016-04-22) 2 commits
- - wrapper.c: delete dead function git_mkstemps()
- - dir.c: remove dead function fnmatch_icase()
+* js/http-custom-headers (2016-04-27) 1 commit
+  (merged to 'next' on 2016-04-27 at 0c97a50)
+ + http: support sending custom HTTP headers
 
- Code cleanup.
+ HTTP transport clients learned to throw extra HTTP headers at the
+ server, specified via http.extraHeader configuration variable.
+
+ Will merge to 'master'.
+
+
+* sb/bisect (2016-04-15) 22 commits
+ - SQUASH???
+ - bisect: get back halfway shortcut
+ - bisect: compute best bisection in compute_relevant_weights()
+ - bisect: use a bottom-up traversal to find relevant weights
+ - bisect: prepare for different algorithms based on find_all
+ - bisect: rename count_distance() to compute_weight()
+ - bisect: make total number of commits global
+ - bisect: introduce distance_direction()
+ - bisect: extract get_distance() function from code duplication
+ - bisect: use commit instead of commit list as arguments when appropriate
+ - bisect: replace clear_distance() by unique markers
+ - bisect: use struct node_data array instead of int array
+ - bisect: get rid of recursion in count_distance()
+ - bisect: make algorithm behavior independent of DEBUG_BISECT
+ - bisect: make bisect compile if DEBUG_BISECT is set
+ - bisect: plug the biggest memory leak
+ - bisect: add test for the bisect algorithm
+ - t6030: generalize test to not rely on current implementation
+ - t: use test_cmp_rev() where appropriate
+ - t/test-lib-functions.sh: generalize test_cmp_rev
+ - bisect: allow 'bisect run' if no good commit is known
+ - bisect: write about `bisect next` in documentation
+
+ The internal algorithm used in "git bisect" to find the next commit
+ to check has been optimized greatly.
+
+ Expecting a reroll.
+ ($gmane/291163)
+
+
+* sb/config-exit-status-list (2016-04-26) 1 commit
+  (merged to 'next' on 2016-04-27 at 44fe343)
+ + config doc: improve exit code listing
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* mh/split-under-lock (2016-04-27) 29 commits
+ - lock_ref_sha1_basic(): only handle REF_NODEREF mode
+ - commit_ref_update(): remove the flags parameter
+ - lock_ref_for_update(): don't resolve symrefs
+ - lock_ref_for_update(): don't re-read non-symbolic references
+ - refs: resolve symbolic refs first
+ - ref_transaction_update(): check refname_is_safe() at a minimum
+ - unlock_ref(): move definition higher in the file
+ - lock_ref_for_update(): new function
+ - add_update(): initialize the whole ref_update
+ - verify_refname_available(): adjust constness in declaration
+ - refs: don't dereference on rename
+ - refs: allow log-only updates
+ - delete_branches(): use resolve_refdup()
+ - ref_transaction_commit(): correctly report close_ref() failure
+ - ref_transaction_create(): disallow recursive pruning
+ - refs: make error messages more consistent
+ - lock_ref_sha1_basic(): remove unneeded local variable
+ - read_raw_ref(): improve docstring
+ - read_raw_ref(): rename symref argument to referent
+ - read_raw_ref(): clear *type at start of function
+ - read_raw_ref(): rename flags argument to type
+ - ref_transaction_commit(): remove local variable n
+ - rename_ref(): remove unneeded local variable
+ - commit_ref_update(): write error message to *err, not stderr
+ - refname_is_safe(): insist that the refname already be normalized
+ - refname_is_safe(): don't allow the empty string
+ - refname_is_safe(): use skip_prefix()
+ - remove_dir_recursively(): add docstring
+ - safe_create_leading_directories(): improve docstring
+
+ Further preparatory work on the refs API before the pluggable
+ backend series can land.
+
+ Almost there.
+ ($gmane/292772)
+
+
+* bn/http-cookiefile-config (2016-04-29) 2 commits
+ - http: expand http.cookieFile as a path
+ - Documentation: config: improve word ordering for http.cookieFile
+ (this branch uses jc/config-pathname-type.)
+
+ "http.cookieFile" configuration variable clearly wants a pathname,
+ but we forgot to treat it as such by e.g. applying tilde expansion.
+
+ Waiting for an Ack to what's queued with tweaks, or a reroll.
+ ($gmane/292969)
+
+
+* ew/doc-split-pack-disables-bitmap (2016-04-28) 1 commit
+ - pack-objects: warn on split packs disabling bitmaps
+
+ Doc update.
 
  Will merge to 'next'.
 
 
-* rt/string-list-lookup-cleanup (2016-04-25) 1 commit
- - string_list: use string-list API in unsorted_string_list_lookup()
+* jc/config-pathname-type (2016-04-29) 1 commit
+ - config: describe 'pathname' value type
+ (this branch is used by bn/http-cookiefile-config.)
 
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* sg/test-lib-simplify-expr-away (2016-04-22) 1 commit
- - test-lib: simplify '--option=value' parsing
-
- Code cleanup.
+ Consolidate description of tilde-expansion that is done to
+ configuration variables that take pathname to a single place.
 
  Will merge to 'next'.
 
 
-* ew/fast-import-unpack-limit (2016-04-24) 1 commit
- - fast-import: implement unpack limit
+* jk/submodule-config-sanitize-fix (2016-04-28) 5 commits
+ - submodule: use prepare_submodule_repo_env consistently
+ - submodule--helper: move config-sanitizing to submodule.c
+ - submodule: export sanitized GIT_CONFIG_PARAMETERS
+ - t5550: break submodule config test into multiple sub-tests
+ - t5550: fix typo in $HTTPD_URL
 
- "git fast-import" learned the same performance trick to avoid
- creating too small a packfile as "git fetch" and "git push" have,
- using *.unpackLimit configuration.
+ An earlier addition of "sanitize_submodule_env" with 14111fc4 (git:
+ submodule honor -c credential.* from command line, 2016-02-29)
+ turned out to be a convoluted no-op; implement what it wanted to do
+ correctly.
 
- Need to pick up the rerolled version.
- ($gmane/292562)
+ With a rethink of the merit of "sanitization" going on, we may end
+ up doing the configuration propagation very differently, though.
 
-
-* jd/send-email-to-whom (2016-04-25) 1 commit
- - send-email: fix grammo in the prompt that asks e-mail recipients
-
- A question by "git send-email" to ask the identity of the sender
- has been updated.
-
- Will merge to 'next'.
+ Will hold.
 
 
-* ld/p4-test-py3 (2016-04-25) 2 commits
- - git-p4 tests: work with python3 as well as python2
- - git-p4 tests: cd to testdir before running python
+* mh/connect-leak (2016-04-28) 1 commit
+ - git_connect(): fix memory leak with CONNECT_DIAG_URL
 
- The test scripts for "git p4" (but not "git p4" implementation
- itself) has been updated so that they would work even on a system
- where the installed version of Python is python 3.
+ Is already made obsolete with a patch in flight under discussion.
+ ($gmane/292962)
 
 
-* ls/p4-lfs-test-fix-2.7.0 (2016-04-24) 1 commit
- - t9824: fix broken &&-chain in a subshell
-
- Fix a broken test.
+* sb/misc-cleanups (2016-04-28) 2 commits
+ - submodule-config: don't shadow `cache`
+ - config.c: drop local variable
 
  Will merge to 'next'.
 
@@ -506,69 +491,130 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* sb/clone-shallow-passthru (2016-04-25) 1 commit
- - clone: add `--shallow-submodules` flag
+* js/name-rev-use-oldest-ref (2016-04-22) 1 commit
+  (merged to 'next' on 2016-04-27 at 8fdc0ac)
+ + name-rev: include taggerdate in considering the best name
+
+ "git describe --contains" often made a hard-to-justify choice of
+ tag to give name to a given commit, because it tried to come up
+ with a name with smallest number of hops from a tag, causing an old
+ commit whose close descendant that is recently tagged were not
+ described with respect to an old tag but with a newer tag.  It did
+ not help that its computation of "hop" count was further tweaked to
+ penalize being on a side branch of a merge.  The logic has been
+ updated to favor using the tag with the oldest tagger date, which
+ is a lot easier to explain to the end users: "We describe a commit
+ in terms of the (chronologically) oldest tag that contains the
+ commit."
+
+ Will merge to 'master'.
+
+
+* nd/remove-unused (2016-04-22) 2 commits
+  (merged to 'next' on 2016-04-27 at 7917efa)
+ + wrapper.c: delete dead function git_mkstemps()
+ + dir.c: remove dead function fnmatch_icase()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rt/string-list-lookup-cleanup (2016-04-25) 1 commit
+  (merged to 'next' on 2016-04-27 at 53514e1)
+ + string_list: use string-list API in unsorted_string_list_lookup()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* sg/test-lib-simplify-expr-away (2016-04-22) 1 commit
+  (merged to 'next' on 2016-04-27 at 8f40952)
+ + test-lib: simplify '--option=value' parsing
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* ew/fast-import-unpack-limit (2016-04-24) 1 commit
+ - fast-import: implement unpack limit
+
+ "git fast-import" learned the same performance trick to avoid
+ creating too small a packfile as "git fetch" and "git push" have,
+ using *.unpackLimit configuration.
+
+ Need to pick up the rerolled version.
+ ($gmane/292562)
+
+
+* jd/send-email-to-whom (2016-04-25) 1 commit
+  (merged to 'next' on 2016-04-27 at 47ae363)
+ + send-email: fix grammo in the prompt that asks e-mail recipients
+
+ A question by "git send-email" to ask the identity of the sender
+ has been updated.
+
+ Will merge to 'master'.
+
+
+* ld/p4-test-py3 (2016-04-26) 3 commits
+  (merged to 'next' on 2016-04-27 at d5d5fca)
+ + git-p4 tests: time_in_seconds should use $PYTHON_PATH
+ + git-p4 tests: work with python3 as well as python2
+ + git-p4 tests: cd to / before running python
+
+ The test scripts for "git p4" (but not "git p4" implementation
+ itself) has been updated so that they would work even on a system
+ where the installed version of Python is python 3.
+
+ Will merge to 'master'.
+
+
+* ls/p4-lfs-test-fix-2.7.0 (2016-04-29) 2 commits
+  (merged to 'next' on 2016-04-29 at da56b67)
+ + t9824: fix wrong reference value
+  (merged to 'next' on 2016-04-27 at be87c63)
+ + t9824: fix broken &&-chain in a subshell
+
+ Fix a broken test.
+
+ Will merge to 'master'.
+
+
+* sb/clone-shallow-passthru (2016-04-26) 1 commit
+  (merged to 'next' on 2016-04-27 at 3112b24)
+ + clone: add `--shallow-submodules` flag
 
  "git clone" learned "--shallow-submodules" option.
-
- Modulo minor nits, looked ready.
- ($gmane/292539)
-
-
-* da/user-useconfigonly (2016-04-01) 2 commits
-  (merged to 'next' on 2016-04-22 at 26845a5)
- + ident: give "please tell me" message upon useConfigOnly error
- + ident: check for useConfigOnly before auto-detection of name/email
-
- The "user.useConfigOnly" configuration variable makes it an error
- if users do not explicitly set user.name and user.email.  However,
- its check was not done early enough and allowed another error to
- trigger, reporting that the default value we guessed from the
- system setting was unusable.  This was a suboptimal end-user
- experience as we want the users to set user.name/user.email without
- relying on the auto-detection at all.
 
  Will merge to 'master'.
 
 
 * jd/p4-jobs-in-commit (2016-04-19) 2 commits
- - git-p4: add P4 jobs to git commit message
- - git-p4: clean-up code style in tests
+  (merged to 'next' on 2016-04-27 at 654d946)
+ + git-p4: add P4 jobs to git commit message
+ + git-p4: clean-up code style in tests
 
  "git p4" learned to record P4 jobs in Git commit that imports from
  the history in Perforce.
 
- Will merge to 'next'.
-
-
-* js/replace-edit-use-editor-configuration (2016-04-20) 1 commit
-  (merged to 'next' on 2016-04-22 at 8df6d30)
- + replace --edit: respect core.editor
-
- "git replace -e" did not honour "core.editor" configuration.
-
  Will merge to 'master'.
 
 
-* ls/p4-lfs (2016-04-19) 2 commits
+* ls/p4-lfs (2016-04-28) 3 commits
  - git-p4: fix Git LFS pointer parsing
+ - travis-ci: express Linux/OS X dependency versions more clearly
  - travis-ci: update Git-LFS and P4 to the latest version
 
  Recent update to Git LFS broke "git p4" by changing the output from
  its "lfs pointer" subcommand.
 
-
-* sb/mv-submodule-fix (2016-04-19) 1 commit
-  (merged to 'next' on 2016-04-22 at 089e788)
- + mv: allow moving nested submodules
-
- "git mv old new" did not adjust the path for a submodule that lives
- as a subdirectory inside old/ directory correctly.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* tb/convert-eol-autocrlf (2016-04-25) 10 commits
+* tb/convert-eol-autocrlf (2016-04-29) 10 commits
  - ce_compare_data() did not respect conversion
  - t6038; use crlf on all platforms
  - convert.c: more safer crlf handling with text attribute
@@ -587,24 +633,26 @@ of the repositories listed at
  refrains from applying eol conversion if it found the path is not
  text.  Also setting core.autocrlf to 'input' and core.eol to 'crlf'
  used to be rejected, but because the code gives precedence to
- core.autcrlf, there is no need to, hence we no longer reject the
+ core.autocrlf, there is no need to, hence we no longer reject the
  combination.
 
- Modulo minor nits, looked almost ready.
- ($gmane/292521, $gmane/292550)
+ The last step seems to be identical to what I earlier did and
+ discarded because the approach is fundamentally wrong, but I may be
+ misreading the patch.
 
 
 * bc/object-id (2016-04-25) 6 commits
- - match-trees: convert several leaf functions to use struct object_id
- - tree-walk: convert tree_entry_extract() to use struct object_id
- - struct name_entry: use struct object_id instead of unsigned char sha1[20]
- - match-trees: convert shift_tree() and shift_tree_by() to use object_id
- - test-match-trees: convert to use struct object_id
- - sha1-name: introduce a get_oid() function
+  (merged to 'next' on 2016-04-29 at 02f13a4)
+ + match-trees: convert several leaf functions to use struct object_id
+ + tree-walk: convert tree_entry_extract() to use struct object_id
+ + struct name_entry: use struct object_id instead of unsigned char sha1[20]
+ + match-trees: convert shift_tree() and shift_tree_by() to use object_id
+ + test-match-trees: convert to use struct object_id
+ + sha1-name: introduce a get_oid() function
 
  Move from unsigned char[20] to struct object_id continues.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ep/http-curl-trace (2016-04-20) 3 commits
@@ -643,39 +691,12 @@ of the repositories listed at
 
 
 * bw/rebase-merge-entire-branch (2016-04-24) 1 commit
- - git-rebase--merge: don't include absent parent as a base
+  (merged to 'next' on 2016-04-29 at 7a9487f)
+ + git-rebase--merge: don't include absent parent as a base
 
  "git rebase -m" could be asked to rebase an entire branch starting
  from the root, but failed by assuming that there always is a parent
  commit to the first commit on the branch.
-
- Will merge to 'next'.
-
-
-* jk/push-client-deadlock-fix (2016-04-20) 5 commits
-  (merged to 'next' on 2016-04-22 at d59a2af)
- + t5504: drop sigpipe=ok from push tests
- + fetch-pack: isolate sigpipe in demuxer thread
- + send-pack: isolate sigpipe in demuxer thread
- + run-command: teach async threads to ignore SIGPIPE
- + send-pack: close demux pipe before finishing async process
-
- "git push" from a corrupt repository that attempts to push a large
- number of refs deadlocked; the thread to relay rejection notices
- for these ref updates blocked on writing them to the main thread,
- after the main thread at the receiving end notices that the push
- failed and decides not to read these notices and return a failure.
-
- Will merge to 'master'.
-
-
-* jc/merge-refuse-new-root (2016-04-21) 2 commits
-  (merged to 'next' on 2016-04-22 at 74eb957)
- + pull: pass --allow-unrelated-histories to "git merge"
- + t3033: avoid 'ambiguous refs' warning
-
- "git pull" has been taught to pass --allow-unrelated-histories
- option to underlying "git merge".
 
  Will merge to 'master'.
 
@@ -697,13 +718,14 @@ of the repositories listed at
 
 
 * en/merge-fixes (2016-04-12) 2 commits
- - merge-recursive: do not check working copy when creating a virtual merge base
- - merge-recursive: remove duplicate code
+  (merged to 'next' on 2016-04-27 at 14d7d10)
+ + merge-recursive: do not check working copy when creating a virtual merge base
+ + merge-recursive: remove duplicate code
 
  "merge-recursive" strategy incorrectly checked if a path that is
  involved in its internal merge exists in the working tree.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/fsck-nul-in-commit (2016-04-14) 2 commits
@@ -714,7 +736,8 @@ of the repositories listed at
  potential error and warn.
 
 
-* jc/ll-merge-internal (2016-04-14) 2 commits
+* jc/ll-merge-internal (2016-04-27) 3 commits
+ - t6036: remove pointless test that expects failure
  - ll-merge: use a longer conflict marker for internal merge
  - ll-merge: fix typo in comment
 
@@ -730,30 +753,22 @@ of the repositories listed at
  more readable by using a blank line as a strong hint that the
  contents before and after it belong to a logically separate unit.
 
- Will merge to 'master'.
+ Will merge to 'master' after removing the experimentation knob.
 
 
-* nd/test-helpers (2016-04-15) 2 commits
-  (merged to 'next' on 2016-04-22 at 55ea5cd)
- + test helpers: move test-* to t/helper/ subdirectory
- + Makefile: clean *.o files we create
-
- Sources to many test helper binaries (and the generated helpers)
- have been moved to t/helper/ subdirectory to reduce clutter at the
- top level of the tree.
-
- Will merge to 'master'.
-
-
-* sb/submodule-init (2016-04-16) 4 commits
- - submodule: port init from shell to C
- - submodule: port resolve_relative_url from shell to C
- - Merge branch 'sb/submodule-path-misc-bugs' into sb/submodule-init
- - Merge branch 'sb/submodule-helper-clone-regression-fix' into sb/submodule-init
+* sb/submodule-init (2016-04-29) 6 commits
+  (merged to 'next' on 2016-04-29 at 3e81ee88)
+ + submodule--helper update-clone: abort gracefully on missing .gitmodules
+ + submodule init: fail gracefully with a missing .gitmodules file
+  (merged to 'next' on 2016-04-27 at afaad81)
+ + submodule: port init from shell to C
+ + submodule: port resolve_relative_url from shell to C
+ + Merge branch 'sb/submodule-path-misc-bugs' into sb/submodule-init
+ + Merge branch 'sb/submodule-helper-clone-regression-fix' into sb/submodule-init
 
  Update of "git submodule" to move pieces of logic to C continues.
 
- Will merge to 'next'.
+ Will cook for a bit more in 'next'.
 
 
 * jc/send-email-skip-backup (2016-04-12) 1 commit
@@ -769,11 +784,12 @@ of the repositories listed at
 
 
 * nf/mergetool-prompt (2016-04-25) 1 commit
- - difftool/mergetool: make the form of yes/no questions consistent
+  (merged to 'next' on 2016-04-27 at 1c992df)
+ + difftool/mergetool: make the form of yes/no questions consistent
 
  UI consistency improvements.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * va/i18n-misc-updates (2016-04-19) 9 commits
@@ -792,27 +808,14 @@ of the repositories listed at
  Comments?  They looked all sensible to me.
 
 
-* jc/drop-git-spec-in (2016-04-06) 1 commit
+* jc/drop-git-spec-in (2016-04-27) 2 commits
+  (merged to 'next' on 2016-04-27 at 2b85030)
+ + Makefile: remove dependency on git.spec
   (merged to 'next' on 2016-04-22 at 531583f)
  + Makefile: stop pretending to support rpmbuild
 
  As nobody maintains our in-tree git.spec.in and distros use their
  own spec file, we stopped pretending that we support "make rpm".
-
- Will merge to 'master'.
-
-
-* st/verify-tag (2016-04-22) 6 commits
-  (merged to 'next' on 2016-04-22 at 98ba239)
- + tag -v: verify directly rather than exec-ing verify-tag
- + verify-tag: move tag verification code to tag.c
- + verify-tag: prepare verify_tag for libification
- + verify-tag: update variable name and type
- + t7030: test verifying multiple tags
- + builtin/verify-tag.c: ignore SIGPIPE in gpg-interface
-
- Unify internal logic between "git tag -v" and "git verify-tag"
- commands by making one directly call into the other.
 
  Will merge to 'master'.
 
@@ -842,39 +845,43 @@ of the repositories listed at
  Needs review.
 
 
-* xy/format-patch-base (2016-04-22) 4 commits
- . format-patch: introduce format.useAutoBase configuration
- . format-patch: introduce --base=auto option
- . format-patch: add '--base' option to record base tree info
- . patch-ids: make commit_patch_id() a public helper function
+* xy/format-patch-base (2016-04-26) 4 commits
+ - format-patch: introduce format.useAutoBase configuration
+ - format-patch: introduce --base=auto option
+ - format-patch: add '--base' option to record base tree info
+ - patch-ids: make commit_patch_id() a public helper function
 
  "git format-patch" learned a new "--base" option to record what
  (public, well-known) commit the original series was built on in
  its output.
 
- Review comments sent.
- ($gmane/292168)
+ Looking close to be ready.
+ ($gmane/292622).
 
 
-* dt/index-helper (2016-04-14) 16 commits
- - read-cache: config for waiting for index-helper
- - index-helper: optionally automatically run
- - index-helper: autorun mode
- - index-helper: don't run if already running
- - index-helper: kill mode
- - unpack-trees: preserve index extensions
- - update-index: enable/disable watchman support
- - index-helper: use watchman to avoid refreshing index with lstat()
- - index-helper: add watchman support to reduce index refresh cost
- - read-cache: add watchman 'WAMA' extension
- - index-helper: add --detach
- - daemonize(): set a flag before exiting the main process
- - index-helper: add --strict
- - index-helper: new daemon for caching index and related stuff
- - read-cache: allow to keep mmap'd memory after reading
- - read-cache.c: fix constness of verify_hdr()
+* dt/index-helper (2016-04-28) 19 commits
+ . untracked-cache: config option
+ . Add tracing to measure where most of the time is spent
+ . index-helper: optionally automatically run
+ . index-helper: autorun mode
+ . index-helper: don't run if already running
+ . index-helper: kill mode
+ . watchman: add a config option to enable the extension
+ . unpack-trees: preserve index extensions
+ . update-index: enable/disable watchman support
+ . index-helper: use watchman to avoid refreshing index with lstat()
+ . Add watchman support to reduce index refresh cost
+ . read-cache: add watchman 'WAMA' extension
+ . index-helper: add --detach
+ . daemonize(): set a flag before exiting the main process
+ . index-helper: log warnings
+ . index-helper: add --strict
+ . index-helper: new daemon for caching index and related stuff
+ . read-cache: allow to keep mmap'd memory after reading
+ . read-cache.c: fix constness of verify_hdr()
 
  Needs review.
+ t7900#5 seems to fail for me.
 
 
 * jc/bundle (2016-03-03) 6 commits
