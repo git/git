@@ -141,13 +141,13 @@ test_expect_success 'GIT_PREFIX for !alias' '
 test_expect_success 'GIT_PREFIX for built-ins' '
 	# Use GIT_EXTERNAL_DIFF to test that the "diff" built-in
 	# receives the GIT_PREFIX variable.
-	printf "dir/" >expect &&
-	printf "#!/bin/sh\n" >diff &&
-	printf "printf \"\$GIT_PREFIX\"" >>diff &&
-	chmod +x diff &&
+	echo "dir/" >expect &&
+	write_script diff <<-\EOF &&
+	printf "%s\n" "$GIT_PREFIX"
+	EOF
 	(
 		cd dir &&
-		printf "change" >two &&
+		echo "change" >two &&
 		GIT_EXTERNAL_DIFF=./diff git diff >../actual
 		git checkout -- two
 	) &&
