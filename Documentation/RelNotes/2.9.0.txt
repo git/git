@@ -85,12 +85,27 @@ UI, Workflows & Features
 
  * "git send-email" now uses a more readable timestamps when
    formulating a message ID.
-   (merge f916ab0 ew/send-email-readable-message-id later to maint).
 
  * "git rerere" can encounter two or more files with the same conflict
    signature that have to be resolved in different ways, but there was
    no way to record these separate resolutions.
    (merge 890fca8 jc/rerere-multi later to maint).
+
+ * "git p4" learned to record P4 jobs in Git commit that imports from
+   the history in Perforce.
+
+ * "git describe --contains" often made a hard-to-justify choice of
+   tag to give name to a given commit, because it tried to come up
+   with a name with smallest number of hops from a tag, causing an old
+   commit whose close descendant that is recently tagged were not
+   described with respect to an old tag but with a newer tag.  It did
+   not help that its computation of "hop" count was further tweaked to
+   penalize being on a side branch of a merge.  The logic has been
+   updated to favor using the tag with the oldest tagger date, which
+   is a lot easier to explain to the end users: "We describe a commit
+   in terms of the (chronologically) oldest tag that contains the
+   commit."
+   (merge 7550424 js/name-rev-use-oldest-ref later to maint).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -98,7 +113,6 @@ Performance, Internal Implementation, Development Support etc.
  * The embedded args argv-array in the child process is used to build
    the command line to run pack-objects instead of using a separate
    array of strings.
-   (merge 65a3629 mp/upload-pack-use-embedded-args later to maint).
 
  * A test for tags has been restructured so that more parts of it can
    easily be run on a platform without a working GnuPG.
@@ -107,7 +121,6 @@ Performance, Internal Implementation, Development Support etc.
    repository (among other things), are now uniformly available to Git
    subcommand implementations, and Git avoids attempting to touch
    references when we are not in a repository.
-   (merge 11e6b3f jk/startup-info later to maint).
 
  * The command line argument parser for "receive-pack" has been
    rewritten to use parse-options.
@@ -117,20 +130,16 @@ Performance, Internal Implementation, Development Support etc.
    parallel.
 
  * Rename bunch of tests on "git clone" for better organization.
-   (merge 8fbb03a sb/clone-t57-t56 later to maint).
 
  * The tests that involve running httpd leaked the system-wide
    configuration in /etc/gitconfig to the tested environment.
-   (merge 1fad503 jk/test-httpd-config-nosystem later to maint).
 
  * Build updates for MSVC.
-   (merge 0ef60af ss/msvc later to maint).
 
  * The repository set-up sequence has been streamlined (the biggest
    change is that there is no longer git_config_early()), so that we
    do not attempt to look into refs/* when we know we do not have a
    Git repository.
-   (merge 274db84 jk/check-repository-format later to maint).
 
  * Code restructuring around the "refs" area to prepare for pluggable
    refs backends.
@@ -149,6 +158,9 @@ Performance, Internal Implementation, Development Support etc.
    commands by making one directly call into the other.
    (merge bef234b st/verify-tag later to maint).
 
+ * "merge-recursive" strategy incorrectly checked if a path that is
+   involved in its internal merge exists in the working tree.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -163,98 +175,78 @@ notes for details).
  * "git config --get-urlmatch", unlike other variants of the "git
    config --get" family, did not signal error with its exit status
    when there was no matching configuration.
-   (merge 24990b2 jk/config-get-urlmatch later to maint).
 
  * The "--local-env-vars" and "--resolve-git-dir" options of "git
    rev-parse" failed to work outside a repository when the command's
    option parsing was rewritten in 1.8.5 era.
-   (merge fc7d47f jk/rev-parse-local-env-vars later to maint).
 
  * "git index-pack --keep[=<msg>] pack-$name.pack" simply did not work.
-   (merge 0e94242 jc/maint-index-pack-keep later to maint).
 
  * Fetching of history by naming a commit object name directly didn't
    work across remote-curl transport.
-   (merge 754ecb1 gf/fetch-pack-direct-object-fetch later to maint).
 
  * A small memory leak in an error codepath has been plugged in xdiff
    code.
-   (merge 87f1625 rj/xdiff-prepare-plug-leak-on-error-codepath later to maint).
 
  * strbuf_getwholeline() did not NUL-terminate the buffer on certain
    corner cases in its error codepath.
-   (merge b709043 jk/getwholeline-getdelim-empty later to maint).
 
  * "git mergetool" did not work well with conflicts that both sides
    deleted.
-   (merge a298604 da/mergetool-delete-delete-conflict later to maint).
 
  * "git send-email" had trouble parsing alias file in mailrc format
    when lines in it had trailing whitespaces on them.
-   (merge a277d1e jk/send-email-rtrim-mailrc-alias later to maint).
 
  * When "git merge --squash" stopped due to conflict, the concluding
    "git commit" failed to read in the SQUASH_MSG that shows the log
    messages from all the squashed commits.
-   (merge b64c1e0 ss/commit-squash-msg later to maint).
 
  * "git merge FETCH_HEAD" dereferenced NULL pointer when merging
    nothing into an unborn history (which is arguably unusual usage,
    which perhaps was the reason why nobody noticed it).
-   (merge b84e65d jv/merge-nothing-into-void later to maint).
 
  * When "git worktree" feature is in use, "git branch -d" allowed
    deletion of a branch that is checked out in another worktree,
    which was wrong.
-   (merge f292244 ky/branch-d-worktree later to maint).
 
  * When "git worktree" feature is in use, "git branch -m" renamed a
    branch that is checked out in another worktree without adjusting
    the HEAD symbolic ref for the worktree.
-   (merge 18eb3a9 ky/branch-m-worktree later to maint).
 
  * "git diff -M" used to work better when two originally identical
    files A and B got renamed to X/A and X/B by pairing A to X/A and B
    to X/B, but this was broken in the 2.0 timeframe.
-   (merge ca4e3ca sg/diff-multiple-identical-renames later to maint).
 
  * "git send-pack --all <there>" was broken when its command line
    option parsing was written in the 2.6 timeframe.
-   (merge c677756 sk/send-pack-all-fix later to maint).
 
  * "git format-patch --help" showed `-s` and `--no-patch` as if these
    are valid options to the command.  We already hide `--patch` option
    from the documentation, because format-patch is about showing the
    diff, and the documentation now hides these options as well.
-   (merge b73a1bc es/format-patch-doc-hide-no-patch later to maint).
 
  * When running "git blame $path" with unnormalized data in the index
    for the path, the data in the working tree was blamed, even though
    "git add" would not have changed what is already in the index, due
    to "safe crlf" that disables the line-end conversion.  It has been
    corrected.
-   (merge a08feb8 tb/blame-force-read-cache-to-workaround-safe-crlf later to maint).
 
  * A change back in version 2.7 to "git branch" broke display of a
    symbolic ref in a non-standard place in the refs/ hierarchy (we
    expect symbolic refs to appear in refs/remotes/*/HEAD to point at
    the primary branch the remote has, and as .git/HEAD to point at the
    branch we locally checked out).
-   (merge 95c38fb jk/branch-shortening-funny-symrefs later to maint).
 
  * A partial rewrite of "git submodule" in the 2.7 timeframe changed
    the way the gitdir: pointer in the submodules point at the real
    repository location to use absolute paths by accident.  This has
    been corrected.
-   (merge 1f15ba1 sb/submodule-helper-clone-regression-fix later to maint).
 
  * "git commit" misbehaved in a few minor ways when an empty message
    is given via -m '', all of which has been corrected.
-   (merge 27014cb ad/commit-have-m-option later to maint).
 
  * Support for CRAM-MD5 authentication method in "git imap-send" did
    not work well.
-   (merge eb94ee7 ky/imap-send later to maint).
 
  * Upcoming OpenSSL 1.1.0 will break compilation b updating a few APIs
    we use in imap-send, which has been adjusted for the change.
@@ -262,11 +254,9 @@ notes for details).
 
  * The socks5:// proxy support added back in 2.6.4 days was not aware
    that socks5h:// proxies behave differently.
-   (merge 87f8a0b jc/http-socks5h later to maint).
 
  * "git config" had a codepath that tried to pass a NULL to
    printf("%s"), which nobody seems to have noticed.
-   (merge 1cae428 jk/do-not-printf-NULL later to maint).
 
  * On Cygwin, object creation uses the "create a temporary and then
    rename it to the final name" pattern, not "create a temporary,
@@ -277,7 +267,6 @@ notes for details).
    already enabled for the MinGW and plain Windows builds.  It also
    has been used in Cygwin packaged versions of Git for quite a while.
    See http://thread.gmane.org/gmane.comp.version-control.git/291853
-   (merge e53a64b ad/cygwin-wants-rename later to maint).
 
  * "merge-octopus" strategy did not ensure that the index is clean
    when merge begins.
@@ -320,23 +309,18 @@ notes for details).
    consuming paging store when not needed.
    (merge d5425d1 js/win32-mmap later to maint).
 
+ * A question by "git send-email" to ask the identity of the sender
+   has been updated.
+   (merge 0d6b21e jd/send-email-to-whom later to maint).
+
+ * UI consistency improvements for "git mergetool".
+   (merge cce076e nf/mergetool-prompt later to maint).
+
  * Other minor clean-ups and documentation updates
-   (merge aed7480 mm/lockfile-error-message later to maint).
-   (merge bfee614 jc/index-pack later to maint).
-   (merge f870899 ss/exc-flag-is-a-collection-of-bits later to maint).
-   (merge dde7891 pb/t7502-drop-dup later to maint).
-   (merge 3bd1b51 cc/doc-recommend-performance-trace-to-file later to maint).
-   (merge 7d5e9c9 jk/credential-cache-comment-exit later to maint).
-   (merge 16a86d4 nd/apply-doc later to maint).
-   (merge c3f6b85 pb/opt-cmdmode-doc later to maint).
-   (merge 30211fb oa/doc-diff-check later to maint).
-   (merge 01d98e8 ak/use-hashmap-iter-first-in-submodule-config later to maint).
    (merge 8b5a3e9 kn/for-each-tag-branch later to maint).
    (merge 9c60d9f sb/misc-cleanups later to maint).
    (merge 7a6a44c cc/apply later to maint).
-   (merge 8e9b208 js/mingw-tests-2.8 later to maint).
-   (merge d55de70 jc/makefile-redirection-stderr later to maint).
-   (merge 4232b21 ep/trace-doc-sample-fix later to maint).
-   (merge ef8c95e ew/send-email-drop-data-dumper later to maint).
-   (merge 24041d6 jc/xstrfmt-null-with-prec-0 later to maint).
-   (merge 7bec7f5 jk/use-write-script-more later to maint).
+   (merge 6594883 nd/remove-unused later to maint).
+   (merge 0ff7410 sg/test-lib-simplify-expr-away later to maint).
+   (merge 060e776 jk/fix-attribute-macro-in-2.5 later to maint).
+   (merge d16df0c rt/string-list-lookup-cleanup later to maint).
