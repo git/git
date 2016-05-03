@@ -100,7 +100,7 @@ check_unchanged () {
 		while true
 		do
 			echo "$MERGED seems unchanged."
-			printf "Was the merge successful? [y/n] "
+			printf "Was the merge successful [y/n]? "
 			read answer || return 1
 			case "$answer" in
 			y*|Y*) return 0 ;;
