@@ -958,8 +958,6 @@ static inline int is_empty_blob_sha1(const unsigned char *sha1)
 
 int git_mkstemp(char *path, size_t n, const char *template);
 
-int git_mkstemps(char *path, size_t n, const char *template, int suffix_len);
-
 /* set default permissions by passing mode arguments to open(2) */
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
 int git_mkstemp_mode(char *pattern, int mode);
