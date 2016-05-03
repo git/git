@@ -55,6 +55,12 @@ import git_multimail
 # git-multimail:
 config = git_multimail.Config('multimailhook')
 
+# Set some Git configuration variables. Equivalent to passing var=val
+# to "git -c var=val" each time git is called, or to adding the
+# configuration in .git/config (must come before instanciating the
+# environment) :
+#git_multimail.Config.add_config_parameters('multimailhook.commitEmailFormat=html')
+#git_multimail.Config.add_config_parameters(('user.name=foo', 'user.email=foo@example.com'))
 
 # Select the type of environment:
 try:

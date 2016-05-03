@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 # Copyright (c) 2015 Matthieu Moy and others
 # Copyright (c) 2012-2014 Michael Haggerty and others
@@ -57,6 +57,11 @@ import subprocess
 import shlex
 import optparse
 import smtplib
+try:
+    import ssl
+except ImportError:
+    # Python < 2.6 do not have ssl, but that's OK if we don't use it.
+    pass
 import time
 import cgi
 
@@ -75,6 +80,9 @@ def is_ascii(s):
 
 
 if PYTHON3:
+    def is_string(s):
+        return isinstance(s, str)
+
     def str_to_bytes(s):
         return s.encode(ENCODING)
 
@@ -91,6 +99,12 @@ if PYTHON3:
         except UnicodeEncodeError:
             f.buffer.write(msg.encode(ENCODING))
 else:
+    def is_string(s):
+        try:
+            return isinstance(s, basestring)
+        except NameError:  # Silence Pyflakes warning
+            raise
+
     def str_to_bytes(s):
         return s
 
@@ -313,6 +327,16 @@ in repository %(repo_shortname)s.
 
 """
 
+LINK_TEXT_TEMPLATE = """\
+View the commit online:
+%(browse_url)s
+
+"""
+
+LINK_HTML_TEMPLATE = """\
+<p><a href="%(browse_url)s">View the commit online</a>.</p>
+"""
+
 
 REVISION_FOOTER_TEMPLATE = FOOTER_TEMPLATE
 
@@ -532,6 +556,28 @@ class Config(object):
         assert words[-1] == ''
         return words[:-1]
 
+    @staticmethod
+    def add_config_parameters(c):
+        """Add configuration parameters to Git.
+
+        c is either an str or a list of str, each element being of the
+        form 'var=val' or 'var', with the same syntax and meaning as
+        the argument of 'git -c var=val'.
+        """
+        if isinstance(c, str):
+            c = (c,)
+        parameters = os.environ.get('GIT_CONFIG_PARAMETERS', '')
+        if parameters:
+            parameters += ' '
+        # git expects GIT_CONFIG_PARAMETERS to be of the form
+        #    "'name1=value1' 'name2=value2' 'name3=value3'"
+        # including everything inside the double quotes (but not the double
+        # quotes themselves).  Spacing is critical.  Also, if a value contains
+        # a literal single quote that quote must be represented using the
+        # four character sequence: '\''
+        parameters += ' '.join("'" + x.replace("'", "'\\''") + "'" for x in c)
+        os.environ['GIT_CONFIG_PARAMETERS'] = parameters
+
     def get(self, name, default=None):
         try:
             values = self._split(read_git_output(
@@ -745,6 +791,12 @@ class Change(object):
         values['multimail_version'] = get_version()
         return values
 
+    # Aliases usable in template strings. Tuple of pairs (destination,
+    # source).
+    VALUES_ALIAS = (
+        ("id", "newrev"),
+        )
+
     def get_values(self, **extra_values):
         """Return a dictionary {keyword: expansion} for this Change.
 
@@ -760,6 +812,9 @@ class Change(object):
         values = self._values.copy()
         if extra_values:
             values.update(extra_values)
+
+        for alias, val in self.VALUES_ALIAS:
+            values[alias] = values[val]
         return values
 
     def expand(self, template, **extra_values):
@@ -772,10 +827,14 @@ class Change(object):
 
         return template % self.get_values(**extra_values)
 
-    def expand_lines(self, template, **extra_values):
+    def expand_lines(self, template, html_escape_val=False, **extra_values):
         """Break template into lines and expand each line."""
 
         values = self.get_values(**extra_values)
+        if html_escape_val:
+            for k in values:
+                if is_string(values[k]):
+                    values[k] = cgi.escape(values[k], True)
         for line in template.splitlines(True):
             yield line % values
 
@@ -787,9 +846,10 @@ class Change(object):
 
         values = self.get_values(**extra_values)
         if self._contains_html_diff:
-            values['contenttype'] = 'html'
+            self._content_type = 'html'
         else:
-            values['contenttype'] = 'plain'
+            self._content_type = 'plain'
+        values['contenttype'] = self._content_type
 
         for line in template.splitlines():
             (name, value) = line.split(': ', 1)
@@ -819,7 +879,11 @@ class Change(object):
 
         raise NotImplementedError()
 
-    def generate_email_intro(self):
+    def generate_browse_link(self, base_url):
+        """Generate a link to an online repository browser."""
+        return iter(())
+
+    def generate_email_intro(self, html_escape_val=False):
         """Generate the email intro for this Change, a line at a time.
 
         The output will be used as the standard boilerplate at the top
@@ -835,7 +899,7 @@ class Change(object):
 
         raise NotImplementedError()
 
-    def generate_email_footer(self):
+    def generate_email_footer(self, html_escape_val):
         """Generate the footer of the email, a line at a time.
 
         The footer is always included, irrespective of
@@ -876,8 +940,17 @@ class Change(object):
         for line in self.generate_email_header(**extra_header_values):
             yield line
         yield '\n'
-        for line in self._wrap_for_html(self.generate_email_intro()):
+        html_escape_val = (self.environment.html_in_intro and
+                           self._contains_html_diff)
+        intro = self.generate_email_intro(html_escape_val)
+        if not self.environment.html_in_intro:
+            intro = self._wrap_for_html(intro)
+        for line in intro:
             yield line
+
+        if self.environment.commitBrowseURL:
+            for line in self.generate_browse_link(self.environment.commitBrowseURL):
+                yield line
 
         body = self.generate_email_body(push)
         if body_filter is not None:
@@ -939,8 +1012,12 @@ class Change(object):
             yield line
         if self._contains_html_diff:
             yield '</pre>'
-
-        for line in self._wrap_for_html(self.generate_email_footer()):
+        html_escape_val = (self.environment.html_in_footer and
+                           self._contains_html_diff)
+        footer = self.generate_email_footer(html_escape_val)
+        if not self.environment.html_in_footer:
+            footer = self._wrap_for_html(footer)
+        for line in footer:
             yield line
 
     def get_alt_fromaddr(self):
@@ -992,6 +1069,7 @@ class Revision(Change):
         values['rev_short'] = self.rev.short
         values['change_type'] = self.change_type
         values['refname'] = self.refname
+        values['newrev'] = self.rev.sha1
         values['short_refname'] = self.reference_change.short_refname
         values['refname_type'] = self.reference_change.refname_type
         values['reply_to_msgid'] = self.reference_change.msgid
@@ -1015,8 +1093,26 @@ class Revision(Change):
                 ):
             yield line
 
-    def generate_email_intro(self):
-        for line in self.expand_lines(REVISION_INTRO_TEMPLATE):
+    def generate_browse_link(self, base_url):
+        if '%(' not in base_url:
+            base_url += '%(id)s'
+        url = "".join(self.expand_lines(base_url))
+        if self._content_type == 'html':
+            for line in self.expand_lines(LINK_HTML_TEMPLATE,
+                                          html_escape_val=True,
+                                          browse_url=url):
+                yield line
+        elif self._content_type == 'plain':
+            for line in self.expand_lines(LINK_TEXT_TEMPLATE,
+                                          html_escape_val=False,
+                                          browse_url=url):
+                yield line
+        else:
+            raise NotImplementedError("Content-type %s unsupported. Please report it as a bug.")
+
+    def generate_email_intro(self, html_escape_val=False):
+        for line in self.expand_lines(REVISION_INTRO_TEMPLATE,
+                                      html_escape_val=html_escape_val):
             yield line
 
     def generate_email_body(self, push):
@@ -1031,8 +1127,9 @@ class Revision(Change):
             else:
                 yield line
 
-    def generate_email_footer(self):
-        return self.expand_lines(REVISION_FOOTER_TEMPLATE)
+    def generate_email_footer(self, html_escape_val):
+        return self.expand_lines(REVISION_FOOTER_TEMPLATE,
+                                 html_escape_val=html_escape_val)
 
     def generate_email(self, push, body_filter=None, extra_header_values={}):
         self._contains_diff()
@@ -1217,8 +1314,9 @@ class ReferenceChange(Change):
                 ):
             yield line
 
-    def generate_email_intro(self):
-        for line in self.expand_lines(self.intro_template):
+    def generate_email_intro(self, html_escape_val=False):
+        for line in self.expand_lines(self.intro_template,
+                                      html_escape_val=html_escape_val):
             yield line
 
     def generate_email_body(self, push):
@@ -1238,8 +1336,9 @@ class ReferenceChange(Change):
         for line in self.generate_revision_change_summary(push):
             yield line
 
-    def generate_email_footer(self):
-        return self.expand_lines(self.footer_template)
+    def generate_email_footer(self, html_escape_val):
+        return self.expand_lines(self.footer_template,
+                                 html_escape_val=html_escape_val)
 
     def generate_revision_change_graph(self, push):
         if self.showgraph:
@@ -1896,6 +1995,7 @@ class SMTPMailer(Mailer):
                  smtpservertimeout=10.0, smtpserverdebuglevel=0,
                  smtpencryption='none',
                  smtpuser='', smtppass='',
+                 smtpcacerts=''
                  ):
         if not envelopesender:
             sys.stderr.write(
@@ -1915,6 +2015,7 @@ class SMTPMailer(Mailer):
         self.security = smtpencryption
         self.username = smtpuser
         self.password = smtppass
+        self.smtpcacerts = smtpcacerts
         try:
             def call(klass, server, timeout):
                 try:
@@ -1925,13 +2026,56 @@ class SMTPMailer(Mailer):
             if self.security == 'none':
                 self.smtp = call(smtplib.SMTP, self.smtpserver, timeout=self.smtpservertimeout)
             elif self.security == 'ssl':
+                if self.smtpcacerts:
+                    raise smtplib.SMTPException(
+                        "Checking certificate is not supported for ssl, prefer starttls"
+                        )
                 self.smtp = call(smtplib.SMTP_SSL, self.smtpserver, timeout=self.smtpservertimeout)
             elif self.security == 'tls':
+                if 'ssl' not in sys.modules:
+                    sys.stderr.write(
+                        '*** Your Python version does not have the ssl library installed\n'
+                        '*** smtpEncryption=tls is not available.\n'
+                        '*** Either upgrade Python to 2.6 or later\n'
+                        '    or use git_multimail.py version 1.2.\n')
                 if ':' not in self.smtpserver:
                     self.smtpserver += ':587'  # default port for TLS
                 self.smtp = call(smtplib.SMTP, self.smtpserver, timeout=self.smtpservertimeout)
+                # start: ehlo + starttls
+                # equivalent to
+                #     self.smtp.ehlo()
+                #     self.smtp.starttls()
+                # with acces to the ssl layer
                 self.smtp.ehlo()
-                self.smtp.starttls()
+                if not self.smtp.has_extn("starttls"):
+                    raise smtplib.SMTPException("STARTTLS extension not supported by server")
+                resp, reply = self.smtp.docmd("STARTTLS")
+                if resp != 220:
+                    raise smtplib.SMTPException("Wrong answer to the STARTTLS command")
+                if self.smtpcacerts:
+                    self.smtp.sock = ssl.wrap_socket(
+                        self.smtp.sock,
+                        ca_certs=self.smtpcacerts,
+                        cert_reqs=ssl.CERT_REQUIRED
+                        )
+                else:
+                    self.smtp.sock = ssl.wrap_socket(
+                        self.smtp.sock,
+                        cert_reqs=ssl.CERT_NONE
+                        )
+                    sys.stderr.write(
+                        '*** Warning, the server certificat is not verified (smtp) ***\n'
+                        '***          set the option smtpCACerts                   ***\n'
+                        )
+                if not hasattr(self.smtp.sock, "read"):
+                    # using httplib.FakeSocket with Python 2.5.x or earlier
+                    self.smtp.sock.read = self.smtp.sock.recv
+                self.smtp.file = smtplib.SSLFakeFile(self.smtp.sock)
+                self.smtp.helo_resp = None
+                self.smtp.ehlo_resp = None
+                self.smtp.esmtp_features = {}
+                self.smtp.does_esmtp = 0
+                # end:   ehlo + starttls
                 self.smtp.ehlo()
             else:
                 sys.stdout.write('*** Error: Control reached an invalid option. ***')
@@ -1951,6 +2095,7 @@ class SMTPMailer(Mailer):
     def __del__(self):
         if hasattr(self, 'smtp'):
             self.smtp.quit()
+            del self.smtp
 
     def send(self, lines, to_addrs):
         try:
@@ -1958,13 +2103,24 @@ class SMTPMailer(Mailer):
                 self.smtp.login(self.username, self.password)
             msg = ''.join(lines)
             # turn comma-separated list into Python list if needed.
-            if isinstance(to_addrs, basestring):
+            if is_string(to_addrs):
                 to_addrs = [email for (name, email) in getaddresses([to_addrs])]
             self.smtp.sendmail(self.envelopesender, to_addrs, msg)
-        except Exception:
+        except smtplib.SMTPResponseException:
             sys.stderr.write('*** Error sending email ***\n')
-            sys.stderr.write('*** %s\n' % sys.exc_info()[1])
-            self.smtp.quit()
+            err = sys.exc_info()[1]
+            sys.stderr.write('*** Error %d: %s\n' % (err.smtp_code,
+                                                     bytes_to_str(err.smtp_error)))
+            try:
+                smtp = self.smtp
+                # delete the field before quit() so that in case of
+                # error, self.smtp is deleted anyway.
+                del self.smtp
+                smtp.quit()
+            except:
+                sys.stderr.write('*** Error closing the SMTP connection ***\n')
+                sys.stderr.write('*** Exiting anyway ... ***\n')
+                sys.stderr.write('*** %s\n' % sys.exc_info()[1])
             sys.exit(1)
 
 
@@ -2097,6 +2253,14 @@ class Environment(object):
             If "html", generate commit emails in HTML instead of plain text
             used by default.
 
+        html_in_intro (bool)
+        html_in_footer (bool)
+
+            When generating HTML emails, the introduction (respectively,
+            the footer) will be HTML-escaped iff html_in_intro (respectively,
+            the footer) is true. When false, only the values used to expand
+            the template are escaped.
+
         refchange_showgraph (bool)
 
             True iff refchanges emails should include a detailed graph.
@@ -2160,6 +2324,9 @@ class Environment(object):
         self.osenv = osenv or os.environ
         self.announce_show_shortlog = False
         self.commit_email_format = "text"
+        self.html_in_intro = False
+        self.html_in_footer = False
+        self.commitBrowseURL = None
         self.maxcommitemails = 500
         self.diffopts = ['--stat', '--summary', '--find-copies-harder']
         self.graphopts = ['--oneline', '--decorate']
@@ -2236,7 +2403,7 @@ class Environment(object):
         The return value is always a new dictionary."""
 
         if self._values is None:
-            values = {}
+            values = {'': ''}  # %()s expands to the empty string.
 
             for key in self.COMPUTED_KEYS:
                 value = getattr(self, 'get_%s' % (key,))()
@@ -2375,6 +2542,16 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
             else:
                 self.commit_email_format = commit_email_format
 
+        html_in_intro = config.get_bool('htmlInIntro')
+        if html_in_intro is not None:
+            self.html_in_intro = html_in_intro
+
+        html_in_footer = config.get_bool('htmlInFooter')
+        if html_in_footer is not None:
+            self.html_in_footer = html_in_footer
+
+        self.commitBrowseURL = config.get('commitBrowseURL')
+
         maxcommitemails = config.get('maxcommitemails')
         if maxcommitemails is not None:
             try:
@@ -2415,7 +2592,6 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
                                  ['author'])
         self.__reply_to_commit = config.get('replyToCommit', default=reply_to)
 
-        from_addr = self.config.get('from')
         self.from_refchange = config.get('fromRefchange')
         self.forbid_field_values('fromRefchange',
                                  self.from_refchange,
@@ -3390,6 +3566,8 @@ def run_as_post_receive_hook(environment, mailer):
     if changes:
         push = Push(environment, changes)
         push.send_emails(mailer, body_filter=environment.filter_body)
+    if hasattr(mailer, '__del__'):
+        mailer.__del__()
 
 
 def run_as_update_hook(environment, mailer, refname, oldrev, newrev, force_send=False):
@@ -3406,6 +3584,8 @@ def run_as_update_hook(environment, mailer, refname, oldrev, newrev, force_send=
         ]
     push = Push(environment, changes, force_send)
     push.send_emails(mailer, body_filter=environment.filter_body)
+    if hasattr(mailer, '__del__'):
+        mailer.__del__()
 
 
 def choose_mailer(config, environment):
@@ -3418,6 +3598,7 @@ def choose_mailer(config, environment):
         smtpencryption = config.get('smtpencryption', default='none')
         smtpuser = config.get('smtpuser', default='')
         smtppass = config.get('smtppass', default='')
+        smtpcacerts = config.get('smtpcacerts', default='')
         mailer = SMTPMailer(
             envelopesender=(environment.get_sender() or environment.get_fromaddr()),
             smtpserver=smtpserver, smtpservertimeout=smtpservertimeout,
@@ -3425,6 +3606,7 @@ def choose_mailer(config, environment):
             smtpencryption=smtpencryption,
             smtpuser=smtpuser,
             smtppass=smtppass,
+            smtpcacerts=smtpcacerts
             )
     elif mailer == 'sendmail':
         command = config.get('sendmailcommand')
@@ -3691,17 +3873,7 @@ def main(args):
         return
 
     if options.c:
-        parameters = os.environ.get('GIT_CONFIG_PARAMETERS', '')
-        if parameters:
-            parameters += ' '
-        # git expects GIT_CONFIG_PARAMETERS to be of the form
-        #    "'name1=value1' 'name2=value2' 'name3=value3'"
-        # including everything inside the double quotes (but not the double
-        # quotes themselves).  Spacing is critical.  Also, if a value contains
-        # a literal single quote that quote must be represented using the
-        # four character sequence: '\''
-        parameters += ' '.join("'" + x.replace("'", "'\\''") + "'" for x in options.c)
-        os.environ['GIT_CONFIG_PARAMETERS'] = parameters
+        Config.add_config_parameters(options.c)
 
     config = Config('multimailhook')
 
