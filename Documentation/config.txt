@@ -1493,7 +1493,7 @@ gui.diffContext::
 	made by the linkgit:git-gui[1]. The default is "5".
 
 gui.displayUntracked::
-	Determines if linkgit::git-gui[1] shows untracked files
+	Determines if linkgit:git-gui[1] shows untracked files
 	in the file list. The default is "true".
 
 gui.encoding::
@@ -1658,7 +1658,7 @@ http.cookieFile::
 	File containing previously stored cookie lines which should be used
 	in the Git http session, if they match the server. The file format
 	of the file to read cookies from should be plain HTTP headers or
-	the Netscape/Mozilla cookie file format (see linkgit:curl[1]).
+	the Netscape/Mozilla cookie file format (see `curl(1)`).
 	NOTE that the file specified with http.cookieFile is only used as
 	input unless http.saveCookies is set.
 
