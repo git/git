@@ -1477,7 +1477,16 @@ stat_ref:
 
 	/* Is it a directory? */
 	if (S_ISDIR(st.st_mode)) {
-		errno = EISDIR;
+		/*
+		 * Even though there is a directory where the loose
+		 * ref is supposed to be, there could still be a
+		 * packed ref:
+		 */
+		if (resolve_missing_loose_ref(refname, sha1, flags)) {
+			errno = EISDIR;
+			goto out;
+		}
+		ret = 0;
 		goto out;
 	}
 

@@ -106,7 +106,7 @@ test_expect_success 'one new ref is a simple prefix of another' '
 
 '
 
-test_expect_failure 'empty directory should not fool rev-parse' '
+test_expect_success 'empty directory should not fool rev-parse' '
 	prefix=refs/e-rev-parse &&
 	git update-ref $prefix/foo $C &&
 	git pack-refs --all &&
