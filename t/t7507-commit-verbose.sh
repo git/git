@@ -103,4 +103,55 @@ test_expect_success 'status does not verbose without --verbose' '
 	! grep "^diff --git" actual
 '
 
+test_expect_success 'setup -v -v' '
+	echo dirty >file
+'
+
+for i in true 1
+do
+	test_expect_success "commit.verbose=$i and --verbose omitted" "
+		git -c commit.verbose=$i commit --amend &&
+		test_line_count = 1 out
+	"
+done
+
+for i in false -2 -1 0
+do
+	test_expect_success "commit.verbose=$i and --verbose omitted" "
+		git -c commit.verbose=$i commit --amend &&
+		test_line_count = 0 out
+	"
+done
+
+for i in 2 3
+do
+	test_expect_success "commit.verbose=$i and --verbose omitted" "
+		git -c commit.verbose=$i commit --amend &&
+		test_line_count = 2 out
+	"
+done
+
+for i in true false -2 -1 0 1 2 3
+do
+	test_expect_success "commit.verbose=$i and --verbose" "
+		git -c commit.verbose=$i commit --amend --verbose &&
+		test_line_count = 1 out
+	"
+
+	test_expect_success "commit.verbose=$i and --no-verbose" "
+		git -c commit.verbose=$i commit --amend --no-verbose &&
+		test_line_count = 0 out
+	"
+
+	test_expect_success "commit.verbose=$i and -v -v" "
+		git -c commit.verbose=$i commit --amend -v -v &&
+		test_line_count = 2 out
+	"
+done
+
+test_expect_success "status ignores commit.verbose=true" '
+	git -c commit.verbose=true status >actual &&
+	! grep "^diff --git actual"
+'
+
 test_done
