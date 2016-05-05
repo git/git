@@ -1098,50 +1098,13 @@ void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir)
 	strbuf_release(&rel_path);
 	free((void *)real_work_tree);
 }
-/*
- * Rules to sanitize configuration variables that are Ok to be passed into
- * submodule operations from the parent project using "-c". Should only
- * include keys which are both (a) safe and (b) necessary for proper
- * operation.
- */
-static int submodule_config_ok(const char *var)
-{
-	if (starts_with(var, "credential."))
-		return 1;
-	return 0;
-}
-
-int sanitize_submodule_config(const char *var, const char *value, void *data)
-{
-	struct strbuf *out = data;
-
-	if (submodule_config_ok(var)) {
-		if (out->len)
-			strbuf_addch(out, ' ');
-
-		if (value)
-			sq_quotef(out, "%s=%s", var, value);
-		else
-			sq_quote_buf(out, var);
-	}
-
-	return 0;
-}
 
 void prepare_submodule_repo_env(struct argv_array *out)
 {
 	const char * const *var;
 
 	for (var = local_repo_env; *var; var++) {
-		if (!strcmp(*var, CONFIG_DATA_ENVIRONMENT)) {
-			struct strbuf sanitized_config = STRBUF_INIT;
-			git_config_from_parameters(sanitize_submodule_config,
-						   &sanitized_config);
-			argv_array_pushf(out, "%s=%s", *var, sanitized_config.buf);
-			strbuf_release(&sanitized_config);
-		} else {
+		if (strcmp(*var, CONFIG_DATA_ENVIRONMENT))
 			argv_array_push(out, *var);
-		}
 	}
-
 }

@@ -44,18 +44,9 @@ int push_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_nam
 void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
 
 /*
- * This function is intended as a callback for use with
- * git_config_from_parameters(). It ignores any config options which
- * are not suitable for passing along to a submodule, and accumulates the rest
- * in "data", which must be a pointer to a strbuf. The end result can
- * be put into $GIT_CONFIG_PARAMETERS for passing to a sub-process.
- */
-int sanitize_submodule_config(const char *var, const char *value, void *data);
-
-/*
  * Prepare the "env_array" parameter of a "struct child_process" for executing
  * a submodule by clearing any repo-specific envirionment variables, but
- * retaining any config approved by sanitize_submodule_config().
+ * retaining any config in the environment.
  */
 void prepare_submodule_repo_env(struct argv_array *out);
 
