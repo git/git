@@ -39,6 +39,61 @@ static int number_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int collect_expect(const struct option *opt, const char *arg, int unset)
+{
+	struct string_list *expect;
+	struct string_list_item *item;
+	struct strbuf label = STRBUF_INIT;
+	const char *colon;
+
+	if (!arg || unset)
+		die("malformed --expect option");
+
+	expect = (struct string_list *)opt->value;
+	colon = strchr(arg, ':');
+	if (!colon)
+		die("malformed --expect option, lacking a colon");
+	strbuf_add(&label, arg, colon - arg);
+	item = string_list_insert(expect, strbuf_detach(&label, NULL));
+	if (item->util)
+		die("malformed --expect option, duplicate %s", label.buf);
+	item->util = (void *)arg;
+	return 0;
+}
+
+__attribute__((format (printf,3,4)))
+static void show(struct string_list *expect, int *status, const char *fmt, ...)
+{
+	struct string_list_item *item;
+	struct strbuf buf = STRBUF_INIT;
+	va_list args;
+
+	va_start(args, fmt);
+	strbuf_vaddf(&buf, fmt, args);
+	va_end(args);
+
+	if (!expect->nr)
+		printf("%s\n", buf.buf);
+	else {
+		char *colon = strchr(buf.buf, ':');
+		if (!colon)
+			die("malformed output format, output lacking colon: %s", fmt);
+		*colon = '\0';
+		item = string_list_lookup(expect, buf.buf);
+		*colon = ':';
+		if (!item)
+			; /* not among entries being checked */
+		else {
+			if (strcmp((const char *)item->util, buf.buf)) {
+				printf("-%s\n", (char *)item->util);
+				printf("+%s\n", buf.buf);
+				*status = 1;
+			}
+		}
+	}
+	strbuf_release(&buf);
+}
+
 int main(int argc, char **argv)
 {
 	const char *prefix = "prefix/";
@@ -46,6 +101,7 @@ int main(int argc, char **argv)
 		"test-parse-options <options>",
 		NULL
 	};
+	struct string_list expect = STRING_LIST_INIT_NODUP;
 	struct option options[] = {
 		OPT_BOOL(0, "yes", &boolean, "get a boolean"),
 		OPT_BOOL('D', "no-doubt", &boolean, "begins with 'no-'"),
@@ -86,34 +142,38 @@ int main(int argc, char **argv)
 		OPT__VERBOSE(&verbose, "be verbose"),
 		OPT__DRY_RUN(&dry_run, "dry run"),
 		OPT__QUIET(&quiet, "be quiet"),
+		OPT_CALLBACK(0, "expect", &expect, "string",
+			     "expected output in the variable dump",
+			     collect_expect),
 		OPT_END(),
 	};
 	int i;
+	int ret = 0;
 
 	argc = parse_options(argc, (const char **)argv, prefix, options, usage, 0);
 
 	if (length_cb.called) {
 		const char *arg = length_cb.arg;
 		int unset = length_cb.unset;
-		printf("Callback: \"%s\", %d\n",
-		       (arg ? arg : "not set"), unset);
+		show(&expect, &ret, "Callback: \"%s\", %d",
+		     (arg ? arg : "not set"), unset);
 	}
-	printf("boolean: %d\n", boolean);
-	printf("integer: %d\n", integer);
-	printf("magnitude: %lu\n", magnitude);
-	printf("timestamp: %lu\n", timestamp);
-	printf("string: %s\n", string ? string : "(not set)");
-	printf("abbrev: %d\n", abbrev);
-	printf("verbose: %d\n", verbose);
-	printf("quiet: %d\n", quiet);
-	printf("dry run: %s\n", dry_run ? "yes" : "no");
-	printf("file: %s\n", file ? file : "(not set)");
+	show(&expect, &ret, "boolean: %d", boolean);
+	show(&expect, &ret, "integer: %d", integer);
+	show(&expect, &ret, "magnitude: %lu", magnitude);
+	show(&expect, &ret, "timestamp: %lu", timestamp);
+	show(&expect, &ret, "string: %s", string ? string : "(not set)");
+	show(&expect, &ret, "abbrev: %d", abbrev);
+	show(&expect, &ret, "verbose: %d", verbose);
+	show(&expect, &ret, "quiet: %d", quiet);
+	show(&expect, &ret, "dry run: %s", dry_run ? "yes" : "no");
+	show(&expect, &ret, "file: %s", file ? file : "(not set)");
 
 	for (i = 0; i < list.nr; i++)
-		printf("list: %s\n", list.items[i].string);
+		show(&expect, &ret, "list: %s", list.items[i].string);
 
 	for (i = 0; i < argc; i++)
-		printf("arg %02d: %s\n", i, argv[i]);
+		show(&expect, &ret, "arg %02d: %s", i, argv[i]);
 
-	return 0;
+	return ret;
 }

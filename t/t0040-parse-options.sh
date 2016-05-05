@@ -45,6 +45,7 @@ Standard options
     -v, --verbose         be verbose
     -n, --dry-run         dry run
     -q, --quiet           be quiet
+    --expect <string>     expected output in the variable dump
 
 EOF
 
