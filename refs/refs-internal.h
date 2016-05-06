@@ -209,6 +209,44 @@ int rename_ref_available(const char *oldname, const char *newname);
 int do_for_each_ref(const char *submodule, const char *base,
 		    each_ref_fn fn, int trim, int flags, void *cb_data);
 
+/*
+ * Read the specified reference from the filesystem or packed refs
+ * file, non-recursively. Set type to describe the reference, and:
+ *
+ * - If refname is the name of a normal reference, fill in sha1
+ *   (leaving referent unchanged).
+ *
+ * - If refname is the name of a symbolic reference, write the full
+ *   name of the reference to which it refers (e.g.
+ *   "refs/heads/master") to referent and set the REF_ISSYMREF bit in
+ *   type (leaving sha1 unchanged). The caller is responsible for
+ *   validating that referent is a valid reference name.
+ *
+ * WARNING: refname might be used as part of a filename, so it is
+ * important from a security standpoint that it be safe in the sense
+ * of refname_is_safe(). Moreover, for symrefs this function sets
+ * referent to whatever the repository says, which might not be a
+ * properly-formatted or even safe reference name. NEITHER INPUT NOR
+ * OUTPUT REFERENCE NAMES ARE VALIDATED WITHIN THIS FUNCTION.
+ *
+ * Return 0 on success. If the ref doesn't exist, set errno to ENOENT
+ * and return -1. If the ref exists but is neither a symbolic ref nor
+ * a sha1, it is broken; set REF_ISBROKEN in type, set errno to
+ * EINVAL, and return -1. If there is another error reading the ref,
+ * set errno appropriately and return -1.
+ *
+ * Backend-specific flags might be set in type as well, regardless of
+ * outcome.
+ *
+ * It is OK for refname to point into referent. If so:
+ *
+ * - if the function succeeds with REF_ISSYMREF, referent will be
+ *   overwritten and the memory formerly pointed to by it might be
+ *   changed or even freed.
+ *
+ * - in all other cases, referent will be untouched, and therefore
+ *   refname will still be valid and unchanged.
+ */
 int read_raw_ref(const char *refname, unsigned char *sha1,
 		 struct strbuf *referent, unsigned int *type);
 
