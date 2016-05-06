@@ -145,7 +145,7 @@ current branch integrates with) obviously do not work, as there is no
 	A fast-forward is a special type of <<def_merge,merge>> where you have a
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
-	you have. In such these cases, you do not make a new <<def_merge,merge>>
+	you have. In such a case, you do not make a new <<def_merge,merge>>
 	<<def_commit,commit>> but instead just update to his
 	revision. This will happen frequently on a
 	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
