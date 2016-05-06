@@ -107,6 +107,15 @@ UI, Workflows & Features
    commit."
    (merge 7550424 js/name-rev-use-oldest-ref later to maint).
 
+ * "git clone" learned "--shallow-submodules" option.
+
+ * HTTP transport clients learned to throw extra HTTP headers at the
+   server, specified via http.extraHeader configuration variable.
+
+ * Patch output from "git diff" and friends has been tweaked to be
+   more readable by using a blank line as a strong hint that the
+   contents before and after it belong to a logically separate unit.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -160,6 +169,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * "merge-recursive" strategy incorrectly checked if a path that is
    involved in its internal merge exists in the working tree.
+
+ * The test scripts for "git p4" (but not "git p4" implementation
+   itself) has been updated so that they would work even on a system
+   where the installed version of Python is python 3.
+   (merge 1fb3fb4 ld/p4-test-py3 later to maint).
+
+ * As nobody maintains our in-tree git.spec.in and distros use their
+   own spec file, we stopped pretending that we support "make rpm".
+
+ * Move from unsigned char[20] to struct object_id continues.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -303,7 +322,7 @@ notes for details).
    for these ref updates blocked on writing them to the main thread,
    after the main thread at the receiving end notices that the push
    failed and decides not to read these notices and return a failure.
-   (merge c4b2751 jk/push-client-deadlock-fix later to maint).
+   (merge f924b52a jk/push-client-deadlock-fix later to maint).
 
  * mmap emulation on Windows has been optimized and work better without
    consuming paging store when not needed.
@@ -316,11 +335,20 @@ notes for details).
  * UI consistency improvements for "git mergetool".
    (merge cce076e nf/mergetool-prompt later to maint).
 
+ * "git rebase -m" could be asked to rebase an entire branch starting
+   from the root, but failed by assuming that there always is a parent
+   commit to the first commit on the branch.
+   (merge 79f4344 bw/rebase-merge-entire-branch later to maint).
+
+ * Fix a broken "p4 lfs" test.
+   (merge 9e220fe ls/p4-lfs-test-fix-2.7.0 later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 8b5a3e9 kn/for-each-tag-branch later to maint).
-   (merge 9c60d9f sb/misc-cleanups later to maint).
+   (merge 99dab16 sb/misc-cleanups later to maint).
    (merge 7a6a44c cc/apply later to maint).
    (merge 6594883 nd/remove-unused later to maint).
    (merge 0ff7410 sg/test-lib-simplify-expr-away later to maint).
    (merge 060e776 jk/fix-attribute-macro-in-2.5 later to maint).
    (merge d16df0c rt/string-list-lookup-cleanup later to maint).
+   (merge 376eb60 sb/config-exit-status-list later to maint).
