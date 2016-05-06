@@ -110,7 +110,8 @@ base-name::
 --max-pack-size=<n>::
 	Maximum size of each output pack file. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
-	If specified,  multiple packfiles may be created.
+	If specified, multiple packfiles may be created, which also
+	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
 	`pack.packSizeLimit` is set.
 
