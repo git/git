@@ -67,7 +67,9 @@ call_merge () {
 		GIT_MERGE_VERBOSITY=1 && export GIT_MERGE_VERBOSITY
 	fi
 	test -z "$strategy" && strategy=recursive
-	eval 'git-merge-$strategy' $strategy_opts '"$cmt^" -- "$hd" "$cmt"'
+	# If cmt doesn't have a parent, don't include it as a base
+	base=$(git rev-parse --verify --quiet $cmt^)
+	eval 'git-merge-$strategy' $strategy_opts $base ' -- "$hd" "$cmt"'
 	rv=$?
 	case "$rv" in
 	0)
