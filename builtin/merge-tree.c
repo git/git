@@ -150,15 +150,15 @@ static void show_result(void)
 /* An empty entry never compares same, not even to another empty entry */
 static int same_entry(struct name_entry *a, struct name_entry *b)
 {
-	return	a->sha1 &&
-		b->sha1 &&
-		!hashcmp(a->sha1, b->sha1) &&
+	return	a->oid &&
+		b->oid &&
+		!oidcmp(a->oid, b->oid) &&
 		a->mode == b->mode;
 }
 
 static int both_empty(struct name_entry *a, struct name_entry *b)
 {
-	return !(a->sha1 || b->sha1);
+	return !(a->oid || b->oid);
 }
 
 static struct merge_list *create_entry(unsigned stage, unsigned mode, const unsigned char *sha1, const char *path)
@@ -188,8 +188,8 @@ static void resolve(const struct traverse_info *info, struct name_entry *ours, s
 		return;
 
 	path = traverse_path(info, result);
-	orig = create_entry(2, ours->mode, ours->sha1, path);
-	final = create_entry(0, result->mode, result->sha1, path);
+	orig = create_entry(2, ours->mode, ours->oid->hash, path);
+	final = create_entry(0, result->mode, result->oid->hash, path);
 
 	final->link = orig;
 
@@ -213,7 +213,7 @@ static void unresolved_directory(const struct traverse_info *info,
 
 	newbase = traverse_path(info, p);
 
-#define ENTRY_SHA1(e) (((e)->mode && S_ISDIR((e)->mode)) ? (e)->sha1 : NULL)
+#define ENTRY_SHA1(e) (((e)->mode && S_ISDIR((e)->mode)) ? (e)->oid->hash : NULL)
 	buf0 = fill_tree_descriptor(t+0, ENTRY_SHA1(n + 0));
 	buf1 = fill_tree_descriptor(t+1, ENTRY_SHA1(n + 1));
 	buf2 = fill_tree_descriptor(t+2, ENTRY_SHA1(n + 2));
@@ -239,7 +239,7 @@ static struct merge_list *link_entry(unsigned stage, const struct traverse_info 
 		path = entry->path;
 	else
 		path = traverse_path(info, n);
-	link = create_entry(stage, n->mode, n->sha1, path);
+	link = create_entry(stage, n->mode, n->oid->hash, path);
 	link->link = entry;
 	return link;
 }
@@ -314,7 +314,7 @@ static int threeway_callback(int n, unsigned long mask, unsigned long dirmask, s
 	}
 
 	if (same_entry(entry+0, entry+1)) {
-		if (entry[2].sha1 && !S_ISDIR(entry[2].mode)) {
+		if (entry[2].oid && !S_ISDIR(entry[2].mode)) {
 			/* We did not touch, they modified -- take theirs */
 			resolve(info, entry+1, entry+2);
 			return mask;

@@ -183,7 +183,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 
 	if (t) {
 		/* path present in resulting tree */
-		sha1 = tree_entry_extract(t, &path, &mode);
+		sha1 = tree_entry_extract(t, &path, &mode)->hash;
 		pathlen = tree_entry_len(&t->entry);
 		isdir = S_ISDIR(mode);
 	} else {
@@ -229,7 +229,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 						DIFF_STATUS_ADDED;
 
 			if (tpi_valid) {
-				sha1_i = tp[i].entry.sha1;
+				sha1_i = tp[i].entry.oid->hash;
 				mode_i = tp[i].entry.mode;
 			}
 			else {
@@ -270,7 +270,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 			/* same rule as in emitthis */
 			int tpi_valid = tp && !(tp[i].entry.mode & S_IFXMIN_NEQ);
 
-			parents_sha1[i] = tpi_valid ? tp[i].entry.sha1
+			parents_sha1[i] = tpi_valid ? tp[i].entry.oid->hash
 						    : NULL;
 		}
 
@@ -482,7 +482,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 						continue;
 
 					/* diff(t,pi) != ø */
-					if (hashcmp(t.entry.sha1, tp[i].entry.sha1) ||
+					if (oidcmp(t.entry.oid, tp[i].entry.oid) ||
 					    (t.entry.mode != tp[i].entry.mode))
 						continue;
 

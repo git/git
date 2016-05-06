@@ -38,7 +38,7 @@ static void decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned 
 	/* Initialize the descriptor entry */
 	desc->entry.path = path;
 	desc->entry.mode = canon_mode(mode);
-	desc->entry.sha1 = (const unsigned char *)(path + len);
+	desc->entry.oid  = (const struct object_id *)(path + len);
 }
 
 void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long size)
@@ -76,7 +76,7 @@ static void entry_extract(struct tree_desc *t, struct name_entry *a)
 void update_tree_entry(struct tree_desc *desc)
 {
 	const void *buf = desc->buffer;
-	const unsigned char *end = desc->entry.sha1 + 20;
+	const unsigned char *end = desc->entry.oid->hash + 20;
 	unsigned long size = desc->size;
 	unsigned long len = end - (const unsigned char *)buf;
 
@@ -110,7 +110,7 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 		pathlen--;
 	info->pathlen = pathlen ? pathlen + 1 : 0;
 	info->name.path = base;
-	info->name.sha1 = (void *)(base + pathlen + 1);
+	info->name.oid = (void *)(base + pathlen + 1);
 	if (pathlen)
 		info->prev = &dummy;
 }
@@ -433,10 +433,10 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 	int namelen = strlen(name);
 	while (t->size) {
 		const char *entry;
-		const unsigned char *sha1;
+		const struct object_id *oid;
 		int entrylen, cmp;
 
-		sha1 = tree_entry_extract(t, &entry, mode);
+		oid = tree_entry_extract(t, &entry, mode);
 		entrylen = tree_entry_len(&t->entry);
 		update_tree_entry(t);
 		if (entrylen > namelen)
@@ -447,7 +447,7 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (cmp < 0)
 			break;
 		if (entrylen == namelen) {
-			hashcpy(result, sha1);
+			hashcpy(result, oid->hash);
 			return 0;
 		}
 		if (name[entrylen] != '/')
@@ -455,10 +455,10 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (!S_ISDIR(*mode))
 			break;
 		if (++entrylen == namelen) {
-			hashcpy(result, sha1);
+			hashcpy(result, oid->hash);
 			return 0;
 		}
-		return get_tree_entry(sha1, name + entrylen, result, mode);
+		return get_tree_entry(oid->hash, name + entrylen, result, mode);
 	}
 	return -1;
 }
