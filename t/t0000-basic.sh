@@ -98,7 +98,7 @@ check_sub_test_lib_test () {
 }
 
 check_sub_test_lib_test_err () {
-	name="$1" # stdin is the expected output output from the test
+	name="$1" # stdin is the expected output from the test
 	# expected error output is in descriptior 3
 	(
 		cd "$name" &&

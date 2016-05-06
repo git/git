@@ -1156,7 +1156,7 @@ sub prepDirForOutput
     # FUTURE: This would more accurately emulate CVS by sending
     #   another copy of sticky after processing the files in that
     #   directory.  Or intermediate: perhaps send all sticky's for
-    #   $seendirs after after processing all files.
+    #   $seendirs after processing all files.
 }
 
 # update \n
@@ -2824,7 +2824,7 @@ sub statecleanup
 }
 
 # Return working directory CVS revision "1.X" out
-# of the the working directory "entries" state, for the given filename.
+# of the working directory "entries" state, for the given filename.
 # This is prefixed with a dash if the file is scheduled for removal
 # when it is committed.
 sub revparse
@@ -2935,7 +2935,7 @@ sub filecleanup
     return $filename;
 }
 
-# Remove prependdir from the path, so that is is relative to the directory
+# Remove prependdir from the path, so that it is relative to the directory
 # the CVS client was started from, rather than the top of the project.
 # Essentially the inverse of filecleanup().
 sub remove_prependdir

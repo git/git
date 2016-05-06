@@ -526,7 +526,7 @@ Push Certificate
 
 A push certificate begins with a set of header lines.  After the
 header and an empty line, the protocol commands follow, one per
-line. Note that the the trailing LF in push-cert PKT-LINEs is _not_
+line. Note that the trailing LF in push-cert PKT-LINEs is _not_
 optional; it must be present.
 
 Currently, the following header fields are defined:
