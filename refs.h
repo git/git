@@ -77,11 +77,12 @@ int is_branch(const char *refname);
 int peel_ref(const char *refname, unsigned char *sha1);
 
 /**
- * Resolve refname in the nested "gitlink" repository that is located
- * at path.  If the resolution is successful, return 0 and set sha1 to
- * the name of the object; otherwise, return a non-zero value.
+ * Resolve refname in the nested "gitlink" repository in the specified
+ * submodule (which must be non-NULL). If the resolution is
+ * successful, return 0 and set sha1 to the name of the object;
+ * otherwise, return a non-zero value.
  */
-int resolve_gitlink_ref(const char *path, const char *refname,
+int resolve_gitlink_ref(const char *submodule, const char *refname,
 			unsigned char *sha1);
 
 /*
