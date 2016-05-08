@@ -77,7 +77,7 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 	wm withdraw $w
 
 	${NS}::frame $w.m
-	${NS}::label $w.m.l1 -text "$hook hook failed:" \
+	${NS}::label $w.m.l1 -text [mc "%s hook failed:" $hook] \
 		-anchor w \
 		-justify left \
 		-font font_uibold
