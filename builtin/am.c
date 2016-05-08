@@ -769,15 +769,15 @@ static int split_mail_conv(mail_conv_fn fn, struct am_state *state,
 			in = fopen(*paths, "r");
 
 		if (!in)
-			return error(_("could not open '%s' for reading: %s"),
-					*paths, strerror(errno));
+			return error_errno(_("could not open '%s' for reading"),
+					   *paths);
 
 		mail = mkpath("%s/%0*d", state->dir, state->prec, i + 1);
 
 		out = fopen(mail, "w");
 		if (!out)
-			return error(_("could not open '%s' for writing: %s"),
-					mail, strerror(errno));
+			return error_errno(_("could not open '%s' for writing"),
+					   mail);
 
 		ret = fn(out, in, keep_cr);
 
@@ -857,8 +857,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 
 	fp = fopen(*paths, "r");
 	if (!fp)
-		return error(_("could not open '%s' for reading: %s"), *paths,
-				strerror(errno));
+		return error_errno(_("could not open '%s' for reading"), *paths);
 
 	while (!strbuf_getline_lf(&sb, fp)) {
 		if (*sb.buf == '#')
