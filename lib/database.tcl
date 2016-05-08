@@ -63,7 +63,7 @@ proc do_stats {} {
 	bind $w <Visibility> "grab $w; focus $w.buttons.close"
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [list destroy $w]
-	wm title $w [append "[appname] ([reponame]): " [mc "Database Statistics"]]
+	wm title $w [mc "%s (%s): Database Statistics" [appname] [reponame]]
 	wm deiconify $w
 	tkwait window $w
 }

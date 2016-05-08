@@ -17,7 +17,7 @@ proc error_popup {msg} {
 	set cmd [list tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [append "$title: " [mc "error"]] \
+		-title [mc "%s: error" $title] \
 		-message $msg]
 	if {[winfo ismapped [_error_parent]]} {
 		lappend cmd -parent [_error_parent]
@@ -33,7 +33,7 @@ proc warn_popup {msg} {
 	set cmd [list tk_messageBox \
 		-icon warning \
 		-type ok \
-		-title [append "$title: " [mc "warning"]] \
+		-title [mc "%s: warning" $title] \
 		-message $msg]
 	if {[winfo ismapped [_error_parent]]} {
 		lappend cmd -parent [_error_parent]
