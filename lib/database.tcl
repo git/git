@@ -54,7 +54,7 @@ proc do_stats {} {
 			set value "$value[lindex $s 2]"
 		}
 
-		${NS}::label $w.stat.l_$name -text "$label:" -anchor w
+		${NS}::label $w.stat.l_$name -text [mc "%s:" $label] -anchor w
 		${NS}::label $w.stat.v_$name -text $value -anchor w
 		grid $w.stat.l_$name $w.stat.v_$name -sticky we -padx {0 5}
 	}

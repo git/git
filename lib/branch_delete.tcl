@@ -128,7 +128,7 @@ method _delete {} {
 		set b [lindex $i 0]
 		set o [lindex $i 1]
 		if {[catch {git branch -D $b} err]} {
-			append failed " - $b: $err\n"
+			append failed [mc " - %s:" $b] " $err\n"
 		}
 	}
 
