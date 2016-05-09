@@ -679,7 +679,12 @@ test_seq () {
 	2)	;;
 	*)	error "bug in the test script: not 1 or 2 parameters to test_seq" ;;
 	esac
-	perl -le 'print for $ARGV[0]..$ARGV[1]' -- "$@"
+	test_seq_counter__=$1
+	while test "$test_seq_counter__" -le "$2"
+	do
+		echo "$test_seq_counter__"
+		test_seq_counter__=$(( $test_seq_counter__ + 1 ))
+	done
 }
 
 # This function can be used to schedule some commands to be run
