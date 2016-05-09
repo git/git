@@ -665,20 +665,13 @@ test_cmp_rev () {
 	test_cmp expect.rev actual.rev
 }
 
-# Print a sequence of numbers or letters in increasing order.  This is
-# similar to GNU seq(1), but the latter might not be available
-# everywhere (and does not do letters).  It may be used like:
+# Print a sequence of integers in increasing order, either with
+# two arguments (start and end):
 #
-#	for i in $(test_seq 100)
-#	do
-#		for j in $(test_seq 10 20)
-#		do
-#			for k in $(test_seq a z)
-#			do
-#				echo $i-$j-$k
-#			done
-#		done
-#	done
+#     test_seq 1 5 -- outputs 1 2 3 4 5 one line at a time
+#
+# or with one argument (end), in which case it starts counting
+# from 1.
 
 test_seq () {
 	case $# in
