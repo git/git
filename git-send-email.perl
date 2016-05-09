@@ -1556,9 +1556,9 @@ foreach my $t (@files) {
 				next if $suppress_cc{'sob'} and $what =~ /Signed-off-by/i;
 				next if $suppress_cc{'bodycc'} and $what =~ /Cc/i;
 			}
-			push @cc, $c;
+			push @cc, $sc;
 			printf("(body) Adding cc: %s from line '%s'\n",
-				$c, $_) unless $quiet;
+				$sc, $_) unless $quiet;
 		}
 	}
 	close $fh;
