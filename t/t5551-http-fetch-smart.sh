@@ -283,7 +283,8 @@ test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
 '
 
 test_expect_success 'custom http headers' '
-	test_must_fail git fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	test_must_fail git -c http.extraheader="x-magic-two: cadabra" \
+		fetch "$HTTPD_URL/smart_headers/repo.git" &&
 	git -c http.extraheader="x-magic-one: abra" \
 	    -c http.extraheader="x-magic-two: cadabra" \
 	    fetch "$HTTPD_URL/smart_headers/repo.git"
