@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2016, #02; Fri, 6)
+Subject: What's cooking in git.git (May 2016, #03; Mon, 9)
 X-master-at: 63a35025b11bf0e7ef39693aeea3b639a066b7b8
-X-next-at: 68575d3b6b2330b6a5502f5d10f584fa21b380e1
+X-next-at: 51d527da26abd20d7685abe3bbf48cc606056418
 
-What's cooking in git.git (May 2016, #02; Fri, 6)
+What's cooking in git.git (May 2016, #03; Mon, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,136 +24,154 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/object-id (2016-04-25) 6 commits
-  (merged to 'next' on 2016-04-29 at 02f13a4)
- + match-trees: convert several leaf functions to use struct object_id
- + tree-walk: convert tree_entry_extract() to use struct object_id
- + struct name_entry: use struct object_id instead of unsigned char sha1[20]
- + match-trees: convert shift_tree() and shift_tree_by() to use object_id
- + test-match-trees: convert to use struct object_id
- + sha1-name: introduce a get_oid() function
-
- Move from unsigned char[20] to struct object_id continues.
-
-
-* bw/rebase-merge-entire-branch (2016-04-24) 1 commit
-  (merged to 'next' on 2016-04-29 at 7a9487f)
- + git-rebase--merge: don't include absent parent as a base
-
- "git rebase -m" could be asked to rebase an entire branch starting
- from the root, but failed by assuming that there always is a parent
- commit to the first commit on the branch.
-
-
-* jc/drop-git-spec-in (2016-04-27) 2 commits
-  (merged to 'next' on 2016-04-27 at 2b85030)
- + Makefile: remove dependency on git.spec
-  (merged to 'next' on 2016-04-22 at 531583f)
- + Makefile: stop pretending to support rpmbuild
-
- As nobody maintains our in-tree git.spec.in and distros use their
- own spec file, we stopped pretending that we support "make rpm".
-
-
-* jk/diff-compact-heuristic (2016-05-02) 3 commits
-  (merged to 'next' on 2016-05-02 at 2a74763)
- + diff: undocument the compaction heuristic knobs for experimentation
-  (merged to 'next' on 2016-04-22 at 0c117ea)
- + xdiff: implement empty line chunk heuristic
- + xdiff: add recs_match helper function
- (this branch is tangled with jc/diff-compact-always-use-blank-heuristics.)
-
- Patch output from "git diff" and friends has been tweaked to be
- more readable by using a blank line as a strong hint that the
- contents before and after it belong to a logically separate unit.
-
-
-* js/http-custom-headers (2016-04-27) 1 commit
-  (merged to 'next' on 2016-04-27 at 0c97a50)
- + http: support sending custom HTTP headers
-
- HTTP transport clients learned to throw extra HTTP headers at the
- server, specified via http.extraHeader configuration variable.
-
-
-* ld/p4-test-py3 (2016-04-26) 3 commits
-  (merged to 'next' on 2016-04-27 at d5d5fca)
- + git-p4 tests: time_in_seconds should use $PYTHON_PATH
- + git-p4 tests: work with python3 as well as python2
- + git-p4 tests: cd to / before running python
-
- The test scripts for "git p4" (but not "git p4" implementation
- itself) has been updated so that they would work even on a system
- where the installed version of Python is python 3.
-
-
-* ls/p4-lfs-test-fix-2.7.0 (2016-04-29) 2 commits
-  (merged to 'next' on 2016-04-29 at da56b67)
- + t9824: fix wrong reference value
-  (merged to 'next' on 2016-04-27 at be87c63)
- + t9824: fix broken &&-chain in a subshell
-
- Fix a broken test.
-
-
-* sb/clone-shallow-passthru (2016-04-26) 1 commit
-  (merged to 'next' on 2016-04-27 at 3112b24)
- + clone: add `--shallow-submodules` flag
-
- "git clone" learned "--shallow-submodules" option.
-
-
-* sb/config-exit-status-list (2016-04-26) 1 commit
-  (merged to 'next' on 2016-04-27 at 44fe343)
- + config doc: improve exit code listing
-
- Doc update.
-
---------------------------------------------------
 [New Topics]
 
-* sb/submodule-deinit-all (2016-05-05) 1 commit
- - submodule deinit: require '--all' instead of '.' for all submodules
+* ak/t4151-ls-files-could-be-empty (2016-05-09) 1 commit
+ - t4151: make sure argument to 'test -z' is given
 
- Correct faulty recommendation to use "git submodule deinit ." when
- de-initialising all submodules, which would result in a strange
- error message in a pathological corner case.
+ Test fix.
 
  Will merge to 'next'.
 
 
-* bn/config-doc-tt-varnames (2016-05-05) 1 commit
- - config: consistently format $variables in monospaced font
- (this branch uses jc/config-pathname-type.)
+* es/test-gpg-tags (2016-05-09) 1 commit
+ - t6302: simplify non-gpg cases
 
- Doc formatting fixes.
-
-
-* lp/typofixes (2016-05-06) 1 commit
- - typofix: assorted typofixes in comments, documentation and messages
+ Test fix.
 
  Will merge to 'next'.
 
 
-* sb/z-is-gnutar-ism (2016-05-06) 1 commit
- - t3513: do not compress backup tar file
+* jc/test-seq (2016-05-09) 2 commits
+ - test-lib-functions.sh: rewrite test_seq without Perl
+ - test-lib-functions.sh: remove misleading comment on test_seq
+
+ Test fix.
 
  Will merge to 'next'.
 
 
-* jc/test-parse-options-expect (2016-05-06) 4 commits
- - t0040: convert a few tests to use test-parse-options --expect
- - t0040: remove unused test helpers
- - test-parse-options: --expect=<string> option to simplify tests
- - test-parse-options: fix output when callback option fails
- (this branch uses pb/commit-verbose-config.)
+* js/windows-dotgit (2016-05-09) 2 commits
+ - mingw: remove unnecessary definition
+ - mingw: introduce the 'core.hideDotFiles' setting
+
+ On Windows, .git and optionally any files whose name starts with a
+ dot are now marked as hidden, with a core.hideDotFiles knob to
+ customize this behaviour.
 
 
-* jc/doc-lint (2016-05-04) 2 commits
+* nd/error-errno (2016-05-09) 41 commits
+ - wrapper.c: use warning_errno()
+ - vcs-svn: use error_errno()
+ - upload-pack.c: use error_errno()
+ - unpack-trees.c: use error_errno()
+ - transport-helper.c: use error_errno()
+ - sha1_file.c: use {error,die,warning}_errno()
+ - server-info.c: use error_errno()
+ - sequencer.c: use error_errno()
+ - run-command.c: use error_errno()
+ - rerere.c: use error_errno() and warning_errno()
+ - reachable.c: use error_errno()
+ - mailmap.c: use error_errno()
+ - ident.c: use warning_errno()
+ - http.c: use error_errno() and warning_errno()
+ - grep.c: use error_errno()
+ - gpg-interface.c: use error_errno()
+ - fast-import.c: use error_errno()
+ - entry.c: use error_errno()
+ - editor.c: use error_errno()
+ - diff-no-index.c: use error_errno()
+ - credential-cache--daemon.c: use warning_errno()
+ - copy.c: use error_errno()
+ - connected.c: use error_errno()
+ - config.c: use error_errno()
+ - compat/win32/syslog.c: use warning_errno()
+ - combine-diff.c: use error_errno()
+ - check-racy.c: use error_errno()
+ - builtin/worktree.c: use error_errno()
+ - builtin/upload-archive.c: use error_errno()
+ - builtin/update-index.c: prefer "err" to "errno" in process_lstat_error
+ - builtin/rm.c: use warning_errno()
+ - builtin/pack-objects.c: use die_errno() and warning_errno()
+ - builtin/merge-file.c: use error_errno()
+ - builtin/mailsplit.c: use error_errno()
+ - builtin/help.c: use warning_errno()
+ - builtin/fetch.c: use error_errno()
+ - builtin/branch.c: use error_errno()
+ - builtin/am.c: use error_errno()
+ - bisect.c: use die_errno() and warning_errno()
+ - usage.c: add warning_errno() and error_errno()
+ - usage.c: move format processing out of die_errno()
+
+ The code for warning_errno/die_errno has been refactored and a new
+ error_errno() reporting helper is introduced.
+
+ Will merge to 'next'.
+
+
+* nd/remote-plural-ours-plus-theirs (2016-05-06) 1 commit
+ - remote.c: specify correct plural form in "commit diverge" message
+
+ Message fix.
+
+ Will merge to 'next'.
+
+
+* nd/test-helpers (2016-05-09) 1 commit
+ - wrap-for-bin.sh: handle t/helper/ paths internally
+
+ Switching between 'master' and 'next', between which the paths to
+ test helper binaries have changed, did not update bin-wrappers/*
+ scripts used in tests, causing false test failures.
+
+ Will merge to 'next'.
+
+
+* tb/core-eol-fix (2016-04-25) 4 commits
+ - convert.c: ident + core.autocrlf didn't work
+ - t0027: test cases for combined attributes
+ - convert: allow core.autocrlf=input and core.eol=crlf
+ - t0027: make commit_chk_wrnNNO() reliable
+
+ A couple of bugs around core.autocrlf have been fixed.
+
+ Will merge to 'next'.
+
+
+* tb/t5601-sed-fix (2016-05-09) 1 commit
+ - t5601: Remove trailing space in sed expression
+
+ Test fix.
+
+ Will merge to 'next'.
+
+
+* va/i18n-remote-comment-to-align (2016-05-09) 1 commit
+ - i18n: remote: add comment for translators
+
+ Message fix.
+
+ Will merge to 'next'.
+
+
+* jc/linkgit-fix (2016-05-09) 1 commit
  - Documentation: fix linkgit references
- - ci: validate "gitlink:" in documentation
+
+ Many 'linkgit:<git documentation page>' references were broken,
+ which are all fixed with this.
+
+ Will merge to 'next'.
+
+
+* js/http-custom-headers (2016-05-09) 2 commits
+ - t5551: make the test for extra HTTP headers more robust
+ - tests: adjust the configuration for Apache 2.2
+
+ Update tests for "http.extraHeaders=<header>" to be portable back
+ to Apache 2.2 (the original depended on <RequireAll/> which is a
+ more recent feature).
+
+ Will merge to 'next'.
 
 
 --------------------------------------------------
@@ -380,6 +398,63 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* sb/submodule-deinit-all (2016-05-05) 1 commit
+  (merged to 'next' on 2016-05-09 at 0fd4518)
+ + submodule deinit: require '--all' instead of '.' for all submodules
+
+ Correct faulty recommendation to use "git submodule deinit ." when
+ de-initialising all submodules, which would result in a strange
+ error message in a pathological corner case.
+
+ Will merge to 'master'.
+
+
+* bn/config-doc-tt-varnames (2016-05-05) 1 commit
+ - config: consistently format $variables in monospaced font
+ (this branch uses jc/config-pathname-type.)
+
+ Doc formatting fixes.
+
+ Will merge to 'next'.
+
+
+* lp/typofixes (2016-05-06) 1 commit
+  (merged to 'next' on 2016-05-09 at 59683be)
+ + typofix: assorted typofixes in comments, documentation and messages
+
+ Will merge to 'master'.
+
+
+* sb/z-is-gnutar-ism (2016-05-09) 2 commits
+  (merged to 'next' on 2016-05-09 at 51d527d)
+ + t6041: do not compress backup tar file
+ + t3513: do not compress backup tar file
+
+ Will merge to 'master'.
+
+
+* jc/test-parse-options-expect (2016-05-06) 4 commits
+ - t0040: convert a few tests to use test-parse-options --expect
+ - t0040: remove unused test helpers
+ - test-parse-options: --expect=<string> option to simplify tests
+ - test-parse-options: fix output when callback option fails
+ (this branch uses pb/commit-verbose-config.)
+
+ t0040 had too many unnecessary repetitions in its test data.  Teach
+ test-parse-options program so that a caller can tell what it
+ expects in its output, so that these repetitions can be cleaned up.
+
+ Will merge to 'next'.
+
+
+* jc/doc-lint (2016-05-04) 1 commit
+ - ci: validate "gitlink:" in documentation
+
+ Find common mistakes when writing gitlink: in our documentation and
+ drive the check from "make check-docs".
+
+
+
 * ew/normal-to-e (2016-05-02) 1 commit
   (merged to 'next' on 2016-05-06 at 65a2c52)
  + .mailmap: update to my shorter email address
@@ -458,15 +533,16 @@ of the repositories listed at
 
 
 * ab/hooks (2016-05-04) 4 commits
- - hooks: allow customizing where the hook directory is
- - githooks.txt: minor improvements to the grammar & phrasing
- - githooks.txt: amend dangerous advice about 'update' hook ACL
- - githooks.txt: improve the intro section
+  (merged to 'next' on 2016-05-09 at 23cf808)
+ + hooks: allow customizing where the hook directory is
+ + githooks.txt: minor improvements to the grammar & phrasing
+ + githooks.txt: amend dangerous advice about 'update' hook ACL
+ + githooks.txt: improve the intro section
 
  A new configuration variable core.hooksPath allows customizing
  where the hook directory is.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/merge-impossible-no-commit (2016-04-26) 2 commits
@@ -525,13 +601,14 @@ of the repositories listed at
 
 
 * bn/http-cookiefile-config (2016-05-04) 2 commits
- - http: expand http.cookieFile as a path
- - Documentation: config: improve word ordering for http.cookieFile
+  (merged to 'next' on 2016-05-09 at d519b13)
+ + http: expand http.cookieFile as a path
+ + Documentation: config: improve word ordering for http.cookieFile
 
  "http.cookieFile" configuration variable clearly wants a pathname,
  but we forgot to treat it as such by e.g. applying tilde expansion.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ew/doc-split-pack-disables-bitmap (2016-04-28) 1 commit
@@ -544,13 +621,14 @@ of the repositories listed at
 
 
 * jc/config-pathname-type (2016-05-04) 1 commit
- - config: describe 'pathname' value type
+  (merged to 'next' on 2016-05-09 at 0876e55)
+ + config: describe 'pathname' value type
  (this branch is used by bn/config-doc-tt-varnames.)
 
  Consolidate description of tilde-expansion that is done to
  configuration variables that take pathname to a single place.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/submodule-c-credential (2016-05-06) 6 commits
@@ -609,32 +687,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* tb/convert-eol-autocrlf (2016-04-29) 10 commits
- - ce_compare_data() did not respect conversion
- - t6038; use crlf on all platforms
- - convert.c: more safer crlf handling with text attribute
- - convert: unify the "auto" handling of CRLF
- - convert.c: stream and early out
- - read-cache: factor out get_sha1_from_index() helper
- - convert.c: ident + core.autocrlf didn't work
- - t0027: test cases for combined attributes
- - convert: allow core.autocrlf=input and core.eol=crlf
- - t0027: make commit_chk_wrnNNO() reliable
-
- The combination of text=auto & eol=crlf (or eol=lf for that matter)
- is taught to be much more useful; it used to be "auto detection"
- was defeated as if setting eol declares that the file _is_ text,
- but now text=auto is still in effect for such a path and the code
- refrains from applying eol conversion if it found the path is not
- text.  Also setting core.autocrlf to 'input' and core.eol to 'crlf'
- used to be rejected, but because the code gives precedence to
- core.autocrlf, there is no need to, hence we no longer reject the
- combination.
-
- Earlier steps looked alright, but it veers into a wrong direction
- in the middle.
-
-
 * ep/http-curl-trace (2016-05-02) 2 commits
  . imap-send.c: introduce the GIT_TRACE_CURL environment variable
  . http.c: implement the GIT_TRACE_CURL environment variable
@@ -665,8 +717,7 @@ of the repositories listed at
  forbid operations on a branch that is checked out or being actively
  worked on elsewhere, by noticing that e.g. it is being rebased.
 
- Being reviewed.
- ($gmane/292189)
+ Will merge to 'next'.
 
 
 * pb/commit-verbose-config (2016-05-05) 8 commits
@@ -698,7 +749,7 @@ of the repositories listed at
  What was the status of this one?  Ready to proceed?
 
 
-* jc/ll-merge-internal (2016-04-27) 3 commits
+* jc/ll-merge-internal (2016-05-09) 3 commits
  - t6036: remove pointless test that expects failure
  - ll-merge: use a longer conflict marker for internal merge
  - ll-merge: fix typo in comment
@@ -709,7 +760,7 @@ of the repositories listed at
  what the end user and "rerere" need to look at.  This was fixed by
  making the conflict markers left by the inner merges a bit longer.
 
- Will rebase to remove the comment after three-dash line and then merge.
+ Will merge to 'next'.
 
 
 * sb/submodule-init (2016-05-03) 7 commits
@@ -754,8 +805,7 @@ of the repositories listed at
 
  Mark several messages for translation.
 
- Comments?  They looked all sensible to me.
- Does the lack of response mean lack of interest and support?
+ Will merge to 'next'.
 
 
 * kn/ref-filter-branch-list (2016-04-25) 17 commits
@@ -793,13 +843,12 @@ of the repositories listed at
  (public, well-known) commit the original series was built on in
  its output.
 
- Looking close to be ready.
- ($gmane/292622).
+ Will merge to 'next'.
 
 
-* dt/index-helper (2016-05-05) 19 commits
+* dt/index-helper (2016-05-09) 19 commits
  - untracked-cache: config option
- - trace: measure where most of the time is spent
+ - trace: measure where the time is spent in the index-heavy operations
  - index-helper: optionally automatically run
  - index-helper: autorun mode
  - index-helper: don't run if already running
@@ -808,7 +857,7 @@ of the repositories listed at
  - unpack-trees: preserve index extensions
  - update-index: enable/disable watchman support
  - index-helper: use watchman to avoid refreshing index with lstat()
- - watchman: add support to watchman to reduce refresh cost
+ - watchman: support watchman to reduce index refresh cost
  - read-cache: add watchman 'WAMA' extension
  - index-helper: add --detach
  - daemonize(): set a flag before exiting the main process
@@ -818,8 +867,8 @@ of the repositories listed at
  - read-cache: allow to keep mmap'd memory after reading
  - read-cache.c: fix constness of verify_hdr()
 
- Needs review.  Reported to break its own tests.
- ($gmane/293687).
+ Needs review.
+ ($gmane/294056).
 
 
 * jc/bundle (2016-03-03) 6 commits
