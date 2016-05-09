@@ -294,7 +294,7 @@ static int http_options(const char *var, const char *value, void *cb)
 		return git_config_string(&http_proxy_authmethod, var, value);
 
 	if (!strcmp("http.cookiefile", var))
-		return git_config_string(&curl_cookie_file, var, value);
+		return git_config_pathname(&curl_cookie_file, var, value);
 	if (!strcmp("http.savecookies", var)) {
 		curl_save_cookies = git_config_bool(var, value);
 		return 0;
