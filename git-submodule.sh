@@ -124,9 +124,10 @@ isnumber()
 # of the settings from GIT_CONFIG_PARAMETERS.
 sanitize_submodule_env()
 {
-	sanitized_config=$(git submodule--helper sanitize-config)
+	save_config=$GIT_CONFIG_PARAMETERS
 	clear_local_git_env
-	GIT_CONFIG_PARAMETERS=$sanitized_config
+	GIT_CONFIG_PARAMETERS=$save_config
+	export GIT_CONFIG_PARAMETERS
 }
 
 #

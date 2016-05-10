@@ -443,54 +443,6 @@ static int module_name(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-/*
- * Rules to sanitize configuration variables that are Ok to be passed into
- * submodule operations from the parent project using "-c". Should only
- * include keys which are both (a) safe and (b) necessary for proper
- * operation.
- */
-static int submodule_config_ok(const char *var)
-{
-	if (starts_with(var, "credential."))
-		return 1;
-	return 0;
-}
-
-static int sanitize_submodule_config(const char *var, const char *value, void *data)
-{
-	struct strbuf *out = data;
-
-	if (submodule_config_ok(var)) {
-		if (out->len)
-			strbuf_addch(out, ' ');
-
-		if (value)
-			sq_quotef(out, "%s=%s", var, value);
-		else
-			sq_quote_buf(out, var);
-	}
-
-	return 0;
-}
-
-static void prepare_submodule_repo_env(struct argv_array *out)
-{
-	const char * const *var;
-
-	for (var = local_repo_env; *var; var++) {
-		if (!strcmp(*var, CONFIG_DATA_ENVIRONMENT)) {
-			struct strbuf sanitized_config = STRBUF_INIT;
-			git_config_from_parameters(sanitize_submodule_config,
-						   &sanitized_config);
-			argv_array_pushf(out, "%s=%s", *var, sanitized_config.buf);
-			strbuf_release(&sanitized_config);
-		} else {
-			argv_array_push(out, *var);
-		}
-	}
-
-}
-
 static int clone_submodule(const char *path, const char *gitdir, const char *url,
 			   const char *depth, const char *reference, int quiet)
 {
@@ -615,22 +567,6 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	free(sm_gitdir);
 	free(path);
 	free(p);
-	return 0;
-}
-
-static int module_sanitize_config(int argc, const char **argv, const char *prefix)
-{
-	struct strbuf sanitized_config = STRBUF_INIT;
-
-	if (argc > 1)
-		usage(_("git submodule--helper sanitize-config"));
-
-	git_config_from_parameters(sanitize_submodule_config, &sanitized_config);
-	if (sanitized_config.len)
-		printf("%s\n", sanitized_config.buf);
-
-	strbuf_release(&sanitized_config);
-
 	return 0;
 }
 
@@ -906,7 +842,6 @@ static struct cmd_struct commands[] = {
 	{"list", module_list},
 	{"name", module_name},
 	{"clone", module_clone},
-	{"sanitize-config", module_sanitize_config},
 	{"update-clone", update_clone},
 	{"resolve-relative-url", resolve_relative_url},
 	{"resolve-relative-url-test", resolve_relative_url_test},

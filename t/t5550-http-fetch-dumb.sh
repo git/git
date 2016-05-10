@@ -91,20 +91,52 @@ test_expect_success 'configured username does not override URL' '
 	expect_askpass pass user@host
 '
 
-test_expect_success 'cmdline credential config passes into submodules' '
+test_expect_success 'set up repo with http submodules' '
 	git init super &&
 	set_askpass user@host pass@host &&
 	(
 		cd super &&
 		git submodule add "$HTTPD_URL/auth/dumb/repo.git" sub &&
 		git commit -m "add submodule"
-	) &&
+	)
+'
+
+test_expect_success 'cmdline credential config passes to submodule via clone' '
 	set_askpass wrong pass@host &&
 	test_must_fail git clone --recursive super super-clone &&
 	rm -rf super-clone &&
+
 	set_askpass wrong pass@host &&
-	git -c "credential.$HTTP_URL.username=user@host" \
+	git -c "credential.$HTTPD_URL.username=user@host" \
 		clone --recursive super super-clone &&
+	expect_askpass pass user@host
+'
+
+test_expect_success 'cmdline credential config passes submodule via fetch' '
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone fetch --recurse-submodules &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    fetch --recurse-submodules &&
+	expect_askpass pass user@host
+'
+
+test_expect_success 'cmdline credential config passes submodule update' '
+	# advance the submodule HEAD so that a fetch is required
+	git commit --allow-empty -m foo &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git" HEAD &&
+	sha1=$(git rev-parse HEAD) &&
+	git -C super-clone update-index --cacheinfo 160000,$sha1,sub &&
+
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone submodule update &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    submodule update &&
 	expect_askpass pass user@host
 '
 
