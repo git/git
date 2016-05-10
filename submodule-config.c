@@ -30,7 +30,7 @@ enum lookup_type {
 	lookup_path
 };
 
-static struct submodule_cache cache;
+static struct submodule_cache the_submodule_cache;
 static int is_cache_init;
 
 static int config_path_cmp(const struct submodule_entry *a,
@@ -470,14 +470,14 @@ static void ensure_cache_init(void)
 	if (is_cache_init)
 		return;
 
-	cache_init(&cache);
+	cache_init(&the_submodule_cache);
 	is_cache_init = 1;
 }
 
 int parse_submodule_config_option(const char *var, const char *value)
 {
 	struct parse_config_parameter parameter;
-	parameter.cache = &cache;
+	parameter.cache = &the_submodule_cache;
 	parameter.commit_sha1 = NULL;
 	parameter.gitmodules_sha1 = null_sha1;
 	parameter.overwrite = 1;
@@ -490,18 +490,18 @@ const struct submodule *submodule_from_name(const unsigned char *commit_sha1,
 		const char *name)
 {
 	ensure_cache_init();
-	return config_from_name(&cache, commit_sha1, name);
+	return config_from_name(&the_submodule_cache, commit_sha1, name);
 }
 
 const struct submodule *submodule_from_path(const unsigned char *commit_sha1,
 		const char *path)
 {
 	ensure_cache_init();
-	return config_from_path(&cache, commit_sha1, path);
+	return config_from_path(&the_submodule_cache, commit_sha1, path);
 }
 
 void submodule_free(void)
 {
-	cache_free(&cache);
+	cache_free(&the_submodule_cache);
 	is_cache_init = 0;
 }
