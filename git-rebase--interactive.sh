@@ -82,6 +82,7 @@ rewritten_pending="$state_dir"/rewritten-pending
 cr=$(printf "\015")
 
 strategy_args=${strategy:+--strategy=$strategy}
+test -n "$strategy_opts" &&
 eval '
 	for strategy_opt in '"$strategy_opts"'
 	do
