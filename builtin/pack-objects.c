@@ -759,6 +759,10 @@ static off_t write_reused_pack(struct sha1file *f)
 	return reuse_packfile_offset - sizeof(struct pack_header);
 }
 
+static const char no_split_warning[] = N_(
+"disabling bitmap writing, packs are split due to pack.packSizeLimit"
+);
+
 static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
@@ -813,7 +817,10 @@ static void write_pack_file(void)
 			fixup_pack_header_footer(fd, sha1, pack_tmp_name,
 						 nr_written, sha1, offset);
 			close(fd);
-			write_bitmap_index = 0;
+			if (write_bitmap_index) {
+				warning(_(no_split_warning));
+				write_bitmap_index = 0;
+			}
 		}
 
 		if (!pack_to_stdout) {
