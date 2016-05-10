@@ -301,7 +301,7 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 			return -1;
 		}
 	}
-	if (!strcmp_icase(ent->base, normalized_objdir)) {
+	if (!fspathcmp(ent->base, normalized_objdir)) {
 		free(ent);
 		return -1;
 	}

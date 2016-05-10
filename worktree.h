@@ -3,11 +3,12 @@
 
 struct worktree {
 	char *path;
-	char *git_dir;
+	char *id;
 	char *head_ref;
 	unsigned char head_sha1[20];
 	int is_detached;
 	int is_bare;
+	int is_current;
 };
 
 /* Functions for acting on the information about worktrees. */
@@ -23,16 +24,33 @@ struct worktree {
 extern struct worktree **get_worktrees(void);
 
 /*
+ * Return git dir of the worktree. Note that the path may be relative.
+ * If wt is NULL, git dir of current worktree is returned.
+ */
+extern const char *get_worktree_git_dir(const struct worktree *wt);
+
+/*
  * Free up the memory for worktree(s)
  */
 extern void free_worktrees(struct worktree **);
 
 /*
  * Check if a per-worktree symref points to a ref in the main worktree
- * or any linked worktree, and return the path to the exising worktree
- * if it is.  Returns NULL if there is no existing ref.  The caller is
- * responsible for freeing the returned path.
+ * or any linked worktree, and return the worktree that holds the ref,
+ * or NULL otherwise. The result may be destroyed by the next call.
  */
-extern char *find_shared_symref(const char *symref, const char *target);
+extern const struct worktree *find_shared_symref(const char *symref,
+						 const char *target);
+
+int is_worktree_being_rebased(const struct worktree *wt, const char *target);
+int is_worktree_being_bisected(const struct worktree *wt, const char *target);
+
+/*
+ * Similar to git_path() but can produce paths for a specified
+ * worktree instead of current one
+ */
+extern const char *worktree_git_path(const struct worktree *wt,
+				     const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
 
 #endif

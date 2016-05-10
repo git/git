@@ -220,12 +220,12 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		name = mkpathdup(fmt, bname.buf);
 
 		if (kinds == FILTER_REFS_BRANCHES) {
-			char *worktree = find_shared_symref("HEAD", name);
-			if (worktree) {
+			const struct worktree *wt =
+				find_shared_symref("HEAD", name);
+			if (wt) {
 				error(_("Cannot delete branch '%s' "
 					"checked out at '%s'"),
-				      bname.buf, worktree);
-				free(worktree);
+				      bname.buf, wt->path);
 				ret = 1;
 				continue;
 			}
@@ -526,6 +526,29 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	ref_array_clear(&array);
 }
 
+static void reject_rebase_or_bisect_branch(const char *target)
+{
+	struct worktree **worktrees = get_worktrees();
+	int i;
+
+	for (i = 0; worktrees[i]; i++) {
+		struct worktree *wt = worktrees[i];
+
+		if (!wt->is_detached)
+			continue;
+
+		if (is_worktree_being_rebased(wt, target))
+			die(_("Branch %s is being rebased at %s"),
+			    target, wt->path);
+
+		if (is_worktree_being_bisected(wt, target))
+			die(_("Branch %s is being bisected at %s"),
+			    target, wt->path);
+	}
+
+	free_worktrees(worktrees);
+}
+
 static void rename_branch(const char *oldname, const char *newname, int force)
 {
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
@@ -554,6 +577,8 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	clobber_head_ok = !strcmp(oldname, newname);
 
 	validate_new_branchname(newname, &newref, force, clobber_head_ok);
+
+	reject_rebase_or_bisect_branch(oldref.buf);
 
 	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 		 oldref.buf, newref.buf);
