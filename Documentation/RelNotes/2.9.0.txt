@@ -343,6 +343,23 @@ notes for details).
  * Fix a broken "p4 lfs" test.
    (merge 9e220fe ls/p4-lfs-test-fix-2.7.0 later to maint).
 
+ * Recent update to Git LFS broke "git p4" by changing the output from
+   its "lfs pointer" subcommand.
+   (merge 82f2567 ls/p4-lfs later to maint).
+
+ * "git fetch" test t5510 was flaky while running a (forced) automagic
+   garbage collection.
+   (merge bb05510 js/close-packs-before-gc later to maint).
+
+ * Documentation updates to help contributors setting up Travis CI
+   test for their patches.
+   (merge 0e5d028 ls/travis-submitting-patches later to maint).
+
+ * Some multi-byte encoding can have a backslash byte as a later part
+   of one letter, which would confuse "highlight" filter used in
+   gitweb.
+   (merge 029f372 sk/gitweb-highlight-encoding later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 8b5a3e9 kn/for-each-tag-branch later to maint).
    (merge 99dab16 sb/misc-cleanups later to maint).
@@ -352,3 +369,7 @@ notes for details).
    (merge 060e776 jk/fix-attribute-macro-in-2.5 later to maint).
    (merge d16df0c rt/string-list-lookup-cleanup later to maint).
    (merge 376eb60 sb/config-exit-status-list later to maint).
+   (merge 9cea46c ew/doc-split-pack-disables-bitmap later to maint).
+   (merge fa72245 ew/normal-to-e later to maint).
+   (merge 2e39a24 rn/glossary-typofix later to maint).
+   (merge cadfbef sb/clean-test-fix later to maint).
