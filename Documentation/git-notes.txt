@@ -402,4 +402,4 @@ on the `notes.rewrite.<command>` and `notes.rewriteRef` settings.
 
 GIT
 ---
-Part of the linkgit:git[7] suite
+Part of the linkgit:git[1] suite
