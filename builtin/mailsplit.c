@@ -109,7 +109,7 @@ static int populate_maildir_list(struct string_list *list, const char *path)
 		if ((dir = opendir(name)) == NULL) {
 			if (errno == ENOENT)
 				continue;
-			error("cannot opendir %s (%s)", name, strerror(errno));
+			error_errno("cannot opendir %s", name);
 			goto out;
 		}
 
@@ -174,12 +174,12 @@ static int split_maildir(const char *maildir, const char *dir,
 
 		f = fopen(file, "r");
 		if (!f) {
-			error("cannot open mail %s (%s)", file, strerror(errno));
+			error_errno("cannot open mail %s", file);
 			goto out;
 		}
 
 		if (strbuf_getwholeline(&buf, f, '\n')) {
-			error("cannot read mail %s (%s)", file, strerror(errno));
+			error_errno("cannot read mail %s", file);
 			goto out;
 		}
 
@@ -210,7 +210,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 	int file_done = 0;
 
 	if (!f) {
-		error("cannot open mbox %s", file);
+		error_errno("cannot open mbox %s", file);
 		goto out;
 	}
 
@@ -318,7 +318,7 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 		}
 
 		if (stat(arg, &argstat) == -1) {
-			error("cannot stat %s (%s)", arg, strerror(errno));
+			error_errno("cannot stat %s", arg);
 			return 1;
 		}
 

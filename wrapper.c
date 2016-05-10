@@ -555,7 +555,7 @@ static int warn_if_unremovable(const char *op, const char *file, int rc)
 	if (!rc || errno == ENOENT)
 		return 0;
 	err = errno;
-	warning("unable to %s %s: %s", op, file, strerror(errno));
+	warning_errno("unable to %s %s", op, file);
 	errno = err;
 	return rc;
 }
@@ -591,7 +591,7 @@ int remove_or_warn(unsigned int mode, const char *file)
 
 void warn_on_inaccessible(const char *path)
 {
-	warning(_("unable to access '%s': %s"), path, strerror(errno));
+	warning_errno(_("unable to access '%s'"), path);
 }
 
 static int access_error_is_ok(int err, unsigned flag)

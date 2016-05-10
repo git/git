@@ -1107,9 +1107,8 @@ unsigned char *use_pack(struct packed_git *p,
 				PROT_READ, MAP_PRIVATE,
 				p->pack_fd, win->offset);
 			if (win->base == MAP_FAILED)
-				die("packfile %s cannot be mapped: %s",
-					p->pack_name,
-					strerror(errno));
+				die_errno("packfile %s cannot be mapped",
+					  p->pack_name);
 			if (!win->offset && win->len == p->pack_size
 				&& !p->do_not_close)
 				close_pack_fd(p);
@@ -1279,8 +1278,8 @@ static void prepare_packed_git_one(char *objdir, int local)
 	dir = opendir(path.buf);
 	if (!dir) {
 		if (errno != ENOENT)
-			error("unable to open object pack directory: %s: %s",
-			      path.buf, strerror(errno));
+			error_errno("unable to open object pack directory: %s",
+				    path.buf);
 		strbuf_release(&path);
 		return;
 	}
@@ -2984,7 +2983,7 @@ int finalize_object_file(const char *tmpfile, const char *filename)
 	unlink_or_warn(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
-			return error("unable to write sha1 filename %s: %s", filename, strerror(ret));
+			return error_errno("unable to write sha1 filename %s", filename);
 		}
 		/* FIXME!!! Collision check here ? */
 	}
@@ -2998,7 +2997,7 @@ out:
 static int write_buffer(int fd, const void *buf, size_t len)
 {
 	if (write_in_full(fd, buf, len) < 0)
-		return error("file write error (%s)", strerror(errno));
+		return error_errno("file write error");
 	return 0;
 }
 
@@ -3081,7 +3080,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 		if (errno == EACCES)
 			return error("insufficient permission for adding an object to repository database %s", get_object_directory());
 		else
-			return error("unable to create temporary file: %s", strerror(errno));
+			return error_errno("unable to create temporary file");
 	}
 
 	/* Set it up */
@@ -3126,8 +3125,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 		utb.actime = mtime;
 		utb.modtime = mtime;
 		if (utime(tmp_file.buf, &utb) < 0)
-			warning("failed utime() on %s: %s",
-				tmp_file.buf, strerror(errno));
+			warning_errno("failed utime() on %s", tmp_file.buf);
 	}
 
 	return finalize_object_file(tmp_file.buf, filename);
@@ -3360,7 +3358,7 @@ static int index_core(unsigned char *sha1, int fd, size_t size,
 		if (size == read_in_full(fd, buf, size))
 			ret = index_mem(sha1, buf, size, type, path, flags);
 		else
-			ret = error("short read %s", strerror(errno));
+			ret = error_errno("short read");
 		free(buf);
 	} else {
 		void *buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -3425,18 +3423,14 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned 
 	case S_IFREG:
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
-			return error("open(\"%s\"): %s", path,
-				     strerror(errno));
+			return error_errno("open(\"%s\")", path);
 		if (index_fd(sha1, fd, st, OBJ_BLOB, path, flags) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;
 	case S_IFLNK:
-		if (strbuf_readlink(&sb, path, st->st_size)) {
-			char *errstr = strerror(errno);
-			return error("readlink(\"%s\"): %s", path,
-			             errstr);
-		}
+		if (strbuf_readlink(&sb, path, st->st_size))
+			return error_errno("readlink(\"%s\")", path);
 		if (!(flags & HASH_WRITE_OBJECT))
 			hash_sha1_file(sb.buf, sb.len, blob_type, sha1);
 		else if (write_sha1_file(sb.buf, sb.len, blob_type, sha1))
@@ -3492,7 +3486,7 @@ static int for_each_file_in_obj_subdir(int subdir_nr,
 	if (!dir) {
 		if (errno == ENOENT)
 			return 0;
-		return error("unable to open %s: %s", path->buf, strerror(errno));
+		return error_errno("unable to open %s", path->buf);
 	}
 
 	while ((de = readdir(dir))) {
