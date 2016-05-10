@@ -118,6 +118,7 @@ static int module_name(int argc, const char **argv, const char *prefix)
 
 	return 0;
 }
+
 static int clone_submodule(const char *path, const char *gitdir, const char *url,
 			   const char *depth, const char *reference, int quiet)
 {
@@ -139,7 +140,7 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 	argv_array_push(&cp.args, path);
 
 	cp.git_cmd = 1;
-	cp.env = local_repo_env;
+	prepare_submodule_repo_env(&cp.env_array);
 	cp.no_stdin = 1;
 
 	return run_command(&cp);
@@ -180,13 +181,17 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 
 	const char *const git_submodule_helper_usage[] = {
 		N_("git submodule--helper clone [--prefix=<path>] [--quiet] "
-		   "[--reference <repository>] [--name <name>] [--url <url>]"
-		   "[--depth <depth>] [--] [<path>...]"),
+		   "[--reference <repository>] [--name <name>] [--depth <depth>] "
+		   "--url <url> --path <path>"),
 		NULL
 	};
 
 	argc = parse_options(argc, argv, prefix, module_clone_options,
 			     git_submodule_helper_usage, 0);
+
+	if (argc || !url || !path)
+		usage_with_options(git_submodule_helper_usage,
+				   module_clone_options);
 
 	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
 	sm_gitdir = strbuf_detach(&sb, NULL);

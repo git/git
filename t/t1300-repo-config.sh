@@ -1087,6 +1087,20 @@ test_expect_success 'git -c complains about empty key and value' '
 	test_must_fail git -c "" rev-parse
 '
 
+test_expect_success 'multiple git -c appends config' '
+	test_config alias.x "!git -c x.two=2 config --get-regexp ^x\.*" &&
+	cat >expect <<-\EOF &&
+	x.one 1
+	x.two 2
+	EOF
+	git -c x.one=1 x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git -c is not confused by empty environment' '
+	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config --list
+'
+
 test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&

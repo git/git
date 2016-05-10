@@ -192,6 +192,17 @@ isnumber()
 	n=$(($1 + 0)) 2>/dev/null && test "$n" = "$1"
 }
 
+# Sanitize the local git environment for use within a submodule. We
+# can't simply use clear_local_git_env since we want to preserve some
+# of the settings from GIT_CONFIG_PARAMETERS.
+sanitize_submodule_env()
+{
+	save_config=$GIT_CONFIG_PARAMETERS
+	clear_local_git_env
+	GIT_CONFIG_PARAMETERS=$save_config
+	export GIT_CONFIG_PARAMETERS
+}
+
 #
 # Add a new submodule to the working tree, .gitmodules and the index
 #
@@ -347,9 +358,9 @@ Use -f if you really want to add it." >&2
 				echo "$(eval_gettext "Reactivating local git directory for submodule '\$sm_name'.")"
 			fi
 		fi
-		git submodule--helper clone ${GIT_QUIET:+--quiet} --prefix "$wt_prefix" --path "$sm_path" --name "$sm_name" --url "$realrepo" "$reference" "$depth" || exit
+		git submodule--helper clone ${GIT_QUIET:+--quiet} --prefix "$wt_prefix" --path "$sm_path" --name "$sm_name" --url "$realrepo" ${reference:+"$reference"} ${depth:+"$depth"} || exit
 		(
-			clear_local_git_env
+			sanitize_submodule_env
 			cd "$sm_path" &&
 			# ash fails to wordsplit ${branch:+-b "$branch"...}
 			case "$branch" in
@@ -418,7 +429,7 @@ cmd_foreach()
 			name=$(git submodule--helper name "$sm_path")
 			(
 				prefix="$prefix$sm_path/"
-				clear_local_git_env
+				sanitize_submodule_env
 				cd "$sm_path" &&
 				sm_path=$(relative_path "$sm_path") &&
 				# we make $path available to scripts ...
@@ -592,14 +603,14 @@ cmd_deinit()
 }
 
 is_tip_reachable () (
-	clear_local_git_env
+	sanitize_submodule_env &&
 	cd "$1" &&
 	rev=$(git rev-list -n 1 "$2" --not --all 2>/dev/null) &&
 	test -z "$rev"
 )
 
 fetch_in_submodule () (
-	clear_local_git_env
+	sanitize_submodule_env &&
 	cd "$1" &&
 	case "$2" in
 	'')
@@ -727,11 +738,11 @@ Maybe you want to use 'update --init'?")"
 
 		if ! test -d "$sm_path"/.git && ! test -f "$sm_path"/.git
 		then
-			git submodule--helper clone ${GIT_QUIET:+--quiet} --prefix "$prefix" --path "$sm_path" --name "$name" --url "$url" "$reference" "$depth" || exit
+			git submodule--helper clone ${GIT_QUIET:+--quiet} --prefix "$prefix" --path "$sm_path" --name "$name" --url "$url" ${reference:+"$reference"} ${depth:+"$depth"} || exit
 			cloned_modules="$cloned_modules;$name"
 			subsha1=
 		else
-			subsha1=$(clear_local_git_env; cd "$sm_path" &&
+			subsha1=$(sanitize_submodule_env; cd "$sm_path" &&
 				git rev-parse --verify HEAD) ||
 			die "$(eval_gettext "Unable to find current revision in submodule path '\$displaypath'")"
 		fi
@@ -741,11 +752,11 @@ Maybe you want to use 'update --init'?")"
 			if test -z "$nofetch"
 			then
 				# Fetch remote before determining tracking $sha1
-				(clear_local_git_env; cd "$sm_path" && git-fetch) ||
+				(sanitize_submodule_env; cd "$sm_path" && git-fetch) ||
 				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
 			fi
-			remote_name=$(clear_local_git_env; cd "$sm_path" && get_default_remote)
-			sha1=$(clear_local_git_env; cd "$sm_path" &&
+			remote_name=$(sanitize_submodule_env; cd "$sm_path" && get_default_remote)
+			sha1=$(sanitize_submodule_env; cd "$sm_path" &&
 				git rev-parse --verify "${remote_name}/${branch}") ||
 			die "$(eval_gettext "Unable to find current ${remote_name}/${branch} revision in submodule path '\$sm_path'")"
 		fi
@@ -810,7 +821,7 @@ Maybe you want to use 'update --init'?")"
 				die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
 			esac
 
-			if (clear_local_git_env; cd "$sm_path" && $command "$sha1")
+			if (sanitize_submodule_env; cd "$sm_path" && $command "$sha1")
 			then
 				say "$say_msg"
 			elif test -n "$must_die_on_failure"
@@ -826,7 +837,7 @@ Maybe you want to use 'update --init'?")"
 		then
 			(
 				prefix="$prefix$sm_path/"
-				clear_local_git_env
+				sanitize_submodule_env
 				cd "$sm_path" &&
 				eval cmd_update
 			)
@@ -864,7 +875,7 @@ Maybe you want to use 'update --init'?")"
 
 set_name_rev () {
 	revname=$( (
-		clear_local_git_env
+		sanitize_submodule_env
 		cd "$1" && {
 			git describe "$2" 2>/dev/null ||
 			git describe --tags "$2" 2>/dev/null ||
@@ -1148,7 +1159,7 @@ cmd_status()
 		else
 			if test -z "$cached"
 			then
-				sha1=$(clear_local_git_env; cd "$sm_path" && git rev-parse --verify HEAD)
+				sha1=$(sanitize_submodule_env; cd "$sm_path" && git rev-parse --verify HEAD)
 			fi
 			set_name_rev "$sm_path" "$sha1"
 			say "+$sha1 $displaypath$revname"
@@ -1158,7 +1169,7 @@ cmd_status()
 		then
 			(
 				prefix="$displaypath/"
-				clear_local_git_env
+				sanitize_submodule_env
 				cd "$sm_path" &&
 				eval cmd_status
 			) ||
@@ -1232,7 +1243,7 @@ cmd_sync()
 			if test -e "$sm_path"/.git
 			then
 			(
-				clear_local_git_env
+				sanitize_submodule_env
 				cd "$sm_path"
 				remote=$(get_default_remote)
 				git config remote."$remote".url "$sub_origin_url"
