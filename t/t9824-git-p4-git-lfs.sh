@@ -13,6 +13,10 @@ test_file_in_lfs () {
 	FILE="$1" &&
 	SIZE="$2" &&
 	EXPECTED_CONTENT="$3" &&
+	sed -n '1,1 p' "$FILE" | grep "^version " &&
+	sed -n '2,2 p' "$FILE" | grep "^oid " &&
+	sed -n '3,3 p' "$FILE" | grep "^size " &&
+	test_line_count = 3 "$FILE" &&
 	cat "$FILE" | grep "size $SIZE" &&
 	HASH=$(cat "$FILE" | grep "oid sha256:" | sed -e "s/oid sha256://g") &&
 	LFS_FILE=".git/lfs/objects/$(echo "$HASH" | cut -c1-2)/$(echo "$HASH" | cut -c3-4)/$HASH" &&
