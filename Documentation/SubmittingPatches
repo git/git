@@ -61,23 +61,28 @@ Make sure that you have tests for the bug you are fixing.  See
 t/README for guidance.
 
 When adding a new feature, make sure that you have new tests to show
-the feature triggers the new behaviour when it should, and to show the
-feature does not trigger when it shouldn't.  Also make sure that the
-test suite passes after your commit.  Do not forget to update the
-documentation to describe the updated behaviour.
+the feature triggers the new behavior when it should, and to show the
+feature does not trigger when it shouldn't.  After any code change, make
+sure that the entire test suite passes.
 
-Speaking of the documentation, it is currently a liberal mixture of US
-and UK English norms for spelling and grammar, which is somewhat
-unfortunate.  A huge patch that touches the files all over the place
-only to correct the inconsistency is not welcome, though.  Potential
-clashes with other changes that can result from such a patch are not
-worth it.  We prefer to gradually reconcile the inconsistencies in
-favor of US English, with small and easily digestible patches, as a
-side effect of doing some other real work in the vicinity (e.g.
-rewriting a paragraph for clarity, while turning en_UK spelling to
-en_US).  Obvious typographical fixes are much more welcomed ("teh ->
-"the"), preferably submitted as independent patches separate from
-other documentation changes.
+If you have an account at GitHub (and you can get one for free to work
+on open source projects), you can use their Travis CI integration to
+test your changes on Linux, Mac (and hopefully soon Windows).  See
+GitHub-Travis CI hints section for details.
+
+Do not forget to update the documentation to describe the updated
+behavior and make sure that the resulting documentation set formats
+well. It is currently a liberal mixture of US and UK English norms for
+spelling and grammar, which is somewhat unfortunate.  A huge patch that
+touches the files all over the place only to correct the inconsistency
+is not welcome, though.  Potential clashes with other changes that can
+result from such a patch are not worth it.  We prefer to gradually
+reconcile the inconsistencies in favor of US English, with small and
+easily digestible patches, as a side effect of doing some other real
+work in the vicinity (e.g. rewriting a paragraph for clarity, while
+turning en_UK spelling to en_US).  Obvious typographical fixes are much
+more welcomed ("teh -> "the"), preferably submitted as independent
+patches separate from other documentation changes.
 
 Oh, another thing.  We are picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
@@ -369,6 +374,47 @@ Know the status of your patch after submission
 * Read the Git mailing list, the maintainer regularly posts messages
   entitled "What's cooking in git.git" and "What's in git.git" giving
   the status of various proposed changes.
+
+--------------------------------------------------
+GitHub-Travis CI hints
+
+With an account at GitHub (you can get one for free to work on open
+source projects), you can use Travis CI to test your changes on Linux,
+Mac (and hopefully soon Windows).  You can find a successful example
+test build here: https://travis-ci.org/git/git/builds/120473209
+
+Follow these steps for the initial setup:
+
+ (1) Fork https://github.com/git/git to your GitHub account.
+     You can find detailed instructions how to fork here:
+     https://help.github.com/articles/fork-a-repo/
+
+ (2) Open the Travis CI website: https://travis-ci.org
+
+ (3) Press the "Sign in with GitHub" button.
+
+ (4) Grant Travis CI permissions to access your GitHub account.
+     You can find more information about the required permissions here:
+     https://docs.travis-ci.com/user/github-oauth-scopes
+
+ (5) Open your Travis CI profile page: https://travis-ci.org/profile
+
+ (6) Enable Travis CI builds for your Git fork.
+
+After the initial setup, Travis CI will run whenever you push new changes
+to your fork of Git on GitHub.  You can monitor the test state of all your
+branches here: https://travis-ci.org/<Your GitHub handle>/git/branches
+
+If a branch did not pass all test cases then it is marked with a red
+cross.  In that case you can click on the failing Travis CI job and
+scroll all the way down in the log.  Find the line "<-- Click here to see
+detailed test output!" and click on the triangle next to the log line
+number to expand the detailed test output.  Here is such a failing
+example: https://travis-ci.org/git/git/jobs/122676187
+
+Fix the problem and push your fix to your Git fork.  This will trigger
+a new Travis CI build to ensure all tests pass.
+
 
 ------------------------------------------------
 MUA specific hints
