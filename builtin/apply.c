@@ -2194,17 +2194,17 @@ static void update_pre_post_images(struct image *preimage,
 	fixed = preimage->buf;
 
 	for (i = reduced = ctx = 0; i < postimage->nr; i++) {
-		size_t len = postimage->line[i].len;
+		size_t l_len = postimage->line[i].len;
 		if (!(postimage->line[i].flag & LINE_COMMON)) {
 			/* an added line -- no counterparts in preimage */
-			memmove(new, old, len);
-			old += len;
-			new += len;
+			memmove(new, old, l_len);
+			old += l_len;
+			new += l_len;
 			continue;
 		}
 
 		/* a common context -- skip it in the original postimage */
-		old += len;
+		old += l_len;
 
 		/* and find the corresponding one in the fixed preimage */
 		while (ctx < preimage->nr &&
@@ -2223,11 +2223,11 @@ static void update_pre_post_images(struct image *preimage,
 		}
 
 		/* and copy it in, while fixing the line length */
-		len = preimage->line[ctx].len;
-		memcpy(new, fixed, len);
-		new += len;
-		fixed += len;
-		postimage->line[i].len = len;
+		l_len = preimage->line[ctx].len;
+		memcpy(new, fixed, l_len);
+		new += l_len;
+		fixed += l_len;
+		postimage->line[i].len = l_len;
 		ctx++;
 	}
 
