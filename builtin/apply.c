@@ -35,7 +35,7 @@ static int prefix_length = -1;
 static int newfd = -1;
 
 static int unidiff_zero;
-static int p_value = 1;
+static int state_p_value = 1;
 static int p_value_known;
 static int check_index;
 static int update_index;
@@ -872,24 +872,24 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 		q = guess_p_value(second);
 		if (p < 0) p = q;
 		if (0 <= p && p == q) {
-			p_value = p;
+			state_p_value = p;
 			p_value_known = 1;
 		}
 	}
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
-		name = find_name_traditional(second, NULL, p_value);
+		name = find_name_traditional(second, NULL, state_p_value);
 		patch->new_name = name;
 	} else if (is_dev_null(second)) {
 		patch->is_new = 0;
 		patch->is_delete = 1;
-		name = find_name_traditional(first, NULL, p_value);
+		name = find_name_traditional(first, NULL, state_p_value);
 		patch->old_name = name;
 	} else {
 		char *first_name;
-		first_name = find_name_traditional(first, NULL, p_value);
-		name = find_name_traditional(second, first_name, p_value);
+		first_name = find_name_traditional(first, NULL, state_p_value);
+		name = find_name_traditional(second, first_name, state_p_value);
 		free(first_name);
 		if (has_epoch_timestamp(first)) {
 			patch->is_new = 1;
@@ -928,7 +928,7 @@ static int gitdiff_hdrend(const char *line, struct patch *patch)
 static void gitdiff_verify_name(const char *line, int isnull, char **name, int side)
 {
 	if (!*name && !isnull) {
-		*name = find_name(line, NULL, p_value, TERM_TAB);
+		*name = find_name(line, NULL, state_p_value, TERM_TAB);
 		return;
 	}
 
@@ -938,7 +938,7 @@ static void gitdiff_verify_name(const char *line, int isnull, char **name, int s
 		if (isnull)
 			die(_("git apply: bad git-diff - expected /dev/null, got %s on line %d"),
 			    *name, linenr);
-		another = find_name(line, NULL, p_value, TERM_TAB);
+		another = find_name(line, NULL, state_p_value, TERM_TAB);
 		if (!another || memcmp(another, *name, len + 1))
 			die((side == DIFF_NEW_NAME) ?
 			    _("git apply: bad git-diff - inconsistent new filename on line %d") :
@@ -997,7 +997,7 @@ static int gitdiff_copysrc(const char *line, struct patch *patch)
 {
 	patch->is_copy = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(line, NULL, p_value ? p_value - 1 : 0, 0);
+	patch->old_name = find_name(line, NULL, state_p_value ? state_p_value - 1 : 0, 0);
 	return 0;
 }
 
@@ -1005,7 +1005,7 @@ static int gitdiff_copydst(const char *line, struct patch *patch)
 {
 	patch->is_copy = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(line, NULL, p_value ? p_value - 1 : 0, 0);
+	patch->new_name = find_name(line, NULL, state_p_value ? state_p_value - 1 : 0, 0);
 	return 0;
 }
 
@@ -1013,7 +1013,7 @@ static int gitdiff_renamesrc(const char *line, struct patch *patch)
 {
 	patch->is_rename = 1;
 	free(patch->old_name);
-	patch->old_name = find_name(line, NULL, p_value ? p_value - 1 : 0, 0);
+	patch->old_name = find_name(line, NULL, state_p_value ? state_p_value - 1 : 0, 0);
 	return 0;
 }
 
@@ -1021,7 +1021,7 @@ static int gitdiff_renamedst(const char *line, struct patch *patch)
 {
 	patch->is_rename = 1;
 	free(patch->new_name);
-	patch->new_name = find_name(line, NULL, p_value ? p_value - 1 : 0, 0);
+	patch->new_name = find_name(line, NULL, state_p_value ? state_p_value - 1 : 0, 0);
 	return 0;
 }
 
@@ -1092,10 +1092,10 @@ static const char *skip_tree_prefix(const char *line, int llen)
 	int nslash;
 	int i;
 
-	if (!p_value)
+	if (!state_p_value)
 		return (llen && line[0] == '/') ? NULL : line;
 
-	nslash = p_value;
+	nslash = state_p_value;
 	for (i = 0; i < llen; i++) {
 		int ch = line[i];
 		if (ch == '/' && --nslash <= 0)
@@ -1481,8 +1481,8 @@ static int find_header(const char *line, unsigned long size, int *hdrsize, struc
 					       "%d leading pathname component (line %d)",
 					       "git diff header lacks filename information when removing "
 					       "%d leading pathname components (line %d)",
-					       p_value),
-					    p_value, linenr);
+					       state_p_value),
+					    state_p_value, linenr);
 				patch->old_name = xstrdup(patch->def_name);
 				patch->new_name = xstrdup(patch->def_name);
 			}
@@ -4461,7 +4461,7 @@ static int option_parse_include(const struct option *opt,
 static int option_parse_p(const struct option *opt,
 			  const char *arg, int unset)
 {
-	p_value = atoi(arg);
+	state_p_value = atoi(arg);
 	p_value_known = 1;
 	return 0;
 }
