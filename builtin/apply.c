@@ -21,6 +21,11 @@
 #include "ll-merge.h"
 #include "rerere.h"
 
+struct apply_state {
+	const char *prefix;
+	int prefix_length;
+};
+
 /*
  *  --check turns on checking that the working tree matches the
  *    files that are being modified, but doesn't apply the patch
@@ -30,8 +35,6 @@
  *  --index updates the cache as well.
  *  --cached updates only the cache without ever touching the working tree.
  */
-static const char *prefix;
-static int prefix_length = -1;
 static int newfd = -1;
 
 static int unidiff_zero;
@@ -748,7 +751,7 @@ static int count_slashes(const char *cp)
  * Given the string after "--- " or "+++ ", guess the appropriate
  * p_value for the given patch.
  */
-static int guess_p_value(const char *nameline)
+static int guess_p_value(struct apply_state *state, const char *nameline)
 {
 	char *name, *cp;
 	int val = -1;
@@ -761,17 +764,17 @@ static int guess_p_value(const char *nameline)
 	cp = strchr(name, '/');
 	if (!cp)
 		val = 0;
-	else if (prefix) {
+	else if (state->prefix) {
 		/*
 		 * Does it begin with "a/$our-prefix" and such?  Then this is
 		 * very likely to apply to our directory.
 		 */
-		if (!strncmp(name, prefix, prefix_length))
-			val = count_slashes(prefix);
+		if (!strncmp(name, state->prefix, state->prefix_length))
+			val = count_slashes(state->prefix);
 		else {
 			cp++;
-			if (!strncmp(cp, prefix, prefix_length))
-				val = count_slashes(prefix) + 1;
+			if (!strncmp(cp, state->prefix, state->prefix_length))
+				val = count_slashes(state->prefix) + 1;
 		}
 	}
 	free(name);
@@ -858,7 +861,10 @@ static int has_epoch_timestamp(const char *nameline)
  * files, we can happily check the index for a match, but for creating a
  * new file we should try to match whatever "patch" does. I have no idea.
  */
-static void parse_traditional_patch(const char *first, const char *second, struct patch *patch)
+static void parse_traditional_patch(struct apply_state *state,
+				    const char *first,
+				    const char *second,
+				    struct patch *patch)
 {
 	char *name;
 
@@ -866,8 +872,8 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 	second += 4;	/* skip "+++ " */
 	if (!p_value_known) {
 		int p, q;
-		p = guess_p_value(first);
-		q = guess_p_value(second);
+		p = guess_p_value(state, first);
+		q = guess_p_value(state, second);
 		if (p < 0) p = q;
 		if (0 <= p && p == q) {
 			state_p_value = p;
@@ -1429,7 +1435,11 @@ static int parse_fragment_header(const char *line, int len, struct fragment *fra
 	return offset;
 }
 
-static int find_header(const char *line, unsigned long size, int *hdrsize, struct patch *patch)
+static int find_header(struct apply_state *state,
+		       const char *line,
+		       unsigned long size,
+		       int *hdrsize,
+		       struct patch *patch)
 {
 	unsigned long offset, len;
 
@@ -1506,7 +1516,7 @@ static int find_header(const char *line, unsigned long size, int *hdrsize, struc
 			continue;
 
 		/* Ok, we'll consider it a patch */
-		parse_traditional_patch(line, line+len, patch);
+		parse_traditional_patch(state, line, line+len, patch);
 		*hdrsize = len + nextlen;
 		state_linenr += 2;
 		return offset;
@@ -1913,21 +1923,21 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 	return used;
 }
 
-static void prefix_one(char **name)
+static void prefix_one(struct apply_state *state, char **name)
 {
 	char *old_name = *name;
 	if (!old_name)
 		return;
-	*name = xstrdup(prefix_filename(prefix, prefix_length, *name));
+	*name = xstrdup(prefix_filename(state->prefix, state->prefix_length, *name));
 	free(old_name);
 }
 
-static void prefix_patch(struct patch *p)
+static void prefix_patch(struct apply_state *state, struct patch *p)
 {
-	if (!prefix || p->is_toplevel_relative)
+	if (!state->prefix || p->is_toplevel_relative)
 		return;
-	prefix_one(&p->new_name);
-	prefix_one(&p->old_name);
+	prefix_one(state, &p->new_name);
+	prefix_one(state, &p->old_name);
 }
 
 /*
@@ -1944,16 +1954,16 @@ static void add_name_limit(const char *name, int exclude)
 	it->util = exclude ? NULL : (void *) 1;
 }
 
-static int use_patch(struct patch *p)
+static int use_patch(struct apply_state *state, struct patch *p)
 {
 	const char *pathname = p->new_name ? p->new_name : p->old_name;
 	int i;
 
 	/* Paths outside are not touched regardless of "--include" */
-	if (0 < prefix_length) {
+	if (0 < state->prefix_length) {
 		int pathlen = strlen(pathname);
-		if (pathlen <= prefix_length ||
-		    memcmp(prefix, pathname, prefix_length))
+		if (pathlen <= state->prefix_length ||
+		    memcmp(state->prefix, pathname, state->prefix_length))
 			return 0;
 	}
 
@@ -1980,17 +1990,17 @@ static int use_patch(struct patch *p)
  * Return the number of bytes consumed, so that the caller can call us
  * again for the next patch.
  */
-static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
+static int parse_chunk(struct apply_state *state, char *buffer, unsigned long size, struct patch *patch)
 {
 	int hdrsize, patchsize;
-	int offset = find_header(buffer, size, &hdrsize, patch);
+	int offset = find_header(state, buffer, size, &hdrsize, patch);
 
 	if (offset < 0)
 		return offset;
 
-	prefix_patch(patch);
+	prefix_patch(state, patch);
 
-	if (!use_patch(patch))
+	if (!use_patch(state, patch))
 		patch->ws_rule = 0;
 	else
 		patch->ws_rule = whitespace_rule(patch->new_name
@@ -4367,7 +4377,10 @@ static struct lock_file lock_file;
 #define INACCURATE_EOF	(1<<0)
 #define RECOUNT		(1<<1)
 
-static int apply_patch(int fd, const char *filename, int options)
+static int apply_patch(struct apply_state *state,
+		       int fd,
+		       const char *filename,
+		       int options)
 {
 	size_t offset;
 	struct strbuf buf = STRBUF_INIT; /* owns the patch text */
@@ -4384,14 +4397,14 @@ static int apply_patch(int fd, const char *filename, int options)
 		patch = xcalloc(1, sizeof(*patch));
 		patch->inaccurate_eof = !!(options & INACCURATE_EOF);
 		patch->recount =  !!(options & RECOUNT);
-		nr = parse_chunk(buf.buf + offset, buf.len - offset, patch);
+		nr = parse_chunk(state, buf.buf + offset, buf.len - offset, patch);
 		if (nr < 0) {
 			free_patch(patch);
 			break;
 		}
 		if (apply_in_reverse)
 			reverse_patches(patch);
-		if (use_patch(patch)) {
+		if (use_patch(state, patch)) {
 			patch_stats(patch);
 			*listp = patch;
 			listp = &patch->next;
@@ -4517,6 +4530,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 	int force_apply = 0;
 	int options = 0;
 	int read_stdin = 1;
+	struct apply_state state;
 
 	const char *whitespace_option = NULL;
 
@@ -4589,15 +4603,17 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 		OPT_END()
 	};
 
-	prefix = prefix_;
-	prefix_length = prefix ? strlen(prefix) : 0;
+	memset(&state, 0, sizeof(state));
+	state.prefix = prefix_;
+	state.prefix_length = state.prefix ? strlen(state.prefix) : 0;
+
 	git_apply_config();
 	if (apply_default_whitespace)
 		parse_whitespace_option(apply_default_whitespace);
 	if (apply_default_ignorewhitespace)
 		parse_ignorewhitespace_option(apply_default_ignorewhitespace);
 
-	argc = parse_options(argc, argv, prefix, builtin_apply_options,
+	argc = parse_options(argc, argv, state.prefix, builtin_apply_options,
 			apply_usage, 0);
 
 	if (apply_with_reject && threeway)
@@ -4628,23 +4644,25 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			errs |= apply_patch(0, "<stdin>", options);
+			errs |= apply_patch(&state, 0, "<stdin>", options);
 			read_stdin = 0;
 			continue;
-		} else if (0 < prefix_length)
-			arg = prefix_filename(prefix, prefix_length, arg);
+		} else if (0 < state.prefix_length)
+			arg = prefix_filename(state.prefix,
+					      state.prefix_length,
+					      arg);
 
 		fd = open(arg, O_RDONLY);
 		if (fd < 0)
 			die_errno(_("can't open patch '%s'"), arg);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		errs |= apply_patch(fd, arg, options);
+		errs |= apply_patch(&state, fd, arg, options);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		errs |= apply_patch(0, "<stdin>", options);
+		errs |= apply_patch(&state, 0, "<stdin>", options);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {
