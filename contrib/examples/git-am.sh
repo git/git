@@ -52,7 +52,7 @@ cd_to_toplevel
 git var GIT_COMMITTER_IDENT >/dev/null ||
 	die "$(gettext "You need to set your committer info first")"
 
-if git rev-parse --verify -q HEAD >/dev/null
+if git rev-parse --verify --quiet HEAD >/dev/null
 then
 	HAS_HEAD=yes
 else
@@ -77,7 +77,7 @@ sq () {
 
 stop_here () {
     echo "$1" >"$dotest/next"
-    git rev-parse --verify -q HEAD >"$dotest/abort-safety"
+    git rev-parse --verify --quiet HEAD >"$dotest/abort-safety"
     exit 1
 }
 
@@ -93,7 +93,7 @@ safe_to_abort () {
 	fi
 
 	abort_safety=$(cat "$dotest/abort-safety")
-	if test "z$(git rev-parse --verify -q HEAD)" = "z$abort_safety"
+	if test "z$(git rev-parse --verify --quiet HEAD)" = "z$abort_safety"
 	then
 		return 0
 	fi
@@ -179,7 +179,7 @@ It does not apply to blobs recorded in its index.")"
     then
 	    GIT_MERGE_VERBOSITY=0 && export GIT_MERGE_VERBOSITY
     fi
-    our_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree)
+    our_tree=$(git rev-parse --verify --quiet HEAD || echo $empty_tree)
     git-merge-recursive $orig_tree -- $our_tree $his_tree || {
 	    git rerere $allow_rerere_autoupdate
 	    die "$(gettext "Failed to merge in the changes.")"
@@ -508,7 +508,7 @@ then
 		;;
 	t,)
 		git rerere clear
-		head_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree) &&
+		head_tree=$(git rev-parse --verify --quiet HEAD || echo $empty_tree) &&
 		git read-tree --reset -u $head_tree $head_tree &&
 		index_tree=$(git write-tree) &&
 		git read-tree -m -u $index_tree $head_tree
@@ -522,12 +522,12 @@ then
 		git rerere clear
 		if safe_to_abort
 		then
-			head_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree) &&
+			head_tree=$(git rev-parse --verify --quiet HEAD || echo $empty_tree) &&
 			git read-tree --reset -u $head_tree $head_tree &&
 			index_tree=$(git write-tree) &&
-			orig_head=$(git rev-parse --verify -q ORIG_HEAD || echo $empty_tree) &&
+			orig_head=$(git rev-parse --verify --quiet ORIG_HEAD || echo $empty_tree) &&
 			git read-tree -m -u $index_tree $orig_head
-			if git rev-parse --verify -q ORIG_HEAD >/dev/null 2>&1
+			if git rev-parse --verify --quiet ORIG_HEAD >/dev/null 2>&1
 			then
 				git reset ORIG_HEAD
 			else
@@ -934,7 +934,7 @@ did you forget to use 'git add'?"
 		then
 			GIT_AUTHOR_DATE=
 		fi
-		parent=$(git rev-parse --verify -q HEAD) ||
+		parent=$(git rev-parse --verify --quiet HEAD) ||
 		say >&2 "$(gettext "applying to an empty history")"
 
 		if test -n "$committer_date_is_author_date"

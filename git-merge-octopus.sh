@@ -50,7 +50,7 @@ then
     git diff-index --cached --name-only HEAD -- | sed -e 's/^/    /'
     exit 2
 fi
-MRC=$(git rev-parse --verify -q $head)
+MRC=$(git rev-parse --verify --quiet $head)
 MRT=$(git write-tree)
 NON_FF_MERGE=0
 OCTOPUS_FAILURE=0

@@ -642,7 +642,7 @@ sub is_sha1 {
 
 sub get_headref ($) {
 	my $name = shift;
-	my $r = `git rev-parse --verify '$name' 2>/dev/null`;
+	my $r = `git rev-parse --verify --quiet '$name'`;
 	return undef unless $? == 0;
 	chomp $r;
 	return $r;

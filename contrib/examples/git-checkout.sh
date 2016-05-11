@@ -16,7 +16,7 @@ SUBDIRECTORY_OK=Sometimes
 require_work_tree
 
 old_name=HEAD
-old=$(git rev-parse --verify $old_name 2>/dev/null)
+old=$(git rev-parse --verify --quiet $old_name)
 oldbranch=$(git symbolic-ref $old_name 2>/dev/null)
 new=
 new_name=
@@ -71,8 +71,8 @@ while test $# != 0; do
 done
 
 arg="$1"
-rev=$(git rev-parse --verify "$arg" 2>/dev/null)
-if rev=$(git rev-parse --verify "$rev^0" 2>/dev/null)
+rev=$(git rev-parse --verify --quiet "$arg")
+if rev=$(git rev-parse --verify --quiet "$rev^0")
 then
 	[ -z "$rev" ] && die "unknown flag $arg"
 	new_name="$arg"
@@ -83,7 +83,7 @@ then
 	fi
 	new="$rev"
 	shift
-elif rev=$(git rev-parse --verify "$rev^{tree}" 2>/dev/null)
+elif rev=$(git rev-parse --verify --quiet "$rev^{tree}")
 then
 	# checking out selected paths from a tree-ish.
 	new="$rev"
