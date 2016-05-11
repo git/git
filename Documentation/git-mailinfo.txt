@@ -63,7 +63,7 @@ with comments and suggestions on the message you are responding to, and to
 conclude it with a patch submission, separating the discussion and the
 beginning of the proposed commit log message with a scissors line.
 +
-This can enabled by default with the configuration option mailinfo.scissors.
+This can be enabled by default with the configuration option mailinfo.scissors.
 
 --no-scissors::
 	Ignore scissors lines. Useful for overriding mailinfo.scissors settings.
