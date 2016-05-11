@@ -1052,8 +1052,8 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 		handle_cache(path, sha1, rerere_path(id, "thisimage"));
 		if (read_mmfile(&cur, rerere_path(id, "thisimage"))) {
 			free(cur.ptr);
-			return error("Failed to update conflicted state in '%s'",
-				     path);
+			error("Failed to update conflicted state in '%s'", path);
+			goto fail_exit;
 		}
 		cleanly_resolved = !try_merge(id, path, &cur, &result);
 		free(result.ptr);
@@ -1062,14 +1062,19 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 			break;
 	}
 
-	if (id->collection->status_nr <= id->variant)
-		return error("no remembered resolution for '%s'", path);
+	if (id->collection->status_nr <= id->variant) {
+		error("no remembered resolution for '%s'", path);
+		goto fail_exit;
+	}
 
 	filename = rerere_path(id, "postimage");
-	if (unlink(filename))
-		return (errno == ENOENT
-			? error("no remembered resolution for %s", path)
-			: error("cannot unlink %s: %s", filename, strerror(errno)));
+	if (unlink(filename)) {
+		if (errno == ENOENT)
+			error("no remembered resolution for %s", path);
+		else
+			error("cannot unlink %s: %s", filename, strerror(errno));
+		goto fail_exit;
+	};
 
 	/*
 	 * Update the preimage so that the user can resolve the
@@ -1088,6 +1093,10 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	item->util = id;
 	fprintf(stderr, "Forgot resolution for %s\n", path);
 	return 0;
+
+fail_exit:
+	free(id);
+	return -1;
 }
 
 int rerere_forget(struct pathspec *pathspec)
