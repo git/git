@@ -7,7 +7,7 @@
 GIT_DIR=$(git rev-parse -q --git-dir) || :;
 
 get_default_remote () {
-	curr_branch=$(git symbolic-ref -q HEAD)
+	curr_branch=$(git symbolic-ref --quiet HEAD)
 	curr_branch="${curr_branch#refs/heads/}"
 	origin=$(git config --get "branch.$curr_branch.remote")
 	echo ${origin:-origin}
@@ -19,7 +19,7 @@ get_remote_merge_branch () {
 	    origin="$1"
 	    default=$(get_default_remote)
 	    test -z "$origin" && origin=$default
-	    curr_branch=$(git symbolic-ref -q HEAD) &&
+	    curr_branch=$(git symbolic-ref --quiet HEAD) &&
 	    [ "$origin" = "$default" ] &&
 	    echo $(git for-each-ref --format='%(upstream)' $curr_branch)
 	    ;;
@@ -58,7 +58,7 @@ error_on_missing_default_upstream () {
 	op_type="$2"
 	op_prep="$3"
 	example="$4"
-	branch_name=$(git symbolic-ref -q HEAD)
+	branch_name=$(git symbolic-ref --quiet HEAD)
 	# If there's only one remote, use that in the suggestion
 	remote="<remote>"
 	if test $(git remote | wc -l) = 1

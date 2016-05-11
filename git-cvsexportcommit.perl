@@ -136,7 +136,7 @@ my $go_back_to = 0;
 
 if ($opt_W) {
     $opt_v && print "Resetting to $parent\n";
-    $go_back_to = `git symbolic-ref HEAD 2> /dev/null ||
+    $go_back_to = `git symbolic-ref --quiet HEAD ||
 	git rev-parse HEAD` || die "Could not determine current branch";
     system("git checkout -q $parent^0") && die "Could not check out $parent^0";
 }

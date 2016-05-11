@@ -532,7 +532,7 @@ then
 				git reset ORIG_HEAD
 			else
 				git read-tree $empty_tree
-				curr_branch=$(git symbolic-ref HEAD 2>/dev/null) &&
+				curr_branch=$(git symbolic-ref --quiet HEAD) &&
 				git update-ref -d $curr_branch
 			fi
 		fi

@@ -56,7 +56,7 @@ local=${local:-HEAD}
 remote=${3#*:}
 pretty_remote=${remote#refs/}
 pretty_remote=${pretty_remote#heads/}
-head=$(git symbolic-ref -q "$local")
+head=$(git symbolic-ref --quiet "$local")
 head=${head:-$(git show-ref --heads --tags "$local" | cut -d' ' -f2)}
 head=${head:-$(git rev-parse --quiet --verify "$local")}
 

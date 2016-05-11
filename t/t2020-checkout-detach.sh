@@ -4,11 +4,11 @@ test_description='checkout into detached HEAD state'
 . ./test-lib.sh
 
 check_detached () {
-	test_must_fail git symbolic-ref -q HEAD >/dev/null
+	test_must_fail git symbolic-ref --quiet HEAD >/dev/null
 }
 
 check_not_detached () {
-	git symbolic-ref -q HEAD >/dev/null
+	git symbolic-ref --quiet HEAD >/dev/null
 }
 
 PREV_HEAD_DESC='Previous HEAD position was'

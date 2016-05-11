@@ -12,7 +12,7 @@ require_work_tree
 cd_to_toplevel
 
 # Remember original branch
-branch=$(git symbolic-ref -q HEAD) ||
+branch=$(git symbolic-ref --quiet HEAD) ||
 original_HEAD=$(git rev-parse --verify HEAD) || {
 	echo >&2 "Not on any branch and no commit yet?"
 	exit 1

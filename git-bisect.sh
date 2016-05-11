@@ -150,7 +150,7 @@ bisect_start() {
 	#
 	# Verify HEAD.
 	#
-	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref -q HEAD) ||
+	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref --quiet HEAD) ||
 	head=$(GIT_DIR="$GIT_DIR" git rev-parse --verify HEAD) ||
 	die "$(gettext "Bad HEAD - I need a HEAD")"
 

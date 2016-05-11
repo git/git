@@ -74,7 +74,7 @@ create_stash () {
 		die "$(gettext "You do not have the initial commit yet")"
 	fi
 
-	if branch=$(git symbolic-ref -q HEAD)
+	if branch=$(git symbolic-ref --quiet HEAD)
 	then
 		branch=${branch#refs/heads/}
 	else

@@ -17,7 +17,7 @@ require_work_tree
 
 old_name=HEAD
 old=$(git rev-parse --verify $old_name 2>/dev/null)
-oldbranch=$(git symbolic-ref $old_name 2>/dev/null)
+oldbranch=$(git symbolic-ref --quiet $old_name)
 new=
 new_name=
 force=

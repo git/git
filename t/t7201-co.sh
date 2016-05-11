@@ -329,7 +329,7 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
-	name=$(git symbolic-ref HEAD 2>/dev/null) &&
+	name=$(git symbolic-ref --quiet HEAD) &&
 	test "z$name" = zrefs/heads/both
 
 '
@@ -348,7 +348,7 @@ test_expect_success 'checkout with ambiguous tag/branch names' '
 	H=$(git rev-parse --verify HEAD) &&
 	S=$(git show-ref -s --verify refs/heads/side) &&
 	test "z$H" = "z$S" &&
-	if name=$(git symbolic-ref HEAD 2>/dev/null)
+	if name=$(git symbolic-ref --quiet HEAD)
 	then
 		echo "Bad -- should have detached"
 		false
