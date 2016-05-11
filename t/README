@@ -84,9 +84,9 @@ appropriately before running "make".
 
 -x::
 	Turn on shell tracing (i.e., `set -x`) during the tests
-	themselves. Implies `--verbose`. Note that this can cause
-	failures in some tests which redirect and test the
-	output of shell functions. Use with caution.
+	themselves. Implies `--verbose`. Note that in non-bash shells,
+	this can cause failures in some tests which redirect and test
+	the output of shell functions. Use with caution.
 
 -d::
 --debug::
