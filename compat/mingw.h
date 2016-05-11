@@ -416,9 +416,6 @@ int mingw_offset_1st_component(const char *path);
 void mingw_open_html(const char *path);
 #define open_html mingw_open_html
 
-void mingw_mark_as_git_dir(const char *dir);
-#define mark_as_git_dir mingw_mark_as_git_dir
-
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
  *
