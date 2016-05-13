@@ -19,9 +19,9 @@ test_expect_success 'setup old-looking metadata' '
 	git svn init "$svnrepo" &&
 	git svn fetch &&
 	rm -rf "$GIT_DIR"/svn &&
-	git update-ref refs/heads/git-svn-HEAD refs/${remotes_git_svn} &&
-	git update-ref refs/heads/svn-HEAD refs/${remotes_git_svn} &&
-	git update-ref -d refs/${remotes_git_svn} refs/${remotes_git_svn}
+	git update-ref refs/heads/git-svn-HEAD refs/remotes/git-svn &&
+	git update-ref refs/heads/svn-HEAD refs/remotes/git-svn &&
+	git update-ref -d refs/remotes/git-svn refs/remotes/git-svn
 	'
 
 head=$(git rev-parse --verify refs/heads/git-svn-HEAD^0)
@@ -35,11 +35,11 @@ test_expect_success 'initialize old-style (v0) git svn layout' '
 	echo "$svnrepo" > "$GIT_DIR"/svn/info/url &&
 	git svn migrate &&
 	! test -d "$GIT_DIR"/git-svn &&
-	git rev-parse --verify refs/${remotes_git_svn}^0 &&
+	git rev-parse --verify refs/remotes/git-svn^0 &&
 	git rev-parse --verify refs/remotes/svn^0 &&
 	test "$(git config --get svn-remote.svn.url)" = "$svnrepo_escaped" &&
 	test $(git config --get svn-remote.svn.fetch) = \
-             ":refs/${remotes_git_svn}"
+		":refs/remotes/git-svn"
 	'
 
 test_expect_success 'initialize a multi-repository repo' '
@@ -66,7 +66,7 @@ test_expect_success 'initialize a multi-repository repo' '
 	grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
 	grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
 	grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
-	grep "^:refs/${remotes_git_svn}" fetch.out
+	grep "^:refs/remotes/git-svn" fetch.out
 	'
 
 # refs should all be different, but the trees should all be the same:
@@ -104,7 +104,7 @@ test_expect_success 'migrate --minimize on old inited layout' '
 	grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
 	grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
 	grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
-	grep "^:refs/${remotes_git_svn}" fetch.out
+	grep "^:refs/remotes/git-svn" fetch.out
 	'
 
 test_expect_success  ".rev_db auto-converted to .rev_map.UUID" '
