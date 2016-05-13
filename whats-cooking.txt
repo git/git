@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2016, #04; Wed, 11)
-X-master-at: 5fe494c54ae44ae01a8efa91d00ac9d4c1c475e9
-X-next-at: d10caa2ddaf445fafa2323231055ded89325d69d
+Subject: What's cooking in git.git (May 2016, #05; Fri, 13)
+X-master-at: edec3709db124a96134a64d8fd1117ca50f90f7c
+X-next-at: 78b384c29366e199741393e56030a8384110760d
 
-What's cooking in git.git (May 2016, #04; Wed, 11)
+What's cooking in git.git (May 2016, #05; Fri, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,64 +24,149 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ew/doc-split-pack-disables-bitmap (2016-04-28) 1 commit
-  (merged to 'next' on 2016-05-06 at 6343d1e)
- + pack-objects: warn on split packs disabling bitmaps
+* jc/commit-tree-ignore-commit-gpgsign (2016-05-03) 1 commit
+  (merged to 'next' on 2016-05-06 at 08eccb2)
+ + commit-tree: do not pay attention to commit.gpgsign
 
- Doc update.
-
-
-* ew/normal-to-e (2016-05-02) 1 commit
-  (merged to 'next' on 2016-05-06 at 65a2c52)
- + .mailmap: update to my shorter email address
-
-
-* js/close-packs-before-gc (2016-05-02) 1 commit
-  (merged to 'next' on 2016-05-06 at bfd39bf)
- + t5510: run auto-gc in the foreground
+ "git commit-tree" plumbing command required the user to always sign
+ its result when the user sets the commit.gpgsign configuration
+ variable, which was an ancient mistake.  Rework "git rebase" that
+ relied on this mistake so that it reads commit.gpgsign and pass (or
+ not pass) the -S option to "git commit-tree" to keep the end-user
+ expectation the same, while teaching "git commit-tree" to ignore
+ the configuration variable.  This will stop requiring the users to
+ sign commit objects used internally as an implementation detail of
+ "git stash".
 
 
-* ls/p4-lfs (2016-04-28) 3 commits
-  (merged to 'next' on 2016-05-06 at 3e1354d)
- + git-p4: fix Git LFS pointer parsing
- + travis-ci: express Linux/OS X dependency versions more clearly
- + travis-ci: update Git-LFS and P4 to the latest version
-
- Recent update to Git LFS broke "git p4" by changing the output from
- its "lfs pointer" subcommand.
-
-
-* ls/travis-submitting-patches (2016-05-02) 1 commit
-  (merged to 'next' on 2016-05-06 at 467930e)
- + Documentation: add setup instructions for Travis CI
-
-
-* rn/glossary-typofix (2016-05-02) 1 commit
-  (merged to 'next' on 2016-05-06 at 1e73e76)
- + Documentation: fix typo 'In such these cases'
-
-
-* sb/clean-test-fix (2016-05-03) 1 commit
-  (merged to 'next' on 2016-05-06 at d80c9c6)
- + t7300: mark test with SANITY
-
-
-* sb/misc-cleanups (2016-04-28) 2 commits
-  (merged to 'next' on 2016-05-06 at 87bc8a5)
- + submodule-config: don't shadow `cache`
- + config.c: drop local variable
-
-
-* sk/gitweb-highlight-encoding (2016-05-03) 1 commit
-  (merged to 'next' on 2016-05-06 at 441302c)
- + gitweb: apply fallback encoding before highlight
-
- Some multi-byte encoding can have a backslash byte as a later part
- of one letter, which would confuse "highlight" filter used in
- gitweb.
+* sb/submodule-module-list-pathspec-fix (2016-05-03) 1 commit
+  (merged to 'next' on 2016-05-06 at ab6dac3)
+ + submodule deinit test: fix broken && chain in subshell
 
 --------------------------------------------------
 [New Topics]
+
+* jc/rerere-multi (2016-05-11) 1 commit
+  (merged to 'next' on 2016-05-13 at f4d1d82)
+ + rerere: plug memory leaks upon "rerere forget" failure
+
+ Will merge to 'master'.
+
+
+* cc/apply-introduce-state (2016-05-12) 48 commits
+ - builtin/apply: rename 'prefix_' parameter to 'prefix'
+ - builtin/apply: move applying patches into apply_all_patches()
+ - builtin/apply: move 'state' check into check_apply_state()
+ - builtin/apply: move 'symlink_changes' global into 'struct apply_state'
+ - builtin/apply: move 'fn_table' global into 'struct apply_state'
+ - builtin/apply: move 'state_linenr' global into 'struct apply_state'
+ - builtin/apply: move 'max_change' and 'max_len' into 'struct apply_state'
+ - builtin/apply: move 'ws_ignore_action' into 'struct apply_state'
+ - builtin/apply: move 'ws_error_action' into 'struct apply_state'
+ - builtin/apply: move 'applied_after_fixing_ws' into 'struct apply_state'
+ - builtin/apply: move 'squelch_whitespace_errors' into 'struct apply_state'
+ - builtin/apply: remove whitespace_option arg from set_default_whitespace_mode()
+ - builtin/apply: move 'whitespace_option' into 'struct apply_state'
+ - builtin/apply: move 'whitespace_error' global into 'struct apply_state'
+ - builtin/apply: move 'root' global into 'struct apply_state'
+ - builtin/apply: move 'p_value_known' global into 'struct apply_state'
+ - builtin/apply: move 'p_value' global into 'struct apply_state'
+ - builtin/apply: move 'has_include' global into 'struct apply_state'
+ - builtin/apply: move 'limit_by_name' global into 'struct apply_state'
+ - builtin/apply: move 'patch_input_file' global into 'struct apply_state'
+ - builtin/apply: move 'apply' global into 'struct apply_state'
+ - builtin/apply: move 'p_context' global into 'struct apply_state'
+ - builtin/apply: move 'fake_ancestor' global into 'struct apply_state'
+ - builtin/apply: move 'line_termination' global into 'struct apply_state'
+ - builtin/apply: move 'unsafe_paths' global into 'struct apply_state'
+ - builtin/apply: move 'no_add' global into 'struct apply_state'
+ - builtin/apply: move 'threeway' global into 'struct apply_state'
+ - builtin/apply: move 'summary' global into 'struct apply_state'
+ - builtin/apply: move 'numstat' global into 'struct apply_state'
+ - builtin/apply: move 'diffstat' global into 'struct apply_state'
+ - builtin/apply: move 'cached' global into 'struct apply_state'
+ - builtin/apply: move 'allow_overlap' global into 'struct apply_state'
+ - builtin/apply: move 'update_index' global into 'struct apply_state'
+ - builtin/apply: move 'apply_verbosely' global into 'struct apply_state'
+ - builtin/apply: move 'apply_with_reject' global into 'struct apply_state'
+ - builtin/apply: move 'apply_in_reverse' global into 'struct apply_state'
+ - builtin/apply: move 'check_index' global into 'struct apply_state'
+ - builtin/apply: move 'check' global into 'struct apply_state'
+ - builtin/apply: move 'unidiff_zero' global into 'struct apply_state'
+ - builtin/apply: move 'state' init into init_apply_state()
+ - builtin/apply: introduce 'struct apply_state' to start libifying
+ - builtin/apply: move 'read_stdin' global into cmd_apply()
+ - builtin/apply: move 'options' variable into cmd_apply()
+ - builtin/apply: extract line_by_line_fuzzy_match() from match_fragment()
+ - builtin/apply: avoid local variable shadowing 'len' parameter
+ - builtin/apply: avoid parameter shadowing 'linenr' global
+ - builtin/apply: avoid parameter shadowing 'p_value' global
+ - builtin/apply: make gitdiff_verify_name() return void
+
+ The "git apply" standalone program is being libified; this is the
+ first step to move many state variables into a structure that can
+ be explicitly (re)initialized to make the machinery callable more
+ than once.
+
+ The next step that moves some remaining state variables into the
+ structure and turns die()s into an error return that propagates up
+ to the caller is not queued yet but in flight.  It would be good to
+ review the above first and give the remainder of the series a solid
+ base to build on.
+
+
+* jk/test-z-n-unquoted (2016-05-13) 6 commits
+ - always quote shell arguments to test -z/-n
+ - t9103: modernize test style
+ - t9107: switch inverted single/double quotes in test
+ - t9107: use "return 1" instead of "exit 1"
+ - t9100,t3419: enclose all test code in single-quotes
+ - t/lib-git-svn: drop $remote_git_svn and $git_svn_id
+
+ t9xxx series has been updated primarily for readability, while
+ fixing small bugs in it.  A few scripted Porcelains have also been
+ updated to fix possible bugs around their use of "test -z" and
+ "test -n".
+
+ Will merge to 'next'.
+
+
+* kf/gpg-sig-verification-doc (2016-05-13) 1 commit
+  (merged to 'next' on 2016-05-13 at 2cec353)
+ + Documentation: clarify signature verification
+
+ Documentation for "git merge --verify-signatures" has been updated
+ to clarify that the signature of only the commit at the tip is
+ verified.  Also the phrasing used for signature and key validity is
+ adjusted to align with that used by OpenPGP.
+
+ Will merge to 'master'.
+
+
+* pb/bisect (2016-05-13) 4 commits
+ - t6030: explicitly test for bisection cleanup
+ - bisect--helper: `write_terms` shell function in C
+ - bisect: rewrite `check_term_format` shell function in C
+ - bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+
+ Beginning of GSoC "git bisect" project.
+
+
+* sb/pathspec-label (2016-05-12) 5 commits
+ - pathspec: record labels
+ - pathspec: move prefix check out of the inner loop
+ - pathspec: move long magic parsing out of prefix_pathspec
+ - Documentation: correct typo in example for querying attributes
+ - Documentation: fix a typo
+
+ The pathspec mechanism learned ":(label=X)$pattern" pathspec magic
+ to limit paths that match $pattern further by labels defined by the
+ attributes mechanism for the paths.
+
+ (RFC/WIP)
+
+--------------------------------------------------
+[Stalled]
 
 * es/t1500-modernize (2016-05-10) 7 commits
  - t1500: finish preparation upfront
@@ -95,78 +180,8 @@ of the repositories listed at
  test updates to make it more readable and maintainable.
 
  Will be rerolled.
+ ($gmane/294181)
 
-
-* ls/travis-build-doc (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-10 at 7f63497)
- + travis-ci: build documentation
-
- CI test was taught to build documentation pages.
-
- Will merge to 'master'.
-
-
-* js/t3404-typofix (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-10 at cbeabc0)
- + t3404: fix typo
-
- Will merge to 'master'.
-
-
-* jk/rebase-interative-eval-fix (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-11 at 4fdf387)
- + rebase--interactive: avoid empty list in shell for-loop
-
- Portability enhancement for "rebase -i" to help platforms whose
- shell does not like "for i in <empty>" (which is not POSIX-kosher).
-
- Will merge to 'master'.
-
-
-* jk/test-send-sh-x-trace-elsewhere (2016-05-11) 1 commit
-  (merged to 'next' on 2016-05-11 at 273a137)
- + test-lib: set BASH_XTRACEFD automatically
-
- Running tests with '-x' option to trace the individual command
- executions is a useful way to debug test scripts, but some tests
- that capture the standard error stream and check what the command
- said can be broken with the trace output mixed in.  When running
- our tests under "bash", however, we can redirect the trace output
- to another file descriptor to keep the standard error of programs
- being tested intact.
-
- Will merge to 'master'.
-
-
-* js/perf-rebase-i (2016-05-11) 3 commits
- - Add a perf test for rebase -i
- - perf: make the tests work in worktrees
- - perf: let's disable symlinks when they are not available
-
- Add perf test for "rebase -i"
-
-
-* nd/worktree-cleanup-post-head-protection (2016-05-10) 7 commits
- - worktree: simplify prefixing paths
- - worktree: avoid 0{40}, too many zeroes, hard to read
- - worktree.c: add clear_worktree()
- - worktree.c: use is_dot_or_dotdot()
- - git-worktree.txt: keep subcommand listing in alphabetical order
- - worktree.c: rewrite mark_current_worktree() to avoid strbuf
- - completion: support git-worktree
- (this branch uses nd/worktree-various-heads.)
-
-
-* va/mailinfo-doc-typofix (2016-05-11) 1 commit
-  (merged to 'next' on 2016-05-11 at 7180176)
- + Documentation/git-mailinfo: fix typo
-
- Typofix.
-
- Will merge to 'master'.
-
---------------------------------------------------
-[Stalled]
 
 * ep/http-curl-trace (2016-05-02) 2 commits
  . imap-send.c: introduce the GIT_TRACE_CURL environment variable
@@ -208,18 +223,6 @@ of the repositories listed at
 
  Expecting a reroll.
  ($gmane/291163)
-
-
-* ar/diff-args-osx-precompose (2016-04-05) 1 commit
- - diff: run arguments through precompose_argv
-
- Many commands normalize command line arguments from NFD to NFC
- variant of UTF-8 on OSX, but commands in the "diff" family did
- not, causing "git diff $path" to complain that no such path is
- known to Git.  They have been taught to do the normalization.
-
- Will this be rerolled?
- ($gmane/290724)
 
 
 * nd/shallow-deepen (2016-04-13) 26 commits
@@ -388,8 +391,111 @@ of the repositories listed at
  The fix in this patch is broken, unfortunately.
  Will discard.
 
+
+* jc/merge-impossible-no-commit (2016-04-26) 2 commits
+ - merge: warn --no-commit merge when no new commit is created
+ - merge: do not contaminate option_commit with --squash
+
+ "git merge --no-commit" silently succeeded when there is no need to
+ create any commit, either when you are more recent than the commit
+ you tried to merge, or you can fast-forward to the commit you tried
+ to merge.  The command gives a warning message in such cases.
+
+ Just tying loose ends in a discussion.  Unless somebody else
+ champions this topic, I'll drop it.
+
+ Will discard.
+
 --------------------------------------------------
 [Cooking]
+
+* ar/diff-args-osx-precompose (2016-05-13) 1 commit
+ - diff: run arguments through precompose_argv
+
+ Many commands normalize command line arguments from NFD to NFC
+ variant of UTF-8 on OSX, but commands in the "diff" family did
+ not, causing "git diff $path" to complain that no such path is
+ known to Git.  They have been taught to do the normalization.
+
+ Will merge to 'next'.
+
+
+* ls/travis-build-doc (2016-05-10) 1 commit
+  (merged to 'next' on 2016-05-10 at 7f63497)
+ + travis-ci: build documentation
+
+ CI test was taught to build documentation pages.
+
+ Will merge to 'master'.
+
+
+* js/t3404-typofix (2016-05-10) 1 commit
+  (merged to 'next' on 2016-05-10 at cbeabc0)
+ + t3404: fix typo
+
+ Will merge to 'master'.
+
+
+* jk/rebase-interative-eval-fix (2016-05-10) 1 commit
+  (merged to 'next' on 2016-05-11 at 4fdf387)
+ + rebase--interactive: avoid empty list in shell for-loop
+
+ Portability enhancement for "rebase -i" to help platforms whose
+ shell does not like "for i in <empty>" (which is not POSIX-kosher).
+
+ Will merge to 'master'.
+
+
+* jk/test-send-sh-x-trace-elsewhere (2016-05-11) 1 commit
+  (merged to 'next' on 2016-05-11 at 273a137)
+ + test-lib: set BASH_XTRACEFD automatically
+
+ Running tests with '-x' option to trace the individual command
+ executions is a useful way to debug test scripts, but some tests
+ that capture the standard error stream and check what the command
+ said can be broken with the trace output mixed in.  When running
+ our tests under "bash", however, we can redirect the trace output
+ to another file descriptor to keep the standard error of programs
+ being tested intact.
+
+ Will merge to 'master'.
+
+
+* js/perf-rebase-i (2016-05-13) 3 commits
+  (merged to 'next' on 2016-05-13 at eb51ddd)
+ + perf: run "rebase -i" under perf
+ + perf: make the tests work in worktrees
+ + perf: let's disable symlinks when they are not available
+
+ Add perf test for "rebase -i"
+
+ Will merge to 'master'.
+
+
+* nd/worktree-cleanup-post-head-protection (2016-05-10) 7 commits
+ - worktree: simplify prefixing paths
+ - worktree: avoid 0{40}, too many zeroes, hard to read
+ - worktree.c: add clear_worktree()
+ - worktree.c: use is_dot_or_dotdot()
+ - git-worktree.txt: keep subcommand listing in alphabetical order
+ - worktree.c: rewrite mark_current_worktree() to avoid strbuf
+ - completion: support git-worktree
+ (this branch uses nd/worktree-various-heads.)
+
+ Further preparatory clean-up for "worktree" feature.
+
+ Expecting a reroll.
+ ($gmane/294136, etc.)
+
+
+* va/mailinfo-doc-typofix (2016-05-11) 1 commit
+  (merged to 'next' on 2016-05-11 at 7180176)
+ + Documentation/git-mailinfo: fix typo
+
+ Typofix.
+
+ Will merge to 'master'.
+
 
 * ss/commit-dry-run-resolve-merge-to-no-op (2016-02-17) 1 commit
   (merged to 'next' on 2016-05-10 at 2ada404)
@@ -627,22 +733,12 @@ of the repositories listed at
  Find common mistakes when writing gitlink: in our documentation and
  drive the check from "make check-docs".
 
+ I am not entirely happy with the way the script chooses what input
+ file to validate, but it is not worse than not having anything, so
+ let's move it forward and have the logic improved later when people
+ care about it deeply.
 
-* jc/commit-tree-ignore-commit-gpgsign (2016-05-03) 1 commit
-  (merged to 'next' on 2016-05-06 at 08eccb2)
- + commit-tree: do not pay attention to commit.gpgsign
-
- "git commit-tree" plumbing command required the user to always sign
- its result when the user sets the commit.gpgsign configuration
- variable, which was an ancient mistake.  Rework "git rebase" that
- relied on this mistake so that it reads commit.gpgsign and pass (or
- not pass) the -S option to "git commit-tree" to keep the end-user
- expectation the same, while teaching "git commit-tree" to ignore
- the configuration variable.  This will stop requiring the users to
- sign commit objects used internally as an implementation detail of
- "git stash".
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * jk/push-client-deadlock-fix (2016-05-11) 2 commits
@@ -653,13 +749,6 @@ of the repositories listed at
 
  Some Windows SDK lacks pthread_sigmask() implementation and fails
  to compile the recently updated "git push" codepath that uses it.
-
- Will merge to 'master'.
-
-
-* sb/submodule-module-list-pathspec-fix (2016-05-03) 1 commit
-  (merged to 'next' on 2016-05-06 at ab6dac3)
- + submodule deinit test: fix broken && chain in subshell
 
  Will merge to 'master'.
 
@@ -677,20 +766,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/merge-impossible-no-commit (2016-04-26) 2 commits
- - merge: warn --no-commit merge when no new commit is created
- - merge: do not contaminate option_commit with --squash
-
- "git merge --no-commit" silently succeeded when there is no need to
- create any commit, either when you are more recent than the commit
- you tried to merge, or you can fast-forward to the commit you tried
- to merge.  The command gives a warning message in such cases.
-
- Just tying loose ends in a discussion.  Unless somebody else
- champions this topic, I'll drop it.
-
-
-* mh/split-under-lock (2016-05-06) 33 commits
+* mh/split-under-lock (2016-05-13) 33 commits
  - lock_ref_sha1_basic(): only handle REF_NODEREF mode
  - commit_ref_update(): remove the flags parameter
  - lock_ref_for_update(): don't resolve symrefs
@@ -728,8 +804,8 @@ of the repositories listed at
  Further preparatory work on the refs API before the pluggable
  backend series can land.
 
- Updated.  Will wait for comments for the last time, and then
- merge to 'next'.
+ Updated (again).  Will wait for comments for the last time, and
+ then merge to 'next'.
 
 
 * bn/http-cookiefile-config (2016-05-04) 2 commits
@@ -888,7 +964,9 @@ of the repositories listed at
  Needs review.
 
 
-* va/i18n-misc-updates (2016-04-19) 9 commits
+* va/i18n-misc-updates (2016-05-12) 10 commits
+  (merged to 'next' on 2016-05-13 at 0361b16)
+ + i18n: unpack-trees: avoid substituting only a verb in sentences
   (merged to 'next' on 2016-05-10 at b5dbd0d)
  + i18n: builtin/pull.c: split strings marked for translation
  + i18n: builtin/pull.c: mark placeholders for translation
@@ -944,7 +1022,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dt/index-helper (2016-05-09) 19 commits
+* dt/index-helper (2016-05-13) 20 commits
  - untracked-cache: config option
  - trace: measure where the time is spent in the index-heavy operations
  - index-helper: optionally automatically run
@@ -957,16 +1035,22 @@ of the repositories listed at
  - index-helper: use watchman to avoid refreshing index with lstat()
  - watchman: support watchman to reduce index refresh cost
  - read-cache: add watchman 'WAMA' extension
+ - index-helper: log warnings
  - index-helper: add --detach
  - daemonize(): set a flag before exiting the main process
- - index-helper: log warnings
  - index-helper: add --strict
  - index-helper: new daemon for caching index and related stuff
+ - pkt-line: add gentle version of packet_write
  - read-cache: allow to keep mmap'd memory after reading
  - read-cache.c: fix constness of verify_hdr()
 
- Needs review.
- ($gmane/294056).
+ A new "index-helper" daemon has been introduced to give newly
+ spawned Git process a quicker access to the data in the index, and
+ optionally interface with the watchman daemon to further reduce the
+ refresh cost.
+
+ Under review.
+ ($gmane/294470).
 
 
 * jc/bundle (2016-03-03) 6 commits
@@ -993,6 +1077,7 @@ of the repositories listed at
  which needs to be fixed before this final step can proceed.
  ($gmane/282594)
 
+
 --------------------------------------------------
 [Discarded]
 
@@ -1000,3 +1085,5 @@ of the repositories listed at
  . diff: enable "compaction heuristics" and lose experimentation knob
 
  Superseded by the tip commit on the jk/diff-compact-heuristic topic.
+
+
