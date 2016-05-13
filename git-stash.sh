@@ -185,7 +185,7 @@ store_stash () {
 
 	git update-ref --create-reflog -m "$stash_msg" $ref_stash $w_commit
 	ret=$?
-	test $ret != 0 && test -z $quiet &&
+	test $ret != 0 && test -z "$quiet" &&
 	die "$(eval_gettext "Cannot update \$ref_stash with \$w_commit")"
 	return $ret
 }
@@ -277,7 +277,7 @@ save_stash () {
 			git clean --force --quiet -d $CLEAN_X_OPTION
 		fi
 
-		if test "$keep_index" = "t" && test -n $i_tree
+		if test "$keep_index" = "t" && test -n "$i_tree"
 		then
 			git read-tree --reset -u $i_tree
 		fi
