@@ -24,8 +24,9 @@ test_expect_success 'setup old-looking metadata' '
 	git update-ref -d refs/remotes/git-svn refs/remotes/git-svn
 	'
 
-head=$(git rev-parse --verify refs/heads/git-svn-HEAD^0)
-test_expect_success 'git-svn-HEAD is a real HEAD' "test -n '$head'"
+test_expect_success 'git-svn-HEAD is a real HEAD' '
+	git rev-parse --verify refs/heads/git-svn-HEAD^0
+'
 
 svnrepo_escaped=$(echo $svnrepo | sed 's/ /%20/')
 
