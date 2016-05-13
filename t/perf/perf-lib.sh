@@ -80,23 +80,26 @@ test_perf_create_repo_from () {
 	error "bug in the test script: not 2 parameters to test-create-repo"
 	repo="$1"
 	source="$2"
-	source_git=$source/$(cd "$source" && git rev-parse --git-dir)
+	source_git="$(git -C "$source" rev-parse --git-dir)"
+	objects_dir="$(git -C "$source" rev-parse --git-path objects)"
 	mkdir -p "$repo/.git"
 	(
-		cd "$repo/.git" &&
-		{ cp -Rl "$source_git/objects" . 2>/dev/null ||
-			cp -R "$source_git/objects" .; } &&
+		{ cp -Rl "$objects_dir" "$repo/.git/" 2>/dev/null ||
+			cp -R "$objects_dir" "$repo/.git/"; } &&
 		for stuff in "$source_git"/*; do
 			case "$stuff" in
-				*/objects|*/hooks|*/config)
+				*/objects|*/hooks|*/config|*/commondir)
 					;;
 				*)
-					cp -R "$stuff" . || exit 1
+					cp -R "$stuff" "$repo/.git/" || exit 1
 					;;
 			esac
 		done &&
-		cd .. &&
-		git init -q &&
+		cd "$repo" &&
+		git init -q && {
+			test_have_prereq SYMLINKS ||
+			git config core.symlinks false
+		} &&
 		mv .git/hooks .git/hooks-disabled 2>/dev/null
 	) || error "failed to copy repository '$source' to '$repo'"
 }
