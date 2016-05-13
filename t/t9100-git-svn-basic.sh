@@ -217,11 +217,11 @@ EOF
 
 test_expect_success POSIXPERM,SYMLINKS "$name" "test_cmp a expected"
 
-test_expect_success 'exit if remote refs are ambigious' "
+test_expect_success 'exit if remote refs are ambigious' '
         git config --add svn-remote.svn.fetch \
 		bar:refs/remotes/git-svn &&
 	test_must_fail git svn migrate
-"
+'
 
 test_expect_success 'exit if init-ing a would clobber a URL' '
         svnadmin create "${PWD}/svnrepo2" &&
@@ -259,26 +259,26 @@ test_expect_success 'dcommit $rev does not clobber current branch' '
 	git branch -D my-bar
 	'
 
-test_expect_success 'able to dcommit to a subdirectory' "
+test_expect_success 'able to dcommit to a subdirectory' '
 	git svn fetch -i bar &&
 	git checkout -b my-bar refs/remotes/bar &&
 	echo abc > d &&
 	git update-index --add d &&
-	git commit -m '/bar/d should be in the log' &&
+	git commit -m "/bar/d should be in the log" &&
 	git svn dcommit -i bar &&
-	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\" &&
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)" &&
 	mkdir newdir &&
 	echo new > newdir/dir &&
 	git update-index --add newdir/dir &&
-	git commit -m 'add a new directory' &&
+	git commit -m "add a new directory" &&
 	git svn dcommit -i bar &&
-	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\" &&
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)" &&
 	echo foo >> newdir/dir &&
 	git update-index newdir/dir &&
-	git commit -m 'modify a file in new directory' &&
+	git commit -m "modify a file in new directory" &&
 	git svn dcommit -i bar &&
-	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\"
-	"
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)"
+'
 
 test_expect_success 'dcommit should not fail with a touched file' '
 	test_commit "commit-new-file-foo2" foo2 &&
@@ -291,13 +291,13 @@ test_expect_success 'rebase should not fail with a touched file' '
 	git svn rebase
 '
 
-test_expect_success 'able to set-tree to a subdirectory' "
+test_expect_success 'able to set-tree to a subdirectory' '
 	echo cba > d &&
 	git update-index d &&
-	git commit -m 'update /bar/d' &&
+	git commit -m "update /bar/d" &&
 	git svn set-tree -i bar HEAD &&
-	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\"
-	"
+	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)"
+'
 
 test_expect_success 'git-svn works in a bare repository' '
 	mkdir bare-repo &&
