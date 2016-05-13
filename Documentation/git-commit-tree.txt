@@ -61,8 +61,8 @@ OPTIONS
 	stuck to the option without a space.
 
 --no-gpg-sign::
-	Countermand `commit.gpgSign` configuration variable that is
-	set to force each and every commit to be signed.
+	Do not GPG-sign commit, to countermand a `--gpg-sign` option
+	given earlier on the command line.
 
 
 Commit Information

@@ -87,7 +87,10 @@ preserve_merges=
 autosquash=
 keep_empty=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
-gpg_sign_opt=
+case "$(git config --bool commit.gpgsign)" in
+true)	gpg_sign_opt=-S ;;
+*)	gpg_sign_opt= ;;
+esac
 
 read_basic_state () {
 	test -f "$state_dir/head-name" &&

@@ -45,12 +45,18 @@ test_expect_success GPG 'create signed commits' '
 	git tag seventh-signed &&
 
 	echo 8 >file && test_tick && git commit -a -m eighth -SB7227189 &&
-	git tag eighth-signed-alt
+	git tag eighth-signed-alt &&
+
+	# commit.gpgsign is still on but this must not be signed
+	git tag ninth-unsigned $(echo 9 | git commit-tree HEAD^{tree}) &&
+	# explicit -S of course must sign.
+	git tag tenth-signed $(echo 9 | git commit-tree -S HEAD^{tree})
 '
 
 test_expect_success GPG 'verify and show signatures' '
 	(
-		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
+		for commit in initial second merge fourth-signed \
+			fifth-signed sixth-signed seventh-signed tenth-signed
 		do
 			git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
@@ -60,7 +66,8 @@ test_expect_success GPG 'verify and show signatures' '
 		done
 	) &&
 	(
-		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
+		for commit in merge^2 fourth-unsigned sixth-unsigned \
+			seventh-unsigned ninth-unsigned
 		do
 			test_must_fail git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
