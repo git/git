@@ -898,7 +898,7 @@ test_expect_success 'submodule deinit works on repository without submodules' '
 		git init &&
 		>file &&
 		git add file &&
-		git commit -m "repo should not be empty"
+		git commit -m "repo should not be empty" &&
 		git submodule deinit .
 	)
 '
