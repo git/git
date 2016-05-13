@@ -16,11 +16,19 @@ The output formats of "git log" that indents the commit log message by
 4 spaces now expands HT in the log message by default.  You can use
 the "--no-expand-tabs" option to disable this.
 
+"git commit-tree" plumbing command required the user to always sign
+its result when the user sets the commit.gpgsign configuration
+variable, which was an ancient mistake, which this release corrects.
+A script that drives commit-tree, if it relies on this mistake, now
+needs to read commit.gpgsign and pass the -S option as necessary.
+
 
 Updates since v2.8
 ------------------
 
 UI, Workflows & Features
+
+ * Comes with git-multimail 1.3.1 (in contrib/).
 
  * The end-user facing Porcelain level commands like "diff" and "log"
    now enables the rename detection by default.
@@ -359,6 +367,18 @@ notes for details).
    of one letter, which would confuse "highlight" filter used in
    gitweb.
    (merge 029f372 sk/gitweb-highlight-encoding later to maint).
+
+ * "git commit-tree" plumbing command required the user to always sign
+   its result when the user sets the commit.gpgsign configuration
+   variable, which was an ancient mistake.  Rework "git rebase" that
+   relied on this mistake so that it reads commit.gpgsign and pass (or
+   not pass) the -S option to "git commit-tree" to keep the end-user
+   expectation the same, while teaching "git commit-tree" to ignore
+   the configuration variable.  This will stop requiring the users to
+   sign commit objects used internally as an implementation detail of
+   "git stash".
+   (merge 6694856 jc/commit-tree-ignore-commit-gpgsign later to maint).
+
 
  * Other minor clean-ups and documentation updates
    (merge 8b5a3e9 kn/for-each-tag-branch later to maint).

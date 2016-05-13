@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 # Copyright (c) 2015 Matthieu Moy and others
 # Copyright (c) 2012-2014 Michael Haggerty and others
@@ -1704,6 +1704,14 @@ class BranchChange(ReferenceChange):
         self.header_template = COMBINED_HEADER_TEMPLATE
         self.intro_template = COMBINED_INTRO_TEMPLATE
         self.footer_template = COMBINED_FOOTER_TEMPLATE
+
+        def revision_gen_link(base_url):
+            # revision is used only to generate the body, and
+            # _content_type is set while generating headers. Get it
+            # from the BranchChange object.
+            revision._content_type = self._content_type
+            return revision.generate_browse_link(base_url)
+        self.generate_browse_link = revision_gen_link
         for line in self.generate_email(push, body_filter, values):
             yield line
 
