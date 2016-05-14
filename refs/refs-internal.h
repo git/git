@@ -404,13 +404,15 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 					       const char *prefix,
 					       int trim);
 
+struct ref_store;
+
 /*
  * Iterate over the packed and loose references in the specified
- * submodule that are within find_containing_dir(prefix). If prefix is
+ * ref_store that are within find_containing_dir(prefix). If prefix is
  * NULL or the empty string, iterate over all references in the
  * submodule.
  */
-struct ref_iterator *files_ref_iterator_begin(const char *submodule,
+struct ref_iterator *files_ref_iterator_begin(struct ref_store *ref_store,
 					      const char *prefix,
 					      unsigned int flags);
 
@@ -483,8 +485,6 @@ extern struct ref_iterator *current_ref_iter;
  */
 int do_for_each_ref_iterator(struct ref_iterator *iter,
 			     each_ref_fn fn, void *cb_data);
-
-struct ref_store;
 
 /* refs backends */
 
