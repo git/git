@@ -31,7 +31,7 @@ struct if_then_else {
 };
 
 struct refname_atom {
-	enum { R_NORMAL, R_SHORT, R_STRIP } option;
+	enum { R_BASE, R_DIR, R_NORMAL, R_SHORT, R_STRIP } option;
 	unsigned int strip;
 };
 
@@ -93,7 +93,11 @@ static void refname_atom_parser_internal(struct refname_atom *atom,
 		atom->option = R_STRIP;
 		if (strtoul_ui(arg, 10, &atom->strip) || atom->strip <= 0)
 			die(_("positive value expected refname:strip=%s"), arg);
-	} 	else
+	} else if (!strcmp(arg, "dir"))
+		atom->option = R_DIR;
+	else if (!strcmp(arg, "base"))
+		atom->option = R_BASE;
+	else
 		die(_("unrecognized %%(%s) argument: %s"), name, arg);
 }
 
@@ -251,7 +255,6 @@ static void if_atom_parser(struct used_atom *atom, const char *arg)
 	else
 		die(_("unrecognized %%(if) argument: %s"), arg);
 }
-
 
 static struct {
 	const char *name;
@@ -1096,7 +1099,25 @@ static const char *show_ref(struct refname_atom *atom, const char *refname)
 		return shorten_unambiguous_ref(refname, warn_ambiguous_refs);
 	else if (atom->option == R_STRIP)
 		return strip_ref_components(refname, atom->strip);
-	else
+	else if (atom->option == R_BASE) {
+		const char *sp, *ep;
+
+		if (skip_prefix(refname, "refs/", &sp)) {
+			ep = strchr(sp, '/');
+			if (!ep)
+				return "";
+			return xstrndup(sp, ep - sp);
+		}
+		return "";
+	} else if (atom->option == R_DIR) {
+		const char *sp, *ep;
+
+		sp = refname;
+		ep = strrchr(sp, '/');
+		if (!ep)
+			return "";
+		return xstrndup(sp, ep - sp);
+	} else
 		return refname;
 }
 
