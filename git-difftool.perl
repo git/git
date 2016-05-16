@@ -273,7 +273,7 @@ EOF
 	# temporary file to both the left and right directories to show the
 	# change in the recorded SHA1 for the submodule.
 	for my $path (keys %submodule) {
-		my $ok;
+		my $ok = 0;
 		if (defined($submodule{$path}{left})) {
 			$ok = write_to_file("$ldir/$path",
 				"Subproject commit $submodule{$path}{left}");
@@ -289,7 +289,7 @@ EOF
 	# shows only the link itself, not the contents of the link target.
 	# This loop replicates that behavior.
 	for my $path (keys %symlink) {
-		my $ok;
+		my $ok = 0;
 		if (defined($symlink{$path}{left})) {
 			$ok = write_to_file("$ldir/$path",
 					$symlink{$path}{left});
