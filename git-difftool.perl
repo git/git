@@ -138,6 +138,7 @@ sub setup_dir_diff
 	my %submodule;
 	my %symlink;
 	my @working_tree = ();
+	my %working_tree_dups = ();
 	my @rawdiff = split('\0', $diffrtn);
 
 	my $i = 0;
@@ -188,6 +189,10 @@ EOF
 		}
 
 		if ($rmode ne $null_mode) {
+			# Avoid duplicate working_tree entries
+			if ($working_tree_dups{$dst_path}++) {
+				next;
+			}
 			my ($use, $wt_sha1) = use_wt_file($repo, $workdir,
 							  $dst_path, $rsha1);
 			if ($use) {

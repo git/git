@@ -419,6 +419,29 @@ run_dir_diff_test 'difftool --dir-diff when worktree file is missing' '
 	grep file2 output
 '
 
+run_dir_diff_test 'difftool --dir-diff with unmerged files' '
+	test_when_finished git reset --hard &&
+	test_config difftool.echo.cmd "echo ok" &&
+	git checkout -B conflict-a &&
+	git checkout -B conflict-b &&
+	git checkout conflict-a &&
+	echo a >>file &&
+	git add file &&
+	git commit -m conflict-a &&
+	git checkout conflict-b &&
+	echo b >>file &&
+	git add file &&
+	git commit -m conflict-b &&
+	git checkout master &&
+	git merge conflict-a &&
+	test_must_fail git merge conflict-b &&
+	cat >expect <<-EOF &&
+		ok
+	EOF
+	git difftool --dir-diff $symlinks -t echo >actual &&
+	test_cmp expect actual
+'
+
 write_script .git/CHECK_SYMLINKS <<\EOF
 for f in file file2 sub/sub
 do
