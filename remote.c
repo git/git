@@ -2108,7 +2108,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			   "Your branch and '%s' have diverged,\n"
 			       "and have %d and %d different commits each, "
 			       "respectively.\n",
-			   theirs),
+			   ours + theirs),
 			base, ours, theirs);
 		if (advice_status_hints)
 			strbuf_addf(sb,
