@@ -7,24 +7,35 @@ githooks - Hooks used by Git
 
 SYNOPSIS
 --------
-$GIT_DIR/hooks/*
+$GIT_DIR/hooks/* (or \`git config core.hooksPath`/*)
 
 
 DESCRIPTION
 -----------
 
-Hooks are little scripts you can place in `$GIT_DIR/hooks`
-directory to trigger action at certain points.  When
-'git init' is run, a handful of example hooks are copied into the
-`hooks` directory of the new repository, but by default they are
-all disabled.  To enable a hook, rename it by removing its `.sample`
-suffix.
+Hooks are programs you can place in a hooks directory to trigger
+actions at certain points in git's execution. Hooks that don't have
+the executable bit set are ignored.
 
-NOTE: It is also a requirement for a given hook to be executable.
-However - in a freshly initialized repository - the `.sample` files are
-executable by default.
+By default the hooks directory is `$GIT_DIR/hooks`, but that can be
+changed via the `core.hooksPath` configuration variable (see
+linkgit:git-config[1]).
 
-This document describes the currently defined hooks.
+Before Git invokes a hook, it changes its working directory to either
+the root of the working tree in a non-bare repository, or to the
+$GIT_DIR in a bare repository.
+
+Hooks can get their arguments via the environment, command-line
+arguments, and stdin. See the documentation for each hook below for
+details.
+
+'git init' may copy hooks to the new repository, depending on its
+configuration. See the "TEMPLATE DIRECTORY" section in
+linkgit:git-init[1] for details. When the rest of this document refers
+to "default hooks" it's talking about the default template shipped
+with Git.
+
+The currently supported hooks are described below.
 
 HOOKS
 -----
@@ -32,15 +43,15 @@ HOOKS
 applypatch-msg
 ~~~~~~~~~~~~~~
 
-This hook is invoked by 'git am' script.  It takes a single
+This hook is invoked by 'git am'.  It takes a single
 parameter, the name of the file that holds the proposed commit
-log message.  Exiting with non-zero status causes
-'git am' to abort before applying the patch.
+log message.  Exiting with a non-zero status causes 'git am' to abort
+before applying the patch.
 
 The hook is allowed to edit the message file in place, and can
 be used to normalize the message into some project standard
-format (if the project has one). It can also be used to refuse
-the commit after inspecting the message file.
+format. It can also be used to refuse the commit after inspecting
+the message file.
 
 The default 'applypatch-msg' hook, when enabled, runs the
 'commit-msg' hook, if the latter is enabled.
@@ -73,10 +84,10 @@ pre-commit
 ~~~~~~~~~~
 
 This hook is invoked by 'git commit', and can be bypassed
-with `--no-verify` option.  It takes no parameter, and is
+with the `--no-verify` option.  It takes no parameters, and is
 invoked before obtaining the proposed commit log message and
-making a commit.  Exiting with non-zero status from this script
-causes the 'git commit' to abort.
+making a commit.  Exiting with a non-zero status from this script
+causes the 'git commit' command to abort before creating a commit.
 
 The default 'pre-commit' hook, when enabled, catches introduction
 of lines with trailing whitespaces and aborts the commit when
@@ -115,15 +126,15 @@ commit-msg
 ~~~~~~~~~~
 
 This hook is invoked by 'git commit', and can be bypassed
-with `--no-verify` option.  It takes a single parameter, the
+with the `--no-verify` option.  It takes a single parameter, the
 name of the file that holds the proposed commit log message.
-Exiting with non-zero status causes the 'git commit' to
+Exiting with a non-zero status causes the 'git commit' to
 abort.
 
-The hook is allowed to edit the message file in place, and can
-be used to normalize the message into some project standard
-format (if the project has one). It can also be used to refuse
-the commit after inspecting the message file.
+The hook is allowed to edit the message file in place, and can be used
+to normalize the message into some project standard format. It
+can also be used to refuse the commit after inspecting the message
+file.
 
 The default 'commit-msg' hook, when enabled, detects duplicate
 "Signed-off-by" lines, and aborts the commit if one is found.
@@ -131,8 +142,8 @@ The default 'commit-msg' hook, when enabled, detects duplicate
 post-commit
 ~~~~~~~~~~~
 
-This hook is invoked by 'git commit'.  It takes no
-parameter, and is invoked after a commit is made.
+This hook is invoked by 'git commit'. It takes no parameters, and is
+invoked after a commit is made.
 
 This hook is meant primarily for notification, and cannot affect
 the outcome of 'git commit'.
@@ -267,9 +278,11 @@ does not know the entire set of branches, so it would end up
 firing one e-mail per ref when used naively, though.  The
 <<post-receive,'post-receive'>> hook is more suited to that.
 
-Another use suggested on the mailing list is to use this hook to
-implement access control which is finer grained than the one
-based on filesystem group.
+In an environment that restricts the users' access only to git
+commands over the wire, this hook can be used to implement access
+control without relying on filesystem ownership and group
+membership. See linkgit:git-shell[1] for how you might use the login
+shell to restrict the user's access to only git commands.
 
 Both standard output and standard error output are forwarded to
 'git send-pack' on the other end, so you can simply `echo` messages
