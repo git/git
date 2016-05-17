@@ -64,13 +64,13 @@ static int write_strbuf(struct strbuf *sb, FILE *out)
 {
 	if (fwrite(sb->buf, 1, sb->len, out) == sb->len)	/* Success. */
 		return 0;
-	return error("cannot write delta postimage: %s", strerror(errno));
+	return error_errno("cannot write delta postimage");
 }
 
 static int error_short_read(struct line_buffer *input)
 {
 	if (buffer_ferror(input))
-		return error("error reading delta: %s", strerror(errno));
+		return error_errno("error reading delta");
 	return error("invalid delta: unexpected end of file");
 }
 

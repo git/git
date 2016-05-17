@@ -607,7 +607,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 	fp = fopen(filename, "a");
 	if (!fp)
-		return error(_("cannot open %s: %s\n"), filename, strerror(errno));
+		return error_errno(_("cannot open %s"), filename);
 
 	if (raw_url)
 		url = transport_anonymize_url(raw_url);
@@ -848,7 +848,7 @@ static int truncate_fetch_head(void)
 	FILE *fp = fopen_for_writing(filename);
 
 	if (!fp)
-		return error(_("cannot open %s: %s\n"), filename, strerror(errno));
+		return error_errno(_("cannot open %s"), filename);
 	fclose(fp);
 	return 0;
 }

@@ -414,7 +414,7 @@ static void write_crash_report(const char *err)
 	struct recent_command *rc;
 
 	if (!rpt) {
-		error("can't write crash report %s: %s", loc, strerror(errno));
+		error_errno("can't write crash report %s", loc);
 		free(loc);
 		return;
 	}
@@ -1806,8 +1806,8 @@ static void dump_marks(void)
 		return;
 
 	if (hold_lock_file_for_update(&mark_lock, export_marks_file, 0) < 0) {
-		failure |= error("Unable to write marks file %s: %s",
-			export_marks_file, strerror(errno));
+		failure |= error_errno("Unable to write marks file %s",
+				       export_marks_file);
 		return;
 	}
 
@@ -1822,8 +1822,8 @@ static void dump_marks(void)
 
 	dump_marks_helper(f, 0, marks);
 	if (commit_lock_file(&mark_lock)) {
-		failure |= error("Unable to write file %s: %s",
-			export_marks_file, strerror(errno));
+		failure |= error_errno("Unable to write file %s",
+				       export_marks_file);
 		return;
 	}
 }

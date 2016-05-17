@@ -75,14 +75,12 @@ static int add_mailname_host(struct strbuf *buf)
 	mailname = fopen("/etc/mailname", "r");
 	if (!mailname) {
 		if (errno != ENOENT)
-			warning("cannot open /etc/mailname: %s",
-				strerror(errno));
+			warning_errno("cannot open /etc/mailname");
 		return -1;
 	}
 	if (strbuf_getline(&mailnamebuf, mailname) == EOF) {
 		if (ferror(mailname))
-			warning("cannot read /etc/mailname: %s",
-				strerror(errno));
+			warning_errno("cannot read /etc/mailname");
 		strbuf_release(&mailnamebuf);
 		fclose(mailname);
 		return -1;
@@ -125,7 +123,7 @@ static void add_domainname(struct strbuf *out, int *is_bogus)
 	char buf[1024];
 
 	if (gethostname(buf, sizeof(buf))) {
-		warning("cannot get host name: %s", strerror(errno));
+		warning_errno("cannot get host name");
 		strbuf_addstr(out, "(none)");
 		*is_bogus = 1;
 		return;

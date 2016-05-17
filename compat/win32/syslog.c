@@ -28,13 +28,13 @@ void syslog(int priority, const char *fmt, ...)
 	va_end(ap);
 
 	if (str_len < 0) {
-		warning("vsnprintf failed: '%s'", strerror(errno));
+		warning_errno("vsnprintf failed");
 		return;
 	}
 
 	str = malloc(st_add(str_len, 1));
 	if (!str) {
-		warning("malloc failed: '%s'", strerror(errno));
+		warning_errno("malloc failed");
 		return;
 	}
 
@@ -45,7 +45,7 @@ void syslog(int priority, const char *fmt, ...)
 	while ((pos = strstr(str, "%1")) != NULL) {
 		str = realloc(str, st_add(++str_len, 1));
 		if (!str) {
-			warning("realloc failed: '%s'", strerror(errno));
+			warning_errno("realloc failed");
 			return;
 		}
 		memmove(pos + 2, pos + 1, strlen(pos));
