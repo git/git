@@ -2650,6 +2650,21 @@ test_expect_success 'R: ignore non-git options' '
 	git fast-import <input
 '
 
+test_expect_success 'R: corrupt lines do not mess marks file' '
+	rm -f io.marks &&
+	blob=$(echo hi | git hash-object --stdin) &&
+	cat >expect <<-EOF &&
+	:3 0000000000000000000000000000000000000000
+	:1 $blob
+	:2 $blob
+	EOF
+	cp expect io.marks &&
+	test_must_fail git fast-import --import-marks=io.marks --export-marks=io.marks <<-\EOF &&
+
+	EOF
+	test_cmp expect io.marks
+'
+
 ##
 ## R: very large blobs
 ##

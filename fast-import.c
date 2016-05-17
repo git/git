@@ -329,6 +329,7 @@ static const char *export_marks_file;
 static const char *import_marks_file;
 static int import_marks_file_from_stream;
 static int import_marks_file_ignore_missing;
+static int import_marks_file_done;
 static int relative_marks_paths;
 
 /* Our last blob */
@@ -1802,7 +1803,7 @@ static void dump_marks(void)
 	static struct lock_file mark_lock;
 	FILE *f;
 
-	if (!export_marks_file)
+	if (!export_marks_file || (import_marks_file && !import_marks_file_done))
 		return;
 
 	if (hold_lock_file_for_update(&mark_lock, export_marks_file, 0) < 0) {
@@ -1835,7 +1836,7 @@ static void read_marks(void)
 	if (f)
 		;
 	else if (import_marks_file_ignore_missing && errno == ENOENT)
-		return; /* Marks file does not exist */
+		goto done; /* Marks file does not exist */
 	else
 		die_errno("cannot read '%s'", import_marks_file);
 	while (fgets(line, sizeof(line), f)) {
@@ -1865,6 +1866,8 @@ static void read_marks(void)
 		insert_mark(mark, e);
 	}
 	fclose(f);
+done:
+	import_marks_file_done = 1;
 }
 
 
