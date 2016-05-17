@@ -35,6 +35,21 @@ env:
     # t9816 occasionally fails with "TAP out of sequence errors" on Travis CI OS X
     - GIT_SKIP_TESTS="t9810 t9816"
 
+matrix:
+  include:
+    - env: Documentation
+      os: linux
+      compiler: clang
+      addons:
+        apt:
+          packages:
+          - asciidoc
+          - xmlto
+      before_install:
+      before_script:
+      script: ci/test-documentation.sh
+      after_failure:
+
 before_install:
   - >
     case "${TRAVIS_OS_NAME:-linux}" in
