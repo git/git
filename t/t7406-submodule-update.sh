@@ -108,14 +108,25 @@ pwd=$(pwd)
 
 cat <<EOF >expect
 Submodule path '../super': checked out '$supersha1'
-Submodule 'merging' ($pwd/merging) registered for path '../super/merging'
-Submodule 'none' ($pwd/none) registered for path '../super/none'
-Submodule 'rebasing' ($pwd/rebasing) registered for path '../super/rebasing'
-Submodule 'submodule' ($pwd/submodule) registered for path '../super/submodule'
 Submodule path '../super/merging': checked out '$mergingsha1'
 Submodule path '../super/none': checked out '$nonesha1'
 Submodule path '../super/rebasing': checked out '$rebasingsha1'
 Submodule path '../super/submodule': checked out '$submodulesha1'
+EOF
+
+cat <<EOF >expect2
+Submodule 'merging' ($pwd/merging) registered for path '../super/merging'
+Submodule 'none' ($pwd/none) registered for path '../super/none'
+Submodule 'rebasing' ($pwd/rebasing) registered for path '../super/rebasing'
+Submodule 'submodule' ($pwd/submodule) registered for path '../super/submodule'
+Cloning into '$pwd/recursivesuper/super/merging'...
+done.
+Cloning into '$pwd/recursivesuper/super/none'...
+done.
+Cloning into '$pwd/recursivesuper/super/rebasing'...
+done.
+Cloning into '$pwd/recursivesuper/super/submodule'...
+done.
 EOF
 
 test_expect_success 'submodule update --init --recursive from subdirectory' '
@@ -123,9 +134,10 @@ test_expect_success 'submodule update --init --recursive from subdirectory' '
 	(cd recursivesuper &&
 	 mkdir tmp &&
 	 cd tmp &&
-	 git submodule update --init --recursive ../super >../../actual
+	 git submodule update --init --recursive ../super >../../actual 2>../../actual2
 	) &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_cmp expect2 actual2
 '
 
 apos="'";
