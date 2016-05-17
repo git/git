@@ -62,4 +62,11 @@ int push_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_nam
 void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
 int parallel_submodules(void);
 
+/*
+ * Prepare the "env_array" parameter of a "struct child_process" for executing
+ * a submodule by clearing any repo-specific envirionment variables, but
+ * retaining any config in the environment.
+ */
+void prepare_submodule_repo_env(struct argv_array *out);
+
 #endif
