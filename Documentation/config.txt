@@ -117,7 +117,7 @@ Example
 	[include]
 		path = /path/to/foo.inc ; include by absolute path
 		path = foo ; expand "foo" relative to the current file
-		path = ~/foo ; expand "foo" in your $HOME directory
+		path = ~/foo ; expand "foo" in your `$HOME` directory
 
 
 Values
@@ -496,10 +496,10 @@ repository's usual working tree).
 
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file
-	"$GIT_DIR/logs/<ref>", by appending the new and old
+	"`$GIT_DIR/logs/<ref>`", by appending the new and old
 	SHA-1, the date/time and the reason of the update, but
 	only when the file exists.  If this configuration
-	variable is set to true, missing "$GIT_DIR/logs/<ref>"
+	variable is set to true, missing "`$GIT_DIR/logs/<ref>`"
 	file is automatically created for branch heads (i.e. under
 	refs/heads/), remote refs (i.e. under refs/remotes/),
 	note refs (i.e. under refs/notes/), and the symbolic ref HEAD.
@@ -606,8 +606,8 @@ core.excludesFile::
 	Specifies the pathname to the file that contains patterns to
 	describe paths that are not meant to be tracked, in addition
 	to '.gitignore' (per-directory) and '.git/info/exclude'.
-	Defaults to $XDG_CONFIG_HOME/git/ignore.
-	If $XDG_CONFIG_HOME is either not set or empty, $HOME/.config/git/ignore
+	Defaults to `$XDG_CONFIG_HOME/git/ignore`.
+	If `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/git/ignore`
 	is used instead. See linkgit:gitignore[5].
 
 core.askPass::
@@ -624,8 +624,8 @@ core.attributesFile::
 	'.git/info/attributes', Git looks into this file for attributes
 	(see linkgit:gitattributes[5]). Path expansions are made the same
 	way as for `core.excludesFile`. Its default value is
-	$XDG_CONFIG_HOME/git/attributes. If $XDG_CONFIG_HOME is either not
-	set or empty, $HOME/.config/git/attributes is used instead.
+	`$XDG_CONFIG_HOME/git/attributes`. If `$XDG_CONFIG_HOME` is either not
+	set or empty, `$HOME/.config/git/attributes` is used instead.
 
 core.hooksPath::
 	By default Git will look for your hooks in the
@@ -1360,7 +1360,7 @@ gc.worktreePruneExpire::
 	'git worktree prune --expire 3.months.ago'.
 	This config variable can be used to set a different grace
 	period. The value "now" may be used to disable the grace
-	period and prune $GIT_DIR/worktrees immediately, or "never"
+	period and prune `$GIT_DIR/worktrees` immediately, or "never"
 	may be used to suppress pruning.
 
 gc.reflogExpire::
@@ -1500,13 +1500,13 @@ grep.fallbackToNoIndex::
 	is executed outside of a git repository.  Defaults to false.
 
 gpg.program::
-	Use this custom program instead of "gpg" found on $PATH when
+	Use this custom program instead of "`gpg`" found on `$PATH` when
 	making or verifying a PGP signature. The program must support the
 	same command-line interface as GPG, namely, to verify a detached
-	signature, "gpg --verify $file - <$signature" is run, and the
+	signature, "`gpg --verify $file - <$signature`" is run, and the
 	program is expected to signal a good signature by exiting with
 	code 0, and to generate an ASCII-armored detached signature, the
-	standard input of "gpg -bsau $key" is fed with the contents to be
+	standard input of "`gpg -bsau $key`" is fed with the contents to be
 	signed, and the program is expected to send the result to its
 	standard output.
 
