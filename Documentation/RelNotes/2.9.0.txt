@@ -124,6 +124,14 @@ UI, Workflows & Features
    more readable by using a blank line as a strong hint that the
    contents before and after it belong to a logically separate unit.
 
+ * A new configuration variable core.hooksPath allows customizing
+   where the hook directory is.
+
+ * An earlier addition of "sanitize_submodule_env" with 14111fc4 (git:
+   submodule honor -c credential.* from command line, 2016-02-29)
+   turned out to be a convoluted no-op; implement what it wanted to do
+   correctly, and stop filtering settings given via "git -c var=val".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -165,12 +173,6 @@ Performance, Internal Implementation, Development Support etc.
    have been moved to t/helper/ subdirectory to reduce clutter at the
    top level of the tree.
 
-   Note that this can break your tests if you check out revisions
-   across the merge boundary of this topic, e0b58519 (Merge branch
-   'nd/test-helpers', 2016-04-29), as bin-wrappers/test-* are not
-   rebuilt to point the underlying executables.  For now, "make
-   distclean" is your friend.
-
  * Unify internal logic between "git tag -v" and "git verify-tag"
    commands by making one directly call into the other.
    (merge bef234b st/verify-tag later to maint).
@@ -187,6 +189,21 @@ Performance, Internal Implementation, Development Support etc.
    own spec file, we stopped pretending that we support "make rpm".
 
  * Move from unsigned char[20] to struct object_id continues.
+
+ * Update of "git submodule" to move pieces of logic to C continues.
+
+ * The code for warning_errno/die_errno has been refactored and a new
+   error_errno() reporting helper is introduced.
+   (merge 1da045f nd/error-errno later to maint).
+
+ * Running tests with '-x' option to trace the individual command
+   executions is a useful way to debug test scripts, but some tests
+   that capture the standard error stream and check what the command
+   said can be broken with the trace output mixed in.  When running
+   our tests under "bash", however, we can redirect the trace output
+   to another file descriptor to keep the standard error of programs
+   being tested intact.
+   (merge d88785e jk/test-send-sh-x-trace-elsewhere later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -379,6 +396,51 @@ notes for details).
    "git stash".
    (merge 6694856 jc/commit-tree-ignore-commit-gpgsign later to maint).
 
+ * "http.cookieFile" configuration variable clearly wants a pathname,
+   but we forgot to treat it as such by e.g. applying tilde expansion.
+   (merge e5a39ad bn/http-cookiefile-config later to maint).
+
+ * Consolidate description of tilde-expansion that is done to
+   configuration variables that take pathname to a single place.
+   (merge dca83ab jc/config-pathname-type later to maint).
+
+ * Correct faulty recommendation to use "git submodule deinit ." when
+   de-initialising all submodules, which would result in a strange
+   error message in a pathological corner case.
+   (merge f6a5279 sb/submodule-deinit-all later to maint).
+
+ * Many 'linkgit:<git documentation page>' references were broken,
+   which are all fixed with this.
+   (merge 1cca17d jc/linkgit-fix later to maint).
+
+ * "git rerere" can get confused by conflict markers deliberately left
+   by the inner merge step, because they are indistinguishable from
+   the real conflict markers left by the outermost merge which are
+   what the end user and "rerere" need to look at.  This was fixed by
+   making the conflict markers left by the inner merges a bit longer.
+   (merge 0f9fd5c jc/ll-merge-internal later to maint).
+
+ * CI test was taught to build documentation pages.
+   (merge b98712b ls/travis-build-doc later to maint).
+
+ * "git fsck" learned to catch NUL byte in a commit object as
+   potential error and warn.
+   (merge 6d2d780 jc/fsck-nul-in-commit later to maint).
+
+ * Portability enhancement for "rebase -i" to help platforms whose
+   shell does not like "for i in <empty>" (which is not POSIX-kosher).
+   (merge 8e98b35 jk/rebase-interative-eval-fix later to maint).
+
+ * On Windows, .git and optionally any files whose name starts with a
+   dot are now marked as hidden, with a core.hideDotFiles knob to
+   customize this behaviour.
+   (merge ebf31e7 js/windows-dotgit later to maint).
+
+ * Documentation for "git merge --verify-signatures" has been updated
+   to clarify that the signature of only the commit at the tip is
+   verified.  Also the phrasing used for signature and key validity is
+   adjusted to align with that used by OpenPGP.
+   (merge 05a5869 kf/gpg-sig-verification-doc later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge 8b5a3e9 kn/for-each-tag-branch later to maint).
@@ -393,3 +455,13 @@ notes for details).
    (merge fa72245 ew/normal-to-e later to maint).
    (merge 2e39a24 rn/glossary-typofix later to maint).
    (merge cadfbef sb/clean-test-fix later to maint).
+   (merge 832c0e5 lp/typofixes later to maint).
+   (merge f5ee54a sb/z-is-gnutar-ism later to maint).
+   (merge 2e3926b va/i18n-misc-updates later to maint).
+   (merge f212dcc bn/config-doc-tt-varnames later to maint).
+   (merge f54bea4 nd/remote-plural-ours-plus-theirs later to maint).
+   (merge 2bb0518 ak/t4151-ls-files-could-be-empty later to maint).
+   (merge 4df4313 jc/test-seq later to maint).
+   (merge a75a308 tb/t5601-sed-fix later to maint).
+   (merge 6c1fbe1 va/i18n-remote-comment-to-align later to maint).
+   (merge dee2303 va/mailinfo-doc-typofix later to maint).
