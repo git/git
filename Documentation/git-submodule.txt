@@ -13,7 +13,7 @@ SYNOPSIS
 	      [--reference <repository>] [--depth <depth>] [--] <repository> [<path>]
 'git submodule' [--quiet] status [--cached] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] init [--] [<path>...]
-'git submodule' [--quiet] deinit [-f|--force] [--] <path>...
+'git submodule' [--quiet] deinit [-f|--force] (--all|[--] <path>...)
 'git submodule' [--quiet] update [--init] [--remote] [-N|--no-fetch]
 	      [-f|--force] [--rebase|--merge] [--reference <repository>]
 	      [--depth <depth>] [--recursive] [--jobs <n>] [--] [<path>...]
@@ -140,12 +140,15 @@ deinit::
 	tree. Further calls to `git submodule update`, `git submodule foreach`
 	and `git submodule sync` will skip any unregistered submodules until
 	they are initialized again, so use this command if you don't want to
-	have a local checkout of the submodule in your work tree anymore. If
+	have a local checkout of the submodule in your working tree anymore. If
 	you really want to remove a submodule from the repository and commit
 	that use linkgit:git-rm[1] instead.
 +
-If `--force` is specified, the submodule's work tree will be removed even if
-it contains local modifications.
+When the command is run without pathspec, it errors out,
+instead of deinit-ing everything, to prevent mistakes.
++
+If `--force` is specified, the submodule's working tree will
+be removed even if it contains local modifications.
 
 update::
 +
@@ -247,6 +250,10 @@ OPTIONS
 --quiet::
 	Only print error messages.
 
+--all::
+	This option is only valid for the deinit command. Unregister all
+	submodules in the working tree.
+
 -b::
 --branch::
 	Branch of repository to add as submodule.
@@ -257,8 +264,8 @@ OPTIONS
 --force::
 	This option is only valid for add, deinit and update commands.
 	When running add, allow adding an otherwise ignored submodule path.
-	When running deinit the submodule work trees will be removed even if
-	they contain local changes.
+	When running deinit the submodule working trees will be removed even
+	if they contain local changes.
 	When running update (only effective with the checkout procedure),
 	throw away local changes in submodules when switching to a
 	different commit; and always run a checkout operation in the
