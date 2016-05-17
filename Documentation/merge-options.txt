@@ -89,8 +89,11 @@ option can be used to override --squash.
 
 --verify-signatures::
 --no-verify-signatures::
-	Verify that the commits being merged have good and trusted GPG signatures
-	and abort the merge in case they do not.
+	Verify that the tip commit of the side branch being merged is
+	signed with a valid key, i.e. a key that has a valid uid: in the
+	default trust model, this means the signing key has been signed by
+	a trusted key.  If the tip commit of the side branch is not signed
+	with a valid key, the merge is aborted.
 
 --summary::
 --no-summary::
