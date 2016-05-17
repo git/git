@@ -179,7 +179,7 @@ returns an empty string instead.
 
 As a special case for the date-type fields, you may specify a format for
 the date by adding `:` followed by date format name (see the
-values the `--date` option to linkgit::git-rev-list[1] takes).
+values the `--date` option to linkgit:git-rev-list[1] takes).
 
 
 EXAMPLES
