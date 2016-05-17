@@ -37,6 +37,11 @@ test_rev_parse() {
 
 ROOT=$(pwd)
 
+test_expect_success 'setup' '
+	mkdir -p sub/dir work &&
+	cp -R .git repo.git
+'
+
 test_rev_parse toplevel false false true '' .git
 
 cd .git || exit 1
@@ -45,7 +50,6 @@ cd objects || exit 1
 test_rev_parse .git/objects/ false true false '' "$ROOT/.git"
 cd ../.. || exit 1
 
-mkdir -p sub/dir || exit 1
 cd sub/dir || exit 1
 test_rev_parse subdirectory false false true sub/dir/ "$ROOT/.git"
 cd ../.. || exit 1
@@ -56,7 +60,6 @@ test_rev_parse 'core.bare = true' true false false
 git config --unset core.bare
 test_rev_parse 'core.bare undefined' false false true
 
-mkdir work || exit 1
 cd work || exit 1
 GIT_DIR=../.git
 GIT_CONFIG="$(pwd)"/../.git/config
@@ -71,7 +74,6 @@ test_rev_parse 'GIT_DIR=../.git, core.bare = true' true false false ''
 git config --unset core.bare
 test_rev_parse 'GIT_DIR=../.git, core.bare undefined' false false true ''
 
-mv ../.git ../repo.git || exit 1
 GIT_DIR=../repo.git
 GIT_CONFIG="$(pwd)"/../repo.git/config
 
