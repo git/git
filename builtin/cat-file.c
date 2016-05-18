@@ -504,6 +504,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 
 	git_config(git_cat_file_config, NULL);
 
+	batch.buffer_output = -1;
 	argc = parse_options(argc, argv, prefix, options, cat_file_usage, 0);
 
 	if (opt) {
@@ -526,6 +527,9 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	if ((batch.follow_symlinks || batch.all_objects) && !batch.enabled) {
 		usage_with_options(cat_file_usage, options);
 	}
+
+	if (batch.buffer_output < 0)
+		batch.buffer_output = batch.all_objects;
 
 	if (batch.enabled)
 		return batch_objects(&batch);
