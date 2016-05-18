@@ -3,37 +3,27 @@
 test_description='test git rev-parse'
 . ./test-lib.sh
 
-test_rev_parse() {
+# usage: label is-bare is-inside-git is-inside-work prefix git-dir
+test_rev_parse () {
 	name=$1
 	shift
 
-	test_expect_success "$name: is-bare-repository" \
-	"test '$1' = \"\$(git rev-parse --is-bare-repository)\""
-	shift
-	[ $# -eq 0 ] && return
-
-	test_expect_success "$name: is-inside-git-dir" \
-	"test '$1' = \"\$(git rev-parse --is-inside-git-dir)\""
-	shift
-	[ $# -eq 0 ] && return
-
-	test_expect_success "$name: is-inside-work-tree" \
-	"test '$1' = \"\$(git rev-parse --is-inside-work-tree)\""
-	shift
-	[ $# -eq 0 ] && return
-
-	test_expect_success "$name: prefix" \
-	"test '$1' = \"\$(git rev-parse --show-prefix)\""
-	shift
-	[ $# -eq 0 ] && return
-
-	test_expect_success "$name: git-dir" \
-	"test '$1' = \"\$(git rev-parse --git-dir)\""
-	shift
-	[ $# -eq 0 ] && return
+	for o in --is-bare-repository \
+		 --is-inside-git-dir \
+		 --is-inside-work-tree \
+		 --show-prefix \
+		 --git-dir
+	do
+		test $# -eq 0 && break
+		expect="$1"
+		test_expect_success "$name: $o" '
+			echo "$expect" >expect &&
+			git rev-parse $o >actual &&
+			test_cmp expect actual
+		'
+		shift
+	done
 }
-
-# label is-bare is-inside-git is-inside-work prefix git-dir
 
 ROOT=$(pwd)
 
