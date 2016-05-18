@@ -1,6 +1,3 @@
-Makefile
-
-Loading latest commit…
 # The default target of this Makefile is...
 all::
 
