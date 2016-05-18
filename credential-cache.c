@@ -32,6 +32,7 @@ static int send_request(const char *socket, const struct strbuf *out)
 		write_or_die(1, in, r);
 		got_data = 1;
 	}
+	close(fd);
 	return got_data;
 }
 
