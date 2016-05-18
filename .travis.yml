@@ -22,8 +22,11 @@ addons:
 env:
   global:
     - DEVELOPER=1
-    - P4_VERSION="15.2"
-    - GIT_LFS_VERSION="1.1.0"
+    # The Linux build installs the defined dependency versions below.
+    # The OS X build installs the latest available versions. Keep that
+    # in mind when you encounter a broken OS X build!
+    - LINUX_P4_VERSION="16.1"
+    - LINUX_GIT_LFS_VERSION="1.2.0"
     - DEFAULT_TEST_TARGET=prove
     - GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
     - GIT_TEST_OPTS="--verbose --tee"
@@ -38,17 +41,17 @@ before_install:
     linux)
       mkdir --parents custom/p4
       pushd custom/p4
-        wget --quiet http://filehost.perforce.com/perforce/r$P4_VERSION/bin.linux26x86_64/p4d
-        wget --quiet http://filehost.perforce.com/perforce/r$P4_VERSION/bin.linux26x86_64/p4
+        wget --quiet http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION/bin.linux26x86_64/p4d
+        wget --quiet http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION/bin.linux26x86_64/p4
         chmod u+x p4d
         chmod u+x p4
         export PATH="$(pwd):$PATH"
       popd
       mkdir --parents custom/git-lfs
       pushd custom/git-lfs
-        wget --quiet https://github.com/github/git-lfs/releases/download/v$GIT_LFS_VERSION/git-lfs-linux-amd64-$GIT_LFS_VERSION.tar.gz
-        tar --extract --gunzip --file "git-lfs-linux-amd64-$GIT_LFS_VERSION.tar.gz"
-        cp git-lfs-$GIT_LFS_VERSION/git-lfs .
+        wget --quiet https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz
+        tar --extract --gunzip --file "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+        cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
         export PATH="$(pwd):$PATH"
       popd
       ;;
