@@ -106,7 +106,8 @@ other objects in that pack they already have locally.
 --max-pack-size=<n>::
 	Maximum size of each output pack file. The size can be suffixed with
 	"k", "m", or "g". The minimum size allowed is limited to 1 MiB.
-	If specified,  multiple packfiles may be created.
+	If specified, multiple packfiles may be created, which also
+	prevents the creation of a bitmap index.
 	The default is unlimited, unless the config variable
 	`pack.packSizeLimit` is set.
 
@@ -115,7 +116,8 @@ other objects in that pack they already have locally.
 	Write a reachability bitmap index as part of the repack. This
 	only makes sense when used with `-a` or `-A`, as the bitmaps
 	must be able to refer to all reachable objects. This option
-	overrides the setting of `pack.writeBitmaps`.
+	overrides the setting of `repack.writeBitmaps`.  This option
+	has no effect if multiple packfiles are created.
 
 --pack-kept-objects::
 	Include objects in `.keep` files when repacking.  Note that we
@@ -123,7 +125,7 @@ other objects in that pack they already have locally.
 	This means that we may duplicate objects, but this makes the
 	option safe to use when there are concurrent pushes or fetches.
 	This option is generally only useful if you are writing bitmaps
-	with `-b` or `pack.writeBitmaps`, as it ensures that the
+	with `-b` or `repack.writeBitmaps`, as it ensures that the
 	bitmapped packfile has the necessary objects.
 
 Configuration
