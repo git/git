@@ -52,6 +52,7 @@ static int keepalive = 5;
 static int use_sideband;
 static int advertise_refs;
 static int stateless_rpc;
+static const char *pack_objects_hook;
 
 static void reset_timeout(void)
 {
@@ -93,6 +94,14 @@ static void create_pack_file(void)
 	int i;
 	FILE *pipe_fd;
 
+	if (!pack_objects_hook)
+		pack_objects.git_cmd = 1;
+	else {
+		argv_array_push(&pack_objects.args, pack_objects_hook);
+		argv_array_push(&pack_objects.args, "git");
+		pack_objects.use_shell = 1;
+	}
+
 	if (shallow_nr) {
 		argv_array_push(&pack_objects.args, "--shallow-file");
 		argv_array_push(&pack_objects.args, "");
@@ -115,7 +124,6 @@ static void create_pack_file(void)
 	pack_objects.in = -1;
 	pack_objects.out = -1;
 	pack_objects.err = -1;
-	pack_objects.git_cmd = 1;
 
 	if (start_command(&pack_objects))
 		die("git upload-pack: unable to fork git-pack-objects");
@@ -812,6 +820,9 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 		keepalive = git_config_int(var, value);
 		if (!keepalive)
 			keepalive = -1;
+	} else if (current_config_scope() != CONFIG_SCOPE_REPO) {
+		if (!strcmp("uploadpack.packobjectshook", var))
+			return git_config_string(&pack_objects_hook, var, value);
 	}
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
