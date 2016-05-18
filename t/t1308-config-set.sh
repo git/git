@@ -238,16 +238,19 @@ test_expect_success 'iteration shows correct origins' '
 	value=from-home
 	origin=file
 	name=$(pwd)/.gitconfig
+	scope=global
 
 	key=foo.bar
 	value=from-repo
 	origin=file
 	name=.git/config
+	scope=repo
 
 	key=foo.bar
 	value=from-cmdline
 	origin=command line
 	name=
+	scope=cmdline
 	EOF
 	GIT_CONFIG_PARAMETERS=$cmdline_config test-config iterate >actual &&
 	test_cmp expect actual
