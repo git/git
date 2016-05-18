@@ -6,10 +6,15 @@ test_description='test git rev-parse'
 # usage: [options] label is-bare is-inside-git is-inside-work prefix git-dir
 test_rev_parse () {
 	d=
+	bare=
 	while :
 	do
 		case "$1" in
 		-C) d="$2"; shift; shift ;;
+		-b) case "$2" in
+		    [tfu]*) bare="$2"; shift; shift ;;
+		    *) error "test_rev_parse: bogus core.bare value '$2'" ;;
+		    esac ;;
 		-*) error "test_rev_parse: unrecognized option '$1'" ;;
 		*) break ;;
 		esac
@@ -27,6 +32,12 @@ test_rev_parse () {
 		test $# -eq 0 && break
 		expect="$1"
 		test_expect_success "$name: $o" '
+			case "$bare" in
+			t*) test_config ${d:+-C} ${d:+"$d"} core.bare true ;;
+			f*) test_config ${d:+-C} ${d:+"$d"} core.bare false ;;
+			u*) test_unconfig ${d:+-C} ${d:+"$d"} core.bare ;;
+			esac &&
+
 			echo "$expect" >expect &&
 			git ${d:+-C} ${d:+"$d"} rev-parse $o >actual &&
 			test_cmp expect actual
@@ -49,35 +60,25 @@ test_rev_parse -C .git/objects .git/objects/ false true false '' "$ROOT/.git"
 
 test_rev_parse -C sub/dir subdirectory false false true sub/dir/ "$ROOT/.git"
 
-git config core.bare true
-test_rev_parse 'core.bare = true' true false false
+test_rev_parse -b t 'core.bare = true' true false false
 
-git config --unset core.bare
-test_rev_parse 'core.bare undefined' false false true
+test_rev_parse -b u 'core.bare undefined' false false true
 
 GIT_DIR=../.git
-GIT_CONFIG="$(pwd)/work/../.git/config"
-export GIT_DIR GIT_CONFIG
+export GIT_DIR
 
-git config core.bare false
-test_rev_parse -C work 'GIT_DIR=../.git, core.bare = false' false false true ''
+test_rev_parse -C work -b f 'GIT_DIR=../.git, core.bare = false' false false true ''
 
-git config core.bare true
-test_rev_parse -C work 'GIT_DIR=../.git, core.bare = true' true false false ''
+test_rev_parse -C work -b t 'GIT_DIR=../.git, core.bare = true' true false false ''
 
-git config --unset core.bare
-test_rev_parse -C work 'GIT_DIR=../.git, core.bare undefined' false false true ''
+test_rev_parse -C work -b u 'GIT_DIR=../.git, core.bare undefined' false false true ''
 
 GIT_DIR=../repo.git
-GIT_CONFIG="$(pwd)/work/../repo.git/config"
 
-git config core.bare false
-test_rev_parse -C work 'GIT_DIR=../repo.git, core.bare = false' false false true ''
+test_rev_parse -C work -b f 'GIT_DIR=../repo.git, core.bare = false' false false true ''
 
-git config core.bare true
-test_rev_parse -C work 'GIT_DIR=../repo.git, core.bare = true' true false false ''
+test_rev_parse -C work -b t 'GIT_DIR=../repo.git, core.bare = true' true false false ''
 
-git config --unset core.bare
-test_rev_parse -C work 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
+test_rev_parse -C work -b u 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
 
 test_done
