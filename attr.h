@@ -8,7 +8,10 @@ struct git_attr;
  * Given a string, return the gitattribute object that
  * corresponds to it.
  */
-struct git_attr *git_attr(const char *);
+extern struct git_attr *git_attr(const char *);
+
+/* The same, but with counted string */
+extern struct git_attr *git_attr_counted(const char *, size_t);
 
 /* Internal use */
 extern const char git_attr__true[];
