@@ -131,7 +131,9 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	if (!access_or_die(path, R_OK, 0)) {
 		if (++inc->depth > MAX_INCLUDE_DEPTH)
 			die(include_depth_advice, MAX_INCLUDE_DEPTH, path,
-			    cf && cf->name ? cf->name : "the command line");
+			    !cf ? "<unknown>" :
+			    cf->name ? cf->name :
+			    "the command line");
 		ret = git_config_from_file(git_config_include, path, inc);
 		inc->depth--;
 	}
@@ -210,9 +212,15 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	const char **argv = NULL;
 	int nr = 0, alloc = 0;
 	int i;
+	struct config_source source;
 
 	if (!env)
 		return 0;
+
+	memset(&source, 0, sizeof(source));
+	source.prev = cf;
+	cf = &source;
+
 	/* sq_dequote will write over it */
 	envw = xstrdup(env);
 
@@ -231,6 +239,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 out:
 	free(argv);
 	free(envw);
+	cf = source.prev;
 	return ret;
 }
 
@@ -1341,7 +1350,9 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	l_item->e = e;
 	l_item->value_index = e->value_list.nr - 1;
 
-	if (cf) {
+	if (!cf)
+		die("BUG: configset_add_value has no source");
+	if (cf->name) {
 		kv_info->filename = strintern(cf->name);
 		kv_info->linenr = cf->linenr;
 	} else {
@@ -2427,10 +2438,14 @@ int parse_config_key(const char *var,
 
 const char *current_config_origin_type(void)
 {
-	return cf && cf->origin_type ? cf->origin_type : "command line";
+	if (!cf)
+		die("BUG: current_config_origin_type called outside config callback");
+	return cf->origin_type ? cf->origin_type : "command line";
 }
 
 const char *current_config_name(void)
 {
-	return cf && cf->name ? cf->name : "";
+	if (!cf)
+		die("BUG: current_config_name called outside config callback");
+	return cf->name ? cf->name : "";
 }
