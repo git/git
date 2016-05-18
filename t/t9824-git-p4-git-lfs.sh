@@ -265,7 +265,7 @@ test_expect_success 'Add big files to repo and store files in LFS based on compr
 		# We only import HEAD here ("@all" is missing!)
 		git p4 clone --destination="$git" //depot &&
 
-		test_file_in_lfs file6.bin 13 "content 6 bin 39 bytes XXXXXYYYYYZZZZZ"
+		test_file_in_lfs file6.bin 39 "content 6 bin 39 bytes XXXXXYYYYYZZZZZ" &&
 		test_file_count_in_dir ".git/lfs/objects" 1 &&
 
 		cat >expect <<-\EOF &&
