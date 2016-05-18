@@ -413,7 +413,7 @@ done
 prompt_after_failed_merge () {
 	while true
 	do
-		printf "Continue merging other unresolved paths (y/n) ? "
+		printf "Continue merging other unresolved paths [y/n]? "
 		read ans || return 1
 		case "$ans" in
 		[yY]*)

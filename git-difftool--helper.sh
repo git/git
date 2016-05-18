@@ -44,10 +44,10 @@ launch_merge_tool () {
 			"$GIT_DIFF_PATH_TOTAL" "$MERGED"
 		if use_ext_cmd
 		then
-			printf "Launch '%s' [Y/n]: " \
+			printf "Launch '%s' [Y/n]? " \
 				"$GIT_DIFFTOOL_EXTCMD"
 		else
-			printf "Launch '%s' [Y/n]: " "$merge_tool"
+			printf "Launch '%s' [Y/n]? " "$merge_tool"
 		fi
 		read ans || return
 		if test "$ans" = n
