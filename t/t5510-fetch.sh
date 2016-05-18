@@ -682,6 +682,7 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 	(
 		cd auto-gc &&
 		git config gc.autoPackLimit 1 &&
+		git config gc.autoDetach false &&
 		GIT_ASK_YESNO="$D/askyesno" git fetch >fetch.out 2>&1 &&
 		! grep "Should I try again" fetch.out
 	)
