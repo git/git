@@ -7,6 +7,7 @@ test_description='test git rev-parse'
 test_rev_parse () {
 	d=
 	bare=
+	gitdir=
 	while :
 	do
 		case "$1" in
@@ -15,6 +16,7 @@ test_rev_parse () {
 		    [tfu]*) bare="$2"; shift; shift ;;
 		    *) error "test_rev_parse: bogus core.bare value '$2'" ;;
 		    esac ;;
+		-g) gitdir="$2"; shift; shift ;;
 		-*) error "test_rev_parse: unrecognized option '$1'" ;;
 		*) break ;;
 		esac
@@ -32,6 +34,13 @@ test_rev_parse () {
 		test $# -eq 0 && break
 		expect="$1"
 		test_expect_success "$name: $o" '
+			if test -n "$gitdir"
+			then
+				test_when_finished "unset GIT_DIR" &&
+				GIT_DIR="$gitdir" &&
+				export GIT_DIR
+			fi &&
+
 			case "$bare" in
 			t*) test_config ${d:+-C} ${d:+"$d"} core.bare true ;;
 			f*) test_config ${d:+-C} ${d:+"$d"} core.bare false ;;
@@ -64,21 +73,18 @@ test_rev_parse -b t 'core.bare = true' true false false
 
 test_rev_parse -b u 'core.bare undefined' false false true
 
-GIT_DIR=../.git
-export GIT_DIR
 
-test_rev_parse -C work -b f 'GIT_DIR=../.git, core.bare = false' false false true ''
+test_rev_parse -C work -g ../.git -b f 'GIT_DIR=../.git, core.bare = false' false false true ''
 
-test_rev_parse -C work -b t 'GIT_DIR=../.git, core.bare = true' true false false ''
+test_rev_parse -C work -g ../.git -b t 'GIT_DIR=../.git, core.bare = true' true false false ''
 
-test_rev_parse -C work -b u 'GIT_DIR=../.git, core.bare undefined' false false true ''
+test_rev_parse -C work -g ../.git -b u 'GIT_DIR=../.git, core.bare undefined' false false true ''
 
-GIT_DIR=../repo.git
 
-test_rev_parse -C work -b f 'GIT_DIR=../repo.git, core.bare = false' false false true ''
+test_rev_parse -C work -g ../repo.git -b f 'GIT_DIR=../repo.git, core.bare = false' false false true ''
 
-test_rev_parse -C work -b t 'GIT_DIR=../repo.git, core.bare = true' true false false ''
+test_rev_parse -C work -g ../repo.git -b t 'GIT_DIR=../repo.git, core.bare = true' true false false ''
 
-test_rev_parse -C work -b u 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
+test_rev_parse -C work -g ../repo.git -b u 'GIT_DIR=../repo.git, core.bare undefined' false false true ''
 
 test_done
