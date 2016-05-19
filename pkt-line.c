@@ -91,6 +91,12 @@ void packet_flush(int fd)
 	write_or_die(fd, "0000", 4);
 }
 
+int packet_flush_gently(int fd)
+{
+	packet_trace("0000", 4, 1);
+	return write_in_full(fd, "0000", 4) != 4;
+}
+
 void packet_buf_flush(struct strbuf *buf)
 {
 	packet_trace("0000", 4, 1);
@@ -128,6 +134,18 @@ void packet_write(int fd, const char *fmt, ...)
 	format_packet(&buf, fmt, args);
 	va_end(args);
 	write_or_die(fd, buf.buf, buf.len);
+}
+
+int packet_write_gently(int fd, const char *fmt, ...)
+{
+	static struct strbuf buf = STRBUF_INIT;
+	va_list args;
+
+	strbuf_reset(&buf);
+	va_start(args, fmt);
+	format_packet(&buf, fmt, args);
+	va_end(args);
+	return write_in_full(fd, buf.buf, buf.len) != buf.len;
 }
 
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
