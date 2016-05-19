@@ -1,0 +1,115 @@
+git-ignore(1)
+=============
+
+NAME
+----
+git-ignore - Easily add entries to your .gitignore file
+
+
+SYNOPSIS
+--------
+[verse]
+'git ignore' [--dry-run | -n] [--ext | -e] [--all-ext | -E] [--dir | -d]
+	[--all-file | -a] [--parent-level | -p <parent_level>] pathspec [...]
+'git ignore' --edit [--parent-level | -p <parent_level>]
+
+
+DESCRIPTION
+-----------
+The command modifies a .gitignore file in your path easily. By default,
+it adds lines to the .gitignore found in the root of your path. It
+can, however, add lines to a gitignore anywhere inbetween the file(s)
+passed in and the root directory. The lines added can be based on
+filename, extension, directory, or recursive glob.
+
+Also, you can easily open the gitignore file using your $EDITOR.
+
+
+OPTIONS
+-------
+<pathspec>...::
+	Files to add to a gitignore. Fileglobs (e.g. `*.c`) can
+	be given to add all matching files.  Also a
+	directory name can be given to add it to the gitignore
+	as well.
+
+--edit::
+	Open the appropriate gitignore file in your default editor (using the
+	$EDITOR variable. This option can be combined with `--parent-level` based
+	on your current working directory.
+
+-n::
+--dry-run::
+	Don't actually edit the gitignore(s), just show if what changes
+	would have taken place.
+
+-e::
+--ext::
+	Add the relative filepath based on extension. If pathspec
+	references path/to/file.log, the added gitignore line would
+	be path/to/*.log.
+
+-E::
+--all-ext::
+	Add a global exclusion of the given extension. If pathspec
+	references path/to/file.log, the added gitignore line would
+	be **/*.log.
+
+-d::
+--dir::
+	Add the contents of the parent directory. If pathspec references
+	path/to/file.log, the added gitignore line would be path/to/*.
+
+-a::
+--all-file::
+	Add a global exclusion of the given filename. If pathspec references
+	path/to/file.log, the added gitignore line would be **/file.log.
+'git ignore' [--dry-run | -n] [--ext | -e] [--all-ext | -E] [--dir | -d]
+	[--all-file | -a] [--parent-level | -p] pathspec [...]
+
+-p::
+--parent-level <parent_level>::
+	Modifications will go to a gitignore located <parent_level>
+	directories above each of the files passed in. If the number
+	of parent levels causes the directory to fall outside of the
+	root of the git repository, a warning is printed and the root
+	of the repository is used instead. Using a parent-level of 0
+	will use the gitignore in the directory of each file passed in.
+
++
+Note that the parent level is calculated for each file passed in. If multiple
+files are passed in that have different parents at a given parent level, then
+they will cause separate gitignore files to be written.
+
+
+EXAMPLES
+--------
+
+* Adds all `*.log` files under `tmp` directory
+and its subdirectories to the gitignore file found at the
+root of the repository:
++
+------------
+$ pwd
+/user/test/git_repo/src
+$ git ignore -e tmp/file.log
+------------
++
+Results in `tmp/*.log` added to /user/test/git_repo/.gitignore
+
+
+* Add the files under the `var/uploaded` to the gitignore above
+
++
+------------
+$ git ignore -d --parent-level=1 www/var/uploaded/\*
+------------
+Results in `var/uploaded/*` added to /user/test/git_repo/www/.gitignore
+
+SEE ALSO
+--------
+linkgit:gitignore[5]
+
+GIT
+---
+Part of the linkgit:git[1] suite

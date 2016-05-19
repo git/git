@@ -76,6 +76,7 @@
 /git-http-backend
 /git-http-fetch
 /git-http-push
+/git-ignore
 /git-imap-send
 /git-index-pack
 /git-init
