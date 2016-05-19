@@ -1674,9 +1674,12 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	istate->mmap = mmap;
 	istate->mmap_size = mmap_size;
-	if (try_shm(istate) &&
-	    verify_hdr(istate->mmap, istate->mmap_size) < 0)
-		goto unmap;
+	if (try_shm(istate)) {
+		if (verify_hdr(istate->mmap, istate->mmap_size) < 0)
+			goto unmap;
+	} else if (istate->always_verify_trailing_sha1 &&
+		   verify_hdr(istate->mmap, istate->mmap_size) < 0)
+			goto unmap;
 	hdr = mmap = istate->mmap;
 	mmap_size = istate->mmap_size;
 	if (!istate->keep_mmap)

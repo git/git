@@ -17,6 +17,7 @@ struct shm {
 
 static struct shm shm_index;
 static struct shm shm_base_index;
+static int to_verify = 1;
 
 static void release_index_shm(struct shm *is)
 {
@@ -114,11 +115,56 @@ static void share_index(struct index_state *istate, struct shm *is)
 	hashcpy((unsigned char *)new_mmap + istate->mmap_size - 20, is->sha1);
 }
 
+static int verify_shm(void)
+{
+	int i;
+	struct index_state istate;
+	memset(&istate, 0, sizeof(istate));
+	istate.always_verify_trailing_sha1 = 1;
+	istate.to_shm = 1;
+	i = read_index(&istate);
+	if (i != the_index.cache_nr)
+		goto done;
+	for (; i < the_index.cache_nr; i++) {
+		struct cache_entry *base, *ce;
+		/* namelen is checked separately */
+		const unsigned int ondisk_flags =
+			CE_STAGEMASK | CE_VALID | CE_EXTENDED_FLAGS;
+		unsigned int ce_flags, base_flags, ret;
+		base = the_index.cache[i];
+		ce = istate.cache[i];
+		if (ce->ce_namelen != base->ce_namelen ||
+		    strcmp(ce->name, base->name)) {
+			warning("mismatch at entry %d", i);
+			break;
+		}
+		ce_flags = ce->ce_flags;
+		base_flags = base->ce_flags;
+		/* only on-disk flags matter */
+		ce->ce_flags   &= ondisk_flags;
+		base->ce_flags &= ondisk_flags;
+		ret = memcmp(&ce->ce_stat_data, &base->ce_stat_data,
+			     offsetof(struct cache_entry, name) -
+			     offsetof(struct cache_entry, ce_stat_data));
+		ce->ce_flags = ce_flags;
+		base->ce_flags = base_flags;
+		if (ret) {
+			warning("mismatch at entry %d", i);
+			break;
+		}
+	}
+done:
+	discard_index(&istate);
+	return i == the_index.cache_nr;
+}
+
 static void share_the_index(void)
 {
 	if (the_index.split_index && the_index.split_index->base)
 		share_index(the_index.split_index->base, &shm_base_index);
 	share_index(&the_index, &shm_index);
+	if (to_verify && !verify_shm())
+		cleanup_shm();
 	discard_index(&the_index);
 }
 
@@ -250,6 +296,8 @@ int main(int argc, char **argv)
 	struct option options[] = {
 		OPT_INTEGER(0, "exit-after", &idle_in_seconds,
 			    N_("exit if not used after some seconds")),
+		OPT_BOOL(0, "strict", &to_verify,
+			 "verify shared memory after creating"),
 		OPT_END()
 	};
 
