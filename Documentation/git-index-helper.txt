@@ -34,6 +34,9 @@ OPTIONS
 	for reading an index, but because it will happen in the
 	background, it's not noticable. `--strict` is enabled by default.
 
+--detach::
+	Detach from the shell.
+
 NOTES
 -----
 
