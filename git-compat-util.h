@@ -513,6 +513,7 @@ static inline int ends_with(const char *str, const char *suffix)
 #define PROT_READ 1
 #define PROT_WRITE 2
 #define MAP_PRIVATE 1
+#define MAP_SHARED 2
 #endif
 
 #define mmap git_mmap

@@ -1,0 +1,50 @@
+git-index-helper(1)
+===================
+
+NAME
+----
+git-index-helper - A simple cache daemon for speeding up index file access
+
+SYNOPSIS
+--------
+[verse]
+'git index-helper' [options]
+
+DESCRIPTION
+-----------
+Keep the index file in memory for faster access. This daemon is per
+repository and per working tree.  So if you have two working trees
+each with a submodule, you might need four index-helpers.  (In practice,
+this is only worthwhile for large indexes, so only use it if you notice
+that git status is slow).
+
+OPTIONS
+-------
+
+--exit-after=<n>::
+	Exit if the cached index is not accessed for `<n>`
+	seconds. Specify 0 to wait forever. Default is 600.
+
+NOTES
+-----
+
+$GIT_DIR/index-helper.sock a Unix domain socket that the daemon reads
+commands from.  The directory will also contain files named
+"shm-index-<SHA1>".  These are used as backing stores for shared
+memory.  Normally the daemon will clean up these files when it exits
+or when they are no longer relevant.  But if it crashes, some objects
+could remain there and they can be safely deleted with "rm"
+command. The following commands are used to control the daemon:
+
+"refresh"::
+	Reread the index.
+
+"poke":
+	Let the daemon know the index is to be read. It keeps the
+	daemon alive longer, unless `--exit-after=0` is used.
+
+All commands and replies are terminated by a NUL byte.
+
+GIT
+---
+Part of the linkgit:git[1] suite

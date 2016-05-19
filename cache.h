@@ -334,6 +334,17 @@ struct index_state {
 	struct cache_time timestamp;
 	unsigned name_hash_initialized : 1,
 		 keep_mmap : 1,
+
+		 /*
+		  * This index came from index-helper originally.
+		  */
+		 from_shm : 1,
+		 /*
+		  * We're moving this index to shared memory, so we
+		  * don't need to poke the daemon to request updates
+		  * on it.
+		  */
+		 to_shm : 1,
 		 initialized : 1;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
