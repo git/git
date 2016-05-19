@@ -149,14 +149,16 @@ that the tip of the "master" branch is always more stable than any of
 the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
-"master" at that point.  Obvious, safe and urgent fixes after a
-feature release are applied to this branch and maintenance releases
-are cut from it.  The maintenance releases used to be named with four
-dotted decimal, named after the feature release they are updates to
-(e.g. "1.8.5.1" was the first maintenance release for "1.8.5" feature
-release).  These days, maintenance releases are named by incrementing
-the last digit of three-dotted decimal name (e.g. "2.7.4" is the
-fourth maintenance release for the "2.7" series).
+"master" at that point.  Obvious and safe fixes after a feature
+release are applied to this branch and maintenance releases are cut
+from it.  Usually the fixes are merged to the "master" branch first,
+several days before merged to the "maint" branch, to reduce the chance
+of last-minute issues.  The maintenance releases used to be named with
+four dotted decimal, named after the feature release they are updates
+to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
+feature release).  These days, maintenance releases are named by
+incrementing the last digit of three-dotted decimal name (e.g. "2.8.3"
+is the third maintenance release for the "2.8" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
