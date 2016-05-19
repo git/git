@@ -18,6 +18,9 @@ each with a submodule, you might need four index-helpers.  (In practice,
 this is only worthwhile for large indexes, so only use it if you notice
 that git status is slow).
 
+If you want the index-helper to accelerate untracked file checking,
+run git update-index --watchman before using it.
+
 OPTIONS
 -------
 
