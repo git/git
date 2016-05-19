@@ -18,6 +18,7 @@ addons:
   apt:
     packages:
     - language-pack-is
+    - git-svn
 
 env:
   global:
