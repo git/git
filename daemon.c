@@ -1365,7 +1365,7 @@ int main(int argc, char **argv)
 		return execute();
 
 	if (detach) {
-		if (daemonize())
+		if (daemonize(NULL))
 			die("--detach not supported on this platform");
 	} else
 		sanitize_stdfds();
