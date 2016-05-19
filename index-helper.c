@@ -425,6 +425,8 @@ int main(int argc, char **argv)
 	git_extract_argv0_path(argv[0]);
 	git_setup_gettext();
 
+	git_config_get_int("indexhelper.exitafter", &idle_in_seconds);
+
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(usage_text, options);
 

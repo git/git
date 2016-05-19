@@ -66,4 +66,12 @@ test_expect_success 'index-helper autorun works' '
 	test_path_is_missing .git/index-helper.sock
 '
 
+test_expect_success 'indexhelper.exitafter config works' '
+	test_when_finished "git index-helper --kill" &&
+	test_config indexhelper.exitafter 1 &&
+	git index-helper --detach &&
+	sleep 3 &&
+	test_path_is_missing .git/index-helper.sock
+'
+
 test_done

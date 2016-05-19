@@ -1860,6 +1860,10 @@ indexhelper.autorun::
 	Automatically run git index-helper when any builtin git
 	command is run inside a repository.
 
+indexhelper.exitafter::
+	When no exit-after argument is given, git index-helper defaults
+	to this number of seconds. Specify 0 to wait forever. Default is 600.
+
 init.templateDir::
 	Specify the directory from which templates will be copied.
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
