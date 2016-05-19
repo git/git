@@ -1235,7 +1235,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 		if (!new) {
 			const char *fmt;
 
-			if (really && cache_errno == EINVAL) {
+			if (really || cache_errno == EINVAL) {
 				/* If we are doing --really-refresh that
 				 * means the index is not valid anymore.
 				 */
@@ -1375,11 +1375,75 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	return 0;
 }
 
+static struct untracked_cache_dir *find_untracked_cache_dir(
+	struct untracked_cache *uc, struct untracked_cache_dir *ucd,
+	const char *name)
+{
+	int component_len;
+	const char *end;
+	struct untracked_cache_dir *dir;
+
+	if (!*name)
+		return ucd;
+
+	end = strchr(name, '/');
+	if (end)
+		component_len = end - name;
+	else
+		component_len = strlen(name);
+
+	dir = lookup_untracked(uc, ucd, name, component_len);
+	if (dir)
+		return find_untracked_cache_dir(uc, dir, name + component_len + 1);
+
+	return NULL;
+}
+
 static void mark_no_watchman(size_t pos, void *data)
 {
 	struct index_state *istate = data;
+	struct cache_entry *ce = istate->cache[pos];
+	struct strbuf sb = STRBUF_INIT;
+	char *c;
+	struct untracked_cache_dir *dir;
+
 	assert(pos < istate->cache_nr);
-	istate->cache[pos]->ce_flags |= CE_WATCHMAN_DIRTY;
+	ce->ce_flags |= CE_WATCHMAN_DIRTY;
+
+	if (!istate->untracked || !istate->untracked->root)
+		return;
+
+	strbuf_add(&sb, ce->name, ce_namelen(ce));
+
+	for (c = sb.buf + sb.len - 1; c > sb.buf; c--) {
+		if (*c == '/') {
+			strbuf_setlen(&sb, c - sb.buf);
+			break;
+		}
+	}
+
+	if (c == sb.buf)
+		strbuf_setlen(&sb, 0);
+
+	dir = find_untracked_cache_dir(istate->untracked,
+				       istate->untracked->root, sb.buf);
+	if (dir)
+		dir->valid = 0;
+
+	strbuf_release(&sb);
+}
+
+static int mark_untracked_invalid(struct string_list_item *item, void *uc)
+{
+	struct untracked_cache *untracked = uc;
+	struct untracked_cache_dir *dir;
+
+	dir = find_untracked_cache_dir(untracked, untracked->root,
+				       item->string);
+	if (dir)
+		dir->valid = 0;
+
+	return 0;
 }
 
 static int read_watchman_ext(struct index_state *istate, const void *data,
@@ -1409,10 +1473,24 @@ static int read_watchman_ext(struct index_state *istate, const void *data,
 	ewah_each_bit(bitmap, mark_no_watchman, istate);
 	ewah_free(bitmap);
 
-	/*
-	 * TODO: update the untracked cache from the untracked data in this
-	 * extension.
-	 */
+	if (istate->untracked && istate->untracked->root) {
+		int i;
+		const char *untracked;
+
+		untracked = (const char *)data + len + 8 + bitmap_size;
+		for (i = 0; i < untracked_nr; ++i) {
+			int len = strlen(untracked);
+			string_list_append(&istate->untracked->invalid_untracked,
+					   untracked);
+			untracked += len + 1;
+		}
+
+		for_each_string_list(&istate->untracked->invalid_untracked,
+			 mark_untracked_invalid, istate->untracked);
+
+		if (untracked_nr)
+			istate->cache_changed |= WATCHMAN_CHANGED;
+	}
 	return 0;
 }
 
@@ -1645,29 +1723,88 @@ static void post_read_index_from(struct index_state *istate)
 	tweak_untracked_cache(istate);
 }
 
+/* in ms */
+#define WATCHMAN_TIMEOUT 1000
+
+static int poke_and_wait_for_reply(int fd)
+{
+	int ret = -1;
+	struct pollfd pollfd;
+	int bytes_read;
+	char reply_buf[4096];
+	const char *requested_capabilities = "";
+
+#ifdef USE_WATCHMAN
+	requested_capabilities = "watchman";
+#endif
+
+	if (fd < 0)
+		return -1;
+
+	if (packet_write_gently(fd, "poke %d %s", getpid(), requested_capabilities))
+		return -1;
+	if (packet_flush_gently(fd))
+		return -1;
+
+	/* Now wait for a reply */
+	pollfd.fd = fd;
+	pollfd.events = POLLIN;
+	if (poll(&pollfd, 1, WATCHMAN_TIMEOUT) <= 0)
+		/* No reply or error, giving up */
+		goto done_poke;
+
+	bytes_read = packet_read(fd, NULL, NULL, reply_buf, sizeof(reply_buf),
+				 PACKET_READ_GENTLE_ON_EOF |
+				 PACKET_READ_CHOMP_NEWLINE);
+
+	if (bytes_read < 0)
+		goto done_poke;
+
+	if (!strcmp(reply_buf, "NAK watchman")
+#ifdef USE_WATCHMAN
+	    || !ends_with(reply_buf, "watchman")
+#endif
+		) {
+		warning("We requested watchman support from index-helper, but "
+			"it doesn't support it. Please use a version of git "
+			"index-helper with watchman support.");
+		goto done_poke;
+	}
+
+	if (!starts_with(reply_buf, "OK"))
+		goto done_poke;
+
+	ret = 0;
+done_poke:
+	close(fd);
+	return ret;
+}
+
 static int poke_daemon(struct index_state *istate,
 		       const struct stat *st, int refresh_cache)
 {
 	int fd;
-	int ret = 0;
-	const char *socket_path;
+	int ret = -1;
 
 	/* if this is from index-helper, do not poke itself (recursively) */
 	if (istate->to_shm)
 		return 0;
 
-	socket_path = git_path("index-helper.sock");
-	if (!socket_path)
+	fd = unix_stream_connect(git_path("index-helper.sock"));
+	if (fd < 0) {
+		warning("Failed to connect to index-helper socket");
+		unlink(git_path("index-helper.sock"));
 		return -1;
-
-	fd = unix_stream_connect(socket_path);
+	}
 	sigchain_push(SIGPIPE, SIG_IGN);
+
 	if (refresh_cache) {
 		packet_write_gently(fd, "refresh");
+		packet_flush_gently(fd);
+		ret = 0;
 	} else {
-		packet_write_gently(fd, "poke");
+		ret = poke_and_wait_for_reply(fd);
 	}
-	packet_flush_gently(fd);
 
 	close(fd);
 	sigchain_pop(SIGPIPE);
@@ -1735,6 +1872,74 @@ fail:
 		close(fd);
 	poke_daemon(istate, &st, 1);
 	return -1;
+}
+
+static void refresh_by_watchman(struct index_state *istate)
+{
+	void *shm = NULL;
+	int length;
+	int i;
+	struct stat st;
+	int fd = -1;
+	const char *path = git_path("shm-watchman-%s-%"PRIuMAX,
+				    sha1_to_hex(istate->sha1),
+				    (uintmax_t)getpid());
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return;
+
+	/*
+	 * This watchman data is just for us -- no need to keep it
+	 * around once we've got it open.
+	 */
+	unlink(path);
+
+	if (fstat(fd, &st) < 0)
+		goto done;
+
+	length = st.st_size;
+	shm = mmap(NULL, length, PROT_READ, MAP_SHARED, fd, 0);
+
+	if (shm == MAP_FAILED)
+		goto done;
+
+	close(fd);
+	fd = -1;
+
+	if (length <= 20 ||
+	    hashcmp(istate->sha1, (unsigned char *)shm + length - 20) ||
+	    /*
+	     * No need to clear CE_WATCHMAN_DIRTY set by 'WAMA' on
+	     * disk. Watchman can only set more, not clear any, so
+	     * this is OR mask.
+	     */
+	    read_watchman_ext(istate, shm, length - 20))
+		goto done;
+
+	/*
+	 * Now that we've marked the invalid entries in the
+	 * untracked-cache itself, we can erase them from the list of
+	 * entries to be processed and mark the untracked cache for
+	 * watchman usage.
+	 */
+	if (istate->untracked) {
+		string_list_clear(&istate->untracked->invalid_untracked, 0);
+		istate->untracked->use_watchman = 1;
+	}
+
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		if (ce_stage(ce) || (ce->ce_flags & CE_WATCHMAN_DIRTY))
+			continue;
+		ce_mark_uptodate(ce);
+	}
+done:
+	if (shm)
+		munmap(shm, length);
+
+	if (fd >= 0)
+		close(fd);
 }
 
 /* remember to discard_cache() before reading a different cache! */
@@ -1856,7 +2061,7 @@ int read_index_from(struct index_state *istate, const char *path)
 	split_index = istate->split_index;
 	if (!split_index || is_null_sha1(split_index->base_sha1)) {
 		post_read_index_from(istate);
-		return ret;
+		goto done;
 	}
 
 	if (split_index->base)
@@ -1877,6 +2082,10 @@ int read_index_from(struct index_state *istate, const char *path)
 		    sha1_to_hex(split_index->base->sha1));
 	merge_base_index(istate);
 	post_read_index_from(istate);
+
+done:
+	if (ret > 0 && istate->from_shm && istate->last_update)
+		refresh_by_watchman(istate);
 	return ret;
 }
 
@@ -2178,7 +2387,7 @@ out:
 	return 0;
 }
 
-static int verify_index(const struct index_state *istate)
+int verify_index(const struct index_state *istate)
 {
 	return verify_index_from(istate, get_index_file());
 }
