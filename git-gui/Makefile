@@ -161,7 +161,9 @@ ifeq ($(uname_S),Darwin)
 	endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
+ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
 	NO_MSGFMT=1
+endif
 	GITGUI_WINDOWS_WRAPPER := YesPlease
 	GITGUI_RELATIVE := 1
 endif
