@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "pathspec.h"
+#include "attr.h"
 
 /*
  * Finds which of the given pathspecs match items in the index.
@@ -88,12 +89,78 @@ static void prefix_short_magic(struct strbuf *sb, int prefixlen,
 	strbuf_addf(sb, ",prefix:%d)", prefixlen);
 }
 
+static void parse_pathspec_attr_match(struct pathspec_item *item, const char *value)
+{
+	struct string_list_item *si;
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+
+	if (!value || !strlen(value))
+		die(_("attr spec must not be empty"));
+
+	string_list_split(&list, value, ' ', -1);
+	string_list_remove_empty_items(&list, 0);
+
+	if (!item->attr_check)
+		item->attr_check = git_attr_check_alloc();
+	else
+		die(_("Only one 'attr:' specification is allowed."));
+
+	ALLOC_GROW(item->attr_match, item->attr_match_nr + list.nr, item->attr_match_alloc);
+
+	for_each_string_list_item(si, &list) {
+		size_t attr_len;
+
+		int j = item->attr_match_nr++;
+		const char *attr = si->string;
+		struct attr_match *am = &item->attr_match[j];
+
+		switch (*attr) {
+		case '!':
+			am->match_mode = MATCH_UNSPECIFIED;
+			attr++;
+			attr_len = strlen(attr);
+			break;
+		case '-':
+			am->match_mode = MATCH_UNSET;
+			attr++;
+			attr_len = strlen(attr);
+			break;
+		default:
+			attr_len = strcspn(attr, "=");
+			if (attr[attr_len] != '=')
+				am->match_mode = MATCH_SET;
+			else {
+				am->match_mode = MATCH_VALUE;
+				am->value = xstrdup(&attr[attr_len + 1]);
+				if (strchr(am->value, '\\'))
+					die(_("attr spec values must not contain backslashes"));
+			}
+			break;
+		}
+
+		am->attr = git_attr_counted(attr, attr_len);
+		if (!am->attr) {
+			struct strbuf sb = STRBUF_INIT;
+			am->match_mode = INVALID_ATTR;
+			invalid_attr_name_message(&sb, attr, attr_len);
+			die(_("invalid attribute in '%s': '%s'"), value, sb.buf);
+		}
+
+		git_attr_check_append(item->attr_check, am->attr);
+	}
+
+	string_list_clear(&list, 0);
+	return;
+}
+
 static void eat_long_magic(struct pathspec_item *item, const char *elt,
 		unsigned *magic, int *pathspec_prefix,
 		const char **copyfrom_, const char **long_magic_end)
 {
 	int i;
 	const char *copyfrom = *copyfrom_;
+	const char *body;
 	/* longhand */
 	const char *nextat;
 	for (copyfrom = elt + 2;
@@ -108,12 +175,18 @@ static void eat_long_magic(struct pathspec_item *item, const char *elt,
 		if (!len)
 			continue;
 
-		if (starts_with(copyfrom, "prefix:")) {
+		if (skip_prefix(copyfrom, "prefix:", &body)) {
 			char *endptr;
-			*pathspec_prefix = strtol(copyfrom + 7,
-						  &endptr, 10);
+			*pathspec_prefix = strtol(body, &endptr, 10);
 			if (endptr - copyfrom != len)
 				die(_("invalid parameter for pathspec magic 'prefix'"));
+			continue;
+		}
+
+		if (skip_prefix(copyfrom, "attr:", &body)) {
+			char *attr_body = xmemdupz(body, len - strlen("attr:"));
+			parse_pathspec_attr_match(item, attr_body);
+			free(attr_body);
 			continue;
 		}
 
@@ -425,7 +498,10 @@ void parse_pathspec(struct pathspec *pathspec,
 	for (i = 0; i < n; i++) {
 		unsigned short_magic;
 		entry = argv[i];
-
+		item[i].attr_check = NULL;
+		item[i].attr_match = NULL;
+		item[i].attr_match_nr = 0;
+		item[i].attr_match_alloc = 0;
 		item[i].magic = prefix_pathspec(item + i, &short_magic,
 						argv + i, flags,
 						prefix, prefixlen, entry);
@@ -447,6 +523,13 @@ void parse_pathspec(struct pathspec *pathspec,
 		if (item[i].nowildcard_len < item[i].len)
 			pathspec->has_wildcard = 1;
 		pathspec->magic |= item[i].magic;
+
+		if (item[i].attr_match_nr) {
+			int j;
+			for (j = 0; j < item[i].attr_match_nr; j++)
+				if (item[i].attr_match[j].match_mode == INVALID_ATTR)
+					die(_("attribute spec in the wrong syntax are prohibited."));
+		}
 	}
 
 	if (nr_exclude == n)
@@ -502,6 +585,16 @@ void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 
 void free_pathspec(struct pathspec *pathspec)
 {
+	int i, j;
+	for (i = 0; i < pathspec->nr; i++) {
+		if (!pathspec->items[i].attr_match_nr)
+			continue;
+		for (j = 0; j < pathspec->items[j].attr_match_nr; j++)
+			free(pathspec->items[i].attr_match[j].value);
+		free(pathspec->items[i].attr_match);
+		git_attr_check_free(pathspec->items[i].attr_check);
+	}
+
 	free(pathspec->items);
 	pathspec->items = NULL;
 }
