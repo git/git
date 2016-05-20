@@ -614,9 +614,8 @@ int mingw_chdir(const char *dirname)
 	int result;
 	DECLARE_PROC_ADDR(kernel32.dll, DWORD, GetFinalPathNameByHandleW,
 			  HANDLE, LPWSTR, DWORD, DWORD);
-	wchar_t wdirname[MAX_PATH];
-	/* SetCurrentDirectoryW doesn't support long paths */
-	if (xutftowcs_path(wdirname, dirname) < 0)
+	wchar_t wdirname[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wdirname, dirname) < 0)
 		return -1;
 
 	if (has_symlinks && INIT_PROC_ADDR(GetFinalPathNameByHandleW)) {
