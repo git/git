@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2016, #06; Tue, 17)
-X-master-at: 1f66975deb8402131fbf7c14330d0c7cdebaeaa2
-X-next-at: 927f4258f48da33cf64d9a9f47fd3a0ac725a748
+Subject: What's cooking in git.git (May 2016, #07; Fri, 20)
+X-master-at: 3916adf9978b020f9a9b165f4c1c109046899560
+X-next-at: 0520c90a3eb69be4dcb02396166432df2ae280e5
 
-What's cooking in git.git (May 2016, #06; Tue, 17)
+What's cooking in git.git (May 2016, #07; Fri, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The 'master' branch now has 390 non-merge commits in this cycle.  On
-the 'maint' front, 2.8.2 is out and fixes that have been in 'master'
-accumulates on it for 2.8.3, which probably should be tagged sometime
-late this week.
+Almost all the topics marked as "will merge" in this issue should be
+merged before 2.9-rc0 (scheduled for coming Monday).  There are a
+few very interesting topics that we will be cooking throughout the
+pre-release freeze in 'next', and I am already looking forward to
+the cycle after this upcoming release ;-).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,373 +26,47 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/hooks (2016-05-04) 4 commits
-  (merged to 'next' on 2016-05-09 at 23cf808)
- + hooks: allow customizing where the hook directory is
- + githooks.txt: minor improvements to the grammar & phrasing
- + githooks.txt: amend dangerous advice about 'update' hook ACL
- + githooks.txt: improve the intro section
-
- A new configuration variable core.hooksPath allows customizing
- where the hook directory is.
-
-
-* ak/t4151-ls-files-could-be-empty (2016-05-09) 1 commit
-  (merged to 'next' on 2016-05-10 at 36ae38c)
- + t4151: make sure argument to 'test -z' is given
-
- Test fix.
-
-
-* bn/config-doc-tt-varnames (2016-05-05) 1 commit
-  (merged to 'next' on 2016-05-10 at aa7b834)
- + config: consistently format $variables in monospaced font
- (this branch uses jc/config-pathname-type.)
-
- Doc formatting fixes.
-
-
-* bn/http-cookiefile-config (2016-05-04) 2 commits
-  (merged to 'next' on 2016-05-09 at d519b13)
- + http: expand http.cookieFile as a path
- + Documentation: config: improve word ordering for http.cookieFile
-
- "http.cookieFile" configuration variable clearly wants a pathname,
- but we forgot to treat it as such by e.g. applying tilde expansion.
-
-
-* es/test-gpg-tags (2016-05-09) 1 commit
-  (merged to 'next' on 2016-05-10 at 9fcb98b)
- + t6302: simplify non-gpg cases
-
- Test fix.
-
-
-* jc/config-pathname-type (2016-05-04) 1 commit
-  (merged to 'next' on 2016-05-09 at 0876e55)
- + config: describe 'pathname' value type
- (this branch is used by bn/config-doc-tt-varnames.)
-
- Consolidate description of tilde-expansion that is done to
- configuration variables that take pathname to a single place.
-
-
-* jc/fsck-nul-in-commit (2016-05-10) 2 commits
-  (merged to 'next' on 2016-05-10 at 3bc3ca3)
- + fsck: detect and warn a commit with embedded NUL
- + fsck_commit_buffer(): do not special case the last validation
-
- "git fsck" learned to catch NUL byte in a commit object as
- potential error and warn.
-
-
-* jc/linkgit-fix (2016-05-09) 1 commit
-  (merged to 'next' on 2016-05-10 at 0e5ba60)
- + Documentation: fix linkgit references
-
- Many 'linkgit:<git documentation page>' references were broken,
- which are all fixed with this.
-
-
-* jc/ll-merge-internal (2016-05-09) 3 commits
-  (merged to 'next' on 2016-05-10 at a6bf1d0)
- + t6036: remove pointless test that expects failure
- + ll-merge: use a longer conflict marker for internal merge
- + ll-merge: fix typo in comment
-
- "git rerere" can get confused by conflict markers deliberately left
- by the inner merge step, because they are indistinguishable from
- the real conflict markers left by the outermost merge which are
- what the end user and "rerere" need to look at.  This was fixed by
- making the conflict markers left by the inner merges a bit longer.
-
-
-* jc/test-seq (2016-05-09) 2 commits
-  (merged to 'next' on 2016-05-10 at 1512890)
- + test-lib-functions.sh: rewrite test_seq without Perl
- + test-lib-functions.sh: remove misleading comment on test_seq
-
- Test fix.
-
-
-* jk/rebase-interative-eval-fix (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-11 at 4fdf387)
- + rebase--interactive: avoid empty list in shell for-loop
-
- Portability enhancement for "rebase -i" to help platforms whose
- shell does not like "for i in <empty>" (which is not POSIX-kosher).
-
-
-* jk/submodule-c-credential (2016-05-06) 6 commits
-  (merged to 'next' on 2016-05-10 at 4abe871)
- + submodule: stop sanitizing config options
- + submodule: use prepare_submodule_repo_env consistently
- + submodule--helper: move config-sanitizing to submodule.c
- + submodule: export sanitized GIT_CONFIG_PARAMETERS
- + t5550: break submodule config test into multiple sub-tests
- + t5550: fix typo in $HTTPD_URL
- (this branch is used by js/http-custom-headers.)
-
- An earlier addition of "sanitize_submodule_env" with 14111fc4 (git:
- submodule honor -c credential.* from command line, 2016-02-29)
- turned out to be a convoluted no-op; implement what it wanted to do
- correctly, and stop filtering settings given via "git -c var=val".
-
-
-* jk/test-send-sh-x-trace-elsewhere (2016-05-11) 1 commit
-  (merged to 'next' on 2016-05-11 at 273a137)
- + test-lib: set BASH_XTRACEFD automatically
-
- Running tests with '-x' option to trace the individual command
- executions is a useful way to debug test scripts, but some tests
- that capture the standard error stream and check what the command
- said can be broken with the trace output mixed in.  When running
- our tests under "bash", however, we can redirect the trace output
- to another file descriptor to keep the standard error of programs
- being tested intact.
-
-
-* js/http-custom-headers (2016-05-10) 4 commits
-  (merged to 'next' on 2016-05-10 at 7cf5cca)
- + submodule: ensure that -c http.extraheader is heeded
- + Merge branch 'jk/submodule-c-credential' into js/http-custom-headers
- + t5551: make the test for extra HTTP headers more robust
- + tests: adjust the configuration for Apache 2.2
- (this branch uses jk/submodule-c-credential.)
-
- Update tests for "http.extraHeaders=<header>" to be portable back
- to Apache 2.2 (the original depended on <RequireAll/> which is a
- more recent feature).
-
-
-* js/t3404-typofix (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-10 at cbeabc0)
- + t3404: fix typo
-
- Test fix.
-
-
-* js/windows-dotgit (2016-05-11) 2 commits
-  (merged to 'next' on 2016-05-11 at d10caa2)
- + mingw: remove unnecessary definition
- + mingw: introduce the 'core.hideDotFiles' setting
-
- On Windows, .git and optionally any files whose name starts with a
- dot are now marked as hidden, with a core.hideDotFiles knob to
- customize this behaviour.
-
-
-* kf/gpg-sig-verification-doc (2016-05-13) 1 commit
-  (merged to 'next' on 2016-05-13 at 2cec353)
- + Documentation: clarify signature verification
-
- Documentation for "git merge --verify-signatures" has been updated
- to clarify that the signature of only the commit at the tip is
- verified.  Also the phrasing used for signature and key validity is
- adjusted to align with that used by OpenPGP.
-
-
-* lp/typofixes (2016-05-06) 1 commit
-  (merged to 'next' on 2016-05-09 at 59683be)
- + typofix: assorted typofixes in comments, documentation and messages
-
- Typofixes.
-
-
-* ls/travis-build-doc (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-10 at 7f63497)
- + travis-ci: build documentation
-
- CI test was taught to build documentation pages.
-
-
-* nd/error-errno (2016-05-09) 41 commits
-  (merged to 'next' on 2016-05-10 at 1cdeda8)
- + wrapper.c: use warning_errno()
- + vcs-svn: use error_errno()
- + upload-pack.c: use error_errno()
- + unpack-trees.c: use error_errno()
- + transport-helper.c: use error_errno()
- + sha1_file.c: use {error,die,warning}_errno()
- + server-info.c: use error_errno()
- + sequencer.c: use error_errno()
- + run-command.c: use error_errno()
- + rerere.c: use error_errno() and warning_errno()
- + reachable.c: use error_errno()
- + mailmap.c: use error_errno()
- + ident.c: use warning_errno()
- + http.c: use error_errno() and warning_errno()
- + grep.c: use error_errno()
- + gpg-interface.c: use error_errno()
- + fast-import.c: use error_errno()
- + entry.c: use error_errno()
- + editor.c: use error_errno()
- + diff-no-index.c: use error_errno()
- + credential-cache--daemon.c: use warning_errno()
- + copy.c: use error_errno()
- + connected.c: use error_errno()
- + config.c: use error_errno()
- + compat/win32/syslog.c: use warning_errno()
- + combine-diff.c: use error_errno()
- + check-racy.c: use error_errno()
- + builtin/worktree.c: use error_errno()
- + builtin/upload-archive.c: use error_errno()
- + builtin/update-index.c: prefer "err" to "errno" in process_lstat_error
- + builtin/rm.c: use warning_errno()
- + builtin/pack-objects.c: use die_errno() and warning_errno()
- + builtin/merge-file.c: use error_errno()
- + builtin/mailsplit.c: use error_errno()
- + builtin/help.c: use warning_errno()
- + builtin/fetch.c: use error_errno()
- + builtin/branch.c: use error_errno()
- + builtin/am.c: use error_errno()
- + bisect.c: use die_errno() and warning_errno()
- + usage.c: add warning_errno() and error_errno()
- + usage.c: move format processing out of die_errno()
-
- The code for warning_errno/die_errno has been refactored and a new
- error_errno() reporting helper is introduced.
-
-
-* nd/remote-plural-ours-plus-theirs (2016-05-06) 1 commit
-  (merged to 'next' on 2016-05-10 at aea08dc)
- + remote.c: specify correct plural form in "commit diverge" message
-
- Message fix.
-
-
-* nd/test-helpers (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-10 at e8ad58d)
- + wrap-for-bin.sh: regenerate bin-wrappers when switching branches
-
- Switching between 'master' and 'next', between which the paths to
- test helper binaries have changed, did not update bin-wrappers/*
- scripts used in tests, causing false test failures.
-
-
-* sb/submodule-deinit-all (2016-05-05) 1 commit
-  (merged to 'next' on 2016-05-09 at 0fd4518)
- + submodule deinit: require '--all' instead of '.' for all submodules
-
- Correct faulty recommendation to use "git submodule deinit ." when
- de-initialising all submodules, which would result in a strange
- error message in a pathological corner case.
-
-
-* sb/submodule-init (2016-05-03) 7 commits
-  (merged to 'next' on 2016-05-03 at 8a5fce4)
- + submodule init: redirect stdout to stderr
-  (merged to 'next' on 2016-04-29 at 3e81ee88)
- + submodule--helper update-clone: abort gracefully on missing .gitmodules
- + submodule init: fail gracefully with a missing .gitmodules file
-  (merged to 'next' on 2016-04-27 at afaad81)
- + submodule: port init from shell to C
- + submodule: port resolve_relative_url from shell to C
- + Merge branch 'sb/submodule-path-misc-bugs' into sb/submodule-init
- + Merge branch 'sb/submodule-helper-clone-regression-fix' into sb/submodule-init
-
- Update of "git submodule" to move pieces of logic to C continues.
-
-
-* sb/z-is-gnutar-ism (2016-05-09) 2 commits
-  (merged to 'next' on 2016-05-09 at 51d527d)
- + t6041: do not compress backup tar file
- + t3513: do not compress backup tar file
-
- Test fix.
-
-
-* tb/t5601-sed-fix (2016-05-09) 1 commit
-  (merged to 'next' on 2016-05-10 at d3e54e8)
- + t5601: Remove trailing space in sed expression
-
- Test fix.
-
-
-* va/i18n-misc-updates (2016-05-12) 10 commits
-  (merged to 'next' on 2016-05-13 at 0361b16)
- + i18n: unpack-trees: avoid substituting only a verb in sentences
-  (merged to 'next' on 2016-05-10 at b5dbd0d)
- + i18n: builtin/pull.c: split strings marked for translation
- + i18n: builtin/pull.c: mark placeholders for translation
- + i18n: git-parse-remote.sh: mark strings for translation
- + i18n: branch: move comment for translators
- + i18n: branch: unmark string for translation
- + i18n: builtin/rm.c: remove a comma ',' from string
- + i18n: unpack-trees: mark strings for translation
- + i18n: builtin/branch.c: mark option for translation
- + i18n: index-pack: use plural string instead of normal one
-
- Mark several messages for translation.
-
-
-* va/i18n-remote-comment-to-align (2016-05-09) 1 commit
-  (merged to 'next' on 2016-05-10 at edbacbb)
- + i18n: remote: add comment for translators
-
- Message fix.
-
-
-* va/mailinfo-doc-typofix (2016-05-11) 1 commit
-  (merged to 'next' on 2016-05-11 at 7180176)
- + Documentation/git-mailinfo: fix typo
-
- Typofix.
+* jk/push-client-deadlock-fix (2016-05-11) 2 commits
+  (merged to 'next' on 2016-05-11 at 8f4abf9)
+ + Windows: only add a no-op pthread_sigmask() when needed
+  (merged to 'next' on 2016-05-06 at e91626c)
+ + Windows: add pthread_sigmask() that does nothing
+
+ Some Windows SDK lacks pthread_sigmask() implementation and fails
+ to compile the recently updated "git push" codepath that uses it.
 
 --------------------------------------------------
 [New Topics]
 
-* da/difftool (2016-05-16) 2 commits
-  (merged to 'next' on 2016-05-17 at ef5a435)
- + difftool: handle unmerged files in dir-diff mode
- + difftool: initialize variables for readability
+* jk/cat-file-buffered-batch-all (2016-05-18) 2 commits
+ - cat-file: default to --buffer when --batch-all-objects is used
+ - cat-file: avoid noop calls to sha1_object_info_extended
 
- "git difftool" learned to handle unmerged paths correctly in
- dir-diff mode.
+ "git cat-file --batch-all" has been sped up, by taking advantage
+ of the fact that it does not have to read a list of objects, in two
+ ways.
 
- Will merge to 'master'.
-
-
-* jc/attr (2016-05-17) 14 commits
- - SQUASH???
- - attr: retire git_check_attrs() API
- - attr: convert git_check_attrs() callers to use the new API
- - attr: convert git_all_attrs() to use "struct git_attr_check"
- - attr: (re)introduce git_check_attr() and struct git_attr_check
- - attr: rename function and struct related to checking attributes
- - attr.c: tighten constness around "git_attr" structure
- - attr.c: simplify macroexpand_one()
- - attr.c: mark where #if DEBUG ends more clearly
- - attr.c: complete a sentence in a comment
- - attr.c: explain the lack of attr-name syntax check in parse_attr()
- - attr.c: update a stale comment on "struct match_attr"
- - attr.c: use strchrnul() to scan for one line
- - commit.c: use strchrnul() to scan for one line
-
- The attributes API has been updated so that it can later be
- optimized using the knowledge of which attributes are queried.
+ Will merge to 'next'.
 
 
-* fc/fast-import-broken-marks-file (2016-05-17) 1 commit
- - fast-import: do not truncate exported marks file
+* ah/no-verify-signature-with-pull-rebase (2016-05-20) 1 commit
+ - pull: warn on --verify-signatures with --rebase
 
- "git fast-import --export-marks" would overwrite the existing marks
- file even when it makes a dump from its custom die routine.
- Prevent it from doing so when we have an import-marks file but
- haven't finished reading it. 
+ "git pull --rebase --verify-signature" learned to warn the user
+ that "--verify-signature" is a no-op.
+
+ Will merge to 'next'.
+
+
+* ak/t0008-ksh88-workaround (2016-05-20) 1 commit
+ - t0008: 4 tests fail with ksh88
+
+ Test portability workaround.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* ep/http-curl-trace (2016-05-02) 2 commits
- . imap-send.c: introduce the GIT_TRACE_CURL environment variable
- . http.c: implement the GIT_TRACE_CURL environment variable
-
- HTTP transport gained an option to produce more detailed debugging
- trace.
-
- Expecting a reroll.
- ($gmane/292074, 293236)
 
 
 * sb/bisect (2016-04-15) 22 commits
@@ -609,7 +284,65 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* es/t1500-modernize (2016-05-17) 5 commits
+* ep/http-curl-trace (2016-05-20) 2 commits
+ . imap-send.c: introduce the GIT_TRACE_CURL enviroment variable
+ . http.c: implement the GIT_TRACE_CURL environment variable
+
+ HTTP transport gained an option to produce more detailed debugging
+ trace.
+
+ Rerolled.
+
+
+* da/difftool (2016-05-16) 2 commits
+  (merged to 'next' on 2016-05-17 at ef5a435)
+ + difftool: handle unmerged files in dir-diff mode
+ + difftool: initialize variables for readability
+
+ "git difftool" learned to handle unmerged paths correctly in
+ dir-diff mode.
+
+ Will merge to 'master'.
+
+
+* jc/attr (2016-05-18) 16 commits
+ - attr: expose validity check for attribute names
+ - attr: add counted string version of git_attr()
+ - attr: add counted string version of git_check_attr()
+ - attr: retire git_check_attrs() API
+ - attr: convert git_check_attrs() callers to use the new API
+ - attr: convert git_all_attrs() to use "struct git_attr_check"
+ - attr: (re)introduce git_check_attr() and struct git_attr_check
+ - attr: rename function and struct related to checking attributes
+ - attr.c: tighten constness around "git_attr" structure
+ - attr.c: simplify macroexpand_one()
+ - attr.c: mark where #if DEBUG ends more clearly
+ - attr.c: complete a sentence in a comment
+ - attr.c: explain the lack of attr-name syntax check in parse_attr()
+ - attr.c: update a stale comment on "struct match_attr"
+ - attr.c: use strchrnul() to scan for one line
+ - commit.c: use strchrnul() to scan for one line
+ (this branch is used by sb/pathspec-label.)
+
+ The attributes API has been updated so that it can later be
+ optimized using the knowledge of which attributes are queried.
+
+ Let's merge the early "clean-up" half to 'next', after splitting it
+ into a separate topic.
+
+
+* fc/fast-import-broken-marks-file (2016-05-17) 1 commit
+ - fast-import: do not truncate exported marks file
+
+ "git fast-import --export-marks" would overwrite the existing marks
+ file even when it makes a dump from its custom die routine.
+ Prevent it from doing so when we have an import-marks file but
+ haven't finished reading it.
+
+ Will merge to 'next'.
+
+
+* es/t1500-modernize (2016-05-18) 5 commits
  - t1500: avoid setting environment variables outside of tests
  - t1500: avoid setting configuration options outside of tests
  - t1500: avoid changing working directory outside of tests
@@ -618,8 +351,12 @@ of the repositories listed at
 
  test updates to make it more readable and maintainable.
 
+ Will merge to 'next'.
 
-* jc/rerere-multi (2016-05-11) 1 commit
+
+* jc/rerere-multi (2016-05-19) 2 commits
+  (merged to 'next' on 2016-05-19 at 0520c90)
+ + rerere: remove an null statement
   (merged to 'next' on 2016-05-13 at f4d1d82)
  + rerere: plug memory leaks upon "rerere forget" failure
 
@@ -716,18 +453,17 @@ of the repositories listed at
  Beginning of GSoC "git bisect" project.
 
 
-* sb/pathspec-label (2016-05-14) 5 commits
- . pathspec: record labels
- . pathspec: move prefix check out of the inner loop
- . pathspec: move long magic parsing out of prefix_pathspec
- . Documentation: correct typo in example for querying attributes
- . Documentation: fix a typo
+* sb/pathspec-label (2016-05-20) 4 commits
+ - pathspec: allow querying for attributes
+ - pathspec: move prefix check out of the inner loop
+ - pathspec: move long magic parsing out of prefix_pathspec
+ - Documentation: fix a typo
+ (this branch uses jc/attr.)
 
- The pathspec mechanism learned ":(label=X)$pattern" pathspec magic
- to limit paths that match $pattern further by labels defined by the
- attributes mechanism for the paths.
+ The pathspec mechanism learned ":(attr:X)$pattern" pathspec magic
+ to limit paths that match $pattern further by attribute settings.
 
- (RFC/WIP)
+ Will merge to 'next'.
 
 
 * ar/diff-args-osx-precompose (2016-05-13) 1 commit
@@ -789,6 +525,7 @@ of the repositories listed at
  + t0027: test cases for combined attributes
  + convert: allow core.autocrlf=input and core.eol=crlf
  + t0027: make commit_chk_wrnNNO() reliable
+ (this branch is used by tb/convert-peek-in-index.)
 
  A couple of bugs around core.autocrlf have been fixed.
 
@@ -821,18 +558,6 @@ of the repositories listed at
  file to validate, but it is not worse than not having anything, so
  let's move it forward and have the logic improved later when people
  care about it deeply.
-
- Will merge to 'master'.
-
-
-* jk/push-client-deadlock-fix (2016-05-11) 2 commits
-  (merged to 'next' on 2016-05-11 at 8f4abf9)
- + Windows: only add a no-op pthread_sigmask() when needed
-  (merged to 'next' on 2016-05-06 at e91626c)
- + Windows: add pthread_sigmask() that does nothing
-
- Some Windows SDK lacks pthread_sigmask() implementation and fails
- to compile the recently updated "git push" codepath that uses it.
 
  Will merge to 'master'.
 
@@ -888,7 +613,9 @@ of the repositories listed at
  Will discard.
 
 
-* ew/fast-import-unpack-limit (2016-05-11) 1 commit
+* ew/fast-import-unpack-limit (2016-05-19) 2 commits
+  (merged to 'next' on 2016-05-19 at 50137c5)
+ + (DO NOT MERGE YET) fast-import: discard object-table after closing a pack
   (merged to 'next' on 2016-05-11 at ffd4efb)
  + fast-import: implement unpack limit
 
@@ -896,7 +623,7 @@ of the repositories listed at
  creating too small a packfile as "git fetch" and "git push" have,
  using *.unpackLimit configuration.
 
- Will merge to 'master'.
+ Will hold.
 
 
 * nd/worktree-various-heads (2016-04-22) 13 commits
@@ -992,8 +719,8 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dt/index-helper (2016-05-13) 20 commits
- - untracked-cache: config option
+* dt/index-helper (2016-05-20) 20 commits
+ - index-helper: indexhelper.exitafter config
  - trace: measure where the time is spent in the index-heavy operations
  - index-helper: optionally automatically run
  - index-helper: autorun mode
@@ -1019,8 +746,8 @@ of the repositories listed at
  optionally interface with the watchman daemon to further reduce the
  refresh cost.
 
- Under review.
- ($gmane/294470).
+ Rerolled.
+ ($gmane/295106).
 
 
 * jc/bundle (2016-03-03) 6 commits
