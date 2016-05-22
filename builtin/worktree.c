@@ -337,7 +337,7 @@ static int add(int ac, const char **av, const char *prefix)
 	if (ac < 1 || ac > 2)
 		usage_with_options(worktree_usage, options);
 
-	path = prefix ? prefix_filename(prefix, strlen(prefix), av[0]) : av[0];
+	path = prefix_filename(prefix, strlen(prefix), av[0]);
 	branch = ac < 2 ? "HEAD" : av[1];
 
 	opts.force_new_branch = !!new_branch_force;
@@ -467,6 +467,8 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 
 	if (ac < 2)
 		usage_with_options(worktree_usage, options);
+	if (!prefix)
+		prefix = "";
 	if (!strcmp(av[1], "add"))
 		return add(ac - 1, av + 1, prefix);
 	if (!strcmp(av[1], "prune"))
