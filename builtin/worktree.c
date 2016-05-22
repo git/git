@@ -13,8 +13,8 @@
 
 static const char * const worktree_usage[] = {
 	N_("git worktree add [<options>] <path> [<branch>]"),
-	N_("git worktree prune [<options>]"),
 	N_("git worktree list [<options>]"),
+	N_("git worktree prune [<options>]"),
 	NULL
 };
 
