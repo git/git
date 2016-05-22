@@ -187,7 +187,7 @@ struct worktree **get_worktrees(void)
 	if (dir) {
 		while ((d = readdir(dir)) != NULL) {
 			struct worktree *linked = NULL;
-			if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+			if (is_dot_or_dotdot(d->d_name))
 				continue;
 
 			if ((linked = get_linked_worktree(d->d_name))) {
