@@ -2595,6 +2595,29 @@ _git_whatchanged ()
 	_git_log
 }
 
+_git_worktree ()
+{
+	local subcommands="add list prune"
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+	else
+		case "$subcommand,$cur" in
+		add,--*)
+			__gitcomp "--detach"
+			;;
+		list,--*)
+			__gitcomp "--porcelain"
+			;;
+		prune,--*)
+			__gitcomp "--dry-run --expire --verbose"
+			;;
+		*)
+			;;
+		esac
+	fi
+}
+
 __git_main ()
 {
 	local i c=1 command __git_dir
