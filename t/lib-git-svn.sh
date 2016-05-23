@@ -1,8 +1,5 @@
 . ./test-lib.sh
 
-remotes_git_svn=remotes/git""-svn
-git_svn_id=git""-svn-id
-
 if test -n "$NO_SVN_TESTS"
 then
 	skip_all='skipping git svn tests, NO_SVN_TESTS defined'
