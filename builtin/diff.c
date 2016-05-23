@@ -320,6 +320,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		gitmodules_config();
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
+	precompose_argv(argc, argv);
 
 	init_revisions(&rev, prefix);
 
