@@ -45,6 +45,7 @@ Standard options
     -v, --verbose         be verbose
     -n, --dry-run         dry run
     -q, --quiet           be quiet
+    --expect <string>     expected output in the variable dump
 
 EOF
 
@@ -56,52 +57,12 @@ test_expect_success 'test help' '
 
 mv expect expect.err
 
-cat >expect.template <<\EOF
-boolean: 0
-integer: 0
-magnitude: 0
-timestamp: 0
-string: (not set)
-abbrev: 7
-verbose: -1
-quiet: 0
-dry run: no
-file: (not set)
-EOF
-
-check() {
+check () {
 	what="$1" &&
 	shift &&
 	expect="$1" &&
 	shift &&
-	sed "s/^$what .*/$what $expect/" <expect.template >expect &&
-	test-parse-options $* >output 2>output.err &&
-	test_must_be_empty output.err &&
-	test_cmp expect output
-}
-
-check_i18n() {
-	what="$1" &&
-	shift &&
-	expect="$1" &&
-	shift &&
-	sed "s/^$what .*/$what $expect/" <expect.template >expect &&
-	test-parse-options $* >output 2>output.err &&
-	test_must_be_empty output.err &&
-	test_i18ncmp expect output
-}
-
-check_unknown() {
-	case "$1" in
-	--*)
-		echo error: unknown option \`${1#--}\' >expect ;;
-	-*)
-		echo error: unknown switch \`${1#-}\' >expect ;;
-	esac &&
-	cat expect.err >>expect &&
-	test_must_fail test-parse-options $* >output 2>output.err &&
-	test_must_be_empty output &&
-	test_cmp expect output.err
+	test-parse-options --expect="$what $expect" "$@"
 }
 
 check_unknown_i18n() {
@@ -356,9 +317,7 @@ test_expect_success 'OPT_CALLBACK() and OPT_BIT() work' '
 	test_cmp expect output
 '
 
-cat >expect <<\EOF
-Callback: "not set", 1
-EOF
+>expect
 
 test_expect_success 'OPT_CALLBACK() and callback errors work' '
 	test_must_fail test-parse-options --no-length >output 2>output.err &&
