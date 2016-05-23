@@ -265,6 +265,11 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
   Output an all-zero hash in each patch's From header instead
   of the hash of the commit.
 
+--base=<commit>::
+	Record the base tree information to identify the state the
+	patch series applies to.  See the BASE TREE INFORMATION section
+	below for details.
+
 --root::
 	Treat the revision argument as a <revision range>, even if it
 	is just a single commit (that would normally be treated as a
@@ -520,6 +525,61 @@ This should help you to submit patches inline using KMail.
 5. Back in the compose window: add whatever other text you wish to the
    message, complete the addressing and subject fields, and press send.
 
+BASE TREE INFORMATION
+---------------------
+
+The base tree information block is used for maintainers or third party
+testers to know the exact state the patch series applies to. It consists
+of the 'base commit', which is a well-known commit that is part of the
+stable part of the project history everybody else works off of, and zero
+or more 'prerequisite patches', which are well-known patches in flight
+that is not yet part of the 'base commit' that need to be applied on top
+of 'base commit' in topological order before the patches can be applied.
+
+The 'base commit' is shown as "base-commit: " followed by the 40-hex of
+the commit object name.  A 'prerequisite patch' is shown as
+"prerequisite-patch-id: " followed by the 40-hex 'patch id', which can
+be obtained by passing the patch through the `git patch-id --stable`
+command.
+
+Imagine that on top of the public commit P, you applied well-known
+patches X, Y and Z from somebody else, and then built your three-patch
+series A, B, C, the history would be like:
+
+................................................
+---P---X---Y---Z---A---B---C
+................................................
+
+With `git format-patch --base=P -3 C` (or variants thereof, e.g. with
+`--cover-letter` of using `Z..C` instead of `-3 C` to specify the
+range), the base tree information block is shown at the end of the
+first message the command outputs (either the first patch, or the
+cover letter), like this:
+
+------------
+base-commit: P
+prerequisite-patch-id: X
+prerequisite-patch-id: Y
+prerequisite-patch-id: Z
+------------
+
+For non-linear topology, such as
+
+................................................
+---P---X---A---M---C
+    \         /
+     Y---Z---B
+................................................
+
+You can also use `git format-patch --base=P -3 C` to generate patches
+for A, B and C, and the identifiers for P, X, Y, Z are appended at the
+end of the first message.
+
+If set `--base=auto` in cmdline, it will track base commit automatically,
+the base commit will be the merge base of tip commit of the remote-tracking
+branch and revision-range specified in cmdline.
+For a local branch, you need to track a remote branch by `git branch
+--set-upstream-to` before using this option.
 
 EXAMPLES
 --------
