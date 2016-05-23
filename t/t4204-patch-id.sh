@@ -30,11 +30,11 @@ test_expect_success 'patch-id output is well-formed' '
 
 #calculate patch id. Make sure output is not empty.
 calc_patch_id () {
-	name="$1"
+	patch_name="$1"
 	shift
 	git patch-id "$@" |
-	sed "s/ .*//" >patch-id_"$name" &&
-	test_line_count -gt 0 patch-id_"$name"
+	sed "s/ .*//" >patch-id_"$patch_name" &&
+	test_line_count -gt 0 patch-id_"$patch_name"
 }
 
 get_top_diff () {
