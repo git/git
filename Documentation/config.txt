@@ -1141,6 +1141,10 @@ commit.template::
 	Specify the pathname of a file to use as the template for
 	new commit messages.
 
+commit.verbose::
+	A boolean or int to specify the level of verbose with `git commit`.
+	See linkgit:git-commit[1].
+
 credential.helper::
 	Specify an external helper to be called when a username or
 	password credential is needed; the helper may consult external
