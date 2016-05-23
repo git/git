@@ -2483,6 +2483,7 @@ ALL_COMMANDS += git-gui git-citool
 
 .PHONY: check-docs
 check-docs::
+	$(MAKE) -C Documentation lint-docs
 	@(for v in $(ALL_COMMANDS); \
 	do \
 		case "$$v" in \
