@@ -97,7 +97,7 @@ UI, Workflows & Features
  * "git rerere" can encounter two or more files with the same conflict
    signature that have to be resolved in different ways, but there was
    no way to record these separate resolutions.
-   (merge 890fca8 jc/rerere-multi later to maint).
+   (merge d9d501b068 jc/rerere-multi later to maint).
 
  * "git p4" learned to record P4 jobs in Git commit that imports from
    the history in Perforce.
@@ -131,6 +131,25 @@ UI, Workflows & Features
    submodule honor -c credential.* from command line, 2016-02-29)
    turned out to be a convoluted no-op; implement what it wanted to do
    correctly, and stop filtering settings given via "git -c var=val".
+
+ * "git commit --dry-run" reported "No, no, you cannot commit." in one
+   case where "git commit" would have allowed you to commit, and this
+   improves it a little bit ("git commit --dry-run --short" still does
+   not give you the correct answer, for example).  This is a stop-gap
+   measure in that "commit --short --dry-run" still gives an incorrect
+   result.
+
+ * The experimental "multiple worktree" feature gains more safety to
+   forbid operations on a branch that is checked out or being actively
+   worked on elsewhere, by noticing that e.g. it is being rebased.
+
+ * "git format-patch" learned a new "--base" option to record what
+   (public, well-known) commit the original series was built on in
+   its output.
+
+ * "git commit" learned to pay attention to "commit.verbose"
+   configuration variable and act as if "--verbose" option was
+   given from the command line.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -183,7 +202,6 @@ Performance, Internal Implementation, Development Support etc.
  * The test scripts for "git p4" (but not "git p4" implementation
    itself) has been updated so that they would work even on a system
    where the installed version of Python is python 3.
-   (merge 1fb3fb4 ld/p4-test-py3 later to maint).
 
  * As nobody maintains our in-tree git.spec.in and distros use their
    own spec file, we stopped pretending that we support "make rpm".
@@ -204,6 +222,22 @@ Performance, Internal Implementation, Development Support etc.
    to another file descriptor to keep the standard error of programs
    being tested intact.
    (merge d88785e jk/test-send-sh-x-trace-elsewhere later to maint).
+
+ * t0040 had too many unnecessary repetitions in its test data.  Teach
+   test-parse-options program so that a caller can tell what it
+   expects in its output, so that these repetitions can be cleaned up.
+
+ * Add perf test for "rebase -i"
+
+ * Common mistakes when writing gitlink: in our documentation are
+   found by "make check-docs".
+
+ * t9xxx series has been updated primarily for readability, while
+   fixing small bugs in it.  A few scripted Porcelains have also been
+   updated to fix possible bugs around their use of "test -z" and
+   "test -n".
+
+ * CI test was taught to run git-svn tests.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -294,7 +328,6 @@ notes for details).
 
  * Upcoming OpenSSL 1.1.0 will break compilation b updating a few APIs
    we use in imap-send, which has been adjusted for the change.
-   (merge 1245c74 ky/imap-send-openssl-1.1.0 later to maint).
 
  * The socks5:// proxy support added back in 2.6.4 days was not aware
    that socks5h:// proxies behave differently.
@@ -324,7 +357,6 @@ notes for details).
  * "git submodule" reports the paths of submodules the command
    recurses into, but this was incorrect when the command was not run
    from the root level of the superproject.
-   (merge 2ab5660 sb/submodule-path-misc-bugs later to maint).
 
  * The "user.useConfigOnly" configuration variable makes it an error
    if users do not explicitly set user.name and user.email.  However,
@@ -333,32 +365,25 @@ notes for details).
    system setting was unusable.  This was a suboptimal end-user
    experience as we want the users to set user.name/user.email without
    relying on the auto-detection at all.
-   (merge d3c06c1 da/user-useconfigonly later to maint).
 
  * "git mv old new" did not adjust the path for a submodule that lives
    as a subdirectory inside old/ directory correctly.
-   (merge a127331 sb/mv-submodule-fix later to maint).
 
  * "git replace -e" did not honour "core.editor" configuration.
-   (merge 36b1437 js/replace-edit-use-editor-configuration later to maint).
 
  * "git push" from a corrupt repository that attempts to push a large
    number of refs deadlocked; the thread to relay rejection notices
    for these ref updates blocked on writing them to the main thread,
    after the main thread at the receiving end notices that the push
    failed and decides not to read these notices and return a failure.
-   (merge f924b52a jk/push-client-deadlock-fix later to maint).
 
  * mmap emulation on Windows has been optimized and work better without
    consuming paging store when not needed.
-   (merge d5425d1 js/win32-mmap later to maint).
 
  * A question by "git send-email" to ask the identity of the sender
    has been updated.
-   (merge 0d6b21e jd/send-email-to-whom later to maint).
 
  * UI consistency improvements for "git mergetool".
-   (merge cce076e nf/mergetool-prompt later to maint).
 
  * "git rebase -m" could be asked to rebase an entire branch starting
    from the root, but failed by assuming that there always is a parent
@@ -366,24 +391,19 @@ notes for details).
    (merge 79f4344 bw/rebase-merge-entire-branch later to maint).
 
  * Fix a broken "p4 lfs" test.
-   (merge 9e220fe ls/p4-lfs-test-fix-2.7.0 later to maint).
 
  * Recent update to Git LFS broke "git p4" by changing the output from
    its "lfs pointer" subcommand.
-   (merge 82f2567 ls/p4-lfs later to maint).
 
  * "git fetch" test t5510 was flaky while running a (forced) automagic
    garbage collection.
-   (merge bb05510 js/close-packs-before-gc later to maint).
 
  * Documentation updates to help contributors setting up Travis CI
    test for their patches.
-   (merge 0e5d028 ls/travis-submitting-patches later to maint).
 
  * Some multi-byte encoding can have a backslash byte as a later part
    of one letter, which would confuse "highlight" filter used in
    gitweb.
-   (merge 029f372 sk/gitweb-highlight-encoding later to maint).
 
  * "git commit-tree" plumbing command required the user to always sign
    its result when the user sets the commit.gpgsign configuration
@@ -442,19 +462,20 @@ notes for details).
    adjusted to align with that used by OpenPGP.
    (merge 05a5869 kf/gpg-sig-verification-doc later to maint).
 
+ * A couple of bugs around core.autocrlf have been fixed.
+   (merge caa47ad tb/core-eol-fix later to maint).
+
+ * Many commands normalize command line arguments from NFD to NFC
+   variant of UTF-8 on OSX, but commands in the "diff" family did
+   not, causing "git diff $path" to complain that no such path is
+   known to Git.  They have been taught to do the normalization.
+   (merge 90a78b8 ar/diff-args-osx-precompose later to maint).
+
+ * "git difftool" learned to handle unmerged paths correctly in
+   dir-diff mode.
+   (merge 366f9ce da/difftool later to maint).
+
  * Other minor clean-ups and documentation updates
-   (merge 8b5a3e9 kn/for-each-tag-branch later to maint).
-   (merge 99dab16 sb/misc-cleanups later to maint).
-   (merge 7a6a44c cc/apply later to maint).
-   (merge 6594883 nd/remove-unused later to maint).
-   (merge 0ff7410 sg/test-lib-simplify-expr-away later to maint).
-   (merge 060e776 jk/fix-attribute-macro-in-2.5 later to maint).
-   (merge d16df0c rt/string-list-lookup-cleanup later to maint).
-   (merge 376eb60 sb/config-exit-status-list later to maint).
-   (merge 9cea46c ew/doc-split-pack-disables-bitmap later to maint).
-   (merge fa72245 ew/normal-to-e later to maint).
-   (merge 2e39a24 rn/glossary-typofix later to maint).
-   (merge cadfbef sb/clean-test-fix later to maint).
    (merge 832c0e5 lp/typofixes later to maint).
    (merge f5ee54a sb/z-is-gnutar-ism later to maint).
    (merge 2e3926b va/i18n-misc-updates later to maint).
