@@ -63,6 +63,7 @@ struct apply_state {
 	/* These control whitespace errors */
 	const char *whitespace_option;
 	int whitespace_error;
+	int squelch_whitespace_errors;
 };
 
 static int newfd = -1;
@@ -78,7 +79,6 @@ static enum ws_error_action {
 	die_on_ws_error,
 	correct_ws_error
 } ws_error_action = warn_on_ws_error;
-static int squelch_whitespace_errors = 5;
 static int applied_after_fixing_ws;
 
 static enum ws_ignore {
@@ -87,7 +87,7 @@ static enum ws_ignore {
 } ws_ignore_action = ignore_ws_none;
 
 
-static void parse_whitespace_option(const char *option)
+static void parse_whitespace_option(struct apply_state *state, const char *option)
 {
 	if (!option) {
 		ws_error_action = warn_on_ws_error;
@@ -107,7 +107,7 @@ static void parse_whitespace_option(const char *option)
 	}
 	if (!strcmp(option, "error-all")) {
 		ws_error_action = die_on_ws_error;
-		squelch_whitespace_errors = 0;
+		state->squelch_whitespace_errors = 0;
 		return;
 	}
 	if (!strcmp(option, "strip") || !strcmp(option, "fix")) {
@@ -1599,8 +1599,8 @@ static void record_ws_error(struct apply_state *state,
 		return;
 
 	state->whitespace_error++;
-	if (squelch_whitespace_errors &&
-	    squelch_whitespace_errors < state->whitespace_error)
+	if (state->squelch_whitespace_errors &&
+	    state->squelch_whitespace_errors < state->whitespace_error)
 		return;
 
 	err = whitespace_error_string(result);
@@ -4620,9 +4620,8 @@ static int option_parse_whitespace(const struct option *opt,
 				   const char *arg, int unset)
 {
 	struct apply_state *state = opt->value;
-
 	state->whitespace_option = arg;
-	parse_whitespace_option(arg);
+	parse_whitespace_option(state, arg);
 	return 0;
 }
 
@@ -4645,11 +4644,12 @@ static void init_apply_state(struct apply_state *state, const char *prefix)
 	state->line_termination = '\n';
 	state->p_value = 1;
 	state->p_context = UINT_MAX;
+	state->squelch_whitespace_errors = 5;
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();
 	if (apply_default_whitespace)
-		parse_whitespace_option(apply_default_whitespace);
+		parse_whitespace_option(state, apply_default_whitespace);
 	if (apply_default_ignorewhitespace)
 		parse_ignorewhitespace_option(apply_default_ignorewhitespace);
 }
@@ -4792,10 +4792,10 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	if (read_stdin)
 		errs |= apply_patch(&state, 0, "<stdin>", options);
 	if (state.whitespace_error) {
-		if (squelch_whitespace_errors &&
-		    squelch_whitespace_errors < state.whitespace_error) {
+		if (state.squelch_whitespace_errors &&
+		    state.squelch_whitespace_errors < state.whitespace_error) {
 			int squelched =
-				state.whitespace_error - squelch_whitespace_errors;
+				state.whitespace_error - state.squelch_whitespace_errors;
 			warning(Q_("squelched %d whitespace error",
 				   "squelched %d whitespace errors",
 				   squelched),
