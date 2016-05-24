@@ -91,7 +91,9 @@ causes the 'git commit' command to abort before creating a commit.
 
 The default 'pre-commit' hook, when enabled, catches introduction
 of lines with trailing whitespaces and aborts the commit when
-such a line is found.
+such a line is found. If non-ASCII filenames are not allowed,
+then the hook also catches the introduction of non-ASCII
+filenames and aborts the commit if there is at least one present.
 
 All the 'git commit' hooks are invoked with the environment
 variable `GIT_EDITOR=:` if the command will not bring up an editor
