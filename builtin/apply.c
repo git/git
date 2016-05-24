@@ -31,6 +31,7 @@ struct apply_state {
 
 	/* These boolean parameters control how the apply is done */
 	int apply_in_reverse;
+	int apply_with_reject;
 	int unidiff_zero;
 };
 
@@ -50,7 +51,6 @@ static int diffstat;
 static int numstat;
 static int summary;
 static int apply = 1;
-static int apply_with_reject;
 static int apply_verbosely;
 static int allow_overlap;
 static int no_add;
@@ -3096,7 +3096,7 @@ static int apply_fragments(struct apply_state *state, struct image *img, struct 
 		nth++;
 		if (apply_one_fragment(state, img, frag, inaccurate_eof, ws_rule, nth)) {
 			error(_("patch failed: %s:%ld"), name, frag->oldpos);
-			if (!apply_with_reject)
+			if (!state->apply_with_reject)
 				return -1;
 			frag->rejected = 1;
 		}
@@ -4462,11 +4462,11 @@ static int apply_patch(struct apply_state *state,
 
 	if ((state->check || apply) &&
 	    check_patch_list(state, list) < 0 &&
-	    !apply_with_reject)
+	    !state->apply_with_reject)
 		exit(1);
 
 	if (apply && write_out_results(list)) {
-		if (apply_with_reject)
+		if (state->apply_with_reject)
 			exit(1);
 		/* with --3way, we still need to write the index out */
 		return 1;
@@ -4631,7 +4631,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			N_("apply the patch in reverse")),
 		OPT_BOOL(0, "unidiff-zero", &state.unidiff_zero,
 			N_("don't expect at least one line of context")),
-		OPT_BOOL(0, "reject", &apply_with_reject,
+		OPT_BOOL(0, "reject", &state.apply_with_reject,
 			N_("leave the rejected hunks in corresponding *.rej files")),
 		OPT_BOOL(0, "allow-overlap", &allow_overlap,
 			N_("allow overlapping hunks")),
@@ -4653,7 +4653,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, state.prefix, builtin_apply_options,
 			apply_usage, 0);
 
-	if (apply_with_reject && threeway)
+	if (state.apply_with_reject && threeway)
 		die("--reject and --3way cannot be used together.");
 	if (cached && threeway)
 		die("--cached and --3way cannot be used together.");
@@ -4662,7 +4662,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			die(_("--3way outside a repository"));
 		state.check_index = 1;
 	}
-	if (apply_with_reject)
+	if (state.apply_with_reject)
 		apply = apply_verbosely = 1;
 	if (!force_apply && (diffstat || numstat || summary || state.check || fake_ancestor))
 		apply = 0;
