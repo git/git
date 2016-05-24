@@ -28,6 +28,7 @@ struct apply_state {
 	/* These control what gets looked at and modified */
 	int check; /* preimage must match working tree, don't actually apply */
 	int check_index; /* preimage must match the indexed version */
+	int update_index; /* check_index && apply */
 
 	/* These boolean parameters control how the apply is done */
 	int apply_in_reverse;
@@ -46,7 +47,6 @@ static int newfd = -1;
 
 static int state_p_value = 1;
 static int p_value_known;
-static int update_index;
 static int cached;
 static int diffstat;
 static int numstat;
@@ -4090,9 +4090,9 @@ static void patch_stats(struct patch *patch)
 	}
 }
 
-static void remove_file(struct patch *patch, int rmdir_empty)
+static void remove_file(struct apply_state *state, struct patch *patch, int rmdir_empty)
 {
-	if (update_index) {
+	if (state->update_index) {
 		if (remove_file_from_cache(patch->old_name) < 0)
 			die(_("unable to remove %s from index"), patch->old_name);
 	}
@@ -4103,14 +4103,18 @@ static void remove_file(struct patch *patch, int rmdir_empty)
 	}
 }
 
-static void add_index_file(const char *path, unsigned mode, void *buf, unsigned long size)
+static void add_index_file(struct apply_state *state,
+			   const char *path,
+			   unsigned mode,
+			   void *buf,
+			   unsigned long size)
 {
 	struct stat st;
 	struct cache_entry *ce;
 	int namelen = strlen(path);
 	unsigned ce_size = cache_entry_size(namelen);
 
-	if (!update_index)
+	if (!state->update_index)
 		return;
 
 	ce = xcalloc(1, ce_size);
@@ -4220,13 +4224,14 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 	die_errno(_("unable to write file '%s' mode %o"), path, mode);
 }
 
-static void add_conflicted_stages_file(struct patch *patch)
+static void add_conflicted_stages_file(struct apply_state *state,
+				       struct patch *patch)
 {
 	int stage, namelen;
 	unsigned ce_size, mode;
 	struct cache_entry *ce;
 
-	if (!update_index)
+	if (!state->update_index)
 		return;
 	namelen = strlen(patch->new_name);
 	ce_size = cache_entry_size(namelen);
@@ -4247,7 +4252,7 @@ static void add_conflicted_stages_file(struct patch *patch)
 	}
 }
 
-static void create_file(struct patch *patch)
+static void create_file(struct apply_state *state, struct patch *patch)
 {
 	char *path = patch->new_name;
 	unsigned mode = patch->new_mode;
@@ -4259,22 +4264,24 @@ static void create_file(struct patch *patch)
 	create_one_file(path, mode, buf, size);
 
 	if (patch->conflicted_threeway)
-		add_conflicted_stages_file(patch);
+		add_conflicted_stages_file(state, patch);
 	else
-		add_index_file(path, mode, buf, size);
+		add_index_file(state, path, mode, buf, size);
 }
 
 /* phase zero is to remove, phase one is to create */
-static void write_out_one_result(struct patch *patch, int phase)
+static void write_out_one_result(struct apply_state *state,
+				 struct patch *patch,
+				 int phase)
 {
 	if (patch->is_delete > 0) {
 		if (phase == 0)
-			remove_file(patch, 1);
+			remove_file(state, patch, 1);
 		return;
 	}
 	if (patch->is_new > 0 || patch->is_copy) {
 		if (phase == 1)
-			create_file(patch);
+			create_file(state, patch);
 		return;
 	}
 	/*
@@ -4282,9 +4289,9 @@ static void write_out_one_result(struct patch *patch, int phase)
 	 * thing: remove the old, write the new
 	 */
 	if (phase == 0)
-		remove_file(patch, patch->is_rename);
+		remove_file(state, patch, patch->is_rename);
 	if (phase == 1)
-		create_file(patch);
+		create_file(state, patch);
 }
 
 static int write_out_one_reject(struct apply_state *state, struct patch *patch)
@@ -4371,7 +4378,7 @@ static int write_out_results(struct apply_state *state, struct patch *list)
 			if (l->rejected)
 				errs = 1;
 			else {
-				write_out_one_result(l, phase);
+				write_out_one_result(state, l, phase);
 				if (phase == 1) {
 					if (write_out_one_reject(state, l))
 						errs = 1;
@@ -4451,8 +4458,8 @@ static int apply_patch(struct apply_state *state,
 	if (whitespace_error && (ws_error_action == die_on_ws_error))
 		apply = 0;
 
-	update_index = state->check_index && apply;
-	if (update_index && newfd < 0)
+	state->update_index = state->check_index && apply;
+	if (state->update_index && newfd < 0)
 		newfd = hold_locked_index(&lock_file, 1);
 
 	if (state->check_index) {
@@ -4727,7 +4734,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 				whitespace_error);
 	}
 
-	if (update_index) {
+	if (state.update_index) {
 		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 			die(_("Unable to write new index file"));
 	}
