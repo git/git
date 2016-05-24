@@ -31,6 +31,7 @@ struct apply_state {
 	int update_index; /* check_index && apply */
 
 	/* These boolean parameters control how the apply is done */
+	int allow_overlap;
 	int apply_in_reverse;
 	int apply_with_reject;
 	int apply_verbosely;
@@ -52,7 +53,6 @@ static int diffstat;
 static int numstat;
 static int summary;
 static int apply = 1;
-static int allow_overlap;
 static int no_add;
 static int threeway;
 static int unsafe_paths;
@@ -2627,7 +2627,8 @@ static void remove_last_line(struct image *img)
  * apply at applied_pos (counts in line numbers) in "img".
  * Update "img" to remove "preimage" and replace it with "postimage".
  */
-static void update_image(struct image *img,
+static void update_image(struct apply_state *state,
+			 struct image *img,
 			 int applied_pos,
 			 struct image *preimage,
 			 struct image *postimage)
@@ -2692,7 +2693,7 @@ static void update_image(struct image *img,
 	memcpy(img->line + applied_pos,
 	       postimage->line,
 	       postimage->nr * sizeof(*img->line));
-	if (!allow_overlap)
+	if (!state->allow_overlap)
 		for (i = 0; i < postimage->nr; i++)
 			img->line[applied_pos + i].flag |= LINE_PATCHED;
 	img->nr = nr;
@@ -2940,7 +2941,7 @@ static int apply_one_fragment(struct apply_state *state,
 			fprintf_ln(stderr, _("Context reduced to (%ld/%ld)"
 					     " to apply fragment at %d"),
 				   leading, trailing, applied_pos+1);
-		update_image(img, applied_pos, &preimage, &postimage);
+		update_image(state, img, applied_pos, &preimage, &postimage);
 	} else {
 		if (state->apply_verbosely)
 			error(_("while searching for:\n%.*s"),
@@ -4640,7 +4641,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			N_("don't expect at least one line of context")),
 		OPT_BOOL(0, "reject", &state.apply_with_reject,
 			N_("leave the rejected hunks in corresponding *.rej files")),
-		OPT_BOOL(0, "allow-overlap", &allow_overlap,
+		OPT_BOOL(0, "allow-overlap", &state.allow_overlap,
 			N_("allow overlapping hunks")),
 		OPT__VERBOSE(&state.apply_verbosely, N_("be verbose")),
 		OPT_BIT(0, "inaccurate-eof", &options,
