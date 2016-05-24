@@ -28,6 +28,12 @@ enum ws_error_action {
 	correct_ws_error
 };
 
+
+enum ws_ignore {
+	ignore_ws_none,
+	ignore_ws_change
+};
+
 struct apply_state {
 	const char *prefix;
 	int prefix_length;
@@ -69,6 +75,7 @@ struct apply_state {
 
 	/* These control whitespace errors */
 	enum ws_error_action ws_error_action;
+	enum ws_ignore ws_ignore_action;
 	const char *whitespace_option;
 	int whitespace_error;
 	int squelch_whitespace_errors;
@@ -81,13 +88,6 @@ static const char * const apply_usage[] = {
 	N_("git apply [<options>] [<patch>...]"),
 	NULL
 };
-
-
-static enum ws_ignore {
-	ignore_ws_none,
-	ignore_ws_change
-} ws_ignore_action = ignore_ws_none;
-
 
 static void parse_whitespace_option(struct apply_state *state, const char *option)
 {
@@ -119,16 +119,17 @@ static void parse_whitespace_option(struct apply_state *state, const char *optio
 	die(_("unrecognized whitespace option '%s'"), option);
 }
 
-static void parse_ignorewhitespace_option(const char *option)
+static void parse_ignorewhitespace_option(struct apply_state *state,
+					  const char *option)
 {
 	if (!option || !strcmp(option, "no") ||
 	    !strcmp(option, "false") || !strcmp(option, "never") ||
 	    !strcmp(option, "none")) {
-		ws_ignore_action = ignore_ws_none;
+		state->ws_ignore_action = ignore_ws_none;
 		return;
 	}
 	if (!strcmp(option, "change")) {
-		ws_ignore_action = ignore_ws_change;
+		state->ws_ignore_action = ignore_ws_change;
 		return;
 	}
 	die(_("unrecognized whitespace ignore option '%s'"), option);
@@ -2488,7 +2489,7 @@ static int match_fragment(struct apply_state *state,
 	 * fuzzy matching. We collect all the line length information because
 	 * we need it to adjust whitespace if we match.
 	 */
-	if (ws_ignore_action == ignore_ws_change)
+	if (state->ws_ignore_action == ignore_ws_change)
 		return line_by_line_fuzzy_match(img, preimage, postimage,
 						try, try_lno, preimage_limit);
 
@@ -4611,12 +4612,13 @@ static int option_parse_p(const struct option *opt,
 }
 
 static int option_parse_space_change(const struct option *opt,
-			  const char *arg, int unset)
+				     const char *arg, int unset)
 {
+	struct apply_state *state = opt->value;
 	if (unset)
-		ws_ignore_action = ignore_ws_none;
+		state->ws_ignore_action = ignore_ws_none;
 	else
-		ws_ignore_action = ignore_ws_change;
+		state->ws_ignore_action = ignore_ws_change;
 	return 0;
 }
 
@@ -4650,13 +4652,14 @@ static void init_apply_state(struct apply_state *state, const char *prefix)
 	state->p_context = UINT_MAX;
 	state->squelch_whitespace_errors = 5;
 	state->ws_error_action = warn_on_ws_error;
+	state->ws_ignore_action = ignore_ws_none;
 	strbuf_init(&state->root, 0);
 
 	git_apply_config();
 	if (apply_default_whitespace)
 		parse_whitespace_option(state, apply_default_whitespace);
 	if (apply_default_ignorewhitespace)
-		parse_ignorewhitespace_option(apply_default_ignorewhitespace);
+		parse_ignorewhitespace_option(state, apply_default_ignorewhitespace);
 }
 
 static void clear_apply_state(struct apply_state *state)
@@ -4717,10 +4720,10 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "whitespace", &state, N_("action"),
 			N_("detect new or modified lines that have whitespace errors"),
 			0, option_parse_whitespace },
-		{ OPTION_CALLBACK, 0, "ignore-space-change", NULL, NULL,
+		{ OPTION_CALLBACK, 0, "ignore-space-change", &state, NULL,
 			N_("ignore changes in whitespace when finding context"),
 			PARSE_OPT_NOARG, option_parse_space_change },
-		{ OPTION_CALLBACK, 0, "ignore-whitespace", NULL, NULL,
+		{ OPTION_CALLBACK, 0, "ignore-whitespace", &state, NULL,
 			N_("ignore changes in whitespace when finding context"),
 			PARSE_OPT_NOARG, option_parse_space_change },
 		OPT_BOOL('R', "reverse", &state.apply_in_reverse,
