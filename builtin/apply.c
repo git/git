@@ -64,6 +64,7 @@ struct apply_state {
 	const char *whitespace_option;
 	int whitespace_error;
 	int squelch_whitespace_errors;
+	int applied_after_fixing_ws;
 };
 
 static int newfd = -1;
@@ -79,7 +80,6 @@ static enum ws_error_action {
 	die_on_ws_error,
 	correct_ws_error
 } ws_error_action = warn_on_ws_error;
-static int applied_after_fixing_ws;
 
 static enum ws_ignore {
 	ignore_ws_none,
@@ -2862,7 +2862,7 @@ static int apply_one_fragment(struct apply_state *state,
 				strbuf_add(&newlines, patch + 1, plen);
 			}
 			else {
-				ws_fix_copy(&newlines, patch + 1, plen, ws_rule, &applied_after_fixing_ws);
+				ws_fix_copy(&newlines, patch + 1, plen, ws_rule, &state->applied_after_fixing_ws);
 			}
 			add_line_info(&postimage, newlines.buf + start, newlines.len - start,
 				      (first == '+' ? 0 : LINE_COMMON));
@@ -4806,11 +4806,11 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			       "%d lines add whitespace errors.",
 			       state.whitespace_error),
 			    state.whitespace_error);
-		if (applied_after_fixing_ws && state.apply)
+		if (state.applied_after_fixing_ws && state.apply)
 			warning("%d line%s applied after"
 				" fixing whitespace errors.",
-				applied_after_fixing_ws,
-				applied_after_fixing_ws == 1 ? "" : "s");
+				state.applied_after_fixing_ws,
+				state.applied_after_fixing_ws == 1 ? "" : "s");
 		else if (state.whitespace_error)
 			warning(Q_("%d line adds whitespace errors.",
 				   "%d lines add whitespace errors.",
