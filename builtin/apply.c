@@ -41,6 +41,7 @@ struct apply_state {
 	int apply_in_reverse;
 	int apply_with_reject;
 	int apply_verbosely;
+	int no_add;
 	int threeway;
 	int unidiff_zero;
 };
@@ -53,7 +54,6 @@ static int newfd = -1;
 static int state_p_value = 1;
 static int p_value_known;
 static int apply = 1;
-static int no_add;
 static int unsafe_paths;
 static const char *fake_ancestor;
 static int line_termination = '\n';
@@ -2782,7 +2782,7 @@ static int apply_one_fragment(struct apply_state *state,
 		/* Fall-through for ' ' */
 		case '+':
 			/* --no-add does not add new lines */
-			if (first == '+' && no_add)
+			if (first == '+' && state->no_add)
 				break;
 
 			start = newlines.len;
@@ -4600,7 +4600,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 'p', NULL, NULL, N_("num"),
 			N_("remove <num> leading slashes from traditional diff paths"),
 			0, option_parse_p },
-		OPT_BOOL(0, "no-add", &no_add,
+		OPT_BOOL(0, "no-add", &state.no_add,
 			N_("ignore additions made by the patch")),
 		OPT_BOOL(0, "stat", &state.diffstat,
 			N_("instead of applying the patch, output diffstat for the input")),
