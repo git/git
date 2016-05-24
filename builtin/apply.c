@@ -132,10 +132,9 @@ static void parse_ignorewhitespace_option(const char *option)
 	die(_("unrecognized whitespace ignore option '%s'"), option);
 }
 
-static void set_default_whitespace_mode(struct apply_state *state,
-					const char *whitespace_option)
+static void set_default_whitespace_mode(struct apply_state *state)
 {
-	if (!whitespace_option && !apply_default_whitespace)
+	if (!state->whitespace_option && !apply_default_whitespace)
 		ws_error_action = (state->apply ? warn_on_ws_error : nowarn_ws_error);
 }
 
@@ -4785,11 +4784,11 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		if (fd < 0)
 			die_errno(_("can't open patch '%s'"), arg);
 		read_stdin = 0;
-		set_default_whitespace_mode(&state, state.whitespace_option);
+		set_default_whitespace_mode(&state);
 		errs |= apply_patch(&state, fd, arg, options);
 		close(fd);
 	}
-	set_default_whitespace_mode(&state, state.whitespace_option);
+	set_default_whitespace_mode(&state);
 	if (read_stdin)
 		errs |= apply_patch(&state, 0, "<stdin>", options);
 	if (state.whitespace_error) {
