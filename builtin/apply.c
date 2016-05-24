@@ -4522,7 +4522,25 @@ static int option_parse_directory(const struct option *opt,
 	return 0;
 }
 
-int cmd_apply(int argc, const char **argv, const char *prefix_)
+static void init_apply_state(struct apply_state *state, const char *prefix)
+{
+	memset(state, 0, sizeof(*state));
+	state->prefix = prefix;
+	state->prefix_length = state->prefix ? strlen(state->prefix) : 0;
+
+	git_apply_config();
+	if (apply_default_whitespace)
+		parse_whitespace_option(apply_default_whitespace);
+	if (apply_default_ignorewhitespace)
+		parse_ignorewhitespace_option(apply_default_ignorewhitespace);
+}
+
+static void clear_apply_state(struct apply_state *state)
+{
+	/* empty for now */
+}
+
+int cmd_apply(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int errs = 0;
@@ -4603,15 +4621,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 		OPT_END()
 	};
 
-	memset(&state, 0, sizeof(state));
-	state.prefix = prefix_;
-	state.prefix_length = state.prefix ? strlen(state.prefix) : 0;
-
-	git_apply_config();
-	if (apply_default_whitespace)
-		parse_whitespace_option(apply_default_whitespace);
-	if (apply_default_ignorewhitespace)
-		parse_ignorewhitespace_option(apply_default_ignorewhitespace);
+	init_apply_state(&state, prefix);
 
 	argc = parse_options(argc, argv, state.prefix, builtin_apply_options,
 			apply_usage, 0);
@@ -4694,6 +4704,8 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 			die(_("Unable to write new index file"));
 	}
+
+	clear_apply_state(&state);
 
 	return !!errs;
 }
