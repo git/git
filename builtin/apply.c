@@ -31,6 +31,9 @@ struct apply_state {
 	int check_index; /* preimage must match the indexed version */
 	int update_index; /* check_index && apply */
 
+	/* These control cosmetic aspect of the output */
+	int diffstat; /* just show a diffstat, and don't actually apply */
+
 	/* These boolean parameters control how the apply is done */
 	int allow_overlap;
 	int apply_in_reverse;
@@ -40,7 +43,6 @@ struct apply_state {
 };
 
 /*
- *  --stat does just a diffstat, and doesn't actually apply
  *  --numstat does numeric diffstat, and doesn't actually apply
  *  --index-info shows the old and new index info for paths if available.
  */
@@ -48,7 +50,6 @@ static int newfd = -1;
 
 static int state_p_value = 1;
 static int p_value_known;
-static int diffstat;
 static int numstat;
 static int summary;
 static int apply = 1;
@@ -4486,7 +4487,7 @@ static int apply_patch(struct apply_state *state,
 	if (fake_ancestor)
 		build_fake_ancestor(list, fake_ancestor);
 
-	if (diffstat)
+	if (state->diffstat)
 		stat_patch_list(list);
 
 	if (numstat)
@@ -4602,7 +4603,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			0, option_parse_p },
 		OPT_BOOL(0, "no-add", &no_add,
 			N_("ignore additions made by the patch")),
-		OPT_BOOL(0, "stat", &diffstat,
+		OPT_BOOL(0, "stat", &state.diffstat,
 			N_("instead of applying the patch, output diffstat for the input")),
 		OPT_NOOP_NOARG(0, "allow-binary-replacement"),
 		OPT_NOOP_NOARG(0, "binary"),
@@ -4675,7 +4676,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	}
 	if (state.apply_with_reject)
 		apply = state.apply_verbosely = 1;
-	if (!force_apply && (diffstat || numstat || summary || state.check || fake_ancestor))
+	if (!force_apply && (state.diffstat || numstat || summary || state.check || fake_ancestor))
 		apply = 0;
 	if (state.check_index && is_not_gitdir)
 		die(_("--index outside a repository"));
