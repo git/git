@@ -1247,7 +1247,8 @@ sub auto_create_empty_directories {
 }
 
 sub cmd_rebase {
-	command_noisy(qw/update-index --refresh/);
+    my $autostashCommitId;
+	my $autostashEnabled = "0";
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
@@ -1258,6 +1259,20 @@ sub cmd_rebase {
 		print "SVN URL: " . $url . "\n";
 		return;
 	}
+	
+	eval { command_noisy(qw/update-index --refresh/) };
+	if ($@) {
+		$autostashEnabled = eval { command_oneline('config', '--get', "rebase.autosquash") };
+		if($autostashEnabled){
+		   $autostashCommitId = command_oneline(qw/stash create/);
+		   print "Created Autostash (" . $autostashCommitId . ")\n";
+		   command(qw/reset/);
+		   command(qw/checkout -f/);
+		} else {
+		   die $@;
+		}
+	}
+	
 	if (command(qw/diff-index HEAD --/)) {
 		print STDERR "Cannot rebase with uncommitted changes:\n";
 		command_noisy('status');
@@ -1271,6 +1286,11 @@ sub cmd_rebase {
 	command_noisy(rebase_cmd(), $gs->refname);
 	if (auto_create_empty_directories($gs)) {
 		$gs->mkemptydirs;
+	}
+	
+	if($autostashCommitId){
+	   print "Applying Autostash (" . $autostashCommitId . ")\n";
+	   command_noisy(split(' ', "stash apply $autostashCommitId"));
 	}
 }
 
