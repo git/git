@@ -61,6 +61,7 @@ struct apply_state {
 	int has_include;
 
 	/* These control whitespace errors */
+	const char *whitespace_option;
 	int whitespace_error;
 };
 
@@ -4619,9 +4620,9 @@ static int option_parse_space_change(const struct option *opt,
 static int option_parse_whitespace(const struct option *opt,
 				   const char *arg, int unset)
 {
-	const char **whitespace_option = opt->value;
+	struct apply_state *state = opt->value;
 
-	*whitespace_option = arg;
+	state->whitespace_option = arg;
 	parse_whitespace_option(arg);
 	return 0;
 }
@@ -4670,8 +4671,6 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	int read_stdin = 1;
 	struct apply_state state;
 
-	const char *whitespace_option = NULL;
-
 	struct option builtin_apply_options[] = {
 		{ OPTION_CALLBACK, 0, "exclude", &state, N_("path"),
 			N_("don't apply changes matching the given path"),
@@ -4711,7 +4710,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			N_("paths are separated with NUL character"), '\0'),
 		OPT_INTEGER('C', NULL, &state.p_context,
 				N_("ensure at least <n> lines of context match")),
-		{ OPTION_CALLBACK, 0, "whitespace", &whitespace_option, N_("action"),
+		{ OPTION_CALLBACK, 0, "whitespace", &state, N_("action"),
 			N_("detect new or modified lines that have whitespace errors"),
 			0, option_parse_whitespace },
 		{ OPTION_CALLBACK, 0, "ignore-space-change", NULL, NULL,
@@ -4786,11 +4785,11 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		if (fd < 0)
 			die_errno(_("can't open patch '%s'"), arg);
 		read_stdin = 0;
-		set_default_whitespace_mode(&state, whitespace_option);
+		set_default_whitespace_mode(&state, state.whitespace_option);
 		errs |= apply_patch(&state, fd, arg, options);
 		close(fd);
 	}
-	set_default_whitespace_mode(&state, whitespace_option);
+	set_default_whitespace_mode(&state, state.whitespace_option);
 	if (read_stdin)
 		errs |= apply_patch(&state, 0, "<stdin>", options);
 	if (state.whitespace_error) {
