@@ -25,13 +25,14 @@ struct apply_state {
 	const char *prefix;
 	int prefix_length;
 
+	/* These control what gets looked at and modified */
+	int check; /* preimage must match working tree, don't actually apply */
+
 	/* These boolean parameters control how the apply is done */
 	int unidiff_zero;
 };
 
 /*
- *  --check turns on checking that the working tree matches the
- *    files that are being modified, but doesn't apply the patch
  *  --stat does just a diffstat, and doesn't actually apply
  *  --numstat does numeric diffstat, and doesn't actually apply
  *  --index-info shows the old and new index info for paths if available.
@@ -48,7 +49,6 @@ static int cached;
 static int diffstat;
 static int numstat;
 static int summary;
-static int check;
 static int apply = 1;
 static int apply_in_reverse;
 static int apply_with_reject;
@@ -2053,7 +2053,7 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 		 * without metadata change.  A binary patch appears
 		 * empty to us here.
 		 */
-		if ((apply || check) &&
+		if ((apply || state->check) &&
 		    (!patch->is_binary && !metadata_changes(patch)))
 			die(_("patch with only garbage at line %d"), state_linenr);
 	}
@@ -4440,7 +4440,7 @@ static int apply_patch(struct apply_state *state,
 			die(_("unable to read index file"));
 	}
 
-	if ((check || apply) &&
+	if ((state->check || apply) &&
 	    check_patch_list(state, list) < 0 &&
 	    !apply_with_reject)
 		exit(1);
@@ -4579,7 +4579,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			N_("show number of added and deleted lines in decimal notation")),
 		OPT_BOOL(0, "summary", &summary,
 			N_("instead of applying the patch, output a summary for the input")),
-		OPT_BOOL(0, "check", &check,
+		OPT_BOOL(0, "check", &state.check,
 			N_("instead of applying the patch, see if the patch is applicable")),
 		OPT_BOOL(0, "index", &check_index,
 			N_("make sure the patch is applicable to the current index")),
@@ -4644,7 +4644,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	}
 	if (apply_with_reject)
 		apply = apply_verbosely = 1;
-	if (!force_apply && (diffstat || numstat || summary || check || fake_ancestor))
+	if (!force_apply && (diffstat || numstat || summary || state.check || fake_ancestor))
 		apply = 0;
 	if (check_index && is_not_gitdir)
 		die(_("--index outside a repository"));
