@@ -640,7 +640,7 @@ cmd_update()
 			if test -z "$nofetch"
 			then
 				# Fetch remote before determining tracking $sha1
-				(sanitize_submodule_env; cd "$sm_path" && git-fetch) ||
+				fetch_in_submodule "$sm_path" ||
 				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
 			fi
 			remote_name=$(sanitize_submodule_env; cd "$sm_path" && get_default_remote)
