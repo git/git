@@ -597,6 +597,33 @@ static struct object_entry *insert_object(unsigned char *sha1)
 	return e;
 }
 
+static void invalidate_pack_id(unsigned int id)
+{
+	unsigned int h;
+	unsigned long lu;
+	struct tag *t;
+
+	for (h = 0; h < ARRAY_SIZE(object_table); h++) {
+		struct object_entry *e;
+
+		for (e = object_table[h]; e; e = e->next)
+			if (e->pack_id == id)
+				e->pack_id = MAX_PACK_ID;
+	}
+
+	for (lu = 0; lu < branch_table_sz; lu++) {
+		struct branch *b;
+
+		for (b = branch_table[lu]; b; b = b->table_next_branch)
+			if (b->pack_id == id)
+				b->pack_id = MAX_PACK_ID;
+	}
+
+	for (t = first_tag; t; t = t->next_tag)
+		if (t->pack_id == id)
+			t->pack_id = MAX_PACK_ID;
+}
+
 static unsigned int hc_str(const char *s, size_t len)
 {
 	unsigned int r = 0;
@@ -993,8 +1020,10 @@ static void end_packfile(void)
 				    cur_pack_sha1, pack_size);
 
 		if (object_count <= unpack_limit) {
-			if (!loosen_small_pack(pack_data))
+			if (!loosen_small_pack(pack_data)) {
+				invalidate_pack_id(pack_id);
 				goto discard_pack;
+			}
 		}
 
 		close(pack_data->pack_fd);
