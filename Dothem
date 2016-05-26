@@ -174,7 +174,10 @@ do
 		'')
 			;;
 		y)
+			saveMeta=$(readlink Meta)
 			Meta/Make distclean
+			git clean -f -x
+			ln -s "$saveMeta" Meta
 			;;
 		esac &&
 
