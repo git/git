@@ -59,6 +59,7 @@
 	FUNC(HAS_DOTGIT, WARN) \
 	FUNC(NULL_SHA1, WARN) \
 	FUNC(ZERO_PADDED_FILEMODE, WARN) \
+	FUNC(NUL_IN_COMMIT, WARN) \
 	/* infos (reported as warnings, but ignored by default) */ \
 	FUNC(BAD_TAG_NAME, INFO) \
 	FUNC(MISSING_TAGGER_ENTRY, INFO)
@@ -610,6 +611,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	struct commit_graft *graft;
 	unsigned parent_count, parent_line_count = 0, author_count;
 	int err;
+	const char *buffer_begin = buffer;
 
 	if (verify_headers(buffer, size, &commit->object, options))
 		return -1;
@@ -666,9 +668,17 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	err = fsck_ident(&buffer, &commit->object, options);
 	if (err)
 		return err;
-	if (!commit->tree)
-		return report(options, &commit->object, FSCK_MSG_BAD_TREE, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
-
+	if (!commit->tree) {
+		err = report(options, &commit->object, FSCK_MSG_BAD_TREE, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
+		if (err)
+			return err;
+	}
+	if (memchr(buffer_begin, '\0', size)) {
+		err = report(options, &commit->object, FSCK_MSG_NUL_IN_COMMIT,
+			     "NUL byte in the commit object body");
+		if (err)
+			return err;
+	}
 	return 0;
 }
 
