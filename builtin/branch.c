@@ -375,12 +375,14 @@ static char *get_head_description(void)
 		strbuf_addf(&desc, _("(no branch, bisect started on %s)"),
 			    state.branch);
 	else if (state.detached_from) {
-		/* TRANSLATORS: make sure these match _("HEAD detached at ")
-		   and _("HEAD detached from ") in wt-status.c */
 		if (state.detached_at)
+			/* TRANSLATORS: make sure this matches
+			   "HEAD detached at " in wt-status.c */
 			strbuf_addf(&desc, _("(HEAD detached at %s)"),
 				state.detached_from);
 		else
+			/* TRANSLATORS: make sure this matches
+			   "HEAD detached from " in wt-status.c */
 			strbuf_addf(&desc, _("(HEAD detached from %s)"),
 				state.detached_from);
 	}
@@ -630,7 +632,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			BRANCH_TRACK_EXPLICIT),
 		OPT_SET_INT( 0, "set-upstream",  &track, N_("change upstream info"),
 			BRANCH_TRACK_OVERRIDE),
-		OPT_STRING('u', "set-upstream-to", &new_upstream, "upstream", "change the upstream info"),
+		OPT_STRING('u', "set-upstream-to", &new_upstream, N_("upstream"), N_("change the upstream info")),
 		OPT_BOOL(0, "unset-upstream", &unset_upstream, "Unset the upstream info"),
 		OPT__COLOR(&branch_use_color, N_("use colored output")),
 		OPT_SET_INT('r', "remotes",     &filter.kind, N_("act on remote-tracking branches"),
@@ -838,8 +840,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (argc == 1 && track == BRANCH_TRACK_OVERRIDE &&
 		    !branch_existed && remote_tracking) {
 			fprintf(stderr, _("\nIf you wanted to make '%s' track '%s', do this:\n\n"), head, branch->name);
-			fprintf(stderr, _("    git branch -d %s\n"), branch->name);
-			fprintf(stderr, _("    git branch --set-upstream-to %s\n"), branch->name);
+			fprintf(stderr, "    git branch -d %s\n", branch->name);
+			fprintf(stderr, "    git branch --set-upstream-to %s\n", branch->name);
 		}
 
 	} else
