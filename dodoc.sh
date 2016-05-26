@@ -62,11 +62,10 @@ done
 # The below used to contain this instead...
 # MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
 dd='
-	ASCIIDOC_NO_ROFF=YesPlease
-	ASCIIDOC8=YesPlease
 	MAN_BASE_URL="git-htmldocs/"
 	BLK_SHA1=YesPlease
 	GNU_ROFF=YesPlease
+	MAN_BOLD_LITERAL=YesPlease
 '
 
 if test -z "$DOC_FROM_SCRATCH"
