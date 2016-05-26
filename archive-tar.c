@@ -181,7 +181,7 @@ static void prepare_header(struct archiver_args *args,
 	memcpy(header->magic, "ustar", 6);
 	memcpy(header->version, "00", 2);
 
-	snprintf(header->chksum, sizeof(header->chksum), "%07o", ustar_header_chksum(header));
+	xsnprintf(header->chksum, sizeof(header->chksum), "%07o", ustar_header_chksum(header));
 }
 
 static int write_extended_header(struct archiver_args *args,
