@@ -279,6 +279,12 @@ See linkgit:git-update-index[1].
 +
 The default is true (when core.filemode is not specified in the config file).
 
+core.hideDotFiles::
+	(Windows-only) If true, mark newly-created directories and files whose
+	name starts with a dot as hidden.  If 'dotGitOnly', only the `.git/`
+	directory is hidden, but no other files starting with a dot.  The
+	default mode is 'dotGitOnly'.
+
 core.ignoreCase::
 	If true, this option enables various workarounds to enable
 	Git to work better on filesystems that are not case sensitive,
