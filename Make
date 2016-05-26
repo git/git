@@ -56,7 +56,7 @@ do
 done
 
 Wall="-Wall -Wvla -Wdeclaration-after-statement -Wno-format-zero-length${Wall+ $Wall}"
-tests= jobs= skip= oldtest= with_dash= testpen=
+tests= jobs= skip= oldtest= with_dash=y testpen=
 clean=:
 
 case `uname` in
