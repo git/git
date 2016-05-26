@@ -581,6 +581,7 @@ struct submodule_update_clone {
 
 	/* configuration parameters which are passed on to the children */
 	int quiet;
+	int recommend_shallow;
 	const char *reference;
 	const char *depth;
 	const char *recursive_prefix;
@@ -593,7 +594,7 @@ struct submodule_update_clone {
 	unsigned quickstop : 1;
 };
 #define SUBMODULE_UPDATE_CLONE_INIT {0, MODULE_LIST_INIT, 0, \
-	SUBMODULE_UPDATE_STRATEGY_INIT, 0, NULL, NULL, NULL, NULL, \
+	SUBMODULE_UPDATE_STRATEGY_INIT, 0, -1, NULL, NULL, NULL, NULL, \
 	STRING_LIST_INIT_DUP, 0}
 
 
@@ -698,6 +699,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		argv_array_push(&child->args, "--quiet");
 	if (suc->prefix)
 		argv_array_pushl(&child->args, "--prefix", suc->prefix, NULL);
+	if (suc->recommend_shallow && sub->recommend_shallow == 1)
+		argv_array_push(&child->args, "--depth=1");
 	argv_array_pushl(&child->args, "--path", sub->path, NULL);
 	argv_array_pushl(&child->args, "--name", sub->name, NULL);
 	argv_array_pushl(&child->args, "--url", url, NULL);
@@ -780,6 +783,8 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 			      "specified number of revisions")),
 		OPT_INTEGER('j', "jobs", &max_jobs,
 			    N_("parallel jobs")),
+		OPT_BOOL(0, "recommend-shallow", &suc.recommend_shallow,
+			    N_("whether the initial clone should follow the shallow recommendation")),
 		OPT__QUIET(&suc.quiet, N_("don't print cloning progress")),
 		OPT_END()
 	};
