@@ -695,18 +695,32 @@ struct child_process *git_connect(int fd[2], const char *url,
 		 * connect, unless the user has overridden us in
 		 * the environment.
 		 */
-		char *target_host = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
-		if (target_host)
-			target_host = xstrdup(target_host);
-		else
-			target_host = xstrdup(hostandport);
+		struct strbuf target_host = STRBUF_INIT;
+		struct strbuf virtual_host = STRBUF_INIT;
+		const char *colon = strchr(host, ':');
+		char *override_vhost = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
+
+		/* If the host contains a colon (ipv6 address), it needs to
+		 * be enclosed with square brackets. */
+		if (colon)
+			strbuf_addch(&target_host, '[');
+		strbuf_addstr(&target_host, host);
+		if (colon)
+			strbuf_addch(&target_host, ']');
+		if (port) {
+			strbuf_addch(&target_host, ':');
+			strbuf_addstr(&target_host, port);
+		}
+
+		strbuf_addstr(&virtual_host, override_vhost ? override_vhost
+							    : target_host.buf);
 
 		transport_check_allowed("git");
 
 		/* These underlying connection commands die() if they
 		 * cannot connect.
 		 */
-		if (git_use_proxy(hostandport))
+		if (git_use_proxy(target_host.buf))
 			conn = git_proxy_connect(fd, host, port);
 		else
 			git_tcp_connect(fd, host, port, flags);
@@ -720,8 +734,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 		packet_write(fd[1],
 			     "%s %s%chost=%s%c",
 			     prog, path, 0,
-			     target_host, 0);
-		free(target_host);
+			     virtual_host.buf, 0);
+		strbuf_release(&virtual_host);
+		strbuf_release(&target_host);
 	} else {
 		conn = xmalloc(sizeof(*conn));
 		child_process_init(conn);
