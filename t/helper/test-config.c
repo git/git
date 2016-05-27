@@ -25,6 +25,9 @@
  * 				ascending order of priority from a config_set
  * 				constructed from files entered as arguments.
  *
+ * iterate -> iterate over all values using git_config(), and print some
+ *            data for each
+ *
  * Examples:
  *
  * To print the value with highest priority for key "foo.bAr Baz.rock":
@@ -32,6 +35,20 @@
  *
  */
 
+static int iterate_cb(const char *var, const char *value, void *data)
+{
+	static int nr;
+
+	if (nr++)
+		putchar('\n');
+
+	printf("key=%s\n", var);
+	printf("value=%s\n", value ? value : "(null)");
+	printf("origin=%s\n", current_config_origin_type());
+	printf("name=%s\n", current_config_name());
+
+	return 0;
+}
 
 int main(int argc, char **argv)
 {
@@ -134,6 +151,9 @@ int main(int argc, char **argv)
 			printf("Value not found for \"%s\"\n", argv[2]);
 			goto exit1;
 		}
+	} else if (!strcmp(argv[1], "iterate")) {
+		git_config(iterate_cb, NULL);
+		goto exit0;
 	}
 
 	die("%s: Please check the syntax and the function name", argv[0]);

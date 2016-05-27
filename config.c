@@ -38,7 +38,24 @@ struct config_source {
 	long (*do_ftell)(struct config_source *c);
 };
 
+/*
+ * These variables record the "current" config source, which
+ * can be accessed by parsing callbacks.
+ *
+ * The "cf" variable will be non-NULL only when we are actually parsing a real
+ * config source (file, blob, cmdline, etc).
+ *
+ * The "current_config_kvi" variable will be non-NULL only when we are feeding
+ * cached config from a configset into a callback.
+ *
+ * They should generally never be non-NULL at the same time. If they are both
+ * NULL, then we aren't parsing anything (and depending on the function looking
+ * at the variables, it's either a bug for it to be called in the first place,
+ * or it's a function which can be reused for non-config purposes, and should
+ * fall back to some sane behavior).
+ */
 static struct config_source *cf;
+static struct key_value_info *current_config_kvi;
 
 static int zlib_compression_seen;
 
@@ -1284,16 +1301,20 @@ static void configset_iter(struct config_set *cs, config_fn_t fn, void *data)
 	struct string_list *values;
 	struct config_set_element *entry;
 	struct configset_list *list = &cs->list;
-	struct key_value_info *kv_info;
 
 	for (i = 0; i < list->nr; i++) {
 		entry = list->items[i].e;
 		value_index = list->items[i].value_index;
 		values = &entry->value_list;
-		if (fn(entry->key, values->items[value_index].string, data) < 0) {
-			kv_info = values->items[value_index].util;
-			git_die_config_linenr(entry->key, kv_info->filename, kv_info->linenr);
-		}
+
+		current_config_kvi = values->items[value_index].util;
+
+		if (fn(entry->key, values->items[value_index].string, data) < 0)
+			git_die_config_linenr(entry->key,
+					      current_config_kvi->filename,
+					      current_config_kvi->linenr);
+
+		current_config_kvi = NULL;
 	}
 }
 
@@ -1355,10 +1376,12 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	if (cf->name) {
 		kv_info->filename = strintern(cf->name);
 		kv_info->linenr = cf->linenr;
+		kv_info->origin_type = strintern(cf->origin_type);
 	} else {
 		/* for values read from `git_config_from_parameters()` */
 		kv_info->filename = NULL;
 		kv_info->linenr = -1;
+		kv_info->origin_type = NULL;
 	}
 	si->util = kv_info;
 
@@ -2438,14 +2461,24 @@ int parse_config_key(const char *var,
 
 const char *current_config_origin_type(void)
 {
-	if (!cf)
+	const char *type;
+	if (current_config_kvi)
+		type = current_config_kvi->origin_type;
+	else if(cf)
+		type = cf->origin_type;
+	else
 		die("BUG: current_config_origin_type called outside config callback");
-	return cf->origin_type ? cf->origin_type : "command line";
+	return type ? type : "command line";
 }
 
 const char *current_config_name(void)
 {
-	if (!cf)
+	const char *name;
+	if (current_config_kvi)
+		name = current_config_kvi->filename;
+	else if (cf)
+		name = cf->name;
+	else
 		die("BUG: current_config_name called outside config callback");
-	return cf->name ? cf->name : "";
+	return name ? name : "";
 }
