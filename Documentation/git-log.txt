@@ -29,12 +29,14 @@ OPTIONS
 	(works only for a single file).
 
 --no-decorate::
---decorate[=short|full|no]::
+--decorate[=short|full|auto|no]::
 	Print out the ref names of any commits that are shown. If 'short' is
 	specified, the ref name prefixes 'refs/heads/', 'refs/tags/' and
 	'refs/remotes/' will not be printed. If 'full' is specified, the
-	full ref name (including prefix) will be printed. The default option
-	is 'short'.
+	full ref name (including prefix) will be printed. If 'auto' is
+	specified, then if the output is going to a terminal, the ref names
+	are shown as if 'short' were given, otherwise no ref names are
+	shown. The default option is 'short'.
 
 --source::
 	Print out the ref name given on the command line by which each
