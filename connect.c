@@ -742,6 +742,13 @@ struct child_process *git_connect(int fd[2], const char *url,
 			transport_check_allowed("ssh");
 			get_host_and_port(&ssh_host, &port);
 
+			/*
+			 * get_host_and_port does not return a port in the
+			 * [host:port]:path case. In that case, it is called
+			 * with "[host:port]" and returns "host:port" and NULL.
+			 * To support this undocumented legacy we still need
+			 * to split the port.
+			 */
 			if (!port)
 				port = get_port(ssh_host);
 
