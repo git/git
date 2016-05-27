@@ -730,6 +730,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 		const char *colon = strchr(host, ':');
 		char *override_vhost = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
 
+		if (user)
+			die("user@host is not allowed in git:// urls");
+
 		/* If the host contains a colon (ipv6 address), it needs to
 		 * be enclosed with square brackets. */
 		if (colon)
