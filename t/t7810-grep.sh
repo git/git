@@ -748,7 +748,7 @@ hello.c-#include <assert.h>
 hello.c:#include <stdio.h>
 EOF
 
-test_expect_failure 'grep -W shows no trailing empty lines' '
+test_expect_success 'grep -W shows no trailing empty lines' '
 	git grep -W stdio >actual &&
 	test_cmp expected actual
 '
