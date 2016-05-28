@@ -145,7 +145,7 @@ test_expect_success ' context includes begin' '
 	grep "^ .*Begin of first part" long_common_tail.diff
 '
 
-test_expect_failure ' context includes end' '
+test_expect_success ' context includes end' '
 	grep "^ .*End of second part" long_common_tail.diff
 '
 
