@@ -9,7 +9,9 @@ test_description='git grep various.
 . ./test-lib.sh
 
 cat >hello.c <<EOF
+#include <assert.h>
 #include <stdio.h>
+
 int main(int argc, const char **argv)
 {
 	printf("Hello world.\n");
@@ -715,6 +717,7 @@ test_expect_success 'grep -p' '
 
 cat >expected <<EOF
 hello.c-#include <stdio.h>
+hello.c-
 hello.c=int main(int argc, const char **argv)
 hello.c-{
 hello.c-	printf("Hello world.\n");
@@ -737,6 +740,16 @@ EOF
 
 test_expect_success 'grep -W' '
 	git grep -W return >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+hello.c-#include <assert.h>
+hello.c:#include <stdio.h>
+EOF
+
+test_expect_failure 'grep -W shows no trailing empty lines' '
+	git grep -W stdio >actual &&
 	test_cmp expected actual
 '
 
@@ -1205,8 +1218,8 @@ test_expect_success 'grep --heading' '
 
 cat >expected <<EOF
 <BOLD;GREEN>hello.c<RESET>
-2:int main(int argc, const <BLACK;BYELLOW>char<RESET> **argv)
-6:	/* <BLACK;BYELLOW>char<RESET> ?? */
+4:int main(int argc, const <BLACK;BYELLOW>char<RESET> **argv)
+8:	/* <BLACK;BYELLOW>char<RESET> ?? */
 
 <BOLD;GREEN>hello_world<RESET>
 3:Hel<BLACK;BYELLOW>lo_w<RESET>orld
@@ -1313,7 +1326,7 @@ test_expect_success 'grep --color -e A --and --not -e B with context' '
 '
 
 cat >expected <<EOF
-hello.c-#include <stdio.h>
+hello.c-
 hello.c=int main(int argc, const char **argv)
 hello.c-{
 hello.c:	pr<RED>int<RESET>f("<RED>Hello<RESET> world.\n");
