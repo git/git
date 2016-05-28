@@ -155,6 +155,18 @@ static long get_func_line(xdfenv_t *xe, xdemitconf_t const *xecfg,
 	return -1;
 }
 
+static int is_empty_rec(xdfile_t *xdf, long ri)
+{
+	const char *rec;
+	long len = xdl_get_rec(xdf, ri, &rec);
+
+	while (len > 0 && XDL_ISSPACE(*rec)) {
+		rec++;
+		len--;
+	}
+	return !len;
+}
+
 int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		  xdemitconf_t const *xecfg) {
 	long s1, s2, e1, e2, lctx;
@@ -176,12 +188,18 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			/* Appended chunk? */
 			if (i1 >= xe->xdf1.nrec) {
 				char dummy[1];
+				long i2 = xch->i2;
 
 				/*
 				 * We don't need additional context if
-				 * a whole function was added.
+				 * a whole function was added, possibly
+				 * starting with empty lines.
 				 */
-				if (match_func_rec(&xe->xdf2, xecfg, xch->i2,
+				while (i2 < xe->xdf2.nrec &&
+				       is_empty_rec(&xe->xdf2, i2))
+					i2++;
+				if (i2 < xe->xdf2.nrec &&
+				    match_func_rec(&xe->xdf2, xecfg, i2,
 						   dummy, sizeof(dummy)) >= 0)
 					goto post_context_calculation;
 
