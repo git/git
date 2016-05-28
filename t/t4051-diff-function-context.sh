@@ -85,7 +85,7 @@ test_expect_success ' context does not include preceding empty lines' '
 	test "$(first_context_line <changed_hello.diff)" != " "
 '
 
-test_expect_failure ' context does not include trailing empty lines' '
+test_expect_success ' context does not include trailing empty lines' '
 	test "$(last_context_line <changed_hello.diff)" != " "
 '
 
@@ -103,7 +103,7 @@ test_expect_success ' context does not include other functions' '
 	test $(grep -c "^[ +-].*Begin" changed_includes.diff) -le 1
 '
 
-test_expect_failure ' context does not include trailing empty lines' '
+test_expect_success ' context does not include trailing empty lines' '
 	test "$(last_context_line <changed_includes.diff)" != " "
 '
 
