@@ -171,7 +171,28 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
 
 		if (xecfg->flags & XDL_EMIT_FUNCCONTEXT) {
-			long fs1 = get_func_line(xe, xecfg, NULL, xch->i1, -1);
+			long fs1, i1 = xch->i1;
+
+			/* Appended chunk? */
+			if (i1 >= xe->xdf1.nrec) {
+				char dummy[1];
+
+				/*
+				 * We don't need additional context if
+				 * a whole function was added.
+				 */
+				if (match_func_rec(&xe->xdf2, xecfg, xch->i2,
+						   dummy, sizeof(dummy)) >= 0)
+					goto post_context_calculation;
+
+				/*
+				 * Otherwise get more context from the
+				 * pre-image.
+				 */
+				i1 = xe->xdf1.nrec - 1;
+			}
+
+			fs1 = get_func_line(xe, xecfg, NULL, i1, -1);
 			if (fs1 < 0)
 				fs1 = 0;
 			if (fs1 < s1) {
@@ -180,7 +201,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			}
 		}
 
- again:
+ post_context_calculation:
 		lctx = xecfg->ctxlen;
 		lctx = XDL_MIN(lctx, xe->xdf1.nrec - (xche->i1 + xche->chg1));
 		lctx = XDL_MIN(lctx, xe->xdf2.nrec - (xche->i2 + xche->chg2));
@@ -209,7 +230,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 				if (l <= e1 ||
 				    get_func_line(xe, xecfg, NULL, l, e1) < 0) {
 					xche = xche->next;
-					goto again;
+					goto post_context_calculation;
 				}
 			}
 		}

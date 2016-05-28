@@ -131,7 +131,7 @@ test_expect_success ' context includes end' '
 	grep "^[+].*End of second part" extended.diff
 '
 
-test_expect_failure ' context does not include other functions' '
+test_expect_success ' context does not include other functions' '
 	test $(grep -c "^[ +-].*Begin" extended.diff) -le 2
 '
 
