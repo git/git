@@ -106,7 +106,7 @@ test_expect_success '--word-diff=porcelain' '
 		-h(4)
 		+h(4),hh[44]
 		~
-		 # significant space
+		# significant space
 		~
 		 a = b + c
 		~
