@@ -125,7 +125,7 @@ effect to your index in a row.
 
 --allow-empty-message::
 	By default, cherry-picking a commit with an empty message will fail.
-	This option overrides that behaviour, allowing commits with empty
+	This option overrides that behavior, allowing commits with empty
 	messages to be cherry picked.
 
 --keep-redundant-commits::
