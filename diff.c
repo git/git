@@ -471,7 +471,7 @@ static void emit_line_0(struct diff_options *o, const char *set, const char *res
 		has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
 		if (has_trailing_carriage_return)
 			len--;
-		nofirst = 0;
+		nofirst = len == 0 && (char)first == ' ' ? 1 : 0;
 	}
 
 	if (len || !nofirst) {
