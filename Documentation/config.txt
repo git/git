@@ -1956,7 +1956,10 @@ log.decorate::
 	command. If 'short' is specified, the ref name prefixes 'refs/heads/',
 	'refs/tags/' and 'refs/remotes/' will not be printed. If 'full' is
 	specified, the full ref name (including prefix) will be printed.
-	This is the same as the log commands '--decorate' option.
+	If 'auto' is specified, then if the output is going to a terminal,
+	the ref names are shown as if 'short' were given, otherwise no ref
+	names are shown. This is the same as the '--decorate' option
+	of the `git log`.
 
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when
