@@ -6172,7 +6172,7 @@ msgstr "affiche les tailles dans un format humainement lisible"
 
 #: builtin/describe.c:17
 msgid "git describe [<options>] [<commit-ish>...]"
-msgstr "git describe [<options>] <commit ou apparenté>*"
+msgstr "git describe [<options>] [<commit ou apparenté>...]"
 
 #: builtin/describe.c:18
 msgid "git describe [<options>] --dirty"
