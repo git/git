@@ -151,6 +151,9 @@ UI, Workflows & Features
    configuration variable and act as if "--verbose" option was
    given from the command line.
 
+ * Give hints to GMail users with two-factor auth enabled that
+   they need app-specific-password when using send-email.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -474,6 +477,14 @@ notes for details).
  * "git difftool" learned to handle unmerged paths correctly in
    dir-diff mode.
    (merge 366f9ce da/difftool later to maint).
+
+ * The "are we talking with TTY, doing an interactive session?"
+   detection has been updated to work better for "Git for Windows".
+   (merge f7f90e0 kb/msys2-tty later to maint).
+
+ * We forgot to add "git log --decorate=auto" to documentation when we
+   added the feature back in v2.1.0 timeframe.
+   (merge 462cbb4 rj/log-decorate-auto later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge 832c0e5 lp/typofixes later to maint).
