@@ -483,6 +483,7 @@ static size_t sizeof_ioinfo = 0;
 #define IOINFO_L2E 5
 #define IOINFO_ARRAY_ELTS (1 << IOINFO_L2E)
 
+#define FPIPE 0x08
 #define FDEV  0x40
 
 static inline ioinfo* _pioinfo(int fd)
@@ -530,6 +531,45 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 	return old_handle;
 }
 
+#ifdef DETECT_MSYS_TTY
+
+#include <winternl.h>
+#include <ntstatus.h>
+
+static void detect_msys_tty(int fd)
+{
+	ULONG result;
+	BYTE buffer[1024];
+	POBJECT_NAME_INFORMATION nameinfo = (POBJECT_NAME_INFORMATION) buffer;
+	PWSTR name;
+
+	/* check if fd is a pipe */
+	HANDLE h = (HANDLE) _get_osfhandle(fd);
+	if (GetFileType(h) != FILE_TYPE_PIPE)
+		return;
+
+	/* get pipe name */
+	if (!NT_SUCCESS(NtQueryObject(h, ObjectNameInformation,
+			buffer, sizeof(buffer) - 2, &result)))
+		return;
+	name = nameinfo->Name.Buffer;
+	name[nameinfo->Name.Length] = 0;
+
+	/* check if this could be a MSYS2 pty pipe ('msys-XXXX-ptyN-XX') */
+	if (!wcsstr(name, L"msys-") || !wcsstr(name, L"-pty"))
+		return;
+
+	/* init ioinfo size if we haven't done so */
+	if (init_sizeof_ioinfo())
+		return;
+
+	/* set FDEV flag, reset FPIPE flag */
+	_pioinfo(fd)->osflags &= ~FPIPE;
+	_pioinfo(fd)->osflags |= FDEV;
+}
+
+#endif
+
 void winansi_init(void)
 {
 	int con1, con2;
@@ -538,8 +578,15 @@ void winansi_init(void)
 	/* check if either stdout or stderr is a console output screen buffer */
 	con1 = is_console(1);
 	con2 = is_console(2);
-	if (!con1 && !con2)
+	if (!con1 && !con2) {
+#ifdef DETECT_MSYS_TTY
+		/* check if stdin / stdout / stderr are MSYS2 pty pipes */
+		detect_msys_tty(0);
+		detect_msys_tty(1);
+		detect_msys_tty(2);
+#endif
 		return;
+	}
 
 	/* create a named pipe to communicate with the console thread */
 	xsnprintf(name, sizeof(name), "\\\\.\\pipe\\winansi%lu", GetCurrentProcessId());
@@ -575,8 +622,11 @@ void winansi_init(void)
 HANDLE winansi_get_osfhandle(int fd)
 {
 	HANDLE hnd = (HANDLE) _get_osfhandle(fd);
-	if ((fd == 1 || fd == 2) && isatty(fd)
-	    && GetFileType(hnd) == FILE_TYPE_PIPE)
-		return (fd == 1) ? hconsole1 : hconsole2;
+	if (isatty(fd) && GetFileType(hnd) == FILE_TYPE_PIPE) {
+		if (fd == 1 && hconsole1)
+			return hconsole1;
+		else if (fd == 2 && hconsole2)
+			return hconsole2;
+	}
 	return hnd;
 }
