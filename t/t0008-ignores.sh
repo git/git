@@ -605,7 +605,7 @@ cat <<-EOF >expected-verbose
 	a/b/.gitignore:8:!on*	a/b/one
 	a/b/.gitignore:8:!on*	a/b/one one
 	a/b/.gitignore:8:!on*	a/b/one two
-	a/b/.gitignore:8:!on*	"a/b/one\"three"
+	a/b/.gitignore:8:!on*	"a/b/one\\"three"
 	a/b/.gitignore:9:!two	a/b/two
 	a/.gitignore:1:two*	a/b/twooo
 	$global_excludes:2:!globaltwo	globaltwo
@@ -686,7 +686,7 @@ cat <<-EOF >expected-all
 	a/b/.gitignore:8:!on*	b/one
 	a/b/.gitignore:8:!on*	b/one one
 	a/b/.gitignore:8:!on*	b/one two
-	a/b/.gitignore:8:!on*	"b/one\"three"
+	a/b/.gitignore:8:!on*	"b/one\\"three"
 	a/b/.gitignore:9:!two	b/two
 	::	b/not-ignored
 	a/.gitignore:1:two*	b/twooo
