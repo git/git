@@ -20,7 +20,7 @@ test_description="merges with unrelated index changes"
 #   Commit E: renames a->subdir/a, adds subdir/e
 
 test_expect_success 'setup trivial merges' '
-	seq 1 10 >a &&
+	test_seq 1 10 >a &&
 	git add a &&
 	test_tick && git commit -m A &&
 
@@ -42,7 +42,7 @@ test_expect_success 'setup trivial merges' '
 	test_tick && git commit -m C &&
 
 	git checkout D &&
-	seq 2 10 >a &&
+	test_seq 2 10 >a &&
 	echo d >d &&
 	git add a d &&
 	test_tick && git commit -m D &&
