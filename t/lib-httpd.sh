@@ -30,6 +30,18 @@
 # Copyright (c) 2008 Clemens Buchacher <drizzd@aon.at>
 #
 
+if test -n "$NO_CURL"
+then
+	skip_all='skipping test, git built without http support'
+	test_done
+fi
+
+if test -n "$NO_EXPAT" && test -n "$LIB_HTTPD_DAV"
+then
+	skip_all='skipping test, git built without expat support'
+	test_done
+fi
+
 test_tristate GIT_TEST_HTTPD
 if test "$GIT_TEST_HTTPD" = false
 then
@@ -37,7 +49,7 @@ then
 	test_done
 fi
 
-if ! test_have_prereq SANITY; then
+if ! test_have_prereq NOT_ROOT; then
 	test_skip_or_die $GIT_TEST_HTTPD \
 		"Cannot run httpd tests as root"
 fi
@@ -79,14 +91,15 @@ HTTPD_DOCUMENT_ROOT_PATH=$HTTPD_ROOT_PATH/www
 # hack to suppress apache PassEnv warnings
 GIT_VALGRIND=$GIT_VALGRIND; export GIT_VALGRIND
 GIT_VALGRIND_OPTIONS=$GIT_VALGRIND_OPTIONS; export GIT_VALGRIND_OPTIONS
+GIT_TRACE=$GIT_TRACE; export GIT_TRACE
 
 if ! test -x "$LIB_HTTPD_PATH"
 then
 	test_skip_or_die $GIT_TEST_HTTPD "no web server found at '$LIB_HTTPD_PATH'"
 fi
 
-HTTPD_VERSION=`$LIB_HTTPD_PATH -v | \
-	sed -n 's/^Server version: Apache\/\([0-9]*\)\..*$/\1/p; q'`
+HTTPD_VERSION=$($LIB_HTTPD_PATH -v | \
+	sed -n 's/^Server version: Apache\/\([0-9]*\)\..*$/\1/p; q')
 
 if test -n "$HTTPD_VERSION"
 then

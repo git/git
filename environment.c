@@ -24,13 +24,14 @@ int is_bare_repository_cfg = -1; /* unspecified */
 int log_all_ref_updates = -1; /* unspecified */
 int warn_ambiguous_refs = 1;
 int warn_on_object_refname_ambiguity = 1;
-int repository_format_version;
+int ref_paranoia = -1;
+int repository_format_precious_objects;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
-int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
 const char *apply_default_ignorewhitespace;
 const char *git_attributes_file;
+const char *git_hooks_path;
 int zlib_compression_level = Z_BEST_SPEED;
 int core_compression_level;
 int core_compression_seen;
@@ -46,6 +47,7 @@ const char *askpass_program;
 const char *excludes_file;
 enum auto_crlf auto_crlf = AUTO_CRLF_FALSE;
 int check_replace_refs = 1;
+char *git_replace_ref_base;
 enum eol core_eol = EOL_UNSET;
 enum safe_crlf safe_crlf = SAFE_CRLF_WARN;
 unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
@@ -61,8 +63,8 @@ int grafts_replace_parents = 1;
 int core_apply_sparse_checkout;
 int merge_log_config = -1;
 int precomposed_unicode = -1; /* see probe_utf8_pathname_composition() */
-struct startup_info *startup_info;
 unsigned long pack_size_limit_cfg;
+enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 
 #ifndef PROTECT_HFS_DEFAULT
 #define PROTECT_HFS_DEFAULT 0
@@ -84,6 +86,13 @@ int auto_comment_line_char;
 /* Parallel index stat data preload? */
 int core_preload_index = 1;
 
+/*
+ * This is a hack for test programs like test-dump-untracked-cache to
+ * ensure that they do not modify the untracked cache when reading it.
+ * Do not use it otherwise!
+ */
+int ignore_untracked_cache_config;
+
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
 static char *work_tree;
@@ -91,8 +100,9 @@ static char *work_tree;
 static const char *namespace;
 static size_t namespace_len;
 
-static const char *git_dir;
+static const char *git_dir, *git_common_dir;
 static char *git_object_dir, *git_index_file, *git_graft_file;
+int git_db_env, git_index_env, git_graft_env, git_common_dir_env;
 
 /*
  * Repository-local GIT_* environment variables; see cache.h for details.
@@ -108,8 +118,10 @@ const char * const local_repo_env[] = {
 	GRAFT_ENVIRONMENT,
 	INDEX_ENVIRONMENT,
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
+	GIT_REPLACE_REF_BASE_ENVIRONMENT,
 	GIT_PREFIX_ENVIRONMENT,
 	GIT_SHALLOW_FILE_ENVIRONMENT,
+	GIT_COMMON_DIR_ENVIRONMENT,
 	NULL
 };
 
@@ -134,27 +146,43 @@ static char *expand_namespace(const char *raw_namespace)
 	return strbuf_detach(&buf, NULL);
 }
 
-static char *git_path_from_env(const char *envvar, const char *path)
+static char *git_path_from_env(const char *envvar, const char *git_dir,
+			       const char *path, int *fromenv)
 {
 	const char *value = getenv(envvar);
-	return value ? xstrdup(value) : git_pathdup("%s", path);
+	if (!value)
+		return xstrfmt("%s/%s", git_dir, path);
+	if (fromenv)
+		*fromenv = 1;
+	return xstrdup(value);
 }
 
 static void setup_git_env(void)
 {
+	struct strbuf sb = STRBUF_INIT;
 	const char *gitfile;
 	const char *shallow_file;
+	const char *replace_ref_base;
 
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
 	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	gitfile = read_gitfile(git_dir);
 	git_dir = xstrdup(gitfile ? gitfile : git_dir);
-	git_object_dir = git_path_from_env(DB_ENVIRONMENT, "objects");
-	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, "index");
-	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, "info/grafts");
+	if (get_common_dir(&sb, git_dir))
+		git_common_dir_env = 1;
+	git_common_dir = strbuf_detach(&sb, NULL);
+	git_object_dir = git_path_from_env(DB_ENVIRONMENT, git_common_dir,
+					   "objects", &git_db_env);
+	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, git_dir,
+					   "index", &git_index_env);
+	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, git_common_dir,
+					   "info/grafts", &git_graft_env);
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		check_replace_refs = 0;
+	replace_ref_base = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
+	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
+							  : "refs/replace/");
 	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
 	namespace_len = strlen(namespace);
 	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
@@ -173,6 +201,11 @@ const char *get_git_dir(void)
 	if (!git_dir)
 		setup_git_env();
 	return git_dir;
+}
+
+const char *get_git_common_dir(void)
+{
+	return git_common_dir;
 }
 
 const char *get_git_namespace(void)
@@ -290,4 +323,25 @@ const char *get_log_output_encoding(void)
 const char *get_commit_output_encoding(void)
 {
 	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+}
+
+static int the_shared_repository = PERM_UMASK;
+static int need_shared_repository_from_config = 1;
+
+void set_shared_repository(int value)
+{
+	the_shared_repository = value;
+	need_shared_repository_from_config = 0;
+}
+
+int get_shared_repository(void)
+{
+	if (need_shared_repository_from_config) {
+		const char *var = "core.sharedrepository";
+		const char *value;
+		if (!git_config_get_value(var, &value))
+			the_shared_repository = git_config_perm(var, value);
+		need_shared_repository_from_config = 0;
+	}
+	return the_shared_repository;
 }

@@ -1,0 +1,76 @@
+Git v2.4.3 Release Notes
+========================
+
+Fixes since v2.4.3
+------------------
+
+ * Error messages from "git branch" called remote-tracking branches as
+   "remote branches".
+
+ * "git rerere forget" in a repository without rerere enabled gave a
+   cryptic error message; it should be a silent no-op instead.
+
+ * "git pull --log" and "git pull --no-log" worked as expected, but
+   "git pull --log=20" did not.
+
+ * The pull.ff configuration was supposed to override the merge.ff
+   configuration, but it didn't.
+
+ * The code to read pack-bitmap wanted to allocate a few hundred
+   pointers to a structure, but by mistake allocated and leaked memory
+   enough to hold that many actual structures.  Correct the allocation
+   size and also have it on stack, as it is small enough.
+
+ * Various documentation mark-up fixes to make the output more
+   consistent in general and also make AsciiDoctor (an alternative
+   formatter) happier.
+
+ * "git bundle verify" did not diagnose extra parameters on the
+   command line.
+
+ * Multi-ref transaction support we merged a few releases ago
+   unnecessarily kept many file descriptors open, risking to fail with
+   resource exhaustion.
+
+ * The ref API did not handle cases where 'refs/heads/xyzzy/frotz' is
+   removed at the same time as 'refs/heads/xyzzy' is added (or vice
+   versa) very well.
+
+ * The "log --decorate" enhancement in Git 2.4 that shows the commit
+   at the tip of the current branch e.g. "HEAD -> master", did not
+   work with --decorate=full.
+
+ * There was a commented-out (instead of being marked to expect
+   failure) test that documented a breakage that was fixed since the
+   test was written; turn it into a proper test.
+
+ * core.excludesfile (defaulting to $XDG_HOME/git/ignore) is supposed
+   to be overridden by repository-specific .git/info/exclude file, but
+   the order was swapped from the beginning. This belatedly fixes it.
+
+ * The connection initiation code for "ssh" transport tried to absorb
+   differences between the stock "ssh" and Putty-supplied "plink" and
+   its derivatives, but the logic to tell that we are using "plink"
+   variants were too loose and falsely triggered when "plink" appeared
+   anywhere in the path (e.g. "/home/me/bin/uplink/ssh").
+
+ * "git rebase -i" moved the "current" command from "todo" to "done" a
+   bit too prematurely, losing a step when a "pick" did not even start.
+
+ * "git add -e" did not allow the user to abort the operation by
+   killing the editor.
+
+ * Git 2.4 broke setting verbosity and progress levels on "git clone"
+   with native transports.
+
+ * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
+   call when synthesizing a fake "tip" commit that represents the
+   state in the working tree, which broke folks who record the history
+   with LF line ending to make their project portabile across
+   platforms while terminating lines in their working tree files with
+   CRLF for their platform.
+
+ * Code clean-up for xdg configuration path support.
+
+Also contains typofixes, documentation updates and trivial code
+clean-ups.

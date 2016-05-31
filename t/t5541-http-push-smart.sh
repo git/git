@@ -6,11 +6,6 @@
 test_description='test smart pushing over http via http-backend'
 . ./test-lib.sh
 
-if test -n "$NO_CURL"; then
-	skip_all='skipping test, git built without http support'
-	test_done
-fi
-
 ROOT_PATH="$PWD"
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
@@ -158,7 +153,7 @@ test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper' '
 	# create a dissimilarly-named remote ref so that git is unable to match the
 	# two refs (viz. local, remote) unless an explicit refspec is provided.
-	git push origin master:retsam
+	git push origin master:retsam &&
 
 	echo "change changed" > path2 &&
 	git commit -a -m path2 --amend &&
@@ -323,12 +318,6 @@ test_expect_success 'push into half-auth-complete requires password' '
 	expect_askpass both user@host &&
 	test_cmp expect actual
 '
-
-run_with_limited_cmdline () {
-	(ulimit -s 128 && "$@")
-}
-
-test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'
 
 test_expect_success CMDLINE_LIMIT 'push 2000 tags over http' '
 	sha1=$(git rev-parse HEAD) &&

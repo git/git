@@ -35,11 +35,11 @@ test_expect_success \
      GIT_COMMITTER_NAME="Committer Name" \
      GIT_COMMITTER_EMAIL="committer@email" \
      GIT_COMMITTER_DATE="2005-05-26 23:30" \
-     TZ=GMT git commit-tree `cat treeid` >commitid 2>/dev/null'
+     TZ=GMT git commit-tree $(cat treeid) >commitid 2>/dev/null'
 
 test_expect_success \
     'read commit' \
-    'git cat-file commit `cat commitid` >commit'
+    'git cat-file commit $(cat commitid) >commit'
 
 test_expect_success \
     'compare commit' \

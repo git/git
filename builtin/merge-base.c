@@ -16,7 +16,7 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 		return 1;
 
 	while (result) {
-		printf("%s\n", sha1_to_hex(result->item->object.sha1));
+		printf("%s\n", oid_to_hex(&result->item->object.oid));
 		if (!show_all)
 			return 0;
 		result = result->next;
@@ -26,8 +26,8 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 }
 
 static const char * const merge_base_usage[] = {
-	N_("git merge-base [-a|--all] <commit> <commit>..."),
-	N_("git merge-base [-a|--all] --octopus <commit>..."),
+	N_("git merge-base [-a | --all] <commit> <commit>..."),
+	N_("git merge-base [-a | --all] --octopus <commit>..."),
 	N_("git merge-base --independent <commit>..."),
 	N_("git merge-base --is-ancestor <commit> <commit>"),
 	N_("git merge-base --fork-point <ref> [<commit>]"),
@@ -62,7 +62,7 @@ static int handle_independent(int count, const char **args)
 		return 1;
 
 	while (result) {
-		printf("%s\n", sha1_to_hex(result->item->object.sha1));
+		printf("%s\n", oid_to_hex(&result->item->object.oid));
 		result = result->next;
 	}
 	return 0;
@@ -83,7 +83,7 @@ static int handle_octopus(int count, const char **args, int show_all)
 		return 1;
 
 	while (result) {
-		printf("%s\n", sha1_to_hex(result->item->object.sha1));
+		printf("%s\n", oid_to_hex(&result->item->object.oid));
 		if (!show_all)
 			return 0;
 		result = result->next;
@@ -196,7 +196,7 @@ static int handle_fork_point(int argc, const char **argv)
 		goto cleanup_return;
 	}
 
-	printf("%s\n", sha1_to_hex(bases->item->object.sha1));
+	printf("%s\n", oid_to_hex(&bases->item->object.oid));
 
 cleanup_return:
 	free_commit_list(bases);
@@ -252,7 +252,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	if (argc < 2)
 		usage_with_options(merge_base_usage, options);
 
-	rev = xmalloc(argc * sizeof(*rev));
+	ALLOC_ARRAY(rev, argc);
 	while (argc-- > 0)
 		rev[rev_nr++] = get_commit_reference(*argv++);
 	return show_merge_base(rev, rev_nr, show_all);

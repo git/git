@@ -45,6 +45,14 @@ test_expect_success 'fast-forward pull succeeds with "true" in pull.ff' '
 	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
 '
 
+test_expect_success 'pull.ff=true overrides merge.ff=false' '
+	git reset --hard c0 &&
+	test_config merge.ff false &&
+	test_config pull.ff true &&
+	git pull . c1 &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+'
+
 test_expect_success 'fast-forward pull creates merge with "false" in pull.ff' '
 	git reset --hard c0 &&
 	test_config pull.ff false &&

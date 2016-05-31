@@ -19,6 +19,21 @@ relative_path() {
 	"test \"\$(test-path-utils relative_path '$1' '$2')\" = '$expected'"
 }
 
+test_submodule_relative_url() {
+	test_expect_success "test_submodule_relative_url: $1 $2 $3 => $4" "
+		actual=\$(git submodule--helper resolve-relative-url-test '$1' '$2' '$3') &&
+		test \"\$actual\" = '$4'
+	"
+}
+
+test_git_path() {
+	test_expect_success "git-path $1 $2 => $3" "
+		$1 git rev-parse --git-path $2 >actual &&
+		echo $3 >expect &&
+		test_cmp expect actual
+	"
+}
+
 # On Windows, we are using MSYS's bash, which mangles the paths.
 # Absolute paths are anchored at the MSYS installation directory,
 # which means that the path / accounts for this many characters:
@@ -28,12 +43,21 @@ if test $rootoff = 2; then
 	rootoff=	# we are on Unix
 else
 	rootoff=$(($rootoff-1))
+	# In MSYS2, the root directory "/" is translated into a Windows
+	# directory *with* trailing slash. Let's test for that and adjust
+	# our expected longest ancestor length accordingly.
+	case "$(test-path-utils print_path /)" in
+	*/) rootslash=1;;
+	*) rootslash=0;;
+	esac
 fi
 
 ancestor() {
 	# We do some math with the expected ancestor length.
 	expected=$3
 	if test -n "$rootoff" && test "x$expected" != x-1; then
+		expected=$(($expected-$rootslash))
+		test $expected -lt 0 ||
 		expected=$(($expected+$rootoff))
 	fi
 	test_expect_success "longest ancestor: $1 $2 => $expected" \
@@ -50,6 +74,9 @@ case $(uname -s) in
 	test_set_prereq POSIX
 	;;
 esac
+
+test_expect_success basename 'test-path-utils basename'
+test_expect_success dirname 'test-path-utils dirname'
 
 norm_path "" ""
 norm_path . ""
@@ -243,5 +270,78 @@ relative_path "<empty>"		"<null>"	./
 relative_path "<null>"		"<empty>"	./
 relative_path "<null>"		"<null>"	./
 relative_path "<null>"		/foo/a/b	./
+
+test_git_path A=B                info/grafts .git/info/grafts
+test_git_path GIT_GRAFT_FILE=foo info/grafts foo
+test_git_path GIT_GRAFT_FILE=foo info/////grafts foo
+test_git_path GIT_INDEX_FILE=foo index foo
+test_git_path GIT_INDEX_FILE=foo index/foo .git/index/foo
+test_git_path GIT_INDEX_FILE=foo index2 .git/index2
+test_expect_success 'setup fake objects directory foo' 'mkdir foo'
+test_git_path GIT_OBJECT_DIRECTORY=foo objects foo
+test_git_path GIT_OBJECT_DIRECTORY=foo objects/foo foo/foo
+test_git_path GIT_OBJECT_DIRECTORY=foo objects2 .git/objects2
+test_expect_success 'setup common repository' 'git --git-dir=bar init'
+test_git_path GIT_COMMON_DIR=bar index                    .git/index
+test_git_path GIT_COMMON_DIR=bar HEAD                     .git/HEAD
+test_git_path GIT_COMMON_DIR=bar logs/HEAD                .git/logs/HEAD
+test_git_path GIT_COMMON_DIR=bar logs/refs/bisect/foo     .git/logs/refs/bisect/foo
+test_git_path GIT_COMMON_DIR=bar logs/refs/bisec/foo      bar/logs/refs/bisec/foo
+test_git_path GIT_COMMON_DIR=bar logs/refs/bisec          bar/logs/refs/bisec
+test_git_path GIT_COMMON_DIR=bar logs/refs/bisectfoo      bar/logs/refs/bisectfoo
+test_git_path GIT_COMMON_DIR=bar objects                  bar/objects
+test_git_path GIT_COMMON_DIR=bar objects/bar              bar/objects/bar
+test_git_path GIT_COMMON_DIR=bar info/exclude             bar/info/exclude
+test_git_path GIT_COMMON_DIR=bar info/grafts              bar/info/grafts
+test_git_path GIT_COMMON_DIR=bar info/sparse-checkout     .git/info/sparse-checkout
+test_git_path GIT_COMMON_DIR=bar info//sparse-checkout    .git/info//sparse-checkout
+test_git_path GIT_COMMON_DIR=bar remotes/bar              bar/remotes/bar
+test_git_path GIT_COMMON_DIR=bar branches/bar             bar/branches/bar
+test_git_path GIT_COMMON_DIR=bar logs/refs/heads/master   bar/logs/refs/heads/master
+test_git_path GIT_COMMON_DIR=bar refs/heads/master        bar/refs/heads/master
+test_git_path GIT_COMMON_DIR=bar refs/bisect/foo          .git/refs/bisect/foo
+test_git_path GIT_COMMON_DIR=bar hooks/me                 bar/hooks/me
+test_git_path GIT_COMMON_DIR=bar config                   bar/config
+test_git_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
+test_git_path GIT_COMMON_DIR=bar shallow                  bar/shallow
+
+# In the tests below, the distinction between $PWD and $(pwd) is important:
+# on Windows, $PWD is POSIX style (/c/foo), $(pwd) has drive letter (c:/foo).
+
+test_submodule_relative_url "../" "../foo" "../submodule" "../../submodule"
+test_submodule_relative_url "../" "../foo/bar" "../submodule" "../../foo/submodule"
+test_submodule_relative_url "../" "../foo/submodule" "../submodule" "../../foo/submodule"
+test_submodule_relative_url "../" "./foo" "../submodule" "../submodule"
+test_submodule_relative_url "../" "./foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "../../../" "../foo/bar" "../sub/a/b/c" "../../../../foo/sub/a/b/c"
+test_submodule_relative_url "../" "$PWD/addtest" "../repo" "$(pwd)/repo"
+test_submodule_relative_url "../" "foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "../" "foo" "../submodule" "../submodule"
+
+test_submodule_relative_url "(null)" "../foo/bar" "../sub/a/b/c" "../foo/sub/a/b/c"
+test_submodule_relative_url "(null)" "../foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "(null)" "../foo/submodule" "../submodule" "../foo/submodule"
+test_submodule_relative_url "(null)" "../foo" "../submodule" "../submodule"
+test_submodule_relative_url "(null)" "./foo/bar" "../submodule" "foo/submodule"
+test_submodule_relative_url "(null)" "./foo" "../submodule" "submodule"
+test_submodule_relative_url "(null)" "//somewhere else/repo" "../subrepo" "//somewhere else/subrepo"
+test_submodule_relative_url "(null)" "$PWD/subsuper_update_r" "../subsubsuper_update_r" "$(pwd)/subsubsuper_update_r"
+test_submodule_relative_url "(null)" "$PWD/super_update_r2" "../subsuper_update_r" "$(pwd)/subsuper_update_r"
+test_submodule_relative_url "(null)" "$PWD/." "../." "$(pwd)/."
+test_submodule_relative_url "(null)" "$PWD" "./." "$(pwd)/."
+test_submodule_relative_url "(null)" "$PWD/addtest" "../repo" "$(pwd)/repo"
+test_submodule_relative_url "(null)" "$PWD" "./å äö" "$(pwd)/å äö"
+test_submodule_relative_url "(null)" "$PWD/." "../submodule" "$(pwd)/submodule"
+test_submodule_relative_url "(null)" "$PWD/submodule" "../submodule" "$(pwd)/submodule"
+test_submodule_relative_url "(null)" "$PWD/home2/../remote" "../bundle1" "$(pwd)/home2/../bundle1"
+test_submodule_relative_url "(null)" "$PWD/submodule_update_repo" "./." "$(pwd)/submodule_update_repo/."
+test_submodule_relative_url "(null)" "file:///tmp/repo" "../subrepo" "file:///tmp/subrepo"
+test_submodule_relative_url "(null)" "foo/bar" "../submodule" "foo/submodule"
+test_submodule_relative_url "(null)" "foo" "../submodule" "submodule"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../subrepo" "helper:://hostname/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname/repo" "../subrepo" "ssh://hostname/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname:22/repo" "../subrepo" "ssh://hostname:22/subrepo"
+test_submodule_relative_url "(null)" "user@host:path/to/repo" "../subrepo" "user@host:path/to/subrepo"
+test_submodule_relative_url "(null)" "user@host:repo" "../subrepo" "user@host:subrepo"
 
 test_done

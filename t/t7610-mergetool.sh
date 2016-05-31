@@ -174,9 +174,9 @@ test_expect_success 'mergetool skips autoresolved' '
 '
 
 test_expect_success 'mergetool merges all from subdir' '
+	test_config rerere.enabled false &&
 	(
 		cd subdir &&
-		test_config rerere.enabled false &&
 		test_must_fail git merge master &&
 		( yes "r" | git mergetool ../submod ) &&
 		( yes "d" "d" | git mergetool --no-prompt ) &&
@@ -241,6 +241,70 @@ test_expect_success 'mergetool takes partial path' '
 
 	test "$(cat subdir/file3)" = "master new sub" &&
 	git reset --hard
+'
+
+test_expect_success 'mergetool delete/delete conflict' '
+	git checkout -b delete-base branch1 &&
+	mkdir -p a/a &&
+	(echo one; echo two; echo 3; echo 4) >a/a/file.txt &&
+	git add a/a/file.txt &&
+	git commit -m"base file" &&
+	git checkout -b move-to-b delete-base &&
+	mkdir -p b/b &&
+	git mv a/a/file.txt b/b/file.txt &&
+	(echo one; echo two; echo 4) >b/b/file.txt &&
+	git commit -a -m"move to b" &&
+	git checkout -b move-to-c delete-base &&
+	mkdir -p c/c &&
+	git mv a/a/file.txt c/c/file.txt &&
+	(echo one; echo two; echo 3) >c/c/file.txt &&
+	git commit -a -m"move to c" &&
+	test_must_fail git merge move-to-b &&
+	echo d | git mergetool a/a/file.txt &&
+	! test -f a/a/file.txt &&
+	git reset --hard HEAD &&
+	test_must_fail git merge move-to-b &&
+	echo m | git mergetool a/a/file.txt &&
+	test -f b/b/file.txt &&
+	git reset --hard HEAD &&
+	test_must_fail git merge move-to-b &&
+	! echo a | git mergetool a/a/file.txt &&
+	! test -f a/a/file.txt &&
+	git reset --hard HEAD
+'
+
+test_expect_success 'mergetool produces no errors when keepBackup is used' '
+	test_config mergetool.keepBackup true &&
+	test_must_fail git merge move-to-b &&
+	: >expect &&
+	echo d | git mergetool a/a/file.txt 2>actual &&
+	test_cmp expect actual &&
+	! test -d a &&
+	git reset --hard HEAD
+'
+
+test_expect_success 'mergetool honors tempfile config for deleted files' '
+	test_config mergetool.keepTemporaries false &&
+	test_must_fail git merge move-to-b &&
+	echo d | git mergetool a/a/file.txt &&
+	! test -d a &&
+	git reset --hard HEAD
+'
+
+test_expect_success 'mergetool keeps tempfiles when aborting delete/delete' '
+	test_config mergetool.keepTemporaries true &&
+	test_must_fail git merge move-to-b &&
+	! (echo a; echo n) | git mergetool a/a/file.txt &&
+	test -d a/a &&
+	cat >expect <<-\EOF &&
+	file_BASE_.txt
+	file_LOCAL_.txt
+	file_REMOTE_.txt
+	EOF
+	ls -1 a/a | sed -e "s/[0-9]*//g" >actual &&
+	test_cmp expect actual &&
+	git clean -fdx &&
+	git reset --hard HEAD
 '
 
 test_expect_success 'deleted vs modified submodule' '

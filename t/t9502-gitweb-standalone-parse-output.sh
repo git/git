@@ -145,9 +145,11 @@ test_expect_success 'forks: not skipped unless "forks" feature enabled' '
 	grep -q ">fork of .*<"           gitweb.body
 '
 
-cat >>gitweb_config.perl <<\EOF &&
-$feature{'forks'}{'default'} = [1];
-EOF
+test_expect_success 'enable forks feature' '
+	cat >>gitweb_config.perl <<-\EOF
+	$feature{"forks"}{"default"} = [1];
+	EOF
+'
 
 test_expect_success 'forks: forks skipped if "forks" feature enabled' '
 	gitweb_run "a=project_list" &&
@@ -173,7 +175,7 @@ test_expect_success 'forks: can access forked repository' '
 '
 
 test_expect_success 'forks: project_index lists all projects (incl. forks)' '
-	cat >expected <<-\EOF
+	cat >expected <<-\EOF &&
 	.git
 	foo.bar.git
 	foo.git

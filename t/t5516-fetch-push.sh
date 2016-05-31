@@ -16,7 +16,7 @@ This test checks the following functionality:
 
 . ./test-lib.sh
 
-D=`pwd`
+D=$(pwd)
 
 mk_empty () {
 	repo_name="$1"
@@ -238,7 +238,7 @@ test_expect_success 'push with pushInsteadOf' '
 test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
 	mk_empty testrepo &&
 	test_config "url.trash2/.pushInsteadOf" testrepo/ &&
-	test_config "url.trash3/.pusnInsteadOf" trash/wrong &&
+	test_config "url.trash3/.pushInsteadOf" trash/wrong &&
 	test_config remote.r.url trash/wrong &&
 	test_config remote.r.pushurl "testrepo/" &&
 	git push r refs/heads/master:refs/remotes/origin/master &&
@@ -422,7 +422,7 @@ test_expect_success 'push tag with non-existent, incomplete dest' '
 test_expect_success 'push sha1 with non-existent, incomplete dest' '
 
 	mk_test testrepo &&
-	test_must_fail git push testrepo `git rev-parse master`:foo
+	test_must_fail git push testrepo $(git rev-parse master):foo
 
 '
 
@@ -1107,11 +1107,73 @@ test_expect_success 'fetch exact SHA1' '
 			git config uploadpack.allowtipsha1inwant true
 		) &&
 
-		git fetch -v ../testrepo $the_commit:refs/heads/copy &&
-		result=$(git rev-parse --verify refs/heads/copy) &&
-		test "$the_commit" = "$result"
+		git fetch -v ../testrepo $the_commit:refs/heads/copy master:refs/heads/extra &&
+		cat >expect <<-EOF &&
+		$the_commit
+		$the_first_commit
+		EOF
+		{
+			git rev-parse --verify refs/heads/copy &&
+			git rev-parse --verify refs/heads/extra
+		} >actual &&
+		test_cmp expect actual
 	)
 '
+
+for configallowtipsha1inwant in true false
+do
+	test_expect_success "shallow fetch reachable SHA1 (but not a ref), allowtipsha1inwant=$configallowtipsha1inwant" '
+		mk_empty testrepo &&
+		(
+			cd testrepo &&
+			git config uploadpack.allowtipsha1inwant $configallowtipsha1inwant &&
+			git commit --allow-empty -m foo &&
+			git commit --allow-empty -m bar
+		) &&
+		SHA1=$(git --git-dir=testrepo/.git rev-parse HEAD^) &&
+		mk_empty shallow &&
+		(
+			cd shallow &&
+			test_must_fail git fetch --depth=1 ../testrepo/.git $SHA1 &&
+			git --git-dir=../testrepo/.git config uploadpack.allowreachablesha1inwant true &&
+			git fetch --depth=1 ../testrepo/.git $SHA1 &&
+			git cat-file commit $SHA1
+		)
+	'
+
+	test_expect_success "deny fetch unreachable SHA1, allowtipsha1inwant=$configallowtipsha1inwant" '
+		mk_empty testrepo &&
+		(
+			cd testrepo &&
+			git config uploadpack.allowtipsha1inwant $configallowtipsha1inwant &&
+			git commit --allow-empty -m foo &&
+			git commit --allow-empty -m bar &&
+			git commit --allow-empty -m xyz
+		) &&
+		SHA1_1=$(git --git-dir=testrepo/.git rev-parse HEAD^^) &&
+		SHA1_2=$(git --git-dir=testrepo/.git rev-parse HEAD^) &&
+		SHA1_3=$(git --git-dir=testrepo/.git rev-parse HEAD) &&
+		(
+			cd testrepo &&
+			git reset --hard $SHA1_2 &&
+			git cat-file commit $SHA1_1 &&
+			git cat-file commit $SHA1_3
+		) &&
+		mk_empty shallow &&
+		(
+			cd shallow &&
+			test_must_fail ok=sigpipe git fetch ../testrepo/.git $SHA1_3 &&
+			test_must_fail ok=sigpipe git fetch ../testrepo/.git $SHA1_1 &&
+			git --git-dir=../testrepo/.git config uploadpack.allowreachablesha1inwant true &&
+			git fetch ../testrepo/.git $SHA1_1 &&
+			git cat-file commit $SHA1_1 &&
+			test_must_fail git cat-file commit $SHA1_2 &&
+			git fetch ../testrepo/.git $SHA1_2 &&
+			git cat-file commit $SHA1_2 &&
+			test_must_fail ok=sigpipe git fetch ../testrepo/.git $SHA1_3
+		)
+	'
+done
 
 test_expect_success 'fetch follows tags by default' '
 	mk_test testrepo heads/master &&
@@ -1430,8 +1492,124 @@ test_expect_success 'receive.denyCurrentBranch = updateInstead' '
 		test $(git -C .. rev-parse HEAD^^) = $(git rev-parse HEAD) &&
 		git diff --quiet &&
 		test fifth = "$(cat path3)"
-	)
+	) &&
 
+	# (5) push into void
+	rm -fr void &&
+	git init void &&
+	(
+		cd void &&
+		git config receive.denyCurrentBranch updateInstead
+	) &&
+	git push void master &&
+	(
+		cd void &&
+		test $(git -C .. rev-parse master) = $(git rev-parse HEAD) &&
+		git diff --quiet &&
+		git diff --cached --quiet
+	)
+'
+
+test_expect_success 'updateInstead with push-to-checkout hook' '
+	rm -fr testrepo &&
+	git init testrepo &&
+	(
+		cd testrepo &&
+		git pull .. master &&
+		git reset --hard HEAD^^ &&
+		git tag initial &&
+		git config receive.denyCurrentBranch updateInstead &&
+		write_script .git/hooks/push-to-checkout <<-\EOF
+		echo >&2 updating from $(git rev-parse HEAD)
+		echo >&2 updating to "$1"
+
+		git update-index -q --refresh &&
+		git read-tree -u -m HEAD "$1" || {
+			status=$?
+			echo >&2 read-tree failed
+			exit $status
+		}
+		EOF
+	) &&
+
+	# Try pushing into a pristine
+	git push testrepo master &&
+	(
+		cd testrepo &&
+		git diff --quiet &&
+		git diff HEAD --quiet &&
+		test $(git -C .. rev-parse HEAD) = $(git rev-parse HEAD)
+	) &&
+
+	# Try pushing into a repository with conflicting change
+	(
+		cd testrepo &&
+		git reset --hard initial &&
+		echo conflicting >path2
+	) &&
+	test_must_fail git push testrepo master &&
+	(
+		cd testrepo &&
+		test $(git rev-parse initial) = $(git rev-parse HEAD) &&
+		test conflicting = "$(cat path2)" &&
+		git diff-index --quiet --cached HEAD
+	) &&
+
+	# Try pushing into a repository with unrelated change
+	(
+		cd testrepo &&
+		git reset --hard initial &&
+		echo unrelated >path1 &&
+		echo irrelevant >path5 &&
+		git add path5
+	) &&
+	git push testrepo master &&
+	(
+		cd testrepo &&
+		test "$(cat path1)" = unrelated &&
+		test "$(cat path5)" = irrelevant &&
+		test "$(git diff --name-only --cached HEAD)" = path5 &&
+		test $(git -C .. rev-parse HEAD) = $(git rev-parse HEAD)
+	) &&
+
+	# push into void
+	rm -fr void &&
+	git init void &&
+	(
+		cd void &&
+		git config receive.denyCurrentBranch updateInstead &&
+		write_script .git/hooks/push-to-checkout <<-\EOF
+		if git rev-parse --quiet --verify HEAD
+		then
+			has_head=yes
+			echo >&2 updating from $(git rev-parse HEAD)
+		else
+			has_head=no
+			echo >&2 pushing into void
+		fi
+		echo >&2 updating to "$1"
+
+		git update-index -q --refresh &&
+		case "$has_head" in
+		yes)
+			git read-tree -u -m HEAD "$1" ;;
+		no)
+			git read-tree -u -m "$1" ;;
+		esac || {
+			status=$?
+			echo >&2 read-tree failed
+			exit $status
+		}
+		EOF
+	) &&
+
+	git push void master &&
+	(
+		cd void &&
+		git diff --quiet &&
+		git diff --cached --quiet &&
+		test $(git -C .. rev-parse HEAD) = $(git rev-parse HEAD)
+	)
 '
 
 test_done

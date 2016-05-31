@@ -7,8 +7,8 @@
 #include "parse-options.h"
 
 static const char * const show_ref_usage[] = {
-	N_("git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "),
-	N_("git show-ref --exclude-existing[=pattern] < ref-list"),
+	N_("git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"),
+	N_("git show-ref --exclude-existing[=<pattern>]"),
 	NULL
 };
 
@@ -17,19 +17,20 @@ static int deref_tags, show_head, tags_only, heads_only, found_match, verify,
 static const char **pattern;
 static const char *exclude_existing_arg;
 
-static void show_one(const char *refname, const unsigned char *sha1)
+static void show_one(const char *refname, const struct object_id *oid)
 {
-	const char *hex = find_unique_abbrev(sha1, abbrev);
+	const char *hex = find_unique_abbrev(oid->hash, abbrev);
 	if (hash_only)
 		printf("%s\n", hex);
 	else
 		printf("%s %s\n", hex, refname);
 }
 
-static int show_ref(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
+static int show_ref(const char *refname, const struct object_id *oid,
+		    int flag, void *cbdata)
 {
 	const char *hex;
-	unsigned char peeled[20];
+	struct object_id peeled;
 
 	if (show_head && !strcmp(refname, "HEAD"))
 		goto match;
@@ -69,26 +70,27 @@ match:
 	 * detect and return error if the repository is corrupt and
 	 * ref points at a nonexistent object.
 	 */
-	if (!has_sha1_file(sha1))
+	if (!has_sha1_file(oid->hash))
 		die("git show-ref: bad ref %s (%s)", refname,
-		    sha1_to_hex(sha1));
+		    oid_to_hex(oid));
 
 	if (quiet)
 		return 0;
 
-	show_one(refname, sha1);
+	show_one(refname, oid);
 
 	if (!deref_tags)
 		return 0;
 
-	if (!peel_ref(refname, peeled)) {
-		hex = find_unique_abbrev(peeled, abbrev);
+	if (!peel_ref(refname, peeled.hash)) {
+		hex = find_unique_abbrev(peeled.hash, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}
 	return 0;
 }
 
-static int add_existing(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
+static int add_existing(const char *refname, const struct object_id *oid,
+			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	string_list_insert(list, refname);
@@ -159,11 +161,6 @@ static int exclude_existing_callback(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static int help_callback(const struct option *opt, const char *arg, int unset)
-{
-	return -1;
-}
-
 static const struct option show_ref_options[] = {
 	OPT_BOOL(0, "tags", &tags_only, N_("only show tags (can be combined with heads)")),
 	OPT_BOOL(0, "heads", &heads_only, N_("only show heads (can be combined with tags)")),
@@ -184,18 +181,13 @@ static const struct option show_ref_options[] = {
 	{ OPTION_CALLBACK, 0, "exclude-existing", &exclude_existing_arg,
 	  N_("pattern"), N_("show refs from stdin that aren't in local repository"),
 	  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback },
-	{ OPTION_CALLBACK, 0, "help-all", NULL, NULL, N_("show usage"),
-	  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, help_callback },
 	OPT_END()
 };
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(show_ref_usage, show_ref_options);
-
 	argc = parse_options(argc, argv, prefix, show_ref_options,
-			     show_ref_usage, PARSE_OPT_NO_INTERNAL_HELP);
+			     show_ref_usage, 0);
 
 	if (exclude_arg)
 		return exclude_existing(exclude_existing_arg);
@@ -208,12 +200,12 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		if (!pattern)
 			die("--verify requires a reference");
 		while (*pattern) {
-			unsigned char sha1[20];
+			struct object_id oid;
 
 			if (starts_with(*pattern, "refs/") &&
-			    !read_ref(*pattern, sha1)) {
+			    !read_ref(*pattern, oid.hash)) {
 				if (!quiet)
-					show_one(*pattern, sha1);
+					show_one(*pattern, &oid);
 			}
 			else if (!quiet)
 				die("'%s' - not a valid ref", *pattern);

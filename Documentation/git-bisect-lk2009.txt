@@ -1321,7 +1321,7 @@ So git bisect is unconditional goodness - and feel free to quote that
 _____________
 
 Acknowledgments
-----------------
+---------------
 
 Many thanks to Junio Hamano for his help in reviewing this paper, for
 reviewing the patches I sent to the Git mailing list, for discussing

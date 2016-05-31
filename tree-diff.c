@@ -64,7 +64,7 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 {
 	struct combine_diff_parent *p0 = &p->parent[0];
 	if (p->mode && p0->mode) {
-		opt->change(opt, p0->mode, p->mode, p0->sha1, p->sha1,
+		opt->change(opt, p0->mode, p->mode, p0->oid.hash, p->oid.hash,
 			1, 1, p->path, 0, 0);
 	}
 	else {
@@ -74,11 +74,11 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 
 		if (p->mode) {
 			addremove = '+';
-			sha1 = p->sha1;
+			sha1 = p->oid.hash;
 			mode = p->mode;
 		} else {
 			addremove = '-';
-			sha1 = p0->sha1;
+			sha1 = p0->oid.hash;
 			mode = p0->mode;
 		}
 
@@ -124,8 +124,8 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	unsigned mode, const unsigned char *sha1)
 {
 	struct combine_diff_path *p;
-	int len = base->len + pathlen;
-	int alloclen = combine_diff_path_size(nparent, len);
+	size_t len = st_add(base->len, pathlen);
+	size_t alloclen = combine_diff_path_size(nparent, len);
 
 	/* if last->next is !NULL - it is a pre-allocated memory, we can reuse */
 	p = last->next;
@@ -151,7 +151,7 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	memcpy(p->path + base->len, path, pathlen);
 	p->path[len] = 0;
 	p->mode = mode;
-	hashcpy(p->sha1, sha1 ? sha1 : null_sha1);
+	hashcpy(p->oid.hash, sha1 ? sha1 : null_sha1);
 
 	return p;
 }
@@ -183,7 +183,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 
 	if (t) {
 		/* path present in resulting tree */
-		sha1 = tree_entry_extract(t, &path, &mode);
+		sha1 = tree_entry_extract(t, &path, &mode)->hash;
 		pathlen = tree_entry_len(&t->entry);
 		isdir = S_ISDIR(mode);
 	} else {
@@ -229,7 +229,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 						DIFF_STATUS_ADDED;
 
 			if (tpi_valid) {
-				sha1_i = tp[i].entry.sha1;
+				sha1_i = tp[i].entry.oid->hash;
 				mode_i = tp[i].entry.mode;
 			}
 			else {
@@ -238,7 +238,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 			}
 
 			p->parent[i].mode = mode_i;
-			hashcpy(p->parent[i].sha1, sha1_i ? sha1_i : null_sha1);
+			hashcpy(p->parent[i].oid.hash, sha1_i ? sha1_i : null_sha1);
 		}
 
 		keep = 1;
@@ -270,7 +270,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 			/* same rule as in emitthis */
 			int tpi_valid = tp && !(tp[i].entry.mode & S_IFXMIN_NEQ);
 
-			parents_sha1[i] = tpi_valid ? tp[i].entry.sha1
+			parents_sha1[i] = tpi_valid ? tp[i].entry.oid->hash
 						    : NULL;
 		}
 
@@ -482,7 +482,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 						continue;
 
 					/* diff(t,pi) != ø */
-					if (hashcmp(t.entry.sha1, tp[i].entry.sha1) ||
+					if (oidcmp(t.entry.oid, tp[i].entry.oid) ||
 					    (t.entry.mode != tp[i].entry.mode))
 						continue;
 

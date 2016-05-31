@@ -54,8 +54,6 @@ struct line_log_data {
 	struct diff_ranges diff;
 };
 
-extern void line_log_data_init(struct line_log_data *r);
-
 extern void line_log_init(struct rev_info *rev, const char *prefix, struct string_list *args);
 
 extern int line_log_filter(struct rev_info *rev);

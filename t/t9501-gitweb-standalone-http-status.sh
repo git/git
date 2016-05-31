@@ -100,14 +100,14 @@ test_expect_success 'snapshots: bad tree-ish id (tagged object)' '
 	echo object > tag-object &&
 	git add tag-object &&
 	test_tick && git commit -m "Object to be tagged" &&
-	git tag tagged-object `git hash-object tag-object` &&
+	git tag tagged-object $(git hash-object tag-object) &&
 	gitweb_run "p=.git;a=snapshot;h=tagged-object;sf=tgz" &&
 	grep "400 - Object is not a tree-ish" gitweb.output
 '
 test_debug 'cat gitweb.output'
 
 test_expect_success 'snapshots: good object id' '
-	ID=`git rev-parse --verify HEAD` &&
+	ID=$(git rev-parse --verify HEAD) &&
 	gitweb_run "p=.git;a=snapshot;h=$ID;sf=tgz" &&
 	grep "Status: 200 OK" gitweb.output
 '
@@ -173,7 +173,7 @@ test_expect_success DATE_PARSER 'modification: snapshot if-modified-since (unmod
 test_debug 'cat gitweb.headers'
 
 test_expect_success DATE_PARSER 'modification: tree snapshot' '
-	ID=`git rev-parse --verify HEAD^{tree}` &&
+	ID=$(git rev-parse --verify HEAD^{tree}) &&
 	HTTP_IF_MODIFIED_SINCE="Wed, 6 Apr 2005 22:14:13 +0000" &&
 	export HTTP_IF_MODIFIED_SINCE &&
 	test_when_finished "unset HTTP_IF_MODIFIED_SINCE" &&

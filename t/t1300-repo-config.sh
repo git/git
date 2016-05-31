@@ -353,12 +353,34 @@ test_expect_success '--list without repo produces empty output' '
 '
 
 cat > expect << EOF
+beta.noindent
+nextsection.nonewline
+123456.a123
+version.1.2.3eX.alpha
+EOF
+
+test_expect_success '--name-only --list' '
+	git config --name-only --list >output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
 beta.noindent sillyValue
 nextsection.nonewline wow2 for me
 EOF
 
 test_expect_success '--get-regexp' '
 	git config --get-regexp in >output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+beta.noindent
+nextsection.nonewline
+EOF
+
+test_expect_success '--name-only --get-regexp' '
+	git config --name-only --get-regexp in >output &&
 	test_cmp expect output
 '
 
@@ -677,11 +699,13 @@ test_expect_success 'invalid unit' '
 	echo 1auto >expect &&
 	git config aninvalid.unit >actual &&
 	test_cmp expect actual &&
-	cat >expect <<-\EOF
-	fatal: bad numeric config value '\''1auto'\'' for '\''aninvalid.unit'\'' in .git/config: invalid unit
-	EOF
 	test_must_fail git config --int --get aninvalid.unit 2>actual &&
-	test_i18ncmp expect actual
+	test_i18ngrep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
+'
+
+test_expect_success 'invalid stdin config' '
+	echo "[broken" | test_must_fail git config --list --file - >output 2>&1 &&
+	test_i18ngrep "bad config line 1 in standard input" output
 '
 
 cat > expect << EOF
@@ -935,13 +959,15 @@ Qsection.sub=section.val4
 Qsection.sub=section.val5Q
 EOF
 test_expect_success '--null --list' '
-	git config --null --list | nul_to_q >result &&
+	git config --null --list >result.raw &&
+	nul_to_q <result.raw >result &&
 	echo >>result &&
 	test_cmp expect result
 '
 
 test_expect_success '--null --get-regexp' '
-	git config --null --get-regexp "val[0-9]" | nul_to_q >result &&
+	git config --null --get-regexp "val[0-9]" >result.raw &&
+	nul_to_q <result.raw >result &&
 	echo >>result &&
 	test_cmp expect result
 '
@@ -1061,6 +1087,20 @@ test_expect_success 'git -c complains about empty key and value' '
 	test_must_fail git -c "" rev-parse
 '
 
+test_expect_success 'multiple git -c appends config' '
+	test_config alias.x "!git -c x.two=2 config --get-regexp ^x\.*" &&
+	cat >expect <<-\EOF &&
+	x.one 1
+	x.two 2
+	EOF
+	git -c x.one=1 x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git -c is not confused by empty environment' '
+	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config --list
+'
+
 test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
@@ -1118,6 +1158,9 @@ test_expect_success 'urlmatch' '
 		cookieFile = /tmp/cookie.txt
 	EOF
 
+	test_expect_code 1 git config --bool --get-urlmatch doesnt.exist https://good.example.com >actual &&
+	test_must_be_empty actual &&
+
 	echo true >expect &&
 	git config --bool --get-urlmatch http.SSLverify https://good.example.com >actual &&
 	test_cmp expect actual &&
@@ -1165,7 +1208,7 @@ test_expect_failure 'adding a key into an empty section reuses header' '
 	Qkey = value
 	EOF
 
-	git config section.key value
+	git config section.key value &&
 	test_cmp expect .git/config
 '
 
@@ -1177,6 +1220,156 @@ test_expect_success POSIXPERM,PERL 'preserves existing permissions' '
 	git config --rename-section imap pop &&
 	perl -e \
 	  "die q(badrename) if ((stat(q(.git/config)))[2] & 07777) != 0600"
+'
+
+! test_have_prereq MINGW ||
+HOME="$(pwd)" # convert to Windows path
+
+test_expect_success 'set up --show-origin tests' '
+	INCLUDE_DIR="$HOME/include" &&
+	mkdir -p "$INCLUDE_DIR" &&
+	cat >"$INCLUDE_DIR"/absolute.include <<-\EOF &&
+		[user]
+			absolute = include
+	EOF
+	cat >"$INCLUDE_DIR"/relative.include <<-\EOF &&
+		[user]
+			relative = include
+	EOF
+	cat >"$HOME"/.gitconfig <<-EOF &&
+		[user]
+			global = true
+			override = global
+		[include]
+			path = "$INCLUDE_DIR/absolute.include"
+	EOF
+	cat >.git/config <<-\EOF
+		[user]
+			local = true
+			override = local
+		[include]
+			path = ../include/relative.include
+	EOF
+'
+
+test_expect_success '--show-origin with --list' '
+	cat >expect <<-EOF &&
+		file:$HOME/.gitconfig	user.global=true
+		file:$HOME/.gitconfig	user.override=global
+		file:$HOME/.gitconfig	include.path=$INCLUDE_DIR/absolute.include
+		file:$INCLUDE_DIR/absolute.include	user.absolute=include
+		file:.git/config	user.local=true
+		file:.git/config	user.override=local
+		file:.git/config	include.path=../include/relative.include
+		file:.git/../include/relative.include	user.relative=include
+		command line:	user.cmdline=true
+	EOF
+	git -c user.cmdline=true config --list --show-origin >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-origin with --list --null' '
+	cat >expect <<-EOF &&
+		file:$HOME/.gitconfigQuser.global
+		trueQfile:$HOME/.gitconfigQuser.override
+		globalQfile:$HOME/.gitconfigQinclude.path
+		$INCLUDE_DIR/absolute.includeQfile:$INCLUDE_DIR/absolute.includeQuser.absolute
+		includeQfile:.git/configQuser.local
+		trueQfile:.git/configQuser.override
+		localQfile:.git/configQinclude.path
+		../include/relative.includeQfile:.git/../include/relative.includeQuser.relative
+		includeQcommand line:Quser.cmdline
+		trueQ
+	EOF
+	git -c user.cmdline=true config --null --list --show-origin >output.raw &&
+	nul_to_q <output.raw >output &&
+	# The here-doc above adds a newline that the --null output would not
+	# include. Add it here to make the two comparable.
+	echo >>output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-origin with single file' '
+	cat >expect <<-\EOF &&
+		file:.git/config	user.local=true
+		file:.git/config	user.override=local
+		file:.git/config	include.path=../include/relative.include
+	EOF
+	git config --local --list --show-origin >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-origin with --get-regexp' '
+	cat >expect <<-EOF &&
+		file:$HOME/.gitconfig	user.global true
+		file:.git/config	user.local true
+	EOF
+	git config --show-origin --get-regexp "user\.[g|l].*" >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-origin getting a single key' '
+	cat >expect <<-\EOF &&
+		file:.git/config	local
+	EOF
+	git config --show-origin user.override >output &&
+	test_cmp expect output
+'
+
+test_expect_success 'set up custom config file' '
+	CUSTOM_CONFIG_FILE="file\" (dq) and spaces.conf" &&
+	cat >"$CUSTOM_CONFIG_FILE" <<-\EOF
+		[user]
+			custom = true
+	EOF
+'
+
+test_expect_success !MINGW '--show-origin escape special file name characters' '
+	cat >expect <<-\EOF &&
+		file:"file\" (dq) and spaces.conf"	user.custom=true
+	EOF
+	git config --file "$CUSTOM_CONFIG_FILE" --show-origin --list >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-origin stdin' '
+	cat >expect <<-\EOF &&
+		standard input:	user.custom=true
+	EOF
+	git config --file - --show-origin --list <"$CUSTOM_CONFIG_FILE" >output &&
+	test_cmp expect output
+'
+
+test_expect_success '--show-origin stdin with file include' '
+	cat >"$INCLUDE_DIR"/stdin.include <<-EOF &&
+		[user]
+			stdin = include
+	EOF
+	cat >expect <<-EOF &&
+		file:$INCLUDE_DIR/stdin.include	include
+	EOF
+	echo "[include]path=\"$INCLUDE_DIR\"/stdin.include" \
+		| git config --show-origin --includes --file - user.stdin >output &&
+	test_cmp expect output
+'
+
+test_expect_success !MINGW '--show-origin blob' '
+	cat >expect <<-\EOF &&
+		blob:a9d9f9e555b5c6f07cbe09d3f06fe3df11e09c08	user.custom=true
+	EOF
+	blob=$(git hash-object -w "$CUSTOM_CONFIG_FILE") &&
+	git config --blob=$blob --show-origin --list >output &&
+	test_cmp expect output
+'
+
+test_expect_success !MINGW '--show-origin blob ref' '
+	cat >expect <<-\EOF &&
+		blob:"master:file\" (dq) and spaces.conf"	user.custom=true
+	EOF
+	git add "$CUSTOM_CONFIG_FILE" &&
+	git commit -m "new config file" &&
+	git config --blob=master:"$CUSTOM_CONFIG_FILE" --show-origin --list >output &&
+	test_cmp expect output
 '
 
 test_done

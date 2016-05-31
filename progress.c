@@ -25,7 +25,7 @@ struct throughput {
 	unsigned int last_bytes[TP_IDX_MAX];
 	unsigned int last_misecs[TP_IDX_MAX];
 	unsigned int idx;
-	char display[32];
+	struct strbuf display;
 };
 
 struct progress {
@@ -72,6 +72,12 @@ static void clear_progress_signal(void)
 	progress_update = 0;
 }
 
+static int is_foreground_fd(int fd)
+{
+	int tpgrp = tcgetpgrp(fd);
+	return tpgrp < 0 || tpgrp == getpgid(0);
+}
+
 static int display(struct progress *progress, unsigned n, const char *done)
 {
 	const char *eol, *tp;
@@ -92,22 +98,27 @@ static int display(struct progress *progress, unsigned n, const char *done)
 	}
 
 	progress->last_value = n;
-	tp = (progress->throughput) ? progress->throughput->display : "";
+	tp = (progress->throughput) ? progress->throughput->display.buf : "";
 	eol = done ? done : "   \r";
 	if (progress->total) {
 		unsigned percent = n * 100 / progress->total;
 		if (percent != progress->last_percent || progress_update) {
 			progress->last_percent = percent;
-			fprintf(stderr, "%s: %3u%% (%u/%u)%s%s",
-				progress->title, percent, n,
-				progress->total, tp, eol);
-			fflush(stderr);
+			if (is_foreground_fd(fileno(stderr)) || done) {
+				fprintf(stderr, "%s: %3u%% (%u/%u)%s%s",
+					progress->title, percent, n,
+					progress->total, tp, eol);
+				fflush(stderr);
+			}
 			progress_update = 0;
 			return 1;
 		}
 	} else if (progress_update) {
-		fprintf(stderr, "%s: %u%s%s", progress->title, n, tp, eol);
-		fflush(stderr);
+		if (is_foreground_fd(fileno(stderr)) || done) {
+			fprintf(stderr, "%s: %u%s%s",
+				progress->title, n, tp, eol);
+			fflush(stderr);
+		}
 		progress_update = 0;
 		return 1;
 	}
@@ -118,6 +129,7 @@ static int display(struct progress *progress, unsigned n, const char *done)
 static void throughput_string(struct strbuf *buf, off_t total,
 			      unsigned int rate)
 {
+	strbuf_reset(buf);
 	strbuf_addstr(buf, ", ");
 	strbuf_humanise_bytes(buf, total);
 	strbuf_addstr(buf, " | ");
@@ -130,7 +142,6 @@ void display_throughput(struct progress *progress, off_t total)
 	struct throughput *tp;
 	uint64_t now_ns;
 	unsigned int misecs, count, rate;
-	struct strbuf buf = STRBUF_INIT;
 
 	if (!progress)
 		return;
@@ -143,6 +154,7 @@ void display_throughput(struct progress *progress, off_t total)
 		if (tp) {
 			tp->prev_total = tp->curr_total = total;
 			tp->prev_ns = now_ns;
+			strbuf_init(&tp->display, 0);
 		}
 		return;
 	}
@@ -182,9 +194,7 @@ void display_throughput(struct progress *progress, off_t total)
 	tp->last_misecs[tp->idx] = misecs;
 	tp->idx = (tp->idx + 1) % TP_IDX_MAX;
 
-	throughput_string(&buf, total, rate);
-	strncpy(tp->display, buf.buf, sizeof(tp->display));
-	strbuf_release(&buf);
+	throughput_string(&tp->display, total, rate);
 	if (progress->last_value != -1 && progress_update)
 		display(progress, progress->last_value, NULL);
 }
@@ -237,22 +247,21 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
 		size_t len = strlen(msg) + 5;
 		struct throughput *tp = progress->throughput;
 
-		bufp = (len < sizeof(buf)) ? buf : xmalloc(len + 1);
+		bufp = (len < sizeof(buf)) ? buf : xmallocz(len);
 		if (tp) {
-			struct strbuf strbuf = STRBUF_INIT;
 			unsigned int rate = !tp->avg_misecs ? 0 :
 					tp->avg_bytes / tp->avg_misecs;
-			throughput_string(&strbuf, tp->curr_total, rate);
-			strncpy(tp->display, strbuf.buf, sizeof(tp->display));
-			strbuf_release(&strbuf);
+			throughput_string(&tp->display, tp->curr_total, rate);
 		}
 		progress_update = 1;
-		sprintf(bufp, ", %s.\n", msg);
+		xsnprintf(bufp, len + 1, ", %s.\n", msg);
 		display(progress, progress->last_value, bufp);
 		if (buf != bufp)
 			free(bufp);
 	}
 	clear_progress_signal();
+	if (progress->throughput)
+		strbuf_release(&progress->throughput->display);
 	free(progress->throughput);
 	free(progress);
 }

@@ -27,7 +27,7 @@ SHA1=
 test_expect_success \
     'see if git show-ref works as expected' \
     'git branch a &&
-     SHA1=`cat .git/refs/heads/a` &&
+     SHA1=$(cat .git/refs/heads/a) &&
      echo "$SHA1 refs/heads/a" >expect &&
      git show-ref a >result &&
      test_cmp expect result'
@@ -160,6 +160,13 @@ test_expect_success 'pack ref directly below refs/' '
 	test_path_is_missing .git/refs/top
 '
 
+test_expect_success 'do not pack ref in refs/bisect' '
+	git update-ref refs/bisect/local HEAD &&
+	git pack-refs --all --prune &&
+	! grep refs/bisect/local .git/packed-refs >/dev/null &&
+	test_path_is_file .git/refs/bisect/local
+'
+
 test_expect_success 'disable reflogs' '
 	git config core.logallrefupdates false &&
 	rm -rf .git/logs
@@ -169,7 +176,7 @@ test_expect_success 'create packed foo/bar/baz branch' '
 	git branch foo/bar/baz &&
 	git pack-refs --all --prune &&
 	test_path_is_missing .git/refs/heads/foo/bar/baz &&
-	test_path_is_missing .git/logs/refs/heads/foo/bar/baz
+	test_must_fail git reflog exists refs/heads/foo/bar/baz
 '
 
 test_expect_success 'notice d/f conflict with existing directory' '
@@ -185,6 +192,23 @@ test_expect_success 'existing directory reports concrete ref' '
 test_expect_success 'notice d/f conflict with existing ref' '
 	test_must_fail git branch foo/bar/baz/extra &&
 	test_must_fail git branch foo/bar/baz/lots/of/extra/components
+'
+
+test_expect_success 'timeout if packed-refs.lock exists' '
+	LOCK=.git/packed-refs.lock &&
+	>"$LOCK" &&
+	test_when_finished "rm -f $LOCK" &&
+	test_must_fail git pack-refs --all --prune
+'
+
+test_expect_success 'retry acquiring packed-refs.lock' '
+	LOCK=.git/packed-refs.lock &&
+	>"$LOCK" &&
+	test_when_finished "wait; rm -f $LOCK" &&
+	{
+		( sleep 1 ; rm -f $LOCK ) &
+	} &&
+	git -c core.packedrefstimeout=3000 pack-refs --all --prune
 '
 
 test_done

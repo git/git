@@ -12,6 +12,29 @@
 #include "version.h"
 #include "sha1-array.h"
 #include "gpg-interface.h"
+#include "cache.h"
+
+int option_parse_push_signed(const struct option *opt,
+			     const char *arg, int unset)
+{
+	if (unset) {
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_NEVER;
+		return 0;
+	}
+	switch (git_parse_maybe_bool(arg)) {
+	case 1:
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_ALWAYS;
+		return 0;
+	case 0:
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_NEVER;
+		return 0;
+	}
+	if (!strcasecmp("if-asked", arg)) {
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_IF_ASKED;
+		return 0;
+	}
+	die("bad %s argument: %s", opt->long_name, arg);
+}
 
 static int feed_object(const unsigned char *sha1, int fd, int negative)
 {
@@ -79,11 +102,11 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 			break;
 
 	while (refs) {
-		if (!is_null_sha1(refs->old_sha1) &&
-		    !feed_object(refs->old_sha1, po.in, 1))
+		if (!is_null_oid(&refs->old_oid) &&
+		    !feed_object(refs->old_oid.hash, po.in, 1))
 			break;
-		if (!is_null_sha1(refs->new_sha1) &&
-		    !feed_object(refs->new_sha1, po.in, 0))
+		if (!is_null_oid(&refs->new_oid) &&
+		    !feed_object(refs->new_oid.hash, po.in, 0))
 			break;
 		refs = refs->next;
 	}
@@ -182,7 +205,7 @@ static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *c
 {
 	struct strbuf *sb = cb;
 	if (graft->nr_parent == -1)
-		packet_buf_write(sb, "shallow %s\n", sha1_to_hex(graft->sha1));
+		packet_buf_write(sb, "shallow %s\n", oid_to_hex(&graft->oid));
 	return 0;
 }
 
@@ -193,10 +216,13 @@ static void advertise_shallow_grafts_buf(struct strbuf *sb)
 	for_each_commit_graft(advertise_shallow_grafts_cb, sb);
 }
 
-static int ref_update_to_be_sent(const struct ref *ref, const struct send_pack_args *args)
+#define CHECK_REF_NO_PUSH -1
+#define CHECK_REF_STATUS_REJECTED -2
+#define CHECK_REF_UPTODATE -3
+static int check_to_send_update(const struct ref *ref, const struct send_pack_args *args)
 {
 	if (!ref->peer_ref && !args->send_mirror)
-		return 0;
+		return CHECK_REF_NO_PUSH;
 
 	/* Check for statuses set by set_ref_status_for_push() */
 	switch (ref->status) {
@@ -206,10 +232,11 @@ static int ref_update_to_be_sent(const struct ref *ref, const struct send_pack_a
 	case REF_STATUS_REJECT_NEEDS_FORCE:
 	case REF_STATUS_REJECT_STALE:
 	case REF_STATUS_REJECT_NODELETE:
+		return CHECK_REF_STATUS_REJECTED;
 	case REF_STATUS_UPTODATE:
-		return 0;
+		return CHECK_REF_UPTODATE;
 	default:
-		return 1;
+		return 0;
 	}
 }
 
@@ -253,12 +280,12 @@ static int generate_push_cert(struct strbuf *req_buf,
 	strbuf_addstr(&cert, "\n");
 
 	for (ref = remote_refs; ref; ref = ref->next) {
-		if (!ref_update_to_be_sent(ref, args))
+		if (check_to_send_update(ref, args) < 0)
 			continue;
 		update_seen = 1;
 		strbuf_addf(&cert, "%s %s %s\n",
-			    sha1_to_hex(ref->old_sha1),
-			    sha1_to_hex(ref->new_sha1),
+			    oid_to_hex(&ref->old_oid),
+			    oid_to_hex(&ref->new_oid),
 			    ref->name);
 	}
 	if (!update_seen)
@@ -281,6 +308,51 @@ free_return:
 	return update_seen;
 }
 
+
+static int atomic_push_failure(struct send_pack_args *args,
+			       struct ref *remote_refs,
+			       struct ref *failing_ref)
+{
+	struct ref *ref;
+	/* Mark other refs as failed */
+	for (ref = remote_refs; ref; ref = ref->next) {
+		if (!ref->peer_ref && !args->send_mirror)
+			continue;
+
+		switch (ref->status) {
+		case REF_STATUS_EXPECTING_REPORT:
+			ref->status = REF_STATUS_ATOMIC_PUSH_FAILED;
+			continue;
+		default:
+			break; /* do nothing */
+		}
+	}
+	return error("atomic push failed for ref %s. status: %d\n",
+		     failing_ref->name, failing_ref->status);
+}
+
+#define NONCE_LEN_LIMIT 256
+
+static void reject_invalid_nonce(const char *nonce, int len)
+{
+	int i = 0;
+
+	if (NONCE_LEN_LIMIT <= len)
+		die("the receiving end asked to sign an invalid nonce <%.*s>",
+		    len, nonce);
+
+	for (i = 0; i < len; i++) {
+		int ch = nonce[i] & 0xFF;
+		if (isalnum(ch) ||
+		    ch == '-' || ch == '.' ||
+		    ch == '/' || ch == '+' ||
+		    ch == '=' || ch == '_')
+			continue;
+		die("the receiving end asked to sign an invalid nonce <%.*s>",
+		    len, nonce);
+	}
+}
+
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs,
@@ -297,6 +369,8 @@ int send_pack(struct send_pack_args *args,
 	int use_sideband = 0;
 	int quiet_supported = 0;
 	int agent_supported = 0;
+	int use_atomic = 0;
+	int atomic_supported = 0;
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
@@ -317,13 +391,22 @@ int send_pack(struct send_pack_args *args,
 		agent_supported = 1;
 	if (server_supports("no-thin"))
 		args->use_thin_pack = 0;
-	if (args->push_cert) {
-		int len;
+	if (server_supports("atomic"))
+		atomic_supported = 1;
 
+	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
+		int len;
 		push_cert_nonce = server_feature_value("push-cert", &len);
-		if (!push_cert_nonce)
+		if (push_cert_nonce) {
+			reject_invalid_nonce(push_cert_nonce, len);
+			push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		} else if (args->push_cert == SEND_PACK_PUSH_CERT_ALWAYS) {
 			die(_("the receiving end does not support --signed push"));
-		push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		} else if (args->push_cert == SEND_PACK_PUSH_CERT_IF_ASKED) {
+			warning(_("not sending a push certificate since the"
+				  " receiving end does not support --signed"
+				  " push"));
+		}
 	}
 
 	if (!remote_refs) {
@@ -331,6 +414,10 @@ int send_pack(struct send_pack_args *args,
 			"Perhaps you should specify a branch such as 'master'.\n");
 		return 0;
 	}
+	if (args->atomic && !atomic_supported)
+		die(_("the receiving end does not support --atomic push"));
+
+	use_atomic = atomic_supported && args->atomic;
 
 	if (status_report)
 		strbuf_addstr(&cap_buf, " report-status");
@@ -338,6 +425,8 @@ int send_pack(struct send_pack_args *args,
 		strbuf_addstr(&cap_buf, " side-band-64k");
 	if (quiet_supported && (args->quiet || !args->progress))
 		strbuf_addstr(&cap_buf, " quiet");
+	if (use_atomic)
+		strbuf_addstr(&cap_buf, " atomic");
 	if (agent_supported)
 		strbuf_addf(&cap_buf, " agent=%s", git_user_agent_sanitized());
 
@@ -353,7 +442,7 @@ int send_pack(struct send_pack_args *args,
 	if (!args->dry_run)
 		advertise_shallow_grafts_buf(&req_buf);
 
-	if (!args->dry_run && args->push_cert)
+	if (!args->dry_run && push_cert_nonce)
 		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
 					       cap_buf.buf, push_cert_nonce);
 
@@ -362,9 +451,21 @@ int send_pack(struct send_pack_args *args,
 	 * the pack data.
 	 */
 	for (ref = remote_refs; ref; ref = ref->next) {
-		if (!ref_update_to_be_sent(ref, args))
+		switch (check_to_send_update(ref, args)) {
+		case 0: /* no error */
+			break;
+		case CHECK_REF_STATUS_REJECTED:
+			/*
+			 * When we know the server would reject a ref update if
+			 * we were to send it and we're trying to send the refs
+			 * atomically, abort the whole operation.
+			 */
+			if (use_atomic)
+				return atomic_push_failure(args, remote_refs, ref);
+			/* Fallthrough for non atomic case. */
+		default:
 			continue;
-
+		}
 		if (!ref->deletion)
 			need_pack_data = 1;
 
@@ -380,14 +481,14 @@ int send_pack(struct send_pack_args *args,
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *old_hex, *new_hex;
 
-		if (args->dry_run || args->push_cert)
+		if (args->dry_run || push_cert_nonce)
 			continue;
 
-		if (!ref_update_to_be_sent(ref, args))
+		if (check_to_send_update(ref, args) < 0)
 			continue;
 
-		old_hex = sha1_to_hex(ref->old_sha1);
-		new_hex = sha1_to_hex(ref->new_sha1);
+		old_hex = oid_to_hex(&ref->old_oid);
+		new_hex = oid_to_hex(&ref->new_oid);
 		if (!cmds_sent) {
 			packet_buf_write(&req_buf,
 					 "%s %s %s%c%s",
@@ -417,6 +518,7 @@ int send_pack(struct send_pack_args *args,
 		demux.proc = sideband_demux;
 		demux.data = fd;
 		demux.out = -1;
+		demux.isolate_sigpipe = 1;
 		if (start_async(&demux))
 			die("send-pack: unable to fork off sideband demultiplexer");
 		in = demux.out;
@@ -430,8 +532,10 @@ int send_pack(struct send_pack_args *args,
 				close(out);
 			if (git_connection_is_socket(conn))
 				shutdown(fd[0], SHUT_WR);
-			if (use_sideband)
+			if (use_sideband) {
+				close(demux.out);
 				finish_async(&demux);
+			}
 			fd[1] = -1;
 			return -1;
 		}
@@ -450,11 +554,11 @@ int send_pack(struct send_pack_args *args,
 		packet_flush(out);
 
 	if (use_sideband && cmds_sent) {
+		close(demux.out);
 		if (finish_async(&demux)) {
 			error("error in sideband demultiplexer");
 			ret = -1;
 		}
-		close(demux.out);
 	}
 
 	if (ret < 0)

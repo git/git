@@ -3,7 +3,7 @@
 {
 	cat <<\EOF
 sayIt:
-	$(foreach b,$(BUILT_INS),echo XXX $b YYY;)
+	$(foreach b,$(BUILT_INS),echo XXX $(b:$X=) YYY;)
 EOF
 	cat Makefile
 } |

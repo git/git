@@ -18,22 +18,16 @@ test_expect_success setup '
 
 	echo file >expected &&
 	mkdir sub &&
-	bad= &&
 	for n in 0 1 2 3 4 5
 	do
 		for m in 0 1 2 3 4 5 6 7 8 9
 		do
 			num=00$n$m &&
 			>sub/file-$num &&
-			echo file-$num >>expected || {
-				bad=t
-				break
-			}
-		done && test -z "$bad" || {
-			bad=t
-			break
-		}
-	done && test -z "$bad" &&
+			echo file-$num >>expected ||
+			return 1
+		done
+	done &&
 	git add . &&
 	git commit -m "add a bunch of files" &&
 

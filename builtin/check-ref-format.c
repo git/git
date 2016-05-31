@@ -8,7 +8,7 @@
 #include "strbuf.h"
 
 static const char builtin_check_ref_format_usage[] =
-"git check-ref-format [--normalize] [options] <refname>\n"
+"git check-ref-format [--normalize] [<options>] <refname>\n"
 "   or: git check-ref-format --branch <branchname-shorthand>";
 
 /*
@@ -20,7 +20,7 @@ static const char builtin_check_ref_format_usage[] =
  */
 static char *collapse_slashes(const char *refname)
 {
-	char *ret = xmalloc(strlen(refname) + 1);
+	char *ret = xmallocz(strlen(refname));
 	char ch;
 	char prev = '/';
 	char *cp = ret;

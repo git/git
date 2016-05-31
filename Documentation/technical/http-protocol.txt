@@ -319,7 +319,8 @@ Servers SHOULD support all capabilities defined here.
 Clients MUST send at least one "want" command in the request body.
 Clients MUST NOT reference an id in a "want" command which did not
 appear in the response obtained through ref discovery unless the
-server advertises capability `allow-tip-sha1-in-want`.
+server advertises capability `allow-tip-sha1-in-want` or
+`allow-reachable-sha1-in-want`.
 
   compute_request   =  want_list
 		       have_list

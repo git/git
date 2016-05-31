@@ -1,9 +1,8 @@
 #!/bin/sh
 
 gpg_version=$(gpg --version 2>&1)
-if test $? = 127; then
-	say "You do not seem to have gpg installed"
-else
+if test $? != 127
+then
 	# As said here: http://www.gnupg.org/documentation/faqs.html#q6.19
 	# the gpg version 1.0.6 didn't parse trust packets correctly, so for
 	# that version, creation of signed tags using the generated key fails.
@@ -23,6 +22,8 @@ else
 		# To write armored exported key to keyring:
 		#	gpg --homedir /tmp/gpghome --export-secret-keys \
 		#		--armor 0xDEADBEEF >> lib-gpg/keyring.gpg
+		#	gpg --homedir /tmp/gpghome --export \
+		#		--armor 0xDEADBEEF >> lib-gpg/keyring.gpg
 		# To export ownertrust:
 		#	gpg --homedir /tmp/gpghome --export-ownertrust \
 		#		> lib-gpg/ownertrust
@@ -34,6 +35,8 @@ else
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
 		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import-ownertrust \
 			"$TEST_DIRECTORY"/lib-gpg/ownertrust &&
+		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null 2>&1 \
+			--sign -u committer@example.com &&
 		test_set_prereq GPG
 		;;
 	esac

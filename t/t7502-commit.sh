@@ -229,14 +229,36 @@ test_expect_success 'cleanup commit messages (scissors option,-F,-e)' '
 	cat >text <<EOF &&
 
 # to be kept
+
+  # ------------------------ >8 ------------------------
+# to be kept, too
 # ------------------------ >8 ------------------------
 to be removed
+# ------------------------ >8 ------------------------
+to be removed, too
 EOF
-	echo "# to be kept" >expect &&
+
+	cat >expect <<EOF &&
+# to be kept
+
+  # ------------------------ >8 ------------------------
+# to be kept, too
+EOF
 	git commit --cleanup=scissors -e -F text -a &&
 	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
 	test_cmp expect actual
+'
 
+test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on first line)' '
+
+	echo >>negative &&
+	cat >text <<EOF &&
+# ------------------------ >8 ------------------------
+to be removed
+EOF
+	git commit --cleanup=scissors -e -F text -a --allow-empty-message &&
+	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'cleanup commit messages (strip option,-F)' '
@@ -370,7 +392,7 @@ exit 0
 EOF
 
 test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
-	>.git/result
+	>.git/result &&
 	>expect &&
 
 	echo >>negative &&
@@ -499,11 +521,6 @@ try_commit () {
 }
 
 try_commit_status_combo () {
-
-	test_expect_success 'commit' '
-		try_commit "" &&
-		test_i18ngrep "^# Changes to be committed:" .git/COMMIT_EDITMSG
-	'
 
 	test_expect_success 'commit' '
 		try_commit "" &&

@@ -42,6 +42,10 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(cmd, "verify")) {
 		close(bundle_fd);
+		if (argc != 1) {
+			usage(builtin_bundle_usage);
+			return 1;
+		}
 		if (verify_bundle(&header, 1))
 			return 1;
 		fprintf(stderr, _("%s is okay\n"), bundle_file);
@@ -52,6 +56,10 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 		return !!list_bundle_refs(&header, argc, argv);
 	}
 	if (!strcmp(cmd, "create")) {
+		if (argc < 2) {
+			usage(builtin_bundle_usage);
+			return 1;
+		}
 		if (!startup_info->have_repository)
 			die(_("Need a repository to create a bundle."));
 		return !!create_bundle(&header, bundle_file, argc, argv);

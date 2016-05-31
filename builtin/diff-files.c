@@ -11,7 +11,7 @@
 #include "submodule.h"
 
 static const char diff_files_usage[] =
-"git diff-files [-q] [-0/-1/2/3 |-c|--cc] [<common diff options>] [<path>...]"
+"git diff-files [-q] [-0 | -1 | -2 | -3 | -c | --cc] [<common-diff-options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
 int cmd_diff_files(int argc, const char **argv, const char *prefix)
@@ -24,6 +24,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	gitmodules_config();
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	rev.abbrev = 0;
+	precompose_argv(argc, argv);
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	while (1 < argc && argv[1][0] == '-') {

@@ -200,6 +200,26 @@ test_expect_success '--amend --edit of empty message' '
 	test_cmp expect msg
 '
 
+test_expect_success '--amend to set message to empty' '
+	echo bata >file &&
+	git add file &&
+	git commit -m "unamended" &&
+	git commit --amend --allow-empty-message -m "" &&
+	git diff-tree -s --format=%s HEAD >msg &&
+	echo "" >expect &&
+	test_cmp expect msg
+'
+
+test_expect_success '--amend to set empty message needs --allow-empty-message' '
+	echo conga >file &&
+	git add file &&
+	git commit -m "unamended" &&
+	test_must_fail git commit --amend -m "" &&
+	git diff-tree -s --format=%s HEAD >msg &&
+	echo "unamended" >expect &&
+	test_cmp expect msg
+'
+
 test_expect_success '-m --edit' '
 	echo amended >expect &&
 	git commit --allow-empty -m buffer &&
@@ -585,6 +605,26 @@ test_expect_success '--only works on to-be-born branch' '
 	echo newfile >expected &&
 	git ls-tree -r --name-only HEAD >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success '--dry-run with conflicts fixed from a merge' '
+	# setup two branches with conflicting information
+	# in the same file, resolve the conflict,
+	# call commit with --dry-run
+	echo "Initial contents, unimportant" >test-file &&
+	git add test-file &&
+	git commit -m "Initial commit" &&
+	echo "commit-1-state" >test-file &&
+	git commit -m "commit 1" -i test-file &&
+	git tag commit-1 &&
+	git checkout -b branch-2 HEAD^1 &&
+	echo "commit-2-state" >test-file &&
+	git commit -m "commit 2" -i test-file &&
+	! $(git merge --no-commit commit-1) &&
+	echo "commit-2-state" >test-file &&
+	git add test-file &&
+	git commit --dry-run &&
+	git commit -m "conflicts fixed from merge."
 '
 
 test_done

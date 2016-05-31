@@ -67,17 +67,17 @@ produced incorrect results if you gave these options.
 	have been completed, or to save the marks table across
 	incremental runs.  As <file> is only opened and truncated
 	at completion, the same path can also be safely given to
-	\--import-marks.
+	--import-marks.
 	The file will not be written if no new object has been
 	marked/exported.
 
 --import-marks=<file>::
 	Before processing any input, load the marks specified in
 	<file>.  The input file must exist, must be readable, and
-	must use the same format as produced by \--export-marks.
+	must use the same format as produced by --export-marks.
 +
 Any commits that have already been marked will not be exported again.
-If the backend uses a similar \--import-marks file, this allows for
+If the backend uses a similar --import-marks file, this allows for
 incremental bidirectional exporting of the repository by keeping the
 marks the same across runs.
 

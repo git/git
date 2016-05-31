@@ -84,6 +84,8 @@ test_expect_success 'non-qualified update in subdir updates from the root' '
 	(
 		cd dir1 &&
 		echo even more >>sub2 &&
+		git --literal-pathspecs add -u &&
+		echo even more >>sub2 &&
 		git add -u
 	) &&
 	: >expect &&

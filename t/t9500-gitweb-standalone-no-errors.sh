@@ -297,7 +297,7 @@ test_expect_success 'setup incomplete lines' '
 	echo "Dominus regit me," >file &&
 	echo "incomplete line" | tr -d "\\012" >>file &&
 	git commit -a -m "Change incomplete line" &&
-	git tag incomplete_lines_chg
+	git tag incomplete_lines_chg &&
 	echo "Dominus regit me," >file &&
 	git commit -a -m "Remove incomplete line" &&
 	git tag incomplete_lines_rem
@@ -779,7 +779,10 @@ test_expect_success \
 
 test_expect_success \
 	'unborn HEAD: "summary" page (with "heads" subview)' \
-	'git checkout orphan_branch || git checkout --orphan orphan_branch &&
+	'{
+		git checkout orphan_branch ||
+		git checkout --orphan orphan_branch
+	 } &&
 	 test_when_finished "git checkout master" &&
 	 gitweb_run "p=.git;a=summary"'
 

@@ -921,7 +921,7 @@ sub commit {
 		# (See check_refname_component in refs.c.)
 		1 while $xtag =~ s/
 			(?: \.\.        # Tag cannot contain '..'.
-			|   \@{         # Tag cannot contain '@{'.
+			|   \@\{        # Tag cannot contain '@{'.
 			| ^ -           # Tag cannot begin with '-'.
 			|   \.lock $    # Tag cannot end with '.lock'.
 			| ^ \.          # Tag cannot begin...
@@ -1162,7 +1162,7 @@ if ($orig_branch) {
 		die "Fast-forward update failed: $?\n" if $?;
 	}
 	else {
-		system(qw(git merge cvsimport HEAD), "$remote/$opt_o");
+		system(qw(git merge -m cvsimport), "$remote/$opt_o");
 		die "Could not merge $opt_o into the current branch.\n" if $?;
 	}
 } else {

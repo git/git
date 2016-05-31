@@ -1,38 +1,9 @@
 /*
  * Copyright (c) 2005, Junio C Hamano
  */
+
 #include "cache.h"
 #include "lockfile.h"
-#include "sigchain.h"
-
-static struct lock_file *volatile lock_file_list;
-
-static void remove_lock_files(int skip_fclose)
-{
-	pid_t me = getpid();
-
-	while (lock_file_list) {
-		if (lock_file_list->owner == me) {
-			/* fclose() is not safe to call in a signal handler */
-			if (skip_fclose)
-				lock_file_list->fp = NULL;
-			rollback_lock_file(lock_file_list);
-		}
-		lock_file_list = lock_file_list->next;
-	}
-}
-
-static void remove_lock_files_on_exit(void)
-{
-	remove_lock_files(0);
-}
-
-static void remove_lock_files_on_signal(int signo)
-{
-	remove_lock_files(1);
-	sigchain_pop(signo);
-	raise(signo);
-}
 
 /*
  * path = absolute or relative path name
@@ -101,72 +72,92 @@ static void resolve_symlink(struct strbuf *path)
 /* Make sure errno contains a meaningful value on error */
 static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
-	size_t pathlen = strlen(path);
+	int fd;
+	struct strbuf filename = STRBUF_INIT;
 
-	if (!lock_file_list) {
-		/* One-time initialization */
-		sigchain_push_common(remove_lock_files_on_signal);
-		atexit(remove_lock_files_on_exit);
+	strbuf_addstr(&filename, path);
+	if (!(flags & LOCK_NO_DEREF))
+		resolve_symlink(&filename);
+
+	strbuf_addstr(&filename, LOCK_SUFFIX);
+	fd = create_tempfile(&lk->tempfile, filename.buf);
+	strbuf_release(&filename);
+	return fd;
+}
+
+/*
+ * Constants defining the gaps between attempts to lock a file. The
+ * first backoff period is approximately INITIAL_BACKOFF_MS
+ * milliseconds. The longest backoff period is approximately
+ * (BACKOFF_MAX_MULTIPLIER * INITIAL_BACKOFF_MS) milliseconds.
+ */
+#define INITIAL_BACKOFF_MS 1L
+#define BACKOFF_MAX_MULTIPLIER 1000
+
+/*
+ * Try locking path, retrying with quadratic backoff for at least
+ * timeout_ms milliseconds. If timeout_ms is 0, try locking the file
+ * exactly once. If timeout_ms is -1, try indefinitely.
+ */
+static int lock_file_timeout(struct lock_file *lk, const char *path,
+			     int flags, long timeout_ms)
+{
+	int n = 1;
+	int multiplier = 1;
+	long remaining_ms = 0;
+	static int random_initialized = 0;
+
+	if (timeout_ms == 0)
+		return lock_file(lk, path, flags);
+
+	if (!random_initialized) {
+		srand((unsigned int)getpid());
+		random_initialized = 1;
 	}
 
-	if (lk->active)
-		die("BUG: cannot lock_file(\"%s\") using active struct lock_file",
-		    path);
-	if (!lk->on_list) {
-		/* Initialize *lk and add it to lock_file_list: */
-		lk->fd = -1;
-		lk->fp = NULL;
-		lk->active = 0;
-		lk->owner = 0;
-		strbuf_init(&lk->filename, pathlen + LOCK_SUFFIX_LEN);
-		lk->next = lock_file_list;
-		lock_file_list = lk;
-		lk->on_list = 1;
-	} else if (lk->filename.len) {
-		/* This shouldn't happen, but better safe than sorry. */
-		die("BUG: lock_file(\"%s\") called with improperly-reset lock_file object",
-		    path);
-	}
+	if (timeout_ms > 0)
+		remaining_ms = timeout_ms;
 
-	if (flags & LOCK_NO_DEREF) {
-		strbuf_add_absolute_path(&lk->filename, path);
-	} else {
-		struct strbuf resolved_path = STRBUF_INIT;
+	while (1) {
+		long backoff_ms, wait_ms;
+		int fd;
 
-		strbuf_add(&resolved_path, path, pathlen);
-		resolve_symlink(&resolved_path);
-		strbuf_add_absolute_path(&lk->filename, resolved_path.buf);
-		strbuf_release(&resolved_path);
-	}
+		fd = lock_file(lk, path, flags);
 
-	strbuf_addstr(&lk->filename, LOCK_SUFFIX);
-	lk->fd = open(lk->filename.buf, O_RDWR | O_CREAT | O_EXCL, 0666);
-	if (lk->fd < 0) {
-		strbuf_reset(&lk->filename);
-		return -1;
+		if (fd >= 0)
+			return fd; /* success */
+		else if (errno != EEXIST)
+			return -1; /* failure other than lock held */
+		else if (timeout_ms > 0 && remaining_ms <= 0)
+			return -1; /* failure due to timeout */
+
+		backoff_ms = multiplier * INITIAL_BACKOFF_MS;
+		/* back off for between 0.75*backoff_ms and 1.25*backoff_ms */
+		wait_ms = (750 + rand() % 500) * backoff_ms / 1000;
+		sleep_millisec(wait_ms);
+		remaining_ms -= wait_ms;
+
+		/* Recursion: (n+1)^2 = n^2 + 2n + 1 */
+		multiplier += 2*n + 1;
+		if (multiplier > BACKOFF_MAX_MULTIPLIER)
+			multiplier = BACKOFF_MAX_MULTIPLIER;
+		else
+			n++;
 	}
-	lk->owner = getpid();
-	lk->active = 1;
-	if (adjust_shared_perm(lk->filename.buf)) {
-		int save_errno = errno;
-		error("cannot fix permission bits on %s", lk->filename.buf);
-		rollback_lock_file(lk);
-		errno = save_errno;
-		return -1;
-	}
-	return lk->fd;
 }
 
 void unable_to_lock_message(const char *path, int err, struct strbuf *buf)
 {
 	if (err == EEXIST) {
-		strbuf_addf(buf, "Unable to create '%s.lock': %s.\n\n"
-		    "If no other git process is currently running, this probably means a\n"
-		    "git process crashed in this repository earlier. Make sure no other git\n"
-		    "process is running and remove the file manually to continue.",
+		strbuf_addf(buf, _("Unable to create '%s.lock': %s.\n\n"
+		    "Another git process seems to be running in this repository, e.g.\n"
+		    "an editor opened by 'git commit'. Please make sure all processes\n"
+		    "are terminated then try again. If it still fails, a git process\n"
+		    "may have crashed in this repository earlier:\n"
+		    "remove the file manually to continue."),
 			    absolute_path(path), strerror(err));
 	} else
-		strbuf_addf(buf, "Unable to create '%s.lock': %s",
+		strbuf_addf(buf, _("Unable to create '%s.lock': %s"),
 			    absolute_path(path), strerror(err));
 }
 
@@ -179,162 +170,38 @@ NORETURN void unable_to_lock_die(const char *path, int err)
 }
 
 /* This should return a meaningful errno on failure */
-int hold_lock_file_for_update(struct lock_file *lk, const char *path, int flags)
+int hold_lock_file_for_update_timeout(struct lock_file *lk, const char *path,
+				      int flags, long timeout_ms)
 {
-	int fd = lock_file(lk, path, flags);
+	int fd = lock_file_timeout(lk, path, flags, timeout_ms);
 	if (fd < 0 && (flags & LOCK_DIE_ON_ERROR))
 		unable_to_lock_die(path, errno);
 	return fd;
 }
 
-int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
-{
-	int fd, orig_fd;
-
-	fd = lock_file(lk, path, flags);
-	if (fd < 0) {
-		if (flags & LOCK_DIE_ON_ERROR)
-			unable_to_lock_die(path, errno);
-		return fd;
-	}
-
-	orig_fd = open(path, O_RDONLY);
-	if (orig_fd < 0) {
-		if (errno != ENOENT) {
-			int save_errno = errno;
-
-			if (flags & LOCK_DIE_ON_ERROR)
-				die("cannot open '%s' for copying", path);
-			rollback_lock_file(lk);
-			error("cannot open '%s' for copying", path);
-			errno = save_errno;
-			return -1;
-		}
-	} else if (copy_fd(orig_fd, fd)) {
-		int save_errno = errno;
-
-		if (flags & LOCK_DIE_ON_ERROR)
-			exit(128);
-		close(orig_fd);
-		rollback_lock_file(lk);
-		errno = save_errno;
-		return -1;
-	} else {
-		close(orig_fd);
-	}
-	return fd;
-}
-
-FILE *fdopen_lock_file(struct lock_file *lk, const char *mode)
-{
-	if (!lk->active)
-		die("BUG: fdopen_lock_file() called for unlocked object");
-	if (lk->fp)
-		die("BUG: fdopen_lock_file() called twice for file '%s'", lk->filename.buf);
-
-	lk->fp = fdopen(lk->fd, mode);
-	return lk->fp;
-}
-
 char *get_locked_file_path(struct lock_file *lk)
 {
-	if (!lk->active)
-		die("BUG: get_locked_file_path() called for unlocked object");
-	if (lk->filename.len <= LOCK_SUFFIX_LEN)
+	struct strbuf ret = STRBUF_INIT;
+
+	strbuf_addstr(&ret, get_tempfile_path(&lk->tempfile));
+	if (ret.len <= LOCK_SUFFIX_LEN ||
+	    strcmp(ret.buf + ret.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
 		die("BUG: get_locked_file_path() called for malformed lock object");
-	return xmemdupz(lk->filename.buf, lk->filename.len - LOCK_SUFFIX_LEN);
-}
-
-int close_lock_file(struct lock_file *lk)
-{
-	int fd = lk->fd;
-	FILE *fp = lk->fp;
-	int err;
-
-	if (fd < 0)
-		return 0;
-
-	lk->fd = -1;
-	if (fp) {
-		lk->fp = NULL;
-
-		/*
-		 * Note: no short-circuiting here; we want to fclose()
-		 * in any case!
-		 */
-		err = ferror(fp) | fclose(fp);
-	} else {
-		err = close(fd);
-	}
-
-	if (err) {
-		int save_errno = errno;
-		rollback_lock_file(lk);
-		errno = save_errno;
-		return -1;
-	}
-
-	return 0;
-}
-
-int reopen_lock_file(struct lock_file *lk)
-{
-	if (0 <= lk->fd)
-		die(_("BUG: reopen a lockfile that is still open"));
-	if (!lk->active)
-		die(_("BUG: reopen a lockfile that has been committed"));
-	lk->fd = open(lk->filename.buf, O_WRONLY);
-	return lk->fd;
-}
-
-int commit_lock_file_to(struct lock_file *lk, const char *path)
-{
-	if (!lk->active)
-		die("BUG: attempt to commit unlocked object to \"%s\"", path);
-
-	if (close_lock_file(lk))
-		return -1;
-
-	if (rename(lk->filename.buf, path)) {
-		int save_errno = errno;
-		rollback_lock_file(lk);
-		errno = save_errno;
-		return -1;
-	}
-
-	lk->active = 0;
-	strbuf_reset(&lk->filename);
-	return 0;
+	/* remove ".lock": */
+	strbuf_setlen(&ret, ret.len - LOCK_SUFFIX_LEN);
+	return strbuf_detach(&ret, NULL);
 }
 
 int commit_lock_file(struct lock_file *lk)
 {
-	static struct strbuf result_file = STRBUF_INIT;
-	int err;
+	char *result_path = get_locked_file_path(lk);
 
-	if (!lk->active)
-		die("BUG: attempt to commit unlocked object");
-
-	if (lk->filename.len <= LOCK_SUFFIX_LEN ||
-	    strcmp(lk->filename.buf + lk->filename.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
-		die("BUG: lockfile filename corrupt");
-
-	/* remove ".lock": */
-	strbuf_add(&result_file, lk->filename.buf,
-		   lk->filename.len - LOCK_SUFFIX_LEN);
-	err = commit_lock_file_to(lk, result_file.buf);
-	strbuf_reset(&result_file);
-	return err;
-}
-
-void rollback_lock_file(struct lock_file *lk)
-{
-	if (!lk->active)
-		return;
-
-	if (!close_lock_file(lk)) {
-		unlink_or_warn(lk->filename.buf);
-		lk->active = 0;
-		strbuf_reset(&lk->filename);
+	if (commit_lock_file_to(lk, result_path)) {
+		int save_errno = errno;
+		free(result_path);
+		errno = save_errno;
+		return -1;
 	}
+	free(result_path);
+	return 0;
 }

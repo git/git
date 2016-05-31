@@ -131,6 +131,44 @@ test_expect_success 'clone two dirs, @all, conflicting files' '
 	)
 '
 
+revision_ranges="2000/01/01,#head \
+		 1,2080/01/01 \
+		 2000/01/01,2080/01/01 \
+		 2000/01/01,1000 \
+		 1,1000"
+
+test_expect_success 'clone using non-numeric revision ranges' '
+	test_when_finished cleanup_git &&
+	for r in $revision_ranges
+	do
+		rm -fr "$git" &&
+		test ! -d "$git" &&
+		git p4 clone --dest="$git" //depot@$r &&
+		(
+			cd "$git" &&
+			git ls-files >lines &&
+			test_line_count = 6 lines
+		)
+	done
+'
+
+test_expect_success 'clone with date range, excluding some changes' '
+	test_when_finished cleanup_git &&
+	before=$(date +%Y/%m/%d:%H:%M:%S) &&
+	sleep 2 &&
+	(
+		cd "$cli" &&
+		:>date_range_test &&
+		p4 add date_range_test &&
+		p4 submit -d "Adding file"
+	) &&
+	git p4 clone --dest="$git" //depot@1,$before &&
+	(
+		cd "$git" &&
+		test_path_is_missing date_range_test
+	)
+'
+
 test_expect_success 'exit when p4 fails to produce marshaled output' '
 	mkdir badp4dir &&
 	test_when_finished "rm badp4dir/p4 && rmdir badp4dir" &&
@@ -200,6 +238,22 @@ test_expect_success 'unresolvable host in P4PORT should display error' '
 		export P4PORT &&
 		test_expect_code 1 git p4 sync >out 2>err &&
 		grep "connect to nosuchhost" err
+	)
+'
+
+test_expect_success 'submit from detached head' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git checkout p4/master &&
+		>detached_head_test &&
+		git add detached_head_test &&
+		git commit -m "add detached_head" &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit &&
+		git p4 rebase &&
+		git log p4/master | grep detached_head
 	)
 '
 

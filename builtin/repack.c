@@ -14,7 +14,7 @@ static int write_bitmaps;
 static char *packdir, *packtmp;
 
 static const char *const git_repack_usage[] = {
-	N_("git repack [options]"),
+	N_("git repack [<options>]"),
 	NULL
 };
 
@@ -193,6 +193,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, builtin_repack_options,
 				git_repack_usage, 0);
 
+	if (delete_redundant && repository_format_precious_objects)
+		die(_("cannot delete packs in a precious-objects repo"));
+
 	if (pack_kept_objects < 0)
 		pack_kept_objects = write_bitmaps;
 
@@ -228,13 +231,17 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		get_non_kept_pack_filenames(&existing_packs);
 
 		if (existing_packs.nr && delete_redundant) {
-			if (unpack_unreachable)
+			if (unpack_unreachable) {
 				argv_array_pushf(&cmd.args,
 						"--unpack-unreachable=%s",
 						unpack_unreachable);
-			else if (pack_everything & LOOSEN_UNREACHABLE)
+				argv_array_push(&cmd.env_array, "GIT_REF_PARANOIA=1");
+			} else if (pack_everything & LOOSEN_UNREACHABLE) {
 				argv_array_push(&cmd.args,
 						"--unpack-unreachable");
+			} else {
+				argv_array_push(&cmd.env_array, "GIT_REF_PARANOIA=1");
+			}
 		}
 	} else {
 		argv_array_push(&cmd.args, "--unpacked");
@@ -259,7 +266,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		return ret;
 
 	out = xfdopen(cmd.out, "r");
-	while (strbuf_getline(&line, out, '\n') != EOF) {
+	while (strbuf_getline_lf(&line, out) != EOF) {
 		if (line.len != 40)
 			die("repack: Expecting 40 character sha1 lines only from pack-objects.");
 		string_list_append(&names, line.buf);
@@ -289,7 +296,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 
-			fname_old = mkpath("%s/old-%s%s", packdir,
+			fname_old = mkpathdup("%s/old-%s%s", packdir,
 						item->string, exts[ext].name);
 			if (file_exists(fname_old))
 				if (unlink(fname_old))
@@ -297,10 +304,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 			if (!failed && rename(fname, fname_old)) {
 				free(fname);
+				free(fname_old);
 				failed = 1;
 				break;
 			} else {
 				string_list_append(&rollback, fname);
+				free(fname_old);
 			}
 		}
 		if (failed)
@@ -311,10 +320,11 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		for_each_string_list_item(item, &rollback) {
 			char *fname, *fname_old;
 			fname = mkpathdup("%s/%s", packdir, item->string);
-			fname_old = mkpath("%s/old-%s", packdir, item->string);
+			fname_old = mkpathdup("%s/old-%s", packdir, item->string);
 			if (rename(fname_old, fname))
 				string_list_append(&rollback_failure, fname);
 			free(fname);
+			free(fname_old);
 		}
 
 		if (rollback_failure.nr) {
@@ -363,12 +373,13 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	for_each_string_list_item(item, &names) {
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname;
-			fname = mkpath("%s/old-%s%s",
-					packdir,
-					item->string,
-					exts[ext].name);
+			fname = mkpathdup("%s/old-%s%s",
+					  packdir,
+					  item->string,
+					  exts[ext].name);
 			if (remove_path(fname))
 				warning(_("removing '%s' failed"), fname);
+			free(fname);
 		}
 	}
 

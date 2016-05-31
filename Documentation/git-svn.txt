@@ -70,8 +70,8 @@ COMMANDS
 --username=<user>;;
 	For transports that SVN handles authentication for (http,
 	https, and plain svn), specify the username.  For other
-	transports (e.g. svn+ssh://), you must include the username in
-	the URL, e.g. svn+ssh://foo@svn.bar.com/project
+	transports (e.g. `svn+ssh://`), you must include the username in
+	the URL, e.g. `svn+ssh://foo@svn.bar.com/project`
 --prefix=<prefix>;;
 	This allows one to specify a prefix which is prepended
 	to the names of remotes if trunk/branches/tags are
@@ -174,6 +174,9 @@ Skip "branches" and "tags" of first level directories;;
 	(including automatic fetches due to 'clone', 'dcommit',
 	'rebase', etc) on a given repository. '--ignore-paths' takes
 	precedence over '--include-paths'.
++
+[verse]
+config key: svn-remote.<name>.include-paths
 
 --log-window-size=<n>;;
 	Fetch <n> log entries per request when scanning Subversion history.
@@ -279,9 +282,9 @@ first have already been pushed into SVN.
 	Ask the user to confirm that a patch set should actually be sent to SVN.
 	For each patch, one may answer "yes" (accept this patch), "no" (discard this
 	patch), "all" (accept all patches), or "quit".
-	+
-	'git svn dcommit' returns immediately if answer is "no" or "quit", without
-	committing anything to SVN.
++
+'git svn dcommit' returns immediately if answer is "no" or "quit", without
+committing anything to SVN.
 
 'branch'::
 	Create a branch in the SVN repository.
@@ -1031,6 +1034,8 @@ listed below are allowed:
 	url = http://server.org/svn
 	fetch = trunk/project-a:refs/remotes/project-a/trunk
 	branches = branches/*/project-a:refs/remotes/project-a/branches/*
+	branches = branches/release_*:refs/remotes/project-a/branches/release_*
+	branches = branches/re*se:refs/remotes/project-a/branches/*
 	tags = tags/*/project-a:refs/remotes/project-a/tags/*
 ------------------------------------------------------------------------
 
@@ -1040,6 +1045,16 @@ however the remote wildcard may be anywhere as long as it's an
 independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using 'git config'.
+
+Also note that only one asterisk is allowed per word. For example:
+
+	branches = branches/re*se:refs/remotes/project-a/branches/*
+
+will match branches 'release', 'rese', 're123se', however
+
+	branches = branches/re*s*e:refs/remotes/project-a/branches/*
+
+will produce an error.
 
 It is also possible to fetch a subset of branches or tags by using a
 comma-separated list of names within braces. For example:

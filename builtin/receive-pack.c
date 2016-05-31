@@ -19,8 +19,12 @@
 #include "tag.h"
 #include "gpg-interface.h"
 #include "sigchain.h"
+#include "fsck.h"
 
-static const char receive_pack_usage[] = "git receive-pack <git-dir>";
+static const char * const receive_pack_usage[] = {
+	N_("git receive-pack <git-dir>"),
+	NULL
+};
 
 enum deny_action {
 	DENY_UNCONFIGURED,
@@ -36,16 +40,19 @@ static enum deny_action deny_current_branch = DENY_UNCONFIGURED;
 static enum deny_action deny_delete_current = DENY_UNCONFIGURED;
 static int receive_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
+static struct strbuf fsck_msg_types = STRBUF_INIT;
 static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
+static int advertise_atomic_push = 1;
 static int unpack_limit = 100;
 static int report_status;
 static int use_sideband;
+static int use_atomic;
 static int quiet;
 static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
 static int auto_gc = 1;
-static int fix_thin = 1;
+static int reject_thin;
 static int stateless_rpc;
 static const char *service_dir;
 static const char *head_name;
@@ -67,6 +74,7 @@ static const char *NONCE_SLOP = "SLOP";
 static const char *nonce_status;
 static long nonce_stamp_slop;
 static unsigned long nonce_stamp_slop_limit;
+static struct ref_transaction *transaction;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
@@ -109,6 +117,26 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "transfer.unpacklimit") == 0) {
 		transfer_unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.fsck.skiplist") == 0) {
+		const char *path;
+
+		if (git_config_pathname(&path, var, value))
+			return 1;
+		strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
+			fsck_msg_types.len ? ',' : '=', path);
+		free((char *)path);
+		return 0;
+	}
+
+	if (skip_prefix(var, "receive.fsck.", &var)) {
+		if (is_valid_msg_type(var, value))
+			strbuf_addf(&fsck_msg_types, "%c%s=%s",
+				fsck_msg_types.len ? ',' : '=', var, value);
+		else
+			warning("Skipping unknown msg id '%s'", var);
 		return 0;
 	}
 
@@ -160,14 +188,16 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (strcmp(var, "receive.advertiseatomic") == 0) {
+		advertise_atomic_push = git_config_bool(var, value);
+		return 0;
+	}
+
 	return git_default_config(var, value, cb);
 }
 
 static void show_ref(const char *path, const unsigned char *sha1)
 {
-	if (ref_is_hidden(path))
-		return;
-
 	if (sent_capabilities) {
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 	} else {
@@ -175,6 +205,8 @@ static void show_ref(const char *path, const unsigned char *sha1)
 
 		strbuf_addstr(&cap,
 			      "report-status delete-refs side-band-64k quiet");
+		if (advertise_atomic_push)
+			strbuf_addstr(&cap, " atomic");
 		if (prefer_ofs_delta)
 			strbuf_addstr(&cap, " ofs-delta");
 		if (push_cert_nonce)
@@ -187,9 +219,14 @@ static void show_ref(const char *path, const unsigned char *sha1)
 	}
 }
 
-static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, void *unused)
+static int show_ref_cb(const char *path_full, const struct object_id *oid,
+		       int flag, void *unused)
 {
-	path = strip_namespace(path);
+	const char *path = strip_namespace(path_full);
+
+	if (ref_is_hidden(path, path_full))
+		return 0;
+
 	/*
 	 * Advertise refs outside our current namespace as ".have"
 	 * refs, so that the client can use them to minimize data
@@ -200,7 +237,7 @@ static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, vo
 	 */
 	if (!path)
 		path = ".have";
-	show_ref(path, sha1);
+	show_ref(path, oid->hash);
 	return 0;
 }
 
@@ -212,12 +249,13 @@ static void show_one_alternate_sha1(const unsigned char sha1[20], void *unused)
 static void collect_one_alternate_ref(const struct ref *ref, void *data)
 {
 	struct sha1_array *sa = data;
-	sha1_array_append(sa, ref->old_sha1);
+	sha1_array_append(sa, ref->old_oid.hash);
 }
 
 static void write_head_info(void)
 {
 	struct sha1_array sa = SHA1_ARRAY_INIT;
+
 	for_each_alternate_ref(collect_one_alternate_ref, &sa);
 	sha1_array_for_each_unique(&sa, show_one_alternate_sha1, NULL);
 	sha1_array_clear(&sa);
@@ -247,10 +285,10 @@ static void rp_warning(const char *err, ...) __attribute__((format (printf, 1, 2
 
 static void report_message(const char *prefix, const char *err, va_list params)
 {
-	int sz = strlen(prefix);
+	int sz;
 	char msg[4096];
 
-	strncpy(msg, prefix, sz);
+	sz = xsnprintf(msg, sizeof(msg), "%s", prefix);
 	sz += vsnprintf(msg + sz, sizeof(msg) - sz, err, params);
 	if (sz > (sizeof(msg) - 1))
 		sz = sizeof(msg) - 1;
@@ -733,7 +771,25 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	return 0;
 }
 
-static const char *update_worktree(unsigned char *sha1)
+/*
+ * NEEDSWORK: we should consolidate various implementions of "are we
+ * on an unborn branch?" test into one, and make the unified one more
+ * robust. !get_sha1() based check used here and elsewhere would not
+ * allow us to tell an unborn branch from corrupt ref, for example.
+ * For the purpose of fixing "deploy-to-update does not work when
+ * pushing into an empty repository" issue, this should suffice for
+ * now.
+ */
+static int head_has_history(void)
+{
+	unsigned char sha1[20];
+
+	return !get_sha1("HEAD", sha1);
+}
+
+static const char *push_to_deploy(unsigned char *sha1,
+				  struct argv_array *env,
+				  const char *work_tree)
 {
 	const char *update_refresh[] = {
 		"update-index", "-q", "--ignore-submodules", "--refresh", NULL
@@ -743,72 +799,93 @@ static const char *update_worktree(unsigned char *sha1)
 	};
 	const char *diff_index[] = {
 		"diff-index", "--quiet", "--cached", "--ignore-submodules",
-		"HEAD", "--", NULL
+		NULL, "--", NULL
 	};
 	const char *read_tree[] = {
 		"read-tree", "-u", "-m", NULL, NULL
 	};
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	child.argv = update_refresh;
+	child.env = env->argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.stdout_to_stderr = 1;
+	child.git_cmd = 1;
+	if (run_command(&child))
+		return "Up-to-date check failed";
+
+	/* run_command() does not clean up completely; reinitialize */
+	child_process_init(&child);
+	child.argv = diff_files;
+	child.env = env->argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.stdout_to_stderr = 1;
+	child.git_cmd = 1;
+	if (run_command(&child))
+		return "Working directory has unstaged changes";
+
+	/* diff-index with either HEAD or an empty tree */
+	diff_index[4] = head_has_history() ? "HEAD" : EMPTY_TREE_SHA1_HEX;
+
+	child_process_init(&child);
+	child.argv = diff_index;
+	child.env = env->argv;
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.stdout_to_stderr = 0;
+	child.git_cmd = 1;
+	if (run_command(&child))
+		return "Working directory has staged changes";
+
+	read_tree[3] = sha1_to_hex(sha1);
+	child_process_init(&child);
+	child.argv = read_tree;
+	child.env = env->argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.stdout_to_stderr = 0;
+	child.git_cmd = 1;
+	if (run_command(&child))
+		return "Could not update working tree to new HEAD";
+
+	return NULL;
+}
+
+static const char *push_to_checkout_hook = "push-to-checkout";
+
+static const char *push_to_checkout(unsigned char *sha1,
+				    struct argv_array *env,
+				    const char *work_tree)
+{
+	argv_array_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
+	if (run_hook_le(env->argv, push_to_checkout_hook,
+			sha1_to_hex(sha1), NULL))
+		return "push-to-checkout hook declined";
+	else
+		return NULL;
+}
+
+static const char *update_worktree(unsigned char *sha1)
+{
+	const char *retval;
 	const char *work_tree = git_work_tree_cfg ? git_work_tree_cfg : "..";
 	struct argv_array env = ARGV_ARRAY_INIT;
-	struct child_process child = CHILD_PROCESS_INIT;
 
 	if (is_bare_repository())
 		return "denyCurrentBranch = updateInstead needs a worktree";
 
 	argv_array_pushf(&env, "GIT_DIR=%s", absolute_path(get_git_dir()));
 
-	child.argv = update_refresh;
-	child.env = env.argv;
-	child.dir = work_tree;
-	child.no_stdin = 1;
-	child.stdout_to_stderr = 1;
-	child.git_cmd = 1;
-	if (run_command(&child)) {
-		argv_array_clear(&env);
-		return "Up-to-date check failed";
-	}
-
-	/* run_command() does not clean up completely; reinitialize */
-	child_process_init(&child);
-	child.argv = diff_files;
-	child.env = env.argv;
-	child.dir = work_tree;
-	child.no_stdin = 1;
-	child.stdout_to_stderr = 1;
-	child.git_cmd = 1;
-	if (run_command(&child)) {
-		argv_array_clear(&env);
-		return "Working directory has unstaged changes";
-	}
-
-	child_process_init(&child);
-	child.argv = diff_index;
-	child.env = env.argv;
-	child.no_stdin = 1;
-	child.no_stdout = 1;
-	child.stdout_to_stderr = 0;
-	child.git_cmd = 1;
-	if (run_command(&child)) {
-		argv_array_clear(&env);
-		return "Working directory has staged changes";
-	}
-
-	read_tree[3] = sha1_to_hex(sha1);
-	child_process_init(&child);
-	child.argv = read_tree;
-	child.env = env.argv;
-	child.dir = work_tree;
-	child.no_stdin = 1;
-	child.no_stdout = 1;
-	child.stdout_to_stderr = 0;
-	child.git_cmd = 1;
-	if (run_command(&child)) {
-		argv_array_clear(&env);
-		return "Could not update working tree to new HEAD";
-	}
+	if (!find_hook(push_to_checkout_hook))
+		retval = push_to_deploy(sha1, &env, work_tree);
+	else
+		retval = push_to_checkout(sha1, &env, work_tree);
 
 	argv_array_clear(&env);
-	return NULL;
+	return retval;
 }
 
 static const char *update(struct command *cmd, struct shallow_info *si)
@@ -861,7 +938,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			return "deletion prohibited";
 		}
 
-		if (!strcmp(namespaced_name, head_name)) {
+		if (head_name && !strcmp(namespaced_name, head_name)) {
 			switch (deny_delete_current) {
 			case DENY_IGNORE:
 				break;
@@ -910,6 +987,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	}
 
 	if (is_null_sha1(new_sha1)) {
+		struct strbuf err = STRBUF_INIT;
 		if (!parse_object(old_sha1)) {
 			old_sha1 = NULL;
 			if (ref_exists(name)) {
@@ -919,35 +997,35 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				cmd->did_not_exist = 1;
 			}
 		}
-		if (delete_ref(namespaced_name, old_sha1, 0)) {
-			rp_error("failed to delete %s", name);
+		if (ref_transaction_delete(transaction,
+					   namespaced_name,
+					   old_sha1,
+					   0, "push", &err)) {
+			rp_error("%s", err.buf);
+			strbuf_release(&err);
 			return "failed to delete";
 		}
+		strbuf_release(&err);
 		return NULL; /* good */
 	}
 	else {
 		struct strbuf err = STRBUF_INIT;
-		struct ref_transaction *transaction;
-
 		if (shallow_update && si->shallow_ref[cmd->index] &&
 		    update_shallow_ref(cmd, si))
 			return "shallow error";
 
-		transaction = ref_transaction_begin(&err);
-		if (!transaction ||
-		    ref_transaction_update(transaction, namespaced_name,
-					   new_sha1, old_sha1, 0, 1, "push",
-					   &err) ||
-		    ref_transaction_commit(transaction, &err)) {
-			ref_transaction_free(transaction);
-
+		if (ref_transaction_update(transaction,
+					   namespaced_name,
+					   new_sha1, old_sha1,
+					   0, "push",
+					   &err)) {
 			rp_error("%s", err.buf);
 			strbuf_release(&err);
+
 			return "failed to update ref";
 		}
-
-		ref_transaction_free(transaction);
 		strbuf_release(&err);
+
 		return NULL; /* good */
 	}
 }
@@ -956,9 +1034,8 @@ static void run_update_post_hook(struct command *commands)
 {
 	struct command *cmd;
 	int argc;
-	const char **argv;
 	struct child_process proc = CHILD_PROCESS_INIT;
-	char *hook;
+	const char *hook;
 
 	hook = find_hook("post-update");
 	for (argc = 0, cmd = commands; cmd; cmd = cmd->next) {
@@ -969,21 +1046,16 @@ static void run_update_post_hook(struct command *commands)
 	if (!argc || !hook)
 		return;
 
-	argv = xmalloc(sizeof(*argv) * (2 + argc));
-	argv[0] = hook;
-
-	for (argc = 1, cmd = commands; cmd; cmd = cmd->next) {
+	argv_array_push(&proc.args, hook);
+	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string || cmd->did_not_exist)
 			continue;
-		argv[argc] = xstrdup(cmd->ref_name);
-		argc++;
+		argv_array_push(&proc.args, cmd->ref_name);
 	}
-	argv[argc] = NULL;
 
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
-	proc.argv = argv;
 
 	if (!start_command(&proc)) {
 		if (use_sideband)
@@ -998,8 +1070,11 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	const char *dst_name;
 	struct string_list_item *item;
 	struct command *dst_cmd;
-	unsigned char sha1[20];
-	char cmd_oldh[41], cmd_newh[41], dst_oldh[41], dst_newh[41];
+	unsigned char sha1[GIT_SHA1_RAWSZ];
+	char cmd_oldh[GIT_SHA1_HEXSZ + 1],
+	     cmd_newh[GIT_SHA1_HEXSZ + 1],
+	     dst_oldh[GIT_SHA1_HEXSZ + 1],
+	     dst_newh[GIT_SHA1_HEXSZ + 1];
 	int flag;
 
 	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
@@ -1009,13 +1084,13 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	if (!(flag & REF_ISSYMREF))
 		return;
 
-	dst_name = strip_namespace(dst_name);
 	if (!dst_name) {
 		rp_error("refusing update to broken symref '%s'", cmd->ref_name);
 		cmd->skip_update = 1;
 		cmd->error_string = "broken symref";
 		return;
 	}
+	dst_name = strip_namespace(dst_name);
 
 	if ((item = string_list_lookup(list, dst_name)) == NULL)
 		return;
@@ -1030,10 +1105,10 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 
 	dst_cmd->skip_update = 1;
 
-	strcpy(cmd_oldh, find_unique_abbrev(cmd->old_sha1, DEFAULT_ABBREV));
-	strcpy(cmd_newh, find_unique_abbrev(cmd->new_sha1, DEFAULT_ABBREV));
-	strcpy(dst_oldh, find_unique_abbrev(dst_cmd->old_sha1, DEFAULT_ABBREV));
-	strcpy(dst_newh, find_unique_abbrev(dst_cmd->new_sha1, DEFAULT_ABBREV));
+	find_unique_abbrev_r(cmd_oldh, cmd->old_sha1, DEFAULT_ABBREV);
+	find_unique_abbrev_r(cmd_newh, cmd->new_sha1, DEFAULT_ABBREV);
+	find_unique_abbrev_r(dst_oldh, dst_cmd->old_sha1, DEFAULT_ABBREV);
+	find_unique_abbrev_r(dst_newh, dst_cmd->new_sha1, DEFAULT_ABBREV);
 	rp_error("refusing inconsistent update between symref '%s' (%s..%s) and"
 		 " its target '%s' (%s..%s)",
 		 cmd->ref_name, cmd_oldh, cmd_newh,
@@ -1119,23 +1194,130 @@ static int iterate_receive_command_list(void *cb_data, unsigned char sha1[20])
 
 static void reject_updates_to_hidden(struct command *commands)
 {
+	struct strbuf refname_full = STRBUF_INIT;
+	size_t prefix_len;
 	struct command *cmd;
 
+	strbuf_addstr(&refname_full, get_git_namespace());
+	prefix_len = refname_full.len;
+
 	for (cmd = commands; cmd; cmd = cmd->next) {
-		if (cmd->error_string || !ref_is_hidden(cmd->ref_name))
+		if (cmd->error_string)
+			continue;
+
+		strbuf_setlen(&refname_full, prefix_len);
+		strbuf_addstr(&refname_full, cmd->ref_name);
+
+		if (!ref_is_hidden(cmd->ref_name, refname_full.buf))
 			continue;
 		if (is_null_sha1(cmd->new_sha1))
 			cmd->error_string = "deny deleting a hidden ref";
 		else
 			cmd->error_string = "deny updating a hidden ref";
 	}
+
+	strbuf_release(&refname_full);
+}
+
+static int should_process_cmd(struct command *cmd)
+{
+	return !cmd->error_string && !cmd->skip_update;
+}
+
+static void warn_if_skipped_connectivity_check(struct command *commands,
+					       struct shallow_info *si)
+{
+	struct command *cmd;
+	int checked_connectivity = 1;
+
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (should_process_cmd(cmd) && si->shallow_ref[cmd->index]) {
+			error("BUG: connectivity check has not been run on ref %s",
+			      cmd->ref_name);
+			checked_connectivity = 0;
+		}
+	}
+	if (!checked_connectivity)
+		die("BUG: connectivity check skipped???");
+}
+
+static void execute_commands_non_atomic(struct command *commands,
+					struct shallow_info *si)
+{
+	struct command *cmd;
+	struct strbuf err = STRBUF_INIT;
+
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (!should_process_cmd(cmd))
+			continue;
+
+		transaction = ref_transaction_begin(&err);
+		if (!transaction) {
+			rp_error("%s", err.buf);
+			strbuf_reset(&err);
+			cmd->error_string = "transaction failed to start";
+			continue;
+		}
+
+		cmd->error_string = update(cmd, si);
+
+		if (!cmd->error_string
+		    && ref_transaction_commit(transaction, &err)) {
+			rp_error("%s", err.buf);
+			strbuf_reset(&err);
+			cmd->error_string = "failed to update ref";
+		}
+		ref_transaction_free(transaction);
+	}
+	strbuf_release(&err);
+}
+
+static void execute_commands_atomic(struct command *commands,
+					struct shallow_info *si)
+{
+	struct command *cmd;
+	struct strbuf err = STRBUF_INIT;
+	const char *reported_error = "atomic push failure";
+
+	transaction = ref_transaction_begin(&err);
+	if (!transaction) {
+		rp_error("%s", err.buf);
+		strbuf_reset(&err);
+		reported_error = "transaction failed to start";
+		goto failure;
+	}
+
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (!should_process_cmd(cmd))
+			continue;
+
+		cmd->error_string = update(cmd, si);
+
+		if (cmd->error_string)
+			goto failure;
+	}
+
+	if (ref_transaction_commit(transaction, &err)) {
+		rp_error("%s", err.buf);
+		reported_error = "atomic transaction failed";
+		goto failure;
+	}
+	goto cleanup;
+
+failure:
+	for (cmd = commands; cmd; cmd = cmd->next)
+		if (!cmd->error_string)
+			cmd->error_string = reported_error;
+
+cleanup:
+	ref_transaction_free(transaction);
+	strbuf_release(&err);
 }
 
 static void execute_commands(struct command *commands,
 			     const char *unpacker_error,
 			     struct shallow_info *si)
 {
-	int checked_connectivity;
 	struct command *cmd;
 	unsigned char sha1[20];
 	struct iterate_data data;
@@ -1166,27 +1348,13 @@ static void execute_commands(struct command *commands,
 	free(head_name_to_free);
 	head_name = head_name_to_free = resolve_refdup("HEAD", 0, sha1, NULL);
 
-	checked_connectivity = 1;
-	for (cmd = commands; cmd; cmd = cmd->next) {
-		if (cmd->error_string)
-			continue;
+	if (use_atomic)
+		execute_commands_atomic(commands, si);
+	else
+		execute_commands_non_atomic(commands, si);
 
-		if (cmd->skip_update)
-			continue;
-
-		cmd->error_string = update(cmd, si);
-		if (shallow_update && !cmd->error_string &&
-		    si->shallow_ref[cmd->index]) {
-			error("BUG: connectivity check has not been run on ref %s",
-			      cmd->ref_name);
-			checked_connectivity = 0;
-		}
-	}
-
-	if (shallow_update && !checked_connectivity)
-		error("BUG: run 'git fsck' for safety.\n"
-		      "If there are errors, try to remove "
-		      "the reported refs above");
+	if (shallow_update)
+		warn_if_skipped_connectivity_check(commands, si);
 }
 
 static struct command **queue_command(struct command **tail,
@@ -1207,7 +1375,7 @@ static struct command **queue_command(struct command **tail,
 
 	refname = line + 82;
 	reflen = linelen - 82;
-	cmd = xcalloc(1, sizeof(struct command) + reflen + 1);
+	cmd = xcalloc(1, st_add3(sizeof(struct command), reflen, 1));
 	hashcpy(cmd->old_sha1, old_sha1);
 	hashcpy(cmd->new_sha1, new_sha1);
 	memcpy(cmd->ref_name, refname, reflen);
@@ -1268,6 +1436,9 @@ static struct command *read_head_info(struct sha1_array *shallow)
 				use_sideband = LARGE_PACKET_MAX;
 			if (parse_feature_request(feature_list, "quiet"))
 				quiet = 1;
+			if (advertise_atomic_push
+			    && parse_feature_request(feature_list, "atomic"))
+				use_atomic = 1;
 		}
 
 		if (!strcmp(line, "push-cert")) {
@@ -1356,7 +1527,8 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (quiet)
 			argv_array_push(&child.args, "-q");
 		if (fsck_objects)
-			argv_array_push(&child.args, "--strict");
+			argv_array_pushf(&child.args, "--strict%s",
+				fsck_msg_types.buf);
 		child.no_stdout = 1;
 		child.err = err_fd;
 		child.git_cmd = 1;
@@ -1364,18 +1536,22 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (status)
 			return "unpack-objects abnormal exit";
 	} else {
-		int s;
-		char keep_arg[256];
-
-		s = sprintf(keep_arg, "--keep=receive-pack %"PRIuMAX" on ", (uintmax_t) getpid());
-		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
-			strcpy(keep_arg + s, "localhost");
+		char hostname[256];
 
 		argv_array_pushl(&child.args, "index-pack",
-				 "--stdin", hdr_arg, keep_arg, NULL);
+				 "--stdin", hdr_arg, NULL);
+
+		if (gethostname(hostname, sizeof(hostname)))
+			xsnprintf(hostname, sizeof(hostname), "localhost");
+		argv_array_pushf(&child.args,
+				 "--keep=receive-pack %"PRIuMAX" on %s",
+				 (uintmax_t)getpid(),
+				 hostname);
+
 		if (fsck_objects)
-			argv_array_push(&child.args, "--strict");
-		if (fix_thin)
+			argv_array_pushf(&child.args, "--strict%s",
+				fsck_msg_types.buf);
+		if (!reject_thin)
 			argv_array_push(&child.args, "--fix-thin");
 		child.out = -1;
 		child.err = err_fd;
@@ -1418,8 +1594,7 @@ static void prepare_shallow_update(struct command *commands,
 {
 	int i, j, k, bitmap_size = (si->ref->nr + 31) / 32;
 
-	si->used_shallow = xmalloc(sizeof(*si->used_shallow) *
-				   si->shallow->nr);
+	ALLOC_ARRAY(si->used_shallow, si->shallow->nr);
 	assign_shallow_commits_to_refs(si, si->used_shallow, NULL);
 
 	si->need_reachability_test =
@@ -1439,7 +1614,7 @@ static void prepare_shallow_update(struct command *commands,
 				continue;
 			si->need_reachability_test[i]++;
 			for (k = 0; k < 32; k++)
-				if (si->used_shallow[i][j] & (1 << k))
+				if (si->used_shallow[i][j] & (1U << k))
 					si->shallow_ref[j * 32 + k]++;
 		}
 
@@ -1485,7 +1660,7 @@ static void update_shallow_info(struct command *commands,
 		return;
 	}
 
-	ref_status = xmalloc(sizeof(*ref_status) * ref->nr);
+	ALLOC_ARRAY(ref_status, ref->nr);
 	assign_shallow_commits_to_refs(si, NULL, ref_status);
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (is_null_sha1(cmd->new_sha1))
@@ -1535,45 +1710,29 @@ static int delete_only(struct command *commands)
 int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 {
 	int advertise_refs = 0;
-	int i;
 	struct command *commands;
 	struct sha1_array shallow = SHA1_ARRAY_INIT;
 	struct sha1_array ref = SHA1_ARRAY_INIT;
 	struct shallow_info si;
 
+	struct option options[] = {
+		OPT__QUIET(&quiet, N_("quiet")),
+		OPT_HIDDEN_BOOL(0, "stateless-rpc", &stateless_rpc, NULL),
+		OPT_HIDDEN_BOOL(0, "advertise-refs", &advertise_refs, NULL),
+		OPT_HIDDEN_BOOL(0, "reject-thin-pack-for-testing", &reject_thin, NULL),
+		OPT_END()
+	};
+
 	packet_trace_identity("receive-pack");
 
-	argv++;
-	for (i = 1; i < argc; i++) {
-		const char *arg = *argv++;
+	argc = parse_options(argc, argv, prefix, options, receive_pack_usage, 0);
 
-		if (*arg == '-') {
-			if (!strcmp(arg, "--quiet")) {
-				quiet = 1;
-				continue;
-			}
+	if (argc > 1)
+		usage_msg_opt(_("Too many arguments."), receive_pack_usage, options);
+	if (argc == 0)
+		usage_msg_opt(_("You must specify a directory."), receive_pack_usage, options);
 
-			if (!strcmp(arg, "--advertise-refs")) {
-				advertise_refs = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--stateless-rpc")) {
-				stateless_rpc = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--reject-thin-pack-for-testing")) {
-				fix_thin = 0;
-				continue;
-			}
-
-			usage(receive_pack_usage);
-		}
-		if (service_dir)
-			usage(receive_pack_usage);
-		service_dir = arg;
-	}
-	if (!service_dir)
-		usage(receive_pack_usage);
+	service_dir = argv[0];
 
 	setup_path();
 
@@ -1617,6 +1776,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 				"gc", "--auto", "--quiet", NULL,
 			};
 			int opt = RUN_GIT_CMD | RUN_COMMAND_STDOUT_TO_STDERR;
+			close_all_packs();
 			run_command_v_opt(argv_gc_auto, opt);
 		}
 		if (auto_update_server_info)

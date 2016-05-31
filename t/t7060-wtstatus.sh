@@ -106,7 +106,7 @@ test_expect_success 'git diff-index --cached -M shows 2 added + 1 unmerged' '
 	A	THREE
 	A	TWO
 	EOF
-	git diff-index --cached --name-status HEAD >actual &&
+	git diff-index --cached -M --name-status HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -213,5 +213,19 @@ EOF
 	git checkout master
 '
 
+test_expect_success 'status --branch with detached HEAD' '
+	git reset --hard &&
+	git checkout master^0 &&
+	git status --branch --porcelain >actual &&
+	cat >expected <<-EOF &&
+	## HEAD (no branch)
+	?? .gitconfig
+	?? actual
+	?? expect
+	?? expected
+	?? mdconflict/
+	EOF
+	test_i18ncmp expected actual
+'
 
 test_done

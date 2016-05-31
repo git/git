@@ -14,6 +14,7 @@ test_expect_success setup '
 		echo expect
 		echo ignored
 	) >.gitignore &&
+	git --literal-pathspecs add --all &&
 	>will-remove &&
 	git add --all &&
 	test_tick &&

@@ -11,7 +11,7 @@
 #define BLKSIZE 512
 
 static const char pack_redundant_usage[] =
-"git pack-redundant [ --verbose ] [ --alt-odb ] < --all | <.pack filename> ...>";
+"git pack-redundant [--verbose] [--alt-odb] (--all | <filename.pack>...)";
 
 static int load_all_packs, verbose, alt_odb;
 
@@ -53,7 +53,7 @@ static inline struct llist_item *llist_item_get(void)
 		free_nodes = free_nodes->next;
 	} else {
 		int i = 1;
-		new = xmalloc(sizeof(struct llist_item) * BLKSIZE);
+		ALLOC_ARRAY(new, BLKSIZE);
 		for (; i < BLKSIZE; i++)
 			llist_item_put(&new[i]);
 	}

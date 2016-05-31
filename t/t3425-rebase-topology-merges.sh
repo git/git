@@ -24,7 +24,7 @@ test_expect_success 'setup of non-linear-history' '
 	test_commit c &&
 	git checkout b &&
 	test_commit d &&
-	test_commit e
+	test_commit e &&
 
 	git checkout c &&
 	test_commit g &&
@@ -33,7 +33,7 @@ test_expect_success 'setup of non-linear-history' '
 	cherry_pick gp g &&
 	test_commit i &&
 	git checkout b &&
-	test_commit f
+	test_commit f &&
 
 	git checkout d &&
 	test_commit n &&

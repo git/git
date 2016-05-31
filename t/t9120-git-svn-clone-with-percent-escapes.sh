@@ -22,7 +22,7 @@ test_expect_success 'test clone with percent escapes' '
 	git svn clone "$svnrepo/pr%20ject" clone &&
 	(
 		cd clone &&
-		git rev-parse refs/${remotes_git_svn}
+		git rev-parse refs/remotes/git-svn
 	)
 '
 
@@ -42,7 +42,7 @@ test_expect_success 'test clone trunk with percent escapes and minimize-url' '
 	git svn clone --minimize-url "$svnrepo/pr%20ject/trunk" minimize &&
 	(
 		cd minimize &&
-		git rev-parse refs/${remotes_git_svn}
+		git rev-parse refs/remotes/git-svn
 	)
 '
 
@@ -50,7 +50,7 @@ test_expect_success 'test clone trunk with percent escapes' '
 	git svn clone "$svnrepo/pr%20ject/trunk" trunk &&
 	(
 		cd trunk &&
-		git rev-parse refs/${remotes_git_svn}
+		git rev-parse refs/remotes/git-svn
 	)
 '
 

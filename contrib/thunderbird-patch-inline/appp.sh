@@ -31,8 +31,8 @@ BODY=$(sed -e "1,/${SEP}/d" $1)
 CMT_MSG=$(sed -e '1,/^$/d' -e '/^---$/,$d' "${PATCH}")
 DIFF=$(sed -e '1,/^---$/d' "${PATCH}")
 
-CCS=`echo -e "$CMT_MSG\n$HEADERS" | sed -n -e 's/^Cc: \(.*\)$/\1,/gp' \
-	-e 's/^Signed-off-by: \(.*\)/\1,/gp'`
+CCS=$(echo -e "$CMT_MSG\n$HEADERS" | sed -n -e 's/^Cc: \(.*\)$/\1,/gp' \
+	-e 's/^Signed-off-by: \(.*\)/\1,/gp')
 
 echo "$SUBJECT" > $1
 echo "Cc: $CCS" >> $1

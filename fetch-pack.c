@@ -43,7 +43,12 @@ static int marked;
 #define MAX_IN_VAIN 256
 
 static struct prio_queue rev_list = { compare_commits_by_commit_date };
-static int non_common_revs, multi_ack, use_sideband, allow_tip_sha1_in_want;
+static int non_common_revs, multi_ack, use_sideband;
+/* Allow specifying sha1 if it is a ref tip. */
+#define ALLOW_TIP_SHA1	01
+/* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
+#define ALLOW_REACHABLE_SHA1	02
+static unsigned int allow_unadvertised_object_request;
 
 static void rev_list_push(struct commit *commit, int mark)
 {
@@ -60,7 +65,7 @@ static void rev_list_push(struct commit *commit, int mark)
 	}
 }
 
-static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int rev_list_insert_ref(const char *refname, const unsigned char *sha1)
 {
 	struct object *o = deref_tag(parse_object(sha1), refname, 0);
 
@@ -70,9 +75,16 @@ static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, i
 	return 0;
 }
 
-static int clear_marks(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int rev_list_insert_ref_oid(const char *refname, const struct object_id *oid,
+				   int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(sha1), refname, 0);
+	return rev_list_insert_ref(refname, oid->hash);
+}
+
+static int clear_marks(const char *refname, const struct object_id *oid,
+		       int flag, void *cb_data)
+{
+	struct object *o = deref_tag(parse_object(oid->hash), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		clear_commit_marks((struct commit *)o,
@@ -157,7 +169,7 @@ static const unsigned char *get_rev(void)
 		}
 	}
 
-	return commit->object.sha1;
+	return commit->object.oid.hash;
 }
 
 enum ack_type {
@@ -226,7 +238,7 @@ static void send_request(struct fetch_pack_args *args,
 
 static void insert_one_alternate_ref(const struct ref *ref, void *unused)
 {
-	rev_list_insert_ref(NULL, ref->old_sha1, 0, NULL);
+	rev_list_insert_ref(NULL, ref->old_oid.hash);
 }
 
 #define INITIAL_FLUSH 16
@@ -263,12 +275,12 @@ static int find_common(struct fetch_pack_args *args,
 		for_each_ref(clear_marks, NULL);
 	marked = 1;
 
-	for_each_ref(rev_list_insert_ref, NULL);
+	for_each_ref(rev_list_insert_ref_oid, NULL);
 	for_each_alternate_ref(insert_one_alternate_ref, NULL);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
-		unsigned char *remote = refs->old_sha1;
+		unsigned char *remote = refs->old_oid.hash;
 		const char *remote_hex;
 		struct object *o;
 
@@ -466,7 +478,7 @@ done:
 
 static struct commit_list *complete;
 
-static int mark_complete(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int mark_complete(const unsigned char *sha1)
 {
 	struct object *o = parse_object(sha1);
 
@@ -475,7 +487,7 @@ static int mark_complete(const char *refname, const unsigned char *sha1, int fla
 		if (!t->tagged)
 			break; /* broken repository */
 		o->flags |= COMPLETE;
-		o = parse_object(t->tagged->sha1);
+		o = parse_object(t->tagged->oid.hash);
 	}
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
@@ -487,13 +499,19 @@ static int mark_complete(const char *refname, const unsigned char *sha1, int fla
 	return 0;
 }
 
+static int mark_complete_oid(const char *refname, const struct object_id *oid,
+			     int flag, void *cb_data)
+{
+	return mark_complete(oid->hash);
+}
+
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
 					 unsigned long cutoff)
 {
 	while (complete && cutoff <= complete->item->date) {
 		if (args->verbose)
 			fprintf(stderr, "Marking %s as complete\n",
-				sha1_to_hex(complete->item->object.sha1));
+				oid_to_hex(&complete->item->object.oid));
 		pop_most_recent_commit(&complete, COMPLETE);
 	}
 }
@@ -542,18 +560,22 @@ static void filter_refs(struct fetch_pack_args *args,
 	}
 
 	/* Append unmatched requests to the list */
-	if (allow_tip_sha1_in_want) {
+	if ((allow_unadvertised_object_request &
+	    (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1))) {
 		for (i = 0; i < nr_sought; i++) {
+			unsigned char sha1[20];
+
 			ref = sought[i];
 			if (ref->matched)
 				continue;
-			if (get_sha1_hex(ref->name, ref->old_sha1))
+			if (get_sha1_hex(ref->name, sha1) ||
+			    ref->name[40] != '\0' ||
+			    hashcmp(sha1, ref->old_oid.hash))
 				continue;
 
 			ref->matched = 1;
-			*newtail = ref;
-			ref->next = NULL;
-			newtail = &ref->next;
+			*newtail = copy_ref(ref);
+			newtail = &(*newtail)->next;
 		}
 	}
 	*refs = newlist;
@@ -561,7 +583,7 @@ static void filter_refs(struct fetch_pack_args *args,
 
 static void mark_alternate_complete(const struct ref *ref, void *unused)
 {
-	mark_complete(NULL, ref->old_sha1, 0, NULL);
+	mark_complete(ref->old_oid.hash);
 }
 
 static int everything_local(struct fetch_pack_args *args,
@@ -577,10 +599,10 @@ static int everything_local(struct fetch_pack_args *args,
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
-		if (!has_sha1_file(ref->old_sha1))
+		if (!has_object_file(&ref->old_oid))
 			continue;
 
-		o = parse_object(ref->old_sha1);
+		o = parse_object(ref->old_oid.hash);
 		if (!o)
 			continue;
 
@@ -596,7 +618,7 @@ static int everything_local(struct fetch_pack_args *args,
 	}
 
 	if (!args->depth) {
-		for_each_ref(mark_complete, NULL);
+		for_each_ref(mark_complete_oid, NULL);
 		for_each_alternate_ref(mark_alternate_complete, NULL);
 		commit_list_sort_by_date(&complete);
 		if (cutoff)
@@ -608,7 +630,7 @@ static int everything_local(struct fetch_pack_args *args,
 	 * Don't mark them common yet; the server has to be told so first.
 	 */
 	for (ref = *refs; ref; ref = ref->next) {
-		struct object *o = deref_tag(lookup_object(ref->old_sha1),
+		struct object *o = deref_tag(lookup_object(ref->old_oid.hash),
 					     NULL, 0);
 
 		if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
@@ -624,8 +646,7 @@ static int everything_local(struct fetch_pack_args *args,
 	filter_refs(args, refs, sought, nr_sought);
 
 	for (retval = 1, ref = *refs; ref ; ref = ref->next) {
-		const unsigned char *remote = ref->old_sha1;
-		unsigned char local[20];
+		const unsigned char *remote = ref->old_oid.hash;
 		struct object *o;
 
 		o = lookup_object(remote);
@@ -638,8 +659,6 @@ static int everything_local(struct fetch_pack_args *args,
 				ref->name);
 			continue;
 		}
-
-		hashcpy(ref->new_sha1, local);
 		if (!args->verbose)
 			continue;
 		fprintf(stderr,
@@ -652,8 +671,9 @@ static int everything_local(struct fetch_pack_args *args,
 static int sideband_demux(int in, int out, void *data)
 {
 	int *xd = data;
+	int ret;
 
-	int ret = recv_sideband("fetch-pack", xd[0], out);
+	ret = recv_sideband("fetch-pack", xd[0], out);
 	close(out);
 	return ret;
 }
@@ -662,11 +682,10 @@ static int get_pack(struct fetch_pack_args *args,
 		    int xd[2], char **pack_lockfile)
 {
 	struct async demux;
-	const char *argv[22];
-	char keep_arg[256];
-	char hdr_arg[256];
-	const char **av, *cmd_name;
 	int do_keep = args->keep_pack;
+	const char *cmd_name;
+	struct pack_header header;
+	int pass_header = 0;
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int ret;
 
@@ -679,6 +698,7 @@ static int get_pack(struct fetch_pack_args *args,
 		demux.proc = sideband_demux;
 		demux.data = xd;
 		demux.out = -1;
+		demux.isolate_sigpipe = 1;
 		if (start_async(&demux))
 			die("fetch-pack: unable to fork off sideband"
 			    " demultiplexer");
@@ -686,17 +706,11 @@ static int get_pack(struct fetch_pack_args *args,
 	else
 		demux.out = xd[0];
 
-	cmd.argv = argv;
-	av = argv;
-	*hdr_arg = 0;
 	if (!args->keep_pack && unpack_limit) {
-		struct pack_header header;
 
 		if (read_pack_header(demux.out, &header))
 			die("protocol error: bad pack header");
-		snprintf(hdr_arg, sizeof(hdr_arg),
-			 "--pack_header=%"PRIu32",%"PRIu32,
-			 ntohl(header.hdr_version), ntohl(header.hdr_entries));
+		pass_header = 1;
 		if (ntohl(header.hdr_entries) < unpack_limit)
 			do_keep = 0;
 		else
@@ -704,44 +718,49 @@ static int get_pack(struct fetch_pack_args *args,
 	}
 
 	if (alternate_shallow_file) {
-		*av++ = "--shallow-file";
-		*av++ = alternate_shallow_file;
+		argv_array_push(&cmd.args, "--shallow-file");
+		argv_array_push(&cmd.args, alternate_shallow_file);
 	}
 
 	if (do_keep) {
 		if (pack_lockfile)
 			cmd.out = -1;
-		*av++ = cmd_name = "index-pack";
-		*av++ = "--stdin";
+		cmd_name = "index-pack";
+		argv_array_push(&cmd.args, cmd_name);
+		argv_array_push(&cmd.args, "--stdin");
 		if (!args->quiet && !args->no_progress)
-			*av++ = "-v";
+			argv_array_push(&cmd.args, "-v");
 		if (args->use_thin_pack)
-			*av++ = "--fix-thin";
+			argv_array_push(&cmd.args, "--fix-thin");
 		if (args->lock_pack || unpack_limit) {
-			int s = sprintf(keep_arg,
-					"--keep=fetch-pack %"PRIuMAX " on ", (uintmax_t) getpid());
-			if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
-				strcpy(keep_arg + s, "localhost");
-			*av++ = keep_arg;
+			char hostname[256];
+			if (gethostname(hostname, sizeof(hostname)))
+				xsnprintf(hostname, sizeof(hostname), "localhost");
+			argv_array_pushf(&cmd.args,
+					"--keep=fetch-pack %"PRIuMAX " on %s",
+					(uintmax_t)getpid(), hostname);
 		}
 		if (args->check_self_contained_and_connected)
-			*av++ = "--check-self-contained-and-connected";
+			argv_array_push(&cmd.args, "--check-self-contained-and-connected");
 	}
 	else {
-		*av++ = cmd_name = "unpack-objects";
+		cmd_name = "unpack-objects";
+		argv_array_push(&cmd.args, cmd_name);
 		if (args->quiet || args->no_progress)
-			*av++ = "-q";
+			argv_array_push(&cmd.args, "-q");
 		args->check_self_contained_and_connected = 0;
 	}
-	if (*hdr_arg)
-		*av++ = hdr_arg;
+
+	if (pass_header)
+		argv_array_pushf(&cmd.args, "--pack_header=%"PRIu32",%"PRIu32,
+				 ntohl(header.hdr_version),
+				 ntohl(header.hdr_entries));
 	if (fetch_fsck_objects >= 0
 	    ? fetch_fsck_objects
 	    : transfer_fsck_objects >= 0
 	    ? transfer_fsck_objects
 	    : 0)
-		*av++ = "--strict";
-	*av++ = NULL;
+		argv_array_push(&cmd.args, "--strict");
 
 	cmd.in = demux.out;
 	cmd.git_cmd = 1;
@@ -790,7 +809,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	sort_ref_list(&ref, ref_compare_name);
 	qsort(sought, nr_sought, sizeof(*sought), cmp_ref_by_name);
 
-	if (is_repository_shallow() && !server_supports("shallow"))
+	if ((args->depth > 0 || is_repository_shallow()) && !server_supports("shallow"))
 		die("Server does not support shallow clients");
 	if (server_supports("multi_ack_detailed")) {
 		if (args->verbose)
@@ -821,7 +840,12 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (server_supports("allow-tip-sha1-in-want")) {
 		if (args->verbose)
 			fprintf(stderr, "Server supports allow-tip-sha1-in-want\n");
-		allow_tip_sha1_in_want = 1;
+		allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
+	}
+	if (server_supports("allow-reachable-sha1-in-want")) {
+		if (args->verbose)
+			fprintf(stderr, "Server supports allow-reachable-sha1-in-want\n");
+		allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
 	}
 	if (!server_supports("thin-pack"))
 		args->use_thin_pack = 0;
@@ -924,7 +948,7 @@ static void update_shallow(struct fetch_pack_args *args,
 
 	if (args->depth > 0 && alternate_shallow_file) {
 		if (*alternate_shallow_file == '\0') { /* --unshallow */
-			unlink_or_warn(git_path("shallow"));
+			unlink_or_warn(git_path_shallow());
 			rollback_lock_file(&shallow_lock);
 		} else
 			commit_lock_file(&shallow_lock);
@@ -963,7 +987,7 @@ static void update_shallow(struct fetch_pack_args *args,
 	if (!si->nr_ours && !si->nr_theirs)
 		return;
 	for (i = 0; i < nr_sought; i++)
-		sha1_array_append(&ref, sought[i]->old_sha1);
+		sha1_array_append(&ref, sought[i]->old_oid.hash);
 	si->ref = &ref;
 
 	if (args->update_shallow) {

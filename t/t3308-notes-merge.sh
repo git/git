@@ -18,7 +18,9 @@ test_expect_success setup '
 	git notes add -m "Notes on 1st commit" 1st &&
 	git notes add -m "Notes on 2nd commit" 2nd &&
 	git notes add -m "Notes on 3rd commit" 3rd &&
-	git notes add -m "Notes on 4th commit" 4th
+	git notes add -m "Notes on 4th commit" 4th &&
+	# Copy notes to remote-notes
+	git fetch . refs/notes/*:refs/remote-notes/origin/*
 '
 
 commit_sha1=$(git rev-parse 1st^{commit})
@@ -66,7 +68,9 @@ test_expect_success 'verify initial notes (x)' '
 '
 
 cp expect_notes_x expect_notes_y
+cp expect_notes_x expect_notes_v
 cp expect_log_x expect_log_y
+cp expect_log_x expect_log_v
 
 test_expect_success 'fail to merge empty notes ref into empty notes ref (z => y)' '
 	test_must_fail git -c "core.notesRef=refs/notes/y" notes merge z
@@ -84,16 +88,12 @@ test_expect_success 'fail to merge into various non-notes refs' '
 	test_must_fail git -c "core.notesRef=refs/notes/foo^{bar" notes merge x
 '
 
-test_expect_success 'fail to merge various non-note-trees' '
-	git config core.notesRef refs/notes/y &&
-	test_must_fail git notes merge refs/notes &&
-	test_must_fail git notes merge refs/notes/ &&
-	test_must_fail git notes merge refs/notes/dir &&
-	test_must_fail git notes merge refs/notes/dir/ &&
-	test_must_fail git notes merge refs/heads/master &&
-	test_must_fail git notes merge x: &&
-	test_must_fail git notes merge x:foo &&
-	test_must_fail git notes merge foo^{bar
+test_expect_success 'merge non-notes ref into empty notes ref (remote-notes/origin/x => v)' '
+	git config core.notesRef refs/notes/v &&
+	git notes merge refs/remote-notes/origin/x &&
+	verify_notes v &&
+	# refs/remote-notes/origin/x and v should point to the same notes commit
+	test "$(git rev-parse refs/remote-notes/origin/x)" = "$(git rev-parse refs/notes/v)"
 '
 
 test_expect_success 'merge notes into empty notes ref (x => y)' '

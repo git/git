@@ -34,7 +34,7 @@ test_expect_success 'change svn:mergeinfo' '
 '
 
 test_expect_success 'verify svn:mergeinfo' '
-	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/trunk)
+	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/trunk) &&
 	test "$mergeinfo" = "/branches/foo:1-10"
 '
 
@@ -46,7 +46,7 @@ test_expect_success 'change svn:mergeinfo multiline' '
 '
 
 test_expect_success 'verify svn:mergeinfo multiline' '
-	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/trunk)
+	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/trunk) &&
 	test "$mergeinfo" = "/branches/bar:1-10
 /branches/other:3-5,8,10-11"
 '

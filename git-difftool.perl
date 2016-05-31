@@ -70,9 +70,7 @@ sub use_wt_file
 	my ($repo, $workdir, $file, $sha1) = @_;
 	my $null_sha1 = '0' x 40;
 
-	if (! -e "$workdir/$file") {
-		# If the file doesn't exist in the working tree, we cannot
-		# use it.
+	if (-l "$workdir/$file" || ! -e _) {
 		return (0, $null_sha1);
 	}
 
@@ -140,6 +138,7 @@ sub setup_dir_diff
 	my %submodule;
 	my %symlink;
 	my @working_tree = ();
+	my %working_tree_dups = ();
 	my @rawdiff = split('\0', $diffrtn);
 
 	my $i = 0;
@@ -190,6 +189,10 @@ EOF
 		}
 
 		if ($rmode ne $null_mode) {
+			# Avoid duplicate working_tree entries
+			if ($working_tree_dups{$dst_path}++) {
+				next;
+			}
 			my ($use, $wt_sha1) = use_wt_file($repo, $workdir,
 							  $dst_path, $rsha1);
 			if ($use) {
@@ -275,7 +278,7 @@ EOF
 	# temporary file to both the left and right directories to show the
 	# change in the recorded SHA1 for the submodule.
 	for my $path (keys %submodule) {
-		my $ok;
+		my $ok = 0;
 		if (defined($submodule{$path}{left})) {
 			$ok = write_to_file("$ldir/$path",
 				"Subproject commit $submodule{$path}{left}");
@@ -291,7 +294,7 @@ EOF
 	# shows only the link itself, not the contents of the link target.
 	# This loop replicates that behavior.
 	for my $path (keys %symlink) {
-		my $ok;
+		my $ok = 0;
 		if (defined($symlink{$path}{left})) {
 			$ok = write_to_file("$ldir/$path",
 					$symlink{$path}{left});

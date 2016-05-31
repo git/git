@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
 	 [--[no-]full] [--strict] [--verbose] [--lost-found]
-	 [--[no-]dangling] [--[no-]progress] [<object>*]
+	 [--[no-]dangling] [--[no-]progress] [--connectivity-only] [<object>*]
 
 DESCRIPTION
 -----------
@@ -59,6 +59,11 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	and corresponding pack subdirectories in alternate
 	object pools.  This is now default; you can turn it off
 	with --no-full.
+
+--connectivity-only::
+	Check only the connectivity of tags, commits and tree objects. By
+	avoiding to unpack blobs, this speeds up the operation, at the
+	expense of missing corrupt objects or other problematic issues.
 
 --strict::
 	Enable more strict checking, namely to catch a file mode

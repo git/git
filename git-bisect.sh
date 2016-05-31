@@ -1,14 +1,19 @@
 #!/bin/sh
 
-USAGE='[help|start|bad|good|skip|next|reset|visualize|replay|log|run]'
+USAGE='[help|start|bad|good|new|old|terms|skip|next|reset|visualize|replay|log|run]'
 LONG_USAGE='git bisect help
 	print this long help message.
-git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<pathspec>...]
+git bisect start [--term-{old,good}=<term> --term-{new,bad}=<term>]
+		 [--no-checkout] [<bad> [<good>...]] [--] [<pathspec>...]
 	reset bisect state and start bisection.
-git bisect bad [<rev>]
-	mark <rev> a known-bad revision.
-git bisect good [<rev>...]
-	mark <rev>... known-good revisions.
+git bisect (bad|new) [<rev>]
+	mark <rev> a known-bad revision/
+		a revision after change in a given property.
+git bisect (good|old) [<rev>...]
+	mark <rev>... known-good revisions/
+		revisions before change in a given property.
+git bisect terms [--term-good | --term-bad]
+	show the terms used for old and new commits (default: bad, good)
 git bisect skip [(<rev>|<range>)...]
 	mark <rev>... untestable revisions.
 git bisect next
@@ -32,6 +37,8 @@ OPTIONS_SPEC=
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+TERM_BAD=bad
+TERM_GOOD=good
 
 bisect_head()
 {
@@ -75,6 +82,8 @@ bisect_start() {
 	orig_args=$(git rev-parse --sq-quote "$@")
 	bad_seen=0
 	eval=''
+	must_write_terms=0
+	revs=''
 	if test "z$(git rev-parse --is-bare-repository)" != zfalse
 	then
 		mode=--no-checkout
@@ -91,6 +100,24 @@ bisect_start() {
 		--no-checkout)
 			mode=--no-checkout
 			shift ;;
+		--term-good|--term-old)
+			shift
+			must_write_terms=1
+			TERM_GOOD=$1
+			shift ;;
+		--term-good=*|--term-old=*)
+			must_write_terms=1
+			TERM_GOOD=${1#*=}
+			shift ;;
+		--term-bad|--term-new)
+			shift
+			must_write_terms=1
+			TERM_BAD=$1
+			shift ;;
+		--term-bad=*|--term-new=*)
+			must_write_terms=1
+			TERM_BAD=${1#*=}
+			shift ;;
 		--*)
 			die "$(eval_gettext "unrecognised option: '\$arg'")" ;;
 		*)
@@ -99,16 +126,27 @@ bisect_start() {
 				die "$(eval_gettext "'\$arg' does not appear to be a valid revision")"
 				break
 			}
-			case $bad_seen in
-			0) state='bad' ; bad_seen=1 ;;
-			*) state='good' ;;
-			esac
-			eval="$eval bisect_write '$state' '$rev' 'nolog' &&"
+			revs="$revs $rev"
 			shift
 			;;
 		esac
 	done
 
+	for rev in $revs
+	do
+		# The user ran "git bisect start <sha1>
+		# <sha1>", hence did not explicitly specify
+		# the terms, but we are already starting to
+		# set references named with the default terms,
+		# and won't be able to change afterwards.
+		must_write_terms=1
+
+		case $bad_seen in
+		0) state=$TERM_BAD ; bad_seen=1 ;;
+		*) state=$TERM_GOOD ;;
+		esac
+		eval="$eval bisect_write '$state' '$rev' 'nolog' &&"
+	done
 	#
 	# Verify HEAD.
 	#
@@ -127,7 +165,7 @@ bisect_start() {
 		if test "z$mode" != "z--no-checkout"
 		then
 			git checkout "$start_head" -- ||
-			die "$(eval_gettext "Checking out '\$start_head' failed. Try 'git bisect reset <validbranch>'.")"
+			die "$(eval_gettext "Checking out '\$start_head' failed. Try 'git bisect reset <valid-branch>'.")"
 		fi
 	else
 		# Get rev from where we start.
@@ -170,6 +208,10 @@ bisect_start() {
 	} &&
 	git rev-parse --sq-quote "$@" >"$GIT_DIR/BISECT_NAMES" &&
 	eval "$eval true" &&
+	if test $must_write_terms -eq 1
+	then
+		write_terms "$TERM_BAD" "$TERM_GOOD"
+	fi &&
 	echo "git bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG" || exit
 	#
 	# Check if we can proceed to the next bisect state.
@@ -184,9 +226,12 @@ bisect_write() {
 	rev="$2"
 	nolog="$3"
 	case "$state" in
-		bad)		tag="$state" ;;
-		good|skip)	tag="$state"-"$rev" ;;
-		*)		die "$(eval_gettext "Bad bisect_write argument: \$state")" ;;
+		"$TERM_BAD")
+			tag="$state" ;;
+		"$TERM_GOOD"|skip)
+			tag="$state"-"$rev" ;;
+		*)
+			die "$(eval_gettext "Bad bisect_write argument: \$state")" ;;
 	esac
 	git update-ref "refs/bisect/$tag" "$rev" || exit
 	echo "# $state: $(git show-branch $rev)" >>"$GIT_DIR/BISECT_LOG"
@@ -227,15 +272,16 @@ bisect_skip() {
 bisect_state() {
 	bisect_autostart
 	state=$1
+	check_and_set_terms $state
 	case "$#,$state" in
 	0,*)
 		die "$(gettext "Please call 'bisect_state' with at least one argument.")" ;;
-	1,bad|1,good|1,skip)
+	1,"$TERM_BAD"|1,"$TERM_GOOD"|1,skip)
 		rev=$(git rev-parse --verify $(bisect_head)) ||
 			die "$(gettext "Bad rev input: $(bisect_head)")"
 		bisect_write "$state" "$rev"
 		check_expected_revs "$rev" ;;
-	2,bad|*,good|*,skip)
+	2,"$TERM_BAD"|*,"$TERM_GOOD"|*,skip)
 		shift
 		hash_list=''
 		for rev in "$@"
@@ -249,8 +295,8 @@ bisect_state() {
 			bisect_write "$state" "$rev"
 		done
 		check_expected_revs $hash_list ;;
-	*,bad)
-		die "$(gettext "'git bisect bad' can take only one argument.")" ;;
+	*,"$TERM_BAD")
+		die "$(eval_gettext "'git bisect \$TERM_BAD' can take only one argument.")" ;;
 	*)
 		usage ;;
 	esac
@@ -259,21 +305,21 @@ bisect_state() {
 
 bisect_next_check() {
 	missing_good= missing_bad=
-	git show-ref -q --verify refs/bisect/bad || missing_bad=t
-	test -n "$(git for-each-ref "refs/bisect/good-*")" || missing_good=t
+	git show-ref -q --verify refs/bisect/$TERM_BAD || missing_bad=t
+	test -n "$(git for-each-ref "refs/bisect/$TERM_GOOD-*")" || missing_good=t
 
 	case "$missing_good,$missing_bad,$1" in
 	,,*)
-		: have both good and bad - ok
+		: have both $TERM_GOOD and $TERM_BAD - ok
 		;;
 	*,)
 		# do not have both but not asked to fail - just report.
 		false
 		;;
-	t,,good)
-		# have bad but not good.  we could bisect although
+	t,,"$TERM_GOOD")
+		# have bad (or new) but not good (or old).  we could bisect although
 		# this is less optimum.
-		gettextln "Warning: bisecting only with a bad commit." >&2
+		eval_gettextln "Warning: bisecting only with a \$TERM_BAD commit." >&2
 		if test -t 0
 		then
 			# TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -283,18 +329,20 @@ bisect_next_check() {
 			read yesno
 			case "$yesno" in [Nn]*) exit 1 ;; esac
 		fi
-		: bisect without good...
+		: bisect without $TERM_GOOD...
 		;;
 	*)
-
+		bad_syn=$(bisect_voc bad)
+		good_syn=$(bisect_voc good)
 		if test -s "$GIT_DIR/BISECT_START"
 		then
-			gettextln "You need to give me at least one good and one bad revision.
-(You can use \"git bisect bad\" and \"git bisect good\" for that.)" >&2
+
+			eval_gettextln "You need to give me at least one \$bad_syn and one \$good_syn revision.
+(You can use \"git bisect \$bad_syn\" and \"git bisect \$good_syn\" for that.)" >&2
 		else
-			gettextln "You need to start by \"git bisect start\".
-You then need to give me at least one good and one bad revision.
-(You can use \"git bisect bad\" and \"git bisect good\" for that.)" >&2
+			eval_gettextln "You need to start by \"git bisect start\".
+You then need to give me at least one \$good_syn and one \$bad_syn revision.
+(You can use \"git bisect \$bad_syn\" and \"git bisect \$good_syn\" for that.)" >&2
 		fi
 		exit 1 ;;
 	esac
@@ -307,7 +355,7 @@ bisect_auto_next() {
 bisect_next() {
 	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
-	bisect_next_check good
+	bisect_next_check $TERM_GOOD
 
 	# Perform all bisection computation, display and checkout
 	git bisect--helper --next-all $(test -f "$GIT_DIR/BISECT_HEAD" && echo --no-checkout)
@@ -316,18 +364,18 @@ bisect_next() {
 	# Check if we should exit because bisection is finished
 	if test $res -eq 10
 	then
-		bad_rev=$(git show-ref --hash --verify refs/bisect/bad)
+		bad_rev=$(git show-ref --hash --verify refs/bisect/$TERM_BAD)
 		bad_commit=$(git show-branch $bad_rev)
-		echo "# first bad commit: $bad_commit" >>"$GIT_DIR/BISECT_LOG"
+		echo "# first $TERM_BAD commit: $bad_commit" >>"$GIT_DIR/BISECT_LOG"
 		exit 0
 	elif test $res -eq 2
 	then
 		echo "# only skipped commits left to test" >>"$GIT_DIR/BISECT_LOG"
-		good_revs=$(git for-each-ref --format="%(objectname)" "refs/bisect/good-*")
-		for skipped in $(git rev-list refs/bisect/bad --not $good_revs)
+		good_revs=$(git for-each-ref --format="%(objectname)" "refs/bisect/$TERM_GOOD-*")
+		for skipped in $(git rev-list refs/bisect/$TERM_BAD --not $good_revs)
 		do
 			skipped_commit=$(git show-branch $skipped)
-			echo "# possible first bad commit: $skipped_commit" >>"$GIT_DIR/BISECT_LOG"
+			echo "# possible first $TERM_BAD commit: $skipped_commit" >>"$GIT_DIR/BISECT_LOG"
 		done
 		exit $res
 	fi
@@ -397,6 +445,7 @@ bisect_clean_state() {
 	rm -f "$GIT_DIR/BISECT_LOG" &&
 	rm -f "$GIT_DIR/BISECT_NAMES" &&
 	rm -f "$GIT_DIR/BISECT_RUN" &&
+	rm -f "$GIT_DIR/BISECT_TERMS" &&
 	# Cleanup head-name if it got left by an old version of git-bisect
 	rm -f "$GIT_DIR/head-name" &&
 	git update-ref -d --no-deref BISECT_HEAD &&
@@ -417,12 +466,16 @@ bisect_replay () {
 			rev="$command"
 			command="$bisect"
 		fi
+		get_terms
+		check_and_set_terms "$command"
 		case "$command" in
 		start)
 			cmd="bisect_start $rev"
 			eval "$cmd" ;;
-		good|bad|skip)
+		"$TERM_GOOD"|"$TERM_BAD"|skip)
 			bisect_write "$command" "$rev" ;;
+		terms)
+			bisect_terms $rev ;;
 		*)
 			die "$(gettext "?? what are you talking about?")" ;;
 		esac
@@ -455,9 +508,9 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 			state='skip'
 		elif [ $res -gt 0 ]
 		then
-			state='bad'
+			state="$TERM_BAD"
 		else
-			state='good'
+			state="$TERM_GOOD"
 		fi
 
 		# We have to use a subshell because "bisect_state" can exit.
@@ -466,7 +519,7 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 
 		cat "$GIT_DIR/BISECT_RUN"
 
-		if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
+		if sane_grep "first $TERM_BAD commit could be any of" "$GIT_DIR/BISECT_RUN" \
 			>/dev/null
 		then
 			gettextln "bisect run cannot continue any more" >&2
@@ -480,7 +533,7 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 			exit $res
 		fi
 
-		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" >/dev/null
+		if sane_grep "is the first $TERM_BAD commit" "$GIT_DIR/BISECT_RUN" >/dev/null
 		then
 			gettextln "bisect run success"
 			exit 0;
@@ -494,18 +547,132 @@ bisect_log () {
 	cat "$GIT_DIR/BISECT_LOG"
 }
 
+get_terms () {
+	if test -s "$GIT_DIR/BISECT_TERMS"
+	then
+		{
+		read TERM_BAD
+		read TERM_GOOD
+		} <"$GIT_DIR/BISECT_TERMS"
+	fi
+}
+
+write_terms () {
+	TERM_BAD=$1
+	TERM_GOOD=$2
+	if test "$TERM_BAD" = "$TERM_GOOD"
+	then
+		die "$(gettext "please use two different terms")"
+	fi
+	check_term_format "$TERM_BAD" bad
+	check_term_format "$TERM_GOOD" good
+	printf '%s\n%s\n' "$TERM_BAD" "$TERM_GOOD" >"$GIT_DIR/BISECT_TERMS"
+}
+
+check_term_format () {
+	term=$1
+	git check-ref-format refs/bisect/"$term" ||
+	die "$(eval_gettext "'\$term' is not a valid term")"
+	case "$term" in
+	help|start|terms|skip|next|reset|visualize|replay|log|run)
+		die "$(eval_gettext "can't use the builtin command '\$term' as a term")"
+		;;
+	bad|new)
+		if test "$2" != bad
+		then
+			# In theory, nothing prevents swapping
+			# completely good and bad, but this situation
+			# could be confusing and hasn't been tested
+			# enough. Forbid it for now.
+			die "$(eval_gettext "can't change the meaning of term '\$term'")"
+		fi
+		;;
+	good|old)
+		if test "$2" != good
+		then
+			die "$(eval_gettext "can't change the meaning of term '\$term'")"
+		fi
+		;;
+	esac
+}
+
+check_and_set_terms () {
+	cmd="$1"
+	case "$cmd" in
+	skip|start|terms) ;;
+	*)
+		if test -s "$GIT_DIR/BISECT_TERMS" && test "$cmd" != "$TERM_BAD" && test "$cmd" != "$TERM_GOOD"
+		then
+			die "$(eval_gettext "Invalid command: you're currently in a \$TERM_BAD/\$TERM_GOOD bisect.")"
+		fi
+		case "$cmd" in
+		bad|good)
+			if ! test -s "$GIT_DIR/BISECT_TERMS"
+			then
+				write_terms bad good
+			fi
+			;;
+		new|old)
+			if ! test -s "$GIT_DIR/BISECT_TERMS"
+			then
+				write_terms new old
+			fi
+			;;
+		esac ;;
+	esac
+}
+
+bisect_voc () {
+	case "$1" in
+	bad) echo "bad|new" ;;
+	good) echo "good|old" ;;
+	esac
+}
+
+bisect_terms () {
+	get_terms
+	if ! test -s "$GIT_DIR/BISECT_TERMS"
+	then
+		die "$(gettext "no terms defined")"
+	fi
+	case "$#" in
+	0)
+		gettextln "Your current terms are $TERM_GOOD for the old state
+and $TERM_BAD for the new state."
+		;;
+	1)
+		arg=$1
+		case "$arg" in
+			--term-good|--term-old)
+				printf '%s\n' "$TERM_GOOD"
+				;;
+			--term-bad|--term-new)
+				printf '%s\n' "$TERM_BAD"
+				;;
+			*)
+				die "$(eval_gettext "invalid argument \$arg for 'git bisect terms'.
+Supported options are: --term-good|--term-old and --term-bad|--term-new.")"
+				;;
+		esac
+		;;
+	*)
+		usage ;;
+	esac
+}
+
 case "$#" in
 0)
 	usage ;;
 *)
 	cmd="$1"
+	get_terms
 	shift
 	case "$cmd" in
 	help)
 		git bisect -h ;;
 	start)
 		bisect_start "$@" ;;
-	bad|good)
+	bad|good|new|old|"$TERM_BAD"|"$TERM_GOOD")
 		bisect_state "$cmd" "$@" ;;
 	skip)
 		bisect_skip "$@" ;;
@@ -522,6 +689,8 @@ case "$#" in
 		bisect_log ;;
 	run)
 		bisect_run "$@" ;;
+	terms)
+		bisect_terms "$@" ;;
 	*)
 		usage ;;
 	esac

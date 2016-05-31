@@ -6,23 +6,22 @@
 #include "git-compat-util.h"
 #include "cache.h"
 
+static FILE *error_handle;
+static int tweaked_error_buffering;
+
 void vreportf(const char *prefix, const char *err, va_list params)
 {
-	char msg[4096];
-	vsnprintf(msg, sizeof(msg), err, params);
-	fprintf(stderr, "%s%s\n", prefix, msg);
-}
+	FILE *fh = error_handle ? error_handle : stderr;
 
-void vwritef(int fd, const char *prefix, const char *err, va_list params)
-{
-	char msg[4096];
-	int len = vsnprintf(msg, sizeof(msg), err, params);
-	if (len > sizeof(msg))
-		len = sizeof(msg);
+	fflush(fh);
+	if (!tweaked_error_buffering) {
+		setvbuf(fh, NULL, _IOLBF, 0);
+		tweaked_error_buffering = 1;
+	}
 
-	write_in_full(fd, prefix, strlen(prefix));
-	write_in_full(fd, msg, len);
-	write_in_full(fd, "\n", 1);
+	fputs(prefix, fh);
+	vfprintf(fh, err, params);
+	fputc('\n', fh);
 }
 
 static NORETURN void usage_builtin(const char *err, va_list params)
@@ -76,6 +75,12 @@ void set_die_is_recursing_routine(int (*routine)(void))
 	die_is_recursing = routine;
 }
 
+void set_error_handle(FILE *fh)
+{
+	error_handle = fh;
+	tweaked_error_buffering = 0;
+}
+
 void NORETURN usagef(const char *err, ...)
 {
 	va_list params;
@@ -104,18 +109,10 @@ void NORETURN die(const char *err, ...)
 	va_end(params);
 }
 
-void NORETURN die_errno(const char *fmt, ...)
+static const char *fmt_with_err(char *buf, int n, const char *fmt)
 {
-	va_list params;
-	char fmt_with_err[1024];
 	char str_error[256], *err;
 	int i, j;
-
-	if (die_is_recursing()) {
-		fputs("fatal: recursion detected in die_errno handler\n",
-			stderr);
-		exit(128);
-	}
 
 	err = strerror(errno);
 	for (i = j = 0; err[i] && j < sizeof(str_error) - 1; ) {
@@ -131,11 +128,35 @@ void NORETURN die_errno(const char *fmt, ...)
 		}
 	}
 	str_error[j] = 0;
-	snprintf(fmt_with_err, sizeof(fmt_with_err), "%s: %s", fmt, str_error);
+	snprintf(buf, n, "%s: %s", fmt, str_error);
+	return buf;
+}
+
+void NORETURN die_errno(const char *fmt, ...)
+{
+	char buf[1024];
+	va_list params;
+
+	if (die_is_recursing()) {
+		fputs("fatal: recursion detected in die_errno handler\n",
+			stderr);
+		exit(128);
+	}
 
 	va_start(params, fmt);
-	die_routine(fmt_with_err, params);
+	die_routine(fmt_with_err(buf, sizeof(buf), fmt), params);
 	va_end(params);
+}
+
+int error_errno(const char *fmt, ...)
+{
+	char buf[1024];
+	va_list params;
+
+	va_start(params, fmt);
+	error_routine(fmt_with_err(buf, sizeof(buf), fmt), params);
+	va_end(params);
+	return -1;
 }
 
 #undef error
@@ -147,6 +168,16 @@ int error(const char *err, ...)
 	error_routine(err, params);
 	va_end(params);
 	return -1;
+}
+
+void warning_errno(const char *warn, ...)
+{
+	char buf[1024];
+	va_list params;
+
+	va_start(params, warn);
+	warn_routine(fmt_with_err(buf, sizeof(buf), warn), params);
+	va_end(params);
 }
 
 void warning(const char *warn, ...)

@@ -6,7 +6,7 @@ Iteration of refs is done by using an iterate function which will call a
 callback function for every ref. The callback function has this
 signature:
 
-	int handle_one_ref(const char *refname, const unsigned char *sha1,
+	int handle_one_ref(const char *refname, const struct object_id *oid,
 			   int flags, void *cb_data);
 
 There are different kinds of iterate functions which all take a

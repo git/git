@@ -396,7 +396,7 @@ test_expect_success TTY 'command-specific pager overrides core.pager' '
 	sane_unset PAGER GIT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
-	test_config core.pager "exit 1"
+	test_config core.pager "exit 1" &&
 	test_config pager.log "sed s/^/foo:/ >actual" &&
 	test_terminal git log --format=%s -1 &&
 	test_cmp expect actual
@@ -424,7 +424,7 @@ test_expect_success TTY 'command-specific pager works for external commands' '
 	echo "foo:initial" >expect &&
 	>actual &&
 	test_config pager.external "sed s/^/foo:/ >actual" &&
-	test_terminal git --exec-path="`pwd`" external log --format=%s -1 &&
+	test_terminal git --exec-path="$(pwd)" external log --format=%s -1 &&
 	test_cmp expect actual
 '
 
@@ -444,6 +444,15 @@ test_expect_success TTY 'external command pagers override sub-commands' '
 	test_config pager.external false &&
 	test_config pager.log "sed s/^/log:/ >actual" &&
 	test_terminal git --exec-path=. external log --format=%s -1 &&
+	test_cmp expect actual
+'
+
+test_expect_success 'command with underscores does not complain' '
+	write_script git-under_score <<-\EOF &&
+	echo ok
+	EOF
+	git --exec-path=. under_score >actual 2>&1 &&
+	echo ok >expect &&
 	test_cmp expect actual
 '
 

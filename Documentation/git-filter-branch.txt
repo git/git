@@ -205,7 +205,7 @@ to other tags will be rewritten to point to the underlying commit.
 Remap to ancestor
 ~~~~~~~~~~~~~~~~~
 
-By using linkgit:rev-list[1] arguments, e.g., path limiters, you can limit the
+By using linkgit:git-rev-list[1] arguments, e.g., path limiters, you can limit the
 set of revisions which get rewritten. However, positive refs on the command
 line are distinguished: we don't let them be excluded by such limiters. For
 this purpose, they are instead rewritten to point at the nearest ancestor that

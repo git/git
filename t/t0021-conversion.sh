@@ -204,6 +204,16 @@ test_expect_success 'filtering large input to small output should use little mem
 	GIT_MMAP_LIMIT=1m GIT_ALLOC_LIMIT=1m git add 30MB
 '
 
+test_expect_success 'filter that does not read is fine' '
+	test-genrandom foo $((128 * 1024 + 1)) >big &&
+	echo "big filter=epipe" >.gitattributes &&
+	git config filter.epipe.clean "echo xyzzy" &&
+	git add big &&
+	git cat-file blob :big >actual &&
+	echo xyzzy >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success EXPENSIVE 'filter large file' '
 	git config filter.largefile.smudge cat &&
 	git config filter.largefile.clean cat &&
@@ -214,6 +224,48 @@ test_expect_success EXPENSIVE 'filter large file' '
 	rm -f 2GB &&
 	git checkout -- 2GB 2>err &&
 	! test -s err
+'
+
+test_expect_success "filter: clean empty file" '
+	git config filter.in-repo-header.clean  "echo cleaned && cat" &&
+	git config filter.in-repo-header.smudge "sed 1d" &&
+
+	echo "empty-in-worktree    filter=in-repo-header" >>.gitattributes &&
+	>empty-in-worktree &&
+
+	echo cleaned >expected &&
+	git add empty-in-worktree &&
+	git show :empty-in-worktree >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success "filter: smudge empty file" '
+	git config filter.empty-in-repo.clean "cat >/dev/null" &&
+	git config filter.empty-in-repo.smudge "echo smudged && cat" &&
+
+	echo "empty-in-repo filter=empty-in-repo" >>.gitattributes &&
+	echo dead data walking >empty-in-repo &&
+	git add empty-in-repo &&
+
+	echo smudged >expected &&
+	git checkout-index --prefix=filtered- empty-in-repo &&
+	test_cmp expected filtered-empty-in-repo
+'
+
+test_expect_success 'disable filter with empty override' '
+	test_config_global filter.disable.smudge false &&
+	test_config_global filter.disable.clean false &&
+	test_config filter.disable.smudge false &&
+	test_config filter.disable.clean false &&
+
+	echo "*.disable filter=disable" >.gitattributes &&
+
+	echo test >test.disable &&
+	git -c filter.disable.clean= add test.disable 2>err &&
+	test_must_be_empty err &&
+	rm -f test.disable &&
+	git -c filter.disable.smudge= checkout -- test.disable 2>err &&
+	test_must_be_empty err
 '
 
 test_done

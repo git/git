@@ -75,6 +75,13 @@ extern int color_stdout_is_tty;
 int git_color_config(const char *var, const char *value, void *cb);
 int git_color_default_config(const char *var, const char *value, void *cb);
 
+/*
+ * Set the color buffer (which must be COLOR_MAXLEN bytes)
+ * to the raw color bytes; this is useful for initializing
+ * default color variables.
+ */
+void color_set(char *dst, const char *color_bytes);
+
 int git_config_colorbool(const char *var, const char *value);
 int want_color(int var);
 int color_parse(const char *value, char *dst);

@@ -8,14 +8,32 @@
 #include "parse-options.h"
 #include "userdiff.h"
 #include "streaming.h"
+#include "tree-walk.h"
+#include "sha1-array.h"
 
-static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
+struct batch_options {
+	int enabled;
+	int follow_symlinks;
+	int print_contents;
+	int buffer_output;
+	int all_objects;
+	const char *format;
+};
+
+static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
+			int unknown_type)
 {
 	unsigned char sha1[20];
 	enum object_type type;
 	char *buf;
 	unsigned long size;
 	struct object_context obj_context;
+	struct object_info oi = {NULL};
+	struct strbuf sb = STRBUF_INIT;
+	unsigned flags = LOOKUP_REPLACE_OBJECT;
+
+	if (unknown_type)
+		flags |= LOOKUP_UNKNOWN_OBJECT;
 
 	if (get_sha1_with_context(obj_name, 0, sha1, &obj_context))
 		die("Not a valid object name %s", obj_name);
@@ -23,20 +41,22 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	buf = NULL;
 	switch (opt) {
 	case 't':
-		type = sha1_object_info(sha1, NULL);
-		if (type > 0) {
-			printf("%s\n", typename(type));
+		oi.typename = &sb;
+		if (sha1_object_info_extended(sha1, &oi, flags) < 0)
+			die("git cat-file: could not get object info");
+		if (sb.len) {
+			printf("%s\n", sb.buf);
+			strbuf_release(&sb);
 			return 0;
 		}
 		break;
 
 	case 's':
-		type = sha1_object_info(sha1, &size);
-		if (type > 0) {
-			printf("%lu\n", size);
-			return 0;
-		}
-		break;
+		oi.sizep = &size;
+		if (sha1_object_info_extended(sha1, &oi, flags) < 0)
+			die("git cat-file: could not get object info");
+		printf("%lu\n", size);
+		return 0;
 
 	case 'e':
 		return !has_sha1_file(sha1);
@@ -194,14 +214,25 @@ static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 	return end - start + 1;
 }
 
-static void print_object_or_die(int fd, struct expand_data *data)
+static void batch_write(struct batch_options *opt, const void *data, int len)
+{
+	if (opt->buffer_output) {
+		if (fwrite(data, 1, len, stdout) != len)
+			die_errno("unable to write to stdout");
+	} else
+		write_or_die(1, data, len);
+}
+
+static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
 {
 	const unsigned char *sha1 = data->sha1;
 
 	assert(data->info.typep);
 
 	if (data->type == OBJ_BLOB) {
-		if (stream_blob_to_fd(fd, sha1, NULL, 0) < 0)
+		if (opt->buffer_output)
+			fflush(stdout);
+		if (stream_blob_to_fd(1, sha1, NULL, 0) < 0)
 			die("unable to stream %s to stdout", sha1_to_hex(sha1));
 	}
 	else {
@@ -217,46 +248,104 @@ static void print_object_or_die(int fd, struct expand_data *data)
 		if (data->info.sizep && size != data->size)
 			die("object %s changed size!?", sha1_to_hex(sha1));
 
-		write_or_die(fd, contents, size);
+		batch_write(opt, contents, size);
 		free(contents);
 	}
 }
 
-struct batch_options {
-	int enabled;
-	int print_contents;
-	const char *format;
-};
-
-static int batch_one_object(const char *obj_name, struct batch_options *opt,
-			    struct expand_data *data)
+static void batch_object_write(const char *obj_name, struct batch_options *opt,
+			       struct expand_data *data)
 {
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!obj_name)
-	   return 1;
-
-	if (get_sha1(obj_name, data->sha1)) {
-		printf("%s missing\n", obj_name);
-		fflush(stdout);
-		return 0;
-	}
-
 	if (sha1_object_info_extended(data->sha1, &data->info, LOOKUP_REPLACE_OBJECT) < 0) {
-		printf("%s missing\n", obj_name);
+		printf("%s missing\n", obj_name ? obj_name : sha1_to_hex(data->sha1));
 		fflush(stdout);
-		return 0;
+		return;
 	}
 
 	strbuf_expand(&buf, opt->format, expand_format, data);
 	strbuf_addch(&buf, '\n');
-	write_or_die(1, buf.buf, buf.len);
+	batch_write(opt, buf.buf, buf.len);
 	strbuf_release(&buf);
 
 	if (opt->print_contents) {
-		print_object_or_die(1, data);
-		write_or_die(1, "\n", 1);
+		print_object_or_die(opt, data);
+		batch_write(opt, "\n", 1);
 	}
+}
+
+static void batch_one_object(const char *obj_name, struct batch_options *opt,
+			     struct expand_data *data)
+{
+	struct object_context ctx;
+	int flags = opt->follow_symlinks ? GET_SHA1_FOLLOW_SYMLINKS : 0;
+	enum follow_symlinks_result result;
+
+	result = get_sha1_with_context(obj_name, flags, data->sha1, &ctx);
+	if (result != FOUND) {
+		switch (result) {
+		case MISSING_OBJECT:
+			printf("%s missing\n", obj_name);
+			break;
+		case DANGLING_SYMLINK:
+			printf("dangling %"PRIuMAX"\n%s\n",
+			       (uintmax_t)strlen(obj_name), obj_name);
+			break;
+		case SYMLINK_LOOP:
+			printf("loop %"PRIuMAX"\n%s\n",
+			       (uintmax_t)strlen(obj_name), obj_name);
+			break;
+		case NOT_DIR:
+			printf("notdir %"PRIuMAX"\n%s\n",
+			       (uintmax_t)strlen(obj_name), obj_name);
+			break;
+		default:
+			die("BUG: unknown get_sha1_with_context result %d\n",
+			       result);
+			break;
+		}
+		fflush(stdout);
+		return;
+	}
+
+	if (ctx.mode == 0) {
+		printf("symlink %"PRIuMAX"\n%s\n",
+		       (uintmax_t)ctx.symlink_path.len,
+		       ctx.symlink_path.buf);
+		fflush(stdout);
+		return;
+	}
+
+	batch_object_write(obj_name, opt, data);
+}
+
+struct object_cb_data {
+	struct batch_options *opt;
+	struct expand_data *expand;
+};
+
+static void batch_object_cb(const unsigned char sha1[20], void *vdata)
+{
+	struct object_cb_data *data = vdata;
+	hashcpy(data->expand->sha1, sha1);
+	batch_object_write(NULL, data->opt, data->expand);
+}
+
+static int batch_loose_object(const unsigned char *sha1,
+			      const char *path,
+			      void *data)
+{
+	sha1_array_append(data, sha1);
+	return 0;
+}
+
+static int batch_packed_object(const unsigned char *sha1,
+			       struct packed_git *pack,
+			       uint32_t pos,
+			       void *data)
+{
+	sha1_array_append(data, sha1);
 	return 0;
 }
 
@@ -287,6 +376,21 @@ static int batch_objects(struct batch_options *opt)
 	if (opt->print_contents)
 		data.info.typep = &data.type;
 
+	if (opt->all_objects) {
+		struct sha1_array sa = SHA1_ARRAY_INIT;
+		struct object_cb_data cb;
+
+		for_each_loose_object(batch_loose_object, &sa, 0);
+		for_each_packed_object(batch_packed_object, &sa, 0);
+
+		cb.opt = opt;
+		cb.expand = &data;
+		sha1_array_for_each_unique(&sa, batch_object_cb, &cb);
+
+		sha1_array_clear(&sa);
+		return 0;
+	}
+
 	/*
 	 * We are going to call get_sha1 on a potentially very large number of
 	 * objects. In most large cases, these will be actual object sha1s. The
@@ -297,7 +401,7 @@ static int batch_objects(struct batch_options *opt)
 	save_warning = warn_on_object_refname_ambiguity;
 	warn_on_object_refname_ambiguity = 0;
 
-	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
+	while (strbuf_getline(&buf, stdin) != EOF) {
 		if (data.split_on_whitespace) {
 			/*
 			 * Split at first whitespace, tying off the beginning
@@ -312,9 +416,7 @@ static int batch_objects(struct batch_options *opt)
 			data.rest = p;
 		}
 
-		retval = batch_one_object(buf.buf, opt, &data);
-		if (retval)
-			break;
+		batch_one_object(buf.buf, opt, &data);
 	}
 
 	strbuf_release(&buf);
@@ -323,8 +425,8 @@ static int batch_objects(struct batch_options *opt)
 }
 
 static const char * const cat_file_usage[] = {
-	N_("git cat-file (-t|-s|-e|-p|<type>|--textconv) <object>"),
-	N_("git cat-file (--batch|--batch-check) < <list_of_objects>"),
+	N_("git cat-file (-t [--allow-unknown-type]|-s [--allow-unknown-type]|-e|-p|<type>|--textconv) <object>"),
+	N_("git cat-file (--batch | --batch-check) [--follow-symlinks]"),
 	NULL
 };
 
@@ -342,9 +444,8 @@ static int batch_option_callback(const struct option *opt,
 {
 	struct batch_options *bo = opt->value;
 
-	if (unset) {
-		memset(bo, 0, sizeof(*bo));
-		return 0;
+	if (bo->enabled) {
+		return 1;
 	}
 
 	bo->enabled = 1;
@@ -359,29 +460,34 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	int opt = 0;
 	const char *exp_type = NULL, *obj_name = NULL;
 	struct batch_options batch = {0};
+	int unknown_type = 0;
 
 	const struct option options[] = {
 		OPT_GROUP(N_("<type> can be one of: blob, tree, commit, tag")),
-		OPT_SET_INT('t', NULL, &opt, N_("show object type"), 't'),
-		OPT_SET_INT('s', NULL, &opt, N_("show object size"), 's'),
-		OPT_SET_INT('e', NULL, &opt,
+		OPT_CMDMODE('t', NULL, &opt, N_("show object type"), 't'),
+		OPT_CMDMODE('s', NULL, &opt, N_("show object size"), 's'),
+		OPT_CMDMODE('e', NULL, &opt,
 			    N_("exit with zero when there's no error"), 'e'),
-		OPT_SET_INT('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
-		OPT_SET_INT(0, "textconv", &opt,
+		OPT_CMDMODE('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
+		OPT_CMDMODE(0, "textconv", &opt,
 			    N_("for blob objects, run textconv on object's content"), 'c'),
+		OPT_BOOL(0, "allow-unknown-type", &unknown_type,
+			  N_("allow -s and -t to work with broken/corrupt objects")),
+		OPT_BOOL(0, "buffer", &batch.buffer_output, N_("buffer --batch output")),
 		{ OPTION_CALLBACK, 0, "batch", &batch, "format",
 			N_("show info and content of objects fed from the standard input"),
 			PARSE_OPT_OPTARG, batch_option_callback },
 		{ OPTION_CALLBACK, 0, "batch-check", &batch, "format",
 			N_("show info about objects fed from the standard input"),
 			PARSE_OPT_OPTARG, batch_option_callback },
+		OPT_BOOL(0, "follow-symlinks", &batch.follow_symlinks,
+			 N_("follow in-tree symlinks (used with --batch or --batch-check)")),
+		OPT_BOOL(0, "batch-all-objects", &batch.all_objects,
+			 N_("show all objects with --batch or --batch-check")),
 		OPT_END()
 	};
 
 	git_config(git_cat_file_config, NULL);
-
-	if (argc != 3 && argc != 2)
-		usage_with_options(cat_file_usage, options);
 
 	argc = parse_options(argc, argv, prefix, options, cat_file_usage, 0);
 
@@ -402,8 +508,14 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		usage_with_options(cat_file_usage, options);
 	}
 
+	if ((batch.follow_symlinks || batch.all_objects) && !batch.enabled) {
+		usage_with_options(cat_file_usage, options);
+	}
+
 	if (batch.enabled)
 		return batch_objects(&batch);
 
-	return cat_one_file(opt, exp_type, obj_name);
+	if (unknown_type && opt != 't' && opt != 's')
+		die("git cat-file --allow-unknown-type: use with -s or -t");
+	return cat_one_file(opt, exp_type, obj_name, unknown_type);
 }

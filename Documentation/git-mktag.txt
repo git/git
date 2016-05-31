@@ -9,7 +9,7 @@ git-mktag - Creates a tag object
 SYNOPSIS
 --------
 [verse]
-'git mktag' < signature_file
+'git mktag'
 
 DESCRIPTION
 -----------
@@ -20,7 +20,8 @@ The output is the new tag's <object> identifier.
 
 Tag Format
 ----------
-A tag signature file has a very simple fixed format: four lines of
+A tag signature file, to be fed to this command's standard input,
+has a very simple fixed format: four lines of
 
   object <sha1>
   type <typename>

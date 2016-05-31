@@ -9,13 +9,14 @@ git-show-index - Show packed archive index
 SYNOPSIS
 --------
 [verse]
-'git show-index' < idx-file
+'git show-index'
 
 
 DESCRIPTION
 -----------
-Reads given idx file for packed Git archive created with
-'git pack-objects' command, and dumps its contents.
+Read the idx file for a Git packfile created with
+'git pack-objects' command from the standard input, and
+dump its contents.
 
 The information it outputs is subset of what you can get from
 'git verify-pack -v'; this command only shows the packfile

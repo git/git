@@ -26,7 +26,7 @@ check_pushed_commit () {
 # $2 = expected target branch for the push
 # $3 = [optional] repo to check for actual output (repo1 by default)
 test_push_success () {
-	git ${1:+-c push.default="$1"} push &&
+	git ${1:+-c} ${1:+push.default="$1"} push &&
 	check_pushed_commit HEAD "$2" "$3"
 }
 
@@ -34,7 +34,7 @@ test_push_success () {
 # check that push fails and does not modify any remote branch
 test_push_failure () {
 	git --git-dir=repo1 log --no-walk --format='%h %s' --all >expect &&
-	test_must_fail git ${1:+-c push.default="$1"} push &&
+	test_must_fail git ${1:+-c} ${1:+push.default="$1"} push &&
 	git --git-dir=repo1 log --no-walk --format='%h %s' --all >actual &&
 	test_cmp expect actual
 }

@@ -14,7 +14,7 @@ test_description='Testing multi_ack pack fetching'
 add () {
 	name=$1 &&
 	text="$@" &&
-	branch=`echo $name | sed -e 's/^\(.\).*$/\1/'` &&
+	branch=$(echo $name | sed -e 's/^\(.\).*$/\1/') &&
 	parents="" &&
 
 	shift &&
@@ -50,18 +50,18 @@ pull_to_client () {
 			case "$heads" in *B*)
 			    echo $BTIP > .git/refs/heads/B;;
 			esac &&
-			git symbolic-ref HEAD refs/heads/`echo $heads \
-				| sed -e "s/^\(.\).*$/\1/"` &&
+			git symbolic-ref HEAD refs/heads/$(echo $heads \
+				| sed -e "s/^\(.\).*$/\1/") &&
 
 			git fsck --full &&
 
 			mv .git/objects/pack/pack-* . &&
-			p=`ls -1 pack-*.pack` &&
+			p=$(ls -1 pack-*.pack) &&
 			git unpack-objects <$p &&
 			git fsck --full &&
 
-			idx=`echo pack-*.idx` &&
-			pack_count=`git show-index <$idx | wc -l` &&
+			idx=$(echo pack-*.idx) &&
+			pack_count=$(git show-index <$idx | wc -l) &&
 			test $pack_count = $count &&
 			rm -f pack-*
 		)
@@ -132,13 +132,13 @@ test_expect_success 'single given branch clone' '
 
 test_expect_success 'clone shallow depth 1' '
 	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
-	test "`git --git-dir=shallow0/.git rev-list --count HEAD`" = 1
+	test "$(git --git-dir=shallow0/.git rev-list --count HEAD)" = 1
 '
 
 test_expect_success 'clone shallow depth 1 with fsck' '
 	git config --global fetch.fsckobjects true &&
 	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0fsck &&
-	test "`git --git-dir=shallow0fsck/.git rev-list --count HEAD`" = 1 &&
+	test "$(git --git-dir=shallow0fsck/.git rev-list --count HEAD)" = 1 &&
 	git config --global --unset fetch.fsckobjects
 '
 
@@ -147,7 +147,7 @@ test_expect_success 'clone shallow' '
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 2
+	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 2
 '
 
 test_expect_success 'clone shallow object count' '
@@ -259,7 +259,8 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		test_must_fail git pull --depth 4 .. A
+		git fetch --depth 4 .. A
+		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
 
@@ -273,15 +274,16 @@ test_expect_success 'additional simple shallow deepenings' '
 '
 
 test_expect_success 'clone shallow depth count' '
-	test "`git --git-dir=shallow/.git rev-list --count HEAD`" = 11
+	test "$(git --git-dir=shallow/.git rev-list --count HEAD)" = 11
 '
 
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
+		git prune &&
 		git count-objects -v
 	) > count.shallow &&
-	grep "^count: 55" count.shallow
+	grep "^count: 54" count.shallow
 '
 
 test_expect_success 'fetch --no-shallow on full repo' '
@@ -414,7 +416,7 @@ test_expect_success 'setup tests for the --stdin parameter' '
 	do
 		git tag $head $head
 	done &&
-	cat >input <<-\EOF
+	cat >input <<-\EOF &&
 	refs/heads/C
 	refs/heads/A
 	refs/heads/D
@@ -531,6 +533,20 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 		git fsck
 	)
 '
+
+test_expect_success 'fetch-pack can fetch a raw sha1' '
+	git init hidden &&
+	(
+		cd hidden &&
+		test_commit 1 &&
+		test_commit 2 &&
+		git update-ref refs/hidden/one HEAD^ &&
+		git config transfer.hiderefs refs/hidden &&
+		git config uploadpack.allowtipsha1inwant true
+	) &&
+	git fetch-pack hidden $(git -C hidden rev-parse refs/hidden/one)
+'
+
 check_prot_path () {
 	cat >expected <<-EOF &&
 	Diag: url=$1
@@ -541,13 +557,30 @@ check_prot_path () {
 	test_cmp expected actual
 }
 
-check_prot_host_path () {
-	cat >expected <<-EOF &&
+check_prot_host_port_path () {
+	local diagport
+	case "$2" in
+		*ssh*)
+		pp=ssh
+		uah=userandhost
+		ehost=$(echo $3 | tr -d "[]")
+		diagport="Diag: port=$4"
+		;;
+		*)
+		pp=$p
+		uah=hostandport
+		ehost=$(echo $3$4 | sed -e "s/22$/:22/" -e "s/NONE//")
+		diagport=""
+		;;
+	esac
+	cat >exp <<-EOF &&
 	Diag: url=$1
-	Diag: protocol=$2
-	Diag: hostandport=$3
-	Diag: path=$4
+	Diag: protocol=$pp
+	Diag: $uah=$ehost
+	$diagport
+	Diag: path=$5
 	EOF
+	grep -v "^$" exp >expected
 	git fetch-pack --diag-url "$1" >actual &&
 	test_cmp expected actual
 }
@@ -557,22 +590,23 @@ do
 	# git or ssh with scheme
 	for p in "ssh+git" "git+ssh" git ssh
 	do
-		for h in host host:12 [::1] [::1]:23
+		for h in host user@host user@[::1] user@::1
 		do
-			case "$p" in
-			*ssh*)
-				pp=ssh
-				;;
-			*)
-				pp=$p
-			;;
-			esac
-			test_expect_success "fetch-pack --diag-url $p://$h/$r" '
-				check_prot_host_path $p://$h/$r $pp "$h" "/$r"
-			'
-			# "/~" -> "~" conversion
-			test_expect_success "fetch-pack --diag-url $p://$h/~$r" '
-				check_prot_host_path $p://$h/~$r $pp "$h" "~$r"
+			for c in "" :
+			do
+				test_expect_success "fetch-pack --diag-url $p://$h$c/$r" '
+					check_prot_host_port_path $p://$h/$r $p "$h" NONE "/$r"
+				'
+				# "/~" -> "~" conversion
+				test_expect_success "fetch-pack --diag-url $p://$h$c/~$r" '
+					check_prot_host_port_path $p://$h/~$r $p "$h" NONE "~$r"
+				'
+			done
+		done
+		for h in host User@host User@[::1]
+		do
+			test_expect_success "fetch-pack --diag-url $p://$h:22/$r" '
+				check_prot_host_port_path $p://$h:22/$r $p "$h" 22 "/$r"
 			'
 		done
 	done
@@ -603,11 +637,11 @@ do
 	for h in host [::1]
 	do
 		test_expect_success "fetch-pack --diag-url $h:$r" '
-			check_prot_path $h:$r $p "$r"
+			check_prot_host_port_path $h:$r $p "$h" NONE "$r"
 		'
 		# Do "/~" -> "~" conversion
 		test_expect_success "fetch-pack --diag-url $h:/~$r" '
-			check_prot_host_path $h:/~$r $p "$h" "~$r"
+			check_prot_host_port_path $h:/~$r $p "$h" NONE "~$r"
 		'
 	done
 done

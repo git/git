@@ -39,7 +39,7 @@ typedef struct kwset_t* kwset_t;
    if enough memory cannot be obtained.  The argument if non-NULL
    specifies a table of character translations to be applied to all
    pattern and search text. */
-extern kwset_t kwsalloc(char const *);
+extern kwset_t kwsalloc(unsigned char const *);
 
 /* Incrementally extend the keyword set to include the given string.
    Return NULL for success, or an error message.  Remember an index

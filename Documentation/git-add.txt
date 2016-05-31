@@ -24,7 +24,7 @@ remove paths that do not exist in the working tree anymore.
 
 The "index" holds a snapshot of the content of the working tree, and it
 is this snapshot that is taken as the contents of the next commit.  Thus
-after making any changes to the working directory, and before running
+after making any changes to the working tree, and before running
 the commit command, you must use the `add` command to add any new or
 modified files to the index.
 
@@ -93,7 +93,8 @@ This effectively runs `add --interactive`, but bypasses the
 initial command menu and directly jumps to the `patch` subcommand.
 See ``Interactive mode'' for details.
 
--e, \--edit::
+-e::
+--edit::
 	Open the diff vs. the index in an editor and let the user
 	edit it.  After the editor was closed, adjust the hunk headers
 	and apply the patch to the index.
@@ -173,7 +174,7 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 Configuration
 -------------
 
-The optional configuration variable `core.excludesfile` indicates a path to a
+The optional configuration variable `core.excludesFile` indicates a path to a
 file containing patterns of file names to exclude from git-add, similar to
 $GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
 those in info/exclude.  See linkgit:gitignore[5].
@@ -317,7 +318,7 @@ After deciding the fate for all hunks, if there is any hunk
 that was chosen, the index is updated with the selected hunks.
 +
 You can omit having to type return here, by setting the configuration
-variable `interactive.singlekey` to `true`.
+variable `interactive.singleKey` to `true`.
 
 diff::
 

@@ -1,0 +1,9 @@
+Git v2.3.9 Release Notes
+========================
+
+Fixes since v2.3.8
+------------------
+
+ * A handful of codepaths that used to use fixed-sized arrays to hold
+   pathnames have been corrected to use strbuf and other mechanisms to
+   allow longer pathnames without fearing overflows.

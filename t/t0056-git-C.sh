@@ -14,6 +14,16 @@ test_expect_success '"git -C <path>" runs git from the directory <path>' '
 	test_cmp expected actual
 '
 
+test_expect_success '"git -C <path>" with an empty <path> is a no-op' '
+	(
+		mkdir -p dir1/subdir &&
+		cd dir1/subdir &&
+		git -C "" rev-parse --show-prefix >actual &&
+		echo subdir/ >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'Multiple -C options: "-C dir1 -C dir2" is equivalent to "-C dir1/dir2"' '
 	test_create_repo dir1/dir2 &&
 	echo 1 >dir1/dir2/b.txt &&

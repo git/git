@@ -22,8 +22,9 @@ This is only valid for <end> and will specify a number
 of lines before or after the line given by <start>.
 
 +
-If ``:<regex>'' is given in place of <start> and <end>, it denotes the range
-from the first funcname line that matches <regex>, up to the next
-funcname line. ``:<regex>'' searches from the end of the previous `-L` range,
-if any, otherwise from the start of file.
-``^:<regex>'' searches from the start of file.
+If ``:<funcname>'' is given in place of <start> and <end>, it is a
+regular expression that denotes the range from the first funcname line
+that matches <funcname>, up to the next funcname line. ``:<funcname>''
+searches from the end of the previous `-L` range, if any, otherwise
+from the start of file. ``^:<funcname>'' searches from the start of
+file.

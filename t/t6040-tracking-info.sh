@@ -12,10 +12,9 @@ advance () {
 }
 
 test_expect_success setup '
-	for i in a b c;
-	do
-		advance $i || break
-	done &&
+	advance a &&
+	advance b &&
+	advance c &&
 	git clone . test &&
 	(
 		cd test &&

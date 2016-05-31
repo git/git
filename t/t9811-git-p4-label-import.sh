@@ -214,6 +214,51 @@ test_expect_success 'use git config to enable import/export of tags' '
 	)
 '
 
+p4_head_revision() {
+	p4 changes -m 1 "$@" | awk '{print $2}'
+}
+
+# Importing a label that references a P4 commit that
+# has not been seen. The presence of a label on a commit
+# we haven't seen should not cause git-p4 to fail. It should
+# merely skip that label, and still import other labels.
+test_expect_success 'importing labels with missing revisions' '
+	test_when_finished cleanup_git &&
+	(
+		rm -fr "$cli" "$git" &&
+		mkdir "$cli" &&
+		P4CLIENT=missing-revision &&
+		client_view "//depot/missing-revision/... //missing-revision/..." &&
+		cd "$cli" &&
+		>f1 && p4 add f1 && p4 submit -d "start" &&
+
+		p4 tag -l TAG_S0 ... &&
+
+		>f2 && p4 add f2 && p4 submit -d "second" &&
+
+		startrev=$(p4_head_revision //depot/missing-revision/...) &&
+
+		>f3 && p4 add f3 && p4 submit -d "third" &&
+
+		p4 edit f2 && date >f2 && p4 submit -d "change" f2 &&
+
+		endrev=$(p4_head_revision //depot/missing-revision/...) &&
+
+		p4 tag -l TAG_S1 ... &&
+
+		# we should skip TAG_S0 since it is before our startpoint,
+		# but pick up TAG_S1.
+
+		git p4 clone --dest="$git" --import-labels -v \
+			//depot/missing-revision/...@$startrev,$endrev &&
+		(
+			cd "$git" &&
+			git rev-parse TAG_S1 &&
+			! git rev-parse TAG_S0
+		)
+	)
+'
+
 
 test_expect_success 'kill p4d' '
 	kill_p4d

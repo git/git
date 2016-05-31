@@ -120,6 +120,13 @@ static int prepare_trace_line(const char *file, int line,
 	return 1;
 }
 
+void trace_verbatim(struct trace_key *key, const void *buf, unsigned len)
+{
+	if (!trace_want(key))
+		return;
+	write_or_whine_pipe(get_trace_fd(key), buf, len, err_msg);
+}
+
 static void print_trace_line(struct trace_key *key, struct strbuf *buf)
 {
 	strbuf_complete_line(buf);
@@ -270,25 +277,24 @@ void trace_performance_fl(const char *file, int line, uint64_t nanos,
 
 static const char *quote_crnl(const char *path)
 {
-	static char new_path[PATH_MAX];
-	const char *p2 = path;
-	char *p1 = new_path;
+	static struct strbuf new_path = STRBUF_INIT;
 
 	if (!path)
 		return NULL;
 
-	while (*p2) {
-		switch (*p2) {
-		case '\\': *p1++ = '\\'; *p1++ = '\\'; break;
-		case '\n': *p1++ = '\\'; *p1++ = 'n'; break;
-		case '\r': *p1++ = '\\'; *p1++ = 'r'; break;
+	strbuf_reset(&new_path);
+
+	while (*path) {
+		switch (*path) {
+		case '\\': strbuf_addstr(&new_path, "\\\\"); break;
+		case '\n': strbuf_addstr(&new_path, "\\n"); break;
+		case '\r': strbuf_addstr(&new_path, "\\r"); break;
 		default:
-			*p1++ = *p2;
+			strbuf_addch(&new_path, *path);
 		}
-		p2++;
+		path++;
 	}
-	*p1 = '\0';
-	return new_path;
+	return new_path.buf;
 }
 
 /* FIXME: move prefix to startup_info struct and get rid of this arg */
@@ -310,6 +316,7 @@ void trace_repo_setup(const char *prefix)
 		prefix = "(null)";
 
 	trace_printf_key(&key, "setup: git_dir: %s\n", quote_crnl(get_git_dir()));
+	trace_printf_key(&key, "setup: git_common_dir: %s\n", quote_crnl(get_git_common_dir()));
 	trace_printf_key(&key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
 	trace_printf_key(&key, "setup: cwd: %s\n", quote_crnl(cwd));
 	trace_printf_key(&key, "setup: prefix: %s\n", quote_crnl(prefix));

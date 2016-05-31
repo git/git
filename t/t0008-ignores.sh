@@ -5,7 +5,7 @@ test_description=check-ignore
 . ./test-lib.sh
 
 init_vars () {
-	global_excludes="$(pwd)/global-excludes"
+	global_excludes="global-excludes"
 }
 
 enable_global_excludes () {
@@ -605,7 +605,7 @@ cat <<-EOF >expected-verbose
 	a/b/.gitignore:8:!on*	a/b/one
 	a/b/.gitignore:8:!on*	a/b/one one
 	a/b/.gitignore:8:!on*	a/b/one two
-	a/b/.gitignore:8:!on*	"a/b/one\"three"
+	a/b/.gitignore:8:!on*	"a/b/one\\"three"
 	a/b/.gitignore:9:!two	a/b/two
 	a/.gitignore:1:two*	a/b/twooo
 	$global_excludes:2:!globaltwo	globaltwo
@@ -686,7 +686,7 @@ cat <<-EOF >expected-all
 	a/b/.gitignore:8:!on*	b/one
 	a/b/.gitignore:8:!on*	b/one one
 	a/b/.gitignore:8:!on*	b/one two
-	a/b/.gitignore:8:!on*	"b/one\"three"
+	a/b/.gitignore:8:!on*	"b/one\\"three"
 	a/b/.gitignore:9:!two	b/two
 	::	b/not-ignored
 	a/.gitignore:1:two*	b/twooo
@@ -829,6 +829,16 @@ test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
 	git ls-files -o -X ignore whitespace >actual 2>err &&
 	test_cmp expect actual &&
 	test_cmp err.expect err
+'
+
+test_expect_success 'info/exclude trumps core.excludesfile' '
+	echo >>global-excludes usually-ignored &&
+	echo >>.git/info/exclude "!usually-ignored" &&
+	>usually-ignored &&
+	echo "?? usually-ignored" >expect &&
+
+	git status --porcelain usually-ignored >actual &&
+	test_cmp expect actual
 '
 
 test_done

@@ -48,7 +48,7 @@ echo "1
 " > file &&
 git commit -m "C3" file &&
 git branch C3 &&
-git merge "pre E3 merge" B A &&
+git merge -m "pre E3 merge" A &&
 echo "1
 2
 3 changed in E3, branch B. New file size
@@ -61,7 +61,7 @@ echo "1
 " > file &&
 git commit -m "E3" file &&
 git checkout A &&
-git merge "pre D8 merge" A C3 &&
+git merge -m "pre D8 merge" C3 &&
 echo "1
 2
 3 changed in C3, branch B
@@ -73,7 +73,7 @@ echo "1
 9" > file &&
 git commit -m D8 file'
 
-test_expect_success 'Criss-cross merge' 'git merge "final merge" A B'
+test_expect_success 'Criss-cross merge' 'git merge -m "final merge" B'
 
 cat > file-expect <<EOF
 1

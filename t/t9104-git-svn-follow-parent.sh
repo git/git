@@ -31,12 +31,12 @@ test_expect_success 'initialize repo' '
 test_expect_success 'init and fetch a moved directory' '
 	git svn init --minimize-url -i thunk "$svnrepo"/thunk &&
 	git svn fetch -i thunk &&
-	test "`git rev-parse --verify refs/remotes/thunk@2`" \
-           = "`git rev-parse --verify refs/remotes/thunk~1`" &&
-        test "`git cat-file blob refs/remotes/thunk:readme |\
-                 sed -n -e "3p"`" = goodbye &&
-	test -z "`git config --get svn-remote.svn.fetch \
-	         "^trunk:refs/remotes/thunk@2$"`"
+	test "$(git rev-parse --verify refs/remotes/thunk@2)" \
+	   = "$(git rev-parse --verify refs/remotes/thunk~1)" &&
+	test "$(git cat-file blob refs/remotes/thunk:readme |\
+		 sed -n -e "3p")" = goodbye &&
+	test -z "$(git config --get svn-remote.svn.fetch \
+		 "^trunk:refs/remotes/thunk@2$")"
 	'
 
 test_expect_success 'init and fetch from one svn-remote' '
@@ -46,10 +46,10 @@ test_expect_success 'init and fetch from one svn-remote' '
         git config --add svn-remote.svn.fetch \
           thunk:refs/remotes/svn/thunk &&
         git svn fetch -i svn/thunk &&
-	test "`git rev-parse --verify refs/remotes/svn/trunk`" \
-           = "`git rev-parse --verify refs/remotes/svn/thunk~1`" &&
-        test "`git cat-file blob refs/remotes/svn/thunk:readme |\
-                 sed -n -e "3p"`" = goodbye
+	test "$(git rev-parse --verify refs/remotes/svn/trunk)" \
+	   = "$(git rev-parse --verify refs/remotes/svn/thunk~1)" &&
+	test "$(git cat-file blob refs/remotes/svn/thunk:readme |\
+		 sed -n -e "3p")" = goodbye
         '
 
 test_expect_success 'follow deleted parent' '
@@ -61,9 +61,9 @@ test_expect_success 'follow deleted parent' '
           junk:refs/remotes/svn/junk &&
         git svn fetch -i svn/thunk &&
         git svn fetch -i svn/junk &&
-        test -z "`git diff svn/junk svn/trunk`" &&
-        test "`git merge-base svn/junk svn/trunk`" \
-           = "`git rev-parse svn/trunk`"
+	test -z "$(git diff svn/junk svn/trunk)" &&
+	test "$(git merge-base svn/junk svn/trunk)" \
+	   = "$(git rev-parse svn/trunk)"
         '
 
 test_expect_success 'follow larger parent' '
@@ -72,16 +72,18 @@ test_expect_success 'follow larger parent' '
         svn import -m "import a larger parent" import "$svnrepo"/larger-parent &&
         svn cp -m "hi" "$svnrepo"/larger-parent "$svnrepo"/another-larger &&
         git svn init --minimize-url -i larger \
-          "$svnrepo"/another-larger/trunk/thunk/bump/thud &&
+	  "$svnrepo"/larger-parent/trunk/thunk/bump/thud &&
         git svn fetch -i larger &&
+	git svn init --minimize-url -i larger-parent \
+	  "$svnrepo"/another-larger/trunk/thunk/bump/thud &&
+	git svn fetch -i larger-parent &&
         git rev-parse --verify refs/remotes/larger &&
         git rev-parse --verify \
-           refs/remotes/larger-parent/trunk/thunk/bump/thud &&
-        test "`git merge-base \
-                 refs/remotes/larger-parent/trunk/thunk/bump/thud \
-                 refs/remotes/larger`" = \
-             "`git rev-parse refs/remotes/larger`"
-        true
+	   refs/remotes/larger-parent &&
+	test "$(git merge-base \
+		 refs/remotes/larger-parent \
+		 refs/remotes/larger)" = \
+	     "$(git rev-parse refs/remotes/larger)"
         '
 
 test_expect_success 'follow higher-level parent' '
@@ -104,8 +106,8 @@ test_expect_success 'follow deleted directory' '
 	svn_cmd rm -m "remove glob" "$svnrepo"/glob &&
 	git svn init --minimize-url -i glob "$svnrepo"/glob &&
 	git svn fetch -i glob &&
-	test "`git cat-file blob refs/remotes/glob:blob/bye`" = hi &&
-	test "`git ls-tree refs/remotes/glob | wc -l `" -eq 1
+	test "$(git cat-file blob refs/remotes/glob:blob/bye)" = hi &&
+	test "$(git ls-tree refs/remotes/glob | wc -l )" -eq 1
 	'
 
 # ref: r9270 of the Subversion repository: (http://svn.collab.net/repos/svn)
@@ -140,9 +142,9 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 	git svn init --minimize-url -i r9270-t \
 	  "$svnrepo"/r9270/trunk/subversion/bindings/swig/perl/native/t &&
 	git svn fetch -i r9270-t &&
-	test `git rev-list r9270-t | wc -l` -eq 2 &&
-	test "`git ls-tree --name-only r9270-t~1`" = \
-	     "`git ls-tree --name-only r9270-t`"
+	test $(git rev-list r9270-t | wc -l) -eq 2 &&
+	test "$(git ls-tree --name-only r9270-t~1)" = \
+	     "$(git ls-tree --name-only r9270-t)"
 	'
 
 test_expect_success "track initial change if it was only made to parent" '
@@ -150,11 +152,11 @@ test_expect_success "track initial change if it was only made to parent" '
 	git svn init --minimize-url -i r9270-d \
 	  "$svnrepo"/r9270/drunk/subversion/bindings/swig/perl/native/t &&
 	git svn fetch -i r9270-d &&
-	test `git rev-list r9270-d | wc -l` -eq 3 &&
-	test "`git ls-tree --name-only r9270-t`" = \
-	     "`git ls-tree --name-only r9270-d`" &&
-	test "`git rev-parse r9270-t`" = \
-	     "`git rev-parse r9270-d~1`"
+	test $(git rev-list r9270-d | wc -l) -eq 3 &&
+	test "$(git ls-tree --name-only r9270-t)" = \
+	     "$(git ls-tree --name-only r9270-d)" &&
+	test "$(git rev-parse r9270-t)" = \
+	     "$(git rev-parse r9270-d~1)"
 	'
 
 test_expect_success "follow-parent is atomic" '
@@ -191,19 +193,19 @@ test_expect_success "follow-parent is atomic" '
 	git svn fetch -i stunk &&
 	git svn init --minimize-url -i flunked "$svnrepo"/flunked &&
 	git svn fetch -i flunked &&
-	test "`git rev-parse --verify refs/remotes/flunk@18`" \
-	   = "`git rev-parse --verify refs/remotes/stunk`" &&
-	test "`git rev-parse --verify refs/remotes/flunk~1`" \
-	   = "`git rev-parse --verify refs/remotes/stunk`" &&
-	test "`git rev-parse --verify refs/remotes/flunked~1`" \
-	   = "`git rev-parse --verify refs/remotes/stunk~1`"
+	test "$(git rev-parse --verify refs/remotes/flunk@18)" \
+	   = "$(git rev-parse --verify refs/remotes/stunk)" &&
+	test "$(git rev-parse --verify refs/remotes/flunk~1)" \
+	   = "$(git rev-parse --verify refs/remotes/stunk)" &&
+	test "$(git rev-parse --verify refs/remotes/flunked~1)" \
+	   = "$(git rev-parse --verify refs/remotes/stunk~1)"
 	'
 
 test_expect_success "track multi-parent paths" '
 	svn_cmd cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
 	git svn multi-fetch &&
-	test `git cat-file commit refs/remotes/glob | \
-	       grep "^parent " | wc -l` -eq 2
+	test $(git cat-file commit refs/remotes/glob | \
+	       grep "^parent " | wc -l) -eq 2
 	'
 
 test_expect_success "multi-fetch continues to work" "

@@ -34,8 +34,16 @@ typedef void *SSL;
 #include "http.h"
 #endif
 
+#if defined(USE_CURL_FOR_IMAP_SEND) && defined(NO_OPENSSL)
+/* only available option */
+#define USE_CURL_DEFAULT 1
+#else
+/* strictly opt in */
+#define USE_CURL_DEFAULT 0
+#endif
+
 static int verbosity;
-static int use_curl; /* strictly opt in */
+static int use_curl = USE_CURL_DEFAULT;
 
 static const char * const imap_send_usage[] = { "git imap-send [-v] [-q] [--[no-]curl] < <mbox>", NULL };
 
@@ -279,17 +287,20 @@ static int ssl_socket_connect(struct imap_socket *sock, int use_tls_only, int ve
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	if (use_tls_only)
-		meth = TLSv1_method();
-	else
-		meth = SSLv23_method();
-
+	meth = SSLv23_method();
 	if (!meth) {
 		ssl_socket_perror("SSLv23_method");
 		return -1;
 	}
 
 	ctx = SSL_CTX_new(meth);
+	if (!ctx) {
+		ssl_socket_perror("SSL_CTX_new");
+		return -1;
+	}
+
+	if (use_tls_only)
+		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	if (verify)
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
@@ -854,7 +865,6 @@ static char hexchar(unsigned int b)
 static char *cram(const char *challenge_64, const char *user, const char *pass)
 {
 	int i, resp_len, encoded_len, decoded_len;
-	HMAC_CTX hmac;
 	unsigned char hash[16];
 	char hex[33];
 	char *response, *response_64, *challenge;
@@ -869,10 +879,8 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 				      (unsigned char *)challenge_64, encoded_len);
 	if (decoded_len < 0)
 		die("invalid challenge %s", challenge_64);
-	HMAC_Init(&hmac, (unsigned char *)pass, strlen(pass), EVP_md5());
-	HMAC_Update(&hmac, (unsigned char *)challenge, decoded_len);
-	HMAC_Final(&hmac, hash, NULL);
-	HMAC_CTX_cleanup(&hmac);
+	if (!HMAC(EVP_md5(), pass, strlen(pass), (unsigned char *)challenge, decoded_len, hash, NULL))
+		die("HMAC error");
 
 	hex[32] = 0;
 	for (i = 0; i < 16; i++) {
@@ -881,16 +889,14 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 	}
 
 	/* response: "<user> <digest in hex>" */
-	resp_len = strlen(user) + 1 + strlen(hex) + 1;
-	response = xmalloc(resp_len);
-	sprintf(response, "%s %s", user, hex);
+	response = xstrfmt("%s %s", user, hex);
+	resp_len = strlen(response);
 
-	response_64 = xmalloc(ENCODED_SIZE(resp_len) + 1);
+	response_64 = xmallocz(ENCODED_SIZE(resp_len));
 	encoded_len = EVP_EncodeBlock((unsigned char *)response_64,
 				      (unsigned char *)response, resp_len);
 	if (encoded_len < 0)
 		die("EVP_EncodeBlock error");
-	response_64[encoded_len] = '\0';
 	return (char *)response_64;
 }
 
@@ -1089,11 +1095,6 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 				srvc->pass = xstrdup(cred.password);
 		}
 
-		if (CAP(NOLOGIN)) {
-			fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host);
-			goto bail;
-		}
-
 		if (srvc->auth_method) {
 			struct imap_cmd_cb cb;
 
@@ -1117,6 +1118,11 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 				goto bail;
 			}
 		} else {
+			if (CAP(NOLOGIN)) {
+				fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n",
+					srvc->user, srvc->host);
+				goto bail;
+			}
 			if (!imap->buf.sock.ssl)
 				imap_warn("*** IMAP Warning *** Password is being "
 					  "sent in the clear\n");
@@ -1181,7 +1187,7 @@ static void lf_to_crlf(struct strbuf *msg)
 		j++;
 	}
 
-	new = xmalloc(j + 1);
+	new = xmallocz(j);
 
 	/*
 	 * Second pass: write the new string.  Note that this loop is
@@ -1414,11 +1420,15 @@ static CURL *setup_curl(struct imap_server_conf *srvc)
 	curl_easy_setopt(curl, CURLOPT_PORT, server.port);
 
 	if (server.auth_method) {
+#if LIBCURL_VERSION_NUM < 0x072200
+		warning("No LOGIN_OPTIONS support in this cURL version");
+#else
 		struct strbuf auth = STRBUF_INIT;
 		strbuf_addstr(&auth, "AUTH=");
 		strbuf_addstr(&auth, server.auth_method);
 		curl_easy_setopt(curl, CURLOPT_LOGIN_OPTIONS, auth.buf);
 		strbuf_release(&auth);
+#endif
 	}
 
 	if (!server.use_ssl)
@@ -1504,8 +1514,13 @@ int main(int argc, char **argv)
 
 #ifndef USE_CURL_FOR_IMAP_SEND
 	if (use_curl) {
-		warning("--use-curl not supported in this build");
+		warning("--curl not supported in this build");
 		use_curl = 0;
+	}
+#elif defined(NO_OPENSSL)
+	if (!use_curl) {
+		warning("--no-curl not supported in this build");
+		use_curl = 1;
 	}
 #endif
 

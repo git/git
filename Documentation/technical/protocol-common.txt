@@ -62,7 +62,10 @@ A pkt-line MAY contain binary data, so implementors MUST ensure
 pkt-line parsing/formatting routines are 8-bit clean.
 
 A non-binary line SHOULD BE terminated by an LF, which if present
-MUST be included in the total length.
+MUST be included in the total length. Receivers MUST treat pkt-lines
+with non-binary data the same whether or not they contain the trailing
+LF (stripping the LF if present, and not complaining when it is
+missing).
 
 The maximum length of a pkt-line's data component is 65520 bytes.
 Implementations MUST NOT send pkt-line whose length exceeds 65524

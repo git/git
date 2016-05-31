@@ -111,9 +111,9 @@ test_expect_success 'unknown color slots are ignored (branch)' '
 '
 
 test_expect_success 'unknown color slots are ignored (status)' '
-	git config color.status.nosuchslotwilleverbedefined white || exit
-	git status
-	case $? in 0|1) : ok ;; *) false ;; esac
+	git config color.status.nosuchslotwilleverbedefined white &&
+	{ git status; ret=$?; } &&
+	case $ret in 0|1) : ok ;; *) false ;; esac
 '
 
 test_done

@@ -190,17 +190,17 @@ static int show_default(void)
 	return 0;
 }
 
-static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int show_reference(const char *refname, const struct object_id *oid, int flag, void *cb_data)
 {
 	if (ref_excluded(ref_excludes, refname))
 		return 0;
-	show_rev(NORMAL, sha1, refname);
+	show_rev(NORMAL, oid->hash, refname);
 	return 0;
 }
 
-static int anti_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int anti_reference(const char *refname, const struct object_id *oid, int flag, void *cb_data)
 {
-	show_rev(REVERSED, sha1, refname);
+	show_rev(REVERSED, oid->hash, refname);
 	return 0;
 }
 
@@ -281,11 +281,8 @@ static int try_difference(const char *arg)
 			b = lookup_commit_reference(end);
 			exclude = get_merge_bases(a, b);
 			while (exclude) {
-				struct commit_list *n = exclude->next;
-				show_rev(REVERSED,
-					 exclude->item->object.sha1,NULL);
-				free(exclude);
-				exclude = n;
+				struct commit *commit = pop_commit(&exclude);
+				show_rev(REVERSED, commit->object.oid.hash, NULL);
 			}
 		}
 		*dotdot = '.';
@@ -322,7 +319,7 @@ static int try_parent_shorthands(const char *arg)
 	commit = lookup_commit_reference(sha1);
 	for (parents = commit->parents; parents; parents = parents->next)
 		show_rev(parents_only ? NORMAL : REVERSED,
-				parents->item->object.sha1, arg);
+				parents->item->object.oid.hash, arg);
 
 	*dotdot = '^';
 	return 1;
@@ -358,7 +355,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
 	static int keep_dashdash = 0, stop_at_non_option = 0;
 	static char const * const parseopt_usage[] = {
-		N_("git rev-parse --parseopt [options] -- [<args>...]"),
+		N_("git rev-parse --parseopt [<options>] -- [<args>...]"),
 		NULL
 	};
 	static struct option parseopt_opts[] = {
@@ -371,6 +368,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 					N_("output in stuck long form")),
 		OPT_END(),
 	};
+	static const char * const flag_chars = "*=?!";
 
 	struct strbuf sb = STRBUF_INIT, parsed = STRBUF_INIT;
 	const char **usage = NULL;
@@ -385,7 +383,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 
 	/* get the usage up to the first line with a -- on it */
 	for (;;) {
-		if (strbuf_getline(&sb, stdin, '\n') == EOF)
+		if (strbuf_getline(&sb, stdin) == EOF)
 			die("premature end of input");
 		ALLOC_GROW(usage, unb + 1, usz);
 		if (!strcmp("--", sb.buf)) {
@@ -398,9 +396,9 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	}
 
 	/* parse: (<short>|<short>,<long>|<long>)[*=?!]*<arghint>? SP+ <help> */
-	while (strbuf_getline(&sb, stdin, '\n') != EOF) {
+	while (strbuf_getline(&sb, stdin) != EOF) {
 		const char *s;
-		const char *end;
+		const char *help;
 		struct option *o;
 
 		if (!sb.len)
@@ -410,45 +408,23 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		memset(opts + onb, 0, sizeof(opts[onb]));
 
 		o = &opts[onb++];
-		s = strchr(sb.buf, ' ');
-		if (!s || *sb.buf == ' ') {
+		help = strchr(sb.buf, ' ');
+		if (!help || *sb.buf == ' ') {
 			o->type = OPTION_GROUP;
 			o->help = xstrdup(skipspaces(sb.buf));
 			continue;
 		}
 
 		o->type = OPTION_CALLBACK;
-		o->help = xstrdup(skipspaces(s));
+		o->help = xstrdup(skipspaces(help));
 		o->value = &parsed;
 		o->flags = PARSE_OPT_NOARG;
 		o->callback = &parseopt_dump;
 
-		/* Possible argument name hint */
-		end = s;
-		while (s > sb.buf && strchr("*=?!", s[-1]) == NULL)
-			--s;
-		if (s != sb.buf && s != end)
-			o->argh = xmemdupz(s, end - s);
-		if (s == sb.buf)
-			s = end;
-
-		while (s > sb.buf && strchr("*=?!", s[-1])) {
-			switch (*--s) {
-			case '=':
-				o->flags &= ~PARSE_OPT_NOARG;
-				break;
-			case '?':
-				o->flags &= ~PARSE_OPT_NOARG;
-				o->flags |= PARSE_OPT_OPTARG;
-				break;
-			case '!':
-				o->flags |= PARSE_OPT_NONEG;
-				break;
-			case '*':
-				o->flags |= PARSE_OPT_HIDDEN;
-				break;
-			}
-		}
+		/* name(s) */
+		s = strpbrk(sb.buf, flag_chars);
+		if (s == NULL)
+			s = help;
 
 		if (s - sb.buf == 1) /* short option only */
 			o->short_name = *sb.buf;
@@ -458,6 +434,30 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 			o->short_name = *sb.buf;
 			o->long_name = xmemdupz(sb.buf + 2, s - sb.buf - 2);
 		}
+
+		/* flags */
+		while (s < help) {
+			switch (*s++) {
+			case '=':
+				o->flags &= ~PARSE_OPT_NOARG;
+				continue;
+			case '?':
+				o->flags &= ~PARSE_OPT_NOARG;
+				o->flags |= PARSE_OPT_OPTARG;
+				continue;
+			case '!':
+				o->flags |= PARSE_OPT_NONEG;
+				continue;
+			case '*':
+				o->flags |= PARSE_OPT_HIDDEN;
+				continue;
+			}
+			s--;
+			break;
+		}
+
+		if (s < help)
+			o->argh = xmemdupz(s, help - s);
 	}
 	strbuf_release(&sb);
 
@@ -496,15 +496,16 @@ static void die_no_single_rev(int quiet)
 }
 
 static const char builtin_rev_parse_usage[] =
-N_("git rev-parse --parseopt [options] -- [<args>...]\n"
+N_("git rev-parse --parseopt [<options>] -- [<args>...]\n"
    "   or: git rev-parse --sq-quote [<arg>...]\n"
-   "   or: git rev-parse [options] [<arg>...]\n"
+   "   or: git rev-parse [<options>] [<arg>...]\n"
    "\n"
    "Run \"git rev-parse --parseopt -h\" for more information on the first usage.");
 
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
+	int did_repo_setup = 0;
 	int has_dashdash = 0;
 	int output_prefix = 0;
 	unsigned char sha1[20];
@@ -528,11 +529,47 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	prefix = setup_git_directory();
-	git_config(git_default_config, NULL);
+	/* No options; just report on whether we're in a git repo or not. */
+	if (argc == 1) {
+		setup_git_directory();
+		git_config(git_default_config, NULL);
+		return 0;
+	}
+
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
+		if (!strcmp(arg, "--local-env-vars")) {
+			int i;
+			for (i = 0; local_repo_env[i]; i++)
+				printf("%s\n", local_repo_env[i]);
+			continue;
+		}
+		if (!strcmp(arg, "--resolve-git-dir")) {
+			const char *gitdir = argv[++i];
+			if (!gitdir)
+				die("--resolve-git-dir requires an argument");
+			gitdir = resolve_gitdir(gitdir);
+			if (!gitdir)
+				die("not a gitdir '%s'", argv[i]);
+			puts(gitdir);
+			continue;
+		}
+
+		/* The rest of the options require a git repository. */
+		if (!did_repo_setup) {
+			prefix = setup_git_directory();
+			git_config(git_default_config, NULL);
+			did_repo_setup = 1;
+		}
+
+		if (!strcmp(arg, "--git-path")) {
+			if (!argv[i + 1])
+				die("--git-path requires an argument");
+			puts(git_path("%s", argv[i + 1]));
+			i++;
+			continue;
+		}
 		if (as_is) {
 			if (show_file(arg, output_prefix) && as_is < 2)
 				verify_filename(prefix, arg, 0);
@@ -699,12 +736,6 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				add_ref_exclusion(&ref_excludes, arg + 10);
 				continue;
 			}
-			if (!strcmp(arg, "--local-env-vars")) {
-				int i;
-				for (i = 0; local_repo_env[i]; i++)
-					printf("%s\n", local_repo_env[i]);
-				continue;
-			}
 			if (!strcmp(arg, "--show-toplevel")) {
 				const char *work_tree = get_git_work_tree();
 				if (work_tree)
@@ -755,14 +786,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				free(cwd);
 				continue;
 			}
-			if (!strcmp(arg, "--resolve-git-dir")) {
-				const char *gitdir = argv[++i];
-				if (!gitdir)
-					die("--resolve-git-dir requires an argument");
-				gitdir = resolve_gitdir(gitdir);
-				if (!gitdir)
-					die("not a gitdir '%s'", argv[i]);
-				puts(gitdir);
+			if (!strcmp(arg, "--git-common-dir")) {
+				const char *pfx = prefix ? prefix : "";
+				puts(prefix_filename(pfx, strlen(pfx), get_git_common_dir()));
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {

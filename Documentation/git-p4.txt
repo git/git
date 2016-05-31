@@ -225,9 +225,20 @@ Git repository:
 	they can find the p4 branches in refs/heads.
 
 --max-changes <n>::
-	Limit the number of imported changes to 'n'.  Useful to
-	limit the amount of history when using the '@all' p4 revision
-	specifier.
+	Import at most 'n' changes, rather than the entire range of
+	changes included in the given revision specifier. A typical
+	usage would be use '@all' as the revision specifier, but then
+	to use '--max-changes 1000' to import only the last 1000
+	revisions rather than the entire revision history.
+
+--changes-block-size <n>::
+	The internal block size to use when converting a revision
+	specifier such as '@all' into a list of specific change
+	numbers. Instead of using a single call to 'p4 changes' to
+	find the full list of changes for the conversion, there are a
+	sequence of calls to 'p4 changes -m', each of which requests
+	one block of changes of the given size. The default block size
+	is 500, which should usually be suitable.
 
 --keep-path::
 	The mapping of file names from the p4 depot path to Git, by
@@ -241,6 +252,9 @@ Git repository:
 	Use a client spec to find the list of interesting files in p4.
 	See the "CLIENT SPEC" section below.
 
+-/ <path>::
+	Exclude selected depot paths when cloning or syncing.
+
 Clone options
 ~~~~~~~~~~~~~
 These options can be used in an initial 'clone', along with the 'sync'
@@ -253,9 +267,6 @@ options described above.
 
 --bare::
 	Perform a bare clone.  See linkgit:git-clone[1].
-
--/ <path>::
-	Exclude selected depot paths when cloning.
 
 Submit options
 ~~~~~~~~~~~~~~
@@ -498,6 +509,58 @@ git-p4.useClientSpec::
 	depot paths of interest.  This is equivalent to specifying the
 	option '--use-client-spec'.  See the "CLIENT SPEC" section above.
 	This variable is a boolean, not the name of a p4 client.
+
+git-p4.pathEncoding::
+	Perforce keeps the encoding of a path as given by the originating OS.
+	Git expects paths encoded as UTF-8. Use this config to tell git-p4
+	what encoding Perforce had used for the paths. This encoding is used
+	to transcode the paths to UTF-8. As an example, Perforce on Windows
+	often uses "cp1252" to encode path names.
+
+git-p4.largeFileSystem::
+	Specify the system that is used for large (binary) files. Please note
+	that large file systems do not support the 'git p4 submit' command.
+	Only Git LFS is implemented right now (see https://git-lfs.github.com/
+	for more information). Download and install the Git LFS command line
+	extension to use this option and configure it like this:
++
+-------------
+git config       git-p4.largeFileSystem GitLFS
+-------------
+
+git-p4.largeFileExtensions::
+	All files matching a file extension in the list will be processed
+	by the large file system. Do not prefix the extensions with '.'.
+
+git-p4.largeFileThreshold::
+	All files with an uncompressed size exceeding the threshold will be
+	processed by the large file system. By default the threshold is
+	defined in bytes. Add the suffix k, m, or g to change the unit.
+
+git-p4.largeFileCompressedThreshold::
+	All files with a compressed size exceeding the threshold will be
+	processed by the large file system. This option might slow down
+	your clone/sync process. By default the threshold is defined in
+	bytes. Add the suffix k, m, or g to change the unit.
+
+git-p4.largeFilePush::
+	Boolean variable which defines if large files are automatically
+	pushed to a server.
+
+git-p4.keepEmptyCommits::
+	A changelist that contains only excluded files will be imported
+	as an empty commit if this boolean option is set to true.
+
+git-p4.mapUser::
+	Map a P4 user to a name and email address in Git. Use a string
+	with the following format to create a mapping:
++
+-------------
+git config --add git-p4.mapUser "p4user = First Last <mail@address.com>"
+-------------
++
+A mapping will override any user information from P4. Mappings for
+multiple P4 user can be defined.
 
 Submit variables
 ~~~~~~~~~~~~~~~~

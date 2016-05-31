@@ -49,7 +49,11 @@ catch {rename send {}} ; # What an evil concept...
 ##
 ## locate our library
 
-set oguilib {@@GITGUI_LIBDIR@@}
+if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
+	set oguilib $::env(GIT_GUI_LIB_DIR)
+} else {
+	set oguilib {@@GITGUI_LIBDIR@@}
+}
 set oguirel {@@GITGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
 	set oguilib [file dirname [file normalize $argv0]]
@@ -79,9 +83,9 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 		return [uplevel 1 real__auto_load $name $args]
 	}
 	rename source real__source
-	proc source {name} {
-		puts stderr "source    $name"
-		uplevel 1 real__source $name
+	proc source {args} {
+		puts stderr "source    $args"
+		uplevel 1 [linsert $args 0 real__source]
 	}
 	if {[tk windowingsystem] eq "win32"} { console show }
 }
@@ -666,9 +670,7 @@ proc kill_file_process {fd} {
 
 	catch {
 		if {[is_Windows]} {
-			# Use a Cygwin-specific flag to allow killing
-			# native Windows processes
-			exec kill -f $process
+			exec taskkill /pid $process
 		} else {
 			exec kill $process
 		}
@@ -908,6 +910,7 @@ set default_config(gui.fontdiff) [font configure font_diff]
 set default_config(gui.maxfilesdisplayed) 5000
 set default_config(gui.usettk) 1
 set default_config(gui.warndetachedcommit) 1
+set default_config(gui.tabsize) 8
 set font_descs {
 	{fontui   font_ui   {mc "Main Font"}}
 	{fontdiff font_diff {mc "Diff/Console Font"}}
@@ -1283,7 +1286,7 @@ load_config 0
 apply_config
 
 # v1.7.0 introduced --show-toplevel to return the canonical work-tree
-if {[package vsatisfies $_git_version 1.7.0-]} {
+if {[package vcompare $_git_version 1.7.0] >= 0} {
 	if { [is_Cygwin] } {
 		catch {set _gitworktree [exec cygpath --windows [git rev-parse --show-toplevel]]}
 	} else {
@@ -1539,7 +1542,7 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	if {[package vsatisfies $::_git_version 1.6.3-]} {
+	if {[package vcompare $::_git_version 1.6.3] >= 0} {
 		set ls_others [list --exclude-standard]
 	} else {
 		set ls_others [list --exclude-per-directory=.gitignore]
@@ -1962,19 +1965,21 @@ proc display_all_files {} {
 
 	set to_display [lsort [array names file_states]]
 	set display_limit [get_config gui.maxfilesdisplayed]
-	if {[llength $to_display] > $display_limit} {
-		if {!$files_warning} {
-			# do not repeatedly warn:
-			set files_warning 1
-			info_popup [mc "Displaying only %s of %s files." \
-				$display_limit [llength $to_display]]
-		}
-		set to_display [lrange $to_display 0 [expr {$display_limit-1}]]
-	}
+	set displayed 0
 	foreach path $to_display {
 		set s $file_states($path)
 		set m [lindex $s 0]
 		set icon_name [lindex $s 1]
+
+		if {$displayed > $display_limit && [string index $m 1] eq {O} } {
+			if {!$files_warning} {
+				# do not repeatedly warn:
+				set files_warning 1
+				info_popup [mc "Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files." \
+					$display_limit [llength $to_display]]
+			}
+			continue
+		}
 
 		set s [string index $m 0]
 		if {$s ne {U} && $s ne {_}} {
@@ -1990,6 +1995,7 @@ proc display_all_files {} {
 		if {$s ne {_}} {
 			display_all_files_helper $ui_workdir $path \
 				$icon_name $s
+			incr displayed
 		}
 	}
 

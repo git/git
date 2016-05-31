@@ -9,8 +9,8 @@ merge_cmd () {
 	gvimdiff|vimdiff)
 		if $base_present
 		then
-			"$merge_tool_path" -f -d -c 'wincmd J' \
-				"$MERGED" "$LOCAL" "$BASE" "$REMOTE"
+			"$merge_tool_path" -f -d -c '4wincmd w | wincmd J' \
+				"$LOCAL" "$BASE" "$REMOTE" "$MERGED"
 		else
 			"$merge_tool_path" -f -d -c 'wincmd l' \
 				"$LOCAL" "$MERGED" "$REMOTE"

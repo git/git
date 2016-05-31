@@ -389,7 +389,7 @@ test_expect_success 'description with Jobs section and bogus following text' '
 	(
 		cd "$cli" &&
 		p4 revert desc6 &&
-		rm desc6
+		rm -f desc6
 	)
 '
 

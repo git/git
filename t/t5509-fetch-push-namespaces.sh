@@ -82,4 +82,45 @@ test_expect_success 'mirroring a repository using a ref namespace' '
 	)
 '
 
+test_expect_success 'hide namespaced refs with transfer.hideRefs' '
+	GIT_NAMESPACE=namespace \
+		git -C pushee -c transfer.hideRefs=refs/tags \
+		ls-remote "ext::git %s ." >actual &&
+	printf "$commit1\trefs/heads/master\n" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'check that transfer.hideRefs does not match unstripped refs' '
+	GIT_NAMESPACE=namespace \
+		git -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
+		ls-remote "ext::git %s ." >actual &&
+	printf "$commit1\trefs/heads/master\n" >expected &&
+	printf "$commit0\trefs/tags/0\n" >>expected &&
+	printf "$commit1\trefs/tags/1\n" >>expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'hide full refs with transfer.hideRefs' '
+	GIT_NAMESPACE=namespace \
+		git -C pushee -c transfer.hideRefs="^refs/namespaces/namespace/refs/tags" \
+		ls-remote "ext::git %s ." >actual &&
+	printf "$commit1\trefs/heads/master\n" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'try to update a hidden ref' '
+	test_config -C pushee transfer.hideRefs refs/heads/master &&
+	test_must_fail git -C original push pushee-namespaced master
+'
+
+test_expect_success 'try to update a ref that is not hidden' '
+	test_config -C pushee transfer.hideRefs refs/namespaces/namespace/refs/heads/master &&
+	git -C original push pushee-namespaced master
+'
+
+test_expect_success 'try to update a hidden full ref' '
+	test_config -C pushee transfer.hideRefs "^refs/namespaces/namespace/refs/heads/master" &&
+	test_must_fail git -C original push pushee-namespaced master
+'
+
 test_done

@@ -218,7 +218,7 @@ test_expect_success 'grow / shrink' '
 	echo size >> in &&
 	echo 64 51 >> expect &&
 	echo put key52 value52 >> in &&
-	echo NULL >> expect
+	echo NULL >> expect &&
 	echo size >> in &&
 	echo 256 52 >> expect &&
 	for n in $(test_seq 12)

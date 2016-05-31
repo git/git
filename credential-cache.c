@@ -32,6 +32,7 @@ static int send_request(const char *socket, const struct strbuf *out)
 		write_or_die(1, in, r);
 		got_data = 1;
 	}
+	close(fd);
 	return got_data;
 }
 
@@ -88,7 +89,7 @@ int main(int argc, const char **argv)
 	int timeout = 900;
 	const char *op;
 	const char * const usage[] = {
-		"git credential-cache [options] <action>",
+		"git credential-cache [<options>] <action>",
 		NULL
 	};
 	struct option options[] = {

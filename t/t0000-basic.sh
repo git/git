@@ -98,7 +98,7 @@ check_sub_test_lib_test () {
 }
 
 check_sub_test_lib_test_err () {
-	name="$1" # stdin is the expected output output from the test
+	name="$1" # stdin is the expected output from the test
 	# expected error output is in descriptior 3
 	(
 		cd "$name" &&
@@ -253,7 +253,7 @@ test_expect_success 'test --verbose' '
 	test_expect_success "failing test" false
 	test_done
 	EOF
-	mv test-verbose/out test-verbose/out+
+	mv test-verbose/out test-verbose/out+ &&
 	grep -v "^Initialized empty" test-verbose/out+ >test-verbose/out &&
 	check_sub_test_lib_test test-verbose <<-\EOF
 	> expecting success: true
@@ -974,7 +974,7 @@ test_expect_success 'writing this tree with --missing-ok' '
 
 ################################################################
 test_expect_success 'git read-tree followed by write-tree should be idempotent' '
-	rm -f .git/index
+	rm -f .git/index &&
 	git read-tree $tree &&
 	test -f .git/index &&
 	newtree=$(git write-tree) &&

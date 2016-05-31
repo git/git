@@ -94,15 +94,15 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb COLUMNS (big change)" '
-		COLUMNS=200 git $cmd $args >output
+		COLUMNS=200 git $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb COLUMNS (big change)" '
-		COLUMNS=200 git $cmd $args --graph >output
+		COLUMNS=200 git $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -122,15 +122,15 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb not enough COLUMNS (big change)" '
-		COLUMNS=40 git $cmd $args >output
+		COLUMNS=40 git $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb not enough COLUMNS (big change)" '
-		COLUMNS=40 git $cmd $args --graph >output
+		COLUMNS=40 git $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -150,15 +150,15 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb statGraphWidth config" '
-		git -c diff.statGraphWidth=26 $cmd $args >output
+		git -c diff.statGraphWidth=26 $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb statGraphWidth config" '
-		git -c diff.statGraphWidth=26 $cmd $args --graph >output
+		git -c diff.statGraphWidth=26 $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -179,33 +179,33 @@ EOF
 while read cmd args
 do
 	test_expect_success "$cmd --stat=width with big change" '
-		git $cmd $args --stat=40 >output
+		git $cmd $args --stat=40 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --stat-width=width with big change" '
-		git $cmd $args --stat-width=40 >output
+		git $cmd $args --stat-width=40 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "$cmd --stat-graph-width with big change" '
-		git $cmd $args --stat-graph-width=26 >output
+		git $cmd $args --stat-graph-width=26 >output &&
 		grep " | " output >actual &&
 		test_cmp expect actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --stat-width=width --graph with big change" '
-		git $cmd $args --stat-width=40 --graph >output
+		git $cmd $args --stat-width=40 --graph >output &&
 		grep " | " output >actual &&
 		test_cmp expect-graph actual
 	'
 
 	test_expect_success "$cmd --stat-graph-width --graph with big change" '
-		git $cmd $args --stat-graph-width=26 --graph >output
+		git $cmd $args --stat-graph-width=26 --graph >output &&
 		grep " | " output >actual &&
 		test_cmp expect-graph actual
 	'
@@ -236,7 +236,7 @@ do
 		test_cmp expect actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --stat=width --graph with big change is balanced" '
 		git $cmd $args --stat-width=60 --graph >output &&
@@ -265,15 +265,15 @@ EOF
 while read verb expect cmd args
 do
 	test_expect_success "$cmd $verb COLUMNS (long filename)" '
-		COLUMNS=200 git $cmd $args >output
+		COLUMNS=200 git $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb COLUMNS (long filename)" '
-		COLUMNS=200 git $cmd $args --graph >output
+		COLUMNS=200 git $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -294,16 +294,16 @@ while read verb expect cmd args
 do
 	test_expect_success COLUMNS_CAN_BE_1 \
 		"$cmd $verb prefix greater than COLUMNS (big change)" '
-		COLUMNS=1 git $cmd $args >output
+		COLUMNS=1 git $cmd $args >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success COLUMNS_CAN_BE_1 \
 		"$cmd --graph $verb prefix greater than COLUMNS (big change)" '
-		COLUMNS=1 git $cmd $args --graph >output
+		COLUMNS=1 git $cmd $args --graph >output &&
 		grep " | " output >actual &&
 		test_cmp "$expect-graph" actual
 	'
@@ -320,7 +320,7 @@ EOF
 test_expect_success 'merge --stat respects COLUMNS (big change)' '
 	git checkout -b branch HEAD^^ &&
 	COLUMNS=100 git merge --stat --no-ff master^ >output &&
-	grep " | " output >actual
+	grep " | " output >actual &&
 	test_cmp expect actual
 '
 
@@ -329,7 +329,7 @@ cat >expect <<'EOF'
 EOF
 test_expect_success 'merge --stat respects COLUMNS (long filename)' '
 	COLUMNS=100 git merge --stat --no-ff master >output &&
-	grep " | " output >actual
+	grep " | " output >actual &&
 	test_cmp expect actual
 '
 

@@ -9,8 +9,8 @@ git-hash-object - Compute object ID and optionally creates a blob from a file
 SYNOPSIS
 --------
 [verse]
-'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>...
-'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters] < <list-of-paths>
+'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin [--literally]] [--] <file>...
+'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters]
 
 DESCRIPTION
 -----------
@@ -35,7 +35,8 @@ OPTIONS
 	Read the object from standard input instead of from a file.
 
 --stdin-paths::
-	Read file names from stdin instead of from the command-line.
+	Read file names from the standard input, one per line, instead
+	of from the command-line.
 
 --path::
 	Hash object as it were located at the given path. The location of
@@ -51,7 +52,13 @@ OPTIONS
 	Hash the contents as is, ignoring any input filter that would
 	have been chosen by the attributes mechanism, including the end-of-line
 	conversion. If the file is read from standard input then this
-	is always implied, unless the --path option is given.
+	is always implied, unless the `--path` option is given.
+
+--literally::
+	Allow `--stdin` to hash any garbage into a loose object which might not
+	otherwise pass standard object parsing or git-fsck checks. Useful for
+	stress-testing Git itself or reproducing characteristics of corrupt or
+	bogus objects encountered in the wild.
 
 GIT
 ---

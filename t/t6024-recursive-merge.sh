@@ -76,7 +76,7 @@ test_expect_success "result contains a conflict" "test_cmp expect a1"
 
 git ls-files --stage > out
 cat > expect << EOF
-100644 439cc46de773d8a83c77799b7cc9191c128bfcff 1	a1
+100644 ec3fe2a791706733f2d8fa7ad45d9a9672031f5e 1	a1
 100644 cf84443e49e1b366fac938711ddf4be2d4d1d9e9 2	a1
 100644 fd7923529855d0b274795ae3349c5e0438333979 3	a1
 EOF

@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
-	[-s <strategy>] [-X <strategy-option>] [-S[<key-id>]]
+	[-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
+	[--[no-]allow-unrelated-histories]
 	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
 'git merge' <msg> HEAD <commit>...
 'git merge' --abort
@@ -67,7 +68,9 @@ include::merge-options.txt[]
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
-	GPG-sign the resulting merge commit.
+	GPG-sign the resulting merge commit. The `keyid` argument is
+	optional and defaults to the committer identity; if specified,
+	it must be stuck to the option without a space.
 
 -m <msg>::
 	Set the commit message to be used for the merge commit (in
@@ -78,7 +81,7 @@ will be appended to the specified message.
 +
 The 'git fmt-merge-msg' command can be
 used to give a good default for automated 'git merge'
-invocations.
+invocations. The automated message can include the branch description.
 
 --[no-]rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the
@@ -104,6 +107,10 @@ commit or stash your changes before running 'git merge'.
 If no commit is given from the command line, merge the remote-tracking
 branches that the current branch is configured to use as its upstream.
 See also the configuration section of this manual page.
++
+When `FETCH_HEAD` (and no other commit) is specified, the branches
+recorded in the `.git/FETCH_HEAD` file by the previous invocation
+of `git fetch` for merging are merged to the current branch.
 
 
 PRE-MERGE CHECKS
@@ -232,7 +239,7 @@ Barbie's remark on your side.  The only thing you can tell is that your
 side wants to say it is hard and you'd prefer to go shopping, while the
 other side wants to claim it is easy.
 
-An alternative style can be used by setting the "merge.conflictstyle"
+An alternative style can be used by setting the "merge.conflictStyle"
 configuration variable to "diff3".  In "diff3" style, the above conflict
 may look like this:
 
@@ -329,7 +336,7 @@ CONFIGURATION
 -------------
 include::merge-config.txt[]
 
-branch.<name>.mergeoptions::
+branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and
 	supported options are the same as those of 'git merge', but option
 	values containing whitespace characters are currently not supported.

@@ -4,13 +4,13 @@
 
 --root::
 	Do not treat root commits as boundaries.  This can also be
-	controlled via the `blame.showroot` config option.
+	controlled via the `blame.showRoot` config option.
 
 --show-stats::
 	Include additional statistics at the end of blame output.
 
 -L <start>,<end>::
--L :<regex>::
+-L :<funcname>::
 	Annotate only the given line range. May be specified multiple times.
 	Overlapping ranges are allowed.
 +
@@ -63,12 +63,18 @@ include::line-range-format.txt[]
 	`-` to make the command read from the standard input).
 
 --date <format>::
-	The value is one of the following alternatives:
-	{relative,local,default,iso,rfc,short}. If --date is not
+	Specifies the format used to output dates. If --date is not
 	provided, the value of the blame.date config variable is
 	used. If the blame.date config variable is also not set, the
-	iso format is used. For more information, See the discussion
+	iso format is used. For supported values, see the discussion
 	of the --date option at linkgit:git-log[1].
+
+--[no-]progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal. This flag
+	enables progress reporting even if not attached to a
+	terminal. Can't use `--progress` together with `--porcelain`
+	or `--incremental`.
 
 -M|<num>|::
 	Detect moved or copied lines within a file. When a commit

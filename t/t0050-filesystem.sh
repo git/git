@@ -33,16 +33,20 @@ test_expect_success "detection of case insensitive filesystem during repo init" 
 '
 else
 test_expect_success "detection of case insensitive filesystem during repo init" '
-	test_must_fail git config --bool core.ignorecase >/dev/null ||
-	test $(git config --bool core.ignorecase) = false
+	{
+		test_must_fail git config --bool core.ignorecase >/dev/null ||
+			test $(git config --bool core.ignorecase) = false
+	}
 '
 fi
 
 if test_have_prereq SYMLINKS
 then
 test_expect_success "detection of filesystem w/o symlink support during repo init" '
-	test_must_fail git config --bool core.symlinks ||
-	test "$(git config --bool core.symlinks)" = true
+	{
+		test_must_fail git config --bool core.symlinks ||
+		test "$(git config --bool core.symlinks)" = true
+	}
 '
 else
 test_expect_success "detection of filesystem w/o symlink support during repo init" '

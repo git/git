@@ -58,13 +58,19 @@ endif::git-rev-list[]
 	more than one `--grep=<pattern>`, commits whose message
 	matches any of the given patterns are chosen (but see
 	`--all-match`).
+ifndef::git-rev-list[]
 +
-When `--show-notes` is in effect, the message from the notes as
-if it is part of the log message.
+When `--show-notes` is in effect, the message from the notes is
+matched as if it were part of the log message.
+endif::git-rev-list[]
 
 --all-match::
 	Limit the commits output to ones that match all given `--grep`,
 	instead of ones that match at least one.
+
+--invert-grep::
+	Limit the commits output to ones with log message that do not
+	match the pattern specified with `--grep=<pattern>`.
 
 -i::
 --regexp-ignore-case::
@@ -119,7 +125,8 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	because merges into a topic branch tend to be only about
 	adjusting to updated upstream from time to time, and
 	this option allows you to ignore the individual commits
-	brought in to your history by such a merge.
+	brought in to your history by such a merge. Cannot be
+	combined with --bisect.
 
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
@@ -172,11 +179,6 @@ explicitly.
 	Pretend as if all objects mentioned by reflogs are listed on the
 	command line as `<commit>`.
 
---indexed-objects::
-	Pretend as if all trees and blobs used by the index are listed
-	on the command line.  Note that you probably want to use
-	`--objects`, too.
-
 --ignore-missing::
 	Upon seeing an invalid object name in the input, pretend as if
 	the bad input was not given.
@@ -186,7 +188,7 @@ ifndef::git-rev-list[]
 	Pretend as if the bad bisection ref `refs/bisect/bad`
 	was listed and as if it was followed by `--not` and the good
 	bisection refs `refs/bisect/good-*` on the command
-	line.
+	line. Cannot be combined with --first-parent.
 endif::git-rev-list[]
 
 --stdin::
@@ -567,7 +569,7 @@ outputs 'midpoint', the output of the two commands
 would be of roughly the same length.  Finding the change which
 introduces a regression is thus reduced to a binary search: repeatedly
 generate and test new 'midpoint's until the commit chain is of length
-one.
+one. Cannot be combined with --first-parent.
 
 --bisect-vars::
 	This calculates the same as `--bisect`, except that refs in
@@ -644,6 +646,7 @@ Object Traversal
 
 These options are mostly targeted for packing of Git repositories.
 
+ifdef::git-rev-list[]
 --objects::
 	Print the object IDs of any object referenced by the listed
 	commits.  `--objects foo ^bar` thus means ``send me
@@ -662,9 +665,15 @@ These options are mostly targeted for packing of Git repositories.
 	commits at the cost of increased time.  This is used instead of
 	`--objects-edge` to build ``thin'' packs for shallow repositories.
 
+--indexed-objects::
+	Pretend as if all trees and blobs used by the index are listed
+	on the command line.  Note that you probably want to use
+	`--objects`, too.
+
 --unpacked::
 	Only useful with `--objects`; print the object IDs that are not
 	in packs.
+endif::git-rev-list[]
 
 --no-walk[=(sorted|unsorted)]::
 	Only show the given commits, but do not traverse their ancestors.
@@ -673,6 +682,7 @@ These options are mostly targeted for packing of Git repositories.
 	given on the command line. Otherwise (if `sorted` or no argument
 	was given), the commits are shown in reverse chronological order
 	by commit time.
+	Cannot be combined with `--graph`.
 
 --do-walk::
 	Overrides a previous `--no-walk`.
@@ -691,15 +701,19 @@ include::pretty-options.txt[]
 --relative-date::
 	Synonym for `--date=relative`.
 
---date=(relative|local|default|iso|iso-strict|rfc|short|raw)::
+--date=<format>::
 	Only takes effect for dates shown in human-readable format, such
 	as when using `--pretty`. `log.date` config variable sets a default
-	value for the log command's `--date` option.
+	value for the log command's `--date` option. By default, dates
+	are shown in the original time zone (either committer's or
+	author's). If `-local` is appended to the format (e.g.,
+	`iso-local`), the user's local time zone is used instead.
 +
 `--date=relative` shows dates relative to the current time,
-e.g. ``2 hours ago''.
+e.g. ``2 hours ago''. The `-local` option cannot be used with
+`--raw` or `--relative`.
 +
-`--date=local` shows timestamps in user's local time zone.
+`--date=local` is an alias for `--date=default-local`.
 +
 `--date=iso` (or `--date=iso8601`) shows timestamps in a ISO 8601-like format.
 The differences to the strict ISO 8601 format are:
@@ -719,8 +733,18 @@ format, often found in email messages.
 +
 `--date=raw` shows the date in the internal raw Git format `%s %z` format.
 +
-`--date=default` shows timestamps in the original time zone
-(either committer's or author's).
+`--date=format:...` feeds the format `...` to your system `strftime`.
+Use `--date=format:%c` to show the date in your system locale's
+preferred format.  See the `strftime` manual for a complete list of
+format placeholders. When using `-local`, the correct syntax is
+`--date=format-local:...`.
++
+`--date=default` is the default format, and is similar to
+`--date=rfc2822`, with a few exceptions:
+
+	- there is no comma after the day-of-week
+
+	- the time zone is omitted when the local time zone is used
 
 ifdef::git-rev-list[]
 --header::
@@ -775,6 +799,7 @@ you would get an output like this:
 	on the left hand side of the output.  This may cause extra lines
 	to be printed in between commits, in order for the graph history
 	to be drawn properly.
+	Cannot be combined with `--no-walk`.
 +
 This enables parent rewriting, see 'History Simplification' below.
 +

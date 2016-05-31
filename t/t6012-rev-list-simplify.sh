@@ -71,7 +71,7 @@ test_expect_success setup '
 	note J &&
 
 	git checkout master &&
-	test_tick && git merge -m "Coolest" unrelated &&
+	test_tick && git merge --allow-unrelated-histories -m "Coolest" unrelated &&
 	note K &&
 
 	echo "Immaterial" >elif &&
@@ -95,10 +95,7 @@ check_outcome () {
 		git log --pretty="$FMT" --parents $param |
 		unnote >actual &&
 		sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
-		test_cmp expect check || {
-			cat actual
-			false
-		}
+		test_cmp expect check
 	'
 }
 
@@ -121,10 +118,7 @@ test_expect_success 'full history simplification without parent' '
 	git log --pretty="$FMT" --full-history E -- lost |
 	unnote >actual &&
 	sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
-	test_cmp expect check || {
-		cat actual
-		false
-	}
+	test_cmp expect check
 '
 
 test_expect_success '--full-diff is not affected by --parents' '

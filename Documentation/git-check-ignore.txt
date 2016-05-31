@@ -10,16 +10,15 @@ SYNOPSIS
 --------
 [verse]
 'git check-ignore' [options] pathname...
-'git check-ignore' [options] --stdin < <list-of-paths>
+'git check-ignore' [options] --stdin
 
 DESCRIPTION
 -----------
 
 For each pathname given via the command-line or from a file via
-`--stdin`, show the pattern from .gitignore (or other input files to
-the exclude mechanism) that decides if the pathname is excluded or
-included.  Later patterns within a file take precedence over earlier
-ones.
+`--stdin`, check whether the file is excluded by .gitignore (or other
+input files to the exclude mechanism) and output the path if it is
+excluded.
 
 By default, tracked files are not shown at all since they are not
 subject to exclude rules; but see `--no-index'.
@@ -32,10 +31,12 @@ OPTIONS
 
 -v, --verbose::
 	Also output details about the matching pattern (if any)
-	for each given pathname.
+	for each given pathname. For precedence rules within and
+	between exclude sources, see linkgit:gitignore[5].
 
 --stdin::
-	Read file names from stdin instead of from the command-line.
+	Read pathnames from the standard input, one per line,
+	instead of from the command-line.
 
 -z::
 	The output format is modified to be machine-parseable (see
@@ -72,7 +73,7 @@ matching pattern, <source> is the pattern's source file, and <linenum>
 is the line number of the pattern within that source.  If the pattern
 contained a `!` prefix or `/` suffix, it will be preserved in the
 output.  <source> will be an absolute path when referring to the file
-configured by `core.excludesfile`, or relative to the repository root
+configured by `core.excludesFile`, or relative to the repository root
 when referring to `.git/info/exclude` or a per-directory exclude file.
 
 If `-z` is specified, the pathnames in the output are delimited by the
@@ -111,7 +112,7 @@ EXIT STATUS
 SEE ALSO
 --------
 linkgit:gitignore[5]
-linkgit:gitconfig[5]
+linkgit:git-config[1]
 linkgit:git-ls-files[1]
 
 GIT

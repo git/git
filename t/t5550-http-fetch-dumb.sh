@@ -2,12 +2,6 @@
 
 test_description='test dumb fetching over http via static file'
 . ./test-lib.sh
-
-if test -n "$NO_CURL"; then
-	skip_all='skipping test, git built without http support'
-	test_done
-fi
-
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
@@ -15,7 +9,7 @@ test_expect_success 'setup repository' '
 	git config push.default matching &&
 	echo content1 >file &&
 	git add file &&
-	git commit -m one
+	git commit -m one &&
 	echo content2 >file &&
 	git add file &&
 	git commit -m two
@@ -97,6 +91,55 @@ test_expect_success 'configured username does not override URL' '
 	expect_askpass pass user@host
 '
 
+test_expect_success 'set up repo with http submodules' '
+	git init super &&
+	set_askpass user@host pass@host &&
+	(
+		cd super &&
+		git submodule add "$HTTPD_URL/auth/dumb/repo.git" sub &&
+		git commit -m "add submodule"
+	)
+'
+
+test_expect_success 'cmdline credential config passes to submodule via clone' '
+	set_askpass wrong pass@host &&
+	test_must_fail git clone --recursive super super-clone &&
+	rm -rf super-clone &&
+
+	set_askpass wrong pass@host &&
+	git -c "credential.$HTTPD_URL.username=user@host" \
+		clone --recursive super super-clone &&
+	expect_askpass pass user@host
+'
+
+test_expect_success 'cmdline credential config passes submodule via fetch' '
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone fetch --recurse-submodules &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    fetch --recurse-submodules &&
+	expect_askpass pass user@host
+'
+
+test_expect_success 'cmdline credential config passes submodule update' '
+	# advance the submodule HEAD so that a fetch is required
+	git commit --allow-empty -m foo &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git" HEAD &&
+	sha1=$(git rev-parse HEAD) &&
+	git -C super-clone update-index --cacheinfo 160000,$sha1,sub &&
+
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone submodule update &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    submodule update &&
+	expect_askpass pass user@host
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&
@@ -138,7 +181,7 @@ test_expect_success 'fetch packed objects' '
 test_expect_success 'fetch notices corrupt pack' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
-	 p=`ls objects/pack/pack-*.pack` &&
+	 p=$(ls objects/pack/pack-*.pack) &&
 	 chmod u+w $p &&
 	 printf %0256d 0 | dd of=$p bs=256 count=1 seek=1 conv=notrunc
 	) &&
@@ -146,14 +189,14 @@ test_expect_success 'fetch notices corrupt pack' '
 	(cd repo_bad1.git &&
 	 git --bare init &&
 	 test_must_fail git --bare fetch $HTTPD_URL/dumb/repo_bad1.git &&
-	 test 0 = `ls objects/pack/pack-*.pack | wc -l`
+	 test 0 = $(ls objects/pack/pack-*.pack | wc -l)
 	)
 '
 
 test_expect_success 'fetch notices corrupt idx' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad2.git &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad2.git &&
-	 p=`ls objects/pack/pack-*.idx` &&
+	 p=$(ls objects/pack/pack-*.idx) &&
 	 chmod u+w $p &&
 	 printf %0256d 0 | dd of=$p bs=256 count=1 seek=1 conv=notrunc
 	) &&
@@ -161,13 +204,31 @@ test_expect_success 'fetch notices corrupt idx' '
 	(cd repo_bad2.git &&
 	 git --bare init &&
 	 test_must_fail git --bare fetch $HTTPD_URL/dumb/repo_bad2.git &&
-	 test 0 = `ls objects/pack | wc -l`
+	 test 0 = $(ls objects/pack | wc -l)
 	)
 '
 
+test_expect_success 'fetch can handle previously-fetched .idx files' '
+	git checkout --orphan branch1 &&
+	echo base >file &&
+	git add file &&
+	git commit -m base &&
+	git --bare init "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git branch1 &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git repack -d &&
+	git checkout -b branch2 branch1 &&
+	echo b2 >>file &&
+	git commit -a -m b2 &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git branch2 &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git repack -d &&
+	git --bare init clone_packed_branches.git &&
+	git --git-dir=clone_packed_branches.git fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch1:branch1 &&
+	git --git-dir=clone_packed_branches.git fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch2:branch2
+'
+
 test_expect_success 'did not use upload-pack service' '
-	grep '/git-upload-pack' <"$HTTPD_ROOT_PATH"/access.log >act
-	: >exp
+	test_might_fail grep '/git-upload-pack' <"$HTTPD_ROOT_PATH"/access.log >act &&
+	: >exp &&
 	test_cmp exp act
 '
 
@@ -194,6 +255,48 @@ test_expect_success 'http error messages are reencoded' '
 test_expect_success 'reencoding is robust to whitespace oddities' '
 	test_must_fail git clone "$HTTPD_URL/error/odd-spacing" 2>stderr &&
 	grep "this is the error message" stderr
+'
+
+check_language () {
+	case "$2" in
+	'')
+		>expect
+		;;
+	?*)
+		echo "Accept-Language: $1" >expect
+		;;
+	esac &&
+	GIT_CURL_VERBOSE=1 \
+	LANGUAGE=$2 \
+	git ls-remote "$HTTPD_URL/dumb/repo.git" >output 2>&1 &&
+	tr -d '\015' <output |
+	sort -u |
+	sed -ne '/^Accept-Language:/ p' >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'git client sends Accept-Language based on LANGUAGE' '
+	check_language "ko-KR, *;q=0.9" ko_KR.UTF-8'
+
+test_expect_success 'git client sends Accept-Language correctly with unordinary LANGUAGE' '
+	check_language "ko-KR, *;q=0.9" "ko_KR:" &&
+	check_language "ko-KR, en-US;q=0.9, *;q=0.8" "ko_KR::en_US" &&
+	check_language "ko-KR, *;q=0.9" ":::ko_KR" &&
+	check_language "ko-KR, en-US;q=0.9, *;q=0.8" "ko_KR!!:en_US" &&
+	check_language "ko-KR, ja-JP;q=0.9, *;q=0.8" "ko_KR en_US:ja_JP"'
+
+test_expect_success 'git client sends Accept-Language with many preferred languages' '
+	check_language "ko-KR, en-US;q=0.9, fr-CA;q=0.8, de;q=0.7, sr;q=0.6, \
+ja;q=0.5, zh;q=0.4, sv;q=0.3, pt;q=0.2, *;q=0.1" \
+		ko_KR.EUC-KR:en_US.UTF-8:fr_CA:de.UTF-8@euro:sr@latin:ja:zh:sv:pt &&
+	check_language "ko-KR, en-US;q=0.99, fr-CA;q=0.98, de;q=0.97, sr;q=0.96, \
+ja;q=0.95, zh;q=0.94, sv;q=0.93, pt;q=0.92, nb;q=0.91, *;q=0.90" \
+		ko_KR.EUC-KR:en_US.UTF-8:fr_CA:de.UTF-8@euro:sr@latin:ja:zh:sv:pt:nb
+'
+
+test_expect_success 'git client does not send an empty Accept-Language' '
+	GIT_CURL_VERBOSE=1 LANGUAGE= git ls-remote "$HTTPD_URL/dumb/repo.git" 2>stderr &&
+	! grep "^Accept-Language:" stderr
 '
 
 stop_httpd

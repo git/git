@@ -118,4 +118,11 @@ test_expect_success 'add -e' '
 
 '
 
+test_expect_success 'add -e notices editor failure' '
+	git reset --hard &&
+	echo change >>file &&
+	test_must_fail env GIT_EDITOR=false git add -e &&
+	test_expect_code 1 git diff --exit-code
+'
+
 test_done

@@ -41,13 +41,6 @@ int read_link_extension(struct index_state *istate,
 	return 0;
 }
 
-static int write_strbuf(void *user_data, const void *data, size_t len)
-{
-	struct strbuf *sb = user_data;
-	strbuf_add(sb, data, len);
-	return len;
-}
-
 int write_link_extension(struct strbuf *sb,
 			 struct index_state *istate)
 {
@@ -55,8 +48,8 @@ int write_link_extension(struct strbuf *sb,
 	strbuf_add(sb, si->base_sha1, 20);
 	if (!si->delete_bitmap && !si->replace_bitmap)
 		return 0;
-	ewah_serialize_to(si->delete_bitmap, write_strbuf, sb);
-	ewah_serialize_to(si->replace_bitmap, write_strbuf, sb);
+	ewah_serialize_strbuf(si->delete_bitmap, sb);
+	ewah_serialize_strbuf(si->replace_bitmap, sb);
 	return 0;
 }
 
@@ -67,7 +60,7 @@ static void mark_base_index_entries(struct index_state *base)
 	 * To keep track of the shared entries between
 	 * istate->base->cache[] and istate->cache[], base entry
 	 * position is stored in each base entry. All positions start
-	 * from 1 instead of 0, which is resrved to say "this is a new
+	 * from 1 instead of 0, which is reserved to say "this is a new
 	 * entry".
 	 */
 	for (i = 0; i < base->cache_nr; i++)

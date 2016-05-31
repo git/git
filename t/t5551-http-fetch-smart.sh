@@ -2,12 +2,6 @@
 
 test_description='test smart fetching over http via http-backend'
 . ./test-lib.sh
-
-if test -n "$NO_CURL"; then
-	skip_all='skipping test, git built without http support'
-	test_done
-fi
-
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
@@ -83,7 +77,7 @@ test_expect_success 'clone http repository' '
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&
-	git push public
+	git push public &&
 	(cd clone && git pull) &&
 	test_cmp file clone/file
 '
@@ -169,7 +163,7 @@ test_expect_success 'GIT_SMART_HTTP can disable smart http' '
 '
 
 test_expect_success 'invalid Content-Type rejected' '
-	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual
+	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual &&
 	grep "not valid:" actual
 '
 
@@ -209,40 +203,100 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
 	git ls-remote $HTTPD_URL/smart_cookies/repo.git master &&
-	tail -3 cookies.txt > cookies_tail.txt
+	tail -3 cookies.txt >cookies_tail.txt &&
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 
-test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
-	(
-	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	for i in `test_seq 50000`
+test_expect_success 'transfer.hiderefs works over smart-http' '
+	test_commit hidden &&
+	test_commit visible &&
+	git push public HEAD^:refs/heads/a HEAD:refs/heads/b &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		config transfer.hiderefs refs/heads/a &&
+	git clone --bare "$HTTPD_URL/smart/repo.git" hidden.git &&
+	test_must_fail git -C hidden.git rev-parse --verify a &&
+	git -C hidden.git rev-parse --verify b
+'
+
+# create an arbitrary number of tags, numbered from tag-$1 to tag-$2
+create_tags () {
+	rm -f marks &&
+	for i in $(test_seq "$1" "$2")
 	do
-		echo "commit refs/heads/too-many-refs"
-		echo "mark :$i"
-		echo "committer git <git@example.com> $i +0000"
-		echo "data 0"
-		echo "M 644 inline bla.txt"
-		echo "data 4"
-		echo "bla"
+		# don't use here-doc, because it requires a process
+		# per loop iteration
+		echo "commit refs/heads/too-many-refs-$1" &&
+		echo "mark :$i" &&
+		echo "committer git <git@example.com> $i +0000" &&
+		echo "data 0" &&
+		echo "M 644 inline bla.txt" &&
+		echo "data 4" &&
+		echo "bla" &&
 		# make every commit dangling by always
 		# rewinding the branch after each commit
-		echo "reset refs/heads/too-many-refs"
-		echo "from :1"
+		echo "reset refs/heads/too-many-refs-$1" &&
+		echo "from :$1"
 	done | git fast-import --export-marks=marks &&
 
 	# now assign tags to all the dangling commits we created above
 	tag=$(perl -e "print \"bla\" x 30") &&
 	sed -e "s|^:\([^ ]*\) \(.*\)$|\2 refs/tags/$tag-\1|" <marks >>packed-refs
+}
+
+test_expect_success 'create 2,000 tags in the repo' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+		create_tags 1 2000
 	)
 '
 
-test_expect_success EXPENSIVE 'clone the 50,000 tag repo to check OS command line overflow' '
-	git clone $HTTPD_URL/smart/repo.git too-many-refs &&
+test_expect_success CMDLINE_LIMIT \
+	'clone the 2,000 tag repo to check OS command line overflow' '
+	run_with_limited_cmdline git clone $HTTPD_URL/smart/repo.git too-many-refs &&
 	(
 		cd too-many-refs &&
-		test $(git for-each-ref refs/tags | wc -l) = 50000
+		git for-each-ref refs/tags >actual &&
+		test_line_count = 2000 actual
 	)
+'
+
+test_expect_success 'large fetch-pack requests can be split across POSTs' '
+	GIT_CURL_VERBOSE=1 git -c http.postbuffer=65536 \
+		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
+	grep "^> POST" err >posts &&
+	test_line_count = 2 posts
+'
+
+test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+		create_tags 2001 50000
+	) &&
+	git -C too-many-refs fetch -q --tags &&
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+		create_tags 50001 100000
+	) &&
+	git -C too-many-refs fetch -q --tags &&
+	git -C too-many-refs for-each-ref refs/tags >tags &&
+	test_line_count = 100000 tags
+'
+
+test_expect_success 'custom http headers' '
+	test_must_fail git -c http.extraheader="x-magic-two: cadabra" \
+		fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+	    fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git update-index --add --cacheinfo 160000,$(git rev-parse HEAD),sub &&
+	git config -f .gitmodules submodule.sub.path sub &&
+	git config -f .gitmodules submodule.sub.url \
+		"$HTTPD_URL/smart_headers/repo.git" &&
+	git submodule init sub &&
+	test_must_fail git submodule update sub &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+		submodule update sub
 '
 
 stop_httpd

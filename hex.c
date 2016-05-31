@@ -38,7 +38,7 @@ const signed char hexval_table[256] = {
 int get_sha1_hex(const char *hex, unsigned char *sha1)
 {
 	int i;
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
 		unsigned int val;
 		/*
 		 * hex[1]=='\0' is caught when val is checked below,
@@ -56,15 +56,18 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
-char *sha1_to_hex(const unsigned char *sha1)
+int get_oid_hex(const char *hex, struct object_id *oid)
 {
-	static int bufno;
-	static char hexbuffer[4][50];
+	return get_sha1_hex(hex, oid->hash);
+}
+
+char *sha1_to_hex_r(char *buffer, const unsigned char *sha1)
+{
 	static const char hex[] = "0123456789abcdef";
-	char *buffer = hexbuffer[3 & ++bufno], *buf = buffer;
+	char *buf = buffer;
 	int i;
 
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
 		unsigned int val = *sha1++;
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];
@@ -72,4 +75,16 @@ char *sha1_to_hex(const unsigned char *sha1)
 	*buf = '\0';
 
 	return buffer;
+}
+
+char *sha1_to_hex(const unsigned char *sha1)
+{
+	static int bufno;
+	static char hexbuffer[4][GIT_SHA1_HEXSZ + 1];
+	return sha1_to_hex_r(hexbuffer[3 & ++bufno], sha1);
+}
+
+char *oid_to_hex(const struct object_id *oid)
+{
+	return sha1_to_hex(oid->hash);
 }

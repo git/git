@@ -26,4 +26,6 @@ extern int bisect_next_all(const char *prefix, int no_checkout);
 
 extern int estimate_bisect_steps(int all);
 
+extern void read_bisect_terms(const char **bad, const char **good);
+
 #endif

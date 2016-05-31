@@ -8,7 +8,7 @@ test_expect_success setup '
 	do
 		blob=$(echo $i | git hash-object --stdin) &&
 		eval "blob$i=$blob" &&
-		eval "m$i=\"100644 \$blob$i $i\"" || break
+		eval "m$i=\"100644 \$blob$i $i\"" || return 1
 	done &&
 	paths= &&
 	for b in o x
@@ -24,9 +24,9 @@ test_expect_success setup '
 				case "$b" in x) echo "$m1$p" ;; esac &&
 				case "$o" in x) echo "$m2$p" ;; esac &&
 				case "$t" in x) echo "$m3$p" ;; esac ||
-				break
-			done || break
-		done || break
+				return 1
+			done
+		done
 	done >ls-files-s.expect &&
 	git update-index --index-info <ls-files-s.expect &&
 	git ls-files -s >ls-files-s.actual &&

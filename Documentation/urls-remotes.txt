@@ -36,7 +36,7 @@ The `<pushurl>` is used for pushes only. It is optional and defaults
 to `<url>`.
 
 Named file in `$GIT_DIR/remotes`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can choose to provide the name of a
 file in `$GIT_DIR/remotes`.  The URL

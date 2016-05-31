@@ -13,6 +13,8 @@
 #include "line-log.h"
 
 static struct decoration name_decoration = { "object names" };
+static int decoration_loaded;
+static int decoration_flags;
 
 static char decoration_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -75,9 +77,8 @@ int parse_decorate_color_config(const char *var, const char *slot_name, const ch
 
 void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
 {
-	int nlen = strlen(name);
-	struct name_decoration *res = xmalloc(sizeof(*res) + nlen + 1);
-	memcpy(res->name, name, nlen + 1);
+	struct name_decoration *res;
+	FLEX_ALLOC_STR(res, name, name);
 	res->type = type;
 	res->next = add_decoration(&name_decoration, obj, res);
 }
@@ -87,26 +88,30 @@ const struct name_decoration *get_name_decoration(const struct object *obj)
 	return lookup_decoration(&name_decoration, obj);
 }
 
-static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
+static int add_ref_decoration(const char *refname, const struct object_id *oid,
+			      int flags, void *cb_data)
 {
 	struct object *obj;
 	enum decoration_type type = DECORATION_NONE;
 
-	if (starts_with(refname, "refs/replace/")) {
-		unsigned char original_sha1[20];
+	assert(cb_data == NULL);
+
+	if (starts_with(refname, git_replace_ref_base)) {
+		struct object_id original_oid;
 		if (!check_replace_refs)
 			return 0;
-		if (get_sha1_hex(refname + 13, original_sha1)) {
+		if (get_oid_hex(refname + strlen(git_replace_ref_base),
+				&original_oid)) {
 			warning("invalid replace ref %s", refname);
 			return 0;
 		}
-		obj = parse_object(original_sha1);
+		obj = parse_object(original_oid.hash);
 		if (obj)
 			add_name_decoration(DECORATION_GRAFTED, "replaced", obj);
 		return 0;
 	}
 
-	obj = parse_object(sha1);
+	obj = parse_object(oid->hash);
 	if (!obj)
 		return 0;
 
@@ -121,15 +126,13 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	else if (!strcmp(refname, "HEAD"))
 		type = DECORATION_REF_HEAD;
 
-	if (!cb_data || *(int *)cb_data == DECORATE_SHORT_REFS)
-		refname = prettify_refname(refname);
 	add_name_decoration(type, refname, obj);
 	while (obj->type == OBJ_TAG) {
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			break;
 		if (!obj->parsed)
-			parse_object(obj->sha1);
+			parse_object(obj->oid.hash);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
@@ -137,7 +140,7 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 
 static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
 {
-	struct commit *commit = lookup_commit(graft->sha1);
+	struct commit *commit = lookup_commit(graft->oid.hash);
 	if (!commit)
 		return 0;
 	add_name_decoration(DECORATION_GRAFTED, "grafted", &commit->object);
@@ -146,11 +149,12 @@ static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
 
 void load_ref_decorations(int flags)
 {
-	static int loaded;
-	if (!loaded) {
-		loaded = 1;
-		for_each_ref(add_ref_decoration, &flags);
-		head_ref(add_ref_decoration, &flags);
+	if (!decoration_loaded) {
+
+		decoration_loaded = 1;
+		decoration_flags = flags;
+		for_each_ref(add_ref_decoration, NULL);
+		head_ref(add_ref_decoration, NULL);
 		for_each_commit_graft(add_graft_decoration, NULL);
 	}
 }
@@ -160,7 +164,7 @@ static void show_parents(struct commit *commit, int abbrev)
 	struct commit_list *p;
 	for (p = commit->parents; p ; p = p->next) {
 		struct commit *parent = p->item;
-		printf(" %s", find_unique_abbrev(parent->object.sha1, abbrev));
+		printf(" %s", find_unique_abbrev(parent->object.oid.hash, abbrev));
 	}
 }
 
@@ -168,8 +172,54 @@ static void show_children(struct rev_info *opt, struct commit *commit, int abbre
 {
 	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
 	for ( ; p; p = p->next) {
-		printf(" %s", find_unique_abbrev(p->item->object.sha1, abbrev));
+		printf(" %s", find_unique_abbrev(p->item->object.oid.hash, abbrev));
 	}
+}
+
+/*
+ * Do we have HEAD in the output, and also the branch it points at?
+ * If so, find that decoration entry for that current branch.
+ */
+static const struct name_decoration *current_pointed_by_HEAD(const struct name_decoration *decoration)
+{
+	const struct name_decoration *list, *head = NULL;
+	const char *branch_name = NULL;
+	unsigned char unused[20];
+	int rru_flags;
+
+	/* First find HEAD */
+	for (list = decoration; list; list = list->next)
+		if (list->type == DECORATION_REF_HEAD) {
+			head = list;
+			break;
+		}
+	if (!head)
+		return NULL;
+
+	/* Now resolve and find the matching current branch */
+	branch_name = resolve_ref_unsafe("HEAD", 0, unused, &rru_flags);
+	if (!(rru_flags & REF_ISSYMREF))
+		return NULL;
+
+	if (!starts_with(branch_name, "refs/"))
+		return NULL;
+
+	/* OK, do we have that ref in the list? */
+	for (list = decoration; list; list = list->next)
+		if ((list->type == DECORATION_REF_LOCAL) &&
+		    !strcmp(branch_name, list->name)) {
+			return list;
+		}
+
+	return NULL;
+}
+
+static void show_name(struct strbuf *sb, const struct name_decoration *decoration)
+{
+	if (decoration_flags == DECORATE_SHORT_REFS)
+		strbuf_addstr(sb, prettify_refname(decoration->name));
+	else
+		strbuf_addstr(sb, decoration->name);
 }
 
 /*
@@ -184,6 +234,7 @@ void format_decorations_extended(struct strbuf *sb,
 			const char *suffix)
 {
 	const struct name_decoration *decoration;
+	const struct name_decoration *current_and_HEAD;
 	const char *color_commit =
 		diff_get_color(use_color, DIFF_COMMIT);
 	const char *color_reset =
@@ -192,15 +243,37 @@ void format_decorations_extended(struct strbuf *sb,
 	decoration = get_name_decoration(&commit->object);
 	if (!decoration)
 		return;
+
+	current_and_HEAD = current_pointed_by_HEAD(decoration);
 	while (decoration) {
-		strbuf_addstr(sb, color_commit);
-		strbuf_addstr(sb, prefix);
-		strbuf_addstr(sb, decorate_get_color(use_color, decoration->type));
-		if (decoration->type == DECORATION_REF_TAG)
-			strbuf_addstr(sb, "tag: ");
-		strbuf_addstr(sb, decoration->name);
-		strbuf_addstr(sb, color_reset);
-		prefix = separator;
+		/*
+		 * When both current and HEAD are there, only
+		 * show HEAD->current where HEAD would have
+		 * appeared, skipping the entry for current.
+		 */
+		if (decoration != current_and_HEAD) {
+			strbuf_addstr(sb, color_commit);
+			strbuf_addstr(sb, prefix);
+			strbuf_addstr(sb, color_reset);
+			strbuf_addstr(sb, decorate_get_color(use_color, decoration->type));
+			if (decoration->type == DECORATION_REF_TAG)
+				strbuf_addstr(sb, "tag: ");
+
+			show_name(sb, decoration);
+
+			if (current_and_HEAD &&
+			    decoration->type == DECORATION_REF_HEAD) {
+				strbuf_addstr(sb, color_reset);
+				strbuf_addstr(sb, color_commit);
+				strbuf_addstr(sb, " -> ");
+				strbuf_addstr(sb, color_reset);
+				strbuf_addstr(sb, decorate_get_color(use_color, current_and_HEAD->type));
+				show_name(sb, current_and_HEAD);
+			}
+			strbuf_addstr(sb, color_reset);
+
+			prefix = separator;
+		}
 		decoration = decoration->next;
 	}
 	strbuf_addstr(sb, color_commit);
@@ -268,7 +341,8 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 {
 	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
-	const char *name = sha1_to_hex(commit->object.sha1);
+	const char *name = oid_to_hex(opt->zero_commit ?
+				      &null_oid : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 	if (opt->total > 0) {
@@ -395,7 +469,7 @@ static int which_parent(const unsigned char *sha1, const struct commit *commit)
 	const struct commit_list *parent;
 
 	for (nth = 0, parent = commit->parents; parent; parent = parent->next) {
-		if (!hashcmp(parent->item->object.sha1, sha1))
+		if (!hashcmp(parent->item->object.oid.hash, sha1))
 			return nth;
 		nth++;
 	}
@@ -429,13 +503,13 @@ static void show_one_mergetag(struct commit *commit,
 	if (parse_tag_buffer(tag, extra->value, extra->len))
 		strbuf_addstr(&verify_message, "malformed mergetag\n");
 	else if (is_common_merge(commit) &&
-		 !hashcmp(tag->tagged->sha1,
-			  commit->parents->next->item->object.sha1))
+		 !oidcmp(&tag->tagged->oid,
+			  &commit->parents->next->item->object.oid))
 		strbuf_addf(&verify_message,
 			    "merged tag '%s'\n", tag->tag);
-	else if ((nth = which_parent(tag->tagged->sha1, commit)) < 0)
+	else if ((nth = which_parent(tag->tagged->oid.hash, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
-				    tag->tag, tag->tagged->sha1);
+				    tag->tag, tag->tagged->oid.hash);
 	else
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
@@ -479,7 +553,7 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
+		fputs(find_unique_abbrev(commit->object.oid.hash, abbrev_commit), stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
 		if (opt->children.name)
@@ -539,7 +613,7 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(commit->object.sha1, abbrev_commit),
+		fputs(find_unique_abbrev(commit->object.oid.hash, abbrev_commit),
 		      stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
@@ -547,7 +621,7 @@ void show_log(struct rev_info *opt)
 			show_children(opt, commit, abbrev_commit);
 		if (parent)
 			printf(" (from %s)",
-			       find_unique_abbrev(parent->object.sha1,
+			       find_unique_abbrev(parent->object.oid.hash,
 						  abbrev_commit));
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_RESET), stdout);
 		show_decorations(opt, commit);
@@ -566,7 +640,7 @@ void show_log(struct rev_info *opt)
 			 */
 			show_reflog_message(opt->reflog_info,
 					    opt->commit_format == CMIT_FMT_ONELINE,
-					    opt->date_mode,
+					    &opt->date_mode,
 					    opt->date_mode_explicit);
 			if (opt->commit_format == CMIT_FMT_ONELINE)
 				return;
@@ -586,7 +660,7 @@ void show_log(struct rev_info *opt)
 		struct strbuf notebuf = STRBUF_INIT;
 
 		raw = (opt->commit_format == CMIT_FMT_USERFORMAT);
-		format_display_notes(commit->object.sha1, &notebuf,
+		format_display_notes(commit->object.oid.hash, &notebuf,
 				     get_log_output_encoding(), raw);
 		ctx.notes_message = notebuf.len
 			? strbuf_detach(&notebuf, NULL)
@@ -609,6 +683,7 @@ void show_log(struct rev_info *opt)
 	ctx.fmt = opt->commit_format;
 	ctx.mailmap = opt->mailmap;
 	ctx.color = opt->diffopt.use_color;
+	ctx.expand_tabs_in_log = opt->expand_tabs_in_log;
 	ctx.output_encoding = get_log_output_encoding();
 	if (opt->from_ident.mail_begin && opt->from_ident.name_begin)
 		ctx.from_ident = &opt->from_ident;
@@ -722,19 +797,19 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 {
 	int showed_log;
 	struct commit_list *parents;
-	unsigned const char *sha1;
+	struct object_id *oid;
 
 	if (!opt->diff && !DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS))
 		return 0;
 
 	parse_commit_or_die(commit);
-	sha1 = commit->tree->object.sha1;
+	oid = &commit->tree->object.oid;
 
 	/* Root commit? */
 	parents = get_saved_parents(opt, commit);
 	if (!parents) {
 		if (opt->show_root_diff) {
-			diff_root_tree_sha1(sha1, "", &opt->diffopt);
+			diff_root_tree_sha1(oid->hash, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 		}
 		return !opt->loginfo;
@@ -753,8 +828,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			 * we merged _in_.
 			 */
 			parse_commit_or_die(parents->item);
-			diff_tree_sha1(parents->item->tree->object.sha1,
-				       sha1, "", &opt->diffopt);
+			diff_tree_sha1(parents->item->tree->object.oid.hash,
+				       oid->hash, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 			return !opt->loginfo;
 		}
@@ -768,8 +843,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		struct commit *parent = parents->item;
 
 		parse_commit_or_die(parent);
-		diff_tree_sha1(parent->tree->object.sha1,
-			       sha1, "", &opt->diffopt);
+		diff_tree_sha1(parent->tree->object.oid.hash,
+			       oid->hash, "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 
 		showed_log |= !opt->loginfo;

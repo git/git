@@ -139,8 +139,8 @@ EOF
 '
 
 test_expect_success 'new clone fetch master and tags' '
-	git branch -D cat
-	rm -f $U
+	test_might_fail git branch -D cat &&
+	rm -f $U &&
 	(
 		mkdir clone2 &&
 		cd clone2 &&

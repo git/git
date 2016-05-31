@@ -16,6 +16,6 @@ const char *githstrerror(int err)
 	case TRY_AGAIN:
 		return "Non-authoritative \"host not found\", or SERVERFAIL";
 	}
-	sprintf(buffer, "Name resolution error %d", err);
+	snprintf(buffer, sizeof(buffer), "Name resolution error %d", err);
 	return buffer;
 }

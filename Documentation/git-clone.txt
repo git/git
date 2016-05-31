@@ -14,8 +14,8 @@ SYNOPSIS
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch]
-	  [--recursive | --recurse-submodules] [--] <repository>
-	  [<directory>]
+	  [--recursive | --recurse-submodules] [--[no-]shallow-submodules]
+	  [--jobs <n>] [--] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -104,14 +104,18 @@ objects from the source repository into a pack in the cloned repository.
 --dissociate::
 	Borrow the objects from reference repositories specified
 	with the `--reference` options only to reduce network
-	transfer and stop borrowing from them after a clone is made
-	by making necessary local copies of borrowed objects.
+	transfer, and stop borrowing from them after a clone is made
+	by making necessary local copies of borrowed objects.  This
+	option can also be used when cloning locally from a
+	repository that already borrows objects from another
+	repository--the new repository will borrow objects from the
+	same repository, and this option can be used to stop the
+	borrowing.
 
 --quiet::
 -q::
 	Operate quietly.  Progress is not reported to the standard
-	error stream. This flag is also passed to the `rsync'
-	command when given.
+	error stream.
 
 --verbose::
 -v::
@@ -185,15 +189,16 @@ objects from the source repository into a pack in the cloned repository.
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
-	specified number of revisions.
+	specified number of commits. Implies `--single-branch` unless
+	`--no-single-branch` is given to fetch the histories near the
+	tips of all branches. This implies `--shallow-submodules`. If
+	you want to have a shallow superproject clone, but full submodules,
+	also pass `--no-shallow-submodules`.
 
 --[no-]single-branch::
 	Clone only the history leading to the tip of a single branch,
 	either specified by the `--branch` option or the primary
-	branch remote's `HEAD` points at. When creating a shallow
-	clone with the `--depth` option, this is the default, unless
-	`--no-single-branch` is given to fetch the histories near the
-	tips of all branches.
+	branch remote's `HEAD` points at.
 	Further fetches into the resulting repository will only update the
 	remote-tracking branch for the branch this option was used for the
 	initial cloning.  If the HEAD at the remote did not point at any
@@ -209,6 +214,9 @@ objects from the source repository into a pack in the cloned repository.
 	repository does not have a worktree/checkout (i.e. if any of
 	`--no-checkout`/`-n`, `--bare`, or `--mirror` is given)
 
+--[no-]shallow-submodules::
+	All submodules which are cloned will be shallow with a depth of 1.
+
 --separate-git-dir=<git dir>::
 	Instead of placing the cloned repository where it is supposed
 	to be, place the cloned repository at the specified directory,
@@ -216,6 +224,10 @@ objects from the source repository into a pack in the cloned repository.
 	The result is Git repository can be separated from working
 	tree.
 
+-j <n>::
+--jobs <n>::
+	The number of submodules fetched at the same time.
+	Defaults to the `submodule.fetchJobs` option.
 
 <repository>::
 	The (possibly remote) repository to clone from.  See the

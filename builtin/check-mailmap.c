@@ -5,7 +5,7 @@
 
 static int use_stdin;
 static const char * const check_mailmap_usage[] = {
-N_("git check-mailmap [options] <contact>..."),
+N_("git check-mailmap [<options>] <contact>..."),
 NULL
 };
 
@@ -54,7 +54,7 @@ int cmd_check_mailmap(int argc, const char **argv, const char *prefix)
 
 	if (use_stdin) {
 		struct strbuf buf = STRBUF_INIT;
-		while (strbuf_getline(&buf, stdin, '\n') != EOF) {
+		while (strbuf_getline_lf(&buf, stdin) != EOF) {
 			check_mailmap(&mailmap, buf.buf);
 			maybe_flush_or_die(stdout, "stdout");
 		}

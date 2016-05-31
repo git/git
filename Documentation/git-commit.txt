@@ -13,7 +13,7 @@ SYNOPSIS
 	   [-F <file> | -m <msg>] [--reset-author] [--allow-empty]
 	   [--allow-empty-message] [--no-verify] [-e] [--author=<author>]
 	   [--date=<date>] [--cleanup=<mode>] [--[no-]status]
-	   [-i | -o] [-S[<key-id>]] [--] [<file>...]
+	   [-i | -o] [-S[<keyid>]] [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -94,7 +94,7 @@ OPTIONS
 --reset-author::
 	When used with -C/-c/--amend options, or when committing after a
 	a conflicting cherry-pick, declare that the authorship of the
-	resulting commit now belongs of the committer. This also renews
+	resulting commit now belongs to the committer. This also renews
 	the author timestamp.
 
 --short::
@@ -154,7 +154,11 @@ OPTIONS
 -s::
 --signoff::
 	Add Signed-off-by line by the committer at the end of the commit
-	log message.
+	log message.  The meaning of a signoff depends on the project,
+	but it typically certifies that committer has
+	the rights to submit this work under the same license and
+	agrees to a Developer Certificate of Origin
+	(see http://developercertificate.org/ for more information).
 
 -n::
 --no-verify::
@@ -180,8 +184,8 @@ OPTIONS
 +
 --
 strip::
-	Strip leading and trailing empty lines, trailing whitespace, and
-	#commentary and collapse consecutive empty lines.
+	Strip leading and trailing empty lines, trailing whitespace,
+	commentary and collapse consecutive empty lines.
 whitespace::
 	Same as `strip` except #commentary is not removed.
 verbatim::
@@ -282,8 +286,16 @@ configuration variable documented in linkgit:git-config[1].
 --verbose::
 	Show unified diff between the HEAD commit and what
 	would be committed at the bottom of the commit message
-	template.  Note that this diff output doesn't have its
-	lines prefixed with '#'.
+	template to help the user describe the commit by reminding
+	what changes the commit has.
+	Note that this diff output doesn't have its
+	lines prefixed with '#'. This diff will not be a part
+	of the commit message. See the `commit.verbose` configuration
+	variable in linkgit:git-config[1].
++
+If specified twice, show in addition the unified diff between
+what would be committed and the worktree files, i.e. the unstaged
+changes to tracked files.
 
 -q::
 --quiet::
@@ -307,10 +319,12 @@ configuration variable documented in linkgit:git-config[1].
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
-	GPG-sign commit.
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
 
 --no-gpg-sign::
-	Countermand `commit.gpgsign` configuration variable that is
+	Countermand `commit.gpgSign` configuration variable that is
 	set to force each and every commit to be signed.
 
 \--::

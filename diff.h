@@ -6,6 +6,7 @@
 
 #include "tree-walk.h"
 #include "pathspec.h"
+#include "object.h"
 
 struct rev_info;
 struct diff_options;
@@ -90,6 +91,7 @@ typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data)
 #define DIFF_OPT_DIRSTAT_BY_LINE     (1 << 28)
 #define DIFF_OPT_FUNCCONTEXT         (1 << 29)
 #define DIFF_OPT_PICKAXE_IGNORE_CASE (1 << 30)
+#define DIFF_OPT_DEFAULT_FOLLOW_RENAMES (1U << 31)
 
 #define DIFF_OPT_TST(opts, flag)    ((opts)->flags & DIFF_OPT_##flag)
 #define DIFF_OPT_TOUCHED(opts, flag)    ((opts)->touched_flags & DIFF_OPT_##flag)
@@ -137,6 +139,11 @@ struct diff_options {
 	int dirstat_permille;
 	int setup;
 	int abbrev;
+/* white-space error highlighting */
+#define WSEH_NEW 1
+#define WSEH_CONTEXT 2
+#define WSEH_OLD 4
+	unsigned ws_error_highlight;
 	const char *prefix;
 	int prefix_length;
 	const char *stat_sep;
@@ -175,7 +182,7 @@ struct diff_options {
 
 enum color_diff {
 	DIFF_RESET = 0,
-	DIFF_PLAIN = 1,
+	DIFF_CONTEXT = 1,
 	DIFF_METAINFO = 2,
 	DIFF_FRAGINFO = 3,
 	DIFF_FILE_OLD = 4,
@@ -207,16 +214,16 @@ struct combine_diff_path {
 	struct combine_diff_path *next;
 	char *path;
 	unsigned int mode;
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct combine_diff_parent {
 		char status;
 		unsigned int mode;
-		unsigned char sha1[20];
+		struct object_id oid;
 	} parent[FLEX_ARRAY];
 };
 #define combine_diff_path_size(n, l) \
-	(sizeof(struct combine_diff_path) + \
-	 sizeof(struct combine_diff_parent) * (n) + (l) + 1)
+	st_add4(sizeof(struct combine_diff_path), (l), 1, \
+		st_mult(sizeof(struct combine_diff_parent), (n)))
 
 extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			      int dense, struct rev_info *);
@@ -259,9 +266,10 @@ extern int parse_long_opt(const char *opt, const char **argv,
 			 const char **optarg);
 
 extern int git_diff_basic_config(const char *var, const char *value, void *cb);
+extern void init_diff_ui_defaults(void);
 extern int git_diff_ui_config(const char *var, const char *value, void *cb);
 extern void diff_setup(struct diff_options *);
-extern int diff_opt_parse(struct diff_options *, const char **, int);
+extern int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 extern void diff_setup_done(struct diff_options *);
 
 #define DIFF_DETECT_RENAME	1
@@ -338,14 +346,30 @@ extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
 
 extern int diff_result_code(struct diff_options *, int);
 
-extern void diff_no_index(struct rev_info *, int, const char **, const char *);
+extern void diff_no_index(struct rev_info *, int, const char **);
 
 extern int index_differs_from(const char *def, int diff_flags);
 
+/*
+ * Fill the contents of the filespec "df", respecting any textconv defined by
+ * its userdiff driver.  The "driver" parameter must come from a
+ * previous call to get_textconv(), and therefore should either be NULL or have
+ * textconv enabled.
+ *
+ * Note that the memory ownership of the resulting buffer depends on whether
+ * the driver field is NULL. If it is, then the memory belongs to the filespec
+ * struct. If it is non-NULL, then "outbuf" points to a newly allocated buffer
+ * that should be freed by the caller.
+ */
 extern size_t fill_textconv(struct userdiff_driver *driver,
 			    struct diff_filespec *df,
 			    char **outbuf);
 
+/*
+ * Look up the userdiff driver for the given filespec, and return it if
+ * and only if it has textconv enabled (otherwise return NULL). The result
+ * can be passed to fill_textconv().
+ */
 extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 
 extern int parse_rename_score(const char **cp_p);

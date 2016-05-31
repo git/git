@@ -11,7 +11,7 @@ test_description='Rename interaction with pathspec.
 
 test_expect_success 'prepare reference tree' '
 	mkdir path0 path1 &&
-	cp "$TEST_DIRECTORY"/../COPYING path0/COPYING &&
+	cp "$TEST_DIRECTORY"/diff-lib/COPYING path0/COPYING &&
 	git update-index --add path0/COPYING &&
 	tree=$(git write-tree) &&
 	echo $tree

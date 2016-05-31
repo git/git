@@ -33,9 +33,11 @@ printf '%s\n' 1 2 3 4 5 6 7 8 9 >file
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >file.1
 printf '%s\n' 1 2 3 4 '5 X' 6 7 8 9 >file.5
 printf '%s\n' 1 2 3 4 5 6 7 8 '9 X' >file.9
+printf '%s\n' 1 2 3 4 5 6 7 8 '9 Y' >file.9y
 printf '%s\n' '1 X' 2 3 4 5 6 7 8 9 >result.1
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 9 >result.1-5
 printf '%s\n' '1 X' 2 3 4 '5 X' 6 7 8 '9 X' >result.1-5-9
+printf '%s\n' 1 2 3 4 5 6 7 8 '9 Z' >result.9z
 >empty
 
 create_merge_msgs () {
@@ -128,12 +130,18 @@ test_expect_success 'setup' '
 	git tag c2 &&
 	c2=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
+	cp file.9y file &&
+	git add file &&
+	test_tick &&
+	git commit -m "commit 7" &&
+	git tag c7 &&
+	git reset --hard "$c0" &&
 	cp file.9 file &&
 	git add file &&
 	test_tick &&
 	git commit -m "commit 3" &&
 	git tag c3 &&
-	c3=$(git rev-parse HEAD)
+	c3=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
 	create_merge_msgs
 '
@@ -216,6 +224,26 @@ test_expect_success 'merge c1 with c2' '
 	git merge c2 &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2
+'
+
+test_expect_success 'merge --squash c3 with c7' '
+	git reset --hard c3 &&
+	test_must_fail git merge --squash c7 &&
+	cat result.9z >file &&
+	git commit --no-edit -a &&
+
+	{
+		cat <<-EOF
+		Squashed commit of the following:
+
+		$(git show -s c7)
+
+		# Conflicts:
+		#	file
+		EOF
+	} >expect &&
+	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
+	test_cmp expect actual
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
@@ -690,6 +718,49 @@ test_expect_success GPG 'merge --no-edit tag should skip editor' '
 	git rev-parse signed^0 >expect &&
 	git rev-parse HEAD^2 >actual &&
 	test_cmp actual expect
+'
+
+test_expect_success 'set up mod-256 conflict scenario' '
+	# 256 near-identical stanzas...
+	for i in $(test_seq 1 256); do
+		for j in 1 2 3 4 5; do
+			echo $i-$j
+		done
+	done >file &&
+	git add file &&
+	git commit -m base &&
+
+	# one side changes the first line of each to "master"
+	sed s/-1/-master/ <file >tmp &&
+	mv tmp file &&
+	git commit -am master &&
+
+	# and the other to "side"; merging the two will
+	# yield 256 separate conflicts
+	git checkout -b side HEAD^ &&
+	sed s/-1/-side/ <file >tmp &&
+	mv tmp file &&
+	git commit -am side
+'
+
+test_expect_success 'merge detects mod-256 conflicts (recursive)' '
+	git reset --hard &&
+	test_must_fail git merge -s recursive master
+'
+
+test_expect_success 'merge detects mod-256 conflicts (resolve)' '
+	git reset --hard &&
+	test_must_fail git merge -s resolve master
+'
+
+test_expect_success 'merge nothing into void' '
+	git init void &&
+	(
+		cd void &&
+		git remote add up .. &&
+		git fetch up &&
+		test_must_fail git merge FETCH_HEAD
+	)
 '
 
 test_done

@@ -24,7 +24,7 @@ test_expect_success setup '
 	git add file1 file2 &&
 	test_tick &&
 	git commit -m "Initial commit" &&
-	git branch diff-in-message
+	git branch diff-in-message &&
 
 	git checkout -b multi-line-subject &&
 	cat F >file2 &&
@@ -36,7 +36,7 @@ test_expect_success setup '
 
 	git checkout diff-in-message &&
 	echo "commit log message containing a diff" >G &&
-	echo "" >>G
+	echo "" >>G &&
 	cat G >file2 &&
 	git add file2 &&
 	git diff --cached >>G &&

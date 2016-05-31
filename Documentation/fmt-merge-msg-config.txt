@@ -1,0 +1,10 @@
+merge.branchdesc::
+	In addition to branch names, populate the log message with
+	the branch description text associated with them.  Defaults
+	to false.
+
+merge.log::
+	In addition to branch names, populate the log message with at
+	most the specified number of one-line descriptions from the
+	actual commits that are being merged.  Defaults to false, and
+	true is a synonym for 20.

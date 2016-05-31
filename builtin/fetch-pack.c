@@ -6,33 +6,36 @@
 #include "sha1-array.h"
 
 static const char fetch_pack_usage[] =
-"git fetch-pack [--all] [--stdin] [--quiet|-q] [--keep|-k] [--thin] "
+"git fetch-pack [--all] [--stdin] [--quiet | -q] [--keep | -k] [--thin] "
 "[--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] "
 "[--no-progress] [--diag-url] [-v] [<host>:]<directory> [<refs>...]";
 
-static void add_sought_entry_mem(struct ref ***sought, int *nr, int *alloc,
-				 const char *name, int namelen)
+static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
+			     const char *name)
 {
-	struct ref *ref = xcalloc(1, sizeof(*ref) + namelen + 1);
-	unsigned char sha1[20];
+	struct ref *ref;
+	struct object_id oid;
 
-	if (namelen > 41 && name[40] == ' ' && !get_sha1_hex(name, sha1)) {
-		hashcpy(ref->old_sha1, sha1);
-		name += 41;
-		namelen -= 41;
+	if (!get_oid_hex(name, &oid)) {
+		if (name[GIT_SHA1_HEXSZ] == ' ') {
+			/* <sha1> <ref>, find refname */
+			name += GIT_SHA1_HEXSZ + 1;
+		} else if (name[GIT_SHA1_HEXSZ] == '\0') {
+			; /* <sha1>, leave sha1 as name */
+		} else {
+			/* <ref>, clear cruft from oid */
+			oidclr(&oid);
+		}
+	} else {
+		/* <ref>, clear cruft from get_oid_hex */
+		oidclr(&oid);
 	}
 
-	memcpy(ref->name, name, namelen);
-	ref->name[namelen] = '\0';
+	ref = alloc_ref(name);
+	oidcpy(&ref->old_oid, &oid);
 	(*nr)++;
 	ALLOC_GROW(*sought, *nr, *alloc);
 	(*sought)[*nr - 1] = ref;
-}
-
-static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
-			     const char *string)
-{
-	add_sought_entry_mem(sought, nr, alloc, string, strlen(string));
 }
 
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
@@ -156,7 +159,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		else {
 			/* read from stdin one ref per line, until EOF */
 			struct strbuf line = STRBUF_INIT;
-			while (strbuf_getline(&line, stdin, '\n') != EOF)
+			while (strbuf_getline_lf(&line, stdin) != EOF)
 				add_sought_entry(&sought, &nr_sought, &alloc_sought, line.buf);
 			strbuf_release(&line);
 		}
@@ -210,7 +213,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 
 	while (ref) {
 		printf("%s %s\n",
-		       sha1_to_hex(ref->old_sha1), ref->name);
+		       oid_to_hex(&ref->old_oid), ref->name);
 		ref = ref->next;
 	}
 

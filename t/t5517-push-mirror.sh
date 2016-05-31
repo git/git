@@ -4,7 +4,7 @@ test_description='pushing to a mirror repository'
 
 . ./test-lib.sh
 
-D=`pwd`
+D=$(pwd)
 
 invert () {
 	if "$@"; then

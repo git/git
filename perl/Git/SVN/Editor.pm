@@ -5,7 +5,6 @@ use warnings;
 use SVN::Core;
 use SVN::Delta;
 use Carp qw/croak/;
-use IO::File;
 use Git qw/command command_oneline command_noisy command_output_pipe
            command_input_pipe command_close_pipe
            command_bidi_pipe command_close_bidi_pipe/;
@@ -42,6 +41,7 @@ sub new {
 	                       "$self->{svn_path}/" : '';
 	$self->{config} = $opts->{config};
 	$self->{mergeinfo} = $opts->{mergeinfo};
+	$self->{pathnameencoding} = Git::config('svn.pathnameencoding');
 	return $self;
 }
 
@@ -144,11 +144,12 @@ sub repo_path {
 
 sub url_path {
 	my ($self, $path) = @_;
+	$path = $self->repo_path($path);
 	if ($self->{url} =~ m#^https?://#) {
 		# characters are taken from subversion/libsvn_subr/path.c
 		$path =~ s#([^~a-zA-Z0-9_./!$&'()*+,-])#sprintf("%%%02X",ord($1))#eg;
 	}
-	$self->{url} . '/' . $self->repo_path($path);
+	$self->{url} . '/' . $path;
 }
 
 sub rmdirs {
@@ -586,7 +587,7 @@ The interface will change as git-svn evolves.
 =head1 DEPENDENCIES
 
 Subversion perl bindings,
-the core L<Carp> and L<IO::File> modules,
+the core L<Carp> module,
 and git's L<Git> helper module.
 
 C<Git::SVN::Editor> has not been tested using callers other than

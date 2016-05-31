@@ -29,7 +29,7 @@ struct object_request {
 struct alternates_request {
 	struct walker *walker;
 	const char *base;
-	char *url;
+	struct strbuf *url;
 	struct strbuf *buffer;
 	struct active_request_slot *slot;
 	int http_specific;
@@ -195,10 +195,11 @@ static void process_alternates_response(void *callback_data)
 
 			/* Try reusing the slot to get non-http alternates */
 			alt_req->http_specific = 0;
-			sprintf(alt_req->url, "%s/objects/info/alternates",
-				base);
+			strbuf_reset(alt_req->url);
+			strbuf_addf(alt_req->url, "%s/objects/info/alternates",
+				    base);
 			curl_easy_setopt(slot->curl, CURLOPT_URL,
-					 alt_req->url);
+					 alt_req->url->buf);
 			active_requests++;
 			slot->in_use = 1;
 			if (slot->finished != NULL)
@@ -312,7 +313,7 @@ static void process_alternates_response(void *callback_data)
 static void fetch_alternates(struct walker *walker, const char *base)
 {
 	struct strbuf buffer = STRBUF_INIT;
-	char *url;
+	struct strbuf url = STRBUF_INIT;
 	struct active_request_slot *slot;
 	struct alternates_request alt_req;
 	struct walker_data *cdata = walker->data;
@@ -338,7 +339,7 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	if (walker->get_verbosely)
 		fprintf(stderr, "Getting alternates list for %s\n", base);
 
-	url = xstrfmt("%s/objects/info/http-alternates", base);
+	strbuf_addf(&url, "%s/objects/info/http-alternates", base);
 
 	/*
 	 * Use a callback to process the result, since another request
@@ -351,10 +352,10 @@ static void fetch_alternates(struct walker *walker, const char *base)
 
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
+	curl_easy_setopt(slot->curl, CURLOPT_URL, url.buf);
 
 	alt_req.base = base;
-	alt_req.url = url;
+	alt_req.url = &url;
 	alt_req.buffer = &buffer;
 	alt_req.http_specific = 1;
 	alt_req.slot = slot;
@@ -365,7 +366,7 @@ static void fetch_alternates(struct walker *walker, const char *base)
 		cdata->got_alternates = -1;
 
 	strbuf_release(&buffer);
-	free(url);
+	strbuf_release(&url);
 }
 
 static int fetch_indices(struct walker *walker, struct alt_base *repo)

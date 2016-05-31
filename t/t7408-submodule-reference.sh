@@ -6,7 +6,7 @@
 test_description='test clone --reference'
 . ./test-lib.sh
 
-base_dir=`pwd`
+base_dir=$(pwd)
 
 U=$base_dir/UPLOAD_LOG
 

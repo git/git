@@ -9,6 +9,8 @@
 #include "transport.h"
 #include "parse-options.h"
 #include "submodule.h"
+#include "submodule-config.h"
+#include "send-pack.h"
 
 static const char * const push_usage[] = {
 	N_("git push [<options>] [<repository> [<refspec>...]]"),
@@ -20,6 +22,8 @@ static int deleterefs;
 static const char *receivepack;
 static int verbosity;
 static int progress = -1;
+static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
+static enum transport_family family;
 
 static struct push_cas_option cas;
 
@@ -201,37 +205,6 @@ static void setup_push_current(struct remote *remote, struct branch *branch)
 	add_refspec(branch->name);
 }
 
-static char warn_unspecified_push_default_msg[] =
-N_("push.default is unset; its implicit value has changed in\n"
-   "Git 2.0 from 'matching' to 'simple'. To squelch this message\n"
-   "and maintain the traditional behavior, use:\n"
-   "\n"
-   "  git config --global push.default matching\n"
-   "\n"
-   "To squelch this message and adopt the new behavior now, use:\n"
-   "\n"
-   "  git config --global push.default simple\n"
-   "\n"
-   "When push.default is set to 'matching', git will push local branches\n"
-   "to the remote branches that already exist with the same name.\n"
-   "\n"
-   "Since Git 2.0, Git defaults to the more conservative 'simple'\n"
-   "behavior, which only pushes the current branch to the corresponding\n"
-   "remote branch that 'git pull' uses to update the current branch.\n"
-   "\n"
-   "See 'git help config' and search for 'push.default' for further information.\n"
-   "(the 'simple' mode was introduced in Git 1.7.11. Use the similar mode\n"
-   "'current' instead of 'simple' if you sometimes use older versions of Git)");
-
-static void warn_unspecified_push_default_configuration(void)
-{
-	static int warn_once;
-
-	if (warn_once++)
-		return;
-	warning("%s\n", _(warn_unspecified_push_default_msg));
-}
-
 static int is_workflow_triangular(struct remote *remote)
 {
 	struct remote *fetch_remote = remote_get(NULL);
@@ -250,9 +223,6 @@ static void setup_default_push_refspecs(struct remote *remote)
 		break;
 
 	case PUSH_DEFAULT_UNSPECIFIED:
-		warn_unspecified_push_default_configuration();
-		/* fallthru */
-
 	case PUSH_DEFAULT_SIMPLE:
 		if (triangular)
 			setup_push_current(remote, branch);
@@ -343,6 +313,7 @@ static int push_with_options(struct transport *transport, int flags)
 	unsigned int reject_reasons;
 
 	transport_set_verbosity(transport, verbosity, progress);
+	transport->family = family;
 
 	if (receivepack)
 		transport_set_option(transport,
@@ -451,41 +422,82 @@ static int do_push(const char *repo, int flags)
 static int option_parse_recurse_submodules(const struct option *opt,
 				   const char *arg, int unset)
 {
-	int *flags = opt->value;
+	int *recurse_submodules = opt->value;
 
-	if (*flags & (TRANSPORT_RECURSE_SUBMODULES_CHECK |
-		      TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND))
-		die("%s can only be used once.", opt->long_name);
-
-	if (arg) {
-		if (!strcmp(arg, "check"))
-			*flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
-		else if (!strcmp(arg, "on-demand"))
-			*flags |= TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND;
-		else
-			die("bad %s argument: %s", opt->long_name, arg);
-	} else
-		die("option %s needs an argument (check|on-demand)",
-				opt->long_name);
+	if (unset)
+		*recurse_submodules = RECURSE_SUBMODULES_OFF;
+	else if (arg)
+		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
+	else
+		die("%s missing parameter", opt->long_name);
 
 	return 0;
 }
 
+static void set_push_cert_flags(int *flags, int v)
+{
+	switch (v) {
+	case SEND_PACK_PUSH_CERT_NEVER:
+		*flags &= ~(TRANSPORT_PUSH_CERT_ALWAYS | TRANSPORT_PUSH_CERT_IF_ASKED);
+		break;
+	case SEND_PACK_PUSH_CERT_ALWAYS:
+		*flags |= TRANSPORT_PUSH_CERT_ALWAYS;
+		*flags &= ~TRANSPORT_PUSH_CERT_IF_ASKED;
+		break;
+	case SEND_PACK_PUSH_CERT_IF_ASKED:
+		*flags |= TRANSPORT_PUSH_CERT_IF_ASKED;
+		*flags &= ~TRANSPORT_PUSH_CERT_ALWAYS;
+		break;
+	}
+}
+
+
 static int git_push_config(const char *k, const char *v, void *cb)
 {
-	struct wt_status *s = cb;
+	int *flags = cb;
 	int status;
 
 	status = git_gpg_config(k, v, NULL);
 	if (status)
 		return status;
-	return git_default_config(k, v, s);
+
+	if (!strcmp(k, "push.followtags")) {
+		if (git_config_bool(k, v))
+			*flags |= TRANSPORT_PUSH_FOLLOW_TAGS;
+		else
+			*flags &= ~TRANSPORT_PUSH_FOLLOW_TAGS;
+		return 0;
+	} else if (!strcmp(k, "push.gpgsign")) {
+		const char *value;
+		if (!git_config_get_value("push.gpgsign", &value)) {
+			switch (git_config_maybe_bool("push.gpgsign", value)) {
+			case 0:
+				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_NEVER);
+				break;
+			case 1:
+				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_ALWAYS);
+				break;
+			default:
+				if (value && !strcasecmp(value, "if-asked"))
+					set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_IF_ASKED);
+				else
+					return error("Invalid value for '%s'", k);
+			}
+		}
+	} else if (!strcmp(k, "push.recursesubmodules")) {
+		const char *value;
+		if (!git_config_get_value("push.recursesubmodules", &value))
+			recurse_submodules = parse_push_recurse_submodules_arg(k, value);
+	}
+
+	return git_default_config(k, v, NULL);
 }
 
 int cmd_push(int argc, const char **argv, const char *prefix)
 {
 	int flags = 0;
 	int tags = 0;
+	int push_cert = -1;
 	int rc;
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
@@ -494,7 +506,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT( 0 , "all", &flags, N_("push all refs"), TRANSPORT_PUSH_ALL),
 		OPT_BIT( 0 , "mirror", &flags, N_("mirror all refs"),
 			    (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE)),
-		OPT_BOOL( 0, "delete", &deleterefs, N_("delete refs")),
+		OPT_BOOL('d', "delete", &deleterefs, N_("delete refs")),
 		OPT_BOOL( 0 , "tags", &tags, N_("push tags (can't be used with --all or --mirror)")),
 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
@@ -503,7 +515,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		  0, CAS_OPT_NAME, &cas, N_("refname>:<expect"),
 		  N_("require old value of ref to be at this value"),
 		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &flags, "check|on-demand",
+		{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, "check|on-demand|no",
 			N_("control recursive pushing of submodules"),
 			PARSE_OPT_OPTARG, option_parse_recurse_submodules },
 		OPT_BOOL( 0 , "thin", &thin, N_("use thin pack")),
@@ -517,18 +529,31 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "no-verify", &flags, N_("bypass pre-push hook"), TRANSPORT_PUSH_NO_HOOK),
 		OPT_BIT(0, "follow-tags", &flags, N_("push missing but relevant tags"),
 			TRANSPORT_PUSH_FOLLOW_TAGS),
-		OPT_BIT(0, "signed", &flags, N_("GPG sign the push"), TRANSPORT_PUSH_CERT),
+		{ OPTION_CALLBACK,
+		  0, "signed", &push_cert, "yes|no|if-asked", N_("GPG sign the push"),
+		  PARSE_OPT_OPTARG, option_parse_push_signed },
+		OPT_BIT(0, "atomic", &flags, N_("request atomic transaction on remote side"), TRANSPORT_PUSH_ATOMIC),
+		OPT_SET_INT('4', "ipv4", &family, N_("use IPv4 addresses only"),
+				TRANSPORT_FAMILY_IPV4),
+		OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
+				TRANSPORT_FAMILY_IPV6),
 		OPT_END()
 	};
 
 	packet_trace_identity("push");
-	git_config(git_push_config, NULL);
+	git_config(git_push_config, &flags);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
+	set_push_cert_flags(&flags, push_cert);
 
 	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
 		die(_("--delete is incompatible with --all, --mirror and --tags"));
 	if (deleterefs && argc < 2)
 		die(_("--delete doesn't make sense without any refs"));
+
+	if (recurse_submodules == RECURSE_SUBMODULES_CHECK)
+		flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
+	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+		flags |= TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND;
 
 	if (tags)
 		add_refspec("refs/tags/*");

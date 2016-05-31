@@ -11,7 +11,8 @@ SYNOPSIS
 'git branch' [--color[=<when>] | --no-color] [-r | -a]
 	[--list] [-v [--abbrev=<length> | --no-abbrev]]
 	[--column[=<options>] | --no-column]
-	[(--merged | --no-merged | --contains) [<commit>]] [<pattern>...]
+	[(--merged | --no-merged | --contains) [<commit>]] [--sort=<key>]
+	[--points-at <object>] [<pattern>...]
 'git branch' [--set-upstream | --track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
@@ -51,7 +52,7 @@ When a local branch is started off a remote-tracking branch, Git sets up the
 branch (specifically the `branch.<name>.remote` and `branch.<name>.merge`
 configuration entries) so that 'git pull' will appropriately merge from
 the remote-tracking branch. This behavior may be changed via the global
-`branch.autosetupmerge` configuration flag. That setting can be
+`branch.autoSetupMerge` configuration flag. That setting can be
 overridden by using the `--track` and `--no-track` options, and
 changed later using `git branch --set-upstream-to`.
 
@@ -81,7 +82,7 @@ OPTIONS
 	`--track` or `--set-upstream`.
 
 -D::
-	Delete a branch irrespective of its merged status.
+	Shortcut for `--delete --force`.
 
 -l::
 --create-reflog::
@@ -95,13 +96,17 @@ OPTIONS
 --force::
 	Reset <branchname> to <startpoint> if <branchname> exists
 	already. Without `-f` 'git branch' refuses to change an existing branch.
+	In combination with `-d` (or `--delete`), allow deleting the
+	branch irrespective of its merged status. In combination with
+	`-m` (or `--move`), allow renaming the branch even if the new
+	branch name already exists.
 
 -m::
 --move::
 	Move/rename a branch and the corresponding reflog.
 
 -M::
-	Move/rename a branch even if the new branch name already exists.
+	Shortcut for `--move --force`.
 
 --color[=<when>]::
 	Color branches to highlight current, local, and
@@ -166,14 +171,14 @@ This option is only applicable in non-verbose mode.
 	upstream when the new branch is checked out.
 +
 This behavior is the default when the start point is a remote-tracking branch.
-Set the branch.autosetupmerge configuration variable to `false` if you
+Set the branch.autoSetupMerge configuration variable to `false` if you
 want `git checkout` and `git branch` to always behave as if '--no-track'
 were given. Set it to `always` if you want this behavior when the
 start-point is either a local or remote-tracking branch.
 
 --no-track::
 	Do not set up "upstream" configuration, even if the
-	branch.autosetupmerge configuration variable is true.
+	branch.autoSetupMerge configuration variable is true.
 
 --set-upstream::
 	If specified branch does not exist yet or if `--force` has been
@@ -193,7 +198,9 @@ start-point is either a local or remote-tracking branch.
 
 --edit-description::
 	Open an editor and edit the text to explain what the branch is
-	for, to be used by various other commands (e.g. `request-pull`).
+	for, to be used by various other commands (e.g. `format-patch`,
+	`request-pull`, and `merge` (if enabled)). Multi-line explanations
+	may be used.
 
 --contains [<commit>]::
 	Only list branches which contain the specified commit (HEAD
@@ -225,6 +232,19 @@ start-point is either a local or remote-tracking branch.
 	The new name for an existing branch. The same restrictions as for
 	<branchname> apply.
 
+--sort=<key>::
+	Sort based on the key given. Prefix `-` to sort in descending
+	order of the value. You may use the --sort=<key> option
+	multiple times, in which case the last key becomes the primary
+	key. The keys supported are the same as those in `git
+	for-each-ref`. Sort order defaults to sorting based on the
+	full refname (including `refs/...` prefix). This lists
+	detached HEAD (if present) first, then local branches and
+	finally remote-tracking branches.
+
+
+--points-at <object>::
+	Only list branches of the given object.
 
 Examples
 --------

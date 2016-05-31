@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "refs.h"
 #include "commit.h"
 #include "tree-walk.h"
 #include "attr.h"
@@ -8,9 +9,9 @@
 #include "dir.h"
 
 static char const * const archive_usage[] = {
-	N_("git archive [options] <tree-ish> [<path>...]"),
+	N_("git archive [<options>] <tree-ish> [<path>...]"),
 	N_("git archive --list"),
-	N_("git archive --remote <repo> [--exec <cmd>] [options] <tree-ish> [<path>...]"),
+	N_("git archive --remote <repo> [--exec <cmd>] [<options>] <tree-ish> [<path>...]"),
 	N_("git archive --remote <repo> [--exec <cmd>] --list"),
 	NULL
 };
@@ -33,7 +34,7 @@ static void format_subst(const struct commit *commit,
 	char *to_free = NULL;
 	struct strbuf fmt = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
-	ctx.date_mode = DATE_NORMAL;
+	ctx.date_mode.type = DATE_NORMAL;
 	ctx.abbrev = DEFAULT_ABBREV;
 
 	if (src == buf->buf)
@@ -101,7 +102,7 @@ static void setup_archive_check(struct git_attr_check *check)
 
 struct directory {
 	struct directory *up;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int baselen, len;
 	unsigned mode;
 	int stage;
@@ -170,14 +171,15 @@ static void queue_directory(const unsigned char *sha1,
 		unsigned mode, int stage, struct archiver_context *c)
 {
 	struct directory *d;
-	d = xmallocz(sizeof(*d) + base->len + 1 + strlen(filename));
+	size_t len = st_add4(base->len, 1, strlen(filename), 1);
+	d = xmalloc(st_add(sizeof(*d), len));
 	d->up	   = c->bottom;
 	d->baselen = base->len;
 	d->mode	   = mode;
 	d->stage   = stage;
 	c->bottom  = d;
-	d->len = sprintf(d->path, "%.*s%s/", (int)base->len, base->buf, filename);
-	hashcpy(d->sha1, sha1);
+	d->len = xsnprintf(d->path, len, "%.*s%s/", (int)base->len, base->buf, filename);
+	hashcpy(d->oid.hash, sha1);
 }
 
 static int write_directory(struct archiver_context *c)
@@ -191,7 +193,7 @@ static int write_directory(struct archiver_context *c)
 	d->path[d->len - 1] = '\0'; /* no trailing slash */
 	ret =
 		write_directory(c) ||
-		write_archive_entry(d->sha1, d->path, d->baselen,
+		write_archive_entry(d->oid.hash, d->path, d->baselen,
 				    d->path + d->baselen, d->mode,
 				    d->stage, c) != READ_TREE_RECURSIVE;
 	free(d);
@@ -239,7 +241,7 @@ int write_archive_entries(struct archiver_args *args,
 			len--;
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
-		err = write_entry(args, args->tree->object.sha1, args->base,
+		err = write_entry(args, args->tree->object.oid.hash, args->base,
 				  len, 040777);
 		if (err)
 			return err;
@@ -354,7 +356,7 @@ static void parse_treeish_arg(const char **argv,
 	time_t archive_time;
 	struct tree *tree;
 	const struct commit *commit;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	/* Remotes are only allowed to fetch actual refs */
 	if (remote && !remote_allow_unreachable) {
@@ -362,38 +364,38 @@ static void parse_treeish_arg(const char **argv,
 		const char *colon = strchrnul(name, ':');
 		int refnamelen = colon - name;
 
-		if (!dwim_ref(name, refnamelen, sha1, &ref))
+		if (!dwim_ref(name, refnamelen, oid.hash, &ref))
 			die("no such ref: %.*s", refnamelen, name);
 		free(ref);
 	}
 
-	if (get_sha1(name, sha1))
+	if (get_sha1(name, oid.hash))
 		die("Not a valid object name");
 
-	commit = lookup_commit_reference_gently(sha1, 1);
+	commit = lookup_commit_reference_gently(oid.hash, 1);
 	if (commit) {
-		commit_sha1 = commit->object.sha1;
+		commit_sha1 = commit->object.oid.hash;
 		archive_time = commit->date;
 	} else {
 		commit_sha1 = NULL;
 		archive_time = time(NULL);
 	}
 
-	tree = parse_tree_indirect(sha1);
+	tree = parse_tree_indirect(oid.hash);
 	if (tree == NULL)
 		die("not a tree object");
 
 	if (prefix) {
-		unsigned char tree_sha1[20];
+		struct object_id tree_oid;
 		unsigned int mode;
 		int err;
 
-		err = get_tree_entry(tree->object.sha1, prefix,
-				     tree_sha1, &mode);
+		err = get_tree_entry(tree->object.oid.hash, prefix,
+				     tree_oid.hash, &mode);
 		if (err || !S_ISDIR(mode))
 			die("current working directory is untracked");
 
-		tree = parse_tree_indirect(tree_sha1);
+		tree = parse_tree_indirect(tree_oid.hash);
 	}
 	ar_args->tree = tree;
 	ar_args->commit_sha1 = commit_sha1;

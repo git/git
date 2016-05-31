@@ -7,7 +7,7 @@ test_description='our own option parser'
 
 . ./test-lib.sh
 
-cat > expect << EOF
+cat >expect <<\EOF
 usage: test-parse-options <options>
 
     --yes                 get a boolean
@@ -19,6 +19,7 @@ usage: test-parse-options <options>
 
     -i, --integer <n>     get a integer
     -j <n>                get a integer, too
+    -m, --magnitude <n>   get a magnitude
     --set23               set integer to 23
     -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
@@ -44,62 +45,24 @@ Standard options
     -v, --verbose         be verbose
     -n, --dry-run         dry run
     -q, --quiet           be quiet
+    --expect <string>     expected output in the variable dump
 
 EOF
 
 test_expect_success 'test help' '
-	test_must_fail test-parse-options -h > output 2> output.err &&
+	test_must_fail test-parse-options -h >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_i18ncmp expect output
 '
 
 mv expect expect.err
 
-cat >expect.template <<EOF
-boolean: 0
-integer: 0
-timestamp: 0
-string: (not set)
-abbrev: 7
-verbose: 0
-quiet: no
-dry run: no
-file: (not set)
-EOF
-
-check() {
+check () {
 	what="$1" &&
 	shift &&
 	expect="$1" &&
 	shift &&
-	sed "s/^$what .*/$what $expect/" <expect.template >expect &&
-	test-parse-options $* >output 2>output.err &&
-	test_must_be_empty output.err &&
-	test_cmp expect output
-}
-
-check_i18n() {
-	what="$1" &&
-	shift &&
-	expect="$1" &&
-	shift &&
-	sed "s/^$what .*/$what $expect/" <expect.template >expect &&
-	test-parse-options $* >output 2>output.err &&
-	test_must_be_empty output.err &&
-	test_i18ncmp expect output
-}
-
-check_unknown() {
-	case "$1" in
-	--*)
-		echo error: unknown option \`${1#--}\' >expect ;;
-	-*)
-		echo error: unknown switch \`${1#-}\' >expect ;;
-	esac &&
-	cat expect.err >>expect &&
-	test_must_fail test-parse-options $* >output 2>output.err &&
-	test_must_be_empty output &&
-	test_cmp expect output.err
+	test-parse-options --expect="$what $expect" "$@"
 }
 
 check_unknown_i18n() {
@@ -132,62 +95,85 @@ test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown_i18n --no-no-fear
 
 test_expect_success 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
 
-cat > expect << EOF
+test_expect_success 'OPT_INT() negative' 'check integer: -2345 -i -2345'
+
+test_expect_success 'OPT_MAGNITUDE() simple' '
+	check magnitude: 2345678 -m 2345678
+'
+
+test_expect_success 'OPT_MAGNITUDE() kilo' '
+	check magnitude: 239616 -m 234k
+'
+
+test_expect_success 'OPT_MAGNITUDE() mega' '
+	check magnitude: 104857600 -m 100m
+'
+
+test_expect_success 'OPT_MAGNITUDE() giga' '
+	check magnitude: 1073741824 -m 1g
+'
+
+test_expect_success 'OPT_MAGNITUDE() 3giga' '
+	check magnitude: 3221225472 -m 3g
+'
+
+cat >expect <<\EOF
 boolean: 2
 integer: 1729
+magnitude: 16384
 timestamp: 0
 string: 123
 abbrev: 7
 verbose: 2
-quiet: no
+quiet: 0
 dry run: yes
 file: prefix/my.file
 EOF
 
 test_expect_success 'short options' '
-	test-parse-options -s123 -b -i 1729 -b -vv -n -F my.file \
-	> output 2> output.err &&
+	test-parse-options -s123 -b -i 1729 -m 16k -b -vv -n -F my.file \
+	>output 2>output.err &&
 	test_cmp expect output &&
 	test_must_be_empty output.err
 '
 
-cat > expect << EOF
+cat >expect <<\EOF
 boolean: 2
 integer: 1729
+magnitude: 16384
 timestamp: 0
 string: 321
 abbrev: 10
 verbose: 2
-quiet: no
+quiet: 0
 dry run: no
 file: prefix/fi.le
 EOF
 
 test_expect_success 'long options' '
-	test-parse-options --boolean --integer 1729 --boolean --string2=321 \
-		--verbose --verbose --no-dry-run --abbrev=10 --file fi.le\
-		--obsolete > output 2> output.err &&
+	test-parse-options --boolean --integer 1729 --magnitude 16k \
+		--boolean --string2=321 --verbose --verbose --no-dry-run \
+		--abbrev=10 --file fi.le --obsolete \
+		>output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'missing required value' '
-	test-parse-options -s;
-	test $? = 129 &&
-	test-parse-options --string;
-	test $? = 129 &&
-	test-parse-options --file;
-	test $? = 129
+	test_expect_code 129 test-parse-options -s &&
+	test_expect_code 129 test-parse-options --string &&
+	test_expect_code 129 test-parse-options --file
 '
 
-cat > expect << EOF
+cat >expect <<\EOF
 boolean: 1
 integer: 13
+magnitude: 0
 timestamp: 0
 string: 123
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 arg 00: a1
@@ -197,105 +183,108 @@ EOF
 
 test_expect_success 'intermingled arguments' '
 	test-parse-options a1 --string 123 b1 --boolean -j 13 -- --boolean \
-		> output 2> output.err &&
+		>output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
-cat > expect << EOF
+cat >expect <<\EOF
 boolean: 0
 integer: 2
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 EOF
 
 test_expect_success 'unambiguously abbreviated option' '
-	test-parse-options --int 2 --boolean --no-bo > output 2> output.err &&
+	test-parse-options --int 2 --boolean --no-bo >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'unambiguously abbreviated option with "="' '
-	test-parse-options --int=2 > output 2> output.err &&
+	test-parse-options --int=2 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'ambiguously abbreviated option' '
-	test-parse-options --strin 123;
-	test $? = 129
+	test_expect_code 129 test-parse-options --strin 123
 '
 
-cat > expect << EOF
+cat >expect <<\EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 0
 string: 123
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 EOF
 
 test_expect_success 'non ambiguous option (after two options it abbreviates)' '
-	test-parse-options --st 123 > output 2> output.err &&
+	test-parse-options --st 123 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
-cat > typo.err << EOF
-error: did you mean \`--boolean\` (with two dashes ?)
+cat >typo.err <<\EOF
+error: did you mean `--boolean` (with two dashes ?)
 EOF
 
 test_expect_success 'detect possible typos' '
-	test_must_fail test-parse-options -boolean > output 2> output.err &&
+	test_must_fail test-parse-options -boolean >output 2>output.err &&
 	test_must_be_empty output &&
 	test_cmp typo.err output.err
 '
 
-cat > typo.err << EOF
-error: did you mean \`--ambiguous\` (with two dashes ?)
+cat >typo.err <<\EOF
+error: did you mean `--ambiguous` (with two dashes ?)
 EOF
 
 test_expect_success 'detect possible typos' '
-	test_must_fail test-parse-options -ambiguous > output 2> output.err &&
+	test_must_fail test-parse-options -ambiguous >output 2>output.err &&
 	test_must_be_empty output &&
 	test_cmp typo.err output.err
 '
 
-cat > expect <<EOF
+cat >expect <<\EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 arg 00: --quux
 EOF
 
 test_expect_success 'keep some options as arguments' '
-	test-parse-options --quux > output 2> output.err &&
+	test-parse-options --quux >output 2>output.err &&
 	test_must_be_empty output.err &&
-        test_cmp expect output
+	test_cmp expect output
 '
 
-cat > expect <<EOF
+cat >expect <<\EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 1
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: yes
+verbose: -1
+quiet: 1
 dry run: no
 file: (not set)
 arg 00: foo
@@ -303,120 +292,123 @@ EOF
 
 test_expect_success 'OPT_DATE() works' '
 	test-parse-options -t "1970-01-01 00:00:01 +0000" \
-		foo -q > output 2> output.err &&
+		foo -q >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
-cat > expect <<EOF
+cat >expect <<\EOF
 Callback: "four", 0
 boolean: 5
 integer: 4
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 EOF
 
 test_expect_success 'OPT_CALLBACK() and OPT_BIT() work' '
-	test-parse-options --length=four -b -4 > output 2> output.err &&
+	test-parse-options --length=four -b -4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
-cat > expect <<EOF
-Callback: "not set", 1
-EOF
+>expect
 
 test_expect_success 'OPT_CALLBACK() and callback errors work' '
-	test_must_fail test-parse-options --no-length > output 2> output.err &&
+	test_must_fail test-parse-options --no-length >output 2>output.err &&
 	test_i18ncmp expect output &&
 	test_i18ncmp expect.err output.err
 '
 
-cat > expect <<EOF
+cat >expect <<\EOF
 boolean: 1
 integer: 23
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 EOF
 
 test_expect_success 'OPT_BIT() and OPT_SET_INT() work' '
-	test-parse-options --set23 -bbbbb --no-or4 > output 2> output.err &&
+	test-parse-options --set23 -bbbbb --no-or4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'OPT_NEGBIT() and OPT_SET_INT() work' '
-	test-parse-options --set23 -bbbbb --neg-or4 > output 2> output.err &&
+	test-parse-options --set23 -bbbbb --neg-or4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
-cat > expect <<EOF
+cat >expect <<\EOF
 boolean: 6
 integer: 0
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 EOF
 
 test_expect_success 'OPT_BIT() works' '
-	test-parse-options -bb --or4 > output 2> output.err &&
+	test-parse-options -bb --or4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'OPT_NEGBIT() works' '
-	test-parse-options -bb --no-neg-or4 > output 2> output.err &&
+	test-parse-options -bb --no-neg-or4 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '
-	test-parse-options + + + + + + > output 2> output.err &&
+	test-parse-options + + + + + + >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
-cat > expect <<EOF
+cat >expect <<\EOF
 boolean: 0
 integer: 12345
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 EOF
 
 test_expect_success 'OPT_NUMBER_CALLBACK() works' '
-	test-parse-options -12345 > output 2> output.err &&
+	test-parse-options -12345 >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 
-cat >expect <<EOF
+cat >expect <<\EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
-verbose: 0
-quiet: no
+verbose: -1
+quiet: 0
 dry run: no
 file: (not set)
 EOF
@@ -427,7 +419,7 @@ test_expect_success 'negation of OPT_NONEG flags is not ambiguous' '
 	test_cmp expect output
 '
 
-cat >>expect <<'EOF'
+cat >>expect <<\EOF
 list: foo
 list: bar
 list: baz
@@ -440,6 +432,120 @@ test_expect_success '--list keeps list of strings' '
 test_expect_success '--no-list resets list' '
 	test-parse-options --list=other --list=irrelevant --list=options \
 		--no-list --list=foo --list=bar --list=baz >output &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: -1
+quiet: 3
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success 'multiple quiet levels' '
+	test-parse-options -q -q -q >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 3
+quiet: 0
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success 'multiple verbose levels' '
+	test-parse-options -v -v -v >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: -1
+quiet: 0
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success '--no-quiet sets --quiet to 0' '
+	test-parse-options --no-quiet >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: -1
+quiet: 0
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success '--no-quiet resets multiple -q to 0' '
+	test-parse-options -q -q -q --no-quiet >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: 0
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success '--no-verbose sets verbose to 0' '
+	test-parse-options --no-verbose >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect output
+'
+
+cat >expect <<\EOF
+boolean: 0
+integer: 0
+magnitude: 0
+timestamp: 0
+string: (not set)
+abbrev: 7
+verbose: 0
+quiet: 0
+dry run: no
+file: (not set)
+EOF
+
+test_expect_success '--no-verbose resets multiple verbose to 0' '
+	test-parse-options -v -v -v --no-verbose >output 2>output.err &&
+	test_must_be_empty output.err &&
 	test_cmp expect output
 '
 

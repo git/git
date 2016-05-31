@@ -20,7 +20,7 @@ difftool_test_setup ()
 prompt_given ()
 {
 	prompt="$1"
-	test "$prompt" = "Launch 'test-tool' [Y/n]: branch"
+	test "$prompt" = "Launch 'test-tool' [Y/n]? branch"
 }
 
 # Create a file on master and change it on branch
@@ -419,6 +419,29 @@ run_dir_diff_test 'difftool --dir-diff when worktree file is missing' '
 	grep file2 output
 '
 
+run_dir_diff_test 'difftool --dir-diff with unmerged files' '
+	test_when_finished git reset --hard &&
+	test_config difftool.echo.cmd "echo ok" &&
+	git checkout -B conflict-a &&
+	git checkout -B conflict-b &&
+	git checkout conflict-a &&
+	echo a >>file &&
+	git add file &&
+	git commit -m conflict-a &&
+	git checkout conflict-b &&
+	echo b >>file &&
+	git add file &&
+	git commit -m conflict-b &&
+	git checkout master &&
+	git merge conflict-a &&
+	test_must_fail git merge conflict-b &&
+	cat >expect <<-EOF &&
+		ok
+	EOF
+	git difftool --dir-diff $symlinks -t echo >actual &&
+	test_cmp expect actual
+'
+
 write_script .git/CHECK_SYMLINKS <<\EOF
 for f in file file2 sub/sub
 do
@@ -430,11 +453,11 @@ EOF
 test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
 	cat >expect <<-EOF &&
 	file
-	$(pwd)/file
+	$PWD/file
 	file2
-	$(pwd)/file2
+	$PWD/file2
 	sub/sub
-	$(pwd)/sub/sub
+	$PWD/sub/sub
 	EOF
 	git difftool --dir-diff --symlink \
 		--extcmd "./.git/CHECK_SYMLINKS" branch HEAD &&
@@ -448,14 +471,14 @@ EOF
 run_dir_diff_test 'difftool --dir-diff syncs worktree with unstaged change' '
 	test_when_finished git reset --hard &&
 	echo "orig content" >file &&
-	git difftool -d $symlinks --extcmd "$(pwd)/modify-right-file" branch &&
+	git difftool -d $symlinks --extcmd "$PWD/modify-right-file" branch &&
 	echo "new content" >expect &&
 	test_cmp expect file
 '
 
 run_dir_diff_test 'difftool --dir-diff syncs worktree without unstaged change' '
 	test_when_finished git reset --hard &&
-	git difftool -d $symlinks --extcmd "$(pwd)/modify-right-file" branch &&
+	git difftool -d $symlinks --extcmd "$PWD/modify-right-file" branch &&
 	echo "new content" >expect &&
 	test_cmp expect file
 '
@@ -466,7 +489,7 @@ EOF
 
 test_expect_success PERL 'difftool --no-symlinks does not overwrite working tree file ' '
 	echo "orig content" >file &&
-	git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-file" branch &&
+	git difftool --dir-diff --no-symlinks --extcmd "$PWD/modify-file" branch &&
 	echo "new content" >expect &&
 	test_cmp expect file
 '
@@ -482,7 +505,7 @@ test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
 		TMPDIR=$TRASH_DIRECTORY &&
 		export TMPDIR &&
 		echo "orig content" >file &&
-		test_must_fail git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-both-files" branch &&
+		test_must_fail git difftool --dir-diff --no-symlinks --extcmd "$PWD/modify-both-files" branch &&
 		echo "wt content" >expect &&
 		test_cmp expect file &&
 		echo "tmp content" >expect &&
@@ -492,12 +515,31 @@ test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
 
 test_expect_success PERL 'difftool properly honors gitlink and core.worktree' '
 	git submodule add ./. submod/ule &&
+	test_config -C submod/ule diff.tool checktrees &&
+	test_config -C submod/ule difftool.checktrees.cmd '\''
+		test -d "$LOCAL" && test -d "$REMOTE" && echo good
+		'\'' &&
 	(
 		cd submod/ule &&
-		test_config diff.tool checktrees &&
-		test_config difftool.checktrees.cmd '\''
-			test -d "$LOCAL" && test -d "$REMOTE" && echo good
-		'\'' &&
+		echo good >expect &&
+		git difftool --tool=checktrees --dir-diff HEAD~ >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success PERL,SYMLINKS 'difftool --dir-diff symlinked directories' '
+	git init dirlinks &&
+	(
+		cd dirlinks &&
+		git config diff.tool checktrees &&
+		git config difftool.checktrees.cmd "echo good" &&
+		mkdir foo &&
+		: >foo/bar &&
+		git add foo/bar &&
+		test_commit symlink-one &&
+		ln -s foo link &&
+		git add link &&
+		test_commit symlink-two &&
 		echo good >expect &&
 		git difftool --tool=checktrees --dir-diff HEAD~ >actual &&
 		test_cmp expect actual

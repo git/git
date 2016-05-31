@@ -7,7 +7,6 @@ use warnings;
 use SVN::Delta;
 use Carp qw/croak/;
 use File::Basename qw/dirname/;
-use IO::File qw//;
 use Git qw/command command_oneline command_noisy command_output_pipe
            command_input_pipe command_close_pipe
            command_bidi_pipe command_close_bidi_pipe/;
@@ -322,6 +321,14 @@ sub apply_textdelta {
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
 	my $base = $::_repository->temp_acquire("git_blob_${$}_$suffix");
+	# close_file may call temp_acquire on 'svn_hash', but because of the
+	# call chain, if the temp_acquire call from close_file ends up being the
+	# call that first creates the 'svn_hash' temp file, then the FileHandle
+	# that's created as a result will end up in an SVN::Pool that we clear
+	# in SVN::Ra::gs_fetch_loop_common.  Avoid that by making sure the
+	# 'svn_hash' FileHandle is already created before close_file is called.
+	my $tmp_fh = $::_repository->temp_acquire('svn_hash');
+	$::_repository->temp_release($tmp_fh, 1);
 
 	if ($fb->{blob}) {
 		my ($base_is_link, $size);
@@ -600,7 +607,7 @@ developing git-svn.
 =head1 DEPENDENCIES
 
 L<SVN::Delta> from the Subversion perl bindings,
-the core L<Carp>, L<File::Basename>, and L<IO::File> modules,
+the core L<Carp> and L<File::Basename> modules,
 and git's L<Git> helper module.
 
 C<Git::SVN::Fetcher> has not been tested using callers other than

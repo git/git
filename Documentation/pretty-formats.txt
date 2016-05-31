@@ -79,7 +79,10 @@ stored in the commit object.  Notably, the SHA-1s are
 displayed in full, regardless of whether --abbrev or
 --no-abbrev are used, and 'parents' information show the
 true parent commits, without taking grafts or history
-simplification into account.
+simplification into account. Note that this format affects the way
+commits are displayed, but not the way the diff is shown e.g. with
+`git log --raw`. To get full object names in a raw diff format,
+use `--no-abbrev`.
 
 * 'format:<string>'
 +
@@ -136,10 +139,12 @@ The placeholders are:
 - '%f': sanitized subject line, suitable for a filename
 - '%b': body
 - '%B': raw body (unwrapped subject and body)
+ifndef::git-rev-list[]
 - '%N': commit notes
+endif::git-rev-list[]
 - '%GG': raw verification message from GPG for a signed commit
-- '%G?': show "G" for a Good signature, "B" for a Bad signature, "U" for a good,
-  untrusted signature and "N" for no signature
+- '%G?': show "G" for a good (valid) signature, "B" for a bad signature,
+  "U" for a good signature with unknown validity and "N" for no signature
 - '%GS': show the name of the signer for a signed commit
 - '%GK': show the key used to sign a signed commit
 - '%gD': reflog selector, e.g., `refs/stash@{1}`

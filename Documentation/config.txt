@@ -14,7 +14,8 @@ the fully qualified variable name of the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive, allow only alphanumeric
 characters and `-`, and must start with an alphabetic character.  Some
-variables may appear multiple times.
+variables may appear multiple times; we say then that the variable is
+multivalued.
 
 Syntax
 ~~~~~~
@@ -25,7 +26,7 @@ blank lines are ignored.
 
 The file consists of sections and variables.  A section begins with
 the name of the section in square brackets and continues until the next
-section begins.  Section names are not case sensitive.  Only alphanumeric
+section begins.  Section names are case-insensitive.  Only alphanumeric
 characters, `-` and `.` are allowed in section names.  Each variable
 must belong to some section, which means that there must be a section
 header before the first setting of a variable.
@@ -40,8 +41,8 @@ in the section header, like in the example below:
 --------
 
 Subsection names are case sensitive and can contain any characters except
-newline (doublequote `"` and backslash have to be escaped as `\"` and `\\`,
-respectively).  Section headers cannot span multiple
+newline (doublequote `"` and backslash can be included by escaping them
+as `\"` and `\\`, respectively).  Section headers cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
 don't need to.
@@ -53,51 +54,43 @@ restrictions as section names.
 
 All the other lines (and the remainder of the line after the section
 header) are recognized as setting variables, in the form
-'name = value'.  If there is no equal sign on the line, the entire line
-is taken as 'name' and the variable is recognized as boolean "true".
+'name = value' (or just 'name', which is a short-hand to say that
+the variable is the boolean "true").
 The variable names are case-insensitive, allow only alphanumeric characters
-and `-`, and must start with an alphabetic character.  There can be more
-than one value for a given variable; we say then that the variable is
-multivalued.
+and `-`, and must start with an alphabetic character.
 
-Leading and trailing whitespace in a variable value is discarded.
-Internal whitespace within a variable value is retained verbatim.
+A line that defines a value can be continued to the next line by
+ending it with a `\`; the backquote and the end-of-line are
+stripped.  Leading whitespaces after 'name =', the remainder of the
+line after the first comment character '#' or ';', and trailing
+whitespaces of the line are discarded unless they are enclosed in
+double quotes.  Internal whitespaces within the value are retained
+verbatim.
 
-The values following the equals sign in variable assign are all either
-a string, an integer, or a boolean.  Boolean values may be given as yes/no,
-1/0, true/false or on/off.  Case is not significant in boolean values, when
-converting value to the canonical form using '--bool' type specifier;
-'git config' will ensure that the output is "true" or "false".
-
-String values may be entirely or partially enclosed in double quotes.
-You need to enclose variable values in double quotes if you want to
-preserve leading or trailing whitespace, or if the variable value contains
-comment characters (i.e. it contains '#' or ';').
-Double quote `"` and backslash `\` characters in variable values must
-be escaped: use `\"` for `"` and `\\` for `\`.
+Inside double quotes, double quote `"` and backslash `\` characters
+must be escaped: use `\"` for `"` and `\\` for `\`.
 
 The following escape sequences (beside `\"` and `\\`) are recognized:
 `\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
 and `\b` for backspace (BS).  Other char escape sequences (including octal
 escape sequences) are invalid.
 
-Variable values ending in a `\` are continued on the next line in the
-customary UNIX fashion.
-
-Some variables may require a special value format.
 
 Includes
 ~~~~~~~~
 
 You can include one config file from another by setting the special
 `include.path` variable to the name of the file to be included. The
+variable takes a pathname as its value, and is subject to tilde
+expansion.
+
+The
 included file is expanded immediately, as if its contents had been
 found at the location of the include directive. If the value of the
 `include.path` variable is a relative path, the path is considered to be
 relative to the configuration file in which the include directive was
-found. The value of `include.path` is subject to tilde expansion: `~/`
-is expanded to the value of `$HOME`, and `~user/` to the specified
-user's home directory. See below for examples.
+found.  See below for examples.
+
 
 Example
 ~~~~~~~
@@ -124,7 +117,68 @@ Example
 	[include]
 		path = /path/to/foo.inc ; include by absolute path
 		path = foo ; expand "foo" relative to the current file
-		path = ~/foo ; expand "foo" in your $HOME directory
+		path = ~/foo ; expand "foo" in your `$HOME` directory
+
+
+Values
+~~~~~~
+
+Values of many variables are treated as a simple string, but there
+are variables that take values of specific types and there are rules
+as to how to spell them.
+
+boolean::
+
+       When a variable is said to take a boolean value, many
+       synonyms are accepted for 'true' and 'false'; these are all
+       case-insensitive.
+
+       true;; Boolean true can be spelled as `yes`, `on`, `true`,
+		or `1`.  Also, a variable defined without `= <value>`
+		is taken as true.
+
+       false;; Boolean false can be spelled as `no`, `off`,
+		`false`, or `0`.
++
+When converting value to the canonical form using '--bool' type
+specifier; 'git config' will ensure that the output is "true" or
+"false" (spelled in lowercase).
+
+integer::
+       The value for many variables that specify various sizes can
+       be suffixed with `k`, `M`,... to mean "scale the number by
+       1024", "by 1024x1024", etc.
+
+color::
+       The value for a variables that takes a color is a list of
+       colors (at most two) and attributes (at most one), separated
+       by spaces.  The colors accepted are `normal`, `black`,
+       `red`, `green`, `yellow`, `blue`, `magenta`, `cyan` and
+       `white`; the attributes are `bold`, `dim`, `ul`, `blink` and
+       `reverse`.  The first color given is the foreground; the
+       second is the background.  The position of the attribute, if
+       any, doesn't matter. Attributes may be turned off specifically
+       by prefixing them with `no` (e.g., `noreverse`, `noul`, etc).
++
+Colors (foreground and background) may also be given as numbers between
+0 and 255; these use ANSI 256-color mode (but note that not all
+terminals may support this).  If your terminal supports it, you may also
+specify 24-bit RGB values as hex, like `#ff0ab3`.
++
+The attributes are meant to be reset at the beginning of each item
+in the colored output, so setting color.decorate.branch to `black`
+will paint that branch name in a plain `black`, even if the previous
+thing on the same output line (e.g. opening parenthesis before the
+list of branch names in `log --decorate` output) is set to be
+painted with `bold` or some other attribute.
+
+pathname::
+	A variable that takes a pathname value can be given a
+	string that begins with "`~/`" or "`~user/`", and the usual
+	tilde expansion happens to such a string: `~/`
+	is expanded to the value of `$HOME`, and `~user/` to the
+	specified user's home directory.
+
 
 Variables
 ~~~~~~~~~
@@ -225,7 +279,13 @@ See linkgit:git-update-index[1].
 +
 The default is true (when core.filemode is not specified in the config file).
 
-core.ignorecase::
+core.hideDotFiles::
+	(Windows-only) If true, mark newly-created directories and files whose
+	name starts with a dot as hidden.  If 'dotGitOnly', only the `.git/`
+	directory is hidden, but no other files starting with a dot.  The
+	default mode is 'dotGitOnly'.
+
+core.ignoreCase::
 	If true, this option enables various workarounds to enable
 	Git to work better on filesystems that are not case sensitive,
 	like FAT. For example, if a directory listing finds
@@ -234,12 +294,12 @@ core.ignorecase::
 	"Makefile".
 +
 The default is false, except linkgit:git-clone[1] or linkgit:git-init[1]
-will probe and set core.ignorecase true if appropriate when the repository
+will probe and set core.ignoreCase true if appropriate when the repository
 is created.
 
-core.precomposeunicode::
+core.precomposeUnicode::
 	This option is only used by Mac OS implementation of Git.
-	When core.precomposeunicode=true, Git reverts the unicode decomposition
+	When core.precomposeUnicode=true, Git reverts the unicode decomposition
 	of filenames done by Mac OS. This is useful when sharing a repository
 	between Mac OS and Linux or Windows.
 	(Git for Windows 1.7.10 or higher is needed, or Git under cygwin 1.7).
@@ -264,13 +324,22 @@ core.trustctime::
 	crawlers and some backup systems).
 	See linkgit:git-update-index[1]. True by default.
 
-core.checkstat::
+core.untrackedCache::
+	Determines what to do about the untracked cache feature of the
+	index. It will be kept, if this variable is unset or set to
+	`keep`. It will automatically be added if set to `true`. And
+	it will automatically be removed, if set to `false`. Before
+	setting it to `true`, you should check that mtime is working
+	properly on your system.
+	See linkgit:git-update-index[1]. `keep` by default.
+
+core.checkStat::
 	Determines which stat fields to match between the index
 	and work tree. The user can set this to 'default' or
 	'minimal'. Default (or explicitly 'default'), is to check
 	all fields, including the sub-second part of mtime and ctime.
 
-core.quotepath::
+core.quotePath::
 	The commands that output paths (e.g. 'ls-files',
 	'diff'), when not given the `-z` option, will quote
 	"unusual" characters in the pathname by enclosing the
@@ -284,9 +353,9 @@ core.quotepath::
 
 core.eol::
 	Sets the line ending type to use in the working directory for
-	files that have the `text` property set.  Alternatives are
-	'lf', 'crlf' and 'native', which uses the platform's native
-	line ending.  The default value is `native`.  See
+	files that have the `text` property set when core.autocrlf is false.
+	Alternatives are 'lf', 'crlf' and 'native', which uses the platform's
+	native line ending.  The default value is `native`.  See
 	linkgit:gitattributes[5] for more information on end-of-line
 	conversion.
 
@@ -409,6 +478,8 @@ false), while all other repositories are assumed to be bare (bare
 
 core.worktree::
 	Set the path to the root of the working tree.
+	If GIT_COMMON_DIR environment variable is set, core.worktree
+	is ignored and not used for determining the root of working tree.
 	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command-line option.
 	The value can be an absolute path or relative to the path to
@@ -431,10 +502,10 @@ repository's usual working tree).
 
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file
-	"$GIT_DIR/logs/<ref>", by appending the new and old
+	"`$GIT_DIR/logs/<ref>`", by appending the new and old
 	SHA-1, the date/time and the reason of the update, but
 	only when the file exists.  If this configuration
-	variable is set to true, missing "$GIT_DIR/logs/<ref>"
+	variable is set to true, missing "`$GIT_DIR/logs/<ref>`"
 	file is automatically created for branch heads (i.e. under
 	refs/heads/), remote refs (i.e. under refs/remotes/),
 	note refs (i.e. under refs/notes/), and the symbolic ref HEAD.
@@ -474,9 +545,9 @@ core.compression::
 	-1 is the zlib default. 0 means no compression,
 	and 1..9 are various speed/size tradeoffs, 9 being slowest.
 	If set, this provides a default to other compression variables,
-	such as 'core.loosecompression' and 'pack.compression'.
+	such as 'core.looseCompression' and 'pack.compression'.
 
-core.loosecompression::
+core.looseCompression::
 	An integer -1..9, indicating the compression level for objects that
 	are not in a pack file. -1 is the zlib default. 0 means no
 	compression, and 1..9 are various speed/size tradeoffs, 9 being
@@ -537,16 +608,15 @@ be delta compressed, but larger binary media files won't be.
 +
 Common unit suffixes of 'k', 'm', or 'g' are supported.
 
-core.excludesfile::
-	In addition to '.gitignore' (per-directory) and
-	'.git/info/exclude', Git looks into this file for patterns
-	of files which are not meant to be tracked.  "`~/`" is expanded
-	to the value of `$HOME` and "`~user/`" to the specified user's
-	home directory. Its default value is $XDG_CONFIG_HOME/git/ignore.
-	If $XDG_CONFIG_HOME is either not set or empty, $HOME/.config/git/ignore
+core.excludesFile::
+	Specifies the pathname to the file that contains patterns to
+	describe paths that are not meant to be tracked, in addition
+	to '.gitignore' (per-directory) and '.git/info/exclude'.
+	Defaults to `$XDG_CONFIG_HOME/git/ignore`.
+	If `$XDG_CONFIG_HOME` is either not set or empty, `$HOME/.config/git/ignore`
 	is used instead. See linkgit:gitignore[5].
 
-core.askpass::
+core.askPass::
 	Some commands (e.g. svn and http interfaces) that interactively
 	ask for a password can be told to use an external program given
 	via the value of this variable. Can be overridden by the 'GIT_ASKPASS'
@@ -555,13 +625,30 @@ core.askpass::
 	prompt. The external program shall be given a suitable prompt as
 	command-line argument and write the password on its STDOUT.
 
-core.attributesfile::
+core.attributesFile::
 	In addition to '.gitattributes' (per-directory) and
 	'.git/info/attributes', Git looks into this file for attributes
 	(see linkgit:gitattributes[5]). Path expansions are made the same
-	way as for `core.excludesfile`. Its default value is
-	$XDG_CONFIG_HOME/git/attributes. If $XDG_CONFIG_HOME is either not
-	set or empty, $HOME/.config/git/attributes is used instead.
+	way as for `core.excludesFile`. Its default value is
+	`$XDG_CONFIG_HOME/git/attributes`. If `$XDG_CONFIG_HOME` is either not
+	set or empty, `$HOME/.config/git/attributes` is used instead.
+
+core.hooksPath::
+	By default Git will look for your hooks in the
+	'$GIT_DIR/hooks' directory. Set this to different path,
+	e.g. '/etc/git/hooks', and Git will try to find your hooks in
+	that directory, e.g. '/etc/git/hooks/pre-receive' instead of
+	in '$GIT_DIR/hooks/pre-receive'.
++
+The path can be either absolute or relative. A relative path is
+taken as relative to the directory where the hooks are run (see
+the "DESCRIPTION" section of linkgit:githooks[5]).
++
+This configuration variable is useful in cases where you'd like to
+centrally configure your Git hooks instead of configuring them on a
+per-repository basis, or as a more flexible and centralized
+alternative to having an `init.templateDir` where you've changed
+default hooks.
 
 core.editor::
 	Commands such as `commit` and `tag` that lets you edit
@@ -569,7 +656,7 @@ core.editor::
 	variable when it is set, and the environment variable
 	`GIT_EDITOR` is not set.  See linkgit:git-var[1].
 
-core.commentchar::
+core.commentChar::
 	Commands such as `commit` and `tag` that lets you edit
 	messages consider a line that begins with this character
 	commented, and removes them after the editor returns
@@ -577,6 +664,12 @@ core.commentchar::
 +
 If set to "auto", `git-commit` would select a character that is not
 the beginning character of any line in existing commit messages.
+
+core.packedRefsTimeout::
+	The length of time, in milliseconds, to retry when trying to
+	lock the `packed-refs` file. Value 0 means not to retry at
+	all; -1 means to try indefinitely. Default is 1000 (i.e.,
+	retry for 1 second).
 
 sequence.editor::
 	Text editor used by `git rebase -i` for editing the rebase instruction file.
@@ -638,7 +731,7 @@ core.whitespace::
   is relevant for `indent-with-non-tab` and when Git fixes `tab-in-indent`
   errors. The default tab width is 8. Allowed values are 1 to 63.
 
-core.fsyncobjectfiles::
+core.fsyncObjectFiles::
 	This boolean will enable 'fsync()' when writing object files.
 +
 This is a total waste of time and effort on a filesystem that orders
@@ -646,7 +739,7 @@ data writes properly, but can be useful for filesystems that do not use
 journalling (traditional UNIX filesystems) or that only journal metadata
 and not file contents (OS X's HFS+, or Linux ext3 with "data=writeback").
 
-core.preloadindex::
+core.preloadIndex::
 	Enable parallel index preload for operations like 'git diff'
 +
 This can speed up operations like 'git diff' and 'git status' especially
@@ -683,14 +776,13 @@ core.abbrev::
 	for abbreviated object names to stay unique for sufficiently long
 	time.
 
-add.ignore-errors::
 add.ignoreErrors::
+add.ignore-errors (deprecated)::
 	Tells 'git add' to continue adding files when some files cannot be
 	added due to indexing errors. Equivalent to the '--ignore-errors'
-	option of linkgit:git-add[1].  Older versions of Git accept only
-	`add.ignore-errors`, which does not follow the usual naming
-	convention for configuration variables.  Newer versions of Git
-	honor `add.ignoreErrors` as well.
+	option of linkgit:git-add[1].  `add.ignore-errors` is deprecated,
+	as it does not follow the usual naming convention for configuration
+	variables.
 
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
@@ -718,7 +810,15 @@ am.keepcr::
 	by giving '--no-keep-cr' from the command line.
 	See linkgit:git-am[1], linkgit:git-mailsplit[1].
 
-apply.ignorewhitespace::
+am.threeWay::
+	By default, `git am` will fail if the patch does not apply cleanly. When
+	set to true, this setting tells `git am` to fall back on 3-way merge if
+	the patch records the identity of blobs it is supposed to apply to and
+	we have those blobs available locally (equivalent to giving the `--3way`
+	option from the command line). Defaults to `false`.
+	See linkgit:git-am[1].
+
+apply.ignoreWhitespace::
 	When set to 'change', tells 'git apply' to ignore changes in
 	whitespace, in the same way as the '--ignore-space-change'
 	option.
@@ -730,7 +830,7 @@ apply.whitespace::
 	Tells 'git apply' how to handle whitespaces, in the same way
 	as the '--whitespace' option. See linkgit:git-apply[1].
 
-branch.autosetupmerge::
+branch.autoSetupMerge::
 	Tells 'git branch' and 'git checkout' to set up new branches
 	so that linkgit:git-pull[1] will appropriately merge from the
 	starting point branch. Note that even if this option is not set,
@@ -742,7 +842,7 @@ branch.autosetupmerge::
 	local branch or remote-tracking
 	branch. This option defaults to true.
 
-branch.autosetuprebase::
+branch.autoSetupRebase::
 	When a new branch is created with 'git branch' or 'git checkout'
 	that tracks another branch, this variable tells Git to set
 	up pull to rebase instead of merge (see "branch.<name>.rebase").
@@ -753,27 +853,27 @@ branch.autosetuprebase::
 	remote-tracking branches.
 	When `always`, rebase will be set to true for all tracking
 	branches.
-	See "branch.autosetupmerge" for details on how to set up a
+	See "branch.autoSetupMerge" for details on how to set up a
 	branch to track another branch.
 	This option defaults to never.
 
 branch.<name>.remote::
 	When on branch <name>, it tells 'git fetch' and 'git push'
 	which remote to fetch from/push to.  The remote to push to
-	may be overridden with `remote.pushdefault` (for all branches).
+	may be overridden with `remote.pushDefault` (for all branches).
 	The remote to push to, for the current branch, may be further
-	overridden by `branch.<name>.pushremote`.  If no remote is
+	overridden by `branch.<name>.pushRemote`.  If no remote is
 	configured, or if you are not on any branch, it defaults to
-	`origin` for fetching and `remote.pushdefault` for pushing.
+	`origin` for fetching and `remote.pushDefault` for pushing.
 	Additionally, `.` (a period) is the current local repository
 	(a dot-repository), see `branch.<name>.merge`'s final note below.
 
-branch.<name>.pushremote::
+branch.<name>.pushRemote::
 	When on branch <name>, it overrides `branch.<name>.remote` for
-	pushing.  It also overrides `remote.pushdefault` for pushing
+	pushing.  It also overrides `remote.pushDefault` for pushing
 	from branch <name>.  When you pull from one place (e.g. your
 	upstream) and push to another place (e.g. your own publishing
-	repository), you would want to set `remote.pushdefault` to
+	repository), you would want to set `remote.pushDefault` to
 	specify the remote to push to for all branches, and use this
 	option to override it for a specific branch.
 
@@ -795,7 +895,7 @@ branch.<name>.merge::
 	branch.<name>.merge to the desired branch, and use the relative path
 	setting `.` (a period) for branch.<name>.remote.
 
-branch.<name>.mergeoptions::
+branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and
 	supported options are the same as those of linkgit:git-merge[1], but
 	option values containing whitespace characters are currently not
@@ -807,9 +907,11 @@ branch.<name>.rebase::
 	"git pull" is run. See "pull.rebase" for doing this in a non
 	branch-specific manner.
 +
-	When preserve, also pass `--preserve-merges` along to 'git rebase'
-	so that locally committed merge commits will not be flattened
-	by running 'git pull'.
+When preserve, also pass `--preserve-merges` along to 'git rebase'
+so that locally committed merge commits will not be flattened
+by running 'git pull'.
++
+When the value is `interactive`, the rebase is run in interactive mode.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand the implications (see linkgit:git-rebase[1]
@@ -847,20 +949,6 @@ color.branch.<slot>::
 	`remote` (a remote-tracking branch in refs/remotes/),
 	`upstream` (upstream tracking branch), `plain` (other
 	refs).
-+
-The value for these configuration variables is a list of colors (at most
-two) and attributes (at most one), separated by spaces.  The colors
-accepted are `normal`, `black`, `red`, `green`, `yellow`, `blue`,
-`magenta`, `cyan` and `white`; the attributes are `bold`, `dim`, `ul`,
-`blink` and `reverse`.  The first color given is the foreground; the
-second is the background.  The position of the attribute, if any,
-doesn't matter. Attributes may be turned off specifically by prefixing
-them with `no` (e.g., `noreverse`, `noul`, etc).
-+
-Colors (foreground and background) may also be given as numbers between
-0 and 255; these use ANSI 256-color mode (but note that not all
-terminals may support this).  If your terminal supports it, you may also
-specify 24-bit RGB values as hex, like `#ff0ab3`.
 
 color.diff::
 	Whether to use ANSI escape sequences to add color to patches.
@@ -877,11 +965,11 @@ command line with the `--color[=<when>]` option.
 color.diff.<slot>::
 	Use customized color for diff colorization.  `<slot>` specifies
 	which part of the patch to use the specified color, and is one
-	of `plain` (context text), `meta` (metainformation), `frag`
+	of `context` (context text - `plain` is a historical synonym),
+	`meta` (metainformation), `frag`
 	(hunk header), 'func' (function in hunk header), `old` (removed lines),
 	`new` (added lines), `commit` (commit headers), or `whitespace`
-	(highlighting whitespace errors). The values of these variables may be
-	specified as in color.branch.<slot>.
+	(highlighting whitespace errors).
 
 color.decorate.<slot>::
 	Use customized color for 'git log --decorate' output.  `<slot>` is one
@@ -918,8 +1006,6 @@ color.grep.<slot>::
 	separators between fields on a line (`:`, `-`, and `=`)
 	and between hunks (`--`)
 --
-+
-The values of these variables may be specified as in color.branch.<slot>.
 
 color.interactive::
 	When set to `always`, always use colors for interactive prompts
@@ -932,14 +1018,13 @@ color.interactive.<slot>::
 	Use customized color for 'git add --interactive' and 'git clean
 	--interactive' output. `<slot>` may be `prompt`, `header`, `help`
 	or `error`, for four distinct types of normal output from
-	interactive commands.  The values of these variables may be
-	specified as in color.branch.<slot>.
+	interactive commands.
 
 color.pager::
 	A boolean to enable/disable colored output when the pager is in
 	use (default is true).
 
-color.showbranch::
+color.showBranch::
 	A boolean to enable/disable color in the output of
 	linkgit:git-show-branch[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
@@ -957,10 +1042,10 @@ color.status.<slot>::
 	`added` or `updated` (files which are added but not committed),
 	`changed` (files which are changed but not added in the index),
 	`untracked` (files which are not tracked by Git),
-	`branch` (the current branch), or
+	`branch` (the current branch),
 	`nobranch` (the color the 'no branch' warning is shown in, defaulting
-	to red). The values of these variables may be specified as in
-	color.branch.<slot>.
+	to red), or
+	`unmerged` (files which have unmerged changes).
 
 color.ui::
 	This variable determines the default value for variables such
@@ -1039,7 +1124,7 @@ commit.cleanup::
 	have to remove the help lines that begin with `#` in the commit log
 	template yourself, if you do this).
 
-commit.gpgsign::
+commit.gpgSign::
 
 	A boolean to specify whether all commits should be GPG signed.
 	Use of this option when doing operations such as rebase can
@@ -1053,15 +1138,19 @@ commit.status::
 	message.  Defaults to true.
 
 commit.template::
-	Specify a file to use as the template for new commit messages.
-	"`~/`" is expanded to the value of `$HOME` and "`~user/`" to the
-	specified user's home directory.
+	Specify the pathname of a file to use as the template for
+	new commit messages.
+
+commit.verbose::
+	A boolean or int to specify the level of verbose with `git commit`.
+	See linkgit:git-commit[1].
 
 credential.helper::
 	Specify an external helper to be called when a username or
 	password credential is needed; the helper may consult external
-	storage to avoid prompting the user for the credentials. See
-	linkgit:gitcredentials[7] for details.
+	storage to avoid prompting the user for the credentials. Note
+	that multiple helpers may be defined. See linkgit:gitcredentials[7]
+	for details.
 
 credential.useHttpPath::
 	When acquiring credentials, consider the "path" component of an http
@@ -1079,6 +1168,9 @@ credential.<url>.*::
 	would set the default username only for https connections to
 	example.com. See linkgit:gitcredentials[7] for details on how URLs are
 	matched.
+
+credentialCache.ignoreSIGHUP::
+	Tell git-credential-cache--daemon to ignore SIGHUP, instead of quitting.
 
 include::diff-config.txt[]
 
@@ -1152,7 +1244,7 @@ format.cc::
 	by mail.  See the --to and --cc options in
 	linkgit:git-format-patch[1].
 
-format.subjectprefix::
+format.subjectPrefix::
 	The default for format-patch is to output files with the '[PATCH]'
 	subject prefix. Use this variable to change that prefix.
 
@@ -1162,7 +1254,7 @@ format.signature::
 	Set this variable to the empty string ("") to suppress
 	signature generation.
 
-format.signaturefile::
+format.signatureFile::
 	Works just like format.signature except the contents of the
 	file specified by this variable will be used as the signature.
 
@@ -1186,7 +1278,7 @@ format.thread::
 	A true boolean value is the same as `shallow`, and a false
 	value disables threading.
 
-format.signoff::
+format.signOff::
 	A boolean value which lets you enable the `-s/--signoff` option of
 	format-patch by default. *Note:* Adding the Signed-off-by: line to a
 	patch should be a conscious act and means that you certify you have
@@ -1198,6 +1290,14 @@ format.coverLetter::
 	format-patch is invoked, but in addition can be set to "auto", to
 	generate a cover-letter only when there's more than one patch.
 
+format.outputDirectory::
+	Set a custom directory to store the resulting files instead of the
+	current working directory.
+
+format.useAutoBase::
+	A boolean value which lets you enable the `--base=auto` option of
+	format-patch by default.
+
 filter.<driver>.clean::
 	The command which is used to convert the content of a worktree
 	file to a blob upon checkin.  See linkgit:gitattributes[5] for
@@ -1207,6 +1307,25 @@ filter.<driver>.smudge::
 	The command which is used to convert the content of a blob
 	object to a worktree file upon checkout.  See
 	linkgit:gitattributes[5] for details.
+
+fsck.<msg-id>::
+	Allows overriding the message type (error, warn or ignore) of a
+	specific message ID such as `missingEmail`.
++
+For convenience, fsck prefixes the error/warning with the message ID,
+e.g.  "missingEmail: invalid author/committer line - missing email" means
+that setting `fsck.missingEmail = ignore` will hide that issue.
++
+This feature is intended to support working with legacy repositories
+which cannot be repaired without disruptive changes.
+
+fsck.skipList::
+	The path to a sorted list of object names (i.e. one SHA-1 per
+	line) that are known to be broken in a non-fatal way and should
+	be ignored. This feature is useful when an established project
+	should be accepted despite early commits containing errors that
+	can be safely ignored such as invalid committer email addresses.
+	Note: corrupt objects cannot be skipped with this setting.
 
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
@@ -1225,17 +1344,17 @@ gc.auto::
 	light-weight garbage collection from time to time.  The
 	default value is 6700.  Setting this to 0 disables it.
 
-gc.autopacklimit::
+gc.autoPackLimit::
 	When there are more than this many packs that are not
 	marked with `*.keep` file in the repository, `git gc
 	--auto` consolidates them into one larger pack.  The
 	default	value is 50.  Setting this to 0 disables it.
 
-gc.autodetach::
+gc.autoDetach::
 	Make `git gc --auto` return immediately and run in background
 	if the system supports it. Default is true.
 
-gc.packrefs::
+gc.packRefs::
 	Running `git pack-refs` in a repository renders it
 	unclonable by Git versions prior to 1.5.1.2 over dumb
 	transports such as HTTP.  This variable determines whether
@@ -1243,38 +1362,51 @@ gc.packrefs::
 	to enable it within all non-bare repos or it can be set to a
 	boolean value.  The default is `true`.
 
-gc.pruneexpire::
+gc.pruneExpire::
 	When 'git gc' is run, it will call 'prune --expire 2.weeks.ago'.
 	Override the grace period with this config variable.  The value
-	"now" may be used to disable this  grace period and always prune
-	unreachable objects immediately.
+	"now" may be used to disable this grace period and always prune
+	unreachable objects immediately, or "never" may be used to
+	suppress pruning.
 
-gc.reflogexpire::
-gc.<pattern>.reflogexpire::
+gc.worktreePruneExpire::
+	When 'git gc' is run, it calls
+	'git worktree prune --expire 3.months.ago'.
+	This config variable can be used to set a different grace
+	period. The value "now" may be used to disable the grace
+	period and prune `$GIT_DIR/worktrees` immediately, or "never"
+	may be used to suppress pruning.
+
+gc.reflogExpire::
+gc.<pattern>.reflogExpire::
 	'git reflog expire' removes reflog entries older than
-	this time; defaults to 90 days.  With "<pattern>" (e.g.
+	this time; defaults to 90 days. The value "now" expires all
+	entries immediately, and "never" suppresses expiration
+	altogether. With "<pattern>" (e.g.
 	"refs/stash") in the middle the setting applies only to
 	the refs that match the <pattern>.
 
-gc.reflogexpireunreachable::
-gc.<ref>.reflogexpireunreachable::
+gc.reflogExpireUnreachable::
+gc.<pattern>.reflogExpireUnreachable::
 	'git reflog expire' removes reflog entries older than
 	this time and are not reachable from the current tip;
-	defaults to 30 days.  With "<pattern>" (e.g. "refs/stash")
+	defaults to 30 days. The value "now" expires all entries
+	immediately, and "never" suppresses expiration altogether.
+	With "<pattern>" (e.g. "refs/stash")
 	in the middle, the setting applies only to the refs that
 	match the <pattern>.
 
-gc.rerereresolved::
+gc.rerereResolved::
 	Records of conflicted merge you resolved earlier are
 	kept for this many days when 'git rerere gc' is run.
 	The default is 60 days.  See linkgit:git-rerere[1].
 
-gc.rerereunresolved::
+gc.rerereUnresolved::
 	Records of conflicted merge you have not resolved are
 	kept for this many days when 'git rerere gc' is run.
 	The default is 15 days.  See linkgit:git-rerere[1].
 
-gitcvs.commitmsgannotation::
+gitcvs.commitMsgAnnotation::
 	Append this string to each commit message. Set to empty string
 	to disable this feature. Defaults to "via git-CVS emulator".
 
@@ -1282,7 +1414,7 @@ gitcvs.enabled::
 	Whether the CVS server interface is enabled for this repository.
 	See linkgit:git-cvsserver[1].
 
-gitcvs.logfile::
+gitcvs.logFile::
 	Path to a log file where the CVS server interface well... logs
 	various stuff. See linkgit:git-cvsserver[1].
 
@@ -1294,10 +1426,10 @@ gitcvs.usecrlfattr::
 	treat it as text. If they suppress text conversion, the file
 	will be set with '-kb' mode, which suppresses any newline munging
 	the client might otherwise do. If the attributes do not allow
-	the file type to be determined, then 'gitcvs.allbinary' is
+	the file type to be determined, then 'gitcvs.allBinary' is
 	used. See linkgit:gitattributes[5].
 
-gitcvs.allbinary::
+gitcvs.allBinary::
 	This is used if 'gitcvs.usecrlfattr' does not resolve
 	the correct '-kb' mode to use. If true, all
 	unresolved files are sent to the client in
@@ -1307,7 +1439,7 @@ gitcvs.allbinary::
 	then the contents of the file are examined to decide if
 	it is binary, similar to 'core.autocrlf'.
 
-gitcvs.dbname::
+gitcvs.dbName::
 	Database used by git-cvsserver to cache revision information
 	derived from the Git repository. The exact meaning depends on the
 	used database driver, for SQLite (which is the default driver) this
@@ -1315,7 +1447,7 @@ gitcvs.dbname::
 	linkgit:git-cvsserver[1] for details). May not contain semicolons (`;`).
 	Default: '%Ggitcvs.%m.sqlite'
 
-gitcvs.dbdriver::
+gitcvs.dbDriver::
 	Used Perl DBI driver. You can specify any available driver
 	for this here, but it might not work. git-cvsserver is tested
 	with 'DBD::SQLite', reported to work with 'DBD::Pg', and
@@ -1323,10 +1455,10 @@ gitcvs.dbdriver::
 	May not contain double colons (`:`). Default: 'SQLite'.
 	See linkgit:git-cvsserver[1].
 
-gitcvs.dbuser, gitcvs.dbpass::
-	Database user and password. Only useful if setting 'gitcvs.dbdriver',
+gitcvs.dbUser, gitcvs.dbPass::
+	Database user and password. Only useful if setting 'gitcvs.dbDriver',
 	since SQLite has no concept of database users and/or passwords.
-	'gitcvs.dbuser' supports variable substitution (see
+	'gitcvs.dbUser' supports variable substitution (see
 	linkgit:git-cvsserver[1] for details).
 
 gitcvs.dbTableNamePrefix::
@@ -1337,7 +1469,7 @@ gitcvs.dbTableNamePrefix::
 	characters will be replaced with underscores.
 
 All gitcvs variables except for 'gitcvs.usecrlfattr' and
-'gitcvs.allbinary' can also be specified as
+'gitcvs.allBinary' can also be specified as
 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
@@ -1355,7 +1487,7 @@ gitweb.highlight::
 gitweb.patches::
 gitweb.pickaxe::
 gitweb.remote_heads::
-gitweb.showsizes::
+gitweb.showSizes::
 gitweb.snapshot::
 	See linkgit:gitweb.conf[5] for description.
 
@@ -1373,27 +1505,35 @@ grep.extendedRegexp::
 	option is ignored when the 'grep.patternType' option is set to a value
 	other than 'default'.
 
+grep.threads::
+	Number of grep worker threads to use.
+	See `grep.threads` in linkgit:git-grep[1] for more information.
+
+grep.fallbackToNoIndex::
+	If set to true, fall back to git grep --no-index if git grep
+	is executed outside of a git repository.  Defaults to false.
+
 gpg.program::
-	Use this custom program instead of "gpg" found on $PATH when
+	Use this custom program instead of "`gpg`" found on `$PATH` when
 	making or verifying a PGP signature. The program must support the
 	same command-line interface as GPG, namely, to verify a detached
-	signature, "gpg --verify $file - <$signature" is run, and the
+	signature, "`gpg --verify $file - <$signature`" is run, and the
 	program is expected to signal a good signature by exiting with
 	code 0, and to generate an ASCII-armored detached signature, the
-	standard input of "gpg -bsau $key" is fed with the contents to be
+	standard input of "`gpg -bsau $key`" is fed with the contents to be
 	signed, and the program is expected to send the result to its
 	standard output.
 
-gui.commitmsgwidth::
+gui.commitMsgWidth::
 	Defines how wide the commit message window is in the
 	linkgit:git-gui[1]. "75" is the default.
 
-gui.diffcontext::
+gui.diffContext::
 	Specifies how many context lines should be used in calls to diff
 	made by the linkgit:git-gui[1]. The default is "5".
 
-gui.displayuntracked::
-	Determines if linkgit::git-gui[1] shows untracked files
+gui.displayUntracked::
+	Determines if linkgit:git-gui[1] shows untracked files
 	in the file list. The default is "true".
 
 gui.encoding::
@@ -1404,16 +1544,16 @@ gui.encoding::
 	If this option is not set, the tools default to the
 	locale encoding.
 
-gui.matchtrackingbranch::
+gui.matchTrackingBranch::
 	Determines if new branches created with linkgit:git-gui[1] should
 	default to tracking remote branches with matching names or
 	not. Default: "false".
 
-gui.newbranchtemplate::
+gui.newBranchTemplate::
 	Is used as suggested name when creating new branches using the
 	linkgit:git-gui[1].
 
-gui.pruneduringfetch::
+gui.pruneDuringFetch::
 	"true" if linkgit:git-gui[1] should prune remote-tracking branches when
 	performing a fetch. The default value is "false".
 
@@ -1421,17 +1561,17 @@ gui.trustmtime::
 	Determines if linkgit:git-gui[1] should trust the file modification
 	timestamp or not. By default the timestamps are not trusted.
 
-gui.spellingdictionary::
+gui.spellingDictionary::
 	Specifies the dictionary used for spell checking commit messages in
 	the linkgit:git-gui[1]. When set to "none" spell checking is turned
 	off.
 
-gui.fastcopyblame::
+gui.fastCopyBlame::
 	If true, 'git gui blame' uses `-C` instead of `-C -C` for original
 	location detection. It makes blame significantly faster on huge
 	repositories at the expense of less thorough copy detection.
 
-gui.copyblamethreshold::
+gui.copyBlameThreshold::
 	Specifies the threshold to use in 'git gui blame' original location
 	detection, measured in alphanumeric characters. See the
 	linkgit:git-blame[1] manual for more information on copy detection.
@@ -1451,22 +1591,22 @@ guitool.<name>.cmd::
 	'FILENAME', and the name of the current branch as 'CUR_BRANCH' (if
 	the head is detached, 'CUR_BRANCH' is empty).
 
-guitool.<name>.needsfile::
+guitool.<name>.needsFile::
 	Run the tool only if a diff is selected in the GUI. It guarantees
 	that 'FILENAME' is not empty.
 
-guitool.<name>.noconsole::
+guitool.<name>.noConsole::
 	Run the command silently, without creating a window to display its
 	output.
 
-guitool.<name>.norescan::
+guitool.<name>.noRescan::
 	Don't rescan the working directory for changes after the tool
 	finishes execution.
 
 guitool.<name>.confirm::
 	Show a confirmation dialog before actually running the tool.
 
-guitool.<name>.argprompt::
+guitool.<name>.argPrompt::
 	Request a string argument from the user, and pass it to the tool
 	through the 'ARGS' environment variable. Since requesting an
 	argument implies confirmation, the 'confirm' option has no effect
@@ -1474,13 +1614,13 @@ guitool.<name>.argprompt::
 	the dialog uses a built-in generic prompt; otherwise the exact
 	value of the variable is used.
 
-guitool.<name>.revprompt::
+guitool.<name>.revPrompt::
 	Request a single valid revision from the user, and set the
 	'REVISION' environment variable. In other aspects this option
-	is similar to 'argprompt', and can be used together with it.
+	is similar to 'argPrompt', and can be used together with it.
 
-guitool.<name>.revunmerged::
-	Show only unmerged branches in the 'revprompt' subdialog.
+guitool.<name>.revUnmerged::
+	Show only unmerged branches in the 'revPrompt' subdialog.
 	This is useful for tools similar to merge or rebase, but not
 	for things like checkout or reset.
 
@@ -1490,7 +1630,7 @@ guitool.<name>.title::
 
 guitool.<name>.prompt::
 	Specifies the general prompt string to display at the top of
-	the dialog, before subsections for 'argprompt' and 'revprompt'.
+	the dialog, before subsections for 'argPrompt' and 'revPrompt'.
 	The default value includes the actual command.
 
 help.browser::
@@ -1502,7 +1642,7 @@ help.format::
 	Values 'man', 'info', 'web' and 'html' are supported. 'man' is
 	the default. 'web' and 'html' are the same.
 
-help.autocorrect::
+help.autoCorrect::
 	Automatically correct and execute mistyped commands after
 	waiting for the given number of deciseconds (0.1 sec). If more
 	than one command can be deduced from the entered text, nothing
@@ -1511,7 +1651,7 @@ help.autocorrect::
 	value is 0 - the command will be just shown but not executed.
 	This is the default.
 
-help.htmlpath::
+help.htmlPath::
 	Specify the path where the HTML documentation resides. File system paths
 	and URLs are supported. HTML pages will be prefixed with this path when
 	help is displayed in the 'web' format. This defaults to the documentation
@@ -1519,21 +1659,95 @@ help.htmlpath::
 
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy',
-	'https_proxy', and 'all_proxy' environment variables (see
-	`curl(1)`).  This can be overridden on a per-remote basis; see
-	remote.<name>.proxy
+	'https_proxy', and 'all_proxy' environment variables (see `curl(1)`). In
+	addition to the syntax understood by curl, it is possible to specify a
+	proxy string with a user name but no password, in which case git will
+	attempt to acquire one in the same way it does for other credentials. See
+	linkgit:gitcredentials[7] for more information. The syntax thus is
+	'[protocol://][user[:password]@]proxyhost[:port]'. This can be overridden
+	on a per-remote basis; see remote.<name>.proxy
 
-http.cookiefile::
-	File containing previously stored cookie lines which should be used
+http.proxyAuthMethod::
+	Set the method with which to authenticate against the HTTP proxy. This
+	only takes effect if the configured proxy string contains a user name part
+	(i.e. is of the form 'user@host' or 'user@host:port'). This can be
+	overridden on a per-remote basis; see `remote.<name>.proxyAuthMethod`.
+	Both can be overridden by the 'GIT_HTTP_PROXY_AUTHMETHOD' environment
+	variable.  Possible values are:
++
+--
+* `anyauth` - Automatically pick a suitable authentication method. It is
+  assumed that the proxy answers an unauthenticated request with a 407
+  status code and one or more Proxy-authenticate headers with supported
+  authentication methods. This is the default.
+* `basic` - HTTP Basic authentication
+* `digest` - HTTP Digest authentication; this prevents the password from being
+  transmitted to the proxy in clear text
+* `negotiate` - GSS-Negotiate authentication (compare the --negotiate option
+  of `curl(1)`)
+* `ntlm` - NTLM authentication (compare the --ntlm option of `curl(1)`)
+--
+
+http.emptyAuth::
+	Attempt authentication without seeking a username or password.  This
+	can be used to attempt GSS-Negotiate authentication without specifying
+	a username in the URL, as libcurl normally requires a username for
+	authentication.
+
+http.extraHeader::
+	Pass an additional HTTP header when communicating with a server.  If
+	more than one such entry exists, all of them are added as extra
+	headers.  To allow overriding the settings inherited from the system
+	config, an empty value will reset the extra headers to the empty list.
+
+http.cookieFile::
+	The pathname of a file containing previously stored cookie lines,
+	which should be used
 	in the Git http session, if they match the server. The file format
 	of the file to read cookies from should be plain HTTP headers or
-	the Netscape/Mozilla cookie file format (see linkgit:curl[1]).
-	NOTE that the file specified with http.cookiefile is only used as
+	the Netscape/Mozilla cookie file format (see `curl(1)`).
+	NOTE that the file specified with http.cookieFile is used only as
 	input unless http.saveCookies is set.
 
-http.savecookies::
+http.saveCookies::
 	If set, store cookies received during requests to the file specified by
-	http.cookiefile. Has no effect if http.cookiefile is unset.
+	http.cookieFile. Has no effect if http.cookieFile is unset.
+
+http.sslVersion::
+	The SSL version to use when negotiating an SSL connection, if you
+	want to force the default.  The available and default version
+	depend on whether libcurl was built against NSS or OpenSSL and the
+	particular configuration of the crypto library in use. Internally
+	this sets the 'CURLOPT_SSL_VERSION' option; see the libcurl
+	documentation for more details on the format of this option and
+	for the ssl version supported. Actually the possible values of
+	this option are:
+
+	- sslv2
+	- sslv3
+	- tlsv1
+	- tlsv1.0
+	- tlsv1.1
+	- tlsv1.2
+
++
+Can be overridden by the 'GIT_SSL_VERSION' environment variable.
+To force git to use libcurl's default ssl version and ignore any
+explicit http.sslversion option, set 'GIT_SSL_VERSION' to the
+empty string.
+
+http.sslCipherList::
+  A list of SSL ciphers to use when negotiating an SSL connection.
+  The available ciphers depend on whether libcurl was built against
+  NSS or OpenSSL and the particular configuration of the crypto
+  library in use.  Internally this sets the 'CURLOPT_SSL_CIPHER_LIST'
+  option; see the libcurl documentation for more details on the format
+  of this list.
++
+Can be overridden by the 'GIT_SSL_CIPHER_LIST' environment variable.
+To force git to use libcurl's default cipher list and ignore any
+explicit http.sslCipherList option, set 'GIT_SSL_CIPHER_LIST' to the
+empty string.
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
@@ -1565,6 +1779,14 @@ http.sslCAPath::
 	Path containing files with the CA certificates to verify the peer
 	with when fetching or pushing over HTTPS. Can be overridden
 	by the 'GIT_SSL_CAPATH' environment variable.
+
+http.pinnedpubkey::
+	Public key of the https service. It may either be the filename of
+	a PEM or DER encoded public key file or a string starting with
+	'sha256//' followed by the base64 encoded sha256 hash of the
+	public key. See also libcurl 'CURLOPT_PINNEDPUBLICKEY'. git will
+	exit with an error if this option is set but not supported by
+	cURL.
 
 http.sslTry::
 	Attempt to use AUTH SSL/TLS and encrypted data transfers
@@ -1604,7 +1826,7 @@ http.noEPSV::
 	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
 	environment variable. Default is false (curl will use EPSV).
 
-http.useragent::
+http.userAgent::
 	The HTTP USER_AGENT string presented to an HTTP server.  The default
 	value represents the version of the client Git such as git/1.7.1.
 	This option allows you to override this value to a more common value
@@ -1677,7 +1899,7 @@ index.version::
 	Specify the version with which new index files should be
 	initialized.  This does not affect existing repositories.
 
-init.templatedir::
+init.templateDir::
 	Specify the directory from which templates will be copied.
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
@@ -1693,7 +1915,7 @@ instaweb.local::
 	If true the web server started by linkgit:git-instaweb[1] will
 	be bound to the local IP (127.0.0.1).
 
-instaweb.modulepath::
+instaweb.modulePath::
 	The default module path for linkgit:git-instaweb[1] to use
 	instead of /usr/lib/apache2/modules.  Only used if httpd
 	is Apache.
@@ -1702,7 +1924,7 @@ instaweb.port::
 	The port number to bind the gitweb httpd to. See
 	linkgit:git-instaweb[1].
 
-interactive.singlekey::
+interactive.singleKey::
 	In interactive commands, allow the user to provide one-letter
 	input with a single key (i.e., without hitting enter).
 	Currently this is used by the `--patch` mode of
@@ -1710,6 +1932,14 @@ interactive.singlekey::
 	linkgit:git-reset[1], and linkgit:git-stash[1]. Note that this
 	setting is silently ignored if portable keystroke input
 	is not available; requires the Perl module Term::ReadKey.
+
+interactive.diffFilter::
+	When an interactive command (such as `git add --patch`) shows
+	a colorized diff, git will pipe the diff through the shell
+	command defined by this configuration variable. The command may
+	mark up the diff further for human consumption, provided that it
+	retains a one-to-one correspondence with the lines in the
+	original diff. Defaults to disabled (no filtering).
 
 log.abbrevCommit::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
@@ -1719,18 +1949,25 @@ log.abbrevCommit::
 log.date::
 	Set the default date-time mode for the 'log' command.
 	Setting a value for log.date is similar to using 'git log''s
-	`--date` option.  Possible values are `relative`, `local`,
-	`default`, `iso`, `rfc`, and `short`; see linkgit:git-log[1]
-	for details.
+	`--date` option.  See linkgit:git-log[1] for details.
 
 log.decorate::
 	Print out the ref names of any commits that are shown by the log
 	command. If 'short' is specified, the ref name prefixes 'refs/heads/',
 	'refs/tags/' and 'refs/remotes/' will not be printed. If 'full' is
 	specified, the full ref name (including prefix) will be printed.
-	This is the same as the log commands '--decorate' option.
+	If 'auto' is specified, then if the output is going to a terminal,
+	the ref names are shown as if 'short' were given, otherwise no ref
+	names are shown. This is the same as the '--decorate' option
+	of the `git log`.
 
-log.showroot::
+log.follow::
+	If `true`, `git log` will act as if the `--follow` option was used when
+	a single <path> is given.  This has the same limitations as `--follow`,
+	i.e. it cannot be used to follow multiple files and does not work well
+	on non-linear history.
+
+log.showRoot::
 	If true, the initial commit will be shown as a big creation event.
 	This is equivalent to a diff against an empty tree.
 	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
@@ -1739,6 +1976,13 @@ log.showroot::
 log.mailmap::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
 	linkgit:git-whatchanged[1] assume `--use-mailmap`.
+
+mailinfo.scissors::
+	If true, makes linkgit:git-mailinfo[1] (and therefore
+	linkgit:git-am[1]) act by default as if the --scissors option
+	was provided on the command-line. When active, this features
+	removes everything from the message body before a scissors
+	line (i.e. consisting mainly of ">8", "8<" and "-").
 
 mailmap.file::
 	The location of an augmenting mailmap file. The default
@@ -1825,6 +2069,18 @@ mergetool.writeToTemp::
 mergetool.prompt::
 	Prompt before each invocation of the merge resolution program.
 
+notes.mergeStrategy::
+	Which merge strategy to choose by default when resolving notes
+	conflicts.  Must be one of `manual`, `ours`, `theirs`, `union`, or
+	`cat_sort_uniq`.  Defaults to `manual`.  See "NOTES MERGE STRATEGIES"
+	section of linkgit:git-notes[1] for more information on each strategy.
+
+notes.<name>.mergeStrategy::
+	Which merge strategy to choose when doing a notes merge into
+	refs/notes/<name>.  This overrides the more general
+	"notes.mergeStrategy".  See the "NOTES MERGE STRATEGIES" section in
+	linkgit:git-notes[1] for more information on the available strategies.
+
 notes.displayRef::
 	The (fully qualified) refname from which to show notes when
 	showing commit messages.  The value of this variable can be set
@@ -1853,8 +2109,8 @@ notes.rewriteMode::
 	When copying notes during a rewrite (see the
 	"notes.rewrite.<command>" option), determines what to do if
 	the target commit already has a note.  Must be one of
-	`overwrite`, `concatenate`, or `ignore`.  Defaults to
-	`concatenate`.
+	`overwrite`, `concatenate`, `cat_sort_uniq`, or `ignore`.
+	Defaults to `concatenate`.
 +
 This setting can be overridden with the `GIT_NOTES_REWRITE_MODE`
 environment variable.
@@ -1938,7 +2194,7 @@ pack.indexVersion::
 	larger than 2 GB.
 +
 If you have an old Git that does not understand the version 2 `*.idx` file,
-cloning or fetching over a non native protocol (e.g. "http" and "rsync")
+cloning or fetching over a non native protocol (e.g. "http")
 that will copy both `*.pack` file and corresponding `*.idx` file from the
 other side may give you a repository that cannot be accessed with your
 older version of Git. If the `*.pack` file is smaller than 2 GB, however,
@@ -1949,8 +2205,11 @@ pack.packSizeLimit::
 	The maximum size of a pack.  This setting only affects
 	packing to a file when repacking, i.e. the git:// protocol
 	is unaffected.  It can be overridden by the `--max-pack-size`
-	option of linkgit:git-repack[1]. The minimum size allowed is
-	limited to 1 MiB. The default is unlimited.
+	option of linkgit:git-repack[1].  Reaching this limit results
+	in the creation of multiple packfiles; which in turn prevents
+	bitmaps from being created.
+	The minimum size allowed is limited to 1 MiB.
+	The default is unlimited.
 	Common unit suffixes of 'k', 'm', or 'g' are
 	supported.
 
@@ -1960,7 +2219,7 @@ pack.useBitmaps::
 	true. You should not generally need to turn this off unless
 	you are debugging pack bitmaps.
 
-pack.writebitmaps::
+pack.writeBitmaps (deprecated)::
 	This is a deprecated synonym for `repack.writeBitmaps`.
 
 pack.writeBitmapHashCache::
@@ -2001,7 +2260,7 @@ pull.ff::
 	a case (equivalent to giving the `--no-ff` option from the command
 	line). When set to `only`, only such fast-forward merges are
 	allowed (equivalent to giving the `--ff-only` option from the
-	command line).
+	command line). This setting overrides `merge.ff` when pulling.
 
 pull.rebase::
 	When true, rebase branches on top of the fetched branch, instead
@@ -2009,9 +2268,11 @@ pull.rebase::
 	pull" is run. See "branch.<name>.rebase" for setting this on a
 	per-branch basis.
 +
-	When preserve, also pass `--preserve-merges` along to 'git rebase'
-	so that locally committed merge commits will not be flattened
-	by running 'git pull'.
+When preserve, also pass `--preserve-merges` along to 'git rebase'
+so that locally committed merge commits will not be flattened
+by running 'git pull'.
++
+When the value is `interactive`, the rebase is run in interactive mode.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand the implications (see linkgit:git-rebase[1]
@@ -2079,14 +2340,42 @@ new default).
 
 --
 
+push.followTags::
+	If set to true enable '--follow-tags' option by default.  You
+	may override this configuration at time of push by specifying
+	'--no-follow-tags'.
+
+push.gpgSign::
+	May be set to a boolean value, or the string 'if-asked'. A true
+	value causes all pushes to be GPG signed, as if '--signed' is
+	passed to linkgit:git-push[1]. The string 'if-asked' causes
+	pushes to be signed if the server supports it, as if
+	'--signed=if-asked' is passed to 'git push'. A false value may
+	override a value from a lower-priority config file. An explicit
+	command-line flag always overrides this config option.
+
+push.recurseSubmodules::
+	Make sure all submodule commits used by the revisions to be pushed
+	are available on a remote-tracking branch. If the value is 'check'
+	then Git will verify that all submodule commits that changed in the
+	revisions to be pushed are available on at least one remote of the
+	submodule. If any commits are missing, the push will be aborted and
+	exit with non-zero status. If the value is 'on-demand' then all
+	submodules that changed in the revisions to be pushed will be
+	pushed. If on-demand was not able to push all necessary revisions
+	it will also be aborted and exit with non-zero status. If the value
+	is 'no' then default behavior of ignoring submodules when pushing
+	is retained. You may override this configuration at time of push by
+	specifying '--recurse-submodules=check|on-demand|no'.
+
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
 	rebase. False by default.
 
-rebase.autosquash::
+rebase.autoSquash::
 	If set to true enable '--autosquash' option by default.
 
-rebase.autostash::
+rebase.autoStash::
 	When set to true, automatically create a temporary stash
 	before the operation begins, and apply it after the operation
 	ends.  This means that you can run rebase on a dirty worktree.
@@ -2094,18 +2383,39 @@ rebase.autostash::
 	successful rebase might result in non-trivial conflicts.
 	Defaults to false.
 
+rebase.missingCommitsCheck::
+	If set to "warn", git rebase -i will print a warning if some
+	commits are removed (e.g. a line was deleted), however the
+	rebase will still proceed. If set to "error", it will print
+	the previous warning and stop the rebase, 'git rebase
+	--edit-todo' can then be used to correct the error. If set to
+	"ignore", no checking is done.
+	To drop a commit without warning or error, use the `drop`
+	command in the todo-list.
+	Defaults to "ignore".
+
+rebase.instructionFormat
+	A format string, as specified in linkgit:git-log[1], to be used for
+	the instruction list during an interactive rebase.  The format will automatically
+	have the long commit hash prepended to the format.
+
+receive.advertiseAtomic::
+	By default, git-receive-pack will advertise the atomic push
+	capability to its clients. If you don't want to this capability
+	to be advertised, set this variable to false.
+
 receive.autogc::
 	By default, git-receive-pack will run "git-gc --auto" after
 	receiving data from git-push and updating refs.  You can stop
 	it by setting this variable to false.
 
-receive.certnonceseed::
+receive.certNonceSeed::
 	By setting this variable to a string, `git receive-pack`
 	will accept a `git push --signed` and verifies it by using
 	a "nonce" protected by HMAC using this string as a secret
 	key.
 
-receive.certnonceslop::
+receive.certNonceSlop::
 	When a `git push --signed` sent a push certificate with a
 	"nonce" that was issued by a receive-pack serving the same
 	repository within this many seconds, export the "nonce"
@@ -2124,6 +2434,28 @@ receive.fsckObjects::
 	broken link. The result of an abort are only dangling objects.
 	Defaults to false. If not set, the value of `transfer.fsckObjects`
 	is used instead.
+
+receive.fsck.<msg-id>::
+	When `receive.fsckObjects` is set to true, errors can be switched
+	to warnings and vice versa by configuring the `receive.fsck.<msg-id>`
+	setting where the `<msg-id>` is the fsck message ID and the value
+	is one of `error`, `warn` or `ignore`. For convenience, fsck prefixes
+	the error/warning with the message ID, e.g. "missingEmail: invalid
+	author/committer line - missing email" means that setting
+	`receive.fsck.missingEmail = ignore` will hide that issue.
++
+This feature is intended to support working with legacy repositories
+which would not pass pushing when `receive.fsckObjects = true`, allowing
+the host to accept repositories with certain known issues but still catch
+other issues.
+
+receive.fsck.skipList::
+	The path to a sorted list of object names (i.e. one SHA-1 per
+	line) that are known to be broken in a non-fatal way and should
+	be ignored. This feature is useful when an established project
+	should be accepted despite early commits containing errors that
+	can be safely ignored such as invalid committer email addresses.
+	Note: corrupt objects cannot be skipped with this setting.
 
 receive.unpackLimit::
 	If the number of objects received in a push is below this
@@ -2153,11 +2485,15 @@ receive.denyCurrentBranch::
 	message. Defaults to "refuse".
 +
 Another option is "updateInstead" which will update the working
-directory (must be clean) if pushing into the current branch. This option is
+tree if pushing into the current branch.  This option is
 intended for synchronizing working directories when one side is not easily
 accessible via interactive ssh (e.g. a live web site, hence the requirement
 that the working directory be clean). This mode also comes in handy when
 developing inside a VM to test and fix code on different Operating Systems.
++
+By default, "updateInstead" will refuse the push if the working tree or
+the index have any difference from the HEAD, but the `push-to-checkout`
+hook can be used to customize this.  See linkgit:githooks[5].
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is
@@ -2165,27 +2501,24 @@ receive.denyNonFastForwards::
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
 
-receive.hiderefs::
-	String(s) `receive-pack` uses to decide which refs to omit
-	from its initial advertisement.  Use more than one
-	definitions to specify multiple prefix strings. A ref that
-	are under the hierarchies listed on the value of this
-	variable is excluded, and is hidden when responding to `git
-	push`, and an attempt to update or delete a hidden ref by
-	`git push` is rejected.
+receive.hideRefs::
+	This variable is the same as `transfer.hideRefs`, but applies
+	only to `receive-pack` (and so affects pushes, but not fetches).
+	An attempt to update or delete a hidden ref by `git push` is
+	rejected.
 
-receive.updateserverinfo::
+receive.updateServerInfo::
 	If set to true, git-receive-pack will run git-update-server-info
 	after receiving data from git-push and updating refs.
 
-receive.shallowupdate::
+receive.shallowUpdate::
 	If set to true, .git/shallow can be updated when new refs
 	require new shallow roots. Otherwise those refs are rejected.
 
-remote.pushdefault::
+remote.pushDefault::
 	The remote to push to by default.  Overrides
 	`branch.<name>.remote` for all branches, and is overridden by
-	`branch.<name>.pushremote` for specific branches.
+	`branch.<name>.pushRemote` for specific branches.
 
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
@@ -2198,6 +2531,11 @@ remote.<name>.proxy::
 	For remotes that require curl (http, https and ftp), the URL to
 	the proxy to use for that remote.  Set to the empty string to
 	disable proxying for that remote.
+
+remote.<name>.proxyAuthMethod::
+	For remotes that require curl (http, https and ftp), the method to use for
+	authenticating against the proxy in use (probably set in
+	`remote.<name>.proxy`). See `http.proxyAuthMethod`.
 
 remote.<name>.fetch::
 	The default set of "refspec" for linkgit:git-fetch[1]. See
@@ -2223,18 +2561,18 @@ remote.<name>.skipFetchAll::
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
-	option \--receive-pack of linkgit:git-push[1].
+	option --receive-pack of linkgit:git-push[1].
 
 remote.<name>.uploadpack::
 	The default program to execute on the remote side when fetching.  See
-	option \--upload-pack of linkgit:git-fetch-pack[1].
+	option --upload-pack of linkgit:git-fetch-pack[1].
 
-remote.<name>.tagopt::
-	Setting this value to \--no-tags disables automatic tag following when
-	fetching from remote <name>. Setting it to \--tags will fetch every
+remote.<name>.tagOpt::
+	Setting this value to --no-tags disables automatic tag following when
+	fetching from remote <name>. Setting it to --tags will fetch every
 	tag from remote <name>, even if they are not reachable from remote
 	branch heads. Passing these flags directly to linkgit:git-fetch[1] can
-	override this setting. See options \--tags and \--no-tags of
+	override this setting. See options --tags and --no-tags of
 	linkgit:git-fetch[1].
 
 remote.<name>.vcs::
@@ -2251,7 +2589,7 @@ remotes.<group>::
 	The list of remotes which are fetched by "git remote update
 	<group>".  See linkgit:git-remote[1].
 
-repack.usedeltabaseoffset::
+repack.useDeltaBaseOffset::
 	By default, linkgit:git-repack[1] creates packs that use
 	delta-base offset. If you need to share your repository with
 	Git older than version 1.4.4, either directly or via a dumb
@@ -2271,10 +2609,11 @@ repack.writeBitmaps::
 	objects to disk (e.g., when `git repack -a` is run).  This
 	index can speed up the "counting objects" phase of subsequent
 	packs created for clones and fetches, at the cost of some disk
-	space and extra time spent on the initial repack.  Defaults to
-	false.
+	space and extra time spent on the initial repack.  This has
+	no effect if multiple packfiles are created.
+	Defaults to false.
 
-rerere.autoupdate::
+rerere.autoUpdate::
 	When set to true, `git-rerere` updates the index with the
 	resulting contents after it cleanly resolves conflicts using
 	previously recorded resolution.  Defaults to false.
@@ -2293,12 +2632,12 @@ sendemail.identity::
 	values in the 'sendemail' section. The default identity is
 	the value of 'sendemail.identity'.
 
-sendemail.smtpencryption::
+sendemail.smtpEncryption::
 	See linkgit:git-send-email[1] for description.  Note that this
 	setting is not subject to the 'identity' mechanism.
 
-sendemail.smtpssl::
-	Deprecated alias for 'sendemail.smtpencryption = ssl'.
+sendemail.smtpssl (deprecated)::
+	Deprecated alias for 'sendemail.smtpEncryption = ssl'.
 
 sendemail.smtpsslcertpath::
 	Path to ca-certificates (either a directory or a single file).
@@ -2310,34 +2649,34 @@ sendemail.<identity>.*::
 	identity is selected, through command-line or
 	'sendemail.identity'.
 
-sendemail.aliasesfile::
-sendemail.aliasfiletype::
+sendemail.aliasesFile::
+sendemail.aliasFileType::
 sendemail.annotate::
 sendemail.bcc::
 sendemail.cc::
-sendemail.cccmd::
-sendemail.chainreplyto::
+sendemail.ccCmd::
+sendemail.chainReplyTo::
 sendemail.confirm::
-sendemail.envelopesender::
+sendemail.envelopeSender::
 sendemail.from::
-sendemail.multiedit::
+sendemail.multiEdit::
 sendemail.signedoffbycc::
-sendemail.smtppass::
+sendemail.smtpPass::
 sendemail.suppresscc::
-sendemail.suppressfrom::
+sendemail.suppressFrom::
 sendemail.to::
-sendemail.smtpdomain::
-sendemail.smtpserver::
-sendemail.smtpserverport::
-sendemail.smtpserveroption::
-sendemail.smtpuser::
+sendemail.smtpDomain::
+sendemail.smtpServer::
+sendemail.smtpServerPort::
+sendemail.smtpServerOption::
+sendemail.smtpUser::
 sendemail.thread::
-sendemail.transferencoding::
+sendemail.transferEncoding::
 sendemail.validate::
 sendemail.xmailer::
 	See linkgit:git-send-email[1] for description.
 
-sendemail.signedoffcc::
+sendemail.signedoffcc (deprecated)::
 	Deprecated alias for 'sendemail.signedoffbycc'.
 
 showbranch.default::
@@ -2384,7 +2723,7 @@ If this variable is not specified, it defaults to 'normal'.
 This variable can be overridden with the -u|--untracked-files option
 of linkgit:git-status[1] and linkgit:git-commit[1].
 
-status.submodulesummary::
+status.submoduleSummary::
 	Defaults to false.
 	If this is set to a non zero number or true (identical to -1 or an
 	unlimited number), the submodule summary will be enabled and a
@@ -2400,14 +2739,28 @@ status.submodulesummary::
 	submodule summary' command, which shows a similar output but does
 	not honor these settings.
 
+stash.showPatch::
+	If this is set to true, the `git stash show` command without an
+	option will show the stash in patch form.  Defaults to false.
+	See description of 'show' command in linkgit:git-stash[1].
+
+stash.showStat::
+	If this is set to true, the `git stash show` command without an
+	option will show diffstat of the stash.  Defaults to true.
+	See description of 'show' command in linkgit:git-stash[1].
+
 submodule.<name>.path::
 submodule.<name>.url::
+	The path within this project and URL for a submodule. These
+	variables are initially populated by 'git submodule init'. See
+	linkgit:git-submodule[1] and linkgit:gitmodules[5] for
+	details.
+
 submodule.<name>.update::
-	The path within this project, URL, and the updating strategy
-	for a submodule.  These variables are initially populated
-	by 'git submodule init'; edit them to override the
-	URL and other values found in the `.gitmodules` file.  See
-	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
+	The default update procedure for a submodule. This variable
+	is populated by `git submodule init` from the
+	linkgit:gitmodules[5] file. See description of 'update'
+	command in linkgit:git-submodule[1].
 
 submodule.<name>.branch::
 	The remote branch name for a submodule, used by `git submodule
@@ -2438,6 +2791,17 @@ submodule.<name>.ignore::
 	"--ignore-submodules" option. The 'git submodule' commands are not
 	affected by this setting.
 
+submodule.fetchJobs::
+	Specifies how many submodules are fetched/cloned at the same time.
+	A positive integer allows up to that number of submodules fetched
+	in parallel. A value of 0 will give some reasonable default.
+	If unset, it defaults to 1.
+
+tag.forceSignAnnotated::
+	A boolean to specify whether annotated tags created should be GPG signed.
+	If `--annotate` is specified on the command line, it takes
+	precedence over this option.
+
 tag.sort::
 	This variable controls the sort ordering of tags when displayed by
 	linkgit:git-tag[1]. Without the "--sort=<value>" option provided, the
@@ -2455,10 +2819,28 @@ transfer.fsckObjects::
 	not set, the value of this variable is used instead.
 	Defaults to false.
 
-transfer.hiderefs::
-	This variable can be used to set both `receive.hiderefs`
-	and `uploadpack.hiderefs` at the same time to the same
-	values.  See entries for these other variables.
+transfer.hideRefs::
+	String(s) `receive-pack` and `upload-pack` use to decide which
+	refs to omit from their initial advertisements.  Use more than
+	one definition to specify multiple prefix strings. A ref that is
+	under the hierarchies listed in the value of this variable is
+	excluded, and is hidden when responding to `git push` or `git
+	fetch`.  See `receive.hideRefs` and `uploadpack.hideRefs` for
+	program-specific versions of this config.
++
+You may also include a `!` in front of the ref name to negate the entry,
+explicitly exposing it, even if an earlier entry marked it as hidden.
+If you have multiple hideRefs values, later entries override earlier ones
+(and entries in more-specific config files override less-specific ones).
++
+If a namespace is in use, the namespace prefix is stripped from each
+reference before it is matched against `transfer.hiderefs` patterns.
+For example, if `refs/heads/master` is specified in `transfer.hideRefs` and
+the current namespace is `foo`, then `refs/namespaces/foo/refs/heads/master`
+is omitted from the advertisements but `refs/heads/master` and
+`refs/namespaces/bar/refs/heads/master` are still advertised as so-called
+"have" lines. In order to match refs before stripping, add a `^` in front of
+the ref name. If you combine `!` and `^`, `!` must be specified first.
 
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
@@ -2472,22 +2854,25 @@ uploadarchive.allowUnreachable::
 	linkgit:git-upload-archive[1] for more details. Defaults to
 	`false`.
 
-uploadpack.hiderefs::
-	String(s) `upload-pack` uses to decide which refs to omit
-	from its initial advertisement.  Use more than one
-	definitions to specify multiple prefix strings. A ref that
-	are under the hierarchies listed on the value of this
-	variable is excluded, and is hidden from `git ls-remote`,
-	`git fetch`, etc.  An attempt to fetch a hidden ref by `git
-	fetch` will fail.  See also `uploadpack.allowtipsha1inwant`.
+uploadpack.hideRefs::
+	This variable is the same as `transfer.hideRefs`, but applies
+	only to `upload-pack` (and so affects only fetches, not pushes).
+	An attempt to fetch a hidden ref by `git fetch` will fail.  See
+	also `uploadpack.allowTipSHA1InWant`.
 
-uploadpack.allowtipsha1inwant::
-	When `uploadpack.hiderefs` is in effect, allow `upload-pack`
+uploadpack.allowTipSHA1InWant::
+	When `uploadpack.hideRefs` is in effect, allow `upload-pack`
 	to accept a fetch request that asks for an object at the tip
 	of a hidden ref (by default, such a request is rejected).
-	see also `uploadpack.hiderefs`.
+	see also `uploadpack.hideRefs`.
 
-uploadpack.keepalive::
+uploadpack.allowReachableSHA1InWant::
+	Allow `upload-pack` to accept a fetch request that asks for an
+	object that is reachable from any ref tip. However, note that
+	calculating object reachability is computationally expensive.
+	Defaults to `false`.
+
+uploadpack.keepAlive::
 	When `upload-pack` has started `pack-objects`, there may be a
 	quiet period while `pack-objects` prepares the pack. Normally
 	it would output progress information, but if `--quiet` was used
@@ -2495,7 +2880,7 @@ uploadpack.keepalive::
 	the pack data begins. Some clients and networks may consider
 	the server to be hung and give up. Setting this option instructs
 	`upload-pack` to send an empty keepalive packet every
-	`uploadpack.keepalive` seconds. Setting this option to 0
+	`uploadpack.keepAlive` seconds. Setting this option to 0
 	disables keepalive packets entirely. The default is 5 seconds.
 
 url.<base>.insteadOf::
@@ -2532,12 +2917,34 @@ user.name::
 	Can be overridden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
 	environment variables.  See linkgit:git-commit-tree[1].
 
-user.signingkey::
+user.useConfigOnly::
+	Instruct Git to avoid trying to guess defaults for 'user.email'
+	and 'user.name', and instead retrieve the values only from the
+	configuration. For example, if you have multiple email addresses
+	and would like to use a different one for each repository, then
+	with this configuration option set to `true` in the global config
+	along with a name, Git will prompt you to set up an email before
+	making new commits in a newly cloned repository.
+	Defaults to `false`.
+
+user.signingKey::
 	If linkgit:git-tag[1] or linkgit:git-commit[1] is not selecting the
 	key you want it to automatically when creating a signed tag or
 	commit, you can override the default selection with this variable.
 	This option is passed unchanged to gpg's --local-user parameter,
 	so you may specify a key using any method that gpg supports.
+
+versionsort.prereleaseSuffix::
+	When version sort is used in linkgit:git-tag[1], prerelease
+	tags (e.g. "1.0-rc1") may appear after the main release
+	"1.0". By specifying the suffix "-rc" in this variable,
+	"1.0-rc1" will appear before "1.0".
++
+This variable can be specified multiple times, once per suffix. The
+order of suffixes in the config file determines the sorting order
+(e.g. if "-pre" appears before "-rc" in the config file then 1.0-preXX
+is sorted before 1.0-rcXX). The sorting order between different
+suffixes is undefined if they are in multiple config files.
 
 web.browser::
 	Specify a web browser that may be used by some commands.

@@ -56,7 +56,7 @@ for repack in '' true; do
 
 	test_expect_success "disable reflogs ($title)" '
 		git config core.logallrefupdates false &&
-		rm -rf .git/logs
+		git reflog expire --expire=all --all
 	'
 
 	test_expect_success "setup basic history ($title)" '
@@ -128,5 +128,20 @@ for repack in '' true; do
 		git update-ref HEAD $commit
 	'
 done
+
+test_expect_success 'do not complain about existing broken links' '
+	cat >broken-commit <<-\EOF &&
+	tree 0000000000000000000000000000000000000001
+	parent 0000000000000000000000000000000000000002
+	author whatever <whatever@example.com> 1234 -0000
+	committer whatever <whatever@example.com> 1234 -0000
+
+	some message
+	EOF
+	commit=$(git hash-object -t commit -w broken-commit) &&
+	git gc 2>stderr &&
+	verbose git cat-file -e $commit &&
+	test_must_be_empty stderr
+'
 
 test_done

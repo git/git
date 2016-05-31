@@ -9,18 +9,18 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git config' [<file-option>] [type] [-z|--null] name [value [value_regex]]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] name [value [value_regex]]
 'git config' [<file-option>] [type] --add name value
 'git config' [<file-option>] [type] --replace-all name value [value_regex]
-'git config' [<file-option>] [type] [-z|--null] --get name [value_regex]
-'git config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
-'git config' [<file-option>] [type] [-z|--null] --get-regexp name_regex [value_regex]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] --get name [value_regex]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] --get-all name [value_regex]
+'git config' [<file-option>] [type] [--show-origin] [-z|--null] [--name-only] --get-regexp name_regex [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-urlmatch name URL
 'git config' [<file-option>] --unset name [value_regex]
 'git config' [<file-option>] --unset-all name [value_regex]
 'git config' [<file-option>] --rename-section old_name new_name
 'git config' [<file-option>] --remove-section name
-'git config' [<file-option>] [-z|--null] -l | --list
+'git config' [<file-option>] [--show-origin] [-z|--null] [--name-only] -l | --list
 'git config' [<file-option>] --get-color name [default]
 'git config' [<file-option>] --get-colorbool name [stdout-is-tty]
 'git config' [<file-option>] -e | --edit
@@ -58,13 +58,13 @@ that location (you can say '--local' but that is the default).
 This command will fail with non-zero status upon error.  Some exit
 codes are:
 
-. The config file is invalid (ret=3),
-. can not write to the config file (ret=4),
-. no section or name was provided (ret=2),
-. the section or key is invalid (ret=1),
-. you try to unset an option which does not exist (ret=5),
-. you try to unset/set an option for which multiple lines match (ret=5), or
-. you try to use an invalid regexp (ret=6).
+- The section or key is invalid (ret=1),
+- no section or name was provided (ret=2),
+- the config file is invalid (ret=3),
+- the config file cannot be written (ret=4),
+- you try to unset an option which does not exist (ret=5),
+- you try to unset/set an option for which multiple lines match (ret=5), or
+- you try to use an invalid regexp (ret=6).
 
 On success, the command returns the exit code 0.
 
@@ -86,8 +86,7 @@ OPTIONS
 	found and the last value if multiple key values were found.
 
 --get-all::
-	Like get, but does not fail if the number of values for the key
-	is not exactly one.
+	Like get, but returns all values for a multi-valued key.
 
 --get-regexp::
 	Like --get-all, but interprets the name as a regular expression and
@@ -102,7 +101,7 @@ OPTIONS
 	given URL is returned (if no such key exists, the value for
 	section.key is used as a fallback).  When given just the
 	section as name, do so for all the keys in the section and
-	list them.
+	list them.  Returns error code 1 if no value is found.
 
 --global::
 	For writing options: write to global `~/.gitconfig` file
@@ -159,7 +158,7 @@ See also <<FILES>>.
 
 -l::
 --list::
-	List all variables set in config file.
+	List all variables set in config file, along with their values.
 
 --bool::
 	'git config' will ensure that the output is "true" or "false"
@@ -190,6 +189,16 @@ See also <<FILES>>.
 	output without getting confused e.g. by values that
 	contain line breaks.
 
+--name-only::
+	Output only the names of config variables for `--list` or
+	`--get-regexp`.
+
+--show-origin::
+	Augment the output of all queried config options with the
+	origin type (file, standard input, blob, command line) and
+	the actual origin (config file path, ref, or blob id if
+	applicable).
+
 --get-colorbool name [stdout-is-tty]::
 
 	Find the color setting for `name` (e.g. `color.diff`) and output
@@ -215,7 +224,9 @@ See also <<FILES>>.
 
 --[no-]includes::
 	Respect `include.*` directives in config files when looking up
-	values. Defaults to on.
+	values. Defaults to `off` when a specific file is given (e.g.,
+	using `--file`, `--global`, etc) and `on` when searching all
+	config files.
 
 [[FILES]]
 FILES
@@ -405,7 +416,7 @@ true
 % git config --bool --get-urlmatch http.sslverify https://weak.example.com
 false
 % git config --get-urlmatch http https://weak.example.com
-http.cookiefile /tmp/cookie.txt
+http.cookieFile /tmp/cookie.txt
 http.sslverify false
 ------------
 

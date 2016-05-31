@@ -102,7 +102,7 @@ test_expect_success \
 
 test_expect_success \
     'adding another file' \
-    'cp "$TEST_DIRECTORY"/../README path0/README &&
+    'cp "$TEST_DIRECTORY"/../README.md path0/README &&
      git add path0/README &&
      git commit -m add2 -a'
 
@@ -156,15 +156,12 @@ test_expect_success "Michael Cassar's test case" '
 	echo b > partA/outline.txt &&
 	echo c > papers/unsorted/_another &&
 	git add papers partA &&
-	T1=`git write-tree` &&
+	T1=$(git write-tree) &&
 
 	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
 
-	T=`git write-tree` &&
-	git ls-tree -r $T | grep partA/outline.txt || {
-		git ls-tree -r $T
-		(exit 1)
-	}
+	T=$(git write-tree) &&
+	git ls-tree -r $T | verbose grep partA/outline.txt
 '
 
 rm -fr papers partA path?
@@ -295,6 +292,9 @@ test_expect_success 'setup submodule' '
 	echo content >file &&
 	git add file &&
 	git commit -m "added sub and file" &&
+	mkdir -p deep/directory/hierachy &&
+	git submodule add ./. deep/directory/hierachy/sub &&
+	git commit -m "added another submodule" &&
 	git branch submodule
 '
 
@@ -476,6 +476,19 @@ test_expect_success 'mv -k does not accidentally destroy submodules' '
 	grep "^R  sub -> dest/sub" actual &&
 	git reset --hard &&
 	git checkout .
+'
+
+test_expect_success 'moving a submodule in nested directories' '
+	(
+		cd deep &&
+		git mv directory ../ &&
+		# git status would fail if the update of linking git dir to
+		# work dir of the submodule failed.
+		git status &&
+		git config -f ../.gitmodules submodule.deep/directory/hierachy/sub.path >../actual &&
+		echo "directory/hierachy/sub" >../expect
+	) &&
+	test_cmp actual expect
 '
 
 test_done

@@ -89,7 +89,7 @@ static int verify_packfile(struct packed_git *p,
 	 * we do not do scan-streaming check on the pack file.
 	 */
 	nr_objects = p->num_objects;
-	entries = xmalloc((nr_objects + 1) * sizeof(*entries));
+	ALLOC_ARRAY(entries, nr_objects + 1);
 	entries[nr_objects].offset = pack_sig_ofs;
 	/* first sort entries by pack offset, since unpacking them is more efficient that way */
 	for (i = 0; i < nr_objects; i++) {
@@ -126,7 +126,7 @@ static int verify_packfile(struct packed_git *p,
 				    sha1_to_hex(entries[i].sha1), p->pack_name);
 		else if (fn) {
 			int eaten = 0;
-			fn(entries[i].sha1, type, size, data, &eaten);
+			err |= fn(entries[i].sha1, type, size, data, &eaten);
 			if (eaten)
 				data = NULL;
 		}

@@ -60,6 +60,43 @@ void parse_gpg_output(struct signature_check *sigc)
 	}
 }
 
+int check_signature(const char *payload, size_t plen, const char *signature,
+	size_t slen, struct signature_check *sigc)
+{
+	struct strbuf gpg_output = STRBUF_INIT;
+	struct strbuf gpg_status = STRBUF_INIT;
+	int status;
+
+	sigc->result = 'N';
+
+	status = verify_signed_buffer(payload, plen, signature, slen,
+				      &gpg_output, &gpg_status);
+	if (status && !gpg_output.len)
+		goto out;
+	sigc->payload = xmemdupz(payload, plen);
+	sigc->gpg_output = strbuf_detach(&gpg_output, NULL);
+	sigc->gpg_status = strbuf_detach(&gpg_status, NULL);
+	parse_gpg_output(sigc);
+
+ out:
+	strbuf_release(&gpg_status);
+	strbuf_release(&gpg_output);
+
+	return sigc->result != 'G' && sigc->result != 'U';
+}
+
+void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
+{
+	const char *output = flags & GPG_VERIFY_RAW ?
+		sigc->gpg_status : sigc->gpg_output;
+
+	if (flags & GPG_VERIFY_VERBOSE && sigc->payload)
+		fputs(sigc->payload, stdout);
+
+	if (output)
+		fputs(output, stderr);
+}
+
 /*
  * Look at GPG signed content (e.g. a signed tag object), whose
  * payload is followed by a detached signature on it.  Return the
@@ -182,11 +219,9 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	args_gpg[0] = gpg_program;
 	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
 	if (fd < 0)
-		return error(_("could not create temporary file '%s': %s"),
-			     path, strerror(errno));
+		return error_errno(_("could not create temporary file '%s'"), path);
 	if (write_in_full(fd, signature, signature_size) < 0)
-		return error(_("failed writing detached signature to '%s': %s"),
-			     path, strerror(errno));
+		return error_errno(_("failed writing detached signature to '%s'"), path);
 	close(fd);
 
 	gpg.argv = args_gpg;
@@ -200,6 +235,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 		return error(_("could not run gpg."));
 	}
 
+	sigchain_push(SIGPIPE, SIG_IGN);
 	write_in_full(gpg.in, payload, payload_size);
 	close(gpg.in);
 
@@ -213,6 +249,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	close(gpg.out);
 
 	ret = finish_command(&gpg);
+	sigchain_pop(SIGPIPE);
 
 	unlink_or_warn(path);
 

@@ -12,7 +12,7 @@
 #include "submodule.h"
 
 static const char * const builtin_mv_usage[] = {
-	N_("git mv [options] <source>... <destination>"),
+	N_("git mv [<options>] <source>... <destination>"),
 	NULL
 };
 
@@ -24,7 +24,8 @@ static const char **internal_copy_pathspec(const char *prefix,
 					   int count, unsigned flags)
 {
 	int i;
-	const char **result = xmalloc((count + 1) * sizeof(const char *));
+	const char **result;
+	ALLOC_ARRAY(result, count + 1);
 	memcpy(result, pathspec, count * sizeof(const char *));
 	result[count] = NULL;
 	for (i = 0; i < count; i++) {
@@ -47,9 +48,9 @@ static const char **internal_copy_pathspec(const char *prefix,
 
 static const char *add_slash(const char *path)
 {
-	int len = strlen(path);
+	size_t len = strlen(path);
 	if (path[len - 1] != '/') {
-		char *with_slash = xmalloc(len + 2);
+		char *with_slash = xmalloc(st_add(len, 2));
 		memcpy(with_slash, path, len);
 		with_slash[len++] = '/';
 		with_slash[len] = 0;
@@ -251,15 +252,18 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		int pos;
 		if (show_only || verbose)
 			printf(_("Renaming %s to %s\n"), src, dst);
-		if (!show_only && mode != INDEX) {
-			if (rename(src, dst) < 0 && !ignore_errors)
-				die_errno(_("renaming '%s' failed"), src);
-			if (submodule_gitfile[i]) {
-				if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
-					connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
-				if (!update_path_in_gitmodules(src, dst))
-					gitmodules_modified = 1;
-			}
+		if (show_only)
+			continue;
+		if (mode != INDEX && rename(src, dst) < 0) {
+			if (ignore_errors)
+				continue;
+			die_errno(_("renaming '%s' failed"), src);
+		}
+		if (submodule_gitfile[i]) {
+			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
+				connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
+			if (!update_path_in_gitmodules(src, dst))
+				gitmodules_modified = 1;
 		}
 
 		if (mode == WORKING_DIRECTORY)

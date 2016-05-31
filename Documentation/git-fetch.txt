@@ -26,7 +26,7 @@ By default, any tag that points into the histories being fetched is
 also fetched; the effect is to fetch tags that
 point at branches that you are interested in.  This default behavior
 can be changed by using the --tags or --no-tags options or by
-configuring remote.<name>.tagopt.  By using a refspec that fetches tags
+configuring remote.<name>.tagOpt.  By using a refspec that fetches tags
 explicitly, you can fetch tags that do not point into branches you
 are interested in as well.
 
@@ -71,7 +71,7 @@ This configuration is used in two ways:
 * When `git fetch` is run without specifying what branches
   and/or tags to fetch on the command line, e.g. `git fetch origin`
   or `git fetch`, `remote.<repository>.fetch` values are used as
-  the refspecs---they specify which refs to fetch and which local refs
+  the refspecs--they specify which refs to fetch and which local refs
   to update.  The example above will fetch
   all branches that exist in the `origin` (i.e. any ref that matches
   the left-hand side of the value, `refs/heads/*`) and update the

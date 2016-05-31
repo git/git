@@ -31,7 +31,6 @@ struct url_info {
 };
 
 extern char *url_normalize(const char *, struct url_info *);
-extern int match_urls(const struct url_info *url, const struct url_info *url_prefix, int *exactusermatch);
 
 struct urlmatch_item {
 	size_t matched_len;

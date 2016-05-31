@@ -93,9 +93,36 @@ test_expect_success 'with config option on the command line' '
 		Acked-by: Johan
 		Reviewed-by: Peff
 	EOF
-	echo "Acked-by: Johan" |
+	{ echo; echo "Acked-by: Johan"; } |
 	git -c "trailer.Acked-by.ifexists=addifdifferent" interpret-trailers \
 		--trailer "Reviewed-by: Peff" --trailer "Acked-by: Johan" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with only a title in the message' '
+	cat >expected <<-\EOF &&
+		area: change
+
+		Reviewed-by: Peff
+		Acked-by: Johan
+	EOF
+	echo "area: change" |
+	git interpret-trailers --trailer "Reviewed-by: Peff" \
+		--trailer "Acked-by: Johan" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with multiline title in the message' '
+	cat >expected <<-\EOF &&
+		place of
+		code: change
+
+		Reviewed-by: Peff
+		Acked-by: Johan
+	EOF
+	printf "%s\n" "place of" "code: change" |
+	git interpret-trailers --trailer "Reviewed-by: Peff" \
+		--trailer "Acked-by: Johan" >actual &&
 	test_cmp expected actual
 '
 
@@ -297,6 +324,46 @@ test_expect_success 'with complex patch, args and --trim-empty' '
 	git interpret-trailers --trim-empty --trailer "ack: Peff" \
 		--trailer "bug: 42" <complex_patch >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success 'in-place editing with basic patch' '
+	cat basic_message >message &&
+	cat basic_patch >>message &&
+	cat basic_message >expected &&
+	echo >>expected &&
+	cat basic_patch >>expected &&
+	git interpret-trailers --in-place message &&
+	test_cmp expected message
+'
+
+test_expect_success 'in-place editing with additional trailer' '
+	cat basic_message >message &&
+	cat basic_patch >>message &&
+	cat basic_message >expected &&
+	echo >>expected &&
+	cat >>expected <<-\EOF &&
+		Reviewed-by: Alice
+	EOF
+	cat basic_patch >>expected &&
+	git interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
+	test_cmp expected message
+'
+
+test_expect_success 'in-place editing on stdin disallowed' '
+	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place < basic_message
+'
+
+test_expect_success 'in-place editing on non-existing file' '
+	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place nonexisting &&
+	test_path_is_missing nonexisting
+'
+
+test_expect_success POSIXPERM,SANITY "in-place editing doesn't clobber original file on error" '
+	cat basic_message >message &&
+	chmod -r message &&
+	test_must_fail git interpret-trailers --trailer "Reviewed-by: Alice" --in-place message &&
+	chmod +r message &&
+	test_cmp message basic_message
 '
 
 test_expect_success 'using "where = before"' '

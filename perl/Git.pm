@@ -188,7 +188,8 @@ sub repository {
 		};
 
 		if ($dir) {
-			$dir =~ m#^/# or $dir = $opts{Directory} . '/' . $dir;
+			_verify_require();
+			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
 			$opts{Repository} = abs_path($dir);
 
 			# If --git-dir went ok, this shouldn't die either.
@@ -392,7 +393,7 @@ sub command_close_pipe {
 Execute the given C<COMMAND> in the same way as command_output_pipe()
 does but return both an input pipe filehandle and an output pipe filehandle.
 
-The function will return return C<($pid, $pipe_in, $pipe_out, $ctx)>.
+The function will return C<($pid, $pipe_in, $pipe_out, $ctx)>.
 See C<command_close_bidi_pipe()> for details.
 
 =cut
@@ -695,7 +696,7 @@ Retrieve the integer configuration C<VARIABLE>. The return value
 is simple decimal number.  An optional value suffix of 'k', 'm',
 or 'g' in the config file will cause the value to be multiplied
 by 1024, 1048576 (1024^2), or 1073741824 (1024^3) prior to output.
-It would return C<undef> if configuration variable is not defined,
+It would return C<undef> if configuration variable is not defined.
 
 =cut
 
@@ -704,7 +705,7 @@ sub config_int {
 }
 
 # Common subroutine to implement bulk of what the config* family of methods
-# do. This curently wraps command('config') so it is not so fast.
+# do. This currently wraps command('config') so it is not so fast.
 sub _config_common {
 	my ($opts) = shift @_;
 	my ($self, $var) = _maybe_self(@_);
@@ -864,6 +865,73 @@ sub ident_person {
 	return "$ident[0] <$ident[1]>";
 }
 
+=item parse_mailboxes
+
+Return an array of mailboxes extracted from a string.
+
+=cut
+
+sub parse_mailboxes {
+	my $re_comment = qr/\((?:[^)]*)\)/;
+	my $re_quote = qr/"(?:[^\"\\]|\\.)*"/;
+	my $re_word = qr/(?:[^]["\s()<>:;@\\,.]|\\.)+/;
+
+	# divide the string in tokens of the above form
+	my $re_token = qr/(?:$re_quote|$re_word|$re_comment|\S)/;
+	my @tokens = map { $_ =~ /\s*($re_token)\s*/g } @_;
+
+	# add a delimiter to simplify treatment for the last mailbox
+	push @tokens, ",";
+
+	my (@addr_list, @phrase, @address, @comment, @buffer) = ();
+	foreach my $token (@tokens) {
+		if ($token =~ /^[,;]$/) {
+			# if buffer still contains undeterminated strings
+			# append it at the end of @address or @phrase
+			if (@address) {
+				push @address, @buffer;
+			} else {
+				push @phrase, @buffer;
+			}
+
+			my $str_phrase = join ' ', @phrase;
+			my $str_address = join '', @address;
+			my $str_comment = join ' ', @comment;
+
+			# quote are necessary if phrase contains
+			# special characters
+			if ($str_phrase =~ /[][()<>:;@\\,.\000-\037\177]/) {
+				$str_phrase =~ s/(^|[^\\])"/$1/g;
+				$str_phrase = qq["$str_phrase"];
+			}
+
+			# add "<>" around the address if necessary
+			if ($str_address ne "" && $str_phrase ne "") {
+				$str_address = qq[<$str_address>];
+			}
+
+			my $str_mailbox = "$str_phrase $str_address $str_comment";
+			$str_mailbox =~ s/^\s*|\s*$//g;
+			push @addr_list, $str_mailbox if ($str_mailbox);
+
+			@phrase = @address = @comment = @buffer = ();
+		} elsif ($token =~ /^\(/) {
+			push @comment, $token;
+		} elsif ($token eq "<") {
+			push @phrase, (splice @address), (splice @buffer);
+		} elsif ($token eq ">") {
+			push @address, (splice @buffer);
+		} elsif ($token eq "@") {
+			push @address, (splice @buffer), "@";
+		} elsif ($token eq ".") {
+			push @address, (splice @buffer), ".";
+		} else {
+			push @buffer, $token;
+		}
+	}
+
+	return @addr_list;
+}
 
 =item hash_object ( TYPE, FILENAME )
 

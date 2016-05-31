@@ -74,9 +74,6 @@ pulling or stash them away with linkgit:git-stash[1].
 OPTIONS
 -------
 
-Options meant for 'git pull' itself and the underlying 'git merge'
-must be given before the options meant for 'git fetch'.
-
 -q::
 --quiet::
 	This is passed to both underlying git-fetch to squelch reporting of
@@ -104,20 +101,21 @@ Options related to merging
 include::merge-options.txt[]
 
 -r::
---rebase[=false|true|preserve]::
+--rebase[=false|true|preserve|interactive]::
 	When true, rebase the current branch on top of the upstream
 	branch after fetching. If there is a remote-tracking branch
 	corresponding to the upstream branch and the upstream branch
 	was rebased since last fetched, the rebase uses that information
 	to avoid rebasing non-local changes.
 +
-When preserve, also rebase the current branch on top of the upstream
-branch, but pass `--preserve-merges` along to `git rebase` so that
-locally created merge commits will not be flattened.
+When set to preserve, rebase with the `--preserve-merges` option passed
+to `git rebase` so that locally created merge commits will not be flattened.
 +
 When false, merge the current branch into the upstream branch.
 +
-See `pull.rebase`, `branch.<name>.rebase` and `branch.autosetuprebase` in
+When `interactive`, enable the interactive mode of rebase.
++
+See `pull.rebase`, `branch.<name>.rebase` and `branch.autoSetupRebase` in
 linkgit:git-config[1] if you want to make `git pull` always use
 `--rebase` instead of merging.
 +
@@ -129,6 +127,15 @@ unless you have read linkgit:git-rebase[1] carefully.
 
 --no-rebase::
 	Override earlier --rebase.
+
+--autostash::
+--no-autostash::
+	Before starting rebase, stash local modifications away (see
+	linkgit:git-stash[1]) if needed, and apply the stash when
+	done. `--no-autostash` is useful to override the `rebase.autoStash`
+	configuration variable (see linkgit:git-config[1]).
++
+This option is only valid when "--rebase" is used.
 
 Options related to fetching
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

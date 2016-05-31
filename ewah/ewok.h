@@ -20,18 +20,9 @@
 #ifndef __EWOK_BITMAP_H__
 #define __EWOK_BITMAP_H__
 
-#ifndef ewah_malloc
-#	define ewah_malloc xmalloc
-#endif
-#ifndef ewah_realloc
-#	define ewah_realloc xrealloc
-#endif
-#ifndef ewah_calloc
-#	define ewah_calloc xcalloc
-#endif
-
+struct strbuf;
 typedef uint64_t eword_t;
-#define BITS_IN_WORD (sizeof(eword_t) * 8)
+#define BITS_IN_EWORD (sizeof(eword_t) * 8)
 
 /**
  * Do not use __builtin_popcountll. The GCC implementation
@@ -47,7 +38,8 @@ static inline uint32_t ewah_bit_popcount64(uint64_t x)
 	return (x * 0x0101010101010101ULL) >> 56;
 }
 
-#ifdef __GNUC__
+/* __builtin_ctzll was not available until 3.4.0 */
+#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3  && __GNUC_MINOR > 3))
 #define ewah_bit_ctz64(x) __builtin_ctzll(x)
 #else
 static inline int ewah_bit_ctz64(uint64_t x)
@@ -97,6 +89,7 @@ int ewah_serialize_to(struct ewah_bitmap *self,
 		      void *out);
 int ewah_serialize(struct ewah_bitmap *self, int fd);
 int ewah_serialize_native(struct ewah_bitmap *self, int fd);
+int ewah_serialize_strbuf(struct ewah_bitmap *self, struct strbuf *);
 
 int ewah_deserialize(struct ewah_bitmap *self, int fd);
 int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len);

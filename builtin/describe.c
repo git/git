@@ -14,8 +14,8 @@
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
-	N_("git describe [options] <commit-ish>*"),
-	N_("git describe [options] --dirty"),
+	N_("git describe [<options>] [<commit-ish>...]"),
+	N_("git describe [<options>] --dirty"),
 	NULL
 };
 
@@ -119,10 +119,10 @@ static void add_to_known_names(const char *path,
 	}
 }
 
-static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int get_name(const char *path, const struct object_id *oid, int flag, void *cb_data)
 {
 	int is_tag = starts_with(path, "refs/tags/");
-	unsigned char peeled[20];
+	struct object_id peeled;
 	int is_annotated, prio;
 
 	/* Reject anything outside refs/tags/ unless --all */
@@ -134,10 +134,10 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 		return 0;
 
 	/* Is it annotated? */
-	if (!peel_ref(path, peeled)) {
-		is_annotated = !!hashcmp(sha1, peeled);
+	if (!peel_ref(path, peeled.hash)) {
+		is_annotated = !!oidcmp(oid, &peeled);
 	} else {
-		hashcpy(peeled, sha1);
+		oidcpy(&peeled, oid);
 		is_annotated = 0;
 	}
 
@@ -154,7 +154,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	else
 		prio = 0;
 
-	add_to_known_names(all ? path + 5 : path + 10, peeled, prio, sha1);
+	add_to_known_names(all ? path + 5 : path + 10, peeled.hash, prio, oid->hash);
 	return 0;
 }
 
@@ -252,14 +252,14 @@ static void describe(const char *arg, int last_one)
 	if (!cmit)
 		die(_("%s is not a valid '%s' object"), arg, commit_type);
 
-	n = find_commit_name(cmit->object.sha1);
+	n = find_commit_name(cmit->object.oid.hash);
 	if (n && (tags || all || n->prio == 2)) {
 		/*
 		 * Exact match to an existing ref.
 		 */
 		display_name(n);
 		if (longformat)
-			show_suffix(0, n->tag ? n->tag->tagged->sha1 : sha1);
+			show_suffix(0, n->tag ? n->tag->tagged->oid.hash : sha1);
 		if (dirty)
 			printf("%s", dirty);
 		printf("\n");
@@ -267,7 +267,7 @@ static void describe(const char *arg, int last_one)
 	}
 
 	if (!max_candidates)
-		die(_("no tag exactly matches '%s'"), sha1_to_hex(cmit->object.sha1));
+		die(_("no tag exactly matches '%s'"), oid_to_hex(&cmit->object.oid));
 	if (debug)
 		fprintf(stderr, _("searching to describe %s\n"), arg);
 
@@ -317,7 +317,7 @@ static void describe(const char *arg, int last_one)
 		if (annotated_cnt && !list) {
 			if (debug)
 				fprintf(stderr, _("finished search at %s\n"),
-					sha1_to_hex(c->object.sha1));
+					oid_to_hex(&c->object.oid));
 			break;
 		}
 		while (parents) {
@@ -334,9 +334,9 @@ static void describe(const char *arg, int last_one)
 	}
 
 	if (!match_cnt) {
-		const unsigned char *sha1 = cmit->object.sha1;
+		struct object_id *oid = &cmit->object.oid;
 		if (always) {
-			printf("%s", find_unique_abbrev(sha1, abbrev));
+			printf("%s", find_unique_abbrev(oid->hash, abbrev));
 			if (dirty)
 				printf("%s", dirty);
 			printf("\n");
@@ -345,11 +345,11 @@ static void describe(const char *arg, int last_one)
 		if (unannotated_cnt)
 			die(_("No annotated tags can describe '%s'.\n"
 			    "However, there were unannotated tags: try --tags."),
-			    sha1_to_hex(sha1));
+			    oid_to_hex(oid));
 		else
 			die(_("No tags can describe '%s'.\n"
 			    "Try --always, or create some tags."),
-			    sha1_to_hex(sha1));
+			    oid_to_hex(oid));
 	}
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
@@ -374,13 +374,13 @@ static void describe(const char *arg, int last_one)
 				_("more than %i tags found; listed %i most recent\n"
 				"gave up search at %s\n"),
 				max_candidates, max_candidates,
-				sha1_to_hex(gave_up_on->object.sha1));
+				oid_to_hex(&gave_up_on->object.oid));
 		}
 	}
 
 	display_name(all_matches[0].name);
 	if (abbrev)
-		show_suffix(all_matches[0].depth, cmit->object.sha1);
+		show_suffix(all_matches[0].depth, cmit->object.oid.hash);
 	if (dirty)
 		printf("%s", dirty);
 	printf("\n");
@@ -443,10 +443,10 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			if (pattern)
 				argv_array_pushf(&args, "--refs=refs/tags/%s", pattern);
 		}
-		while (*argv) {
-			argv_array_push(&args, *argv);
-			argv++;
-		}
+		if (argc)
+			argv_array_pushv(&args, argv);
+		else
+			argv_array_push(&args, "HEAD");
 		return cmd_name_rev(args.argc, args.argv, prefix);
 	}
 

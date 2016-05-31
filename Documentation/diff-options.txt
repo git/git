@@ -23,13 +23,15 @@ ifndef::git-format-patch[]
 -u::
 --patch::
 	Generate patch (see section on generating patches).
-	{git-diff? This is the default.}
-endif::git-format-patch[]
+ifdef::git-diff[]
+	This is the default.
+endif::git-diff[]
 
 -s::
 --no-patch::
 	Suppress diff output. Useful for commands like `git show` that
 	show the patch by default, or to cancel the effect of `--patch`.
+endif::git-format-patch[]
 
 -U<n>::
 --unified=<n>::
@@ -41,8 +43,19 @@ endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 --raw::
-	Generate the raw format.
-	{git-diff-core? This is the default.}
+ifndef::git-log[]
+	Generate the diff in raw format.
+ifdef::git-diff-core[]
+	This is the default.
+endif::git-diff-core[]
+endif::git-log[]
+ifdef::git-log[]
+	For each commit, show a summary of changes using the raw diff
+	format. See the "RAW OUTPUT FORMAT" section of
+	linkgit:git-diff[1]. This is different from showing the log
+	itself in raw format, which you can achieve with
+	`--format=raw`.
+endif::git-log[]
 endif::git-format-patch[]
 
 ifndef::git-format-patch[]
@@ -254,8 +267,11 @@ expression to make sure that it matches all non-whitespace characters.
 A match that contains a newline is silently truncated(!) at the
 newline.
 +
+For example, `--word-diff-regex=.` will treat each character as a word
+and, correspondingly, show differences character by character.
++
 The regex can also be set via a diff driver or configuration option, see
-linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
+linkgit:gitattributes[5] or linkgit:git-config[1].  Giving it explicitly
 overrides any diff driver or configuration setting.  Diff drivers
 override configuration settings.
 
@@ -270,14 +286,24 @@ endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 --check::
-	Warn if changes introduce whitespace errors.  What are
-	considered whitespace errors is controlled by `core.whitespace`
+	Warn if changes introduce conflict markers or whitespace errors.
+	What are considered whitespace errors is controlled by `core.whitespace`
 	configuration.  By default, trailing whitespaces (including
 	lines that solely consist of whitespaces) and a space character
 	that is immediately followed by a tab character inside the
 	initial indent of the line are considered whitespace errors.
 	Exits with non-zero status if problems are found. Not compatible
 	with --exit-code.
+
+--ws-error-highlight=<kind>::
+	Highlight whitespace errors on lines specified by <kind>
+	in the color specified by `color.diff.whitespace`.  <kind>
+	is a comma separated list of `old`, `new`, `context`.  When
+	this option is not given, only whitespace errors in `new`
+	lines are highlighted.  E.g. `--ws-error-highlight=new,old`
+	highlights whitespace errors on both deleted and added lines.
+	`all` can be used as a short-hand for `old,new,context`.
+
 endif::git-format-patch[]
 
 --full-index::
@@ -432,8 +458,8 @@ endif::git-format-patch[]
 -O<orderfile>::
 	Output the patch in the order specified in the
 	<orderfile>, which has one shell glob pattern per line.
-	This overrides the `diff.orderfile` configuration variable
-	(see linkgit:git-config[1]).  To cancel `diff.orderfile`,
+	This overrides the `diff.orderFile` configuration variable
+	(see linkgit:git-config[1]).  To cancel `diff.orderFile`,
 	use `-O/dev/null`.
 
 ifndef::git-format-patch[]

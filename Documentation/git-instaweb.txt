@@ -76,7 +76,7 @@ You may specify configuration in your .git/config
 	httpd = apache2 -f
 	port = 4321
 	browser = konqueror
-	modulepath = /usr/lib/apache2/modules
+	modulePath = /usr/lib/apache2/modules
 
 -----------------------------------------------------------------------
 

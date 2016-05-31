@@ -482,12 +482,12 @@ project config.  Per-repository configuration takes precedence over value
 composed from `@git_base_url_list` elements and project name.
 +
 You can setup one single value (single entry/item in this list) at build
-time by setting the `GITWEB_BASE_URL` built-time configuration variable.
+time by setting the `GITWEB_BASE_URL` build-time configuration variable.
 By default it is set to (), i.e. an empty list.  This means that gitweb
 would not try to create project URL (to fetch) from project name.
 
 $projects_list_group_categories::
-	Whether to enables the grouping of projects by category on the project
+	Whether to enable the grouping of projects by category on the project
 	list page. The category of a project is determined by the
 	`$GIT_DIR/category` file or the `gitweb.category` variable in each
 	repository's configuration.  Disabled by default (set to 0).
@@ -706,7 +706,7 @@ show-sizes::
 	I/O.  Enabled by default.
 +
 This feature can be configured on a per-repository basis via
-repository's `gitweb.showsizes` configuration variable (boolean).
+repository's `gitweb.showSizes` configuration variable (boolean).
 
 patches::
 	Enable and configure "patches" view, which displays list of commits in email

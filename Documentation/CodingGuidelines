@@ -1,5 +1,5 @@
 Like other projects, we also have some guidelines to keep to the
-code.  For Git in general, three rough rules are:
+code.  For Git in general, a few rough rules are:
 
  - Most importantly, we never say "It's in POSIX; we'll happily
    ignore your needs should your system not conform to it."
@@ -171,6 +171,11 @@ For C programs:
 
  - We try to keep to at most 80 characters per line.
 
+ - As a Git developer we assume you have a reasonably modern compiler
+   and we recommend you to enable the DEVELOPER makefile knob to
+   ensure your patch is clear of all compiler warnings we care about,
+   by e.g. "echo DEVELOPER=1 >>config.mak".
+
  - We try to support a wide range of C compilers to compile Git with,
    including old ones. That means that you should not use C99
    initializers, even if a lot of compilers grok it.
@@ -328,9 +333,14 @@ For C programs:
 
  - When you come up with an API, document it.
 
- - The first #include in C files, except in platform specific
-   compat/ implementations, should be git-compat-util.h or another
-   header file that includes it, such as cache.h or builtin.h.
+ - The first #include in C files, except in platform specific compat/
+   implementations, must be either "git-compat-util.h", "cache.h" or
+   "builtin.h".  You do not have to include more than one of these.
+
+ - A C file must directly include the header files that declare the
+   functions and the types it uses, except for the functions and types
+   that are made available to it by including one of the header files
+   it must include by the previous rule.
 
  - If you are planning a new command, consider writing it in shell
    or perl first, so that changes in semantics can be easily
@@ -413,6 +423,29 @@ Error Messages
  - Say what the error is first ("cannot open %s", not "%s: cannot open")
 
 
+Externally Visible Names
+
+ - For configuration variable names, follow the existing convention:
+
+   . The section name indicates the affected subsystem.
+
+   . The subsection name, if any, indicates which of an unbounded set
+     of things to set the value for.
+
+   . The variable name describes the effect of tweaking this knob.
+
+   The section and variable names that consist of multiple words are
+   formed by concatenating the words without punctuations (e.g. `-`),
+   and are broken using bumpyCaps in documentation as a hint to the
+   reader.
+
+   When choosing the variable namespace, do not use variable name for
+   specifying possibly unbounded set of things, most notably anything
+   an end user can freely come up with (e.g. branch names).  Instead,
+   use subsection names or variable values, like the existing variable
+   branch.<name>.description does.
+
+
 Writing Documentation:
 
  Most (if not all) of the documentation pages are written in the
@@ -441,6 +474,10 @@ Writing Documentation:
    --sort=<key>
    --abbrev[=<n>]
 
+ If a placeholder has multiple words, they are separated by dashes:
+   <new-branch-name>
+   --template=<template-directory>
+
  Possibility of multiple occurrences is indicated by three dots:
    <file>...
    (One or more of <file>.)
@@ -457,12 +494,12 @@ Writing Documentation:
    (Zero or more of <patch>.  Note that the dots are inside, not
    outside the brackets.)
 
- Multiple alternatives are indicated with vertical bar:
+ Multiple alternatives are indicated with vertical bars:
    [-q | --quiet]
    [--utf8 | --no-utf8]
 
  Parentheses are used for grouping:
-   [(<rev>|<range>)...]
+   [(<rev> | <range>)...]
    (Any number of either <rev> or <range>.  Parens are needed to make
    it clear that "..." pertains to both <rev> and <range>.)
 
@@ -494,7 +531,7 @@ Writing Documentation:
  `backticks around word phrases`, do so.
    `--pretty=oneline`
    `git rev-list`
-   `remote.pushdefault`
+   `remote.pushDefault`
 
  Word phrases enclosed in `backtick characters` are rendered literally
  and will not be further expanded. The use of `backticks` to achieve the

@@ -95,6 +95,8 @@ show [<stash>]::
 	shows the latest one. By default, the command shows the diffstat, but
 	it will accept any format known to 'git diff' (e.g., `git stash show
 	-p stash@{1}` to view the second most recent stash in patch form).
+	You can use stash.showStat and/or stash.showPatch config variables
+	to change the default behavior.
 
 pop [--index] [-q|--quiet] [<stash>]::
 

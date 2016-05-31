@@ -3,9 +3,13 @@
 
 	Pretty-print the contents of the commit logs in a given format,
 	where '<format>' can be one of 'oneline', 'short', 'medium',
-	'full', 'fuller', 'email', 'raw' and 'format:<string>'.  See
-	the "PRETTY FORMATS" section for some additional details for each
-	format.  When omitted, the format defaults to 'medium'.
+	'full', 'fuller', 'email', 'raw', 'format:<string>'
+	and 'tformat:<string>'.  When '<format>' is none of the above,
+	and has '%placeholder' in it, it acts as if
+	'--pretty=tformat:<format>' were given.
++
+See the "PRETTY FORMATS" section for some additional details for each
+format.  When '=<format>' part is omitted, it defaults to 'medium'.
 +
 Note: you can specify the default pretty format in the repository
 configuration (see linkgit:git-config[1]).
@@ -33,9 +37,27 @@ people using 80-column terminals.
 	in their encoding header; this option can be used to tell the
 	command to re-code the commit log message in the encoding
 	preferred by the user.  For non plumbing commands this
-	defaults to UTF-8.
+	defaults to UTF-8. Note that if an object claims to be encoded
+	in `X` and we are outputting in `X`, we will output the object
+	verbatim; this means that invalid sequences in the original
+	commit may be copied to the output.
 
---notes[=<ref>]::
+--expand-tabs=<n>::
+--expand-tabs::
+--no-expand-tabs::
+	Perform a tab expansion (replace each tab with enough spaces
+	to fill to the next display column that is multiple of '<n>')
+	in the log message before showing it in the output.
+	`--expand-tabs` is a short-hand for `--expand-tabs=8`, and
+	`--no-expand-tabs` is a short-hand for `--expand-tabs=0`,
+	which disables tab expansion.
++
+By default, tabs are expanded in pretty formats that indent the log
+message by 4 spaces (i.e.  'medium', which is the default, 'full',
+and 'fuller').
+
+ifndef::git-rev-list[]
+--notes[=<treeish>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
 	commit, when showing the commit log message.  This is the default
 	for `git log`, `git show` and `git whatchanged` commands when
@@ -46,9 +68,10 @@ By default, the notes shown are from the notes refs listed in the
 'core.notesRef' and 'notes.displayRef' variables (or corresponding
 environment overrides). See linkgit:git-config[1] for more details.
 +
-With an optional '<ref>' argument, show this notes ref instead of the
-default notes ref(s). The ref is taken to be in `refs/notes/` if it
-is not qualified.
+With an optional '<treeish>' argument, use the treeish to find the notes
+to display.  The treeish can specify the full refname when it begins
+with `refs/notes/`; when it begins with `notes/`, `refs/` and otherwise
+`refs/notes/` is prefixed to form a full name of the ref.
 +
 Multiple --notes options can be combined to control which notes are
 being displayed. Examples: "--notes=foo" will show only notes from
@@ -62,10 +85,11 @@ being displayed. Examples: "--notes=foo" will show only notes from
 	"--notes --notes=foo --no-notes --notes=bar" will only show notes
 	from "refs/notes/bar".
 
---show-notes[=<ref>]::
+--show-notes[=<treeish>]::
 --[no-]standard-notes::
 	These options are deprecated. Use the above --notes/--no-notes
 	options instead.
+endif::git-rev-list[]
 
 --show-signature::
 	Check the validity of a signed commit object by passing the signature

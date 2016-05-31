@@ -8,10 +8,11 @@
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
 --depth=<depth>::
-	Deepen or shorten the history of a 'shallow' repository created by
-	`git clone` with `--depth=<depth>` option (see linkgit:git-clone[1])
-	to the specified number of commits from the tip of each remote
-	branch history. Tags for the deepened commits are not fetched.
+	Limit fetching to the specified number of commits from the tip of
+	each remote branch history. If fetching to a 'shallow' repository
+	created by `git clone` with `--depth=<depth>` option (see
+	linkgit:git-clone[1]), deepen or shorten the history to the specified
+	number of commits. Tags for the deepened commits are not fetched.
 
 --unshallow::
 	If the source repository is complete, convert a shallow
@@ -68,7 +69,7 @@ endif::git-pull[]
 	By default, tags that point at objects that are downloaded
 	from the remote repository are fetched and stored locally.
 	This option disables this automatic tag following. The default
-	behavior for a remote may be specified with the remote.<name>.tagopt
+	behavior for a remote may be specified with the remote.<name>.tagOpt
 	setting. See linkgit:git-config[1].
 
 ifndef::git-pull[]
@@ -99,6 +100,13 @@ ifndef::git-pull[]
 	when the superproject retrieves a commit that updates the submodule's
 	reference to a commit that isn't already in the local submodule
 	clone.
+
+-j::
+--jobs=<n>::
+	Number of parallel children to be used for fetching submodules.
+	Each will fetch from different submodules, such that fetching many
+	submodules will be faster. By default submodules will be fetched
+	one at a time.
 
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as
@@ -150,3 +158,11 @@ endif::git-pull[]
 	by default when it is attached to a terminal, unless -q
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
+
+-4::
+--ipv4::
+	Use IPv4 addresses only, ignoring IPv6 addresses.
+
+-6::
+--ipv6::
+	Use IPv6 addresses only, ignoring IPv4 addresses.

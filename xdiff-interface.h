@@ -3,6 +3,13 @@
 
 #include "xdiff/xdiff.h"
 
+/*
+ * xdiff isn't equipped to handle content over a gigabyte;
+ * we make the cutoff 1GB - 1MB to give some breathing
+ * room for constant-sized additions (e.g., merge markers)
+ */
+#define MAX_XDIFF_SIZE (1024UL * 1024 * 1023)
+
 typedef void (*xdiff_emit_consume_fn)(void *, char *, unsigned long);
 
 int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);

@@ -3,17 +3,27 @@
 #define HEADER_HMAC_H
 #define HEADER_SHA_H
 #include <CommonCrypto/CommonHMAC.h>
-#define HMAC_CTX CCHmacContext
-#define HMAC_Init(hmac, key, len, algo) CCHmacInit(hmac, algo, key, len)
-#define HMAC_Update CCHmacUpdate
-#define HMAC_Final(hmac, hash, ptr) CCHmacFinal(hmac, hash)
-#define HMAC_CTX_cleanup(ignore)
 #define EVP_md5(...) kCCHmacAlgMD5
+/* CCHmac doesn't take md_len and the return type is void */
+#define HMAC git_CC_HMAC
+static inline unsigned char *git_CC_HMAC(CCHmacAlgorithm alg,
+		const void *key, int key_len,
+		const unsigned char *data, size_t data_len,
+		unsigned char *md, unsigned int *md_len)
+{
+	CCHmac(alg, key, key_len, data, data_len, md);
+	return md;
+}
+
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
 #define APPLE_LION_OR_NEWER
 #include <Security/Security.h>
 /* Apple's TYPE_BOOL conflicts with config.c */
 #undef TYPE_BOOL
+#endif
+
+#ifndef SHA1_MAX_BLOCK_SIZE
+#error Using Apple Common Crypto library requires setting SHA1_MAX_BLOCK_SIZE
 #endif
 
 #ifdef APPLE_LION_OR_NEWER

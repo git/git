@@ -8,7 +8,7 @@
 #include "quote.h"
 
 static const char builtin_get_tar_commit_id_usage[] =
-"git get-tar-commit-id < <tarfile>";
+"git get-tar-commit-id";
 
 /* ustar header + extended global header content */
 #define RECORDSIZE	(512)

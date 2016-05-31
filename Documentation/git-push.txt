@@ -9,9 +9,10 @@ git-push - Update remote refs along with associated objects
 SYNOPSIS
 --------
 [verse]
-'git push' [--all | --mirror | --tags] [--follow-tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
-	   [--repo=<repository>] [-f | --force] [--prune] [-v | --verbose]
-	   [-u | --set-upstream] [--signed]
+'git push' [--all | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
+	   [--repo=<repository>] [-f | --force] [-d | --delete] [--prune] [-v | --verbose]
+	   [-u | --set-upstream]
+	   [--[no-]signed|--sign=(true|false|if-asked)]
 	   [--force-with-lease[=<refname>[:<expect>]]]
 	   [--no-verify] [<repository> [<refspec>...]]
 
@@ -35,6 +36,13 @@ arguments or `--all`, `--mirror`, `--tags` options, the command finds
 the default `<refspec>` by consulting `remote.*.push` configuration,
 and if it is not found, honors `push.default` configuration to decide
 what to push (See linkgit:git-config[1] for the meaning of `push.default`).
+
+When neither the command-line nor the configuration specify what to
+push, the default behavior is used, which corresponds to the `simple`
+value for `push.default`: the current branch is pushed to the
+corresponding upstream branch, but as a safety measure, the push is
+aborted if the upstream branch does not have the same name as the
+local one.
 
 
 OPTIONS[[OPTIONS]]
@@ -61,7 +69,7 @@ be named.
 If `git push [<repository>]` without any `<refspec>` argument is set to
 update some ref at the destination with `<src>` with
 `remote.<repository>.push` configuration variable, `:<dst>` part can
-be omitted---such a push will update a ref that `<src>` normally updates
+be omitted--such a push will update a ref that `<src>` normally updates
 without any `<refspec>` on the command line.  Otherwise, missing
 `:<dst>` means to update the same ref as the `<src>`.
 +
@@ -128,13 +136,25 @@ already exists on the remote side.
 	Push all the refs that would be pushed without this option,
 	and also push annotated tags in `refs/tags` that are missing
 	from the remote but are pointing at commit-ish that are
-	reachable from the refs being pushed.
+	reachable from the refs being pushed.  This can also be specified
+	with configuration variable 'push.followTags'.  For more
+	information, see 'push.followTags' in linkgit:git-config[1].
 
---signed::
+--[no-]signed::
+--sign=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
-	logged.  See linkgit:git-receive-pack[1] for the details
-	on the receiving end.
+	logged.  If `false` or `--no-signed`, no signing will be
+	attempted.  If `true` or `--signed`, the push will fail if the
+	server does not support signed pushes.  If set to `if-asked`,
+	sign if and only if the server supports signed pushes.  The push
+	will also fail if the actual call to `gpg --sign` fails.  See
+	linkgit:git-receive-pack[1] for the details on the receiving end.
+
+--[no-]atomic::
+	Use an atomic transaction on the remote side if available.
+	Either all refs are updated, or on error, no refs are updated.
+	If the server does not support atomic pushes the push will fail.
 
 --receive-pack=<git-receive-pack>::
 --exec=<git-receive-pack>::
@@ -149,9 +169,8 @@ already exists on the remote side.
 	Usually, "git push" refuses to update a remote ref that is
 	not an ancestor of the local ref used to overwrite it.
 +
-This option bypasses the check, but instead requires that the
-current value of the ref to be the expected value.  "git push"
-fails otherwise.
+This option overrides this restriction if the current value of the
+remote ref is the expected value.  "git push" fails otherwise.
 +
 Imagine that you have to rebase what you have already published.
 You will have to bypass the "must fast-forward" rule in order to
@@ -163,15 +182,14 @@ commit, and blindly pushing with `--force` will lose her work.
 This option allows you to say that you expect the history you are
 updating is what you rebased and want to replace. If the remote ref
 still points at the commit you specified, you can be sure that no
-other people did anything to the ref (it is like taking a "lease" on
-the ref without explicitly locking it, and you update the ref while
-making sure that your earlier "lease" is still valid).
+other people did anything to the ref. It is like taking a "lease" on
+the ref without explicitly locking it, and the remote ref is updated
+only if the "lease" is still valid.
 +
 `--force-with-lease` alone, without specifying the details, will protect
 all remote refs that are going to be updated by requiring their
 current value to be the same as the remote-tracking branch we have
-for them, unless specified with a `--force-with-lease=<refname>:<expect>`
-option that explicitly states what the expected value is.
+for them.
 +
 `--force-with-lease=<refname>`, without specifying the expected value, will
 protect the named ref (alone), if it is going to be updated, by
@@ -214,22 +232,8 @@ origin +master` to force a push to the `master` branch). See the
 `<refspec>...` section above for details.
 
 --repo=<repository>::
-	This option is only relevant if no <repository> argument is
-	passed in the invocation. In this case, 'git push' derives the
-	remote name from the current branch: If it tracks a remote
-	branch, then that remote repository is pushed to. Otherwise,
-	the name "origin" is used. For this latter case, this option
-	can be used to override the name "origin". In other words,
-	the difference between these two commands
-+
---------------------------
-git push public         #1
-git push --repo=public  #2
---------------------------
-+
-is that #1 always pushes to "public" whereas #2 pushes to "public"
-only if the current branch does not track a remote branch. This is
-useful if you write an alias or script around 'git push'.
+	This option is equivalent to the <repository> argument. If both
+	are specified, the command-line argument takes precedence.
 
 -u::
 --set-upstream::
@@ -260,22 +264,33 @@ useful if you write an alias or script around 'git push'.
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
---recurse-submodules=check|on-demand::
-	Make sure all submodule commits used by the revisions to be
-	pushed are available on a remote-tracking branch. If 'check' is
-	used Git will verify that all submodule commits that changed in
-	the revisions to be pushed are available on at least one remote
-	of the submodule. If any commits are missing the push will be
-	aborted and exit with non-zero status. If 'on-demand' is used
-	all submodules that changed in the revisions to be pushed will
-	be pushed. If on-demand was not able to push all necessary
-	revisions it will also be aborted and exit with non-zero status.
+--no-recurse-submodules::
+--recurse-submodules=check|on-demand|no::
+	May be used to make sure all submodule commits used by the
+	revisions to be pushed are available on a remote-tracking branch.
+	If 'check' is used Git will verify that all submodule commits that
+	changed in the revisions to be pushed are available on at least one
+	remote of the submodule. If any commits are missing the push will
+	be aborted and exit with non-zero status. If 'on-demand' is used
+	all submodules that changed in the revisions to be pushed will be
+	pushed. If on-demand was not able to push all necessary revisions
+	it will also be aborted and exit with non-zero status. A value of
+	'no' or using '--no-recurse-submodules' can be used to override the
+	push.recurseSubmodules configuration variable when no submodule
+	recursion is required.
 
 --[no-]verify::
 	Toggle the pre-push hook (see linkgit:githooks[5]).  The
-	default is \--verify, giving the hook a chance to prevent the
-	push.  With \--no-verify, the hook is bypassed completely.
+	default is --verify, giving the hook a chance to prevent the
+	push.  With --no-verify, the hook is bypassed completely.
 
+-4::
+--ipv4::
+	Use IPv4 addresses only, ignoring IPv6 addresses.
+
+-6::
+--ipv6::
+	Use IPv6 addresses only, ignoring IPv4 addresses.
 
 include::urls-remotes.txt[]
 

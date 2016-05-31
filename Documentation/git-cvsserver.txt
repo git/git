@@ -154,7 +154,7 @@ with CVS_SERVER (and shouldn't) as 'git-shell' understands `cvs` to mean
    [gitcvs]
         enabled=1
         # optional for debugging
-        logfile=/path/to/logfile
+	logFile=/path/to/logfile
 
 ------
 Note: you need to ensure each user that is going to invoke 'git-cvsserver' has
@@ -254,14 +254,14 @@ Configuring database backend
 its documentation if changing these variables, especially
 about `DBI->connect()`.
 
-gitcvs.dbname::
+gitcvs.dbName::
 	Database name. The exact meaning depends on the
 	selected database driver, for SQLite this is a filename.
 	Supports variable substitution (see below). May
 	not contain semicolons (`;`).
 	Default: '%Ggitcvs.%m.sqlite'
 
-gitcvs.dbdriver::
+gitcvs.dbDriver::
 	Used DBI driver. You can specify any available driver
 	for this here, but it might not work. cvsserver is tested
 	with 'DBD::SQLite', reported to work with
@@ -271,12 +271,12 @@ gitcvs.dbdriver::
 	Default: 'SQLite'
 
 gitcvs.dbuser::
-	Database user. Only useful if setting `dbdriver`, since
+	Database user. Only useful if setting `dbDriver`, since
 	SQLite has no concept of database users. Supports variable
 	substitution (see below).
 
-gitcvs.dbpass::
-	Database password.  Only useful if setting `dbdriver`, since
+gitcvs.dbPass::
+	Database password.  Only useful if setting `dbDriver`, since
 	SQLite has no concept of database passwords.
 
 gitcvs.dbTableNamePrefix::
@@ -288,7 +288,7 @@ All variables can also be set per access method, see <<configaccessmethod,above>
 
 Variable substitution
 ^^^^^^^^^^^^^^^^^^^^^
-In `dbdriver` and `dbuser` you can use the following variables:
+In `dbDriver` and `dbUser` you can use the following variables:
 
 %G::
 	Git directory name
@@ -413,16 +413,16 @@ about end-of-line conversion.
 
 Alternatively, if `gitcvs.usecrlfattr` config is not enabled
 or the attributes do not allow automatic detection for a filename, then
-the server uses the `gitcvs.allbinary` config for the default setting.
-If `gitcvs.allbinary` is set, then file not otherwise
+the server uses the `gitcvs.allBinary` config for the default setting.
+If `gitcvs.allBinary` is set, then file not otherwise
 specified will default to '-kb' mode. Otherwise the '-k' mode
-is left blank. But if `gitcvs.allbinary` is set to "guess", then
+is left blank. But if `gitcvs.allBinary` is set to "guess", then
 the correct '-k' mode will be guessed based on the contents of
 the file.
 
 For best consistency with 'cvs', it is probably best to override the
 defaults by setting `gitcvs.usecrlfattr` to true,
-and `gitcvs.allbinary` to "guess".
+and `gitcvs.allBinary` to "guess".
 
 Dependencies
 ------------
