@@ -345,7 +345,10 @@ cmd_foreach()
 	# command in the subshell (and a recursive call to this function)
 	exec 3<&0
 
-	git submodule--helper list --prefix "$wt_prefix"|
+	{
+		git submodule--helper list --prefix "$wt_prefix" ||
+		echo "#unmatched"
+	} |
 	while read mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode"
@@ -453,7 +456,10 @@ cmd_deinit()
 		die "$(eval_gettext "Use '--all' if you really want to deinitialize all submodules")"
 	fi
 
-	git submodule--helper list --prefix "$wt_prefix" "$@" |
+	{
+		git submodule--helper list --prefix "$wt_prefix" "$@" ||
+		echo "#unmatched"
+	} |
 	while read mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode"
@@ -1013,7 +1019,10 @@ cmd_status()
 		shift
 	done
 
-	git submodule--helper list --prefix "$wt_prefix" "$@" |
+	{
+		git submodule--helper list --prefix "$wt_prefix" "$@" ||
+		echo "#unmatched"
+	} |
 	while read mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode"
@@ -1091,7 +1100,10 @@ cmd_sync()
 		esac
 	done
 	cd_to_toplevel
-	git submodule--helper list --prefix "$wt_prefix" "$@" |
+	{
+		git submodule--helper list --prefix "$wt_prefix" "$@" ||
+		echo "#unmatched"
+	} |
 	while read mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode"
