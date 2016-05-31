@@ -1,16 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2016, #08; Thu, 26)
-X-master-at: 7777322816a31edff4fb9f429847d11f8974f264
-X-next-at: 397704a2234a83bf7ba537e78d607ea550d3074c
+Subject: What's cooking in git.git (May 2016, #09; Tue, 31)
+X-master-at: 60bd4b1c513bb652cdffad44382046ca872140eb
+X-next-at: 534e6b4ae36749d2ee8ff48851a5939661db5ad6
 
-What's cooking in git.git (May 2016, #08; Thu, 26)
+What's cooking in git.git (May 2016, #09; Tue, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+2.9-rc1 has been tagged.  There still are a few topics yet to be
+merged to 'master' for the upcoming release, but otherwise this is
+pretty much "feature complete".  One known brown-paper-bag breakage
+exists in t/perf/, whose fix is still in 'next'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,228 +25,236 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ar/diff-args-osx-precompose (2016-05-13) 1 commit
-  (merged to 'next' on 2016-05-17 at 7b59b79)
- + diff: run arguments through precompose_argv
+* ak/t0008-ksh88-workaround (2016-05-20) 1 commit
+  (merged to 'next' on 2016-05-26 at 9a34a2a)
+ + t0008: 4 tests fail with ksh88
 
- Many commands normalize command line arguments from NFD to NFC
- variant of UTF-8 on OSX, but commands in the "diff" family did
- not, causing "git diff $path" to complain that no such path is
- known to Git.  They have been taught to do the normalization.
+ Test portability workaround.
 
-
-* da/difftool (2016-05-16) 2 commits
-  (merged to 'next' on 2016-05-17 at ef5a435)
- + difftool: handle unmerged files in dir-diff mode
- + difftool: initialize variables for readability
-
- "git difftool" learned to handle unmerged paths correctly in
- dir-diff mode.
-
-
-* jc/doc-lint (2016-05-10) 1 commit
-  (merged to 'next' on 2016-05-17 at 9032aa5)
- + ci: validate "linkgit:" in documentation
-
- Find common mistakes when writing gitlink: in our documentation and
- drive the check from "make check-docs".
-
-
-* jc/rerere-multi (2016-05-19) 2 commits
-  (merged to 'next' on 2016-05-19 at 0520c90)
- + rerere: remove an null statement
-  (merged to 'next' on 2016-05-13 at f4d1d82)
- + rerere: plug memory leaks upon "rerere forget" failure
-
-
-* jc/test-parse-options-expect (2016-05-10) 4 commits
-  (merged to 'next' on 2016-05-10 at 3ca5783)
- + t0040: convert a few tests to use test-parse-options --expect
- + t0040: remove unused test helpers
- + test-parse-options: --expect=<string> option to simplify tests
- + test-parse-options: fix output when callback option fails
- (this branch uses pb/commit-verbose-config.)
-
- t0040 had too many unnecessary repetitions in its test data.  Teach
- test-parse-options program so that a caller can tell what it
- expects in its output, so that these repetitions can be cleaned up.
-
-
-* jk/test-z-n-unquoted (2016-05-14) 6 commits
-  (merged to 'next' on 2016-05-17 at 65372cf)
- + always quote shell arguments to test -z/-n
- + t9103: modernize test style
- + t9107: switch inverted single/double quotes in test
- + t9107: use "return 1" instead of "exit 1"
- + t9100,t3419: enclose all test code in single-quotes
- + t/lib-git-svn: drop $remote_git_svn and $git_svn_id
-
- t9xxx series has been updated primarily for readability, while
- fixing small bugs in it.  A few scripted Porcelains have also been
- updated to fix possible bugs around their use of "test -z" and
- "test -n".
-
-
-* js/perf-rebase-i (2016-05-13) 3 commits
-  (merged to 'next' on 2016-05-13 at eb51ddd)
- + perf: run "rebase -i" under perf
- + perf: make the tests work in worktrees
- + perf: let's disable symlinks when they are not available
-
- Add perf test for "rebase -i"
-
-
-* nd/worktree-various-heads (2016-04-22) 13 commits
-  (merged to 'next' on 2016-05-10 at 61d3415)
- + branch: do not rename a branch under bisect or rebase
- + worktree.c: check whether branch is bisected in another worktree
- + wt-status.c: split bisect detection out of wt_status_get_state()
- + worktree.c: check whether branch is rebased in another worktree
- + worktree.c: avoid referencing to worktrees[i] multiple times
- + wt-status.c: make wt_status_check_rebase() work on any worktree
- + wt-status.c: split rebase detection out of wt_status_get_state()
- + path.c: refactor and add worktree_git_path()
- + worktree.c: mark current worktree
- + worktree.c: make find_shared_symref() return struct worktree *
- + worktree.c: store "id" instead of "git_dir"
- + path.c: add git_common_path() and strbuf_git_common_path()
- + dir.c: rename str(n)cmp_icase to fspath(n)cmp
- (this branch is used by nd/worktree-cleanup-post-head-protection.)
-
- The experimental "multiple worktree" feature gains more safety to
- forbid operations on a branch that is checked out or being actively
- worked on elsewhere, by noticing that e.g. it is being rebased.
-
-
-* pb/commit-verbose-config (2016-05-10) 7 commits
- + commit: add a commit.verbose config variable
- + t7507-commit-verbose: improve test coverage by testing number of diffs
- + parse-options.c: make OPTION_COUNTUP respect "unspecified" values
- + t/t7507: improve test coverage
- + t0040-parse-options: improve test coverage
- + test-parse-options: print quiet as integer
- + t0040-test-parse-options.sh: fix style issues
- (this branch is used by jc/test-parse-options-expect.)
-
- "git commit" learned to pay attention to "commit.verbose"
- configuration variable and act as if "--verbose" option was
- given from the command line.
-
-
-* ss/commit-dry-run-resolve-merge-to-no-op (2016-02-17) 1 commit
-  (merged to 'next' on 2016-05-10 at 2ada404)
- + wt-status.c: set commitable bit if there is a meaningful merge.
-
- "git commit --dry-run" reported "No, no, you cannot commit." in one
- case where "git commit" would have allowed you to commit, and this
- improves it a little bit ("git commit --dry-run --short" still does
- not give you the correct answer, for example).  This is a stop-gap
- measure in that "commit --short --dry-run" still gives an incorrect
- result.
-
-
-* tb/core-eol-fix (2016-04-25) 4 commits
-  (merged to 'next' on 2016-05-10 at fa8a200)
- + convert.c: ident + core.autocrlf didn't work
- + t0027: test cases for combined attributes
- + convert: allow core.autocrlf=input and core.eol=crlf
- + t0027: make commit_chk_wrnNNO() reliable
- (this branch is used by tb/convert-peek-in-index.)
-
- A couple of bugs around core.autocrlf have been fixed.
-
-
-* xy/format-patch-base (2016-04-26) 4 commits
-  (merged to 'next' on 2016-05-10 at dd19e0a)
- + format-patch: introduce format.useAutoBase configuration
- + format-patch: introduce --base=auto option
- + format-patch: add '--base' option to record base tree info
- + patch-ids: make commit_patch_id() a public helper function
-
- "git format-patch" learned a new "--base" option to record what
- (public, well-known) commit the original series was built on in
- its output.
-
---------------------------------------------------
-[New Topics]
 
 * ak/t4204-shell-portability (2016-05-24) 1 commit
- - t4204: do not let $name variable clobbered
+  (merged to 'next' on 2016-05-27 at fd16e6d)
+ + t4204: do not let $name variable clobbered
 
  Update a test to run also under ksh88.
 
- Will merge to 'next' and to 'master'.
+
+* es/t1500-modernize (2016-05-18) 5 commits
+  (merged to 'next' on 2016-05-26 at 274e39c)
+ + t1500: avoid setting environment variables outside of tests
+ + t1500: avoid setting configuration options outside of tests
+ + t1500: avoid changing working directory outside of tests
+ + t1500: test_rev_parse: facilitate future test enhancements
+ + t1500: be considerate to future potential tests
+
+ test updates to make it more readable and maintainable.
 
 
-* et/pretty-format-c-auto (2016-05-25) 1 commit
- - format_commit_message: honor `color=auto` for `%C(auto)`
+* fc/fast-import-broken-marks-file (2016-05-17) 1 commit
+  (merged to 'next' on 2016-05-26 at 9962fcf)
+ + fast-import: do not truncate exported marks file
 
- Expecting a reroll.
- ($gmane/295601)
-
-
-* ew/daemon-socket-keepalive (2016-05-25) 1 commit
- - daemon: enable SO_KEEPALIVE for all sockets
-
- When "git daemon" is run without --[init-]timeout specified, a
- connection from a client that silently goes offline can hang around
- for a long time, wasting resources.  The socket-level KEEPALIVE has
- been enabled to allow the OS to notice such failed connections.
-
- Will merge to 'next'.
+ "git fast-import --export-marks" would overwrite the existing marks
+ file even when it makes a dump from its custom die routine.
+ Prevent it from doing so when we have an import-marks file but
+ haven't finished reading it.
 
 
-* jk/upload-pack-hook (2016-05-24) 6 commits
- - upload-pack: provide a hook for running pack-objects
- - config: add a notion of "scope"
- - config: return configset value for current_config_ functions
- - config: set up config_source for command-line config
- - git_config_parse_parameter: refactor cleanup code
- - git_config_with_options: drop "found" counting
+* jk/cat-file-buffered-batch-all (2016-05-18) 2 commits
+  (merged to 'next' on 2016-05-26 at 4da062d)
+ + cat-file: default to --buffer when --batch-all-objects is used
+ + cat-file: avoid noop calls to sha1_object_info_extended
 
- Allow a custom "git upload-pack" replacement to respond to
- "fetch/clone" request.
+ "git cat-file --batch-all" has been sped up, by taking advantage
+ of the fact that it does not have to read a list of objects, in two
+ ways.
 
- Will merge to 'next'.
+
+* js/t6044-use-test-seq (2016-05-18) 1 commit
+  (merged to 'next' on 2016-05-27 at d052a29)
+ + t6044: replace seq by test_seq
+
+ Test portability fix.
 
 
 * kb/msys2-tty (2016-05-26) 1 commit
- - mingw: make isatty() recognize MSYS2's pseudo terminals (/dev/pty*)
+  (merged to 'next' on 2016-05-27 at 588f76c)
+ + mingw: make isatty() recognize MSYS2's pseudo terminals (/dev/pty*)
 
  The "are we talking with TTY, doing an interactive session?"
  detection has been updated to work better for "Git for Windows".
 
 
-* rs/xdiff-hunk-with-func-line (2016-05-26) 5 commits
- - grep: don't extend context to trailing empty lines with -W
- - xdiff: don't include common trailing empty lines with -W
- - xdiff: ignore empty lines before added functions with -W
- - xdiff: handle appended chunks better with -W
- - xdiff: factor out match_func_rec()
+* mr/send-email-doc-gmail-2fa (2016-05-27) 1 commit
+  (merged to 'next' on 2016-05-27 at 19d6ba4)
+ + Documentation: add instructions to help setup gmail 2FA
 
- "git show -W" (extend hunks to cover the entire function, delimited
- by lines that match the "funcname" pattern) used to show the entire
- file when a change added an entire function at the end of the file,
- which has been fixed.
+ Give hints to GMail users with two-factor auth enabled that
+ they need app-specific-password when using send-email.
 
 
-* sb/submodule-misc-cleanups (2016-05-25) 1 commit
- - submodule update: make use of the existing fetch_in_submodule function
+* rj/log-decorate-auto (2016-05-27) 1 commit
+  (merged to 'next' on 2016-05-27 at 813112b)
+ + log: document the --decorate=auto option
 
- Minor simplification.
+ We forgot to add "git log --decorate=auto" to documentation when we
+ added the feature back in v2.1.0 timeframe.
+
+--------------------------------------------------
+[New Topics]
+
+* js/rebase-i-dedup-call-to-rerere (2016-05-31) 1 commit
+  (merged to 'next' on 2016-05-31 at db1f9e3)
+ + rebase -i: remove an unnecessary 'rerere' invocation
+
+ "git rebase -i", after it fails to auto-resolve the conflict, had
+ an unnecessary call to "git rerere" from its very early days, which
+ was spotted recently; the call has been removed.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-recommend-shallowness (2016-05-27) 2 commits
+  (merged to 'next' on 2016-05-31 at 1ee161c)
+ + submodule update: learn `--[no-]recommend-shallow` option
+ + submodule-config: keep shallow recommendation around
+
+ An upstream project can make a recommendation to make only a
+ shallow clone for some submodules in the .gitmodules file it ship.
+
+ Will merge to 'master' after 2.9 final.
+
+
+* tb/convert-peek-in-index (2016-05-24) 2 commits
+ - convert: ce_compare_data() checks for a sha1 of a path
+ - read-cache: factor out get_sha1_from_index() helper
+
+ The motivation is rather iffy.
+
+
+* va/i18n-even-more (2016-05-26) 22 commits
+ - t5523: use test_i18ngrep for negation
+ - t4153: fix negated test_i18ngrep call
+ - t9003: become resilient to GETTEXT_POISON
+ - tests: unpack-trees: update to use test_i18n* functions
+ - tests: use test_i18n* functions to suppress false positives
+ - i18n: setup: mark strings for translation
+ - i18n: rebase-interactive: mark comments of squash for translation
+ - i18n: rebase-interactive: mark here-doc strings for translation
+ - i18n: rebase-interactive: mark strings for translation
+ - i18n: git-sh-setup.sh: mark strings for translation
+ - t6030: update to use test_i18ncmp
+ - i18n: bisect: simplify error message for i18n
+ - i18n: rebase: mark placeholder for translation
+ - i18n: rebase: fix marked string to use eval_gettext variant
+ - merge-octupus: use die shell function from git-sh-setup.sh
+ - i18n: merge-octopus: mark messages for translation
+ - i18n: sequencer: mark string for translation
+ - i18n: sequencer: mark entire sentences for translation
+ - i18n: transport: mark strings for translation
+ - i18n: advice: internationalize message for conflicts
+ - i18n: advice: mark string about detached head for translation
+ - i18n: builtin/remote.c: fix mark for translation
+
+ More markings of messages for i18n, with updates to various tests
+ to pass GETTEXT_POISON tests.
+
+ Is everybody happy with this version?
+
+
+* bd/readme.markdown-more (2016-05-31) 1 commit
+ - README.md: format CLI commands with code syntax
 
  Will merge to 'next'.
 
 
-* sb/submodule-default-paths (2016-05-26) 7 commits
- - clone: add --init-submodule=<pathspec> switch
- - submodule update: add `--init-default-path` switch
- - Merge branch 'sb/pathspec-label' into sb/submodule-default-paths
- - Merge branch 'jc/attr' into sb/submodule-default-paths
- - Merge branch 'sb/clone-shallow-passthru' into sb/submodule-default-paths
- - Merge branch 'sb/submodule-deinit-all' into sb/submodule-default-paths
- - Merge branch 'sb/submodule-parallel-update' into sb/submodule-default-paths
- (this branch uses jc/attr and sb/pathspec-label.)
+* em/man-bold-literal (2016-05-31) 1 commit
+ - Documentation: bold literals in man
+
+ The manpage output of our documentation did not render well in
+ terminal; typeset literals in bold by default to make them stand
+ out more.
+
+ Will merge to 'next'.
+
+
+* jg/dash-is-last-branch-in-worktree-add (2016-05-31) 1 commit
+ - worktree: allow "-" short-hand for @{-1} in add command
+
+ "git worktree add" learned that '-' can be used as a short-hand for
+ "@{-1}", the previous branch.
+
+ Will merge to 'next'.
+
+
+* js/perf-rebase-i (2016-05-31) 1 commit
+  (merged to 'next' on 2016-05-31 at 39d8dc8)
+ + perf: make the tests work without a worktree
+
+ The one in 'master' has a brown-paper-bag bug that breaks the perf
+ test when used inside a usual Git repository with a working tree.
+
+ Will merge to 'master'.
+
+
+* dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
+ - blame: require 0 context lines while finding moved lines with -M
+
+ "git blame -M" missed a single line that was moved within the file.
+
+ We may want to squash a test or two to this commit.  Volunteers?
+
+
+* mm/makefile-developer-can-be-in-config-mak (2016-05-31) 1 commit
+ - Makefile: move 'ifdef DEVELOPER' after config.mak* inclusion
+
+ "make DEVELOPER=1" worked as expected; setting DEVELOPER=1 in
+ config.mak didn't.
+
+ Will merge to 'next'.
+
+
+* nd/worktree-lock (2016-05-31) 6 commits
+ - worktree: add "unlock" command
+ - worktree: add "lock" command
+ - worktree.c: retrieve lock status (and optionally reason) in get_worktrees()
+ - worktree.c: add is_main_worktree()
+ - worktree.c: find_worktree() learns to identify worktrees by basename
+ - worktree.c: add find_worktree()
+ (this branch uses nd/worktree-cleanup-post-head-protection.)
+
+ "git worktree prune" protected worktrees that are marked as
+ "locked" by creating a file in a known location.  "git worktree"
+ command learned a dedicated command pair to create and remoev such
+ a file, so that the users do not have to do this with editor.
+
+ The implementation was wasteful; expecting a reroll.
+
+
+* pa/cherry-pick-doc-typo (2016-05-29) 1 commit
+ - git-cherry-pick.txt: correct a small typo
+
+ "git cherry-pick --help" had three instances of word "behavior",
+ one of which was spelled "behaviour", which is updated to match the
+ other two.
+
+ Will merge to 'next'.
+
+
+* rs/apply-name-terminate (2016-05-29) 1 commit
+ - apply: remove unused parameters from name_terminate()
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* rs/patch-id-use-skip-prefix (2016-05-29) 1 commit
+ - patch-id: use starts_with() and skip_prefix()
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -461,34 +474,93 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/cat-file-buffered-batch-all (2016-05-18) 2 commits
-  (merged to 'next' on 2016-05-26 at 4da062d)
- + cat-file: default to --buffer when --batch-all-objects is used
- + cat-file: avoid noop calls to sha1_object_info_extended
+* et/pretty-format-c-auto (2016-05-27) 1 commit
+  (merged to 'next' on 2016-05-31 at 1e9c920)
+ + format_commit_message: honor `color=auto` for `%C(auto)`
 
- "git cat-file --batch-all" has been sped up, by taking advantage
- of the fact that it does not have to read a list of objects, in two
- ways.
+ %C(auto) in a custom format string that commands in `git log`
+ family takes unconditionally turned the color on, ignoring
+ --no-color or --color=auto with output not connected to a tty;
+ this was corrected to make the format truly behave as "auto".
 
- Will merge to 'master'.
+ Will merge to 'master' after 2.9 final.
 
 
-* ah/no-verify-signature-with-pull-rebase (2016-05-20) 1 commit
- - pull: warn on --verify-signatures with --rebase
+* ew/daemon-socket-keepalive (2016-05-25) 1 commit
+  (merged to 'next' on 2016-05-31 at c32acf1)
+ + daemon: enable SO_KEEPALIVE for all sockets
 
- "git pull --rebase --verify-signature" learned to warn the user
- that "--verify-signature" is a no-op.
+ When "git daemon" is run without --[init-]timeout specified, a
+ connection from a client that silently goes offline can hang around
+ for a long time, wasting resources.  The socket-level KEEPALIVE has
+ been enabled to allow the OS to notice such failed connections.
+
+ Will merge to 'master' after 2.9 final.
+
+
+* jk/upload-pack-hook (2016-05-27) 6 commits
+ - upload-pack: provide a hook for running pack-objects
+ - config: add a notion of "scope"
+ - config: return configset value for current_config_ functions
+ - config: set up config_source for command-line config
+ - git_config_parse_parameter: refactor cleanup code
+ - git_config_with_options: drop "found" counting
+
+ Allow a custom "git upload-pack" replacement to respond to
+ "fetch/clone" request.
+
+ Still under discussion.
+ ($gmane/295705).
+
+
+* rs/xdiff-hunk-with-func-line (2016-05-31) 8 commits
+ - grep: -W: don't extend context to trailing empty lines
+ - t7810: add test for grep -W and trailing empty context lines
+ - xdiff: don't trim common tail with -W
+ - xdiff: -W: don't include common trailing empty lines in context
+ - xdiff: ignore empty lines before added functions with -W
+ - xdiff: handle appended chunks better with -W
+ - xdiff: factor out match_func_rec()
+ - t4051: rewrite, add more tests
+
+ "git show -W" (extend hunks to cover the entire function, delimited
+ by lines that match the "funcname" pattern) used to show the entire
+ file when a change added an entire function at the end of the file,
+ which has been fixed.
 
  Will merge to 'next'.
 
 
-* ak/t0008-ksh88-workaround (2016-05-20) 1 commit
-  (merged to 'next' on 2016-05-26 at 9a34a2a)
- + t0008: 4 tests fail with ksh88
+* sb/submodule-misc-cleanups (2016-05-25) 1 commit
+  (merged to 'next' on 2016-05-31 at 0d07b9c)
+ + submodule update: make use of the existing fetch_in_submodule function
 
- Test portability workaround.
+ Minor simplification.
 
- Will merge to 'master'.
+ Will merge to 'master' after 2.9 final.
+
+
+* sb/submodule-default-paths (2016-05-26) 7 commits
+ - clone: add --init-submodule=<pathspec> switch
+ - submodule update: add `--init-default-path` switch
+ - Merge branch 'sb/pathspec-label' into sb/submodule-default-paths
+ - Merge branch 'jc/attr' into sb/submodule-default-paths
+ - Merge branch 'sb/clone-shallow-passthru' into sb/submodule-default-paths
+ - Merge branch 'sb/submodule-deinit-all' into sb/submodule-default-paths
+ - Merge branch 'sb/submodule-parallel-update' into sb/submodule-default-paths
+ (this branch uses jc/attr and sb/pathspec-label.)
+
+ Will merge to 'next'.
+
+
+* ah/no-verify-signature-with-pull-rebase (2016-05-20) 1 commit
+  (merged to 'next' on 2016-05-31 at 30add83)
+ + pull: warn on --verify-signatures with --rebase
+
+ "git pull --rebase --verify-signature" learned to warn the user
+ that "--verify-signature" is a no-op.
+
+ Will merge to 'master' after 2.9 final.
 
 
 * ep/http-curl-trace (2016-05-24) 2 commits
@@ -498,60 +570,33 @@ of the repositories listed at
  HTTP transport gained an option to produce more detailed debugging
  trace.
 
- Rerolled.
+ Rerolled.  Is everybody happy with this version?
 
 
 * jc/attr (2016-05-25) 18 commits
- - attr: support quoting pathname patterns in C style
- - attr: expose validity check for attribute names
- - attr: add counted string version of git_attr()
- - attr: add counted string version of git_check_attr()
- - attr: retire git_check_attrs() API
- - attr: convert git_check_attrs() callers to use the new API
- - attr: convert git_all_attrs() to use "struct git_attr_check"
- - attr: (re)introduce git_check_attr() and struct git_attr_check
- - attr: rename function and struct related to checking attributes
- - attr.c: plug small leak in parse_attr_line()
- - attr.c: tighten constness around "git_attr" structure
- - attr.c: simplify macroexpand_one()
- - attr.c: mark where #if DEBUG ends more clearly
- - attr.c: complete a sentence in a comment
- - attr.c: explain the lack of attr-name syntax check in parse_attr()
- - attr.c: update a stale comment on "struct match_attr"
- - attr.c: use strchrnul() to scan for one line
- - commit.c: use strchrnul() to scan for one line
+  (merged to 'next' on 2016-05-31 at 5b2f08b)
+ + attr: support quoting pathname patterns in C style
+ + attr: expose validity check for attribute names
+ + attr: add counted string version of git_attr()
+ + attr: add counted string version of git_check_attr()
+ + attr: retire git_check_attrs() API
+ + attr: convert git_check_attrs() callers to use the new API
+ + attr: convert git_all_attrs() to use "struct git_attr_check"
+ + attr: (re)introduce git_check_attr() and struct git_attr_check
+ + attr: rename function and struct related to checking attributes
+ + attr.c: plug small leak in parse_attr_line()
+ + attr.c: tighten constness around "git_attr" structure
+ + attr.c: simplify macroexpand_one()
+ + attr.c: mark where #if DEBUG ends more clearly
+ + attr.c: complete a sentence in a comment
+ + attr.c: explain the lack of attr-name syntax check in parse_attr()
+ + attr.c: update a stale comment on "struct match_attr"
+ + attr.c: use strchrnul() to scan for one line
+ + commit.c: use strchrnul() to scan for one line
  (this branch is used by sb/pathspec-label and sb/submodule-default-paths.)
 
  The attributes API has been updated so that it can later be
  optimized using the knowledge of which attributes are queried.
-
- Let's merge the early "clean-up" half to 'next', after splitting it
- into a separate topic.
-
-
-* fc/fast-import-broken-marks-file (2016-05-17) 1 commit
-  (merged to 'next' on 2016-05-26 at 9962fcf)
- + fast-import: do not truncate exported marks file
-
- "git fast-import --export-marks" would overwrite the existing marks
- file even when it makes a dump from its custom die routine.
- Prevent it from doing so when we have an import-marks file but
- haven't finished reading it.
-
- Will merge to 'master'.
-
-
-* es/t1500-modernize (2016-05-18) 5 commits
-  (merged to 'next' on 2016-05-26 at 274e39c)
- + t1500: avoid setting environment variables outside of tests
- + t1500: avoid setting configuration options outside of tests
- + t1500: avoid changing working directory outside of tests
- + t1500: test_rev_parse: facilitate future test enhancements
- + t1500: be considerate to future potential tests
-
- test updates to make it more readable and maintainable.
-
- Will merge to 'master'.
 
 
 * cc/apply-introduce-state (2016-05-12) 48 commits
@@ -627,16 +672,17 @@ of the repositories listed at
 
 
 * sb/pathspec-label (2016-05-25) 4 commits
- - pathspec: allow querying for attributes
- - pathspec: move prefix check out of the inner loop
- - pathspec: move long magic parsing out of prefix_pathspec
- - Documentation: fix a typo
+  (merged to 'next' on 2016-05-31 at e72b604)
+ + pathspec: allow querying for attributes
+ + pathspec: move prefix check out of the inner loop
+ + pathspec: move long magic parsing out of prefix_pathspec
+ + Documentation: fix a typo
  (this branch is used by sb/submodule-default-paths; uses jc/attr.)
 
  The pathspec mechanism learned ":(attr:X)$pattern" pathspec magic
  to limit paths that match $pattern further by attribute settings.
 
- Will merge to 'next'.
+ Will merge to 'master' after 2.9 final.
 
 
 * nd/worktree-cleanup-post-head-protection (2016-05-24) 6 commits
@@ -646,6 +692,7 @@ of the repositories listed at
  - git-worktree.txt: keep subcommand listing in alphabetical order
  - worktree.c: rewrite mark_current_worktree() to avoid strbuf
  - completion: support git-worktree
+ (this branch is used by nd/worktree-lock.)
 
  Further preparatory clean-up for "worktree" feature.
 
@@ -704,9 +751,9 @@ of the repositories listed at
  Will discard.
 
 
-* ew/fast-import-unpack-limit (2016-05-19) 2 commits
-  (merged to 'next' on 2016-05-19 at 50137c5)
- + (DO NOT MERGE YET) fast-import: discard object-table after closing a pack
+* ew/fast-import-unpack-limit (2016-05-29) 2 commits
+  (merged to 'next' on 2016-05-29 at af32aba)
+ + fast-import: invalidate pack_id references after loosening
   (merged to 'next' on 2016-05-11 at ffd4efb)
  + fast-import: implement unpack limit
 
@@ -809,11 +856,3 @@ of the repositories listed at
  It has been reported that git-gui still uses the deprecated syntax,
  which needs to be fixed before this final step can proceed.
  ($gmane/282594)
-
---------------------------------------------------
-[Discarded]
-
-* jc/diff-compact-always-use-blank-heuristics (2016-04-29) 1 commit
- . diff: enable "compaction heuristics" and lose experimentation knob
-
- Superseded by the tip commit on the jk/diff-compact-heuristic topic.
