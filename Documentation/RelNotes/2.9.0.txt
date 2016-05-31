@@ -1,12 +1,12 @@
 Git 2.9 Release Notes
 =====================
 
-Backward compatibility note
----------------------------
+Backward compatibility notes
+----------------------------
 
 The end-user facing Porcelain level commands in the "git diff" and
-"git log" by default enables the rename detection; you can still use
-"diff.renames" configuration variable to disable this.
+"git log" family by default enable the rename detection; you can still
+use "diff.renames" configuration variable to disable this.
 
 Merging two branches that have no common ancestor with "git merge" is
 by default forbidden now to prevent creating such an unusual merge by
@@ -30,8 +30,8 @@ UI, Workflows & Features
 
  * Comes with git-multimail 1.3.1 (in contrib/).
 
- * The end-user facing Porcelain level commands like "diff" and "log"
-   now enables the rename detection by default.
+ * The end-user facing commands like "git diff" and "git log"
+   now enable the rename detection by default.
 
  * The credential.helper configuration variable is cumulative and
    there is no good way to override it from the command line.  As
@@ -39,7 +39,7 @@ UI, Workflows & Features
    as the signal to clear the values specified in various files.
 
  * A new "interactive.diffFilter" configuration can be used to
-   customize the diff shown in "git add -i" session.
+   customize the diff shown in "git add -i" sessions.
 
  * "git p4" now allows P4 author names to be mapped to Git author
    names.
@@ -64,7 +64,7 @@ UI, Workflows & Features
    to be used in a rare event that merges histories of two projects
    that started their lives independently.
 
- * "git pull" has been taught to pass --allow-unrelated-histories
+ * "git pull" has been taught to pass the "--allow-unrelated-histories"
    option to underlying "git merge".
 
  * "git apply -v" learned to report paths in the patch that were
@@ -87,7 +87,7 @@ UI, Workflows & Features
 
  * When "git log" shows the log message indented by 4-spaces, the
    remainder of a line after a HT does not align in the way the author
-   originally intended.  The command now expands tabs by default in
+   originally intended.  The command now expands tabs by default to help
    such a case, and allows the users to override it with a new option,
    "--no-expand-tabs".
 
@@ -97,13 +97,12 @@ UI, Workflows & Features
  * "git rerere" can encounter two or more files with the same conflict
    signature that have to be resolved in different ways, but there was
    no way to record these separate resolutions.
-   (merge d9d501b068 jc/rerere-multi later to maint).
 
  * "git p4" learned to record P4 jobs in Git commit that imports from
    the history in Perforce.
 
  * "git describe --contains" often made a hard-to-justify choice of
-   tag to give name to a given commit, because it tried to come up
+   tag to name a given commit, because it tried to come up
    with a name with smallest number of hops from a tag, causing an old
    commit whose close descendant that is recently tagged were not
    described with respect to an old tag but with a newer tag.  It did
@@ -115,14 +114,14 @@ UI, Workflows & Features
    commit."
    (merge 7550424 js/name-rev-use-oldest-ref later to maint).
 
- * "git clone" learned "--shallow-submodules" option.
+ * "git clone" learned the "--shallow-submodules" option.
 
  * HTTP transport clients learned to throw extra HTTP headers at the
    server, specified via http.extraHeader configuration variable.
 
  * Patch output from "git diff" and friends has been tweaked to be
    more readable by using a blank line as a strong hint that the
-   contents before and after it belong to a logically separate unit.
+   contents before and after it belong to logically separate units.
 
  * A new configuration variable core.hooksPath allows customizing
    where the hook directory is.
@@ -147,12 +146,13 @@ UI, Workflows & Features
    (public, well-known) commit the original series was built on in
    its output.
 
- * "git commit" learned to pay attention to "commit.verbose"
-   configuration variable and act as if "--verbose" option was
-   given from the command line.
+ * "git commit" learned to pay attention to the "commit.verbose"
+   configuration variable and act as if the "--verbose" option
+   was given from the command line.
 
- * Give hints to GMail users with two-factor auth enabled that
-   they need app-specific-password when using send-email.
+ * Updated documentation gives hints to GMail users with two-factor
+   auth enabled that they need app-specific-password when using
+   "git send-email".
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -174,7 +174,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * A major part of "git submodule update" has been ported to C to take
    advantage of the recently added framework to run download tasks in
-   parallel.
+   parallel.  Other updates to "git submodule" that move pieces of
+   logic to C continues.
 
  * Rename bunch of tests on "git clone" for better organization.
 
@@ -188,16 +189,15 @@ Performance, Internal Implementation, Development Support etc.
    do not attempt to look into refs/* when we know we do not have a
    Git repository.
 
- * Code restructuring around the "refs" area to prepare for pluggable
+ * Code restructuring around the "refs" API to prepare for pluggable
    refs backends.
 
- * Sources to many test helper binaries (and the generated helpers)
+ * Sources to many test helper binaries and the generated helpers
    have been moved to t/helper/ subdirectory to reduce clutter at the
    top level of the tree.
 
  * Unify internal logic between "git tag -v" and "git verify-tag"
    commands by making one directly call into the other.
-   (merge bef234b st/verify-tag later to maint).
 
  * "merge-recursive" strategy incorrectly checked if a path that is
    involved in its internal merge exists in the working tree.
@@ -209,9 +209,7 @@ Performance, Internal Implementation, Development Support etc.
  * As nobody maintains our in-tree git.spec.in and distros use their
    own spec file, we stopped pretending that we support "make rpm".
 
- * Move from unsigned char[20] to struct object_id continues.
-
- * Update of "git submodule" to move pieces of logic to C continues.
+ * Move from "unsigned char[20]" to "struct object_id" continues.
 
  * The code for warning_errno/die_errno has been refactored and a new
    error_errno() reporting helper is introduced.
@@ -230,17 +228,24 @@ Performance, Internal Implementation, Development Support etc.
    test-parse-options program so that a caller can tell what it
    expects in its output, so that these repetitions can be cleaned up.
 
- * Add perf test for "rebase -i"
+ * Add perf test for "rebase -i".
 
  * Common mistakes when writing gitlink: in our documentation are
    found by "make check-docs".
 
  * t9xxx series has been updated primarily for readability, while
-   fixing small bugs in it.  A few scripted Porcelains have also been
-   updated to fix possible bugs around their use of "test -z" and
-   "test -n".
+   fixing small bugs in it.  A few scripted Porcelain commands have
+   also been updated to fix possible bugs around their use of
+   "test -z" and "test -n".
 
  * CI test was taught to run git-svn tests.
+
+ * "git cat-file --batch-all" has been sped up, by taking advantage
+   of the fact that it does not have to read a list of objects, in two
+   ways.
+
+ * test updates to make it more readable and maintainable.
+   (merge e6273f4 es/t1500-modernize later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -329,11 +334,11 @@ notes for details).
  * Support for CRAM-MD5 authentication method in "git imap-send" did
    not work well.
 
- * Upcoming OpenSSL 1.1.0 will break compilation b updating a few APIs
-   we use in imap-send, which has been adjusted for the change.
+ * Upcoming OpenSSL 1.1.0 will break compilation by updating a few API
+   elements we use in imap-send, which has been adjusted for the change.
 
  * The socks5:// proxy support added back in 2.6.4 days was not aware
-   that socks5h:// proxies behave differently.
+   that socks5h:// proxies behave differently from socks5:// proxies.
 
  * "git config" had a codepath that tried to pass a NULL to
    printf("%s"), which nobody seems to have noticed.
@@ -354,12 +359,12 @@ notes for details).
  * When "git merge" notices that the merge can be resolved purely at
    the tree level (without having to merge blobs) and the resulting
    tree happens to already exist in the object store, it forgot to
-   update the index, which lead to an inconsistent state for later
-   operations.
+   update the index, which left an inconsistent state that would
+   break later operations.
 
  * "git submodule" reports the paths of submodules the command
-   recurses into, but this was incorrect when the command was not run
-   from the root level of the superproject.
+   recurses into, but these paths were incorrectly reported when
+   the command was not run from the root level of the superproject.
 
  * The "user.useConfigOnly" configuration variable makes it an error
    if users do not explicitly set user.name and user.email.  However,
@@ -391,7 +396,6 @@ notes for details).
  * "git rebase -m" could be asked to rebase an entire branch starting
    from the root, but failed by assuming that there always is a parent
    commit to the first commit on the branch.
-   (merge 79f4344 bw/rebase-merge-entire-branch later to maint).
 
  * Fix a broken "p4 lfs" test.
 
@@ -417,7 +421,6 @@ notes for details).
    the configuration variable.  This will stop requiring the users to
    sign commit objects used internally as an implementation detail of
    "git stash".
-   (merge 6694856 jc/commit-tree-ignore-commit-gpgsign later to maint).
 
  * "http.cookieFile" configuration variable clearly wants a pathname,
    but we forgot to treat it as such by e.g. applying tilde expansion.
@@ -452,7 +455,7 @@ notes for details).
 
  * Portability enhancement for "rebase -i" to help platforms whose
    shell does not like "for i in <empty>" (which is not POSIX-kosher).
-   (merge 8e98b35 jk/rebase-interative-eval-fix later to maint).
+   (merge 8e98b35 jk/rebase-interactive-eval-fix later to maint).
 
  * On Windows, .git and optionally any files whose name starts with a
    dot are now marked as hidden, with a core.hideDotFiles knob to
@@ -485,6 +488,12 @@ notes for details).
  * We forgot to add "git log --decorate=auto" to documentation when we
    added the feature back in v2.1.0 timeframe.
    (merge 462cbb4 rj/log-decorate-auto later to maint).
+
+ * "git fast-import --export-marks" would overwrite the existing marks
+   file even when it makes a dump from its custom die routine.
+   Prevent it from doing so when we have an import-marks file but
+   haven't finished reading it.
+   (merge f4beed6 fc/fast-import-broken-marks-file later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge 832c0e5 lp/typofixes later to maint).
