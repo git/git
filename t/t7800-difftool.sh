@@ -423,7 +423,7 @@ write_script .git/CHECK_SYMLINKS <<\EOF
 for f in file file2 sub/sub
 do
 	echo "$f"
-	readlink "$2/$f"
+	ls -ld "$2/$f" | sed -e 's/.* -> //'
 done >actual
 EOF
 
