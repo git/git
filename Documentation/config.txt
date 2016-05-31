@@ -1669,11 +1669,12 @@ http.emptyAuth::
 	authentication.
 
 http.cookieFile::
-	File containing previously stored cookie lines which should be used
+	The pathname of a file containing previously stored cookie lines,
+	which should be used
 	in the Git http session, if they match the server. The file format
 	of the file to read cookies from should be plain HTTP headers or
 	the Netscape/Mozilla cookie file format (see `curl(1)`).
-	NOTE that the file specified with http.cookieFile is only used as
+	NOTE that the file specified with http.cookieFile is used only as
 	input unless http.saveCookies is set.
 
 http.saveCookies::
