@@ -380,18 +380,6 @@ ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
 STRIP ?= strip
 
-ifdef DEVELOPER
-CFLAGS += -Werror \
-	-Wdeclaration-after-statement \
-	-Wno-format-zero-length \
-	-Wold-style-definition \
-	-Woverflow \
-	-Wpointer-arith \
-	-Wstrict-prototypes \
-	-Wunused \
-	-Wvla
-endif
-
 # Create as necessary, replace existing, make ranlib unneeded.
 ARFLAGS = rcs
 
@@ -951,6 +939,18 @@ GIT_USER_AGENT = git/$(GIT_VERSION)
 include config.mak.uname
 -include config.mak.autogen
 -include config.mak
+
+ifdef DEVELOPER
+CFLAGS += -Werror \
+	-Wdeclaration-after-statement \
+	-Wno-format-zero-length \
+	-Wold-style-definition \
+	-Woverflow \
+	-Wpointer-arith \
+	-Wstrict-prototypes \
+	-Wunused \
+	-Wvla
+endif
 
 ifndef sysconfdir
 ifeq ($(prefix),/usr)
