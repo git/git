@@ -939,3 +939,25 @@ mingw_read_file_strip_cr_ () {
 		eval "$1=\$$1\$line"
 	done
 }
+
+# Like "env FOO=BAR some-program", but run inside a subshell, which means
+# it also works for shell functions (though those functions cannot impact
+# the environment outside of the test_env invocation).
+test_env () {
+	(
+		while test $# -gt 0
+		do
+			case "$1" in
+			*=*)
+				eval "${1%%=*}=\${1#*=}"
+				eval "export ${1%%=*}"
+				shift
+				;;
+			*)
+				"$@"
+				exit
+				;;
+			esac
+		done
+	)
+}
