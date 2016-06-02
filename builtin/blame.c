@@ -609,7 +609,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -651,7 +651,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -1343,7 +1343,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 	} while (unblamed);
 	target->suspects = reverse_blame(leftover, NULL);
 	diff_flush(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 }
 
 /*

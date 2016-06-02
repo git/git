@@ -322,7 +322,7 @@ static int path_exists(struct tree *tree, const char *path)
 	pathspec.recursive = 1;
 	ret = read_tree_recursive(tree, "", 0, 0, &pathspec,
 				  reject_entry, &pathspec);
-	free_pathspec(&pathspec);
+	clear_pathspec(&pathspec);
 	return ret != 0;
 }
 
