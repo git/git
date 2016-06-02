@@ -237,7 +237,7 @@ test_expect_success 'iteration shows correct origins' '
 	key=foo.bar
 	value=from-home
 	origin=file
-	name=$(pwd)/.gitconfig
+	name=$HOME/.gitconfig
 	scope=global
 
 	key=foo.bar
