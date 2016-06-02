@@ -251,6 +251,18 @@ static void eat_long_magic(struct pathspec_item *item, const char *elt,
 	*copyfrom_ = copyfrom;
 }
 
+int pathspec_is_non_threadable(const struct pathspec *pathspec)
+{
+	int i;
+
+	for (i = 0; i < pathspec->nr; i++) {
+		const struct pathspec_item *item = &pathspec->items[i];
+		if (item->attr_check)
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * Take an element of a pathspec and check for magic signatures.
  * Append the result to the prefix. Return the magic bitmap.

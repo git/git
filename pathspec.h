@@ -115,4 +115,6 @@ extern void add_pathspec_matches_against_index(const struct pathspec *pathspec, 
 extern const char *check_path_for_gitlink(const char *path);
 extern void die_if_path_beyond_symlink(const char *path, const char *prefix);
 
+extern int pathspec_is_non_threadable(const struct pathspec *);
+
 #endif /* PATHSPEC_H */
