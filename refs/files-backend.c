@@ -517,7 +517,7 @@ static void sort_ref_dir(struct ref_dir *dir)
  * an object in the database.  Emit a warning if the referred-to
  * object does not exist.
  */
-static int ref_resolves_to_object(struct ref_entry *entry)
+static int entry_resolves_to_object(struct ref_entry *entry)
 {
 	if (entry->flag & REF_ISBROKEN)
 		return 0;
@@ -563,7 +563,7 @@ static int do_one_ref(struct ref_entry *entry, void *cb_data)
 		return 0;
 
 	if (!(data->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
-	      !ref_resolves_to_object(entry))
+	      !entry_resolves_to_object(entry))
 		return 0;
 
 	/* Store the old value, in case this is a recursive call: */
@@ -2228,7 +2228,7 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 		return 0;
 
 	/* Do not pack symbolic or broken refs: */
-	if ((entry->flag & REF_ISSYMREF) || !ref_resolves_to_object(entry))
+	if ((entry->flag & REF_ISSYMREF) || !entry_resolves_to_object(entry))
 		return 0;
 
 	/* Add a packed ref cache entry equivalent to the loose entry. */
