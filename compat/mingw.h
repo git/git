@@ -352,10 +352,12 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 #ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+#ifndef _MSC_VER
 struct timespec {
 	time_t tv_sec;
 	long tv_nsec;
 };
+#endif
 #endif
 
 struct mingw_stat {
