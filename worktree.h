@@ -38,6 +38,11 @@ extern struct worktree *find_worktree(struct worktree **list,
 				      const char *arg);
 
 /*
+ * Return true if the given worktree is the main one.
+ */
+extern int is_main_worktree(const struct worktree *wt);
+
+/*
  * Free up the memory for worktree(s)
  */
 extern void free_worktrees(struct worktree **);
