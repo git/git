@@ -542,7 +542,7 @@ static struct ref_entry *current_ref;
 typedef int each_ref_entry_fn(struct ref_entry *entry, void *cb_data);
 
 struct ref_entry_cb {
-	const char *base;
+	const char *prefix;
 	int trim;
 	int flags;
 	each_ref_fn *fn;
@@ -559,7 +559,7 @@ static int do_one_ref(struct ref_entry *entry, void *cb_data)
 	struct ref_entry *old_current_ref;
 	int retval;
 
-	if (!starts_with(entry->name, data->base))
+	if (!starts_with(entry->name, data->prefix))
 		return 0;
 
 	if (!(data->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
@@ -1824,12 +1824,12 @@ int peel_ref(const char *refname, unsigned char *sha1)
 
 /*
  * Call fn for each reference in the specified ref_cache, omitting
- * references not in the containing_dir of base.  fn is called for all
- * references, including broken ones.  If fn ever returns a non-zero
+ * references not in the containing_dir of prefix. Call fn for all
+ * references, including broken ones. If fn ever returns a non-zero
  * value, stop the iteration and return that value; otherwise, return
  * 0.
  */
-static int do_for_each_entry(struct ref_cache *refs, const char *base,
+static int do_for_each_entry(struct ref_cache *refs, const char *prefix,
 			     each_ref_entry_fn fn, void *cb_data)
 {
 	struct packed_ref_cache *packed_ref_cache;
@@ -1846,8 +1846,8 @@ static int do_for_each_entry(struct ref_cache *refs, const char *base,
 	 * disk.
 	 */
 	loose_dir = get_loose_refs(refs);
-	if (base && *base) {
-		loose_dir = find_containing_dir(loose_dir, base, 0);
+	if (prefix && *prefix) {
+		loose_dir = find_containing_dir(loose_dir, prefix, 0);
 	}
 	if (loose_dir)
 		prime_ref_dir(loose_dir);
@@ -1855,8 +1855,8 @@ static int do_for_each_entry(struct ref_cache *refs, const char *base,
 	packed_ref_cache = get_packed_ref_cache(refs);
 	acquire_packed_ref_cache(packed_ref_cache);
 	packed_dir = get_packed_ref_dir(packed_ref_cache);
-	if (base && *base) {
-		packed_dir = find_containing_dir(packed_dir, base, 0);
+	if (prefix && *prefix) {
+		packed_dir = find_containing_dir(packed_dir, prefix, 0);
 	}
 
 	if (packed_dir && loose_dir) {
@@ -1878,14 +1878,14 @@ static int do_for_each_entry(struct ref_cache *refs, const char *base,
 	return retval;
 }
 
-int do_for_each_ref(const char *submodule, const char *base,
+int do_for_each_ref(const char *submodule, const char *prefix,
 		    each_ref_fn fn, int trim, int flags, void *cb_data)
 {
 	struct ref_entry_cb data;
 	struct ref_cache *refs;
 
 	refs = get_ref_cache(submodule);
-	data.base = base;
+	data.prefix = prefix;
 	data.trim = trim;
 	data.flags = flags;
 	data.fn = fn;
@@ -1896,7 +1896,7 @@ int do_for_each_ref(const char *submodule, const char *base,
 	if (ref_paranoia)
 		data.flags |= DO_FOR_EACH_INCLUDE_BROKEN;
 
-	return do_for_each_entry(refs, base, do_one_ref, &data);
+	return do_for_each_entry(refs, prefix, do_one_ref, &data);
 }
 
 /*
