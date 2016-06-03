@@ -3482,19 +3482,20 @@ static const char *original_update_refname(struct ref_update *update)
  * - If it is an update of head_ref, add a corresponding REF_LOG_ONLY
  *   update of HEAD.
  */
-static int lock_ref_for_update(struct ref_update *update,
+static int lock_ref_for_update(struct files_ref_store *refs,
+			       struct ref_update *update,
 			       struct ref_transaction *transaction,
 			       const char *head_ref,
 			       struct string_list *affected_refnames,
 			       struct strbuf *err)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "lock_ref_for_update");
 	struct strbuf referent = STRBUF_INIT;
 	int mustexist = (update->flags & REF_HAVE_OLD) &&
 		!is_null_sha1(update->old_sha1);
 	int ret;
 	struct ref_lock *lock;
+
+	assert_main_repository(&refs->base, "lock_ref_for_update");
 
 	if ((update->flags & REF_HAVE_NEW) && is_null_sha1(update->new_sha1))
 		update->flags |= REF_DELETING;
@@ -3720,8 +3721,8 @@ static int files_transaction_commit(struct ref_store *ref_store,
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
-		ret = lock_ref_for_update(update, transaction, head_ref,
-					  &affected_refnames, err);
+		ret = lock_ref_for_update(refs, update, transaction,
+					  head_ref, &affected_refnames, err);
 		if (ret)
 			goto cleanup;
 	}
