@@ -8,6 +8,22 @@
 #include <winreg.h>
 #include "win32.h"
 
+#if defined(_MSC_VER)
+
+static int fd_is_interactive[3] = { 0, 0, 0 };
+#define MY_INTERACTIVE_CONSOLE 0x1
+#define MY_INTERACTIVE_SWAPPED 0x2
+#define MY_INTERACTIVE_MSYS    0x4
+
+/* Accumulate what we know about the inherited console descriptors. */
+static void set_interactive(int fd, int bit)
+{
+	if (fd >=0 && fd <= 2)
+		fd_is_interactive[fd] |= bit;
+}
+
+#endif
+
 /*
  ANSI codes used by git: m, K
 
@@ -93,6 +109,10 @@ static int is_console(int fd)
 	/* check if its a handle to a console output screen buffer */
 	if (!GetConsoleScreenBufferInfo(hcon, &sbi))
 		return 0;
+
+#if defined(_MSC_VER)
+	set_interactive(fd, MY_INTERACTIVE_CONSOLE);
+#endif
 
 	/* initialize attributes */
 	if (!initialized) {
@@ -455,6 +475,56 @@ static HANDLE duplicate_handle(HANDLE hnd)
 	return hresult;
 }
 
+#if defined(_MSC_VER)
+static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
+{
+	DWORD key_std = ((fd == 1) ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
+
+	/*
+	 * Create a copy of the original handle associated with fd
+	 * because the original will get closed when we dup2().
+	 */
+	HANDLE h_original = (HANDLE)_get_osfhandle(fd);
+	HANDLE h_copy_original = duplicate_handle(h_original);
+
+	/* Create a temp fd associated with the already open "new_handle". */
+	int fd_temp = _open_osfhandle((intptr_t)new_handle, O_BINARY);
+
+	assert((fd == 1) || (fd == 2));
+
+	/*
+	 * Use stock dup2() to re-bind fd to the new handle.  Note that
+	 * this will implicitly close(1) and close both fd=1 and the
+	 * originally associated handle.  It will open a new fd=1 and
+	 * call DuplicateHandle() on the handle associated with fd_temp.
+	 * It is because of this implicit close() that we created the
+	 * copy of the original.
+	 *
+	 * Note that the OS can recycle HANDLE (numbers) just like it
+	 * recycles fd (numbers), so we must update the cached value
+	 * of "console".  You can use GetFileType() to see that
+	 * h_original and _get_osfhandle(fd) may have the same number
+	 * value, but they refer to different actual files now.
+	 *
+	 * Note that dup2() when given target := {0,1,2} will also
+	 * call SetStdHandle(), so we don't need to worry about that.
+	 */
+	dup2(fd_temp, fd);
+	if (console == h_original)
+		console = h_copy_original;
+	h_original = INVALID_HANDLE_VALUE;
+
+	/* Close the temp fd.  This explicitly closes "new_handle"
+	 * (because it has been associated with it).
+	 */
+	close(fd_temp);
+
+	fd_is_interactive[fd] |= MY_INTERACTIVE_SWAPPED;
+
+	return h_copy_original;
+}
+
+#else
 
 /*
  * Make MSVCRT's internal file descriptor control structure accessible
@@ -527,10 +597,26 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 	return old_handle;
 }
 
+#endif
+
+
 #ifdef DETECT_MSYS_TTY
 
 #include <winternl.h>
+
+#if defined(_MSC_VER)
+
+typedef struct _OBJECT_NAME_INFORMATION
+{
+	UNICODE_STRING Name;
+	WCHAR NameBuffer[0];
+} OBJECT_NAME_INFORMATION, *POBJECT_NAME_INFORMATION;
+
+#define ObjectNameInformation 1
+
+#else
 #include <ntstatus.h>
+#endif
 
 static void detect_msys_tty(int fd)
 {
@@ -559,6 +645,9 @@ static void detect_msys_tty(int fd)
 			!wcsstr(name, L"-pty"))
 		return;
 
+#if defined(_MSC_VER)
+	fd_is_interactive[fd] |= MY_INTERACTIVE_MSYS;
+#else
 	/* init ioinfo size if we haven't done so */
 	if (init_sizeof_ioinfo())
 		return;
@@ -566,6 +655,7 @@ static void detect_msys_tty(int fd)
 	/* set FDEV flag, reset FPIPE flag */
 	_pioinfo(fd)->osflags &= ~FPIPE;
 	_pioinfo(fd)->osflags |= FDEV;
+#endif
 }
 
 #endif
@@ -578,6 +668,12 @@ void winansi_init(void)
 	/* check if either stdout or stderr is a console output screen buffer */
 	con1 = is_console(1);
 	con2 = is_console(2);
+
+#if defined(_MSC_VER)
+	/* Also compute console bit for fd 0 even though we don't need the result here. */
+	is_console(0);
+#endif
+
 	if (!con1 && !con2) {
 #ifdef DETECT_MSYS_TTY
 		/* check if stdin / stdout / stderr are MSYS2 pty pipes */
@@ -630,3 +726,23 @@ HANDLE winansi_get_osfhandle(int fd)
 	}
 	return hnd;
 }
+
+#ifdef _MSC_VER
+
+/* Wrapper for isatty().  Most calls in the main git code
+ * call isatty(1 or 2) to see if the instance is interactive
+ * and should: be colored, show progress, paginate output.
+ * We lie and give results for what the descriptor WAS at
+ * startup (and ignore any pipe redirection we internally
+ * do).
+ */
+#undef isatty
+int msc_isatty(fd)
+{
+	if (fd >=0 && fd <= 2)
+		return fd_is_interactive[fd] != 0;
+	else
+		return isatty(fd);
+}
+
+#endif
