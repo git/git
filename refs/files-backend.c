@@ -3401,7 +3401,8 @@ static int split_head_update(struct ref_update *update,
  * Note that the new update will itself be subject to splitting when
  * the iteration gets to it.
  */
-static int split_symref_update(struct ref_update *update,
+static int split_symref_update(struct files_ref_store *refs,
+			       struct ref_update *update,
 			       const char *referent,
 			       struct ref_transaction *transaction,
 			       struct string_list *affected_refnames,
@@ -3553,7 +3554,6 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 					    sha1_to_hex(update->old_sha1));
 				return TRANSACTION_GENERIC_ERROR;
 			}
-
 		} else {
 			/*
 			 * Create a new update for the reference this
@@ -3562,7 +3562,8 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * of processing the split-off update, so we
 			 * don't have to do it here.
 			 */
-			ret = split_symref_update(update, referent.buf, transaction,
+			ret = split_symref_update(refs, update,
+						  referent.buf, transaction,
 						  affected_refnames, err);
 			if (ret)
 				return ret;
