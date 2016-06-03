@@ -192,7 +192,6 @@ make_patch () {
 die_with_patch () {
 	echo "$1" > "$state_dir"/stopped-sha
 	make_patch "$1"
-	git rerere
 	die "$2"
 }
 
