@@ -394,10 +394,12 @@ static inline long long filetime_to_hnsec(const FILETIME *ft)
 #ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+#ifndef _MSC_VER
 struct timespec {
 	time_t tv_sec;
 	long tv_nsec;
 };
+#endif
 #endif
 
 static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
