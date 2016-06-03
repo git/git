@@ -154,6 +154,13 @@ UI, Workflows & Features
    auth enabled that they need app-specific-password when using
    "git send-email".
 
+ * The manpage output of our documentation did not render well in
+   terminal; typeset literals in bold by default to make them stand
+   out more.
+
+ * The mark-up in the top-level README.md file has been updated to
+   typeset CLI command names differently from the body text.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -246,6 +253,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * test updates to make it more readable and maintainable.
    (merge e6273f4 es/t1500-modernize later to maint).
+
+ * "make DEVELOPER=1" worked as expected; setting DEVELOPER=1 in
+   config.mak didn't.
+   (merge 51dd3e8 mm/makefile-developer-can-be-in-config-mak later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -495,6 +506,11 @@ notes for details).
    haven't finished reading it.
    (merge f4beed6 fc/fast-import-broken-marks-file later to maint).
 
+ * "git rebase -i", after it fails to auto-resolve the conflict, had
+   an unnecessary call to "git rerere" from its very early days, which
+   was spotted recently; the call has been removed.
+   (merge 7063693 js/rebase-i-dedup-call-to-rerere later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 832c0e5 lp/typofixes later to maint).
    (merge f5ee54a sb/z-is-gnutar-ism later to maint).
@@ -506,3 +522,6 @@ notes for details).
    (merge a75a308 tb/t5601-sed-fix later to maint).
    (merge 6c1fbe1 va/i18n-remote-comment-to-align later to maint).
    (merge dee2303 va/mailinfo-doc-typofix later to maint).
+   (merge cd82b7a pa/cherry-pick-doc-typo later to maint).
+   (merge 2bb73ae rs/patch-id-use-skip-prefix later to maint).
+   (merge aa20cbc rs/apply-name-terminate later to maint).
