@@ -1597,7 +1597,10 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 	prog = path_lookup(interpr, 1);
 	if (prog) {
 		int argc = 0;
-		const char **argv2;
+#ifndef _MSC_VER
+		const
+#endif
+		char **argv2;
 		while (argv[argc]) argc++;
 		ALLOC_ARRAY(argv2, argc + 1);
 		argv2[0] = (char *)cmd;	/* full path to the script file */
