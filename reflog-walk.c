@@ -241,6 +241,12 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 		logobj = parse_object(reflog->osha1);
 	} while (commit_reflog->recno && (logobj && logobj->type != OBJ_COMMIT));
 
+	if (!logobj && commit_reflog->recno >= 0 && is_null_sha1(reflog->osha1)) {
+		/* a root commit, but there are still more entries to show */
+		reflog = &commit_reflog->reflogs->items[commit_reflog->recno];
+		logobj = parse_object(reflog->nsha1);
+	}
+
 	if (!logobj || logobj->type != OBJ_COMMIT) {
 		commit_info->commit = NULL;
 		commit->parents = NULL;
