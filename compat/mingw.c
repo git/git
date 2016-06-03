@@ -2575,6 +2575,12 @@ static void maybe_redirect_std_handles(void)
 				  GENERIC_WRITE, FILE_FLAG_NO_BUFFERING);
 }
 
+#ifdef _MSC_VER
+#ifdef _DEBUG
+#include <crtdbg.h>
+#endif
+#endif
+
 /*
  * We implement wmain() and compile with -municode, which would
  * normally ignore main(), but we call the latter from the former
@@ -2589,6 +2595,12 @@ int wmain(int argc, const wchar_t **wargv)
 	int i, maxlen, exit_status;
 	char *buffer, **save;
 	const char **argv;
+
+#ifdef _MSC_VER
+#ifdef USE_MSVC_CRTDBG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+#endif
 
 	maybe_redirect_std_handles();
 
