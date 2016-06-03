@@ -57,6 +57,7 @@ struct apply_state {
 	 * lock_file structures, it isn't safe to free(lock_file).
 	 */
 	struct lock_file *lock_file;
+	int newfd;
 
 	/* These control what gets looked at and modified */
 	int apply; /* this is not a dry-run */
@@ -119,8 +120,6 @@ struct apply_state {
 	int squelch_whitespace_errors;
 	int applied_after_fixing_ws;
 };
-
-static int newfd = -1;
 
 static const char * const apply_usage[] = {
 	N_("git apply [<options>] [<patch>...]"),
@@ -4552,8 +4551,8 @@ static int apply_patch(struct apply_state *state,
 		state->apply = 0;
 
 	state->update_index = state->check_index && state->apply;
-	if (state->update_index && newfd < 0)
-		newfd = hold_locked_index(state->lock_file, 1);
+	if (state->update_index && state->newfd < 0)
+		state->newfd = hold_locked_index(state->lock_file, 1);
 
 	if (state->check_index) {
 		if (read_cache() < 0)
@@ -4662,6 +4661,7 @@ static void init_apply_state(struct apply_state *state,
 	state->prefix = prefix;
 	state->prefix_length = state->prefix ? strlen(state->prefix) : 0;
 	state->lock_file = lock_file;
+	state->newfd = -1;
 	state->apply = 1;
 	state->line_termination = '\n';
 	state->p_value = 1;
@@ -4782,6 +4782,7 @@ static int apply_all_patches(struct apply_state *state,
 	if (state->update_index) {
 		if (write_locked_index(&the_index, state->lock_file, COMMIT_LOCK))
 			die(_("Unable to write new index file"));
+		state->newfd = -1;
 	}
 
 	return !!errs;
