@@ -1162,6 +1162,177 @@ static char *path_lookup(const char *cmd, int exe_only)
 	return prog;
 }
 
+#if defined(_MSC_VER)
+/*
+ * Build an environment block combining the inherited environment
+ * merged with the given list of settings.
+ *
+ * Values of the form "KEY=VALUE" in deltaenv override inherited values.
+ * Values of the form "KEY" in deltaenv delete inherited values.
+ *
+ * We return a contiguous block of UNICODE strings with a final trailing
+ * zero word.
+ */
+static wchar_t *make_environment_block(char **deltaenv)
+{
+	/*
+	 * The CRT (at least as of UCRT) secretly declares "_wenviron"
+	 * as a function that returns a pointer to a mostly static table.
+	 * Grab the pointer and cache it for the duration of our loop.
+	 */
+	extern wchar_t **_wenviron;
+	const wchar_t **my_wenviron = _wenviron;
+
+	/*
+	 * Internally, we create normal 'C' arrays of strings (pointing
+	 * into the blocks) to help with some of the de-dup work.
+	 */
+	wchar_t **wptrs_ins = NULL;
+	wchar_t **wptrs_del = NULL;
+	wchar_t *wblock_ins = NULL;
+	wchar_t *wblock_del = NULL;
+	wchar_t *wend_ins;
+	wchar_t *wend_del;
+	wchar_t *w_ins;
+	wchar_t *w_del;
+
+	int maxlen = 0;
+	int nr_delta = 0;
+	int nr_delta_ins = 0;
+	int nr_delta_del = 0;
+	int nr_wenv = 0;
+	int j, k, k_ins, k_del;
+
+	/*
+	 * Count the number of inserts and deletes in the deltaenv list.
+	 * Allocate 'C' arrays for inserts and deletes.
+	 * Also estimate the block size of our results.
+	 */
+	if (deltaenv && deltaenv[0] && *deltaenv[0]) {
+		for (k = 0; deltaenv && deltaenv[k] && *deltaenv[k]; k++) {
+			if (strchr(deltaenv[k], '=') == NULL)
+				nr_delta_del++;
+			else {
+				maxlen += strlen(deltaenv[k]) + 1;
+				nr_delta_ins++;
+			}
+		}
+
+		if (nr_delta_ins)
+			wptrs_ins = (wchar_t**)calloc(nr_delta_ins + 1, sizeof(wchar_t*));
+		if (nr_delta_del)
+			wptrs_del = (wchar_t**)calloc(nr_delta_del + 1, sizeof(wchar_t*));
+
+		nr_delta = nr_delta_ins + nr_delta_del;
+	}
+	while (my_wenviron && my_wenviron[nr_wenv] && *my_wenviron[nr_wenv])
+		maxlen += wcslen(my_wenviron[nr_wenv++]) + 1;
+	maxlen++;
+
+	/*
+	 * Allocate blocks for inserted and deleted items.
+	 * The individual pointers in the 'C' arrays will point into here.
+	 * We will use the wblock_ins as the final result.
+	 */
+	if (nr_delta_del) {
+		wblock_del = (wchar_t*)calloc(maxlen, sizeof(wchar_t));
+		wend_del = wblock_del + maxlen;
+		w_del = wblock_del;
+	}
+	wblock_ins = (wchar_t*)calloc(maxlen, sizeof(wchar_t));
+	wend_ins = wblock_ins + maxlen;
+	w_ins = wblock_ins;
+
+	/*
+	 * deltaenv values override inherited environment, so put them
+	 * in the result list first (so that we can de-dup using the
+	 * wide versions of them.
+	 *
+	 * Items in the deltaenv list that DO NOT contain an "=" are
+	 * treated as unsetenv.
+	 *
+	 * Care needs to be taken to handle entries that are added first, and
+	 * then deleted.
+	 */
+	k_ins = 0;
+	k_del = 0;
+	for (k = 0; k < nr_delta; k++) {
+		if (strchr(deltaenv[k], '=') == NULL) {
+			wchar_t *save = w_del;
+			wptrs_del[k_del++] = w_del;
+			w_del += xutftowcs(w_del, deltaenv[k], (wend_del - w_del));
+			*w_del++ = L'='; /* append '=' to make lookup easier in next step. */
+			*w_del++ = 0;
+
+			/* If we added this key, we have to remove it again */
+			for (j = 0; j < k_ins; j++)
+				if (!wcsnicmp(wptrs_ins[j], save, w_del - save - 1)) {
+					if (j + 1 < k_ins) {
+						int delta = sizeof(wchar_t) * (wptrs_ins[j + 1] - wptrs_ins[j]), i;
+						memmove(wptrs_ins[j], wptrs_ins[j + 1], sizeof(wchar_t) * (w_ins - wptrs_ins[j + 1]));
+						for (i = j; i < --k_ins; i++)
+							wptrs_ins[i] = wptrs_ins[i + 1] - delta;
+						w_ins -= delta;
+					} else
+						w_ins = wptrs_ins[j];
+					k_ins--;
+					j--;
+				}
+		} else {
+			wptrs_ins[k_ins++] = w_ins;
+			w_ins += xutftowcs(w_ins, deltaenv[k], (wend_ins - w_ins)) + 1;
+		}
+	}
+	assert(k_ins <= nr_delta_ins);
+	assert(k_del == nr_delta_del);
+
+	/*
+	 * Walk the inherited environment and copy over unique, non-deleted
+	 * ones into the result set. Note that we only have to de-dup WRT
+	 * the values from deltaenv, because the inherited set should be unique.
+	 */
+	for (j = 0; j < nr_wenv; j++) {
+		const wchar_t *v_j = my_wenviron[j];
+		wchar_t *v_j_eq = wcschr(v_j, L'=');
+		int len_j_eq, len_j;
+
+		if (!v_j_eq)
+			continue; /* should not happen */
+		len_j_eq = v_j_eq + 1 - v_j; /* length(v_j) including '=' */
+
+		/* lookup v_j in list of to-delete vars */
+		for (k_del = 0; k_del < nr_delta_del; k_del++) {
+			if (wcsnicmp(v_j, wptrs_del[k_del], len_j_eq) == 0)
+				goto skip_it;
+		}
+
+		/* lookup v_j in deltaenv portion of result set */
+		for (k_ins = 0; k_ins < nr_delta_ins; k_ins++) {
+			if (wcsnicmp(v_j, wptrs_ins[k_ins], len_j_eq) == 0)
+				goto skip_it;
+		}
+
+		/* item is unique, add it to results. */
+		len_j = wcslen(v_j);
+		memcpy(w_ins, v_j, len_j * sizeof(wchar_t));
+		w_ins += len_j + 1;
+
+skip_it:
+		;
+	}
+
+	if (wptrs_ins)
+		free(wptrs_ins);
+	if (wptrs_del)
+		free(wptrs_del);
+	if (wblock_del)
+		free(wblock_del);
+
+	return wblock_ins;
+}
+
+#else
+
 static int do_putenv(char **env, const char *name, int size, int free_old);
 
 /* used number of elements of environ array, including terminating NULL */
@@ -1208,6 +1379,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 	free(tmpenv);
 	return wenvblk;
 }
+#endif
 
 static void do_unset_environment_variables(void)
 {
@@ -1498,6 +1670,70 @@ int mingw_kill(pid_t pid, int sig)
 	return -1;
 }
 
+#if defined(_MSC_VER)
+
+/* UTF8 versions of getenv and putenv (and unsetenv).
+ * Internally, they use the CRT's stock UNICODE routines
+ * to avoid data loss.
+ *
+ * Unlike the mingw version, we DO NOT directly write to
+ * the CRT variables.  We also DO NOT try to manage/replace
+ * the CRT storage.
+ */
+char *msc_getenv(const char *name)
+{
+	int len_key, len_value;
+	wchar_t *w_key;
+	char *value;
+	const wchar_t *w_value;
+
+	if (!name || !*name)
+		return NULL;
+
+	len_key = strlen(name) + 1;
+	w_key = calloc(len_key, sizeof(wchar_t));
+	xutftowcs(w_key, name, len_key);
+	w_value = _wgetenv(w_key);
+	free(w_key);
+
+	if (!w_value)
+		return NULL;
+
+	len_value = wcslen(w_value) * 3 + 1;
+	value = calloc(len_value, sizeof(char));
+	xwcstoutf(value, w_value, len_value);
+
+	/* TODO Warning: We return "value" which is an allocated
+	 * value and the caller is NOT expecting to have to free
+	 * it, so we leak memory.
+	 */
+	return value;
+}
+
+int msc_putenv(const char *name)
+{
+	int len, result;
+	char *equal;
+	wchar_t *wide;
+
+	if (!name || !*name)
+		return 0;
+
+	len = strlen(name);
+	equal = strchr(name, '=');
+	wide = calloc(len+1+!equal, sizeof(wchar_t));
+	xutftowcs(wide, name, len+1);
+	if (!equal)
+		wcscat(wide, L"=");
+
+	result = _wputenv(wide);
+
+	free(wide);
+	return result;
+}
+
+#else
+
 /*
  * Compare environment entries by key (i.e. stopping at '=' or '\0').
  */
@@ -1625,6 +1861,8 @@ int mingw_putenv(const char *namevalue)
 	environ_size = do_putenv(environ, namevalue, environ_size, 1);
 	return 0;
 }
+
+#endif
 
 /*
  * Note, this isn't a complete replacement for getaddrinfo. It assumes
