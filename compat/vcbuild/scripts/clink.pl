@@ -12,10 +12,11 @@
 use strict;
 my @args = ();
 my @cflags = ();
+my @lflags = ();
 my $is_linking = 0;
 while (@ARGV) {
 	my $arg = shift @ARGV;
-	if ("$arg" =~ /^-[DIMGO]/) {
+	if ("$arg" =~ /^-[DIMGOZ]/) {
 		push(@cflags, $arg);
 	} elsif ("$arg" eq "-o") {
 		my $file_out = shift @ARGV;
@@ -35,9 +36,11 @@ while (@ARGV) {
 		push(@args, "ssleay32.lib");
 	} elsif ("$arg" eq "-lcurl") {
 		push(@args, "libcurl.lib");
+	} elsif ("$arg" eq "-lexpat") {
+		push(@args, "libexpat.lib");
 	} elsif ("$arg" =~ /^-L/ && "$arg" ne "-LTCG") {
 		$arg =~ s/^-L/-LIBPATH:/;
-		push(@args, $arg);
+		push(@lflags, $arg);
 	} elsif ("$arg" =~ /^-R/) {
 		# eat
 	} else {
@@ -45,6 +48,9 @@ while (@ARGV) {
 	}
 }
 if ($is_linking) {
+	push(@args, @lflags);
+	# force PDB to be created.
+	push(@args, "-debug");
 	unshift(@args, "link.exe");
 } else {
 	unshift(@args, "cl.exe");
