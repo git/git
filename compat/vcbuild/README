@@ -1,3 +1,54 @@
+The Steps to Build Git with VS2015 or VS2017 from the command line.
+
+1. Install the "vcpkg" open source package manager and build essential
+   third-party libraries.  The steps for this have been captured in a
+   set of convenience scripts.  These can be run from a stock Command
+   Prompt or from an SDK bash window:
+
+   $ cd <repo_root>
+   $ ./compat/vcbuild/vcpkg_install.bat
+
+   The vcpkg tools and all of the third-party sources will be installed
+   in this folder:
+      <repo_root>/compat/vcbuild/vcpkg/
+
+   A file will be created with a set of Makefile macros pointing to a
+   unified "include", "lib", and "bin" directory (release and debug) for
+   all of the required packages.  This file will be included by the main
+   Makefile:
+      <repo_root>/compat/vcbuild/MSVC-DEFS-GEN
+
+2. OPTIONALLY copy the third-party *.dll and *.pdb files into the repo
+   root to make it easier to run and debug git.exe without having to
+   manipulate your PATH.  This is especially true for debug sessions in
+   Visual Studio.
+
+   Use ONE of the following forms which should match how you want to
+   compile git.exe.
+
+   $ ./compat/vcbuild/vcpkg_copy_packages.bat debug
+   $ ./compat/vcbuild/vcpkg_copy_packages.bat release
+
+3. Build git using MSVC from an SDK bash window using one of the
+   following commands:
+
+   $ make MSVC=1
+   $ make MSVC=1 DEBUG=1
+
+================================================================
+
+Alternatively, run `make MSVC=1 vcxproj` and then load the generated
+git.sln in Visual Studio. The initial build will install the vcpkg
+system and build the dependencies automatically. This will take a while.
+
+Note that this will automatically add and commit the generated
+.sln and .vcxproj files to the repo.  You may want to drop this
+commit before submitting a Pull Request....
+
+Or maybe we should put the .sln/.vcxproj files in the .gitignore file
+and not do this.  I'm not sure.
+
+================================================================
 The Steps of Build Git with VS2008
 
 1. You need the build environment, which contains the Git dependencies
