@@ -363,7 +363,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 				printf("%d\n", commit_count);
 				return 0;
 			}
-		} else if (revs.tag_objects && revs.tree_objects && revs.blob_objects) {
+		} else if (revs.max_count < 0 &&
+			   revs.tag_objects && revs.tree_objects && revs.blob_objects) {
 			if (!prepare_bitmap_walk(&revs)) {
 				traverse_bitmap_commit_list(&show_object_fast);
 				return 0;
