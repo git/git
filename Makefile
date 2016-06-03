@@ -375,13 +375,7 @@ GIT-VERSION-FILE: FORCE
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
 CFLAGS = -g -O2 -Wall
-LDFLAGS =
-ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
-ALL_LDFLAGS = $(LDFLAGS)
-STRIP ?= strip
-
-ifdef DEVELOPER
-CFLAGS += -Werror \
+DEVELOPER_CFLAGS = -Werror \
 	-Wdeclaration-after-statement \
 	-Wno-format-zero-length \
 	-Wold-style-definition \
@@ -390,7 +384,10 @@ CFLAGS += -Werror \
 	-Wstrict-prototypes \
 	-Wunused \
 	-Wvla
-endif
+LDFLAGS =
+ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
+ALL_LDFLAGS = $(LDFLAGS)
+STRIP ?= strip
 
 # Create as necessary, replace existing, make ranlib unneeded.
 ARFLAGS = rcs
@@ -950,6 +947,10 @@ GIT_USER_AGENT = git/$(GIT_VERSION)
 include config.mak.uname
 -include config.mak.autogen
 -include config.mak
+
+ifdef DEVELOPER
+CFLAGS += $(DEVELOPER_CFLAGS)
+endif
 
 ifndef sysconfdir
 ifeq ($(prefix),/usr)
