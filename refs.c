@@ -1120,6 +1120,26 @@ int head_ref(each_ref_fn fn, void *cb_data)
 	return head_ref_submodule(NULL, fn, cb_data);
 }
 
+/*
+ * Call fn for each reference in the specified submodule for which the
+ * refname begins with prefix. If trim is non-zero, then trim that
+ * many characters off the beginning of each refname before passing
+ * the refname to fn. flags can be DO_FOR_EACH_INCLUDE_BROKEN to
+ * include broken references in the iteration. If fn ever returns a
+ * non-zero value, stop the iteration and return that value;
+ * otherwise, return 0.
+ */
+static int do_for_each_ref(const char *submodule, const char *prefix,
+			   each_ref_fn fn, int trim, int flags, void *cb_data)
+{
+	struct ref_iterator *iter;
+
+	iter = files_ref_iterator_begin(submodule, prefix, flags);
+	iter = prefix_ref_iterator_begin(iter, prefix, trim);
+
+	return do_for_each_ref_iterator(iter, fn, cb_data);
+}
+
 int for_each_ref(each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_ref(NULL, "", fn, 0, 0, cb_data);
