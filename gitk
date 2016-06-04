@@ -1315,7 +1315,7 @@ proc commitonrow {row} {
 
 proc closevarcs {v} {
     global varctok varccommits varcid parents children
-    global cmitlisted commitidx vtokmod
+    global cmitlisted commitidx vtokmod curview numcommits
 
     set missing_parents 0
     set scripts {}
@@ -1340,6 +1340,9 @@ proc closevarcs {v} {
 	    }
 	    lappend varccommits($v,$b) $p
 	    incr commitidx($v)
+	    if {$v == $curview} {
+		set numcommits $commitidx($v)
+	    }
 	    set scripts [check_interest $p $scripts]
 	}
     }
