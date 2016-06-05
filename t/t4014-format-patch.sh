@@ -1565,4 +1565,45 @@ test_expect_success 'format-patch --base overrides format.useAutoBase' '
 	test_cmp expected actual
 '
 
+test_expect_success 'format-patch --pretty=mboxrd' '
+	sp=" " &&
+	cat >msg <<-INPUT_END &&
+	mboxrd should escape the body
+
+	From could trip up a loose mbox parser
+	>From extra escape for reversibility
+	>>From extra escape for reversibility 2
+	from lower case not escaped
+	Fromm bad speling not escaped
+	 From with leading space not escaped
+
+	F
+	From
+	From$sp
+	From    $sp
+	From	$sp
+	INPUT_END
+
+	cat >expect <<-INPUT_END &&
+	>From could trip up a loose mbox parser
+	>>From extra escape for reversibility
+	>>>From extra escape for reversibility 2
+	from lower case not escaped
+	Fromm bad speling not escaped
+	 From with leading space not escaped
+
+	F
+	From
+	From
+	From
+	From
+	INPUT_END
+
+	C=$(git commit-tree HEAD^^{tree} -p HEAD <msg) &&
+	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >patch &&
+	git grep -h --no-index -A11 \
+		"^>From could trip up a loose mbox parser" patch >actual &&
+	test_cmp expect actual
+'
+
 test_done
