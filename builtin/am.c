@@ -70,7 +70,8 @@ enum patch_format {
 	PATCH_FORMAT_MBOX,
 	PATCH_FORMAT_STGIT,
 	PATCH_FORMAT_STGIT_SERIES,
-	PATCH_FORMAT_HG
+	PATCH_FORMAT_HG,
+	PATCH_FORMAT_MBOXRD
 };
 
 enum keep_type {
@@ -712,7 +713,8 @@ done:
  * Splits out individual email patches from `paths`, where each path is either
  * a mbox file or a Maildir. Returns 0 on success, -1 on failure.
  */
-static int split_mail_mbox(struct am_state *state, const char **paths, int keep_cr)
+static int split_mail_mbox(struct am_state *state, const char **paths,
+				int keep_cr, int mboxrd)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf last = STRBUF_INIT;
@@ -724,6 +726,8 @@ static int split_mail_mbox(struct am_state *state, const char **paths, int keep_
 	argv_array_push(&cp.args, "-b");
 	if (keep_cr)
 		argv_array_push(&cp.args, "--keep-cr");
+	if (mboxrd)
+		argv_array_push(&cp.args, "--mboxrd");
 	argv_array_push(&cp.args, "--");
 	argv_array_pushv(&cp.args, paths);
 
@@ -965,13 +969,15 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 
 	switch (patch_format) {
 	case PATCH_FORMAT_MBOX:
-		return split_mail_mbox(state, paths, keep_cr);
+		return split_mail_mbox(state, paths, keep_cr, 0);
 	case PATCH_FORMAT_STGIT:
 		return split_mail_conv(stgit_patch_to_mail, state, paths, keep_cr);
 	case PATCH_FORMAT_STGIT_SERIES:
 		return split_mail_stgit_series(state, paths, keep_cr);
 	case PATCH_FORMAT_HG:
 		return split_mail_conv(hg_patch_to_mail, state, paths, keep_cr);
+	case PATCH_FORMAT_MBOXRD:
+		return split_mail_mbox(state, paths, keep_cr, 1);
 	default:
 		die("BUG: invalid patch_format");
 	}
@@ -2201,6 +2207,8 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 		*opt_value = PATCH_FORMAT_STGIT_SERIES;
 	else if (!strcmp(arg, "hg"))
 		*opt_value = PATCH_FORMAT_HG;
+	else if (!strcmp(arg, "mboxrd"))
+		*opt_value = PATCH_FORMAT_MBOXRD;
 	else
 		return error(_("Invalid value for --patch-format: %s"), arg);
 	return 0;
