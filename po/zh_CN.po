@@ -136,7 +136,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2016-05-24 23:42+0800\n"
-"PO-Revision-Date: 2016-06-04 22:06+0800\n"
+"PO-Revision-Date: 2016-06-06 23:05+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -1941,7 +1941,7 @@ msgid ""
 "%%sPlease commit your changes or stash them before you can switch branches."
 msgstr ""
 "您对下列文件的本地修改将被检出操作覆盖：\n"
-"%%s请在切换分支前提交您的修改或者进度保存。"
+"%%s请在切换分支前提交您的修改或者保存进度。"
 
 #: unpack-trees.c:66
 #, c-format
@@ -1959,7 +1959,7 @@ msgid ""
 "%%sPlease commit your changes or stash them before you can merge."
 msgstr ""
 "您对下列文件的本地修改将被合并操作覆盖：\n"
-"%%s请在合并前提交您的修改或者进度保存。"
+"%%s请在合并前提交您的修改或者保存进度。"
 
 #: unpack-trees.c:71
 #, c-format
@@ -1977,7 +1977,7 @@ msgid ""
 "%%sPlease commit your changes or stash them before you can %s."
 msgstr ""
 "您对下列文件的本地修改将被 %s 覆盖：\n"
-"%%s请在 %s 之前提交您的修改或者进度保存。"
+"%%s请在 %s 之前提交您的修改或者保存进度。"
 
 #: unpack-trees.c:76
 #, c-format
@@ -2003,8 +2003,8 @@ msgid ""
 "The following untracked working tree files would be removed by checkout:\n"
 "%%sPlease move or remove them before you can switch branches."
 msgstr ""
-"如下未跟踪的工作区文件将因为检出而被删除：\n"
-"%%s请在切换分支之前移动或删除这些文件。"
+"工作区中下列未跟踪的文件将会因为检出操作而被删除：\n"
+"%%s请在切换分支之前移动或删除。"
 
 #: unpack-trees.c:87
 #, c-format
@@ -2118,7 +2118,7 @@ msgid ""
 "Cannot update sparse checkout: the following entries are not up-to-date:\n"
 "%s"
 msgstr ""
-"无法更新稀疏检出。如下条目不是最新：\n"
+"无法更新稀疏检出：如下条目不是最新：\n"
 "%s"
 
 #: unpack-trees.c:126
@@ -7744,7 +7744,7 @@ msgid ""
 "Or you could specify base commit by --base=<base-commit-id> manually."
 msgstr ""
 "无法得到上游地址，如果你想自动记录基线提交，请使用命令\n"
-"git branch --set-upstream-to 来跟踪一个远程分支。或者你可以通过 \n"
+"git branch --set-upstream-to 来跟踪一个远程分支。或者你可以通过\n"
 "参数 --base=<base-commit-id> 手动指定一个基线提交。"
 
 #: builtin/log.c:1255
@@ -7761,7 +7761,7 @@ msgstr "基线提交不应该出现在版本列表中"
 
 #: builtin/log.c:1319
 msgid "cannot get patch id"
-msgstr "无法得到补丁id"
+msgstr "无法得到补丁 id"
 
 #: builtin/log.c:1377
 msgid "use [PATCH n/m] even with a single patch"
@@ -10997,13 +10997,13 @@ msgstr "无法为子模组 '%s' 注册 url"
 #: builtin/submodule--helper.c:370
 #, c-format
 msgid "Submodule '%s' (%s) registered for path '%s'\n"
-msgstr "子模组 '%s' (%s) 未对路径 '%s' 注册\n"
+msgstr "子模组 '%s'（%s）未对路径 '%s' 注册\n"
 
 #
 #: builtin/submodule--helper.c:380
-#, c-format, fuzzy
+#, c-format
 msgid "warning: command update mode suggested for submodule '%s'\n"
-msgstr "警告：子模组 '%s' 使用了命令模式作为 update 选项\n"
+msgstr "警告：建议子模组 '%s' 使用命令更新模式\n"
 
 #: builtin/submodule--helper.c:387
 #, c-format
@@ -12439,7 +12439,7 @@ msgstr "正在进入 '$displaypath'"
 #: git-submodule.sh:375
 #, sh-format
 msgid "Stopping at '$displaypath'; script returned non-zero status."
-msgstr "停止于 '$displaypath'，脚本返回非零值。"
+msgstr "停止于 '$displaypath'；脚本返回非零值。"
 
 #: git-submodule.sh:448
 #, sh-format
@@ -12449,7 +12449,7 @@ msgstr "pathspec 和 --all 不兼容"
 #: git-submodule.sh:453
 #, sh-format
 msgid "Use '--all' if you really want to deinitialize all submodules"
-msgstr "使用 '--all' 如果您真的想要对所有子模组取消初始化"
+msgstr "如果您确实想要对所有子模组执行取消初始化，请使用 '--all'"
 
 #: git-submodule.sh:470
 #, sh-format
@@ -12542,7 +12542,7 @@ msgstr "在子模组 '$displaypath' 中执行 '$command $sha1' 失败"
 #: git-submodule.sh:698
 #, sh-format
 msgid "Submodule path '$displaypath': '$command $sha1'"
-msgstr "子模组 '$displaypath': '$command $sha1'"
+msgstr "子模组 '$displaypath'：'$command $sha1'"
 
 #: git-submodule.sh:729
 #, sh-format
