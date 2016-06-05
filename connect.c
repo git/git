@@ -618,10 +618,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_user,
 		}
 	}
 
-	/*
-	 * Don't do destructive transforms as protocol code does
-	 * '[]' unwrapping in get_host_and_port()
-	 */
+	/* '[]' unwrapping is done in get_host_and_port() */
 	end = host_end(&host, 0);
 
 	if (protocol == PROTO_LOCAL)
@@ -670,10 +667,10 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_user,
 	/*
 	 * get_host_and_port does not return a port in the [host:port]:path
 	 * case. In that case, it is called with "[host:port]" and returns
-	 * "host:port" and NULL.
-	 * To support this undocumented legacy we still need to split the port.
+	 * "host:port" and NULL. To support this undocumented legacy
+	 * (for ssh only) we still need to split the port.
 	 */
-	if (!port)
+	if (!port && protocol == PROTO_SSH)
 		port = get_port(host);
 
 	*ret_user = user ? xstrdup(user) : NULL;

@@ -618,6 +618,23 @@ do
 			'
 		done
 	done
+	# git with scheme and []
+	for p in git
+	do
+		for h in [host:123]
+		do
+			for c in "" :
+			do
+				test_expect_success "fetch-pack --diag-url $p://$h$c/$r" '
+					check_prot_host_port_path $p://$h/$r $p "$h" NONE "/$r"
+				'
+				# "/~" -> "~" conversion
+				test_expect_success "fetch-pack --diag-url $p://$h$c/~$r" '
+					check_prot_host_port_path $p://$h/~$r $p "$h" NONE "~$r"
+				'
+			done
+		done
+	done
 	# file with scheme
 	for p in file
 	do
