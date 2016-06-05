@@ -901,6 +901,12 @@ test_expect_success GPG 'log.showsignature=true behaves like --show-signature' '
 	grep "gpg: Good signature" actual
 '
 
+test_expect_success GPG '--no-show-signature overrides log.showsignature=true' '
+	test_config log.showsignature true &&
+	git log -1 --no-show-signature signed >actual &&
+	! grep "^gpg:" actual
+'
+
 test_expect_success GPG '--show-signature overrides log.showsignature=false' '
 	test_when_finished "git reset --hard && git checkout master" &&
 	test_config log.showsignature false &&
