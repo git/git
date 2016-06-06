@@ -52,4 +52,18 @@ Fixes since v2.8.3
    result in a strange error message in a pathological corner case.
    This has been corrected to suggest "submodule deinit --all" instead.
 
+ * Many commands normalize command line arguments from NFD to NFC
+   variant of UTF-8 on OSX, but commands in the "diff" family did
+   not, causing "git diff $path" to complain that no such path is
+   known to Git.  They have been taught to do the normalization.
+
+ * A couple of bugs around core.autocrlf have been fixed.
+
+ * "git difftool" learned to handle unmerged paths correctly in
+   dir-diff mode.
+
+ * The "are we talking with TTY, doing an interactive session?"
+   detection has been updated to work better for "Git for Windows".
+
+
 Also contains other minor documentation updates and code clean-ups.
