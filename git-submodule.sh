@@ -46,41 +46,6 @@ prefix=
 custom_name=
 depth=
 
-# Resolve a path to be relative to another path.  This is intended for
-# converting submodule paths when git-submodule is run in a subdirectory
-# and only handles paths where the directory separator is '/'.
-#
-# The output is the first argument as a path relative to the second argument,
-# which defaults to $wt_prefix if it is omitted.
-relative_path ()
-{
-	local target curdir result
-	target=$1
-	curdir=${2-$wt_prefix}
-	curdir=${curdir%/}
-	result=
-
-	while test -n "$curdir"
-	do
-		case "$target" in
-		"$curdir/"*)
-			target=${target#"$curdir"/}
-			break
-			;;
-		esac
-
-		result="${result}../"
-		if test "$curdir" = "${curdir%/*}"
-		then
-			curdir=
-		else
-			curdir="${curdir%/*}"
-		fi
-	done
-
-	echo "$result$target"
-}
-
 die_if_unmatched ()
 {
 	if test "$1" = "#unmatched"
@@ -354,14 +319,14 @@ cmd_foreach()
 		die_if_unmatched "$mode"
 		if test -e "$sm_path"/.git
 		then
-			displaypath=$(relative_path "$prefix$sm_path")
+			displaypath=$(git submodule--helper relative-path "$prefix$sm_path" "$wt_prefix")
 			say "$(eval_gettext "Entering '\$displaypath'")"
 			name=$(git submodule--helper name "$sm_path")
 			(
 				prefix="$prefix$sm_path/"
 				sanitize_submodule_env
 				cd "$sm_path" &&
-				sm_path=$(relative_path "$sm_path") &&
+				sm_path=$(git submodule--helper relative-path "$sm_path" "$wt_prefix") &&
 				# we make $path available to scripts ...
 				path=$sm_path &&
 				if test $# -eq 1
@@ -465,7 +430,7 @@ cmd_deinit()
 		die_if_unmatched "$mode"
 		name=$(git submodule--helper name "$sm_path") || exit
 
-		displaypath=$(relative_path "$sm_path")
+		displaypath=$(git submodule--helper relative-path "$sm_path" "$wt_prefix")
 
 		# Remove the submodule work tree (unless the user already did it)
 		if test -d "$sm_path"
@@ -629,7 +594,7 @@ cmd_update()
 			fi
 		fi
 
-		displaypath=$(relative_path "$prefix$sm_path")
+		displaypath=$(git submodule--helper relative-path "$prefix$sm_path" "$wt_prefix")
 
 		if test $just_cloned -eq 1
 		then
@@ -723,7 +688,7 @@ cmd_update()
 		if test -n "$recursive"
 		then
 			(
-				prefix=$(relative_path "$prefix$sm_path/")
+				prefix=$(git submodule--helper relative-path "$prefix$sm_path/" "$wt_prefix")
 				wt_prefix=
 				sanitize_submodule_env
 				cd "$sm_path" &&
@@ -907,7 +872,7 @@ cmd_summary() {
 		! GIT_DIR="$name/.git" git-rev-parse -q --verify $sha1_dst^0 >/dev/null &&
 		missing_dst=t
 
-		display_name=$(relative_path "$name")
+		display_name=$(git submodule--helper relative-path "$name" "$wt_prefix")
 
 		total_commits=
 		case "$missing_src,$missing_dst" in
@@ -1028,7 +993,7 @@ cmd_status()
 		die_if_unmatched "$mode"
 		name=$(git submodule--helper name "$sm_path") || exit
 		url=$(git config submodule."$name".url)
-		displaypath=$(relative_path "$prefix$sm_path")
+		displaypath=$(git submodule--helper relative-path "$prefix$sm_path" "$wt_prefix")
 		if test "$stage" = U
 		then
 			say "U$sha1 $displaypath"
@@ -1131,7 +1096,7 @@ cmd_sync()
 
 		if git config "submodule.$name.url" >/dev/null 2>/dev/null
 		then
-			displaypath=$(relative_path "$prefix$sm_path")
+			displaypath=$(git submodule--helper relative-path "$prefix$sm_path" "$wt_prefix")
 			say "$(eval_gettext "Synchronizing submodule url for '\$displaypath'")"
 			git config submodule."$name".url "$super_config_url"
 
