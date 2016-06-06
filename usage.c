@@ -15,7 +15,12 @@ void vreportf(const char *prefix, const char *err, va_list params)
 
 	fflush(fh);
 	if (!tweaked_error_buffering) {
+#if defined(_MSC_VER)
+		/* UCRT doesn't like zero buffer size */
+		setvbuf(fh, NULL, _IOLBF, BUFSIZ);
+#else
 		setvbuf(fh, NULL, _IOLBF, 0);
+#endif
 		tweaked_error_buffering = 1;
 	}
 
