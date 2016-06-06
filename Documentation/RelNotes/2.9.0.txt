@@ -112,7 +112,6 @@ UI, Workflows & Features
    is a lot easier to explain to the end users: "We describe a commit
    in terms of the (chronologically) oldest tag that contains the
    commit."
-   (merge 7550424 js/name-rev-use-oldest-ref later to maint).
 
  * "git clone" learned the "--shallow-submodules" option.
 
@@ -229,7 +228,6 @@ Performance, Internal Implementation, Development Support etc.
    our tests under "bash", however, we can redirect the trace output
    to another file descriptor to keep the standard error of programs
    being tested intact.
-   (merge d88785e jk/test-send-sh-x-trace-elsewhere later to maint).
 
  * t0040 had too many unnecessary repetitions in its test data.  Teach
    test-parse-options program so that a caller can tell what it
@@ -257,6 +255,12 @@ Performance, Internal Implementation, Development Support etc.
  * "make DEVELOPER=1" worked as expected; setting DEVELOPER=1 in
    config.mak didn't.
    (merge 51dd3e8 mm/makefile-developer-can-be-in-config-mak later to maint).
+
+ * The way how "submodule--helper list" signals unmatch error to its
+   callers has been updated.
+
+ * A bash-ism "local" has been removed from "git submodule" scripted
+   Porcelain.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -435,20 +439,16 @@ notes for details).
 
  * "http.cookieFile" configuration variable clearly wants a pathname,
    but we forgot to treat it as such by e.g. applying tilde expansion.
-   (merge e5a39ad bn/http-cookiefile-config later to maint).
 
  * Consolidate description of tilde-expansion that is done to
    configuration variables that take pathname to a single place.
-   (merge dca83ab jc/config-pathname-type later to maint).
 
  * Correct faulty recommendation to use "git submodule deinit ." when
    de-initialising all submodules, which would result in a strange
    error message in a pathological corner case.
-   (merge f6a5279 sb/submodule-deinit-all later to maint).
 
  * Many 'linkgit:<git documentation page>' references were broken,
    which are all fixed with this.
-   (merge 1cca17d jc/linkgit-fix later to maint).
 
  * "git rerere" can get confused by conflict markers deliberately left
    by the inner merge step, because they are indistinguishable from
@@ -458,43 +458,34 @@ notes for details).
    (merge 0f9fd5c jc/ll-merge-internal later to maint).
 
  * CI test was taught to build documentation pages.
-   (merge b98712b ls/travis-build-doc later to maint).
 
  * "git fsck" learned to catch NUL byte in a commit object as
    potential error and warn.
-   (merge 6d2d780 jc/fsck-nul-in-commit later to maint).
 
  * Portability enhancement for "rebase -i" to help platforms whose
    shell does not like "for i in <empty>" (which is not POSIX-kosher).
-   (merge 8e98b35 jk/rebase-interactive-eval-fix later to maint).
 
  * On Windows, .git and optionally any files whose name starts with a
    dot are now marked as hidden, with a core.hideDotFiles knob to
    customize this behaviour.
-   (merge ebf31e7 js/windows-dotgit later to maint).
 
  * Documentation for "git merge --verify-signatures" has been updated
    to clarify that the signature of only the commit at the tip is
    verified.  Also the phrasing used for signature and key validity is
    adjusted to align with that used by OpenPGP.
-   (merge 05a5869 kf/gpg-sig-verification-doc later to maint).
 
  * A couple of bugs around core.autocrlf have been fixed.
-   (merge caa47ad tb/core-eol-fix later to maint).
 
  * Many commands normalize command line arguments from NFD to NFC
    variant of UTF-8 on OSX, but commands in the "diff" family did
    not, causing "git diff $path" to complain that no such path is
    known to Git.  They have been taught to do the normalization.
-   (merge 90a78b8 ar/diff-args-osx-precompose later to maint).
 
  * "git difftool" learned to handle unmerged paths correctly in
    dir-diff mode.
-   (merge 366f9ce da/difftool later to maint).
 
  * The "are we talking with TTY, doing an interactive session?"
    detection has been updated to work better for "Git for Windows".
-   (merge f7f90e0 kb/msys2-tty later to maint).
 
  * We forgot to add "git log --decorate=auto" to documentation when we
    added the feature back in v2.1.0 timeframe.
@@ -512,16 +503,6 @@ notes for details).
    (merge 7063693 js/rebase-i-dedup-call-to-rerere later to maint).
 
  * Other minor clean-ups and documentation updates
-   (merge 832c0e5 lp/typofixes later to maint).
-   (merge f5ee54a sb/z-is-gnutar-ism later to maint).
-   (merge 2e3926b va/i18n-misc-updates later to maint).
-   (merge f212dcc bn/config-doc-tt-varnames later to maint).
-   (merge f54bea4 nd/remote-plural-ours-plus-theirs later to maint).
-   (merge 2bb0518 ak/t4151-ls-files-could-be-empty later to maint).
-   (merge 4df4313 jc/test-seq later to maint).
-   (merge a75a308 tb/t5601-sed-fix later to maint).
-   (merge 6c1fbe1 va/i18n-remote-comment-to-align later to maint).
-   (merge dee2303 va/mailinfo-doc-typofix later to maint).
    (merge cd82b7a pa/cherry-pick-doc-typo later to maint).
    (merge 2bb73ae rs/patch-id-use-skip-prefix later to maint).
    (merge aa20cbc rs/apply-name-terminate later to maint).
