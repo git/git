@@ -12,7 +12,7 @@ fi
 
 compare_files () {
 	tr '\015\000' QN <"$1" >"$1".expect &&
-	tr '\015\000' QN <"$2" >"$2".actual &&
+	tr '\015\000' QN <"$2" | tr -d 'Z' >"$2".actual &&
 	test_cmp "$1".expect "$2".actual &&
 	rm "$1".expect "$2".actual
 }
@@ -52,14 +52,17 @@ create_gitattributes () {
 create_NNO_files () {
 	for crlf in false true input
 	do
-		for attr in "" auto text -text lf crlf
+		for attr in "" auto text -text
 		do
-			pfx=NNO_${crlf}_attr_${attr} &&
-			cp CRLF_mix_LF ${pfx}_LF.txt &&
-			cp CRLF_mix_LF ${pfx}_CRLF.txt &&
-			cp CRLF_mix_LF ${pfx}_CRLF_mix_LF.txt &&
-			cp CRLF_mix_LF ${pfx}_LF_mix_CR.txt &&
-			cp CRLF_mix_LF ${pfx}_CRLF_nul.txt
+			for aeol in "" lf crlf
+			do
+				pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
+				cp CRLF_mix_LF ${pfx}_LF.txt &&
+				cp CRLF_mix_LF ${pfx}_CRLF.txt &&
+				cp CRLF_mix_LF ${pfx}_CRLF_mix_LF.txt &&
+				cp CRLF_mix_LF ${pfx}_LF_mix_CR.txt &&
+				cp CRLF_mix_LF ${pfx}_CRLF_nul.txt
+			done
 		done
 	done
 }
@@ -100,20 +103,22 @@ commit_check_warn () {
 }
 
 commit_chk_wrnNNO () {
-	crlf=$1
-	attr=$2
-	lfwarn=$3
-	crlfwarn=$4
-	lfmixcrlf=$5
-	lfmixcr=$6
-	crlfnul=$7
-	pfx=NNO_${crlf}_attr_${attr}
+	attr=$1 ; shift
+	aeol=$1 ; shift
+	crlf=$1 ; shift
+	lfwarn=$1 ; shift
+	crlfwarn=$1 ; shift
+	lfmixcrlf=$1 ; shift
+	lfmixcr=$1 ; shift
+	crlfnul=$1 ; shift
+	pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
 	#Commit files on top of existing file
-	create_gitattributes "$attr" &&
+	create_gitattributes "$attr" $aeol &&
 	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
 	do
 		fname=${pfx}_$f.txt &&
 		cp $f $fname &&
+		printf Z >>"$fname" &&
 		git -c core.autocrlf=$crlf add $fname 2>/dev/null &&
 		git -c core.autocrlf=$crlf commit -m "commit_$fname" $fname >"${pfx}_$f.err" 2>&1
 	done
@@ -121,19 +126,19 @@ commit_chk_wrnNNO () {
 	test_expect_success "commit NNO files crlf=$crlf attr=$attr LF" '
 		check_warning "$lfwarn" ${pfx}_LF.err
 	'
-	test_expect_success "commit NNO files crlf=$crlf attr=$attr CRLF" '
+	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF" '
 		check_warning "$crlfwarn" ${pfx}_CRLF.err
 	'
 
-	test_expect_success "commit NNO files crlf=$crlf attr=$attr CRLF_mix_LF" '
+	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF_mix_LF" '
 		check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err
 	'
 
-	test_expect_success "commit NNO files crlf=$crlf attr=$attr LF_mix_cr" '
+	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf LF_mix_cr" '
 		check_warning "$lfmixcr" ${pfx}_LF_mix_CR.err
 	'
 
-	test_expect_success "commit NNO files crlf=$crlf attr=$attr CRLF_nul" '
+	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF_nul" '
 		check_warning "$crlfnul" ${pfx}_CRLF_nul.err
 	'
 }
@@ -162,6 +167,7 @@ stats_ascii () {
 
 # contruct the attr/ returned by git ls-files --eol
 # Take none (=empty), one or two args
+# convert.c: eol=XX overrides text=auto
 attr_ascii () {
 	case $1,$2 in
 	-text,*)   echo "-text" ;;
@@ -169,8 +175,8 @@ attr_ascii () {
 	text,lf)   echo "text eol=lf" ;;
 	text,crlf) echo "text eol=crlf" ;;
 	auto,)     echo "text=auto" ;;
-	auto,lf)   echo "text=auto eol=lf" ;;
-	auto,crlf) echo "text=auto eol=crlf" ;;
+	auto,lf)   echo "text eol=lf" ;;
+	auto,crlf) echo "text eol=crlf" ;;
 	lf,)       echo "text eol=lf" ;;
 	crlf,)     echo "text eol=crlf" ;;
 	,) echo "" ;;
@@ -195,28 +201,29 @@ check_files_in_repo () {
 }
 
 check_in_repo_NNO () {
-	crlf=$1
-	attr=$2
-	lfname=$3
-	crlfname=$4
-	lfmixcrlf=$5
-	lfmixcr=$6
-	crlfnul=$7
-	pfx=NNO_${crlf}_attr_${attr}_
-	test_expect_success "compare_files $lfname ${pfx}LF.txt" '
-		compare_files $lfname ${pfx}LF.txt
+	attr=$1 ; shift
+	aeol=$1 ; shift
+	crlf=$1 ; shift
+	lfname=$1 ; shift
+	crlfname=$1 ; shift
+	lfmixcrlf=$1 ; shift
+	lfmixcr=$1 ; shift
+	crlfnul=$1 ; shift
+	pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
+	test_expect_success "compare_files $lfname ${pfx}_LF.txt" '
+		compare_files $lfname ${pfx}_LF.txt
 	'
-	test_expect_success "compare_files $crlfname ${pfx}CRLF.txt" '
-		compare_files $crlfname ${pfx}CRLF.txt
+	test_expect_success "compare_files $crlfname ${pfx}_CRLF.txt" '
+		compare_files $crlfname ${pfx}_CRLF.txt
 	'
-	test_expect_success "compare_files $lfmixcrlf ${pfx}CRLF_mix_LF.txt" '
-		compare_files $lfmixcrlf ${pfx}CRLF_mix_LF.txt
+	test_expect_success "compare_files $lfmixcrlf ${pfx}_CRLF_mix_LF.txt" '
+		compare_files $lfmixcrlf ${pfx}_CRLF_mix_LF.txt
 	'
-	test_expect_success "compare_files $lfmixcr ${pfx}LF_mix_CR.txt" '
-		compare_files $lfmixcr ${pfx}LF_mix_CR.txt
+	test_expect_success "compare_files $lfmixcr ${pfx}_LF_mix_CR.txt" '
+		compare_files $lfmixcr ${pfx}_LF_mix_CR.txt
 	'
-	test_expect_success "compare_files $crlfnul ${pfx}CRLF_nul.txt" '
-		compare_files $crlfnul ${pfx}CRLF_nul.txt
+	test_expect_success "compare_files $crlfnul ${pfx}_CRLF_nul.txt" '
+		compare_files $crlfnul ${pfx}_CRLF_nul.txt
 	'
 }
 
@@ -231,7 +238,7 @@ checkout_files () {
 	lfmixcrlf=$1 ; shift
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
-	create_gitattributes "$attr" "$ident" &&
+	create_gitattributes "$attr" $ident $aeol &&
 	git config core.autocrlf $crlf &&
 	pfx=eol_${ceol}_crlf_${crlf}_attr_${attr}_ &&
 	for f in LF CRLF LF_mix_CR CRLF_mix_LF LF_nul
@@ -244,7 +251,7 @@ checkout_files () {
 		fi
 	done
 
-	test_expect_success "ls-files --eol attr=$attr $ident $aeol core.autocrlf=$crlf core.eol=$ceol" '
+	test_expect_success "ls-files --eol attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol" '
 		test_when_finished "rm expect actual" &&
 		sort <<-EOF >expect &&
 		i/crlf w/$(stats_ascii $crlfname) attr/$(attr_ascii $attr $aeol) crlf_false_attr__CRLF.txt
@@ -259,19 +266,19 @@ checkout_files () {
 		sort >actual &&
 		test_cmp expect actual
 	'
-	test_expect_success "checkout $ident $attr $aeol core.autocrlf=$crlf core.eol=$ceol file=LF" "
+	test_expect_success "checkout attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol file=LF" "
 		compare_ws_file $pfx $lfname    crlf_false_attr__LF.txt
 	"
-	test_expect_success "checkout $ident $attr $aeol core.autocrlf=$crlf core.eol=$ceol file=CRLF" "
+	test_expect_success "checkout attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol file=CRLF" "
 		compare_ws_file $pfx $crlfname  crlf_false_attr__CRLF.txt
 	"
-	test_expect_success "checkout $ident $attr $aeol core.autocrlf=$crlf core.eol=$ceol file=CRLF_mix_LF" "
+	test_expect_success "checkout attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol file=CRLF_mix_LF" "
 		compare_ws_file $pfx $lfmixcrlf crlf_false_attr__CRLF_mix_LF.txt
 	"
-	test_expect_success "checkout $ident $attr $aeol core.autocrlf=$crlf core.eol=$ceol file=LF_mix_CR" "
+	test_expect_success "checkout attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol file=LF_mix_CR" "
 		compare_ws_file $pfx $lfmixcr   crlf_false_attr__LF_mix_CR.txt
 	"
-	test_expect_success "checkout $ident $attr $aeol core.autocrlf=$crlf core.eol=$ceol file=LF_nul" "
+	test_expect_success "checkout attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol file=LF_nul" "
 		compare_ws_file $pfx $crlfnul   crlf_false_attr__LF_nul.txt
 	"
 }
@@ -385,31 +392,31 @@ test_expect_success 'commit files attr=crlf' '
 	commit_check_warn input "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""
 '
 
-#                       attr   LF        CRLF      CRLFmixLF 	 LF_mix_CR   CRLFNUL
-commit_chk_wrnNNO false ""     ""        ""        ""        	 ""        	 ""
-commit_chk_wrnNNO true  ""     "LF_CRLF" ""        ""        	 ""        	 ""
-commit_chk_wrnNNO input ""     ""        ""        ""        	 ""        	 ""
+#                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
+commit_chk_wrnNNO ""      ""      false   ""        ""        ""          ""          ""
+commit_chk_wrnNNO ""      ""      true    LF_CRLF   ""        ""          ""          ""
+commit_chk_wrnNNO ""      ""      input   ""        ""        ""          ""          ""
 
+commit_chk_wrnNNO "auto"  ""      false   "$WILC"   "$WICL"   "$WAMIX"    ""          ""
+commit_chk_wrnNNO "auto"  ""      true    LF_CRLF   ""        LF_CRLF     ""          ""
+commit_chk_wrnNNO "auto"  ""      input   ""        CRLF_LF   CRLF_LF     ""          ""
 
-commit_chk_wrnNNO false "auto" "$WILC"   "$WICL"   "$WAMIX"  	 ""        	 ""
-commit_chk_wrnNNO true  "auto" "LF_CRLF" ""        "LF_CRLF" 	 ""        	 ""
-commit_chk_wrnNNO input "auto" ""        "CRLF_LF" "CRLF_LF" 	 ""        	 ""
+for crlf in true false input
+do
+	commit_chk_wrnNNO -text ""      $crlf   ""        ""        ""          ""          ""
+	commit_chk_wrnNNO -text lf      $crlf   ""        ""        ""          ""          ""
+	commit_chk_wrnNNO -text crlf    $crlf   ""        ""        ""          ""          ""
+	commit_chk_wrnNNO ""    lf      $crlf   ""       CRLF_LF    CRLF_LF      ""         CRLF_LF
+	commit_chk_wrnNNO ""    crlf    $crlf   LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
+	commit_chk_wrnNNO auto  lf    	$crlf   ""       CRLF_LF    CRLF_LF     ""          CRLF_LF
+	commit_chk_wrnNNO auto  crlf  	$crlf   LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
+	commit_chk_wrnNNO text  lf    	$crlf   ""       CRLF_LF    CRLF_LF     ""          CRLF_LF
+	commit_chk_wrnNNO text  crlf  	$crlf   LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
+done
 
-commit_chk_wrnNNO false "text" "$WILC"   "$WICL"   "$WAMIX"  	 "$WILC"   	 "$WICL"
-commit_chk_wrnNNO true  "text" "LF_CRLF" ""        "LF_CRLF" 	 "LF_CRLF" 	 ""
-commit_chk_wrnNNO input "text" ""        "CRLF_LF" "CRLF_LF" 	 ""        	 "CRLF_LF"
-
-commit_chk_wrnNNO false "-text" ""       ""        ""        	 ""        	 ""
-commit_chk_wrnNNO true  "-text" ""       ""        ""        	 ""        	 ""
-commit_chk_wrnNNO input "-text" ""       ""        ""        	 ""        	 ""
-
-commit_chk_wrnNNO false "lf"    ""       "CRLF_LF" "CRLF_LF" 	  ""       	 "CRLF_LF"
-commit_chk_wrnNNO true  "lf"    ""       "CRLF_LF" "CRLF_LF" 	  ""       	 "CRLF_LF"
-commit_chk_wrnNNO input "lf"    ""       "CRLF_LF" "CRLF_LF" 	  ""       	 "CRLF_LF"
-
-commit_chk_wrnNNO false "crlf" "LF_CRLF" ""        "LF_CRLF" 	 "LF_CRLF" 	 ""
-commit_chk_wrnNNO true  "crlf" "LF_CRLF" ""        "LF_CRLF" 	 "LF_CRLF" 	 ""
-commit_chk_wrnNNO input "crlf" "LF_CRLF" ""        "LF_CRLF" 	 "LF_CRLF" 	 ""
+commit_chk_wrnNNO "text"  ""      false   "$WILC"   "$WICL"   "$WAMIX"    "$WILC"     "$WICL"
+commit_chk_wrnNNO "text"  ""      true    LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
+commit_chk_wrnNNO "text"  ""      input   ""        CRLF_LF   CRLF_LF     ""          CRLF_LF
 
 test_expect_success 'create files cleanup' '
 	rm -f *.txt &&
@@ -440,24 +447,20 @@ test_expect_success 'commit -text' '
 	check_files_in_repo input "-text" LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
 '
 
-#                       attr    LF        CRLF      CRLF_mix_LF  LF_mix_CR 	CRLFNUL
-check_in_repo_NNO false ""      LF        CRLF      CRLF_mix_LF  LF_mix_CR 	CRLF_nul
-check_in_repo_NNO true  ""      LF        CRLF      CRLF_mix_LF  LF_mix_CR 	CRLF_nul
-check_in_repo_NNO input ""      LF        CRLF      CRLF_mix_LF  LF_mix_CR 	CRLF_nul
-
-check_in_repo_NNO false "auto"  LF        LF        LF           LF_mix_CR 	CRLF_nul
-check_in_repo_NNO true  "auto"  LF        LF        LF           LF_mix_CR 	CRLF_nul
-check_in_repo_NNO input "auto"  LF        LF        LF           LF_mix_CR 	CRLF_nul
-
-check_in_repo_NNO false "text"  LF        LF        LF           LF_mix_CR 	LF_nul
-check_in_repo_NNO true  "text"  LF        LF        LF           LF_mix_CR 	LF_nul
-check_in_repo_NNO input "text"  LF        LF        LF           LF_mix_CR 	LF_nul
-
-check_in_repo_NNO false "-text" LF        CRLF      CRLF_mix_LF  LF_mix_CR 	CRLF_nul
-check_in_repo_NNO true  "-text" LF        CRLF      CRLF_mix_LF  LF_mix_CR 	CRLF_nul
-check_in_repo_NNO input "-text" LF        CRLF      CRLF_mix_LF  LF_mix_CR 	CRLF_nul
-
-
+for crlf in true false input
+do
+	#                 attr  aeol           LF  CRLF  CRLF_mix_LF  LF_mix_CR  CRLFNUL
+	check_in_repo_NNO ""    ""     $crlf   LF  CRLF  CRLF_mix_LF  LF_mix_CR  CRLF_nul
+	check_in_repo_NNO -text ""     $crlf   LF  CRLF  CRLF_mix_LF  LF_mix_CR  CRLF_nul
+	check_in_repo_NNO -text lf     $crlf   LF  CRLF  CRLF_mix_LF  LF_mix_CR  CRLF_nul
+	check_in_repo_NNO -text crlf   $crlf   LF  CRLF  CRLF_mix_LF  LF_mix_CR  CRLF_nul
+	check_in_repo_NNO auto  ""     $crlf   LF  LF    LF           LF_mix_CR  CRLF_nul
+	check_in_repo_NNO auto  lf     $crlf   LF  LF    LF           LF_mix_CR  LF_nul
+	check_in_repo_NNO auto  crlf   $crlf   LF  LF    LF           LF_mix_CR  LF_nul
+	check_in_repo_NNO text  ""     $crlf   LF  LF    LF           LF_mix_CR  LF_nul
+	check_in_repo_NNO text  lf     $crlf   LF  LF    LF           LF_mix_CR  LF_nul
+	check_in_repo_NNO text  crlf   $crlf   LF  LF    LF           LF_mix_CR  LF_nul
+done
 ################################################################################
 # Check how files in the repo are changed when they are checked out
 # How to read the table below:
@@ -489,89 +492,47 @@ LFNUL=LF_nul
 fi
 export CRLF_MIX_LF_CR MIX NL
 
-checkout_files ""      "" 	 ""    false  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    false  crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    false  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    false  native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    input  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    input  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    true   ""       CRLF  CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    true   crlf     CRLF  CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    true   lf       CRLF  CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      "" 	 ""    true   native   CRLF  CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    false  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    false  crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    false  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    false  native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    input  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    input  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    true   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    true   crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    true   lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files ""      ident ""    true   native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    false  ""       $NL   CRLF  $MIX_CRLF_LF LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    false  crlf     CRLF  CRLF  CRLF         LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    false  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    false  native   $NL   CRLF  $MIX_CRLF_LF LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    input  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    input  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    true   ""       CRLF  CRLF  CRLF         LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    true   crlf     CRLF  CRLF  CRLF         LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    true   lf       CRLF  CRLF  CRLF         LF_mix_CR    LF_nul
-checkout_files "auto"  "" 	 ""    true   native   CRLF  CRLF  CRLF         LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    false  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    false  crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    false  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    false  native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    input  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    input  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    true   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    true   crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    true   lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-checkout_files "auto"  ident ""    true   native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-
-for id in "" ident;
+# Same handling with and without ident
+for id in "" ident
 do
-	checkout_files "crlf"  "$id" ""    false  ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    false  crlf     CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    false  lf       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    false  native   CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    input  ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    input  lf       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    true   ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    true   crlf     CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    true   lf       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "crlf"  "$id" ""    true   native   CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "lf"    "$id" ""    false  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    false  crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    false  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    false  native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    input  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    input  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    true   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    true   crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    true   lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "lf"    "$id" ""    true   native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "text"  "$id" ""    false  ""       $NL   CRLF  $MIX_CRLF_LF $MIX_LF_CR   $LFNUL
-	checkout_files "text"  "$id" ""    false  crlf     CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "text"  "$id" ""    false  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "text"  "$id" ""    false  native   $NL   CRLF  $MIX_CRLF_LF $MIX_LF_CR   $LFNUL
-	checkout_files "text"  "$id" ""    input  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "text"  "$id" ""    input  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "text"  "$id" ""    true   ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "text"  "$id" ""    true   crlf     CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "text"  "$id" ""    true   lf       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "text"  "$id" ""    true   native   CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
-	checkout_files "-text" "$id" ""    false  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    false  crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    false  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    false  native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    input  ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    input  lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    true   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    true   crlf     LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    true   lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
-	checkout_files "-text" "$id" ""    true   native   LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	for ceol in lf crlf native
+	do
+		for crlf in true false input
+		do
+			# -text overrides core.autocrlf and core.eol
+			# text and eol=crlf or eol=lf override core.autocrlf and core.eol
+			checkout_files -text "$id" ""     "$crlf" "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+			checkout_files -text "$id" "lf"   "$crlf" "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+			checkout_files -text "$id" "crlf" "$crlf" "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+			# text
+			checkout_files text  "$id" "lf"   "$crlf" "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+			checkout_files text  "$id" "crlf" "$crlf" "$ceol"  CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
+			# currently the same as text, eol=XXX
+			checkout_files auto  "$id" "lf"   "$crlf" "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+			checkout_files auto  "$id" "crlf" "$crlf" "$ceol"  CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
+		done
+
+		# core.autocrlf false, different core.eol
+		checkout_files   ""    "$id" ""     false   "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+		# core.autocrlf true
+		checkout_files   ""    "$id" ""     true    "$ceol"  CRLF  CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+		# text: core.autocrlf = true overrides core.eol
+		checkout_files   auto  "$id" ""     true    "$ceol"  CRLF  CRLF  CRLF         LF_mix_CR    LF_nul
+		checkout_files   text  "$id" ""     true    "$ceol"  CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
+		# text: core.autocrlf = input overrides core.eol
+		checkout_files   text  "$id" ""     input   "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+		checkout_files   auto  "$id" ""     input   "$ceol"  LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+		# text=auto + eol=XXX
+	done
+	# text: core.autocrlf=false uses core.eol
+	checkout_files     text  "$id" ""     false   crlf     CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
+	checkout_files     text  "$id" ""     false   lf       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	# text: core.autocrlf=false and core.eol unset(or native) uses native eol
+	checkout_files     text  "$id" ""     false   ""       $NL   CRLF  $MIX_CRLF_LF $MIX_LF_CR   $LFNUL
+	checkout_files     text  "$id" ""     false   native   $NL   CRLF  $MIX_CRLF_LF $MIX_LF_CR   $LFNUL
+	# auto: core.autocrlf=false and core.eol unset(or native) uses native eol
+	checkout_files     auto  "$id" ""     false   ""       $NL   CRLF  $MIX_CRLF_LF LF_mix_CR    LF_nul
+	checkout_files     auto  "$id" ""     false   native   $NL   CRLF  $MIX_CRLF_LF LF_mix_CR    LF_nul
 done
 
 # Should be the last test case: remove some files from the worktree
