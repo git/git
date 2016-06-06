@@ -52,10 +52,7 @@ struct apply_state {
 	const char *prefix;
 	int prefix_length;
 
-	/*
-	 * Since lockfile.c keeps a linked list of all created
-	 * lock_file structures, it isn't safe to free(lock_file).
-	 */
+	/* These are lock_file related */
 	struct lock_file *lock_file;
 	int newfd;
 
