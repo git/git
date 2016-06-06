@@ -906,7 +906,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			 * submodules which were manually staged, which would
 			 * be really confusing.
 			 */
-			int diff_flags = DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG;
+			uint64_t diff_flags = DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG;
 			if (ignore_submodule_arg &&
 			    !strcmp(ignore_submodule_arg, "all"))
 				diff_flags |= DIFF_OPT_IGNORE_SUBMODULES;

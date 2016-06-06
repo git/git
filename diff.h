@@ -115,8 +115,8 @@ struct diff_options {
 	const char *pickaxe;
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
-	unsigned flags;
-	unsigned touched_flags;
+	uint64_t flags;
+	uint64_t touched_flags;
 
 	/* diff-filter bits */
 	unsigned int filter;
@@ -348,7 +348,7 @@ extern int diff_result_code(struct diff_options *, int);
 
 extern void diff_no_index(struct rev_info *, int, const char **);
 
-extern int index_differs_from(const char *def, int diff_flags);
+extern int index_differs_from(const char *def, uint64_t diff_flags);
 
 /*
  * Fill the contents of the filespec "df", respecting any textconv defined by

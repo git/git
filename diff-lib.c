@@ -71,7 +71,7 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 {
 	int changed = ce_match_stat(ce, st, ce_option);
 	if (S_ISGITLINK(ce->ce_mode)) {
-		unsigned orig_flags = diffopt->flags;
+		uint64_t orig_flags = diffopt->flags;
 		if (!DIFF_OPT_TST(diffopt, OVERRIDE_SUBMODULE_CONFIG))
 			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
 		if (DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES))
@@ -516,7 +516,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	return 0;
 }
 
-int index_differs_from(const char *def, int diff_flags)
+int index_differs_from(const char *def, uint64_t diff_flags)
 {
 	struct rev_info rev;
 	struct setup_revision_opt opt;
