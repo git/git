@@ -212,6 +212,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 					       ce->sha1, !is_null_sha1(ce->sha1),
 					       ce->name, 0);
 				continue;
+			} else if (DIFF_OPT_TST(&revs->diffopt, SHIFT_INTENT_TO_ADD) &&
+				   ce_intent_to_add(ce)) {
+				diff_addremove(&revs->diffopt, '+', ce->ce_mode,
+					       EMPTY_BLOB_SHA1_BIN, 0,
+					       ce->name, 0);
+				continue;
 			}
 
 			changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
@@ -375,6 +381,14 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 {
 	struct rev_info *revs = o->unpack_data;
 	int match_missing, cached;
+
+	/* i-t-a entries do not actually exist in the index */
+	if (DIFF_OPT_TST(&revs->diffopt, SHIFT_INTENT_TO_ADD) &&
+	    idx && ce_intent_to_add(idx)) {
+		idx = NULL;
+		if (!tree)
+			return;	/* nothing to diff.. */
+	}
 
 	/* if the entry is not checked out, don't examine work tree */
 	cached = o->index_only ||

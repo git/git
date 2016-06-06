@@ -3910,6 +3910,8 @@ int diff_opt_parse(struct diff_options *options,
 		return parse_submodule_opt(options, arg);
 	else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
 		return parse_ws_error_highlight(options, arg);
+	else if (!strcmp(arg, "--shift-ita"))
+		DIFF_OPT_SET(options, SHIFT_INTENT_TO_ADD);
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))

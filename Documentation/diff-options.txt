@@ -559,5 +559,11 @@ endif::git-format-patch[]
 --no-prefix::
 	Do not show any source or destination prefix.
 
+--shift-ita::
+	By default entries added by "git add -N" appear as an existing
+	empty file in "git diff" and a new file in "git diff --cached".
+	This option makes the entry appear as a new file in "git diff"
+	and non-existent in "git diff --cached".
+
 For more detailed explanation on these common options, see also
 linkgit:gitdiffcore[7].
