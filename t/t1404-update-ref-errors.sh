@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test git update-ref with D/F conflicts'
+test_description='Test git update-ref error handling'
 . ./test-lib.sh
 
 test_update_rejected () {
