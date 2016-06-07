@@ -47,7 +47,7 @@ Only print error and warning messages; all other output will be suppressed.
 
 --bare::
 
-Create a bare repository. If GIT_DIR environment is not set, it is set to the
+Create a bare repository. If `GIT_DIR` environment is not set, it is set to the
 current working directory.
 
 --template=<template_directory>::

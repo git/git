@@ -134,7 +134,7 @@ Submit
 ~~~~~~
 Submitting changes from a Git repository back to the p4 repository
 requires a separate p4 client workspace.  This should be specified
-using the 'P4CLIENT' environment variable or the Git configuration
+using the `P4CLIENT` environment variable or the Git configuration
 variable 'git-p4.client'.  The p4 client must exist, but the client root
 will be created and populated if it does not already exist.
 

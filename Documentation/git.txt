@@ -572,7 +572,7 @@ foo.bar= ...`) sets `foo.bar` to the empty string.
 
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
-	setting the GIT_DIR environment variable. It can be an absolute
+	setting the `GIT_DIR` environment variable. It can be an absolute
 	path or relative path to current working directory.
 
 --work-tree=<path>::

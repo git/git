@@ -128,7 +128,7 @@ will try to use konqueror first. But this may fail (for example, if
 DISPLAY is not set) and in that case emacs' woman mode will be tried.
 
 If everything fails, or if no viewer is configured, the viewer specified
-in the GIT_MAN_VIEWER environment variable will be tried.  If that
+in the `GIT_MAN_VIEWER` environment variable will be tried.  If that
 fails too, the 'man' program will be tried anyway.
 
 man.<tool>.path
