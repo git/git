@@ -176,7 +176,9 @@ static enum eol output_eol(enum crlf_action crlf_action)
 		return EOL_LF;
 	case CRLF_UNDEFINED:
 	case CRLF_AUTO_CRLF:
+		return EOL_CRLF;
 	case CRLF_AUTO_INPUT:
+		return EOL_LF;
 	case CRLF_TEXT:
 	case CRLF_AUTO:
 		/* fall through */
@@ -254,17 +256,15 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 		if (convert_is_binary(len, &stats))
 			return 0;
-
-		if (crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
-			/*
-			 * If the file in the index has any CR in it, do not convert.
-			 * This is the new safer autocrlf handling.
-			 */
-			if (has_cr_in_index(path))
-				return 0;
-		}
+		/*
+		 * If the file in the index has any CR in it, do not convert.
+		 * This is the new safer autocrlf handling.
+		 */
+		if (checksafe == SAFE_CRLF_RENORMALIZE)
+			checksafe = SAFE_CRLF_FALSE;
+		else if (has_cr_in_index(path))
+			return 0;
 	}
-
 	check_safe_crlf(path, crlf_action, &stats, checksafe);
 
 	/* Optimization: No CRLF? Nothing to convert, regardless. */
@@ -320,12 +320,10 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 		return 0;
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
-		if (crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
-			/* If we have any CR or CRLF line endings, we do not touch it */
-			/* This is the new safer autocrlf-handling */
-			if (stats.lonecr || stats.crlf )
-				return 0;
-		}
+		/* If we have any CR or CRLF line endings, we do not touch it */
+		/* This is the new safer autocrlf-handling */
+		if (stats.lonecr || stats.crlf )
+			return 0;
 
 		if (convert_is_binary(len, &stats))
 			return 0;
@@ -786,7 +784,11 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 		ca->drv = git_path_check_convert(ccheck + 2);
 		if (ca->crlf_action != CRLF_BINARY) {
 			enum eol eol_attr = git_path_check_eol(ccheck + 3);
-			if (eol_attr == EOL_LF)
+			if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_LF)
+				ca->crlf_action = CRLF_AUTO_INPUT;
+			else if (ca->crlf_action == CRLF_AUTO && eol_attr == EOL_CRLF)
+				ca->crlf_action = CRLF_AUTO_CRLF;
+			else if (eol_attr == EOL_LF)
 				ca->crlf_action = CRLF_TEXT_INPUT;
 			else if (eol_attr == EOL_CRLF)
 				ca->crlf_action = CRLF_TEXT_CRLF;
@@ -845,9 +847,9 @@ const char *get_convert_attr_ascii(const char *path)
 	case CRLF_AUTO:
 		return "text=auto";
 	case CRLF_AUTO_CRLF:
-		return "text=auto eol=crlf"; /* This is not supported yet */
+		return "text=auto eol=crlf";
 	case CRLF_AUTO_INPUT:
-		return "text=auto eol=lf"; /* This is not supported yet */
+		return "text=auto eol=lf";
 	}
 	return "";
 }
@@ -949,7 +951,7 @@ int renormalize_buffer(const char *path, const char *src, size_t len, struct str
 		src = dst->buf;
 		len = dst->len;
 	}
-	return ret | convert_to_git(path, src, len, dst, SAFE_CRLF_FALSE);
+	return ret | convert_to_git(path, src, len, dst, SAFE_CRLF_RENORMALIZE);
 }
 
 /*****************************************************************
