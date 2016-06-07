@@ -1725,14 +1725,14 @@ static int verify_lock(struct ref_lock *lock,
 			errno = save_errno;
 			return -1;
 		} else {
-			hashclr(lock->old_oid.hash);
+			oidclr(&lock->old_oid);
 			return 0;
 		}
 	}
 	if (old_sha1 && hashcmp(lock->old_oid.hash, old_sha1)) {
 		strbuf_addf(err, "ref %s is at %s but expected %s",
 			    lock->ref_name,
-			    sha1_to_hex(lock->old_oid.hash),
+			    oid_to_hex(&lock->old_oid),
 			    sha1_to_hex(old_sha1));
 		errno = EBUSY;
 		return -1;
