@@ -2800,7 +2800,8 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 		/*
 		 * Convert from working tree format to canonical git format
 		 */
-		if (convert_to_git(s->path, s->data, s->size, &buf, crlf_warn)) {
+		if (convert_to_git(s->path, s->data, s->size, &buf,
+				   crlf_warn, NULL)) {
 			size_t size = 0;
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
