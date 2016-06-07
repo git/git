@@ -5,15 +5,11 @@
 # Resolve two or more trees.
 #
 
+. git-sh-setup
 . git-sh-i18n
 
 LF='
 '
-
-die () {
-    echo >&2 "$*"
-    exit 1
-}
 
 # The first parameters up to -- are merge bases; the rest are heads.
 bases= head= remotes= sep_seen=
