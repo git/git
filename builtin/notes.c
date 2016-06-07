@@ -749,7 +749,7 @@ static int git_config_get_notes_strategy(const char *key,
 	if (git_config_get_string(key, &value))
 		return 1;
 	if (parse_notes_merge_strategy(value, strategy))
-		git_die_config(key, "unknown notes merge strategy %s", value);
+		git_die_config(key, _("unknown notes merge strategy %s"), value);
 
 	free(value);
 	return 0;
@@ -788,15 +788,15 @@ static int merge(int argc, const char **argv, const char *prefix)
 	if (strategy || do_commit + do_abort == 0)
 		do_merge = 1;
 	if (do_merge + do_commit + do_abort != 1) {
-		error("cannot mix --commit, --abort or -s/--strategy");
+		error(_("cannot mix --commit, --abort or -s/--strategy"));
 		usage_with_options(git_notes_merge_usage, options);
 	}
 
 	if (do_merge && argc != 1) {
-		error("Must specify a notes ref to merge");
+		error(_("Must specify a notes ref to merge"));
 		usage_with_options(git_notes_merge_usage, options);
 	} else if (!do_merge && argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_merge_usage, options);
 	}
 
@@ -817,7 +817,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 
 	if (strategy) {
 		if (parse_notes_merge_strategy(strategy, &o.strategy)) {
-			error("Unknown -s/--strategy: %s", strategy);
+			error(_("Unknown -s/--strategy: %s"), strategy);
 			usage_with_options(git_notes_merge_usage, options);
 		}
 	} else {
@@ -857,11 +857,11 @@ static int merge(int argc, const char **argv, const char *prefix)
 			die(_("A notes merge into %s is already in-progress at %s"),
 			    default_notes_ref(), wt->path);
 		if (create_symref("NOTES_MERGE_REF", default_notes_ref(), NULL))
-			die("Failed to store link to current notes ref (%s)",
+			die(_("Failed to store link to current notes ref (%s)"),
 			    default_notes_ref());
-		printf("Automatic notes merge failed. Fix conflicts in %s and "
-		       "commit the result with 'git notes merge --commit', or "
-		       "abort the merge with 'git notes merge --abort'.\n",
+		printf(_("Automatic notes merge failed. Fix conflicts in %s and "
+			 "commit the result with 'git notes merge --commit', or "
+			 "abort the merge with 'git notes merge --abort'.\n"),
 		       git_path(NOTES_MERGE_WORKTREE));
 	}
 
@@ -964,7 +964,7 @@ static int get_ref(int argc, const char **argv, const char *prefix)
 			     git_notes_get_ref_usage, 0);
 
 	if (argc) {
-		error("too many parameters");
+		error(_("too many parameters"));
 		usage_with_options(git_notes_get_ref_usage, options);
 	}
 
