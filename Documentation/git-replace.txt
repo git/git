@@ -51,7 +51,7 @@ $ git cat-file commit foo
 
 shows information about commit 'bar'.
 
-The 'GIT_NO_REPLACE_OBJECTS' environment variable can be set to
+The `GIT_NO_REPLACE_OBJECTS` environment variable can be set to
 achieve the same effect as the `--no-replace-objects` option.
 
 OPTIONS

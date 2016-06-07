@@ -161,7 +161,7 @@ OPTIONS
 
 --ref <ref>::
 	Manipulate the notes tree in <ref>.  This overrides
-	'GIT_NOTES_REF' and the "core.notesRef" configuration.  The ref
+	`GIT_NOTES_REF` and the "core.notesRef" configuration.  The ref
 	specifies the full refname when it begins with `refs/notes/`; when it
 	begins with `notes/`, `refs/` and otherwise `refs/notes/` is prefixed
 	to form a full name of the ref.
@@ -333,10 +333,10 @@ notes.<name>.mergeStrategy::
 notes.displayRef::
 	Which ref (or refs, if a glob or specified more than once), in
 	addition to the default set by `core.notesRef` or
-	'GIT_NOTES_REF', to read notes from when showing commit
+	`GIT_NOTES_REF`, to read notes from when showing commit
 	messages with the 'git log' family of commands.
 	This setting can be overridden on the command line or by the
-	'GIT_NOTES_DISPLAY_REF' environment variable.
+	`GIT_NOTES_DISPLAY_REF` environment variable.
 	See linkgit:git-log[1].
 
 notes.rewrite.<command>::
@@ -345,7 +345,7 @@ notes.rewrite.<command>::
 	notes from the original to the rewritten commit.  Defaults to
 	`true`.  See also "`notes.rewriteRef`" below.
 +
-This setting can be overridden by the 'GIT_NOTES_REWRITE_REF'
+This setting can be overridden by the `GIT_NOTES_REWRITE_REF`
 environment variable.
 
 notes.rewriteMode::
@@ -366,33 +366,33 @@ notes.rewriteRef::
 Does not have a default value; you must configure this variable to
 enable note rewriting.
 +
-Can be overridden with the 'GIT_NOTES_REWRITE_REF' environment variable.
+Can be overridden with the `GIT_NOTES_REWRITE_REF` environment variable.
 
 
 ENVIRONMENT
 -----------
 
-'GIT_NOTES_REF'::
+`GIT_NOTES_REF`::
 	Which ref to manipulate notes from, instead of `refs/notes/commits`.
 	This overrides the `core.notesRef` setting.
 
-'GIT_NOTES_DISPLAY_REF'::
+`GIT_NOTES_DISPLAY_REF`::
 	Colon-delimited list of refs or globs indicating which refs,
 	in addition to the default from `core.notesRef` or
-	'GIT_NOTES_REF', to read notes from when showing commit
+	`GIT_NOTES_REF`, to read notes from when showing commit
 	messages.
 	This overrides the `notes.displayRef` setting.
 +
 A warning will be issued for refs that do not exist, but a glob that
 does not match any refs is silently ignored.
 
-'GIT_NOTES_REWRITE_MODE'::
+`GIT_NOTES_REWRITE_MODE`::
 	When copying notes during a rewrite, what to do if the target
 	commit already has a note.
 	Must be one of `overwrite`, `concatenate`, `cat_sort_uniq`, or `ignore`.
 	This overrides the `core.rewriteMode` setting.
 
-'GIT_NOTES_REWRITE_REF'::
+`GIT_NOTES_REWRITE_REF`::
 	When rewriting commits, which notes to copy from the original
 	to the rewritten commit.  Must be a colon-delimited list of
 	refs or globs.

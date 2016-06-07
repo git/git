@@ -166,7 +166,7 @@ General options
 All commands except clone accept these options.
 
 --git-dir <dir>::
-	Set the 'GIT_DIR' environment variable.  See linkgit:git[1].
+	Set the `GIT_DIR` environment variable.  See linkgit:git[1].
 
 -v::
 --verbose::
