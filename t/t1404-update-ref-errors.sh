@@ -39,8 +39,9 @@ test_expect_success 'setup' '
 	git commit --allow-empty -m Initial &&
 	C=$(git rev-parse HEAD) &&
 	git commit --allow-empty -m Second &&
-	D=$(git rev-parse HEAD)
-
+	D=$(git rev-parse HEAD) &&
+	git commit --allow-empty -m Third &&
+	E=$(git rev-parse HEAD)
 '
 
 test_expect_success 'existing loose ref is a simple prefix of new' '
@@ -185,6 +186,222 @@ test_expect_success 'empty directory should not fool 1-arg delete' '
 	mkdir -p .git/$prefix/foo/bar/baz &&
 	printf "delete %s $C\n" $prefix/foo |
 	git update-ref --stdin
+'
+
+# Test various errors when reading the old values of references...
+
+test_expect_success 'missing old value blocks update' '
+	prefix=refs/missing-update &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q
+	EOF
+	printf "%s\n" "update $prefix/foo $E $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'incorrect old value blocks update' '
+	prefix=refs/incorrect-update &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: is at $C but expected $D
+	EOF
+	printf "%s\n" "update $prefix/foo $E $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'existing old value blocks create' '
+	prefix=refs/existing-create &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: reference already exists
+	EOF
+	printf "%s\n" "create $prefix/foo $E" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'incorrect old value blocks delete' '
+	prefix=refs/incorrect-delete &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: is at $C but expected $D
+	EOF
+	printf "%s\n" "delete $prefix/foo $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'missing old value blocks indirect update' '
+	prefix=refs/missing-indirect-update &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q
+	EOF
+	printf "%s\n" "update $prefix/symref $E $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'incorrect old value blocks indirect update' '
+	prefix=refs/incorrect-indirect-update &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	EOF
+	printf "%s\n" "update $prefix/symref $E $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'existing old value blocks indirect create' '
+	prefix=refs/existing-indirect-create &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/symref$Q: reference already exists
+	EOF
+	printf "%s\n" "create $prefix/symref $E" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'incorrect old value blocks indirect delete' '
+	prefix=refs/incorrect-indirect-delete &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	EOF
+	printf "%s\n" "delete $prefix/symref $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'missing old value blocks indirect no-deref update' '
+	prefix=refs/missing-noderef-update &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/symref$Q: can${Q}t resolve old value
+	EOF
+	printf "%s\n" "option no-deref" "update $prefix/symref $E $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'incorrect old value blocks indirect no-deref update' '
+	prefix=refs/incorrect-noderef-update &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	EOF
+	printf "%s\n" "option no-deref" "update $prefix/symref $E $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_failure 'existing old value blocks indirect no-deref create' '
+	prefix=refs/existing-noderef-create &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/symref$Q: reference already exists
+	EOF
+	printf "%s\n" "option no-deref" "create $prefix/symref $E" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'incorrect old value blocks indirect no-deref delete' '
+	prefix=refs/incorrect-noderef-delete &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	git update-ref $prefix/foo $C &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/symref$Q: is at $C but expected $D
+	EOF
+	printf "%s\n" "option no-deref" "delete $prefix/symref $D" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'non-empty directory blocks create' '
+	prefix=refs/ne-create &&
+	mkdir -p .git/$prefix/foo/bar &&
+	: >.git/$prefix/foo/bar/baz.lock &&
+	test_when_finished "rm -f .git/$prefix/foo/bar/baz.lock" &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: there is a non-empty directory $Q.git/$prefix/foo$Q blocking reference $Q$prefix/foo$Q
+	EOF
+	printf "%s\n" "update $prefix/foo $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q
+	EOF
+	printf "%s\n" "update $prefix/foo $D $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'broken reference blocks create' '
+	prefix=refs/broken-create &&
+	mkdir -p .git/$prefix &&
+	echo "gobbledigook" >.git/$prefix/foo &&
+	test_when_finished "rm -f .git/$prefix/foo" &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	EOF
+	printf "%s\n" "update $prefix/foo $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	EOF
+	printf "%s\n" "update $prefix/foo $D $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'non-empty directory blocks indirect create' '
+	prefix=refs/ne-indirect-create &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	mkdir -p .git/$prefix/foo/bar &&
+	: >.git/$prefix/foo/bar/baz.lock &&
+	test_when_finished "rm -f .git/$prefix/foo/bar/baz.lock" &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: there is a non-empty directory $Q.git/$prefix/foo$Q blocking reference $Q$prefix/foo$Q
+	EOF
+	printf "%s\n" "update $prefix/symref $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q
+	EOF
+	printf "%s\n" "update $prefix/symref $D $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
+'
+
+test_expect_success 'broken reference blocks indirect create' '
+	prefix=refs/broken-indirect-create &&
+	git symbolic-ref $prefix/symref $prefix/foo &&
+	echo "gobbledigook" >.git/$prefix/foo &&
+	test_when_finished "rm -f .git/$prefix/foo" &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	EOF
+	printf "%s\n" "update $prefix/symref $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err &&
+	cat >expected <<-EOF &&
+	fatal: cannot lock ref $Q$prefix/foo$Q: unable to resolve reference $Q$prefix/foo$Q: reference broken
+	EOF
+	printf "%s\n" "update $prefix/symref $D $C" |
+	test_must_fail git update-ref --stdin 2>output.err &&
+	test_cmp expected output.err
 '
 
 test_done
