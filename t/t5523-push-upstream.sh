@@ -75,7 +75,7 @@ test_expect_success TTY 'progress messages go to tty' '
 	ensure_fresh_upstream &&
 
 	test_terminal git push -u upstream master >out 2>err &&
-	grep "Writing objects" err
+	test_i18ngrep "Writing objects" err
 '
 
 test_expect_success 'progress messages do not go to non-tty' '
@@ -91,7 +91,7 @@ test_expect_success 'progress messages go to non-tty (forced)' '
 
 	# force progress messages to stderr, even though it is non-tty
 	git push -u --progress upstream master >out 2>err &&
-	grep "Writing objects" err
+	test_i18ngrep "Writing objects" err
 '
 
 test_expect_success TTY 'push -q suppresses progress' '

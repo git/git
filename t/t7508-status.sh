@@ -1377,7 +1377,7 @@ EOF
 	git config --add -f .gitmodules submodule.subname.ignore all &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status > output &&
-	test_cmp expect output &&
+	test_i18ncmp expect output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1387,7 +1387,7 @@ test_expect_success '.git/config ignore=all suppresses unstaged submodule summar
 	git config --add submodule.subname.ignore all &&
 	git config --add submodule.subname.path sm &&
 	git status > output &&
-	test_cmp expect output &&
+	test_i18ncmp expect output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
