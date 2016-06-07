@@ -402,12 +402,52 @@ pick_one_preserving_merges () {
 	esac
 }
 
-nth_string () {
-	case "$1" in
-	*1[0-9]|*[04-9]) echo "$1"th;;
-	*1) echo "$1"st;;
-	*2) echo "$1"nd;;
-	*3) echo "$1"rd;;
+this_nth_commit_message () {
+	n=$1
+	case "$n" in
+	1) gettext "This is the 1st commit message:";;
+	2) gettext "This is the 2nd commit message:";;
+	3) gettext "This is the 3rd commit message:";;
+	4) gettext "This is the 4th commit message:";;
+	5) gettext "This is the 5th commit message:";;
+	6) gettext "This is the 6th commit message:";;
+	7) gettext "This is the 7th commit message:";;
+	8) gettext "This is the 8th commit message:";;
+	9) gettext "This is the 9th commit message:";;
+	10) gettext "This is the 10th commit message:";;
+	# TRANSLATORS: if the language you are translating into
+	# doesn't allow you to compose a sentence in this fashion,
+	# consider translating as if this and the following few strings
+	# were "This is the commit message ${n}:"
+	*1[0-9]|*[04-9]) eval_gettext "This is the \${n}th commit message:";;
+	*1) eval_gettext "This is the \${n}st commit message:";;
+	*2) eval_gettext "This is the \${n}nd commit message:";;
+	*3) eval_gettext "This is the \${n}rd commit message:";;
+	*) eval_gettext "This is the commit message \${n}:";;
+	esac
+}
+skip_nth_commit_message () {
+	n=$1
+	case "$n" in
+	1) gettext "The 1st commit message will be skipped:";;
+	2) gettext "The 2nd commit message will be skipped:";;
+	3) gettext "The 3rd commit message will be skipped:";;
+	4) gettext "The 4th commit message will be skipped:";;
+	5) gettext "The 5th commit message will be skipped:";;
+	6) gettext "The 6th commit message will be skipped:";;
+	7) gettext "The 7th commit message will be skipped:";;
+	8) gettext "The 8th commit message will be skipped:";;
+	9) gettext "The 9th commit message will be skipped:";;
+	10) gettext "The 10th commit message will be skipped:";;
+	# TRANSLATORS: if the language you are translating into
+	# doesn't allow you to compose a sentence in this fashion,
+	# consider translating as if this and the following few strings
+	# were "The commit message ${n} will be skipped:"
+	*1[0-9]|*[04-9]) eval_gettext "The \${n}th commit message will be skipped:";;
+	*1) eval_gettext "The \${n}st commit message will be skipped:";;
+	*2) eval_gettext "The \${n}nd commit message will be skipped:";;
+	*3) eval_gettext "The \${n}rd commit message will be skipped:";;
+	*) eval_gettext "The commit message \${n} will be skipped:";;
 	esac
 }
 
@@ -415,20 +455,23 @@ update_squash_messages () {
 	if test -f "$squash_msg"; then
 		mv "$squash_msg" "$squash_msg".bak || exit
 		count=$(($(sed -n \
-			-e "1s/^. This is a combination of \(.*\) commits\./\1/p" \
+			-e "1s/^$comment_char.*\([0-9][0-9]*\).*/\1/p" \
 			-e "q" < "$squash_msg".bak)+1))
 		{
-			printf '%s\n' "$comment_char This is a combination of $count commits."
+			printf '%s\n' "$comment_char $(eval_ngettext \
+				"This is a combination of \$count commit." \
+				"This is a combination of \$count commits." \
+				$count)"
 			sed -e 1d -e '2,/^./{
 				/^$/d
 			}' <"$squash_msg".bak
 		} >"$squash_msg"
 	else
-		commit_message HEAD > "$fixup_msg" || die "Cannot write $fixup_msg"
+		commit_message HEAD > "$fixup_msg" || die "$(gettext "Cannot write \$fixup_msg")"
 		count=2
 		{
-			printf '%s\n' "$comment_char This is a combination of 2 commits."
-			printf '%s\n' "$comment_char The first commit's message is:"
+			printf '%s\n' "$comment_char $(gettext "This is a combination of 2 commits.")"
+			printf '%s\n' "$comment_char $(gettext "This is the 1st commit message:")"
 			echo
 			cat "$fixup_msg"
 		} >"$squash_msg"
@@ -437,13 +480,13 @@ update_squash_messages () {
 	squash)
 		rm -f "$fixup_msg"
 		echo
-		printf '%s\n' "$comment_char This is the $(nth_string $count) commit message:"
+		printf '%s\n' "$comment_char $(this_nth_commit_message $count)"
 		echo
 		commit_message $2
 		;;
 	fixup)
 		echo
-		printf '%s\n' "$comment_char The $(nth_string $count) commit message will be skipped:"
+		printf '%s\n' "$comment_char $(skip_nth_commit_message $count)"
 		echo
 		# Change the space after the comment character to TAB:
 		commit_message $2 | git stripspace --comment-lines | sed -e 's/ /	/'
