@@ -33,7 +33,7 @@ struct diff_filespec {
 	int count;               /* Reference count */
 	int rename_used;         /* Count of rename users */
 	unsigned short mode;	 /* file mode */
-	unsigned sha1_valid : 1; /* if true, use sha1 and trust mode;
+	unsigned oid_valid : 1;  /* if true, use oid and trust mode;
 				  * if false, use the name and read from
 				  * the filesystem.
 				  */
