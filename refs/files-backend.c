@@ -3479,7 +3479,7 @@ static int lock_ref_for_update(struct ref_update *update,
 			 * the transaction, so we have to read it here
 			 * to record and possibly check old_sha1:
 			 */
-			if (read_ref_full(update->refname, 0,
+			if (read_ref_full(referent.buf, 0,
 					  lock->old_oid.hash, NULL)) {
 				if (update->flags & REF_HAVE_OLD) {
 					strbuf_addf(err, "cannot lock ref '%s': "
