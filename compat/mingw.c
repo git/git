@@ -512,22 +512,6 @@ int mingw_chmod(const char *filename, int mode)
 	return _wchmod(wfilename, mode);
 }
 
-/*
- * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
- * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
- */
-static inline long long filetime_to_hnsec(const FILETIME *ft)
-{
-	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
-	/* Windows to Unix Epoch conversion */
-	return winTime - 116444736000000000LL;
-}
-
-static inline time_t filetime_to_time_t(const FILETIME *ft)
-{
-	return (time_t)(filetime_to_hnsec(ft) / 10000000);
-}
-
 /**
  * Verifies that safe_create_leading_directories() would succeed.
  */
@@ -666,6 +650,8 @@ static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 	alt_name[namelen] = 0;
 	return do_lstat(follow, alt_name, buf);
 }
+
+int (*lstat)(const char *file_name, struct stat *buf) = mingw_lstat;
 
 int mingw_lstat(const char *file_name, struct stat *buf)
 {
