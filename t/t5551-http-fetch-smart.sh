@@ -282,5 +282,22 @@ test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
 	test_line_count = 100000 tags
 '
 
+test_expect_success 'custom http headers' '
+	test_must_fail git -c http.extraheader="x-magic-two: cadabra" \
+		fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+	    fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git update-index --add --cacheinfo 160000,$(git rev-parse HEAD),sub &&
+	git config -f .gitmodules submodule.sub.path sub &&
+	git config -f .gitmodules submodule.sub.url \
+		"$HTTPD_URL/smart_headers/repo.git" &&
+	git submodule init sub &&
+	test_must_fail git submodule update sub &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+		submodule update sub
+'
+
 stop_httpd
 test_done
