@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2016, #01; Thu, 2)
-X-master-at: 60bd4b1c513bb652cdffad44382046ca872140eb
-X-next-at: 8a191e187a9dca3d786c0197f9610e627b4f4137
+Subject: What's cooking in git.git (Jun 2016, #02; Mon, 6)
+X-master-at: 49fa3dc76179e04b0833542fa52d0f287a4955ac
+X-next-at: 3cd93d08f085fd56ac81614bd2e920c3b50eacec
 
-What's cooking in git.git (Jun 2016, #01; Thu, 2)
+What's cooking in git.git (Jun 2016, #02; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,19 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-2.9-rc2 is scheduled for early next week.  A handful low-impact
-topics are expected to be in 'master' by then.
+The hopefully final release candidate 2.9-rc2 together with 2.8.4
+has been pushed out.
+
+By the way, the tip of 'pu' is not expected to pass its own test
+suite, due to multiple broken topics queued near its tip. Earlier
+there was a talk about automatically bisecting breakage on 'pu', but
+tonight's pushout is a good illustration why that would not be very
+useful.  What would be useful is (1) enumeration of commits on the
+first parent chain on master..pu, (2) test of the second parent of
+each of the commits found in (1), and (3) bisection between the
+broken commits in (2) and 'master', which would highlight broken
+topics and the commit(s) that might be responsible for each broken
+topic.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,44 +32,79 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* et/add-chmod-x (2016-06-01) 2 commits
- - SQUASH??? add: add --chmod=+x / --chmod=-x options
- - add: add --chmod=+x / --chmod=-x options
+* bd/readme.markdown-more (2016-05-31) 1 commit
+  (merged to 'next' on 2016-06-02 at 1de7554)
+ + README.md: format CLI commands with code syntax
 
- Waiting for a reroll (or ack for proposed fixup).
-
-
-* jc/t2300-setup (2016-06-01) 1 commit
- - t2300: run git-sh-setup in an environment that better mimics the real life
-
- A test fix.
-
- Will merge to 'next'.
+ The mark-up in the top-level README.md file has been updated to
+ typeset CLI command names differently from the body text.
 
 
-* jk/shell-portability (2016-06-01) 2 commits
- - t5500 & t7403: lose bash-ism "local"
- - test-lib: add in-shell "env" replacement
+* em/man-bold-literal (2016-05-31) 1 commit
+  (merged to 'next' on 2016-06-02 at efb4156)
+ + Documentation: bold literals in man
 
- test fixes.
+ The manpage output of our documentation did not render well in
+ terminal; typeset literals in bold by default to make them stand
+ out more.
 
- Will merge to 'next'.
+
+* js/perf-rebase-i (2016-05-31) 1 commit
+  (merged to 'next' on 2016-05-31 at 39d8dc8)
+ + perf: make the tests work without a worktree
+
+ The one in 'master' has a brown-paper-bag bug that breaks the perf
+ test when used inside a usual Git repository with a working tree.
 
 
-* mh/connect (2016-06-01) 9 commits
- - connect: move ssh command line preparation to a separate function
- - connect: actively reject git:// urls with a user part
- - connect: change the --diag-url output to separate user and host
- - connect: make parse_connect_url() return the user part of the url as a separate value
- - connect: group CONNECT_DIAG_URL handling code
- - connect: make parse_connect_url() return separated host and port
- - connect: re-derive a host:port string from the separate host and port variables
- - connect: call get_host_and_port() earlier
- - connect: document why we sometimes call get_port after get_host_and_port
+* js/rebase-i-dedup-call-to-rerere (2016-05-31) 1 commit
+  (merged to 'next' on 2016-05-31 at db1f9e3)
+ + rebase -i: remove an unnecessary 'rerere' invocation
 
- Needs review.
+ "git rebase -i", after it fails to auto-resolve the conflict, had
+ an unnecessary call to "git rerere" from its very early days, which
+ was spotted recently; the call has been removed.
+
+
+* mm/makefile-developer-can-be-in-config-mak (2016-06-01) 2 commits
+  (merged to 'next' on 2016-06-02 at f3a0678)
+ + Makefile: add $(DEVELOPER_CFLAGS) variable
+ + Makefile: move 'ifdef DEVELOPER' after config.mak* inclusion
+
+ "make DEVELOPER=1" worked as expected; setting DEVELOPER=1 in
+ config.mak didn't.
+
+
+* mr/send-email-doc-gmail-2fa (2016-06-01) 1 commit
+  (merged to 'next' on 2016-06-02 at cd2ade8)
+ + Documentation/git-send-email: fix typo in gmail 2FA section
+
+ Typofix.
+
+
+* pa/cherry-pick-doc-typo (2016-05-29) 1 commit
+  (merged to 'next' on 2016-06-02 at e2c2457)
+ + git-cherry-pick.txt: correct a small typo
+
+ "git cherry-pick --help" had three instances of word "behavior",
+ one of which was spelled "behaviour", which is updated to match the
+ other two.
+
+
+* rs/apply-name-terminate (2016-05-29) 1 commit
+  (merged to 'next' on 2016-06-02 at 8df9332)
+ + apply: remove unused parameters from name_terminate()
+
+ Code clean-up.
+
+
+* rs/patch-id-use-skip-prefix (2016-05-29) 1 commit
+  (merged to 'next' on 2016-06-02 at c993de3)
+ + patch-id: use starts_with() and skip_prefix()
+
+ Code clean-up.
 
 
 * sb/submodule-helper-list-signal-unmatch-via-exit-status (2016-06-01) 1 commit
@@ -69,8 +115,6 @@ of the repositories listed at
  The way how "submodule--helper list" signals unmatch error to its
  callers has been updated.
 
- Will merge to 'master'.
-
 
 * sb/submodule-helper-relative-path (2016-06-01) 1 commit
   (merged to 'next' on 2016-06-02 at 8a191e1)
@@ -80,37 +124,158 @@ of the repositories listed at
  A bash-ism "local" has been removed from "git submodule" scripted
  Porcelain.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* wd/userdiff-css (2016-06-03) 1 commit
+  (merged to 'next' on 2016-06-06 at 536102f)
+ + userdiff: add built-in pattern for CSS
+
+ Update the funcname definition to support css files.
+
+ Will merge to 'master' after 2.9 final.
 
 
-* mr/send-email-doc-gmail-2fa (2016-06-01) 1 commit
-  (merged to 'next' on 2016-06-02 at cd2ade8)
- + Documentation/git-send-email: fix typo in gmail 2FA section
+* jc/attr-more (2016-06-03) 2 commits
+ - attr.c: pass struct git_attr_check down the callchain
+ - attr.c: add push_stack() helper
+ (this branch uses jc/attr; is tangled with sb/pathspec-label and sb/submodule-default-paths.)
 
- Typofix.
+ The beginning of long and tortuous journey to clean-up attribute
+ subsystem implementation.
 
- Will merge to 'master'.
+
+* jk/rev-list-count-with-bitmap (2016-06-03) 2 commits
+  (merged to 'next' on 2016-06-06 at dd9b30f)
+ + rev-list: disable bitmaps when "-n" is used with listing objects
+ + rev-list: "adjust" results of "--count --use-bitmap-index -n"
+
+ "git rev-list --count" whose walk-length is limited with "-n"
+ option did not work well with the counting optimized to look at the
+ bitmap index.
+
+ Will merge to 'master' after 2.9 final.
 
 
-* aq/upload-pack-use-parse-options (2016-05-31) 1 commit
- - upload-pack.c: use parse-options API
+* mh/ref-iterators (2016-06-03) 13 commits
+  (merged to 'next' on 2016-06-06 at c8e79dc)
+ + for_each_reflog(): reimplement using iterators
+ + dir_iterator: new API for iterating over a directory tree
+ + for_each_reflog(): don't abort for bad references
+ + do_for_each_ref(): reimplement using reference iteration
+ + refs: introduce an iterator interface
+ + ref_resolves_to_object(): new function
+ + entry_resolves_to_object(): rename function from ref_resolves_to_object()
+ + get_ref_cache(): only create an instance if there is a submodule
+ + remote rm: handle symbolic refs correctly
+ + delete_refs(): add a flags argument
+ + refs: use name "prefix" consistently
+ + do_for_each_ref(): move docstring to the header file
+ + refs: remove unnecessary "extern" keywords
+ (this branch uses mh/split-under-lock.)
 
- "git upload-pack" command has been updated to use the parse-options
- API.
+ The API to iterate over all the refs (i.e. for_each_ref(), etc.)
+ has been revamped.
+
+ Will merge to 'master' after 2.9 final.
+
+
+* ew/mboxrd-format-am (2016-06-06) 3 commits
+ - am: support --patch-format=mboxrd
+ - mailsplit: support unescaping mboxrd messages
+ - pretty: support "mboxrd" output format
+
+ Teach format-patch and mailsplit (hence "am") how a line that
+ happens to begin with "From " in the e-mail message is quoted with
+ ">", so that these lines can be restored to their original shape.
+
+
+* lf/receive-pack-auto-gc-to-client (2016-06-06) 1 commit
+ - receive-pack: send auto-gc output over sideband 2
+
+ Allow messages that are generated by auto gc during "git push" on
+ the receiving end to be explicitly passed back to the sending end
+ over sideband, so that they are shown with "remote: " prefix to
+ avoid confusing the users.
+
+
+* mg/cherry-pick-multi-on-unborn (2016-06-06) 1 commit
+ - cherry-pick: allow to pick to unborn branches
+
+ "git cherry-pick A" worked on an unborn branch, but "git
+ cherry-pick A..B" didn't.
+
+
+* mj/log-show-signature-conf (2016-06-06) 2 commits
+ - log: "--no-show-signature" commmand-line option
+ - log: add "log.showsignature" configuration variable
+
+ "git log" learns log.showSignature configuration variable, and a
+ command line option "--no-show-signature" to countermand it.
+
+ The order of the commits in the topic need to be reversed.
+
+
+* nd/i-t-a-commitable (2016-06-06) 3 commits
+ - commit: don't count i-t-a entries when checking if the new commit is empty
+ - Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
+ - diff.h: extend "flags" field to 64 bits because we're out of bits
+
+
+* sg/reflog-past-root (2016-06-06) 1 commit
+ - reflog: continue walking the reflog past root commits
+
+ "git reflog" stopped upon seeing an entry that denotes a branch
+ creation event (aka "unborn"), which made it appear as if the
+ reflog was truncated.
+
+
+* tb/complete-status (2016-06-06) 3 commits
+ - completion: add git status
+ - completion: add __git_get_option_value helper
+ - completion: factor out untracked file modes into a variable
+
+ The completion script (in contrib/) learned to complete "git
+ status" options.
+
+
+* tr/doc-tt (2016-06-06) 3 commits
+ - doc: change configuration variables format
+ - doc: change environment variables format
+ - doc: clearer rule about formatting literals
+
+ The documentation set has been updated so that literal commands,
+ configuration variables and environment variables are consistently
+ typeset in fixed-width font and bold in manpages.
+
+
+* vs/prompt-avoid-unset-variable (2016-06-06) 1 commit
+ - git-prompt.sh: Don't error on null ${ZSH,BASH}_VERSION, $short_sha
+
+ The git-prompt scriptlet (in contrib/) was not friendly with those
+ who uses "set -u", which has been fixed.
+
+
+* rj/compat-regex-size-max-fix (2016-06-06) 1 commit
+ - regex: fix a SIZE_MAX macro redefinition warning
+
+ A compilation fix.
 
  Will merge to 'next'.
 
 
-* jc/clear-pathspec (2016-06-02) 1 commit
- - pathspec: rename free_pathspec() to clear_pathspec()
+* bc/cocci-object-id (2016-06-06) 8 commits
+ - merge-recursive: convert merge_recursive_generic to object_id
+ - merge-recursive: convert leaf functions to use struct object_id
+ - merge-recursive: convert struct merge_file_info to object_id
+ - merge-recursive: convert struct stage_data to use object_id
+ - Rename struct diff_filespec's sha1_valid member.
+ - Convert struct diff_filespec to struct object_id
+ - Apply standard object_id Coccinelle transformations.
+ - Add basic Coccinelle transforms.
 
- We usually call a function that clears the contents a data
- structure X without freeing the structure itself clear_X(), and
- call a function that does clear_X() and also frees it free_X().
- free_pathspec() function has been renamed to clear_pathspec()
- to avoid confusion.
-
- Will merge to 'next'.
+ Move from "unsigned char [20]" to "struct object_id" continues,
+ with help from an automated tool.
 
 --------------------------------------------------
 [Stalled]
@@ -330,15 +495,68 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* js/rebase-i-dedup-call-to-rerere (2016-05-31) 1 commit
-  (merged to 'next' on 2016-05-31 at db1f9e3)
- + rebase -i: remove an unnecessary 'rerere' invocation
+* et/add-chmod-x (2016-06-01) 2 commits
+ - SQUASH??? add: add --chmod=+x / --chmod=-x options
+ - add: add --chmod=+x / --chmod=-x options
 
- "git rebase -i", after it fails to auto-resolve the conflict, had
- an unnecessary call to "git rerere" from its very early days, which
- was spotted recently; the call has been removed.
+ Waiting for a reroll (or ack for proposed fixup).
+
+
+* jc/t2300-setup (2016-06-01) 1 commit
+  (merged to 'next' on 2016-06-06 at 20f7f83)
+ + t2300: run git-sh-setup in an environment that better mimics the real life
+
+ A test fix.
 
  Will merge to 'master'.
+
+
+* jk/shell-portability (2016-06-01) 2 commits
+  (merged to 'next' on 2016-06-06 at 5de784e)
+ + t5500 & t7403: lose bash-ism "local"
+ + test-lib: add in-shell "env" replacement
+
+ test fixes.
+
+ Will merge to 'master'.
+
+
+* mh/connect (2016-06-06) 10 commits
+ - connect: [host:port] is legacy for ssh
+ - connect: move ssh command line preparation to a separate function
+ - connect: actively reject git:// urls with a user part
+ - connect: change the --diag-url output to separate user and host
+ - connect: make parse_connect_url() return the user part of the url as a separate value
+ - connect: group CONNECT_DIAG_URL handling code
+ - connect: make parse_connect_url() return separated host and port
+ - connect: re-derive a host:port string from the separate host and port variables
+ - connect: call get_host_and_port() earlier
+ - connect: document why we sometimes call get_port after get_host_and_port
+
+ Ok, folks, is everybody happy with this version?
+
+
+* aq/upload-pack-use-parse-options (2016-05-31) 1 commit
+  (merged to 'next' on 2016-06-06 at 505f1ee)
+ + upload-pack.c: use parse-options API
+
+ "git upload-pack" command has been updated to use the parse-options
+ API.
+
+ Will merge to 'master' after 2.9 final.
+
+
+* jc/clear-pathspec (2016-06-02) 1 commit
+  (merged to 'next' on 2016-06-06 at 9e7e291)
+ + pathspec: rename free_pathspec() to clear_pathspec()
+
+ We usually call a function that clears the contents a data
+ structure X without freeing the structure itself clear_X(), and
+ call a function that does clear_X() and also frees it free_X().
+ free_pathspec() function has been renamed to clear_pathspec()
+ to avoid confusion.
+
+ Will merge to 'master' after 2.9 final.
 
 
 * sb/submodule-recommend-shallowness (2016-05-27) 2 commits
@@ -389,27 +607,6 @@ of the repositories listed at
  Is everybody happy with this version?
 
 
-* bd/readme.markdown-more (2016-05-31) 1 commit
-  (merged to 'next' on 2016-06-02 at 1de7554)
- + README.md: format CLI commands with code syntax
-
- The mark-up in the top-level README.md file has been updated to
- typeset CLI command names differently from the body text.
-
- Will merge to 'master'.
-
-
-* em/man-bold-literal (2016-05-31) 1 commit
-  (merged to 'next' on 2016-06-02 at efb4156)
- + Documentation: bold literals in man
-
- The manpage output of our documentation did not render well in
- terminal; typeset literals in bold by default to make them stand
- out more.
-
- Will merge to 'master'.
-
-
 * jg/dash-is-last-branch-in-worktree-add (2016-05-31) 1 commit
   (merged to 'next' on 2016-06-02 at 3959ef6)
  + worktree: allow "-" short-hand for @{-1} in add command
@@ -420,16 +617,6 @@ of the repositories listed at
  Will merge to 'master' after 2.9 final.
 
 
-* js/perf-rebase-i (2016-05-31) 1 commit
-  (merged to 'next' on 2016-05-31 at 39d8dc8)
- + perf: make the tests work without a worktree
-
- The one in 'master' has a brown-paper-bag bug that breaks the perf
- test when used inside a usual Git repository with a working tree.
-
- Will merge to 'master'.
-
-
 * dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
  - blame: require 0 context lines while finding moved lines with -M
 
@@ -438,23 +625,12 @@ of the repositories listed at
  We may want to squash a test or two to this commit.  Volunteers?
 
 
-* mm/makefile-developer-can-be-in-config-mak (2016-06-01) 2 commits
-  (merged to 'next' on 2016-06-02 at f3a0678)
- + Makefile: add $(DEVELOPER_CFLAGS) variable
- + Makefile: move 'ifdef DEVELOPER' after config.mak* inclusion
-
- "make DEVELOPER=1" worked as expected; setting DEVELOPER=1 in
- config.mak didn't.
-
- Will merge to 'master' after 2.9 final.
-
-
-* nd/worktree-lock (2016-05-31) 6 commits
+* nd/worktree-lock (2016-06-03) 6 commits
+ - worktree.c: find_worktree() search by path suffix
  - worktree: add "unlock" command
  - worktree: add "lock" command
- - worktree.c: retrieve lock status (and optionally reason) in get_worktrees()
+ - worktree.c: add is_worktree_locked()
  - worktree.c: add is_main_worktree()
- - worktree.c: find_worktree() learns to identify worktrees by basename
  - worktree.c: add find_worktree()
  (this branch uses nd/worktree-cleanup-post-head-protection.)
 
@@ -463,36 +639,7 @@ of the repositories listed at
  command learned a dedicated command pair to create and remoev such
  a file, so that the users do not have to do this with editor.
 
- Expecting a reroll.
-
-
-* pa/cherry-pick-doc-typo (2016-05-29) 1 commit
-  (merged to 'next' on 2016-06-02 at e2c2457)
- + git-cherry-pick.txt: correct a small typo
-
- "git cherry-pick --help" had three instances of word "behavior",
- one of which was spelled "behaviour", which is updated to match the
- other two.
-
- Will merge to 'master'.
-
-
-* rs/apply-name-terminate (2016-05-29) 1 commit
-  (merged to 'next' on 2016-06-02 at 8df9332)
- + apply: remove unused parameters from name_terminate()
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/patch-id-use-skip-prefix (2016-05-29) 1 commit
-  (merged to 'next' on 2016-06-02 at c993de3)
- + patch-id: use starts_with() and skip_prefix()
-
- Code clean-up.
-
- Will merge to 'master'.
+ Ok, folks, is everybody happy with this version?
 
 
 * et/pretty-format-c-auto (2016-05-27) 1 commit
@@ -563,7 +710,7 @@ of the repositories listed at
  Will merge to 'master' after 2.9 final.
 
 
-* sb/submodule-default-paths (2016-05-26) 7 commits
+* sb/submodule-default-paths (2016-05-26) 11 commits
  - clone: add --init-submodule=<pathspec> switch
  - submodule update: add `--init-default-path` switch
  - Merge branch 'sb/pathspec-label' into sb/submodule-default-paths
@@ -571,9 +718,14 @@ of the repositories listed at
  - Merge branch 'sb/clone-shallow-passthru' into sb/submodule-default-paths
  - Merge branch 'sb/submodule-deinit-all' into sb/submodule-default-paths
  - Merge branch 'sb/submodule-parallel-update' into sb/submodule-default-paths
- (this branch uses jc/attr and sb/pathspec-label.)
+  (merged to 'next' on 2016-05-31 at e72b604)
+ + pathspec: allow querying for attributes
+ + pathspec: move prefix check out of the inner loop
+ + pathspec: move long magic parsing out of prefix_pathspec
+ + Documentation: fix a typo
+ (this branch uses jc/attr; is tangled with jc/attr-more and sb/pathspec-label.)
 
- Will merge to 'next'.
+ Will hold.
 
 
 * ah/no-verify-signature-with-pull-rebase (2016-05-20) 1 commit
@@ -616,62 +768,65 @@ of the repositories listed at
  + attr.c: update a stale comment on "struct match_attr"
  + attr.c: use strchrnul() to scan for one line
  + commit.c: use strchrnul() to scan for one line
- (this branch is used by sb/pathspec-label and sb/submodule-default-paths.)
+ (this branch is used by jc/attr-more, sb/pathspec-label and sb/submodule-default-paths.)
 
  The attributes API has been updated so that it can later be
  optimized using the knowledge of which attributes are queried.
 
 
-* cc/apply-introduce-state (2016-06-01) 49 commits
- - builtin/apply: move 'newfd' global into 'struct apply_state'
- - builtin/apply: move 'lock_file' global into 'struct apply_state'
- - builtin/apply: move applying patches into apply_all_patches()
- - builtin/apply: move 'state' check into check_apply_state()
- - builtin/apply: move 'symlink_changes' global into 'struct apply_state'
- - builtin/apply: move 'fn_table' global into 'struct apply_state'
- - builtin/apply: move 'state_linenr' global into 'struct apply_state'
- - builtin/apply: move 'max_change' and 'max_len' into 'struct apply_state'
- - builtin/apply: move 'ws_ignore_action' into 'struct apply_state'
- - builtin/apply: move 'ws_error_action' into 'struct apply_state'
- - builtin/apply: move 'applied_after_fixing_ws' into 'struct apply_state'
- - builtin/apply: move 'squelch_whitespace_errors' into 'struct apply_state'
- - builtin/apply: remove whitespace_option arg from set_default_whitespace_mode()
- - builtin/apply: move 'whitespace_option' into 'struct apply_state'
- - builtin/apply: move 'whitespace_error' global into 'struct apply_state'
- - builtin/apply: move 'root' global into 'struct apply_state'
- - builtin/apply: move 'p_value_known' global into 'struct apply_state'
- - builtin/apply: move 'p_value' global into 'struct apply_state'
- - builtin/apply: move 'has_include' global into 'struct apply_state'
- - builtin/apply: move 'limit_by_name' global into 'struct apply_state'
- - builtin/apply: move 'patch_input_file' global into 'struct apply_state'
- - builtin/apply: move 'apply' global into 'struct apply_state'
- - builtin/apply: move 'p_context' global into 'struct apply_state'
- - builtin/apply: move 'fake_ancestor' global into 'struct apply_state'
- - builtin/apply: move 'line_termination' global into 'struct apply_state'
- - builtin/apply: move 'unsafe_paths' global into 'struct apply_state'
- - builtin/apply: move 'no_add' global into 'struct apply_state'
- - builtin/apply: move 'threeway' global into 'struct apply_state'
- - builtin/apply: move 'summary' global into 'struct apply_state'
- - builtin/apply: move 'numstat' global into 'struct apply_state'
- - builtin/apply: move 'diffstat' global into 'struct apply_state'
- - builtin/apply: move 'cached' global into 'struct apply_state'
- - builtin/apply: move 'allow_overlap' global into 'struct apply_state'
- - builtin/apply: move 'update_index' global into 'struct apply_state'
- - builtin/apply: move 'apply_verbosely' global into 'struct apply_state'
- - builtin/apply: move 'apply_with_reject' global into 'struct apply_state'
- - builtin/apply: move 'apply_in_reverse' global into 'struct apply_state'
- - builtin/apply: move 'check_index' global into 'struct apply_state'
- - builtin/apply: move 'check' global into 'struct apply_state'
- - builtin/apply: move 'unidiff_zero' global into 'struct apply_state'
- - builtin/apply: move 'state' init into init_apply_state()
- - builtin/apply: introduce 'struct apply_state' to start libifying
- - builtin/apply: move 'read_stdin' global into cmd_apply()
- - builtin/apply: move 'options' variable into cmd_apply()
- - builtin/apply: extract line_by_line_fuzzy_match() from match_fragment()
- - builtin/apply: avoid local variable shadowing 'len' parameter
- - builtin/apply: avoid parameter shadowing 'linenr' global
- - builtin/apply: avoid parameter shadowing 'p_value' global
- - builtin/apply: make gitdiff_verify_name() return void
+* cc/apply-introduce-state (2016-06-06) 50 commits
+  (merged to 'next' on 2016-06-06 at 9f6bdcb)
+ + builtin/apply: remove misleading comment on lock_file field
+  (merged to 'next' on 2016-06-03 at 1ab0cf9)
+ + builtin/apply: move 'newfd' global into 'struct apply_state'
+ + builtin/apply: add 'lock_file' pointer into 'struct apply_state'
+ + builtin/apply: move applying patches into apply_all_patches()
+ + builtin/apply: move 'state' check into check_apply_state()
+ + builtin/apply: move 'symlink_changes' global into 'struct apply_state'
+ + builtin/apply: move 'fn_table' global into 'struct apply_state'
+ + builtin/apply: move 'state_linenr' global into 'struct apply_state'
+ + builtin/apply: move 'max_change' and 'max_len' into 'struct apply_state'
+ + builtin/apply: move 'ws_ignore_action' into 'struct apply_state'
+ + builtin/apply: move 'ws_error_action' into 'struct apply_state'
+ + builtin/apply: move 'applied_after_fixing_ws' into 'struct apply_state'
+ + builtin/apply: move 'squelch_whitespace_errors' into 'struct apply_state'
+ + builtin/apply: remove whitespace_option arg from set_default_whitespace_mode()
+ + builtin/apply: move 'whitespace_option' into 'struct apply_state'
+ + builtin/apply: move 'whitespace_error' global into 'struct apply_state'
+ + builtin/apply: move 'root' global into 'struct apply_state'
+ + builtin/apply: move 'p_value_known' global into 'struct apply_state'
+ + builtin/apply: move 'p_value' global into 'struct apply_state'
+ + builtin/apply: move 'has_include' global into 'struct apply_state'
+ + builtin/apply: move 'limit_by_name' global into 'struct apply_state'
+ + builtin/apply: move 'patch_input_file' global into 'struct apply_state'
+ + builtin/apply: move 'apply' global into 'struct apply_state'
+ + builtin/apply: move 'p_context' global into 'struct apply_state'
+ + builtin/apply: move 'fake_ancestor' global into 'struct apply_state'
+ + builtin/apply: move 'line_termination' global into 'struct apply_state'
+ + builtin/apply: move 'unsafe_paths' global into 'struct apply_state'
+ + builtin/apply: move 'no_add' global into 'struct apply_state'
+ + builtin/apply: move 'threeway' global into 'struct apply_state'
+ + builtin/apply: move 'summary' global into 'struct apply_state'
+ + builtin/apply: move 'numstat' global into 'struct apply_state'
+ + builtin/apply: move 'diffstat' global into 'struct apply_state'
+ + builtin/apply: move 'cached' global into 'struct apply_state'
+ + builtin/apply: move 'allow_overlap' global into 'struct apply_state'
+ + builtin/apply: move 'update_index' global into 'struct apply_state'
+ + builtin/apply: move 'apply_verbosely' global into 'struct apply_state'
+ + builtin/apply: move 'apply_with_reject' global into 'struct apply_state'
+ + builtin/apply: move 'apply_in_reverse' global into 'struct apply_state'
+ + builtin/apply: move 'check_index' global into 'struct apply_state'
+ + builtin/apply: move 'check' global into 'struct apply_state'
+ + builtin/apply: move 'unidiff_zero' global into 'struct apply_state'
+ + builtin/apply: move 'state' init into init_apply_state()
+ + builtin/apply: introduce 'struct apply_state' to start libifying
+ + builtin/apply: move 'read_stdin' global into cmd_apply()
+ + builtin/apply: move 'options' variable into cmd_apply()
+ + builtin/apply: extract line_by_line_fuzzy_match() from match_fragment()
+ + builtin/apply: avoid local variable shadowing 'len' parameter
+ + builtin/apply: avoid parameter shadowing 'linenr' global
+ + builtin/apply: avoid parameter shadowing 'p_value' global
+ + builtin/apply: make gitdiff_verify_name() return void
 
  The "git apply" standalone program is being libified; this is the
  first step to move many state variables into a structure that can
@@ -684,8 +839,7 @@ of the repositories listed at
  review the above first and give the remainder of the series a solid
  base to build on.
 
- Expecting an update.
- ($gmane/296136)
+ Will hold.
 
 
 * pb/bisect (2016-05-24) 3 commits
@@ -696,19 +850,24 @@ of the repositories listed at
  Beginning of GSoC "git bisect" project.
 
 
-* sb/pathspec-label (2016-05-25) 4 commits
+* sb/pathspec-label (2016-06-03) 6 commits
+  (merged to 'next' on 2016-06-03 at 362f097)
+ + pathspec: disable preload-index when attribute pathspec magic is in use
+ + pathspec: allow escaped query values
   (merged to 'next' on 2016-05-31 at e72b604)
  + pathspec: allow querying for attributes
  + pathspec: move prefix check out of the inner loop
  + pathspec: move long magic parsing out of prefix_pathspec
  + Documentation: fix a typo
- (this branch is used by sb/submodule-default-paths; uses jc/attr.)
+ (this branch uses jc/attr; is tangled with jc/attr-more and sb/submodule-default-paths.)
 
  The pathspec mechanism learned ":(attr:X)$pattern" pathspec magic
  to limit paths that match $pattern further by attribute settings.
+ The preload-index mechanism is disabled when the new pathspec magic
+ is in use (at least for now), because the attribute subsystem is
+ not thread-ready.
 
- This breaks anything that uses preload-index with the new pathspec
- magic, because the attribute subsystem is not thread-ready.
+ Will hold.
 
 
 * nd/worktree-cleanup-post-head-protection (2016-05-24) 6 commits
@@ -727,45 +886,46 @@ of the repositories listed at
 
 
 * mh/split-under-lock (2016-05-13) 33 commits
- - lock_ref_sha1_basic(): only handle REF_NODEREF mode
- - commit_ref_update(): remove the flags parameter
- - lock_ref_for_update(): don't resolve symrefs
- - lock_ref_for_update(): don't re-read non-symbolic references
- - refs: resolve symbolic refs first
- - ref_transaction_update(): check refname_is_safe() at a minimum
- - unlock_ref(): move definition higher in the file
- - lock_ref_for_update(): new function
- - add_update(): initialize the whole ref_update
- - verify_refname_available(): adjust constness in declaration
- - refs: don't dereference on rename
- - refs: allow log-only updates
- - delete_branches(): use resolve_refdup()
- - ref_transaction_commit(): correctly report close_ref() failure
- - ref_transaction_create(): disallow recursive pruning
- - refs: make error messages more consistent
- - lock_ref_sha1_basic(): remove unneeded local variable
- - read_raw_ref(): move docstring to header file
- - read_raw_ref(): improve docstring
- - read_raw_ref(): rename symref argument to referent
- - read_raw_ref(): clear *type at start of function
- - read_raw_ref(): rename flags argument to type
- - ref_transaction_commit(): remove local variable n
- - rename_ref(): remove unneeded local variable
- - commit_ref_update(): write error message to *err, not stderr
- - refname_is_safe(): insist that the refname already be normalized
- - refname_is_safe(): don't allow the empty string
- - refname_is_safe(): use skip_prefix()
- - remove_dir_recursively(): add docstring
- - safe_create_leading_directories(): improve docstring
- - read_raw_ref(): don't get confused by an empty directory
- - commit_ref(): if there is an empty dir in the way, delete it
- - t1404: demonstrate a bug resolving references
+  (merged to 'next' on 2016-06-03 at 2e71330)
+ + lock_ref_sha1_basic(): only handle REF_NODEREF mode
+ + commit_ref_update(): remove the flags parameter
+ + lock_ref_for_update(): don't resolve symrefs
+ + lock_ref_for_update(): don't re-read non-symbolic references
+ + refs: resolve symbolic refs first
+ + ref_transaction_update(): check refname_is_safe() at a minimum
+ + unlock_ref(): move definition higher in the file
+ + lock_ref_for_update(): new function
+ + add_update(): initialize the whole ref_update
+ + verify_refname_available(): adjust constness in declaration
+ + refs: don't dereference on rename
+ + refs: allow log-only updates
+ + delete_branches(): use resolve_refdup()
+ + ref_transaction_commit(): correctly report close_ref() failure
+ + ref_transaction_create(): disallow recursive pruning
+ + refs: make error messages more consistent
+ + lock_ref_sha1_basic(): remove unneeded local variable
+ + read_raw_ref(): move docstring to header file
+ + read_raw_ref(): improve docstring
+ + read_raw_ref(): rename symref argument to referent
+ + read_raw_ref(): clear *type at start of function
+ + read_raw_ref(): rename flags argument to type
+ + ref_transaction_commit(): remove local variable n
+ + rename_ref(): remove unneeded local variable
+ + commit_ref_update(): write error message to *err, not stderr
+ + refname_is_safe(): insist that the refname already be normalized
+ + refname_is_safe(): don't allow the empty string
+ + refname_is_safe(): use skip_prefix()
+ + remove_dir_recursively(): add docstring
+ + safe_create_leading_directories(): improve docstring
+ + read_raw_ref(): don't get confused by an empty directory
+ + commit_ref(): if there is an empty dir in the way, delete it
+ + t1404: demonstrate a bug resolving references
+ (this branch is used by mh/ref-iterators.)
 
  Further preparatory work on the refs API before the pluggable
  backend series can land.
 
- Updated (again).  Will wait for comments for the last time, and
- then merge to 'next'.
+ Will merge to 'master' after 2.9 final.
 
 
 * ew/fast-import-unpack-limit (2016-05-29) 2 commits
