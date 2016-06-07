@@ -45,7 +45,6 @@ skip!              skip current patch and continue
 edit-todo!         edit the todo list during an interactive rebase
 "
 . git-sh-setup
-. git-sh-i18n
 set_reflog_action rebase
 require_work_tree_exists
 cd_to_toplevel
