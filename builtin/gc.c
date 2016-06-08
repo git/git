@@ -473,8 +473,10 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git();
-	if (pack_garbage.nr > 0)
+	if (pack_garbage.nr > 0) {
+		close_all_packs();
 		clean_pack_garbage();
+	}
 
 	if (auto_gc && too_many_loose_objects())
 		warning(_("There are too many unreachable loose objects; "
