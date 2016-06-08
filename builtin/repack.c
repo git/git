@@ -8,6 +8,7 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "argv-array.h"
+#include "packfile.h"
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
@@ -303,6 +304,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (!names.nr && !quiet)
 		printf("Nothing new to pack.\n");
+
+	close_all_packs();
 
 	/*
 	 * Ok we have prepared all new packfiles.
