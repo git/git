@@ -421,6 +421,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	close_all_packs(the_repository->objects);
 
+	close_all_packs(the_repository->objects);
+
 	/*
 	 * Ok we have prepared all new packfiles.
 	 * First see if there are packs of the same name and if so
