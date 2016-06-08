@@ -61,10 +61,10 @@ argument. If such a URL is encountered directly on the command line,
 the first argument is '<address>', and if it is encountered in a
 configured remote, the first argument is the name of that remote.
 
-Additionally, when a configured remote has 'remote.<name>.vcs' set to
+Additionally, when a configured remote has `remote.<name>.vcs` set to
 '<transport>', Git explicitly invokes 'git remote-<transport>' with
 '<name>' as the first argument. If set, the second argument is
-'remote.<name>.url'; otherwise, the second argument is omitted.
+`remote.<name>.url`; otherwise, the second argument is omitted.
 
 INPUT FORMAT
 ------------

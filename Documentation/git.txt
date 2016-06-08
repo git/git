@@ -991,7 +991,7 @@ for further details.
 	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
 	will call this program with a suitable prompt as command-line argument
-	and read the password from its STDOUT. See also the 'core.askPass'
+	and read the password from its STDOUT. See also the `core.askPass`
 	option in linkgit:git-config[1].
 
 `GIT_TERMINAL_PROMPT`::

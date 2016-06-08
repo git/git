@@ -57,10 +57,10 @@ OPTIONS
 --man::
 	Display manual page for the command in the 'man' format. This
 	option may be used to override a value set in the
-	'help.format' configuration variable.
+	`help.format` configuration variable.
 +
 By default the 'man' program will be used to display the manual page,
-but the 'man.viewer' configuration variable may be used to choose
+but the `man.viewer` configuration variable may be used to choose
 other display programs (see below).
 
 -w::
@@ -69,7 +69,7 @@ other display programs (see below).
 	format. A web browser will be used for that purpose.
 +
 The web browser can be specified using the configuration variable
-'help.browser', or 'web.browser' if the former is not set. If none of
+`help.browser`, or `web.browser` if the former is not set. If none of
 these config variables is set, the 'git web{litdd}browse' helper script
 (called by 'git help') will pick a suitable default. See
 linkgit:git-web{litdd}browse[1] for more information about this.
@@ -80,7 +80,7 @@ CONFIGURATION VARIABLES
 help.format
 ~~~~~~~~~~~
 
-If no command-line option is passed, the 'help.format' configuration
+If no command-line option is passed, the `help.format` configuration
 variable will be checked. The following values are supported for this
 variable; they make 'git help' behave as their corresponding command-
 line option:
@@ -92,7 +92,7 @@ line option:
 help.browser, web.browser and browser.<tool>.path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
+The `help.browser`, `web.browser` and `browser.<tool>.path` will also
 be checked if the 'web' format is chosen (either by command-line
 option or configuration variable). See '-w|--web' in the OPTIONS
 section above and linkgit:git-web{litdd}browse[1].
@@ -100,7 +100,7 @@ section above and linkgit:git-web{litdd}browse[1].
 man.viewer
 ~~~~~~~~~~
 
-The 'man.viewer' configuration variable will be checked if the 'man'
+The `man.viewer` configuration variable will be checked if the 'man'
 format is chosen. The following values are currently supported:
 
 * "man": use the 'man' program as usual,
@@ -110,9 +110,9 @@ format is chosen. The following values are currently supported:
 tab (see 'Note about konqueror' below).
 
 Values for other tools can be used if there is a corresponding
-'man.<tool>.cmd' configuration entry (see below).
+`man.<tool>.cmd` configuration entry (see below).
 
-Multiple values may be given to the 'man.viewer' configuration
+Multiple values may be given to the `man.viewer` configuration
 variable. Their corresponding programs will be tried in the order
 listed in the configuration file.
 
@@ -135,7 +135,7 @@ man.<tool>.path
 ~~~~~~~~~~~~~~~
 
 You can explicitly provide a full path to your preferred man viewer by
-setting the configuration variable 'man.<tool>.path'. For example, you
+setting the configuration variable `man.<tool>.path`. For example, you
 can configure the absolute path to konqueror by setting
 'man.konqueror.path'. Otherwise, 'git help' assumes the tool is
 available in PATH.
@@ -143,9 +143,9 @@ available in PATH.
 man.<tool>.cmd
 ~~~~~~~~~~~~~~
 
-When the man viewer, specified by the 'man.viewer' configuration
+When the man viewer, specified by the `man.viewer` configuration
 variables, is not among the supported ones, then the corresponding
-'man.<tool>.cmd' configuration variable will be looked up. If this
+`man.<tool>.cmd` configuration variable will be looked up. If this
 variable exists then the specified tool will be treated as a custom
 command and a shell eval will be used to run the command with the man
 page passed as arguments.
@@ -153,7 +153,7 @@ page passed as arguments.
 Note about konqueror
 ~~~~~~~~~~~~~~~~~~~~
 
-When 'konqueror' is specified in the 'man.viewer' configuration
+When 'konqueror' is specified in the `man.viewer` configuration
 variable, we launch 'kfmclient' to try to open the man page on an
 already opened konqueror in a new tab if possible.
 

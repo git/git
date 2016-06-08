@@ -545,7 +545,7 @@ core.compression::
 	-1 is the zlib default. 0 means no compression,
 	and 1..9 are various speed/size tradeoffs, 9 being slowest.
 	If set, this provides a default to other compression variables,
-	such as 'core.looseCompression' and 'pack.compression'.
+	such as `core.looseCompression` and `pack.compression`.
 
 core.looseCompression::
 	An integer -1..9, indicating the compression level for objects that
@@ -1400,18 +1400,18 @@ gitcvs.usecrlfattr::
 	treat it as text. If they suppress text conversion, the file
 	will be set with '-kb' mode, which suppresses any newline munging
 	the client might otherwise do. If the attributes do not allow
-	the file type to be determined, then 'gitcvs.allBinary' is
+	the file type to be determined, then `gitcvs.allBinary` is
 	used. See linkgit:gitattributes[5].
 
 gitcvs.allBinary::
-	This is used if 'gitcvs.usecrlfattr' does not resolve
+	This is used if `gitcvs.usecrlfattr` does not resolve
 	the correct '-kb' mode to use. If true, all
 	unresolved files are sent to the client in
 	mode '-kb'. This causes the client to treat them
 	as binary files, which suppresses any newline munging it
 	otherwise might do. Alternatively, if it is set to "guess",
 	then the contents of the file are examined to decide if
-	it is binary, similar to 'core.autocrlf'.
+	it is binary, similar to `core.autocrlf`.
 
 gitcvs.dbName::
 	Database used by git-cvsserver to cache revision information
@@ -1430,7 +1430,7 @@ gitcvs.dbDriver::
 	See linkgit:git-cvsserver[1].
 
 gitcvs.dbUser, gitcvs.dbPass::
-	Database user and password. Only useful if setting 'gitcvs.dbDriver',
+	Database user and password. Only useful if setting `gitcvs.dbDriver`,
 	since SQLite has no concept of database users and/or passwords.
 	'gitcvs.dbUser' supports variable substitution (see
 	linkgit:git-cvsserver[1] for details).
@@ -1442,8 +1442,8 @@ gitcvs.dbTableNamePrefix::
 	linkgit:git-cvsserver[1] for details).  Any non-alphabetic
 	characters will be replaced with underscores.
 
-All gitcvs variables except for 'gitcvs.usecrlfattr' and
-'gitcvs.allBinary' can also be specified as
+All gitcvs variables except for `gitcvs.usecrlfattr` and
+`gitcvs.allBinary` can also be specified as
 'gitcvs.<access_method>.<varname>' (where 'access_method'
 is one of "ext" and "pserver") to make them apply only for the given
 access method.
@@ -1476,7 +1476,7 @@ grep.patternType::
 
 grep.extendedRegexp::
 	If set to true, enable '--extended-regexp' option by default. This
-	option is ignored when the 'grep.patternType' option is set to a value
+	option is ignored when the `grep.patternType` option is set to a value
 	other than 'default'.
 
 grep.threads::
@@ -2587,7 +2587,7 @@ sendemail.identity::
 	A configuration identity. When given, causes values in the
 	'sendemail.<identity>' subsection to take precedence over
 	values in the 'sendemail' section. The default identity is
-	the value of 'sendemail.identity'.
+	the value of `sendemail.identity`.
 
 sendemail.smtpEncryption::
 	See linkgit:git-send-email[1] for description.  Note that this
@@ -2604,7 +2604,7 @@ sendemail.<identity>.*::
 	Identity-specific versions of the 'sendemail.*' parameters
 	found below, taking precedence over those when the this
 	identity is selected, through command-line or
-	'sendemail.identity'.
+	`sendemail.identity`.
 
 sendemail.aliasesFile::
 sendemail.aliasFileType::
@@ -2634,7 +2634,7 @@ sendemail.xmailer::
 	See linkgit:git-send-email[1] for description.
 
 sendemail.signedoffcc (deprecated)::
-	Deprecated alias for 'sendemail.signedoffbycc'.
+	Deprecated alias for `sendemail.signedoffbycc`.
 
 showbranch.default::
 	The default set of branches for linkgit:git-show-branch[1].
@@ -2864,8 +2864,8 @@ user.name::
 	environment variables.  See linkgit:git-commit-tree[1].
 
 user.useConfigOnly::
-	Instruct Git to avoid trying to guess defaults for 'user.email'
-	and 'user.name', and instead retrieve the values only from the
+	Instruct Git to avoid trying to guess defaults for `user.email`
+	and `user.name`, and instead retrieve the values only from the
 	configuration. For example, if you have multiple email addresses
 	and would like to use a different one for each repository, then
 	with this configuration option set to `true` in the global config
