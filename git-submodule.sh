@@ -734,7 +734,7 @@ cmd_update()
 			if test $res -gt 0
 			then
 				die_msg="$(eval_gettext "Failed to recurse into submodule path '\$displaypath'")"
-				if test $res -eq 1
+				if test $res -ne 2
 				then
 					err="${err};$die_msg"
 					continue
