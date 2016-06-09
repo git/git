@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2016, #02; Mon, 6)
+Subject: What's cooking in git.git (Jun 2016, #03; Thu, 9)
 X-master-at: 49fa3dc76179e04b0833542fa52d0f287a4955ac
 X-next-at: 3cd93d08f085fd56ac81614bd2e920c3b50eacec
 
-What's cooking in git.git (Jun 2016, #02; Mon, 6)
+What's cooking in git.git (Jun 2016, #03; Thu, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,19 +12,15 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The hopefully final release candidate 2.9-rc2 together with 2.8.4
-has been pushed out.
-
-By the way, the tip of 'pu' is not expected to pass its own test
-suite, due to multiple broken topics queued near its tip. Earlier
-there was a talk about automatically bisecting breakage on 'pu', but
-tonight's pushout is a good illustration why that would not be very
-useful.  What would be useful is (1) enumeration of commits on the
-first parent chain on master..pu, (2) test of the second parent of
-each of the commits found in (1), and (3) bisection between the
-broken commits in (2) and 'master', which would highlight broken
-topics and the commit(s) that might be responsible for each broken
-topic.
+The tip of 'pu' is not expected to pass its own test suite, due to
+multiple broken topics queued near its tip. Earlier there was a talk
+about automatically bisecting breakage on 'pu', but tonight's
+pushout is a good illustration why that would not be very useful.
+What would be useful is (1) enumeration of commits on the first
+parent chain on master..pu, (2) test of the second parent of each of
+the commits found in (1), and (3) bisection between the broken
+commits in (2) and 'master', which would highlight broken topics and
+the commit(s) that might be responsible for each broken topic.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -32,250 +28,28 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bd/readme.markdown-more (2016-05-31) 1 commit
-  (merged to 'next' on 2016-06-02 at 1de7554)
- + README.md: format CLI commands with code syntax
-
- The mark-up in the top-level README.md file has been updated to
- typeset CLI command names differently from the body text.
-
-
-* em/man-bold-literal (2016-05-31) 1 commit
-  (merged to 'next' on 2016-06-02 at efb4156)
- + Documentation: bold literals in man
-
- The manpage output of our documentation did not render well in
- terminal; typeset literals in bold by default to make them stand
- out more.
-
-
-* js/perf-rebase-i (2016-05-31) 1 commit
-  (merged to 'next' on 2016-05-31 at 39d8dc8)
- + perf: make the tests work without a worktree
-
- The one in 'master' has a brown-paper-bag bug that breaks the perf
- test when used inside a usual Git repository with a working tree.
-
-
-* js/rebase-i-dedup-call-to-rerere (2016-05-31) 1 commit
-  (merged to 'next' on 2016-05-31 at db1f9e3)
- + rebase -i: remove an unnecessary 'rerere' invocation
-
- "git rebase -i", after it fails to auto-resolve the conflict, had
- an unnecessary call to "git rerere" from its very early days, which
- was spotted recently; the call has been removed.
-
-
-* mm/makefile-developer-can-be-in-config-mak (2016-06-01) 2 commits
-  (merged to 'next' on 2016-06-02 at f3a0678)
- + Makefile: add $(DEVELOPER_CFLAGS) variable
- + Makefile: move 'ifdef DEVELOPER' after config.mak* inclusion
-
- "make DEVELOPER=1" worked as expected; setting DEVELOPER=1 in
- config.mak didn't.
-
-
-* mr/send-email-doc-gmail-2fa (2016-06-01) 1 commit
-  (merged to 'next' on 2016-06-02 at cd2ade8)
- + Documentation/git-send-email: fix typo in gmail 2FA section
-
- Typofix.
-
-
-* pa/cherry-pick-doc-typo (2016-05-29) 1 commit
-  (merged to 'next' on 2016-06-02 at e2c2457)
- + git-cherry-pick.txt: correct a small typo
-
- "git cherry-pick --help" had three instances of word "behavior",
- one of which was spelled "behaviour", which is updated to match the
- other two.
-
-
-* rs/apply-name-terminate (2016-05-29) 1 commit
-  (merged to 'next' on 2016-06-02 at 8df9332)
- + apply: remove unused parameters from name_terminate()
-
- Code clean-up.
-
-
-* rs/patch-id-use-skip-prefix (2016-05-29) 1 commit
-  (merged to 'next' on 2016-06-02 at c993de3)
- + patch-id: use starts_with() and skip_prefix()
-
- Code clean-up.
-
-
-* sb/submodule-helper-list-signal-unmatch-via-exit-status (2016-06-01) 1 commit
-  (merged to 'next' on 2016-06-02 at 29064a2)
- + submodule--helper: offer a consistent API
- (this branch is used by sb/submodule-helper-relative-path.)
-
- The way how "submodule--helper list" signals unmatch error to its
- callers has been updated.
-
-
-* sb/submodule-helper-relative-path (2016-06-01) 1 commit
-  (merged to 'next' on 2016-06-02 at 8a191e1)
- + submodule: remove bashism from shell script
- (this branch uses sb/submodule-helper-list-signal-unmatch-via-exit-status.)
-
- A bash-ism "local" has been removed from "git submodule" scripted
- Porcelain.
-
---------------------------------------------------
 [New Topics]
 
-* wd/userdiff-css (2016-06-03) 1 commit
-  (merged to 'next' on 2016-06-06 at 536102f)
- + userdiff: add built-in pattern for CSS
-
- Update the funcname definition to support css files.
-
- Will merge to 'master' after 2.9 final.
-
-
-* jc/attr-more (2016-06-03) 2 commits
- - attr.c: pass struct git_attr_check down the callchain
- - attr.c: add push_stack() helper
- (this branch uses jc/attr; is tangled with sb/pathspec-label and sb/submodule-default-paths.)
-
- The beginning of long and tortuous journey to clean-up attribute
- subsystem implementation.
-
-
-* jk/rev-list-count-with-bitmap (2016-06-03) 2 commits
-  (merged to 'next' on 2016-06-06 at dd9b30f)
- + rev-list: disable bitmaps when "-n" is used with listing objects
- + rev-list: "adjust" results of "--count --use-bitmap-index -n"
-
- "git rev-list --count" whose walk-length is limited with "-n"
- option did not work well with the counting optimized to look at the
- bitmap index.
-
- Will merge to 'master' after 2.9 final.
-
-
-* mh/ref-iterators (2016-06-03) 13 commits
-  (merged to 'next' on 2016-06-06 at c8e79dc)
- + for_each_reflog(): reimplement using iterators
- + dir_iterator: new API for iterating over a directory tree
- + for_each_reflog(): don't abort for bad references
- + do_for_each_ref(): reimplement using reference iteration
- + refs: introduce an iterator interface
- + ref_resolves_to_object(): new function
- + entry_resolves_to_object(): rename function from ref_resolves_to_object()
- + get_ref_cache(): only create an instance if there is a submodule
- + remote rm: handle symbolic refs correctly
- + delete_refs(): add a flags argument
- + refs: use name "prefix" consistently
- + do_for_each_ref(): move docstring to the header file
- + refs: remove unnecessary "extern" keywords
- (this branch uses mh/split-under-lock.)
-
- The API to iterate over all the refs (i.e. for_each_ref(), etc.)
- has been revamped.
-
- Will merge to 'master' after 2.9 final.
-
-
-* ew/mboxrd-format-am (2016-06-06) 3 commits
- - am: support --patch-format=mboxrd
- - mailsplit: support unescaping mboxrd messages
- - pretty: support "mboxrd" output format
-
- Teach format-patch and mailsplit (hence "am") how a line that
- happens to begin with "From " in the e-mail message is quoted with
- ">", so that these lines can be restored to their original shape.
-
-
-* lf/receive-pack-auto-gc-to-client (2016-06-06) 1 commit
- - receive-pack: send auto-gc output over sideband 2
-
- Allow messages that are generated by auto gc during "git push" on
- the receiving end to be explicitly passed back to the sending end
- over sideband, so that they are shown with "remote: " prefix to
- avoid confusing the users.
-
-
-* mg/cherry-pick-multi-on-unborn (2016-06-06) 1 commit
- - cherry-pick: allow to pick to unborn branches
-
- "git cherry-pick A" worked on an unborn branch, but "git
- cherry-pick A..B" didn't.
-
-
-* mj/log-show-signature-conf (2016-06-06) 2 commits
- - log: "--no-show-signature" commmand-line option
- - log: add "log.showsignature" configuration variable
-
- "git log" learns log.showSignature configuration variable, and a
- command line option "--no-show-signature" to countermand it.
-
- The order of the commits in the topic need to be reversed.
-
-
-* nd/i-t-a-commitable (2016-06-06) 3 commits
- - commit: don't count i-t-a entries when checking if the new commit is empty
- - Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
- - diff.h: extend "flags" field to 64 bits because we're out of bits
-
-
-* sg/reflog-past-root (2016-06-06) 1 commit
- - reflog: continue walking the reflog past root commits
-
- "git reflog" stopped upon seeing an entry that denotes a branch
- creation event (aka "unborn"), which made it appear as if the
- reflog was truncated.
-
-
-* tb/complete-status (2016-06-06) 3 commits
- - completion: add git status
- - completion: add __git_get_option_value helper
- - completion: factor out untracked file modes into a variable
-
- The completion script (in contrib/) learned to complete "git
- status" options.
-
-
-* tr/doc-tt (2016-06-06) 3 commits
- - doc: change configuration variables format
- - doc: change environment variables format
- - doc: clearer rule about formatting literals
-
- The documentation set has been updated so that literal commands,
- configuration variables and environment variables are consistently
- typeset in fixed-width font and bold in manpages.
-
-
-* vs/prompt-avoid-unset-variable (2016-06-06) 1 commit
- - git-prompt.sh: Don't error on null ${ZSH,BASH}_VERSION, $short_sha
-
- The git-prompt scriptlet (in contrib/) was not friendly with those
- who uses "set -u", which has been fixed.
-
-
-* rj/compat-regex-size-max-fix (2016-06-06) 1 commit
- - regex: fix a SIZE_MAX macro redefinition warning
-
- A compilation fix.
+* jk/avoid-unbounded-alloca (2016-06-07) 1 commit
+ - tree-diff: avoid alloca for large allocations
 
  Will merge to 'next'.
 
 
-* bc/cocci-object-id (2016-06-06) 8 commits
- - merge-recursive: convert merge_recursive_generic to object_id
- - merge-recursive: convert leaf functions to use struct object_id
- - merge-recursive: convert struct merge_file_info to object_id
- - merge-recursive: convert struct stage_data to use object_id
- - Rename struct diff_filespec's sha1_valid member.
- - Convert struct diff_filespec to struct object_id
- - Apply standard object_id Coccinelle transformations.
- - Add basic Coccinelle transforms.
+* jk/send-pack-stdio (2016-06-08) 1 commit
+ - send-pack: use buffered I/O to talk to pack-objects
 
- Move from "unsigned char [20]" to "struct object_id" continues,
- with help from an automated tool.
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* pb/commit-editmsg-path (2016-06-09) 1 commit
+ - builtin/commit.c: memoize git-path for COMMIT_EDITMSG
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -495,16 +269,184 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* et/add-chmod-x (2016-06-01) 2 commits
- - SQUASH??? add: add --chmod=+x / --chmod=-x options
+* wd/userdiff-css (2016-06-03) 1 commit
+  (merged to 'next' on 2016-06-06 at 536102f)
+ + userdiff: add built-in pattern for CSS
+
+ Update the funcname definition to support css files.
+
+ Will merge to 'master' after 2.9 final.
+
+
+* jc/attr-more (2016-06-08) 5 commits
+ - attr.c: always pass check[] to collect_some_attrs()
+ - attr.c: correct ugly hack for git_all_attrs()
+ - fixup! d5ad6c13
+ - attr.c: pass struct git_attr_check down the callchain
+ - attr.c: add push_stack() helper
+ (this branch uses jc/attr; is tangled with sb/pathspec-label and sb/submodule-default-paths.)
+
+ The beginning of long and tortuous journey to clean-up attribute
+ subsystem implementation.
+
+
+* jk/rev-list-count-with-bitmap (2016-06-03) 2 commits
+  (merged to 'next' on 2016-06-06 at dd9b30f)
+ + rev-list: disable bitmaps when "-n" is used with listing objects
+ + rev-list: "adjust" results of "--count --use-bitmap-index -n"
+
+ "git rev-list --count" whose walk-length is limited with "-n"
+ option did not work well with the counting optimized to look at the
+ bitmap index.
+
+ Will merge to 'master' after 2.9 final.
+
+
+* mh/ref-iterators (2016-06-03) 13 commits
+  (merged to 'next' on 2016-06-06 at c8e79dc)
+ + for_each_reflog(): reimplement using iterators
+ + dir_iterator: new API for iterating over a directory tree
+ + for_each_reflog(): don't abort for bad references
+ + do_for_each_ref(): reimplement using reference iteration
+ + refs: introduce an iterator interface
+ + ref_resolves_to_object(): new function
+ + entry_resolves_to_object(): rename function from ref_resolves_to_object()
+ + get_ref_cache(): only create an instance if there is a submodule
+ + remote rm: handle symbolic refs correctly
+ + delete_refs(): add a flags argument
+ + refs: use name "prefix" consistently
+ + do_for_each_ref(): move docstring to the header file
+ + refs: remove unnecessary "extern" keywords
+ (this branch is used by mh/ref-store; uses mh/split-under-lock; is tangled with mh/update-ref-errors.)
+
+ The API to iterate over all the refs (i.e. for_each_ref(), etc.)
+ has been revamped.
+
+ Will merge to 'master' after 2.9 final.
+
+
+* ew/mboxrd-format-am (2016-06-06) 3 commits
+ - am: support --patch-format=mboxrd
+ - mailsplit: support unescaping mboxrd messages
+ - pretty: support "mboxrd" output format
+
+ Teach format-patch and mailsplit (hence "am") how a line that
+ happens to begin with "From " in the e-mail message is quoted with
+ ">", so that these lines can be restored to their original shape.
+
+
+* lf/receive-pack-auto-gc-to-client (2016-06-06) 1 commit
+ - receive-pack: send auto-gc output over sideband 2
+
+ Allow messages that are generated by auto gc during "git push" on
+ the receiving end to be explicitly passed back to the sending end
+ over sideband, so that they are shown with "remote: " prefix to
+ avoid confusing the users.
+
+
+* mg/cherry-pick-multi-on-unborn (2016-06-06) 1 commit
+ - cherry-pick: allow to pick to unborn branches
+
+ "git cherry-pick A" worked on an unborn branch, but "git
+ cherry-pick A..B" didn't.
+
+
+* mj/log-show-signature-conf (2016-06-06) 2 commits
+ - log: "--no-show-signature" commmand-line option
+ - log: add "log.showsignature" configuration variable
+
+ "git log" learns log.showSignature configuration variable, and a
+ command line option "--no-show-signature" to countermand it.
+
+ The order of the commits in the topic need to be reversed.
+
+
+* nd/i-t-a-commitable (2016-06-06) 3 commits
+ - commit: don't count i-t-a entries when checking if the new commit is empty
+ - Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
+ - diff.h: extend "flags" field to 64 bits because we're out of bits
+
+ "rm .git/index && git add -N * && git commit" allows you to create
+ an empty commit without --allow-empty; attempt to forbid it.
+
+ Breaks many tests by completely butchering "git commit", it seems.
+
+
+* sg/reflog-past-root (2016-06-06) 1 commit
+ - reflog: continue walking the reflog past root commits
+
+ "git reflog" stopped upon seeing an entry that denotes a branch
+ creation event (aka "unborn"), which made it appear as if the
+ reflog was truncated.
+
+
+* tb/complete-status (2016-06-06) 3 commits
+ - completion: add git status
+ - completion: add __git_get_option_value helper
+ - completion: factor out untracked file modes into a variable
+
+ The completion script (in contrib/) learned to complete "git
+ status" options.
+
+ Breaks t9902.
+
+
+* tr/doc-tt (2016-06-08) 4 commits
+ - doc: change configuration variables format
+ - doc: more consistency in environment variables format
+ - doc: change environment variables format
+ - doc: clearer rule about formatting literals
+
+ The documentation set has been updated so that literal commands,
+ configuration variables and environment variables are consistently
+ typeset in fixed-width font and bold in manpages.
+
+ Will merge to 'next'.
+
+
+* vs/prompt-avoid-unset-variable (2016-06-06) 1 commit
+ - git-prompt.sh: Don't error on null ${ZSH,BASH}_VERSION, $short_sha
+
+ The git-prompt scriptlet (in contrib/) was not friendly with those
+ who uses "set -u", which has been fixed.
+
+
+* rj/compat-regex-size-max-fix (2016-06-06) 1 commit
+ - regex: fix a SIZE_MAX macro redefinition warning
+
+ A compilation fix.
+
+ Will merge to 'next'.
+
+
+* bc/cocci-object-id (2016-06-06) 8 commits
+ - merge-recursive: convert merge_recursive_generic to object_id
+ - merge-recursive: convert leaf functions to use struct object_id
+ - merge-recursive: convert struct merge_file_info to object_id
+ - merge-recursive: convert struct stage_data to use object_id
+ - Rename struct diff_filespec's sha1_valid member.
+ - Convert struct diff_filespec to struct object_id
+ - Apply standard object_id Coccinelle transformations.
+ - Add basic Coccinelle transforms.
+
+ Move from "unsigned char [20]" to "struct object_id" continues,
+ with help from an automated tool.
+
+
+* et/add-chmod-x (2016-06-07) 1 commit
  - add: add --chmod=+x / --chmod=-x options
 
- Waiting for a reroll (or ack for proposed fixup).
+ "git update-index --add --chmod=+x file" may be usable as an escape
+ hatch, but not a friendly thing to force for people who do need to
+ use it regularly.  "git add --chmod=+x file" can be used instead.
+
+ Will merge to 'next'.
 
 
 * jc/t2300-setup (2016-06-01) 1 commit
   (merged to 'next' on 2016-06-06 at 20f7f83)
  + t2300: run git-sh-setup in an environment that better mimics the real life
+ (this branch is used by va/i18n-even-more.)
 
  A test fix.
 
@@ -570,14 +512,30 @@ of the repositories listed at
  Will merge to 'master' after 2.9 final.
 
 
-* tb/convert-peek-in-index (2016-05-24) 2 commits
- - convert: ce_compare_data() checks for a sha1 of a path
+* tb/convert-peek-in-index (2016-06-07) 3 commits
+ - correct ce_compare_data() in a middle of a merge
  - read-cache: factor out get_sha1_from_index() helper
+ - convert: unify the "auto" handling of CRLF
 
- The motivation is rather iffy.
+ Needs review.
 
 
-* va/i18n-even-more (2016-05-26) 22 commits
+* va/i18n-even-more (2016-06-07) 38 commits
+ - i18n: branch: mark comment when editing branch description for translation
+ - i18n: unmark die messages for translation
+ - i18n: submodule: escape shell variables inside eval_gettext
+ - i18n: submodule: join strings marked for translation
+ - i18n: init-db: join message pieces
+ - i18n: remote: allow translations to reorder message
+ - i18n: remote: mark URL fallback text for translation
+ - i18n: standardise messages
+ - i18n: sequencer: add period to error message
+ - i18n: merge: change command option help to lowercase
+ - i18n: merge: mark messages for translation
+ - i18n: notes: mark options for translation
+ - i18n: notes: mark strings for translation
+ - i18n: transport-helper.c: change N_() call to _()
+ - i18n: bisect: mark strings for translation
  - t5523: use test_i18ngrep for negation
  - t4153: fix negated test_i18ngrep call
  - t9003: become resilient to GETTEXT_POISON
@@ -600,11 +558,14 @@ of the repositories listed at
  - i18n: advice: internationalize message for conflicts
  - i18n: advice: mark string about detached head for translation
  - i18n: builtin/remote.c: fix mark for translation
+ - Merge branch 'jc/t2300-setup' into HEAD
+ (this branch uses jc/t2300-setup.)
 
  More markings of messages for i18n, with updates to various tests
  to pass GETTEXT_POISON tests.
 
- Is everybody happy with this version?
+ One patch from the original submission dropped due to conflicts
+ with other topics in flight.
 
 
 * jg/dash-is-last-branch-in-worktree-add (2016-05-31) 1 commit
@@ -920,7 +881,7 @@ of the repositories listed at
  + read_raw_ref(): don't get confused by an empty directory
  + commit_ref(): if there is an empty dir in the way, delete it
  + t1404: demonstrate a bug resolving references
- (this branch is used by mh/ref-iterators.)
+ (this branch is used by mh/ref-iterators, mh/ref-store and mh/update-ref-errors.)
 
  Further preparatory work on the refs API before the pluggable
  backend series can land.
