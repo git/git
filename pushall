@@ -45,5 +45,6 @@ case "$#,$*" in
 		printf "%s: " "$topic"
 		( cd ../git-$topic.git && git push "$@") || exit
 	done
+	test "$1" = '-n' || ( cd ../git-htmldocs.git && git push gh-pages )
 	;;
 esac
