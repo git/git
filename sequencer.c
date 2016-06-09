@@ -131,6 +131,8 @@ static void remove_sequencer_state(const struct replay_opts *opts)
 		free(opts->owned[i]);
 	free(opts->owned);
 
+	free(opts->xopts);
+
 	strbuf_addf(&dir, "%s", get_dir(opts));
 	remove_dir_recursively(&dir, 0);
 	strbuf_release(&dir);
@@ -815,13 +817,18 @@ static int populate_opts_cb(const char *key, const char *value, void *data)
 		opts->allow_ff = git_config_bool_or_int(key, value, &error_flag);
 	else if (!strcmp(key, "options.mainline"))
 		opts->mainline = git_config_int(key, value);
-	else if (!strcmp(key, "options.strategy"))
+	else if (!strcmp(key, "options.strategy")) {
 		git_config_string(&opts->strategy, key, value);
-	else if (!strcmp(key, "options.gpg-sign"))
+		sequencer_entrust(opts, (char *) opts->strategy);
+	}
+	else if (!strcmp(key, "options.gpg-sign")) {
 		git_config_string(&opts->gpg_sign, key, value);
+		sequencer_entrust(opts, (char *) opts->gpg_sign);
+	}
 	else if (!strcmp(key, "options.strategy-option")) {
 		ALLOC_GROW(opts->xopts, opts->xopts_nr + 1, opts->xopts_alloc);
-		opts->xopts[opts->xopts_nr++] = xstrdup(value);
+		opts->xopts[opts->xopts_nr++] =
+			sequencer_entrust(opts, xstrdup(value));
 	} else
 		return error(_("Invalid key: %s"), key);
 
