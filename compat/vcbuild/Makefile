@@ -106,13 +106,14 @@ openssl:	insdir
 ZLIB_VER=1.2.8.8
 ZLIB_ROOT=$(PKGDIR)/zlib.v140.windesktop.msvcstl.dyn.rt-dyn.$(ZLIB_VER)
 ZLIB_INC=$(ZLIB_ROOT)/build/native/include
-ZLIB_LIB=$(ZLIB_ROOT)/lib/native/v140/windesktop/msvcstl/dyn/rt-dyn/x64/Release
+ZLIB_LIB=$(ZLIB_ROOT)/lib/native/v140/windesktop/msvcstl/dyn/rt-dyn/x64/RelWithDebInfo
 
 zlib:	insdir
 	[ -d $(INST_INC)/zlib ] || mkdir $(INST_INC)/zlib
 	cp -r $(ZLIB_INC)/*     $(INST_INC)/zlib
 	cp -r $(ZLIB_LIB)/*.lib $(INST_LIB)/
 	cp -r $(ZLIB_LIB)/*.dll $(INST_BIN)/
+	cp -r $(ZLIB_LIB)/*.pdb $(INST_BIN)/
 
 ##################################################################
 clean:
