@@ -22,9 +22,12 @@ while (@ARGV) {
 		my $file_out = shift @ARGV;
 		if ("$file_out" =~ /exe$/) {
 			$is_linking = 1;
+			# Create foo.exe and foo.pdb
 			push(@args, "-OUT:$file_out");
 		} else {
+			# Create foo.o and foo.o.pdb
 			push(@args, "-Fo$file_out");
+			push(@args, "-Fd$file_out.pdb");
 		}
 	} elsif ("$arg" eq "-lz") {
 		push(@args, "zlib.lib");
@@ -49,12 +52,10 @@ while (@ARGV) {
 }
 if ($is_linking) {
 	push(@args, @lflags);
-	# force PDB to be created.
-	push(@args, "-debug");
 	unshift(@args, "link.exe");
 } else {
 	unshift(@args, "cl.exe");
 	push(@args, @cflags);
 }
-#printf("**** @args\n");
+printf("**** @args\n\n\n");
 exit (system(@args) != 0);
