@@ -246,7 +246,8 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			 * its new end.
 			 */
 			if (xche->next) {
-				long l = xche->next->i1;
+				long l = XDL_MIN(xche->next->i1,
+						 xe->xdf1.nrec - 1);
 				if (l <= e1 ||
 				    get_func_line(xe, xecfg, NULL, l, e1) < 0) {
 					xche = xche->next;

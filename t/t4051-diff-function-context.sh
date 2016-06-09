@@ -64,7 +64,13 @@ test_expect_success 'setup' '
 
 	grep -v "Begin of second part" <file.c >file.c.new &&
 	mv file.c.new file.c &&
-	commit_and_tag long_common_tail file.c
+	commit_and_tag long_common_tail file.c &&
+
+	git checkout initial &&
+	grep -v "delete me from hello" <file.c >file.c.new &&
+	mv file.c.new file.c &&
+	cat "$dir/appended1.c" >>file.c &&
+	commit_and_tag changed_hello_appended file.c
 '
 
 check_diff changed_hello 'changed function'
@@ -155,6 +161,22 @@ test_expect_success ' context does not include other functions' '
 
 test_expect_success ' context does not include preceding empty lines' '
 	test "$(first_context_line <long_common_tail.diff.diff)" != " "
+'
+
+check_diff changed_hello_appended 'changed function plus appended function'
+
+test_expect_success ' context includes begin' '
+	grep "^ .*Begin of hello" changed_hello_appended.diff &&
+	grep "^[+].*Begin of first part" changed_hello_appended.diff
+'
+
+test_expect_success ' context includes end' '
+	grep "^ .*End of hello" changed_hello_appended.diff &&
+	grep "^[+].*End of first part" changed_hello_appended.diff
+'
+
+test_expect_success ' context does not include other functions' '
+	test $(grep -c "^[ +-].*Begin" changed_hello_appended.diff) -le 2
 '
 
 test_done
