@@ -416,12 +416,16 @@ ifeq ($(uname_S),Windows)
 	# Optionally enable memory leak reporting.
 	# BASIC_CLFAGS += -DUSE_MSVC_CRTDBG
 	BASIC_CFLAGS += -DPROTECT_NTFS_DEFAULT=1
+	# Always give "-Zi" to the compiler and "-debug" to linker (even in
+	# release mode) to force a PDB to be generated (like RelWithDebInfo).
+	BASIC_CFLAGS += -Zi
+	BASIC_LDFLAGS += -debug
 ifndef DEBUG
-	BASIC_CFLAGS += -GL -Os -MD
-	BASIC_LDFLAGS += -LTCG
+	BASIC_CFLAGS += -GL -Gy -Os -Oy- -MD -DNDEBUG
+	BASIC_LDFLAGS += -release -LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO /DEBUGTYPE:CV,FIXUP
 	AR += -LTCG
 else
-	BASIC_CFLAGS += -Zi -MDd -DDEBUG -D_DEBUG
+	BASIC_CFLAGS += -MDd -DDEBUG -D_DEBUG
 endif
 	X = .exe
 
