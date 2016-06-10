@@ -170,6 +170,11 @@ diff.tool::
 
 include::mergetools-diff.txt[]
 
+diff.compactionHeuristic::
+	Set this option to `true` to enable an experimental heuristic that
+	shifts the hunk boundary in an attempt to make the resulting
+	patch easier to read.
+
 diff.algorithm::
 	Choose a diff algorithm.  The variants are as follows:
 +
