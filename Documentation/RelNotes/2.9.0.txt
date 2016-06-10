@@ -118,9 +118,11 @@ UI, Workflows & Features
  * HTTP transport clients learned to throw extra HTTP headers at the
    server, specified via http.extraHeader configuration variable.
 
- * Patch output from "git diff" and friends has been tweaked to be
-   more readable by using a blank line as a strong hint that the
-   contents before and after it belong to logically separate units.
+ * The "--compaction-heuristic" option to "git diff" family of
+   commands enables a heuristic to make the patch output more readable
+   by using a blank line as a strong hint that the contents before and
+   after it belong to logically separate units.  It is still
+   experimental.
 
  * A new configuration variable core.hooksPath allows customizing
    where the hook directory is.
@@ -506,3 +508,5 @@ notes for details).
    (merge cd82b7a pa/cherry-pick-doc-typo later to maint).
    (merge 2bb73ae rs/patch-id-use-skip-prefix later to maint).
    (merge aa20cbc rs/apply-name-terminate later to maint).
+   (merge fe17fc0 jc/t2300-setup later to maint).
+   (merge e256eec jk/shell-portability later to maint).
