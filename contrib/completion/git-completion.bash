@@ -803,6 +803,50 @@ __git_find_on_cmdline ()
 	done
 }
 
+# Echo the value of an option set on the command line or config
+#
+# $1: short option name
+# $2: long option name including =
+# $3: list of possible values
+# $4: config string (optional)
+#
+# example:
+# result="$(__git_get_option_value "-d" "--do-something=" \
+#     "yes no" "core.doSomething")"
+#
+# result is then either empty (no option set) or "yes" or "no"
+#
+# __git_get_option_value requires 3 arguments
+__git_get_option_value ()
+{
+	local c short_opt long_opt val
+	local result= values config_key word
+
+	short_opt="$1"
+	long_opt="$2"
+	values="$3"
+	config_key="$4"
+
+	((c = $cword - 1))
+	while [ $c -ge 0 ]; do
+		word="${words[c]}"
+		for val in $values; do
+			if [ "$short_opt$val" = "$word" ] ||
+			   [ "$long_opt$val"  = "$word" ]; then
+				result="$val"
+				break 2
+			fi
+		done
+		((c--))
+	done
+
+	if [ -n "$config_key" ] && [ -z "$result" ]; then
+		result="$(git --git-dir="$(__gitdir)" config "$config_key")"
+	fi
+
+	echo "$result"
+}
+
 __git_has_doubledash ()
 {
 	local c=1
