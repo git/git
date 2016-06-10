@@ -3,6 +3,16 @@
 test_description='Test git update-ref error handling'
 . ./test-lib.sh
 
+# Create some references, perhaps run pack-refs --all, then try to
+# create some more references. Ensure that the second creation fails
+# with the correct error message.
+# Usage: test_update_rejected <before> <pack> <create> <error>
+#   <before> is a ws-separated list of refs to create before the test
+#   <pack> (true or false) tells whether to pack the refs before the test
+#   <create> is a list of variables to attempt creating
+#   <error> is a string to look for in the stderr of update-ref.
+# All references are created in the namespace specified by the current
+# value of $prefix.
 test_update_rejected () {
 	before="$1" &&
 	pack="$2" &&
