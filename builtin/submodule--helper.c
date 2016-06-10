@@ -592,10 +592,14 @@ struct submodule_update_clone {
 
 	/* If we want to stop as fast as possible and return an error */
 	unsigned quickstop : 1;
+
+	/* failed clones to be retried again */
+	const struct cache_entry **failed_clones;
+	int failed_clones_nr, failed_clones_alloc;
 };
 #define SUBMODULE_UPDATE_CLONE_INIT {0, MODULE_LIST_INIT, 0, \
 	SUBMODULE_UPDATE_STRATEGY_INIT, 0, -1, NULL, NULL, NULL, NULL, \
-	STRING_LIST_INIT_DUP, 0}
+	STRING_LIST_INIT_DUP, 0, NULL, 0, 0}
 
 
 static void next_submodule_warn_missing(struct submodule_update_clone *suc,
@@ -720,23 +724,47 @@ cleanup:
 static int update_clone_get_next_task(struct child_process *child,
 				      struct strbuf *err,
 				      void *suc_cb,
-				      void **void_task_cb)
+				      void **idx_task_cb)
 {
 	struct submodule_update_clone *suc = suc_cb;
+	const struct cache_entry *ce;
+	int index;
 
 	for (; suc->current < suc->list.nr; suc->current++) {
-		const struct cache_entry *ce = suc->list.entries[suc->current];
+		ce = suc->list.entries[suc->current];
 		if (prepare_to_clone_next_submodule(ce, child, suc, err)) {
+			int *p = xmalloc(sizeof(*p));
+			*p = suc->current;
+			*idx_task_cb = p;
 			suc->current++;
 			return 1;
 		}
 	}
+
+	/*
+	 * The loop above tried cloning each submodule once, now try the
+	 * stragglers again, which we can imagine as an extension of the
+	 * entry list.
+	 */
+	index = suc->current - suc->list.nr;
+	if (index < suc->failed_clones_nr) {
+		int *p;
+		ce = suc->failed_clones[index];
+		if (!prepare_to_clone_next_submodule(ce, child, suc, err))
+			die("BUG: ce was a submodule before?");
+		p = xmalloc(sizeof(*p));
+		*p = suc->current;
+		*idx_task_cb = p;
+		suc->current ++;
+		return 1;
+	}
+
 	return 0;
 }
 
 static int update_clone_start_failure(struct strbuf *err,
 				      void *suc_cb,
-				      void *void_task_cb)
+				      void *idx_task_cb)
 {
 	struct submodule_update_clone *suc = suc_cb;
 	suc->quickstop = 1;
@@ -746,15 +774,39 @@ static int update_clone_start_failure(struct strbuf *err,
 static int update_clone_task_finished(int result,
 				      struct strbuf *err,
 				      void *suc_cb,
-				      void *void_task_cb)
+				      void *idx_task_cb)
 {
+	const struct cache_entry *ce;
 	struct submodule_update_clone *suc = suc_cb;
+
+	int *idxP = *(int**)idx_task_cb;
+	int idx = *idxP;
+	free(idxP);
 
 	if (!result)
 		return 0;
 
-	suc->quickstop = 1;
-	return 1;
+	if (idx < suc->list.nr) {
+		ce  = suc->list.entries[idx];
+		strbuf_addf(err, _("Failed to clone '%s'. Retry scheduled"),
+			    ce->name);
+		strbuf_addch(err, '\n');
+		ALLOC_GROW(suc->failed_clones,
+			   suc->failed_clones_nr + 1,
+			   suc->failed_clones_alloc);
+		suc->failed_clones[suc->failed_clones_nr++] = ce;
+		return 0;
+	} else {
+		idx = suc->current - suc->list.nr;
+		ce  = suc->failed_clones[idx];
+		strbuf_addf(err, _("Failed to clone '%s' a second time, aborting"),
+			    ce->name);
+		strbuf_addch(err, '\n');
+		suc->quickstop = 1;
+		return 1;
+	}
+
+	return 0;
 }
 
 static int update_clone(int argc, const char **argv, const char *prefix)
