@@ -558,7 +558,6 @@ check_prot_path () {
 }
 
 check_prot_host_port_path () {
-	local diagport
 	case "$2" in
 		*ssh*)
 		pp=ssh

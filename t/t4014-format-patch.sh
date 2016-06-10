@@ -1072,7 +1072,7 @@ test_expect_success '--from omits redundant in-body header' '
 '
 
 test_expect_success 'in-body headers trigger content encoding' '
-	GIT_AUTHOR_NAME="éxötìc" test_commit exotic &&
+	test_env GIT_AUTHOR_NAME="éxötìc" test_commit exotic &&
 	test_when_finished "git reset --hard HEAD^" &&
 	git format-patch -1 --stdout --from >patch &&
 	cat >expect <<-\EOF &&

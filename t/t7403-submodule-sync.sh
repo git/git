@@ -62,13 +62,13 @@ test_expect_success 'change submodule' '
 '
 
 reset_submodule_urls () {
-	local root
-	root=$(pwd) &&
 	(
+		root=$(pwd) &&
 		cd super-clone/submodule &&
 		git config remote.origin.url "$root/submodule"
 	) &&
 	(
+		root=$(pwd) &&
 		cd super-clone/submodule/sub-submodule &&
 		git config remote.origin.url "$root/submodule"
 	)
