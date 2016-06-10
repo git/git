@@ -25,7 +25,7 @@
 #endif
 
 static int diff_detect_rename_default;
-static int diff_compaction_heuristic = 1;
+static int diff_compaction_heuristic; /* experimental */
 static int diff_rename_limit_default = 400;
 static int diff_suppress_blank_empty;
 static int diff_use_color_default = -1;
