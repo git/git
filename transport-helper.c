@@ -260,6 +260,28 @@ static const char *boolean_options[] = {
 	TRANS_OPT_FOLLOWTAGS,
 	};
 
+static int strbuf_set_helper_option(struct helper_data *data,
+				    struct strbuf *buf)
+{
+	int ret;
+
+	sendline(data, buf);
+	if (recvline(data, buf))
+		exit(128);
+
+	if (!strcmp(buf->buf, "ok"))
+		ret = 0;
+	else if (starts_with(buf->buf, "error"))
+		ret = -1;
+	else if (!strcmp(buf->buf, "unsupported"))
+		ret = 1;
+	else {
+		warning("%s unexpectedly said: '%s'", data->name, buf->buf);
+		ret = 1;
+	}
+	return ret;
+}
+
 static int set_helper_option(struct transport *transport,
 			  const char *name, const char *value)
 {
@@ -291,20 +313,7 @@ static int set_helper_option(struct transport *transport,
 		quote_c_style(value, &buf, NULL, 0);
 	strbuf_addch(&buf, '\n');
 
-	sendline(data, &buf);
-	if (recvline(data, &buf))
-		exit(128);
-
-	if (!strcmp(buf.buf, "ok"))
-		ret = 0;
-	else if (starts_with(buf.buf, "error")) {
-		ret = -1;
-	} else if (!strcmp(buf.buf, "unsupported"))
-		ret = 1;
-	else {
-		warning("%s unexpectedly said: '%s'", data->name, buf.buf);
-		ret = 1;
-	}
+	ret = strbuf_set_helper_option(data, &buf);
 	strbuf_release(&buf);
 	return ret;
 }
