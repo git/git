@@ -452,21 +452,24 @@ static int is_our_ref(struct object *o)
 	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
 
-static int has_unreachable(struct object_array *src)
+/*
+ * on successful case, it's up to the caller to close cmd->out
+ */
+static int do_reachable_revlist(struct child_process *cmd,
+				struct object_array *src)
 {
 	static const char *argv[] = {
 		"rev-list", "--stdin", NULL,
 	};
-	static struct child_process cmd = CHILD_PROCESS_INIT;
 	struct object *o;
 	char namebuf[42]; /* ^ + SHA-1 + LF */
 	int i;
 
-	cmd.argv = argv;
-	cmd.git_cmd = 1;
-	cmd.no_stderr = 1;
-	cmd.in = -1;
-	cmd.out = -1;
+	cmd->argv = argv;
+	cmd->git_cmd = 1;
+	cmd->no_stderr = 1;
+	cmd->in = -1;
+	cmd->out = -1;
 
 	/*
 	 * If the next rev-list --stdin encounters an unknown commit,
@@ -475,7 +478,7 @@ static int has_unreachable(struct object_array *src)
 	 */
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	if (start_command(&cmd))
+	if (start_command(cmd))
 		goto error;
 
 	namebuf[0] = '^';
@@ -487,7 +490,7 @@ static int has_unreachable(struct object_array *src)
 		if (!is_our_ref(o))
 			continue;
 		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd.in, namebuf, 42) < 0)
+		if (write_in_full(cmd->in, namebuf, 42) < 0)
 			goto error;
 	}
 	namebuf[40] = '\n';
@@ -496,17 +499,39 @@ static int has_unreachable(struct object_array *src)
 		if (is_our_ref(o))
 			continue;
 		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd.in, namebuf, 41) < 0)
+		if (write_in_full(cmd->in, namebuf, 41) < 0)
 			goto error;
 	}
-	close(cmd.in);
-	cmd.in = -1;
+	close(cmd->in);
+	cmd->in = -1;
+	sigchain_pop(SIGPIPE);
+
+	return 0;
+
+error:
+	sigchain_pop(SIGPIPE);
+
+	if (cmd->in >= 0)
+		close(cmd->in);
+	if (cmd->out >= 0)
+		close(cmd->out);
+	return -1;
+}
+
+static int has_unreachable(struct object_array *src)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	char buf[1];
+	int i;
+
+	if (do_reachable_revlist(&cmd, src) < 0)
+		return 1;
 
 	/*
 	 * The commits out of the rev-list are not ancestors of
 	 * our ref.
 	 */
-	i = read_in_full(cmd.out, namebuf, 1);
+	i = read_in_full(cmd.out, buf, 1);
 	if (i)
 		goto error;
 	close(cmd.out);
@@ -520,16 +545,11 @@ static int has_unreachable(struct object_array *src)
 	if (finish_command(&cmd))
 		goto error;
 
-	sigchain_pop(SIGPIPE);
-
 	/* All the non-tip ones are ancestors of what we advertised */
 	return 0;
 
 error:
 	sigchain_pop(SIGPIPE);
-
-	if (cmd.in >= 0)
-		close(cmd.in);
 	if (cmd.out >= 0)
 		close(cmd.out);
 	return 1;
