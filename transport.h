@@ -5,6 +5,8 @@
 #include "run-command.h"
 #include "remote.h"
 
+struct string_list;
+
 struct git_transport_options {
 	unsigned thin : 1;
 	unsigned keep : 1;
@@ -14,6 +16,7 @@ struct git_transport_options {
 	unsigned update_shallow : 1;
 	int depth;
 	const char *deepen_since;
+	const struct string_list *deepen_not;
 	const char *uploadpack;
 	const char *receivepack;
 	struct push_cas_option *cas;
@@ -174,6 +177,9 @@ int transport_restrict_protocols(void);
 
 /* Limit the depth of the fetch based on time if not null */
 #define TRANS_OPT_DEEPEN_SINCE "deepen-since"
+
+/* Limit the depth of the fetch based on revs if not null */
+#define TRANS_OPT_DEEPEN_NOT "deepen-not"
 
 /* Aggressively fetch annotated tags if possible */
 #define TRANS_OPT_FOLLOWTAGS "followtags"

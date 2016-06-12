@@ -21,6 +21,7 @@ struct options {
 	int verbosity;
 	unsigned long depth;
 	char *deepen_since;
+	struct string_list deepen_not;
 	unsigned progress : 1,
 		check_self_contained_and_connected : 1,
 		cloning : 1,
@@ -63,6 +64,10 @@ static int set_option(const char *name, const char *value)
 	}
 	else if (!strcmp(name, "deepen-since")) {
 		options.deepen_since = xstrdup(value);
+		return 0;
+	}
+	else if (!strcmp(name, "deepen-not")) {
+		string_list_append(&options.deepen_not, value);
 		return 0;
 	}
 	else if (!strcmp(name, "followtags")) {
@@ -753,6 +758,9 @@ static int fetch_git(struct discovery *heads,
 		argv_array_pushf(&args, "--depth=%lu", options.depth);
 	if (options.deepen_since)
 		argv_array_pushf(&args, "--shallow-since=%s", options.deepen_since);
+	for (i = 0; i < options.deepen_not.nr; i++)
+		argv_array_pushf(&args, "--shallow-exclude=%s",
+				 options.deepen_not.items[i].string);
 	argv_array_push(&args, url.buf);
 
 	for (i = 0; i < nr_heads; i++) {
@@ -973,6 +981,7 @@ int main(int argc, const char **argv)
 	options.verbosity = 1;
 	options.progress = !!isatty(2);
 	options.thin = 1;
+	string_list_init(&options.deepen_not, 1);
 
 	remote = remote_get(argv[1]);
 

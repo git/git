@@ -154,6 +154,9 @@ static int set_git_option(struct git_transport_options *opts,
 	} else if (!strcmp(name, TRANS_OPT_DEEPEN_SINCE)) {
 		opts->deepen_since = value;
 		return 0;
+	} else if (!strcmp(name, TRANS_OPT_DEEPEN_NOT)) {
+		opts->deepen_not = (const struct string_list *)value;
+		return 0;
 	}
 	return 1;
 }
@@ -209,6 +212,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.no_progress = !transport->progress;
 	args.depth = data->options.depth;
 	args.deepen_since = data->options.deepen_since;
+	args.deepen_not = data->options.deepen_not;
 	args.check_self_contained_and_connected =
 		data->options.check_self_contained_and_connected;
 	args.cloning = transport->cloning;
