@@ -645,6 +645,7 @@ static void deepen_by_rev_list(int ac, const char **av,
 static void receive_needs(void)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
+	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 	int depth = 0;
 	int has_non_tip = 0;
 	unsigned long deepen_since = 0;
@@ -692,6 +693,16 @@ static void receive_needs(void)
 			    /* revisions.c's max_age -1 is special */
 			    deepen_since == -1)
 				die("Invalid deepen-since: %s", line);
+			deepen_rev_list = 1;
+			continue;
+		}
+		if (skip_prefix(line, "deepen-not ", &arg)) {
+			char *ref = NULL;
+			unsigned char sha1[20];
+			if (expand_ref(arg, strlen(arg), sha1, &ref) != 1)
+				die("git upload-pack: ambiguous deepen-not: %s", line);
+			string_list_append(&deepen_not, ref);
+			free(ref);
 			deepen_rev_list = 1;
 			continue;
 		}
@@ -749,7 +760,7 @@ static void receive_needs(void)
 	if (depth == 0 && !deepen_rev_list && shallows.nr == 0)
 		return;
 	if (depth > 0 && deepen_rev_list)
-		die("git upload-pack: deepen and deepen-since cannot be used together");
+		die("git upload-pack: deepen and deepen-since (or deepen-not) cannot be used together");
 	if (depth > 0)
 		deepen(depth, &shallows);
 	else if (deepen_rev_list) {
@@ -759,6 +770,14 @@ static void receive_needs(void)
 		argv_array_push(&av, "rev-list");
 		if (deepen_since)
 			argv_array_pushf(&av, "--max-age=%lu", deepen_since);
+		if (deepen_not.nr) {
+			argv_array_push(&av, "--not");
+			for (i = 0; i < deepen_not.nr; i++) {
+				struct string_list_item *s = deepen_not.items + i;
+				argv_array_push(&av, s->string);
+			}
+			argv_array_push(&av, "--not");
+		}
 		for (i = 0; i < want_obj.nr; i++) {
 			struct object *o = want_obj.objects[i].item;
 			argv_array_push(&av, oid_to_hex(&o->oid));
@@ -814,7 +833,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		    int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow deepen-since no-progress"
+		" side-band-64k ofs-delta shallow deepen-since deepen-not no-progress"
 		" include-tag multi_ack_detailed";
 	const char *refname_nons = strip_namespace(refname);
 	struct object_id peeled;
