@@ -451,7 +451,7 @@ static int is_our_ref(struct object *o)
 	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
 
-static void check_non_tip(void)
+static int has_unreachable(struct object_array *src)
 {
 	static const char *argv[] = {
 		"rev-list", "--stdin", NULL,
@@ -460,14 +460,6 @@ static void check_non_tip(void)
 	struct object *o;
 	char namebuf[42]; /* ^ + SHA-1 + LF */
 	int i;
-
-	/*
-	 * In the normal in-process case without
-	 * uploadpack.allowReachableSHA1InWant,
-	 * non-tip requests can never happen.
-	 */
-	if (!stateless_rpc && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
-		goto error;
 
 	cmd.argv = argv;
 	cmd.git_cmd = 1;
@@ -498,8 +490,8 @@ static void check_non_tip(void)
 			goto error;
 	}
 	namebuf[40] = '\n';
-	for (i = 0; i < want_obj.nr; i++) {
-		o = want_obj.objects[i].item;
+	for (i = 0; i < src->nr; i++) {
+		o = src->objects[i].item;
 		if (is_our_ref(o))
 			continue;
 		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
@@ -530,7 +522,7 @@ static void check_non_tip(void)
 	sigchain_pop(SIGPIPE);
 
 	/* All the non-tip ones are ancestors of what we advertised */
-	return;
+	return 0;
 
 error:
 	sigchain_pop(SIGPIPE);
@@ -539,10 +531,28 @@ error:
 		close(cmd.in);
 	if (cmd.out >= 0)
 		close(cmd.out);
+	return 1;
+}
 
+static void check_non_tip(void)
+{
+	int i;
+
+	/*
+	 * In the normal in-process case without
+	 * uploadpack.allowReachableSHA1InWant,
+	 * non-tip requests can never happen.
+	 */
+	if (!stateless_rpc && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
+		goto error;
+	if (!has_unreachable(&want_obj))
+		/* All the non-tip ones are ancestors of what we advertised */
+		return;
+
+error:
 	/* Pick one of them (we know there at least is one) */
 	for (i = 0; i < want_obj.nr; i++) {
-		o = want_obj.objects[i].item;
+		struct object *o = want_obj.objects[i].item;
 		if (!is_our_ref(o))
 			die("git upload-pack: not our ref %s",
 			    oid_to_hex(&o->oid));
