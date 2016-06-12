@@ -14,6 +14,7 @@
 #include "sigchain.h"
 #include "version.h"
 #include "string-list.h"
+#include "argv-array.h"
 
 static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<n>] <dir>";
 
@@ -629,11 +630,25 @@ static void deepen(int depth, const struct object_array *shallows)
 	packet_flush(1);
 }
 
+static void deepen_by_rev_list(int ac, const char **av,
+			       struct object_array *shallows)
+{
+	struct commit_list *result;
+
+	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
+	send_shallow(result);
+	free_commit_list(result);
+	send_unshallow(shallows);
+	packet_flush(1);
+}
+
 static void receive_needs(void)
 {
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	int depth = 0;
 	int has_non_tip = 0;
+	unsigned long deepen_since = 0;
+	int deepen_rev_list = 0;
 
 	shallow_nr = 0;
 	for (;;) {
@@ -668,6 +683,16 @@ static void receive_needs(void)
 			depth = strtol(arg, &end, 0);
 			if (!end || *end || depth <= 0)
 				die("Invalid deepen: %s", line);
+			continue;
+		}
+		if (skip_prefix(line, "deepen-since ", &arg)) {
+			char *end = NULL;
+			deepen_since = strtoul(arg, &end, 0);
+			if (!end || *end || !deepen_since ||
+			    /* revisions.c's max_age -1 is special */
+			    deepen_since == -1)
+				die("Invalid deepen-since: %s", line);
+			deepen_rev_list = 1;
 			continue;
 		}
 		if (!skip_prefix(line, "want ", &arg) ||
@@ -721,10 +746,26 @@ static void receive_needs(void)
 	if (!use_sideband && daemon_mode)
 		no_progress = 1;
 
-	if (depth == 0 && shallows.nr == 0)
+	if (depth == 0 && !deepen_rev_list && shallows.nr == 0)
 		return;
+	if (depth > 0 && deepen_rev_list)
+		die("git upload-pack: deepen and deepen-since cannot be used together");
 	if (depth > 0)
 		deepen(depth, &shallows);
+	else if (deepen_rev_list) {
+		struct argv_array av = ARGV_ARRAY_INIT;
+		int i;
+
+		argv_array_push(&av, "rev-list");
+		if (deepen_since)
+			argv_array_pushf(&av, "--max-age=%lu", deepen_since);
+		for (i = 0; i < want_obj.nr; i++) {
+			struct object *o = want_obj.objects[i].item;
+			argv_array_push(&av, oid_to_hex(&o->oid));
+		}
+		deepen_by_rev_list(av.argc, av.argv, &shallows);
+		argv_array_clear(&av);
+	}
 	else
 		if (shallows.nr > 0) {
 			int i;
@@ -773,7 +814,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		    int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow no-progress"
+		" side-band-64k ofs-delta shallow deepen-since no-progress"
 		" include-tag multi_ack_detailed";
 	const char *refname_nons = strip_namespace(refname);
 	struct object_id peeled;
