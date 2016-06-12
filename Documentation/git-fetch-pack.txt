@@ -87,6 +87,10 @@ be in a separate packet, and the list must end with a flush packet.
 	'git-upload-pack' treats the special depth 2147483647 as
 	infinite even if there is an ancestor-chain that long.
 
+--shallow-since=<date>::
+	Deepen or shorten the history of a shallow'repository to
+	include all reachable commits after <date>.
+
 --no-progress::
 	Do not show the progress.
 

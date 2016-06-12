@@ -104,6 +104,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			args.depth = strtol(arg, NULL, 0);
 			continue;
 		}
+		if (skip_prefix(arg, "--shallow-since=", &arg)) {
+			args.deepen_since = xstrdup(arg);
+			continue;
+		}
 		if (!strcmp("--no-progress", arg)) {
 			args.no_progress = 1;
 			continue;
