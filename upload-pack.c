@@ -552,20 +552,10 @@ static void send_shallow(struct commit_list *result)
 	}
 }
 
-static void deepen(int depth, const struct object_array *shallows)
+static void send_unshallow(const struct object_array *shallows)
 {
-	struct commit_list *result = NULL;
 	int i;
-	if (depth == INFINITE_DEPTH && !is_repository_shallow())
-		for (i = 0; i < shallows->nr; i++) {
-			struct object *object = shallows->objects[i].item;
-			object->flags |= NOT_SHALLOW;
-		}
-	else
-		result = get_shallow_commits(&want_obj, depth,
-					     SHALLOW, NOT_SHALLOW);
-	send_shallow(result);
-	free_commit_list(result);
+
 	for (i = 0; i < shallows->nr; i++) {
 		struct object *object = shallows->objects[i].item;
 		if (object->flags & NOT_SHALLOW) {
@@ -573,7 +563,13 @@ static void deepen(int depth, const struct object_array *shallows)
 			packet_write(1, "unshallow %s",
 				     oid_to_hex(&object->oid));
 			object->flags &= ~CLIENT_SHALLOW;
-			/* make sure the real parents are parsed */
+			/*
+			 * We want to _register_ "object" as shallow, but we
+			 * also need to traverse object's parents to deepen a
+			 * shallow clone. Unregister it for now so we can
+			 * parse and add the parents to the want list, then
+			 * re-register it.
+			 */
 			unregister_shallow(object->oid.hash);
 			object->parsed = 0;
 			parse_commit_or_die((struct commit *)object);
@@ -588,6 +584,27 @@ static void deepen(int depth, const struct object_array *shallows)
 		/* make sure commit traversal conforms to client */
 		register_shallow(object->oid.hash);
 	}
+}
+
+static void deepen(int depth, const struct object_array *shallows)
+{
+	if (depth == INFINITE_DEPTH && !is_repository_shallow()) {
+		int i;
+
+		for (i = 0; i < shallows->nr; i++) {
+			struct object *object = shallows->objects[i].item;
+			object->flags |= NOT_SHALLOW;
+		}
+	} else {
+		struct commit_list *result;
+
+		result = get_shallow_commits(&want_obj, depth,
+					     SHALLOW, NOT_SHALLOW);
+		send_shallow(result);
+		free_commit_list(result);
+	}
+
+	send_unshallow(shallows);
 	packet_flush(1);
 }
 
