@@ -645,9 +645,9 @@ static void receive_needs(void)
 			continue;
 		}
 		if (skip_prefix(line, "deepen ", &arg)) {
-			char *end;
+			char *end = NULL;
 			depth = strtol(arg, &end, 0);
-			if (end == arg || depth <= 0)
+			if (!end || *end || depth <= 0)
 				die("Invalid deepen: %s", line);
 			continue;
 		}
