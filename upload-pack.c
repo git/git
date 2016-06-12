@@ -475,15 +475,15 @@ static void check_non_tip(void)
 	cmd.in = -1;
 	cmd.out = -1;
 
-	if (start_command(&cmd))
-		goto error;
-
 	/*
-	 * If rev-list --stdin encounters an unknown commit, it
-	 * terminates, which will cause SIGPIPE in the write loop
+	 * If the next rev-list --stdin encounters an unknown commit,
+	 * it terminates, which will cause SIGPIPE in the write loop
 	 * below.
 	 */
 	sigchain_push(SIGPIPE, SIG_IGN);
+
+	if (start_command(&cmd))
+		goto error;
 
 	namebuf[0] = '^';
 	namebuf[41] = '\n';
@@ -507,8 +507,7 @@ static void check_non_tip(void)
 			goto error;
 	}
 	close(cmd.in);
-
-	sigchain_pop(SIGPIPE);
+	cmd.in = -1;
 
 	/*
 	 * The commits out of the rev-list are not ancestors of
@@ -518,6 +517,7 @@ static void check_non_tip(void)
 	if (i)
 		goto error;
 	close(cmd.out);
+	cmd.out = -1;
 
 	/*
 	 * rev-list may have died by encountering a bad commit
@@ -527,10 +527,19 @@ static void check_non_tip(void)
 	if (finish_command(&cmd))
 		goto error;
 
+	sigchain_pop(SIGPIPE);
+
 	/* All the non-tip ones are ancestors of what we advertised */
 	return;
 
 error:
+	sigchain_pop(SIGPIPE);
+
+	if (cmd.in >= 0)
+		close(cmd.in);
+	if (cmd.out >= 0)
+		close(cmd.out);
+
 	/* Pick one of them (we know there at least is one) */
 	for (i = 0; i < want_obj.nr; i++) {
 		o = want_obj.objects[i].item;
