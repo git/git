@@ -96,6 +96,11 @@ be in a separate packet, and the list must end with a flush packet.
 	exclude commits reachable from a specified remote branch or tag.
 	This option can be specified multiple times.
 
+--deepen-relative::
+	Argument --depth specifies the number of commits from the
+	current shallow boundary instead of from the tip of each
+	remote branch history.
+
 --no-progress::
 	Do not show the progress.
 

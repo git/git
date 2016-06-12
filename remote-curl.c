@@ -30,7 +30,8 @@ struct options {
 		dry_run : 1,
 		thin : 1,
 		/* One of the SEND_PACK_PUSH_CERT_* constants. */
-		push_cert : 2;
+		push_cert : 2,
+		deepen_relative : 1;
 };
 static struct options options;
 static struct string_list cas_options = STRING_LIST_INIT_DUP;
@@ -68,6 +69,15 @@ static int set_option(const char *name, const char *value)
 	}
 	else if (!strcmp(name, "deepen-not")) {
 		string_list_append(&options.deepen_not, value);
+		return 0;
+	}
+	else if (!strcmp(name, "deepen-relative")) {
+		if (!strcmp(value, "true"))
+			options.deepen_relative = 1;
+		else if (!strcmp(value, "false"))
+			options.deepen_relative = 0;
+		else
+			return -1;
 		return 0;
 	}
 	else if (!strcmp(name, "followtags")) {
@@ -761,6 +771,8 @@ static int fetch_git(struct discovery *heads,
 	for (i = 0; i < options.deepen_not.nr; i++)
 		argv_array_pushf(&args, "--shallow-exclude=%s",
 				 options.deepen_not.items[i].string);
+	if (options.deepen_relative && options.depth)
+		argv_array_push(&args, "--deepen-relative");
 	argv_array_push(&args, url.buf);
 
 	for (i = 0; i < nr_heads; i++) {

@@ -113,6 +113,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			string_list_append(&deepen_not, arg);
 			continue;
 		}
+		if (!strcmp(arg, "--deepen-relative")) {
+			args.deepen_relative = 1;
+			continue;
+		}
 		if (!strcmp("--no-progress", arg)) {
 			args.no_progress = 1;
 			continue;

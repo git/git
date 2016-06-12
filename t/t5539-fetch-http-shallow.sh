@@ -120,5 +120,31 @@ test_expect_success 'fetch exclude tag one' '
 	test_cmp expected actual
 '
 
+test_expect_success 'fetching deepen' '
+	test_create_repo shallow-deepen &&
+	(
+	cd shallow-deepen &&
+	test_commit one &&
+	test_commit two &&
+	test_commit three &&
+	mv .git "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.git" &&
+	git clone --depth 1 $HTTPD_URL/smart/shallow-deepen.git deepen &&
+	mv "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.git" .git &&
+	test_commit four &&
+	git -C deepen log --pretty=tformat:%s master >actual &&
+	echo three >expected &&
+	test_cmp expected actual &&
+	mv .git "$HTTPD_DOCUMENT_ROOT_PATH/shallow-deepen.git" &&
+	git -C deepen fetch --deepen=1 &&
+	git -C deepen log --pretty=tformat:%s origin/master >actual &&
+	cat >expected <<-\EOF &&
+	four
+	three
+	two
+	EOF
+	test_cmp expected actual
+	)
+'
+
 stop_httpd
 test_done
