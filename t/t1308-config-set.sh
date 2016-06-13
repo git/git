@@ -229,4 +229,31 @@ test_expect_success 'error on modifying repo config without repo' '
 	)
 '
 
+cmdline_config="'foo.bar=from-cmdline'"
+test_expect_success 'iteration shows correct origins' '
+	echo "[foo]bar = from-repo" >.git/config &&
+	echo "[foo]bar = from-home" >.gitconfig &&
+	cat >expect <<-EOF &&
+	key=foo.bar
+	value=from-home
+	origin=file
+	name=$HOME/.gitconfig
+	scope=global
+
+	key=foo.bar
+	value=from-repo
+	origin=file
+	name=.git/config
+	scope=repo
+
+	key=foo.bar
+	value=from-cmdline
+	origin=command line
+	name=
+	scope=cmdline
+	EOF
+	GIT_CONFIG_PARAMETERS=$cmdline_config test-config iterate >actual &&
+	test_cmp expect actual
+'
+
 test_done
