@@ -759,7 +759,7 @@ static int do_reupdate(int ac, const char **av,
 		if (save_nr != active_nr)
 			goto redo;
 	}
-	free_pathspec(&pathspec);
+	clear_pathspec(&pathspec);
 	return 0;
 }
 

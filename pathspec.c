@@ -638,7 +638,7 @@ void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 	       sizeof(struct pathspec_item) * dst->nr);
 }
 
-void free_pathspec(struct pathspec *pathspec)
+void clear_pathspec(struct pathspec *pathspec)
 {
 	int i, j;
 	for (i = 0; i < pathspec->nr; i++) {
