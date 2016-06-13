@@ -221,11 +221,11 @@ void shortlog_init(struct shortlog *log)
 
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
 {
-	static struct shortlog log;
-	static struct rev_info rev;
+	struct shortlog log = { STRING_LIST_INIT_NODUP };
+	struct rev_info rev;
 	int nongit = !startup_info->have_repository;
 
-	static const struct option options[] = {
+	const struct option options[] = {
 		OPT_BOOL('n', "numbered", &log.sort_by_number,
 			 N_("sort output according to the number of commits per author")),
 		OPT_BOOL('s', "summary", &log.summary,

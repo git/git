@@ -2503,12 +2503,12 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	char *final_commit_name = NULL;
 	enum object_type type;
 
-	static struct string_list range_list;
-	static int output_option = 0, opt = 0;
-	static int show_stats = 0;
-	static const char *revs_file = NULL;
-	static const char *contents_from = NULL;
-	static const struct option options[] = {
+	struct string_list range_list = STRING_LIST_INIT_NODUP;
+	int output_option = 0, opt = 0;
+	int show_stats = 0;
+	const char *revs_file = NULL;
+	const char *contents_from = NULL;
+	const struct option options[] = {
 		OPT_BOOL(0, "incremental", &incremental, N_("Show blame entries as we find them, incrementally")),
 		OPT_BOOL('b', NULL, &blank_boundary, N_("Show blank SHA-1 for boundary commits (Default: off)")),
 		OPT_BOOL(0, "root", &show_root, N_("Do not treat root commits as boundaries (Default: off)")),
