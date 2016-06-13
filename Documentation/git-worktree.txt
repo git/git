@@ -48,7 +48,8 @@ add <path> [<branch>]::
 
 Create `<path>` and checkout `<branch>` into it. The new working directory
 is linked to the current repository, sharing everything except working
-directory specific files such as HEAD, index, etc.
+directory specific files such as HEAD, index, etc. `-` may also be
+specified as `<branch>`; it is synonymous with `@{-1}`.
 +
 If `<branch>` is omitted and neither `-b` nor `-B` nor `--detached` used,
 then, as a convenience, a new branch based at HEAD is created automatically,
