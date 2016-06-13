@@ -45,6 +45,19 @@ static int is_from_line(const char *line, int len)
 
 static struct strbuf buf = STRBUF_INIT;
 static int keep_cr;
+static int mboxrd;
+
+static int is_gtfrom(const struct strbuf *buf)
+{
+	size_t min = strlen(">From ");
+	size_t ngt;
+
+	if (buf->len < min)
+		return 0;
+
+	ngt = strspn(buf->buf, ">");
+	return ngt && starts_with(buf->buf + ngt, "From ");
+}
 
 /* Called with the first line (potentially partial)
  * already in buf[] -- normally that should begin with
@@ -76,6 +89,9 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 			strbuf_setlen(&buf, buf.len-2);
 			strbuf_addch(&buf, '\n');
 		}
+
+		if (mboxrd && is_gtfrom(&buf))
+			strbuf_remove(&buf, 0, 1);
 
 		if (fwrite(buf.buf, 1, buf.len, output) != buf.len)
 			die_errno("cannot write output");
@@ -271,6 +287,8 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 			keep_cr = 1;
 		} else if ( arg[1] == 'o' && arg[2] ) {
 			dir = arg+2;
+		} else if (!strcmp(arg, "--mboxrd")) {
+			mboxrd = 1;
 		} else if ( arg[1] == '-' && !arg[2] ) {
 			argp++;	/* -- marks end of options */
 			break;
