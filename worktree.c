@@ -219,11 +219,40 @@ const char *get_worktree_git_dir(const struct worktree *wt)
 		return git_common_path("worktrees/%s", wt->id);
 }
 
+static struct worktree *find_worktree_by_suffix(struct worktree **list,
+						const char *suffix)
+{
+	struct worktree *found = NULL;
+	int nr_found = 0, suffixlen;
+
+	suffixlen = strlen(suffix);
+	if (!suffixlen)
+		return NULL;
+
+	for (; *list && nr_found < 2; list++) {
+		const char	*path	 = (*list)->path;
+		int		 pathlen = strlen(path);
+		int		 start	 = pathlen - suffixlen;
+
+		/* suffix must start at directory boundary */
+		if ((!start || (start > 0 && is_dir_sep(path[start - 1]))) &&
+		    !fspathcmp(suffix, path + start)) {
+			found = *list;
+			nr_found++;
+		}
+	}
+	return nr_found == 1 ? found : NULL;
+}
+
 struct worktree *find_worktree(struct worktree **list,
 			       const char *prefix,
 			       const char *arg)
 {
+	struct worktree *wt;
 	char *path;
+
+	if ((wt = find_worktree_by_suffix(list, arg)))
+		return wt;
 
 	arg = prefix_filename(prefix, strlen(prefix), arg);
 	path = xstrdup(real_path(arg));

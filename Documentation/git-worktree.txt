@@ -129,6 +129,11 @@ OPTIONS
 <worktree>::
 	Working trees can be identified by path, either relative or
 	absolute.
++
+If the last path components in the working tree's path is unique among
+working trees, it can be used to identify worktrees. For example if
+you only have to working trees at "/abc/def/ghi" and "/abc/def/ggg",
+then "ghi" or "def/ghi" is enough to point to the former working tree.
 
 DETAILS
 -------
