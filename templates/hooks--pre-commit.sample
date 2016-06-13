@@ -17,6 +17,7 @@ fi
 
 # If you want to allow non-ASCII filenames set this variable to true.
 allownonascii=$(git config --bool hooks.allownonascii)
+allownonwindowschars=$(git config --bool hooks.allownonwindowschars)
 
 # Redirect output to stderr.
 exec 1>&2
@@ -43,6 +44,27 @@ If you know what you are doing you can disable this check using:
   git config hooks.allownonascii true
 EOF
 	exit 1
+elif [ "$allownonwindowschars" != "true" ] &&
+	# If you work with linux and windows, there is a problem, if you use
+	# chars like \ / : * ? " < > |
+	# Check if there are used only windows compatible chars
+	test $(git diff --cached --name-only --diff-filter=A -z $against |
+	  LC_ALL=C tr -d '[0-9A-Za-z\[\]\{\}_ -)+-.]\0' | wc -c) != 0
+then
+	cat <<\EOF
+Error: Attempt to add a chars that are not allowed for a windows file name.
+
+This can cause problems if you want to work with people on other platforms.
+
+To be portable it is advisable to rename the file.
+
+Check your filenames for: \ / : * ? " < > |
+
+If you know what you are doing you can disable this check using:
+
+  git config hooks.allownonwindowschars true
+EOF
+	exit 2
 fi
 
 # If there are whitespace errors, print the offending file names and fail.
