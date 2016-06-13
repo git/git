@@ -19,7 +19,7 @@ static const char * const git_interpret_trailers_usage[] = {
 int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 {
 	int trim_empty = 0;
-	struct string_list trailers = STRING_LIST_INIT_DUP;
+	struct string_list trailers = STRING_LIST_INIT_NODUP;
 
 	struct option options[] = {
 		OPT_BOOL(0, "trim-empty", &trim_empty, N_("trim empty trailers")),
