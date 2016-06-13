@@ -669,6 +669,15 @@ static void hostinfo_clear(struct hostinfo *hi)
 	strbuf_release(&hi->tcp_port);
 }
 
+static void set_keep_alive(int sockfd)
+{
+	int ka = 1;
+
+	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &ka, sizeof(ka)) < 0)
+		logerror("unable to set SO_KEEPALIVE on socket: %s",
+			strerror(errno));
+}
+
 static int execute(void)
 {
 	char *line = packet_buffer;
@@ -681,6 +690,7 @@ static int execute(void)
 	if (addr)
 		loginfo("Connection from %s:%s", addr, port);
 
+	set_keep_alive(0);
 	alarm(init_timeout ? init_timeout : timeout);
 	pktlen = packet_read(0, NULL, NULL, packet_buffer, sizeof(packet_buffer), 0);
 	alarm(0);
@@ -951,6 +961,8 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 			continue;
 		}
 
+		set_keep_alive(sockfd);
+
 		if (bind(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
 			logerror("Could not bind to %s: %s",
 				 ip2str(ai->ai_family, ai->ai_addr, ai->ai_addrlen),
@@ -1009,6 +1021,8 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 		close(sockfd);
 		return 0;
 	}
+
+	set_keep_alive(sockfd);
 
 	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
 		logerror("Could not bind to %s: %s",
