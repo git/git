@@ -134,6 +134,12 @@ other objects in that pack they already have locally.
 	the write of any objects that would be immediately pruned by
 	a follow-up `git prune`.
 
+-k::
+--keep-unreachable::
+	When used with `-ad`, any unreachable objects from existing
+	packs will be appended to the end of the packfile instead of
+	being removed.
+
 Configuration
 -------------
 
