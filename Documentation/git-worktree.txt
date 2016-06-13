@@ -13,6 +13,7 @@ SYNOPSIS
 'git worktree list' [--porcelain]
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree prune' [-n] [-v] [--expire <expire>]
+'git worktree unlock' <worktree>
 
 DESCRIPTION
 -----------
@@ -72,6 +73,10 @@ with `--reason`.
 prune::
 
 Prune working tree information in $GIT_DIR/worktrees.
+
+unlock::
+
+Unlock a working tree, allowing it to be pruned, moved or deleted.
 
 OPTIONS
 -------
