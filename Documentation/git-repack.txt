@@ -138,7 +138,8 @@ other objects in that pack they already have locally.
 --keep-unreachable::
 	When used with `-ad`, any unreachable objects from existing
 	packs will be appended to the end of the packfile instead of
-	being removed.
+	being removed. In addition, any unreachable loose objects will
+	be packed (and their loose counterparts removed).
 
 Configuration
 -------------

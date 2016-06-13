@@ -248,6 +248,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 						"--unpack-unreachable");
 			} else if (keep_unreachable) {
 				argv_array_push(&cmd.args, "--keep-unreachable");
+				argv_array_push(&cmd.args, "--pack-loose-unreachable");
 			} else {
 				argv_array_push(&cmd.env_array, "GIT_REF_PARANOIA=1");
 			}
