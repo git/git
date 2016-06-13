@@ -5,10 +5,12 @@ struct worktree {
 	char *path;
 	char *id;
 	char *head_ref;
+	char *lock_reason;	/* internal use */
 	unsigned char head_sha1[20];
 	int is_detached;
 	int is_bare;
 	int is_current;
+	int lock_reason_valid;
 };
 
 /* Functions for acting on the information about worktrees. */
@@ -41,6 +43,12 @@ extern struct worktree *find_worktree(struct worktree **list,
  * Return true if the given worktree is the main one.
  */
 extern int is_main_worktree(const struct worktree *wt);
+
+/*
+ * Return the reason string if the given worktree is locked or NULL
+ * otherwise.
+ */
+extern const char *is_worktree_locked(struct worktree *wt);
 
 /*
  * Free up the memory for worktree(s)
