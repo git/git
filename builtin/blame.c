@@ -134,7 +134,7 @@ struct progress_info {
 	int blamed_lines;
 };
 
-static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b, long ctxlen,
+static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b,
 		      xdl_emit_hunk_consume_func_t hunk_func, void *cb_data)
 {
 	xpparam_t xpp = {0};
@@ -142,7 +142,6 @@ static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b, long ctxlen,
 	xdemitcb_t ecb = {NULL};
 
 	xpp.flags = xdl_opts;
-	xecfg.ctxlen = ctxlen;
 	xecfg.hunk_func = hunk_func;
 	ecb.priv = cb_data;
 	return xdi_diff(file_a, file_b, &xpp, &xecfg, &ecb);
@@ -980,7 +979,7 @@ static void pass_blame_to_parent(struct scoreboard *sb,
 	fill_origin_blob(&sb->revs->diffopt, target, &file_o);
 	num_get_patch++;
 
-	if (diff_hunks(&file_p, &file_o, 0, blame_chunk_cb, &d))
+	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d))
 		die("unable to generate diff (%s -> %s)",
 		    oid_to_hex(&parent->commit->object.oid),
 		    oid_to_hex(&target->commit->object.oid));
@@ -1129,7 +1128,7 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	 * file_p partially may match that image.
 	 */
 	memset(split, 0, sizeof(struct blame_entry [3]));
-	if (diff_hunks(file_p, &file_o, 1, handle_split_cb, &d))
+	if (diff_hunks(file_p, &file_o, handle_split_cb, &d))
 		die("unable to generate diff (%s)",
 		    oid_to_hex(&parent->commit->object.oid));
 	/* remainder, if any, all match the preimage */
