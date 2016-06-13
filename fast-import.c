@@ -166,6 +166,7 @@ Format of STDIN stream:
 #include "quote.h"
 #include "exec_cmd.h"
 #include "dir.h"
+#include "run-command.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -282,6 +283,7 @@ struct recent_command {
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static off_t max_packsize;
+static int unpack_limit = 100;
 static int force_update;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
@@ -594,6 +596,33 @@ static struct object_entry *insert_object(unsigned char *sha1)
 	e->idx.offset = 0;
 	object_table[h] = e;
 	return e;
+}
+
+static void invalidate_pack_id(unsigned int id)
+{
+	unsigned int h;
+	unsigned long lu;
+	struct tag *t;
+
+	for (h = 0; h < ARRAY_SIZE(object_table); h++) {
+		struct object_entry *e;
+
+		for (e = object_table[h]; e; e = e->next)
+			if (e->pack_id == id)
+				e->pack_id = MAX_PACK_ID;
+	}
+
+	for (lu = 0; lu < branch_table_sz; lu++) {
+		struct branch *b;
+
+		for (b = branch_table[lu]; b; b = b->table_next_branch)
+			if (b->pack_id == id)
+				b->pack_id = MAX_PACK_ID;
+	}
+
+	for (t = first_tag; t; t = t->next_tag)
+		if (t->pack_id == id)
+			t->pack_id = MAX_PACK_ID;
 }
 
 static unsigned int hc_str(const char *s, size_t len)
@@ -951,6 +980,23 @@ static void unkeep_all_packs(void)
 	}
 }
 
+static int loosen_small_pack(const struct packed_git *p)
+{
+	struct child_process unpack = CHILD_PROCESS_INIT;
+
+	if (lseek(p->pack_fd, 0, SEEK_SET) < 0)
+		die_errno("Failed seeking to start of '%s'", p->pack_name);
+
+	unpack.in = p->pack_fd;
+	unpack.git_cmd = 1;
+	unpack.stdout_to_stderr = 1;
+	argv_array_push(&unpack.args, "unpack-objects");
+	if (!show_stats)
+		argv_array_push(&unpack.args, "-q");
+
+	return run_command(&unpack);
+}
+
 static void end_packfile(void)
 {
 	static int running;
@@ -973,6 +1019,14 @@ static void end_packfile(void)
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
 				    pack_data->pack_name, object_count,
 				    cur_pack_sha1, pack_size);
+
+		if (object_count <= unpack_limit) {
+			if (!loosen_small_pack(pack_data)) {
+				invalidate_pack_id(pack_id);
+				goto discard_pack;
+			}
+		}
+
 		close(pack_data->pack_fd);
 		idx_name = keep_pack(create_index());
 
@@ -1003,6 +1057,7 @@ static void end_packfile(void)
 		pack_id++;
 	}
 	else {
+discard_pack:
 		close(pack_data->pack_fd);
 		unlink_or_warn(pack_data->pack_name);
 	}
@@ -3320,6 +3375,7 @@ static void parse_option(const char *option)
 static void git_pack_config(void)
 {
 	int indexversion_value;
+	int limit;
 	unsigned long packsizelimit_value;
 
 	if (!git_config_get_ulong("pack.depth", &max_depth)) {
@@ -3343,6 +3399,11 @@ static void git_pack_config(void)
 	}
 	if (!git_config_get_ulong("pack.packsizelimit", &packsizelimit_value))
 		max_packsize = packsizelimit_value;
+
+	if (!git_config_get_int("fastimport.unpacklimit", &limit))
+		unpack_limit = limit;
+	else if (!git_config_get_int("transfer.unpacklimit", &limit))
+		unpack_limit = limit;
 
 	git_config(git_default_config, NULL);
 }

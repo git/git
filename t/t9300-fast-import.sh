@@ -52,6 +52,7 @@ echo "$@"'
 ###
 
 test_expect_success 'empty stream succeeds' '
+	git config fastimport.unpackLimit 0 &&
 	git fast-import </dev/null
 '
 
@@ -2690,6 +2691,7 @@ test_expect_success 'R: blob bigger than threshold' '
 	echo >>input &&
 
 	test_create_repo R &&
+	git --git-dir=R/.git config fastimport.unpackLimit 0 &&
 	git --git-dir=R/.git fast-import --big-file-threshold=1 <input
 '
 
