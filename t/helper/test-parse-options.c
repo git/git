@@ -11,7 +11,7 @@ static int verbose = 0, dry_run = 0, quiet = 0;
 static char *string = NULL;
 static char *file = NULL;
 static int ambiguous;
-static struct string_list list;
+static struct string_list list = STRING_LIST_INIT_NODUP;
 
 static int length_callback(const struct option *opt, const char *arg, int unset)
 {

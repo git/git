@@ -270,7 +270,7 @@ struct image {
  * the case where more than one patches touch the same file.
  */
 
-static struct string_list fn_table;
+static struct string_list fn_table = STRING_LIST_INIT_NODUP;
 
 static uint32_t hash_line(const char *cp, size_t len)
 {
@@ -1936,7 +1936,7 @@ static void prefix_patch(struct patch *p)
  * include/exclude
  */
 
-static struct string_list limit_by_name;
+static struct string_list limit_by_name = STRING_LIST_INIT_NODUP;
 static int has_include;
 static void add_name_limit(const char *name, int exclude)
 {
@@ -3582,7 +3582,7 @@ static int check_to_create(const char *new_name, int ok_if_exists)
  * it is perfectly fine, as the patch removes a/b to make room
  * to create a directory a/b so that a/b/c can be created.
  */
-static struct string_list symlink_changes;
+static struct string_list symlink_changes = STRING_LIST_INIT_NODUP;
 #define SYMLINK_GOES_AWAY 01
 #define SYMLINK_IN_RESULT 02
 
