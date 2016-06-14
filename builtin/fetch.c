@@ -1032,7 +1032,7 @@ static int get_remote_group(const char *key, const char *value, void *priv)
 			size_t wordlen = strcspn(value, " \t\n");
 
 			if (wordlen >= 1)
-				string_list_append(g->list,
+				string_list_append_nodup(g->list,
 						   xstrndup(value, wordlen));
 			value += wordlen + (value[wordlen] != '\0');
 		}
@@ -1170,7 +1170,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 int cmd_fetch(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	struct string_list list = STRING_LIST_INIT_NODUP;
+	struct string_list list = STRING_LIST_INIT_DUP;
 	struct remote *remote;
 	int result = 0;
 	struct argv_array argv_gc_auto = ARGV_ARRAY_INIT;
@@ -1262,8 +1262,6 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		argv_array_clear(&options);
 	}
 
-	/* All names were strdup()ed or strndup()ed */
-	list.strdup_strings = 1;
 	string_list_clear(&list, 0);
 
 	close_all_packs();
