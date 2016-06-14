@@ -131,7 +131,7 @@ test_expect_success 'no changes are a nop' '
 	set_fake_editor &&
 	git rebase -i F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
-	test $(git rev-parse I) = $(git rev-parse HEAD)
+	test_cmp_rev I HEAD
 '
 
 test_expect_success 'test the [branch] option' '
@@ -141,8 +141,8 @@ test_expect_success 'test the [branch] option' '
 	set_fake_editor &&
 	git rebase -i F branch2 &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
-	test $(git rev-parse I) = $(git rev-parse branch2) &&
-	test $(git rev-parse I) = $(git rev-parse HEAD)
+	test_cmp_rev I branch2 &&
+	test_cmp_rev I HEAD
 '
 
 test_expect_success 'test --onto <branch>' '
@@ -150,8 +150,8 @@ test_expect_success 'test --onto <branch>' '
 	set_fake_editor &&
 	git rebase -i --onto branch1 F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/test-onto" &&
-	test $(git rev-parse HEAD^) = $(git rev-parse branch1) &&
-	test $(git rev-parse I) = $(git rev-parse branch2)
+	test_cmp_rev HEAD^ branch1 &&
+	test_cmp_rev I branch2
 '
 
 test_expect_success 'rebase on top of a non-conflicting commit' '
@@ -161,12 +161,12 @@ test_expect_success 'rebase on top of a non-conflicting commit' '
 	git rebase -i branch2 &&
 	test file6 = $(git diff --name-only original-branch1) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
-	test $(git rev-parse I) = $(git rev-parse branch2) &&
-	test $(git rev-parse I) = $(git rev-parse HEAD~2)
+	test_cmp_rev I branch2 &&
+	test_cmp_rev I HEAD~2
 '
 
 test_expect_success 'reflog for the branch shows state before rebase' '
-	test $(git rev-parse branch1@{1}) = $(git rev-parse original-branch1)
+	test_cmp_rev branch1@{1} original-branch1
 '
 
 test_expect_success 'exchange two commits' '
@@ -198,7 +198,7 @@ test_expect_success 'stop on conflicting pick' '
 	git tag new-branch1 &&
 	set_fake_editor &&
 	test_must_fail git rebase -i master &&
-	test "$(git rev-parse HEAD~3)" = "$(git rev-parse master)" &&
+	test_cmp_rev HEAD~3 master &&
 	test_cmp expect .git/rebase-merge/patch &&
 	test_cmp expect2 file1 &&
 	test "$(git diff --name-status |
@@ -209,7 +209,7 @@ test_expect_success 'stop on conflicting pick' '
 
 test_expect_success 'abort' '
 	git rebase --abort &&
-	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
+	test_cmp_rev new-branch1 HEAD &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
 	test_path_is_missing .git/rebase-merge
 '
@@ -247,7 +247,7 @@ test_expect_success 'squash' '
 	FAKE_LINES="1 squash 2" EXPECT_HEADER_COUNT=2 \
 		git rebase -i --onto master HEAD~2 &&
 	test B = $(cat file7) &&
-	test $(git rev-parse HEAD^) = $(git rev-parse master)
+	test_cmp_rev HEAD^ master
 '
 
 test_expect_success 'retain authorship when squashing' '
@@ -306,9 +306,9 @@ test_expect_success 'preserve merges with -p' '
 	git update-index --refresh &&
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD -- &&
-	test $(git rev-parse HEAD~6) = $(git rev-parse branch1) &&
-	test $(git rev-parse HEAD~4^2) = $(git rev-parse to-be-preserved) &&
-	test $(git rev-parse HEAD^^2^) = $(git rev-parse HEAD^^^) &&
+	test_cmp_rev HEAD~6 branch1 &&
+	test_cmp_rev HEAD~4^2 to-be-preserved &&
+	test_cmp_rev HEAD^^2^ HEAD^^^ &&
 	test $(git show HEAD~5:file1) = B &&
 	test $(git show HEAD~3:file1) = C &&
 	test $(git show HEAD:file1) = E &&
@@ -335,7 +335,7 @@ test_expect_success '--continue tries to commit' '
 	echo resolved > file1 &&
 	git add file1 &&
 	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
-	test $(git rev-parse HEAD^) = $(git rev-parse new-branch1) &&
+	test_cmp_rev HEAD^ new-branch1 &&
 	git show HEAD | grep chouette
 '
 
@@ -599,7 +599,7 @@ test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 	test $(git rev-parse branch3) != $(git rev-parse branch4) &&
 	set_fake_editor &&
 	git rebase -i branch3 &&
-	test $(git rev-parse branch3) = $(git rev-parse branch4)
+	test_cmp_rev branch3 branch4
 
 '
 
@@ -659,7 +659,7 @@ test_expect_success 'rebase -i continue with unstaged submodule' '
 	test_must_fail git rebase -i submodule-base &&
 	git reset &&
 	git rebase --continue &&
-	test $(git rev-parse submodule-base) = $(git rev-parse HEAD)
+	test_cmp_rev submodule-base HEAD
 '
 
 test_expect_success 'avoid unnecessary reset' '
@@ -681,7 +681,7 @@ test_expect_success 'reword' '
 	FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" git rebase -i A &&
 	git show HEAD | grep "E changed" &&
 	test $(git rev-parse master) != $(git rev-parse HEAD) &&
-	test $(git rev-parse master^) = $(git rev-parse HEAD^) &&
+	test_cmp_rev master^ HEAD^ &&
 	FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" git rebase -i A &&
 	git show HEAD^ | grep "D changed" &&
 	FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" git rebase -i A &&
@@ -740,7 +740,7 @@ test_expect_success 'always cherry-pick with --no-ff' '
 		git diff HEAD~$p original-no-ff-branch~$p > out &&
 		test_cmp empty out
 	done &&
-	test $(git rev-parse HEAD~3) = $(git rev-parse original-no-ff-branch~3) &&
+	test_cmp_rev HEAD~3 original-no-ff-branch~3 &&
 	git diff HEAD~3 original-no-ff-branch~3 > out &&
 	test_cmp empty out
 '

@@ -39,6 +39,8 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 TERM_BAD=bad
 TERM_GOOD=good
+IF_NO_GOOD=ask
+AUTONEXT=false
 
 bisect_head()
 {
@@ -312,11 +314,11 @@ bisect_next_check() {
 	,,*)
 		: have both $TERM_GOOD and $TERM_BAD - ok
 		;;
-	*,)
+	*,false)
 		# do not have both but not asked to fail - just report.
 		false
 		;;
-	t,,"$TERM_GOOD")
+	t,,ask)
 		# have bad (or new) but not good (or old).  we could bisect although
 		# this is less optimum.
 		eval_gettextln "Warning: bisecting only with a \$TERM_BAD commit." >&2
@@ -331,31 +333,28 @@ bisect_next_check() {
 		fi
 		: bisect without $TERM_GOOD...
 		;;
+	t,,true)
+		:
+		;;
 	*)
 		bad_syn=$(bisect_voc bad)
 		good_syn=$(bisect_voc good)
-		if test -s "$GIT_DIR/BISECT_START"
-		then
-
-			eval_gettextln "You need to give me at least one \$bad_syn and one \$good_syn revision.
-(You can use \"git bisect \$bad_syn\" and \"git bisect \$good_syn\" for that.)" >&2
-		else
-			eval_gettextln "You need to start by \"git bisect start\".
-You then need to give me at least one \$good_syn and one \$bad_syn revision.
-(You can use \"git bisect \$bad_syn\" and \"git bisect \$good_syn\" for that.)" >&2
-		fi
+		eval_gettextln "You need to give me at least one \$bad_syn revision.
+Use \"git bisect \$bad_syn\" for that. One \$good_syn revision is also helpful
+for bisecting (use \"git bisect \$good_syn\"). If you do not know one \$good_syn
+revision, you can use \"git bisect next\" to find one." >&2
 		exit 1 ;;
 	esac
 }
 
 bisect_auto_next() {
-	bisect_next_check && bisect_next || :
+	bisect_next_check $AUTONEXT && bisect_next || :
 }
 
 bisect_next() {
 	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
-	bisect_next_check $TERM_GOOD
+	bisect_next_check $IF_NO_GOOD
 
 	# Perform all bisection computation, display and checkout
 	git bisect--helper --next-all $(test -f "$GIT_DIR/BISECT_HEAD" && echo --no-checkout)
@@ -484,7 +483,9 @@ bisect_replay () {
 }
 
 bisect_run () {
-	bisect_next_check fail
+	bisect_next_check $IF_NO_GOOD
+	AUTONEXT=true
+	IF_NO_GOOD=true
 
 	while true
 	do
@@ -677,7 +678,6 @@ case "$#" in
 	skip)
 		bisect_skip "$@" ;;
 	next)
-		# Not sure we want "next" at the UI level anymore.
 		bisect_next "$@" ;;
 	visualize|view)
 		bisect_visualize "$@" ;;

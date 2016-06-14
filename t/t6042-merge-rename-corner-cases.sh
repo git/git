@@ -68,8 +68,8 @@ test_expect_failure 'rename/modify/add-source conflict resolvable' '
 
 	git merge -s recursive C^0 &&
 
-	test $(git rev-parse B:a) = $(git rev-parse b) &&
-	test $(git rev-parse C:a) = $(git rev-parse a)
+	test_cmp_rev B:a b &&
+	test_cmp_rev C:a a
 '
 
 test_expect_success 'setup resolvable conflict missed if rename missed' '
@@ -105,8 +105,8 @@ test_expect_failure 'conflict caused if rename not detected' '
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
 	test_line_count = 6 c &&
-	test $(git rev-parse HEAD:a) = $(git rev-parse B:a) &&
-	test $(git rev-parse HEAD:b) = $(git rev-parse A:b)
+	test_cmp_rev HEAD:a B:a &&
+	test_cmp_rev HEAD:b A:b
 '
 
 test_expect_success 'setup conflict resolved wrong if rename missed' '
@@ -178,8 +178,8 @@ test_expect_failure 'detect rename/add-source and preserve all data' '
 	test -f a &&
 	test -f b &&
 
-	test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
-	test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
+	test_cmp_rev HEAD:b A:a &&
+	test_cmp_rev HEAD:a C:a
 '
 
 test_expect_failure 'detect rename/add-source and preserve all data, merge other way' '
@@ -194,8 +194,8 @@ test_expect_failure 'detect rename/add-source and preserve all data, merge other
 	test -f a &&
 	test -f b &&
 
-	test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
-	test $(git rev-parse HEAD:a) = $(git rev-parse C:a)
+	test_cmp_rev HEAD:b A:a &&
+	test_cmp_rev HEAD:a C:a
 '
 
 test_expect_success 'setup content merge + rename/directory conflict' '
@@ -281,9 +281,9 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 		left base right &&
 	test_cmp left newfile~HEAD &&
 
-	test $(git rev-parse :1:newfile) = $(git rev-parse base:file) &&
-	test $(git rev-parse :2:newfile) = $(git rev-parse left-conflict:newfile) &&
-	test $(git rev-parse :3:newfile) = $(git rev-parse right:file) &&
+	test_cmp_rev :1:newfile base:file &&
+	test_cmp_rev :2:newfile left-conflict:newfile &&
+	test_cmp_rev :3:newfile right:file &&
 
 	test -f newfile/realfile &&
 	test -f newfile~HEAD
@@ -432,9 +432,9 @@ test_expect_success 'merge has correct working tree contents' '
 	test 3 -eq $(git ls-files -u | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
-	test $(git rev-parse :3:b) = $(git rev-parse A:a) &&
-	test $(git rev-parse :2:c) = $(git rev-parse A:a) &&
+	test_cmp_rev :1:a A:a &&
+	test_cmp_rev :3:b A:a &&
+	test_cmp_rev :2:c A:a &&
 
 	test ! -f a &&
 	test $(git hash-object b) = $(git rev-parse A:a) &&
@@ -478,10 +478,10 @@ test_expect_failure 'detect conflict with rename/rename(1to2)/add-source merge' 
 	test 4 -eq $(git ls-files -s | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse 3:a) = $(git rev-parse C:a) &&
-	test $(git rev-parse 1:a) = $(git rev-parse A:a) &&
-	test $(git rev-parse 2:b) = $(git rev-parse B:b) &&
-	test $(git rev-parse 3:c) = $(git rev-parse C:c) &&
+	test_cmp_rev 3:a C:a &&
+	test_cmp_rev 1:a A:a &&
+	test_cmp_rev 2:b B:b &&
+	test_cmp_rev 3:c C:c &&
 
 	test -f a &&
 	test -f b &&
@@ -520,8 +520,8 @@ test_expect_failure 'rename/rename/add-source still tracks new a file' '
 	test 2 -eq $(git ls-files -s | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse HEAD:a) = $(git rev-parse C:a) &&
-	test $(git rev-parse HEAD:b) = $(git rev-parse A:a)
+	test_cmp_rev HEAD:a C:a &&
+	test_cmp_rev HEAD:b A:a
 '
 
 test_expect_success 'setup rename/rename(1to2)/add-dest conflict' '
@@ -560,11 +560,11 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 	test 2 -eq $(git ls-files -u c | wc -l) &&
 	test 4 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :1:a) = $(git rev-parse A:a) &&
-	test $(git rev-parse :2:b) = $(git rev-parse C:b) &&
-	test $(git rev-parse :3:b) = $(git rev-parse B:b) &&
-	test $(git rev-parse :2:c) = $(git rev-parse C:c) &&
-	test $(git rev-parse :3:c) = $(git rev-parse B:c) &&
+	test_cmp_rev :1:a A:a &&
+	test_cmp_rev :2:b C:b &&
+	test_cmp_rev :3:b B:b &&
+	test_cmp_rev :2:c C:c &&
+	test_cmp_rev :3:c B:c &&
 
 	test $(git hash-object c~HEAD) = $(git rev-parse C:c) &&
 	test $(git hash-object c~B\^0) = $(git rev-parse B:c) &&

@@ -354,8 +354,8 @@ test_expect_success '--remap-to-ancestor with filename filters' '
 	git filter-branch -f --remap-to-ancestor \
 		moved-foo moved-bar A..master \
 		-- -- foo &&
-	test $(git rev-parse moved-foo) = $(git rev-parse moved-bar) &&
-	test $(git rev-parse moved-foo) = $(git rev-parse master^) &&
+	test_cmp_rev moved-foo moved-bar &&
+	test_cmp_rev moved-foo master^ &&
 	test $orig_invariant = $(git rev-parse invariant)
 '
 
@@ -372,8 +372,8 @@ test_expect_success 'automatic remapping to ancestor with filename filters' '
 	git filter-branch -f \
 		moved-foo2 moved-bar2 A..master \
 		-- -- foo &&
-	test $(git rev-parse moved-foo2) = $(git rev-parse moved-bar2) &&
-	test $(git rev-parse moved-foo2) = $(git rev-parse master^) &&
+	test_cmp_rev moved-foo2 moved-bar2 &&
+	test_cmp_rev moved-foo2 master^ &&
 	test $orig_invariant = $(git rev-parse invariant2)
 '
 
