@@ -2,6 +2,9 @@
 # to set up some variables pointing at the normal git directories and
 # a few helper shell functions.
 
+# Source git-sh-i18n for gettext support.
+. git-sh-i18n
+
 # Having this variable in your environment would break scripts because
 # you would cause "cd" to be taken to unexpected places.  If you
 # like CDPATH, define it for your interactive shell sessions without
@@ -83,16 +86,16 @@ if test -n "$OPTIONS_SPEC"; then
 else
 	dashless=$(basename -- "$0" | sed -e 's/-/ /')
 	usage() {
-		die "usage: $dashless $USAGE"
+		die "$(eval_gettext "usage: \$dashless \$USAGE")"
 	}
 
 	if [ -z "$LONG_USAGE" ]
 	then
-		LONG_USAGE="usage: $dashless $USAGE"
+		LONG_USAGE="$(eval_gettext "usage: \$dashless \$USAGE")"
 	else
-		LONG_USAGE="usage: $dashless $USAGE
+		LONG_USAGE="$(eval_gettext "usage: \$dashless \$USAGE
 
-$LONG_USAGE"
+$LONG_USAGE")"
 	fi
 
 	case "$1" in
@@ -182,7 +185,7 @@ is_bare_repository () {
 cd_to_toplevel () {
 	cdup=$(git rev-parse --show-toplevel) &&
 	cd "$cdup" || {
-		echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
+		gettextln "Cannot chdir to \$cdup, the toplevel of the working tree" >&2
 		exit 1
 	}
 }
@@ -190,13 +193,16 @@ cd_to_toplevel () {
 require_work_tree_exists () {
 	if test "z$(git rev-parse --is-bare-repository)" != zfalse
 	then
-		die "fatal: $0 cannot be used without a working tree."
+		program_name=$0
+		die "$(gettext "fatal: \$program_name cannot be used without a working tree.")"
 	fi
 }
 
 require_work_tree () {
-	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true ||
-	die "fatal: $0 cannot be used without a working tree."
+	test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = true || {
+		program_name=$0
+		die "$(gettext "fatal: \$program_name cannot be used without a working tree.")"
+	}
 }
 
 require_clean_work_tree () {
@@ -206,24 +212,49 @@ require_clean_work_tree () {
 
 	if ! git diff-files --quiet --ignore-submodules
 	then
-		echo >&2 "Cannot $1: You have unstaged changes."
+		action=$1
+		case "$action" in
+		rebase)
+			gettextln "Cannot rebase: You have unstaged changes." >&2
+			;;
+		"rewrite branches")
+			gettextln "Cannot rewrite branches: You have unstaged changes." >&2
+			;;
+		"pull with rebase")
+			gettextln "Cannot pull with rebase: You have unstaged changes." >&2
+			;;
+		*)
+			eval_gettextln "Cannot \$action: You have unstaged changes." >&2
+			;;
+		esac
 		err=1
 	fi
 
 	if ! git diff-index --cached --quiet --ignore-submodules HEAD --
 	then
-		if [ $err = 0 ]
+		if test $err = 0
 		then
-		    echo >&2 "Cannot $1: Your index contains uncommitted changes."
+			action=$1
+			case "$action" in
+			rebase)
+				gettextln "Cannot rebase: Your index contains uncommitted changes." >&2
+				;;
+			"pull with rebase")
+				gettextln "Cannot pull with rebase: Your index contains uncommitted changes." >&2
+				;;
+			*)
+				eval_gettextln "Cannot \$action: Your index contains uncommitted changes." >&2
+				;;
+			esac
 		else
-		    echo >&2 "Additionally, your index contains uncommitted changes."
+		    gettextln "Additionally, your index contains uncommitted changes." >&2
 		fi
 		err=1
 	fi
 
-	if [ $err = 1 ]
+	if test $err = 1
 	then
-		test -n "$2" && echo >&2 "$2"
+		test -n "$2" && echo "$2" >&2
 		exit 1
 	fi
 }
@@ -336,12 +367,12 @@ git_dir_init () {
 	then
 		test -z "$(git rev-parse --show-cdup)" || {
 			exit=$?
-			echo >&2 "You need to run this command from the toplevel of the working tree."
+			gettextln "You need to run this command from the toplevel of the working tree." >&2
 			exit $exit
 		}
 	fi
 	test -n "$GIT_DIR" && GIT_DIR=$(cd "$GIT_DIR" && pwd) || {
-		echo >&2 "Unable to determine absolute path of git directory"
+		gettextln "Unable to determine absolute path of git directory" >&2
 		exit 1
 	}
 	: ${GIT_OBJECT_DIRECTORY="$(git rev-parse --git-path objects)"}

@@ -359,7 +359,7 @@ test_expect_success 'bisect starting with a detached HEAD' '
 test_expect_success 'bisect errors out if bad and good are mistaken' '
 	git bisect reset &&
 	test_must_fail git bisect start $HASH2 $HASH4 2> rev_list_error &&
-	grep "mistook good and bad" rev_list_error &&
+	test_i18ngrep "mistook good and bad" rev_list_error &&
 	git bisect reset
 '
 
@@ -400,7 +400,7 @@ test_expect_success 'side branch creation' '
 
 test_expect_success 'good merge base when good and bad are siblings' '
 	git bisect start "$HASH6" "$SIDE_HASH7" > my_bisect_log.txt &&
-	grep "merge base must be tested" my_bisect_log.txt &&
+	test_i18ngrep "merge base must be tested" my_bisect_log.txt &&
 	grep $HASH4 my_bisect_log.txt &&
 	git bisect good > my_bisect_log.txt &&
 	test_must_fail grep "merge base must be tested" my_bisect_log.txt &&
@@ -410,7 +410,7 @@ test_expect_success 'good merge base when good and bad are siblings' '
 
 test_expect_success 'skipped merge base when good and bad are siblings' '
 	git bisect start "$SIDE_HASH7" "$HASH7" > my_bisect_log.txt &&
-	grep "merge base must be tested" my_bisect_log.txt &&
+	test_i18ngrep "merge base must be tested" my_bisect_log.txt &&
 	grep $HASH4 my_bisect_log.txt &&
 	git bisect skip > my_bisect_log.txt 2>&1 &&
 	grep "warning" my_bisect_log.txt &&
@@ -420,11 +420,11 @@ test_expect_success 'skipped merge base when good and bad are siblings' '
 
 test_expect_success 'bad merge base when good and bad are siblings' '
 	git bisect start "$HASH7" HEAD > my_bisect_log.txt &&
-	grep "merge base must be tested" my_bisect_log.txt &&
+	test_i18ngrep "merge base must be tested" my_bisect_log.txt &&
 	grep $HASH4 my_bisect_log.txt &&
 	test_must_fail git bisect bad > my_bisect_log.txt 2>&1 &&
-	grep "merge base $HASH4 is bad" my_bisect_log.txt &&
-	grep "fixed between $HASH4 and \[$SIDE_HASH7\]" my_bisect_log.txt &&
+	test_i18ngrep "merge base $HASH4 is bad" my_bisect_log.txt &&
+	test_i18ngrep "fixed between $HASH4 and \[$SIDE_HASH7\]" my_bisect_log.txt &&
 	git bisect reset
 '
 
@@ -460,9 +460,9 @@ test_expect_success 'many merge bases creation' '
 
 test_expect_success 'good merge bases when good and bad are siblings' '
 	git bisect start "$B_HASH" "$A_HASH" > my_bisect_log.txt &&
-	grep "merge base must be tested" my_bisect_log.txt &&
+	test_i18ngrep "merge base must be tested" my_bisect_log.txt &&
 	git bisect good > my_bisect_log2.txt &&
-	grep "merge base must be tested" my_bisect_log2.txt &&
+	test_i18ngrep "merge base must be tested" my_bisect_log2.txt &&
 	{
 		{
 			grep "$SIDE_HASH5" my_bisect_log.txt &&
@@ -477,13 +477,13 @@ test_expect_success 'good merge bases when good and bad are siblings' '
 
 test_expect_success 'optimized merge base checks' '
 	git bisect start "$HASH7" "$SIDE_HASH7" > my_bisect_log.txt &&
-	grep "merge base must be tested" my_bisect_log.txt &&
+	test_i18ngrep "merge base must be tested" my_bisect_log.txt &&
 	grep "$HASH4" my_bisect_log.txt &&
 	git bisect good > my_bisect_log2.txt &&
 	test -f ".git/BISECT_ANCESTORS_OK" &&
 	next="$(test_cmp_rev HEAD $HASH5 && echo $A_HASH || echo $A6_HASH)" &&
 	git bisect good "$next" > my_bisect_log4.txt &&
-	grep "merge base must be tested" my_bisect_log4.txt &&
+	test_i18ngrep "merge base must be tested" my_bisect_log4.txt &&
 	test_must_fail test -f ".git/BISECT_ANCESTORS_OK"
 '
 
@@ -553,7 +553,7 @@ test_expect_success 'skipping away from skipped commit' '
 
 test_expect_success 'erroring out when using bad path parameters' '
 	test_must_fail git bisect start $PARA_HASH7 $HASH1 -- foobar 2> error.txt &&
-	grep "bad path parameters" error.txt
+	test_i18ngrep "bad path parameters" error.txt
 '
 
 test_expect_success 'test bisection on bare repo - --no-checkout specified' '
@@ -789,7 +789,7 @@ test_expect_success 'bisect terms needs 0 or 1 argument' '
 	test_must_fail git bisect terms 1 2 &&
 	test_must_fail git bisect terms 2>actual &&
 	echo "no terms defined" >expected &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success 'bisect terms shows good/bad after start' '
@@ -861,7 +861,7 @@ test_expect_success 'bisect start --term-* does store terms' '
 	Your current terms are two for the old state
 	and one for the new state.
 	EOF
-	test_cmp expected actual &&
+	test_i18ncmp expected actual &&
 	git bisect terms --term-bad >actual &&
 	echo one >expected &&
 	test_cmp expected actual &&

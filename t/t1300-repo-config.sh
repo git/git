@@ -886,7 +886,7 @@ test_expect_success !MINGW 'get --path copes with unset $HOME' '
 		git config --get --path path.normal >>result &&
 		git config --get --path path.trailingtilde >>result
 	) &&
-	grep "[Ff]ailed to expand.*~/" msg &&
+	test_i18ngrep "[Ff]ailed to expand.*~/" msg &&
 	test_cmp expect result
 '
 
@@ -1126,7 +1126,7 @@ test_expect_success 'barf on syntax error' '
 	key garbage
 	EOF
 	test_must_fail git config --get section.key >actual 2>error &&
-	grep " line 3 " error
+	test_i18ngrep " line 3 " error
 '
 
 test_expect_success 'barf on incomplete section header' '
@@ -1136,7 +1136,7 @@ test_expect_success 'barf on incomplete section header' '
 	key = value
 	EOF
 	test_must_fail git config --get section.key >actual 2>error &&
-	grep " line 2 " error
+	test_i18ngrep " line 2 " error
 '
 
 test_expect_success 'barf on incomplete string' '
@@ -1146,7 +1146,7 @@ test_expect_success 'barf on incomplete string' '
 	key = "value string
 	EOF
 	test_must_fail git config --get section.key >actual 2>error &&
-	grep " line 3 " error
+	test_i18ngrep " line 3 " error
 '
 
 test_expect_success 'urlmatch' '
