@@ -60,8 +60,10 @@ static void reset_timeout(void)
 
 static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 {
-	if (use_sideband)
-		return send_sideband(1, fd, data, sz, use_sideband);
+	if (use_sideband) {
+		send_sideband(1, fd, data, sz, use_sideband);
+		return sz;
+	}
 	if (fd == 3)
 		/* emergency quit */
 		fd = 2;
