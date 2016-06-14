@@ -28,12 +28,13 @@ include::line-range-format.txt[]
 -S <revs-file>::
 	Use revisions from revs-file instead of calling linkgit:git-rev-list[1].
 
---reverse::
+--reverse <rev>..<rev>::
 	Walk history forward instead of backward. Instead of showing
 	the revision in which a line appeared, this shows the last
 	revision in which a line has existed. This requires a range of
 	revision like START..END where the path to blame exists in
-	START.
+	START.  `git blame --reverse START` is taken as `git blame
+	--reverse START..HEAD` for convenience.
 
 -p::
 --porcelain::
