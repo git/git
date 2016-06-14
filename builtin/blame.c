@@ -2424,8 +2424,7 @@ static struct commit *find_single_final(struct rev_info *revs,
 		struct object *obj = revs->pending.objects[i].item;
 		if (obj->flags & UNINTERESTING)
 			continue;
-		while (obj->type == OBJ_TAG)
-			obj = deref_tag(obj, NULL, 0);
+		obj = deref_tag(obj, NULL, 0);
 		if (obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)
@@ -2495,8 +2494,7 @@ static char *prepare_initial(struct scoreboard *sb)
 		struct object *obj = revs->pending.objects[i].item;
 		if (!(obj->flags & UNINTERESTING))
 			continue;
-		while (obj->type == OBJ_TAG)
-			obj = deref_tag(obj, NULL, 0);
+		obj = deref_tag(obj, NULL, 0);
 		if (obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (sb->final)
