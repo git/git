@@ -2080,8 +2080,9 @@ class P4Submit(Command, P4UserMap):
                 sync.branch = self.branch
             sync.run([])
 
-            rebase = P4Rebase()
-            rebase.rebase()
+            if not gitConfigBool("core.bare"):
+                rebase = P4Rebase()
+                rebase.rebase()
 
         else:
             if len(applied) == 0:
