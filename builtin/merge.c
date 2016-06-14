@@ -1150,6 +1150,15 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 	return remoteheads;
 }
 
+static void no_commit_impossible(const char *message)
+{
+	if (!option_commit) {
+		warning("%s\n%s", _(message),
+			_("--no-commit is impossible"));
+		warning(_("In future versions of Git, this will become an error."));
+	}
+}
+
 int cmd_merge(int argc, const char **argv, const char *prefix)
 {
 	unsigned char result_tree[20];
@@ -1230,11 +1239,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (verbosity < 0)
 		show_diffstat = 0;
 
-	if (squash) {
-		if (fast_forward == FF_NO)
-			die(_("You cannot combine --squash with --no-ff."));
-		option_commit = 0;
-	}
+	if (squash && fast_forward == FF_NO)
+		die(_("You cannot combine --squash with --no-ff."));
 
 	if (!argc) {
 		if (default_to_upstream)
@@ -1380,6 +1386,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * If head can reach all the merge then we are up to date.
 		 * but first the most common case of merging one remote.
 		 */
+		no_commit_impossible(_("Already up-to-date"));
 		finish_up_to_date("Already up-to-date.");
 		goto done;
 	} else if (fast_forward != FF_NO && !remoteheads->next &&
@@ -1389,6 +1396,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		struct strbuf msg = STRBUF_INIT;
 		struct commit *commit;
 
+		no_commit_impossible(_("Fast-forward"));
 		if (verbosity >= 0) {
 			char from[GIT_SHA1_HEXSZ + 1], to[GIT_SHA1_HEXSZ + 1];
 			find_unique_abbrev_r(from, head_commit->object.oid.hash,
@@ -1423,10 +1431,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * We are not doing octopus and not fast-forward.  Need
 		 * a real merge.
 		 */
-	else if (!remoteheads->next && !common->next && option_commit) {
+	else if (!remoteheads->next && !common->next && option_commit && !squash) {
 		/*
 		 * We are not doing octopus, not fast-forward, and have
-		 * only one common.
+		 * only one common.  And we do want to create a new commit.
 		 */
 		refresh_cache(REFRESH_QUIET);
 		if (allow_trivial && fast_forward != FF_ONLY) {
@@ -1465,6 +1473,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			}
 		}
 		if (up_to_date) {
+			no_commit_impossible(_("Already up-to-date"));
 			finish_up_to_date("Already up-to-date. Yeeah!");
 			goto done;
 		}
@@ -1509,7 +1518,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		ret = try_merge_strategy(use_strategies[i]->name,
 					 common, remoteheads,
 					 head_commit);
-		if (!option_commit && !ret) {
+		if ((!option_commit || squash) && !ret) {
 			merge_was_ok = 1;
 			/*
 			 * This is necessary here just to avoid writing
