@@ -398,6 +398,7 @@ extern void free_name_hash(struct index_state *istate);
 #define unmerge_cache_entry_at(at) unmerge_index_entry_at(&the_index, at)
 #define unmerge_cache(pathspec) unmerge_index(&the_index, pathspec)
 #define read_blob_data_from_cache(path, sz) read_blob_data_from_index(&the_index, (path), (sz))
+#define get_sha1_from_cache(path)  get_sha1_from_index (&the_index, (path))
 #endif
 
 enum object_type {
@@ -626,6 +627,7 @@ extern int ie_modified(const struct index_state *, const struct cache_entry *, s
 
 #define HASH_WRITE_OBJECT 1
 #define HASH_FORMAT_CHECK 2
+#define HASH_USE_SHA_NOT_PATH 4
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, unsigned flags);
 
@@ -1077,6 +1079,8 @@ static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *
 {
 	return read_sha1_file_extended(sha1, type, size, LOOKUP_REPLACE_OBJECT);
 }
+
+const unsigned char *get_sha1_from_index(struct index_state *istate, const char *path);
 
 /*
  * This internal function is only declared here for the benefit of
