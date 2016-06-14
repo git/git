@@ -1100,6 +1100,7 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 	struct ref_entry *last = NULL;
 	struct strbuf line = STRBUF_INIT;
 	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
+	uint64_t start = getnanotime();
 
 	while (strbuf_getwholeline(&line, f, '\n') != EOF) {
 		unsigned char sha1[20];
@@ -1148,6 +1149,7 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 	}
 
 	strbuf_release(&line);
+	trace_performance_since(start, "read packed refs");
 }
 
 /*
