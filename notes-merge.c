@@ -41,14 +41,14 @@ static int verify_notes_filepair(struct diff_filepair *p, unsigned char *sha1)
 	switch (p->status) {
 	case DIFF_STATUS_MODIFIED:
 		assert(p->one->mode == p->two->mode);
-		assert(!is_null_sha1(p->one->sha1));
-		assert(!is_null_sha1(p->two->sha1));
+		assert(!is_null_oid(&p->one->oid));
+		assert(!is_null_oid(&p->two->oid));
 		break;
 	case DIFF_STATUS_ADDED:
-		assert(is_null_sha1(p->one->sha1));
+		assert(is_null_oid(&p->one->oid));
 		break;
 	case DIFF_STATUS_DELETED:
-		assert(is_null_sha1(p->two->sha1));
+		assert(is_null_oid(&p->two->oid));
 		break;
 	default:
 		return -1;
@@ -142,27 +142,27 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 		if (verify_notes_filepair(p, obj)) {
 			trace_printf("\t\tCannot merge entry '%s' (%c): "
 			       "%.7s -> %.7s. Skipping!\n", p->one->path,
-			       p->status, sha1_to_hex(p->one->sha1),
-			       sha1_to_hex(p->two->sha1));
+			       p->status, oid_to_hex(&p->one->oid),
+			       oid_to_hex(&p->two->oid));
 			continue;
 		}
 		mp = find_notes_merge_pair_pos(changes, len, obj, 1, &occupied);
 		if (occupied) {
 			/* We've found an addition/deletion pair */
 			assert(!hashcmp(mp->obj, obj));
-			if (is_null_sha1(p->one->sha1)) { /* addition */
+			if (is_null_oid(&p->one->oid)) { /* addition */
 				assert(is_null_sha1(mp->remote));
-				hashcpy(mp->remote, p->two->sha1);
-			} else if (is_null_sha1(p->two->sha1)) { /* deletion */
+				hashcpy(mp->remote, p->two->oid.hash);
+			} else if (is_null_oid(&p->two->oid)) { /* deletion */
 				assert(is_null_sha1(mp->base));
-				hashcpy(mp->base, p->one->sha1);
+				hashcpy(mp->base, p->one->oid.hash);
 			} else
 				assert(!"Invalid existing change recorded");
 		} else {
 			hashcpy(mp->obj, obj);
-			hashcpy(mp->base, p->one->sha1);
+			hashcpy(mp->base, p->one->oid.hash);
 			hashcpy(mp->local, uninitialized);
-			hashcpy(mp->remote, p->two->sha1);
+			hashcpy(mp->remote, p->two->oid.hash);
 			len++;
 		}
 		trace_printf("\t\tStored remote change for %s: %.7s -> %.7s\n",
@@ -203,21 +203,21 @@ static void diff_tree_local(struct notes_merge_options *o,
 		if (verify_notes_filepair(p, obj)) {
 			trace_printf("\t\tCannot merge entry '%s' (%c): "
 			       "%.7s -> %.7s. Skipping!\n", p->one->path,
-			       p->status, sha1_to_hex(p->one->sha1),
-			       sha1_to_hex(p->two->sha1));
+			       p->status, oid_to_hex(&p->one->oid),
+			       oid_to_hex(&p->two->oid));
 			continue;
 		}
 		mp = find_notes_merge_pair_pos(changes, len, obj, 0, &match);
 		if (!match) {
 			trace_printf("\t\tIgnoring local-only change for %s: "
 			       "%.7s -> %.7s\n", sha1_to_hex(obj),
-			       sha1_to_hex(p->one->sha1),
-			       sha1_to_hex(p->two->sha1));
+			       oid_to_hex(&p->one->oid),
+			       oid_to_hex(&p->two->oid));
 			continue;
 		}
 
 		assert(!hashcmp(mp->obj, obj));
-		if (is_null_sha1(p->two->sha1)) { /* deletion */
+		if (is_null_oid(&p->two->oid)) { /* deletion */
 			/*
 			 * Either this is a true deletion (1), or it is part
 			 * of an A/D pair (2), or D/A pair (3):
@@ -229,7 +229,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 			 */
 			if (!hashcmp(mp->local, uninitialized))
 				hashclr(mp->local);
-		} else if (is_null_sha1(p->one->sha1)) { /* addition */
+		} else if (is_null_oid(&p->one->oid)) { /* addition */
 			/*
 			 * Either this is a true addition (1), or it is part
 			 * of an A/D pair (2), or D/A pair (3):
@@ -240,16 +240,16 @@ static void diff_tree_local(struct notes_merge_options *o,
 			 */
 			assert(is_null_sha1(mp->local) ||
 			       !hashcmp(mp->local, uninitialized));
-			hashcpy(mp->local, p->two->sha1);
+			hashcpy(mp->local, p->two->oid.hash);
 		} else { /* modification */
 			/*
 			 * This is a true modification. p->one->sha1 shall
 			 * match mp->base, and mp->local shall be uninitialized.
 			 * Set mp->local to p->two->sha1.
 			 */
-			assert(!hashcmp(p->one->sha1, mp->base));
+			assert(!hashcmp(p->one->oid.hash, mp->base));
 			assert(!hashcmp(mp->local, uninitialized));
-			hashcpy(mp->local, p->two->sha1);
+			hashcpy(mp->local, p->two->oid.hash);
 		}
 		trace_printf("\t\tStored local change for %s: %.7s -> %.7s\n",
 		       sha1_to_hex(mp->obj), sha1_to_hex(mp->base),
