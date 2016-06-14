@@ -181,4 +181,19 @@ test_expect_success 'up-to-date merge without common ancestor' '
 	)
 '
 
+test_expect_success 'custom merge does not lock index' '
+	git reset --hard anchor &&
+
+	write_script sleep-one-second.sh <<-\EOF &&
+		sleep 1 &
+	EOF
+
+	printf "* merge=ours\ntext merge=sleep-one-second\n" >.gitattributes &&
+
+	git config merge.ours.driver "true" &&
+	git config merge.sleep-one-second.driver "./sleep-one-second.sh" &&
+
+	git merge master
+'
+
 test_done
