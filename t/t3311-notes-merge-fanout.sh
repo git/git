@@ -135,13 +135,13 @@ test_expect_success 'No-op merge (already included) (x => y)' '
 	git update-ref refs/notes/m refs/notes/y &&
 	git config core.notesRef refs/notes/m &&
 	git notes merge x &&
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/y)"
+	test_cmp_rev refs/notes/m refs/notes/y
 '
 
 test_expect_success 'Fast-forward merge (y => x)' '
 	git update-ref refs/notes/m refs/notes/x &&
 	git notes merge y &&
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/y)"
+	test_cmp_rev refs/notes/m refs/notes/y
 '
 
 cat <<EOF | sort >expect_notes_z
@@ -394,7 +394,7 @@ test_expect_success 'verify conflict entries (with no fanout)' '
 		exit 1
 	done ) &&
 	# Verify that current notes tree (pre-merge) has not changed (m == w)
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)"
+	test_cmp_rev refs/notes/m refs/notes/w
 '
 
 cat >expect_log_m <<EOF

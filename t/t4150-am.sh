@@ -209,8 +209,8 @@ test_expect_success 'am applies patch correctly' '
 	git am <patch1 &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am fails if index is dirty' '
@@ -232,8 +232,8 @@ test_expect_success 'am applies patch e-mail not in a mbox' '
 	git am patch1.eml &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
@@ -243,8 +243,8 @@ test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
 	git am patch1-crlf.eml &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies patch e-mail with preceding whitespace' '
@@ -254,8 +254,8 @@ test_expect_success 'am applies patch e-mail with preceding whitespace' '
 	git am patch1-ws.eml &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies stgit patch' '
@@ -456,7 +456,7 @@ test_expect_success 'am changes committer and keeps author' '
 	git checkout first &&
 	git am patch2 &&
 	test_path_is_missing .git/rebase-apply &&
-	test "$(git rev-parse master^^)" = "$(git rev-parse HEAD^^)" &&
+	test_cmp_rev master^^ HEAD^^ &&
 	git diff --exit-code master..HEAD &&
 	git diff --exit-code master^..HEAD^ &&
 	compare author master HEAD &&
@@ -955,6 +955,26 @@ test_expect_success 'am -s unexpected trailer block' '
 	) >expect &&
 	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	echo mboxrd >>file &&
+	git add file &&
+	cat >msg <<-\INPUT_END &&
+	mboxrd should escape the body
+
+	From could trip up a loose mbox parser
+	>From extra escape for reversibility
+	INPUT_END
+	git commit -F msg &&
+	git format-patch --pretty=mboxrd --stdout -1 >mboxrd1 &&
+	grep "^>From could trip up a loose mbox parser" mboxrd1 &&
+	git checkout -f first &&
+	git am --patch-format=mboxrd mboxrd1 &&
+	git cat-file commit HEAD | tail -n4 >out &&
+	test_cmp msg out
 '
 
 test_done

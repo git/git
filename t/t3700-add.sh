@@ -332,4 +332,34 @@ test_expect_success 'git add --dry-run --ignore-missing of non-existing file out
 	test_i18ncmp expect.err actual.err
 '
 
+test_expect_success 'git add --chmod=+x stages a non-executable file with +x' '
+	echo foo >foo1 &&
+	git add --chmod=+x foo1 &&
+	case "$(git ls-files --stage foo1)" in
+	100755" "*foo1) echo pass;;
+	*) echo fail; git ls-files --stage foo1; (exit 1);;
+	esac
+'
+
+test_expect_success 'git add --chmod=-x stages an executable file with -x' '
+	echo foo >xfoo1 &&
+	chmod 755 xfoo1 &&
+	git add --chmod=-x xfoo1 &&
+	case "$(git ls-files --stage xfoo1)" in
+	100644" "*xfoo1) echo pass;;
+	*) echo fail; git ls-files --stage xfoo1; (exit 1);;
+	esac
+'
+
+test_expect_success POSIXPERM,SYMLINKS 'git add --chmod=+x with symlinks' '
+	git config core.filemode 1 &&
+	git config core.symlinks 1 &&
+	echo foo >foo2 &&
+	git add --chmod=+x foo2 &&
+	case "$(git ls-files --stage foo2)" in
+	100755" "*foo2) echo pass;;
+	*) echo fail; git ls-files --stage foo2; (exit 1);;
+	esac
+'
+
 test_done

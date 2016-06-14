@@ -57,8 +57,8 @@ static int should_break(struct diff_filespec *src,
 		return 1; /* even their types are different */
 	}
 
-	if (src->sha1_valid && dst->sha1_valid &&
-	    !hashcmp(src->sha1, dst->sha1))
+	if (src->oid_valid && dst->oid_valid &&
+	    !oidcmp(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 
 	if (diff_populate_filespec(src, 0) || diff_populate_filespec(dst, 0))
@@ -167,6 +167,7 @@ void diffcore_break(int break_score)
 
 	DIFF_QUEUE_CLEAR(&outq);
 
+	diff_debug_queue("begin breaking", q);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		int score;
@@ -221,6 +222,7 @@ void diffcore_break(int break_score)
 	free(q->queue);
 	*q = outq;
 
+	diff_debug_queue("end breaking", q);
 	return;
 }
 
@@ -267,6 +269,7 @@ void diffcore_merge_broken(void)
 
 	DIFF_QUEUE_CLEAR(&outq);
 
+	diff_debug_queue("begin merge broken", q);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		if (!p)
@@ -299,6 +302,7 @@ void diffcore_merge_broken(void)
 	}
 	free(q->queue);
 	*q = outq;
+	diff_debug_queue("end merge broken", q);
 
 	return;
 }

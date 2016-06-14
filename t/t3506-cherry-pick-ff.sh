@@ -24,7 +24,7 @@ test_expect_success 'cherry-pick using --ff fast forwards' '
 	git reset --hard first &&
 	test_tick &&
 	git cherry-pick --ff second &&
-	test "$(git rev-parse --verify HEAD)" = "$(git rev-parse --verify second)"
+	test_cmp_rev HEAD second
 '
 
 test_expect_success 'cherry-pick not using --ff does not fast forwards' '
@@ -80,14 +80,14 @@ test_expect_success 'cherry pick with --ff a merge (1)' '
 	git reset --hard A -- &&
 	git cherry-pick --ff -m 1 C &&
 	git diff --exit-code C &&
-	test "$(git rev-parse --verify HEAD)" = "$(git rev-parse --verify C)"
+	test_cmp_rev HEAD C
 '
 
 test_expect_success 'cherry pick with --ff a merge (2)' '
 	git reset --hard B -- &&
 	git cherry-pick --ff -m 2 C &&
 	git diff --exit-code C &&
-	test "$(git rev-parse --verify HEAD)" = "$(git rev-parse --verify C)"
+	test_cmp_rev HEAD C
 '
 
 test_expect_success 'cherry pick a merge relative to nonexistent parent with --ff should fail' '

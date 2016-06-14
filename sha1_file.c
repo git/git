@@ -1224,7 +1224,9 @@ void (*report_garbage)(unsigned seen_bits, const char *path);
 static void report_helper(const struct string_list *list,
 			  int seen_bits, int first, int last)
 {
-	if (seen_bits == (PACKDIR_FILE_PACK|PACKDIR_FILE_IDX))
+	static const int pack_and_index = PACKDIR_FILE_PACK|PACKDIR_FILE_IDX;
+
+	if ((seen_bits & pack_and_index) == pack_and_index)
 		return;
 
 	for (; first < last; first++)
@@ -1258,9 +1260,13 @@ static void report_pack_garbage(struct string_list *list)
 			first = i;
 		}
 		if (!strcmp(path + baselen, "pack"))
-			seen_bits |= 1;
+			seen_bits |= PACKDIR_FILE_PACK;
 		else if (!strcmp(path + baselen, "idx"))
-			seen_bits |= 2;
+			seen_bits |= PACKDIR_FILE_IDX;
+		else if (!strcmp(path + baselen, "bitmap"))
+			seen_bits |= PACKDIR_FILE_BITMAP;
+		else if (!strcmp(path + baselen, "keep"))
+			seen_bits |= PACKDIR_FILE_KEEP;
 	}
 	report_helper(list, seen_bits, first, list->nr);
 }
@@ -3273,6 +3279,7 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 {
 	int ret, re_allocated = 0;
 	int write_object = flags & HASH_WRITE_OBJECT;
+	const int valid_sha1 = flags & HASH_USE_SHA_NOT_PATH;
 
 	if (!type)
 		type = OBJ_BLOB;
@@ -3283,7 +3290,8 @@ static int index_mem(unsigned char *sha1, void *buf, size_t size,
 	if ((type == OBJ_BLOB) && path) {
 		struct strbuf nbuf = STRBUF_INIT;
 		if (convert_to_git(path, buf, size, &nbuf,
-				   write_object ? safe_crlf : SAFE_CRLF_FALSE)) {
+				   write_object ? safe_crlf : SAFE_CRLF_FALSE,
+				   valid_sha1 ? sha1 : NULL)) {
 			buf = strbuf_detach(&nbuf, &size);
 			re_allocated = 1;
 		}
@@ -3311,13 +3319,15 @@ static int index_stream_convert_blob(unsigned char *sha1, int fd,
 {
 	int ret;
 	const int write_object = flags & HASH_WRITE_OBJECT;
+	const int valid_sha1 = flags & HASH_USE_SHA_NOT_PATH;
 	struct strbuf sbuf = STRBUF_INIT;
 
 	assert(path);
 	assert(would_convert_to_git_filter_fd(path));
 
 	convert_to_git_filter_fd(path, fd, &sbuf,
-				 write_object ? safe_crlf : SAFE_CRLF_FALSE);
+				 write_object ? safe_crlf : SAFE_CRLF_FALSE,
+				 valid_sha1 ? sha1 : NULL);
 
 	if (write_object)
 		ret = write_sha1_file(sbuf.buf, sbuf.len, typename(OBJ_BLOB),
@@ -3394,6 +3404,8 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st,
 	     enum object_type type, const char *path, unsigned flags)
 {
 	int ret;
+	const unsigned char *sha1_ce;
+	sha1_ce = flags & HASH_USE_SHA_NOT_PATH ? sha1 : NULL;
 
 	/*
 	 * Call xsize_t() only when needed to avoid potentially unnecessary
@@ -3404,7 +3416,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st,
 	else if (!S_ISREG(st->st_mode))
 		ret = index_pipe(sha1, fd, type, path, flags);
 	else if (st->st_size <= big_file_threshold || type != OBJ_BLOB ||
-		 (path && would_convert_to_git(path)))
+		 (path && would_convert_to_git(path,sha1_ce)))
 		ret = index_core(sha1, fd, xsize_t(st->st_size), type, path,
 				 flags);
 	else

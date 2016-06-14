@@ -61,8 +61,8 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 	test 2 = $(git ls-files -u | wc -l) &&
 	test 2 = $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
-	test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
+	test_cmp_rev :2:three L2:three &&
+	test_cmp_rev :3:three R2:three &&
 
 	test $(git rev-parse L2:three) = $(git hash-object three~HEAD) &&
 	test $(git rev-parse R2:three) = $(git hash-object three~R2^0)
@@ -128,8 +128,8 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 	test 2 = $(git ls-files -u | wc -l) &&
 	test 2 = $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :2:three) = $(git rev-parse L2:three) &&
-	test $(git rev-parse :3:three) = $(git rev-parse R2:three) &&
+	test_cmp_rev :2:three L2:three &&
+	test_cmp_rev :3:three R2:three &&
 
 	test $(git rev-parse L2:three) = $(git hash-object three~HEAD) &&
 	test $(git rev-parse R2:three) = $(git hash-object three~R2^0)
@@ -201,8 +201,8 @@ test_expect_success 'git detects differently handled merges conflict' '
 	test 3 = $(git ls-files -u | wc -l) &&
 	test 0 = $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :2:new_a) = $(git rev-parse D:new_a) &&
-	test $(git rev-parse :3:new_a) = $(git rev-parse E:new_a) &&
+	test_cmp_rev :2:new_a D:new_a &&
+	test_cmp_rev :3:new_a E:new_a &&
 
 	git cat-file -p B:new_a >>merged &&
 	git cat-file -p C:new_a >>merge-me &&
@@ -282,8 +282,8 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete' '
 	test 2 -eq $(git ls-files -s | wc -l) &&
 	test 2 -eq $(git ls-files -u | wc -l) &&
 
-	test $(git rev-parse :1:file) = $(git rev-parse master:file) &&
-	test $(git rev-parse :2:file) = $(git rev-parse B:file)
+	test_cmp_rev :1:file master:file &&
+	test_cmp_rev :2:file B:file
 '
 
 test_expect_success 'git detects conflict merging criss-cross+modify/delete, reverse direction' '
@@ -295,8 +295,8 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 	test 2 -eq $(git ls-files -s | wc -l) &&
 	test 2 -eq $(git ls-files -u | wc -l) &&
 
-	test $(git rev-parse :1:file) = $(git rev-parse master:file) &&
-	test $(git rev-parse :3:file) = $(git rev-parse B:file)
+	test_cmp_rev :1:file master:file &&
+	test_cmp_rev :3:file B:file
 '
 
 #
@@ -401,8 +401,8 @@ test_expect_success 'merge of D & E1 fails but has appropriate contents' '
 	test 1 -eq $(git ls-files -u | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
-	test $(git rev-parse :2:a) = $(git rev-parse B:a)
+	test_cmp_rev :0:ignore-me A:ignore-me &&
+	test_cmp_rev :2:a B:a
 '
 
 test_expect_success 'merge of E1 & D fails but has appropriate contents' '
@@ -414,8 +414,8 @@ test_expect_success 'merge of E1 & D fails but has appropriate contents' '
 	test 1 -eq $(git ls-files -u | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
-	test $(git rev-parse :3:a) = $(git rev-parse B:a)
+	test_cmp_rev :0:ignore-me A:ignore-me &&
+	test_cmp_rev :3:a B:a
 '
 
 test_expect_success 'merge of D & E2 fails but has appropriate contents' '
@@ -427,10 +427,10 @@ test_expect_success 'merge of D & E2 fails but has appropriate contents' '
 	test 3 -eq $(git ls-files -u | wc -l) &&
 	test 1 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :2:a) = $(git rev-parse B:a) &&
-	test $(git rev-parse :3:a/file) = $(git rev-parse E2:a/file) &&
-	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
-	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+	test_cmp_rev :2:a B:a &&
+	test_cmp_rev :3:a/file E2:a/file &&
+	test_cmp_rev :1:a/file C:a/file &&
+	test_cmp_rev :0:ignore-me A:ignore-me &&
 
 	test -f a~HEAD
 '
@@ -444,10 +444,10 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 	test 3 -eq $(git ls-files -u | wc -l) &&
 	test 1 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse :3:a) = $(git rev-parse B:a) &&
-	test $(git rev-parse :2:a/file) = $(git rev-parse E2:a/file) &&
-	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
-	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
+	test_cmp_rev :3:a B:a &&
+	test_cmp_rev :2:a/file E2:a/file &&
+	test_cmp_rev :1:a/file C:a/file &&
+	test_cmp_rev :0:ignore-me A:ignore-me &&
 
 	test -f a~D^0
 '
@@ -537,7 +537,7 @@ test_expect_success 'handle rename/rename(1to2)/modify followed by what looks li
 	test 0 -eq $(git ls-files -u | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse HEAD:newname) = $(git rev-parse E:newname)
+	test_cmp_rev HEAD:newname E:newname
 '
 
 #
@@ -612,8 +612,8 @@ test_expect_failure 'detect rename/rename/add-source for virtual merge-base' '
 	test 0 -eq $(git ls-files -u | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse HEAD:b) = $(git rev-parse A:a) &&
-	test $(git rev-parse HEAD:c) = $(git rev-parse A:a) &&
+	test_cmp_rev HEAD:b A:a &&
+	test_cmp_rev HEAD:c A:a &&
 	test "$(cat a)" = "$(printf "1\n2\n3\n4\n5\n6\n7\n8\n")"
 '
 
@@ -682,8 +682,8 @@ test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 	test 0 -eq $(git ls-files -u | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
 
-	test $(git rev-parse HEAD:a) = $(git rev-parse A:a) &&
-	test $(git rev-parse HEAD:c) = $(git rev-parse E:c)
+	test_cmp_rev HEAD:a A:a &&
+	test_cmp_rev HEAD:c E:c
 '
 
 test_done

@@ -46,11 +46,10 @@ test_expect_success 'setup' '
 test_expect_success 'merge c1 with c2, c3, c4, c5' '
 	git reset --hard c1 &&
 	git merge c2 c3 c4 c5 &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD^1)" &&
-	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
-	test "$(git rev-parse c3)" = "$(git rev-parse HEAD^3)" &&
-	test "$(git rev-parse c5)" = "$(git rev-parse HEAD^4)" &&
+	test_cmp_rev c1 HEAD^1 &&
+	test_cmp_rev c2 HEAD^2 &&
+	test_cmp_rev c3 HEAD^3 &&
+	test_cmp_rev c5 HEAD^4 &&
 	git diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&
@@ -69,11 +68,10 @@ test_expect_success 'merge c1 with c2, c3, c4, c5' '
 test_expect_success 'pull c2, c3, c4, c5 into c1' '
 	git reset --hard c1 &&
 	git pull . c2 c3 c4 c5 &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD^1)" &&
-	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
-	test "$(git rev-parse c3)" = "$(git rev-parse HEAD^3)" &&
-	test "$(git rev-parse c5)" = "$(git rev-parse HEAD^4)" &&
+	test_cmp_rev c1 HEAD^1 &&
+	test_cmp_rev c2 HEAD^2 &&
+	test_cmp_rev c3 HEAD^3 &&
+	test_cmp_rev c5 HEAD^4 &&
 	git diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&
@@ -113,8 +111,8 @@ test_expect_success 'merge E and I' '
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD^1) = $(git rev-parse E) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse I)
+	test_cmp_rev HEAD^1 E &&
+	test_cmp_rev HEAD^2 I
 '
 
 test_expect_success 'add conflicts' '
@@ -139,8 +137,8 @@ test_expect_success 'merge E2 and I2, causing a conflict and resolve it' '
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD^1) = $(git rev-parse E2) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse I2)
+	test_cmp_rev HEAD^1 E2 &&
+	test_cmp_rev HEAD^2 I2
 '
 
 test_expect_success 'fast-forward to redundant refs' '
@@ -149,7 +147,7 @@ test_expect_success 'fast-forward to redundant refs' '
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD) = $(git rev-parse c5)
+	test_cmp_rev HEAD c5
 '
 
 test_expect_success 'merge up-to-date redundant refs' '
@@ -158,7 +156,7 @@ test_expect_success 'merge up-to-date redundant refs' '
 '
 
 test_expect_success 'verify merge result' '
-	test $(git rev-parse HEAD) = $(git rev-parse c5)
+	test_cmp_rev HEAD c5
 '
 
 test_done

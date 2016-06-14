@@ -19,7 +19,7 @@
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern satisfies GFNM_ONESTAR */
 
 struct pathspec {
-	const char **_raw; /* get_pathspec() result, not freed by free_pathspec() */
+	const char **_raw; /* get_pathspec() result, not freed by clear_pathspec() */
 	int nr;
 	unsigned int has_wildcard:1;
 	unsigned int recursive:1;
@@ -32,6 +32,22 @@ struct pathspec {
 		int len, prefix;
 		int nowildcard_len;
 		int flags;
+		int attr_match_nr;
+		int attr_match_alloc;
+		struct attr_match {
+			struct git_attr *attr;
+			char *value;
+			enum attr_match_mode {
+				MATCH_SET,
+				MATCH_UNSET,
+				MATCH_VALUE,
+				MATCH_UNSPECIFIED,
+				MATCH_NOT_UNSPECIFIED,
+				MATCH_SET_OR_VALUE,
+				INVALID_ATTR
+			} match_mode;
+		} *attr_match;
+		struct git_attr_check *attr_check;
 	} *items;
 };
 
@@ -74,7 +90,7 @@ extern void parse_pathspec(struct pathspec *pathspec,
 			   const char *prefix,
 			   const char **args);
 extern void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
-extern void free_pathspec(struct pathspec *);
+extern void clear_pathspec(struct pathspec *);
 
 static inline int ps_strncmp(const struct pathspec_item *item,
 			     const char *s1, const char *s2, size_t n)
@@ -98,5 +114,7 @@ extern char *find_pathspecs_matching_against_index(const struct pathspec *pathsp
 extern void add_pathspec_matches_against_index(const struct pathspec *pathspec, char *seen);
 extern const char *check_path_for_gitlink(const char *path);
 extern void die_if_path_beyond_symlink(const char *path, const char *prefix);
+
+extern int pathspec_is_non_threadable(const struct pathspec *);
 
 #endif /* PATHSPEC_H */

@@ -18,6 +18,8 @@
 #	endif
 #endif
 
+static const char *charset;
+
 /*
  * Guess the user's preferred languages from the value in LANGUAGE environment
  * variable and LC_MESSAGES locale category if NO_GETTEXT is not defined.
@@ -65,7 +67,6 @@ static int test_vsnprintf(const char *fmt, ...)
 	return ret;
 }
 
-static const char *charset;
 static void init_gettext_charset(const char *domain)
 {
 	/*
@@ -172,8 +173,27 @@ int gettext_width(const char *s)
 {
 	static int is_utf8 = -1;
 	if (is_utf8 == -1)
-		is_utf8 = !strcmp(charset, "UTF-8");
+		is_utf8 = is_utf8_locale();
 
 	return is_utf8 ? utf8_strwidth(s) : strlen(s);
 }
 #endif
+
+int is_utf8_locale(void)
+{
+#ifdef NO_GETTEXT
+	if (!charset) {
+		const char *env = getenv("LC_ALL");
+		if (!env || !*env)
+			env = getenv("LC_CTYPE");
+		if (!env || !*env)
+			env = getenv("LANG");
+		if (!env)
+			env = "";
+		if (strchr(env, '.'))
+			env = strchr(env, '.') + 1;
+		charset = xstrdup(env);
+	}
+#endif
+	return is_encoding_utf8(charset);
+}

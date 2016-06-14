@@ -111,4 +111,35 @@ test_expect_success 'mailinfo on message with quoted >From' '
 	test_cmp "$TEST_DIRECTORY"/t5100/quoted-from.expect quoted-from/msg
 '
 
+test_expect_success 'mailinfo unescapes with --mboxrd' '
+	mkdir mboxrd &&
+	git mailsplit -omboxrd --mboxrd \
+		"$TEST_DIRECTORY"/t5100/sample.mboxrd >last &&
+	test x"$(cat last)" = x2 &&
+	for i in 0001 0002
+	do
+		git mailinfo mboxrd/msg mboxrd/patch \
+		  <mboxrd/$i >mboxrd/out &&
+		test_cmp "$TEST_DIRECTORY"/t5100/${i}mboxrd mboxrd/msg
+	done &&
+	sp=" " &&
+	echo "From " >expect &&
+	echo "From " >>expect &&
+	echo >> expect &&
+	cat >sp <<-INPUT_END &&
+	From mboxrd Mon Sep 17 00:00:00 2001
+	From: trailing spacer <sp@example.com>
+	Subject: [PATCH] a commit with trailing space
+
+	From$sp
+	>From$sp
+
+	INPUT_END
+
+	git mailsplit -f2 -omboxrd --mboxrd <sp >last &&
+	test x"$(cat last)" = x1 &&
+	git mailinfo mboxrd/msg mboxrd/patch <mboxrd/0003 &&
+	test_cmp expect mboxrd/msg
+'
+
 test_done

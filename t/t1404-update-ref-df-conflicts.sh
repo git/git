@@ -28,7 +28,9 @@ Q="'"
 test_expect_success 'setup' '
 
 	git commit --allow-empty -m Initial &&
-	C=$(git rev-parse HEAD)
+	C=$(git rev-parse HEAD) &&
+	git commit --allow-empty -m Second &&
+	D=$(git rev-parse HEAD)
 
 '
 
@@ -102,6 +104,78 @@ test_expect_success 'one new ref is a simple prefix of another' '
 	test_update_rejected $prefix "a e" false "b c c/x d" \
 		"cannot process $Q$prefix/c$Q and $Q$prefix/c/x$Q at the same time"
 
+'
+
+test_expect_success 'empty directory should not fool rev-parse' '
+	prefix=refs/e-rev-parse &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	echo "$C" >expected &&
+	git rev-parse $prefix/foo >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'empty directory should not fool for-each-ref' '
+	prefix=refs/e-for-each-ref &&
+	git update-ref $prefix/foo $C &&
+	git for-each-ref $prefix >expected &&
+	git pack-refs --all &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	git for-each-ref $prefix >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'empty directory should not fool create' '
+	prefix=refs/e-create &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	printf "create %s $C\n" $prefix/foo |
+	git update-ref --stdin
+'
+
+test_expect_success 'empty directory should not fool verify' '
+	prefix=refs/e-verify &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	printf "verify %s $C\n" $prefix/foo |
+	git update-ref --stdin
+'
+
+test_expect_success 'empty directory should not fool 1-arg update' '
+	prefix=refs/e-update-1 &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	printf "update %s $D\n" $prefix/foo |
+	git update-ref --stdin
+'
+
+test_expect_success 'empty directory should not fool 2-arg update' '
+	prefix=refs/e-update-2 &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	printf "update %s $D $C\n" $prefix/foo |
+	git update-ref --stdin
+'
+
+test_expect_success 'empty directory should not fool 0-arg delete' '
+	prefix=refs/e-delete-0 &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	printf "delete %s\n" $prefix/foo |
+	git update-ref --stdin
+'
+
+test_expect_success 'empty directory should not fool 1-arg delete' '
+	prefix=refs/e-delete-1 &&
+	git update-ref $prefix/foo $C &&
+	git pack-refs --all &&
+	mkdir -p .git/$prefix/foo/bar/baz &&
+	printf "delete %s $C\n" $prefix/foo |
+	git update-ref --stdin
 '
 
 test_done

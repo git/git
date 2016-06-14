@@ -5,13 +5,10 @@
 # Resolve two or more trees.
 #
 
+. git-sh-setup
+
 LF='
 '
-
-die () {
-    echo >&2 "$*"
-    exit 1
-}
 
 # The first parameters up to -- are merge bases; the rest are heads.
 bases= head= remotes= sep_seen=
@@ -46,7 +43,7 @@ esac
 
 if ! git diff-index --quiet --cached HEAD --
 then
-    echo "Error: Your local changes to the following files would be overwritten by merge"
+    gettextln "Error: Your local changes to the following files would be overwritten by merge"
     git diff-index --cached --name-only HEAD -- | sed -e 's/^/    /'
     exit 2
 fi
@@ -61,8 +58,8 @@ do
 		# We allow only last one to have a hand-resolvable
 		# conflicts.  Last round failed and we still had
 		# a head to merge.
-		echo "Automated merge did not work."
-		echo "Should not be doing an Octopus."
+		gettextln "Automated merge did not work."
+		gettextln "Should not be doing an Octopus."
 		exit 2
 	esac
 
@@ -73,11 +70,11 @@ do
 		eval pretty_name=\${GITHEAD_$SHA1_UP:-$pretty_name}
 	fi
 	common=$(git merge-base --all $SHA1 $MRC) ||
-		die "Unable to find common commit with $pretty_name"
+		die "$(eval_gettext "Unable to find common commit with \$pretty_name")"
 
 	case "$LF$common$LF" in
 	*"$LF$SHA1$LF"*)
-		echo "Already up-to-date with $pretty_name"
+		eval_gettextln "Already up-to-date with \$pretty_name"
 		continue
 		;;
 	esac
@@ -89,7 +86,7 @@ do
 		# tree as the intermediate result of the merge.
 		# We still need to count this as part of the parent set.
 
-		echo "Fast-forwarding to: $pretty_name"
+		eval_gettextln "Fast-forwarding to: \$pretty_name"
 		git read-tree -u -m $head $SHA1 || exit
 		MRC=$SHA1 MRT=$(git write-tree)
 		continue
@@ -97,12 +94,12 @@ do
 
 	NON_FF_MERGE=1
 
-	echo "Trying simple merge with $pretty_name"
+	eval_gettextln "Trying simple merge with \$pretty_name"
 	git read-tree -u -m --aggressive  $common $MRT $SHA1 || exit 2
 	next=$(git write-tree 2>/dev/null)
 	if test $? -ne 0
 	then
-		echo "Simple merge did not work, trying automatic merge."
+		gettextln "Simple merge did not work, trying automatic merge."
 		git-merge-index -o git-merge-one-file -a ||
 		OCTOPUS_FAILURE=1
 		next=$(git write-tree 2>/dev/null)

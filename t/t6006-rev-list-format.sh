@@ -184,43 +184,55 @@ commit $head1
 [1;31;43mfoo[m
 EOF
 
-test_expect_success '%C(auto) does not enable color by default' '
+test_expect_success '%C(auto,...) does not enable color by default' '
 	git log --format=$AUTO_COLOR -1 >actual &&
 	has_no_color actual
 '
 
-test_expect_success '%C(auto) enables colors for color.diff' '
+test_expect_success '%C(auto,...) enables colors for color.diff' '
 	git -c color.diff=always log --format=$AUTO_COLOR -1 >actual &&
 	has_color actual
 '
 
-test_expect_success '%C(auto) enables colors for color.ui' '
+test_expect_success '%C(auto,...) enables colors for color.ui' '
 	git -c color.ui=always log --format=$AUTO_COLOR -1 >actual &&
 	has_color actual
 '
 
-test_expect_success '%C(auto) respects --color' '
+test_expect_success '%C(auto,...) respects --color' '
 	git log --format=$AUTO_COLOR -1 --color >actual &&
 	has_color actual
 '
 
-test_expect_success '%C(auto) respects --no-color' '
+test_expect_success '%C(auto,...) respects --no-color' '
 	git -c color.ui=always log --format=$AUTO_COLOR -1 --no-color >actual &&
 	has_no_color actual
 '
 
-test_expect_success TTY '%C(auto) respects --color=auto (stdout is tty)' '
+test_expect_success TTY '%C(auto,...) respects --color=auto (stdout is tty)' '
 	test_terminal env TERM=vt100 \
 		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
 	has_color actual
 '
 
-test_expect_success '%C(auto) respects --color=auto (stdout not tty)' '
+test_expect_success '%C(auto,...) respects --color=auto (stdout not tty)' '
 	(
 		TERM=vt100 && export TERM &&
 		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
 		has_no_color actual
 	)
+'
+
+test_expect_success '%C(auto) respects --color' '
+	git log --color --format="%C(auto)%H" -1 >actual &&
+	printf "\\033[33m%s\\033[m\\n" $(git rev-parse HEAD) >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '%C(auto) respects --no-color' '
+	git log --no-color --format="%C(auto)%H" -1 >actual &&
+	git rev-parse HEAD >expect &&
+	test_cmp expect actual
 '
 
 iconv -f utf-8 -t $test_encoding > commit-msg <<EOF
