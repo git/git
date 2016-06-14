@@ -49,6 +49,7 @@ int sequencer_make_script(int keep_empty, FILE *out,
 		int argc, const char **argv);
 
 int transform_todo_ids(int shorten_sha1s);
+int check_todo_list(void);
 
 extern const char sign_off_header[];
 
