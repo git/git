@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2016, #03; Thu, 9)
-X-master-at: 49fa3dc76179e04b0833542fa52d0f287a4955ac
-X-next-at: 3cd93d08f085fd56ac81614bd2e920c3b50eacec
+Subject: What's cooking in git.git (Jun 2016, #04; Tue, 14)
+X-master-at: 05219a1276341e72d8082d76b7f5ed394b7437a4
+X-next-at: 3dc84b0c19932ec9947ca4936b6bfd6421ccb1b4
 
-What's cooking in git.git (Jun 2016, #03; Thu, 9)
+What's cooking in git.git (Jun 2016, #04; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,15 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The tip of 'pu' is not expected to pass its own test suite, due to
-multiple broken topics queued near its tip. Earlier there was a talk
-about automatically bisecting breakage on 'pu', but tonight's
-pushout is a good illustration why that would not be very useful.
-What would be useful is (1) enumeration of commits on the first
-parent chain on master..pu, (2) test of the second parent of each of
-the commits found in (1), and (3) bisection between the broken
-commits in (2) and 'master', which would highlight broken topics and
-the commit(s) that might be responsible for each broken topic.
+Git 2.9 has been tagged.  Let's wait for a few days to clean up
+possible fallout and then start a new cycle by rewinding the tip of
+'next'.  I expect I'd eject a few premature topics out of 'next'
+while doing so.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -28,26 +23,137 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* jc/t2300-setup (2016-06-01) 1 commit
+  (merged to 'next' on 2016-06-06 at 20f7f83)
+ + t2300: run git-sh-setup in an environment that better mimics the real life
+ (this branch is used by va/i18n-even-more.)
+
+ A test fix.
+
+
+* jk/diff-compact-heuristic (2016-06-10) 1 commit
+ - diff: disable compaction heuristic for now
+
+ It turns out that the earlier effort to update the heuristics may
+ want to use a bit more time to mature.  Turn it off by default.
+
+
+* jk/shell-portability (2016-06-01) 2 commits
+  (merged to 'next' on 2016-06-06 at 5de784e)
+ + t5500 & t7403: lose bash-ism "local"
+ + test-lib: add in-shell "env" replacement
+
+ test fixes.
+
+--------------------------------------------------
 [New Topics]
 
-* jk/avoid-unbounded-alloca (2016-06-07) 1 commit
- - tree-diff: avoid alloca for large allocations
+* lv/status-say-working-tree-not-directory (2016-06-09) 1 commit
+ - Use "working tree" instead of "working directory" for git status
+
+ "git status" used to say "working directory" when it meant "working
+ tree".
 
  Will merge to 'next'.
 
 
-* jk/send-pack-stdio (2016-06-08) 1 commit
- - send-pack: use buffered I/O to talk to pack-objects
+* jk/parseopt-string-list (2016-06-13) 3 commits
+ - blame,shortlog: don't make local option variables static
+ - interpret-trailers: don't duplicate option strings
+ - parse_opt_string_list: stop allocating new strings
+ (this branch is used by jk/string-list-static-init.)
+
+ The command line argument parsing that uses OPT_STRING_LIST() often
+ made a copy of the argv[] element, which was unnecessary.
+
+ Will merge to 'next'.
+
+
+* jk/repack-keep-unreachable (2016-06-14) 3 commits
+ - repack: extend --keep-unreachable to loose objects
+ - repack: add --keep-unreachable option
+ - repack: document --unpack-unreachable option
+
+ "git repack" learned the "--keep-unreachable" option, which sends
+ loose unreachable objects to a pack instead of leaving them loose.
+ This helps heuristics based on the number of loose objects
+ (e.g. "gc --auto").
+
+ Will merge to 'next'.
+
+
+* lf/recv-sideband-cleanup (2016-06-13) 1 commit
+ - sideband.c: refactor recv_sideband()
+
+ Code simplification.  It however loses the atomicity of the output
+ 9ac13ec9 (atomic write for sideband remote messages, 2006-10-11)
+ tried to add to an once-much-simpler codebase.
+
+ Expecting a reroll.
+
+
+* nd/test-lib-httpd-show-error-log-in-verbose (2016-06-13) 1 commit
+ - lib-httpd.sh: print error.log on error
+
+ Debugging aid.
+
+ Will merge to 'next'.
+
+
+* pc/occurred (2016-06-10) 2 commits
+ - config.c: fix misspelt "occurred" in an error message
+ - refs.h: fix misspelt "occurred" in a comment
+
+ Will merge to 'next'.
+
+
+* sb/submodule-clone-retry (2016-06-13) 2 commits
+ - submodule update: continue when a clone fails
+ - submodule--helper: initial clone learns retry logic
+ (this branch uses sb/submodule-recommend-shallowness.)
+
+ "git submodule update" that drives many "git clone" could
+ eventually hit flaky servers/network conditions on one of the
+ submodules; the command learned to retry the attempt.
+
+
+* jc/blame-reverse (2016-06-14) 2 commits
+ - blame: dwim "blame --reverse OLD" as "blame --reverse OLD.."
+ - blame: improve diagnosis for "--reverse NEW"
+
+
+* jc/deref-tag (2016-06-14) 1 commit
+ - blame, line-log: do not loop around deref_tag()
 
  Code clean-up.
 
  Will merge to 'next'.
 
 
-* pb/commit-editmsg-path (2016-06-09) 1 commit
- - builtin/commit.c: memoize git-path for COMMIT_EDITMSG
+* jk/fetch-prune-doc (2016-06-14) 1 commit
+ - fetch: document that pruning happens before fetching
 
- Code clean-up.
+ Will merge to 'next'.
+
+
+* km/fetch-do-not-free-remote-name (2016-06-14) 1 commit
+ - builtin/fetch.c: don't free remote->name after fetch
+
+ Will merge to 'next'.
+
+
+* nb/gnome-keyring-build (2016-06-14) 1 commit
+ - gnome-keyring: Don't hard-code pkg-config executable
+
+ Build improvements for gnome-keyring (in contrib/)
+
+ Will merge to 'next'.
+
+
+* pb/strbuf-read-file-doc (2016-06-14) 1 commit
+ - strbuf: describe the return value of strbuf_read_file
 
  Will merge to 'next'.
 
@@ -83,45 +189,6 @@ of the repositories listed at
 
  Expecting a reroll.
  ($gmane/291163)
-
-
-* nd/shallow-deepen (2016-04-13) 26 commits
- - fetch, upload-pack: --deepen=N extends shallow boundary by N commits
- - upload-pack: add get_reachable_list()
- - upload-pack: split check_unreachable() in two, prep for get_reachable_list()
- - t5500, t5539: tests for shallow depth excluding a ref
- - clone: define shallow clone boundary with --shallow-exclude
- - fetch: define shallow boundary with --shallow-exclude
- - upload-pack: support define shallow boundary by excluding revisions
- - refs: add expand_ref()
- - t5500, t5539: tests for shallow depth since a specific date
- - clone: define shallow clone boundary based on time with --shallow-since
- - fetch: define shallow boundary with --shallow-since
- - upload-pack: add deepen-since to cut shallow repos based on time
- - shallow.c: implement a generic shallow boundary finder based on rev-list
- - fetch-pack: use a separate flag for fetch in deepening mode
- - fetch-pack.c: mark strings for translating
- - fetch-pack: use a common function for verbose printing
- - fetch-pack: use skip_prefix() instead of starts_with()
- - upload-pack: move rev-list code out of check_non_tip()
- - upload-pack: tighten number parsing at "deepen" lines
- - upload-pack: use skip_prefix() instead of starts_with()
- - upload-pack: move "unshallow" sending code out of deepen()
- - upload-pack: remove unused variable "backup"
- - upload-pack: move "shallow" sending code out of deepen()
- - upload-pack: move shallow deepen code out of receive_needs()
- - transport-helper.c: refactor set_helper_option()
- - remote-curl.c: convert fetch_git() to use argv_array
-
- The existing "git fetch --depth=<n>" option was hard to use
- correctly when making the history of an existing shallow clone
- deeper.  A new option, "--deepen=<n>", has been added to make this
- easier to use.  "git clone" also learned "--shallow-since=<date>"
- and "--shallow-exclude=<tag>" options to make it easier to specify
- "I am interested only in the recent N months worth of history" and
- "Give me only the history since that version".
-
- Needs review.
 
 
 * sg/completion-updates (2016-02-28) 21 commits
@@ -269,6 +336,69 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* nd/shallow-deepen (2016-06-13) 27 commits
+ - fetch, upload-pack: --deepen=N extends shallow boundary by N commits
+ - upload-pack: add get_reachable_list()
+ - upload-pack: split check_unreachable() in two, prep for get_reachable_list()
+ - t5500, t5539: tests for shallow depth excluding a ref
+ - clone: define shallow clone boundary with --shallow-exclude
+ - fetch: define shallow boundary with --shallow-exclude
+ - upload-pack: support define shallow boundary by excluding revisions
+ - refs: add expand_ref()
+ - t5500, t5539: tests for shallow depth since a specific date
+ - clone: define shallow clone boundary based on time with --shallow-since
+ - fetch: define shallow boundary with --shallow-since
+ - upload-pack: add deepen-since to cut shallow repos based on time
+ - shallow.c: implement a generic shallow boundary finder based on rev-list
+ - fetch-pack: use a separate flag for fetch in deepening mode
+ - fetch-pack.c: mark strings for translating
+ - fetch-pack: use a common function for verbose printing
+ - fetch-pack: use skip_prefix() instead of starts_with()
+ - upload-pack: move rev-list code out of check_non_tip()
+ - upload-pack: make check_non_tip() clean things up on error
+ - upload-pack: tighten number parsing at "deepen" lines
+ - upload-pack: use skip_prefix() instead of starts_with()
+ - upload-pack: move "unshallow" sending code out of deepen()
+ - upload-pack: remove unused variable "backup"
+ - upload-pack: move "shallow" sending code out of deepen()
+ - upload-pack: move shallow deepen code out of receive_needs()
+ - transport-helper.c: refactor set_helper_option()
+ - remote-curl.c: convert fetch_git() to use argv_array
+
+ The existing "git fetch --depth=<n>" option was hard to use
+ correctly when making the history of an existing shallow clone
+ deeper.  A new option, "--deepen=<n>", has been added to make this
+ easier to use.  "git clone" also learned "--shallow-since=<date>"
+ and "--shallow-exclude=<tag>" options to make it easier to specify
+ "I am interested only in the recent N months worth of history" and
+ "Give me only the history since that version".
+
+ Rerolled.
+
+
+* jk/avoid-unbounded-alloca (2016-06-07) 1 commit
+ - tree-diff: avoid alloca for large allocations
+
+ Will merge to 'next'.
+
+
+* jk/send-pack-stdio (2016-06-10) 2 commits
+ - write_or_die: remove the unused write_or_whine() function
+ - send-pack: use buffered I/O to talk to pack-objects
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* pb/commit-editmsg-path (2016-06-09) 1 commit
+ - builtin/commit.c: memoize git-path for COMMIT_EDITMSG
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
 * wd/userdiff-css (2016-06-03) 1 commit
   (merged to 'next' on 2016-06-06 at 536102f)
  + userdiff: add built-in pattern for CSS
@@ -278,9 +408,12 @@ of the repositories listed at
  Will merge to 'master' after 2.9 final.
 
 
-* jc/attr-more (2016-06-08) 5 commits
+* jc/attr-more (2016-06-09) 8 commits
+ - attr.c: outline the future plans by heavily commenting
  - attr.c: always pass check[] to collect_some_attrs()
+ - attr.c: introduce empty_attr_check_elems()
  - attr.c: correct ugly hack for git_all_attrs()
+ - attr.c: rename a local variable check
  - fixup! d5ad6c13
  - attr.c: pass struct git_attr_check down the callchain
  - attr.c: add push_stack() helper
@@ -380,15 +513,13 @@ of the repositories listed at
  reflog was truncated.
 
 
-* tb/complete-status (2016-06-06) 3 commits
+* tb/complete-status (2016-06-10) 3 commits
  - completion: add git status
  - completion: add __git_get_option_value helper
  - completion: factor out untracked file modes into a variable
 
  The completion script (in contrib/) learned to complete "git
  status" options.
-
- Breaks t9902.
 
 
 * tr/doc-tt (2016-06-08) 4 commits
@@ -443,26 +574,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jc/t2300-setup (2016-06-01) 1 commit
-  (merged to 'next' on 2016-06-06 at 20f7f83)
- + t2300: run git-sh-setup in an environment that better mimics the real life
- (this branch is used by va/i18n-even-more.)
-
- A test fix.
-
- Will merge to 'master'.
-
-
-* jk/shell-portability (2016-06-01) 2 commits
-  (merged to 'next' on 2016-06-06 at 5de784e)
- + t5500 & t7403: lose bash-ism "local"
- + test-lib: add in-shell "env" replacement
-
- test fixes.
-
- Will merge to 'master'.
-
-
 * mh/connect (2016-06-06) 10 commits
  - connect: [host:port] is legacy for ssh
  - connect: move ssh command line preparation to a separate function
@@ -505,6 +616,7 @@ of the repositories listed at
   (merged to 'next' on 2016-05-31 at 1ee161c)
  + submodule update: learn `--[no-]recommend-shallow` option
  + submodule-config: keep shallow recommendation around
+ (this branch is used by sb/submodule-clone-retry.)
 
  An upstream project can make a recommendation to make only a
  shallow clone for some submodules in the .gitmodules file it ship.
@@ -559,7 +671,6 @@ of the repositories listed at
  - i18n: advice: mark string about detached head for translation
  - i18n: builtin/remote.c: fix mark for translation
  - Merge branch 'jc/t2300-setup' into HEAD
- (this branch uses jc/t2300-setup.)
 
  More markings of messages for i18n, with updates to various tests
  to pass GETTEXT_POISON tests.
@@ -586,7 +697,7 @@ of the repositories listed at
  We may want to squash a test or two to this commit.  Volunteers?
 
 
-* nd/worktree-lock (2016-06-03) 6 commits
+* nd/worktree-lock (2016-06-13) 6 commits
  - worktree.c: find_worktree() search by path suffix
  - worktree: add "unlock" command
  - worktree: add "lock" command
@@ -643,7 +754,9 @@ of the repositories listed at
  ($gmane/295705).
 
 
-* rs/xdiff-hunk-with-func-line (2016-05-31) 8 commits
+* rs/xdiff-hunk-with-func-line (2016-06-09) 9 commits
+  (merged to 'next' on 2016-06-10 at 9ff9ba8)
+ + xdiff: fix merging of appended hunk with -W
   (merged to 'next' on 2016-06-02 at 0c2e335)
  + grep: -W: don't extend context to trailing empty lines
  + t7810: add test for grep -W and trailing empty context lines
@@ -671,7 +784,8 @@ of the repositories listed at
  Will merge to 'master' after 2.9 final.
 
 
-* sb/submodule-default-paths (2016-05-26) 11 commits
+* sb/submodule-default-paths (2016-06-14) 8 commits
+ - completion: clone can recurse into submodules
  - clone: add --init-submodule=<pathspec> switch
  - submodule update: add `--init-default-path` switch
  - Merge branch 'sb/pathspec-label' into sb/submodule-default-paths
@@ -679,12 +793,7 @@ of the repositories listed at
  - Merge branch 'sb/clone-shallow-passthru' into sb/submodule-default-paths
  - Merge branch 'sb/submodule-deinit-all' into sb/submodule-default-paths
  - Merge branch 'sb/submodule-parallel-update' into sb/submodule-default-paths
-  (merged to 'next' on 2016-05-31 at e72b604)
- + pathspec: allow querying for attributes
- + pathspec: move prefix check out of the inner loop
- + pathspec: move long magic parsing out of prefix_pathspec
- + Documentation: fix a typo
- (this branch uses jc/attr; is tangled with jc/attr-more and sb/pathspec-label.)
+ (this branch uses jc/attr and sb/pathspec-label; is tangled with jc/attr-more.)
 
  Will hold.
 
@@ -820,7 +929,7 @@ of the repositories listed at
  + pathspec: move prefix check out of the inner loop
  + pathspec: move long magic parsing out of prefix_pathspec
  + Documentation: fix a typo
- (this branch uses jc/attr; is tangled with jc/attr-more and sb/submodule-default-paths.)
+ (this branch is used by sb/submodule-default-paths; uses jc/attr; is tangled with jc/attr-more.)
 
  The pathspec mechanism learned ":(attr:X)$pattern" pathspec magic
  to limit paths that match $pattern further by attribute settings.
