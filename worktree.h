@@ -5,10 +5,12 @@ struct worktree {
 	char *path;
 	char *id;
 	char *head_ref;
+	char *lock_reason;	/* internal use */
 	unsigned char head_sha1[20];
 	int is_detached;
 	int is_bare;
 	int is_current;
+	int lock_reason_valid;
 };
 
 /* Functions for acting on the information about worktrees. */
@@ -28,6 +30,25 @@ extern struct worktree **get_worktrees(void);
  * If wt is NULL, git dir of current worktree is returned.
  */
 extern const char *get_worktree_git_dir(const struct worktree *wt);
+
+/*
+ * Search a worktree that can be unambiguously identified by
+ * "arg". "prefix" must not be NULL.
+ */
+extern struct worktree *find_worktree(struct worktree **list,
+				      const char *prefix,
+				      const char *arg);
+
+/*
+ * Return true if the given worktree is the main one.
+ */
+extern int is_main_worktree(const struct worktree *wt);
+
+/*
+ * Return the reason string if the given worktree is locked or NULL
+ * otherwise.
+ */
+extern const char *is_worktree_locked(struct worktree *wt);
 
 /*
  * Free up the memory for worktree(s)
