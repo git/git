@@ -71,7 +71,7 @@ static int match_stat_with_submodule(struct diff_options *diffopt,
 {
 	int changed = ce_match_stat(ce, st, ce_option);
 	if (S_ISGITLINK(ce->ce_mode)) {
-		unsigned orig_flags = diffopt->flags;
+		uint64_t orig_flags = diffopt->flags;
 		if (!DIFF_OPT_TST(diffopt, OVERRIDE_SUBMODULE_CONFIG))
 			set_diffopt_flags_from_submodule_config(diffopt, ce->name);
 		if (DIFF_OPT_TST(diffopt, IGNORE_SUBMODULES))
@@ -211,6 +211,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				}
 				diff_addremove(&revs->diffopt, '-', ce->ce_mode,
 					       ce->sha1, !is_null_sha1(ce->sha1),
+					       ce->name, 0);
+				continue;
+			} else if (DIFF_OPT_TST(&revs->diffopt, SHIFT_INTENT_TO_ADD) &&
+				   ce_intent_to_add(ce)) {
+				diff_addremove(&revs->diffopt, '+', ce->ce_mode,
+					       EMPTY_BLOB_SHA1_BIN, 0,
 					       ce->name, 0);
 				continue;
 			}
@@ -378,6 +384,14 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	struct rev_info *revs = o->unpack_data;
 	int match_missing, cached;
 
+	/* i-t-a entries do not actually exist in the index */
+	if (DIFF_OPT_TST(&revs->diffopt, SHIFT_INTENT_TO_ADD) &&
+	    idx && ce_intent_to_add(idx)) {
+		idx = NULL;
+		if (!tree)
+			return;	/* nothing to diff.. */
+	}
+
 	/* if the entry is not checked out, don't examine work tree */
 	cached = o->index_only ||
 		(idx && ((idx->ce_flags & CE_VALID) || ce_skip_worktree(idx)));
@@ -520,7 +534,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	return 0;
 }
 
-int index_differs_from(const char *def, int diff_flags)
+int index_differs_from(const char *def, uint64_t diff_flags)
 {
 	struct rev_info rev;
 	struct setup_revision_opt opt;

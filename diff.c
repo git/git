@@ -3914,6 +3914,8 @@ int diff_opt_parse(struct diff_options *options,
 		return parse_submodule_opt(options, arg);
 	else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
 		return parse_ws_error_highlight(options, arg);
+	else if (!strcmp(arg, "--shift-ita"))
+		DIFF_OPT_SET(options, SHIFT_INTENT_TO_ADD);
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
@@ -4943,7 +4945,7 @@ int diff_can_quit_early(struct diff_options *opt)
 static int is_submodule_ignored(const char *path, struct diff_options *options)
 {
 	int ignored = 0;
-	unsigned orig_flags = options->flags;
+	uint64_t orig_flags = options->flags;
 	if (!DIFF_OPT_TST(options, OVERRIDE_SUBMODULE_CONFIG))
 		set_diffopt_flags_from_submodule_config(options, path);
 	if (DIFF_OPT_TST(options, IGNORE_SUBMODULES))
