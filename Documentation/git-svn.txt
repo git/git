@@ -456,6 +456,20 @@ Any other arguments are passed directly to 'git log'
 	Gets the Subversion property given as the first argument, for a
 	file.  A specific revision can be specified with -r/--revision.
 
+'propset'::
+	Sets the Subversion property given as the first argument, to the
+	value given as the second argument for the file given as the
+	third argument.
++
+Example:
++
+------------------------------------------------------------------------
+git svn propset svn:keywords "FreeBSD=%H" devel/py-tipper/Makefile
+------------------------------------------------------------------------
++
+This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
+'devel/py-tipper/Makefile'.
+
 'show-externals'::
 	Shows the Subversion externals.  Use -r/--revision to specify a
 	specific revision.
