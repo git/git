@@ -886,6 +886,7 @@ static void show_diff_tree(const char *prefix, struct commit *commit)
 	if (!opt.diffopt.output_format)
 		opt.diffopt.output_format = DIFF_FORMAT_RAW;
 
+	setup_revisions(0, NULL, &opt, NULL);
 	log_tree_commit(&opt, commit);
 }
 
