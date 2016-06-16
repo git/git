@@ -1299,6 +1299,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		if (!start)
 			start = sb->buf;
 		occupied = utf8_strnwidth(start, -1, 1);
+		occupied += c->pretty_ctx->graph_width;
 		padding = (-padding) - occupied;
 	}
 	while (1) {

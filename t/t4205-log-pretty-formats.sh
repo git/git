@@ -319,6 +319,19 @@ EOF
 	test_cmp expected actual
 '
 
+# Note: Space between 'message' and 'two' should be in the same column
+# as in previous test.
+test_expect_success 'right alignment formatting at the nth column with --graph. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --graph --pretty="tformat:%h %>|(40)%s" >actual &&
+	iconv -f utf-8 -t $test_encoding >expected <<EOF&&
+* $head1                    message two
+* $head2                    message one
+* $head3                        add bar
+* $head4            $(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'right alignment formatting with no padding' '
 	git log --pretty="tformat:%>(1)%s" >actual &&
 	cat <<EOF >expected &&
@@ -326,6 +339,17 @@ message two
 message one
 add bar
 $(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'right alignment formatting with no padding and with --graph' '
+	git log --graph --pretty="tformat:%>(1)%s" >actual &&
+	cat <<EOF >expected &&
+* message two
+* message one
+* add bar
+* $(commit_msg)
 EOF
 	test_cmp expected actual
 '

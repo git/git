@@ -669,6 +669,13 @@ static void graph_output_padding_line(struct git_graph *graph,
 	graph_pad_horizontally(graph, sb, graph->num_new_columns * 2);
 }
 
+
+int graph_width(struct git_graph *graph)
+{
+	return graph->width;
+}
+
+
 static void graph_output_skip_line(struct git_graph *graph, struct strbuf *sb)
 {
 	/*
