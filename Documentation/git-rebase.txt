@@ -430,13 +430,15 @@ without an explicit `--interactive`.
 --autosquash::
 --no-autosquash::
 	When the commit log message begins with "squash! ..." (or
-	"fixup! ..."), and there is a commit whose title begins with
-	the same ..., automatically modify the todo list of rebase -i
-	so that the commit marked for squashing comes right after the
-	commit to be modified, and change the action of the moved
-	commit from `pick` to `squash` (or `fixup`).  Ignores subsequent
-	"fixup! " or "squash! " after the first, in case you referred to an
-	earlier fixup/squash with `git commit --fixup/--squash`.
+	"fixup! ..."), and there is already a commit in the todo list that
+	matches the same `...`, automatically modify the todo list of rebase
+	-i so that the commit marked for squashing comes right after the
+	commit to be modified, and change the action of the moved commit
+	from `pick` to `squash` (or `fixup`).  A commit matches the `...` if
+	the commit subject matches, or if the `...` refers to the commit's
+	hash. As a fall-back, partial matches of the commit subject work,
+	too.  The recommended way to create fixup/squash commits is by using
+	the `--fixup`/`--squash` options of linkgit:git-commit[1].
 +
 This option is only valid when the `--interactive` option is used.
 +
