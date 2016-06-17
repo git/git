@@ -144,29 +144,28 @@ reschedule_last_action () {
 }
 
 append_todo_help () {
-	git stripspace --comment-lines >>"$todo" <<\EOF
-
+	gettext "
 Commands:
  p, pick = use commit
  r, reword = use commit, but edit the commit message
  e, edit = use commit, but stop for amending
  s, squash = use commit, but meld into previous commit
- f, fixup = like "squash", but discard this commit's log message
+ f, fixup = like \"squash\", but discard this commit's log message
  x, exec = run command (the rest of the line) using shell
  d, drop = remove commit
 
 These lines can be re-ordered; they are executed from top to bottom.
+" | git stripspace --comment-lines >>"$todo"
 
-EOF
 	if test $(get_missing_commit_check_level) = error
 	then
-		git stripspace --comment-lines >>"$todo" <<\EOF
+		gettext "
 Do not remove any line. Use 'drop' explicitly to remove a commit.
-EOF
+" | git stripspace --comment-lines >>"$todo"
 	else
-		git stripspace --comment-lines >>"$todo" <<\EOF
+		gettext "
 If you remove a line here THAT COMMIT WILL BE LOST.
-EOF
+" | git stripspace --comment-lines >>"$todo"
 	fi
 }
 
@@ -1123,13 +1122,12 @@ edit-todo)
 	mv -f "$todo".new "$todo"
 	collapse_todo_ids
 	append_todo_help
-	git stripspace --comment-lines >>"$todo" <<\EOF
-
+	gettext "
 You are editing the todo file of an ongoing interactive rebase.
 To continue rebase after editing, run:
     git rebase --continue
 
-EOF
+" | git stripspace --comment-lines >>"$todo"
 
 	git_sequence_editor "$todo" ||
 		die "$(gettext "Could not execute editor")"
@@ -1270,14 +1268,16 @@ todocount=${todocount##* }
 
 cat >>"$todo" <<EOF
 
-$comment_char Rebase $shortrevisions onto $shortonto ($todocount command(s))
+$comment_char $(eval_ngettext \
+	"Rebase \$shortrevisions onto \$shortonto (\$todocount command)" \
+	"Rebase \$shortrevisions onto \$shortonto (\$todocount commands)" \
+	"$todocount")
 EOF
 append_todo_help
-git stripspace --comment-lines >>"$todo" <<\EOF
-
+gettext "
 However, if you remove everything, the rebase will be aborted.
 
-EOF
+" | git stripspace --comment-lines >>"$todo"
 
 if test -z "$keep_empty"
 then
