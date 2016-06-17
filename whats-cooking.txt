@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2016, #04; Tue, 14)
+Subject: What's cooking in git.git (Jun 2016, #05; Thu, 16)
 X-master-at: 05219a1276341e72d8082d76b7f5ed394b7437a4
 X-next-at: 3dc84b0c19932ec9947ca4936b6bfd6421ccb1b4
 
-What's cooking in git.git (Jun 2016, #04; Tue, 14)
+What's cooking in git.git (Jun 2016, #05; Thu, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.9 has been tagged.  Let's wait for a few days to clean up
-possible fallout and then start a new cycle by rewinding the tip of
-'next'.  I expect I'd eject a few premature topics out of 'next'
-while doing so.
+Let's start a new cycle by rewinding the tip of 'next' soonish.  I
+expect I'd eject a few premature topics out of 'next' while doing
+so.  There are many topics that need input from the list (look for
+'?' in this document) to decide either to drop them or to move them
+forward.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,32 +24,238 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* jc/t2300-setup (2016-06-01) 1 commit
-  (merged to 'next' on 2016-06-06 at 20f7f83)
- + t2300: run git-sh-setup in an environment that better mimics the real life
- (this branch is used by va/i18n-even-more.)
+* ap/git-svn-propset-doc (2016-06-15) 1 commit
+ - git-svn: document the 'git svn propset' command
 
- A test fix.
+ "git svn propset" subcommand that was added in 2.3 days is
+ documented now.
 
-
-* jk/diff-compact-heuristic (2016-06-10) 1 commit
- - diff: disable compaction heuristic for now
-
- It turns out that the earlier effort to update the heuristics may
- want to use a bit more time to mature.  Turn it off by default.
+ Will merge to 'next'.
 
 
-* jk/shell-portability (2016-06-01) 2 commits
-  (merged to 'next' on 2016-06-06 at 5de784e)
- + t5500 & t7403: lose bash-ism "local"
- + test-lib: add in-shell "env" replacement
+* jk/add-i-diff-compact-heuristics (2016-06-16) 1 commit
+ - add--interactive: respect diff.compactionHeuristic
 
- test fixes.
+ "git add -i/-p" learned to honor diff.compactionHeuristic
+ experimental knob, so that the user can work on the same hunk split
+ as "git diff" output.
+
+ Will merge to 'next'.
+
+
+* jk/big-and-old-archive-tar (2016-06-16) 2 commits
+ - archive-tar: write extended headers for far-future mtime
+ - archive-tar: write extended headers for file sizes >= 8GB
+
+ "git archive" learned to handle files that are larger than 8GB and
+ commits far in the future than expressible by the traditional US-TAR
+ format.
+
+ Will merge to 'next'.
+
+
+* jk/gpg-interface-cleanup (2016-06-16) 7 commits
+ - gpg-interface: check gpg signature creation status
+ - sign_buffer: use pipe_command
+ - verify_signed_buffer: use pipe_command
+ - run-command: add pipe_command helper
+ - verify_signed_buffer: use tempfile object
+ - verify_signed_buffer: drop pbuf variable
+ - gpg-interface: use child_process.args
+
+ A new run-command API function pipe_command() is introduced to
+ sanely feed data to the standard input while capturing data from
+ the standard output and the standard error of an external process,
+ which is cumbersome to hand-roll correctly without deadlocking.
+
+ The codepath to sign data in a prepared buffer with GPG has been
+ updated to use this API to read from the status-fd to check for
+ errors (instead of relying on GPG's exit status).
+
+ Will merge to 'next'.
+
+
+* lf/sideband-returns-void (2016-06-16) 2 commits
+ - upload-pack.c: make send_client_data() return void
+ - sideband.c: make send_sideband() return void
+
+ A small internal API cleanup.
+
+ Will merge to 'next'.
+
+
+* nd/graph-width-padded (2016-06-16) 2 commits
+ - pretty.c: support <direction>|(<negative number>) forms
+ - pretty: pass graph width to pretty formatting for use in '%>|(N)'
+
+ "log --graph --format=" learned that "%>|(N)" specifies the width
+ relative to the terminal's left edge, not relative to the area to
+ draw text that is to the right of the ancestry-graph section.  It
+ also now accepts negative N that means the column limit is relative
+ to the right border.
+
+ Will merge to 'next'.
+
+
+* dn/gpg-doc (2016-06-16) 1 commit
+ - Documentation: GPG capitalization
+
+ The documentation tries to consistently spell "GPG"; when
+ referring to the specific program name, "gpg" is used.
+
+ Will merge to 'next'.
+
+
+* jk/bisect-show-tree (2016-06-16) 1 commit
+ - bisect: always call setup_revisions after init_revisions
+
+ "git bisect" makes an internal call to "git diff-tree" when
+ bisection finds the culprit, but this call did not initialize the
+ data structure to pass to the diff-tree API correctly.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* mj/log-show-signature-conf (2016-06-06) 2 commits
+ - log: "--no-show-signature" commmand-line option
+ - log: add "log.showsignature" configuration variable
+
+ "git log" learns log.showSignature configuration variable, and a
+ command line option "--no-show-signature" to countermand it.
+
+ The order of the commits in the topic need to be reversed.
+ Expecting a reroll.
+
+
+* sb/bisect (2016-04-15) 22 commits
+ - SQUASH???
+ - bisect: get back halfway shortcut
+ - bisect: compute best bisection in compute_relevant_weights()
+ - bisect: use a bottom-up traversal to find relevant weights
+ - bisect: prepare for different algorithms based on find_all
+ - bisect: rename count_distance() to compute_weight()
+ - bisect: make total number of commits global
+ - bisect: introduce distance_direction()
+ - bisect: extract get_distance() function from code duplication
+ - bisect: use commit instead of commit list as arguments when appropriate
+ - bisect: replace clear_distance() by unique markers
+ - bisect: use struct node_data array instead of int array
+ - bisect: get rid of recursion in count_distance()
+ - bisect: make algorithm behavior independent of DEBUG_BISECT
+ - bisect: make bisect compile if DEBUG_BISECT is set
+ - bisect: plug the biggest memory leak
+ - bisect: add test for the bisect algorithm
+ - t6030: generalize test to not rely on current implementation
+ - t: use test_cmp_rev() where appropriate
+ - t/test-lib-functions.sh: generalize test_cmp_rev
+ - bisect: allow 'bisect run' if no good commit is known
+ - bisect: write about `bisect next` in documentation
+
+ The internal algorithm used in "git bisect" to find the next commit
+ to check has been optimized greatly.
+
+ Expecting a reroll.
+ ($gmane/291163)
+
+
+* sg/completion-updates (2016-02-28) 21 commits
+ . completion: cache the path to the repository
+ . completion: extract repository discovery from __gitdir()
+ . completion: don't guard git executions with __gitdir()
+ . completion: consolidate silencing errors from git commands
+ . completion: don't use __gitdir() for git commands
+ . completion: respect 'git -C <path>'
+ . completion: fix completion after 'git -C <path>'
+ . completion: don't offer commands when 'git --opt' needs an argument
+ . rev-parse: add '--absolute-git-dir' option
+ . completion: list short refs from a remote given as a URL
+ . completion: don't list 'HEAD' when trying refs completion outside of a repo
+ . completion: list refs from remote when remote's name matches a directory
+ . completion: respect 'git --git-dir=<path>' when listing remote refs
+ . completion: fix most spots not respecting 'git --git-dir=<path>'
+ . completion: ensure that the repository path given on the command line exists
+ . completion tests: add tests for the __git_refs() helper function
+ . completion tests: check __gitdir()'s output in the error cases
+ . completion tests: consolidate getting path of current working directory
+ . completion tests: make the $cur variable local to the test helper functions
+ . completion tests: don't add test cruft to the test repository
+ . completion: improve __git_refs()'s in-code documentation
+
+ Will be rerolled.
+ ($gmane/287839)
+
+
+* nd/icase (2016-02-15) 12 commits
+ - grep.c: reuse "icase" variable
+ - diffcore-pickaxe: support case insensitive match on non-ascii
+ - diffcore-pickaxe: "share" regex error handling code
+ - grep/pcre: support utf-8
+ - gettext: add is_utf8_locale()
+ - grep/pcre: prepare locale-dependent tables for icase matching
+ - grep/icase: avoid kwsset when -F is specified
+ - grep/icase: avoid kwsset on literal non-ascii strings
+ - test-regex: expose full regcomp() to the command line
+ - test-regex: isolate the bug test code
+ - grep: break down an "if" stmt in preparation for next changes
+ - grep: allow -F -i combination
+
+ "git grep -i" has been taught to fold case in non-ascii locales.
+
+ This really needs review.  What it attempts to achieve is
+ worthwhile, I would think ($gmane/286137).
+
+
+* ec/annotate-deleted (2015-11-20) 1 commit
+ - annotate: skip checking working tree if a revision is provided
+
+ Usability fix for annotate-specific "<file> <rev>" syntax with deleted
+ files.
+
+ Waiting for review.
+
+
+* dg/subtree-rebase-test (2016-01-19) 1 commit
+ - contrib/subtree: Add a test for subtree rebase that loses commits
+
+ Reviewed up to v5.
+ Will be rerolled.
+ ($gmane/284426)
+
+
+* dk/gc-more-wo-pack (2016-01-13) 4 commits
+ - gc: clean garbage .bitmap files from pack dir
+ - t5304: ensure non-garbage files are not deleted
+ - t5304: test .bitmap garbage files
+ - prepare_packed_git(): find more garbage
+
+ Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
+ .bitmap and .keep files.
+
+ Waiting for a reroll.
+ ($gmane/284368).
+
+
+* jc/diff-b-m (2015-02-23) 5 commits
+ . WIPWIP
+ . WIP: diff-b-m
+ - diffcore-rename: allow easier debugging
+ - diffcore-rename.c: add locate_rename_src()
+ - diffcore-break: allow debugging
+
+ "git diff -B -M" produced incorrect patch when the postimage of a
+ completely rewritten file is similar to the preimage of a removed
+ file; such a resulting file must not be expressed as a rename from
+ other place.
+
+ The fix in this patch is broken, unfortunately.
+ Will discard.
+
+--------------------------------------------------
+[Cooking]
 
 * lv/status-say-working-tree-not-directory (2016-06-09) 1 commit
  - Use "working tree" instead of "working directory" for git status
@@ -118,10 +325,19 @@ of the repositories listed at
  eventually hit flaky servers/network conditions on one of the
  submodules; the command learned to retry the attempt.
 
+ Will merge to 'next'.
+
 
 * jc/blame-reverse (2016-06-14) 2 commits
  - blame: dwim "blame --reverse OLD" as "blame --reverse OLD.."
  - blame: improve diagnosis for "--reverse NEW"
+
+ It is a common mistake to say "git blame --reverse OLD path",
+ expecting that the command line is dwimmed as if asking how lines
+ in path in an old revision OLD have survived up to the current
+ commit.
+
+ Any supporters?  Otherwise will drop.
 
 
 * jc/deref-tag (2016-06-14) 1 commit
@@ -157,184 +373,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* sb/bisect (2016-04-15) 22 commits
- - SQUASH???
- - bisect: get back halfway shortcut
- - bisect: compute best bisection in compute_relevant_weights()
- - bisect: use a bottom-up traversal to find relevant weights
- - bisect: prepare for different algorithms based on find_all
- - bisect: rename count_distance() to compute_weight()
- - bisect: make total number of commits global
- - bisect: introduce distance_direction()
- - bisect: extract get_distance() function from code duplication
- - bisect: use commit instead of commit list as arguments when appropriate
- - bisect: replace clear_distance() by unique markers
- - bisect: use struct node_data array instead of int array
- - bisect: get rid of recursion in count_distance()
- - bisect: make algorithm behavior independent of DEBUG_BISECT
- - bisect: make bisect compile if DEBUG_BISECT is set
- - bisect: plug the biggest memory leak
- - bisect: add test for the bisect algorithm
- - t6030: generalize test to not rely on current implementation
- - t: use test_cmp_rev() where appropriate
- - t/test-lib-functions.sh: generalize test_cmp_rev
- - bisect: allow 'bisect run' if no good commit is known
- - bisect: write about `bisect next` in documentation
-
- The internal algorithm used in "git bisect" to find the next commit
- to check has been optimized greatly.
-
- Expecting a reroll.
- ($gmane/291163)
-
-
-* sg/completion-updates (2016-02-28) 21 commits
- . completion: cache the path to the repository
- . completion: extract repository discovery from __gitdir()
- . completion: don't guard git executions with __gitdir()
- . completion: consolidate silencing errors from git commands
- . completion: don't use __gitdir() for git commands
- . completion: respect 'git -C <path>'
- . completion: fix completion after 'git -C <path>'
- . completion: don't offer commands when 'git --opt' needs an argument
- . rev-parse: add '--absolute-git-dir' option
- . completion: list short refs from a remote given as a URL
- . completion: don't list 'HEAD' when trying refs completion outside of a repo
- . completion: list refs from remote when remote's name matches a directory
- . completion: respect 'git --git-dir=<path>' when listing remote refs
- . completion: fix most spots not respecting 'git --git-dir=<path>'
- . completion: ensure that the repository path given on the command line exists
- . completion tests: add tests for the __git_refs() helper function
- . completion tests: check __gitdir()'s output in the error cases
- . completion tests: consolidate getting path of current working directory
- . completion tests: make the $cur variable local to the test helper functions
- . completion tests: don't add test cruft to the test repository
- . completion: improve __git_refs()'s in-code documentation
-
- Will be rerolled.
- ($gmane/287839)
-
-
-* az/p4-bare-no-rebase (2016-02-19) 1 commit
- - git-p4.py: Don't try to rebase on submit from bare repository
-
- "git p4 submit" attempts to do a rebase, which would fail if done
- in a bare repository.  Not doing this rebase would paper over the
- failure, which is what this patch does, but it is unclear what the
- side effect of not rebasing is.
-
- Needs a better explanation.
-
-
-* nd/icase (2016-02-15) 12 commits
- - grep.c: reuse "icase" variable
- - diffcore-pickaxe: support case insensitive match on non-ascii
- - diffcore-pickaxe: "share" regex error handling code
- - grep/pcre: support utf-8
- - gettext: add is_utf8_locale()
- - grep/pcre: prepare locale-dependent tables for icase matching
- - grep/icase: avoid kwsset when -F is specified
- - grep/icase: avoid kwsset on literal non-ascii strings
- - test-regex: expose full regcomp() to the command line
- - test-regex: isolate the bug test code
- - grep: break down an "if" stmt in preparation for next changes
- - grep: allow -F -i combination
-
- "git grep -i" has been taught to fold case in non-ascii locales.
-
- Needs review.
- ($gmane/286137)
-
-
-* ec/annotate-deleted (2015-11-20) 1 commit
- - annotate: skip checking working tree if a revision is provided
-
- Usability fix for annotate-specific "<file> <rev>" syntax with deleted
- files.
-
- Waiting for review.
-
-
-* dg/subtree-rebase-test (2016-01-19) 1 commit
- - contrib/subtree: Add a test for subtree rebase that loses commits
-
- Reviewed up to v5.
- Will be rerolled.
- ($gmane/284426)
-
-
-* js/am-3-merge-recursive-direct (2015-10-12) 2 commits
- - am: make a direct call to merge_recursive
- - merge_recursive_options: introduce the "gently" flag
-
- The merge_recursive_generic() function has been made a bit safer to
- call from inside a process.  "git am -3" was taught to make a direct
- call to the function when falling back to three-way merge.
-
- Being able to make a direct call would be good in general, but as a
- performance thing, the change needs to be backed up by numbers.
-
- I haven't gone through the "gently" change with fine toothed comb;
- I can see that the change avoids calling die(), but I haven't made
- sure that the program states (e.g. what's in the in-core index) are
- adjusted sensibly when it returns to the caller instead of dying,
- or the codepaths that used to die() are free of resource leaks.
- The original code certainly did not care the program states at the
- point of dying exactly because it knew it is going to exit, but now
- they have to care, and they need to be audited.
-
- Will be rerolled.
- ($gmane/292205)
-
-
-* dk/gc-more-wo-pack (2016-01-13) 4 commits
- - gc: clean garbage .bitmap files from pack dir
- - t5304: ensure non-garbage files are not deleted
- - t5304: test .bitmap garbage files
- - prepare_packed_git(): find more garbage
-
- Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
- .bitmap and .keep files.
-
- Waiting for a reroll.
- ($gmane/284368).
-
-
-* jc/diff-b-m (2015-02-23) 5 commits
- . WIPWIP
- . WIP: diff-b-m
- - diffcore-rename: allow easier debugging
- - diffcore-rename.c: add locate_rename_src()
- - diffcore-break: allow debugging
-
- "git diff -B -M" produced incorrect patch when the postimage of a
- completely rewritten file is similar to the preimage of a removed
- file; such a resulting file must not be expressed as a rename from
- other place.
-
- The fix in this patch is broken, unfortunately.
- Will discard.
-
-
-* jc/merge-impossible-no-commit (2016-04-26) 2 commits
- - merge: warn --no-commit merge when no new commit is created
- - merge: do not contaminate option_commit with --squash
-
- "git merge --no-commit" silently succeeded when there is no need to
- create any commit, either when you are more recent than the commit
- you tried to merge, or you can fast-forward to the commit you tried
- to merge.  The command gives a warning message in such cases.
-
- Just tying loose ends in a discussion.  Unless somebody else
- champions this topic, I'll drop it.
-
- Will discard.
-
---------------------------------------------------
-[Cooking]
 
 * nd/shallow-deepen (2016-06-13) 27 commits
  - fetch, upload-pack: --deepen=N extends shallow boundary by N commits
@@ -374,6 +412,8 @@ of the repositories listed at
  "Give me only the history since that version".
 
  Rerolled.
+ Needs review.  What this topic attempts to achieve is worthwhile, I
+ would think.
 
 
 * jk/avoid-unbounded-alloca (2016-06-07) 1 commit
@@ -405,7 +445,7 @@ of the repositories listed at
 
  Update the funcname definition to support css files.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * jc/attr-more (2016-06-09) 8 commits
@@ -422,6 +462,8 @@ of the repositories listed at
  The beginning of long and tortuous journey to clean-up attribute
  subsystem implementation.
 
+ Needs to be redone.
+
 
 * jk/rev-list-count-with-bitmap (2016-06-03) 2 commits
   (merged to 'next' on 2016-06-06 at dd9b30f)
@@ -432,7 +474,7 @@ of the repositories listed at
  option did not work well with the counting optimized to look at the
  bitmap index.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * mh/ref-iterators (2016-06-03) 13 commits
@@ -455,7 +497,7 @@ of the repositories listed at
  The API to iterate over all the refs (i.e. for_each_ref(), etc.)
  has been revamped.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * ew/mboxrd-format-am (2016-06-06) 3 commits
@@ -467,6 +509,8 @@ of the repositories listed at
  happens to begin with "From " in the e-mail message is quoted with
  ">", so that these lines can be restored to their original shape.
 
+ Will merge to 'next'.
+
 
 * lf/receive-pack-auto-gc-to-client (2016-06-06) 1 commit
  - receive-pack: send auto-gc output over sideband 2
@@ -476,6 +520,8 @@ of the repositories listed at
  over sideband, so that they are shown with "remote: " prefix to
  avoid confusing the users.
 
+ Will merge to 'next'.
+
 
 * mg/cherry-pick-multi-on-unborn (2016-06-06) 1 commit
  - cherry-pick: allow to pick to unborn branches
@@ -483,26 +529,7 @@ of the repositories listed at
  "git cherry-pick A" worked on an unborn branch, but "git
  cherry-pick A..B" didn't.
 
-
-* mj/log-show-signature-conf (2016-06-06) 2 commits
- - log: "--no-show-signature" commmand-line option
- - log: add "log.showsignature" configuration variable
-
- "git log" learns log.showSignature configuration variable, and a
- command line option "--no-show-signature" to countermand it.
-
- The order of the commits in the topic need to be reversed.
-
-
-* nd/i-t-a-commitable (2016-06-06) 3 commits
- - commit: don't count i-t-a entries when checking if the new commit is empty
- - Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
- - diff.h: extend "flags" field to 64 bits because we're out of bits
-
- "rm .git/index && git add -N * && git commit" allows you to create
- an empty commit without --allow-empty; attempt to forbid it.
-
- Breaks many tests by completely butchering "git commit", it seems.
+ Will merge to 'next'.
 
 
 * sg/reflog-past-root (2016-06-06) 1 commit
@@ -512,6 +539,8 @@ of the repositories listed at
  creation event (aka "unborn"), which made it appear as if the
  reflog was truncated.
 
+ Will merge to 'next'.
+
 
 * tb/complete-status (2016-06-10) 3 commits
  - completion: add git status
@@ -520,6 +549,8 @@ of the repositories listed at
 
  The completion script (in contrib/) learned to complete "git
  status" options.
+
+ Any further comments?  Otherwise will merge to 'next'.
 
 
 * tr/doc-tt (2016-06-08) 4 commits
@@ -541,6 +572,8 @@ of the repositories listed at
  The git-prompt scriptlet (in contrib/) was not friendly with those
  who uses "set -u", which has been fixed.
 
+ Will merge to 'next'.
+
 
 * rj/compat-regex-size-max-fix (2016-06-06) 1 commit
  - regex: fix a SIZE_MAX macro redefinition warning
@@ -548,20 +581,6 @@ of the repositories listed at
  A compilation fix.
 
  Will merge to 'next'.
-
-
-* bc/cocci-object-id (2016-06-06) 8 commits
- - merge-recursive: convert merge_recursive_generic to object_id
- - merge-recursive: convert leaf functions to use struct object_id
- - merge-recursive: convert struct merge_file_info to object_id
- - merge-recursive: convert struct stage_data to use object_id
- - Rename struct diff_filespec's sha1_valid member.
- - Convert struct diff_filespec to struct object_id
- - Apply standard object_id Coccinelle transformations.
- - Add basic Coccinelle transforms.
-
- Move from "unsigned char [20]" to "struct object_id" continues,
- with help from an automated tool.
 
 
 * et/add-chmod-x (2016-06-07) 1 commit
@@ -586,7 +605,10 @@ of the repositories listed at
  - connect: call get_host_and_port() earlier
  - connect: document why we sometimes call get_port after get_host_and_port
 
- Ok, folks, is everybody happy with this version?
+ Rewrite Git-URL parsing routine (hopefully) without changing any
+ behaviour.
+
+ Will merge to 'next'???
 
 
 * aq/upload-pack-use-parse-options (2016-05-31) 1 commit
@@ -596,7 +618,7 @@ of the repositories listed at
  "git upload-pack" command has been updated to use the parse-options
  API.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * jc/clear-pathspec (2016-06-02) 1 commit
@@ -609,7 +631,7 @@ of the repositories listed at
  free_pathspec() function has been renamed to clear_pathspec()
  to avoid confusion.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * sb/submodule-recommend-shallowness (2016-05-27) 2 commits
@@ -621,7 +643,7 @@ of the repositories listed at
  An upstream project can make a recommendation to make only a
  shallow clone for some submodules in the .gitmodules file it ship.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * tb/convert-peek-in-index (2016-06-07) 3 commits
@@ -678,6 +700,8 @@ of the repositories listed at
  One patch from the original submission dropped due to conflicts
  with other topics in flight.
 
+ Will merge to 'next'.
+
 
 * jg/dash-is-last-branch-in-worktree-add (2016-05-31) 1 commit
   (merged to 'next' on 2016-06-02 at 3959ef6)
@@ -686,7 +710,7 @@ of the repositories listed at
  "git worktree add" learned that '-' can be used as a short-hand for
  "@{-1}", the previous branch.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
@@ -711,7 +735,8 @@ of the repositories listed at
  command learned a dedicated command pair to create and remoev such
  a file, so that the users do not have to do this with editor.
 
- Ok, folks, is everybody happy with this version?
+ Is everybody happy with this version?
+ If so, will merge to 'next'.
 
 
 * et/pretty-format-c-auto (2016-05-27) 1 commit
@@ -723,7 +748,7 @@ of the repositories listed at
  --no-color or --color=auto with output not connected to a tty;
  this was corrected to make the format truly behave as "auto".
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * ew/daemon-socket-keepalive (2016-05-25) 1 commit
@@ -735,7 +760,7 @@ of the repositories listed at
  for a long time, wasting resources.  The socket-level KEEPALIVE has
  been enabled to allow the OS to notice such failed connections.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * jk/upload-pack-hook (2016-06-02) 7 commits
@@ -750,7 +775,7 @@ of the repositories listed at
  Allow a custom "git upload-pack" replacement to respond to
  "fetch/clone" request.
 
- Still under discussion.
+ Still under discussion???
  ($gmane/295705).
 
 
@@ -772,7 +797,7 @@ of the repositories listed at
  file when a change added an entire function at the end of the file,
  which has been fixed.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * sb/submodule-misc-cleanups (2016-05-25) 1 commit
@@ -781,7 +806,7 @@ of the repositories listed at
 
  Minor simplification.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * sb/submodule-default-paths (2016-06-14) 8 commits
@@ -805,7 +830,7 @@ of the repositories listed at
  "git pull --rebase --verify-signature" learned to warn the user
  that "--verify-signature" is a no-op.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * ep/http-curl-trace (2016-05-24) 2 commits
@@ -815,7 +840,7 @@ of the repositories listed at
  HTTP transport gained an option to produce more detailed debugging
  trace.
 
- Rerolled.  Is everybody happy with this version?
+ Will merge to 'next'.
 
 
 * jc/attr (2016-05-25) 18 commits
@@ -842,6 +867,9 @@ of the repositories listed at
 
  The attributes API has been updated so that it can later be
  optimized using the knowledge of which attributes are queried.
+
+ Will eject from 'next'.
+ The updated API needs further rethinking.
 
 
 * cc/apply-introduce-state (2016-06-06) 50 commits
@@ -919,6 +947,10 @@ of the repositories listed at
 
  Beginning of GSoC "git bisect" project.
 
+ I know another topic is getting rerolled many times on top of this;
+ are people happy with these three patches?  If so, will merge to
+ 'next'.
+
 
 * sb/pathspec-label (2016-06-03) 6 commits
   (merged to 'next' on 2016-06-03 at 362f097)
@@ -937,7 +969,8 @@ of the repositories listed at
  is in use (at least for now), because the attribute subsystem is
  not thread-ready.
 
- Will hold.
+ Will eject from 'next'.
+ The jc/attr topic that this depends on needs to be redone.
 
 
 * nd/worktree-cleanup-post-head-protection (2016-05-24) 6 commits
@@ -951,8 +984,7 @@ of the repositories listed at
 
  Further preparatory clean-up for "worktree" feature.
 
- Expecting a reroll.
- ($gmane/294136, etc.)
+ Will merge to 'next'.
 
 
 * mh/split-under-lock (2016-05-13) 33 commits
@@ -995,7 +1027,7 @@ of the repositories listed at
  Further preparatory work on the refs API before the pluggable
  backend series can land.
 
- Will merge to 'master' after 2.9 final.
+ Will merge to 'master'.
 
 
 * ew/fast-import-unpack-limit (2016-05-29) 2 commits
@@ -1008,7 +1040,7 @@ of the repositories listed at
  creating too small a packfile as "git fetch" and "git push" have,
  using *.unpackLimit configuration.
 
- Will hold.
+ Will merge to 'master'.
 
 
 * jc/send-email-skip-backup (2016-04-12) 1 commit
@@ -1020,7 +1052,8 @@ of the repositories listed at
  embarrassment and a minor confusion.  Detect such an input and
  offer to skip the backup files when sending the patches out.
 
- Needs review.
+ Will merge to 'next'.
+ Perhaps people will enhance it more once it gains more visibility.
 
 
 * kn/ref-filter-branch-list (2016-05-17) 17 commits
@@ -1046,7 +1079,7 @@ of the repositories listed at
  with the more generic ref-filter API.
 
  Rerolled.
- Needs review.
+ This also really needs review.
 
 
 * dt/index-helper (2016-05-20) 20 commits
@@ -1076,7 +1109,7 @@ of the repositories listed at
  optionally interface with the watchman daemon to further reduce the
  refresh cost.
 
- Rerolled.
+ Are people happy with this version?  If so will merge to 'next'.
  ($gmane/295106).
 
 
@@ -1091,6 +1124,12 @@ of the repositories listed at
  The beginning of "split bundle", which could be one of the
  ingredients to allow "git clone" traffic off of the core server
  network to CDN.
+
+ While I think it would make it easier for people to experiment and
+ build on if the topic is merged to 'next', I am at the same time a
+ bit reluctant to merge an unproven new topic that introduces a new
+ file format, which we may end up having to support til the end of
+ time.  Comments?
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
@@ -1107,8 +1146,85 @@ of the repositories listed at
 --------------------------------------------------
 [Discarded]
 
-* mh/connect-leak (2016-04-28) 1 commit
- . git_connect(): fix memory leak with CONNECT_DIAG_URL
+* js/am-3-merge-recursive-direct (2015-10-12) 2 commits
+ . am: make a direct call to merge_recursive
+ . merge_recursive_options: introduce the "gently" flag
 
- Is already made obsolete with a patch in flight under discussion.
- ($gmane/292962)
+ The merge_recursive_generic() function has been made a bit safer to
+ call from inside a process.  "git am -3" was taught to make a direct
+ call to the function when falling back to three-way merge.
+
+ Being able to make a direct call would be good in general, but as a
+ performance thing, the change needs to be backed up by numbers.
+
+ I haven't gone through the "gently" change with fine toothed comb;
+ I can see that the change avoids calling die(), but I haven't made
+ sure that the program states (e.g. what's in the in-core index) are
+ adjusted sensibly when it returns to the caller instead of dying,
+ or the codepaths that used to die() are free of resource leaks.
+ The original code certainly did not care the program states at the
+ point of dying exactly because it knew it is going to exit, but now
+ they have to care, and they need to be audited.
+
+ Has a lot of conflict when merged to 'pu' these days, so let's
+ eject it from our tree for now.
+
+ Will discard.
+ ($gmane/292205)
+
+
+* nd/i-t-a-commitable (2016-06-06) 3 commits
+ . commit: don't count i-t-a entries when checking if the new commit is empty
+ . Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
+ . diff.h: extend "flags" field to 64 bits because we're out of bits
+
+ "rm .git/index && git add -N * && git commit" allows you to create
+ an empty commit without --allow-empty; attempt to forbid it.
+
+ Retracted.
+ Will discard.
+ ($gmane/297362)
+
+
+* jc/merge-impossible-no-commit (2016-04-26) 2 commits
+ . merge: warn --no-commit merge when no new commit is created
+ . merge: do not contaminate option_commit with --squash
+
+ "git merge --no-commit" silently succeeded when there is no need to
+ create any commit, either when you are more recent than the commit
+ you tried to merge, or you can fast-forward to the commit you tried
+ to merge.  The command gives a warning message in such cases.
+
+ Just tying loose ends in a discussion.  Unless somebody else
+ champions this topic, I'll drop it.
+
+ Will discard.
+
+
+* bc/cocci-object-id (2016-06-06) 8 commits
+ . merge-recursive: convert merge_recursive_generic to object_id
+ . merge-recursive: convert leaf functions to use struct object_id
+ . merge-recursive: convert struct merge_file_info to object_id
+ . merge-recursive: convert struct stage_data to use object_id
+ . Rename struct diff_filespec's sha1_valid member.
+ . Convert struct diff_filespec to struct object_id
+ . Apply standard object_id Coccinelle transformations.
+ . Add basic Coccinelle transforms.
+
+ Move from "unsigned char [20]" to "struct object_id" continues,
+ with help from an automated tool.
+
+ Will discard.
+ ($gmane/296749)
+
+
+* az/p4-bare-no-rebase (2016-02-19) 1 commit
+ - git-p4.py: Don't try to rebase on submit from bare repository
+
+ "git p4 submit" attempts to do a rebase, which would fail if done
+ in a bare repository.  Not doing this rebase would paper over the
+ failure, which is what this patch does, but it is unclear what the
+ side effect of not rebasing is.
+
+ Retracted.
+ ($gmane/296722)
