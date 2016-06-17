@@ -153,9 +153,11 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	struct child_process gpg = CHILD_PROCESS_INIT;
 	int ret;
 	size_t i, j, bottom;
+	struct strbuf gpg_status = STRBUF_INIT;
 
 	argv_array_pushl(&gpg.args,
 			 gpg_program,
+			 "--status-fd=2",
 			 "-bsau", signing_key,
 			 NULL);
 
@@ -167,10 +169,12 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *sig
 	 */
 	sigchain_push(SIGPIPE, SIG_IGN);
 	ret = pipe_command(&gpg, buffer->buf, buffer->len,
-			   signature, 1024, NULL, 0);
+			   signature, 1024, &gpg_status, 0);
 	sigchain_pop(SIGPIPE);
 
-	if (ret || signature->len == bottom)
+	ret |= !strstr(gpg_status.buf, "\n[GNUPG:] SIG_CREATED ");
+	strbuf_release(&gpg_status);
+	if (ret)
 		return error(_("gpg failed to sign the data"));
 
 	/* Strip CR from the line endings, in case we are on Windows. */
