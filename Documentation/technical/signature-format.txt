@@ -110,3 +110,77 @@ signed commit
 
 signed commit message body
 ----
+
+== Mergetag signatures
+
+- created by: `git merge` on signed tag
+- payload/embedding: the whole signed tag object is embedded into
+  the (merge) commit object as header entry `mergetag`
+- example: merge of the signed tag `signedtag` as above
+
+----
+tree c7b1cff039a93f3600a1d18b82d26688668c7dea
+parent c33429be94b5f2d3ee9b0adad223f877f174b05d
+parent 04b871796dc0420f8e7561a895b52484b701d51a
+author A U Thor <author@example.com> 1465982009 +0000
+committer C O Mitter <committer@example.com> 1465982009 +0000
+mergetag object 04b871796dc0420f8e7561a895b52484b701d51a
+ type commit
+ tag signedtag
+ tagger C O Mitter <committer@example.com> 1465981006 +0000
+
+ signed tag
+
+ signed tag message body
+ -----BEGIN PGP SIGNATURE-----
+ Version: GnuPG v1
+
+ iQEcBAABAgAGBQJXYRhOAAoJEGEJLoW3InGJklkIAIcnhL7RwEb/+QeX9enkXhxn
+ rxfdqrvWd1K80sl2TOt8Bg/NYwrUBw/RWJ+sg/hhHp4WtvE1HDGHlkEz3y11Lkuh
+ 8tSxS3qKTxXUGozyPGuE90sJfExhZlW4knIQ1wt/yWqM+33E9pN4hzPqLwyrdods
+ q8FWEqPPUbSJXoMbRPw04S5jrLtZSsUWbRYjmJCHzlhSfFWW4eFd37uquIaLUBS0
+ rkC3Jrx7420jkIpgFcTI2s60uhSQLzgcCwdA2ukSYIRnjg/zDkj8+3h/GaROJ72x
+ lZyI6HWixKJkWw8lE9aAOD9TmTW9sFJwcVAzmAuFX2kUreDUKMZduGcoRYGpD7E=
+ =jpXa
+ -----END PGP SIGNATURE-----
+
+Merge tag 'signedtag' into downstream
+
+signed tag
+
+signed tag message body
+
+# gpg: Signature made Wed Jun 15 08:56:46 2016 UTC using RSA key ID B7227189
+# gpg: Good signature from "Eris Discordia <discord@example.net>"
+# gpg: WARNING: This key is not certified with a trusted signature!
+# gpg:          There is no indication that the signature belongs to the owner.
+# Primary key fingerprint: D4BE 2231 1AD3 131E 5EDA  29A4 6109 2E85 B722 7189
+----
+
+- verify with: verification is embedded in merge commit message by default,
+  alternatively with `git show --show-signature`:
+
+----
+commit 9863f0c76ff78712b6800e199a46aa56afbcbd49
+merged tag 'signedtag'
+gpg: Signature made Wed Jun 15 10:56:46 2016 CEST using RSA key ID B7227189
+gpg: Good signature from "Eris Discordia <discord@example.net>"
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: D4BE 2231 1AD3 131E 5EDA  29A4 6109 2E85 B722 7189
+Merge: c33429b 04b8717
+Author: A U Thor <author@example.com>
+Date:   Wed Jun 15 09:13:29 2016 +0000
+
+    Merge tag 'signedtag' into downstream
+
+    signed tag
+
+    signed tag message body
+
+    # gpg: Signature made Wed Jun 15 08:56:46 2016 UTC using RSA key ID B7227189
+    # gpg: Good signature from "Eris Discordia <discord@example.net>"
+    # gpg: WARNING: This key is not certified with a trusted signature!
+    # gpg:          There is no indication that the signature belongs to the owner.
+    # Primary key fingerprint: D4BE 2231 1AD3 131E 5EDA  29A4 6109 2E85 B722 7189
+----
