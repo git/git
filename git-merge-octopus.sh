@@ -6,7 +6,6 @@
 #
 
 . git-sh-setup
-. git-sh-i18n
 
 LF='
 '
