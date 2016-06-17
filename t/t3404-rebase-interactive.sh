@@ -219,9 +219,9 @@ test_expect_success 'abort with error when new base cannot be checked out' '
 	git commit -m "remove file in base" &&
 	set_fake_editor &&
 	test_must_fail git rebase -i master > output 2>&1 &&
-	grep "The following untracked working tree files would be overwritten by checkout:" \
+	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" \
 		output &&
-	grep "file1" output &&
+	test_i18ngrep "file1" output &&
 	test_path_is_missing .git/rebase-merge &&
 	git reset --hard HEAD^
 '
