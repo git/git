@@ -3,6 +3,7 @@
 #include "strbuf.h"
 #include "gpg-interface.h"
 #include "sigchain.h"
+#include "tempfile.h"
 
 static char *configured_signing_key;
 static const char *gpg_program = "gpg";
@@ -208,28 +209,32 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	char path[PATH_MAX];
+	static struct tempfile temp;
 	int fd, ret;
 	struct strbuf buf = STRBUF_INIT;
 
-	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
+	fd = mks_tempfile_t(&temp, ".git_vtag_tmpXXXXXX");
 	if (fd < 0)
-		return error_errno(_("could not create temporary file '%s'"), path);
-	if (write_in_full(fd, signature, signature_size) < 0)
-		return error_errno(_("failed writing detached signature to '%s'"), path);
+		return error_errno(_("could not create temporary file"));
+	if (write_in_full(fd, signature, signature_size) < 0) {
+		error_errno(_("failed writing detached signature to '%s'"),
+			    temp.filename.buf);
+		delete_tempfile(&temp);
+		return -1;
+	}
 	close(fd);
 
 	argv_array_pushl(&gpg.args,
 			 gpg_program,
 			 "--status-fd=1",
-			 "--verify", path, "-",
+			 "--verify", temp.filename.buf, "-",
 			 NULL);
 	gpg.in = -1;
 	gpg.out = -1;
 	if (gpg_output)
 		gpg.err = -1;
 	if (start_command(&gpg)) {
-		unlink(path);
+		delete_tempfile(&temp);
 		return error(_("could not run gpg."));
 	}
 
@@ -249,7 +254,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	ret = finish_command(&gpg);
 	sigchain_pop(SIGPIPE);
 
-	unlink_or_warn(path);
+	delete_tempfile(&temp);
 
 	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
 	strbuf_release(&buf); /* no matter it was used or not */
