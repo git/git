@@ -150,17 +150,15 @@ const char *get_signing_key(void)
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	const char *args[4];
 	ssize_t len;
 	size_t i, j, bottom;
 
-	gpg.argv = args;
 	gpg.in = -1;
 	gpg.out = -1;
-	args[0] = gpg_program;
-	args[1] = "-bsau";
-	args[2] = signing_key;
-	args[3] = NULL;
+	argv_array_pushl(&gpg.args,
+			 gpg_program,
+			 "-bsau", signing_key,
+			 NULL);
 
 	if (start_command(&gpg))
 		return error(_("could not run gpg."));
@@ -210,13 +208,11 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	const char *args_gpg[] = {NULL, "--status-fd=1", "--verify", "FILE", "-", NULL};
 	char path[PATH_MAX];
 	int fd, ret;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf *pbuf = &buf;
 
-	args_gpg[0] = gpg_program;
 	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
 	if (fd < 0)
 		return error_errno(_("could not create temporary file '%s'"), path);
@@ -224,12 +220,15 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 		return error_errno(_("failed writing detached signature to '%s'"), path);
 	close(fd);
 
-	gpg.argv = args_gpg;
+	argv_array_pushl(&gpg.args,
+			 gpg_program,
+			 "--status-fd=1",
+			 "--verify", path, "-",
+			 NULL);
 	gpg.in = -1;
 	gpg.out = -1;
 	if (gpg_output)
 		gpg.err = -1;
-	args_gpg[3] = path;
 	if (start_command(&gpg)) {
 		unlink(path);
 		return error(_("could not run gpg."));
