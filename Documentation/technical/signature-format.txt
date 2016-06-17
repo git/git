@@ -15,3 +15,50 @@ produce RFC1991 signatures which use `MESSAGE` instead of `SIGNATURE`.
 
 The signed payload and the way the signature is embedded depends
 on the type of the object resp. transaction.
+
+== Tag signatures
+
+- created by: `git tag -s`
+- payload: annotated tag object
+- embedding: append the signature to the unsigned tag object
+- example: tag `signedtag` with subject `signed tag`
+
+----
+object 04b871796dc0420f8e7561a895b52484b701d51a
+type commit
+tag signedtag
+tagger C O Mitter <committer@example.com> 1465981006 +0000
+
+signed tag
+
+signed tag message body
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQEcBAABAgAGBQJXYRhOAAoJEGEJLoW3InGJklkIAIcnhL7RwEb/+QeX9enkXhxn
+rxfdqrvWd1K80sl2TOt8Bg/NYwrUBw/RWJ+sg/hhHp4WtvE1HDGHlkEz3y11Lkuh
+8tSxS3qKTxXUGozyPGuE90sJfExhZlW4knIQ1wt/yWqM+33E9pN4hzPqLwyrdods
+q8FWEqPPUbSJXoMbRPw04S5jrLtZSsUWbRYjmJCHzlhSfFWW4eFd37uquIaLUBS0
+rkC3Jrx7420jkIpgFcTI2s60uhSQLzgcCwdA2ukSYIRnjg/zDkj8+3h/GaROJ72x
+lZyI6HWixKJkWw8lE9aAOD9TmTW9sFJwcVAzmAuFX2kUreDUKMZduGcoRYGpD7E=
+=jpXa
+-----END PGP SIGNATURE-----
+----
+
+- verify with: `git verify-tag [-v]` or `git tag -v`
+
+----
+gpg: Signature made Wed Jun 15 10:56:46 2016 CEST using RSA key ID B7227189
+gpg: Good signature from "Eris Discordia <discord@example.net>"
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: D4BE 2231 1AD3 131E 5EDA  29A4 6109 2E85 B722 7189
+object 04b871796dc0420f8e7561a895b52484b701d51a
+type commit
+tag signedtag
+tagger C O Mitter <committer@example.com> 1465981006 +0000
+
+signed tag
+
+signed tag message body
+----
