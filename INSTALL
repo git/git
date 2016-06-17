@@ -1,6 +1,18 @@
 
 		Git installation
 
+NOTICE: 
+  Before you compile && install git with source codes, you should make sure
+  that your system has corresponding libs installed. These libs are:
+      curl-devel 
+      expat-devel 
+      gettext-devel 
+      openssl-devel 
+      zlib-devel
+      gcc
+      perl-ExtUtils-MakeMaker
+
+
 Normally you can just do "make" followed by "make install", and that
 will install the git programs in your own ~/bin/ directory.  If you want
 to do a global install, you can do
