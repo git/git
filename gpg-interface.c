@@ -211,7 +211,6 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	char path[PATH_MAX];
 	int fd, ret;
 	struct strbuf buf = STRBUF_INIT;
-	struct strbuf *pbuf = &buf;
 
 	fd = git_mkstemp(path, PATH_MAX, ".git_vtag_tmpXXXXXX");
 	if (fd < 0)
@@ -242,9 +241,9 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 		strbuf_read(gpg_output, gpg.err, 0);
 		close(gpg.err);
 	}
-	if (gpg_status)
-		pbuf = gpg_status;
-	strbuf_read(pbuf, gpg.out, 0);
+	if (!gpg_status)
+		gpg_status = &buf;
+	strbuf_read(gpg_status, gpg.out, 0);
 	close(gpg.out);
 
 	ret = finish_command(&gpg);
@@ -252,7 +251,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 
 	unlink_or_warn(path);
 
-	ret |= !strstr(pbuf->buf, "\n[GNUPG:] GOODSIG ");
+	ret |= !strstr(gpg_status->buf, "\n[GNUPG:] GOODSIG ");
 	strbuf_release(&buf); /* no matter it was used or not */
 
 	return ret;
