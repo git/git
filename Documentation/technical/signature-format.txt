@@ -1,0 +1,17 @@
+Git signature format
+====================
+
+== Overview
+
+Git uses cryptographic signatures in various places, currently objects (tags,
+commits, mergetags) and transactions (pushes). In every case, the command which
+is about to create an object or transaction determines a payload from that,
+calls gpg to obtain a detached signature for the payload (`gpg -bsa`) and
+embeds the signature into the object or transaction.
+
+Signatures always begin with `-----BEGIN PGP SIGNATURE-----`
+and end with `-----END PGP SIGNATURE-----`, unless gpg is told to
+produce RFC1991 signatures which use `MESSAGE` instead of `SIGNATURE`.
+
+The signed payload and the way the signature is embedded depends
+on the type of the object resp. transaction.
