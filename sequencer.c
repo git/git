@@ -225,7 +225,7 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from,
 	if (checkout_fast_forward(from, to, 1))
 		exit(128); /* the callee should have complained already */
 
-	strbuf_addf(&sb, "%s: fast-forward", action_name(opts));
+	strbuf_addf(&sb, _("%s: fast-forward"), action_name(opts));
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
