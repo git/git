@@ -141,7 +141,9 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 struct ref_transaction;
 
 /*
- * Bit values set in the flags argument passed to each_ref_fn():
+ * Bit values set in the flags argument passed to each_ref_fn() and
+ * stored in ref_iterator::flags. Other bits are for internal use
+ * only:
  */
 
 /* Reference is a symbolic reference. */
