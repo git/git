@@ -954,15 +954,26 @@ static struct ref_cache *lookup_ref_cache(const char *submodule)
 
 /*
  * Return a pointer to a ref_cache for the specified submodule. For
- * the main repository, use submodule==NULL. The returned structure
- * will be allocated and initialized but not necessarily populated; it
- * should not be freed.
+ * the main repository, use submodule==NULL; such a call cannot fail.
+ * For a submodule, the submodule must exist and be a nonbare
+ * repository, otherwise return NULL.
+ *
+ * The returned structure will be allocated and initialized but not
+ * necessarily populated; it should not be freed.
  */
 static struct ref_cache *get_ref_cache(const char *submodule)
 {
 	struct ref_cache *refs = lookup_ref_cache(submodule);
-	if (!refs)
-		refs = create_ref_cache(submodule);
+
+	if (!refs) {
+		struct strbuf submodule_sb = STRBUF_INIT;
+
+		strbuf_addstr(&submodule_sb, submodule);
+		if (is_nonbare_repository_dir(&submodule_sb))
+			refs = create_ref_cache(submodule);
+		strbuf_release(&submodule_sb);
+	}
+
 	return refs;
 }
 
@@ -1341,13 +1352,10 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
 		return -1;
 
 	strbuf_add(&submodule, path, len);
-	refs = lookup_ref_cache(submodule.buf);
+	refs = get_ref_cache(submodule.buf);
 	if (!refs) {
-		if (!is_nonbare_repository_dir(&submodule)) {
-			strbuf_release(&submodule);
-			return -1;
-		}
-		refs = create_ref_cache(submodule.buf);
+		strbuf_release(&submodule);
+		return -1;
 	}
 	strbuf_release(&submodule);
 
@@ -1885,6 +1893,9 @@ int do_for_each_ref(const char *submodule, const char *prefix,
 	struct ref_cache *refs;
 
 	refs = get_ref_cache(submodule);
+	if (!refs)
+		return 0;
+
 	data.prefix = prefix;
 	data.trim = trim;
 	data.flags = flags;
