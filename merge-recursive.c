@@ -1982,11 +1982,11 @@ int merge_recursive(struct merge_options *o,
 	return clean;
 }
 
-static struct commit *get_ref(const unsigned char *sha1, const char *name)
+static struct commit *get_ref(const struct object_id *oid, const char *name)
 {
 	struct object *object;
 
-	object = deref_tag(parse_object(sha1), name, strlen(name));
+	object = deref_tag(parse_object(oid->hash), name, strlen(name));
 	if (!object)
 		return NULL;
 	if (object->type == OBJ_TREE)
@@ -1999,10 +1999,10 @@ static struct commit *get_ref(const unsigned char *sha1, const char *name)
 }
 
 int merge_recursive_generic(struct merge_options *o,
-			    const unsigned char *head,
-			    const unsigned char *merge,
+			    const struct object_id *head,
+			    const struct object_id *merge,
 			    int num_base_list,
-			    const unsigned char **base_list,
+			    const struct object_id **base_list,
 			    struct commit **result)
 {
 	int clean;
@@ -2015,9 +2015,9 @@ int merge_recursive_generic(struct merge_options *o,
 		int i;
 		for (i = 0; i < num_base_list; ++i) {
 			struct commit *base;
-			if (!(base = get_ref(base_list[i], sha1_to_hex(base_list[i]))))
+			if (!(base = get_ref(base_list[i], oid_to_hex(base_list[i]))))
 				return error(_("Could not parse object '%s'"),
-					sha1_to_hex(base_list[i]));
+					oid_to_hex(base_list[i]));
 			commit_list_insert(base, &ca);
 		}
 	}
