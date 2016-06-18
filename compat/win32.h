@@ -66,8 +66,9 @@ static inline void *get_proc_addr(struct proc_addr *proc)
 {
 	/* only do this once */
 	if (!proc->initialized) {
+		HANDLE hnd;
 		proc->initialized = 1;
-		HANDLE hnd = LoadLibraryA(proc->dll);
+		hnd = LoadLibraryA(proc->dll);
 		if (hnd)
 			proc->pfunction = GetProcAddress(hnd, proc->function);
 	}
