@@ -722,6 +722,7 @@ LIB_OBJS += diff-lib.o
 LIB_OBJS += diff-no-index.o
 LIB_OBJS += diff.o
 LIB_OBJS += dir.o
+LIB_OBJS += dir-iterator.o
 LIB_OBJS += editor.o
 LIB_OBJS += entry.o
 LIB_OBJS += environment.o
