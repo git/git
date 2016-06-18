@@ -277,6 +277,79 @@ static int check_and_set_terms(const char *cmd, const char *term_good,
 	return 0;
 }
 
+static int mark_good(const char *refname, const struct object_id *oid,
+		     int flag, void *cb_data)
+{
+	int *missing_good = (int *)cb_data;
+	*missing_good = 0;
+	printf("missing_good: %d\n", *missing_good);
+
+	return 0;
+}
+
+static int bisect_next_check(const char *term, const char *term_good,
+			     const char *term_bad)
+{
+	int missing_good = 1, missing_bad = 1;
+	struct strbuf hi = STRBUF_INIT;
+
+	char *bad_ref = xstrfmt("refs/bisect/%s", term_bad);
+	if (ref_exists(bad_ref))
+		missing_bad = 0;
+
+	free(bad_ref);
+	for_each_ref_in("refs/bisect/", mark_good, (void *) &missing_good);
+
+	if (!missing_good && !missing_bad)
+		return 0;
+
+	if (missing_good && missing_bad)
+		return -1;
+
+	if (missing_good && !missing_bad && !term) {
+		struct strbuf yesno = STRBUF_INIT;
+		/*
+		 * have bad (or new) but not good (or old). We could bisect
+		 * although this is less optimum.
+		 */
+		fprintf(stderr, "Warning: bisecting only with a %s\n", term_bad);
+		/*
+		 * TRANSLATORS: Make sure to include [Y] and [n] in your
+		 * translation. The program will only accept English input
+		 * at this point.
+		 */
+		fprintf(stderr, "Are you sure [Y/n]? ");
+		if (strbuf_read(&yesno, 0, 3))
+			return error(_("cannot read from standard input"));
+		if (starts_with(yesno.buf, "N") || starts_with(yesno.buf, "n"))
+			return -1;
+	}
+	if (strbuf_read_file(&hi, git_path_bisect_start(), 0) > 0) {
+		char *bad_syn = xstrdup("bad|new");
+		char *good_syn = xstrdup("good|old");
+		error(_("You need to give me at least one %s and one %s "
+			"revision. You can use \"git bisect %s and %s\" for "
+			"that.\n"), bad_syn, good_syn, bad_syn, good_syn);
+		free(bad_syn);
+		free(good_syn);
+		return -1;
+	}
+	else {
+		char *bad_syn = xstrdup("bad|new");
+		char *good_syn = xstrdup("good|old");
+		error(_("You need to start by \"git bisect start\". You "
+			"then need to give me at least one %s and one %s "
+			"revision. You can use \"git bisect %s\" and \" "
+			"git bisect %s\" for that.\n"), good_syn,
+			bad_syn, good_syn, bad_syn);
+		free(bad_syn);
+		free(good_syn);
+		return -1;
+	}
+
+	return 0;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -286,7 +359,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_RESET,
 		CHECK_EXPECTED_REVS,
 		BISECT_WRITE,
-		CHECK_AND_SET_TERMS
+		CHECK_AND_SET_TERMS,
+		BISECT_NEXT_CHECK
 	} cmdmode = 0;
 	int no_checkout = 0;
 	struct option options[] = {
@@ -304,6 +378,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("write out the bisection state in BISECT_LOG"), BISECT_WRITE),
 		OPT_CMDMODE(0, "check-and-set-terms", &cmdmode,
 			 N_("check and set terms in a bisection state"), CHECK_AND_SET_TERMS),
+		OPT_CMDMODE(0, "bisect-next-check", &cmdmode,
+			 N_("check whether bad or good terms exist"), BISECT_NEXT_CHECK),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
@@ -342,6 +418,12 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		if (argc != 3)
 			die(_("--check-and-set-terms requires 3 arguments"));
 		return check_and_set_terms(argv[0], argv[1], argv[2]);
+	case BISECT_NEXT_CHECK:
+		if (!(argc == 2 || argc == 3))
+			die(_("--bisect-next-check requires 2 or 3 arguments"));
+		if (argc == 2)
+			return bisect_next_check(NULL, argv[0], argv[1]);
+		return bisect_next_check(argv[0], argv[1], argv[2]);
 	default:
 		die("BUG: unknown subcommand '%d'", cmdmode);
 	}
