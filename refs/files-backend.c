@@ -2403,7 +2403,7 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 	return 0;
 }
 
-int delete_refs(struct string_list *refnames)
+int delete_refs(struct string_list *refnames, unsigned int flags)
 {
 	struct strbuf err = STRBUF_INIT;
 	int i, result = 0;
@@ -2432,7 +2432,7 @@ int delete_refs(struct string_list *refnames)
 	for (i = 0; i < refnames->nr; i++) {
 		const char *refname = refnames->items[i].string;
 
-		if (delete_ref(refname, NULL, 0))
+		if (delete_ref(refname, NULL, flags))
 			result |= error(_("could not remove reference %s"), refname);
 	}
 

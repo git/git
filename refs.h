@@ -274,9 +274,10 @@ int delete_ref(const char *refname, const unsigned char *old_sha1,
 /*
  * Delete the specified references. If there are any problems, emit
  * errors but attempt to keep going (i.e., the deletes are not done in
- * an all-or-nothing transaction).
+ * an all-or-nothing transaction). flags is passed through to
+ * ref_transaction_delete().
  */
-int delete_refs(struct string_list *refnames);
+int delete_refs(struct string_list *refnames, unsigned int flags);
 
 /** Delete a reflog */
 int delete_reflog(const char *refname);
