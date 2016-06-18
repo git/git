@@ -542,52 +542,7 @@ static int entry_resolves_to_object(struct ref_entry *entry)
 				      &entry->u.value.oid, entry->flag);
 }
 
-/*
- * current_ref is a performance hack: when iterating over references
- * using the for_each_ref*() functions, current_ref is set to the
- * current reference's entry before calling the callback function.  If
- * the callback function calls peel_ref(), then peel_ref() first
- * checks whether the reference to be peeled is the current reference
- * (it usually is) and if so, returns that reference's peeled version
- * if it is available.  This avoids a refname lookup in a common case.
- */
-static struct ref_entry *current_ref;
-
 typedef int each_ref_entry_fn(struct ref_entry *entry, void *cb_data);
-
-struct ref_entry_cb {
-	const char *prefix;
-	int trim;
-	int flags;
-	each_ref_fn *fn;
-	void *cb_data;
-};
-
-/*
- * Handle one reference in a do_for_each_ref*()-style iteration,
- * calling an each_ref_fn for each entry.
- */
-static int do_one_ref(struct ref_entry *entry, void *cb_data)
-{
-	struct ref_entry_cb *data = cb_data;
-	struct ref_entry *old_current_ref;
-	int retval;
-
-	if (!starts_with(entry->name, data->prefix))
-		return 0;
-
-	if (!(data->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
-	      !entry_resolves_to_object(entry))
-		return 0;
-
-	/* Store the old value, in case this is a recursive call: */
-	old_current_ref = current_ref;
-	current_ref = entry;
-	retval = data->fn(entry->name + data->trim, &entry->u.value.oid,
-			  entry->flag, data->cb_data);
-	current_ref = old_current_ref;
-	return retval;
-}
 
 /*
  * Call fn for each reference in dir that has index in the range
@@ -615,78 +570,6 @@ static int do_for_each_entry_in_dir(struct ref_dir *dir, int offset,
 			return retval;
 	}
 	return 0;
-}
-
-/*
- * Call fn for each reference in the union of dir1 and dir2, in order
- * by refname.  Recurse into subdirectories.  If a value entry appears
- * in both dir1 and dir2, then only process the version that is in
- * dir2.  The input dirs must already be sorted, but subdirs will be
- * sorted as needed.  fn is called for all references, including
- * broken ones.
- */
-static int do_for_each_entry_in_dirs(struct ref_dir *dir1,
-				     struct ref_dir *dir2,
-				     each_ref_entry_fn fn, void *cb_data)
-{
-	int retval;
-	int i1 = 0, i2 = 0;
-
-	assert(dir1->sorted == dir1->nr);
-	assert(dir2->sorted == dir2->nr);
-	while (1) {
-		struct ref_entry *e1, *e2;
-		int cmp;
-		if (i1 == dir1->nr) {
-			return do_for_each_entry_in_dir(dir2, i2, fn, cb_data);
-		}
-		if (i2 == dir2->nr) {
-			return do_for_each_entry_in_dir(dir1, i1, fn, cb_data);
-		}
-		e1 = dir1->entries[i1];
-		e2 = dir2->entries[i2];
-		cmp = strcmp(e1->name, e2->name);
-		if (cmp == 0) {
-			if ((e1->flag & REF_DIR) && (e2->flag & REF_DIR)) {
-				/* Both are directories; descend them in parallel. */
-				struct ref_dir *subdir1 = get_ref_dir(e1);
-				struct ref_dir *subdir2 = get_ref_dir(e2);
-				sort_ref_dir(subdir1);
-				sort_ref_dir(subdir2);
-				retval = do_for_each_entry_in_dirs(
-						subdir1, subdir2, fn, cb_data);
-				i1++;
-				i2++;
-			} else if (!(e1->flag & REF_DIR) && !(e2->flag & REF_DIR)) {
-				/* Both are references; ignore the one from dir1. */
-				retval = fn(e2, cb_data);
-				i1++;
-				i2++;
-			} else {
-				die("conflict between reference and directory: %s",
-				    e1->name);
-			}
-		} else {
-			struct ref_entry *e;
-			if (cmp < 0) {
-				e = e1;
-				i1++;
-			} else {
-				e = e2;
-				i2++;
-			}
-			if (e->flag & REF_DIR) {
-				struct ref_dir *subdir = get_ref_dir(e);
-				sort_ref_dir(subdir);
-				retval = do_for_each_entry_in_dir(
-						subdir, 0, fn, cb_data);
-			} else {
-				retval = fn(e, cb_data);
-			}
-		}
-		if (retval)
-			return retval;
-	}
 }
 
 /*
@@ -1959,11 +1842,12 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	int flag;
 	unsigned char base[20];
 
-	if (current_ref && (current_ref->name == refname
-			    || !strcmp(current_ref->name, refname))) {
-		if (peel_entry(current_ref, 0))
+	if (current_ref_iter && current_ref_iter->refname == refname) {
+		struct object_id peeled;
+
+		if (ref_iterator_peel(current_ref_iter, &peeled))
 			return -1;
-		hashcpy(sha1, current_ref->u.value.peeled.hash);
+		hashcpy(sha1, peeled.hash);
 		return 0;
 	}
 
@@ -2122,86 +2006,6 @@ struct ref_iterator *files_ref_iterator_begin(
 	iter->flags = flags;
 
 	return ref_iterator;
-}
-
-/*
- * Call fn for each reference in the specified ref_cache, omitting
- * references not in the containing_dir of prefix. Call fn for all
- * references, including broken ones. If fn ever returns a non-zero
- * value, stop the iteration and return that value; otherwise, return
- * 0.
- */
-static int do_for_each_entry(struct ref_cache *refs, const char *prefix,
-			     each_ref_entry_fn fn, void *cb_data)
-{
-	struct packed_ref_cache *packed_ref_cache;
-	struct ref_dir *loose_dir;
-	struct ref_dir *packed_dir;
-	int retval = 0;
-
-	/*
-	 * We must make sure that all loose refs are read before accessing the
-	 * packed-refs file; this avoids a race condition in which loose refs
-	 * are migrated to the packed-refs file by a simultaneous process, but
-	 * our in-memory view is from before the migration. get_packed_ref_cache()
-	 * takes care of making sure our view is up to date with what is on
-	 * disk.
-	 */
-	loose_dir = get_loose_refs(refs);
-	if (prefix && *prefix) {
-		loose_dir = find_containing_dir(loose_dir, prefix, 0);
-	}
-	if (loose_dir)
-		prime_ref_dir(loose_dir);
-
-	packed_ref_cache = get_packed_ref_cache(refs);
-	acquire_packed_ref_cache(packed_ref_cache);
-	packed_dir = get_packed_ref_dir(packed_ref_cache);
-	if (prefix && *prefix) {
-		packed_dir = find_containing_dir(packed_dir, prefix, 0);
-	}
-
-	if (packed_dir && loose_dir) {
-		sort_ref_dir(packed_dir);
-		sort_ref_dir(loose_dir);
-		retval = do_for_each_entry_in_dirs(
-				packed_dir, loose_dir, fn, cb_data);
-	} else if (packed_dir) {
-		sort_ref_dir(packed_dir);
-		retval = do_for_each_entry_in_dir(
-				packed_dir, 0, fn, cb_data);
-	} else if (loose_dir) {
-		sort_ref_dir(loose_dir);
-		retval = do_for_each_entry_in_dir(
-				loose_dir, 0, fn, cb_data);
-	}
-
-	release_packed_ref_cache(packed_ref_cache);
-	return retval;
-}
-
-int do_for_each_ref(const char *submodule, const char *prefix,
-		    each_ref_fn fn, int trim, int flags, void *cb_data)
-{
-	struct ref_entry_cb data;
-	struct ref_cache *refs;
-
-	refs = get_ref_cache(submodule);
-	if (!refs)
-		return 0;
-
-	data.prefix = prefix;
-	data.trim = trim;
-	data.flags = flags;
-	data.fn = fn;
-	data.cb_data = cb_data;
-
-	if (ref_paranoia < 0)
-		ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
-	if (ref_paranoia)
-		data.flags |= DO_FOR_EACH_INCLUDE_BROKEN;
-
-	return do_for_each_entry(refs, prefix, do_one_ref, &data);
 }
 
 /*

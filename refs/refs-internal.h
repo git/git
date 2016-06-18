@@ -443,18 +443,29 @@ struct ref_iterator_vtable {
 };
 
 /*
- * Call fn for each reference in the specified submodule for which the
- * refname begins with prefix. If trim is non-zero, then trim that
- * many characters off the beginning of each refname before passing
- * the refname to fn. flags can be DO_FOR_EACH_INCLUDE_BROKEN to
- * include broken references in the iteration. If fn ever returns a
- * non-zero value, stop the iteration and return that value;
- * otherwise, return 0.
- *
- * This is the common backend for the for_each_*ref* functions.
+ * current_ref_iter is a performance hack: when iterating over
+ * references using the for_each_ref*() functions, current_ref_iter is
+ * set to the reference iterator before calling the callback function.
+ * If the callback function calls peel_ref(), then peel_ref() first
+ * checks whether the reference to be peeled is the one referred to by
+ * the iterator (it usually is) and if so, asks the iterator for the
+ * peeled version of the reference if it is available. This avoids a
+ * refname lookup in a common case. current_ref_iter is set to NULL
+ * when the iteration is over.
  */
-int do_for_each_ref(const char *submodule, const char *prefix,
-		    each_ref_fn fn, int trim, int flags, void *cb_data);
+extern struct ref_iterator *current_ref_iter;
+
+/*
+ * The common backend for the for_each_*ref* functions. Call fn for
+ * each reference in iter. If the iterator itself ever returns
+ * ITER_ERROR, return -1. If fn ever returns a non-zero value, stop
+ * the iteration and return that value. Otherwise, return 0. In any
+ * case, free the iterator when done. This function is basically an
+ * adapter between the callback style of reference iteration and the
+ * iterator style.
+ */
+int do_for_each_ref_iterator(struct ref_iterator *iter,
+			     each_ref_fn fn, void *cb_data);
 
 /*
  * Read the specified reference from the filesystem or packed refs
