@@ -25,7 +25,7 @@
 struct userdiff_driver;
 
 struct diff_filespec {
-	unsigned char sha1[20];
+	struct object_id oid;
 	char *path;
 	void *data;
 	void *cnt_data;

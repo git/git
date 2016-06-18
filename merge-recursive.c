@@ -134,11 +134,13 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 		int ostage2 = ostage1 ^ 1;
 
 		ci->ren1_other.path = pair1->one->path;
-		hashcpy(ci->ren1_other.sha1, src_entry1->stages[ostage1].sha);
+		hashcpy(ci->ren1_other.oid.hash,
+			src_entry1->stages[ostage1].sha);
 		ci->ren1_other.mode = src_entry1->stages[ostage1].mode;
 
 		ci->ren2_other.path = pair2->one->path;
-		hashcpy(ci->ren2_other.sha1, src_entry2->stages[ostage2].sha);
+		hashcpy(ci->ren2_other.oid.hash,
+			src_entry2->stages[ostage2].sha);
 		ci->ren2_other.mode = src_entry2->stages[ostage2].mode;
 	}
 }
@@ -552,13 +554,13 @@ static int update_stages(const char *path, const struct diff_filespec *o,
 		if (remove_file_from_cache(path))
 			return -1;
 	if (o)
-		if (add_cacheinfo(o->mode, o->sha1, path, 1, 0, options))
+		if (add_cacheinfo(o->mode, o->oid.hash, path, 1, 0, options))
 			return -1;
 	if (a)
-		if (add_cacheinfo(a->mode, a->sha1, path, 2, 0, options))
+		if (add_cacheinfo(a->mode, a->oid.hash, path, 2, 0, options))
 			return -1;
 	if (b)
-		if (add_cacheinfo(b->mode, b->sha1, path, 3, 0, options))
+		if (add_cacheinfo(b->mode, b->oid.hash, path, 3, 0, options))
 			return -1;
 	return 0;
 }
@@ -572,9 +574,9 @@ static void update_entry(struct stage_data *entry,
 	entry->stages[1].mode = o->mode;
 	entry->stages[2].mode = a->mode;
 	entry->stages[3].mode = b->mode;
-	hashcpy(entry->stages[1].sha, o->sha1);
-	hashcpy(entry->stages[2].sha, a->sha1);
-	hashcpy(entry->stages[3].sha, b->sha1);
+	hashcpy(entry->stages[1].sha, o->oid.hash);
+	hashcpy(entry->stages[2].sha, a->oid.hash);
+	hashcpy(entry->stages[3].sha, b->oid.hash);
 }
 
 static int remove_file(struct merge_options *o, int clean,
@@ -871,9 +873,9 @@ static int merge_3way(struct merge_options *o,
 		name2 = mkpathdup("%s", branch2);
 	}
 
-	read_mmblob(&orig, one->sha1);
-	read_mmblob(&src1, a->sha1);
-	read_mmblob(&src2, b->sha1);
+	read_mmblob(&orig, one->oid.hash);
+	read_mmblob(&src1, a->oid.hash);
+	read_mmblob(&src2, b->oid.hash);
 
 	merge_status = ll_merge(result_buf, a->path, &orig, base_name,
 				&src1, name1, &src2, name2, &ll_opts);
@@ -902,13 +904,13 @@ static struct merge_file_info merge_file_1(struct merge_options *o,
 		result.clean = 0;
 		if (S_ISREG(a->mode)) {
 			result.mode = a->mode;
-			hashcpy(result.sha, a->sha1);
+			hashcpy(result.sha, a->oid.hash);
 		} else {
 			result.mode = b->mode;
-			hashcpy(result.sha, b->sha1);
+			hashcpy(result.sha, b->oid.hash);
 		}
 	} else {
-		if (!sha_eq(a->sha1, one->sha1) && !sha_eq(b->sha1, one->sha1))
+		if (!sha_eq(a->oid.hash, one->oid.hash) && !sha_eq(b->oid.hash, one->oid.hash))
 			result.merge = 1;
 
 		/*
@@ -924,10 +926,10 @@ static struct merge_file_info merge_file_1(struct merge_options *o,
 			}
 		}
 
-		if (sha_eq(a->sha1, b->sha1) || sha_eq(a->sha1, one->sha1))
-			hashcpy(result.sha, b->sha1);
-		else if (sha_eq(b->sha1, one->sha1))
-			hashcpy(result.sha, a->sha1);
+		if (sha_eq(a->oid.hash, b->oid.hash) || sha_eq(a->oid.hash, one->oid.hash))
+			hashcpy(result.sha, b->oid.hash);
+		else if (sha_eq(b->oid.hash, one->oid.hash))
+			hashcpy(result.sha, a->oid.hash);
 		else if (S_ISREG(a->mode)) {
 			mmbuffer_t result_buf;
 			int merge_status;
@@ -947,13 +949,15 @@ static struct merge_file_info merge_file_1(struct merge_options *o,
 			result.clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
 			result.clean = merge_submodule(result.sha,
-						       one->path, one->sha1,
-						       a->sha1, b->sha1,
+						       one->path,
+						       one->oid.hash,
+						       a->oid.hash,
+						       b->oid.hash,
 						       !o->call_depth);
 		} else if (S_ISLNK(a->mode)) {
-			hashcpy(result.sha, a->sha1);
+			hashcpy(result.sha, a->oid.hash);
 
-			if (!sha_eq(a->sha1, b->sha1))
+			if (!sha_eq(a->oid.hash, b->oid.hash))
 				result.clean = 0;
 		} else {
 			die(_("unsupported object type in the tree"));
@@ -1000,11 +1004,11 @@ static struct merge_file_info merge_file_one(struct merge_options *o,
 	struct diff_filespec one, a, b;
 
 	one.path = a.path = b.path = (char *)path;
-	hashcpy(one.sha1, o_sha);
+	hashcpy(one.oid.hash, o_sha);
 	one.mode = o_mode;
-	hashcpy(a.sha1, a_sha);
+	hashcpy(a.oid.hash, a_sha);
 	a.mode = a_mode;
-	hashcpy(b.sha1, b_sha);
+	hashcpy(b.oid.hash, b_sha);
 	b.mode = b_mode;
 	return merge_file_1(o, &one, &a, &b, branch1, branch2);
 }
@@ -1079,16 +1083,16 @@ static void conflict_rename_delete(struct merge_options *o,
 	int b_mode = 0;
 
 	if (rename_branch == o->branch1) {
-		a_sha = dest->sha1;
+		a_sha = dest->oid.hash;
 		a_mode = dest->mode;
 	} else {
-		b_sha = dest->sha1;
+		b_sha = dest->oid.hash;
 		b_mode = dest->mode;
 	}
 
 	handle_change_delete(o,
 			     o->call_depth ? orig->path : dest->path,
-			     orig->sha1, orig->mode,
+			     orig->oid.hash, orig->mode,
 			     a_sha, a_mode,
 			     b_sha, b_mode,
 			     _("rename"), _("renamed"));
@@ -1111,7 +1115,7 @@ static struct diff_filespec *filespec_from_entry(struct diff_filespec *target,
 	unsigned mode = entry->stages[stage].mode;
 	if (mode == 0 || is_null_sha1(sha))
 		return NULL;
-	hashcpy(target->sha1, sha);
+	hashcpy(target->oid.hash, sha);
 	target->mode = mode;
 	return target;
 }
@@ -1140,7 +1144,7 @@ static void handle_file(struct merge_options *o,
 	add = filespec_from_entry(&other, dst_entry, stage ^ 1);
 	if (add) {
 		char *add_name = unique_path(o, rename->path, other_branch);
-		update_file(o, 0, add->sha1, add->mode, add_name);
+		update_file(o, 0, add->oid.hash, add->mode, add_name);
 
 		remove_file(o, 0, rename->path, 0);
 		dst_name = unique_path(o, rename->path, cur_branch);
@@ -1151,7 +1155,7 @@ static void handle_file(struct merge_options *o,
 			       rename->path, other_branch, dst_name);
 		}
 	}
-	update_file(o, 0, rename->sha1, rename->mode, dst_name);
+	update_file(o, 0, rename->oid.hash, rename->mode, dst_name);
 	if (stage == 2)
 		update_stages(rename->path, NULL, rename, add);
 	else
@@ -1180,9 +1184,9 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		struct diff_filespec other;
 		struct diff_filespec *add;
 		mfi = merge_file_one(o, one->path,
-				 one->sha1, one->mode,
-				 a->sha1, a->mode,
-				 b->sha1, b->mode,
+				 one->oid.hash, one->mode,
+				 a->oid.hash, a->mode,
+				 b->oid.hash, b->mode,
 				 ci->branch1, ci->branch2);
 		/*
 		 * FIXME: For rename/add-source conflicts (if we could detect
@@ -1202,12 +1206,12 @@ static void conflict_rename_rename_1to2(struct merge_options *o,
 		 */
 		add = filespec_from_entry(&other, ci->dst_entry1, 2 ^ 1);
 		if (add)
-			update_file(o, 0, add->sha1, add->mode, a->path);
+			update_file(o, 0, add->oid.hash, add->mode, a->path);
 		else
 			remove_file_from_cache(a->path);
 		add = filespec_from_entry(&other, ci->dst_entry2, 3 ^ 1);
 		if (add)
-			update_file(o, 0, add->sha1, add->mode, b->path);
+			update_file(o, 0, add->oid.hash, add->mode, b->path);
 		else
 			remove_file_from_cache(b->path);
 	} else {
@@ -1421,13 +1425,15 @@ static int process_renames(struct merge_options *o,
 			remove_file(o, 1, ren1_src,
 				    renamed_stage == 2 || !was_tracked(ren1_src));
 
-			hashcpy(src_other.sha1, ren1->src_entry->stages[other_stage].sha);
+			hashcpy(src_other.oid.hash,
+				ren1->src_entry->stages[other_stage].sha);
 			src_other.mode = ren1->src_entry->stages[other_stage].mode;
-			hashcpy(dst_other.sha1, ren1->dst_entry->stages[other_stage].sha);
+			hashcpy(dst_other.oid.hash,
+				ren1->dst_entry->stages[other_stage].sha);
 			dst_other.mode = ren1->dst_entry->stages[other_stage].mode;
 			try_merge = 0;
 
-			if (sha_eq(src_other.sha1, null_sha1)) {
+			if (sha_eq(src_other.oid.hash, null_sha1)) {
 				setup_rename_conflict_info(RENAME_DELETE,
 							   ren1->pair,
 							   NULL,
@@ -1439,7 +1445,7 @@ static int process_renames(struct merge_options *o,
 							   NULL,
 							   NULL);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
-				   sha_eq(dst_other.sha1, ren1->pair->two->sha1)) {
+				   sha_eq(dst_other.oid.hash, ren1->pair->two->oid.hash)) {
 				/*
 				 * Added file on the other side identical to
 				 * the file being renamed: clean merge.
@@ -1449,12 +1455,12 @@ static int process_renames(struct merge_options *o,
 				 * update_file().
 				 */
 				update_file_flags(o,
-						  ren1->pair->two->sha1,
+						  ren1->pair->two->oid.hash,
 						  ren1->pair->two->mode,
 						  ren1_dst,
 						  1, /* update_cache */
 						  0  /* update_wd    */);
-			} else if (!sha_eq(dst_other.sha1, null_sha1)) {
+			} else if (!sha_eq(dst_other.oid.hash, null_sha1)) {
 				clean_merge = 0;
 				try_merge = 1;
 				output(o, 1, _("CONFLICT (rename/add): Rename %s->%s in %s. "
@@ -1464,8 +1470,10 @@ static int process_renames(struct merge_options *o,
 				if (o->call_depth) {
 					struct merge_file_info mfi;
 					mfi = merge_file_one(o, ren1_dst, null_sha1, 0,
-							 ren1->pair->two->sha1, ren1->pair->two->mode,
-							 dst_other.sha1, dst_other.mode,
+							 ren1->pair->two->oid.hash,
+							 ren1->pair->two->mode,
+							 dst_other.oid.hash,
+							 dst_other.mode,
 							 branch1, branch2);
 					output(o, 1, _("Adding merged %s"), ren1_dst);
 					update_file(o, 0, mfi.sha, mfi.mode, ren1_dst);
@@ -1473,7 +1481,8 @@ static int process_renames(struct merge_options *o,
 				} else {
 					char *new_path = unique_path(o, ren1_dst, branch2);
 					output(o, 1, _("Adding as %s instead"), new_path);
-					update_file(o, 0, dst_other.sha1, dst_other.mode, new_path);
+					update_file(o, 0, dst_other.oid.hash,
+						    dst_other.mode, new_path);
 					free(new_path);
 				}
 			} else
@@ -1599,11 +1608,11 @@ static int merge_content(struct merge_options *o,
 		o_sha = (unsigned char *)null_sha1;
 	}
 	one.path = a.path = b.path = (char *)path;
-	hashcpy(one.sha1, o_sha);
+	hashcpy(one.oid.hash, o_sha);
 	one.mode = o_mode;
-	hashcpy(a.sha1, a_sha);
+	hashcpy(a.oid.hash, a_sha);
 	a.mode = a_mode;
-	hashcpy(b.sha1, b_sha);
+	hashcpy(b.oid.hash, b_sha);
 	b.mode = b_mode;
 
 	if (rename_conflict_info) {
@@ -1664,7 +1673,7 @@ static int merge_content(struct merge_options *o,
 			else {
 				int file_from_stage2 = was_tracked(path);
 				struct diff_filespec merged;
-				hashcpy(merged.sha1, mfi.sha);
+				hashcpy(merged.oid.hash, mfi.sha);
 				merged.mode = mfi.mode;
 
 				update_stages(path, NULL,
