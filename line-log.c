@@ -894,14 +894,14 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 	if (!pair || !diff)
 		return;
 
-	if (pair->one->sha1_valid)
+	if (pair->one->oid_valid)
 		fill_line_ends(pair->one, &p_lines, &p_ends);
 	fill_line_ends(pair->two, &t_lines, &t_ends);
 
 	printf("%s%sdiff --git a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
 	printf("%s%s--- %s%s%s\n", prefix, c_meta,
-	       pair->one->sha1_valid ? "a/" : "",
-	       pair->one->sha1_valid ? pair->one->path : "/dev/null",
+	       pair->one->oid_valid ? "a/" : "",
+	       pair->one->oid_valid ? pair->one->path : "/dev/null",
 	       c_reset);
 	printf("%s%s+++ b/%s%s\n", prefix, c_meta, pair->two->path, c_reset);
 	for (i = 0; i < range->ranges.nr; i++) {
@@ -1011,12 +1011,12 @@ static int process_diff_filepair(struct rev_info *rev,
 	if (rg->ranges.nr == 0)
 		return 0;
 
-	assert(pair->two->sha1_valid);
+	assert(pair->two->oid_valid);
 	diff_populate_filespec(pair->two, 0);
 	file_target.ptr = pair->two->data;
 	file_target.size = pair->two->size;
 
-	if (pair->one->sha1_valid) {
+	if (pair->one->oid_valid) {
 		diff_populate_filespec(pair->one, 0);
 		file_parent.ptr = pair->one->data;
 		file_parent.size = pair->one->size;
