@@ -250,16 +250,16 @@ int rename_ref_available(const char *oldname, const char *newname);
 
 /*
  * Call fn for each reference in the specified submodule for which the
- * refname begins with base. If trim is non-zero, then trim that many
- * characters off the beginning of each refname before passing the
- * refname to fn. flags can be DO_FOR_EACH_INCLUDE_BROKEN to include
- * broken references in the iteration. If fn ever returns a non-zero
- * value, stop the iteration and return that value; otherwise, return
- * 0.
+ * refname begins with prefix. If trim is non-zero, then trim that
+ * many characters off the beginning of each refname before passing
+ * the refname to fn. flags can be DO_FOR_EACH_INCLUDE_BROKEN to
+ * include broken references in the iteration. If fn ever returns a
+ * non-zero value, stop the iteration and return that value;
+ * otherwise, return 0.
  *
  * This is the common backend for the for_each_*ref* functions.
  */
-int do_for_each_ref(const char *submodule, const char *base,
+int do_for_each_ref(const char *submodule, const char *prefix,
 		    each_ref_fn fn, int trim, int flags, void *cb_data);
 
 /*
