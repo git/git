@@ -404,6 +404,13 @@ struct ref_iterator *files_ref_iterator_begin(const char *submodule,
 					      const char *prefix,
 					      unsigned int flags);
 
+/*
+ * Iterate over the references in the main ref_store that have a
+ * reflog. The paths within a directory are iterated over in arbitrary
+ * order.
+ */
+struct ref_iterator *files_reflog_iterator_begin(void);
+
 /* Internal implementation of reference iteration: */
 
 /*
