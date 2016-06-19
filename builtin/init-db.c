@@ -154,6 +154,14 @@ static int git_init_db_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "init.templatedir"))
 		return git_config_pathname(&init_db_template_dir, k, v);
 
+	if (!strcmp(k, "core.hidedotfiles")) {
+		if (v && !strcasecmp(v, "dotgitonly"))
+			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+		else
+			hide_dotfiles = git_config_bool(k, v);
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -187,9 +195,6 @@ static int create_default_files(const char *template_path)
 	safe_create_dir(git_path_buf(&buf, "refs"), 1);
 	safe_create_dir(git_path_buf(&buf, "refs/heads"), 1);
 	safe_create_dir(git_path_buf(&buf, "refs/tags"), 1);
-
-	/* Just look for `init.templatedir` */
-	git_config(git_init_db_config, NULL);
 
 	/* First copy the templates -- we might have the default
 	 * config file there, in which case we would want to read
@@ -357,6 +362,9 @@ int init_db(const char *template_dir, unsigned int flags)
 
 	if (git_link)
 		separate_git_dir(git_dir);
+
+	/* Just look for `init.templatedir` and `core.hidedotfiles` */
+	git_config(git_init_db_config, NULL);
 
 	safe_create_dir(git_dir, 0);
 
