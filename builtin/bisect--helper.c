@@ -6,6 +6,7 @@
 #include "dir.h"
 #include "argv-array.h"
 #include "run-command.h"
+#include "prompt.h"
 
 static GIT_PATH_FUNC(git_path_bisect_write_terms, "BISECT_TERMS")
 static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
@@ -308,19 +309,20 @@ static int bisect_next_check(const char *term, const char *term_good,
 		return -1;
 
 	if (missing_good && !missing_bad && term && !strcmp(term, term_good)) {
-		char yesno[1000];
+		char *yesno;
 		/*
 		 * have bad (or new) but not good (or old). We could bisect
 		 * although this is less optimum.
 		 */
 		fprintf(stderr, "Warning: bisecting only with a %s\n", term_bad);
+		if (!isatty(0))
+			return 0;
 		/*
 		 * TRANSLATORS: Make sure to include [Y] and [n] in your
 		 * translation. The program will only accept English input
 		 * at this point.
 		 */
-		fprintf(stderr, "Are you sure [Y/n]? ");
-		scanf("%s", yesno);
+		yesno = git_prompt(_("Are you sure [Y/n]? "), PROMPT_ECHO);
 		if (starts_with(yesno, "N") || starts_with(yesno, "n"))
 			return -1;
 		return 0;
