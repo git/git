@@ -192,9 +192,8 @@ objects from the source repository into a pack in the cloned repository.
 	Create a 'shallow' clone with a history truncated to the
 	specified number of revisions. Implies `--single-branch` unless
 	`--no-single-branch` is given to fetch the histories near the
-	tips of all branches. This implies `--shallow-submodules`. If
-	you want to have a shallow superproject clone, but full submodules,
-	also pass `--no-shallow-submodules`.
+	tips of all branches. If you want to clone submodules shallowly,
+	also pass `--shallow-submodules`.
 
 --[no-]single-branch::
 	Clone only the history leading to the tip of a single branch,
