@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2016, #05; Thu, 16)
+Subject: What's cooking in git.git (Jun 2016, #06; Sun, 19)
 X-master-at: 05219a1276341e72d8082d76b7f5ed394b7437a4
 X-next-at: 3dc84b0c19932ec9947ca4936b6bfd6421ccb1b4
 
-What's cooking in git.git (Jun 2016, #05; Thu, 16)
+What's cooking in git.git (Jun 2016, #06; Sun, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Let's start a new cycle by rewinding the tip of 'next' soonish.  I
-expect I'd eject a few premature topics out of 'next' while doing
-so.  There are many topics that need input from the list (look for
-'?' in this document) to decide either to drop them or to move them
-forward.
+The tip of 'next' will be rewound and rebuilt, soon after the topics
+that have been cooking graduates to 'master', which in turn will
+happen RSN.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,96 +24,129 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ap/git-svn-propset-doc (2016-06-15) 1 commit
- - git-svn: document the 'git svn propset' command
+* em/newer-freebsd-shells-are-fine-with-returns (2016-06-17) 1 commit
+ - rebase: update comment about FreeBSD /bin/sh
 
- "git svn propset" subcommand that was added in 2.3 days is
- documented now.
-
- Will merge to 'next'.
-
-
-* jk/add-i-diff-compact-heuristics (2016-06-16) 1 commit
- - add--interactive: respect diff.compactionHeuristic
-
- "git add -i/-p" learned to honor diff.compactionHeuristic
- experimental knob, so that the user can work on the same hunk split
- as "git diff" output.
+ Comments about misbehaving FreeBSD shells have been clarified with
+ the version number (9.x and before are broken, newer ones are OK).
 
  Will merge to 'next'.
 
 
-* jk/big-and-old-archive-tar (2016-06-16) 2 commits
- - archive-tar: write extended headers for far-future mtime
- - archive-tar: write extended headers for file sizes >= 8GB
+* mg/signature-doc (2016-06-17) 4 commits
+ - Documentation/technical: signed merge tag format
+ - Documentation/technical: signed commit format
+ - Documentation/technical: signed tag format
+ - Documentation/technical: describe signature formats
 
- "git archive" learned to handle files that are larger than 8GB and
- commits far in the future than expressible by the traditional US-TAR
- format.
-
- Will merge to 'next'.
+ Formats of the various data (and how to validate them) where we use
+ GPG signature have been documented.
 
 
-* jk/gpg-interface-cleanup (2016-06-16) 7 commits
- - gpg-interface: check gpg signature creation status
- - sign_buffer: use pipe_command
- - verify_signed_buffer: use pipe_command
- - run-command: add pipe_command helper
- - verify_signed_buffer: use tempfile object
- - verify_signed_buffer: drop pbuf variable
- - gpg-interface: use child_process.args
+* jk/string-list-static-init (2016-06-13) 2 commits
+ - use string_list initializer consistently
+ - Merge branch 'jk/parseopt-string-list' into jk/string-list-static-init
+ (this branch uses jk/parseopt-string-list.)
 
- A new run-command API function pipe_command() is introduced to
- sanely feed data to the standard input while capturing data from
- the standard output and the standard error of an external process,
- which is cumbersome to hand-roll correctly without deadlocking.
-
- The codepath to sign data in a prepared buffer with GPG has been
- updated to use this API to read from the status-fd to check for
- errors (instead of relying on GPG's exit status).
+ Instead of taking advantage of a struct string_list that is
+ allocated with all NULs happens to be STRING_LIST_INIT_NODUP kind,
+ initialize them explicitly as such, to document their behaviour
+ better.
 
  Will merge to 'next'.
 
 
-* lf/sideband-returns-void (2016-06-16) 2 commits
- - upload-pack.c: make send_client_data() return void
- - sideband.c: make send_sideband() return void
+* mh/ref-store (2016-06-07) 38 commits
+ - refs: implement iteration over only per-worktree refs
+ - refs: make lock generic
+ - refs: add method to rename refs
+ - refs: add methods to init refs db
+ - refs: add method for delete_refs
+ - refs: add method for initial ref transaction commit
+ - refs: add methods for reflog
+ - refs: add method iterator_begin
+ - files_ref_iterator_begin(): take a ref_store argument
+ - split_symref_update(): add a files_ref_store argument
+ - lock_ref_sha1_basic(): add a files_ref_store argument
+ - lock_ref_for_update(): add a files_ref_store argument
+ - commit_ref_update(): add a files_ref_store argument
+ - lock_raw_ref(): add a files_ref_store argument
+ - repack_without_refs(): add a files_ref_store argument
+ - refs: make peel_ref() virtual
+ - refs: make create_symref() virtual
+ - refs: make pack_refs() virtual
+ - refs: make verify_refname_available() virtual
+ - refs: make read_raw_ref() virtual
+ - resolve_gitlink_ref(): rename path parameter to submodule
+ - resolve_gitlink_ref(): avoid memory allocation in many cases
+ - resolve_gitlink_ref(): implement using resolve_ref_recursively()
+ - resolve_ref_recursively(): new function
+ - read_raw_ref(): take a (struct ref_store *) argument
+ - resolve_gitlink_packed_ref(): remove function
+ - resolve_packed_ref(): rename function from resolve_missing_loose_ref()
+ - refs: reorder definitions
+ - refs: add a transaction_commit() method
+ - {lock,commit,rollback}_packed_refs(): add files_ref_store arguments
+ - resolve_missing_loose_ref(): add a files_ref_store argument
+ - get_packed_ref(): add a files_ref_store argument
+ - add_packed_ref(): add a files_ref_store argument
+ - refs: create a base class "ref_store" for files_ref_store
+ - refs: add a backend method structure
+ - refs: rename struct ref_cache to files_ref_store
+ - rename_ref_available(): add docstring
+ - resolve_gitlink_ref(): eliminate temporary variable
+ (this branch uses mh/ref-iterators and mh/split-under-lock; is tangled with mh/update-ref-errors.)
 
- A small internal API cleanup.
+ As mh/split-under-lock will be replaced, this needs to be rebuilt
+ on top.
+
+
+* mh/update-ref-errors (2016-06-10) 6 commits
+ - lock_ref_for_update(): avoid a symref resolution
+ - lock_ref_for_update(): make error handling more uniform
+ - t1404: add more tests of update-ref error handling
+ - t1404: document function test_update_rejected
+ - t1404: remove "prefix" argument to test_update_rejected
+ - t1404: rename file to t1404-update-ref-errors.sh
+ (this branch uses mh/split-under-lock; is tangled with mh/ref-iterators and mh/ref-store.)
+
+ As mh/split-under-lock will be replaced, this needs to be rebuilt
+ on top.
+
+
+* jh/clean-smudge-annex (2016-06-17) 5 commits
+ - warn on unusable smudgeToFile/cleanFromFile config
+ - use smudgeToFile in git checkout etc
+ - use cleanFromFile in git add
+ - add smudgeToFile and cleanFromFile filter configs
+ - clarify %f documentation
+
+ The interface to "clean/smudge" filters require Git to feed the
+ whole contents via pipe, which is suboptimal for some
+ applications.  "cleanFromFile/smudgeToFile" commands are the moral
+ equilvalents for these filters but they interact with the files on
+ the filesystem directly.
+
+ This unfortunately does not build when merged to 'pu', as there are
+ interactions with other topic(s).
+
+
+* lc/shell-default-value-noexpand (2016-06-19) 1 commit
+ - sh-setup: enclose setting of ${VAR=default} in double-quotes
+
+ Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
+ to set the default value, without enclosing it in double quotes.
 
  Will merge to 'next'.
 
 
-* nd/graph-width-padded (2016-06-16) 2 commits
- - pretty.c: support <direction>|(<negative number>) forms
- - pretty: pass graph width to pretty formatting for use in '%>|(N)'
+* sb/clone-shallow-passthru (2016-06-19) 1 commit
+ - clone: do not let --depth imply --shallow-submodules
 
- "log --graph --format=" learned that "%>|(N)" specifies the width
- relative to the terminal's left edge, not relative to the area to
- draw text that is to the right of the ancestry-graph section.  It
- also now accepts negative N that means the column limit is relative
- to the right border.
-
- Will merge to 'next'.
-
-
-* dn/gpg-doc (2016-06-16) 1 commit
- - Documentation: GPG capitalization
-
- The documentation tries to consistently spell "GPG"; when
- referring to the specific program name, "gpg" is used.
-
- Will merge to 'next'.
-
-
-* jk/bisect-show-tree (2016-06-16) 1 commit
- - bisect: always call setup_revisions after init_revisions
-
- "git bisect" makes an internal call to "git diff-tree" when
- bisection finds the culprit, but this call did not initialize the
- data structure to pass to the diff-tree API correctly.
-
- Will merge to 'next'.
+ Fix an unintended regression in v2.9 that breaks "clone --depth"
+ that recurses down to submodules by forcing the submodules to also
+ be cloned shallowly, which many server instances that host upstream
+ of the submodules are not prepared for.
 
 --------------------------------------------------
 [Stalled]
@@ -205,8 +236,9 @@ of the repositories listed at
 
  "git grep -i" has been taught to fold case in non-ascii locales.
 
- This really needs review.  What it attempts to achieve is
- worthwhile, I would think ($gmane/286137).
+ What it attempts to achieve is worthwhile, I would think, but
+ it seems to be broken, unfortunately.
+ ($gmane/286137, 297593, 297605).
 
 
 * ec/annotate-deleted (2015-11-20) 1 commit
@@ -256,6 +288,98 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* ap/git-svn-propset-doc (2016-06-15) 1 commit
+ - git-svn: document the 'git svn propset' command
+
+ "git svn propset" subcommand that was added in 2.3 days is
+ documented now.
+
+ Will merge to 'next'.
+
+
+* jk/add-i-diff-compact-heuristics (2016-06-16) 1 commit
+ - add--interactive: respect diff.compactionHeuristic
+
+ "git add -i/-p" learned to honor diff.compactionHeuristic
+ experimental knob, so that the user can work on the same hunk split
+ as "git diff" output.
+
+ Will merge to 'next'.
+
+
+* jk/big-and-future-archive-tar (2016-06-17) 2 commits
+ - archive-tar: write extended headers for far-future mtime
+ - archive-tar: write extended headers for file sizes >= 8GB
+
+ "git archive" learned to handle files that are larger than 8GB and
+ commits far in the future than expressible by the traditional US-TAR
+ format.
+
+ Will merge to 'next'.
+
+
+* jk/gpg-interface-cleanup (2016-06-17) 7 commits
+ - gpg-interface: check gpg signature creation status
+ - sign_buffer: use pipe_command
+ - verify_signed_buffer: use pipe_command
+ - run-command: add pipe_command helper
+ - verify_signed_buffer: use tempfile object
+ - verify_signed_buffer: drop pbuf variable
+ - gpg-interface: use child_process.args
+
+ A new run-command API function pipe_command() is introduced to
+ sanely feed data to the standard input while capturing data from
+ the standard output and the standard error of an external process,
+ which is cumbersome to hand-roll correctly without deadlocking.
+
+ The codepath to sign data in a prepared buffer with GPG has been
+ updated to use this API to read from the status-fd to check for
+ errors (instead of relying on GPG's exit status).
+
+ Will merge to 'next'.
+
+
+* lf/sideband-returns-void (2016-06-16) 2 commits
+ - upload-pack.c: make send_client_data() return void
+ - sideband.c: make send_sideband() return void
+
+ A small internal API cleanup.
+
+ Will merge to 'next'.
+
+
+* nd/graph-width-padded (2016-06-16) 2 commits
+ - pretty.c: support <direction>|(<negative number>) forms
+ - pretty: pass graph width to pretty formatting for use in '%>|(N)'
+
+ "log --graph --format=" learned that "%>|(N)" specifies the width
+ relative to the terminal's left edge, not relative to the area to
+ draw text that is to the right of the ancestry-graph section.  It
+ also now accepts negative N that means the column limit is relative
+ to the right border.
+
+ Will merge to 'next'.
+
+
+* dn/gpg-doc (2016-06-16) 1 commit
+ - Documentation: GPG capitalization
+
+ The documentation tries to consistently spell "GPG"; when
+ referring to the specific program name, "gpg" is used.
+
+ Will merge to 'next'.
+
+
+* jk/bisect-show-tree (2016-06-16) 1 commit
+ - bisect: always call setup_revisions after init_revisions
+
+ "git bisect" makes an internal call to "git diff-tree" when
+ bisection finds the culprit, but this call did not initialize the
+ data structure to pass to the diff-tree API correctly.
+
+ Will merge to 'next'.
+
 
 * lv/status-say-working-tree-not-directory (2016-06-09) 1 commit
  - Use "working tree" instead of "working directory" for git status
@@ -443,6 +567,8 @@ of the repositories listed at
   (merged to 'next' on 2016-06-06 at 536102f)
  + userdiff: add built-in pattern for CSS
 
+ Originally merged to 'next' on 2016-06-06
+
  Update the funcname definition to support css files.
 
  Will merge to 'master'.
@@ -470,6 +596,8 @@ of the repositories listed at
  + rev-list: disable bitmaps when "-n" is used with listing objects
  + rev-list: "adjust" results of "--count --use-bitmap-index -n"
 
+ Originally merged to 'next' on 2016-06-06
+
  "git rev-list --count" whose walk-length is limited with "-n"
  option did not work well with the counting optimized to look at the
  bitmap index.
@@ -494,10 +622,15 @@ of the repositories listed at
  + refs: remove unnecessary "extern" keywords
  (this branch is used by mh/ref-store; uses mh/split-under-lock; is tangled with mh/update-ref-errors.)
 
+ Originally merged to 'next' on 2016-06-06
+
  The API to iterate over all the refs (i.e. for_each_ref(), etc.)
  has been revamped.
 
- Will merge to 'master'.
+ As mh/split-under-lock will be replaced, this needs to be rebuilt
+ on top.
+
+ Will eject from 'next'.
 
 
 * ew/mboxrd-format-am (2016-06-06) 3 commits
@@ -615,6 +748,8 @@ of the repositories listed at
   (merged to 'next' on 2016-06-06 at 505f1ee)
  + upload-pack.c: use parse-options API
 
+ Originally merged to 'next' on 2016-06-06
+
  "git upload-pack" command has been updated to use the parse-options
  API.
 
@@ -624,6 +759,8 @@ of the repositories listed at
 * jc/clear-pathspec (2016-06-02) 1 commit
   (merged to 'next' on 2016-06-06 at 9e7e291)
  + pathspec: rename free_pathspec() to clear_pathspec()
+
+ Originally merged to 'next' on 2016-06-06
 
  We usually call a function that clears the contents a data
  structure X without freeing the structure itself clear_X(), and
@@ -640,6 +777,8 @@ of the repositories listed at
  + submodule-config: keep shallow recommendation around
  (this branch is used by sb/submodule-clone-retry.)
 
+ Originally merged to 'next' on 2016-05-31
+
  An upstream project can make a recommendation to make only a
  shallow clone for some submodules in the .gitmodules file it ship.
 
@@ -654,7 +793,7 @@ of the repositories listed at
  Needs review.
 
 
-* va/i18n-even-more (2016-06-07) 38 commits
+* va/i18n-even-more (2016-06-17) 38 commits
  - i18n: branch: mark comment when editing branch description for translation
  - i18n: unmark die messages for translation
  - i18n: submodule: escape shell variables inside eval_gettext
@@ -684,7 +823,7 @@ of the repositories listed at
  - i18n: bisect: simplify error message for i18n
  - i18n: rebase: mark placeholder for translation
  - i18n: rebase: fix marked string to use eval_gettext variant
- - merge-octupus: use die shell function from git-sh-setup.sh
+ - merge-octopus: use die shell function from git-sh-setup.sh
  - i18n: merge-octopus: mark messages for translation
  - i18n: sequencer: mark string for translation
  - i18n: sequencer: mark entire sentences for translation
@@ -698,7 +837,7 @@ of the repositories listed at
  to pass GETTEXT_POISON tests.
 
  One patch from the original submission dropped due to conflicts
- with other topics in flight.
+ with jk/upload-pack-hook, which is still in flux.
 
  Will merge to 'next'.
 
@@ -706,6 +845,8 @@ of the repositories listed at
 * jg/dash-is-last-branch-in-worktree-add (2016-05-31) 1 commit
   (merged to 'next' on 2016-06-02 at 3959ef6)
  + worktree: allow "-" short-hand for @{-1} in add command
+
+ Originally merged to 'next' on 2016-06-02
 
  "git worktree add" learned that '-' can be used as a short-hand for
  "@{-1}", the previous branch.
@@ -743,6 +884,8 @@ of the repositories listed at
   (merged to 'next' on 2016-05-31 at 1e9c920)
  + format_commit_message: honor `color=auto` for `%C(auto)`
 
+ Originally merged to 'next' on 2016-05-31
+
  %C(auto) in a custom format string that commands in `git log`
  family takes unconditionally turned the color on, ignoring
  --no-color or --color=auto with output not connected to a tty;
@@ -754,6 +897,8 @@ of the repositories listed at
 * ew/daemon-socket-keepalive (2016-05-25) 1 commit
   (merged to 'next' on 2016-05-31 at c32acf1)
  + daemon: enable SO_KEEPALIVE for all sockets
+
+ Originally merged to 'next' on 2016-05-31
 
  When "git daemon" is run without --[init-]timeout specified, a
  connection from a client that silently goes offline can hang around
@@ -775,8 +920,7 @@ of the repositories listed at
  Allow a custom "git upload-pack" replacement to respond to
  "fetch/clone" request.
 
- Still under discussion???
- ($gmane/295705).
+ Will merge to 'next'.
 
 
 * rs/xdiff-hunk-with-func-line (2016-06-09) 9 commits
@@ -792,6 +936,8 @@ of the repositories listed at
  + xdiff: factor out match_func_rec()
  + t4051: rewrite, add more tests
 
+ Originally merged to 'next' on 2016-06-10
+
  "git show -W" (extend hunks to cover the entire function, delimited
  by lines that match the "funcname" pattern) used to show the entire
  file when a change added an entire function at the end of the file,
@@ -803,6 +949,8 @@ of the repositories listed at
 * sb/submodule-misc-cleanups (2016-05-25) 1 commit
   (merged to 'next' on 2016-05-31 at 0d07b9c)
  + submodule update: make use of the existing fetch_in_submodule function
+
+ Originally merged to 'next' on 2016-05-31
 
  Minor simplification.
 
@@ -821,11 +969,14 @@ of the repositories listed at
  (this branch uses jc/attr and sb/pathspec-label; is tangled with jc/attr-more.)
 
  Will hold.
+ The jc/attr topic that this depends on needs to be redone.
 
 
 * ah/no-verify-signature-with-pull-rebase (2016-05-20) 1 commit
   (merged to 'next' on 2016-05-31 at 30add83)
  + pull: warn on --verify-signatures with --rebase
+
+ Originally merged to 'next' on 2016-05-31
 
  "git pull --rebase --verify-signature" learned to warn the user
  that "--verify-signature" is a no-op.
@@ -864,6 +1015,8 @@ of the repositories listed at
  + attr.c: use strchrnul() to scan for one line
  + commit.c: use strchrnul() to scan for one line
  (this branch is used by jc/attr-more, sb/pathspec-label and sb/submodule-default-paths.)
+
+ Originally merged to 'next' on 2016-05-31
 
  The attributes API has been updated so that it can later be
  optimized using the knowledge of which attributes are queried.
@@ -926,6 +1079,8 @@ of the repositories listed at
  + builtin/apply: avoid parameter shadowing 'p_value' global
  + builtin/apply: make gitdiff_verify_name() return void
 
+ Originally merged to 'next' on 2016-06-06
+
  The "git apply" standalone program is being libified; this is the
  first step to move many state variables into a structure that can
  be explicitly (re)initialized to make the machinery callable more
@@ -962,6 +1117,8 @@ of the repositories listed at
  + pathspec: move long magic parsing out of prefix_pathspec
  + Documentation: fix a typo
  (this branch is used by sb/submodule-default-paths; uses jc/attr; is tangled with jc/attr-more.)
+
+ Originally merged to 'next' on 2016-06-03
 
  The pathspec mechanism learned ":(attr:X)$pattern" pathspec magic
  to limit paths that match $pattern further by attribute settings.
@@ -1024,10 +1181,13 @@ of the repositories listed at
  + t1404: demonstrate a bug resolving references
  (this branch is used by mh/ref-iterators, mh/ref-store and mh/update-ref-errors.)
 
+ Originally merged to 'next' on 2016-06-03
+
  Further preparatory work on the refs API before the pluggable
  backend series can land.
 
- Will merge to 'master'.
+ Will eject from 'next'.
+ Will be replaced with the updated one from Michael after that.
 
 
 * ew/fast-import-unpack-limit (2016-05-29) 2 commits
@@ -1035,6 +1195,8 @@ of the repositories listed at
  + fast-import: invalidate pack_id references after loosening
   (merged to 'next' on 2016-05-11 at ffd4efb)
  + fast-import: implement unpack limit
+
+ Originally merged to 'next' on 2016-05-29
 
  "git fast-import" learned the same performance trick to avoid
  creating too small a packfile as "git fetch" and "git push" have,
@@ -1109,7 +1271,8 @@ of the repositories listed at
  optionally interface with the watchman daemon to further reduce the
  refresh cost.
 
- Are people happy with this version?  If so will merge to 'next'.
+ Belated review comments still trickling in.
+ Will hold.
  ($gmane/295106).
 
 
@@ -1142,89 +1305,3 @@ of the repositories listed at
  It has been reported that git-gui still uses the deprecated syntax,
  which needs to be fixed before this final step can proceed.
  ($gmane/282594)
-
---------------------------------------------------
-[Discarded]
-
-* js/am-3-merge-recursive-direct (2015-10-12) 2 commits
- . am: make a direct call to merge_recursive
- . merge_recursive_options: introduce the "gently" flag
-
- The merge_recursive_generic() function has been made a bit safer to
- call from inside a process.  "git am -3" was taught to make a direct
- call to the function when falling back to three-way merge.
-
- Being able to make a direct call would be good in general, but as a
- performance thing, the change needs to be backed up by numbers.
-
- I haven't gone through the "gently" change with fine toothed comb;
- I can see that the change avoids calling die(), but I haven't made
- sure that the program states (e.g. what's in the in-core index) are
- adjusted sensibly when it returns to the caller instead of dying,
- or the codepaths that used to die() are free of resource leaks.
- The original code certainly did not care the program states at the
- point of dying exactly because it knew it is going to exit, but now
- they have to care, and they need to be audited.
-
- Has a lot of conflict when merged to 'pu' these days, so let's
- eject it from our tree for now.
-
- Will discard.
- ($gmane/292205)
-
-
-* nd/i-t-a-commitable (2016-06-06) 3 commits
- . commit: don't count i-t-a entries when checking if the new commit is empty
- . Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
- . diff.h: extend "flags" field to 64 bits because we're out of bits
-
- "rm .git/index && git add -N * && git commit" allows you to create
- an empty commit without --allow-empty; attempt to forbid it.
-
- Retracted.
- Will discard.
- ($gmane/297362)
-
-
-* jc/merge-impossible-no-commit (2016-04-26) 2 commits
- . merge: warn --no-commit merge when no new commit is created
- . merge: do not contaminate option_commit with --squash
-
- "git merge --no-commit" silently succeeded when there is no need to
- create any commit, either when you are more recent than the commit
- you tried to merge, or you can fast-forward to the commit you tried
- to merge.  The command gives a warning message in such cases.
-
- Just tying loose ends in a discussion.  Unless somebody else
- champions this topic, I'll drop it.
-
- Will discard.
-
-
-* bc/cocci-object-id (2016-06-06) 8 commits
- . merge-recursive: convert merge_recursive_generic to object_id
- . merge-recursive: convert leaf functions to use struct object_id
- . merge-recursive: convert struct merge_file_info to object_id
- . merge-recursive: convert struct stage_data to use object_id
- . Rename struct diff_filespec's sha1_valid member.
- . Convert struct diff_filespec to struct object_id
- . Apply standard object_id Coccinelle transformations.
- . Add basic Coccinelle transforms.
-
- Move from "unsigned char [20]" to "struct object_id" continues,
- with help from an automated tool.
-
- Will discard.
- ($gmane/296749)
-
-
-* az/p4-bare-no-rebase (2016-02-19) 1 commit
- - git-p4.py: Don't try to rebase on submit from bare repository
-
- "git p4 submit" attempts to do a rebase, which would fail if done
- in a bare repository.  Not doing this rebase would paper over the
- failure, which is what this patch does, but it is unclear what the
- side effect of not rebasing is.
-
- Retracted.
- ($gmane/296722)
