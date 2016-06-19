@@ -31,6 +31,8 @@ static struct bisect_term {
 	char term_bad[10];
 } terms;
 
+int missing_good = 1, missing_bad = 1;
+
 /*
  * Check whether the string `term` belongs to the set of strings
  * included in the variable arguments.
@@ -280,9 +282,9 @@ static int check_and_set_terms(const char *cmd, const char *term_good,
 static int mark_good(const char *refname, const struct object_id *oid,
 		     int flag, void *cb_data)
 {
-	int *missing_good = (int *)cb_data;
-	*missing_good = 0;
-	printf("missing_good: %d\n", *missing_good);
+	char *term_good = (char *)cb_data;
+	if (starts_with(refname, term_good))
+		missing_good = 0;
 
 	return 0;
 }
@@ -290,7 +292,6 @@ static int mark_good(const char *refname, const struct object_id *oid,
 static int bisect_next_check(const char *term, const char *term_good,
 			     const char *term_bad)
 {
-	int missing_good = 1, missing_bad = 1;
 	struct strbuf hi = STRBUF_INIT;
 
 	char *bad_ref = xstrfmt("refs/bisect/%s", term_bad);
@@ -298,16 +299,16 @@ static int bisect_next_check(const char *term, const char *term_good,
 		missing_bad = 0;
 
 	free(bad_ref);
-	for_each_ref_in("refs/bisect/", mark_good, (void *) &missing_good);
+	for_each_ref_in("refs/bisect/", mark_good, (void *) term_good);
 
 	if (!missing_good && !missing_bad)
 		return 0;
 
-	if (missing_good && missing_bad)
+	if (missing_good && missing_bad && !term)
 		return -1;
 
-	if (missing_good && !missing_bad && !term) {
-		struct strbuf yesno = STRBUF_INIT;
+	if (missing_good && !missing_bad && term && !strcmp(term, term_good)) {
+		char yesno[1000];
 		/*
 		 * have bad (or new) but not good (or old). We could bisect
 		 * although this is less optimum.
@@ -319,12 +320,12 @@ static int bisect_next_check(const char *term, const char *term_good,
 		 * at this point.
 		 */
 		fprintf(stderr, "Are you sure [Y/n]? ");
-		if (strbuf_read(&yesno, 0, 3))
-			return error(_("cannot read from standard input"));
-		if (starts_with(yesno.buf, "N") || starts_with(yesno.buf, "n"))
+		scanf("%s", yesno);
+		if (starts_with(yesno, "N") || starts_with(yesno, "n"))
 			return -1;
+		return 0;
 	}
-	if (strbuf_read_file(&hi, git_path_bisect_start(), 0) > 0) {
+	if (strbuf_read_file(&hi, git_path_bisect_start(), 0) >= 0) {
 		char *bad_syn = xstrdup("bad|new");
 		char *good_syn = xstrdup("good|old");
 		error(_("You need to give me at least one %s and one %s "
@@ -419,7 +420,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			die(_("--check-and-set-terms requires 3 arguments"));
 		return check_and_set_terms(argv[0], argv[1], argv[2]);
 	case BISECT_NEXT_CHECK:
-		if (!(argc == 2 || argc == 3))
+		if (argc != 2 && argc != 3)
 			die(_("--bisect-next-check requires 2 or 3 arguments"));
 		if (argc == 2)
 			return bisect_next_check(NULL, argv[0], argv[1]);
