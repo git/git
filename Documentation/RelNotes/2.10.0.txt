@@ -1,0 +1,68 @@
+Git 2.10 Release Notes
+======================
+
+Backward compatibility notes
+----------------------------
+
+Updates since v2.9
+------------------
+
+UI, Workflows & Features
+
+ * "git pull --rebase --verify-signature" learned to warn the user
+   that "--verify-signature" is a no-op when rebasing.
+
+ * An upstream project can make a recommendation to shallowly clone
+   some submodules in the .gitmodules file it ships.
+
+ * "git worktree add" learned that '-' can be used as a short-hand for
+   "@{-1}", the previous branch.
+
+ * Update the funcname definition to support css files.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * "git fast-import" learned the same performance trick to avoid
+   creating too small a packfile as "git fetch" and "git push" have,
+   using *.unpackLimit configuration.
+
+ * When "git daemon" is run without --[init-]timeout specified, a
+   connection from a client that silently goes offline can hang around
+   for a long time, wasting resources.  The socket-level KEEPALIVE has
+   been enabled to allow the OS to notice such failed connections.
+   (merge a43b68a ew/daemon-socket-keepalive later to maint).
+
+ * "git upload-pack" command has been updated to use the parse-options
+   API.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.9
+----------------
+
+Unless otherwise noted, all the fixes since v2.8 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * The commands in `git log` family take %C(auto) in a custom format
+   string.  This unconditionally turned the color on, ignoring
+   --no-color or with --color=auto when the output is not connected to
+   a tty; this was corrected to make the format truly behave as
+   "auto".
+   (merge b15a3e0 et/pretty-format-c-auto later to maint).
+
+ * "git rev-list --count" whose walk-length is limited with "-n"
+   option did not work well with the counting optimized to look at the
+   bitmap index.
+   (merge fb85db8 jk/rev-list-count-with-bitmap later to maint).
+
+ * "git show -W" (extend hunks to cover the entire function, delimited
+   by lines that match the "funcname" pattern) used to show the entire
+   file when a change added an entire function at the end of the file,
+   which has been fixed.
+   (merge 6f8d9bc rs/xdiff-hunk-with-func-line later to maint).
+
+ * Other minor clean-ups and documentation updates
