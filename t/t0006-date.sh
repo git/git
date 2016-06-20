@@ -48,6 +48,11 @@ check_show default "$TIME" 'Wed Jun 15 16:13:20 2016 +0200'
 check_show raw "$TIME" '1466000000 +0200'
 check_show iso-local "$TIME" '2016-06-15 14:13:20 +0000'
 
+# arbitrary time absurdly far in the future
+FUTURE="5758122296 -0400"
+check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400"
+check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000"
+
 check_parse() {
 	echo "$1 -> $2" >expect
 	test_expect_${4:-success} "parse date ($1${3:+ TZ=$3})" "

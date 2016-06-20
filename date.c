@@ -74,6 +74,8 @@ static int local_tzoffset(unsigned long time)
 	localtime_r(&t, &tm);
 	t_local = tm_to_time_t(&tm);
 
+	if (t_local == -1)
+		return 0; /* error; just use +0000 */
 	if (t_local < t) {
 		eastwest = -1;
 		offset = t - t_local;
