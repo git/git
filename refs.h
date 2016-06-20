@@ -90,6 +90,7 @@ extern int resolve_gitlink_ref(const char *path, const char *refname, unsigned c
  */
 extern int refname_match(const char *abbrev_name, const char *full_name);
 
+extern int expand_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 

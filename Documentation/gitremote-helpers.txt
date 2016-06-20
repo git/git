@@ -415,6 +415,17 @@ set by Git if the remote helper has the 'option' capability.
 'option depth' <depth>::
 	Deepens the history of a shallow repository.
 
+'option deepen-since <timestamp>::
+	Deepens the history of a shallow repository based on time.
+
+'option deepen-not <ref>::
+	Deepens the history of a shallow repository excluding ref.
+	Multiple options add up.
+
+'option deepen-relative {'true'|'false'}::
+	Deepens the history of a shallow repository relative to
+	current boundary. Only valid when used with "option depth".
+
 'option followtags' {'true'|'false'}::
 	If enabled the helper should automatically fetch annotated
 	tag objects if the object the tag points at was transferred

@@ -81,7 +81,8 @@ static struct ref *get_refs_from_bundle(struct transport *transport, int for_pus
 
 	if (data->fd > 0)
 		close(data->fd);
-	data->fd = read_bundle_header(transport->url, &data->header);
+	init_bundle_header(&data->header, transport->url);
+	data->fd = read_bundle_header(&data->header);
 	if (data->fd < 0)
 		die ("Could not read bundle '%s'.", transport->url);
 	for (i = 0; i < data->header.references.nr; i++) {
@@ -107,6 +108,7 @@ static int close_bundle(struct transport *transport)
 	struct bundle_transport_data *data = transport->data;
 	if (data->fd > 0)
 		close(data->fd);
+	release_bundle_header(&data->header);
 	free(data);
 	return 0;
 }
@@ -150,6 +152,15 @@ static int set_git_option(struct git_transport_options *opts,
 			if (*end)
 				die("transport: invalid depth option '%s'", value);
 		}
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_DEEPEN_SINCE)) {
+		opts->deepen_since = value;
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_DEEPEN_NOT)) {
+		opts->deepen_not = (const struct string_list *)value;
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_DEEPEN_RELATIVE)) {
+		opts->deepen_relative = !!value;
 		return 0;
 	}
 	return 1;
@@ -211,6 +222,9 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.quiet = (transport->verbose < 0);
 	args.no_progress = !transport->progress;
 	args.depth = data->options.depth;
+	args.deepen_since = data->options.deepen_since;
+	args.deepen_not = data->options.deepen_not;
+	args.deepen_relative = data->options.deepen_relative;
 	args.check_self_contained_and_connected =
 		data->options.check_self_contained_and_connected;
 	args.cloning = transport->cloning;
@@ -678,8 +692,9 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		|| starts_with(url, "file://")
 		|| starts_with(url, "git://")
 		|| starts_with(url, "ssh://")
-		|| starts_with(url, "git+ssh://")
-		|| starts_with(url, "ssh+git://")) {
+		|| starts_with(url, "git+ssh://") /* deprecated - do not use */
+		|| starts_with(url, "ssh+git://") /* deprecated - do not use */
+		) {
 		/*
 		 * These are builtin smart transports; "allowed" transports
 		 * will be checked individually in git_connect.

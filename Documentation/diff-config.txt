@@ -108,9 +108,13 @@ diff.renameLimit::
 	detection; equivalent to the 'git diff' option '-l'.
 
 diff.renames::
-	Tells Git to detect renames.  If set to any boolean value, it
-	will enable basic rename detection.  If set to "copies" or
-	"copy", it will detect copies, as well.
+	Whether and how Git detects renames.  If set to "false",
+	rename detection is disabled. If set to "true", basic rename
+	detection is enabled.  If set to "copies" or "copy", Git will
+	detect copies, as well.  Defaults to true.  Note that this
+	affects only 'git diff' Porcelain like linkgit:git-diff[1] and
+	linkgit:git-log[1], and not lower level commands such as
+	linkgit:git-diff-files[1].
 
 diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space

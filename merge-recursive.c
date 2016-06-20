@@ -266,8 +266,12 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 		active_cache_tree = cache_tree();
 
 	if (!cache_tree_fully_valid(active_cache_tree) &&
-	    cache_tree_update(&the_index, 0) < 0)
-		die(_("error building trees"));
+	    cache_tree_update(&the_index, 0) < 0) {
+		if (!o->gently)
+			die(_("error building trees"));
+		error(_("error building trees"));
+		return NULL;
+	}
 
 	result = lookup_tree(active_cache_tree->sha1);
 
@@ -714,6 +718,8 @@ static int make_room_for_path(struct merge_options *o, const char *path)
 			error(msg, path, _(": perhaps a D/F conflict?"));
 			return -1;
 		}
+		if (o->gently)
+			return error(msg, path, "");
 		die(msg, path, "");
 	}
 
@@ -1342,8 +1348,11 @@ static int process_renames(struct merge_options *o,
 			const char *ren2_src = ren2->pair->one->path;
 			const char *ren2_dst = ren2->pair->two->path;
 			enum rename_type rename_type;
-			if (strcmp(ren1_src, ren2_src) != 0)
+			if (strcmp(ren1_src, ren2_src) != 0) {
+				if (o->gently)
+					return error("ren1_src != ren2_src");
 				die("ren1_src != ren2_src");
+			}
 			ren2->dst_entry->processed = 1;
 			ren2->processed = 1;
 			if (strcmp(ren1_dst, ren2_dst) != 0) {
@@ -1376,8 +1385,11 @@ static int process_renames(struct merge_options *o,
 			char *ren2_dst;
 			ren2 = lookup->util;
 			ren2_dst = ren2->pair->two->path;
-			if (strcmp(ren1_dst, ren2_dst) != 0)
+			if (strcmp(ren1_dst, ren2_dst) != 0) {
+				if (o->gently)
+					return error("ren1_dst != ren2_dst");
 				die("ren1_dst != ren2_dst");
+			}
 
 			clean_merge = 0;
 			ren2->processed = 1;
@@ -1824,6 +1836,11 @@ int merge_trees(struct merge_options *o,
 	code = git_merge_trees(o->call_depth, common, head, merge);
 
 	if (code != 0) {
+		if (o->gently)
+			return error(_("merging of trees %s and %s failed"),
+			    oid_to_hex(&head->object.oid),
+			    oid_to_hex(&merge->object.oid));
+
 		if (show(o, 4) || o->call_depth)
 			die(_("merging of trees %s and %s failed"),
 			    oid_to_hex(&head->object.oid),
@@ -1870,8 +1887,8 @@ int merge_trees(struct merge_options *o,
 	else
 		clean = 1;
 
-	if (o->call_depth)
-		*result = write_tree_from_memory(o);
+	if (o->call_depth && !(*result = write_tree_from_memory(o)))
+		return -1;
 
 	return clean;
 }
@@ -1946,14 +1963,18 @@ int merge_recursive(struct merge_options *o,
 		saved_b2 = o->branch2;
 		o->branch1 = "Temporary merge branch 1";
 		o->branch2 = "Temporary merge branch 2";
-		merge_recursive(o, merged_common_ancestors, iter->item,
-				NULL, &merged_common_ancestors);
+		if (merge_recursive(o, merged_common_ancestors, iter->item,
+				NULL, &merged_common_ancestors) < 0)
+			return -1;
 		o->branch1 = saved_b1;
 		o->branch2 = saved_b2;
 		o->call_depth--;
 
-		if (!merged_common_ancestors)
+		if (!merged_common_ancestors) {
+			if (o->gently)
+				return error(_("merge returned no commit"));
 			die(_("merge returned no commit"));
+		}
 	}
 
 	discard_cache();
@@ -1963,6 +1984,8 @@ int merge_recursive(struct merge_options *o,
 	o->ancestor = "merged common ancestors";
 	clean = merge_trees(o, h1->tree, h2->tree, merged_common_ancestors->tree,
 			    &mrtree);
+	if (clean < 0)
+		return clean;
 
 	if (o->call_depth) {
 		*result = make_virtual_commit(mrtree, "merged tree");
@@ -2019,6 +2042,9 @@ int merge_recursive_generic(struct merge_options *o,
 	hold_locked_index(lock, 1);
 	clean = merge_recursive(o, head_commit, next_commit, ca,
 			result);
+	if (clean < 0)
+		return clean;
+
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, lock, COMMIT_LOCK))
 		return error(_("Unable to write index."));

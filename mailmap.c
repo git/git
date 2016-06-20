@@ -250,7 +250,8 @@ int read_mailmap(struct string_list *map, char **repo_abbrev)
 		git_mailmap_blob = "HEAD:.mailmap";
 
 	err |= read_mailmap_file(map, ".mailmap", repo_abbrev);
-	err |= read_mailmap_blob(map, git_mailmap_blob, repo_abbrev);
+	if (startup_info->have_repository)
+		err |= read_mailmap_blob(map, git_mailmap_blob, repo_abbrev);
 	err |= read_mailmap_file(map, git_mailmap_file, repo_abbrev);
 	return err;
 }
