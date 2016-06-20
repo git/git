@@ -1,11 +1,11 @@
 #include "cache.h"
 
 static const char *usage_msg = "\n"
-"  test-date show [time_t]...\n"
+"  test-date relative [time_t]...\n"
 "  test-date parse [date]...\n"
 "  test-date approxidate [date]...\n";
 
-static void show_dates(char **argv, struct timeval *now)
+static void show_relative_dates(char **argv, struct timeval *now)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -61,8 +61,8 @@ int main(int argc, char **argv)
 	argv++;
 	if (!*argv)
 		usage(usage_msg);
-	if (!strcmp(*argv, "show"))
-		show_dates(argv+1, &now);
+	if (!strcmp(*argv, "relative"))
+		show_relative_dates(argv+1, &now);
 	else if (!strcmp(*argv, "parse"))
 		parse_dates(argv+1, &now);
 	else if (!strcmp(*argv, "approxidate"))

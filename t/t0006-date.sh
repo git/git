@@ -6,26 +6,26 @@ test_description='test date parsing and printing'
 # arbitrary reference time: 2009-08-30 19:20:00
 TEST_DATE_NOW=1251660000; export TEST_DATE_NOW
 
-check_show() {
+check_relative() {
 	t=$(($TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
-	test-date show $t >actual &&
+	test-date relative $t >actual &&
 	test_i18ncmp expect actual
 	"
 }
 
-check_show 5 '5 seconds ago'
-check_show 300 '5 minutes ago'
-check_show 18000 '5 hours ago'
-check_show 432000 '5 days ago'
-check_show 1728000 '3 weeks ago'
-check_show 13000000 '5 months ago'
-check_show 37500000 '1 year, 2 months ago'
-check_show 55188000 '1 year, 9 months ago'
-check_show 630000000 '20 years ago'
-check_show 31449600 '12 months ago'
-check_show 62985600 '2 years ago'
+check_relative 5 '5 seconds ago'
+check_relative 300 '5 minutes ago'
+check_relative 18000 '5 hours ago'
+check_relative 432000 '5 days ago'
+check_relative 1728000 '3 weeks ago'
+check_relative 13000000 '5 months ago'
+check_relative 37500000 '1 year, 2 months ago'
+check_relative 55188000 '1 year, 9 months ago'
+check_relative 630000000 '20 years ago'
+check_relative 31449600 '12 months ago'
+check_relative 62985600 '2 years ago'
 
 check_parse() {
 	echo "$1 -> $2" >expect
