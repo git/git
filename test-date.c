@@ -2,6 +2,7 @@
 
 static const char *usage_msg = "\n"
 "  test-date relative [time_t]...\n"
+"  test-date show:<format> [time_t]...\n"
 "  test-date parse [date]...\n"
 "  test-date approxidate [date]...\n";
 
@@ -15,6 +16,29 @@ static void show_relative_dates(char **argv, struct timeval *now)
 		printf("%s -> %s\n", *argv, buf.buf);
 	}
 	strbuf_release(&buf);
+}
+
+static void show_dates(char **argv, const char *format)
+{
+	struct date_mode mode;
+
+	parse_date_format(format, &mode);
+	for (; *argv; argv++) {
+		char *arg = *argv;
+		time_t t;
+		int tz;
+
+		/*
+		 * Do not use our normal timestamp parsing here, as the point
+		 * is to test the formatting code in isolation.
+		 */
+		t = strtol(arg, &arg, 10);
+		while (*arg == ' ')
+			arg++;
+		tz = atoi(arg);
+
+		printf("%s -> %s\n", *argv, show_date(t, tz, &mode));
+	}
 }
 
 static void parse_dates(char **argv, struct timeval *now)
@@ -63,6 +87,8 @@ int main(int argc, char **argv)
 		usage(usage_msg);
 	if (!strcmp(*argv, "relative"))
 		show_relative_dates(argv+1, &now);
+	else if (skip_prefix(*argv, "show:", &x))
+		show_dates(argv+1, x);
 	else if (!strcmp(*argv, "parse"))
 		parse_dates(argv+1, &now);
 	else if (!strcmp(*argv, "approxidate"))

@@ -27,6 +27,27 @@ check_relative 630000000 '20 years ago'
 check_relative 31449600 '12 months ago'
 check_relative 62985600 '2 years ago'
 
+check_show () {
+	format=$1
+	time=$2
+	expect=$3
+	test_expect_${4:-success} "show date ($format:$time)" '
+		echo "$time -> $expect" >expect &&
+		test-date show:$format "$time" >actual &&
+		test_cmp expect actual
+	'
+}
+
+# arbitrary but sensible time for examples
+TIME='1466000000 +0200'
+check_show iso8601 "$TIME" '2016-06-15 16:13:20 +0200'
+check_show iso8601-strict "$TIME" '2016-06-15T16:13:20+02:00'
+check_show rfc2822 "$TIME" 'Wed, 15 Jun 2016 16:13:20 +0200'
+check_show short "$TIME" '2016-06-15'
+check_show default "$TIME" 'Wed Jun 15 16:13:20 2016 +0200'
+check_show raw "$TIME" '1466000000 +0200'
+check_show iso-local "$TIME" '2016-06-15 14:13:20 +0000'
+
 check_parse() {
 	echo "$1 -> $2" >expect
 	test_expect_${4:-success} "parse date ($1${3:+ TZ=$3})" "
