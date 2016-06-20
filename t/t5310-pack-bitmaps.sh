@@ -47,6 +47,12 @@ rev_list_tests() {
 		test_cmp expect actual
 	'
 
+	test_expect_success "counting commits with limit ($state)" '
+		git rev-list --count -n 1 HEAD >expect &&
+		git rev-list --use-bitmap-index --count -n 1 HEAD >actual &&
+		test_cmp expect actual
+	'
+
 	test_expect_success "counting non-linear history ($state)" '
 		git rev-list --count other...master >expect &&
 		git rev-list --use-bitmap-index --count other...master >actual &&
