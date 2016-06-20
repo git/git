@@ -1396,9 +1396,17 @@ static int fill_textconv_grep(struct userdiff_driver *driver,
 	return 0;
 }
 
+static int is_empty_line(const char *bol, const char *eol)
+{
+	while (bol < eol && isspace(*bol))
+		bol++;
+	return bol == eol;
+}
+
 static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int collect_hits)
 {
 	char *bol;
+	char *peek_bol = NULL;
 	unsigned long left;
 	unsigned lno = 1;
 	unsigned last_hit = 0;
@@ -1543,8 +1551,24 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 				show_function = 1;
 			goto next_line;
 		}
-		if (show_function && match_funcname(opt, gs, bol, eol))
-			show_function = 0;
+		if (show_function && (!peek_bol || peek_bol < bol)) {
+			unsigned long peek_left = left;
+			char *peek_eol = eol;
+
+			/*
+			 * Trailing empty lines are not interesting.
+			 * Peek past them to see if they belong to the
+			 * body of the current function.
+			 */
+			peek_bol = bol;
+			while (is_empty_line(peek_bol, peek_eol)) {
+				peek_bol = peek_eol + 1;
+				peek_eol = end_of_line(peek_bol, &peek_left);
+			}
+
+			if (match_funcname(opt, gs, peek_bol, peek_eol))
+				show_function = 0;
+		}
 		if (show_function ||
 		    (last_hit && lno <= last_hit + opt->post_context)) {
 			/* If the last hit is within the post context,
