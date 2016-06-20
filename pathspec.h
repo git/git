@@ -19,7 +19,7 @@
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern satisfies GFNM_ONESTAR */
 
 struct pathspec {
-	const char **_raw; /* get_pathspec() result, not freed by free_pathspec() */
+	const char **_raw; /* get_pathspec() result, not freed by clear_pathspec() */
 	int nr;
 	unsigned int has_wildcard:1;
 	unsigned int recursive:1;
@@ -74,7 +74,7 @@ extern void parse_pathspec(struct pathspec *pathspec,
 			   const char *prefix,
 			   const char **args);
 extern void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
-extern void free_pathspec(struct pathspec *);
+extern void clear_pathspec(struct pathspec *);
 
 static inline int ps_strncmp(const struct pathspec_item *item,
 			     const char *s1, const char *s2, size_t n)

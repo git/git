@@ -607,7 +607,7 @@ static void try_to_follow_renames(const unsigned char *old, const unsigned char 
 	diff_setup_done(&diff_opts);
 	ll_diff_tree_sha1(old, new, base, &diff_opts);
 	diffcore_std(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 
 	/* Go through the new set of filepairing, and see if we find a more interesting one */
 	opt->found_follow = 0;
@@ -630,7 +630,7 @@ static void try_to_follow_renames(const unsigned char *old, const unsigned char 
 			/* Update the path we use from now on.. */
 			path[0] = p->one->path;
 			path[1] = NULL;
-			free_pathspec(&opt->pathspec);
+			clear_pathspec(&opt->pathspec);
 			parse_pathspec(&opt->pathspec,
 				       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 				       PATHSPEC_LITERAL_PATH, "", path);

@@ -1525,7 +1525,7 @@ void diff_tree_combined(const unsigned char *sha1,
 		free(tmp);
 	}
 
-	free_pathspec(&diffopts.pathspec);
+	clear_pathspec(&diffopts.pathspec);
 }
 
 void diff_tree_combined_merge(const struct commit *commit, int dense,
