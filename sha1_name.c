@@ -143,6 +143,7 @@ static void unique_in_pack(int len,
 			   struct packed_git *p,
 			   struct disambiguate_state *ds)
 {
+<<<<<<< HEAD
 	uint32_t num, last, i, first = 0;
 	const unsigned char *current = NULL;
 
@@ -163,6 +164,55 @@ static void unique_in_pack(int len,
 		if (cmp > 0) {
 			first = mid+1;
 			continue;
+=======
+	struct packed_git *p;
+	const unsigned char *found_sha1 = NULL;
+	int found = 0;
+
+	prepare_packed_git();
+	for (p = packed_git; p && found < 2; p = p->next) {
+		unsigned num = p->num_objects;
+		unsigned first = 0, last = num;
+		while (first < last) {
+			unsigned mid = (first + last) / 2;
+			const unsigned char *now;
+			int cmp;
+
+			now = nth_packed_object_sha1(p, mid);
+			cmp = hashcmp(match, now);
+			if (!cmp) {
+				first = mid;
+				break;
+			}
+			if (cmp > 0) {
+				first = mid+1;
+				continue;
+			}
+			last = mid;
+		}
+		if (first < num) {
+			const unsigned char *now, *next;
+		       now = nth_packed_object_sha1(p, first);
+			if (match_sha(len, match, now)) {
+				next = nth_packed_object_sha1(p, first+1);
+			       if (!next|| !match_sha(len, match, next)) {
+					/* unique within this pack */
+					if (!found) {
+						found_sha1 = now;
+						found++;
+					}
+					else if (hashcmp(found_sha1, now)) {
+						found = 2;
+						break;
+					}
+				}
+				else {
+					/* not even unique within this pack */
+					found = 2;
+					break;
+				}
+			}
+>>>>>>> v1.4.4.5
 		}
 		last = mid;
 	}

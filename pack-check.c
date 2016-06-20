@@ -11,6 +11,7 @@ struct idx_entry {
 
 static int compare_entries(const void *e1, const void *e2)
 {
+<<<<<<< HEAD
 	const struct idx_entry *entry1 = e1;
 	const struct idx_entry *entry2 = e2;
 	if (entry1->offset < entry2->offset)
@@ -83,11 +84,54 @@ static int verify_packfile(struct packed_git *p,
 		err = error("%s SHA1 does not match its index",
 			    p->pack_name);
 	unuse_pack(w_curs);
+=======
+	unsigned long index_size = p->index_size;
+	const unsigned char *index_base = p->index_data;
+	SHA_CTX ctx;
+	unsigned char sha1[20];
+	struct pack_header *hdr;
+	int nr_objects, err, i;
+	unsigned char *packdata;
+	unsigned long datasize;
+
+	/* Header consistency check */
+	hdr = p->pack_base;
+	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+		return error("Packfile %s signature mismatch", p->pack_name);
+	if (!pack_version_ok(hdr->hdr_version))
+		return error("Packfile version %d unsupported",
+			     ntohl(hdr->hdr_version));
+	nr_objects = ntohl(hdr->hdr_entries);
+	if (p->num_objects != nr_objects)
+		return error("Packfile claims to have %d objects, "
+			     "while idx size expects %d", nr_objects,
+			     p->num_objects);
+
+	/* Check integrity of pack data with its SHA-1 checksum */
+	SHA1_Init(&ctx);
+	packdata = p->pack_base;
+	datasize = p->pack_size - 20;
+	while (datasize) {
+		unsigned long batch = (datasize < BATCH) ? datasize : BATCH;
+		SHA1_Update(&ctx, packdata, batch);
+		datasize -= batch;
+		packdata += batch;
+	}
+	SHA1_Final(sha1, &ctx);
+
+	if (hashcmp(sha1, (unsigned char *)(p->pack_base) + p->pack_size - 20))
+		return error("Packfile %s SHA1 mismatch with itself",
+			     p->pack_name);
+	if (hashcmp(sha1, index_base + index_size - 40))
+		return error("Packfile %s SHA1 mismatch with idx",
+			     p->pack_name);
+>>>>>>> v1.4.4.5
 
 	/* Make sure everything reachable from idx is valid.  Since we
 	 * have verified that nr_objects matches between idx and pack,
 	 * we do not do scan-streaming check on the pack file.
 	 */
+<<<<<<< HEAD
 	nr_objects = p->num_objects;
 	ALLOC_ARRAY(entries, nr_objects + 1);
 	entries[nr_objects].offset = pack_sig_ofs;
@@ -102,10 +146,15 @@ static int verify_packfile(struct packed_git *p,
 	qsort(entries, nr_objects, sizeof(*entries), compare_entries);
 
 	for (i = 0; i < nr_objects; i++) {
+=======
+	for (i = err = 0; i < nr_objects; i++) {
+		const unsigned char *sha1;
+>>>>>>> v1.4.4.5
 		void *data;
 		enum object_type type;
 		unsigned long size;
 
+<<<<<<< HEAD
 		if (p->index_version > 1) {
 			off_t offset = entries[i].offset;
 			off_t len = entries[i+1].offset - offset;
@@ -115,6 +164,19 @@ static int verify_packfile(struct packed_git *p,
 					    "from %s at offset %"PRIuMAX"",
 					    sha1_to_hex(entries[i].sha1),
 					    p->pack_name, (uintmax_t)offset);
+=======
+		sha1 = nth_packed_object_sha1(p, i);
+		if (!sha1)
+			die("internal error pack-check nth-packed-object");
+		offset = find_pack_entry_one(sha1, p);
+		if (!offset)
+			die("internal error pack-check find-pack-entry-one");
+		data = unpack_entry_gently(p, offset, type, &size);
+		if (!data) {
+			err = error("cannot unpack %s from %s",
+				    sha1_to_hex(sha1), p->pack_name);
+			continue;
+>>>>>>> v1.4.4.5
 		}
 		data = unpack_entry(p, entries[i].offset, &type, &size);
 		if (!data)
@@ -149,6 +211,7 @@ int verify_pack_index(struct packed_git *p)
 	unsigned char sha1[20];
 	int err = 0;
 
+<<<<<<< HEAD
 	if (open_pack_index(p))
 		return error("packfile %s index not opened", p->pack_name);
 	index_size = p->index_size;
@@ -162,13 +225,73 @@ int verify_pack_index(struct packed_git *p)
 		err = error("Packfile index for %s SHA1 mismatch",
 			    p->pack_name);
 	return err;
+=======
+	for (i = 0; i < nr_objects; i++) {
+		const unsigned char *sha1;
+		unsigned char base_sha1[20];
+		char type[20];
+		unsigned long size;
+		unsigned long store_size;
+		unsigned long offset;
+		unsigned int delta_chain_length;
+
+		sha1 = nth_packed_object_sha1(p, i);
+		if (!sha1)
+			die("internal error pack-check nth-packed-object");
+		offset = find_pack_entry_one(sha1, p);
+		if (!offset)
+			die("internal error pack-check find-pack-entry-one");
+
+		packed_object_info_detail(p, offset, type, &size, &store_size,
+					  &delta_chain_length,
+					  base_sha1);
+		printf("%s ", sha1_to_hex(sha1));
+		if (!delta_chain_length)
+			printf("%-6s %lu %lu\n", type, size, offset);
+		else {
+			printf("%-6s %lu %lu %u %s\n", type, size, offset,
+			       delta_chain_length, sha1_to_hex(base_sha1));
+			if (delta_chain_length < MAX_CHAIN)
+				chain_histogram[delta_chain_length]++;
+			else
+				chain_histogram[0]++;
+		}
+	}
+
+	for (i = 0; i < MAX_CHAIN; i++) {
+		if (!chain_histogram[i])
+			continue;
+		printf("chain length %s %d: %d object%s\n",
+		       i ? "=" : ">=",
+		       i ? i : MAX_CHAIN,
+		       chain_histogram[i],
+		       1 < chain_histogram[i] ? "s" : "");
+	}
+>>>>>>> v1.4.4.5
 }
 
 int verify_pack(struct packed_git *p, verify_fn fn,
 		struct progress *progress, uint32_t base_count)
 {
+<<<<<<< HEAD
 	int err = 0;
 	struct pack_window *w_curs = NULL;
+=======
+	unsigned long index_size = p->index_size;
+	const unsigned char *index_base = p->index_data;
+	SHA_CTX ctx;
+	unsigned char sha1[20];
+	int ret;
+
+	ret = 0;
+	/* Verify SHA1 sum of the index file */
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, index_base, index_size - 20);
+	SHA1_Final(sha1, &ctx);
+	if (hashcmp(sha1, index_base + index_size - 20))
+		ret = error("Packfile index for %s SHA1 mismatch",
+			    p->pack_name);
+>>>>>>> v1.4.4.5
 
 	err |= verify_pack_index(p);
 	if (!p->index_data)

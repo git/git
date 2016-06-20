@@ -246,6 +246,7 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 
 static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 {
+<<<<<<< HEAD:builtin/pack-redundant.c
 	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
@@ -256,6 +257,15 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	p2_base += 256 * 4 + ((p2->pack->index_version < 2) ? 4 : 8);
 	p1_step = (p1->pack->index_version < 2) ? 24 : 20;
 	p2_step = (p2->pack->index_version < 2) ? 24 : 20;
+=======
+	int p1_off, p2_off;
+	const unsigned char *p1_base, *p2_base;
+	struct llist_item *p1_hint = NULL, *p2_hint = NULL;
+
+	p1_off = p2_off = 256 * 4 + 4;
+	p1_base = p1->pack->index_data;
+	p2_base = p2->pack->index_data;
+>>>>>>> v1.4.4.5:pack-redundant.c
 
 	while (p1_off < p1->pack->num_objects * p1_step &&
 	       p2_off < p2->pack->num_objects * p2_step)
@@ -354,6 +364,7 @@ static int is_superset(struct pack_list *pl, struct llist *list)
 static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
+<<<<<<< HEAD:builtin/pack-redundant.c
 	unsigned long p1_off = 0, p2_off = 0, p1_step, p2_step;
 	const unsigned char *p1_base, *p2_base;
 
@@ -366,6 +377,17 @@ static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 
 	while (p1_off < p1->num_objects * p1_step &&
 	       p2_off < p2->num_objects * p2_step)
+=======
+	int p1_off, p2_off;
+	const unsigned char *p1_base, *p2_base;
+
+	p1_off = p2_off = 256 * 4 + 4;
+	p1_base = p1->index_data;
+	p2_base = p2->index_data;
+
+	while (p1_off <= p1->index_size - 3 * 20 &&
+	       p2_off <= p2->index_size - 3 * 20)
+>>>>>>> v1.4.4.5:pack-redundant.c
 	{
 		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
 		/* cmp ~ p1 - p2 */
@@ -540,7 +562,11 @@ static void scan_alt_odb_packs(void)
 static struct pack_list * add_pack(struct packed_git *p)
 {
 	struct pack_list l;
+<<<<<<< HEAD:builtin/pack-redundant.c
 	unsigned long off = 0, step;
+=======
+	size_t off;
+>>>>>>> v1.4.4.5:pack-redundant.c
 	const unsigned char *base;
 
 	if (!p->pack_local && !(alt_odb || verbose))
@@ -549,6 +575,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 	l.pack = p;
 	llist_init(&l.all_objects);
 
+<<<<<<< HEAD:builtin/pack-redundant.c
 	if (open_pack_index(p))
 		return NULL;
 
@@ -556,6 +583,11 @@ static struct pack_list * add_pack(struct packed_git *p)
 	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
 	step = (p->index_version < 2) ? 24 : 20;
 	while (off < p->num_objects * step) {
+=======
+	off = 256 * 4 + 4;
+	base = p->index_data;
+	while (off <= p->index_size - 3 * 20) {
+>>>>>>> v1.4.4.5:pack-redundant.c
 		llist_insert_back(l.all_objects, base + off);
 		off += step;
 	}

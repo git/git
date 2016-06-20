@@ -522,6 +522,7 @@ static size_t peak_pack_mapped;
 static size_t pack_mapped;
 struct packed_git *packed_git;
 
+<<<<<<< HEAD
 void pack_report(void)
 {
 	fprintf(stderr,
@@ -555,6 +556,15 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 	size_t idx_size;
 	uint32_t version, nr, i, *index;
 	int fd = git_open_noatime(path);
+=======
+static int check_packed_git_idx(const char *path,  struct packed_git *p)
+{
+	void *idx_map;
+	struct pack_idx_header *hdr;
+	unsigned long idx_size;
+	unsigned int version, nr, i, *index;
+	int fd = open(path, O_RDONLY);
+>>>>>>> v1.4.4.5
 	struct stat st;
 
 	if (fd < 0)
@@ -576,7 +586,11 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 		version = ntohl(hdr->idx_version);
 		if (version < 2 || version > 2) {
 			munmap(idx_map, idx_size);
+<<<<<<< HEAD
 			return error("index file %s is version %"PRIu32
+=======
+			return error("index file %s is version %d"
+>>>>>>> v1.4.4.5
 				     " and is not supported by this binary"
 				     " (try upgrading GIT to a newer version)",
 				     path, version);
@@ -607,7 +621,11 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 		 */
 		if (idx_size != 4*256 + nr * 24 + 20 + 20) {
 			munmap(idx_map, idx_size);
+<<<<<<< HEAD
 			return error("wrong index v1 file size in %s", path);
+=======
+			return error("wrong index file size in %s", path);
+>>>>>>> v1.4.4.5
 		}
 	} else if (version == 2) {
 		/*
@@ -624,6 +642,7 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 		 * for offsets larger than 2^31.
 		 */
 		unsigned long min_size = 8 + 4*256 + nr*(20 + 4 + 4) + 20 + 20;
+<<<<<<< HEAD
 		unsigned long max_size = min_size;
 		if (nr)
 			max_size += (nr - 1)*8;
@@ -640,6 +659,18 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 		    (sizeof(off_t) <= 4)) {
 			munmap(idx_map, idx_size);
 			return error("pack too large for current definition of off_t in %s", path);
+=======
+		if (idx_size < min_size || idx_size > min_size + (nr - 1)*8) {
+			munmap(idx_map, idx_size);
+			return error("wrong index file size in %s", path);
+		}
+		if (idx_size != min_size) {
+			/* make sure we can deal with large pack offsets */
+			if (sizeof(unsigned long) <= 4) {
+				munmap(idx_map, idx_size);
+				return error("pack %s too large -- please upgrade your git version", path);
+			}
+>>>>>>> v1.4.4.5
 		}
 	}
 
@@ -674,6 +705,7 @@ static void scan_windows(struct packed_git *p,
 {
 	struct pack_window *w, *w_l;
 
+<<<<<<< HEAD
 	for (w_l = NULL, w = p->windows; w; w = w->next) {
 		if (!w->inuse_cnt) {
 			if (!*lru_w || w->last_used < (*lru_w)->last_used) {
@@ -681,6 +713,27 @@ static void scan_windows(struct packed_git *p,
 				*lru_w = w;
 				*lru_l = w_l;
 			}
+=======
+		/* Check if we understand this pack file.  If we don't we're
+		 * likely too old to handle it.
+		 */
+		hdr = map;
+		if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+			die("packfile %s isn't actually a pack.", p->pack_name);
+		if (!pack_version_ok(hdr->hdr_version))
+			die("packfile %s is version %i and not supported"
+				" (try upgrading GIT to a newer version)",
+				p->pack_name, ntohl(hdr->hdr_version));
+
+		/* Check if the pack file matches with the index file.
+		 * this is cheap.
+		 */
+		if (hashcmp((unsigned char *)(p->index_data) +
+			    p->index_size - 40,
+			    (unsigned char *)p->pack_base +
+			    p->pack_size - 20)) {
+			die("packfile %s does not match index.", p->pack_name);
+>>>>>>> v1.4.4.5
 		}
 		w_l = w;
 	}
@@ -688,6 +741,7 @@ static void scan_windows(struct packed_git *p,
 
 static int unuse_one_window(struct packed_git *current)
 {
+<<<<<<< HEAD
 	struct packed_git *p, *lru_p = NULL;
 	struct pack_window *lru_w = NULL, *lru_l = NULL;
 
@@ -707,6 +761,38 @@ static int unuse_one_window(struct packed_git *current)
 		return 1;
 	}
 	return 0;
+=======
+	struct stat st;
+	struct packed_git *p = xmalloc(sizeof(*p) + path_len + 2);
+
+	/*
+	 * Make sure a corresponding .pack file exists and that
+	 * the index looks sane.
+	 */
+	path_len -= strlen(".idx");
+	if (path_len < 1)
+		return NULL;
+	memcpy(p->pack_name, path, path_len);
+	strcpy(p->pack_name + path_len, ".pack");
+	if (stat(p->pack_name, &st) || !S_ISREG(st.st_mode) ||
+	    check_packed_git_idx(path, p)) {
+		free(p);
+		return NULL;
+	}
+
+	/* ok, it looks sane as far as we can check without
+	 * actually mapping the pack file.
+	 */
+	p->pack_size = st.st_size;
+	p->next = NULL;
+	p->pack_base = NULL;
+	p->pack_last_used = 0;
+	p->pack_use_cnt = 0;
+	p->pack_local = local;
+	if (path_len < 40 || get_sha1_hex(path + path_len - 40, p->sha1))
+		hashclr(p->sha1);
+	return p;
+>>>>>>> v1.4.4.5
 }
 
 void release_pack_memory(size_t need)
@@ -716,6 +802,7 @@ void release_pack_memory(size_t need)
 		; /* nothing */
 }
 
+<<<<<<< HEAD
 static void mmap_limit_check(size_t length)
 {
 	static size_t limit = 0;
@@ -743,6 +830,27 @@ void *xmmap_gently(void *start, size_t length,
 		ret = mmap(start, length, prot, flags, fd, offset);
 	}
 	return ret;
+=======
+struct packed_git *parse_pack_index_file(const unsigned char *sha1,
+					 const char *idx_path)
+{
+	const char *path = sha1_pack_name(sha1);
+	struct packed_git *p = xmalloc(sizeof(*p) + strlen(path) + 2);
+
+	if (check_packed_git_idx(idx_path, p)) {
+		free(p);
+		return NULL;
+	}
+
+	strcpy(p->pack_name, path);
+	p->pack_size = 0;
+	p->next = NULL;
+	p->pack_base = NULL;
+	p->pack_last_used = 0;
+	p->pack_use_cnt = 0;
+	hashcpy(p->sha1, sha1);
+	return p;
+>>>>>>> v1.4.4.5
 }
 
 void *xmmap(void *start, size_t length,
@@ -2430,6 +2538,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	return data;
 }
 
+<<<<<<< HEAD
 const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 					    uint32_t n)
 {
@@ -2439,6 +2548,12 @@ const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 			return NULL;
 		index = p->index_data;
 	}
+=======
+const unsigned char *nth_packed_object_sha1(const struct packed_git *p,
+					    unsigned int n)
+{
+	const unsigned char *index = p->index_data;
+>>>>>>> v1.4.4.5
 	if (n >= p->num_objects)
 		return NULL;
 	index += 4 * 256;
@@ -2450,6 +2565,7 @@ const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 	}
 }
 
+<<<<<<< HEAD
 void check_pack_index_ptr(const struct packed_git *p, const void *vptr)
 {
 	const unsigned char *ptr = vptr;
@@ -2465,6 +2581,9 @@ void check_pack_index_ptr(const struct packed_git *p, const void *vptr)
 }
 
 off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
+=======
+static off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
+>>>>>>> v1.4.4.5
 {
 	const unsigned char *index = p->index_data;
 	index += 4 * 256;
@@ -2477,7 +2596,10 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 		if (!(off & 0x80000000))
 			return off;
 		index += p->num_objects * 4 + (off & 0x7fffffff) * 8;
+<<<<<<< HEAD
 		check_pack_index_ptr(p, index);
+=======
+>>>>>>> v1.4.4.5
 		return (((uint64_t)ntohl(*((uint32_t *)(index + 0)))) << 32) |
 				   ntohl(*((uint32_t *)(index + 4)));
 	}
@@ -2486,6 +2608,7 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 off_t find_pack_entry_one(const unsigned char *sha1,
 				  struct packed_git *p)
 {
+<<<<<<< HEAD
 	const uint32_t *level1_ofs = p->index_data;
 	const unsigned char *index = p->index_data;
 	unsigned hi, lo, stride;
@@ -2501,6 +2624,12 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 		level1_ofs = p->index_data;
 		index = p->index_data;
 	}
+=======
+	const unsigned int *level1_ofs = p->index_data;
+	const unsigned char *index = p->index_data;
+	unsigned hi, lo;
+
+>>>>>>> v1.4.4.5
 	if (p->index_version > 1) {
 		level1_ofs += 2;
 		index += 8;
@@ -2508,6 +2637,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	index += 4 * 256;
 	hi = ntohl(level1_ofs[*sha1]);
 	lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
+<<<<<<< HEAD
 	if (p->index_version > 1) {
 		stride = 20;
 	} else {
@@ -2536,6 +2666,13 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 		if (debug_lookup)
 			printf("lo %u hi %u rg %u mi %u\n",
 			       lo, hi, hi - lo, mi);
+=======
+
+	do {
+		unsigned mi = (lo + hi) / 2;
+		unsigned x = (p->index_version > 1) ? (mi * 20) : (mi * 24 + 4);
+		int cmp = hashcmp(index + x, sha1);
+>>>>>>> v1.4.4.5
 		if (!cmp)
 			return nth_packed_object_offset(p, mi);
 		if (cmp > 0)

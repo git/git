@@ -35,6 +35,7 @@ struct pack_header {
  */
 #define PACK_IDX_SIGNATURE 0xff744f63	/* "\377tOc" */
 
+<<<<<<< HEAD
 struct pack_idx_option {
 	unsigned flags;
 	/* flag bits */
@@ -55,6 +56,8 @@ struct pack_idx_option {
 
 extern void reset_pack_idx_option(struct pack_idx_option *);
 
+=======
+>>>>>>> v1.4.4.5
 /*
  * Packed object index header
  */
@@ -63,6 +66,7 @@ struct pack_idx_header {
 	uint32_t idx_version;
 };
 
+<<<<<<< HEAD
 /*
  * Common part of object structure used for write_idx_file
  */
@@ -93,4 +97,8 @@ extern int read_pack_header(int fd, struct pack_header *);
 extern struct sha1file *create_tmp_packfile(char **pack_tmp_name);
 extern void finish_tmp_packfile(struct strbuf *name_buffer, const char *pack_tmp_name, struct pack_idx_entry **written_list, uint32_t nr_written, struct pack_idx_option *pack_idx_opts, unsigned char sha1[]);
 
+=======
+
+extern int verify_pack(struct packed_git *, int);
+>>>>>>> v1.4.4.5
 #endif

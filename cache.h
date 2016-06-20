@@ -1306,6 +1306,7 @@ struct pack_window {
 
 extern struct packed_git {
 	struct packed_git *next;
+<<<<<<< HEAD
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
@@ -1320,6 +1321,17 @@ extern struct packed_git {
 		 pack_keep:1,
 		 freshened:1,
 		 do_not_close:1;
+=======
+	unsigned long index_size;
+	unsigned long pack_size;
+	const void *index_data;
+	void *pack_base;
+	unsigned int num_objects;
+	int index_version;
+	unsigned int pack_last_used;
+	unsigned int pack_use_cnt;
+	int pack_local;
+>>>>>>> v1.4.4.5
 	unsigned char sha1[20];
 	struct revindex_entry *revindex;
 	/* something like ".git/objects/pack/xxxxx.pack" */
@@ -1334,11 +1346,17 @@ struct pack_entry {
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
+<<<<<<< HEAD
 /* A hook to report invalid files in pack directory */
 #define PACKDIR_FILE_PACK 1
 #define PACKDIR_FILE_IDX 2
 #define PACKDIR_FILE_GARBAGE 4
 extern void (*report_garbage)(unsigned seen_bits, const char *path);
+=======
+extern struct packed_git *parse_pack_index(unsigned char *sha1);
+extern struct packed_git *parse_pack_index_file(const unsigned char *sha1,
+						const char *idx_path);
+>>>>>>> v1.4.4.5
 
 extern void prepare_packed_git(void);
 extern void reprepare_packed_git(void);
@@ -1347,6 +1365,7 @@ extern void install_packed_git(struct packed_git *pack);
 extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
 					 struct packed_git *packs);
 
+<<<<<<< HEAD
 extern void pack_report(void);
 
 /*
@@ -1492,6 +1511,16 @@ struct object_info {
 	} u;
 };
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
+=======
+extern int use_packed_git(struct packed_git *);
+extern void unuse_packed_git(struct packed_git *);
+extern struct packed_git *add_packed_git(char *, int, int);
+extern const unsigned char *nth_packed_object_sha1(const struct packed_git *, unsigned int);
+extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
+extern void *unpack_entry_gently(struct packed_git *, unsigned long, char *, unsigned long *);
+extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
+extern void packed_object_info_detail(struct packed_git *, unsigned long, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+>>>>>>> v1.4.4.5
 
 /* Dumb servers support */
 extern int update_server_info(int);
