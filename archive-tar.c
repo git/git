@@ -185,6 +185,14 @@ static inline unsigned long ustar_size(uintmax_t size)
 		return 0;
 }
 
+static inline unsigned long ustar_mtime(time_t mtime)
+{
+	if (mtime <= 077777777777UL)
+		return mtime;
+	else
+		return 0;
+}
+
 static void prepare_header(struct archiver_args *args,
 			   struct ustar_header *header,
 			   unsigned int mode, unsigned long size)
@@ -192,7 +200,8 @@ static void prepare_header(struct archiver_args *args,
 	xsnprintf(header->mode, sizeof(header->mode), "%07o", mode & 07777);
 	xsnprintf(header->size, sizeof(header->size), "%011lo",
 		  S_ISREG(mode) ? ustar_size(size) : 0);
-	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo", (unsigned long) args->time);
+	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo",
+		  ustar_mtime(args->time));
 
 	xsnprintf(header->uid, sizeof(header->uid), "%07o", 0);
 	xsnprintf(header->gid, sizeof(header->gid), "%07o", 0);
@@ -292,6 +301,8 @@ static int write_tar_entry(struct archiver_args *args,
 
 	if (S_ISREG(mode) && ustar_size(size) != size)
 		strbuf_append_ext_header_uint(&ext_header, "size", size);
+	if (ustar_mtime(args->time) != args->time)
+		strbuf_append_ext_header_uint(&ext_header, "mtime", args->time);
 
 	prepare_header(args, &header, mode, size);
 
