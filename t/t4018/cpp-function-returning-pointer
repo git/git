@@ -1,4 +1,0 @@
-const char *get_it_RIGHT(char *ptr)
-{
-	ChangeMe;
-}

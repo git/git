@@ -1,7 +1,0 @@
-can_merge () {
-	return 1
-}
-
-diff_cmd () {
-	"$merge_tool_path" "$LOCAL" "$REMOTE"
-}

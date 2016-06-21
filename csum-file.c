@@ -8,179 +8,140 @@
  * able to verify hasn't been messed with afterwards.
  */
 #include "cache.h"
-#include "progress.h"
 #include "csum-file.h"
 
-static void flush(struct sha1file *f, const void *buf, unsigned int count)
+static int sha1flush(struct sha1file *f, unsigned int count)
 {
-	if (0 <= f->check_fd && count)  {
-		unsigned char check_buffer[8192];
-		ssize_t ret = read_in_full(f->check_fd, check_buffer, count);
-
-		if (ret < 0)
-			die_errno("%s: sha1 file read error", f->name);
-		if (ret < count)
-			die("%s: sha1 file truncated", f->name);
-		if (memcmp(buf, check_buffer, count))
-			die("sha1 file '%s' validation error", f->name);
-	}
+	void *buf = f->buffer;
 
 	for (;;) {
-		int ret = xwrite(f->fd, buf, count);
+		int ret = write(f->fd, buf, count);
 		if (ret > 0) {
-			f->total += ret;
-			display_throughput(f->tp, f->total);
-			buf = (char *) buf + ret;
+			buf += ret;
 			count -= ret;
 			if (count)
 				continue;
-			return;
+			return 0;
 		}
 		if (!ret)
 			die("sha1 file '%s' write error. Out of diskspace", f->name);
-		die_errno("sha1 file '%s' write error", f->name);
+		if (errno == EAGAIN || errno == EINTR)
+			continue;
+		die("sha1 file '%s' write error (%s)", f->name, strerror(errno));
 	}
 }
 
-void sha1flush(struct sha1file *f)
+int sha1close(struct sha1file *f, unsigned char *result, int update)
 {
 	unsigned offset = f->offset;
-
 	if (offset) {
-		git_SHA1_Update(&f->ctx, f->buffer, offset);
-		flush(f, f->buffer, offset);
-		f->offset = 0;
+		SHA1_Update(&f->ctx, f->buffer, offset);
+		sha1flush(f, offset);
 	}
-}
-
-int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
-{
-	int fd;
-
-	sha1flush(f);
-	git_SHA1_Final(f->buffer, &f->ctx);
+	SHA1_Final(f->buffer, &f->ctx);
 	if (result)
-		hashcpy(result, f->buffer);
-	if (flags & (CSUM_CLOSE | CSUM_FSYNC)) {
-		/* write checksum and close fd */
-		flush(f, f->buffer, 20);
-		if (flags & CSUM_FSYNC)
-			fsync_or_die(f->fd, f->name);
-		if (close(f->fd))
-			die_errno("%s: sha1 file error on close", f->name);
-		fd = 0;
-	} else
-		fd = f->fd;
-	if (0 <= f->check_fd) {
-		char discard;
-		int cnt = read_in_full(f->check_fd, &discard, 1);
-		if (cnt < 0)
-			die_errno("%s: error when reading the tail of sha1 file",
-				  f->name);
-		if (cnt)
-			die("%s: sha1 file has trailing garbage", f->name);
-		if (close(f->check_fd))
-			die_errno("%s: sha1 file error on close", f->name);
-	}
-	free(f);
-	return fd;
+		memcpy(result, f->buffer, 20);
+	if (update)
+		sha1flush(f, 20);
+	if (close(f->fd))
+		die("%s: sha1 file error on close (%s)", f->name, strerror(errno));
+	return 0;
 }
 
-void sha1write(struct sha1file *f, const void *buf, unsigned int count)
+int sha1write(struct sha1file *f, void *buf, unsigned int count)
 {
 	while (count) {
 		unsigned offset = f->offset;
 		unsigned left = sizeof(f->buffer) - offset;
 		unsigned nr = count > left ? left : count;
-		const void *data;
 
-		if (f->do_crc)
-			f->crc32 = crc32(f->crc32, buf, nr);
-
-		if (nr == sizeof(f->buffer)) {
-			/* process full buffer directly without copy */
-			data = buf;
-		} else {
-			memcpy(f->buffer + offset, buf, nr);
-			data = f->buffer;
-		}
-
+		memcpy(f->buffer + offset, buf, nr);
 		count -= nr;
 		offset += nr;
-		buf = (char *) buf + nr;
+		buf += nr;
 		left -= nr;
 		if (!left) {
-			git_SHA1_Update(&f->ctx, data, offset);
-			flush(f, data, offset);
+			SHA1_Update(&f->ctx, f->buffer, offset);
+			sha1flush(f, offset);
 			offset = 0;
 		}
 		f->offset = offset;
 	}
+	return 0;
+}
+
+struct sha1file *sha1create(const char *fmt, ...)
+{
+	struct sha1file *f;
+	unsigned len;
+	va_list arg;
+	int fd;
+
+	f = xmalloc(sizeof(*f));
+
+	va_start(arg, fmt);
+	len = vsnprintf(f->name, sizeof(f->name), fmt, arg);
+	va_end(arg);
+	if (len >= PATH_MAX)
+		die("you wascally wabbit, you");
+	f->namelen = len;
+
+	fd = open(f->name, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	if (fd < 0)
+		die("unable to open %s (%s)", f->name, strerror(errno));
+	f->fd = fd;
+	f->error = 0;
+	f->offset = 0;
+	SHA1_Init(&f->ctx);
+	return f;
 }
 
 struct sha1file *sha1fd(int fd, const char *name)
 {
-	return sha1fd_throughput(fd, name, NULL);
-}
-
-struct sha1file *sha1fd_check(const char *name)
-{
-	int sink, check;
 	struct sha1file *f;
+	unsigned len;
 
-	sink = open("/dev/null", O_WRONLY);
-	if (sink < 0)
-		die_errno("unable to open /dev/null");
-	check = open(name, O_RDONLY);
-	if (check < 0)
-		die_errno("unable to open '%s'", name);
-	f = sha1fd(sink, name);
-	f->check_fd = check;
-	return f;
-}
+	f = xmalloc(sizeof(*f));
 
-struct sha1file *sha1fd_throughput(int fd, const char *name, struct progress *tp)
-{
-	struct sha1file *f = xmalloc(sizeof(*f));
+	len = strlen(name);
+	if (len >= PATH_MAX)
+		die("you wascally wabbit, you");
+	f->namelen = len;
+	memcpy(f->name, name, len+1);
+
 	f->fd = fd;
-	f->check_fd = -1;
+	f->error = 0;
 	f->offset = 0;
-	f->total = 0;
-	f->tp = tp;
-	f->name = name;
-	f->do_crc = 0;
-	git_SHA1_Init(&f->ctx);
+	SHA1_Init(&f->ctx);
 	return f;
 }
 
-void sha1file_checkpoint(struct sha1file *f, struct sha1file_checkpoint *checkpoint)
+int sha1write_compressed(struct sha1file *f, void *in, unsigned int size)
 {
-	sha1flush(f);
-	checkpoint->offset = f->total;
-	checkpoint->ctx = f->ctx;
+	z_stream stream;
+	unsigned long maxsize;
+	void *out;
+
+	memset(&stream, 0, sizeof(stream));
+	deflateInit(&stream, Z_DEFAULT_COMPRESSION);
+	maxsize = deflateBound(&stream, size);
+	out = xmalloc(maxsize);
+
+	/* Compress it */
+	stream.next_in = in;
+	stream.avail_in = size;
+
+	stream.next_out = out;
+	stream.avail_out = maxsize;
+
+	while (deflate(&stream, Z_FINISH) == Z_OK)
+		/* nothing */;
+	deflateEnd(&stream);
+
+	size = stream.total_out;
+	sha1write(f, out, size);
+	free(out);
+	return size;
 }
 
-int sha1file_truncate(struct sha1file *f, struct sha1file_checkpoint *checkpoint)
-{
-	off_t offset = checkpoint->offset;
 
-	if (ftruncate(f->fd, offset) ||
-	    lseek(f->fd, offset, SEEK_SET) != offset)
-		return -1;
-	f->total = offset;
-	f->ctx = checkpoint->ctx;
-	f->offset = 0; /* sha1flush() was called in checkpoint */
-	return 0;
-}
-
-void crc32_begin(struct sha1file *f)
-{
-	f->crc32 = crc32(0, NULL, 0);
-	f->do_crc = 1;
-}
-
-uint32_t crc32_end(struct sha1file *f)
-{
-	f->do_crc = 0;
-	return f->crc32;
-}

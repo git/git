@@ -1,5 +1,6 @@
 git-update-server-info(1)
 =========================
+v0.1, July 2005
 
 NAME
 ----
@@ -8,37 +9,34 @@ git-update-server-info - Update auxiliary info file to help dumb servers
 
 SYNOPSIS
 --------
-[verse]
-'git update-server-info' [--force]
+'git-update-server-info' [--force]
 
 DESCRIPTION
 -----------
-A dumb server that does not do on-the-fly pack generations must
+A dumb server that does not do on-the-fly pack generations can
 have some auxiliary information files in $GIT_DIR/info and
 $GIT_OBJECT_DIRECTORY/info directories to help clients discover
-what references and packs the server has.  This command
-generates such auxiliary files.
+what references and packs the server has and make optimized
+pull decisions.  This command generates such auxiliary files.
 
 
 OPTIONS
 -------
 
--f::
 --force::
-	Update the info files from scratch.
+	Update the info files even when they do not appear
+	stale.
 
 
-OUTPUT
+Author
 ------
+Written by Junio C Hamano <junkio@cox.net>
 
-Currently the command updates the following files.  Please see
-linkgit:gitrepository-layout[5] for description of
-what they are for:
-
-* objects/info/packs
-
-* info/refs
+Documentation
+--------------
+Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the link:git.html[git] suite
+

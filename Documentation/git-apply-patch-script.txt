@@ -1,0 +1,32 @@
+git-apply-patch-script(1)
+=========================
+v0.1, May 2005
+
+NAME
+----
+git-apply-patch-script - Sample script to apply the diffs from git-diff-*
+
+
+SYNOPSIS
+--------
+'git-apply-patch-script'
+
+DESCRIPTION
+-----------
+This is a sample script to be used via the 'GIT_EXTERNAL_DIFF'
+environment variable to apply the differences that the "git-diff-*"
+family of commands report to the current work tree.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

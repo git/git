@@ -1,9 +1,0 @@
-struct item RIGHT(int i)
-// Do not
-// pick up
-/* these
-** comments.
-*/
-{
-	ChangeMe;
-}

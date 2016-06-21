@@ -1,0 +1,47 @@
+git-fetch-script(1)
+===================
+v0.1, July 2005
+
+NAME
+----
+git-fetch-script - Download objects and a head from another repository.
+
+
+SYNOPSIS
+--------
+'git-fetch-script' <repository> [ <head> | tag <tag> ]
+
+
+DESCRIPTION
+-----------
+Fetches a named head or a tag from another repository, along
+with the objects necessary to complete that head or tag.  The
+head to pull defaults to HEAD if unspecified.  The head or tag
+fetched from the remote repository is stored in
+$GIT_DIR/FETCH_HEAD.
+
+When a <tag> is specified, the <tag> fetched from the remote is
+also copied to the local $GIT_DIR/tags/<tag> file.  When no
+<head> nor <tag> is specified, and <repository> was specified
+with the short-hand notation (i.e. naming a file under the
+$GIT_DIR/branches directory), the head fetched from the remote
+repository is also copied to the local $GIT_DIR/heads/<repository>
+file.
+
+
+OPTIONS
+-------
+include::pull-fetch-param.txt[]
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite

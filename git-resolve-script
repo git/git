@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+# Copyright (c) 2005 Linus Torvalds
+#
+# Resolve two trees.
+#
+. git-sh-setup-script || die "Not a git archive"
+
+head=$(git-rev-parse --verify "$1")
+merge=$(git-rev-parse --verify "$2")
+merge_msg="$3"
+
+dropheads() {
+	rm -f -- "$GIT_DIR/MERGE_HEAD" \
+		"$GIT_DIR/LAST_MERGE" || exit 1
+}
+
+#
+# The remote name is just used for the message,
+# but we do want it.
+#
+if [ -z "$head" -o -z "$merge" -o -z "$merge_msg" ]; then
+	die "git-resolve-script <head> <remote> <merge-message>"
+fi
+
+dropheads
+echo $head > "$GIT_DIR"/ORIG_HEAD
+echo $merge > "$GIT_DIR"/LAST_MERGE
+
+common=$(git-merge-base $head $merge)
+if [ -z "$common" ]; then
+	die "Unable to find common commit between" $merge $head
+fi
+
+if [ "$common" == "$merge" ]; then
+	echo "Already up-to-date. Yeeah!"
+	dropheads
+	exit 0
+fi
+if [ "$common" == "$head" ]; then
+	echo "Updating from $head to $merge."
+	git-read-tree -u -m $head $merge || exit 1
+	echo $merge > "$GIT_DIR"/HEAD
+	git-diff-tree -p $head $merge | git-apply --stat
+	dropheads
+	exit 0
+fi
+echo "Trying to merge $merge into $head"
+git-read-tree -u -m $common $head $merge || exit 1
+result_tree=$(git-write-tree  2> /dev/null)
+if [ $? -ne 0 ]; then
+	echo "Simple merge failed, trying Automatic merge"
+	git-merge-cache -o git-merge-one-file-script -a
+	if [ $? -ne 0 ]; then
+		echo $merge > "$GIT_DIR"/MERGE_HEAD
+		die "Automatic merge failed, fix up by hand"
+	fi
+	result_tree=$(git-write-tree) || exit 1
+fi
+result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree -p $head -p $merge)
+echo "Committed merge $result_commit"
+echo $result_commit > "$GIT_DIR"/HEAD
+git-diff-tree -p $head $result_commit | git-apply --stat
+dropheads

@@ -1,0 +1,30 @@
+git-merge-one-file-script(1)
+============================
+v0.1, May 2005
+
+NAME
+----
+git-merge-one-file-script - The standard helper program to use with "git-merge-cache"
+
+
+SYNOPSIS
+--------
+'git-merge-one-file-script'
+
+DESCRIPTION
+-----------
+This is the standard helper program to use with "git-merge-cache"
+to resolve a merge after the trivial merge done with "git-read-tree -m".
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

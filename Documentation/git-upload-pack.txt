@@ -1,43 +1,40 @@
 git-upload-pack(1)
 ==================
+v0.1, July 2005
 
 NAME
 ----
-git-upload-pack - Send objects packed back to git-fetch-pack
+git-upload-pack - Send missing objects packed.
 
 
 SYNOPSIS
 --------
-[verse]
-'git-upload-pack' [--strict] [--timeout=<n>] <directory>
+'git-upload-pack' <directory>
 
 DESCRIPTION
 -----------
-Invoked by 'git fetch-pack', learns what
+Invoked by 'git-clone-pack' and/or 'git-fetch-pack', learns what
 objects the other side is missing, and sends them after packing.
 
 This command is usually not invoked directly by the end user.
-The UI for the protocol is on the 'git fetch-pack' side, and the
+The UI for the protocol is on the 'git-fetch-pack' side, and the
 program pair is meant to be used to pull updates from a remote
-repository.  For push operations, see 'git send-pack'.
+repository.  For push operations, see 'git-send-pack'.
 
 
 OPTIONS
 -------
-
---strict::
-	Do not try <directory>/.git/ if <directory> is no Git directory.
-
---timeout=<n>::
-	Interrupt transfer after <n> seconds of inactivity.
-
 <directory>::
 	The repository to sync from.
 
-SEE ALSO
---------
-linkgit:gitnamespaces[7]
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Documentation
+--------------
+Documentation by Junio C Hamano.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the link:git.html[git] suite
