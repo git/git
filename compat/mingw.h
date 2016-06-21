@@ -459,9 +459,6 @@ extern char *mingw_query_user_email(void);
 #include <inttypes.h>
 #endif
 
-void mingw_open_html(const char *path);
-#define open_html mingw_open_html
-
 /**
  * Max length of long paths (exceeding MAX_PATH). The actual maximum supported
  * by NTFS is 32,767 (* sizeof(wchar_t)), but we choose an arbitrary smaller
