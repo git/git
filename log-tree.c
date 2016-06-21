@@ -864,6 +864,9 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	struct log_info log;
 	int shown;
 
+	if (opt->diffopt.close_file)
+		die("BUG: close_file is incompatible with log_tree_commit()");
+
 	log.commit = commit;
 	log.parent = NULL;
 	opt->loginfo = &log;

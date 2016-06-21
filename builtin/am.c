@@ -1437,6 +1437,7 @@ static int write_commit_patch(const struct am_state *state, struct commit *commi
 {
 	struct rev_info rev_info;
 	FILE *fp;
+	int res;
 
 	fp = fopen(am_path(state, "patch"), "w");
 	if (!fp)
@@ -1453,10 +1454,11 @@ static int write_commit_patch(const struct am_state *state, struct commit *commi
 	DIFF_OPT_SET(&rev_info.diffopt, FULL_INDEX);
 	rev_info.diffopt.use_color = 0;
 	rev_info.diffopt.file = fp;
-	rev_info.diffopt.close_file = 1;
 	add_pending_object(&rev_info, &commit->object, "");
 	diff_setup_done(&rev_info.diffopt);
-	return log_tree_commit(&rev_info, commit);
+	res = log_tree_commit(&rev_info, commit);
+	fclose(fp);
+	return res;
 }
 
 /**
