@@ -1,5 +1,6 @@
 git-rev-list(1)
 ===============
+v0.1, May 2005
 
 NAME
 ----
@@ -8,114 +9,88 @@ git-rev-list - Lists commit objects in reverse chronological order
 
 SYNOPSIS
 --------
-[verse]
-'git rev-list' [ --max-count=<number> ]
-	     [ --skip=<number> ]
-	     [ --max-age=<timestamp> ]
-	     [ --min-age=<timestamp> ]
-	     [ --sparse ]
-	     [ --merges ]
-	     [ --no-merges ]
-	     [ --min-parents=<number> ]
-	     [ --no-min-parents ]
-	     [ --max-parents=<number> ]
-	     [ --no-max-parents ]
-	     [ --first-parent ]
-	     [ --remove-empty ]
-	     [ --full-history ]
-	     [ --not ]
-	     [ --all ]
-	     [ --branches[=<pattern>] ]
-	     [ --tags[=<pattern>] ]
-	     [ --remotes[=<pattern>] ]
-	     [ --glob=<glob-pattern> ]
-	     [ --ignore-missing ]
-	     [ --stdin ]
-	     [ --quiet ]
-	     [ --topo-order ]
-	     [ --parents ]
-	     [ --timestamp ]
-	     [ --left-right ]
-	     [ --left-only ]
-	     [ --right-only ]
-	     [ --cherry-mark ]
-	     [ --cherry-pick ]
-	     [ --encoding=<encoding> ]
-	     [ --(author|committer|grep)=<pattern> ]
-	     [ --regexp-ignore-case | -i ]
-	     [ --extended-regexp | -E ]
-	     [ --fixed-strings | -F ]
-	     [ --date=<format>]
-	     [ [ --objects | --objects-edge | --objects-edge-aggressive ]
-	       [ --unpacked ] ]
-	     [ --pretty | --header ]
-	     [ --bisect ]
-	     [ --bisect-vars ]
-	     [ --bisect-all ]
-	     [ --merge ]
-	     [ --reverse ]
-	     [ --walk-reflogs ]
-	     [ --no-walk ] [ --do-walk ]
-	     [ --count ]
-	     [ --use-bitmap-index ]
-	     <commit>... [ \-- <paths>... ]
+'git-rev-list' [ *--max-count*=number ] [ *--max-age*=timestamp ] [ *--min-age*=timestamp ] [ *--bisect* ] [ *--pretty* ] [ *--objects* ] [ *--merge-order* [ *--show-breaks* ] ] <commit> [ <commit> ...] [ ^<commit> ...]
 
 DESCRIPTION
 -----------
+Lists commit objects in reverse chronological order starting at the
+given commit(s), taking ancestry relationship into account.  This is
+useful to produce human-readable log output.
 
-List commits that are reachable by following the `parent` links from the
-given commit(s), but exclude commits that are reachable from the one(s)
-given with a '{caret}' in front of them.  The output is given in reverse
-chronological order by default.
+Commits which are stated with a preceding '^' cause listing to stop at
+that point. Their parents are implied. "git-rev-list foo bar ^baz" thus
+means "list all the commits which are included in 'foo' and 'bar', but
+not in 'baz'".
 
-You can think of this as a set operation.  Commits given on the command
-line form a set of commits that are reachable from any of them, and then
-commits reachable from any of the ones given with '{caret}' in front are
-subtracted from that set.  The remaining commits are what comes out in the
-command's output.  Various other options and paths parameters can be used
-to further limit the result.
+If *--pretty* is specified, print the contents of the commit changesets
+in human-readable form.
 
-Thus, the following command:
+The *--objects* flag causes 'git-rev-list' to print the object IDs of
+any object referenced by the listed commits. 'git-rev-list --objects foo
+^bar' thus means "send me all object IDs which I need to download if
+I have the commit object 'bar', but not 'foo'".
 
------------------------------------------------------------------------
-	$ git rev-list foo bar ^baz
------------------------------------------------------------------------
+The *--bisect* flag limits output to the one commit object which is
+roughly halfway between the included and excluded commits. Thus,
+if "git-rev-list --bisect foo ^bar ^baz" outputs 'midpoint', the output
+of "git-rev-list foo ^midpoint" and "git-rev-list midpoint ^bar ^baz"
+would be of roughly the same length. Finding the change which introduces
+a regression is thus reduced to a binary search: repeatedly generate and
+test new 'midpoint's until the commit chain is of length one.
 
-means "list all the commits which are reachable from 'foo' or 'bar', but
-not from 'baz'".
+If *--merge-order* is specified, the commit history is decomposed into a
+unique sequence of minimal, non-linear epochs and maximal, linear epochs.
+Non-linear epochs are then linearised by sorting them into merge order, which
+is described below.
 
-A special notation "'<commit1>'..'<commit2>'" can be used as a
-short-hand for "{caret}'<commit1>' '<commit2>'". For example, either of
-the following may be used interchangeably:
+Maximal, linear epochs correspond to periods of sequential development.
+Minimal, non-linear epochs correspond to periods of divergent development
+followed by a converging merge. The theory of epochs is described in more
+detail at
+link:http://blackcubes.dyndns.org/epoch/[http://blackcubes.dyndns.org/epoch/].
 
------------------------------------------------------------------------
-	$ git rev-list origin..HEAD
-	$ git rev-list HEAD ^origin
------------------------------------------------------------------------
+The merge order for a non-linear epoch is defined as a linearisation for which
+the following invariants are true:
 
-Another special notation is "'<commit1>'...'<commit2>'" which is useful
-for merges.  The resulting set of commits is the symmetric difference
-between the two operands.  The following two commands are equivalent:
+    1. if a commit P is reachable from commit N, commit P sorts after commit N
+       in the linearised list.
+    2. if Pi and Pj are any two parents of a merge M (with i < j), then any
+       commit N, such that N is reachable from Pj but not reachable from Pi,
+       sorts before all commits reachable from Pi.
 
------------------------------------------------------------------------
-	$ git rev-list A B --not $(git merge-base --all A B)
-	$ git rev-list A...B
------------------------------------------------------------------------
+Invariant 1 states that later commits appear before earlier commits they are
+derived from.
 
-'rev-list' is a very essential Git command, since it
-provides the ability to build and traverse commit ancestry graphs. For
-this reason, it has a lot of different options that enables it to be
-used by commands as different as 'git bisect' and
-'git repack'.
+Invariant 2 states that commits unique to "later" parents in a merge, appear
+before all commits from "earlier" parents of a merge.
 
-OPTIONS
--------
+If *--show-breaks* is specified, each item of the list is output with a
+2-character prefix consisting of one of: (|), (^), (=) followed by a space.
 
-:git-rev-list: 1
-include::rev-list-options.txt[]
+Commits marked with (=) represent the boundaries of minimal, non-linear epochs
+and correspond either to the start of a period of divergent development or to
+the end of such a period.
 
-include::pretty-formats.txt[]
+Commits marked with (|) are direct parents of commits immediately preceding
+the marked commit in the list.
+
+Commits marked with (^) are not parents of the immediately preceding commit.
+These "breaks" represent necessary discontinuities implied by trying to
+represent an arbtirary DAG in a linear form.
+
+*--show-breaks* is only valid if *--merge-order* is also specified.
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+Original *--merge-order* logic by Jon Seymour <jon.seymour@gmail.com>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the link:git.html[git] suite
+

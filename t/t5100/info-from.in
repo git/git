@@ -1,8 +1,0 @@
-From 667d8940e719cddee1cfe237cbbe215e20270b09 Mon Sep 17 00:00:00 2001
-From: bare@example.com
-Date: Sun, 25 May 2008 00:38:18 -0700
-Subject: [PATCH] testing bare address in from header
-
-commit message
----
-patch

@@ -1,0 +1,37 @@
+git-pull-script(1)
+==================
+v0.1, May 2005
+
+NAME
+----
+git-pull-script - Pull and merge from another repository.
+
+
+SYNOPSIS
+--------
+'git-pull-script' <repository> [ <head> | tag <tag> ]
+
+
+DESCRIPTION
+-----------
+Runs 'git-fetch-script' with the given parameters, then
+'git-resolve-script' to merge the local HEAD and FETCH_HEAD.
+
+
+OPTIONS
+-------
+include::pull-fetch-param.txt[]
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org> and Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

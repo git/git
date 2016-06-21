@@ -1,0 +1,14 @@
+#!/bin/sh
+. git-sh-setup-script || die "Not a git archive"
+	
+rm -f .tmp-pack-*
+packname=$(git-rev-list --unpacked --objects $(git-rev-parse --all) |
+	git-pack-objects --non-empty --incremental .tmp-pack) ||
+	exit 1
+if [ -z "$packname" ]; then
+	echo Nothing new to pack
+	exit 0
+fi
+mkdir -p "$GIT_OBJECT_DIRECTORY/pack" &&
+mv .tmp-pack-$packname.pack "$GIT_OBJECT_DIRECTORY/pack/pack-$packname.pack" &&
+mv .tmp-pack-$packname.idx  "$GIT_OBJECT_DIRECTORY/pack/pack-$packname.idx"

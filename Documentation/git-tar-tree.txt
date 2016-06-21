@@ -1,0 +1,39 @@
+git-tar-tree(1)
+===============
+v0.1, May 2005
+
+NAME
+----
+git-tar-tree - Creates a tar archive of the files in the named tree
+
+
+SYNOPSIS
+--------
+'git-tar-tree' <tree-ish> [ <base> ]
+
+DESCRIPTION
+-----------
+Creates a tar archive containing the tree structure for the named tree.
+When <base> is specified it is added as a leading path to the files in the
+generated tar archive.
+
+git-tar-tree behaves differently when given a tree ID versus when given
+a commit ID or tag ID.  In the first case the current time is used as
+modification time of each file in the archive.  In the latter case the
+commit time as recorded in the referenced commit object is used instead.
+Additionally the commit ID is stored in a global extended pax header.
+It can be extracted using git-get-tar-commit-id.
+
+
+Author
+------
+Written by Rene Scharfe.
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the link:git.html[git] suite
+

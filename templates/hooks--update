@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# An example hook script to mail out commit update information.
+#
+# To enable this hook:
+# (1) change the recipient e-mail address
+# (2) make this file executable by "chmod +x update".
+#
+
+recipient="commit-list@mydomain.xz"
+
+if expr "$2" : '0*$' >/dev/null
+then
+	echo "Created a new ref, with the following commits:"
+	git-rev-list --pretty "$2"
+else
+	echo "New commits:"
+	git-rev-list --pretty "$3" "^$2"
+fi |
+mail -s "Changes to ref $1" "$recipient"
+exit 0

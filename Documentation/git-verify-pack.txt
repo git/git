@@ -1,21 +1,21 @@
 git-verify-pack(1)
 ==================
+v0.1, June 2005
 
 NAME
 ----
-git-verify-pack - Validate packed Git archive files
+git-verify-pack - Validate packed GIT archive files.
 
 
 SYNOPSIS
 --------
-[verse]
-'git verify-pack' [-v|--verbose] [-s|--stat-only] [--] <pack>.idx ...
+'git-verify-pack' [-v] <pack>.idx ...
 
 
 DESCRIPTION
 -----------
-Reads given idx file for packed Git archive created with the
-'git pack-objects' command and verifies idx file and the
+Reads given idx file for packed GIT archive created with
+git-pack-objects command and verifies idx file and the
 corresponding pack file.
 
 OPTIONS
@@ -24,30 +24,26 @@ OPTIONS
 	The idx files to verify.
 
 -v::
---verbose::
 	After verifying the pack, show list of objects contained
-	in the pack and a histogram of delta chain length.
+	in the pack.  The format used is:
 
--s::
---stat-only::
-	Do not verify the pack contents; only show the histogram of delta
-	chain length.  With `--verbose`, list of objects is also shown.
+		SHA1 type size offset-in-packfile
 
-\--::
-	Do not interpret any more arguments as options.
+	for objects that are not deltified in the pack, and
 
-OUTPUT FORMAT
--------------
-When specifying the -v option the format used is:
+		SHA1 type size offset-in-packfile depth base-SHA1
 
-	SHA-1 type size size-in-packfile offset-in-packfile
+	for objects that are deltified.
 
-for objects that are not deltified in the pack, and
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
 
-	SHA-1 type size size-in-packfile offset-in-packfile depth base-SHA-1
-
-for objects that are deltified.
+Documentation
+--------------
+Documentation by Junio C Hamano
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the link:git.html[git] suite
+

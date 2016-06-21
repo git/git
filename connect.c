@@ -1,265 +1,268 @@
-#include "git-compat-util.h"
 #include "cache.h"
 #include "pkt-line.h"
 #include "quote.h"
-#include "refs.h"
-#include "run-command.h"
-#include "remote.h"
-#include "connect.h"
-#include "url.h"
-#include "string-list.h"
-#include "sha1-array.h"
-#include "transport.h"
-
-static char *server_capabilities;
-static const char *parse_feature_value(const char *, const char *, int *);
-
-static int check_ref(const char *name, unsigned int flags)
-{
-	if (!flags)
-		return 1;
-
-	if (!skip_prefix(name, "refs/", &name))
-		return 0;
-
-	/* REF_NORMAL means that we don't want the magic fake tag refs */
-	if ((flags & REF_NORMAL) && check_refname_format(name, 0))
-		return 0;
-
-	/* REF_HEADS means that we want regular branch heads */
-	if ((flags & REF_HEADS) && starts_with(name, "heads/"))
-		return 1;
-
-	/* REF_TAGS means that we want tags */
-	if ((flags & REF_TAGS) && starts_with(name, "tags/"))
-		return 1;
-
-	/* All type bits clear means that we are ok with anything */
-	return !(flags & ~REF_NORMAL);
-}
-
-int check_ref_type(const struct ref *ref, int flags)
-{
-	return check_ref(ref->name, flags);
-}
-
-static void die_initial_contact(int got_at_least_one_head)
-{
-	if (got_at_least_one_head)
-		die("The remote end hung up upon initial contact");
-	else
-		die("Could not read from remote repository.\n\n"
-		    "Please make sure you have the correct access rights\n"
-		    "and the repository exists.");
-}
-
-static void parse_one_symref_info(struct string_list *symref, const char *val, int len)
-{
-	char *sym, *target;
-	struct string_list_item *item;
-
-	if (!len)
-		return; /* just "symref" */
-	/* e.g. "symref=HEAD:refs/heads/master" */
-	sym = xmemdupz(val, len);
-	target = strchr(sym, ':');
-	if (!target)
-		/* just "symref=something" */
-		goto reject;
-	*(target++) = '\0';
-	if (check_refname_format(sym, REFNAME_ALLOW_ONELEVEL) ||
-	    check_refname_format(target, REFNAME_ALLOW_ONELEVEL))
-		/* "symref=bogus:pair */
-		goto reject;
-	item = string_list_append(symref, sym);
-	item->util = target;
-	return;
-reject:
-	free(sym);
-	return;
-}
-
-static void annotate_refs_with_symref_info(struct ref *ref)
-{
-	struct string_list symref = STRING_LIST_INIT_DUP;
-	const char *feature_list = server_capabilities;
-
-	while (feature_list) {
-		int len;
-		const char *val;
-
-		val = parse_feature_value(feature_list, "symref", &len);
-		if (!val)
-			break;
-		parse_one_symref_info(&symref, val, len);
-		feature_list = val + 1;
-	}
-	string_list_sort(&symref);
-
-	for (; ref; ref = ref->next) {
-		struct string_list_item *item;
-		item = string_list_lookup(&symref, ref->name);
-		if (!item)
-			continue;
-		ref->symref = xstrdup((char *)item->util);
-	}
-	string_list_clear(&symref, 0);
-}
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 /*
  * Read all the refs from the other end
  */
-struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
-			      struct ref **list, unsigned int flags,
-			      struct sha1_array *extra_have,
-			      struct sha1_array *shallow_points)
+struct ref **get_remote_heads(int in, struct ref **list, int nr_match, char **match)
 {
-	struct ref **orig_list = list;
-	int got_at_least_one_head = 0;
-
 	*list = NULL;
 	for (;;) {
 		struct ref *ref;
-		struct object_id old_oid;
+		unsigned char old_sha1[20];
+		static char buffer[1000];
 		char *name;
-		int len, name_len;
-		char *buffer = packet_buffer;
-		const char *arg;
+		int len;
 
-		len = packet_read(in, &src_buf, &src_len,
-				  packet_buffer, sizeof(packet_buffer),
-				  PACKET_READ_GENTLE_ON_EOF |
-				  PACKET_READ_CHOMP_NEWLINE);
-		if (len < 0)
-			die_initial_contact(got_at_least_one_head);
-
+		len = packet_read_line(in, buffer, sizeof(buffer));
 		if (!len)
 			break;
+		if (buffer[len-1] == '\n')
+			buffer[--len] = 0;
 
-		if (len > 4 && skip_prefix(buffer, "ERR ", &arg))
-			die("remote error: %s", arg);
-
-		if (len == GIT_SHA1_HEXSZ + strlen("shallow ") &&
-			skip_prefix(buffer, "shallow ", &arg)) {
-			if (get_oid_hex(arg, &old_oid))
-				die("protocol error: expected shallow sha-1, got '%s'", arg);
-			if (!shallow_points)
-				die("repository on the other end cannot be shallow");
-			sha1_array_append(shallow_points, old_oid.hash);
-			continue;
-		}
-
-		if (len < GIT_SHA1_HEXSZ + 2 || get_oid_hex(buffer, &old_oid) ||
-			buffer[GIT_SHA1_HEXSZ] != ' ')
+		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')
 			die("protocol error: expected sha/ref, got '%s'", buffer);
-		name = buffer + GIT_SHA1_HEXSZ + 1;
-
-		name_len = strlen(name);
-		if (len != name_len + GIT_SHA1_HEXSZ + 1) {
-			free(server_capabilities);
-			server_capabilities = xstrdup(name + name_len + 1);
-		}
-
-		if (extra_have && !strcmp(name, ".have")) {
-			sha1_array_append(extra_have, old_oid.hash);
+		name = buffer + 41;
+		if (nr_match && !path_match(name, nr_match, match))
 			continue;
-		}
-
-		if (!check_ref(name, flags))
-			continue;
-		ref = alloc_ref(buffer + GIT_SHA1_HEXSZ + 1);
-		oidcpy(&ref->old_oid, &old_oid);
+		ref = xcalloc(1, sizeof(*ref) + len - 40);
+		memcpy(ref->old_sha1, old_sha1, 20);
+		memcpy(ref->name, buffer + 41, len - 40);
 		*list = ref;
 		list = &ref->next;
-		got_at_least_one_head = 1;
 	}
-
-	annotate_refs_with_symref_info(*orig_list);
-
 	return list;
 }
 
-static const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp)
+int get_ack(int fd, unsigned char *result_sha1)
 {
-	int len;
+	static char line[1000];
+	int len = packet_read_line(fd, line, sizeof(line));
 
-	if (!feature_list)
-		return NULL;
-
-	len = strlen(feature);
-	while (*feature_list) {
-		const char *found = strstr(feature_list, feature);
-		if (!found)
-			return NULL;
-		if (feature_list == found || isspace(found[-1])) {
-			const char *value = found + len;
-			/* feature with no value (e.g., "thin-pack") */
-			if (!*value || isspace(*value)) {
-				if (lenp)
-					*lenp = 0;
-				return value;
-			}
-			/* feature with a value (e.g., "agent=git/1.2.3") */
-			else if (*value == '=') {
-				value++;
-				if (lenp)
-					*lenp = strcspn(value, " \t\n");
-				return value;
-			}
-			/*
-			 * otherwise we matched a substring of another feature;
-			 * keep looking
-			 */
-		}
-		feature_list = found + 1;
+	if (!len)
+		die("git-fetch-pack: expected ACK/NAK, got EOF");
+	if (line[len-1] == '\n')
+		line[--len] = 0;
+	if (!strcmp(line, "NAK"))
+		return 0;
+	if (!strncmp(line, "ACK ", 3)) {
+		if (!get_sha1_hex(line+4, result_sha1))
+			return 1;
 	}
+	die("git-fetch_pack: expected ACK/NAK, got '%s'", line);
+}
+
+int path_match(const char *path, int nr, char **match)
+{
+	int i;
+	int pathlen = strlen(path);
+
+	for (i = 0; i < nr; i++) {
+		char *s = match[i];
+		int len = strlen(s);
+
+		if (!len || len > pathlen)
+			continue;
+		if (memcmp(path + pathlen - len, s, len))
+			continue;
+		if (pathlen > len && path[pathlen - len - 1] != '/')
+			continue;
+		*s = 0;
+		return 1;
+	}
+	return 0;
+}
+
+struct refspec {
+	char *src;
+	char *dst;
+};
+
+static struct refspec *parse_ref_spec(int nr_refspec, char **refspec)
+{
+	int i;
+	struct refspec *rs = xmalloc(sizeof(*rs) * (nr_refspec + 1));
+	for (i = 0; i < nr_refspec; i++) {
+		char *sp, *dp, *ep;
+		sp = refspec[i];
+		ep = strchr(sp, ':');
+		if (ep) {
+			dp = ep + 1;
+			*ep = 0;
+		}
+		else
+			dp = sp;
+		rs[i].src = sp;
+		rs[i].dst = dp;
+	}
+	rs[nr_refspec].src = rs[nr_refspec].dst = NULL;
+	return rs;
+}
+
+static int count_refspec_match(const char *pattern,
+			       struct ref *refs,
+			       struct ref **matched_ref)
+{
+	int match;
+	int patlen = strlen(pattern);
+
+	for (match = 0; refs; refs = refs->next) {
+		char *name = refs->name;
+		int namelen = strlen(name);
+		if (namelen < patlen ||
+		    memcmp(name + namelen - patlen, pattern, patlen))
+			continue;
+		if (namelen != patlen && name[namelen - patlen - 1] != '/')
+			continue;
+		match++;
+		*matched_ref = refs;
+	}
+	return match;
+}
+
+static void link_dst_tail(struct ref *ref, struct ref ***tail)
+{
+	**tail = ref;
+	*tail = &ref->next;
+	**tail = NULL;
+}
+
+static struct ref *try_explicit_object_name(const char *name)
+{
+	unsigned char sha1[20];
+	struct ref *ref;
+	int len;
+	if (get_sha1(name, sha1))
+		return NULL;
+	len = strlen(name) + 1;
+	ref = xcalloc(1, sizeof(*ref) + len);
+	memcpy(ref->name, name, len);
+	memcpy(ref->new_sha1, sha1, 20);
+	return ref;
+}
+
+static int match_explicit_refs(struct ref *src, struct ref *dst,
+			       struct ref ***dst_tail, struct refspec *rs)
+{
+	int i, errs;
+	for (i = errs = 0; rs[i].src; i++) {
+		struct ref *matched_src, *matched_dst;
+
+		matched_src = matched_dst = NULL;
+		switch (count_refspec_match(rs[i].src, src, &matched_src)) {
+		case 1:
+			break;
+		case 0:
+			/* The source could be in the get_sha1() format
+			 * not a reference name.
+			 */
+			matched_src = try_explicit_object_name(rs[i].src);
+			if (matched_src)
+				break;
+			errs = 1;
+			error("src refspec %s does not match any.");
+			break;
+		default:
+			errs = 1;
+			error("src refspec %s matches more than one.",
+			      rs[i].src);
+			break;
+		}
+		switch (count_refspec_match(rs[i].dst, dst, &matched_dst)) {
+		case 1:
+			break;
+		case 0:
+			if (!memcmp(rs[i].dst, "refs/", 5)) {
+				int len = strlen(rs[i].dst) + 1;
+				matched_dst = xcalloc(1, sizeof(*dst) + len);
+				memcpy(matched_dst->name, rs[i].dst, len);
+				link_dst_tail(matched_dst, dst_tail);
+			}
+			else if (!strcmp(rs[i].src, rs[i].dst) &&
+				 matched_src) {
+				/* pushing "master:master" when
+				 * remote does not have master yet.
+				 */
+				int len = strlen(matched_src->name) + 1;
+				matched_dst = xcalloc(1, sizeof(*dst) + len);
+				memcpy(matched_dst->name, matched_src->name,
+				       len);
+				link_dst_tail(matched_dst, dst_tail);
+			}
+			else {
+				errs = 1;
+				error("dst refspec %s does not match any "
+				      "existing ref on the remote and does "
+				      "not start with refs/.", rs[i].dst);
+			}
+			break;
+		default:
+			errs = 1;
+			error("dst refspec %s matches more than one.",
+			      rs[i].dst);
+			break;
+		}
+		if (errs)
+			continue;
+		if (matched_dst->peer_ref) {
+			errs = 1;
+			error("dst ref %s receives from more than one src.",
+			      matched_dst->name);
+		}
+		else
+			matched_dst->peer_ref = matched_src;
+	}
+	return -errs;
+}
+
+static struct ref *find_ref_by_name(struct ref *list, const char *name)
+{
+	for ( ; list; list = list->next)
+		if (!strcmp(list->name, name))
+			return list;
 	return NULL;
 }
 
-int parse_feature_request(const char *feature_list, const char *feature)
+int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
+	       int nr_refspec, char **refspec, int all)
 {
-	return !!parse_feature_value(feature_list, feature, NULL);
-}
+	struct refspec *rs = parse_ref_spec(nr_refspec, refspec);
 
-const char *server_feature_value(const char *feature, int *len)
-{
-	return parse_feature_value(server_capabilities, feature, len);
-}
+	if (nr_refspec)
+		return match_explicit_refs(src, dst, dst_tail, rs);
 
-int server_supports(const char *feature)
-{
-	return !!server_feature_value(feature, NULL);
+	/* pick the remainder */
+	for ( ; src; src = src->next) {
+		struct ref *dst_peer;
+		if (src->peer_ref)
+			continue;
+		dst_peer = find_ref_by_name(dst, src->name);
+		if ((dst_peer && dst_peer->peer_ref) || (!dst_peer && !all))
+			continue;
+		if (!dst_peer) {
+			/* Create a new one and link it */
+			int len = strlen(src->name) + 1;
+			dst_peer = xcalloc(1, sizeof(*dst_peer) + len);
+			memcpy(dst_peer->name, src->name, len);
+			memcpy(dst_peer->new_sha1, src->new_sha1, 20);
+			link_dst_tail(dst_peer, dst_tail);
+		}
+		dst_peer->peer_ref = src;
+	}
+	return 0;
 }
 
 enum protocol {
 	PROTO_LOCAL = 1,
-	PROTO_FILE,
 	PROTO_SSH,
-	PROTO_GIT
+	PROTO_GIT,
 };
-
-int url_is_local_not_ssh(const char *url)
-{
-	const char *colon = strchr(url, ':');
-	const char *slash = strchr(url, '/');
-	return !colon || (slash && slash < colon) ||
-		has_dos_drive_prefix(url);
-}
-
-static const char *prot_name(enum protocol protocol)
-{
-	switch (protocol) {
-		case PROTO_LOCAL:
-		case PROTO_FILE:
-			return "file";
-		case PROTO_SSH:
-			return "ssh";
-		case PROTO_GIT:
-			return "git";
-		default:
-			return "unknown protocol";
-	}
-}
 
 static enum protocol get_protocol(const char *name)
 {
@@ -267,567 +270,140 @@ static enum protocol get_protocol(const char *name)
 		return PROTO_SSH;
 	if (!strcmp(name, "git"))
 		return PROTO_GIT;
-	if (!strcmp(name, "git+ssh")) /* deprecated - do not use */
-		return PROTO_SSH;
-	if (!strcmp(name, "ssh+git")) /* deprecated - do not use */
-		return PROTO_SSH;
-	if (!strcmp(name, "file"))
-		return PROTO_FILE;
 	die("I don't handle protocol '%s'", name);
-}
-
-static char *host_end(char **hoststart, int removebrackets)
-{
-	char *host = *hoststart;
-	char *end;
-	char *start = strstr(host, "@[");
-	if (start)
-		start++; /* Jump over '@' */
-	else
-		start = host;
-	if (start[0] == '[') {
-		end = strchr(start + 1, ']');
-		if (end) {
-			if (removebrackets) {
-				*end = 0;
-				memmove(start, start + 1, end - start);
-				end++;
-			}
-		} else
-			end = host;
-	} else
-		end = host;
-	return end;
 }
 
 #define STR_(s)	# s
 #define STR(s)	STR_(s)
 
-static void get_host_and_port(char **host, const char **port)
+static int git_tcp_connect(int fd[2], const char *prog, char *host, char *path)
 {
-	char *colon, *end;
-	end = host_end(host, 1);
-	colon = strchr(end, ':');
-	if (colon) {
-		long portnr = strtol(colon + 1, &end, 10);
-		if (end != colon + 1 && *end == '\0' && 0 <= portnr && portnr < 65536) {
-			*colon = 0;
-			*port = colon + 1;
-		} else if (!colon[1]) {
-			*colon = 0;
-		}
-	}
-}
-
-static void enable_keepalive(int sockfd)
-{
-	int ka = 1;
-
-	if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &ka, sizeof(ka)) < 0)
-		fprintf(stderr, "unable to set SO_KEEPALIVE on socket: %s\n",
-			strerror(errno));
-}
-
-#ifndef NO_IPV6
-
-static const char *ai_name(const struct addrinfo *ai)
-{
-	static char addr[NI_MAXHOST];
-	if (getnameinfo(ai->ai_addr, ai->ai_addrlen, addr, sizeof(addr), NULL, 0,
-			NI_NUMERICHOST) != 0)
-		xsnprintf(addr, sizeof(addr), "(unknown)");
-
-	return addr;
-}
-
-/*
- * Returns a connected socket() fd, or else die()s.
- */
-static int git_tcp_connect_sock(char *host, int flags)
-{
-	struct strbuf error_message = STRBUF_INIT;
 	int sockfd = -1;
-	const char *port = STR(DEFAULT_GIT_PORT);
+	char *colon, *end;
+	char *port = STR(DEFAULT_GIT_PORT);
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
-	int cnt = 0;
 
-	get_host_and_port(&host, &port);
-	if (!*port)
-		port = "<none>";
+	if (host[0] == '[') {
+		end = strchr(host + 1, ']');
+		if (end) {
+			*end = 0;
+			end++;
+			host++;
+		} else
+			end = host;
+	} else
+		end = host;
+	colon = strchr(end, ':');
+
+	if (colon) {
+		*colon = 0;
+		port = colon + 1;
+	}
 
 	memset(&hints, 0, sizeof(hints));
-	if (flags & CONNECT_IPV4)
-		hints.ai_family = AF_INET;
-	else if (flags & CONNECT_IPV6)
-		hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 
-	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "Looking up %s ... ", host);
-
 	gai = getaddrinfo(host, port, &hints, &ai);
 	if (gai)
-		die("Unable to look up %s (port %s) (%s)", host, port, gai_strerror(gai));
+		die("Unable to look up %s (%s)", host, gai_strerror(gai));
 
-	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
-
-	for (ai0 = ai; ai; ai = ai->ai_next, cnt++) {
-		sockfd = socket(ai->ai_family,
-				ai->ai_socktype, ai->ai_protocol);
-		if ((sockfd < 0) ||
-		    (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0)) {
-			strbuf_addf(&error_message, "%s[%d: %s]: errno=%s\n",
-				    host, cnt, ai_name(ai), strerror(errno));
-			if (0 <= sockfd)
-				close(sockfd);
+	for (ai0 = ai; ai; ai = ai->ai_next) {
+		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+		if (sockfd < 0)
+			continue;
+		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) < 0) {
+			close(sockfd);
 			sockfd = -1;
 			continue;
 		}
-		if (flags & CONNECT_VERBOSE)
-			fprintf(stderr, "%s ", ai_name(ai));
 		break;
 	}
 
 	freeaddrinfo(ai0);
 
 	if (sockfd < 0)
-		die("unable to connect to %s:\n%s", host, error_message.buf);
-
-	enable_keepalive(sockfd);
-
-	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\n");
-
-	strbuf_release(&error_message);
-
-	return sockfd;
-}
-
-#else /* NO_IPV6 */
-
-/*
- * Returns a connected socket() fd, or else die()s.
- */
-static int git_tcp_connect_sock(char *host, int flags)
-{
-	struct strbuf error_message = STRBUF_INIT;
-	int sockfd = -1;
-	const char *port = STR(DEFAULT_GIT_PORT);
-	char *ep;
-	struct hostent *he;
-	struct sockaddr_in sa;
-	char **ap;
-	unsigned int nport;
-	int cnt;
-
-	get_host_and_port(&host, &port);
-
-	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "Looking up %s ... ", host);
-
-	he = gethostbyname(host);
-	if (!he)
-		die("Unable to look up %s (%s)", host, hstrerror(h_errno));
-	nport = strtoul(port, &ep, 10);
-	if ( ep == port || *ep ) {
-		/* Not numeric */
-		struct servent *se = getservbyname(port,"tcp");
-		if ( !se )
-			die("Unknown port %s", port);
-		nport = se->s_port;
-	}
-
-	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
-
-	for (cnt = 0, ap = he->h_addr_list; *ap; ap++, cnt++) {
-		memset(&sa, 0, sizeof sa);
-		sa.sin_family = he->h_addrtype;
-		sa.sin_port = htons(nport);
-		memcpy(&sa.sin_addr, *ap, he->h_length);
-
-		sockfd = socket(he->h_addrtype, SOCK_STREAM, 0);
-		if ((sockfd < 0) ||
-		    connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
-			strbuf_addf(&error_message, "%s[%d: %s]: errno=%s\n",
-				host,
-				cnt,
-				inet_ntoa(*(struct in_addr *)&sa.sin_addr),
-				strerror(errno));
-			if (0 <= sockfd)
-				close(sockfd);
-			sockfd = -1;
-			continue;
-		}
-		if (flags & CONNECT_VERBOSE)
-			fprintf(stderr, "%s ",
-				inet_ntoa(*(struct in_addr *)&sa.sin_addr));
-		break;
-	}
-
-	if (sockfd < 0)
-		die("unable to connect to %s:\n%s", host, error_message.buf);
-
-	enable_keepalive(sockfd);
-
-	if (flags & CONNECT_VERBOSE)
-		fprintf(stderr, "done.\n");
-
-	return sockfd;
-}
-
-#endif /* NO_IPV6 */
-
-
-static void git_tcp_connect(int fd[2], char *host, int flags)
-{
-	int sockfd = git_tcp_connect_sock(host, flags);
+		die("unable to connect a socket (%s)", strerror(errno));
 
 	fd[0] = sockfd;
-	fd[1] = dup(sockfd);
-}
-
-
-static char *git_proxy_command;
-
-static int git_proxy_command_options(const char *var, const char *value,
-		void *cb)
-{
-	if (!strcmp(var, "core.gitproxy")) {
-		const char *for_pos;
-		int matchlen = -1;
-		int hostlen;
-		const char *rhost_name = cb;
-		int rhost_len = strlen(rhost_name);
-
-		if (git_proxy_command)
-			return 0;
-		if (!value)
-			return config_error_nonbool(var);
-		/* [core]
-		 * ;# matches www.kernel.org as well
-		 * gitproxy = netcatter-1 for kernel.org
-		 * gitproxy = netcatter-2 for sample.xz
-		 * gitproxy = netcatter-default
-		 */
-		for_pos = strstr(value, " for ");
-		if (!for_pos)
-			/* matches everybody */
-			matchlen = strlen(value);
-		else {
-			hostlen = strlen(for_pos + 5);
-			if (rhost_len < hostlen)
-				matchlen = -1;
-			else if (!strncmp(for_pos + 5,
-					  rhost_name + rhost_len - hostlen,
-					  hostlen) &&
-				 ((rhost_len == hostlen) ||
-				  rhost_name[rhost_len - hostlen -1] == '.'))
-				matchlen = for_pos - value;
-			else
-				matchlen = -1;
-		}
-		if (0 <= matchlen) {
-			/* core.gitproxy = none for kernel.org */
-			if (matchlen == 4 &&
-			    !memcmp(value, "none", 4))
-				matchlen = 0;
-			git_proxy_command = xmemdupz(value, matchlen);
-		}
-		return 0;
-	}
-
-	return git_default_config(var, value, cb);
-}
-
-static int git_use_proxy(const char *host)
-{
-	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, (void*)host);
-	return (git_proxy_command && *git_proxy_command);
-}
-
-static struct child_process *git_proxy_connect(int fd[2], char *host)
-{
-	const char *port = STR(DEFAULT_GIT_PORT);
-	struct child_process *proxy;
-
-	get_host_and_port(&host, &port);
-
-	proxy = xmalloc(sizeof(*proxy));
-	child_process_init(proxy);
-	argv_array_push(&proxy->args, git_proxy_command);
-	argv_array_push(&proxy->args, host);
-	argv_array_push(&proxy->args, port);
-	proxy->in = -1;
-	proxy->out = -1;
-	if (start_command(proxy))
-		die("cannot start proxy %s", git_proxy_command);
-	fd[0] = proxy->out; /* read from proxy stdout */
-	fd[1] = proxy->in;  /* write to proxy stdin */
-	return proxy;
-}
-
-static char *get_port(char *host)
-{
-	char *end;
-	char *p = strchr(host, ':');
-
-	if (p) {
-		long port = strtol(p + 1, &end, 10);
-		if (end != p + 1 && *end == '\0' && 0 <= port && port < 65536) {
-			*p = '\0';
-			return p+1;
-		}
-	}
-
-	return NULL;
+	fd[1] = sockfd;
+	packet_write(sockfd, "%s %s\n", prog, path);
+	return 0;
 }
 
 /*
- * Extract protocol and relevant parts from the specified connection URL.
- * The caller must free() the returned strings.
+ * Yeah, yeah, fixme. Need to pass in the heads etc.
  */
-static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
-				       char **ret_path)
+int git_connect(int fd[2], char *url, const char *prog)
 {
-	char *url;
+	char command[1024];
 	char *host, *path;
-	char *end;
-	int separator = '/';
-	enum protocol protocol = PROTO_LOCAL;
-
-	if (is_url(url_orig))
-		url = url_decode(url_orig);
-	else
-		url = xstrdup(url_orig);
-
-	host = strstr(url, "://");
-	if (host) {
-		*host = '\0';
-		protocol = get_protocol(url);
-		host += 3;
-	} else {
-		host = url;
-		if (!url_is_local_not_ssh(url)) {
-			protocol = PROTO_SSH;
-			separator = ':';
-		}
-	}
-
-	/*
-	 * Don't do destructive transforms as protocol code does
-	 * '[]' unwrapping in get_host_and_port()
-	 */
-	end = host_end(&host, 0);
-
-	if (protocol == PROTO_LOCAL)
-		path = end;
-	else if (protocol == PROTO_FILE && has_dos_drive_prefix(end))
-		path = end; /* "file://$(pwd)" may be "file://C:/projects/repo" */
-	else
-		path = strchr(end, separator);
-
-	if (!path || !*path)
-		die("No path specified. See 'man git-pull' for valid url syntax");
-
-	/*
-	 * null-terminate hostname and point path to ~ for URL's like this:
-	 *    ssh://host.xz/~user/repo
-	 */
-
-	end = path; /* Need to \0 terminate host here */
-	if (separator == ':')
-		path++; /* path starts after ':' */
-	if (protocol == PROTO_GIT || protocol == PROTO_SSH) {
-		if (path[1] == '~')
-			path++;
-	}
-
-	path = xstrdup(path);
-	*end = '\0';
-
-	*ret_host = xstrdup(host);
-	*ret_path = path;
-	free(url);
-	return protocol;
-}
-
-static struct child_process no_fork = CHILD_PROCESS_INIT;
-
-/*
- * This returns a dummy child_process if the transport protocol does not
- * need fork(2), or a struct child_process object if it does.  Once done,
- * finish the connection with finish_connect() with the value returned from
- * this function (it is safe to call finish_connect() with NULL to support
- * the former case).
- *
- * If it returns, the connect is successful; it just dies on errors (this
- * will hopefully be changed in a libification effort, to return NULL when
- * the connection failed).
- */
-struct child_process *git_connect(int fd[2], const char *url,
-				  const char *prog, int flags)
-{
-	char *hostandport, *path;
-	struct child_process *conn = &no_fork;
+	char *colon;
+	int pipefd[2][2];
+	pid_t pid;
 	enum protocol protocol;
-	struct strbuf cmd = STRBUF_INIT;
 
-	/* Without this we cannot rely on waitpid() to tell
-	 * what happened to our children.
-	 */
-	signal(SIGCHLD, SIG_DFL);
-
-	protocol = parse_connect_url(url, &hostandport, &path);
-	if ((flags & CONNECT_DIAG_URL) && (protocol != PROTO_SSH)) {
-		printf("Diag: url=%s\n", url ? url : "NULL");
-		printf("Diag: protocol=%s\n", prot_name(protocol));
-		printf("Diag: hostandport=%s\n", hostandport ? hostandport : "NULL");
-		printf("Diag: path=%s\n", path ? path : "NULL");
-		conn = NULL;
-	} else if (protocol == PROTO_GIT) {
-		/*
-		 * Set up virtual host information based on where we will
-		 * connect, unless the user has overridden us in
-		 * the environment.
-		 */
-		char *target_host = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
-		if (target_host)
-			target_host = xstrdup(target_host);
-		else
-			target_host = xstrdup(hostandport);
-
-		transport_check_allowed("git");
-
-		/* These underlying connection commands die() if they
-		 * cannot connect.
-		 */
-		if (git_use_proxy(hostandport))
-			conn = git_proxy_connect(fd, hostandport);
-		else
-			git_tcp_connect(fd, hostandport, flags);
-		/*
-		 * Separate original protocol components prog and path
-		 * from extended host header with a NUL byte.
-		 *
-		 * Note: Do not add any other headers here!  Doing so
-		 * will cause older git-daemon servers to crash.
-		 */
-		packet_write(fd[1],
-			     "%s %s%chost=%s%c",
-			     prog, path, 0,
-			     target_host, 0);
-		free(target_host);
-	} else {
-		conn = xmalloc(sizeof(*conn));
-		child_process_init(conn);
-
-		strbuf_addstr(&cmd, prog);
-		strbuf_addch(&cmd, ' ');
-		sq_quote_buf(&cmd, path);
-
-		/* remove repo-local variables from the environment */
-		conn->env = local_repo_env;
-		conn->use_shell = 1;
-		conn->in = conn->out = -1;
-		if (protocol == PROTO_SSH) {
-			const char *ssh;
-			int putty = 0, tortoiseplink = 0;
-			char *ssh_host = hostandport;
-			const char *port = NULL;
-			transport_check_allowed("ssh");
-			get_host_and_port(&ssh_host, &port);
-
-			if (!port)
-				port = get_port(ssh_host);
-
-			if (flags & CONNECT_DIAG_URL) {
-				printf("Diag: url=%s\n", url ? url : "NULL");
-				printf("Diag: protocol=%s\n", prot_name(protocol));
-				printf("Diag: userandhost=%s\n", ssh_host ? ssh_host : "NULL");
-				printf("Diag: port=%s\n", port ? port : "NONE");
-				printf("Diag: path=%s\n", path ? path : "NULL");
-
-				free(hostandport);
-				free(path);
-				free(conn);
-				return NULL;
+	host = NULL;
+	path = url;
+	colon = strchr(url, ':');
+	protocol = PROTO_LOCAL;
+	if (colon) {
+		*colon = 0;
+		host = url;
+		path = colon+1;
+		protocol = PROTO_SSH;
+		if (!memcmp(path, "//", 2)) {
+			char *slash = strchr(path + 2, '/');
+			if (slash) {
+				int nr = slash - path - 2;
+				memmove(path, path+2, nr);
+				path[nr] = 0;
+				protocol = get_protocol(url);
+				host = path;
+				path = slash;
 			}
-
-			ssh = getenv("GIT_SSH_COMMAND");
-			if (!ssh) {
-				const char *base;
-				char *ssh_dup;
-
-				/*
-				 * GIT_SSH is the no-shell version of
-				 * GIT_SSH_COMMAND (and must remain so for
-				 * historical compatibility).
-				 */
-				conn->use_shell = 0;
-
-				ssh = getenv("GIT_SSH");
-				if (!ssh)
-					ssh = "ssh";
-
-				ssh_dup = xstrdup(ssh);
-				base = basename(ssh_dup);
-
-				tortoiseplink = !strcasecmp(base, "tortoiseplink") ||
-					!strcasecmp(base, "tortoiseplink.exe");
-				putty = tortoiseplink ||
-					!strcasecmp(base, "plink") ||
-					!strcasecmp(base, "plink.exe");
-
-				free(ssh_dup);
-			}
-
-			argv_array_push(&conn->args, ssh);
-			if (flags & CONNECT_IPV4)
-				argv_array_push(&conn->args, "-4");
-			else if (flags & CONNECT_IPV6)
-				argv_array_push(&conn->args, "-6");
-			if (tortoiseplink)
-				argv_array_push(&conn->args, "-batch");
-			if (port) {
-				/* P is for PuTTY, p is for OpenSSH */
-				argv_array_push(&conn->args, putty ? "-P" : "-p");
-				argv_array_push(&conn->args, port);
-			}
-			argv_array_push(&conn->args, ssh_host);
-		} else {
-			transport_check_allowed("file");
 		}
-		argv_array_push(&conn->args, cmd.buf);
-
-		if (start_command(conn))
-			die("unable to fork");
-
-		fd[0] = conn->out; /* read from child's stdout */
-		fd[1] = conn->in;  /* write to child's stdin */
-		strbuf_release(&cmd);
 	}
-	free(hostandport);
-	free(path);
-	return conn;
+
+	if (protocol == PROTO_GIT)
+		return git_tcp_connect(fd, prog, host, path);
+
+	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
+		die("unable to create pipe pair for communication");
+	pid = fork();
+	if (!pid) {
+		snprintf(command, sizeof(command), "%s %s", prog,
+			 sq_quote(path));
+		dup2(pipefd[1][0], 0);
+		dup2(pipefd[0][1], 1);
+		close(pipefd[0][0]);
+		close(pipefd[0][1]);
+		close(pipefd[1][0]);
+		close(pipefd[1][1]);
+		if (protocol == PROTO_SSH)
+			execlp("ssh", "ssh", host, command, NULL);
+		else
+			execlp("sh", "sh", "-c", command, NULL);
+		die("exec failed");
+	}		
+	fd[0] = pipefd[0][0];
+	fd[1] = pipefd[1][1];
+	close(pipefd[0][1]);
+	close(pipefd[1][0]);
+	return pid;
 }
 
-int git_connection_is_socket(struct child_process *conn)
+int finish_connect(pid_t pid)
 {
-	return conn == &no_fork;
-}
+	int ret;
 
-int finish_connect(struct child_process *conn)
-{
-	int code;
-	if (!conn || git_connection_is_socket(conn))
-		return 0;
-
-	code = finish_command(conn);
-	free(conn);
-	return code;
+	for (;;) {
+		ret = waitpid(pid, NULL, 0);
+		if (!ret)
+			break;
+		if (errno != EINTR)
+			break;
+	}
+	return ret;
 }

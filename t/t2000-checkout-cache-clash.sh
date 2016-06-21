@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git checkout-index test.
+test_description='git-checkout-cache test.
 
 This test registers the following filesystem structure in the
 cache:
@@ -16,7 +16,7 @@ And then tries to checkout in a work tree that has the following:
     path0/file0 - a file in a directory
     path1       - a file
 
-The git checkout-index command should fail when attempting to checkout
+The git-checkout-cache command should fail when attempting to checkout
 path0, finding it is occupied by a directory, and path1/file1, finding
 path1 is occupied by a non-directory.  With "-f" flag, it should remove
 the conflicting paths and succeed.
@@ -28,33 +28,26 @@ mkdir path1
 date >path1/file1
 
 test_expect_success \
-    'git update-index --add various paths.' \
-    'git update-index --add path0 path1/file1'
+    'git-update-cache --add various paths.' \
+    'git-update-cache --add path0 path1/file1'
 
 rm -fr path0 path1
 mkdir path0
 date >path0/file0
 date >path1
 
-test_expect_success \
-    'git checkout-index without -f should fail on conflicting work tree.' \
-    'test_must_fail git checkout-index -a'
+test_expect_failure \
+    'git-checkout-cache without -f should fail on conflicting work tree.' \
+    'git-checkout-cache -a'
 
 test_expect_success \
-    'git checkout-index with -f should succeed.' \
-    'git checkout-index -f -a'
+    'git-checkout-cache with -f should succeed.' \
+    'git-checkout-cache -f -a'
 
 test_expect_success \
-    'git checkout-index conflicting paths.' \
+    'git-checkout-cache conflicting paths.' \
     'test -f path0 && test -d path1 && test -f path1/file1'
 
-test_expect_success SYMLINKS 'checkout-index -f twice with --prefix' '
-	mkdir -p tar/get &&
-	ln -s tar/get there &&
-	echo first &&
-	git checkout-index -a -f --prefix=there/ &&
-	echo second &&
-	git checkout-index -a -f --prefix=there/
-'
-
 test_done
+
+

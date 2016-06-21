@@ -1,5 +1,6 @@
-git(1)
+git(7)
 ======
+May 2005
 
 NAME
 ----
@@ -8,818 +9,290 @@ git - the stupid content tracker
 
 SYNOPSIS
 --------
-[verse]
-'git' [--version] [--help] [-C <path>] [-c <name>=<value>]
-    [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-    [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
-    [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-    <command> [<args>]
+'git-<command>' <args>
 
 DESCRIPTION
 -----------
-Git is a fast, scalable, distributed revision control system with an
-unusually rich command set that provides both high-level operations
-and full access to internals.
 
-See linkgit:gittutorial[7] to get started, then see
-linkgit:giteveryday[7] for a useful minimum set of
-commands.  The link:user-manual.html[Git User's Manual] has a more
-in-depth introduction.
+This is reference information for the core git commands.
 
-After you mastered the basic concepts, you can come back to this
-page to learn what commands Git offers.  You can learn more about
-individual Git commands with "git help command".  linkgit:gitcli[7]
-manual page gives you an overview of the command-line command syntax.
+The Discussion section below contains much useful definition and
+clarification info - read that first.  And of the commands, I suggest
+reading link:git-update-cache.html[git-update-cache] and
+link:git-read-tree.html[git-read-tree] first - I wish I had!
 
-Formatted and hyperlinked version of the latest Git documentation
-can be viewed at `http://git-htmldocs.googlecode.com/git/git.html`.
+David Greaves <david@dgreaves.com>
+08/05/05
 
-ifdef::stalenotes[]
-[NOTE]
-============
+Updated by Junio C Hamano <junkio@cox.net> on 2005-05-05 to
+reflect recent changes.
 
-You are reading the documentation for the latest (possibly
-unreleased) version of Git, that is available from the 'master'
-branch of the `git.git` repository.
-Documentation for older releases are available here:
+Commands Overview
+-----------------
+The git commands can helpfully be split into those that manipulate
+the repository, the cache and the working fileset, those that
+interrogate and compare them, and those that moves objects and
+references between repositories.
 
-* link:v2.7.3/git.html[documentation for release 2.7.3]
-
-* release notes for
-  link:RelNotes/2.7.3.txt[2.7.3],
-  link:RelNotes/2.7.2.txt[2.7.2],
-  link:RelNotes/2.7.1.txt[2.7.1],
-  link:RelNotes/2.7.0.txt[2.7].
-
-* link:v2.6.5/git.html[documentation for release 2.6.5]
-
-* release notes for
-  link:RelNotes/2.6.5.txt[2.6.5],
-  link:RelNotes/2.6.4.txt[2.6.4],
-  link:RelNotes/2.6.3.txt[2.6.3],
-  link:RelNotes/2.6.2.txt[2.6.2],
-  link:RelNotes/2.6.1.txt[2.6.1],
-  link:RelNotes/2.6.0.txt[2.6].
-
-* link:v2.5.4/git.html[documentation for release 2.5.4]
-
-* release notes for
-  link:RelNotes/2.5.4.txt[2.5.4],
-  link:RelNotes/2.5.3.txt[2.5.3],
-  link:RelNotes/2.5.2.txt[2.5.2],
-  link:RelNotes/2.5.1.txt[2.5.1],
-  link:RelNotes/2.5.0.txt[2.5].
-
-* link:v2.4.10/git.html[documentation for release 2.4.10]
-
-* release notes for
-  link:RelNotes/2.4.10.txt[2.4.10],
-  link:RelNotes/2.4.9.txt[2.4.9],
-  link:RelNotes/2.4.8.txt[2.4.8],
-  link:RelNotes/2.4.7.txt[2.4.7],
-  link:RelNotes/2.4.6.txt[2.4.6],
-  link:RelNotes/2.4.5.txt[2.4.5],
-  link:RelNotes/2.4.4.txt[2.4.4],
-  link:RelNotes/2.4.3.txt[2.4.3],
-  link:RelNotes/2.4.2.txt[2.4.2],
-  link:RelNotes/2.4.1.txt[2.4.1],
-  link:RelNotes/2.4.0.txt[2.4].
-
-* link:v2.3.10/git.html[documentation for release 2.3.10]
-
-* release notes for
-  link:RelNotes/2.3.10.txt[2.3.10],
-  link:RelNotes/2.3.9.txt[2.3.9],
-  link:RelNotes/2.3.8.txt[2.3.8],
-  link:RelNotes/2.3.7.txt[2.3.7],
-  link:RelNotes/2.3.6.txt[2.3.6],
-  link:RelNotes/2.3.5.txt[2.3.5],
-  link:RelNotes/2.3.4.txt[2.3.4],
-  link:RelNotes/2.3.3.txt[2.3.3],
-  link:RelNotes/2.3.2.txt[2.3.2],
-  link:RelNotes/2.3.1.txt[2.3.1],
-  link:RelNotes/2.3.0.txt[2.3].
-
-* link:v2.2.3/git.html[documentation for release 2.2.3]
-
-* release notes for
-  link:RelNotes/2.2.3.txt[2.2.3],
-  link:RelNotes/2.2.2.txt[2.2.2],
-  link:RelNotes/2.2.1.txt[2.2.1],
-  link:RelNotes/2.2.0.txt[2.2].
-
-* link:v2.1.4/git.html[documentation for release 2.1.4]
-
-* release notes for
-  link:RelNotes/2.1.4.txt[2.1.4],
-  link:RelNotes/2.1.3.txt[2.1.3],
-  link:RelNotes/2.1.2.txt[2.1.2],
-  link:RelNotes/2.1.1.txt[2.1.1],
-  link:RelNotes/2.1.0.txt[2.1].
-
-* link:v2.0.5/git.html[documentation for release 2.0.5]
-
-* release notes for
-  link:RelNotes/2.0.5.txt[2.0.5],
-  link:RelNotes/2.0.4.txt[2.0.4],
-  link:RelNotes/2.0.3.txt[2.0.3],
-  link:RelNotes/2.0.2.txt[2.0.2],
-  link:RelNotes/2.0.1.txt[2.0.1],
-  link:RelNotes/2.0.0.txt[2.0.0].
-
-* link:v1.9.5/git.html[documentation for release 1.9.5]
-
-* release notes for
-  link:RelNotes/1.9.5.txt[1.9.5],
-  link:RelNotes/1.9.4.txt[1.9.4],
-  link:RelNotes/1.9.3.txt[1.9.3],
-  link:RelNotes/1.9.2.txt[1.9.2],
-  link:RelNotes/1.9.1.txt[1.9.1],
-  link:RelNotes/1.9.0.txt[1.9.0].
-
-* link:v1.8.5.6/git.html[documentation for release 1.8.5.6]
-
-* release notes for
-  link:RelNotes/1.8.5.6.txt[1.8.5.6],
-  link:RelNotes/1.8.5.5.txt[1.8.5.5],
-  link:RelNotes/1.8.5.4.txt[1.8.5.4],
-  link:RelNotes/1.8.5.3.txt[1.8.5.3],
-  link:RelNotes/1.8.5.2.txt[1.8.5.2],
-  link:RelNotes/1.8.5.1.txt[1.8.5.1],
-  link:RelNotes/1.8.5.txt[1.8.5].
-
-* link:v1.8.4.5/git.html[documentation for release 1.8.4.5]
-
-* release notes for
-  link:RelNotes/1.8.4.5.txt[1.8.4.5],
-  link:RelNotes/1.8.4.4.txt[1.8.4.4],
-  link:RelNotes/1.8.4.3.txt[1.8.4.3],
-  link:RelNotes/1.8.4.2.txt[1.8.4.2],
-  link:RelNotes/1.8.4.1.txt[1.8.4.1],
-  link:RelNotes/1.8.4.txt[1.8.4].
-
-* link:v1.8.3.4/git.html[documentation for release 1.8.3.4]
-
-* release notes for
-  link:RelNotes/1.8.3.4.txt[1.8.3.4],
-  link:RelNotes/1.8.3.3.txt[1.8.3.3],
-  link:RelNotes/1.8.3.2.txt[1.8.3.2],
-  link:RelNotes/1.8.3.1.txt[1.8.3.1],
-  link:RelNotes/1.8.3.txt[1.8.3].
-
-* link:v1.8.2.3/git.html[documentation for release 1.8.2.3]
-
-* release notes for
-  link:RelNotes/1.8.2.3.txt[1.8.2.3],
-  link:RelNotes/1.8.2.2.txt[1.8.2.2],
-  link:RelNotes/1.8.2.1.txt[1.8.2.1],
-  link:RelNotes/1.8.2.txt[1.8.2].
-
-* link:v1.8.1.6/git.html[documentation for release 1.8.1.6]
-
-* release notes for
-  link:RelNotes/1.8.1.6.txt[1.8.1.6],
-  link:RelNotes/1.8.1.5.txt[1.8.1.5],
-  link:RelNotes/1.8.1.4.txt[1.8.1.4],
-  link:RelNotes/1.8.1.3.txt[1.8.1.3],
-  link:RelNotes/1.8.1.2.txt[1.8.1.2],
-  link:RelNotes/1.8.1.1.txt[1.8.1.1],
-  link:RelNotes/1.8.1.txt[1.8.1].
-
-* link:v1.8.0.3/git.html[documentation for release 1.8.0.3]
-
-* release notes for
-  link:RelNotes/1.8.0.3.txt[1.8.0.3],
-  link:RelNotes/1.8.0.2.txt[1.8.0.2],
-  link:RelNotes/1.8.0.1.txt[1.8.0.1],
-  link:RelNotes/1.8.0.txt[1.8.0].
-
-* link:v1.7.12.4/git.html[documentation for release 1.7.12.4]
-
-* release notes for
-  link:RelNotes/1.7.12.4.txt[1.7.12.4],
-  link:RelNotes/1.7.12.3.txt[1.7.12.3],
-  link:RelNotes/1.7.12.2.txt[1.7.12.2],
-  link:RelNotes/1.7.12.1.txt[1.7.12.1],
-  link:RelNotes/1.7.12.txt[1.7.12].
-
-* link:v1.7.11.7/git.html[documentation for release 1.7.11.7]
-
-* release notes for
-  link:RelNotes/1.7.11.7.txt[1.7.11.7],
-  link:RelNotes/1.7.11.6.txt[1.7.11.6],
-  link:RelNotes/1.7.11.5.txt[1.7.11.5],
-  link:RelNotes/1.7.11.4.txt[1.7.11.4],
-  link:RelNotes/1.7.11.3.txt[1.7.11.3],
-  link:RelNotes/1.7.11.2.txt[1.7.11.2],
-  link:RelNotes/1.7.11.1.txt[1.7.11.1],
-  link:RelNotes/1.7.11.txt[1.7.11].
-
-* link:v1.7.10.5/git.html[documentation for release 1.7.10.5]
-
-* release notes for
-  link:RelNotes/1.7.10.5.txt[1.7.10.5],
-  link:RelNotes/1.7.10.4.txt[1.7.10.4],
-  link:RelNotes/1.7.10.3.txt[1.7.10.3],
-  link:RelNotes/1.7.10.2.txt[1.7.10.2],
-  link:RelNotes/1.7.10.1.txt[1.7.10.1],
-  link:RelNotes/1.7.10.txt[1.7.10].
-
-* link:v1.7.9.7/git.html[documentation for release 1.7.9.7]
-
-* release notes for
-  link:RelNotes/1.7.9.7.txt[1.7.9.7],
-  link:RelNotes/1.7.9.6.txt[1.7.9.6],
-  link:RelNotes/1.7.9.5.txt[1.7.9.5],
-  link:RelNotes/1.7.9.4.txt[1.7.9.4],
-  link:RelNotes/1.7.9.3.txt[1.7.9.3],
-  link:RelNotes/1.7.9.2.txt[1.7.9.2],
-  link:RelNotes/1.7.9.1.txt[1.7.9.1],
-  link:RelNotes/1.7.9.txt[1.7.9].
-
-* link:v1.7.8.6/git.html[documentation for release 1.7.8.6]
-
-* release notes for
-  link:RelNotes/1.7.8.6.txt[1.7.8.6],
-  link:RelNotes/1.7.8.5.txt[1.7.8.5],
-  link:RelNotes/1.7.8.4.txt[1.7.8.4],
-  link:RelNotes/1.7.8.3.txt[1.7.8.3],
-  link:RelNotes/1.7.8.2.txt[1.7.8.2],
-  link:RelNotes/1.7.8.1.txt[1.7.8.1],
-  link:RelNotes/1.7.8.txt[1.7.8].
-
-* link:v1.7.7.7/git.html[documentation for release 1.7.7.7]
-
-* release notes for
-  link:RelNotes/1.7.7.7.txt[1.7.7.7],
-  link:RelNotes/1.7.7.6.txt[1.7.7.6],
-  link:RelNotes/1.7.7.5.txt[1.7.7.5],
-  link:RelNotes/1.7.7.4.txt[1.7.7.4],
-  link:RelNotes/1.7.7.3.txt[1.7.7.3],
-  link:RelNotes/1.7.7.2.txt[1.7.7.2],
-  link:RelNotes/1.7.7.1.txt[1.7.7.1],
-  link:RelNotes/1.7.7.txt[1.7.7].
-
-* link:v1.7.6.6/git.html[documentation for release 1.7.6.6]
-
-* release notes for
-  link:RelNotes/1.7.6.6.txt[1.7.6.6],
-  link:RelNotes/1.7.6.5.txt[1.7.6.5],
-  link:RelNotes/1.7.6.4.txt[1.7.6.4],
-  link:RelNotes/1.7.6.3.txt[1.7.6.3],
-  link:RelNotes/1.7.6.2.txt[1.7.6.2],
-  link:RelNotes/1.7.6.1.txt[1.7.6.1],
-  link:RelNotes/1.7.6.txt[1.7.6].
-
-* link:v1.7.5.4/git.html[documentation for release 1.7.5.4]
-
-* release notes for
-  link:RelNotes/1.7.5.4.txt[1.7.5.4],
-  link:RelNotes/1.7.5.3.txt[1.7.5.3],
-  link:RelNotes/1.7.5.2.txt[1.7.5.2],
-  link:RelNotes/1.7.5.1.txt[1.7.5.1],
-  link:RelNotes/1.7.5.txt[1.7.5].
-
-* link:v1.7.4.5/git.html[documentation for release 1.7.4.5]
-
-* release notes for
-  link:RelNotes/1.7.4.5.txt[1.7.4.5],
-  link:RelNotes/1.7.4.4.txt[1.7.4.4],
-  link:RelNotes/1.7.4.3.txt[1.7.4.3],
-  link:RelNotes/1.7.4.2.txt[1.7.4.2],
-  link:RelNotes/1.7.4.1.txt[1.7.4.1],
-  link:RelNotes/1.7.4.txt[1.7.4].
-
-* link:v1.7.3.5/git.html[documentation for release 1.7.3.5]
-
-* release notes for
-  link:RelNotes/1.7.3.5.txt[1.7.3.5],
-  link:RelNotes/1.7.3.4.txt[1.7.3.4],
-  link:RelNotes/1.7.3.3.txt[1.7.3.3],
-  link:RelNotes/1.7.3.2.txt[1.7.3.2],
-  link:RelNotes/1.7.3.1.txt[1.7.3.1],
-  link:RelNotes/1.7.3.txt[1.7.3].
-
-* link:v1.7.2.5/git.html[documentation for release 1.7.2.5]
-
-* release notes for
-  link:RelNotes/1.7.2.5.txt[1.7.2.5],
-  link:RelNotes/1.7.2.4.txt[1.7.2.4],
-  link:RelNotes/1.7.2.3.txt[1.7.2.3],
-  link:RelNotes/1.7.2.2.txt[1.7.2.2],
-  link:RelNotes/1.7.2.1.txt[1.7.2.1],
-  link:RelNotes/1.7.2.txt[1.7.2].
-
-* link:v1.7.1.4/git.html[documentation for release 1.7.1.4]
-
-* release notes for
-  link:RelNotes/1.7.1.4.txt[1.7.1.4],
-  link:RelNotes/1.7.1.3.txt[1.7.1.3],
-  link:RelNotes/1.7.1.2.txt[1.7.1.2],
-  link:RelNotes/1.7.1.1.txt[1.7.1.1],
-  link:RelNotes/1.7.1.txt[1.7.1].
-
-* link:v1.7.0.9/git.html[documentation for release 1.7.0.9]
-
-* release notes for
-  link:RelNotes/1.7.0.9.txt[1.7.0.9],
-  link:RelNotes/1.7.0.8.txt[1.7.0.8],
-  link:RelNotes/1.7.0.7.txt[1.7.0.7],
-  link:RelNotes/1.7.0.6.txt[1.7.0.6],
-  link:RelNotes/1.7.0.5.txt[1.7.0.5],
-  link:RelNotes/1.7.0.4.txt[1.7.0.4],
-  link:RelNotes/1.7.0.3.txt[1.7.0.3],
-  link:RelNotes/1.7.0.2.txt[1.7.0.2],
-  link:RelNotes/1.7.0.1.txt[1.7.0.1],
-  link:RelNotes/1.7.0.txt[1.7.0].
-
-* link:v1.6.6.3/git.html[documentation for release 1.6.6.3]
-
-* release notes for
-  link:RelNotes/1.6.6.3.txt[1.6.6.3],
-  link:RelNotes/1.6.6.2.txt[1.6.6.2],
-  link:RelNotes/1.6.6.1.txt[1.6.6.1],
-  link:RelNotes/1.6.6.txt[1.6.6].
-
-* link:v1.6.5.9/git.html[documentation for release 1.6.5.9]
-
-* release notes for
-  link:RelNotes/1.6.5.9.txt[1.6.5.9],
-  link:RelNotes/1.6.5.8.txt[1.6.5.8],
-  link:RelNotes/1.6.5.7.txt[1.6.5.7],
-  link:RelNotes/1.6.5.6.txt[1.6.5.6],
-  link:RelNotes/1.6.5.5.txt[1.6.5.5],
-  link:RelNotes/1.6.5.4.txt[1.6.5.4],
-  link:RelNotes/1.6.5.3.txt[1.6.5.3],
-  link:RelNotes/1.6.5.2.txt[1.6.5.2],
-  link:RelNotes/1.6.5.1.txt[1.6.5.1],
-  link:RelNotes/1.6.5.txt[1.6.5].
-
-* link:v1.6.4.5/git.html[documentation for release 1.6.4.5]
-
-* release notes for
-  link:RelNotes/1.6.4.5.txt[1.6.4.5],
-  link:RelNotes/1.6.4.4.txt[1.6.4.4],
-  link:RelNotes/1.6.4.3.txt[1.6.4.3],
-  link:RelNotes/1.6.4.2.txt[1.6.4.2],
-  link:RelNotes/1.6.4.1.txt[1.6.4.1],
-  link:RelNotes/1.6.4.txt[1.6.4].
-
-* link:v1.6.3.4/git.html[documentation for release 1.6.3.4]
-
-* release notes for
-  link:RelNotes/1.6.3.4.txt[1.6.3.4],
-  link:RelNotes/1.6.3.3.txt[1.6.3.3],
-  link:RelNotes/1.6.3.2.txt[1.6.3.2],
-  link:RelNotes/1.6.3.1.txt[1.6.3.1],
-  link:RelNotes/1.6.3.txt[1.6.3].
-
-* release notes for
-  link:RelNotes/1.6.2.5.txt[1.6.2.5],
-  link:RelNotes/1.6.2.4.txt[1.6.2.4],
-  link:RelNotes/1.6.2.3.txt[1.6.2.3],
-  link:RelNotes/1.6.2.2.txt[1.6.2.2],
-  link:RelNotes/1.6.2.1.txt[1.6.2.1],
-  link:RelNotes/1.6.2.txt[1.6.2].
-
-* link:v1.6.1.3/git.html[documentation for release 1.6.1.3]
-
-* release notes for
-  link:RelNotes/1.6.1.3.txt[1.6.1.3],
-  link:RelNotes/1.6.1.2.txt[1.6.1.2],
-  link:RelNotes/1.6.1.1.txt[1.6.1.1],
-  link:RelNotes/1.6.1.txt[1.6.1].
-
-* link:v1.6.0.6/git.html[documentation for release 1.6.0.6]
-
-* release notes for
-  link:RelNotes/1.6.0.6.txt[1.6.0.6],
-  link:RelNotes/1.6.0.5.txt[1.6.0.5],
-  link:RelNotes/1.6.0.4.txt[1.6.0.4],
-  link:RelNotes/1.6.0.3.txt[1.6.0.3],
-  link:RelNotes/1.6.0.2.txt[1.6.0.2],
-  link:RelNotes/1.6.0.1.txt[1.6.0.1],
-  link:RelNotes/1.6.0.txt[1.6.0].
-
-* link:v1.5.6.6/git.html[documentation for release 1.5.6.6]
-
-* release notes for
-  link:RelNotes/1.5.6.6.txt[1.5.6.6],
-  link:RelNotes/1.5.6.5.txt[1.5.6.5],
-  link:RelNotes/1.5.6.4.txt[1.5.6.4],
-  link:RelNotes/1.5.6.3.txt[1.5.6.3],
-  link:RelNotes/1.5.6.2.txt[1.5.6.2],
-  link:RelNotes/1.5.6.1.txt[1.5.6.1],
-  link:RelNotes/1.5.6.txt[1.5.6].
-
-* link:v1.5.5.6/git.html[documentation for release 1.5.5.6]
-
-* release notes for
-  link:RelNotes/1.5.5.6.txt[1.5.5.6],
-  link:RelNotes/1.5.5.5.txt[1.5.5.5],
-  link:RelNotes/1.5.5.4.txt[1.5.5.4],
-  link:RelNotes/1.5.5.3.txt[1.5.5.3],
-  link:RelNotes/1.5.5.2.txt[1.5.5.2],
-  link:RelNotes/1.5.5.1.txt[1.5.5.1],
-  link:RelNotes/1.5.5.txt[1.5.5].
-
-* link:v1.5.4.7/git.html[documentation for release 1.5.4.7]
-
-* release notes for
-  link:RelNotes/1.5.4.7.txt[1.5.4.7],
-  link:RelNotes/1.5.4.6.txt[1.5.4.6],
-  link:RelNotes/1.5.4.5.txt[1.5.4.5],
-  link:RelNotes/1.5.4.4.txt[1.5.4.4],
-  link:RelNotes/1.5.4.3.txt[1.5.4.3],
-  link:RelNotes/1.5.4.2.txt[1.5.4.2],
-  link:RelNotes/1.5.4.1.txt[1.5.4.1],
-  link:RelNotes/1.5.4.txt[1.5.4].
-
-* link:v1.5.3.8/git.html[documentation for release 1.5.3.8]
-
-* release notes for
-  link:RelNotes/1.5.3.8.txt[1.5.3.8],
-  link:RelNotes/1.5.3.7.txt[1.5.3.7],
-  link:RelNotes/1.5.3.6.txt[1.5.3.6],
-  link:RelNotes/1.5.3.5.txt[1.5.3.5],
-  link:RelNotes/1.5.3.4.txt[1.5.3.4],
-  link:RelNotes/1.5.3.3.txt[1.5.3.3],
-  link:RelNotes/1.5.3.2.txt[1.5.3.2],
-  link:RelNotes/1.5.3.1.txt[1.5.3.1],
-  link:RelNotes/1.5.3.txt[1.5.3].
-
-* link:v1.5.2.5/git.html[documentation for release 1.5.2.5]
-
-* release notes for
-  link:RelNotes/1.5.2.5.txt[1.5.2.5],
-  link:RelNotes/1.5.2.4.txt[1.5.2.4],
-  link:RelNotes/1.5.2.3.txt[1.5.2.3],
-  link:RelNotes/1.5.2.2.txt[1.5.2.2],
-  link:RelNotes/1.5.2.1.txt[1.5.2.1],
-  link:RelNotes/1.5.2.txt[1.5.2].
-
-* link:v1.5.1.6/git.html[documentation for release 1.5.1.6]
-
-* release notes for
-  link:RelNotes/1.5.1.6.txt[1.5.1.6],
-  link:RelNotes/1.5.1.5.txt[1.5.1.5],
-  link:RelNotes/1.5.1.4.txt[1.5.1.4],
-  link:RelNotes/1.5.1.3.txt[1.5.1.3],
-  link:RelNotes/1.5.1.2.txt[1.5.1.2],
-  link:RelNotes/1.5.1.1.txt[1.5.1.1],
-  link:RelNotes/1.5.1.txt[1.5.1].
-
-* link:v1.5.0.7/git.html[documentation for release 1.5.0.7]
-
-* release notes for
-  link:RelNotes/1.5.0.7.txt[1.5.0.7],
-  link:RelNotes/1.5.0.6.txt[1.5.0.6],
-  link:RelNotes/1.5.0.5.txt[1.5.0.5],
-  link:RelNotes/1.5.0.3.txt[1.5.0.3],
-  link:RelNotes/1.5.0.2.txt[1.5.0.2],
-  link:RelNotes/1.5.0.1.txt[1.5.0.1],
-  link:RelNotes/1.5.0.txt[1.5.0].
-
-* documentation for release link:v1.4.4.4/git.html[1.4.4.4],
-  link:v1.3.3/git.html[1.3.3],
-  link:v1.2.6/git.html[1.2.6],
-  link:v1.0.13/git.html[1.0.13].
-
-============
-
-endif::stalenotes[]
-
-OPTIONS
--------
---version::
-	Prints the Git suite version that the 'git' program came from.
-
---help::
-	Prints the synopsis and a list of the most commonly used
-	commands. If the option '--all' or '-a' is given then all
-	available commands are printed. If a Git command is named this
-	option will bring up the manual page for that command.
-+
-Other options are available to control how the manual page is
-displayed. See linkgit:git-help[1] for more information,
-because `git --help ...` is converted internally into `git
-help ...`.
-
--C <path>::
-	Run as if git was started in '<path>' instead of the current working
-	directory.  When multiple `-C` options are given, each subsequent
-	non-absolute `-C <path>` is interpreted relative to the preceding `-C
-	<path>`.
-+
-This option affects options that expect path name like `--git-dir` and
-`--work-tree` in that their interpretations of the path names would be
-made relative to the working directory caused by the `-C` option. For
-example the following invocations are equivalent:
-
-    git --git-dir=a.git --work-tree=b -C c status
-    git --git-dir=c/a.git --work-tree=c/b status
-
--c <name>=<value>::
-	Pass a configuration parameter to the command. The value
-	given will override values from configuration files.
-	The <name> is expected in the same format as listed by
-	'git config' (subkeys separated by dots).
-+
-Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
-`foo.bar` to the boolean true value (just like `[foo]bar` would in a
-config file). Including the equals but with an empty value (like `git -c
-foo.bar= ...`) sets `foo.bar` to the empty string.
-
---exec-path[=<path>]::
-	Path to wherever your core Git programs are installed.
-	This can also be controlled by setting the GIT_EXEC_PATH
-	environment variable. If no path is given, 'git' will print
-	the current setting and then exit.
-
---html-path::
-	Print the path, without trailing slash, where Git's HTML
-	documentation is installed and exit.
-
---man-path::
-	Print the manpath (see `man(1)`) for the man pages for
-	this version of Git and exit.
-
---info-path::
-	Print the path where the Info files documenting this
-	version of Git are installed and exit.
-
--p::
---paginate::
-	Pipe all output into 'less' (or if set, $PAGER) if standard
-	output is a terminal.  This overrides the `pager.<cmd>`
-	configuration options (see the "Configuration Mechanism" section
-	below).
-
---no-pager::
-	Do not pipe Git output into a pager.
-
---git-dir=<path>::
-	Set the path to the repository. This can also be controlled by
-	setting the GIT_DIR environment variable. It can be an absolute
-	path or relative path to current working directory.
-
---work-tree=<path>::
-	Set the path to the working tree. It can be an absolute path
-	or a path relative to the current working directory.
-	This can also be controlled by setting the GIT_WORK_TREE
-	environment variable and the core.worktree configuration
-	variable (see core.worktree in linkgit:git-config[1] for a
-	more detailed discussion).
-
---namespace=<path>::
-	Set the Git namespace.  See linkgit:gitnamespaces[7] for more
-	details.  Equivalent to setting the `GIT_NAMESPACE` environment
-	variable.
-
---bare::
-	Treat the repository as a bare repository.  If GIT_DIR
-	environment is not set, it is set to the current working
-	directory.
-
---no-replace-objects::
-	Do not use replacement refs to replace Git objects. See
-	linkgit:git-replace[1] for more information.
-
---literal-pathspecs::
-	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
-	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
-	variable to `1`.
-
---glob-pathspecs::
-	Add "glob" magic to all pathspec. This is equivalent to setting
-	the `GIT_GLOB_PATHSPECS` environment variable to `1`. Disabling
-	globbing on individual pathspecs can be done using pathspec
-	magic ":(literal)"
-
---noglob-pathspecs::
-	Add "literal" magic to all pathspec. This is equivalent to setting
-	the `GIT_NOGLOB_PATHSPECS` environment variable to `1`. Enabling
-	globbing on individual pathspecs can be done using pathspec
-	magic ":(glob)"
-
---icase-pathspecs::
-	Add "icase" magic to all pathspec. This is equivalent to setting
-	the `GIT_ICASE_PATHSPECS` environment variable to `1`.
-
-GIT COMMANDS
-------------
-
-We divide Git into high level ("porcelain") commands and low level
-("plumbing") commands.
-
-High-level commands (porcelain)
--------------------------------
-
-We separate the porcelain commands into the main commands and some
-ancillary user utilities.
-
-Main porcelain commands
-~~~~~~~~~~~~~~~~~~~~~~~
-
-include::cmds-mainporcelain.txt[]
-
-Ancillary Commands
-~~~~~~~~~~~~~~~~~~
-Manipulators:
-
-include::cmds-ancillarymanipulators.txt[]
-
-Interrogators:
-
-include::cmds-ancillaryinterrogators.txt[]
-
-
-Interacting with Others
-~~~~~~~~~~~~~~~~~~~~~~~
-
-These commands are to interact with foreign SCM and with other
-people via patch over e-mail.
-
-include::cmds-foreignscminterface.txt[]
-
-
-Low-level commands (plumbing)
------------------------------
-
-Although Git includes its
-own porcelain layer, its low-level commands are sufficient to support
-development of alternative porcelains.  Developers of such porcelains
-might start by reading about linkgit:git-update-index[1] and
-linkgit:git-read-tree[1].
-
-The interface (input, output, set of options and the semantics)
-to these low-level commands are meant to be a lot more stable
-than Porcelain level commands, because these commands are
-primarily for scripted use.  The interface to Porcelain commands
-on the other hand are subject to change in order to improve the
-end user experience.
-
-The following description divides
-the low-level commands into commands that manipulate objects (in
-the repository, index, and working tree), commands that interrogate and
-compare objects, and commands that move objects and references between
-repositories.
-
+There are also some ancilliary programs that can be viewed as useful
+aids for using the core commands but which are unlikely to be used by
+SCMs layered over git.
 
 Manipulation commands
 ~~~~~~~~~~~~~~~~~~~~~
+link:git-checkout-cache.html[git-checkout-cache]::
+	Copy files from the cache to the working directory
 
-include::cmds-plumbingmanipulators.txt[]
+link:git-commit-tree.html[git-commit-tree]::
+	Creates a new commit object
 
+link:git-init-db.html[git-init-db]::
+	Creates an empty git object database
+
+link:git-merge-base.html[git-merge-base]::
+	Finds as good a common ancestor as possible for a merge
+
+link:git-mktag.html[git-mktag]::
+	Creates a tag object
+
+link:git-read-tree.html[git-read-tree]::
+	Reads tree information into the directory cache
+
+link:git-update-cache.html[git-update-cache]::
+	Modifies the index or directory cache
+
+link:git-hash-object.html[git-hash-object]::
+	Computes the object ID from a file.
+
+link:git-write-tree.html[git-write-tree]::
+	Creates a tree from the current cache
 
 Interrogation commands
 ~~~~~~~~~~~~~~~~~~~~~~
+link:git-cat-file.html[git-cat-file]::
+	Provide content or type information for repository objects
 
-include::cmds-plumbinginterrogators.txt[]
+link:git-diff-cache.html[git-diff-cache]::
+	Compares content and mode of blobs between the cache and repository
 
-In general, the interrogate commands do not touch the files in
-the working tree.
+link:git-diff-files.html[git-diff-files]::
+	Compares files in the working tree and the cache
+
+link:git-diff-tree.html[git-diff-tree]::
+	Compares the content and mode of blobs found via two tree objects
+
+link:git-export.html[git-export]::
+	Exports each commit and a diff against each of its parents
+
+link:git-fsck-cache.html[git-fsck-cache]::
+	Verifies the connectivity and validity of the objects in the database
+
+link:git-ls-files.html[git-ls-files]::
+	Information about files in the cache/working directory
+
+link:git-ls-tree.html[git-ls-tree]::
+	Displays a tree object in human readable form
+
+link:git-merge-cache.html[git-merge-cache]::
+	Runs a merge for files needing merging
+
+link:git-rev-list.html[git-rev-list]::
+	Lists commit objects in reverse chronological order
+
+link:git-rev-tree.html[git-rev-tree]::
+	Provides the revision tree for one or more commits
+
+link:git-tar-tree.html[git-tar-tree]::
+	Creates a tar archive of the files in the named tree
+
+link:git-unpack-file.html[git-unpack-file]::
+	Creates a temporary file with a blob's contents
+
+link:git-var.html[git-var]::
+	Displays a git logical variable
+
+link:git-verify-pack.html[git-verify-pack]::
+	Validates packed GIT archive files
+
+The interrogate commands may create files - and you can force them to
+touch the working file set - but in general they don't
 
 
 Synching repositories
 ~~~~~~~~~~~~~~~~~~~~~
 
-include::cmds-synchingrepositories.txt[]
+link:git-clone-script.html[git-clone-script]::
+	Clones a repository into the current repository (user interface)
 
-The following are helper commands used by the above; end users
-typically do not use them directly.
+link:git-clone-pack.html[git-clone-pack]::
+	Clones a repository into the current repository (engine
+	for ssh and local transport)
 
-include::cmds-synchelpers.txt[]
+link:git-fetch-script.html[git-fetch-script]::
+	Download from a remote repository via various protocols
+	(user interface).
+
+link:git-pull-script.html[git-pull-script]::
+	Fetch from and merge with a remote repository via
+	various protocols (user interface).
+
+link:git-http-pull.html[git-http-pull]::
+	Downloads a remote GIT repository via HTTP
+
+link:git-local-pull.html[git-local-pull]::
+	Duplicates another GIT repository on a local system
+
+link:git-ssh-pull.html[git-ssh-pull]::
+	Pulls from a remote repository over ssh connection
+
+link:git-send-pack.html[git-send-pack]::
+	Pushes to a remote repository, intelligently.
+
+link:git-receive-pack.html[git-receive-pack]::
+	Invoked by 'git-send-pack' to receive what is pushed to it.
+
+link:git-clone-pack.html[git-clone-pack]::
+	Clones from a remote repository.
+
+link:git-fetch-pack.html[git-fetch-pack]::
+	Updates from a remote repository.
+
+link:git-peek-remote.html[git-peek-remote]::
+	Lists references on a remote repository using upload-pack protocol.
+
+link:git-upload-pack.html[git-upload-pack]::
+	Invoked by 'git-clone-pack' and 'git-fetch-pack' to push
+	what are asked for.
+
+link:git-update-server-info.html[git-update-server-info]::
+	Updates auxiliary information on a dumb server to help
+	clients discover references and packs on it.
 
 
-Internal helper commands
-~~~~~~~~~~~~~~~~~~~~~~~~
+Ancilliary Commands
+-------------------
+Manipulators:
 
-These are internal helper commands used by other commands; end
-users typically do not use them directly.
+link:git-apply-patch-script.html[git-apply-patch-script]::
+	Sample script to apply the diffs from git-diff-*
 
-include::cmds-purehelpers.txt[]
+link:git-convert-cache.html[git-convert-cache]::
+	Converts old-style GIT repository
+
+link:git-merge-one-file-script.html[git-merge-one-file-script]::
+	The standard helper program to use with "git-merge-cache"
+
+link:git-prune-script.html[git-prune-script]::
+	Prunes all unreachable objects from the object database
+
+link:git-resolve-script.html[git-resolve-script]::
+	Script used to merge two trees
+
+link:git-tag-script.html[git-tag-script]::
+	An example script to create a tag object signed with GPG
 
 
-Configuration Mechanism
------------------------
+Interogators:
 
-Git uses a simple text format to store customizations that are per
-repository and are per user.  Such a configuration file may look
-like this:
+link:git-diff-helper.html[git-diff-helper]::
+	Generates patch format output for git-diff-*
 
-------------
-#
-# A '#' or ';' character indicates a comment.
-#
+link:git-ssh-push.html[git-ssh-push]::
+	Helper "server-side" program used by git-ssh-pull
 
-; core variables
-[core]
-	; Don't trust file modes
-	filemode = false
-
-; user identity
-[user]
-	name = "Junio C Hamano"
-	email = "gitster@pobox.com"
-
-------------
-
-Various commands read from the configuration file and adjust
-their operation accordingly.  See linkgit:git-config[1] for a
-list and more details about the configuration mechanism.
 
 
 Identifier Terminology
 ----------------------
 <object>::
-	Indicates the object name for any type of object.
+	Indicates the sha1 identifier for any type of object
 
 <blob>::
-	Indicates a blob object name.
+	Indicates a blob object sha1 identifier
 
 <tree>::
-	Indicates a tree object name.
+	Indicates a tree object sha1 identifier
 
 <commit>::
-	Indicates a commit object name.
+	Indicates a commit object sha1 identifier
 
 <tree-ish>::
-	Indicates a tree, commit or tag object name.  A
+	Indicates a tree, commit or tag object sha1 identifier.  A
 	command that takes a <tree-ish> argument ultimately wants to
 	operate on a <tree> object but automatically dereferences
 	<commit> and <tag> objects that point at a <tree>.
 
-<commit-ish>::
-	Indicates a commit or tag object name.  A
-	command that takes a <commit-ish> argument ultimately wants to
-	operate on a <commit> object but automatically dereferences
-	<tag> objects that point at a <commit>.
-
 <type>::
 	Indicates that an object type is required.
-	Currently one of: `blob`, `tree`, `commit`, or `tag`.
+	Currently one of: blob/tree/commit/tag
 
 <file>::
-	Indicates a filename - almost always relative to the
-	root of the tree structure `GIT_INDEX_FILE` describes.
+	Indicates a filename - always relative to the root of
+	the tree structure GIT_INDEX_FILE describes.
 
 Symbolic Identifiers
 --------------------
-Any Git command accepting any <object> can also use the following
+Any git comand accepting any <object> can also use the following
 symbolic notation:
 
 HEAD::
-	indicates the head of the current branch.
-
+	indicates the head of the repository (ie the contents of
+	`$GIT_DIR/HEAD`)
 <tag>::
-	a valid tag 'name'
-	(i.e. a `refs/tags/<tag>` reference).
-
+	a valid tag 'name'+
+	(ie the contents of `$GIT_DIR/refs/tags/<tag>`)
 <head>::
-	a valid head 'name'
-	(i.e. a `refs/heads/<head>` reference).
-
-For a more complete list of ways to spell object names, see
-"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
+	a valid head 'name'+
+	(ie the contents of `$GIT_DIR/refs/heads/<head>`)
+<snap>::
+	a valid snapshot 'name'+
+	(ie the contents of `$GIT_DIR/refs/snap/<snap>`)
 
 
 File/Directory Structure
 ------------------------
+The git-core manipulates the following areas in the directory:
 
-Please see the linkgit:gitrepository-layout[5] document.
+ .git/	       The base (overridden with $GIT_DIR)
+   objects/    The object base (overridden with $GIT_OBJECT_DIRECTORY)
+     ??/       'First 2 chars of object' directories.
+     pack/     Packed archives.
 
-Read linkgit:githooks[5] for more details about each hook.
+   refs/       Directories containing symbolic names for objects
+	       (each file contains the hex SHA1 + newline)
+     heads/    Commits which are heads of various sorts
+     tags/     Tags, by the tag name (or some local renaming of it)
+     */        Any other subdirectory of refs/ can be used to store
+	       files similar to what are under refs/heads/.
+   HEAD        Symlink to refs/heads/<current-branch-name>
 
 Higher level SCMs may provide and manage additional information in the
-`$GIT_DIR`.
-
+GIT_DIR.
 
 Terminology
 -----------
-Please see linkgit:gitglossary[7].
+Each line contains terms which you may see used interchangeably
+
+ object database, .git directory
+ directory cache, index
+ id, sha1, sha1-id, sha1 hash
+ type, tag
 
 
 Environment Variables
 ---------------------
-Various Git commands use the following environment variables:
+Various git commands use the following environment variables:
 
-The Git Repository
+The git Repository
 ~~~~~~~~~~~~~~~~~~
-These environment variables apply to 'all' core Git commands. Nb: it
+These environment variables apply to 'all' core git commands. Nb: it
 is worth noting that they may be used/overridden by SCMS sitting above
-Git so take care if using a foreign front-end.
+git so take care if using Cogito etc
 
 'GIT_INDEX_FILE'::
 	This environment allows the specification of an alternate
-	index file. If not specified, the default of `$GIT_DIR/index`
-	is used.
-
-'GIT_INDEX_VERSION'::
-	This environment variable allows the specification of an index
-	version for new repositories.  It won't affect existing index
-	files.  By default index file version 2 or 3 is used. See
-	linkgit:git-update-index[1] for more information.
+	cache/index file. If not specified, the default of
+	`$GIT_DIR/index` is used.
 
 'GIT_OBJECT_DIRECTORY'::
 	If the object storage directory is specified via this
@@ -828,419 +301,48 @@ Git so take care if using a foreign front-end.
 	directory is used.
 
 'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
-	Due to the immutable nature of Git objects, old objects can be
+	Due to the immutable nature of git objects, old objects can be
 	archived into shared, read-only directories. This variable
-	specifies a ":" separated (on Windows ";" separated) list
-	of Git object directories which can be used to search for Git
-	objects. New objects will not be written to these directories.
+	specifies a ":" seperated list of git object directories which
+	can be used to search for git objects. New objects will not be
+	written to these directories.
 
 'GIT_DIR'::
-	If the 'GIT_DIR' environment variable is set then it
-	specifies a path to use instead of the default `.git`
-	for the base of the repository.
-	The '--git-dir' command-line option also sets this value.
+	If the 'GIT_DIR' environment variable is set then it specifies
+	a path to use instead of `./.git` for the base of the
+	repository.
 
-'GIT_WORK_TREE'::
-	Set the path to the root of the working tree.
-	This can also be controlled by the '--work-tree' command-line
-	option and the core.worktree configuration variable.
-
-'GIT_NAMESPACE'::
-	Set the Git namespace; see linkgit:gitnamespaces[7] for details.
-	The '--namespace' command-line option also sets this value.
-
-'GIT_CEILING_DIRECTORIES'::
-	This should be a colon-separated list of absolute paths.  If
-	set, it is a list of directories that Git should not chdir up
-	into while looking for a repository directory (useful for
-	excluding slow-loading network directories).  It will not
-	exclude the current working directory or a GIT_DIR set on the
-	command line or in the environment.  Normally, Git has to read
-	the entries in this list and resolve any symlink that
-	might be present in order to compare them with the current
-	directory.  However, if even this access is slow, you
-	can add an empty entry to the list to tell Git that the
-	subsequent entries are not symlinks and needn't be resolved;
-	e.g.,
-	'GIT_CEILING_DIRECTORIES=/maybe/symlink::/very/slow/non/symlink'.
-
-'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
-	When run in a directory that does not have ".git" repository
-	directory, Git tries to find such a directory in the parent
-	directories to find the top of the working tree, but by default it
-	does not cross filesystem boundaries.  This environment variable
-	can be set to true to tell Git not to stop at filesystem
-	boundaries.  Like 'GIT_CEILING_DIRECTORIES', this will not affect
-	an explicit repository directory set via 'GIT_DIR' or on the
-	command line.
-
-'GIT_COMMON_DIR'::
-	If this variable is set to a path, non-worktree files that are
-	normally in $GIT_DIR will be taken from this path
-	instead. Worktree-specific files such as HEAD or index are
-	taken from $GIT_DIR. See linkgit:gitrepository-layout[5] and
-	linkgit:git-worktree[1] for
-	details. This variable has lower precedence than other path
-	variables such as GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY...
-
-Git Commits
+git Commits
 ~~~~~~~~~~~
 'GIT_AUTHOR_NAME'::
 'GIT_AUTHOR_EMAIL'::
 'GIT_AUTHOR_DATE'::
 'GIT_COMMITTER_NAME'::
 'GIT_COMMITTER_EMAIL'::
-'GIT_COMMITTER_DATE'::
-'EMAIL'::
-	see linkgit:git-commit-tree[1]
+	see link:git-commit-tree.html[git-commit-tree]
 
-Git Diffs
+git Diffs
 ~~~~~~~~~
 'GIT_DIFF_OPTS'::
-	Only valid setting is "--unified=??" or "-u??" to set the
-	number of context lines shown when a unified diff is created.
-	This takes precedence over any "-U" or "--unified" option
-	value passed on the Git diff command line.
-
 'GIT_EXTERNAL_DIFF'::
-	When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
-	program named by it is called, instead of the diff invocation
-	described above.  For a path that is added, removed, or modified,
-        'GIT_EXTERNAL_DIFF' is called with 7 parameters:
+	see the "generating patches" section in :
+	link:git-diff-cache.html[git-diff-cache];
+	link:git-diff-files.html[git-diff-files];
+	link:git-diff-tree.html[git-diff-tree]
 
-	path old-file old-hex old-mode new-file new-hex new-mode
-+
-where:
+Discussion
+----------
+include::../README[]
 
-	<old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
-                         contents of <old|new>,
-	<old|new>-hex:: are the 40-hexdigit SHA-1 hashes,
-	<old|new>-mode:: are the octal representation of the file modes.
-+
-The file parameters can point at the user's working file
-(e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
-when a new file is added), or a temporary file (e.g. `old-file` in the
-index).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
-temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
-+
-For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
-parameter, <path>.
-+
-For each path 'GIT_EXTERNAL_DIFF' is called, two environment variables,
-'GIT_DIFF_PATH_COUNTER' and 'GIT_DIFF_PATH_TOTAL' are set.
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org> and the git-list <git@vger.kernel.org>.
 
-'GIT_DIFF_PATH_COUNTER'::
-	A 1-based counter incremented by one for every path.
-
-'GIT_DIFF_PATH_TOTAL'::
-	The total number of paths.
-
-other
-~~~~~
-'GIT_MERGE_VERBOSITY'::
-	A number controlling the amount of output shown by
-	the recursive merge strategy.  Overrides merge.verbosity.
-	See linkgit:git-merge[1]
-
-'GIT_PAGER'::
-	This environment variable overrides `$PAGER`. If it is set
-	to an empty string or to the value "cat", Git will not launch
-	a pager.  See also the `core.pager` option in
-	linkgit:git-config[1].
-
-'GIT_EDITOR'::
-	This environment variable overrides `$EDITOR` and `$VISUAL`.
-	It is used by several Git commands when, on interactive mode,
-	an editor is to be launched. See also linkgit:git-var[1]
-	and the `core.editor` option in linkgit:git-config[1].
-
-'GIT_SSH'::
-'GIT_SSH_COMMAND'::
-	If either of these environment variables is set then 'git fetch'
-	and 'git push' will use the specified command instead of 'ssh'
-	when they need to connect to a remote system.
-	The command will be given exactly two or four arguments: the
-	'username@host' (or just 'host') from the URL and the shell
-	command to execute on that remote system, optionally preceded by
-	'-p' (literally) and the 'port' from the URL when it specifies
-	something other than the default SSH port.
-+
-`$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
-by the shell, which allows additional arguments to be included.
-`$GIT_SSH` on the other hand must be just the path to a program
-(which can be a wrapper shell script, if additional arguments are
-needed).
-+
-Usually it is easier to configure any desired options through your
-personal `.ssh/config` file.  Please consult your ssh documentation
-for further details.
-
-'GIT_ASKPASS'::
-	If this environment variable is set, then Git commands which need to
-	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
-	will call this program with a suitable prompt as command-line argument
-	and read the password from its STDOUT. See also the 'core.askPass'
-	option in linkgit:git-config[1].
-
-'GIT_TERMINAL_PROMPT'::
-	If this environment variable is set to `0`, git will not prompt
-	on the terminal (e.g., when asking for HTTP authentication).
-
-'GIT_CONFIG_NOSYSTEM'::
-	Whether to skip reading settings from the system-wide
-	`$(prefix)/etc/gitconfig` file.  This environment variable can
-	be used along with `$HOME` and `$XDG_CONFIG_HOME` to create a
-	predictable environment for a picky script, or you can set it
-	temporarily to avoid using a buggy `/etc/gitconfig` file while
-	waiting for someone with sufficient permissions to fix it.
-
-'GIT_FLUSH'::
-	If this environment variable is set to "1", then commands such
-	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
-	'git check-attr' and 'git check-ignore' will
-	force a flush of the output stream after each record have been
-	flushed. If this
-	variable is set to "0", the output of these commands will be done
-	using completely buffered I/O.   If this environment variable is
-	not set, Git will choose buffered or record-oriented flushing
-	based on whether stdout appears to be redirected to a file or not.
-
-'GIT_TRACE'::
-	Enables general trace messages, e.g. alias expansion, built-in
-	command execution and external command execution.
-+
-If this variable is set to "1", "2" or "true" (comparison
-is case insensitive), trace messages will be printed to
-stderr.
-+
-If the variable is set to an integer value greater than 2
-and lower than 10 (strictly) then Git will interpret this
-value as an open file descriptor and will try to write the
-trace messages into this file descriptor.
-+
-Alternatively, if the variable is set to an absolute path
-(starting with a '/' character), Git will interpret this
-as a file path and will try to write the trace messages
-into it.
-+
-Unsetting the variable, or setting it to empty, "0" or
-"false" (case insensitive) disables trace messages.
-
-'GIT_TRACE_PACK_ACCESS'::
-	Enables trace messages for all accesses to any packs. For each
-	access, the pack file name and an offset in the pack is
-	recorded. This may be helpful for troubleshooting some
-	pack-related performance problems.
-	See 'GIT_TRACE' for available trace output options.
-
-'GIT_TRACE_PACKET'::
-	Enables trace messages for all packets coming in or out of a
-	given program. This can help with debugging object negotiation
-	or other protocol issues. Tracing is turned off at a packet
-	starting with "PACK" (but see 'GIT_TRACE_PACKFILE' below).
-	See 'GIT_TRACE' for available trace output options.
-
-'GIT_TRACE_PACKFILE'::
-	Enables tracing of packfiles sent or received by a
-	given program. Unlike other trace output, this trace is
-	verbatim: no headers, and no quoting of binary data. You almost
-	certainly want to direct into a file (e.g.,
-	`GIT_TRACE_PACKFILE=/tmp/my.pack`) rather than displaying it on
-	the terminal or mixing it with other trace output.
-+
-Note that this is currently only implemented for the client side
-of clones and fetches.
-
-'GIT_TRACE_PERFORMANCE'::
-	Enables performance related trace messages, e.g. total execution
-	time of each Git command.
-	See 'GIT_TRACE' for available trace output options.
-
-'GIT_TRACE_SETUP'::
-	Enables trace messages printing the .git, working tree and current
-	working directory after Git has completed its setup phase.
-	See 'GIT_TRACE' for available trace output options.
-
-'GIT_TRACE_SHALLOW'::
-	Enables trace messages that can help debugging fetching /
-	cloning of shallow repositories.
-	See 'GIT_TRACE' for available trace output options.
-
-'GIT_TRACE_EXCLUDE'::
-	Enables trace messages that can help debugging .gitignore
-	processing. See 'GIT_TRACE' for available trace output
-	options.
-
-'GIT_LITERAL_PATHSPECS'::
-	Setting this variable to `1` will cause Git to treat all
-	pathspecs literally, rather than as glob patterns. For example,
-	running `GIT_LITERAL_PATHSPECS=1 git log -- '*.c'` will search
-	for commits that touch the path `*.c`, not any paths that the
-	glob `*.c` matches. You might want this if you are feeding
-	literal paths to Git (e.g., paths previously given to you by
-	`git ls-tree`, `--raw` diff output, etc).
-
-'GIT_GLOB_PATHSPECS'::
-	Setting this variable to `1` will cause Git to treat all
-	pathspecs as glob patterns (aka "glob" magic).
-
-'GIT_NOGLOB_PATHSPECS'::
-	Setting this variable to `1` will cause Git to treat all
-	pathspecs as literal (aka "literal" magic).
-
-'GIT_ICASE_PATHSPECS'::
-	Setting this variable to `1` will cause Git to treat all
-	pathspecs as case-insensitive.
-
-'GIT_REFLOG_ACTION'::
-	When a ref is updated, reflog entries are created to keep
-	track of the reason why the ref was updated (which is
-	typically the name of the high-level command that updated
-	the ref), in addition to the old and new values of the ref.
-	A scripted Porcelain command can use set_reflog_action
-	helper function in `git-sh-setup` to set its name to this
-	variable when it is invoked as the top level command by the
-	end user, to be recorded in the body of the reflog.
-
-'GIT_REF_PARANOIA'::
-	If set to `1`, include broken or badly named refs when iterating
-	over lists of refs. In a normal, non-corrupted repository, this
-	does nothing. However, enabling it may help git to detect and
-	abort some operations in the presence of broken refs. Git sets
-	this variable automatically when performing destructive
-	operations like linkgit:git-prune[1]. You should not need to set
-	it yourself unless you want to be paranoid about making sure
-	an operation has touched every ref (e.g., because you are
-	cloning a repository to make a backup).
-
-'GIT_ALLOW_PROTOCOL'::
-	If set, provide a colon-separated list of protocols which are
-	allowed to be used with fetch/push/clone. This is useful to
-	restrict recursive submodule initialization from an untrusted
-	repository. Any protocol not mentioned will be disallowed (i.e.,
-	this is a whitelist, not a blacklist). If the variable is not
-	set at all, all protocols are enabled.  The protocol names
-	currently used by git are:
-
-	  - `file`: any local file-based path (including `file://` URLs,
-	    or local paths)
-
-	  - `git`: the anonymous git protocol over a direct TCP
-	    connection (or proxy, if configured)
-
-	  - `ssh`: git over ssh (including `host:path` syntax,
-	    `ssh://`, etc).
-
-	  - `http`: git over http, both "smart http" and "dumb http".
-	    Note that this does _not_ include `https`; if you want both,
-	    you should specify both as `http:https`.
-
-	  - any external helpers are named by their protocol (e.g., use
-	    `hg` to allow the `git-remote-hg` helper)
-
-
-Discussion[[Discussion]]
-------------------------
-
-More detail on the following is available from the
-link:user-manual.html#git-concepts[Git concepts chapter of the
-user-manual] and linkgit:gitcore-tutorial[7].
-
-A Git project normally consists of a working directory with a ".git"
-subdirectory at the top level.  The .git directory contains, among other
-things, a compressed object database representing the complete history
-of the project, an "index" file which links that history to the current
-contents of the working tree, and named pointers into that history such
-as tags and branch heads.
-
-The object database contains objects of three main types: blobs, which
-hold file data; trees, which point to blobs and other trees to build up
-directory hierarchies; and commits, which each reference a single tree
-and some number of parent commits.
-
-The commit, equivalent to what other systems call a "changeset" or
-"version", represents a step in the project's history, and each parent
-represents an immediately preceding step.  Commits with more than one
-parent represent merges of independent lines of development.
-
-All objects are named by the SHA-1 hash of their contents, normally
-written as a string of 40 hex digits.  Such names are globally unique.
-The entire history leading up to a commit can be vouched for by signing
-just that commit.  A fourth object type, the tag, is provided for this
-purpose.
-
-When first created, objects are stored in individual files, but for
-efficiency may later be compressed together into "pack files".
-
-Named pointers called refs mark interesting points in history.  A ref
-may contain the SHA-1 name of an object or the name of another ref.  Refs
-with names beginning `ref/head/` contain the SHA-1 name of the most
-recent commit (or "head") of a branch under development.  SHA-1 names of
-tags of interest are stored under `ref/tags/`.  A special ref named
-`HEAD` contains the name of the currently checked-out branch.
-
-The index file is initialized with a list of all paths and, for each
-path, a blob object and a set of attributes.  The blob object represents
-the contents of the file as of the head of the current branch.  The
-attributes (last modified time, size, etc.) are taken from the
-corresponding file in the working tree.  Subsequent changes to the
-working tree can be found by comparing these attributes.  The index may
-be updated with new content, and new commits may be created from the
-content stored in the index.
-
-The index is also capable of storing multiple entries (called "stages")
-for a given pathname.  These stages are used to hold the various
-unmerged version of a file when a merge is in progress.
-
-FURTHER DOCUMENTATION
----------------------
-
-See the references in the "description" section to get started
-using Git.  The following is probably more detail than necessary
-for a first-time user.
-
-The link:user-manual.html#git-concepts[Git concepts chapter of the
-user-manual] and linkgit:gitcore-tutorial[7] both provide
-introductions to the underlying Git architecture.
-
-See linkgit:gitworkflows[7] for an overview of recommended workflows.
-
-See also the link:howto-index.html[howto] documents for some useful
-examples.
-
-The internals are documented in the
-link:technical/api-index.html[Git API documentation].
-
-Users migrating from CVS may also want to
-read linkgit:gitcvs-migration[7].
-
-
-Authors
--------
-Git was started by Linus Torvalds, and is currently maintained by Junio
-C Hamano. Numerous contributions have come from the Git mailing list
-<git@vger.kernel.org>.  http://www.openhub.net/p/git/contributors/summary
-gives you a more complete list of contributors.
-
-If you have a clone of git.git itself, the
-output of linkgit:git-shortlog[1] and linkgit:git-blame[1] can show you
-the authors for specific parts of the project.
-
-Reporting Bugs
+Documentation
 --------------
-
-Report bugs to the Git mailing list <git@vger.kernel.org> where the
-development and maintenance is primarily done.  You do not have to be
-subscribed to the list to send a message there.
-
-SEE ALSO
---------
-linkgit:gittutorial[7], linkgit:gittutorial-2[7],
-linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
-linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
-linkgit:gitcli[7], link:user-manual.html[The Git User's Manual],
-linkgit:gitworkflows[7]
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
-Part of the linkgit:git[1] suite
+Part of the link:git.html[git] suite
+
