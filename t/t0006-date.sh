@@ -6,26 +6,52 @@ test_description='test date parsing and printing'
 # arbitrary reference time: 2009-08-30 19:20:00
 TEST_DATE_NOW=1251660000; export TEST_DATE_NOW
 
-check_show() {
+check_relative() {
 	t=$(($TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
 	test_expect_${3:-success} "relative date ($2)" "
-	test-date show $t >actual &&
+	test-date relative $t >actual &&
 	test_i18ncmp expect actual
 	"
 }
 
-check_show 5 '5 seconds ago'
-check_show 300 '5 minutes ago'
-check_show 18000 '5 hours ago'
-check_show 432000 '5 days ago'
-check_show 1728000 '3 weeks ago'
-check_show 13000000 '5 months ago'
-check_show 37500000 '1 year, 2 months ago'
-check_show 55188000 '1 year, 9 months ago'
-check_show 630000000 '20 years ago'
-check_show 31449600 '12 months ago'
-check_show 62985600 '2 years ago'
+check_relative 5 '5 seconds ago'
+check_relative 300 '5 minutes ago'
+check_relative 18000 '5 hours ago'
+check_relative 432000 '5 days ago'
+check_relative 1728000 '3 weeks ago'
+check_relative 13000000 '5 months ago'
+check_relative 37500000 '1 year, 2 months ago'
+check_relative 55188000 '1 year, 9 months ago'
+check_relative 630000000 '20 years ago'
+check_relative 31449600 '12 months ago'
+check_relative 62985600 '2 years ago'
+
+check_show () {
+	format=$1
+	time=$2
+	expect=$3
+	test_expect_${4:-success} "show date ($format:$time)" '
+		echo "$time -> $expect" >expect &&
+		test-date show:$format "$time" >actual &&
+		test_cmp expect actual
+	'
+}
+
+# arbitrary but sensible time for examples
+TIME='1466000000 +0200'
+check_show iso8601 "$TIME" '2016-06-15 16:13:20 +0200'
+check_show iso8601-strict "$TIME" '2016-06-15T16:13:20+02:00'
+check_show rfc2822 "$TIME" 'Wed, 15 Jun 2016 16:13:20 +0200'
+check_show short "$TIME" '2016-06-15'
+check_show default "$TIME" 'Wed Jun 15 16:13:20 2016 +0200'
+check_show raw "$TIME" '1466000000 +0200'
+check_show iso-local "$TIME" '2016-06-15 14:13:20 +0000'
+
+# arbitrary time absurdly far in the future
+FUTURE="5758122296 -0400"
+check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400"
+check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000"
 
 check_parse() {
 	echo "$1 -> $2" >expect
