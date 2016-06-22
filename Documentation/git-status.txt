@@ -49,6 +49,9 @@ OPTIONS
 	twice, then also show the changes in the working tree that
 	have not yet been staged (i.e., like the output of `git diff`).
 
+	When given twice with `--porcelain`, additional output is enabled.
+	See the section entitled "Very Verbose Porcelain Format" for details.
+
 -u[<mode>]::
 --untracked-files[=<mode>]::
 	Show untracked files.
@@ -206,6 +209,86 @@ and the terminating newline (but a space still separates the status
 field from the first filename).  Third, filenames containing special
 characters are not specially formatted; no quoting or
 backslash-escaping is performed.
+
+Very Verbose Porcelain Format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When --verbose is given twice along with --porcelain, additional output
+is provided.
+
+If --branch is given, the first line shows a summary of the current
+operation in progress.  This line begins with "### state: ", the name
+of the operation in progress, and then operation-specific information.
+Fields are separated by a single space.
+
+    Operation   Fields                     Explanation
+    ------------------------------------------------------------------
+    clean
+    ------------------------------------------------------------------
+    merge       <nr>                       Number unmerged
+    ------------------------------------------------------------------
+    am          [E]                        Present if the current patch
+                                           is empty
+    ------------------------------------------------------------------
+    rebase      <nr>                       Number unmerged
+                [S]                        Present if split commit in
+                                           progress during rebase
+                [E]                        Present if editing a commit
+                                           during rebase
+                [I(<done>/<total>)]        Present if in an interactive
+                                           rebase. Step counts are given.
+                [<current>:<onto>]         Rebase branches
+    ------------------------------------------------------------------
+    cherrypick  <sha>
+                <nr>                       Number unmerged
+    ------------------------------------------------------------------
+    revert      <sha>
+                <nr>                       Number unmerged
+    ------------------------------------------------------------------
+    bisect      [<branch>]
+    ------------------------------------------------------------------
+
+If --branch is given, the second line shows branch tracking information.
+This line begins with "### track: ".  Fields are separated by a single
+space, unless otherwise indicated.
+
+    Field                    Meaning
+    --------------------------------------------------------
+    <sha> | "(initial)"      Current commit
+    <branch> | "(detached)"  Current branch
+    ":"<upstream>            Upstream branch, if set
+    "+"<ahead>               Ahead count, if upstream present
+    "-"<behind>              Behind count, if upstream present
+    --------------------------------------------------------
+
+A series of lines are then displayed for the tracked entries.
+Lines have one of the following formats:
+
+    XYS mH mI mW shaH shaI PATH
+    XYS mH mI mW shaH shaI score OLD_PATH\tPATH
+    XYS m1 m2 m3 mW sha1 sha2 sha3 PATH
+
+* X and Y were described in the short format section.
+* S is a one character summary of the submodule status with values '0'..'7'
+  representing the sum of: 4 when submodule has a new commit, 2 when the
+  submodule is modified, and 1 when the submodule contains untracked changes.
+  The value is ' ' if the entry is not a submodule.
+* mH, mI, and mW are the 6 digit octal modes for the head, index, and worktree
+  versions of the entry.
+* m1, m2, and m3 are the modes for the stage 1, 2, and 3 versions of the entry
+  when in an unmerged state.
+* shaH and shaI are the 40 character hashes for the head and index version.
+* sha1, sha2, and sha3 are the hashes for the stage 1, 2, and 3 versions of
+  the entry when in an unmerged state.
+* score is the rename percentage score.
+* PATH is the current path.
+* OLD_PATH is the source path for a staged rename.
+
+A series of lines are then displayed for untracked and ignored entries.
+
+    XXX PATH
+
+* XXX is "???" for untracked entries and "!!!" for ignored entries.
 
 CONFIGURATION
 -------------

@@ -39,6 +39,14 @@ struct wt_status_change_data {
 	int index_status;
 	int stagemask;
 	char *head_path;
+
+	struct 
+	{
+		int rename_score;
+		int mode_head, mode_index, mode_worktree;
+		unsigned char sha1_head[20], sha1_index[20];
+	} vvp;
+
 	unsigned dirty_submodule       : 2;
 	unsigned new_submodule_commits : 1;
 };
@@ -65,6 +73,7 @@ struct wt_status {
 	int null_termination;
 	int show_branch;
 	int hints;
+	unsigned char sha_commit[GIT_SHA1_RAWSZ]; /* Commit SHA (when not Initial) */
 
 	/* These are computed during processing of the individual sections */
 	int commitable;
@@ -109,6 +118,7 @@ int wt_status_check_bisect(const struct worktree *wt,
 
 void wt_shortstatus_print(struct wt_status *s);
 void wt_porcelain_print(struct wt_status *s);
+void wt_porcelain_very_verbose_print(struct wt_status *s);
 
 __attribute__((format (printf, 3, 4)))
 void status_printf_ln(struct wt_status *s, const char *color, const char *fmt, ...);
