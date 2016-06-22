@@ -77,6 +77,10 @@ static void preload_index(struct index_state *index,
 	if (!core_preload_index)
 		return;
 
+	/* Do not preload when pathspec uses non-threadable subsystems */
+	if (pathspec && pathspec_is_non_threadable(pathspec))
+		return; /* for now ... */
+
 	threads = index->cache_nr / THREAD_COST;
 	if (threads < 2)
 		return;
