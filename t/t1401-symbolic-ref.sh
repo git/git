@@ -110,7 +110,7 @@ test_expect_success 'symbolic-ref writes reflog entry' '
 	update
 	create
 	EOF
-	git log --format=%gs -g >actual &&
+	git log --format=%gs -g -2 >actual &&
 	test_cmp expect actual
 '
 
