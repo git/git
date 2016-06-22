@@ -146,6 +146,7 @@ static int write_entry(struct cache_entry *ce,
 	unsigned long size;
 	size_t wrote, newsize = 0;
 	struct stat st;
+	int regular_file, smudge_to_file;
 
 	if (ce_mode_s_ifmt == S_IFREG) {
 		struct stream_filter *filter = get_stream_filter(ce->name, ce->sha1);
@@ -178,9 +179,8 @@ static int write_entry(struct cache_entry *ce,
 		 * unless the smudgeToFile filter can write to the
 		 * file directly.
 		 */
-		int regular_file = ce_mode_s_ifmt == S_IFREG;
-		int smudge_to_file = regular_file
-			&& can_smudge_to_file(ce->name);
+		regular_file = ce_mode_s_ifmt == S_IFREG;
+		smudge_to_file = regular_file && can_smudge_to_file(ce->name);
 
 		fd = open_output_fd(path, ce, to_tempfile);
 		if (fd < 0) {
