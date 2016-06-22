@@ -747,7 +747,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 				 (pos = cache_name_pos(fname, strlen(fname))) >= 0 &&
 				 !ce_stage(active_cache[pos]) &&
 				 ce_uptodate(active_cache[pos]) &&
-				 !would_convert_to_git(fname))
+				 !would_convert_to_git(fname, NULL))
 				hashcpy(sha1_stat->sha1, active_cache[pos]->sha1);
 			else
 				hash_sha1_file(buf, size, "blob", sha1_stat->sha1);
