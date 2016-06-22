@@ -104,7 +104,7 @@ OPTIONS
 	order can also be affected by the
 	"versionsort.prereleaseSuffix" configuration variable.
 	The keys supported are the same as those in `git for-each-ref`.
-	Sort order defaults to the value configured for the 'tag.sort'
+	Sort order defaults to the value configured for the `tag.sort`
 	variable if it exists, or lexicographic order otherwise. See
 	linkgit:git-config[1].
 
