@@ -78,7 +78,7 @@ OPTIONS
 
 -v::
 --verify::
-	Verify the gpg signature of the given tag names.
+	Verify the GPG signature of the given tag names.
 
 -n<num>::
 	<num> specifies how many lines from the annotation, if any,
