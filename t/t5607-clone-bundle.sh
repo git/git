@@ -71,4 +71,8 @@ test_expect_success 'prerequisites with an empty commit message' '
 	git bundle verify bundle
 '
 
+test_expect_success 'try to create a bundle with empty ref count' '
+	test_expect_code 1 git bundle create foobar.bundle master..master
+'
+
 test_done
