@@ -492,7 +492,7 @@ static inline ioinfo* _pioinfo(int fd)
 			(fd & (IOINFO_ARRAY_ELTS - 1)) * sizeof_ioinfo);
 }
 
-static int init_sizeof_ioinfo()
+static int init_sizeof_ioinfo(void)
 {
 	int istty, wastty;
 	/* don't init twice */
