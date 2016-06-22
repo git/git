@@ -31,8 +31,8 @@ page to learn what commands Git offers.  You can learn more about
 individual Git commands with "git help command".  linkgit:gitcli[7]
 manual page gives you an overview of the command-line command syntax.
 
-Formatted and hyperlinked version of the latest Git documentation
-can be viewed at `http://git-htmldocs.googlecode.com/git/git.html`.
+A formatted and hyperlinked copy of the latest Git documentation
+can be viewed at `https://git.github.io/htmldocs/git.html`.
 
 ifdef::stalenotes[]
 [NOTE]
