@@ -28,6 +28,14 @@ touch rot13-to-file.ran
 EOF
 chmod +x rot13-to-file.sh
 
+cat <<EOF >delete-file-and-fail.sh
+#!$SHELL_PATH
+destfile="\$1"
+rm -f "\$destfile"
+exit 1
+EOF
+chmod +x delete-file-and-fail.sh
+
 test_expect_success setup '
 	git config filter.rot13.smudge ./rot13.sh &&
 	git config filter.rot13.clean ./rot13.sh &&
@@ -308,6 +316,22 @@ test_expect_success 'smudgeToFile filter is used when checking out a file' '
 
 	test -e rot13-to-file.ran &&
 	rm -f rot13-to-file.ran
+'
+
+test_expect_success 'recovery from failure of smudgeToFile filter, using smudge filter' '
+	test_config filter.rot13.smudgeToFile false &&
+
+	rm -f fstest.t &&
+	git checkout -- fstest.t &&
+	cmp test fstest.t
+'
+
+test_expect_success 'recovery from failure of smudgeToFile filter that deletes the worktree file' '
+	test_config filter.rot13.smudgeToFile ./delete-file-and-fail.sh &&
+
+	rm -f fstest.t &&
+	git checkout -- fstest.t &&
+	cmp test fstest.t
 '
 
 test_expect_success 'cleanFromFile filter is not used when clean filter is not configured' '
