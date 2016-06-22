@@ -167,6 +167,7 @@ struct pretty_print_context {
 	 * should not be counted on by callers.
 	 */
 	struct string_list in_body_headers;
+	int graph_width;
 };
 
 struct userformat_want {
