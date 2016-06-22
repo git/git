@@ -70,7 +70,7 @@ struct non_note {
 
 struct notes_tree default_notes_tree;
 
-static struct string_list display_notes_refs;
+static struct string_list display_notes_refs = STRING_LIST_INIT_NODUP;
 static struct notes_tree **display_notes_trees;
 
 static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,

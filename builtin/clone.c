@@ -49,8 +49,8 @@ static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress = -1;
 static enum transport_family family;
-static struct string_list option_config;
-static struct string_list option_reference;
+static struct string_list option_config = STRING_LIST_INIT_NODUP;
+static struct string_list option_reference = STRING_LIST_INIT_NODUP;
 static int option_dissociate;
 static int max_jobs = -1;
 

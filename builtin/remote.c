@@ -247,7 +247,7 @@ struct branch_info {
 	enum { NO_REBASE, NORMAL_REBASE, INTERACTIVE_REBASE } rebase;
 };
 
-static struct string_list branch_list;
+static struct string_list branch_list = STRING_LIST_INIT_NODUP;
 
 static const char *abbrev_ref(const char *name, const char *prefix)
 {
