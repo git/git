@@ -90,5 +90,6 @@ const char *Q_(const char *msgid, const char *plu, unsigned long n)
 #endif
 
 const char *get_preferred_languages(void);
+extern int is_utf8_locale(void);
 
 #endif
