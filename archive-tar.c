@@ -137,6 +137,20 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 	strbuf_addch(sb, '\n');
 }
 
+/*
+ * Like strbuf_append_ext_header, but for numeric values.
+ */
+static void strbuf_append_ext_header_uint(struct strbuf *sb,
+					  const char *keyword,
+					  uintmax_t value)
+{
+	char buf[40]; /* big enough for 2^128 in decimal, plus NUL */
+	int len;
+
+	len = xsnprintf(buf, sizeof(buf), "%"PRIuMAX, value);
+	strbuf_append_ext_header(sb, keyword, buf, len);
+}
+
 static unsigned int ustar_header_chksum(const struct ustar_header *header)
 {
 	const unsigned char *p = (const unsigned char *)header;
@@ -163,13 +177,31 @@ static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 	return i;
 }
 
+static inline unsigned long ustar_size(uintmax_t size)
+{
+	if (size <= 077777777777UL)
+		return size;
+	else
+		return 0;
+}
+
+static inline unsigned long ustar_mtime(time_t mtime)
+{
+	if (mtime <= 077777777777UL)
+		return mtime;
+	else
+		return 0;
+}
+
 static void prepare_header(struct archiver_args *args,
 			   struct ustar_header *header,
 			   unsigned int mode, unsigned long size)
 {
 	xsnprintf(header->mode, sizeof(header->mode), "%07o", mode & 07777);
-	xsnprintf(header->size, sizeof(header->size), "%011lo", S_ISREG(mode) ? size : 0);
-	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo", (unsigned long) args->time);
+	xsnprintf(header->size, sizeof(header->size), "%011lo",
+		  S_ISREG(mode) ? ustar_size(size) : 0);
+	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo",
+		  ustar_mtime(args->time));
 
 	xsnprintf(header->uid, sizeof(header->uid), "%07o", 0);
 	xsnprintf(header->gid, sizeof(header->gid), "%07o", 0);
@@ -266,6 +298,11 @@ static int write_tar_entry(struct archiver_args *args,
 		} else
 			memcpy(header.linkname, buffer, size);
 	}
+
+	if (S_ISREG(mode) && ustar_size(size) != size)
+		strbuf_append_ext_header_uint(&ext_header, "size", size);
+	if (ustar_mtime(args->time) != args->time)
+		strbuf_append_ext_header_uint(&ext_header, "mtime", args->time);
 
 	prepare_header(args, &header, mode, size);
 
