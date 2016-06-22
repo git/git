@@ -47,7 +47,7 @@ extern int git_check_attr(const char *path, struct git_attr_check *);
 extern int git_check_attr_counted(const char *, int, struct git_attr_check *);
 
 extern struct git_attr_check *git_attr_check_alloc(void);
-extern void git_attr_check_append(struct git_attr_check *, const struct git_attr *);
+extern struct git_attr_check_elem *git_attr_check_append(struct git_attr_check *, const struct git_attr *);
 
 extern void git_attr_check_clear(struct git_attr_check *);
 extern void git_attr_check_free(struct git_attr_check *);
