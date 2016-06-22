@@ -184,4 +184,10 @@ test_expect_success 'shortlog with revision pseudo options' '
 	git shortlog --exclude=refs/heads/m* --all
 '
 
+test_expect_success 'shortlog with --output=<file>' '
+	git shortlog --output=shortlog master >output &&
+	test ! -s output &&
+	test_line_count = 7 shortlog
+'
+
 test_done
