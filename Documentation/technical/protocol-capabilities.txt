@@ -179,6 +179,31 @@ This capability adds "deepen", "shallow" and "unshallow" commands to
 the  fetch-pack/upload-pack protocol so clients can request shallow
 clones.
 
+deepen-since
+------------
+
+This capability adds "deepen-since" command to fetch-pack/upload-pack
+protocol so the client can request shallow clones that are cut at a
+specific time, instead of depth. Internally it's equivalent of doing
+"rev-list --max-age=<timestamp>" on the server side. "deepen-since"
+cannot be used with "deepen".
+
+deepen-not
+----------
+
+This capability adds "deepen-not" command to fetch-pack/upload-pack
+protocol so the client can request shallow clones that are cut at a
+specific revision, instead of depth. Internally it's equivalent of
+doing "rev-list --not <rev>" on the server side. "deepen-not"
+cannot be used with "deepen", but can be used with "deepen-since".
+
+deepen-relative
+---------------
+
+If this capability is requested by the client, the semantics of
+"deepen" command is changed. The "depth" argument is the depth from
+the current shallow boundary, instead of the depth from remote refs.
+
 no-progress
 -----------
 
