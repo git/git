@@ -115,8 +115,16 @@ After that you will want to use some of the following:
 
 At least one of the first two is required!
 
-You can use test_expect_success as usual.  For actual performance
-tests, use
+You can use test_expect_success as usual. In both test_expect_success
+and in test_perf, running "git" points to the version that is being
+perf-tested. The $MODERN_GIT variable points to the git wrapper for the
+currently checked-out version (i.e., the one that matches the t/perf
+scripts you are running).  This is useful if your setup uses commands
+that only work with newer versions of git than what you might want to
+test (but obviously your new commands must still create a state that can
+be used by the older version of git you are testing).
+
+For actual performance tests, use
 
 	test_perf 'descriptive string' '
 		command1 &&

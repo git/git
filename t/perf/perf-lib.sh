@@ -52,6 +52,9 @@ TEST_NO_MALLOC_CHECK=t
 # need to export them for test_perf subshells
 export TEST_DIRECTORY TRASH_DIRECTORY GIT_BUILD_DIR GIT_TEST_CMP
 
+MODERN_GIT=$GIT_BUILD_DIR/bin-wrappers/git
+export MODERN_GIT
+
 perf_results_dir=$TEST_OUTPUT_DIRECTORY/test-results
 mkdir -p "$perf_results_dir"
 rm -f "$perf_results_dir"/$(basename "$0" .sh).subtests
@@ -81,7 +84,7 @@ test_perf_create_repo_from () {
 	repo="$1"
 	source="$2"
 	source_git="$(git -C "$source" rev-parse --git-dir)"
-	objects_dir="$(git -C "$source" rev-parse --git-path objects)"
+	objects_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-path objects)"
 	mkdir -p "$repo/.git"
 	(
 		{ cp -Rl "$objects_dir" "$repo/.git/" 2>/dev/null ||
