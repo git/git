@@ -574,3 +574,23 @@ test_expect_success 'blame -L X,-N (non-numeric N)' '
 test_expect_success 'blame -L ,^/RE/' '
 	test_must_fail $PROG -L1,^/99/ file
 '
+
+test_expect_success 'annotate deleted file' '
+	echo hello world > hello_world.txt &&
+	git add hello_world.txt &&
+	git commit -m "step 1" &&
+	git rm hello_world.txt &&
+	git commit -m "step 2" &&
+	git annotate hello_world.txt HEAD~1 &&
+	test_must_fail git annotate hello_world.txt
+'
+
+test_expect_success 'annotate moved file' '
+	echo hello world > hello_world.txt &&
+	git add hello_world.txt &&
+	git commit -m "step 1" &&
+	git mv hello_world.txt not_there_anymore.txt &&
+	git commit -m "step 2" &&
+	git annotate hello_world.txt HEAD~1 &&
+	test_must_fail git annotate hello_world.txt
+'
