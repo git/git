@@ -862,11 +862,12 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 int log_tree_commit(struct rev_info *opt, struct commit *commit)
 {
 	struct log_info log;
-	int shown;
+	int shown, close_file = opt->diffopt.close_file;
 
 	log.commit = commit;
 	log.parent = NULL;
 	opt->loginfo = &log;
+	opt->diffopt.close_file = 0;
 
 	if (opt->line_level_traverse)
 		return line_log_print(opt, commit);
@@ -883,5 +884,7 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 		printf("\n%s\n", opt->break_bar);
 	opt->loginfo = NULL;
 	maybe_flush_or_die(stdout, "stdout");
+	if (close_file)
+		fclose(opt->diffopt.file);
 	return shown;
 }
