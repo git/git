@@ -62,20 +62,21 @@ static void reset_timeout(void)
 	alarm(timeout);
 }
 
-static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
+static void send_client_data(int fd, const char *data, ssize_t sz)
 {
-	if (use_sideband)
-		return send_sideband(1, fd, data, sz, use_sideband);
+	if (use_sideband) {
+		send_sideband(1, fd, data, sz, use_sideband);
+		return;
+	}
 	if (fd == 3)
 		/* emergency quit */
 		fd = 2;
 	if (fd == 2) {
 		/* XXX: are we happy to lose stuff here? */
 		xwrite(fd, data, sz);
-		return sz;
+		return;
 	}
 	write_or_die(fd, data, sz);
-	return sz;
 }
 
 static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
@@ -233,9 +234,7 @@ static void create_pack_file(void)
 			}
 			else
 				buffered = -1;
-			sz = send_client_data(1, data, sz);
-			if (sz < 0)
-				goto fail;
+			send_client_data(1, data, sz);
 		}
 
 		/*
@@ -262,9 +261,7 @@ static void create_pack_file(void)
 	/* flush the data */
 	if (0 <= buffered) {
 		data[0] = buffered;
-		sz = send_client_data(1, data, 1);
-		if (sz < 0)
-			goto fail;
+		send_client_data(1, data, 1);
 		fprintf(stderr, "flushed.\n");
 	}
 	if (use_sideband)
