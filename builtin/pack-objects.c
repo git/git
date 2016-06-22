@@ -44,6 +44,7 @@ static int non_empty;
 static int reuse_delta = 1, reuse_object = 1;
 static int keep_unreachable, unpack_unreachable, include_tag;
 static unsigned long unpack_unreachable_expiration;
+static int pack_loose_unreachable;
 static int local;
 static int incremental;
 static int ignore_packed_keep;
@@ -2378,6 +2379,32 @@ static void add_objects_in_unpacked_packs(struct rev_info *revs)
 	free(in_pack.array);
 }
 
+static int add_loose_object(const unsigned char *sha1, const char *path,
+			    void *data)
+{
+	enum object_type type = sha1_object_info(sha1, NULL);
+
+	if (type < 0) {
+		warning("loose object at %s could not be examined", path);
+		return 0;
+	}
+
+	add_object_entry(sha1, type, "", 0);
+	return 0;
+}
+
+/*
+ * We actually don't even have to worry about reachability here.
+ * add_object_entry will weed out duplicates, so we just add every
+ * loose object we find.
+ */
+static void add_unreachable_loose_objects(void)
+{
+	for_each_loose_file_in_objdir(get_object_directory(),
+				      add_loose_object,
+				      NULL, NULL, NULL);
+}
+
 static int has_sha1_pack_kept_or_nonlocal(const unsigned char *sha1)
 {
 	static struct packed_git *last_found = (void *)1;
@@ -2547,6 +2574,8 @@ static void get_object_list(int ac, const char **av)
 
 	if (keep_unreachable)
 		add_objects_in_unpacked_packs(&revs);
+	if (pack_loose_unreachable)
+		add_unreachable_loose_objects();
 	if (unpack_unreachable)
 		loosen_unused_packed_objects(&revs);
 
@@ -2647,6 +2676,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			 N_("include tag objects that refer to objects to be packed")),
 		OPT_BOOL(0, "keep-unreachable", &keep_unreachable,
 			 N_("keep unreachable objects")),
+		OPT_BOOL(0, "pack-loose-unreachable", &pack_loose_unreachable,
+			 N_("pack loose unreachable objects")),
 		{ OPTION_CALLBACK, 0, "unpack-unreachable", NULL, N_("time"),
 		  N_("unpack unreachable objects newer than <time>"),
 		  PARSE_OPT_OPTARG, option_parse_unpack_unreachable },
