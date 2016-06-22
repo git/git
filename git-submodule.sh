@@ -16,7 +16,6 @@ USAGE="[--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <re
 OPTIONS_SPEC=
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
-. git-sh-i18n
 . git-parse-remote
 require_work_tree
 wt_prefix=$(git rev-parse --show-prefix)
@@ -240,14 +239,15 @@ Use -f if you really want to add it." >&2
 		then
 			if test -z "$force"
 			then
-				echo >&2 "$(eval_gettext "A git directory for '\$sm_name' is found locally with remote(s):")"
+				eval_gettextln >&2 "A git directory for '\$sm_name' is found locally with remote(s):"
 				GIT_DIR=".git/modules/$sm_name" GIT_WORK_TREE=. git remote -v | grep '(fetch)' | sed -e s,^,"  ", -e s,' (fetch)',, >&2
-				echo >&2 "$(eval_gettext "If you want to reuse this local git directory instead of cloning again from")"
-				echo >&2 "  $realrepo"
-				echo >&2 "$(eval_gettext "use the '--force' option. If the local git directory is not the correct repo")"
-				die "$(eval_gettext "or you are unsure what this means choose another name with the '--name' option.")"
+				die "$(eval_gettextln "\
+If you want to reuse this local git directory instead of cloning again from
+  \$realrepo
+use the '--force' option. If the local git directory is not the correct repo
+or you are unsure what this means choose another name with the '--name' option.")"
 			else
-				echo "$(eval_gettext "Reactivating local git directory for submodule '\$sm_name'.")"
+				eval_gettextln "Reactivating local git directory for submodule '\$sm_name'."
 			fi
 		fi
 		git submodule--helper clone ${GIT_QUIET:+--quiet} --prefix "$wt_prefix" --path "$sm_path" --name "$sm_name" --url "$realrepo" ${reference:+"$reference"} ${depth:+"$depth"} || exit
@@ -438,8 +438,9 @@ cmd_deinit()
 			# Protect submodules containing a .git directory
 			if test -d "$sm_path/.git"
 			then
-				echo >&2 "$(eval_gettext "Submodule work tree '\$displaypath' contains a .git directory")"
-				die "$(eval_gettext "(use 'rm -rf' if you really want to remove it including all of its history)")"
+				die "$(eval_gettext "\
+Submodule work tree '\$displaypath' contains a .git directory
+(use 'rm -rf' if you really want to remove it including all of its history)")"
 			fi
 
 			if test -z "$force"
@@ -624,7 +625,7 @@ cmd_update()
 			remote_name=$(sanitize_submodule_env; cd "$sm_path" && get_default_remote)
 			sha1=$(sanitize_submodule_env; cd "$sm_path" &&
 				git rev-parse --verify "${remote_name}/${branch}") ||
-			die "$(eval_gettext "Unable to find current ${remote_name}/${branch} revision in submodule path '\$sm_path'")"
+			die "$(eval_gettext "Unable to find current \${remote_name}/\${branch} revision in submodule path '\$sm_path'")"
 		fi
 
 		if test "$subsha1" != "$sha1" || test -n "$force"
@@ -648,7 +649,7 @@ cmd_update()
 				# not be reachable from any of the refs
 				is_tip_reachable "$sm_path" "$sha1" ||
 				fetch_in_submodule "$sm_path" "$sha1" ||
-				die "$(eval_gettext "Fetched in submodule path '\$displaypath', but it did not contain $sha1. Direct fetching of that commit failed.")"
+				die "$(eval_gettext "Fetched in submodule path '\$displaypath', but it did not contain \$sha1. Direct fetching of that commit failed.")"
 			fi
 
 			must_die_on_failure=

@@ -361,7 +361,7 @@ test_expect_success 'stdin test setup' '
 
 test_expect_success '-z fails without --stdin' '
 	test_must_fail git update-ref -z $m $m $m 2>err &&
-	grep "usage: git update-ref" err
+	test_i18ngrep "usage: git update-ref" err
 '
 
 test_expect_success 'stdin works with no input' '
