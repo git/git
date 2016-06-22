@@ -863,32 +863,50 @@ int would_convert_to_git_filter_fd(const char *path)
 	return apply_filter(path, NULL, NULL, 0, -1, NULL, ca.drv->clean);
 }
 
+static int can_filter_file(const char *filefilter, const char *filefiltername,
+			   const char *stdiofilter, const char *stdiofiltername,
+			   const struct conv_attrs *ca,
+			   int *warncount)
+{
+	if (! filefilter)
+		return 0;
+
+	if (stdiofilter)
+		return 1;
+
+	if (*warncount == 0)
+		warning("Not running your configured filter.%s.%s command, because filter.%s.%s is not configured",
+			ca->drv->name, filefiltername,
+			ca->drv->name, stdiofiltername);
+		*warncount=*warncount+1;
+
+	return 0;
+}
+
 int can_clean_from_file(const char *path)
 {
 	struct conv_attrs ca;
+	static int warncount = 0;
 
 	convert_attrs(&ca, path);
 	if (!ca.drv)
 		return 0;
 
-	/* Only use the cleanFromFile filter when the clean filter is also
-	 * configured.
-	 */
-	return (ca.drv->clean_from_file && ca.drv->clean);
+	return can_filter_file(ca.drv->clean_from_file, "cleanFromFile",
+			       ca.drv->clean, "clean", &ca, &warncount);
 }
 
 int can_smudge_to_file(const char *path)
 {
 	struct conv_attrs ca;
+	static int warncount = 0;
 
 	convert_attrs(&ca, path);
 	if (!ca.drv)
 		return 0;
 
-	/* Only use the smudgeToFile filter when the smudge filter is also
-	 * configured.
-	 */
-	return (ca.drv->smudge_to_file && ca.drv->smudge);
+	return can_filter_file(ca.drv->smudge_to_file, "smudgeToFile",
+			       ca.drv->smudge, "smudge", &ca, &warncount);
 }
 
 const char *get_convert_attr_ascii(const char *path)
