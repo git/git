@@ -198,6 +198,10 @@ log.showRoot::
 	`git log -p` output would be shown without a diff attached.
 	The default is `true`.
 
+log.showSignature::
+	If `true`, `git log` and related commands will act as if the
+	`--show-signature` option was passed to them.
+
 mailmap.*::
 	See linkgit:git-shortlog[1].
 
