@@ -163,8 +163,8 @@ git_pager() {
 	else
 		GIT_PAGER=cat
 	fi
-	: ${LESS=-FRX}
-	: ${LV=-c}
+	: "${LESS=-FRX}"
+	: "${LV=-c}"
 	export LESS LV
 
 	eval "$GIT_PAGER" '"$@"'
@@ -375,7 +375,7 @@ git_dir_init () {
 		gettextln "Unable to determine absolute path of git directory" >&2
 		exit 1
 	}
-	: ${GIT_OBJECT_DIRECTORY="$(git rev-parse --git-path objects)"}
+	: "${GIT_OBJECT_DIRECTORY="$(git rev-parse --git-path objects)"}"
 }
 
 if test -z "$NONGIT_OK"
