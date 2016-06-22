@@ -131,10 +131,16 @@ enum cmit_fmt {
 	CMIT_FMT_FULLER,
 	CMIT_FMT_ONELINE,
 	CMIT_FMT_EMAIL,
+	CMIT_FMT_MBOXRD,
 	CMIT_FMT_USERFORMAT,
 
 	CMIT_FMT_UNSPECIFIED
 };
+
+static inline int cmit_fmt_is_mail(enum cmit_fmt fmt)
+{
+	return (fmt == CMIT_FMT_EMAIL || fmt == CMIT_FMT_MBOXRD);
+}
 
 struct pretty_print_context {
 	/*
