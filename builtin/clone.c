@@ -40,7 +40,7 @@ static const char * const builtin_clone_usage[] = {
 
 static int option_no_checkout, option_bare, option_mirror, option_single_branch = -1;
 static int option_local = -1, option_no_hardlinks, option_shared, option_recursive;
-static int option_shallow_submodules = -1;
+static int option_shallow_submodules;
 static int deepen;
 static char *option_template, *option_depth, *option_since;
 static char *option_origin = NULL;
@@ -744,8 +744,7 @@ static int checkout(void)
 		struct argv_array args = ARGV_ARRAY_INIT;
 		argv_array_pushl(&args, "submodule", "update", "--init", "--recursive", NULL);
 
-		if (option_shallow_submodules == 1
-		    || (option_shallow_submodules == -1 && option_depth))
+		if (option_shallow_submodules == 1)
 			argv_array_push(&args, "--depth=1");
 
 		if (max_jobs != -1)
