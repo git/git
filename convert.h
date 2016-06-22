@@ -44,6 +44,10 @@ extern int convert_to_git(const char *path, const char *src, size_t len,
 
 extern int convert_to_working_tree(const char *path, const char *src,
 				   size_t len, struct strbuf *dst);
+extern int convert_to_working_tree_filter_to_file(const char *path,
+						  const char *destpath,
+						  const char *src,
+						  size_t len);
 extern int renormalize_buffer(const char *path, const char *src, size_t len,
 			      struct strbuf *dst);
 static inline int would_convert_to_git(const char *path,
@@ -60,6 +64,13 @@ extern void convert_to_git_filter_fd(const char *path, int fd,
 				     const unsigned char *index_blob_sha1);
 
 extern int would_convert_to_git_filter_fd(const char *path);
+/* Precondition: can_clean_from_file(path) == true */
+extern void convert_to_git_filter_from_file(const char *path,
+					    struct strbuf *dst,
+					    enum safe_crlf checksafe,
+					    const unsigned char *index_blob_sha1);
+extern int can_clean_from_file(const char *path);
+extern int can_smudge_to_file(const char *path);
 
 /*****************************************************************
  *

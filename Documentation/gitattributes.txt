@@ -383,6 +383,43 @@ not exist, or may have different contents. So, smudge and clean commands
 should not try to access the file on disk, but only act as filters on the
 content provided to them on standard input.
 
+There are two extra commands "cleanFromFile" and "smudgeToFile", which
+can optionally be set in a filter driver. These are similar to the "clean"
+and "smudge" commands, but avoid needing to pipe the contents of files
+through the filters, and instead read/write files in the filesystem.
+This can be more efficient when using filters with large files that are not
+directly stored in the repository.
+
+Both "cleanFromFile" and "smudgeToFile" are provided a path as an
+added parameter after the configured command line.
+
+The "cleanFromFile" command is provided the path to the file that
+it should clean. Like the "clean" command, it should output the cleaned
+version to standard output.
+
+The "smudgeToFile" command is provided a path to the file that it
+should write to. (This file will already exist, as an empty file that can
+be written to or replaced.) Like the "smudge" command, "smudgeToFile"
+is fed the blob object from its standard input.
+
+Some git operations that need to apply filters cannot use "cleanFromFile"
+and "smudgeToFile", since the files are not present to disk. So, to avoid
+inconsistent behavior, "cleanFromFile" will only be used if "clean" is
+also configured, and "smudgeToFile" will only be used if "smudge" is also
+configured.
+
+An example large file storage filter driver using cleanFromFile and
+smudgeToFile follows:
+
+------------------------
+[filter "bigfiles"]
+	clean = store-bigfile --from-stdin
+	cleanFromFile = store-bigfile --from-file
+	smudge = retrieve-bigfile --to-stdout
+	smudgeToFile = retrieve-bigfile --to-file
+	required
+------------------------
+
 Interaction between checkin/checkout attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
