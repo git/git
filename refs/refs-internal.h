@@ -15,7 +15,7 @@
 
 /*
  * Used as a flag in ref_update::flags when a loose ref is being
- * pruned.
+ * pruned. This flag must only be used when REF_NODEREF is set.
  */
 #define REF_ISPRUNING	0x04
 
@@ -41,6 +41,19 @@
  * 0x40 is REF_FORCE_CREATE_REFLOG, so skip it if you're adding a
  * value to ref_update::flags
  */
+
+/*
+ * Used as a flag in ref_update::flags when we want to log a ref
+ * update but not actually perform it.  This is used when a symbolic
+ * ref update is split up.
+ */
+#define REF_LOG_ONLY 0x80
+
+/*
+ * Internal flag, meaning that the containing ref_update was via an
+ * update to HEAD.
+ */
+#define REF_UPDATE_VIA_HEAD 0x100
 
 /*
  * Return true iff refname is minimally safe. "Safe" here means that
@@ -109,8 +122,8 @@ enum peel_status peel_object(const unsigned char *name, unsigned char *sha1);
  * extras and skip must be sorted.
  */
 int verify_refname_available(const char *newname,
-			     struct string_list *extras,
-			     struct string_list *skip,
+			     const struct string_list *extras,
+			     const struct string_list *skip,
 			     struct strbuf *err);
 
 /*
@@ -130,25 +143,57 @@ int should_autocreate_reflog(const char *refname);
  * not exist before update.
  */
 struct ref_update {
+
 	/*
 	 * If (flags & REF_HAVE_NEW), set the reference to this value:
 	 */
 	unsigned char new_sha1[20];
+
 	/*
 	 * If (flags & REF_HAVE_OLD), check that the reference
 	 * previously had this value:
 	 */
 	unsigned char old_sha1[20];
+
 	/*
 	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,
-	 * REF_DELETING, and REF_ISPRUNING:
+	 * REF_DELETING, REF_ISPRUNING, REF_LOG_ONLY, and
+	 * REF_UPDATE_VIA_HEAD:
 	 */
 	unsigned int flags;
+
 	struct ref_lock *lock;
-	int type;
+	unsigned int type;
 	char *msg;
+
+	/*
+	 * If this ref_update was split off of a symref update via
+	 * split_symref_update(), then this member points at that
+	 * update. This is used for two purposes:
+	 * 1. When reporting errors, we report the refname under which
+	 *    the update was originally requested.
+	 * 2. When we read the old value of this reference, we
+	 *    propagate it back to its parent update for recording in
+	 *    the latter's reflog.
+	 */
+	struct ref_update *parent_update;
+
 	const char refname[FLEX_ARRAY];
 };
+
+/*
+ * Add a ref_update with the specified properties to transaction, and
+ * return a pointer to the new object. This function does not verify
+ * that refname is well-formed. new_sha1 and old_sha1 are only
+ * dereferenced if the REF_HAVE_NEW and REF_HAVE_OLD bits,
+ * respectively, are set in flags.
+ */
+struct ref_update *ref_transaction_add_update(
+		struct ref_transaction *transaction,
+		const char *refname, unsigned int flags,
+		const unsigned char *new_sha1,
+		const unsigned char *old_sha1,
+		const char *msg);
 
 /*
  * Transaction states.
@@ -209,7 +254,45 @@ int rename_ref_available(const char *oldname, const char *newname);
 int do_for_each_ref(const char *submodule, const char *base,
 		    each_ref_fn fn, int trim, int flags, void *cb_data);
 
+/*
+ * Read the specified reference from the filesystem or packed refs
+ * file, non-recursively. Set type to describe the reference, and:
+ *
+ * - If refname is the name of a normal reference, fill in sha1
+ *   (leaving referent unchanged).
+ *
+ * - If refname is the name of a symbolic reference, write the full
+ *   name of the reference to which it refers (e.g.
+ *   "refs/heads/master") to referent and set the REF_ISSYMREF bit in
+ *   type (leaving sha1 unchanged). The caller is responsible for
+ *   validating that referent is a valid reference name.
+ *
+ * WARNING: refname might be used as part of a filename, so it is
+ * important from a security standpoint that it be safe in the sense
+ * of refname_is_safe(). Moreover, for symrefs this function sets
+ * referent to whatever the repository says, which might not be a
+ * properly-formatted or even safe reference name. NEITHER INPUT NOR
+ * OUTPUT REFERENCE NAMES ARE VALIDATED WITHIN THIS FUNCTION.
+ *
+ * Return 0 on success. If the ref doesn't exist, set errno to ENOENT
+ * and return -1. If the ref exists but is neither a symbolic ref nor
+ * a sha1, it is broken; set REF_ISBROKEN in type, set errno to
+ * EINVAL, and return -1. If there is another error reading the ref,
+ * set errno appropriately and return -1.
+ *
+ * Backend-specific flags might be set in type as well, regardless of
+ * outcome.
+ *
+ * It is OK for refname to point into referent. If so:
+ *
+ * - if the function succeeds with REF_ISSYMREF, referent will be
+ *   overwritten and the memory formerly pointed to by it might be
+ *   changed or even freed.
+ *
+ * - in all other cases, referent will be untouched, and therefore
+ *   refname will still be valid and unchanged.
+ */
 int read_raw_ref(const char *refname, unsigned char *sha1,
-		 struct strbuf *symref, unsigned int *flags);
+		 struct strbuf *referent, unsigned int *type);
 
 #endif /* REFS_REFS_INTERNAL_H */
