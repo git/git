@@ -805,7 +805,6 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	return git_log_config(var, value, cb);
 }
 
-static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 static int outdir_offset;
 
@@ -831,7 +830,7 @@ static int open_next_file(struct commit *commit, const char *subject,
 		fmt_output_subject(&filename, subject, rev);
 
 	if (!quiet)
-		fprintf(realstdout, "%s\n", filename.buf + outdir_offset);
+		printf("%s\n", filename.buf + outdir_offset);
 
 	if ((rev->diffopt.file = fopen(filename.buf, "w")) == NULL)
 		return error(_("Cannot open patch file %s"), filename.buf);
@@ -1638,9 +1637,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 		get_patch_ids(&rev, &ids);
 	}
-
-	if (!use_stdout)
-		realstdout = xfdopen(xdup(1), "w");
 
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));
