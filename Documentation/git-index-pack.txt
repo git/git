@@ -9,7 +9,7 @@ git-index-pack - Build pack index file for an existing packed archive
 SYNOPSIS
 --------
 [verse]
-'git index-pack' [-v] [-o <index-file>] <pack-file>
+'git index-pack' [-v] [-o <index-file>] [--clone-bundle] <pack-file>
 'git index-pack' --stdin [--fix-thin] [--keep] [-v] [-o <index-file>]
                  [<pack-file>]
 
@@ -34,6 +34,14 @@ OPTIONS
 	file by replacing .pack with .idx (and the program
 	fails if the name of packed archive does not end
 	with .pack).
+
+--clone-bundle::
+	Write a split bundle file that uses the <pack-file> as its
+	data.  The <pack-file> must not contain any broken links, or
+	the bundle file will not be written.  The prerequisite list
+	of the resulting bundle will be empty.  The reference list
+	of the resulting bundle points at tips of the history in the
+	<pack-file>.
 
 --stdin::
 	When this flag is provided, the pack is read from stdin
