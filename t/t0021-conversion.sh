@@ -334,6 +334,19 @@ test_expect_success 'recovery from failure of smudgeToFile filter that deletes t
 	cmp test fstest.t
 '
 
+test_expect_success 'smudgeToFile filter is used by git am' '
+	test_config filter.rot13.smudgeToFile ./rot13-to-file.sh &&
+
+	git commit fstest.t -m "added fstest.t" &&
+	git format-patch HEAD^ --stdout > fstest.patch &&
+	git reset --hard HEAD^ &&
+	git am < fstest.patch &&
+
+	test -e rot13-to-file.ran &&
+	rm -f rot13-to-file.ran &&
+	cmp test fstest.t
+'
+
 test_expect_success 'cleanFromFile filter is not used when clean filter is not configured' '
 	test_config filter.noclean.smudge ./rot13.sh &&
 	test_config filter.noclean.cleanFromFile ./rot13-from-file.sh &&

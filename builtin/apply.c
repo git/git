@@ -4110,6 +4110,22 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 
+	if (can_smudge_to_file(path)) {
+		close(fd);
+		fd = convert_to_working_tree_filter_to_file(path, path, buf, size);
+		if (fd < 0) {
+			/* smudgeToFile filter failed; continue
+			 * with regular file creation. */
+			fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
+			if (fd < 0)
+				return -1;
+		}
+		else {
+			close(fd);
+			return 0;
+		}
+	}
+
 	if (convert_to_working_tree(path, buf, size, &nbuf)) {
 		size = nbuf.len;
 		buf  = nbuf.buf;

@@ -1052,13 +1052,28 @@ int convert_to_working_tree(const char *path, const char *src, size_t len, struc
 	return convert_to_working_tree_internal(path, NULL, src, len, dst, 0);
 }
 
+/* Returns fd open to read the worktree file on success.
+ * On failure, the worktree file will not exist. */
 int convert_to_working_tree_filter_to_file(const char *path, const char *destpath, const char *src, size_t len)
 {
 	struct strbuf output = STRBUF_INIT;
-	int ret = convert_to_working_tree_internal(path, destpath, src, len, &output, 0);
+	int ok = convert_to_working_tree_internal(path, destpath, src, len, &output, 0);
 	/* The smudgeToFile filter stdout is not used. */
 	strbuf_release(&output);
-	return ret;
+	if (ok) {
+		/* Open the file to make sure that it's present
+		 * (and readable) after the command populated it. */
+		int fd = open(path, O_RDONLY);
+		if (fd < 0)
+			unlink(path);
+		return fd;
+	}
+	else {
+		/* The command could have created the file before failing,
+		 * so delete it. */
+		unlink(path);
+		return -1;
+	}
 }
 
 int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst)
