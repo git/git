@@ -334,10 +334,24 @@ test_expect_success 'recovery from failure of smudgeToFile filter that deletes t
 	cmp test fstest.t
 '
 
+test_expect_success 'smudgeToFile filter is used in merge' '
+	test_config filter.rot13.smudgeToFile ./rot13-to-file.sh &&
+
+	git commit -m "added fstest.t" fstest.t &&
+	git checkout -b old &&
+	git reset --hard HEAD^ &&
+	git merge master &&
+
+	test -e rot13-to-file.ran &&
+	rm -f rot13-to-file.ran &&
+
+	cmp test fstest.t &&
+	git checkout master
+'
+
 test_expect_success 'smudgeToFile filter is used by git am' '
 	test_config filter.rot13.smudgeToFile ./rot13-to-file.sh &&
 
-	git commit fstest.t -m "added fstest.t" &&
 	git format-patch HEAD^ --stdout > fstest.patch &&
 	git reset --hard HEAD^ &&
 	git am < fstest.patch &&
