@@ -788,7 +788,7 @@ test_expect_success 'merge rename + small change' '
 
 	test 1 -eq $(git ls-files -s | wc -l) &&
 	test 0 -eq $(git ls-files -o | wc -l) &&
-	test $(git rev-parse HEAD:renamed_file) = $(git rev-parse HEAD~1:file)
+	test_cmp_rev HEAD:renamed_file HEAD~1:file
 '
 
 test_expect_success 'setup for use of extended merge markers' '

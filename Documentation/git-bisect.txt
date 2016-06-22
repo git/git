@@ -27,6 +27,7 @@ on the subcommand:
  git bisect replay <logfile>
  git bisect log
  git bisect run <cmd>...
+ git bisect next
  git bisect help
 
 This command uses a binary search algorithm to find which commit in
@@ -64,6 +65,15 @@ checks it out, and outputs something similar to the following:
 
 ------------------------------------------------
 Bisecting: 675 revisions left to test after this (roughly 10 steps)
+------------------------------------------------
+
+Note that in cases you do not know a good commit,
+you can also start with:
+
+------------------------------------------------
+$ git bisect start
+$ git bisect bad                 # current version is bad
+$ git bisect next                # check out another commit
 ------------------------------------------------
 
 You should now compile the checked-out version and test it. If that
@@ -352,6 +362,20 @@ revision (possibly with the needed patch) passed the test and then
 rewind the tree to the pristine state.  Finally the script should exit
 with the status of the real test to let the `git bisect run` command loop
 determine the eventual outcome of the bisect session.
+
+Bisect next
+~~~~~~~~~~~
+
+In case you have marked a commit as bad but you do not know a good
+commit, you do not have to crawl through the commit history yourself to
+find a good commit. Simply issue the command:
+
+------------
+$ git bisect next
+------------
+
+In general, the command computes the next commit for the bisection and
+checks it out.
 
 OPTIONS
 -------

@@ -43,7 +43,7 @@ test_expect_success '"checkout -" attaches again' '
 
 test_expect_success '"checkout -" detaches again' '
 	git checkout - &&
-	test "z$(git rev-parse HEAD)" = "z$(git rev-parse other)" &&
+	test_cmp_rev HEAD other &&
 	test_must_fail git symbolic-ref HEAD
 '
 
@@ -101,19 +101,19 @@ test_expect_success 'merge base test setup' '
 test_expect_success 'another...master' '
 	git checkout another &&
 	git checkout another...master &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify master^)"
+	test_cmp_rev HEAD master^
 '
 
 test_expect_success '...master' '
 	git checkout another &&
 	git checkout ...master &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify master^)"
+	test_cmp_rev HEAD master^
 '
 
 test_expect_success 'master...' '
 	git checkout another &&
 	git checkout master... &&
-	test "z$(git rev-parse --verify HEAD)" = "z$(git rev-parse --verify master^)"
+	test_cmp_rev HEAD master^
 '
 
 test_expect_success '"checkout -" works after a rebase A' '

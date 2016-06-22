@@ -42,7 +42,7 @@ test_expect_success 'fast-forward pull succeeds with "true" in pull.ff' '
 	git reset --hard c0 &&
 	test_config pull.ff true &&
 	git pull . c1 &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+	test_cmp_rev HEAD c1
 '
 
 test_expect_success 'pull.ff=true overrides merge.ff=false' '
@@ -50,15 +50,15 @@ test_expect_success 'pull.ff=true overrides merge.ff=false' '
 	test_config merge.ff false &&
 	test_config pull.ff true &&
 	git pull . c1 &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse c1)"
+	test_cmp_rev HEAD c1
 '
 
 test_expect_success 'fast-forward pull creates merge with "false" in pull.ff' '
 	git reset --hard c0 &&
 	test_config pull.ff false &&
 	git pull . c1 &&
-	test "$(git rev-parse HEAD^1)" = "$(git rev-parse c0)" &&
-	test "$(git rev-parse HEAD^2)" = "$(git rev-parse c1)"
+	test_cmp_rev HEAD^1 c0 &&
+	test_cmp_rev HEAD^2 c1
 '
 
 test_expect_success 'pull prevents non-fast-forward with "only" in pull.ff' '
@@ -79,17 +79,16 @@ test_expect_success 'merge c1 with c2 and c3 (recursive in pull.octopus)' '
 	git reset --hard c1 &&
 	git config pull.octopus "recursive" &&
 	test_must_fail git merge c2 c3 &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD)"
+	test_cmp_rev c1 HEAD
 '
 
 test_expect_success 'merge c1 with c2 and c3 (recursive and octopus in pull.octopus)' '
 	git reset --hard c1 &&
 	git config pull.octopus "recursive octopus" &&
 	git merge c2 c3 &&
-	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse c1)" = "$(git rev-parse HEAD^1)" &&
-	test "$(git rev-parse c2)" = "$(git rev-parse HEAD^2)" &&
-	test "$(git rev-parse c3)" = "$(git rev-parse HEAD^3)" &&
+	test_cmp_rev c1 HEAD^1 &&
+	test_cmp_rev c2 HEAD^2 &&
+	test_cmp_rev c3 HEAD^3 &&
 	git diff --exit-code &&
 	test -f c0.c &&
 	test -f c1.c &&

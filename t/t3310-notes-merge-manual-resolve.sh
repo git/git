@@ -516,7 +516,7 @@ cp expect_log_w expect_log_m
 test_expect_success 'reset notes ref m to somewhere else (w)' '
 	git update-ref refs/notes/m refs/notes/w &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)"
+	test_cmp_rev refs/notes/m refs/notes/w
 '
 
 test_expect_success 'fail to finalize conflicting merge if underlying ref has moved in the meantime (m != NOTES_MERGE_PARTIAL^1)' '
@@ -537,8 +537,8 @@ EOF
 	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&
 	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha4 &&
 	# Refs are unchanged
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
-	test "$(git rev-parse refs/notes/y)" = "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
+	test_cmp_rev refs/notes/m refs/notes/w &&
+	test_cmp_rev refs/notes/y NOTES_MERGE_PARTIAL^1 &&
 	test "$(git rev-parse refs/notes/m)" != "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
 	# Mention refs/notes/m, and its current and expected value in output
 	grep -q "refs/notes/m" output &&
@@ -557,7 +557,7 @@ test_expect_success 'resolve situation by aborting the notes merge' '
 	test_might_fail ls .git/NOTES_MERGE_* >output 2>/dev/null &&
 	test_cmp /dev/null output &&
 	# m has not moved (still == w)
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
+	test_cmp_rev refs/notes/m refs/notes/w &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&

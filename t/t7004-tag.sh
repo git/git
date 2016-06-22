@@ -337,7 +337,7 @@ test_expect_success \
 	'a non-annotated tag created without parameters should point to HEAD' '
 	git tag non-annotated-tag &&
 	test $(git cat-file -t non-annotated-tag) = commit &&
-	test $(git rev-parse non-annotated-tag) = $(git rev-parse HEAD)
+	test_cmp_rev non-annotated-tag HEAD
 '
 
 test_expect_success 'trying to verify an unknown tag should fail' \

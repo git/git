@@ -209,8 +209,8 @@ test_expect_success 'am applies patch correctly' '
 	git am <patch1 &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am fails if index is dirty' '
@@ -232,8 +232,8 @@ test_expect_success 'am applies patch e-mail not in a mbox' '
 	git am patch1.eml &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
@@ -243,8 +243,8 @@ test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
 	git am patch1-crlf.eml &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies patch e-mail with preceding whitespace' '
@@ -254,8 +254,8 @@ test_expect_success 'am applies patch e-mail with preceding whitespace' '
 	git am patch1-ws.eml &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
-	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
-	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies stgit patch' '
@@ -456,7 +456,7 @@ test_expect_success 'am changes committer and keeps author' '
 	git checkout first &&
 	git am patch2 &&
 	test_path_is_missing .git/rebase-apply &&
-	test "$(git rev-parse master^^)" = "$(git rev-parse HEAD^^)" &&
+	test_cmp_rev master^^ HEAD^^ &&
 	git diff --exit-code master..HEAD &&
 	git diff --exit-code master^..HEAD^ &&
 	compare author master HEAD &&
