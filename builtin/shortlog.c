@@ -229,7 +229,6 @@ void shortlog_init(struct shortlog *log)
 	log->wrap = DEFAULT_WRAPLEN;
 	log->in1 = DEFAULT_INDENT1;
 	log->in2 = DEFAULT_INDENT2;
-	log->file = stdout;
 }
 
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
@@ -277,6 +276,7 @@ parse_done:
 
 	log.user_format = rev.commit_format == CMIT_FMT_USERFORMAT;
 	log.abbrev = rev.abbrev;
+	log.file = rev.diffopt.file;
 
 	/* assume HEAD if from a tty */
 	if (!nongit && !rev.pending.nr && isatty(0))
@@ -290,6 +290,8 @@ parse_done:
 		get_from_rev(&rev, &log);
 
 	shortlog_output(&log);
+	if (log.file != stdout)
+		fclose(log.file);
 	return 0;
 }
 
