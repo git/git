@@ -577,7 +577,7 @@ foo.bar= ...`) sets `foo.bar` to the empty string.
 
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
-	setting the GIT_DIR environment variable. It can be an absolute
+	setting the `GIT_DIR` environment variable. It can be an absolute
 	path or relative path to current working directory.
 
 --work-tree=<path>::
@@ -827,46 +827,46 @@ These environment variables apply to 'all' core Git commands. Nb: it
 is worth noting that they may be used/overridden by SCMS sitting above
 Git so take care if using a foreign front-end.
 
-'GIT_INDEX_FILE'::
+`GIT_INDEX_FILE`::
 	This environment allows the specification of an alternate
 	index file. If not specified, the default of `$GIT_DIR/index`
 	is used.
 
-'GIT_INDEX_VERSION'::
+`GIT_INDEX_VERSION`::
 	This environment variable allows the specification of an index
 	version for new repositories.  It won't affect existing index
 	files.  By default index file version 2 or 3 is used. See
 	linkgit:git-update-index[1] for more information.
 
-'GIT_OBJECT_DIRECTORY'::
+`GIT_OBJECT_DIRECTORY`::
 	If the object storage directory is specified via this
 	environment variable then the sha1 directories are created
 	underneath - otherwise the default `$GIT_DIR/objects`
 	directory is used.
 
-'GIT_ALTERNATE_OBJECT_DIRECTORIES'::
+`GIT_ALTERNATE_OBJECT_DIRECTORIES`::
 	Due to the immutable nature of Git objects, old objects can be
 	archived into shared, read-only directories. This variable
 	specifies a ":" separated (on Windows ";" separated) list
 	of Git object directories which can be used to search for Git
 	objects. New objects will not be written to these directories.
 
-'GIT_DIR'::
-	If the 'GIT_DIR' environment variable is set then it
+`GIT_DIR`::
+	If the `GIT_DIR` environment variable is set then it
 	specifies a path to use instead of the default `.git`
 	for the base of the repository.
 	The '--git-dir' command-line option also sets this value.
 
-'GIT_WORK_TREE'::
+`GIT_WORK_TREE`::
 	Set the path to the root of the working tree.
 	This can also be controlled by the '--work-tree' command-line
 	option and the core.worktree configuration variable.
 
-'GIT_NAMESPACE'::
+`GIT_NAMESPACE`::
 	Set the Git namespace; see linkgit:gitnamespaces[7] for details.
 	The '--namespace' command-line option also sets this value.
 
-'GIT_CEILING_DIRECTORIES'::
+`GIT_CEILING_DIRECTORIES`::
 	This should be a colon-separated list of absolute paths.  If
 	set, it is a list of directories that Git should not chdir up
 	into while looking for a repository directory (useful for
@@ -879,19 +879,19 @@ Git so take care if using a foreign front-end.
 	can add an empty entry to the list to tell Git that the
 	subsequent entries are not symlinks and needn't be resolved;
 	e.g.,
-	'GIT_CEILING_DIRECTORIES=/maybe/symlink::/very/slow/non/symlink'.
+	`GIT_CEILING_DIRECTORIES=/maybe/symlink::/very/slow/non/symlink`.
 
-'GIT_DISCOVERY_ACROSS_FILESYSTEM'::
+`GIT_DISCOVERY_ACROSS_FILESYSTEM`::
 	When run in a directory that does not have ".git" repository
 	directory, Git tries to find such a directory in the parent
 	directories to find the top of the working tree, but by default it
 	does not cross filesystem boundaries.  This environment variable
 	can be set to true to tell Git not to stop at filesystem
-	boundaries.  Like 'GIT_CEILING_DIRECTORIES', this will not affect
-	an explicit repository directory set via 'GIT_DIR' or on the
+	boundaries.  Like `GIT_CEILING_DIRECTORIES`, this will not affect
+	an explicit repository directory set via `GIT_DIR` or on the
 	command line.
 
-'GIT_COMMON_DIR'::
+`GIT_COMMON_DIR`::
 	If this variable is set to a path, non-worktree files that are
 	normally in $GIT_DIR will be taken from this path
 	instead. Worktree-specific files such as HEAD or index are
@@ -902,28 +902,28 @@ Git so take care if using a foreign front-end.
 
 Git Commits
 ~~~~~~~~~~~
-'GIT_AUTHOR_NAME'::
-'GIT_AUTHOR_EMAIL'::
-'GIT_AUTHOR_DATE'::
-'GIT_COMMITTER_NAME'::
-'GIT_COMMITTER_EMAIL'::
-'GIT_COMMITTER_DATE'::
+`GIT_AUTHOR_NAME`::
+`GIT_AUTHOR_EMAIL`::
+`GIT_AUTHOR_DATE`::
+`GIT_COMMITTER_NAME`::
+`GIT_COMMITTER_EMAIL`::
+`GIT_COMMITTER_DATE`::
 'EMAIL'::
 	see linkgit:git-commit-tree[1]
 
 Git Diffs
 ~~~~~~~~~
-'GIT_DIFF_OPTS'::
+`GIT_DIFF_OPTS`::
 	Only valid setting is "--unified=??" or "-u??" to set the
 	number of context lines shown when a unified diff is created.
 	This takes precedence over any "-U" or "--unified" option
 	value passed on the Git diff command line.
 
-'GIT_EXTERNAL_DIFF'::
-	When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
+`GIT_EXTERNAL_DIFF`::
+	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
 	program named by it is called, instead of the diff invocation
 	described above.  For a path that is added, removed, or modified,
-        'GIT_EXTERNAL_DIFF' is called with 7 parameters:
+	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
 
 	path old-file old-hex old-mode new-file new-hex new-mode
 +
@@ -937,42 +937,42 @@ where:
 The file parameters can point at the user's working file
 (e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
 when a new file is added), or a temporary file (e.g. `old-file` in the
-index).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
-temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
+index).  `GIT_EXTERNAL_DIFF` should not worry about unlinking the
+temporary file --- it is removed when `GIT_EXTERNAL_DIFF` exits.
 +
-For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
+For a path that is unmerged, `GIT_EXTERNAL_DIFF` is called with 1
 parameter, <path>.
 +
-For each path 'GIT_EXTERNAL_DIFF' is called, two environment variables,
-'GIT_DIFF_PATH_COUNTER' and 'GIT_DIFF_PATH_TOTAL' are set.
+For each path `GIT_EXTERNAL_DIFF` is called, two environment variables,
+`GIT_DIFF_PATH_COUNTER` and `GIT_DIFF_PATH_TOTAL` are set.
 
-'GIT_DIFF_PATH_COUNTER'::
+`GIT_DIFF_PATH_COUNTER`::
 	A 1-based counter incremented by one for every path.
 
-'GIT_DIFF_PATH_TOTAL'::
+`GIT_DIFF_PATH_TOTAL`::
 	The total number of paths.
 
 other
 ~~~~~
-'GIT_MERGE_VERBOSITY'::
+`GIT_MERGE_VERBOSITY`::
 	A number controlling the amount of output shown by
 	the recursive merge strategy.  Overrides merge.verbosity.
 	See linkgit:git-merge[1]
 
-'GIT_PAGER'::
+`GIT_PAGER`::
 	This environment variable overrides `$PAGER`. If it is set
 	to an empty string or to the value "cat", Git will not launch
 	a pager.  See also the `core.pager` option in
 	linkgit:git-config[1].
 
-'GIT_EDITOR'::
+`GIT_EDITOR`::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
 	It is used by several Git commands when, on interactive mode,
 	an editor is to be launched. See also linkgit:git-var[1]
 	and the `core.editor` option in linkgit:git-config[1].
 
-'GIT_SSH'::
-'GIT_SSH_COMMAND'::
+`GIT_SSH`::
+`GIT_SSH_COMMAND`::
 	If either of these environment variables is set then 'git fetch'
 	and 'git push' will use the specified command instead of 'ssh'
 	when they need to connect to a remote system.
@@ -992,18 +992,18 @@ Usually it is easier to configure any desired options through your
 personal `.ssh/config` file.  Please consult your ssh documentation
 for further details.
 
-'GIT_ASKPASS'::
+`GIT_ASKPASS`::
 	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
 	will call this program with a suitable prompt as command-line argument
-	and read the password from its STDOUT. See also the 'core.askPass'
+	and read the password from its STDOUT. See also the `core.askPass`
 	option in linkgit:git-config[1].
 
-'GIT_TERMINAL_PROMPT'::
+`GIT_TERMINAL_PROMPT`::
 	If this environment variable is set to `0`, git will not prompt
 	on the terminal (e.g., when asking for HTTP authentication).
 
-'GIT_CONFIG_NOSYSTEM'::
+`GIT_CONFIG_NOSYSTEM`::
 	Whether to skip reading settings from the system-wide
 	`$(prefix)/etc/gitconfig` file.  This environment variable can
 	be used along with `$HOME` and `$XDG_CONFIG_HOME` to create a
@@ -1011,7 +1011,7 @@ for further details.
 	temporarily to avoid using a buggy `/etc/gitconfig` file while
 	waiting for someone with sufficient permissions to fix it.
 
-'GIT_FLUSH'::
+`GIT_FLUSH`::
 	If this environment variable is set to "1", then commands such
 	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
 	'git check-attr' and 'git check-ignore' will
@@ -1022,7 +1022,7 @@ for further details.
 	not set, Git will choose buffered or record-oriented flushing
 	based on whether stdout appears to be redirected to a file or not.
 
-'GIT_TRACE'::
+`GIT_TRACE`::
 	Enables general trace messages, e.g. alias expansion, built-in
 	command execution and external command execution.
 +
@@ -1043,21 +1043,21 @@ into it.
 Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
 
-'GIT_TRACE_PACK_ACCESS'::
+`GIT_TRACE_PACK_ACCESS`::
 	Enables trace messages for all accesses to any packs. For each
 	access, the pack file name and an offset in the pack is
 	recorded. This may be helpful for troubleshooting some
 	pack-related performance problems.
-	See 'GIT_TRACE' for available trace output options.
+	See `GIT_TRACE` for available trace output options.
 
-'GIT_TRACE_PACKET'::
+`GIT_TRACE_PACKET`::
 	Enables trace messages for all packets coming in or out of a
 	given program. This can help with debugging object negotiation
 	or other protocol issues. Tracing is turned off at a packet
-	starting with "PACK" (but see 'GIT_TRACE_PACKFILE' below).
-	See 'GIT_TRACE' for available trace output options.
+	starting with "PACK" (but see `GIT_TRACE_PACKFILE` below).
+	See `GIT_TRACE` for available trace output options.
 
-'GIT_TRACE_PACKFILE'::
+`GIT_TRACE_PACKFILE`::
 	Enables tracing of packfiles sent or received by a
 	given program. Unlike other trace output, this trace is
 	verbatim: no headers, and no quoting of binary data. You almost
@@ -1068,22 +1068,22 @@ Unsetting the variable, or setting it to empty, "0" or
 Note that this is currently only implemented for the client side
 of clones and fetches.
 
-'GIT_TRACE_PERFORMANCE'::
+`GIT_TRACE_PERFORMANCE`::
 	Enables performance related trace messages, e.g. total execution
 	time of each Git command.
-	See 'GIT_TRACE' for available trace output options.
+	See `GIT_TRACE` for available trace output options.
 
-'GIT_TRACE_SETUP'::
+`GIT_TRACE_SETUP`::
 	Enables trace messages printing the .git, working tree and current
 	working directory after Git has completed its setup phase.
-	See 'GIT_TRACE' for available trace output options.
+	See `GIT_TRACE` for available trace output options.
 
-'GIT_TRACE_SHALLOW'::
+`GIT_TRACE_SHALLOW`::
 	Enables trace messages that can help debugging fetching /
 	cloning of shallow repositories.
-	See 'GIT_TRACE' for available trace output options.
+	See `GIT_TRACE` for available trace output options.
 
-'GIT_LITERAL_PATHSPECS'::
+`GIT_LITERAL_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,
 	running `GIT_LITERAL_PATHSPECS=1 git log -- '*.c'` will search
@@ -1092,19 +1092,19 @@ of clones and fetches.
 	literal paths to Git (e.g., paths previously given to you by
 	`git ls-tree`, `--raw` diff output, etc).
 
-'GIT_GLOB_PATHSPECS'::
+`GIT_GLOB_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as glob patterns (aka "glob" magic).
 
-'GIT_NOGLOB_PATHSPECS'::
+`GIT_NOGLOB_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as literal (aka "literal" magic).
 
-'GIT_ICASE_PATHSPECS'::
+`GIT_ICASE_PATHSPECS`::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as case-insensitive.
 
-'GIT_REFLOG_ACTION'::
+`GIT_REFLOG_ACTION`::
 	When a ref is updated, reflog entries are created to keep
 	track of the reason why the ref was updated (which is
 	typically the name of the high-level command that updated
@@ -1114,7 +1114,7 @@ of clones and fetches.
 	variable when it is invoked as the top level command by the
 	end user, to be recorded in the body of the reflog.
 
-'GIT_REF_PARANOIA'::
+`GIT_REF_PARANOIA`::
 	If set to `1`, include broken or badly named refs when iterating
 	over lists of refs. In a normal, non-corrupted repository, this
 	does nothing. However, enabling it may help git to detect and
@@ -1125,7 +1125,7 @@ of clones and fetches.
 	an operation has touched every ref (e.g., because you are
 	cloning a repository to make a backup).
 
-'GIT_ALLOW_PROTOCOL'::
+`GIT_ALLOW_PROTOCOL`::
 	If set, provide a colon-separated list of protocols which are
 	allowed to be used with fetch/push/clone. This is useful to
 	restrict recursive submodule initialization from an untrusted
