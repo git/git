@@ -176,6 +176,7 @@ extern const char *format_subject(struct strbuf *sb, const char *msg,
 				  const char *line_separator);
 extern void userformat_find_requirements(const char *fmt, struct userformat_want *w);
 extern int commit_format_is_empty(enum cmit_fmt);
+extern const char *skip_blank_lines(const char *msg);
 extern void format_commit_message(const struct commit *commit,
 				  const char *format, struct strbuf *sb,
 				  const struct pretty_print_context *context);
