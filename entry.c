@@ -175,8 +175,13 @@ static int write_entry(struct cache_entry *ce,
 
 		/*
 		 * Convert from git internal format to working tree format
+		 * unless the smudgeToFile filter can write to the
+		 * file directly.
 		 */
-		if (ce_mode_s_ifmt == S_IFREG &&
+		int regular_file = ce_mode_s_ifmt == S_IFREG;
+		int smudge_to_file = regular_file
+			&& can_smudge_to_file(ce->name);
+		if (regular_file && ! smudge_to_file &&
 		    convert_to_working_tree(ce->name, new, size, &buf)) {
 			free(new);
 			new = strbuf_detach(&buf, &newsize);
@@ -189,13 +194,29 @@ static int write_entry(struct cache_entry *ce,
 			return error_errno("unable to create file %s", path);
 		}
 
-		wrote = write_in_full(fd, new, size);
-		if (!to_tempfile)
-			fstat_done = fstat_output(fd, state, &st);
-		close(fd);
-		free(new);
-		if (wrote != size)
-			return error("unable to write file %s", path);
+		if (! smudge_to_file) {
+			wrote = write_in_full(fd, new, size);
+			if (!to_tempfile)
+				fstat_done = fstat_output(fd, state, &st);
+			close(fd);
+			free(new);
+			if (wrote != size)
+				return error("unable to write file %s", path);
+		}
+		else {
+			close(fd);
+			convert_to_working_tree_filter_to_file(ce->name, path, new, size);
+			free(new);
+			/* The smudgeToFile filter may have replaced the
+			 * file; open it to make sure that the file
+			 * exists. */
+			fd = open(path, O_RDONLY);
+			if (fd < 0)
+				return error_errno("unable to create file %s", path);
+			if (!to_tempfile)
+				fstat_done = fstat_output(fd, state, &st);
+			close(fd);
+		}
 		break;
 	case S_IFGITLINK:
 		if (to_tempfile)
