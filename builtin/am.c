@@ -1439,12 +1439,16 @@ static void get_commit_info(struct am_state *state, struct commit *commit)
 /**
  * Writes `commit` as a patch to the state directory's "patch" file.
  */
-static void write_commit_patch(const struct am_state *state, struct commit *commit)
+static int write_commit_patch(const struct am_state *state, struct commit *commit)
 {
 	struct rev_info rev_info;
 	FILE *fp;
+	int res;
 
-	fp = xfopen(am_path(state, "patch"), "w");
+	fp = fopen(am_path(state, "patch"), "w");
+	if (!fp)
+		return error(_("Could not open %s for writing"),
+			am_path(state, "patch"));
 	init_revisions(&rev_info, NULL);
 	rev_info.diff = 1;
 	rev_info.abbrev = 0;
@@ -1456,10 +1460,11 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
 	DIFF_OPT_SET(&rev_info.diffopt, FULL_INDEX);
 	rev_info.diffopt.use_color = 0;
 	rev_info.diffopt.file = fp;
-	rev_info.diffopt.close_file = 1;
 	add_pending_object(&rev_info, &commit->object, "");
 	diff_setup_done(&rev_info.diffopt);
-	log_tree_commit(&rev_info, commit);
+	res = log_tree_commit(&rev_info, commit);
+	fclose(fp);
+	return res;
 }
 
 /**
@@ -1507,13 +1512,14 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 	unsigned char commit_sha1[GIT_SHA1_RAWSZ];
 
 	if (get_mail_commit_sha1(commit_sha1, mail) < 0)
-		die(_("could not parse %s"), mail);
+		return error(_("could not parse %s"), mail);
 
 	commit = lookup_commit_or_die(commit_sha1, mail);
 
 	get_commit_info(state, commit);
 
-	write_commit_patch(state, commit);
+	if (write_commit_patch(state, commit) < 0)
+		return -1;
 
 	hashcpy(state->orig_commit, commit_sha1);
 	write_state_text(state, "original-commit", sha1_to_hex(commit_sha1));
