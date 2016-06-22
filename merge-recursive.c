@@ -765,14 +765,6 @@ static void update_file_flags(struct merge_options *o,
 			die(_("cannot read object %s '%s'"), oid_to_hex(oid), path);
 		if (type != OBJ_BLOB)
 			die(_("blob expected for %s '%s'"), oid_to_hex(oid), path);
-		if (S_ISREG(mode)) {
-			struct strbuf strbuf = STRBUF_INIT;
-			if (convert_to_working_tree(path, buf, size, &strbuf)) {
-				free(buf);
-				size = strbuf.len;
-				buf = strbuf_detach(&strbuf, NULL);
-			}
-		}
 
 		if (make_room_for_path(o, path) < 0) {
 			update_wd = 0;
@@ -781,6 +773,9 @@ static void update_file_flags(struct merge_options *o,
 		}
 		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
 			int fd;
+			int isreg = S_ISREG(mode);
+			int smudge_to_file;
+
 			if (mode & 0100)
 				mode = 0777;
 			else
@@ -788,8 +783,38 @@ static void update_file_flags(struct merge_options *o,
 			fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
 			if (fd < 0)
 				die_errno(_("failed to open '%s'"), path);
-			write_in_full(fd, buf, size);
-			close(fd);
+
+			smudge_to_file = can_smudge_to_file(path);
+
+			if (smudge_to_file) {
+				close(fd);
+				fd = convert_to_working_tree_filter_to_file(path, path, buf, size);
+				if (fd < 0) {
+					/* smudgeToFile filter failed;
+					 * continue with regular file
+					 * creation. */
+					smudge_to_file = 0;
+					fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, mode);
+					if (fd < 0)
+						die_errno(_("failed to open '%s'"), path);
+				}
+				else {
+					close(fd);
+				}
+			}
+
+			if (! smudge_to_file) {
+				if (isreg) {
+					struct strbuf strbuf = STRBUF_INIT;
+					if (convert_to_working_tree(path, buf, size, &strbuf)) {
+						free(buf);
+						size = strbuf.len;
+						buf = strbuf_detach(&strbuf, NULL);
+					}
+				}
+				write_in_full(fd, buf, size);
+				close(fd);
+			}
 		} else if (S_ISLNK(mode)) {
 			char *lnk = xmemdupz(buf, size);
 			safe_create_leading_directories_const(path);

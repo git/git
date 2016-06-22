@@ -146,6 +146,7 @@ static int write_entry(struct cache_entry *ce,
 	unsigned long size;
 	size_t wrote, newsize = 0;
 	struct stat st;
+	int regular_file, smudge_to_file;
 
 	if (ce_mode_s_ifmt == S_IFREG) {
 		struct stream_filter *filter = get_stream_filter(ce->name, ce->sha1);
@@ -175,13 +176,11 @@ static int write_entry(struct cache_entry *ce,
 
 		/*
 		 * Convert from git internal format to working tree format
+		 * unless the smudgeToFile filter can write to the
+		 * file directly.
 		 */
-		if (ce_mode_s_ifmt == S_IFREG &&
-		    convert_to_working_tree(ce->name, new, size, &buf)) {
-			free(new);
-			new = strbuf_detach(&buf, &newsize);
-			size = newsize;
-		}
+		regular_file = ce_mode_s_ifmt == S_IFREG;
+		smudge_to_file = regular_file && can_smudge_to_file(ce->name);
 
 		fd = open_output_fd(path, ce, to_tempfile);
 		if (fd < 0) {
@@ -189,13 +188,41 @@ static int write_entry(struct cache_entry *ce,
 			return error_errno("unable to create file %s", path);
 		}
 
-		wrote = write_in_full(fd, new, size);
-		if (!to_tempfile)
-			fstat_done = fstat_output(fd, state, &st);
-		close(fd);
-		free(new);
-		if (wrote != size)
-			return error("unable to write file %s", path);
+		if (smudge_to_file) {
+			close(fd);
+			fd = convert_to_working_tree_filter_to_file(ce->name, path, new, size);
+			if (fd < 0) {
+				smudge_to_file = 0;
+				/* re-open for recovery write */
+				fd = open_output_fd(path, ce, to_tempfile);
+				if (fd < 0) {
+					free(new);
+					return error_errno("unable to create file %s", path);
+				}
+			}
+			else {
+				free(new);
+				if (!to_tempfile)
+					fstat_done = fstat_output(fd, state, &st);
+				close(fd);
+			}
+		}
+
+		if (! smudge_to_file) {
+			if (regular_file &&
+			    convert_to_working_tree(ce->name, new, size, &buf)) {
+				free(new);
+				new = strbuf_detach(&buf, &newsize);
+				size = newsize;
+			}
+			wrote = write_in_full(fd, new, size);
+			if (!to_tempfile)
+				fstat_done = fstat_output(fd, state, &st);
+			close(fd);
+			free(new);
+			if (wrote != size)
+				return error("unable to write file %s", path);
+		}
 		break;
 	case S_IFGITLINK:
 		if (to_tempfile)
