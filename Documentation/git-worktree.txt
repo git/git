@@ -10,8 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git worktree add' [-f] [--detach] [--checkout] [-b <new-branch>] <path> [<branch>]
-'git worktree prune' [-n] [-v] [--expire <expire>]
 'git worktree list' [--porcelain]
+'git worktree prune' [-n] [-v] [--expire <expire>]
 
 DESCRIPTION
 -----------
@@ -55,16 +55,16 @@ If `<branch>` is omitted and neither `-b` nor `-B` nor `--detached` used,
 then, as a convenience, a new branch based at HEAD is created automatically,
 as if `-b $(basename <path>)` was specified.
 
-prune::
-
-Prune working tree information in $GIT_DIR/worktrees.
-
 list::
 
 List details of each worktree.  The main worktree is listed first, followed by
 each of the linked worktrees.  The output details include if the worktree is
 bare, the revision currently checked out, and the branch currently checked out
 (or 'detached HEAD' if none).
+
+prune::
+
+Prune working tree information in $GIT_DIR/worktrees.
 
 OPTIONS
 -------
