@@ -20,7 +20,9 @@
  * side can't, we stay with pure read/write interfaces.
  */
 void packet_flush(int fd);
+int packet_flush_gently(int fd);
 void packet_write(int fd, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+int packet_write_gently(int fd, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
 void packet_buf_flush(struct strbuf *buf);
 void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
 

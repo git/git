@@ -295,3 +295,25 @@ The remaining data of each directory block is grouped by type:
     in the previous ewah bitmap.
 
   - One NUL.
+
+== Watchman cache
+
+  The watchman cache tracks files for which watchman has told us about
+  changes.  The signature for this extension is { 'W', 'A', 'M', 'A' }.
+
+  The extension starts with
+
+  - A NUL-terminated string: the watchman vector clock at the last
+    time we heard from watchman.
+
+  - 32-bit bitmap size: the size of the CE_WATCHMAN_DIRTY bitmap
+
+  - 32-bit untracked cache entry count: the number of dirty untracked
+    cache entries
+
+  - An ewah bitmap, the n-th bit indicates whether the n-th index entry
+    is CE_WATCHMAN_DIRTY.
+
+  - a list of N NUL-terminated strings.  Each is a directory that should
+    be marked dirty in the untracked cache because watchman has told us
+    about an update to a file in it.

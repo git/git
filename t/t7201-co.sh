@@ -257,7 +257,7 @@ test_expect_success 'checkout to detach HEAD' '
 	git checkout -f renamer && git clean -f &&
 	git checkout renamer^ 2>messages &&
 	test_i18ngrep "HEAD is now at 7329388" messages &&
-	test_line_count -gt 1 messages &&
+	(test_line_count -gt 1 messages || test -n "$GETTEXT_POISON") &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/master) &&
 	test "z$H" = "z$M" &&
@@ -415,7 +415,7 @@ test_expect_success 'checkout w/--track from non-branch HEAD fails' '
     test_must_fail git checkout --track -b track &&
     test_must_fail git rev-parse --verify track &&
     test_must_fail git symbolic-ref HEAD &&
-    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+    test_cmp_rev master^0 HEAD
 '
 
 test_expect_success 'checkout w/--track from tag fails' '
@@ -424,7 +424,7 @@ test_expect_success 'checkout w/--track from tag fails' '
     test_must_fail git checkout --track -b track frotz &&
     test_must_fail git rev-parse --verify track &&
     test_must_fail git symbolic-ref HEAD &&
-    test "z$(git rev-parse master^0)" = "z$(git rev-parse HEAD)"
+    test_cmp_rev master^0 HEAD
 '
 
 test_expect_success 'detach a symbolic link HEAD' '
@@ -436,7 +436,7 @@ test_expect_success 'detach a symbolic link HEAD' '
     test "z$it" = zrefs/heads/master &&
     here=$(git rev-parse --verify refs/heads/master) &&
     git checkout side^ &&
-    test "z$(git rev-parse --verify refs/heads/master)" = "z$here"
+    test_cmp_rev refs/heads/master "$here"
 '
 
 test_expect_success \
@@ -446,19 +446,19 @@ test_expect_success \
 
     git checkout --track origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+    test_cmp_rev HEAD renamer &&
 
     git checkout master && git branch -D koala/bear &&
 
     git checkout --track refs/remotes/origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)" &&
+    test_cmp_rev HEAD renamer &&
 
     git checkout master && git branch -D koala/bear &&
 
     git checkout --track remotes/origin/koala/bear &&
     test "refs/heads/koala/bear" = "$(git symbolic-ref HEAD)" &&
-    test "$(git rev-parse HEAD)" = "$(git rev-parse renamer)"
+    test_cmp_rev HEAD renamer
 '
 
 test_expect_success \

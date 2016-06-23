@@ -51,7 +51,7 @@ test_expect_success 'skip same-resolution merges with -p' '
 	test_commit J file1 23 &&
 	test_commit K file7 file7 &&
 	git rebase -i -p L &&
-	test $(git rev-parse HEAD^^) = $(git rev-parse L) &&
+	test_cmp_rev HEAD^^ L &&
 	test "23" = "$(cat file1)" &&
 	test "I" = "$(cat file6)" &&
 	test "file7" = "$(cat file7)"
@@ -76,7 +76,7 @@ test_expect_success 'keep different-resolution merges with -p' '
 	echo 234 > file1 &&
 	git add file1 &&
 	git rebase --continue &&
-	test $(git rev-parse HEAD^^^) = $(git rev-parse L2) &&
+	test_cmp_rev HEAD^^^ L2 &&
 	test "234" = "$(cat file1)" &&
 	test "I" = "$(cat file6)" &&
 	test "file7" = "$(cat file7)"

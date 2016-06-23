@@ -40,7 +40,7 @@ testrebase() {
 		test_must_fail git rebase$type master &&
 		test_path_is_dir "$dotest" &&
 		git rebase --abort &&
-		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test_cmp_rev to-rebase pre-rebase &&
 		test ! -d "$dotest"
 	'
 
@@ -51,9 +51,9 @@ testrebase() {
 		test_must_fail git rebase$type master &&
 		test_path_is_dir "$dotest" &&
 		test_must_fail git rebase --skip &&
-		test $(git rev-parse HEAD) = $(git rev-parse master) &&
+		test_cmp_rev HEAD master &&
 		git rebase --abort &&
-		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test_cmp_rev to-rebase pre-rebase &&
 		test ! -d "$dotest"
 	'
 
@@ -69,7 +69,7 @@ testrebase() {
 		test_must_fail git rebase --continue &&
 		test $(git rev-parse HEAD) != $(git rev-parse master) &&
 		git rebase --abort &&
-		test $(git rev-parse to-rebase) = $(git rev-parse pre-rebase) &&
+		test_cmp_rev to-rebase pre-rebase &&
 		test ! -d "$dotest"
 	'
 

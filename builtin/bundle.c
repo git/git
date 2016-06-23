@@ -35,9 +35,9 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 		bundle_file = buffer;
 	}
 
-	memset(&header, 0, sizeof(header));
-	if (strcmp(cmd, "create") && (bundle_fd =
-				read_bundle_header(bundle_file, &header)) < 0)
+	init_bundle_header(&header, bundle_file);
+	if (strcmp(cmd, "create") &&
+	    (bundle_fd = read_bundle_header(&header)) < 0)
 		return 1;
 
 	if (!strcmp(cmd, "verify")) {

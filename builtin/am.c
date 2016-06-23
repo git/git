@@ -70,7 +70,8 @@ enum patch_format {
 	PATCH_FORMAT_MBOX,
 	PATCH_FORMAT_STGIT,
 	PATCH_FORMAT_STGIT_SERIES,
-	PATCH_FORMAT_HG
+	PATCH_FORMAT_HG,
+	PATCH_FORMAT_MBOXRD
 };
 
 enum keep_type {
@@ -712,7 +713,8 @@ done:
  * Splits out individual email patches from `paths`, where each path is either
  * a mbox file or a Maildir. Returns 0 on success, -1 on failure.
  */
-static int split_mail_mbox(struct am_state *state, const char **paths, int keep_cr)
+static int split_mail_mbox(struct am_state *state, const char **paths,
+				int keep_cr, int mboxrd)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf last = STRBUF_INIT;
@@ -724,6 +726,8 @@ static int split_mail_mbox(struct am_state *state, const char **paths, int keep_
 	argv_array_push(&cp.args, "-b");
 	if (keep_cr)
 		argv_array_push(&cp.args, "--keep-cr");
+	if (mboxrd)
+		argv_array_push(&cp.args, "--mboxrd");
 	argv_array_push(&cp.args, "--");
 	argv_array_pushv(&cp.args, paths);
 
@@ -965,13 +969,15 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 
 	switch (patch_format) {
 	case PATCH_FORMAT_MBOX:
-		return split_mail_mbox(state, paths, keep_cr);
+		return split_mail_mbox(state, paths, keep_cr, 0);
 	case PATCH_FORMAT_STGIT:
 		return split_mail_conv(stgit_patch_to_mail, state, paths, keep_cr);
 	case PATCH_FORMAT_STGIT_SERIES:
 		return split_mail_stgit_series(state, paths, keep_cr);
 	case PATCH_FORMAT_HG:
 		return split_mail_conv(hg_patch_to_mail, state, paths, keep_cr);
+	case PATCH_FORMAT_MBOXRD:
+		return split_mail_mbox(state, paths, keep_cr, 1);
 	default:
 		die("BUG: invalid patch_format");
 	}
@@ -1433,12 +1439,16 @@ static void get_commit_info(struct am_state *state, struct commit *commit)
 /**
  * Writes `commit` as a patch to the state directory's "patch" file.
  */
-static void write_commit_patch(const struct am_state *state, struct commit *commit)
+static int write_commit_patch(const struct am_state *state, struct commit *commit)
 {
 	struct rev_info rev_info;
 	FILE *fp;
+	int res;
 
-	fp = xfopen(am_path(state, "patch"), "w");
+	fp = fopen(am_path(state, "patch"), "w");
+	if (!fp)
+		return error(_("Could not open %s for writing"),
+			am_path(state, "patch"));
 	init_revisions(&rev_info, NULL);
 	rev_info.diff = 1;
 	rev_info.abbrev = 0;
@@ -1450,10 +1460,11 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
 	DIFF_OPT_SET(&rev_info.diffopt, FULL_INDEX);
 	rev_info.diffopt.use_color = 0;
 	rev_info.diffopt.file = fp;
-	rev_info.diffopt.close_file = 1;
 	add_pending_object(&rev_info, &commit->object, "");
 	diff_setup_done(&rev_info.diffopt);
-	log_tree_commit(&rev_info, commit);
+	res = log_tree_commit(&rev_info, commit);
+	fclose(fp);
+	return res;
 }
 
 /**
@@ -1501,13 +1512,14 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 	unsigned char commit_sha1[GIT_SHA1_RAWSZ];
 
 	if (get_mail_commit_sha1(commit_sha1, mail) < 0)
-		die(_("could not parse %s"), mail);
+		return error(_("could not parse %s"), mail);
 
 	commit = lookup_commit_or_die(commit_sha1, mail);
 
 	get_commit_info(state, commit);
 
-	write_commit_patch(state, commit);
+	if (write_commit_patch(state, commit) < 0)
+		return -1;
 
 	hashcpy(state->orig_commit, commit_sha1);
 	write_state_text(state, "original-commit", sha1_to_hex(commit_sha1));
@@ -2201,6 +2213,8 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 		*opt_value = PATCH_FORMAT_STGIT_SERIES;
 	else if (!strcmp(arg, "hg"))
 		*opt_value = PATCH_FORMAT_HG;
+	else if (!strcmp(arg, "mboxrd"))
+		*opt_value = PATCH_FORMAT_MBOXRD;
 	else
 		return error(_("Invalid value for --patch-format: %s"), arg);
 	return 0;

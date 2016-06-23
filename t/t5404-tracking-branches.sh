@@ -40,7 +40,7 @@ test_expect_success 'mixed-success push returns error' '
 '
 
 test_expect_success 'check tracking branches updated correctly after push' '
-	test "$(git rev-parse origin/master)" = "$(git rev-parse master)"
+	test_cmp_rev origin/master master
 '
 
 test_expect_success 'check tracking branches not updated for failed refs' '

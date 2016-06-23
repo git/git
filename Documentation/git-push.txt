@@ -137,8 +137,8 @@ already exists on the remote side.
 	and also push annotated tags in `refs/tags` that are missing
 	from the remote but are pointing at commit-ish that are
 	reachable from the refs being pushed.  This can also be specified
-	with configuration variable 'push.followTags'.  For more
-	information, see 'push.followTags' in linkgit:git-config[1].
+	with configuration variable `push.followTags`.  For more
+	information, see `push.followTags` in linkgit:git-config[1].
 
 --[no-]signed::
 --sign=(true|false|if-asked)::
@@ -240,7 +240,7 @@ origin +master` to force a push to the `master` branch). See the
 	For every branch that is up to date or successfully pushed, add
 	upstream (tracking) reference, used by argument-less
 	linkgit:git-pull[1] and other commands. For more information,
-	see 'branch.<name>.merge' in linkgit:git-config[1].
+	see `branch.<name>.merge` in linkgit:git-config[1].
 
 --[no-]thin::
 	These options are passed to linkgit:git-send-pack[1]. A thin transfer

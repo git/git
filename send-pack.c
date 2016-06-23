@@ -36,18 +36,15 @@ int option_parse_push_signed(const struct option *opt,
 	die("bad %s argument: %s", opt->long_name, arg);
 }
 
-static int feed_object(const unsigned char *sha1, int fd, int negative)
+static void feed_object(const unsigned char *sha1, FILE *fh, int negative)
 {
-	char buf[42];
-
 	if (negative && !has_sha1_file(sha1))
-		return 1;
+		return;
 
-	memcpy(buf + negative, sha1_to_hex(sha1), 40);
 	if (negative)
-		buf[0] = '^';
-	buf[40 + negative] = '\n';
-	return write_or_whine(fd, buf, 41 + negative, "send-pack: send refs");
+		putc('^', fh);
+	fputs(sha1_to_hex(sha1), fh);
+	putc('\n', fh);
 }
 
 /*
@@ -73,6 +70,7 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		NULL,
 	};
 	struct child_process po = CHILD_PROCESS_INIT;
+	FILE *po_in;
 	int i;
 
 	i = 4;
@@ -97,21 +95,22 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
+	po_in = xfdopen(po.in, "w");
 	for (i = 0; i < extra->nr; i++)
-		if (!feed_object(extra->sha1[i], po.in, 1))
-			break;
+		feed_object(extra->sha1[i], po_in, 1);
 
 	while (refs) {
-		if (!is_null_oid(&refs->old_oid) &&
-		    !feed_object(refs->old_oid.hash, po.in, 1))
-			break;
-		if (!is_null_oid(&refs->new_oid) &&
-		    !feed_object(refs->new_oid.hash, po.in, 0))
-			break;
+		if (!is_null_oid(&refs->old_oid))
+			feed_object(refs->old_oid.hash, po_in, 1);
+		if (!is_null_oid(&refs->new_oid))
+			feed_object(refs->new_oid.hash, po_in, 0);
 		refs = refs->next;
 	}
 
-	close(po.in);
+	fflush(po_in);
+	if (ferror(po_in))
+		die_errno("error writing to pack-objects");
+	fclose(po_in);
 
 	if (args->stateless_rpc) {
 		char *buf = xmalloc(LARGE_PACKET_MAX);

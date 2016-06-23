@@ -61,10 +61,7 @@ test_expect_success 'parse errors in blobs are properly attributed' '
 	git commit -m broken &&
 
 	test_must_fail git config --blob=HEAD:config some.value 2>err &&
-
-	# just grep for our token as the exact error message is likely to
-	# change or be internationalized
-	grep "HEAD:config" err
+	test_i18ngrep "HEAD:config" err
 '
 
 test_expect_success 'can parse blob ending with CR' '

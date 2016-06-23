@@ -72,9 +72,14 @@ static void preload_index(struct index_state *index,
 {
 	int threads, i, work, offset;
 	struct thread_data data[MAX_PARALLEL];
+	uint64_t start = getnanotime();
 
 	if (!core_preload_index)
 		return;
+
+	/* Do not preload when pathspec uses non-threadable subsystems */
+	if (pathspec && pathspec_is_non_threadable(pathspec))
+		return; /* for now ... */
 
 	threads = index->cache_nr / THREAD_COST;
 	if (threads < 2)
@@ -100,6 +105,7 @@ static void preload_index(struct index_state *index,
 		if (pthread_join(p->pthread, NULL))
 			die("unable to join threaded lstat");
 	}
+	trace_performance_since(start, "preload index");
 }
 #endif
 

@@ -644,7 +644,7 @@ test_expect_success 'fetch --prune prints the remotes url' '
 		git fetch --prune origin 2>&1 | head -n1 >../actual
 	) &&
 	echo "From ${D}/." >expect &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'branchname D/F conflict resolved by --prune' '

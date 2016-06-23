@@ -1,7 +1,7 @@
 DATE FORMATS
 ------------
 
-The GIT_AUTHOR_DATE, GIT_COMMITTER_DATE environment variables
+The `GIT_AUTHOR_DATE`, `GIT_COMMITTER_DATE` environment variables
 ifdef::git-commit[]
 and the `--date` option
 endif::git-commit[]

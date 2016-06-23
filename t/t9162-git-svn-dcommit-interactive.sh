@@ -21,7 +21,7 @@ test_expect_success 'answers: y [\n] yes' '
 		( echo "y
 
 y" | GIT_SVN_NOTTY=1 git svn dcommit --interactive ) &&
-		test $(git rev-parse HEAD) = $(git rev-parse remotes/git-svn)
+		test_cmp_rev HEAD remotes/git-svn
 	)
 	'
 
@@ -33,7 +33,7 @@ test_expect_success 'answers: yes yes no' '
 		( echo "yes
 yes
 no" | GIT_SVN_NOTTY=1 git svn dcommit --interactive ) &&
-		test $(git rev-parse HEAD^^^) = $(git rev-parse remotes/git-svn) &&
+		test_cmp_rev HEAD^^^ remotes/git-svn &&
 		git reset --hard remotes/git-svn
 	)
 	'
@@ -45,7 +45,7 @@ test_expect_success 'answers: yes quit' '
 		echo "change #3" >> foo && git commit -a -m"change #3" &&
 		( echo "yes
 quit" | GIT_SVN_NOTTY=1 git svn dcommit --interactive ) &&
-		test $(git rev-parse HEAD^^^) = $(git rev-parse remotes/git-svn) &&
+		test_cmp_rev HEAD^^^ remotes/git-svn &&
 		git reset --hard remotes/git-svn
 	)
 	'
@@ -56,7 +56,7 @@ test_expect_success 'answers: all' '
 		echo "change #2" >> foo && git commit -a -m"change #2" &&
 		echo "change #3" >> foo && git commit -a -m"change #3" &&
 		( echo "all" | GIT_SVN_NOTTY=1 git svn dcommit --interactive ) &&
-		test $(git rev-parse HEAD) = $(git rev-parse remotes/git-svn) &&
+		test_cmp_rev HEAD remotes/git-svn &&
 		git reset --hard remotes/git-svn
 	)
 	'
