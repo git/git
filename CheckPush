@@ -72,10 +72,7 @@ then
 	else
 		echo "master..$next..next..$jch..jch..$pu..pu"
 	fi
-else
-	echo "git diff --stat next jch"
-	git diff --stat next jch
+elif match_next=$(git rev-parse 'jch^{/^### match next$}' 2>/dev/null)
+then
+	git diff --stat "$match_next" next
 fi
-
-match_next=$(git rev-parse 'jch^{/^### match next}') || exit
-git diff --stat "$match_next" next
