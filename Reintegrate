@@ -242,7 +242,7 @@ show_merge () {
 show_pick () {
 	case "$msg" in
 	"### "* | "###")
-		merged="$msg"
+		merged="$msg$LF"
 		;;
 	*)
 		merged="$(git rev-parse --verify "$commit") pick $msg"
