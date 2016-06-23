@@ -163,7 +163,7 @@ hex, like `#ff0ab3`.
 The accepted attributes are `bold`, `dim`, `ul`, `blink`, and `reverse`.
 The position of any attributes with respect to the colors (before, after,
 or in between), doesn't matter. Specific attributes may be turned off
-by prefixing them with `no` (e.g., `noreverse`, `noul`, etc).
+by prefixing them with `no` or `no-` (e.g., `noreverse`, `no-ul`, etc).
 +
 For git's pre-defined color slots, the attributes are meant to be reset
 at the beginning of each item in the colored output. So setting

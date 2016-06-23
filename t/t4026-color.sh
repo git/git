@@ -50,6 +50,10 @@ test_expect_success 'attr negation' '
 	color "nobold nodim noul noblink noreverse" "[22;24;25;27m"
 '
 
+test_expect_success '"no-" variant of negation' '
+	color "no-bold no-blink" "[22;25m"
+'
+
 test_expect_success 'long color specification' '
 	color "254 255 bold dim ul blink reverse" "[1;2;4;5;7;38;5;254;48;5;255m"
 '

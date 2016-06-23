@@ -141,8 +141,10 @@ static int parse_attr(const char *name, size_t len)
 	int negate = 0;
 	int i;
 
-	if (skip_prefix_mem(name, len, "no", &name, &len))
+	if (skip_prefix_mem(name, len, "no", &name, &len)) {
+		skip_prefix_mem(name, len, "-", &name, &len);
 		negate = 1;
+	}
 
 	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
 		if (attrs[i].len == len && !memcmp(attrs[i].name, name, len))
