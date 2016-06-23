@@ -46,7 +46,7 @@ The Git transport starts off by sending the command and repository
 on the wire using the pkt-line format, followed by a NUL byte and a
 hostname parameter, terminated by a NUL byte.
 
-   0032git-upload-pack /project.git\0host=myserver.com\0
+   0033git-upload-pack /project.git\0host=myserver.com\0
 
 --
    git-proto-request = request-command SP pathname NUL [ host-parameter NUL ]
