@@ -123,19 +123,30 @@ static int parse_color(struct color *out, const char *name, int len)
 	return -1;
 }
 
-static int parse_attr(const char *name, int len)
+static int parse_attr(const char *name, size_t len)
 {
-	static const int attr_values[] = { 1, 2, 4, 5, 7,
-					   22, 22, 24, 25, 27 };
-	static const char * const attr_names[] = {
-		"bold", "dim", "ul", "blink", "reverse",
-		"nobold", "nodim", "noul", "noblink", "noreverse"
+	static const struct {
+		const char *name;
+		size_t len;
+		int val, neg;
+	} attrs[] = {
+#define ATTR(x, val, neg) { (x), sizeof(x)-1, (val), (neg) }
+		ATTR("bold",      1, 22),
+		ATTR("dim",       2, 22),
+		ATTR("ul",        4, 24),
+		ATTR("blink",     5, 25),
+		ATTR("reverse",   7, 27)
+#undef ATTR
 	};
+	int negate = 0;
 	int i;
-	for (i = 0; i < ARRAY_SIZE(attr_names); i++) {
-		const char *str = attr_names[i];
-		if (!strncasecmp(name, str, len) && !str[len])
-			return attr_values[i];
+
+	if (skip_prefix_mem(name, len, "no", &name, &len))
+		negate = 1;
+
+	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
+		if (attrs[i].len == len && !memcmp(attrs[i].name, name, len))
+			return negate ? attrs[i].neg : attrs[i].val;
 	}
 	return -1;
 }
