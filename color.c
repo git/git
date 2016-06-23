@@ -136,7 +136,8 @@ static int parse_attr(const char *name, size_t len)
 		ATTR("italic",    3, 23),
 		ATTR("ul",        4, 24),
 		ATTR("blink",     5, 25),
-		ATTR("reverse",   7, 27)
+		ATTR("reverse",   7, 27),
+		ATTR("strike",    9, 29)
 #undef ATTR
 	};
 	int negate = 0;
