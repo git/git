@@ -682,9 +682,10 @@ sub wildo_flush_topic {
 }
 
 sub wildo_match {
-	if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|be re-?rolled)[,. ]/ ||
-	    /^Not urgent/ || /^Not ready/ || /^Waiting for / || /^Can wait in / ||
-	    /^Needs? / || /^Expecting / || /^May want to / || /^Still /) {
+	if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled)[,. ]/ ||
+	    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
+	    /^Can wait in / || /^Still / ||
+	    /^Needs? / || /^Expecting / || /^May want to /) {
 		return 1;
 	}
 	if (/^I think this is ready for /) {
