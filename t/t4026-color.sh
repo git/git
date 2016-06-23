@@ -60,8 +60,9 @@ test_expect_success 'long color specification' '
 
 test_expect_success 'absurdly long color specification' '
 	color \
-	  "#ffffff #ffffff bold nobold dim nodim ul noul blink noblink reverse noreverse" \
-	  "[1;2;4;5;7;22;24;25;27;38;2;255;255;255;48;2;255;255;255m"
+	  "#ffffff #ffffff bold nobold dim nodim italic noitalic
+	   ul noul blink noblink reverse noreverse" \
+	  "[1;2;3;4;5;7;22;23;24;25;27;38;2;255;255;255;48;2;255;255;255m"
 '
 
 test_expect_success '0-7 are aliases for basic ANSI color names' '

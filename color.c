@@ -133,6 +133,7 @@ static int parse_attr(const char *name, size_t len)
 #define ATTR(x, val, neg) { (x), sizeof(x)-1, (val), (neg) }
 		ATTR("bold",      1, 22),
 		ATTR("dim",       2, 22),
+		ATTR("italic",    3, 23),
 		ATTR("ul",        4, 24),
 		ATTR("blink",     5, 25),
 		ATTR("reverse",   7, 27)

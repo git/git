@@ -16,7 +16,8 @@ struct strbuf;
  *
  * The space for attributes is also slightly overallocated, as
  * the negation for some attributes is the same (e.g., nobold and nodim).
- * We also allocate space for 6 attributes (even though we have only 5).
+ *
+ * We allocate space for 6 attributes.
  */
 #define COLOR_MAXLEN 70
 
