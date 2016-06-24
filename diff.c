@@ -2866,7 +2866,7 @@ void diff_free_filespec_data(struct diff_filespec *s)
 static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 			   void *blob,
 			   unsigned long size,
-			   const unsigned char *sha1,
+			   const struct object_id *oid,
 			   int mode)
 {
 	int fd;
@@ -2891,7 +2891,7 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 		die_errno("unable to write temp-file");
 	close_tempfile(&temp->tempfile);
 	temp->name = get_tempfile_path(&temp->tempfile);
-	sha1_to_hex_r(temp->hex, sha1);
+	oid_to_hex_r(temp->hex, oid);
 	xsnprintf(temp->mode, sizeof(temp->mode), "%06o", mode);
 	strbuf_release(&buf);
 	strbuf_release(&template);
@@ -2929,7 +2929,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 				die_errno("readlink(%s)", name);
 			prep_temp_blob(name, temp, sb.buf, sb.len,
 				       (one->oid_valid ?
-					one->oid.hash : null_sha1),
+					&one->oid : &null_oid),
 				       (one->oid_valid ?
 					one->mode : S_IFLNK));
 			strbuf_release(&sb);
@@ -2955,7 +2955,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		if (diff_populate_filespec(one, 0))
 			die("cannot read data blob for %s", one->path);
 		prep_temp_blob(name, temp, one->data, one->size,
-			       one->oid.hash, one->mode);
+			       &one->oid, one->mode);
 	}
 	return temp;
 }
