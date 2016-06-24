@@ -599,7 +599,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 			    p->status);
 		case 'M':
 			porigin = get_origin(sb, parent, origin->path);
-			hashcpy(porigin->blob_sha1, p->one->sha1);
+			hashcpy(porigin->blob_sha1, p->one->oid.hash);
 			porigin->mode = p->one->mode;
 			break;
 		case 'A':
@@ -645,7 +645,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 		if ((p->status == 'R' || p->status == 'C') &&
 		    !strcmp(p->two->path, origin->path)) {
 			porigin = get_origin(sb, parent, p->one->path);
-			hashcpy(porigin->blob_sha1, p->one->sha1);
+			hashcpy(porigin->blob_sha1, p->one->oid.hash);
 			porigin->mode = p->one->mode;
 			break;
 		}
@@ -1309,7 +1309,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 				continue;
 
 			norigin = get_origin(sb, parent, p->one->path);
-			hashcpy(norigin->blob_sha1, p->one->sha1);
+			hashcpy(norigin->blob_sha1, p->one->oid.hash);
 			norigin->mode = p->one->mode;
 			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p);
 			if (!file_p.ptr)

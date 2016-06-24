@@ -432,7 +432,8 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 			d->worktree_status = p->status;
 		d->dirty_submodule = p->two->dirty_submodule;
 		if (S_ISGITLINK(p->two->mode))
-			d->new_submodule_commits = !!hashcmp(p->one->sha1, p->two->sha1);
+			d->new_submodule_commits = !!oidcmp(&p->one->oid,
+							    &p->two->oid);
 	}
 }
 

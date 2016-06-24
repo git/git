@@ -1934,7 +1934,7 @@ static void show_dirstat(struct diff_options *options)
 		name = p->two->path ? p->two->path : p->one->path;
 
 		if (p->one->sha1_valid && p->two->sha1_valid)
-			content_changed = hashcmp(p->one->sha1, p->two->sha1);
+			content_changed = oidcmp(&p->one->oid, &p->two->oid);
 		else
 			content_changed = 1;
 
@@ -2306,7 +2306,8 @@ static void builtin_diff(const char *name_a,
 		const char *add = diff_get_color_opt(o, DIFF_FILE_NEW);
 		show_submodule_summary(o->file, one->path ? one->path : two->path,
 				line_prefix,
-				one->sha1, two->sha1, two->dirty_submodule,
+				one->oid.hash, two->oid.hash,
+				two->dirty_submodule,
 				meta, del, add, reset);
 		return;
 	}
@@ -2384,7 +2385,7 @@ static void builtin_diff(const char *name_a,
 		if (!one->data && !two->data &&
 		    S_ISREG(one->mode) && S_ISREG(two->mode) &&
 		    !DIFF_OPT_TST(o, BINARY)) {
-			if (!hashcmp(one->sha1, two->sha1)) {
+			if (!oidcmp(&one->oid, &two->oid)) {
 				if (must_show_header)
 					fprintf(o->file, "%s", header.buf);
 				goto free_ab_and_return;
@@ -2505,7 +2506,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		return;
 	}
 
-	same_contents = !hashcmp(one->sha1, two->sha1);
+	same_contents = !oidcmp(&one->oid, &two->oid);
 
 	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
 		data->is_binary = 1;
@@ -2638,7 +2639,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 {
 	if (mode) {
 		spec->mode = canon_mode(mode);
-		hashcpy(spec->sha1, sha1);
+		hashcpy(spec->oid.hash, sha1);
 		spec->sha1_valid = sha1_valid;
 	}
 }
@@ -2721,7 +2722,8 @@ static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 	if (s->dirty_submodule)
 		dirty = "-dirty";
 
-	strbuf_addf(&buf, "Subproject commit %s%s\n", sha1_to_hex(s->sha1), dirty);
+	strbuf_addf(&buf, "Subproject commit %s%s\n",
+		    oid_to_hex(&s->oid), dirty);
 	s->size = buf.len;
 	if (size_only) {
 		s->data = NULL;
@@ -2765,7 +2767,7 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 		return diff_populate_gitlink(s, size_only);
 
 	if (!s->sha1_valid ||
-	    reuse_worktree_file(s->path, s->sha1, 0)) {
+	    reuse_worktree_file(s->path, s->oid.hash, 0)) {
 		struct strbuf buf = STRBUF_INIT;
 		struct stat st;
 		int fd;
@@ -2822,9 +2824,10 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 	else {
 		enum object_type type;
 		if (size_only || (flags & CHECK_BINARY)) {
-			type = sha1_object_info(s->sha1, &s->size);
+			type = sha1_object_info(s->oid.hash, &s->size);
 			if (type < 0)
-				die("unable to read %s", sha1_to_hex(s->sha1));
+				die("unable to read %s",
+				    oid_to_hex(&s->oid));
 			if (size_only)
 				return 0;
 			if (s->size > big_file_threshold && s->is_binary == -1) {
@@ -2832,9 +2835,9 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 				return 0;
 			}
 		}
-		s->data = read_sha1_file(s->sha1, &type, &s->size);
+		s->data = read_sha1_file(s->oid.hash, &type, &s->size);
 		if (!s->data)
-			die("unable to read %s", sha1_to_hex(s->sha1));
+			die("unable to read %s", oid_to_hex(&s->oid));
 		s->should_free = 1;
 	}
 	return 0;
@@ -2913,7 +2916,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 
 	if (!S_ISGITLINK(one->mode) &&
 	    (!one->sha1_valid ||
-	     reuse_worktree_file(name, one->sha1, 1))) {
+	     reuse_worktree_file(name, one->oid.hash, 1))) {
 		struct stat st;
 		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)
@@ -2926,7 +2929,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 				die_errno("readlink(%s)", name);
 			prep_temp_blob(name, temp, sb.buf, sb.len,
 				       (one->sha1_valid ?
-					one->sha1 : null_sha1),
+					one->oid.hash : null_sha1),
 				       (one->sha1_valid ?
 					one->mode : S_IFLNK));
 			strbuf_release(&sb);
@@ -2937,7 +2940,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			if (!one->sha1_valid)
 				sha1_to_hex_r(temp->hex, null_sha1);
 			else
-				sha1_to_hex_r(temp->hex, one->sha1);
+				sha1_to_hex_r(temp->hex, one->oid.hash);
 			/* Even though we may sometimes borrow the
 			 * contents from the work tree, we always want
 			 * one->mode.  mode is trustworthy even when
@@ -2952,7 +2955,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		if (diff_populate_filespec(one, 0))
 			die("cannot read data blob for %s", one->path);
 		prep_temp_blob(name, temp, one->data, one->size,
-			       one->sha1, one->mode);
+			       one->oid.hash, one->mode);
 	}
 	return temp;
 }
@@ -3065,7 +3068,7 @@ static void fill_metainfo(struct strbuf *msg,
 	default:
 		*must_show_header = 0;
 	}
-	if (one && two && hashcmp(one->sha1, two->sha1)) {
+	if (one && two && oidcmp(&one->oid, &two->oid)) {
 		int abbrev = DIFF_OPT_TST(o, FULL_INDEX) ? 40 : DEFAULT_ABBREV;
 
 		if (DIFF_OPT_TST(o, BINARY)) {
@@ -3075,8 +3078,8 @@ static void fill_metainfo(struct strbuf *msg,
 				abbrev = 40;
 		}
 		strbuf_addf(msg, "%s%sindex %s..", line_prefix, set,
-			    find_unique_abbrev(one->sha1, abbrev));
-		strbuf_addstr(msg, find_unique_abbrev(two->sha1, abbrev));
+			    find_unique_abbrev(one->oid.hash, abbrev));
+		strbuf_addstr(msg, find_unique_abbrev(two->oid.hash, abbrev));
 		if (one->mode == two->mode)
 			strbuf_addf(msg, " %06o", one->mode);
 		strbuf_addf(msg, "%s\n", reset);
@@ -3134,17 +3137,17 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 		if (!one->sha1_valid) {
 			struct stat st;
 			if (one->is_stdin) {
-				hashclr(one->sha1);
+				oidclr(&one->oid);
 				return;
 			}
 			if (lstat(one->path, &st) < 0)
 				die_errno("stat '%s'", one->path);
-			if (index_path(one->sha1, one->path, &st, 0))
+			if (index_path(one->oid.hash, one->path, &st, 0))
 				die("cannot hash %s", one->path);
 		}
 	}
 	else
-		hashclr(one->sha1);
+		oidclr(&one->oid);
 }
 
 static void strip_prefix(int prefix_length, const char **namep, const char **otherp)
@@ -4118,8 +4121,9 @@ static void diff_flush_raw(struct diff_filepair *p, struct diff_options *opt)
 	fprintf(opt->file, "%s", diff_line_prefix(opt));
 	if (!(opt->output_format & DIFF_FORMAT_NAME_STATUS)) {
 		fprintf(opt->file, ":%06o %06o %s ", p->one->mode, p->two->mode,
-			diff_unique_abbrev(p->one->sha1, opt->abbrev));
-		fprintf(opt->file, "%s ", diff_unique_abbrev(p->two->sha1, opt->abbrev));
+			diff_unique_abbrev(p->one->oid.hash, opt->abbrev));
+		fprintf(opt->file, "%s ",
+			diff_unique_abbrev(p->two->oid.hash, opt->abbrev));
 	}
 	if (p->score) {
 		fprintf(opt->file, "%c%03d%c", p->status, similarity_index(p),
@@ -4169,7 +4173,7 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	 * dealing with a change.
 	 */
 	if (one->sha1_valid && two->sha1_valid &&
-	    !hashcmp(one->sha1, two->sha1) &&
+	    !oidcmp(&one->oid, &two->oid) &&
 	    !one->dirty_submodule && !two->dirty_submodule)
 		return 1; /* no change */
 	if (!one->sha1_valid && !two->sha1_valid)
@@ -4233,7 +4237,7 @@ void diff_debug_filespec(struct diff_filespec *s, int x, const char *one)
 		s->path,
 		DIFF_FILE_VALID(s) ? "valid" : "invalid",
 		s->mode,
-		s->sha1_valid ? sha1_to_hex(s->sha1) : "");
+		s->sha1_valid ? oid_to_hex(&s->oid) : "");
 	fprintf(stderr, "queue[%d] %s size %lu\n",
 		x, one ? one : "",
 		s->size);
@@ -4303,11 +4307,11 @@ static void diff_resolve_rename_copy(void)
 			else
 				p->status = DIFF_STATUS_RENAMED;
 		}
-		else if (hashcmp(p->one->sha1, p->two->sha1) ||
+		else if (oidcmp(&p->one->oid, &p->two->oid) ||
 			 p->one->mode != p->two->mode ||
 			 p->one->dirty_submodule ||
 			 p->two->dirty_submodule ||
-			 is_null_sha1(p->one->sha1))
+			 is_null_oid(&p->one->oid))
 			p->status = DIFF_STATUS_MODIFIED;
 		else {
 			/* This is a "no-change" entry and should not
@@ -4523,8 +4527,10 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 
 		if (diff_filespec_is_binary(p->one) ||
 		    diff_filespec_is_binary(p->two)) {
-			git_SHA1_Update(&ctx, sha1_to_hex(p->one->sha1), 40);
-			git_SHA1_Update(&ctx, sha1_to_hex(p->two->sha1), 40);
+			git_SHA1_Update(&ctx, oid_to_hex(&p->one->oid),
+					40);
+			git_SHA1_Update(&ctx, oid_to_hex(&p->two->oid),
+					40);
 			continue;
 		}
 
@@ -5113,7 +5119,8 @@ size_t fill_textconv(struct userdiff_driver *driver,
 		die("BUG: fill_textconv called with non-textconv driver");
 
 	if (driver->textconv_cache && df->sha1_valid) {
-		*outbuf = notes_cache_get(driver->textconv_cache, df->sha1,
+		*outbuf = notes_cache_get(driver->textconv_cache,
+					  df->oid.hash,
 					  &size);
 		if (*outbuf)
 			return size;
@@ -5125,7 +5132,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 
 	if (driver->textconv_cache && df->sha1_valid) {
 		/* ignore errors, as we might be in a readonly repository */
-		notes_cache_put(driver->textconv_cache, df->sha1, *outbuf,
+		notes_cache_put(driver->textconv_cache, df->oid.hash, *outbuf,
 				size);
 		/*
 		 * we could save up changes and flush them all at the end,
