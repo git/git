@@ -57,7 +57,7 @@ static int should_break(struct diff_filespec *src,
 		return 1; /* even their types are different */
 	}
 
-	if (src->sha1_valid && dst->sha1_valid &&
+	if (src->oid_valid && dst->oid_valid &&
 	    !oidcmp(&src->oid, &dst->oid))
 		return 0; /* they are the same */
 

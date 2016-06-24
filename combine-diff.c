@@ -1269,7 +1269,7 @@ static struct diff_filepair *combined_pair(struct combine_diff_path *p,
 		pair->one[i].path = p->path;
 		pair->one[i].mode = p->parent[i].mode;
 		oidcpy(&pair->one[i].oid, &p->parent[i].oid);
-		pair->one[i].sha1_valid = !is_null_oid(&p->parent[i].oid);
+		pair->one[i].oid_valid = !is_null_oid(&p->parent[i].oid);
 		pair->one[i].has_more_entries = 1;
 	}
 	pair->one[num_parent - 1].has_more_entries = 0;
@@ -1277,7 +1277,7 @@ static struct diff_filepair *combined_pair(struct combine_diff_path *p,
 	pair->two->path = p->path;
 	pair->two->mode = p->mode;
 	oidcpy(&pair->two->oid, &p->oid);
-	pair->two->sha1_valid = !is_null_oid(&p->oid);
+	pair->two->oid_valid = !is_null_oid(&p->oid);
 	return pair;
 }
 

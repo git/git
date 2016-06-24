@@ -1933,7 +1933,7 @@ static void show_dirstat(struct diff_options *options)
 
 		name = p->two->path ? p->two->path : p->one->path;
 
-		if (p->one->sha1_valid && p->two->sha1_valid)
+		if (p->one->oid_valid && p->two->oid_valid)
 			content_changed = oidcmp(&p->one->oid, &p->two->oid);
 		else
 			content_changed = 1;
@@ -2640,7 +2640,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 	if (mode) {
 		spec->mode = canon_mode(mode);
 		hashcpy(spec->oid.hash, sha1);
-		spec->sha1_valid = sha1_valid;
+		spec->oid_valid = sha1_valid;
 	}
 }
 
@@ -2766,7 +2766,7 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 	if (S_ISGITLINK(s->mode))
 		return diff_populate_gitlink(s, size_only);
 
-	if (!s->sha1_valid ||
+	if (!s->oid_valid ||
 	    reuse_worktree_file(s->path, s->oid.hash, 0)) {
 		struct strbuf buf = STRBUF_INIT;
 		struct stat st;
@@ -2915,7 +2915,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 	}
 
 	if (!S_ISGITLINK(one->mode) &&
-	    (!one->sha1_valid ||
+	    (!one->oid_valid ||
 	     reuse_worktree_file(name, one->oid.hash, 1))) {
 		struct stat st;
 		if (lstat(name, &st) < 0) {
@@ -2928,16 +2928,16 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			if (strbuf_readlink(&sb, name, st.st_size) < 0)
 				die_errno("readlink(%s)", name);
 			prep_temp_blob(name, temp, sb.buf, sb.len,
-				       (one->sha1_valid ?
+				       (one->oid_valid ?
 					one->oid.hash : null_sha1),
-				       (one->sha1_valid ?
+				       (one->oid_valid ?
 					one->mode : S_IFLNK));
 			strbuf_release(&sb);
 		}
 		else {
 			/* we can borrow from the file in the work tree */
 			temp->name = name;
-			if (!one->sha1_valid)
+			if (!one->oid_valid)
 				sha1_to_hex_r(temp->hex, null_sha1);
 			else
 				sha1_to_hex_r(temp->hex, one->oid.hash);
@@ -3134,7 +3134,7 @@ static void run_diff_cmd(const char *pgm,
 static void diff_fill_sha1_info(struct diff_filespec *one)
 {
 	if (DIFF_FILE_VALID(one)) {
-		if (!one->sha1_valid) {
+		if (!one->oid_valid) {
 			struct stat st;
 			if (one->is_stdin) {
 				oidclr(&one->oid);
@@ -4172,11 +4172,11 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	/* both are valid and point at the same path.  that is, we are
 	 * dealing with a change.
 	 */
-	if (one->sha1_valid && two->sha1_valid &&
+	if (one->oid_valid && two->oid_valid &&
 	    !oidcmp(&one->oid, &two->oid) &&
 	    !one->dirty_submodule && !two->dirty_submodule)
 		return 1; /* no change */
-	if (!one->sha1_valid && !two->sha1_valid)
+	if (!one->oid_valid && !two->oid_valid)
 		return 1; /* both look at the same file on the filesystem. */
 	return 0;
 }
@@ -4237,7 +4237,7 @@ void diff_debug_filespec(struct diff_filespec *s, int x, const char *one)
 		s->path,
 		DIFF_FILE_VALID(s) ? "valid" : "invalid",
 		s->mode,
-		s->sha1_valid ? oid_to_hex(&s->oid) : "");
+		s->oid_valid ? oid_to_hex(&s->oid) : "");
 	fprintf(stderr, "queue[%d] %s size %lu\n",
 		x, one ? one : "",
 		s->size);
@@ -4822,7 +4822,7 @@ static int diff_filespec_check_stat_unmatch(struct diff_filepair *p)
 	 */
 	if (!DIFF_FILE_VALID(p->one) || /* (1) */
 	    !DIFF_FILE_VALID(p->two) ||
-	    (p->one->sha1_valid && p->two->sha1_valid) ||
+	    (p->one->oid_valid && p->two->oid_valid) ||
 	    (p->one->mode != p->two->mode) ||
 	    diff_populate_filespec(p->one, CHECK_SIZE_ONLY) ||
 	    diff_populate_filespec(p->two, CHECK_SIZE_ONLY) ||
@@ -5118,7 +5118,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 	if (!driver->textconv)
 		die("BUG: fill_textconv called with non-textconv driver");
 
-	if (driver->textconv_cache && df->sha1_valid) {
+	if (driver->textconv_cache && df->oid_valid) {
 		*outbuf = notes_cache_get(driver->textconv_cache,
 					  df->oid.hash,
 					  &size);
@@ -5130,7 +5130,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 	if (!*outbuf)
 		die("unable to read files to diff");
 
-	if (driver->textconv_cache && df->sha1_valid) {
+	if (driver->textconv_cache && df->oid_valid) {
 		/* ignore errors, as we might be in a readonly repository */
 		notes_cache_put(driver->textconv_cache, df->oid.hash, *outbuf,
 				size);
