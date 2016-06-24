@@ -82,8 +82,7 @@ stop_git_daemon() {
 	kill "$GIT_DAEMON_PID"
 	wait "$GIT_DAEMON_PID" >&3 2>&4
 	ret=$?
-	# expect exit with status 143 = 128+15 for signal TERM=15
-	if test $ret -ne 143
+	if test_match_signal 15 $?
 	then
 		error "git daemon exited with status: $ret"
 	fi
