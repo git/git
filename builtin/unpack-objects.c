@@ -355,7 +355,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			return; /* we are done */
 		else {
 			/* cannot resolve yet --- queue it */
-			hashcpy(obj_list[nr].sha1, null_sha1);
+			hashclr(obj_list[nr].sha1);
 			add_delta_to_list(nr, base_sha1, 0, delta_data, delta_size);
 			return;
 		}
@@ -406,7 +406,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * The delta base object is itself a delta that
 			 * has not been resolved yet.
 			 */
-			hashcpy(obj_list[nr].sha1, null_sha1);
+			hashclr(obj_list[nr].sha1);
 			add_delta_to_list(nr, null_sha1, base_offset, delta_data, delta_size);
 			return;
 		}

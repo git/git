@@ -1530,7 +1530,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	     * Stash away the local changes so that we can try more than one.
 	     */
 	    save_state(stash))
-		hashcpy(stash, null_sha1);
+		hashclr(stash);
 
 	for (i = 0; i < use_strategies_nr; i++) {
 		int ret;

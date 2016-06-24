@@ -3134,7 +3134,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 		if (!one->sha1_valid) {
 			struct stat st;
 			if (one->is_stdin) {
-				hashcpy(one->sha1, null_sha1);
+				hashclr(one->sha1);
 				return;
 			}
 			if (lstat(one->path, &st) < 0)
