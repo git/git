@@ -12408,7 +12408,7 @@ msgstr ""
 
 #: git-rebase.sh:168
 msgid "Applied autostash."
-msgstr "\"autostash\" angewendet."
+msgstr "Automatischen Stash angewendet."
 
 #: git-rebase.sh:171
 #, sh-format
@@ -12421,7 +12421,7 @@ msgid ""
 "Your changes are safe in the stash.\n"
 "You can run \"git stash pop\" or \"git stash drop\" at any time.\n"
 msgstr ""
-"Anwendung von \"autostash\" resultierte in Konflikten.\n"
+"Anwendung des automatischen Stash resultierte in Konflikten.\n"
 "Ihre Änderungen sind im Stash sicher.\n"
 "Sie können jederzeit \"git stash pop\" oder \"git stash drop\" ausführen.\n"
 
@@ -12508,12 +12508,12 @@ msgstr "fatal: Branch $branch_name nicht gefunden"
 
 #: git-rebase.sh:558
 msgid "Cannot autostash"
-msgstr "Kann \"autostash\" nicht ausführen."
+msgstr "Kann automatischen Stash nicht erzeugen."
 
 #: git-rebase.sh:563
 #, sh-format
 msgid "Created autostash: $stash_abbrev"
-msgstr "\"autostash\" erzeugt: $stash_abbrev"
+msgstr "Automatischen Stash erzeugt: $stash_abbrev"
 
 #: git-rebase.sh:567
 msgid "Please commit or stash them."
