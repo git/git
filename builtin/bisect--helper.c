@@ -359,6 +359,41 @@ static int bisect_next_check(const struct bisect_terms *state, const char *term)
 	return 0;
 }
 
+static int get_terms(struct bisect_terms *term)
+{
+	FILE *fp;
+	fp = fopen(git_path_bisect_write_terms(), "r");
+	if (!fp)
+		return -1;
+
+	bisect_terms_reset(term);
+	if (strbuf_getline(&term->term_bad, fp) == EOF)
+		return -1;
+	if (strbuf_getline(&term->term_good, fp) == EOF)
+		return -1;
+	return 0;
+}
+
+static int bisect_terms(struct bisect_terms *term, const char *arg)
+{
+	if (get_terms(term)) {
+		fprintf(stderr, "no terms defined\n");
+		return -1;
+	}
+	if (!arg) {
+		printf("Your current terms are %s for the old state\nand "
+		       "%s for the new state.\n", term->term_good.buf,
+		       term->term_bad.buf);
+		return 0;
+	}
+	if (one_of(arg, "--term-good", "--term-old", NULL))
+		printf("%s\n", term->term_good.buf);
+	if (one_of(arg, "--term-bad", "--term-new", NULL))
+		printf("%s\n", term->term_bad.buf);
+
+	return 0;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -369,7 +404,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		CHECK_EXPECTED_REVS,
 		BISECT_WRITE,
 		CHECK_AND_SET_TERMS,
-		BISECT_NEXT_CHECK
+		BISECT_NEXT_CHECK,
+		BISECT_TERMS
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0;
 	struct option options[] = {
@@ -389,6 +425,12 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("check and set terms in a bisection state"), CHECK_AND_SET_TERMS),
 		OPT_CMDMODE(0, "bisect-next-check", &cmdmode,
 			 N_("check whether bad or good terms exist"), BISECT_NEXT_CHECK),
+		OPT_CMDMODE(0, "bisect-terms", &cmdmode,
+			 N_("print out the bisect terms"), BISECT_TERMS),
+		OPT_ARGUMENT("term-bad", "handle this in an individual function"),
+		OPT_ARGUMENT("term-good", "handle this in an individual function"),
+		OPT_ARGUMENT("term-new", "handle this in an individual function"),
+		OPT_ARGUMENT("term-old", "handle this in an individual function"),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
@@ -449,6 +491,11 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		res = bisect_next_check(&state, argv[2]);
+		break;
+	case BISECT_TERMS:
+		if (argc != 0 && argc != 1)
+			die(_("--bisect-terms requires 0 or 1 argument"));
+		res = bisect_terms(&state, argc ? argv[0] : NULL);
 		break;
 	default:
 		die("BUG: unknown subcommand '%d'", cmdmode);
