@@ -860,12 +860,15 @@ test_expect_success 'dotdot is a parent directory' '
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'log --graph --show-signature' '
+test_expect_success GPG 'setup signed branch' '
 	test_when_finished "git reset --hard && git checkout master" &&
 	git checkout -b signed master &&
 	echo foo >foo &&
 	git add foo &&
-	git commit -S -m signed_commit &&
+	git commit -S -m signed_commit
+'
+
+test_expect_success GPG 'log --graph --show-signature' '
 	git log --graph --show-signature -n1 signed >actual &&
 	grep "^| gpg: Signature made" actual &&
 	grep "^| gpg: Good signature" actual
