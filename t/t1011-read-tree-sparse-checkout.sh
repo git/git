@@ -244,7 +244,7 @@ test_expect_success 'print errors when failed to update worktree' '
 error: The following untracked working tree files would be overwritten by checkout:
 	sub/added
 	sub/addedtoo
-Please move or remove them before you can switch branches.
+Please move or remove them before you switch branches.
 Aborting
 EOF
 	test_cmp expected actual
