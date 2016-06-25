@@ -7,6 +7,8 @@
 #include "diffcore.h"
 #include "xdiff-interface.h"
 #include "kwset.h"
+#include "commit.h"
+#include "quote.h"
 
 typedef int (*pickaxe_fn)(mmfile_t *one, mmfile_t *two,
 			  struct diff_options *o,
@@ -222,6 +224,15 @@ void diffcore_pickaxe(struct diff_options *o)
 		if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE))
 			cflags |= REG_ICASE;
 		regcomp_or_die(&regex, needle, cflags);
+		regexp = &regex;
+	} else if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE) &&
+		   has_non_ascii(needle)) {
+		struct strbuf sb = STRBUF_INIT;
+		int cflags = REG_NEWLINE | REG_ICASE;
+
+		basic_regex_quote_buf(&sb, needle);
+		regcomp_or_die(&regex, sb.buf, cflags);
+		strbuf_release(&sb);
 		regexp = &regex;
 	} else {
 		kws = kwsalloc(DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE)
