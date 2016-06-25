@@ -324,11 +324,14 @@ static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
 	int erroffset;
 	int options = PCRE_MULTILINE;
 
-	if (opt->ignore_case)
+	if (opt->ignore_case) {
+		if (has_non_ascii(p->pattern))
+			p->pcre_tables = pcre_maketables();
 		options |= PCRE_CASELESS;
+	}
 
 	p->pcre_regexp = pcre_compile(p->pattern, options, &error, &erroffset,
-			NULL);
+				      p->pcre_tables);
 	if (!p->pcre_regexp)
 		compile_regexp_failed(p, error);
 
@@ -362,6 +365,7 @@ static void free_pcre_regexp(struct grep_pat *p)
 {
 	pcre_free(p->pcre_regexp);
 	pcre_free(p->pcre_extra_info);
+	pcre_free((void *)p->pcre_tables);
 }
 #else /* !USE_LIBPCRE */
 static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
