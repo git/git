@@ -442,11 +442,8 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	 * simple string match using kws.  p->fixed tells us if we
 	 * want to use kws.
 	 */
-	if (opt->fixed)
+	if (opt->fixed || is_fixed(p->pattern, p->patternlen))
 		p->fixed = !icase || ascii_only;
-	else if ((!icase || ascii_only) &&
-		 is_fixed(p->pattern, p->patternlen))
-		p->fixed = 1;
 	else
 		p->fixed = 0;
 
