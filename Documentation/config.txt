@@ -443,6 +443,13 @@ specify that no proxy be used for a given domain pattern.
 This is useful for excluding servers inside a firewall from
 proxy use, while defaulting to a common proxy for external domains.
 
+core.sshCommand::
+	If this variable is set, `git fetch` and `git push` will
+	use the specified command instead of `ssh` when they need to
+	connect to a remote system. The command is in the same form as
+	the `GIT_SSH_COMMAND` environment variable and is overridden
+	when the environment variable is set.
+
 core.ignoreStat::
 	If true, Git will avoid using lstat() calls to detect if files have
 	changed by setting the "assume-unchanged" bit for those tracked files
