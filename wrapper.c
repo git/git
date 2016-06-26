@@ -271,8 +271,26 @@ ssize_t xwrite(int fd, const void *buf, size_t len)
 	    len = MAX_IO_SIZE;
 	while (1) {
 		nr = write(fd, buf, len);
-		if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
-			continue;
+		if (nr < 0) {
+			if (errno == EINTR)
+				continue;
+			if (errno == EAGAIN || errno == EWOULDBLOCK) {
+				struct pollfd pfd;
+				pfd.events = POLLOUT;
+				pfd.fd = fd;
+				/*
+				 * it is OK if this poll() failed; we
+				 * want to leave this infinite loop
+				 * only when write() returns with
+				 * success, or an expected failure,
+				 * which would be checked by the next
+				 * call to write(2).
+				 */
+				poll(&pfd, 1, -1);
+				continue;
+			}
+		}
+
 		return nr;
 	}
 }
