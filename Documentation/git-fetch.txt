@@ -120,8 +120,8 @@ flag::
 	A single character indicating the status of the ref:
 (space);; for a successfully fetched fast-forward;
 `+`;; for a successful forced update;
-`x`;; for a successfully pruned ref;
-`-`;; for a successful tag update;
+`-`;; for a successfully pruned ref;
+`t`;; for a successful tag update;
 `*`;; for a successfully fetched new ref;
 `!`;; for a ref that was rejected or failed to update; and
 `=`;; for a ref that was up to date and did not need fetching.

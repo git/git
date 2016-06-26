@@ -500,7 +500,7 @@ static int update_local_ref(struct ref *ref,
 	    starts_with(ref->name, "refs/tags/")) {
 		int r;
 		r = s_update_ref("updating tag", ref, 0);
-		format_display(display, r ? '!' : '-', _("[tag update]"),
+		format_display(display, r ? '!' : 't', _("[tag update]"),
 			       r ? _("unable to update local ref") : NULL,
 			       remote, pretty_ref);
 		return r;
@@ -814,7 +814,7 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 				fprintf(stderr, _("From %.*s\n"), url_len, url);
 				shown_url = 1;
 			}
-			format_display(&sb, 'x', _("[deleted]"), NULL,
+			format_display(&sb, '-', _("[deleted]"), NULL,
 				       _("(none)"), prettify_refname(ref->name));
 			fprintf(stderr, " %s\n",sb.buf);
 			strbuf_release(&sb);
