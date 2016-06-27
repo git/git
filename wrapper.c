@@ -252,6 +252,7 @@ ssize_t xread(int fd, void *buf, size_t len)
 				 * call to read(2).
 				 */
 				poll(&pfd, 1, -1);
+				continue;
 			}
 		}
 		return nr;
