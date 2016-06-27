@@ -188,7 +188,7 @@ Git configuration files in that directory are readable by `<user>`.
 	arguments. The external command can decide to decline the
 	service by exiting with a non-zero status (or to allow it by
 	exiting with a zero status).  It can also look at the $REMOTE_ADDR
-	and $REMOTE_PORT environment variables to learn about the
+	and `$REMOTE_PORT` environment variables to learn about the
 	requestor when making this decision.
 +
 The external command can optionally write a single line to its

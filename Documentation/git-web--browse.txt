@@ -62,14 +62,14 @@ CONF.VAR (from -c option) and web.browser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The web browser can be specified using a configuration variable passed
-with the -c (or --config) command-line option, or the 'web.browser'
+with the -c (or --config) command-line option, or the `web.browser`
 configuration variable if the former is not used.
 
 browser.<tool>.path
 ~~~~~~~~~~~~~~~~~~~
 
 You can explicitly provide a full path to your preferred browser by
-setting the configuration variable 'browser.<tool>.path'. For example,
+setting the configuration variable `browser.<tool>.path`. For example,
 you can configure the absolute path to firefox by setting
 'browser.firefox.path'. Otherwise, 'git web{litdd}browse' assumes the tool
 is available in PATH.
@@ -79,7 +79,7 @@ browser.<tool>.cmd
 
 When the browser, specified by options or configuration variables, is
 not among the supported ones, then the corresponding
-'browser.<tool>.cmd' configuration variable will be looked up. If this
+`browser.<tool>.cmd` configuration variable will be looked up. If this
 variable exists then 'git web{litdd}browse' will treat the specified tool
 as a custom command and will use a shell eval to run the command with
 the URLs passed as arguments.

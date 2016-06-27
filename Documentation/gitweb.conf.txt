@@ -376,7 +376,7 @@ $site_name::
 	Name of your site or organization, to appear in page titles.  Set it
 	to something descriptive for clearer bookmarks etc.  If this variable
 	is not set or is, then gitweb uses the value of the `SERVER_NAME`
-	CGI environment variable, setting site name to "$SERVER_NAME Git",
+	`CGI` environment variable, setting site name to "$SERVER_NAME Git",
 	or "Untitled Git" if this variable is not set (e.g. if running gitweb
 	as standalone script).
 +

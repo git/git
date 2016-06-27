@@ -82,13 +82,13 @@ automatic consolidation of packs.
 Configuration
 -------------
 
-The optional configuration variable 'gc.reflogExpire' can be
+The optional configuration variable `gc.reflogExpire` can be
 set to indicate how long historical entries within each branch's
 reflog should remain available in this repository.  The setting is
 expressed as a length of time, for example '90 days' or '3 months'.
 It defaults to '90 days'.
 
-The optional configuration variable 'gc.reflogExpireUnreachable'
+The optional configuration variable `gc.reflogExpireUnreachable`
 can be set to indicate how long historical reflog entries which
 are not part of the current branch should remain available in
 this repository.  These types of entries are generally created as
@@ -107,30 +107,30 @@ branches:
 	reflogExpireUnreachable = 3 days
 ------------
 
-The optional configuration variable 'gc.rerereResolved' indicates
+The optional configuration variable `gc.rerereResolved` indicates
 how long records of conflicted merge you resolved earlier are
 kept.  This defaults to 60 days.
 
-The optional configuration variable 'gc.rerereUnresolved' indicates
+The optional configuration variable `gc.rerereUnresolved` indicates
 how long records of conflicted merge you have not resolved are
 kept.  This defaults to 15 days.
 
-The optional configuration variable 'gc.packRefs' determines if
+The optional configuration variable `gc.packRefs` determines if
 'git gc' runs 'git pack-refs'. This can be set to "notbare" to enable
 it within all non-bare repos or it can be set to a boolean value.
 This defaults to true.
 
-The optional configuration variable 'gc.aggressiveWindow' controls how
+The optional configuration variable `gc.aggressiveWindow` controls how
 much time is spent optimizing the delta compression of the objects in
 the repository when the --aggressive option is specified.  The larger
 the value, the more time is spent optimizing the delta compression.  See
 the documentation for the --window' option in linkgit:git-repack[1] for
 more details.  This defaults to 250.
 
-Similarly, the optional configuration variable 'gc.aggressiveDepth'
+Similarly, the optional configuration variable `gc.aggressiveDepth`
 controls --depth option in linkgit:git-repack[1]. This defaults to 250.
 
-The optional configuration variable 'gc.pruneExpire' controls how old
+The optional configuration variable `gc.pruneExpire` controls how old
 the unreferenced loose objects have to be before they are pruned.  The
 default is "2 weeks ago".
 
