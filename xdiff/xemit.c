@@ -120,6 +120,16 @@ static long def_ff(const char *rec, long len, char *buf, long sz, void *priv)
 	return -1;
 }
 
+static long match_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri,
+			   char *buf, long sz)
+{
+	const char *rec;
+	long len = xdl_get_rec(xdf, ri, &rec);
+	if (!xecfg->find_func)
+		return def_ff(rec, len, buf, sz, xecfg->find_func_priv);
+	return xecfg->find_func(rec, len, buf, sz, xecfg->find_func_priv);
+}
+
 struct func_line {
 	long len;
 	char buf[80];
@@ -128,7 +138,6 @@ struct func_line {
 static long get_func_line(xdfenv_t *xe, xdemitconf_t const *xecfg,
 			  struct func_line *func_line, long start, long limit)
 {
-	find_func_t ff = xecfg->find_func ? xecfg->find_func : def_ff;
 	long l, size, step = (start > limit) ? -1 : 1;
 	char *buf, dummy[1];
 
@@ -136,9 +145,7 @@ static long get_func_line(xdfenv_t *xe, xdemitconf_t const *xecfg,
 	size = func_line ? sizeof(func_line->buf) : sizeof(dummy);
 
 	for (l = start; l != limit && 0 <= l && l < xe->xdf1.nrec; l += step) {
-		const char *rec;
-		long reclen = xdl_get_rec(&xe->xdf1, l, &rec);
-		long len = ff(rec, reclen, buf, size, xecfg->find_func_priv);
+		long len = match_func_rec(&xe->xdf1, xecfg, l, buf, size);
 		if (len >= 0) {
 			if (func_line)
 				func_line->len = len;
@@ -146,6 +153,18 @@ static long get_func_line(xdfenv_t *xe, xdemitconf_t const *xecfg,
 		}
 	}
 	return -1;
+}
+
+static int is_empty_rec(xdfile_t *xdf, long ri)
+{
+	const char *rec;
+	long len = xdl_get_rec(xdf, ri, &rec);
+
+	while (len > 0 && XDL_ISSPACE(*rec)) {
+		rec++;
+		len--;
+	}
+	return !len;
 }
 
 int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
@@ -164,7 +183,34 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
 
 		if (xecfg->flags & XDL_EMIT_FUNCCONTEXT) {
-			long fs1 = get_func_line(xe, xecfg, NULL, xch->i1, -1);
+			long fs1, i1 = xch->i1;
+
+			/* Appended chunk? */
+			if (i1 >= xe->xdf1.nrec) {
+				char dummy[1];
+				long i2 = xch->i2;
+
+				/*
+				 * We don't need additional context if
+				 * a whole function was added, possibly
+				 * starting with empty lines.
+				 */
+				while (i2 < xe->xdf2.nrec &&
+				       is_empty_rec(&xe->xdf2, i2))
+					i2++;
+				if (i2 < xe->xdf2.nrec &&
+				    match_func_rec(&xe->xdf2, xecfg, i2,
+						   dummy, sizeof(dummy)) >= 0)
+					goto post_context_calculation;
+
+				/*
+				 * Otherwise get more context from the
+				 * pre-image.
+				 */
+				i1 = xe->xdf1.nrec - 1;
+			}
+
+			fs1 = get_func_line(xe, xecfg, NULL, i1, -1);
 			if (fs1 < 0)
 				fs1 = 0;
 			if (fs1 < s1) {
@@ -173,7 +219,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			}
 		}
 
- again:
+ post_context_calculation:
 		lctx = xecfg->ctxlen;
 		lctx = XDL_MIN(lctx, xe->xdf1.nrec - (xche->i1 + xche->chg1));
 		lctx = XDL_MIN(lctx, xe->xdf2.nrec - (xche->i2 + xche->chg2));
@@ -185,6 +231,8 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			long fe1 = get_func_line(xe, xecfg, NULL,
 						 xche->i1 + xche->chg1,
 						 xe->xdf1.nrec);
+			while (fe1 > 0 && is_empty_rec(&xe->xdf1, fe1 - 1))
+				fe1--;
 			if (fe1 < 0)
 				fe1 = xe->xdf1.nrec;
 			if (fe1 > e1) {
@@ -198,11 +246,12 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			 * its new end.
 			 */
 			if (xche->next) {
-				long l = xche->next->i1;
+				long l = XDL_MIN(xche->next->i1,
+						 xe->xdf1.nrec - 1);
 				if (l <= e1 ||
 				    get_func_line(xe, xecfg, NULL, l, e1) < 0) {
 					xche = xche->next;
-					goto again;
+					goto post_context_calculation;
 				}
 			}
 		}
