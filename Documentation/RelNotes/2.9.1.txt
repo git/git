@@ -1,0 +1,28 @@
+Git v2.9.1 Release Notes
+========================
+
+Fixes since v2.9
+----------------
+
+ * When "git daemon" is run without --[init-]timeout specified, a
+   connection from a client that silently goes offline can hang around
+   for a long time, wasting resources.  The socket-level KEEPALIVE has
+   been enabled to allow the OS to notice such failed connections.
+
+ * The commands in `git log` family take %C(auto) in a custom format
+   string.  This unconditionally turned the color on, ignoring
+   --no-color or with --color=auto when the output is not connected to
+   a tty; this was corrected to make the format truly behave as
+   "auto".
+
+ * "git rev-list --count" whose walk-length is limited with "-n"
+   option did not work well with the counting optimized to look at the
+   bitmap index.
+
+ * "git show -W" (extend hunks to cover the entire function, delimited
+   by lines that match the "funcname" pattern) used to show the entire
+   file when a change added an entire function at the end of the file,
+   which has been fixed.
+
+
+Also contains minor documentation updates and code clean-ups.
