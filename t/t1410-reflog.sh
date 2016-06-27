@@ -348,4 +348,26 @@ test_expect_success 'reflog expire operates on symref not referrent' '
 	git reflog expire --expire=all the_symref
 '
 
+test_expect_success 'continue walking past root commits' '
+	git init orphanage &&
+	(
+		cd orphanage &&
+		cat >expect <<-\EOF &&
+		HEAD@{0} commit (initial): orphan2-1
+		HEAD@{1} commit: orphan1-2
+		HEAD@{2} commit (initial): orphan1-1
+		HEAD@{3} commit (initial): initial
+		EOF
+		test_commit initial &&
+		git reflog &&
+		git checkout --orphan orphan1 &&
+		test_commit orphan1-1 &&
+		test_commit orphan1-2 &&
+		git checkout --orphan orphan2 &&
+		test_commit orphan2-1 &&
+		git log -g --format="%gd %gs" >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
