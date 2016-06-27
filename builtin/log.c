@@ -674,9 +674,9 @@ static int auto_number = 1;
 
 static char *default_attach = NULL;
 
-static struct string_list extra_hdr;
-static struct string_list extra_to;
-static struct string_list extra_cc;
+static struct string_list extra_hdr = STRING_LIST_INIT_NODUP;
+static struct string_list extra_to = STRING_LIST_INIT_NODUP;
+static struct string_list extra_cc = STRING_LIST_INIT_NODUP;
 
 static void add_header(const char *value)
 {

@@ -56,7 +56,7 @@ static int show_progress;
 static struct date_mode blame_date_mode = { DATE_ISO8601 };
 static size_t blame_date_width;
 
-static struct string_list mailmap;
+static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
 #ifndef DEBUG
 #define DEBUG 0
