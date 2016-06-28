@@ -176,6 +176,17 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting at the nth column' '
+	COLUMNS=50 git log --pretty="tformat:%h %<|(-10)%s" >actual &&
+	qz_to_tab_space <<EOF >expected &&
+$head1 message two                    Z
+$head2 message one                    Z
+$head3 add bar                        Z
+$head4 $(commit_msg)            Z
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'left alignment formatting at the nth column. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%h %<|(40)%s" >actual &&
 	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
@@ -308,6 +319,17 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'right alignment formatting at the nth column' '
+	COLUMNS=50 git log --pretty="tformat:%h %>|(-10)%s" >actual &&
+	qz_to_tab_space <<EOF >expected &&
+$head1                      message two
+$head2                      message one
+$head3                          add bar
+$head4              $(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'right alignment formatting at the nth column. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%h %>|(40)%s" >actual &&
 	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
@@ -319,6 +341,19 @@ EOF
 	test_cmp expected actual
 '
 
+# Note: Space between 'message' and 'two' should be in the same column
+# as in previous test.
+test_expect_success 'right alignment formatting at the nth column with --graph. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --graph --pretty="tformat:%h %>|(40)%s" >actual &&
+	iconv -f utf-8 -t $test_encoding >expected <<EOF&&
+* $head1                    message two
+* $head2                    message one
+* $head3                        add bar
+* $head4            $(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'right alignment formatting with no padding' '
 	git log --pretty="tformat:%>(1)%s" >actual &&
 	cat <<EOF >expected &&
@@ -326,6 +361,17 @@ message two
 message one
 add bar
 $(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'right alignment formatting with no padding and with --graph' '
+	git log --graph --pretty="tformat:%>(1)%s" >actual &&
+	cat <<EOF >expected &&
+* message two
+* message one
+* add bar
+* $(commit_msg)
 EOF
 	test_cmp expected actual
 '
@@ -364,6 +410,17 @@ EOF
 '
 test_expect_success 'center alignment formatting at the nth column' '
 	git log --pretty="tformat:%h %><|(40)%s" >actual &&
+	qz_to_tab_space <<EOF >expected &&
+$head1           message two          Z
+$head2           message one          Z
+$head3             add bar            Z
+$head4       $(commit_msg)      Z
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'center alignment formatting at the nth column' '
+	COLUMNS=70 git log --pretty="tformat:%h %><|(-30)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 $head1           message two          Z
 $head2           message one          Z
