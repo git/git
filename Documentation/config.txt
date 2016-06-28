@@ -140,7 +140,7 @@ boolean::
        false;; Boolean false can be spelled as `no`, `off`,
 		`false`, or `0`.
 +
-When converting value to the canonical form using '--bool' type
+When converting value to the canonical form using `--bool` type
 specifier; 'git config' will ensure that the output is "true" or
 "false" (spelled in lowercase).
 
@@ -481,7 +481,7 @@ core.worktree::
 	If `GIT_COMMON_DIR` environment variable is set, core.worktree
 	is ignored and not used for determining the root of working tree.
 	This can be overridden by the `GIT_WORK_TREE` environment
-	variable and the '--work-tree' command-line option.
+	variable and the `--work-tree` command-line option.
 	The value can be an absolute path or relative to the path to
 	the .git directory, which is either specified by --git-dir
 	or GIT_DIR, or automatically discovered.
@@ -762,7 +762,7 @@ core.abbrev::
 add.ignoreErrors::
 add.ignore-errors (deprecated)::
 	Tells 'git add' to continue adding files when some files cannot be
-	added due to indexing errors. Equivalent to the '--ignore-errors'
+	added due to indexing errors. Equivalent to the `--ignore-errors`
 	option of linkgit:git-add[1].  `add.ignore-errors` is deprecated,
 	as it does not follow the usual naming convention for configuration
 	variables.
@@ -788,9 +788,9 @@ from the original current directory. See linkgit:git-rev-parse[1].
 
 am.keepcr::
 	If true, git-am will call git-mailsplit for patches in mbox format
-	with parameter '--keep-cr'. In this case git-mailsplit will
+	with parameter `--keep-cr`. In this case git-mailsplit will
 	not remove `\r` from lines ending with `\r\n`. Can be overridden
-	by giving '--no-keep-cr' from the command line.
+	by giving `--no-keep-cr` from the command line.
 	See linkgit:git-am[1], linkgit:git-mailsplit[1].
 
 am.threeWay::
@@ -803,7 +803,7 @@ am.threeWay::
 
 apply.ignoreWhitespace::
 	When set to 'change', tells 'git apply' to ignore changes in
-	whitespace, in the same way as the '--ignore-space-change'
+	whitespace, in the same way as the `--ignore-space-change`
 	option.
 	When set to one of: no, none, never, false tells 'git apply' to
 	respect all whitespace differences.
@@ -811,7 +811,7 @@ apply.ignoreWhitespace::
 
 apply.whitespace::
 	Tells 'git apply' how to handle whitespaces, in the same way
-	as the '--whitespace' option. See linkgit:git-apply[1].
+	as the `--whitespace` option. See linkgit:git-apply[1].
 
 branch.autoSetupMerge::
 	Tells 'git branch' and 'git checkout' to set up new branches
@@ -1470,12 +1470,12 @@ grep.lineNumber::
 
 grep.patternType::
 	Set the default matching behavior. Using a value of 'basic', 'extended',
-	'fixed', or 'perl' will enable the '--basic-regexp', '--extended-regexp',
-	'--fixed-strings', or '--perl-regexp' option accordingly, while the
+	'fixed', or 'perl' will enable the `--basic-regexp`, `--extended-regexp`,
+	`--fixed-strings`, or `--perl-regexp` option accordingly, while the
 	value 'default' will return to the default matching behavior.
 
 grep.extendedRegexp::
-	If set to true, enable '--extended-regexp' option by default. This
+	If set to true, enable `--extended-regexp` option by default. This
 	option is ignored when the `grep.patternType` option is set to a value
 	other than 'default'.
 
@@ -1916,7 +1916,7 @@ log.decorate::
 	command. If 'short' is specified, the ref name prefixes 'refs/heads/',
 	'refs/tags/' and 'refs/remotes/' will not be printed. If 'full' is
 	specified, the full ref name (including prefix) will be printed.
-	This is the same as the log commands '--decorate' option.
+	This is the same as the log commands `--decorate` option.
 
 log.follow::
 	If `true`, `git log` will act as if the `--follow` option was used when
@@ -2298,16 +2298,16 @@ new default).
 --
 
 push.followTags::
-	If set to true enable '--follow-tags' option by default.  You
+	If set to true enable `--follow-tags` option by default.  You
 	may override this configuration at time of push by specifying
-	'--no-follow-tags'.
+	`--no-follow-tags`.
 
 push.gpgSign::
 	May be set to a boolean value, or the string 'if-asked'. A true
-	value causes all pushes to be GPG signed, as if '--signed' is
+	value causes all pushes to be GPG signed, as if `--signed` is
 	passed to linkgit:git-push[1]. The string 'if-asked' causes
 	pushes to be signed if the server supports it, as if
-	'--signed=if-asked' is passed to 'git push'. A false value may
+	`--signed=if-asked` is passed to 'git push'. A false value may
 	override a value from a lower-priority config file. An explicit
 	command-line flag always overrides this config option.
 
@@ -2330,7 +2330,7 @@ rebase.stat::
 	rebase. False by default.
 
 rebase.autoSquash::
-	If set to true enable '--autosquash' option by default.
+	If set to true enable `--autosquash` option by default.
 
 rebase.autoStash::
 	When set to true, automatically create a temporary stash

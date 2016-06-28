@@ -41,7 +41,7 @@ OPTIONS
 	option, then the refs from stdin are processed after those
 	on the command line.
 +
-If '--stateless-rpc' is specified together with this option then
+If `--stateless-rpc` is specified together with this option then
 the list of refs must be in packet format (pkt-line). Each ref must
 be in a separate packet, and the list must end with a flush packet.
 

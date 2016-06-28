@@ -508,7 +508,7 @@ OPTIONS
 
 --help::
 	Prints the synopsis and a list of the most commonly used
-	commands. If the option '--all' or `-a` is given then all
+	commands. If the option `--all` or `-a` is given then all
 	available commands are printed. If a Git command is named this
 	option will bring up the manual page for that command.
 +
@@ -850,16 +850,16 @@ Git so take care if using a foreign front-end.
 	If the `GIT_DIR` environment variable is set then it
 	specifies a path to use instead of the default `.git`
 	for the base of the repository.
-	The '--git-dir' command-line option also sets this value.
+	The `--git-dir` command-line option also sets this value.
 
 `GIT_WORK_TREE`::
 	Set the path to the root of the working tree.
-	This can also be controlled by the '--work-tree' command-line
+	This can also be controlled by the `--work-tree` command-line
 	option and the core.worktree configuration variable.
 
 `GIT_NAMESPACE`::
 	Set the Git namespace; see linkgit:gitnamespaces[7] for details.
-	The '--namespace' command-line option also sets this value.
+	The `--namespace` command-line option also sets this value.
 
 `GIT_CEILING_DIRECTORIES`::
 	This should be a colon-separated list of absolute paths.  If

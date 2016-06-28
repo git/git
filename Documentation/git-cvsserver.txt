@@ -54,7 +54,7 @@ Print usage information and exit
 You can specify a list of allowed directories. If no directories
 are given, all are allowed. This is an additional restriction, gitcvs
 access still needs to be enabled by the `gitcvs.enabled` config option
-unless '--export-all' was given, too.
+unless `--export-all` was given, too.
 
 
 DESCRIPTION

@@ -219,7 +219,7 @@ Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
 ------------
 
-* Use the '--in-place' option to edit a message file in place:
+* Use the `--in-place` option to edit a message file in place:
 +
 ------------
 $ cat msg.txt

@@ -16,7 +16,7 @@ DESCRIPTION
 -----------
 In its first form, the command provides the content or the type of an object in
 the repository. The type is required unless `-t` or `-p` is used to find the
-object type, or `-s` is used to find the object size, or '--textconv' is used
+object type, or `-s` is used to find the object size, or `--textconv` is used
 (which implies type "blob").
 
 In the second form, a list of objects (separated by linefeeds) is provided on

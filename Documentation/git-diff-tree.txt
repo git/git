@@ -43,11 +43,11 @@ include::diff-options.txt[]
 	show tree entry itself as well as subtrees.  Implies -r.
 
 --root::
-	When '--root' is specified the initial commit will be shown as a big
+	When `--root` is specified the initial commit will be shown as a big
 	creation event. This is equivalent to a diff against the NULL tree.
 
 --stdin::
-	When '--stdin' is specified, the command does not take
+	When `--stdin` is specified, the command does not take
 	<tree-ish> arguments from the command line.  Instead, it
 	reads lines containing either two <tree>, one <commit>, or a
 	list of <commit> from its standard input.  (Use a single space
@@ -91,7 +91,7 @@ include::pretty-options.txt[]
 -c::
 	This flag changes the way a merge commit is displayed
 	(which means it is useful only when the command is given
-	one <tree-ish>, or '--stdin').  It shows the differences
+	one <tree-ish>, or `--stdin`).  It shows the differences
 	from each of the parents to the merge result simultaneously
 	instead of showing pairwise diff between a parent and the
 	result one at a time (which is what the `-m` option does).

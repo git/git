@@ -210,17 +210,17 @@ the remote repository.
 'export-marks' <file>::
 	This modifies the 'export' capability, instructing Git to dump the
 	internal marks table to <file> when complete. For details,
-	read up on '--export-marks=<file>' in linkgit:git-fast-export[1].
+	read up on `--export-marks=<file>` in linkgit:git-fast-export[1].
 
 'import-marks' <file>::
 	This modifies the 'export' capability, instructing Git to load the
 	marks specified in <file> before processing any input. For details,
-	read up on '--import-marks=<file>' in linkgit:git-fast-export[1].
+	read up on `--import-marks=<file>` in linkgit:git-fast-export[1].
 
 'signed-tags'::
 	This modifies the 'export' capability, instructing Git to pass
-	'--signed-tags=verbatim' to linkgit:git-fast-export[1].  In the
-	absence of this capability, Git will use '--signed-tags=warn-strip'.
+	`--signed-tags=verbatim` to linkgit:git-fast-export[1].  In the
+	absence of this capability, Git will use `--signed-tags=warn-strip`.
 
 
 

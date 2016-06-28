@@ -71,7 +71,7 @@ some output processing may assume ref names in UTF-8.
   existing log ('$GIT_DIR/logs/<ref>'). Note that this looks up the state
   of your *local* ref at a given time; e.g., what was in your local
   'master' branch last week. If you want to look at commits made during
-  certain times, see '--since' and '--until'.
+  certain times, see `--since` and `--until`.
 
 '<refname>@{<n>}', e.g. 'master@\{1\}'::
   A ref followed by the suffix '@' with an ordinal specification

@@ -30,7 +30,7 @@ that service if it is enabled.
 
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any Git directory that hasn't explicitly been marked
-for export this way (unless the '--export-all' parameter is specified). If you
+for export this way (unless the `--export-all` parameter is specified). If you
 pass some directory paths as 'git daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
@@ -90,10 +90,10 @@ OPTIONS
 	is not supported, then --listen=hostname is also not supported and
 	--listen must be given an IPv4 address.
 	Can be given more than once.
-	Incompatible with '--inetd' option.
+	Incompatible with `--inetd` option.
 
 --port=<n>::
-	Listen on an alternative port.  Incompatible with '--inetd' option.
+	Listen on an alternative port.  Incompatible with `--inetd` option.
 
 --init-timeout=<n>::
 	Timeout (in seconds) between the moment the connection is established

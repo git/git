@@ -98,11 +98,11 @@ your Perl's Getopt::Long is < v2.37).
 --ignore-paths=<regex>;;
 	When passed to 'init' or 'clone' this regular expression will
 	be preserved as a config key.  See 'fetch' for a description
-	of '--ignore-paths'.
+	of `--ignore-paths`.
 --include-paths=<regex>;;
 	When passed to 'init' or 'clone' this regular expression will
 	be preserved as a config key.  See 'fetch' for a description
-	of '--include-paths'.
+	of `--include-paths`.
 --no-minimize-url;;
 	When tracking multiple directories (using --stdlayout,
 	--branches, or --tags options), git svn will attempt to connect
@@ -110,7 +110,7 @@ your Perl's Getopt::Long is < v2.37).
 	repository.  This default allows better tracking of history if
 	entire projects are moved within a repository, but may cause
 	issues on repositories where read access restrictions are in
-	place.  Passing '--no-minimize-url' will allow git svn to
+	place.  Passing `--no-minimize-url` will allow git svn to
 	accept URLs as-is without attempting to connect to a higher
 	level directory.  This option is off by default when only
 	one URL/branch is tracked (it would do little good).
@@ -141,7 +141,7 @@ the same local time zone.
 --ignore-paths=<regex>;;
 	This allows one to specify a Perl regular expression that will
 	cause skipping of all matching paths from checkout from SVN.
-	The '--ignore-paths' option should match for every 'fetch'
+	The `--ignore-paths` option should match for every 'fetch'
 	(including automatic fetches due to 'clone', 'dcommit',
 	'rebase', etc) on a given repository.
 +
@@ -170,10 +170,10 @@ Skip "branches" and "tags" of first level directories;;
 --include-paths=<regex>;;
 	This allows one to specify a Perl regular expression that will
 	cause the inclusion of only matching paths from checkout from SVN.
-	The '--include-paths' option should match for every 'fetch'
+	The `--include-paths` option should match for every 'fetch'
 	(including automatic fetches due to 'clone', 'dcommit',
-	'rebase', etc) on a given repository. '--ignore-paths' takes
-	precedence over '--include-paths'.
+	'rebase', etc) on a given repository. `--ignore-paths` takes
+	precedence over `--include-paths`.
 +
 [verse]
 config key: svn-remote.<name>.include-paths
@@ -191,7 +191,7 @@ config key: svn-remote.<name>.include-paths
 	or if a second argument is passed; it will create a directory
 	and work within that.  It accepts all arguments that the
 	'init' and 'fetch' commands accept; with the exception of
-	'--fetch-all' and '--parent'.  After a repository is cloned,
+	`--fetch-all` and `--parent`.  After a repository is cloned,
 	the 'fetch' command will be able to update revisions without
 	affecting the working tree; and the 'rebase' command will be
 	able to update the working tree with the latest changes.
@@ -216,7 +216,7 @@ it preserves linear history with 'git rebase' instead of
 'git merge' for ease of dcommitting with 'git svn'.
 +
 This accepts all options that 'git svn fetch' and 'git rebase'
-accept.  However, '--fetch-all' only fetches from the current
+accept.  However, `--fetch-all` only fetches from the current
 [svn-remote], and not all [svn-remote] definitions.
 +
 Like 'git rebase'; this requires that the working tree be clean
@@ -905,7 +905,7 @@ parent of the branch. However, it is possible that there is no suitable
 Git commit to serve as parent.  This will happen, among other reasons,
 if the SVN branch is a copy of a revision that was not fetched by 'git
 svn' (e.g. because it is an old revision that was skipped with
-'--revision'), or if in SVN a directory was copied that is not tracked
+`--revision`), or if in SVN a directory was copied that is not tracked
 by 'git svn' (such as a branch that is not tracked at all, or a
 subdirectory of a tracked branch). In these cases, 'git svn' will still
 create a Git branch, but instead of using an existing Git commit as the
@@ -982,12 +982,12 @@ directories in the working copy.  While this is the easiest way to get a
 copy of a complete repository, for projects with many branches it will
 lead to a working copy many times larger than just the trunk. Thus for
 projects using the standard directory structure (trunk/branches/tags),
-it is recommended to clone with option '--stdlayout'. If the project
+it is recommended to clone with option `--stdlayout`. If the project
 uses a non-standard structure, and/or if branches and tags are not
 required, it is easiest to only clone one directory (typically trunk),
 without giving any repository layout options.  If the full history with
-branches and tags is required, the options '--trunk' / '--branches' /
-'--tags' must be used.
+branches and tags is required, the options `--trunk` / `--branches` /
+`--tags` must be used.
 
 When using multiple --branches or --tags, 'git svn' does not automatically
 handle name collisions (for example, if two branches from different paths have

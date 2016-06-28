@@ -88,7 +88,7 @@ ifndef::git-pull[]
 	to whatever else would otherwise be fetched.  Using this
 	option alone does not subject tags to pruning, even if --prune
 	is used (though tags may be pruned anyway if they are also the
-	destination of an explicit refspec; see '--prune').
+	destination of an explicit refspec; see `--prune`).
 
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new commits of
@@ -110,7 +110,7 @@ ifndef::git-pull[]
 
 --no-recurse-submodules::
 	Disable recursive fetching of submodules (this has the same effect as
-	using the '--recurse-submodules=no' option).
+	using the `--recurse-submodules=no` option).
 
 --submodule-prefix=<path>::
 	Prepend <path> to paths printed in informative messages
@@ -137,7 +137,7 @@ endif::git-pull[]
 
 --upload-pack <upload-pack>::
 	When given, and the repository to fetch from is handled
-	by 'git fetch-pack', '--exec=<upload-pack>' is passed to
+	by 'git fetch-pack', `--exec=<upload-pack>` is passed to
 	the command to specify non-default path for the command
 	run on the other end.
 

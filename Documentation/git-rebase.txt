@@ -208,10 +208,10 @@ rebase.stat::
 	rebase. False by default.
 
 rebase.autoSquash::
-	If set to true enable '--autosquash' option by default.
+	If set to true enable `--autosquash` option by default.
 
 rebase.autoStash::
-	If set to true enable '--autostash' option by default.
+	If set to true enable `--autostash` option by default.
 
 rebase.missingCommitsCheck::
 	If set to "warn", print warnings about removed commits in
@@ -220,7 +220,7 @@ rebase.missingCommitsCheck::
 	done. "ignore" by default.
 
 rebase.instructionFormat::
-	Custom commit list format to use during an '--interactive' rebase.
+	Custom commit list format to use during an `--interactive` rebase.
 
 OPTIONS
 -------
@@ -428,9 +428,9 @@ squash/fixup series.
 	"fixup! " or "squash! " after the first, in case you referred to an
 	earlier fixup/squash with `git commit --fixup/--squash`.
 +
-This option is only valid when the '--interactive' option is used.
+This option is only valid when the `--interactive` option is used.
 +
-If the '--autosquash' option is enabled by default using the
+If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
 used to override and disable this setting.
 

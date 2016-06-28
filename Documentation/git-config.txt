@@ -31,29 +31,29 @@ You can query/set/replace/unset options with this command. The name is
 actually the section and the key separated by a dot, and the value will be
 escaped.
 
-Multiple lines can be added to an option by using the '--add' option.
+Multiple lines can be added to an option by using the `--add` option.
 If you want to update or unset an option which can occur on multiple
 lines, a POSIX regexp `value_regex` needs to be given.  Only the
 existing values that match the regexp are updated or unset.  If
 you want to handle the lines that do *not* match the regex, just
 prepend a single exclamation mark in front (see also <<EXAMPLES>>).
 
-The type specifier can be either '--int' or '--bool', to make
+The type specifier can be either `--int` or `--bool`, to make
 'git config' ensure that the variable(s) are of the given type and
 convert the value to the canonical form (simple decimal number for int,
-a "true" or "false" string for bool), or '--path', which does some
-path expansion (see '--path' below).  If no type specifier is passed, no
+a "true" or "false" string for bool), or `--path`, which does some
+path expansion (see `--path` below).  If no type specifier is passed, no
 checks or transformations are performed on the value.
 
 When reading, the values are read from the system, global and
 repository local configuration files by default, and options
-'--system', '--global', '--local' and '--file <filename>' can be
+`--system`, `--global`, `--local` and '--file <filename>' can be
 used to tell the command to read from only that location (see <<FILES>>).
 
 When writing, the new value is written to the repository local
-configuration file by default, and options '--system', '--global',
+configuration file by default, and options `--system`, `--global`,
 '--file <filename>' can be used to tell the command to write to
-that location (you can say '--local' but that is the default).
+that location (you can say `--local` but that is the default).
 
 This command will fail with non-zero status upon error.  Some exit
 codes are:
@@ -138,7 +138,7 @@ See also <<FILES>>.
 	Use the given config file instead of the one specified by GIT_CONFIG.
 
 --blob blob::
-	Similar to '--file' but use the given blob instead of a file. E.g.
+	Similar to `--file` but use the given blob instead of a file. E.g.
 	you can use 'master:.gitmodules' to read values from the file
 	'.gitmodules' in the master branch. See "SPECIFYING REVISIONS"
 	section in linkgit:gitrevisions[7] for a more complete list of
@@ -220,7 +220,7 @@ See also <<FILES>>.
 -e::
 --edit::
 	Opens an editor to modify the specified config file; either
-	'--system', '--global', or repository (default).
+	`--system`, `--global`, or repository (default).
 
 --[no-]includes::
 	Respect `include.*` directives in config files when looking up
@@ -232,7 +232,7 @@ See also <<FILES>>.
 FILES
 -----
 
-If not set explicitly with '--file', there are four files where
+If not set explicitly with `--file`, there are four files where
 'git config' will search for configuration options:
 
 $(prefix)/etc/gitconfig::
@@ -264,11 +264,11 @@ precedence over values read earlier.  When multiple values are taken then all
 values of a key from all files will be used.
 
 All writing options will per default write to the repository specific
-configuration file. Note that this also affects options like '--replace-all'
-and '--unset'. *'git config' will only ever change one file at a time*.
+configuration file. Note that this also affects options like `--replace-all`
+and `--unset`. *'git config' will only ever change one file at a time*.
 
 You can override these rules either by command-line options or by environment
-variables. The '--global' and the '--system' options will limit the file used
+variables. The `--global` and the `--system` options will limit the file used
 to the global or system-wide file respectively. The `GIT_CONFIG` environment
 variable has a similar effect, but you can specify any filename you want.
 
