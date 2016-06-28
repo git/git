@@ -3,20 +3,23 @@
 
 struct strbuf;
 
-/*  2 + (2 * num_attrs) + 8 + 1 + 8 + 'm' + NUL */
-/* "\033[1;2;4;5;7;38;5;2xx;48;5;2xxm\0" */
 /*
  * The maximum length of ANSI color sequence we would generate:
  * - leading ESC '['            2
- * - attr + ';'                 3 * 10 (e.g. "1;")
+ * - attr + ';'                 2 * num_attr (e.g. "1;")
+ * - no-attr + ';'              3 * num_attr (e.g. "22;")
  * - fg color + ';'             17 (e.g. "38;2;255;255;255;")
  * - bg color + ';'             17 (e.g. "48;2;255;255;255;")
  * - terminating 'm' NUL        2
  *
- * The above overcounts attr (we only use 5 not 8) and one semicolon
- * but it is close enough.
+ * The above overcounts by one semicolon but it is close enough.
+ *
+ * The space for attributes is also slightly overallocated, as
+ * the negation for some attributes is the same (e.g., nobold and nodim).
+ *
+ * We allocate space for 7 attributes.
  */
-#define COLOR_MAXLEN 70
+#define COLOR_MAXLEN 75
 
 /*
  * IMPORTANT: Due to the way these color codes are emulated on Windows,
