@@ -197,7 +197,7 @@ to other tags will be rewritten to point to the underlying commit.
 <rev-list options>...::
 	Arguments for 'git rev-list'.  All positive refs included by
 	these options are rewritten.  You may also specify options
-	such as `--all`, but you must use '--' to separate them from
+	such as `--all`, but you must use `--` to separate them from
 	the 'git filter-branch' options. Implies <<Remap_to_ancestor>>.
 
 
