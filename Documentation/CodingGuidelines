@@ -527,12 +527,13 @@ Writing Documentation:
  or commands:
 
  Literal examples (e.g. use of command-line options, command names,
- configuration and environment variables) must be typeset in monospace (i.e.
- wrapped with backticks):
+ branch names, configuration and environment variables) must be
+ typeset in monospace (i.e. wrapped with backticks):
    `--pretty=oneline`
    `git rev-list`
    `remote.pushDefault`
    `GIT_DIR`
+   `HEAD`
 
  An environment variable must be prefixed with "$" only when referring to its
  value and not when referring to the variable itself, in this case there is
