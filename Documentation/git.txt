@@ -508,7 +508,7 @@ OPTIONS
 
 --help::
 	Prints the synopsis and a list of the most commonly used
-	commands. If the option '--all' or '-a' is given then all
+	commands. If the option '--all' or `-a` is given then all
 	available commands are printed. If a Git command is named this
 	option will bring up the manual page for that command.
 +
@@ -974,7 +974,7 @@ other
 	The command will be given exactly two or four arguments: the
 	'username@host' (or just 'host') from the URL and the shell
 	command to execute on that remote system, optionally preceded by
-	'-p' (literally) and the 'port' from the URL when it specifies
+	`-p` (literally) and the 'port' from the URL when it specifies
 	something other than the default SSH port.
 +
 `$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted

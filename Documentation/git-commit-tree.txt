@@ -44,7 +44,7 @@ OPTIONS
 	An existing tree object
 
 -p <parent>::
-	Each '-p' indicates the id of a parent commit object.
+	Each `-p` indicates the id of a parent commit object.
 
 -m <message>::
 	A paragraph in the commit log message. This can be given more than

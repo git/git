@@ -103,7 +103,7 @@ the old cvs2git tool.
 
 -p <options-for-cvsps>::
 	Additional options for cvsps.
-	The options '-u' and '-A' are implicit and should not be used here.
+	The options `-u` and '-A' are implicit and should not be used here.
 +
 If you need to pass multiple options, separate them with a comma.
 
@@ -122,7 +122,7 @@ If you need to pass multiple options, separate them with a comma.
 
 -M <regex>::
 	Attempt to detect merges based on the commit message with a custom
-	regex. It can be used with '-m' to enable the default regexes
+	regex. It can be used with `-m` to enable the default regexes
 	as well. You must escape forward slashes.
 +
 The regex must capture the source branch name in $1.
@@ -186,7 +186,7 @@ messages, bug-tracking systems, email archives, and the like.
 
 OUTPUT
 ------
-If '-v' is specified, the script reports what it is doing.
+If `-v` is specified, the script reports what it is doing.
 
 Otherwise, success is indicated the Unix way, i.e. by simply exiting with
 a zero exit status.

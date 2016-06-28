@@ -41,7 +41,7 @@ CONFIGURATION
 -------------
 
 grep.lineNumber::
-	If set to true, enable '-n' option by default.
+	If set to true, enable `-n` option by default.
 
 grep.patternType::
 	Set the default matching behavior. Using a value of 'basic', 'extended',

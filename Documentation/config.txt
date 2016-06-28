@@ -913,7 +913,7 @@ browser.<tool>.cmd::
 
 browser.<tool>.path::
 	Override the path for the given tool that may be used to
-	browse HTML help (see '-w' option in linkgit:git-help[1]) or a
+	browse HTML help (see `-w` option in linkgit:git-help[1]) or a
 	working repository in gitweb (see linkgit:git-instaweb[1]).
 
 clean.requireForce::
@@ -1394,9 +1394,9 @@ gitcvs.logFile::
 
 gitcvs.usecrlfattr::
 	If true, the server will look up the end-of-line conversion
-	attributes for files to determine the '-k' modes to use. If
+	attributes for files to determine the `-k` modes to use. If
 	the attributes force Git to treat a file as text,
-	the '-k' mode will be left blank so CVS clients will
+	the `-k` mode will be left blank so CVS clients will
 	treat it as text. If they suppress text conversion, the file
 	will be set with '-kb' mode, which suppresses any newline munging
 	the client might otherwise do. If the attributes do not allow
@@ -1466,7 +1466,7 @@ gitweb.snapshot::
 	See linkgit:gitweb.conf[5] for description.
 
 grep.lineNumber::
-	If set to true, enable '-n' option by default.
+	If set to true, enable `-n` option by default.
 
 grep.patternType::
 	Set the default matching behavior. Using a value of 'basic', 'extended',

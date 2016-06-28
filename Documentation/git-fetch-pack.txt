@@ -47,7 +47,7 @@ be in a separate packet, and the list must end with a flush packet.
 
 -q::
 --quiet::
-	Pass '-q' flag to 'git unpack-objects'; this makes the
+	Pass `-q` flag to 'git unpack-objects'; this makes the
 	cloning process less verbose.
 
 -k::
