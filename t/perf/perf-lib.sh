@@ -127,11 +127,15 @@ test_checkout_worktree () {
 # Performance tests should never fail.  If they do, stop immediately
 immediate=t
 
+# Perf tests require GNU time
+case "$(uname -s)" in Darwin) GTIME="${GTIME:-gtime}";; esac
+GTIME="${GTIME:-/usr/bin/time}"
+
 test_run_perf_ () {
 	test_cleanup=:
 	test_export_="test_cleanup"
 	export test_cleanup test_export_
-	/usr/bin/time -f "%E %U %S" -o test_time.$i "$SHELL" -c '
+	"$GTIME" -f "%E %U %S" -o test_time.$i "$SHELL" -c '
 . '"$TEST_DIRECTORY"/test-lib-functions.sh'
 test_export () {
 	[ $# != 0 ] || return 0
