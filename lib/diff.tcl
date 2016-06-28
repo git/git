@@ -127,6 +127,9 @@ proc show_diff {path w {lno {}} {scroll_pos {}} {callback {}}} {
 	} else {
 		start_show_diff $cont_info
 	}
+
+	global current_diff_path selected_paths
+	set selected_paths($current_diff_path) 1
 }
 
 proc show_unmerged_diff {cont_info} {
