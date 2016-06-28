@@ -136,8 +136,8 @@ test_expect_success 'submodule update --init --recursive from subdirectory' '
 	 cd tmp &&
 	 git submodule update --init --recursive ../super >../../actual 2>../../actual2
 	) &&
-	test_cmp expect actual &&
-	test_cmp expect2 actual2
+	test_i18ncmp expect actual &&
+	test_i18ncmp expect2 actual2
 '
 
 apos="'";
@@ -370,7 +370,7 @@ test_expect_success 'submodule update - command in .git/config catches failure' 
 	(cd super &&
 	 test_must_fail git submodule update submodule 2>../actual
 	) &&
-	test_cmp actual expect
+	test_i18ncmp actual expect
 '
 
 cat << EOF >expect
@@ -388,7 +388,7 @@ test_expect_success 'submodule update - command in .git/config catches failure -
 	 mkdir tmp && cd tmp &&
 	 test_must_fail git submodule update ../submodule 2>../../actual
 	) &&
-	test_cmp actual expect
+	test_i18ncmp actual expect
 '
 
 cat << EOF >expect
@@ -408,7 +408,7 @@ test_expect_success 'recursive submodule update - command in .git/config catches
 	 mkdir -p tmp && cd tmp &&
 	 test_must_fail git submodule update --recursive ../super 2>../../actual
 	) &&
-	test_cmp actual expect
+	test_i18ncmp actual expect
 '
 
 test_expect_success 'submodule init does not copy command into .git/config' '

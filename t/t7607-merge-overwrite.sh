@@ -125,7 +125,7 @@ test_expect_success 'will not overwrite untracked file in leading path' '
 	cp important sub &&
 	cp important sub2 &&
 	test_must_fail git merge sub 2>out &&
-	test_cmp out expect &&
+	test_i18ncmp out expect &&
 	test_path_is_missing .git/MERGE_HEAD &&
 	test_cmp important sub &&
 	test_cmp important sub2 &&

@@ -1182,7 +1182,7 @@ test_expect_success 'extra args: setup' '
 test_extra_arg () {
 	test_expect_success "extra args: $*" "
 		test_must_fail git remote $* bogus_extra_arg 2>actual &&
-		grep '^usage:' actual
+		test_i18ngrep '^usage:' actual
 	"
 }
 

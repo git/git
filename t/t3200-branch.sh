@@ -550,7 +550,7 @@ If you wanted to make '"'master'"' track '"'origin/master'"', do this:
     git branch -d origin/master
     git branch --set-upstream-to origin/master
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream with two args only shows the deprecation message' '
@@ -559,7 +559,7 @@ test_expect_success '--set-upstream with two args only shows the deprecation mes
 	cat >expected <<EOF &&
 The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream with one arg only shows the deprecation message if the branch existed' '
@@ -568,7 +568,7 @@ test_expect_success '--set-upstream with one arg only shows the deprecation mess
 	cat >expected <<EOF &&
 The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '

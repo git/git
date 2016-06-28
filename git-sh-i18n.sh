@@ -53,6 +53,13 @@ gettext_without_eval_gettext)
 			git sh-i18n--envsubst "$1"
 		)
 	}
+
+	eval_ngettext () {
+		ngettext "$1" "$2" "$3" | (
+			export PATH $(git sh-i18n--envsubst --variables "$2");
+			git sh-i18n--envsubst "$2"
+		)
+	}
 	;;
 poison)
 	# Emit garbage so that tests that incorrectly rely on translatable
@@ -62,6 +69,10 @@ poison)
 	}
 
 	eval_gettext () {
+		printf "%s" "# GETTEXT POISON #"
+	}
+
+	eval_ngettext () {
 		printf "%s" "# GETTEXT POISON #"
 	}
 	;;
@@ -74,6 +85,13 @@ poison)
 		printf "%s" "$1" | (
 			export PATH $(git sh-i18n--envsubst --variables "$1");
 			git sh-i18n--envsubst "$1"
+		)
+	}
+
+	eval_ngettext () {
+		(test "$3" = 1 && printf "%s" "$1" || printf "%s" "$2") | (
+			export PATH $(git sh-i18n--envsubst --variables "$2");
+			git sh-i18n--envsubst "$2"
 		)
 	}
 	;;
