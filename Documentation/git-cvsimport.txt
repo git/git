@@ -74,10 +74,10 @@ OPTIONS
 	akin to the way 'git clone' uses 'origin' by default.
 
 -o <branch-for-HEAD>::
-	When no remote is specified (via -r) the 'HEAD' branch
+	When no remote is specified (via -r) the `HEAD` branch
 	from CVS is imported to the 'origin' branch within the Git
-	repository, as 'HEAD' already has a special meaning for Git.
-	When a remote is specified the 'HEAD' branch is named
+	repository, as `HEAD` already has a special meaning for Git.
+	When a remote is specified the `HEAD` branch is named
 	remotes/<remote>/master mirroring 'git clone' behaviour.
 	Use this option if you want to import into a different
 	branch.

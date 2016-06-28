@@ -27,9 +27,9 @@ in the current working directory.  Note that:
    taken as relative to the current working directory.  E.g. when you are
    in a directory 'sub' that has a directory 'dir', you can run 'git
    ls-tree -r HEAD dir' to list the contents of the tree (that is
-   'sub/dir' in 'HEAD').  You don't want to give a tree that is not at the
+   'sub/dir' in `HEAD`).  You don't want to give a tree that is not at the
    root level (e.g. `git ls-tree -r HEAD:sub dir`) in this case, as that
-   would result in asking for 'sub/sub/dir' in the 'HEAD' commit.
+   would result in asking for 'sub/sub/dir' in the `HEAD` commit.
    However, the current working directory can be ignored by passing
    --full-tree option.
 

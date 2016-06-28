@@ -298,7 +298,7 @@ Supported if the helper has the "fetch" capability.
 	is followed by a blank line). For example, the following would
 	be two batches of 'push', the first asking the remote-helper
 	to push the local ref 'master' to the remote ref 'master' and
-	the local 'HEAD' to the remote 'branch', and the second
+	the local `HEAD` to the remote 'branch', and the second
 	asking to push ref 'foo' to ref 'bar' (forced update requested
 	by the '+').
 +

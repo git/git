@@ -296,7 +296,7 @@ they correspond to these IP addresses.
 selectively enable/disable services per repository::
 	To enable 'git archive --remote' and disable 'git fetch' against
 	a repository, have the following in the configuration file in the
-	repository (that is the file 'config' next to 'HEAD', 'refs' and
+	repository (that is the file 'config' next to `HEAD`, 'refs' and
 	'objects').
 +
 ----------------------------------------------------------------

@@ -332,7 +332,7 @@ To get a checkout with the Eclipse CVS client:
 3. Browse the 'modules' available. It will give you a list of the heads in
    the repository. You will not be able to browse the tree from there. Only
    the heads.
-4. Pick 'HEAD' when it asks what branch/tag to check out. Untick the
+4. Pick `HEAD` when it asks what branch/tag to check out. Untick the
    "launch commit wizard" to avoid committing the .project file.
 
 Protocol notes: If you are using anonymous access via pserver, just select that.
