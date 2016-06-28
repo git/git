@@ -7,7 +7,8 @@
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,
 	SAFE_CRLF_FAIL = 1,
-	SAFE_CRLF_WARN = 2
+	SAFE_CRLF_WARN = 2,
+	SAFE_CRLF_RENORMALIZE = 3
 };
 
 extern enum safe_crlf safe_crlf;
