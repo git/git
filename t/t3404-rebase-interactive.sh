@@ -64,7 +64,7 @@ test_expect_success 'setup' '
 	done
 '
 
-# "exec" commands are ran with the user shell by default, but this may
+# "exec" commands are run with the user shell by default, but this may
 # be non-POSIX. For example, if SHELL=zsh then ">file" doesn't work
 # to create a file. Unseting SHELL avoids such non-portable behavior
 # in tests.
