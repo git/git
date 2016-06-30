@@ -375,7 +375,7 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 
 	for (nr = 0; nr < active_nr; nr++) {
 		const struct cache_entry *ce = active_cache[nr];
-		if (!S_ISREG(ce->ce_mode) || ce_intent_to_add(ce))
+		if (!S_ISREG(ce->ce_mode))
 			continue;
 		if (!ce_path_match(ce, pathspec, NULL))
 			continue;
@@ -385,7 +385,7 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 		 * cache version instead
 		 */
 		if (cached || (ce->ce_flags & CE_VALID) || ce_skip_worktree(ce)) {
-			if (ce_stage(ce))
+			if (ce_stage(ce) || ce_intent_to_add(ce))
 				continue;
 			hit |= grep_sha1(opt, ce->sha1, ce->name, 0, ce->name);
 		}
