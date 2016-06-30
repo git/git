@@ -961,3 +961,18 @@ test_env () {
 		done
 	)
 }
+
+# Returns true if the numeric exit code in "$2" represents the expected signal
+# in "$1". Signals should be given numerically.
+test_match_signal () {
+	if test "$2" = "$((128 + $1))"
+	then
+		# POSIX
+		return 0
+	elif test "$2" = "$((256 + $1))"
+	then
+		# ksh
+		return 0
+	fi
+	return 1
+}
