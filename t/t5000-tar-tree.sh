@@ -383,11 +383,11 @@ test_expect_success 'set up repository with far-future commit' '
 		git commit -m "tempori parendum"
 '
 
-test_expect_failure 'generate tar with future mtime' '
+test_expect_success 'generate tar with future mtime' '
 	git archive HEAD >future.tar
 '
 
-test_expect_failure TAR_HUGE 'system tar can read our future mtime' '
+test_expect_success TAR_HUGE 'system tar can read our future mtime' '
 	echo 4147 >expect &&
 	tar_info future.tar | cut -d" " -f2 >actual &&
 	test_cmp expect actual

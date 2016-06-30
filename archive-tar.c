@@ -22,8 +22,11 @@ static int write_tar_filter_archive(const struct archiver *ar,
  * This is the max value that a ustar size header can specify, as it is fixed
  * at 11 octal digits. POSIX specifies that we switch to extended headers at
  * this size.
+ *
+ * Likewise for the mtime (which happens to use a buffer of the same size).
  */
 #define USTAR_MAX_SIZE 077777777777UL
+#define USTAR_MAX_MTIME 077777777777UL
 
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
@@ -324,7 +327,18 @@ static int write_global_extended_header(struct archiver_args *args)
 	unsigned int mode;
 	int err = 0;
 
-	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
+	if (sha1)
+		strbuf_append_ext_header(&ext_header, "comment",
+					 sha1_to_hex(sha1), 40);
+	if (args->time > USTAR_MAX_MTIME) {
+		strbuf_append_ext_header_uint(&ext_header, "mtime",
+					      args->time);
+		args->time = USTAR_MAX_MTIME;
+	}
+
+	if (!ext_header.len)
+		return 0;
+
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
 	mode = 0100666;
@@ -409,8 +423,7 @@ static int write_tar_archive(const struct archiver *ar,
 {
 	int err = 0;
 
-	if (args->commit_sha1)
-		err = write_global_extended_header(args);
+	err = write_global_extended_header(args);
 	if (!err)
 		err = write_archive_entries(args, write_tar_entry);
 	if (!err)
