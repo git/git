@@ -360,7 +360,7 @@ test_expect_success 'set up repository with huge blob' '
 
 # We expect git to die with SIGPIPE here (otherwise we
 # would generate the whole 64GB).
-test_expect_failure 'generate tar with huge size' '
+test_expect_success 'generate tar with huge size' '
 	{
 		git archive HEAD
 		echo $? >exit-code
@@ -369,7 +369,7 @@ test_expect_failure 'generate tar with huge size' '
 	test_cmp expect exit-code
 '
 
-test_expect_failure TAR_HUGE 'system tar can read our huge size' '
+test_expect_success TAR_HUGE 'system tar can read our huge size' '
 	echo 68719476737 >expect &&
 	tar_info huge.tar | cut -d" " -f1 >actual &&
 	test_cmp expect actual
