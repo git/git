@@ -319,13 +319,12 @@ static int write_tar_entry(struct archiver_args *args,
 	return err;
 }
 
-static int write_global_extended_header(struct archiver_args *args)
+static void write_global_extended_header(struct archiver_args *args)
 {
 	const unsigned char *sha1 = args->commit_sha1;
 	struct strbuf ext_header = STRBUF_INIT;
 	struct ustar_header header;
 	unsigned int mode;
-	int err = 0;
 
 	if (sha1)
 		strbuf_append_ext_header(&ext_header, "comment",
@@ -337,7 +336,7 @@ static int write_global_extended_header(struct archiver_args *args)
 	}
 
 	if (!ext_header.len)
-		return 0;
+		return;
 
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
@@ -347,7 +346,6 @@ static int write_global_extended_header(struct archiver_args *args)
 	write_blocked(&header, sizeof(header));
 	write_blocked(ext_header.buf, ext_header.len);
 	strbuf_release(&ext_header);
-	return err;
 }
 
 static struct archiver **tar_filters;
@@ -423,9 +421,8 @@ static int write_tar_archive(const struct archiver *ar,
 {
 	int err = 0;
 
-	err = write_global_extended_header(args);
-	if (!err)
-		err = write_archive_entries(args, write_tar_entry);
+	write_global_extended_header(args);
+	err = write_archive_entries(args, write_tar_entry);
 	if (!err)
 		write_trailer();
 	return err;
