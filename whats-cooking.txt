@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2016, #10; Wed, 29)
+Subject: What's cooking in git.git (Jul 2016, #01; Fri, 1)
 X-master-at: cf4c2cfe52be5bd973a4838f73a35d3959ce2f43
-X-next-at: 9717e00580637967d08d52f0b50bbe27721a2120
+X-next-at: fa5e50e3639a0a6cbe9c3df13ce7aa2e6f3a4fcb
 
-What's cooking in git.git (Jun 2016, #10; Wed, 29)
+What's cooking in git.git (Jul 2016, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,117 +23,37 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* cc/apply-am (2016-06-28) 41 commits
- - apply: use error_errno() where possible
- - builtin/am: use apply api in run_apply()
- - apply: change error_routine when be_silent is set
- - usage: add get_error_routine() and get_warn_routine()
- - usage: add set_warn_routine()
- - apply: don't print on stdout when be_silent is set
- - apply: make 'be_silent' incompatible with 'apply_verbosely'
- - apply: add 'be_silent' variable to 'struct apply_state'
- - write_or_die: use warning() instead of fprintf(stderr, ...)
- - environment: add set_index_file()
- - apply: make some parsing functions static again
- - apply: move libified code from builtin/apply.c to apply.{c,h}
- - apply: rename and move opt constants to apply.h
- - builtin/apply: rename option parsing functions
- - builtin/apply: make create_one_file() return -1 on error
- - builtin/apply: make try_create_file() return -1 on error
- - builtin/apply: make write_out_results() return -1 on error
- - builtin/apply: make write_out_one_result() return -1 on error
- - builtin/apply: make create_file() return -1 on error
- - builtin/apply: make add_index_file() return -1 on error
- - builtin/apply: make add_conflicted_stages_file() return -1 on error
- - builtin/apply: make remove_file() return -1 on error
- - builtin/apply: make build_fake_ancestor() return -1 on error
- - builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
- - builtin/apply: make gitdiff_*() return -1 on error
- - builtin/apply: make gitdiff_*() return 1 at end of header
- - builtin/apply: make parse_traditional_patch() return -1 on error
- - builtin/apply: make apply_all_patches() return 128 or 1 on error
- - builtin/apply: move check_apply_state() to apply.c
- - builtin/apply: make check_apply_state() return -1 instead of die()ing
- - apply: make init_apply_state() return -1 instead of exit()ing
- - builtin/apply: move init_apply_state() to apply.c
- - builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
- - builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
- - builtin/apply: make parse_single_patch() return -1 on error
- - builtin/apply: make parse_chunk() return a negative integer on error
- - builtin/apply: make find_header() return -128 instead of die()ing
- - builtin/apply: read_patch_file() return -1 instead of die()ing
- - builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
- - apply: move 'struct apply_state' to apply.h
- - apply: make some names more specific
-
- "git am" has been taught to make an internal call to "git apply"'s
- innards without spawning the latter as a separate process.
-
- Needs review.
+* jk/common-main (2016-07-01) 1 commit
+ - Merge branch 'jk/common-main-2.8' into jk/common-main
+ (this branch uses jk/common-main-2.8.)
 
 
-* dp/autoconf-curl-ssl (2016-06-28) 1 commit
- - ./configure.ac: detect SSL in libcurl using curl-config
+* jk/common-main-2.8 (2016-07-01) 5 commits
+ - common-main: call git_setup_gettext()
+ - common-main: call restore_sigpipe_to_default()
+ - common-main: call sanitize_stdfds()
+ - common-main: call git_extract_argv0_path()
+ - add an extra level of indirection to main()
+ (this branch is used by jk/common-main.)
 
- The ./configure script generated from configure.ac was taught how
- to detect support of SSL by libcurl better.
-
- Needs review.
-
-
-* js/color-on-windows-comment (2016-06-28) 1 commit
-  (merged to 'next' on 2016-06-28 at 38a2ea1)
- + color.h: remove obsolete comment about limitations on Windows
-
- For a long time, we carried an in-code comment that said our
- colored output would work only when we use fprintf/fputs on
- Windows, which no longer is the case for the past few years.
-
- Will merge to 'master'.
+ There are certain house-keeping tasks that need to be performed at
+ the very beginning of any Git program, and programs that are not
+ built-in commands had to do them exactly the same way as "git"
+ potty does.  It was easy to make mistakes in one-off standalone
+ programs (like test helpers).  A common "main()" function that
+ calls cmd_main() of individual program has been introduced to
+ make it harder to make mistakes.
 
 
-* js/sign-empty-commit-fix (2016-06-29) 1 commit
- - commit -S: avoid invalid pointer with empty message
+* nd/ita-cleanup (2016-07-01) 3 commits
+ - grep: fix grepping for "intent to add" files
+ - t7810-grep.sh: fix a whitespace inconsistency
+ - t7810-grep.sh: fix duplicated test name
 
- "git commit --amend --allow-empty-message -S" for a commit without
- any message body could have misidentified where the header of the
- commit object ends.
-
- Will merge to 'next'.
-
-
-* js/t3404-grammo-fix (2016-06-29) 1 commit
- - t3404: fix a grammo (commands are ran -> commands are run)
-
- Will merge to 'next'.
-
-
-* ls/p4-tmp-refs (2016-06-29) 1 commit
- - git-p4: place temporary refs used for branch import under refs/git-p4-tmp
-
- "git p4" used a location outside $GIT_DIR/refs/ to place its
- temporary branches, which has been moved to refs/git-p4-tmp/.
-
- Needs an ack from "git p4" experts.
-
-
-* jc/pull-rebase-ff (2016-06-29) 1 commit
- -   pull: fast-forward "pull --rebase=true"
-
- "git pull --rebase", when there is no new commits on our side since
- we forked from the upstream, should be able to fast-forward without
- invoking "git rebase", but it didn't.
-
- Needs a real log message and a few tests.
-
-
-* ps/rebase-i-auto-unstash-upon-abort (2016-06-29) 1 commit
- - rebase -i: restore autostash on abort
-
- "git rebase -i --autostash" did not restore the auto-stashed change
- when the operation was aborted.
-
- Will merge to 'next'.
+ Git does not know what the contents in the index should be for a
+ path added with "git add -N" yet, so "git grep --cached" should not
+ show hits (or show lack of hits, with -L) in such a path.  But we
+ did by mistake, which has been corrected.
 
 --------------------------------------------------
 [Stalled]
@@ -273,6 +193,119 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cc/apply-am (2016-06-28) 41 commits
+ - apply: use error_errno() where possible
+ - builtin/am: use apply api in run_apply()
+ - apply: change error_routine when be_silent is set
+ - usage: add get_error_routine() and get_warn_routine()
+ - usage: add set_warn_routine()
+ - apply: don't print on stdout when be_silent is set
+ - apply: make 'be_silent' incompatible with 'apply_verbosely'
+ - apply: add 'be_silent' variable to 'struct apply_state'
+ - write_or_die: use warning() instead of fprintf(stderr, ...)
+ - environment: add set_index_file()
+ - apply: make some parsing functions static again
+ - apply: move libified code from builtin/apply.c to apply.{c,h}
+ - apply: rename and move opt constants to apply.h
+ - builtin/apply: rename option parsing functions
+ - builtin/apply: make create_one_file() return -1 on error
+ - builtin/apply: make try_create_file() return -1 on error
+ - builtin/apply: make write_out_results() return -1 on error
+ - builtin/apply: make write_out_one_result() return -1 on error
+ - builtin/apply: make create_file() return -1 on error
+ - builtin/apply: make add_index_file() return -1 on error
+ - builtin/apply: make add_conflicted_stages_file() return -1 on error
+ - builtin/apply: make remove_file() return -1 on error
+ - builtin/apply: make build_fake_ancestor() return -1 on error
+ - builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
+ - builtin/apply: make gitdiff_*() return -1 on error
+ - builtin/apply: make gitdiff_*() return 1 at end of header
+ - builtin/apply: make parse_traditional_patch() return -1 on error
+ - builtin/apply: make apply_all_patches() return 128 or 1 on error
+ - builtin/apply: move check_apply_state() to apply.c
+ - builtin/apply: make check_apply_state() return -1 instead of die()ing
+ - apply: make init_apply_state() return -1 instead of exit()ing
+ - builtin/apply: move init_apply_state() to apply.c
+ - builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_single_patch() return -1 on error
+ - builtin/apply: make parse_chunk() return a negative integer on error
+ - builtin/apply: make find_header() return -128 instead of die()ing
+ - builtin/apply: read_patch_file() return -1 instead of die()ing
+ - builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
+ - apply: move 'struct apply_state' to apply.h
+ - apply: make some names more specific
+
+ "git am" has been taught to make an internal call to "git apply"'s
+ innards without spawning the latter as a separate process.
+
+ Needs review.
+
+
+* dp/autoconf-curl-ssl (2016-06-28) 1 commit
+ - ./configure.ac: detect SSL in libcurl using curl-config
+
+ The ./configure script generated from configure.ac was taught how
+ to detect support of SSL by libcurl better.
+
+ Needs review.
+
+
+* js/color-on-windows-comment (2016-06-28) 1 commit
+  (merged to 'next' on 2016-06-28 at 38a2ea1)
+ + color.h: remove obsolete comment about limitations on Windows
+
+ For a long time, we carried an in-code comment that said our
+ colored output would work only when we use fprintf/fputs on
+ Windows, which no longer is the case for the past few years.
+
+ Will merge to 'master'.
+
+
+* js/sign-empty-commit-fix (2016-06-29) 1 commit
+ - commit -S: avoid invalid pointer with empty message
+
+ "git commit --amend --allow-empty-message -S" for a commit without
+ any message body could have misidentified where the header of the
+ commit object ends.
+
+ Will merge to 'next'.
+
+
+* js/t3404-grammo-fix (2016-06-29) 1 commit
+ - t3404: fix a grammo (commands are ran -> commands are run)
+
+ Will merge to 'next'.
+
+
+* ls/p4-tmp-refs (2016-06-29) 1 commit
+ - git-p4: place temporary refs used for branch import under refs/git-p4-tmp
+
+ "git p4" used a location outside $GIT_DIR/refs/ to place its
+ temporary branches, which has been moved to refs/git-p4-tmp/.
+
+ Needs an ack from "git p4" experts.
+
+
+* jc/pull-rebase-ff (2016-06-29) 1 commit
+ -   pull: fast-forward "pull --rebase=true"
+
+ "git pull --rebase", when there is no new commits on our side since
+ we forked from the upstream, should be able to fast-forward without
+ invoking "git rebase", but it didn't.
+
+ Needs a real log message and a few tests.
+
+
+* ps/rebase-i-auto-unstash-upon-abort (2016-06-29) 1 commit
+ - rebase -i: restore autostash on abort
+
+ "git rebase -i --autostash" did not restore the auto-stashed change
+ when the operation was aborted.
+
+ Will merge to 'next'.
+
+
 * dg/subtree-rebase-test (2016-06-28) 1 commit
  - contrib/subtree: Add a test for subtree rebase that loses commits
 
@@ -328,12 +361,19 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* po/range-doc (2016-06-27) 3 commits
+* po/range-doc (2016-07-01) 3 commits
  - doc: give headings for the two and three dot notations
  - doc: show the actual left, right, and boundary marks
  - doc: use 'symmetric difference' consistently
 
- Expecting a reroll.
+ Clarify various ways to specify the "revision ranges" in the
+ documentation.
+
+ Will hold.
+
+ There is another one that tries to clarify r1..r2 excludes r1
+ itself, which is not queued here waiting for the conclusion of a
+ review discussion.  Otherwise looked good.
 
 
 * sb/submodule-parallel-fetch (2016-06-27) 2 commits
@@ -488,8 +528,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/icase (2016-06-27) 13 commits
- - SQUASH???
+* nd/icase (2016-07-01) 12 commits
  - grep.c: reuse "icase" variable
  - diffcore-pickaxe: support case insensitive match on non-ascii
  - diffcore-pickaxe: Add regcomp_or_die()
@@ -506,7 +545,7 @@ of the repositories listed at
  "git grep -i" has been taught to fold case in non-ascii locales
  correctly.
 
- Modulo minor possible nits, this round looked mostly sensible.
+ Will merge to 'next'.
 
 
 * mj/log-show-signature-conf (2016-06-24) 3 commits
@@ -592,8 +631,8 @@ of the repositories listed at
  The ref-store abstraction was introduced to the refs API so that we
  can plug in different backends to store references.
 
- Is everybody happy with this version?
- If so, will merge to 'next'.
+ Needs a fixup.
+ ($gmane/298137)
 
 
 * mh/update-ref-errors (2016-06-20) 6 commits
@@ -731,16 +770,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/big-and-future-archive-tar (2016-06-21) 2 commits
+* jk/big-and-future-archive-tar (2016-07-01) 5 commits
+ - archive-tar: drop return value
  - archive-tar: write extended headers for far-future mtime
  - archive-tar: write extended headers for file sizes >= 8GB
+ - t5000: test tar files that overflow ustar headers
+ - t9300: factor out portable "head -c" replacement
 
  "git archive" learned to handle files that are larger than 8GB and
  commits far in the future than expressible by the traditional US-TAR
  format.
 
- Expecting a reroll.
- ($gmane/298119)
+ Will merge to 'next'.
 
 
 * jk/gpg-interface-cleanup (2016-06-17) 7 commits
@@ -827,15 +868,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* lf/recv-sideband-cleanup (2016-06-29) 2 commits
- - SQUASH???
+* lf/recv-sideband-cleanup (2016-07-01) 1 commit
  - sideband.c: refactor recv_sideband()
 
  Code simplification.  It however seems to add unnecessary trailing
  output in some cases.
 
- Queued with fixup from Nico.
- Waiting for response from Lukas.
+ Will merge to 'next'.
 
 
 * nd/test-lib-httpd-show-error-log-in-verbose (2016-06-13) 1 commit
@@ -1014,7 +1053,9 @@ of the repositories listed at
  Comments?
 
 
-* va/i18n-even-more (2016-06-17) 38 commits
+* va/i18n-even-more (2016-07-01) 39 commits
+  (merged to 'next' on 2016-07-01 at fa5e50e3)
+ + t5541: become resilient to GETTEXT_POISON
   (merged to 'next' on 2016-06-28 at 5919dfa)
  + i18n: branch: mark comment when editing branch description for translation
  + i18n: unmark die messages for translation
@@ -1064,9 +1105,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/worktree-lock (2016-06-13) 6 commits
+* nd/worktree-lock (2016-07-01) 7 commits
  - worktree.c: find_worktree() search by path suffix
  - worktree: add "unlock" command
+ - fixup! worktree: add "lock" command
  - worktree: add "lock" command
  - worktree.c: add is_worktree_locked()
  - worktree.c: add is_main_worktree()
@@ -1078,8 +1120,7 @@ of the repositories listed at
  command learned a dedicated command pair to create and remoev such
  a file, so that the users do not have to do this with editor.
 
- Is everybody happy with this version?
- If so, will merge to 'next'.
+ Need to squash one fixup before merging to 'next'.
 
 
 * jk/upload-pack-hook (2016-06-02) 7 commits
