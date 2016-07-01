@@ -142,7 +142,7 @@ static void lookup_credential(const struct string_list *fns, struct credential *
 			return; /* Found credential */
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char * const usage[] = {
 		"git credential-store [<options>] <action>",

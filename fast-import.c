@@ -300,7 +300,7 @@ static int failure;
 static FILE *pack_edges;
 static unsigned int show_stats = 1;
 static int global_argc;
-static char **global_argv;
+static const char **global_argv;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -3381,7 +3381,7 @@ static void parse_argv(void)
 		read_marks();
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	unsigned int i;
 

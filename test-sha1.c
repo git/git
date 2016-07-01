@@ -1,6 +1,6 @@
 #include "cache.h"
 
-int main(int ac, char **av)
+int cmd_main(int ac, const char **av)
 {
 	git_SHA_CTX ctx;
 	unsigned char sha1[20];

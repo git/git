@@ -138,7 +138,7 @@ static struct commands {
 	{ NULL },
 };
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	char *prog;
 	const char **user_argv;

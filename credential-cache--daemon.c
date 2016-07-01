@@ -257,7 +257,7 @@ static void init_socket_directory(const char *path)
 	free(path_copy);
 }
 
-int main(int argc, const char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char *socket_path;
 	int ignore_sighup = 0;

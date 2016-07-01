@@ -30,7 +30,7 @@ static int number_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char *prefix = "prefix/";
 	const char *usage[] = {

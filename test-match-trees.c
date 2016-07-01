@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "tree.h"
 
-int main(int ac, char **av)
+int cmd_main(int ac, const char **av)
 {
 	unsigned char hash1[20], hash2[20], shifted[20];
 	struct tree *one, *two;
