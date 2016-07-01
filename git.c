@@ -618,8 +618,6 @@ int cmd_main(int argc, const char **argv)
 	if (!cmd)
 		cmd = "git-help";
 
-	git_setup_gettext();
-
 	trace_command_performance(argv);
 
 	/*

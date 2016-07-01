@@ -11,8 +11,6 @@ int cmd_main(int argc, const char **argv)
 	unsigned int version;
 	static unsigned int top_index[256];
 
-	git_setup_gettext();
-
 	if (argc != 1)
 		usage(show_index_usage);
 	if (fread(top_index, 2 * 4, 1, stdin) != 1)
