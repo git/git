@@ -64,7 +64,7 @@ static void note_variables (const char *string);
 static void subst_from_stdin (void);
 
 int
-main (int argc, char *argv[])
+cmd_main (int argc, const char *argv[])
 {
   /* Default values for command line options.  */
   /* unsigned short int show_variables = 0; */

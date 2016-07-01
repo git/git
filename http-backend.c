@@ -632,7 +632,7 @@ static struct service_cmd {
 	{"POST", "/git-receive-pack$", service_rpc}
 };
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	char *method = getenv("REQUEST_METHOD");
 	char *dir;

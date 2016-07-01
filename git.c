@@ -630,9 +630,8 @@ static void restore_sigpipe_to_default(void)
 	signal(SIGPIPE, SIG_DFL);
 }
 
-int main(int argc, char **av)
+int cmd_main(int argc, const char **argv)
 {
-	const char **argv = (const char **) av;
 	const char *cmd;
 	int done_help = 0;
 

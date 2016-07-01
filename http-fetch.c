@@ -6,7 +6,7 @@
 static const char http_fetch_usage[] = "git http-fetch "
 "[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url";
 
-int main(int argc, const char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct walker *walker;
 	int commits_on_stdin = 0;
