@@ -813,9 +813,9 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
-	char *dir;
+	const char *dir;
 	int i;
 	int strict = 0;
 
@@ -826,7 +826,7 @@ int main(int argc, char **argv)
 	check_replace_refs = 0;
 
 	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+		const char *arg = argv[i];
 
 		if (arg[0] != '-')
 			break;

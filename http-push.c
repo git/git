@@ -1692,12 +1692,12 @@ static void run_request_queue(void)
 #endif
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct transfer_request *request;
 	struct transfer_request *next_request;
 	int nr_refspec = 0;
-	char **refspec = NULL;
+	const char **refspec = NULL;
 	struct remote_lock *ref_lock = NULL;
 	struct remote_lock *info_ref_lock = NULL;
 	struct rev_info revs;
@@ -1717,7 +1717,7 @@ int main(int argc, char **argv)
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
-		char *arg = *argv;
+		const char *arg = *argv;
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "--all")) {

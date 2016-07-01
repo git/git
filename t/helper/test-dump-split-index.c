@@ -7,7 +7,7 @@ static void show_bit(size_t pos, void *data)
 	printf(" %d", (int)pos);
 }
 
-int main(int ac, char **av)
+int cmd_main(int ac, const char **av)
 {
 	struct split_index *si;
 	int i;

@@ -40,7 +40,7 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	strbuf_setlen(base, len);
 }
 
-int main(int ac, char **av)
+int cmd_main(int ac, const char **av)
 {
 	struct untracked_cache *uc;
 	struct strbuf base = STRBUF_INIT;
