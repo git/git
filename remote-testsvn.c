@@ -292,7 +292,6 @@ int cmd_main(int argc, const char **argv)
 	static struct remote *remote;
 	const char *url_in;
 
-	git_extract_argv0_path(argv[0]);
 	setup_git_directory();
 	if (argc < 2 || argc > 3) {
 		usage("git-remote-svn <remote-name> [<url>]");

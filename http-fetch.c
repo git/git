@@ -24,8 +24,6 @@ int cmd_main(int argc, const char **argv)
 
 	git_setup_gettext();
 
-	git_extract_argv0_path(argv[0]);
-
 	while (arg < argc && argv[arg][0] == '-') {
 		if (argv[arg][1] == 't') {
 			get_tree = 1;

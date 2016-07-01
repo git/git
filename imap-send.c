@@ -1500,8 +1500,6 @@ int cmd_main(int argc, const char **argv)
 	int total;
 	int nongit_ok;
 
-	git_extract_argv0_path(argv[0]);
-
 	git_setup_gettext();
 
 	setup_git_directory_gently(&nongit_ok);
