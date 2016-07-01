@@ -164,7 +164,6 @@ Format of STDIN stream:
 #include "refs.h"
 #include "csum-file.h"
 #include "quote.h"
-#include "exec_cmd.h"
 #include "dir.h"
 
 #define PACK_ID_BITS 16
@@ -3384,8 +3383,6 @@ static void parse_argv(void)
 int cmd_main(int argc, const char **argv)
 {
 	unsigned int i;
-
-	git_extract_argv0_path(argv[0]);
 
 	git_setup_gettext();
 

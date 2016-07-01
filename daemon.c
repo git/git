@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "pkt-line.h"
-#include "exec_cmd.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "string-list.h"
@@ -1189,8 +1188,6 @@ int cmd_main(int argc, const char **argv)
 	int i;
 
 	git_setup_gettext();
-
-	git_extract_argv0_path(argv[0]);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
