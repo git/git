@@ -2231,9 +2231,9 @@ perf: all
 
 .PHONY: test perf
 
-t/helper/test-line-buffer$X: vcs-svn/lib.a
+t/helper/test-line-buffer$X: $(VCSSVN_LIB)
 
-t/helper/test-svn-fe$X: vcs-svn/lib.a
+t/helper/test-svn-fe$X: $(VCSSVN_LIB)
 
 .PRECIOUS: $(TEST_OBJS)
 
