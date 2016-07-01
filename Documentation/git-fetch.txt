@@ -116,6 +116,11 @@ representing the status of a single ref. Each line is of the form:
 The status of up-to-date refs is shown only if the --verbose option is
 used.
 
+In compact output mode, specified with configuration variable
+fetch.output, if either entire `<from>` or `<to>` is found in the
+other string, it will be substituted with `*` in the other string. For
+example, `master -> origin/master` becomes `master -> origin/*`.
+
 flag::
 	A single character indicating the status of the ref:
 (space);; for a successfully fetched fast-forward;
