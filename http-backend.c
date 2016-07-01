@@ -640,8 +640,6 @@ int cmd_main(int argc, const char **argv)
 	char *cmd_arg = NULL;
 	int i;
 
-	git_setup_gettext();
-
 	set_die_routine(die_webcgi);
 	set_die_is_recursing_routine(die_webcgi_recursing);
 

@@ -3384,8 +3384,6 @@ int cmd_main(int argc, const char **argv)
 {
 	unsigned int i;
 
-	git_setup_gettext();
-
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(fast_import_usage);
 

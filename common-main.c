@@ -37,6 +37,8 @@ int main(int argc, char **av)
 	 */
 	sanitize_stdfds();
 
+	git_setup_gettext();
+
 	argv[0] = git_extract_argv0_path(argv[0]);
 
 	restore_sigpipe_to_default();
