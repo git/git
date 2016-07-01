@@ -1203,8 +1203,6 @@ int cmd_main(int argc, const char **argv)
 	struct credentials *cred = NULL;
 	int i;
 
-	git_setup_gettext();
-
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		const char *v;

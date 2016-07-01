@@ -145,8 +145,6 @@ int cmd_main(int argc, const char **argv)
 	struct commands *cmd;
 	int count;
 
-	git_setup_gettext();
-
 	/*
 	 * Special hack to pretend to be a CVS server
 	 */

@@ -1709,8 +1709,6 @@ int cmd_main(int argc, const char **argv)
 	int new_refs;
 	struct ref *ref, *local_refs;
 
-	git_setup_gettext();
-
 	repo = xcalloc(1, sizeof(*repo));
 
 	argv++;
