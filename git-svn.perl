@@ -507,7 +507,10 @@ sub init_subdir {
 
 sub cmd_clone {
 	my ($url, $path) = @_;
-	if (!defined $path &&
+	if (!$url) {
+		die "SVN repository location required ",
+		    "as a command-line argument\n";
+	} elsif (!defined $path &&
 	    (defined $_trunk || @_branches || @_tags ||
 	     defined $_stdlayout) &&
 	    $url !~ m#^[a-z\+]+://#) {
