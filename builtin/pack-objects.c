@@ -349,7 +349,7 @@ static unsigned long write_reuse_object(struct sha1file *f, struct object_entry 
 	struct revindex_entry *revidx;
 	off_t offset;
 	enum object_type type = entry->type;
-	unsigned long datalen;
+	off_t datalen;
 	unsigned char header[10], dheader[10];
 	unsigned hdrlen;
 
