@@ -117,19 +117,24 @@ int parse_opt_tertiary(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int parse_options_concat(struct option *dst, size_t dst_size, struct option *src)
+struct option *parse_options_concat(struct option *a, struct option *b)
 {
-	int i, j;
+	struct option *ret;
+	size_t i, a_len = 0, b_len = 0;
 
-	for (i = 0; i < dst_size; i++)
-		if (dst[i].type == OPTION_END)
-			break;
-	for (j = 0; i < dst_size; i++, j++) {
-		dst[i] = src[j];
-		if (src[j].type == OPTION_END)
-			return 0;
-	}
-	return -1;
+	for (i = 0; a[i].type != OPTION_END; i++)
+		a_len++;
+	for (i = 0; b[i].type != OPTION_END; i++)
+		b_len++;
+
+	ALLOC_ARRAY(ret, st_add3(a_len, b_len, 1));
+	for (i = 0; i < a_len; i++)
+		ret[i] = a[i];
+	for (i = 0; i < b_len; i++)
+		ret[a_len + i] = b[i];
+	ret[a_len + b_len] = b[b_len]; /* final OPTION_END */
+
+	return ret;
 }
 
 int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
