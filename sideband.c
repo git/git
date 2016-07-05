@@ -68,12 +68,12 @@ int recv_sideband(const char *me, int in_stream, int out)
 				int linelen = brk - b;
 
 				if (!outbuf.len)
-					strbuf_addf(&outbuf, "%s", PREFIX);
+					strbuf_addstr(&outbuf, PREFIX);
 				if (linelen > 0) {
 					strbuf_addf(&outbuf, "%.*s%s%c",
 						    linelen, b, suffix, *brk);
 				} else {
-					strbuf_addf(&outbuf, "%c", *brk);
+					strbuf_addch(&outbuf, *brk);
 				}
 				xwrite(2, outbuf.buf, outbuf.len);
 				strbuf_reset(&outbuf);
@@ -97,7 +97,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 	}
 
 	if (outbuf.len) {
-		strbuf_addf(&outbuf, "\n");
+		strbuf_addch(&outbuf, '\n');
 		xwrite(2, outbuf.buf, outbuf.len);
 	}
 	strbuf_release(&outbuf);
