@@ -366,7 +366,7 @@ skip" to do the same thing. (In fact the special exit code 125 makes
 
 Or if you want more control, you can inspect the current state using
 for example "git bisect visualize". It will launch gitk (or "git log"
-if the DISPLAY environment variable is not set) to help you find a
+if the `DISPLAY` environment variable is not set) to help you find a
 better bisection point.
 
 Either way, if you have a string of untestable commits, it might

@@ -58,7 +58,7 @@ output, unless the `--stdout` option is specified.
 
 If `-o` is specified, output files are created in <dir>.  Otherwise
 they are created in the current working directory. The default path
-can be set with the 'format.outputDirectory' configuration option.
+can be set with the `format.outputDirectory` configuration option.
 The `-o` option takes precedence over `format.outputDirectory`.
 To store patches in the current working directory even when
 `format.outputDirectory` points elsewhere, use `-o .`.
@@ -146,9 +146,9 @@ series, where the head is chosen from the cover letter, the
 `--in-reply-to`, and the first patch mail, in this order.  'deep'
 threading makes every mail a reply to the previous one.
 +
-The default is `--no-thread`, unless the 'format.thread' configuration
+The default is `--no-thread`, unless the `format.thread` configuration
 is set.  If `--thread` is specified without a style, it defaults to the
-style specified by 'format.thread' if any, or else `shallow`.
+style specified by `format.thread` if any, or else `shallow`.
 +
 Beware that the default for 'git send-email' is to thread emails
 itself.  If you want `git format-patch` to take care of threading, you
