@@ -1,6 +1,6 @@
 #include "git-compat-util.h"
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	char *pat = "[^={} \t]+";
 	char *str = "={}\nfred";

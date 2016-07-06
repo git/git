@@ -3,7 +3,7 @@
  */
 #include "git-compat-util.h"
 
-int main(int argc, char *argv[])
+int cmd_main(int argc, const char **argv)
 {
 	if (argc != 2)
 		usage("Expected 1 parameter defining the temporary file template");

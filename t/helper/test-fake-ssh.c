@@ -2,7 +2,7 @@
 #include "run-command.h"
 #include "strbuf.h"
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char *trash_directory = getenv("TRASH_DIRECTORY");
 	struct strbuf buf = STRBUF_INIT;

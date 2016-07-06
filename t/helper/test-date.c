@@ -5,7 +5,7 @@ static const char *usage_msg = "\n"
 "  test-date parse [date]...\n"
 "  test-date approxidate [date]...\n";
 
-static void show_dates(char **argv, struct timeval *now)
+static void show_dates(const char **argv, struct timeval *now)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -17,7 +17,7 @@ static void show_dates(char **argv, struct timeval *now)
 	strbuf_release(&buf);
 }
 
-static void parse_dates(char **argv, struct timeval *now)
+static void parse_dates(const char **argv, struct timeval *now)
 {
 	struct strbuf result = STRBUF_INIT;
 
@@ -36,7 +36,7 @@ static void parse_dates(char **argv, struct timeval *now)
 	strbuf_release(&result);
 }
 
-static void parse_approxidate(char **argv, struct timeval *now)
+static void parse_approxidate(const char **argv, struct timeval *now)
 {
 	for (; *argv; argv++) {
 		time_t t;
@@ -45,7 +45,7 @@ static void parse_approxidate(char **argv, struct timeval *now)
 	}
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct timeval now;
 	const char *x;
