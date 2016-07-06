@@ -28,6 +28,34 @@ UI, Workflows & Features
    that they are shown with "remote: " prefix to avoid confusing the
    users.
 
+ * "git add -i/-p" learned to honor diff.compactionHeuristic
+   experimental knob, so that the user can work on the same hunk split
+   as "git diff" output.
+   (merge 46e3d17 jk/add-i-diff-compact-heuristics later to maint).
+
+ * "upload-pack" allows a custom "git pack-objects" replacement when
+   responding to "fetch/clone" via the uploadpack.packObjectsHook.
+   (merge 20b20a2 jk/upload-pack-hook later to maint).
+
+ * Teach format-patch and mailsplit (hence "am") how a line that
+   happens to begin with "From " in the e-mail message is quoted with
+   ">", so that these lines can be restored to their original shape.
+   (merge d9925d1 ew/mboxrd-format-am later to maint).
+
+ * "git repack" learned the "--keep-unreachable" option, which sends
+   loose unreachable objects to a pack instead of leaving them loose.
+   This helps heuristics based on the number of loose objects
+   (e.g. "gc --auto").
+   (merge e26a8c4 jk/repack-keep-unreachable later to maint).
+
+ * "log --graph --format=" learned that "%>|(N)" specifies the width
+   relative to the terminal's left edge, not relative to the area to
+   draw text that is to the right of the ancestry-graph section.  It
+   also now accepts negative N that means the column limit is relative
+   to the right border.
+   (merge 066790d nd/graph-width-padded later to maint).
+
+
 Performance, Internal Implementation, Development Support etc.
 
  * "git fast-import" learned the same performance trick to avoid
@@ -47,6 +75,46 @@ Performance, Internal Implementation, Development Support etc.
    first step to move many state variables into a structure that can
    be explicitly (re)initialized to make the machinery callable more
    than once.
+
+ * HTTP transport gained an option to produce more detailed debugging
+   trace.
+   (merge 73e57aa ep/http-curl-trace later to maint).
+
+ * Instead of taking advantage of a struct string_list that is
+   allocated with all NULs happens to be STRING_LIST_INIT_NODUP kind,
+   initialize them explicitly as such, to document their behaviour
+   better.
+   (merge 2721ce2 jk/string-list-static-init later to maint).
+
+ * HTTPd tests learned to show the server error log to help diagnosing
+   a failing tests.
+   (merge 44f243d nd/test-lib-httpd-show-error-log-in-verbose later to maint).
+
+ * The ownership rule for the piece of memory that hold references to
+   be fetched in "git fetch" was screwy, which has been cleaned up.
+   (merge b7410f6 km/fetch-do-not-free-remote-name later to maint).
+
+ * "git bisect" makes an internal call to "git diff-tree" when
+   bisection finds the culprit, but this call did not initialize the
+   data structure to pass to the diff-tree API correctly.
+   (merge 43ec550 jk/bisect-show-tree later to maint).
+
+ * Further preparatory clean-up for "worktree" feature continues.
+   (merge 0409e0b nd/worktree-cleanup-post-head-protection later to maint).
+
+ * Formats of the various data (and how to validate them) where we use
+   GPG signature have been documented.
+   (merge cc6ee97 mg/signature-doc later to maint).
+
+ * A new run-command API function pipe_command() is introduced to
+   sanely feed data to the standard input while capturing data from
+   the standard output and the standard error of an external process,
+   which is cumbersome to hand-roll correctly without deadlocking.
+
+   The codepath to sign data in a prepared buffer with GPG has been
+   updated to use this API to read from the status-fd to check for
+   errors (instead of relying on GPG's exit status).
+   (merge efee955 jk/gpg-interface-cleanup later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -80,54 +148,81 @@ notes for details).
  * The documentation set has been updated so that literal commands,
    configuration variables and environment variables are consistently
    typeset in fixed-width font and bold in manpages.
-   (merge ae9f631 tr/doc-tt later to maint).
 
  * "git svn propset" subcommand that was added in 2.3 days is
    documented now.
-   (merge 19a7f24 ap/git-svn-propset-doc later to maint).
 
  * The documentation tries to consistently spell "GPG"; when
    referring to the specific program name, "gpg" is used.
-   (merge bc91316 dn/gpg-doc later to maint).
 
  * "git reflog" stopped upon seeing an entry that denotes a branch
    creation event (aka "unborn"), which made it appear as if the
    reflog was truncated.
-   (merge 71abeb7 sg/reflog-past-root later to maint).
 
  * The git-prompt scriptlet (in contrib/) was not friendly with those
    who uses "set -u", which has been fixed.
-   (merge 34d8f5a vs/prompt-avoid-unset-variable later to maint).
 
  * compat/regex code did not cleanly compile.
-   (merge bd8f005 rj/compat-regex-size-max-fix later to maint).
 
  * A codepath that used alloca(3) to place an unbounded amount of data
    on the stack has been updated to avoid doing so.
-   (merge b8ba412 jk/avoid-unbounded-alloca later to maint).
 
  * "git update-index --add --chmod=+x file" may be usable as an escape
    hatch, but not a friendly thing to force for people who do need to
    use it regularly.  "git add --chmod=+x file" can be used instead.
-   (merge 4e55ed3 et/add-chmod-x later to maint).
 
  * Build improvements for gnome-keyring (in contrib/)
-   (merge 3cddb00 nb/gnome-keyring-build later to maint).
 
  * "git status" used to say "working directory" when it meant "working
    tree".
-   (merge 2a0e6cd lv/status-say-working-tree-not-directory later to maint).
 
  * Comments about misbehaving FreeBSD shells have been clarified with
    the version number (9.x and before are broken, newer ones are OK).
-   (merge 9b35cad em/newer-freebsd-shells-are-fine-with-returns later to maint).
 
  * "git cherry-pick A" worked on an unborn branch, but "git
    cherry-pick A..B" didn't.
-   (merge 0f974e2 mg/cherry-pick-multi-on-unborn later to maint).
+
+ * Fix an unintended regression in v2.9 that breaks "clone --depth"
+   that recurses down to submodules by forcing the submodules to also
+   be cloned shallowly, which many server instances that host upstream
+   of the submodules are not prepared for.
+   (merge 18a74a0 sb/clone-shallow-passthru later to maint).
+
+ * Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
+   to set the default value, without enclosing it in double quotes.
+   (merge 01247e0 lc/shell-default-value-noexpand later to maint).
+
+ * Some platform-specific code had non-ANSI strict declarations of C
+   functions that do not take any parameters, which has been
+   corrected.
+   (merge 0767172 js/mingw-parameter-less-c-functions later to maint).
+
+ * The internal code used to show local timezone offset is not
+   prepared to handle timestamps beyond year 2100, and gave a
+   bogus offset value to the caller.  Use a more benign looking
+   +0000 instead and let "git log" going in such a case, instead
+   of aborting.
+   (merge bab7483 jk/tzoffset-fix later to maint).
+
+ * One among four invocations of readlink(1) in our test suite has
+   been rewritten so that the test can run on systems without the
+   command (others are in valgrind test framework and t9802).
+   (merge d2addc3 ak/t7800-wo-readlink later to maint).
+
+ * t/perf needs /usr/bin/time with GNU extension; the invocation of it
+   is updated to "gtime" on Darwin.
+   (merge e3efa94 js/perf-on-apple later to maint).
+
+ * A bug, which caused "git p4" while running under verbose mode to
+   report paths that are omitted due to branch prefix incorrectly, has
+   been fixed; the command said "Ignoring file outside of prefix" for
+   paths that are _inside_.
+   (merge 09667d0 ao/p4-has-branch-prefix-fix later to maint).
 
  * Other minor clean-ups and documentation updates
-   (merge 3a39f61 pc/occurred later to maint).
-   (merge 9e70233 jk/fetch-prune-doc later to maint).
-   (merge ed008d7 pb/strbuf-read-file-doc later to maint).
-   (merge 31da121 jc/deref-tag later to maint).
+   (merge e51b0df pb/commit-editmsg-path later to maint).
+   (merge b333d0d jk/send-pack-stdio later to maint).
+   (merge fcf0fe9 lf/sideband-returns-void later to maint).
+   (merge 5819c2e sb/t5614-modernize later to maint).
+   (merge fe0537a cb/t7810-test-label-fix later to maint).
+   (merge 412b9a1 jc/t2300-setup later to maint).
