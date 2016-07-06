@@ -18,6 +18,16 @@ static int tar_umask = 002;
 static int write_tar_filter_archive(const struct archiver *ar,
 				    struct archiver_args *args);
 
+/*
+ * This is the max value that a ustar size header can specify, as it is fixed
+ * at 11 octal digits. POSIX specifies that we switch to extended headers at
+ * this size.
+ *
+ * Likewise for the mtime (which happens to use a buffer of the same size).
+ */
+#define USTAR_MAX_SIZE 077777777777UL
+#define USTAR_MAX_MTIME 077777777777UL
+
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
 {
@@ -137,6 +147,20 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 	strbuf_addch(sb, '\n');
 }
 
+/*
+ * Like strbuf_append_ext_header, but for numeric values.
+ */
+static void strbuf_append_ext_header_uint(struct strbuf *sb,
+					  const char *keyword,
+					  uintmax_t value)
+{
+	char buf[40]; /* big enough for 2^128 in decimal, plus NUL */
+	int len;
+
+	len = xsnprintf(buf, sizeof(buf), "%"PRIuMAX, value);
+	strbuf_append_ext_header(sb, keyword, buf, len);
+}
+
 static unsigned int ustar_header_chksum(const struct ustar_header *header)
 {
 	const unsigned char *p = (const unsigned char *)header;
@@ -208,7 +232,7 @@ static int write_tar_entry(struct archiver_args *args,
 	struct ustar_header header;
 	struct strbuf ext_header = STRBUF_INIT;
 	unsigned int old_mode = mode;
-	unsigned long size;
+	unsigned long size, size_in_header;
 	void *buffer;
 	int err = 0;
 
@@ -267,7 +291,13 @@ static int write_tar_entry(struct archiver_args *args,
 			memcpy(header.linkname, buffer, size);
 	}
 
-	prepare_header(args, &header, mode, size);
+	size_in_header = size;
+	if (S_ISREG(mode) && size > USTAR_MAX_SIZE) {
+		size_in_header = 0;
+		strbuf_append_ext_header_uint(&ext_header, "size", size);
+	}
+
+	prepare_header(args, &header, mode, size_in_header);
 
 	if (ext_header.len > 0) {
 		err = write_extended_header(args, sha1, ext_header.buf,
@@ -289,15 +319,25 @@ static int write_tar_entry(struct archiver_args *args,
 	return err;
 }
 
-static int write_global_extended_header(struct archiver_args *args)
+static void write_global_extended_header(struct archiver_args *args)
 {
 	const unsigned char *sha1 = args->commit_sha1;
 	struct strbuf ext_header = STRBUF_INIT;
 	struct ustar_header header;
 	unsigned int mode;
-	int err = 0;
 
-	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
+	if (sha1)
+		strbuf_append_ext_header(&ext_header, "comment",
+					 sha1_to_hex(sha1), 40);
+	if (args->time > USTAR_MAX_MTIME) {
+		strbuf_append_ext_header_uint(&ext_header, "mtime",
+					      args->time);
+		args->time = USTAR_MAX_MTIME;
+	}
+
+	if (!ext_header.len)
+		return;
+
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
 	mode = 0100666;
@@ -306,7 +346,6 @@ static int write_global_extended_header(struct archiver_args *args)
 	write_blocked(&header, sizeof(header));
 	write_blocked(ext_header.buf, ext_header.len);
 	strbuf_release(&ext_header);
-	return err;
 }
 
 static struct archiver **tar_filters;
@@ -382,10 +421,8 @@ static int write_tar_archive(const struct archiver *ar,
 {
 	int err = 0;
 
-	if (args->commit_sha1)
-		err = write_global_extended_header(args);
-	if (!err)
-		err = write_archive_entries(args, write_tar_entry);
+	write_global_extended_header(args);
+	err = write_archive_entries(args, write_tar_entry);
 	if (!err)
 		write_trailer();
 	return err;
