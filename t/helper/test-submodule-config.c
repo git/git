@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 		path_or_name = arg[1];
 
 		if (commit[0] == '\0')
-			hashcpy(commit_sha1, null_sha1);
+			hashclr(commit_sha1);
 		else if (get_sha1(commit, commit_sha1) < 0)
 			die_usage(argc, argv, "Commit not found.");
 

@@ -368,7 +368,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 			print_path(spec->path);
 			putchar('\n');
 
-			if (!hashcmp(ospec->sha1, spec->sha1) &&
+			if (!oidcmp(&ospec->oid, &spec->oid) &&
 			    ospec->mode == spec->mode)
 				break;
 			/* fallthrough */
@@ -383,10 +383,10 @@ static void show_filemodify(struct diff_queue_struct *q,
 			if (no_data || S_ISGITLINK(spec->mode))
 				printf("M %06o %s ", spec->mode,
 				       sha1_to_hex(anonymize ?
-						   anonymize_sha1(spec->sha1) :
-						   spec->sha1));
+						   anonymize_sha1(spec->oid.hash) :
+						   spec->oid.hash));
 			else {
-				struct object *object = lookup_object(spec->sha1);
+				struct object *object = lookup_object(spec->oid.hash);
 				printf("M %06o :%d ", spec->mode,
 				       get_object_mark(object));
 			}
@@ -572,7 +572,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	/* Export the referenced blobs, and remember the marks. */
 	for (i = 0; i < diff_queued_diff.nr; i++)
 		if (!S_ISGITLINK(diff_queued_diff.queue[i]->two->mode))
-			export_blob(diff_queued_diff.queue[i]->two->sha1);
+			export_blob(diff_queued_diff.queue[i]->two->oid.hash);
 
 	refname = commit->util;
 	if (anonymize) {
