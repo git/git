@@ -102,7 +102,7 @@ thus, in case the assumed-untracked file is changed upstream,
 you will need to handle the situation manually.
 
 --really-refresh::
-	Like '--refresh', but checks stat information unconditionally,
+	Like `--refresh`, but checks stat information unconditionally,
 	without regard to the "assume unchanged" setting.
 
 --[no-]skip-worktree::
@@ -211,7 +211,7 @@ will remove the intended effect of the option.
 
 Using --refresh
 ---------------
-'--refresh' does not calculate a new sha1 file or bring the index
+`--refresh` does not calculate a new sha1 file or bring the index
 up-to-date for mode/content changes. But what it *does* do is to
 "re-match" the stat information of a file with the index, so that you
 can refresh the index for a file that hasn't been changed but where
@@ -222,7 +222,7 @@ up the stat index details with the proper files.
 
 Using --cacheinfo or --info-only
 --------------------------------
-'--cacheinfo' is used to register a file that is not in the
+`--cacheinfo` is used to register a file that is not in the
 current working directory.  This is useful for minimum-checkout
 merging.
 
@@ -232,12 +232,12 @@ To pretend you have a file with mode and sha1 at path, say:
 $ git update-index --cacheinfo <mode>,<sha1>,<path>
 ----------------
 
-'--info-only' is used to register files without placing them in the object
+`--info-only` is used to register files without placing them in the object
 database.  This is useful for status-only repositories.
 
-Both '--cacheinfo' and '--info-only' behave similarly: the index is updated
-but the object database isn't.  '--cacheinfo' is useful when the object is
-in the database but the file isn't available locally.  '--info-only' is
+Both `--cacheinfo` and `--info-only` behave similarly: the index is updated
+but the object database isn't.  `--cacheinfo` is useful when the object is
+in the database but the file isn't available locally.  `--info-only` is
 useful when the file is available, but you do not wish to update the
 object database.
 

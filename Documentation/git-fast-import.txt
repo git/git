@@ -1056,7 +1056,7 @@ relative-marks::
 no-relative-marks::
 force::
 	Act as though the corresponding command-line option with
-	a leading '--' was passed on the command line
+	a leading `--` was passed on the command line
 	(see OPTIONS, above).
 
 import-marks::
@@ -1107,7 +1107,7 @@ options the user may specify to git fast-import itself.
 
 The `<option>` part of the command may contain any of the options
 listed in the OPTIONS section that do not change import semantics,
-without the leading '--' and is treated in the same way.
+without the leading `--` and is treated in the same way.
 
 Option commands must be the first commands on the input (not counting
 feature commands), to give an option command after any non-option

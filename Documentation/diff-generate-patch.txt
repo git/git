@@ -2,7 +2,7 @@ Generating patches with -p
 --------------------------
 
 When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
-with a '-p' option, "git diff" without the '--raw' option, or
+with a `-p` option, "git diff" without the `--raw` option, or
 "git log" with the "-p" option, they
 do not produce the output described above; instead they produce a
 patch file.  You can customize the creation of such patches via the
@@ -114,11 +114,11 @@ index fabadb8,cc95eb0..4866510
 ------------
 
 1.   It is preceded with a "git diff" header, that looks like
-     this (when '-c' option is used):
+     this (when `-c` option is used):
 
        diff --combined file
 +
-or like this (when '--cc' option is used):
+or like this (when `--cc` option is used):
 
        diff --cc file
 

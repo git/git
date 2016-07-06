@@ -47,7 +47,7 @@ OPTIONS
 	For a more complete list of ways to spell commits, see
 	linkgit:gitrevisions[7].
 	Sets of commits can be passed but no traversal is done by
-	default, as if the '--no-walk' option was specified, see
+	default, as if the `--no-walk` option was specified, see
 	linkgit:git-rev-list[1]. Note that specifying a range will
 	feed all <commit>... arguments to a single revision walk
 	(see a later example that uses 'maint master..next').

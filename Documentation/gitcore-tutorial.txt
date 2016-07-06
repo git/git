@@ -949,7 +949,7 @@ for details.
 [NOTE]
 If there were more commits on the 'master' branch after the merge, the
 merge commit itself would not be shown by 'git show-branch' by
-default.  You would need to provide '--sparse' option to make the
+default.  You would need to provide `--sparse` option to make the
 merge commit visible in this case.
 
 Now, let's pretend you are the one who did all the work in

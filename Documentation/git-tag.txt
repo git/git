@@ -167,7 +167,7 @@ This option is only applicable when listing tags without annotation lines.
 
 --[no-]merged [<commit>]::
 	Only list tags whose tips are reachable, or not reachable
-	if '--no-merged' is used, from the specified commit ('HEAD'
+	if `--no-merged` is used, from the specified commit (`HEAD`
 	if not specified).
 
 CONFIGURATION

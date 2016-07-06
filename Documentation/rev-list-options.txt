@@ -193,7 +193,7 @@ endif::git-rev-list[]
 
 --stdin::
 	In addition to the '<commit>' listed on the command
-	line, read them from the standard input. If a '--' separator is
+	line, read them from the standard input. If a `--` separator is
 	seen, stop reading commits and start reading paths to limit the
 	result.
 

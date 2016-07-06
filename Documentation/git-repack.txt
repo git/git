@@ -33,7 +33,7 @@ OPTIONS
 	pack everything referenced into a single pack.
 	Especially useful when packing a repository that is used
 	for private development. Use
-	with '-d'.  This will clean up the objects that `git prune`
+	with `-d`.  This will clean up the objects that `git prune`
 	leaves behind, but `git fsck --full --dangling` shows as
 	dangling.
 +
@@ -42,7 +42,7 @@ whole new pack in order to get any contained object, no matter how many
 other objects in that pack they already have locally.
 
 -A::
-	Same as `-a`, unless '-d' is used.  Then any unreachable
+	Same as `-a`, unless `-d` is used.  Then any unreachable
 	objects in a previous pack become loose, unpacked objects,
 	instead of being left in the old pack.  Unreachable objects
 	are never intentionally added to a pack, even when repacking.

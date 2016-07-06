@@ -39,10 +39,10 @@ named commit).  With `--merged`, only branches merged into the named
 commit (i.e. the branches whose tip commits are reachable from the named
 commit) will be listed.  With `--no-merged` only branches not merged into
 the named commit will be listed.  If the <commit> argument is missing it
-defaults to 'HEAD' (i.e. the tip of the current branch).
+defaults to `HEAD` (i.e. the tip of the current branch).
 
 The command's second form creates a new branch head named <branchname>
-which points to the current 'HEAD', or <start-point> if given.
+which points to the current `HEAD`, or <start-point> if given.
 
 Note that this will create the new branch, but it will not switch the
 working tree to it; use "git checkout <newbranch>" to switch to the
@@ -172,7 +172,7 @@ This option is only applicable in non-verbose mode.
 +
 This behavior is the default when the start point is a remote-tracking branch.
 Set the branch.autoSetupMerge configuration variable to `false` if you
-want `git checkout` and `git branch` to always behave as if '--no-track'
+want `git checkout` and `git branch` to always behave as if `--no-track`
 were given. Set it to `always` if you want this behavior when the
 start-point is either a local or remote-tracking branch.
 
