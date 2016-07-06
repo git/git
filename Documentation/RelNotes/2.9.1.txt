@@ -24,5 +24,39 @@ Fixes since v2.9
    file when a change added an entire function at the end of the file,
    which has been fixed.
 
+ * The documentation set has been updated so that literal commands,
+   configuration variables and environment variables are consistently
+   typeset in fixed-width font and bold in manpages.
+
+ * "git svn propset" subcommand that was added in 2.3 days is
+   documented now.
+
+ * The documentation tries to consistently spell "GPG"; when
+   referring to the specific program name, "gpg" is used.
+
+ * "git reflog" stopped upon seeing an entry that denotes a branch
+   creation event (aka "unborn"), which made it appear as if the
+   reflog was truncated.
+
+ * The git-prompt scriptlet (in contrib/) was not friendly with those
+   who uses "set -u", which has been fixed.
+
+ * A codepath that used alloca(3) to place an unbounded amount of data
+   on the stack has been updated to avoid doing so.
+
+ * "git update-index --add --chmod=+x file" may be usable as an escape
+   hatch, but not a friendly thing to force for people who do need to
+   use it regularly.  "git add --chmod=+x file" can be used instead.
+
+ * Build improvements for gnome-keyring (in contrib/)
+
+ * "git status" used to say "working directory" when it meant "working
+   tree".
+
+ * Comments about misbehaving FreeBSD shells have been clarified with
+   the version number (9.x and before are broken, newer ones are OK).
+
+ * "git cherry-pick A" worked on an unborn branch, but "git
+   cherry-pick A..B" didn't.
 
 Also contains minor documentation updates and code clean-ups.
