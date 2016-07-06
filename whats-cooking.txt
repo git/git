@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2016, #01; Fri, 1)
-X-master-at: cf4c2cfe52be5bd973a4838f73a35d3959ce2f43
-X-next-at: fa5e50e3639a0a6cbe9c3df13ce7aa2e6f3a4fcb
+Subject: What's cooking in git.git (Jul 2016, #02; Wed, 6)
+X-master-at: 5c589a73de4394ad125a4effac227b3aec856fa1
+X-next-at: 281e4d64a61b891e32e0344654b580b4203effa6
 
-What's cooking in git.git (Jul 2016, #01; Fri, 1)
+What's cooking in git.git (Jul 2016, #02; Wed, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -21,44 +21,324 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ak/t7800-wo-readlink (2016-06-21) 1 commit
+  (merged to 'next' on 2016-06-28 at 403bbbb)
+ + t7800: readlink may not be available
+
+ One among four invocations of readlink(1) in our test suite has
+ been rewritten so that the test can run on systems without the
+ command (others are in valgrind test framework and t9802).
+
+
+* ao/p4-has-branch-prefix-fix (2016-06-22) 1 commit
+  (merged to 'next' on 2016-06-28 at 333f90d)
+ + git-p4: correct hasBranchPrefix verbose output
+
+ A bug, which caused "git p4" while running under verbose mode to
+ report paths that are omitted due to branch prefix incorrectly, has
+ been fixed; the command said "Ignoring file outside of prefix" for
+ paths that are _inside_.
+
+
+* cb/t7810-test-label-fix (2016-06-21) 1 commit
+  (merged to 'next' on 2016-06-28 at 4d85a00)
+ + t7810: fix duplicated test title
+
+ Test clean-up.
+
+
+* ep/http-curl-trace (2016-05-24) 2 commits
+  (merged to 'next' on 2016-06-27 at c290515)
+ + imap-send.c: introduce the GIT_TRACE_CURL enviroment variable
+ + http.c: implement the GIT_TRACE_CURL environment variable
+
+ HTTP transport gained an option to produce more detailed debugging
+ trace.
+
+
+* ew/mboxrd-format-am (2016-06-06) 3 commits
+  (merged to 'next' on 2016-06-28 at ee0a088)
+ + am: support --patch-format=mboxrd
+ + mailsplit: support unescaping mboxrd messages
+ + pretty: support "mboxrd" output format
+
+ Teach format-patch and mailsplit (hence "am") how a line that
+ happens to begin with "From " in the e-mail message is quoted with
+ ">", so that these lines can be restored to their original shape.
+
+
+* jc/t2300-setup (2016-06-22) 1 commit
+  (merged to 'next' on 2016-06-28 at 62b902a)
+ + t2300: "git --exec-path" is not usable in $PATH on Windows as-is
+
+ Portability fix for Windows.
+
+
+* jk/add-i-diff-compact-heuristics (2016-06-16) 1 commit
+  (merged to 'next' on 2016-06-27 at 568f892)
+ + add--interactive: respect diff.compactionHeuristic
+
+ "git add -i/-p" learned to honor diff.compactionHeuristic
+ experimental knob, so that the user can work on the same hunk split
+ as "git diff" output.
+
+
+* jk/bisect-show-tree (2016-06-16) 1 commit
+  (merged to 'next' on 2016-06-27 at 6970f87e)
+ + bisect: always call setup_revisions after init_revisions
+
+ "git bisect" makes an internal call to "git diff-tree" when
+ bisection finds the culprit, but this call did not initialize the
+ data structure to pass to the diff-tree API correctly.
+
+
+* jk/gpg-interface-cleanup (2016-06-17) 7 commits
+  (merged to 'next' on 2016-06-28 at eed3498)
+ + gpg-interface: check gpg signature creation status
+ + sign_buffer: use pipe_command
+ + verify_signed_buffer: use pipe_command
+ + run-command: add pipe_command helper
+ + verify_signed_buffer: use tempfile object
+ + verify_signed_buffer: drop pbuf variable
+ + gpg-interface: use child_process.args
+
+ A new run-command API function pipe_command() is introduced to
+ sanely feed data to the standard input while capturing data from
+ the standard output and the standard error of an external process,
+ which is cumbersome to hand-roll correctly without deadlocking.
+
+ The codepath to sign data in a prepared buffer with GPG has been
+ updated to use this API to read from the status-fd to check for
+ errors (instead of relying on GPG's exit status).
+
+
+* jk/parseopt-string-list (2016-06-13) 3 commits
+  (merged to 'next' on 2016-06-27 at 27462e6)
+ + blame,shortlog: don't make local option variables static
+ + interpret-trailers: don't duplicate option strings
+ + parse_opt_string_list: stop allocating new strings
+ (this branch is used by jk/string-list-static-init.)
+
+ The command line argument parsing that uses OPT_STRING_LIST() often
+ made a copy of the argv[] element, which was unnecessary.
+
+
+* jk/repack-keep-unreachable (2016-06-14) 3 commits
+  (merged to 'next' on 2016-06-28 at 802b849)
+ + repack: extend --keep-unreachable to loose objects
+ + repack: add --keep-unreachable option
+ + repack: document --unpack-unreachable option
+
+ "git repack" learned the "--keep-unreachable" option, which sends
+ loose unreachable objects to a pack instead of leaving them loose.
+ This helps heuristics based on the number of loose objects
+ (e.g. "gc --auto").
+
+
+* jk/send-pack-stdio (2016-06-10) 2 commits
+  (merged to 'next' on 2016-06-27 at 2cfb0ff)
+ + write_or_die: remove the unused write_or_whine() function
+ + send-pack: use buffered I/O to talk to pack-objects
+
+ Code clean-up.
+
+
+* jk/string-list-static-init (2016-06-13) 2 commits
+  (merged to 'next' on 2016-06-27 at 3d4b2fa)
+ + use string_list initializer consistently
+ + Merge branch 'jk/parseopt-string-list' into jk/string-list-static-init
+ (this branch uses jk/parseopt-string-list.)
+
+ Instead of taking advantage of a struct string_list that is
+ allocated with all NULs happens to be STRING_LIST_INIT_NODUP kind,
+ initialize them explicitly as such, to document their behaviour
+ better.
+
+
+* jk/tzoffset-fix (2016-06-20) 3 commits
+  (merged to 'next' on 2016-06-28 at 08ec8c5)
+ + local_tzoffset: detect errors from tm_to_time_t
+ + t0006: test various date formats
+ + t0006: rename test-date's "show" to "relative"
+
+ The internal code used to show local timezone offset is not
+ prepared to handle timestamps beyond year 2100, and gave a
+ bogus offset value to the caller.  Use a more benign looking
+ +0000 instead and let "git log" going in such a case, instead
+ of aborting.
+
+
+* jk/upload-pack-hook (2016-06-02) 7 commits
+  (merged to 'next' on 2016-06-28 at e5e5bb6)
+ + upload-pack: provide a hook for running pack-objects
+ + t1308: do not get fooled by symbolic links to the source tree
+ + config: add a notion of "scope"
+ + config: return configset value for current_config_ functions
+ + config: set up config_source for command-line config
+ + git_config_parse_parameter: refactor cleanup code
+ + git_config_with_options: drop "found" counting
+
+ "upload-pack" allows a custom "git pack-objects" replacement when
+ responding to "fetch/clone" via the uploadpack.packObjectsHook.
+
+
+* js/mingw-parameter-less-c-functions (2016-06-20) 1 commit
+  (merged to 'next' on 2016-06-28 at e673c65)
+ + mingw: let the build succeed with DEVELOPER=1
+
+ Some platform-specific code had non-ANSI strict declarations of C
+ functions that do not take any parameters, which has been
+ corrected.
+
+
+* js/perf-on-apple (2016-06-21) 1 commit
+  (merged to 'next' on 2016-06-28 at 83529b9)
+ + perf: accommodate for MacOSX
+
+ t/perf needs /usr/bin/time with GNU extension; the invocation of it
+ is updated to "gtime" on Darwin.
+
+
+* km/fetch-do-not-free-remote-name (2016-06-14) 1 commit
+  (merged to 'next' on 2016-06-27 at 4bc34c4)
+ + builtin/fetch.c: don't free remote->name after fetch
+
+ The ownership rule for the piece of memory that hold references to
+ be fetched in "git fetch" was screwy, which has been cleaned up.
+
+
+* lc/shell-default-value-noexpand (2016-06-19) 1 commit
+  (merged to 'next' on 2016-06-28 at 2dc7727)
+ + sh-setup: enclose setting of ${VAR=default} in double-quotes
+
+ Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
+ to set the default value, without enclosing it in double quotes.
+
+
+* lf/sideband-returns-void (2016-06-16) 2 commits
+  (merged to 'next' on 2016-06-27 at 558c781)
+ + upload-pack.c: make send_client_data() return void
+ + sideband.c: make send_sideband() return void
+
+ A small internal API cleanup.
+
+
+* mg/signature-doc (2016-06-17) 4 commits
+  (merged to 'next' on 2016-06-28 at 2732a37)
+ + Documentation/technical: signed merge tag format
+ + Documentation/technical: signed commit format
+ + Documentation/technical: signed tag format
+ + Documentation/technical: describe signature formats
+
+ Formats of the various data (and how to validate them) where we use
+ GPG signature have been documented.
+
+
+* nd/graph-width-padded (2016-06-16) 2 commits
+  (merged to 'next' on 2016-06-28 at 0f733ef)
+ + pretty.c: support <direction>|(<negative number>) forms
+ + pretty: pass graph width to pretty formatting for use in '%>|(N)'
+
+ "log --graph --format=" learned that "%>|(N)" specifies the width
+ relative to the terminal's left edge, not relative to the area to
+ draw text that is to the right of the ancestry-graph section.  It
+ also now accepts negative N that means the column limit is relative
+ to the right border.
+
+
+* nd/test-lib-httpd-show-error-log-in-verbose (2016-06-13) 1 commit
+  (merged to 'next' on 2016-06-27 at 9793d81)
+ + lib-httpd.sh: print error.log on error
+
+ HTTPd tests learned to show the server error log to help diagnosing
+ a failing tests.
+
+
+* nd/worktree-cleanup-post-head-protection (2016-05-24) 6 commits
+  (merged to 'next' on 2016-06-28 at 55414fa)
+ + worktree: simplify prefixing paths
+ + worktree: avoid 0{40}, too many zeroes, hard to read
+ + worktree.c: use is_dot_or_dotdot()
+ + git-worktree.txt: keep subcommand listing in alphabetical order
+ + worktree.c: rewrite mark_current_worktree() to avoid strbuf
+ + completion: support git-worktree
+ (this branch is used by nd/worktree-lock.)
+
+ Further preparatory clean-up for "worktree" feature continues.
+
+
+* pb/commit-editmsg-path (2016-06-09) 1 commit
+  (merged to 'next' on 2016-06-27 at 0f01ce1)
+ + builtin/commit.c: memoize git-path for COMMIT_EDITMSG
+
+ Code clean-up.
+
+
+* sb/clone-shallow-passthru (2016-06-20) 1 commit
+  (merged to 'next' on 2016-06-28 at d515d7d)
+ + clone: do not let --depth imply --shallow-submodules
+ (this branch is used by sb/t5614-modernize.)
+
+ Fix an unintended regression in v2.9 that breaks "clone --depth"
+ that recurses down to submodules by forcing the submodules to also
+ be cloned shallowly, which many server instances that host upstream
+ of the submodules are not prepared for.
+
+
+* sb/t5614-modernize (2016-06-21) 1 commit
+  (merged to 'next' on 2016-06-28 at ee05326)
+ + t5614: don't use subshells
+ (this branch uses sb/clone-shallow-passthru.)
+
+ Test clean-up.
+
+--------------------------------------------------
 [New Topics]
 
-* jk/common-main (2016-07-01) 1 commit
- - Merge branch 'jk/common-main-2.8' into jk/common-main
- (this branch uses jk/common-main-2.8.)
+* ak/lazy-prereq-mktemp (2016-07-06) 1 commit
+ - t7610: test for mktemp before test execution
+
+ A test that unconditionally used "mktemp" learned that the command
+ is not necessarily available everywhere.
+
+ Will merge to 'next'.
 
 
-* jk/common-main-2.8 (2016-07-01) 5 commits
- - common-main: call git_setup_gettext()
- - common-main: call restore_sigpipe_to_default()
- - common-main: call sanitize_stdfds()
- - common-main: call git_extract_argv0_path()
- - add an extra level of indirection to main()
- (this branch is used by jk/common-main.)
+* ew/svn-bad-ref (2016-07-06) 1 commit
+ - git-svn: warn instead of dying when commit data is missing
 
- There are certain house-keeping tasks that need to be performed at
- the very beginning of any Git program, and programs that are not
- built-in commands had to do them exactly the same way as "git"
- potty does.  It was easy to make mistakes in one-off standalone
- programs (like test helpers).  A common "main()" function that
- calls cmd_main() of individual program has been introduced to
- make it harder to make mistakes.
+ An earlier update to "git svn" tightened the parsing of refs given
+ as the command line arguments too much.  This has been fixed by
+ loosening the check a bit.
+
+ I'm likely to discard this, favouring a direct pull request from
+ the subsystem maintainer directly going to 'master'.
 
 
-* nd/ita-cleanup (2016-07-01) 3 commits
- - grep: fix grepping for "intent to add" files
- - t7810-grep.sh: fix a whitespace inconsistency
- - t7810-grep.sh: fix duplicated test name
+* jk/difftool-in-subdir (2016-07-06) 1 commit
+ - difftool: fix argument handling in subdirs
 
- Git does not know what the contents in the index should be for a
- path added with "git add -N" yet, so "git grep --cached" should not
- show hits (or show lack of hits, with -L) in such a path.  But we
- did by mistake, which has been corrected.
+ "git difftool <paths>..." started in a subdirectory failed to
+ interpret the paths relative to that directory, which has been
+ fixed.
+
+ Waiting for an ack.
+
+
+* nd/test-helpers (2016-07-06) 2 commits
+ - Makefile: use VCSSVN_LIB to refer to svn library
+ - Makefile: drop extra dependencies for test helpers
+
+ Build clean-up.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
 
-* jh/clean-smudge-annex (2016-06-22) 10 commits
+* jh/clean-smudge-annex (2016-07-06) 10 commits
  - SQUASH???
  - use smudgeToFile filter in recursive merge
  - use smudgeToFile filter in git am
@@ -78,17 +358,9 @@ of the repositories listed at
  the filesystem directly.
 
 
-* dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
- - blame: require 0 context lines while finding moved lines with -M
-
- "git blame -M" missed a single line that was moved within the file.
-
- We may want to squash a test or two to this commit.  Volunteers?
-
-
-* tb/convert-peek-in-index (2016-06-07) 3 commits
- - correct ce_compare_data() in a middle of a merge
+* tb/convert-peek-in-index (2016-07-06) 3 commits
  - read-cache: factor out get_sha1_from_index() helper
+ - correct ce_compare_data() in a middle of a merge
  - convert: unify the "auto" handling of CRLF
  (this branch is used by jh/clean-smudge-annex.)
 
@@ -193,6 +465,56 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
+  (merged to 'next' on 2016-07-06 at 087490c)
+ + blame: require 0 context lines while finding moved lines with -M
+
+ "git blame -M" missed a single line that was moved within the file.
+
+ We may want to squash a test or two to this commit.  Volunteers?
+
+
+* jk/common-main (2016-07-06) 1 commit
+ - Merge branch 'jk/common-main-2.8' into jk/common-main
+ (this branch uses jk/common-main-2.8.)
+
+ Prepare jk/commin-main-2.8 topic to be mergeable to 2.9 and later.
+
+ Will merge to 'master'.
+
+
+* jk/common-main-2.8 (2016-07-06) 6 commits
+ - mingw: declare main()'s argv as const
+ - common-main: call git_setup_gettext()
+ - common-main: call restore_sigpipe_to_default()
+ - common-main: call sanitize_stdfds()
+ - common-main: call git_extract_argv0_path()
+ - add an extra level of indirection to main()
+ (this branch is used by jk/common-main.)
+
+ There are certain house-keeping tasks that need to be performed at
+ the very beginning of any Git program, and programs that are not
+ built-in commands had to do them exactly the same way as "git"
+ potty does.  It was easy to make mistakes in one-off standalone
+ programs (like test helpers).  A common "main()" function that
+ calls cmd_main() of individual program has been introduced to
+ make it harder to make mistakes.
+
+
+* nd/ita-cleanup (2016-07-01) 3 commits
+  (merged to 'next' on 2016-07-06 at f15aeba)
+ + grep: fix grepping for "intent to add" files
+ + t7810-grep.sh: fix a whitespace inconsistency
+ + t7810-grep.sh: fix duplicated test name
+
+ Git does not know what the contents in the index should be for a
+ path added with "git add -N" yet, so "git grep --cached" should not
+ show hits (or show lack of hits, with -L) in such a path.  But we
+ did by mistake, which has been corrected.
+
+ Will merge to 'master'.
+
+
 * cc/apply-am (2016-06-28) 41 commits
  - apply: use error_errno() where possible
  - builtin/am: use apply api in run_apply()
@@ -263,19 +585,23 @@ of the repositories listed at
 
 
 * js/sign-empty-commit-fix (2016-06-29) 1 commit
- - commit -S: avoid invalid pointer with empty message
+  (merged to 'next' on 2016-07-06 at 448da1b)
+ + commit -S: avoid invalid pointer with empty message
 
  "git commit --amend --allow-empty-message -S" for a commit without
  any message body could have misidentified where the header of the
  commit object ends.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/t3404-grammo-fix (2016-06-29) 1 commit
- - t3404: fix a grammo (commands are ran -> commands are run)
+  (merged to 'next' on 2016-07-06 at 4378654)
+ + t3404: fix a grammo (commands are ran -> commands are run)
 
- Will merge to 'next'.
+ Grammofix.
+
+ Will merge to 'master'.
 
 
 * ls/p4-tmp-refs (2016-06-29) 1 commit
@@ -298,24 +624,26 @@ of the repositories listed at
 
 
 * ps/rebase-i-auto-unstash-upon-abort (2016-06-29) 1 commit
- - rebase -i: restore autostash on abort
+  (merged to 'next' on 2016-07-06 at 0fdcedb)
+ + rebase -i: restore autostash on abort
 
  "git rebase -i --autostash" did not restore the auto-stashed change
  when the operation was aborted.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dg/subtree-rebase-test (2016-06-28) 1 commit
- - contrib/subtree: Add a test for subtree rebase that loses commits
+  (merged to 'next' on 2016-07-06 at 4dec1ad)
+ + contrib/subtree: Add a test for subtree rebase that loses commits
 
  This is just a test to specify the desired behaviour that currently
  is not available.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/test-match-signal (2016-06-24) 4 commits
+* jk/test-match-signal (2016-07-06) 4 commits
  - t/lib-git-daemon: use test_match_signal
  - test_must_fail: use test_match_signal
  - t0005: use test_match_signal as appropriate
@@ -324,41 +652,46 @@ of the repositories listed at
  The test framework learned a new helper test_match_signal to check
  an exit code from getting killed by an expected signal.
 
- HOLD
- ($gmane/298523)
+ Is this what everybody can agree on?
 
 
 * ah/unpack-trees-advice-messages (2016-06-27) 1 commit
- - unpack-trees: fix English grammar in do-this-before-that messages
+  (merged to 'next' on 2016-07-06 at 4254fc2)
+ + unpack-trees: fix English grammar in do-this-before-that messages
 
- Will merge to 'next'.
+ Grammofix.
+
+ Will merge to 'master'.
 
 
 * ew/gc-auto-pack-limit-fix (2016-06-27) 1 commit
- - gc: fix off-by-one error with gc.autoPackLimit
+  (merged to 'next' on 2016-07-06 at aa023d3)
+ + gc: fix off-by-one error with gc.autoPackLimit
 
  "gc.autoPackLimit" when set to 1 should not trigger a repacking
  when there is only one pack, but the code counted poorly and did
  so.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* nd/connect-ssh-command-config (2016-06-28) 2 commits
- - SQUASH???
- - connect: read $GIT_SSH_COMMAND from config file
+* nd/connect-ssh-command-config (2016-07-06) 1 commit
+  (merged to 'next' on 2016-07-06 at 6eac316)
+ + connect: read $GIT_SSH_COMMAND from config file
 
  A new configuration variable core.sshCommand to specify what value
  for GIT_SSH_COMMAND to use per repository.
 
- Is everybody happy with the SQUASH???
- If so will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/doc-new-command (2016-06-27) 1 commit
- - new-command.txt: correct the command description file
+  (merged to 'next' on 2016-07-06 at 1404b64)
+ + new-command.txt: correct the command description file
 
- Will merge to 'next'.
+ Typofix in a doc.
+
+ Will merge to 'master'.
 
 
 * po/range-doc (2016-07-01) 3 commits
@@ -377,33 +710,35 @@ of the repositories listed at
 
 
 * sb/submodule-parallel-fetch (2016-06-27) 2 commits
- - xwrite: poll on non-blocking FDs
- - xread: retry after poll on EAGAIN/EWOULDBLOCK
+  (merged to 'next' on 2016-07-06 at de5fd35)
+ + xwrite: poll on non-blocking FDs
+ + xread: retry after poll on EAGAIN/EWOULDBLOCK
 
  Fix a recently introduced codepaths that are involved in parallel
  submodule operations, which gave up on reading too early, and
  could have wasted CPU while attempting to write under a corner case
  condition.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mm/doc-tt (2016-06-28) 7 commits
- - doc: typeset HEAD and variants as literal
- - CodingGuidelines: formatting HEAD in documentation
- - doc: typeset long options with argument as literal
- - doc: typeset '--' as literal
- - doc: typeset long command-line options as literal
- - doc: typeset short command-line options as literal
- - Documentation/git-mv.txt: fix whitespace indentation
+  (merged to 'next' on 2016-07-06 at a8c74bd)
+ + doc: typeset HEAD and variants as literal
+ + CodingGuidelines: formatting HEAD in documentation
+ + doc: typeset long options with argument as literal
+ + doc: typeset '--' as literal
+ + doc: typeset long command-line options as literal
+ + doc: typeset short command-line options as literal
+ + Documentation/git-mv.txt: fix whitespace indentation
 
  More mark-up updates to typeset strings that are expected to
  literally typed by the end user in fixed-width font.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* nd/fetch-ref-summary (2016-06-27) 5 commits
+* nd/fetch-ref-summary (2016-07-06) 5 commits
  - fetch: reduce duplicate in ref update status lines with placeholder
  - fetch: align all "remote -> local" output
  - fetch: change flag code for displaying tag update and deleted ref
@@ -413,68 +748,7 @@ of the repositories listed at
  Improve the look of the way "git fetch" reports what happened to
  each ref that was fetched.
 
- Still being discussed.
-
-
-* ak/t7800-wo-readlink (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at 403bbbb)
- + t7800: readlink may not be available
-
- One among four invocations of readlink(1) in our test suite has
- been rewritten so that the test can run on systems without the
- command (others are in valgrind test framework and t9802).
-
- Will merge to 'master'.
-
-
-* js/perf-on-apple (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at 83529b9)
- + perf: accommodate for MacOSX
-
- t/perf needs /usr/bin/time with GNU extension; the invocation of it
- is updated to "gtime" on Darwin.
-
- Will merge to 'master'.
-
-
-* sb/t5614-modernize (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at ee05326)
- + t5614: don't use subshells
- (this branch uses sb/clone-shallow-passthru.)
-
- Test clean-up.
-
- Will merge to 'master'.
-
-
-* ao/p4-has-branch-prefix-fix (2016-06-22) 1 commit
-  (merged to 'next' on 2016-06-28 at 333f90d)
- + git-p4: correct hasBranchPrefix verbose output
-
- A bug, which caused "git p4" while running under verbose mode to
- report paths that are omitted due to branch prefix incorrectly, has
- been fixed; the command said "Ignoring file outside of prefix" for
- paths that are _inside_.
-
- Will merge to 'master'.
-
-
-* cb/t7810-test-label-fix (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at 4d85a00)
- + t7810: fix duplicated test title
-
- Test clean-up.
-
- Will merge to 'master'.
-
-
-* jc/t2300-setup (2016-06-22) 1 commit
-  (merged to 'next' on 2016-06-28 at 62b902a)
- + t2300: "git --exec-path" is not usable in $PATH on Windows as-is
-
- Portability fix for Windows.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * jk/perf-any-version (2016-06-22) 2 commits
@@ -560,33 +834,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mg/signature-doc (2016-06-17) 4 commits
-  (merged to 'next' on 2016-06-28 at 2732a37)
- + Documentation/technical: signed merge tag format
- + Documentation/technical: signed commit format
- + Documentation/technical: signed tag format
- + Documentation/technical: describe signature formats
-
- Formats of the various data (and how to validate them) where we use
- GPG signature have been documented.
-
- Will merge to 'master'.
-
-
-* jk/string-list-static-init (2016-06-13) 2 commits
-  (merged to 'next' on 2016-06-27 at 3d4b2fa)
- + use string_list initializer consistently
- + Merge branch 'jk/parseopt-string-list' into jk/string-list-static-init
- (this branch uses jk/parseopt-string-list.)
-
- Instead of taking advantage of a struct string_list that is
- allocated with all NULs happens to be STRING_LIST_INIT_NODUP kind,
- initialize them explicitly as such, to document their behaviour
- better.
-
- Will merge to 'master'.
-
-
 * mh/ref-store (2016-06-20) 38 commits
  - refs: implement iteration over only per-worktree refs
  - refs: make lock generic
@@ -651,29 +898,6 @@ of the repositories listed at
  If so, will merge to 'next'.
 
 
-* lc/shell-default-value-noexpand (2016-06-19) 1 commit
-  (merged to 'next' on 2016-06-28 at 2dc7727)
- + sh-setup: enclose setting of ${VAR=default} in double-quotes
-
- Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
- to set the default value, without enclosing it in double quotes.
-
- Will merge to 'master'.
-
-
-* sb/clone-shallow-passthru (2016-06-20) 1 commit
-  (merged to 'next' on 2016-06-28 at d515d7d)
- + clone: do not let --depth imply --shallow-submodules
- (this branch is used by sb/t5614-modernize.)
-
- Fix an unintended regression in v2.9 that breaks "clone --depth"
- that recurses down to submodules by forcing the submodules to also
- be cloned shallowly, which many server instances that host upstream
- of the submodules are not prepared for.
-
- Will merge to 'master'.
-
-
 * js/find-commit-subject-ignore-leading-blanks (2016-06-29) 5 commits
   (merged to 'next' on 2016-06-29 at 9717e00)
  + reset --hard: skip blank lines when reporting the commit subject
@@ -692,17 +916,18 @@ of the repositories listed at
 
 
 * js/log-to-diffopt-file (2016-06-28) 11 commits
- - diff: do not color output when --color=auto and --output=<file> is given
- - t4211: ensure that log respects --output=<file>
- - shortlog: respect the --output=<file> setting
- - format-patch: use stdout directly
- - format-patch: avoid freopen()
- - format-patch: explicitly switch off color when writing to files
- - shortlog: support outputting to streams other than stdout
- - graph: respect the diffopt.file setting
- - line-log: respect diffopt's configured output file stream
- - log-tree: respect diffopt's configured output file stream
- - log: prepare log/log-tree to reuse the diffopt.close_file attribute
+  (merged to 'next' on 2016-07-06 at 39e7a5f)
+ + diff: do not color output when --color=auto and --output=<file> is given
+ + t4211: ensure that log respects --output=<file>
+ + shortlog: respect the --output=<file> setting
+ + format-patch: use stdout directly
+ + format-patch: avoid freopen()
+ + format-patch: explicitly switch off color when writing to files
+ + shortlog: support outputting to streams other than stdout
+ + graph: respect the diffopt.file setting
+ + line-log: respect diffopt's configured output file stream
+ + log-tree: respect diffopt's configured output file stream
+ + log: prepare log/log-tree to reuse the diffopt.close_file attribute
 
  The commands in the "log/diff" family had an FILE* pointer in the
  data structure they pass around for a long time, but some codepaths
@@ -711,177 +936,50 @@ of the repositories listed at
  codepaths have been updated to consistently write into that FILE*
  instead.
 
- Will merge to 'next'.
-
-
-* js/mingw-parameter-less-c-functions (2016-06-20) 1 commit
-  (merged to 'next' on 2016-06-28 at e673c65)
- + mingw: let the build succeed with DEVELOPER=1
-
- Some platform-specific code had non-ANSI strict declarations of C
- functions that do not take any parameters, which has been
- corrected.
-
  Will merge to 'master'.
 
 
 * bc/cocci (2016-06-28) 11 commits
- - diff: convert prep_temp_blob() to struct object_id
- - merge-recursive: convert merge_recursive_generic() to object_id
- - merge-recursive: convert leaf functions to use struct object_id
- - merge-recursive: convert struct merge_file_info to object_id
- - merge-recursive: convert struct stage_data to use object_id
- - diff: rename struct diff_filespec's sha1_valid member
- - diff: convert struct diff_filespec to struct object_id
- - coccinelle: apply object_id Coccinelle transformations
- - coccinelle: convert hashcpy() with null_sha1 to hashclr()
- - contrib/coccinelle: add basic Coccinelle transforms
- - hex: add oid_to_hex_r()
+  (merged to 'next' on 2016-07-06 at f2e8e2a)
+ + diff: convert prep_temp_blob() to struct object_id
+ + merge-recursive: convert merge_recursive_generic() to object_id
+ + merge-recursive: convert leaf functions to use struct object_id
+ + merge-recursive: convert struct merge_file_info to object_id
+ + merge-recursive: convert struct stage_data to use object_id
+ + diff: rename struct diff_filespec's sha1_valid member
+ + diff: convert struct diff_filespec to struct object_id
+ + coccinelle: apply object_id Coccinelle transformations
+ + coccinelle: convert hashcpy() with null_sha1 to hashclr()
+ + contrib/coccinelle: add basic Coccinelle transforms
+ + hex: add oid_to_hex_r()
 
  Conversion from unsigned char sha1[20] to struct object_id
  continues.
 
- Needs review.
-
-
-* jk/tzoffset-fix (2016-06-20) 3 commits
-  (merged to 'next' on 2016-06-28 at 08ec8c5)
- + local_tzoffset: detect errors from tm_to_time_t
- + t0006: test various date formats
- + t0006: rename test-date's "show" to "relative"
-
- The internal code used to show local timezone offset is not
- prepared to handle timestamps beyond year 2100, and gave a
- bogus offset value to the caller.  Use a more benign looking
- +0000 instead and let "git log" going in such a case, instead
- of aborting.
-
- Will merge to 'master'.
-
-
-* jk/add-i-diff-compact-heuristics (2016-06-16) 1 commit
-  (merged to 'next' on 2016-06-27 at 568f892)
- + add--interactive: respect diff.compactionHeuristic
-
- "git add -i/-p" learned to honor diff.compactionHeuristic
- experimental knob, so that the user can work on the same hunk split
- as "git diff" output.
-
- Will merge to 'master'.
+ Will cook a bit in 'next' and then merge to 'master'.
 
 
 * jk/big-and-future-archive-tar (2016-07-01) 5 commits
- - archive-tar: drop return value
- - archive-tar: write extended headers for far-future mtime
- - archive-tar: write extended headers for file sizes >= 8GB
- - t5000: test tar files that overflow ustar headers
- - t9300: factor out portable "head -c" replacement
+  (merged to 'next' on 2016-07-06 at 89f3835)
+ + archive-tar: drop return value
+ + archive-tar: write extended headers for far-future mtime
+ + archive-tar: write extended headers for file sizes >= 8GB
+ + t5000: test tar files that overflow ustar headers
+ + t9300: factor out portable "head -c" replacement
 
  "git archive" learned to handle files that are larger than 8GB and
  commits far in the future than expressible by the traditional US-TAR
  format.
 
- Will merge to 'next'.
-
-
-* jk/gpg-interface-cleanup (2016-06-17) 7 commits
-  (merged to 'next' on 2016-06-28 at eed3498)
- + gpg-interface: check gpg signature creation status
- + sign_buffer: use pipe_command
- + verify_signed_buffer: use pipe_command
- + run-command: add pipe_command helper
- + verify_signed_buffer: use tempfile object
- + verify_signed_buffer: drop pbuf variable
- + gpg-interface: use child_process.args
-
- A new run-command API function pipe_command() is introduced to
- sanely feed data to the standard input while capturing data from
- the standard output and the standard error of an external process,
- which is cumbersome to hand-roll correctly without deadlocking.
-
- The codepath to sign data in a prepared buffer with GPG has been
- updated to use this API to read from the status-fd to check for
- errors (instead of relying on GPG's exit status).
-
  Will merge to 'master'.
 
 
-* lf/sideband-returns-void (2016-06-16) 2 commits
-  (merged to 'next' on 2016-06-27 at 558c781)
- + upload-pack.c: make send_client_data() return void
- + sideband.c: make send_sideband() return void
+* lf/recv-sideband-cleanup (2016-07-06) 2 commits
+  (merged to 'next' on 2016-07-06 at d527bcb)
+ + sideband.c: small optimization of strbuf usage
+ + sideband.c: refactor recv_sideband()
 
- A small internal API cleanup.
-
- Will merge to 'master'.
-
-
-* nd/graph-width-padded (2016-06-16) 2 commits
-  (merged to 'next' on 2016-06-28 at 0f733ef)
- + pretty.c: support <direction>|(<negative number>) forms
- + pretty: pass graph width to pretty formatting for use in '%>|(N)'
-
- "log --graph --format=" learned that "%>|(N)" specifies the width
- relative to the terminal's left edge, not relative to the area to
- draw text that is to the right of the ancestry-graph section.  It
- also now accepts negative N that means the column limit is relative
- to the right border.
-
- Will merge to 'master'.
-
-
-* jk/bisect-show-tree (2016-06-16) 1 commit
-  (merged to 'next' on 2016-06-27 at 6970f87e)
- + bisect: always call setup_revisions after init_revisions
-
- "git bisect" makes an internal call to "git diff-tree" when
- bisection finds the culprit, but this call did not initialize the
- data structure to pass to the diff-tree API correctly.
-
- Will merge to 'master'.
-
-
-* jk/parseopt-string-list (2016-06-13) 3 commits
-  (merged to 'next' on 2016-06-27 at 27462e6)
- + blame,shortlog: don't make local option variables static
- + interpret-trailers: don't duplicate option strings
- + parse_opt_string_list: stop allocating new strings
- (this branch is used by jk/string-list-static-init.)
-
- The command line argument parsing that uses OPT_STRING_LIST() often
- made a copy of the argv[] element, which was unnecessary.
-
- Will merge to 'master'.
-
-
-* jk/repack-keep-unreachable (2016-06-14) 3 commits
-  (merged to 'next' on 2016-06-28 at 802b849)
- + repack: extend --keep-unreachable to loose objects
- + repack: add --keep-unreachable option
- + repack: document --unpack-unreachable option
-
- "git repack" learned the "--keep-unreachable" option, which sends
- loose unreachable objects to a pack instead of leaving them loose.
- This helps heuristics based on the number of loose objects
- (e.g. "gc --auto").
-
- Will merge to 'master'.
-
-
-* lf/recv-sideband-cleanup (2016-07-01) 1 commit
- - sideband.c: refactor recv_sideband()
-
- Code simplification.  It however seems to add unnecessary trailing
- output in some cases.
-
- Will merge to 'next'.
-
-
-* nd/test-lib-httpd-show-error-log-in-verbose (2016-06-13) 1 commit
-  (merged to 'next' on 2016-06-27 at 9793d81)
- + lib-httpd.sh: print error.log on error
-
- Debugging aid.
+ Code simplification.
 
  Will merge to 'master'.
 
@@ -908,16 +1006,6 @@ of the repositories listed at
  commit.
 
  Any supporters?  Otherwise will drop.
-
-
-* km/fetch-do-not-free-remote-name (2016-06-14) 1 commit
-  (merged to 'next' on 2016-06-27 at 4bc34c4)
- + builtin/fetch.c: don't free remote->name after fetch
-
- The ownership rule for the piece of memory that hold references to
- be fetched in "git fetch" was screwy, which has been cleaned up.
-
- Will merge to 'master'.
 
 
 * nd/shallow-deepen (2016-06-13) 27 commits
@@ -963,25 +1051,6 @@ of the repositories listed at
  would think.
 
 
-* jk/send-pack-stdio (2016-06-10) 2 commits
-  (merged to 'next' on 2016-06-27 at 2cfb0ff)
- + write_or_die: remove the unused write_or_whine() function
- + send-pack: use buffered I/O to talk to pack-objects
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* pb/commit-editmsg-path (2016-06-09) 1 commit
-  (merged to 'next' on 2016-06-27 at 0f01ce1)
- + builtin/commit.c: memoize git-path for COMMIT_EDITMSG
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * jc/attr-more (2016-06-09) 8 commits
  - attr.c: outline the future plans by heavily commenting
  - attr.c: always pass check[] to collect_some_attrs()
@@ -1020,19 +1089,6 @@ of the repositories listed at
 
  Is everybody happy with this version?
  If so, will merge to 'next'.
-
-
-* ew/mboxrd-format-am (2016-06-06) 3 commits
-  (merged to 'next' on 2016-06-28 at ee0a088)
- + am: support --patch-format=mboxrd
- + mailsplit: support unescaping mboxrd messages
- + pretty: support "mboxrd" output format
-
- Teach format-patch and mailsplit (hence "am") how a line that
- happens to begin with "From " in the e-mail message is quoted with
- ">", so that these lines can be restored to their original shape.
-
- Will merge to 'master'.
 
 
 * mh/connect (2016-06-06) 10 commits
@@ -1113,7 +1169,6 @@ of the repositories listed at
  - worktree.c: add is_worktree_locked()
  - worktree.c: add is_main_worktree()
  - worktree.c: add find_worktree()
- (this branch uses nd/worktree-cleanup-post-head-protection.)
 
  "git worktree prune" protected worktrees that are marked as
  "locked" by creating a file in a known location.  "git worktree"
@@ -1121,22 +1176,6 @@ of the repositories listed at
  a file, so that the users do not have to do this with editor.
 
  Need to squash one fixup before merging to 'next'.
-
-
-* jk/upload-pack-hook (2016-06-02) 7 commits
-  (merged to 'next' on 2016-06-28 at e5e5bb6)
- + upload-pack: provide a hook for running pack-objects
- + t1308: do not get fooled by symbolic links to the source tree
- + config: add a notion of "scope"
- + config: return configset value for current_config_ functions
- + config: set up config_source for command-line config
- + git_config_parse_parameter: refactor cleanup code
- + git_config_with_options: drop "found" counting
-
- Allow a custom "git upload-pack" replacement to respond to
- "fetch/clone" request.
-
- Will merge to 'master'.
 
 
 * sb/submodule-default-paths (2016-06-20) 5 commits
@@ -1149,17 +1188,6 @@ of the repositories listed at
 
  Allow specifying the set of submodules the user is interested in on
  the command line of "git clone" that clones the superproject.
-
-
-* ep/http-curl-trace (2016-05-24) 2 commits
-  (merged to 'next' on 2016-06-27 at c290515)
- + imap-send.c: introduce the GIT_TRACE_CURL enviroment variable
- + http.c: implement the GIT_TRACE_CURL environment variable
-
- HTTP transport gained an option to produce more detailed debugging
- trace.
-
- Will merge to 'master'.
 
 
 * jc/attr (2016-05-25) 18 commits
@@ -1221,21 +1249,6 @@ of the repositories listed at
  The preload-index mechanism is disabled when the new pathspec magic
  is in use (at least for now), because the attribute subsystem is
  not thread-ready.
-
-
-* nd/worktree-cleanup-post-head-protection (2016-05-24) 6 commits
-  (merged to 'next' on 2016-06-28 at 55414fa)
- + worktree: simplify prefixing paths
- + worktree: avoid 0{40}, too many zeroes, hard to read
- + worktree.c: use is_dot_or_dotdot()
- + git-worktree.txt: keep subcommand listing in alphabetical order
- + worktree.c: rewrite mark_current_worktree() to avoid strbuf
- + completion: support git-worktree
- (this branch is used by nd/worktree-lock.)
-
- Further preparatory clean-up for "worktree" feature.
-
- Will merge to 'master'.
 
 
 * mh/split-under-lock (2016-06-13) 33 commits
@@ -1321,9 +1334,8 @@ of the repositories listed at
  This also really needs review.
 
 
-* dt/index-helper (2016-06-27) 21 commits
- - unix-socket.c: add stub implementation when unix sockets are not supported
- - index-helper: indexhelper.exitafter config
+* dt/index-helper (2016-07-06) 21 commits
+ - index-helper: indexhelper.exitAfter config
  - trace: measure where the time is spent in the index-heavy operations
  - index-helper: optionally automatically run
  - index-helper: autorun mode
@@ -1340,6 +1352,7 @@ of the repositories listed at
  - daemonize(): set a flag before exiting the main process
  - index-helper: add --strict
  - index-helper: new daemon for caching index and related stuff
+ - unix-socket.c: add stub implementation when unix sockets are not supported
  - pkt-line: add gentle version of packet_write
  - read-cache: allow to keep mmap'd memory after reading
  - read-cache.c: fix constness of verify_hdr()
@@ -1349,8 +1362,8 @@ of the repositories listed at
  optionally interface with the watchman daemon to further reduce the
  refresh cost.
 
- Expecting a reroll.
- ($gmane/298331, $gmane/298319).
+ Is everybody happy with this version?
+ At v14.
 
 
 * jc/bundle (2016-03-03) 6 commits
