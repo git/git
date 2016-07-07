@@ -394,6 +394,175 @@ static int bisect_terms(struct bisect_terms *term, const char *arg)
 	return 0;
 }
 
+static int bisect_start(struct bisect_terms *terms, int no_checkout,
+			const char **argv, int argc)
+{
+	int i, j, has_double_dash = 0, must_write_terms = 0, bad_seen = 0;
+	int flag;
+	struct string_list revs = STRING_LIST_INIT_DUP;
+	struct string_list states = STRING_LIST_INIT_DUP;
+	struct strbuf start_head = STRBUF_INIT;
+	const char *head;
+	unsigned char sha1[20];
+	FILE *fp;
+	struct object_id oid;
+
+	if (is_bare_repository())
+		no_checkout = 1;
+
+	for(i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "--")) {
+			has_double_dash = 1;
+			break;
+		}
+		if (!strcmp(argv[i], "--term-good")) {
+			must_write_terms = 1;
+			strbuf_reset(&terms->term_good);
+			strbuf_addstr(&terms->term_good, argv[++i]);
+			break;
+		}
+		if (!strcmp(argv[i], "--term-bad")) {
+			must_write_terms = 1;
+			strbuf_reset(&terms->term_bad);
+			strbuf_addstr(&terms->term_bad, argv[++i]);
+			break;
+		}
+		if (starts_with(argv[i], "--") &&
+		    !one_of(argv[i], "--term-good", "--term-bad", NULL))
+			die(_("unrecognised option: '%s'"), argv[i]);
+		if (!get_oid(argv[i], &oid) && has_double_dash) {
+			string_list_clear(&revs, 0);
+			die(_("'%s' does not appear to be a valid revision"), argv[i]);
+		}
+		else
+			string_list_append(&revs, argv[i]);
+	}
+
+	for (j = 0; j < revs.nr; j++) {
+		struct strbuf state = STRBUF_INIT;
+		/*
+		 * The user ran "git bisect start <sha1> <sha1>", hence
+		 * did not explicitly specify the terms, but we are already
+		 * starting to set references named with the default terms,
+		 * and won't be able to change afterwards.
+		 */
+		must_write_terms = 1;
+
+		if (bad_seen)
+			strbuf_addstr(&state, terms->term_good.buf);
+		else {
+			bad_seen = 1;
+			strbuf_addstr(&state, terms->term_bad.buf);
+		}
+		string_list_append(&states, state.buf);
+		strbuf_release(&state);
+	}
+	string_list_clear(&revs, 0);
+
+	/*
+	 * Verify HEAD
+	 */
+	head = resolve_ref_unsafe("HEAD", 0, sha1, &flag);
+	if (!head) {
+		if(get_sha1("HEAD", sha1))
+			die(_("Bad HEAD - I need a HEAD"));
+	}
+	if (is_empty_or_missing_file(git_path_bisect_start())) {
+		strbuf_read_file(&start_head, git_path_bisect_start(), 0);
+		if (!no_checkout) {
+			struct argv_array argv = ARGV_ARRAY_INIT;
+			argv_array_pushl(&argv, "checkout", start_head.buf,
+					 "--", NULL);
+			if (run_command_v_opt(argv.argv, RUN_GIT_CMD)) {
+				error(_("checking out '%s' failed. Try again."),
+				      start_head.buf);
+				strbuf_release(&start_head);
+				return -1;
+			}
+		}
+	} else {
+		if (starts_with(head, "refs/head/") || get_oid(head, &oid)) {
+			/*
+			 * This error message should only be triggered by
+			 * cogito usage, and cogito users should understand
+			 * it relates to cg-seek.
+			 */
+			if (!is_empty_or_missing_file(git_path_head_name())) {
+				die(_("won't bisect on cg-seek'ed tree"));
+			}
+			if (starts_with(head, "refs/head/")) {
+				strbuf_reset(&start_head);
+				strbuf_addstr(&start_head, head + 10);
+			}
+		} else {
+			die(_("Bad HEAD - strange symbolic ref"));
+		}
+	}
+
+	/*
+	 * Get rid of any old bisect state.
+	 */
+	if (bisect_clean_state()) {
+		return -1;
+	}
+
+	/*
+	 * Write new start state
+	 */
+	fp = fopen(git_path_bisect_start(), "w");
+	if (!fp) {
+		return -1;
+	}
+	if (!fprintf(fp, "%s", start_head.buf)) {
+		fclose(fp);
+		return -1;
+	}
+	fclose(fp);
+
+	if (!no_checkout) {
+		if (update_ref(NULL, "BISECT_HEAD", start_head.buf, NULL, 0,
+			       UPDATE_REFS_MSG_ON_ERR)) {
+			return -1;
+		}
+	}
+	fp = fopen(git_path_bisect_names(), "w");
+	for (; i < argc; i++) {
+		if (!fprintf(fp, "'%s' ", argv[i])) {
+			fclose(fp);
+			return -1;
+		}
+	}
+	fclose(fp);
+
+	for (j = 0; j < states.nr; j ++) {
+		if (!bisect_write(states.items[j].string, revs.items[i].string,
+				  terms, 1)) {
+			return -1;
+		}
+	}
+	if (must_write_terms)
+		if (!write_terms(terms->term_good.buf, terms->term_bad.buf)) {
+			return -1;
+		}
+
+	fp = fopen(git_path_bisect_log(), "a");
+	if (!fp) {
+		return -1;
+	}
+	if (!fprintf(fp, "git bisect start")) {
+		return -1;
+	}
+	for (i = 0; i < argc; i++) {
+		if (!fprintf(fp, "%s", argv[i])) {
+			fclose(fp);
+			return -1;
+		}
+	}
+	fclose(fp);
+
+	return 0;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -405,7 +574,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_WRITE,
 		CHECK_AND_SET_TERMS,
 		BISECT_NEXT_CHECK,
-		BISECT_TERMS
+		BISECT_TERMS,
+		BISECT_START
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0;
 	struct option options[] = {
@@ -427,6 +597,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("check whether bad or good terms exist"), BISECT_NEXT_CHECK),
 		OPT_CMDMODE(0, "bisect-terms", &cmdmode,
 			 N_("print out the bisect terms"), BISECT_TERMS),
+		OPT_CMDMODE(0, "bisect-start", &cmdmode,
+			 N_("start the bisect session"), BISECT_START),
 		OPT_ARGUMENT("term-bad", "handle this in an individual function"),
 		OPT_ARGUMENT("term-good", "handle this in an individual function"),
 		OPT_ARGUMENT("term-new", "handle this in an individual function"),
@@ -496,6 +668,9 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		if (argc != 0 && argc != 1)
 			die(_("--bisect-terms requires 0 or 1 argument"));
 		res = bisect_terms(&state, argc ? argv[0] : NULL);
+		break;
+	case BISECT_START:
+		res = bisect_start(&state, no_checkout, argv, argc);
 		break;
 	default:
 		die("BUG: unknown subcommand '%d'", cmdmode);
