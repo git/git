@@ -295,4 +295,13 @@ test_expect_failure 'autosquash with multiple empty patches' '
 	)
 '
 
+test_expect_success 'extra spaces after fixup!' '
+	base=$(git rev-parse HEAD) &&
+	test_commit to-fixup &&
+	git commit --allow-empty -m "fixup!  to-fixup" &&
+	git rebase -i --autosquash --keep-empty HEAD~2 &&
+	parent=$(git rev-parse HEAD^) &&
+	test $base = $parent
+'
+
 test_done
