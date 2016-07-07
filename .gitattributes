@@ -1,3 +1,3 @@
 * whitespace=!indent,trail,space
-*.[ch] whitespace=indent,trail,space
+*.[ch] whitespace=indent,trail,space diff=cpp
 *.sh whitespace=indent,trail,space
