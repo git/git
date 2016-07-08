@@ -376,10 +376,6 @@ extern int parse_signed_commit(const struct commit *commit,
 			       struct strbuf *message, struct strbuf *signature);
 extern int remove_signature(struct strbuf *buf);
 
-extern void print_commit_list(struct commit_list *list,
-			      const char *format_cur,
-			      const char *format_last);
-
 /*
  * Check the signature of the given commit. The result of the check is stored
  * in sig->check_result, 'G' for a good signature, 'U' for a good signature
