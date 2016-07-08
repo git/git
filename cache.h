@@ -1740,6 +1740,14 @@ static inline ssize_t write_str_in_full(int fd, const char *str)
  */
 extern void write_file_buf(const char *path, const char *buf, size_t len);
 
+/**
+ * Like write_file_buf(), but format the contents into a buffer first.
+ * Additionally, write_file() will append a newline if one is not already
+ * present, making it convenient to write text files:
+ *
+ *   write_file(path, "counter: %d", ctr);
+ */
+__attribute__((format (printf, 2, 3)))
 extern void write_file(const char *path, const char *fmt, ...);
 
 /* pager.c */
