@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2016, #02; Wed, 6)
+Subject: What's cooking in git.git (Jul 2016, #03; Fri, 8)
 X-master-at: 5c589a73de4394ad125a4effac227b3aec856fa1
 X-next-at: 281e4d64a61b891e32e0344654b580b4203effa6
 
-What's cooking in git.git (Jul 2016, #02; Wed, 6)
+What's cooking in git.git (Jul 2016, #03; Fri, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -21,325 +21,100 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ak/t7800-wo-readlink (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at 403bbbb)
- + t7800: readlink may not be available
-
- One among four invocations of readlink(1) in our test suite has
- been rewritten so that the test can run on systems without the
- command (others are in valgrind test framework and t9802).
-
-
-* ao/p4-has-branch-prefix-fix (2016-06-22) 1 commit
-  (merged to 'next' on 2016-06-28 at 333f90d)
- + git-p4: correct hasBranchPrefix verbose output
-
- A bug, which caused "git p4" while running under verbose mode to
- report paths that are omitted due to branch prefix incorrectly, has
- been fixed; the command said "Ignoring file outside of prefix" for
- paths that are _inside_.
-
-
-* cb/t7810-test-label-fix (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at 4d85a00)
- + t7810: fix duplicated test title
-
- Test clean-up.
-
-
-* ep/http-curl-trace (2016-05-24) 2 commits
-  (merged to 'next' on 2016-06-27 at c290515)
- + imap-send.c: introduce the GIT_TRACE_CURL enviroment variable
- + http.c: implement the GIT_TRACE_CURL environment variable
-
- HTTP transport gained an option to produce more detailed debugging
- trace.
-
-
-* ew/mboxrd-format-am (2016-06-06) 3 commits
-  (merged to 'next' on 2016-06-28 at ee0a088)
- + am: support --patch-format=mboxrd
- + mailsplit: support unescaping mboxrd messages
- + pretty: support "mboxrd" output format
-
- Teach format-patch and mailsplit (hence "am") how a line that
- happens to begin with "From " in the e-mail message is quoted with
- ">", so that these lines can be restored to their original shape.
-
-
-* jc/t2300-setup (2016-06-22) 1 commit
-  (merged to 'next' on 2016-06-28 at 62b902a)
- + t2300: "git --exec-path" is not usable in $PATH on Windows as-is
-
- Portability fix for Windows.
-
-
-* jk/add-i-diff-compact-heuristics (2016-06-16) 1 commit
-  (merged to 'next' on 2016-06-27 at 568f892)
- + add--interactive: respect diff.compactionHeuristic
-
- "git add -i/-p" learned to honor diff.compactionHeuristic
- experimental knob, so that the user can work on the same hunk split
- as "git diff" output.
-
-
-* jk/bisect-show-tree (2016-06-16) 1 commit
-  (merged to 'next' on 2016-06-27 at 6970f87e)
- + bisect: always call setup_revisions after init_revisions
-
- "git bisect" makes an internal call to "git diff-tree" when
- bisection finds the culprit, but this call did not initialize the
- data structure to pass to the diff-tree API correctly.
-
-
-* jk/gpg-interface-cleanup (2016-06-17) 7 commits
-  (merged to 'next' on 2016-06-28 at eed3498)
- + gpg-interface: check gpg signature creation status
- + sign_buffer: use pipe_command
- + verify_signed_buffer: use pipe_command
- + run-command: add pipe_command helper
- + verify_signed_buffer: use tempfile object
- + verify_signed_buffer: drop pbuf variable
- + gpg-interface: use child_process.args
-
- A new run-command API function pipe_command() is introduced to
- sanely feed data to the standard input while capturing data from
- the standard output and the standard error of an external process,
- which is cumbersome to hand-roll correctly without deadlocking.
-
- The codepath to sign data in a prepared buffer with GPG has been
- updated to use this API to read from the status-fd to check for
- errors (instead of relying on GPG's exit status).
-
-
-* jk/parseopt-string-list (2016-06-13) 3 commits
-  (merged to 'next' on 2016-06-27 at 27462e6)
- + blame,shortlog: don't make local option variables static
- + interpret-trailers: don't duplicate option strings
- + parse_opt_string_list: stop allocating new strings
- (this branch is used by jk/string-list-static-init.)
-
- The command line argument parsing that uses OPT_STRING_LIST() often
- made a copy of the argv[] element, which was unnecessary.
-
-
-* jk/repack-keep-unreachable (2016-06-14) 3 commits
-  (merged to 'next' on 2016-06-28 at 802b849)
- + repack: extend --keep-unreachable to loose objects
- + repack: add --keep-unreachable option
- + repack: document --unpack-unreachable option
-
- "git repack" learned the "--keep-unreachable" option, which sends
- loose unreachable objects to a pack instead of leaving them loose.
- This helps heuristics based on the number of loose objects
- (e.g. "gc --auto").
-
-
-* jk/send-pack-stdio (2016-06-10) 2 commits
-  (merged to 'next' on 2016-06-27 at 2cfb0ff)
- + write_or_die: remove the unused write_or_whine() function
- + send-pack: use buffered I/O to talk to pack-objects
-
- Code clean-up.
-
-
-* jk/string-list-static-init (2016-06-13) 2 commits
-  (merged to 'next' on 2016-06-27 at 3d4b2fa)
- + use string_list initializer consistently
- + Merge branch 'jk/parseopt-string-list' into jk/string-list-static-init
- (this branch uses jk/parseopt-string-list.)
-
- Instead of taking advantage of a struct string_list that is
- allocated with all NULs happens to be STRING_LIST_INIT_NODUP kind,
- initialize them explicitly as such, to document their behaviour
- better.
-
-
-* jk/tzoffset-fix (2016-06-20) 3 commits
-  (merged to 'next' on 2016-06-28 at 08ec8c5)
- + local_tzoffset: detect errors from tm_to_time_t
- + t0006: test various date formats
- + t0006: rename test-date's "show" to "relative"
-
- The internal code used to show local timezone offset is not
- prepared to handle timestamps beyond year 2100, and gave a
- bogus offset value to the caller.  Use a more benign looking
- +0000 instead and let "git log" going in such a case, instead
- of aborting.
-
-
-* jk/upload-pack-hook (2016-06-02) 7 commits
-  (merged to 'next' on 2016-06-28 at e5e5bb6)
- + upload-pack: provide a hook for running pack-objects
- + t1308: do not get fooled by symbolic links to the source tree
- + config: add a notion of "scope"
- + config: return configset value for current_config_ functions
- + config: set up config_source for command-line config
- + git_config_parse_parameter: refactor cleanup code
- + git_config_with_options: drop "found" counting
-
- "upload-pack" allows a custom "git pack-objects" replacement when
- responding to "fetch/clone" via the uploadpack.packObjectsHook.
-
-
-* js/mingw-parameter-less-c-functions (2016-06-20) 1 commit
-  (merged to 'next' on 2016-06-28 at e673c65)
- + mingw: let the build succeed with DEVELOPER=1
-
- Some platform-specific code had non-ANSI strict declarations of C
- functions that do not take any parameters, which has been
- corrected.
-
-
-* js/perf-on-apple (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at 83529b9)
- + perf: accommodate for MacOSX
-
- t/perf needs /usr/bin/time with GNU extension; the invocation of it
- is updated to "gtime" on Darwin.
-
-
-* km/fetch-do-not-free-remote-name (2016-06-14) 1 commit
-  (merged to 'next' on 2016-06-27 at 4bc34c4)
- + builtin/fetch.c: don't free remote->name after fetch
-
- The ownership rule for the piece of memory that hold references to
- be fetched in "git fetch" was screwy, which has been cleaned up.
-
-
-* lc/shell-default-value-noexpand (2016-06-19) 1 commit
-  (merged to 'next' on 2016-06-28 at 2dc7727)
- + sh-setup: enclose setting of ${VAR=default} in double-quotes
-
- Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
- to set the default value, without enclosing it in double quotes.
-
-
-* lf/sideband-returns-void (2016-06-16) 2 commits
-  (merged to 'next' on 2016-06-27 at 558c781)
- + upload-pack.c: make send_client_data() return void
- + sideband.c: make send_sideband() return void
-
- A small internal API cleanup.
-
-
-* mg/signature-doc (2016-06-17) 4 commits
-  (merged to 'next' on 2016-06-28 at 2732a37)
- + Documentation/technical: signed merge tag format
- + Documentation/technical: signed commit format
- + Documentation/technical: signed tag format
- + Documentation/technical: describe signature formats
-
- Formats of the various data (and how to validate them) where we use
- GPG signature have been documented.
-
-
-* nd/graph-width-padded (2016-06-16) 2 commits
-  (merged to 'next' on 2016-06-28 at 0f733ef)
- + pretty.c: support <direction>|(<negative number>) forms
- + pretty: pass graph width to pretty formatting for use in '%>|(N)'
-
- "log --graph --format=" learned that "%>|(N)" specifies the width
- relative to the terminal's left edge, not relative to the area to
- draw text that is to the right of the ancestry-graph section.  It
- also now accepts negative N that means the column limit is relative
- to the right border.
-
-
-* nd/test-lib-httpd-show-error-log-in-verbose (2016-06-13) 1 commit
-  (merged to 'next' on 2016-06-27 at 9793d81)
- + lib-httpd.sh: print error.log on error
-
- HTTPd tests learned to show the server error log to help diagnosing
- a failing tests.
-
-
-* nd/worktree-cleanup-post-head-protection (2016-05-24) 6 commits
-  (merged to 'next' on 2016-06-28 at 55414fa)
- + worktree: simplify prefixing paths
- + worktree: avoid 0{40}, too many zeroes, hard to read
- + worktree.c: use is_dot_or_dotdot()
- + git-worktree.txt: keep subcommand listing in alphabetical order
- + worktree.c: rewrite mark_current_worktree() to avoid strbuf
- + completion: support git-worktree
- (this branch is used by nd/worktree-lock.)
-
- Further preparatory clean-up for "worktree" feature continues.
-
-
-* pb/commit-editmsg-path (2016-06-09) 1 commit
-  (merged to 'next' on 2016-06-27 at 0f01ce1)
- + builtin/commit.c: memoize git-path for COMMIT_EDITMSG
-
- Code clean-up.
-
-
-* sb/clone-shallow-passthru (2016-06-20) 1 commit
-  (merged to 'next' on 2016-06-28 at d515d7d)
- + clone: do not let --depth imply --shallow-submodules
- (this branch is used by sb/t5614-modernize.)
-
- Fix an unintended regression in v2.9 that breaks "clone --depth"
- that recurses down to submodules by forcing the submodules to also
- be cloned shallowly, which many server instances that host upstream
- of the submodules are not prepared for.
-
-
-* sb/t5614-modernize (2016-06-21) 1 commit
-  (merged to 'next' on 2016-06-28 at ee05326)
- + t5614: don't use subshells
- (this branch uses sb/clone-shallow-passthru.)
-
- Test clean-up.
-
---------------------------------------------------
 [New Topics]
 
-* ak/lazy-prereq-mktemp (2016-07-06) 1 commit
- - t7610: test for mktemp before test execution
+* rs/help-c-source-with-gitattributes (2016-07-07) 1 commit
+ - .gitattributes: set file type for C files
 
- A test that unconditionally used "mktemp" learned that the command
- is not necessarily available everywhere.
+ The .c/.h sources are marked as such in our .gitattributes file so
+ that "git diff -W" and friends would work better.
 
  Will merge to 'next'.
 
 
-* ew/svn-bad-ref (2016-07-06) 1 commit
- - git-svn: warn instead of dying when commit data is missing
+* rs/notes-merge-no-toctou (2016-07-07) 1 commit
+ - notes-merge: use O_EXCL to avoid overwriting existing files
 
- An earlier update to "git svn" tightened the parsing of refs given
- as the command line arguments too much.  This has been fixed by
- loosening the check a bit.
-
- I'm likely to discard this, favouring a direct pull request from
- the subsystem maintainer directly going to 'master'.
+ "git notes merge" had a code to see if a path exists (and fails if
+ it does) and then open the path for writing (when it doesn't).
+ Replace it with open with O_EXCL.
 
 
-* jk/difftool-in-subdir (2016-07-06) 1 commit
- - difftool: fix argument handling in subdirs
+* rw/make-needs-librt (2016-07-07) 1 commit
+ - Makefile: add NEEDS_LIBRT to optionally link with librt
 
- "git difftool <paths>..." started in a subdirectory failed to
- interpret the paths relative to that directory, which has been
- fixed.
+ Makefile assumed that -lrt is always available on platforms that
+ want to use clock_gettime() and CLOCK_MONOTONIC, which is not a
+ case for recent Mac OS X.  The necessary symbols are often found in
+ libc on many modern systems and having -lrt on the command line, as
+ long as the library exists, had no effect, but when the platform
+ removes librt.a that is a different matter--having -lrt will break
+ the linkage.
 
- Waiting for an ack.
+ This change could be seen as a regression for those who do need to
+ specify -lrt, as they now specifically ask for NEEDS_LIBRT when
+ building. Hopefully they are in the minority these days.
+
+ Will merge to 'next'.
 
 
-* nd/test-helpers (2016-07-06) 2 commits
- - Makefile: use VCSSVN_LIB to refer to svn library
- - Makefile: drop extra dependencies for test helpers
+* jc/renormalize-merge-kill-safer-crlf (2016-07-08) 2 commits
+ - merge: avoid "safer crlf" during recording of merge results
+ - convert: unify the "auto" handling of CRLF
+ (this branch is tangled with tb/convert-peek-in-index.)
 
- Build clean-up.
+ "git merge" with renormalization did not work well with
+ merge-recursive, due to "safer crlf" conversion kicking in when it
+ shouldn't.
+
+
+* jk/printf-format (2016-07-08) 3 commits
+ - commit.c: remove print_commit_list()
+ - avoid using sha1_to_hex output as printf format
+ - walker: let walker_say take arbitrary formats
+
+ Code clean-up to avoid using a variable string that compilers may
+ feel untrustable as printf-style format given to write_file()
+ helper function.
+
+ Will merge to 'next'.
+
+
+* jk/write-file (2016-07-08) 9 commits
+ - branch: use write_file_buf instead of write_file
+ - use write_file_buf where applicable
+ - write_file: add format attribute
+ - write_file: add pointer+len variant
+ - write_file: use xopen
+ - write_file: drop "gently" form
+ - branch: use non-gentle write_file for branch description
+ - am: ignore return value of write_file()
+ - config: fix bogus fd check when setting up default config
+
+ General code clean-up around a helper function to write a
+ single-liner to a file.
+
+ Will merge to 'next'.
+ While it is textually independent, jk/printf-format needs to be
+ merged before this one.
+
+
+* js/am-call-theirs-theirs-in-fallback-3way (2016-07-08) 1 commit
+ - am: counteract gender bias
+
+ One part of "git am" had an oddball helper function that called
+ stuff from outside "his" as opposed to calling what we have "ours",
+ which was not gender-neutral and also inconsistent with the rest of
+ the system where outside stuff is usuall called "theirs" in
+ contrast to "ours".
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
 
-* jh/clean-smudge-annex (2016-07-06) 10 commits
- - SQUASH???
+* jh/clean-smudge-annex (2016-07-08) 9 commits
+ - SQUASH??? compilation fix
  - use smudgeToFile filter in recursive merge
  - use smudgeToFile filter in git am
  - better recovery from failure of smudgeToFile filter
@@ -348,23 +123,21 @@ of the repositories listed at
  - use cleanFromFile in git add
  - add smudgeToFile and cleanFromFile filter configs
  - clarify %f documentation
- - Merge branch 'tb/convert-peek-in-index' into jh/clean-smudge-annex
- (this branch uses tb/convert-peek-in-index.)
 
  The interface to "clean/smudge" filters require Git to feed the
- whole contents via pipe, which is suboptimal for some
- applications.  "cleanFromFile/smudgeToFile" commands are the moral
- equilvalents for these filters but they interact with the files on
- the filesystem directly.
+ whole contents via pipe, which is suboptimal for some applications.
+ "cleanFromFile/smudgeToFile" commands are the moral equilvalents
+ for these filters but they interact with the files on the
+ filesystem directly.
 
 
-* tb/convert-peek-in-index (2016-07-06) 3 commits
- - read-cache: factor out get_sha1_from_index() helper
- - correct ce_compare_data() in a middle of a merge
+* tb/convert-peek-in-index (2016-07-07) 3 commits
+ . correct ce_compare_data() in a middle of a merge
+ . read-cache: factor out get_sha1_from_index() helper
  - convert: unify the "auto" handling of CRLF
- (this branch is used by jh/clean-smudge-annex.)
+ (this branch is tangled with jc/renormalize-merge-kill-safer-crlf.)
 
- Needs review.
+ Tentatively replaced with jc/renormalize-merge-kill-safer-crlf
 
 
 * sb/bisect (2016-04-15) 22 commits
@@ -465,6 +238,45 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ak/lazy-prereq-mktemp (2016-07-06) 1 commit
+ - t7610: test for mktemp before test execution
+
+ A test that unconditionally used "mktemp" learned that the command
+ is not necessarily available everywhere.
+
+ Will merge to 'next'.
+
+
+* ew/svn-bad-ref (2016-07-06) 1 commit
+ - git-svn: warn instead of dying when commit data is missing
+
+ An earlier update to "git svn" tightened the parsing of refs given
+ as the command line arguments too much.  This has been fixed by
+ loosening the check a bit.
+
+ I'm likely to discard this, favouring a direct pull request from
+ the subsystem maintainer directly going to 'master'.
+
+
+* jk/difftool-in-subdir (2016-07-06) 1 commit
+ - difftool: fix argument handling in subdirs
+
+ "git difftool <paths>..." started in a subdirectory failed to
+ interpret the paths relative to that directory, which has been
+ fixed.
+
+ Waiting for an ack.
+
+
+* nd/test-helpers (2016-07-06) 2 commits
+ - Makefile: use VCSSVN_LIB to refer to svn library
+ - Makefile: drop extra dependencies for test helpers
+
+ Build clean-up.
+
+ Will merge to 'next'.
+
+
 * dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
   (merged to 'next' on 2016-07-06 at 087490c)
  + blame: require 0 context lines while finding moved lines with -M
@@ -480,7 +292,7 @@ of the repositories listed at
 
  Prepare jk/commin-main-2.8 topic to be mergeable to 2.9 and later.
 
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * jk/common-main-2.8 (2016-07-06) 6 commits
@@ -604,13 +416,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ls/p4-tmp-refs (2016-06-29) 1 commit
+* ls/p4-tmp-refs (2016-07-08) 1 commit
  - git-p4: place temporary refs used for branch import under refs/git-p4-tmp
 
  "git p4" used a location outside $GIT_DIR/refs/ to place its
  temporary branches, which has been moved to refs/git-p4-tmp/.
 
- Needs an ack from "git p4" experts.
+ Will merge to 'next'.
 
 
 * jc/pull-rebase-ff (2016-06-29) 1 commit
@@ -652,7 +464,7 @@ of the repositories listed at
  The test framework learned a new helper test_match_signal to check
  an exit code from getting killed by an expected signal.
 
- Is this what everybody can agree on?
+ Will merge to 'next'.
 
 
 * ah/unpack-trees-advice-messages (2016-06-27) 1 commit
@@ -783,7 +595,7 @@ of the repositories listed at
  eventually the warning can be turned into a hard error, upgrading
  the deprecation into removal of this (mis)feature.
 
- Will wait for further comments for a bit before merging to 'next'.
+ Will merge to 'next'.
 
 
 * jk/ansi-color (2016-06-23) 7 commits
@@ -894,8 +706,7 @@ of the repositories listed at
  Error handling in the codepaths that updates refs has been
  improved.
 
- Is everybody happy with this version?
- If so, will merge to 'next'.
+ Will merge to 'next'.
 
 
 * js/find-commit-subject-ignore-leading-blanks (2016-06-29) 5 commits
@@ -1087,8 +898,7 @@ of the repositories listed at
  The API to iterate over all the refs (i.e. for_each_ref(), etc.)
  has been revamped.
 
- Is everybody happy with this version?
- If so, will merge to 'next'.
+ Will merge to 'next'.
 
 
 * mh/connect (2016-06-06) 10 commits
@@ -1161,10 +971,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/worktree-lock (2016-07-01) 7 commits
+* nd/worktree-lock (2016-07-08) 6 commits
  - worktree.c: find_worktree() search by path suffix
  - worktree: add "unlock" command
- - fixup! worktree: add "lock" command
  - worktree: add "lock" command
  - worktree.c: add is_worktree_locked()
  - worktree.c: add is_main_worktree()
@@ -1175,7 +984,7 @@ of the repositories listed at
  command learned a dedicated command pair to create and remoev such
  a file, so that the users do not have to do this with editor.
 
- Need to squash one fixup before merging to 'next'.
+ Will merge to 'next'.
 
 
 * sb/submodule-default-paths (2016-06-20) 5 commits
@@ -1290,8 +1099,7 @@ of the repositories listed at
  Further preparatory work on the refs API before the pluggable
  backend series can land.
 
- Is everybody happy with this version?
- If so, will merge to 'next'.
+ Will merge to 'next'.
 
 
 * jc/send-email-skip-backup (2016-04-12) 1 commit
