@@ -1734,6 +1734,12 @@ static inline ssize_t write_str_in_full(int fd, const char *str)
 	return write_in_full(fd, str, strlen(str));
 }
 
+/**
+ * Open (and truncate) the file at path, write the contents of buf to it,
+ * and close it. Dies if any errors are encountered.
+ */
+extern void write_file_buf(const char *path, const char *buf, size_t len);
+
 extern void write_file(const char *path, const char *fmt, ...);
 
 /* pager.c */
