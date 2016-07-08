@@ -323,6 +323,19 @@ static void put_object_name(struct fsck_options *options, struct object *obj,
 	va_end(ap);
 }
 
+static const char *describe_object(struct fsck_options *o, struct object *obj)
+{
+	static struct strbuf buf = STRBUF_INIT;
+	char *name;
+
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, oid_to_hex(&obj->oid));
+	if (o->object_names && (name = lookup_decoration(o->object_names, obj)))
+		strbuf_addf(&buf, " (%s)", name);
+
+	return buf.buf;
+}
+
 static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *options)
 {
 	struct tree_desc desc;
@@ -358,7 +371,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 		}
 		else {
 			result = error("in tree %s: entry %s has bad mode %.6o",
-					oid_to_hex(&tree->object.oid), entry.path, entry.mode);
+					describe_object(options, &tree->object), entry.path, entry.mode);
 		}
 		if (result < 0)
 			return result;
@@ -454,7 +467,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 	case OBJ_TAG:
 		return fsck_walk_tag((struct tag *)obj, data, options);
 	default:
-		error("Unknown object type for %s", oid_to_hex(&obj->oid));
+		error("Unknown object type for %s", describe_object(options, obj));
 		return -1;
 	}
 }
@@ -901,9 +914,9 @@ int fsck_error_function(struct fsck_options *o,
 	struct object *obj, int msg_type, const char *message)
 {
 	if (msg_type == FSCK_WARN) {
-		warning("object %s: %s", oid_to_hex(&obj->oid), message);
+		warning("object %s: %s", describe_object(o, obj), message);
 		return 0;
 	}
-	error("object %s: %s", oid_to_hex(&obj->oid), message);
+	error("object %s: %s", describe_object(o, obj), message);
 	return 1;
 }
