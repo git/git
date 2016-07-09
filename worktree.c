@@ -80,7 +80,7 @@ static struct worktree *get_main_worktree(void)
 	int is_bare = 0;
 	int is_detached = 0;
 
-	strbuf_addstr(&worktree_path, absolute_path(get_git_common_dir()));
+	strbuf_add_absolute_path(&worktree_path, get_git_common_dir());
 	is_bare = !strbuf_strip_suffix(&worktree_path, "/.git");
 	if (is_bare)
 		strbuf_strip_suffix(&worktree_path, "/.");
@@ -125,7 +125,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	strbuf_rtrim(&worktree_path);
 	if (!strbuf_strip_suffix(&worktree_path, "/.git")) {
 		strbuf_reset(&worktree_path);
-		strbuf_addstr(&worktree_path, absolute_path("."));
+		strbuf_add_absolute_path(&worktree_path, ".");
 		strbuf_strip_suffix(&worktree_path, "/.");
 	}
 
