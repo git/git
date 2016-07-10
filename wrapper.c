@@ -224,6 +224,24 @@ int xopen(const char *path, int oflag, ...)
 	}
 }
 
+static int handle_nonblock(int fd, short poll_events, int err)
+{
+	struct pollfd pfd;
+
+	if (err != EAGAIN && err != EWOULDBLOCK)
+		return 0;
+
+	pfd.fd = fd;
+	pfd.events = poll_events;
+
+	/*
+	 * no need to check for errors, here;
+	 * a subsequent read/write will detect unrecoverable errors
+	 */
+	poll(&pfd, 1, -1);
+	return 1;
+}
+
 /*
  * xread() is the same a read(), but it automatically restarts read()
  * operations with a recoverable error (EAGAIN and EINTR). xread()
@@ -239,21 +257,8 @@ ssize_t xread(int fd, void *buf, size_t len)
 		if (nr < 0) {
 			if (errno == EINTR)
 				continue;
-			if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				struct pollfd pfd;
-				pfd.events = POLLIN;
-				pfd.fd = fd;
-				/*
-				 * it is OK if this poll() failed; we
-				 * want to leave this infinite loop
-				 * only when read() returns with
-				 * success, or an expected failure,
-				 * which would be checked by the next
-				 * call to read(2).
-				 */
-				poll(&pfd, 1, -1);
+			if (handle_nonblock(fd, POLLIN, errno))
 				continue;
-			}
 		}
 		return nr;
 	}
@@ -274,21 +279,8 @@ ssize_t xwrite(int fd, const void *buf, size_t len)
 		if (nr < 0) {
 			if (errno == EINTR)
 				continue;
-			if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				struct pollfd pfd;
-				pfd.events = POLLOUT;
-				pfd.fd = fd;
-				/*
-				 * it is OK if this poll() failed; we
-				 * want to leave this infinite loop
-				 * only when write() returns with
-				 * success, or an expected failure,
-				 * which would be checked by the next
-				 * call to write(2).
-				 */
-				poll(&pfd, 1, -1);
+			if (handle_nonblock(fd, POLLOUT, errno))
 				continue;
-			}
 		}
 
 		return nr;
