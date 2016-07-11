@@ -56,7 +56,7 @@ static int timespec_arg(const char *arg, long int *set_time, int *set_eq)
 	return 1;
 }
 
-int main(int argc, char *argv[])
+int cmd_main(int argc, const char **argv)
 {
 	static int verbose;
 

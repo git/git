@@ -164,7 +164,6 @@ Format of STDIN stream:
 #include "refs.h"
 #include "csum-file.h"
 #include "quote.h"
-#include "exec_cmd.h"
 #include "dir.h"
 #include "run-command.h"
 
@@ -302,7 +301,7 @@ static int failure;
 static FILE *pack_edges;
 static unsigned int show_stats = 1;
 static int global_argc;
-static char **global_argv;
+static const char **global_argv;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -3445,13 +3444,9 @@ static void parse_argv(void)
 		read_marks();
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	unsigned int i;
-
-	git_extract_argv0_path(argv[0]);
-
-	git_setup_gettext();
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(fast_import_usage);

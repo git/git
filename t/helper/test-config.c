@@ -66,7 +66,7 @@ static int iterate_cb(const char *var, const char *value, void *data)
 	return 0;
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	int i, val;
 	const char *v;

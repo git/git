@@ -15,7 +15,7 @@
 static const char usage_str[] =
 	"test-delta (-d|-p) <from_file> <data_file> <out_file>";
 
-int main(int argc, char *argv[])
+int cmd_main(int argc, const char **argv)
 {
 	int fd;
 	struct stat st;

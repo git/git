@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 #include "urlmatch.h"
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char usage[] = "test-urlmatch-normalization [-p | -l] <url1> | <url1> <url2>";
 	char *url1, *url2;
