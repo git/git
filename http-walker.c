@@ -447,7 +447,7 @@ static void abort_object_request(struct object_request *obj_req)
 	release_object_request(obj_req);
 }
 
-static int fetch_object(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
+static int fetch_object(struct walker *walker, unsigned char *sha1)
 {
 	char *hex = sha1_to_hex(sha1);
 	int ret = 0;
@@ -518,7 +518,7 @@ static int fetch(struct walker *walker, unsigned char *sha1)
 	struct walker_data *data = walker->data;
 	struct alt_base *altbase = data->alt;
 
-	if (!fetch_object(walker, altbase, sha1))
+	if (!fetch_object(walker, sha1))
 		return 0;
 	while (altbase) {
 		if (!http_fetch_pack(walker, altbase, sha1))
