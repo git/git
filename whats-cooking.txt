@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2016, #03; Fri, 8)
-X-master-at: 5c589a73de4394ad125a4effac227b3aec856fa1
-X-next-at: 281e4d64a61b891e32e0344654b580b4203effa6
+Subject: What's cooking in git.git (Jul 2016, #04; Mon, 11)
+X-master-at: b1ec08fda8e0c3ed19b680404770ca4ec313ca8c
+X-next-at: aa0ab43525ebd305d89ffde30b5d5837a535491c
 
-What's cooking in git.git (Jul 2016, #03; Fri, 8)
+What's cooking in git.git (Jul 2016, #04; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,7 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first few batches for this cycle has been merged to 'master',
-and new topics are trickling into 'next'.
+The first maintenance release for 2.9.x series has been issued.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,94 +20,119 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* jc/send-email-skip-backup (2016-04-12) 1 commit
+  (merged to 'next' on 2016-06-28 at 67dac59)
+ + send-email: detect and offer to skip backup files
+
+ A careless invocation of "git send-email directory/" after editing
+ 0001-change.patch with an editor often ends up sending both
+ 0001-change.patch and its backup file, 0001-change.patch~, causing
+ embarrassment and a minor confusion.  Detect such an input and
+ offer to skip the backup files when sending the patches out.
+ Perhaps people will enhance it more once it gains more visibility.
+
+
+* jk/ansi-color (2016-06-23) 7 commits
+  (merged to 'next' on 2016-06-28 at 354989c)
+ + color: support strike-through attribute
+ + color: support "italic" attribute
+ + color: allow "no-" for negating attributes
+ + color: refactor parse_attr
+ + add skip_prefix_mem helper
+ + doc: refactor description of color format
+ + color: fix max-size comment
+
+ The output coloring scheme learned two new attributes, italic and
+ strike, in addition to existing bold, reverse, etc.
+
+
+* jk/perf-any-version (2016-06-22) 2 commits
+  (merged to 'next' on 2016-06-28 at 6a41c30)
+ + p4211: explicitly disable renames in no-rename test
+ + t/perf: fix regression in testing older versions of git
+
+ Allow t/perf framework to use the features from the most recent
+ version of Git even when testing an older installed version.
+
+
+* jn/preformatted-doc-url (2016-06-22) 1 commit
+  (merged to 'next' on 2016-06-28 at 60a99eb)
+ + doc: git-htmldocs.googlecode.com is no more
+
+ The top level documentation "git help git" still pointed at the
+ documentation set hosted at now-defunct google-code repository.
+ Update it to point to https://git.github.io/htmldocs/git.html
+ instead.
+
+
+* js/color-on-windows-comment (2016-06-28) 1 commit
+  (merged to 'next' on 2016-06-28 at 38a2ea1)
+ + color.h: remove obsolete comment about limitations on Windows
+
+ For a long time, we carried an in-code comment that said our
+ colored output would work only when we use fprintf/fputs on
+ Windows, which no longer is the case for the past few years.
+
+
+* js/find-commit-subject-ignore-leading-blanks (2016-06-29) 5 commits
+  (merged to 'next' on 2016-06-29 at 9717e00)
+ + reset --hard: skip blank lines when reporting the commit subject
+ + sequencer: use skip_blank_lines() to find the commit subject
+ + commit -C: skip blank lines at the beginning of the message
+  (merged to 'next' on 2016-06-28 at 32bbd94)
+ + commit.c: make find_commit_subject() more robust
+ + pretty: make the skip_blank_lines() function public
+
+ A helper function that takes the contents of a commit object and
+ finds its subject line did not ignore leading blank lines, as is
+ commonly done by other codepaths.  Make it ignore leading blank
+ lines to match.
+
+
+* mj/log-show-signature-conf (2016-06-24) 3 commits
+  (merged to 'next' on 2016-06-28 at c8b3347)
+ + log: add log.showSignature configuration variable
+ + log: add "--no-show-signature" command line option
+ + t4202: refactor test
+
+ "git log" learns log.showSignature configuration variable, and a
+ command line option "--no-show-signature" to countermand it.
+
+
+* sb/submodule-clone-retry (2016-06-13) 2 commits
+  (merged to 'next' on 2016-06-28 at 8a86d54)
+ + submodule update: continue when a clone fails
+ + submodule--helper: initial clone learns retry logic
+
+ "git submodule update" that drives many "git clone" could
+ eventually hit flaky servers/network conditions on one of the
+ submodules; the command learned to retry the attempt.
+
+--------------------------------------------------
 [New Topics]
 
-* rs/help-c-source-with-gitattributes (2016-07-07) 1 commit
- - .gitattributes: set file type for C files
+* js/ignore-space-at-eol (2016-07-11) 2 commits
+ - diff: fix a double off-by-one with --ignore-space-at-eol
+ - diff: demonstrate a bug with --patience and --ignore-space-at-eol
 
- The .c/.h sources are marked as such in our .gitattributes file so
- that "git diff -W" and friends would work better.
-
- Will merge to 'next'.
-
-
-* rs/notes-merge-no-toctou (2016-07-07) 1 commit
- - notes-merge: use O_EXCL to avoid overwriting existing files
-
- "git notes merge" had a code to see if a path exists (and fails if
- it does) and then open the path for writing (when it doesn't).
- Replace it with open with O_EXCL.
-
-
-* rw/make-needs-librt (2016-07-07) 1 commit
- - Makefile: add NEEDS_LIBRT to optionally link with librt
-
- Makefile assumed that -lrt is always available on platforms that
- want to use clock_gettime() and CLOCK_MONOTONIC, which is not a
- case for recent Mac OS X.  The necessary symbols are often found in
- libc on many modern systems and having -lrt on the command line, as
- long as the library exists, had no effect, but when the platform
- removes librt.a that is a different matter--having -lrt will break
- the linkage.
-
- This change could be seen as a regression for those who do need to
- specify -lrt, as they now specifically ask for NEEDS_LIBRT when
- building. Hopefully they are in the minority these days.
+ An age old bug that caused "git diff --ignore-space-at-eol"
+ misbehave has been fixed.
 
  Will merge to 'next'.
 
 
-* jc/renormalize-merge-kill-safer-crlf (2016-07-08) 2 commits
- - merge: avoid "safer crlf" during recording of merge results
- - convert: unify the "auto" handling of CRLF
- (this branch is tangled with tb/convert-peek-in-index.)
+* js/rebase-i-tests (2016-07-07) 3 commits
+ - rebase -i: we allow extra spaces after fixup!/squash!
+ - rebase -i: demonstrate a bug with --autosquash
+ - t3404: add a test for the --gpg-sign option
 
- "git merge" with renormalization did not work well with
- merge-recursive, due to "safer crlf" conversion kicking in when it
- shouldn't.
-
-
-* jk/printf-format (2016-07-08) 3 commits
- - commit.c: remove print_commit_list()
- - avoid using sha1_to_hex output as printf format
- - walker: let walker_say take arbitrary formats
-
- Code clean-up to avoid using a variable string that compilers may
- feel untrustable as printf-style format given to write_file()
- helper function.
+ A few tests that specifically target "git rebase -i" have been
+ added.
 
  Will merge to 'next'.
 
-
-* jk/write-file (2016-07-08) 9 commits
- - branch: use write_file_buf instead of write_file
- - use write_file_buf where applicable
- - write_file: add format attribute
- - write_file: add pointer+len variant
- - write_file: use xopen
- - write_file: drop "gently" form
- - branch: use non-gentle write_file for branch description
- - am: ignore return value of write_file()
- - config: fix bogus fd check when setting up default config
-
- General code clean-up around a helper function to write a
- single-liner to a file.
-
- Will merge to 'next'.
- While it is textually independent, jk/printf-format needs to be
- merged before this one.
-
-
-* js/am-call-theirs-theirs-in-fallback-3way (2016-07-08) 1 commit
- - am: counteract gender bias
-
- One part of "git am" had an oddball helper function that called
- stuff from outside "his" as opposed to calling what we have "ours",
- which was not gender-neutral and also inconsistent with the rest of
- the system where outside stuff is usuall called "theirs" in
- contrast to "ours".
-
- Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -238,24 +262,112 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ak/lazy-prereq-mktemp (2016-07-06) 1 commit
- - t7610: test for mktemp before test execution
+* jc/renormalize-merge-kill-safer-crlf (2016-07-08) 2 commits
+ - merge: avoid "safer crlf" during recording of merge results
+ - convert: unify the "auto" handling of CRLF
+ (this branch is tangled with tb/convert-peek-in-index.)
 
- A test that unconditionally used "mktemp" learned that the command
- is not necessarily available everywhere.
+ "git merge" with renormalization did not work well with
+ merge-recursive, due to "safer crlf" conversion kicking in when it
+ shouldn't.
+
+ Waiting for further discussion; hopefully can move this forward.
+
+
+* rs/help-c-source-with-gitattributes (2016-07-07) 1 commit
+  (merged to 'next' on 2016-07-11 at b90b7d0)
+ + .gitattributes: set file type for C files
+
+ The .c/.h sources are marked as such in our .gitattributes file so
+ that "git diff -W" and friends would work better.
+
+ Will merge to 'master'.
+
+
+* rs/notes-merge-no-toctou (2016-07-07) 1 commit
+ - notes-merge: use O_EXCL to avoid overwriting existing files
+
+ "git notes merge" had a code to see if a path exists (and fails if
+ it does) and then open the path for writing (when it doesn't).
+ Replace it with open with O_EXCL.
 
  Will merge to 'next'.
 
 
-* ew/svn-bad-ref (2016-07-06) 1 commit
- - git-svn: warn instead of dying when commit data is missing
+* rw/make-needs-librt (2016-07-11) 2 commits
+ - config.mak.uname: define NEEDS_LIBRT under Linux, for now
+ - Makefile: add NEEDS_LIBRT to optionally link with librt
 
- An earlier update to "git svn" tightened the parsing of refs given
- as the command line arguments too much.  This has been fixed by
- loosening the check a bit.
+ Makefile assumed that -lrt is always available on platforms that
+ want to use clock_gettime() and CLOCK_MONOTONIC, which is not a
+ case for recent Mac OS X.  The necessary symbols are often found in
+ libc on many modern systems and having -lrt on the command line, as
+ long as the library exists, had no effect, but when the platform
+ removes librt.a that is a different matter--having -lrt will break
+ the linkage.
 
- I'm likely to discard this, favouring a direct pull request from
- the subsystem maintainer directly going to 'master'.
+ This change could be seen as a regression for those who do need to
+ specify -lrt, as they now specifically ask for NEEDS_LIBRT when
+ building. Hopefully they are in the minority these days.
+
+ Will merge to 'next'.
+
+
+* jk/printf-format (2016-07-08) 3 commits
+  (merged to 'next' on 2016-07-11 at 731eafb)
+ + commit.c: remove print_commit_list()
+ + avoid using sha1_to_hex output as printf format
+ + walker: let walker_say take arbitrary formats
+
+ Code clean-up to avoid using a variable string that compilers may
+ feel untrustable as printf-style format given to write_file()
+ helper function.
+
+ Will merge to 'master'.
+
+
+* jk/write-file (2016-07-08) 9 commits
+  (merged to 'next' on 2016-07-11 at f51b449)
+ + branch: use write_file_buf instead of write_file
+ + use write_file_buf where applicable
+ + write_file: add format attribute
+ + write_file: add pointer+len variant
+ + write_file: use xopen
+ + write_file: drop "gently" form
+ + branch: use non-gentle write_file for branch description
+ + am: ignore return value of write_file()
+ + config: fix bogus fd check when setting up default config
+
+ General code clean-up around a helper function to write a
+ single-liner to a file.
+
+ Will merge to 'master'.
+
+ While it is textually independent, jk/printf-format needs to be
+ merged before this one.
+
+
+* js/am-call-theirs-theirs-in-fallback-3way (2016-07-08) 1 commit
+  (merged to 'next' on 2016-07-11 at abae4bc)
+ + am: counteract gender bias
+
+ One part of "git am" had an oddball helper function that called
+ stuff from outside "his" as opposed to calling what we have "ours",
+ which was not gender-neutral and also inconsistent with the rest of
+ the system where outside stuff is usuall called "theirs" in
+ contrast to "ours".
+
+ Will merge to 'master'.
+
+
+* ak/lazy-prereq-mktemp (2016-07-06) 1 commit
+  (merged to 'next' on 2016-07-11 at 66a9384)
+ + t7610: test for mktemp before test execution
+
+ A test that unconditionally used "mktemp" learned that the command
+ is not necessarily available everywhere.
+
+ Will merge to 'master'.
 
 
 * jk/difftool-in-subdir (2016-07-06) 1 commit
@@ -268,7 +380,8 @@ of the repositories listed at
  Waiting for an ack.
 
 
-* nd/test-helpers (2016-07-06) 2 commits
+* nd/test-helpers (2016-07-11) 3 commits
+ - t/test-lib.sh: fix running tests with --valgrind
  - Makefile: use VCSSVN_LIB to refer to svn library
  - Makefile: drop extra dependencies for test helpers
 
@@ -287,21 +400,22 @@ of the repositories listed at
 
 
 * jk/common-main (2016-07-06) 1 commit
- - Merge branch 'jk/common-main-2.8' into jk/common-main
+  (merged to 'next' on 2016-07-11 at 1c2228a)
+ + Merge branch 'jk/common-main-2.8' into jk/common-main
  (this branch uses jk/common-main-2.8.)
 
  Prepare jk/commin-main-2.8 topic to be mergeable to 2.9 and later.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/common-main-2.8 (2016-07-06) 6 commits
- - mingw: declare main()'s argv as const
- - common-main: call git_setup_gettext()
- - common-main: call restore_sigpipe_to_default()
- - common-main: call sanitize_stdfds()
- - common-main: call git_extract_argv0_path()
- - add an extra level of indirection to main()
+ + mingw: declare main()'s argv as const
+ + common-main: call git_setup_gettext()
+ + common-main: call restore_sigpipe_to_default()
+ + common-main: call sanitize_stdfds()
+ + common-main: call git_extract_argv0_path()
+ + add an extra level of indirection to main()
  (this branch is used by jk/common-main.)
 
  There are certain house-keeping tasks that need to be performed at
@@ -385,17 +499,6 @@ of the repositories listed at
  Needs review.
 
 
-* js/color-on-windows-comment (2016-06-28) 1 commit
-  (merged to 'next' on 2016-06-28 at 38a2ea1)
- + color.h: remove obsolete comment about limitations on Windows
-
- For a long time, we carried an in-code comment that said our
- colored output would work only when we use fprintf/fputs on
- Windows, which no longer is the case for the past few years.
-
- Will merge to 'master'.
-
-
 * js/sign-empty-commit-fix (2016-06-29) 1 commit
   (merged to 'next' on 2016-07-06 at 448da1b)
  + commit -S: avoid invalid pointer with empty message
@@ -417,12 +520,13 @@ of the repositories listed at
 
 
 * ls/p4-tmp-refs (2016-07-08) 1 commit
- - git-p4: place temporary refs used for branch import under refs/git-p4-tmp
+  (merged to 'next' on 2016-07-11 at 4af2d93)
+ + git-p4: place temporary refs used for branch import under refs/git-p4-tmp
 
  "git p4" used a location outside $GIT_DIR/refs/ to place its
  temporary branches, which has been moved to refs/git-p4-tmp/.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/pull-rebase-ff (2016-06-29) 1 commit
@@ -456,15 +560,16 @@ of the repositories listed at
 
 
 * jk/test-match-signal (2016-07-06) 4 commits
- - t/lib-git-daemon: use test_match_signal
- - test_must_fail: use test_match_signal
- - t0005: use test_match_signal as appropriate
- - tests: factor portable signal check out of t0005
+  (merged to 'next' on 2016-07-11 at 54e1462)
+ + t/lib-git-daemon: use test_match_signal
+ + test_must_fail: use test_match_signal
+ + t0005: use test_match_signal as appropriate
+ + tests: factor portable signal check out of t0005
 
  The test framework learned a new helper test_match_signal to check
  an exit code from getting killed by an expected signal.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ah/unpack-trees-advice-messages (2016-06-27) 1 commit
@@ -521,7 +626,9 @@ of the repositories listed at
  review discussion.  Otherwise looked good.
 
 
-* sb/submodule-parallel-fetch (2016-06-27) 2 commits
+* sb/submodule-parallel-fetch (2016-07-11) 3 commits
+  (merged to 'next' on 2016-07-11 at 4983ded)
+ + hoist out handle_nonblock function for xread and xwrite
   (merged to 'next' on 2016-07-06 at de5fd35)
  + xwrite: poll on non-blocking FDs
  + xread: retry after poll on EAGAIN/EWOULDBLOCK
@@ -551,32 +658,15 @@ of the repositories listed at
 
 
 * nd/fetch-ref-summary (2016-07-06) 5 commits
- - fetch: reduce duplicate in ref update status lines with placeholder
- - fetch: align all "remote -> local" output
- - fetch: change flag code for displaying tag update and deleted ref
- - fetch: refactor ref update status formatting code
- - git-fetch.txt: document fetch output
+  (merged to 'next' on 2016-07-11 at 379df9f)
+ + fetch: reduce duplicate in ref update status lines with placeholder
+ + fetch: align all "remote -> local" output
+ + fetch: change flag code for displaying tag update and deleted ref
+ + fetch: refactor ref update status formatting code
+ + git-fetch.txt: document fetch output
 
  Improve the look of the way "git fetch" reports what happened to
  each ref that was fetched.
-
- Will merge to 'next'.
-
-
-* jk/perf-any-version (2016-06-22) 2 commits
-  (merged to 'next' on 2016-06-28 at 6a41c30)
- + p4211: explicitly disable renames in no-rename test
- + t/perf: fix regression in testing older versions of git
-
- Allow t/perf framework to use the features from the most recent
- version of Git even when testing an older installed version.
-
- Will merge to 'master'.
-
-
-* jn/preformatted-doc-url (2016-06-22) 1 commit
-  (merged to 'next' on 2016-06-28 at 60a99eb)
- + doc: git-htmldocs.googlecode.com is no more
 
  Will merge to 'master'.
 
@@ -598,50 +688,23 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jk/ansi-color (2016-06-23) 7 commits
-  (merged to 'next' on 2016-06-28 at 354989c)
- + color: support strike-through attribute
- + color: support "italic" attribute
- + color: allow "no-" for negating attributes
- + color: refactor parse_attr
- + add skip_prefix_mem helper
- + doc: refactor description of color format
- + color: fix max-size comment
-
- The output coloring scheme learned two new attributes, italic and
- strike, in addition to existing bold, reverse, etc.
-
- Will merge to 'master'.
-
-
 * nd/icase (2016-07-01) 12 commits
- - grep.c: reuse "icase" variable
- - diffcore-pickaxe: support case insensitive match on non-ascii
- - diffcore-pickaxe: Add regcomp_or_die()
- - grep/pcre: support utf-8
- - gettext: add is_utf8_locale()
- - grep/pcre: prepare locale-dependent tables for icase matching
- - grep: rewrite an if/else condition to avoid duplicate expression
- - grep/icase: avoid kwsset when -F is specified
- - grep/icase: avoid kwsset on literal non-ascii strings
- - test-regex: expose full regcomp() to the command line
- - test-regex: isolate the bug test code
- - grep: break down an "if" stmt in preparation for next changes
+  (merged to 'next' on 2016-07-11 at a00d080)
+ + grep.c: reuse "icase" variable
+ + diffcore-pickaxe: support case insensitive match on non-ascii
+ + diffcore-pickaxe: Add regcomp_or_die()
+ + grep/pcre: support utf-8
+ + gettext: add is_utf8_locale()
+ + grep/pcre: prepare locale-dependent tables for icase matching
+ + grep: rewrite an if/else condition to avoid duplicate expression
+ + grep/icase: avoid kwsset when -F is specified
+ + grep/icase: avoid kwsset on literal non-ascii strings
+ + test-regex: expose full regcomp() to the command line
+ + test-regex: isolate the bug test code
+ + grep: break down an "if" stmt in preparation for next changes
 
  "git grep -i" has been taught to fold case in non-ascii locales
  correctly.
-
- Will merge to 'next'.
-
-
-* mj/log-show-signature-conf (2016-06-24) 3 commits
-  (merged to 'next' on 2016-06-28 at c8b3347)
- + log: add log.showSignature configuration variable
- + log: add "--no-show-signature" command line option
- + t4202: refactor test
-
- "git log" learns log.showSignature configuration variable, and a
- command line option "--no-show-signature" to countermand it.
 
  Will merge to 'master'.
 
@@ -709,24 +772,8 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* js/find-commit-subject-ignore-leading-blanks (2016-06-29) 5 commits
-  (merged to 'next' on 2016-06-29 at 9717e00)
- + reset --hard: skip blank lines when reporting the commit subject
- + sequencer: use skip_blank_lines() to find the commit subject
- + commit -C: skip blank lines at the beginning of the message
-  (merged to 'next' on 2016-06-28 at 32bbd94)
- + commit.c: make find_commit_subject() more robust
- + pretty: make the skip_blank_lines() function public
-
- A helper function that takes the contents of a commit object and
- finds its subject line did not ignore leading blank lines, as is
- commonly done by other codepaths.  Make it ignore leading blank
- lines to match.
-
- Will merge to 'master'.
-
-
-* js/log-to-diffopt-file (2016-06-28) 11 commits
+* js/log-to-diffopt-file (2016-07-11) 12 commits
+ - mingw: fix the shortlog --output=<file> test
   (merged to 'next' on 2016-07-06 at 39e7a5f)
  + diff: do not color output when --color=auto and --output=<file> is given
  + t4211: ensure that log respects --output=<file>
@@ -791,18 +838,6 @@ of the repositories listed at
  + sideband.c: refactor recv_sideband()
 
  Code simplification.
-
- Will merge to 'master'.
-
-
-* sb/submodule-clone-retry (2016-06-13) 2 commits
-  (merged to 'next' on 2016-06-28 at 8a86d54)
- + submodule update: continue when a clone fails
- + submodule--helper: initial clone learns retry logic
-
- "git submodule update" that drives many "git clone" could
- eventually hit flaky servers/network conditions on one of the
- submodules; the command learned to retry the attempt.
 
  Will merge to 'master'.
 
@@ -1030,7 +1065,7 @@ of the repositories listed at
  back-burner the threading enhancement to another day.
 
 
-* pb/bisect (2016-06-27) 9 commits
+* pb/bisect (2016-07-11) 9 commits
  - bisect--helper: `bisect_write` shell function in C
  - bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
  - bisect--helper: `bisect_reset` shell function in C
@@ -1102,20 +1137,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jc/send-email-skip-backup (2016-04-12) 1 commit
-  (merged to 'next' on 2016-06-28 at 67dac59)
- + send-email: detect and offer to skip backup files
-
- A careless invocation of "git send-email directory/" after editing
- 0001-change.patch with an editor often ends up sending both
- 0001-change.patch and its backup file, 0001-change.patch~, causing
- embarrassment and a minor confusion.  Detect such an input and
- offer to skip the backup files when sending the patches out.
-
- Will merge to 'master'.
- Perhaps people will enhance it more once it gains more visibility.
-
-
 * kn/ref-filter-branch-list (2016-05-17) 17 commits
  - branch: implement '--format' option
  - branch: use ref-filter printing APIs
@@ -1170,6 +1191,8 @@ of the repositories listed at
  optionally interface with the watchman daemon to further reduce the
  refresh cost.
 
+ Will merge to 'next'.
+
  Is everybody happy with this version?
  At v14.
 
@@ -1203,3 +1226,11 @@ of the repositories listed at
  It has been reported that git-gui still uses the deprecated syntax,
  which needs to be fixed before this final step can proceed.
  ($gmane/282594)
+
+--------------------------------------------------
+[Discarded]
+
+* ew/svn-bad-ref (2016-07-06) 1 commit
+ . git-svn: warn instead of dying when commit data is missing
+
+ Pulled directly from upstream hence discarded.
