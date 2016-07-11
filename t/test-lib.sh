@@ -1098,3 +1098,12 @@ run_with_limited_cmdline () {
 }
 
 test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'
+
+build_option () {
+	git version --build-options |
+	sed -ne "s/^$1: //p"
+}
+
+test_lazy_prereq LONG_IS_64BIT '
+	test 8 -le "$(build_option sizeof-long)"
+'
