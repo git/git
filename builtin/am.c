@@ -184,22 +184,22 @@ static inline const char *am_path(const struct am_state *state, const char *path
 /**
  * For convenience to call write_file()
  */
-static int write_state_text(const struct am_state *state,
-			    const char *name, const char *string)
+static void write_state_text(const struct am_state *state,
+			     const char *name, const char *string)
 {
-	return write_file(am_path(state, name), "%s", string);
+	write_file(am_path(state, name), "%s", string);
 }
 
-static int write_state_count(const struct am_state *state,
+static void write_state_count(const struct am_state *state,
+			      const char *name, int value)
+{
+	write_file(am_path(state, name), "%d", value);
+}
+
+static void write_state_bool(const struct am_state *state,
 			     const char *name, int value)
 {
-	return write_file(am_path(state, name), "%d", value);
-}
-
-static int write_state_bool(const struct am_state *state,
-			    const char *name, int value)
-{
-	return write_state_text(state, name, value ? "t" : "f");
+	write_state_text(state, name, value ? "t" : "f");
 }
 
 /**
@@ -403,13 +403,8 @@ static int read_commit_msg(struct am_state *state)
  */
 static void write_commit_msg(const struct am_state *state)
 {
-	int fd;
 	const char *filename = am_path(state, "final-commit");
-
-	fd = xopen(filename, O_WRONLY | O_CREAT, 0666);
-	if (write_in_full(fd, state->msg, state->msg_len) < 0)
-		die_errno(_("could not write to %s"), filename);
-	close(fd);
+	write_file_buf(filename, state->msg, state->msg_len);
 }
 
 /**
