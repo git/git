@@ -1022,9 +1022,15 @@ static size_t parse_padding_placeholder(struct strbuf *sb,
 		int width;
 		if (!end || end == start)
 			return 0;
-		width = strtoul(start, &next, 10);
+		width = strtol(start, &next, 10);
 		if (next == start || width == 0)
 			return 0;
+		if (width < 0) {
+			if (to_column)
+				width += term_columns();
+			if (width < 0)
+				return 0;
+		}
 		c->padding = to_column ? -width : width;
 		c->flush_type = flush_type;
 
@@ -1299,6 +1305,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		if (!start)
 			start = sb->buf;
 		occupied = utf8_strnwidth(start, -1, 1);
+		occupied += c->pretty_ctx->graph_width;
 		padding = (-padding) - occupied;
 	}
 	while (1) {
