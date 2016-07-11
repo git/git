@@ -55,6 +55,26 @@ UI, Workflows & Features
    to the right border.
    (merge 066790d nd/graph-width-padded later to maint).
 
+ * A careless invocation of "git send-email directory/" after editing
+   0001-change.patch with an editor often ends up sending both
+   0001-change.patch and its backup file, 0001-change.patch~, causing
+   embarrassment and a minor confusion.  Detect such an input and
+   offer to skip the backup files when sending the patches out.
+   (merge 531220b jc/send-email-skip-backup later to maint).
+
+ * "git submodule update" that drives many "git clone" could
+   eventually hit flaky servers/network conditions on one of the
+   submodules; the command learned to retry the attempt.
+
+ * The output coloring scheme learned two new attributes, italic and
+   strike, in addition to existing bold, reverse, etc.
+
+ * "git log" learns log.showSignature configuration variable, and a
+   command line option "--no-show-signature" to countermand it.
+   (merge fce04c3 mj/log-show-signature-conf later to maint).
+
+ * A couple of "git svn" updates.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -115,6 +135,9 @@ Performance, Internal Implementation, Development Support etc.
    updated to use this API to read from the status-fd to check for
    errors (instead of relying on GPG's exit status).
    (merge efee955 jk/gpg-interface-cleanup later to maint).
+
+ * Allow t/perf framework to use the features from the most recent
+   version of Git even when testing an older installed version.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -218,6 +241,23 @@ notes for details).
    been fixed; the command said "Ignoring file outside of prefix" for
    paths that are _inside_.
    (merge 09667d0 ao/p4-has-branch-prefix-fix later to maint).
+
+ * The top level documentation "git help git" still pointed at the
+   documentation set hosted at now-defunct google-code repository.
+   Update it to point to https://git.github.io/htmldocs/git.html
+   instead.
+   (merge f793582 jn/preformatted-doc-url later to maint).
+
+ * A helper function that takes the contents of a commit object and
+   finds its subject line did not ignore leading blank lines, as is
+   commonly done by other codepaths.  Make it ignore leading blank
+   lines to match.
+   (merge 054a5ae js/find-commit-subject-ignore-leading-blanks later to maint).
+
+ * For a long time, we carried an in-code comment that said our
+   colored output would work only when we use fprintf/fputs on
+   Windows, which no longer is the case for the past few years.
+   (merge 3d0a833 js/color-on-windows-comment later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge e51b0df pb/commit-editmsg-path later to maint).
