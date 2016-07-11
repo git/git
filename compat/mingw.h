@@ -532,8 +532,8 @@ extern CRITICAL_SECTION pinfo_cs;
  * A replacement of main() that adds win32 specific initialization.
  */
 
-void mingw_startup();
-#define main(c,v) dummy_decl_mingw_main(); \
+void mingw_startup(void);
+#define main(c,v) dummy_decl_mingw_main(void); \
 static int mingw_main(c,v); \
 int main(int argc, char **argv) \
 { \

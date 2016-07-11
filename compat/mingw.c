@@ -2162,7 +2162,7 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
 	return -1;
 }
 
-static void setup_windows_environment()
+static void setup_windows_environment(void)
 {
 	char *tmp = getenv("TMPDIR");
 
@@ -2204,7 +2204,7 @@ typedef struct {
 extern int __wgetmainargs(int *argc, wchar_t ***argv, wchar_t ***env, int glob,
 		_startupinfo *si);
 
-static NORETURN void die_startup()
+static NORETURN void die_startup(void)
 {
 	fputs("fatal: not enough memory for initialization", stderr);
 	exit(128);
@@ -2224,7 +2224,7 @@ static char *wcstoutfdup_startup(char *buffer, const wchar_t *wcs, size_t len)
 	return memcpy(malloc_startup(len), buffer, len);
 }
 
-void mingw_startup()
+void mingw_startup(void)
 {
 	int i, maxlen, argc;
 	char *buffer;
