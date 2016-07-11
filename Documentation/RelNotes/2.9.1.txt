@@ -59,4 +59,59 @@ Fixes since v2.9
  * "git cherry-pick A" worked on an unborn branch, but "git
    cherry-pick A..B" didn't.
 
+ * "git add -i/-p" learned to honor diff.compactionHeuristic
+   experimental knob, so that the user can work on the same hunk split
+   as "git diff" output.
+
+ * "log --graph --format=" learned that "%>|(N)" specifies the width
+   relative to the terminal's left edge, not relative to the area to
+   draw text that is to the right of the ancestry-graph section.  It
+   also now accepts negative N that means the column limit is relative
+   to the right border.
+
+ * The ownership rule for the piece of memory that hold references to
+   be fetched in "git fetch" was screwy, which has been cleaned up.
+
+ * "git bisect" makes an internal call to "git diff-tree" when
+   bisection finds the culprit, but this call did not initialize the
+   data structure to pass to the diff-tree API correctly.
+
+ * Formats of the various data (and how to validate them) where we use
+   GPG signature have been documented.
+
+ * Fix an unintended regression in v2.9 that breaks "clone --depth"
+   that recurses down to submodules by forcing the submodules to also
+   be cloned shallowly, which many server instances that host upstream
+   of the submodules are not prepared for.
+
+ * Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
+   to set the default value, without enclosing it in double quotes.
+
+ * Some platform-specific code had non-ANSI strict declarations of C
+   functions that do not take any parameters, which has been
+   corrected.
+
+ * The internal code used to show local timezone offset is not
+   prepared to handle timestamps beyond year 2100, and gave a
+   bogus offset value to the caller.  Use a more benign looking
+   +0000 instead and let "git log" going in such a case, instead
+   of aborting.
+
+ * One among four invocations of readlink(1) in our test suite has
+   been rewritten so that the test can run on systems without the
+   command (others are in valgrind test framework and t9802).
+
+ * t/perf needs /usr/bin/time with GNU extension; the invocation of it
+   is updated to "gtime" on Darwin.
+
+ * A bug, which caused "git p4" while running under verbose mode to
+   report paths that are omitted due to branch prefix incorrectly, has
+   been fixed; the command said "Ignoring file outside of prefix" for
+   paths that are _inside_.
+
+ * The top level documentation "git help git" still pointed at the
+   documentation set hosted at now-defunct google-code repository.
+   Update it to point to https://git.github.io/htmldocs/git.html
+   instead.
+
 Also contains minor documentation updates and code clean-ups.
