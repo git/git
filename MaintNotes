@@ -125,11 +125,10 @@ found in:
   git://repo.or.cz/git-{htmldocs,manpages}.git/
   https://github.com/gitster/git-{htmldocs,manpages}.git/
 
-Also GitHub shows the manual pages formatted in HTML (with a
-formatting backend different from the one that is used to create the
-above) at:
+The manual pages formatted in HTML for the tip of 'master' can be
+viewed online at:
 
-  http://git-scm.com/docs/git
+  https://git.github.io/htmldocs/git.html
 
 
 * How various branches are used.
