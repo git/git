@@ -245,7 +245,7 @@ static void fscache_remove(struct fsentry *fse)
 /*
  * Clears the cache.
  */
-static void fscache_clear()
+static void fscache_clear(void)
 {
 	struct hashmap_iter iter;
 	struct fsentry *fse;
