@@ -499,6 +499,8 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 	s->fp = fp;
 	s->nowarn = nowarn;
 	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
+	if (!s->is_initial)
+		hashcpy(s->sha_commit, sha1);
 
 	wt_status_collect(s);
 
@@ -1380,7 +1382,20 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	fd = hold_locked_index(&index_lock, 0);
 
 	s.is_initial = get_sha1(s.reference, sha1) ? 1 : 0;
+	if (!s.is_initial)
+		hashcpy(s.sha_commit, sha1);
+
 	s.ignore_submodule_arg = ignore_submodule_arg;
+	if (verbose > 1 && status_format == STATUS_FORMAT_PORCELAIN) {
+		/* Capture extra data for very verbose porcelain output. */
+		s.verbose = verbose;
+
+		/* Force safe_crlf off to prevent normal LF/CRLF warning
+		 * message from being printed on stderr for each new file.
+		 */
+		safe_crlf = SAFE_CRLF_FALSE;
+	}
+
 	wt_status_collect(&s);
 
 	if (0 <= fd)
