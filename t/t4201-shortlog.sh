@@ -185,9 +185,9 @@ test_expect_success 'shortlog with revision pseudo options' '
 '
 
 test_expect_success 'shortlog with --output=<file>' '
-	git shortlog --output=shortlog master >output &&
+	git shortlog --output=shortlog -1 master >output &&
 	test ! -s output &&
-	test_line_count = 7 shortlog
+	test_line_count = 3 shortlog
 '
 
 test_done
