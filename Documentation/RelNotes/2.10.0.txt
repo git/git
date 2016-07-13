@@ -31,7 +31,6 @@ UI, Workflows & Features
  * "git add -i/-p" learned to honor diff.compactionHeuristic
    experimental knob, so that the user can work on the same hunk split
    as "git diff" output.
-   (merge 46e3d17 jk/add-i-diff-compact-heuristics later to maint).
 
  * "upload-pack" allows a custom "git pack-objects" replacement when
    responding to "fetch/clone" via the uploadpack.packObjectsHook.
@@ -53,7 +52,6 @@ UI, Workflows & Features
    draw text that is to the right of the ancestry-graph section.  It
    also now accepts negative N that means the column limit is relative
    to the right border.
-   (merge 066790d nd/graph-width-padded later to maint).
 
  * A careless invocation of "git send-email directory/" after editing
    0001-change.patch with an editor often ends up sending both
@@ -75,6 +73,14 @@ UI, Workflows & Features
 
  * A couple of "git svn" updates.
 
+ * More markings of messages for i18n, with updates to various tests
+   to pass GETTEXT_POISON tests.
+
+ * "git archive" learned to handle files that are larger than 8GB and
+   commits far in the future than expressible by the traditional US-TAR
+   format.
+   (merge 5caeeb8 jk/big-and-future-archive-tar later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -86,7 +92,6 @@ Performance, Internal Implementation, Development Support etc.
    connection from a client that silently goes offline can hang around
    for a long time, wasting resources.  The socket-level KEEPALIVE has
    been enabled to allow the OS to notice such failed connections.
-   (merge a43b68a ew/daemon-socket-keepalive later to maint).
 
  * "git upload-pack" command has been updated to use the parse-options
    API.
@@ -112,19 +117,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * The ownership rule for the piece of memory that hold references to
    be fetched in "git fetch" was screwy, which has been cleaned up.
-   (merge b7410f6 km/fetch-do-not-free-remote-name later to maint).
 
  * "git bisect" makes an internal call to "git diff-tree" when
    bisection finds the culprit, but this call did not initialize the
    data structure to pass to the diff-tree API correctly.
-   (merge 43ec550 jk/bisect-show-tree later to maint).
 
  * Further preparatory clean-up for "worktree" feature continues.
    (merge 0409e0b nd/worktree-cleanup-post-head-protection later to maint).
 
  * Formats of the various data (and how to validate them) where we use
    GPG signature have been documented.
-   (merge cc6ee97 mg/signature-doc later to maint).
 
  * A new run-command API function pipe_command() is introduced to
    sanely feed data to the standard input while capturing data from
@@ -155,18 +157,15 @@ notes for details).
    --no-color or with --color=auto when the output is not connected to
    a tty; this was corrected to make the format truly behave as
    "auto".
-   (merge b15a3e0 et/pretty-format-c-auto later to maint).
 
  * "git rev-list --count" whose walk-length is limited with "-n"
    option did not work well with the counting optimized to look at the
    bitmap index.
-   (merge fb85db8 jk/rev-list-count-with-bitmap later to maint).
 
  * "git show -W" (extend hunks to cover the entire function, delimited
    by lines that match the "funcname" pattern) used to show the entire
    file when a change added an entire function at the end of the file,
    which has been fixed.
-   (merge 6f8d9bc rs/xdiff-hunk-with-func-line later to maint).
 
  * The documentation set has been updated so that literal commands,
    configuration variables and environment variables are consistently
@@ -209,16 +208,13 @@ notes for details).
    that recurses down to submodules by forcing the submodules to also
    be cloned shallowly, which many server instances that host upstream
    of the submodules are not prepared for.
-   (merge 18a74a0 sb/clone-shallow-passthru later to maint).
 
  * Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
    to set the default value, without enclosing it in double quotes.
-   (merge 01247e0 lc/shell-default-value-noexpand later to maint).
 
  * Some platform-specific code had non-ANSI strict declarations of C
    functions that do not take any parameters, which has been
    corrected.
-   (merge 0767172 js/mingw-parameter-less-c-functions later to maint).
 
  * The internal code used to show local timezone offset is not
    prepared to handle timestamps beyond year 2100, and gave a
@@ -230,23 +226,19 @@ notes for details).
  * One among four invocations of readlink(1) in our test suite has
    been rewritten so that the test can run on systems without the
    command (others are in valgrind test framework and t9802).
-   (merge d2addc3 ak/t7800-wo-readlink later to maint).
 
  * t/perf needs /usr/bin/time with GNU extension; the invocation of it
    is updated to "gtime" on Darwin.
-   (merge e3efa94 js/perf-on-apple later to maint).
 
  * A bug, which caused "git p4" while running under verbose mode to
    report paths that are omitted due to branch prefix incorrectly, has
    been fixed; the command said "Ignoring file outside of prefix" for
    paths that are _inside_.
-   (merge 09667d0 ao/p4-has-branch-prefix-fix later to maint).
 
  * The top level documentation "git help git" still pointed at the
    documentation set hosted at now-defunct google-code repository.
    Update it to point to https://git.github.io/htmldocs/git.html
    instead.
-   (merge f793582 jn/preformatted-doc-url later to maint).
 
  * A helper function that takes the contents of a commit object and
    finds its subject line did not ignore leading blank lines, as is
@@ -259,10 +251,39 @@ notes for details).
    Windows, which no longer is the case for the past few years.
    (merge 3d0a833 js/color-on-windows-comment later to maint).
 
+ * "gc.autoPackLimit" when set to 1 should not trigger a repacking
+   when there is only one pack, but the code counted poorly and did
+   so.
+   (merge 5f4e3bf ew/gc-auto-pack-limit-fix later to maint).
+
+ * Add a test to specify the desired behaviour that currently is not
+   available in "git rebase -Xsubtree=...".
+   (merge 5f35900 dg/subtree-rebase-test later to maint).
+
+ * More mark-up updates to typeset strings that are expected to
+   literally typed by the end user in fixed-width font.
+   (merge 661c3e9 mm/doc-tt later to maint).
+
+ * "git commit --amend --allow-empty-message -S" for a commit without
+   any message body could have misidentified where the header of the
+   commit object ends.
+   (merge 3324dd8 js/sign-empty-commit-fix later to maint).
+
+ * "git rebase -i --autostash" did not restore the auto-stashed change
+   when the operation was aborted.
+   (merge 33ba9c6 ps/rebase-i-auto-unstash-upon-abort later to maint).
+
+ * Git does not know what the contents in the index should be for a
+   path added with "git add -N" yet, so "git grep --cached" should not
+   show hits (or show lack of hits, with -L) in such a path, but that
+   logic does not apply to "git grep", i.e. searching in the working
+   tree files.  But we did so by mistake, which has been corrected.
+   (merge b8e47d1 nd/ita-cleanup later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge e51b0df pb/commit-editmsg-path later to maint).
    (merge b333d0d jk/send-pack-stdio later to maint).
    (merge fcf0fe9 lf/sideband-returns-void later to maint).
-   (merge 5819c2e sb/t5614-modernize later to maint).
-   (merge fe0537a cb/t7810-test-label-fix later to maint).
-   (merge 412b9a1 jc/t2300-setup later to maint).
+   (merge c2691e2 ah/unpack-trees-advice-messages later to maint).
+   (merge 82f6178 nd/doc-new-command later to maint).
+   (merge fa90ab4 js/t3404-grammo-fix later to maint).
