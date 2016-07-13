@@ -131,7 +131,7 @@ struct expand_data {
 	unsigned char sha1[20];
 	enum object_type type;
 	unsigned long size;
-	unsigned long disk_size;
+	off_t disk_size;
 	const char *rest;
 	unsigned char delta_base_sha1[20];
 
@@ -184,7 +184,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (data->mark_query)
 			data->info.disk_sizep = &data->disk_size;
 		else
-			strbuf_addf(sb, "%lu", data->disk_size);
+			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
 	} else if (is_atom("rest", atom, len)) {
 		if (data->mark_query)
 			data->split_on_whitespace = 1;
