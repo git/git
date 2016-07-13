@@ -114,7 +114,7 @@ test_expect_success 'autocrlf=true does not normalize CRLF files' '
 	test -z "$LFonlydiff" -a -z "$CRLFonlydiff" -a -z "$LFwithNULdiff"
 '
 
-test_expect_success 'text=auto, autocrlf=true _does_ normalize CRLF files' '
+test_expect_success 'text=auto, autocrlf=true does not normalize CRLF files' '
 
 	rm -f .gitattributes tmp LFonly CRLFonly LFwithNUL &&
 	git config core.autocrlf true &&
@@ -126,7 +126,7 @@ test_expect_success 'text=auto, autocrlf=true _does_ normalize CRLF files' '
 	LFonlydiff=$(git diff LFonly) &&
 	CRLFonlydiff=$(git diff CRLFonly) &&
 	LFwithNULdiff=$(git diff LFwithNUL) &&
-	test -z "$LFonlydiff" -a -n "$CRLFonlydiff" -a -z "$LFwithNULdiff"
+	test -z "$LFonlydiff" -a -z "$CRLFonlydiff" -a -z "$LFwithNULdiff"
 '
 
 test_expect_success 'text=auto, autocrlf=true does not normalize binary files' '
