@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2016, #04; Mon, 11)
+Subject: What's cooking in git.git (Jul 2016, #05; Wed, 13)
 X-master-at: b1ec08fda8e0c3ed19b680404770ca4ec313ca8c
 X-next-at: aa0ab43525ebd305d89ffde30b5d5837a535491c
 
-What's cooking in git.git (Jul 2016, #04; Mon, 11)
+What's cooking in git.git (Jul 2016, #05; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,7 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The first maintenance release for 2.9.x series has been issued.
+It turns out that v2.9.1 had tests that weren't even meant to pass
+on platforms with 32-bit time_t/unsigned long, but did not properly
+exclude them.  A fix nas been prepared and I expect we'll cut v2.9.2
+with only that change relative to v2.9.1 soonish.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,139 +23,186 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jc/send-email-skip-backup (2016-04-12) 1 commit
-  (merged to 'next' on 2016-06-28 at 67dac59)
- + send-email: detect and offer to skip backup files
-
- A careless invocation of "git send-email directory/" after editing
- 0001-change.patch with an editor often ends up sending both
- 0001-change.patch and its backup file, 0001-change.patch~, causing
- embarrassment and a minor confusion.  Detect such an input and
- offer to skip the backup files when sending the patches out.
- Perhaps people will enhance it more once it gains more visibility.
-
-
-* jk/ansi-color (2016-06-23) 7 commits
-  (merged to 'next' on 2016-06-28 at 354989c)
- + color: support strike-through attribute
- + color: support "italic" attribute
- + color: allow "no-" for negating attributes
- + color: refactor parse_attr
- + add skip_prefix_mem helper
- + doc: refactor description of color format
- + color: fix max-size comment
-
- The output coloring scheme learned two new attributes, italic and
- strike, in addition to existing bold, reverse, etc.
-
-
-* jk/perf-any-version (2016-06-22) 2 commits
-  (merged to 'next' on 2016-06-28 at 6a41c30)
- + p4211: explicitly disable renames in no-rename test
- + t/perf: fix regression in testing older versions of git
-
- Allow t/perf framework to use the features from the most recent
- version of Git even when testing an older installed version.
-
-
-* jn/preformatted-doc-url (2016-06-22) 1 commit
-  (merged to 'next' on 2016-06-28 at 60a99eb)
- + doc: git-htmldocs.googlecode.com is no more
-
- The top level documentation "git help git" still pointed at the
- documentation set hosted at now-defunct google-code repository.
- Update it to point to https://git.github.io/htmldocs/git.html
- instead.
-
-
-* js/color-on-windows-comment (2016-06-28) 1 commit
-  (merged to 'next' on 2016-06-28 at 38a2ea1)
- + color.h: remove obsolete comment about limitations on Windows
-
- For a long time, we carried an in-code comment that said our
- colored output would work only when we use fprintf/fputs on
- Windows, which no longer is the case for the past few years.
-
-
-* js/find-commit-subject-ignore-leading-blanks (2016-06-29) 5 commits
-  (merged to 'next' on 2016-06-29 at 9717e00)
- + reset --hard: skip blank lines when reporting the commit subject
- + sequencer: use skip_blank_lines() to find the commit subject
- + commit -C: skip blank lines at the beginning of the message
-  (merged to 'next' on 2016-06-28 at 32bbd94)
- + commit.c: make find_commit_subject() more robust
- + pretty: make the skip_blank_lines() function public
-
- A helper function that takes the contents of a commit object and
- finds its subject line did not ignore leading blank lines, as is
- commonly done by other codepaths.  Make it ignore leading blank
- lines to match.
-
-
-* mj/log-show-signature-conf (2016-06-24) 3 commits
-  (merged to 'next' on 2016-06-28 at c8b3347)
- + log: add log.showSignature configuration variable
- + log: add "--no-show-signature" command line option
- + t4202: refactor test
-
- "git log" learns log.showSignature configuration variable, and a
- command line option "--no-show-signature" to countermand it.
-
-
-* sb/submodule-clone-retry (2016-06-13) 2 commits
-  (merged to 'next' on 2016-06-28 at 8a86d54)
- + submodule update: continue when a clone fails
- + submodule--helper: initial clone learns retry logic
-
- "git submodule update" that drives many "git clone" could
- eventually hit flaky servers/network conditions on one of the
- submodules; the command learned to retry the attempt.
-
---------------------------------------------------
 [New Topics]
 
-* js/ignore-space-at-eol (2016-07-11) 2 commits
- - diff: fix a double off-by-one with --ignore-space-at-eol
- - diff: demonstrate a bug with --patience and --ignore-space-at-eol
+* js/t0006-for-v2.9.2 (2016-07-12) 1 commit
+ - t0006: skip "far in the future" test when unsigned long is not long enough
 
- An age old bug that caused "git diff --ignore-space-at-eol"
- misbehave has been fixed.
+ A test merged to v2.9.1 forgot that the feature it was testing
+ would not work on a platform with 32-bit time_t/unsigned long and
+ reported breakage.  Skip the tests that cannot run correctly on
+ such platforms.
+
+ Waiting for an Ack; will fast-track down to 'maint' to cut v2.9.2.
+
+
+* js/am-3-merge-recursive-direct (2016-07-12) 21 commits
+ - merge-recursive: flush output buffer even when erroring out
+ - merge_trees(): ensure that the output buffer is released after calling it
+ - merge-recursive: offer an option to retain the output in 'obuf'
+ - merge-recursive: write the commit title in one go
+ - merge-recursive: flush output buffer before printing error messages
+ - am -3: use merge_recursive() directly again
+ - merge-recursive: switch to returning errors instead of dying
+ - merge-recursive: handle return values indicating errors
+ - merge-recursive: allow write_tree_from_memory() to error out
+ - merge-recursive: avoid returning a wholesale struct
+ - merge_recursive: abort properly upon errors
+ - prepare the builtins for a libified merge_recursive()
+ - merge-recursive: clarify code in was_tracked()
+ - die(_("BUG")): avoid translating bug messages
+ - die("bug"): report bugs consistently
+ - t5520: verify that `git pull --rebase` shows the advice when failing
+ - Merge branch 'jh/clean-smudge-annex' into HEAD
+ - Merge branch 'bc/cocci' into js/am-3-merge-recursive-direct
+ - Merge branch 'js/am-call-theirs-theirs-in-fallback-3way' into js/am-3-merge-recursive-direct
+ - Merge branch 'cc/apply-am' into js/am-3-merge-recursive-direct
+ - Merge branch 'va/i18n-even-more' into js/am-3-merge-recursive-direct
+ (this branch uses bc/cocci, cc/apply-am, jh/clean-smudge-annex, js/am-call-theirs-theirs-in-fallback-3way and va/i18n-even-more.)
+
+ "git am -3" calls "git merge-recursive" when it needs to fall back
+ to a three-way merge; this call has been turned into an internal
+ subroutine call instead of spawning a separate subprocess.
+
+ Will need to wait for all the topics this depends on graduate to 'master'.
+
+
+* ls/travis-enable-httpd-tests (2016-07-12) 1 commit
+ - travis-ci: enable web server tests t55xx on Linux
+
+ Allow http daemon tests in Travis CI tests.
+
+
+* nd/cache-tree-ita (2016-07-12) 4 commits
+ - cache-tree: do not generate empty trees as a result of all i-t-a subentries
+ - cache-tree.c: fix i-t-a entry skipping directory updates sometimes
+ - test-lib.sh: introduce and use $_EMPTY_BLOB
+ - test-lib.sh: introduce and use $_EMPTY_TREE
+
+ "git add -N dir/file && git write-tree" produced an incorrect tree
+ when there are other paths in the same directory that sorts after
+ "file".
+
+ Looked mostly OK.  Further review comments are welcome.
+
+
+* nd/pack-ofs-4gb-limit (2016-07-13) 7 commits
+ - fsck: use streaming interface for large blobs in pack
+ - pack-objects: do not truncate result in-pack object size on 32-bit systems
+ - index-pack: correct "offset" type in unpack_entry_data()
+ - index-pack: report correct bad object offsets even if they are large
+ - index-pack: correct "len" type in unpack_data()
+ - sha1_file.c: use type off_t* for object_info->disk_sizep
+ - pack-objects: pass length to check_pack_crc() without truncation
+
+ "git pack-objects" and "git index-pack" mostly operate with off_t
+ when talking about the offset of objects in a packfile, but there
+ were a handful of places that used "unsigned long" to hold that
+ value, leading to an unintended truncation.
 
  Will merge to 'next'.
 
 
-* js/rebase-i-tests (2016-07-07) 3 commits
- - rebase -i: we allow extra spaces after fixup!/squash!
- - rebase -i: demonstrate a bug with --autosquash
- - t3404: add a test for the --gpg-sign option
+* sb/push-options (2016-07-12) 5 commits
+ - add a test for push options
+ - push: accept push options
+ - SQUASH???
+ - receive-pack: implement advertising and receiving push options
+ - push options: {pre,post}-receive hook learns about push options
 
- A few tests that specifically target "git rebase -i" have been
- added.
+ "git push" learned to accept and pass extra options to the
+ receiving end so that hooks can read and react to them.
+
+ Discussion continues, expecting a further reroll.
+ ($gmane/299156)
+
+
+* ew/http-walker (2016-07-12) 3 commits
+ - http-walker: reduce O(n) ops with doubly-linked list
+ - http: avoid disconnecting on 404s for loose objects
+ - http-walker: remove unused parameter from fetch_object
+
+ Optimize dumb http transport on the client side.
+
+
+* nd/log-decorate-color-head-arrow (2016-07-12) 1 commit
+ - log: decorate HEAD -> branch with the same color for arrow and HEAD
+
+ An entry "git log --decorate" for the tip of the current branch is
+ shown as "HEAD -> name" (where "name" is the name of the branch);
+ paint the arrow in the same color as "HEAD", not in the color for
+ commits.
+
+ Comments?  Personally I find it more-or-less "Meh".
+
+
+* rs/rm-strbuf-optim (2016-07-12) 1 commit
+ - rm: reuse strbuf for all remove_dir_recursively() calls
+
+ The use of strbuf in "git rm" to build filename to remove was a bit
+ suboptimal, which has been fixed.
 
  Will merge to 'next'.
 
+
+* rs/worktree-use-strbuf-absolute-path (2016-07-12) 1 commit
+ - worktree: use strbuf_add_absolute_path() directly
+
+ Code simplification.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
 
-* jh/clean-smudge-annex (2016-07-08) 9 commits
- - SQUASH??? compilation fix
- - use smudgeToFile filter in recursive merge
- - use smudgeToFile filter in git am
- - better recovery from failure of smudgeToFile filter
- - warn on unusable smudgeToFile/cleanFromFile config
- - use smudgeToFile in git checkout etc
- - use cleanFromFile in git add
- - add smudgeToFile and cleanFromFile filter configs
- - clarify %f documentation
+* cc/apply-am (2016-06-28) 41 commits
+ - apply: use error_errno() where possible
+ - builtin/am: use apply api in run_apply()
+ - apply: change error_routine when be_silent is set
+ - usage: add get_error_routine() and get_warn_routine()
+ - usage: add set_warn_routine()
+ - apply: don't print on stdout when be_silent is set
+ - apply: make 'be_silent' incompatible with 'apply_verbosely'
+ - apply: add 'be_silent' variable to 'struct apply_state'
+ - write_or_die: use warning() instead of fprintf(stderr, ...)
+ - environment: add set_index_file()
+ - apply: make some parsing functions static again
+ - apply: move libified code from builtin/apply.c to apply.{c,h}
+ - apply: rename and move opt constants to apply.h
+ - builtin/apply: rename option parsing functions
+ - builtin/apply: make create_one_file() return -1 on error
+ - builtin/apply: make try_create_file() return -1 on error
+ - builtin/apply: make write_out_results() return -1 on error
+ - builtin/apply: make write_out_one_result() return -1 on error
+ - builtin/apply: make create_file() return -1 on error
+ - builtin/apply: make add_index_file() return -1 on error
+ - builtin/apply: make add_conflicted_stages_file() return -1 on error
+ - builtin/apply: make remove_file() return -1 on error
+ - builtin/apply: make build_fake_ancestor() return -1 on error
+ - builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
+ - builtin/apply: make gitdiff_*() return -1 on error
+ - builtin/apply: make gitdiff_*() return 1 at end of header
+ - builtin/apply: make parse_traditional_patch() return -1 on error
+ - builtin/apply: make apply_all_patches() return 128 or 1 on error
+ - builtin/apply: move check_apply_state() to apply.c
+ - builtin/apply: make check_apply_state() return -1 instead of die()ing
+ - apply: make init_apply_state() return -1 instead of exit()ing
+ - builtin/apply: move init_apply_state() to apply.c
+ - builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_single_patch() return -1 on error
+ - builtin/apply: make parse_chunk() return a negative integer on error
+ - builtin/apply: make find_header() return -128 instead of die()ing
+ - builtin/apply: read_patch_file() return -1 instead of die()ing
+ - builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
+ - apply: move 'struct apply_state' to apply.h
+ - apply: make some names more specific
+ (this branch is used by jh/clean-smudge-annex and js/am-3-merge-recursive-direct.)
 
- The interface to "clean/smudge" filters require Git to feed the
- whole contents via pipe, which is suboptimal for some applications.
- "cleanFromFile/smudgeToFile" commands are the moral equilvalents
- for these filters but they interact with the files on the
- filesystem directly.
+ "git am" has been taught to make an internal call to "git apply"'s
+ innards without spawning the latter as a separate process.
+
+ Needs review.
 
 
 * tb/convert-peek-in-index (2016-07-07) 3 commits
@@ -262,7 +312,49 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jc/renormalize-merge-kill-safer-crlf (2016-07-08) 2 commits
+* jh/clean-smudge-annex (2016-07-12) 9 commits
+ - use smudgeToFile filter in recursive merge
+ - use smudgeToFile filter in git am
+ - better recovery from failure of smudgeToFile filter
+ - warn on unusable smudgeToFile/cleanFromFile config
+ - use smudgeToFile in git checkout etc
+ - use cleanFromFile in git add
+ - add smudgeToFile and cleanFromFile filter configs
+ - clarify %f documentation
+ - Merge branch 'cc/apply-am' into jh/clean-smudge-annex
+ (this branch is used by js/am-3-merge-recursive-direct; uses cc/apply-am.)
+
+ The interface to "clean/smudge" filters require Git to feed the
+ whole contents via pipe, which is suboptimal for some applications.
+ "cleanFromFile/smudgeToFile" commands are the moral equilvalents
+ for these filters but they interact with the files on the
+ filesystem directly.
+
+ Will need to wait for all the topics this depends on graduate to 'master'.
+
+
+* js/ignore-space-at-eol (2016-07-11) 2 commits
+ - diff: fix a double off-by-one with --ignore-space-at-eol
+ - diff: demonstrate a bug with --patience and --ignore-space-at-eol
+
+ An age old bug that caused "git diff --ignore-space-at-eol"
+ misbehave has been fixed.
+
+ Will merge to 'next'.
+
+
+* js/rebase-i-tests (2016-07-07) 3 commits
+ - rebase -i: we allow extra spaces after fixup!/squash!
+ - rebase -i: demonstrate a bug with --autosquash
+ - t3404: add a test for the --gpg-sign option
+
+ A few tests that specifically target "git rebase -i" have been
+ added.
+
+ Will merge to 'next'.
+
+
+* jc/renormalize-merge-kill-safer-crlf (2016-07-12) 2 commits
  - merge: avoid "safer crlf" during recording of merge results
  - convert: unify the "auto" handling of CRLF
  (this branch is tangled with tb/convert-peek-in-index.)
@@ -271,7 +363,7 @@ of the repositories listed at
  merge-recursive, due to "safer crlf" conversion kicking in when it
  shouldn't.
 
- Waiting for further discussion; hopefully can move this forward.
+ Will merge to 'next', but extra set of eyes are appreciated.
 
 
 * rs/help-c-source-with-gitattributes (2016-07-07) 1 commit
@@ -350,6 +442,7 @@ of the repositories listed at
 * js/am-call-theirs-theirs-in-fallback-3way (2016-07-08) 1 commit
   (merged to 'next' on 2016-07-11 at abae4bc)
  + am: counteract gender bias
+ (this branch is used by js/am-3-merge-recursive-direct.)
 
  One part of "git am" had an oddball helper function that called
  stuff from outside "his" as opposed to calling what we have "ours",
@@ -377,7 +470,8 @@ of the repositories listed at
  interpret the paths relative to that directory, which has been
  fixed.
 
- Waiting for an ack.
+ Favourably reviewed with some questions and a request for new tests.
+ ($gmane/299319)
 
 
 * nd/test-helpers (2016-07-11) 3 commits
@@ -439,55 +533,6 @@ of the repositories listed at
  did by mistake, which has been corrected.
 
  Will merge to 'master'.
-
-
-* cc/apply-am (2016-06-28) 41 commits
- - apply: use error_errno() where possible
- - builtin/am: use apply api in run_apply()
- - apply: change error_routine when be_silent is set
- - usage: add get_error_routine() and get_warn_routine()
- - usage: add set_warn_routine()
- - apply: don't print on stdout when be_silent is set
- - apply: make 'be_silent' incompatible with 'apply_verbosely'
- - apply: add 'be_silent' variable to 'struct apply_state'
- - write_or_die: use warning() instead of fprintf(stderr, ...)
- - environment: add set_index_file()
- - apply: make some parsing functions static again
- - apply: move libified code from builtin/apply.c to apply.{c,h}
- - apply: rename and move opt constants to apply.h
- - builtin/apply: rename option parsing functions
- - builtin/apply: make create_one_file() return -1 on error
- - builtin/apply: make try_create_file() return -1 on error
- - builtin/apply: make write_out_results() return -1 on error
- - builtin/apply: make write_out_one_result() return -1 on error
- - builtin/apply: make create_file() return -1 on error
- - builtin/apply: make add_index_file() return -1 on error
- - builtin/apply: make add_conflicted_stages_file() return -1 on error
- - builtin/apply: make remove_file() return -1 on error
- - builtin/apply: make build_fake_ancestor() return -1 on error
- - builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
- - builtin/apply: make gitdiff_*() return -1 on error
- - builtin/apply: make gitdiff_*() return 1 at end of header
- - builtin/apply: make parse_traditional_patch() return -1 on error
- - builtin/apply: make apply_all_patches() return 128 or 1 on error
- - builtin/apply: move check_apply_state() to apply.c
- - builtin/apply: make check_apply_state() return -1 instead of die()ing
- - apply: make init_apply_state() return -1 instead of exit()ing
- - builtin/apply: move init_apply_state() to apply.c
- - builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
- - builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
- - builtin/apply: make parse_single_patch() return -1 on error
- - builtin/apply: make parse_chunk() return a negative integer on error
- - builtin/apply: make find_header() return -128 instead of die()ing
- - builtin/apply: read_patch_file() return -1 instead of die()ing
- - builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
- - apply: move 'struct apply_state' to apply.h
- - apply: make some names more specific
-
- "git am" has been taught to make an internal call to "git apply"'s
- innards without spawning the latter as a separate process.
-
- Needs review.
 
 
 * dp/autoconf-curl-ssl (2016-06-28) 1 commit
@@ -810,11 +855,12 @@ of the repositories listed at
  + coccinelle: convert hashcpy() with null_sha1 to hashclr()
  + contrib/coccinelle: add basic Coccinelle transforms
  + hex: add oid_to_hex_r()
+ (this branch is used by js/am-3-merge-recursive-direct.)
 
  Conversion from unsigned char sha1[20] to struct object_id
  continues.
 
- Will cook a bit in 'next' and then merge to 'master'.
+ Will merge to 'master'.
 
 
 * jk/big-and-future-archive-tar (2016-07-01) 5 commits
@@ -996,6 +1042,7 @@ of the repositories listed at
  + i18n: advice: mark string about detached head for translation
  + i18n: builtin/remote.c: fix mark for translation
  + Merge branch 'jc/t2300-setup' into HEAD
+ (this branch is used by js/am-3-merge-recursive-direct.)
 
  More markings of messages for i18n, with updates to various tests
  to pass GETTEXT_POISON tests.
@@ -1065,7 +1112,7 @@ of the repositories listed at
  back-burner the threading enhancement to another day.
 
 
-* pb/bisect (2016-07-11) 9 commits
+* pb/bisect (2016-07-12) 9 commits
  - bisect--helper: `bisect_write` shell function in C
  - bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
  - bisect--helper: `bisect_reset` shell function in C
