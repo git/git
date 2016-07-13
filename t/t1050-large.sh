@@ -177,10 +177,9 @@ test_expect_success 'zip achiving, deflate' '
 	git archive --format=zip HEAD >/dev/null
 '
 
-test_expect_success 'fsck' '
-	test_must_fail git fsck 2>err &&
-	n=$(grep "error: attempting to allocate .* over limit" err | wc -l) &&
-	test "$n" -gt 1
+test_expect_success 'fsck large blobs' '
+	git fsck 2>err &&
+	test_must_be_empty err
 '
 
 test_done

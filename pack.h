@@ -74,6 +74,7 @@ struct pack_idx_entry {
 
 
 struct progress;
+/* Note, the data argument could be NULL if object type is blob */
 typedef int (*verify_fn)(const unsigned char*, enum object_type, unsigned long, void*, int*);
 
 extern const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
