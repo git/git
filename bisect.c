@@ -438,12 +438,12 @@ static void read_bisect_paths(struct argv_array *array)
 	FILE *fp = fopen(filename, "r");
 
 	if (!fp)
-		die_errno("Could not open file '%s'", filename);
+		die_errno(_("Could not open file '%s'"), filename);
 
 	while (strbuf_getline_lf(&str, fp) != EOF) {
 		strbuf_trim(&str);
 		if (sq_dequote_to_argv_array(str.buf, array))
-			die("Badly quoted content in file '%s': %s",
+			die(_("Badly quoted content in file '%s': %s"),
 			    filename, str.buf);
 	}
 
@@ -649,7 +649,7 @@ static void exit_if_skipped_commits(struct commit_list *tried,
 	print_commit_list(tried, "%s\n", "%s\n");
 	if (bad)
 		printf("%s\n", oid_to_hex(bad));
-	printf("We cannot bisect more!\n");
+	printf(_("We cannot bisect more!\n"));
 	exit(2);
 }
 
@@ -702,7 +702,7 @@ static struct commit *get_commit_reference(const unsigned char *sha1)
 {
 	struct commit *r = lookup_commit_reference(sha1);
 	if (!r)
-		die("Not a valid commit name %s", sha1_to_hex(sha1));
+		die(_("Not a valid commit name %s"), sha1_to_hex(sha1));
 	return r;
 }
 
@@ -726,27 +726,27 @@ static void handle_bad_merge_base(void)
 		char *bad_hex = oid_to_hex(current_bad_oid);
 		char *good_hex = join_sha1_array_hex(&good_revs, ' ');
 		if (!strcmp(term_bad, "bad") && !strcmp(term_good, "good")) {
-			fprintf(stderr, "The merge base %s is bad.\n"
+			fprintf(stderr, _("The merge base %s is bad.\n"
 				"This means the bug has been fixed "
-				"between %s and [%s].\n",
+				"between %s and [%s].\n"),
 				bad_hex, bad_hex, good_hex);
 		} else if (!strcmp(term_bad, "new") && !strcmp(term_good, "old")) {
-			fprintf(stderr, "The merge base %s is new.\n"
+			fprintf(stderr, _("The merge base %s is new.\n"
 				"The property has changed "
-				"between %s and [%s].\n",
+				"between %s and [%s].\n"),
 				bad_hex, bad_hex, good_hex);
 		} else {
-			fprintf(stderr, "The merge base %s is %s.\n"
+			fprintf(stderr, _("The merge base %s is %s.\n"
 				"This means the first '%s' commit is "
-				"between %s and [%s].\n",
+				"between %s and [%s].\n"),
 				bad_hex, term_bad, term_good, bad_hex, good_hex);
 		}
 		exit(3);
 	}
 
-	fprintf(stderr, "Some %s revs are not ancestor of the %s rev.\n"
+	fprintf(stderr, _("Some %s revs are not ancestor of the %s rev.\n"
 		"git bisect cannot work properly in this case.\n"
-		"Maybe you mistook %s and %s revs?\n",
+		"Maybe you mistook %s and %s revs?\n"),
 		term_good, term_bad, term_good, term_bad);
 	exit(1);
 }
@@ -757,11 +757,11 @@ static void handle_skipped_merge_base(const unsigned char *mb)
 	char *bad_hex = sha1_to_hex(current_bad_oid->hash);
 	char *good_hex = join_sha1_array_hex(&good_revs, ' ');
 
-	warning("the merge base between %s and [%s] "
+	warning(_("the merge base between %s and [%s] "
 		"must be skipped.\n"
 		"So we cannot be sure the first %s commit is "
 		"between %s and %s.\n"
-		"We continue anyway.",
+		"We continue anyway."),
 		bad_hex, good_hex, term_bad, mb_hex, bad_hex);
 	free(good_hex);
 }
@@ -792,7 +792,7 @@ static void check_merge_bases(int no_checkout)
 		} else if (0 <= sha1_array_lookup(&skipped_revs, mb)) {
 			handle_skipped_merge_base(mb);
 		} else {
-			printf("Bisecting: a merge base must be tested\n");
+			printf(_("Bisecting: a merge base must be tested\n"));
 			exit(bisect_checkout(mb, no_checkout));
 		}
 	}
@@ -843,7 +843,7 @@ static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
 	int fd;
 
 	if (!current_bad_oid)
-		die("a %s revision is needed", term_bad);
+		die(_("a %s revision is needed"), term_bad);
 
 	/* Check if file BISECT_ANCESTORS_OK exists. */
 	if (!stat(filename, &st) && S_ISREG(st.st_mode))
@@ -860,7 +860,7 @@ static void check_good_are_ancestors_of_bad(const char *prefix, int no_checkout)
 	/* Create file BISECT_ANCESTORS_OK. */
 	fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 	if (fd < 0)
-		warning_errno("could not create file '%s'",
+		warning_errno(_("could not create file '%s'"),
 			      filename);
 	else
 		close(fd);
@@ -911,7 +911,7 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
 			*read_good = "good";
 			return;
 		} else {
-			die_errno("could not read file '%s'", filename);
+			die_errno(_("could not read file '%s'"), filename);
 		}
 	} else {
 		strbuf_getline_lf(&str, fp);
@@ -937,10 +937,11 @@ int bisect_next_all(const char *prefix, int no_checkout)
 	struct commit_list *tried;
 	int reaches = 0, all = 0, nr, steps;
 	const unsigned char *bisect_rev;
+	char steps_msg[32];
 
 	read_bisect_terms(&term_bad, &term_good);
 	if (read_bisect_refs())
-		die("reading bisect refs failed");
+		die(_("reading bisect refs failed"));
 
 	check_good_are_ancestors_of_bad(prefix, no_checkout);
 
@@ -960,7 +961,7 @@ int bisect_next_all(const char *prefix, int no_checkout)
 		 */
 		exit_if_skipped_commits(tried, NULL);
 
-		printf("%s was both %s and %s\n",
+		printf(_("%s was both %s and %s\n"),
 		       oid_to_hex(current_bad_oid),
 		       term_good,
 		       term_bad);
@@ -968,8 +969,8 @@ int bisect_next_all(const char *prefix, int no_checkout)
 	}
 
 	if (!all) {
-		fprintf(stderr, "No testable commit found.\n"
-			"Maybe you started with bad path parameters?\n");
+		fprintf(stderr, _("No testable commit found.\n"
+			"Maybe you started with bad path parameters?\n"));
 		exit(4);
 	}
 
@@ -986,9 +987,14 @@ int bisect_next_all(const char *prefix, int no_checkout)
 
 	nr = all - reaches - 1;
 	steps = estimate_bisect_steps(all);
-	printf("Bisecting: %d revision%s left to test after this "
-	       "(roughly %d step%s)\n", nr, (nr == 1 ? "" : "s"),
-	       steps, (steps == 1 ? "" : "s"));
+	xsnprintf(steps_msg, sizeof(steps_msg),
+		  Q_("(roughly %d step)", "(roughly %d steps)", steps),
+		  steps);
+	/* TRANSLATORS: the last %s will be replaced with
+	   "(roughly %d steps)" translation */
+	printf(Q_("Bisecting: %d revision left to test after this %s\n",
+		  "Bisecting: %d revisions left to test after this %s\n",
+		  nr), nr, steps_msg);
 
 	return bisect_checkout(bisect_rev, no_checkout);
 }

@@ -34,7 +34,7 @@ expect_from_stdin () {
 test_stderr () {
 	expected="$1"
 	expect_in stderr "$1" &&
-	test_cmp "$HOME/expected-stderr" "$HOME/stderr"
+	test_i18ncmp "$HOME/expected-stderr" "$HOME/stderr"
 }
 
 broken_c_unquote () {
@@ -47,7 +47,7 @@ broken_c_unquote_verbose () {
 
 stderr_contains () {
 	regexp="$1"
-	if grep "$regexp" "$HOME/stderr"
+	if test_i18ngrep "$regexp" "$HOME/stderr"
 	then
 		return 0
 	else
