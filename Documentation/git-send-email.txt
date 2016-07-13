@@ -66,7 +66,7 @@ This option may be specified multiple times.
 	Invoke a text editor (see GIT_EDITOR in linkgit:git-var[1])
 	to edit an introductory message for the patch series.
 +
-When '--compose' is used, git send-email will use the From, Subject, and
+When `--compose` is used, git send-email will use the From, Subject, and
 In-Reply-To headers specified in the message. If the body of the message
 (what you type after the headers and a blank line) only contains blank
 (or Git: prefixed) lines, the summary won't be sent, but From, Subject,
@@ -182,19 +182,19 @@ $ git send-email --smtp-auth="PLAIN LOGIN GSSAPI" ...
 +
 If at least one of the specified mechanisms matches the ones advertised by the
 SMTP server and if it is supported by the utilized SASL library, the mechanism
-is used for authentication. If neither 'sendemail.smtpAuth' nor '--smtp-auth'
+is used for authentication. If neither 'sendemail.smtpAuth' nor `--smtp-auth`
 is specified, all mechanisms supported by the SASL library can be used.
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
 	argument is specified, then the empty string is used as
 	the password. Default is the value of `sendemail.smtpPass`,
-	however '--smtp-pass' always overrides this value.
+	however `--smtp-pass` always overrides this value.
 +
 Furthermore, passwords need not be specified in configuration files
 or on the command line. If a username has been specified (with
-'--smtp-user' or a `sendemail.smtpUser`), but no password has been
-specified (with '--smtp-pass' or `sendemail.smtpPass`), then
+`--smtp-user` or a `sendemail.smtpUser`), but no password has been
+specified (with `--smtp-pass` or `sendemail.smtpPass`), then
 a password is obtained using 'git-credential'.
 
 --smtp-server=<host>::
@@ -240,7 +240,7 @@ must be used for each option.
 
 --smtp-user=<user>::
 	Username for SMTP-AUTH. Default is the value of `sendemail.smtpUser`;
-	if a username is not specified (with '--smtp-user' or `sendemail.smtpUser`),
+	if a username is not specified (with `--smtp-user` or `sendemail.smtpUser`),
 	then authentication is not attempted.
 
 --smtp-debug=0|1::
@@ -364,8 +364,8 @@ have been specified, in which case default to 'compose'.
 
 --[no-]format-patch::
 	When an argument may be understood either as a reference or as a file name,
-	choose to understand it as a format-patch argument ('--format-patch')
-	or as a file name ('--no-format-patch'). By default, when such a conflict
+	choose to understand it as a format-patch argument (`--format-patch`)
+	or as a file name (`--no-format-patch`). By default, when such a conflict
 	occurs, git send-email will fail.
 
 --quiet::
@@ -382,7 +382,7 @@ have been specified, in which case default to 'compose'.
 --
 +
 Default is the value of `sendemail.validate`; if this is not set,
-default to '--validate'.
+default to `--validate`.
 
 --force::
 	Send emails even if safety checks would prevent it.
@@ -428,13 +428,13 @@ sendmail;;
 
 sendemail.multiEdit::
 	If true (default), a single editor instance will be spawned to edit
-	files you have to edit (patches when '--annotate' is used, and the
-	summary when '--compose' is used). If false, files will be edited one
+	files you have to edit (patches when `--annotate` is used, and the
+	summary when `--compose` is used). If false, files will be edited one
 	after the other, spawning a new editor each time.
 
 sendemail.confirm::
 	Sets the default for whether to confirm before sending. Must be
-	one of 'always', 'never', 'cc', 'compose', or 'auto'. See '--confirm'
+	one of 'always', 'never', 'cc', 'compose', or 'auto'. See `--confirm`
 	in the previous section for the meaning of these values.
 
 EXAMPLE

@@ -275,7 +275,7 @@ origin +master` to force a push to the `master` branch). See the
 	all submodules that changed in the revisions to be pushed will be
 	pushed. If on-demand was not able to push all necessary revisions
 	it will also be aborted and exit with non-zero status. A value of
-	'no' or using '--no-recurse-submodules' can be used to override the
+	'no' or using `--no-recurse-submodules` can be used to override the
 	push.recurseSubmodules configuration variable when no submodule
 	recursion is required.
 

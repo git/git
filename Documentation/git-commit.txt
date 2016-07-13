@@ -75,7 +75,7 @@ OPTIONS
 
 -c <commit>::
 --reedit-message=<commit>::
-	Like '-C', but with '-c' the editor is invoked, so that
+	Like '-C', but with `-c` the editor is invoked, so that
 	the user can further edit the commit message.
 
 --fixup=<commit>::
@@ -260,7 +260,7 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 	staged for other paths. This is the default mode of operation of
 	'git commit' if any paths are given on the command line,
 	in which case this option can be omitted.
-	If this option is specified together with '--amend', then
+	If this option is specified together with `--amend`, then
 	no paths need to be specified, which can be used to amend
 	the last commit without committing changes that have
 	already been staged.

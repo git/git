@@ -24,7 +24,7 @@ from the HEAD commit).
 Note: 'git revert' is used to record some new commits to reverse the
 effect of some earlier commits (often only a faulty one).  If you want to
 throw away all uncommitted changes in your working directory, you
-should see linkgit:git-reset[1], particularly the '--hard' option.  If
+should see linkgit:git-reset[1], particularly the `--hard` option.  If
 you want to extract specific files as they were in another commit, you
 should see linkgit:git-checkout[1], specifically the `git checkout
 <commit> -- <filename>` syntax.  Take care with these alternatives as
@@ -37,7 +37,7 @@ OPTIONS
 	For a more complete list of ways to spell commit names, see
 	linkgit:gitrevisions[7].
 	Sets of commits can also be given but no traversal is done by
-	default, see linkgit:git-rev-list[1] and its '--no-walk'
+	default, see linkgit:git-rev-list[1] and its `--no-walk`
 	option.
 
 -e::

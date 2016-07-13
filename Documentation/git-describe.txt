@@ -154,7 +154,7 @@ is found, its name will be output and searching will stop.
 If an exact match was not found, 'git describe' will walk back
 through the commit history to locate an ancestor commit which
 has been tagged.  The ancestor's tag will be output along with an
-abbreviation of the input commit-ish's SHA-1. If '--first-parent' was
+abbreviation of the input commit-ish's SHA-1. If `--first-parent` was
 specified then the walk will only consider the first parent of each
 commit.
 

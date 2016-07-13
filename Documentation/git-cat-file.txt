@@ -15,8 +15,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 In its first form, the command provides the content or the type of an object in
-the repository. The type is required unless '-t' or '-p' is used to find the
-object type, or '-s' is used to find the object size, or '--textconv' is used
+the repository. The type is required unless `-t` or `-p` is used to find the
+object type, or `-s` is used to find the object size, or `--textconv` is used
 (which implies type "blob").
 
 In the second form, a list of objects (separated by linefeeds) is provided on
@@ -144,13 +144,13 @@ respectively print:
 
 OUTPUT
 ------
-If '-t' is specified, one of the <type>.
+If `-t` is specified, one of the <type>.
 
-If '-s' is specified, the size of the <object> in bytes.
+If `-s` is specified, the size of the <object> in bytes.
 
-If '-e' is specified, no output.
+If `-e` is specified, no output.
 
-If '-p' is specified, the contents of <object> are pretty-printed.
+If `-p` is specified, the contents of <object> are pretty-printed.
 
 If <type> is specified, the raw (though uncompressed) contents of the <object>
 will be returned.
