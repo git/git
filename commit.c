@@ -1092,9 +1092,14 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 {
 	struct strbuf sig = STRBUF_INIT;
 	int inspos, copypos;
+	const char *eoh;
 
 	/* find the end of the header */
-	inspos = strstr(buf->buf, "\n\n") - buf->buf + 1;
+	eoh = strstr(buf->buf, "\n\n");
+	if (!eoh)
+		inspos = buf->len;
+	else
+		inspos = eoh - buf->buf + 1;
 
 	if (!keyid || !*keyid)
 		keyid = get_signing_key();
