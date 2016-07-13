@@ -31,7 +31,7 @@ error: The following untracked working tree files would be overwritten by merge:
 	four
 	three
 	two
-Please move or remove them before you can merge.
+Please move or remove them before you merge.
 Aborting
 EOF
 
@@ -53,10 +53,10 @@ error: Your local changes to the following files would be overwritten by merge:
 	four
 	three
 	two
-Please commit your changes or stash them before you can merge.
+Please commit your changes or stash them before you merge.
 error: The following untracked working tree files would be overwritten by merge:
 	five
-Please move or remove them before you can merge.
+Please move or remove them before you merge.
 Aborting
 EOF
 
@@ -72,7 +72,7 @@ cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
 	rep/one
 	rep/two
-Please commit your changes or stash them before you can switch branches.
+Please commit your changes or stash them before you switch branches.
 Aborting
 EOF
 
@@ -94,7 +94,7 @@ cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
 	rep/one
 	rep/two
-Please commit your changes or stash them before you can switch branches.
+Please commit your changes or stash them before you switch branches.
 Aborting
 EOF
 
