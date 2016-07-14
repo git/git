@@ -25,8 +25,13 @@ static int write_tar_filter_archive(const struct archiver *ar,
  *
  * Likewise for the mtime (which happens to use a buffer of the same size).
  */
+#if ULONG_MAX == 0xFFFFFFFF
+#define USTAR_MAX_SIZE ULONG_MAX
+#define USTAR_MAX_MTIME ULONG_MAX
+#else
 #define USTAR_MAX_SIZE 077777777777UL
 #define USTAR_MAX_MTIME 077777777777UL
+#endif
 
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
