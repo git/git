@@ -41,12 +41,12 @@ test_expect_success setup '
 	test_tick &&
 	GIT_AUTHOR_NAME=Fourth git commit -m Fourth &&
 
-	{
-		echo ABC
-		echo DEF
-		echo XXXX
-		echo GHIJK
-	} >cow &&
+	cat >cow <<-\EOF &&
+	ABC
+	DEF
+	XXXX
+	GHIJK
+	EOF
 	git add cow &&
 	test_tick &&
 	GIT_AUTHOR_NAME=Fifth git commit -m Fifth
@@ -115,11 +115,11 @@ test_expect_success 'append with -C -C -C' '
 test_expect_success 'blame wholesale copy' '
 
 	git blame -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
-	{
-		echo mouse-Initial
-		echo mouse-Second
-		echo mouse-Third
-	} >expected &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	mouse-Third
+	EOF
 	test_cmp expected current
 
 '
@@ -127,12 +127,12 @@ test_expect_success 'blame wholesale copy' '
 test_expect_success 'blame wholesale copy and more' '
 
 	git blame -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
-	{
-		echo mouse-Initial
-		echo mouse-Second
-		echo cow-Fifth
-		echo mouse-Third
-	} >expected &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	cow-Fifth
+	mouse-Third
+	EOF
 	test_cmp expected current
 
 '
