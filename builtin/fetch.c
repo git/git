@@ -729,7 +729,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 		url = xstrdup("foreign");
 
 	rm = ref_map;
-	if (check_everything_connected(iterate_ref_map, 0, &rm)) {
+	if (check_connected(iterate_ref_map, &rm, NULL)) {
 		rc = error(_("%s did not send all necessary objects\n"), url);
 		goto abort;
 	}
@@ -866,6 +866,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 static int quickfetch(struct ref *ref_map)
 {
 	struct ref *rm = ref_map;
+	struct check_connected_options opt = CHECK_CONNECTED_INIT;
 
 	/*
 	 * If we are deepening a shallow clone we already have these
@@ -876,7 +877,8 @@ static int quickfetch(struct ref *ref_map)
 	 */
 	if (depth)
 		return -1;
-	return check_everything_connected(iterate_ref_map, 1, &rm);
+	opt.quiet = 1;
+	return check_connected(iterate_ref_map, &rm, &opt);
 }
 
 static int fetch_refs(struct transport *transport, struct ref *ref_map)

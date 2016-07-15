@@ -737,7 +737,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 {
 	static struct lock_file shallow_lock;
 	struct sha1_array extra = SHA1_ARRAY_INIT;
-	const char *alt_file;
+	struct check_connected_options opt = CHECK_CONNECTED_INIT;
 	uint32_t mask = 1 << (cmd->index % 32);
 	int i;
 
@@ -749,9 +749,8 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 		    !delayed_reachability_test(si, i))
 			sha1_array_append(&extra, si->shallow->sha1[i]);
 
-	setup_alternate_shallow(&shallow_lock, &alt_file, &extra);
-	if (check_shallow_connected(command_singleton_iterator,
-				    0, cmd, alt_file)) {
+	setup_alternate_shallow(&shallow_lock, &opt.shallow_file, &extra);
+	if (check_connected(command_singleton_iterator, cmd, &opt)) {
 		rollback_lock_file(&shallow_lock);
 		sha1_array_clear(&extra);
 		return -1;
@@ -1160,8 +1159,8 @@ static void set_connectivity_errors(struct command *commands,
 		if (shallow_update && si->shallow_ref[cmd->index])
 			/* to be checked in update_shallow_ref() */
 			continue;
-		if (!check_everything_connected(command_singleton_iterator,
-						0, &singleton))
+		if (!check_connected(command_singleton_iterator, &singleton,
+				     NULL))
 			continue;
 		cmd->error_string = "missing necessary objects";
 	}
@@ -1330,7 +1329,7 @@ static void execute_commands(struct command *commands,
 
 	data.cmds = commands;
 	data.si = si;
-	if (check_everything_connected(iterate_receive_command_list, 0, &data))
+	if (check_connected(iterate_receive_command_list, &data, NULL))
 		set_connectivity_errors(commands, si);
 
 	reject_updates_to_hidden(commands);

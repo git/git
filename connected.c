@@ -4,10 +4,6 @@
 #include "connected.h"
 #include "transport.h"
 
-int check_everything_connected(sha1_iterate_fn fn, int quiet, void *cb_data)
-{
-	return check_everything_connected_with_transport(fn, quiet, cb_data, NULL);
-}
 /*
  * If we feed all the commits we want to verify to this command
  *
@@ -19,18 +15,21 @@ int check_everything_connected(sha1_iterate_fn fn, int quiet, void *cb_data)
  *
  * Returns 0 if everything is connected, non-zero otherwise.
  */
-static int check_everything_connected_real(sha1_iterate_fn fn,
-					   int quiet,
-					   void *cb_data,
-					   struct transport *transport,
-					   const char *shallow_file)
+int check_connected(sha1_iterate_fn fn, void *cb_data,
+		    struct check_connected_options *opt)
 {
 	struct child_process rev_list = CHILD_PROCESS_INIT;
+	struct check_connected_options defaults = CHECK_CONNECTED_INIT;
 	char commit[41];
 	unsigned char sha1[20];
 	int err = 0;
 	struct packed_git *new_pack = NULL;
+	struct transport *transport;
 	size_t base_len;
+
+	if (!opt)
+		opt = &defaults;
+	transport = opt->transport;
 
 	if (fn(cb_data, sha1))
 		return err;
@@ -46,9 +45,9 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 		strbuf_release(&idx_file);
 	}
 
-	if (shallow_file) {
+	if (opt->shallow_file) {
 		argv_array_push(&rev_list.args, "--shallow-file");
-		argv_array_push(&rev_list.args, shallow_file);
+		argv_array_push(&rev_list.args, opt->shallow_file);
 	}
 	argv_array_push(&rev_list.args,"rev-list");
 	argv_array_push(&rev_list.args, "--objects");
@@ -60,7 +59,7 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 	rev_list.git_cmd = 1;
 	rev_list.in = -1;
 	rev_list.no_stdout = 1;
-	rev_list.no_stderr = quiet;
+	rev_list.no_stderr = opt->quiet;
 	if (start_command(&rev_list))
 		return error(_("Could not run 'git rev-list'"));
 
@@ -93,20 +92,4 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 
 	sigchain_pop(SIGPIPE);
 	return finish_command(&rev_list) || err;
-}
-
-int check_everything_connected_with_transport(sha1_iterate_fn fn,
-					      int quiet,
-					      void *cb_data,
-					      struct transport *transport)
-{
-	return check_everything_connected_real(fn, quiet, cb_data,
-					       transport, NULL);
-}
-
-int check_shallow_connected(sha1_iterate_fn fn, int quiet, void *cb_data,
-			    const char *shallow_file)
-{
-	return check_everything_connected_real(fn, quiet, cb_data,
-					       NULL, shallow_file);
 }
