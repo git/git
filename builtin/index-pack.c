@@ -77,6 +77,7 @@ static int strict;
 static int do_fsck_object;
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 static int verbose;
+static int show_resolving_progress;
 static int show_stat;
 static int check_self_contained_and_connected;
 
@@ -1190,7 +1191,7 @@ static void resolve_deltas(void)
 	qsort(ref_deltas, nr_ref_deltas, sizeof(struct ref_delta_entry),
 	      compare_ref_delta_entry);
 
-	if (verbose)
+	if (verbose || show_resolving_progress)
 		progress = start_progress(_("Resolving deltas"),
 					  nr_ref_deltas + nr_ofs_deltas);
 
@@ -1694,6 +1695,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				input_len = sizeof(*hdr);
 			} else if (!strcmp(arg, "-v")) {
 				verbose = 1;
+			} else if (!strcmp(arg, "--show-resolving-progress")) {
+				show_resolving_progress = 1;
 			} else if (!strcmp(arg, "-o")) {
 				if (index_name || (i+1) >= argc)
 					usage(index_pack_usage);
