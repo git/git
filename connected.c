@@ -31,8 +31,11 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 		opt = &defaults;
 	transport = opt->transport;
 
-	if (fn(cb_data, sha1))
+	if (fn(cb_data, sha1)) {
+		if (opt->err_fd)
+			close(opt->err_fd);
 		return err;
+	}
 
 	if (transport && transport->smart_options &&
 	    transport->smart_options->self_contained_and_connected &&
@@ -59,7 +62,11 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 	rev_list.git_cmd = 1;
 	rev_list.in = -1;
 	rev_list.no_stdout = 1;
-	rev_list.no_stderr = opt->quiet;
+	if (opt->err_fd)
+		rev_list.err = opt->err_fd;
+	else
+		rev_list.no_stderr = opt->quiet;
+
 	if (start_command(&rev_list))
 		return error(_("Could not run 'git rev-list'"));
 

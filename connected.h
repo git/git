@@ -23,6 +23,13 @@ struct check_connected_options {
 
 	/* Transport whose objects we are checking, if available. */
 	struct transport *transport;
+
+	/*
+	 * If non-zero, send error messages to this descriptor rather
+	 * than stderr. The descriptor is closed before check_connected
+	 * returns.
+	 */
+	int err_fd;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }
