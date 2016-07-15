@@ -1342,6 +1342,7 @@ static void execute_commands(struct command *commands,
 	data.cmds = commands;
 	data.si = si;
 	opt.err_fd = err_fd;
+	opt.progress = err_fd && !quiet;
 	if (check_connected(iterate_receive_command_list, &data, &opt))
 		set_connectivity_errors(commands, si);
 
