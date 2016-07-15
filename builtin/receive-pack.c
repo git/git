@@ -1547,6 +1547,8 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 				 (uintmax_t)getpid(),
 				 hostname);
 
+		if (!quiet && err_fd)
+			argv_array_push(&child.args, "--show-resolving-progress");
 		if (fsck_objects)
 			argv_array_pushf(&child.args, "--strict%s",
 				fsck_msg_types.buf);
