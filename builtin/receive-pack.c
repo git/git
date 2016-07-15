@@ -76,6 +76,13 @@ static long nonce_stamp_slop;
 static unsigned long nonce_stamp_slop_limit;
 static struct ref_transaction *transaction;
 
+static enum {
+	KEEPALIVE_NEVER = 0,
+	KEEPALIVE_AFTER_NUL,
+	KEEPALIVE_ALWAYS
+} use_keepalive;
+static int keepalive_in_sec = 5;
+
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
 	if (value) {
@@ -190,6 +197,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "receive.advertiseatomic") == 0) {
 		advertise_atomic_push = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.keepalive") == 0) {
+		keepalive_in_sec = git_config_int(var, value);
 		return 0;
 	}
 
@@ -319,10 +331,60 @@ static void rp_error(const char *err, ...)
 static int copy_to_sideband(int in, int out, void *arg)
 {
 	char data[128];
+	int keepalive_active = 0;
+
+	if (keepalive_in_sec <= 0)
+		use_keepalive = KEEPALIVE_NEVER;
+	if (use_keepalive == KEEPALIVE_ALWAYS)
+		keepalive_active = 1;
+
 	while (1) {
-		ssize_t sz = xread(in, data, sizeof(data));
+		ssize_t sz;
+
+		if (keepalive_active) {
+			struct pollfd pfd;
+			int ret;
+
+			pfd.fd = in;
+			pfd.events = POLLIN;
+			ret = poll(&pfd, 1, 1000 * keepalive_in_sec);
+
+			if (ret < 0) {
+				if (errno == EINTR)
+					continue;
+				else
+					break;
+			} else if (ret == 0) {
+				/* no data; send a keepalive packet */
+				static const char buf[] = "0005\1";
+				write_or_die(1, buf, sizeof(buf) - 1);
+				continue;
+			} /* else there is actual data to read */
+		}
+
+		sz = xread(in, data, sizeof(data));
 		if (sz <= 0)
 			break;
+
+		if (use_keepalive == KEEPALIVE_AFTER_NUL && !keepalive_active) {
+			const char *p = memchr(data, '\0', sz);
+			if (p) {
+				/*
+				 * The NUL tells us to start sending keepalives. Make
+				 * sure we send any other data we read along
+				 * with it.
+				 */
+				keepalive_active = 1;
+				send_sideband(1, 2, data, p - data, use_sideband);
+				send_sideband(1, 2, p + 1, sz - (p - data + 1), use_sideband);
+				continue;
+			}
+		}
+
+		/*
+		 * Either we're not looking for a NUL signal, or we didn't see
+		 * it yet; just pass along the data.
+		 */
 		send_sideband(1, 2, data, sz, use_sideband);
 	}
 	close(in);
@@ -1566,6 +1628,8 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 
 		if (!quiet && err_fd)
 			argv_array_push(&child.args, "--show-resolving-progress");
+		if (use_sideband)
+			argv_array_push(&child.args, "--report-end-of-input");
 		if (fsck_objects)
 			argv_array_pushf(&child.args, "--strict%s",
 				fsck_msg_types.buf);
@@ -1595,6 +1659,7 @@ static const char *unpack_with_sideband(struct shallow_info *si)
 	if (!use_sideband)
 		return unpack(0, si);
 
+	use_keepalive = KEEPALIVE_AFTER_NUL;
 	memset(&muxer, 0, sizeof(muxer));
 	muxer.proc = copy_to_sideband;
 	muxer.in = -1;
@@ -1782,6 +1847,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 			unpack_status = unpack_with_sideband(&si);
 			update_shallow_info(commands, &si, &ref);
 		}
+		use_keepalive = KEEPALIVE_ALWAYS;
 		execute_commands(commands, unpack_status, &si);
 		if (pack_lockfile)
 			unlink_or_warn(pack_lockfile);
