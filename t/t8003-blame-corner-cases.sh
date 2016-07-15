@@ -137,6 +137,51 @@ test_expect_success 'blame wholesale copy and more' '
 
 '
 
+test_expect_success 'blame wholesale copy and more in the index' '
+
+	cat >horse <<-\EOF &&
+	ABC
+	DEF
+	XXXX
+	YYYY
+	GHIJK
+	EOF
+	git add horse &&
+	test_when_finished "git rm -f horse" &&
+	git blame -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	cow-Fifth
+	horse-Not
+	mouse-Third
+	EOF
+	test_cmp expected current
+
+'
+
+test_expect_success 'blame during cherry-pick with file rename conflict' '
+
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout HEAD~3 &&
+	echo MOUSE >> mouse &&
+	git mv mouse rodent &&
+	git add rodent &&
+	GIT_AUTHOR_NAME=Rodent git commit -m "rodent" &&
+	git checkout --detach master &&
+	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
+	git show HEAD@{1}:rodent > rodent &&
+	git add rodent &&
+	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
+	cat current &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	rodent-Not
+	EOF
+	test_cmp expected current
+'
+
 test_expect_success 'blame path that used to be a directory' '
 	mkdir path &&
 	echo A A A A A >path/file &&
