@@ -56,8 +56,7 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 	argv[ac++] = "--stdin";
 	argv[ac++] = "--not";
 	argv[ac++] = "--all";
-	if (quiet)
-		argv[ac++] = "--quiet";
+	argv[ac++] = "--quiet";
 	argv[ac] = NULL;
 
 	rev_list.argv = argv;
