@@ -30,6 +30,9 @@ struct check_connected_options {
 	 * returns.
 	 */
 	int err_fd;
+
+	/* If non-zero, show progress as we traverse the objects. */
+	int progress;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }
