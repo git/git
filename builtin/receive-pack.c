@@ -1317,9 +1317,12 @@ static void execute_commands(struct command *commands,
 			     const char *unpacker_error,
 			     struct shallow_info *si)
 {
+	struct check_connected_options opt = CHECK_CONNECTED_INIT;
 	struct command *cmd;
 	unsigned char sha1[20];
 	struct iterate_data data;
+	struct async muxer;
+	int err_fd = 0;
 
 	if (unpacker_error) {
 		for (cmd = commands; cmd; cmd = cmd->next)
@@ -1327,10 +1330,23 @@ static void execute_commands(struct command *commands,
 		return;
 	}
 
+	if (use_sideband) {
+		memset(&muxer, 0, sizeof(muxer));
+		muxer.proc = copy_to_sideband;
+		muxer.in = -1;
+		if (!start_async(&muxer))
+			err_fd = muxer.in;
+		/* ...else, continue without relaying sideband */
+	}
+
 	data.cmds = commands;
 	data.si = si;
-	if (check_connected(iterate_receive_command_list, &data, NULL))
+	opt.err_fd = err_fd;
+	if (check_connected(iterate_receive_command_list, &data, &opt))
 		set_connectivity_errors(commands, si);
+
+	if (use_sideband)
+		finish_async(&muxer);
 
 	reject_updates_to_hidden(commands);
 
