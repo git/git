@@ -26,10 +26,9 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 					   const char *shallow_file)
 {
 	struct child_process rev_list = CHILD_PROCESS_INIT;
-	const char *argv[9];
 	char commit[41];
 	unsigned char sha1[20];
-	int err = 0, ac = 0;
+	int err = 0;
 	struct packed_git *new_pack = NULL;
 	size_t base_len;
 
@@ -48,18 +47,16 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 	}
 
 	if (shallow_file) {
-		argv[ac++] = "--shallow-file";
-		argv[ac++] = shallow_file;
+		argv_array_push(&rev_list.args, "--shallow-file");
+		argv_array_push(&rev_list.args, shallow_file);
 	}
-	argv[ac++] = "rev-list";
-	argv[ac++] = "--objects";
-	argv[ac++] = "--stdin";
-	argv[ac++] = "--not";
-	argv[ac++] = "--all";
-	argv[ac++] = "--quiet";
-	argv[ac] = NULL;
+	argv_array_push(&rev_list.args,"rev-list");
+	argv_array_push(&rev_list.args, "--objects");
+	argv_array_push(&rev_list.args, "--stdin");
+	argv_array_push(&rev_list.args, "--not");
+	argv_array_push(&rev_list.args, "--all");
+	argv_array_push(&rev_list.args, "--quiet");
 
-	rev_list.argv = argv;
 	rev_list.git_cmd = 1;
 	rev_list.in = -1;
 	rev_list.no_stdout = 1;
