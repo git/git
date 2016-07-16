@@ -379,17 +379,10 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
 	free(to_free);
 }
 
-/*
- * If open_html is not defined in a platform-specific way (see for
- * example compat/mingw.h), we use the script web--browse to display
- * HTML.
- */
-#ifndef open_html
 static void open_html(const char *path)
 {
 	execl_git_cmd("web--browse", "-c", "help.browser", path, (char *)NULL);
 }
-#endif
 
 static void show_html_page(const char *git_cmd)
 {
