@@ -99,5 +99,19 @@ test_expect_success 'cache-tree does not ignore dir that has i-t-a entries' '
 	)
 '
 
+test_expect_success 'cache-tree does skip dir that becomes empty' '
+	rm -fr ita-in-dir &&
+	git init ita-in-dir &&
+	(
+		cd ita-in-dir &&
+		mkdir -p 1/2/3 &&
+		echo 4 >1/2/3/4 &&
+		git add -N 1/2/3/4 &&
+		git write-tree >actual &&
+		echo $EMPTY_TREE >expected &&
+		test_cmp expected actual
+	)
+'
+
 test_done
 
