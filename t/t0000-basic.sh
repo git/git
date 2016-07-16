@@ -834,7 +834,7 @@ test_expect_success 'git write-tree should be able to write an empty tree' '
 '
 
 test_expect_success 'validate object ID of a known tree' '
-	test "$tree" = 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+	test "$tree" = $EMPTY_TREE
 '
 
 # Various types of objects

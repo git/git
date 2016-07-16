@@ -162,6 +162,8 @@ _x40="$_x05$_x05$_x05$_x05$_x05$_x05$_x05$_x05"
 # Zero SHA-1
 _z40=0000000000000000000000000000000000000000
 
+EMPTY_TREE=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+
 # Line feed
 LF='
 '
@@ -170,7 +172,7 @@ LF='
 # when case-folding filenames
 u200c=$(printf '\342\200\214')
 
-export _x05 _x40 _z40 LF u200c
+export _x05 _x40 _z40 LF u200c EMPTY_TREE
 
 # Each test should start with something like this, after copyright notices:
 #
