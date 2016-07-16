@@ -319,7 +319,7 @@ static int update_one(struct cache_tree *it,
 	i = 0;
 	while (i < entries) {
 		const struct cache_entry *ce = cache[i];
-		struct cache_tree_sub *sub;
+		struct cache_tree_sub *sub = NULL;
 		const char *path, *slash;
 		int pathlen, entlen;
 		const unsigned char *sha1;
@@ -375,7 +375,7 @@ static int update_one(struct cache_tree *it,
 		 * they are not part of generated trees. Invalidate up
 		 * to root to force cache-tree users to read elsewhere.
 		 */
-		if (ce_intent_to_add(ce)) {
+		if (!sub && ce_intent_to_add(ce)) {
 			to_invalidate = 1;
 			continue;
 		}
