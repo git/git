@@ -33,6 +33,7 @@ struct fsck_options {
 	unsigned strict:1;
 	int *msg_type;
 	struct sha1_array *skiplist;
+	struct decoration *object_names;
 };
 
 #define FSCK_OPTIONS_DEFAULT { NULL, fsck_error_function, 0, NULL }
