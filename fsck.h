@@ -23,9 +23,11 @@ int is_valid_msg_type(const char *msg_id, const char *msg_type);
 typedef int (*fsck_walk_func)(struct object *obj, int type, void *data, struct fsck_options *options);
 
 /* callback for fsck_object, type is FSCK_ERROR or FSCK_WARN */
-typedef int (*fsck_error)(struct object *obj, int type, const char *message);
+typedef int (*fsck_error)(struct fsck_options *o,
+	struct object *obj, int type, const char *message);
 
-int fsck_error_function(struct object *obj, int type, const char *message);
+int fsck_error_function(struct fsck_options *o,
+	struct object *obj, int type, const char *message);
 
 struct fsck_options {
 	fsck_walk_func walk;
