@@ -40,6 +40,11 @@ static int show_dangling = 1;
 #define ERROR_PACK 04
 #define ERROR_REFS 010
 
+static const char *describe_object(struct object *obj)
+{
+	return oid_to_hex(&obj->oid);
+}
+
 static int fsck_config(const char *var, const char *value, void *cb)
 {
 	if (strcmp(var, "fsck.skiplist") == 0) {
@@ -67,7 +72,7 @@ static void objreport(struct object *obj, const char *msg_type,
 			const char *err)
 {
 	fprintf(stderr, "%s in %s %s: %s\n",
-		msg_type, typename(obj->type), oid_to_hex(&obj->oid), err);
+		msg_type, typename(obj->type), describe_object(obj), err);
 }
 
 static int objerror(struct object *obj, const char *err)
@@ -97,7 +102,7 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 	if (!obj) {
 		/* ... these references to parent->fld are safe here */
 		printf("broken link from %7s %s\n",
-			   typename(parent->type), oid_to_hex(&parent->oid));
+			   typename(parent->type), describe_object(parent));
 		printf("broken link from %7s %s\n",
 			   (type == OBJ_ANY ? "unknown" : typename(type)), "unknown");
 		errors_found |= ERROR_REACHABLE;
@@ -114,9 +119,9 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 	if (!(obj->flags & HAS_OBJ)) {
 		if (parent && !has_object_file(&obj->oid)) {
 			printf("broken link from %7s %s\n",
-				 typename(parent->type), oid_to_hex(&parent->oid));
+				 typename(parent->type), describe_object(parent));
 			printf("              to %7s %s\n",
-				 typename(obj->type), oid_to_hex(&obj->oid));
+				 typename(obj->type), describe_object(obj));
 			errors_found |= ERROR_REACHABLE;
 		}
 		return 1;
@@ -190,7 +195,8 @@ static void check_reachable_object(struct object *obj)
 			return; /* it is in pack - forget about it */
 		if (connectivity_only && has_object_file(&obj->oid))
 			return;
-		printf("missing %s %s\n", typename(obj->type), oid_to_hex(&obj->oid));
+		printf("missing %s %s\n", typename(obj->type),
+			describe_object(obj));
 		errors_found |= ERROR_REACHABLE;
 		return;
 	}
@@ -215,7 +221,8 @@ static void check_unreachable_object(struct object *obj)
 	 * since this is something that is prunable.
 	 */
 	if (show_unreachable) {
-		printf("unreachable %s %s\n", typename(obj->type), oid_to_hex(&obj->oid));
+		printf("unreachable %s %s\n", typename(obj->type),
+			describe_object(obj));
 		return;
 	}
 
@@ -234,11 +241,11 @@ static void check_unreachable_object(struct object *obj)
 	if (!obj->used) {
 		if (show_dangling)
 			printf("dangling %s %s\n", typename(obj->type),
-			       oid_to_hex(&obj->oid));
+			       describe_object(obj));
 		if (write_lost_and_found) {
 			char *filename = git_pathdup("lost-found/%s/%s",
 				obj->type == OBJ_COMMIT ? "commit" : "other",
-				oid_to_hex(&obj->oid));
+				describe_object(obj));
 			FILE *f;
 
 			if (safe_create_leading_directories_const(filename)) {
@@ -252,7 +259,7 @@ static void check_unreachable_object(struct object *obj)
 				if (stream_blob_to_fd(fileno(f), obj->oid.hash, NULL, 1))
 					die_errno("Could not write '%s'", filename);
 			} else
-				fprintf(f, "%s\n", oid_to_hex(&obj->oid));
+				fprintf(f, "%s\n", describe_object(obj));
 			if (fclose(f))
 				die_errno("Could not finish '%s'",
 					  filename);
@@ -271,7 +278,7 @@ static void check_unreachable_object(struct object *obj)
 static void check_object(struct object *obj)
 {
 	if (verbose)
-		fprintf(stderr, "Checking %s\n", oid_to_hex(&obj->oid));
+		fprintf(stderr, "Checking %s\n", describe_object(obj));
 
 	if (obj->flags & REACHABLE)
 		check_reachable_object(obj);
@@ -307,7 +314,7 @@ static int fsck_obj(struct object *obj)
 
 	if (verbose)
 		fprintf(stderr, "Checking %s %s\n",
-			typename(obj->type), oid_to_hex(&obj->oid));
+			typename(obj->type), describe_object(obj));
 
 	if (fsck_walk(obj, NULL, &fsck_obj_options))
 		objerror(obj, "broken links");
@@ -326,15 +333,17 @@ static int fsck_obj(struct object *obj)
 		free_commit_buffer(commit);
 
 		if (!commit->parents && show_root)
-			printf("root %s\n", oid_to_hex(&commit->object.oid));
+			printf("root %s\n", describe_object(&commit->object));
 	}
 
 	if (obj->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *) obj;
 
 		if (show_tags && tag->tagged) {
-			printf("tagged %s %s", typename(tag->tagged->type), oid_to_hex(&tag->tagged->oid));
-			printf(" (%s) in %s\n", tag->tag, oid_to_hex(&tag->object.oid));
+			printf("tagged %s %s", typename(tag->tagged->type),
+				describe_object(tag->tagged));
+			printf(" (%s) in %s\n", tag->tag,
+				describe_object(&tag->object));
 		}
 	}
 
