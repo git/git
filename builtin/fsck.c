@@ -13,6 +13,7 @@
 #include "dir.h"
 #include "progress.h"
 #include "streaming.h"
+#include "decorate.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -35,6 +36,7 @@ static int write_lost_and_found;
 static int verbose;
 static int show_progress = -1;
 static int show_dangling = 1;
+static int name_objects;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
@@ -42,7 +44,16 @@ static int show_dangling = 1;
 
 static const char *describe_object(struct object *obj)
 {
-	return oid_to_hex(&obj->oid);
+	static struct strbuf buf = STRBUF_INIT;
+	char *name = name_objects ?
+		lookup_decoration(fsck_walk_options.object_names, obj) : NULL;
+
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, oid_to_hex(&obj->oid));
+	if (name)
+		strbuf_addf(&buf, " (%s)", name);
+
+	return buf.buf;
 }
 
 static int fsck_config(const char *var, const char *value, void *cb)
@@ -378,13 +389,18 @@ static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
 
 static int default_refs;
 
-static void fsck_handle_reflog_sha1(const char *refname, unsigned char *sha1)
+static void fsck_handle_reflog_sha1(const char *refname, unsigned char *sha1,
+	unsigned long timestamp)
 {
 	struct object *obj;
 
 	if (!is_null_sha1(sha1)) {
 		obj = lookup_object(sha1);
 		if (obj) {
+			if (timestamp && name_objects)
+				add_decoration(fsck_walk_options.object_names,
+					obj,
+					xstrfmt("%s@{%ld}", refname, timestamp));
 			obj->used = 1;
 			mark_object_reachable(obj);
 		} else {
@@ -404,8 +420,8 @@ static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		fprintf(stderr, "Checking reflog %s->%s\n",
 			sha1_to_hex(osha1), sha1_to_hex(nsha1));
 
-	fsck_handle_reflog_sha1(refname, osha1);
-	fsck_handle_reflog_sha1(refname, nsha1);
+	fsck_handle_reflog_sha1(refname, osha1, 0);
+	fsck_handle_reflog_sha1(refname, nsha1, timestamp);
 	return 0;
 }
 
@@ -434,6 +450,9 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 	}
 	default_refs++;
 	obj->used = 1;
+	if (name_objects)
+		add_decoration(fsck_walk_options.object_names,
+			obj, xstrdup(refname));
 	mark_object_reachable(obj);
 
 	return 0;
@@ -549,6 +568,9 @@ static int fsck_cache_tree(struct cache_tree *it)
 			return 1;
 		}
 		obj->used = 1;
+		if (name_objects)
+			add_decoration(fsck_walk_options.object_names,
+				obj, xstrdup(":"));
 		mark_object_reachable(obj);
 		if (obj->type != OBJ_TREE)
 			err |= objerror(obj, "non-tree in cache-tree");
@@ -577,6 +599,7 @@ static struct option fsck_opts[] = {
 	OPT_BOOL(0, "lost-found", &write_lost_and_found,
 				N_("write dangling objects in .git/lost-found")),
 	OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
+	OPT_BOOL(0, "name-objects", &name_objects, N_("show verbose names for reachable objects")),
 	OPT_END(),
 };
 
@@ -605,6 +628,10 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		check_full = 1;
 		include_reflogs = 0;
 	}
+
+	if (name_objects)
+		fsck_walk_options.object_names =
+			xcalloc(1, sizeof(struct decoration));
 
 	git_config(fsck_config, NULL);
 
@@ -661,6 +688,9 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				continue;
 
 			obj->used = 1;
+			if (name_objects)
+				add_decoration(fsck_walk_options.object_names,
+					obj, xstrdup(arg));
 			mark_object_reachable(obj);
 			heads++;
 			continue;
@@ -693,6 +723,10 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				continue;
 			obj = &blob->object;
 			obj->used = 1;
+			if (name_objects)
+				add_decoration(fsck_walk_options.object_names,
+					obj,
+					xstrfmt(":%s", active_cache[i]->name));
 			mark_object_reachable(obj);
 		}
 		if (active_cache_tree)
