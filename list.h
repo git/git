@@ -36,6 +36,8 @@ struct list_head {
 	struct list_head *next, *prev;
 };
 
+/* avoid conflicts with BSD-only sys/queue.h */
+#undef LIST_HEAD
 /* Define a variable with the head and tail of the list. */
 #define LIST_HEAD(name) \
 	struct list_head name = { &(name), &(name) }
