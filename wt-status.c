@@ -1060,7 +1060,7 @@ static void abbrev_sha1_in_line(struct strbuf *line)
 			strbuf_addf(split[1], "%s ", abbrev);
 			strbuf_reset(line);
 			for (i = 0; split[i]; i++)
-				strbuf_addf(line, "%s", split[i]->buf);
+				strbuf_addbuf(line, split[i]);
 		}
 	}
 	for (i = 0; split[i]; i++)

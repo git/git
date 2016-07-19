@@ -246,7 +246,7 @@ static void do_submodule_path(struct strbuf *buf, const char *path,
 		strbuf_addstr(buf, git_dir);
 	}
 	strbuf_addch(buf, '/');
-	strbuf_addstr(&git_submodule_dir, buf->buf);
+	strbuf_addbuf(&git_submodule_dir, buf);
 
 	strbuf_vaddf(buf, fmt, args);
 

@@ -2346,7 +2346,7 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 
 	varint_len = encode_varint(untracked->ident.len, varbuf);
 	strbuf_add(out, varbuf, varint_len);
-	strbuf_add(out, untracked->ident.buf, untracked->ident.len);
+	strbuf_addbuf(out, &untracked->ident);
 
 	strbuf_add(out, ouc, ouc_size(len));
 	free(ouc);
