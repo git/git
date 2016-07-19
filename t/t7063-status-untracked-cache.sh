@@ -53,7 +53,7 @@ A  two
 EOF
 
 cat >../dump.expect <<EOF &&
-info/exclude e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
 exclude_per_dir .gitignore
 flags 00000006
@@ -137,7 +137,7 @@ EOF
 test_expect_success 'verify untracked cache dump' '
 	test-dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
-info/exclude e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
 exclude_per_dir .gitignore
 flags 00000006
@@ -184,7 +184,7 @@ EOF
 test_expect_success 'verify untracked cache dump' '
 	test-dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
-info/exclude e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
 exclude_per_dir .gitignore
 flags 00000006

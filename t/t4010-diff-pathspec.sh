@@ -78,8 +78,6 @@ test_expect_success 'diff-tree pathspec' '
 	test_cmp expected current
 '
 
-EMPTY_TREE=4b825dc642cb6eb9a060e54bf8d69288fbee4904
-
 test_expect_success 'diff-tree with wildcard shows dir also matches' '
 	git diff-tree --name-only $EMPTY_TREE $tree -- "f*" >result &&
 	echo file0 >expected &&
