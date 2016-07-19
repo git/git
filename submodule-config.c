@@ -375,7 +375,6 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		const unsigned char *commit_sha1, const char *key,
 		enum lookup_type lookup_type)
 {
-	struct strbuf rev = STRBUF_INIT;
 	unsigned long config_size;
 	char *config;
 	unsigned char sha1[20];
@@ -426,7 +425,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	parameter.commit_sha1 = commit_sha1;
 	parameter.gitmodules_sha1 = sha1;
 	parameter.overwrite = 0;
-	git_config_from_mem(parse_config, "submodule-blob", rev.buf,
+	git_config_from_mem(parse_config, "submodule-blob", "",
 			config, config_size, &parameter);
 	free(config);
 
