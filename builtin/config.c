@@ -604,7 +604,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 				      given_config_source.file : git_path("config"));
 		if (use_global_config) {
 			int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
-			if (fd) {
+			if (fd >= 0) {
 				char *content = default_user_config();
 				write_str_in_full(fd, content);
 				free(content);
