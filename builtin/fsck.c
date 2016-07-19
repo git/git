@@ -13,6 +13,7 @@
 #include "dir.h"
 #include "progress.h"
 #include "streaming.h"
+#include "decorate.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -35,10 +36,25 @@ static int write_lost_and_found;
 static int verbose;
 static int show_progress = -1;
 static int show_dangling = 1;
+static int name_objects;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
 #define ERROR_REFS 010
+
+static const char *describe_object(struct object *obj)
+{
+	static struct strbuf buf = STRBUF_INIT;
+	char *name = name_objects ?
+		lookup_decoration(fsck_walk_options.object_names, obj) : NULL;
+
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, oid_to_hex(&obj->oid));
+	if (name)
+		strbuf_addf(&buf, " (%s)", name);
+
+	return buf.buf;
+}
 
 static int fsck_config(const char *var, const char *value, void *cb)
 {
@@ -67,7 +83,7 @@ static void objreport(struct object *obj, const char *msg_type,
 			const char *err)
 {
 	fprintf(stderr, "%s in %s %s: %s\n",
-		msg_type, typename(obj->type), oid_to_hex(&obj->oid), err);
+		msg_type, typename(obj->type), describe_object(obj), err);
 }
 
 static int objerror(struct object *obj, const char *err)
@@ -77,7 +93,8 @@ static int objerror(struct object *obj, const char *err)
 	return -1;
 }
 
-static int fsck_error_func(struct object *obj, int type, const char *message)
+static int fsck_error_func(struct fsck_options *o,
+	struct object *obj, int type, const char *message)
 {
 	objreport(obj, (type == FSCK_WARN) ? "warning" : "error", message);
 	return (type == FSCK_WARN) ? 0 : 1;
@@ -97,7 +114,7 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 	if (!obj) {
 		/* ... these references to parent->fld are safe here */
 		printf("broken link from %7s %s\n",
-			   typename(parent->type), oid_to_hex(&parent->oid));
+			   typename(parent->type), describe_object(parent));
 		printf("broken link from %7s %s\n",
 			   (type == OBJ_ANY ? "unknown" : typename(type)), "unknown");
 		errors_found |= ERROR_REACHABLE;
@@ -114,9 +131,9 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 	if (!(obj->flags & HAS_OBJ)) {
 		if (parent && !has_object_file(&obj->oid)) {
 			printf("broken link from %7s %s\n",
-				 typename(parent->type), oid_to_hex(&parent->oid));
+				 typename(parent->type), describe_object(parent));
 			printf("              to %7s %s\n",
-				 typename(obj->type), oid_to_hex(&obj->oid));
+				 typename(obj->type), describe_object(obj));
 			errors_found |= ERROR_REACHABLE;
 		}
 		return 1;
@@ -190,7 +207,8 @@ static void check_reachable_object(struct object *obj)
 			return; /* it is in pack - forget about it */
 		if (connectivity_only && has_object_file(&obj->oid))
 			return;
-		printf("missing %s %s\n", typename(obj->type), oid_to_hex(&obj->oid));
+		printf("missing %s %s\n", typename(obj->type),
+			describe_object(obj));
 		errors_found |= ERROR_REACHABLE;
 		return;
 	}
@@ -215,7 +233,8 @@ static void check_unreachable_object(struct object *obj)
 	 * since this is something that is prunable.
 	 */
 	if (show_unreachable) {
-		printf("unreachable %s %s\n", typename(obj->type), oid_to_hex(&obj->oid));
+		printf("unreachable %s %s\n", typename(obj->type),
+			describe_object(obj));
 		return;
 	}
 
@@ -234,11 +253,11 @@ static void check_unreachable_object(struct object *obj)
 	if (!obj->used) {
 		if (show_dangling)
 			printf("dangling %s %s\n", typename(obj->type),
-			       oid_to_hex(&obj->oid));
+			       describe_object(obj));
 		if (write_lost_and_found) {
 			char *filename = git_pathdup("lost-found/%s/%s",
 				obj->type == OBJ_COMMIT ? "commit" : "other",
-				oid_to_hex(&obj->oid));
+				describe_object(obj));
 			FILE *f;
 
 			if (safe_create_leading_directories_const(filename)) {
@@ -252,7 +271,7 @@ static void check_unreachable_object(struct object *obj)
 				if (stream_blob_to_fd(fileno(f), obj->oid.hash, NULL, 1))
 					die_errno("Could not write '%s'", filename);
 			} else
-				fprintf(f, "%s\n", oid_to_hex(&obj->oid));
+				fprintf(f, "%s\n", describe_object(obj));
 			if (fclose(f))
 				die_errno("Could not finish '%s'",
 					  filename);
@@ -271,7 +290,7 @@ static void check_unreachable_object(struct object *obj)
 static void check_object(struct object *obj)
 {
 	if (verbose)
-		fprintf(stderr, "Checking %s\n", oid_to_hex(&obj->oid));
+		fprintf(stderr, "Checking %s\n", describe_object(obj));
 
 	if (obj->flags & REACHABLE)
 		check_reachable_object(obj);
@@ -307,7 +326,7 @@ static int fsck_obj(struct object *obj)
 
 	if (verbose)
 		fprintf(stderr, "Checking %s %s\n",
-			typename(obj->type), oid_to_hex(&obj->oid));
+			typename(obj->type), describe_object(obj));
 
 	if (fsck_walk(obj, NULL, &fsck_obj_options))
 		objerror(obj, "broken links");
@@ -326,15 +345,17 @@ static int fsck_obj(struct object *obj)
 		free_commit_buffer(commit);
 
 		if (!commit->parents && show_root)
-			printf("root %s\n", oid_to_hex(&commit->object.oid));
+			printf("root %s\n", describe_object(&commit->object));
 	}
 
 	if (obj->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *) obj;
 
 		if (show_tags && tag->tagged) {
-			printf("tagged %s %s", typename(tag->tagged->type), oid_to_hex(&tag->tagged->oid));
-			printf(" (%s) in %s\n", tag->tag, oid_to_hex(&tag->object.oid));
+			printf("tagged %s %s", typename(tag->tagged->type),
+				describe_object(tag->tagged));
+			printf(" (%s) in %s\n", tag->tag,
+				describe_object(&tag->object));
 		}
 	}
 
@@ -372,13 +393,18 @@ static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
 
 static int default_refs;
 
-static void fsck_handle_reflog_sha1(const char *refname, unsigned char *sha1)
+static void fsck_handle_reflog_sha1(const char *refname, unsigned char *sha1,
+	unsigned long timestamp)
 {
 	struct object *obj;
 
 	if (!is_null_sha1(sha1)) {
 		obj = lookup_object(sha1);
 		if (obj) {
+			if (timestamp && name_objects)
+				add_decoration(fsck_walk_options.object_names,
+					obj,
+					xstrfmt("%s@{%ld}", refname, timestamp));
 			obj->used = 1;
 			mark_object_reachable(obj);
 		} else {
@@ -398,8 +424,8 @@ static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		fprintf(stderr, "Checking reflog %s->%s\n",
 			sha1_to_hex(osha1), sha1_to_hex(nsha1));
 
-	fsck_handle_reflog_sha1(refname, osha1);
-	fsck_handle_reflog_sha1(refname, nsha1);
+	fsck_handle_reflog_sha1(refname, osha1, 0);
+	fsck_handle_reflog_sha1(refname, nsha1, timestamp);
 	return 0;
 }
 
@@ -428,6 +454,9 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 	}
 	default_refs++;
 	obj->used = 1;
+	if (name_objects)
+		add_decoration(fsck_walk_options.object_names,
+			obj, xstrdup(refname));
 	mark_object_reachable(obj);
 
 	return 0;
@@ -543,6 +572,9 @@ static int fsck_cache_tree(struct cache_tree *it)
 			return 1;
 		}
 		obj->used = 1;
+		if (name_objects)
+			add_decoration(fsck_walk_options.object_names,
+				obj, xstrdup(":"));
 		mark_object_reachable(obj);
 		if (obj->type != OBJ_TREE)
 			err |= objerror(obj, "non-tree in cache-tree");
@@ -571,6 +603,7 @@ static struct option fsck_opts[] = {
 	OPT_BOOL(0, "lost-found", &write_lost_and_found,
 				N_("write dangling objects in .git/lost-found")),
 	OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
+	OPT_BOOL(0, "name-objects", &name_objects, N_("show verbose names for reachable objects")),
 	OPT_END(),
 };
 
@@ -599,6 +632,10 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		check_full = 1;
 		include_reflogs = 0;
 	}
+
+	if (name_objects)
+		fsck_walk_options.object_names =
+			xcalloc(1, sizeof(struct decoration));
 
 	git_config(fsck_config, NULL);
 
@@ -655,6 +692,9 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				continue;
 
 			obj->used = 1;
+			if (name_objects)
+				add_decoration(fsck_walk_options.object_names,
+					obj, xstrdup(arg));
 			mark_object_reachable(obj);
 			heads++;
 			continue;
@@ -687,6 +727,10 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				continue;
 			obj = &blob->object;
 			obj->used = 1;
+			if (name_objects)
+				add_decoration(fsck_walk_options.object_names,
+					obj,
+					xstrfmt(":%s", active_cache[i]->name));
 			mark_object_reachable(obj);
 		}
 		if (active_cache_tree)
