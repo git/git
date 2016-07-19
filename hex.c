@@ -77,6 +77,11 @@ char *sha1_to_hex_r(char *buffer, const unsigned char *sha1)
 	return buffer;
 }
 
+char *oid_to_hex_r(char *buffer, const struct object_id *oid)
+{
+	return sha1_to_hex_r(buffer, oid->hash);
+}
+
 char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;
