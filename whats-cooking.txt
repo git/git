@@ -1,21 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2016, #05; Wed, 13)
-X-master-at: b1ec08fda8e0c3ed19b680404770ca4ec313ca8c
-X-next-at: aa0ab43525ebd305d89ffde30b5d5837a535491c
+Subject: What's cooking in git.git (Jul 2016, #06; Tue, 19)
+X-master-at: 08bb3500a2a718c3c78b0547c68601cafa7a8fd9
+X-next-at: 66765a41ed474ba5c6702f65e187cd9aa6236993
 
-What's cooking in git.git (Jul 2016, #05; Wed, 13)
+What's cooking in git.git (Jul 2016, #06; Tue, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-It turns out that v2.9.1 had tests that weren't even meant to pass
-on platforms with 32-bit time_t/unsigned long, but did not properly
-exclude them.  A fix nas been prepared and I expect we'll cut v2.9.2
-with only that change relative to v2.9.1 soonish.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,132 +20,485 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* js/t0006-for-v2.9.2 (2016-07-12) 1 commit
- - t0006: skip "far in the future" test when unsigned long is not long enough
+* ew/autoconf-pthread (2016-07-18) 1 commit
+  (merged to 'next' on 2016-07-19 at 146e249)
+ + configure.ac: stronger test for pthread linkage
 
- A test merged to v2.9.1 forgot that the feature it was testing
- would not work on a platform with 32-bit time_t/unsigned long and
- reported breakage.  Skip the tests that cannot run correctly on
- such platforms.
+ Existing autoconf generated test for the need to link with pthread
+ library did not check all the functions from pthread libraries;
+ recent FreeBSD has some functions in libc but not others, and we
+ mistakenly thought linking with libc is enough when it is not.
 
- Waiting for an Ack; will fast-track down to 'maint' to cut v2.9.2.
-
-
-* js/am-3-merge-recursive-direct (2016-07-12) 21 commits
- - merge-recursive: flush output buffer even when erroring out
- - merge_trees(): ensure that the output buffer is released after calling it
- - merge-recursive: offer an option to retain the output in 'obuf'
- - merge-recursive: write the commit title in one go
- - merge-recursive: flush output buffer before printing error messages
- - am -3: use merge_recursive() directly again
- - merge-recursive: switch to returning errors instead of dying
- - merge-recursive: handle return values indicating errors
- - merge-recursive: allow write_tree_from_memory() to error out
- - merge-recursive: avoid returning a wholesale struct
- - merge_recursive: abort properly upon errors
- - prepare the builtins for a libified merge_recursive()
- - merge-recursive: clarify code in was_tracked()
- - die(_("BUG")): avoid translating bug messages
- - die("bug"): report bugs consistently
- - t5520: verify that `git pull --rebase` shows the advice when failing
- - Merge branch 'jh/clean-smudge-annex' into HEAD
- - Merge branch 'bc/cocci' into js/am-3-merge-recursive-direct
- - Merge branch 'js/am-call-theirs-theirs-in-fallback-3way' into js/am-3-merge-recursive-direct
- - Merge branch 'cc/apply-am' into js/am-3-merge-recursive-direct
- - Merge branch 'va/i18n-even-more' into js/am-3-merge-recursive-direct
- (this branch uses bc/cocci, cc/apply-am, jh/clean-smudge-annex, js/am-call-theirs-theirs-in-fallback-3way and va/i18n-even-more.)
-
- "git am -3" calls "git merge-recursive" when it needs to fall back
- to a three-way merge; this call has been turned into an internal
- subroutine call instead of spawning a separate subprocess.
-
- Will need to wait for all the topics this depends on graduate to 'master'.
+ Will merge to 'master'.
 
 
-* ls/travis-enable-httpd-tests (2016-07-12) 1 commit
- - travis-ci: enable web server tests t55xx on Linux
+* ew/daemon-socket-keepalive (2016-07-18) 1 commit
+  (merged to 'next' on 2016-07-19 at 0140849)
+ + daemon: ignore ENOTSOCK from setsockopt
 
- Allow http daemon tests in Travis CI tests.
+ Recent update to "git daemon" tries to enable the socket-level
+ KEEPALIVE, but when it is spawned via inetd, the standard input
+ file descriptor may not necessarily be connected to a socket.
+ Suppress an ENOTSOCK error from setsockopt().
 
-
-* nd/cache-tree-ita (2016-07-12) 4 commits
- - cache-tree: do not generate empty trees as a result of all i-t-a subentries
- - cache-tree.c: fix i-t-a entry skipping directory updates sometimes
- - test-lib.sh: introduce and use $_EMPTY_BLOB
- - test-lib.sh: introduce and use $_EMPTY_TREE
-
- "git add -N dir/file && git write-tree" produced an incorrect tree
- when there are other paths in the same directory that sorts after
- "file".
-
- Looked mostly OK.  Further review comments are welcome.
+ Will merge to 'master'.
 
 
-* nd/pack-ofs-4gb-limit (2016-07-13) 7 commits
- - fsck: use streaming interface for large blobs in pack
- - pack-objects: do not truncate result in-pack object size on 32-bit systems
- - index-pack: correct "offset" type in unpack_entry_data()
- - index-pack: report correct bad object offsets even if they are large
- - index-pack: correct "len" type in unpack_data()
- - sha1_file.c: use type off_t* for object_info->disk_sizep
- - pack-objects: pass length to check_pack_crc() without truncation
+* jc/doc-diff-filter-exclude (2016-07-14) 1 commit
+  (merged to 'next' on 2016-07-19 at 0c8aa92)
+ + diff: document diff-filter exclusion
 
- "git pack-objects" and "git index-pack" mostly operate with off_t
- when talking about the offset of objects in a packfile, but there
- were a handful of places that used "unsigned long" to hold that
- value, leading to an unintended truncation.
+ Belated doc update for a feature added in v1.8.5.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sb/push-options (2016-07-12) 5 commits
- - add a test for push options
- - push: accept push options
- - SQUASH???
- - receive-pack: implement advertising and receiving push options
- - push options: {pre,post}-receive hook learns about push options
+* jk/push-scrub-url (2016-07-14) 1 commit
+  (merged to 'next' on 2016-07-19 at 6ada3f1)
+ + push: anonymize URL in status output
 
- "git push" learned to accept and pass extra options to the
- receiving end so that hooks can read and react to them.
+ "git fetch http://user:pass@host/repo..." scrubbed the userinfo
+ part, but "git push" didn't.
 
- Discussion continues, expecting a further reroll.
- ($gmane/299156)
+ Will merge to 'master'.
 
 
-* ew/http-walker (2016-07-12) 3 commits
- - http-walker: reduce O(n) ops with doubly-linked list
- - http: avoid disconnecting on 404s for loose objects
- - http-walker: remove unused parameter from fetch_object
+* js/fsck-name-object (2016-07-18) 4 commits
+  (merged to 'next' on 2016-07-19 at 6f39d2f)
+ + fsck: optionally show more helpful info for broken links
+ + fsck: give the error function a chance to see the fsck_options
+ + fsck_walk(): optionally name objects on the go
+ + fsck: refactor how to describe objects
 
- Optimize dumb http transport on the client side.
+ When "git fsck" reports a broken link (e.g. a tree object contains
+ a blob that does not exist), both containing object and the object
+ that is referred to were reported with their 40-hex object names.
+ The command learned the "--name-objects" option to show the path to
+ the containing object from existing refs (e.g. "HEAD~24^2:file.txt").
 
-
-* nd/log-decorate-color-head-arrow (2016-07-12) 1 commit
- - log: decorate HEAD -> branch with the same color for arrow and HEAD
-
- An entry "git log --decorate" for the tip of the current branch is
- shown as "HEAD -> name" (where "name" is the name of the branch);
- paint the arrow in the same color as "HEAD", not in the color for
- commits.
-
- Comments?  Personally I find it more-or-less "Meh".
+ Will merge to 'master'.
 
 
-* rs/rm-strbuf-optim (2016-07-12) 1 commit
- - rm: reuse strbuf for all remove_dir_recursively() calls
+* mh/blame-worktree (2016-07-18) 2 commits
+  (merged to 'next' on 2016-07-19 at 4c39534)
+ + t/t8003-blame-corner-cases.sh: Use here documents
+ + blame: allow to blame paths freshly added to the index
 
- The use of strbuf in "git rm" to build filename to remove was a bit
- suboptimal, which has been fixed.
+ "git blame file" allowed the lineage of lines in the uncommitted,
+ unadded contents of "file" to be inspected, but it refused when
+ "file" did not appear in the current commit.  When "file" was
+ created by renaming an existing file (but the change has not been
+ committed), this restriction was unnecessarily tight.
+
+ Will merge to 'master'.
+
+
+* jt/fetch-large-handshake-window-on-http (2016-07-19) 1 commit
+ - fetch-pack: grow stateless RPC windows exponentially
+
+ "git fetch" exchanges batched have/ack messages between the sender
+ and the receiver, initially doubling every time and then falling
+ back to use the maximum window size.  The "smart http" transport,
+ being an half-duplex protocol, outgrows the preset limit too
+ quickly and becomes inefficient when interacting with a large
+ repository.  The internal mechanism learned to grow the window size
+ more aggressively when working with the "smart http" transport.
 
  Will merge to 'next'.
 
 
-* rs/worktree-use-strbuf-absolute-path (2016-07-12) 1 commit
- - worktree: use strbuf_add_absolute_path() directly
+* ew/svn-authorsprog-doc (2016-07-19) 1 commit
+ - git-svn: document svn.authorsProg in config
+
+ Belated doc update.
+
+ Perhaps I will get a copy of this directly from Eric together with
+ other updates to git-svn, in which case this needs to be scrapped.
+
+
+* rs/use-strbuf-addbuf (2016-07-19) 1 commit
+  (merged to 'next' on 2016-07-19 at 679f992)
+ + use strbuf_addbuf() for appending a strbuf to another
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rs/submodule-config-code-cleanup (2016-07-19) 1 commit
+  (merged to 'next' on 2016-07-19 at 59dbd58)
+ + submodule-config: use explicit empty string instead of strbuf in config_from()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ah/unpack-trees-advice-messages (2016-06-27) 1 commit
+  (merged to 'next' on 2016-07-06 at 4254fc2)
+ + unpack-trees: fix English grammar in do-this-before-that messages
+
+ Grammofix.
+
+
+* ak/lazy-prereq-mktemp (2016-07-06) 1 commit
+  (merged to 'next' on 2016-07-11 at 66a9384)
+ + t7610: test for mktemp before test execution
+
+ A test that unconditionally used "mktemp" learned that the command
+ is not necessarily available everywhere.
+
+
+* bc/cocci (2016-06-28) 11 commits
+  (merged to 'next' on 2016-07-06 at f2e8e2a)
+ + diff: convert prep_temp_blob() to struct object_id
+ + merge-recursive: convert merge_recursive_generic() to object_id
+ + merge-recursive: convert leaf functions to use struct object_id
+ + merge-recursive: convert struct merge_file_info to object_id
+ + merge-recursive: convert struct stage_data to use object_id
+ + diff: rename struct diff_filespec's sha1_valid member
+ + diff: convert struct diff_filespec to struct object_id
+ + coccinelle: apply object_id Coccinelle transformations
+ + coccinelle: convert hashcpy() with null_sha1 to hashclr()
+ + contrib/coccinelle: add basic Coccinelle transforms
+ + hex: add oid_to_hex_r()
+ (this branch is used by js/am-3-merge-recursive-direct.)
+
+ Conversion from unsigned char sha1[20] to struct object_id
+ continues.
+
+
+* dg/subtree-rebase-test (2016-06-28) 1 commit
+  (merged to 'next' on 2016-07-06 at 4dec1ad)
+ + contrib/subtree: Add a test for subtree rebase that loses commits
+
+ Add a test to specify the desired behaviour that currently is not
+ available in "git rebase -Xsubtree=...".
+
+
+* dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
+  (merged to 'next' on 2016-07-06 at 087490c)
+ + blame: require 0 context lines while finding moved lines with -M
+
+ "git blame -M" missed a single line that was moved within the file.
+
+
+* ew/gc-auto-pack-limit-fix (2016-06-27) 1 commit
+  (merged to 'next' on 2016-07-06 at aa023d3)
+ + gc: fix off-by-one error with gc.autoPackLimit
+
+ "gc.autoPackLimit" when set to 1 should not trigger a repacking
+ when there is only one pack, but the code counted poorly and did
+ so.
+
+
+* jk/big-and-future-archive-tar (2016-07-01) 5 commits
+  (merged to 'next' on 2016-07-06 at 89f3835)
+ + archive-tar: drop return value
+ + archive-tar: write extended headers for far-future mtime
+ + archive-tar: write extended headers for file sizes >= 8GB
+ + t5000: test tar files that overflow ustar headers
+ + t9300: factor out portable "head -c" replacement
+
+ "git archive" learned to handle files that are larger than 8GB and
+ commits far in the future than expressible by the traditional US-TAR
+ format.
+
+
+* jk/common-main (2016-07-06) 1 commit
+  (merged to 'next' on 2016-07-11 at 1c2228a)
+ + Merge branch 'jk/common-main-2.8' into jk/common-main
+ (this branch uses jk/common-main-2.8.)
+
+ There are certain house-keeping tasks that need to be performed at
+ the very beginning of any Git program, and programs that are not
+ built-in commands had to do them exactly the same way as "git"
+ potty does.  It was easy to make mistakes in one-off standalone
+ programs (like test helpers).  A common "main()" function that
+ calls cmd_main() of individual program has been introduced to
+ make it harder to make mistakes.
+
+
+* jk/common-main-2.8 (2016-07-06) 6 commits
+ + mingw: declare main()'s argv as const
+ + common-main: call git_setup_gettext()
+ + common-main: call restore_sigpipe_to_default()
+ + common-main: call sanitize_stdfds()
+ + common-main: call git_extract_argv0_path()
+ + add an extra level of indirection to main()
+ (this branch is used by jk/common-main.)
+
+ There are certain house-keeping tasks that need to be performed at
+ the very beginning of any Git program, and programs that are not
+ built-in commands had to do them exactly the same way as "git"
+ potty does.  It was easy to make mistakes in one-off standalone
+ programs (like test helpers).  A common "main()" function that
+ calls cmd_main() of individual program has been introduced to
+ make it harder to make mistakes.
+
+
+* jk/printf-format (2016-07-08) 3 commits
+  (merged to 'next' on 2016-07-11 at 731eafb)
+ + commit.c: remove print_commit_list()
+ + avoid using sha1_to_hex output as printf format
+ + walker: let walker_say take arbitrary formats
+
+ Code clean-up to avoid using a variable string that compilers may
+ feel untrustable as printf-style format given to write_file()
+ helper function.
+
+
+* jk/test-match-signal (2016-07-06) 4 commits
+  (merged to 'next' on 2016-07-11 at 54e1462)
+ + t/lib-git-daemon: use test_match_signal
+ + test_must_fail: use test_match_signal
+ + t0005: use test_match_signal as appropriate
+ + tests: factor portable signal check out of t0005
+
+ The test framework learned a new helper test_match_signal to
+ check an exit code from getting killed by an expected signal.
+
+
+* jk/write-file (2016-07-08) 9 commits
+  (merged to 'next' on 2016-07-11 at f51b449)
+ + branch: use write_file_buf instead of write_file
+ + use write_file_buf where applicable
+ + write_file: add format attribute
+ + write_file: add pointer+len variant
+ + write_file: use xopen
+ + write_file: drop "gently" form
+ + branch: use non-gentle write_file for branch description
+ + am: ignore return value of write_file()
+ + config: fix bogus fd check when setting up default config
+
+ General code clean-up around a helper function to write a
+ single-liner to a file.
+
+ While it is textually independent, jk/printf-format needs to be
+ merged before this one.
+
+
+* js/am-call-theirs-theirs-in-fallback-3way (2016-07-08) 1 commit
+  (merged to 'next' on 2016-07-11 at abae4bc)
+ + am: counteract gender bias
+ (this branch is used by js/am-3-merge-recursive-direct.)
+
+ One part of "git am" had an oddball helper function that called
+ stuff from outside "his" as opposed to calling what we have "ours",
+ which was not gender-neutral and also inconsistent with the rest of
+ the system where outside stuff is usuall called "theirs" in
+ contrast to "ours".
+
+
+* js/log-to-diffopt-file (2016-07-11) 12 commits
+  (merged to 'next' on 2016-07-13 at d7a0af7)
+ + mingw: fix the shortlog --output=<file> test
+  (merged to 'next' on 2016-07-06 at 39e7a5f)
+ + diff: do not color output when --color=auto and --output=<file> is given
+ + t4211: ensure that log respects --output=<file>
+ + shortlog: respect the --output=<file> setting
+ + format-patch: use stdout directly
+ + format-patch: avoid freopen()
+ + format-patch: explicitly switch off color when writing to files
+ + shortlog: support outputting to streams other than stdout
+ + graph: respect the diffopt.file setting
+ + line-log: respect diffopt's configured output file stream
+ + log-tree: respect diffopt's configured output file stream
+ + log: prepare log/log-tree to reuse the diffopt.close_file attribute
+
+ The commands in the "log/diff" family have had an FILE* pointer in the
+ data structure they pass around for a long time, but some codepaths
+ used to always write to the standard output.  As a preparatory step
+ to make "git format-patch" available to the internal callers, these
+ codepaths have been updated to consistently write into that FILE*
+ instead.
+
+
+* js/sign-empty-commit-fix (2016-06-29) 1 commit
+  (merged to 'next' on 2016-07-06 at 448da1b)
+ + commit -S: avoid invalid pointer with empty message
+
+ "git commit --amend --allow-empty-message -S" for a commit without
+ any message body could have misidentified where the header of the
+ commit object ends.
+
+
+* js/t3404-grammo-fix (2016-06-29) 1 commit
+  (merged to 'next' on 2016-07-06 at 4378654)
+ + t3404: fix a grammo (commands are ran -> commands are run)
+
+ Grammofix.
+
+
+* lf/recv-sideband-cleanup (2016-07-06) 2 commits
+  (merged to 'next' on 2016-07-06 at d527bcb)
+ + sideband.c: small optimization of strbuf usage
+ + sideband.c: refactor recv_sideband()
 
  Code simplification.
 
- Will merge to 'next'.
+
+* ls/p4-tmp-refs (2016-07-08) 1 commit
+  (merged to 'next' on 2016-07-11 at 4af2d93)
+ + git-p4: place temporary refs used for branch import under refs/git-p4-tmp
+
+ "git p4" used a location outside $GIT_DIR/refs/ to place its
+ temporary branches, which has been moved to refs/git-p4-tmp/.
+
+
+* mm/doc-tt (2016-06-28) 7 commits
+  (merged to 'next' on 2016-07-06 at a8c74bd)
+ + doc: typeset HEAD and variants as literal
+ + CodingGuidelines: formatting HEAD in documentation
+ + doc: typeset long options with argument as literal
+ + doc: typeset '--' as literal
+ + doc: typeset long command-line options as literal
+ + doc: typeset short command-line options as literal
+ + Documentation/git-mv.txt: fix whitespace indentation
+
+ More mark-up updates to typeset strings that are expected to
+ literally typed by the end user in fixed-width font.
+
+
+* nd/connect-ssh-command-config (2016-07-06) 1 commit
+  (merged to 'next' on 2016-07-06 at 6eac316)
+ + connect: read $GIT_SSH_COMMAND from config file
+
+ A new configuration variable core.sshCommand has been added to
+ specify what value for GIT_SSH_COMMAND to use per repository.
+
+
+* nd/doc-new-command (2016-06-27) 1 commit
+  (merged to 'next' on 2016-07-06 at 1404b64)
+ + new-command.txt: correct the command description file
+
+ Typofix in a doc.
+
+
+* nd/fetch-ref-summary (2016-07-06) 5 commits
+  (merged to 'next' on 2016-07-11 at 379df9f)
+ + fetch: reduce duplicate in ref update status lines with placeholder
+ + fetch: align all "remote -> local" output
+ + fetch: change flag code for displaying tag update and deleted ref
+ + fetch: refactor ref update status formatting code
+ + git-fetch.txt: document fetch output
+
+ Improve the look of the way "git fetch" reports what happened to
+ each ref that was fetched.
+
+
+* nd/icase (2016-07-01) 12 commits
+  (merged to 'next' on 2016-07-11 at a00d080)
+ + grep.c: reuse "icase" variable
+ + diffcore-pickaxe: support case insensitive match on non-ascii
+ + diffcore-pickaxe: Add regcomp_or_die()
+ + grep/pcre: support utf-8
+ + gettext: add is_utf8_locale()
+ + grep/pcre: prepare locale-dependent tables for icase matching
+ + grep: rewrite an if/else condition to avoid duplicate expression
+ + grep/icase: avoid kwsset when -F is specified
+ + grep/icase: avoid kwsset on literal non-ascii strings
+ + test-regex: expose full regcomp() to the command line
+ + test-regex: isolate the bug test code
+ + grep: break down an "if" stmt in preparation for next changes
+
+ "git grep -i" has been taught to fold case in non-ascii locales
+ correctly.
+
+
+* nd/ita-cleanup (2016-07-01) 3 commits
+  (merged to 'next' on 2016-07-06 at f15aeba)
+ + grep: fix grepping for "intent to add" files
+ + t7810-grep.sh: fix a whitespace inconsistency
+ + t7810-grep.sh: fix duplicated test name
+
+ Git does not know what the contents in the index should be for a
+ path added with "git add -N" yet, so "git grep --cached" should not
+ show hits (or show lack of hits, with -L) in such a path, but that
+ logic does not apply to "git grep", i.e. searching in the working
+ tree files.  But we did so by mistake, which has been corrected.
+
+
+* ps/rebase-i-auto-unstash-upon-abort (2016-06-29) 1 commit
+  (merged to 'next' on 2016-07-06 at 0fdcedb)
+ + rebase -i: restore autostash on abort
+
+ "git rebase -i --autostash" did not restore the auto-stashed change
+ when the operation was aborted.
+
+
+* rs/help-c-source-with-gitattributes (2016-07-07) 1 commit
+  (merged to 'next' on 2016-07-11 at b90b7d0)
+ + .gitattributes: set file type for C files
+
+ The .c/.h sources are marked as such in our .gitattributes file so
+ that "git diff -W" and friends would work better.
+
+
+* sb/submodule-parallel-fetch (2016-07-11) 3 commits
+  (merged to 'next' on 2016-07-11 at 4983ded)
+ + hoist out handle_nonblock function for xread and xwrite
+  (merged to 'next' on 2016-07-06 at de5fd35)
+ + xwrite: poll on non-blocking FDs
+ + xread: retry after poll on EAGAIN/EWOULDBLOCK
+
+ Fix recently introduced codepaths that are involved in parallel
+ submodule operations, which gave up on reading too early, and
+ could have wasted CPU while attempting to write under a corner
+ case condition.
+
+
+* va/i18n-even-more (2016-07-01) 39 commits
+  (merged to 'next' on 2016-07-01 at fa5e50e3)
+ + t5541: become resilient to GETTEXT_POISON
+  (merged to 'next' on 2016-06-28 at 5919dfa)
+ + i18n: branch: mark comment when editing branch description for translation
+ + i18n: unmark die messages for translation
+ + i18n: submodule: escape shell variables inside eval_gettext
+ + i18n: submodule: join strings marked for translation
+ + i18n: init-db: join message pieces
+ + i18n: remote: allow translations to reorder message
+ + i18n: remote: mark URL fallback text for translation
+ + i18n: standardise messages
+ + i18n: sequencer: add period to error message
+ + i18n: merge: change command option help to lowercase
+ + i18n: merge: mark messages for translation
+ + i18n: notes: mark options for translation
+ + i18n: notes: mark strings for translation
+ + i18n: transport-helper.c: change N_() call to _()
+ + i18n: bisect: mark strings for translation
+ + t5523: use test_i18ngrep for negation
+ + t4153: fix negated test_i18ngrep call
+ + t9003: become resilient to GETTEXT_POISON
+ + tests: unpack-trees: update to use test_i18n* functions
+ + tests: use test_i18n* functions to suppress false positives
+ + i18n: setup: mark strings for translation
+ + i18n: rebase-interactive: mark comments of squash for translation
+ + i18n: rebase-interactive: mark here-doc strings for translation
+ + i18n: rebase-interactive: mark strings for translation
+ + i18n: git-sh-setup.sh: mark strings for translation
+ + t6030: update to use test_i18ncmp
+ + i18n: bisect: simplify error message for i18n
+ + i18n: rebase: mark placeholder for translation
+ + i18n: rebase: fix marked string to use eval_gettext variant
+ + merge-octopus: use die shell function from git-sh-setup.sh
+ + i18n: merge-octopus: mark messages for translation
+ + i18n: sequencer: mark string for translation
+ + i18n: sequencer: mark entire sentences for translation
+ + i18n: transport: mark strings for translation
+ + i18n: advice: internationalize message for conflicts
+ + i18n: advice: mark string about detached head for translation
+ + i18n: builtin/remote.c: fix mark for translation
+ + Merge branch 'jc/t2300-setup' into HEAD
+ (this branch is used by js/am-3-merge-recursive-direct.)
+
+ More markings of messages for i18n, with updates to various tests
+ to pass GETTEXT_POISON tests.
+
+ One patch from the original submission dropped due to conflicts
+ with jk/upload-pack-hook, which is still in flux.
 
 --------------------------------------------------
 [Stalled]
@@ -203,15 +551,6 @@ of the repositories listed at
  innards without spawning the latter as a separate process.
 
  Needs review.
-
-
-* tb/convert-peek-in-index (2016-07-07) 3 commits
- . correct ce_compare_data() in a middle of a merge
- . read-cache: factor out get_sha1_from_index() helper
- - convert: unify the "auto" handling of CRLF
- (this branch is tangled with jc/renormalize-merge-kill-safer-crlf.)
-
- Tentatively replaced with jc/renormalize-merge-kill-safer-crlf
 
 
 * sb/bisect (2016-04-15) 22 commits
@@ -312,6 +651,135 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* js/am-3-merge-recursive-direct (2016-07-12) 21 commits
+ - merge-recursive: flush output buffer even when erroring out
+ - merge_trees(): ensure that the output buffer is released after calling it
+ - merge-recursive: offer an option to retain the output in 'obuf'
+ - merge-recursive: write the commit title in one go
+ - merge-recursive: flush output buffer before printing error messages
+ - am -3: use merge_recursive() directly again
+ - merge-recursive: switch to returning errors instead of dying
+ - merge-recursive: handle return values indicating errors
+ - merge-recursive: allow write_tree_from_memory() to error out
+ - merge-recursive: avoid returning a wholesale struct
+ - merge_recursive: abort properly upon errors
+ - prepare the builtins for a libified merge_recursive()
+ - merge-recursive: clarify code in was_tracked()
+ - die(_("BUG")): avoid translating bug messages
+ - die("bug"): report bugs consistently
+ - t5520: verify that `git pull --rebase` shows the advice when failing
+ - Merge branch 'jh/clean-smudge-annex' into HEAD
+ - Merge branch 'bc/cocci' into js/am-3-merge-recursive-direct
+ - Merge branch 'js/am-call-theirs-theirs-in-fallback-3way' into js/am-3-merge-recursive-direct
+ - Merge branch 'cc/apply-am' into js/am-3-merge-recursive-direct
+ - Merge branch 'va/i18n-even-more' into js/am-3-merge-recursive-direct
+ (this branch uses cc/apply-am and jh/clean-smudge-annex.)
+
+ "git am -3" calls "git merge-recursive" when it needs to fall back
+ to a three-way merge; this call has been turned into an internal
+ subroutine call instead of spawning a separate subprocess.
+
+ Will be rerolled, unless Joey says something about the interaction
+ with the other topic.
+
+
+* ls/travis-enable-httpd-tests (2016-07-12) 1 commit
+  (merged to 'next' on 2016-07-13 at 06fa12e)
+ + travis-ci: enable web server tests t55xx on Linux
+
+ Allow http daemon tests in Travis CI tests.
+
+ Will merge to 'master'.
+
+
+* nd/cache-tree-ita (2016-07-18) 4 commits
+  (merged to 'next' on 2016-07-19 at 512fd96)
+ + cache-tree: do not generate empty trees as a result of all i-t-a subentries
+ + cache-tree.c: fix i-t-a entry skipping directory updates sometimes
+ + test-lib.sh: introduce and use $EMPTY_BLOB
+ + test-lib.sh: introduce and use $EMPTY_TREE
+
+ "git add -N dir/file && git write-tree" produced an incorrect tree
+ when there are other paths in the same directory that sorts after
+ "file".
+
+ Will merge to 'master'.
+
+
+* nd/pack-ofs-4gb-limit (2016-07-13) 7 commits
+  (merged to 'next' on 2016-07-13 at 91e217d)
+ + fsck: use streaming interface for large blobs in pack
+ + pack-objects: do not truncate result in-pack object size on 32-bit systems
+ + index-pack: correct "offset" type in unpack_entry_data()
+ + index-pack: report correct bad object offsets even if they are large
+ + index-pack: correct "len" type in unpack_data()
+ + sha1_file.c: use type off_t* for object_info->disk_sizep
+ + pack-objects: pass length to check_pack_crc() without truncation
+
+ "git pack-objects" and "git index-pack" mostly operate with off_t
+ when talking about the offset of objects in a packfile, but there
+ were a handful of places that used "unsigned long" to hold that
+ value, leading to an unintended truncation.
+
+ Will merge to 'master'.
+
+
+* sb/push-options (2016-07-14) 4 commits
+  (merged to 'next' on 2016-07-19 at ee9a83a)
+ + add a test for push options
+ + push: accept push options
+ + receive-pack: implement advertising and receiving push options
+ + push options: {pre,post}-receive hook learns about push options
+
+ "git push" learned to accept and pass extra options to the
+ receiving end so that hooks can read and react to them.
+
+ Will merge to 'master'.
+
+
+* ew/http-walker (2016-07-18) 4 commits
+  (merged to 'next' on 2016-07-18 at a430a97)
+ + list: avoid incompatibility with *BSD sys/queue.h
+  (merged to 'next' on 2016-07-13 at 8585c03)
+ + http-walker: reduce O(n) ops with doubly-linked list
+ + http: avoid disconnecting on 404s for loose objects
+ + http-walker: remove unused parameter from fetch_object
+
+ Optimize dumb http transport on the client side.
+
+ Will merge to 'master'.
+
+
+* nd/log-decorate-color-head-arrow (2016-07-12) 1 commit
+ - log: decorate HEAD -> branch with the same color for arrow and HEAD
+
+ An entry "git log --decorate" for the tip of the current branch is
+ shown as "HEAD -> name" (where "name" is the name of the branch);
+ paint the arrow in the same color as "HEAD", not in the color for
+ commits.
+
+ Comments?  Personally I find it more-or-less "Meh".
+
+
+* rs/rm-strbuf-optim (2016-07-12) 1 commit
+  (merged to 'next' on 2016-07-13 at 5b71fc8)
+ + rm: reuse strbuf for all remove_dir_recursively() calls
+
+ The use of strbuf in "git rm" to build filename to remove was a bit
+ suboptimal, which has been fixed.
+
+ Will merge to 'master'.
+
+
+* rs/worktree-use-strbuf-absolute-path (2016-07-12) 1 commit
+  (merged to 'next' on 2016-07-13 at e8c9c02)
+ + worktree: use strbuf_add_absolute_path() directly
+
+ Code simplification.
+
+ Will merge to 'master'.
+
+
 * jh/clean-smudge-annex (2016-07-12) 9 commits
  - use smudgeToFile filter in recursive merge
  - use smudgeToFile filter in git am
@@ -334,61 +802,56 @@ of the repositories listed at
 
 
 * js/ignore-space-at-eol (2016-07-11) 2 commits
- - diff: fix a double off-by-one with --ignore-space-at-eol
- - diff: demonstrate a bug with --patience and --ignore-space-at-eol
+  (merged to 'next' on 2016-07-13 at 429dd83)
+ + diff: fix a double off-by-one with --ignore-space-at-eol
+ + diff: demonstrate a bug with --patience and --ignore-space-at-eol
 
  An age old bug that caused "git diff --ignore-space-at-eol"
  misbehave has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/rebase-i-tests (2016-07-07) 3 commits
- - rebase -i: we allow extra spaces after fixup!/squash!
- - rebase -i: demonstrate a bug with --autosquash
- - t3404: add a test for the --gpg-sign option
+  (merged to 'next' on 2016-07-13 at b06b28f)
+ + rebase -i: we allow extra spaces after fixup!/squash!
+ + rebase -i: demonstrate a bug with --autosquash
+ + t3404: add a test for the --gpg-sign option
 
  A few tests that specifically target "git rebase -i" have been
  added.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/renormalize-merge-kill-safer-crlf (2016-07-12) 2 commits
- - merge: avoid "safer crlf" during recording of merge results
- - convert: unify the "auto" handling of CRLF
+  (merged to 'next' on 2016-07-13 at c243dd6)
+ + merge: avoid "safer crlf" during recording of merge results
+ + convert: unify the "auto" handling of CRLF
  (this branch is tangled with tb/convert-peek-in-index.)
 
  "git merge" with renormalization did not work well with
  merge-recursive, due to "safer crlf" conversion kicking in when it
  shouldn't.
 
- Will merge to 'next', but extra set of eyes are appreciated.
-
-
-* rs/help-c-source-with-gitattributes (2016-07-07) 1 commit
-  (merged to 'next' on 2016-07-11 at b90b7d0)
- + .gitattributes: set file type for C files
-
- The .c/.h sources are marked as such in our .gitattributes file so
- that "git diff -W" and friends would work better.
-
  Will merge to 'master'.
 
 
 * rs/notes-merge-no-toctou (2016-07-07) 1 commit
- - notes-merge: use O_EXCL to avoid overwriting existing files
+  (merged to 'next' on 2016-07-13 at f08b530)
+ + notes-merge: use O_EXCL to avoid overwriting existing files
 
  "git notes merge" had a code to see if a path exists (and fails if
  it does) and then open the path for writing (when it doesn't).
  Replace it with open with O_EXCL.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rw/make-needs-librt (2016-07-11) 2 commits
- - config.mak.uname: define NEEDS_LIBRT under Linux, for now
- - Makefile: add NEEDS_LIBRT to optionally link with librt
+  (merged to 'next' on 2016-07-13 at 7fafd37)
+ + config.mak.uname: define NEEDS_LIBRT under Linux, for now
+ + Makefile: add NEEDS_LIBRT to optionally link with librt
 
  Makefile assumed that -lrt is always available on platforms that
  want to use clock_gettime() and CLOCK_MONOTONIC, which is not a
@@ -402,135 +865,27 @@ of the repositories listed at
  specify -lrt, as they now specifically ask for NEEDS_LIBRT when
  building. Hopefully they are in the minority these days.
 
- Will merge to 'next'.
-
-
-* jk/printf-format (2016-07-08) 3 commits
-  (merged to 'next' on 2016-07-11 at 731eafb)
- + commit.c: remove print_commit_list()
- + avoid using sha1_to_hex output as printf format
- + walker: let walker_say take arbitrary formats
-
- Code clean-up to avoid using a variable string that compilers may
- feel untrustable as printf-style format given to write_file()
- helper function.
-
  Will merge to 'master'.
 
 
-* jk/write-file (2016-07-08) 9 commits
-  (merged to 'next' on 2016-07-11 at f51b449)
- + branch: use write_file_buf instead of write_file
- + use write_file_buf where applicable
- + write_file: add format attribute
- + write_file: add pointer+len variant
- + write_file: use xopen
- + write_file: drop "gently" form
- + branch: use non-gentle write_file for branch description
- + am: ignore return value of write_file()
- + config: fix bogus fd check when setting up default config
-
- General code clean-up around a helper function to write a
- single-liner to a file.
-
- Will merge to 'master'.
-
- While it is textually independent, jk/printf-format needs to be
- merged before this one.
-
-
-* js/am-call-theirs-theirs-in-fallback-3way (2016-07-08) 1 commit
-  (merged to 'next' on 2016-07-11 at abae4bc)
- + am: counteract gender bias
- (this branch is used by js/am-3-merge-recursive-direct.)
-
- One part of "git am" had an oddball helper function that called
- stuff from outside "his" as opposed to calling what we have "ours",
- which was not gender-neutral and also inconsistent with the rest of
- the system where outside stuff is usuall called "theirs" in
- contrast to "ours".
-
- Will merge to 'master'.
-
-
-* ak/lazy-prereq-mktemp (2016-07-06) 1 commit
-  (merged to 'next' on 2016-07-11 at 66a9384)
- + t7610: test for mktemp before test execution
-
- A test that unconditionally used "mktemp" learned that the command
- is not necessarily available everywhere.
-
- Will merge to 'master'.
-
-
-* jk/difftool-in-subdir (2016-07-06) 1 commit
+* jk/difftool-in-subdir (2016-07-19) 4 commits
+ - difftool: use Git::* functions instead of passing around state
+ - SQUASH???
+ - difftool: avoid $GIT_DIR and $GIT_WORK_TREE
  - difftool: fix argument handling in subdirs
 
  "git difftool <paths>..." started in a subdirectory failed to
  interpret the paths relative to that directory, which has been
  fixed.
 
- Favourably reviewed with some questions and a request for new tests.
- ($gmane/299319)
-
 
 * nd/test-helpers (2016-07-11) 3 commits
- - t/test-lib.sh: fix running tests with --valgrind
- - Makefile: use VCSSVN_LIB to refer to svn library
- - Makefile: drop extra dependencies for test helpers
+  (merged to 'next' on 2016-07-19 at 78ef465)
+ + t/test-lib.sh: fix running tests with --valgrind
+ + Makefile: use VCSSVN_LIB to refer to svn library
+ + Makefile: drop extra dependencies for test helpers
 
  Build clean-up.
-
- Will merge to 'next'.
-
-
-* dk/blame-move-no-reason-for-1-line-context (2016-05-29) 1 commit
-  (merged to 'next' on 2016-07-06 at 087490c)
- + blame: require 0 context lines while finding moved lines with -M
-
- "git blame -M" missed a single line that was moved within the file.
-
- We may want to squash a test or two to this commit.  Volunteers?
-
-
-* jk/common-main (2016-07-06) 1 commit
-  (merged to 'next' on 2016-07-11 at 1c2228a)
- + Merge branch 'jk/common-main-2.8' into jk/common-main
- (this branch uses jk/common-main-2.8.)
-
- Prepare jk/commin-main-2.8 topic to be mergeable to 2.9 and later.
-
- Will merge to 'master'.
-
-
-* jk/common-main-2.8 (2016-07-06) 6 commits
- + mingw: declare main()'s argv as const
- + common-main: call git_setup_gettext()
- + common-main: call restore_sigpipe_to_default()
- + common-main: call sanitize_stdfds()
- + common-main: call git_extract_argv0_path()
- + add an extra level of indirection to main()
- (this branch is used by jk/common-main.)
-
- There are certain house-keeping tasks that need to be performed at
- the very beginning of any Git program, and programs that are not
- built-in commands had to do them exactly the same way as "git"
- potty does.  It was easy to make mistakes in one-off standalone
- programs (like test helpers).  A common "main()" function that
- calls cmd_main() of individual program has been introduced to
- make it harder to make mistakes.
-
-
-* nd/ita-cleanup (2016-07-01) 3 commits
-  (merged to 'next' on 2016-07-06 at f15aeba)
- + grep: fix grepping for "intent to add" files
- + t7810-grep.sh: fix a whitespace inconsistency
- + t7810-grep.sh: fix duplicated test name
-
- Git does not know what the contents in the index should be for a
- path added with "git add -N" yet, so "git grep --cached" should not
- show hits (or show lack of hits, with -L) in such a path.  But we
- did by mistake, which has been corrected.
 
  Will merge to 'master'.
 
@@ -544,36 +899,6 @@ of the repositories listed at
  Needs review.
 
 
-* js/sign-empty-commit-fix (2016-06-29) 1 commit
-  (merged to 'next' on 2016-07-06 at 448da1b)
- + commit -S: avoid invalid pointer with empty message
-
- "git commit --amend --allow-empty-message -S" for a commit without
- any message body could have misidentified where the header of the
- commit object ends.
-
- Will merge to 'master'.
-
-
-* js/t3404-grammo-fix (2016-06-29) 1 commit
-  (merged to 'next' on 2016-07-06 at 4378654)
- + t3404: fix a grammo (commands are ran -> commands are run)
-
- Grammofix.
-
- Will merge to 'master'.
-
-
-* ls/p4-tmp-refs (2016-07-08) 1 commit
-  (merged to 'next' on 2016-07-11 at 4af2d93)
- + git-p4: place temporary refs used for branch import under refs/git-p4-tmp
-
- "git p4" used a location outside $GIT_DIR/refs/ to place its
- temporary branches, which has been moved to refs/git-p4-tmp/.
-
- Will merge to 'master'.
-
-
 * jc/pull-rebase-ff (2016-06-29) 1 commit
  -   pull: fast-forward "pull --rebase=true"
 
@@ -582,78 +907,6 @@ of the repositories listed at
  invoking "git rebase", but it didn't.
 
  Needs a real log message and a few tests.
-
-
-* ps/rebase-i-auto-unstash-upon-abort (2016-06-29) 1 commit
-  (merged to 'next' on 2016-07-06 at 0fdcedb)
- + rebase -i: restore autostash on abort
-
- "git rebase -i --autostash" did not restore the auto-stashed change
- when the operation was aborted.
-
- Will merge to 'master'.
-
-
-* dg/subtree-rebase-test (2016-06-28) 1 commit
-  (merged to 'next' on 2016-07-06 at 4dec1ad)
- + contrib/subtree: Add a test for subtree rebase that loses commits
-
- This is just a test to specify the desired behaviour that currently
- is not available.
-
- Will merge to 'master'.
-
-
-* jk/test-match-signal (2016-07-06) 4 commits
-  (merged to 'next' on 2016-07-11 at 54e1462)
- + t/lib-git-daemon: use test_match_signal
- + test_must_fail: use test_match_signal
- + t0005: use test_match_signal as appropriate
- + tests: factor portable signal check out of t0005
-
- The test framework learned a new helper test_match_signal to check
- an exit code from getting killed by an expected signal.
-
- Will merge to 'master'.
-
-
-* ah/unpack-trees-advice-messages (2016-06-27) 1 commit
-  (merged to 'next' on 2016-07-06 at 4254fc2)
- + unpack-trees: fix English grammar in do-this-before-that messages
-
- Grammofix.
-
- Will merge to 'master'.
-
-
-* ew/gc-auto-pack-limit-fix (2016-06-27) 1 commit
-  (merged to 'next' on 2016-07-06 at aa023d3)
- + gc: fix off-by-one error with gc.autoPackLimit
-
- "gc.autoPackLimit" when set to 1 should not trigger a repacking
- when there is only one pack, but the code counted poorly and did
- so.
-
- Will merge to 'master'.
-
-
-* nd/connect-ssh-command-config (2016-07-06) 1 commit
-  (merged to 'next' on 2016-07-06 at 6eac316)
- + connect: read $GIT_SSH_COMMAND from config file
-
- A new configuration variable core.sshCommand to specify what value
- for GIT_SSH_COMMAND to use per repository.
-
- Will merge to 'master'.
-
-
-* nd/doc-new-command (2016-06-27) 1 commit
-  (merged to 'next' on 2016-07-06 at 1404b64)
- + new-command.txt: correct the command description file
-
- Typofix in a doc.
-
- Will merge to 'master'.
 
 
 * po/range-doc (2016-07-01) 3 commits
@@ -671,53 +924,9 @@ of the repositories listed at
  review discussion.  Otherwise looked good.
 
 
-* sb/submodule-parallel-fetch (2016-07-11) 3 commits
-  (merged to 'next' on 2016-07-11 at 4983ded)
- + hoist out handle_nonblock function for xread and xwrite
-  (merged to 'next' on 2016-07-06 at de5fd35)
- + xwrite: poll on non-blocking FDs
- + xread: retry after poll on EAGAIN/EWOULDBLOCK
-
- Fix a recently introduced codepaths that are involved in parallel
- submodule operations, which gave up on reading too early, and
- could have wasted CPU while attempting to write under a corner case
- condition.
-
- Will merge to 'master'.
-
-
-* mm/doc-tt (2016-06-28) 7 commits
-  (merged to 'next' on 2016-07-06 at a8c74bd)
- + doc: typeset HEAD and variants as literal
- + CodingGuidelines: formatting HEAD in documentation
- + doc: typeset long options with argument as literal
- + doc: typeset '--' as literal
- + doc: typeset long command-line options as literal
- + doc: typeset short command-line options as literal
- + Documentation/git-mv.txt: fix whitespace indentation
-
- More mark-up updates to typeset strings that are expected to
- literally typed by the end user in fixed-width font.
-
- Will merge to 'master'.
-
-
-* nd/fetch-ref-summary (2016-07-06) 5 commits
-  (merged to 'next' on 2016-07-11 at 379df9f)
- + fetch: reduce duplicate in ref update status lines with placeholder
- + fetch: align all "remote -> local" output
- + fetch: change flag code for displaying tag update and deleted ref
- + fetch: refactor ref update status formatting code
- + git-fetch.txt: document fetch output
-
- Improve the look of the way "git fetch" reports what happened to
- each ref that was fetched.
-
- Will merge to 'master'.
-
-
 * ex/deprecate-empty-pathspec-as-match-all (2016-06-22) 1 commit
- - pathspec: warn on empty strings as pathspec
+  (merged to 'next' on 2016-07-13 at d9ca7fb)
+ + pathspec: warn on empty strings as pathspec
 
  An empty string used as a pathspec element has always meant
  'everything matches', but it is too easy to write a script that
@@ -730,28 +939,7 @@ of the repositories listed at
  eventually the warning can be turned into a hard error, upgrading
  the deprecation into removal of this (mis)feature.
 
- Will merge to 'next'.
-
-
-* nd/icase (2016-07-01) 12 commits
-  (merged to 'next' on 2016-07-11 at a00d080)
- + grep.c: reuse "icase" variable
- + diffcore-pickaxe: support case insensitive match on non-ascii
- + diffcore-pickaxe: Add regcomp_or_die()
- + grep/pcre: support utf-8
- + gettext: add is_utf8_locale()
- + grep/pcre: prepare locale-dependent tables for icase matching
- + grep: rewrite an if/else condition to avoid duplicate expression
- + grep/icase: avoid kwsset when -F is specified
- + grep/icase: avoid kwsset on literal non-ascii strings
- + test-regex: expose full regcomp() to the command line
- + test-regex: isolate the bug test code
- + grep: break down an "if" stmt in preparation for next changes
-
- "git grep -i" has been taught to fold case in non-ascii locales
- correctly.
-
- Will merge to 'master'.
+ Will hold to see if people scream.
 
 
 * mh/ref-store (2016-06-20) 38 commits
@@ -803,87 +991,17 @@ of the repositories listed at
 
 
 * mh/update-ref-errors (2016-06-20) 6 commits
- - lock_ref_for_update(): avoid a symref resolution
- - lock_ref_for_update(): make error handling more uniform
- - t1404: add more tests of update-ref error handling
- - t1404: document function test_update_rejected
- - t1404: remove "prefix" argument to test_update_rejected
- - t1404: rename file to t1404-update-ref-errors.sh
+  (merged to 'next' on 2016-07-13 at 53482fa)
+ + lock_ref_for_update(): avoid a symref resolution
+ + lock_ref_for_update(): make error handling more uniform
+ + t1404: add more tests of update-ref error handling
+ + t1404: document function test_update_rejected
+ + t1404: remove "prefix" argument to test_update_rejected
+ + t1404: rename file to t1404-update-ref-errors.sh
  (this branch uses mh/split-under-lock; is tangled with mh/ref-iterators and mh/ref-store.)
 
  Error handling in the codepaths that updates refs has been
  improved.
-
- Will merge to 'next'.
-
-
-* js/log-to-diffopt-file (2016-07-11) 12 commits
- - mingw: fix the shortlog --output=<file> test
-  (merged to 'next' on 2016-07-06 at 39e7a5f)
- + diff: do not color output when --color=auto and --output=<file> is given
- + t4211: ensure that log respects --output=<file>
- + shortlog: respect the --output=<file> setting
- + format-patch: use stdout directly
- + format-patch: avoid freopen()
- + format-patch: explicitly switch off color when writing to files
- + shortlog: support outputting to streams other than stdout
- + graph: respect the diffopt.file setting
- + line-log: respect diffopt's configured output file stream
- + log-tree: respect diffopt's configured output file stream
- + log: prepare log/log-tree to reuse the diffopt.close_file attribute
-
- The commands in the "log/diff" family had an FILE* pointer in the
- data structure they pass around for a long time, but some codepaths
- used to always write to the standard output.  As a preparatory step
- to make "git format-patch" available to the internal callers, these
- codepaths have been updated to consistently write into that FILE*
- instead.
-
- Will merge to 'master'.
-
-
-* bc/cocci (2016-06-28) 11 commits
-  (merged to 'next' on 2016-07-06 at f2e8e2a)
- + diff: convert prep_temp_blob() to struct object_id
- + merge-recursive: convert merge_recursive_generic() to object_id
- + merge-recursive: convert leaf functions to use struct object_id
- + merge-recursive: convert struct merge_file_info to object_id
- + merge-recursive: convert struct stage_data to use object_id
- + diff: rename struct diff_filespec's sha1_valid member
- + diff: convert struct diff_filespec to struct object_id
- + coccinelle: apply object_id Coccinelle transformations
- + coccinelle: convert hashcpy() with null_sha1 to hashclr()
- + contrib/coccinelle: add basic Coccinelle transforms
- + hex: add oid_to_hex_r()
- (this branch is used by js/am-3-merge-recursive-direct.)
-
- Conversion from unsigned char sha1[20] to struct object_id
- continues.
-
- Will merge to 'master'.
-
-
-* jk/big-and-future-archive-tar (2016-07-01) 5 commits
-  (merged to 'next' on 2016-07-06 at 89f3835)
- + archive-tar: drop return value
- + archive-tar: write extended headers for far-future mtime
- + archive-tar: write extended headers for file sizes >= 8GB
- + t5000: test tar files that overflow ustar headers
- + t9300: factor out portable "head -c" replacement
-
- "git archive" learned to handle files that are larger than 8GB and
- commits far in the future than expressible by the traditional US-TAR
- format.
-
- Will merge to 'master'.
-
-
-* lf/recv-sideband-cleanup (2016-07-06) 2 commits
-  (merged to 'next' on 2016-07-06 at d527bcb)
- + sideband.c: small optimization of strbuf usage
- + sideband.c: refactor recv_sideband()
-
- Code simplification.
 
  Will merge to 'master'.
 
@@ -961,25 +1079,26 @@ of the repositories listed at
 
 
 * mh/ref-iterators (2016-06-20) 13 commits
- - for_each_reflog(): reimplement using iterators
- - dir_iterator: new API for iterating over a directory tree
- - for_each_reflog(): don't abort for bad references
- - do_for_each_ref(): reimplement using reference iteration
- - refs: introduce an iterator interface
- - ref_resolves_to_object(): new function
- - entry_resolves_to_object(): rename function from ref_resolves_to_object()
- - get_ref_cache(): only create an instance if there is a submodule
- - remote rm: handle symbolic refs correctly
- - delete_refs(): add a flags argument
- - refs: use name "prefix" consistently
- - do_for_each_ref(): move docstring to the header file
- - refs: remove unnecessary "extern" keywords
+  (merged to 'next' on 2016-07-13 at a5b4e62)
+ + for_each_reflog(): reimplement using iterators
+ + dir_iterator: new API for iterating over a directory tree
+ + for_each_reflog(): don't abort for bad references
+ + do_for_each_ref(): reimplement using reference iteration
+ + refs: introduce an iterator interface
+ + ref_resolves_to_object(): new function
+ + entry_resolves_to_object(): rename function from ref_resolves_to_object()
+ + get_ref_cache(): only create an instance if there is a submodule
+ + remote rm: handle symbolic refs correctly
+ + delete_refs(): add a flags argument
+ + refs: use name "prefix" consistently
+ + do_for_each_ref(): move docstring to the header file
+ + refs: remove unnecessary "extern" keywords
  (this branch is used by mh/ref-store; uses mh/split-under-lock; is tangled with mh/update-ref-errors.)
 
  The API to iterate over all the refs (i.e. for_each_ref(), etc.)
  has been revamped.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mh/connect (2016-06-06) 10 commits
@@ -1000,73 +1119,21 @@ of the repositories listed at
  Comments?
 
 
-* va/i18n-even-more (2016-07-01) 39 commits
-  (merged to 'next' on 2016-07-01 at fa5e50e3)
- + t5541: become resilient to GETTEXT_POISON
-  (merged to 'next' on 2016-06-28 at 5919dfa)
- + i18n: branch: mark comment when editing branch description for translation
- + i18n: unmark die messages for translation
- + i18n: submodule: escape shell variables inside eval_gettext
- + i18n: submodule: join strings marked for translation
- + i18n: init-db: join message pieces
- + i18n: remote: allow translations to reorder message
- + i18n: remote: mark URL fallback text for translation
- + i18n: standardise messages
- + i18n: sequencer: add period to error message
- + i18n: merge: change command option help to lowercase
- + i18n: merge: mark messages for translation
- + i18n: notes: mark options for translation
- + i18n: notes: mark strings for translation
- + i18n: transport-helper.c: change N_() call to _()
- + i18n: bisect: mark strings for translation
- + t5523: use test_i18ngrep for negation
- + t4153: fix negated test_i18ngrep call
- + t9003: become resilient to GETTEXT_POISON
- + tests: unpack-trees: update to use test_i18n* functions
- + tests: use test_i18n* functions to suppress false positives
- + i18n: setup: mark strings for translation
- + i18n: rebase-interactive: mark comments of squash for translation
- + i18n: rebase-interactive: mark here-doc strings for translation
- + i18n: rebase-interactive: mark strings for translation
- + i18n: git-sh-setup.sh: mark strings for translation
- + t6030: update to use test_i18ncmp
- + i18n: bisect: simplify error message for i18n
- + i18n: rebase: mark placeholder for translation
- + i18n: rebase: fix marked string to use eval_gettext variant
- + merge-octopus: use die shell function from git-sh-setup.sh
- + i18n: merge-octopus: mark messages for translation
- + i18n: sequencer: mark string for translation
- + i18n: sequencer: mark entire sentences for translation
- + i18n: transport: mark strings for translation
- + i18n: advice: internationalize message for conflicts
- + i18n: advice: mark string about detached head for translation
- + i18n: builtin/remote.c: fix mark for translation
- + Merge branch 'jc/t2300-setup' into HEAD
- (this branch is used by js/am-3-merge-recursive-direct.)
-
- More markings of messages for i18n, with updates to various tests
- to pass GETTEXT_POISON tests.
-
- One patch from the original submission dropped due to conflicts
- with jk/upload-pack-hook, which is still in flux.
-
- Will merge to 'master'.
-
-
 * nd/worktree-lock (2016-07-08) 6 commits
- - worktree.c: find_worktree() search by path suffix
- - worktree: add "unlock" command
- - worktree: add "lock" command
- - worktree.c: add is_worktree_locked()
- - worktree.c: add is_main_worktree()
- - worktree.c: add find_worktree()
+  (merged to 'next' on 2016-07-13 at c768a85)
+ + worktree.c: find_worktree() search by path suffix
+ + worktree: add "unlock" command
+ + worktree: add "lock" command
+ + worktree.c: add is_worktree_locked()
+ + worktree.c: add is_main_worktree()
+ + worktree.c: add find_worktree()
 
  "git worktree prune" protected worktrees that are marked as
  "locked" by creating a file in a known location.  "git worktree"
  command learned a dedicated command pair to create and remoev such
  a file, so that the users do not have to do this with editor.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/submodule-default-paths (2016-06-20) 5 commits
@@ -1125,6 +1192,10 @@ of the repositories listed at
 
  GSoC "bisect" topic.
 
+ Are people happy with this version?  How much of the planned
+ "porting" is finished by this part of the work?  How much more to
+ go?
+
 
 * sb/pathspec-label (2016-06-03) 6 commits
  - pathspec: disable preload-index when attribute pathspec magic is in use
@@ -1143,45 +1214,46 @@ of the repositories listed at
 
 
 * mh/split-under-lock (2016-06-13) 33 commits
- - lock_ref_sha1_basic(): only handle REF_NODEREF mode
- - commit_ref_update(): remove the flags parameter
- - lock_ref_for_update(): don't resolve symrefs
- - lock_ref_for_update(): don't re-read non-symbolic references
- - refs: resolve symbolic refs first
- - ref_transaction_update(): check refname_is_safe() at a minimum
- - unlock_ref(): move definition higher in the file
- - lock_ref_for_update(): new function
- - add_update(): initialize the whole ref_update
- - verify_refname_available(): adjust constness in declaration
- - refs: don't dereference on rename
- - refs: allow log-only updates
- - delete_branches(): use resolve_refdup()
- - ref_transaction_commit(): correctly report close_ref() failure
- - ref_transaction_create(): disallow recursive pruning
- - refs: make error messages more consistent
- - lock_ref_sha1_basic(): remove unneeded local variable
- - read_raw_ref(): move docstring to header file
- - read_raw_ref(): improve docstring
- - read_raw_ref(): rename symref argument to referent
- - read_raw_ref(): clear *type at start of function
- - read_raw_ref(): rename flags argument to type
- - ref_transaction_commit(): remove local variables n and updates
- - rename_ref(): remove unneeded local variable
- - commit_ref_update(): write error message to *err, not stderr
- - refname_is_safe(): insist that the refname already be normalized
- - refname_is_safe(): don't allow the empty string
- - refname_is_safe(): use skip_prefix()
- - remove_dir_recursively(): add docstring
- - safe_create_leading_directories(): improve docstring
- - read_raw_ref(): don't get confused by an empty directory
- - commit_ref(): if there is an empty dir in the way, delete it
- - t1404: demonstrate a bug resolving references
+  (merged to 'next' on 2016-07-13 at aa598af)
+ + lock_ref_sha1_basic(): only handle REF_NODEREF mode
+ + commit_ref_update(): remove the flags parameter
+ + lock_ref_for_update(): don't resolve symrefs
+ + lock_ref_for_update(): don't re-read non-symbolic references
+ + refs: resolve symbolic refs first
+ + ref_transaction_update(): check refname_is_safe() at a minimum
+ + unlock_ref(): move definition higher in the file
+ + lock_ref_for_update(): new function
+ + add_update(): initialize the whole ref_update
+ + verify_refname_available(): adjust constness in declaration
+ + refs: don't dereference on rename
+ + refs: allow log-only updates
+ + delete_branches(): use resolve_refdup()
+ + ref_transaction_commit(): correctly report close_ref() failure
+ + ref_transaction_create(): disallow recursive pruning
+ + refs: make error messages more consistent
+ + lock_ref_sha1_basic(): remove unneeded local variable
+ + read_raw_ref(): move docstring to header file
+ + read_raw_ref(): improve docstring
+ + read_raw_ref(): rename symref argument to referent
+ + read_raw_ref(): clear *type at start of function
+ + read_raw_ref(): rename flags argument to type
+ + ref_transaction_commit(): remove local variables n and updates
+ + rename_ref(): remove unneeded local variable
+ + commit_ref_update(): write error message to *err, not stderr
+ + refname_is_safe(): insist that the refname already be normalized
+ + refname_is_safe(): don't allow the empty string
+ + refname_is_safe(): use skip_prefix()
+ + remove_dir_recursively(): add docstring
+ + safe_create_leading_directories(): improve docstring
+ + read_raw_ref(): don't get confused by an empty directory
+ + commit_ref(): if there is an empty dir in the way, delete it
+ + t1404: demonstrate a bug resolving references
  (this branch is used by mh/ref-iterators, mh/ref-store and mh/update-ref-errors.)
 
  Further preparatory work on the refs API before the pluggable
  backend series can land.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kn/ref-filter-branch-list (2016-05-17) 17 commits
@@ -1238,10 +1310,8 @@ of the repositories listed at
  optionally interface with the watchman daemon to further reduce the
  refresh cost.
 
- Will merge to 'next'.
-
- Is everybody happy with this version?
- At v14.
+ Not quite ready yet, it seems.
+ ($gmane/298949, $gmane/299506)
 
 
 * jc/bundle (2016-03-03) 6 commits
@@ -1281,3 +1351,12 @@ of the repositories listed at
  . git-svn: warn instead of dying when commit data is missing
 
  Pulled directly from upstream hence discarded.
+
+
+* tb/convert-peek-in-index (2016-07-07) 3 commits
+ . correct ce_compare_data() in a middle of a merge
+ . read-cache: factor out get_sha1_from_index() helper
+ + convert: unify the "auto" handling of CRLF
+ (this branch is tangled with jc/renormalize-merge-kill-safer-crlf.)
+
+ Discarded and replaced by jc/renormalize-merge-kill-safer-crlf
