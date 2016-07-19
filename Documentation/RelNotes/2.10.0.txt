@@ -81,6 +81,9 @@ UI, Workflows & Features
    format.
    (merge 5caeeb8 jk/big-and-future-archive-tar later to maint).
 
+ * A new configuration variable core.sshCommand has been added to
+   specify what value for GIT_SSH_COMMAND to use per repository.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -140,6 +143,31 @@ Performance, Internal Implementation, Development Support etc.
 
  * Allow t/perf framework to use the features from the most recent
    version of Git even when testing an older installed version.
+
+ * The commands in the "log/diff" family have had an FILE* pointer in the
+   data structure they pass around for a long time, but some codepaths
+   used to always write to the standard output.  As a preparatory step
+   to make "git format-patch" available to the internal callers, these
+   codepaths have been updated to consistently write into that FILE*
+   instead.
+
+ * Conversion from unsigned char sha1[20] to struct object_id
+   continues.
+
+ * Improve the look of the way "git fetch" reports what happened to
+   each ref that was fetched.
+   (merge bc437d1 nd/fetch-ref-summary later to maint).
+
+ * The .c/.h sources are marked as such in our .gitattributes file so
+   that "git diff -W" and friends would work better.
+   (merge e82675a rs/help-c-source-with-gitattributes later to maint).
+
+ * Code clean-up to avoid using a variable string that compilers may
+   feel untrustable as printf-style format given to write_file()
+   helper function.
+
+ * "git p4" used a location outside $GIT_DIR/refs/ to place its
+   temporary branches, which has been moved to refs/git-p4-tmp/.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -280,6 +308,47 @@ notes for details).
    tree files.  But we did so by mistake, which has been corrected.
    (merge b8e47d1 nd/ita-cleanup later to maint).
 
+ * "git blame -M" missed a single line that was moved within the file.
+   (merge 17a07e2 dk/blame-move-no-reason-for-1-line-context later to maint).
+
+ * Fix recently introduced codepaths that are involved in parallel
+   submodule operations, which gave up on reading too early, and
+   could have wasted CPU while attempting to write under a corner
+   case condition.
+   (merge d751dd1 sb/submodule-parallel-fetch later to maint).
+
+ * "git grep -i" has been taught to fold case in non-ascii locales
+   correctly.
+   (merge 695f95b nd/icase later to maint).
+
+ * A test that unconditionally used "mktemp" learned that the command
+   is not necessarily available everywhere.
+   (merge c578a09 ak/lazy-prereq-mktemp later to maint).
+
+ * There are certain house-keeping tasks that need to be performed at
+   the very beginning of any Git program, and programs that are not
+   built-in commands had to do them exactly the same way as "git"
+   potty does.  It was easy to make mistakes in one-off standalone
+   programs (like test helpers).  A common "main()" function that
+   calls cmd_main() of individual program has been introduced to
+   make it harder to make mistakes.
+   (merge de61ceb jk/common-main later to maint).
+
+ * The test framework learned a new helper test_match_signal to
+   check an exit code from getting killed by an expected signal.
+   (merge 03c39b3 jk/test-match-signal later to maint).
+
+ * General code clean-up around a helper function to write a
+   single-liner to a file.
+   (merge 7eb6e10 jk/write-file later to maint).
+
+ * One part of "git am" had an oddball helper function that called
+   stuff from outside "his" as opposed to calling what we have "ours",
+   which was not gender-neutral and also inconsistent with the rest of
+   the system where outside stuff is usuall called "theirs" in
+   contrast to "ours".
+   (merge 715a51b js/am-call-theirs-theirs-in-fallback-3way later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge e51b0df pb/commit-editmsg-path later to maint).
    (merge b333d0d jk/send-pack-stdio later to maint).
@@ -287,3 +356,4 @@ notes for details).
    (merge c2691e2 ah/unpack-trees-advice-messages later to maint).
    (merge 82f6178 nd/doc-new-command later to maint).
    (merge fa90ab4 js/t3404-grammo-fix later to maint).
+   (merge c61b2af lf/recv-sideband-cleanup later to maint).
