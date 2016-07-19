@@ -99,4 +99,11 @@ test_expect_success '-L with --first-parent and a merge' '
 	git log --first-parent -L 1,1:b.c
 '
 
+test_expect_success '-L with --output' '
+	git checkout parallel-change &&
+	git log --output=log -L :main:b.c >output &&
+	test ! -s output &&
+	test_line_count = 70 log
+'
+
 test_done
