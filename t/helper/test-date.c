@@ -6,7 +6,7 @@ static const char *usage_msg = "\n"
 "  test-date parse [date]...\n"
 "  test-date approxidate [date]...\n";
 
-static void show_relative_dates(char **argv, struct timeval *now)
+static void show_relative_dates(const char **argv, struct timeval *now)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -18,13 +18,13 @@ static void show_relative_dates(char **argv, struct timeval *now)
 	strbuf_release(&buf);
 }
 
-static void show_dates(char **argv, const char *format)
+static void show_dates(const char **argv, const char *format)
 {
 	struct date_mode mode;
 
 	parse_date_format(format, &mode);
 	for (; *argv; argv++) {
-		char *arg = *argv;
+		char *arg;
 		time_t t;
 		int tz;
 
@@ -32,7 +32,7 @@ static void show_dates(char **argv, const char *format)
 		 * Do not use our normal timestamp parsing here, as the point
 		 * is to test the formatting code in isolation.
 		 */
-		t = strtol(arg, &arg, 10);
+		t = strtol(*argv, &arg, 10);
 		while (*arg == ' ')
 			arg++;
 		tz = atoi(arg);
@@ -41,7 +41,7 @@ static void show_dates(char **argv, const char *format)
 	}
 }
 
-static void parse_dates(char **argv, struct timeval *now)
+static void parse_dates(const char **argv, struct timeval *now)
 {
 	struct strbuf result = STRBUF_INIT;
 
@@ -60,7 +60,7 @@ static void parse_dates(char **argv, struct timeval *now)
 	strbuf_release(&result);
 }
 
-static void parse_approxidate(char **argv, struct timeval *now)
+static void parse_approxidate(const char **argv, struct timeval *now)
 {
 	for (; *argv; argv++) {
 		time_t t;
@@ -69,7 +69,7 @@ static void parse_approxidate(char **argv, struct timeval *now)
 	}
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct timeval now;
 	const char *x;

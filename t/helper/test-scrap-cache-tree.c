@@ -5,7 +5,7 @@
 
 static struct lock_file index_lock;
 
-int main(int ac, char **av)
+int cmd_main(int ac, const char **av)
 {
 	hold_locked_index(&index_lock, 1);
 	if (read_cache() < 0)

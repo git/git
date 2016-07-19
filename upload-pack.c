@@ -828,7 +828,7 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-int main(int argc, const char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char *dir;
 	int strict = 0;
@@ -844,10 +844,7 @@ int main(int argc, const char **argv)
 		OPT_END()
 	};
 
-	git_setup_gettext();
-
 	packet_trace_identity("upload-pack");
-	git_extract_argv0_path(argv[0]);
 	check_replace_refs = 0;
 
 	argc = parse_options(argc, argv, NULL, options, upload_pack_usage, 0);

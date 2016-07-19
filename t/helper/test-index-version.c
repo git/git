@@ -1,6 +1,6 @@
 #include "cache.h"
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct cache_header hdr;
 	int version;
