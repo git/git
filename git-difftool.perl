@@ -83,20 +83,17 @@ sub changed_files
 {
 	my ($repo_path, $index, $worktree) = @_;
 	$ENV{GIT_INDEX_FILE} = $index;
-	$ENV{GIT_WORK_TREE} = $worktree;
-	my $must_unset_git_dir = 0;
-	if (not defined($ENV{GIT_DIR})) {
-		$must_unset_git_dir = 1;
-		$ENV{GIT_DIR} = $repo_path;
-	}
 
-	my @refreshargs = qw/update-index --really-refresh -q --unmerged/;
-	my @gitargs = qw/diff-files --name-only -z/;
+	my @gitargs = ('--git-dir', $repo_path, '--work-tree', $worktree);
+	my @refreshargs = (
+		@gitargs, 'update-index',
+		'--really-refresh', '-q', '--unmerged');
 	try {
 		Git::command_oneline(@refreshargs);
 	} catch Git::Error::Command with {};
 
-	my $line = Git::command_oneline(@gitargs);
+	my @diffargs = (@gitargs, 'diff-files', '--name-only', '-z');
+	my $line = Git::command_oneline(@diffargs);
 	my @files;
 	if (defined $line) {
 		@files = split('\0', $line);
@@ -105,8 +102,6 @@ sub changed_files
 	}
 
 	delete($ENV{GIT_INDEX_FILE});
-	delete($ENV{GIT_WORK_TREE});
-	delete($ENV{GIT_DIR}) if ($must_unset_git_dir);
 
 	return map { $_ => 1 } @files;
 }
@@ -204,15 +199,6 @@ EOF
 	mkpath($ldir) or exit_cleanup($tmpdir, 1);
 	mkpath($rdir) or exit_cleanup($tmpdir, 1);
 
-	# If $GIT_DIR is not set prior to calling 'git update-index' and
-	# 'git checkout-index', then those commands will fail if difftool
-	# is called from a directory other than the repo root.
-	my $must_unset_git_dir = 0;
-	if (not defined($ENV{GIT_DIR})) {
-		$must_unset_git_dir = 1;
-		$ENV{GIT_DIR} = $repo_path;
-	}
-
 	# Populate the left and right directories based on each index file
 	my ($inpipe, $ctx);
 	$ENV{GIT_INDEX_FILE} = "$tmpdir/lindex";
@@ -241,7 +227,6 @@ EOF
 
 	# If $GIT_DIR was explicitly set just for the update/checkout
 	# commands, then it should be unset before continuing.
-	delete($ENV{GIT_DIR}) if ($must_unset_git_dir);
 	delete($ENV{GIT_INDEX_FILE});
 
 	# Changes in the working tree need special treatment since they are
