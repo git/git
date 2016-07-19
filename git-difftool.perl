@@ -115,16 +115,9 @@ sub setup_dir_diff
 {
 	my ($repo, $workdir, $symlinks) = @_;
 
-	# Run the diff; exit immediately if no diff found
-	# 'Repository' and 'WorkingCopy' must be explicitly set to insure that
-	# if $GIT_DIR and $GIT_WORK_TREE are set in ENV, they are actually used
-	# by Git->repository->command*.
 	my $repo_path = $repo->repo_path();
-	my %repo_args = (Repository => $repo_path, WorkingCopy => $workdir);
-	my $diffrepo = Git->repository(%repo_args);
-
 	my @gitargs = ('diff', '--raw', '--no-abbrev', '-z', @ARGV);
-	my $diffrtn = $diffrepo->command_oneline(@gitargs);
+	my $diffrtn = $repo->command_oneline(@gitargs);
 	exit(0) unless defined($diffrtn);
 
 	# Build index info for left and right sides of the diff
@@ -176,12 +169,12 @@ EOF
 
 		if ($lmode eq $symlink_mode) {
 			$symlink{$src_path}{left} =
-				$diffrepo->command_oneline('show', "$lsha1");
+				$repo->command_oneline('show', "$lsha1");
 		}
 
 		if ($rmode eq $symlink_mode) {
 			$symlink{$dst_path}{right} =
-				$diffrepo->command_oneline('show', "$rsha1");
+				$repo->command_oneline('show', "$rsha1");
 		}
 
 		if ($lmode ne $null_mode and $status !~ /^C/) {
