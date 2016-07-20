@@ -369,8 +369,10 @@ test_expect_success GPG 'push with post-receive to inspect certificate' '
 '
 
 test_expect_success 'push status output scrubs password' '
-	test_commit scrub &&
-	git push --porcelain "$HTTPD_URL_USER_PASS/smart/test_repo.git" >status &&
+	cd "$ROOT_PATH/test_repo_clone" &&
+	git push --porcelain \
+		"$HTTPD_URL_USER_PASS/smart/test_repo.git" \
+		+HEAD:scrub >status &&
 	# should have been scrubbed down to vanilla URL
 	grep "^To $HTTPD_URL/smart/test_repo.git" status
 '
