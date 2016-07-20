@@ -255,7 +255,7 @@ A similar notation 'r1\...r2' is called symmetric difference
 of 'r1' and 'r2' and is defined as
 'r1 r2 --not $(git merge-base --all r1 r2)'.
 It is the set of commits that are reachable from either one of
-'r1' or 'r2' but not from both.
+'r1' (left side) or 'r2' (right side) but not from both.
 
 In these two shorthands, you can omit one end and let it default to HEAD.
 For example, 'origin..' is a shorthand for 'origin..HEAD' and asks "What
