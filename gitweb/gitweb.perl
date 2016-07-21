@@ -188,6 +188,10 @@ our $fallback_encoding = 'latin1';
 # - one might want to include '-B' option, e.g. '-B', '-M'
 our @diff_opts = ('-M'); # taken from git_commit
 
+# Enables "--follow" option for following of renamed files in history view.
+# Warning: Enabling may leads to poor performance on big repositories.
+our $history_follow = 0;
+
 # Disables features that would allow repository owners to inject script into
 # the gitweb domain.
 our $prevent_xss = 0;
@@ -3555,21 +3559,51 @@ sub parse_commits {
 	$skip ||= 0;
 
 	local $/ = "\0";
+	my $fd;
 
-	open my $fd, "-|", git_cmd(), "rev-list",
-		"--header",
-		@args,
-		("--max-count=" . $maxcount),
-		("--skip=" . $skip),
-		@extra_options,
-		$commit_id,
-		"--",
-		($filename ? ($filename) : ())
-		or die_error(500, "Open git-rev-list failed");
-	while (my $line = <$fd>) {
-		my %co = parse_commit_text($line);
-		push @cos, \%co;
+	# Notes: 
+	# - '--max-count' argument is not available when using 'git log --follow'
+	# - '--follow' only works for single files
+	if ($history_follow && defined $filename) {
+		open $fd, "-|", git_cmd(), "log",
+			"-z",
+			"--pretty=raw",
+			@args,
+			"--follow",
+			("--skip=" . $skip),
+			@extra_options,
+			$commit_id,
+			"--",
+			$filename
+			or die_error(500, "Open git-log failed");
+		while (my $line = <$fd>) {
+			# Need to put a delimiter on the end of output
+			# 'git-log -z' doesn't put one before EOF as rev-list does
+			$line = ($line . '\0');
+			# Need to strip the word commit from the start so it
+			# looks like rev-list output
+			$line =~ s/^commit //;
+			my %co = parse_commit_text($line);
+			push @cos, \%co;
+		}
 	}
+	else {
+		open $fd, "-|", git_cmd(), "rev-list",
+			"--header",
+			@args,
+			("--max-count=" . $maxcount),
+			("--skip=" . $skip),
+			@extra_options,
+			$commit_id,
+			"--",
+			($filename ? ($filename) : ())
+			or die_error(500, "Open git-rev-list failed");
+		while (my $line = <$fd>) {
+			my %co = parse_commit_text($line);
+			push @cos, \%co;
+		}
+	}
+
 	close $fd;
 
 	return wantarray ? @cos : \@cos;

@@ -458,6 +458,9 @@ CPU-intensive.  Note also that non Git tools can have problems with
 patches generated with options mentioned above, especially when they
 involve file copies (\'-C') or criss-cross renames (\'-B').
 
+$history_follow::
+	Enables "--follow" option for following of renamed files in history view.
+	Warning: Enabling may leads to poor performance on big repositories.
 
 Some optional features and policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
