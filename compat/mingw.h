@@ -73,6 +73,9 @@ typedef int pid_t;
 #ifndef ECONNABORTED
 #define ECONNABORTED WSAECONNABORTED
 #endif
+#ifndef ENOTSOCK
+#define ENOTSOCK WSAENOTSOCK
+#endif
 
 struct passwd {
 	char *pw_name;
