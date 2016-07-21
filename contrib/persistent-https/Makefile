@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BUILD_LABEL=$(shell date +"%s")
+BUILD_LABEL=$(shell cut -d" " -f3 ../../GIT-VERSION-FILE)
 TAR_OUT=$(shell go env GOOS)_$(shell go env GOARCH).tar.gz
 
 all: git-remote-persistent-https git-remote-persistent-https--proxy \
