@@ -25,8 +25,10 @@ git-remote-persistent-http: git-remote-persistent-https
 	ln -f -s git-remote-persistent-https git-remote-persistent-http
 
 git-remote-persistent-https:
+	case $$(go version) in \
+	"go version go"1.[0-5].*) EQ=" " ;; *) EQ="=" ;; esac && \
 	go build -o git-remote-persistent-https \
-		-ldflags "-X main._BUILD_EMBED_LABEL $(BUILD_LABEL)"
+		-ldflags "-X main._BUILD_EMBED_LABEL$${EQ}$(BUILD_LABEL)"
 
 clean:
 	rm -f git-remote-persistent-http* *.tar.gz
