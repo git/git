@@ -302,7 +302,7 @@ In multi_ack mode:
     ready to make a packfile, it will blindly ACK all 'have' obj-ids
     back to the client.
 
-  * the server will then send a 'NACK' and then wait for another response
+  * the server will then send a 'NAK' and then wait for another response
     from the client - either a 'done' or another list of 'have' lines.
 
 In multi_ack_detailed mode:
