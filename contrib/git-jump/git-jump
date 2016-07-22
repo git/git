@@ -25,7 +25,7 @@ mode_diff() {
 	perl -ne '
 	if (m{^\+\+\+ (.*)}) { $file = $1; next }
 	defined($file) or next;
-	if (m/^@@ .*\+(\d+)/) { $line = $1; next }
+	if (m/^@@ .*?\+(\d+)/) { $line = $1; next }
 	defined($line) or next;
 	if (/^ /) { $line++; next }
 	if (/^[-+]\s*(.*)/) {
