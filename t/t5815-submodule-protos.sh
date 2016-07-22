@@ -18,7 +18,7 @@ test_expect_success 'setup repository with submodules' '
 	git commit -m "add submodules"
 '
 
-test_expect_failure 'clone with recurse-submodules fails' '
+test_expect_success 'clone with recurse-submodules fails' '
 	test_must_fail git clone --recurse-submodules . dst
 '
 
@@ -32,7 +32,7 @@ test_expect_success 'update of ssh allowed' '
 	git -C dst submodule update ssh-module
 '
 
-test_expect_failure 'update of ext not allowed' '
+test_expect_success 'update of ext not allowed' '
 	test_must_fail git -C dst submodule update ext-module
 '
 
