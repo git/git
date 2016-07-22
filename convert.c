@@ -481,12 +481,186 @@ static int apply_filter(const char *path, const char *src, size_t len, int fd,
 	return ret;
 }
 
+static int cmd_process_map_init = 0;
+static struct hashmap cmd_process_map;
+
+struct cmd2process {
+	struct hashmap_entry ent; /* must be the first member! */
+	const char *cmd;
+	long protocol;
+	struct child_process process;
+};
+
+static int cmd2process_cmp(const struct cmd2process *e1,
+							const struct cmd2process *e2,
+							const void *unused)
+{
+	return strcmp(e1->cmd, e2->cmd);
+}
+
+static struct cmd2process *find_protocol_filter_entry(const char *cmd)
+{
+	struct cmd2process k;
+	hashmap_entry_init(&k, strhash(cmd));
+	k.cmd = cmd;
+	return hashmap_get(&cmd_process_map, &k, NULL);
+}
+
+static void stop_protocol_filter(struct cmd2process *entry) {
+	if (!entry)
+		return;
+	sigchain_push(SIGPIPE, SIG_IGN);
+	close(entry->process.in);
+	close(entry->process.out);
+	sigchain_pop(SIGPIPE);
+	finish_command(&entry->process);
+	child_process_clear(&entry->process);
+	hashmap_remove(&cmd_process_map, entry, NULL);
+	free(entry);
+}
+
+static struct cmd2process *start_protocol_filter(const char *cmd)
+{
+	int ret = 1;
+	struct cmd2process *entry = NULL;
+	struct child_process *process = NULL;
+	struct strbuf nbuf = STRBUF_INIT;
+	struct string_list split = STRING_LIST_INIT_NODUP;
+	const char *argv[] = { NULL, NULL };
+
+	entry = xmalloc(sizeof(*entry));
+	hashmap_entry_init(entry, strhash(cmd));
+	entry->cmd = cmd;
+	process = &entry->process;
+
+	child_process_init(process);
+	argv[0] = cmd;
+	process->argv = argv;
+	process->use_shell = 1;
+	process->in = -1;
+	process->out = -1;
+
+	if (start_command(process)) {
+		error("cannot fork to run external persistent filter '%s'", cmd);
+		return NULL;
+	}
+	strbuf_reset(&nbuf);
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+	ret &= strbuf_read_once(&nbuf, process->out, 0) > 0;
+	sigchain_pop(SIGPIPE);
+
+	strbuf_stripspace(&nbuf, 0);
+	string_list_split_in_place(&split, nbuf.buf, ' ', 2);
+	ret &= split.nr > 1;
+	ret &= strncmp("git-filter-protocol\nversion", split.items[0].string, 7) == 0;
+	if (ret) {
+		entry->protocol = strtol(split.items[1].string, NULL, 10);
+		switch (entry->protocol) {
+			case 1:
+				break;
+			default:
+				ret = 0;
+				error("unsupported protocol version %s for external persistent filter '%s'", nbuf.buf, cmd);
+		}
+	}
+	string_list_clear(&split, 0);
+	strbuf_release(&nbuf);
+
+	if (!ret) {
+		error("initialization for external persistent filter '%s' failed", cmd);
+		return NULL;
+	}
+
+	hashmap_add(&cmd_process_map, entry);
+	return entry;
+}
+
+static int apply_protocol_filter(const char *path, const char *src, size_t len,
+						int fd, struct strbuf *dst, const char *cmd,
+						const char *filter_type)
+{
+	int ret = 1;
+	struct cmd2process *entry = NULL;
+	struct child_process *process = NULL;
+	struct stat fileStat;
+	struct strbuf nbuf = STRBUF_INIT;
+	size_t nbuf_len;
+	char *strtol_end;
+	char c;
+
+	if (!cmd || !*cmd)
+		return 0;
+
+	if (!dst)
+		return 1;
+
+	if (!cmd_process_map_init) {
+		cmd_process_map_init = 1;
+		hashmap_init(&cmd_process_map, (hashmap_cmp_fn) cmd2process_cmp, 0);
+	} else {
+		entry = find_protocol_filter_entry(cmd);
+	}
+
+	if (!entry){
+		entry = start_protocol_filter(cmd);
+		if (!entry) {
+			stop_protocol_filter(entry);
+			return 0;
+		}
+	}
+	process = &entry->process;
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+	switch (entry->protocol) {
+		case 1:
+			if (fd >= 0 && !src) {
+				ret &= fstat(fd, &fileStat) != -1;
+				len = fileStat.st_size;
+			}
+			strbuf_reset(&nbuf);
+			strbuf_addf(&nbuf, "%s\n%s\n%zu\n", filter_type, path, len);
+			ret &= write_str_in_full(process->in, nbuf.buf) > 1;
+			if (len > 0) {
+				if (src)
+					ret &= write_in_full(process->in, src, len) == len;
+				else if (fd >= 0)
+					ret &= copy_fd(fd, process->in) == 0;
+				else
+					ret &= 0;
+			}
+
+			strbuf_reset(&nbuf);
+			while (xread(process->out, &c, 1) == 1 && c != '\n')
+				strbuf_addchars(&nbuf, c, 1);
+			nbuf_len = (size_t)strtol(nbuf.buf, &strtol_end, 10);
+			ret &= (strtol_end != nbuf.buf && errno != ERANGE);
+			strbuf_reset(&nbuf);
+			if (nbuf_len > 0)
+				ret &= strbuf_read_once(&nbuf, process->out, nbuf_len) == nbuf_len;
+			break;
+		default:
+			ret = 0;
+	}
+	sigchain_pop(SIGPIPE);
+
+	if (ret) {
+		strbuf_swap(dst, &nbuf);
+	} else {
+		// Something went wrong with the protocol filter. Force shutdown!
+		stop_protocol_filter(entry);
+	}
+	strbuf_release(&nbuf);
+	return ret;
+}
+
 static struct convert_driver {
 	const char *name;
 	struct convert_driver *next;
 	const char *smudge;
 	const char *clean;
 	int required;
+	int use_protocol;
 } *user_convert, **user_convert_tail;
 
 static int read_convert_config(const char *var, const char *value, void *cb)
@@ -525,6 +699,11 @@ static int read_convert_config(const char *var, const char *value, void *cb)
 
 	if (!strcmp("clean", key))
 		return git_config_string(&drv->clean, var, value);
+
+	if (!strcmp("useprotocol", key)) {
+		drv->use_protocol = git_config_bool(var, value);
+		return 0;
+	}
 
 	if (!strcmp("required", key)) {
 		drv->required = git_config_bool(var, value);
@@ -823,7 +1002,10 @@ int would_convert_to_git_filter_fd(const char *path)
 	if (!ca.drv->required)
 		return 0;
 
-	return apply_filter(path, NULL, 0, -1, NULL, ca.drv->clean);
+	if (ca.drv->use_protocol)
+		return apply_protocol_filter(path, NULL, 0, -1, NULL, ca.drv->clean, "clean");
+	else
+		return apply_filter(path, NULL, 0, -1, NULL, ca.drv->clean);
 }
 
 const char *get_convert_attr_ascii(const char *path)
@@ -857,16 +1039,20 @@ int convert_to_git(const char *path, const char *src, size_t len,
 {
 	int ret = 0;
 	const char *filter = NULL;
-	int required = 0;
+	int required = 0, use_protocol = 0;
 	struct conv_attrs ca;
 
 	convert_attrs(&ca, path);
 	if (ca.drv) {
 		filter = ca.drv->clean;
 		required = ca.drv->required;
+		use_protocol = ca.drv->use_protocol;
 	}
 
-	ret |= apply_filter(path, src, len, -1, dst, filter);
+	if (use_protocol)
+		ret |= apply_protocol_filter(path, src, len, -1, dst, filter, "clean");
+	else
+		ret |= apply_filter(path, src, len, -1, dst, filter);
 	if (!ret && required)
 		die("%s: clean filter '%s' failed", path, ca.drv->name);
 
@@ -885,13 +1071,19 @@ int convert_to_git(const char *path, const char *src, size_t len,
 void convert_to_git_filter_fd(const char *path, int fd, struct strbuf *dst,
 			      enum safe_crlf checksafe)
 {
+	int ret = 0;
 	struct conv_attrs ca;
 	convert_attrs(&ca, path);
 
 	assert(ca.drv);
 	assert(ca.drv->clean);
 
-	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv->clean))
+	if (ca.drv->use_protocol)
+		ret = apply_protocol_filter(path, NULL, 0, fd, dst, ca.drv->clean, "clean");
+	else
+		ret = apply_filter(path, NULL, 0, fd, dst, ca.drv->clean);
+
+	if (!ret)
 		die("%s: clean filter '%s' failed", path, ca.drv->name);
 
 	crlf_to_git(path, dst->buf, dst->len, dst, ca.crlf_action, checksafe);
@@ -904,13 +1096,14 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 {
 	int ret = 0, ret_filter = 0;
 	const char *filter = NULL;
-	int required = 0;
+	int required = 0, use_protocol = 0;
 	struct conv_attrs ca;
 
 	convert_attrs(&ca, path);
 	if (ca.drv) {
 		filter = ca.drv->smudge;
 		required = ca.drv->required;
+		use_protocol = ca.drv->use_protocol;
 	}
 
 	ret |= ident_to_worktree(path, src, len, dst, ca.ident);
@@ -930,7 +1123,10 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 		}
 	}
 
-	ret_filter = apply_filter(path, src, len, -1, dst, filter);
+	if (use_protocol)
+		ret_filter = apply_protocol_filter(path, src, len, -1, dst, filter, "smudge");
+	else
+		ret_filter |= apply_filter(path, src, len, -1, dst, filter);
 	if (!ret_filter && required)
 		die("%s: smudge filter %s failed", path, ca.drv->name);
 

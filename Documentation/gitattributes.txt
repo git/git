@@ -300,7 +300,10 @@ checkout, when the `smudge` command is specified, the command is
 fed the blob object from its standard input, and its standard
 output is used to update the worktree file.  Similarly, the
 `clean` command is used to convert the contents of worktree file
-upon checkin.
+upon checkin. By default these commands process only a single
+blob and terminate. If the setting filter.<driver>.useProtocol is 
+enabled then Git can process all blobs with a single filter command
+invocation (see filter protocol below).
 
 One use of the content filtering is to massage the content into a shape
 that is more convenient for the platform, filesystem, and the user to use.
@@ -373,6 +376,42 @@ substitution.  For example:
 	clean = git-p4-filter --clean %f
 	smudge = git-p4-filter --smudge %f
 ------------------------
+
+
+Filter Protocol
+^^^^^^^^^^^^^^^
+
+If the setting filter.<driver>.useProtocol is enabled then Git
+can process all blobs with a single filter command invocation
+by talking with the following protocol over stdin/stdout.
+
+Git starts the filter on first usage and expects a welcome
+message with protocol version number:
+------------------------
+Git < Filter: "git-filter-protocol\n"
+Git < Filter: "version 1"
+------------------------
+
+Afterwards Git sends the command (either "smudge" or "clean"), the
+filename, the content size in bytes, and the content separated
+by a newline character:
+------------------------
+Git > Filter: "smudge\n"
+Git > Filter: "testfile.dat\n"
+Git > Filter: "7\n"
+Git > Filter: "CONTENT"
+------------------------
+
+The filter is expected to answer with the result content size in
+bytes and the result content separated by a newline character:
+------------------------
+Git < Filter: "15\n"
+Git < Filter: "SMUDGED_CONTENT"
+------------------------
+
+Afterwards the filter is expected to wait for the next file to
+process. A demo implementation can be found in `t/t0021/rot13.pl`
+located in the Git core repository.
 
 
 Interaction between checkin/checkout attributes

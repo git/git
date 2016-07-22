@@ -268,4 +268,174 @@ test_expect_success 'disable filter with empty override' '
 	test_must_be_empty err
 '
 
+test_expect_success 'required protocol filter should filter data' '
+	test_config_global filter.protocol.smudge \"$TEST_DIRECTORY/t0021/rot13.pl\" &&
+	test_config_global filter.protocol.clean \"$TEST_DIRECTORY/t0021/rot13.pl\" &&
+	test_config_global filter.protocol.useprotocol true &&
+	test_config_global filter.protocol.required true &&
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+
+		echo "*.r filter=protocol" >.gitattributes &&
+		git add . &&
+		git commit . -m "test commit" &&
+		git branch empty &&
+
+		cat ../test.o >test.r &&
+		echo "test22" >test2.r &&
+		echo "test333" >test3.r &&
+
+		rm -f output.log &&
+		git add . &&
+		sort output.log | uniq -c | sed "s/^[ ]*//" > uniq_output.log &&
+		cat >expected_add.log <<-\EOF &&
+			1 IN: clean test.r 57 [OK] -- OUT: 57 [OK]
+			1 IN: clean test2.r 7 [OK] -- OUT: 7 [OK]
+			1 IN: clean test3.r 8 [OK] -- OUT: 8 [OK]
+			1 start
+			1 wrote version
+		EOF
+		test_cmp expected_add.log uniq_output.log &&
+
+		printf "" >output.log &&
+		git commit . -m "test commit" &&
+		sort output.log | uniq -c | sed "s/^[ ]*//" |
+			sed "s/^\([0-9]\) IN: clean/x IN: clean/" > uniq_output.log &&
+		cat >expected_commit.log <<-\EOF &&
+			x IN: clean test.r 57 [OK] -- OUT: 57 [OK]
+			x IN: clean test2.r 7 [OK] -- OUT: 7 [OK]
+			x IN: clean test3.r 8 [OK] -- OUT: 8 [OK]
+			1 start
+			1 wrote version
+		EOF
+		test_cmp expected_commit.log uniq_output.log &&
+
+		printf "" >output.log &&
+		rm -f test?.r &&
+		git checkout . &&
+		cat output.log | grep -v "IN: clean" > smudge_output.log &&
+		cat >expected_checkout.log <<-\EOF &&
+			start
+			wrote version
+			IN: smudge test2.r 7 [OK] -- OUT: 7 [OK]
+			IN: smudge test3.r 8 [OK] -- OUT: 8 [OK]
+		EOF
+		test_cmp expected_checkout.log smudge_output.log &&
+
+		git checkout empty &&
+
+		printf "" >output.log &&
+		git checkout master &&
+		cat output.log | grep -v "IN: clean" > smudge_output.log &&
+		cat >expected_checkout_master.log <<-\EOF &&
+			start
+			wrote version
+			IN: smudge test.r 57 [OK] -- OUT: 57 [OK]
+			IN: smudge test2.r 7 [OK] -- OUT: 7 [OK]
+			IN: smudge test3.r 8 [OK] -- OUT: 8 [OK]
+		EOF
+		test_cmp expected_checkout_master.log smudge_output.log
+	)
+'
+
+test_expect_success EXPENSIVE 'protocol filter large file' '
+	test_config_global filter.protocol.clean \"$TEST_DIRECTORY/t0021/rot13.pl\" &&
+	test_config_global filter.protocol.smudge \"$TEST_DIRECTORY/t0021/rot13.pl\" &&
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+
+		echo "2GB filter=largefile" >.gitattributes &&
+		for i in $(test_seq 1 2048); do printf "%1048576d" 1; done >2GB &&
+		git add 2GB 2>err &&
+		test_must_be_empty err &&
+		rm -f 2GB &&
+		git checkout -- 2GB 2>err &&
+		test_must_be_empty err
+	)
+'
+
+test_expect_success 'required protocol filter should fail with clean' '
+	test_config_global filter.protocol.clean \"$TEST_DIRECTORY/t0021/rot13.pl\" &&
+	test_config_global filter.protocol.useprotocol true &&
+	test_config_global filter.protocol.required true &&
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+
+		echo "*.r filter=protocol" >.gitattributes &&
+
+		cat ../test.o >test.r &&
+		echo "this is going to fail" >clean-write-fail.r &&
+		echo "test333" >test3.r &&
+
+		# Note: There are three clean paths in convert.c we just test one here.
+		test_must_fail git add .
+	)
+'
+
+test_expect_success 'protocol filter should restart after failure' '
+	test_config_global filter.protocol.clean \"$TEST_DIRECTORY/t0021/rot13.pl\" &&
+	test_config_global filter.protocol.smudge \"$TEST_DIRECTORY/t0021/rot13.pl\" &&
+	test_config_global filter.protocol.useprotocol true &&
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+
+		echo "*.r filter=protocol" >.gitattributes &&
+
+		cat ../test.o >test.r &&
+		echo "1234567" >test2.o &&
+		cat test2.o >test2.r &&
+		echo "this is going to fail" >smudge-write-fail.o &&
+		cat smudge-write-fail.o >smudge-write-fail.r &&
+		git add . &&
+		git commit . -m "test commit" &&
+		rm -f *.r &&
+
+		printf "" >output.log &&
+		git checkout . &&
+		cat output.log | grep -v "IN: clean" > smudge_output.log &&
+		cat >expected_checkout_master.log <<-\EOF &&
+			start
+			wrote version
+			IN: smudge smudge-write-fail.r 22 [OK] -- OUT: 22 [FAIL]
+			start
+			wrote version
+			IN: smudge test.r 57 [OK] -- OUT: 57 [OK]
+			IN: smudge test2.r 8 [OK] -- OUT: 8 [OK]
+		EOF
+		test_cmp expected_checkout_master.log smudge_output.log &&
+
+		test_cmp ../test.o test.r &&
+		./../rot13.sh <../test.o >expected &&
+		git cat-file blob :test.r >actual &&
+		test_cmp expected actual
+
+		test_cmp test2.o test2.r &&
+		./../rot13.sh <test2.o >expected &&
+		git cat-file blob :test2.r >actual &&
+		test_cmp expected actual
+
+		test_cmp test2.o test2.r &&
+		./../rot13.sh <test2.o >expected &&
+		git cat-file blob :test2.r >actual &&
+		test_cmp expected actual
+
+		! test_cmp smudge-write-fail.o smudge-write-fail.r && # Smudge failed!
+		./../rot13.sh <smudge-write-fail.o >expected &&
+		git cat-file blob :smudge-write-fail.r >actual &&
+		test_cmp expected actual							  # Clean worked!
+	)
+'
+
 test_done
