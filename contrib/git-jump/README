@@ -85,7 +85,7 @@ complete list of files and line numbers for each match.
 Limitations
 -----------
 
-This scripts was written and tested with vim. Given that the quickfix
+This script was written and tested with vim. Given that the quickfix
 format is the same as what gcc produces, I expect emacs users have a
 similar feature for iterating through the list, but I know nothing about
 how to activate it.
