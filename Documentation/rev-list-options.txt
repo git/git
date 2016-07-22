@@ -252,10 +252,25 @@ list.
 +
 With `--pretty` format other than `oneline` (for obvious reasons),
 this causes the output to have two extra lines of information
-taken from the reflog.  By default, `ref@{Nth}` notation is
-used in the output.  When the starting commit is specified as
-`ref@{now}`, output also uses `ref@{timestamp}` notation
-instead.  Under `--pretty=oneline`, the commit message is
+taken from the reflog.  The reflog designator in the output may be shown
+as `ref@{Nth}` (where `Nth` is the reverse-chronological index in the
+reflog) or as `ref@{timestamp}` (with the timestamp for that entry),
+depending on a few rules:
++
+--
+1. If the starting point is specified as `ref@{Nth}`, show the index
+format.
++
+2. If the starting point was specified as `ref@{now}`, show the
+timestamp format.
++
+3. If neither was used, but `--date` was given on the command line, show
+the timestamp in the format requested by `--date`.
++
+4. Otherwise, show the index format.
+--
++
+Under `--pretty=oneline`, the commit message is
 prefixed with this information on the same line.
 This option cannot be combined with `--reverse`.
 See also linkgit:git-reflog[1].
