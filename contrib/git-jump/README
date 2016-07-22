@@ -29,13 +29,15 @@ Obviously this trivial case isn't that interesting; you could just open
 `foo.c` yourself. But when you have many changes scattered across a
 project, you can use the editor's support to "jump" from point to point.
 
-Git-jump can generate three types of interesting lists:
+Git-jump can generate four types of interesting lists:
 
   1. The beginning of any diff hunks.
 
   2. The beginning of any merge conflict markers.
 
   3. Any grep matches.
+
+  4. Any whitespace errors detected by `git diff --check`.
 
 
 Using git-jump
