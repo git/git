@@ -147,8 +147,11 @@ endif::git-rev-list[]
   "U" for a good signature with unknown validity and "N" for no signature
 - '%GS': show the name of the signer for a signed commit
 - '%GK': show the key used to sign a signed commit
-- '%gD': reflog selector, e.g., `refs/stash@{1}`
-- '%gd': shortened reflog selector, e.g., `stash@{1}`
+- '%gD': reflog selector, e.g., `refs/stash@{1}` or
+  `refs/stash@{2 minutes ago`}; the format follows the rules described
+  for the `-g` option
+- '%gd': shortened reflog selector, e.g., `stash@{1}` or
+  `stash@{2 minutes ago}`
 - '%gn': reflog identity name
 - '%gN': reflog identity name (respecting .mailmap, see
   linkgit:git-shortlog[1] or linkgit:git-blame[1])
