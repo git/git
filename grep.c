@@ -161,17 +161,7 @@ void grep_init(struct grep_opt *opt, const char *prefix)
 	strcpy(opt->color_sep, def->color_sep);
 }
 
-void grep_commit_pattern_type(enum grep_pattern_type pattern_type, struct grep_opt *opt)
-{
-	if (pattern_type != GREP_PATTERN_TYPE_UNSPECIFIED)
-		grep_set_pattern_type_option(pattern_type, opt);
-	else if (opt->pattern_type_option != GREP_PATTERN_TYPE_UNSPECIFIED)
-		grep_set_pattern_type_option(opt->pattern_type_option, opt);
-	else if (opt->extended_regexp_option)
-		grep_set_pattern_type_option(GREP_PATTERN_TYPE_ERE, opt);
-}
-
-void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct grep_opt *opt)
+static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct grep_opt *opt)
 {
 	switch (pattern_type) {
 	case GREP_PATTERN_TYPE_UNSPECIFIED:
@@ -201,6 +191,16 @@ void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct gr
 		opt->regflags &= ~REG_EXTENDED;
 		break;
 	}
+}
+
+void grep_commit_pattern_type(enum grep_pattern_type pattern_type, struct grep_opt *opt)
+{
+	if (pattern_type != GREP_PATTERN_TYPE_UNSPECIFIED)
+		grep_set_pattern_type_option(pattern_type, opt);
+	else if (opt->pattern_type_option != GREP_PATTERN_TYPE_UNSPECIFIED)
+		grep_set_pattern_type_option(opt->pattern_type_option, opt);
+	else if (opt->extended_regexp_option)
+		grep_set_pattern_type_option(GREP_PATTERN_TYPE_ERE, opt);
 }
 
 static struct grep_pat *create_grep_pat(const char *pat, size_t patlen,

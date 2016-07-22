@@ -144,7 +144,6 @@ struct grep_opt {
 extern void init_grep_defaults(void);
 extern int grep_config(const char *var, const char *value, void *);
 extern void grep_init(struct grep_opt *, const char *prefix);
-void grep_set_pattern_type_option(enum grep_pattern_type, struct grep_opt *opt);
 void grep_commit_pattern_type(enum grep_pattern_type, struct grep_opt *opt);
 
 extern void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);
