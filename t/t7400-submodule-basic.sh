@@ -352,7 +352,7 @@ test_expect_success 'sync should fail with unknown submodule' '
 	test_failure_with_unknown_submodule sync
 '
 
-test_expect_success 'update should fail when path is used by a file' '
+test_expect_failure 'update should fail when path is used by a file' '
 	echo hello >expect &&
 
 	echo "hello" >init &&
@@ -361,7 +361,7 @@ test_expect_success 'update should fail when path is used by a file' '
 	test_cmp expect init
 '
 
-test_expect_success 'update should fail when path is used by a nonempty directory' '
+test_expect_failure 'update should fail when path is used by a nonempty directory' '
 	echo hello >expect &&
 
 	rm -fr init &&
