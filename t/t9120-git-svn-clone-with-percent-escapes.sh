@@ -15,7 +15,7 @@ test_expect_success 'setup svnrepo' '
 	svn_cmd cp -m "tag" "$svnrepo/pr ject/trunk" \
 	  "$svnrepo/pr ject/tags/v1" &&
 	rm -rf project &&
-	start_httpd
+	maybe_start_httpd
 '
 
 test_expect_success 'test clone with percent escapes' '
