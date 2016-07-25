@@ -169,6 +169,42 @@ Performance, Internal Implementation, Development Support etc.
  * "git p4" used a location outside $GIT_DIR/refs/ to place its
    temporary branches, which has been moved to refs/git-p4-tmp/.
 
+ * Existing autoconf generated test for the need to link with pthread
+   library did not check all the functions from pthread libraries;
+   recent FreeBSD has some functions in libc but not others, and we
+   mistakenly thought linking with libc is enough when it is not.
+   (merge a9b02de ew/autoconf-pthread later to maint).
+
+ * When "git fsck" reports a broken link (e.g. a tree object contains
+   a blob that does not exist), both containing object and the object
+   that is referred to were reported with their 40-hex object names.
+   The command learned the "--name-objects" option to show the path to
+   the containing object from existing refs (e.g. "HEAD~24^2:file.txt").
+
+ * Allow http daemon tests in Travis CI tests.
+   (merge d9d1426 ls/travis-enable-httpd-tests later to maint).
+
+ * Makefile assumed that -lrt is always available on platforms that
+   want to use clock_gettime() and CLOCK_MONOTONIC, which is not a
+   case for recent Mac OS X.  The necessary symbols are often found in
+   libc on many modern systems and having -lrt on the command line, as
+   long as the library exists, had no effect, but when the platform
+   removes librt.a that is a different matter--having -lrt will break
+   the linkage.
+
+   This change could be seen as a regression for those who do need to
+   specify -lrt, as they now specifically ask for NEEDS_LIBRT when
+   building. Hopefully they are in the minority these days.
+
+ * Further preparatory work on the refs API before the pluggable
+   backend series can land.
+
+ * Error handling in the codepaths that updates refs has been
+   improved.
+
+ * The API to iterate over all the refs (i.e. for_each_ref(), etc.)
+   has been revamped.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -349,6 +385,35 @@ notes for details).
    contrast to "ours".
    (merge 715a51b js/am-call-theirs-theirs-in-fallback-3way later to maint).
 
+ * "git blame file" allowed the lineage of lines in the uncommitted,
+   unadded contents of "file" to be inspected, but it refused when
+   "file" did not appear in the current commit.  When "file" was
+   created by renaming an existing file (but the change has not been
+   committed), this restriction was unnecessarily tight.
+   (merge c66b470 mh/blame-worktree later to maint).
+
+ * "git add -N dir/file && git write-tree" produced an incorrect tree
+   when there are other paths in the same directory that sorts after
+   "file".
+   (merge 6d6a782 nd/cache-tree-ita later to maint).
+
+ * "git fetch http://user:pass@host/repo..." scrubbed the userinfo
+   part, but "git push" didn't.
+   (merge 68f3c07 jk/push-scrub-url later to maint).
+
+ * "git merge" with renormalization did not work well with
+   merge-recursive, due to "safer crlf" conversion kicking in when it
+   shouldn't.
+   (merge 1335d76 jc/renormalize-merge-kill-safer-crlf later to maint).
+
+ * The use of strbuf in "git rm" to build filename to remove was a bit
+   suboptimal, which has been fixed.
+   (merge deb8e15 rs/rm-strbuf-optim later to maint).
+
+ * An age old bug that caused "git diff --ignore-space-at-eol"
+   misbehave has been fixed.
+   (merge 044fb19 js/ignore-space-at-eol later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge e51b0df pb/commit-editmsg-path later to maint).
    (merge b333d0d jk/send-pack-stdio later to maint).
@@ -357,3 +422,7 @@ notes for details).
    (merge 82f6178 nd/doc-new-command later to maint).
    (merge fa90ab4 js/t3404-grammo-fix later to maint).
    (merge c61b2af lf/recv-sideband-cleanup later to maint).
+   (merge 31471ba rs/use-strbuf-addbuf later to maint).
+   (merge 503e224 nd/test-helpers later to maint).
+   (merge 16726cf jc/doc-diff-filter-exclude later to maint).
+   (merge fd2e7da rs/worktree-use-strbuf-absolute-path later to maint).
