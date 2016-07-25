@@ -200,8 +200,10 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 				return 0;
 		}
 	} else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL) {
-		while (i1 < s1 && i2 < s2 && l1[i1++] == l2[i2++])
-			; /* keep going */
+		while (i1 < s1 && i2 < s2 && l1[i1] == l2[i2]) {
+			i1++;
+			i2++;
+		}
 	}
 
 	/*
