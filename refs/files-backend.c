@@ -1,6 +1,8 @@
 #include "../cache.h"
 #include "../refs.h"
 #include "refs-internal.h"
+#include "../iterator.h"
+#include "../dir-iterator.h"
 #include "../lockfile.h"
 #include "../object.h"
 #include "../dir.h"
@@ -513,67 +515,35 @@ static void sort_ref_dir(struct ref_dir *dir)
 }
 
 /*
- * Return true iff the reference described by entry can be resolved to
- * an object in the database.  Emit a warning if the referred-to
- * object does not exist.
+ * Return true if refname, which has the specified oid and flags, can
+ * be resolved to an object in the database. If the referred-to object
+ * does not exist, emit a warning and return false.
  */
-static int ref_resolves_to_object(struct ref_entry *entry)
+static int ref_resolves_to_object(const char *refname,
+				  const struct object_id *oid,
+				  unsigned int flags)
 {
-	if (entry->flag & REF_ISBROKEN)
+	if (flags & REF_ISBROKEN)
 		return 0;
-	if (!has_sha1_file(entry->u.value.oid.hash)) {
-		error("%s does not point to a valid object!", entry->name);
+	if (!has_sha1_file(oid->hash)) {
+		error("%s does not point to a valid object!", refname);
 		return 0;
 	}
 	return 1;
 }
 
 /*
- * current_ref is a performance hack: when iterating over references
- * using the for_each_ref*() functions, current_ref is set to the
- * current reference's entry before calling the callback function.  If
- * the callback function calls peel_ref(), then peel_ref() first
- * checks whether the reference to be peeled is the current reference
- * (it usually is) and if so, returns that reference's peeled version
- * if it is available.  This avoids a refname lookup in a common case.
+ * Return true if the reference described by entry can be resolved to
+ * an object in the database; otherwise, emit a warning and return
+ * false.
  */
-static struct ref_entry *current_ref;
+static int entry_resolves_to_object(struct ref_entry *entry)
+{
+	return ref_resolves_to_object(entry->name,
+				      &entry->u.value.oid, entry->flag);
+}
 
 typedef int each_ref_entry_fn(struct ref_entry *entry, void *cb_data);
-
-struct ref_entry_cb {
-	const char *base;
-	int trim;
-	int flags;
-	each_ref_fn *fn;
-	void *cb_data;
-};
-
-/*
- * Handle one reference in a do_for_each_ref*()-style iteration,
- * calling an each_ref_fn for each entry.
- */
-static int do_one_ref(struct ref_entry *entry, void *cb_data)
-{
-	struct ref_entry_cb *data = cb_data;
-	struct ref_entry *old_current_ref;
-	int retval;
-
-	if (!starts_with(entry->name, data->base))
-		return 0;
-
-	if (!(data->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
-	      !ref_resolves_to_object(entry))
-		return 0;
-
-	/* Store the old value, in case this is a recursive call: */
-	old_current_ref = current_ref;
-	current_ref = entry;
-	retval = data->fn(entry->name + data->trim, &entry->u.value.oid,
-			  entry->flag, data->cb_data);
-	current_ref = old_current_ref;
-	return retval;
-}
 
 /*
  * Call fn for each reference in dir that has index in the range
@@ -604,78 +574,6 @@ static int do_for_each_entry_in_dir(struct ref_dir *dir, int offset,
 }
 
 /*
- * Call fn for each reference in the union of dir1 and dir2, in order
- * by refname.  Recurse into subdirectories.  If a value entry appears
- * in both dir1 and dir2, then only process the version that is in
- * dir2.  The input dirs must already be sorted, but subdirs will be
- * sorted as needed.  fn is called for all references, including
- * broken ones.
- */
-static int do_for_each_entry_in_dirs(struct ref_dir *dir1,
-				     struct ref_dir *dir2,
-				     each_ref_entry_fn fn, void *cb_data)
-{
-	int retval;
-	int i1 = 0, i2 = 0;
-
-	assert(dir1->sorted == dir1->nr);
-	assert(dir2->sorted == dir2->nr);
-	while (1) {
-		struct ref_entry *e1, *e2;
-		int cmp;
-		if (i1 == dir1->nr) {
-			return do_for_each_entry_in_dir(dir2, i2, fn, cb_data);
-		}
-		if (i2 == dir2->nr) {
-			return do_for_each_entry_in_dir(dir1, i1, fn, cb_data);
-		}
-		e1 = dir1->entries[i1];
-		e2 = dir2->entries[i2];
-		cmp = strcmp(e1->name, e2->name);
-		if (cmp == 0) {
-			if ((e1->flag & REF_DIR) && (e2->flag & REF_DIR)) {
-				/* Both are directories; descend them in parallel. */
-				struct ref_dir *subdir1 = get_ref_dir(e1);
-				struct ref_dir *subdir2 = get_ref_dir(e2);
-				sort_ref_dir(subdir1);
-				sort_ref_dir(subdir2);
-				retval = do_for_each_entry_in_dirs(
-						subdir1, subdir2, fn, cb_data);
-				i1++;
-				i2++;
-			} else if (!(e1->flag & REF_DIR) && !(e2->flag & REF_DIR)) {
-				/* Both are references; ignore the one from dir1. */
-				retval = fn(e2, cb_data);
-				i1++;
-				i2++;
-			} else {
-				die("conflict between reference and directory: %s",
-				    e1->name);
-			}
-		} else {
-			struct ref_entry *e;
-			if (cmp < 0) {
-				e = e1;
-				i1++;
-			} else {
-				e = e2;
-				i2++;
-			}
-			if (e->flag & REF_DIR) {
-				struct ref_dir *subdir = get_ref_dir(e);
-				sort_ref_dir(subdir);
-				retval = do_for_each_entry_in_dir(
-						subdir, 0, fn, cb_data);
-			} else {
-				retval = fn(e, cb_data);
-			}
-		}
-		if (retval)
-			return retval;
-	}
-}
-
-/*
  * Load all of the refs from the dir into our in-memory cache. The hard work
  * of loading loose refs is done by get_ref_dir(), so we just need to recurse
  * through all of the sub-directories. We do not even need to care about
@@ -689,6 +587,153 @@ static void prime_ref_dir(struct ref_dir *dir)
 		if (entry->flag & REF_DIR)
 			prime_ref_dir(get_ref_dir(entry));
 	}
+}
+
+/*
+ * A level in the reference hierarchy that is currently being iterated
+ * through.
+ */
+struct cache_ref_iterator_level {
+	/*
+	 * The ref_dir being iterated over at this level. The ref_dir
+	 * is sorted before being stored here.
+	 */
+	struct ref_dir *dir;
+
+	/*
+	 * The index of the current entry within dir (which might
+	 * itself be a directory). If index == -1, then the iteration
+	 * hasn't yet begun. If index == dir->nr, then the iteration
+	 * through this level is over.
+	 */
+	int index;
+};
+
+/*
+ * Represent an iteration through a ref_dir in the memory cache. The
+ * iteration recurses through subdirectories.
+ */
+struct cache_ref_iterator {
+	struct ref_iterator base;
+
+	/*
+	 * The number of levels currently on the stack. This is always
+	 * at least 1, because when it becomes zero the iteration is
+	 * ended and this struct is freed.
+	 */
+	size_t levels_nr;
+
+	/* The number of levels that have been allocated on the stack */
+	size_t levels_alloc;
+
+	/*
+	 * A stack of levels. levels[0] is the uppermost level that is
+	 * being iterated over in this iteration. (This is not
+	 * necessary the top level in the references hierarchy. If we
+	 * are iterating through a subtree, then levels[0] will hold
+	 * the ref_dir for that subtree, and subsequent levels will go
+	 * on from there.)
+	 */
+	struct cache_ref_iterator_level *levels;
+};
+
+static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
+{
+	struct cache_ref_iterator *iter =
+		(struct cache_ref_iterator *)ref_iterator;
+
+	while (1) {
+		struct cache_ref_iterator_level *level =
+			&iter->levels[iter->levels_nr - 1];
+		struct ref_dir *dir = level->dir;
+		struct ref_entry *entry;
+
+		if (level->index == -1)
+			sort_ref_dir(dir);
+
+		if (++level->index == level->dir->nr) {
+			/* This level is exhausted; pop up a level */
+			if (--iter->levels_nr == 0)
+				return ref_iterator_abort(ref_iterator);
+
+			continue;
+		}
+
+		entry = dir->entries[level->index];
+
+		if (entry->flag & REF_DIR) {
+			/* push down a level */
+			ALLOC_GROW(iter->levels, iter->levels_nr + 1,
+				   iter->levels_alloc);
+
+			level = &iter->levels[iter->levels_nr++];
+			level->dir = get_ref_dir(entry);
+			level->index = -1;
+		} else {
+			iter->base.refname = entry->name;
+			iter->base.oid = &entry->u.value.oid;
+			iter->base.flags = entry->flag;
+			return ITER_OK;
+		}
+	}
+}
+
+static enum peel_status peel_entry(struct ref_entry *entry, int repeel);
+
+static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
+				   struct object_id *peeled)
+{
+	struct cache_ref_iterator *iter =
+		(struct cache_ref_iterator *)ref_iterator;
+	struct cache_ref_iterator_level *level;
+	struct ref_entry *entry;
+
+	level = &iter->levels[iter->levels_nr - 1];
+
+	if (level->index == -1)
+		die("BUG: peel called before advance for cache iterator");
+
+	entry = level->dir->entries[level->index];
+
+	if (peel_entry(entry, 0))
+		return -1;
+	hashcpy(peeled->hash, entry->u.value.peeled.hash);
+	return 0;
+}
+
+static int cache_ref_iterator_abort(struct ref_iterator *ref_iterator)
+{
+	struct cache_ref_iterator *iter =
+		(struct cache_ref_iterator *)ref_iterator;
+
+	free(iter->levels);
+	base_ref_iterator_free(ref_iterator);
+	return ITER_DONE;
+}
+
+static struct ref_iterator_vtable cache_ref_iterator_vtable = {
+	cache_ref_iterator_advance,
+	cache_ref_iterator_peel,
+	cache_ref_iterator_abort
+};
+
+static struct ref_iterator *cache_ref_iterator_begin(struct ref_dir *dir)
+{
+	struct cache_ref_iterator *iter;
+	struct ref_iterator *ref_iterator;
+	struct cache_ref_iterator_level *level;
+
+	iter = xcalloc(1, sizeof(*iter));
+	ref_iterator = &iter->base;
+	base_ref_iterator_init(ref_iterator, &cache_ref_iterator_vtable);
+	ALLOC_GROW(iter->levels, 10, iter->levels_alloc);
+
+	iter->levels_nr = 1;
+	level = &iter->levels[0];
+	level->index = -1;
+	level->dir = dir;
+
+	return ref_iterator;
 }
 
 struct nonmatching_ref_data {
@@ -954,15 +999,26 @@ static struct ref_cache *lookup_ref_cache(const char *submodule)
 
 /*
  * Return a pointer to a ref_cache for the specified submodule. For
- * the main repository, use submodule==NULL. The returned structure
- * will be allocated and initialized but not necessarily populated; it
- * should not be freed.
+ * the main repository, use submodule==NULL; such a call cannot fail.
+ * For a submodule, the submodule must exist and be a nonbare
+ * repository, otherwise return NULL.
+ *
+ * The returned structure will be allocated and initialized but not
+ * necessarily populated; it should not be freed.
  */
 static struct ref_cache *get_ref_cache(const char *submodule)
 {
 	struct ref_cache *refs = lookup_ref_cache(submodule);
-	if (!refs)
-		refs = create_ref_cache(submodule);
+
+	if (!refs) {
+		struct strbuf submodule_sb = STRBUF_INIT;
+
+		strbuf_addstr(&submodule_sb, submodule);
+		if (is_nonbare_repository_dir(&submodule_sb))
+			refs = create_ref_cache(submodule);
+		strbuf_release(&submodule_sb);
+	}
+
 	return refs;
 }
 
@@ -1341,13 +1397,10 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
 		return -1;
 
 	strbuf_add(&submodule, path, len);
-	refs = lookup_ref_cache(submodule.buf);
+	refs = get_ref_cache(submodule.buf);
 	if (!refs) {
-		if (!is_nonbare_repository_dir(&submodule)) {
-			strbuf_release(&submodule);
-			return -1;
-		}
-		refs = create_ref_cache(submodule.buf);
+		strbuf_release(&submodule);
+		return -1;
 	}
 	strbuf_release(&submodule);
 
@@ -1790,11 +1843,12 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	int flag;
 	unsigned char base[20];
 
-	if (current_ref && (current_ref->name == refname
-			    || !strcmp(current_ref->name, refname))) {
-		if (peel_entry(current_ref, 0))
+	if (current_ref_iter && current_ref_iter->refname == refname) {
+		struct object_id peeled;
+
+		if (ref_iterator_peel(current_ref_iter, &peeled))
 			return -1;
-		hashcpy(sha1, current_ref->u.value.peeled.hash);
+		hashcpy(sha1, peeled.hash);
 		return 0;
 	}
 
@@ -1822,90 +1876,137 @@ int peel_ref(const char *refname, unsigned char *sha1)
 	return peel_object(base, sha1);
 }
 
-/*
- * Call fn for each reference in the specified ref_cache, omitting
- * references not in the containing_dir of base.  fn is called for all
- * references, including broken ones.  If fn ever returns a non-zero
- * value, stop the iteration and return that value; otherwise, return
- * 0.
- */
-static int do_for_each_entry(struct ref_cache *refs, const char *base,
-			     each_ref_entry_fn fn, void *cb_data)
-{
+struct files_ref_iterator {
+	struct ref_iterator base;
+
 	struct packed_ref_cache *packed_ref_cache;
-	struct ref_dir *loose_dir;
-	struct ref_dir *packed_dir;
-	int retval = 0;
+	struct ref_iterator *iter0;
+	unsigned int flags;
+};
 
-	/*
-	 * We must make sure that all loose refs are read before accessing the
-	 * packed-refs file; this avoids a race condition in which loose refs
-	 * are migrated to the packed-refs file by a simultaneous process, but
-	 * our in-memory view is from before the migration. get_packed_ref_cache()
-	 * takes care of making sure our view is up to date with what is on
-	 * disk.
-	 */
-	loose_dir = get_loose_refs(refs);
-	if (base && *base) {
-		loose_dir = find_containing_dir(loose_dir, base, 0);
-	}
-	if (loose_dir)
-		prime_ref_dir(loose_dir);
+static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
+{
+	struct files_ref_iterator *iter =
+		(struct files_ref_iterator *)ref_iterator;
+	int ok;
 
-	packed_ref_cache = get_packed_ref_cache(refs);
-	acquire_packed_ref_cache(packed_ref_cache);
-	packed_dir = get_packed_ref_dir(packed_ref_cache);
-	if (base && *base) {
-		packed_dir = find_containing_dir(packed_dir, base, 0);
+	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
+		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
+		    !ref_resolves_to_object(iter->iter0->refname,
+					    iter->iter0->oid,
+					    iter->iter0->flags))
+			continue;
+
+		iter->base.refname = iter->iter0->refname;
+		iter->base.oid = iter->iter0->oid;
+		iter->base.flags = iter->iter0->flags;
+		return ITER_OK;
 	}
 
-	if (packed_dir && loose_dir) {
-		sort_ref_dir(packed_dir);
-		sort_ref_dir(loose_dir);
-		retval = do_for_each_entry_in_dirs(
-				packed_dir, loose_dir, fn, cb_data);
-	} else if (packed_dir) {
-		sort_ref_dir(packed_dir);
-		retval = do_for_each_entry_in_dir(
-				packed_dir, 0, fn, cb_data);
-	} else if (loose_dir) {
-		sort_ref_dir(loose_dir);
-		retval = do_for_each_entry_in_dir(
-				loose_dir, 0, fn, cb_data);
-	}
+	iter->iter0 = NULL;
+	if (ref_iterator_abort(ref_iterator) != ITER_DONE)
+		ok = ITER_ERROR;
 
-	release_packed_ref_cache(packed_ref_cache);
-	return retval;
+	return ok;
 }
 
-/*
- * Call fn for each reference in the specified ref_cache for which the
- * refname begins with base.  If trim is non-zero, then trim that many
- * characters off the beginning of each refname before passing the
- * refname to fn.  flags can be DO_FOR_EACH_INCLUDE_BROKEN to include
- * broken references in the iteration.  If fn ever returns a non-zero
- * value, stop the iteration and return that value; otherwise, return
- * 0.
- */
-int do_for_each_ref(const char *submodule, const char *base,
-		    each_ref_fn fn, int trim, int flags, void *cb_data)
+static int files_ref_iterator_peel(struct ref_iterator *ref_iterator,
+				   struct object_id *peeled)
 {
-	struct ref_entry_cb data;
-	struct ref_cache *refs;
+	struct files_ref_iterator *iter =
+		(struct files_ref_iterator *)ref_iterator;
 
-	refs = get_ref_cache(submodule);
-	data.base = base;
-	data.trim = trim;
-	data.flags = flags;
-	data.fn = fn;
-	data.cb_data = cb_data;
+	return ref_iterator_peel(iter->iter0, peeled);
+}
+
+static int files_ref_iterator_abort(struct ref_iterator *ref_iterator)
+{
+	struct files_ref_iterator *iter =
+		(struct files_ref_iterator *)ref_iterator;
+	int ok = ITER_DONE;
+
+	if (iter->iter0)
+		ok = ref_iterator_abort(iter->iter0);
+
+	release_packed_ref_cache(iter->packed_ref_cache);
+	base_ref_iterator_free(ref_iterator);
+	return ok;
+}
+
+static struct ref_iterator_vtable files_ref_iterator_vtable = {
+	files_ref_iterator_advance,
+	files_ref_iterator_peel,
+	files_ref_iterator_abort
+};
+
+struct ref_iterator *files_ref_iterator_begin(
+		const char *submodule,
+		const char *prefix, unsigned int flags)
+{
+	struct ref_cache *refs = get_ref_cache(submodule);
+	struct ref_dir *loose_dir, *packed_dir;
+	struct ref_iterator *loose_iter, *packed_iter;
+	struct files_ref_iterator *iter;
+	struct ref_iterator *ref_iterator;
+
+	if (!refs)
+		return empty_ref_iterator_begin();
 
 	if (ref_paranoia < 0)
 		ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
 	if (ref_paranoia)
-		data.flags |= DO_FOR_EACH_INCLUDE_BROKEN;
+		flags |= DO_FOR_EACH_INCLUDE_BROKEN;
 
-	return do_for_each_entry(refs, base, do_one_ref, &data);
+	iter = xcalloc(1, sizeof(*iter));
+	ref_iterator = &iter->base;
+	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable);
+
+	/*
+	 * We must make sure that all loose refs are read before
+	 * accessing the packed-refs file; this avoids a race
+	 * condition if loose refs are migrated to the packed-refs
+	 * file by a simultaneous process, but our in-memory view is
+	 * from before the migration. We ensure this as follows:
+	 * First, we call prime_ref_dir(), which pre-reads the loose
+	 * references for the subtree into the cache. (If they've
+	 * already been read, that's OK; we only need to guarantee
+	 * that they're read before the packed refs, not *how much*
+	 * before.) After that, we call get_packed_ref_cache(), which
+	 * internally checks whether the packed-ref cache is up to
+	 * date with what is on disk, and re-reads it if not.
+	 */
+
+	loose_dir = get_loose_refs(refs);
+
+	if (prefix && *prefix)
+		loose_dir = find_containing_dir(loose_dir, prefix, 0);
+
+	if (loose_dir) {
+		prime_ref_dir(loose_dir);
+		loose_iter = cache_ref_iterator_begin(loose_dir);
+	} else {
+		/* There's nothing to iterate over. */
+		loose_iter = empty_ref_iterator_begin();
+	}
+
+	iter->packed_ref_cache = get_packed_ref_cache(refs);
+	acquire_packed_ref_cache(iter->packed_ref_cache);
+	packed_dir = get_packed_ref_dir(iter->packed_ref_cache);
+
+	if (prefix && *prefix)
+		packed_dir = find_containing_dir(packed_dir, prefix, 0);
+
+	if (packed_dir) {
+		packed_iter = cache_ref_iterator_begin(packed_dir);
+	} else {
+		/* There's nothing to iterate over. */
+		packed_iter = empty_ref_iterator_begin();
+	}
+
+	iter->iter0 = overlay_ref_iterator_begin(loose_iter, packed_iter);
+	iter->flags = flags;
+
+	return ref_iterator;
 }
 
 /*
@@ -2226,7 +2327,7 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 		return 0;
 
 	/* Do not pack symbolic or broken refs: */
-	if ((entry->flag & REF_ISSYMREF) || !ref_resolves_to_object(entry))
+	if ((entry->flag & REF_ISSYMREF) || !entry_resolves_to_object(entry))
 		return 0;
 
 	/* Add a packed ref cache entry equivalent to the loose entry. */
@@ -2412,7 +2513,7 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 	return 0;
 }
 
-int delete_refs(struct string_list *refnames)
+int delete_refs(struct string_list *refnames, unsigned int flags)
 {
 	struct strbuf err = STRBUF_INIT;
 	int i, result = 0;
@@ -2441,7 +2542,7 @@ int delete_refs(struct string_list *refnames)
 	for (i = 0; i < refnames->nr; i++) {
 		const char *refname = refnames->items[i].string;
 
-		if (delete_ref(refname, NULL, 0))
+		if (delete_ref(refname, NULL, flags))
 			result |= error(_("could not remove reference %s"), refname);
 	}
 
@@ -3191,60 +3292,88 @@ int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_dat
 	strbuf_release(&sb);
 	return ret;
 }
-/*
- * Call fn for each reflog in the namespace indicated by name.  name
- * must be empty or end with '/'.  Name will be used as a scratch
- * space, but its contents will be restored before return.
- */
-static int do_for_each_reflog(struct strbuf *name, each_ref_fn fn, void *cb_data)
+
+struct files_reflog_iterator {
+	struct ref_iterator base;
+
+	struct dir_iterator *dir_iterator;
+	struct object_id oid;
+};
+
+static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 {
-	DIR *d = opendir(git_path("logs/%s", name->buf));
-	int retval = 0;
-	struct dirent *de;
-	int oldlen = name->len;
+	struct files_reflog_iterator *iter =
+		(struct files_reflog_iterator *)ref_iterator;
+	struct dir_iterator *diter = iter->dir_iterator;
+	int ok;
 
-	if (!d)
-		return name->len ? errno : 0;
+	while ((ok = dir_iterator_advance(diter)) == ITER_OK) {
+		int flags;
 
-	while ((de = readdir(d)) != NULL) {
-		struct stat st;
-
-		if (de->d_name[0] == '.')
+		if (!S_ISREG(diter->st.st_mode))
 			continue;
-		if (ends_with(de->d_name, ".lock"))
+		if (diter->basename[0] == '.')
 			continue;
-		strbuf_addstr(name, de->d_name);
-		if (stat(git_path("logs/%s", name->buf), &st) < 0) {
-			; /* silently ignore */
-		} else {
-			if (S_ISDIR(st.st_mode)) {
-				strbuf_addch(name, '/');
-				retval = do_for_each_reflog(name, fn, cb_data);
-			} else {
-				struct object_id oid;
+		if (ends_with(diter->basename, ".lock"))
+			continue;
 
-				if (read_ref_full(name->buf, 0, oid.hash, NULL))
-					retval = error("bad ref for %s", name->buf);
-				else
-					retval = fn(name->buf, &oid, 0, cb_data);
-			}
-			if (retval)
-				break;
+		if (read_ref_full(diter->relative_path, 0,
+				  iter->oid.hash, &flags)) {
+			error("bad ref for %s", diter->path.buf);
+			continue;
 		}
-		strbuf_setlen(name, oldlen);
+
+		iter->base.refname = diter->relative_path;
+		iter->base.oid = &iter->oid;
+		iter->base.flags = flags;
+		return ITER_OK;
 	}
-	closedir(d);
-	return retval;
+
+	iter->dir_iterator = NULL;
+	if (ref_iterator_abort(ref_iterator) == ITER_ERROR)
+		ok = ITER_ERROR;
+	return ok;
+}
+
+static int files_reflog_iterator_peel(struct ref_iterator *ref_iterator,
+				   struct object_id *peeled)
+{
+	die("BUG: ref_iterator_peel() called for reflog_iterator");
+}
+
+static int files_reflog_iterator_abort(struct ref_iterator *ref_iterator)
+{
+	struct files_reflog_iterator *iter =
+		(struct files_reflog_iterator *)ref_iterator;
+	int ok = ITER_DONE;
+
+	if (iter->dir_iterator)
+		ok = dir_iterator_abort(iter->dir_iterator);
+
+	base_ref_iterator_free(ref_iterator);
+	return ok;
+}
+
+static struct ref_iterator_vtable files_reflog_iterator_vtable = {
+	files_reflog_iterator_advance,
+	files_reflog_iterator_peel,
+	files_reflog_iterator_abort
+};
+
+struct ref_iterator *files_reflog_iterator_begin(void)
+{
+	struct files_reflog_iterator *iter = xcalloc(1, sizeof(*iter));
+	struct ref_iterator *ref_iterator = &iter->base;
+
+	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable);
+	iter->dir_iterator = dir_iterator_begin(git_path("logs"));
+	return ref_iterator;
 }
 
 int for_each_reflog(each_ref_fn fn, void *cb_data)
 {
-	int retval;
-	struct strbuf name;
-	strbuf_init(&name, PATH_MAX);
-	retval = do_for_each_reflog(&name, fn, cb_data);
-	strbuf_release(&name);
-	return retval;
+	return do_for_each_ref_iterator(files_reflog_iterator_begin(),
+					fn, cb_data);
 }
 
 static int ref_update_reject_duplicates(struct string_list *refnames,
