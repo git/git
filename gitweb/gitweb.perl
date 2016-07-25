@@ -2090,7 +2090,7 @@ sub format_ref_marker {
 				-href => href(
 					action=>$dest_action,
 					hash=>$dest
-				)}, $name);
+				)}, esc_html($name));
 
 			$markers .= " <span class=\"".esc_attr($class)."\" title=\"".esc_attr($ref)."\">" .
 				$link . "</span>";
