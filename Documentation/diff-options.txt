@@ -419,6 +419,9 @@ ifndef::git-format-patch[]
 	paths are selected if there is any file that matches
 	other criteria in the comparison; if there is no file
 	that matches other criteria, nothing is selected.
++
+Also, these upper-case letters can be downcased to exclude.  E.g.
+`--diff-filter=ad` excludes added and deleted paths.
 
 -S<string>::
 	Look for differences that change the number of occurrences of
