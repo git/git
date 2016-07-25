@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
 	 [--[no-]full] [--strict] [--verbose] [--lost-found]
-	 [--[no-]dangling] [--[no-]progress] [--connectivity-only] [<object>*]
+	 [--[no-]dangling] [--[no-]progress] [--connectivity-only]
+	 [--[no-]name-objects] [<object>*]
 
 DESCRIPTION
 -----------
@@ -81,6 +82,12 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	.git/lost-found/other/, depending on type.  If the object is
 	a blob, the contents are written into the file, rather than
 	its object name.
+
+--name-objects::
+	When displaying names of reachable objects, in addition to the
+	SHA-1 also display a name that describes *how* they are reachable,
+	compatible with linkgit:git-rev-parse[1], e.g.
+	`HEAD@{1234567890}~25^2:src/`.
 
 --[no-]progress::
 	Progress status is reported on the standard error stream by

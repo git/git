@@ -523,4 +523,26 @@ test_expect_success 'fsck --connectivity-only' '
 	)
 '
 
+remove_loose_object () {
+	sha1="$(git rev-parse "$1")" &&
+	remainder=${sha1#??} &&
+	firsttwo=${sha1%$remainder} &&
+	rm .git/objects/$firsttwo/$remainder
+}
+
+test_expect_success 'fsck --name-objects' '
+	rm -rf name-objects &&
+	git init name-objects &&
+	(
+		cd name-objects &&
+		test_commit julius caesar.t &&
+		test_commit augustus &&
+		test_commit caesar &&
+		remove_loose_object $(git rev-parse julius:caesar.t) &&
+		test_must_fail git fsck --name-objects >out &&
+		tree=$(git rev-parse --verify julius:) &&
+		grep "$tree (\(refs/heads/master\|HEAD\)@{[0-9]*}:" out
+	)
+'
+
 test_done
