@@ -1108,14 +1108,19 @@ GIT_CONF_SUBST([HAVE_BSD_SYSCTL])
 AC_DEFUN([PTHREADTEST_SRC], [
 AC_LANG_PROGRAM([[
 #include <pthread.h>
+static void *noop(void *ignore) { return ignore; }
 ]], [[
 	pthread_mutex_t test_mutex;
 	pthread_key_t test_key;
+	pthread_t th;
 	int retcode = 0;
+	void *ret = (void *)0;
 	retcode |= pthread_key_create(&test_key, (void *)0);
 	retcode |= pthread_mutex_init(&test_mutex,(void *)0);
 	retcode |= pthread_mutex_lock(&test_mutex);
 	retcode |= pthread_mutex_unlock(&test_mutex);
+	retcode |= pthread_create(&th, ret, noop, ret);
+	retcode |= pthread_join(th, &ret);
 	return retcode;
 ]])])
 
