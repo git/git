@@ -16,16 +16,16 @@ export TEST_DIRECTORY
 
 subtree_test_create_repo()
 {
-	test_create_repo "$1"
+	test_create_repo "$1" &&
 	(
-		cd $1
+		cd "$1" &&
 		git config log.date relative
 	)
 }
 
 create()
 {
-	echo "$1" >"$1"
+	echo "$1" >"$1" &&
 	git add "$1"
 }
 
@@ -71,12 +71,12 @@ join_commits()
 }
 
 test_create_commit() (
-	repo=$1
-	commit=$2
-	cd "$repo"
-	mkdir -p $(dirname "$commit") \
+	repo=$1 &&
+	commit=$2 &&
+	cd "$repo" &&
+	mkdir -p "$(dirname "$commit")" \
 	|| error "Could not create directory for commit"
-	echo "$commit" >"$commit"
+	echo "$commit" >"$commit" &&
 	git add "$commit" || error "Could not add commit"
 	git commit -m "$commit" || error "Could not commit"
 )
