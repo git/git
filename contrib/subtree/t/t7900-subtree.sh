@@ -16,16 +16,16 @@ export TEST_DIRECTORY
 
 subtree_test_create_repo()
 {
-	test_create_repo "$1"
+	test_create_repo "$1" &&
 	(
-		cd $1
+		cd "$1" &&
 		git config log.date relative
 	)
 }
 
 create()
 {
-	echo "$1" >"$1"
+	echo "$1" >"$1" &&
 	git add "$1"
 }
 
@@ -71,12 +71,12 @@ join_commits()
 }
 
 test_create_commit() (
-	repo=$1
-	commit=$2
-	cd "$repo"
-	mkdir -p $(dirname "$commit") \
+	repo=$1 &&
+	commit=$2 &&
+	cd "$repo" &&
+	mkdir -p "$(dirname "$commit")" \
 	|| error "Could not create directory for commit"
-	echo "$commit" >"$commit"
+	echo "$commit" >"$commit" &&
 	git add "$commit" || error "Could not add commit"
 	git commit -m "$commit" || error "Could not commit"
 )
@@ -342,6 +342,22 @@ test_expect_success 'split sub dir/ with --rejoin' '
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
 		git subtree split --prefix="sub dir" --annotate="*" --rejoin &&
+		check_equal "$(last_commit_message)" "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
+	)
+ '
+
+next_test
+test_expect_success 'split sub dir/ with --rejoin from scratch' '
+	subtree_test_create_repo "$subtree_test_count" &&
+	test_create_commit "$subtree_test_count" main1 &&
+	(
+		cd "$subtree_test_count" &&
+		mkdir "sub dir" &&
+		echo file >"sub dir"/file &&
+		git add "sub dir/file" &&
+		git commit -m"sub dir file" &&
+		split_hash=$(git subtree split --prefix="sub dir" --rejoin) &&
+		git subtree split --prefix="sub dir" --rejoin &&
 		check_equal "$(last_commit_message)" "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
 	)
  '
