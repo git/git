@@ -347,6 +347,22 @@ test_expect_success 'split sub dir/ with --rejoin' '
  '
 
 next_test
+test_expect_success 'split sub dir/ with --rejoin from scratch' '
+	subtree_test_create_repo "$subtree_test_count" &&
+	test_create_commit "$subtree_test_count" main1 &&
+	(
+		cd "$subtree_test_count" &&
+		mkdir "sub dir" &&
+		echo file >"sub dir"/file &&
+		git add "sub dir/file" &&
+		git commit -m"sub dir file" &&
+		split_hash=$(git subtree split --prefix="sub dir" --rejoin) &&
+		git subtree split --prefix="sub dir" --rejoin &&
+		check_equal "$(last_commit_message)" "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
+	)
+ '
+
+next_test
 test_expect_success 'split sub dir/ with --rejoin and --message' '
 	subtree_test_create_repo "$subtree_test_count" &&
 	subtree_test_create_repo "$subtree_test_count/sub proj" &&
