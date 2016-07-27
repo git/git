@@ -504,8 +504,10 @@ test_expect_success 'ISO and ISO-strict date formats display the same values' '
 '
 
 # get new digests (with no abbreviations)
-head1=$(git rev-parse --verify HEAD~0) &&
-head2=$(git rev-parse --verify HEAD~1) &&
+test_expect_success 'set up log decoration tests' '
+	head1=$(git rev-parse --verify HEAD~0) &&
+	head2=$(git rev-parse --verify HEAD~1)
+'
 
 test_expect_success 'log decoration properly follows tag chain' '
 	git tag -a tag1 -m tag1 &&
