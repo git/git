@@ -47,6 +47,7 @@ check_show short "$TIME" '2016-06-15'
 check_show default "$TIME" 'Wed Jun 15 16:13:20 2016 +0200'
 check_show raw "$TIME" '1466000000 +0200'
 check_show iso-local "$TIME" '2016-06-15 14:13:20 +0000'
+check_show raw-local "$TIME" '1466000000 +0000'
 
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"

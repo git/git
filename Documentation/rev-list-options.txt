@@ -725,8 +725,8 @@ include::pretty-options.txt[]
 	`iso-local`), the user's local time zone is used instead.
 +
 `--date=relative` shows dates relative to the current time,
-e.g. ``2 hours ago''. The `-local` option cannot be used with
-`--raw` or `--relative`.
+e.g. ``2 hours ago''. The `-local` option has no effect for
+`--date=relative`.
 +
 `--date=local` is an alias for `--date=default-local`.
 +
@@ -747,6 +747,9 @@ format, often found in email messages.
 `--date=short` shows only the date, but not the time, in `YYYY-MM-DD` format.
 +
 `--date=raw` shows the date in the internal raw Git format `%s %z` format.
+Note that the `-local` option does not affect the seconds-since-epoch
+value (which is always measured in UTC), but does switch the accompanying
+timezone value.
 +
 `--date=format:...` feeds the format `...` to your system `strftime`.
 Use `--date=format:%c` to show the date in your system locale's
