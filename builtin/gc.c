@@ -177,7 +177,7 @@ static int too_many_packs(void)
 		 */
 		cnt++;
 	}
-	return gc_auto_pack_limit <= cnt;
+	return gc_auto_pack_limit < cnt;
 }
 
 static void add_repack_all_option(void)
