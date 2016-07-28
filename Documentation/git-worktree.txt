@@ -11,7 +11,9 @@ SYNOPSIS
 [verse]
 'git worktree add' [-f] [--detach] [--checkout] [-b <new-branch>] <path> [<branch>]
 'git worktree list' [--porcelain]
+'git worktree lock' [--reason <string>] <worktree>
 'git worktree prune' [-n] [-v] [--expire <expire>]
+'git worktree unlock' <worktree>
 
 DESCRIPTION
 -----------
@@ -38,9 +40,8 @@ section "DETAILS" for more information.
 
 If a linked working tree is stored on a portable device or network share
 which is not always mounted, you can prevent its administrative files from
-being pruned by creating a file named 'locked' alongside the other
-administrative files, optionally containing a plain text reason that
-pruning should be suppressed. See section "DETAILS" for more information.
+being pruned by issuing the `git worktree lock` command, optionally
+specifying `--reason` to explain why the working tree is locked.
 
 COMMANDS
 --------
@@ -62,9 +63,21 @@ each of the linked worktrees.  The output details include if the worktree is
 bare, the revision currently checked out, and the branch currently checked out
 (or 'detached HEAD' if none).
 
+lock::
+
+If a working tree is on a portable device or network share which
+is not always mounted, lock it to prevent its administrative
+files from being pruned automatically. This also prevents it from
+being moved or deleted. Optionally, specify a reason for the lock
+with `--reason`.
+
 prune::
 
 Prune working tree information in $GIT_DIR/worktrees.
+
+unlock::
+
+Unlock a working tree, allowing it to be pruned, moved or deleted.
 
 OPTIONS
 -------
@@ -111,6 +124,18 @@ OPTIONS
 --expire <time>::
 	With `prune`, only expire unused working trees older than <time>.
 
+--reason <string>::
+	With `lock`, an explanation why the working tree is locked.
+
+<worktree>::
+	Working trees can be identified by path, either relative or
+	absolute.
++
+If the last path components in the working tree's path is unique among
+working trees, it can be used to identify worktrees. For example if
+you only have to working trees at "/abc/def/ghi" and "/abc/def/ggg",
+then "ghi" or "def/ghi" is enough to point to the former working tree.
+
 DETAILS
 -------
 Each linked working tree has a private sub-directory in the repository's
@@ -151,7 +176,8 @@ instead.
 
 To prevent a $GIT_DIR/worktrees entry from being pruned (which
 can be useful in some situations, such as when the
-entry's working tree is stored on a portable device), add a file named
+entry's working tree is stored on a portable device), use the
+`git worktree lock` command, which adds a file named
 'locked' to the entry's directory. The file contains the reason in
 plain text. For example, if a linked working tree's `.git` file points
 to `/path/main/.git/worktrees/test-next` then a file named
@@ -227,8 +253,6 @@ performed manually, such as:
 - `remove` to remove a linked working tree and its administrative files (and
   warn if the working tree is dirty)
 - `mv` to move or rename a working tree and update its administrative files
-- `lock` to prevent automatic pruning of administrative files (for instance,
-  for a working tree on a portable device)
 
 GIT
 ---
