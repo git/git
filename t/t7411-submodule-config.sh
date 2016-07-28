@@ -82,6 +82,17 @@ test_expect_success 'error in one submodule config lets continue' '
 	)
 '
 
+test_expect_success 'error message contains blob reference' '
+	(cd super &&
+		sha1=$(git rev-parse HEAD) &&
+		test-submodule-config \
+			HEAD b \
+			HEAD submodule \
+				2>actual_err &&
+		grep "submodule-blob $sha1:.gitmodules" actual_err >/dev/null
+	)
+'
+
 cat >super/expect_url <<EOF
 Submodule url: 'git@somewhere.else.net:a.git' for path 'b'
 Submodule url: 'git@somewhere.else.net:submodule.git' for path 'submodule'
