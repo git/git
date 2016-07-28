@@ -46,11 +46,11 @@ That is, from the left to the right:
 . sha1 for "dst"; 0\{40\} if creation, unmerged or "look at work tree".
 . a space.
 . status, followed by optional "score" number.
-. a tab or a NUL when '-z' option is used.
+. a tab or a NUL when `-z` option is used.
 . path for "src"
-. a tab or a NUL when '-z' option is used; only exists for C or R.
+. a tab or a NUL when `-z` option is used; only exists for C or R.
 . path for "dst"; only exists for C or R.
-. an LF or a NUL when '-z' option is used, to terminate the record.
+. an LF or a NUL when `-z` option is used, to terminate the record.
 
 Possible status letters are:
 
@@ -86,7 +86,7 @@ diff format for merges
 ----------------------
 
 "git-diff-tree", "git-diff-files" and "git-diff --raw"
-can take '-c' or '--cc' option
+can take `-c` or `--cc` option
 to generate diff output also for merge commits.  The output differs
 from the format described above in the following way:
 

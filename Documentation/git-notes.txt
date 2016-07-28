@@ -152,7 +152,7 @@ OPTIONS
 
 -c <object>::
 --reedit-message=<object>::
-	Like '-C', but with '-c' the editor is invoked, so that
+	Like '-C', but with `-c` the editor is invoked, so that
 	the user can further edit the note message.
 
 --allow-empty::

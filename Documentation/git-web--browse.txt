@@ -110,7 +110,7 @@ Note about git-config --global
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that these configuration variables should probably be set using
-the '--global' flag, for example like this:
+the `--global` flag, for example like this:
 
 ------------------------------------------------
 $ git config --global web.browser firefox

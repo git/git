@@ -28,8 +28,8 @@ blobs contained in a commit.
   first match in the following rules:
 
   . If '$GIT_DIR/<refname>' exists, that is what you mean (this is usually
-    useful only for 'HEAD', 'FETCH_HEAD', 'ORIG_HEAD', 'MERGE_HEAD'
-    and 'CHERRY_PICK_HEAD');
+    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD`, `MERGE_HEAD`
+    and `CHERRY_PICK_HEAD`);
 
   . otherwise, 'refs/<refname>' if it exists;
 
@@ -41,16 +41,16 @@ blobs contained in a commit.
 
   . otherwise, 'refs/remotes/<refname>/HEAD' if it exists.
 +
-'HEAD' names the commit on which you based the changes in the working tree.
-'FETCH_HEAD' records the branch which you fetched from a remote repository
+`HEAD` names the commit on which you based the changes in the working tree.
+`FETCH_HEAD` records the branch which you fetched from a remote repository
 with your last `git fetch` invocation.
-'ORIG_HEAD' is created by commands that move your 'HEAD' in a drastic
-way, to record the position of the 'HEAD' before their operation, so that
+`ORIG_HEAD` is created by commands that move your `HEAD` in a drastic
+way, to record the position of the `HEAD` before their operation, so that
 you can easily change the tip of the branch back to the state before you ran
 them.
-'MERGE_HEAD' records the commit(s) which you are merging into your branch
+`MERGE_HEAD` records the commit(s) which you are merging into your branch
 when you run `git merge`.
-'CHERRY_PICK_HEAD' records the commit which you are cherry-picking
+`CHERRY_PICK_HEAD` records the commit which you are cherry-picking
 when you run `git cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
@@ -59,7 +59,7 @@ While the ref name encoding is unspecified, UTF-8 is preferred as
 some output processing may assume ref names in UTF-8.
 
 '@'::
-  '@' alone is a shortcut for 'HEAD'.
+  '@' alone is a shortcut for `HEAD`.
 
 '<refname>@{<date>}', e.g. 'master@\{yesterday\}', 'HEAD@{5 minutes ago}'::
   A ref followed by the suffix '@' with a date specification
@@ -71,7 +71,7 @@ some output processing may assume ref names in UTF-8.
   existing log ('$GIT_DIR/logs/<ref>'). Note that this looks up the state
   of your *local* ref at a given time; e.g., what was in your local
   'master' branch last week. If you want to look at commits made during
-  certain times, see '--since' and '--until'.
+  certain times, see `--since` and `--until`.
 
 '<refname>@{<n>}', e.g. 'master@\{1\}'::
   A ref followed by the suffix '@' with an ordinal specification
@@ -101,7 +101,7 @@ some output processing may assume ref names in UTF-8.
 '<branchname>@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
   `git push` were run while `branchname` was checked out (or the current
-  'HEAD' if no branchname is specified). Since our push destination is
+  `HEAD` if no branchname is specified). Since our push destination is
   in a remote repository, of course, we report the local tracking branch
   that corresponds to that branch (i.e., something in 'refs/remotes/').
 +
@@ -283,12 +283,12 @@ To summarize:
 '<rev1>..<rev2>'::
 	Include commits that are reachable from <rev2> but exclude
 	those that are reachable from <rev1>.  When either <rev1> or
-	<rev2> is omitted, it defaults to 'HEAD'.
+	<rev2> is omitted, it defaults to `HEAD`.
 
 '<rev1>\...<rev2>'::
 	Include commits that are reachable from either <rev1> or
 	<rev2> but exclude those that are reachable from both.  When
-	either <rev1> or <rev2> is omitted, it defaults to 'HEAD'.
+	either <rev1> or <rev2> is omitted, it defaults to `HEAD`.
 
 '<rev>{caret}@', e.g. 'HEAD{caret}@'::
   A suffix '{caret}' followed by an at sign is the same as listing

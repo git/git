@@ -82,7 +82,7 @@ linkgit:git-rev-list[1] for a complete list.
 
 --simplify-merges::
 
-	Additional option to '--full-history' to remove some needless
+	Additional option to `--full-history` to remove some needless
 	merges from the resulting history, as there are no selected
 	commits contributing to this merge.  (See "History
 	simplification" in linkgit:git-log[1] for a more detailed

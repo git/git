@@ -98,7 +98,7 @@ instead.  `--no-symlinks` is the default on Windows.
 	invoked diff tool returns a non-zero exit code.
 +
 'git-difftool' will forward the exit code of the invoked tool when
-'--trust-exit-code' is used.
+`--trust-exit-code` is used.
 
 See linkgit:git-diff[1] for the full list of supported options.
 

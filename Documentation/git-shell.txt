@@ -24,7 +24,7 @@ named `git-shell-commands` in the user's home directory.
 COMMANDS
 --------
 
-'git shell' accepts the following commands after the '-c' option:
+'git shell' accepts the following commands after the `-c` option:
 
 'git receive-pack <argument>'::
 'git upload-pack <argument>'::
@@ -43,7 +43,7 @@ directory.
 INTERACTIVE USE
 ---------------
 
-By default, the commands above can be executed only with the '-c'
+By default, the commands above can be executed only with the `-c`
 option; the shell is not interactive.
 
 If a `~/git-shell-commands` directory is present, 'git shell'
