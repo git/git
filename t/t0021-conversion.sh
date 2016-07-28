@@ -268,4 +268,15 @@ test_expect_success 'disable filter with empty override' '
 	test_must_be_empty err
 '
 
+test_expect_success 'diff does not reuse worktree files that need cleaning' '
+	test_config filter.counter.clean "echo . >>count; sed s/^/clean:/" &&
+	echo "file filter=counter" >.gitattributes &&
+	test_commit one file &&
+	test_commit two file &&
+
+	>count &&
+	git diff-tree -p HEAD &&
+	test_line_count = 0 count
+'
+
 test_done
