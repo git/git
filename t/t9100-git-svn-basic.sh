@@ -19,6 +19,25 @@ case "$GIT_SVN_LC_ALL" in
 	;;
 esac
 
+deepdir=nothing-above
+ceiling=$PWD
+
+test_expect_success 'git svn --version works anywhere' '
+	mkdir -p "$deepdir" && (
+		export GIT_CEILING_DIRECTORIES="$ceiling" &&
+		cd "$deepdir" &&
+		git svn --version
+	)
+'
+
+test_expect_success 'git svn help works anywhere' '
+	mkdir -p "$deepdir" && (
+		export GIT_CEILING_DIRECTORIES="$ceiling" &&
+		cd "$deepdir" &&
+		git svn help
+	)
+'
+
 test_expect_success \
     'initialize git svn' '
 	mkdir import &&

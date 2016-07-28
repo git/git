@@ -625,6 +625,9 @@ config key: svn.authorsfile
 	with the committer name as the first argument.  The program is
 	expected to return a single line of the form "Name <email>",
 	which will be treated as if included in the authors file.
++
+[verse]
+config key: svn.authorsProg
 
 -q::
 --quiet::
