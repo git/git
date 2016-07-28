@@ -212,6 +212,7 @@ exit_with_patch () {
 }
 
 die_abort () {
+	apply_autostash
 	rm -rf "$state_dir"
 	die "$1"
 }
