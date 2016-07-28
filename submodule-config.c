@@ -376,7 +376,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 {
 	struct strbuf rev = STRBUF_INIT;
 	unsigned long config_size;
-	char *config;
+	char *config = NULL;
 	unsigned char sha1[20];
 	enum object_type type;
 	const struct submodule *submodule = NULL;
@@ -397,10 +397,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		return entry->config;
 	}
 
-	if (!gitmodule_sha1_from_commit(commit_sha1, sha1, &rev)) {
-		strbuf_release(&rev);
-		return NULL;
-	}
+	if (!gitmodule_sha1_from_commit(commit_sha1, sha1, &rev))
+		goto out;
 
 	switch (lookup_type) {
 	case lookup_name:
@@ -410,22 +408,12 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		submodule = cache_lookup_path(cache, sha1, key);
 		break;
 	}
-	if (submodule) {
-		strbuf_release(&rev);
-		return submodule;
-	}
+	if (submodule)
+		goto out;
 
 	config = read_sha1_file(sha1, &type, &config_size);
-	if (!config) {
-		strbuf_release(&rev);
-		return NULL;
-	}
-
-	if (type != OBJ_BLOB) {
-		strbuf_release(&rev);
-		free(config);
-		return NULL;
-	}
+	if (!config || type != OBJ_BLOB)
+		goto out;
 
 	/* fill the submodule config into the cache */
 	parameter.cache = cache;
@@ -445,6 +433,11 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	default:
 		return NULL;
 	}
+
+out:
+	strbuf_release(&rev);
+	free(config);
+	return submodule;
 }
 
 static const struct submodule *config_from_path(struct submodule_cache *cache,
