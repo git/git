@@ -121,7 +121,7 @@ mark_action_done () {
 	sed -e 1q < "$todo" >> "$done"
 	sed -e 1d < "$todo" >> "$todo".new
 	mv -f "$todo".new "$todo"
-	new_count=$(git stripspace --strip-comments <"$done" | wc -l)
+	new_count=$(( $(git stripspace --strip-comments <"$done" | wc -l) ))
 	echo $new_count >"$msgnum"
 	total=$(($new_count + $(git stripspace --strip-comments <"$todo" | wc -l)))
 	echo $total >"$end"
