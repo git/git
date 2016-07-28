@@ -154,7 +154,7 @@ static void free_message(struct commit *commit, struct commit_message *msg)
 	unuse_commit_buffer(commit, msg->message);
 }
 
-static void print_advice(int show_hint, struct replay_opts *opts)
+static void print_advice(int show_hint, struct replay_opts *opts, int last_commit)
 {
 	char *msg = getenv("GIT_CHERRY_PICK_HELP");
 
@@ -170,13 +170,16 @@ static void print_advice(int show_hint, struct replay_opts *opts)
 	}
 
 	if (show_hint) {
-		if (opts->no_commit)
-			advise(_("after resolving the conflicts, mark the corrected paths\n"
-				 "with 'git add <paths>' or 'git rm <paths>'"));
-		else
-			advise(_("after resolving the conflicts, mark the corrected paths\n"
-				 "with 'git add <paths>' or 'git rm <paths>'\n"
-				 "and commit the result with 'git commit'"));
+		advise(_("after resolving the conflicts, mark the corrected paths\n"
+			"with 'git add <paths>' or 'git rm <paths>'"));
+		if (! opts->no_commit)
+		{
+			if  (last_commit)
+				advise(_("then continue with 'git %s --continue'"
+					"or cancel with 'git %s --abort'" ), action_name(opts), action_name(opts));
+			else
+				advise(_("and commit the result with 'git commit'"));
+		}
 	}
 }
 
@@ -443,7 +446,7 @@ static int allow_empty(struct replay_opts *opts, struct commit *commit)
 		return 1;
 }
 
-static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
+static int do_pick_commit(struct commit *commit, struct replay_opts *opts, int last_commit)
 {
 	unsigned char head[20];
 	struct commit *base, *next, *parent;
@@ -598,7 +601,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		      : _("could not apply %s... %s"),
 		      find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV),
 		      msg.subject);
-		print_advice(res == 1, opts);
+		print_advice(res == 1, opts, last_commit);
 		rerere(opts->allow_rerere_auto);
 		goto leave;
 	}
@@ -975,8 +978,9 @@ static int pick_commits(struct commit_list *todo_list, struct replay_opts *opts)
 	read_and_refresh_cache(opts);
 
 	for (cur = todo_list; cur; cur = cur->next) {
+		int last_commit = (cur->next) != NULL;
 		save_todo(cur, opts);
-		res = do_pick_commit(cur->item, opts);
+		res = do_pick_commit(cur->item, opts, last_commit);
 		if (res)
 			return res;
 	}
@@ -1024,7 +1028,7 @@ static int sequencer_continue(struct replay_opts *opts)
 static int single_pick(struct commit *cmit, struct replay_opts *opts)
 {
 	setenv(GIT_REFLOG_ACTION, action_name(opts), 0);
-	return do_pick_commit(cmit, opts);
+	return do_pick_commit(cmit, opts, 0);
 }
 
 int sequencer_pick_revisions(struct replay_opts *opts)
