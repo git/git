@@ -507,7 +507,7 @@ void pp_user_info(struct pretty_print_context *pp,
 	}
 }
 
-static int is_empty_line(const char *line, int *len_p)
+static int is_blank_line(const char *line, int *len_p)
 {
 	int len = *len_p;
 	while (len && isspace(line[len - 1]))
@@ -516,14 +516,14 @@ static int is_empty_line(const char *line, int *len_p)
 	return !len;
 }
 
-static const char *skip_empty_lines(const char *msg)
+const char *skip_blank_lines(const char *msg)
 {
 	for (;;) {
 		int linelen = get_one_line(msg);
 		int ll = linelen;
 		if (!linelen)
 			break;
-		if (!is_empty_line(msg, &ll))
+		if (!is_blank_line(msg, &ll))
 			break;
 		msg += linelen;
 	}
@@ -875,7 +875,7 @@ const char *format_subject(struct strbuf *sb, const char *msg,
 		int linelen = get_one_line(line);
 
 		msg += linelen;
-		if (!linelen || is_empty_line(line, &linelen))
+		if (!linelen || is_blank_line(line, &linelen))
 			break;
 
 		if (!sb)
@@ -894,11 +894,11 @@ static void parse_commit_message(struct format_commit_context *c)
 	const char *msg = c->message + c->message_off;
 	const char *start = c->message;
 
-	msg = skip_empty_lines(msg);
+	msg = skip_blank_lines(msg);
 	c->subject_off = msg - start;
 
 	msg = format_subject(NULL, msg, NULL);
-	msg = skip_empty_lines(msg);
+	msg = skip_blank_lines(msg);
 	c->body_off = msg - start;
 
 	c->commit_message_parsed = 1;
@@ -1718,7 +1718,7 @@ void pp_remainder(struct pretty_print_context *pp,
 		if (!linelen)
 			break;
 
-		if (is_empty_line(line, &linelen)) {
+		if (is_blank_line(line, &linelen)) {
 			if (first)
 				continue;
 			if (pp->fmt == CMIT_FMT_SHORT)
@@ -1789,7 +1789,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	}
 
 	/* Skip excess blank lines at the beginning of body, if any... */
-	msg = skip_empty_lines(msg);
+	msg = skip_blank_lines(msg);
 
 	/* These formats treat the title line specially. */
 	if (pp->fmt == CMIT_FMT_ONELINE || pp->fmt == CMIT_FMT_EMAIL)

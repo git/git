@@ -103,7 +103,7 @@ static void print_new_head_line(struct commit *commit)
 	if (body) {
 		const char *eol;
 		size_t len;
-		body += 2;
+		body = skip_blank_lines(body + 2);
 		eol = strchr(body, '\n');
 		len = eol ? eol - body : strlen(body);
 		printf(" %.*s\n", (int) len, body);
