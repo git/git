@@ -1,0 +1,58 @@
+Git v2.9.3 Release Notes
+========================
+
+Fixes since v2.9.2
+------------------
+
+ * A helper function that takes the contents of a commit object and
+   finds its subject line did not ignore leading blank lines, as is
+   commonly done by other codepaths.  Make it ignore leading blank
+   lines to match.
+
+ * Git does not know what the contents in the index should be for a
+   path added with "git add -N" yet, so "git grep --cached" should not
+   show hits (or show lack of hits, with -L) in such a path, but that
+   logic does not apply to "git grep", i.e. searching in the working
+   tree files.  But we did so by mistake, which has been corrected.
+
+ * "git rebase -i --autostash" did not restore the auto-stashed change
+   when the operation was aborted.
+
+ * "git commit --amend --allow-empty-message -S" for a commit without
+   any message body could have misidentified where the header of the
+   commit object ends.
+
+ * More mark-up updates to typeset strings that are expected to
+   literally typed by the end user in fixed-width font.
+
+ * For a long time, we carried an in-code comment that said our
+   colored output would work only when we use fprintf/fputs on
+   Windows, which no longer is the case for the past few years.
+
+ * "gc.autoPackLimit" when set to 1 should not trigger a repacking
+   when there is only one pack, but the code counted poorly and did
+   so.
+
+ * One part of "git am" had an oddball helper function that called
+   stuff from outside "his" as opposed to calling what we have "ours",
+   which was not gender-neutral and also inconsistent with the rest of
+   the system where outside stuff is usuall called "theirs" in
+   contrast to "ours".
+
+ * The test framework learned a new helper test_match_signal to
+   check an exit code from getting killed by an expected signal.
+
+ * "git blame -M" missed a single line that was moved within the file.
+
+ * Fix recently introduced codepaths that are involved in parallel
+   submodule operations, which gave up on reading too early, and
+   could have wasted CPU while attempting to write under a corner
+   case condition.
+
+ * "git grep -i" has been taught to fold case in non-ascii locales
+   correctly.
+
+ * A test that unconditionally used "mktemp" learned that the command
+   is not necessarily available everywhere.
+
+Also contains minor documentation updates and code clean-ups.
