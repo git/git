@@ -589,7 +589,12 @@ test_expect_success 'filenames seen by tools start with ./' '
 	git reset --hard master >/dev/null 2>&1
 '
 
-test_expect_success 'temporary filenames are used with mergetool.writeToTemp' '
+test_lazy_prereq MKTEMP '
+	tempdir=$(mktemp -d -t foo.XXXXXX) &&
+	test -d "$tempdir"
+'
+
+test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToTemp' '
 	git checkout -b test16 branch1 &&
 	test_config mergetool.writeToTemp true &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
