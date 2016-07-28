@@ -177,7 +177,7 @@ do
 
 	test_expect_success "grep -c $L (no /dev/null)" '
 		! git grep -c test $H | grep /dev/null
-        '
+	'
 
 	test_expect_success "grep --max-depth -1 $L" '
 		{
@@ -1374,6 +1374,64 @@ test_expect_success 'grep --color -e A --and -e B -p with context' '
 
 	git grep --color=always -p -C3 -e int --and -e Hello --no-index hello.c |
 	test_decode_color >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep can find things only in the work tree' '
+	: >work-tree-only &&
+	git add work-tree-only &&
+	test_when_finished "git rm -f work-tree-only" &&
+	echo "find in work tree" >work-tree-only &&
+	git grep --quiet "find in work tree" &&
+	test_must_fail git grep --quiet --cached "find in work tree" &&
+	test_must_fail git grep --quiet "find in work tree" HEAD
+'
+
+test_expect_success 'grep can find things only in the work tree (i-t-a)' '
+	echo "intend to add this" >intend-to-add &&
+	git add -N intend-to-add &&
+	test_when_finished "git rm -f intend-to-add" &&
+	git grep --quiet "intend to add this" &&
+	test_must_fail git grep --quiet --cached "intend to add this" &&
+	test_must_fail git grep --quiet "intend to add this" HEAD
+'
+
+test_expect_success 'grep does not search work tree with assume unchanged' '
+	echo "intend to add this" >intend-to-add &&
+	git add -N intend-to-add &&
+	git update-index --assume-unchanged intend-to-add &&
+	test_when_finished "git rm -f intend-to-add" &&
+	test_must_fail git grep --quiet "intend to add this" &&
+	test_must_fail git grep --quiet --cached "intend to add this" &&
+	test_must_fail git grep --quiet "intend to add this" HEAD
+'
+
+test_expect_success 'grep can find things only in the index' '
+	echo "only in the index" >cache-this &&
+	git add cache-this &&
+	rm cache-this &&
+	test_when_finished "git rm --cached cache-this" &&
+	test_must_fail git grep --quiet "only in the index" &&
+	git grep --quiet --cached "only in the index" &&
+	test_must_fail git grep --quiet "only in the index" HEAD
+'
+
+test_expect_success 'grep does not report i-t-a with -L --cached' '
+	echo "intend to add this" >intend-to-add &&
+	git add -N intend-to-add &&
+	test_when_finished "git rm -f intend-to-add" &&
+	git ls-files | grep -v "^intend-to-add\$" >expected &&
+	git grep -L --cached "nonexistent_string" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep does not report i-t-a and assume unchanged with -L' '
+	echo "intend to add this" >intend-to-add-assume-unchanged &&
+	git add -N intend-to-add-assume-unchanged &&
+	test_when_finished "git rm -f intend-to-add-assume-unchanged" &&
+	git update-index --assume-unchanged intend-to-add-assume-unchanged &&
+	git ls-files | grep -v "^intend-to-add-assume-unchanged\$" >expected &&
+	git grep -L "nonexistent_string" >actual &&
 	test_cmp expected actual
 '
 
