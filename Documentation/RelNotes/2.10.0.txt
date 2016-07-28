@@ -34,7 +34,7 @@ UI, Workflows & Features
 
  * "upload-pack" allows a custom "git pack-objects" replacement when
    responding to "fetch/clone" via the uploadpack.packObjectsHook.
-   (merge 20b20a2 jk/upload-pack-hook later to maint).
+   (merge b738396 jk/upload-pack-hook later to maint).
 
  * Teach format-patch and mailsplit (hence "am") how a line that
    happens to begin with "From " in the e-mail message is quoted with
@@ -83,6 +83,13 @@ UI, Workflows & Features
 
  * A new configuration variable core.sshCommand has been added to
    specify what value for GIT_SSH_COMMAND to use per repository.
+
+ * "git worktree prune" protected worktrees that are marked as
+   "locked" by creating a file in a known location.  "git worktree"
+   command learned a dedicated command pair to create and remove such
+   a file, so that the users do not have to do this with editor.
+
+ * A handful of "git svn" updates.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -156,7 +163,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * Improve the look of the way "git fetch" reports what happened to
    each ref that was fetched.
-   (merge bc437d1 nd/fetch-ref-summary later to maint).
 
  * The .c/.h sources are marked as such in our .gitattributes file so
    that "git diff -W" and friends would work better.
@@ -204,6 +210,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The API to iterate over all the refs (i.e. for_each_ref(), etc.)
    has been revamped.
+
+ * A few tests that specifically target "git rebase -i" have been
+   added.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -285,7 +294,6 @@ notes for details).
    bogus offset value to the caller.  Use a more benign looking
    +0000 instead and let "git log" going in such a case, instead
    of aborting.
-   (merge bab7483 jk/tzoffset-fix later to maint).
 
  * One among four invocations of readlink(1) in our test suite has
    been rewritten so that the test can run on systems without the
@@ -308,58 +316,46 @@ notes for details).
    finds its subject line did not ignore leading blank lines, as is
    commonly done by other codepaths.  Make it ignore leading blank
    lines to match.
-   (merge 054a5ae js/find-commit-subject-ignore-leading-blanks later to maint).
 
  * For a long time, we carried an in-code comment that said our
    colored output would work only when we use fprintf/fputs on
    Windows, which no longer is the case for the past few years.
-   (merge 3d0a833 js/color-on-windows-comment later to maint).
 
  * "gc.autoPackLimit" when set to 1 should not trigger a repacking
    when there is only one pack, but the code counted poorly and did
    so.
-   (merge 5f4e3bf ew/gc-auto-pack-limit-fix later to maint).
 
  * Add a test to specify the desired behaviour that currently is not
    available in "git rebase -Xsubtree=...".
-   (merge 5f35900 dg/subtree-rebase-test later to maint).
 
  * More mark-up updates to typeset strings that are expected to
    literally typed by the end user in fixed-width font.
-   (merge 661c3e9 mm/doc-tt later to maint).
 
  * "git commit --amend --allow-empty-message -S" for a commit without
    any message body could have misidentified where the header of the
    commit object ends.
-   (merge 3324dd8 js/sign-empty-commit-fix later to maint).
 
  * "git rebase -i --autostash" did not restore the auto-stashed change
    when the operation was aborted.
-   (merge 33ba9c6 ps/rebase-i-auto-unstash-upon-abort later to maint).
 
  * Git does not know what the contents in the index should be for a
    path added with "git add -N" yet, so "git grep --cached" should not
    show hits (or show lack of hits, with -L) in such a path, but that
    logic does not apply to "git grep", i.e. searching in the working
    tree files.  But we did so by mistake, which has been corrected.
-   (merge b8e47d1 nd/ita-cleanup later to maint).
 
  * "git blame -M" missed a single line that was moved within the file.
-   (merge 17a07e2 dk/blame-move-no-reason-for-1-line-context later to maint).
 
  * Fix recently introduced codepaths that are involved in parallel
    submodule operations, which gave up on reading too early, and
    could have wasted CPU while attempting to write under a corner
    case condition.
-   (merge d751dd1 sb/submodule-parallel-fetch later to maint).
 
  * "git grep -i" has been taught to fold case in non-ascii locales
    correctly.
-   (merge 695f95b nd/icase later to maint).
 
  * A test that unconditionally used "mktemp" learned that the command
    is not necessarily available everywhere.
-   (merge c578a09 ak/lazy-prereq-mktemp later to maint).
 
  * There are certain house-keeping tasks that need to be performed at
    the very beginning of any Git program, and programs that are not
@@ -372,7 +368,6 @@ notes for details).
 
  * The test framework learned a new helper test_match_signal to
    check an exit code from getting killed by an expected signal.
-   (merge 03c39b3 jk/test-match-signal later to maint).
 
  * General code clean-up around a helper function to write a
    single-liner to a file.
@@ -383,7 +378,6 @@ notes for details).
    which was not gender-neutral and also inconsistent with the rest of
    the system where outside stuff is usuall called "theirs" in
    contrast to "ours".
-   (merge 715a51b js/am-call-theirs-theirs-in-fallback-3way later to maint).
 
  * "git blame file" allowed the lineage of lines in the uncommitted,
    unadded contents of "file" to be inspected, but it refused when
@@ -414,15 +408,36 @@ notes for details).
    misbehave has been fixed.
    (merge 044fb19 js/ignore-space-at-eol later to maint).
 
+ * "git notes merge" had a code to see if a path exists (and fails if
+   it does) and then open the path for writing (when it doesn't).
+   Replace it with open with O_EXCL.
+   (merge deb9c15 rs/notes-merge-no-toctou later to maint).
+
+ * "git pack-objects" and "git index-pack" mostly operate with off_t
+   when talking about the offset of objects in a packfile, but there
+   were a handful of places that used "unsigned long" to hold that
+   value, leading to an unintended truncation.
+   (merge ec9d224 nd/pack-ofs-4gb-limit later to maint).
+
+ * Recent update to "git daemon" tries to enable the socket-level
+   KEEPALIVE, but when it is spawned via inetd, the standard input
+   file descriptor may not necessarily be connected to a socket.
+   Suppress an ENOTSOCK error from setsockopt().
+   (merge fab6027 ew/daemon-socket-keepalive later to maint).
+
+ * Recent FreeBSD stopped making perl available at /usr/bin/perl;
+   switch the default the built-in path to /usr/local/bin/perl on not
+   too ancient FreeBSD releases.
+   (merge 259f22a ew/find-perl-on-freebsd-in-local later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge e51b0df pb/commit-editmsg-path later to maint).
    (merge b333d0d jk/send-pack-stdio later to maint).
    (merge fcf0fe9 lf/sideband-returns-void later to maint).
    (merge c2691e2 ah/unpack-trees-advice-messages later to maint).
-   (merge 82f6178 nd/doc-new-command later to maint).
-   (merge fa90ab4 js/t3404-grammo-fix later to maint).
    (merge c61b2af lf/recv-sideband-cleanup later to maint).
    (merge 31471ba rs/use-strbuf-addbuf later to maint).
    (merge 503e224 nd/test-helpers later to maint).
    (merge 16726cf jc/doc-diff-filter-exclude later to maint).
    (merge fd2e7da rs/worktree-use-strbuf-absolute-path later to maint).
+   (merge 406621f sb/submodule-deinit-all later to maint).
