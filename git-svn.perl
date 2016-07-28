@@ -339,7 +339,7 @@ if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 			die "failed to open $ENV{GIT_DIR}: $!\n";
 		$ENV{GIT_DIR} = $1 if <$fh> =~ /^gitdir: (.+)$/;
 	}
-} else {
+} elsif ($cmd) {
 	my ($git_dir, $cdup);
 	git_cmd_try {
 		$git_dir = command_oneline([qw/rev-parse --git-dir/]);
@@ -356,7 +356,7 @@ if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
-read_git_config(\%opts);
+read_git_config(\%opts) if $ENV{GIT_DIR};
 if ($cmd && ($cmd eq 'log' || $cmd eq 'blame')) {
 	Getopt::Long::Configure('pass_through');
 }
