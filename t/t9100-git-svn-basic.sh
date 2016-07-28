@@ -24,7 +24,8 @@ ceiling=$PWD
 
 test_expect_success 'git svn --version works anywhere' '
 	mkdir -p "$deepdir" && (
-		export GIT_CEILING_DIRECTORIES="$ceiling" &&
+		GIT_CEILING_DIRECTORIES="$ceiling" &&
+		export GIT_CEILING_DIRECTORIES &&
 		cd "$deepdir" &&
 		git svn --version
 	)
@@ -32,7 +33,8 @@ test_expect_success 'git svn --version works anywhere' '
 
 test_expect_success 'git svn help works anywhere' '
 	mkdir -p "$deepdir" && (
-		export GIT_CEILING_DIRECTORIES="$ceiling" &&
+		GIT_CEILING_DIRECTORIES="$ceiling" &&
+		export GIT_CEILING_DIRECTORIES &&
 		cd "$deepdir" &&
 		git svn help
 	)
