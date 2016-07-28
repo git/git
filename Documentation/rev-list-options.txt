@@ -274,6 +274,10 @@ ifdef::git-rev-list[]
 	Try to speed up the traversal using the pack bitmap index (if
 	one is available). Note that when traversing with `--objects`,
 	trees and blobs will not have their associated path printed.
+
+--progress=<header>::
+	Show progress reports on stderr as objects are considered. The
+	`<header>` text will be printed with each progress update.
 endif::git-rev-list[]
 
 --
