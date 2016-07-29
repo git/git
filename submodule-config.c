@@ -59,6 +59,7 @@ static void free_one_config(struct submodule_entry *entry)
 {
 	free((void *) entry->config->path);
 	free((void *) entry->config->name);
+	free((void *) entry->config->branch);
 	free((void *) entry->config->update_strategy.command);
 	free(entry->config);
 }
@@ -199,6 +200,7 @@ static struct submodule *lookup_or_create_by_name(struct submodule_cache *cache,
 	submodule->update_strategy.command = NULL;
 	submodule->fetch_recurse = RECURSE_SUBMODULES_NONE;
 	submodule->ignore = NULL;
+	submodule->branch = NULL;
 	submodule->recommend_shallow = -1;
 
 	hashcpy(submodule->gitmodules_sha1, gitmodules_sha1);
@@ -358,9 +360,16 @@ static int parse_config(const char *var, const char *value, void *data)
 		if (!me->overwrite && submodule->recommend_shallow != -1)
 			warn_multiple_config(me->commit_sha1, submodule->name,
 					     "shallow");
-		else {
+		else
 			submodule->recommend_shallow =
 				git_config_bool(var, value);
+	} else if (!strcmp(item.buf, "branch")) {
+		if (!me->overwrite && submodule->branch)
+			warn_multiple_config(me->commit_sha1, submodule->name,
+					     "branch");
+		else {
+			free((void *)submodule->branch);
+			submodule->branch = xstrdup(value);
 		}
 	}
 
