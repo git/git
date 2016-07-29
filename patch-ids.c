@@ -43,6 +43,7 @@ static int init_patch_id_entry(struct patch_id *patch,
 			       struct commit *commit,
 			       struct patch_ids *ids)
 {
+	patch->commit = commit;
 	if (commit_patch_id(commit, &ids->diffopts, patch->patch_id))
 		return -1;
 

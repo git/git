@@ -4,7 +4,7 @@
 struct patch_id {
 	struct hashmap_entry ent;
 	unsigned char patch_id[GIT_SHA1_RAWSZ];
-	char seen;
+	struct commit *commit;
 };
 
 struct patch_ids {
