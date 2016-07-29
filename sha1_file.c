@@ -23,6 +23,7 @@
 #include "bulk-checkin.h"
 #include "streaming.h"
 #include "dir.h"
+#include "mru.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -58,14 +59,6 @@ static struct cached_object empty_tree = {
 	"",
 	0
 };
-
-/*
- * A pointer to the last packed_git in which an object was found.
- * When an object is sought, we look in this packfile first, because
- * objects that are looked up at similar times are often in the same
- * packfile as one another.
- */
-static struct packed_git *last_found_pack;
 
 static struct cached_object *find_cached_object(const unsigned char *sha1)
 {
@@ -521,6 +514,9 @@ static unsigned int pack_max_fds;
 static size_t peak_pack_mapped;
 static size_t pack_mapped;
 struct packed_git *packed_git;
+
+static struct mru packed_git_mru_storage;
+struct mru *packed_git_mru = &packed_git_mru_storage;
 
 void pack_report(void)
 {
@@ -1355,6 +1351,15 @@ static void rearrange_packed_git(void)
 	free(ary);
 }
 
+static void prepare_packed_git_mru(void)
+{
+	struct packed_git *p;
+
+	mru_clear(packed_git_mru);
+	for (p = packed_git; p; p = p->next)
+		mru_append(packed_git_mru, p);
+}
+
 static int prepare_packed_git_run_once = 0;
 void prepare_packed_git(void)
 {
@@ -1370,6 +1375,7 @@ void prepare_packed_git(void)
 		alt->name[-1] = '/';
 	}
 	rearrange_packed_git();
+	prepare_packed_git_mru();
 	prepare_packed_git_run_once = 1;
 }
 
@@ -2574,21 +2580,15 @@ static int fill_pack_entry(const unsigned char *sha1,
  */
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
-	struct packed_git *p;
+	struct mru_entry *p;
 
 	prepare_packed_git();
 	if (!packed_git)
 		return 0;
 
-	if (last_found_pack && fill_pack_entry(sha1, e, last_found_pack))
-		return 1;
-
-	for (p = packed_git; p; p = p->next) {
-		if (p == last_found_pack)
-			continue; /* we already checked this one */
-
-		if (fill_pack_entry(sha1, e, p)) {
-			last_found_pack = p;
+	for (p = packed_git_mru->head; p; p = p->next) {
+		if (fill_pack_entry(sha1, e, p->item)) {
+			mru_mark(packed_git_mru, p);
 			return 1;
 		}
 	}
