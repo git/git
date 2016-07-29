@@ -13,7 +13,7 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
 	else
 		diff_root_tree_sha1(commit->object.oid.hash, "", options);
 	diffcore_std(options);
-	return diff_flush_patch_id(options, sha1);
+	return diff_flush_patch_id(options, sha1, 0);
 }
 
 static int patch_id_cmp(struct patch_id *a,
