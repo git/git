@@ -856,6 +856,22 @@ test_expect_success 'submodule update clone shallow submodule' '
 	)
 '
 
+test_expect_success 'submodule update clone shallow submodule outside of depth' '
+	test_when_finished "rm -rf super3" &&
+	git clone cloned super3 &&
+	pwd=$(pwd) &&
+	(
+		cd super3 &&
+		sed -e "s#url = ../#url = file://$pwd/#" <.gitmodules >.gitmodules.tmp &&
+		mv -f .gitmodules.tmp .gitmodules &&
+		test_must_fail git submodule update --init --depth=1 2>actual &&
+		test_i18ngrep "Direct fetching of that commit failed." actual &&
+		git -C ../submodule config uploadpack.allowReachableSHA1InWant true &&
+		git submodule update --init --depth=1 >actual &&
+		test 1 = $(git -C submodule log --oneline | wc -l)
+	)
+'
+
 test_expect_success 'submodule update --recursive drops module name before recursing' '
 	(cd super2 &&
 	 (cd deeper/submodule/subsubmodule &&

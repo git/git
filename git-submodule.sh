@@ -479,7 +479,8 @@ fetch_in_submodule () (
 	'')
 		git fetch ;;
 	*)
-		git fetch $(get_default_remote) "$2" ;;
+		shift
+		git fetch $(get_default_remote) "$@" ;;
 	esac
 )
 
@@ -617,7 +618,7 @@ cmd_update()
 			if test -z "$nofetch"
 			then
 				# Fetch remote before determining tracking $sha1
-				fetch_in_submodule "$sm_path" ||
+				fetch_in_submodule "$sm_path" $depth ||
 				die "$(eval_gettext "Unable to fetch in submodule path '\$sm_path'")"
 			fi
 			remote_name=$(sanitize_submodule_env; cd "$sm_path" && get_default_remote)
@@ -640,13 +641,13 @@ cmd_update()
 				# Run fetch only if $sha1 isn't present or it
 				# is not reachable from a ref.
 				is_tip_reachable "$sm_path" "$sha1" ||
-				fetch_in_submodule "$sm_path" ||
+				fetch_in_submodule "$sm_path" $depth ||
 				die "$(eval_gettext "Unable to fetch in submodule path '\$displaypath'")"
 
 				# Now we tried the usual fetch, but $sha1 may
 				# not be reachable from any of the refs
 				is_tip_reachable "$sm_path" "$sha1" ||
-				fetch_in_submodule "$sm_path" "$sha1" ||
+				fetch_in_submodule "$sm_path" $depth "$sha1" ||
 				die "$(eval_gettext "Fetched in submodule path '\$displaypath', but it did not contain \$sha1. Direct fetching of that commit failed.")"
 			fi
 
