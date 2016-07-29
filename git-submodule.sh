@@ -589,7 +589,6 @@ cmd_update()
 
 		name=$(git submodule--helper name "$sm_path") || exit
 		url=$(git config submodule."$name".url)
-		branch=$(get_submodule_config "$name" branch master)
 		if ! test -z "$update"
 		then
 			update_module=$update
@@ -615,6 +614,7 @@ cmd_update()
 
 		if test -n "$remote"
 		then
+			branch=$(get_submodule_config "$name" branch master)
 			if test -z "$nofetch"
 			then
 				# Fetch remote before determining tracking $sha1
