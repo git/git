@@ -26,7 +26,7 @@ git-remote-persistent-http: git-remote-persistent-https
 
 git-remote-persistent-https:
 	go build -o git-remote-persistent-https \
-		-ldflags "-X main._BUILD_EMBED_LABEL $(BUILD_LABEL)"
+		-ldflags "-X main._BUILD_EMBED_LABEL=$(BUILD_LABEL)"
 
 clean:
 	rm -f git-remote-persistent-http* *.tar.gz
