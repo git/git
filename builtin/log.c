@@ -703,6 +703,7 @@ static void add_header(const char *value)
 static int thread;
 static int do_signoff;
 static int base_auto;
+static char *from;
 static const char *signature = git_version_string;
 static const char *signature_file;
 static int config_cover_letter;
@@ -789,6 +790,17 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		return git_config_string(&config_output_directory, var, value);
 	if (!strcmp(var, "format.useautobase")) {
 		base_auto = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "format.from")) {
+		int b = git_config_maybe_bool(var, value);
+		free(from);
+		if (b < 0)
+			from = xstrdup(value);
+		else if (b)
+			from = xstrdup(git_committer_info(IDENT_NO_DATE));
+		else
+			from = NULL;
 		return 0;
 	}
 
@@ -1368,7 +1380,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	int reroll_count = -1;
 	char *branch_name = NULL;
-	char *from = NULL;
 	char *base_commit = NULL;
 	struct base_tree_info bases;
 
