@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2016, #08; Wed, 27)
-X-master-at: 8c6d1f9807c67532e7fb545a944b064faff0f70b
-X-next-at: f76a962d0b7dc838990b78509c5b907bd27b527e
+Subject: What's cooking in git.git (Jul 2016, #09; Fri, 29)
+X-master-at: f8f7adce9fc50a11a764d57815602dcb818d1816
+X-next-at: f965a184db64b4fd46c6b74c02c0079537516c63
 
-What's cooking in git.git (Jul 2016, #08; Wed, 27)
+What's cooking in git.git (Jul 2016, #09; Fri, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,58 +12,90 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
+On the 'master' front, the individual commit count now exceeds 400
+since the last major release, which is a good pace.  We may want to
+start slowing down once the current crop of topics in 'next' hits
+the 'master' and switch our attention to regression hunting.  The
+'maint' branch has been accumulating enough material to make it the
+next maintenance release v2.9.3.
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* da/subtree-2.9-regression (2016-07-26) 2 commits
-  (merged to 'next' on 2016-07-26 at 9d71562)
- + subtree: fix "git subtree split --rejoin"
- + t7900-subtree.sh: fix quoting and broken && chains
+* ew/daemon-socket-keepalive (2016-07-22) 2 commits
+  (merged to 'next' on 2016-07-22 at d39c827)
+ + Windows: add missing definition of ENOTSOCK
+  (merged to 'next' on 2016-07-19 at 0140849)
+ + daemon: ignore ENOTSOCK from setsockopt
 
- "git merge" in Git v2.9 was taught to forbid merging an unrelated
- lines of history by default, but that is exactly the kind of thing
- the "--rejoin" mode of "git subtree" (in contrib/) wants to do.
- "git subtree" has been taught to use the "--allow-unrelated-histories"
- option to override the default.
-
- Will merge to 'master'.
+ Recent update to "git daemon" tries to enable the socket-level
+ KEEPALIVE, but when it is spawned via inetd, the standard input
+ file descriptor may not necessarily be connected to a socket.
+ Suppress an ENOTSOCK error from setsockopt().
 
 
-* jk/pack-objects-optim-skimming (2016-07-26) 2 commits
- - pack-objects: compute local/ignore_pack_keep early
- - pack-objects: break out of want_object loop early
+* ew/find-perl-on-freebsd-in-local (2016-07-26) 1 commit
+  (merged to 'next' on 2016-07-26 at f76a962)
+ + config.mak.uname: correct perl path on FreeBSD
 
- "git pack-objects" has a few options that tell it not to pack
- objects found in certain packfiles, which require it to scan .idx
- files of all available packs.  The codepaths involved in these
- operations have been optimized for a common case of not having any
- non-local pack and/or any .kept pack.
-
- Will wait for a t/perf update.
+ Recent FreeBSD stopped making perl available at /usr/bin/perl;
+ switch the default the built-in path to /usr/local/bin/perl on not
+ too ancient FreeBSD releases.
 
 
-* nd/fetch-ref-summary (2016-07-26) 1 commit
- - t5510: skip tests under GETTEXT_POISON build
+* js/rebase-i-tests (2016-07-07) 3 commits
+  (merged to 'next' on 2016-07-13 at b06b28f)
+ + rebase -i: we allow extra spaces after fixup!/squash!
+ + rebase -i: demonstrate a bug with --autosquash
+ + t3404: add a test for the --gpg-sign option
 
- Hotfix of a test in a topic that has already been merged to 'master'.
+ A few tests that specifically target "git rebase -i" have been
+ added.
 
- Will merge to 'next'.
+
+* nd/pack-ofs-4gb-limit (2016-07-13) 7 commits
+  (merged to 'next' on 2016-07-13 at 91e217d)
+ + fsck: use streaming interface for large blobs in pack
+ + pack-objects: do not truncate result in-pack object size on 32-bit systems
+ + index-pack: correct "offset" type in unpack_entry_data()
+ + index-pack: report correct bad object offsets even if they are large
+ + index-pack: correct "len" type in unpack_data()
+ + sha1_file.c: use type off_t* for object_info->disk_sizep
+ + pack-objects: pass length to check_pack_crc() without truncation
+
+ "git pack-objects" and "git index-pack" mostly operate with off_t
+ when talking about the offset of objects in a packfile, but there
+ were a handful of places that used "unsigned long" to hold that
+ value, leading to an unintended truncation.
 
 
-* os/no-verify-skips-commit-msg-too (2016-07-26) 1 commit
-  (merged to 'next' on 2016-07-26 at 09b98b9)
- + commit: describe that --no-verify skips the commit-msg hook in the help text
+* nd/worktree-lock (2016-07-08) 6 commits
+  (merged to 'next' on 2016-07-13 at c768a85)
+ + worktree.c: find_worktree() search by path suffix
+ + worktree: add "unlock" command
+ + worktree: add "lock" command
+ + worktree.c: add is_worktree_locked()
+ + worktree.c: add is_main_worktree()
+ + worktree.c: add find_worktree()
 
- "git commit --help" said "--no-verify" is only about skipping the
- pre-commit hook, and failed to say that it also skipped the
- commit-msg hook.
+ "git worktree prune" protected worktrees that are marked as
+ "locked" by creating a file in a known location.  "git worktree"
+ command learned a dedicated command pair to create and remove such
+ a file, so that the users do not have to do this with editor.
 
- Will merge to 'master'.
+
+* rs/notes-merge-no-toctou (2016-07-07) 1 commit
+  (merged to 'next' on 2016-07-13 at f08b530)
+ + notes-merge: use O_EXCL to avoid overwriting existing files
+
+ "git notes merge" had a code to see if a path exists (and fails if
+ it does) and then open the path for writing (when it doesn't).
+ Replace it with open with O_EXCL.
 
 
 * sb/submodule-deinit-all (2016-07-26) 1 commit
@@ -72,22 +104,96 @@ of the repositories listed at
 
  A comment update for a topic that was merged to Git v2.8.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* da/subtree-modernize (2016-07-27) 2 commits
+ - subtree: adjust function definitions to match CodingGuidelines
+ - subtree: adjust style to match CodingGuidelines
+ (this branch uses da/subtree-2.9-regression.)
 
-* cp/completion-clone-recurse-submodules (2016-07-27) 1 commit
- - completion: add option '--recurse-submodules' to 'git clone'
+ Style fixes for "git subtree" (in contrib/).
 
  Will merge to 'next'.
 
 
-* va/i18n (2016-07-27) 3 commits
- - SQUASH??? -Werror=format-security
- - i18n: config: unfold error messages marked for translation
- - i18n: notes: mark comment for translation
+* js/rebase-i-progress-tidy (2016-07-28) 1 commit
+ - rebase-interactive: trim leading whitespace from progress count
 
- More i18n marking.  The top one seems to need more work; the bottom
- one looked OK.
+ Regression fix for an i18n topic already in 'master'.
+
+ Will merge to 'next'.
+
+
+* jk/t4205-cleanup (2016-07-27) 2 commits
+ - t4205: indent here documents
+ - t4205: drop top-level &&-chaining
+
+ Test modernization.
+
+ Will merge to 'next'.
+
+
+* jk/pack-objects-optim (2016-07-29) 7 commits
+ - pack-objects: use mru list when iterating over packs
+ - pack-objects: compute local/ignore_pack_keep early
+ - pack-objects: break out of want_object loop early
+ - find_pack_entry: replace last_found_pack with MRU cache
+ - add generic most-recently-used list
+ - sha1_file: drop free_pack_by_name
+ - t/perf: add tests for many-pack scenarios
+
+ "git pack-objects" has a few options that tell it not to pack
+ objects found in certain packfiles, which require it to scan .idx
+ files of all available packs.  The codepaths involved in these
+ operations have been optimized for a common case of not having any
+ non-local pack and/or any .kept pack.
+
+ The last patch is still questionable in that it can attempt to
+ create a cycle in delta-chain, only to be stopped by the last-ditch
+ recovery logic in there.
+
+
+* kw/patch-ids-optim (2016-07-29) 4 commits
+ - rebase: avoid computing unnecessary patch IDs
+ - patch-ids: add flag to create the diff patch id using header only data
+ - patch-ids: replace the seen indicator with a commit pointer
+ - patch-ids: stop using a hand-rolled hashmap implementation
+
+ When "git rebase" tries to compare set of changes on the updated
+ upstream and our own branch, it computes patch-id for all of these
+ changes and attempts to find matches. This has been optimized by
+ lazily computing the full patch-id (which is expensive) to be
+ compared only for changes that touch the same set of paths.
+
+ Will merge to 'next'.
+
+
+* jk/rebase-i-drop-ident-check (2016-07-29) 1 commit
+ - rebase-interactive: drop early check for valid ident
+
+ Even when "git pull --rebase=preserve" (and the underlying "git
+ rebase --preserve") can complete without creating any new commit
+ (i.e. fast-forwards), it still insisted on having a usable ident
+ information (read: user.email is set correctly), which was less
+ than nice.  As the underlying commands used inside "git rebase"
+ would fail with a more meaningful error message and advice text
+ when the bogus ident matters, this extra check was removed.
+
+ Will hold.
+ cf. <20160729224944.GA23242@sigill.intra.peff.net>
+
+
+* jk/reset-ident-time-per-commit (2016-07-29) 1 commit
+ - reset cached ident date before creating objects
+
+ Not-so-recent rewrite of "git am" that started making internal
+ calls into the commit machinery had an unintended regression, in
+ that no matter how many seconds it took to apply many patches, the
+ resulting committer timestamp for the resulting commits were all
+ the same.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -170,7 +276,7 @@ of the repositories listed at
  to check has been optimized greatly.
 
  Expecting a reroll.
- ($gmane/291163)
+ cf. <1460294354-7031-1-git-send-email-s-beyer@gmx.net>
 
 
 * sg/completion-updates (2016-02-28) 21 commits
@@ -197,7 +303,7 @@ of the repositories listed at
  . completion: improve __git_refs()'s in-code documentation
 
  Will be rerolled.
- ($gmane/287839)
+ cf. <1456754714-25237-1-git-send-email-szeder@ira.uka.de>
 
 
 * ec/annotate-deleted (2015-11-20) 1 commit
@@ -219,7 +325,7 @@ of the repositories listed at
  .bitmap and .keep files.
 
  Waiting for a reroll.
- ($gmane/284368).
+ cf. <xmqq60ypbeng.fsf@gitster.mtv.corp.google.com>
 
 
 * jc/diff-b-m (2015-02-23) 5 commits
@@ -240,18 +346,69 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* da/subtree-2.9-regression (2016-07-26) 2 commits
+  (merged to 'next' on 2016-07-26 at 9d71562)
+ + subtree: fix "git subtree split --rejoin"
+ + t7900-subtree.sh: fix quoting and broken && chains
+ (this branch is used by da/subtree-modernize.)
+
+ "git merge" in Git v2.9 was taught to forbid merging an unrelated
+ lines of history by default, but that is exactly the kind of thing
+ the "--rejoin" mode of "git subtree" (in contrib/) wants to do.
+ "git subtree" has been taught to use the "--allow-unrelated-histories"
+ option to override the default.
+
+ Will merge to 'master'.
+
+
+* nd/fetch-ref-summary (2016-07-26) 1 commit
+ - t5510: skip tests under GETTEXT_POISON build
+
+ Hotfix of a test in a topic that has already been merged to 'master'.
+
+ Will merge to 'next'.
+
+
+* os/no-verify-skips-commit-msg-too (2016-07-26) 1 commit
+  (merged to 'next' on 2016-07-26 at 09b98b9)
+ + commit: describe that --no-verify skips the commit-msg hook in the help text
+
+ "git commit --help" said "--no-verify" is only about skipping the
+ pre-commit hook, and failed to say that it also skipped the
+ commit-msg hook.
+
+ Will merge to 'master'.
+
+
+* cp/completion-clone-recurse-submodules (2016-07-27) 1 commit
+ - completion: add option '--recurse-submodules' to 'git clone'
+
+ Will merge to 'next'.
+
+
+* va/i18n (2016-07-28) 2 commits
+ - i18n: config: unfold error messages marked for translation
+ - i18n: notes: mark comment for translation
+
+ More i18n marking.
+
+ Will merge to 'next'.
+
+
 * jc/grep-commandline-vs-configuration (2016-07-25) 1 commit
- - grep: further simplify setting the pattern type
+  (merged to 'next' on 2016-07-28 at dd53273)
+ + grep: further simplify setting the pattern type
 
  "git -c grep.patternType=extended log --basic-regexp" misbehaved
  because the internal API to access the grep machinery was not
  designed well.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/diff-do-not-reuse-wtf-needs-cleaning (2016-07-22) 1 commit
- - diff: do not reuse worktree files that need "clean" conversion
+  (merged to 'next' on 2016-07-28 at e3c5190)
+ + diff: do not reuse worktree files that need "clean" conversion
 
  There is an optimization used in "git diff $treeA $treeB" to borrow
  an already checked-out copy in the working tree when it is known to
@@ -263,21 +420,23 @@ of the repositories listed at
  point of the optimization.  The optimization has been disabled when
  the conversion is necessary.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/git-jump (2016-07-22) 3 commits
- - contrib/git-jump: fix typo in README
- - contrib/git-jump: add whitespace-checking mode
- - contrib/git-jump: fix greedy regex when matching hunks
+  (merged to 'next' on 2016-07-28 at 9ef9398)
+ + contrib/git-jump: fix typo in README
+ + contrib/git-jump: add whitespace-checking mode
+ + contrib/git-jump: fix greedy regex when matching hunks
 
  "git jump" script (in contrib/) has been updated a bit.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/parse-options-concat (2016-07-06) 1 commit
- - parse_options: allocate a new array when concatenating
+  (merged to 'next' on 2016-07-28 at 219bc3a)
+ + parse_options: allocate a new array when concatenating
 
  Users of the parse_options_concat() API function needs to allocate
  extra slots in advance and fill them with OPT_END() when they want
@@ -285,27 +444,28 @@ of the repositories listed at
  error-prone and hard to read.  This has been corrected by tweaking
  the API to allocate and return a new copy of "struct option" array.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/push-progress (2016-07-20) 12 commits
- - receive-pack: send keepalives during quiet periods
- - receive-pack: turn on connectivity progress
- - receive-pack: relay connectivity errors to sideband
- - receive-pack: turn on index-pack resolving progress
- - index-pack: add flag for showing delta-resolution progress
- - clone: use a real progress meter for connectivity check
- - check_connected: add progress flag
- - check_connected: relay errors to alternate descriptor
- - check_everything_connected: use a struct with named options
- - check_everything_connected: convert to argv_array
- - rev-list: add optional progress reporting
- - check_everything_connected: always pass --quiet to rev-list
+  (merged to 'next' on 2016-07-28 at 39598fb)
+ + receive-pack: send keepalives during quiet periods
+ + receive-pack: turn on connectivity progress
+ + receive-pack: relay connectivity errors to sideband
+ + receive-pack: turn on index-pack resolving progress
+ + index-pack: add flag for showing delta-resolution progress
+ + clone: use a real progress meter for connectivity check
+ + check_connected: add progress flag
+ + check_connected: relay errors to alternate descriptor
+ + check_everything_connected: use a struct with named options
+ + check_everything_connected: convert to argv_array
+ + rev-list: add optional progress reporting
+ + check_everything_connected: always pass --quiet to rev-list
 
  "git push" and "git clone" learned to give better progress meters
  to the end user who is waiting on the terminal.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/reflog-date (2016-07-27) 7 commits
@@ -325,51 +485,44 @@ of the repositories listed at
 
 
 * mm/status-suggest-merge-abort (2016-07-22) 1 commit
- - status: suggest 'git merge --abort' when appropriate
+  (merged to 'next' on 2016-07-28 at b8b87d9)
+ + status: suggest 'git merge --abort' when appropriate
 
  "git status" learned to suggest "merge --abort" during a conflicted
  merge, just like it already suggests "rebase --abort" during a
  conflicted rebase.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pm/build-persistent-https-with-recent-go (2016-07-22) 2 commits
- - contrib/persistent-https: use Git version for build label
- - contrib/persistent-https: update ldflags syntax for Go 1.7+
+  (merged to 'next' on 2016-07-28 at f6e9115)
+ + contrib/persistent-https: use Git version for build label
+ + contrib/persistent-https: update ldflags syntax for Go 1.7+
 
  The build procedure for "git persistent-https" helper (in contrib/)
  has been updated so that it can be built with more recent versions
  of Go.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/pack-protocol-doc-nak (2016-07-22) 1 commit
- - Documentation: pack-protocol correct NAK response
+  (merged to 'next' on 2016-07-28 at 5c94e0e)
+ + Documentation: pack-protocol correct NAK response
 
  A doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/submodule-clone-retry (2016-07-22) 2 commits
- - submodule-helper: fix indexing in clone retry error reporting path
- - git-submodule: forward exit code of git-submodule--helper more faithfully
+  (merged to 'next' on 2016-07-28 at 5487d28)
+ + submodule-helper: fix indexing in clone retry error reporting path
+ + git-submodule: forward exit code of git-submodule--helper more faithfully
 
  An earlier tweak to make "submodule update" retry a failing clone
  of submodules was buggy and caused segfault, which has been fixed.
-
- Will merge to 'next'.
-
-
-* ew/find-perl-on-freebsd-in-local (2016-07-26) 1 commit
-  (merged to 'next' on 2016-07-26 at f76a962)
- + config.mak.uname: correct perl path on FreeBSD
-
- Recent FreeBSD stopped making perl available at /usr/bin/perl;
- switch the default the built-in path to /usr/local/bin/perl on not
- too ancient FreeBSD releases.
 
  Will merge to 'master'.
 
@@ -399,22 +552,9 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ew/daemon-socket-keepalive (2016-07-22) 2 commits
-  (merged to 'next' on 2016-07-22 at d39c827)
- + Windows: add missing definition of ENOTSOCK
-  (merged to 'next' on 2016-07-19 at 0140849)
- + daemon: ignore ENOTSOCK from setsockopt
-
- Recent update to "git daemon" tries to enable the socket-level
- KEEPALIVE, but when it is spawned via inetd, the standard input
- file descriptor may not necessarily be connected to a socket.
- Suppress an ENOTSOCK error from setsockopt().
-
- Will merge to 'master'.
-
-
 * jt/fetch-large-handshake-window-on-http (2016-07-19) 1 commit
- - fetch-pack: grow stateless RPC windows exponentially
+  (merged to 'next' on 2016-07-28 at 5606b14)
+ + fetch-pack: grow stateless RPC windows exponentially
 
  "git fetch" exchanges batched have/ack messages between the sender
  and the receiver, initially doubling every time and then falling
@@ -424,27 +564,20 @@ of the repositories listed at
  repository.  The internal mechanism learned to grow the window size
  more aggressively when working with the "smart http" transport.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ew/svn-authorsprog-doc (2016-07-19) 1 commit
- - git-svn: document svn.authorsProg in config
-
- Belated doc update.
-
- Perhaps I will get a copy of this directly from Eric together with
- other updates to git-svn, in which case this needs to be scrapped.
-
-
-* rs/submodule-config-code-cleanup (2016-07-26) 3 commits
- - submodule-config: combine error checking if clauses
- - fix passing a name for config from submodules
+* rs/submodule-config-code-cleanup (2016-07-28) 4 commits
+  (merged to 'next' on 2016-07-28 at e25450e)
+ + submodule-config: fix test binary crashing when no arguments given
+ + submodule-config: combine early return code into one goto
+ + submodule-config: passing name reference for .gitmodule blobs
   (merged to 'next' on 2016-07-19 at 59dbd58)
  + submodule-config: use explicit empty string instead of strbuf in config_from()
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/am-3-merge-recursive-direct (2016-07-26) 16 commits
@@ -471,24 +604,6 @@ of the repositories listed at
 
  Needs review.
  I started re-reading them, but I do want eyes from other people.
-
-
-* nd/pack-ofs-4gb-limit (2016-07-13) 7 commits
-  (merged to 'next' on 2016-07-13 at 91e217d)
- + fsck: use streaming interface for large blobs in pack
- + pack-objects: do not truncate result in-pack object size on 32-bit systems
- + index-pack: correct "offset" type in unpack_entry_data()
- + index-pack: report correct bad object offsets even if they are large
- + index-pack: correct "len" type in unpack_data()
- + sha1_file.c: use type off_t* for object_info->disk_sizep
- + pack-objects: pass length to check_pack_crc() without truncation
-
- "git pack-objects" and "git index-pack" mostly operate with off_t
- when talking about the offset of objects in a packfile, but there
- were a handful of places that used "unsigned long" to hold that
- value, leading to an unintended truncation.
-
- Will merge to 'master'.
 
 
 * sb/push-options (2016-07-14) 4 commits
@@ -549,38 +664,16 @@ of the repositories listed at
  Will hold.
 
 
-* js/rebase-i-tests (2016-07-07) 3 commits
-  (merged to 'next' on 2016-07-13 at b06b28f)
- + rebase -i: we allow extra spaces after fixup!/squash!
- + rebase -i: demonstrate a bug with --autosquash
- + t3404: add a test for the --gpg-sign option
-
- A few tests that specifically target "git rebase -i" have been
- added.
-
- Will merge to 'master'.
-
-
-* rs/notes-merge-no-toctou (2016-07-07) 1 commit
-  (merged to 'next' on 2016-07-13 at f08b530)
- + notes-merge: use O_EXCL to avoid overwriting existing files
-
- "git notes merge" had a code to see if a path exists (and fails if
- it does) and then open the path for writing (when it doesn't).
- Replace it with open with O_EXCL.
-
- Will merge to 'master'.
-
-
-* jk/difftool-in-subdir (2016-07-19) 4 commits
+* jk/difftool-in-subdir (2016-07-28) 3 commits
  - difftool: use Git::* functions instead of passing around state
- - SQUASH???
  - difftool: avoid $GIT_DIR and $GIT_WORK_TREE
  - difftool: fix argument handling in subdirs
 
  "git difftool <paths>..." started in a subdirectory failed to
  interpret the paths relative to that directory, which has been
  fixed.
+
+ Will merge to 'next'.
 
 
 * dp/autoconf-curl-ssl (2016-06-28) 1 commit
@@ -592,8 +685,8 @@ of the repositories listed at
  Needs review.
 
 
-* jc/pull-rebase-ff (2016-06-29) 1 commit
- -   pull: fast-forward "pull --rebase=true"
+* jc/pull-rebase-ff (2016-07-28) 1 commit
+ - pull: fast-forward "pull --rebase=true"
 
  "git pull --rebase", when there is no new commits on our side since
  we forked from the upstream, should be able to fast-forward without
@@ -616,7 +709,7 @@ of the repositories listed at
  documentation.
 
  Updates in 4/8 ("give headings") is reported to break formatting?
- ($gmane/300030)
+ cf. <57913C97.1030001@xiplink.com>
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2016-06-22) 1 commit
@@ -681,7 +774,7 @@ of the repositories listed at
  can plug in different backends to store references.
 
  Needs a fixup.
- ($gmane/298137)
+ cf. <576D9885.2020901@ramsayjones.plus.com>
 
 
 * jc/blame-reverse (2016-06-14) 2 commits
@@ -772,23 +865,6 @@ of the repositories listed at
  behaviour.
 
  Comments?
-
-
-* nd/worktree-lock (2016-07-08) 6 commits
-  (merged to 'next' on 2016-07-13 at c768a85)
- + worktree.c: find_worktree() search by path suffix
- + worktree: add "unlock" command
- + worktree: add "lock" command
- + worktree.c: add is_worktree_locked()
- + worktree.c: add is_main_worktree()
- + worktree.c: add find_worktree()
-
- "git worktree prune" protected worktrees that are marked as
- "locked" by creating a file in a known location.  "git worktree"
- command learned a dedicated command pair to create and remoev such
- a file, so that the users do not have to do this with editor.
-
- Will merge to 'master'.
 
 
 * sb/submodule-default-paths (2016-06-20) 5 commits
@@ -923,7 +999,8 @@ of the repositories listed at
  refresh cost.
 
  Not quite ready yet, it seems.
- ($gmane/298949, $gmane/299506)
+ cf. <alpine.DEB.2.20.1607061016330.6426@virtualbox>
+ cf. <CACsJy8AiER_=5aJ65r+GPCE_nXbrPTAMKJi=FuJgT8zzV2-NFw@mail.gmail.com>
 
 
 * jc/bundle (2016-03-03) 6 commits
@@ -954,19 +1031,14 @@ of the repositories listed at
 
  It has been reported that git-gui still uses the deprecated syntax,
  which needs to be fixed before this final step can proceed.
- ($gmane/282594)
+ cf. <5671DB28.8020901@kdbg.org>
 
 --------------------------------------------------
 [Discarded]
 
-* ew/svn-bad-ref (2016-07-06) 1 commit
- . git-svn: warn instead of dying when commit data is missing
+* ew/svn-authorsprog-doc (2016-07-19) 1 commit
+ . git-svn: document svn.authorsProg in config
+
+ Belated doc update.
 
  Pulled directly from upstream hence discarded.
-
-
-* tb/convert-peek-in-index (2016-07-07) 2 commits
- . correct ce_compare_data() in a middle of a merge
- . read-cache: factor out get_sha1_from_index() helper
-
- Discarded and replaced by jc/renormalize-merge-kill-safer-crlf
