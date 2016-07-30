@@ -333,6 +333,7 @@ test_expect_success 'git add --dry-run --ignore-missing of non-existing file out
 '
 
 test_expect_success 'git add --chmod=+x stages a non-executable file with +x' '
+	rm -f foo1 &&
 	echo foo >foo1 &&
 	git add --chmod=+x foo1 &&
 	case "$(git ls-files --stage foo1)" in
@@ -342,6 +343,7 @@ test_expect_success 'git add --chmod=+x stages a non-executable file with +x' '
 '
 
 test_expect_success 'git add --chmod=-x stages an executable file with -x' '
+	rm -f xfoo1 &&
 	echo foo >xfoo1 &&
 	chmod 755 xfoo1 &&
 	git add --chmod=-x xfoo1 &&
@@ -354,6 +356,7 @@ test_expect_success 'git add --chmod=-x stages an executable file with -x' '
 test_expect_success POSIXPERM,SYMLINKS 'git add --chmod=+x with symlinks' '
 	git config core.filemode 1 &&
 	git config core.symlinks 1 &&
+	rm -f foo2 &&
 	echo foo >foo2 &&
 	git add --chmod=+x foo2 &&
 	case "$(git ls-files --stage foo2)" in
