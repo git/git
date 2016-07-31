@@ -436,6 +436,16 @@ each invocation of 'git p4 sync'.  Normally, Git garbage compression
 (linkgit:git-gc[1]) automatically compresses these to fewer pack files,
 but explicit invocation of 'git repack -adf' may improve performance.
 
+CONFIGURATION
+-------------
+
+The simplest way of specifying user, password and port for git-p4 is in your ~/.gitconfig file:
+
+[git-p4]
+    user = my_username
+    password = my_password
+    port = port_details
+    # port is like ssl:localhost:1666
 
 CONFIGURATION VARIABLES
 -----------------------
