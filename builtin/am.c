@@ -1840,6 +1840,8 @@ static void am_run(struct am_state *state, int resume)
 		const char *mail = am_path(state, msgnum(state));
 		int apply_status;
 
+		reset_ident_date();
+
 		if (!file_exists(mail))
 			goto next;
 

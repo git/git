@@ -186,6 +186,11 @@ static const char *ident_default_date(void)
 	return git_default_date.buf;
 }
 
+void reset_ident_date(void)
+{
+	strbuf_reset(&git_default_date);
+}
+
 static int crud(unsigned char c)
 {
 	return  c <= 32  ||
