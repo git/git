@@ -2069,8 +2069,10 @@ int merge_recursive(struct merge_options *o,
 	o->ancestor = "merged common ancestors";
 	clean = merge_trees(o, h1->tree, h2->tree, merged_common_ancestors->tree,
 			    &mrtree);
-	if (clean < 0)
+	if (clean < 0) {
+		flush_output(o);
 		return clean;
+	}
 
 	if (o->call_depth) {
 		*result = make_virtual_commit(mrtree, "merged tree");
