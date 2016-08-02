@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2016, #09; Fri, 29)
+Subject: What's cooking in git.git (Aug 2016, #01; Tue, 2)
 X-master-at: f8f7adce9fc50a11a764d57815602dcb818d1816
 X-next-at: f965a184db64b4fd46c6b74c02c0079537516c63
 
-What's cooking in git.git (Jul 2016, #09; Fri, 29)
+What's cooking in git.git (Aug 2016, #01; Tue, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -25,87 +25,265 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ew/daemon-socket-keepalive (2016-07-22) 2 commits
-  (merged to 'next' on 2016-07-22 at d39c827)
- + Windows: add missing definition of ENOTSOCK
-  (merged to 'next' on 2016-07-19 at 0140849)
- + daemon: ignore ENOTSOCK from setsockopt
+* ab/gitweb-link-html-escape (2016-08-01) 1 commit
+ - gitweb: escape link body in format_ref_marker
 
- Recent update to "git daemon" tries to enable the socket-level
- KEEPALIVE, but when it is spawned via inetd, the standard input
- file descriptor may not necessarily be connected to a socket.
- Suppress an ENOTSOCK error from setsockopt().
+ The characters in the label shown for tags/refs for commits shown
+ in "gitweb" output are now properly escaped for proper HTML output.
+
+ Will merge to 'next'.
 
 
-* ew/find-perl-on-freebsd-in-local (2016-07-26) 1 commit
-  (merged to 'next' on 2016-07-26 at f76a962)
- + config.mak.uname: correct perl path on FreeBSD
+* ew/build-time-pager-tweaks (2016-08-01) 1 commit
+ . pager: move pager-specific setup into the build
 
- Recent FreeBSD stopped making perl available at /usr/bin/perl;
- switch the default the built-in path to /usr/local/bin/perl on not
- too ancient FreeBSD releases.
+ The build procedure learned PAGER_ENV knob that lists what default
+ environment variable settings to export for popular pagers.  This
+ mechanism is used to tweak the default settings to MORE on FreeBSD.
 
-
-* js/rebase-i-tests (2016-07-07) 3 commits
-  (merged to 'next' on 2016-07-13 at b06b28f)
- + rebase -i: we allow extra spaces after fixup!/squash!
- + rebase -i: demonstrate a bug with --autosquash
- + t3404: add a test for the --gpg-sign option
-
- A few tests that specifically target "git rebase -i" have been
- added.
+ Waiting for a reroll.
 
 
-* nd/pack-ofs-4gb-limit (2016-07-13) 7 commits
-  (merged to 'next' on 2016-07-13 at 91e217d)
- + fsck: use streaming interface for large blobs in pack
- + pack-objects: do not truncate result in-pack object size on 32-bit systems
- + index-pack: correct "offset" type in unpack_entry_data()
- + index-pack: report correct bad object offsets even if they are large
- + index-pack: correct "len" type in unpack_data()
- + sha1_file.c: use type off_t* for object_info->disk_sizep
- + pack-objects: pass length to check_pack_crc() without truncation
+* ib/t3700-add-chmod-x-updates (2016-08-01) 3 commits
+ - t3700: add a test_mode_in_index helper function
+ - t3700: merge two tests into one
+ - t3700: remove unwanted leftover files before running new tests
 
- "git pack-objects" and "git index-pack" mostly operate with off_t
- when talking about the offset of objects in a packfile, but there
- were a handful of places that used "unsigned long" to hold that
- value, leading to an unintended truncation.
+ The t3700 test about "add --chmod=-x" have been made a bit more
+ robust and generally cleaned up.
+
+ Will merge to 'next'.
 
 
-* nd/worktree-lock (2016-07-08) 6 commits
-  (merged to 'next' on 2016-07-13 at c768a85)
- + worktree.c: find_worktree() search by path suffix
- + worktree: add "unlock" command
- + worktree: add "lock" command
- + worktree.c: add is_worktree_locked()
- + worktree.c: add is_main_worktree()
- + worktree.c: add find_worktree()
+* jt/format-patch-from-config (2016-08-01) 1 commit
+ - format-patch: format.from gives the default for --from
 
- "git worktree prune" protected worktrees that are marked as
- "locked" by creating a file in a known location.  "git worktree"
- command learned a dedicated command pair to create and remove such
- a file, so that the users do not have to do this with editor.
+ "git format-patch" learned format.from configuration variable to
+ specify the default settings for its "--from" option.
 
 
-* rs/notes-merge-no-toctou (2016-07-07) 1 commit
-  (merged to 'next' on 2016-07-13 at f08b530)
- + notes-merge: use O_EXCL to avoid overwriting existing files
+* rs/st-mult (2016-08-01) 1 commit
+ - pass constants as first argument to st_mult()
 
- "git notes merge" had a code to see if a path exists (and fails if
- it does) and then open the path for writing (when it doesn't).
- Replace it with open with O_EXCL.
+ Micro optimization of st_mult() facility used to check the integer
+ overflow coming from multiplication to compute size of memory
+ allocation.
+
+ Will merge to 'next'.
 
 
-* sb/submodule-deinit-all (2016-07-26) 1 commit
-  (merged to 'next' on 2016-07-26 at ca0b067)
- + submodule deinit: remove outdated comment
+* rs/use-strbuf-addstr (2016-08-01) 1 commit
+ - use strbuf_addstr() for adding constant strings to a strbuf
 
- A comment update for a topic that was merged to Git v2.8.
+ Will merge to 'next'.
+
+
+* sb/submodule-update-dot-branch (2016-08-01) 7 commits
+ - submodule update: allow '.' for branch value
+ - submodule--helper: add remote-branch helper
+ - submodule-config: keep configured branch around
+ - submodule--helper: fix usage string for relative-path
+ - submodule update: narrow scope of local variable
+ - submodule update: respect depth in subsequent fetches
+ - t7406: future proof tests with hard coded depth
+
+ A few updates to "git submodule update".
+
+ Will merge to 'next'.
+
+
+* jc/hashmap-doc-init (2016-08-02) 1 commit
+ - hashmap: clarify that hashmap_entry can safely be discarded
+
+ The API documentation for hashmap was unclear if hashmap_entry
+ can be safely discarded without any other consideration.  State
+ that it is safe to do so.
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* jh/clean-smudge-annex (2016-08-01) 9 commits
+ - use smudgeToFile filter in recursive merge
+ - use smudgeToFile filter in git am
+ - better recovery from failure of smudgeToFile filter
+ - warn on unusable smudgeToFile/cleanFromFile config
+ - use smudgeToFile in git checkout etc
+ - use cleanFromFile in git add
+ - add smudgeToFile and cleanFromFile filter configs
+ - clarify %f documentation
+ - Merge branch 'cc/apply-am' into HEAD
+ (this branch uses cc/apply-am.)
+
+ The interface to "clean/smudge" filters require Git to feed the
+ whole contents via pipe, which is suboptimal for some applications.
+ "cleanFromFile/smudgeToFile" commands are the moral equilvalents
+ for these filters but they interact with the files on the
+ filesystem directly.
+
+ This is starting to bit-rot, as the topic it is built upon keeps
+ getting rerolled.  I _think_ I rebased it correctly, but I would
+ not be surprised if I made a mistake.
+
+ Will discard if/when I have to do another rebase, preferring to
+ have a fresh reroll directly from the author.
+
+
+* sb/bisect (2016-04-15) 22 commits
+ . SQUASH???
+ . bisect: get back halfway shortcut
+ . bisect: compute best bisection in compute_relevant_weights()
+ . bisect: use a bottom-up traversal to find relevant weights
+ . bisect: prepare for different algorithms based on find_all
+ . bisect: rename count_distance() to compute_weight()
+ . bisect: make total number of commits global
+ . bisect: introduce distance_direction()
+ . bisect: extract get_distance() function from code duplication
+ . bisect: use commit instead of commit list as arguments when appropriate
+ . bisect: replace clear_distance() by unique markers
+ . bisect: use struct node_data array instead of int array
+ . bisect: get rid of recursion in count_distance()
+ . bisect: make algorithm behavior independent of DEBUG_BISECT
+ . bisect: make bisect compile if DEBUG_BISECT is set
+ . bisect: plug the biggest memory leak
+ . bisect: add test for the bisect algorithm
+ . t6030: generalize test to not rely on current implementation
+ . t: use test_cmp_rev() where appropriate
+ . t/test-lib-functions.sh: generalize test_cmp_rev
+ . bisect: allow 'bisect run' if no good commit is known
+ . bisect: write about `bisect next` in documentation
+
+ The internal algorithm used in "git bisect" to find the next commit
+ to check has been optimized greatly.
+
+ Was expecting a reroll, but now pb/bisect topic starts removinging
+ more and more parts from git-bisect.sh, this needs to see a fresh
+ reroll.
+
+ Will discard for now.
+ cf. <1460294354-7031-1-git-send-email-s-beyer@gmx.net>
+
+
+
+
+* sg/completion-updates (2016-02-28) 21 commits
+ . completion: cache the path to the repository
+ . completion: extract repository discovery from __gitdir()
+ . completion: don't guard git executions with __gitdir()
+ . completion: consolidate silencing errors from git commands
+ . completion: don't use __gitdir() for git commands
+ . completion: respect 'git -C <path>'
+ . completion: fix completion after 'git -C <path>'
+ . completion: don't offer commands when 'git --opt' needs an argument
+ . rev-parse: add '--absolute-git-dir' option
+ . completion: list short refs from a remote given as a URL
+ . completion: don't list 'HEAD' when trying refs completion outside of a repo
+ . completion: list refs from remote when remote's name matches a directory
+ . completion: respect 'git --git-dir=<path>' when listing remote refs
+ . completion: fix most spots not respecting 'git --git-dir=<path>'
+ . completion: ensure that the repository path given on the command line exists
+ . completion tests: add tests for the __git_refs() helper function
+ . completion tests: check __gitdir()'s output in the error cases
+ . completion tests: consolidate getting path of current working directory
+ . completion tests: make the $cur variable local to the test helper functions
+ . completion tests: don't add test cruft to the test repository
+ . completion: improve __git_refs()'s in-code documentation
+
+ Will be rerolled.
+ cf. <1456754714-25237-1-git-send-email-szeder@ira.uka.de>
+
+
+* ec/annotate-deleted (2015-11-20) 1 commit
+ - annotate: skip checking working tree if a revision is provided
+
+ Usability fix for annotate-specific "<file> <rev>" syntax with deleted
+ files.
+
+ Waiting for review.
+
+
+* dk/gc-more-wo-pack (2016-01-13) 4 commits
+ - gc: clean garbage .bitmap files from pack dir
+ - t5304: ensure non-garbage files are not deleted
+ - t5304: test .bitmap garbage files
+ - prepare_packed_git(): find more garbage
+
+ Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
+ .bitmap and .keep files.
+
+ Waiting for a reroll.
+ cf. <xmqq60ypbeng.fsf@gitster.mtv.corp.google.com>
+
+
+* jc/diff-b-m (2015-02-23) 5 commits
+ . WIPWIP
+ . WIP: diff-b-m
+ - diffcore-rename: allow easier debugging
+ - diffcore-rename.c: add locate_rename_src()
+ - diffcore-break: allow debugging
+
+ "git diff -B -M" produced incorrect patch when the postimage of a
+ completely rewritten file is similar to the preimage of a removed
+ file; such a resulting file must not be expressed as a rename from
+ other place.
+
+ The fix in this patch is broken, unfortunately.
+ Will discard.
+
+--------------------------------------------------
+[Cooking]
+
+* cc/apply-am (2016-08-01) 42 commits
+ - fixup! apply: make it possible to silently apply
+ - builtin/am: use apply api in run_apply()
+ - apply: refactor `git apply` option parsing
+ - apply: change error_routine when silent
+ - usage: add get_error_routine() and get_warn_routine()
+ - usage: add set_warn_routine()
+ - apply: don't print on stdout in verbosity_silent mode
+ - apply: make it possible to silently apply
+ - write_or_die: use warning() instead of fprintf(stderr, ...)
+ - environment: add set_index_file()
+ - apply: use error_errno() where possible
+ - apply: make some parsing functions static again
+ - apply: move libified code from builtin/apply.c to apply.{c,h}
+ - apply: rename and move opt constants to apply.h
+ - builtin/apply: rename option parsing functions
+ - builtin/apply: make create_one_file() return -1 on error
+ - builtin/apply: make try_create_file() return -1 on error
+ - builtin/apply: make write_out_results() return -1 on error
+ - builtin/apply: make write_out_one_result() return -1 on error
+ - builtin/apply: make create_file() return -1 on error
+ - builtin/apply: make add_index_file() return -1 on error
+ - builtin/apply: make add_conflicted_stages_file() return -1 on error
+ - builtin/apply: make remove_file() return -1 on error
+ - builtin/apply: make build_fake_ancestor() return -1 on error
+ - builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
+ - builtin/apply: make gitdiff_*() return -1 on error
+ - builtin/apply: make gitdiff_*() return 1 at end of header
+ - builtin/apply: make parse_traditional_patch() return -1 on error
+ - builtin/apply: make apply_all_patches() return 128 or 1 on error
+ - builtin/apply: move check_apply_state() to apply.c
+ - builtin/apply: make check_apply_state() return -1 instead of die()ing
+ - apply: make init_apply_state() return -1 instead of exit()ing
+ - builtin/apply: move init_apply_state() to apply.c
+ - builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_single_patch() return -1 on error
+ - builtin/apply: make parse_chunk() return a negative integer on error
+ - builtin/apply: make find_header() return -128 instead of die()ing
+ - builtin/apply: read_patch_file() return -1 instead of die()ing
+ - builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
+ - apply: move 'struct apply_state' to apply.h
+ - apply: make some names more specific
+ (this branch is used by jh/clean-smudge-annex.)
+
+ "git am" has been taught to make an internal call to "git apply"'s
+ innards without spawning the latter as a separate process.
+
+ Needs review.
+
 
 * da/subtree-modernize (2016-07-27) 2 commits
  - subtree: adjust function definitions to match CodingGuidelines
@@ -184,8 +362,8 @@ of the repositories listed at
  cf. <20160729224944.GA23242@sigill.intra.peff.net>
 
 
-* jk/reset-ident-time-per-commit (2016-07-29) 1 commit
- - reset cached ident date before creating objects
+* jk/reset-ident-time-per-commit (2016-08-01) 1 commit
+ - am: reset cached ident date for each patch
 
  Not-so-recent rewrite of "git am" that started making internal
  calls into the commit machinery had an unintended regression, in
@@ -195,156 +373,6 @@ of the repositories listed at
 
  Will merge to 'next'.
 
---------------------------------------------------
-[Stalled]
-
-* cc/apply-am (2016-06-28) 41 commits
- - apply: use error_errno() where possible
- - builtin/am: use apply api in run_apply()
- - apply: change error_routine when be_silent is set
- - usage: add get_error_routine() and get_warn_routine()
- - usage: add set_warn_routine()
- - apply: don't print on stdout when be_silent is set
- - apply: make 'be_silent' incompatible with 'apply_verbosely'
- - apply: add 'be_silent' variable to 'struct apply_state'
- - write_or_die: use warning() instead of fprintf(stderr, ...)
- - environment: add set_index_file()
- - apply: make some parsing functions static again
- - apply: move libified code from builtin/apply.c to apply.{c,h}
- - apply: rename and move opt constants to apply.h
- - builtin/apply: rename option parsing functions
- - builtin/apply: make create_one_file() return -1 on error
- - builtin/apply: make try_create_file() return -1 on error
- - builtin/apply: make write_out_results() return -1 on error
- - builtin/apply: make write_out_one_result() return -1 on error
- - builtin/apply: make create_file() return -1 on error
- - builtin/apply: make add_index_file() return -1 on error
- - builtin/apply: make add_conflicted_stages_file() return -1 on error
- - builtin/apply: make remove_file() return -1 on error
- - builtin/apply: make build_fake_ancestor() return -1 on error
- - builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
- - builtin/apply: make gitdiff_*() return -1 on error
- - builtin/apply: make gitdiff_*() return 1 at end of header
- - builtin/apply: make parse_traditional_patch() return -1 on error
- - builtin/apply: make apply_all_patches() return 128 or 1 on error
- - builtin/apply: move check_apply_state() to apply.c
- - builtin/apply: make check_apply_state() return -1 instead of die()ing
- - apply: make init_apply_state() return -1 instead of exit()ing
- - builtin/apply: move init_apply_state() to apply.c
- - builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
- - builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
- - builtin/apply: make parse_single_patch() return -1 on error
- - builtin/apply: make parse_chunk() return a negative integer on error
- - builtin/apply: make find_header() return -128 instead of die()ing
- - builtin/apply: read_patch_file() return -1 instead of die()ing
- - builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
- - apply: move 'struct apply_state' to apply.h
- - apply: make some names more specific
- (this branch is used by jh/clean-smudge-annex.)
-
- "git am" has been taught to make an internal call to "git apply"'s
- innards without spawning the latter as a separate process.
-
- Needs review.
-
-
-* sb/bisect (2016-04-15) 22 commits
- - SQUASH???
- - bisect: get back halfway shortcut
- - bisect: compute best bisection in compute_relevant_weights()
- - bisect: use a bottom-up traversal to find relevant weights
- - bisect: prepare for different algorithms based on find_all
- - bisect: rename count_distance() to compute_weight()
- - bisect: make total number of commits global
- - bisect: introduce distance_direction()
- - bisect: extract get_distance() function from code duplication
- - bisect: use commit instead of commit list as arguments when appropriate
- - bisect: replace clear_distance() by unique markers
- - bisect: use struct node_data array instead of int array
- - bisect: get rid of recursion in count_distance()
- - bisect: make algorithm behavior independent of DEBUG_BISECT
- - bisect: make bisect compile if DEBUG_BISECT is set
- - bisect: plug the biggest memory leak
- - bisect: add test for the bisect algorithm
- - t6030: generalize test to not rely on current implementation
- - t: use test_cmp_rev() where appropriate
- - t/test-lib-functions.sh: generalize test_cmp_rev
- - bisect: allow 'bisect run' if no good commit is known
- - bisect: write about `bisect next` in documentation
-
- The internal algorithm used in "git bisect" to find the next commit
- to check has been optimized greatly.
-
- Expecting a reroll.
- cf. <1460294354-7031-1-git-send-email-s-beyer@gmx.net>
-
-
-* sg/completion-updates (2016-02-28) 21 commits
- . completion: cache the path to the repository
- . completion: extract repository discovery from __gitdir()
- . completion: don't guard git executions with __gitdir()
- . completion: consolidate silencing errors from git commands
- . completion: don't use __gitdir() for git commands
- . completion: respect 'git -C <path>'
- . completion: fix completion after 'git -C <path>'
- . completion: don't offer commands when 'git --opt' needs an argument
- . rev-parse: add '--absolute-git-dir' option
- . completion: list short refs from a remote given as a URL
- . completion: don't list 'HEAD' when trying refs completion outside of a repo
- . completion: list refs from remote when remote's name matches a directory
- . completion: respect 'git --git-dir=<path>' when listing remote refs
- . completion: fix most spots not respecting 'git --git-dir=<path>'
- . completion: ensure that the repository path given on the command line exists
- . completion tests: add tests for the __git_refs() helper function
- . completion tests: check __gitdir()'s output in the error cases
- . completion tests: consolidate getting path of current working directory
- . completion tests: make the $cur variable local to the test helper functions
- . completion tests: don't add test cruft to the test repository
- . completion: improve __git_refs()'s in-code documentation
-
- Will be rerolled.
- cf. <1456754714-25237-1-git-send-email-szeder@ira.uka.de>
-
-
-* ec/annotate-deleted (2015-11-20) 1 commit
- - annotate: skip checking working tree if a revision is provided
-
- Usability fix for annotate-specific "<file> <rev>" syntax with deleted
- files.
-
- Waiting for review.
-
-
-* dk/gc-more-wo-pack (2016-01-13) 4 commits
- - gc: clean garbage .bitmap files from pack dir
- - t5304: ensure non-garbage files are not deleted
- - t5304: test .bitmap garbage files
- - prepare_packed_git(): find more garbage
-
- Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
- .bitmap and .keep files.
-
- Waiting for a reroll.
- cf. <xmqq60ypbeng.fsf@gitster.mtv.corp.google.com>
-
-
-* jc/diff-b-m (2015-02-23) 5 commits
- . WIPWIP
- . WIP: diff-b-m
- - diffcore-rename: allow easier debugging
- - diffcore-rename.c: add locate_rename_src()
- - diffcore-break: allow debugging
-
- "git diff -B -M" produced incorrect patch when the postimage of a
- completely rewritten file is similar to the preimage of a removed
- file; such a resulting file must not be expressed as a rename from
- other place.
-
- The fix in this patch is broken, unfortunately.
- Will discard.
-
---------------------------------------------------
-[Cooking]
 
 * da/subtree-2.9-regression (2016-07-26) 2 commits
   (merged to 'next' on 2016-07-26 at 9d71562)
@@ -580,7 +608,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* js/am-3-merge-recursive-direct (2016-07-26) 16 commits
+* js/am-3-merge-recursive-direct (2016-08-01) 16 commits
  - merge-recursive: flush output buffer even when erroring out
  - merge_trees(): ensure that the callers release output buffer
  - merge-recursive: offer an option to retain the output in 'obuf'
@@ -602,8 +630,13 @@ of the repositories listed at
  to a three-way merge; this call has been turned into an internal
  subroutine call instead of spawning a separate subprocess.
 
- Needs review.
- I started re-reading them, but I do want eyes from other people.
+ These mostly looked sensible, but it is dubious if it is a good
+ feature to send what is meant to the standard error to the standard
+ output.
+
+ Eyes from other people are highly appreciated, as my eyes (and the
+ original author's, too) have rotten by staring many rerolls of the
+ same topic and are not effective in spotting errors.
 
 
 * sb/push-options (2016-07-14) 4 commits
@@ -641,27 +674,6 @@ of the repositories listed at
  commits.
 
  Comments?  Personally I find it more-or-less "Meh".
-
-
-* jh/clean-smudge-annex (2016-07-12) 9 commits
- - use smudgeToFile filter in recursive merge
- - use smudgeToFile filter in git am
- - better recovery from failure of smudgeToFile filter
- - warn on unusable smudgeToFile/cleanFromFile config
- - use smudgeToFile in git checkout etc
- - use cleanFromFile in git add
- - add smudgeToFile and cleanFromFile filter configs
- - clarify %f documentation
- - Merge branch 'cc/apply-am' into jh/clean-smudge-annex
- (this branch uses cc/apply-am.)
-
- The interface to "clean/smudge" filters require Git to feed the
- whole contents via pipe, which is suboptimal for some applications.
- "cleanFromFile/smudgeToFile" commands are the moral equilvalents
- for these filters but they interact with the files on the
- filesystem directly.
-
- Will hold.
 
 
 * jk/difftool-in-subdir (2016-07-28) 3 commits
@@ -910,22 +922,26 @@ of the repositories listed at
  back-burner the threading enhancement to another day.
 
 
-* pb/bisect (2016-07-12) 9 commits
- - bisect--helper: `bisect_write` shell function in C
- - bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
- - bisect--helper: `bisect_reset` shell function in C
- - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- - t6030: explicitly test for bisection cleanup
- - bisect--helper: `bisect_clean_state` shell function in C
- - bisect--helper: `write_terms` shell function in C
- - bisect: rewrite `check_term_format` shell function in C
- - bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+* pb/bisect (2016-08-02) 13 commits
+ . bisect--helper: `bisect_start` shell function partially in C
+ . bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ . bisect--helper: `bisect_next_check` shell function in C
+ . bisect--helper: `check_and_set_terms` shell function in C
+ . bisect--helper: `bisect_write` shell function in C
+ . bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
+ . bisect--helper: `bisect_reset` shell function in C
+ . wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ . t6030: explicitly test for bisection cleanup
+ . bisect--helper: `bisect_clean_state` shell function in C
+ . bisect--helper: `write_terms` shell function in C
+ . bisect: rewrite `check_term_format` shell function in C
+ . bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
 
  GSoC "bisect" topic.
 
- Are people happy with this version?  How much of the planned
- "porting" is finished by this part of the work?  How much more to
- go?
+ I'd prefer to see early part solidified so that reviews can focus
+ on the later part that is still in flux.  We are almost there but
+ not quite yet.
 
 
 * sb/pathspec-label (2016-06-03) 6 commits
