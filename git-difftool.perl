@@ -37,14 +37,6 @@ USAGE
 	exit($exitcode);
 }
 
-sub find_worktree
-{
-	# Git->repository->wc_path() does not honor changes to the working
-	# tree location made by $ENV{GIT_WORK_TREE} or the 'core.worktree'
-	# config variable.
-	return Git::command_oneline('rev-parse', '--show-toplevel');
-}
-
 sub print_tool_help
 {
 	# See the comment at the bottom of file_diff() for the reason behind
@@ -67,14 +59,14 @@ sub exit_cleanup
 
 sub use_wt_file
 {
-	my ($repo, $workdir, $file, $sha1) = @_;
+	my ($workdir, $file, $sha1) = @_;
 	my $null_sha1 = '0' x 40;
 
 	if (-l "$workdir/$file" || ! -e _) {
 		return (0, $null_sha1);
 	}
 
-	my $wt_sha1 = $repo->command_oneline('hash-object', "$workdir/$file");
+	my $wt_sha1 = Git::command_oneline('hash-object', "$workdir/$file");
 	my $use = ($sha1 eq $null_sha1) || ($sha1 eq $wt_sha1);
 	return ($use, $wt_sha1);
 }
@@ -83,20 +75,17 @@ sub changed_files
 {
 	my ($repo_path, $index, $worktree) = @_;
 	$ENV{GIT_INDEX_FILE} = $index;
-	$ENV{GIT_WORK_TREE} = $worktree;
-	my $must_unset_git_dir = 0;
-	if (not defined($ENV{GIT_DIR})) {
-		$must_unset_git_dir = 1;
-		$ENV{GIT_DIR} = $repo_path;
-	}
 
-	my @refreshargs = qw/update-index --really-refresh -q --unmerged/;
-	my @gitargs = qw/diff-files --name-only -z/;
+	my @gitargs = ('--git-dir', $repo_path, '--work-tree', $worktree);
+	my @refreshargs = (
+		@gitargs, 'update-index',
+		'--really-refresh', '-q', '--unmerged');
 	try {
 		Git::command_oneline(@refreshargs);
 	} catch Git::Error::Command with {};
 
-	my $line = Git::command_oneline(@gitargs);
+	my @diffargs = (@gitargs, 'diff-files', '--name-only', '-z');
+	my $line = Git::command_oneline(@diffargs);
 	my @files;
 	if (defined $line) {
 		@files = split('\0', $line);
@@ -105,26 +94,15 @@ sub changed_files
 	}
 
 	delete($ENV{GIT_INDEX_FILE});
-	delete($ENV{GIT_WORK_TREE});
-	delete($ENV{GIT_DIR}) if ($must_unset_git_dir);
 
 	return map { $_ => 1 } @files;
 }
 
 sub setup_dir_diff
 {
-	my ($repo, $workdir, $symlinks) = @_;
-
-	# Run the diff; exit immediately if no diff found
-	# 'Repository' and 'WorkingCopy' must be explicitly set to insure that
-	# if $GIT_DIR and $GIT_WORK_TREE are set in ENV, they are actually used
-	# by Git->repository->command*.
-	my $repo_path = $repo->repo_path();
-	my %repo_args = (Repository => $repo_path, WorkingCopy => $workdir);
-	my $diffrepo = Git->repository(%repo_args);
-
+	my ($workdir, $symlinks) = @_;
 	my @gitargs = ('diff', '--raw', '--no-abbrev', '-z', @ARGV);
-	my $diffrtn = $diffrepo->command_oneline(@gitargs);
+	my $diffrtn = Git::command_oneline(@gitargs);
 	exit(0) unless defined($diffrtn);
 
 	# Build index info for left and right sides of the diff
@@ -176,12 +154,12 @@ EOF
 
 		if ($lmode eq $symlink_mode) {
 			$symlink{$src_path}{left} =
-				$diffrepo->command_oneline('show', "$lsha1");
+				Git::command_oneline('show', $lsha1);
 		}
 
 		if ($rmode eq $symlink_mode) {
 			$symlink{$dst_path}{right} =
-				$diffrepo->command_oneline('show', "$rsha1");
+				Git::command_oneline('show', $rsha1);
 		}
 
 		if ($lmode ne $null_mode and $status !~ /^C/) {
@@ -193,8 +171,8 @@ EOF
 			if ($working_tree_dups{$dst_path}++) {
 				next;
 			}
-			my ($use, $wt_sha1) = use_wt_file($repo, $workdir,
-							  $dst_path, $rsha1);
+			my ($use, $wt_sha1) =
+				use_wt_file($workdir, $dst_path, $rsha1);
 			if ($use) {
 				push @working_tree, $dst_path;
 				$wtindex .= "$rmode $wt_sha1\t$dst_path\0";
@@ -211,44 +189,34 @@ EOF
 	mkpath($ldir) or exit_cleanup($tmpdir, 1);
 	mkpath($rdir) or exit_cleanup($tmpdir, 1);
 
-	# If $GIT_DIR is not set prior to calling 'git update-index' and
-	# 'git checkout-index', then those commands will fail if difftool
-	# is called from a directory other than the repo root.
-	my $must_unset_git_dir = 0;
-	if (not defined($ENV{GIT_DIR})) {
-		$must_unset_git_dir = 1;
-		$ENV{GIT_DIR} = $repo_path;
-	}
-
 	# Populate the left and right directories based on each index file
 	my ($inpipe, $ctx);
 	$ENV{GIT_INDEX_FILE} = "$tmpdir/lindex";
 	($inpipe, $ctx) =
-		$repo->command_input_pipe(qw(update-index -z --index-info));
+		Git::command_input_pipe('update-index', '-z', '--index-info');
 	print($inpipe $lindex);
-	$repo->command_close_pipe($inpipe, $ctx);
+	Git::command_close_pipe($inpipe, $ctx);
 
 	my $rc = system('git', 'checkout-index', '--all', "--prefix=$ldir/");
 	exit_cleanup($tmpdir, $rc) if $rc != 0;
 
 	$ENV{GIT_INDEX_FILE} = "$tmpdir/rindex";
 	($inpipe, $ctx) =
-		$repo->command_input_pipe(qw(update-index -z --index-info));
+		Git::command_input_pipe('update-index', '-z', '--index-info');
 	print($inpipe $rindex);
-	$repo->command_close_pipe($inpipe, $ctx);
+	Git::command_close_pipe($inpipe, $ctx);
 
 	$rc = system('git', 'checkout-index', '--all', "--prefix=$rdir/");
 	exit_cleanup($tmpdir, $rc) if $rc != 0;
 
 	$ENV{GIT_INDEX_FILE} = "$tmpdir/wtindex";
 	($inpipe, $ctx) =
-		$repo->command_input_pipe(qw(update-index --info-only -z --index-info));
+		Git::command_input_pipe('update-index', '--info-only', '-z', '--index-info');
 	print($inpipe $wtindex);
-	$repo->command_close_pipe($inpipe, $ctx);
+	Git::command_close_pipe($inpipe, $ctx);
 
 	# If $GIT_DIR was explicitly set just for the update/checkout
 	# commands, then it should be unset before continuing.
-	delete($ENV{GIT_DIR}) if ($must_unset_git_dir);
 	delete($ENV{GIT_INDEX_FILE});
 
 	# Changes in the working tree need special treatment since they are
@@ -415,9 +383,9 @@ sub dir_diff
 	my $rc;
 	my $error = 0;
 	my $repo = Git->repository();
-	my $workdir = find_worktree();
-	my ($a, $b, $tmpdir, @worktree) =
-		setup_dir_diff($repo, $workdir, $symlinks);
+	my $repo_path = $repo->repo_path();
+	my $workdir = $repo->wc_path();
+	my ($a, $b, $tmpdir, @worktree) = setup_dir_diff($workdir, $symlinks);
 
 	if (defined($extcmd)) {
 		$rc = system($extcmd, $a, $b);
@@ -443,10 +411,10 @@ sub dir_diff
 		next if ! -f "$b/$file";
 
 		if (!$indices_loaded) {
-			%wt_modified = changed_files($repo->repo_path(),
-				"$tmpdir/wtindex", "$workdir");
-			%tmp_modified = changed_files($repo->repo_path(),
-				"$tmpdir/wtindex", "$b");
+			%wt_modified = changed_files(
+				$repo_path, "$tmpdir/wtindex", $workdir);
+			%tmp_modified = changed_files(
+				$repo_path, "$tmpdir/wtindex", $b);
 			$indices_loaded = 1;
 		}
 
