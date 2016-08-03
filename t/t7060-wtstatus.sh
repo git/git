@@ -34,6 +34,7 @@ test_expect_success 'M/D conflict does not segfault' '
 On branch side
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
@@ -138,6 +139,7 @@ test_expect_success 'status when conflicts with add and rm advice (deleted by th
 On branch master
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
@@ -171,6 +173,7 @@ test_expect_success 'status when conflicts with add and rm advice (both deleted)
 On branch conflict_second
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
@@ -195,6 +198,7 @@ test_expect_success 'status when conflicts with only rm advice (both deleted)' '
 On branch conflict_second
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Changes to be committed:
 
