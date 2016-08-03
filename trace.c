@@ -25,15 +25,25 @@
 #include "cache.h"
 #include "quote.h"
 
+/*
+ * "Normalize" a key argument by converting NULL to our trace_default,
+ * and otherwise passing through the value. All caller-facing functions
+ * should normalize their inputs in this way, though most get it
+ * for free by calling get_trace_fd() (directly or indirectly).
+ */
+static void normalize_trace_key(struct trace_key **key)
+{
+	static struct trace_key trace_default = { "GIT_TRACE" };
+	if (!*key)
+		*key = &trace_default;
+}
+
 /* Get a trace file descriptor from "key" env variable. */
 static int get_trace_fd(struct trace_key *key)
 {
-	static struct trace_key trace_default = { "GIT_TRACE" };
 	const char *trace;
 
-	/* use default "GIT_TRACE" if NULL */
-	if (!key)
-		key = &trace_default;
+	normalize_trace_key(&key);
 
 	/* don't open twice */
 	if (key->initialized)
@@ -75,6 +85,8 @@ static int get_trace_fd(struct trace_key *key)
 
 void trace_disable(struct trace_key *key)
 {
+	normalize_trace_key(&key);
+
 	if (key->need_close)
 		close(key->fd);
 	key->fd = 0;
