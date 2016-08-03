@@ -9,6 +9,7 @@
 #include "log-tree.h"
 #include "graph.h"
 #include "bisect.h"
+#include "progress.h"
 
 static const char rev_list_usage[] =
 "git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
@@ -49,11 +50,16 @@ static const char rev_list_usage[] =
 "    --bisect-all"
 ;
 
+static struct progress *progress;
+static unsigned progress_counter;
+
 static void finish_commit(struct commit *commit, void *data);
 static void show_commit(struct commit *commit, void *data)
 {
 	struct rev_list_info *info = data;
 	struct rev_info *revs = info->revs;
+
+	display_progress(progress, ++progress_counter);
 
 	if (info->flags & REV_LIST_QUIET) {
 		finish_commit(commit, data);
@@ -190,6 +196,7 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
 	finish_object(obj, name, cb_data);
+	display_progress(progress, ++progress_counter);
 	if (info->flags & REV_LIST_QUIET)
 		return;
 	show_object_with_name(stdout, obj, name);
@@ -276,6 +283,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
+	const char *show_progress = NULL;
 
 	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);
@@ -325,6 +333,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			test_bitmap_walk(&revs);
 			return 0;
 		}
+		if (skip_prefix(arg, "--progress=", &arg)) {
+			show_progress = arg;
+			continue;
+		}
 		usage(rev_list_usage);
 
 	}
@@ -354,6 +366,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			      revs.grep_filter.header_list);
 	if (bisect_list)
 		revs.limited = 1;
+
+	if (show_progress)
+		progress = start_progress_delay(show_progress, 0, 0, 2);
 
 	if (use_bitmap_index && !revs.prune) {
 		if (revs.count && !revs.left_right && !revs.cherry_mark) {
@@ -391,6 +406,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	}
 
 	traverse_commit_list(&revs, show_commit, show_object, &info);
+
+	stop_progress(&progress);
 
 	if (revs.count) {
 		if (revs.left_right && revs.cherry_mark)
