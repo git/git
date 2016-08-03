@@ -252,10 +252,25 @@ list.
 +
 With `--pretty` format other than `oneline` (for obvious reasons),
 this causes the output to have two extra lines of information
-taken from the reflog.  By default, 'commit@\{Nth}' notation is
-used in the output.  When the starting commit is specified as
-'commit@\{now}', output also uses 'commit@\{timestamp}' notation
-instead.  Under `--pretty=oneline`, the commit message is
+taken from the reflog.  The reflog designator in the output may be shown
+as `ref@{Nth}` (where `Nth` is the reverse-chronological index in the
+reflog) or as `ref@{timestamp}` (with the timestamp for that entry),
+depending on a few rules:
++
+--
+1. If the starting point is specified as `ref@{Nth}`, show the index
+format.
++
+2. If the starting point was specified as `ref@{now}`, show the
+timestamp format.
++
+3. If neither was used, but `--date` was given on the command line, show
+the timestamp in the format requested by `--date`.
++
+4. Otherwise, show the index format.
+--
++
+Under `--pretty=oneline`, the commit message is
 prefixed with this information on the same line.
 This option cannot be combined with `--reverse`.
 See also linkgit:git-reflog[1].
@@ -714,8 +729,8 @@ include::pretty-options.txt[]
 	`iso-local`), the user's local time zone is used instead.
 +
 `--date=relative` shows dates relative to the current time,
-e.g. ``2 hours ago''. The `-local` option cannot be used with
-`--raw` or `--relative`.
+e.g. ``2 hours ago''. The `-local` option has no effect for
+`--date=relative`.
 +
 `--date=local` is an alias for `--date=default-local`.
 +
@@ -735,7 +750,18 @@ format, often found in email messages.
 +
 `--date=short` shows only the date, but not the time, in `YYYY-MM-DD` format.
 +
-`--date=raw` shows the date in the internal raw Git format `%s %z` format.
+`--date=raw` shows the date as seconds since the epoch (1970-01-01
+00:00:00 UTC), followed by a space, and then the timezone as an offset
+from UTC (a `+` or `-` with four digits; the first two are hours, and
+the second two are minutes). I.e., as if the timestamp were formatted
+with `strftime("%s %z")`).
+Note that the `-local` option does not affect the seconds-since-epoch
+value (which is always measured in UTC), but does switch the accompanying
+timezone value.
++
+`--date=unix` shows the date as a Unix epoch timestamp (seconds since
+1970).  As with `--raw`, this is always in UTC and therefore `-local`
+has no effect.
 +
 `--date=format:...` feeds the format `...` to your system `strftime`.
 Use `--date=format:%c` to show the date in your system locale's
