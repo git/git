@@ -93,9 +93,6 @@ void trace_disable(struct trace_key *key)
 	key->need_close = 0;
 }
 
-static const char err_msg[] = "could not trace into fd given by "
-	"GIT_TRACE environment variable";
-
 static int prepare_trace_line(const char *file, int line,
 			      struct trace_key *key, struct strbuf *buf)
 {
@@ -133,8 +130,11 @@ static int prepare_trace_line(const char *file, int line,
 
 static void trace_write(struct trace_key *key, const void *buf, unsigned len)
 {
-	if (write_in_full(get_trace_fd(key), buf, len) < 0)
-		warning("%s: write error (%s)", err_msg, strerror(errno));
+	if (write_in_full(get_trace_fd(key), buf, len) < 0) {
+		normalize_trace_key(&key);
+		warning("unable to write trace for %s: %s",
+			key->key, strerror(errno));
+	}
 }
 
 void trace_verbatim(struct trace_key *key, const void *buf, unsigned len)
