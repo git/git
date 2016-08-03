@@ -26,7 +26,7 @@ static int parallel_next(struct child_process *cp,
 		return 0;
 
 	argv_array_pushv(&cp->args, d->argv);
-	strbuf_addf(err, "preloaded output of a child\n");
+	strbuf_addstr(err, "preloaded output of a child\n");
 	number_callbacks++;
 	return 1;
 }
@@ -36,7 +36,7 @@ static int no_job(struct child_process *cp,
 		  void *cb,
 		  void **task_cb)
 {
-	strbuf_addf(err, "no further jobs available\n");
+	strbuf_addstr(err, "no further jobs available\n");
 	return 0;
 }
 
@@ -45,7 +45,7 @@ static int task_finished(int result,
 			 void *pp_cb,
 			 void *pp_task_cb)
 {
-	strbuf_addf(err, "asking for a quick stop\n");
+	strbuf_addstr(err, "asking for a quick stop\n");
 	return 1;
 }
 
