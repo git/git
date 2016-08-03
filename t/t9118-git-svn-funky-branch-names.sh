@@ -32,7 +32,7 @@ test_expect_success 'setup svnrepo' '
 			"$svnrepo/pr ject/branches/trailing_dotlock.lock" &&
 	svn_cmd cp -m "reflog" "$svnrepo/pr ject/trunk" \
 			"$svnrepo/pr ject/branches/not-a@{0}reflog@" &&
-	start_httpd
+	maybe_start_httpd
 	'
 
 # SVN 1.7 will truncate "not-a%40{0]" to just "not-a".
