@@ -209,9 +209,42 @@ test_expect_success 'submodule update --remote should fetch upstream changes' '
 	)
 '
 
+test_expect_success 'submodule update --remote should fetch upstream changes with .' '
+	(
+		cd super &&
+		git config -f .gitmodules submodule."submodule".branch "." &&
+		git add .gitmodules &&
+		git commit -m "submodules: update from the respective superproject branch"
+	) &&
+	(
+		cd submodule &&
+		echo line4a >> file &&
+		git add file &&
+		test_tick &&
+		git commit -m "upstream line4a" &&
+		git checkout -b test-branch &&
+		test_commit on-test-branch
+	) &&
+	(
+		cd super &&
+		git submodule update --remote --force submodule &&
+		git -C submodule log -1 --oneline >actual
+		git -C ../submodule log -1 --oneline master >expect
+		test_cmp expect actual &&
+		git checkout -b test-branch &&
+		git submodule update --remote --force submodule &&
+		git -C submodule log -1 --oneline >actual
+		git -C ../submodule log -1 --oneline test-branch >expect
+		test_cmp expect actual &&
+		git checkout master &&
+		git branch -d test-branch &&
+		git reset --hard HEAD^
+	)
+'
+
 test_expect_success 'local config should override .gitmodules branch' '
 	(cd submodule &&
-	 git checkout -b test-branch &&
+	 git checkout test-branch &&
 	 echo line5 >> file &&
 	 git add file &&
 	 test_tick &&
