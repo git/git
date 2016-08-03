@@ -389,7 +389,7 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 	unsigned int i, nr;
 	struct commit_list *head = NULL;
 	int bitmap_nr = (info->nr_bits + 31) / 32;
-	size_t bitmap_size = st_mult(bitmap_nr, sizeof(uint32_t));
+	size_t bitmap_size = st_mult(sizeof(uint32_t), bitmap_nr);
 	uint32_t *tmp = xmalloc(bitmap_size); /* to be freed before return */
 	uint32_t *bitmap = paint_alloc(info);
 	struct commit *c = lookup_commit_reference_gently(sha1, 1);
