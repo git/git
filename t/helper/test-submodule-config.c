@@ -23,7 +23,7 @@ int cmd_main(int argc, const char **argv)
 
 	arg++;
 	my_argc--;
-	while (starts_with(arg[0], "--")) {
+	while (arg[0] && starts_with(arg[0], "--")) {
 		if (!strcmp(arg[0], "--url"))
 			output_url = 1;
 		if (!strcmp(arg[0], "--name"))
