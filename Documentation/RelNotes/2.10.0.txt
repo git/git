@@ -91,6 +91,20 @@ UI, Workflows & Features
 
  * A handful of "git svn" updates.
 
+ * "git push" learned to accept and pass extra options to the
+   receiving end so that hooks can read and react to them.
+
+ * "git status" learned to suggest "merge --abort" during a conflicted
+   merge, just like it already suggests "rebase --abort" during a
+   conflicted rebase.
+   (merge b0a61ab mm/status-suggest-merge-abort later to maint).
+
+ * "git jump" script (in contrib/) has been updated a bit.
+   (merge a91e692 jk/git-jump later to maint).
+
+ * "git push" and "git clone" learned to give better progress meters
+   to the end user who is waiting on the terminal.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -213,6 +227,24 @@ Performance, Internal Implementation, Development Support etc.
 
  * A few tests that specifically target "git rebase -i" have been
    added.
+
+ * Dumb http transport on the client side has been optimized.
+   (merge ecba195 ew/http-walker later to maint).
+
+ * Users of the parse_options_concat() API function need to allocate
+   extra slots in advance and fill them with OPT_END() when they want
+   to decide the set of supported options dynamically, which makes the
+   code error-prone and hard to read.  This has been corrected by tweaking
+   the API to allocate and return a new copy of "struct option" array.
+   (merge 023ff39 jk/parse-options-concat later to maint).
+
+ * "git fetch" exchanges batched have/ack messages between the sender
+   and the receiver, initially doubling every time and then falling
+   back to enlarge the window size linearly.  The "smart http"
+   transport, being an half-duplex protocol, outgrows the preset limit
+   too quickly and becomes inefficient when interacting with a large
+   repository.  The internal mechanism learned to grow the window size
+   more aggressively when working with the "smart http" transport.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -430,6 +462,34 @@ notes for details).
    too ancient FreeBSD releases.
    (merge 259f22a ew/find-perl-on-freebsd-in-local later to maint).
 
+ * "git commit --help" said "--no-verify" is only about skipping the
+   pre-commit hook, and failed to say that it also skipped the
+   commit-msg hook.
+   (merge def480f os/no-verify-skips-commit-msg-too later to maint).
+
+ * "git merge" in Git v2.9 was taught to forbid merging an unrelated
+   lines of history by default, but that is exactly the kind of thing
+   the "--rejoin" mode of "git subtree" (in contrib/) wants to do.
+   "git subtree" has been taught to use the "--allow-unrelated-histories"
+   option to override the default.
+   (merge 0f12c7d da/subtree-2.9-regression later to maint).
+
+ * The build procedure for "git persistent-https" helper (in contrib/)
+   has been updated so that it can be built with more recent versions
+   of Go.
+   (merge accb613 pm/build-persistent-https-with-recent-go later to maint).
+
+ * There is an optimization used in "git diff $treeA $treeB" to borrow
+   an already checked-out copy in the working tree when it is known to
+   be the same as the blob being compared, expecting that open/mmap of
+   such a file is faster than reading it from the object store, which
+   involves inflating and applying delta.  This however kicked in even
+   when the checked-out copy needs to go through the convert-to-git
+   conversion (including the clean filter), which defeats the whole
+   point of the optimization.  The optimization has been disabled when
+   the conversion is necessary.
+   (merge 06dec43 jk/diff-do-not-reuse-wtf-needs-cleaning later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge e51b0df pb/commit-editmsg-path later to maint).
    (merge b333d0d jk/send-pack-stdio later to maint).
@@ -441,3 +501,4 @@ notes for details).
    (merge 16726cf jc/doc-diff-filter-exclude later to maint).
    (merge fd2e7da rs/worktree-use-strbuf-absolute-path later to maint).
    (merge 406621f sb/submodule-deinit-all later to maint).
+   (merge 55cbe18 rs/submodule-config-code-cleanup later to maint).
