@@ -4,6 +4,20 @@ test_description='test untracked cache'
 
 . ./test-lib.sh
 
+# On some filesystems (e.g. FreeBSD's ext2 and ufs) directory mtime
+# is updated lazily after contents in the directory changes, which
+# forces the untracked cache code to take the slow path.  A test
+# that wants to make sure that the fast path works correctly should
+# call this helper to make mtime of the containing directory in sync
+# with the reality before checking the fast path behaviour.
+#
+# See <20160803174522.5571-1-pclouds@gmail.com> if you want to know
+# more.
+
+sync_mtime () {
+	find . -type d -ls >/dev/null
+}
+
 avoid_racy() {
 	sleep 1
 }
@@ -416,7 +430,8 @@ test_expect_success 'create/modify files, some of which are gitignored' '
 	echo four >done/four && # four is gitignored at a higher level
 	echo five >done/five && # five is not gitignored
 	echo test >base && #we need to ensure that the root dir is touched
-	rm base
+	rm base &&
+	sync_mtime
 '
 
 test_expect_success 'test sparse status with untracked cache' '
