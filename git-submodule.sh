@@ -614,7 +614,7 @@ cmd_update()
 
 		if test -n "$remote"
 		then
-			branch=$(get_submodule_config "$name" branch master)
+			branch=$(git submodule--helper remote-branch "$sm_path")
 			if test -z "$nofetch"
 			then
 				# Fetch remote before determining tracking $sha1
