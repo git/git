@@ -220,7 +220,7 @@ test_expect_success 'new branch already exists' '
 	(
 		cd src &&
 		git checkout -b branch master &&
-		test_commit c
+		test_commit F
 	) &&
 	(
 		cd dst &&
