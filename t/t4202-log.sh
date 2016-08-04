@@ -255,6 +255,20 @@ test_expect_success 'log -F -E --grep=<ere> uses ere' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log with grep.patternType configuration' '
+	>expect &&
+	git -c grep.patterntype=fixed \
+	log -1 --pretty=tformat:%s --grep=s.c.nd >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log with grep.patternType configuration and command line' '
+	echo second >expect &&
+	git -c grep.patterntype=fixed \
+	log -1 --pretty=tformat:%s --basic-regexp --grep=s.c.nd >actual &&
+	test_cmp expect actual
+'
+
 cat > expect <<EOF
 * Second
 * sixth
