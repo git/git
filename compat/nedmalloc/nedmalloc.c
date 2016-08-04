@@ -955,12 +955,11 @@ void **nedpindependent_comalloc(nedpool *p, size_t elems, size_t *sizes, void **
  */
 char *strdup(const char *s1)
 {
-	char *s2 = 0;
-	if (s1) {
-		size_t len = strlen(s1) + 1;
-		s2 = malloc(len);
+	size_t len = strlen(s1) + 1;
+	char *s2 = malloc(len);
+
+	if (s2)
 		memcpy(s2, s1, len);
-	}
 	return s2;
 }
 #endif
