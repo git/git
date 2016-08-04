@@ -490,6 +490,11 @@ notes for details).
    the conversion is necessary.
    (merge 06dec43 jk/diff-do-not-reuse-wtf-needs-cleaning later to maint).
 
+ * "git -c grep.patternType=extended log --basic-regexp" misbehaved
+   because the internal API to access the grep machinery was not
+   designed well.
+   (merge 8465541 jc/grep-commandline-vs-configuration later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge e51b0df pb/commit-editmsg-path later to maint).
    (merge b333d0d jk/send-pack-stdio later to maint).
@@ -502,3 +507,4 @@ notes for details).
    (merge fd2e7da rs/worktree-use-strbuf-absolute-path later to maint).
    (merge 406621f sb/submodule-deinit-all later to maint).
    (merge 55cbe18 rs/submodule-config-code-cleanup later to maint).
+   (merge 280abfd sb/pack-protocol-doc-nak later to maint).
