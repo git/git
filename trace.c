@@ -61,9 +61,8 @@ static int get_trace_fd(struct trace_key *key)
 	else if (is_absolute_path(trace)) {
 		int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT, 0666);
 		if (fd == -1) {
-			fprintf(stderr,
-				"Could not open '%s' for tracing: %s\n"
-				"Defaulting to tracing on stderr...\n",
+			warning("Could not open '%s' for tracing: %s\n"
+				"Defaulting to tracing on stderr...",
 				trace, strerror(errno));
 			key->fd = STDERR_FILENO;
 		} else {
@@ -71,10 +70,10 @@ static int get_trace_fd(struct trace_key *key)
 			key->need_close = 1;
 		}
 	} else {
-		fprintf(stderr, "What does '%s' for %s mean?\n"
+		warning("What does '%s' for %s mean?\n"
 			"If you want to trace into a file, then please set "
 			"%s to an absolute pathname (starting with /).\n"
-			"Defaulting to tracing on stderr...\n",
+			"Defaulting to tracing on stderr...",
 			trace, key->key, key->key);
 		key->fd = STDERR_FILENO;
 	}
@@ -135,7 +134,7 @@ static int prepare_trace_line(const char *file, int line,
 static void trace_write(struct trace_key *key, const void *buf, unsigned len)
 {
 	if (write_in_full(get_trace_fd(key), buf, len) < 0)
-		fprintf(stderr, "%s: write error (%s)\n", err_msg, strerror(errno));
+		warning("%s: write error (%s)", err_msg, strerror(errno));
 }
 
 void trace_verbatim(struct trace_key *key, const void *buf, unsigned len)
