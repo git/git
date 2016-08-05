@@ -38,6 +38,9 @@ struct wt_status_change_data {
 	int worktree_status;
 	int index_status;
 	int stagemask;
+	int score;
+	int mode_head, mode_index, mode_worktree;
+	struct object_id oid_head, oid_index;
 	char *head_path;
 	unsigned dirty_submodule       : 2;
 	unsigned new_submodule_commits : 1;
@@ -48,6 +51,7 @@ enum wt_status_format {
 	STATUS_FORMAT_LONG,
 	STATUS_FORMAT_SHORT,
 	STATUS_FORMAT_PORCELAIN,
+	STATUS_FORMAT_PORCELAIN_V2,
 
 	STATUS_FORMAT_UNSPECIFIED
 };
