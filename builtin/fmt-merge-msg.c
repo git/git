@@ -272,7 +272,7 @@ static int cmp_string_list_util_as_integral(const void *a_, const void *b_)
 static void add_people_count(struct strbuf *out, struct string_list *people)
 {
 	if (people->nr == 1)
-		strbuf_addf(out, "%s", people->items[0].string);
+		strbuf_addstr(out, people->items[0].string);
 	else if (people->nr == 2)
 		strbuf_addf(out, "%s (%d) and %s (%d)",
 			    people->items[0].string,
