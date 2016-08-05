@@ -32,11 +32,14 @@ OPTIONS
 --branch::
 	Show the branch and tracking info even in short-format.
 
---porcelain::
+--porcelain[=<version>]::
 	Give the output in an easy-to-parse format for scripts.
 	This is similar to the short output, but will remain stable
 	across Git versions and regardless of user configuration. See
 	below for details.
++
+The version parameter is used to specify the format version.
+This is optional and defaults to the original version 'v1' format.
 
 --long::
 	Give the output in the long-format. This is the default.
@@ -96,7 +99,7 @@ configuration variable documented in linkgit:git-config[1].
 
 -z::
 	Terminate entries with NUL, instead of LF.  This implies
-	the `--porcelain` output format if no other format is given.
+	the `--porcelain=v1` output format if no other format is given.
 
 --column[=<options>]::
 --no-column::
