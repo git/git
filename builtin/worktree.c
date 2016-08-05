@@ -194,7 +194,7 @@ static int add_worktree(const char *path, const char *refname,
 	struct strbuf sb = STRBUF_INIT;
 	const char *name;
 	struct stat st;
-	struct child_process cp;
+	struct child_process cp = CHILD_PROCESS_INIT;
 	struct argv_array child_env = ARGV_ARRAY_INIT;
 	int counter = 0, len, ret;
 	struct strbuf symref = STRBUF_INIT;
@@ -273,7 +273,6 @@ static int add_worktree(const char *path, const char *refname,
 
 	argv_array_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
 	argv_array_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
-	memset(&cp, 0, sizeof(cp));
 	cp.git_cmd = 1;
 
 	if (commit)
@@ -365,8 +364,7 @@ static int add(int ac, const char **av, const char *prefix)
 	}
 
 	if (opts.new_branch) {
-		struct child_process cp;
-		memset(&cp, 0, sizeof(cp));
+		struct child_process cp = CHILD_PROCESS_INIT;
 		cp.git_cmd = 1;
 		argv_array_push(&cp.args, "branch");
 		if (opts.force_new_branch)

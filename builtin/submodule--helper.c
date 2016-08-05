@@ -444,8 +444,7 @@ static int module_name(int argc, const char **argv, const char *prefix)
 static int clone_submodule(const char *path, const char *gitdir, const char *url,
 			   const char *depth, const char *reference, int quiet)
 {
-	struct child_process cp;
-	child_process_init(&cp);
+	struct child_process cp = CHILD_PROCESS_INIT;
 
 	argv_array_push(&cp.args, "clone");
 	argv_array_push(&cp.args, "--no-checkout");
