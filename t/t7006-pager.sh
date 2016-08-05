@@ -49,6 +49,19 @@ test_expect_success TTY 'LESS and LV envvars are set for pagination' '
 	grep ^LV= pager-env.out
 '
 
+test_expect_success !MINGW,TTY 'LESS and LV envvars set by git-sh-setup' '
+	(
+		sane_unset LESS LV &&
+		PAGER="env >pager-env.out; wc" &&
+		export PAGER &&
+		PATH="$(git --exec-path):$PATH" &&
+		export PATH &&
+		test_terminal sh -c ". git-sh-setup && git_pager"
+	) &&
+	grep ^LESS= pager-env.out &&
+	grep ^LV= pager-env.out
+'
+
 test_expect_success TTY 'some commands do not use a pager' '
 	rm -f paginated.out &&
 	test_terminal git rev-list HEAD &&

@@ -163,9 +163,11 @@ git_pager() {
 	else
 		GIT_PAGER=cat
 	fi
-	: "${LESS=-FRX}"
-	: "${LV=-c}"
-	export LESS LV
+	for vardef in @@PAGER_ENV@@
+	do
+		var=${vardef%%=*}
+		eval ": \"\${$vardef}\" && export $var"
+	done
 
 	eval "$GIT_PAGER" '"$@"'
 }
