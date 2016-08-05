@@ -515,7 +515,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 		break;
 	case STATUS_FORMAT_NONE:
 	case STATUS_FORMAT_LONG:
-		wt_status_print(s);
+		wt_longstatus_print(s);
 		break;
 	}
 
@@ -1403,7 +1403,7 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	case STATUS_FORMAT_LONG:
 		s.verbose = verbose;
 		s.ignore_submodule_arg = ignore_submodule_arg;
-		wt_status_print(&s);
+		wt_longstatus_print(&s);
 		break;
 	}
 	return 0;
