@@ -15,11 +15,11 @@ test_description='sparse checkout tests
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success 'setup' '
-	cat >expected <<-\EOF &&
+	cat >expected <<-EOF &&
 	100644 77f0ba1734ed79d12881f81b36ee134de6a3327b 0	init.t
-	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	sub/added
-	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	sub/addedtoo
-	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	subsub/added
+	100644 $EMPTY_BLOB 0	sub/added
+	100644 $EMPTY_BLOB 0	sub/addedtoo
+	100644 $EMPTY_BLOB 0	subsub/added
 	EOF
 	cat >expected.swt <<-\EOF &&
 	H init.t
