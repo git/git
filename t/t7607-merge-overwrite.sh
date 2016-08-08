@@ -115,7 +115,7 @@ cat >expect <<\EOF
 error: The following untracked working tree files would be overwritten by merge:
 	sub
 	sub2
-Please move or remove them before you can merge.
+Please move or remove them before you merge.
 Aborting
 EOF
 
