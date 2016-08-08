@@ -379,8 +379,6 @@ cmd_init()
 #
 # Unregister submodules from .git/config and remove their work tree
 #
-# $@ = requested paths (use '.' to deinit all submodules)
-#
 cmd_deinit()
 {
 	# parse $args after "submodule ... deinit".
