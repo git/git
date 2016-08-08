@@ -41,12 +41,12 @@ test_expect_success setup '
 	test_tick &&
 	GIT_AUTHOR_NAME=Fourth git commit -m Fourth &&
 
-	{
-		echo ABC
-		echo DEF
-		echo XXXX
-		echo GHIJK
-	} >cow &&
+	cat >cow <<-\EOF &&
+	ABC
+	DEF
+	XXXX
+	GHIJK
+	EOF
 	git add cow &&
 	test_tick &&
 	GIT_AUTHOR_NAME=Fifth git commit -m Fifth
@@ -115,11 +115,11 @@ test_expect_success 'append with -C -C -C' '
 test_expect_success 'blame wholesale copy' '
 
 	git blame -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
-	{
-		echo mouse-Initial
-		echo mouse-Second
-		echo mouse-Third
-	} >expected &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	mouse-Third
+	EOF
 	test_cmp expected current
 
 '
@@ -127,14 +127,59 @@ test_expect_success 'blame wholesale copy' '
 test_expect_success 'blame wholesale copy and more' '
 
 	git blame -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
-	{
-		echo mouse-Initial
-		echo mouse-Second
-		echo cow-Fifth
-		echo mouse-Third
-	} >expected &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	cow-Fifth
+	mouse-Third
+	EOF
 	test_cmp expected current
 
+'
+
+test_expect_success 'blame wholesale copy and more in the index' '
+
+	cat >horse <<-\EOF &&
+	ABC
+	DEF
+	XXXX
+	YYYY
+	GHIJK
+	EOF
+	git add horse &&
+	test_when_finished "git rm -f horse" &&
+	git blame -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	cow-Fifth
+	horse-Not
+	mouse-Third
+	EOF
+	test_cmp expected current
+
+'
+
+test_expect_success 'blame during cherry-pick with file rename conflict' '
+
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout HEAD~3 &&
+	echo MOUSE >> mouse &&
+	git mv mouse rodent &&
+	git add rodent &&
+	GIT_AUTHOR_NAME=Rodent git commit -m "rodent" &&
+	git checkout --detach master &&
+	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
+	git show HEAD@{1}:rodent > rodent &&
+	git add rodent &&
+	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
+	cat current &&
+	cat >expected <<-\EOF &&
+	mouse-Initial
+	mouse-Second
+	rodent-Not
+	EOF
+	test_cmp expected current
 '
 
 test_expect_success 'blame path that used to be a directory' '
