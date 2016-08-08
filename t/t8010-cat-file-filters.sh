@@ -31,4 +31,24 @@ test_expect_success 'cat-file --filters converts to worktree version' '
 	has_cr actual
 '
 
+test_expect_success 'cat-file --filters --path=<path> works' '
+	sha1=$(git rev-parse -q --verify HEAD:world.txt) &&
+	git cat-file --filters --path=world.txt $sha1 >actual &&
+	has_cr actual
+'
+
+test_expect_success 'cat-file --textconv --path=<path> works' '
+	sha1=$(git rev-parse -q --verify HEAD:world.txt) &&
+	test_config diff.txt.textconv "tr A-Za-z N-ZA-Mn-za-m <" &&
+	git cat-file --textconv --path=hello.txt $sha1 >rot13 &&
+	test uryyb = "$(cat rot13 | remove_cr)"
+'
+
+test_expect_success '--path=<path> complains without --textconv/--filters' '
+	sha1=$(git rev-parse -q --verify HEAD:world.txt) &&
+	test_must_fail git cat-file --path=hello.txt blob $sha1 >actual 2>err &&
+	test ! -s actual &&
+	grep "path.*needs.*filters" err
+'
+
 test_done
