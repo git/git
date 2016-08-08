@@ -105,6 +105,11 @@ UI, Workflows & Features
  * "git push" and "git clone" learned to give better progress meters
    to the end user who is waiting on the terminal.
 
+ * An entry "git log --decorate" for the tip of the current branch is
+   shown as "HEAD -> name" (where "name" is the name of the branch);
+   paint the arrow in the same color as "HEAD", not in the color for
+   commits.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -245,6 +250,27 @@ Performance, Internal Implementation, Development Support etc.
    too quickly and becomes inefficient when interacting with a large
    repository.  The internal mechanism learned to grow the window size
    more aggressively when working with the "smart http" transport.
+
+ * Tests for "git svn" have been taught to reuse the lib-httpd test
+   infrastructure when testing the subversion integration that
+   interacts with subversion repositories served over the http://
+   protocol.
+   (merge a8a5d25 ew/git-svn-http-tests later to maint).
+
+ * "git pack-objects" has a few options that tell it not to pack
+   objects found in certain packfiles, which require it to scan .idx
+   files of all available packs.  The codepaths involved in these
+   operations have been optimized for a common case of not having any
+   non-local pack and/or any .kept pack.
+
+ * The t3700 test about "add --chmod=-x" have been made a bit more
+   robust and generally cleaned up.
+   (merge 766cdc4 ib/t3700-add-chmod-x-updates later to maint).
+
+ * The build procedure learned PAGER_ENV knob that lists what default
+   environment variable settings to export for popular pagers.  This
+   mechanism is used to tweak the default settings to MORE on FreeBSD.
+   (merge 995bc22 ew/build-time-pager-tweaks later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -416,16 +442,13 @@ notes for details).
    "file" did not appear in the current commit.  When "file" was
    created by renaming an existing file (but the change has not been
    committed), this restriction was unnecessarily tight.
-   (merge c66b470 mh/blame-worktree later to maint).
 
  * "git add -N dir/file && git write-tree" produced an incorrect tree
    when there are other paths in the same directory that sorts after
    "file".
-   (merge 6d6a782 nd/cache-tree-ita later to maint).
 
  * "git fetch http://user:pass@host/repo..." scrubbed the userinfo
    part, but "git push" didn't.
-   (merge 68f3c07 jk/push-scrub-url later to maint).
 
  * "git merge" with renormalization did not work well with
    merge-recursive, due to "safer crlf" conversion kicking in when it
@@ -438,29 +461,24 @@ notes for details).
 
  * An age old bug that caused "git diff --ignore-space-at-eol"
    misbehave has been fixed.
-   (merge 044fb19 js/ignore-space-at-eol later to maint).
 
  * "git notes merge" had a code to see if a path exists (and fails if
    it does) and then open the path for writing (when it doesn't).
    Replace it with open with O_EXCL.
-   (merge deb9c15 rs/notes-merge-no-toctou later to maint).
 
  * "git pack-objects" and "git index-pack" mostly operate with off_t
    when talking about the offset of objects in a packfile, but there
    were a handful of places that used "unsigned long" to hold that
    value, leading to an unintended truncation.
-   (merge ec9d224 nd/pack-ofs-4gb-limit later to maint).
 
  * Recent update to "git daemon" tries to enable the socket-level
    KEEPALIVE, but when it is spawned via inetd, the standard input
    file descriptor may not necessarily be connected to a socket.
    Suppress an ENOTSOCK error from setsockopt().
-   (merge fab6027 ew/daemon-socket-keepalive later to maint).
 
  * Recent FreeBSD stopped making perl available at /usr/bin/perl;
    switch the default the built-in path to /usr/local/bin/perl on not
    too ancient FreeBSD releases.
-   (merge 259f22a ew/find-perl-on-freebsd-in-local later to maint).
 
  * "git commit --help" said "--no-verify" is only about skipping the
    pre-commit hook, and failed to say that it also skipped the
@@ -495,16 +513,43 @@ notes for details).
    designed well.
    (merge 8465541 jc/grep-commandline-vs-configuration later to maint).
 
+ * Windows port was failing some tests in t4130, due to the lack of
+   inum in the returned values by its lstat(2) emulation.
+   (merge 54956df js/t4130-rename-without-ino later to maint).
+
+ * The reflog output format is documented better, and a new format
+   --date=unix to report the seconds-since-epoch (without timezone)
+   has been added.
+   (merge 442f6fd jk/reflog-date later to maint).
+
+ * "git difftool <paths>..." started in a subdirectory failed to
+   interpret the paths relative to that directory, which has been
+   fixed.
+   (merge 32b8c58 jk/difftool-in-subdir later to maint).
+
+ * The characters in the label shown for tags/refs for commits in
+   "gitweb" output are now properly escaped for proper HTML output.
+   (merge 77947bb ab/gitweb-link-html-escape later to maint).
+
+ * FreeBSD can lie when asked mtime of a directory, which made the
+   untracked cache code to fall back to a slow-path, which in turn
+   caused tests in t7063 to fail because it wanted to verify the
+   behaviour of the fast-path.
+   (merge 6b7728d nd/fbsd-lazy-mtime later to maint).
+
+ * Squelch compiler warnings for netmalloc (in compat/) library.
+   (merge c6c9e18 js/nedmalloc-gcc6-warnings later to maint).
+
+ * A small memory leak in the command line parsing of "git blame"
+   has been plugged.
+
+ * The API documentation for hashmap was unclear if hashmap_entry
+   can be safely discarded without any other consideration.  State
+   that it is safe to do so.
+   (merge 54ba5a1 jc/hashmap-doc-init later to maint).
+
  * Other minor clean-ups and documentation updates
-   (merge e51b0df pb/commit-editmsg-path later to maint).
-   (merge b333d0d jk/send-pack-stdio later to maint).
-   (merge fcf0fe9 lf/sideband-returns-void later to maint).
-   (merge c2691e2 ah/unpack-trees-advice-messages later to maint).
-   (merge c61b2af lf/recv-sideband-cleanup later to maint).
-   (merge 31471ba rs/use-strbuf-addbuf later to maint).
-   (merge 503e224 nd/test-helpers later to maint).
-   (merge 16726cf jc/doc-diff-filter-exclude later to maint).
-   (merge fd2e7da rs/worktree-use-strbuf-absolute-path later to maint).
-   (merge 406621f sb/submodule-deinit-all later to maint).
-   (merge 55cbe18 rs/submodule-config-code-cleanup later to maint).
-   (merge 280abfd sb/pack-protocol-doc-nak later to maint).
+   (merge 9d1ca1d jk/t4205-cleanup later to maint).
+   (merge 5f072e0 cp/completion-clone-recurse-submodules later to maint).
+   (merge bc57b9c rs/use-strbuf-addstr later to maint).
+   (merge 52db4b0 jh/clean-smudge-f-doc later to maint).
