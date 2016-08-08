@@ -3704,7 +3704,7 @@ static int path_is_beyond_symlink(struct apply_state *state, const char *name_)
 	return ret;
 }
 
-static void die_on_unsafe_path(struct patch *patch)
+static int check_unsafe_path(struct patch *patch)
 {
 	const char *old_name = NULL;
 	const char *new_name = NULL;
@@ -3716,9 +3716,10 @@ static void die_on_unsafe_path(struct patch *patch)
 		new_name = patch->new_name;
 
 	if (old_name && !verify_path(old_name))
-		die(_("invalid path '%s'"), old_name);
+		return error(_("invalid path '%s'"), old_name);
 	if (new_name && !verify_path(new_name))
-		die(_("invalid path '%s'"), new_name);
+		return error(_("invalid path '%s'"), new_name);
+	return 0;
 }
 
 /*
@@ -3808,8 +3809,8 @@ static int check_patch(struct apply_state *state, struct patch *patch)
 		}
 	}
 
-	if (!state->unsafe_paths)
-		die_on_unsafe_path(patch);
+	if (!state->unsafe_paths && check_unsafe_path(patch))
+		return -128;
 
 	/*
 	 * An attempt to read from or delete a path that is beyond a
@@ -3837,10 +3838,14 @@ static int check_patch_list(struct apply_state *state, struct patch *patch)
 	prepare_symlink_changes(state, patch);
 	prepare_fn_table(state, patch);
 	while (patch) {
+		int res;
 		if (state->apply_verbosely)
 			say_patch_name(stderr,
 				       _("Checking patch %s..."), patch);
-		err |= check_patch(state, patch);
+		res = check_patch(state, patch);
+		if (res == -128)
+			return -128;
+		err |= res;
 		patch = patch->next;
 	}
 	return err;
@@ -4472,11 +4477,16 @@ static int apply_patch(struct apply_state *state,
 		goto end;
 	}
 
-	if ((state->check || state->apply) &&
-	    check_patch_list(state, list) < 0 &&
-	    !state->apply_with_reject) {
-		res = -1;
-		goto end;
+	if (state->check || state->apply) {
+		int r = check_patch_list(state, list);
+		if (r == -128) {
+			res = -128;
+			goto end;
+		}
+		if (r < 0 && !state->apply_with_reject) {
+			res = -1;
+			goto end;
+		}
 	}
 
 	if (state->apply && write_out_results(state, list)) {
