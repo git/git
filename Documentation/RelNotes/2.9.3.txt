@@ -55,4 +55,38 @@ Fixes since v2.9.2
  * A test that unconditionally used "mktemp" learned that the command
    is not necessarily available everywhere.
 
+ * "git blame file" allowed the lineage of lines in the uncommitted,
+   unadded contents of "file" to be inspected, but it refused when
+   "file" did not appear in the current commit.  When "file" was
+   created by renaming an existing file (but the change has not been
+   committed), this restriction was unnecessarily tight.
+
+ * "git add -N dir/file && git write-tree" produced an incorrect tree
+   when there are other paths in the same directory that sorts after
+   "file".
+
+ * "git fetch http://user:pass@host/repo..." scrubbed the userinfo
+   part, but "git push" didn't.
+
+ * An age old bug that caused "git diff --ignore-space-at-eol"
+   misbehave has been fixed.
+
+ * "git notes merge" had a code to see if a path exists (and fails if
+   it does) and then open the path for writing (when it doesn't).
+   Replace it with open with O_EXCL.
+
+ * "git pack-objects" and "git index-pack" mostly operate with off_t
+   when talking about the offset of objects in a packfile, but there
+   were a handful of places that used "unsigned long" to hold that
+   value, leading to an unintended truncation.
+
+ * Recent update to "git daemon" tries to enable the socket-level
+   KEEPALIVE, but when it is spawned via inetd, the standard input
+   file descriptor may not necessarily be connected to a socket.
+   Suppress an ENOTSOCK error from setsockopt().
+
+ * Recent FreeBSD stopped making perl available at /usr/bin/perl;
+   switch the default the built-in path to /usr/local/bin/perl on not
+   too ancient FreeBSD releases.
+
 Also contains minor documentation updates and code clean-ups.
