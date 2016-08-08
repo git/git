@@ -2281,7 +2281,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 
 		if (do_check_packed_object_crc && p->index_version > 1) {
 			struct revindex_entry *revidx = find_pack_revindex(p, obj_offset);
-			unsigned long len = revidx[1].offset - obj_offset;
+			off_t len = revidx[1].offset - obj_offset;
 			if (check_pack_crc(p, &w_curs, obj_offset, len, revidx->nr)) {
 				const unsigned char *sha1 =
 					nth_packed_object_sha1(p, revidx->nr);
