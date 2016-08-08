@@ -46,6 +46,7 @@ static int keep_unreachable, unpack_unreachable, include_tag;
 static unsigned long unpack_unreachable_expiration;
 static int pack_loose_unreachable;
 static int local;
+static int have_non_local_packs;
 static int incremental;
 static int ignore_packed_keep;
 static int allow_ofs_delta;
@@ -978,6 +979,23 @@ static int want_object_in_pack(const unsigned char *sha1,
 				return 1;
 			if (incremental)
 				return 0;
+
+			/*
+			 * When asked to do --local (do not include an
+			 * object that appears in a pack we borrow
+			 * from elsewhere) or --honor-pack-keep (do not
+			 * include an object that appears in a pack marked
+			 * with .keep), we need to make sure no copy of this
+			 * object come from in _any_ pack that causes us to
+			 * omit it, and need to complete this loop.  When
+			 * neither option is in effect, we know the object
+			 * we just found is going to be packed, so break
+			 * out of the loop to return 1 now.
+			 */
+			if (!ignore_packed_keep &&
+			    (!local || !have_non_local_packs))
+				break;
+
 			if (local && !p->pack_local)
 				return 0;
 			if (ignore_packed_keep && p->pack_local && p->pack_keep)
@@ -2784,6 +2802,28 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		progress = 2;
 
 	prepare_packed_git();
+	if (ignore_packed_keep) {
+		struct packed_git *p;
+		for (p = packed_git; p; p = p->next)
+			if (p->pack_local && p->pack_keep)
+				break;
+		if (!p) /* no keep-able packs found */
+			ignore_packed_keep = 0;
+	}
+	if (local) {
+		/*
+		 * unlike ignore_packed_keep above, we do not want to
+		 * unset "local" based on looking at packs, as it
+		 * also covers non-local objects
+		 */
+		struct packed_git *p;
+		for (p = packed_git; p; p = p->next) {
+			if (!p->pack_local) {
+				have_non_local_packs = 1;
+				break;
+			}
+		}
+	}
 
 	if (progress)
 		progress_state = start_progress(_("Counting objects"), 0);
