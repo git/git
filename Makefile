@@ -1732,11 +1732,17 @@ version.sp version.s version.o: EXTRA_CPPFLAGS = \
 	'-DGIT_VERSION="$(GIT_VERSION)"' \
 	'-DGIT_USER_AGENT=$(GIT_USER_AGENT_CQ_SQ)'
 
+ifeq (,$(BUILT_IN_WRAPPER))
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && \
 	ln $< $@ 2>/dev/null || \
 	ln -s $< $@ 2>/dev/null || \
 	cp $< $@
+else
+$(BUILT_INS): $(BUILT_IN_WRAPPER)
+	$(QUIET_BUILT_IN)$(RM) $@ && \
+	cp $< $@
+endif
 
 common-cmds.h: generate-cmdlist.sh command-list.txt
 
@@ -2303,6 +2309,24 @@ profile-install: profile
 profile-fast-install: profile-fast
 	$(MAKE) install
 
+ifeq (,$(BUILT_IN_WRAPPER))
+LN_OR_CP_BUILT_IN_BINDIR = \
+	test -z "$(NO_INSTALL_HARDLINKS)" && \
+	ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
+	ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
+	cp "$$bindir/git$X" "$$bindir/$$p" || exit;
+LN_OR_CP_BUILT_IN_EXECDIR = \
+	test -z "$(NO_INSTALL_HARDLINKS)" && \
+	ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
+	ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
+	cp "$$execdir/git$X" "$$execdir/$$p" || exit;
+else
+LN_OR_CP_BUILT_IN_BINDIR = \
+	cp "$(BUILT_IN_WRAPPER)" "$$bindir/$$p" || exit;
+LN_OR_CP_BUILT_IN_EXECDIR = \
+	cp "$(BUILT_IN_WRAPPER)" "$$execdir/$$p" || exit;
+endif
+
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(gitexec_instdir_SQ)'
@@ -2341,17 +2365,11 @@ endif
 	} && \
 	for p in $(filter $(install_bindir_programs),$(BUILT_INS)); do \
 		$(RM) "$$bindir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$bindir/git$X" "$$bindir/$$p" 2>/dev/null || \
-		ln -s "git$X" "$$bindir/$$p" 2>/dev/null || \
-		cp "$$bindir/git$X" "$$bindir/$$p" || exit; \
+		$(LN_OR_CP_BUILT_IN_BINDIR) \
 	done && \
 	for p in $(BUILT_INS); do \
 		$(RM) "$$execdir/$$p" && \
-		test -z "$(NO_INSTALL_HARDLINKS)" && \
-		ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
-		ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
-		cp "$$execdir/git$X" "$$execdir/$$p" || exit; \
+		$(LN_OR_CP_BUILT_IN_EXECDIR) \
 	done && \
 	remote_curl_aliases="$(REMOTE_CURL_ALIASES)" && \
 	for p in $$remote_curl_aliases; do \
