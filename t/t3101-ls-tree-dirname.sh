@@ -16,7 +16,7 @@ This test runs git ls-tree with the following in a tree.
     path3/1.txt        - a file in a directory
     path3/2.txt        - a file in a directory
 
-Test the handling of mulitple directories which have matching file
+Test the handling of multiple directories which have matching file
 entries.  Also test odd filename and missing entries handling.
 '
 . ./test-lib.sh

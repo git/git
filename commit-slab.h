@@ -8,7 +8,7 @@
  *
  * After including this header file, using:
  *
- * define_commit_slab(indegee, int);
+ * define_commit_slab(indegree, int);
  *
  * will let you call the following functions:
  *

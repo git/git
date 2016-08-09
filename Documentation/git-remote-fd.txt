@@ -17,7 +17,7 @@ fetch, push or archive.
 
 If only <infd> is given, it is assumed to be a bidirectional socket connected
 to remote Git server (git-upload-pack, git-receive-pack or
-git-upload-achive). If both <infd> and <outfd> are given, they are assumed
+git-upload-archive). If both <infd> and <outfd> are given, they are assumed
 to be pipes connected to a remote Git server (<infd> being the inbound pipe
 and <outfd> being the outbound pipe.
 

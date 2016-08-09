@@ -721,7 +721,7 @@ git bisect good 3de952f2416b6084f557ec417709eac740c6818c
 # first bad commit: [32a594a3fdac2d57cf6d02987e30eec68511498c] Add <4: Ciao for now> into <hello>.
 EOF
 
-test_expect_success 'bisect log: successfull result' '
+test_expect_success 'bisect log: successful result' '
 	git bisect reset &&
 	git bisect start $HASH4 $HASH2 &&
 	git bisect good &&

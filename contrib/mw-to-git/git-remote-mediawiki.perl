@@ -963,7 +963,7 @@ sub mw_upload_file {
 		print {*STDERR} "Check the configuration of file uploads in your mediawiki.\n";
 		return $newrevid;
 	}
-	# Deleting and uploading a file requires a priviledged user
+	# Deleting and uploading a file requires a privileged user
 	if ($file_deleted) {
 		$mediawiki = connect_maybe($mediawiki, $remotename, $url);
 		my $query = {

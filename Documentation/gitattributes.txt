@@ -133,7 +133,7 @@ Set to string value "auto"::
 	When `text` is set to "auto", the path is marked for automatic
 	end-of-line conversion.  If Git decides that the content is
 	text, its line endings are converted to LF on checkin.
-	When the file has been commited with CRLF, no conversion is done.
+	When the file has been committed with CRLF, no conversion is done.
 
 Unspecified::
 

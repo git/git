@@ -1692,7 +1692,7 @@ static int parse_sha1_header_extended(const char *hdr, struct object_info *oi,
 		strbuf_add(oi->typename, type_buf, type_len);
 	/*
 	 * Set type to 0 if its an unknown object and
-	 * we're obtaining the type using '--allow-unkown-type'
+	 * we're obtaining the type using '--allow-unknown-type'
 	 * option.
 	 */
 	if ((flags & LOOKUP_UNKNOWN_OBJECT) && (type < 0))
