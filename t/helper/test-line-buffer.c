@@ -50,7 +50,7 @@ static void handle_line(const char *line, struct line_buffer *stdin_buf)
 	handle_command(line, arg + 1, stdin_buf);
 }
 
-int main(int argc, char *argv[])
+int cmd_main(int argc, const char **argv)
 {
 	struct line_buffer stdin_buf = LINE_BUFFER_INIT;
 	struct line_buffer file_buf = LINE_BUFFER_INIT;
