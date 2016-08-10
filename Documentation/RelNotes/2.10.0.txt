@@ -97,7 +97,6 @@ UI, Workflows & Features
  * "git status" learned to suggest "merge --abort" during a conflicted
    merge, just like it already suggests "rebase --abort" during a
    conflicted rebase.
-   (merge b0a61ab mm/status-suggest-merge-abort later to maint).
 
  * "git jump" script (in contrib/) has been updated a bit.
    (merge a91e692 jk/git-jump later to maint).
@@ -109,6 +108,13 @@ UI, Workflows & Features
    shown as "HEAD -> name" (where "name" is the name of the branch);
    paint the arrow in the same color as "HEAD", not in the color for
    commits.
+
+ * "git format-patch" learned format.from configuration variable to
+   specify the default settings for its "--from" option.
+
+ * "git am -3" calls "git merge-recursive" when it needs to fall back
+   to a three-way merge; this call has been turned into an internal
+   subroutine call instead of spawning a separate subprocess.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -185,7 +191,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * The .c/.h sources are marked as such in our .gitattributes file so
    that "git diff -W" and friends would work better.
-   (merge e82675a rs/help-c-source-with-gitattributes later to maint).
 
  * Code clean-up to avoid using a variable string that compilers may
    feel untrustable as printf-style format given to write_file()
@@ -198,7 +203,6 @@ Performance, Internal Implementation, Development Support etc.
    library did not check all the functions from pthread libraries;
    recent FreeBSD has some functions in libc but not others, and we
    mistakenly thought linking with libc is enough when it is not.
-   (merge a9b02de ew/autoconf-pthread later to maint).
 
  * When "git fsck" reports a broken link (e.g. a tree object contains
    a blob that does not exist), both containing object and the object
@@ -207,7 +211,6 @@ Performance, Internal Implementation, Development Support etc.
    the containing object from existing refs (e.g. "HEAD~24^2:file.txt").
 
  * Allow http daemon tests in Travis CI tests.
-   (merge d9d1426 ls/travis-enable-httpd-tests later to maint).
 
  * Makefile assumed that -lrt is always available on platforms that
    want to use clock_gettime() and CLOCK_MONOTONIC, which is not a
@@ -241,7 +244,6 @@ Performance, Internal Implementation, Development Support etc.
    to decide the set of supported options dynamically, which makes the
    code error-prone and hard to read.  This has been corrected by tweaking
    the API to allocate and return a new copy of "struct option" array.
-   (merge 023ff39 jk/parse-options-concat later to maint).
 
  * "git fetch" exchanges batched have/ack messages between the sender
    and the receiver, initially doubling every time and then falling
@@ -457,7 +459,6 @@ notes for details).
 
  * The use of strbuf in "git rm" to build filename to remove was a bit
    suboptimal, which has been fixed.
-   (merge deb8e15 rs/rm-strbuf-optim later to maint).
 
  * An age old bug that caused "git diff --ignore-space-at-eol"
    misbehave has been fixed.
@@ -483,19 +484,16 @@ notes for details).
  * "git commit --help" said "--no-verify" is only about skipping the
    pre-commit hook, and failed to say that it also skipped the
    commit-msg hook.
-   (merge def480f os/no-verify-skips-commit-msg-too later to maint).
 
  * "git merge" in Git v2.9 was taught to forbid merging an unrelated
    lines of history by default, but that is exactly the kind of thing
    the "--rejoin" mode of "git subtree" (in contrib/) wants to do.
    "git subtree" has been taught to use the "--allow-unrelated-histories"
    option to override the default.
-   (merge 0f12c7d da/subtree-2.9-regression later to maint).
 
  * The build procedure for "git persistent-https" helper (in contrib/)
    has been updated so that it can be built with more recent versions
    of Go.
-   (merge accb613 pm/build-persistent-https-with-recent-go later to maint).
 
  * There is an optimization used in "git diff $treeA $treeB" to borrow
    an already checked-out copy in the working tree when it is known to
@@ -506,16 +504,13 @@ notes for details).
    conversion (including the clean filter), which defeats the whole
    point of the optimization.  The optimization has been disabled when
    the conversion is necessary.
-   (merge 06dec43 jk/diff-do-not-reuse-wtf-needs-cleaning later to maint).
 
  * "git -c grep.patternType=extended log --basic-regexp" misbehaved
    because the internal API to access the grep machinery was not
    designed well.
-   (merge 8465541 jc/grep-commandline-vs-configuration later to maint).
 
  * Windows port was failing some tests in t4130, due to the lack of
    inum in the returned values by its lstat(2) emulation.
-   (merge 54956df js/t4130-rename-without-ino later to maint).
 
  * The reflog output format is documented better, and a new format
    --date=unix to report the seconds-since-epoch (without timezone)
@@ -529,16 +524,13 @@ notes for details).
 
  * The characters in the label shown for tags/refs for commits in
    "gitweb" output are now properly escaped for proper HTML output.
-   (merge 77947bb ab/gitweb-link-html-escape later to maint).
 
  * FreeBSD can lie when asked mtime of a directory, which made the
    untracked cache code to fall back to a slow-path, which in turn
    caused tests in t7063 to fail because it wanted to verify the
    behaviour of the fast-path.
-   (merge 6b7728d nd/fbsd-lazy-mtime later to maint).
 
  * Squelch compiler warnings for netmalloc (in compat/) library.
-   (merge c6c9e18 js/nedmalloc-gcc6-warnings later to maint).
 
  * A small memory leak in the command line parsing of "git blame"
    has been plugged.
@@ -546,10 +538,19 @@ notes for details).
  * The API documentation for hashmap was unclear if hashmap_entry
    can be safely discarded without any other consideration.  State
    that it is safe to do so.
-   (merge 54ba5a1 jc/hashmap-doc-init later to maint).
+
+ * Not-so-recent rewrite of "git am" that started making internal
+   calls into the commit machinery had an unintended regression, in
+   that no matter how many seconds it took to apply many patches, the
+   resulting committer timestamp for the resulting commits were all
+   the same.
+   (merge 4d9c7e6 jk/reset-ident-time-per-commit later to maint).
+
+ * "git push --force-with-lease" already had enough logic to allow
+   ensuring that such a push results in creation of a ref (i.e. the
+   receiving end did not have another push from sideways that would be
+   discarded by our force-pushing), but didn't expose this possibility
+   to the users.  It does so now.
+   (merge 9eed4f3 jk/push-force-with-lease-creation later to maint).
 
  * Other minor clean-ups and documentation updates
-   (merge 9d1ca1d jk/t4205-cleanup later to maint).
-   (merge 5f072e0 cp/completion-clone-recurse-submodules later to maint).
-   (merge bc57b9c rs/use-strbuf-addstr later to maint).
-   (merge 52db4b0 jh/clean-smudge-f-doc later to maint).
