@@ -29,6 +29,7 @@ test_expect_success 'status when conflicts unresolved' '
 On branch conflicts
 You have unmerged paths.
   (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
