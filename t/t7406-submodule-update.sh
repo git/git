@@ -877,7 +877,7 @@ test_expect_success 'submodule update clone shallow submodule' '
 	test_when_finished "rm -rf super3" &&
 	first=$(git -C cloned submodule status submodule |cut -c2-41) &&
 	second=$(git -C submodule rev-parse HEAD) &&
-	commit_count=$(git -C submodule rev-list $first^..$second | wc -l) &&
+	commit_count=$(git -C submodule rev-list --count $first^..$second) &&
 	git clone cloned super3 &&
 	pwd=$(pwd) &&
 	(
