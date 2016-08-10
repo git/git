@@ -229,6 +229,46 @@ check_patch () {
 	grep -e "^Subject:" "$1"
 }
 
+test_expect_success 'format.from=false' '
+
+	git -c format.from=false format-patch --stdout master..side |
+	sed -e "/^\$/q" >patch &&
+	check_patch patch &&
+	! grep "^From: C O Mitter <committer@example.com>\$" patch
+'
+
+test_expect_success 'format.from=true' '
+
+	git -c format.from=true format-patch --stdout master..side |
+	sed -e "/^\$/q" >patch &&
+	check_patch patch &&
+	grep "^From: C O Mitter <committer@example.com>\$" patch
+'
+
+test_expect_success 'format.from with address' '
+
+	git -c format.from="F R Om <from@example.com>" format-patch --stdout master..side |
+	sed -e "/^\$/q" >patch &&
+	check_patch patch &&
+	grep "^From: F R Om <from@example.com>\$" patch
+'
+
+test_expect_success '--no-from overrides format.from' '
+
+	git -c format.from="F R Om <from@example.com>" format-patch --no-from --stdout master..side |
+	sed -e "/^\$/q" >patch &&
+	check_patch patch &&
+	! grep "^From: F R Om <from@example.com>\$" patch
+'
+
+test_expect_success '--from overrides format.from' '
+
+	git -c format.from="F R Om <from@example.com>" format-patch --from --stdout master..side |
+	sed -e "/^\$/q" >patch &&
+	check_patch patch &&
+	! grep "^From: F R Om <from@example.com>\$" patch
+'
+
 test_expect_success '--no-to overrides config.to' '
 
 	git config --replace-all format.to \
