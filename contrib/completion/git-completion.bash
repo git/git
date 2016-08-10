@@ -1205,6 +1205,8 @@ _git_describe ()
 
 __git_diff_algorithms="myers minimal patience histogram"
 
+__git_diff_submodule_formats="log short"
+
 __git_diff_common_options="--stat --numstat --shortstat --summary
 			--patch-with-stat --name-only --name-status --color
 			--no-color --color-words --no-renames --check
@@ -1220,6 +1222,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--dirstat --dirstat= --dirstat-by-file
 			--dirstat-by-file= --cumulative
 			--diff-algorithm=
+			--submodule --submodule=
 "
 
 _git_diff ()
@@ -1229,6 +1232,10 @@ _git_diff ()
 	case "$cur" in
 	--diff-algorithm=*)
 		__gitcomp "$__git_diff_algorithms" "" "${cur##--diff-algorithm=}"
+		return
+		;;
+	--submodule=*)
+		__gitcomp "$__git_diff_submodule_formats" "" "${cur##--submodule=}"
 		return
 		;;
 	--*)
@@ -1492,6 +1499,14 @@ _git_log ()
 		;;
 	--decorate=*)
 		__gitcomp "full short no" "" "${cur##--decorate=}"
+		return
+		;;
+	--diff-algorithm=*)
+		__gitcomp "$__git_diff_algorithms" "" "${cur##--diff-algorithm=}"
+		return
+		;;
+	--submodule=*)
+		__gitcomp "$__git_diff_submodule_formats" "" "${cur##--submodule=}"
 		return
 		;;
 	--*)
@@ -2455,6 +2470,10 @@ _git_show ()
 		;;
 	--diff-algorithm=*)
 		__gitcomp "$__git_diff_algorithms" "" "${cur##--diff-algorithm=}"
+		return
+		;;
+	--submodule=*)
+		__gitcomp "$__git_diff_submodule_formats" "" "${cur##--submodule=}"
 		return
 		;;
 	--*)
