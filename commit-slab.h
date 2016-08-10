@@ -126,16 +126,16 @@ static MAYBE_UNUSED elemtype *slabname## _peek(struct slabname *s,	\
 	return slabname##_at_peek(s, c, 0);				\
 }									\
 									\
-static int stat_ ##slabname## realloc
+struct slabname
 
 /*
- * Note that this seemingly redundant second declaration is required
+ * Note that this redundant forward declaration is required
  * to allow a terminating semicolon, which makes instantiations look
  * like function declarations.  I.e., the expansion of
  *
  *    define_commit_slab(indegree, int);
  *
- * ends in 'static int stat_indegreerealloc;'.  This would otherwise
+ * ends in 'struct indegree;'.  This would otherwise
  * be a syntax error according (at least) to ISO C.  It's hard to
  * catch because GCC silently parses it by default.
  */
