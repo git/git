@@ -191,4 +191,42 @@ test_expect_success 'cover everything with default force-with-lease (allowed)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'new branch covered by force-with-lease' '
+	setup_srcdst_basic &&
+	(
+		cd dst &&
+		git branch branch master &&
+		git push --force-with-lease=branch origin branch
+	) &&
+	git ls-remote dst refs/heads/branch >expect &&
+	git ls-remote src refs/heads/branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'new branch covered by force-with-lease (explicit)' '
+	setup_srcdst_basic &&
+	(
+		cd dst &&
+		git branch branch master &&
+		git push --force-with-lease=branch: origin branch
+	) &&
+	git ls-remote dst refs/heads/branch >expect &&
+	git ls-remote src refs/heads/branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'new branch already exists' '
+	setup_srcdst_basic &&
+	(
+		cd src &&
+		git checkout -b branch master &&
+		test_commit F
+	) &&
+	(
+		cd dst &&
+		git branch branch master &&
+		test_must_fail git push --force-with-lease=branch: origin branch
+	)
+'
+
 test_done
