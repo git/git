@@ -469,7 +469,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 			(stop_at_non_option ? PARSE_OPT_STOP_AT_NON_OPTION : 0) |
 			PARSE_OPT_SHELL_EVAL);
 
-	strbuf_addf(&parsed, " --");
+	strbuf_addstr(&parsed, " --");
 	sq_quote_argv(&parsed, argv, 0);
 	puts(parsed.buf);
 	return 0;

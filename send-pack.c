@@ -265,7 +265,7 @@ static int generate_push_cert(struct strbuf *req_buf,
 	struct strbuf cert = STRBUF_INIT;
 	int update_seen = 0;
 
-	strbuf_addf(&cert, "certificate version 0.1\n");
+	strbuf_addstr(&cert, "certificate version 0.1\n");
 	strbuf_addf(&cert, "pusher %s ", signing_key);
 	datestamp(&cert);
 	strbuf_addch(&cert, '\n');

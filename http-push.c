@@ -1137,7 +1137,7 @@ static void remote_ls(const char *path, int flags,
 	ls.userData = userData;
 	ls.userFunc = userFunc;
 
-	strbuf_addf(&out_buffer.buf, PROPFIND_ALL_REQUEST);
+	strbuf_addstr(&out_buffer.buf, PROPFIND_ALL_REQUEST);
 
 	dav_headers = curl_slist_append(dav_headers, "Depth: 1");
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
