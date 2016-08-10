@@ -89,4 +89,72 @@ Fixes since v2.9.2
    switch the default the built-in path to /usr/local/bin/perl on not
    too ancient FreeBSD releases.
 
+ * "git status" learned to suggest "merge --abort" during a conflicted
+   merge, just like it already suggests "rebase --abort" during a
+   conflicted rebase.
+
+ * The .c/.h sources are marked as such in our .gitattributes file so
+   that "git diff -W" and friends would work better.
+
+ * Existing autoconf generated test for the need to link with pthread
+   library did not check all the functions from pthread libraries;
+   recent FreeBSD has some functions in libc but not others, and we
+   mistakenly thought linking with libc is enough when it is not.
+
+ * Allow http daemon tests in Travis CI tests.
+
+ * Users of the parse_options_concat() API function need to allocate
+   extra slots in advance and fill them with OPT_END() when they want
+   to decide the set of supported options dynamically, which makes the
+   code error-prone and hard to read.  This has been corrected by tweaking
+   the API to allocate and return a new copy of "struct option" array.
+
+ * The use of strbuf in "git rm" to build filename to remove was a bit
+   suboptimal, which has been fixed.
+
+ * "git commit --help" said "--no-verify" is only about skipping the
+   pre-commit hook, and failed to say that it also skipped the
+   commit-msg hook.
+
+ * "git merge" in Git v2.9 was taught to forbid merging an unrelated
+   lines of history by default, but that is exactly the kind of thing
+   the "--rejoin" mode of "git subtree" (in contrib/) wants to do.
+   "git subtree" has been taught to use the "--allow-unrelated-histories"
+   option to override the default.
+
+ * The build procedure for "git persistent-https" helper (in contrib/)
+   has been updated so that it can be built with more recent versions
+   of Go.
+
+ * There is an optimization used in "git diff $treeA $treeB" to borrow
+   an already checked-out copy in the working tree when it is known to
+   be the same as the blob being compared, expecting that open/mmap of
+   such a file is faster than reading it from the object store, which
+   involves inflating and applying delta.  This however kicked in even
+   when the checked-out copy needs to go through the convert-to-git
+   conversion (including the clean filter), which defeats the whole
+   point of the optimization.  The optimization has been disabled when
+   the conversion is necessary.
+
+ * "git -c grep.patternType=extended log --basic-regexp" misbehaved
+   because the internal API to access the grep machinery was not
+   designed well.
+
+ * Windows port was failing some tests in t4130, due to the lack of
+   inum in the returned values by its lstat(2) emulation.
+
+ * The characters in the label shown for tags/refs for commits in
+   "gitweb" output are now properly escaped for proper HTML output.
+
+ * FreeBSD can lie when asked mtime of a directory, which made the
+   untracked cache code to fall back to a slow-path, which in turn
+   caused tests in t7063 to fail because it wanted to verify the
+   behaviour of the fast-path.
+
+ * Squelch compiler warnings for netmalloc (in compat/) library.
+
+ * The API documentation for hashmap was unclear if hashmap_entry
+   can be safely discarded without any other consideration.  State
+   that it is safe to do so.
+
 Also contains minor documentation updates and code clean-ups.
