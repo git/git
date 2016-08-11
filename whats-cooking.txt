@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2016, #03; Mon, 8)
-X-master-at: a0a1831b034af10e5d5b37b99489a7558f9cc547
-X-next-at: 2eb946ae7c35488b71879c33eec3b14b822dee14
+Subject: What's cooking in git.git (Aug 2016, #04; Thu, 11)
+X-master-at: a42d7b6a5b5addcce01f483547ad96825c7a96e0
+X-next-at: 6810c6f841759a3ef9550927d6a884fffbc88cda
 
-What's cooking in git.git (Aug 2016, #03; Mon, 8)
+What's cooking in git.git (Aug 2016, #04; Thu, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,19 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Many topics in "Cooking" section without seeing activity have been
-moved to "Stalled" status and marked as "Will discard".  This is
-unfortunate but with way many people wanting to throw random new
-topics while too few people able/willing to review them, it is
-inevitable.
-
-On the 'master' front, the individual commit count now exceeds 500
-since the last major release, and the early preview -rc0 is expected
-to happen at the end of the week.
-
 The 'maint' branch has been accumulating enough material to make it
-the next maintenance release v2.9.3, which hopefully happen late
-this week.
+the next maintenance release v2.9.3, which hopefully happen very
+soon.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -34,291 +24,169 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/gitweb-link-html-escape (2016-08-01) 1 commit
-  (merged to 'next' on 2016-08-03 at 44b6088)
- + gitweb: escape link body in format_ref_marker
-
- The characters in the label shown for tags/refs for commits in
- "gitweb" output are now properly escaped for proper HTML output.
-
-
-* cp/completion-clone-recurse-submodules (2016-07-27) 1 commit
-  (merged to 'next' on 2016-08-03 at cbf0d94)
- + completion: add option '--recurse-submodules' to 'git clone'
-
-
-
-* da/subtree-modernize (2016-07-27) 2 commits
-  (merged to 'next' on 2016-08-03 at 06ad015)
- + subtree: adjust function definitions to match CodingGuidelines
- + subtree: adjust style to match CodingGuidelines
-
- Style fixes for "git subtree" (in contrib/).
-
-
-* ew/build-time-pager-tweaks (2016-08-04) 1 commit
-  (merged to 'next' on 2016-08-05 at 4f0b11b)
- + pager: move pager-specific setup into the build
-
- The build procedure learned PAGER_ENV knob that lists what default
- environment variable settings to export for popular pagers.  This
- mechanism is used to tweak the default settings to MORE on FreeBSD.
-
-
-* ew/git-svn-http-tests (2016-07-25) 2 commits
-  (merged to 'next' on 2016-08-03 at 2b23920)
- + git svn: migrate tests to use lib-httpd
- + t/t91*: do not say how to avoid the tests
-
- Tests for "git svn" have been taught to reuse the lib-httpd test
- infrastructure when testing the subversion integration that
- interacts with subversion repositories served over the http://
- protocol.
-
-
-* ib/t3700-add-chmod-x-updates (2016-08-01) 3 commits
-  (merged to 'next' on 2016-08-03 at 1753346)
- + t3700: add a test_mode_in_index helper function
- + t3700: merge two tests into one
- + t3700: remove unwanted leftover files before running new tests
-
- The t3700 test about "add --chmod=-x" have been made a bit more
- robust and generally cleaned up.
-
-
-* jc/hashmap-doc-init (2016-08-02) 1 commit
-  (merged to 'next' on 2016-08-05 at 2eb946a)
- + hashmap: clarify that hashmap_entry can safely be discarded
-
- The API documentation for hashmap was unclear if hashmap_entry
- can be safely discarded without any other consideration.  State
- that it is safe to do so.
-
-
-* jh/clean-smudge-f-doc (2016-08-03) 1 commit
-  (merged to 'next' on 2016-08-04 at c2fc8e6)
- + clarify %f documentation
-
- A minor documentation update.
-
- This was split out from a stalled jh/clean-smudge-annex topic
- before discarding it.
-
-
-* jk/difftool-in-subdir (2016-07-28) 3 commits
-  (merged to 'next' on 2016-08-03 at 90f195a)
- + difftool: use Git::* functions instead of passing around state
- + difftool: avoid $GIT_DIR and $GIT_WORK_TREE
- + difftool: fix argument handling in subdirs
-
- "git difftool <paths>..." started in a subdirectory failed to
- interpret the paths relative to that directory, which has been
- fixed.
-
-
-* jk/pack-objects-optim (2016-07-29) 6 commits
-  (merged to 'next' on 2016-08-03 at ad8caca)
- + pack-objects: compute local/ignore_pack_keep early
- + pack-objects: break out of want_object loop early
- + find_pack_entry: replace last_found_pack with MRU cache
- + add generic most-recently-used list
- + sha1_file: drop free_pack_by_name
- + t/perf: add tests for many-pack scenarios
- (this branch is used by jk/pack-objects-optim-mru and ks/pack-objects-bitmap.)
-
- "git pack-objects" has a few options that tell it not to pack
- objects found in certain packfiles, which require it to scan .idx
- files of all available packs.  The codepaths involved in these
- operations have been optimized for a common case of not having any
- non-local pack and/or any .kept pack.
-
-
-* jk/parseopt-string-list (2016-08-03) 1 commit
-  (merged to 'next' on 2016-08-04 at a7f0cd2)
- + blame: drop strdup of string literal
-
- A small memory leak in the command line parsing of "git blame"
- has been plugged.
-
-
-* jk/reflog-date (2016-07-27) 7 commits
-  (merged to 'next' on 2016-08-03 at cd8e92b)
- + date: clarify --date=raw description
- + date: add "unix" format
- + date: document and test "raw-local" mode
- + doc/pretty-formats: explain shortening of %gd
- + doc/pretty-formats: describe index/time formats for %gd
- + doc/rev-list-options: explain "-g" output formats
- + doc/rev-list-options: clarify "commit@{Nth}" for "-g" option
-
- The reflog output format is documented better, and a new format
- --date=unix to report the seconds-since-epoch (without timezone)
- has been added.
-
-
-* jk/t4205-cleanup (2016-07-27) 2 commits
-  (merged to 'next' on 2016-08-03 at ba9b594)
- + t4205: indent here documents
- + t4205: drop top-level &&-chaining
-
- Test modernization.
-
-
-* js/nedmalloc-gcc6-warnings (2016-08-05) 2 commits
-  (merged to 'next' on 2016-08-05 at b31baa7)
- + nedmalloc: work around overzealous GCC 6 warning
- + nedmalloc: fix misleading indentation
-
- Squelch compiler warnings for netmalloc (in compat/) library.
-
-
-* js/rebase-i-progress-tidy (2016-07-28) 1 commit
-  (merged to 'next' on 2016-08-03 at bb1b414)
- + rebase-interactive: trim leading whitespace from progress count
-
- Regression fix for an i18n topic already in 'master'.
-
-
-* js/t4130-rename-without-ino (2016-08-03) 1 commit
-  (merged to 'next' on 2016-08-04 at 044fb33)
- + t4130: work around Windows limitation
-
- Windows port was failing some tests in t4130, due to the lack of
- inum in the returned values by its lstat(2) emulation.
-
- Will merge to 'maint'.
-
-
-* nd/fbsd-lazy-mtime (2016-08-04) 1 commit
-  (merged to 'next' on 2016-08-05 at 7294870)
- + t7063: work around FreeBSD's lazy mtime update feature
-
- FreeBSD can lie when asked mtime of a directory, which made the
- untracked cache code to fall back to a slow-path, which in turn
- caused tests in t7063 to fail because it wanted to verify the
- behaviour of the fast-path.
-
-
-* nd/fetch-ref-summary (2016-07-26) 1 commit
-  (merged to 'next' on 2016-08-03 at c045704)
- + t5510: skip tests under GETTEXT_POISON build
-
- Hotfix of a test in a topic that has already been merged to 'master'.
-
-
-* nd/log-decorate-color-head-arrow (2016-07-12) 1 commit
-  (merged to 'next' on 2016-08-05 at a966c0e)
- + log: decorate HEAD -> branch with the same color for arrow and HEAD
-
- An entry "git log --decorate" for the tip of the current branch is
- shown as "HEAD -> name" (where "name" is the name of the branch);
- paint the arrow in the same color as "HEAD", not in the color for
- commits.
-
-
-* rs/st-mult (2016-08-01) 1 commit
-  (merged to 'next' on 2016-08-03 at 5c6956a)
- + pass constants as first argument to st_mult()
-
- Micro optimization of st_mult() facility used to check the integer
- overflow coming from multiplication to compute size of memory
- allocation.
-
-
-* rs/use-strbuf-addstr (2016-08-05) 2 commits
-  (merged to 'next' on 2016-08-05 at 62d16d7)
- + use strbuf_addstr() instead of strbuf_addf() with "%s"
-  (merged to 'next' on 2016-08-03 at 523422f)
- + use strbuf_addstr() for adding constant strings to a strbuf
-
-
-* sb/submodule-recommend-shallowness (2016-08-03) 1 commit
-  (merged to 'next' on 2016-08-04 at 9f23a7e)
- + gitmodules: document shallow recommendation
-
- Doc update.
-
-
-* va/i18n (2016-07-28) 2 commits
-  (merged to 'next' on 2016-08-03 at cf753d2)
- + i18n: config: unfold error messages marked for translation
- + i18n: notes: mark comment for translation
-
- More i18n marking.
+* cc/mailmap-tuxfamily (2016-08-08) 1 commit
+  (merged to 'next' on 2016-08-10 at 5905fbf)
+ + .mailmap: use Christian Couder's Tuxfamily address
+
+
+* jk/completion-diff-submodule (2016-08-09) 1 commit
+  (merged to 'next' on 2016-08-10 at 146ca11)
+ + completion: add completion for --submodule=* diff option
+
+
+* jk/push-force-with-lease-creation (2016-08-04) 4 commits
+  (merged to 'next' on 2016-08-04 at e42ce85)
+ + t5533: make it pass on case-sensitive filesystems
+  (merged to 'next' on 2016-08-03 at 475c080)
+ + push: allow pushing new branches with --force-with-lease
+ + push: add shorthand for --force-with-lease branch creation
+ + Documentation/git-push: fix placeholder formatting
+
+ "git push --force-with-lease" already had enough logic to allow
+ ensuring that such a push results in creation of a ref (i.e. the
+ receiving end did not have another push from sideways that would be
+ discarded by our force-pushing), but didn't expose this possibility
+ to the users.  It does so now.
+
+
+* jk/reset-ident-time-per-commit (2016-08-01) 1 commit
+  (merged to 'next' on 2016-08-03 at 76d569c)
+ + am: reset cached ident date for each patch
+
+ Not-so-recent rewrite of "git am" that started making internal
+ calls into the commit machinery had an unintended regression, in
+ that no matter how many seconds it took to apply many patches, the
+ resulting committer timestamp for the resulting commits were all
+ the same.
+
+
+* js/am-3-merge-recursive-direct (2016-08-01) 16 commits
+  (merged to 'next' on 2016-08-05 at dc1c9bb)
+ + merge-recursive: flush output buffer even when erroring out
+ + merge_trees(): ensure that the callers release output buffer
+ + merge-recursive: offer an option to retain the output in 'obuf'
+ + merge-recursive: write the commit title in one go
+ + merge-recursive: flush output buffer before printing error messages
+ + am -3: use merge_recursive() directly again
+ + merge-recursive: switch to returning errors instead of dying
+ + merge-recursive: handle return values indicating errors
+ + merge-recursive: allow write_tree_from_memory() to error out
+ + merge-recursive: avoid returning a wholesale struct
+ + merge_recursive: abort properly upon errors
+ + prepare the builtins for a libified merge_recursive()
+ + merge-recursive: clarify code in was_tracked()
+ + die(_("BUG")): avoid translating bug messages
+ + die("bug"): report bugs consistently
+ + t5520: verify that `pull --rebase` shows the helpful advice when failing
+
+ "git am -3" calls "git merge-recursive" when it needs to fall back
+ to a three-way merge; this call has been turned into an internal
+ subroutine call instead of spawning a separate subprocess.
+
+
+* js/commit-slab-decl-fix (2016-08-09) 2 commits
+  (merged to 'next' on 2016-08-10 at 6675402)
+ + commit-slab.h: avoid duplicated global static variables
+ + config.c: avoid duplicated global static variables
+
+
+* jt/format-patch-from-config (2016-08-01) 1 commit
+  (merged to 'next' on 2016-08-05 at 897e986)
+ + format-patch: format.from gives the default for --from
+
+ "git format-patch" learned format.from configuration variable to
+ specify the default settings for its "--from" option.
+
+
+* sb/submodule-update-dot-branch (2016-08-10) 8 commits
+  (merged to 'next' on 2016-08-10 at 40ba945)
+ + t7406: fix breakage on OSX
+  (merged to 'next' on 2016-08-04 at 47bff41)
+ + submodule update: allow '.' for branch value
+ + submodule--helper: add remote-branch helper
+ + submodule-config: keep configured branch around
+ + submodule--helper: fix usage string for relative-path
+ + submodule update: narrow scope of local variable
+ + submodule update: respect depth in subsequent fetches
+ + t7406: future proof tests with hard coded depth
+
+ A few updates to "git submodule update".
 
 --------------------------------------------------
 [New Topics]
 
-* jk/big-and-future-archive-tar (2016-08-06) 1 commit
- - archive-tar: make write_extended_header() void
+* sb/submodule-clone-retry (2016-08-09) 1 commit
+  (merged to 'next' on 2016-08-11 at 4600b20)
+ + submodule--helper: use parallel processor correctly
 
- A small code clean-up.
+ Fix-up to an error codepath in a topic already in 'master'.
 
- Will merge to 'next'.
-
-
-* js/mv-dir-to-new-directory (2016-08-08) 1 commit
- - git mv: do not keep slash in `git mv dir non-existing-dir/`
-
- "git mv dir non-existing-dir/" did not work in some environments
- the same way as existing mainstream platforms.  The code now moves
- "dir" to "non-existing-dir", without relying on rename("A", "B/")
- that strips the trailing slash of '/'.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ks/pack-objects-bitmap (2016-08-08) 2 commits
- - pack-objects: use reachability bitmap index when generating non-stdout pack
- - pack-objects: respect --local/--honor-pack-keep/--incremental when bitmap is in use
+* vs/completion-branch-fully-spelled-d-m-r (2016-08-09) 1 commit
+  (merged to 'next' on 2016-08-11 at a6f189c)
+ + completion: complete --delete, --move, and --remotes for git branch
 
- Waiting for review discussion to settle.
- cf. <20160808185541.6433-1-kirr@nexedi.com>
- cf. <20160808181942.GD3995@teco.navytux.spb.ru>
+ Will merge to 'master'.
 
 
-* rs/child-process-init (2016-08-05) 1 commit
- - use CHILD_PROCESS_INIT to initialize automatic variables
+* vs/typofix (2016-08-11) 1 commit
+  (merged to 'next' on 2016-08-11 at 435c418)
+ + Spelling fixes
 
- A small code clean-up.
-
- Will merge to 'next'.
-
-
-* rs/merge-add-strategies-simplification (2016-08-05) 1 commit
- - merge: use string_list_split() in add_strategies()
-
- A small code clean-up.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* rs/merge-recursive-string-list-init (2016-08-05) 1 commit
- - merge-recursive: use STRING_LIST_INIT_NODUP
+* va/i18n (2016-08-10) 3 commits
+  (merged to 'next' on 2016-08-11 at d6e1422)
+ + i18n: git-stash: mark messages for translation
+ + i18n: archive: mark errors for translation
+ + i18n: setup: mark error messages for translation
 
- A small code clean-up.
-
- Will merge to 'next'.
-
-
-* rs/use-strbuf-add-unique-abbrev (2016-08-06) 1 commit
- - use strbuf_add_unique_abbrev() for adding short hashes
-
- A small code clean-up.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sb/submodule-clone-rr (2016-08-06) 6 commits
- - clone: reference flag is used for submodules as well
- - submodule update: add super-reference flag
- - submodule--helper update-clone: allow multiple references
- - submodule--helper module-clone: allow multiple references
- - t7408: merge short tests, factor out testing method
- - t7408: modernize style
+* ew/http-backend-batch-headers (2016-08-10) 1 commit
+  (merged to 'next' on 2016-08-11 at 93476b4)
+ + http-backend: buffer headers before sending
 
- Waiting for review discussion to settle.
- cf. <20160806012318.17968-1-sbeller@google.com>
+ The http-backend (the server-side component of smart-http
+ transport) used to trickle the HTTP header one at a time.  Now
+ these write(2)s are batched.
+
+ Will merge to 'master'.
+
+
+* ms/document-pack-window-memory-is-per-thread (2016-08-10) 1 commit
+  (merged to 'next' on 2016-08-11 at 228e96d)
+ + document git-repack interaction of pack.threads and pack.windowMemory
+
+ Will merge to 'master'.
+
+
+* jk/diff-submodule-diff-inline (2016-08-11) 5 commits
+ - SQUASH??? clarify the if/{if/else} nesting
+ - SQUASH???
+ - diff: add SUBMODULE_DIFF format to display submodule diff
+ - diff: add --line-prefix option for passing in a prefix
+ - diff.c: remove output_prefix_length field
+
+ The "git diff --submodule={short,log}" mechanism has been enhanced
+ to allow "--submodule=diff" to show the patch between the submodule
+ commits bound to the superproject.
+
+
+* jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
+  (merged to 'next' on 2016-08-11 at 6810c6f)
+ + gc: default aggressive depth to 50
+
+ "git gc --aggressive" used to limit the delta-chain length to 250,
+ which is way too deep for gaining additional space savings and is
+ detrimental for runtime performance.  The limit has been reduced to
+ 50.
+
+ Will hold to see if people scream.
 
 --------------------------------------------------
 [Stalled]
@@ -623,13 +491,93 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jh/status-v2-porcelain (2016-08-05) 10 commits
+* jk/big-and-future-archive-tar (2016-08-06) 1 commit
+  (merged to 'next' on 2016-08-11 at 0abbd07)
+ + archive-tar: make write_extended_header() void
+
+ A small code clean-up.
+
+ Will merge to 'master'.
+
+
+* js/mv-dir-to-new-directory (2016-08-08) 1 commit
+  (merged to 'next' on 2016-08-11 at c806ba2)
+ + git mv: do not keep slash in `git mv dir non-existing-dir/`
+
+ "git mv dir non-existing-dir/" did not work in some environments
+ the same way as existing mainstream platforms.  The code now moves
+ "dir" to "non-existing-dir", without relying on rename("A", "B/")
+ that strips the trailing slash of '/'.
+
+ Will merge to 'master'.
+
+
+* ks/pack-objects-bitmap (2016-08-09) 2 commits
+ - pack-objects: use reachability bitmap index when generating non-stdout pack
+ - pack-objects: respect --local/--honor-pack-keep/--incremental when bitmap is in use
+
+ Waiting for review discussion to settle.
+ cf. <20160808185541.6433-1-kirr@nexedi.com>
+ cf. <20160808181942.GD3995@teco.navytux.spb.ru>
+
+
+* rs/child-process-init (2016-08-05) 1 commit
+  (merged to 'next' on 2016-08-11 at 860857b)
+ + use CHILD_PROCESS_INIT to initialize automatic variables
+
+ A small code clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/merge-add-strategies-simplification (2016-08-05) 1 commit
+  (merged to 'next' on 2016-08-11 at 6b8dfc1)
+ + merge: use string_list_split() in add_strategies()
+
+ A small code clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/merge-recursive-string-list-init (2016-08-05) 1 commit
+  (merged to 'next' on 2016-08-11 at 37e62ba)
+ + merge-recursive: use STRING_LIST_INIT_NODUP
+
+ A small code clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/use-strbuf-add-unique-abbrev (2016-08-06) 1 commit
+  (merged to 'next' on 2016-08-11 at 81ac5ff)
+ + use strbuf_add_unique_abbrev() for adding short hashes
+
+ A small code clean-up.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-clone-rr (2016-08-09) 9 commits
+ - submodule: try alternates when superproject has an alternate
+ - submodule helper: pass through --reference-if-able
+ - clone: implement optional references
+ - clone: clarify option_reference as required
+ - submodule--helper update-clone: allow multiple references
+ - submodule--helper module-clone: allow multiple references
+ - SQUASH???
+ - t7408: merge short tests, factor out testing method
+ - t7408: modernize style
+
+ Waiting for review discussion to settle.
+ cf. <20160806012318.17968-1-sbeller@google.com>
+
+
+* jh/status-v2-porcelain (2016-08-11) 9 commits
  - status: unit tests for --porcelain=v2
- - test-lib-functions.sh: Add lf_to_nul
+ - test-lib-functions.sh: add lf_to_nul helper
  - git-status.txt: describe --porcelain=v2 format
  - status: print branch info with --porcelain=v2 --branch
  - status: print per-file porcelain v2 status data
- - SQUASH???
  - status: collect per-file data for --porcelain=v2
  - status: support --porcelain[=<version>]
  - status: cleanup API to wt_status_print
@@ -641,33 +589,34 @@ of the repositories listed at
  calls to git.
 
  Waiting for review discussion to settle.
- cf. <1470147137-17498-1-git-send-email-git@jeffhostetler.com>
 
 
 * js/import-tars-hardlinks (2016-08-03) 1 commit
- - import-tars: support hard links
+  (merged to 'next' on 2016-08-11 at 034230e)
+ + import-tars: support hard links
 
  "import-tars" fast-import script (in contrib/) used to ignore a
  hardlink target and replaced it with an empty file, which has been
  corrected to record the same blob as the other file the hardlink is
  shared with.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/trace-fixup (2016-08-05) 8 commits
- - trace: do not fall back to stderr
- - write_or_die: drop write_or_whine_pipe()
- - trace: disable key after write error
- - trace: correct variable name in write() error message
- - trace: cosmetic fixes for error messages
- - trace: use warning() for printing trace errors
- - trace: stop using write_or_whine_pipe()
- - trace: handle NULL argument in trace_disable()
+  (merged to 'next' on 2016-08-11 at 56f7621)
+ + trace: do not fall back to stderr
+ + write_or_die: drop write_or_whine_pipe()
+ + trace: disable key after write error
+ + trace: correct variable name in write() error message
+ + trace: cosmetic fixes for error messages
+ + trace: use warning() for printing trace errors
+ + trace: stop using write_or_whine_pipe()
+ + trace: handle NULL argument in trace_disable()
 
  Various small fixups to the "GIT_TRACE" facility.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mh/diff-indent-heuristic (2016-08-04) 8 commits
@@ -693,99 +642,73 @@ of the repositories listed at
  cf. <29c40cdd-363a-df09-f9e2-fe9070bb8a9c@ramsayjones.plus.com>
 
 
-* jt/format-patch-from-config (2016-08-01) 1 commit
-  (merged to 'next' on 2016-08-05 at 897e986)
- + format-patch: format.from gives the default for --from
-
- "git format-patch" learned format.from configuration variable to
- specify the default settings for its "--from" option.
-
- Will merge to 'master'.
-
-
-* sb/submodule-update-dot-branch (2016-08-03) 7 commits
-  (merged to 'next' on 2016-08-04 at 47bff41)
- + submodule update: allow '.' for branch value
- + submodule--helper: add remote-branch helper
- + submodule-config: keep configured branch around
- + submodule--helper: fix usage string for relative-path
- + submodule update: narrow scope of local variable
- + submodule update: respect depth in subsequent fetches
- + t7406: future proof tests with hard coded depth
-
- A few updates to "git submodule update".
-
- Will merge to 'master'.
-
-
-* cc/apply-am (2016-08-01) 42 commits
- . fixup! apply: make it possible to silently apply
- . builtin/am: use apply api in run_apply()
- . apply: refactor `git apply` option parsing
- . apply: change error_routine when silent
- . usage: add get_error_routine() and get_warn_routine()
- . usage: add set_warn_routine()
- . apply: don't print on stdout in verbosity_silent mode
- . apply: make it possible to silently apply
- . write_or_die: use warning() instead of fprintf(stderr, ...)
- . environment: add set_index_file()
- . apply: use error_errno() where possible
- . apply: make some parsing functions static again
- . apply: move libified code from builtin/apply.c to apply.{c,h}
- . apply: rename and move opt constants to apply.h
- . builtin/apply: rename option parsing functions
- . builtin/apply: make create_one_file() return -1 on error
- . builtin/apply: make try_create_file() return -1 on error
- . builtin/apply: make write_out_results() return -1 on error
- . builtin/apply: make write_out_one_result() return -1 on error
- . builtin/apply: make create_file() return -1 on error
- . builtin/apply: make add_index_file() return -1 on error
- . builtin/apply: make add_conflicted_stages_file() return -1 on error
- . builtin/apply: make remove_file() return -1 on error
- . builtin/apply: make build_fake_ancestor() return -1 on error
- . builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
- . builtin/apply: make gitdiff_*() return -1 on error
- . builtin/apply: make gitdiff_*() return 1 at end of header
- . builtin/apply: make parse_traditional_patch() return -1 on error
- . builtin/apply: make apply_all_patches() return 128 or 1 on error
- . builtin/apply: move check_apply_state() to apply.c
- . builtin/apply: make check_apply_state() return -1 instead of die()ing
- . apply: make init_apply_state() return -1 instead of exit()ing
- . builtin/apply: move init_apply_state() to apply.c
- . builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
- . builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
- . builtin/apply: make parse_single_patch() return -1 on error
- . builtin/apply: make parse_chunk() return a negative integer on error
- . builtin/apply: make find_header() return -128 instead of die()ing
- . builtin/apply: read_patch_file() return -1 instead of die()ing
- . builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
- . apply: move 'struct apply_state' to apply.h
- . apply: make some names more specific
- (this branch is used by jh/clean-smudge-annex.)
+* cc/apply-am (2016-08-11) 40 commits
+ - builtin/am: use apply API in run_apply()
+ - apply: learn to use a different index file
+ - apply: refactor `git apply` option parsing
+ - apply: change error_routine when silent
+ - usage: add get_error_routine() and get_warn_routine()
+ - usage: add set_warn_routine()
+ - apply: don't print on stdout in verbosity_silent mode
+ - apply: make it possible to silently apply
+ - apply: use error_errno() where possible
+ - apply: make some parsing functions static again
+ - apply: move libified code from builtin/apply.c to apply.{c,h}
+ - apply: rename and move opt constants to apply.h
+ - builtin/apply: rename option parsing functions
+ - builtin/apply: make create_one_file() return -1 on error
+ - builtin/apply: make try_create_file() return -1 on error
+ - builtin/apply: make write_out_results() return -1 on error
+ - builtin/apply: make write_out_one_result() return -1 on error
+ - builtin/apply: make create_file() return -1 on error
+ - builtin/apply: make add_index_file() return -1 on error
+ - builtin/apply: make add_conflicted_stages_file() return -1 on error
+ - builtin/apply: make remove_file() return -1 on error
+ - builtin/apply: make build_fake_ancestor() return -1 on error
+ - builtin/apply: change die_on_unsafe_path() to check_unsafe_path()
+ - builtin/apply: make gitdiff_*() return -1 on error
+ - builtin/apply: make gitdiff_*() return 1 at end of header
+ - builtin/apply: make parse_traditional_patch() return -1 on error
+ - builtin/apply: make apply_all_patches() return 128 or 1 on error
+ - builtin/apply: move check_apply_state() to apply.c
+ - builtin/apply: make check_apply_state() return -1 instead of die()ing
+ - apply: make init_apply_state() return -1 instead of exit()ing
+ - builtin/apply: move init_apply_state() to apply.c
+ - builtin/apply: make parse_ignorewhitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_whitespace_option() return -1 instead of die()ing
+ - builtin/apply: make parse_single_patch() return -1 on error
+ - builtin/apply: make parse_chunk() return a negative integer on error
+ - builtin/apply: make find_header() return -128 instead of die()ing
+ - builtin/apply: read_patch_file() return -1 instead of die()ing
+ - builtin/apply: make apply_patch() return -1 or -128 instead of die()ing
+ - apply: move 'struct apply_state' to apply.h
+ - apply: make some names more specific
 
  "git am" has been taught to make an internal call to "git apply"'s
  innards without spawning the latter as a separate process.
 
- Temporarily kicked out of 'pu', as it adds more calling sites to a
- function that is going away.
 
- cf. <20160804212157.cn7ecyxcbyf4okd7@sigill.intra.peff.net>
+* jk/pack-objects-optim-mru (2016-08-11) 4 commits
+  (merged to 'next' on 2016-08-11 at c0a7dae)
+ + pack-objects: use mru list when iterating over packs
+ + pack-objects: break delta cycles before delta-search phase
+ + sha1_file: make packed_object_info public
+ + provide an initializer for "struct object_info"
+
+ "git pack-objects" in a repository with many packfiles used to
+ spend a lot of time looking for/at objects in them; the accesses to
+ the packfiles are now optimized by checking the most-recently-used
+ packfile first.
+
+ Will hold to see if people scream.
 
 
-* jk/pack-objects-optim-mru (2016-07-29) 1 commit
- - pack-objects: use mru list when iterating over packs
-
- This is still questionable in that it can attempt to create a cycle
- in delta-chain, only to be stopped by the last-ditch recovery logic
- in there.
-
-
-* kw/patch-ids-optim (2016-08-04) 5 commits
- - SQUASH???
- - rebase: avoid computing unnecessary patch IDs
- - patch-ids: add flag to create the diff patch id using header only data
- - patch-ids: replace the seen indicator with a commit pointer
- - patch-ids: stop using a hand-rolled hashmap implementation
+* kw/patch-ids-optim (2016-08-11) 4 commits
+  (merged to 'next' on 2016-08-11 at f3ba3d0)
+ + rebase: avoid computing unnecessary patch IDs
+ + patch-ids: add flag to create the diff patch id using header only data
+ + patch-ids: replace the seen indicator with a commit pointer
+ + patch-ids: stop using a hand-rolled hashmap implementation
 
  When "git rebase" tries to compare set of changes on the updated
  upstream and our own branch, it computes patch-id for all of these
@@ -793,7 +716,7 @@ of the repositories listed at
  lazily computing the full patch-id (which is expensive) to be
  compared only for changes that touch the same set of paths.
 
- Will merge to 'next' after squashing the fix in.
+ Will merge to 'master'.
 
 
 * jk/rebase-i-drop-ident-check (2016-07-29) 1 commit
@@ -809,66 +732,6 @@ of the repositories listed at
 
  Will hold.
  cf. <20160729224944.GA23242@sigill.intra.peff.net>
-
-
-* jk/reset-ident-time-per-commit (2016-08-01) 1 commit
-  (merged to 'next' on 2016-08-03 at 76d569c)
- + am: reset cached ident date for each patch
-
- Not-so-recent rewrite of "git am" that started making internal
- calls into the commit machinery had an unintended regression, in
- that no matter how many seconds it took to apply many patches, the
- resulting committer timestamp for the resulting commits were all
- the same.
-
- Will merge to 'master'.
-
-
-* jk/push-force-with-lease-creation (2016-08-04) 4 commits
-  (merged to 'next' on 2016-08-04 at e42ce85)
- + t5533: make it pass on case-sensitive filesystems
-  (merged to 'next' on 2016-08-03 at 475c080)
- + push: allow pushing new branches with --force-with-lease
- + push: add shorthand for --force-with-lease branch creation
- + Documentation/git-push: fix placeholder formatting
-
- "git push --force-with-lease" already had enough logic to allow
- ensuring that such a push results in creation of a ref (i.e. the
- receiving end did not have another push from sideways that would be
- discarded by our force-pushing), but didn't expose this possibility
- to the users.  It does so now.
-
- Will merge to 'master'.
-
-
-* js/am-3-merge-recursive-direct (2016-08-01) 16 commits
-  (merged to 'next' on 2016-08-05 at dc1c9bb)
- + merge-recursive: flush output buffer even when erroring out
- + merge_trees(): ensure that the callers release output buffer
- + merge-recursive: offer an option to retain the output in 'obuf'
- + merge-recursive: write the commit title in one go
- + merge-recursive: flush output buffer before printing error messages
- + am -3: use merge_recursive() directly again
- + merge-recursive: switch to returning errors instead of dying
- + merge-recursive: handle return values indicating errors
- + merge-recursive: allow write_tree_from_memory() to error out
- + merge-recursive: avoid returning a wholesale struct
- + merge_recursive: abort properly upon errors
- + prepare the builtins for a libified merge_recursive()
- + merge-recursive: clarify code in was_tracked()
- + die(_("BUG")): avoid translating bug messages
- + die("bug"): report bugs consistently
- + t5520: verify that `pull --rebase` shows the helpful advice when failing
-
- "git am -3" calls "git merge-recursive" when it needs to fall back
- to a three-way merge; this call has been turned into an internal
- subroutine call instead of spawning a separate subprocess.
-
- Will merge to 'master'.
-
- Eyes from other people are highly appreciated, as my eyes (and the
- original author's, too) have rotten by staring many rerolls of the
- same topic and are not effective in spotting errors.
 
 
 * dp/autoconf-curl-ssl (2016-06-28) 1 commit
@@ -1056,28 +919,3 @@ of the repositories listed at
  It has been reported that git-gui still uses the deprecated syntax,
  which needs to be fixed before this final step can proceed.
  cf. <5671DB28.8020901@kdbg.org>
-
---------------------------------------------------
-[Discarded]
-
-* jh/clean-smudge-annex (2016-08-01) 9 commits
- . use smudgeToFile filter in recursive merge
- . use smudgeToFile filter in git am
- . better recovery from failure of smudgeToFile filter
- . warn on unusable smudgeToFile/cleanFromFile config
- . use smudgeToFile in git checkout etc
- . use cleanFromFile in git add
- . add smudgeToFile and cleanFromFile filter configs
- . clarify %f documentation
- . Merge branch 'cc/apply-am' into HEAD
- (this branch uses cc/apply-am.)
-
- The interface to "clean/smudge" filters require Git to feed the
- whole contents via pipe, which is suboptimal for some applications.
- "cleanFromFile/smudgeToFile" commands are the moral equilvalents
- for these filters but they interact with the files on the
- filesystem directly.
-
- This is starting to bit-rot, as the topic it is built upon keeps
- getting rerolled.  I _think_ I rebased it correctly, but I would
- not be surprised if I made a mistake.
