@@ -23,6 +23,7 @@
 #include "reachable.h"
 #include "sha1-array.h"
 #include "argv-array.h"
+#include "mru.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"),
@@ -957,7 +958,7 @@ static int want_object_in_pack(const unsigned char *sha1,
 			       struct packed_git **found_pack,
 			       off_t *found_offset)
 {
-	struct packed_git *p;
+	struct mru_entry *entry;
 
 	if (!exclude && local && has_loose_object_nonlocal(sha1))
 		return 0;
@@ -965,7 +966,8 @@ static int want_object_in_pack(const unsigned char *sha1,
 	*found_pack = NULL;
 	*found_offset = 0;
 
-	for (p = packed_git; p; p = p->next) {
+	for (entry = packed_git_mru->head; entry; entry = entry->next) {
+		struct packed_git *p = entry->item;
 		off_t offset = find_pack_entry_one(sha1, p);
 		if (offset) {
 			if (!*found_pack) {
@@ -992,8 +994,10 @@ static int want_object_in_pack(const unsigned char *sha1,
 			 * out of the loop to return 1 now.
 			 */
 			if (!ignore_packed_keep &&
-			    (!local || !have_non_local_packs))
+			    (!local || !have_non_local_packs)) {
+				mru_mark(packed_git_mru, entry);
 				break;
+			}
 
 			if (local && !p->pack_local)
 				return 0;
