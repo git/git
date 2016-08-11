@@ -104,7 +104,7 @@ static int index_range_of_same_dir(const char *src, int length,
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
-	int i, gitmodules_modified = 0;
+	int i, flags, gitmodules_modified = 0;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -134,10 +134,13 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	modes = xcalloc(argc, sizeof(enum update_mode));
 	/*
 	 * Keep trailing slash, needed to let
-	 * "git mv file no-such-dir/" error out.
+	 * "git mv file no-such-dir/" error out, except in the case
+	 * "git mv directory no-such-dir/".
 	 */
-	dest_path = internal_copy_pathspec(prefix, argv + argc, 1,
-					   KEEP_TRAILING_SLASH);
+	flags = KEEP_TRAILING_SLASH;
+	if (argc == 1 && is_directory(argv[0]) && !is_directory(argv[1]))
+		flags = 0;
+	dest_path = internal_copy_pathspec(prefix, argv + argc, 1, flags);
 	submodule_gitfile = xcalloc(argc, sizeof(char *));
 
 	if (dest_path[0][0] == '\0')
