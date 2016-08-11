@@ -458,11 +458,11 @@ static int parse_archive_args(int argc, const char **argv,
 	argc = parse_options(argc, argv, NULL, opts, archive_usage, 0);
 
 	if (remote)
-		die("Unexpected option --remote");
+		die(_("Unexpected option --remote"));
 	if (exec)
-		die("Option --exec can only be used together with --remote");
+		die(_("Option --exec can only be used together with --remote"));
 	if (output)
-		die("Unexpected option --output");
+		die(_("Unexpected option --output"));
 
 	if (!base)
 		base = "";
@@ -484,14 +484,14 @@ static int parse_archive_args(int argc, const char **argv,
 		usage_with_options(archive_usage, opts);
 	*ar = lookup_archiver(format);
 	if (!*ar || (is_remote && !((*ar)->flags & ARCHIVER_REMOTE)))
-		die("Unknown archive format '%s'", format);
+		die(_("Unknown archive format '%s'"), format);
 
 	args->compression_level = Z_DEFAULT_COMPRESSION;
 	if (compression_level != -1) {
 		if ((*ar)->flags & ARCHIVER_WANT_COMPRESSION_LEVELS)
 			args->compression_level = compression_level;
 		else {
-			die("Argument not supported for format '%s': -%d",
+			die(_("Argument not supported for format '%s': -%d"),
 					format, compression_level);
 		}
 	}
