@@ -27,6 +27,15 @@ struct object_entry {
 	unsigned no_try_delta:1;
 	unsigned tagged:1; /* near the very tip of refs */
 	unsigned filled:1; /* assigned write-order */
+
+	/*
+	 * State flags for depth-first search used for analyzing delta cycles.
+	 */
+	enum {
+		DFS_NONE = 0,
+		DFS_ACTIVE,
+		DFS_DONE
+	} dfs_state;
 };
 
 struct packing_data {
