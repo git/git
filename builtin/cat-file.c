@@ -28,7 +28,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	char *buf;
 	unsigned long size;
 	struct object_context obj_context;
-	struct object_info oi = {NULL};
+	struct object_info oi = OBJECT_INFO_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	unsigned flags = LOOKUP_REPLACE_OBJECT;
 
@@ -378,8 +378,7 @@ static int batch_objects(struct batch_options *opt)
 	data.mark_query = 0;
 
 	if (opt->all_objects) {
-		struct object_info empty;
-		memset(&empty, 0, sizeof(empty));
+		struct object_info empty = OBJECT_INFO_INIT;
 		if (!memcmp(&data.info, &empty, sizeof(empty)))
 			data.skip_object_info = 1;
 	}

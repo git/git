@@ -1542,6 +1542,13 @@ struct object_info {
 		} packed;
 	} u;
 };
+
+/*
+ * Initializer for a "struct object_info" that wants no items. You may
+ * also memset() the memory to all-zeroes.
+ */
+#define OBJECT_INFO_INIT {NULL}
+
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
 
 /* Dumb servers support */

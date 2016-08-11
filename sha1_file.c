@@ -1730,11 +1730,9 @@ static int parse_sha1_header_extended(const char *hdr, struct object_info *oi,
 
 int parse_sha1_header(const char *hdr, unsigned long *sizep)
 {
-	struct object_info oi;
+	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.sizep = sizep;
-	oi.typename = NULL;
-	oi.typep = NULL;
 	return parse_sha1_header_extended(hdr, &oi, LOOKUP_REPLACE_OBJECT);
 }
 
@@ -2738,7 +2736,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
 	enum object_type type;
-	struct object_info oi = {NULL};
+	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.typep = &type;
 	oi.sizep = sizep;
