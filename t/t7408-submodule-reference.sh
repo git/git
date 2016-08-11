@@ -8,6 +8,15 @@ test_description='test clone --reference'
 
 base_dir=$(pwd)
 
+test_alternate_is_used () {
+	alternates_file="$1" &&
+	working_dir="$2" &&
+	test_line_count = 1 "$alternates_file" &&
+	echo "0 objects, 0 kilobytes" >expect &&
+	git -C "$working_dir" count-objects >actual &&
+	test_cmp expect actual
+}
+
 test_expect_success 'preparing first repository' '
 	test_create_repo A &&
 	(
@@ -40,16 +49,14 @@ test_expect_success 'preparing superproject' '
 	)
 '
 
-test_expect_success 'submodule add --reference' '
+test_expect_success 'submodule add --reference uses alternates' '
 	(
 		cd super &&
 		git submodule add --reference ../B "file://$base_dir/A" sub &&
-		git commit -m B-super-added
-	)
-'
-
-test_expect_success 'after add: existence of info/alternates' '
-	test_line_count = 1 super/.git/modules/sub/objects/info/alternates
+		git commit -m B-super-added &&
+		git repack -ad
+	) &&
+	test_alternate_is_used super/.git/modules/sub/objects/info/alternates super/sub
 '
 
 test_expect_success 'that reference gets used with add' '
@@ -61,23 +68,18 @@ test_expect_success 'that reference gets used with add' '
 	)
 '
 
-test_expect_success 'cloning superproject' '
-	git clone super super-clone
-'
+# The tests up to this point, and repositories created by them
+# (A, B, super and super/sub), are about setting up the stage
+# for subsequent tests and meant to be kept throughout the
+# remainder of the test.
+# Tests from here on, if they create their own test repository,
+# are expected to clean after themselves.
 
-test_expect_success 'update with reference' '
-	cd super-clone && git submodule update --init --reference ../B
-'
-
-test_expect_success 'after update: existence of info/alternates' '
-	test_line_count = 1 super-clone/.git/modules/sub/objects/info/alternates
-'
-
-test_expect_success 'that reference gets used with update' '
-	cd super-clone/sub &&
-	echo "0 objects, 0 kilobytes" >expected &&
-	git count-objects >current &&
-	diff expected current
+test_expect_success 'updating superproject keeps alternates' '
+	test_when_finished "rm -rf super-clone" &&
+	git clone super super-clone &&
+	git -C super-clone submodule update --init --reference ../B &&
+	test_alternate_is_used super-clone/.git/modules/sub/objects/info/alternates super-clone/sub
 '
 
 test_done
