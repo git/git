@@ -265,7 +265,7 @@ right, so this:
     $ sh ./t9200-git-cvsexport-commit.sh --run='1-4 !3'
 
 will run tests 1, 2, and 4.  Items that comes later have higher
-precendence.  It means that this:
+precedence.  It means that this:
 
     $ sh ./t9200-git-cvsexport-commit.sh --run='!3 1-4'
 
