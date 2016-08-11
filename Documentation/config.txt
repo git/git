@@ -1366,7 +1366,7 @@ fsck.skipList::
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults
-	to 250.
+	to 50.
 
 gc.aggressiveWindow::
 	The window size parameter used in the delta compression
