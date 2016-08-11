@@ -1008,8 +1008,8 @@ _git_branch ()
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
 		case "$i" in
-		-d|-m)	only_local_ref="y" ;;
-		-r)	has_r="y" ;;
+		-d|--delete|-m|--move)	only_local_ref="y" ;;
+		-r|--remotes)		has_r="y" ;;
 		esac
 		((c++))
 	done
@@ -1023,7 +1023,7 @@ _git_branch ()
 			--color --no-color --verbose --abbrev= --no-abbrev
 			--track --no-track --contains --merged --no-merged
 			--set-upstream-to= --edit-description --list
-			--unset-upstream
+			--unset-upstream --delete --move --remotes
 			"
 		;;
 	*)
