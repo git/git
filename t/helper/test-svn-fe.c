@@ -11,7 +11,7 @@
 static const char test_svnfe_usage[] =
 	"test-svn-fe (<dumpfile> | [-d] <preimage> <delta> <len>)";
 
-static int apply_delta(int argc, char *argv[])
+static int apply_delta(int argc, const char **argv)
 {
 	struct line_buffer preimage = LINE_BUFFER_INIT;
 	struct line_buffer delta = LINE_BUFFER_INIT;
@@ -35,7 +35,7 @@ static int apply_delta(int argc, char *argv[])
 	return 0;
 }
 
-int main(int argc, char *argv[])
+int cmd_main(int argc, const char **argv)
 {
 	if (argc == 2) {
 		if (svndump_init(argv[1]))

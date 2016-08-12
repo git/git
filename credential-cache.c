@@ -83,7 +83,7 @@ static void do_cache(const char *socket, const char *action, int timeout,
 	strbuf_release(&buf);
 }
 
-int main(int argc, const char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	char *socket_path = NULL;
 	int timeout = 900;
