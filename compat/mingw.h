@@ -113,10 +113,6 @@ struct utsname {
  * trivial stubs
  */
 
-static inline int readlink(const char *path, char *buf, size_t bufsiz)
-{ errno = ENOSYS; return -1; }
-static inline int symlink(const char *oldpath, const char *newpath)
-{ errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
 #ifndef __MINGW64_VERSION_MAJOR
@@ -208,6 +204,8 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
 int uname(struct utsname *buf);
+int symlink(const char *target, const char *link);
+int readlink(const char *path, char *buf, size_t bufsiz);
 
 /*
  * replacements of existing functions
@@ -438,9 +436,6 @@ extern const char *program_data_config(void);
 #else
 #include <inttypes.h>
 #endif
-
-void mingw_open_html(const char *path);
-#define open_html mingw_open_html
 
 /**
  * Max length of long paths (exceeding MAX_PATH). The actual maximum supported
