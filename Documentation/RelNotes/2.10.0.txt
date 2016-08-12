@@ -116,6 +116,10 @@ UI, Workflows & Features
    to a three-way merge; this call has been turned into an internal
    subroutine call instead of spawning a separate subprocess.
 
+ * The command line completion scripts (in contrib/) now knows about
+   "git branch --delete/--move [--remote]".
+   (merge 2703c22 vs/completion-branch-fully-spelled-d-m-r later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -273,6 +277,18 @@ Performance, Internal Implementation, Development Support etc.
    environment variable settings to export for popular pagers.  This
    mechanism is used to tweak the default settings to MORE on FreeBSD.
    (merge 995bc22 ew/build-time-pager-tweaks later to maint).
+
+ * The http-backend (the server-side component of smart-http
+   transport) used to trickle the HTTP header one at a time.  Now
+   these write(2)s are batched.
+   (merge b36045c ew/http-backend-batch-headers later to maint).
+
+ * When "git rebase" tries to compare set of changes on the updated
+   upstream and our own branch, it computes patch-id for all of these
+   changes and attempts to find matches. This has been optimized by
+   lazily computing the full patch-id (which is expensive) to be
+   compared only for changes that touch the same set of paths.
+   (merge b3dfeeb kw/patch-ids-optim later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -520,7 +536,6 @@ notes for details).
  * "git difftool <paths>..." started in a subdirectory failed to
    interpret the paths relative to that directory, which has been
    fixed.
-   (merge 32b8c58 jk/difftool-in-subdir later to maint).
 
  * The characters in the label shown for tags/refs for commits in
    "gitweb" output are now properly escaped for proper HTML output.
@@ -544,7 +559,6 @@ notes for details).
    that no matter how many seconds it took to apply many patches, the
    resulting committer timestamp for the resulting commits were all
    the same.
-   (merge 4d9c7e6 jk/reset-ident-time-per-commit later to maint).
 
  * "git push --force-with-lease" already had enough logic to allow
    ensuring that such a push results in creation of a ref (i.e. the
@@ -553,4 +567,24 @@ notes for details).
    to the users.  It does so now.
    (merge 9eed4f3 jk/push-force-with-lease-creation later to maint).
 
+ * The mechanism to limit the pack window memory size, when packing is
+   done using multiple threads (which is the default), is per-thread,
+   but this was not documented clearly.
+   (merge 954176c ms/document-pack-window-memory-is-per-thread later to maint).
+
+ * "import-tars" fast-import script (in contrib/) used to ignore a
+   hardlink target and replaced it with an empty file, which has been
+   corrected to record the same blob as the other file the hardlink is
+   shared with.
+   (merge 04e0869 js/import-tars-hardlinks later to maint).
+
+ * "git mv dir non-existing-dir/" did not work in some environments
+   the same way as existing mainstream platforms.  The code now moves
+   "dir" to "non-existing-dir", without relying on rename("A", "B/")
+   that strips the trailing slash of '/'.
+   (merge 189d035 js/mv-dir-to-new-directory later to maint).
+
  * Other minor clean-ups and documentation updates
+   (merge 02a8cfa rs/merge-add-strategies-simplification later to maint).
+   (merge af4941d rs/merge-recursive-string-list-init later to maint).
+   (merge 1eb47f1 rs/use-strbuf-add-unique-abbrev later to maint).
