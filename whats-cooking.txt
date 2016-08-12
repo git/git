@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2016, #04; Thu, 11)
-X-master-at: a42d7b6a5b5addcce01f483547ad96825c7a96e0
-X-next-at: 6810c6f841759a3ef9550927d6a884fffbc88cda
+Subject: What's cooking in git.git (Aug 2016, #05; Fri, 12)
+X-master-at: 2376d31787760af598db23bb3982a57419854e5c
+X-next-at: 4aa545fa7b5b325b00b863a1c813d5cd62d60123
 
-What's cooking in git.git (Aug 2016, #04; Thu, 11)
+What's cooking in git.git (Aug 2016, #05; Fri, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,13 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The 'maint' branch has been accumulating enough material to make it
-the next maintenance release v2.9.3, which hopefully happen very
-soon.
+v2.9.3 has been tagged as the third maintenance release for 2.9
+series.  I am planning to tag v2.10-rc0 preview this weekend.  As
+the topics that are still in-flight (either in 'pu' or still
+outside) are mostly multi-patch series that can have large impact,
+I think it is safe to say that they are not likely to be in the
+upcoming 2.10 but some of them may hit 'next' during the pre-release
+feature freeze.  We'll see.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,129 +28,6 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cc/mailmap-tuxfamily (2016-08-08) 1 commit
-  (merged to 'next' on 2016-08-10 at 5905fbf)
- + .mailmap: use Christian Couder's Tuxfamily address
-
-
-* jk/completion-diff-submodule (2016-08-09) 1 commit
-  (merged to 'next' on 2016-08-10 at 146ca11)
- + completion: add completion for --submodule=* diff option
-
-
-* jk/push-force-with-lease-creation (2016-08-04) 4 commits
-  (merged to 'next' on 2016-08-04 at e42ce85)
- + t5533: make it pass on case-sensitive filesystems
-  (merged to 'next' on 2016-08-03 at 475c080)
- + push: allow pushing new branches with --force-with-lease
- + push: add shorthand for --force-with-lease branch creation
- + Documentation/git-push: fix placeholder formatting
-
- "git push --force-with-lease" already had enough logic to allow
- ensuring that such a push results in creation of a ref (i.e. the
- receiving end did not have another push from sideways that would be
- discarded by our force-pushing), but didn't expose this possibility
- to the users.  It does so now.
-
-
-* jk/reset-ident-time-per-commit (2016-08-01) 1 commit
-  (merged to 'next' on 2016-08-03 at 76d569c)
- + am: reset cached ident date for each patch
-
- Not-so-recent rewrite of "git am" that started making internal
- calls into the commit machinery had an unintended regression, in
- that no matter how many seconds it took to apply many patches, the
- resulting committer timestamp for the resulting commits were all
- the same.
-
-
-* js/am-3-merge-recursive-direct (2016-08-01) 16 commits
-  (merged to 'next' on 2016-08-05 at dc1c9bb)
- + merge-recursive: flush output buffer even when erroring out
- + merge_trees(): ensure that the callers release output buffer
- + merge-recursive: offer an option to retain the output in 'obuf'
- + merge-recursive: write the commit title in one go
- + merge-recursive: flush output buffer before printing error messages
- + am -3: use merge_recursive() directly again
- + merge-recursive: switch to returning errors instead of dying
- + merge-recursive: handle return values indicating errors
- + merge-recursive: allow write_tree_from_memory() to error out
- + merge-recursive: avoid returning a wholesale struct
- + merge_recursive: abort properly upon errors
- + prepare the builtins for a libified merge_recursive()
- + merge-recursive: clarify code in was_tracked()
- + die(_("BUG")): avoid translating bug messages
- + die("bug"): report bugs consistently
- + t5520: verify that `pull --rebase` shows the helpful advice when failing
-
- "git am -3" calls "git merge-recursive" when it needs to fall back
- to a three-way merge; this call has been turned into an internal
- subroutine call instead of spawning a separate subprocess.
-
-
-* js/commit-slab-decl-fix (2016-08-09) 2 commits
-  (merged to 'next' on 2016-08-10 at 6675402)
- + commit-slab.h: avoid duplicated global static variables
- + config.c: avoid duplicated global static variables
-
-
-* jt/format-patch-from-config (2016-08-01) 1 commit
-  (merged to 'next' on 2016-08-05 at 897e986)
- + format-patch: format.from gives the default for --from
-
- "git format-patch" learned format.from configuration variable to
- specify the default settings for its "--from" option.
-
-
-* sb/submodule-update-dot-branch (2016-08-10) 8 commits
-  (merged to 'next' on 2016-08-10 at 40ba945)
- + t7406: fix breakage on OSX
-  (merged to 'next' on 2016-08-04 at 47bff41)
- + submodule update: allow '.' for branch value
- + submodule--helper: add remote-branch helper
- + submodule-config: keep configured branch around
- + submodule--helper: fix usage string for relative-path
- + submodule update: narrow scope of local variable
- + submodule update: respect depth in subsequent fetches
- + t7406: future proof tests with hard coded depth
-
- A few updates to "git submodule update".
-
---------------------------------------------------
-[New Topics]
-
-* sb/submodule-clone-retry (2016-08-09) 1 commit
-  (merged to 'next' on 2016-08-11 at 4600b20)
- + submodule--helper: use parallel processor correctly
-
- Fix-up to an error codepath in a topic already in 'master'.
-
- Will merge to 'master'.
-
-
-* vs/completion-branch-fully-spelled-d-m-r (2016-08-09) 1 commit
-  (merged to 'next' on 2016-08-11 at a6f189c)
- + completion: complete --delete, --move, and --remotes for git branch
-
- Will merge to 'master'.
-
-
-* vs/typofix (2016-08-11) 1 commit
-  (merged to 'next' on 2016-08-11 at 435c418)
- + Spelling fixes
-
- Will merge to 'master'.
-
-
-* va/i18n (2016-08-10) 3 commits
-  (merged to 'next' on 2016-08-11 at d6e1422)
- + i18n: git-stash: mark messages for translation
- + i18n: archive: mark errors for translation
- + i18n: setup: mark error messages for translation
-
- Will merge to 'master'.
-
-
 * ew/http-backend-batch-headers (2016-08-10) 1 commit
   (merged to 'next' on 2016-08-11 at 93476b4)
  + http-backend: buffer headers before sending
@@ -155,38 +36,124 @@ of the repositories listed at
  transport) used to trickle the HTTP header one at a time.  Now
  these write(2)s are batched.
 
- Will merge to 'master'.
+
+* jk/big-and-future-archive-tar (2016-08-06) 1 commit
+  (merged to 'next' on 2016-08-11 at 0abbd07)
+ + archive-tar: make write_extended_header() void
+
+ A small code clean-up.
+
+
+* jk/trace-fixup (2016-08-05) 8 commits
+  (merged to 'next' on 2016-08-11 at 56f7621)
+ + trace: do not fall back to stderr
+ + write_or_die: drop write_or_whine_pipe()
+ + trace: disable key after write error
+ + trace: correct variable name in write() error message
+ + trace: cosmetic fixes for error messages
+ + trace: use warning() for printing trace errors
+ + trace: stop using write_or_whine_pipe()
+ + trace: handle NULL argument in trace_disable()
+
+ Various small fixups to the "GIT_TRACE" facility.
+
+
+* js/import-tars-hardlinks (2016-08-03) 1 commit
+  (merged to 'next' on 2016-08-11 at 034230e)
+ + import-tars: support hard links
+
+ "import-tars" fast-import script (in contrib/) used to ignore a
+ hardlink target and replaced it with an empty file, which has been
+ corrected to record the same blob as the other file the hardlink is
+ shared with.
+
+
+* js/mv-dir-to-new-directory (2016-08-08) 1 commit
+  (merged to 'next' on 2016-08-11 at c806ba2)
+ + git mv: do not keep slash in `git mv dir non-existing-dir/`
+
+ "git mv dir non-existing-dir/" did not work in some environments
+ the same way as existing mainstream platforms.  The code now moves
+ "dir" to "non-existing-dir", without relying on rename("A", "B/")
+ that strips the trailing slash of '/'.
+
+
+* kw/patch-ids-optim (2016-08-11) 4 commits
+  (merged to 'next' on 2016-08-11 at f3ba3d0)
+ + rebase: avoid computing unnecessary patch IDs
+ + patch-ids: add flag to create the diff patch id using header only data
+ + patch-ids: replace the seen indicator with a commit pointer
+ + patch-ids: stop using a hand-rolled hashmap implementation
+
+ When "git rebase" tries to compare set of changes on the updated
+ upstream and our own branch, it computes patch-id for all of these
+ changes and attempts to find matches. This has been optimized by
+ lazily computing the full patch-id (which is expensive) to be
+ compared only for changes that touch the same set of paths.
 
 
 * ms/document-pack-window-memory-is-per-thread (2016-08-10) 1 commit
   (merged to 'next' on 2016-08-11 at 228e96d)
  + document git-repack interaction of pack.threads and pack.windowMemory
 
- Will merge to 'master'.
+
+* rs/child-process-init (2016-08-05) 1 commit
+  (merged to 'next' on 2016-08-11 at 860857b)
+ + use CHILD_PROCESS_INIT to initialize automatic variables
+
+ A small code clean-up.
 
 
-* jk/diff-submodule-diff-inline (2016-08-11) 5 commits
- - SQUASH??? clarify the if/{if/else} nesting
- - SQUASH???
- - diff: add SUBMODULE_DIFF format to display submodule diff
- - diff: add --line-prefix option for passing in a prefix
- - diff.c: remove output_prefix_length field
+* rs/merge-add-strategies-simplification (2016-08-05) 1 commit
+  (merged to 'next' on 2016-08-11 at 6b8dfc1)
+ + merge: use string_list_split() in add_strategies()
 
- The "git diff --submodule={short,log}" mechanism has been enhanced
- to allow "--submodule=diff" to show the patch between the submodule
- commits bound to the superproject.
+ A small code clean-up.
 
 
-* jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
-  (merged to 'next' on 2016-08-11 at 6810c6f)
- + gc: default aggressive depth to 50
+* rs/merge-recursive-string-list-init (2016-08-05) 1 commit
+  (merged to 'next' on 2016-08-11 at 37e62ba)
+ + merge-recursive: use STRING_LIST_INIT_NODUP
 
- "git gc --aggressive" used to limit the delta-chain length to 250,
- which is way too deep for gaining additional space savings and is
- detrimental for runtime performance.  The limit has been reduced to
- 50.
+ A small code clean-up.
 
- Will hold to see if people scream.
+
+* rs/use-strbuf-add-unique-abbrev (2016-08-06) 1 commit
+  (merged to 'next' on 2016-08-11 at 81ac5ff)
+ + use strbuf_add_unique_abbrev() for adding short hashes
+
+ A small code clean-up.
+
+
+* sb/submodule-clone-retry (2016-08-09) 1 commit
+  (merged to 'next' on 2016-08-11 at 4600b20)
+ + submodule--helper: use parallel processor correctly
+
+ Fix-up to an error codepath in a topic already in 'master'.
+
+
+* va/i18n (2016-08-10) 3 commits
+  (merged to 'next' on 2016-08-11 at d6e1422)
+ + i18n: git-stash: mark messages for translation
+ + i18n: archive: mark errors for translation
+ + i18n: setup: mark error messages for translation
+
+
+* vs/completion-branch-fully-spelled-d-m-r (2016-08-09) 1 commit
+  (merged to 'next' on 2016-08-11 at a6f189c)
+ + completion: complete --delete, --move, and --remotes for git branch
+
+
+* vs/typofix (2016-08-11) 1 commit
+  (merged to 'next' on 2016-08-11 at 435c418)
+ + Spelling fixes
+
+--------------------------------------------------
+[New Topics]
+
+* tb/t0027-raciness-fix (2016-08-12) 2 commits
+ - convert: missing `LF will be replaced by CRLF
+ - t0027: Correct raciness in NNO test
 
 --------------------------------------------------
 [Stalled]
@@ -491,25 +458,28 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/big-and-future-archive-tar (2016-08-06) 1 commit
-  (merged to 'next' on 2016-08-11 at 0abbd07)
- + archive-tar: make write_extended_header() void
+* jk/diff-submodule-diff-inline (2016-08-11) 5 commits
+ - SQUASH??? clarify the if/{if/else} nesting
+ - SQUASH???
+ - diff: add SUBMODULE_DIFF format to display submodule diff
+ - diff: add --line-prefix option for passing in a prefix
+ - diff.c: remove output_prefix_length field
 
- A small code clean-up.
+ The "git diff --submodule={short,log}" mechanism has been enhanced
+ to allow "--submodule=diff" to show the patch between the submodule
+ commits bound to the superproject.
 
- Will merge to 'master'.
 
+* jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
+  (merged to 'next' on 2016-08-11 at 6810c6f)
+ + gc: default aggressive depth to 50
 
-* js/mv-dir-to-new-directory (2016-08-08) 1 commit
-  (merged to 'next' on 2016-08-11 at c806ba2)
- + git mv: do not keep slash in `git mv dir non-existing-dir/`
+ "git gc --aggressive" used to limit the delta-chain length to 250,
+ which is way too deep for gaining additional space savings and is
+ detrimental for runtime performance.  The limit has been reduced to
+ 50.
 
- "git mv dir non-existing-dir/" did not work in some environments
- the same way as existing mainstream platforms.  The code now moves
- "dir" to "non-existing-dir", without relying on rename("A", "B/")
- that strips the trailing slash of '/'.
-
- Will merge to 'master'.
+ Will hold to see if people scream.
 
 
 * ks/pack-objects-bitmap (2016-08-09) 2 commits
@@ -519,42 +489,6 @@ of the repositories listed at
  Waiting for review discussion to settle.
  cf. <20160808185541.6433-1-kirr@nexedi.com>
  cf. <20160808181942.GD3995@teco.navytux.spb.ru>
-
-
-* rs/child-process-init (2016-08-05) 1 commit
-  (merged to 'next' on 2016-08-11 at 860857b)
- + use CHILD_PROCESS_INIT to initialize automatic variables
-
- A small code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/merge-add-strategies-simplification (2016-08-05) 1 commit
-  (merged to 'next' on 2016-08-11 at 6b8dfc1)
- + merge: use string_list_split() in add_strategies()
-
- A small code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/merge-recursive-string-list-init (2016-08-05) 1 commit
-  (merged to 'next' on 2016-08-11 at 37e62ba)
- + merge-recursive: use STRING_LIST_INIT_NODUP
-
- A small code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/use-strbuf-add-unique-abbrev (2016-08-06) 1 commit
-  (merged to 'next' on 2016-08-11 at 81ac5ff)
- + use strbuf_add_unique_abbrev() for adding short hashes
-
- A small code clean-up.
-
- Will merge to 'master'.
 
 
 * sb/submodule-clone-rr (2016-08-09) 9 commits
@@ -589,34 +523,6 @@ of the repositories listed at
  calls to git.
 
  Waiting for review discussion to settle.
-
-
-* js/import-tars-hardlinks (2016-08-03) 1 commit
-  (merged to 'next' on 2016-08-11 at 034230e)
- + import-tars: support hard links
-
- "import-tars" fast-import script (in contrib/) used to ignore a
- hardlink target and replaced it with an empty file, which has been
- corrected to record the same blob as the other file the hardlink is
- shared with.
-
- Will merge to 'master'.
-
-
-* jk/trace-fixup (2016-08-05) 8 commits
-  (merged to 'next' on 2016-08-11 at 56f7621)
- + trace: do not fall back to stderr
- + write_or_die: drop write_or_whine_pipe()
- + trace: disable key after write error
- + trace: correct variable name in write() error message
- + trace: cosmetic fixes for error messages
- + trace: use warning() for printing trace errors
- + trace: stop using write_or_whine_pipe()
- + trace: handle NULL argument in trace_disable()
-
- Various small fixups to the "GIT_TRACE" facility.
-
- Will merge to 'master'.
 
 
 * mh/diff-indent-heuristic (2016-08-04) 8 commits
@@ -701,22 +607,6 @@ of the repositories listed at
  packfile first.
 
  Will hold to see if people scream.
-
-
-* kw/patch-ids-optim (2016-08-11) 4 commits
-  (merged to 'next' on 2016-08-11 at f3ba3d0)
- + rebase: avoid computing unnecessary patch IDs
- + patch-ids: add flag to create the diff patch id using header only data
- + patch-ids: replace the seen indicator with a commit pointer
- + patch-ids: stop using a hand-rolled hashmap implementation
-
- When "git rebase" tries to compare set of changes on the updated
- upstream and our own branch, it computes patch-id for all of these
- changes and attempts to find matches. This has been optimized by
- lazily computing the full patch-id (which is expensive) to be
- compared only for changes that touch the same set of paths.
-
- Will merge to 'master'.
 
 
 * jk/rebase-i-drop-ident-check (2016-07-29) 1 commit
@@ -861,10 +751,10 @@ of the repositories listed at
  would think.
 
 
-* pb/bisect (2016-08-02) 13 commits
+* pb/bisect (2016-08-12) 13 commits
  . bisect--helper: `bisect_start` shell function partially in C
  . bisect--helper: `get_terms` & `bisect_terms` shell function in C
- . bisect--helper: `bisect_next_check` shell function in C
+ . bisect--helper: `bisect_next_check` & bisect_voc shell function in C
  . bisect--helper: `check_and_set_terms` shell function in C
  . bisect--helper: `bisect_write` shell function in C
  . bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
