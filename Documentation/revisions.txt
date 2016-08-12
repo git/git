@@ -280,7 +280,8 @@ for naming a set that is formed by a commit and its parent commits.
 
 The 'r1{caret}@' notation means all parents of 'r1'.
 
-'r1{caret}!' includes commit 'r1' but excludes all of its parents.
+The 'r1{caret}!' notation includes commit 'r1' but excludes all of its parents.
+By itself, this notation denotes the single commit 'r1'.
 
 Revision Range Summary
 ----------------------
