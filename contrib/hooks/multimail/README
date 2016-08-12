@@ -294,7 +294,7 @@ multimailhook.htmlInIntro, multimailhook.htmlInFooter
     like ``<a href="foo">link</a>``, the reader will see the HTML
     source code and not a proper link.
 
-    Set ``multimailhook.htmlInIntro`` to true to allow writting HTML
+    Set ``multimailhook.htmlInIntro`` to true to allow writing HTML
     formatting in introduction templates. Similarly, set
     ``multimailhook.htmlInFooter`` for HTML in the footer.
 
@@ -516,7 +516,7 @@ multimailhook.commitLogOpts
 
 multimailhook.dateSubstitute
     String to use as a substitute for ``Date:`` in the output of ``git
-    log`` while formatting commit messages. This is usefull to avoid
+    log`` while formatting commit messages. This is useful to avoid
     emitting a line that can be interpreted by mailers as the start of
     a cited message (Zimbra webmail in particular). Defaults to
     ``CommitDate:``. Set to an empty string or ``none`` to deactivate

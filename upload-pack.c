@@ -836,7 +836,7 @@ int cmd_main(int argc, const char **argv)
 		OPT_BOOL(0, "stateless-rpc", &stateless_rpc,
 			 N_("quit after a single request/response exchange")),
 		OPT_BOOL(0, "advertise-refs", &advertise_refs,
-			 N_("exit immediately after intial ref advertisement")),
+			 N_("exit immediately after initial ref advertisement")),
 		OPT_BOOL(0, "strict", &strict,
 			 N_("do not try <directory>/.git/ if <directory> is no Git directory")),
 		OPT_INTEGER(0, "timeout", &timeout,

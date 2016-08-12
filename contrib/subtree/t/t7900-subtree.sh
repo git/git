@@ -948,7 +948,7 @@ test_expect_success 'split a new subtree without --onto option' '
 
 		# also test that we still can split out an entirely new subtree
 		# if the parent of the first commit in the tree is not empty,
-		# then the new subtree has accidently been attached to something
+		# then the new subtree has accidentally been attached to something
 		git subtree split --prefix="sub dir2" --branch subproj2-br &&
 		check_equal "$(git log --pretty=format:%P -1 subproj2-br)" ""
 	)

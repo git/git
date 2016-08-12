@@ -19,7 +19,7 @@
 [InputOutput::RequireCheckedSyscalls]
 functions = open say close
 
-# This rules demands to add a dependancy for the Readonly module. This is not
+# This rule demands to add a dependency for the Readonly module. This is not
 # wished.
 [-ValuesAndExpressions::ProhibitConstantPragma]
 
