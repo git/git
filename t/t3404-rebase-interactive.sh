@@ -1286,7 +1286,7 @@ test_expect_success 'rebase -i --gpg-sign=<key-id>' '
 	set_fake_editor &&
 	FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" HEAD^ \
 		>out 2>err &&
-	grep "$SQ-S\"S I Gner\"$SQ" err
+	test_i18ngrep "$SQ-S\"S I Gner\"$SQ" err
 '
 
 test_done
