@@ -9,7 +9,7 @@ git-cat-file - Provide content or type and size information for repository objec
 SYNOPSIS
 --------
 [verse]
-'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv | --smudge ) <object>
+'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv | --smudge ) [--use-path=<path>] <object>
 'git cat-file' (--batch | --batch-check) [--follow-symlinks]
 
 DESCRIPTION
@@ -62,6 +62,11 @@ OPTIONS
 	Show the content as transformed by the smudge filter configured in
 	the current working tree for the given <path>. In this case,
 	<object> has to be of the form <tree-ish>:<path>, or :<path>.
+
+--use-path=<path>::
+	For use with --textconv or --smudge, to allow specifying an object
+	name and a path separately, e.g. when it is difficult to figure out
+	the revision from which the blob came.
 
 --batch::
 --batch=<format>::
