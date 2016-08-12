@@ -1143,8 +1143,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 			return 1;
 		}
-		strbuf_addstr(sb, find_unique_abbrev(commit->object.oid.hash,
-						     c->pretty_ctx->abbrev));
+		strbuf_add_unique_abbrev(sb, commit->object.oid.hash,
+					 c->pretty_ctx->abbrev);
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 		c->abbrev_commit_hash.len = sb->len - c->abbrev_commit_hash.off;
 		return 1;
@@ -1154,8 +1154,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	case 't':		/* abbreviated tree hash */
 		if (add_again(sb, &c->abbrev_tree_hash))
 			return 1;
-		strbuf_addstr(sb, find_unique_abbrev(commit->tree->object.oid.hash,
-						     c->pretty_ctx->abbrev));
+		strbuf_add_unique_abbrev(sb, commit->tree->object.oid.hash,
+					 c->pretty_ctx->abbrev);
 		c->abbrev_tree_hash.len = sb->len - c->abbrev_tree_hash.off;
 		return 1;
 	case 'P':		/* parent hashes */
@@ -1171,9 +1171,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		for (p = commit->parents; p; p = p->next) {
 			if (p != commit->parents)
 				strbuf_addch(sb, ' ');
-			strbuf_addstr(sb, find_unique_abbrev(
-					p->item->object.oid.hash,
-					c->pretty_ctx->abbrev));
+			strbuf_add_unique_abbrev(sb, p->item->object.oid.hash,
+						 c->pretty_ctx->abbrev);
 		}
 		c->abbrev_parent_hashes.len = sb->len -
 		                              c->abbrev_parent_hashes.off;

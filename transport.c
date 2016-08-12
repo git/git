@@ -321,11 +321,6 @@ static void print_ref_status(char flag, const char *summary, struct ref *to, str
 	}
 }
 
-static const char *status_abbrev(unsigned char sha1[20])
-{
-	return find_unique_abbrev(sha1, DEFAULT_ABBREV);
-}
-
 static void print_ok_ref_status(struct ref *ref, int porcelain)
 {
 	if (ref->deletion)
@@ -340,7 +335,8 @@ static void print_ok_ref_status(struct ref *ref, int porcelain)
 		char type;
 		const char *msg;
 
-		strbuf_addstr(&quickref, status_abbrev(ref->old_oid.hash));
+		strbuf_add_unique_abbrev(&quickref, ref->old_oid.hash,
+					 DEFAULT_ABBREV);
 		if (ref->forced_update) {
 			strbuf_addstr(&quickref, "...");
 			type = '+';
@@ -350,7 +346,8 @@ static void print_ok_ref_status(struct ref *ref, int porcelain)
 			type = ' ';
 			msg = NULL;
 		}
-		strbuf_addstr(&quickref, status_abbrev(ref->new_oid.hash));
+		strbuf_add_unique_abbrev(&quickref, ref->new_oid.hash,
+					 DEFAULT_ABBREV);
 
 		print_ref_status(type, quickref.buf, ref, ref->peer_ref, msg, porcelain);
 		strbuf_release(&quickref);
