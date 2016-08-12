@@ -16,8 +16,8 @@ DESCRIPTION
 Many Git commands take revision parameters as arguments. Depending on
 the command, they denote a specific commit or, for commands which
 walk the revision graph (such as linkgit:git-log[1]), all commits which are
-reachable from that commit. In the latter case one can also specify a
-range of revisions explicitly.
+reachable from that commit. For commands that walk the revision graph one can
+also specify a range of revisions explicitly.
 
 In addition, some Git commands (such as linkgit:git-show[1]) also take
 revision parameters which denote other objects than commits, e.g. blobs
