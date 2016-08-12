@@ -337,7 +337,7 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 
 user-manual.xml: user-manual.txt user-manual.conf
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_XML) -d article -o $@+ $< && \
+	$(TXT_TO_XML) -d book -o $@+ $< && \
 	mv $@+ $@
 
 technical/api-index.txt: technical/api-index-skel.txt \
