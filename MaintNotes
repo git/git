@@ -30,21 +30,29 @@ becomes calmer before sending such a reminder.
 
 The list archive is available at a few public sites:
 
-        http://news.gmane.org/gmane.comp.version-control.git/
+        http://public-inbox.org/git/
         http://marc.info/?l=git
         http://www.spinics.net/lists/git/
 
 For those who prefer to read it over NNTP:
 
-        nntp://news.gmane.org/gmane.comp.version-control.git
+	nntp://news.gmane.org/gmane.comp.version-control.git
 
-When you point at a message in a mailing list archive, using
-gmane is often the easiest to follow by readers, like this:
+is still available.  An alternative
 
-        http://thread.gmane.org/gmane.comp.version-control.git/27/focus=217
+        nntp://news.public-inbox.org/inbox.comp.version-control.git
 
-as it also allows people who subscribe to the mailing list as gmane
-newsgroup to "jump to" the article.
+will become usable once it catches up with old messages.
+
+When you point at a message in a mailing list archive, using its
+message ID is often the most robust (if not very friendly) way to do
+so, like this:
+
+	http://public-inbox.org/git/Pine.LNX.4.58.0504150753440.7211@ppc970.osdl.org
+
+Often these web interfaces accept the message ID with enclosing <>
+stripped (like the above example to point at one of the most important
+message in the Git list).
 
 Some members of the development community can sometimes be found on
 the #git and #git-devel IRC channels on Freenode.  Their logs are
@@ -156,8 +164,8 @@ of last-minute issues.  The maintenance releases used to be named with
 four dotted decimal, named after the feature release they are updates
 to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
 feature release).  These days, maintenance releases are named by
-incrementing the last digit of three-dotted decimal name (e.g. "2.8.3"
-is the third maintenance release for the "2.8" series).
+incrementing the last digit of three-dotted decimal name (e.g. "2.9.3"
+is the third maintenance release for the "2.9" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
