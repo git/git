@@ -236,10 +236,16 @@ SPECIFYING RANGES
 -----------------
 
 History traversing commands such as `git log` operate on a set
-of commits, not just a single commit.  To these commands,
-specifying a single revision with the notation described in the
-previous section means the set of commits reachable from that
-commit, following the commit ancestry chain.
+of commits, not just a single commit.
+
+For these commands,
+specifying a single revision, using the notation described in the
+previous section, means the set of commits `reachable` from the given
+commit.
+
+A commit's reachable set is the commit itself and the commits in
+its ancestry chain.
+
 
 Commit Exclusions
 ~~~~~~~~~~~~~~~~~
