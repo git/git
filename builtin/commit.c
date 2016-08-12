@@ -1393,18 +1393,18 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_status_usage, builtin_status_options);
 
-	if (no_lock_index) {
-		warning("--no-lock-index is deprecated, use --no-optional-locks"
-			" instead");
-		setenv(GIT_OPTIONAL_LOCKS_ENVIRONMENT, "false", 1);
-	}
-
 	status_init_config(&s, git_status_config);
 	argc = parse_options(argc, argv, prefix,
 			     builtin_status_options,
 			     builtin_status_usage, 0);
 	finalize_colopts(&s.colopts, -1);
 	finalize_deferred_config(&s);
+
+	if (no_lock_index) {
+		warning("--no-lock-index is deprecated, use --no-optional-locks"
+			" instead");
+		setenv(GIT_OPTIONAL_LOCKS_ENVIRONMENT, "false", 1);
+	}
 
 	handle_untracked_files_arg(&s);
 	handle_ignored_arg(&s);
