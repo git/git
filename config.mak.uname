@@ -580,6 +580,17 @@ else
 		COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO
 		NO_CURL = YesPlease
 	endif
+	OTHER_PROGRAMS += git-wrapper$(X)
+	BUILT_IN_WRAPPER = git-wrapper$(X)
+
+git-wrapper$(X): compat/win32/git-wrapper.o git.res
+	$(QUIET_LINK)$(CC) $(ALL_LDFLAGS) $(COMPAT_CFLAGS) \
+		-fno-stack-protector -Wall -s -o $@ $^ -lshell32 -lshlwapi
+
+compat/win32/git-wrapper.o: %.o: %.c GIT-PREFIX
+	$(QUIET_CC)$(CC) $(ALL_CFLAGS) $(COMPAT_CFLAGS) \
+		-fno-stack-protector -o $*.o -c -Wall -Wwrite-strings $<
+
 endif
 endif
 ifeq ($(uname_S),QNX)
