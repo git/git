@@ -253,7 +253,8 @@ Commit Exclusions
 '{caret}<rev>' (caret) Notation::
  To exclude commits reachable from a commit, a prefix '{caret}'
  notation is used.  E.g. '{caret}r1 r2' means commits reachable
- from 'r2' but exclude the ones reachable from 'r1'.
+ from 'r2' but exclude the ones reachable from 'r1' (i.e. 'r1' and
+ its ancestors).
 
 Dotted Range Notations
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -297,12 +298,12 @@ Revision Range Summary
 ----------------------
 
 '<rev>'::
-	Include commits that are reachable from (i.e. ancestors of)
-	<rev>.
+	Include commits that are reachable from <rev> (i.e. <rev> and its
+	ancestors).
 
 '{caret}<rev>'::
-	Exclude commits that are reachable from (i.e. ancestors of)
-	<rev>.
+	Exclude commits that are reachable from <rev> (i.e. <rev> and its
+	ancestors).
 
 '<rev1>..<rev2>'::
 	Include commits that are reachable from <rev2> but exclude
