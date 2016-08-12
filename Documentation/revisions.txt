@@ -241,35 +241,49 @@ specifying a single revision with the notation described in the
 previous section means the set of commits reachable from that
 commit, following the commit ancestry chain.
 
-To exclude commits reachable from a commit, a prefix '{caret}'
-notation is used.  E.g. '{caret}r1 r2' means commits reachable
-from 'r2' but exclude the ones reachable from 'r1'.
+Commit Exclusions
+~~~~~~~~~~~~~~~~~
 
-This set operation appears so often that there is a shorthand
-for it.  When you have two commits 'r1' and 'r2' (named according
-to the syntax explained in SPECIFYING REVISIONS above), you can ask
-for commits that are reachable from r2 excluding those that are reachable
-from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
+'{caret}<rev>' (caret) Notation::
+ To exclude commits reachable from a commit, a prefix '{caret}'
+ notation is used.  E.g. '{caret}r1 r2' means commits reachable
+ from 'r2' but exclude the ones reachable from 'r1'.
 
-A similar notation 'r1\...r2' is called symmetric difference
-of 'r1' and 'r2' and is defined as
-'r1 r2 --not $(git merge-base --all r1 r2)'.
-It is the set of commits that are reachable from either one of
-'r1' (left side) or 'r2' (right side) but not from both.
+Dotted Range Notations
+~~~~~~~~~~~~~~~~~~~~~~
 
-In these two shorthands, you can omit one end and let it default to HEAD.
+The '..' (two-dot) Range Notation::
+ The '{caret}r1 r2' set operation appears so often that there is a shorthand
+ for it.  When you have two commits 'r1' and 'r2' (named according
+ to the syntax explained in SPECIFYING REVISIONS above), you can ask
+ for commits that are reachable from r2 excluding those that are reachable
+ from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
+
+The '...' (three dot) Symmetric Difference Notation::
+ A similar notation 'r1\...r2' is called symmetric difference
+ of 'r1' and 'r2' and is defined as
+ 'r1 r2 --not $(git merge-base --all r1 r2)'.
+ It is the set of commits that are reachable from either one of
+ 'r1' (left side) or 'r2' (right side) but not from both.
+
+In these two shorthand notations, you can omit one end and let it default to HEAD.
 For example, 'origin..' is a shorthand for 'origin..HEAD' and asks "What
 did I do since I forked from the origin branch?"  Similarly, '..origin'
 is a shorthand for 'HEAD..origin' and asks "What did the origin do since
 I forked from them?"  Note that '..' would mean 'HEAD..HEAD' which is an
 empty range that is both reachable and unreachable from HEAD.
 
-Two other shorthands for naming a set that is formed by a commit
-and its parent commits exist.  The 'r1{caret}@' notation means all
-parents of 'r1'.  'r1{caret}!' includes commit 'r1' but excludes
-all of its parents.
+Other <rev>{caret} Parent Shorthand Notations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Two other shorthands exist, particularly useful for merge commits,
+for naming a set that is formed by a commit and its parent commits.
 
-To summarize:
+The 'r1{caret}@' notation means all parents of 'r1'.
+
+'r1{caret}!' includes commit 'r1' but excludes all of its parents.
+
+Revision Range Summary
+----------------------
 
 '<rev>'::
 	Include commits that are reachable from (i.e. ancestors of)
