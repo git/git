@@ -1205,6 +1205,15 @@ int git_config_system(void)
 	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
+static inline void config_from_file_gently(config_fn_t fn, const char *filename,
+		void *data, unsigned access_flags, int *ret, int *found) {
+	if (!filename || access_or_die(filename, R_OK, access_flags))
+		return;
+
+	*ret += git_config_from_file(fn, filename, data);
+	(*found)++;
+}
+
 static int do_git_config_sequence(config_fn_t fn, void *data)
 {
 	int ret = 0, found = 0;
@@ -1212,26 +1221,19 @@ static int do_git_config_sequence(config_fn_t fn, void *data)
 	char *user_config = expand_user_path("~/.gitconfig");
 	char *repo_config = git_pathdup("config");
 
-	if (git_config_system() && !access_or_die(git_etc_gitconfig(), R_OK, 0)) {
-		ret += git_config_from_file(fn, git_etc_gitconfig(),
-					    data);
-		found += 1;
+	if (git_config_system()) {
+		config_from_file_gently(fn, git_program_data_config(), data,
+				0, &ret, &found);
+		config_from_file_gently(fn, git_etc_gitconfig(), data, 0,
+				&ret, &found);
 	}
 
-	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK)) {
-		ret += git_config_from_file(fn, xdg_config, data);
-		found += 1;
-	}
+	config_from_file_gently(fn, xdg_config, data, ACCESS_EACCES_OK,
+			&ret, &found);
+	config_from_file_gently(fn, user_config, data, ACCESS_EACCES_OK,
+			&ret, &found);
 
-	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK)) {
-		ret += git_config_from_file(fn, user_config, data);
-		found += 1;
-	}
-
-	if (repo_config && !access_or_die(repo_config, R_OK, 0)) {
-		ret += git_config_from_file(fn, repo_config, data);
-		found += 1;
-	}
+	config_from_file_gently(fn, repo_config, data, 0, &ret, &found);
 
 	switch (git_config_from_parameters(fn, data)) {
 	case -1: /* error */
@@ -1972,6 +1974,20 @@ int git_config_key_is_valid(const char *key)
 	return !git_config_parse_key_1(key, NULL, NULL, 1);
 }
 
+static int lock_config_file(const char *config_filename,
+		struct lock_file **result)
+{
+	int fd;
+
+	*result = xcalloc(1, sizeof(struct lock_file));
+	fd = hold_lock_file_for_update(*result, config_filename, 0);
+	if (fd < 0)
+		error("could not lock config file %s: %s", config_filename,
+				strerror(errno));
+
+	return fd;
+}
+
 /*
  * If value==NULL, unset in (remove from) config,
  * if value_regex!=NULL, disregard key/value pairs where value does not match.
@@ -2023,8 +2039,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	 * The lock serves a purpose in addition to locking: the new
 	 * contents of .git/config will be written into it.
 	 */
-	lock = xcalloc(1, sizeof(struct lock_file));
-	fd = hold_lock_file_for_update(lock, config_filename, 0);
+	fd = lock_config_file(config_filename, &lock);
 	if (fd < 0) {
 		error_errno("could not lock config file %s", config_filename);
 		free(store.key);
@@ -2325,12 +2340,9 @@ int git_config_rename_section_in_file(const char *config_filename,
 	if (!config_filename)
 		config_filename = filename_buf = git_pathdup("config");
 
-	lock = xcalloc(1, sizeof(struct lock_file));
-	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
-	if (out_fd < 0) {
-		ret = error("could not lock config file %s", config_filename);
+	out_fd = lock_config_file(config_filename, &lock);
+	if (out_fd < 0)
 		goto out;
-	}
 
 	if (!(config_file = fopen(config_filename, "rb"))) {
 		/* no config file means nothing to rename, no error */
