@@ -325,16 +325,27 @@ Revision Range Summary
   as giving commit '<rev>' and then all its parents prefixed with
   '{caret}' to exclude them (and their ancestors).
 
-Here are a handful of examples:
+Here are a handful of examples using the Loeliger illustration above,
+with each step in the notation's expansion and selection carefully
+spelt out:
 
+   Args   Expanded arguments    Selected commits
    D                G H D
    D F              G H I J D F
    ^G D             H D
    ^D B             E I J F B
-   B..C             C
-   B...C            G H D E B C
+   B..C   = ^B C                C
+   B...C  = B ^F C              G H D E B C
    ^D B C           E I J F B C
    C                I J F C
-   C^@              I J F
-   C^!              C
-   F^! D            G H D F
+   C^@    = C^1
+	  = F                   I J F
+   B^@    = B^1 B^2 B^3
+	  = D E F               D G H E F I J
+   C^!    = C ^C^@
+	  = C ^C^1
+	  = C ^F                C
+   B^!    = B ^B^@
+	  = B ^B^1 ^B^2 ^B^3
+	  = B ^D ^E ^F          B
+   F^! D  = F ^I ^J D           G H D F
