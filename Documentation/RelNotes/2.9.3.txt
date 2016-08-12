@@ -157,4 +157,14 @@ Fixes since v2.9.2
    can be safely discarded without any other consideration.  State
    that it is safe to do so.
 
+ * Not-so-recent rewrite of "git am" that started making internal
+   calls into the commit machinery had an unintended regression, in
+   that no matter how many seconds it took to apply many patches, the
+   resulting committer timestamp for the resulting commits were all
+   the same.
+
+ * "git difftool <paths>..." started in a subdirectory failed to
+   interpret the paths relative to that directory, which has been
+   fixed.
+
 Also contains minor documentation updates and code clean-ups.
