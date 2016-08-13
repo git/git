@@ -124,7 +124,7 @@ static void setup_environment(LPWSTR top_level_path, int full_path)
  */
 static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	LPWSTR prefix_args, int prefix_args_len, int is_git_command,
-	int skip_arguments)
+	int skip_arguments, int append_quote_to_cmdline)
 {
 	int wargc = 0;
 	LPWSTR cmd = NULL, cmdline = NULL;
@@ -133,7 +133,8 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	cmdline = GetCommandLine();
 	wargv = CommandLineToArgvW(cmdline, &wargc);
 	cmd = (LPWSTR)malloc(sizeof(WCHAR) *
-		(wcslen(cmdline) + prefix_args_len + 1 + MAX_PATH));
+		(wcslen(cmdline) + prefix_args_len + 1 + MAX_PATH +
+		 append_quote_to_cmdline));
 	if (prefix_args) {
 		if (is_git_command)
 			_swprintf(cmd, L"\"%s\\%s\" %.*s", exepath, L"git.exe",
@@ -163,6 +164,9 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 		}
 		wcscat(cmd, p);
 	}
+
+	if (append_quote_to_cmdline)
+		wcscat(cmd, L"\"");
 
 	if (wargc > 1 && !wcscmp(wargv[1], L"gui"))
 		*wait = 0;
@@ -285,9 +289,11 @@ static void set_app_id(LPWSTR app_id)
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
-	int *skip_arguments, int *allocate_console, int *show_console)
+	int *skip_arguments, int *allocate_console, int *show_console,
+	int *append_quote_to_cmdline)
 {
 	int i, id, minimal_search_path, needs_a_console, no_hide, wargc;
+	int append_quote;
 	LPWSTR *wargv;
 	WCHAR *app_id;
 
@@ -300,6 +306,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		minimal_search_path = 0;
 		needs_a_console = 0;
 		no_hide = 0;
+		append_quote = 0;
 		app_id = NULL;
 		len = LoadString(NULL, id, buf, BUFSIZE);
 
@@ -325,6 +332,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 				needs_a_console = 1;
 			else if (strip_prefix(buf, &len, L"SHOW_CONSOLE=1 "))
 				no_hide = 1;
+			else if (strip_prefix(buf, &len, L"APPEND_QUOTE=1 "))
+				append_quote = 1;
 			else if (strip_prefix(buf, &len, L"APP_ID=")) {
 				LPWSTR space = wcschr(buf, L' ');
 				size_t app_id_len = space - buf;
@@ -386,6 +395,10 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 			no_hide = 0;
 		else if (!wcscmp(L"--no-hide", wargv[i]))
 			no_hide = 1;
+		else if (!wcscmp(L"--append-quote", wargv[i]))
+			append_quote = 1;
+		else if (!wcscmp(L"--no-append-quote", wargv[i]))
+			append_quote = -1;
 		else if (!wcsncmp(L"--command=", wargv[i], 10)) {
 			LPWSTR expanded;
 
@@ -415,6 +428,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		*allocate_console = 1;
 	if (no_hide)
 		*show_console = 1;
+	if (append_quote)
+		*append_quote_to_cmdline = append_quote == 1;
 	if (app_id)
 		set_app_id(app_id);
 	LocalFree(wargv);
@@ -466,7 +481,8 @@ int main(void)
 {
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
 		is_git_command = 1, full_path = 1, skip_arguments = 0,
-		allocate_console = 0, show_console = 0;
+		allocate_console = 0, show_console = 0,
+		append_quote_to_cmdline = 0;
 	WCHAR exepath[MAX_PATH], exe[MAX_PATH], top_level_path[MAX_PATH];
 	LPWSTR cmd = NULL, exep = exe, prefix_args = NULL, basename;
 	LPWSTR working_directory = NULL;
@@ -487,7 +503,7 @@ int main(void)
 			&prefix_args, &prefix_args_len,
 			&is_git_command, &working_directory,
 			&full_path, &skip_arguments, &allocate_console,
-			&show_console)) {
+			&show_console, &append_quote_to_cmdline)) {
 		/* do nothing */
 	}
 	else if (!wcsicmp(basename, L"git-gui.exe")) {
@@ -571,7 +587,8 @@ int main(void)
 		setup_environment(top_level_path, full_path);
 	}
 	cmd = fixup_commandline(exepath, &exep, &wait,
-		prefix_args, prefix_args_len, is_git_command, skip_arguments);
+		prefix_args, prefix_args_len, is_git_command, skip_arguments,
+		append_quote_to_cmdline);
 
 	if (working_directory == (LPWSTR)1) {
 		int len = GetEnvironmentVariable(L"HOME", NULL, 0);
