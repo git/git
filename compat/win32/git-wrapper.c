@@ -188,16 +188,95 @@ static int strip_prefix(LPWSTR str, int *len, LPCWSTR prefix)
 	return 0;
 }
 
+static void extract_first_arg(LPWSTR command_line, LPWSTR exepath, LPWSTR buf)
+{
+	LPWSTR *wargv;
+	int wargc;
+
+	wargv = CommandLineToArgvW(command_line, &wargc);
+	if (wargc < 1) {
+		fwprintf(stderr, L"Invalid command-line: '%s'\n", command_line);
+		exit(1);
+	}
+	if (*wargv[0] == L'\\' ||
+			(isalpha(*wargv[0]) && wargv[0][1] == L':'))
+		wcscpy(buf, wargv[0]);
+	else {
+		wcscpy(buf, exepath);
+		PathAppend(buf, wargv[0]);
+	}
+	LocalFree(wargv);
+}
+
+#define alloc_nr(x) (((x)+16)*3/2)
+
+static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
+{
+	LPWSTR buf = buffer;
+	size_t len = wcslen(buf);
+
+	for (;;) {
+		LPWSTR atat = wcsstr(buf, L"@@"), atat2;
+		WCHAR save;
+		int env_len, delta;
+
+		if (!atat)
+			break;
+
+		atat2 = wcsstr(atat + 2, L"@@");
+		if (!atat2)
+			break;
+
+		*atat2 = L'\0';
+		env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
+		delta = env_len - 1 - (atat2 + 2 - atat);
+		if (len + delta >= alloc) {
+			LPWSTR buf2;
+			alloc = alloc_nr(alloc);
+			if (alloc <= len + delta)
+				alloc = len + delta + 1;
+			if (buf != buffer)
+				buf2 = realloc(buf, sizeof(WCHAR) * alloc);
+			else {
+				buf2 = malloc(sizeof(WCHAR) * alloc);
+				if (buf2)
+					memcpy(buf2, buf, sizeof(WCHAR)
+							* (len + 1));
+			}
+			if (!buf2) {
+				fwprintf(stderr,
+					L"Substituting '%s' results in too "
+					L"large a command-line\n", atat + 2);
+				exit(1);
+			}
+			atat += buf2 - buf;
+			atat2 += buf2 - buf;
+			buf = buf2;
+		}
+		if (delta)
+			memmove(atat2 + 2 + delta, atat2 + 2,
+				sizeof(WCHAR) * (len + 1
+					- (atat2 + 2 - buf)));
+		len += delta;
+		save = atat[env_len - 1];
+		GetEnvironmentVariable(atat + 2, atat, env_len);
+		atat[env_len - 1] = save;
+	}
+
+	return buf;
+}
+
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
 	int *skip_arguments, int *allocate_console, int *show_console)
 {
-	int id, minimal_search_path, needs_a_console, no_hide, wargc;
+	int i, id, minimal_search_path, needs_a_console, no_hide, wargc;
 	LPWSTR *wargv;
 
 #define BUFSIZE 65536
 	static WCHAR buf[BUFSIZE];
+	LPWSTR buf2 = buf;
 	int len;
 
 	for (id = 0; ; id++) {
@@ -237,74 +316,59 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		if (!id)
 			SetEnvironmentVariable(L"EXEPATH", exepath);
 
-		for (;;) {
-			LPWSTR atat = wcsstr(buf, L"@@"), atat2;
-			WCHAR save;
-			int env_len, delta;
+		buf2 = expand_variables(buf, BUFSIZE);
 
-			if (!atat)
-				break;
-
-			atat2 = wcsstr(atat + 2, L"@@");
-			if (!atat2)
-				break;
-
-			*atat2 = L'\0';
-			env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
-			delta = env_len - 1 - (atat2 + 2 - atat);
-			if (len + delta >= BUFSIZE) {
-				fwprintf(stderr,
-					L"Substituting '%s' results in too "
-					L"large a command-line\n", atat + 2);
-				exit(1);
-			}
-			if (delta)
-				memmove(atat2 + 2 + delta, atat2 + 2,
-					sizeof(WCHAR) * (len + 1
-						- (atat2 + 2 - buf)));
-			len += delta;
-			save = atat[env_len - 1];
-			GetEnvironmentVariable(atat + 2, atat, env_len);
-			atat[env_len - 1] = save;
-		}
-
-		/* parse first argument */
-		wargv = CommandLineToArgvW(buf, &wargc);
-		if (wargc < 1) {
-			fwprintf(stderr, L"Invalid command-line: '%s'\n", buf);
-			exit(1);
-		}
-		if (*wargv[0] == L'\\' ||
-				(isalpha(*wargv[0]) && wargv[0][1] == L':'))
-			wcscpy(exep, wargv[0]);
-		else {
-			wcscpy(exep, exepath);
-			PathAppend(exep, wargv[0]);
-		}
-		LocalFree(wargv);
+		extract_first_arg(buf2, exepath, exep);
 
 		if (_waccess(exep, 0) != -1)
 			break;
 		fwprintf(stderr,
 			L"Skipping command-line '%s'\n('%s' not found)\n",
-			buf, exep);
+			buf2, exep);
 	}
 
-	*prefix_args = buf;
-	*prefix_args_len = wcslen(buf);
+	*prefix_args = buf2;
+	*prefix_args_len = wcslen(buf2);
 
 	*is_git_command = 0;
-	*working_directory = (LPWSTR) 1;
 	wargv = CommandLineToArgvW(GetCommandLine(), &wargc);
-	if (wargc > 1) {
-		if (!wcscmp(L"--no-cd", wargv[1])) {
+	for (i = 1; i < wargc; i++) {
+		if (!wcscmp(L"--no-cd", wargv[i]))
 			*working_directory = NULL;
-			*skip_arguments = 1;
+		else if (!wcscmp(L"--cd-to-home", wargv[i]))
+			*working_directory = (LPWSTR) 1;
+		else if (!wcsncmp(L"--cd=", wargv[i], 5))
+			*working_directory = wcsdup(wargv[i] + 5);
+		else if (!wcscmp(L"--minimal-search-path", wargv[i]))
+			minimal_search_path = 1;
+		else if (!wcscmp(L"--no-minimal-search-path", wargv[i]))
+			minimal_search_path = 0;
+		else if (!wcscmp(L"--needs-console", wargv[i]))
+			needs_a_console = 1;
+		else if (!wcscmp(L"--no-needs-console", wargv[i]))
+			needs_a_console = 0;
+		else if (!wcscmp(L"--hide", wargv[i]))
+			no_hide = 0;
+		else if (!wcscmp(L"--no-hide", wargv[i]))
+			no_hide = 1;
+		else if (!wcsncmp(L"--command=", wargv[i], 10)) {
+			LPWSTR expanded;
+
+			wargv[i] += 10;
+			expanded = expand_variables(wargv[i], wcslen(wargv[i]));
+			if (expanded == wargv[i])
+				expanded = wcsdup(expanded);
+
+			extract_first_arg(expanded, exepath, exep);
+
+			*prefix_args = expanded;
+			*prefix_args_len = wcslen(*prefix_args);
+			*skip_arguments = i;
+			break;
 		}
-		else if (!wcsncmp(L"--cd=", wargv[1], 5)) {
-			*working_directory = wcsdup(wargv[1] + 5);
-			*skip_arguments = 1;
-		}
+		else
+			break;
+		*skip_arguments = i;
 	}
 	if (minimal_search_path)
 		*full_path = 0;
