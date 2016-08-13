@@ -1372,11 +1372,9 @@ static struct command **queue_command(struct command **tail,
 
 	refname = line + 82;
 	reflen = linelen - 82;
-	cmd = xcalloc(1, st_add3(sizeof(struct command), reflen, 1));
+	FLEX_ALLOC_MEM(cmd, ref_name, refname, reflen);
 	hashcpy(cmd->old_sha1, old_sha1);
 	hashcpy(cmd->new_sha1, new_sha1);
-	memcpy(cmd->ref_name, refname, reflen);
-	cmd->ref_name[reflen] = '\0';
 	*tail = cmd;
 	return &cmd->next;
 }
