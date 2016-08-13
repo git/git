@@ -359,6 +359,8 @@ struct merge_remote_desc {
 	const char *name;
 };
 #define merge_remote_util(commit) ((struct merge_remote_desc *)((commit)->util))
+extern void set_merge_remote_desc(struct commit *commit,
+				  const char *name, struct object *obj);
 
 /*
  * Given "name" from the command line to merge, find the commit object
