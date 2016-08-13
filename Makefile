@@ -1770,9 +1770,14 @@ $(SCRIPT_LIB) : % : %.sh GIT-SCRIPT-DEFINES
 	$(QUIET_GEN)$(cmd_munge_script) && \
 	mv $@+ $@
 
+ifeq (,$(findstring .windows.,$(GIT_VERSION)))
+RC_VERSION_DEFS := $(join -DMAJOR= -DMINOR= -DMICRO=, $(wordlist 1,3,$(subst -, ,$(subst ., ,$(subst .windows., ,$(GIT_VERSION)))))) -DPATCHLEVEL=0
+else
+RC_VERSION_DEFS := $(join -DMAJOR= -DMINOR= -DMICRO= -DPATCHLEVEL=, $(wordlist 1,4,$(subst -, ,$(subst ., ,$(subst .windows., ,$(GIT_VERSION))))))
+endif
+
 git.res: git.rc GIT-VERSION-FILE
-	$(QUIET_RC)$(RC) \
-	  $(join -DMAJOR= -DMINOR=, $(wordlist 1,2,$(subst -, ,$(subst ., ,$(GIT_VERSION))))) \
+	$(QUIET_RC)$(RC) $(RC_VERSION_DEFS) \
 	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" $< -o $@
 
 # This makes sure we depend on the NO_PERL setting itself.
