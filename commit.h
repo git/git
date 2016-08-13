@@ -356,7 +356,7 @@ extern void for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *
 
 struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */
-	const char *name;
+	char name[FLEX_ARRAY];
 };
 #define merge_remote_util(commit) ((struct merge_remote_desc *)((commit)->util))
 extern void set_merge_remote_desc(struct commit *commit,

@@ -1580,9 +1580,8 @@ void set_merge_remote_desc(struct commit *commit,
 			   const char *name, struct object *obj)
 {
 	struct merge_remote_desc *desc;
-	desc = xmalloc(sizeof(*desc));
+	FLEX_ALLOC_STR(desc, name, name);
 	desc->obj = obj;
-	desc->name = xstrdup(name);
 	commit->util = desc;
 }
 
