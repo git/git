@@ -16,7 +16,7 @@ static void show(int *v)
 	free(v);
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct prio_queue pq = { intcmp };
 

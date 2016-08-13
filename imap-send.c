@@ -1494,15 +1494,11 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 }
 #endif
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct strbuf all_msgs = STRBUF_INIT;
 	int total;
 	int nongit_ok;
-
-	git_extract_argv0_path(argv[0]);
-
-	git_setup_gettext();
 
 	setup_git_directory_gently(&nongit_ok);
 	git_imap_config();

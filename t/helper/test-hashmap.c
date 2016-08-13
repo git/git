@@ -138,7 +138,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
  *
  * perfhashmap method rounds -> test hashmap.[ch] performance
  */
-int main(int argc, char *argv[])
+int cmd_main(int argc, const char **argv)
 {
 	char line[1024];
 	struct hashmap map;

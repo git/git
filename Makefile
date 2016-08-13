@@ -939,7 +939,7 @@ BUILTIN_OBJS += builtin/verify-tag.o
 BUILTIN_OBJS += builtin/worktree.o
 BUILTIN_OBJS += builtin/write-tree.o
 
-GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
+GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS =
 
 GIT_USER_AGENT = git/$(GIT_VERSION)
@@ -1572,7 +1572,15 @@ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 DIFF_SQ = $(subst ','\'',$(DIFF))
 PERLLIB_EXTRA_SQ = $(subst ','\'',$(PERLLIB_EXTRA))
 
-LIBS = $(GITLIBS) $(EXTLIBS)
+# We must filter out any object files from $(GITLIBS),
+# as it is typically used like:
+#
+#   foo: foo.o $(GITLIBS)
+#	$(CC) $(filter %.o,$^) $(LIBS)
+#
+# where we use it as a dependency. Since we also pull object files
+# from the dependency list, that would make each entry appear twice.
+LIBS = $(filter-out %.o, $(GITLIBS)) $(EXTLIBS)
 
 BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' \
 	$(COMPAT_CFLAGS)
@@ -1708,8 +1716,8 @@ git.sp git.s git.o: EXTRA_CPPFLAGS = \
 	'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'
 
 git$X: git.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS)
-	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) git.o \
-		$(BUILTIN_OBJS) $(LIBS)
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
+		$(filter %.o,$^) $(LIBS)
 
 help.sp help.s help.o: common-cmds.h
 
@@ -1902,6 +1910,7 @@ TEST_OBJS := $(patsubst %$X,%.o,$(TEST_PROGRAMS))
 OBJECTS := $(LIB_OBJS) $(BUILTIN_OBJS) $(PROGRAM_OBJS) $(TEST_OBJS) \
 	$(XDIFF_OBJS) \
 	$(VCSSVN_OBJS) \
+	common-main.o \
 	git.o
 ifndef NO_CURL
 	OBJECTS += http.o http-walker.o remote-curl.o
