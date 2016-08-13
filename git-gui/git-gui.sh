@@ -270,12 +270,10 @@ proc is_Windows {} {
 proc is_Cygwin {} {
 	global _iscygwin
 	if {$_iscygwin eq {}} {
-		if {$::tcl_platform(platform) eq {windows}} {
-			if {[catch {set p [exec cygpath --windir]} err]} {
-				set _iscygwin 0
-			} else {
-				set _iscygwin 1
-			}
+		if {$::tcl_platform(platform) eq {windows} &&
+				(![info exists ::env(MSYSTEM)] ||
+				 $::env(MSYSTEM) eq {MSYS})} {
+			set _iscygwin 1
 		} else {
 			set _iscygwin 0
 		}
@@ -2669,10 +2667,18 @@ if {![is_bare]} {
 }
 
 if {[is_Windows]} {
+	# Use /git-bash.exe if available
+	set normalized [file normalize $::argv0]
+	regsub "/mingw../libexec/git-core/git-gui$" \
+		$normalized "/git-bash.exe" cmdLine
+	if {$cmdLine != $normalized && [file exists $cmdLine]} {
+		set cmdLine [list "Git Bash" $cmdLine &]
+	} else {
+		set cmdLine [list "Git Bash" bash --login -l &]
+	}
 	.mbar.repository add command \
 		-label [mc "Git Bash"] \
-		-command {eval exec [auto_execok start] \
-					  [list "Git Bash" bash --login -l &]}
+		-command {eval exec [auto_execok start] $cmdLine}
 }
 
 if {[is_Windows] || ![is_bare]} {
