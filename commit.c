@@ -1589,7 +1589,7 @@ struct commit *get_merge_parent(const char *name)
 		struct merge_remote_desc *desc;
 		desc = xmalloc(sizeof(*desc));
 		desc->obj = obj;
-		desc->name = strdup(name);
+		desc->name = xstrdup(name);
 		commit->util = desc;
 	}
 	return commit;
