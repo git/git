@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2016, #05; Fri, 12)
-X-master-at: 2376d31787760af598db23bb3982a57419854e5c
-X-next-at: 4aa545fa7b5b325b00b863a1c813d5cd62d60123
+Subject: What's cooking in git.git (Aug 2016, #06; Sun, 14)
+X-master-at: 726cc2ba12c4573ab2e623077479c51019e1f3cd
+X-next-at: 17f0f752fffdc6201c440bd096f91b2b85ae0177
 
-What's cooking in git.git (Aug 2016, #05; Fri, 12)
+What's cooking in git.git (Aug 2016, #06; Sun, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,13 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-v2.9.3 has been tagged as the third maintenance release for 2.9
-series.  I am planning to tag v2.10-rc0 preview this weekend.  As
-the topics that are still in-flight (either in 'pu' or still
-outside) are mostly multi-patch series that can have large impact,
-I think it is safe to say that they are not likely to be in the
-upcoming 2.10 but some of them may hit 'next' during the pre-release
-feature freeze.  We'll see.
+The preview for the upcoming 2.10 release has been tagged as
+v2.10.0-rc0.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,134 +21,68 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ew/http-backend-batch-headers (2016-08-10) 1 commit
-  (merged to 'next' on 2016-08-11 at 93476b4)
- + http-backend: buffer headers before sending
-
- The http-backend (the server-side component of smart-http
- transport) used to trickle the HTTP header one at a time.  Now
- these write(2)s are batched.
-
-
-* jk/big-and-future-archive-tar (2016-08-06) 1 commit
-  (merged to 'next' on 2016-08-11 at 0abbd07)
- + archive-tar: make write_extended_header() void
-
- A small code clean-up.
-
-
-* jk/trace-fixup (2016-08-05) 8 commits
-  (merged to 'next' on 2016-08-11 at 56f7621)
- + trace: do not fall back to stderr
- + write_or_die: drop write_or_whine_pipe()
- + trace: disable key after write error
- + trace: correct variable name in write() error message
- + trace: cosmetic fixes for error messages
- + trace: use warning() for printing trace errors
- + trace: stop using write_or_whine_pipe()
- + trace: handle NULL argument in trace_disable()
-
- Various small fixups to the "GIT_TRACE" facility.
-
-
-* js/import-tars-hardlinks (2016-08-03) 1 commit
-  (merged to 'next' on 2016-08-11 at 034230e)
- + import-tars: support hard links
-
- "import-tars" fast-import script (in contrib/) used to ignore a
- hardlink target and replaced it with an empty file, which has been
- corrected to record the same blob as the other file the hardlink is
- shared with.
-
-
-* js/mv-dir-to-new-directory (2016-08-08) 1 commit
-  (merged to 'next' on 2016-08-11 at c806ba2)
- + git mv: do not keep slash in `git mv dir non-existing-dir/`
-
- "git mv dir non-existing-dir/" did not work in some environments
- the same way as existing mainstream platforms.  The code now moves
- "dir" to "non-existing-dir", without relying on rename("A", "B/")
- that strips the trailing slash of '/'.
-
-
-* kw/patch-ids-optim (2016-08-11) 4 commits
-  (merged to 'next' on 2016-08-11 at f3ba3d0)
- + rebase: avoid computing unnecessary patch IDs
- + patch-ids: add flag to create the diff patch id using header only data
- + patch-ids: replace the seen indicator with a commit pointer
- + patch-ids: stop using a hand-rolled hashmap implementation
-
- When "git rebase" tries to compare set of changes on the updated
- upstream and our own branch, it computes patch-id for all of these
- changes and attempts to find matches. This has been optimized by
- lazily computing the full patch-id (which is expensive) to be
- compared only for changes that touch the same set of paths.
-
-
-* ms/document-pack-window-memory-is-per-thread (2016-08-10) 1 commit
-  (merged to 'next' on 2016-08-11 at 228e96d)
- + document git-repack interaction of pack.threads and pack.windowMemory
-
-
-* rs/child-process-init (2016-08-05) 1 commit
-  (merged to 'next' on 2016-08-11 at 860857b)
- + use CHILD_PROCESS_INIT to initialize automatic variables
-
- A small code clean-up.
-
-
-* rs/merge-add-strategies-simplification (2016-08-05) 1 commit
-  (merged to 'next' on 2016-08-11 at 6b8dfc1)
- + merge: use string_list_split() in add_strategies()
-
- A small code clean-up.
-
-
-* rs/merge-recursive-string-list-init (2016-08-05) 1 commit
-  (merged to 'next' on 2016-08-11 at 37e62ba)
- + merge-recursive: use STRING_LIST_INIT_NODUP
-
- A small code clean-up.
-
-
-* rs/use-strbuf-add-unique-abbrev (2016-08-06) 1 commit
-  (merged to 'next' on 2016-08-11 at 81ac5ff)
- + use strbuf_add_unique_abbrev() for adding short hashes
-
- A small code clean-up.
-
-
-* sb/submodule-clone-retry (2016-08-09) 1 commit
-  (merged to 'next' on 2016-08-11 at 4600b20)
- + submodule--helper: use parallel processor correctly
-
- Fix-up to an error codepath in a topic already in 'master'.
-
-
-* va/i18n (2016-08-10) 3 commits
-  (merged to 'next' on 2016-08-11 at d6e1422)
- + i18n: git-stash: mark messages for translation
- + i18n: archive: mark errors for translation
- + i18n: setup: mark error messages for translation
-
-
-* vs/completion-branch-fully-spelled-d-m-r (2016-08-09) 1 commit
-  (merged to 'next' on 2016-08-11 at a6f189c)
- + completion: complete --delete, --move, and --remotes for git branch
-
-
-* vs/typofix (2016-08-11) 1 commit
-  (merged to 'next' on 2016-08-11 at 435c418)
- + Spelling fixes
-
---------------------------------------------------
 [New Topics]
 
-* tb/t0027-raciness-fix (2016-08-12) 2 commits
- - convert: missing `LF will be replaced by CRLF
- - t0027: Correct raciness in NNO test
+* rt/help-unknown (2016-08-12) 1 commit
+ - help: make option --help open man pages only for Git commands
+
+ "git nosuchcommand --help" said "No manual entry for gitnosuchcommand",
+ which was not intuitive, given that "git nosuchcommand" said "git:
+ 'nosuchcommand' is not a git command".
+
+ "git help everyday" seems to get broken with this change, though.
+
+
+* va/i18n (2016-08-12) 3 commits
+ - t7411: become resilient to GETTEXT_POISON
+ - t5520: become resilient to GETTEXT_POISON
+ - t3404: become resilient to GETTEXT_POISON
+
+ A handful of tests that were broken under gettext-poison build have
+ been fixed.
+
+ Will merge to 'next'.
+
+
+* jk/difftool-command-not-found (2016-08-14) 1 commit
+ - difftool: always honor "command not found" exit code
+
+ "git difftool" by default ignores the error exit from the backend
+ commands it spawns, because often they signal that they found
+ differences by exiting with a non-zero status code just like "diff"
+ does; the exit status codes 126 and 127 however are special in that
+ they are used to signal that the command is not executable or does
+ not exist.  "git difftool" has been taught to notice these exit
+ status codes.
+
+ Will merge to 'next'.
+
+
+* jk/tighten-alloc (2016-08-13) 2 commits
+ - receive-pack: use FLEX_ALLOC_MEM in queue_command()
+ - correct FLEXPTR_* example in comment
+
+ Will merge to 'next'.
+
+
+* rs/mailinfo-lib (2016-08-13) 1 commit
+ - mailinfo: recycle strbuf in check_header()
+
+ Will merge to 'next'.
+
+
+* rs/pull-signed-tag (2016-08-13) 4 commits
+ - commit: use FLEX_ARRAY in struct merge_remote_desc
+ - merge-recursive: fix verbose output for multiple base trees
+ - commit: factor out set_merge_remote_desc()
+ - commit: use xstrdup() in get_merge_parent()
+
+ When "git merge-recursive" works on history with many criss-cross
+ merges in "verbose" mode, the names the command assigns to the
+ virtual merge bases could have overwritten each other by unintended
+ reuse of the same piece of memory.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -226,23 +155,6 @@ of the repositories listed at
  Not quite ready yet, it seems.
  cf. <alpine.DEB.2.20.1607061016330.6426@virtualbox>
  cf. <CACsJy8AiER_=5aJ65r+GPCE_nXbrPTAMKJi=FuJgT8zzV2-NFw@mail.gmail.com>
-
-
-* po/range-doc (2016-07-20) 8 commits
- - doc: revisions - clarify reachability examples
- - doc: revisions - define `reachable`
- - doc: gitrevisions - clarify 'latter case' is revision walk
- - doc: gitrevisions - use 'reachable' in page description
- - doc: give headings for the two and three dot notations
- - doc: show the actual left, right, and boundary marks
- - doc: revisions - name the left and right sides
- - doc: use 'symmetric difference' consistently
-
- Clarify various ways to specify the "revision ranges" in the
- documentation.
-
- Updates in 4/8 ("give headings") is reported to break formatting?
- cf. <57913C97.1030001@xiplink.com>
 
 
 * jc/attr (2016-05-25) 18 commits
@@ -458,11 +370,35 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/diff-submodule-diff-inline (2016-08-11) 5 commits
- - SQUASH??? clarify the if/{if/else} nesting
- - SQUASH???
+* po/range-doc (2016-08-13) 12 commits
+ - doc: revisions: sort examples and fix alignment of the unchanged
+ - doc: revisions: show revision expansion in examples
+ - doc: revisions - clarify reachability examples
+ - doc: revisions - define `reachable`
+ - doc: gitrevisions - clarify 'latter case' is revision walk
+ - doc: gitrevisions - use 'reachable' in page description
+ - doc: revisions: single vs multi-parent notation comparison
+ - doc: revisions: extra clarification of <rev>^! notation effects
+ - doc: revisions: give headings for the two and three dot notations
+ - doc: show the actual left, right, and boundary marks
+ - doc: revisions - name the left and right sides
+ - doc: use 'symmetric difference' consistently
+
+ Clarify various ways to specify the "revision ranges" in the
+ documentation.
+
+ Waiting for review discussion to settle.
+
+
+* tb/t0027-raciness-fix (2016-08-14) 1 commit
+ - convert: Correct NNO tests and missing `LF will be replaced by CRLF`
+
+ The t0027 test for CRLF conversion was timing dependent and flaky.
+
+
+* jk/diff-submodule-diff-inline (2016-08-12) 3 commits
  - diff: add SUBMODULE_DIFF format to display submodule diff
- - diff: add --line-prefix option for passing in a prefix
+ - diff: add --diff-line-prefix option for passing in a prefix
  - diff.c: remove output_prefix_length field
 
  The "git diff --submodule={short,log}" mechanism has been enhanced
@@ -491,22 +427,20 @@ of the repositories listed at
  cf. <20160808181942.GD3995@teco.navytux.spb.ru>
 
 
-* sb/submodule-clone-rr (2016-08-09) 9 commits
- - submodule: try alternates when superproject has an alternate
- - submodule helper: pass through --reference-if-able
+* sb/submodule-clone-rr (2016-08-12) 8 commits
+ - clone: recursive and reference option triggers submodule alternates
  - clone: implement optional references
  - clone: clarify option_reference as required
+ - clone: factor out checking for an alternate path
  - submodule--helper update-clone: allow multiple references
  - submodule--helper module-clone: allow multiple references
- - SQUASH???
  - t7408: merge short tests, factor out testing method
  - t7408: modernize style
 
- Waiting for review discussion to settle.
- cf. <20160806012318.17968-1-sbeller@google.com>
+ Any more comments?
 
 
-* jh/status-v2-porcelain (2016-08-11) 9 commits
+* jh/status-v2-porcelain (2016-08-12) 9 commits
  - status: unit tests for --porcelain=v2
  - test-lib-functions.sh: add lf_to_nul helper
  - git-status.txt: describe --porcelain=v2 format
@@ -522,7 +456,7 @@ of the repositories listed at
  further be used to teach git-prompt (in contrib/) to make fewer
  calls to git.
 
- Waiting for review discussion to settle.
+ Any more comments?
 
 
 * mh/diff-indent-heuristic (2016-08-04) 8 commits
@@ -610,7 +544,8 @@ of the repositories listed at
 
 
 * jk/rebase-i-drop-ident-check (2016-07-29) 1 commit
- - rebase-interactive: drop early check for valid ident
+  (merged to 'next' on 2016-08-14 at 6891bcd)
+ + rebase-interactive: drop early check for valid ident
 
  Even when "git pull --rebase=preserve" (and the underlying "git
  rebase --preserve") can complete without creating any new commit
@@ -620,7 +555,7 @@ of the repositories listed at
  would fail with a more meaningful error message and advice text
  when the bogus ident matters, this extra check was removed.
 
- Will hold.
+ Will hold to see if people scream.
  cf. <20160729224944.GA23242@sigill.intra.peff.net>
 
 
