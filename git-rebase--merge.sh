@@ -96,7 +96,9 @@ finish_rb_merge () {
 	if test -s "$state_dir"/rewritten
 	then
 		git notes copy --for-rewrite=rebase <"$state_dir"/rewritten
-		hook="$(git rev-parse --git-path hooks/post-rewrite)"
+		hooks_path=$(git config --get core.hooksPath)
+		hooks_path="${hooks_path:-$(git rev-parse --git-path hooks)}"
+		hook="${hooks_path}/post-rewrite"
 		test -x "$hook" && "$hook" rebase <"$state_dir"/rewritten
 	fi
 	say All done.
