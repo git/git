@@ -71,8 +71,6 @@ UI, Workflows & Features
    command line option "--no-show-signature" to countermand it.
    (merge fce04c3 mj/log-show-signature-conf later to maint).
 
- * A couple of "git svn" updates.
-
  * More markings of messages for i18n, with updates to various tests
    to pass GETTEXT_POISON tests.
 
@@ -106,8 +104,8 @@ UI, Workflows & Features
 
  * An entry "git log --decorate" for the tip of the current branch is
    shown as "HEAD -> name" (where "name" is the name of the branch);
-   paint the arrow in the same color as "HEAD", not in the color for
-   commits.
+   the arrow is now painted in the same color as "HEAD", not in the
+   color for commits.
 
  * "git format-patch" learned format.from configuration variable to
    specify the default settings for its "--from" option.
@@ -135,19 +133,19 @@ Performance, Internal Implementation, Development Support etc.
  * "git upload-pack" command has been updated to use the parse-options
    API.
 
- * The "git apply" standalone program is being libified; this is the
-   first step to move many state variables into a structure that can
-   be explicitly (re)initialized to make the machinery callable more
-   than once.
+ * The "git apply" standalone program is being libified; the first
+   step to move many state variables into a structure that can be
+   explicitly (re)initialized to make the machinery callable more
+   than once has been merged.
 
  * HTTP transport gained an option to produce more detailed debugging
    trace.
    (merge 73e57aa ep/http-curl-trace later to maint).
 
- * Instead of taking advantage of a struct string_list that is
-   allocated with all NULs happens to be STRING_LIST_INIT_NODUP kind,
-   initialize them explicitly as such, to document their behaviour
-   better.
+ * Instead of taking advantage of the fact that a struct string_list
+   that is allocated with all NULs happens to be the INIT_NODUP kind,
+   the users of string_list structures are taught to initialize them
+   explicitly as such, to document their behaviour better.
    (merge 2721ce2 jk/string-list-static-init later to maint).
 
  * HTTPd tests learned to show the server error log to help diagnosing
