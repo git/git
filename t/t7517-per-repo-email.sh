@@ -36,4 +36,51 @@ test_expect_success 'succeeds cloning if global email is not set' '
 	git clone . clone
 '
 
+test_expect_success 'set up rebase scenarios' '
+	# temporarily enable an actual ident for this setup
+	test_config user.email foo@example.com &&
+	test_commit new &&
+	git branch side-without-commit HEAD^ &&
+	git checkout -b side-with-commit HEAD^ &&
+	test_commit side
+'
+
+test_expect_success 'fast-forward rebase does not care about ident' '
+	git checkout -B tmp side-without-commit &&
+	git rebase master
+'
+
+test_expect_success 'non-fast-forward rebase refuses to write commits' '
+	test_when_finished "git rebase --abort || true" &&
+	git checkout -B tmp side-with-commit &&
+	test_must_fail git rebase master
+'
+
+test_expect_success 'fast-forward rebase does not care about ident (interactive)' '
+	git checkout -B tmp side-without-commit &&
+	git rebase -i master
+'
+
+test_expect_success 'non-fast-forward rebase refuses to write commits (interactive)' '
+	test_when_finished "git rebase --abort || true" &&
+	git checkout -B tmp side-with-commit &&
+	test_must_fail git rebase -i master
+'
+
+test_expect_success 'noop interactive rebase does not care about ident' '
+	git checkout -B tmp side-with-commit &&
+	git rebase -i HEAD^
+'
+
+test_expect_success 'fast-forward rebase does not care about ident (preserve)' '
+	git checkout -B tmp side-without-commit &&
+	git rebase -p master
+'
+
+test_expect_success 'non-fast-forward rebase refuses to write commits (preserve)' '
+	test_when_finished "git rebase --abort || true" &&
+	git checkout -B tmp side-with-commit &&
+	test_must_fail git rebase -p master
+'
+
 test_done
