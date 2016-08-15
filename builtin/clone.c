@@ -50,7 +50,7 @@ static int option_verbosity;
 static int option_progress = -1;
 static enum transport_family family;
 static struct string_list option_config = STRING_LIST_INIT_NODUP;
-static struct string_list option_reference = STRING_LIST_INIT_NODUP;
+static struct string_list option_required_reference = STRING_LIST_INIT_NODUP;
 static int option_dissociate;
 static int max_jobs = -1;
 
@@ -79,7 +79,7 @@ static struct option builtin_clone_options[] = {
 		    N_("number of submodules cloned in parallel")),
 	OPT_STRING(0, "template", &option_template, N_("template-directory"),
 		   N_("directory from which templates will be used")),
-	OPT_STRING_LIST(0, "reference", &option_reference, N_("repo"),
+	OPT_STRING_LIST(0, "reference", &option_required_reference, N_("repo"),
 			N_("reference repository")),
 	OPT_BOOL(0, "dissociate", &option_dissociate,
 		 N_("use --reference only while cloning")),
@@ -300,7 +300,7 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 
 static void setup_reference(void)
 {
-	for_each_string_list(&option_reference, add_one_reference, NULL);
+	for_each_string_list(&option_required_reference, add_one_reference, NULL);
 }
 
 static void copy_alternates(struct strbuf *src, struct strbuf *dst,
@@ -952,7 +952,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	git_config_set(key.buf, repo);
 	strbuf_reset(&key);
 
-	if (option_reference.nr)
+	if (option_required_reference.nr)
 		setup_reference();
 
 	fetch_pattern = value.buf;
