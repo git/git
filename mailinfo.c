@@ -179,12 +179,6 @@ static void handle_content_type(struct mailinfo *mi, struct strbuf *line)
 	}
 }
 
-static void handle_message_id(struct mailinfo *mi, const struct strbuf *line)
-{
-	if (mi->add_message_id)
-		mi->message_id = strdup(line->buf);
-}
-
 static void handle_content_transfer_encoding(struct mailinfo *mi,
 					     const struct strbuf *line)
 {
@@ -495,7 +489,8 @@ static int check_header(struct mailinfo *mi,
 		len = strlen("Message-Id: ");
 		strbuf_add(&sb, line->buf + len, line->len - len);
 		decode_header(mi, &sb);
-		handle_message_id(mi, &sb);
+		if (mi->add_message_id)
+			mi->message_id = strbuf_detach(&sb, NULL);
 		ret = 1;
 		goto check_header_out;
 	}
