@@ -210,7 +210,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
-	const char *args_gpg[] = {NULL, "--status-fd=1", "--verify", "FILE", "-", NULL};
+	const char *args_gpg[] = {NULL, "--status-fd=1", "--keyid-format=long", "--verify", "FILE", "-", NULL};
 	char path[PATH_MAX];
 	int fd, ret;
 	struct strbuf buf = STRBUF_INIT;
@@ -231,7 +231,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	gpg.out = -1;
 	if (gpg_output)
 		gpg.err = -1;
-	args_gpg[3] = path;
+	args_gpg[4] = path;
 	if (start_command(&gpg)) {
 		unlink(path);
 		return error(_("could not run gpg."));
