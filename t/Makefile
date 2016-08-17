@@ -52,7 +52,8 @@ clean-except-prove-cache:
 clean: clean-except-prove-cache
 	$(RM) .prove
 
-test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax
+test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \
+	test-lint-filenames
 
 test-lint-duplicates:
 	@dups=`echo $(T) | tr ' ' '\n' | sed 's/-.*//' | sort | uniq -d` && \
@@ -66,6 +67,14 @@ test-lint-executable:
 
 test-lint-shell-syntax:
 	@'$(PERL_PATH_SQ)' check-non-portable-shell.pl $(T) $(THELPERS)
+
+test-lint-filenames:
+	@# We do *not* pass a glob to ls-files but use grep instead, to catch
+	@# non-ASCII characters (which are quoted within double-quotes)
+	@bad="$$(git -c core.quotepath=true ls-files 2>/dev/null | \
+			grep '["*:<>?\\|]')"; \
+		test -z "$$bad" || { \
+		echo >&2 "non-portable file name(s): $$bad"; exit 1; }
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
