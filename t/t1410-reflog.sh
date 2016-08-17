@@ -359,7 +359,6 @@ test_expect_success 'continue walking past root commits' '
 		HEAD@{3} commit (initial): initial
 		EOF
 		test_commit initial &&
-		git reflog &&
 		git checkout --orphan orphan1 &&
 		test_commit orphan1-1 &&
 		test_commit orphan1-2 &&
