@@ -235,13 +235,12 @@ Performance, Internal Implementation, Development Support etc.
  * The API to iterate over all the refs (i.e. for_each_ref(), etc.)
    has been revamped.
 
- * The handling of the "text = auto" attribute has been updated.
+ * The handling of the "text=auto" attribute has been corrected.
    $ echo "* text=auto eol=crlf" >.gitattributes
    used to have the same effect as
-   $ echo "* text=auto eol=crlf" >.gitattributes
-   $ git config core.eol crlf
-   i.e. declaring all files are text; the combination now is
-   equivalent to doing
+   $ echo "* text eol=crlf" >.gitattributes
+   i.e. declaring all files are text (ignoring "auto").  The
+   combination has been fixed to be equivalent to doing
    $ git config core.autocrlf true
 
  * A few tests that specifically target "git rebase -i" have been
