@@ -270,7 +270,7 @@ test_expect_success '--rebase with conflicts shows advice' '
 	test_tick &&
 	git commit -m "Create conflict" seq.txt &&
 	test_must_fail git pull --rebase . seq 2>err >out &&
-	grep "When you have resolved this problem" out
+	test_i18ngrep "When you have resolved this problem" out
 '
 
 test_expect_success 'failed --rebase shows advice' '
@@ -284,7 +284,7 @@ test_expect_success 'failed --rebase shows advice' '
 	git checkout -f -b fails-to-rebase HEAD^ &&
 	test_commit v2-without-cr file "2" file2-lf &&
 	test_must_fail git pull --rebase . diverging 2>err >out &&
-	grep "When you have resolved this problem" out
+	test_i18ngrep "When you have resolved this problem" out
 '
 
 test_expect_success '--rebase fails with multiple branches' '
