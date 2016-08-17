@@ -235,13 +235,12 @@ Performance, Internal Implementation, Development Support etc.
  * The API to iterate over all the refs (i.e. for_each_ref(), etc.)
    has been revamped.
 
- * The handling of the "text = auto" attribute has been updated.
+ * The handling of the "text=auto" attribute has been corrected.
    $ echo "* text=auto eol=crlf" >.gitattributes
    used to have the same effect as
-   $ echo "* text=auto eol=crlf" >.gitattributes
-   $ git config core.eol crlf
-   i.e. declaring all files are text; the combination now is
-   equivalent to doing
+   $ echo "* text eol=crlf" >.gitattributes
+   i.e. declaring all files are text (ignoring "auto").  The
+   combination has been fixed to be equivalent to doing
    $ git config core.autocrlf true
 
  * A few tests that specifically target "git rebase -i" have been
@@ -296,6 +295,9 @@ Performance, Internal Implementation, Development Support etc.
    lazily computing the full patch-id (which is expensive) to be
    compared only for changes that touch the same set of paths.
    (merge b3dfeeb kw/patch-ids-optim later to maint).
+
+ * A handful of tests that were broken under gettext-poison build have
+   been fixed.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -591,7 +593,17 @@ notes for details).
    that strips the trailing slash of '/'.
    (merge 189d035 js/mv-dir-to-new-directory later to maint).
 
+ * The "t/" hierarchy is prone to get an unusual pathname; "make test"
+   has been taught to make sure they do not contain paths that cannot
+   be checked out on Windows (and the mechanism can be reusable to
+   catch pathnames that are not portable to other platforms as need
+   arises).
+   (merge c2cafd3 js/test-lint-pathname later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 02a8cfa rs/merge-add-strategies-simplification later to maint).
    (merge af4941d rs/merge-recursive-string-list-init later to maint).
    (merge 1eb47f1 rs/use-strbuf-add-unique-abbrev later to maint).
+   (merge ddd0bfa jk/tighten-alloc later to maint).
+   (merge ecf30b2 rs/mailinfo-lib later to maint).
+   (merge 0eb75ce sg/reflog-past-root later to maint).
