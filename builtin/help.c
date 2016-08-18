@@ -433,22 +433,10 @@ static void list_common_guides_help(void)
 	putchar('\n');
 }
 
-static void check_git_cmd(const char* cmd) {
-	char *alias = alias_lookup(cmd);
-
-	if (!is_git_command(cmd)) {
-		if (alias) {
-			printf_ln(_("`git %s' is aliased to `%s'"), cmd, alias);
-			free(alias);
-			exit(0);
-		} else
-			help_unknown_cmd(cmd);
-	}
-}
-
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
+	char *alias;
 	enum help_format parsed_help_format;
 
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
@@ -488,7 +476,12 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	if (help_format == HELP_FORMAT_NONE)
 		help_format = parse_help_format(DEFAULT_HELP_FORMAT);
 
-	check_git_cmd(argv[0]);
+	alias = alias_lookup(argv[0]);
+	if (alias && !is_git_command(argv[0])) {
+		printf_ln(_("`git %s' is aliased to `%s'"), argv[0], alias);
+		free(alias);
+		return 0;
+	}
 
 	switch (help_format) {
 	case HELP_FORMAT_NONE:
