@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2016, #06; Sun, 14)
-X-master-at: 726cc2ba12c4573ab2e623077479c51019e1f3cd
-X-next-at: 17f0f752fffdc6201c440bd096f91b2b85ae0177
+Subject: What's cooking in git.git (Aug 2016, #07; Thu, 18)
+X-master-at: d63263a4dee8fc7da9b97bbdedf9c0d1f33024d4
+X-next-at: 8e4bfbdedf0822fce7bdef0dcc37482a8deb3aca
 
-What's cooking in git.git (Aug 2016, #06; Sun, 14)
+What's cooking in git.git (Aug 2016, #07; Thu, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -21,68 +21,130 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* rt/help-unknown (2016-08-12) 1 commit
- - help: make option --help open man pages only for Git commands
+* jk/tighten-alloc (2016-08-13) 2 commits
+  (merged to 'next' on 2016-08-16 at 5399351)
+ + receive-pack: use FLEX_ALLOC_MEM in queue_command()
+ + correct FLEXPTR_* example in comment
 
- "git nosuchcommand --help" said "No manual entry for gitnosuchcommand",
- which was not intuitive, given that "git nosuchcommand" said "git:
- 'nosuchcommand' is not a git command".
+ Small code and comment clean-up.
 
- "git help everyday" seems to get broken with this change, though.
+
+* js/test-lint-pathname (2016-08-16) 1 commit
+  (merged to 'next' on 2016-08-16 at d154f90)
+ + t/Makefile: ensure that paths are valid on platforms we care
+
+ The "t/" hierarchy is prone to get an unusual pathname; "make test"
+ has been taught to make sure they do not contain paths that cannot
+ be checked out on Windows (and the mechanism can be reusable to
+ catch pathnames that are not portable to other platforms as need
+ arises).
+
+
+* rs/mailinfo-lib (2016-08-13) 1 commit
+  (merged to 'next' on 2016-08-16 at 14101e3)
+ + mailinfo: recycle strbuf in check_header()
+
+ Small code clean-up.
+
+
+* sg/reflog-past-root (2016-08-15) 1 commit
+  (merged to 'next' on 2016-08-16 at ee997a5)
+ + t1410: remove superfluous 'git reflog' from the 'walk past root' test
+
+ A small test clean-up for a topic introduced in v2.9.1 and later.
 
 
 * va/i18n (2016-08-12) 3 commits
- - t7411: become resilient to GETTEXT_POISON
- - t5520: become resilient to GETTEXT_POISON
- - t3404: become resilient to GETTEXT_POISON
+  (merged to 'next' on 2016-08-16 at 6a06cd3)
+ + t7411: become resilient to GETTEXT_POISON
+ + t5520: become resilient to GETTEXT_POISON
+ + t3404: become resilient to GETTEXT_POISON
 
  A handful of tests that were broken under gettext-poison build have
  been fixed.
 
- Will merge to 'next'.
+--------------------------------------------------
+[New Topics]
+
+* ab/hooks (2016-08-16) 1 commit
+  (merged to 'next' on 2016-08-17 at b56e55d)
+ + rev-parse: respect core.hooksPath in --git-path
+
+ "git rev-parse --git-path hooks/<hook>" learned to take
+ core.hooksPath configuration variable (introduced during 2.9 cycle)
+ into account.
+
+ Will merge to 'master'.
 
 
-* jk/difftool-command-not-found (2016-08-14) 1 commit
- - difftool: always honor "command not found" exit code
+* sb/checkout-explit-detach-no-advice (2016-08-15) 1 commit
+  (merged to 'next' on 2016-08-17 at fb64716)
+ + checkout: do not mention detach advice for explicit --detach option
 
- "git difftool" by default ignores the error exit from the backend
- commands it spawns, because often they signal that they found
- differences by exiting with a non-zero status code just like "diff"
- does; the exit status codes 126 and 127 however are special in that
- they are used to signal that the command is not executable or does
- not exist.  "git difftool" has been taught to notice these exit
- status codes.
+ "git checkout --detach <branch>" used to give the same advice
+ message as that is issued when "git checkout <tag>" (or anything
+ that is not a branch name) is given, but asking with "--detach" is
+ an explicit enough sign that the user knows what is going on.  The
+ advice message has been squelched in this case.
 
- Will merge to 'next'.
-
-
-* jk/tighten-alloc (2016-08-13) 2 commits
- - receive-pack: use FLEX_ALLOC_MEM in queue_command()
- - correct FLEXPTR_* example in comment
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* rs/mailinfo-lib (2016-08-13) 1 commit
- - mailinfo: recycle strbuf in check_header()
+* lt/gpg-show-long-key-in-signature-verification (2016-08-16) 1 commit
+  (merged to 'next' on 2016-08-17 at 1ee8a00)
+ + Merge branch 'lt/gpg-show-long-key-in-signature-verification-maint' into lt/gpg-show-long-key-in-signature-verification
+ (this branch uses lt/gpg-show-long-key-in-signature-verification-maint.)
 
- Will merge to 'next'.
+ "git log --show-signature" and other commands that display the
+ verification status of PGP signature now shows the longer key-id,
+ as 32-bit key-id is so last century.
+
+ Will merge to 'master'.
 
 
-* rs/pull-signed-tag (2016-08-13) 4 commits
- - commit: use FLEX_ARRAY in struct merge_remote_desc
- - merge-recursive: fix verbose output for multiple base trees
- - commit: factor out set_merge_remote_desc()
- - commit: use xstrdup() in get_merge_parent()
+* lt/gpg-show-long-key-in-signature-verification-maint (2016-08-16) 1 commit
+ + gpg-interface: prefer "long" key format output when verifying pgp signatures
+ (this branch is used by lt/gpg-show-long-key-in-signature-verification.)
 
- When "git merge-recursive" works on history with many criss-cross
- merges in "verbose" mode, the names the command assigns to the
- virtual merge bases could have overwritten each other by unintended
- reuse of the same piece of memory.
+ "git log --show-signature" and other commands that display the
+ verification status of PGP signature now shows the longer key-id,
+ as 32-bit key-id is so last century.  This is based on older
+ codebase, just in case somebody wants to have it.
 
- Will merge to 'next'.
+
+* ak/curl-imap-send-explicit-scheme (2016-08-17) 1 commit
+ - imap-send: Tell cURL to use imap:// or imaps://
+
+ When we started cURL to talk to imap server when a new enough
+ version of cURL library is available, we forgot to explicitly add
+ imap(s):// before the destination.  To some folks, that didn't work
+ and the library tried to make HTTP(s) requests instead.
+
+ Needs review and testing.
+
+
+* bw/mingw-avoid-inheriting-fd-to-lockfile (2016-08-18) 2 commits
+ - mingw: ensure temporary file handles are not inherited by child processes
+ - t6026-merge-attr: child processes must not inherit index.lock handles
+
+ The tempfile (hence its user lockfile) API lets the caller to open
+ a file descriptor to a temporary file, write into it and then
+ finalize it by first closing the filehandle and then either
+ removing or renaming the temporary file.  When the process spawns a
+ subprocess after obtaining the file descriptor, and if the
+ subprocess has not exited when the attempt to remove or rename is
+ made, the last step fails on Windows, because the subprocess has
+ the file descriptor still open.  Open tempfile with O_CLOEXEC flag
+ to avoid this (on Windows, this is mapped to O_NOINHERIT).
+
+ It was pointed out that not everybody has O_CLOEXEC flag during the
+ review.
+
+ Waiting for the review discussion to settle.
+ cf. <20160818173555.GA29253@starla>
+
 
 --------------------------------------------------
 [Stalled]
@@ -122,39 +184,6 @@ of the repositories listed at
  Has been waiting for positive responses without seeing any.
 
  Will discard.
-
-
-* dt/index-helper (2016-07-06) 21 commits
- - index-helper: indexhelper.exitAfter config
- - trace: measure where the time is spent in the index-heavy operations
- - index-helper: optionally automatically run
- - index-helper: autorun mode
- - index-helper: don't run if already running
- - index-helper: kill mode
- - watchman: add a config option to enable the extension
- - unpack-trees: preserve index extensions
- - update-index: enable/disable watchman support
- - index-helper: use watchman to avoid refreshing index with lstat()
- - watchman: support watchman to reduce index refresh cost
- - read-cache: add watchman 'WAMA' extension
- - index-helper: log warnings
- - index-helper: add --detach
- - daemonize(): set a flag before exiting the main process
- - index-helper: add --strict
- - index-helper: new daemon for caching index and related stuff
- - unix-socket.c: add stub implementation when unix sockets are not supported
- - pkt-line: add gentle version of packet_write
- - read-cache: allow to keep mmap'd memory after reading
- - read-cache.c: fix constness of verify_hdr()
-
- A new "index-helper" daemon has been introduced to give newly
- spawned Git process a quicker access to the data in the index, and
- optionally interface with the watchman daemon to further reduce the
- refresh cost.
-
- Not quite ready yet, it seems.
- cf. <alpine.DEB.2.20.1607061016330.6426@virtualbox>
- cf. <CACsJy8AiER_=5aJ65r+GPCE_nXbrPTAMKJi=FuJgT8zzV2-NFw@mail.gmail.com>
 
 
 * jc/attr (2016-05-25) 18 commits
@@ -370,6 +399,47 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rt/help-unknown (2016-08-18) 2 commits
+ - help: make option --help open man pages only for Git commands
+ - help: introduce option --command-only
+
+ "git nosuchcommand --help" said "No manual entry for gitnosuchcommand",
+ which was not intuitive, given that "git nosuchcommand" said "git:
+ 'nosuchcommand' is not a git command".
+
+ Will merge to 'next'.
+
+
+* jk/difftool-command-not-found (2016-08-15) 1 commit
+  (merged to 'next' on 2016-08-17 at 32baf03)
+ + difftool: always honor fatal error exit codes
+
+ "git difftool" by default ignores the error exit from the backend
+ commands it spawns, because often they signal that they found
+ differences by exiting with a non-zero status code just like "diff"
+ does; the exit status codes 126 and above however are special in
+ that they are used to signal that the command is not executable,
+ does not exist, or killed by a signal.  "git difftool" has been
+ taught to notice these exit status codes.
+
+ Will merge to 'master'.
+
+
+* rs/pull-signed-tag (2016-08-13) 4 commits
+  (merged to 'next' on 2016-08-17 at cecca71)
+ + commit: use FLEX_ARRAY in struct merge_remote_desc
+ + merge-recursive: fix verbose output for multiple base trees
+ + commit: factor out set_merge_remote_desc()
+ + commit: use xstrdup() in get_merge_parent()
+
+ When "git merge-recursive" works on history with many criss-cross
+ merges in "verbose" mode, the names the command assigns to the
+ virtual merge bases could have overwritten each other by unintended
+ reuse of the same piece of memory.
+
+ Will merge to 'master'.
+
+
 * po/range-doc (2016-08-13) 12 commits
  - doc: revisions: sort examples and fix alignment of the unchanged
  - doc: revisions: show revision expansion in examples
@@ -387,23 +457,28 @@ of the repositories listed at
  Clarify various ways to specify the "revision ranges" in the
  documentation.
 
- Waiting for review discussion to settle.
+ Waiting for the review discussion to settle.
 
 
 * tb/t0027-raciness-fix (2016-08-14) 1 commit
- - convert: Correct NNO tests and missing `LF will be replaced by CRLF`
+  (merged to 'next' on 2016-08-17 at 39a6635)
+ + convert: Correct NNO tests and missing `LF will be replaced by CRLF`
 
  The t0027 test for CRLF conversion was timing dependent and flaky.
 
+ Will merge to 'master'.
 
-* jk/diff-submodule-diff-inline (2016-08-12) 3 commits
+
+* jk/diff-submodule-diff-inline (2016-08-16) 3 commits
  - diff: add SUBMODULE_DIFF format to display submodule diff
- - diff: add --diff-line-prefix option for passing in a prefix
+ - graph: add support for --line-prefix on all graph-aware output
  - diff.c: remove output_prefix_length field
 
  The "git diff --submodule={short,log}" mechanism has been enhanced
  to allow "--submodule=diff" to show the patch between the submodule
  commits bound to the superproject.
+
+ Still being worked on.
 
 
 * jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
@@ -422,12 +497,12 @@ of the repositories listed at
  - pack-objects: use reachability bitmap index when generating non-stdout pack
  - pack-objects: respect --local/--honor-pack-keep/--incremental when bitmap is in use
 
- Waiting for review discussion to settle.
- cf. <20160808185541.6433-1-kirr@nexedi.com>
- cf. <20160808181942.GD3995@teco.navytux.spb.ru>
+ Waiting for the review discussion to settle.
+ cf. <20160818175222.bmm3ivjheokf2qzl@sigill.intra.peff.net>
+ cf. <20160818180615.q25p57v35m2xxtww@sigill.intra.peff.net>
 
 
-* sb/submodule-clone-rr (2016-08-12) 8 commits
+* sb/submodule-clone-rr (2016-08-17) 8 commits
  - clone: recursive and reference option triggers submodule alternates
  - clone: implement optional references
  - clone: clarify option_reference as required
@@ -437,7 +512,8 @@ of the repositories listed at
  - t7408: merge short tests, factor out testing method
  - t7408: modernize style
 
- Any more comments?
+ I spotted a last-minute bug in v5, which is not a very good sign
+ (it shows that nobody is reviewing).  Any more comments?
 
 
 * jh/status-v2-porcelain (2016-08-12) 9 commits
@@ -475,7 +551,7 @@ of the repositories listed at
  are the same.  A command line option is added to help with the
  experiment to find a good heuristics.
 
- Waiting for review discussion to settle.
+ Waiting for the review discussion to settle.
  cf. <cover.1470259583.git.mhagger@alum.mit.edu>
  cf. <20160804072705.a53mospcccksiz4e@sigill.intra.peff.net>
  cf. <20160804075631.jakbi5dbsbxsqcpr@sigill.intra.peff.net>
@@ -526,6 +602,11 @@ of the repositories listed at
 
  "git am" has been taught to make an internal call to "git apply"'s
  innards without spawning the latter as a separate process.
+
+ Waiting for the review discussion to settle.
+ cf. <xmqqvaz7ys9u.fsf@gitster.mtv.corp.google.com>
+ We are almost there.
+
 
 
 * jk/pack-objects-optim-mru (2016-08-11) 4 commits
