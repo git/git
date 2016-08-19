@@ -217,6 +217,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 	argv_array_pushl(&gpg.args,
 			 gpg_program,
 			 "--status-fd=1",
+			 "--keyid-format=long",
 			 "--verify", temp.filename.buf, "-",
 			 NULL);
 
