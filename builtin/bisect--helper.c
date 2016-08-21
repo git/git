@@ -878,7 +878,6 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	enum {
 		WRITE_TERMS = 1,
 		BISECT_RESET,
-		CHECK_EXPECTED_REVS,
 		BISECT_WRITE,
 		CHECK_AND_SET_TERMS,
 		BISECT_NEXT_CHECK,
@@ -895,8 +894,6 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("write the terms to .git/BISECT_TERMS"), WRITE_TERMS),
 		OPT_CMDMODE(0, "bisect-reset", &cmdmode,
 			 N_("reset the bisection state"), BISECT_RESET),
-		OPT_CMDMODE(0, "check-expected-revs", &cmdmode,
-			 N_("check for expected revs"), CHECK_EXPECTED_REVS),
 		OPT_CMDMODE(0, "bisect-write", &cmdmode,
 			 N_("write out the bisection state in BISECT_LOG"), BISECT_WRITE),
 		OPT_CMDMODE(0, "check-and-set-terms", &cmdmode,
@@ -938,10 +935,6 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		if (argc > 1)
 			return error(_("--bisect-reset requires either zero or a commit"));
 		return bisect_reset(argc ? argv[0] : NULL);
-	case CHECK_EXPECTED_REVS:
-		check_expected_revs(argv, argc);
-		res = 0;
-		break;
 	case BISECT_WRITE:
 		if (argc != 4 && argc != 5)
 			return error(_("--bisect-write requires either 4 or 5 arguments"));
