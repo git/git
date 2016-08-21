@@ -31,6 +31,8 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-next"),
 	N_("git bisect--helper --bisect-auto-next"),
 	N_("git bisect--helper --bisect-autostart"),
+	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
+	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
 	NULL
 };
 
@@ -784,6 +786,79 @@ static int bisect_autostart(struct bisect_terms *terms)
 	return 0;
 }
 
+static char *bisect_head(void)
+{
+	if (is_empty_or_missing_file(git_path_bisect_head()))
+		return "HEAD";
+	else
+		return "BISECT_HEAD";
+}
+
+static int bisect_state(struct bisect_terms *terms, const char **argv,
+			int argc)
+{
+	const char *state = argv[0];
+
+	get_terms(terms);
+	if (check_and_set_terms(terms, state))
+		return -1;
+
+	if (!argc)
+		die(_("Please call `--bisect-state` with at least one argument"));
+
+	if (argc == 1 && one_of(state, terms->term_good,
+	    terms->term_bad, "skip", NULL)) {
+		const char *bisected_head = xstrdup(bisect_head());
+		const char *hex[1];
+		unsigned char sha1[20];
+
+		if (get_sha1(bisected_head, sha1))
+			die(_("Bad rev input: %s"), bisected_head);
+		if (bisect_write(state, sha1_to_hex(sha1), terms, 0))
+			return -1;
+
+		*hex = xstrdup(sha1_to_hex(sha1));
+		if (check_expected_revs(hex, 1))
+			return -1;
+		return bisect_auto_next(terms, NULL);
+	}
+
+	if ((argc == 2 && !strcmp(state, terms->term_bad)) ||
+			one_of(state, terms->term_good, "skip", NULL)) {
+		int i;
+		struct string_list hex = STRING_LIST_INIT_DUP;
+
+		for (i = 1; i < argc; i++) {
+			unsigned char sha1[20];
+
+			if (get_sha1(argv[i], sha1)) {
+				string_list_clear(&hex, 0);
+				die(_("Bad rev input: %s"), argv[i]);
+			}
+			string_list_append(&hex, sha1_to_hex(sha1));
+		}
+		for (i = 0; i < hex.nr; i++) {
+			const char **hex_string = (const char **) &hex.items[i].string;
+			if(bisect_write(state, *hex_string, terms, 0)) {
+				string_list_clear(&hex, 0);
+				return -1;
+			}
+			if (check_expected_revs(hex_string, 1)) {
+				string_list_clear(&hex, 0);
+				return -1;
+			}
+		}
+		string_list_clear(&hex, 0);
+		return bisect_auto_next(terms, NULL);
+	}
+
+	if (!strcmp(state, terms->term_bad))
+		die(_("'git bisect %s' can take only one argument."),
+		      terms->term_bad);
+
+	return -1;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -798,6 +873,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_NEXT,
 		BISECT_AUTO_NEXT,
 		BISECT_AUTOSTART,
+		BISECT_STATE
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0;
 	struct option options[] = {
@@ -823,6 +899,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("verify the next bisection state then find the next bisection state"), BISECT_AUTO_NEXT),
 		OPT_CMDMODE(0, "bisect-autostart", &cmdmode,
 			 N_("start the bisection if BISECT_START empty or missing"), BISECT_AUTOSTART),
+		OPT_CMDMODE(0, "bisect-state", &cmdmode,
+			 N_("mark the state of ref (or refs)"), BISECT_STATE),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
@@ -901,6 +979,14 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		terms.term_good = "good";
 		terms.term_bad = "bad";
 		res = bisect_autostart(&terms);
+		break;
+	case BISECT_STATE:
+		if (argc == 0)
+			die(_("--bisect-state requires at least 1 argument"));
+		terms.term_good = "good";
+		terms.term_bad = "bad";
+		get_terms(&terms);
+		res = bisect_state(&terms, argv, argc);
 		break;
 	default:
 		die("BUG: unknown subcommand '%d'", cmdmode);
