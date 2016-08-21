@@ -702,7 +702,7 @@ static struct commit *parse_insn_line(char *bol, char *eol, struct replay_opts *
 	if (action != opts->action) {
 		if (action == REPLAY_REVERT)
 		      error((opts->action == REPLAY_REVERT)
-			    ? _("Cannot revert during a another revert.")
+			    ? _("Cannot revert during another revert.")
 			    : _("Cannot revert during a cherry-pick."));
 		else
 		      error((opts->action == REPLAY_REVERT)
