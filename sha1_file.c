@@ -2175,14 +2175,6 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 			list_entry(lru, struct delta_base_cache_entry, lru);
 		if (delta_base_cached <= delta_base_cache_limit)
 			break;
-		if (f->type == OBJ_BLOB)
-			release_delta_base_cache(f);
-	}
-	list_for_each(lru, &delta_base_cache_lru) {
-		struct delta_base_cache_entry *f =
-			list_entry(lru, struct delta_base_cache_entry, lru);
-		if (delta_base_cached <= delta_base_cache_limit)
-			break;
 		release_delta_base_cache(f);
 	}
 
