@@ -405,11 +405,11 @@ static int is_blank_line(xrecord_t *rec, long flags)
 	return xdl_blankline(rec->ptr, rec->size, flags);
 }
 
-static int recs_match(xrecord_t **recs, long ixs, long ix, long flags)
+static int recs_match(xrecord_t *rec1, xrecord_t *rec2, long flags)
 {
-	return (recs[ixs]->ha == recs[ix]->ha &&
-		xdl_recmatch(recs[ixs]->ptr, recs[ixs]->size,
-			     recs[ix]->ptr, recs[ix]->size,
+	return (rec1->ha == rec2->ha &&
+		xdl_recmatch(rec1->ptr, rec1->size,
+			     rec2->ptr, rec2->size,
 			     flags));
 }
 
@@ -457,7 +457,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			 * the last line of the current change group, shift backward
 			 * the group.
 			 */
-			while (ixs > 0 && recs_match(recs, ixs - 1, ix - 1, flags)) {
+			while (ixs > 0 && recs_match(recs[ixs - 1], recs[ix - 1], flags)) {
 				rchg[--ixs] = 1;
 				rchg[--ix] = 0;
 
@@ -484,7 +484,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			 * the line next of the current change group, shift forward
 			 * the group.
 			 */
-			while (ix < nrec && recs_match(recs, ixs, ix, flags)) {
+			while (ix < nrec && recs_match(recs[ixs], recs[ix], flags)) {
 				blank_lines += is_blank_line(recs[ix], flags);
 
 				rchg[ixs++] = 0;
@@ -525,7 +525,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			 */
 			while (ixs > 0 &&
 			       !is_blank_line(recs[ix - 1], flags) &&
-			       recs_match(recs, ixs - 1, ix - 1, flags)) {
+			       recs_match(recs[ixs - 1], recs[ix - 1], flags)) {
 				rchg[--ixs] = 1;
 				rchg[--ix] = 0;
 				while (rchgo[--ixo]);
