@@ -24,6 +24,7 @@
 #include "streaming.h"
 #include "dir.h"
 #include "mru.h"
+#include "list.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -2077,13 +2078,10 @@ static void *unpack_compressed_entry(struct packed_git *p,
 
 static size_t delta_base_cached;
 
-static struct delta_base_cache_lru_list {
-	struct delta_base_cache_lru_list *prev;
-	struct delta_base_cache_lru_list *next;
-} delta_base_cache_lru = { &delta_base_cache_lru, &delta_base_cache_lru };
+static LIST_HEAD(delta_base_cache_lru);
 
 static struct delta_base_cache_entry {
-	struct delta_base_cache_lru_list lru;
+	struct list_head lru;
 	void *data;
 	struct packed_git *p;
 	off_t base_offset;
@@ -2128,8 +2126,7 @@ static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
 static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 {
 	ent->data = NULL;
-	ent->lru.next->prev = ent->lru.prev;
-	ent->lru.prev->next = ent->lru.next;
+	list_del(&ent->lru);
 	delta_base_cached -= ent->size;
 }
 
@@ -2168,24 +2165,24 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 {
 	unsigned long hash = pack_entry_hash(p, base_offset);
 	struct delta_base_cache_entry *ent = delta_base_cache + hash;
-	struct delta_base_cache_lru_list *lru;
+	struct list_head *lru;
 
 	release_delta_base_cache(ent);
 	delta_base_cached += base_size;
 
-	for (lru = delta_base_cache_lru.next;
-	     delta_base_cached > delta_base_cache_limit
-	     && lru != &delta_base_cache_lru;
-	     lru = lru->next) {
-		struct delta_base_cache_entry *f = (void *)lru;
+	list_for_each(lru, &delta_base_cache_lru) {
+		struct delta_base_cache_entry *f =
+			list_entry(lru, struct delta_base_cache_entry, lru);
+		if (delta_base_cached <= delta_base_cache_limit)
+			break;
 		if (f->type == OBJ_BLOB)
 			release_delta_base_cache(f);
 	}
-	for (lru = delta_base_cache_lru.next;
-	     delta_base_cached > delta_base_cache_limit
-	     && lru != &delta_base_cache_lru;
-	     lru = lru->next) {
-		struct delta_base_cache_entry *f = (void *)lru;
+	list_for_each(lru, &delta_base_cache_lru) {
+		struct delta_base_cache_entry *f =
+			list_entry(lru, struct delta_base_cache_entry, lru);
+		if (delta_base_cached <= delta_base_cache_limit)
+			break;
 		release_delta_base_cache(f);
 	}
 
@@ -2194,10 +2191,7 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	ent->type = type;
 	ent->data = base;
 	ent->size = base_size;
-	ent->lru.next = &delta_base_cache_lru;
-	ent->lru.prev = delta_base_cache_lru.prev;
-	delta_base_cache_lru.prev->next = &ent->lru;
-	delta_base_cache_lru.prev = &ent->lru;
+	list_add_tail(&ent->lru, &delta_base_cache_lru);
 }
 
 static void *read_object(const unsigned char *sha1, enum object_type *type,
