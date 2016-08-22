@@ -2120,7 +2120,12 @@ static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
 	return eq_delta_base_cache_entry(ent, p, base_offset);
 }
 
-static void clear_delta_base_cache_entry(struct delta_base_cache_entry *ent)
+/*
+ * Remove the entry from the cache, but do _not_ free the associated
+ * entry data. The caller takes ownership of the "data" buffer, and
+ * should copy out any fields it wants before detaching.
+ */
+static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 {
 	ent->data = NULL;
 	ent->lru.next->prev = ent->lru.prev;
@@ -2243,7 +2248,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 			type = ent->type;
 			data = ent->data;
 			size = ent->size;
-			clear_delta_base_cache_entry(ent);
+			detach_delta_base_cache_entry(ent);
 			base_from_cache = 1;
 			break;
 		}
