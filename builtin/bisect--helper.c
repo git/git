@@ -32,6 +32,7 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-autostart"),
 	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
 	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
+	N_("git bisect--helper --bisect-replay <filename>"),
 	NULL
 };
 
@@ -889,6 +890,118 @@ static int bisect_log(void)
 	return status;
 }
 
+static int get_next_word(const char *line, int pos, struct strbuf *word)
+{
+	int i, len = strlen(line), begin = 0;
+	strbuf_reset(word);
+	for (i = pos; i < len; i++) {
+		if (line[i] == ' ' && begin)
+			return i + 1;
+
+		if (!begin)
+			begin = 1;
+		strbuf_addch(word, line[i]);
+	}
+
+	return i;
+}
+
+static int replay_line(struct bisect_terms *terms, struct strbuf *line)
+{
+	struct strbuf word = STRBUF_INIT;
+	int pos = 0;
+	while (pos < line->len) {
+		pos = get_next_word(line->buf, pos, &word);
+
+		if (!strcmp(word.buf, "git")) {
+			continue;
+		} else if (!strcmp(word.buf, "git-bisect")) {
+			continue;
+		} else if (!strcmp(word.buf, "bisect")) {
+			continue;
+		} else if (starts_with(word.buf, "#")) {
+			break;
+		}
+
+		get_terms(terms);
+		if (check_and_set_terms(terms, word.buf))
+			goto fail;
+
+		if (!strcmp(word.buf, "start")) {
+			struct argv_array argv = ARGV_ARRAY_INIT;
+			sq_dequote_to_argv_array(line->buf+pos, &argv);
+			if (bisect_start(terms, 0, argv.argv, argv.argc)) {
+				argv_array_clear(&argv);
+				goto fail;
+			}
+			argv_array_clear(&argv);
+			break;
+		}
+
+		if (one_of(word.buf, terms->term_good, terms->term_bad,
+		    "skip", NULL)) {
+			if (bisect_write(word.buf, line->buf+pos, terms, 0))
+				goto fail;
+			break;
+		}
+
+		if (!strcmp(word.buf, "terms")) {
+			struct argv_array argv = ARGV_ARRAY_INIT;
+			sq_dequote_to_argv_array(line->buf+pos, &argv);
+			if (bisect_terms(terms, argv.argv, argv.argc)) {
+				argv_array_clear(&argv);
+				goto fail;
+			}
+			argv_array_clear(&argv);
+			break;
+		}
+
+		error(_("Replay file contains rubbish (\"%s\")"), word.buf);
+		goto fail;
+	}
+	strbuf_release(&word);
+	return 0;
+
+fail:
+	strbuf_release(&word);
+	return -1;
+}
+
+static int bisect_replay(struct bisect_terms *terms, const char *filename)
+{
+	struct strbuf line = STRBUF_INIT;
+	FILE *fp = NULL;
+	int res = 0;
+
+	if (is_empty_or_missing_file(filename))
+		return error(_("cannot read file '%s' for replaying"), filename);
+
+	if (bisect_reset(NULL))
+		goto fail;
+
+	fp = fopen(filename, "r");
+	if (!fp)
+		goto fail;
+
+	while (strbuf_getline(&line, fp) != EOF) {
+		res = replay_line(terms, &line);
+		if (res)
+			goto fail;
+	}
+	goto finish;
+
+fail:
+	res = -1;
+finish:
+	strbuf_release(&line);
+	if (fp)
+		fclose(fp);
+	if (res)
+		return -1;
+
+	return bisect_auto_next(terms, NULL);
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -902,7 +1015,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_AUTO_NEXT,
 		BISECT_AUTOSTART,
 		BISECT_STATE,
-		BISECT_LOG
+		BISECT_LOG,
+		BISECT_REPLAY
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0;
 	struct option options[] = {
@@ -928,6 +1042,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("mark the state of ref (or refs)"), BISECT_STATE),
 		OPT_CMDMODE(0, "bisect-log", &cmdmode,
 			 N_("output the contents of BISECT_LOG"), BISECT_LOG),
+		OPT_CMDMODE(0, "bisect-replay", &cmdmode,
+			 N_("replay the bisection process from the given file"), BISECT_REPLAY),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
@@ -1010,6 +1126,13 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		if (argc > 1)
 			die(_("--bisect-log requires 0 arguments"));
 		res = bisect_log();
+		break;
+	case BISECT_REPLAY:
+		if (argc != 1)
+			return error(_("No log file given"));
+		terms.term_good = xstrdup("good");
+		terms.term_bad = xstrdup("bad");
+		res = bisect_replay(&terms, argv[0]);
 		break;
 	default:
 		return error("BUG: unknown subcommand '%d'", cmdmode);
