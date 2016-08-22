@@ -120,7 +120,12 @@ int create_tempfile(struct tempfile *tempfile, const char *path)
 	prepare_tempfile_object(tempfile);
 
 	strbuf_add_absolute_path(&tempfile->filename, path);
-	tempfile->fd = open(tempfile->filename.buf, O_RDWR | O_CREAT | O_EXCL, 0666);
+	tempfile->fd = open(tempfile->filename.buf,
+			    O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0666);
+	if (O_CLOEXEC && tempfile->fd < 0 && errno == EINVAL)
+		/* Try again w/o O_CLOEXEC: the kernel might not support it */
+		tempfile->fd = open(tempfile->filename.buf,
+				    O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (tempfile->fd < 0) {
 		strbuf_reset(&tempfile->filename);
 		return -1;

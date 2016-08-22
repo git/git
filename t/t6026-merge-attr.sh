@@ -181,7 +181,7 @@ test_expect_success 'up-to-date merge without common ancestor' '
 	)
 '
 
-test_expect_success !MINGW 'custom merge does not lock index' '
+test_expect_success 'custom merge does not lock index' '
 	git reset --hard anchor &&
 	write_script sleep-one-second.sh <<-\EOF &&
 		sleep 1 &
