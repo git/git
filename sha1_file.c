@@ -2074,48 +2074,69 @@ static void *unpack_compressed_entry(struct packed_git *p,
 	return buffer;
 }
 
-#define MAX_DELTA_CACHE (256)
-
+static struct hashmap delta_base_cache;
 static size_t delta_base_cached;
 
 static LIST_HEAD(delta_base_cache_lru);
 
-static struct delta_base_cache_entry {
-	struct list_head lru;
-	void *data;
+struct delta_base_cache_key {
 	struct packed_git *p;
 	off_t base_offset;
+};
+
+struct delta_base_cache_entry {
+	struct hashmap hash;
+	struct delta_base_cache_key key;
+	struct list_head lru;
+	void *data;
 	unsigned long size;
 	enum object_type type;
-} delta_base_cache[MAX_DELTA_CACHE];
+};
 
-static unsigned long pack_entry_hash(struct packed_git *p, off_t base_offset)
+static unsigned int pack_entry_hash(struct packed_git *p, off_t base_offset)
 {
-	unsigned long hash;
+	unsigned int hash;
 
-	hash = (unsigned long)(intptr_t)p + (unsigned long)base_offset;
+	hash = (unsigned int)(intptr_t)p + (unsigned int)base_offset;
 	hash += (hash >> 8) + (hash >> 16);
-	return hash % MAX_DELTA_CACHE;
+	return hash;
 }
 
 static struct delta_base_cache_entry *
 get_delta_base_cache_entry(struct packed_git *p, off_t base_offset)
 {
-	unsigned long hash = pack_entry_hash(p, base_offset);
-	return delta_base_cache + hash;
+	struct hashmap_entry entry;
+	struct delta_base_cache_key key;
+
+	if (!delta_base_cache.cmpfn)
+		return NULL;
+
+	hashmap_entry_init(&entry, pack_entry_hash(p, base_offset));
+	key.p = p;
+	key.base_offset = base_offset;
+	return hashmap_get(&delta_base_cache, &entry, &key);
 }
 
-static int eq_delta_base_cache_entry(struct delta_base_cache_entry *ent,
-				     struct packed_git *p, off_t base_offset)
+static int delta_base_cache_key_eq(const struct delta_base_cache_key *a,
+				   const struct delta_base_cache_key *b)
 {
-	return (ent->data && ent->p == p && ent->base_offset == base_offset);
+	return a->p == b->p && a->base_offset == b->base_offset;
+}
+
+static int delta_base_cache_hash_cmp(const void *va, const void *vb,
+				     const void *vkey)
+{
+	const struct delta_base_cache_entry *a = va, *b = vb;
+	const struct delta_base_cache_key *key = vkey;
+	if (key)
+		return !delta_base_cache_key_eq(&a->key, key);
+	else
+		return !delta_base_cache_key_eq(&a->key, &b->key);
 }
 
 static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
 {
-	struct delta_base_cache_entry *ent;
-	ent = get_delta_base_cache_entry(p, base_offset);
-	return eq_delta_base_cache_entry(ent, p, base_offset);
+	return !!get_delta_base_cache_entry(p, base_offset);
 }
 
 /*
@@ -2125,9 +2146,10 @@ static int in_delta_base_cache(struct packed_git *p, off_t base_offset)
  */
 static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 {
-	ent->data = NULL;
+	hashmap_remove(&delta_base_cache, ent, &ent->key);
 	list_del(&ent->lru);
 	delta_base_cached -= ent->size;
+	free(ent);
 }
 
 static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
@@ -2136,8 +2158,7 @@ static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 	struct delta_base_cache_entry *ent;
 
 	ent = get_delta_base_cache_entry(p, base_offset);
-
-	if (!eq_delta_base_cache_entry(ent, p, base_offset))
+	if (!ent)
 		return unpack_entry(p, base_offset, type, base_size);
 
 	*type = ent->type;
@@ -2147,27 +2168,27 @@ static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 
 static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 {
-	if (ent->data) {
-		free(ent->data);
-		detach_delta_base_cache_entry(ent);
-	}
+	free(ent->data);
+	detach_delta_base_cache_entry(ent);
 }
 
 void clear_delta_base_cache(void)
 {
-	unsigned long p;
-	for (p = 0; p < MAX_DELTA_CACHE; p++)
-		release_delta_base_cache(&delta_base_cache[p]);
+	struct hashmap_iter iter;
+	struct delta_base_cache_entry *entry;
+	for (entry = hashmap_iter_first(&delta_base_cache, &iter);
+	     entry;
+	     entry = hashmap_iter_next(&iter)) {
+		release_delta_base_cache(entry);
+	}
 }
 
 static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	void *base, unsigned long base_size, enum object_type type)
 {
-	unsigned long hash = pack_entry_hash(p, base_offset);
-	struct delta_base_cache_entry *ent = delta_base_cache + hash;
+	struct delta_base_cache_entry *ent = xmalloc(sizeof(*ent));
 	struct list_head *lru;
 
-	release_delta_base_cache(ent);
 	delta_base_cached += base_size;
 
 	list_for_each(lru, &delta_base_cache_lru) {
@@ -2178,12 +2199,17 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 		release_delta_base_cache(f);
 	}
 
-	ent->p = p;
-	ent->base_offset = base_offset;
+	ent->key.p = p;
+	ent->key.base_offset = base_offset;
 	ent->type = type;
 	ent->data = base;
 	ent->size = base_size;
 	list_add_tail(&ent->lru, &delta_base_cache_lru);
+
+	if (!delta_base_cache.cmpfn)
+		hashmap_init(&delta_base_cache, delta_base_cache_hash_cmp, 0);
+	hashmap_entry_init(ent, pack_entry_hash(p, base_offset));
+	hashmap_add(&delta_base_cache, ent);
 }
 
 static void *read_object(const unsigned char *sha1, enum object_type *type,
@@ -2227,7 +2253,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		struct delta_base_cache_entry *ent;
 
 		ent = get_delta_base_cache_entry(p, curpos);
-		if (eq_delta_base_cache_entry(ent, p, curpos)) {
+		if (ent) {
 			type = ent->type;
 			data = ent->data;
 			size = ent->size;
