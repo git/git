@@ -585,12 +585,14 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	 * However, if the merge did not even start, then we don't want to
 	 * write it at all.
 	 */
-	if (opts->action == REPLAY_PICK && !opts->no_commit && (res == 0 || res == 1))
-		update_ref(NULL, "CHERRY_PICK_HEAD", commit->object.oid.hash, NULL,
-			   REF_NODEREF, UPDATE_REFS_DIE_ON_ERR);
-	if (opts->action == REPLAY_REVERT && ((opts->no_commit && res == 0) || res == 1))
-		update_ref(NULL, "REVERT_HEAD", commit->object.oid.hash, NULL,
-			   REF_NODEREF, UPDATE_REFS_DIE_ON_ERR);
+	if (opts->action == REPLAY_PICK && !opts->no_commit && (res == 0 || res == 1) &&
+	    update_ref(NULL, "CHERRY_PICK_HEAD", commit->object.oid.hash, NULL,
+		       REF_NODEREF, UPDATE_REFS_MSG_ON_ERR))
+		res = -1;
+	if (opts->action == REPLAY_REVERT && ((opts->no_commit && res == 0) || res == 1) &&
+	    update_ref(NULL, "REVERT_HEAD", commit->object.oid.hash, NULL,
+		       REF_NODEREF, UPDATE_REFS_MSG_ON_ERR))
+		res = -1;
 
 	if (res) {
 		error(opts->action == REPLAY_REVERT
