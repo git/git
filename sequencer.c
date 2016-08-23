@@ -242,20 +242,35 @@ static void print_advice(int show_hint, struct replay_opts *opts)
 	}
 }
 
-static int write_message(struct strbuf *msgbuf, const char *filename)
+static int write_with_lock_file(const char *filename,
+				const void *buf, size_t len, int append_eol)
 {
 	static struct lock_file msg_file;
 
 	int msg_fd = hold_lock_file_for_update(&msg_file, filename, 0);
 	if (msg_fd < 0)
 		return error_errno(_("Could not lock '%s'"), filename);
-	if (write_in_full(msg_fd, msgbuf->buf, msgbuf->len) < 0)
+	if (write_in_full(msg_fd, buf, len) < 0)
 		return error_errno(_("Could not write to %s"), filename);
-	strbuf_release(msgbuf);
+	if (append_eol && write(msg_fd, "\n", 1) < 0)
+		return error_errno(_("Could not write eol to %s"), filename);
 	if (commit_lock_file(&msg_file) < 0)
 		return error(_("Error wrapping up %s."), filename);
 
 	return 0;
+}
+
+static int write_message(struct strbuf *msgbuf, const char *filename)
+{
+	int res = write_with_lock_file(filename, msgbuf->buf, msgbuf->len, 0);
+	strbuf_release(msgbuf);
+	return res;
+}
+
+static int write_file_gently(const char *filename,
+			     const char *text, int append_eol)
+{
+	return write_with_lock_file(filename, text, strlen(text), append_eol);
 }
 
 /*
