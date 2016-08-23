@@ -599,25 +599,16 @@ static int bisect_start(struct bisect_terms *terms, int no_checkout,
 	 * Check for one bad and then some good revisions
 	 */
 	for (i = 0; i < argc; i++) {
-		const char *arg;
-		if (starts_with(argv[i], "'"))
-			arg = sq_dequote(xstrdup(argv[i]));
-		else
-			arg = xstrdup(argv[i]);
-		if (!strcmp(arg, "--")) {
+		if (!strcmp(argv[i], "--")) {
 			has_double_dash = 1;
 			break;
 		}
-		free((void *) arg);
 	}
 
 	for (i = 0; i < argc; i++) {
-		const char *arg, *commit_id;
-		if (starts_with(argv[i], "'"))
-			arg = sq_dequote(xstrdup(argv[i]));
-		else
-			arg = xstrdup(argv[i]);
-		commit_id = xstrfmt("%s^{commit}", arg);
+		const char  *commit_id;
+		const char *arg = argv[i];
+		commit_id = xstrfmt("%s^{commit}", argv[i]);
 		if (!strcmp(argv[i], "--")) {
 			break;
 		} else if (!strcmp(arg, "--no-checkout")) {
@@ -625,29 +616,22 @@ static int bisect_start(struct bisect_terms *terms, int no_checkout,
 		} else if (!strcmp(arg, "--term-good") ||
 			 !strcmp(arg, "--term-old")) {
 			free((void *) terms->term_good);
-			if (starts_with(argv[++i], "'"))
-				terms->term_good = sq_dequote(xstrdup(argv[i]));
-			else
-				terms->term_good = xstrdup(argv[i]);
 			must_write_terms = 1;
+			terms->term_good = xstrdup(argv[++i]);
 		} else if (skip_prefix(arg, "--term-good=", &arg) ||
 			   skip_prefix(arg, "--term-old=", &arg)) {
 			must_write_terms = 1;
-			free((void *) terms->term_good);
-			terms->term_good = arg;
+			terms->term_good = xstrdup(arg);
 		} else if (!strcmp(arg, "--term-bad") ||
 			 !strcmp(arg, "--term-new")) {
 			free((void *) terms->term_bad);
-			if (starts_with(argv[++i], "'"))
-				terms->term_bad = sq_dequote(xstrdup(argv[i]));
-			else
-				terms->term_bad = xstrdup(argv[i]);
+			terms->term_bad = xstrdup(argv[++i]);
 			must_write_terms = 1;
 		} else if (skip_prefix(arg, "--term-bad=", &arg) ||
 			   skip_prefix(arg, "--term-new=", &arg)) {
 			must_write_terms = 1;
 			free((void *) terms->term_bad);
-			terms->term_bad = arg;
+			terms->term_bad = xstrdup(arg);
 		} else if (starts_with(arg, "--") &&
 			 !one_of(arg, "--term-good", "--term-bad", NULL)) {
 			return error(_("unrecognised option: '%s'"), arg);
