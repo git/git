@@ -667,6 +667,10 @@ void *gitmemmem(const void *haystack, size_t haystacklen,
 #define getpagesize() sysconf(_SC_PAGESIZE)
 #endif
 
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
+
 #ifdef FREAD_READS_DIRECTORIES
 #ifdef fopen
 #undef fopen

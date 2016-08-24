@@ -33,6 +33,10 @@
  *   * calling `fdopen_tempfile()` to get a `FILE` pointer for the
  *     open file and writing to the file using stdio.
  *
+ *   Note that the file descriptor returned by create_tempfile()
+ *   is marked O_CLOEXEC, so the new contents must be written by
+ *   the current process, not any spawned one.
+ *
  * When finished writing, the caller can:
  *
  * * Close the file descriptor and remove the temporary file by
