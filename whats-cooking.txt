@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2016, #07; Thu, 18)
-X-master-at: d63263a4dee8fc7da9b97bbdedf9c0d1f33024d4
-X-next-at: 8e4bfbdedf0822fce7bdef0dcc37482a8deb3aca
+Subject: What's cooking in git.git (Aug 2016, #08; Wed, 24)
+X-master-at: 2632c897f74b1cc9b5533f467da459b9ec725538
+X-next-at: 3a084aaf40d3898679a48d19dac63e45ecde4cc7
 
-What's cooking in git.git (Aug 2016, #07; Thu, 18)
+What's cooking in git.git (Aug 2016, #08; Wed, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,15 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The preview for the upcoming 2.10 release has been tagged as
-v2.10.0-rc0.
+v2.10.0-rc1 was tagged last week, then I got sick and lost an entire
+day.  I've merged a handful more topics to 'next' and marked 5 among
+them to be merged to 'master' by -rc2.  A notable is the ja/i18n
+topic, which hopefully will reduce the translator's load somewhat.
+Also the change to arrange the file-descriptors to the tempfile be
+closed for subprocesses to avoid deadlocks on Windows is also in;
+even though it is not a new problem, the fix looked safe enough.
+Linus's "32-bit GPG key-ids are so last century" change is already
+in, as reported in the 2.10.0-rc1 announcement.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,51 +30,6 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/tighten-alloc (2016-08-13) 2 commits
-  (merged to 'next' on 2016-08-16 at 5399351)
- + receive-pack: use FLEX_ALLOC_MEM in queue_command()
- + correct FLEXPTR_* example in comment
-
- Small code and comment clean-up.
-
-
-* js/test-lint-pathname (2016-08-16) 1 commit
-  (merged to 'next' on 2016-08-16 at d154f90)
- + t/Makefile: ensure that paths are valid on platforms we care
-
- The "t/" hierarchy is prone to get an unusual pathname; "make test"
- has been taught to make sure they do not contain paths that cannot
- be checked out on Windows (and the mechanism can be reusable to
- catch pathnames that are not portable to other platforms as need
- arises).
-
-
-* rs/mailinfo-lib (2016-08-13) 1 commit
-  (merged to 'next' on 2016-08-16 at 14101e3)
- + mailinfo: recycle strbuf in check_header()
-
- Small code clean-up.
-
-
-* sg/reflog-past-root (2016-08-15) 1 commit
-  (merged to 'next' on 2016-08-16 at ee997a5)
- + t1410: remove superfluous 'git reflog' from the 'walk past root' test
-
- A small test clean-up for a topic introduced in v2.9.1 and later.
-
-
-* va/i18n (2016-08-12) 3 commits
-  (merged to 'next' on 2016-08-16 at 6a06cd3)
- + t7411: become resilient to GETTEXT_POISON
- + t5520: become resilient to GETTEXT_POISON
- + t3404: become resilient to GETTEXT_POISON
-
- A handful of tests that were broken under gettext-poison build have
- been fixed.
-
---------------------------------------------------
-[New Topics]
-
 * ab/hooks (2016-08-16) 1 commit
   (merged to 'next' on 2016-08-17 at b56e55d)
  + rev-parse: respect core.hooksPath in --git-path
@@ -76,20 +38,18 @@ of the repositories listed at
  core.hooksPath configuration variable (introduced during 2.9 cycle)
  into account.
 
- Will merge to 'master'.
 
+* jk/difftool-command-not-found (2016-08-15) 1 commit
+  (merged to 'next' on 2016-08-17 at 32baf03)
+ + difftool: always honor fatal error exit codes
 
-* sb/checkout-explit-detach-no-advice (2016-08-15) 1 commit
-  (merged to 'next' on 2016-08-17 at fb64716)
- + checkout: do not mention detach advice for explicit --detach option
-
- "git checkout --detach <branch>" used to give the same advice
- message as that is issued when "git checkout <tag>" (or anything
- that is not a branch name) is given, but asking with "--detach" is
- an explicit enough sign that the user knows what is going on.  The
- advice message has been squelched in this case.
-
- Will merge to 'master'.
+ "git difftool" by default ignores the error exit from the backend
+ commands it spawns, because often they signal that they found
+ differences by exiting with a non-zero status code just like "diff"
+ does; the exit status codes 126 and above however are special in
+ that they are used to signal that the command is not executable,
+ does not exist, or killed by a signal.  "git difftool" has been
+ taught to notice these exit status codes.
 
 
 * lt/gpg-show-long-key-in-signature-verification (2016-08-16) 1 commit
@@ -101,7 +61,8 @@ of the repositories listed at
  verification status of PGP signature now shows the longer key-id,
  as 32-bit key-id is so last century.
 
- Will merge to 'master'.
+ A last-minute merge of this topic was a bit scary but I made sure
+ push-certificate codepath would not be negatively affected.
 
 
 * lt/gpg-show-long-key-in-signature-verification-maint (2016-08-16) 1 commit
@@ -114,37 +75,157 @@ of the repositories listed at
  codebase, just in case somebody wants to have it.
 
 
-* ak/curl-imap-send-explicit-scheme (2016-08-17) 1 commit
- - imap-send: Tell cURL to use imap:// or imaps://
+* rs/pull-signed-tag (2016-08-13) 4 commits
+  (merged to 'next' on 2016-08-17 at cecca71)
+ + commit: use FLEX_ARRAY in struct merge_remote_desc
+ + merge-recursive: fix verbose output for multiple base trees
+ + commit: factor out set_merge_remote_desc()
+ + commit: use xstrdup() in get_merge_parent()
 
- When we started cURL to talk to imap server when a new enough
- version of cURL library is available, we forgot to explicitly add
- imap(s):// before the destination.  To some folks, that didn't work
- and the library tried to make HTTP(s) requests instead.
-
- Needs review and testing.
+ When "git merge-recursive" works on history with many criss-cross
+ merges in "verbose" mode, the names the command assigns to the
+ virtual merge bases could have overwritten each other by unintended
+ reuse of the same piece of memory.
 
 
-* bw/mingw-avoid-inheriting-fd-to-lockfile (2016-08-18) 2 commits
- - mingw: ensure temporary file handles are not inherited by child processes
- - t6026-merge-attr: child processes must not inherit index.lock handles
+* sb/checkout-explit-detach-no-advice (2016-08-15) 1 commit
+  (merged to 'next' on 2016-08-17 at fb64716)
+ + checkout: do not mention detach advice for explicit --detach option
 
- The tempfile (hence its user lockfile) API lets the caller to open
- a file descriptor to a temporary file, write into it and then
- finalize it by first closing the filehandle and then either
- removing or renaming the temporary file.  When the process spawns a
- subprocess after obtaining the file descriptor, and if the
- subprocess has not exited when the attempt to remove or rename is
- made, the last step fails on Windows, because the subprocess has
- the file descriptor still open.  Open tempfile with O_CLOEXEC flag
- to avoid this (on Windows, this is mapped to O_NOINHERIT).
+ "git checkout --detach <branch>" used to give the same advice
+ message as that is issued when "git checkout <tag>" (or anything
+ that is not a branch name) is given, but asking with "--detach" is
+ an explicit enough sign that the user knows what is going on.  The
+ advice message has been squelched in this case.
 
- It was pointed out that not everybody has O_CLOEXEC flag during the
- review.
 
- Waiting for the review discussion to settle.
- cf. <20160818173555.GA29253@starla>
+* tb/t0027-raciness-fix (2016-08-14) 1 commit
+  (merged to 'next' on 2016-08-17 at 39a6635)
+ + convert: Correct NNO tests and missing `LF will be replaced by CRLF`
 
+ The t0027 test for CRLF conversion was timing dependent and flaky.
+
+--------------------------------------------------
+[New Topics]
+
+* cc/receive-pack-limit (2016-08-24) 3 commits
+ - receive-pack: allow a maximum input size to be specified
+ - unpack-objects: add --max-input-size=<size> option
+ - index-pack: add --max-input-size=<size> option
+
+ An incoming "git push" that attempts to push too many bytes can now
+ be rejected by setting a new configuration variable at the receiving
+ end.
+
+ Will merge to 'next'.
+
+
+* hv/doc-commit-reference-style (2016-08-17) 1 commit
+  (merged to 'next' on 2016-08-24 at b187d45)
+ + SubmittingPatches: document how to reference previous commits
+
+ A small doc update.
+
+ Will merge to 'master'.
+
+
+* js/no-html-bypass-on-windows (2016-08-19) 1 commit
+  (merged to 'next' on 2016-08-24 at 05728f8)
+ + Revert "display HTML in default browser using Windows' shell API"
+
+ On Windows, help.browser configuration variable used to be ignored,
+ which has been corrected.
+
+ Will merge to 'master'.
+
+
+* dg/document-git-c-in-git-config-doc (2016-08-23) 1 commit
+  (merged to 'next' on 2016-08-24 at a923eb0)
+ + doc: mention `git -c` in git-config(1)
+
+ The "git -c var[=val] cmd" facility to append a configuration
+ variable definition at the end of the search order was described in
+ git(1) manual page, but not in git-config(1), which was more likely
+ place for people to look for when they ask "can I make a one-shot
+ override, and if so how?"
+
+ Will merge to 'master'.
+
+
+* jk/format-patch-number-singleton-patch-with-cover (2016-08-23) 1 commit
+ - format-patch: show 0/1 and 1/1 for singleton patch with cover letter
+
+ "git format-patch --cover-letter HEAD^" to format a single patch
+ with a separate cover letter now numbers the output as [PATCH 0/1]
+ and [PATCH 1/1] by default.
+
+ Will merge to 'next'.
+
+
+* cp/completion-negative-refs (2016-08-24) 1 commit
+ - completion: support excluding refs
+
+ The command-line completion script (in contrib/) learned to
+ complete "git cmd ^mas<HT>" to complete the negative end of
+ reference to "git cmd ^master".
+
+ Waiting for a review.
+
+
+* ja/i18n (2016-08-24) 3 commits
+  (merged to 'next' on 2016-08-24 at 3a084aa)
+ + i18n: simplify numeric error reporting
+ + i18n: fix git rebase interactive commit messages
+ + i18n: fix typos for translation
+
+ The recent i18n patch we added during this cycle did a bit too much
+ refactoring of the messages to avoid word-legos; the repetition has
+ been reduced to help translators.
+
+ Will merge to 'master'.
+
+
+* jk/delta-base-cache (2016-08-23) 7 commits
+ - t/perf: add basic perf tests for delta base cache
+ - delta_base_cache: use hashmap.h
+ - delta_base_cache: drop special treatment of blobs
+ - delta_base_cache: use list.h for LRU
+ - release_delta_base_cache: reuse existing detach function
+ - clear_delta_base_cache_entry: use a more descriptive name
+ - cache_or_unpack_entry: drop keep_cache parameter
+
+ The delta-base-cache mechanism has been a key to the performance in
+ a repository with a tightly packed packfile, but it did not scale
+ well even with a larger value of core.deltaBaseCacheLimit.
+
+ Will merge to 'next'.
+
+
+* js/cat-file-filters (2016-08-24) 4 commits
+ - cat-file: support --textconv/--filters in batch mode
+ - cat-file --textconv/--filters: allow specifying the path separately
+ - cat-file: introduce the --filters option
+ - cat-file: fix a grammo in the man page
+
+ Even though "git hash-objects", which is a tool to take an
+ on-filesystem data stream and put it into the Git object store,
+ allowed to perform the "outside-world-to-Git" conversions (e.g.
+ end-of-line conversions and application of the clean-filter), and
+ it had the feature on by default from very early days, its reverse
+ operation "git cat-file", which takes an object from the Git object
+ store and externalize for the consumption by the outside world,
+ lacked an equivalent mechanism to run the "Git-to-outside-world"
+ conversion.  The command learned the "--filters" option to do so.
+
+
+* sb/push-make-submodule-check-the-default (2016-08-24) 1 commit
+ - push: change submodule default to check
+
+ Turn the default of "push.recurseSubmodules" to "check".
+
+ Alas, this reveals that the "check" mode is too inefficient to use
+ in real projects.
+ cf. <xmqqh9aaot49.fsf@gitster.mtv.corp.google.com>
 
 --------------------------------------------------
 [Stalled]
@@ -399,6 +480,35 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ak/curl-imap-send-explicit-scheme (2016-08-17) 1 commit
+ - imap-send: Tell cURL to use imap:// or imaps://
+
+ When we started cURL to talk to imap server when a new enough
+ version of cURL library is available, we forgot to explicitly add
+ imap(s):// before the destination.  To some folks, that didn't work
+ and the library tried to make HTTP(s) requests instead.
+
+ Needs review and testing.
+
+
+* bw/mingw-avoid-inheriting-fd-to-lockfile (2016-08-23) 2 commits
+  (merged to 'next' on 2016-08-24 at 8389b0e)
+ + mingw: ensure temporary file handles are not inherited by child processes
+ + t6026-merge-attr: child processes must not inherit index.lock handles
+
+ The tempfile (hence its user lockfile) API lets the caller to open
+ a file descriptor to a temporary file, write into it and then
+ finalize it by first closing the filehandle and then either
+ removing or renaming the temporary file.  When the process spawns a
+ subprocess after obtaining the file descriptor, and if the
+ subprocess has not exited when the attempt to remove or rename is
+ made, the last step fails on Windows, because the subprocess has
+ the file descriptor still open.  Open tempfile with O_CLOEXEC flag
+ to avoid this (on Windows, this is mapped to O_NOINHERIT).
+
+ Will merge to 'master'.
+
+
 * rt/help-unknown (2016-08-18) 2 commits
  - help: make option --help open man pages only for Git commands
  - help: introduce option --command-only
@@ -407,37 +517,7 @@ of the repositories listed at
  which was not intuitive, given that "git nosuchcommand" said "git:
  'nosuchcommand' is not a git command".
 
- Will merge to 'next'.
-
-
-* jk/difftool-command-not-found (2016-08-15) 1 commit
-  (merged to 'next' on 2016-08-17 at 32baf03)
- + difftool: always honor fatal error exit codes
-
- "git difftool" by default ignores the error exit from the backend
- commands it spawns, because often they signal that they found
- differences by exiting with a non-zero status code just like "diff"
- does; the exit status codes 126 and above however are special in
- that they are used to signal that the command is not executable,
- does not exist, or killed by a signal.  "git difftool" has been
- taught to notice these exit status codes.
-
- Will merge to 'master'.
-
-
-* rs/pull-signed-tag (2016-08-13) 4 commits
-  (merged to 'next' on 2016-08-17 at cecca71)
- + commit: use FLEX_ARRAY in struct merge_remote_desc
- + merge-recursive: fix verbose output for multiple base trees
- + commit: factor out set_merge_remote_desc()
- + commit: use xstrdup() in get_merge_parent()
-
- When "git merge-recursive" works on history with many criss-cross
- merges in "verbose" mode, the names the command assigns to the
- virtual merge bases could have overwritten each other by unintended
- reuse of the same piece of memory.
-
- Will merge to 'master'.
+ Waiting for the review discussion to settle.
 
 
 * po/range-doc (2016-08-13) 12 commits
@@ -460,25 +540,22 @@ of the repositories listed at
  Waiting for the review discussion to settle.
 
 
-* tb/t0027-raciness-fix (2016-08-14) 1 commit
-  (merged to 'next' on 2016-08-17 at 39a6635)
- + convert: Correct NNO tests and missing `LF will be replaced by CRLF`
-
- The t0027 test for CRLF conversion was timing dependent and flaky.
-
- Will merge to 'master'.
-
-
-* jk/diff-submodule-diff-inline (2016-08-16) 3 commits
- - diff: add SUBMODULE_DIFF format to display submodule diff
+* jk/diff-submodule-diff-inline (2016-08-23) 8 commits
+ - diff: teach diff to display submodule difference with an inline diff
+ - submodule: refactor show_submodule_summary with helper function
+ - submodule: convert show_submodule_summary to use struct object_id *
+ - allow do_submodule_path to work even if submodule isn't checked out
+ - diff: prepare for additional submodule formats
  - graph: add support for --line-prefix on all graph-aware output
  - diff.c: remove output_prefix_length field
+ - cache: add empty_tree_oid object and helper function
 
  The "git diff --submodule={short,log}" mechanism has been enhanced
  to allow "--submodule=diff" to show the patch between the submodule
  commits bound to the superproject.
 
- Still being worked on.
+ Waiting for the review discussion to settle.
+ I think it is getting there.
 
 
 * jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
@@ -535,15 +612,13 @@ of the repositories listed at
  Any more comments?
 
 
-* mh/diff-indent-heuristic (2016-08-04) 8 commits
+* mh/diff-indent-heuristic (2016-08-23) 6 commits
  - diff: improve positioning of add/delete blocks in diffs
- - is_blank_line: take a single xrecord_t as argument
- - xdl_change_compact(): keep track of the earliest end
- - xdl_change_compact(): fix compaction heuristic to adjust io
- - xdl_change_compact(): do one final shift or the other, not both
- - xdl_change_compact(): rename i to end
- - xdl_change_compact(): clarify code
- - xdl_change_compact(): rename some local variables for clarity
+ - xdl_change_compact(): introduce the concept of a change group
+ - recs_match(): take two xrecord_t pointers as arguments
+ - is_blank_line(): take a single xrecord_t as argument
+ - xdl_change_compact(): only use heuristic if group can't be matched
+ - xdl_change_compact(): fix compaction heuristic to adjust ixo
 
  Output from "git diff" can be made easier to read by selecting
  which lines are common and which lines are added/deleted
@@ -552,10 +627,8 @@ of the repositories listed at
  experiment to find a good heuristics.
 
  Waiting for the review discussion to settle.
- cf. <cover.1470259583.git.mhagger@alum.mit.edu>
- cf. <20160804072705.a53mospcccksiz4e@sigill.intra.peff.net>
- cf. <20160804075631.jakbi5dbsbxsqcpr@sigill.intra.peff.net>
  cf. <29c40cdd-363a-df09-f9e2-fe9070bb8a9c@ramsayjones.plus.com>
+ cf. <a27aa17e-f602-fc49-92b3-2198e4772e47@ramsayjones.plus.com>
 
 
 * cc/apply-am (2016-08-11) 40 commits
@@ -606,7 +679,6 @@ of the repositories listed at
  Waiting for the review discussion to settle.
  cf. <xmqqvaz7ys9u.fsf@gitster.mtv.corp.google.com>
  We are almost there.
-
 
 
 * jk/pack-objects-optim-mru (2016-08-11) 4 commits
@@ -767,7 +839,21 @@ of the repositories listed at
  would think.
 
 
-* pb/bisect (2016-08-12) 13 commits
+* pb/bisect (2016-08-23) 27 commits
+ . bisect--helper: remove the dequote in bisect_start()
+ . bisect--helper: retire `--bisect-auto-next` subcommand
+ . bisect--helper: retire `--bisect-autostart` subcommand
+ . bisect--helper: retire `--check-and-set-terms` subcommand
+ . bisect--helper: retire `--bisect-write` subcommand
+ . bisect--helper: `bisect_replay` shell function in C
+ . bisect--helper: `bisect_log` shell function in C
+ . bisect--helper: retire `--write-terms` subcommand
+ . bisect--helper: retire `--check-expected-revs` subcommand
+ . bisect--helper: `bisect_state` & `bisect_head` shell function in C
+ . bisect--helper: `bisect_autostart` shell function in C
+ . bisect--helper: retire `--next-all` subcommand
+ . bisect--helper: retire `--bisect-clean-state` subcommand
+ . bisect--helper: `bisect_next` and `bisect_auto_next` shell function in C
  . bisect--helper: `bisect_start` shell function partially in C
  . bisect--helper: `get_terms` & `bisect_terms` shell function in C
  . bisect--helper: `bisect_next_check` & bisect_voc shell function in C
@@ -812,7 +898,7 @@ of the repositories listed at
  with the more generic ref-filter API.
 
  Rerolled.
- This also really needs review.
+ Needs review.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
