@@ -9,15 +9,15 @@ git-cat-file - Provide content or type and size information for repository objec
 SYNOPSIS
 --------
 [verse]
-'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv ) <object>
+'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv | --filters ) <object>
 'git cat-file' (--batch | --batch-check) [--follow-symlinks]
 
 DESCRIPTION
 -----------
 In its first form, the command provides the content or the type of an object in
 the repository. The type is required unless `-t` or `-p` is used to find the
-object type, or `-s` is used to find the object size, or `--textconv` is used
-(which implies type "blob").
+object type, or `-s` is used to find the object size, or `--textconv` or
+`--filters` is used (which imply type "blob").
 
 In the second form, a list of objects (separated by linefeeds) is provided on
 stdin, and the SHA-1, type, and size of each object is printed on stdout.
@@ -57,6 +57,12 @@ OPTIONS
 	<object> has to be of the form <tree-ish>:<path>, or :<path> in
 	order to apply the filter to the content recorded in the index at
 	<path>.
+
+--filters::
+	Show the content as converted by the filters configured in
+	the current working tree for the given <path> (i.e. smudge filters,
+	end-of-line conversion, etc). In this case, <object> has to be of
+	the form <tree-ish>:<path>, or :<path>.
 
 --batch::
 --batch=<format>::
