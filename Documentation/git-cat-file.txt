@@ -9,15 +9,15 @@ git-cat-file - Provide content or type and size information for repository objec
 SYNOPSIS
 --------
 [verse]
-'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv | --smudge ) [--use-path=<path>] <object>
+'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv ) <object>
 'git cat-file' (--batch | --batch-check) [--follow-symlinks]
 
 DESCRIPTION
 -----------
 In its first form, the command provides the content or the type of an object in
 the repository. The type is required unless `-t` or `-p` is used to find the
-object type, or `-s` is used to find the object size, or `--textconv` or
-`--smudge` is used (which imply type "blob").
+object type, or `-s` is used to find the object size, or `--textconv` is used
+(which implies type "blob").
 
 In the second form, a list of objects (separated by linefeeds) is provided on
 stdin, and the SHA-1, type, and size of each object is printed on stdout.
@@ -54,19 +54,8 @@ OPTIONS
 
 --textconv::
 	Show the content as transformed by a textconv filter. In this case,
-	<object> has to be of the form <tree-ish>:<path>, or :<path> in
-	order to apply the filter to the content recorded in the index at
-	<path>.
-
---smudge::
-	Show the content as transformed by the smudge filter configured in
-	the current working tree for the given <path>. In this case,
-	<object> has to be of the form <tree-ish>:<path>, or :<path>.
-
---use-path=<path>::
-	For use with --textconv or --smudge, to allow specifying an object
-	name and a path separately, e.g. when it is difficult to figure out
-	the revision from which the blob came.
+	<object> has be of the form <tree-ish>:<path>, or :<path> in order
+	to apply the filter to the content recorded in the index at <path>.
 
 --batch::
 --batch=<format>::
