@@ -44,6 +44,9 @@ OPTIONS
 --strict::
 	Don't write objects with broken content or links.
 
+--max-input-size=<size>::
+	Die, if the pack is larger than <size>.
+
 GIT
 ---
 Part of the linkgit:git[1] suite
