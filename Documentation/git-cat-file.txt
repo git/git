@@ -54,8 +54,9 @@ OPTIONS
 
 --textconv::
 	Show the content as transformed by a textconv filter. In this case,
-	<object> has be of the form <tree-ish>:<path>, or :<path> in order
-	to apply the filter to the content recorded in the index at <path>.
+	<object> has to be of the form <tree-ish>:<path>, or :<path> in
+	order to apply the filter to the content recorded in the index at
+	<path>.
 
 --batch::
 --batch=<format>::
