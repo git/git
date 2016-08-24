@@ -547,7 +547,7 @@ static int batch_option_callback(const struct option *opt,
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
 	int opt = 0;
-	const char *exp_type = NULL, *obj_name = NULL;
+	const char *exp_type = NULL, *obj_name = NULL, *force_use_path = NULL;
 	struct batch_options batch = {0};
 	int unknown_type = 0;
 
@@ -564,6 +564,10 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 			    N_("for blob objects, run filters on object's content"), 'w'),
 		OPT_STRING(0, "path", &force_path, N_("blob"),
 			   N_("use a specific path for --textconv/--filters")),
+		OPT_CMDMODE(0, "smudge", &opt,
+			    N_("deprecated, use --filters instead"), 'W'),
+		OPT_STRING(0, "use-path", &force_use_path, N_("blob"),
+			   N_("deprecated, use --path=<path> instead")),
 		OPT_BOOL(0, "allow-unknown-type", &unknown_type,
 			  N_("allow -s and -t to work with broken/corrupt objects")),
 		OPT_BOOL(0, "buffer", &batch.buffer_output, N_("buffer --batch output")),
@@ -584,6 +588,16 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 
 	batch.buffer_output = -1;
 	argc = parse_options(argc, argv, prefix, options, cat_file_usage, 0);
+
+	if (opt == 'W') {
+		warning("--smudge is deprecated, please use --filters instead");
+		opt = 'w';
+	}
+	if (force_use_path) {
+		warning("--use-path=<path> is deprecated, please use "
+			"--path=<path> instead");
+		force_path = force_use_path;
+	}
 
 	if (opt) {
 		if (batch.enabled && (opt == 'c' || opt == 'w'))
