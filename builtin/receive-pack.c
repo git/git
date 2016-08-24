@@ -46,6 +46,7 @@ static int transfer_unpack_limit = -1;
 static int advertise_atomic_push = 1;
 static int advertise_push_options;
 static int unpack_limit = 100;
+static off_t max_input_size;
 static int report_status;
 static int use_sideband;
 static int use_atomic;
@@ -209,6 +210,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "receive.keepalive") == 0) {
 		keepalive_in_sec = git_config_int(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.maxinputsize") == 0) {
+		max_input_size = git_config_int64(var, value);
 		return 0;
 	}
 
@@ -1648,6 +1654,9 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (fsck_objects)
 			argv_array_pushf(&child.args, "--strict%s",
 				fsck_msg_types.buf);
+		if (max_input_size)
+			argv_array_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				(uintmax_t)max_input_size);
 		child.no_stdout = 1;
 		child.err = err_fd;
 		child.git_cmd = 1;
@@ -1676,6 +1685,9 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 				fsck_msg_types.buf);
 		if (!reject_thin)
 			argv_array_push(&child.args, "--fix-thin");
+		if (max_input_size)
+			argv_array_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				(uintmax_t)max_input_size);
 		child.out = -1;
 		child.err = err_fd;
 		child.git_cmd = 1;
