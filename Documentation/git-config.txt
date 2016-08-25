@@ -263,6 +263,9 @@ The files are read in the order given above, with last value found taking
 precedence over values read earlier.  When multiple values are taken then all
 values of a key from all files will be used.
 
+You may override individual configuration parameters when running any git
+command by using the `-c` option. See linkgit:git[1] for details.
+
 All writing options will per default write to the repository specific
 configuration file. Note that this also affects options like `--replace-all`
 and `--unset`. *'git config' will only ever change one file at a time*.
