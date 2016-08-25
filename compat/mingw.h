@@ -417,9 +417,6 @@ int mingw_offset_1st_component(const char *path);
 #include <inttypes.h>
 #endif
 
-void mingw_open_html(const char *path);
-#define open_html mingw_open_html
-
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
  *
