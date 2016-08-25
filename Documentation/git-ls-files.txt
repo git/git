@@ -159,8 +159,7 @@ not accessible in the working tree.
 +
 <eolattr> is the attribute that is used when checking out or committing,
 it is either "", "-text", "text", "text=auto", "text eol=lf", "text eol=crlf".
-Note: Currently Git does not support "text=auto eol=lf" or "text=auto eol=crlf",
-that may change in the future.
+Since Git 2.10 "text=auto eol=lf" and "text=auto eol=crlf" are supported.
 +
 Both the <eolinfo> in the index ("i/<eolinfo>")
 and in the working tree ("w/<eolinfo>") are shown for regular files,
