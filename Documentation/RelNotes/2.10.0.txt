@@ -179,7 +179,7 @@ Performance, Internal Implementation, Development Support etc.
    the standard output and the standard error of an external process,
    which is cumbersome to hand-roll correctly without deadlocking.
 
-   The codepath to sign data in a prepared buffer with GPG has been
+ * The codepath to sign data in a prepared buffer with GPG has been
    updated to use this API to read from the status-fd to check for
    errors (instead of relying on GPG's exit status).
    (merge efee955 jk/gpg-interface-cleanup later to maint).
@@ -307,6 +307,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * A handful of tests that were broken under gettext-poison build have
    been fixed.
+
+ * The recent i18n patch we added during this cycle did a bit too much
+   refactoring of the messages to avoid word-legos; the repetition has
+   been reduced to help translators.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -563,7 +567,7 @@ notes for details).
    caused tests in t7063 to fail because it wanted to verify the
    behaviour of the fast-path.
 
- * Squelch compiler warnings for netmalloc (in compat/) library.
+ * Squelch compiler warnings for nedmalloc (in compat/) library.
 
  * A small memory leak in the command line parsing of "git blame"
    has been plugged.
@@ -631,6 +635,28 @@ notes for details).
    taught to notice these exit status codes.
    (merge 45a4f5d jk/difftool-command-not-found later to maint).
 
+ * On Windows, help.browser configuration variable used to be ignored,
+   which has been corrected.
+   (merge 6db5967 js/no-html-bypass-on-windows later to maint).
+
+ * The "git -c var[=val] cmd" facility to append a configuration
+   variable definition at the end of the search order was described in
+   git(1) manual page, but not in git-config(1), which was more likely
+   place for people to look for when they ask "can I make a one-shot
+   override, and if so how?"
+   (merge ae1f709 dg/document-git-c-in-git-config-doc later to maint).
+
+ * The tempfile (hence its user lockfile) API lets the caller to open
+   a file descriptor to a temporary file, write into it and then
+   finalize it by first closing the filehandle and then either
+   removing or renaming the temporary file.  When the process spawns a
+   subprocess after obtaining the file descriptor, and if the
+   subprocess has not exited when the attempt to remove or rename is
+   made, the last step fails on Windows, because the subprocess has
+   the file descriptor still open.  Open tempfile with O_CLOEXEC flag
+   to avoid this (on Windows, this is mapped to O_NOINHERIT).
+   (merge 05d1ed6 bw/mingw-avoid-inheriting-fd-to-lockfile later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 02a8cfa rs/merge-add-strategies-simplification later to maint).
    (merge af4941d rs/merge-recursive-string-list-init later to maint).
@@ -638,3 +664,4 @@ notes for details).
    (merge ddd0bfa jk/tighten-alloc later to maint).
    (merge ecf30b2 rs/mailinfo-lib later to maint).
    (merge 0eb75ce sg/reflog-past-root later to maint).
+   (merge 175d38c hv/doc-commit-reference-style later to maint).
