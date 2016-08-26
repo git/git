@@ -41,4 +41,12 @@ test_expect_success "--exclude-guides does not work for guides" '
 	test_must_be_empty test-browser.log
 '
 
+test_expect_success "--help does not work for guides" "
+	cat <<-EOF >expect &&
+		git: 'revisions' is not a git command. See 'git --help'.
+	EOF
+	test_must_fail git revisions --help 2>actual &&
+	test_i18ncmp expect actual
+"
+
 test_done
