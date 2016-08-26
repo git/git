@@ -122,9 +122,14 @@ without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
 If you want to reference a previous commit in the history of a stable
-branch use the format "abbreviated sha1 (subject, date)". So for example
-like this: "Commit f86a374 (pack-bitmap.c: fix a memleak, 2015-03-30)
-noticed [...]".
+branch, use the format "abbreviated sha1 (subject, date)",
+with the subject enclosed in a pair of double-quotes, like this:
+
+    Commit f86a374 ("pack-bitmap.c: fix a memleak", 2015-03-30)
+    noticed that ...
+
+The "Copy commit summary" command of gitk can be used to obtain this
+format.
 
 
 (3) Generate your patch using Git tools out of your commits.
