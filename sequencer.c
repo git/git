@@ -1063,10 +1063,11 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 		if (!get_sha1(name, sha1)) {
 			if (!lookup_commit_reference_gently(sha1, 1)) {
 				enum object_type type = sha1_object_info(sha1, NULL);
-				die(_("%s: can't cherry-pick a %s"), name, typename(type));
+				return error(_("%s: can't cherry-pick a %s"),
+					name, typename(type));
 			}
 		} else
-			die(_("%s: bad revision"), name);
+			return error(_("%s: bad revision"), name);
 	}
 
 	/*
@@ -1082,10 +1083,10 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 	    !opts->revs->cmdline.rev->flags) {
 		struct commit *cmit;
 		if (prepare_revision_walk(opts->revs))
-			die(_("revision walk setup failed"));
+			return error(_("revision walk setup failed"));
 		cmit = get_revision(opts->revs);
 		if (!cmit || get_revision(opts->revs))
-			die("BUG: expected exactly one commit from walk");
+			return error("BUG: expected exactly one commit from walk");
 		return single_pick(cmit, opts);
 	}
 
