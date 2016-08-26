@@ -252,6 +252,9 @@ Performance, Internal Implementation, Development Support etc.
    combination has been fixed to be equivalent to doing
    $ git config core.autocrlf true
 
+ * Documentation has been updated to show better example usage
+   of the updated "text=auto" attribute.
+
  * A few tests that specifically target "git rebase -i" have been
    added.
 
