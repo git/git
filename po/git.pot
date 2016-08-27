@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-08-15 22:43+0800\n"
+"POT-Creation-Date: 2016-08-27 23:21+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -567,122 +567,93 @@ msgstr ""
 msgid "bad config line %d in %s"
 msgstr ""
 
-#: config.c:660
-#, c-format
-msgid "bad numeric config value '%s' for '%s': out of range"
+#: config.c:655
+msgid "out of range"
+msgstr ""
+
+#: config.c:655
+msgid "invalid unit"
 msgstr ""
 
 #: config.c:661
 #, c-format
-msgid "bad numeric config value '%s' for '%s': invalid unit"
+msgid "bad numeric config value '%s' for '%s': %s"
 msgstr ""
 
-#: config.c:667
+#: config.c:666
 #, c-format
-msgid "bad numeric config value '%s' for '%s' in blob %s: out of range"
+msgid "bad numeric config value '%s' for '%s' in blob %s: %s"
 msgstr ""
 
-#: config.c:668
+#: config.c:669
 #, c-format
-msgid "bad numeric config value '%s' for '%s' in blob %s: invalid unit"
+msgid "bad numeric config value '%s' for '%s' in file %s: %s"
 msgstr ""
 
 #: config.c:672
 #, c-format
-msgid "bad numeric config value '%s' for '%s' in file %s: out of range"
+msgid "bad numeric config value '%s' for '%s' in standard input: %s"
 msgstr ""
 
-#: config.c:673
+#: config.c:675
 #, c-format
-msgid "bad numeric config value '%s' for '%s' in file %s: invalid unit"
-msgstr ""
-
-#: config.c:677
-#, c-format
-msgid "bad numeric config value '%s' for '%s' in standard input: out of range"
+msgid "bad numeric config value '%s' for '%s' in submodule-blob %s: %s"
 msgstr ""
 
 #: config.c:678
 #, c-format
-msgid "bad numeric config value '%s' for '%s' in standard input: invalid unit"
+msgid "bad numeric config value '%s' for '%s' in command line %s: %s"
 msgstr ""
 
-#: config.c:682
+#: config.c:681
 #, c-format
-msgid ""
-"bad numeric config value '%s' for '%s' in submodule-blob %s: out of range"
+msgid "bad numeric config value '%s' for '%s' in %s: %s"
 msgstr ""
 
-#: config.c:683
-#, c-format
-msgid ""
-"bad numeric config value '%s' for '%s' in submodule-blob %s: invalid unit"
-msgstr ""
-
-#: config.c:687
-#, c-format
-msgid "bad numeric config value '%s' for '%s' in command line %s: out of range"
-msgstr ""
-
-#: config.c:688
-#, c-format
-msgid "bad numeric config value '%s' for '%s' in command line %s: invalid unit"
-msgstr ""
-
-#: config.c:692
-#, c-format
-msgid "bad numeric config value '%s' for '%s' in %s: out of range"
-msgstr ""
-
-#: config.c:693
-#, c-format
-msgid "bad numeric config value '%s' for '%s' in %s: invalid unit"
-msgstr ""
-
-#: config.c:780
+#: config.c:768
 #, c-format
 msgid "failed to expand user dir in: '%s'"
 msgstr ""
 
-#: config.c:861 config.c:872
+#: config.c:849 config.c:860
 #, c-format
 msgid "bad zlib compression level %d"
 msgstr ""
 
-#: config.c:990
+#: config.c:978
 #, c-format
 msgid "invalid mode for object creation: %s"
 msgstr ""
 
-#: config.c:1324
+#: config.c:1312
 msgid "unable to parse command-line config"
 msgstr ""
 
-#: config.c:1374
+#: config.c:1362
 msgid "unknown error occurred while reading the configuration files"
 msgstr ""
 
-#: config.c:1728
+#: config.c:1716
 #, c-format
 msgid "unable to parse '%s' from command-line config"
 msgstr ""
 
-#: config.c:1730
+#: config.c:1718
 #, c-format
 msgid "bad config variable '%s' in file '%s' at line %d"
 msgstr ""
 
-#: config.c:1789
+#: config.c:1777
 #, c-format
 msgid "%s has multiple values"
 msgstr ""
 
-#: config.c:2323
+#: config.c:2311
 #, c-format
 msgid "could not set '%s' to '%s'"
 msgstr ""
 
-#: config.c:2325
+#: config.c:2313
 #, c-format
 msgid "could not unset '%s'"
 msgstr ""
@@ -941,233 +912,233 @@ msgstr ""
 msgid "unable to write new index file"
 msgstr ""
 
-#: merge-recursive.c:212
+#: merge-recursive.c:209
 msgid "(bad commit)\n"
 msgstr ""
 
-#: merge-recursive.c:234
+#: merge-recursive.c:231
 #, c-format
 msgid "addinfo_cache failed for path '%s'"
 msgstr ""
 
-#: merge-recursive.c:304
+#: merge-recursive.c:301
 msgid "error building trees"
 msgstr ""
 
-#: merge-recursive.c:723
+#: merge-recursive.c:720
 #, c-format
 msgid "failed to create path '%s'%s"
 msgstr ""
 
-#: merge-recursive.c:734
+#: merge-recursive.c:731
 #, c-format
 msgid "Removing %s to make room for subdirectory\n"
 msgstr ""
 
-#: merge-recursive.c:748 merge-recursive.c:767
+#: merge-recursive.c:745 merge-recursive.c:764
 msgid ": perhaps a D/F conflict?"
 msgstr ""
 
-#: merge-recursive.c:757
+#: merge-recursive.c:754
 #, c-format
 msgid "refusing to lose untracked file at '%s'"
 msgstr ""
 
-#: merge-recursive.c:799
+#: merge-recursive.c:796
 #, c-format
 msgid "cannot read object %s '%s'"
 msgstr ""
 
-#: merge-recursive.c:801
+#: merge-recursive.c:798
 #, c-format
 msgid "blob expected for %s '%s'"
 msgstr ""
 
-#: merge-recursive.c:825
+#: merge-recursive.c:822
 #, c-format
 msgid "failed to open '%s': %s"
 msgstr ""
 
-#: merge-recursive.c:836
+#: merge-recursive.c:833
 #, c-format
 msgid "failed to symlink '%s': %s"
 msgstr ""
 
-#: merge-recursive.c:841
+#: merge-recursive.c:838
 #, c-format
 msgid "do not know what to do with %06o %s '%s'"
 msgstr ""
 
-#: merge-recursive.c:981
+#: merge-recursive.c:978
 msgid "Failed to execute internal merge"
 msgstr ""
 
-#: merge-recursive.c:985
+#: merge-recursive.c:982
 #, c-format
 msgid "Unable to add %s to database"
 msgstr ""
 
-#: merge-recursive.c:1084 merge-recursive.c:1098
+#: merge-recursive.c:1081 merge-recursive.c:1095
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
 "in tree."
 msgstr ""
 
-#: merge-recursive.c:1090 merge-recursive.c:1103
+#: merge-recursive.c:1087 merge-recursive.c:1100
 #, c-format
 msgid ""
 "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
 "in tree at %s."
 msgstr ""
 
-#: merge-recursive.c:1146
+#: merge-recursive.c:1143
 msgid "rename"
 msgstr ""
 
-#: merge-recursive.c:1146
+#: merge-recursive.c:1143
 msgid "renamed"
 msgstr ""
 
-#: merge-recursive.c:1203
+#: merge-recursive.c:1200
 #, c-format
 msgid "%s is a directory in %s adding as %s instead"
 msgstr ""
 
-#: merge-recursive.c:1228
+#: merge-recursive.c:1225
 #, c-format
 msgid ""
 "CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
 "\"->\"%s\" in \"%s\"%s"
 msgstr ""
 
-#: merge-recursive.c:1233
+#: merge-recursive.c:1230
 msgid " (left unresolved)"
 msgstr ""
 
-#: merge-recursive.c:1295
+#: merge-recursive.c:1292
 #, c-format
 msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
 msgstr ""
 
-#: merge-recursive.c:1328
+#: merge-recursive.c:1325
 #, c-format
 msgid "Renaming %s to %s and %s to %s instead"
 msgstr ""
 
-#: merge-recursive.c:1534
+#: merge-recursive.c:1531
 #, c-format
 msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
 msgstr ""
 
-#: merge-recursive.c:1549
+#: merge-recursive.c:1546
 #, c-format
 msgid "Adding merged %s"
 msgstr ""
 
-#: merge-recursive.c:1556 merge-recursive.c:1769
+#: merge-recursive.c:1553 merge-recursive.c:1766
 #, c-format
 msgid "Adding as %s instead"
 msgstr ""
 
-#: merge-recursive.c:1613
+#: merge-recursive.c:1610
 #, c-format
 msgid "cannot read object %s"
 msgstr ""
 
-#: merge-recursive.c:1616
+#: merge-recursive.c:1613
 #, c-format
 msgid "object %s is not a blob"
 msgstr ""
 
-#: merge-recursive.c:1669
+#: merge-recursive.c:1666
 msgid "modify"
 msgstr ""
 
-#: merge-recursive.c:1669
+#: merge-recursive.c:1666
 msgid "modified"
 msgstr ""
 
-#: merge-recursive.c:1679
+#: merge-recursive.c:1676
 msgid "content"
 msgstr ""
 
-#: merge-recursive.c:1686
+#: merge-recursive.c:1683
 msgid "add/add"
 msgstr ""
 
-#: merge-recursive.c:1721
+#: merge-recursive.c:1718
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr ""
 
-#: merge-recursive.c:1735
+#: merge-recursive.c:1732
 #, c-format
 msgid "Auto-merging %s"
 msgstr ""
 
-#: merge-recursive.c:1739 git-submodule.sh:919
+#: merge-recursive.c:1736 git-submodule.sh:919
 msgid "submodule"
 msgstr ""
 
-#: merge-recursive.c:1740
+#: merge-recursive.c:1737
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr ""
 
-#: merge-recursive.c:1834
+#: merge-recursive.c:1831
 #, c-format
 msgid "Removing %s"
 msgstr ""
 
-#: merge-recursive.c:1860
+#: merge-recursive.c:1857
 msgid "file/directory"
 msgstr ""
 
-#: merge-recursive.c:1866
+#: merge-recursive.c:1863
 msgid "directory/file"
 msgstr ""
 
-#: merge-recursive.c:1871
+#: merge-recursive.c:1868
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr ""
 
-#: merge-recursive.c:1880
+#: merge-recursive.c:1877
 #, c-format
 msgid "Adding %s"
 msgstr ""
 
-#: merge-recursive.c:1917
+#: merge-recursive.c:1914
 msgid "Already up-to-date!"
 msgstr ""
 
-#: merge-recursive.c:1926
+#: merge-recursive.c:1923
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr ""
 
-#: merge-recursive.c:2009
+#: merge-recursive.c:2006
 msgid "Merging:"
 msgstr ""
 
-#: merge-recursive.c:2022
+#: merge-recursive.c:2019
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: merge-recursive.c:2061
+#: merge-recursive.c:2058
 msgid "merge returned no commit"
 msgstr ""
 
-#: merge-recursive.c:2124
+#: merge-recursive.c:2121
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr ""
 
-#: merge-recursive.c:2138 builtin/merge.c:641 builtin/merge.c:788
+#: merge-recursive.c:2135 builtin/merge.c:641 builtin/merge.c:788
 msgid "Unable to write index."
 msgstr ""
 
@@ -1227,7 +1198,7 @@ msgstr ""
 msgid "malformed object name '%s'"
 msgstr ""
 
-#: path.c:796
+#: path.c:798
 #, c-format
 msgid "Could not make %s writable by group"
 msgstr ""
@@ -1745,7 +1716,7 @@ msgid "git %s: failed to refresh the index"
 msgstr ""
 
 #: sequencer.c:705
-msgid "Cannot revert during a another revert."
+msgid "Cannot revert during another revert."
 msgstr ""
 
 #: sequencer.c:706
@@ -2841,7 +2812,7 @@ msgstr ""
 msgid "interactive picking"
 msgstr ""
 
-#: builtin/add.c:257 builtin/checkout.c:1156 builtin/reset.c:286
+#: builtin/add.c:257 builtin/checkout.c:1157 builtin/reset.c:286
 msgid "select hunks interactively"
 msgstr ""
 
@@ -4454,7 +4425,7 @@ msgstr ""
 msgid "terminate input and output records by a NUL character"
 msgstr ""
 
-#: builtin/check-ignore.c:18 builtin/checkout.c:1137 builtin/gc.c:325
+#: builtin/check-ignore.c:18 builtin/checkout.c:1138 builtin/gc.c:325
 msgid "suppress progress reporting"
 msgstr ""
 
@@ -4626,45 +4597,45 @@ msgstr ""
 msgid "Can not do reflog for '%s': %s\n"
 msgstr ""
 
-#: builtin/checkout.c:663
+#: builtin/checkout.c:664
 msgid "HEAD is now at"
 msgstr ""
 
-#: builtin/checkout.c:667 builtin/clone.c:661
+#: builtin/checkout.c:668 builtin/clone.c:661
 msgid "unable to update HEAD"
 msgstr ""
 
-#: builtin/checkout.c:671
+#: builtin/checkout.c:672
 #, c-format
 msgid "Reset branch '%s'\n"
 msgstr ""
 
-#: builtin/checkout.c:674
+#: builtin/checkout.c:675
 #, c-format
 msgid "Already on '%s'\n"
 msgstr ""
 
-#: builtin/checkout.c:678
+#: builtin/checkout.c:679
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
 msgstr ""
 
-#: builtin/checkout.c:680 builtin/checkout.c:1069
+#: builtin/checkout.c:681 builtin/checkout.c:1070
 #, c-format
 msgid "Switched to a new branch '%s'\n"
 msgstr ""
 
-#: builtin/checkout.c:682
+#: builtin/checkout.c:683
 #, c-format
 msgid "Switched to branch '%s'\n"
 msgstr ""
 
-#: builtin/checkout.c:733
+#: builtin/checkout.c:734
 #, c-format
 msgid " ... and %d more.\n"
 msgstr ""
 
-#: builtin/checkout.c:739
+#: builtin/checkout.c:740
 #, c-format
 msgid ""
 "Warning: you are leaving %d commit behind, not connected to\n"
@@ -4679,7 +4650,7 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/checkout.c:758
+#: builtin/checkout.c:759
 #, c-format
 msgid ""
 "If you want to keep it by creating a new branch, this may be a good time\n"
@@ -4696,162 +4667,162 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: builtin/checkout.c:794
+#: builtin/checkout.c:795
 msgid "internal error in revision walk"
 msgstr ""
 
-#: builtin/checkout.c:798
+#: builtin/checkout.c:799
 msgid "Previous HEAD position was"
 msgstr ""
 
-#: builtin/checkout.c:825 builtin/checkout.c:1064
+#: builtin/checkout.c:826 builtin/checkout.c:1065
 msgid "You are on a branch yet to be born"
 msgstr ""
 
-#: builtin/checkout.c:970
+#: builtin/checkout.c:971
 #, c-format
 msgid "only one reference expected, %d given."
 msgstr ""
 
-#: builtin/checkout.c:1010 builtin/worktree.c:214
+#: builtin/checkout.c:1011 builtin/worktree.c:214
 #, c-format
 msgid "invalid reference: %s"
 msgstr ""
 
-#: builtin/checkout.c:1039
+#: builtin/checkout.c:1040
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr ""
 
-#: builtin/checkout.c:1078
+#: builtin/checkout.c:1079
 msgid "paths cannot be used with switching branches"
 msgstr ""
 
-#: builtin/checkout.c:1081 builtin/checkout.c:1085
+#: builtin/checkout.c:1082 builtin/checkout.c:1086
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr ""
 
-#: builtin/checkout.c:1089 builtin/checkout.c:1092 builtin/checkout.c:1097
-#: builtin/checkout.c:1100
+#: builtin/checkout.c:1090 builtin/checkout.c:1093 builtin/checkout.c:1098
+#: builtin/checkout.c:1101
 #, c-format
 msgid "'%s' cannot be used with '%s'"
 msgstr ""
 
-#: builtin/checkout.c:1105
+#: builtin/checkout.c:1106
 #, c-format
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr ""
 
-#: builtin/checkout.c:1138 builtin/checkout.c:1140 builtin/clone.c:88
+#: builtin/checkout.c:1139 builtin/checkout.c:1141 builtin/clone.c:88
 #: builtin/remote.c:165 builtin/remote.c:167 builtin/worktree.c:324
 #: builtin/worktree.c:326
 msgid "branch"
 msgstr ""
 
-#: builtin/checkout.c:1139
+#: builtin/checkout.c:1140
 msgid "create and checkout a new branch"
 msgstr ""
 
-#: builtin/checkout.c:1141
+#: builtin/checkout.c:1142
 msgid "create/reset and checkout a branch"
 msgstr ""
 
-#: builtin/checkout.c:1142
+#: builtin/checkout.c:1143
 msgid "create reflog for new branch"
 msgstr ""
 
-#: builtin/checkout.c:1143 builtin/worktree.c:328
+#: builtin/checkout.c:1144 builtin/worktree.c:328
 msgid "detach HEAD at named commit"
 msgstr ""
 
-#: builtin/checkout.c:1144
+#: builtin/checkout.c:1145
 msgid "set upstream info for new branch"
 msgstr ""
 
-#: builtin/checkout.c:1146
+#: builtin/checkout.c:1147
 msgid "new-branch"
 msgstr ""
 
-#: builtin/checkout.c:1146
+#: builtin/checkout.c:1147
 msgid "new unparented branch"
 msgstr ""
 
-#: builtin/checkout.c:1147
+#: builtin/checkout.c:1148
 msgid "checkout our version for unmerged files"
 msgstr ""
 
-#: builtin/checkout.c:1149
+#: builtin/checkout.c:1150
 msgid "checkout their version for unmerged files"
 msgstr ""
 
-#: builtin/checkout.c:1151
+#: builtin/checkout.c:1152
 msgid "force checkout (throw away local modifications)"
 msgstr ""
 
-#: builtin/checkout.c:1152
+#: builtin/checkout.c:1153
 msgid "perform a 3-way merge with the new branch"
 msgstr ""
 
-#: builtin/checkout.c:1153 builtin/merge.c:231
+#: builtin/checkout.c:1154 builtin/merge.c:231
 msgid "update ignored files (default)"
 msgstr ""
 
-#: builtin/checkout.c:1154 builtin/log.c:1459 parse-options.h:250
+#: builtin/checkout.c:1155 builtin/log.c:1459 parse-options.h:250
 msgid "style"
 msgstr ""
 
-#: builtin/checkout.c:1155
+#: builtin/checkout.c:1156
 msgid "conflict style (merge or diff3)"
 msgstr ""
 
-#: builtin/checkout.c:1158
+#: builtin/checkout.c:1159
 msgid "do not limit pathspecs to sparse entries only"
 msgstr ""
 
-#: builtin/checkout.c:1160
+#: builtin/checkout.c:1161
 msgid "second guess 'git checkout <no-such-branch>'"
 msgstr ""
 
-#: builtin/checkout.c:1162
+#: builtin/checkout.c:1163
 msgid "do not check if another worktree is holding the given ref"
 msgstr ""
 
-#: builtin/checkout.c:1163 builtin/clone.c:60 builtin/fetch.c:117
+#: builtin/checkout.c:1164 builtin/clone.c:60 builtin/fetch.c:117
 #: builtin/merge.c:228 builtin/pull.c:116 builtin/push.c:536
 #: builtin/send-pack.c:168
 msgid "force progress reporting"
 msgstr ""
 
-#: builtin/checkout.c:1194
+#: builtin/checkout.c:1195
 msgid "-b, -B and --orphan are mutually exclusive"
 msgstr ""
 
-#: builtin/checkout.c:1211
+#: builtin/checkout.c:1212
 msgid "--track needs a branch name"
 msgstr ""
 
-#: builtin/checkout.c:1216
+#: builtin/checkout.c:1217
 msgid "Missing branch name; try -b"
 msgstr ""
 
-#: builtin/checkout.c:1252
+#: builtin/checkout.c:1253
 msgid "invalid path specification"
 msgstr ""
 
-#: builtin/checkout.c:1259
+#: builtin/checkout.c:1260
 #, c-format
 msgid ""
 "Cannot update paths and switch to branch '%s' at the same time.\n"
 "Did you intend to checkout '%s' which can not be resolved as commit?"
 msgstr ""
 
-#: builtin/checkout.c:1264
+#: builtin/checkout.c:1265
 #, c-format
 msgid "git checkout: --detach does not take a path argument '%s'"
 msgstr ""
 
-#: builtin/checkout.c:1268
+#: builtin/checkout.c:1269
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
@@ -5221,7 +5192,7 @@ msgstr ""
 msgid "cannot unlink temporary alternates file"
 msgstr ""
 
-#: builtin/clone.c:863 builtin/receive-pack.c:1857
+#: builtin/clone.c:863 builtin/receive-pack.c:1855
 msgid "Too many arguments."
 msgstr ""
 
@@ -7065,48 +7036,48 @@ msgstr ""
 msgid "no info viewer handled the request"
 msgstr ""
 
-#: builtin/help.c:408
+#: builtin/help.c:401
 msgid "Defining attributes per path"
 msgstr ""
 
-#: builtin/help.c:409
+#: builtin/help.c:402
 msgid "Everyday Git With 20 Commands Or So"
 msgstr ""
 
-#: builtin/help.c:410
+#: builtin/help.c:403
 msgid "A Git glossary"
 msgstr ""
 
-#: builtin/help.c:411
+#: builtin/help.c:404
 msgid "Specifies intentionally untracked files to ignore"
 msgstr ""
 
-#: builtin/help.c:412
+#: builtin/help.c:405
 msgid "Defining submodule properties"
 msgstr ""
 
-#: builtin/help.c:413
+#: builtin/help.c:406
 msgid "Specifying revisions and ranges for Git"
 msgstr ""
 
-#: builtin/help.c:414
+#: builtin/help.c:407
 msgid "A tutorial introduction to Git (for version 1.5.1 or newer)"
 msgstr ""
 
-#: builtin/help.c:415
+#: builtin/help.c:408
 msgid "An overview of recommended workflows with Git"
 msgstr ""
 
-#: builtin/help.c:427
+#: builtin/help.c:420
 msgid "The common Git guides are:\n"
 msgstr ""
 
-#: builtin/help.c:448 builtin/help.c:465
+#: builtin/help.c:441 builtin/help.c:458
 #, c-format
 msgid "usage: %s%s"
 msgstr ""
 
-#: builtin/help.c:481
+#: builtin/help.c:474
 #, c-format
 msgid "`git %s' is aliased to `%s'"
 msgstr ""
@@ -9643,11 +9614,11 @@ msgstr ""
 msgid "git receive-pack <git-dir>"
 msgstr ""
 
-#: builtin/receive-pack.c:1845
+#: builtin/receive-pack.c:1843
 msgid "quiet"
 msgstr ""
 
-#: builtin/receive-pack.c:1859
+#: builtin/receive-pack.c:1857
 msgid "You must specify a directory."
 msgstr ""
 
@@ -12606,167 +12577,43 @@ msgstr ""
 msgid "Could not pick $sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:408 git-rebase--interactive.sh:474
-msgid "This is the 1st commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:409
-msgid "This is the 2nd commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:410
-msgid "This is the 3rd commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:411
-msgid "This is the 4th commit message:"
+#: git-rebase--interactive.sh:407
+#, sh-format
+msgid "This is the commit message #${n}:"
 msgstr ""
 
 #: git-rebase--interactive.sh:412
-msgid "This is the 5th commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:413
-msgid "This is the 6th commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:414
-msgid "This is the 7th commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:415
-msgid "This is the 8th commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:416
-msgid "This is the 9th commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:417
-msgid "This is the 10th commit message:"
-msgstr ""
-
-#. TRANSLATORS: if the language you are translating into
-#. doesn't allow you to compose a sentence in this fashion,
-#. consider translating as if this and the following few strings
-#. were "This is the commit message ${n}:"
-#: git-rebase--interactive.sh:422
 #, sh-format
-msgid "This is the ${n}th commit message:"
+msgid "The commit message #${n} will be skipped:"
 msgstr ""
 
 #: git-rebase--interactive.sh:423
-#, sh-format
-msgid "This is the ${n}st commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:424
-#, sh-format
-msgid "This is the ${n}nd commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:425
-#, sh-format
-msgid "This is the ${n}rd commit message:"
-msgstr ""
-
-#: git-rebase--interactive.sh:426
-#, sh-format
-msgid "This is the commit message ${n}:"
-msgstr ""
-
-#: git-rebase--interactive.sh:432
-msgid "The 1st commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:433
-msgid "The 2nd commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:434
-msgid "The 3rd commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:435
-msgid "The 4th commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:436
-msgid "The 5th commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:437
-msgid "The 6th commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:438
-msgid "The 7th commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:439
-msgid "The 8th commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:440
-msgid "The 9th commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:441
-msgid "The 10th commit message will be skipped:"
-msgstr ""
-
-#. TRANSLATORS: if the language you are translating into
-#. doesn't allow you to compose a sentence in this fashion,
-#. consider translating as if this and the following few strings
-#. were "The commit message ${n} will be skipped:"
-#: git-rebase--interactive.sh:446
-#, sh-format
-msgid "The ${n}th commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:447
-#, sh-format
-msgid "The ${n}st commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:448
-#, sh-format
-msgid "The ${n}nd commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:449
-#, sh-format
-msgid "The ${n}rd commit message will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:450
-#, sh-format
-msgid "The commit message ${n} will be skipped:"
-msgstr ""
-
-#: git-rebase--interactive.sh:462
 #, sh-format
 msgid "This is a combination of $count commit."
 msgid_plural "This is a combination of $count commits."
 msgstr[0] ""
 msgstr[1] ""
 
-#: git-rebase--interactive.sh:470
+#: git-rebase--interactive.sh:431
 #, sh-format
 msgid "Cannot write $fixup_msg"
 msgstr ""
 
-#: git-rebase--interactive.sh:473
+#: git-rebase--interactive.sh:434
 msgid "This is a combination of 2 commits."
 msgstr ""
 
-#: git-rebase--interactive.sh:514 git-rebase--interactive.sh:557
-#: git-rebase--interactive.sh:560
+#: git-rebase--interactive.sh:435
+msgid "This is the 1st commit message:"
+msgstr ""
+
+#: git-rebase--interactive.sh:475 git-rebase--interactive.sh:518
+#: git-rebase--interactive.sh:521
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:588
+#: git-rebase--interactive.sh:549
 #, sh-format
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
@@ -12776,31 +12623,31 @@ msgid ""
 "you are able to reword the commit."
 msgstr ""
 
-#: git-rebase--interactive.sh:603
+#: git-rebase--interactive.sh:564
 #, sh-format
 msgid "Stopped at $sha1_abbrev... $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:618
+#: git-rebase--interactive.sh:579
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
 msgstr ""
 
-#: git-rebase--interactive.sh:660
+#: git-rebase--interactive.sh:621
 #, sh-format
 msgid "Executing: $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:668
+#: git-rebase--interactive.sh:629
 #, sh-format
 msgid "Execution failed: $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:670
+#: git-rebase--interactive.sh:631
 msgid "and made changes to the index and/or the working tree"
 msgstr ""
 
-#: git-rebase--interactive.sh:672
+#: git-rebase--interactive.sh:633
 msgid ""
 "You can fix the problem, and then run\n"
 "\n"
@@ -12808,7 +12655,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: after these lines is a command to be issued by the user
-#: git-rebase--interactive.sh:685
+#: git-rebase--interactive.sh:646
 #, sh-format
 msgid ""
 "Execution succeeded: $rest\n"
@@ -12818,49 +12665,49 @@ msgid ""
 "\tgit rebase --continue"
 msgstr ""
 
-#: git-rebase--interactive.sh:696
+#: git-rebase--interactive.sh:657
 #, sh-format
 msgid "Unknown command: $command $sha1 $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:697
+#: git-rebase--interactive.sh:658
 msgid "Please fix this using 'git rebase --edit-todo'."
 msgstr ""
 
-#: git-rebase--interactive.sh:732
+#: git-rebase--interactive.sh:693
 #, sh-format
 msgid "Successfully rebased and updated $head_name."
 msgstr ""
 
-#: git-rebase--interactive.sh:779
+#: git-rebase--interactive.sh:740
 msgid "Could not skip unnecessary pick commands"
 msgstr ""
 
-#: git-rebase--interactive.sh:937
+#: git-rebase--interactive.sh:898
 #, sh-format
 msgid ""
 "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
 " - $line"
 msgstr ""
 
-#: git-rebase--interactive.sh:970
+#: git-rebase--interactive.sh:931
 #, sh-format
 msgid ""
 "Warning: the command isn't recognized in the following line:\n"
 " - $line"
 msgstr ""
 
-#: git-rebase--interactive.sh:1009
+#: git-rebase--interactive.sh:970
 msgid "could not detach HEAD"
 msgstr ""
 
-#: git-rebase--interactive.sh:1047
+#: git-rebase--interactive.sh:1008
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
 msgstr ""
 
-#: git-rebase--interactive.sh:1055
+#: git-rebase--interactive.sh:1016
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
@@ -12869,26 +12716,26 @@ msgid ""
 "The possible behaviours are: ignore, warn, error."
 msgstr ""
 
-#: git-rebase--interactive.sh:1066
+#: git-rebase--interactive.sh:1027
 #, sh-format
 msgid ""
 "Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
 "Ignoring."
 msgstr ""
 
-#: git-rebase--interactive.sh:1083
+#: git-rebase--interactive.sh:1044
 msgid "You can fix this with 'git rebase --edit-todo'."
 msgstr ""
 
-#: git-rebase--interactive.sh:1084
+#: git-rebase--interactive.sh:1045
 msgid "Or you can abort the rebase with 'git rebase --abort'."
 msgstr ""
 
-#: git-rebase--interactive.sh:1108
+#: git-rebase--interactive.sh:1069
 msgid "Could not remove CHERRY_PICK_HEAD"
 msgstr ""
 
-#: git-rebase--interactive.sh:1113
+#: git-rebase--interactive.sh:1074
 #, sh-format
 msgid ""
 "You have staged changes in your working tree.\n"
@@ -12906,21 +12753,21 @@ msgid ""
 "  git rebase --continue\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:1130
+#: git-rebase--interactive.sh:1091
 msgid "Error trying to find the author identity to amend commit"
 msgstr ""
 
-#: git-rebase--interactive.sh:1135
+#: git-rebase--interactive.sh:1096
 msgid ""
 "You have uncommitted changes in your working tree. Please commit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 
-#: git-rebase--interactive.sh:1140 git-rebase--interactive.sh:1144
+#: git-rebase--interactive.sh:1101 git-rebase--interactive.sh:1105
 msgid "Could not commit staged changes."
 msgstr ""
 
-#: git-rebase--interactive.sh:1168
+#: git-rebase--interactive.sh:1129
 msgid ""
 "\n"
 "You are editing the todo file of an ongoing interactive rebase.\n"
@@ -12929,51 +12776,51 @@ msgid ""
 "\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:1176 git-rebase--interactive.sh:1337
+#: git-rebase--interactive.sh:1137 git-rebase--interactive.sh:1298
 msgid "Could not execute editor"
 msgstr ""
 
-#: git-rebase--interactive.sh:1184
+#: git-rebase--interactive.sh:1145
 msgid "You need to set your committer info first"
 msgstr ""
 
-#: git-rebase--interactive.sh:1192
+#: git-rebase--interactive.sh:1153
 #, sh-format
 msgid "Could not checkout $switch_to"
 msgstr ""
 
-#: git-rebase--interactive.sh:1197
+#: git-rebase--interactive.sh:1158
 msgid "No HEAD?"
 msgstr ""
 
-#: git-rebase--interactive.sh:1198
+#: git-rebase--interactive.sh:1159
 #, sh-format
 msgid "Could not create temporary $state_dir"
 msgstr ""
 
-#: git-rebase--interactive.sh:1200
+#: git-rebase--interactive.sh:1161
 msgid "Could not mark as interactive"
 msgstr ""
 
-#: git-rebase--interactive.sh:1210 git-rebase--interactive.sh:1215
+#: git-rebase--interactive.sh:1171 git-rebase--interactive.sh:1176
 msgid "Could not init rewritten commits"
 msgstr ""
 
-#: git-rebase--interactive.sh:1315
+#: git-rebase--interactive.sh:1276
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: git-rebase--interactive.sh:1320
+#: git-rebase--interactive.sh:1281
 msgid ""
 "\n"
 "However, if you remove everything, the rebase will be aborted.\n"
 "\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:1327
+#: git-rebase--interactive.sh:1288
 msgid "Note that empty commits are commented out"
 msgstr ""
 
