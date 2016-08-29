@@ -209,7 +209,7 @@ test_expect_failure 'diff-highlight highlights mismatched hunk size' '
 
 # TODO add multi-byte test
 
-test_expect_failure 'diff-highlight works with the --graph option' '
+test_expect_success 'diff-highlight works with the --graph option' '
 	dh_test_setup_history &&
 
 	# topo-order so that the order of the commits is the same as with --graph
