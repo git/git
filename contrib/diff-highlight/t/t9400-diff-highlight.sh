@@ -49,6 +49,55 @@ test_strip_patch_header () {
 	sed -n '/^@@/,$p' $*
 }
 
+# dh_test_setup_history generates a contrived graph such that we have at least
+# 1 nesting (E) and 2 nestings (F).
+#
+#	      A branch
+#	     /
+#	D---E---F master
+#
+#	git log --all --graph
+#	* commit
+#	|    A
+#	| * commit
+#	| |    F
+#	| * commit
+#	|/
+#	|    E
+#	* commit
+#	     D
+#
+dh_test_setup_history () {
+	echo "file1" >file1 &&
+	echo "file2" >file2 &&
+	echo "file3" >file3 &&
+
+	cat file1 >file &&
+	git add file &&
+	git commit -m "D" &&
+
+	git checkout -b branch &&
+	cat file2 >file &&
+	git commit -a -m "A" &&
+
+	git checkout master &&
+	cat file2 >file &&
+	git commit -a -m "E" &&
+
+	cat file3 >file &&
+	git commit -a -m "F"
+}
+
+left_trim () {
+	"$PERL_PATH" -pe 's/^\s+//'
+}
+
+trim_graph () {
+	# graphs start with * or |
+	# followed by a space or / or \
+	"$PERL_PATH" -pe 's@^((\*|\|)( |/|\\))+@@'
+}
+
 test_expect_success 'diff-highlight highlights the beginning of a line' '
 	cat >a <<-\EOF &&
 		aaa
@@ -159,5 +208,18 @@ test_expect_failure 'diff-highlight highlights mismatched hunk size' '
 '
 
 # TODO add multi-byte test
+
+test_expect_failure 'diff-highlight works with the --graph option' '
+	dh_test_setup_history &&
+
+	# topo-order so that the order of the commits is the same as with --graph
+	# trim graph elements so we can do a diff
+	# trim leading space because our trim_graph is not perfect
+	git log --branches -p --topo-order |
+		"$DIFF_HIGHLIGHT" | left_trim >graph.exp &&
+	git log --branches -p --graph |
+		"$DIFF_HIGHLIGHT" | trim_graph | left_trim >graph.act &&
+	test_cmp graph.exp graph.act
+'
 
 test_done
