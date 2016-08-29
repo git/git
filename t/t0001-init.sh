@@ -384,4 +384,16 @@ test_expect_success MINGW 'bare git dir not hidden' '
 	! is_hidden newdir
 '
 
+test_expect_success MINGW 'core.hidedotfiles = false' '
+	git config --global core.hidedotfiles false &&
+	rm -rf newdir &&
+	(
+		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
+		mkdir newdir &&
+		cd newdir &&
+		git init
+	) &&
+	! is_hidden newdir/.git
+'
+
 test_done
