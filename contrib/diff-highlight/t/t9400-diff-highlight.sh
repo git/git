@@ -256,4 +256,41 @@ test_expect_success 'diff-highlight works with the --graph option' '
 	test_cmp graph.exp graph.act
 '
 
+# Most combined diffs won't meet diff-highlight's line-number filter. So we
+# create one here where one side drops a line and the other modifies it. That
+# should result in a diff like:
+#
+#    - modified content
+#    ++resolved content
+#
+# which naively looks like one side added "+resolved".
+test_expect_success 'diff-highlight ignores combined diffs' '
+	echo "content" >file &&
+	git add file &&
+	git commit -m base &&
+
+	>file &&
+	git commit -am master &&
+
+	git checkout -b other HEAD^ &&
+	echo "modified content" >file &&
+	git commit -am other &&
+
+	test_must_fail git merge master &&
+	echo "resolved content" >file &&
+	git commit -am resolved &&
+
+	cat >expect <<-\EOF &&
+	--- a/file
+	+++ b/file
+	@@@ -1,1 -1,0 +1,1 @@@
+	- modified content
+	++resolved content
+	EOF
+
+	git show -c | "$DIFF_HIGHLIGHT" >actual.raw &&
+	sed -n "/^---/,\$p" <actual.raw >actual &&
+	test_cmp expect actual
+'
+
 test_done
