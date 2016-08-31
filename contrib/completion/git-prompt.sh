@@ -478,6 +478,7 @@ __git_ps1 ()
 		then
 			git diff --no-ext-diff --quiet || w="*"
 			git diff --no-ext-diff --cached --quiet || i="+"
+			git diff --stat --quiet origin/"${b##refs/heads/}" || i="^"
 			if [ -z "$short_sha" ] && [ -z "$i" ]; then
 				i="#"
 			fi
