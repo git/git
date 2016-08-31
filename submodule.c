@@ -337,7 +337,7 @@ static void print_submodule_summary(struct rev_info *rev, FILE *f,
 
 void show_submodule_summary(FILE *f, const char *path,
 		const char *line_prefix,
-		unsigned char one[20], unsigned char two[20],
+		struct object_id *one, struct object_id *two,
 		unsigned dirty_submodule, const char *meta,
 		const char *del, const char *add, const char *reset)
 {
@@ -347,14 +347,14 @@ void show_submodule_summary(FILE *f, const char *path,
 	struct strbuf sb = STRBUF_INIT;
 	int fast_forward = 0, fast_backward = 0;
 
-	if (is_null_sha1(two))
+	if (is_null_oid(two))
 		message = "(submodule deleted)";
 	else if (add_submodule_odb(path))
 		message = "(not initialized)";
-	else if (is_null_sha1(one))
+	else if (is_null_oid(one))
 		message = "(new submodule)";
-	else if (!(left = lookup_commit_reference(one)) ||
-		 !(right = lookup_commit_reference(two)))
+	else if (!(left = lookup_commit_reference(one->hash)) ||
+		 !(right = lookup_commit_reference(two->hash)))
 		message = "(commits not present)";
 	else if (prepare_submodule_summary(&rev, path, left, right,
 					   &fast_forward, &fast_backward))
@@ -367,16 +367,16 @@ void show_submodule_summary(FILE *f, const char *path,
 		fprintf(f, "%sSubmodule %s contains modified content\n",
 			line_prefix, path);
 
-	if (!hashcmp(one, two)) {
+	if (!oidcmp(one, two)) {
 		strbuf_release(&sb);
 		return;
 	}
 
 	strbuf_addf(&sb, "%s%sSubmodule %s %s..", line_prefix, meta, path,
-			find_unique_abbrev(one, DEFAULT_ABBREV));
+			find_unique_abbrev(one->hash, DEFAULT_ABBREV));
 	if (!fast_backward && !fast_forward)
 		strbuf_addch(&sb, '.');
-	strbuf_addf(&sb, "%s", find_unique_abbrev(two, DEFAULT_ABBREV));
+	strbuf_addf(&sb, "%s", find_unique_abbrev(two->hash, DEFAULT_ABBREV));
 	if (message)
 		strbuf_addf(&sb, " %s%s\n", message, reset);
 	else

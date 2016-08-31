@@ -2307,7 +2307,7 @@ static void builtin_diff(const char *name_a,
 		const char *add = diff_get_color_opt(o, DIFF_FILE_NEW);
 		show_submodule_summary(o->file, one->path ? one->path : two->path,
 				line_prefix,
-				one->oid.hash, two->oid.hash,
+				&one->oid, &two->oid,
 				two->dirty_submodule,
 				meta, del, add, reset);
 		return;
