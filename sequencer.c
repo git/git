@@ -1859,22 +1859,25 @@ int sequencer_continue(struct replay_opts *opts)
 		if (commit_staged_changes(opts))
 			return -1;
 	}
-	if (!file_exists(get_todo_path(opts)))
+	else if (!file_exists(get_todo_path(opts)))
 		return continue_single_pick();
 	if (read_populate_opts(opts) ||
 			read_populate_todo(&todo_list, opts))
 		return -1;
 
-	/* Verify that the conflict has been resolved */
-	if (file_exists(git_path_cherry_pick_head()) ||
-	    file_exists(git_path_revert_head())) {
-		int ret = continue_single_pick();
-		if (ret)
-			return ret;
+	if (!is_rebase_i(opts)) {
+		/* Verify that the conflict has been resolved */
+		if (file_exists(git_path_cherry_pick_head()) ||
+		    file_exists(git_path_revert_head())) {
+			int ret = continue_single_pick();
+			if (ret)
+				return ret;
+		}
+		if (index_differs_from("HEAD", 0))
+			return error_dirty_index(opts);
+		todo_list.current++;
 	}
-	if (index_differs_from("HEAD", 0))
-		return error_dirty_index(opts);
-	todo_list.current++;
+
 	res = pick_commits(&todo_list, opts);
 	todo_list_release(&todo_list);
 	return res;
