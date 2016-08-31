@@ -77,7 +77,8 @@ UI, Workflows & Features
  * "git archive" learned to handle files that are larger than 8GB and
    commits far in the future than expressible by the traditional US-TAR
    format.
-   (merge 5caeeb8 jk/big-and-future-archive-tar later to maint).
+   (merge 560b0e8 jk/big-and-future-archive-tar later to maint).
+
 
  * A new configuration variable core.sshCommand has been added to
    specify what value for GIT_SSH_COMMAND to use per repository.
@@ -306,7 +307,7 @@ Performance, Internal Implementation, Development Support etc.
    changes and attempts to find matches. This has been optimized by
    lazily computing the full patch-id (which is expensive) to be
    compared only for changes that touch the same set of paths.
-   (merge b3dfeeb kw/patch-ids-optim later to maint).
+   (merge ba67504 kw/patch-ids-optim later to maint).
 
  * A handful of tests that were broken under gettext-poison build have
    been fixed.
@@ -660,6 +661,10 @@ notes for details).
    to avoid this (on Windows, this is mapped to O_NOINHERIT).
    (merge 05d1ed6 bw/mingw-avoid-inheriting-fd-to-lockfile later to maint).
 
+ * Correct an age-old calco (is that a typo-like word for calc)
+   in the documentation.
+   (merge 7841c48 ls/packet-line-protocol-doc-fix later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 02a8cfa rs/merge-add-strategies-simplification later to maint).
    (merge af4941d rs/merge-recursive-string-list-init later to maint).
@@ -667,4 +672,4 @@ notes for details).
    (merge ddd0bfa jk/tighten-alloc later to maint).
    (merge ecf30b2 rs/mailinfo-lib later to maint).
    (merge 0eb75ce sg/reflog-past-root later to maint).
-   (merge 175d38c hv/doc-commit-reference-style later to maint).
+   (merge 4369523 hv/doc-commit-reference-style later to maint).
