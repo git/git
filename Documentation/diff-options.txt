@@ -210,13 +210,16 @@ any of those replacements occurred.
 	of the `--diff-filter` option on what the status letters mean.
 
 --submodule[=<format>]::
-	Specify how differences in submodules are shown.  When `--submodule`
-	or `--submodule=log` is given, the 'log' format is used.  This format lists
-	the commits in the range like linkgit:git-submodule[1] `summary` does.
-	Omitting the `--submodule` option or specifying `--submodule=short`,
-	uses the 'short' format. This format just shows the names of the commits
-	at the beginning and end of the range.  Can be tweaked via the
-	`diff.submodule` configuration variable.
+	Specify how differences in submodules are shown.  When specifying
+	`--submodule=short` the 'short' format is used.  This format just
+	shows the names of the commits at the beginning and end of the range.
+	When `--submodule` or `--submodule=log` is specified, the 'log'
+	format is used.  This format lists the commits in the range like
+	linkgit:git-submodule[1] `summary` does.  When `--submodule=diff`
+	is specified, the 'diff' format is used.  This format shows an
+	inline diff of the changes in the submodule contents between the
+	commit range.  Defaults to `diff.submodule` or the 'short' format
+	if the config option is unset.
 
 --color[=<when>]::
 	Show colored diff.

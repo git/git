@@ -111,7 +111,8 @@ enum diff_words_type {
 
 enum diff_submodule_format {
 	DIFF_SUBMODULE_SHORT = 0,
-	DIFF_SUBMODULE_LOG
+	DIFF_SUBMODULE_LOG,
+	DIFF_SUBMODULE_INLINE_DIFF
 };
 
 struct diff_options {
