@@ -569,5 +569,8 @@ endif::git-format-patch[]
 --no-prefix::
 	Do not show any source or destination prefix.
 
+--line-prefix=<prefix>::
+	Prepend an additional prefix to every line of output.
+
 For more detailed explanation on these common options, see also
 linkgit:gitdiffcore[7].

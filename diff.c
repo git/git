@@ -18,6 +18,7 @@
 #include "ll-merge.h"
 #include "string-list.h"
 #include "argv-array.h"
+#include "graph.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -3964,6 +3965,12 @@ int diff_opt_parse(struct diff_options *options,
 	}
 	else if ((argcount = parse_long_opt("src-prefix", av, &optarg))) {
 		options->a_prefix = optarg;
+		return argcount;
+	}
+	else if ((argcount = parse_long_opt("line-prefix", av, &optarg))) {
+		options->line_prefix = optarg;
+		options->line_prefix_length = strlen(options->line_prefix);
+		graph_setup_line_prefix(options);
 		return argcount;
 	}
 	else if ((argcount = parse_long_opt("dst-prefix", av, &optarg))) {

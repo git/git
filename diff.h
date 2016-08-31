@@ -115,6 +115,8 @@ struct diff_options {
 	const char *pickaxe;
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
+	const char *line_prefix;
+	size_t line_prefix_length;
 	unsigned flags;
 	unsigned touched_flags;
 
