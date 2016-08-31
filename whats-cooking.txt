@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2016, #08; Wed, 24)
-X-master-at: 2632c897f74b1cc9b5533f467da459b9ec725538
-X-next-at: 3a084aaf40d3898679a48d19dac63e45ecde4cc7
+Subject: What's cooking in git.git (Aug 2016, #09; Wed, 31)
+X-master-at: 5b18e70009487bb156cac18546d6f91105338f4c
+X-next-at: 775ea9aab9ac658f12f52eef7b42ae8064dd56dd
 
-What's cooking in git.git (Aug 2016, #08; Wed, 24)
+What's cooking in git.git (Aug 2016, #09; Wed, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,131 +12,92 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-v2.10.0-rc1 was tagged last week, then I got sick and lost an entire
-day.  I've merged a handful more topics to 'next' and marked 5 among
-them to be merged to 'master' by -rc2.  A notable is the ja/i18n
-topic, which hopefully will reduce the translator's load somewhat.
-Also the change to arrange the file-descriptors to the tempfile be
-closed for subprocesses to avoid deadlocks on Windows is also in;
-even though it is not a new problem, the fix looked safe enough.
-Linus's "32-bit GPG key-ids are so last century" change is already
-in, as reported in the 2.10.0-rc1 announcement.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ab/hooks (2016-08-16) 1 commit
-  (merged to 'next' on 2016-08-17 at b56e55d)
- + rev-parse: respect core.hooksPath in --git-path
-
- "git rev-parse --git-path hooks/<hook>" learned to take
- core.hooksPath configuration variable (introduced during 2.9 cycle)
- into account.
-
-
-* jk/difftool-command-not-found (2016-08-15) 1 commit
-  (merged to 'next' on 2016-08-17 at 32baf03)
- + difftool: always honor fatal error exit codes
-
- "git difftool" by default ignores the error exit from the backend
- commands it spawns, because often they signal that they found
- differences by exiting with a non-zero status code just like "diff"
- does; the exit status codes 126 and above however are special in
- that they are used to signal that the command is not executable,
- does not exist, or killed by a signal.  "git difftool" has been
- taught to notice these exit status codes.
-
-
-* lt/gpg-show-long-key-in-signature-verification (2016-08-16) 1 commit
-  (merged to 'next' on 2016-08-17 at 1ee8a00)
- + Merge branch 'lt/gpg-show-long-key-in-signature-verification-maint' into lt/gpg-show-long-key-in-signature-verification
- (this branch uses lt/gpg-show-long-key-in-signature-verification-maint.)
-
- "git log --show-signature" and other commands that display the
- verification status of PGP signature now shows the longer key-id,
- as 32-bit key-id is so last century.
-
- A last-minute merge of this topic was a bit scary but I made sure
- push-certificate codepath would not be negatively affected.
-
-
-* lt/gpg-show-long-key-in-signature-verification-maint (2016-08-16) 1 commit
- + gpg-interface: prefer "long" key format output when verifying pgp signatures
- (this branch is used by lt/gpg-show-long-key-in-signature-verification.)
-
- "git log --show-signature" and other commands that display the
- verification status of PGP signature now shows the longer key-id,
- as 32-bit key-id is so last century.  This is based on older
- codebase, just in case somebody wants to have it.
-
-
-* rs/pull-signed-tag (2016-08-13) 4 commits
-  (merged to 'next' on 2016-08-17 at cecca71)
- + commit: use FLEX_ARRAY in struct merge_remote_desc
- + merge-recursive: fix verbose output for multiple base trees
- + commit: factor out set_merge_remote_desc()
- + commit: use xstrdup() in get_merge_parent()
-
- When "git merge-recursive" works on history with many criss-cross
- merges in "verbose" mode, the names the command assigns to the
- virtual merge bases could have overwritten each other by unintended
- reuse of the same piece of memory.
-
-
-* sb/checkout-explit-detach-no-advice (2016-08-15) 1 commit
-  (merged to 'next' on 2016-08-17 at fb64716)
- + checkout: do not mention detach advice for explicit --detach option
-
- "git checkout --detach <branch>" used to give the same advice
- message as that is issued when "git checkout <tag>" (or anything
- that is not a branch name) is given, but asking with "--detach" is
- an explicit enough sign that the user knows what is going on.  The
- advice message has been squelched in this case.
-
-
-* tb/t0027-raciness-fix (2016-08-14) 1 commit
-  (merged to 'next' on 2016-08-17 at 39a6635)
- + convert: Correct NNO tests and missing `LF will be replaced by CRLF`
-
- The t0027 test for CRLF conversion was timing dependent and flaky.
-
---------------------------------------------------
 [New Topics]
 
-* cc/receive-pack-limit (2016-08-24) 3 commits
- - receive-pack: allow a maximum input size to be specified
- - unpack-objects: add --max-input-size=<size> option
- - index-pack: add --max-input-size=<size> option
+* bh/diff-highlight-graph (2016-08-31) 6 commits
+  (merged to 'next' on 2016-08-31 at 523a15f)
+ + diff-highlight: avoid highlighting combined diffs
+ + diff-highlight: add multi-byte tests
+ + diff-highlight: ignore test cruft
+ + diff-highlight: add support for --graph output
+ + diff-highlight: add failing test for handling --graph output
+ + diff-highlight: add some tests
 
- An incoming "git push" that attempts to push too many bytes can now
- be rejected by setting a new configuration variable at the receiving
- end.
+ "diff-highlight" script (in contrib/) learned to work better with
+ "git log -p --graph" output.
 
- Will merge to 'next'.
-
-
-* hv/doc-commit-reference-style (2016-08-17) 1 commit
-  (merged to 'next' on 2016-08-24 at b187d45)
- + SubmittingPatches: document how to reference previous commits
-
- A small doc update.
-
- Will merge to 'master'.
+ Will keep in 'next' during the rest of the cycle.
 
 
-* js/no-html-bypass-on-windows (2016-08-19) 1 commit
-  (merged to 'next' on 2016-08-24 at 05728f8)
- + Revert "display HTML in default browser using Windows' shell API"
+* jc/am-read-author-file (2016-08-30) 1 commit
+ - am: refactor read_author_script()
 
- On Windows, help.browser configuration variable used to be ignored,
- which has been corrected.
+ Extract a small helper out of the function that reads the authors
+ script file "git am" internally uses.
 
- Will merge to 'master'.
+
+* jk/test-lib-drop-pid-from-results (2016-08-30) 1 commit
+ - test-lib: drop PID from test-results/*.count
+
+ The test framework left the number of tests and success/failure
+ count in the t/test-results directory, keyed by the name of the
+ test script plus the process ID.  The latter however turned out not
+ to serve any useful purpose.  The process ID part of the filename
+ has been removed.
+
+ Will hold for a bit more and then merge to 'next'.
+
+
+* js/sequencer-wo-die (2016-08-29) 14 commits
+ - sequencer: lib'ify save_opts()
+ - sequencer: lib'ify save_todo()
+ - sequencer: lib'ify save_head()
+ - sequencer: lib'ify create_seq_dir()
+ - sequencer: lib'ify read_populate_opts()
+ - sequencer: lib'ify read_populate_todo()
+ - sequencer: lib'ify read_and_refresh_cache()
+ - sequencer: lib'ify prepare_revs()
+ - sequencer: lib'ify walk_revs_populate_todo()
+ - sequencer: lib'ify do_pick_commit()
+ - sequencer: lib'ify do_recursive_merge()
+ - sequencer: lib'ify write_message()
+ - sequencer: do not die() in do_pick_commit()
+ - sequencer: lib'ify sequencer_pick_revisions()
+
+ Lifts calls to exit(2) and die() higher in the callchain in
+ sequencer.c files so that more helper functions in it can be used
+ by callers that want to handle error conditions themselves.
+
+ Waiting for the review discussion to settle.
+
+
+* jk/squelch-false-warning-from-gcc-o3 (2016-08-31) 2 commits
+ - color_parse_mem: initialize "struct color" temporary
+ - error_errno: use constant return similar to error()
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bw/mingw-avoid-inheriting-fd-to-lockfile (2016-08-23) 2 commits
+  (merged to 'next' on 2016-08-24 at 8389b0e)
+ + mingw: ensure temporary file handles are not inherited by child processes
+ + t6026-merge-attr: child processes must not inherit index.lock handles
+
+ The tempfile (hence its user lockfile) API lets the caller to open
+ a file descriptor to a temporary file, write into it and then
+ finalize it by first closing the filehandle and then either
+ removing or renaming the temporary file.  When the process spawns a
+ subprocess after obtaining the file descriptor, and if the
+ subprocess has not exited when the attempt to remove or rename is
+ made, the last step fails on Windows, because the subprocess has
+ the file descriptor still open.  Open tempfile with O_CLOEXEC flag
+ to avoid this (on Windows, this is mapped to O_NOINHERIT).
 
 
 * dg/document-git-c-in-git-config-doc (2016-08-23) 1 commit
@@ -149,28 +110,6 @@ of the repositories listed at
  place for people to look for when they ask "can I make a one-shot
  override, and if so how?"
 
- Will merge to 'master'.
-
-
-* jk/format-patch-number-singleton-patch-with-cover (2016-08-23) 1 commit
- - format-patch: show 0/1 and 1/1 for singleton patch with cover letter
-
- "git format-patch --cover-letter HEAD^" to format a single patch
- with a separate cover letter now numbers the output as [PATCH 0/1]
- and [PATCH 1/1] by default.
-
- Will merge to 'next'.
-
-
-* cp/completion-negative-refs (2016-08-24) 1 commit
- - completion: support excluding refs
-
- The command-line completion script (in contrib/) learned to
- complete "git cmd ^mas<HT>" to complete the negative end of
- reference to "git cmd ^master".
-
- Waiting for a review.
-
 
 * ja/i18n (2016-08-24) 3 commits
   (merged to 'next' on 2016-08-24 at 3a084aa)
@@ -182,50 +121,34 @@ of the repositories listed at
  refactoring of the messages to avoid word-legos; the repetition has
  been reduced to help translators.
 
- Will merge to 'master'.
+
+* js/no-html-bypass-on-windows (2016-08-19) 1 commit
+  (merged to 'next' on 2016-08-24 at 05728f8)
+ + Revert "display HTML in default browser using Windows' shell API"
+
+ On Windows, help.browser configuration variable used to be ignored,
+ which has been corrected.
 
 
-* jk/delta-base-cache (2016-08-23) 7 commits
- - t/perf: add basic perf tests for delta base cache
- - delta_base_cache: use hashmap.h
- - delta_base_cache: drop special treatment of blobs
- - delta_base_cache: use list.h for LRU
- - release_delta_base_cache: reuse existing detach function
- - clear_delta_base_cache_entry: use a more descriptive name
- - cache_or_unpack_entry: drop keep_cache parameter
+* kw/patch-ids-optim (2016-08-29) 1 commit
+  (merged to 'next' on 2016-08-30 at 9590e42)
+ + p3400: make test script executable
 
- The delta-base-cache mechanism has been a key to the performance in
- a repository with a tightly packed packfile, but it did not scale
- well even with a larger value of core.deltaBaseCacheLimit.
-
- Will merge to 'next'.
+ Micro hot-fix for a topic that is already in.
 
 
-* js/cat-file-filters (2016-08-24) 4 commits
- - cat-file: support --textconv/--filters in batch mode
- - cat-file --textconv/--filters: allow specifying the path separately
- - cat-file: introduce the --filters option
- - cat-file: fix a grammo in the man page
+* ls/packet-line-protocol-doc-fix (2016-08-30) 1 commit
+ - pack-protocol: fix maximum pkt-line size
 
- Even though "git hash-objects", which is a tool to take an
- on-filesystem data stream and put it into the Git object store,
- allowed to perform the "outside-world-to-Git" conversions (e.g.
- end-of-line conversions and application of the clean-filter), and
- it had the feature on by default from very early days, its reverse
- operation "git cat-file", which takes an object from the Git object
- store and externalize for the consumption by the outside world,
- lacked an equivalent mechanism to run the "Git-to-outside-world"
- conversion.  The command learned the "--filters" option to do so.
+ Correct an age-old calco (is that a typo-like word for calc)
+ in the documentation.
 
 
-* sb/push-make-submodule-check-the-default (2016-08-24) 1 commit
- - push: change submodule default to check
+* mh/blame-worktree (2016-08-29) 1 commit
+  (merged to 'next' on 2016-08-30 at 6c8d903)
+ + blame: fix segfault on untracked files
 
- Turn the default of "push.recurseSubmodules" to "check".
-
- Alas, this reveals that the "check" mode is too inefficient to use
- in real projects.
- cf. <xmqqh9aaot49.fsf@gitster.mtv.corp.google.com>
+ Micro hot-fix for a topic that is already in.
 
 --------------------------------------------------
 [Stalled]
@@ -480,6 +403,95 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* hv/doc-commit-reference-style (2016-08-26) 1 commit
+  (merged to 'next' on 2016-08-31 at 68fb778)
+ + SubmittingPatches: use gitk's "Copy commit summary" format
+
+ A small doc update.
+ Will keep in 'next' during the rest of the cycle.
+
+
+* cc/receive-pack-limit (2016-08-24) 3 commits
+  (merged to 'next' on 2016-08-25 at bc74b5b)
+ + receive-pack: allow a maximum input size to be specified
+ + unpack-objects: add --max-input-size=<size> option
+ + index-pack: add --max-input-size=<size> option
+
+ An incoming "git push" that attempts to push too many bytes can now
+ be rejected by setting a new configuration variable at the receiving
+ end.
+
+ Will keep in 'next' during the rest of the cycle.
+
+
+* jk/format-patch-number-singleton-patch-with-cover (2016-08-23) 1 commit
+  (merged to 'next' on 2016-08-25 at a4737fb)
+ + format-patch: show 0/1 and 1/1 for singleton patch with cover letter
+
+ "git format-patch --cover-letter HEAD^" to format a single patch
+ with a separate cover letter now numbers the output as [PATCH 0/1]
+ and [PATCH 1/1] by default.
+
+ Will keep in 'next' during the rest of the cycle.
+
+
+* cp/completion-negative-refs (2016-08-24) 1 commit
+ - completion: support excluding refs
+
+ The command-line completion script (in contrib/) learned to
+ complete "git cmd ^mas<HT>" to complete the negative end of
+ reference to "git cmd ^master".
+
+ Waiting for a review.
+
+
+* jk/delta-base-cache (2016-08-23) 7 commits
+  (merged to 'next' on 2016-08-25 at f1c141a)
+ + t/perf: add basic perf tests for delta base cache
+ + delta_base_cache: use hashmap.h
+ + delta_base_cache: drop special treatment of blobs
+ + delta_base_cache: use list.h for LRU
+ + release_delta_base_cache: reuse existing detach function
+ + clear_delta_base_cache_entry: use a more descriptive name
+ + cache_or_unpack_entry: drop keep_cache parameter
+
+ The delta-base-cache mechanism has been a key to the performance in
+ a repository with a tightly packed packfile, but it did not scale
+ well even with a larger value of core.deltaBaseCacheLimit.
+
+ Will keep in 'next' during the rest of the cycle.
+
+
+* js/cat-file-filters (2016-08-24) 4 commits
+ - cat-file: support --textconv/--filters in batch mode
+ - cat-file --textconv/--filters: allow specifying the path separately
+ - cat-file: introduce the --filters option
+ - cat-file: fix a grammo in the man page
+
+ Even though "git hash-objects", which is a tool to take an
+ on-filesystem data stream and put it into the Git object store,
+ allowed to perform the "outside-world-to-Git" conversions (e.g.
+ end-of-line conversions and application of the clean-filter), and
+ it had the feature on by default from very early days, its reverse
+ operation "git cat-file", which takes an object from the Git object
+ store and externalize for the consumption by the outside world,
+ lacked an equivalent mechanism to run the "Git-to-outside-world"
+ conversion.  The command learned the "--filters" option to do so.
+
+ Waiting for a reroll.
+ cf. <xmqqmvk2qcv8.fsf@gitster.mtv.corp.google.com>
+
+
+* sb/push-make-submodule-check-the-default (2016-08-24) 1 commit
+ - push: change submodule default to check
+
+ Turn the default of "push.recurseSubmodules" to "check".
+
+ Alas, this reveals that the "check" mode is too inefficient to use
+ in real projects, even in ones as small as git itself.
+ cf. <xmqqh9aaot49.fsf@gitster.mtv.corp.google.com>
+
+
 * ak/curl-imap-send-explicit-scheme (2016-08-17) 1 commit
  - imap-send: Tell cURL to use imap:// or imaps://
 
@@ -491,56 +503,41 @@ of the repositories listed at
  Needs review and testing.
 
 
-* bw/mingw-avoid-inheriting-fd-to-lockfile (2016-08-23) 2 commits
-  (merged to 'next' on 2016-08-24 at 8389b0e)
- + mingw: ensure temporary file handles are not inherited by child processes
- + t6026-merge-attr: child processes must not inherit index.lock handles
-
- The tempfile (hence its user lockfile) API lets the caller to open
- a file descriptor to a temporary file, write into it and then
- finalize it by first closing the filehandle and then either
- removing or renaming the temporary file.  When the process spawns a
- subprocess after obtaining the file descriptor, and if the
- subprocess has not exited when the attempt to remove or rename is
- made, the last step fails on Windows, because the subprocess has
- the file descriptor still open.  Open tempfile with O_CLOEXEC flag
- to avoid this (on Windows, this is mapped to O_NOINHERIT).
-
- Will merge to 'master'.
-
-
-* rt/help-unknown (2016-08-18) 2 commits
- - help: make option --help open man pages only for Git commands
- - help: introduce option --command-only
+* rt/help-unknown (2016-08-30) 3 commits
+  (merged to 'next' on 2016-08-30 at db2a5b0)
+ + help: make option --help open man pages only for Git commands
+ + help: introduce option --exclude-guides
+ + Merge branch 'js/no-html-bypass-on-windows' into rt/help-unknown
 
  "git nosuchcommand --help" said "No manual entry for gitnosuchcommand",
  which was not intuitive, given that "git nosuchcommand" said "git:
  'nosuchcommand' is not a git command".
 
- Waiting for the review discussion to settle.
+ Will keep in 'next' during the rest of the cycle.
 
 
 * po/range-doc (2016-08-13) 12 commits
- - doc: revisions: sort examples and fix alignment of the unchanged
- - doc: revisions: show revision expansion in examples
- - doc: revisions - clarify reachability examples
- - doc: revisions - define `reachable`
- - doc: gitrevisions - clarify 'latter case' is revision walk
- - doc: gitrevisions - use 'reachable' in page description
- - doc: revisions: single vs multi-parent notation comparison
- - doc: revisions: extra clarification of <rev>^! notation effects
- - doc: revisions: give headings for the two and three dot notations
- - doc: show the actual left, right, and boundary marks
- - doc: revisions - name the left and right sides
- - doc: use 'symmetric difference' consistently
+  (merged to 'next' on 2016-08-31 at d29870b)
+ + doc: revisions: sort examples and fix alignment of the unchanged
+ + doc: revisions: show revision expansion in examples
+ + doc: revisions - clarify reachability examples
+ + doc: revisions - define `reachable`
+ + doc: gitrevisions - clarify 'latter case' is revision walk
+ + doc: gitrevisions - use 'reachable' in page description
+ + doc: revisions: single vs multi-parent notation comparison
+ + doc: revisions: extra clarification of <rev>^! notation effects
+ + doc: revisions: give headings for the two and three dot notations
+ + doc: show the actual left, right, and boundary marks
+ + doc: revisions - name the left and right sides
+ + doc: use 'symmetric difference' consistently
 
  Clarify various ways to specify the "revision ranges" in the
  documentation.
 
- Waiting for the review discussion to settle.
+ Will keep in 'next' during the rest of the cycle.
 
 
-* jk/diff-submodule-diff-inline (2016-08-23) 8 commits
+* jk/diff-submodule-diff-inline (2016-08-26) 8 commits
  - diff: teach diff to display submodule difference with an inline diff
  - submodule: refactor show_submodule_summary with helper function
  - submodule: convert show_submodule_summary to use struct object_id *
@@ -554,8 +551,7 @@ of the repositories listed at
  to allow "--submodule=diff" to show the patch between the submodule
  commits bound to the superproject.
 
- Waiting for the review discussion to settle.
- I think it is getting there.
+ Waiting for a reroll.
 
 
 * jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
@@ -580,36 +576,43 @@ of the repositories listed at
 
 
 * sb/submodule-clone-rr (2016-08-17) 8 commits
- - clone: recursive and reference option triggers submodule alternates
- - clone: implement optional references
- - clone: clarify option_reference as required
- - clone: factor out checking for an alternate path
- - submodule--helper update-clone: allow multiple references
- - submodule--helper module-clone: allow multiple references
- - t7408: merge short tests, factor out testing method
- - t7408: modernize style
+  (merged to 'next' on 2016-08-31 at 08b4b7d)
+ + clone: recursive and reference option triggers submodule alternates
+ + clone: implement optional references
+ + clone: clarify option_reference as required
+ + clone: factor out checking for an alternate path
+ + submodule--helper update-clone: allow multiple references
+ + submodule--helper module-clone: allow multiple references
+ + t7408: merge short tests, factor out testing method
+ + t7408: modernize style
 
- I spotted a last-minute bug in v5, which is not a very good sign
- (it shows that nobody is reviewing).  Any more comments?
+ "git clone --resurse-submodules --reference $path $URL" is a way to
+ reduce network transfer cost by borrowing objects in an existing
+ $path repository when cloning the superproject from $URL; it
+ learned to also peek into $path for presense of corresponding
+ repositories of submodules and borrow objects from there when able.
+
+ Will keep in 'next' during the rest of the cycle.
 
 
 * jh/status-v2-porcelain (2016-08-12) 9 commits
- - status: unit tests for --porcelain=v2
- - test-lib-functions.sh: add lf_to_nul helper
- - git-status.txt: describe --porcelain=v2 format
- - status: print branch info with --porcelain=v2 --branch
- - status: print per-file porcelain v2 status data
- - status: collect per-file data for --porcelain=v2
- - status: support --porcelain[=<version>]
- - status: cleanup API to wt_status_print
- - status: rename long-format print routines
+  (merged to 'next' on 2016-08-31 at e71f595)
+ + status: unit tests for --porcelain=v2
+ + test-lib-functions.sh: add lf_to_nul helper
+ + git-status.txt: describe --porcelain=v2 format
+ + status: print branch info with --porcelain=v2 --branch
+ + status: print per-file porcelain v2 status data
+ + status: collect per-file data for --porcelain=v2
+ + status: support --porcelain[=<version>]
+ + status: cleanup API to wt_status_print
+ + status: rename long-format print routines
 
  Enhance "git status --porcelain" output by collecting more data on
  the state of the index and the working tree files, which may
  further be used to teach git-prompt (in contrib/) to make fewer
  calls to git.
 
- Any more comments?
+ Will keep in 'next' during the rest of the cycle.
 
 
 * mh/diff-indent-heuristic (2016-08-23) 6 commits
@@ -626,14 +629,14 @@ of the repositories listed at
  are the same.  A command line option is added to help with the
  experiment to find a good heuristics.
 
- Waiting for the review discussion to settle.
- cf. <29c40cdd-363a-df09-f9e2-fe9070bb8a9c@ramsayjones.plus.com>
+ Waiting for a reroll.
  cf. <a27aa17e-f602-fc49-92b3-2198e4772e47@ramsayjones.plus.com>
 
 
-* cc/apply-am (2016-08-11) 40 commits
+* cc/apply-am (2016-08-29) 41 commits
  - builtin/am: use apply API in run_apply()
  - apply: learn to use a different index file
+ - apply: pass apply state to build_fake_ancestor()
  - apply: refactor `git apply` option parsing
  - apply: change error_routine when silent
  - usage: add get_error_routine() and get_warn_routine()
@@ -676,9 +679,7 @@ of the repositories listed at
  "git am" has been taught to make an internal call to "git apply"'s
  innards without spawning the latter as a separate process.
 
- Waiting for the review discussion to settle.
- cf. <xmqqvaz7ys9u.fsf@gitster.mtv.corp.google.com>
- We are almost there.
+ Will hold for a bit more and then merge to 'next'.
 
 
 * jk/pack-objects-optim-mru (2016-08-11) 4 commits
