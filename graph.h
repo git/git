@@ -1,8 +1,21 @@
 #ifndef GRAPH_H
 #define GRAPH_H
+#include "diff.h"
 
 /* A graph is a pointer to this opaque structure */
 struct git_graph;
+
+/*
+ * Called to setup global display of line_prefix diff option.
+ *
+ * Passed a diff_options structure which indicates the line_prefix and the
+ * file to output the prefix to. This is sort of a hack used so that the
+ * line_prefix will be honored by all flows which also honor "--graph"
+ * regardless of whether a graph has actually been setup. The normal graph
+ * flow will honor the exact diff_options passed, but a NULL graph will cause
+ * display of a line_prefix to stdout.
+ */
+void graph_setup_line_prefix(struct diff_options *diffopt);
 
 /*
  * Set up a custom scheme for column colors.
@@ -113,7 +126,14 @@ int graph_show_remainder(struct git_graph *graph);
  * missing a terminating newline (including if it is empty), the output
  * printed by graph_show_commit_msg() will also be missing a terminating
  * newline.
+ *
+ * Note that unlike some other graph display functions, you must pass the file
+ * handle directly. It is assumed that this is the same file handle as the
+ * file specified by the graph diff options. This is necessary so that
+ * graph_show_commit_msg can be called even with a NULL graph.
  */
-void graph_show_commit_msg(struct git_graph *graph, struct strbuf const *sb);
+void graph_show_commit_msg(struct git_graph *graph,
+			   FILE *file,
+			   struct strbuf const *sb);
 
 #endif /* GRAPH_H */

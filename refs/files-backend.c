@@ -1225,12 +1225,18 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 	struct strbuf refname;
 	struct strbuf path = STRBUF_INIT;
 	size_t path_baselen;
+	int err = 0;
 
 	if (*refs->name)
-		strbuf_git_path_submodule(&path, refs->name, "%s", dirname);
+		err = strbuf_git_path_submodule(&path, refs->name, "%s", dirname);
 	else
 		strbuf_git_path(&path, "%s", dirname);
 	path_baselen = path.len;
+
+	if (err) {
+		strbuf_release(&path);
+		return;
+	}
 
 	d = opendir(path.buf);
 	if (!d) {
