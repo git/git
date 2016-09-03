@@ -1576,24 +1576,6 @@ void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
 	qsort(array->items, array->nr, sizeof(struct ref_array_item *), compare_refs);
 }
 
-static int hex1(char ch)
-{
-	if ('0' <= ch && ch <= '9')
-		return ch - '0';
-	else if ('a' <= ch && ch <= 'f')
-		return ch - 'a' + 10;
-	else if ('A' <= ch && ch <= 'F')
-		return ch - 'A' + 10;
-	return -1;
-}
-static int hex2(const char *cp)
-{
-	if (cp[0] && cp[1])
-		return (hex1(cp[0]) << 4) | hex1(cp[1]);
-	else
-		return -1;
-}
-
 static void append_literal(const char *cp, const char *ep, struct ref_formatting_state *state)
 {
 	struct strbuf *s = &state->stack->output;
@@ -1603,7 +1585,7 @@ static void append_literal(const char *cp, const char *ep, struct ref_formatting
 			if (cp[1] == '%')
 				cp++;
 			else {
-				int ch = hex2(cp + 1);
+				int ch = hex2chr(cp + 1);
 				if (0 <= ch) {
 					strbuf_addch(s, ch);
 					cp += 3;
