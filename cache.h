@@ -712,6 +712,8 @@ extern enum hide_dotfiles_type hide_dotfiles;
 
 extern int core_fscache;
 
+extern int core_long_paths;
+
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,
 	BRANCH_TRACK_NEVER = 0,
