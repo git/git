@@ -1,16 +1,23 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2016, #09; Wed, 31)
-X-master-at: 5b18e70009487bb156cac18546d6f91105338f4c
-X-next-at: 775ea9aab9ac658f12f52eef7b42ae8064dd56dd
+Subject: What's cooking in git.git (Sep 2016, #01; Fri, 2)
+X-master-at: 6ebdac1bab966b720d776aa43ca188fe378b1f4b
+X-next-at: f2ff48496e8dc270b21b0290a2a3e4ef98e352ed
 
-What's cooking in git.git (Aug 2016, #09; Wed, 31)
+What's cooking in git.git (Sep 2016, #01; Fri, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+Git 2.10 has been tagged.  In a few days, many topics that have been
+cooking in 'next' would be merged to 'master'; as usual, I plan to
+keep the tip of 'next' closed for a week or so and encourage people
+to pay more attention to possible regressions than to show their
+shiny new toys, and then open the new cycle by rebuilding 'next'
+after that.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,135 +27,23 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* bh/diff-highlight-graph (2016-08-31) 6 commits
-  (merged to 'next' on 2016-08-31 at 523a15f)
- + diff-highlight: avoid highlighting combined diffs
- + diff-highlight: add multi-byte tests
- + diff-highlight: ignore test cruft
- + diff-highlight: add support for --graph output
- + diff-highlight: add failing test for handling --graph output
- + diff-highlight: add some tests
+* jc/submodule-anchor-git-dir (2016-09-01) 1 commit
+ - submodule: avoid auto-discovery in prepare_submodule_repo_env()
 
- "diff-highlight" script (in contrib/) learned to work better with
- "git log -p --graph" output.
+ Having a submodule whose ".git" repository is somehow corrupt
+ caused a few commands that recurse into submodules loop forever.
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'next'.
 
 
-* jc/am-read-author-file (2016-08-30) 1 commit
- - am: refactor read_author_script()
+* jc/forbid-symbolic-ref-d-HEAD (2016-09-02) 1 commit
+ - symbolic-ref -d: do not allow removal of HEAD
 
- Extract a small helper out of the function that reads the authors
- script file "git am" internally uses.
+ "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
+ the resulting repository becomes an invalid one.  Teach the command
+ to forbid removal of HEAD.
 
-
-* jk/test-lib-drop-pid-from-results (2016-08-30) 1 commit
- - test-lib: drop PID from test-results/*.count
-
- The test framework left the number of tests and success/failure
- count in the t/test-results directory, keyed by the name of the
- test script plus the process ID.  The latter however turned out not
- to serve any useful purpose.  The process ID part of the filename
- has been removed.
-
- Will hold for a bit more and then merge to 'next'.
-
-
-* js/sequencer-wo-die (2016-08-29) 14 commits
- - sequencer: lib'ify save_opts()
- - sequencer: lib'ify save_todo()
- - sequencer: lib'ify save_head()
- - sequencer: lib'ify create_seq_dir()
- - sequencer: lib'ify read_populate_opts()
- - sequencer: lib'ify read_populate_todo()
- - sequencer: lib'ify read_and_refresh_cache()
- - sequencer: lib'ify prepare_revs()
- - sequencer: lib'ify walk_revs_populate_todo()
- - sequencer: lib'ify do_pick_commit()
- - sequencer: lib'ify do_recursive_merge()
- - sequencer: lib'ify write_message()
- - sequencer: do not die() in do_pick_commit()
- - sequencer: lib'ify sequencer_pick_revisions()
-
- Lifts calls to exit(2) and die() higher in the callchain in
- sequencer.c files so that more helper functions in it can be used
- by callers that want to handle error conditions themselves.
-
- Waiting for the review discussion to settle.
-
-
-* jk/squelch-false-warning-from-gcc-o3 (2016-08-31) 2 commits
- - color_parse_mem: initialize "struct color" temporary
- - error_errno: use constant return similar to error()
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bw/mingw-avoid-inheriting-fd-to-lockfile (2016-08-23) 2 commits
-  (merged to 'next' on 2016-08-24 at 8389b0e)
- + mingw: ensure temporary file handles are not inherited by child processes
- + t6026-merge-attr: child processes must not inherit index.lock handles
-
- The tempfile (hence its user lockfile) API lets the caller to open
- a file descriptor to a temporary file, write into it and then
- finalize it by first closing the filehandle and then either
- removing or renaming the temporary file.  When the process spawns a
- subprocess after obtaining the file descriptor, and if the
- subprocess has not exited when the attempt to remove or rename is
- made, the last step fails on Windows, because the subprocess has
- the file descriptor still open.  Open tempfile with O_CLOEXEC flag
- to avoid this (on Windows, this is mapped to O_NOINHERIT).
-
-
-* dg/document-git-c-in-git-config-doc (2016-08-23) 1 commit
-  (merged to 'next' on 2016-08-24 at a923eb0)
- + doc: mention `git -c` in git-config(1)
-
- The "git -c var[=val] cmd" facility to append a configuration
- variable definition at the end of the search order was described in
- git(1) manual page, but not in git-config(1), which was more likely
- place for people to look for when they ask "can I make a one-shot
- override, and if so how?"
-
-
-* ja/i18n (2016-08-24) 3 commits
-  (merged to 'next' on 2016-08-24 at 3a084aa)
- + i18n: simplify numeric error reporting
- + i18n: fix git rebase interactive commit messages
- + i18n: fix typos for translation
-
- The recent i18n patch we added during this cycle did a bit too much
- refactoring of the messages to avoid word-legos; the repetition has
- been reduced to help translators.
-
-
-* js/no-html-bypass-on-windows (2016-08-19) 1 commit
-  (merged to 'next' on 2016-08-24 at 05728f8)
- + Revert "display HTML in default browser using Windows' shell API"
-
- On Windows, help.browser configuration variable used to be ignored,
- which has been corrected.
-
-
-* kw/patch-ids-optim (2016-08-29) 1 commit
-  (merged to 'next' on 2016-08-30 at 9590e42)
- + p3400: make test script executable
-
- Micro hot-fix for a topic that is already in.
-
-
-* ls/packet-line-protocol-doc-fix (2016-08-30) 1 commit
- - pack-protocol: fix maximum pkt-line size
-
- Correct an age-old calco (is that a typo-like word for calc)
- in the documentation.
-
-
-* mh/blame-worktree (2016-08-29) 1 commit
-  (merged to 'next' on 2016-08-30 at 6c8d903)
- + blame: fix segfault on untracked files
-
- Micro hot-fix for a topic that is already in.
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -403,12 +298,80 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bh/diff-highlight-graph (2016-08-31) 6 commits
+  (merged to 'next' on 2016-08-31 at 523a15f)
+ + diff-highlight: avoid highlighting combined diffs
+ + diff-highlight: add multi-byte tests
+ + diff-highlight: ignore test cruft
+ + diff-highlight: add support for --graph output
+ + diff-highlight: add failing test for handling --graph output
+ + diff-highlight: add some tests
+
+ "diff-highlight" script (in contrib/) learned to work better with
+ "git log -p --graph" output.
+
+ Will merge to 'master'.
+
+
+* jc/am-read-author-file (2016-08-30) 1 commit
+ - am: refactor read_author_script()
+
+ Extract a small helper out of the function that reads the authors
+ script file "git am" internally uses.
+
+ Will merge to 'next'.
+ This by itself is not useful until a second caller appears in the
+ future for "rebase -i" helper.
+
+
+* jk/test-lib-drop-pid-from-results (2016-08-30) 1 commit
+ - test-lib: drop PID from test-results/*.count
+
+ The test framework left the number of tests and success/failure
+ count in the t/test-results directory, keyed by the name of the
+ test script plus the process ID.  The latter however turned out not
+ to serve any useful purpose.  The process ID part of the filename
+ has been removed.
+
+ Will merge to 'next'.
+
+
+* js/sequencer-wo-die (2016-08-29) 14 commits
+ - sequencer: lib'ify save_opts()
+ - sequencer: lib'ify save_todo()
+ - sequencer: lib'ify save_head()
+ - sequencer: lib'ify create_seq_dir()
+ - sequencer: lib'ify read_populate_opts()
+ - sequencer: lib'ify read_populate_todo()
+ - sequencer: lib'ify read_and_refresh_cache()
+ - sequencer: lib'ify prepare_revs()
+ - sequencer: lib'ify walk_revs_populate_todo()
+ - sequencer: lib'ify do_pick_commit()
+ - sequencer: lib'ify do_recursive_merge()
+ - sequencer: lib'ify write_message()
+ - sequencer: do not die() in do_pick_commit()
+ - sequencer: lib'ify sequencer_pick_revisions()
+
+ Lifts calls to exit(2) and die() higher in the callchain in
+ sequencer.c files so that more helper functions in it can be used
+ by callers that want to handle error conditions themselves.
+
+ Waiting for a reroll.
+
+
+* jk/squelch-false-warning-from-gcc-o3 (2016-08-31) 2 commits
+ - color_parse_mem: initialize "struct color" temporary
+ - error_errno: use constant return similar to error()
+
+ Will merge to 'next'.
+
+
 * hv/doc-commit-reference-style (2016-08-26) 1 commit
   (merged to 'next' on 2016-08-31 at 68fb778)
  + SubmittingPatches: use gitk's "Copy commit summary" format
 
  A small doc update.
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
 * cc/receive-pack-limit (2016-08-24) 3 commits
@@ -421,7 +384,7 @@ of the repositories listed at
  be rejected by setting a new configuration variable at the receiving
  end.
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
 * jk/format-patch-number-singleton-patch-with-cover (2016-08-23) 1 commit
@@ -432,7 +395,7 @@ of the repositories listed at
  with a separate cover letter now numbers the output as [PATCH 0/1]
  and [PATCH 1/1] by default.
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
 * cp/completion-negative-refs (2016-08-24) 1 commit
@@ -459,7 +422,7 @@ of the repositories listed at
  a repository with a tightly packed packfile, but it did not scale
  well even with a larger value of core.deltaBaseCacheLimit.
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
 * js/cat-file-filters (2016-08-24) 4 commits
@@ -513,7 +476,7 @@ of the repositories listed at
  which was not intuitive, given that "git nosuchcommand" said "git:
  'nosuchcommand' is not a git command".
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
 * po/range-doc (2016-08-13) 12 commits
@@ -534,24 +497,25 @@ of the repositories listed at
  Clarify various ways to specify the "revision ranges" in the
  documentation.
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
-* jk/diff-submodule-diff-inline (2016-08-26) 8 commits
- - diff: teach diff to display submodule difference with an inline diff
- - submodule: refactor show_submodule_summary with helper function
- - submodule: convert show_submodule_summary to use struct object_id *
- - allow do_submodule_path to work even if submodule isn't checked out
- - diff: prepare for additional submodule formats
- - graph: add support for --line-prefix on all graph-aware output
- - diff.c: remove output_prefix_length field
- - cache: add empty_tree_oid object and helper function
+* jk/diff-submodule-diff-inline (2016-08-31) 8 commits
+  (merged to 'next' on 2016-09-02 at 734e42c)
+ + diff: teach diff to display submodule difference with an inline diff
+ + submodule: refactor show_submodule_summary with helper function
+ + submodule: convert show_submodule_summary to use struct object_id *
+ + allow do_submodule_path to work even if submodule isn't checked out
+ + diff: prepare for additional submodule formats
+ + graph: add support for --line-prefix on all graph-aware output
+ + diff.c: remove output_prefix_length field
+ + cache: add empty_tree_oid object and helper function
 
  The "git diff --submodule={short,log}" mechanism has been enhanced
  to allow "--submodule=diff" to show the patch between the submodule
  commits bound to the superproject.
 
- Waiting for a reroll.
+ Will merge to 'master'.
 
 
 * jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
@@ -592,7 +556,7 @@ of the repositories listed at
  learned to also peek into $path for presense of corresponding
  repositories of submodules and borrow objects from there when able.
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
 * jh/status-v2-porcelain (2016-08-12) 9 commits
@@ -612,7 +576,7 @@ of the repositories listed at
  further be used to teach git-prompt (in contrib/) to make fewer
  calls to git.
 
- Will keep in 'next' during the rest of the cycle.
+ Will merge to 'master'.
 
 
 * mh/diff-indent-heuristic (2016-08-23) 6 commits
@@ -679,7 +643,7 @@ of the repositories listed at
  "git am" has been taught to make an internal call to "git apply"'s
  innards without spawning the latter as a separate process.
 
- Will hold for a bit more and then merge to 'next'.
+ Waiting for a reroll.
 
 
 * jk/pack-objects-optim-mru (2016-08-11) 4 commits
