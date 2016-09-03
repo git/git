@@ -376,6 +376,10 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define git_program_data_config() NULL
 #endif
 
+#ifndef query_user_email
+#define query_user_email() NULL
+#endif
+
 #if defined(__HP_cc) && (__HP_cc >= 61000)
 #define NORETURN __attribute__((noreturn))
 #define NORETURN_PTR
