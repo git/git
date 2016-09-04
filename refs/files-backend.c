@@ -1316,89 +1316,6 @@ static struct ref_dir *get_loose_refs(struct files_ref_store *refs)
 	return get_ref_dir(refs->loose);
 }
 
-#define MAXREFLEN (1024)
-
-/*
- * Called by resolve_gitlink_ref_recursive() after it failed to read
- * from the loose refs in refs. Find <refname> in the packed-refs file
- * for the submodule.
- */
-static int resolve_gitlink_packed_ref(struct files_ref_store *refs,
-				      const char *refname, unsigned char *sha1)
-{
-	struct ref_entry *ref;
-	struct ref_dir *dir = get_packed_refs(refs);
-
-	ref = find_ref(dir, refname);
-	if (ref == NULL)
-		return -1;
-
-	hashcpy(sha1, ref->u.value.oid.hash);
-	return 0;
-}
-
-static int resolve_gitlink_ref_recursive(struct files_ref_store *refs,
-					 const char *refname, unsigned char *sha1,
-					 int recursion)
-{
-	int fd, len;
-	char buffer[128], *p;
-	char *path;
-
-	if (recursion > SYMREF_MAXDEPTH || strlen(refname) > MAXREFLEN)
-		return -1;
-	path = *refs->base.submodule
-		? git_pathdup_submodule(refs->base.submodule, "%s", refname)
-		: git_pathdup("%s", refname);
-	fd = open(path, O_RDONLY);
-	free(path);
-	if (fd < 0)
-		return resolve_gitlink_packed_ref(refs, refname, sha1);
-
-	len = read(fd, buffer, sizeof(buffer)-1);
-	close(fd);
-	if (len < 0)
-		return -1;
-	while (len && isspace(buffer[len-1]))
-		len--;
-	buffer[len] = 0;
-
-	/* Was it a detached head or an old-fashioned symlink? */
-	if (!get_sha1_hex(buffer, sha1))
-		return 0;
-
-	/* Symref? */
-	if (strncmp(buffer, "ref:", 4))
-		return -1;
-	p = buffer + 4;
-	while (isspace(*p))
-		p++;
-
-	return resolve_gitlink_ref_recursive(refs, p, sha1, recursion+1);
-}
-
-int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
-{
-	int len = strlen(path);
-	struct strbuf submodule = STRBUF_INIT;
-	struct files_ref_store *refs;
-
-	while (len && path[len-1] == '/')
-		len--;
-	if (!len)
-		return -1;
-
-	strbuf_add(&submodule, path, len);
-	refs = get_files_ref_store(submodule.buf, "resolve_gitlink_ref");
-	if (!refs) {
-		strbuf_release(&submodule);
-		return -1;
-	}
-	strbuf_release(&submodule);
-
-	return resolve_gitlink_ref_recursive(refs, refname, sha1, 0);
-}
-
 /*
  * Return the ref_entry for the given refname from the packed
  * references.  If it does not exist, return NULL.
@@ -1570,6 +1487,89 @@ static void unlock_ref(struct ref_lock *lock)
 		rollback_lock_file(lock->lk);
 	free(lock->ref_name);
 	free(lock);
+}
+
+#define MAXREFLEN (1024)
+
+/*
+ * Called by resolve_gitlink_ref_recursive() after it failed to read
+ * from the loose refs in refs. Find <refname> in the packed-refs file
+ * for the submodule.
+ */
+static int resolve_gitlink_packed_ref(struct files_ref_store *refs,
+				      const char *refname, unsigned char *sha1)
+{
+	struct ref_entry *ref;
+	struct ref_dir *dir = get_packed_refs(refs);
+
+	ref = find_ref(dir, refname);
+	if (ref == NULL)
+		return -1;
+
+	hashcpy(sha1, ref->u.value.oid.hash);
+	return 0;
+}
+
+static int resolve_gitlink_ref_recursive(struct files_ref_store *refs,
+					 const char *refname, unsigned char *sha1,
+					 int recursion)
+{
+	int fd, len;
+	char buffer[128], *p;
+	char *path;
+
+	if (recursion > SYMREF_MAXDEPTH || strlen(refname) > MAXREFLEN)
+		return -1;
+	path = *refs->base.submodule
+		? git_pathdup_submodule(refs->base.submodule, "%s", refname)
+		: git_pathdup("%s", refname);
+	fd = open(path, O_RDONLY);
+	free(path);
+	if (fd < 0)
+		return resolve_gitlink_packed_ref(refs, refname, sha1);
+
+	len = read(fd, buffer, sizeof(buffer)-1);
+	close(fd);
+	if (len < 0)
+		return -1;
+	while (len && isspace(buffer[len-1]))
+		len--;
+	buffer[len] = 0;
+
+	/* Was it a detached head or an old-fashioned symlink? */
+	if (!get_sha1_hex(buffer, sha1))
+		return 0;
+
+	/* Symref? */
+	if (strncmp(buffer, "ref:", 4))
+		return -1;
+	p = buffer + 4;
+	while (isspace(*p))
+		p++;
+
+	return resolve_gitlink_ref_recursive(refs, p, sha1, recursion+1);
+}
+
+int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
+{
+	int len = strlen(path);
+	struct strbuf submodule = STRBUF_INIT;
+	struct files_ref_store *refs;
+
+	while (len && path[len-1] == '/')
+		len--;
+	if (!len)
+		return -1;
+
+	strbuf_add(&submodule, path, len);
+	refs = get_files_ref_store(submodule.buf, "resolve_gitlink_ref");
+	if (!refs) {
+		strbuf_release(&submodule);
+		return -1;
+	}
+	strbuf_release(&submodule);
+
+	return resolve_gitlink_ref_recursive(refs, refname, sha1, 0);
 }
 
 /*
