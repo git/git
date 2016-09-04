@@ -1412,13 +1412,11 @@ static struct ref_entry *get_packed_ref(struct files_ref_store *refs,
 /*
  * A loose ref file doesn't exist; check for a packed ref.
  */
-static int resolve_missing_loose_ref(const char *refname,
+static int resolve_missing_loose_ref(struct files_ref_store *refs,
+				     const char *refname,
 				     unsigned char *sha1,
 				     unsigned int *flags)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "resolve_missing_loose_ref");
-
 	struct ref_entry *entry;
 
 	/*
@@ -1438,6 +1436,8 @@ static int resolve_missing_loose_ref(const char *refname,
 int read_raw_ref(const char *refname, unsigned char *sha1,
 		 struct strbuf *referent, unsigned int *type)
 {
+	struct files_ref_store *refs =
+		get_files_ref_store(NULL, "read_raw_ref");
 	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
 	const char *path;
@@ -1466,7 +1466,7 @@ stat_ref:
 	if (lstat(path, &st) < 0) {
 		if (errno != ENOENT)
 			goto out;
-		if (resolve_missing_loose_ref(refname, sha1, type)) {
+		if (resolve_missing_loose_ref(refs, refname, sha1, type)) {
 			errno = ENOENT;
 			goto out;
 		}
@@ -1500,7 +1500,7 @@ stat_ref:
 		 * ref is supposed to be, there could still be a
 		 * packed ref:
 		 */
-		if (resolve_missing_loose_ref(refname, sha1, type)) {
+		if (resolve_missing_loose_ref(refs, refname, sha1, type)) {
 			errno = EISDIR;
 			goto out;
 		}
