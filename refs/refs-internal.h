@@ -467,9 +467,17 @@ extern struct ref_iterator *current_ref_iter;
 int do_for_each_ref_iterator(struct ref_iterator *iter,
 			     each_ref_fn fn, void *cb_data);
 
-/* refs backends */
+/*
+ * Only include per-worktree refs in a do_for_each_ref*() iteration.
+ * Normally this will be used with a files ref_store, since that's
+ * where all reference backends will presumably store their
+ * per-worktree refs.
+ */
+#define DO_FOR_EACH_PER_WORKTREE_ONLY 0x02
 
 struct ref_store;
+
+/* refs backends */
 
 /*
  * Initialize the ref_store for the specified submodule, or for the
