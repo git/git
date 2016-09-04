@@ -2549,13 +2549,14 @@ out:
 	return ret;
 }
 
-int verify_refname_available(const char *newname,
-			     const struct string_list *extras,
-			     const struct string_list *skip,
-			     struct strbuf *err)
+static int files_verify_refname_available(struct ref_store *ref_store,
+					  const char *newname,
+					  const struct string_list *extras,
+					  const struct string_list *skip,
+					  struct strbuf *err)
 {
 	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "verify_refname_available");
+		files_downcast(ref_store, 1, "verify_refname_available");
 	struct ref_dir *packed_refs = get_packed_refs(refs);
 	struct ref_dir *loose_refs = get_loose_refs(refs);
 
@@ -4021,5 +4022,6 @@ struct ref_storage_be refs_be_files = {
 	files_ref_store_create,
 	files_transaction_commit,
 
-	files_read_raw_ref
+	files_read_raw_ref,
+	files_verify_refname_available
 };
