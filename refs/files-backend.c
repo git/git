@@ -1863,11 +1863,11 @@ static struct ref_iterator_vtable files_ref_iterator_vtable = {
 };
 
 struct ref_iterator *files_ref_iterator_begin(
-		const char *submodule,
+		struct ref_store *ref_store,
 		const char *prefix, unsigned int flags)
 {
 	struct files_ref_store *refs =
-		get_files_ref_store(submodule, "ref_iterator_begin");
+		files_downcast(ref_store, 1, "ref_iterator_begin");
 	struct ref_dir *loose_dir, *packed_dir;
 	struct ref_iterator *loose_iter, *packed_iter;
 	struct files_ref_iterator *iter;
