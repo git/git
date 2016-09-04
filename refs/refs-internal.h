@@ -486,6 +486,20 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
 
 struct ref_store;
 
+/* refs backends */
+
+/*
+ * Initialize the ref_store for the specified submodule, or for the
+ * main repository if submodule == NULL. These functions should call
+ * base_ref_store_init() to initialize the shared part of the
+ * ref_store and to record the ref_store for later lookup.
+ */
+typedef struct ref_store *ref_store_init_fn(const char *submodule);
+
+typedef int ref_transaction_commit_fn(struct ref_store *refs,
+				      struct ref_transaction *transaction,
+				      struct strbuf *err);
+
 /*
  * Read a reference from the specified reference store, non-recursively.
  * Set type to describe the reference, and:
@@ -524,29 +538,17 @@ struct ref_store;
  * - in all other cases, referent will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
-int read_raw_ref(struct ref_store *ref_store,
-		 const char *refname, unsigned char *sha1,
-		 struct strbuf *referent, unsigned int *type);
-
-/* refs backends */
-
-/*
- * Initialize the ref_store for the specified submodule, or for the
- * main repository if submodule == NULL. These functions should call
- * base_ref_store_init() to initialize the shared part of the
- * ref_store and to record the ref_store for later lookup.
- */
-typedef struct ref_store *ref_store_init_fn(const char *submodule);
-
-typedef int ref_transaction_commit_fn(struct ref_store *refs,
-				      struct ref_transaction *transaction,
-				      struct strbuf *err);
+typedef int read_raw_ref_fn(struct ref_store *ref_store,
+			    const char *refname, unsigned char *sha1,
+			    struct strbuf *referent, unsigned int *type);
 
 struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
 	ref_store_init_fn *init;
 	ref_transaction_commit_fn *transaction_commit;
+
+	read_raw_ref_fn *read_raw_ref;
 };
 
 extern struct ref_storage_be refs_be_files;

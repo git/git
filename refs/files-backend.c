@@ -1349,9 +1349,9 @@ static int resolve_packed_ref(struct files_ref_store *refs,
 	return -1;
 }
 
-int read_raw_ref(struct ref_store *ref_store,
-		 const char *refname, unsigned char *sha1,
-		 struct strbuf *referent, unsigned int *type)
+static int files_read_raw_ref(struct ref_store *ref_store,
+			      const char *refname, unsigned char *sha1,
+			      struct strbuf *referent, unsigned int *type)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, 1, "read_raw_ref");
@@ -1623,8 +1623,8 @@ retry:
 	 * fear that its value will change.
 	 */
 
-	if (read_raw_ref(ref_store, refname,
-			 lock->old_oid.hash, referent, type)) {
+	if (files_read_raw_ref(ref_store, refname,
+			       lock->old_oid.hash, referent, type)) {
 		if (errno == ENOENT) {
 			if (mustexist) {
 				/* Garden variety missing reference. */
@@ -4019,5 +4019,7 @@ struct ref_storage_be refs_be_files = {
 	NULL,
 	"files",
 	files_ref_store_create,
-	files_transaction_commit
+	files_transaction_commit,
+
+	files_read_raw_ref
 };
