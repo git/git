@@ -1299,26 +1299,27 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 				       resolve_flags, sha1, flags);
 }
 
-int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
+int resolve_gitlink_ref(const char *submodule, const char *refname,
+			unsigned char *sha1)
 {
-	size_t len = strlen(path);
+	size_t len = strlen(submodule);
 	struct ref_store *refs;
 	int flags;
 
-	while (len && path[len - 1] == '/')
+	while (len && submodule[len - 1] == '/')
 		len--;
 
 	if (!len)
 		return -1;
 
-	if (path[len]) {
+	if (submodule[len]) {
 		/* We need to strip off one or more trailing slashes */
-		char *stripped = xmemdupz(path, len);
+		char *stripped = xmemdupz(submodule, len);
 
 		refs = get_ref_store(stripped);
 		free(stripped);
 	} else {
-		refs = get_ref_store(path);
+		refs = get_ref_store(submodule);
 	}
 
 	if (!refs)
