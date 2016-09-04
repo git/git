@@ -1329,10 +1329,9 @@ static struct ref_entry *get_packed_ref(struct files_ref_store *refs,
 /*
  * A loose ref file doesn't exist; check for a packed ref.
  */
-static int resolve_missing_loose_ref(struct files_ref_store *refs,
-				     const char *refname,
-				     unsigned char *sha1,
-				     unsigned int *flags)
+static int resolve_packed_ref(struct files_ref_store *refs,
+			      const char *refname,
+			      unsigned char *sha1, unsigned int *flags)
 {
 	struct ref_entry *entry;
 
@@ -1383,7 +1382,7 @@ stat_ref:
 	if (lstat(path, &st) < 0) {
 		if (errno != ENOENT)
 			goto out;
-		if (resolve_missing_loose_ref(refs, refname, sha1, type)) {
+		if (resolve_packed_ref(refs, refname, sha1, type)) {
 			errno = ENOENT;
 			goto out;
 		}
@@ -1417,7 +1416,7 @@ stat_ref:
 		 * ref is supposed to be, there could still be a
 		 * packed ref:
 		 */
-		if (resolve_missing_loose_ref(refs, refname, sha1, type)) {
+		if (resolve_packed_ref(refs, refname, sha1, type)) {
 			errno = EISDIR;
 			goto out;
 		}
