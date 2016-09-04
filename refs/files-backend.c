@@ -2451,10 +2451,11 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 	return 0;
 }
 
-int delete_refs(struct string_list *refnames, unsigned int flags)
+static int files_delete_refs(struct ref_store *ref_store,
+			     struct string_list *refnames, unsigned int flags)
 {
 	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "delete_refs");
+		files_downcast(ref_store, 0, "delete_refs");
 	struct strbuf err = STRBUF_INIT;
 	int i, result = 0;
 
@@ -4067,6 +4068,7 @@ struct ref_storage_be refs_be_files = {
 	files_pack_refs,
 	files_peel_ref,
 	files_create_symref,
+	files_delete_refs,
 
 	files_ref_iterator_begin,
 	files_read_raw_ref,
