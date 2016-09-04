@@ -1759,9 +1759,10 @@ static enum peel_status peel_entry(struct ref_entry *entry, int repeel)
 	return status;
 }
 
-int peel_ref(const char *refname, unsigned char *sha1)
+static int files_peel_ref(struct ref_store *ref_store,
+			  const char *refname, unsigned char *sha1)
 {
-	struct files_ref_store *refs = get_files_ref_store(NULL, "peel_ref");
+	struct files_ref_store *refs = files_downcast(ref_store, 0, "peel_ref");
 	int flag;
 	unsigned char base[20];
 
@@ -4027,6 +4028,7 @@ struct ref_storage_be refs_be_files = {
 	files_transaction_commit,
 
 	files_pack_refs,
+	files_peel_ref,
 	files_create_symref,
 
 	files_read_raw_ref,
