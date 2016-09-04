@@ -70,9 +70,19 @@ void set_error_routine(void (*routine)(const char *err, va_list params))
 	error_routine = routine;
 }
 
+void (*get_error_routine(void))(const char *err, va_list params)
+{
+	return error_routine;
+}
+
 void set_warn_routine(void (*routine)(const char *warn, va_list params))
 {
 	warn_routine = routine;
+}
+
+void (*get_warn_routine(void))(const char *warn, va_list params)
+{
+	return warn_routine;
 }
 
 void set_die_is_recursing_routine(int (*routine)(void))
