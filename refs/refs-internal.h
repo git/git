@@ -501,6 +501,10 @@ typedef int ref_transaction_commit_fn(struct ref_store *refs,
 				      struct strbuf *err);
 
 typedef int pack_refs_fn(struct ref_store *ref_store, unsigned int flags);
+typedef int create_symref_fn(struct ref_store *ref_store,
+			     const char *ref_target,
+			     const char *refs_heads_master,
+			     const char *logmsg);
 
 /*
  * Read a reference from the specified reference store, non-recursively.
@@ -557,6 +561,7 @@ struct ref_storage_be {
 	ref_transaction_commit_fn *transaction_commit;
 
 	pack_refs_fn *pack_refs;
+	create_symref_fn *create_symref;
 
 	read_raw_ref_fn *read_raw_ref;
 	verify_refname_available_fn *verify_refname_available;
