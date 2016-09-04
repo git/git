@@ -582,6 +582,7 @@ struct ref_storage_be {
 	const char *name;
 	ref_store_init_fn *init;
 	ref_transaction_commit_fn *transaction_commit;
+	ref_transaction_commit_fn *initial_transaction_commit;
 
 	pack_refs_fn *pack_refs;
 	peel_ref_fn *peel_ref;

@@ -3829,11 +3829,12 @@ static int ref_present(const char *refname,
 	return string_list_has_string(affected_refnames, refname);
 }
 
-int initial_ref_transaction_commit(struct ref_transaction *transaction,
-				   struct strbuf *err)
+static int files_initial_transaction_commit(struct ref_store *ref_store,
+					    struct ref_transaction *transaction,
+					    struct strbuf *err)
 {
 	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "initial_ref_transaction_commit");
+		files_downcast(ref_store, 0, "initial_ref_transaction_commit");
 	int ret = 0, i;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 
@@ -4061,6 +4062,7 @@ struct ref_storage_be refs_be_files = {
 	"files",
 	files_ref_store_create,
 	files_transaction_commit,
+	files_initial_transaction_commit,
 
 	files_pack_refs,
 	files_peel_ref,
