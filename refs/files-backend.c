@@ -1387,7 +1387,7 @@ static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
 
 int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
 {
-	int len = strlen(path), retval;
+	int len = strlen(path);
 	struct strbuf submodule = STRBUF_INIT;
 	struct ref_cache *refs;
 
@@ -1404,8 +1404,7 @@ int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sh
 	}
 	strbuf_release(&submodule);
 
-	retval = resolve_gitlink_ref_recursive(refs, refname, sha1, 0);
-	return retval;
+	return resolve_gitlink_ref_recursive(refs, refname, sha1, 0);
 }
 
 /*
