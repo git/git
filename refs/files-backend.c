@@ -1523,7 +1523,8 @@ static void unlock_ref(struct ref_lock *lock)
  *   avoided, namely if we were successfully able to read the ref
  * - Generate informative error messages in the case of failure
  */
-static int lock_raw_ref(const char *refname, int mustexist,
+static int lock_raw_ref(struct files_ref_store *refs,
+			const char *refname, int mustexist,
 			const struct string_list *extras,
 			const struct string_list *skip,
 			struct ref_lock **lock_p,
@@ -1531,15 +1532,14 @@ static int lock_raw_ref(const char *refname, int mustexist,
 			unsigned int *type,
 			struct strbuf *err)
 {
-	struct ref_store *ref_store = get_ref_store(NULL);
-	struct files_ref_store *refs =
-		files_downcast(ref_store, 0, "lock_raw_ref");
 	struct ref_lock *lock;
 	struct strbuf ref_file = STRBUF_INIT;
 	int attempts_remaining = 3;
 	int ret = TRANSACTION_GENERIC_ERROR;
 
 	assert(err);
+	assert_main_repository(&refs->base, "lock_raw_ref");
+
 	*type = 0;
 
 	/* First lock the file so it can't change out from under us. */
@@ -1623,7 +1623,7 @@ retry:
 	 * fear that its value will change.
 	 */
 
-	if (files_read_raw_ref(ref_store, refname,
+	if (files_read_raw_ref(&refs->base, refname,
 			       lock->old_oid.hash, referent, type)) {
 		if (errno == ENOENT) {
 			if (mustexist) {
@@ -3486,6 +3486,8 @@ static int lock_ref_for_update(struct ref_update *update,
 			       struct string_list *affected_refnames,
 			       struct strbuf *err)
 {
+	struct files_ref_store *refs =
+		get_files_ref_store(NULL, "lock_ref_for_update");
 	struct strbuf referent = STRBUF_INIT;
 	int mustexist = (update->flags & REF_HAVE_OLD) &&
 		!is_null_sha1(update->old_sha1);
@@ -3502,7 +3504,7 @@ static int lock_ref_for_update(struct ref_update *update,
 			return ret;
 	}
 
-	ret = lock_raw_ref(update->refname, mustexist,
+	ret = lock_raw_ref(refs, update->refname, mustexist,
 			   affected_refnames, NULL,
 			   &update->lock, &referent,
 			   &update->type, err);
