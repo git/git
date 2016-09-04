@@ -2777,10 +2777,15 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 }
 
 
-int safe_create_reflog(const char *refname, int force_create, struct strbuf *err)
+static int files_create_reflog(struct ref_store *ref_store,
+			       const char *refname, int force_create,
+			       struct strbuf *err)
 {
 	int ret;
 	struct strbuf sb = STRBUF_INIT;
+
+	/* Check validity (but we don't need the result): */
+	files_downcast(ref_store, 0, "create_reflog");
 
 	ret = log_ref_setup(refname, &sb, err, force_create);
 	strbuf_release(&sb);
@@ -3075,16 +3080,24 @@ int set_worktree_head_symref(const char *gitdir, const char *target)
 	return ret;
 }
 
-int reflog_exists(const char *refname)
+static int files_reflog_exists(struct ref_store *ref_store,
+			       const char *refname)
 {
 	struct stat st;
+
+	/* Check validity (but we don't need the result): */
+	files_downcast(ref_store, 0, "reflog_exists");
 
 	return !lstat(git_path("logs/%s", refname), &st) &&
 		S_ISREG(st.st_mode);
 }
 
-int delete_reflog(const char *refname)
+static int files_delete_reflog(struct ref_store *ref_store,
+			       const char *refname)
 {
+	/* Check validity (but we don't need the result): */
+	files_downcast(ref_store, 0, "delete_reflog");
+
 	return remove_path(git_path("logs/%s", refname));
 }
 
@@ -3127,12 +3140,18 @@ static char *find_beginning_of_line(char *bob, char *scan)
 	return scan;
 }
 
-int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void *cb_data)
+static int files_for_each_reflog_ent_reverse(struct ref_store *ref_store,
+					     const char *refname,
+					     each_reflog_ent_fn fn,
+					     void *cb_data)
 {
 	struct strbuf sb = STRBUF_INIT;
 	FILE *logfp;
 	long pos;
 	int ret = 0, at_tail = 1;
+
+	/* Check validity (but we don't need the result): */
+	files_downcast(ref_store, 0, "for_each_reflog_ent_reverse");
 
 	logfp = fopen(git_path("logs/%s", refname), "r");
 	if (!logfp)
@@ -3229,11 +3248,16 @@ int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void
 	return ret;
 }
 
-int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_data)
+static int files_for_each_reflog_ent(struct ref_store *ref_store,
+				     const char *refname,
+				     each_reflog_ent_fn fn, void *cb_data)
 {
 	FILE *logfp;
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
+
+	/* Check validity (but we don't need the result): */
+	files_downcast(ref_store, 0, "for_each_reflog_ent");
 
 	logfp = fopen(git_path("logs/%s", refname), "r");
 	if (!logfp)
@@ -3313,20 +3337,17 @@ static struct ref_iterator_vtable files_reflog_iterator_vtable = {
 	files_reflog_iterator_abort
 };
 
-struct ref_iterator *files_reflog_iterator_begin(void)
+static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_store)
 {
 	struct files_reflog_iterator *iter = xcalloc(1, sizeof(*iter));
 	struct ref_iterator *ref_iterator = &iter->base;
 
+	/* Check validity (but we don't need the result): */
+	files_downcast(ref_store, 0, "reflog_iterator_begin");
+
 	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable);
 	iter->dir_iterator = dir_iterator_begin(git_path("logs"));
 	return ref_iterator;
-}
-
-int for_each_reflog(each_ref_fn fn, void *cb_data)
-{
-	return do_for_each_ref_iterator(files_reflog_iterator_begin(),
-					fn, cb_data);
 }
 
 static int ref_update_reject_duplicates(struct string_list *refnames,
@@ -3925,15 +3946,16 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	return 0;
 }
 
-int reflog_expire(const char *refname, const unsigned char *sha1,
-		 unsigned int flags,
-		 reflog_expiry_prepare_fn prepare_fn,
-		 reflog_expiry_should_prune_fn should_prune_fn,
-		 reflog_expiry_cleanup_fn cleanup_fn,
-		 void *policy_cb_data)
+static int files_reflog_expire(struct ref_store *ref_store,
+			       const char *refname, const unsigned char *sha1,
+			       unsigned int flags,
+			       reflog_expiry_prepare_fn prepare_fn,
+			       reflog_expiry_should_prune_fn should_prune_fn,
+			       reflog_expiry_cleanup_fn cleanup_fn,
+			       void *policy_cb_data)
 {
 	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "reflog_expire");
+		files_downcast(ref_store, 0, "reflog_expire");
 	static struct lock_file reflog_lock;
 	struct expire_reflog_cb cb;
 	struct ref_lock *lock;
@@ -4046,5 +4068,13 @@ struct ref_storage_be refs_be_files = {
 
 	files_ref_iterator_begin,
 	files_read_raw_ref,
-	files_verify_refname_available
+	files_verify_refname_available,
+
+	files_reflog_iterator_begin,
+	files_for_each_reflog_ent,
+	files_for_each_reflog_ent_reverse,
+	files_reflog_exists,
+	files_create_reflog,
+	files_delete_reflog,
+	files_reflog_expire
 };

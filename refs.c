@@ -1461,3 +1461,66 @@ int verify_refname_available(const char *refname,
 
 	return refs->be->verify_refname_available(refs, refname, extra, skip, err);
 }
+
+int for_each_reflog(each_ref_fn fn, void *cb_data)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+	struct ref_iterator *iter;
+
+	iter = refs->be->reflog_iterator_begin(refs);
+
+	return do_for_each_ref_iterator(iter, fn, cb_data);
+}
+
+int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn,
+				void *cb_data)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->for_each_reflog_ent_reverse(refs, refname,
+						     fn, cb_data);
+}
+
+int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn,
+			void *cb_data)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->for_each_reflog_ent(refs, refname, fn, cb_data);
+}
+
+int reflog_exists(const char *refname)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->reflog_exists(refs, refname);
+}
+
+int safe_create_reflog(const char *refname, int force_create,
+		       struct strbuf *err)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->create_reflog(refs, refname, force_create, err);
+}
+
+int delete_reflog(const char *refname)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->delete_reflog(refs, refname);
+}
+
+int reflog_expire(const char *refname, const unsigned char *sha1,
+		  unsigned int flags,
+		  reflog_expiry_prepare_fn prepare_fn,
+		  reflog_expiry_should_prune_fn should_prune_fn,
+		  reflog_expiry_cleanup_fn cleanup_fn,
+		  void *policy_cb_data)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->reflog_expire(refs, refname, sha1, flags,
+				       prepare_fn, should_prune_fn,
+				       cleanup_fn, policy_cb_data);
+}
