@@ -1299,6 +1299,30 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 				       resolve_flags, sha1, flags);
 }
 
+int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
+{
+	int len = strlen(path);
+	struct strbuf submodule = STRBUF_INIT;
+	struct ref_store *refs;
+	int flags;
+
+	while (len && path[len-1] == '/')
+		len--;
+	if (!len)
+		return -1;
+
+	strbuf_add(&submodule, path, len);
+	refs = get_ref_store(submodule.buf);
+	strbuf_release(&submodule);
+	if (!refs)
+		return -1;
+
+	if (!resolve_ref_recursively(refs, refname, 0, sha1, &flags) ||
+	    is_null_sha1(sha1))
+		return -1;
+	return 0;
+}
+
 /* A pointer to the ref_store for the main repository: */
 static struct ref_store *main_ref_store;
 
