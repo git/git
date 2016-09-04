@@ -997,22 +997,6 @@ static struct files_ref_store *files_downcast(
 	return (struct files_ref_store *)ref_store;
 }
 
-/*
- * Return a pointer to the reference store for the specified
- * submodule. For the main repository, use submodule==NULL; such a
- * call cannot fail. For a submodule, the submodule must exist and be
- * a nonbare repository, otherwise return NULL. Verify that the
- * reference store is a files_ref_store, and cast it to that type
- * before returning it.
- */
-static struct files_ref_store *get_files_ref_store(const char *submodule,
-						   const char *caller)
-{
-	struct ref_store *refs = get_ref_store(submodule);
-
-	return refs ? files_downcast(refs, 1, caller) : NULL;
-}
-
 /* The length of a peeled reference line in packed-refs, including EOL: */
 #define PEELED_LINE_LENGTH 42
 
@@ -2580,9 +2564,12 @@ static int commit_ref_update(struct files_ref_store *refs,
 			     const unsigned char *sha1, const char *logmsg,
 			     struct strbuf *err);
 
-int rename_ref(const char *oldrefname, const char *newrefname, const char *logmsg)
+static int files_rename_ref(struct ref_store *ref_store,
+			    const char *oldrefname, const char *newrefname,
+			    const char *logmsg)
 {
-	struct files_ref_store *refs = get_files_ref_store(NULL, "rename_ref");
+	struct files_ref_store *refs =
+		files_downcast(ref_store, 0, "rename_ref");
 	unsigned char sha1[20], orig_sha1[20];
 	int flag = 0, logmoved = 0;
 	struct ref_lock *lock;
@@ -4087,6 +4074,7 @@ struct ref_storage_be refs_be_files = {
 	files_peel_ref,
 	files_create_symref,
 	files_delete_refs,
+	files_rename_ref,
 
 	files_ref_iterator_begin,
 	files_read_raw_ref,
