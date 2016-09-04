@@ -1157,7 +1157,7 @@ static int do_for_each_ref(const char *submodule, const char *prefix,
 	if (!refs)
 		return 0;
 
-	iter = files_ref_iterator_begin(refs, prefix, flags);
+	iter = refs->be->iterator_begin(refs, prefix, flags);
 	iter = prefix_ref_iterator_begin(iter, prefix, trim);
 
 	return do_for_each_ref_iterator(iter, fn, cb_data);
