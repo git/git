@@ -10,6 +10,25 @@
 #include "tag.h"
 
 /*
+ * List of all available backends
+ */
+static struct ref_storage_be *refs_backends = &refs_be_files;
+
+static struct ref_storage_be *find_ref_storage_backend(const char *name)
+{
+	struct ref_storage_be *be;
+	for (be = refs_backends; be; be = be->next)
+		if (!strcmp(be->name, name))
+			return be;
+	return NULL;
+}
+
+int ref_storage_backend_exists(const char *name)
+{
+	return find_ref_storage_backend(name) != NULL;
+}
+
+/*
  * How to handle various characters in refnames:
  * 0: An acceptable character for refs
  * 1: End-of-component

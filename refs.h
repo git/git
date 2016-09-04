@@ -544,4 +544,6 @@ int reflog_expire(const char *refname, const unsigned char *sha1,
 		  reflog_expiry_cleanup_fn cleanup_fn,
 		  void *policy_cb_data);
 
+int ref_storage_backend_exists(const char *name);
+
 #endif /* REFS_H */
