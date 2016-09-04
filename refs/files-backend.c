@@ -2384,14 +2384,14 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
  *
  * The refs in 'refnames' needn't be sorted. `err` must not be NULL.
  */
-static int repack_without_refs(struct string_list *refnames, struct strbuf *err)
+static int repack_without_refs(struct files_ref_store *refs,
+			       struct string_list *refnames, struct strbuf *err)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "repack_without_refs");
 	struct ref_dir *packed;
 	struct string_list_item *refname;
 	int ret, needs_repacking = 0, removed = 0;
 
+	assert_main_repository(&refs->base, "repack_without_refs");
 	assert(err);
 
 	/* Look for a packed ref */
@@ -2453,13 +2453,15 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 
 int delete_refs(struct string_list *refnames, unsigned int flags)
 {
+	struct files_ref_store *refs =
+		get_files_ref_store(NULL, "delete_refs");
 	struct strbuf err = STRBUF_INIT;
 	int i, result = 0;
 
 	if (!refnames->nr)
 		return 0;
 
-	result = repack_without_refs(refnames, &err);
+	result = repack_without_refs(refs, refnames, &err);
 	if (result) {
 		/*
 		 * If we failed to rewrite the packed-refs file, then
@@ -3769,7 +3771,7 @@ static int files_transaction_commit(struct ref_store *ref_store,
 		}
 	}
 
-	if (repack_without_refs(&refs_to_delete, err)) {
+	if (repack_without_refs(refs, &refs_to_delete, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;
 	}
