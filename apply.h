@@ -111,20 +111,10 @@ struct apply_state {
 	int applied_after_fixing_ws;
 };
 
-extern int apply_option_parse_exclude(const struct option *opt,
-				      const char *arg, int unset);
-extern int apply_option_parse_include(const struct option *opt,
-				      const char *arg, int unset);
-extern int apply_option_parse_p(const struct option *opt,
-				const char *arg,
-				int unset);
-extern int apply_option_parse_whitespace(const struct option *opt,
-					 const char *arg, int unset);
-extern int apply_option_parse_directory(const struct option *opt,
-					const char *arg, int unset);
-extern int apply_option_parse_space_change(const struct option *opt,
-					   const char *arg, int unset);
-
+extern int apply_parse_options(int argc, const char **argv,
+			       struct apply_state *state,
+			       int *force_apply, int *options,
+			       const char * const *apply_usage);
 extern int init_apply_state(struct apply_state *state,
 			    const char *prefix,
 			    struct lock_file *lock_file);
