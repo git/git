@@ -4042,7 +4042,7 @@ static int preimage_sha1_in_gitlink_patch(struct patch *p, unsigned char sha1[20
 }
 
 /* Build an index that contains the just the files needed for a 3way merge */
-static int build_fake_ancestor(struct patch *list, const char *filename)
+static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 {
 	struct patch *patch;
 	struct index_state result = { NULL };
@@ -4089,12 +4089,13 @@ static int build_fake_ancestor(struct patch *list, const char *filename)
 		}
 	}
 
-	hold_lock_file_for_update(&lock, filename, LOCK_DIE_ON_ERROR);
+	hold_lock_file_for_update(&lock, state->fake_ancestor, LOCK_DIE_ON_ERROR);
 	res = write_locked_index(&result, &lock, COMMIT_LOCK);
 	discard_index(&result);
 
 	if (res)
-		return error("Could not write temporary index to %s", filename);
+		return error("Could not write temporary index to %s",
+			     state->fake_ancestor);
 
 	return 0;
 }
@@ -4709,7 +4710,7 @@ static int apply_patch(struct apply_state *state,
 	}
 
 	if (state->fake_ancestor &&
-	    build_fake_ancestor(list, state->fake_ancestor)) {
+	    build_fake_ancestor(state, list)) {
 		res = -128;
 		goto end;
 	}
