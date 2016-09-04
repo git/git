@@ -108,4 +108,11 @@ extern int init_apply_state(struct apply_state *state,
 extern void clear_apply_state(struct apply_state *state);
 extern int check_apply_state(struct apply_state *state, int force_apply);
 
+/*
+ * Some aspects of the apply behavior are controlled by the following
+ * bits in the "options" parameter passed to apply_all_patches().
+ */
+#define APPLY_OPT_INACCURATE_EOF	(1<<0) /* accept inaccurate eof */
+#define APPLY_OPT_RECOUNT		(1<<1) /* accept inaccurate line count */
+
 #endif
