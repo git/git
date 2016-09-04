@@ -1192,10 +1192,9 @@ static struct ref_dir *get_packed_refs(struct files_ref_store *refs)
  * lock_packed_refs()).  To actually write the packed-refs file, call
  * commit_packed_refs().
  */
-static void add_packed_ref(const char *refname, const unsigned char *sha1)
+static void add_packed_ref(struct files_ref_store *refs,
+			   const char *refname, const unsigned char *sha1)
 {
-	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "add_packed_ref");
 	struct packed_ref_cache *packed_ref_cache = get_packed_ref_cache(refs);
 
 	if (!packed_ref_cache->lock)
@@ -3869,6 +3868,8 @@ static int ref_present(const char *refname,
 int initial_ref_transaction_commit(struct ref_transaction *transaction,
 				   struct strbuf *err)
 {
+	struct files_ref_store *refs =
+		get_files_ref_store(NULL, "initial_ref_transaction_commit");
 	int ret = 0, i;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 
@@ -3928,7 +3929,7 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 
 		if ((update->flags & REF_HAVE_NEW) &&
 		    !is_null_sha1(update->new_sha1))
-			add_packed_ref(update->refname, update->new_sha1);
+			add_packed_ref(refs, update->refname, update->new_sha1);
 	}
 
 	if (commit_packed_refs()) {
