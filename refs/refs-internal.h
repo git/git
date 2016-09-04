@@ -526,11 +526,89 @@ int read_raw_ref(const char *refname, unsigned char *sha1,
 		 struct strbuf *referent, unsigned int *type);
 
 /* refs backends */
+
+/*
+ * Initialize the ref_store for the specified submodule, or for the
+ * main repository if submodule == NULL. These functions should call
+ * base_ref_store_init() to initialize the shared part of the
+ * ref_store and to record the ref_store for later lookup.
+ */
+typedef struct ref_store *ref_store_init_fn(const char *submodule);
+
 struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
+	ref_store_init_fn *init;
 };
 
 extern struct ref_storage_be refs_be_files;
+
+/*
+ * A representation of the reference store for the main repository or
+ * a submodule. The ref_store instances for submodules are kept in a
+ * linked list.
+ */
+struct ref_store {
+	/* The backend describing this ref_store's storage scheme: */
+	const struct ref_storage_be *be;
+
+	/*
+	 * The name of the submodule represented by this object, or
+	 * the empty string if it represents the main repository's
+	 * reference store:
+	 */
+	const char *submodule;
+
+	/*
+	 * Submodule reference store instances are stored in a linked
+	 * list using this pointer.
+	 */
+	struct ref_store *next;
+};
+
+/*
+ * Fill in the generic part of refs for the specified submodule and
+ * add it to our collection of reference stores.
+ */
+void base_ref_store_init(struct ref_store *refs,
+			 const struct ref_storage_be *be,
+			 const char *submodule);
+
+/*
+ * Create, record, and return a ref_store instance for the specified
+ * submodule (or the main repository if submodule is NULL).
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+struct ref_store *ref_store_init(const char *submodule);
+
+/*
+ * Return the ref_store instance for the specified submodule (or the
+ * main repository if submodule is NULL). If that ref_store hasn't
+ * been initialized yet, return NULL.
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+struct ref_store *lookup_ref_store(const char *submodule);
+
+/*
+ * Return the ref_store instance for the specified submodule. For the
+ * main repository, use submodule==NULL; such a call cannot fail. For
+ * a submodule, the submodule must exist and be a nonbare repository,
+ * otherwise return NULL. If the requested reference store has not yet
+ * been initialized, initialize it first.
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+struct ref_store *get_ref_store(const char *submodule);
+
+/*
+ * Die if refs is for a submodule (i.e., not for the main repository).
+ * caller is used in any necessary error messages.
+ */
+void assert_main_repository(struct ref_store *refs, const char *caller);
 
 #endif /* REFS_REFS_INTERNAL_H */
