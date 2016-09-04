@@ -1349,11 +1349,12 @@ static int resolve_packed_ref(struct files_ref_store *refs,
 	return -1;
 }
 
-int read_raw_ref(const char *refname, unsigned char *sha1,
+int read_raw_ref(struct ref_store *ref_store,
+		 const char *refname, unsigned char *sha1,
 		 struct strbuf *referent, unsigned int *type)
 {
 	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "read_raw_ref");
+		files_downcast(ref_store, 1, "read_raw_ref");
 	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
 	const char *path;
@@ -1365,7 +1366,12 @@ int read_raw_ref(const char *refname, unsigned char *sha1,
 
 	*type = 0;
 	strbuf_reset(&sb_path);
-	strbuf_git_path(&sb_path, "%s", refname);
+
+	if (*refs->base.submodule)
+		strbuf_git_path_submodule(&sb_path, refs->base.submodule, "%s", refname);
+	else
+		strbuf_git_path(&sb_path, "%s", refname);
+
 	path = sb_path.buf;
 
 stat_ref:
@@ -1592,8 +1598,9 @@ static int lock_raw_ref(const char *refname, int mustexist,
 			unsigned int *type,
 			struct strbuf *err)
 {
+	struct ref_store *ref_store = get_ref_store(NULL);
 	struct files_ref_store *refs =
-		get_files_ref_store(NULL, "lock_raw_ref");
+		files_downcast(ref_store, 0, "lock_raw_ref");
 	struct ref_lock *lock;
 	struct strbuf ref_file = STRBUF_INIT;
 	int attempts_remaining = 3;
@@ -1683,7 +1690,8 @@ retry:
 	 * fear that its value will change.
 	 */
 
-	if (read_raw_ref(refname, lock->old_oid.hash, referent, type)) {
+	if (read_raw_ref(ref_store, refname,
+			 lock->old_oid.hash, referent, type)) {
 		if (errno == ENOENT) {
 			if (mustexist) {
 				/* Garden variety missing reference. */
