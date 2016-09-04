@@ -3993,12 +3993,21 @@ static int check_patch_list(struct apply_state *state, struct patch *patch)
 	return err;
 }
 
+static int read_apply_cache(struct apply_state *state)
+{
+	if (state->index_file)
+		return read_cache_from(state->index_file);
+	else
+		return read_cache();
+}
+
 /* This function tries to read the sha1 from the current index */
-static int get_current_sha1(const char *path, unsigned char *sha1)
+static int get_current_sha1(struct apply_state *state, const char *path,
+			    unsigned char *sha1)
 {
 	int pos;
 
-	if (read_cache() < 0)
+	if (read_apply_cache(state) < 0)
 		return -1;
 	pos = cache_name_pos(path, strlen(path));
 	if (pos < 0)
@@ -4071,7 +4080,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			; /* ok */
 		} else if (!patch->lines_added && !patch->lines_deleted) {
 			/* mode-only change: update the current */
-			if (get_current_sha1(patch->old_name, sha1))
+			if (get_current_sha1(state, patch->old_name, sha1))
 				return error("mode change for %s, which is not "
 					     "in current HEAD", name);
 		} else
@@ -4675,10 +4684,16 @@ static int apply_patch(struct apply_state *state,
 		state->apply = 0;
 
 	state->update_index = state->check_index && state->apply;
-	if (state->update_index && state->newfd < 0)
-		state->newfd = hold_locked_index(state->lock_file, 1);
+	if (state->update_index && state->newfd < 0) {
+		if (state->index_file)
+			state->newfd = hold_lock_file_for_update(state->lock_file,
+								 state->index_file,
+								 LOCK_DIE_ON_ERROR);
+		else
+			state->newfd = hold_locked_index(state->lock_file, 1);
+	}
 
-	if (state->check_index && read_cache() < 0) {
+	if (state->check_index && read_apply_cache(state) < 0) {
 		error(_("unable to read index file"));
 		res = -128;
 		goto end;

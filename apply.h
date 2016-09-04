@@ -63,6 +63,7 @@ struct apply_state {
 	int unsafe_paths;
 
 	/* Other non boolean parameters */
+	const char *index_file;
 	enum apply_verbosity apply_verbosity;
 	const char *fake_ancestor;
 	const char *patch_input_file;
