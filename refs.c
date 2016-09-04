@@ -1421,6 +1421,13 @@ void assert_main_repository(struct ref_store *refs, const char *caller)
 }
 
 /* backend functions */
+int pack_refs(unsigned int flags)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->pack_refs(refs, flags);
+}
+
 int ref_transaction_commit(struct ref_transaction *transaction,
 			   struct strbuf *err)
 {
