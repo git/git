@@ -479,6 +479,8 @@ struct ref_store;
  */
 typedef struct ref_store *ref_store_init_fn(const char *submodule);
 
+typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
+
 typedef int ref_transaction_commit_fn(struct ref_store *refs,
 				      struct ref_transaction *transaction,
 				      struct strbuf *err);
@@ -583,6 +585,7 @@ struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
 	ref_store_init_fn *init;
+	ref_init_db_fn *init_db;
 	ref_transaction_commit_fn *transaction_commit;
 	ref_transaction_commit_fn *initial_transaction_commit;
 
