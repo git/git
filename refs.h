@@ -477,6 +477,9 @@ void ref_transaction_free(struct ref_transaction *transaction);
 int update_ref(const char *msg, const char *refname,
 	       const unsigned char *new_sha1, const unsigned char *old_sha1,
 	       unsigned int flags, enum action_on_err onerr);
+int update_ref_oid(const char *msg, const char *refname,
+	       const struct object_id *new_oid, const struct object_id *old_oid,
+	       unsigned int flags, enum action_on_err onerr);
 
 int parse_hide_refs_config(const char *var, const char *value, const char *);
 
