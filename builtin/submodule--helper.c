@@ -296,7 +296,8 @@ static int module_list(int argc, const char **argv, const char *prefix)
 		if (ce_stage(ce))
 			printf("%06o %s U\t", ce->ce_mode, sha1_to_hex(null_sha1));
 		else
-			printf("%06o %s %d\t", ce->ce_mode, sha1_to_hex(ce->sha1), ce_stage(ce));
+			printf("%06o %s %d\t", ce->ce_mode,
+			       oid_to_hex(&ce->oid), ce_stage(ce));
 
 		utf8_fprintf(stdout, "%s\n", ce->name);
 	}
@@ -683,7 +684,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%06o %s %d %d\t%s\n", ce->ce_mode,
-			sha1_to_hex(ce->sha1), ce_stage(ce),
+			oid_to_hex(&ce->oid), ce_stage(ce),
 			needs_cloning, ce->name);
 	string_list_append(&suc->projectlines, sb.buf);
 

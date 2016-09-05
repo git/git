@@ -199,7 +199,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 		if (no_head
 		     || get_tree_entry(head, name, sha1, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
-		     || hashcmp(ce->sha1, sha1))
+		     || hashcmp(ce->oid.hash, sha1))
 			staged_changes = 1;
 
 		/*

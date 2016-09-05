@@ -398,7 +398,8 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 		if (cached || (ce->ce_flags & CE_VALID) || ce_skip_worktree(ce)) {
 			if (ce_stage(ce) || ce_intent_to_add(ce))
 				continue;
-			hit |= grep_sha1(opt, ce->sha1, ce->name, 0, ce->name);
+			hit |= grep_sha1(opt, ce->oid.hash, ce->name, 0,
+					 ce->name);
 		}
 		else
 			hit |= grep_file(opt, ce->name);

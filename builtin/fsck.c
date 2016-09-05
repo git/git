@@ -722,7 +722,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			mode = active_cache[i]->ce_mode;
 			if (S_ISGITLINK(mode))
 				continue;
-			blob = lookup_blob(active_cache[i]->sha1);
+			blob = lookup_blob(active_cache[i]->oid.hash);
 			if (!blob)
 				continue;
 			obj = &blob->object;

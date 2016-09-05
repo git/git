@@ -382,7 +382,7 @@ static struct string_list *get_unmerged(void)
 		}
 		e = item->util;
 		e->stages[ce_stage(ce)].mode = ce->ce_mode;
-		hashcpy(e->stages[ce_stage(ce)].oid.hash, ce->sha1);
+		oidcpy(&e->stages[ce_stage(ce)].oid, &ce->oid);
 	}
 
 	return unmerged;

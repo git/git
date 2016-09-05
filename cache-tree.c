@@ -168,7 +168,7 @@ static int verify_cache(struct cache_entry **cache,
 				break;
 			}
 			fprintf(stderr, "%s: unmerged (%s)\n",
-				ce->name, sha1_to_hex(ce->sha1));
+				ce->name, oid_to_hex(&ce->oid));
 		}
 	}
 	if (funny)
@@ -349,7 +349,7 @@ static int update_one(struct cache_tree *it,
 			}
 		}
 		else {
-			sha1 = ce->sha1;
+			sha1 = ce->oid.hash;
 			mode = ce->ce_mode;
 			entlen = pathlen - baselen;
 			i++;

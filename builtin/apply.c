@@ -3220,7 +3220,7 @@ static int read_file_or_gitlink(const struct cache_entry *ce, struct strbuf *buf
 {
 	if (!ce)
 		return 0;
-	return read_blob_object(buf, ce->sha1, ce->ce_mode);
+	return read_blob_object(buf, ce->oid.hash, ce->ce_mode);
 }
 
 static struct patch *in_fn_table(struct apply_state *state, const char *name)
@@ -3959,7 +3959,7 @@ static int get_current_sha1(const char *path, unsigned char *sha1)
 	pos = cache_name_pos(path, strlen(path));
 	if (pos < 0)
 		return -1;
-	hashcpy(sha1, active_cache[pos]->sha1);
+	hashcpy(sha1, active_cache[pos]->oid.hash);
 	return 0;
 }
 
@@ -4211,7 +4211,7 @@ static void add_index_file(struct apply_state *state,
 		const char *s;
 
 		if (!skip_prefix(buf, "Subproject commit ", &s) ||
-		    get_sha1_hex(s, ce->sha1))
+		    get_sha1_hex(s, ce->oid.hash))
 			die(_("corrupt patch for submodule %s"), path);
 	} else {
 		if (!state->cached) {
@@ -4220,7 +4220,7 @@ static void add_index_file(struct apply_state *state,
 					  path);
 			fill_stat_cache_info(ce, &st);
 		}
-		if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0)
+		if (write_sha1_file(buf, size, blob_type, ce->oid.hash) < 0)
 			die(_("unable to create backing store for newly created file %s"), path);
 	}
 	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
@@ -4335,7 +4335,7 @@ static void add_conflicted_stages_file(struct apply_state *state,
 		ce->ce_mode = create_ce_mode(mode);
 		ce->ce_flags = create_ce_flags(stage);
 		ce->ce_namelen = namelen;
-		hashcpy(ce->sha1, patch->threeway_stage[stage - 1].hash);
+		oidcpy(&ce->oid, &patch->threeway_stage[stage - 1]);
 		if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
 			die(_("unable to add cache entry for %s"), patch->new_name);
 	}

@@ -625,7 +625,7 @@ static struct cache_entry *create_ce_entry(const struct traverse_info *info, con
 	ce->ce_mode = create_ce_mode(n->mode);
 	ce->ce_flags = create_ce_flags(stage);
 	ce->ce_namelen = len;
-	hashcpy(ce->sha1, n->oid->hash);
+	oidcpy(&ce->oid, n->oid);
 	make_traverse_path(ce->name, info, n);
 
 	return ce;
@@ -1287,7 +1287,7 @@ static int same(const struct cache_entry *a, const struct cache_entry *b)
 	if ((a->ce_flags | b->ce_flags) & CE_CONFLICTED)
 		return 0;
 	return a->ce_mode == b->ce_mode &&
-	       !hashcmp(a->sha1, b->sha1);
+	       !oidcmp(&a->oid, &b->oid);
 }
 
 
@@ -1393,7 +1393,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 		/* If we are not going to update the submodule, then
 		 * we don't care.
 		 */
-		if (!hashcmp(sha1, ce->sha1))
+		if (!hashcmp(sha1, ce->oid.hash))
 			return 0;
 		return verify_clean_submodule(ce, error_type, o);
 	}
@@ -1665,7 +1665,7 @@ static void show_stage_entry(FILE *o,
 		fprintf(o, "%s%06o %s %d\t%s\n",
 			label,
 			ce->ce_mode,
-			sha1_to_hex(ce->sha1),
+			oid_to_hex(&ce->oid),
 			ce_stage(ce),
 			ce->name);
 }

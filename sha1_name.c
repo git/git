@@ -1435,7 +1435,7 @@ static int get_sha1_with_context_1(const char *name,
 			    memcmp(ce->name, cp, namelen))
 				break;
 			if (ce_stage(ce) == stage) {
-				hashcpy(sha1, ce->sha1);
+				hashcpy(sha1, ce->oid.hash);
 				oc->mode = ce->ce_mode;
 				free(new_path);
 				return 0;

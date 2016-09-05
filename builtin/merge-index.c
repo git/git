@@ -22,7 +22,7 @@ static int merge_entry(int pos, const char *path)
 		if (strcmp(ce->name, path))
 			break;
 		found++;
-		sha1_to_hex_r(hexbuf[stage], ce->sha1);
+		sha1_to_hex_r(hexbuf[stage], ce->oid.hash);
 		xsnprintf(ownbuf[stage], sizeof(ownbuf[stage]), "%o", ce->ce_mode);
 		arguments[stage] = hexbuf[stage];
 		arguments[stage + 4] = ownbuf[stage];

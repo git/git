@@ -2700,7 +2700,7 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	 * This is not the sha1 we are looking for, or
 	 * unreusable because it is not a regular file.
 	 */
-	if (hashcmp(sha1, ce->sha1) || !S_ISREG(ce->ce_mode))
+	if (hashcmp(sha1, ce->oid.hash) || !S_ISREG(ce->ce_mode))
 		return 0;
 
 	/*

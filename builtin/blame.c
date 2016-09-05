@@ -2410,7 +2410,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	}
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
-	hashcpy(ce->sha1, origin->blob_sha1);
+	hashcpy(ce->oid.hash, origin->blob_sha1);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
