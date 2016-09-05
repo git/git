@@ -107,7 +107,7 @@ static int check_submodules_use_gitfiles(void)
 	return errs;
 }
 
-static int check_local_mod(unsigned char *head, int index_only)
+static int check_local_mod(struct object_id *head, int index_only)
 {
 	/*
 	 * Items in list are already sorted in the cache order,
@@ -123,13 +123,13 @@ static int check_local_mod(unsigned char *head, int index_only)
 	struct string_list files_submodule = STRING_LIST_INIT_NODUP;
 	struct string_list files_local = STRING_LIST_INIT_NODUP;
 
-	no_head = is_null_sha1(head);
+	no_head = is_null_oid(head);
 	for (i = 0; i < list.nr; i++) {
 		struct stat st;
 		int pos;
 		const struct cache_entry *ce;
 		const char *name = list.entry[i].name;
-		unsigned char sha1[20];
+		struct object_id oid;
 		unsigned mode;
 		int local_changes = 0;
 		int staged_changes = 0;
@@ -197,9 +197,9 @@ static int check_local_mod(unsigned char *head, int index_only)
 		 * way as changed from the HEAD.
 		 */
 		if (no_head
-		     || get_tree_entry(head, name, sha1, &mode)
+		     || get_tree_entry(head->hash, name, oid.hash, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
-		     || hashcmp(ce->oid.hash, sha1))
+		     || oidcmp(&ce->oid, &oid))
 			staged_changes = 1;
 
 		/*
@@ -351,10 +351,10 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 * report no changes unless forced.
 	 */
 	if (!force) {
-		unsigned char sha1[20];
-		if (get_sha1("HEAD", sha1))
-			hashclr(sha1);
-		if (check_local_mod(sha1, index_only))
+		struct object_id oid;
+		if (get_oid("HEAD", &oid))
+			oidclr(&oid);
+		if (check_local_mod(&oid, index_only))
 			exit(1);
 	} else if (!index_only) {
 		if (check_submodules_use_gitfiles())
