@@ -37,7 +37,6 @@ test_expect_success 'unpack objects' '
 		GIT_DIR=clone.git &&
 		export GIT_DIR &&
 		git init &&
-		git unpack-objects -n <test-1-${packname_1}.pack &&
 		git unpack-objects <test-1-${packname_1}.pack
 	)
 '
@@ -64,7 +63,6 @@ test_expect_success 'unpack objects' '
 		GIT_DIR=clone.git &&
 		export GIT_DIR &&
 		git init &&
-		git unpack-objects -n <test-2-${packname_1}.pack &&
 		git unpack-objects <test-2-${packname_1}.pack
 	)
 '
