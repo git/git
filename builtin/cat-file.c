@@ -23,7 +23,7 @@ struct batch_options {
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			int unknown_type)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	enum object_type type;
 	char *buf;
 	unsigned long size;
@@ -35,14 +35,14 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	if (unknown_type)
 		flags |= LOOKUP_UNKNOWN_OBJECT;
 
-	if (get_sha1_with_context(obj_name, 0, sha1, &obj_context))
+	if (get_sha1_with_context(obj_name, 0, oid.hash, &obj_context))
 		die("Not a valid object name %s", obj_name);
 
 	buf = NULL;
 	switch (opt) {
 	case 't':
 		oi.typename = &sb;
-		if (sha1_object_info_extended(sha1, &oi, flags) < 0)
+		if (sha1_object_info_extended(oid.hash, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
 		if (sb.len) {
 			printf("%s\n", sb.buf);
@@ -53,24 +53,24 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 
 	case 's':
 		oi.sizep = &size;
-		if (sha1_object_info_extended(sha1, &oi, flags) < 0)
+		if (sha1_object_info_extended(oid.hash, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
 		printf("%lu\n", size);
 		return 0;
 
 	case 'e':
-		return !has_sha1_file(sha1);
+		return !has_object_file(&oid);
 
 	case 'c':
 		if (!obj_context.path[0])
 			die("git cat-file --textconv %s: <object> must be <sha1:path>",
 			    obj_name);
 
-		if (textconv_object(obj_context.path, obj_context.mode, sha1, 1, &buf, &size))
+		if (textconv_object(obj_context.path, obj_context.mode, oid.hash, 1, &buf, &size))
 			break;
 
 	case 'p':
-		type = sha1_object_info(sha1, NULL);
+		type = sha1_object_info(oid.hash, NULL);
 		if (type < 0)
 			die("Not a valid object name %s", obj_name);
 
@@ -83,8 +83,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		}
 
 		if (type == OBJ_BLOB)
-			return stream_blob_to_fd(1, sha1, NULL, 0);
-		buf = read_sha1_file(sha1, &type, &size);
+			return stream_blob_to_fd(1, oid.hash, NULL, 0);
+		buf = read_sha1_file(oid.hash, &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
 
@@ -93,19 +93,19 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 
 	case 0:
 		if (type_from_string(exp_type) == OBJ_BLOB) {
-			unsigned char blob_sha1[20];
-			if (sha1_object_info(sha1, NULL) == OBJ_TAG) {
-				char *buffer = read_sha1_file(sha1, &type, &size);
+			struct object_id blob_oid;
+			if (sha1_object_info(oid.hash, NULL) == OBJ_TAG) {
+				char *buffer = read_sha1_file(oid.hash, &type, &size);
 				const char *target;
 				if (!skip_prefix(buffer, "object ", &target) ||
-				    get_sha1_hex(target, blob_sha1))
-					die("%s not a valid tag", sha1_to_hex(sha1));
+				    get_oid_hex(target, &blob_oid))
+					die("%s not a valid tag", oid_to_hex(&oid));
 				free(buffer);
 			} else
-				hashcpy(blob_sha1, sha1);
+				oidcpy(&blob_oid, &oid);
 
-			if (sha1_object_info(blob_sha1, NULL) == OBJ_BLOB)
-				return stream_blob_to_fd(1, blob_sha1, NULL, 0);
+			if (sha1_object_info(blob_oid.hash, NULL) == OBJ_BLOB)
+				return stream_blob_to_fd(1, blob_oid.hash, NULL, 0);
 			/*
 			 * we attempted to dereference a tag to a blob
 			 * and failed; there may be new dereference
@@ -113,7 +113,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			 * fall-back to the usual case.
 			 */
 		}
-		buf = read_object_with_reference(sha1, exp_type, &size, NULL);
+		buf = read_object_with_reference(oid.hash, exp_type, &size, NULL);
 		break;
 
 	default:
@@ -233,28 +233,28 @@ static void batch_write(struct batch_options *opt, const void *data, int len)
 
 static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
 {
-	const unsigned char *sha1 = data->oid.hash;
+	const struct object_id *oid = &data->oid;
 
 	assert(data->info.typep);
 
 	if (data->type == OBJ_BLOB) {
 		if (opt->buffer_output)
 			fflush(stdout);
-		if (stream_blob_to_fd(1, sha1, NULL, 0) < 0)
-			die("unable to stream %s to stdout", sha1_to_hex(sha1));
+		if (stream_blob_to_fd(1, oid->hash, NULL, 0) < 0)
+			die("unable to stream %s to stdout", oid_to_hex(oid));
 	}
 	else {
 		enum object_type type;
 		unsigned long size;
 		void *contents;
 
-		contents = read_sha1_file(sha1, &type, &size);
+		contents = read_sha1_file(oid->hash, &type, &size);
 		if (!contents)
-			die("object %s disappeared", sha1_to_hex(sha1));
+			die("object %s disappeared", oid_to_hex(oid));
 		if (type != data->type)
-			die("object %s changed type!?", sha1_to_hex(sha1));
+			die("object %s changed type!?", oid_to_hex(oid));
 		if (data->info.sizep && size != data->size)
-			die("object %s changed size!?", sha1_to_hex(sha1));
+			die("object %s changed size!?", oid_to_hex(oid));
 
 		batch_write(opt, contents, size);
 		free(contents);
