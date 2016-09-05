@@ -120,7 +120,7 @@ struct origin {
 	 */
 	struct blame_entry *suspects;
 	mmfile_t file;
-	unsigned char blob_sha1[20];
+	struct object_id blob_oid;
 	unsigned mode;
 	/* guilty gets set when shipping any suspects to the final
 	 * blame list instead of other commits
@@ -188,15 +188,16 @@ static void fill_origin_blob(struct diff_options *opt,
 
 		num_read_blob++;
 		if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
-		    textconv_object(o->path, o->mode, o->blob_sha1, 1, &file->ptr, &file_size))
+		    textconv_object(o->path, o->mode, o->blob_oid.hash, 1, &file->ptr, &file_size))
 			;
 		else
-			file->ptr = read_sha1_file(o->blob_sha1, &type, &file_size);
+			file->ptr = read_sha1_file(o->blob_oid.hash, &type,
+						   &file_size);
 		file->size = file_size;
 
 		if (!file->ptr)
 			die("Cannot read blob %s for path %s",
-			    sha1_to_hex(o->blob_sha1),
+			    oid_to_hex(&o->blob_oid),
 			    o->path);
 		o->file = *file;
 	}
@@ -508,17 +509,17 @@ static struct origin *get_origin(struct scoreboard *sb,
  */
 static int fill_blob_sha1_and_mode(struct origin *origin)
 {
-	if (!is_null_sha1(origin->blob_sha1))
+	if (!is_null_oid(&origin->blob_oid))
 		return 0;
 	if (get_tree_entry(origin->commit->object.oid.hash,
 			   origin->path,
-			   origin->blob_sha1, &origin->mode))
+			   origin->blob_oid.hash, &origin->mode))
 		goto error_out;
-	if (sha1_object_info(origin->blob_sha1, NULL) != OBJ_BLOB)
+	if (sha1_object_info(origin->blob_oid.hash, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:
-	hashclr(origin->blob_sha1);
+	oidclr(&origin->blob_oid);
 	origin->mode = S_IFINVALID;
 	return -1;
 }
@@ -572,7 +573,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 	if (!diff_queued_diff.nr) {
 		/* The path is the same as parent */
 		porigin = get_origin(sb, parent, origin->path);
-		hashcpy(porigin->blob_sha1, origin->blob_sha1);
+		oidcpy(&porigin->blob_oid, &origin->blob_oid);
 		porigin->mode = origin->mode;
 	} else {
 		/*
@@ -598,7 +599,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 			    p->status);
 		case 'M':
 			porigin = get_origin(sb, parent, origin->path);
-			hashcpy(porigin->blob_sha1, p->one->oid.hash);
+			oidcpy(&porigin->blob_oid, &p->one->oid);
 			porigin->mode = p->one->mode;
 			break;
 		case 'A':
@@ -644,7 +645,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 		if ((p->status == 'R' || p->status == 'C') &&
 		    !strcmp(p->two->path, origin->path)) {
 			porigin = get_origin(sb, parent, p->one->path);
-			hashcpy(porigin->blob_sha1, p->one->oid.hash);
+			oidcpy(&porigin->blob_oid, &p->one->oid);
 			porigin->mode = p->one->mode;
 			break;
 		}
@@ -1308,7 +1309,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 				continue;
 
 			norigin = get_origin(sb, parent, p->one->path);
-			hashcpy(norigin->blob_sha1, p->one->oid.hash);
+			oidcpy(&norigin->blob_oid, &p->one->oid);
 			norigin->mode = p->one->mode;
 			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p);
 			if (!file_p.ptr)
@@ -1458,15 +1459,14 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 			porigin = find(sb, p, origin);
 			if (!porigin)
 				continue;
-			if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
+			if (!oidcmp(&porigin->blob_oid, &origin->blob_oid)) {
 				pass_whole_blame(sb, origin, porigin);
 				origin_decref(porigin);
 				goto finish;
 			}
 			for (j = same = 0; j < i; j++)
 				if (sg_origin[j] &&
-				    !hashcmp(sg_origin[j]->blob_sha1,
-					     porigin->blob_sha1)) {
+				    !oidcmp(&sg_origin[j]->blob_oid, &porigin->blob_oid)) {
 					same = 1;
 					break;
 				}
@@ -2388,7 +2388,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	convert_to_git(path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
-	pretend_sha1_file(buf.buf, buf.len, OBJ_BLOB, origin->blob_sha1);
+	pretend_sha1_file(buf.buf, buf.len, OBJ_BLOB, origin->blob_oid.hash);
 
 	/*
 	 * Read the current index, replace the path entry with
@@ -2410,7 +2410,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	}
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
-	hashcpy(ce->oid.hash, origin->blob_sha1);
+	oidcpy(&ce->oid, &origin->blob_oid);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
@@ -2793,16 +2793,16 @@ parse_done:
 			die("no such path %s in %s", path, final_commit_name);
 
 		if (DIFF_OPT_TST(&sb.revs->diffopt, ALLOW_TEXTCONV) &&
-		    textconv_object(path, o->mode, o->blob_sha1, 1, (char **) &sb.final_buf,
+		    textconv_object(path, o->mode, o->blob_oid.hash, 1, (char **) &sb.final_buf,
 				    &sb.final_buf_size))
 			;
 		else
-			sb.final_buf = read_sha1_file(o->blob_sha1, &type,
+			sb.final_buf = read_sha1_file(o->blob_oid.hash, &type,
 						      &sb.final_buf_size);
 
 		if (!sb.final_buf)
 			die("Cannot read blob %s for path %s",
-			    sha1_to_hex(o->blob_sha1),
+			    oid_to_hex(&o->blob_oid),
 			    path);
 	}
 	num_read_blob++;
