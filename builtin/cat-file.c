@@ -128,12 +128,12 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 }
 
 struct expand_data {
-	unsigned char sha1[20];
+	struct object_id oid;
 	enum object_type type;
 	unsigned long size;
 	off_t disk_size;
 	const char *rest;
-	unsigned char delta_base_sha1[20];
+	struct object_id delta_base_oid;
 
 	/*
 	 * If mark_query is true, we do not expand anything, but rather
@@ -176,7 +176,7 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 
 	if (is_atom("objectname", atom, len)) {
 		if (!data->mark_query)
-			strbuf_addstr(sb, sha1_to_hex(data->sha1));
+			strbuf_addstr(sb, oid_to_hex(&data->oid));
 	} else if (is_atom("objecttype", atom, len)) {
 		if (data->mark_query)
 			data->info.typep = &data->type;
@@ -199,9 +199,10 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 			strbuf_addstr(sb, data->rest);
 	} else if (is_atom("deltabase", atom, len)) {
 		if (data->mark_query)
-			data->info.delta_base_sha1 = data->delta_base_sha1;
+			data->info.delta_base_sha1 = data->delta_base_oid.hash;
 		else
-			strbuf_addstr(sb, sha1_to_hex(data->delta_base_sha1));
+			strbuf_addstr(sb,
+				      oid_to_hex(&data->delta_base_oid));
 	} else
 		die("unknown format element: %.*s", len, atom);
 }
@@ -232,7 +233,7 @@ static void batch_write(struct batch_options *opt, const void *data, int len)
 
 static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
 {
-	const unsigned char *sha1 = data->sha1;
+	const unsigned char *sha1 = data->oid.hash;
 
 	assert(data->info.typep);
 
@@ -266,8 +267,9 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	struct strbuf buf = STRBUF_INIT;
 
 	if (!data->skip_object_info &&
-	    sha1_object_info_extended(data->sha1, &data->info, LOOKUP_REPLACE_OBJECT) < 0) {
-		printf("%s missing\n", obj_name ? obj_name : sha1_to_hex(data->sha1));
+	    sha1_object_info_extended(data->oid.hash, &data->info, LOOKUP_REPLACE_OBJECT) < 0) {
+		printf("%s missing\n",
+		       obj_name ? obj_name : oid_to_hex(&data->oid));
 		fflush(stdout);
 		return;
 	}
@@ -290,7 +292,7 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 	int flags = opt->follow_symlinks ? GET_SHA1_FOLLOW_SYMLINKS : 0;
 	enum follow_symlinks_result result;
 
-	result = get_sha1_with_context(obj_name, flags, data->sha1, &ctx);
+	result = get_sha1_with_context(obj_name, flags, data->oid.hash, &ctx);
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
@@ -336,7 +338,7 @@ struct object_cb_data {
 static void batch_object_cb(const unsigned char sha1[20], void *vdata)
 {
 	struct object_cb_data *data = vdata;
-	hashcpy(data->expand->sha1, sha1);
+	hashcpy(data->expand->oid.hash, sha1);
 	batch_object_write(NULL, data->opt, data->expand);
 }
 
