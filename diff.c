@@ -175,6 +175,21 @@ void init_diff_ui_defaults(void)
 	diff_detect_rename_default = 1;
 }
 
+int git_diff_heuristic_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "diff.indentheuristic")) {
+		diff_indent_heuristic = git_config_bool(var, value);
+		if (diff_indent_heuristic)
+			diff_compaction_heuristic = 0;
+	}
+	if (!strcmp(var, "diff.compactionheuristic")) {
+		diff_compaction_heuristic = git_config_bool(var, value);
+		if (diff_compaction_heuristic)
+			diff_indent_heuristic = 0;
+	}
+	return 0;
+}
+
 int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
@@ -189,18 +204,6 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "diff.renames")) {
 		diff_detect_rename_default = git_config_rename(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.indentheuristic")) {
-		diff_indent_heuristic = git_config_bool(var, value);
-		if (diff_indent_heuristic)
-			diff_compaction_heuristic = 0;
-		return 0;
-	}
-	if (!strcmp(var, "diff.compactionheuristic")) {
-		diff_compaction_heuristic = git_config_bool(var, value);
-		if (diff_compaction_heuristic)
-			diff_indent_heuristic = 0;
 		return 0;
 	}
 	if (!strcmp(var, "diff.autorefreshindex")) {
@@ -243,6 +246,8 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (git_diff_heuristic_config(var, value, cb) < 0)
+		return -1;
 	if (git_color_config(var, value, cb) < 0)
 		return -1;
 

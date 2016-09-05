@@ -14,6 +14,14 @@ compare_diff () {
 	test_cmp .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
 }
 
+# Compare blame output using the expectation for a diff as reference.
+# Only look for the lines coming from non-boundary commits.
+compare_blame () {
+	sed -n -e "1,4d" -e "s/^\+//p" <"$1" >.tmp-1
+	sed -ne "s/^[^^][^)]*) *//p" <"$2" >.tmp-2
+	test_cmp .tmp-1 .tmp-2 && rm -f .tmp-1 .tmp-2
+}
+
 test_expect_success 'prepare' '
 	cat <<-\EOF >spaces.txt &&
 	1
@@ -182,6 +190,27 @@ test_expect_success 'diff: ugly functions' '
 test_expect_success 'diff: nice functions with --indent-heuristic' '
 	git diff --indent-heuristic old new -- functions.c >out-compacted &&
 	compare_diff functions-compacted-expect out-compacted
+'
+
+test_expect_success 'blame: ugly spaces' '
+	git blame old..new -- spaces.txt >out-blame &&
+	compare_blame spaces-expect out-blame
+'
+
+test_expect_success 'blame: nice spaces with --indent-heuristic' '
+	git blame --indent-heuristic old..new -- spaces.txt >out-blame-compacted &&
+	compare_blame spaces-compacted-expect out-blame-compacted
+'
+
+test_expect_success 'blame: nice spaces with diff.indentHeuristic' '
+	git -c diff.indentHeuristic=true blame old..new -- spaces.txt >out-blame-compacted2 &&
+	compare_blame spaces-compacted-expect out-blame-compacted2
+'
+
+test_expect_success 'blame: --no-indent-heuristic overrides config' '
+	git -c diff.indentHeuristic=true blame --no-indent-heuristic old..new -- spaces.txt >out-blame2 &&
+	git blame old..new -- spaces.txt >out-blame &&
+	compare_blame spaces-expect out-blame2
 '
 
 test_done
