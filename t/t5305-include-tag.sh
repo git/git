@@ -25,7 +25,6 @@ test_expect_success setup '
 	} >obj-list
 '
 
-rm -rf clone.git
 test_expect_success 'pack without --include-tag' '
 	packname_1=$(git pack-objects \
 		--window=0 \
@@ -33,6 +32,7 @@ test_expect_success 'pack without --include-tag' '
 '
 
 test_expect_success 'unpack objects' '
+	rm -rf clone.git &&
 	(
 		GIT_DIR=clone.git &&
 		export GIT_DIR &&
@@ -51,7 +51,6 @@ test_expect_success 'check unpacked result (have commit, no tag)' '
 	test_cmp list.expect list.actual
 '
 
-rm -rf clone.git
 test_expect_success 'pack with --include-tag' '
 	packname_1=$(git pack-objects \
 		--window=0 \
@@ -60,6 +59,7 @@ test_expect_success 'pack with --include-tag' '
 '
 
 test_expect_success 'unpack objects' '
+	rm -rf clone.git &&
 	(
 		GIT_DIR=clone.git &&
 		export GIT_DIR &&
