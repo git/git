@@ -33,20 +33,14 @@ test_expect_success 'pack without --include-tag' '
 
 test_expect_success 'unpack objects' '
 	rm -rf clone.git &&
-	(
-		GIT_DIR=clone.git &&
-		export GIT_DIR &&
-		git init &&
-		git unpack-objects <test-1-${packname_1}.pack
-	)
+	git init clone.git &&
+	git -C clone.git unpack-objects <test-1-${packname_1}.pack
 '
 
 test_expect_success 'check unpacked result (have commit, no tag)' '
 	git rev-list --objects $commit >list.expect &&
-	(
-		test_must_fail env GIT_DIR=clone.git git cat-file -e $tag &&
-		git rev-list --objects $commit
-	) >list.actual &&
+	test_must_fail git -C clone.git cat-file -e $tag &&
+	git -C clone.git rev-list --objects $commit >list.actual &&
 	test_cmp list.expect list.actual
 '
 
@@ -59,21 +53,13 @@ test_expect_success 'pack with --include-tag' '
 
 test_expect_success 'unpack objects' '
 	rm -rf clone.git &&
-	(
-		GIT_DIR=clone.git &&
-		export GIT_DIR &&
-		git init &&
-		git unpack-objects <test-2-${packname_1}.pack
-	)
+	git init clone.git &&
+	git -C clone.git unpack-objects <test-2-${packname_1}.pack
 '
 
 test_expect_success 'check unpacked result (have commit, have tag)' '
 	git rev-list --objects mytag >list.expect &&
-	(
-		GIT_DIR=clone.git &&
-		export GIT_DIR &&
-		git rev-list --objects $tag
-	) >list.actual &&
+	git -C clone.git rev-list --objects $tag >list.actual &&
 	test_cmp list.expect list.actual
 '
 
