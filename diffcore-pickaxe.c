@@ -49,6 +49,8 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
 
+	assert(!one || one->ptr[one->size] == '\0');
+	assert(!two || two->ptr[two->size] == '\0');
 	if (!one)
 		return !regexec(regexp, two->ptr, 1, &regmatch, 0);
 	if (!two)
