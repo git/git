@@ -3435,9 +3435,9 @@ static int three_way_merge(struct image *image,
 	mmbuffer_t result = { NULL };
 	int status;
 
-	read_mmblob(&base_file, base->hash);
-	read_mmblob(&our_file, ours->hash);
-	read_mmblob(&their_file, theirs->hash);
+	read_mmblob(&base_file, base);
+	read_mmblob(&our_file, ours);
+	read_mmblob(&their_file, theirs);
 	status = ll_merge(&result, path,
 			  &base_file, "base",
 			  &our_file, "ours",

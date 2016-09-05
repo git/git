@@ -344,9 +344,9 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
 	mmfile_t base, local, remote;
 	int status;
 
-	read_mmblob(&base, p->base.hash);
-	read_mmblob(&local, p->local.hash);
-	read_mmblob(&remote, p->remote.hash);
+	read_mmblob(&base, &p->base);
+	read_mmblob(&local, &p->local);
+	read_mmblob(&remote, &p->remote);
 
 	status = ll_merge(&result_buf, oid_to_hex(&p->obj), &base, NULL,
 			  &local, o->local_ref, &remote, o->remote_ref, NULL);
