@@ -66,7 +66,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			die("git cat-file --textconv %s: <object> must be <sha1:path>",
 			    obj_name);
 
-		if (textconv_object(obj_context.path, obj_context.mode, oid.hash, 1, &buf, &size))
+		if (textconv_object(obj_context.path, obj_context.mode, &oid, 1, &buf, &size))
 			break;
 
 	case 'p':

@@ -479,7 +479,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	if (get_sha1_with_context(obj_name, 0, oidc.hash, &obj_context))
 		die(_("Not a valid object name %s"), obj_name);
 	if (!obj_context.path[0] ||
-	    !textconv_object(obj_context.path, obj_context.mode, oidc.hash, 1, &buf, &size))
+	    !textconv_object(obj_context.path, obj_context.mode, &oidc, 1, &buf, &size))
 		return stream_blob_to_fd(1, oid->hash, NULL, 0);
 
 	if (!buf)
