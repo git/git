@@ -136,7 +136,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2016-08-27 23:21+0800\n"
-"PO-Revision-Date: 2016-08-31 00:11+0800\n"
+"PO-Revision-Date: 2016-09-05 23:36+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -949,7 +949,7 @@ msgstr "外部 diff 退出，停止在 %s"
 
 #: diff.c:3415
 msgid "--follow requires exactly one pathspec"
-msgstr "--follow 参数后只跟一个 pathspec"
+msgstr "--follow 参数需要一个路径"
 
 #: diff.c:3578
 #, c-format
@@ -1033,7 +1033,7 @@ msgid ""
 "WARNING: You called a Git command named '%s', which does not exist.\n"
 "Continuing under the assumption that you meant '%s'"
 msgstr ""
-"警告：您运行一个不存在的 Git 命令 '%s'。继续执行假定您要要运行的\n"
+"警告：您运行一个不存在的 Git 命令 '%s'。继续执行假定您要运行的\n"
 "是 '%s'"
 
 #: help.c:393
@@ -12881,7 +12881,7 @@ msgstr "索引的进度没有被恢复。"
 
 #: git-stash.sh:551
 msgid "The stash is kept in case you need it again."
-msgstr "进度保存以免您再需要。"
+msgstr "保存以备您再次需要。"
 
 #: git-stash.sh:560
 #, sh-format
