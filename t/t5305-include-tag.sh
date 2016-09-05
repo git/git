@@ -26,15 +26,15 @@ test_expect_success setup '
 '
 
 test_expect_success 'pack without --include-tag' '
-	packname_1=$(git pack-objects \
+	packname=$(git pack-objects \
 		--window=0 \
-		test-1 <obj-list)
+		test-no-include <obj-list)
 '
 
 test_expect_success 'unpack objects' '
 	rm -rf clone.git &&
 	git init clone.git &&
-	git -C clone.git unpack-objects <test-1-${packname_1}.pack
+	git -C clone.git unpack-objects <test-no-include-${packname}.pack
 '
 
 test_expect_success 'check unpacked result (have commit, no tag)' '
@@ -45,16 +45,16 @@ test_expect_success 'check unpacked result (have commit, no tag)' '
 '
 
 test_expect_success 'pack with --include-tag' '
-	packname_1=$(git pack-objects \
+	packname=$(git pack-objects \
 		--window=0 \
 		--include-tag \
-		test-2 <obj-list)
+		test-include <obj-list)
 '
 
 test_expect_success 'unpack objects' '
 	rm -rf clone.git &&
 	git init clone.git &&
-	git -C clone.git unpack-objects <test-2-${packname_1}.pack
+	git -C clone.git unpack-objects <test-include-${packname}.pack
 '
 
 test_expect_success 'check unpacked result (have commit, have tag)' '
