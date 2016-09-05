@@ -63,4 +63,56 @@ test_expect_success 'check unpacked result (have commit, have tag)' '
 	test_cmp list.expect list.actual
 '
 
+# A tag of a tag, where the "inner" tag is not otherwise
+# reachable, and a full peel points to a commit reachable from HEAD.
+test_expect_success 'create hidden inner tag' '
+	test_commit commit &&
+	git tag -m inner inner HEAD &&
+	git tag -m outer outer inner &&
+	git tag -d inner
+'
+
+test_expect_success 'pack explicit outer tag' '
+	packname=$(
+		{
+			echo HEAD &&
+			echo outer
+		} |
+		git pack-objects --revs test-hidden-explicit
+	)
+'
+
+test_expect_success 'unpack objects' '
+	rm -rf clone.git &&
+	git init clone.git &&
+	git -C clone.git unpack-objects <test-hidden-explicit-${packname}.pack
+'
+
+test_expect_success 'check unpacked result (have all objects)' '
+	git -C clone.git rev-list --objects $(git rev-parse outer HEAD)
+'
+
+test_expect_success 'pack implied outer tag' '
+	packname=$(
+		echo HEAD |
+		git pack-objects --revs --include-tag test-hidden-implied
+	)
+'
+
+test_expect_success 'unpack objects' '
+	rm -rf clone.git &&
+	git init clone.git &&
+	git -C clone.git unpack-objects <test-hidden-implied-${packname}.pack
+'
+
+test_expect_success 'check unpacked result (have all objects)' '
+	git -C clone.git rev-list --objects $(git rev-parse outer HEAD)
+'
+
+test_expect_success 'single-branch clone can transfer tag' '
+	rm -rf clone.git &&
+	git clone --no-local --single-branch -b master . clone.git &&
+	git -C clone.git fsck
+'
+
 test_done
