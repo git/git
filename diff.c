@@ -2826,6 +2826,15 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 			s->data = strbuf_detach(&buf, &size);
 			s->size = size;
 			s->should_free = 1;
+		} else {
+			/* data must be NUL-terminated so e.g. for regexec() */
+			char *data = xmalloc(s->size + 1);
+			memcpy(data, s->data, s->size);
+			data[s->size] = '\0';
+			munmap(s->data, s->size);
+			s->should_munmap = 0;
+			s->data = data;
+			s->should_free = 1;
 		}
 	}
 	else {
