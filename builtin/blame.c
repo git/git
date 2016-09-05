@@ -1941,7 +1941,7 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
-		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : abbrev;
+		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? GIT_SHA1_HEXSZ : abbrev;
 
 		if (suspect->commit->object.flags & UNINTERESTING) {
 			if (blank_boundary)
@@ -2232,12 +2232,12 @@ static void verify_working_tree_path(struct commit *work_tree, const char *path)
 	int pos;
 
 	for (parents = work_tree->parents; parents; parents = parents->next) {
-		const unsigned char *commit_sha1 = parents->item->object.oid.hash;
-		unsigned char blob_sha1[20];
+		const struct object_id *commit_oid = &parents->item->object.oid;
+		struct object_id blob_oid;
 		unsigned mode;
 
-		if (!get_tree_entry(commit_sha1, path, blob_sha1, &mode) &&
-		    sha1_object_info(blob_sha1, NULL) == OBJ_BLOB)
+		if (!get_tree_entry(commit_oid->hash, path, blob_oid.hash, &mode) &&
+		    sha1_object_info(blob_oid.hash, NULL) == OBJ_BLOB)
 			return;
 	}
 
@@ -2251,13 +2251,13 @@ static void verify_working_tree_path(struct commit *work_tree, const char *path)
 		die("no such path '%s' in HEAD", path);
 }
 
-static struct commit_list **append_parent(struct commit_list **tail, const unsigned char *sha1)
+static struct commit_list **append_parent(struct commit_list **tail, const struct object_id *oid)
 {
 	struct commit *parent;
 
-	parent = lookup_commit_reference(sha1);
+	parent = lookup_commit_reference(oid->hash);
 	if (!parent)
-		die("no such commit %s", sha1_to_hex(sha1));
+		die("no such commit %s", oid_to_hex(oid));
 	return &commit_list_insert(parent, tail)->next;
 }
 
@@ -2274,10 +2274,10 @@ static void append_merge_parents(struct commit_list **tail)
 	}
 
 	while (!strbuf_getwholeline_fd(&line, merge_head, '\n')) {
-		unsigned char sha1[20];
-		if (line.len < 40 || get_sha1_hex(line.buf, sha1))
+		struct object_id oid;
+		if (line.len < GIT_SHA1_HEXSZ || get_oid_hex(line.buf, &oid))
 			die("unknown line in '%s': %s", git_path_merge_head(), line.buf);
-		tail = append_parent(tail, sha1);
+		tail = append_parent(tail, &oid);
 	}
 	close(merge_head);
 	strbuf_release(&line);
@@ -2306,7 +2306,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	struct commit *commit;
 	struct origin *origin;
 	struct commit_list **parent_tail, *parent;
-	unsigned char head_sha1[20];
+	struct object_id head_oid;
 	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
 	time_t now;
@@ -2322,10 +2322,10 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	commit->date = now;
 	parent_tail = &commit->parents;
 
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_sha1, NULL))
+	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_oid.hash, NULL))
 		die("no such ref: HEAD");
 
-	parent_tail = append_parent(parent_tail, head_sha1);
+	parent_tail = append_parent(parent_tail, &head_oid);
 	append_merge_parents(parent_tail);
 	verify_working_tree_path(commit, path);
 
