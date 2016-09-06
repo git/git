@@ -102,6 +102,8 @@ msgstr "準備完了"
 msgid ""
 "Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files."
 msgstr ""
+"表示可能な限界 (gui.maxfilesdisplayed = %s) に達しため、全体で%s個のファイル"
+"を表示できません"
 
 #: git-gui.sh:2101
 msgid "Unmodified"
@@ -128,23 +130,20 @@ msgid "File type changed, not staged"
 msgstr "ファイル型変更、コミット未予定"
 
 #: git-gui.sh:2109 git-gui.sh:2110
-#, fuzzy
 msgid "File type changed, old type staged for commit"
-msgstr "ファイル型変更、コミット未予定"
+msgstr "ファイル型変更、旧型コミット予定済"
 
 #: git-gui.sh:2111
 msgid "File type changed, staged"
 msgstr "ファイル型変更、コミット予定済"
 
 #: git-gui.sh:2112
-#, fuzzy
 msgid "File type change staged, modification not staged"
-msgstr "ファイル型変更、コミット未予定"
+msgstr "ファイル型変更コミット予定済、変更コミット未予定"
 
 #: git-gui.sh:2113
-#, fuzzy
 msgid "File type change staged, file missing"
-msgstr "ファイル型変更、コミット予定済"
+msgstr "ファイル型変更コミット予定済、ファイル無し"
 
 #: git-gui.sh:2115
 msgid "Untracked, not staged"
@@ -408,10 +407,9 @@ msgstr "SSH キーを表示"
 
 #: git-gui.sh:3014 git-gui.sh:3146
 msgid "Usage"
-msgstr ""
+msgstr "使い方"
 
 #: git-gui.sh:3095 lib/blame.tcl:573
-#, fuzzy
 msgid "Error"
 msgstr "エラー"
 
@@ -1112,9 +1110,8 @@ msgid "Find Text..."
 msgstr "テキストを検索"
 
 #: lib/blame.tcl:288
-#, fuzzy
 msgid "Goto Line..."
-msgstr "複製…"
+msgstr "指定行に移動…"
 
 #: lib/blame.tcl:297
 msgid "Do Full Copy Detection"
@@ -1310,7 +1307,7 @@ msgstr "共有(最高速・非推奨・バックアップ無し)"
 
 #: lib/choose_repository.tcl:545
 msgid "Recursively clone submodules too"
-msgstr ""
+msgstr "サブモジュールも再帰的に複製する"
 
 #: lib/choose_repository.tcl:579 lib/choose_repository.tcl:626
 #: lib/choose_repository.tcl:772 lib/choose_repository.tcl:842
@@ -1435,12 +1432,11 @@ msgstr "ファイル"
 
 #: lib/choose_repository.tcl:981
 msgid "Cannot clone submodules."
-msgstr ""
+msgstr "サブモジュールが複製できません。"
 
 #: lib/choose_repository.tcl:990
-#, fuzzy
 msgid "Cloning submodules"
-msgstr "%s から複製しています"
+msgstr "サブモジュールを複製しています"
 
 #: lib/choose_repository.tcl:1015
 msgid "Initial file checkout failed."
@@ -1515,11 +1511,11 @@ msgstr "前"
 
 #: lib/search.tcl:52
 msgid "RegExp"
-msgstr ""
+msgstr "正規表現"
 
 #: lib/search.tcl:54
 msgid "Case"
-msgstr ""
+msgstr "大文字小文字を区別"
 
 #: lib/status_bar.tcl:87
 #, tcl-format
@@ -1635,9 +1631,9 @@ msgid "Running %s requires a selected file."
 msgstr "ファイルを選択してから %s を起動してください。"
 
 #: lib/tools.tcl:91
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Are you sure you want to run %1$s on file \"%2$s\"?"
-msgstr "本当に %s を起動しますか?"
+msgstr "本当にファイル \"%2$s\"で %1$s を起動しますか?"
 
 #: lib/tools.tcl:95
 #, tcl-format
@@ -1817,16 +1813,15 @@ msgstr "トラッキングブランチを合わせる"
 
 #: lib/option.tcl:151
 msgid "Use Textconv For Diffs and Blames"
-msgstr ""
+msgstr "diff と注釈に textconv を使う"
 
 #: lib/option.tcl:152
 msgid "Blame Copy Only On Changed Files"
 msgstr "変更されたファイルのみコピー検知を行なう"
 
 #: lib/option.tcl:153
-#, fuzzy
 msgid "Maximum Length of Recent Repositories List"
-msgstr "最近使ったリポジトリ"
+msgstr "最近使ったリポジトリ一覧の上限"
 
 #: lib/option.tcl:154
 msgid "Minimum Letters To Blame Copy On"
@@ -1842,7 +1837,7 @@ msgstr "diff の文脈行数"
 
 #: lib/option.tcl:157
 msgid "Additional Diff Parameters"
-msgstr ""
+msgstr "diff の追加引数"
 
 #: lib/option.tcl:158
 msgid "Commit Message Text Width"
@@ -1858,19 +1853,19 @@ msgstr "ファイル内容のデフォールトエンコーディング"
 
 #: lib/option.tcl:161
 msgid "Warn before committing to a detached head"
-msgstr ""
+msgstr "分離 HEAD のコミット前に警告する"
 
 #: lib/option.tcl:162
 msgid "Staging of untracked files"
-msgstr ""
+msgstr "管理外のファイルをコミット予定する"
 
 #: lib/option.tcl:163
 msgid "Show untracked files"
-msgstr ""
+msgstr "管理外のファイルを表示する"
 
 #: lib/option.tcl:164
 msgid "Tab spacing"
-msgstr ""
+msgstr "タブ幅"
 
 #: lib/option.tcl:210
 msgid "Change"
@@ -1979,22 +1974,19 @@ msgstr "%s から削除されたトラッキング・ブランチを刈ってい
 
 #: lib/transport.tcl:25
 msgid "fetch all remotes"
-msgstr ""
+msgstr "すべてのリモートを取得"
 
 #: lib/transport.tcl:26
-#, fuzzy
 msgid "Fetching new changes from all remotes"
-msgstr "%s から新しい変更をフェッチしています"
+msgstr "すべてのリモートから新しい変更をフェッチしています"
 
 #: lib/transport.tcl:40
-#, fuzzy
 msgid "remote prune all remotes"
-msgstr "リモート刈込 %s"
+msgstr "リモート刈込 すべてのリモート"
 
 #: lib/transport.tcl:41
-#, fuzzy
 msgid "Pruning tracking branches deleted from all remotes"
-msgstr "%s から削除されたトラッキング・ブランチを刈っています"
+msgstr "すべてのリモートから削除されたトラッキング・ブランチを刈っています"
 
 #: lib/transport.tcl:54 lib/transport.tcl:92 lib/transport.tcl:110
 #: lib/remote_add.tcl:162
@@ -2247,7 +2239,7 @@ msgstr "コミットに %s を加えています"
 #: lib/index.tcl:380
 #, tcl-format
 msgid "Stage %d untracked files?"
-msgstr ""
+msgstr "管理外の %d ファイルをコミット予定としますか？"
 
 #: lib/index.tcl:428
 #, tcl-format
@@ -2452,6 +2444,13 @@ msgid ""
 " \n"
 " Do you really want to proceed with your Commit?"
 msgstr ""
+"分離 HEAD での変更をコミットしようとしています。"
+"これは潜在的に危険な行為で、理由は別のブランチへの切り替えで"
+"変更が消失し、reflog からの事後復旧も困難となるためです。"
+"おそらくこのコミットはキャンセルし新しく作成したブランチで"
+"行うべきです。\n"
+"\n"
+" 本当にコミットを続行しますか？"
 
 #: lib/commit.tcl:290
 msgid "Calling commit-msg hook..."
@@ -2593,11 +2592,11 @@ msgstr "%2$s にある %1$s をセットアップします"
 
 #: lib/line.tcl:17
 msgid "Goto Line:"
-msgstr ""
+msgstr "行番号"
 
 #: lib/line.tcl:23
 msgid "Go"
-msgstr ""
+msgstr "移動"
 
 #: lib/branch_create.tcl:23
 msgid "Create Branch"
@@ -2681,9 +2680,3 @@ msgstr "スペルチェッカーが予想外の EOF を返しました"
 #: lib/spellcheck.tcl:392
 msgid "Spell Checker Failed"
 msgstr "スペルチェック失敗"
-
-#~ msgid "Displaying only %s of %s files."
-#~ msgstr "全体で%s個の内の%sファイルだけ表示しています"
-
-#~ msgid "Case-Sensitive"
-#~ msgstr "大文字小文字を区別"
