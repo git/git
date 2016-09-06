@@ -1,15 +1,17 @@
 # Translation of git-gui to Japanese
 # Copyright (C) 2007 Shawn Pearce
 # This file is distributed under the same license as the git-gui package.
+#
 # しらいし ななこ <nanako3@bluebottle.com>, 2007.
+# Satoshi Yasushima <s.yasushima@gmail.com>, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-27 17:52+0900\n"
-"PO-Revision-Date: 2010-02-02 19:03+0900\n"
-"Last-Translator: しらいし ななこ <nanako3@lavabit.com>\n"
+"PO-Revision-Date: 2016-06-22 12:50+0900\n"
+"Last-Translator: Satoshi Yasushima <s.yasushima@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
