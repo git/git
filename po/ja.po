@@ -765,7 +765,8 @@ msgstr "トラッキング・ブランチを選択して下さい。"
 #: lib/branch_create.tcl:140
 #, tcl-format
 msgid "Tracking branch %s is not a branch in the remote repository."
-msgstr "トラッキング・ブランチ %s は遠隔リポジトリのブランチではありません。"
+msgstr ""
+"トラッキング・ブランチ %s はリモートリポジトリのブランチではありません。"
 
 #: lib/branch_create.tcl:153 lib/branch_rename.tcl:86
 msgid "Please supply a branch name."
@@ -2192,7 +2193,7 @@ msgstr "%2$s にある %1$s をセットアップします"
 
 #: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
 msgid "Delete Branch Remotely"
-msgstr "遠隔でブランチ削除"
+msgstr "リモートブランチ削除"
 
 #: lib/remote_branch_delete.tcl:47
 msgid "From Repository"
@@ -2504,7 +2505,7 @@ msgstr "%s から新しい変更をフェッチしています"
 #: lib/transport.tcl:18
 #, tcl-format
 msgid "remote prune %s"
-msgstr "遠隔刈込 %s"
+msgstr "リモート刈込 %s"
 
 #: lib/transport.tcl:19
 #, tcl-format
