@@ -1195,7 +1195,7 @@ To avoid this message, use "drop" to explicitly remove a commit.
 Use 'git config rebase.missingCommitsCheck' to change the level of warnings.
 The possible behaviours are: ignore, warn, error.
 
-You can fix this with 'git rebase --edit-todo'.
+You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'.
 Or you can abort the rebase with 'git rebase --abort'.
 EOF
 
@@ -1219,7 +1219,7 @@ cat >expect <<EOF
 Warning: the command isn't recognized in the following line:
  - badcmd $(git rev-list --oneline -1 master~1)
 
-You can fix this with 'git rebase --edit-todo'.
+You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'.
 Or you can abort the rebase with 'git rebase --abort'.
 EOF
 
@@ -1254,7 +1254,7 @@ cat >expect <<EOF
 Warning: the SHA-1 is missing or isn't a commit in the following line:
  - edit XXXXXXX False commit
 
-You can fix this with 'git rebase --edit-todo'.
+You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'.
 Or you can abort the rebase with 'git rebase --abort'.
 EOF
 
