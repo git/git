@@ -598,7 +598,7 @@ msgstr "文脈を見せる"
 
 #: lib/blame.tcl:291
 msgid "Blame Parent Commit"
-msgstr "親コミットを註釈"
+msgstr "親コミットを注釈"
 
 #: lib/blame.tcl:450
 #, tcl-format
@@ -2052,7 +2052,7 @@ msgstr "コピーを検知する最少文字数"
 
 #: lib/option.tcl:151
 msgid "Blame History Context Radius (days)"
-msgstr "註釈する履歴半径（日数）"
+msgstr "注釈する履歴半径（日数）"
 
 #: lib/option.tcl:152
 msgid "Number of Diff Context Lines"
