@@ -761,6 +761,17 @@ revert_attrs:
 	return rc;
 }
 
+#undef strftime
+size_t mingw_strftime(char *s, size_t max,
+		      const char *format, const struct tm *tm)
+{
+	size_t ret = strftime(s, max, format, tm);
+
+	if (!ret && errno == EINVAL)
+		die("invalid strftime format: '%s'", format);
+	return ret;
+}
+
 unsigned int sleep (unsigned int seconds)
 {
 	Sleep(seconds*1000);
