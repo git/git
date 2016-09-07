@@ -965,6 +965,27 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #define qsort git_qsort
 #endif
 
+static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
+			      size_t nmatch, regmatch_t pmatch[], int eflags)
+{
+#ifdef REG_STARTEND
+	assert(nmatch > 0 && pmatch);
+	pmatch[0].rm_so = 0;
+	pmatch[0].rm_eo = size;
+	return regexec(preg, buf, nmatch, pmatch, eflags | REG_STARTEND);
+#else
+	char *buf2 = xmalloc(size + 1);
+	int ret;
+
+	memcpy(buf2, buf, size);
+	buf2[size] = '\0';
+	ret = regexec(preg, buf2, nmatch, pmatch, eflags);
+	free(buf2);
+
+	return ret;
+#endif
+}
+
 #ifndef DIR_HAS_BSD_GROUP_SEMANTICS
 # define FORCE_DIR_SET_GID S_ISGID
 #else
