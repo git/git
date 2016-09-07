@@ -250,5 +250,13 @@ test_expect_success 'git client does not send an empty Accept-Language' '
 	! grep "^Accept-Language:" stderr
 '
 
+test_expect_success 'remote-http complains cleanly about malformed urls' '
+	# do not actually issue "list" or other commands, as we do not
+	# want to rely on what curl would actually do with such a broken
+	# URL. This is just about making sure we do not segfault during
+	# initialization.
+	test_must_fail git remote-http http::/example.com/repo.git
+'
+
 stop_httpd
 test_done

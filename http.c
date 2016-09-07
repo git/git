@@ -590,7 +590,7 @@ static CURL *get_curl_handle(void)
 	 * precedence here, as in CURL.
 	 */
 	if (!curl_http_proxy) {
-		if (!strcmp(http_auth.protocol, "https")) {
+		if (http_auth.protocol && !strcmp(http_auth.protocol, "https")) {
 			var_override(&curl_http_proxy, getenv("HTTPS_PROXY"));
 			var_override(&curl_http_proxy, getenv("https_proxy"));
 		} else {
