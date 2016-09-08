@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2016, #01; Fri, 2)
+Subject: What's cooking in git.git (Sep 2016, #02; Thu, 8)
 X-master-at: 6ebdac1bab966b720d776aa43ca188fe378b1f4b
 X-next-at: f2ff48496e8dc270b21b0290a2a3e4ef98e352ed
 
-What's cooking in git.git (Sep 2016, #01; Fri, 2)
+What's cooking in git.git (Sep 2016, #02; Thu, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,12 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.10 has been tagged.  In a few days, many topics that have been
-cooking in 'next' would be merged to 'master'; as usual, I plan to
-keep the tip of 'next' closed for a week or so and encourage people
-to pay more attention to possible regressions than to show their
-shiny new toys, and then open the new cycle by rebuilding 'next'
-after that.
+There are a few more topics in flight that may be ready to be picked
+up but I haven't, and other topics in flight that may not be quite
+ready.  I'll start merging topics that have been cooking in 'next'
+to 'master', rewind and rebuild 'next', and merge those that have
+been waiting in 'pu' to 'next' before picking them up.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -27,21 +26,247 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/submodule-anchor-git-dir (2016-09-01) 1 commit
- - submodule: avoid auto-discovery in prepare_submodule_repo_env()
+* bc/object-id (2016-09-07) 20 commits
+ - builtin/reset: convert to use struct object_id
+ - builtin/commit-tree: convert to struct object_id
+ - builtin/am: convert to struct object_id
+ - refs: add an update_ref_oid function.
+ - sha1_name: convert get_sha1_mb to struct object_id
+ - builtin/update-index: convert file to struct object_id
+ - notes: convert init_notes to use struct object_id
+ - builtin/rm: convert to use struct object_id
+ - builtin/blame: convert file to use struct object_id
+ - Convert read_mmblob to take struct object_id.
+ - notes-merge: convert struct notes_merge_pair to struct object_id
+ - builtin/checkout: convert some static functions to struct object_id
+ - streaming: make stream_blob_to_fd take struct object_id
+ - builtin: convert textconv_object to use struct object_id
+ - builtin/cat-file: convert some static functions to struct object_id
+ - builtin/cat-file: convert struct expand_data to use struct object_id
+ - builtin/log: convert some static functions to use struct object_id
+ - builtin/blame: convert struct origin to use struct object_id
+ - builtin/apply: convert static functions to struct object_id
+ - cache: convert struct cache_entry to use struct object_id
 
- Having a submodule whose ".git" repository is somehow corrupt
- caused a few commands that recurse into submodules loop forever.
+ The "unsigned char sha1[20]" to "struct object_id" conversion
+ continues.  Notable changes in this round includes that ce->sha1,
+ i.e. the object name recorded in the cache_entry, turns into an
+ object_id.
+
+ It had merge conflicts with a few topics in flight (Christian's
+ "apply.c split", Dscho's "cat-file --filters" and Jeff Hostetler's
+ "status --porcelain-v2").  Extra sets of eyes double-checking for
+ mismerges are highly appreciated.
+
+
+* ep/use-git-trace-curl-in-tests (2016-09-07) 4 commits
+ - t5551-http-fetch-smart.sh: use the GIT_TRACE_CURL environment var
+ - t5550-http-fetch-dumb.sh: use the GIT_TRACE_CURL environment var
+ - test-lib.sh: preserve GIT_TRACE_CURL from the environment
+ - t5541-http-push-smart.sh: use the GIT_TRACE_CURL environment var
+
+ Update a few tests that used to use GIT_CURL_VERBOSE to use the
+ newer GIT_TRACE_CURL.
 
  Will merge to 'next'.
 
 
-* jc/forbid-symbolic-ref-d-HEAD (2016-09-02) 1 commit
- - symbolic-ref -d: do not allow removal of HEAD
+* jk/pack-tag-of-tag (2016-09-07) 5 commits
+ - pack-objects: walk tag chains for --include-tag
+ - t5305: simplify packname handling
+ - t5305: use "git -C"
+ - t5305: drop "dry-run" of unpack-objects
+ - t5305: move cleanup into test block
 
- "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
- the resulting repository becomes an invalid one.  Teach the command
- to forbid removal of HEAD.
+ "git pack-objects --include-tag" was taught that when we know that
+ we are sending an object C, we want a tag B that directly points at
+ C but also a tag A that points at the tag B.  We used to miss the
+ intermediate tag B in some cases.
+
+
+* js/t6026-clean-up (2016-09-07) 1 commit
+ - t6026-merge-attr: clean up background process at end of test case
+
+ A test spawned a short-lived background process, which sometimes
+ prevented the test directory from getting removed at the end of the
+ script on some platforms.
+
+ Will merge to 'next'.
+
+
+* js/t9903-chaining (2016-09-07) 1 commit
+ - t9903: fix broken && chain
+
+ Will merge to 'next'.
+
+
+* jt/accept-capability-advertisement-when-fetching-from-void (2016-09-07) 2 commits
+ - connect: advertized capability is not a ref
+ - tests: move test_lazy_prereq JGIT to test-lib.sh
+
+ JGit can show a fake ref "capabilities^{}" to "git fetch" when it
+ does not advertise any refs, but "git fetch" was not prepared to
+ see such an advertisement.
+
+ Waiting for a reroll.
+ Rewording the log, and avoiding making it overly loose are needed.
+ cf. <20160908013431.GC25016@google.com>
+
+
+* rs/compat-strdup (2016-09-07) 1 commit
+ - compat: move strdup(3) replacement to its own file
+
+ Will merge to 'next'.
+
+
+* rs/hex2chr (2016-09-07) 1 commit
+ - introduce hex2chr() for converting two hexadecimal digits to a character
+
+ Will merge to 'next'.
+
+
+* rt/rebase-i-broken-insn-advise (2016-09-07) 1 commit
+ - rebase -i: improve advice on bad instruction lines
+
+ When "git rebase -i" is given a broken instruction, it told the
+ user to fix it with "--edit-todo", but didn't say what the step
+ after that was (i.e. "--continue").
+
+ Will hold.
+ Dscho's "rebase -i" hopefully will become available in 'pu', by
+ which time an equivalent of this fix would be ported to C.  This is
+ queued merely as a reminder.
+
+
+* sb/xdiff-remove-unused-static-decl (2016-09-07) 1 commit
+ - xdiff: remove unneeded declarations
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* sy/git-gui-i18n-ja (2016-09-07) 7 commits
+ - Merge branch 'sy/i18n' of git-gui
+ - git-gui: update Japanese information
+ - git-gui: update Japanese translation
+ - git-gui: add Japanese language code
+ - git-gui: apply po template to Japanese translation
+ - git-gui: consistently use the same word for "blame" in Japanese
+ - git-gui: consistently use the same word for "remote" in Japanese
+
+ Update Japanese translation for "git-gui".
+
+
+* ah/misc-message-fixes (2016-09-08) 5 commits
+ - unpack-trees: do not capitalize "working"
+ - git-merge-octopus: do not capitalize "octopus"
+ - git-rebase--interactive: fix English grammar
+ - cat-file: put spaces around pipes in usage string
+ - am: put spaces around pipe in usage string
+
+ Message cleanup.
+
+ Will merge to 'next'.
+
+
+* jk/fix-remote-curl-url-wo-proto (2016-09-08) 1 commit
+ - remote-curl: handle URLs without protocol
+
+ "git fetch http::/site/path" did not die correctly and segfaulted
+ instead.
+
+ Will merge to 'next'.
+
+
+* jn/fix-connect-unexpected-hangup-diag (2016-09-08) 1 commit
+ - connect: tighten check for unexpected early hang up
+
+ When the other side disconnects without giving any ref
+ advertisement, we used to say "there may not be a repository at
+ that URL", but we may have seen other advertisement like "shallow"
+ and ".have" in which case we definitely know that a repository is
+ there.  The code to detect this case has been updated.
+
+ Waiting for a reroll with test.
+ cf. <20160908015040.GF25016@google.com>
+
+
+* jt/format-patch-base-info-above-sig (2016-09-08) 1 commit
+ - format-patch: show base info before email signature
+
+ "git format-patch --base=..." feature that was recently added
+ showed the base commit information after "-- " e-mail signature
+ line, which turned out to be inconvenient.  The base information
+ has been moved above the signature line.
+
+ Needs rephrasing of the log message to describe an accidental bugfix.
+ cf. <xmqqd1kef5k5.fsf@gitster.mtv.corp.google.com>
+
+
+* nd/checkout-disambiguation (2016-09-08) 3 commits
+ - checkout: fix ambiguity check in subdir
+ - checkout.txt: document a common case that ignores ambiguation rules
+ - checkout: add some spaces between code and comment
+
+ "git checkout <word>" does not follow the usual disambiguation
+ rules when the <word> can be both a rev and a path, to allow
+ checking out a branch 'foo' in a project that happens to have a
+ file 'foo' in the working tree without having to disambiguate.
+ This was poorly documented and the check was incorrect when the
+ command was run from a subdirectory.
+
+ Waiting for a reroll.
+ cf. <xmqq7famgnwo.fsf@gitster.mtv.corp.google.com>
+
+
+* sb/diff-cleanup (2016-09-08) 3 commits
+ - diff: remove dead code
+ - diff: omit found pointer from emit_callback
+ - diff.c: use diff_options directly
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* sb/transport-report-missing-submodule-on-stderr (2016-09-08) 1 commit
+ - transport: report missing submodule pushes consistently on stderr
+
+ Message cleanup.
+
+ Will merge to 'next'.
+
+
+* sg/fix-versioncmp-with-common-suffix (2016-09-08) 5 commits
+ - versioncmp: cope with common leading parts in versionsort.prereleaseSuffix
+ - versioncmp: pass full tagnames to swap_prereleases()
+ - t7004-tag: add version sort tests to show prerelease reordering issues
+ - t7004-tag: use test_config helper
+ - t7004-tag: delete unnecessary tags with test_when_finished
+
+ The prereleaseSuffix feature of version comparison that is used in
+ "git tag -l" did not correctly when two or more prereleases for the
+ same release were present (e.g. when 2.0, 2.0-beta1, and 2.0-beta2
+ are there and the code needs to compare 2.0-beta1 and 2.0-beta2).
+
+ Waiting for a reroll.
+ cf. <20160908223727.Horde.jVOOJ278ssZ3qkyjkmyqZD-@webmail.informatik.kit.edu>
+
+
+* va/i18n (2016-09-08) 10 commits
+ - i18n: update-index: mark warning for translation
+ - i18n: show-branch: mark error messages for translation
+ - i18n: receive-pack: mark messages for translation
+ - notes: lowercase first word of error messages
+ - i18n: notes: mark error messages for translation
+ - i18n: merge-recursive: mark verbose message for translation
+ - i18n: merge-recursive: mark error messages for translation
+ - i18n: config: mark error message for translation
+ - i18n: branch: mark option description for translation
+ - i18n: blame: mark error messages for translation
+
+ More i18n.
 
  Will merge to 'next'.
 
@@ -297,6 +522,25 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* jc/submodule-anchor-git-dir (2016-09-01) 1 commit
+ - submodule: avoid auto-discovery in prepare_submodule_repo_env()
+
+ Having a submodule whose ".git" repository is somehow corrupt
+ caused a few commands that recurse into submodules loop forever.
+
+ Will merge to 'next'.
+
+
+* jc/forbid-symbolic-ref-d-HEAD (2016-09-02) 1 commit
+ - symbolic-ref -d: do not allow removal of HEAD
+
+ "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
+ the resulting repository becomes an invalid one.  Teach the command
+ to forbid removal of HEAD.
+
+ Will merge to 'next'.
+
 
 * bh/diff-highlight-graph (2016-08-31) 6 commits
   (merged to 'next' on 2016-08-31 at 523a15f)
@@ -579,7 +823,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mh/diff-indent-heuristic (2016-08-23) 6 commits
+* mh/diff-indent-heuristic (2016-09-07) 9 commits
+ - SQAUSH???
+ - blame: honor the diff heuristic options and config
+ - parse-options: add parse_opt_unknown_cb()
  - diff: improve positioning of add/delete blocks in diffs
  - xdl_change_compact(): introduce the concept of a change group
  - recs_match(): take two xrecord_t pointers as arguments
@@ -593,11 +840,11 @@ of the repositories listed at
  are the same.  A command line option is added to help with the
  experiment to find a good heuristics.
 
- Waiting for a reroll.
- cf. <a27aa17e-f602-fc49-92b3-2198e4772e47@ramsayjones.plus.com>
+ Rerolled.
+ Needs adjustment of test numbers.  Otherwise looked OK.
 
 
-* cc/apply-am (2016-08-29) 41 commits
+* cc/apply-am (2016-09-07) 41 commits
  - builtin/am: use apply API in run_apply()
  - apply: learn to use a different index file
  - apply: pass apply state to build_fake_ancestor()
@@ -643,7 +890,7 @@ of the repositories listed at
  "git am" has been taught to make an internal call to "git apply"'s
  innards without spawning the latter as a separate process.
 
- Waiting for a reroll.
+ Will merge to 'next'.
 
 
 * jk/pack-objects-optim-mru (2016-08-11) 4 commits
