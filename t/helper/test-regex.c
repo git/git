@@ -36,7 +36,7 @@ static int test_regex_bug(void)
 	return 0;
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char *pat;
 	const char *str;
