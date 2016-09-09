@@ -748,7 +748,7 @@ static int parse_insn_buffer(char *buf, struct commit_list **todo_list,
 	return 0;
 }
 
-static void read_populate_todo(struct commit_list **todo_list,
+static int read_populate_todo(struct commit_list **todo_list,
 			struct replay_opts *opts)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -756,18 +756,21 @@ static void read_populate_todo(struct commit_list **todo_list,
 
 	fd = open(git_path_todo_file(), O_RDONLY);
 	if (fd < 0)
-		die_errno(_("Could not open %s"), git_path_todo_file());
+		return error_errno(_("Could not open %s"),
+				   git_path_todo_file());
 	if (strbuf_read(&buf, fd, 0) < 0) {
 		close(fd);
 		strbuf_release(&buf);
-		die(_("Could not read %s."), git_path_todo_file());
+		return error(_("Could not read %s."), git_path_todo_file());
 	}
 	close(fd);
 
 	res = parse_insn_buffer(buf.buf, todo_list, opts);
 	strbuf_release(&buf);
 	if (res)
-		die(_("Unusable instruction sheet: %s"), git_path_todo_file());
+		return error(_("Unusable instruction sheet: %s"),
+			git_path_todo_file());
+	return 0;
 }
 
 static int populate_opts_cb(const char *key, const char *value, void *data)
@@ -1019,7 +1022,8 @@ static int sequencer_continue(struct replay_opts *opts)
 	if (!file_exists(git_path_todo_file()))
 		return continue_single_pick();
 	read_populate_opts(&opts);
-	read_populate_todo(&todo_list, opts);
+	if (read_populate_todo(&todo_list, opts))
+		return -1;
 
 	/* Verify that the conflict has been resolved */
 	if (file_exists(git_path_cherry_pick_head()) ||
