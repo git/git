@@ -948,22 +948,6 @@ void **nedpindependent_comalloc(nedpool *p, size_t elems, size_t *sizes, void **
 	return ret;
 }
 
-#ifdef OVERRIDE_STRDUP
-/*
- * This implementation is purely there to override the libc version, to
- * avoid a crash due to allocation and free on different 'heaps'.
- */
-char *strdup(const char *s1)
-{
-	size_t len = strlen(s1) + 1;
-	char *s2 = malloc(len);
-
-	if (s2)
-		memcpy(s2, s1, len);
-	return s2;
-}
-#endif
-
 #if defined(__cplusplus)
 }
 #endif
