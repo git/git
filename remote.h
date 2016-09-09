@@ -89,7 +89,6 @@ struct ref {
 		force:1,
 		forced_update:1,
 		expect_old_sha1:1,
-		expect_old_no_trackback:1,
 		deletion:1,
 		matched:1;
 
