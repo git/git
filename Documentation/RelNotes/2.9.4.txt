@@ -1,0 +1,83 @@
+Git v2.9.4 Release Notes
+========================
+
+Fixes since v2.9.3
+------------------
+
+ * There are certain house-keeping tasks that need to be performed at
+   the very beginning of any Git program, and programs that are not
+   built-in commands had to do them exactly the same way as "git"
+   potty does.  It was easy to make mistakes in one-off standalone
+   programs (like test helpers).  A common "main()" function that
+   calls cmd_main() of individual program has been introduced to
+   make it harder to make mistakes.
+
+ * "git merge" with renormalization did not work well with
+   merge-recursive, due to "safer crlf" conversion kicking in when it
+   shouldn't.
+
+ * The reflog output format is documented better, and a new format
+   --date=unix to report the seconds-since-epoch (without timezone)
+   has been added.
+
+ * "git push --force-with-lease" already had enough logic to allow
+   ensuring that such a push results in creation of a ref (i.e. the
+   receiving end did not have another push from sideways that would be
+   discarded by our force-pushing), but didn't expose this possibility
+   to the users.  It does so now.
+
+ * "import-tars" fast-import script (in contrib/) used to ignore a
+   hardlink target and replaced it with an empty file, which has been
+   corrected to record the same blob as the other file the hardlink is
+   shared with.
+
+ * "git mv dir non-existing-dir/" did not work in some environments
+   the same way as existing mainstream platforms.  The code now moves
+   "dir" to "non-existing-dir", without relying on rename("A", "B/")
+   that strips the trailing slash of '/'.
+
+ * The "t/" hierarchy is prone to get an unusual pathname; "make test"
+   has been taught to make sure they do not contain paths that cannot
+   be checked out on Windows (and the mechanism can be reusable to
+   catch pathnames that are not portable to other platforms as need
+   arises).
+
+ * When "git merge-recursive" works on history with many criss-cross
+   merges in "verbose" mode, the names the command assigns to the
+   virtual merge bases could have overwritten each other by unintended
+   reuse of the same piece of memory.
+
+ * "git checkout --detach <branch>" used to give the same advice
+   message as that is issued when "git checkout <tag>" (or anything
+   that is not a branch name) is given, but asking with "--detach" is
+   an explicit enough sign that the user knows what is going on.  The
+   advice message has been squelched in this case.
+
+ * "git difftool" by default ignores the error exit from the backend
+   commands it spawns, because often they signal that they found
+   differences by exiting with a non-zero status code just like "diff"
+   does; the exit status codes 126 and above however are special in
+   that they are used to signal that the command is not executable,
+   does not exist, or killed by a signal.  "git difftool" has been
+   taught to notice these exit status codes.
+
+ * On Windows, help.browser configuration variable used to be ignored,
+   which has been corrected.
+
+ * The "git -c var[=val] cmd" facility to append a configuration
+   variable definition at the end of the search order was described in
+   git(1) manual page, but not in git-config(1), which was more likely
+   place for people to look for when they ask "can I make a one-shot
+   override, and if so how?"
+
+ * The tempfile (hence its user lockfile) API lets the caller to open
+   a file descriptor to a temporary file, write into it and then
+   finalize it by first closing the filehandle and then either
+   removing or renaming the temporary file.  When the process spawns a
+   subprocess after obtaining the file descriptor, and if the
+   subprocess has not exited when the attempt to remove or rename is
+   made, the last step fails on Windows, because the subprocess has
+   the file descriptor still open.  Open tempfile with O_CLOEXEC flag
+   to avoid this (on Windows, this is mapped to O_NOINHERIT).
+
+Also contains minor documentation updates and code clean-ups.
