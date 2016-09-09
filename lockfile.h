@@ -55,6 +55,10 @@
  *   * calling `fdopen_lock_file()` to get a `FILE` pointer for the
  *     open file and writing to the file using stdio.
  *
+ *   Note that the file descriptor returned by hold_lock_file_for_update()
+ *   is marked O_CLOEXEC, so the new contents must be written by the
+ *   current process, not a spawned one.
+ *
  * When finished writing, the caller can:
  *
  * * Close the file descriptor and rename the lockfile to its final
