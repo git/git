@@ -1280,4 +1280,5 @@ void prepare_submodule_repo_env(struct argv_array *out)
 		if (strcmp(*var, CONFIG_DATA_ENVIRONMENT))
 			argv_array_push(out, *var);
 	}
+	argv_array_push(out, "GIT_DIR=.git");
 }
