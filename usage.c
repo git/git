@@ -148,6 +148,7 @@ void NORETURN die_errno(const char *fmt, ...)
 	va_end(params);
 }
 
+#undef error_errno
 int error_errno(const char *fmt, ...)
 {
 	char buf[1024];
