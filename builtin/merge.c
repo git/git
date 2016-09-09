@@ -30,6 +30,7 @@
 #include "fmt-merge-msg.h"
 #include "gpg-interface.h"
 #include "sequencer.h"
+#include "string-list.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -712,42 +713,17 @@ static int count_unmerged_entries(void)
 	return ret;
 }
 
-static void split_merge_strategies(const char *string, struct strategy **list,
-				   int *nr, int *alloc)
-{
-	char *p, *q, *buf;
-
-	if (!string)
-		return;
-
-	buf = xstrdup(string);
-	q = buf;
-	for (;;) {
-		p = strchr(q, ' ');
-		if (!p) {
-			ALLOC_GROW(*list, *nr + 1, *alloc);
-			(*list)[(*nr)++].name = xstrdup(q);
-			free(buf);
-			return;
-		} else {
-			*p = '\0';
-			ALLOC_GROW(*list, *nr + 1, *alloc);
-			(*list)[(*nr)++].name = xstrdup(q);
-			q = ++p;
-		}
-	}
-}
-
 static void add_strategies(const char *string, unsigned attr)
 {
-	struct strategy *list = NULL;
-	int list_alloc = 0, list_nr = 0, i;
+	int i;
 
-	memset(&list, 0, sizeof(list));
-	split_merge_strategies(string, &list, &list_nr, &list_alloc);
-	if (list) {
-		for (i = 0; i < list_nr; i++)
-			append_strategy(get_strategy(list[i].name));
+	if (string) {
+		struct string_list list = STRING_LIST_INIT_DUP;
+		struct string_list_item *item;
+		string_list_split(&list, string, ' ', -1);
+		for_each_string_list_item(item, &list)
+			append_strategy(get_strategy(item->string));
+		string_list_clear(&list, 0);
 		return;
 	}
 	for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
