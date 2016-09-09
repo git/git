@@ -623,7 +623,7 @@ leave:
 	return res;
 }
 
-static void prepare_revs(struct replay_opts *opts)
+static int prepare_revs(struct replay_opts *opts)
 {
 	/*
 	 * picking (but not reverting) ranges (but not individual revisions)
@@ -633,10 +633,11 @@ static void prepare_revs(struct replay_opts *opts)
 		opts->revs->reverse ^= 1;
 
 	if (prepare_revision_walk(opts->revs))
-		die(_("revision walk setup failed"));
+		return error(_("revision walk setup failed"));
 
 	if (!opts->revs->commits)
-		die(_("empty commit set passed"));
+		return error(_("empty commit set passed"));
+	return 0;
 }
 
 static void read_and_refresh_cache(struct replay_opts *opts)
