@@ -96,18 +96,21 @@ foreach my $tar_file (@ARGV)
 		$mtime = oct $mtime;
 		next if $typeflag == 5; # directory
 
-		print FI "blob\n", "mark :$next_mark\n";
-		if ($typeflag == 2) { # symbolic link
-			print FI "data ", length($linkname), "\n", $linkname;
-			$mode = 0120000;
-		} else {
-			print FI "data $size\n";
-			while ($size > 0 && read(I, $_, 512) == 512) {
-				print FI substr($_, 0, $size);
-				$size -= 512;
+		if ($typeflag != 1) { # handle hard links later
+			print FI "blob\n", "mark :$next_mark\n";
+			if ($typeflag == 2) { # symbolic link
+				print FI "data ", length($linkname), "\n",
+					$linkname;
+				$mode = 0120000;
+			} else {
+				print FI "data $size\n";
+				while ($size > 0 && read(I, $_, 512) == 512) {
+					print FI substr($_, 0, $size);
+					$size -= 512;
+				}
 			}
+			print FI "\n";
 		}
-		print FI "\n";
 
 		my $path;
 		if ($prefix) {
@@ -115,7 +118,13 @@ foreach my $tar_file (@ARGV)
 		} else {
 			$path = "$name";
 		}
-		$files{$path} = [$next_mark++, $mode];
+
+		if ($typeflag == 1) { # hard link
+			$linkname = "$prefix/$linkname" if $prefix;
+			$files{$path} = [ $files{$linkname}->[0], $mode ];
+		} else {
+			$files{$path} = [$next_mark++, $mode];
+		}
 
 		$author_time = $mtime if $mtime > $author_time;
 		$path =~ m,^([^/]+)/,;
