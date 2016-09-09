@@ -1,0 +1,56 @@
+Git 2.11 Release Notes
+======================
+
+Updates since v2.10
+-------------------
+
+UI, Workflows & Features
+
+ * "git format-patch --cover-letter HEAD^" to format a single patch
+   with a separate cover letter now numbers the output as [PATCH 0/1]
+   and [PATCH 1/1] by default.
+
+ * An incoming "git push" that attempts to push too many bytes can now
+   be rejected by setting a new configuration variable at the receiving
+   end.
+
+ * "git nosuchcommand --help" said "No manual entry for gitnosuchcommand",
+   which was not intuitive, given that "git nosuchcommand" said "git:
+   'nosuchcommand' is not a git command".
+
+ * "git clone --resurse-submodules --reference $path $URL" is a way to
+   reduce network transfer cost by borrowing objects in an existing
+   $path repository when cloning the superproject from $URL; it
+   learned to also peek into $path for presense of corresponding
+   repositories of submodules and borrow objects from there when able.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The delta-base-cache mechanism has been a key to the performance in
+   a repository with a tightly packed packfile, but it did not scale
+   well even with a larger value of core.deltaBaseCacheLimit.
+
+ * Enhance "git status --porcelain" output by collecting more data on
+   the state of the index and the working tree files, which may
+   further be used to teach git-prompt (in contrib/) to make fewer
+   calls to git.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.10
+-----------------
+
+Unless otherwise noted, all the fixes since v2.9 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * Clarify various ways to specify the "revision ranges" in the
+   documentation.
+   (merge a117be4 po/range-doc later to maint).
+
+ * "diff-highlight" script (in contrib/) learned to work better with
+   "git log -p --graph" output.
+   (merge 3dbfe2b bh/diff-highlight-graph later to maint).
