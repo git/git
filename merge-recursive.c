@@ -406,7 +406,7 @@ static void record_df_conflict_files(struct merge_options *o,
 	 * and the file need to be present, then the D/F file will be
 	 * reinstated with a new unique name at the time it is processed.
 	 */
-	struct string_list df_sorted_entries;
+	struct string_list df_sorted_entries = STRING_LIST_INIT_NODUP;
 	const char *last_file = NULL;
 	int last_len = 0;
 	int i;
@@ -419,7 +419,6 @@ static void record_df_conflict_files(struct merge_options *o,
 		return;
 
 	/* Ensure D/F conflicts are adjacent in the entries list. */
-	memset(&df_sorted_entries, 0, sizeof(struct string_list));
 	for (i = 0; i < entries->nr; i++) {
 		struct string_list_item *next = &entries->items[i];
 		string_list_append(&df_sorted_entries, next->string)->util =
