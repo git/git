@@ -640,18 +640,21 @@ static int prepare_revs(struct replay_opts *opts)
 	return 0;
 }
 
-static void read_and_refresh_cache(struct replay_opts *opts)
+static int read_and_refresh_cache(struct replay_opts *opts)
 {
 	static struct lock_file index_lock;
 	int index_fd = hold_locked_index(&index_lock, 0);
 	if (read_index_preload(&the_index, NULL) < 0)
-		die(_("git %s: failed to read the index"), action_name(opts));
+		return error(_("git %s: failed to read the index"),
+			action_name(opts));
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
 	if (the_index.cache_changed && index_fd >= 0) {
 		if (write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
-			die(_("git %s: failed to refresh the index"), action_name(opts));
+			return error(_("git %s: failed to refresh the index"),
+				action_name(opts));
 	}
 	rollback_lock_file(&index_lock);
+	return 0;
 }
 
 static int format_todo(struct strbuf *buf, struct commit_list *todo_list,
@@ -981,7 +984,8 @@ static int pick_commits(struct commit_list *todo_list, struct replay_opts *opts)
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
 				opts->record_origin || opts->edit));
-	read_and_refresh_cache(opts);
+	if (read_and_refresh_cache(opts))
+		return -1;
 
 	for (cur = todo_list; cur; cur = cur->next) {
 		save_todo(cur, opts);
@@ -1045,7 +1049,8 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 	if (opts->subcommand == REPLAY_NONE)
 		assert(opts->revs);
 
-	read_and_refresh_cache(opts);
+	if (read_and_refresh_cache(opts))
+		return -1;
 
 	/*
 	 * Decide what to do depending on the arguments; a fresh
