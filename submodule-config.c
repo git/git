@@ -59,6 +59,7 @@ static void free_one_config(struct submodule_entry *entry)
 {
 	free((void *) entry->config->path);
 	free((void *) entry->config->name);
+	free((void *) entry->config->branch);
 	free((void *) entry->config->update_strategy.command);
 	free(entry->config);
 }
@@ -199,6 +200,8 @@ static struct submodule *lookup_or_create_by_name(struct submodule_cache *cache,
 	submodule->update_strategy.command = NULL;
 	submodule->fetch_recurse = RECURSE_SUBMODULES_NONE;
 	submodule->ignore = NULL;
+	submodule->branch = NULL;
+	submodule->recommend_shallow = -1;
 
 	hashcpy(submodule->gitmodules_sha1, gitmodules_sha1);
 
@@ -353,6 +356,21 @@ static int parse_config(const char *var, const char *value, void *data)
 		else if (parse_submodule_update_strategy(value,
 			 &submodule->update_strategy) < 0)
 				die(_("invalid value for %s"), var);
+	} else if (!strcmp(item.buf, "shallow")) {
+		if (!me->overwrite && submodule->recommend_shallow != -1)
+			warn_multiple_config(me->commit_sha1, submodule->name,
+					     "shallow");
+		else
+			submodule->recommend_shallow =
+				git_config_bool(var, value);
+	} else if (!strcmp(item.buf, "branch")) {
+		if (!me->overwrite && submodule->branch)
+			warn_multiple_config(me->commit_sha1, submodule->name,
+					     "branch");
+		else {
+			free((void *)submodule->branch);
+			submodule->branch = xstrdup(value);
+		}
 	}
 
 	strbuf_release(&name);
@@ -368,7 +386,7 @@ static int gitmodule_sha1_from_commit(const unsigned char *commit_sha1,
 	int ret = 0;
 
 	if (is_null_sha1(commit_sha1)) {
-		hashcpy(gitmodules_sha1, null_sha1);
+		hashclr(gitmodules_sha1);
 		return 1;
 	}
 
@@ -433,7 +451,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	parameter.commit_sha1 = commit_sha1;
 	parameter.gitmodules_sha1 = sha1;
 	parameter.overwrite = 0;
-	git_config_from_mem(parse_config, "submodule-blob", rev.buf,
+	git_config_from_mem(parse_config, CONFIG_ORIGIN_SUBMODULE_BLOB, rev.buf,
 			config, config_size, &parameter);
 	strbuf_release(&rev);
 	free(config);

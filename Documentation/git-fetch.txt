@@ -99,6 +99,57 @@ The latter use of the `remote.<repository>.fetch` values can be
 overridden by giving the `--refmap=<refspec>` parameter(s) on the
 command line.
 
+OUTPUT
+------
+
+The output of "git fetch" depends on the transport method used; this
+section describes the output when fetching over the Git protocol
+(either locally or via ssh) and Smart HTTP protocol.
+
+The status of the fetch is output in tabular form, with each line
+representing the status of a single ref. Each line is of the form:
+
+-------------------------------
+ <flag> <summary> <from> -> <to> [<reason>]
+-------------------------------
+
+The status of up-to-date refs is shown only if the --verbose option is
+used.
+
+In compact output mode, specified with configuration variable
+fetch.output, if either entire `<from>` or `<to>` is found in the
+other string, it will be substituted with `*` in the other string. For
+example, `master -> origin/master` becomes `master -> origin/*`.
+
+flag::
+	A single character indicating the status of the ref:
+(space);; for a successfully fetched fast-forward;
+`+`;; for a successful forced update;
+`-`;; for a successfully pruned ref;
+`t`;; for a successful tag update;
+`*`;; for a successfully fetched new ref;
+`!`;; for a ref that was rejected or failed to update; and
+`=`;; for a ref that was up to date and did not need fetching.
+
+summary::
+	For a successfully fetched ref, the summary shows the old and new
+	values of the ref in a form suitable for using as an argument to
+	`git log` (this is `<old>..<new>` in most cases, and
+	`<old>...<new>` for forced non-fast-forward updates).
+
+from::
+	The name of the remote ref being fetched from, minus its
+	`refs/<type>/` prefix. In the case of deletion, the name of
+	the remote ref is "(none)".
+
+to::
+	The name of the local ref being updated, minus its
+	`refs/<type>/` prefix.
+
+reason::
+	A human-readable explanation. In the case of successfully fetched
+	refs, no explanation is needed. For a failed ref, the reason for
+	failure is described.
 
 EXAMPLES
 --------

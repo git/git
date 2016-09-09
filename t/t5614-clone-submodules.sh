@@ -67,4 +67,56 @@ test_expect_success 'non shallow clone with shallow submodule' '
 	test_line_count = 1 lines
 '
 
+test_expect_success 'clone follows shallow recommendation' '
+	test_when_finished "rm -rf super_clone" &&
+	git config -f .gitmodules submodule.sub.shallow true &&
+	git add .gitmodules &&
+	git commit -m "recommed shallow for sub" &&
+	git clone --recurse-submodules --no-local "file://$pwd/." super_clone &&
+	(
+		cd super_clone &&
+		git log --oneline >lines &&
+		test_line_count = 4 lines
+	) &&
+	(
+		cd super_clone/sub &&
+		git log --oneline >lines &&
+		test_line_count = 1 lines
+	)
+'
+
+test_expect_success 'get unshallow recommended shallow submodule' '
+	test_when_finished "rm -rf super_clone" &&
+	git clone --no-local "file://$pwd/." super_clone &&
+	(
+		cd super_clone &&
+		git submodule update --init --no-recommend-shallow &&
+		git log --oneline >lines &&
+		test_line_count = 4 lines
+	) &&
+	(
+		cd super_clone/sub &&
+		git log --oneline >lines &&
+		test_line_count = 3 lines
+	)
+'
+
+test_expect_success 'clone follows non shallow recommendation' '
+	test_when_finished "rm -rf super_clone" &&
+	git config -f .gitmodules submodule.sub.shallow false &&
+	git add .gitmodules &&
+	git commit -m "recommed non shallow for sub" &&
+	git clone --recurse-submodules --no-local "file://$pwd/." super_clone &&
+	(
+		cd super_clone &&
+		git log --oneline >lines &&
+		test_line_count = 5 lines
+	) &&
+	(
+		cd super_clone/sub &&
+		git log --oneline >lines &&
+		test_line_count = 3 lines
+	)
+'
+
 test_done

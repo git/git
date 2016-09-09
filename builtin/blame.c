@@ -56,7 +56,7 @@ static int show_progress;
 static struct date_mode blame_date_mode = { DATE_ISO8601 };
 static size_t blame_date_width;
 
-static struct string_list mailmap;
+static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -598,7 +598,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 			    p->status);
 		case 'M':
 			porigin = get_origin(sb, parent, origin->path);
-			hashcpy(porigin->blob_sha1, p->one->sha1);
+			hashcpy(porigin->blob_sha1, p->one->oid.hash);
 			porigin->mode = p->one->mode;
 			break;
 		case 'A':
@@ -608,7 +608,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -644,13 +644,13 @@ static struct origin *find_rename(struct scoreboard *sb,
 		if ((p->status == 'R' || p->status == 'C') &&
 		    !strcmp(p->two->path, origin->path)) {
 			porigin = get_origin(sb, parent, p->one->path);
-			hashcpy(porigin->blob_sha1, p->one->sha1);
+			hashcpy(porigin->blob_sha1, p->one->oid.hash);
 			porigin->mode = p->one->mode;
 			break;
 		}
 	}
 	diff_flush(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 	return porigin;
 }
 
@@ -1308,7 +1308,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 				continue;
 
 			norigin = get_origin(sb, parent, p->one->path);
-			hashcpy(norigin->blob_sha1, p->one->sha1);
+			hashcpy(norigin->blob_sha1, p->one->oid.hash);
 			norigin->mode = p->one->mode;
 			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p);
 			if (!file_p.ptr)
@@ -1342,7 +1342,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 	} while (unblamed);
 	target->suspects = reverse_blame(leftover, NULL);
 	diff_flush(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 }
 
 /*
@@ -2244,7 +2244,8 @@ static void verify_working_tree_path(struct commit *work_tree, const char *path)
 	pos = cache_name_pos(path, strlen(path));
 	if (pos >= 0)
 		; /* path is in the index */
-	else if (!strcmp(active_cache[-1 - pos]->name, path))
+	else if (-1 - pos < active_nr &&
+		 !strcmp(active_cache[-1 - pos]->name, path))
 		; /* path is in the index, unmerged */
 	else
 		die("no such path '%s' in HEAD", path);
@@ -2527,12 +2528,12 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	enum object_type type;
 	struct commit *final_commit = NULL;
 
-	static struct string_list range_list;
-	static int output_option = 0, opt = 0;
-	static int show_stats = 0;
-	static const char *revs_file = NULL;
-	static const char *contents_from = NULL;
-	static const struct option options[] = {
+	struct string_list range_list = STRING_LIST_INIT_NODUP;
+	int output_option = 0, opt = 0;
+	int show_stats = 0;
+	const char *revs_file = NULL;
+	const char *contents_from = NULL;
+	const struct option options[] = {
 		OPT_BOOL(0, "incremental", &incremental, N_("Show blame entries as we find them, incrementally")),
 		OPT_BOOL('b', NULL, &blank_boundary, N_("Show blank SHA-1 for boundary commits (Default: off)")),
 		OPT_BOOL(0, "root", &show_root, N_("Do not treat root commits as boundaries (Default: off)")),
@@ -2808,7 +2809,7 @@ parse_done:
 	lno = prepare_lines(&sb);
 
 	if (lno && !range_list.nr)
-		string_list_append(&range_list, xstrdup("1"));
+		string_list_append(&range_list, "1");
 
 	anchor = 1;
 	range_set_init(&ranges, range_list.nr);

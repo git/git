@@ -644,7 +644,7 @@ test_expect_success 'fetch --prune prints the remotes url' '
 		git fetch --prune origin 2>&1 | head -n1 >../actual
 	) &&
 	echo "From ${D}/." >expect &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'branchname D/F conflict resolved by --prune' '
@@ -686,6 +686,36 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 		GIT_ASK_YESNO="$D/askyesno" git fetch >fetch.out 2>&1 &&
 		! grep "Should I try again" fetch.out
 	)
+'
+
+test_expect_success C_LOCALE_OUTPUT 'fetch aligned output' '
+	git clone . full-output &&
+	test_commit looooooooooooong-tag &&
+	(
+		cd full-output &&
+		git -c fetch.output=full fetch origin 2>&1 | \
+			grep -e "->" | cut -c 22- >../actual
+	) &&
+	cat >expect <<-\EOF &&
+	master               -> origin/master
+	looooooooooooong-tag -> looooooooooooong-tag
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success C_LOCALE_OUTPUT 'fetch compact output' '
+	git clone . compact &&
+	test_commit extraaa &&
+	(
+		cd compact &&
+		git -c fetch.output=compact fetch origin 2>&1 | \
+			grep -e "->" | cut -c 22- >../actual
+	) &&
+	cat >expect <<-\EOF &&
+	master     -> origin/*
+	extraaa    -> *
+	EOF
+	test_cmp expect actual
 '
 
 test_done

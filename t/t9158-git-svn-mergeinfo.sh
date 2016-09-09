@@ -7,8 +7,6 @@ test_description='git svn mergeinfo propagation'
 
 . ./lib-git-svn.sh
 
-say 'define NO_SVN_TESTS to skip git svn tests'
-
 test_expect_success 'initialize source svn repo' '
 	svn_cmd mkdir -m x "$svnrepo"/trunk &&
 	svn_cmd co "$svnrepo"/trunk "$SVN_TREE" &&

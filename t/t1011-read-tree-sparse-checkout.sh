@@ -247,7 +247,7 @@ error: The following untracked working tree files would be overwritten by checko
 Please move or remove them before you switch branches.
 Aborting
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success 'checkout without --ignore-skip-worktree-bits' '

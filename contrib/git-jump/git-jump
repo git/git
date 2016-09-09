@@ -12,6 +12,8 @@ diff: elements are diff hunks. Arguments are given to diff.
 merge: elements are merge conflicts. Arguments are ignored.
 
 grep: elements are grep hits. Arguments are given to grep.
+
+ws: elements are whitespace errors. Arguments are given to diff --check.
 EOF
 }
 
@@ -25,7 +27,7 @@ mode_diff() {
 	perl -ne '
 	if (m{^\+\+\+ (.*)}) { $file = $1; next }
 	defined($file) or next;
-	if (m/^@@ .*\+(\d+)/) { $line = $1; next }
+	if (m/^@@ .*?\+(\d+)/) { $line = $1; next }
 	defined($line) or next;
 	if (/^ /) { $line++; next }
 	if (/^[-+]\s*(.*)/) {
@@ -53,6 +55,10 @@ mode_grep() {
 	s/[ \t]+/ /g;
 	s/^ *//;
 	'
+}
+
+mode_ws() {
+	git diff --check "$@"
 }
 
 if test $# -lt 1; then

@@ -20,7 +20,7 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
 {
 	int in_place = 0;
 	int trim_empty = 0;
-	struct string_list trailers = STRING_LIST_INIT_DUP;
+	struct string_list trailers = STRING_LIST_INIT_NODUP;
 
 	struct option options[] = {
 		OPT_BOOL(0, "in-place", &in_place, N_("edit files in place")),

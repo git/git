@@ -519,7 +519,7 @@ static void fill_line_ends(struct diff_filespec *spec, long *lines,
 	char *data = NULL;
 
 	if (diff_populate_filespec(spec, 0))
-		die("Cannot read blob %s", sha1_to_hex(spec->sha1));
+		die("Cannot read blob %s", oid_to_hex(&spec->oid));
 
 	ALLOC_ARRAY(ends, size);
 	ends[cur++] = 0;
@@ -840,7 +840,7 @@ static char *get_nth_line(long line, unsigned long *ends, void *data)
 
 static void print_line(const char *prefix, char first,
 		       long line, unsigned long *ends, void *data,
-		       const char *color, const char *reset)
+		       const char *color, const char *reset, FILE *file)
 {
 	char *begin = get_nth_line(line, ends, data);
 	char *end = get_nth_line(line+1, ends, data);
@@ -851,14 +851,14 @@ static void print_line(const char *prefix, char first,
 		had_nl = 1;
 	}
 
-	fputs(prefix, stdout);
-	fputs(color, stdout);
-	putchar(first);
-	fwrite(begin, 1, end-begin, stdout);
-	fputs(reset, stdout);
-	putchar('\n');
+	fputs(prefix, file);
+	fputs(color, file);
+	putc(first, file);
+	fwrite(begin, 1, end-begin, file);
+	fputs(reset, file);
+	putc('\n', file);
 	if (!had_nl)
-		fputs("\\ No newline at end of file\n", stdout);
+		fputs("\\ No newline at end of file\n", file);
 }
 
 static char *output_prefix(struct diff_options *opt)
@@ -893,16 +893,16 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 	if (!pair || !diff)
 		return;
 
-	if (pair->one->sha1_valid)
+	if (pair->one->oid_valid)
 		fill_line_ends(pair->one, &p_lines, &p_ends);
 	fill_line_ends(pair->two, &t_lines, &t_ends);
 
-	printf("%s%sdiff --git a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
-	printf("%s%s--- %s%s%s\n", prefix, c_meta,
-	       pair->one->sha1_valid ? "a/" : "",
-	       pair->one->sha1_valid ? pair->one->path : "/dev/null",
+	fprintf(opt->file, "%s%sdiff --git a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
+	fprintf(opt->file, "%s%s--- %s%s%s\n", prefix, c_meta,
+	       pair->one->oid_valid ? "a/" : "",
+	       pair->one->oid_valid ? pair->one->path : "/dev/null",
 	       c_reset);
-	printf("%s%s+++ b/%s%s\n", prefix, c_meta, pair->two->path, c_reset);
+	fprintf(opt->file, "%s%s+++ b/%s%s\n", prefix, c_meta, pair->two->path, c_reset);
 	for (i = 0; i < range->ranges.nr; i++) {
 		long p_start, p_end;
 		long t_start = range->ranges.ranges[i].start;
@@ -944,7 +944,7 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 		}
 
 		/* Now output a diff hunk for this range */
-		printf("%s%s@@ -%ld,%ld +%ld,%ld @@%s\n",
+		fprintf(opt->file, "%s%s@@ -%ld,%ld +%ld,%ld @@%s\n",
 		       prefix, c_frag,
 		       p_start+1, p_end-p_start, t_start+1, t_end-t_start,
 		       c_reset);
@@ -952,18 +952,18 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 			int k;
 			for (; t_cur < diff->target.ranges[j].start; t_cur++)
 				print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
-					   c_context, c_reset);
+					   c_context, c_reset, opt->file);
 			for (k = diff->parent.ranges[j].start; k < diff->parent.ranges[j].end; k++)
 				print_line(prefix, '-', k, p_ends, pair->one->data,
-					   c_old, c_reset);
+					   c_old, c_reset, opt->file);
 			for (; t_cur < diff->target.ranges[j].end && t_cur < t_end; t_cur++)
 				print_line(prefix, '+', t_cur, t_ends, pair->two->data,
-					   c_new, c_reset);
+					   c_new, c_reset, opt->file);
 			j++;
 		}
 		for (; t_cur < t_end; t_cur++)
 			print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
-				   c_context, c_reset);
+				   c_context, c_reset, opt->file);
 	}
 
 	free(p_ends);
@@ -976,7 +976,7 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
  */
 static void dump_diff_hacky(struct rev_info *rev, struct line_log_data *range)
 {
-	puts(output_prefix(&rev->diffopt));
+	fprintf(rev->diffopt.file, "%s\n", output_prefix(&rev->diffopt));
 	while (range) {
 		dump_diff_hacky_one(rev, range);
 		range = range->next;
@@ -1010,12 +1010,12 @@ static int process_diff_filepair(struct rev_info *rev,
 	if (rg->ranges.nr == 0)
 		return 0;
 
-	assert(pair->two->sha1_valid);
+	assert(pair->two->oid_valid);
 	diff_populate_filespec(pair->two, 0);
 	file_target.ptr = pair->two->data;
 	file_target.size = pair->two->size;
 
-	if (pair->one->sha1_valid) {
+	if (pair->one->oid_valid) {
 		diff_populate_filespec(pair->one, 0);
 		file_parent.ptr = pair->one->data;
 		file_parent.size = pair->one->size;

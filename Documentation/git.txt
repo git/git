@@ -43,6 +43,11 @@ unreleased) version of Git, that is available from the 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
+* link:v2.10.0/git.html[documentation for release 2.10]
+
+* release notes for
+  link:RelNotes/2.10.0.txt[2.10].
+
 * link:v2.9.3/git.html[documentation for release 2.9.3]
 
 * release notes for
@@ -1084,6 +1089,14 @@ of clones and fetches.
 `GIT_TRACE_SHALLOW`::
 	Enables trace messages that can help debugging fetching /
 	cloning of shallow repositories.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_CURL`::
+	Enables a curl full trace dump of all incoming and outgoing data,
+	including descriptive information, of the git transport protocol.
+	This is similar to doing curl `--trace-ascii` on the command line.
+	This option overrides setting the `GIT_CURL_VERBOSE` environment
+	variable.
 	See `GIT_TRACE` for available trace output options.
 
 `GIT_LITERAL_PATHSPECS`::

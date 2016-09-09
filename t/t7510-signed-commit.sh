@@ -210,4 +210,11 @@ test_expect_success GPG 'show lack of signature with custom format' '
 	test_cmp expect actual
 '
 
+test_expect_success GPG 'log.showsignature behaves like --show-signature' '
+	test_config log.showsignature true &&
+	git show initial >actual &&
+	grep "gpg: Signature made" actual &&
+	grep "gpg: Good signature" actual
+'
+
 test_done

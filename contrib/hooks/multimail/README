@@ -1,11 +1,11 @@
-git-multimail 1.3.1
-===================
+git-multimail version 1.4.0
+===========================
 
 .. image:: https://travis-ci.org/git-multimail/git-multimail.svg?branch=master
     :target: https://travis-ci.org/git-multimail/git-multimail
 
 git-multimail is a tool for sending notification emails on pushes to a
-Git repository.  It includes a Python module called git_multimail.py,
+Git repository.  It includes a Python module called ``git_multimail.py``,
 which can either be used as a hook script directly or can be imported
 as a Python module into another script.
 
@@ -93,20 +93,20 @@ Requirements
 Invocation
 ----------
 
-git_multimail.py is designed to be used as a ``post-receive`` hook in a
+``git_multimail.py`` is designed to be used as a ``post-receive`` hook in a
 Git repository (see githooks(5)).  Link or copy it to
 $GIT_DIR/hooks/post-receive within the repository for which email
 notifications are desired.  Usually it should be installed on the
 central repository for a project, to which all commits are eventually
 pushed.
 
-For use on pre-v1.5.1 Git servers, git_multimail.py can also work as
+For use on pre-v1.5.1 Git servers, ``git_multimail.py`` can also work as
 an ``update`` hook, taking its arguments on the command line.  To use
 this script in this manner, link or copy it to $GIT_DIR/hooks/update.
 Please note that the script is not completely reliable in this mode
-[2]_.
+[1]_.
 
-Alternatively, git_multimail.py can be imported as a Python module
+Alternatively, ``git_multimail.py`` can be imported as a Python module
 into your own Python post-receive script.  This method is a bit more
 work, but allows the behavior of the hook to be customized using
 arbitrary Python code.  For example, you can use a custom environment
@@ -122,7 +122,7 @@ arbitrary Python code.  For example, you can use a custom environment
 
 Or you can change how emails are sent by writing your own Mailer
 class.  The ``post-receive`` script in this directory demonstrates how
-to use git_multimail.py as a Python module.  (If you make interesting
+to use ``git_multimail.py`` as a Python module.  (If you make interesting
 changes of this type, please consider sharing them with the
 community.)
 
@@ -151,7 +151,10 @@ multimailhook.environment
       the repository name is derived from the repository's path.
 
     gitolite
-      the username of the pusher is read from $GL_USER, the repository
+      Environment to use when ``git-multimail`` is ran as a gitolite_
+      hook.
+
+      The username of the pusher is read from $GL_USER, the repository
       name is read from $GL_REPO, and the From: header value is
       optionally read from gitolite.conf (see multimailhook.from).
 
@@ -294,7 +297,7 @@ multimailhook.htmlInIntro, multimailhook.htmlInFooter
     like ``<a href="foo">link</a>``, the reader will see the HTML
     source code and not a proper link.
 
-    Set ``multimailhook.htmlInIntro`` to true to allow writting HTML
+    Set ``multimailhook.htmlInIntro`` to true to allow writing HTML
     formatting in introduction templates. Similarly, set
     ``multimailhook.htmlInFooter`` for HTML in the footer.
 
@@ -444,7 +447,9 @@ multimailhook.emailPrefix
     email filtering (though filtering based on the X-Git-* email
     headers is probably more robust).  Default is the short name of
     the repository in square brackets; e.g., ``[myrepo]``.  Set this
-    value to the empty string to suppress the email prefix.
+    value to the empty string to suppress the email prefix. You may
+    use the placeholder ``%(repo_shortname)s`` for the short name of
+    the repository.
 
 multimailhook.emailMaxLines
     The maximum number of lines that should be included in the body of
@@ -461,6 +466,17 @@ multimailhook.emailMaxLineLength
     lines, the diffs are probably unreadable anyway.  To disable line
     truncation, set this option to 0.
 
+multimailhook.subjectMaxLength
+    The maximum length of the subject line (i.e. the ``oneline`` field
+    in templates, not including the prefix). Lines longer than this
+    limit are truncated to this length with a trailing ``[...]`` added
+    to indicate the missing text. This option The default is to use
+    ``multimailhook.emailMaxLineLength``. This option avoids sending
+    emails with overly long subject lines, but should not be needed if
+    the commit messages follow the Git convention (one short subject
+    line, then a blank line, then the message body). To disable line
+    truncation, set this option to 0.
+
 multimailhook.maxCommitEmails
     The maximum number of commit emails to send for a given change.
     When the number of patches is larger that this value, only the
@@ -474,12 +490,15 @@ multimailhook.emailStrictUTF8
     not valid UTF-8 are converted to the Unicode replacement
     character, U+FFFD.  The default is `true`.
 
+    This option is ineffective with Python 3, where non-UTF-8
+    characters are unconditionally replaced.
+
 multimailhook.diffOpts
     Options passed to ``git diff-tree`` when generating the summary
     information for ReferenceChange emails.  Default is ``--stat
     --summary --find-copies-harder``.  Add -p to those options to
     include a unified diff of changes in addition to the usual summary
-    output.  Shell quoting is allowed; see multimailhook.logOpts for
+    output.  Shell quoting is allowed; see ``multimailhook.logOpts`` for
     details.
 
 multimailhook.graphOpts
@@ -516,7 +535,7 @@ multimailhook.commitLogOpts
 
 multimailhook.dateSubstitute
     String to use as a substitute for ``Date:`` in the output of ``git
-    log`` while formatting commit messages. This is usefull to avoid
+    log`` while formatting commit messages. This is useful to avoid
     emitting a line that can be interpreted by mailers as the start of
     a cited message (Zimbra webmail in particular). Defaults to
     ``CommitDate:``. Set to an empty string or ``none`` to deactivate
@@ -564,6 +583,8 @@ multimailhook.refFilterInclusionRegex, multimailhook.refFilterExclusionRegex, mu
     the user-interface is not stable yet (in particular, the option
     names may change). If you want to participate in stabilizing the
     feature, please contact the maintainers and/or send pull-requests.
+    If you are happy with the current shape of the feature, please
+    report it too.
 
     Regular expressions that can be used to limit refs for which email
     updates will be sent.  It is an error to specify both an inclusion
@@ -613,6 +634,32 @@ multimailhook.refFilterInclusionRegex, multimailhook.refFilterExclusionRegex, mu
       [multimailhook]
               refFilterExclusionRegex = ^refs/tags/|^refs/heads/master$
 
+    ``refFilterInclusionRegex`` and ``refFilterExclusionRegex`` are
+    strictly stronger than ``refFilterDoSendRegex`` and
+    ``refFilterDontSendRegex``. In other words, adding a ref to a
+    DoSend/DontSend regex has no effect if it is already excluded by a
+    Exclusion/Inclusion regex.
+
+multimailhook.logFile, multimailhook.errorLogFile, multimailhook.debugLogFile
+
+    When set, these variable designate path to files where
+    git-multimail will log some messages. Normal messages and error
+    messages are sent to ``logFile``, and error messages are also sent
+    to ``errorLogFile``. Debug messages and all other messages are
+    sent to ``debugLogFile``. The recommended way is to set only one
+    of these variables, but it is also possible to set several of them
+    (part of the information is then duplicated in several log files,
+    for example errors are duplicated to all log files).
+
+    Relative path are relative to the Git repository where the push is
+    done.
+
+multimailhook.verbose
+
+    Verbosity level of git-multimail on its standard output. By
+    default, show only error and info messages. If set to true, show
+    also debug messages.
+
 Email filtering aids
 --------------------
 
@@ -628,8 +675,8 @@ Customizing email contents
 
 git-multimail mostly generates emails by expanding templates.  The
 templates can be customized.  To avoid the need to edit
-git_multimail.py directly, the preferred way to change the templates
-is to write a separate Python script that imports git_multimail.py as
+``git_multimail.py`` directly, the preferred way to change the templates
+is to write a separate Python script that imports ``git_multimail.py`` as
 a module, then replaces the templates in place.  See the provided
 post-receive script for an example of how this is done.
 
@@ -645,8 +692,8 @@ GenericEnvironment
     a stand-alone Git repository.
 
 GitoliteEnvironment
-    a Git repository that is managed by gitolite
-    [3]_.  For such repositories, the identity of the pusher is read from
+    a Git repository that is managed by gitolite_.  For such
+    repositories, the identity of the pusher is read from
     environment variable $GL_USER, the name of the repository is read
     from $GL_REPO (if it is not overridden by multimailhook.reponame),
     and the From: header value is optionally read from gitolite.conf
@@ -662,7 +709,7 @@ option to the script.
 If you need to customize the script in ways that are not supported by
 the existing environments, you can define your own environment class
 class using arbitrary Python code.  To do so, you need to import
-git_multimail.py as a Python module, as demonstrated by the example
+``git_multimail.py`` as a Python module, as demonstrated by the example
 post-receive script.  Then implement your environment class; it should
 usually inherit from one of the existing Environment classes and
 possibly one or more of the EnvironmentMixin classes.  Then set the
@@ -690,9 +737,7 @@ contribute to git-multimail.
 Footnotes
 ---------
 
-.. [1] http://www.python.org/dev/peps/pep-0394/
-
-.. [2] Because of the way information is passed to update hooks, the
+.. [1] Because of the way information is passed to update hooks, the
        script's method of determining whether a commit has already
        been seen does not work when it is used as an ``update`` script.
        In particular, no notification email will be generated for a
@@ -700,4 +745,4 @@ Footnotes
        push. A workaround is to use --force-send to force sending the
        emails.
 
-.. [3] https://github.com/sitaramc/gitolite
+.. _gitolite: https://github.com/sitaramc/gitolite

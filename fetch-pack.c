@@ -243,16 +243,21 @@ static void insert_one_alternate_ref(const struct ref *ref, void *unused)
 
 #define INITIAL_FLUSH 16
 #define PIPESAFE_FLUSH 32
-#define LARGE_FLUSH 1024
+#define LARGE_FLUSH 16384
 
 static int next_flush(struct fetch_pack_args *args, int count)
 {
-	int flush_limit = args->stateless_rpc ? LARGE_FLUSH : PIPESAFE_FLUSH;
-
-	if (count < flush_limit)
-		count <<= 1;
-	else
-		count += flush_limit;
+	if (args->stateless_rpc) {
+		if (count < LARGE_FLUSH)
+			count <<= 1;
+		else
+			count = count * 11 / 10;
+	} else {
+		if (count < PIPESAFE_FLUSH)
+			count <<= 1;
+		else
+			count += PIPESAFE_FLUSH;
+	}
 	return count;
 }
 

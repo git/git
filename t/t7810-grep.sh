@@ -581,7 +581,7 @@ test_expect_success 'log grep (9)' '
 '
 
 test_expect_success 'log grep (9)' '
-	git log -g --grep-reflog="commit: third" --author="non-existant" --pretty=tformat:%s >actual &&
+	git log -g --grep-reflog="commit: third" --author="non-existent" --pretty=tformat:%s >actual &&
 	: >expect &&
 	test_cmp expect actual
 '

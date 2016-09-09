@@ -8,8 +8,6 @@ GIT_SVN_LC_ALL=${LC_ALL:-$LANG}
 
 . ./lib-git-svn.sh
 
-say 'define NO_SVN_TESTS to skip git svn tests'
-
 case "$GIT_SVN_LC_ALL" in
 *.UTF-8)
 	test_set_prereq UTF8
@@ -18,6 +16,27 @@ case "$GIT_SVN_LC_ALL" in
 	say "# UTF-8 locale not set, some tests skipped ($GIT_SVN_LC_ALL)"
 	;;
 esac
+
+deepdir=nothing-above
+ceiling=$PWD
+
+test_expect_success 'git svn --version works anywhere' '
+	mkdir -p "$deepdir" && (
+		GIT_CEILING_DIRECTORIES="$ceiling" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd "$deepdir" &&
+		git svn --version
+	)
+'
+
+test_expect_success 'git svn help works anywhere' '
+	mkdir -p "$deepdir" && (
+		GIT_CEILING_DIRECTORIES="$ceiling" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd "$deepdir" &&
+		git svn help
+	)
+'
 
 test_expect_success \
     'initialize git svn' '

@@ -976,3 +976,17 @@ test_match_signal () {
 	fi
 	return 1
 }
+
+# Read up to "$1" bytes (or to EOF) from stdin and write them to stdout.
+test_copy_bytes () {
+	perl -e '
+		my $len = $ARGV[1];
+		while ($len > 0) {
+			my $s;
+			my $nread = sysread(STDIN, $s, $len);
+			die "cannot read: $!" unless defined($nread);
+			print $s;
+			$len -= $nread;
+		}
+	' - "$1"
+}

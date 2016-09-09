@@ -79,6 +79,15 @@ test_expect_success 'git branch -m dumps usage' '
 	test_i18ngrep "branch name required" err
 '
 
+test_expect_success 'git branch -m m broken_symref should work' '
+	test_when_finished "git branch -D broken_symref" &&
+	git branch -l m &&
+	git symbolic-ref refs/heads/broken_symref refs/heads/i_am_broken &&
+	git branch -m m broken_symref &&
+	git reflog exists refs/heads/broken_symref &&
+	test_must_fail git reflog exists refs/heads/i_am_broken
+'
+
 test_expect_success 'git branch -m m m/m should work' '
 	git branch -l m &&
 	git branch -m m m/m &&
@@ -550,7 +559,7 @@ If you wanted to make '"'master'"' track '"'origin/master'"', do this:
     git branch -d origin/master
     git branch --set-upstream-to origin/master
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream with two args only shows the deprecation message' '
@@ -559,7 +568,7 @@ test_expect_success '--set-upstream with two args only shows the deprecation mes
 	cat >expected <<EOF &&
 The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream with one arg only shows the deprecation message if the branch existed' '
@@ -568,7 +577,7 @@ test_expect_success '--set-upstream with one arg only shows the deprecation mess
 	cat >expected <<EOF &&
 The --set-upstream flag is deprecated and will be removed. Consider using --track or --set-upstream-to
 EOF
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '

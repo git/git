@@ -136,8 +136,8 @@ test_expect_success 'submodule update --init --recursive from subdirectory' '
 	 cd tmp &&
 	 git submodule update --init --recursive ../super >../../actual 2>../../actual2
 	) &&
-	test_cmp expect actual &&
-	test_cmp expect2 actual2
+	test_i18ncmp expect actual &&
+	test_i18ncmp expect2 actual2
 '
 
 apos="'";
@@ -209,9 +209,42 @@ test_expect_success 'submodule update --remote should fetch upstream changes' '
 	)
 '
 
+test_expect_success 'submodule update --remote should fetch upstream changes with .' '
+	(
+		cd super &&
+		git config -f .gitmodules submodule."submodule".branch "." &&
+		git add .gitmodules &&
+		git commit -m "submodules: update from the respective superproject branch"
+	) &&
+	(
+		cd submodule &&
+		echo line4a >> file &&
+		git add file &&
+		test_tick &&
+		git commit -m "upstream line4a" &&
+		git checkout -b test-branch &&
+		test_commit on-test-branch
+	) &&
+	(
+		cd super &&
+		git submodule update --remote --force submodule &&
+		git -C submodule log -1 --oneline >actual
+		git -C ../submodule log -1 --oneline master >expect
+		test_cmp expect actual &&
+		git checkout -b test-branch &&
+		git submodule update --remote --force submodule &&
+		git -C submodule log -1 --oneline >actual
+		git -C ../submodule log -1 --oneline test-branch >expect
+		test_cmp expect actual &&
+		git checkout master &&
+		git branch -d test-branch &&
+		git reset --hard HEAD^
+	)
+'
+
 test_expect_success 'local config should override .gitmodules branch' '
 	(cd submodule &&
-	 git checkout -b test-branch &&
+	 git checkout test-branch &&
 	 echo line5 >> file &&
 	 git add file &&
 	 test_tick &&
@@ -370,7 +403,7 @@ test_expect_success 'submodule update - command in .git/config catches failure' 
 	(cd super &&
 	 test_must_fail git submodule update submodule 2>../actual
 	) &&
-	test_cmp actual expect
+	test_i18ncmp actual expect
 '
 
 cat << EOF >expect
@@ -388,7 +421,7 @@ test_expect_success 'submodule update - command in .git/config catches failure -
 	 mkdir tmp && cd tmp &&
 	 test_must_fail git submodule update ../submodule 2>../../actual
 	) &&
-	test_cmp actual expect
+	test_i18ncmp actual expect
 '
 
 cat << EOF >expect
@@ -408,7 +441,7 @@ test_expect_success 'recursive submodule update - command in .git/config catches
 	 mkdir -p tmp && cd tmp &&
 	 test_must_fail git submodule update --recursive ../super 2>../../actual
 	) &&
-	test_cmp actual expect
+	test_i18ncmp actual expect
 '
 
 test_expect_success 'submodule init does not copy command into .git/config' '
@@ -841,16 +874,35 @@ test_expect_success SYMLINKS 'submodule update can handle symbolic links in pwd'
 '
 
 test_expect_success 'submodule update clone shallow submodule' '
+	test_when_finished "rm -rf super3" &&
+	first=$(git -C cloned submodule status submodule |cut -c2-41) &&
+	second=$(git -C submodule rev-parse HEAD) &&
+	commit_count=$(git -C submodule rev-list --count $first^..$second) &&
 	git clone cloned super3 &&
 	pwd=$(pwd) &&
-	(cd super3 &&
-	 sed -e "s#url = ../#url = file://$pwd/#" <.gitmodules >.gitmodules.tmp &&
-	 mv -f .gitmodules.tmp .gitmodules &&
-	 git submodule update --init --depth=3
-	 (cd submodule &&
-	  test 1 = $(git log --oneline | wc -l)
-	 )
-)
+	(
+		cd super3 &&
+		sed -e "s#url = ../#url = file://$pwd/#" <.gitmodules >.gitmodules.tmp &&
+		mv -f .gitmodules.tmp .gitmodules &&
+		git submodule update --init --depth=$commit_count &&
+		test 1 = $(git -C submodule log --oneline | wc -l)
+	)
+'
+
+test_expect_success 'submodule update clone shallow submodule outside of depth' '
+	test_when_finished "rm -rf super3" &&
+	git clone cloned super3 &&
+	pwd=$(pwd) &&
+	(
+		cd super3 &&
+		sed -e "s#url = ../#url = file://$pwd/#" <.gitmodules >.gitmodules.tmp &&
+		mv -f .gitmodules.tmp .gitmodules &&
+		test_must_fail git submodule update --init --depth=1 2>actual &&
+		test_i18ngrep "Direct fetching of that commit failed." actual &&
+		git -C ../submodule config uploadpack.allowReachableSHA1InWant true &&
+		git submodule update --init --depth=1 >actual &&
+		test 1 = $(git -C submodule log --oneline | wc -l)
+	)
 '
 
 test_expect_success 'submodule update --recursive drops module name before recursing' '

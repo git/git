@@ -759,7 +759,7 @@ static int do_reupdate(int ac, const char **av,
 		if (save_nr != active_nr)
 			goto redo;
 	}
-	free_pathspec(&pathspec);
+	clear_pathspec(&pathspec);
 	return 0;
 }
 
@@ -1146,7 +1146,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		report(_("Untracked cache enabled for '%s'"), get_git_work_tree());
 		break;
 	default:
-		die("Bug: bad untracked_cache value: %d", untracked_cache);
+		die("BUG: bad untracked_cache value: %d", untracked_cache);
 	}
 
 	if (active_cache_changed) {

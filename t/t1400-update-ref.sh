@@ -23,7 +23,7 @@ test_expect_success setup '
 m=refs/heads/master
 n_dir=refs/heads/gu
 n=$n_dir/fixes
-outside=foo
+outside=refs/foo
 
 test_expect_success \
 	"create $m" \
@@ -361,7 +361,7 @@ test_expect_success 'stdin test setup' '
 
 test_expect_success '-z fails without --stdin' '
 	test_must_fail git update-ref -z $m $m $m 2>err &&
-	grep "usage: git update-ref" err
+	test_i18ngrep "usage: git update-ref" err
 '
 
 test_expect_success 'stdin works with no input' '
@@ -479,7 +479,7 @@ test_expect_success 'stdin fails with duplicate refs' '
 	create $a $m
 	EOF
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: Multiple updates for ref '"'"'$a'"'"' not allowed." err
+	grep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed." err
 '
 
 test_expect_success 'stdin create ref works' '
@@ -880,7 +880,7 @@ test_expect_success 'stdin -z fails option with unknown name' '
 test_expect_success 'stdin -z fails with duplicate refs' '
 	printf $F "create $a" "$m" "create $b" "$m" "create $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: Multiple updates for ref '"'"'$a'"'"' not allowed." err
+	grep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed." err
 '
 
 test_expect_success 'stdin -z create ref works' '
@@ -1100,6 +1100,41 @@ test_expect_success 'stdin -z delete refs works with packed and loose refs' '
 	test_must_fail git rev-parse --verify -q $a &&
 	test_must_fail git rev-parse --verify -q $b &&
 	test_must_fail git rev-parse --verify -q $c
+'
+
+test_expect_success 'fails with duplicate HEAD update' '
+	git branch target1 $A &&
+	git checkout target1 &&
+	cat >stdin <<-EOF &&
+	update refs/heads/target1 $C
+	option no-deref
+	update HEAD $B
+	EOF
+	test_must_fail git update-ref --stdin <stdin 2>err &&
+	grep "fatal: multiple updates for '\''HEAD'\'' (including one via its referent .refs/heads/target1.) are not allowed" err &&
+	echo "refs/heads/target1" >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	echo "$A" >expect &&
+	git rev-parse refs/heads/target1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fails with duplicate ref update via symref' '
+	git branch target2 $A &&
+	git symbolic-ref refs/heads/symref2 refs/heads/target2 &&
+	cat >stdin <<-EOF &&
+	update refs/heads/target2 $C
+	update refs/heads/symref2 $B
+	EOF
+	test_must_fail git update-ref --stdin <stdin 2>err &&
+	grep "fatal: multiple updates for '\''refs/heads/target2'\'' (including one via symref .refs/heads/symref2.) are not allowed" err &&
+	echo "refs/heads/target2" >expect &&
+	git symbolic-ref refs/heads/symref2 >actual &&
+	test_cmp expect actual &&
+	echo "$A" >expect &&
+	git rev-parse refs/heads/target2 >actual &&
+	test_cmp expect actual
 '
 
 run_with_limited_open_files () {

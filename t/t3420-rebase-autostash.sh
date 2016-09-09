@@ -179,7 +179,7 @@ testrebase " --interactive" .git/rebase-merge
 
 test_expect_success 'abort rebase -i with --autostash' '
 	test_when_finished "git reset --hard" &&
-	echo uncommited-content >file0 &&
+	echo uncommitted-content >file0 &&
 	(
 		write_script abort-editor.sh <<-\EOF &&
 			echo >"$1"
@@ -188,7 +188,7 @@ test_expect_success 'abort rebase -i with --autostash' '
 		test_must_fail git rebase -i --autostash HEAD^ &&
 		rm -f abort-editor.sh
 	) &&
-	echo uncommited-content >expected &&
+	echo uncommitted-content >expected &&
 	test_cmp expected file0
 '
 

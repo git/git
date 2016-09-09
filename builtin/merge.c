@@ -212,7 +212,7 @@ static struct option builtin_merge_options[] = {
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, FF_ONLY },
 	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_BOOL(0, "verify-signatures", &verify_signatures,
-		N_("Verify that the named commit has a valid GPG signature")),
+		N_("verify that the named commit has a valid GPG signature")),
 	OPT_CALLBACK('s', "strategy", &use_strategies, N_("strategy"),
 		N_("merge strategy to use"), option_parse_strategy),
 	OPT_CALLBACK('X', "strategy-option", &xopts, N_("option=value"),
@@ -337,15 +337,9 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
 	struct rev_info rev;
 	struct strbuf out = STRBUF_INIT;
 	struct commit_list *j;
-	const char *filename;
-	int fd;
 	struct pretty_print_context ctx = {0};
 
 	printf(_("Squash commit -- not updating HEAD\n"));
-	filename = git_path_squash_msg();
-	fd = open(filename, O_WRONLY | O_CREAT, 0666);
-	if (fd < 0)
-		die_errno(_("Could not write to '%s'"), filename);
 
 	init_revisions(&rev, NULL);
 	rev.ignore_merges = 1;
@@ -372,10 +366,7 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
 			oid_to_hex(&commit->object.oid));
 		pretty_print_commit(&ctx, commit, &out);
 	}
-	if (write_in_full(fd, out.buf, out.len) != out.len)
-		die_errno(_("Writing SQUASH_MSG"));
-	if (close(fd))
-		die_errno(_("Finishing SQUASH_MSG"));
+	write_file_buf(git_path_squash_msg(), out.buf, out.len);
 	strbuf_release(&out);
 }
 
@@ -502,7 +493,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		if (ref_exists(truname.buf)) {
 			strbuf_addf(msg,
 				    "%s\t\tbranch '%s'%s of .\n",
-				    sha1_to_hex(remote_head->object.oid.hash),
+				    oid_to_hex(&remote_head->object.oid),
 				    truname.buf + 11,
 				    (early ? " (early part)" : ""));
 			strbuf_release(&truname);
@@ -516,7 +507,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		desc = merge_remote_util(remote_head);
 		if (desc && desc->obj && desc->obj->type == OBJ_TAG) {
 			strbuf_addf(msg, "%s\t\t%s '%s'\n",
-				    sha1_to_hex(desc->obj->oid.hash),
+				    oid_to_hex(&desc->obj->oid),
 				    typename(desc->obj->type),
 				    remote);
 			goto cleanup;
@@ -524,7 +515,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	}
 
 	strbuf_addf(msg, "%s\t\tcommit '%s'\n",
-		sha1_to_hex(remote_head->object.oid.hash), remote);
+		oid_to_hex(&remote_head->object.oid), remote);
 cleanup:
 	strbuf_release(&buf);
 	strbuf_release(&bname);
@@ -683,6 +674,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		hold_locked_index(&lock, 1);
 		clean = merge_recursive(&o, head,
 				remoteheads->item, reversed, &result);
+		if (clean < 0)
+			exit(128);
 		if (active_cache_changed &&
 		    write_locked_index(&the_index, &lock, COMMIT_LOCK))
 			die (_("unable to write %s"), get_index_file());
@@ -732,18 +725,6 @@ static void add_strategies(const char *string, unsigned attr)
 
 }
 
-static void write_merge_msg(struct strbuf *msg)
-{
-	const char *filename = git_path_merge_msg();
-	int fd = open(filename, O_WRONLY | O_CREAT, 0666);
-	if (fd < 0)
-		die_errno(_("Could not open '%s' for writing"),
-			  filename);
-	if (write_in_full(fd, msg->buf, msg->len) != msg->len)
-		die_errno(_("Could not write to '%s'"), filename);
-	close(fd);
-}
-
 static void read_merge_msg(struct strbuf *msg)
 {
 	const char *filename = git_path_merge_msg();
@@ -777,7 +758,7 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	strbuf_addch(&msg, '\n');
 	if (0 < option_edit)
 		strbuf_commented_addf(&msg, _(merge_editor_comment), comment_line_char);
-	write_merge_msg(&msg);
+	write_file_buf(git_path_merge_msg(), msg.buf, msg.len);
 	if (run_commit_hook(0 < option_edit, get_index_file(), "prepare-commit-msg",
 			    git_path_merge_msg(), "merge", NULL))
 		abort_commit(remoteheads, NULL);
@@ -940,8 +921,6 @@ static int setup_with_upstream(const char ***argv)
 
 static void write_merge_state(struct commit_list *remoteheads)
 {
-	const char *filename;
-	int fd;
 	struct commit_list *j;
 	struct strbuf buf = STRBUF_INIT;
 
@@ -955,26 +934,14 @@ static void write_merge_state(struct commit_list *remoteheads)
 		}
 		strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 	}
-	filename = git_path_merge_head();
-	fd = open(filename, O_WRONLY | O_CREAT, 0666);
-	if (fd < 0)
-		die_errno(_("Could not open '%s' for writing"), filename);
-	if (write_in_full(fd, buf.buf, buf.len) != buf.len)
-		die_errno(_("Could not write to '%s'"), filename);
-	close(fd);
+	write_file_buf(git_path_merge_head(), buf.buf, buf.len);
 	strbuf_addch(&merge_msg, '\n');
-	write_merge_msg(&merge_msg);
+	write_file_buf(git_path_merge_msg(), merge_msg.buf, merge_msg.len);
 
-	filename = git_path_merge_mode();
-	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	if (fd < 0)
-		die_errno(_("Could not open '%s' for writing"), filename);
 	strbuf_reset(&buf);
 	if (fast_forward == FF_NO)
 		strbuf_addf(&buf, "no-ff");
-	if (write_in_full(fd, buf.buf, buf.len) != buf.len)
-		die_errno(_("Could not write to '%s'"), filename);
-	close(fd);
+	write_file_buf(git_path_merge_mode(), buf.buf, buf.len);
 }
 
 static int default_edit_option(void)
@@ -990,7 +957,7 @@ static int default_edit_option(void)
 	if (e) {
 		int v = git_config_maybe_bool(name, e);
 		if (v < 0)
-			die("Bad value '%s' in environment '%s'", e, name);
+			die(_("Bad value '%s' in environment '%s'"), e, name);
 		return v;
 	}
 
@@ -1091,7 +1058,7 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
 		if (!commit) {
 			if (ptr)
 				*ptr = '\0';
-			die("not something we can merge in %s: %s",
+			die(_("not something we can merge in %s: %s"),
 			    filename, merge_names->buf + pos);
 		}
 		remotes = &commit_list_insert(commit, remotes)->next;
@@ -1125,7 +1092,7 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 			struct commit *commit = get_merge_parent(argv[i]);
 			if (!commit)
 				help_unknown_ref(argv[i], "merge",
-						 "not something we can merge");
+						 _("not something we can merge"));
 			remotes = &commit_list_insert(commit, remotes)->next;
 		}
 		remoteheads = reduce_parents(head_commit, head_subsumed, remoteheads);
@@ -1342,7 +1309,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	for (p = remoteheads; p; p = p->next) {
 		struct commit *commit = p->item;
 		strbuf_addf(&buf, "GITHEAD_%s",
-			    sha1_to_hex(commit->object.oid.hash));
+			    oid_to_hex(&commit->object.oid));
 		setenv(buf.buf, merge_remote_util(commit)->name, 1);
 		strbuf_reset(&buf);
 		if (fast_forward != FF_ONLY &&
@@ -1397,11 +1364,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * If head can reach all the merge then we are up to date.
 		 * but first the most common case of merging one remote.
 		 */
-		finish_up_to_date("Already up-to-date.");
+		finish_up_to_date(_("Already up-to-date."));
 		goto done;
 	} else if (fast_forward != FF_NO && !remoteheads->next &&
 			!common->next &&
-			!hashcmp(common->item->object.oid.hash, head_commit->object.oid.hash)) {
+			!oidcmp(&common->item->object.oid, &head_commit->object.oid)) {
 		/* Again the most common case of merging one remote. */
 		struct strbuf msg = STRBUF_INIT;
 		struct commit *commit;
@@ -1475,14 +1442,13 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			 * HEAD^^" would be missed.
 			 */
 			common_one = get_merge_bases(head_commit, j->item);
-			if (hashcmp(common_one->item->object.oid.hash,
-				j->item->object.oid.hash)) {
+			if (oidcmp(&common_one->item->object.oid, &j->item->object.oid)) {
 				up_to_date = 0;
 				break;
 			}
 		}
 		if (up_to_date) {
-			finish_up_to_date("Already up-to-date. Yeeah!");
+			finish_up_to_date(_("Already up-to-date. Yeeah!"));
 			goto done;
 		}
 	}
@@ -1506,7 +1472,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	     * Stash away the local changes so that we can try more than one.
 	     */
 	    save_state(stash))
-		hashcpy(stash, null_sha1);
+		hashclr(stash);
 
 	for (i = 0; i < use_strategies_nr; i++) {
 		int ret;

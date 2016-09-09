@@ -1038,7 +1038,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 				(*tail)->status |= REF_STATUS_UPTODATE;
 				if (read_ref((*tail)->name,
 					     (*tail)->old_oid.hash) < 0)
-					die(N_("Could not read ref %s"),
+					die(_("Could not read ref %s"),
 					    (*tail)->name);
 			}
 		}
@@ -1103,7 +1103,7 @@ static void transfer_debug(const char *fmt, ...)
 }
 
 /* Stream state: More data may be coming in this direction. */
-#define SSTATE_TRANSFERING 0
+#define SSTATE_TRANSFERRING 0
 /*
  * Stream state: No more data coming in this direction, flushing rest of
  * data.
@@ -1112,7 +1112,7 @@ static void transfer_debug(const char *fmt, ...)
 /* Stream state: Transfer in this direction finished. */
 #define SSTATE_FINISHED 2
 
-#define STATE_NEEDS_READING(state) ((state) <= SSTATE_TRANSFERING)
+#define STATE_NEEDS_READING(state) ((state) <= SSTATE_TRANSFERRING)
 #define STATE_NEEDS_WRITING(state) ((state) <= SSTATE_FLUSHING)
 #define STATE_NEEDS_CLOSING(state) ((state) == SSTATE_FLUSHING)
 
@@ -1369,7 +1369,7 @@ int bidirectional_transfer_loop(int input, int output)
 	state.ptg.dest = 1;
 	state.ptg.src_is_sock = (input == output);
 	state.ptg.dest_is_sock = 0;
-	state.ptg.state = SSTATE_TRANSFERING;
+	state.ptg.state = SSTATE_TRANSFERRING;
 	state.ptg.bufuse = 0;
 	state.ptg.src_name = "remote input";
 	state.ptg.dest_name = "stdout";
@@ -1378,7 +1378,7 @@ int bidirectional_transfer_loop(int input, int output)
 	state.gtp.dest = output;
 	state.gtp.src_is_sock = 0;
 	state.gtp.dest_is_sock = (input == output);
-	state.gtp.state = SSTATE_TRANSFERING;
+	state.gtp.state = SSTATE_TRANSFERRING;
 	state.gtp.bufuse = 0;
 	state.gtp.src_name = "stdin";
 	state.gtp.dest_name = "remote output";

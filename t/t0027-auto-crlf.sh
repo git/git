@@ -119,8 +119,7 @@ commit_chk_wrnNNO () {
 		fname=${pfx}_$f.txt &&
 		cp $f $fname &&
 		printf Z >>"$fname" &&
-		git -c core.autocrlf=$crlf add $fname 2>/dev/null &&
-		git -c core.autocrlf=$crlf commit -m "commit_$fname" $fname >"${pfx}_$f.err" 2>&1
+		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done
 
 	test_expect_success "commit NNO files crlf=$crlf attr=$attr LF" '
@@ -417,7 +416,8 @@ commit_chk_wrnNNO "text"  ""      false   "$WILC"   "$WICL"   "$WAMIX"    "$WILC
 commit_chk_wrnNNO "text"  ""      true    LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
 commit_chk_wrnNNO "text"  ""      input   ""        CRLF_LF   CRLF_LF     ""          CRLF_LF
 
-test_expect_success 'create files cleanup' '
+test_expect_success 'commit NNO and cleanup' '
+	git commit -m "commit files on top of NNO" &&
 	rm -f *.txt &&
 	git -c core.autocrlf=false reset --hard
 '
