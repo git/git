@@ -90,13 +90,16 @@ If you want to break the dependency of a repository cloned with `-s` on
 its source repository, you can simply run `git repack -a` to copy all
 objects from the source repository into a pack in the cloned repository.
 
---reference <repository>::
+--reference[-if-able] <repository>::
 	If the reference repository is on the local machine,
 	automatically setup `.git/objects/info/alternates` to
 	obtain objects from the reference repository.  Using
 	an already existing repository as an alternate will
 	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
+	When using the `--reference-if-able`, a non existing
+	directory is skipped with a warning instead of aborting
+	the clone.
 +
 *NOTE*: see the NOTE for the `--shared` option, and also the
 `--dissociate` option.
