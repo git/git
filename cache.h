@@ -632,6 +632,7 @@ extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 #define REFRESH_IGNORE_SUBMODULES	0x0010	/* ignore submodules */
 #define REFRESH_IN_PORCELAIN	0x0020	/* user friendly output, not "needs update" */
 extern int refresh_index(struct index_state *, unsigned int flags, const struct pathspec *pathspec, char *seen, const char *header_msg);
+extern struct cache_entry *refresh_cache_entry(struct cache_entry *, unsigned int);
 
 extern void update_index_if_able(struct index_state *, struct lock_file *);
 
