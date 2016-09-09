@@ -33,18 +33,25 @@ test_expect_success 'symbolic-ref refuses bare sha1' '
 '
 reset_to_sane
 
-test_expect_success 'symbolic-ref deletes HEAD' '
-	git symbolic-ref -d HEAD &&
+test_expect_success 'HEAD cannot be removed' '
+	test_must_fail git symbolic-ref -d HEAD
+'
+
+reset_to_sane
+
+test_expect_success 'symbolic-ref can be deleted' '
+	git symbolic-ref NOTHEAD refs/heads/foo &&
+	git symbolic-ref -d NOTHEAD &&
 	test_path_is_file .git/refs/heads/foo &&
-	test_path_is_missing .git/HEAD
+	test_path_is_missing .git/NOTHEAD
 '
 reset_to_sane
 
-test_expect_success 'symbolic-ref deletes dangling HEAD' '
-	git symbolic-ref HEAD refs/heads/missing &&
-	git symbolic-ref -d HEAD &&
+test_expect_success 'symbolic-ref can delete dangling symref' '
+	git symbolic-ref NOTHEAD refs/heads/missing &&
+	git symbolic-ref -d NOTHEAD &&
 	test_path_is_missing .git/refs/heads/missing &&
-	test_path_is_missing .git/HEAD
+	test_path_is_missing .git/NOTHEAD
 '
 reset_to_sane
 
