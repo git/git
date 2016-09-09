@@ -177,6 +177,12 @@ const char *show_date(unsigned long time, int tz, const struct date_mode *mode)
 	struct tm *tm;
 	static struct strbuf timebuf = STRBUF_INIT;
 
+	if (mode->type == DATE_UNIX) {
+		strbuf_reset(&timebuf);
+		strbuf_addf(&timebuf, "%lu", time);
+		return timebuf.buf;
+	}
+
 	if (mode->local)
 		tz = local_tzoffset(time);
 
@@ -792,6 +798,8 @@ static enum date_mode_type parse_date_type(const char *format, const char **end)
 		return DATE_NORMAL;
 	if (skip_prefix(format, "raw", end))
 		return DATE_RAW;
+	if (skip_prefix(format, "unix", end))
+		return DATE_UNIX;
 	if (skip_prefix(format, "format", end))
 		return DATE_STRFTIME;
 
