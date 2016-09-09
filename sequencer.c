@@ -809,17 +809,19 @@ static void read_populate_opts(struct replay_opts **opts_ptr)
 		die(_("Malformed options sheet: %s"), git_path_opts_file());
 }
 
-static void walk_revs_populate_todo(struct commit_list **todo_list,
+static int walk_revs_populate_todo(struct commit_list **todo_list,
 				struct replay_opts *opts)
 {
 	struct commit *commit;
 	struct commit_list **next;
 
-	prepare_revs(opts);
+	if (prepare_revs(opts))
+		return -1;
 
 	next = todo_list;
 	while ((commit = get_revision(opts->revs)))
 		next = commit_list_append(commit, next);
+	return 0;
 }
 
 static int create_seq_dir(void)
@@ -1102,8 +1104,8 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 	 * progress
 	 */
 
-	walk_revs_populate_todo(&todo_list, opts);
-	if (create_seq_dir() < 0)
+	if (walk_revs_populate_todo(&todo_list, opts) ||
+			create_seq_dir() < 0)
 		return -1;
 	if (get_sha1("HEAD", sha1) && (opts->action == REPLAY_REVERT))
 		return error(_("Can't revert as initial commit"));
