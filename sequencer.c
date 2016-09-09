@@ -255,7 +255,7 @@ static int write_with_lock_file(const char *filename,
 	if (append_eol && write(msg_fd, "\n", 1) < 0)
 		return error_errno(_("Could not write eol to '%s"), filename);
 	if (commit_lock_file(&msg_file) < 0)
-		return error(_("Error wrapping up %s."), filename);
+		return error(_("Error wrapping up '%s'."), filename);
 
 	return 0;
 }
@@ -955,16 +955,16 @@ static int read_populate_todo(struct todo_list *todo_list,
 	strbuf_reset(&todo_list->buf);
 	fd = open(todo_file, O_RDONLY);
 	if (fd < 0)
-		return error_errno(_("Could not open %s"), todo_file);
+		return error_errno(_("Could not open '%s'"), todo_file);
 	if (strbuf_read(&todo_list->buf, fd, 0) < 0) {
 		close(fd);
-		return error(_("Could not read %s."), todo_file);
+		return error(_("Could not read '%s'."), todo_file);
 	}
 	close(fd);
 
 	res = parse_insn_buffer(todo_list->buf.buf, todo_list);
 	if (res)
-		return error(_("Unusable instruction sheet: %s"), todo_file);
+		return error(_("Unusable instruction sheet: '%s'"), todo_file);
 
 	if (!is_rebase_i(opts)) {
 		enum todo_command valid =
@@ -1050,7 +1050,7 @@ static int read_populate_opts(struct replay_opts *opts)
 	 * are pretty certain that it is syntactically correct.
 	 */
 	if (git_config_from_file(populate_opts_cb, git_path_opts_file(), opts) < 0)
-		return error(_("Malformed options sheet: %s"),
+		return error(_("Malformed options sheet: '%s'"),
 			git_path_opts_file());
 	return 0;
 }
@@ -1093,7 +1093,7 @@ static int create_seq_dir(void)
 		return -1;
 	}
 	else if (mkdir(git_path_seq_dir(), 0777) < 0)
-		return error_errno(_("Could not create sequencer directory %s"),
+		return error_errno(_("Could not create sequencer directory '%s'"),
 				   git_path_seq_dir());
 	return 0;
 }
@@ -1112,12 +1112,12 @@ static int save_head(const char *head)
 	strbuf_addf(&buf, "%s\n", head);
 	if (write_in_full(fd, buf.buf, buf.len) < 0) {
 		rollback_lock_file(&head_lock);
-		return error_errno(_("Could not write to %s"),
+		return error_errno(_("Could not write to '%s'"),
 				   git_path_head_file());
 	}
 	if (commit_lock_file(&head_lock) < 0) {
 		rollback_lock_file(&head_lock);
-		return error(_("Error wrapping up %s."), git_path_head_file());
+		return error(_("Error wrapping up '%s'."), git_path_head_file());
 	}
 	return 0;
 }
@@ -1162,9 +1162,9 @@ int sequencer_rollback(struct replay_opts *opts)
 		return rollback_single_pick();
 	}
 	if (!f)
-		return error_errno(_("cannot open %s"), git_path_head_file());
+		return error_errno(_("cannot open '%s'"), git_path_head_file());
 	if (strbuf_getline_lf(&buf, f)) {
-		error(_("cannot read %s: %s"), git_path_head_file(),
+		error(_("cannot read '%s': %s"), git_path_head_file(),
 		      ferror(f) ?  strerror(errno) : _("unexpected end of file"));
 		fclose(f);
 		goto fail;
@@ -1203,7 +1203,7 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 			todo_list->buf.len - offset) < 0)
 		return error_errno(_("Could not write to '%s'"), todo_path);
 	if (commit_lock_file(&todo_lock) < 0)
-		return error(_("Error wrapping up %s."), todo_path);
+		return error(_("Error wrapping up '%s'."), todo_path);
 	return 0;
 }
 
