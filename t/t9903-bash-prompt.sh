@@ -177,7 +177,7 @@ test_expect_success 'prompt - interactive rebase' '
 	git checkout b1 &&
 	test_when_finished "git checkout master" &&
 	git rebase -i HEAD^ &&
-	test_when_finished "git rebase --abort"
+	test_when_finished "git rebase --abort" &&
 	__git_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
