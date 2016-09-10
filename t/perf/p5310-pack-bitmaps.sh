@@ -32,6 +32,14 @@ test_perf 'simulated fetch' '
 	} | git pack-objects --revs --stdout >/dev/null
 '
 
+test_perf 'pack to file' '
+	git pack-objects --all pack1 </dev/null >/dev/null
+'
+
+test_perf 'pack to file (bitmap)' '
+	git pack-objects --use-bitmap-index --all pack1b </dev/null >/dev/null
+'
+
 test_expect_success 'create partial bitmap state' '
 	# pick a commit to represent the repo tip in the past
 	cutoff=$(git rev-list HEAD~100 -1) &&
@@ -53,8 +61,12 @@ test_expect_success 'create partial bitmap state' '
 	git update-ref HEAD $orig_tip
 '
 
-test_perf 'partial bitmap' '
+test_perf 'clone (partial bitmap)' '
 	git pack-objects --stdout --all </dev/null >/dev/null
+'
+
+test_perf 'pack to file (partial bitmap)' '
+	git pack-objects --use-bitmap-index --all pack2b </dev/null >/dev/null
 '
 
 test_done
