@@ -22,15 +22,6 @@
 
 #include "xinclude.h"
 
-
-
-
-static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec);
-static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *ecb);
-
-
-
-
 static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec) {
 
 	*rec = xdf->recs[ri]->ptr;
