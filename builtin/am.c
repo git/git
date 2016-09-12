@@ -28,6 +28,7 @@
 #include "rerere.h"
 #include "prompt.h"
 #include "mailinfo.h"
+#include "string-list.h"
 
 /**
  * Returns 1 if the file is empty or does not exist, 0 otherwise.
@@ -258,38 +259,29 @@ static int read_state_file(struct strbuf *sb, const struct am_state *state,
 }
 
 /**
- * Reads a KEY=VALUE shell variable assignment from `fp`, returning the VALUE
- * as a newly-allocated string. VALUE must be a quoted string, and the KEY must
- * match `key`. Returns NULL on failure.
- *
- * This is used by read_author_script() to read the GIT_AUTHOR_* variables from
- * the author-script.
+ * Take a series of KEY='VALUE' lines where VALUE part is
+ * sq-quoted, and append <KEY, VALUE> at the end of the string list
  */
-static char *read_shell_var(FILE *fp, const char *key)
+static int parse_key_value_squoted(char *buf, struct string_list *list)
 {
-	struct strbuf sb = STRBUF_INIT;
-	const char *str;
+	while (*buf) {
+		struct string_list_item *item;
+		char *np;
+		char *cp = strchr(buf, '=');
+		if (!cp)
+			return -1;
+		np = strchrnul(cp, '\n');
+		*cp++ = '\0';
+		item = string_list_append(list, buf);
 
-	if (strbuf_getline_lf(&sb, fp))
-		goto fail;
-
-	if (!skip_prefix(sb.buf, key, &str))
-		goto fail;
-
-	if (!skip_prefix(str, "=", &str))
-		goto fail;
-
-	strbuf_remove(&sb, 0, str - sb.buf);
-
-	str = sq_dequote(sb.buf);
-	if (!str)
-		goto fail;
-
-	return strbuf_detach(&sb, NULL);
-
-fail:
-	strbuf_release(&sb);
-	return NULL;
+		buf = np + (*np == '\n');
+		*np = '\0';
+		cp = sq_dequote(cp);
+		if (!cp)
+			return -1;
+		item->util = xstrdup(cp);
+	}
+	return 0;
 }
 
 /**
@@ -311,44 +303,39 @@ fail:
 static int read_author_script(struct am_state *state)
 {
 	const char *filename = am_path(state, "author-script");
-	FILE *fp;
+	struct strbuf buf = STRBUF_INIT;
+	struct string_list kv = STRING_LIST_INIT_DUP;
+	int retval = -1; /* assume failure */
+	int fd;
 
 	assert(!state->author_name);
 	assert(!state->author_email);
 	assert(!state->author_date);
 
-	fp = fopen(filename, "r");
-	if (!fp) {
+	fd = open(filename, O_RDONLY);
+	if (fd < 0) {
 		if (errno == ENOENT)
 			return 0;
 		die_errno(_("could not open '%s' for reading"), filename);
 	}
+	strbuf_read(&buf, fd, 0);
+	close(fd);
+	if (parse_key_value_squoted(buf.buf, &kv))
+		goto finish;
 
-	state->author_name = read_shell_var(fp, "GIT_AUTHOR_NAME");
-	if (!state->author_name) {
-		fclose(fp);
-		return -1;
-	}
-
-	state->author_email = read_shell_var(fp, "GIT_AUTHOR_EMAIL");
-	if (!state->author_email) {
-		fclose(fp);
-		return -1;
-	}
-
-	state->author_date = read_shell_var(fp, "GIT_AUTHOR_DATE");
-	if (!state->author_date) {
-		fclose(fp);
-		return -1;
-	}
-
-	if (fgetc(fp) != EOF) {
-		fclose(fp);
-		return -1;
-	}
-
-	fclose(fp);
-	return 0;
+	if (kv.nr != 3 ||
+	    strcmp(kv.items[0].string, "GIT_AUTHOR_NAME") ||
+	    strcmp(kv.items[1].string, "GIT_AUTHOR_EMAIL") ||
+	    strcmp(kv.items[2].string, "GIT_AUTHOR_DATE"))
+		goto finish;
+	state->author_name = kv.items[0].util;
+	state->author_email = kv.items[1].util;
+	state->author_date = kv.items[2].util;
+	retval = 0;
+finish:
+	string_list_clear(&kv, !!retval);
+	strbuf_release(&buf);
+	return retval;
 }
 
 /**
