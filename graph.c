@@ -2,7 +2,6 @@
 #include "commit.h"
 #include "color.h"
 #include "graph.h"
-#include "diff.h"
 #include "revision.h"
 
 /* Internal API */
@@ -28,8 +27,15 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
  * responsible for printing this line's graph (perhaps via
  * graph_show_commit() or graph_show_oneline()) before calling
  * graph_show_strbuf().
+ *
+ * Note that unlike some other graph display functions, you must pass the file
+ * handle directly. It is assumed that this is the same file handle as the
+ * file specified by the graph diff options. This is necessary so that
+ * graph_show_strbuf can be called even with a NULL graph.
  */
-static void graph_show_strbuf(struct git_graph *graph, struct strbuf const *sb);
+static void graph_show_strbuf(struct git_graph *graph,
+			      FILE *file,
+			      struct strbuf const *sb);
 
 /*
  * TODO:
@@ -58,6 +64,17 @@ enum graph_state {
 	GRAPH_POST_MERGE,
 	GRAPH_COLLAPSING
 };
+
+static void graph_show_line_prefix(const struct diff_options *diffopt)
+{
+	if (!diffopt || !diffopt->line_prefix)
+		return;
+
+	fwrite(diffopt->line_prefix,
+	       sizeof(char),
+	       diffopt->line_prefix_length,
+	       diffopt->file);
+}
 
 static const char **column_colors;
 static unsigned short column_colors_max;
@@ -195,13 +212,27 @@ static struct strbuf *diff_output_prefix_callback(struct diff_options *opt, void
 	static struct strbuf msgbuf = STRBUF_INIT;
 
 	assert(opt);
-	assert(graph);
 
-	opt->output_prefix_length = graph->width;
 	strbuf_reset(&msgbuf);
-	graph_padding_line(graph, &msgbuf);
+	if (opt->line_prefix)
+		strbuf_add(&msgbuf, opt->line_prefix,
+			   opt->line_prefix_length);
+	if (graph)
+		graph_padding_line(graph, &msgbuf);
 	return &msgbuf;
 }
+
+static const struct diff_options *default_diffopt;
+
+void graph_setup_line_prefix(struct diff_options *diffopt)
+{
+	default_diffopt = diffopt;
+
+	/* setup an output prefix callback if necessary */
+	if (diffopt && !diffopt->output_prefix)
+		diffopt->output_prefix = diff_output_prefix_callback;
+}
+
 
 struct git_graph *graph_init(struct rev_info *opt)
 {
@@ -245,7 +276,6 @@ struct git_graph *graph_init(struct rev_info *opt)
 	 */
 	opt->diffopt.output_prefix = diff_output_prefix_callback;
 	opt->diffopt.output_prefix_data = graph;
-	opt->diffopt.output_prefix_length = 0;
 
 	return graph;
 }
@@ -1185,6 +1215,8 @@ void graph_show_commit(struct git_graph *graph)
 	struct strbuf msgbuf = STRBUF_INIT;
 	int shown_commit_line = 0;
 
+	graph_show_line_prefix(default_diffopt);
+
 	if (!graph)
 		return;
 
@@ -1202,8 +1234,10 @@ void graph_show_commit(struct git_graph *graph)
 		shown_commit_line = graph_next_line(graph, &msgbuf);
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len,
 			graph->revs->diffopt.file);
-		if (!shown_commit_line)
+		if (!shown_commit_line) {
 			putc('\n', graph->revs->diffopt.file);
+			graph_show_line_prefix(&graph->revs->diffopt);
+		}
 		strbuf_setlen(&msgbuf, 0);
 	}
 
@@ -1213,6 +1247,8 @@ void graph_show_commit(struct git_graph *graph)
 void graph_show_oneline(struct git_graph *graph)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
+
+	graph_show_line_prefix(default_diffopt);
 
 	if (!graph)
 		return;
@@ -1225,6 +1261,8 @@ void graph_show_oneline(struct git_graph *graph)
 void graph_show_padding(struct git_graph *graph)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
+
+	graph_show_line_prefix(default_diffopt);
 
 	if (!graph)
 		return;
@@ -1239,6 +1277,8 @@ int graph_show_remainder(struct git_graph *graph)
 	struct strbuf msgbuf = STRBUF_INIT;
 	int shown = 0;
 
+	graph_show_line_prefix(default_diffopt);
+
 	if (!graph)
 		return 0;
 
@@ -1252,26 +1292,23 @@ int graph_show_remainder(struct git_graph *graph)
 		strbuf_setlen(&msgbuf, 0);
 		shown = 1;
 
-		if (!graph_is_commit_finished(graph))
+		if (!graph_is_commit_finished(graph)) {
 			putc('\n', graph->revs->diffopt.file);
-		else
+			graph_show_line_prefix(&graph->revs->diffopt);
+		} else {
 			break;
+		}
 	}
 	strbuf_release(&msgbuf);
 
 	return shown;
 }
 
-
-static void graph_show_strbuf(struct git_graph *graph, struct strbuf const *sb)
+static void graph_show_strbuf(struct git_graph *graph,
+			      FILE *file,
+			      struct strbuf const *sb)
 {
 	char *p;
-
-	if (!graph) {
-		fwrite(sb->buf, sizeof(char), sb->len,
-			graph->revs->diffopt.file);
-		return;
-	}
 
 	/*
 	 * Print the strbuf line by line,
@@ -1287,7 +1324,7 @@ static void graph_show_strbuf(struct git_graph *graph, struct strbuf const *sb)
 		} else {
 			len = (sb->buf + sb->len) - p;
 		}
-		fwrite(p, sizeof(char), len, graph->revs->diffopt.file);
+		fwrite(p, sizeof(char), len, file);
 		if (next_p && *next_p != '\0')
 			graph_show_oneline(graph);
 		p = next_p;
@@ -1295,29 +1332,20 @@ static void graph_show_strbuf(struct git_graph *graph, struct strbuf const *sb)
 }
 
 void graph_show_commit_msg(struct git_graph *graph,
+			   FILE *file,
 			   struct strbuf const *sb)
 {
 	int newline_terminated;
 
-	if (!graph) {
-		/*
-		 * If there's no graph, just print the message buffer.
-		 *
-		 * The message buffer for CMIT_FMT_ONELINE and
-		 * CMIT_FMT_USERFORMAT are already missing a terminating
-		 * newline.  All of the other formats should have it.
-		 */
-		fwrite(sb->buf, sizeof(char), sb->len,
-			graph->revs->diffopt.file);
-		return;
-	}
-
-	newline_terminated = (sb->len && sb->buf[sb->len - 1] == '\n');
-
 	/*
 	 * Show the commit message
 	 */
-	graph_show_strbuf(graph, sb);
+	graph_show_strbuf(graph, file, sb);
+
+	if (!graph)
+		return;
+
+	newline_terminated = (sb->len && sb->buf[sb->len - 1] == '\n');
 
 	/*
 	 * If there is more output needed for this commit, show it now
@@ -1329,7 +1357,7 @@ void graph_show_commit_msg(struct git_graph *graph,
 		 * new line.
 		 */
 		if (!newline_terminated)
-			putc('\n', graph->revs->diffopt.file);
+			putc('\n', file);
 
 		graph_show_remainder(graph);
 
@@ -1337,6 +1365,6 @@ void graph_show_commit_msg(struct git_graph *graph,
 		 * If sb ends with a newline, our output should too.
 		 */
 		if (newline_terminated)
-			putc('\n', graph->revs->diffopt.file);
+			putc('\n', file);
 	}
 }

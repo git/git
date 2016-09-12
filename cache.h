@@ -819,8 +819,8 @@ extern void strbuf_git_common_path(struct strbuf *sb, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
 extern char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
-extern void strbuf_git_path_submodule(struct strbuf *sb, const char *path,
-				      const char *fmt, ...)
+extern int strbuf_git_path_submodule(struct strbuf *sb, const char *path,
+				     const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 extern char *git_pathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
@@ -953,21 +953,38 @@ static inline void oidclr(struct object_id *oid)
 #define EMPTY_TREE_SHA1_BIN_LITERAL \
 	 "\x4b\x82\x5d\xc6\x42\xcb\x6e\xb9\xa0\x60" \
 	 "\xe5\x4b\xf8\xd6\x92\x88\xfb\xee\x49\x04"
-#define EMPTY_TREE_SHA1_BIN \
-	 ((const unsigned char *) EMPTY_TREE_SHA1_BIN_LITERAL)
+extern const struct object_id empty_tree_oid;
+#define EMPTY_TREE_SHA1_BIN (empty_tree_oid.hash)
 
 #define EMPTY_BLOB_SHA1_HEX \
 	"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
 #define EMPTY_BLOB_SHA1_BIN_LITERAL \
 	"\xe6\x9d\xe2\x9b\xb2\xd1\xd6\x43\x4b\x8b" \
 	"\x29\xae\x77\x5a\xd8\xc2\xe4\x8c\x53\x91"
-#define EMPTY_BLOB_SHA1_BIN \
-	((const unsigned char *) EMPTY_BLOB_SHA1_BIN_LITERAL)
+extern const struct object_id empty_blob_oid;
+#define EMPTY_BLOB_SHA1_BIN (empty_blob_oid.hash)
+
 
 static inline int is_empty_blob_sha1(const unsigned char *sha1)
 {
 	return !hashcmp(sha1, EMPTY_BLOB_SHA1_BIN);
 }
+
+static inline int is_empty_blob_oid(const struct object_id *oid)
+{
+	return !hashcmp(oid->hash, EMPTY_BLOB_SHA1_BIN);
+}
+
+static inline int is_empty_tree_sha1(const unsigned char *sha1)
+{
+	return !hashcmp(sha1, EMPTY_TREE_SHA1_BIN);
+}
+
+static inline int is_empty_tree_oid(const struct object_id *oid)
+{
+	return !hashcmp(oid->hash, EMPTY_TREE_SHA1_BIN);
+}
+
 
 int git_mkstemp(char *path, size_t n, const char *template);
 

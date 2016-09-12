@@ -122,48 +122,40 @@ static void show_commit(struct commit *commit, void *data)
 		ctx.fmt = revs->commit_format;
 		ctx.output_encoding = get_log_output_encoding();
 		pretty_print_commit(&ctx, commit, &buf);
-		if (revs->graph) {
-			if (buf.len) {
-				if (revs->commit_format != CMIT_FMT_ONELINE)
-					graph_show_oneline(revs->graph);
+		if (buf.len) {
+			if (revs->commit_format != CMIT_FMT_ONELINE)
+				graph_show_oneline(revs->graph);
 
-				graph_show_commit_msg(revs->graph, &buf);
+			graph_show_commit_msg(revs->graph, stdout, &buf);
 
-				/*
-				 * Add a newline after the commit message.
-				 *
-				 * Usually, this newline produces a blank
-				 * padding line between entries, in which case
-				 * we need to add graph padding on this line.
-				 *
-				 * However, the commit message may not end in a
-				 * newline.  In this case the newline simply
-				 * ends the last line of the commit message,
-				 * and we don't need any graph output.  (This
-				 * always happens with CMIT_FMT_ONELINE, and it
-				 * happens with CMIT_FMT_USERFORMAT when the
-				 * format doesn't explicitly end in a newline.)
-				 */
-				if (buf.len && buf.buf[buf.len - 1] == '\n')
-					graph_show_padding(revs->graph);
-				putchar('\n');
-			} else {
-				/*
-				 * If the message buffer is empty, just show
-				 * the rest of the graph output for this
-				 * commit.
-				 */
-				if (graph_show_remainder(revs->graph))
-					putchar('\n');
-				if (revs->commit_format == CMIT_FMT_ONELINE)
-					putchar('\n');
-			}
+			/*
+			 * Add a newline after the commit message.
+			 *
+			 * Usually, this newline produces a blank
+			 * padding line between entries, in which case
+			 * we need to add graph padding on this line.
+			 *
+			 * However, the commit message may not end in a
+			 * newline.  In this case the newline simply
+			 * ends the last line of the commit message,
+			 * and we don't need any graph output.  (This
+			 * always happens with CMIT_FMT_ONELINE, and it
+			 * happens with CMIT_FMT_USERFORMAT when the
+			 * format doesn't explicitly end in a newline.)
+			 */
+			if (buf.len && buf.buf[buf.len - 1] == '\n')
+				graph_show_padding(revs->graph);
+			putchar('\n');
 		} else {
-			if (revs->commit_format != CMIT_FMT_USERFORMAT ||
-			    buf.len) {
-				fwrite(buf.buf, 1, buf.len, stdout);
-				putchar(info->hdr_termination);
-			}
+			/*
+			 * If the message buffer is empty, just show
+			 * the rest of the graph output for this
+			 * commit.
+			 */
+			if (graph_show_remainder(revs->graph))
+				putchar('\n');
+			if (revs->commit_format == CMIT_FMT_ONELINE)
+				putchar('\n');
 		}
 		strbuf_release(&buf);
 	} else {
