@@ -296,7 +296,8 @@ all::
 # Define USE_NED_ALLOCATOR if you want to replace the platforms default
 # memory allocators with the nedmalloc allocator written by Niall Douglas.
 #
-# Define NO_REGEX if you have no or inferior regex support in your C library.
+# Define NO_REGEX if your C library lacks regex support with REG_STARTEND
+# feature.
 #
 # Define HAVE_DEV_TTY if your system can open /dev/tty to interact with the
 # user.
