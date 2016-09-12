@@ -162,7 +162,7 @@ struct ref_update {
 	 */
 	unsigned int flags;
 
-	struct ref_lock *lock;
+	void *backend_data;
 	unsigned int type;
 	char *msg;
 
@@ -240,7 +240,17 @@ const char *find_descendant_ref(const char *dirname,
 				const struct string_list *extras,
 				const struct string_list *skip);
 
-int rename_ref_available(const char *oldname, const char *newname);
+/*
+ * Check whether an attempt to rename old_refname to new_refname would
+ * cause a D/F conflict with any existing reference (other than
+ * possibly old_refname). If there would be a conflict, emit an error
+ * message and return false; otherwise, return true.
+ *
+ * Note that this function is not safe against all races with other
+ * processes (though rename_ref() catches some races that might get by
+ * this check).
+ */
+int rename_ref_available(const char *old_refname, const char *new_refname);
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define SYMREF_MAXDEPTH 5
@@ -394,23 +404,6 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 					       const char *prefix,
 					       int trim);
 
-/*
- * Iterate over the packed and loose references in the specified
- * submodule that are within find_containing_dir(prefix). If prefix is
- * NULL or the empty string, iterate over all references in the
- * submodule.
- */
-struct ref_iterator *files_ref_iterator_begin(const char *submodule,
-					      const char *prefix,
-					      unsigned int flags);
-
-/*
- * Iterate over the references in the main ref_store that have a
- * reflog. The paths within a directory are iterated over in arbitrary
- * order.
- */
-struct ref_iterator *files_reflog_iterator_begin(void);
-
 /* Internal implementation of reference iteration: */
 
 /*
@@ -475,8 +468,85 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
 			     each_ref_fn fn, void *cb_data);
 
 /*
- * Read the specified reference from the filesystem or packed refs
- * file, non-recursively. Set type to describe the reference, and:
+ * Only include per-worktree refs in a do_for_each_ref*() iteration.
+ * Normally this will be used with a files ref_store, since that's
+ * where all reference backends will presumably store their
+ * per-worktree refs.
+ */
+#define DO_FOR_EACH_PER_WORKTREE_ONLY 0x02
+
+struct ref_store;
+
+/* refs backends */
+
+/*
+ * Initialize the ref_store for the specified submodule, or for the
+ * main repository if submodule == NULL. These functions should call
+ * base_ref_store_init() to initialize the shared part of the
+ * ref_store and to record the ref_store for later lookup.
+ */
+typedef struct ref_store *ref_store_init_fn(const char *submodule);
+
+typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
+
+typedef int ref_transaction_commit_fn(struct ref_store *refs,
+				      struct ref_transaction *transaction,
+				      struct strbuf *err);
+
+typedef int pack_refs_fn(struct ref_store *ref_store, unsigned int flags);
+typedef int peel_ref_fn(struct ref_store *ref_store,
+			const char *refname, unsigned char *sha1);
+typedef int create_symref_fn(struct ref_store *ref_store,
+			     const char *ref_target,
+			     const char *refs_heads_master,
+			     const char *logmsg);
+typedef int delete_refs_fn(struct ref_store *ref_store,
+			   struct string_list *refnames, unsigned int flags);
+typedef int rename_ref_fn(struct ref_store *ref_store,
+			  const char *oldref, const char *newref,
+			  const char *logmsg);
+
+/*
+ * Iterate over the references in the specified ref_store that are
+ * within find_containing_dir(prefix). If prefix is NULL or the empty
+ * string, iterate over all references in the submodule.
+ */
+typedef struct ref_iterator *ref_iterator_begin_fn(
+		struct ref_store *ref_store,
+		const char *prefix, unsigned int flags);
+
+/* reflog functions */
+
+/*
+ * Iterate over the references in the specified ref_store that have a
+ * reflog. The refs are iterated over in arbitrary order.
+ */
+typedef struct ref_iterator *reflog_iterator_begin_fn(
+		struct ref_store *ref_store);
+
+typedef int for_each_reflog_ent_fn(struct ref_store *ref_store,
+				   const char *refname,
+				   each_reflog_ent_fn fn,
+				   void *cb_data);
+typedef int for_each_reflog_ent_reverse_fn(struct ref_store *ref_store,
+					   const char *refname,
+					   each_reflog_ent_fn fn,
+					   void *cb_data);
+typedef int reflog_exists_fn(struct ref_store *ref_store, const char *refname);
+typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
+			     int force_create, struct strbuf *err);
+typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
+typedef int reflog_expire_fn(struct ref_store *ref_store,
+			     const char *refname, const unsigned char *sha1,
+			     unsigned int flags,
+			     reflog_expiry_prepare_fn prepare_fn,
+			     reflog_expiry_should_prune_fn should_prune_fn,
+			     reflog_expiry_cleanup_fn cleanup_fn,
+			     void *policy_cb_data);
+
+/*
+ * Read a reference from the specified reference store, non-recursively.
+ * Set type to describe the reference, and:
  *
  * - If refname is the name of a normal reference, fill in sha1
  *   (leaving referent unchanged).
@@ -512,7 +582,111 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
  * - in all other cases, referent will be untouched, and therefore
  *   refname will still be valid and unchanged.
  */
-int read_raw_ref(const char *refname, unsigned char *sha1,
-		 struct strbuf *referent, unsigned int *type);
+typedef int read_raw_ref_fn(struct ref_store *ref_store,
+			    const char *refname, unsigned char *sha1,
+			    struct strbuf *referent, unsigned int *type);
+
+typedef int verify_refname_available_fn(struct ref_store *ref_store,
+					const char *newname,
+					const struct string_list *extras,
+					const struct string_list *skip,
+					struct strbuf *err);
+
+struct ref_storage_be {
+	struct ref_storage_be *next;
+	const char *name;
+	ref_store_init_fn *init;
+	ref_init_db_fn *init_db;
+	ref_transaction_commit_fn *transaction_commit;
+	ref_transaction_commit_fn *initial_transaction_commit;
+
+	pack_refs_fn *pack_refs;
+	peel_ref_fn *peel_ref;
+	create_symref_fn *create_symref;
+	delete_refs_fn *delete_refs;
+	rename_ref_fn *rename_ref;
+
+	ref_iterator_begin_fn *iterator_begin;
+	read_raw_ref_fn *read_raw_ref;
+	verify_refname_available_fn *verify_refname_available;
+
+	reflog_iterator_begin_fn *reflog_iterator_begin;
+	for_each_reflog_ent_fn *for_each_reflog_ent;
+	for_each_reflog_ent_reverse_fn *for_each_reflog_ent_reverse;
+	reflog_exists_fn *reflog_exists;
+	create_reflog_fn *create_reflog;
+	delete_reflog_fn *delete_reflog;
+	reflog_expire_fn *reflog_expire;
+};
+
+extern struct ref_storage_be refs_be_files;
+
+/*
+ * A representation of the reference store for the main repository or
+ * a submodule. The ref_store instances for submodules are kept in a
+ * linked list.
+ */
+struct ref_store {
+	/* The backend describing this ref_store's storage scheme: */
+	const struct ref_storage_be *be;
+
+	/*
+	 * The name of the submodule represented by this object, or
+	 * the empty string if it represents the main repository's
+	 * reference store:
+	 */
+	const char *submodule;
+
+	/*
+	 * Submodule reference store instances are stored in a linked
+	 * list using this pointer.
+	 */
+	struct ref_store *next;
+};
+
+/*
+ * Fill in the generic part of refs for the specified submodule and
+ * add it to our collection of reference stores.
+ */
+void base_ref_store_init(struct ref_store *refs,
+			 const struct ref_storage_be *be,
+			 const char *submodule);
+
+/*
+ * Create, record, and return a ref_store instance for the specified
+ * submodule (or the main repository if submodule is NULL).
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+struct ref_store *ref_store_init(const char *submodule);
+
+/*
+ * Return the ref_store instance for the specified submodule (or the
+ * main repository if submodule is NULL). If that ref_store hasn't
+ * been initialized yet, return NULL.
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+struct ref_store *lookup_ref_store(const char *submodule);
+
+/*
+ * Return the ref_store instance for the specified submodule. For the
+ * main repository, use submodule==NULL; such a call cannot fail. For
+ * a submodule, the submodule must exist and be a nonbare repository,
+ * otherwise return NULL. If the requested reference store has not yet
+ * been initialized, initialize it first.
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+struct ref_store *get_ref_store(const char *submodule);
+
+/*
+ * Die if refs is for a submodule (i.e., not for the main repository).
+ * caller is used in any necessary error messages.
+ */
+void assert_main_repository(struct ref_store *refs, const char *caller);
 
 #endif /* REFS_REFS_INTERNAL_H */
