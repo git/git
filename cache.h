@@ -1156,6 +1156,16 @@ static inline unsigned int hexval(unsigned char c)
 	return hexval_table[c];
 }
 
+/*
+ * Convert two consecutive hexadecimal digits into a char.  Return a
+ * negative value on error.  Don't run over the end of short strings.
+ */
+static inline int hex2chr(const char *s)
+{
+	int val = hexval(s[0]);
+	return (val < 0) ? val : (val << 4) | hexval(s[1]);
+}
+
 /* Convert to/from hex/sha1 representation */
 #define MINIMUM_ABBREV minimum_abbrev
 #define DEFAULT_ABBREV default_abbrev
