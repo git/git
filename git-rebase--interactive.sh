@@ -1082,7 +1082,7 @@ If they are meant to go into a new commit, run:
 
   git commit \$gpg_sign_opt_quoted
 
-In both case, once you're done, continue with:
+In both cases, once you're done, continue with:
 
   git rebase --continue
 ")"
