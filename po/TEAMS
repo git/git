@@ -37,8 +37,9 @@ Repository:	https://github.com/changwoo/git-l10n-ko/
 Leader:		Changwoo Ryu <cwryu@debian.org>
 
 Language:	pt_PT (Portuguese - Portugal)
-Repository:	https://github.com/marcomsousa/git-l10n-pt_PT/
-Leader:		Marco Sousa <marcomsousa AT gmail.com>
+Repository:	https://github.com/vascool/git-po-pt/
+Leader:		Vasco Almeida <vascomalmeida@sapo.pt>
+Members:	Marco Sousa <marcomsousa AT gmail.com>
 
 Language:	ru (Russian)
 Repository:	https://github.com/DJm00n/git-po-ru/
