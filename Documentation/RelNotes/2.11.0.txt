@@ -24,6 +24,10 @@ UI, Workflows & Features
    learned to also peek into $path for presense of corresponding
    repositories of submodules and borrow objects from there when able.
 
+ * The "git diff --submodule={short,log}" mechanism has been enhanced
+   to allow "--submodule=diff" to show the patch between the submodule
+   commits bound to the superproject.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -35,6 +39,10 @@ Performance, Internal Implementation, Development Support etc.
    the state of the index and the working tree files, which may
    further be used to teach git-prompt (in contrib/) to make fewer
    calls to git.
+
+ * Extract a small helper out of the function that reads the authors
+   script file "git am" internally uses.
+   (merge a77598e jc/am-read-author-file later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -54,3 +62,36 @@ notes for details).
  * "diff-highlight" script (in contrib/) learned to work better with
    "git log -p --graph" output.
    (merge 3dbfe2b bh/diff-highlight-graph later to maint).
+
+ * The test framework left the number of tests and success/failure
+   count in the t/test-results directory, keyed by the name of the
+   test script plus the process ID.  The latter however turned out not
+   to serve any useful purpose.  The process ID part of the filename
+   has been removed.
+   (merge 5c885c1 jk/test-lib-drop-pid-from-results later to maint).
+
+ * Having a submodule whose ".git" repository is somehow corrupt
+   caused a few commands that recurse into submodules loop forever.
+   (merge 10f5c52 jc/submodule-anchor-git-dir later to maint).
+
+ * "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
+   the resulting repository becomes an invalid one.  Teach the command
+   to forbid removal of HEAD.
+   (merge 12cfa79 jc/forbid-symbolic-ref-d-HEAD later to maint).
+
+ * A test spawned a short-lived background process, which sometimes
+   prevented the test directory from getting removed at the end of the
+   script on some platforms.
+   (merge 5babb5b js/t6026-clean-up later to maint).
+
+ * Update a few tests that used to use GIT_CURL_VERBOSE to use the
+   newer GIT_TRACE_CURL.
+   (merge 14e2411 ep/use-git-trace-curl-in-tests later to maint).
+
+ * Other minor doc, test and build updates and code cleanups.
+   (merge 3e1952e jk/squelch-false-warning-from-gcc-o3 later to maint).
+   (merge ca2baa3 rs/compat-strdup later to maint).
+   (merge d233097 rs/hex2chr later to maint).
+   (merge c00bfc9 js/t9903-chaining later to maint).
+   (merge 5e4e5bb sb/xdiff-remove-unused-static-decl later to maint).
+   (merge 5cb5fe4 sb/transport-report-missing-submodule-on-stderr later to maint).
