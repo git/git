@@ -81,6 +81,10 @@ test_decode_color () {
 	'
 }
 
+lf_to_nul () {
+	perl -pe 'y/\012/\000/'
+}
+
 nul_to_q () {
 	perl -pe 'y/\000/Q/'
 }
