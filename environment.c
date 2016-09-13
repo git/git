@@ -350,3 +350,8 @@ int get_shared_repository(void)
 	}
 	return the_shared_repository;
 }
+
+void reset_shared_repository(void)
+{
+	need_shared_repository_from_config = 1;
+}

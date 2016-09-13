@@ -195,8 +195,14 @@ static int create_default_files(const char *template_path)
 	 * First copy the templates -- we might have the default
 	 * config file there, in which case we would want to read
 	 * from it after installing.
+	 *
+	 * Before reading that config, we also need to clear out any cached
+	 * values (since we've just potentially changed what's available on
+	 * disk).
 	 */
 	copy_templates(template_path);
+	git_config_clear();
+	reset_shared_repository();
 	git_config(git_default_config, NULL);
 
 	/*
