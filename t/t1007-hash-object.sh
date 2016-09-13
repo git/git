@@ -121,6 +121,17 @@ test_expect_success 'check that appropriate filter is invoke when --path is used
 	git config --unset core.autocrlf
 '
 
+test_expect_success 'gitattributes also work in a subdirectory' '
+	mkdir subdir &&
+	(
+		cd subdir &&
+		subdir_sha0=$(git hash-object ../file0) &&
+		subdir_sha1=$(git hash-object ../file1) &&
+		test "$file0_sha" = "$subdir_sha0" &&
+		test "$file1_sha" = "$subdir_sha1"
+	)
+'
+
 test_expect_success 'check that --no-filters option works' '
 	echo fooQ | tr Q "\\015" >file0 &&
 	cp file0 file1 &&
