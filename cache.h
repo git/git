@@ -1733,7 +1733,6 @@ extern int write_file_gently(const char *path, const char *fmt, ...);
 
 /* pager.c */
 extern void setup_pager(void);
-extern const char *pager_program;
 extern int pager_in_use(void);
 extern int pager_use_color;
 extern int term_columns(void);

@@ -7,6 +7,7 @@
 #endif
 
 static struct child_process pager_process = CHILD_PROCESS_INIT;
+static const char *pager_program;
 
 static void wait_for_pager(int in_signal)
 {
