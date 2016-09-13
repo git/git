@@ -301,9 +301,9 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			break;
 	}
 
-	if (!no_index) {
-		prefix = setup_git_directory_gently(&nongit);
+	prefix = setup_git_directory_gently(&nongit);
 
+	if (!no_index) {
 		/*
 		 * Treat git diff with at least one path outside of the
 		 * repo the same as if the command would have been executed

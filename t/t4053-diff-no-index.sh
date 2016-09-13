@@ -107,4 +107,24 @@ test_expect_success 'diff from repo subdir shows real paths (implicit)' '
 	test_cmp expect actual.head
 '
 
+test_expect_success 'diff --no-index from repo subdir respects config (explicit)' '
+	echo "diff --git ../../non/git/a ../../non/git/b" >expect &&
+	test_config -C repo diff.noprefix true &&
+	test_expect_code 1 \
+		git -C repo/sub \
+		diff --no-index ../../non/git/a ../../non/git/b >actual &&
+	head -n 1 <actual >actual.head &&
+	test_cmp expect actual.head
+'
+
+test_expect_success 'diff --no-index from repo subdir respects config (implicit)' '
+	echo "diff --git ../../non/git/a ../../non/git/b" >expect &&
+	test_config -C repo diff.noprefix true &&
+	test_expect_code 1 \
+		git -C repo/sub \
+		diff ../../non/git/a ../../non/git/b >actual &&
+	head -n 1 <actual >actual.head &&
+	test_cmp expect actual.head
+'
+
 test_done
