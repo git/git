@@ -836,9 +836,6 @@ static int git_default_core_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.pager"))
-		return git_config_string(&pager_program, var, value);
-
 	if (!strcmp(var, "core.editor"))
 		return git_config_string(&editor_program, var, value);
 

@@ -35,6 +35,13 @@ static void wait_for_pager_signal(int signo)
 	raise(signo);
 }
 
+static int core_pager_config(const char *var, const char *value, void *data)
+{
+	if (!strcmp(var, "core.pager"))
+		return git_config_string(&pager_program, var, value);
+	return 0;
+}
+
 const char *git_pager(int stdout_is_tty)
 {
 	const char *pager;
@@ -45,7 +52,7 @@ const char *git_pager(int stdout_is_tty)
 	pager = getenv("GIT_PAGER");
 	if (!pager) {
 		if (!pager_program)
-			git_config(git_default_config, NULL);
+			git_config(core_pager_config, NULL);
 		pager = pager_program;
 	}
 	if (!pager)
