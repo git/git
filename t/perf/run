@@ -30,7 +30,13 @@ unpack_git_rev () {
 }
 build_git_rev () {
 	rev=$1
-	cp ../../config.mak build/$rev/config.mak
+	for config in config.mak config.mak.autogen config.status
+	do
+		if test -e "../../$config"
+		then
+			cp "../../$config" "build/$rev/"
+		fi
+	done
 	(cd build/$rev && make $GIT_PERF_MAKE_OPTS) ||
 	die "failed to build revision '$mydir'"
 }
