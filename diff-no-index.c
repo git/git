@@ -282,6 +282,9 @@ void diff_no_index(struct rev_info *revs,
 
 	DIFF_OPT_SET(&revs->diffopt, NO_INDEX);
 
+	DIFF_OPT_SET(&revs->diffopt, RELATIVE_NAME);
+	revs->diffopt.prefix = prefix;
+
 	revs->max_count = -2;
 	diff_setup_done(&revs->diffopt);
 

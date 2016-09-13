@@ -89,4 +89,22 @@ test_expect_success 'turning a file into a directory' '
 	)
 '
 
+test_expect_success 'diff from repo subdir shows real paths (explicit)' '
+	echo "diff --git a/../../non/git/a b/../../non/git/b" >expect &&
+	test_expect_code 1 \
+		git -C repo/sub \
+		diff --no-index ../../non/git/a ../../non/git/b >actual &&
+	head -n 1 <actual >actual.head &&
+	test_cmp expect actual.head
+'
+
+test_expect_success 'diff from repo subdir shows real paths (implicit)' '
+	echo "diff --git a/../../non/git/a b/../../non/git/b" >expect &&
+	test_expect_code 1 \
+		git -C repo/sub \
+		diff ../../non/git/a ../../non/git/b >actual &&
+	head -n 1 <actual >actual.head &&
+	test_cmp expect actual.head
+'
+
 test_done
