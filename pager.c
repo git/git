@@ -159,23 +159,42 @@ int decimal_width(uintmax_t number)
 	return width;
 }
 
+struct pager_command_config_data {
+	const char *cmd;
+	int want;
+	char *value;
+};
+
+static int pager_command_config(const char *var, const char *value, void *vdata)
+{
+	struct pager_command_config_data *data = vdata;
+	const char *cmd;
+
+	if (skip_prefix(var, "pager.", &cmd) && !strcmp(cmd, data->cmd)) {
+		int b = git_config_maybe_bool(var, value);
+		if (b >= 0)
+			data->want = b;
+		else {
+			data->want = 1;
+			data->value = xstrdup(value);
+		}
+	}
+
+	return 0;
+}
+
 /* returns 0 for "no pager", 1 for "use pager", and -1 for "not specified" */
 int check_pager_config(const char *cmd)
 {
-	int want = -1;
-	struct strbuf key = STRBUF_INIT;
-	const char *value = NULL;
-	strbuf_addf(&key, "pager.%s", cmd);
-	if (git_config_key_is_valid(key.buf) &&
-	    !git_config_get_value(key.buf, &value)) {
-		int b = git_config_maybe_bool(key.buf, value);
-		if (b >= 0)
-			want = b;
-		else {
-			want = 1;
-			pager_program = xstrdup(value);
-		}
-	}
-	strbuf_release(&key);
-	return want;
+	struct pager_command_config_data data;
+
+	data.cmd = cmd;
+	data.want = -1;
+	data.value = NULL;
+
+	git_config(pager_command_config, &data);
+
+	if (data.value)
+		pager_program = data.value;
+	return data.want;
 }
