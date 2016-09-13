@@ -301,20 +301,21 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			break;
 	}
 
-	if (!no_index)
+	if (!no_index) {
 		prefix = setup_git_directory_gently(&nongit);
 
-	/*
-	 * Treat git diff with at least one path outside of the
-	 * repo the same as if the command would have been executed
-	 * outside of a git repository.  In this case it behaves
-	 * the same way as "git diff --no-index <a> <b>", which acts
-	 * as a colourful "diff" replacement.
-	 */
-	if (nongit || ((argc == i + 2) &&
-		       (!path_inside_repo(prefix, argv[i]) ||
-			!path_inside_repo(prefix, argv[i + 1]))))
-		no_index = DIFF_NO_INDEX_IMPLICIT;
+		/*
+		 * Treat git diff with at least one path outside of the
+		 * repo the same as if the command would have been executed
+		 * outside of a git repository.  In this case it behaves
+		 * the same way as "git diff --no-index <a> <b>", which acts
+		 * as a colourful "diff" replacement.
+		 */
+		if (nongit || ((argc == i + 2) &&
+			       (!path_inside_repo(prefix, argv[i]) ||
+				!path_inside_repo(prefix, argv[i + 1]))))
+			no_index = DIFF_NO_INDEX_IMPLICIT;
+	}
 
 	if (!no_index)
 		gitmodules_config();
