@@ -143,6 +143,20 @@ test_expect_success 'patch-id supports git-format-patch MIME output' '
 	test_cmp patch-id_master patch-id_same
 '
 
+test_expect_success 'patch-id respects config from subdir' '
+	test_config patchid.stable true &&
+	mkdir subdir &&
+
+	# copy these because test_patch_id() looks for them in
+	# the current directory
+	cp bar-then-foo foo-then-bar subdir &&
+
+	(
+		cd subdir &&
+		test_patch_id irrelevant patchid.stable=true
+	)
+'
+
 cat >nonl <<\EOF
 diff --git i/a w/a
 index e69de29..2e65efe 100644
