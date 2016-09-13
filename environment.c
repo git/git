@@ -194,6 +194,13 @@ int is_bare_repository(void)
 	return is_bare_repository_cfg && !get_git_work_tree();
 }
 
+int have_git_dir(void)
+{
+	return startup_info->have_repository
+		|| git_dir
+		|| getenv(GIT_DIR_ENVIRONMENT);
+}
+
 const char *get_git_dir(void)
 {
 	if (!git_dir)

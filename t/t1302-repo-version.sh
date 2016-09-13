@@ -32,9 +32,7 @@ test_expect_success 'gitdir selection on normal repos' '
 
 test_expect_success 'gitdir selection on unsupported repo' '
 	# Make sure it would stop at test2, not trash
-	echo 99 >expect &&
-	git -C test2 config core.repositoryformatversion >actual &&
-	test_cmp expect actual
+	test_expect_code 1 git -C test2 config core.repositoryformatversion >actual
 '
 
 test_expect_success 'gitdir not required mode' '

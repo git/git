@@ -172,4 +172,13 @@ test_expect_success POSIXPERM 'forced modes' '
 	}" actual)"
 '
 
+test_expect_success POSIXPERM 'remote init does not use config from cwd' '
+	git config core.sharedrepository 0666 &&
+	umask 0022 &&
+	git init --bare child.git &&
+	echo "-rw-r--r--" >expect &&
+	modebits child.git/config >actual &&
+	test_cmp expect actual
+'
+
 test_done
