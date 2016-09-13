@@ -96,7 +96,5 @@ static inline int ps_strcmp(const struct pathspec_item *item,
 
 extern char *find_pathspecs_matching_against_index(const struct pathspec *pathspec);
 extern void add_pathspec_matches_against_index(const struct pathspec *pathspec, char *seen);
-extern const char *check_path_for_gitlink(const char *path);
-extern void die_if_path_beyond_symlink(const char *path, const char *prefix);
 
 #endif /* PATHSPEC_H */
