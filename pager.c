@@ -6,11 +6,6 @@
 #define DEFAULT_PAGER "less"
 #endif
 
-/*
- * This is split up from the rest of git so that we can do
- * something different on Windows.
- */
-
 static struct child_process pager_process = CHILD_PROCESS_INIT;
 
 static void wait_for_pager(int in_signal)
