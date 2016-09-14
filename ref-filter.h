@@ -107,4 +107,14 @@ struct ref_sorting *ref_default_sorting(void);
 /*  Function to parse --merged and --no-merged options */
 int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset);
 
+/*
+ * Provide wrappers to expose the ref_array_item data structure independently
+ * of the container ref_array, e.g. to format-print individual refs.
+ */
+struct ref_array_item *new_ref_item(const char *refname,
+		const unsigned char *objectname, int flag);
+void show_ref_item(struct ref_array_item *ref_item, const char *format,
+		int quote_style);
+void free_ref_item(struct ref_array_item *ref_item);
+
 #endif /*  REF_FILTER_H  */
