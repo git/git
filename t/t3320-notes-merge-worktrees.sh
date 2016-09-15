@@ -52,7 +52,7 @@ test_expect_success 'merge z into y while mid-merge in another workdir fails' '
 		cd worktree &&
 		git config core.notesRef refs/notes/y &&
 		test_must_fail git notes merge z 2>err &&
-		test_i18ngrep "A notes merge into refs/notes/y is already in-progress at" err
+		test_i18ngrep "a notes merge into refs/notes/y is already in-progress at" err
 	) &&
 	test_path_is_missing .git/worktrees/worktree/NOTES_MERGE_REF
 '
