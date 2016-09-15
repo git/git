@@ -373,8 +373,9 @@ static int append_ref(const char *refname, const struct object_id *oid,
 				return 0;
 	}
 	if (MAX_REVS <= ref_name_cnt) {
-		warning("ignoring %s; cannot handle more than %d refs",
-			refname, MAX_REVS);
+		warning(Q_("ignoring %s; cannot handle more than %d ref",
+			   "ignoring %s; cannot handle more than %d refs",
+			   MAX_REVS), refname, MAX_REVS);
 		return 0;
 	}
 	ref_name[ref_name_cnt++] = xstrdup(refname);
@@ -731,8 +732,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			die(_("--reflog option needs one branch name"));
 
 		if (MAX_REVS < reflog)
-			die("Only %d entries can be shown at one time.",
-			    MAX_REVS);
+			die(Q_("only %d entry can be shown at one time.",
+			       "only %d entries can be shown at one time.",
+			       MAX_REVS), MAX_REVS);
 		if (!dwim_ref(*av, strlen(*av), oid.hash, &ref))
 			die(_("no such ref %s"), *av);
 
@@ -826,7 +828,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		unsigned int flag = 1u << (num_rev + REV_SHIFT);
 
 		if (MAX_REVS <= num_rev)
-			die("cannot handle more than %d revs.", MAX_REVS);
+			die(Q_("cannot handle more than %d rev.",
+			       "cannot handle more than %d revs.",
+			       MAX_REVS), MAX_REVS);
 		if (get_sha1(ref_name[num_rev], revkey.hash))
 			die(_("'%s' is not a valid ref."), ref_name[num_rev]);
 		commit = lookup_commit_reference(revkey.hash);
