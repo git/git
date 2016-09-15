@@ -30,7 +30,7 @@ do
 	esac
 done
 
-# Reject if this is not an Octopus -- resolve should be used instead.
+# Reject if this is not an octopus -- resolve should be used instead.
 case "$remotes" in
 ?*' '?*)
 	;;
@@ -59,7 +59,7 @@ do
 		# conflicts.  Last round failed and we still had
 		# a head to merge.
 		gettextln "Automated merge did not work."
-		gettextln "Should not be doing an Octopus."
+		gettextln "Should not be doing an octopus."
 		exit 2
 	esac
 
