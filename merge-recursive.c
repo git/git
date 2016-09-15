@@ -206,7 +206,7 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 			find_unique_abbrev(commit->object.oid.hash,
 				DEFAULT_ABBREV));
 		if (parse_commit(commit) != 0)
-			strbuf_addf(&o->obuf, _("(bad commit)\n"));
+			strbuf_addstr(&o->obuf, _("(bad commit)\n"));
 		else {
 			const char *title;
 			const char *msg = get_commit_buffer(commit, NULL);

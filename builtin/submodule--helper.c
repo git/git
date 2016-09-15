@@ -749,8 +749,9 @@ static int update_clone_get_next_task(struct child_process *child,
 		ce = suc->failed_clones[index];
 		if (!prepare_to_clone_next_submodule(ce, child, suc, err)) {
 			suc->current ++;
-			strbuf_addf(err, "BUG: submodule considered for cloning,"
-				    "doesn't need cloning any more?\n");
+			strbuf_addstr(err, "BUG: submodule considered for "
+					   "cloning, doesn't need cloning "
+					   "any more?\n");
 			return 0;
 		}
 		p = xmalloc(sizeof(*p));
