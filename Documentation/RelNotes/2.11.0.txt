@@ -44,6 +44,10 @@ Performance, Internal Implementation, Development Support etc.
    script file "git am" internally uses.
    (merge a77598e jc/am-read-author-file later to maint).
 
+ * Lifts calls to exit(2) and die() higher in the callchain in
+   sequencer.c files so that more helper functions in it can be used
+   by callers that want to handle error conditions themselves.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -88,6 +92,25 @@ notes for details).
    newer GIT_TRACE_CURL.
    (merge 14e2411 ep/use-git-trace-curl-in-tests later to maint).
 
+ * "git pack-objects --include-tag" was taught that when we know that
+   we are sending an object C, we want a tag B that directly points at
+   C but also a tag A that points at the tag B.  We used to miss the
+   intermediate tag B in some cases.
+   (merge b773dde jk/pack-tag-of-tag later to maint).
+
+ * Update Japanese translation for "git-gui".
+   (merge 02748bc sy/git-gui-i18n-ja later to maint).
+
+ * "git fetch http::/site/path" did not die correctly and segfaulted
+   instead.
+   (merge d63ed6e jk/fix-remote-curl-url-wo-proto later to maint).
+
+ * "git commit-tree" stopped reading commit.gpgsign configuration
+   variable that was meant for Porcelain "git commit" in Git 2.9; we
+   forgot to update "git gui" to look at the configuration to match
+   this change.
+   (merge f14a310 js/git-gui-commit-gpgsign later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 3e1952e jk/squelch-false-warning-from-gcc-o3 later to maint).
    (merge ca2baa3 rs/compat-strdup later to maint).
@@ -95,3 +118,5 @@ notes for details).
    (merge c00bfc9 js/t9903-chaining later to maint).
    (merge 5e4e5bb sb/xdiff-remove-unused-static-decl later to maint).
    (merge 5cb5fe4 sb/transport-report-missing-submodule-on-stderr later to maint).
+   (merge a1c8044 ah/misc-message-fixes later to maint).
+   (merge ca9b37e sb/diff-cleanup later to maint).
