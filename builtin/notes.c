@@ -340,7 +340,9 @@ static struct notes_tree *init_notes_check(const char *subcommand,
 
 	ref = (flags & NOTES_INIT_WRITABLE) ? t->update_ref : t->ref;
 	if (!starts_with(ref, "refs/notes/"))
-		die("Refusing to %s notes in %s (outside of refs/notes/)",
+		/* TRANSLATORS: the first %s will be replaced by a
+		   git notes command: 'add', 'merge', 'remove', etc.*/
+		die(_("Refusing to %s notes in %s (outside of refs/notes/)"),
 		    subcommand, ref);
 	return t;
 }
@@ -680,11 +682,11 @@ static int merge_abort(struct notes_merge_options *o)
 	 */
 
 	if (delete_ref("NOTES_MERGE_PARTIAL", NULL, 0))
-		ret += error("Failed to delete ref NOTES_MERGE_PARTIAL");
+		ret += error(_("Failed to delete ref NOTES_MERGE_PARTIAL"));
 	if (delete_ref("NOTES_MERGE_REF", NULL, REF_NODEREF))
-		ret += error("Failed to delete ref NOTES_MERGE_REF");
+		ret += error(_("Failed to delete ref NOTES_MERGE_REF"));
 	if (notes_merge_abort(o))
-		ret += error("Failed to remove 'git notes merge' worktree");
+		ret += error(_("Failed to remove 'git notes merge' worktree"));
 	return ret;
 }
 
@@ -704,11 +706,11 @@ static int merge_commit(struct notes_merge_options *o)
 	 */
 
 	if (get_sha1("NOTES_MERGE_PARTIAL", sha1))
-		die("Failed to read ref NOTES_MERGE_PARTIAL");
+		die(_("Failed to read ref NOTES_MERGE_PARTIAL"));
 	else if (!(partial = lookup_commit_reference(sha1)))
-		die("Could not find commit from NOTES_MERGE_PARTIAL.");
+		die(_("Could not find commit from NOTES_MERGE_PARTIAL."));
 	else if (parse_commit(partial))
-		die("Could not parse commit from NOTES_MERGE_PARTIAL.");
+		die(_("Could not parse commit from NOTES_MERGE_PARTIAL."));
 
 	if (partial->parents)
 		hashcpy(parent_sha1, partial->parents->item->object.oid.hash);
@@ -721,10 +723,10 @@ static int merge_commit(struct notes_merge_options *o)
 	o->local_ref = local_ref_to_free =
 		resolve_refdup("NOTES_MERGE_REF", 0, sha1, NULL);
 	if (!o->local_ref)
-		die("Failed to resolve NOTES_MERGE_REF");
+		die(_("Failed to resolve NOTES_MERGE_REF"));
 
 	if (notes_merge_commit(o, t, partial, sha1))
-		die("Failed to finalize notes merge");
+		die(_("Failed to finalize notes merge"));
 
 	/* Reuse existing commit message in reflog message */
 	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
