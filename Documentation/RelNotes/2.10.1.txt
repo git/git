@@ -1,0 +1,33 @@
+Git v2.10.1 Release Notes
+=========================
+
+Fixes since v2.10
+-----------------
+
+ * Clarify various ways to specify the "revision ranges" in the
+   documentation.
+
+ * "diff-highlight" script (in contrib/) learned to work better with
+   "git log -p --graph" output.
+
+ * The test framework left the number of tests and success/failure
+   count in the t/test-results directory, keyed by the name of the
+   test script plus the process ID.  The latter however turned out not
+   to serve any useful purpose.  The process ID part of the filename
+   has been removed.
+
+ * Having a submodule whose ".git" repository is somehow corrupt
+   caused a few commands that recurse into submodules loop forever.
+
+ * "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
+   the resulting repository becomes an invalid one.  Teach the command
+   to forbid removal of HEAD.
+
+ * A test spawned a short-lived background process, which sometimes
+   prevented the test directory from getting removed at the end of the
+   script on some platforms.
+
+ * Update a few tests that used to use GIT_CURL_VERBOSE to use the
+   newer GIT_TRACE_CURL.
+
+Also contains minor documentation updates and code clean-ups.
