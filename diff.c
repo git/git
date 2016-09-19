@@ -354,7 +354,6 @@ struct emit_callback {
 	const char **label_path;
 	struct diff_words_data *diff_words;
 	struct diff_options *opt;
-	int *found_changesp;
 	struct strbuf *header;
 };
 
@@ -722,7 +721,6 @@ static void emit_rewrite_diff(const char *name_a,
 
 	memset(&ecbdata, 0, sizeof(ecbdata));
 	ecbdata.color_diff = want_color(o->use_color);
-	ecbdata.found_changesp = &o->found_changes;
 	ecbdata.ws_rule = whitespace_rule(name_b);
 	ecbdata.opt = o;
 	if (ecbdata.ws_rule & WS_BLANK_AT_EOF) {
@@ -1216,12 +1214,13 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	struct diff_options *o = ecbdata->opt;
 	const char *line_prefix = diff_line_prefix(o);
 
+	o->found_changes = 1;
+
 	if (ecbdata->header) {
-		fprintf(ecbdata->opt->file, "%s", ecbdata->header->buf);
+		fprintf(o->file, "%s", ecbdata->header->buf);
 		strbuf_reset(ecbdata->header);
 		ecbdata->header = NULL;
 	}
-	*(ecbdata->found_changesp) = 1;
 
 	if (ecbdata->label_path[0]) {
 		const char *name_a_tab, *name_b_tab;
@@ -1229,9 +1228,9 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		name_a_tab = strchr(ecbdata->label_path[0], ' ') ? "\t" : "";
 		name_b_tab = strchr(ecbdata->label_path[1], ' ') ? "\t" : "";
 
-		fprintf(ecbdata->opt->file, "%s%s--- %s%s%s\n",
+		fprintf(o->file, "%s%s--- %s%s%s\n",
 			line_prefix, meta, ecbdata->label_path[0], reset, name_a_tab);
-		fprintf(ecbdata->opt->file, "%s%s+++ %s%s%s\n",
+		fprintf(o->file, "%s%s+++ %s%s%s\n",
 			line_prefix, meta, ecbdata->label_path[1], reset, name_b_tab);
 		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
 	}
@@ -1249,15 +1248,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		find_lno(line, ecbdata);
 		emit_hunk_header(ecbdata, line, len);
 		if (line[len-1] != '\n')
-			putc('\n', ecbdata->opt->file);
-		return;
-	}
-
-	if (len < 1) {
-		emit_line(ecbdata->opt, reset, reset, line, len);
-		if (ecbdata->diff_words
-		    && ecbdata->diff_words->type == DIFF_WORDS_PORCELAIN)
-			fputs("~\n", ecbdata->opt->file);
+			putc('\n', o->file);
 		return;
 	}
 
@@ -1282,8 +1273,8 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		}
 		diff_words_flush(ecbdata);
 		if (ecbdata->diff_words->type == DIFF_WORDS_PORCELAIN) {
-			emit_line(ecbdata->opt, context, reset, line, len);
-			fputs("~\n", ecbdata->opt->file);
+			emit_line(o, context, reset, line, len);
+			fputs("~\n", o->file);
 		} else {
 			/*
 			 * Skip the prefix character, if any.  With
@@ -1294,7 +1285,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 			      line++;
 			      len--;
 			}
-			emit_line(ecbdata->opt, context, reset, line, len);
+			emit_line(o, context, reset, line, len);
 		}
 		return;
 	}
@@ -1316,8 +1307,7 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	default:
 		/* incomplete line at the end */
 		ecbdata->lno_in_preimage++;
-		emit_line(ecbdata->opt,
-			  diff_get_color(ecbdata->color_diff, DIFF_CONTEXT),
+		emit_line(o, diff_get_color(ecbdata->color_diff, DIFF_CONTEXT),
 			  reset, line, len);
 		break;
 	}
@@ -2438,7 +2428,6 @@ static void builtin_diff(const char *name_a,
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
 		ecbdata.color_diff = want_color(o->use_color);
-		ecbdata.found_changesp = &o->found_changes;
 		ecbdata.ws_rule = whitespace_rule(name_b);
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
 			check_blank_at_eof(&mf1, &mf2, &ecbdata);
