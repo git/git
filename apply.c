@@ -3131,7 +3131,7 @@ static int apply_binary(struct apply_state *state,
 			struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	/*
 	 * For safety, we require patch index line to contain
@@ -3139,8 +3139,8 @@ static int apply_binary(struct apply_state *state,
 	 */
 	if (strlen(patch->old_sha1_prefix) != 40 ||
 	    strlen(patch->new_sha1_prefix) != 40 ||
-	    get_sha1_hex(patch->old_sha1_prefix, sha1) ||
-	    get_sha1_hex(patch->new_sha1_prefix, sha1))
+	    get_oid_hex(patch->old_sha1_prefix, &oid) ||
+	    get_oid_hex(patch->new_sha1_prefix, &oid))
 		return error("cannot apply binary patch to '%s' "
 			     "without full index line", name);
 
@@ -3149,12 +3149,12 @@ static int apply_binary(struct apply_state *state,
 		 * See if the old one matches what the patch
 		 * applies to.
 		 */
-		hash_sha1_file(img->buf, img->len, blob_type, sha1);
-		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
+		hash_sha1_file(img->buf, img->len, blob_type, oid.hash);
+		if (strcmp(oid_to_hex(&oid), patch->old_sha1_prefix))
 			return error("the patch applies to '%s' (%s), "
 				     "which does not match the "
 				     "current contents.",
-				     name, sha1_to_hex(sha1));
+				     name, oid_to_hex(&oid));
 	}
 	else {
 		/* Otherwise, the old one must be empty. */
@@ -3163,19 +3163,19 @@ static int apply_binary(struct apply_state *state,
 				     "'%s' but it is not empty", name);
 	}
 
-	get_sha1_hex(patch->new_sha1_prefix, sha1);
-	if (is_null_sha1(sha1)) {
+	get_oid_hex(patch->new_sha1_prefix, &oid);
+	if (is_null_oid(&oid)) {
 		clear_image(img);
 		return 0; /* deletion patch */
 	}
 
-	if (has_sha1_file(sha1)) {
+	if (has_sha1_file(oid.hash)) {
 		/* We already have the postimage */
 		enum object_type type;
 		unsigned long size;
 		char *result;
 
-		result = read_sha1_file(sha1, &type, &size);
+		result = read_sha1_file(oid.hash, &type, &size);
 		if (!result)
 			return error("the necessary postimage %s for "
 				     "'%s' cannot be read",
@@ -3194,10 +3194,10 @@ static int apply_binary(struct apply_state *state,
 				     name);
 
 		/* verify that the result matches */
-		hash_sha1_file(img->buf, img->len, blob_type, sha1);
-		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
+		hash_sha1_file(img->buf, img->len, blob_type, oid.hash);
+		if (strcmp(oid_to_hex(&oid), patch->new_sha1_prefix))
 			return error(_("binary patch to '%s' creates incorrect result (expecting %s, got %s)"),
-				name, patch->new_sha1_prefix, sha1_to_hex(sha1));
+				name, patch->new_sha1_prefix, oid_to_hex(&oid));
 	}
 
 	return 0;
@@ -3227,17 +3227,17 @@ static int apply_fragments(struct apply_state *state, struct image *img, struct 
 	return 0;
 }
 
-static int read_blob_object(struct strbuf *buf, const unsigned char *sha1, unsigned mode)
+static int read_blob_object(struct strbuf *buf, const struct object_id *oid, unsigned mode)
 {
 	if (S_ISGITLINK(mode)) {
 		strbuf_grow(buf, 100);
-		strbuf_addf(buf, "Subproject commit %s\n", sha1_to_hex(sha1));
+		strbuf_addf(buf, "Subproject commit %s\n", oid_to_hex(oid));
 	} else {
 		enum object_type type;
 		unsigned long sz;
 		char *result;
 
-		result = read_sha1_file(sha1, &type, &sz);
+		result = read_sha1_file(oid->hash, &type, &sz);
 		if (!result)
 			return -1;
 		/* XXX read_sha1_file NUL-terminates */
@@ -3250,7 +3250,7 @@ static int read_file_or_gitlink(const struct cache_entry *ce, struct strbuf *buf
 {
 	if (!ce)
 		return 0;
-	return read_blob_object(buf, ce->sha1, ce->ce_mode);
+	return read_blob_object(buf, &ce->oid, ce->ce_mode);
 }
 
 static struct patch *in_fn_table(struct apply_state *state, const char *name)
@@ -3457,9 +3457,9 @@ static int load_preimage(struct apply_state *state,
 
 static int three_way_merge(struct image *image,
 			   char *path,
-			   const unsigned char *base,
-			   const unsigned char *ours,
-			   const unsigned char *theirs)
+			   const struct object_id *base,
+			   const struct object_id *ours,
+			   const struct object_id *theirs)
 {
 	mmfile_t base_file, our_file, their_file;
 	mmbuffer_t result = { NULL };
@@ -3536,7 +3536,7 @@ static int try_threeway(struct apply_state *state,
 			struct stat *st,
 			const struct cache_entry *ce)
 {
-	unsigned char pre_sha1[20], post_sha1[20], our_sha1[20];
+	struct object_id pre_oid, post_oid, our_oid;
 	struct strbuf buf = STRBUF_INIT;
 	size_t len;
 	int status;
@@ -3550,9 +3550,9 @@ static int try_threeway(struct apply_state *state,
 
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
-		write_sha1_file("", 0, blob_type, pre_sha1);
-	else if (get_sha1(patch->old_sha1_prefix, pre_sha1) ||
-		 read_blob_object(&buf, pre_sha1, patch->old_mode))
+		write_sha1_file("", 0, blob_type, pre_oid.hash);
+	else if (get_sha1(patch->old_sha1_prefix, pre_oid.hash) ||
+		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error("repository lacks the necessary blob to fall back on 3-way merge.");
 
 	if (state->apply_verbosity > verbosity_silent)
@@ -3565,11 +3565,11 @@ static int try_threeway(struct apply_state *state,
 		clear_image(&tmp_image);
 		return -1;
 	}
-	/* post_sha1[] is theirs */
-	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, post_sha1);
+	/* post_oid is theirs */
+	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, post_oid.hash);
 	clear_image(&tmp_image);
 
-	/* our_sha1[] is ours */
+	/* our_oid is ours */
 	if (patch->is_new) {
 		if (load_current(state, &tmp_image, patch))
 			return error("cannot read the current contents of '%s'",
@@ -3579,12 +3579,12 @@ static int try_threeway(struct apply_state *state,
 			return error("cannot read the current contents of '%s'",
 				     patch->old_name);
 	}
-	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, our_sha1);
+	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, our_oid.hash);
 	clear_image(&tmp_image);
 
 	/* in-core three-way merge between post and our using pre as base */
 	status = three_way_merge(image, patch->new_name,
-				 pre_sha1, our_sha1, post_sha1);
+				 &pre_oid, &our_oid, &post_oid);
 	if (status < 0) {
 		if (state->apply_verbosity > verbosity_silent)
 			fprintf(stderr,
@@ -3597,9 +3597,9 @@ static int try_threeway(struct apply_state *state,
 		if (patch->is_new)
 			oidclr(&patch->threeway_stage[0]);
 		else
-			hashcpy(patch->threeway_stage[0].hash, pre_sha1);
-		hashcpy(patch->threeway_stage[1].hash, our_sha1);
-		hashcpy(patch->threeway_stage[2].hash, post_sha1);
+			oidcpy(&patch->threeway_stage[0], &pre_oid);
+		oidcpy(&patch->threeway_stage[1], &our_oid);
+		oidcpy(&patch->threeway_stage[2], &post_oid);
 		if (state->apply_verbosity > verbosity_silent)
 			fprintf(stderr,
 				"Applied patch to '%s' with conflicts.\n",
@@ -4001,9 +4001,9 @@ static int read_apply_cache(struct apply_state *state)
 		return read_cache();
 }
 
-/* This function tries to read the sha1 from the current index */
-static int get_current_sha1(struct apply_state *state, const char *path,
-			    unsigned char *sha1)
+/* This function tries to read the object name from the current index */
+static int get_current_oid(struct apply_state *state, const char *path,
+			   struct object_id *oid)
 {
 	int pos;
 
@@ -4012,11 +4012,11 @@ static int get_current_sha1(struct apply_state *state, const char *path,
 	pos = cache_name_pos(path, strlen(path));
 	if (pos < 0)
 		return -1;
-	hashcpy(sha1, active_cache[pos]->sha1);
+	oidcpy(oid, &active_cache[pos]->oid);
 	return 0;
 }
 
-static int preimage_sha1_in_gitlink_patch(struct patch *p, unsigned char sha1[20])
+static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 {
 	/*
 	 * A usable gitlink patch has only one fragment (hunk) that looks like:
@@ -4040,14 +4040,14 @@ static int preimage_sha1_in_gitlink_patch(struct patch *p, unsigned char sha1[20
 	    (preimage = memchr(hunk->patch, '\n', hunk->size)) != NULL &&
 	    starts_with(++preimage, heading) &&
 	    /* does it record full SHA-1? */
-	    !get_sha1_hex(preimage + sizeof(heading) - 1, sha1) &&
-	    preimage[sizeof(heading) + 40 - 1] == '\n' &&
+	    !get_oid_hex(preimage + sizeof(heading) - 1, oid) &&
+	    preimage[sizeof(heading) + GIT_SHA1_HEXSZ - 1] == '\n' &&
 	    /* does the abbreviated name on the index line agree with it? */
 	    starts_with(preimage + sizeof(heading) - 1, p->old_sha1_prefix))
 		return 0; /* it all looks fine */
 
 	/* we may have full object name on the index line */
-	return get_sha1_hex(p->old_sha1_prefix, sha1);
+	return get_oid_hex(p->old_sha1_prefix, oid);
 }
 
 /* Build an index that contains the just the files needed for a 3way merge */
@@ -4062,7 +4062,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 	 * worth showing the new sha1 prefix, but until then...
 	 */
 	for (patch = list; patch; patch = patch->next) {
-		unsigned char sha1[20];
+		struct object_id oid;
 		struct cache_entry *ce;
 		const char *name;
 
@@ -4071,23 +4071,23 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			continue;
 
 		if (S_ISGITLINK(patch->old_mode)) {
-			if (!preimage_sha1_in_gitlink_patch(patch, sha1))
+			if (!preimage_oid_in_gitlink_patch(patch, &oid))
 				; /* ok, the textual part looks sane */
 			else
 				return error("sha1 information is lacking or "
 					     "useless for submodule %s", name);
-		} else if (!get_sha1_blob(patch->old_sha1_prefix, sha1)) {
+		} else if (!get_sha1_blob(patch->old_sha1_prefix, oid.hash)) {
 			; /* ok */
 		} else if (!patch->lines_added && !patch->lines_deleted) {
 			/* mode-only change: update the current */
-			if (get_current_sha1(state, patch->old_name, sha1))
+			if (get_current_oid(state, patch->old_name, &oid))
 				return error("mode change for %s, which is not "
 					     "in current HEAD", name);
 		} else
 			return error("sha1 information is lacking or useless "
 				     "(%s).", name);
 
-		ce = make_cache_entry(patch->old_mode, sha1, name, 0, 0);
+		ce = make_cache_entry(patch->old_mode, oid.hash, name, 0, 0);
 		if (!ce)
 			return error(_("make_cache_entry failed for path '%s'"),
 				     name);
@@ -4102,179 +4102,179 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 	res = write_locked_index(&result, &lock, COMMIT_LOCK);
 	discard_index(&result);
 
-	if (res)
-		return error("Could not write temporary index to %s",
-			     state->fake_ancestor);
+	 if (res)
+		 return error("Could not write temporary index to %s",
+			      state->fake_ancestor);
 
-	return 0;
-}
+	 return 0;
+ }
 
-static void stat_patch_list(struct apply_state *state, struct patch *patch)
-{
-	int files, adds, dels;
+ static void stat_patch_list(struct apply_state *state, struct patch *patch)
+ {
+	 int files, adds, dels;
 
-	for (files = adds = dels = 0 ; patch ; patch = patch->next) {
-		files++;
-		adds += patch->lines_added;
-		dels += patch->lines_deleted;
-		show_stats(state, patch);
-	}
+	 for (files = adds = dels = 0 ; patch ; patch = patch->next) {
+		 files++;
+		 adds += patch->lines_added;
+		 dels += patch->lines_deleted;
+		 show_stats(state, patch);
+	 }
 
-	print_stat_summary(stdout, files, adds, dels);
-}
+	 print_stat_summary(stdout, files, adds, dels);
+ }
 
-static void numstat_patch_list(struct apply_state *state,
-			       struct patch *patch)
-{
-	for ( ; patch; patch = patch->next) {
-		const char *name;
-		name = patch->new_name ? patch->new_name : patch->old_name;
-		if (patch->is_binary)
-			printf("-\t-\t");
-		else
-			printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
-		write_name_quoted(name, stdout, state->line_termination);
-	}
-}
+ static void numstat_patch_list(struct apply_state *state,
+				struct patch *patch)
+ {
+	 for ( ; patch; patch = patch->next) {
+		 const char *name;
+		 name = patch->new_name ? patch->new_name : patch->old_name;
+		 if (patch->is_binary)
+			 printf("-\t-\t");
+		 else
+			 printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		 write_name_quoted(name, stdout, state->line_termination);
+	 }
+ }
 
-static void show_file_mode_name(const char *newdelete, unsigned int mode, const char *name)
-{
-	if (mode)
-		printf(" %s mode %06o %s\n", newdelete, mode, name);
-	else
-		printf(" %s %s\n", newdelete, name);
-}
+ static void show_file_mode_name(const char *newdelete, unsigned int mode, const char *name)
+ {
+	 if (mode)
+		 printf(" %s mode %06o %s\n", newdelete, mode, name);
+	 else
+		 printf(" %s %s\n", newdelete, name);
+ }
 
-static void show_mode_change(struct patch *p, int show_name)
-{
-	if (p->old_mode && p->new_mode && p->old_mode != p->new_mode) {
-		if (show_name)
-			printf(" mode change %06o => %06o %s\n",
-			       p->old_mode, p->new_mode, p->new_name);
-		else
-			printf(" mode change %06o => %06o\n",
-			       p->old_mode, p->new_mode);
-	}
-}
+ static void show_mode_change(struct patch *p, int show_name)
+ {
+	 if (p->old_mode && p->new_mode && p->old_mode != p->new_mode) {
+		 if (show_name)
+			 printf(" mode change %06o => %06o %s\n",
+				p->old_mode, p->new_mode, p->new_name);
+		 else
+			 printf(" mode change %06o => %06o\n",
+				p->old_mode, p->new_mode);
+	 }
+ }
 
-static void show_rename_copy(struct patch *p)
-{
-	const char *renamecopy = p->is_rename ? "rename" : "copy";
-	const char *old, *new;
+ static void show_rename_copy(struct patch *p)
+ {
+	 const char *renamecopy = p->is_rename ? "rename" : "copy";
+	 const char *old, *new;
 
-	/* Find common prefix */
-	old = p->old_name;
-	new = p->new_name;
-	while (1) {
-		const char *slash_old, *slash_new;
-		slash_old = strchr(old, '/');
-		slash_new = strchr(new, '/');
-		if (!slash_old ||
-		    !slash_new ||
-		    slash_old - old != slash_new - new ||
-		    memcmp(old, new, slash_new - new))
-			break;
-		old = slash_old + 1;
-		new = slash_new + 1;
-	}
-	/* p->old_name thru old is the common prefix, and old and new
-	 * through the end of names are renames
-	 */
-	if (old != p->old_name)
-		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
-		       (int)(old - p->old_name), p->old_name,
-		       old, new, p->score);
-	else
-		printf(" %s %s => %s (%d%%)\n", renamecopy,
-		       p->old_name, p->new_name, p->score);
-	show_mode_change(p, 0);
-}
+	 /* Find common prefix */
+	 old = p->old_name;
+	 new = p->new_name;
+	 while (1) {
+		 const char *slash_old, *slash_new;
+		 slash_old = strchr(old, '/');
+		 slash_new = strchr(new, '/');
+		 if (!slash_old ||
+		     !slash_new ||
+		     slash_old - old != slash_new - new ||
+		     memcmp(old, new, slash_new - new))
+			 break;
+		 old = slash_old + 1;
+		 new = slash_new + 1;
+	 }
+	 /* p->old_name thru old is the common prefix, and old and new
+	  * through the end of names are renames
+	  */
+	 if (old != p->old_name)
+		 printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
+			(int)(old - p->old_name), p->old_name,
+			old, new, p->score);
+	 else
+		 printf(" %s %s => %s (%d%%)\n", renamecopy,
+			p->old_name, p->new_name, p->score);
+	 show_mode_change(p, 0);
+ }
 
-static void summary_patch_list(struct patch *patch)
-{
-	struct patch *p;
+ static void summary_patch_list(struct patch *patch)
+ {
+	 struct patch *p;
 
-	for (p = patch; p; p = p->next) {
-		if (p->is_new)
-			show_file_mode_name("create", p->new_mode, p->new_name);
-		else if (p->is_delete)
-			show_file_mode_name("delete", p->old_mode, p->old_name);
-		else {
-			if (p->is_rename || p->is_copy)
-				show_rename_copy(p);
-			else {
-				if (p->score) {
-					printf(" rewrite %s (%d%%)\n",
-					       p->new_name, p->score);
-					show_mode_change(p, 0);
-				}
-				else
-					show_mode_change(p, 1);
-			}
-		}
-	}
-}
+	 for (p = patch; p; p = p->next) {
+		 if (p->is_new)
+			 show_file_mode_name("create", p->new_mode, p->new_name);
+		 else if (p->is_delete)
+			 show_file_mode_name("delete", p->old_mode, p->old_name);
+		 else {
+			 if (p->is_rename || p->is_copy)
+				 show_rename_copy(p);
+			 else {
+				 if (p->score) {
+					 printf(" rewrite %s (%d%%)\n",
+						p->new_name, p->score);
+					 show_mode_change(p, 0);
+				 }
+				 else
+					 show_mode_change(p, 1);
+			 }
+		 }
+	 }
+ }
 
-static void patch_stats(struct apply_state *state, struct patch *patch)
-{
-	int lines = patch->lines_added + patch->lines_deleted;
+ static void patch_stats(struct apply_state *state, struct patch *patch)
+ {
+	 int lines = patch->lines_added + patch->lines_deleted;
 
-	if (lines > state->max_change)
-		state->max_change = lines;
-	if (patch->old_name) {
-		int len = quote_c_style(patch->old_name, NULL, NULL, 0);
-		if (!len)
-			len = strlen(patch->old_name);
-		if (len > state->max_len)
-			state->max_len = len;
-	}
-	if (patch->new_name) {
-		int len = quote_c_style(patch->new_name, NULL, NULL, 0);
-		if (!len)
-			len = strlen(patch->new_name);
-		if (len > state->max_len)
-			state->max_len = len;
-	}
-}
+	 if (lines > state->max_change)
+		 state->max_change = lines;
+	 if (patch->old_name) {
+		 int len = quote_c_style(patch->old_name, NULL, NULL, 0);
+		 if (!len)
+			 len = strlen(patch->old_name);
+		 if (len > state->max_len)
+			 state->max_len = len;
+	 }
+	 if (patch->new_name) {
+		 int len = quote_c_style(patch->new_name, NULL, NULL, 0);
+		 if (!len)
+			 len = strlen(patch->new_name);
+		 if (len > state->max_len)
+			 state->max_len = len;
+	 }
+ }
 
-static int remove_file(struct apply_state *state, struct patch *patch, int rmdir_empty)
-{
-	if (state->update_index) {
-		if (remove_file_from_cache(patch->old_name) < 0)
-			return error(_("unable to remove %s from index"), patch->old_name);
-	}
-	if (!state->cached) {
-		if (!remove_or_warn(patch->old_mode, patch->old_name) && rmdir_empty) {
-			remove_path(patch->old_name);
-		}
-	}
-	return 0;
-}
+ static int remove_file(struct apply_state *state, struct patch *patch, int rmdir_empty)
+ {
+	 if (state->update_index) {
+		 if (remove_file_from_cache(patch->old_name) < 0)
+			 return error(_("unable to remove %s from index"), patch->old_name);
+	 }
+	 if (!state->cached) {
+		 if (!remove_or_warn(patch->old_mode, patch->old_name) && rmdir_empty) {
+			 remove_path(patch->old_name);
+		 }
+	 }
+	 return 0;
+ }
 
-static int add_index_file(struct apply_state *state,
-			  const char *path,
-			  unsigned mode,
-			  void *buf,
-			  unsigned long size)
-{
-	struct stat st;
-	struct cache_entry *ce;
-	int namelen = strlen(path);
-	unsigned ce_size = cache_entry_size(namelen);
+ static int add_index_file(struct apply_state *state,
+			   const char *path,
+			   unsigned mode,
+			   void *buf,
+			   unsigned long size)
+ {
+	 struct stat st;
+	 struct cache_entry *ce;
+	 int namelen = strlen(path);
+	 unsigned ce_size = cache_entry_size(namelen);
 
-	if (!state->update_index)
-		return 0;
+	 if (!state->update_index)
+		 return 0;
 
-	ce = xcalloc(1, ce_size);
-	memcpy(ce->name, path, namelen);
-	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = create_ce_flags(0);
-	ce->ce_namelen = namelen;
-	if (S_ISGITLINK(mode)) {
-		const char *s;
+	 ce = xcalloc(1, ce_size);
+	 memcpy(ce->name, path, namelen);
+	 ce->ce_mode = create_ce_mode(mode);
+	 ce->ce_flags = create_ce_flags(0);
+	 ce->ce_namelen = namelen;
+	 if (S_ISGITLINK(mode)) {
+		 const char *s;
 
-		if (!skip_prefix(buf, "Subproject commit ", &s) ||
-		    get_sha1_hex(s, ce->sha1)) {
+		 if (!skip_prefix(buf, "Subproject commit ", &s) ||
+		     get_oid_hex(s, &ce->oid)) {
 			free(ce);
 			return error(_("corrupt patch for submodule %s"), path);
 		}
@@ -4288,7 +4288,7 @@ static int add_index_file(struct apply_state *state,
 			}
 			fill_stat_cache_info(ce, &st);
 		}
-		if (write_sha1_file(buf, size, blob_type, ce->sha1) < 0) {
+		if (write_sha1_file(buf, size, blob_type, ce->oid.hash) < 0) {
 			free(ce);
 			return error(_("unable to create backing store "
 				       "for newly created file %s"), path);
@@ -4437,7 +4437,7 @@ static int add_conflicted_stages_file(struct apply_state *state,
 		ce->ce_mode = create_ce_mode(mode);
 		ce->ce_flags = create_ce_flags(stage);
 		ce->ce_namelen = namelen;
-		hashcpy(ce->sha1, patch->threeway_stage[stage - 1].hash);
+		oidcpy(&ce->oid, &patch->threeway_stage[stage - 1]);
 		if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0) {
 			free(ce);
 			return error(_("unable to add cache entry for %s"),

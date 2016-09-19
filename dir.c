@@ -525,7 +525,7 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 		return NULL;
 	if (!ce_skip_worktree(active_cache[pos]))
 		return NULL;
-	data = read_sha1_file(active_cache[pos]->sha1, &type, &sz);
+	data = read_sha1_file(active_cache[pos]->oid.hash, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -533,7 +533,7 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 	*size = xsize_t(sz);
 	if (sha1_stat) {
 		memset(&sha1_stat->stat, 0, sizeof(sha1_stat->stat));
-		hashcpy(sha1_stat->sha1, active_cache[pos]->sha1);
+		hashcpy(sha1_stat->sha1, active_cache[pos]->oid.hash);
 	}
 	return data;
 }
@@ -713,7 +713,8 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 				 !ce_stage(active_cache[pos]) &&
 				 ce_uptodate(active_cache[pos]) &&
 				 !would_convert_to_git(fname))
-				hashcpy(sha1_stat->sha1, active_cache[pos]->sha1);
+				hashcpy(sha1_stat->sha1,
+					active_cache[pos]->oid.hash);
 			else
 				hash_sha1_file(buf, size, "blob", sha1_stat->sha1);
 			fill_stat_data(&sha1_stat->stat, &st);

@@ -623,7 +623,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 			d->index_status = DIFF_STATUS_ADDED;
 			/* Leave {mode,oid}_head zero for adds. */
 			d->mode_index = ce->ce_mode;
-			hashcpy(d->oid_index.hash, ce->sha1);
+			hashcpy(d->oid_index.hash, ce->oid.hash);
 		}
 	}
 }
@@ -2093,7 +2093,7 @@ static void wt_porcelain_v2_print_unmerged_entry(
 		if (strcmp(ce->name, it->string) || !stage)
 			break;
 		stages[stage - 1].mode = ce->ce_mode;
-		hashcpy(stages[stage - 1].oid.hash, ce->sha1);
+		hashcpy(stages[stage - 1].oid.hash, ce->oid.hash);
 		sum |= (1 << (stage - 1));
 	}
 	if (sum != d->stagemask)
