@@ -215,7 +215,7 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 	/* [fg [bg]] [attr]... */
 	while (len > 0) {
 		const char *word = ptr;
-		struct color c;
+		struct color c = { COLOR_UNSPECIFIED };
 		int val, wordlen = 0;
 
 		while (len > 0 && !isspace(word[wordlen])) {
