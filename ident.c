@@ -331,17 +331,17 @@ person_only:
 }
 
 static const char *env_hint =
-"\n"
-"*** Please tell me who you are.\n"
-"\n"
-"Run\n"
-"\n"
-"  git config --global user.email \"you@example.com\"\n"
-"  git config --global user.name \"Your Name\"\n"
-"\n"
-"to set your account\'s default identity.\n"
-"Omit --global to set the identity only in this repository.\n"
-"\n";
+N_("\n"
+   "*** Please tell me who you are.\n"
+   "\n"
+   "Run\n"
+   "\n"
+   "  git config --global user.email \"you@example.com\"\n"
+   "  git config --global user.name \"Your Name\"\n"
+   "\n"
+   "to set your account\'s default identity.\n"
+   "Omit --global to set the identity only in this repository.\n"
+   "\n");
 
 const char *fmt_ident(const char *name, const char *email,
 		      const char *date_str, int flag)
@@ -356,13 +356,13 @@ const char *fmt_ident(const char *name, const char *email,
 		if (!name) {
 			if (strict && ident_use_config_only
 			    && !(ident_config_given & IDENT_NAME_GIVEN)) {
-				fputs(env_hint, stderr);
+				fputs(_(env_hint), stderr);
 				die("no name was given and auto-detection is disabled");
 			}
 			name = ident_default_name();
 			using_default = 1;
 			if (strict && default_name_is_bogus) {
-				fputs(env_hint, stderr);
+				fputs(_(env_hint), stderr);
 				die("unable to auto-detect name (got '%s')", name);
 			}
 		}
@@ -370,7 +370,7 @@ const char *fmt_ident(const char *name, const char *email,
 			struct passwd *pw;
 			if (strict) {
 				if (using_default)
-					fputs(env_hint, stderr);
+					fputs(_(env_hint), stderr);
 				die("empty ident name (for <%s>) not allowed", email);
 			}
 			pw = xgetpwuid_self(NULL);
@@ -381,12 +381,12 @@ const char *fmt_ident(const char *name, const char *email,
 	if (!email) {
 		if (strict && ident_use_config_only
 		    && !(ident_config_given & IDENT_MAIL_GIVEN)) {
-			fputs(env_hint, stderr);
+			fputs(_(env_hint), stderr);
 			die("no email was given and auto-detection is disabled");
 		}
 		email = ident_default_email();
 		if (strict && default_email_is_bogus) {
-			fputs(env_hint, stderr);
+			fputs(_(env_hint), stderr);
 			die("unable to auto-detect email address (got '%s')", email);
 		}
 	}
