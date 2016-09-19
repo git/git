@@ -495,21 +495,6 @@ static int check_header(struct mailinfo *mi,
 		goto check_header_out;
 	}
 
-	/* for inbody stuff */
-	if (starts_with(line->buf, ">From") && isspace(line->buf[5])) {
-		ret = is_format_patch_separator(line->buf + 1, line->len - 1);
-		goto check_header_out;
-	}
-	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
-		for (i = 0; header[i]; i++) {
-			if (!strcmp("Subject", header[i])) {
-				handle_header(&hdr_data[i], line);
-				ret = 1;
-				goto check_header_out;
-			}
-		}
-	}
-
 check_header_out:
 	strbuf_release(&sb);
 	return ret;
@@ -623,6 +608,22 @@ static int is_scissors_line(const struct strbuf *line)
 		gap * 2 < perforation);
 }
 
+static int check_inbody_header(struct mailinfo *mi, const struct strbuf *line)
+{
+	if (starts_with(line->buf, ">From") && isspace(line->buf[5]))
+		return is_format_patch_separator(line->buf + 1, line->len - 1);
+	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
+		int i;
+		for (i = 0; header[i]; i++)
+			if (!strcmp("Subject", header[i])) {
+				handle_header(&mi->s_hdr_data[i], line);
+				return 1;
+			}
+		return 0;
+	}
+	return check_header(mi, line, mi->s_hdr_data, 0);
+}
+
 static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 {
 	assert(!mi->filter_stage);
@@ -633,7 +634,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 	}
 
 	if (mi->use_inbody_headers && mi->header_stage) {
-		mi->header_stage = check_header(mi, line, mi->s_hdr_data, 0);
+		mi->header_stage = check_inbody_header(mi, line);
 		if (mi->header_stage)
 			return 0;
 	} else
