@@ -43,12 +43,21 @@ cat >exp <<EOF
 < Content-Type: application/x-git-upload-pack-result
 EOF
 test_expect_success 'clone http repository' '
-	GIT_CURL_VERBOSE=1 git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
+	GIT_TRACE_CURL=true git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
 	sed -e "
 		s/Q\$//
 		/^[*] /d
+		/^== Info:/d
+		/^=> Send header, /d
+		/^=> Send header:$/d
+		/^<= Recv header, /d
+		/^<= Recv header:$/d
+		s/=> Send header: //
+		s/= Recv header://
+		/^<= Recv data/d
+		/^=> Send data/d
 		/^$/d
 		/^< $/d
 
@@ -261,9 +270,9 @@ test_expect_success CMDLINE_LIMIT \
 '
 
 test_expect_success 'large fetch-pack requests can be split across POSTs' '
-	GIT_CURL_VERBOSE=1 git -c http.postbuffer=65536 \
+	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
-	grep "^> POST" err >posts &&
+	grep "^=> Send header: POST" err >posts &&
 	test_line_count = 2 posts
 '
 

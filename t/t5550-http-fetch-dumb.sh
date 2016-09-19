@@ -263,15 +263,15 @@ check_language () {
 		>expect
 		;;
 	?*)
-		echo "Accept-Language: $1" >expect
+		echo "=> Send header: Accept-Language: $1" >expect
 		;;
 	esac &&
-	GIT_CURL_VERBOSE=1 \
+	GIT_TRACE_CURL=true \
 	LANGUAGE=$2 \
 	git ls-remote "$HTTPD_URL/dumb/repo.git" >output 2>&1 &&
 	tr -d '\015' <output |
 	sort -u |
-	sed -ne '/^Accept-Language:/ p' >actual &&
+	sed -ne '/^=> Send header: Accept-Language:/ p' >actual &&
 	test_cmp expect actual
 }
 
@@ -295,8 +295,8 @@ ja;q=0.95, zh;q=0.94, sv;q=0.93, pt;q=0.92, nb;q=0.91, *;q=0.90" \
 '
 
 test_expect_success 'git client does not send an empty Accept-Language' '
-	GIT_CURL_VERBOSE=1 LANGUAGE= git ls-remote "$HTTPD_URL/dumb/repo.git" 2>stderr &&
-	! grep "^Accept-Language:" stderr
+	GIT_TRACE_CURL=true LANGUAGE= git ls-remote "$HTTPD_URL/dumb/repo.git" 2>stderr &&
+	! grep "^=> Send header: Accept-Language:" stderr
 '
 
 stop_httpd
