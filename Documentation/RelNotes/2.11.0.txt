@@ -48,6 +48,17 @@ Performance, Internal Implementation, Development Support etc.
    sequencer.c files so that more helper functions in it can be used
    by callers that want to handle error conditions themselves.
 
+ * "git am" has been taught to make an internal call to "git apply"'s
+   innards without spawning the latter as a separate process.
+
+ * The ref-store abstraction was introduced to the refs API so that we
+   can plug in different backends to store references.
+
+ * The "unsigned char sha1[20]" to "struct object_id" conversion
+   continues.  Notable changes in this round includes that ce->sha1,
+   i.e. the object name recorded in the cache_entry, turns into an
+   object_id.
+
 
 Also contains various documentation updates and code clean-ups.
 
