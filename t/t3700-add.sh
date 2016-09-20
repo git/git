@@ -380,7 +380,7 @@ test_expect_success 'no file status change if no pathspec is given' '
 '
 
 test_expect_success 'no file status change if no pathspec is given in subdir' '
-	mkdir sub &&
+	mkdir -p sub &&
 	(
 		cd sub &&
 		>sub-foo1 &&
