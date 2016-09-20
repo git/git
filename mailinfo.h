@@ -27,6 +27,7 @@ struct mailinfo {
 	int patch_lines;
 	int filter_stage; /* still reading log or are we copying patch? */
 	int header_stage; /* still checking in-body headers? */
+	struct strbuf inbody_header_accum;
 	struct strbuf **p_hdr_data;
 	struct strbuf **s_hdr_data;
 

@@ -500,6 +500,21 @@ check_header_out:
 	return ret;
 }
 
+/*
+ * Returns 1 if the given line or any line beginning with the given line is an
+ * in-body header (that is, check_header will succeed when passed
+ * mi->s_hdr_data).
+ */
+static int is_inbody_header(const struct mailinfo *mi,
+			    const struct strbuf *line)
+{
+	int i;
+	for (i = 0; header[i]; i++)
+		if (!mi->s_hdr_data[i] && cmp_header(line, header[i]))
+			return 1;
+	return 0;
+}
+
 static void decode_transfer_encoding(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf *ret;
@@ -609,8 +624,33 @@ static int is_scissors_line(const char *line)
 		gap * 2 < perforation);
 }
 
+static void flush_inbody_header_accum(struct mailinfo *mi)
+{
+	if (!mi->inbody_header_accum.len)
+		return;
+	assert(check_header(mi, &mi->inbody_header_accum, mi->s_hdr_data, 0));
+	strbuf_reset(&mi->inbody_header_accum);
+}
+
 static int check_inbody_header(struct mailinfo *mi, const struct strbuf *line)
 {
+	if (mi->inbody_header_accum.len &&
+	    (line->buf[0] == ' ' || line->buf[0] == '\t')) {
+		if (mi->use_scissors && is_scissors_line(line->buf)) {
+			/*
+			 * This is a scissors line; do not consider this line
+			 * as a header continuation line.
+			 */
+			flush_inbody_header_accum(mi);
+			return 0;
+		}
+		strbuf_strip_suffix(&mi->inbody_header_accum, "\n");
+		strbuf_addbuf(&mi->inbody_header_accum, line);
+		return 1;
+	}
+
+	flush_inbody_header_accum(mi);
+
 	if (starts_with(line->buf, ">From") && isspace(line->buf[5]))
 		return is_format_patch_separator(line->buf + 1, line->len - 1);
 	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
@@ -622,7 +662,11 @@ static int check_inbody_header(struct mailinfo *mi, const struct strbuf *line)
 			}
 		return 0;
 	}
-	return check_header(mi, line, mi->s_hdr_data, 0);
+	if (is_inbody_header(mi, line)) {
+		strbuf_addbuf(&mi->inbody_header_accum, line);
+		return 1;
+	}
+	return 0;
 }
 
 static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
@@ -888,6 +932,8 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 			break;
 	} while (!strbuf_getwholeline(line, mi->input, '\n'));
 
+	flush_inbody_header_accum(mi);
+
 handle_body_out:
 	strbuf_release(&prev);
 }
@@ -1003,6 +1049,7 @@ void setup_mailinfo(struct mailinfo *mi)
 	strbuf_init(&mi->email, 0);
 	strbuf_init(&mi->charset, 0);
 	strbuf_init(&mi->log_message, 0);
+	strbuf_init(&mi->inbody_header_accum, 0);
 	mi->header_stage = 1;
 	mi->use_inbody_headers = 1;
 	mi->content_top = mi->content;
@@ -1016,6 +1063,7 @@ void clear_mailinfo(struct mailinfo *mi)
 	strbuf_release(&mi->name);
 	strbuf_release(&mi->email);
 	strbuf_release(&mi->charset);
+	strbuf_release(&mi->inbody_header_accum);
 	free(mi->message_id);
 
 	for (i = 0; mi->p_hdr_data[i]; i++)
