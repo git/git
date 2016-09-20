@@ -361,13 +361,11 @@ test_expect_success 'git add --chmod=[+-]x changes index with already added file
 	test_mode_in_index 100644 xfoo3
 '
 
-test_expect_success 'file status is changed after git add --chmod=+x' '
-	echo "AM foo4" >expected &&
+test_expect_success POSIXPERM 'git add --chmod=[+-]x does not change the working tree' '
 	echo foo >foo4 &&
 	git add foo4 &&
 	git add --chmod=+x foo4 &&
-	git status -s foo4 >actual &&
-	test_cmp expected actual
+	! test -x foo4
 '
 
 test_expect_success 'no file status change if no pathspec is given' '
