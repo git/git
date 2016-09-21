@@ -1141,9 +1141,6 @@ To continue rebase after editing, run:
 	;;
 esac
 
-git var GIT_COMMITTER_IDENT >/dev/null ||
-	die "$(gettext "You need to set your committer info first")"
-
 comment_for_reflog start
 
 if test ! -z "$switch_to"
