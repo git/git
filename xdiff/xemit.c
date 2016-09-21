@@ -239,7 +239,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 			if (xche->next) {
 				long l = XDL_MIN(xche->next->i1,
 						 xe->xdf1.nrec - 1);
-				if (l <= e1 ||
+				if (l - xecfg->ctxlen <= e1 ||
 				    get_func_line(xe, xecfg, NULL, l, e1) < 0) {
 					xche = xche->next;
 					goto post_context_calculation;
