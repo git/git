@@ -6,12 +6,8 @@
 #define DEFAULT_PAGER "less"
 #endif
 
-/*
- * This is split up from the rest of git so that we can do
- * something different on Windows.
- */
-
 static struct child_process pager_process = CHILD_PROCESS_INIT;
+static const char *pager_program;
 
 static void wait_for_pager(int in_signal)
 {
@@ -40,6 +36,44 @@ static void wait_for_pager_signal(int signo)
 	raise(signo);
 }
 
+static int core_pager_config(const char *var, const char *value, void *data)
+{
+	if (!strcmp(var, "core.pager"))
+		return git_config_string(&pager_program, var, value);
+	return 0;
+}
+
+static void read_early_config(config_fn_t cb, void *data)
+{
+	git_config_with_options(cb, data, NULL, 1);
+
+	/*
+	 * Note that this is a really dirty hack that does the wrong thing in
+	 * many cases. The crux of the problem is that we cannot run
+	 * setup_git_directory() early on in git's setup, so we have no idea if
+	 * we are in a repository or not, and therefore are not sure whether
+	 * and how to read repository-local config.
+	 *
+	 * So if we _aren't_ in a repository (or we are but we would reject its
+	 * core.repositoryformatversion), we'll read whatever is in .git/config
+	 * blindly. Similarly, if we _are_ in a repository, but not at the
+	 * root, we'll fail to find .git/config (because it's really
+	 * ../.git/config, etc). See t7006 for a complete set of failures.
+	 *
+	 * However, we have historically provided this hack because it does
+	 * work some of the time (namely when you are at the top-level of a
+	 * valid repository), and would rarely make things worse (i.e., you do
+	 * not generally have a .git/config file sitting around).
+	 */
+	if (!startup_info->have_repository) {
+		struct git_config_source repo_config;
+
+		memset(&repo_config, 0, sizeof(repo_config));
+		repo_config.file = ".git/config";
+		git_config_with_options(cb, data, &repo_config, 1);
+	}
+}
+
 const char *git_pager(int stdout_is_tty)
 {
 	const char *pager;
@@ -50,7 +84,7 @@ const char *git_pager(int stdout_is_tty)
 	pager = getenv("GIT_PAGER");
 	if (!pager) {
 		if (!pager_program)
-			git_config(git_default_config, NULL);
+			read_early_config(core_pager_config, NULL);
 		pager = pager_program;
 	}
 	if (!pager)
@@ -180,23 +214,42 @@ int decimal_width(uintmax_t number)
 	return width;
 }
 
+struct pager_command_config_data {
+	const char *cmd;
+	int want;
+	char *value;
+};
+
+static int pager_command_config(const char *var, const char *value, void *vdata)
+{
+	struct pager_command_config_data *data = vdata;
+	const char *cmd;
+
+	if (skip_prefix(var, "pager.", &cmd) && !strcmp(cmd, data->cmd)) {
+		int b = git_config_maybe_bool(var, value);
+		if (b >= 0)
+			data->want = b;
+		else {
+			data->want = 1;
+			data->value = xstrdup(value);
+		}
+	}
+
+	return 0;
+}
+
 /* returns 0 for "no pager", 1 for "use pager", and -1 for "not specified" */
 int check_pager_config(const char *cmd)
 {
-	int want = -1;
-	struct strbuf key = STRBUF_INIT;
-	const char *value = NULL;
-	strbuf_addf(&key, "pager.%s", cmd);
-	if (git_config_key_is_valid(key.buf) &&
-	    !git_config_get_value(key.buf, &value)) {
-		int b = git_config_maybe_bool(key.buf, value);
-		if (b >= 0)
-			want = b;
-		else {
-			want = 1;
-			pager_program = xstrdup(value);
-		}
-	}
-	strbuf_release(&key);
-	return want;
+	struct pager_command_config_data data;
+
+	data.cmd = cmd;
+	data.want = -1;
+	data.value = NULL;
+
+	read_early_config(pager_command_config, &data);
+
+	if (data.value)
+		pager_program = data.value;
+	return data.want;
 }

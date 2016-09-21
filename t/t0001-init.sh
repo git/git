@@ -384,4 +384,13 @@ test_expect_success MINGW 'bare git dir not hidden' '
 	! is_hidden newdir
 '
 
+test_expect_success 'remote init from does not use config from cwd' '
+	rm -rf newdir &&
+	test_config core.logallrefupdates true &&
+	git init newdir &&
+	echo true >expect &&
+	git -C newdir config --bool core.logallrefupdates >actual &&
+	test_cmp expect actual
+'
+
 test_done

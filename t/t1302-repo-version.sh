@@ -25,46 +25,26 @@ test_expect_success 'setup' '
 test_expect_success 'gitdir selection on normal repos' '
 	echo 0 >expect &&
 	git config core.repositoryformatversion >actual &&
-	(
-		cd test &&
-		git config core.repositoryformatversion >../actual2
-	) &&
+	git -C test config core.repositoryformatversion >actual2 &&
 	test_cmp expect actual &&
 	test_cmp expect actual2
 '
 
 test_expect_success 'gitdir selection on unsupported repo' '
 	# Make sure it would stop at test2, not trash
-	echo 99 >expect &&
-	(
-		cd test2 &&
-		git config core.repositoryformatversion >../actual
-	) &&
-	test_cmp expect actual
+	test_expect_code 1 git -C test2 config core.repositoryformatversion >actual
 '
 
 test_expect_success 'gitdir not required mode' '
 	git apply --stat test.patch &&
-	(
-		cd test &&
-		git apply --stat ../test.patch
-	) &&
-	(
-		cd test2 &&
-		git apply --stat ../test.patch
-	)
+	git -C test apply --stat ../test.patch &&
+	git -C test2 apply --stat ../test.patch
 '
 
 test_expect_success 'gitdir required mode' '
 	git apply --check --index test.patch &&
-	(
-		cd test &&
-		git apply --check --index ../test.patch
-	) &&
-	(
-		cd test2 &&
-		test_must_fail git apply --check --index ../test.patch
-	)
+	git -C test apply --check --index ../test.patch &&
+	test_must_fail git -C test2 apply --check --index ../test.patch
 '
 
 check_allow () {
