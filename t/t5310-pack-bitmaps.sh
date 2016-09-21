@@ -7,6 +7,18 @@ objpath () {
 	echo ".git/objects/$(echo "$1" | sed -e 's|\(..\)|\1/|')"
 }
 
+# show objects present in pack ($1 should be associated *.idx)
+list_packed_objects () {
+	git show-index <"$1" | cut -d' ' -f2
+}
+
+# has_any pattern-file content-file
+# tests whether content-file has any entry from pattern-file with entries being
+# whole lines.
+has_any () {
+	grep -Ff "$1" "$2"
+}
+
 test_expect_success 'setup repo with moderate-sized history' '
 	for i in $(test_seq 1 10); do
 		test_commit $i
@@ -16,6 +28,7 @@ test_expect_success 'setup repo with moderate-sized history' '
 		test_commit side-$i
 	done &&
 	git checkout master &&
+	bitmaptip=$(git rev-parse master) &&
 	blob=$(echo tagged-blob | git hash-object -w --stdin) &&
 	git tag tagged-blob $blob &&
 	git config repack.writebitmaps true &&
@@ -118,6 +131,83 @@ test_expect_success 'incremental repack can disable bitmaps' '
 	git repack -d --no-write-bitmap-index
 '
 
+test_expect_success 'pack-objects respects --local (non-local loose)' '
+	git init --bare alt.git &&
+	echo $(pwd)/alt.git/objects >.git/objects/info/alternates &&
+	echo content1 >file1 &&
+	# non-local loose object which is not present in bitmapped pack
+	altblob=$(GIT_DIR=alt.git git hash-object -w file1) &&
+	# non-local loose object which is also present in bitmapped pack
+	git cat-file blob $blob | GIT_DIR=alt.git git hash-object -w --stdin &&
+	git add file1 &&
+	test_tick &&
+	git commit -m commit_file1 &&
+	echo HEAD | git pack-objects --local --stdout --revs >1.pack &&
+	git index-pack 1.pack &&
+	list_packed_objects 1.idx >1.objects &&
+	printf "%s\n" "$altblob" "$blob" >nonlocal-loose &&
+	! has_any nonlocal-loose 1.objects
+'
+
+test_expect_success 'pack-objects respects --honor-pack-keep (local non-bitmapped pack)' '
+	echo content2 >file2 &&
+	blob2=$(git hash-object -w file2) &&
+	git add file2 &&
+	test_tick &&
+	git commit -m commit_file2 &&
+	printf "%s\n" "$blob2" "$bitmaptip" >keepobjects &&
+	pack2=$(git pack-objects pack2 <keepobjects) &&
+	mv pack2-$pack2.* .git/objects/pack/ &&
+	>.git/objects/pack/pack2-$pack2.keep &&
+	rm $(objpath $blob2) &&
+	echo HEAD | git pack-objects --honor-pack-keep --stdout --revs >2a.pack &&
+	git index-pack 2a.pack &&
+	list_packed_objects 2a.idx >2a.objects &&
+	! has_any keepobjects 2a.objects
+'
+
+test_expect_success 'pack-objects respects --local (non-local pack)' '
+	mv .git/objects/pack/pack2-$pack2.* alt.git/objects/pack/ &&
+	echo HEAD | git pack-objects --local --stdout --revs >2b.pack &&
+	git index-pack 2b.pack &&
+	list_packed_objects 2b.idx >2b.objects &&
+	! has_any keepobjects 2b.objects
+'
+
+test_expect_success 'pack-objects respects --honor-pack-keep (local bitmapped pack)' '
+	ls .git/objects/pack/ | grep bitmap >output &&
+	test_line_count = 1 output &&
+	packbitmap=$(basename $(cat output) .bitmap) &&
+	list_packed_objects .git/objects/pack/$packbitmap.idx >packbitmap.objects &&
+	test_when_finished "rm -f .git/objects/pack/$packbitmap.keep" &&
+	>.git/objects/pack/$packbitmap.keep &&
+	echo HEAD | git pack-objects --honor-pack-keep --stdout --revs >3a.pack &&
+	git index-pack 3a.pack &&
+	list_packed_objects 3a.idx >3a.objects &&
+	! has_any packbitmap.objects 3a.objects
+'
+
+test_expect_success 'pack-objects respects --local (non-local bitmapped pack)' '
+	mv .git/objects/pack/$packbitmap.* alt.git/objects/pack/ &&
+	test_when_finished "mv alt.git/objects/pack/$packbitmap.* .git/objects/pack/" &&
+	echo HEAD | git pack-objects --local --stdout --revs >3b.pack &&
+	git index-pack 3b.pack &&
+	list_packed_objects 3b.idx >3b.objects &&
+	! has_any packbitmap.objects 3b.objects
+'
+
+test_expect_success 'pack-objects to file can use bitmap' '
+	# make sure we still have 1 bitmap index from previous tests
+	ls .git/objects/pack/ | grep bitmap >output &&
+	test_line_count = 1 output &&
+	# verify equivalent packs are generated with/without using bitmap index
+	packasha1=$(git pack-objects --no-use-bitmap-index --all packa </dev/null) &&
+	packbsha1=$(git pack-objects --use-bitmap-index --all packb </dev/null) &&
+	list_packed_objects <packa-$packasha1.idx >packa.objects &&
+	list_packed_objects <packb-$packbsha1.idx >packb.objects &&
+	test_cmp packa.objects packb.objects
+'
+
 test_expect_success 'full repack, reusing previous bitmaps' '
 	git repack -ad &&
 	ls .git/objects/pack/ | grep bitmap >output &&
@@ -141,6 +231,20 @@ test_expect_success 'create objects for missing-HAVE tests' '
 	^HEAD^
 	^$commit
 	EOF
+'
+
+test_expect_success 'pack-objects respects --incremental' '
+	cat >revs2 <<-EOF &&
+	HEAD
+	$commit
+	EOF
+	git pack-objects --incremental --stdout --revs <revs2 >4.pack &&
+	git index-pack 4.pack &&
+	list_packed_objects 4.idx >4.objects &&
+	test_line_count = 4 4.objects &&
+	git rev-list --objects $commit >revlist &&
+	cut -d" " -f1 revlist |sort >objects &&
+	test_cmp 4.objects objects
 '
 
 test_expect_success 'pack with missing blob' '
