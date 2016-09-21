@@ -42,7 +42,7 @@ annotate_merge () {
 			my @msg = ();
 			while (<$fh>) {
 				chomp;
-				if (/^\* $branch /) {
+				if (/^\* \Q$branch\E /) {
 					$in_section = 1;
 					next;
 				}
