@@ -28,6 +28,16 @@ UI, Workflows & Features
    to allow "--submodule=diff" to show the patch between the submodule
    commits bound to the superproject.
 
+ * Even though "git hash-objects", which is a tool to take an
+   on-filesystem data stream and put it into the Git object store,
+   allowed to perform the "outside-world-to-Git" conversions (e.g.
+   end-of-line conversions and application of the clean-filter), and
+   it had the feature on by default from very early days, its reverse
+   operation "git cat-file", which takes an object from the Git object
+   store and externalize for the consumption by the outside world,
+   lacked an equivalent mechanism to run the "Git-to-outside-world"
+   conversion.  The command learned the "--filters" option to do so.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -59,6 +69,19 @@ Performance, Internal Implementation, Development Support etc.
    i.e. the object name recorded in the cache_entry, turns into an
    object_id.
 
+ * JGit can show a fake ref "capabilities^{}" to "git fetch" when it
+   does not advertise any refs, but "git fetch" was not prepared to
+   see such an advertisement.  When the other side disconnects without
+   giving any ref advertisement, we used to say "there may not be a
+   repository at that URL", but we may have seen other advertisement
+   like "shallow" and ".have" in which case we definitely know that a
+   repository is there.  The code to detect this case has also been
+   updated.
+
+ * Some codepaths in "git pack-objects" were not ready to use an
+   existing pack bitmap; now they are and as the result they have
+   become faster.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -72,36 +95,29 @@ notes for details).
 
  * Clarify various ways to specify the "revision ranges" in the
    documentation.
-   (merge a117be4 po/range-doc later to maint).
 
  * "diff-highlight" script (in contrib/) learned to work better with
    "git log -p --graph" output.
-   (merge 3dbfe2b bh/diff-highlight-graph later to maint).
 
  * The test framework left the number of tests and success/failure
    count in the t/test-results directory, keyed by the name of the
    test script plus the process ID.  The latter however turned out not
    to serve any useful purpose.  The process ID part of the filename
    has been removed.
-   (merge 5c885c1 jk/test-lib-drop-pid-from-results later to maint).
 
  * Having a submodule whose ".git" repository is somehow corrupt
    caused a few commands that recurse into submodules loop forever.
-   (merge 10f5c52 jc/submodule-anchor-git-dir later to maint).
 
  * "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
    the resulting repository becomes an invalid one.  Teach the command
    to forbid removal of HEAD.
-   (merge 12cfa79 jc/forbid-symbolic-ref-d-HEAD later to maint).
 
  * A test spawned a short-lived background process, which sometimes
    prevented the test directory from getting removed at the end of the
    script on some platforms.
-   (merge 5babb5b js/t6026-clean-up later to maint).
 
  * Update a few tests that used to use GIT_CURL_VERBOSE to use the
    newer GIT_TRACE_CURL.
-   (merge 14e2411 ep/use-git-trace-curl-in-tests later to maint).
 
  * "git pack-objects --include-tag" was taught that when we know that
    we are sending an object C, we want a tag B that directly points at
@@ -122,12 +138,67 @@ notes for details).
    this change.
    (merge f14a310 js/git-gui-commit-gpgsign later to maint).
 
+ * "git add --chmod=+x" added recently lacked documentation, which has
+   been corrected.
+   (merge 7ef7903 et/add-chmod-x later to maint).
+
+ * "git log --cherry-pick" used to include merge commits as candidates
+   to be matched up with other commits, resulting a lot of wasted time.
+   The patch-id generation logic has been updated to ignore merges to
+   avoid the wastage.
+   (merge 7c81040 jk/patch-ids-no-merges later to maint).
+
+ * The http transport (with curl-multi option, which is the default
+   these days) failed to remove curl-easy handle from a curlm session,
+   which led to unnecessary API failures.
+   (merge 2abc848 ew/http-do-not-forget-to-call-curl-multi-remove-handle later to maint).
+
+ * There were numerous corner cases in which the configuration files
+   are read and used or not read at all depending on the directory a
+   Git command was run, leading to inconsistent behaviour.  The code
+   to set-up repository access at the beginning of a Git process has
+   been updated to fix them.
+   (merge 4d0efa1 jk/setup-sequence-update later to maint).
+
+ * "git diff -W" output needs to extend the context backward to
+   include the header line of the current function and also forward to
+   include the body of the entire current function up to the header
+   line of the next one.  This process may have to merge to adjacent
+   hunks, but the code forgot to do so in some cases.
+   (merge 45d2f75 rs/xdiff-merge-overlapping-hunks-for-W-context later to maint).
+
+ * Performance tests done via "t/perf" did not use the same set of
+   build configuration if the user relied on autoconf generated
+   configuration.
+   (merge cd5c281 ks/perf-build-with-autoconf later to maint).
+
+ * "git format-patch --base=..." feature that was recently added
+   showed the base commit information after "-- " e-mail signature
+   line, which turned out to be inconvenient.  The base information
+   has been moved above the signature line.
+   (merge 480871e jt/format-patch-base-info-above-sig later to maint).
+
+ * More i18n.
+   (merge 43073f8 va/i18n later to maint).
+
+ * Even when "git pull --rebase=preserve" (and the underlying "git
+   rebase --preserve") can complete without creating any new commit
+   (i.e. fast-forwards), it still insisted on having a usable ident
+   information (read: user.email is set correctly), which was less
+   than nice.  As the underlying commands used inside "git rebase"
+   would fail with a more meaningful error message and advice text
+   when the bogus ident matters, this extra check was removed.
+   (merge 1e461c4 jk/rebase-i-drop-ident-check later to maint).
+
+ * "git gc --aggressive" used to limit the delta-chain length to 250,
+   which is way too deep for gaining additional space savings and is
+   detrimental for runtime performance.  The limit has been reduced to
+   50.
+   (merge 07e7dbf jk/reduce-gc-aggressive-depth later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
-   (merge 3e1952e jk/squelch-false-warning-from-gcc-o3 later to maint).
-   (merge ca2baa3 rs/compat-strdup later to maint).
-   (merge d233097 rs/hex2chr later to maint).
-   (merge c00bfc9 js/t9903-chaining later to maint).
-   (merge 5e4e5bb sb/xdiff-remove-unused-static-decl later to maint).
-   (merge 5cb5fe4 sb/transport-report-missing-submodule-on-stderr later to maint).
-   (merge a1c8044 ah/misc-message-fixes later to maint).
-   (merge ca9b37e sb/diff-cleanup later to maint).
+   (merge e78d57e bw/pathspec-remove-unused-extern-decl later to maint).
+   (merge ce25e4c rs/checkout-some-states-are-const later to maint).
+   (merge a8342a4 rs/strbuf-remove-fix later to maint).
+   (merge b56aa5b rs/unpack-trees-reduce-file-scope-global later to maint).
+   (merge 5efc60c mr/vcs-svn-printf-ulong later to maint).
