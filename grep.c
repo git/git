@@ -848,17 +848,6 @@ static int fixmatch(struct grep_pat *p, char *line, char *eol,
 	}
 }
 
-static int regmatch(const regex_t *preg, char *line, char *eol,
-		    regmatch_t *match, int eflags)
-{
-#ifdef REG_STARTEND
-	match->rm_so = 0;
-	match->rm_eo = eol - line;
-	eflags |= REG_STARTEND;
-#endif
-	return regexec(preg, line, 1, match, eflags);
-}
-
 static int patmatch(struct grep_pat *p, char *line, char *eol,
 		    regmatch_t *match, int eflags)
 {
@@ -869,7 +858,8 @@ static int patmatch(struct grep_pat *p, char *line, char *eol,
 	else if (p->pcre_regexp)
 		hit = !pcrematch(p, line, eol, match, eflags);
 	else
-		hit = !regmatch(&p->regexp, line, eol, match, eflags);
+		hit = !regexec_buf(&p->regexp, line, eol - line, 1, match,
+				   eflags);
 
 	return hit;
 }

@@ -14,7 +14,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m "A 4k file"
 '
-test_expect_failure '-G matches' '
+test_expect_success '-G matches' '
 	git diff --name-only -G "^0{4096}$" HEAD^ >out &&
 	test 4096-zeroes.txt = "$(cat out)"
 '
