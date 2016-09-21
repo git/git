@@ -51,7 +51,7 @@ before_install:
         FORMULA=$1
         SHA=$(brew fetch --force $FORMULA 2>&1 | grep ^SHA256: | cut -d ' ' -f 2)
         sed -E -i.bak "s/sha256 \"[0-9a-f]{64}\"/sha256 \"$SHA\"/g" \
-          /usr/local/Library/Taps/homebrew/homebrew-binary/$FORMULA.rb
+          "$(brew --repository homebrew/homebrew-binary)/$FORMULA.rb"
       }
       brew update --quiet
       brew tap homebrew/binary --quiet
