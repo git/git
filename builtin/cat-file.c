@@ -17,8 +17,33 @@ struct batch_options {
 	int print_contents;
 	int buffer_output;
 	int all_objects;
+	int cmdmode; /* may be 'w' or 'c' for --filters or --textconv */
 	const char *format;
 };
+
+static const char *force_path;
+
+static int filter_object(const char *path, unsigned mode,
+			 const struct object_id *oid,
+			 char **buf, unsigned long *size)
+{
+	enum object_type type;
+
+	*buf = read_sha1_file(oid->hash, &type, size);
+	if (!*buf)
+		return error(_("cannot read object %s '%s'"),
+			     oid_to_hex(oid), path);
+	if ((type == OBJ_BLOB) && S_ISREG(mode)) {
+		struct strbuf strbuf = STRBUF_INIT;
+		if (convert_to_working_tree(path, *buf, *size, &strbuf)) {
+			free(*buf);
+			*size = strbuf.len;
+			*buf = strbuf_detach(&strbuf, NULL);
+		}
+	}
+
+	return 0;
+}
 
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			int unknown_type)
@@ -31,12 +56,18 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	struct object_info oi = {NULL};
 	struct strbuf sb = STRBUF_INIT;
 	unsigned flags = LOOKUP_REPLACE_OBJECT;
+	const char *path = force_path;
 
 	if (unknown_type)
 		flags |= LOOKUP_UNKNOWN_OBJECT;
 
 	if (get_sha1_with_context(obj_name, 0, oid.hash, &obj_context))
 		die("Not a valid object name %s", obj_name);
+
+	if (!path)
+		path = obj_context.path;
+	if (obj_context.mode == S_IFINVALID)
+		obj_context.mode = 0100644;
 
 	buf = NULL;
 	switch (opt) {
@@ -61,12 +92,22 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	case 'e':
 		return !has_object_file(&oid);
 
+	case 'w':
+		if (!path[0])
+			die("git cat-file --filters %s: <object> must be "
+			    "<sha1:path>", obj_name);
+
+		if (filter_object(path, obj_context.mode,
+				  &oid, &buf, &size))
+			return -1;
+		break;
+
 	case 'c':
-		if (!obj_context.path[0])
+		if (!path[0])
 			die("git cat-file --textconv %s: <object> must be <sha1:path>",
 			    obj_name);
 
-		if (textconv_object(obj_context.path, obj_context.mode, &oid, 1, &buf, &size))
+		if (textconv_object(path, obj_context.mode, &oid, 1, &buf, &size))
 			break;
 
 	case 'p':
@@ -240,7 +281,32 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	if (data->type == OBJ_BLOB) {
 		if (opt->buffer_output)
 			fflush(stdout);
-		if (stream_blob_to_fd(1, oid, NULL, 0) < 0)
+		if (opt->cmdmode) {
+			char *contents;
+			unsigned long size;
+
+			if (!data->rest)
+				die("missing path for '%s'", oid_to_hex(oid));
+
+			if (opt->cmdmode == 'w') {
+				if (filter_object(data->rest, 0100644, oid,
+						  &contents, &size))
+					die("could not convert '%s' %s",
+					    oid_to_hex(oid), data->rest);
+			} else if (opt->cmdmode == 'c') {
+				enum object_type type;
+				if (!textconv_object(data->rest, 0100644, oid,
+						     1, &contents, &size))
+					contents = read_sha1_file(oid->hash, &type,
+								  &size);
+				if (!contents)
+					die("could not convert '%s' %s",
+					    oid_to_hex(oid), data->rest);
+			} else
+				die("BUG: invalid cmdmode: %c", opt->cmdmode);
+			batch_write(opt, contents, size);
+			free(contents);
+		} else if (stream_blob_to_fd(1, oid, NULL, 0) < 0)
 			die("unable to stream %s to stdout", oid_to_hex(oid));
 	}
 	else {
@@ -378,6 +444,8 @@ static int batch_objects(struct batch_options *opt)
 	data.mark_query = 1;
 	strbuf_expand(&buf, opt->format, expand_format, &data);
 	data.mark_query = 0;
+	if (opt->cmdmode)
+		data.split_on_whitespace = 1;
 
 	if (opt->all_objects) {
 		struct object_info empty;
@@ -442,8 +510,8 @@ static int batch_objects(struct batch_options *opt)
 }
 
 static const char * const cat_file_usage[] = {
-	N_("git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -p | <type> | --textconv) <object>"),
-	N_("git cat-file (--batch | --batch-check) [--follow-symlinks]"),
+	N_("git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -p | <type> | --textconv | --filters) [--path=<path>] <object>"),
+	N_("git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --filters]"),
 	NULL
 };
 
@@ -488,6 +556,10 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
 		OPT_CMDMODE(0, "textconv", &opt,
 			    N_("for blob objects, run textconv on object's content"), 'c'),
+		OPT_CMDMODE(0, "filters", &opt,
+			    N_("for blob objects, run filters on object's content"), 'w'),
+		OPT_STRING(0, "path", &force_path, N_("blob"),
+			   N_("use a specific path for --textconv/--filters")),
 		OPT_BOOL(0, "allow-unknown-type", &unknown_type,
 			  N_("allow -s and -t to work with broken/corrupt objects")),
 		OPT_BOOL(0, "buffer", &batch.buffer_output, N_("buffer --batch output")),
@@ -510,7 +582,9 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, cat_file_usage, 0);
 
 	if (opt) {
-		if (argc == 1)
+		if (batch.enabled && (opt == 'c' || opt == 'w'))
+			batch.cmdmode = opt;
+		else if (argc == 1)
 			obj_name = argv[0];
 		else
 			usage_with_options(cat_file_usage, options);
@@ -522,11 +596,25 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		} else
 			usage_with_options(cat_file_usage, options);
 	}
-	if (batch.enabled && (opt || argc)) {
-		usage_with_options(cat_file_usage, options);
+	if (batch.enabled) {
+		if (batch.cmdmode != opt || argc)
+			usage_with_options(cat_file_usage, options);
+		if (batch.cmdmode && batch.all_objects)
+			die("--batch-all-objects cannot be combined with "
+			    "--textconv nor with --filters");
 	}
 
 	if ((batch.follow_symlinks || batch.all_objects) && !batch.enabled) {
+		usage_with_options(cat_file_usage, options);
+	}
+
+	if (force_path && opt != 'c' && opt != 'w') {
+		error("--path=<path> needs --textconv or --filters");
+		usage_with_options(cat_file_usage, options);
+	}
+
+	if (force_path && batch.enabled) {
+		error("--path=<path> incompatible with --batch");
 		usage_with_options(cat_file_usage, options);
 	}
 
