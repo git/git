@@ -886,7 +886,7 @@ test_expect_success !MINGW 'get --path copes with unset $HOME' '
 		git config --get --path path.normal >>result &&
 		git config --get --path path.trailingtilde >>result
 	) &&
-	grep "[Ff]ailed to expand.*~/" msg &&
+	test_i18ngrep "[Ff]ailed to expand.*~/" msg &&
 	test_cmp expect result
 '
 
@@ -1087,6 +1087,20 @@ test_expect_success 'git -c complains about empty key and value' '
 	test_must_fail git -c "" rev-parse
 '
 
+test_expect_success 'multiple git -c appends config' '
+	test_config alias.x "!git -c x.two=2 config --get-regexp ^x\.*" &&
+	cat >expect <<-\EOF &&
+	x.one 1
+	x.two 2
+	EOF
+	git -c x.one=1 x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git -c is not confused by empty environment' '
+	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config --list
+'
+
 test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
@@ -1112,7 +1126,7 @@ test_expect_success 'barf on syntax error' '
 	key garbage
 	EOF
 	test_must_fail git config --get section.key >actual 2>error &&
-	grep " line 3 " error
+	test_i18ngrep " line 3 " error
 '
 
 test_expect_success 'barf on incomplete section header' '
@@ -1122,7 +1136,7 @@ test_expect_success 'barf on incomplete section header' '
 	key = value
 	EOF
 	test_must_fail git config --get section.key >actual 2>error &&
-	grep " line 2 " error
+	test_i18ngrep " line 2 " error
 '
 
 test_expect_success 'barf on incomplete string' '
@@ -1132,7 +1146,7 @@ test_expect_success 'barf on incomplete string' '
 	key = "value string
 	EOF
 	test_must_fail git config --get section.key >actual 2>error &&
-	grep " line 3 " error
+	test_i18ngrep " line 3 " error
 '
 
 test_expect_success 'urlmatch' '
@@ -1143,6 +1157,9 @@ test_expect_success 'urlmatch' '
 		sslVerify = false
 		cookieFile = /tmp/cookie.txt
 	EOF
+
+	test_expect_code 1 git config --bool --get-urlmatch doesnt.exist https://good.example.com >actual &&
+	test_must_be_empty actual &&
 
 	echo true >expect &&
 	git config --bool --get-urlmatch http.SSLverify https://good.example.com >actual &&

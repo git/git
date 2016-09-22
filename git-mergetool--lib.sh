@@ -100,7 +100,7 @@ check_unchanged () {
 		while true
 		do
 			echo "$MERGED seems unchanged."
-			printf "Was the merge successful? [y/n] "
+			printf "Was the merge successful [y/n]? "
 			read answer || return 1
 			case "$answer" in
 			y*|Y*) return 0 ;;
@@ -371,4 +371,29 @@ get_merge_tool () {
 		merge_tool=$(guess_merge_tool) || exit
 	fi
 	echo "$merge_tool"
+}
+
+mergetool_find_win32_cmd () {
+	executable=$1
+	sub_directory=$2
+
+	# Use $executable if it exists in $PATH
+	if type -p "$executable" >/dev/null 2>&1
+	then
+		printf '%s' "$executable"
+		return
+	fi
+
+	# Look for executable in the typical locations
+	for directory in $(env | grep -Ei '^PROGRAM(FILES(\(X86\))?|W6432)=' |
+		cut -d '=' -f 2- | sort -u)
+	do
+		if test -n "$directory" && test -x "$directory/$sub_directory/$executable"
+		then
+			printf '%s' "$directory/$sub_directory/$executable"
+			return
+		fi
+	done
+
+	printf '%s' "$executable"
 }

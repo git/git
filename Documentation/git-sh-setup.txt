@@ -41,7 +41,7 @@ usage::
 	die with the usage message.
 
 set_reflog_action::
-	Set GIT_REFLOG_ACTION environment to a given string (typically
+	Set `GIT_REFLOG_ACTION` environment to a given string (typically
 	the name of the program) unless it is already set.  Whenever
 	the script runs a `git` command that updates refs, a reflog
 	entry is created using the value of this string to leave the

@@ -19,6 +19,13 @@ relative_path() {
 	"test \"\$(test-path-utils relative_path '$1' '$2')\" = '$expected'"
 }
 
+test_submodule_relative_url() {
+	test_expect_success "test_submodule_relative_url: $1 $2 $3 => $4" "
+		actual=\$(git submodule--helper resolve-relative-url-test '$1' '$2' '$3') &&
+		test \"\$actual\" = '$4'
+	"
+}
+
 test_git_path() {
 	test_expect_success "git-path $1 $2 => $3" "
 		$1 git rev-parse --git-path $2 >actual &&
@@ -297,5 +304,44 @@ test_git_path GIT_COMMON_DIR=bar hooks/me                 bar/hooks/me
 test_git_path GIT_COMMON_DIR=bar config                   bar/config
 test_git_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
 test_git_path GIT_COMMON_DIR=bar shallow                  bar/shallow
+
+# In the tests below, the distinction between $PWD and $(pwd) is important:
+# on Windows, $PWD is POSIX style (/c/foo), $(pwd) has drive letter (c:/foo).
+
+test_submodule_relative_url "../" "../foo" "../submodule" "../../submodule"
+test_submodule_relative_url "../" "../foo/bar" "../submodule" "../../foo/submodule"
+test_submodule_relative_url "../" "../foo/submodule" "../submodule" "../../foo/submodule"
+test_submodule_relative_url "../" "./foo" "../submodule" "../submodule"
+test_submodule_relative_url "../" "./foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "../../../" "../foo/bar" "../sub/a/b/c" "../../../../foo/sub/a/b/c"
+test_submodule_relative_url "../" "$PWD/addtest" "../repo" "$(pwd)/repo"
+test_submodule_relative_url "../" "foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "../" "foo" "../submodule" "../submodule"
+
+test_submodule_relative_url "(null)" "../foo/bar" "../sub/a/b/c" "../foo/sub/a/b/c"
+test_submodule_relative_url "(null)" "../foo/bar" "../submodule" "../foo/submodule"
+test_submodule_relative_url "(null)" "../foo/submodule" "../submodule" "../foo/submodule"
+test_submodule_relative_url "(null)" "../foo" "../submodule" "../submodule"
+test_submodule_relative_url "(null)" "./foo/bar" "../submodule" "foo/submodule"
+test_submodule_relative_url "(null)" "./foo" "../submodule" "submodule"
+test_submodule_relative_url "(null)" "//somewhere else/repo" "../subrepo" "//somewhere else/subrepo"
+test_submodule_relative_url "(null)" "$PWD/subsuper_update_r" "../subsubsuper_update_r" "$(pwd)/subsubsuper_update_r"
+test_submodule_relative_url "(null)" "$PWD/super_update_r2" "../subsuper_update_r" "$(pwd)/subsuper_update_r"
+test_submodule_relative_url "(null)" "$PWD/." "../." "$(pwd)/."
+test_submodule_relative_url "(null)" "$PWD" "./." "$(pwd)/."
+test_submodule_relative_url "(null)" "$PWD/addtest" "../repo" "$(pwd)/repo"
+test_submodule_relative_url "(null)" "$PWD" "./å äö" "$(pwd)/å äö"
+test_submodule_relative_url "(null)" "$PWD/." "../submodule" "$(pwd)/submodule"
+test_submodule_relative_url "(null)" "$PWD/submodule" "../submodule" "$(pwd)/submodule"
+test_submodule_relative_url "(null)" "$PWD/home2/../remote" "../bundle1" "$(pwd)/home2/../bundle1"
+test_submodule_relative_url "(null)" "$PWD/submodule_update_repo" "./." "$(pwd)/submodule_update_repo/."
+test_submodule_relative_url "(null)" "file:///tmp/repo" "../subrepo" "file:///tmp/subrepo"
+test_submodule_relative_url "(null)" "foo/bar" "../submodule" "foo/submodule"
+test_submodule_relative_url "(null)" "foo" "../submodule" "submodule"
+test_submodule_relative_url "(null)" "helper:://hostname/repo" "../subrepo" "helper:://hostname/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname/repo" "../subrepo" "ssh://hostname/subrepo"
+test_submodule_relative_url "(null)" "ssh://hostname:22/repo" "../subrepo" "ssh://hostname:22/subrepo"
+test_submodule_relative_url "(null)" "user@host:path/to/repo" "../subrepo" "user@host:path/to/subrepo"
+test_submodule_relative_url "(null)" "user@host:repo" "../subrepo" "user@host:subrepo"
 
 test_done

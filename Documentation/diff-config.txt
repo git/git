@@ -75,7 +75,7 @@ diff.ignoreSubmodules::
 	commands such as 'git diff-files'. 'git checkout' also honors
 	this setting when reporting uncommitted changes. Setting it to
 	'all' disables the submodule summary normally shown by 'git commit'
-	and 'git status' when 'status.submoduleSummary' is set unless it is
+	and 'git status' when `status.submoduleSummary` is set unless it is
 	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
 
@@ -105,12 +105,16 @@ diff.orderFile::
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
-	detection; equivalent to the 'git diff' option '-l'.
+	detection; equivalent to the 'git diff' option `-l`.
 
 diff.renames::
-	Tells Git to detect renames.  If set to any boolean value, it
-	will enable basic rename detection.  If set to "copies" or
-	"copy", it will detect copies, as well.
+	Whether and how Git detects renames.  If set to "false",
+	rename detection is disabled. If set to "true", basic rename
+	detection is enabled.  If set to "copies" or "copy", Git will
+	detect copies, as well.  Defaults to true.  Note that this
+	affects only 'git diff' Porcelain like linkgit:git-diff[1] and
+	linkgit:git-log[1], and not lower level commands such as
+	linkgit:git-diff-files[1].
 
 diff.suppressBlankEmpty::
 	A boolean to inhibit the standard behavior of printing a space
@@ -118,10 +122,11 @@ diff.suppressBlankEmpty::
 
 diff.submodule::
 	Specify the format in which differences in submodules are
-	shown.  The "log" format lists the commits in the range like
-	linkgit:git-submodule[1] `summary` does.  The "short" format
-	format just shows the names of the commits at the beginning
-	and end of the range.  Defaults to short.
+	shown.  The "short" format just shows the names of the commits
+	at the beginning and end of the range. The "log" format lists
+	the commits in the range like linkgit:git-submodule[1] `summary`
+	does. The "diff" format shows an inline diff of the changed
+	contents of the submodule. Defaults to "short".
 
 diff.wordRegex::
 	A POSIX Extended Regular Expression used to determine what is a "word"
@@ -165,6 +170,11 @@ diff.tool::
 	that a corresponding difftool.<tool>.cmd variable is defined.
 
 include::mergetools-diff.txt[]
+
+diff.compactionHeuristic::
+	Set this option to `true` to enable an experimental heuristic that
+	shifts the hunk boundary in an attempt to make the resulting
+	patch easier to read.
 
 diff.algorithm::
 	Choose a diff algorithm.  The variants are as follows:

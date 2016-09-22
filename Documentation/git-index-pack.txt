@@ -87,6 +87,8 @@ OPTIONS
 	Specifying 0 will cause Git to auto-detect the number of CPU's
 	and use maximum 3 threads.
 
+--max-input-size=<size>::
+	Die, if the pack is larger than <size>.
 
 Note
 ----

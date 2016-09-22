@@ -81,6 +81,10 @@ test_decode_color () {
 	'
 }
 
+lf_to_nul () {
+	perl -pe 'y/\012/\000/'
+}
+
 nul_to_q () {
 	perl -pe 'y/\000/Q/'
 }
@@ -612,7 +616,7 @@ test_must_fail () {
 	then
 		echo >&2 "test_must_fail: command succeeded: $*"
 		return 1
-	elif test $exit_code -eq 141 && list_contains "$_test_ok" sigpipe
+	elif test_match_signal 13 $exit_code && list_contains "$_test_ok" sigpipe
 	then
 		return 0
 	elif test $exit_code -gt 129 && test $exit_code -le 192
@@ -718,20 +722,13 @@ test_cmp_rev () {
 	test_cmp expect.rev actual.rev
 }
 
-# Print a sequence of numbers or letters in increasing order.  This is
-# similar to GNU seq(1), but the latter might not be available
-# everywhere (and does not do letters).  It may be used like:
+# Print a sequence of integers in increasing order, either with
+# two arguments (start and end):
 #
-#	for i in $(test_seq 100)
-#	do
-#		for j in $(test_seq 10 20)
-#		do
-#			for k in $(test_seq a z)
-#			do
-#				echo $i-$j-$k
-#			done
-#		done
-#	done
+#     test_seq 1 5 -- outputs 1 2 3 4 5 one line at a time
+#
+# or with one argument (end), in which case it starts counting
+# from 1.
 
 test_seq () {
 	case $# in
@@ -739,7 +736,12 @@ test_seq () {
 	2)	;;
 	*)	error "bug in the test script: not 1 or 2 parameters to test_seq" ;;
 	esac
-	perl -le 'print for $ARGV[0]..$ARGV[1]' -- "$@"
+	test_seq_counter__=$1
+	while test "$test_seq_counter__" -le "$2"
+	do
+		echo "$test_seq_counter__"
+		test_seq_counter__=$(( $test_seq_counter__ + 1 ))
+	done
 }
 
 # This function can be used to schedule some commands to be run
@@ -940,4 +942,55 @@ mingw_read_file_strip_cr_ () {
 		fi
 		eval "$1=\$$1\$line"
 	done
+}
+
+# Like "env FOO=BAR some-program", but run inside a subshell, which means
+# it also works for shell functions (though those functions cannot impact
+# the environment outside of the test_env invocation).
+test_env () {
+	(
+		while test $# -gt 0
+		do
+			case "$1" in
+			*=*)
+				eval "${1%%=*}=\${1#*=}"
+				eval "export ${1%%=*}"
+				shift
+				;;
+			*)
+				"$@"
+				exit
+				;;
+			esac
+		done
+	)
+}
+
+# Returns true if the numeric exit code in "$2" represents the expected signal
+# in "$1". Signals should be given numerically.
+test_match_signal () {
+	if test "$2" = "$((128 + $1))"
+	then
+		# POSIX
+		return 0
+	elif test "$2" = "$((256 + $1))"
+	then
+		# ksh
+		return 0
+	fi
+	return 1
+}
+
+# Read up to "$1" bytes (or to EOF) from stdin and write them to stdout.
+test_copy_bytes () {
+	perl -e '
+		my $len = $ARGV[1];
+		while ($len > 0) {
+			my $s;
+			my $nread = sysread(STDIN, $s, $len);
+			die "cannot read: $!" unless defined($nread);
+			print $s;
+			$len -= $nread;
+		}
+	' - "$1"
 }

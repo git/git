@@ -26,7 +26,7 @@ people using 80-column terminals.
 --no-abbrev-commit::
 	Show the full 40-byte hexadecimal commit object name. This negates
 	`--abbrev-commit` and those options which imply it such as
-	"--oneline". It also overrides the 'log.abbrevCommit' variable.
+	"--oneline". It also overrides the `log.abbrevCommit` variable.
 
 --oneline::
 	This is a shorthand for "--pretty=oneline --abbrev-commit"
@@ -42,6 +42,20 @@ people using 80-column terminals.
 	verbatim; this means that invalid sequences in the original
 	commit may be copied to the output.
 
+--expand-tabs=<n>::
+--expand-tabs::
+--no-expand-tabs::
+	Perform a tab expansion (replace each tab with enough spaces
+	to fill to the next display column that is multiple of '<n>')
+	in the log message before showing it in the output.
+	`--expand-tabs` is a short-hand for `--expand-tabs=8`, and
+	`--no-expand-tabs` is a short-hand for `--expand-tabs=0`,
+	which disables tab expansion.
++
+By default, tabs are expanded in pretty formats that indent the log
+message by 4 spaces (i.e.  'medium', which is the default, 'full',
+and 'fuller').
+
 ifndef::git-rev-list[]
 --notes[=<treeish>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
@@ -51,7 +65,7 @@ ifndef::git-rev-list[]
 	on the command line.
 +
 By default, the notes shown are from the notes refs listed in the
-'core.notesRef' and 'notes.displayRef' variables (or corresponding
+`core.notesRef` and `notes.displayRef` variables (or corresponding
 environment overrides). See linkgit:git-config[1] for more details.
 +
 With an optional '<treeish>' argument, use the treeish to find the notes

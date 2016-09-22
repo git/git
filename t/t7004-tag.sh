@@ -775,6 +775,47 @@ test_expect_success GPG '-s implies annotated tag' '
 	test_cmp expect actual
 '
 
+get_tag_header forcesignannotated-implied-sign $commit commit $time >expect
+echo "A message" >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success GPG \
+	'git tag -s implied if configured with tag.forcesignannotated' \
+	'test_config tag.forcesignannotated true &&
+	git tag -m "A message" forcesignannotated-implied-sign &&
+	get_tag_msg forcesignannotated-implied-sign >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG \
+	'lightweight with no message when configured with tag.forcesignannotated' \
+	'test_config tag.forcesignannotated true &&
+	git tag forcesignannotated-lightweight &&
+	tag_exists forcesignannotated-lightweight &&
+	test_must_fail git tag -v forcesignannotated-no-message
+'
+
+get_tag_header forcesignannotated-annotate $commit commit $time >expect
+echo "A message" >>expect
+test_expect_success GPG \
+	'git tag -a disable configured tag.forcesignannotated' \
+	'test_config tag.forcesignannotated true &&
+	git tag -a -m "A message" forcesignannotated-annotate &&
+	get_tag_msg forcesignannotated-annotate >actual &&
+	test_cmp expect actual &&
+	test_must_fail git tag -v forcesignannotated-annotate
+'
+
+get_tag_header forcesignannotated-disabled $commit commit $time >expect
+echo "A message" >>expect
+echo '-----BEGIN PGP SIGNATURE-----' >>expect
+test_expect_success GPG \
+	'git tag --sign enable GPG sign' \
+	'test_config tag.forcesignannotated false &&
+	git tag --sign -m "A message" forcesignannotated-disabled &&
+	get_tag_msg forcesignannotated-disabled >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success GPG \
 	'trying to create a signed tag with non-existing -F file should fail' '
 	! test -f nonexistingfile &&
@@ -1161,9 +1202,16 @@ test_expect_success GPG,RFC1991 \
 # try to sign with bad user.signingkey
 git config user.signingkey BobTheMouse
 test_expect_success GPG \
-	'git tag -s fails if gpg is misconfigured' \
+	'git tag -s fails if gpg is misconfigured (bad key)' \
 	'test_must_fail git tag -s -m tail tag-gpg-failure'
 git config --unset user.signingkey
+
+# try to produce invalid signature
+test_expect_success GPG \
+	'git tag -s fails if gpg is misconfigured (bad signature format)' \
+	'test_config gpg.program echo &&
+	 test_must_fail git tag -s -m tail tag-gpg-failure'
+
 
 # try to verify without gpg:
 

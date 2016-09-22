@@ -43,12 +43,21 @@ cat >exp <<EOF
 < Content-Type: application/x-git-upload-pack-result
 EOF
 test_expect_success 'clone http repository' '
-	GIT_CURL_VERBOSE=1 git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
+	GIT_TRACE_CURL=true git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
 	sed -e "
 		s/Q\$//
 		/^[*] /d
+		/^== Info:/d
+		/^=> Send header, /d
+		/^=> Send header:$/d
+		/^<= Recv header, /d
+		/^<= Recv header:$/d
+		s/=> Send header: //
+		s/= Recv header://
+		/^<= Recv data/d
+		/^=> Send data/d
 		/^$/d
 		/^< $/d
 
@@ -261,9 +270,9 @@ test_expect_success CMDLINE_LIMIT \
 '
 
 test_expect_success 'large fetch-pack requests can be split across POSTs' '
-	GIT_CURL_VERBOSE=1 git -c http.postbuffer=65536 \
+	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
-	grep "^> POST" err >posts &&
+	grep "^=> Send header: POST" err >posts &&
 	test_line_count = 2 posts
 '
 
@@ -280,6 +289,23 @@ test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
 	git -C too-many-refs fetch -q --tags &&
 	git -C too-many-refs for-each-ref refs/tags >tags &&
 	test_line_count = 100000 tags
+'
+
+test_expect_success 'custom http headers' '
+	test_must_fail git -c http.extraheader="x-magic-two: cadabra" \
+		fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+	    fetch "$HTTPD_URL/smart_headers/repo.git" &&
+	git update-index --add --cacheinfo 160000,$(git rev-parse HEAD),sub &&
+	git config -f .gitmodules submodule.sub.path sub &&
+	git config -f .gitmodules submodule.sub.url \
+		"$HTTPD_URL/smart_headers/repo.git" &&
+	git submodule init sub &&
+	test_must_fail git submodule update sub &&
+	git -c http.extraheader="x-magic-one: abra" \
+	    -c http.extraheader="x-magic-two: cadabra" \
+		submodule update sub
 '
 
 stop_httpd

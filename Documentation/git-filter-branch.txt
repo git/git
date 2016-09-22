@@ -52,7 +52,7 @@ if different from the rewritten ones, will be stored in the namespace
 
 Note that since this operation is very I/O expensive, it might
 be a good idea to redirect the temporary directory off-disk with the
-'-d' option, e.g. on tmpfs.  Reportedly the speedup is very noticeable.
+`-d` option, e.g. on tmpfs.  Reportedly the speedup is very noticeable.
 
 
 Filters
@@ -61,7 +61,7 @@ Filters
 The filters are applied in the order as listed below.  The <command>
 argument is always evaluated in the shell context using the 'eval' command
 (with the notable exception of the commit filter, for technical reasons).
-Prior to that, the $GIT_COMMIT environment variable will be set to contain
+Prior to that, the `$GIT_COMMIT` environment variable will be set to contain
 the id of the commit being rewritten.  Also, GIT_AUTHOR_NAME,
 GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_COMMITTER_NAME, GIT_COMMITTER_EMAIL,
 and GIT_COMMITTER_DATE are taken from the current commit and exported to
@@ -171,7 +171,7 @@ to other tags will be rewritten to point to the underlying commit.
 	untouched.  This switch allow git-filter-branch to ignore such
 	commits.  Though, this switch only applies for commits that have one
 	and only one parent, it will hence keep merges points. Also, this
-	option is not compatible with the use of '--commit-filter'. Though you
+	option is not compatible with the use of `--commit-filter`. Though you
 	just need to use the function 'git_commit_non_empty_tree "$@"' instead
 	of the `git commit-tree "$@"` idiom in your commit filter to make that
 	happen.
@@ -197,7 +197,7 @@ to other tags will be rewritten to point to the underlying commit.
 <rev-list options>...::
 	Arguments for 'git rev-list'.  All positive refs included by
 	these options are rewritten.  You may also specify options
-	such as '--all', but you must use '--' to separate them from
+	such as `--all`, but you must use `--` to separate them from
 	the 'git filter-branch' options. Implies <<Remap_to_ancestor>>.
 
 
@@ -205,7 +205,7 @@ to other tags will be rewritten to point to the underlying commit.
 Remap to ancestor
 ~~~~~~~~~~~~~~~~~
 
-By using linkgit:rev-list[1] arguments, e.g., path limiters, you can limit the
+By using linkgit:git-rev-list[1] arguments, e.g., path limiters, you can limit the
 set of revisions which get rewritten. However, positive refs on the command
 line are distinguished: we don't let them be excluded by such limiters. For
 this purpose, they are instead rewritten to point at the nearest ancestor that

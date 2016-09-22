@@ -28,8 +28,8 @@ The 'git diff-{asterisk}' family works by first comparing two sets of
 files:
 
  - 'git diff-index' compares contents of a "tree" object and the
-   working directory (when '--cached' flag is not used) or a
-   "tree" object and the index file (when '--cached' flag is
+   working directory (when `--cached` flag is not used) or a
+   "tree" object and the index file (when `--cached` flag is
    used);
 
  - 'git diff-files' compares contents of the index file and the

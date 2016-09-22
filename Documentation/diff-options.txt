@@ -26,12 +26,12 @@ ifndef::git-format-patch[]
 ifdef::git-diff[]
 	This is the default.
 endif::git-diff[]
-endif::git-format-patch[]
 
 -s::
 --no-patch::
 	Suppress diff output. Useful for commands like `git show` that
 	show the patch by default, or to cancel the effect of `--patch`.
+endif::git-format-patch[]
 
 -U<n>::
 --unified=<n>::
@@ -62,6 +62,13 @@ ifndef::git-format-patch[]
 --patch-with-raw::
 	Synonym for `-p --raw`.
 endif::git-format-patch[]
+
+--compaction-heuristic::
+--no-compaction-heuristic::
+	These are to help debugging and tuning an experimental
+	heuristic (which is off by default) that shifts the hunk
+	boundary in an attempt to make the resulting patch easier
+	to read.
 
 --minimal::
 	Spend extra time to make sure the smallest possible
@@ -203,13 +210,16 @@ any of those replacements occurred.
 	of the `--diff-filter` option on what the status letters mean.
 
 --submodule[=<format>]::
-	Specify how differences in submodules are shown.  When `--submodule`
-	or `--submodule=log` is given, the 'log' format is used.  This format lists
-	the commits in the range like linkgit:git-submodule[1] `summary` does.
-	Omitting the `--submodule` option or specifying `--submodule=short`,
-	uses the 'short' format. This format just shows the names of the commits
-	at the beginning and end of the range.  Can be tweaked via the
-	`diff.submodule` configuration variable.
+	Specify how differences in submodules are shown.  When specifying
+	`--submodule=short` the 'short' format is used.  This format just
+	shows the names of the commits at the beginning and end of the range.
+	When `--submodule` or `--submodule=log` is specified, the 'log'
+	format is used.  This format lists the commits in the range like
+	linkgit:git-submodule[1] `summary` does.  When `--submodule=diff`
+	is specified, the 'diff' format is used.  This format shows an
+	inline diff of the changes in the submodule contents between the
+	commit range.  Defaults to `diff.submodule` or the 'short' format
+	if the config option is unset.
 
 --color[=<when>]::
 	Show colored diff.
@@ -271,7 +281,7 @@ For example, `--word-diff-regex=.` will treat each character as a word
 and, correspondingly, show differences character by character.
 +
 The regex can also be set via a diff driver or configuration option, see
-linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
+linkgit:gitattributes[5] or linkgit:git-config[1].  Giving it explicitly
 overrides any diff driver or configuration setting.  Diff drivers
 override configuration settings.
 
@@ -286,8 +296,8 @@ endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 --check::
-	Warn if changes introduce whitespace errors.  What are
-	considered whitespace errors is controlled by `core.whitespace`
+	Warn if changes introduce conflict markers or whitespace errors.
+	What are considered whitespace errors is controlled by `core.whitespace`
 	configuration.  By default, trailing whitespaces (including
 	lines that solely consist of whitespaces) and a space character
 	that is immediately followed by a tab character inside the
@@ -412,6 +422,9 @@ ifndef::git-format-patch[]
 	paths are selected if there is any file that matches
 	other criteria in the comparison; if there is no file
 	that matches other criteria, nothing is selected.
++
+Also, these upper-case letters can be downcased to exclude.  E.g.
+`--diff-filter=ad` excludes added and deleted paths.
 
 -S<string>::
 	Look for differences that change the number of occurrences of
@@ -558,6 +571,9 @@ endif::git-format-patch[]
 
 --no-prefix::
 	Do not show any source or destination prefix.
+
+--line-prefix=<prefix>::
+	Prepend an additional prefix to every line of output.
 
 For more detailed explanation on these common options, see also
 linkgit:gitdiffcore[7].

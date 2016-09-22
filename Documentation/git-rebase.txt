@@ -208,10 +208,10 @@ rebase.stat::
 	rebase. False by default.
 
 rebase.autoSquash::
-	If set to true enable '--autosquash' option by default.
+	If set to true enable `--autosquash` option by default.
 
 rebase.autoStash::
-	If set to true enable '--autostash' option by default.
+	If set to true enable `--autostash` option by default.
 
 rebase.missingCommitsCheck::
 	If set to "warn", print warnings about removed commits in
@@ -220,7 +220,7 @@ rebase.missingCommitsCheck::
 	done. "ignore" by default.
 
 rebase.instructionFormat::
-	Custom commit list format to use during an '--interactive' rebase.
+	Custom commit list format to use during an `--interactive` rebase.
 
 OPTIONS
 -------
@@ -391,9 +391,6 @@ idea unless you know what you are doing (see BUGS below).
 	final history. <cmd> will be interpreted as one or more shell
 	commands.
 +
-This option can only be used with the `--interactive` option
-(see INTERACTIVE MODE below).
-+
 You may execute several commands by either using one instance of `--exec`
 with several commands:
 +
@@ -406,6 +403,9 @@ or by giving more than one `--exec`:
 If `--autosquash` is used, "exec" lines will not be appended for
 the intermediate commits, and will only appear at the end of each
 squash/fixup series.
++
+This uses the `--interactive` machinery internally, but it can be run
+without an explicit `--interactive`.
 
 --root::
 	Rebase all commits reachable from <branch>, instead of
@@ -428,9 +428,9 @@ squash/fixup series.
 	"fixup! " or "squash! " after the first, in case you referred to an
 	earlier fixup/squash with `git commit --fixup/--squash`.
 +
-This option is only valid when the '--interactive' option is used.
+This option is only valid when the `--interactive` option is used.
 +
-If the '--autosquash' option is enabled by default using the
+If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
 used to override and disable this setting.
 

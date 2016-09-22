@@ -156,7 +156,7 @@ test_expect_success 'branch --merged with --verbose' '
 	* topic  2c939f4 [ahead 1] foo
 	  zzz    c77a0a9 second on master
 	EOF
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_done

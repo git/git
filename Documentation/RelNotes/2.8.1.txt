@@ -1,0 +1,9 @@
+Git v2.8.1 Release Notes
+========================
+
+Fixes since v2.8
+----------------
+
+ * "make rpmbuild" target was broken as its input, git.spec.in, was
+   not updated to match a file it describes that has been renamed
+   recently.  This has been fixed.

@@ -62,8 +62,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 		usage_with_options(merge_file_usage, options);
 	if (quiet) {
 		if (!freopen("/dev/null", "w", stderr))
-			return error("failed to redirect stderr to /dev/null: "
-				     "%s", strerror(errno));
+			return error_errno("failed to redirect stderr to /dev/null");
 	}
 
 	if (prefix)
@@ -95,12 +94,13 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 		FILE *f = to_stdout ? stdout : fopen(fpath, "wb");
 
 		if (!f)
-			ret = error("Could not open %s for writing", filename);
+			ret = error_errno("Could not open %s for writing",
+					  filename);
 		else if (result.size &&
 			 fwrite(result.ptr, result.size, 1, f) != 1)
-			ret = error("Could not write to %s", filename);
+			ret = error_errno("Could not write to %s", filename);
 		else if (fclose(f))
-			ret = error("Could not close %s", filename);
+			ret = error_errno("Could not close %s", filename);
 		free(result.ptr);
 	}
 

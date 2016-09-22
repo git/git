@@ -12,10 +12,8 @@ test_expect_success 'setup remote repo' '
 	)
 '
 
-cat >proxy <<'EOF'
-#!/bin/sh
-echo >&2 "proxying for $*"
-cmd=$("$PERL_PATH" -e '
+test_expect_success 'setup proxy script' '
+	write_script proxy-get-cmd "$PERL_PATH" <<-\EOF &&
 	read(STDIN, $buf, 4);
 	my $n = hex($buf) - 4;
 	read(STDIN, $buf, $n);
@@ -23,11 +21,16 @@ cmd=$("$PERL_PATH" -e '
 	# drop absolute-path on repo name
 	$cmd =~ s{ /}{ };
 	print $cmd;
-')
-echo >&2 "Running '$cmd'"
-exec $cmd
-EOF
-chmod +x proxy
+	EOF
+
+	write_script proxy <<-\EOF
+	echo >&2 "proxying for $*"
+	cmd=$(./proxy-get-cmd)
+	echo >&2 "Running $cmd"
+	exec $cmd
+	EOF
+'
+
 test_expect_success 'setup local repo' '
 	git remote add fake git://example.com/remote &&
 	git config core.gitproxy ./proxy

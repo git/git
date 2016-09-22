@@ -15,7 +15,7 @@ Also make sure that command line parser understands the normal
 . ./test-lib.sh
 
 cat >expected <<EOF
-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+tree $EMPTY_TREE
 author Author Name <author@email> 1117148400 +0000
 committer Committer Name <committer@email> 1117150200 +0000
 

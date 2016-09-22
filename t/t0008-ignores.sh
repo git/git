@@ -34,7 +34,7 @@ expect_from_stdin () {
 test_stderr () {
 	expected="$1"
 	expect_in stderr "$1" &&
-	test_cmp "$HOME/expected-stderr" "$HOME/stderr"
+	test_i18ncmp "$HOME/expected-stderr" "$HOME/stderr"
 }
 
 broken_c_unquote () {
@@ -47,7 +47,7 @@ broken_c_unquote_verbose () {
 
 stderr_contains () {
 	regexp="$1"
-	if grep "$regexp" "$HOME/stderr"
+	if test_i18ngrep "$regexp" "$HOME/stderr"
 	then
 		return 0
 	else
@@ -605,7 +605,7 @@ cat <<-EOF >expected-verbose
 	a/b/.gitignore:8:!on*	a/b/one
 	a/b/.gitignore:8:!on*	a/b/one one
 	a/b/.gitignore:8:!on*	a/b/one two
-	a/b/.gitignore:8:!on*	"a/b/one\"three"
+	a/b/.gitignore:8:!on*	"a/b/one\\"three"
 	a/b/.gitignore:9:!two	a/b/two
 	a/.gitignore:1:two*	a/b/twooo
 	$global_excludes:2:!globaltwo	globaltwo
@@ -686,7 +686,7 @@ cat <<-EOF >expected-all
 	a/b/.gitignore:8:!on*	b/one
 	a/b/.gitignore:8:!on*	b/one one
 	a/b/.gitignore:8:!on*	b/one two
-	a/b/.gitignore:8:!on*	"b/one\"three"
+	a/b/.gitignore:8:!on*	"b/one\\"three"
 	a/b/.gitignore:9:!two	b/two
 	::	b/not-ignored
 	a/.gitignore:1:two*	b/twooo

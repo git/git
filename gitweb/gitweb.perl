@@ -2090,7 +2090,7 @@ sub format_ref_marker {
 				-href => href(
 					action=>$dest_action,
 					hash=>$dest
-				)}, $name);
+				)}, esc_html($name));
 
 			$markers .= " <span class=\"".esc_attr($class)."\" title=\"".esc_attr($ref)."\">" .
 				$link . "</span>";
@@ -3935,6 +3935,9 @@ sub run_highlighter {
 
 	close $fd;
 	open $fd, quote_command(git_cmd(), "cat-file", "blob", $hash)." | ".
+	          quote_command($^X, '-CO', '-MEncode=decode,FB_DEFAULT', '-pse',
+	            '$_ = decode($fe, $_, FB_DEFAULT) if !utf8::decode($_);',
+	            '--', "-fe=$fallback_encoding")." | ".
 	          quote_command($highlight_bin).
 	          " --replace-tabs=8 --fragment --syntax $syntax |"
 		or die_error(500, "Couldn't open file or run syntax highlighter");

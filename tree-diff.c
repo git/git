@@ -14,6 +14,16 @@
  */
 #define S_IFXMIN_NEQ	S_DIFFTREE_IFXMIN_NEQ
 
+#define FAST_ARRAY_ALLOC(x, nr) do { \
+	if ((nr) <= 2) \
+		(x) = xalloca((nr) * sizeof(*(x))); \
+	else \
+		ALLOC_ARRAY((x), nr); \
+} while(0)
+#define FAST_ARRAY_FREE(x, nr) do { \
+	if ((nr) > 2) \
+		free((x)); \
+} while(0)
 
 static struct combine_diff_path *ll_diff_tree_paths(
 	struct combine_diff_path *p, const unsigned char *sha1,
@@ -183,7 +193,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 
 	if (t) {
 		/* path present in resulting tree */
-		sha1 = tree_entry_extract(t, &path, &mode);
+		sha1 = tree_entry_extract(t, &path, &mode)->hash;
 		pathlen = tree_entry_len(&t->entry);
 		isdir = S_ISDIR(mode);
 	} else {
@@ -229,7 +239,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 						DIFF_STATUS_ADDED;
 
 			if (tpi_valid) {
-				sha1_i = tp[i].entry.sha1;
+				sha1_i = tp[i].entry.oid->hash;
 				mode_i = tp[i].entry.mode;
 			}
 			else {
@@ -265,19 +275,19 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 	if (recurse) {
 		const unsigned char **parents_sha1;
 
-		parents_sha1 = xalloca(nparent * sizeof(parents_sha1[0]));
+		FAST_ARRAY_ALLOC(parents_sha1, nparent);
 		for (i = 0; i < nparent; ++i) {
 			/* same rule as in emitthis */
 			int tpi_valid = tp && !(tp[i].entry.mode & S_IFXMIN_NEQ);
 
-			parents_sha1[i] = tpi_valid ? tp[i].entry.sha1
+			parents_sha1[i] = tpi_valid ? tp[i].entry.oid->hash
 						    : NULL;
 		}
 
 		strbuf_add(base, path, pathlen);
 		strbuf_addch(base, '/');
 		p = ll_diff_tree_paths(p, sha1, parents_sha1, nparent, base, opt);
-		xalloca_free(parents_sha1);
+		FAST_ARRAY_FREE(parents_sha1, nparent);
 	}
 
 	strbuf_setlen(base, old_baselen);
@@ -402,8 +412,8 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	void *ttree, **tptree;
 	int i;
 
-	tp     = xalloca(nparent * sizeof(tp[0]));
-	tptree = xalloca(nparent * sizeof(tptree[0]));
+	FAST_ARRAY_ALLOC(tp, nparent);
+	FAST_ARRAY_ALLOC(tptree, nparent);
 
 	/*
 	 * load parents first, as they are probably already cached.
@@ -482,7 +492,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 						continue;
 
 					/* diff(t,pi) != ø */
-					if (hashcmp(t.entry.sha1, tp[i].entry.sha1) ||
+					if (oidcmp(t.entry.oid, tp[i].entry.oid) ||
 					    (t.entry.mode != tp[i].entry.mode))
 						continue;
 
@@ -531,8 +541,8 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	free(ttree);
 	for (i = nparent-1; i >= 0; i--)
 		free(tptree[i]);
-	xalloca_free(tptree);
-	xalloca_free(tp);
+	FAST_ARRAY_FREE(tptree, nparent);
+	FAST_ARRAY_FREE(tp, nparent);
 
 	return p;
 }
@@ -607,7 +617,7 @@ static void try_to_follow_renames(const unsigned char *old, const unsigned char 
 	diff_setup_done(&diff_opts);
 	ll_diff_tree_sha1(old, new, base, &diff_opts);
 	diffcore_std(&diff_opts);
-	free_pathspec(&diff_opts.pathspec);
+	clear_pathspec(&diff_opts.pathspec);
 
 	/* Go through the new set of filepairing, and see if we find a more interesting one */
 	opt->found_follow = 0;
@@ -630,7 +640,7 @@ static void try_to_follow_renames(const unsigned char *old, const unsigned char 
 			/* Update the path we use from now on.. */
 			path[0] = p->one->path;
 			path[1] = NULL;
-			free_pathspec(&opt->pathspec);
+			clear_pathspec(&opt->pathspec);
 			parse_pathspec(&opt->pathspec,
 				       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 				       PATHSPEC_LITERAL_PATH, "", path);

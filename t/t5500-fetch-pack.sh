@@ -259,7 +259,8 @@ test_expect_success 'clone shallow object count' '
 test_expect_success 'pull in shallow repo with missing merge base' '
 	(
 		cd shallow &&
-		test_must_fail git pull --depth 4 .. A
+		git fetch --depth 4 .. A
+		test_must_fail git merge --allow-unrelated-histories FETCH_HEAD
 	)
 '
 
@@ -279,9 +280,10 @@ test_expect_success 'clone shallow depth count' '
 test_expect_success 'clone shallow object count' '
 	(
 		cd shallow &&
+		git prune &&
 		git count-objects -v
 	) > count.shallow &&
-	grep "^count: 55" count.shallow
+	grep "^count: 54" count.shallow
 '
 
 test_expect_success 'fetch --no-shallow on full repo' '
@@ -531,6 +533,20 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 		git fsck
 	)
 '
+
+test_expect_success 'fetch-pack can fetch a raw sha1' '
+	git init hidden &&
+	(
+		cd hidden &&
+		test_commit 1 &&
+		test_commit 2 &&
+		git update-ref refs/hidden/one HEAD^ &&
+		git config transfer.hiderefs refs/hidden &&
+		git config uploadpack.allowtipsha1inwant true
+	) &&
+	git fetch-pack hidden $(git -C hidden rev-parse refs/hidden/one)
+'
+
 check_prot_path () {
 	cat >expected <<-EOF &&
 	Diag: url=$1
@@ -542,7 +558,6 @@ check_prot_path () {
 }
 
 check_prot_host_port_path () {
-	local diagport
 	case "$2" in
 		*ssh*)
 		pp=ssh

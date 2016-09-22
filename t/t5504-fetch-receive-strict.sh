@@ -100,11 +100,8 @@ test_expect_success 'push with receive.fsckobjects' '
 		git config receive.fsckobjects true &&
 		git config transfer.fsckobjects false
 	) &&
-	test_must_fail ok=sigpipe git push --porcelain dst master:refs/heads/test >act &&
-	{
-		test_cmp exp act ||
-		! test -s act
-	}
+	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_cmp exp act
 '
 
 test_expect_success 'push with transfer.fsckobjects' '
@@ -114,11 +111,12 @@ test_expect_success 'push with transfer.fsckobjects' '
 		cd dst &&
 		git config transfer.fsckobjects true
 	) &&
-	test_must_fail ok=sigpipe git push --porcelain dst master:refs/heads/test >act
+	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_cmp exp act
 '
 
-cat >bogus-commit <<\EOF
-tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904
+cat >bogus-commit <<EOF
+tree $EMPTY_TREE
 author Bugs Bunny 1234567890 +0000
 committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
 

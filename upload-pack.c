@@ -14,8 +14,12 @@
 #include "sigchain.h"
 #include "version.h"
 #include "string-list.h"
+#include "parse-options.h"
 
-static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<n>] <dir>";
+static const char * const upload_pack_usage[] = {
+	N_("git upload-pack [<options>] <dir>"),
+	NULL
+};
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -52,26 +56,28 @@ static int keepalive = 5;
 static int use_sideband;
 static int advertise_refs;
 static int stateless_rpc;
+static const char *pack_objects_hook;
 
 static void reset_timeout(void)
 {
 	alarm(timeout);
 }
 
-static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
+static void send_client_data(int fd, const char *data, ssize_t sz)
 {
-	if (use_sideband)
-		return send_sideband(1, fd, data, sz, use_sideband);
+	if (use_sideband) {
+		send_sideband(1, fd, data, sz, use_sideband);
+		return;
+	}
 	if (fd == 3)
 		/* emergency quit */
 		fd = 2;
 	if (fd == 2) {
 		/* XXX: are we happy to lose stuff here? */
 		xwrite(fd, data, sz);
-		return sz;
+		return;
 	}
 	write_or_die(fd, data, sz);
-	return sz;
 }
 
 static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
@@ -90,35 +96,39 @@ static void create_pack_file(void)
 		"corruption on the remote side.";
 	int buffered = -1;
 	ssize_t sz;
-	const char *argv[13];
-	int i, arg = 0;
+	int i;
 	FILE *pipe_fd;
 
-	if (shallow_nr) {
-		argv[arg++] = "--shallow-file";
-		argv[arg++] = "";
+	if (!pack_objects_hook)
+		pack_objects.git_cmd = 1;
+	else {
+		argv_array_push(&pack_objects.args, pack_objects_hook);
+		argv_array_push(&pack_objects.args, "git");
+		pack_objects.use_shell = 1;
 	}
-	argv[arg++] = "pack-objects";
-	argv[arg++] = "--revs";
-	if (use_thin_pack)
-		argv[arg++] = "--thin";
 
-	argv[arg++] = "--stdout";
+	if (shallow_nr) {
+		argv_array_push(&pack_objects.args, "--shallow-file");
+		argv_array_push(&pack_objects.args, "");
+	}
+	argv_array_push(&pack_objects.args, "pack-objects");
+	argv_array_push(&pack_objects.args, "--revs");
+	if (use_thin_pack)
+		argv_array_push(&pack_objects.args, "--thin");
+
+	argv_array_push(&pack_objects.args, "--stdout");
 	if (shallow_nr)
-		argv[arg++] = "--shallow";
+		argv_array_push(&pack_objects.args, "--shallow");
 	if (!no_progress)
-		argv[arg++] = "--progress";
+		argv_array_push(&pack_objects.args, "--progress");
 	if (use_ofs_delta)
-		argv[arg++] = "--delta-base-offset";
+		argv_array_push(&pack_objects.args, "--delta-base-offset");
 	if (use_include_tag)
-		argv[arg++] = "--include-tag";
-	argv[arg++] = NULL;
+		argv_array_push(&pack_objects.args, "--include-tag");
 
 	pack_objects.in = -1;
 	pack_objects.out = -1;
 	pack_objects.err = -1;
-	pack_objects.git_cmd = 1;
-	pack_objects.argv = argv;
 
 	if (start_command(&pack_objects))
 		die("git upload-pack: unable to fork git-pack-objects");
@@ -177,8 +187,7 @@ static void create_pack_file(void)
 
 		if (ret < 0) {
 			if (errno != EINTR) {
-				error("poll failed, resuming: %s",
-				      strerror(errno));
+				error_errno("poll failed, resuming");
 				sleep(1);
 			}
 			continue;
@@ -233,9 +242,7 @@ static void create_pack_file(void)
 			}
 			else
 				buffered = -1;
-			sz = send_client_data(1, data, sz);
-			if (sz < 0)
-				goto fail;
+			send_client_data(1, data, sz);
 		}
 
 		/*
@@ -262,9 +269,7 @@ static void create_pack_file(void)
 	/* flush the data */
 	if (0 <= buffered) {
 		data[0] = buffered;
-		sz = send_client_data(1, data, 1);
-		if (sz < 0)
-			goto fail;
+		send_client_data(1, data, 1);
 		fprintf(stderr, "flushed.\n");
 	}
 	if (use_sideband)
@@ -816,56 +821,43 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 		keepalive = git_config_int(var, value);
 		if (!keepalive)
 			keepalive = -1;
+	} else if (current_config_scope() != CONFIG_SCOPE_REPO) {
+		if (!strcmp("uploadpack.packobjectshook", var))
+			return git_config_string(&pack_objects_hook, var, value);
 	}
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
-	char *dir;
-	int i;
+	const char *dir;
 	int strict = 0;
-
-	git_setup_gettext();
+	struct option options[] = {
+		OPT_BOOL(0, "stateless-rpc", &stateless_rpc,
+			 N_("quit after a single request/response exchange")),
+		OPT_BOOL(0, "advertise-refs", &advertise_refs,
+			 N_("exit immediately after initial ref advertisement")),
+		OPT_BOOL(0, "strict", &strict,
+			 N_("do not try <directory>/.git/ if <directory> is no Git directory")),
+		OPT_INTEGER(0, "timeout", &timeout,
+			    N_("interrupt transfer after <n> seconds of inactivity")),
+		OPT_END()
+	};
 
 	packet_trace_identity("upload-pack");
-	git_extract_argv0_path(argv[0]);
 	check_replace_refs = 0;
 
-	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
+	argc = parse_options(argc, argv, NULL, options, upload_pack_usage, 0);
 
-		if (arg[0] != '-')
-			break;
-		if (!strcmp(arg, "--advertise-refs")) {
-			advertise_refs = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--stateless-rpc")) {
-			stateless_rpc = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--strict")) {
-			strict = 1;
-			continue;
-		}
-		if (starts_with(arg, "--timeout=")) {
-			timeout = atoi(arg+10);
-			daemon_mode = 1;
-			continue;
-		}
-		if (!strcmp(arg, "--")) {
-			i++;
-			break;
-		}
-	}
+	if (argc != 1)
+		usage_with_options(upload_pack_usage, options);
 
-	if (i != argc-1)
-		usage(upload_pack_usage);
+	if (timeout)
+		daemon_mode = 1;
 
 	setup_path();
 
-	dir = argv[i];
+	dir = argv[0];
 
 	if (!enter_repo(dir, strict))
 		die("'%s' does not appear to be a git repository", dir);

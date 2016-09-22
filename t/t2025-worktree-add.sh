@@ -4,6 +4,8 @@ test_description='test git worktree add'
 
 . ./test-lib.sh
 
+. "$TEST_DIRECTORY"/lib-rebase.sh
+
 test_expect_success 'setup' '
 	test_commit init
 '
@@ -16,6 +18,22 @@ test_expect_success '"add" an existing worktree' '
 test_expect_success '"add" an existing empty worktree' '
 	mkdir existing_empty &&
 	git worktree add --detach existing_empty master
+'
+
+test_expect_success '"add" using shorthand - fails when no previous branch' '
+	test_must_fail git worktree add existing_short -
+'
+
+test_expect_success '"add" using - shorthand' '
+	git checkout -b newbranch &&
+	echo hello >myworld &&
+	git add myworld &&
+	git commit -m myworld &&
+	git checkout master &&
+	git worktree add short-hand - &&
+	echo refs/heads/newbranch >expect &&
+	git -C short-hand rev-parse --symbolic-full-name HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '"add" refuses to checkout locked branch' '
@@ -211,6 +229,75 @@ test_expect_success 'add -B' '
 test_expect_success 'local clone from linked checkout' '
 	git clone --local here here-clone &&
 	( cd here-clone && git fsck )
+'
+
+test_expect_success '"add" worktree with --no-checkout' '
+	git worktree add --no-checkout -b swamp swamp &&
+	! test -e swamp/init.t &&
+	git -C swamp reset --hard &&
+	test_cmp init.t swamp/init.t
+'
+
+test_expect_success '"add" worktree with --checkout' '
+	git worktree add --checkout -b swmap2 swamp2 &&
+	test_cmp init.t swamp2/init.t
+'
+
+test_expect_success 'put a worktree under rebase' '
+	git worktree add under-rebase &&
+	(
+		cd under-rebase &&
+		set_fake_editor &&
+		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+		git worktree list | grep "under-rebase.*detached HEAD"
+	)
+'
+
+test_expect_success 'add a worktree, checking out a rebased branch' '
+	test_must_fail git worktree add new-rebase under-rebase &&
+	! test -d new-rebase
+'
+
+test_expect_success 'checking out a rebased branch from another worktree' '
+	git worktree add new-place &&
+	test_must_fail git -C new-place checkout under-rebase
+'
+
+test_expect_success 'not allow to delete a branch under rebase' '
+	(
+		cd under-rebase &&
+		test_must_fail git branch -D under-rebase
+	)
+'
+
+test_expect_success 'rename a branch under rebase not allowed' '
+	test_must_fail git branch -M under-rebase rebase-with-new-name
+'
+
+test_expect_success 'check out from current worktree branch ok' '
+	(
+		cd under-rebase &&
+		git checkout under-rebase &&
+		git checkout - &&
+		git rebase --abort
+	)
+'
+
+test_expect_success 'checkout a branch under bisect' '
+	git worktree add under-bisect &&
+	(
+		cd under-bisect &&
+		git bisect start &&
+		git bisect bad &&
+		git bisect good HEAD~2 &&
+		git worktree list | grep "under-bisect.*detached HEAD" &&
+		test_must_fail git worktree add new-bisect under-bisect &&
+		! test -d new-bisect
+	)
+'
+
+test_expect_success 'rename a branch under bisect not allowed' '
+	test_must_fail git branch -M under-bisect bisect-with-new-name
 '
 
 test_done

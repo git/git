@@ -13,7 +13,7 @@ struct merge_options {
 		MERGE_RECURSIVE_THEIRS
 	} recursive_variant;
 	const char *subtree_shift;
-	unsigned buffer_output : 1;
+	unsigned buffer_output; /* 1: output at end, 2: keep buffered */
 	unsigned renormalize : 1;
 	long xdl_opts;
 	int verbosity;
@@ -49,10 +49,10 @@ int merge_trees(struct merge_options *o,
  * virtual commits and call merge_recursive() proper.
  */
 int merge_recursive_generic(struct merge_options *o,
-			    const unsigned char *head,
-			    const unsigned char *merge,
+			    const struct object_id *head,
+			    const struct object_id *merge,
 			    int num_ca,
-			    const unsigned char **ca,
+			    const struct object_id **ca,
 			    struct commit **result);
 
 void init_merge_options(struct merge_options *o);

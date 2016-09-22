@@ -85,6 +85,15 @@ test_expect_success 'rebase -Xtheirs' '
 	! grep 11 original
 '
 
+test_expect_success 'rebase -Xtheirs from orphan' '
+	git checkout --orphan orphan-conflicting master~2 &&
+	echo "AB $T" >> original &&
+	git commit -morphan-conflicting original &&
+	git rebase -Xtheirs master &&
+	grep AB original &&
+	! grep 11 original
+'
+
 test_expect_success 'merge and rebase should match' '
 	git diff-tree -r test-rebase test-merge >difference &&
 	if test -s difference

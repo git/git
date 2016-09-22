@@ -75,14 +75,12 @@ static int add_mailname_host(struct strbuf *buf)
 	mailname = fopen("/etc/mailname", "r");
 	if (!mailname) {
 		if (errno != ENOENT)
-			warning("cannot open /etc/mailname: %s",
-				strerror(errno));
+			warning_errno("cannot open /etc/mailname");
 		return -1;
 	}
 	if (strbuf_getline(&mailnamebuf, mailname) == EOF) {
 		if (ferror(mailname))
-			warning("cannot read /etc/mailname: %s",
-				strerror(errno));
+			warning_errno("cannot read /etc/mailname");
 		strbuf_release(&mailnamebuf);
 		fclose(mailname);
 		return -1;
@@ -125,7 +123,7 @@ static void add_domainname(struct strbuf *out, int *is_bogus)
 	char buf[1024];
 
 	if (gethostname(buf, sizeof(buf))) {
-		warning("cannot get host name: %s", strerror(errno));
+		warning_errno("cannot get host name");
 		strbuf_addstr(out, "(none)");
 		*is_bogus = 1;
 		return;
@@ -184,6 +182,11 @@ static const char *ident_default_date(void)
 	if (!git_default_date.len)
 		datestamp(&git_default_date);
 	return git_default_date.buf;
+}
+
+void reset_ident_date(void)
+{
+	strbuf_reset(&git_default_date);
 }
 
 static int crud(unsigned char c)
@@ -351,15 +354,17 @@ const char *fmt_ident(const char *name, const char *email,
 	if (want_name) {
 		int using_default = 0;
 		if (!name) {
+			if (strict && ident_use_config_only
+			    && !(ident_config_given & IDENT_NAME_GIVEN)) {
+				fputs(env_hint, stderr);
+				die("no name was given and auto-detection is disabled");
+			}
 			name = ident_default_name();
 			using_default = 1;
 			if (strict && default_name_is_bogus) {
 				fputs(env_hint, stderr);
 				die("unable to auto-detect name (got '%s')", name);
 			}
-			if (strict && ident_use_config_only
-			    && !(ident_config_given & IDENT_NAME_GIVEN))
-				die("user.useConfigOnly set but no name given");
 		}
 		if (!*name) {
 			struct passwd *pw;
@@ -374,14 +379,16 @@ const char *fmt_ident(const char *name, const char *email,
 	}
 
 	if (!email) {
+		if (strict && ident_use_config_only
+		    && !(ident_config_given & IDENT_MAIL_GIVEN)) {
+			fputs(env_hint, stderr);
+			die("no email was given and auto-detection is disabled");
+		}
 		email = ident_default_email();
 		if (strict && default_email_is_bogus) {
 			fputs(env_hint, stderr);
 			die("unable to auto-detect email address (got '%s')", email);
 		}
-		if (strict && ident_use_config_only
-		    && !(ident_config_given & IDENT_MAIL_GIVEN))
-			die("user.useConfigOnly set but no mail given");
 	}
 
 	strbuf_reset(&ident);

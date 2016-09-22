@@ -104,6 +104,11 @@ If `free_entries` is true, each hashmap_entry in the map is freed as well
 `entry` points to the entry to initialize.
 +
 `hash` is the hash code of the entry.
++
+The hashmap_entry structure does not hold references to external resources,
+and it is safe to just discard it once you are done with it (i.e. if
+your structure was allocated with xmalloc(), you can just free(3) it,
+and if it is on stack, you can just let it go out of scope).
 
 `void *hashmap_get(const struct hashmap *map, const void *key, const void *keydata)`::
 

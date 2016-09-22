@@ -131,10 +131,16 @@ enum cmit_fmt {
 	CMIT_FMT_FULLER,
 	CMIT_FMT_ONELINE,
 	CMIT_FMT_EMAIL,
+	CMIT_FMT_MBOXRD,
 	CMIT_FMT_USERFORMAT,
 
 	CMIT_FMT_UNSPECIFIED
 };
+
+static inline int cmit_fmt_is_mail(enum cmit_fmt fmt)
+{
+	return (fmt == CMIT_FMT_EMAIL || fmt == CMIT_FMT_MBOXRD);
+}
 
 struct pretty_print_context {
 	/*
@@ -147,6 +153,7 @@ struct pretty_print_context {
 	int preserve_subject;
 	struct date_mode date_mode;
 	unsigned date_mode_explicit:1;
+	int expand_tabs_in_log;
 	int need_8bit_cte;
 	char *notes_message;
 	struct reflog_walk_info *reflog_info;
@@ -160,6 +167,7 @@ struct pretty_print_context {
 	 * should not be counted on by callers.
 	 */
 	struct string_list in_body_headers;
+	int graph_width;
 };
 
 struct userformat_want {
@@ -176,6 +184,7 @@ extern const char *format_subject(struct strbuf *sb, const char *msg,
 				  const char *line_separator);
 extern void userformat_find_requirements(const char *fmt, struct userformat_want *w);
 extern int commit_format_is_empty(enum cmit_fmt);
+extern const char *skip_blank_lines(const char *msg);
 extern void format_commit_message(const struct commit *commit,
 				  const char *format, struct strbuf *sb,
 				  const struct pretty_print_context *context);
@@ -353,9 +362,11 @@ extern void for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *
 
 struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */
-	const char *name;
+	char name[FLEX_ARRAY];
 };
 #define merge_remote_util(commit) ((struct merge_remote_desc *)((commit)->util))
+extern void set_merge_remote_desc(struct commit *commit,
+				  const char *name, struct object *obj);
 
 /*
  * Given "name" from the command line to merge, find the commit object
@@ -367,10 +378,6 @@ struct commit *get_merge_parent(const char *name);
 extern int parse_signed_commit(const struct commit *commit,
 			       struct strbuf *message, struct strbuf *signature);
 extern int remove_signature(struct strbuf *buf);
-
-extern void print_commit_list(struct commit_list *list,
-			      const char *format_cur,
-			      const char *format_last);
 
 /*
  * Check the signature of the given commit. The result of the check is stored

@@ -74,6 +74,8 @@ static int local_tzoffset(unsigned long time)
 	localtime_r(&t, &tm);
 	t_local = tm_to_time_t(&tm);
 
+	if (t_local == -1)
+		return 0; /* error; just use +0000 */
 	if (t_local < t) {
 		eastwest = -1;
 		offset = t - t_local;
@@ -174,6 +176,12 @@ const char *show_date(unsigned long time, int tz, const struct date_mode *mode)
 {
 	struct tm *tm;
 	static struct strbuf timebuf = STRBUF_INIT;
+
+	if (mode->type == DATE_UNIX) {
+		strbuf_reset(&timebuf);
+		strbuf_addf(&timebuf, "%lu", time);
+		return timebuf.buf;
+	}
 
 	if (mode->local)
 		tz = local_tzoffset(time);
@@ -790,6 +798,8 @@ static enum date_mode_type parse_date_type(const char *format, const char **end)
 		return DATE_NORMAL;
 	if (skip_prefix(format, "raw", end))
 		return DATE_RAW;
+	if (skip_prefix(format, "unix", end))
+		return DATE_UNIX;
 	if (skip_prefix(format, "format", end))
 		return DATE_STRFTIME;
 

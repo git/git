@@ -263,11 +263,7 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s)
 /**
  * Copy the contents of another buffer at the end of the current one.
  */
-static inline void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2)
-{
-	strbuf_grow(sb, sb2->len);
-	strbuf_add(sb, sb2->buf, sb2->len);
-}
+extern void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2);
 
 /**
  * Copy part of the buffer from a given position till a given length to the
@@ -377,6 +373,8 @@ extern ssize_t strbuf_read_once(struct strbuf *, int fd, size_t hint);
 /**
  * Read the contents of a file, specified by its path. The third argument
  * can be used to give a hint about the file size, to avoid reallocs.
+ * Return the number of bytes read or a negative value if some error
+ * occurred while opening or reading the file.
  */
 extern ssize_t strbuf_read_file(struct strbuf *sb, const char *path, size_t hint);
 
@@ -385,6 +383,12 @@ extern ssize_t strbuf_read_file(struct strbuf *sb, const char *path, size_t hint
  * argument can be used to give a hint about the size, to avoid reallocs.
  */
 extern int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
+
+/**
+ * Write the whole content of the strbuf to the stream not stopping at
+ * NUL bytes.
+ */
+extern ssize_t strbuf_write(struct strbuf *sb, FILE *stream);
 
 /**
  * Read a line from a FILE *, overwriting the existing contents of

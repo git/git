@@ -172,4 +172,45 @@ test_expect_success POSIXPERM 'forced modes' '
 	}" actual)"
 '
 
+test_expect_success POSIXPERM 'remote init does not use config from cwd' '
+	git config core.sharedrepository 0666 &&
+	umask 0022 &&
+	git init --bare child.git &&
+	echo "-rw-r--r--" >expect &&
+	modebits child.git/config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success POSIXPERM 're-init respects core.sharedrepository (local)' '
+	git config core.sharedrepository 0666 &&
+	umask 0022 &&
+	echo whatever >templates/foo &&
+	git init --template=templates &&
+	echo "-rw-rw-rw-" >expect &&
+	modebits .git/foo >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success POSIXPERM 're-init respects core.sharedrepository (remote)' '
+	rm -rf child.git &&
+	umask 0022 &&
+	git init --bare --shared=0666 child.git &&
+	test_path_is_missing child.git/foo &&
+	git init --bare --template=../templates child.git &&
+	echo "-rw-rw-rw-" >expect &&
+	modebits child.git/foo >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success POSIXPERM 'template can set core.sharedrepository' '
+	rm -rf child.git &&
+	umask 0022 &&
+	git config core.sharedrepository 0666 &&
+	cp .git/config templates/config &&
+	git init --bare --template=../templates child.git &&
+	echo "-rw-rw-rw-" >expect &&
+	modebits child.git/HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done

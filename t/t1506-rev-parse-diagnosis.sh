@@ -106,7 +106,7 @@ test_expect_success 'incorrect revision id' '
 	test_must_fail git rev-parse foobar:file.txt 2>error &&
 	grep "Invalid object name '"'"'foobar'"'"'." error &&
 	test_must_fail git rev-parse foobar 2> error &&
-	grep "unknown revision or path not in the working tree." error
+	test_i18ngrep "unknown revision or path not in the working tree." error
 '
 
 test_expect_success 'incorrect file in sha1:path' '
@@ -164,11 +164,6 @@ test_expect_success 'relative path when cwd is outside worktree' '
 	test_must_fail git --git-dir=.git --work-tree=subdir rev-parse HEAD:./file.txt >output 2>error &&
 	test -z "$(cat output)" &&
 	grep "relative path syntax can.t be used outside working tree." error
-'
-
-test_expect_success 'relative path when startup_info is NULL' '
-	test_must_fail test-match-trees HEAD:./file.txt HEAD:./file.txt 2>error &&
-	grep "BUG: startup_info struct is not initialized." error
 '
 
 test_expect_success '<commit>:file correctly diagnosed after a pathname' '

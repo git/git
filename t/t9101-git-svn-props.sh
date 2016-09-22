@@ -73,11 +73,11 @@ test_expect_success 'fetch revisions from svn' 'git svn fetch'
 
 name='test svn:keywords ignoring'
 test_expect_success "$name" \
-	'git checkout -b mybranch ${remotes_git_svn} &&
+	'git checkout -b mybranch remotes/git-svn &&
 	echo Hi again >> kw.c &&
 	git commit -a -m "test keywords ignoring" &&
-	git svn set-tree ${remotes_git_svn}..mybranch &&
-	git pull . ${remotes_git_svn}'
+	git svn set-tree remotes/git-svn..mybranch &&
+	git pull . remotes/git-svn'
 
 expect='/* $Id$ */'
 got="$(sed -ne 2p kw.c)"
@@ -95,7 +95,7 @@ test_expect_success "propset CR on crlf files" '
 
 test_expect_success 'fetch and pull latest from svn and checkout a new wc' \
 	'git svn fetch &&
-	 git pull . ${remotes_git_svn} &&
+	 git pull . remotes/git-svn &&
 	 svn_cmd co "$svnrepo" new_wc'
 
 for i in crlf ne_crlf lf ne_lf cr ne_cr empty_cr empty_lf empty empty_crlf
@@ -117,7 +117,7 @@ cd test_wc
 	 svn_cmd commit -m "propset CRLF on cr files"'
 cd ..
 test_expect_success 'fetch and pull latest from svn' \
-	'git svn fetch && git pull . ${remotes_git_svn}'
+	'git svn fetch && git pull . remotes/git-svn'
 
 b_cr="$(git hash-object cr)"
 b_ne_cr="$(git hash-object ne_cr)"
@@ -168,7 +168,7 @@ cat >create-ignore-index.expect <<\EOF
 EOF
 
 test_expect_success 'test create-ignore' "
-	git svn fetch && git pull . ${remotes_git_svn} &&
+	git svn fetch && git pull . remotes/git-svn &&
 	git svn create-ignore &&
 	cmp ./.gitignore create-ignore.expect &&
 	cmp ./deeply/.gitignore create-ignore.expect &&

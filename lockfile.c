@@ -149,13 +149,15 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 void unable_to_lock_message(const char *path, int err, struct strbuf *buf)
 {
 	if (err == EEXIST) {
-		strbuf_addf(buf, "Unable to create '%s.lock': %s.\n\n"
-		    "If no other git process is currently running, this probably means a\n"
-		    "git process crashed in this repository earlier. Make sure no other git\n"
-		    "process is running and remove the file manually to continue.",
+		strbuf_addf(buf, _("Unable to create '%s.lock': %s.\n\n"
+		    "Another git process seems to be running in this repository, e.g.\n"
+		    "an editor opened by 'git commit'. Please make sure all processes\n"
+		    "are terminated then try again. If it still fails, a git process\n"
+		    "may have crashed in this repository earlier:\n"
+		    "remove the file manually to continue."),
 			    absolute_path(path), strerror(err));
 	} else
-		strbuf_addf(buf, "Unable to create '%s.lock': %s",
+		strbuf_addf(buf, _("Unable to create '%s.lock': %s"),
 			    absolute_path(path), strerror(err));
 }
 

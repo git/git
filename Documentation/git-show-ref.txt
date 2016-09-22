@@ -60,7 +60,7 @@ OPTIONS
 
 	Enable stricter reference checking by requiring an exact ref path.
 	Aside from returning an error code of 1, it will also print an error
-	message if '--quiet' was not specified.
+	message if `--quiet` was not specified.
 
 --abbrev[=<n>]::
 
@@ -70,7 +70,7 @@ OPTIONS
 -q::
 --quiet::
 
-	Do not print any results to stdout. When combined with '--verify' this
+	Do not print any results to stdout. When combined with `--verify` this
 	can be used to silently check if a reference exists.
 
 --exclude-existing[=<pattern>]::
@@ -134,7 +134,7 @@ use:
 This will show "refs/heads/master" but also "refs/remote/other-repo/master",
 if such references exists.
 
-When using the '--verify' flag, the command requires an exact path:
+When using the `--verify` flag, the command requires an exact path:
 
 -----------------------------------------------------------------------------
 	git show-ref --verify refs/heads/master

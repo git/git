@@ -38,7 +38,7 @@ precedence, the last matching pattern decides the outcome):
  * Patterns read from `$GIT_DIR/info/exclude`.
 
  * Patterns read from the file specified by the configuration
-   variable 'core.excludesFile'.
+   variable `core.excludesFile`.
 
 Which file to place a pattern in depends on how the pattern is meant to
 be used.

@@ -284,7 +284,7 @@ static int do_command(struct strbuf *line)
 	return 0;
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT, url_sb = STRBUF_INIT,
 			private_ref_sb = STRBUF_INIT, marksfilename_sb = STRBUF_INIT,
@@ -292,7 +292,6 @@ int main(int argc, char **argv)
 	static struct remote *remote;
 	const char *url_in;
 
-	git_extract_argv0_path(argv[0]);
 	setup_git_directory();
 	if (argc < 2 || argc > 3) {
 		usage("git-remote-svn <remote-name> [<url>]");

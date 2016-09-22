@@ -15,7 +15,6 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_SPEC=
 START_DIR=$(pwd)
 . git-sh-setup
-. git-sh-i18n
 require_work_tree
 cd_to_toplevel
 
@@ -185,7 +184,7 @@ store_stash () {
 
 	git update-ref --create-reflog -m "$stash_msg" $ref_stash $w_commit
 	ret=$?
-	test $ret != 0 && test -z $quiet &&
+	test $ret != 0 && test -z "$quiet" &&
 	die "$(eval_gettext "Cannot update \$ref_stash with \$w_commit")"
 	return $ret
 }
@@ -266,7 +265,7 @@ save_stash () {
 	create_stash "$stash_msg" $untracked
 	store_stash -m "$stash_msg" -q $w_commit ||
 	die "$(gettext "Cannot save the current status")"
-	say Saved working directory and index state "$stash_msg"
+	say "$(eval_gettext "Saved working directory and index state \$stash_msg")"
 
 	if test -z "$patch_mode"
 	then
@@ -277,7 +276,7 @@ save_stash () {
 			git clean --force --quiet -d $CLEAN_X_OPTION
 		fi
 
-		if test "$keep_index" = "t" && test -n $i_tree
+		if test "$keep_index" = "t" && test -n "$i_tree"
 		then
 			git read-tree --reset -u $i_tree
 		fi
@@ -549,7 +548,7 @@ pop_stash() {
 		drop_stash "$@"
 	else
 		status=$?
-		say "The stash is kept in case you need it again."
+		say "$(gettext "The stash is kept in case you need it again.")"
 		exit $status
 	fi
 }

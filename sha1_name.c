@@ -995,35 +995,35 @@ static int interpret_nth_prior_checkout(const char *name, int namelen,
 	return retval;
 }
 
-int get_sha1_mb(const char *name, unsigned char *sha1)
+int get_oid_mb(const char *name, struct object_id *oid)
 {
 	struct commit *one, *two;
 	struct commit_list *mbs;
-	unsigned char sha1_tmp[20];
+	struct object_id oid_tmp;
 	const char *dots;
 	int st;
 
 	dots = strstr(name, "...");
 	if (!dots)
-		return get_sha1(name, sha1);
+		return get_oid(name, oid);
 	if (dots == name)
-		st = get_sha1("HEAD", sha1_tmp);
+		st = get_oid("HEAD", &oid_tmp);
 	else {
 		struct strbuf sb;
 		strbuf_init(&sb, dots - name);
 		strbuf_add(&sb, name, dots - name);
-		st = get_sha1_committish(sb.buf, sha1_tmp);
+		st = get_sha1_committish(sb.buf, oid_tmp.hash);
 		strbuf_release(&sb);
 	}
 	if (st)
 		return st;
-	one = lookup_commit_reference_gently(sha1_tmp, 0);
+	one = lookup_commit_reference_gently(oid_tmp.hash, 0);
 	if (!one)
 		return -1;
 
-	if (get_sha1_committish(dots[3] ? (dots + 3) : "HEAD", sha1_tmp))
+	if (get_sha1_committish(dots[3] ? (dots + 3) : "HEAD", oid_tmp.hash))
 		return -1;
-	two = lookup_commit_reference_gently(sha1_tmp, 0);
+	two = lookup_commit_reference_gently(oid_tmp.hash, 0);
 	if (!two)
 		return -1;
 	mbs = get_merge_bases(one, two);
@@ -1031,7 +1031,7 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 		st = -1;
 	else {
 		st = 0;
-		hashcpy(sha1, mbs->item->object.oid.hash);
+		oidcpy(oid, &mbs->item->object.oid);
 	}
 	free_commit_list(mbs);
 	return st;
@@ -1215,6 +1215,15 @@ int get_sha1(const char *name, unsigned char *sha1)
 }
 
 /*
+ * This is like "get_sha1()", but for struct object_id.
+ */
+int get_oid(const char *name, struct object_id *oid)
+{
+	return get_sha1(name, oid->hash);
+}
+
+
+/*
  * Many callers know that the user meant to name a commit-ish by
  * syntactical positions where the object name appears.  Calling this
  * function allows the machinery to disambiguate shorter-than-unique
@@ -1353,9 +1362,6 @@ static char *resolve_relative_path(const char *rel)
 	if (!starts_with(rel, "./") && !starts_with(rel, "../"))
 		return NULL;
 
-	if (!startup_info)
-		die("BUG: startup_info struct is not initialized.");
-
 	if (!is_inside_work_tree())
 		die("relative path syntax can't be used outside working tree.");
 
@@ -1429,7 +1435,7 @@ static int get_sha1_with_context_1(const char *name,
 			    memcmp(ce->name, cp, namelen))
 				break;
 			if (ce_stage(ce) == stage) {
-				hashcpy(sha1, ce->sha1);
+				hashcpy(sha1, ce->oid.hash);
 				oc->mode = ce->ce_mode;
 				free(new_path);
 				return 0;

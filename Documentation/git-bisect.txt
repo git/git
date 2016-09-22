@@ -205,7 +205,7 @@ $ git bisect visualize
 
 `view` may also be used as a synonym for `visualize`.
 
-If the 'DISPLAY' environment variable is not set, 'git log' is used
+If the `DISPLAY` environment variable is not set, 'git log' is used
 instead.  You can also give command-line options such as `-p` and
 `--stat`.
 
@@ -358,7 +358,7 @@ OPTIONS
 --no-checkout::
 +
 Do not checkout the new working tree at each iteration of the bisection
-process. Instead just update a special reference named 'BISECT_HEAD' to make
+process. Instead just update a special reference named `BISECT_HEAD` to make
 it point to the commit that should be tested.
 +
 This option may be useful when the test you would perform in each step

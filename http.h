@@ -106,6 +106,7 @@ extern void step_active_slots(void);
 extern void http_init(struct remote *remote, const char *url,
 		      int proactive_auth);
 extern void http_cleanup(void);
+extern struct curl_slist *http_copy_default_headers(void);
 
 extern long int git_curl_ipresolve;
 extern int active_requests;
@@ -224,4 +225,6 @@ extern int finish_http_object_request(struct http_object_request *freq);
 extern void abort_http_object_request(struct http_object_request *freq);
 extern void release_http_object_request(struct http_object_request *freq);
 
+/* setup routine for curl_easy_setopt CURLOPT_DEBUGFUNCTION */
+void setup_curl_trace(CURL *handle);
 #endif /* HTTP_H */

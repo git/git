@@ -49,11 +49,53 @@ test_expect_success "setup" '
 test_expect_success "setup case mac" '
 	git checkout -b mac_os
 '
+# This will test nfd2nfc in git diff
+test_expect_success "git diff f.Adiar" '
+	touch f.$Adiarnfc &&
+	git add f.$Adiarnfc &&
+	echo f.Adiarnfc >f.$Adiarnfc &&
+	git diff f.$Adiarnfd >expect &&
+	git diff f.$Adiarnfc >actual &&
+	test_cmp expect actual &&
+	git reset HEAD f.Adiarnfc &&
+	rm f.$Adiarnfc expect actual
+'
+# This will test nfd2nfc in git diff-files
+test_expect_success "git diff-files f.Adiar" '
+	touch f.$Adiarnfc &&
+	git add f.$Adiarnfc &&
+	echo f.Adiarnfc >f.$Adiarnfc &&
+	git diff-files f.$Adiarnfd >expect &&
+	git diff-files f.$Adiarnfc >actual &&
+	test_cmp expect actual &&
+	git reset HEAD f.Adiarnfc &&
+	rm f.$Adiarnfc expect actual
+'
+# This will test nfd2nfc in git diff-index
+test_expect_success "git diff-index f.Adiar" '
+	touch f.$Adiarnfc &&
+	git add f.$Adiarnfc &&
+	echo f.Adiarnfc >f.$Adiarnfc &&
+	git diff-index HEAD f.$Adiarnfd >expect &&
+	git diff-index HEAD f.$Adiarnfc >actual &&
+	test_cmp expect actual &&
+	git reset HEAD f.Adiarnfc &&
+	rm f.$Adiarnfc expect actual
+'
 # This will test nfd2nfc in readdir()
 test_expect_success "add file Adiarnfc" '
 	echo f.Adiarnfc >f.$Adiarnfc &&
 	git add f.$Adiarnfc &&
 	git commit -m "add f.$Adiarnfc"
+'
+# This will test nfd2nfc in git diff-tree
+test_expect_success "git diff-tree f.Adiar" '
+	echo f.Adiarnfc >>f.$Adiarnfc &&
+	git diff-tree HEAD f.$Adiarnfd >expect &&
+	git diff-tree HEAD f.$Adiarnfc >actual &&
+	test_cmp expect actual &&
+	git checkout f.$Adiarnfc &&
+	rm expect actual
 '
 # This will test nfd2nfc in git stage()
 test_expect_success "stage file d.Adiarnfd/f.Adiarnfd" '

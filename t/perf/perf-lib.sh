@@ -52,6 +52,9 @@ TEST_NO_MALLOC_CHECK=t
 # need to export them for test_perf subshells
 export TEST_DIRECTORY TRASH_DIRECTORY GIT_BUILD_DIR GIT_TEST_CMP
 
+MODERN_GIT=$GIT_BUILD_DIR/bin-wrappers/git
+export MODERN_GIT
+
 perf_results_dir=$TEST_OUTPUT_DIRECTORY/test-results
 mkdir -p "$perf_results_dir"
 rm -f "$perf_results_dir"/$(basename "$0" .sh).subtests
@@ -80,23 +83,29 @@ test_perf_create_repo_from () {
 	error "bug in the test script: not 2 parameters to test-create-repo"
 	repo="$1"
 	source="$2"
-	source_git=$source/$(cd "$source" && git rev-parse --git-dir)
+	source_git="$(git -C "$source" rev-parse --git-dir)"
+	objects_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-path objects)"
 	mkdir -p "$repo/.git"
 	(
-		cd "$repo/.git" &&
-		{ cp -Rl "$source_git/objects" . 2>/dev/null ||
-			cp -R "$source_git/objects" .; } &&
+		cd "$source" &&
+		{ cp -Rl "$objects_dir" "$repo/.git/" 2>/dev/null ||
+			cp -R "$objects_dir" "$repo/.git/"; } &&
 		for stuff in "$source_git"/*; do
 			case "$stuff" in
-				*/objects|*/hooks|*/config)
+				*/objects|*/hooks|*/config|*/commondir)
 					;;
 				*)
-					cp -R "$stuff" . || exit 1
+					cp -R "$stuff" "$repo/.git/" || exit 1
 					;;
 			esac
-		done &&
-		cd .. &&
-		git init -q &&
+		done
+	) &&
+	(
+		cd "$repo" &&
+		git init -q && {
+			test_have_prereq SYMLINKS ||
+			git config core.symlinks false
+		} &&
 		mv .git/hooks .git/hooks-disabled 2>/dev/null
 	) || error "failed to copy repository '$source' to '$repo'"
 }
@@ -121,11 +130,15 @@ test_checkout_worktree () {
 # Performance tests should never fail.  If they do, stop immediately
 immediate=t
 
+# Perf tests require GNU time
+case "$(uname -s)" in Darwin) GTIME="${GTIME:-gtime}";; esac
+GTIME="${GTIME:-/usr/bin/time}"
+
 test_run_perf_ () {
 	test_cleanup=:
 	test_export_="test_cleanup"
 	export test_cleanup test_export_
-	/usr/bin/time -f "%E %U %S" -o test_time.$i "$SHELL" -c '
+	"$GTIME" -f "%E %U %S" -o test_time.$i "$SHELL" -c '
 . '"$TEST_DIRECTORY"/test-lib-functions.sh'
 test_export () {
 	[ $# != 0 ] || return 0

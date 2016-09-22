@@ -9,6 +9,7 @@
 #include "log-tree.h"
 #include "graph.h"
 #include "bisect.h"
+#include "progress.h"
 
 static const char rev_list_usage[] =
 "git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
@@ -49,11 +50,16 @@ static const char rev_list_usage[] =
 "    --bisect-all"
 ;
 
+static struct progress *progress;
+static unsigned progress_counter;
+
 static void finish_commit(struct commit *commit, void *data);
 static void show_commit(struct commit *commit, void *data)
 {
 	struct rev_list_info *info = data;
 	struct rev_info *revs = info->revs;
+
+	display_progress(progress, ++progress_counter);
 
 	if (info->flags & REV_LIST_QUIET) {
 		finish_commit(commit, data);
@@ -116,48 +122,40 @@ static void show_commit(struct commit *commit, void *data)
 		ctx.fmt = revs->commit_format;
 		ctx.output_encoding = get_log_output_encoding();
 		pretty_print_commit(&ctx, commit, &buf);
-		if (revs->graph) {
-			if (buf.len) {
-				if (revs->commit_format != CMIT_FMT_ONELINE)
-					graph_show_oneline(revs->graph);
+		if (buf.len) {
+			if (revs->commit_format != CMIT_FMT_ONELINE)
+				graph_show_oneline(revs->graph);
 
-				graph_show_commit_msg(revs->graph, &buf);
+			graph_show_commit_msg(revs->graph, stdout, &buf);
 
-				/*
-				 * Add a newline after the commit message.
-				 *
-				 * Usually, this newline produces a blank
-				 * padding line between entries, in which case
-				 * we need to add graph padding on this line.
-				 *
-				 * However, the commit message may not end in a
-				 * newline.  In this case the newline simply
-				 * ends the last line of the commit message,
-				 * and we don't need any graph output.  (This
-				 * always happens with CMIT_FMT_ONELINE, and it
-				 * happens with CMIT_FMT_USERFORMAT when the
-				 * format doesn't explicitly end in a newline.)
-				 */
-				if (buf.len && buf.buf[buf.len - 1] == '\n')
-					graph_show_padding(revs->graph);
-				putchar('\n');
-			} else {
-				/*
-				 * If the message buffer is empty, just show
-				 * the rest of the graph output for this
-				 * commit.
-				 */
-				if (graph_show_remainder(revs->graph))
-					putchar('\n');
-				if (revs->commit_format == CMIT_FMT_ONELINE)
-					putchar('\n');
-			}
+			/*
+			 * Add a newline after the commit message.
+			 *
+			 * Usually, this newline produces a blank
+			 * padding line between entries, in which case
+			 * we need to add graph padding on this line.
+			 *
+			 * However, the commit message may not end in a
+			 * newline.  In this case the newline simply
+			 * ends the last line of the commit message,
+			 * and we don't need any graph output.  (This
+			 * always happens with CMIT_FMT_ONELINE, and it
+			 * happens with CMIT_FMT_USERFORMAT when the
+			 * format doesn't explicitly end in a newline.)
+			 */
+			if (buf.len && buf.buf[buf.len - 1] == '\n')
+				graph_show_padding(revs->graph);
+			putchar('\n');
 		} else {
-			if (revs->commit_format != CMIT_FMT_USERFORMAT ||
-			    buf.len) {
-				fwrite(buf.buf, 1, buf.len, stdout);
-				putchar(info->hdr_termination);
-			}
+			/*
+			 * If the message buffer is empty, just show
+			 * the rest of the graph output for this
+			 * commit.
+			 */
+			if (graph_show_remainder(revs->graph))
+				putchar('\n');
+			if (revs->commit_format == CMIT_FMT_ONELINE)
+				putchar('\n');
 		}
 		strbuf_release(&buf);
 	} else {
@@ -190,6 +188,7 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
 	finish_object(obj, name, cb_data);
+	display_progress(progress, ++progress_counter);
 	if (info->flags & REV_LIST_QUIET)
 		return;
 	show_object_with_name(stdout, obj, name);
@@ -276,6 +275,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_show_vars = 0;
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
+	const char *show_progress = NULL;
 
 	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);
@@ -325,6 +325,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			test_bitmap_walk(&revs);
 			return 0;
 		}
+		if (skip_prefix(arg, "--progress=", &arg)) {
+			show_progress = arg;
+			continue;
+		}
 		usage(rev_list_usage);
 
 	}
@@ -355,15 +359,22 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (bisect_list)
 		revs.limited = 1;
 
+	if (show_progress)
+		progress = start_progress_delay(show_progress, 0, 0, 2);
+
 	if (use_bitmap_index && !revs.prune) {
 		if (revs.count && !revs.left_right && !revs.cherry_mark) {
 			uint32_t commit_count;
+			int max_count = revs.max_count;
 			if (!prepare_bitmap_walk(&revs)) {
 				count_bitmap_commit_list(&commit_count, NULL, NULL, NULL);
+				if (max_count >= 0 && max_count < commit_count)
+					commit_count = max_count;
 				printf("%d\n", commit_count);
 				return 0;
 			}
-		} else if (revs.tag_objects && revs.tree_objects && revs.blob_objects) {
+		} else if (revs.max_count < 0 &&
+			   revs.tag_objects && revs.tree_objects && revs.blob_objects) {
 			if (!prepare_bitmap_walk(&revs)) {
 				traverse_bitmap_commit_list(&show_object_fast);
 				return 0;
@@ -387,6 +398,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	}
 
 	traverse_commit_list(&revs, show_commit, show_object, &info);
+
+	stop_progress(&progress);
 
 	if (revs.count) {
 		if (revs.left_right && revs.cherry_mark)

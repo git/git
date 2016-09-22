@@ -164,8 +164,8 @@ Format of STDIN stream:
 #include "refs.h"
 #include "csum-file.h"
 #include "quote.h"
-#include "exec_cmd.h"
 #include "dir.h"
+#include "run-command.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -282,6 +282,7 @@ struct recent_command {
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static off_t max_packsize;
+static int unpack_limit = 100;
 static int force_update;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
@@ -300,7 +301,7 @@ static int failure;
 static FILE *pack_edges;
 static unsigned int show_stats = 1;
 static int global_argc;
-static char **global_argv;
+static const char **global_argv;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -329,6 +330,7 @@ static const char *export_marks_file;
 static const char *import_marks_file;
 static int import_marks_file_from_stream;
 static int import_marks_file_ignore_missing;
+static int import_marks_file_done;
 static int relative_marks_paths;
 
 /* Our last blob */
@@ -414,7 +416,7 @@ static void write_crash_report(const char *err)
 	struct recent_command *rc;
 
 	if (!rpt) {
-		error("can't write crash report %s: %s", loc, strerror(errno));
+		error_errno("can't write crash report %s", loc);
 		free(loc);
 		return;
 	}
@@ -593,6 +595,33 @@ static struct object_entry *insert_object(unsigned char *sha1)
 	e->idx.offset = 0;
 	object_table[h] = e;
 	return e;
+}
+
+static void invalidate_pack_id(unsigned int id)
+{
+	unsigned int h;
+	unsigned long lu;
+	struct tag *t;
+
+	for (h = 0; h < ARRAY_SIZE(object_table); h++) {
+		struct object_entry *e;
+
+		for (e = object_table[h]; e; e = e->next)
+			if (e->pack_id == id)
+				e->pack_id = MAX_PACK_ID;
+	}
+
+	for (lu = 0; lu < branch_table_sz; lu++) {
+		struct branch *b;
+
+		for (b = branch_table[lu]; b; b = b->table_next_branch)
+			if (b->pack_id == id)
+				b->pack_id = MAX_PACK_ID;
+	}
+
+	for (t = first_tag; t; t = t->next_tag)
+		if (t->pack_id == id)
+			t->pack_id = MAX_PACK_ID;
 }
 
 static unsigned int hc_str(const char *s, size_t len)
@@ -950,6 +979,23 @@ static void unkeep_all_packs(void)
 	}
 }
 
+static int loosen_small_pack(const struct packed_git *p)
+{
+	struct child_process unpack = CHILD_PROCESS_INIT;
+
+	if (lseek(p->pack_fd, 0, SEEK_SET) < 0)
+		die_errno("Failed seeking to start of '%s'", p->pack_name);
+
+	unpack.in = p->pack_fd;
+	unpack.git_cmd = 1;
+	unpack.stdout_to_stderr = 1;
+	argv_array_push(&unpack.args, "unpack-objects");
+	if (!show_stats)
+		argv_array_push(&unpack.args, "-q");
+
+	return run_command(&unpack);
+}
+
 static void end_packfile(void)
 {
 	static int running;
@@ -972,6 +1018,14 @@ static void end_packfile(void)
 		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
 				    pack_data->pack_name, object_count,
 				    cur_pack_sha1, pack_size);
+
+		if (object_count <= unpack_limit) {
+			if (!loosen_small_pack(pack_data)) {
+				invalidate_pack_id(pack_id);
+				goto discard_pack;
+			}
+		}
+
 		close(pack_data->pack_fd);
 		idx_name = keep_pack(create_index());
 
@@ -1002,6 +1056,7 @@ static void end_packfile(void)
 		pack_id++;
 	}
 	else {
+discard_pack:
 		close(pack_data->pack_fd);
 		unlink_or_warn(pack_data->pack_name);
 	}
@@ -1512,7 +1567,7 @@ static int tree_content_set(
 	t = root->tree;
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
-		if (e->name->str_len == n && !strncmp_icase(p, e->name->str_dat, n)) {
+		if (e->name->str_len == n && !fspathncmp(p, e->name->str_dat, n)) {
 			if (!*slash1) {
 				if (!S_ISDIR(mode)
 						&& e->versions[1].mode == mode
@@ -1602,7 +1657,7 @@ static int tree_content_remove(
 	t = root->tree;
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
-		if (e->name->str_len == n && !strncmp_icase(p, e->name->str_dat, n)) {
+		if (e->name->str_len == n && !fspathncmp(p, e->name->str_dat, n)) {
 			if (*slash1 && !S_ISDIR(e->versions[1].mode))
 				/*
 				 * If p names a file in some subdirectory, and a
@@ -1669,7 +1724,7 @@ static int tree_content_get(
 	t = root->tree;
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
-		if (e->name->str_len == n && !strncmp_icase(p, e->name->str_dat, n)) {
+		if (e->name->str_len == n && !fspathncmp(p, e->name->str_dat, n)) {
 			if (!*slash1)
 				goto found_entry;
 			if (!S_ISDIR(e->versions[1].mode))
@@ -1802,12 +1857,12 @@ static void dump_marks(void)
 	static struct lock_file mark_lock;
 	FILE *f;
 
-	if (!export_marks_file)
+	if (!export_marks_file || (import_marks_file && !import_marks_file_done))
 		return;
 
 	if (hold_lock_file_for_update(&mark_lock, export_marks_file, 0) < 0) {
-		failure |= error("Unable to write marks file %s: %s",
-			export_marks_file, strerror(errno));
+		failure |= error_errno("Unable to write marks file %s",
+				       export_marks_file);
 		return;
 	}
 
@@ -1822,8 +1877,8 @@ static void dump_marks(void)
 
 	dump_marks_helper(f, 0, marks);
 	if (commit_lock_file(&mark_lock)) {
-		failure |= error("Unable to write file %s: %s",
-			export_marks_file, strerror(errno));
+		failure |= error_errno("Unable to write file %s",
+				       export_marks_file);
 		return;
 	}
 }
@@ -1835,7 +1890,7 @@ static void read_marks(void)
 	if (f)
 		;
 	else if (import_marks_file_ignore_missing && errno == ENOENT)
-		return; /* Marks file does not exist */
+		goto done; /* Marks file does not exist */
 	else
 		die_errno("cannot read '%s'", import_marks_file);
 	while (fgets(line, sizeof(line), f)) {
@@ -1865,6 +1920,8 @@ static void read_marks(void)
 		insert_mark(mark, e);
 	}
 	fclose(f);
+done:
+	import_marks_file_done = 1;
 }
 
 
@@ -3317,6 +3374,7 @@ static void parse_option(const char *option)
 static void git_pack_config(void)
 {
 	int indexversion_value;
+	int limit;
 	unsigned long packsizelimit_value;
 
 	if (!git_config_get_ulong("pack.depth", &max_depth)) {
@@ -3340,6 +3398,11 @@ static void git_pack_config(void)
 	}
 	if (!git_config_get_ulong("pack.packsizelimit", &packsizelimit_value))
 		max_packsize = packsizelimit_value;
+
+	if (!git_config_get_int("fastimport.unpacklimit", &limit))
+		unpack_limit = limit;
+	else if (!git_config_get_int("transfer.unpacklimit", &limit))
+		unpack_limit = limit;
 
 	git_config(git_default_config, NULL);
 }
@@ -3381,13 +3444,9 @@ static void parse_argv(void)
 		read_marks();
 }
 
-int main(int argc, char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	unsigned int i;
-
-	git_extract_argv0_path(argv[0]);
-
-	git_setup_gettext();
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(fast_import_usage);

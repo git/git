@@ -91,6 +91,55 @@ test_expect_success 'configured username does not override URL' '
 	expect_askpass pass user@host
 '
 
+test_expect_success 'set up repo with http submodules' '
+	git init super &&
+	set_askpass user@host pass@host &&
+	(
+		cd super &&
+		git submodule add "$HTTPD_URL/auth/dumb/repo.git" sub &&
+		git commit -m "add submodule"
+	)
+'
+
+test_expect_success 'cmdline credential config passes to submodule via clone' '
+	set_askpass wrong pass@host &&
+	test_must_fail git clone --recursive super super-clone &&
+	rm -rf super-clone &&
+
+	set_askpass wrong pass@host &&
+	git -c "credential.$HTTPD_URL.username=user@host" \
+		clone --recursive super super-clone &&
+	expect_askpass pass user@host
+'
+
+test_expect_success 'cmdline credential config passes submodule via fetch' '
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone fetch --recurse-submodules &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    fetch --recurse-submodules &&
+	expect_askpass pass user@host
+'
+
+test_expect_success 'cmdline credential config passes submodule update' '
+	# advance the submodule HEAD so that a fetch is required
+	git commit --allow-empty -m foo &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git" HEAD &&
+	sha1=$(git rev-parse HEAD) &&
+	git -C super-clone update-index --cacheinfo 160000,$sha1,sub &&
+
+	set_askpass wrong pass@host &&
+	test_must_fail git -C super-clone submodule update &&
+
+	set_askpass wrong pass@host &&
+	git -C super-clone \
+	    -c "credential.$HTTPD_URL.username=user@host" \
+	    submodule update &&
+	expect_askpass pass user@host
+'
+
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&
@@ -214,15 +263,15 @@ check_language () {
 		>expect
 		;;
 	?*)
-		echo "Accept-Language: $1" >expect
+		echo "=> Send header: Accept-Language: $1" >expect
 		;;
 	esac &&
-	GIT_CURL_VERBOSE=1 \
+	GIT_TRACE_CURL=true \
 	LANGUAGE=$2 \
 	git ls-remote "$HTTPD_URL/dumb/repo.git" >output 2>&1 &&
 	tr -d '\015' <output |
 	sort -u |
-	sed -ne '/^Accept-Language:/ p' >actual &&
+	sed -ne '/^=> Send header: Accept-Language:/ p' >actual &&
 	test_cmp expect actual
 }
 
@@ -246,8 +295,16 @@ ja;q=0.95, zh;q=0.94, sv;q=0.93, pt;q=0.92, nb;q=0.91, *;q=0.90" \
 '
 
 test_expect_success 'git client does not send an empty Accept-Language' '
-	GIT_CURL_VERBOSE=1 LANGUAGE= git ls-remote "$HTTPD_URL/dumb/repo.git" 2>stderr &&
-	! grep "^Accept-Language:" stderr
+	GIT_TRACE_CURL=true LANGUAGE= git ls-remote "$HTTPD_URL/dumb/repo.git" 2>stderr &&
+	! grep "^=> Send header: Accept-Language:" stderr
+'
+
+test_expect_success 'remote-http complains cleanly about malformed urls' '
+	# do not actually issue "list" or other commands, as we do not
+	# want to rely on what curl would actually do with such a broken
+	# URL. This is just about making sure we do not segfault during
+	# initialization.
+	test_must_fail git remote-http http::/example.com/repo.git
 '
 
 stop_httpd

@@ -76,7 +76,7 @@ OPTIONS
 	specified commit (HEAD if not specified).
 
 --contains [<object>]::
-	Only list tags which contain the specified commit (HEAD if not
+	Only list refs which contain the specified commit (HEAD if not
 	specified).
 
 FIELD NAMES
@@ -142,7 +142,7 @@ align::
 	<width> and <position> used instead.  For instance,
 	`%(align:<width>,<position>)`. If the contents length is more
 	than the width then no alignment is performed. If used with
-	'--quote' everything in between %(align:...) and %(end) is
+	`--quote` everything in between %(align:...) and %(end) is
 	quoted, but if nested then only the topmost level performs
 	quoting.
 
@@ -179,7 +179,7 @@ returns an empty string instead.
 
 As a special case for the date-type fields, you may specify a format for
 the date by adding `:` followed by date format name (see the
-values the `--date` option to linkgit::git-rev-list[1] takes).
+values the `--date` option to linkgit:git-rev-list[1] takes).
 
 
 EXAMPLES

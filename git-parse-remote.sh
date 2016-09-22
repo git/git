@@ -56,11 +56,13 @@ get_remote_merge_branch () {
 error_on_missing_default_upstream () {
 	cmd="$1"
 	op_type="$2"
-	op_prep="$3"
+	op_prep="$3" # FIXME: op_prep is no longer used
 	example="$4"
 	branch_name=$(git symbolic-ref -q HEAD)
+	display_branch_name="${branch_name#refs/heads/}"
 	# If there's only one remote, use that in the suggestion
-	remote="<remote>"
+	remote="$(gettext "<remote>")"
+	branch="$(gettext "<branch>")"
 	if test $(git remote | wc -l) = 1
 	then
 		remote=$(git remote)
@@ -68,22 +70,32 @@ error_on_missing_default_upstream () {
 
 	if test -z "$branch_name"
 	then
-		echo "You are not currently on a branch. Please specify which
-branch you want to $op_type $op_prep. See git-${cmd}(1) for details.
-
-    $example
-"
+		gettextln "You are not currently on a branch."
 	else
-		echo "There is no tracking information for the current branch.
-Please specify which branch you want to $op_type $op_prep.
-See git-${cmd}(1) for details
-
-    $example
-
-If you wish to set tracking information for this branch you can do so with:
-
-    git branch --set-upstream-to=$remote/<branch> ${branch_name#refs/heads/}
-"
+		gettextln "There is no tracking information for the current branch."
+	fi
+	case "$op_type" in
+	rebase)
+		gettextln "Please specify which branch you want to rebase against."
+		;;
+	merge)
+		gettextln "Please specify which branch you want to merge with."
+		;;
+	*)
+		echo >&2 "BUG: unknown operation type: $op_type"
+		exit 1
+		;;
+	esac
+	eval_gettextln "See git-\${cmd}(1) for details."
+	echo
+	echo "    $example"
+	echo
+	if test -n "$branch_name"
+	then
+		gettextln "If you wish to set tracking information for this branch you can do so with:"
+		echo
+		echo "    git branch --set-upstream-to=$remote/$branch $display_branch_name"
+		echo
 	fi
 	exit 1
 }

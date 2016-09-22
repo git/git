@@ -67,7 +67,9 @@ call_merge () {
 		GIT_MERGE_VERBOSITY=1 && export GIT_MERGE_VERBOSITY
 	fi
 	test -z "$strategy" && strategy=recursive
-	eval 'git-merge-$strategy' $strategy_opts '"$cmt^" -- "$hd" "$cmt"'
+	# If cmt doesn't have a parent, don't include it as a base
+	base=$(git rev-parse --verify --quiet $cmt^)
+	eval 'git-merge-$strategy' $strategy_opts $base ' -- "$hd" "$cmt"'
 	rv=$?
 	case "$rv" in
 	0)
@@ -105,8 +107,8 @@ finish_rb_merge () {
 # below were not inside any function, and expected to return
 # to the function that dot-sourced us.
 #
-# However, FreeBSD /bin/sh misbehaves on such a construct and
-# continues to run the statements that follow such a "return".
+# However, older (9.x) versions of FreeBSD /bin/sh misbehave on such a
+# construct and continue to run the statements that follow such a "return".
 # As a work-around, we introduce an extra layer of a function
 # here, and immediately call it after defining it.
 git_rebase__merge () {

@@ -118,7 +118,8 @@ static void show_killed_files(struct dir_struct *dir)
 				 */
 				pos = cache_name_pos(ent->name, ent->len);
 				if (0 <= pos)
-					die("bug in show-killed-files");
+					die("BUG: killed-file %.*s not found",
+						ent->len, ent->name);
 				pos = -pos - 1;
 				while (pos < active_nr &&
 				       ce_stage(active_cache[pos]))
@@ -186,7 +187,7 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 		printf("%s%06o %s %d\t",
 		       tag,
 		       ce->ce_mode,
-		       find_unique_abbrev(ce->sha1,abbrev),
+		       find_unique_abbrev(ce->oid.hash,abbrev),
 		       ce_stage(ce));
 	}
 	write_eolinfo(ce, ce->name);

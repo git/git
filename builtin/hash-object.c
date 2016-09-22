@@ -87,6 +87,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	int stdin_paths = 0;
 	int no_filters = 0;
 	int literally = 0;
+	int nongit = 0;
 	unsigned flags = HASH_FORMAT_CHECK;
 	const char *vpath = NULL;
 	const struct option hash_object_options[] = {
@@ -107,12 +108,14 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, NULL, hash_object_options,
 			     hash_object_usage, 0);
 
-	if (flags & HASH_WRITE_OBJECT) {
+	if (flags & HASH_WRITE_OBJECT)
 		prefix = setup_git_directory();
-		prefix_length = prefix ? strlen(prefix) : 0;
-		if (vpath && prefix)
-			vpath = prefix_filename(prefix, prefix_length, vpath);
-	}
+	else
+		prefix = setup_git_directory_gently(&nongit);
+
+	prefix_length = prefix ? strlen(prefix) : 0;
+	if (vpath && prefix)
+		vpath = prefix_filename(prefix, prefix_length, vpath);
 
 	git_config(git_default_config, NULL);
 

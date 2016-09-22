@@ -168,7 +168,7 @@ static int verify_cache(struct cache_entry **cache,
 				break;
 			}
 			fprintf(stderr, "%s: unmerged (%s)\n",
-				ce->name, sha1_to_hex(ce->sha1));
+				ce->name, oid_to_hex(&ce->oid));
 		}
 	}
 	if (funny)
@@ -319,12 +319,13 @@ static int update_one(struct cache_tree *it,
 	i = 0;
 	while (i < entries) {
 		const struct cache_entry *ce = cache[i];
-		struct cache_tree_sub *sub;
+		struct cache_tree_sub *sub = NULL;
 		const char *path, *slash;
 		int pathlen, entlen;
 		const unsigned char *sha1;
 		unsigned mode;
 		int expected_missing = 0;
+		int contains_ita = 0;
 
 		path = ce->name;
 		pathlen = ce_namelen(ce);
@@ -341,13 +342,14 @@ static int update_one(struct cache_tree *it,
 			i += sub->count;
 			sha1 = sub->cache_tree->sha1;
 			mode = S_IFDIR;
-			if (sub->cache_tree->entry_count < 0) {
+			contains_ita = sub->cache_tree->entry_count < 0;
+			if (contains_ita) {
 				to_invalidate = 1;
 				expected_missing = 1;
 			}
 		}
 		else {
-			sha1 = ce->sha1;
+			sha1 = ce->oid.hash;
 			mode = ce->ce_mode;
 			entlen = pathlen - baselen;
 			i++;
@@ -375,10 +377,16 @@ static int update_one(struct cache_tree *it,
 		 * they are not part of generated trees. Invalidate up
 		 * to root to force cache-tree users to read elsewhere.
 		 */
-		if (ce_intent_to_add(ce)) {
+		if (!sub && ce_intent_to_add(ce)) {
 			to_invalidate = 1;
 			continue;
 		}
+
+		/*
+		 * "sub" can be an empty tree if all subentries are i-t-a.
+		 */
+		if (contains_ita && !hashcmp(sha1, EMPTY_TREE_SHA1_BIN))
+			continue;
 
 		strbuf_grow(&buffer, entlen + 100);
 		strbuf_addf(&buffer, "%o %.*s%c", mode, entlen, path + baselen, '\0');
@@ -663,7 +671,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(entry.sha1);
+			struct tree *subtree = lookup_tree(entry.oid->hash);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
 			sub = cache_tree_sub(it, entry.path);
@@ -710,7 +718,7 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 
 	it = find_cache_tree_from_traversal(root, info);
 	it = cache_tree_find(it, ent->path);
-	if (it && it->entry_count > 0 && !hashcmp(ent->sha1, it->sha1))
+	if (it && it->entry_count > 0 && !hashcmp(ent->oid->hash, it->sha1))
 		return it->entry_count;
 	return 0;
 }

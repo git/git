@@ -98,6 +98,11 @@ sub resolve_local_globs {
 				    " globbed: $refname\n";
 			}
 			my $u = (::cmt_metadata("$refname"))[0];
+			if (!defined($u)) {
+				warn
+"W: $refname: no associated commit metadata from SVN, skipping\n";
+				next;
+			}
 			$u =~ s!^\Q$url\E(/|$)!! or die
 			  "$refname: '$url' not found in '$u'\n";
 			if ($pathname ne $u) {
@@ -1904,15 +1909,22 @@ sub make_log_entry {
 
 	my @parents = @$parents;
 	my $props = $ed->{dir_prop}{$self->path};
-	if ( $props->{"svk:merge"} ) {
-		$self->find_extra_svk_parents($props->{"svk:merge"}, \@parents);
-	}
-	if ( $props->{"svn:mergeinfo"} ) {
-		my $mi_changes = $self->mergeinfo_changes
-			($parent_path, $parent_rev,
-			 $self->path, $rev,
-			 $props->{"svn:mergeinfo"});
-		$self->find_extra_svn_parents($mi_changes, \@parents);
+	if ($self->follow_parent) {
+		my $tickets = $props->{"svk:merge"};
+		if ($tickets) {
+			$self->find_extra_svk_parents($tickets, \@parents);
+		}
+
+		my $mergeinfo_prop = $props->{"svn:mergeinfo"};
+		if ($mergeinfo_prop) {
+			my $mi_changes = $self->mergeinfo_changes(
+						$parent_path,
+						$parent_rev,
+						$self->path,
+						$rev,
+						$mergeinfo_prop);
+			$self->find_extra_svn_parents($mi_changes, \@parents);
+		}
 	}
 
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;

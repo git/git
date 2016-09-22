@@ -19,6 +19,7 @@ static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict]
 static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
+static off_t max_input_size;
 static git_SHA_CTX ctx;
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 
@@ -87,6 +88,8 @@ static void use(int bytes)
 	if (signed_add_overflows(consumed_bytes, bytes))
 		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
+	if (max_input_size && consumed_bytes > max_input_size)
+		die(_("pack exceeds maximum allowed size"));
 }
 
 static void *get_data(unsigned long size)
@@ -355,7 +358,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			return; /* we are done */
 		else {
 			/* cannot resolve yet --- queue it */
-			hashcpy(obj_list[nr].sha1, null_sha1);
+			hashclr(obj_list[nr].sha1);
 			add_delta_to_list(nr, base_sha1, 0, delta_data, delta_size);
 			return;
 		}
@@ -406,7 +409,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * The delta base object is itself a delta that
 			 * has not been resolved yet.
 			 */
-			hashcpy(obj_list[nr].sha1, null_sha1);
+			hashclr(obj_list[nr].sha1);
 			add_delta_to_list(nr, null_sha1, base_offset, delta_data, delta_size);
 			return;
 		}
@@ -548,6 +551,10 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 				if (*c)
 					die("bad %s", arg);
 				len = sizeof(*hdr);
+				continue;
+			}
+			if (skip_prefix(arg, "--max-input-size=", &arg)) {
+				max_input_size = strtoumax(arg, NULL, 10);
 				continue;
 			}
 			usage(unpack_usage);

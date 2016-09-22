@@ -14,11 +14,11 @@ test_description='revert can handle submodules'
 git_revert () {
 	git status -su >expect &&
 	ls -1pR * >>expect &&
-	tar czf "$TRASH_DIRECTORY/tmp.tgz" * &&
+	tar cf "$TRASH_DIRECTORY/tmp.tar" * &&
 	git checkout "$1" &&
 	git revert HEAD &&
 	rm -rf * &&
-	tar xzf "$TRASH_DIRECTORY/tmp.tgz" &&
+	tar xf "$TRASH_DIRECTORY/tmp.tar" &&
 	git status -su >actual &&
 	ls -1pR * >>actual &&
 	test_cmp expect actual &&

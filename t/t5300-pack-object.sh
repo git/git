@@ -284,6 +284,12 @@ test_expect_success \
      git index-pack test-3.pack &&
      cmp test-3.idx test-3-${packname_3}.idx &&
 
+     cat test-1-${packname_1}.pack >test-4.pack &&
+     rm -f test-4.keep &&
+     git index-pack --keep=why test-4.pack &&
+     cmp test-1-${packname_1}.idx test-4.idx &&
+     test -f test-4.keep &&
+
      :'
 
 test_expect_success 'unpacking with --strict' '

@@ -65,8 +65,7 @@ static int populate_from_stdin(struct diff_filespec *s)
 	size_t size = 0;
 
 	if (strbuf_read(&buf, 0, 0) < 0)
-		return error("error while reading from stdin %s",
-				     strerror(errno));
+		return error_errno("error while reading from stdin");
 
 	s->should_munmap = 0;
 	s->data = strbuf_detach(&buf, &size);
@@ -281,6 +280,9 @@ void diff_no_index(struct rev_info *revs,
 		revs->diffopt.output_format = DIFF_FORMAT_PATCH;
 
 	DIFF_OPT_SET(&revs->diffopt, NO_INDEX);
+
+	DIFF_OPT_SET(&revs->diffopt, RELATIVE_NAME);
+	revs->diffopt.prefix = prefix;
 
 	revs->max_count = -2;
 	diff_setup_done(&revs->diffopt);

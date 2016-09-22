@@ -82,7 +82,7 @@ test_expect_success 'am -3 --abort removes otherfile-4' '
 	test 4 = "$(cat otherfile-4)" &&
 	git am --abort &&
 	test_cmp_rev initial HEAD &&
-	test -z $(git ls-files -u) &&
+	test -z "$(git ls-files -u)" &&
 	test_path_is_missing otherfile-4
 '
 

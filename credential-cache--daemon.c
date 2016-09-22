@@ -126,8 +126,17 @@ static void serve_one_client(FILE *in, FILE *out)
 			fprintf(out, "password=%s\n", e->item.password);
 		}
 	}
-	else if (!strcmp(action.buf, "exit"))
+	else if (!strcmp(action.buf, "exit")) {
+		/*
+		 * It's important that we clean up our socket first, and then
+		 * signal the client only once we have finished the cleanup.
+		 * Calling exit() directly does this, because we clean up in
+		 * our atexit() handler, and then signal the client when our
+		 * process actually ends, which closes the socket and gives
+		 * them EOF.
+		 */
 		exit(0);
+	}
 	else if (!strcmp(action.buf, "erase"))
 		remove_credential(&c);
 	else if (!strcmp(action.buf, "store")) {
@@ -170,12 +179,12 @@ static int serve_cache_loop(int fd)
 
 		client = accept(fd, NULL, NULL);
 		if (client < 0) {
-			warning("accept failed: %s", strerror(errno));
+			warning_errno("accept failed");
 			return 1;
 		}
 		client2 = dup(client);
 		if (client2 < 0) {
-			warning("dup failed: %s", strerror(errno));
+			warning_errno("dup failed");
 			close(client);
 			return 1;
 		}
@@ -248,7 +257,7 @@ static void init_socket_directory(const char *path)
 	free(path_copy);
 }
 
-int main(int argc, const char **argv)
+int cmd_main(int argc, const char **argv)
 {
 	const char *socket_path;
 	int ignore_sighup = 0;

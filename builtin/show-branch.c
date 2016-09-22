@@ -373,8 +373,9 @@ static int append_ref(const char *refname, const struct object_id *oid,
 				return 0;
 	}
 	if (MAX_REVS <= ref_name_cnt) {
-		warning("ignoring %s; cannot handle more than %d refs",
-			refname, MAX_REVS);
+		warning(Q_("ignoring %s; cannot handle more than %d ref",
+			   "ignoring %s; cannot handle more than %d refs",
+			   MAX_REVS), refname, MAX_REVS);
 		return 0;
 	}
 	ref_name[ref_name_cnt++] = xstrdup(refname);
@@ -538,7 +539,7 @@ static void append_one_rev(const char *av)
 		for_each_ref(append_matching_ref, NULL);
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
-			error("no matching refs with %s", av);
+			error(_("no matching refs with %s"), av);
 		if (saved_matches + 1 < ref_name_cnt)
 			sort_ref_range(saved_matches, ref_name_cnt);
 		return;
@@ -701,8 +702,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			 *
 			 * Also --all and --remotes do not make sense either.
 			 */
-			die("--reflog is incompatible with --all, --remotes, "
-			    "--independent or --merge-base");
+			die(_("--reflog is incompatible with --all, --remotes, "
+			      "--independent or --merge-base"));
 	}
 
 	/* If nothing is specified, show all branches by default */
@@ -725,16 +726,17 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			av = fake_av;
 			ac = 1;
 			if (!*av)
-				die("no branches given, and HEAD is not valid");
+				die(_("no branches given, and HEAD is not valid"));
 		}
 		if (ac != 1)
-			die("--reflog option needs one branch name");
+			die(_("--reflog option needs one branch name"));
 
 		if (MAX_REVS < reflog)
-			die("Only %d entries can be shown at one time.",
-			    MAX_REVS);
+			die(Q_("only %d entry can be shown at one time.",
+			       "only %d entries can be shown at one time.",
+			       MAX_REVS), MAX_REVS);
 		if (!dwim_ref(*av, strlen(*av), oid.hash, &ref))
-			die("No such ref %s", *av);
+			die(_("no such ref %s"), *av);
 
 		/* Has the base been specified? */
 		if (reflog_base) {
@@ -826,12 +828,14 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		unsigned int flag = 1u << (num_rev + REV_SHIFT);
 
 		if (MAX_REVS <= num_rev)
-			die("cannot handle more than %d revs.", MAX_REVS);
+			die(Q_("cannot handle more than %d rev.",
+			       "cannot handle more than %d revs.",
+			       MAX_REVS), MAX_REVS);
 		if (get_sha1(ref_name[num_rev], revkey.hash))
-			die("'%s' is not a valid ref.", ref_name[num_rev]);
+			die(_("'%s' is not a valid ref."), ref_name[num_rev]);
 		commit = lookup_commit_reference(revkey.hash);
 		if (!commit)
-			die("cannot find commit %s (%s)",
+			die(_("cannot find commit %s (%s)"),
 			    ref_name[num_rev], oid_to_hex(&revkey));
 		parse_commit(commit);
 		mark_seen(commit, &seen);

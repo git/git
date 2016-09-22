@@ -79,17 +79,34 @@ int run_command_v_opt(const char **argv, int opt);
 int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env);
 
 /**
- * Execute the given command, capturing its stdout in the given strbuf.
+ * Execute the given command, sending "in" to its stdin, and capturing its
+ * stdout and stderr in the "out" and "err" strbufs. Any of the three may
+ * be NULL to skip processing.
+ *
  * Returns -1 if starting the command fails or reading fails, and otherwise
- * returns the exit code of the command. The output collected in the
- * buffer is kept even if the command returns a non-zero exit. The hint field
- * gives a starting size for the strbuf allocation.
+ * returns the exit code of the command. Any output collected in the
+ * buffers is kept even if the command returns a non-zero exit. The hint fields
+ * gives starting sizes for the strbuf allocations.
  *
  * The fields of "cmd" should be set up as they would for a normal run_command
- * invocation. But note that there is no need to set cmd->out; the function
- * sets it up for the caller.
+ * invocation. But note that there is no need to set the in, out, or err
+ * fields; pipe_command handles that automatically.
  */
-int capture_command(struct child_process *cmd, struct strbuf *buf, size_t hint);
+int pipe_command(struct child_process *cmd,
+		 const char *in, size_t in_len,
+		 struct strbuf *out, size_t out_hint,
+		 struct strbuf *err, size_t err_hint);
+
+/**
+ * Convenience wrapper around pipe_command for the common case
+ * of capturing only stdout.
+ */
+static inline int capture_command(struct child_process *cmd,
+				  struct strbuf *out,
+				  size_t hint)
+{
+	return pipe_command(cmd, NULL, 0, out, hint, NULL, 0);
+}
 
 /*
  * The purpose of the following functions is to feed a pipe by running
@@ -116,6 +133,7 @@ struct async {
 	int proc_in;
 	int proc_out;
 #endif
+	int isolate_sigpipe;
 };
 
 int start_async(struct async *async);
@@ -140,7 +158,7 @@ void NORETURN async_exit(int code);
  * return the negative signal number.
  */
 typedef int (*get_next_task_fn)(struct child_process *cp,
-				struct strbuf *err,
+				struct strbuf *out,
 				void *pp_cb,
 				void **pp_task_cb);
 
@@ -149,7 +167,7 @@ typedef int (*get_next_task_fn)(struct child_process *cp,
  * a new process.
  *
  * You must not write to stdout or stderr in this function. Add your
- * message to the strbuf err instead, which will be printed without
+ * message to the strbuf out instead, which will be printed without
  * messing up the output of the other parallel processes.
  *
  * pp_cb is the callback cookie as passed into run_processes_parallel,
@@ -159,7 +177,7 @@ typedef int (*get_next_task_fn)(struct child_process *cp,
  * To send a signal to other child processes for abortion, return
  * the negative signal number.
  */
-typedef int (*start_failure_fn)(struct strbuf *err,
+typedef int (*start_failure_fn)(struct strbuf *out,
 				void *pp_cb,
 				void *pp_task_cb);
 
@@ -167,7 +185,7 @@ typedef int (*start_failure_fn)(struct strbuf *err,
  * This callback is called on every child process that finished processing.
  *
  * You must not write to stdout or stderr in this function. Add your
- * message to the strbuf err instead, which will be printed without
+ * message to the strbuf out instead, which will be printed without
  * messing up the output of the other parallel processes.
  *
  * pp_cb is the callback cookie as passed into run_processes_parallel,
@@ -178,7 +196,7 @@ typedef int (*start_failure_fn)(struct strbuf *err,
  * the negative signal number.
  */
 typedef int (*task_finished_fn)(int result,
-				struct strbuf *err,
+				struct strbuf *out,
 				void *pp_cb,
 				void *pp_task_cb);
 

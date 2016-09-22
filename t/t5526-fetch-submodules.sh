@@ -471,4 +471,53 @@ test_expect_success "don't fetch submodule when newly recorded commits are alrea
 	test_i18ncmp expect.err actual.err
 '
 
+test_expect_success 'fetching submodules respects parallel settings' '
+	git config fetch.recurseSubmodules true &&
+	(
+		cd downstream &&
+		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 7 &&
+		grep "7 tasks" trace.out &&
+		git config submodule.fetchJobs 8 &&
+		GIT_TRACE=$(pwd)/trace.out git fetch &&
+		grep "8 tasks" trace.out &&
+		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 9 &&
+		grep "9 tasks" trace.out
+	)
+'
+
+test_expect_success 'fetching submodule into a broken repository' '
+	# Prepare src and src/sub nested in it
+	git init src &&
+	(
+		cd src &&
+		git init sub &&
+		git -C sub commit --allow-empty -m "initial in sub" &&
+		git submodule add -- ./sub sub &&
+		git commit -m "initial in top"
+	) &&
+
+	# Clone the old-fashoned way
+	git clone src dst &&
+	git -C dst clone ../src/sub sub &&
+
+	# Make sure that old-fashoned layout is still supported
+	git -C dst status &&
+
+	# "diff" would find no change
+	git -C dst diff --exit-code &&
+
+	# Recursive-fetch works fine
+	git -C dst fetch --recurse-submodules &&
+
+	# Break the receiving submodule
+	rm -f dst/sub/.git/HEAD &&
+
+	# NOTE: without the fix the following tests will recurse forever!
+	# They should terminate with an error.
+
+	test_must_fail git -C dst status &&
+	test_must_fail git -C dst diff &&
+	test_must_fail git -C dst fetch --recurse-submodules
+'
+
 test_done

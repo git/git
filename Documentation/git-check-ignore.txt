@@ -112,7 +112,7 @@ EXIT STATUS
 SEE ALSO
 --------
 linkgit:gitignore[5]
-linkgit:gitconfig[5]
+linkgit:git-config[1]
 linkgit:git-ls-files[1]
 
 GIT

@@ -9,10 +9,14 @@
 
 static unsigned char current_commit_sha1[20];
 
-void walker_say(struct walker *walker, const char *fmt, const char *hex)
+void walker_say(struct walker *walker, const char *fmt, ...)
 {
-	if (walker->get_verbosely)
-		fprintf(stderr, fmt, hex);
+	if (walker->get_verbosely) {
+		va_list ap;
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
 }
 
 static void report_missing(const struct object *obj)
@@ -43,12 +47,12 @@ static int process_tree(struct walker *walker, struct tree *tree)
 		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode)) {
-			struct tree *tree = lookup_tree(entry.sha1);
+			struct tree *tree = lookup_tree(entry.oid->hash);
 			if (tree)
 				obj = &tree->object;
 		}
 		else {
-			struct blob *blob = lookup_blob(entry.sha1);
+			struct blob *blob = lookup_blob(entry.oid->hash);
 			if (blob)
 				obj = &blob->object;
 		}

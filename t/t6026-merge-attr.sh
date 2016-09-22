@@ -176,8 +176,24 @@ test_expect_success 'up-to-date merge without common ancestor' '
 	test_tick &&
 	(
 		cd repo1 &&
-		git pull ../repo2 master
+		git fetch ../repo2 master &&
+		git merge --allow-unrelated-histories FETCH_HEAD
 	)
+'
+
+test_expect_success 'custom merge does not lock index' '
+	git reset --hard anchor &&
+	write_script sleep-one-second.sh <<-\EOF &&
+		sleep 1 &
+		echo $! >sleep.pid
+	EOF
+	test_when_finished "kill \$(cat sleep.pid)" &&
+
+	test_write_lines >.gitattributes \
+		"* merge=ours" "text merge=sleep-one-second" &&
+	test_config merge.ours.driver true &&
+	test_config merge.sleep-one-second.driver ./sleep-one-second.sh &&
+	git merge master
 '
 
 test_done

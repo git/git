@@ -7,23 +7,6 @@ test_description='test git fast-import utility'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/diff-lib.sh ;# test-lib chdir's into trash
 
-# Print $1 bytes from stdin to stdout.
-#
-# This could be written as "head -c $1", but IRIX "head" does not
-# support the -c option.
-head_c () {
-	perl -e '
-		my $len = $ARGV[1];
-		while ($len > 0) {
-			my $s;
-			my $nread = sysread(STDIN, $s, $len);
-			die "cannot read: $!" unless defined($nread);
-			print $s;
-			$len -= $nread;
-		}
-	' - "$1"
-}
-
 verify_packs () {
 	for p in .git/objects/pack/*.pack
 	do
@@ -52,7 +35,12 @@ echo "$@"'
 ###
 
 test_expect_success 'empty stream succeeds' '
+	git config fastimport.unpackLimit 0 &&
 	git fast-import </dev/null
+'
+
+test_expect_success 'truncated stream complains' '
+	echo "tag foo" | test_must_fail git fast-import
 '
 
 test_expect_success 'A: create pack from stdin' '
@@ -2476,7 +2464,7 @@ test_expect_success PIPE 'R: copy using cat-file' '
 
 		read blob_id type size <&3 &&
 		echo "$blob_id $type $size" >response &&
-		head_c $size >blob <&3 &&
+		test_copy_bytes $size >blob <&3 &&
 		read newline <&3 &&
 
 		cat <<-EOF &&
@@ -2519,7 +2507,7 @@ test_expect_success PIPE 'R: print blob mid-commit' '
 		EOF
 
 		read blob_id type size <&3 &&
-		head_c $size >actual <&3 &&
+		test_copy_bytes $size >actual <&3 &&
 		read newline <&3 &&
 
 		echo
@@ -2554,7 +2542,7 @@ test_expect_success PIPE 'R: print staged blob within commit' '
 		echo "cat-blob $to_get" &&
 
 		read blob_id type size <&3 &&
-		head_c $size >actual <&3 &&
+		test_copy_bytes $size >actual <&3 &&
 		read newline <&3 &&
 
 		echo deleteall
@@ -2646,6 +2634,21 @@ test_expect_success 'R: ignore non-git options' '
 	git fast-import <input
 '
 
+test_expect_success 'R: corrupt lines do not mess marks file' '
+	rm -f io.marks &&
+	blob=$(echo hi | git hash-object --stdin) &&
+	cat >expect <<-EOF &&
+	:3 0000000000000000000000000000000000000000
+	:1 $blob
+	:2 $blob
+	EOF
+	cp expect io.marks &&
+	test_must_fail git fast-import --import-marks=io.marks --export-marks=io.marks <<-\EOF &&
+
+	EOF
+	test_cmp expect io.marks
+'
+
 ##
 ## R: very large blobs
 ##
@@ -2671,6 +2674,7 @@ test_expect_success 'R: blob bigger than threshold' '
 	echo >>input &&
 
 	test_create_repo R &&
+	git --git-dir=R/.git config fastimport.unpackLimit 0 &&
 	git --git-dir=R/.git fast-import --big-file-threshold=1 <input
 '
 

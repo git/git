@@ -369,6 +369,9 @@ A rescan will be automatically started now.
 	# -- Create the commit.
 	#
 	set cmd [list commit-tree $tree_id]
+	if {[is_config_true commit.gpgsign]} {
+		lappend cmd -S
+	}
 	foreach p [concat $PARENT $MERGE_HEAD] {
 		lappend cmd -p $p
 	}

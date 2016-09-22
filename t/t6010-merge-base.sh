@@ -215,11 +215,13 @@ test_expect_success 'criss-cross merge-base for octopus-step' '
 	git reset --hard E &&
 	test_commit CC2 &&
 	test_tick &&
-	git merge -s ours CC1 &&
+	# E is a root commit unrelated to MMR root on which CC1 is based
+	git merge -s ours --allow-unrelated-histories CC1 &&
 	test_commit CC-o &&
 	test_commit CCB &&
 	git reset --hard CC1 &&
-	git merge -s ours CC2 &&
+	# E is a root commit unrelated to MMR root on which CC1 is based
+	git merge -s ours --allow-unrelated-histories CC2 &&
 	test_commit CCA &&
 
 	git rev-parse CC1 CC2 >expected &&

@@ -44,7 +44,7 @@ OPTIONS
 	An existing tree object
 
 -p <parent>::
-	Each '-p' indicates the id of a parent commit object.
+	Each `-p` indicates the id of a parent commit object.
 
 -m <message>::
 	A paragraph in the commit log message. This can be given more than
@@ -61,8 +61,8 @@ OPTIONS
 	stuck to the option without a space.
 
 --no-gpg-sign::
-	Countermand `commit.gpgSign` configuration variable that is
-	set to force each and every commit to be signed.
+	Do not GPG-sign commit, to countermand a `--gpg-sign` option
+	given earlier on the command line.
 
 
 Commit Information

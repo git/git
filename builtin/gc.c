@@ -28,7 +28,7 @@ static const char * const builtin_gc_usage[] = {
 
 static int pack_refs = 1;
 static int prune_reflogs = 1;
-static int aggressive_depth = 250;
+static int aggressive_depth = 50;
 static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
@@ -177,7 +177,7 @@ static int too_many_packs(void)
 		 */
 		cnt++;
 	}
-	return gc_auto_pack_limit <= cnt;
+	return gc_auto_pack_limit < cnt;
 }
 
 static void add_repack_all_option(void)

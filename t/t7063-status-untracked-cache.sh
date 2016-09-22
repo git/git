@@ -4,6 +4,20 @@ test_description='test untracked cache'
 
 . ./test-lib.sh
 
+# On some filesystems (e.g. FreeBSD's ext2 and ufs) directory mtime
+# is updated lazily after contents in the directory changes, which
+# forces the untracked cache code to take the slow path.  A test
+# that wants to make sure that the fast path works correctly should
+# call this helper to make mtime of the containing directory in sync
+# with the reality before checking the fast path behaviour.
+#
+# See <20160803174522.5571-1-pclouds@gmail.com> if you want to know
+# more.
+
+sync_mtime () {
+	find . -type d -ls >/dev/null
+}
+
 avoid_racy() {
 	sleep 1
 }
@@ -53,7 +67,7 @@ A  two
 EOF
 
 cat >../dump.expect <<EOF &&
-info/exclude e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
 exclude_per_dir .gitignore
 flags 00000006
@@ -137,7 +151,7 @@ EOF
 test_expect_success 'verify untracked cache dump' '
 	test-dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
-info/exclude e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
 exclude_per_dir .gitignore
 flags 00000006
@@ -184,7 +198,7 @@ EOF
 test_expect_success 'verify untracked cache dump' '
 	test-dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
-info/exclude e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+info/exclude $EMPTY_BLOB
 core.excludesfile 0000000000000000000000000000000000000000
 exclude_per_dir .gitignore
 flags 00000006
@@ -416,7 +430,8 @@ test_expect_success 'create/modify files, some of which are gitignored' '
 	echo four >done/four && # four is gitignored at a higher level
 	echo five >done/five && # five is not gitignored
 	echo test >base && #we need to ensure that the root dir is touched
-	rm base
+	rm base &&
+	sync_mtime
 '
 
 test_expect_success 'test sparse status with untracked cache' '
@@ -643,7 +658,7 @@ test_expect_success 'test ident field is working' '
 	cp -R done dthree dtwo four three ../other_worktree &&
 	GIT_WORK_TREE=../other_worktree git status 2>../err &&
 	echo "warning: Untracked cache is disabled on this system or location." >../expect &&
-	test_cmp ../expect ../err
+	test_i18ncmp ../expect ../err
 '
 
 test_done

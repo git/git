@@ -53,22 +53,14 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path, int len);
 
-/* helper string functions with support for the ignore_case flag */
-int strcmp_icase(const char *a, const char *b)
+int fspathcmp(const char *a, const char *b)
 {
 	return ignore_case ? strcasecmp(a, b) : strcmp(a, b);
 }
 
-int strncmp_icase(const char *a, const char *b, size_t count)
+int fspathncmp(const char *a, const char *b, size_t count)
 {
 	return ignore_case ? strncasecmp(a, b, count) : strncmp(a, b, count);
-}
-
-int fnmatch_icase(const char *pattern, const char *string, int flags)
-{
-	return wildmatch(pattern, string,
-			 flags | (ignore_case ? WM_CASEFOLD : 0),
-			 NULL);
 }
 
 int git_fnmatch(const struct pathspec_item *item,
@@ -457,7 +449,7 @@ int no_wildcard(const char *string)
 
 void parse_exclude_pattern(const char **pattern,
 			   int *patternlen,
-			   int *flags,
+			   unsigned *flags,
 			   int *nowildcardlen)
 {
 	const char *p = *pattern;
@@ -498,7 +490,7 @@ void add_exclude(const char *string, const char *base,
 {
 	struct exclude *x;
 	int patternlen;
-	int flags;
+	unsigned flags;
 	int nowildcardlen;
 
 	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
@@ -533,7 +525,7 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 		return NULL;
 	if (!ce_skip_worktree(active_cache[pos]))
 		return NULL;
-	data = read_sha1_file(active_cache[pos]->sha1, &type, &sz);
+	data = read_sha1_file(active_cache[pos]->oid.hash, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -541,7 +533,7 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 	*size = xsize_t(sz);
 	if (sha1_stat) {
 		memset(&sha1_stat->stat, 0, sizeof(sha1_stat->stat));
-		hashcpy(sha1_stat->sha1, active_cache[pos]->sha1);
+		hashcpy(sha1_stat->sha1, active_cache[pos]->oid.hash);
 	}
 	return data;
 }
@@ -721,7 +713,8 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 				 !ce_stage(active_cache[pos]) &&
 				 ce_uptodate(active_cache[pos]) &&
 				 !would_convert_to_git(fname))
-				hashcpy(sha1_stat->sha1, active_cache[pos]->sha1);
+				hashcpy(sha1_stat->sha1,
+					active_cache[pos]->oid.hash);
 			else
 				hash_sha1_file(buf, size, "blob", sha1_stat->sha1);
 			fill_stat_data(&sha1_stat->stat, &st);
@@ -798,16 +791,16 @@ void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 
 int match_basename(const char *basename, int basenamelen,
 		   const char *pattern, int prefix, int patternlen,
-		   int flags)
+		   unsigned flags)
 {
 	if (prefix == patternlen) {
 		if (patternlen == basenamelen &&
-		    !strncmp_icase(pattern, basename, basenamelen))
+		    !fspathncmp(pattern, basename, basenamelen))
 			return 1;
 	} else if (flags & EXC_FLAG_ENDSWITH) {
 		/* "*literal" matching against "fooliteral" */
 		if (patternlen - 1 <= basenamelen &&
-		    !strncmp_icase(pattern + 1,
+		    !fspathncmp(pattern + 1,
 				   basename + basenamelen - (patternlen - 1),
 				   patternlen - 1))
 			return 1;
@@ -823,7 +816,7 @@ int match_basename(const char *basename, int basenamelen,
 int match_pathname(const char *pathname, int pathlen,
 		   const char *base, int baselen,
 		   const char *pattern, int prefix, int patternlen,
-		   int flags)
+		   unsigned flags)
 {
 	const char *name;
 	int namelen;
@@ -844,7 +837,7 @@ int match_pathname(const char *pathname, int pathlen,
 	 */
 	if (pathlen < baselen + 1 ||
 	    (baselen && pathname[baselen] != '/') ||
-	    strncmp_icase(pathname, base, baselen))
+	    fspathncmp(pathname, base, baselen))
 		return 0;
 
 	namelen = baselen ? pathlen - baselen - 1 : pathlen;
@@ -858,7 +851,7 @@ int match_pathname(const char *pathname, int pathlen,
 		if (prefix > namelen)
 			return 0;
 
-		if (strncmp_icase(pattern, name, prefix))
+		if (fspathncmp(pattern, name, prefix))
 			return 0;
 		pattern += prefix;
 		patternlen -= prefix;
@@ -2372,7 +2365,7 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 
 	varint_len = encode_varint(untracked->ident.len, varbuf);
 	strbuf_add(out, varbuf, varint_len);
-	strbuf_add(out, untracked->ident.buf, untracked->ident.len);
+	strbuf_addbuf(out, &untracked->ident);
 
 	strbuf_add(out, ouc, ouc_size(len));
 	free(ouc);

@@ -107,7 +107,7 @@ static int check_submodules_use_gitfiles(void)
 	return errs;
 }
 
-static int check_local_mod(unsigned char *head, int index_only)
+static int check_local_mod(struct object_id *head, int index_only)
 {
 	/*
 	 * Items in list are already sorted in the cache order,
@@ -123,13 +123,13 @@ static int check_local_mod(unsigned char *head, int index_only)
 	struct string_list files_submodule = STRING_LIST_INIT_NODUP;
 	struct string_list files_local = STRING_LIST_INIT_NODUP;
 
-	no_head = is_null_sha1(head);
+	no_head = is_null_oid(head);
 	for (i = 0; i < list.nr; i++) {
 		struct stat st;
 		int pos;
 		const struct cache_entry *ce;
 		const char *name = list.entry[i].name;
-		unsigned char sha1[20];
+		struct object_id oid;
 		unsigned mode;
 		int local_changes = 0;
 		int staged_changes = 0;
@@ -152,7 +152,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 
 		if (lstat(ce->name, &st) < 0) {
 			if (errno != ENOENT && errno != ENOTDIR)
-				warning("'%s': %s", ce->name, strerror(errno));
+				warning_errno(_("failed to stat '%s'"), ce->name);
 			/* It already vanished from the working tree */
 			continue;
 		}
@@ -197,9 +197,9 @@ static int check_local_mod(unsigned char *head, int index_only)
 		 * way as changed from the HEAD.
 		 */
 		if (no_head
-		     || get_tree_entry(head, name, sha1, &mode)
+		     || get_tree_entry(head->hash, name, oid.hash, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
-		     || hashcmp(ce->sha1, sha1))
+		     || oidcmp(&ce->oid, &oid))
 			staged_changes = 1;
 
 		/*
@@ -314,7 +314,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		list.entry[list.nr].is_submodule = S_ISGITLINK(ce->ce_mode);
 		if (list.entry[list.nr++].is_submodule &&
 		    !is_staging_gitmodules_ok())
-			die (_("Please, stage your changes to .gitmodules or stash them to proceed"));
+			die (_("Please stage your changes to .gitmodules or stash them to proceed"));
 	}
 
 	if (pathspec.nr) {
@@ -351,10 +351,10 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 * report no changes unless forced.
 	 */
 	if (!force) {
-		unsigned char sha1[20];
-		if (get_sha1("HEAD", sha1))
-			hashclr(sha1);
-		if (check_local_mod(sha1, index_only))
+		struct object_id oid;
+		if (get_oid("HEAD", &oid))
+			oidclr(&oid);
+		if (check_local_mod(&oid, index_only))
 			exit(1);
 	} else if (!index_only) {
 		if (check_submodules_use_gitfiles())
@@ -387,6 +387,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 */
 	if (!index_only) {
 		int removed = 0, gitmodules_modified = 0;
+		struct strbuf buf = STRBUF_INIT;
 		for (i = 0; i < list.nr; i++) {
 			const char *path = list.entry[i].name;
 			if (list.entry[i].is_submodule) {
@@ -398,7 +399,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 						continue;
 					}
 				} else {
-					struct strbuf buf = STRBUF_INIT;
+					strbuf_reset(&buf);
 					strbuf_addstr(&buf, path);
 					if (!remove_dir_recursively(&buf, 0)) {
 						removed = 1;
@@ -410,7 +411,6 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 						/* Submodule was removed by user */
 						if (!remove_path_from_gitmodules(path))
 							gitmodules_modified = 1;
-					strbuf_release(&buf);
 					/* Fallthrough and let remove_path() fail. */
 				}
 			}
@@ -421,6 +421,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			if (!removed)
 				die_errno("git rm: '%s'", path);
 		}
+		strbuf_release(&buf);
 		if (gitmodules_modified)
 			stage_updated_gitmodules();
 	}

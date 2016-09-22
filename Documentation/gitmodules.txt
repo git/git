@@ -19,7 +19,7 @@ of linkgit:git-config[1].
 
 The file contains one subsection per submodule, and the subsection value
 is the name of the submodule. The name is set to the path where the
-submodule has been added unless it was customized with the '--name'
+submodule has been added unless it was customized with the `--name`
 option of 'git submodule add'. Each submodule section also contains the
 following required keys:
 
@@ -78,6 +78,11 @@ submodule.<name>.ignore::
 	Both settings can be overridden on the command line by using the
 	"--ignore-submodule" option. The 'git submodule' commands are not
 	affected by this setting.
+
+submodule.<name>.shallow::
+	When set to true, a clone of this submodule will be performed as a
+	shallow clone unless the user explicitly asks for a non-shallow
+	clone.
 
 
 EXAMPLES

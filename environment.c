@@ -25,14 +25,13 @@ int log_all_ref_updates = -1; /* unspecified */
 int warn_ambiguous_refs = 1;
 int warn_on_object_refname_ambiguity = 1;
 int ref_paranoia = -1;
-int repository_format_version;
 int repository_format_precious_objects;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
-int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
 const char *apply_default_ignorewhitespace;
 const char *git_attributes_file;
+const char *git_hooks_path;
 int zlib_compression_level = Z_BEST_SPEED;
 int core_compression_level;
 int core_compression_seen;
@@ -41,7 +40,6 @@ size_t packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE;
 size_t packed_git_limit = DEFAULT_PACKED_GIT_LIMIT;
 size_t delta_base_cache_limit = 96 * 1024 * 1024;
 unsigned long big_file_threshold = 512 * 1024 * 1024;
-const char *pager_program;
 int pager_use_color = 1;
 const char *editor_program;
 const char *askpass_program;
@@ -64,8 +62,8 @@ int grafts_replace_parents = 1;
 int core_apply_sparse_checkout;
 int merge_log_config = -1;
 int precomposed_unicode = -1; /* see probe_utf8_pathname_composition() */
-struct startup_info *startup_info;
 unsigned long pack_size_limit_cfg;
+enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 
 #ifndef PROTECT_HFS_DEFAULT
 #define PROTECT_HFS_DEFAULT 0
@@ -197,6 +195,13 @@ int is_bare_repository(void)
 	return is_bare_repository_cfg && !get_git_work_tree();
 }
 
+int have_git_dir(void)
+{
+	return startup_info->have_repository
+		|| git_dir
+		|| getenv(GIT_DIR_ENVIRONMENT);
+}
+
 const char *get_git_dir(void)
 {
 	if (!git_dir)
@@ -324,4 +329,30 @@ const char *get_log_output_encoding(void)
 const char *get_commit_output_encoding(void)
 {
 	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+}
+
+static int the_shared_repository = PERM_UMASK;
+static int need_shared_repository_from_config = 1;
+
+void set_shared_repository(int value)
+{
+	the_shared_repository = value;
+	need_shared_repository_from_config = 0;
+}
+
+int get_shared_repository(void)
+{
+	if (need_shared_repository_from_config) {
+		const char *var = "core.sharedrepository";
+		const char *value;
+		if (!git_config_get_value(var, &value))
+			the_shared_repository = git_config_perm(var, value);
+		need_shared_repository_from_config = 0;
+	}
+	return the_shared_repository;
+}
+
+void reset_shared_repository(void)
+{
+	need_shared_repository_from_config = 1;
 }
