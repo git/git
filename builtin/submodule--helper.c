@@ -443,7 +443,8 @@ static int module_name(int argc, const char **argv, const char *prefix)
 }
 
 static int clone_submodule(const char *path, const char *gitdir, const char *url,
-			   const char *depth, struct string_list *reference, int quiet)
+			   const char *depth, struct string_list *reference,
+			   int quiet, int progress)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
@@ -451,6 +452,8 @@ static int clone_submodule(const char *path, const char *gitdir, const char *url
 	argv_array_push(&cp.args, "--no-checkout");
 	if (quiet)
 		argv_array_push(&cp.args, "--quiet");
+	if (progress)
+		argv_array_push(&cp.args, "--progress");
 	if (depth && *depth)
 		argv_array_pushl(&cp.args, "--depth", depth, NULL);
 	if (reference->nr) {
@@ -575,6 +578,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 {
 	const char *name = NULL, *url = NULL, *depth = NULL;
 	int quiet = 0;
+	int progress = 0;
 	FILE *submodule_dot_git;
 	char *p, *path = NULL, *sm_gitdir;
 	struct strbuf rel_path = STRBUF_INIT;
@@ -601,6 +605,8 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			   N_("string"),
 			   N_("depth for shallow clones")),
 		OPT__QUIET(&quiet, "Suppress output for cloning a submodule"),
+		OPT_BOOL(0, "progress", &progress,
+			   N_("force cloning progress")),
 		OPT_END()
 	};
 
@@ -634,7 +640,8 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 
 		prepare_possible_alternates(name, &reference);
 
-		if (clone_submodule(path, sm_gitdir, url, depth, &reference, quiet))
+		if (clone_submodule(path, sm_gitdir, url, depth, &reference,
+				    quiet, progress))
 			die(_("clone of '%s' into submodule path '%s' failed"),
 			    url, path);
 	} else {
@@ -684,6 +691,7 @@ struct submodule_update_clone {
 	struct submodule_update_strategy update;
 
 	/* configuration parameters which are passed on to the children */
+	int progress;
 	int quiet;
 	int recommend_shallow;
 	struct string_list references;
@@ -702,7 +710,7 @@ struct submodule_update_clone {
 	int failed_clones_nr, failed_clones_alloc;
 };
 #define SUBMODULE_UPDATE_CLONE_INIT {0, MODULE_LIST_INIT, 0, \
-	SUBMODULE_UPDATE_STRATEGY_INIT, 0, -1, STRING_LIST_INIT_DUP, \
+	SUBMODULE_UPDATE_STRATEGY_INIT, 0, 0, -1, STRING_LIST_INIT_DUP, \
 	NULL, NULL, NULL, \
 	STRING_LIST_INIT_DUP, 0, NULL, 0, 0}
 
@@ -804,6 +812,8 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	child->err = -1;
 	argv_array_push(&child->args, "submodule--helper");
 	argv_array_push(&child->args, "clone");
+	if (suc->progress)
+		argv_array_push(&child->args, "--progress");
 	if (suc->quiet)
 		argv_array_push(&child->args, "--quiet");
 	if (suc->prefix)
@@ -951,6 +961,8 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "recommend-shallow", &suc.recommend_shallow,
 			    N_("whether the initial clone should follow the shallow recommendation")),
 		OPT__QUIET(&suc.quiet, N_("don't print cloning progress")),
+		OPT_BOOL(0, "progress", &suc.progress,
+			    N_("force cloning progress")),
 		OPT_END()
 	};
 
