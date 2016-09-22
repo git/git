@@ -16,7 +16,7 @@ static int checkout_stage; /* default to checkout stage0 */
 static int to_tempfile;
 static char topath[4][TEMPORARY_FILENAME_LENGTH + 1];
 
-static struct checkout state;
+static struct checkout state = CHECKOUT_INIT;
 
 static void write_tempfile_record(const char *name, const char *prefix)
 {
