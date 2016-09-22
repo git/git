@@ -670,7 +670,7 @@ static void update_head(const struct ref *our, const struct ref *remote,
 	}
 }
 
-static int checkout(void)
+static int checkout(int submodule_progress)
 {
 	unsigned char sha1[20];
 	char *head;
@@ -733,6 +733,9 @@ static int checkout(void)
 
 		if (max_jobs != -1)
 			argv_array_pushf(&args, "--jobs=%d", max_jobs);
+
+		if (submodule_progress)
+			argv_array_push(&args, "--progress");
 
 		err = run_command_v_opt(args.argv, RUN_GIT_CMD);
 		argv_array_clear(&args);
@@ -841,6 +844,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	const char *src_ref_prefix = "refs/heads/";
 	struct remote *remote;
 	int err = 0, complete_refs_before_fetch = 1;
+	int submodule_progress;
 
 	struct refspec *refspec;
 	const char *fetch_pattern;
@@ -1099,6 +1103,14 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	update_head(our_head_points_at, remote_head, reflog_msg.buf);
 
+	/*
+	 * We want to show progress for recursive submodule clones iff
+	 * we did so for the main clone. But only the transport knows
+	 * the final decision for this flag, so we need to rescue the value
+	 * before we free the transport.
+	 */
+	submodule_progress = transport->progress;
+
 	transport_unlock_pack(transport);
 	transport_disconnect(transport);
 
@@ -1108,7 +1120,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	junk_mode = JUNK_LEAVE_REPO;
-	err = checkout();
+	err = checkout(submodule_progress);
 
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_top);

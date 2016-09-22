@@ -44,6 +44,7 @@ update=
 prefix=
 custom_name=
 depth=
+progress=
 
 die_if_unmatched ()
 {
@@ -498,6 +499,9 @@ cmd_update()
 		-q|--quiet)
 			GIT_QUIET=1
 			;;
+		--progress)
+			progress="--progress"
+			;;
 		-i|--init)
 			init=1
 			;;
@@ -573,6 +577,7 @@ cmd_update()
 
 	{
 	git submodule--helper update-clone ${GIT_QUIET:+--quiet} \
+		${progress:+"$progress"} \
 		${wt_prefix:+--prefix "$wt_prefix"} \
 		${prefix:+--recursive-prefix "$prefix"} \
 		${update:+--update "$update"} \
