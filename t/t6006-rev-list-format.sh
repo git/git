@@ -225,7 +225,7 @@ test_expect_success '%C(auto,...) respects --color=auto (stdout not tty)' '
 
 test_expect_success '%C(auto) respects --color' '
 	git log --color --format="%C(auto)%H" -1 >actual &&
-	printf "\\033[33m%s\\033[m\\n" $(git rev-parse HEAD) >expect &&
+	printf "\\033[m\\033[33m%s\\033[m\\n" $(git rev-parse HEAD) >expect &&
 	test_cmp expect actual
 '
 
