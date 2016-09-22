@@ -41,6 +41,15 @@ test_expect_success 'check ambiguity' '
 	test_must_fail git checkout world all
 '
 
+test_expect_success 'check ambiguity in subdir' '
+	mkdir sub &&
+	# not ambiguous because sub/world does not exist
+	git -C sub checkout world ../all &&
+	echo hello >sub/world &&
+	# ambiguous because sub/world does exist
+	test_must_fail git -C sub checkout world ../all
+'
+
 test_expect_success 'disambiguate checking out from a tree-ish' '
 	echo bye > world &&
 	git checkout world -- world &&
