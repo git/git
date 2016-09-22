@@ -117,7 +117,7 @@ Importing a CVS archive
 -----------------------
 
 First, install version 2.1 or higher of cvsps from
-http://www.cobite.com/cvsps/[http://www.cobite.com/cvsps/] and make
+https://github.com/andreyvit/cvsps[https://github.com/andreyvit/cvsps] and make
 sure it is in your path.  Then cd to a checked out CVS working directory
 of the project you are interested in and run linkgit:git-cvsimport[1]:
 
