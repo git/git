@@ -1356,6 +1356,7 @@ struct checkout {
 		 not_new:1,
 		 refresh_cache:1;
 };
+#define CHECKOUT_INIT { NULL, "" }
 
 #define TEMPORARY_FILENAME_LENGTH 25
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);

@@ -239,7 +239,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 			  const char *revision)
 {
 	int pos;
-	struct checkout state;
+	struct checkout state = CHECKOUT_INIT;
 	static char *ps_matched;
 	struct object_id rev;
 	struct commit *head;
@@ -352,7 +352,6 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return 1;
 
 	/* Now we are committed to check them out */
-	memset(&state, 0, sizeof(state));
 	state.force = 1;
 	state.refresh_cache = 1;
 	state.istate = &the_index;
