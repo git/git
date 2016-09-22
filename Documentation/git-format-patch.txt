@@ -19,7 +19,8 @@ SYNOPSIS
 		   [--start-number <n>] [--numbered-files]
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
-		   [--subject-prefix=Subject-Prefix] [(--reroll-count|-v) <n>]
+		   [--rfc] [--subject-prefix=Subject-Prefix]
+		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet] [--notes[=<ref>]]
 		   [<common diff options>]
@@ -171,6 +172,11 @@ will want to ensure that threading is disabled for `git send-email`.
 	line, instead use '[<Subject-Prefix>]'. This
 	allows for useful naming of a patch series, and can be
 	combined with the `--numbered` option.
+
+--rfc::
+	Alias for `--subject-prefix="RFC PATCH"`. RFC means "Request For
+	Comments"; use this when sending an experimental patch for
+	discussion rather than application.
 
 -v <n>::
 --reroll-count=<n>::
