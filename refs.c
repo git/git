@@ -419,6 +419,13 @@ static char *substitute_branch_name(const char **string, int *len)
 int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
 	char *last_branch = substitute_branch_name(&str, &len);
+	int   refs_found  = expand_ref(str, len, sha1, ref);
+	free(last_branch);
+	return refs_found;
+}
+
+int expand_ref(const char *str, int len, unsigned char *sha1, char **ref)
+{
 	const char **p, *r;
 	int refs_found = 0;
 
@@ -444,7 +451,6 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 			warning("ignoring broken ref %s.", fullref);
 		}
 	}
-	free(last_branch);
 	return refs_found;
 }
 
