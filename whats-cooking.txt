@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2016, #06; Wed, 21)
+Subject: What's cooking in git.git (Sep 2016, #07; Fri, 23)
 X-master-at: 6fe1b1407ed91823daa5d487abe457ff37463349
-X-next-at: 97b919bdbde768487edc76513548a747496e2579
+X-next-at: 0d124844aa5dddf553b9ab078d43c935bb585135
 
-What's cooking in git.git (Sep 2016, #06; Wed, 21)
+What's cooking in git.git (Sep 2016, #07; Fri, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,304 +12,97 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
+A bunch of topics have graduated to 'next', including a few that
+were so far marked as "needs review" or "will hold", as I think
+giving them a greater visibility and guinea pigs would be the most
+efficient way to get feedback from the real world ;-) Some of them
+may be "Meh" topic, which might be why they weren't getting any
+feedback so far, but at least this way we'd know if there are
+breakages in them (in which case we can just revert and discard
+them).
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bw/pathspec-remove-unused-extern-decl (2016-09-13) 1 commit
-  (merged to 'next' on 2016-09-15 at c5b281b)
- + pathspec: remove unnecessary function prototypes
-
- Code cleanup.
-
-
-* et/add-chmod-x (2016-09-12) 1 commit
-  (merged to 'next' on 2016-09-15 at c81abae)
- + add: document the chmod option
- (this branch is used by tg/add-chmod+x-fix.)
-
- "git add --chmod=+x" added recently lacked documentation, which has
- been corrected.
-
-
-* ew/http-do-not-forget-to-call-curl-multi-remove-handle (2016-09-13) 3 commits
-  (merged to 'next' on 2016-09-15 at 696acb7)
- + http: always remove curl easy from curlm session on release
- + http: consolidate #ifdefs for curl_multi_remove_handle
- + http: warn on curl_multi_add_handle failures
-
- The http transport (with curl-multi option, which is the default
- these days) failed to remove curl-easy handle from a curlm session,
- which led to unnecessary API failures.
-
-
-* jk/delta-base-cache (2016-09-12) 1 commit
-  (merged to 'next' on 2016-09-15 at 1e35f8d)
- + add_delta_base_cache: use list_for_each_safe
-
- Recently we updated the code to manage the in-core cache that holds
- objects that have recently been used to reconstitute other objects
- that are stored as deltas against them, but the update used an
- incorrect API function to manage the list of these objects.  This
- has been fixed.
- This is a last-minute fix to a topic that graduated to 'master'
- post 2.10 release.
-
-
-* jk/patch-ids-no-merges (2016-09-12) 2 commits
-  (merged to 'next' on 2016-09-15 at 14bb3a0)
- + patch-ids: refuse to compute patch-id for merge commit
- + patch-ids: turn off rename detection
-
- "git log --cherry-pick" used to include merge commits as candidates
- to be matched up with other commits, resulting a lot of wasted time.
- The patch-id generation logic has been updated to ignore merges to
- avoid the wastage.
-
-
-* jk/rebase-i-drop-ident-check (2016-07-29) 1 commit
-  (merged to 'next' on 2016-08-14 at 6891bcd)
- + rebase-interactive: drop early check for valid ident
-
- Even when "git pull --rebase=preserve" (and the underlying "git
- rebase --preserve") can complete without creating any new commit
- (i.e. fast-forwards), it still insisted on having a usable ident
- information (read: user.email is set correctly), which was less
- than nice.  As the underlying commands used inside "git rebase"
- would fail with a more meaningful error message and advice text
- when the bogus ident matters, this extra check was removed.
-
-
-* jk/reduce-gc-aggressive-depth (2016-08-11) 1 commit
-  (merged to 'next' on 2016-08-11 at 6810c6f)
- + gc: default aggressive depth to 50
-
- "git gc --aggressive" used to limit the delta-chain length to 250,
- which is way too deep for gaining additional space savings and is
- detrimental for runtime performance.  The limit has been reduced to
- 50.
-
-
-* jk/setup-sequence-update (2016-09-13) 16 commits
-  (merged to 'next' on 2016-09-15 at 4df8399)
- + t1007: factor out repeated setup
- + init: reset cached config when entering new repo
- + init: expand comments explaining config trickery
- + config: only read .git/config from configured repos
- + test-config: setup git directory
- + t1302: use "git -C"
- + pager: handle early config
- + pager: use callbacks instead of configset
- + pager: make pager_program a file-local static
- + pager: stop loading git_default_config()
- + pager: remove obsolete comment
- + diff: always try to set up the repository
- + diff: handle --no-index prefixes consistently
- + diff: skip implicit no-index check when given --no-index
- + patch-id: use RUN_SETUP_GENTLY
- + hash-object: always try to set up the git repository
- (this branch is used by nd/init-core-worktree-in-multi-worktree-world.)
-
- There were numerous corner cases in which the configuration files
- are read and used or not read at all depending on the directory a
- Git command was run, leading to inconsistent behaviour.  The code
- to set-up repository access at the beginning of a Git process has
- been updated to fix them.
-
-
-* js/cat-file-filters (2016-09-11) 4 commits
-  (merged to 'next' on 2016-09-15 at a231380)
- + cat-file: support --textconv/--filters in batch mode
- + cat-file --textconv/--filters: allow specifying the path separately
- + cat-file: introduce the --filters option
- + cat-file: fix a grammo in the man page
-
- Even though "git hash-objects", which is a tool to take an
- on-filesystem data stream and put it into the Git object store,
- allowed to perform the "outside-world-to-Git" conversions (e.g.
- end-of-line conversions and application of the clean-filter), and
- it had the feature on by default from very early days, its reverse
- operation "git cat-file", which takes an object from the Git object
- store and externalize for the consumption by the outside world,
- lacked an equivalent mechanism to run the "Git-to-outside-world"
- conversion.  The command learned the "--filters" option to do so.
-
-
-* jt/accept-capability-advertisement-when-fetching-from-void (2016-09-09) 3 commits
-  (merged to 'next' on 2016-09-15 at 1cd9f9a)
- + connect: advertized capability is not a ref
- + connect: tighten check for unexpected early hang up
- + tests: move test_lazy_prereq JGIT to test-lib.sh
-
- JGit can show a fake ref "capabilities^{}" to "git fetch" when it
- does not advertise any refs, but "git fetch" was not prepared to
- see such an advertisement.  When the other side disconnects without
- giving any ref advertisement, we used to say "there may not be a
- repository at that URL", but we may have seen other advertisement
- like "shallow" and ".have" in which case we definitely know that a
- repository is there.  The code to detect this case has also been
- updated.
-
-
-* jt/format-patch-base-info-above-sig (2016-09-15) 1 commit
-  (merged to 'next' on 2016-09-15 at 3da5c68)
- + format-patch: show base info before email signature
-
- "git format-patch --base=..." feature that was recently added
- showed the base commit information after "-- " e-mail signature
- line, which turned out to be inconvenient.  The base information
- has been moved above the signature line.
-
-
-* ks/pack-objects-bitmap (2016-09-12) 2 commits
-  (merged to 'next' on 2016-09-15 at e0600bd)
- + pack-objects: use reachability bitmap index when generating non-stdout pack
- + pack-objects: respect --local/--honor-pack-keep/--incremental when bitmap is in use
-
- Some codepaths in "git pack-objects" were not ready to use an
- existing pack bitmap; now they are and as the result they have
- become faster.
-
-
-* ks/perf-build-with-autoconf (2016-09-15) 1 commit
-  (merged to 'next' on 2016-09-15 at 261878d)
- + t/perf/run: copy config.mak.autogen & friends to build area
-
- Performance tests done via "t/perf" did not use the same set of
- build configuration if the user relied on autoconf generated
- configuration.
-
-
-* mr/vcs-svn-printf-ulong (2016-09-14) 1 commit
-  (merged to 'next' on 2016-09-15 at cc8ef53)
- + vcs-svn/fast_export: fix timestamp fmt specifiers
-
- Code cleanup.
-
-
-* rs/checkout-some-states-are-const (2016-09-13) 1 commit
-  (merged to 'next' on 2016-09-15 at 19f219b)
- + checkout: constify parameters of checkout_stage() and checkout_merged()
-
- Code cleanup.
-
-
-* rs/pack-sort-with-llist-mergesort (2016-09-13) 1 commit
-  (merged to 'next' on 2016-09-15 at 45159f5)
- + sha1_file: use llist_mergesort() for sorting packs
-
- Code cleanup.
-
-
-* rs/strbuf-remove-fix (2016-09-13) 1 commit
-  (merged to 'next' on 2016-09-15 at 5f64556)
- + strbuf: use valid pointer in strbuf_remove()
-
- Code cleanup.
-
-
-* rs/unpack-trees-reduce-file-scope-global (2016-09-13) 1 commit
-  (merged to 'next' on 2016-09-15 at cd16435)
- + unpack-trees: pass checkout state explicitly to check_updates()
-
- Code cleanup.
-
-
-* rs/xdiff-merge-overlapping-hunks-for-W-context (2016-09-14) 1 commit
-  (merged to 'next' on 2016-09-15 at eaa85ab)
- + xdiff: fix merging of hunks with -W context and -u context
-
- "git diff -W" output needs to extend the context backward to
- include the header line of the current function and also forward to
- include the body of the entire current function up to the header
- line of the next one.  This process may have to merge to adjacent
- hunks, but the code forgot to do so in some cases.
-
-
-* va/i18n (2016-09-15) 11 commits
-  (merged to 'next' on 2016-09-15 at 2b3d368)
- + i18n: update-index: mark warnings for translation
- + i18n: show-branch: mark plural strings for translation
- + i18n: show-branch: mark error messages for translation
- + i18n: receive-pack: mark messages for translation
- + notes: spell first word of error messages in lowercase
- + i18n: notes: mark error messages for translation
- + i18n: merge-recursive: mark verbose message for translation
- + i18n: merge-recursive: mark error messages for translation
- + i18n: config: mark error message for translation
- + i18n: branch: mark option description for translation
- + i18n: blame: mark error messages for translation
- (this branch is used by va/i18n-more.)
-
- More i18n.
-
---------------------------------------------------
 [New Topics]
 
-* ep/doc-check-ref-format-example (2016-09-21) 1 commit
- - git-check-ref-format.txt: fixup documentation
+* jk/clone-recursive-progress (2016-09-22) 1 commit
+  (merged to 'next' on 2016-09-22 at 8310c42)
+ + clone: pass --progress decision to recursive submodules
 
- A shell script example in check-ref-format documentation has been
- fixed.
+ "git clone --recurse-submodules" lost the progress eye-candy in
+ recent update, which has been corrected.
 
- Will merge to 'next'.
-
-
-* js/regexec-buf (2016-09-21) 3 commits
- - regex: use regexec_buf()
- - regex: add regexec_buf() that can work on a non NUL-terminated string
- - regex: -G<pattern> feeds a non NUL-terminated string to regexec() and fails
-
- Some codepaths in "git diff" used regexec(3) on a buffer that was
- mmap(2)ed, which may not have a terminating NUL, leading to a read
- beyond the end of the mapped region.  This was fixed by introducing
- a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
- extension.
-
- Waiting for an Ack to minor tweaks.
- cf. <cover.1474482164.git.johannes.schindelin@gmx.de>
+ Will merge to 'master'.
 
 
-* jt/format-patch-rfc (2016-09-21) 1 commit
- - format-patch: add "--rfc" for the common case of [RFC PATCH]
+* jk/doc-cvs-update (2016-09-22) 3 commits
+  (merged to 'next' on 2016-09-22 at c0f949f)
+ + docs/cvs-migration: mention cvsimport caveats
+ + docs/cvs-migration: update link to cvsps homepage
+ + docs/cvsimport: prefer cvs-fast-export to parsecvs
 
- In some projects it is common to use "[RFC PATCH]" as the subject
- prefix for a patch meant for discussion rather than application.  A
- new option "--rfc" was a short-hand for "--subject-prefix=RFC PATCH"
- to help the participants of such projects.
+ Documentation around tools to import from CVS was fairly outdated.
+
+ Will merge to 'master'.
+
+
+* jk/verify-packfile-gently (2016-09-22) 1 commit
+ - verify_packfile: check pack validity before accessing data
+
+ A low-level function verify_packfile() was meant to show errors
+ detected without dying itself, but under some conditions it didn't
+ and died instead, which has been fixed.
 
  Will merge to 'next'.
 
 
-* ls/travis-homebrew-path-fix (2016-09-21) 1 commit
- - travis-ci: ask homebrew for the its path instead of hardcoding it
+* jt/fetch-pack-in-vain-count-with-stateless (2016-09-23) 1 commit
+ - fetch-pack: do not reset in_vain on non-novel acks
 
- The procedure to build Git on Mac OS X for Travis CI hardcoded the
- internal directory structure we assumed HomeBrew uses, which was a
- no-no.  The procedure has been updated to ask HomeBrew things we
- need to know to fix this.
+ When "git fetch" tries to find where the history it has diverged
+ from what the other side has, it has a mechanism to avoid digging
+ too deep into irrelevant side branches.  This however did not work
+ well over the "smart-http" transport due to a design bug, which has
+ been fixed.
 
  Will merge to 'next'.
 
 
-* nd/init-core-worktree-in-multi-worktree-world (2016-09-21) 3 commits
- - init: reuse original_git_dir in set_git_dir_init()
- - init: do not set core.worktree more often than necessary
- - init: correct re-initialization from a linked worktree
+* rs/checkout-init-macro (2016-09-22) 1 commit
+  (merged to 'next' on 2016-09-22 at 6513755)
+ + introduce CHECKOUT_INIT
 
- "git init" tried to record core.worktree in the repository's
- 'config' file when GIT_WORK_TREE environment variable was set and
- it was different from where GIT_DIR appears as ".git" at its top,
- but the logic was faulty when .git is a "gitdir:" file that points
- at the real place, causing trouble in working trees that are
- managed by "git worktree".  This has been corrected.
+ Code cleanup.
 
- The second one seems to need a bit more polishing.
- cf. <xmqqd1jx854z.fsf@gitster.mtv.corp.google.com>
+ Will merge to 'master'.
+
+
+* ik/gitweb-force-highlight (2016-09-23) 2 commits
+ - gitweb: use highlight's shebang detection
+ - gitweb: remove unused paarmeter from guess_file_syntax()
+
+ "gitweb" can spawn "highlight" to show blob contents with
+ (programming) language-specific syntax highlighting, but only
+ when the language is known.  "highlight" can however be told
+ to make the guess itself by giving it "--force" option, which
+ has been enabled.
+
+ Waiting for the discussion to conclude.
+ cf. <2a4c3efb-2145-b699-c980-3079f165a6e1@gmail.com>
+
+
+* jk/ident-ai-canonname-could-be-null (2016-09-23) 1 commit
+ - ident: handle NULL ai_canonname
+
+ In the codepath that comes up with the hostname to be used in an
+ e-mail when the user didn't tell us, we looked at ai_canonname
+ field in struct addrinfo without making sure it is not NULL first.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -333,20 +126,6 @@ of the repositories listed at
  time.  It is likely that to support a "prime clone from CDN", it
  would need a lot more than just "these are the heads and the pack
  data is over there", so this may not be sufficient.
-
- Will discard.
-
-
-* jc/blame-reverse (2016-06-14) 2 commits
- - blame: dwim "blame --reverse OLD" as "blame --reverse OLD.."
- - blame: improve diagnosis for "--reverse NEW"
-
- It is a common mistake to say "git blame --reverse OLD path",
- expecting that the command line is dwimmed as if asking how lines
- in path in an old revision OLD have survived up to the current
- commit.
-
- Has been waiting for positive responses without seeing any.
 
  Will discard.
 
@@ -453,6 +232,68 @@ of the repositories listed at
 
  It has been two months without any support.  We may want to discard
  this.
+
+
+* pb/bisect (2016-08-23) 27 commits
+ . bisect--helper: remove the dequote in bisect_start()
+ . bisect--helper: retire `--bisect-auto-next` subcommand
+ . bisect--helper: retire `--bisect-autostart` subcommand
+ . bisect--helper: retire `--check-and-set-terms` subcommand
+ . bisect--helper: retire `--bisect-write` subcommand
+ . bisect--helper: `bisect_replay` shell function in C
+ . bisect--helper: `bisect_log` shell function in C
+ . bisect--helper: retire `--write-terms` subcommand
+ . bisect--helper: retire `--check-expected-revs` subcommand
+ . bisect--helper: `bisect_state` & `bisect_head` shell function in C
+ . bisect--helper: `bisect_autostart` shell function in C
+ . bisect--helper: retire `--next-all` subcommand
+ . bisect--helper: retire `--bisect-clean-state` subcommand
+ . bisect--helper: `bisect_next` and `bisect_auto_next` shell function in C
+ . bisect--helper: `bisect_start` shell function partially in C
+ . bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ . bisect--helper: `bisect_next_check` & bisect_voc shell function in C
+ . bisect--helper: `check_and_set_terms` shell function in C
+ . bisect--helper: `bisect_write` shell function in C
+ . bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
+ . bisect--helper: `bisect_reset` shell function in C
+ . wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ . t6030: explicitly test for bisection cleanup
+ . bisect--helper: `bisect_clean_state` shell function in C
+ . bisect--helper: `write_terms` shell function in C
+ . bisect: rewrite `check_term_format` shell function in C
+ . bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+
+ GSoC "bisect" topic.
+
+ I'd prefer to see early part solidified so that reviews can focus
+ on the later part that is still in flux.  We are almost there but
+ not quite yet.
+
+
+* kn/ref-filter-branch-list (2016-05-17) 17 commits
+ - branch: implement '--format' option
+ - branch: use ref-filter printing APIs
+ - branch, tag: use porcelain output
+ - ref-filter: allow porcelain to translate messages in the output
+ - ref-filter: add `:dir` and `:base` options for ref printing atoms
+ - ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
+ - ref-filter: introduce symref_atom_parser() and refname_atom_parser()
+ - ref-filter: introduce refname_atom_parser_internal()
+ - ref-filter: make "%(symref)" atom work with the ':short' modifier
+ - ref-filter: add support for %(upstream:track,nobracket)
+ - ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
+ - ref-filter: introduce format_ref_array_item()
+ - ref-filter: move get_head_description() from branch.c
+ - ref-filter: modify "%(objectname:short)" to take length
+ - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
+ - ref-filter: include reference to 'used_atom' within 'atom_value'
+ - ref-filter: implement %(if), %(then), and %(else) atoms
+
+ The code to list branches in "git branch" has been consolidated
+ with the more generic ref-filter API.
+
+ Rerolled.
+ Needs review.
 
 
 * sb/bisect (2016-04-15) 22 commits
@@ -564,8 +405,88 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/blame-reverse (2016-06-14) 2 commits
+  (merged to 'next' on 2016-09-22 at d1a8e9c)
+ + blame: dwim "blame --reverse OLD" as "blame --reverse OLD.."
+ + blame: improve diagnosis for "--reverse NEW"
+
+ It is a common mistake to say "git blame --reverse OLD path",
+ expecting that the command line is dwimmed as if asking how lines
+ in path in an old revision OLD have survived up to the current
+ commit.
+
+ Will hold to see if it is broken.
+
+
+* ep/doc-check-ref-format-example (2016-09-21) 1 commit
+  (merged to 'next' on 2016-09-22 at 6d0d79e)
+ + git-check-ref-format.txt: fixup documentation
+
+ A shell script example in check-ref-format documentation has been
+ fixed.
+
+ Will merge to 'master'.
+
+
+* js/regexec-buf (2016-09-21) 3 commits
+  (merged to 'next' on 2016-09-22 at 2ee2477)
+ + regex: use regexec_buf()
+ + regex: add regexec_buf() that can work on a non NUL-terminated string
+ + regex: -G<pattern> feeds a non NUL-terminated string to regexec() and fails
+
+ Some codepaths in "git diff" used regexec(3) on a buffer that was
+ mmap(2)ed, which may not have a terminating NUL, leading to a read
+ beyond the end of the mapped region.  This was fixed by introducing
+ a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
+ extension.
+
+ Will merge to 'master'.
+
+
+* jt/format-patch-rfc (2016-09-21) 1 commit
+  (merged to 'next' on 2016-09-22 at 3b39442)
+ + format-patch: add "--rfc" for the common case of [RFC PATCH]
+
+ In some projects, it is common to use "[RFC PATCH]" as the subject
+ prefix for a patch meant for discussion rather than application.  A
+ new option "--rfc" was a short-hand for "--subject-prefix=RFC PATCH"
+ to help the participants of such projects.
+
+ Will merge to 'master'.
+
+
+* ls/travis-homebrew-path-fix (2016-09-22) 1 commit
+  (merged to 'next' on 2016-09-22 at 310e620)
+ + travis-ci: ask homebrew for its path instead of hardcoding it
+
+ The procedure to build Git on Mac OS X for Travis CI hardcoded the
+ internal directory structure we assumed HomeBrew uses, which was a
+ no-no.  The procedure has been updated to ask HomeBrew things we
+ need to know to fix this.
+
+ Will merge to 'master'.
+
+
+* nd/init-core-worktree-in-multi-worktree-world (2016-09-23) 4 commits
+ - init: combine set_git_dir_init() and init_db() into one
+ - init: reuse original_git_dir in set_git_dir_init()
+ - init: do not set core.worktree more often than necessary
+ - init: correct re-initialization from a linked worktree
+
+ "git init" tried to record core.worktree in the repository's
+ 'config' file when GIT_WORK_TREE environment variable was set and
+ it was different from where GIT_DIR appears as ".git" at its top,
+ but the logic was faulty when .git is a "gitdir:" file that points
+ at the real place, causing trouble in working trees that are
+ managed by "git worktree".  This has been corrected.
+
+ The fourth one seems to need a bit more polishing.
+ cf. <xmqqshsqz0s1.fsf@gitster.mtv.corp.google.com>
+
+
 * mm/config-color-ui-default-to-auto (2016-09-16) 1 commit
- - Documentation/config: default for color.* is color.ui
+  (merged to 'next' on 2016-09-22 at 4eac0cb)
+ + Documentation/config: default for color.* is color.ui
 
  Documentation for individual configuration variables to control use
  of color (like `color.grep`) said that their default value was
@@ -574,40 +495,43 @@ of the repositories listed at
  'auto' quite a while ago, all of them broke.  This has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/c-auto-resets-attributes (2016-09-19) 1 commit
- - pretty: let %C(auto) reset all attributes
+  (merged to 'next' on 2016-09-22 at 68f2e4a)
+ + pretty: let %C(auto) reset all attributes
 
  The pretty-format specifier used by the "log" family of commands
- have "%C(auto)" to turn coloring of the output is taught to also
+ have "%C(auto)" to enable coloring of the output is taught to also
  issue a color-reset sequence to the output.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/cocci (2016-09-15) 3 commits
- - use strbuf_addstr() for adding constant strings to a strbuf, part 2
- - add coccicheck make target
- - contrib/coccinelle: fix semantic patch for oid_to_hex_r()
+  (merged to 'next' on 2016-09-22 at aa54fa4)
+ + use strbuf_addstr() for adding constant strings to a strbuf, part 2
+ + add coccicheck make target
+ + contrib/coccinelle: fix semantic patch for oid_to_hex_r()
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * va/i18n-more (2016-09-21) 6 commits
- - i18n: stash: mark messages for translation
- - i18n: notes-merge: mark die messages for translation
- - i18n: ident: mark hint for translation
- - i18n: i18n: diff: mark die messages for translation
- - i18n: connect: mark die messages for translation
- - i18n: commit: mark message for translation
+  (merged to 'next' on 2016-09-22 at bea26e8)
+ + i18n: stash: mark messages for translation
+ + i18n: notes-merge: mark die messages for translation
+ + i18n: ident: mark hint for translation
+ + i18n: i18n: diff: mark die messages for translation
+ + i18n: connect: mark die messages for translation
+ + i18n: commit: mark message for translation
 
  Even more i18n.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jt/mailinfo-fold-in-body-headers (2016-09-21) 3 commits
@@ -653,20 +577,20 @@ of the repositories listed at
 
 
 * tg/add-chmod+x-fix (2016-09-21) 6 commits
- - t3700-add: do not check working tree file mode without POSIXPERM
- - t3700-add: create subdirectory gently
- - add: modify already added files when --chmod is given
- - read-cache: introduce chmod_index_entry
- - update-index: add test for chmod flags
- - Merge branch 'ib/t3700-add-chmod-x-updates' into tg/add-chmod+x-fix
+  (merged to 'next' on 2016-09-22 at 6afdd21)
+ + t3700-add: do not check working tree file mode without POSIXPERM
+ + t3700-add: create subdirectory gently
+ + add: modify already added files when --chmod is given
+ + read-cache: introduce chmod_index_entry
+ + update-index: add test for chmod flags
+ + Merge branch 'ib/t3700-add-chmod-x-updates' into tg/add-chmod+x-fix
 
  "git add --chmod=+x <pathspec>" added recently only toggled the
  executable bit for paths that are either new or modified. This has
  been corrected to flip the executable bit for all paths that match
  the given pathspec.
 
- Waiting for the discussion to conclude.
- cf. <c3aefd9d-b794-21a1-619e-bce6a3c2cf47@kdbg.org>
+ Will merge to 'master'.
 
 
 * bw/ls-files-recurse-submodules (2016-09-21) 2 commits
@@ -683,7 +607,7 @@ of the repositories listed at
  Waiting for the discussion to conclude.
 
 
-* ls/filter-process (2016-09-21) 11 commits
+* ls/filter-process (2016-09-23) 11 commits
  - convert: add filter.<driver>.process option
  - convert: make apply_filter() adhere to standard Git error handling
  - convert: modernize tests
@@ -703,7 +627,7 @@ of the repositories listed at
  all filtering need is served by this single process for multiple
  paths, reducing the process creation overhead.
 
- Is this ready?
+ Is this one ready to be merged?
 
 
 * hv/submodule-not-yet-pushed-fix (2016-09-15) 5 commits
@@ -724,22 +648,21 @@ of the repositories listed at
 
 
 * rt/rebase-i-broken-insn-advise (2016-09-07) 1 commit
- - rebase -i: improve advice on bad instruction lines
+  (merged to 'next' on 2016-09-23 at 0d12484)
+ + rebase -i: improve advice on bad instruction lines
 
  When "git rebase -i" is given a broken instruction, it told the
  user to fix it with "--edit-todo", but didn't say what the step
  after that was (i.e. "--continue").
 
- Will hold.
- Dscho's "rebase -i" hopefully will become available in 'pu', by
- which time an equivalent of this fix would be ported to C.  This is
- queued merely as a reminder.
+ Will merge to 'master'.
 
 
 * nd/checkout-disambiguation (2016-09-21) 3 commits
- - checkout: fix ambiguity check in subdir
- - checkout.txt: document a common case that ignores ambiguation rules
- - checkout: add some spaces between code and comment
+  (merged to 'next' on 2016-09-22 at ebfa365)
+ + checkout: fix ambiguity check in subdir
+ + checkout.txt: document a common case that ignores ambiguation rules
+ + checkout: add some spaces between code and comment
 
  "git checkout <word>" does not follow the usual disambiguation
  rules when the <word> can be both a rev and a path, to allow
@@ -748,7 +671,7 @@ of the repositories listed at
  This was poorly documented and the check was incorrect when the
  command was run from a subdirectory.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/fix-versioncmp-with-common-suffix (2016-09-08) 5 commits
@@ -768,13 +691,14 @@ of the repositories listed at
 
 
 * cp/completion-negative-refs (2016-08-24) 1 commit
- - completion: support excluding refs
+  (merged to 'next' on 2016-09-22 at abd1585)
+ + completion: support excluding refs
 
  The command-line completion script (in contrib/) learned to
  complete "git cmd ^mas<HT>" to complete the negative end of
  reference to "git cmd ^master".
 
- Needs review.
+ Will hold to see if it is broken.
 
 
 * sb/push-make-submodule-check-the-default (2016-08-24) 1 commit
@@ -788,25 +712,27 @@ of the repositories listed at
 
 
 * ak/curl-imap-send-explicit-scheme (2016-08-17) 1 commit
- - imap-send: Tell cURL to use imap:// or imaps://
+  (merged to 'next' on 2016-09-22 at 4449584)
+ + imap-send: Tell cURL to use imap:// or imaps://
 
  When we started cURL to talk to imap server when a new enough
  version of cURL library is available, we forgot to explicitly add
  imap(s):// before the destination.  To some folks, that didn't work
  and the library tried to make HTTP(s) requests instead.
 
- Needs review and testing.
+ Will hold to see if it is broken.
 
 
 * mh/diff-indent-heuristic (2016-09-19) 8 commits
- - blame: honor the diff heuristic options and config
- - parse-options: add parse_opt_unknown_cb()
- - diff: improve positioning of add/delete blocks in diffs
- - xdl_change_compact(): introduce the concept of a change group
- - recs_match(): take two xrecord_t pointers as arguments
- - is_blank_line(): take a single xrecord_t as argument
- - xdl_change_compact(): only use heuristic if group can't be matched
- - xdl_change_compact(): fix compaction heuristic to adjust ixo
+  (merged to 'next' on 2016-09-22 at e71d742)
+ + blame: honor the diff heuristic options and config
+ + parse-options: add parse_opt_unknown_cb()
+ + diff: improve positioning of add/delete blocks in diffs
+ + xdl_change_compact(): introduce the concept of a change group
+ + recs_match(): take two xrecord_t pointers as arguments
+ + is_blank_line(): take a single xrecord_t as argument
+ + xdl_change_compact(): only use heuristic if group can't be matched
+ + xdl_change_compact(): fix compaction heuristic to adjust ixo
 
  Output from "git diff" can be made easier to read by selecting
  which lines are common and which lines are added/deleted
@@ -814,7 +740,7 @@ of the repositories listed at
  are the same.  A command line option is added to help with the
  experiment to find a good heuristics.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/pack-objects-optim-mru (2016-08-11) 4 commits
@@ -835,12 +761,13 @@ of the repositories listed at
 
 
 * dp/autoconf-curl-ssl (2016-06-28) 1 commit
- - ./configure.ac: detect SSL in libcurl using curl-config
+  (merged to 'next' on 2016-09-22 at 9c5aeec)
+ + ./configure.ac: detect SSL in libcurl using curl-config
 
  The ./configure script generated from configure.ac was taught how
  to detect support of SSL by libcurl better.
 
- Needs review.
+ Will hold to see if it is broken.
 
 
 * jc/pull-rebase-ff (2016-07-28) 1 commit
@@ -874,33 +801,34 @@ of the repositories listed at
 
 
 * nd/shallow-deepen (2016-06-13) 27 commits
- - fetch, upload-pack: --deepen=N extends shallow boundary by N commits
- - upload-pack: add get_reachable_list()
- - upload-pack: split check_unreachable() in two, prep for get_reachable_list()
- - t5500, t5539: tests for shallow depth excluding a ref
- - clone: define shallow clone boundary with --shallow-exclude
- - fetch: define shallow boundary with --shallow-exclude
- - upload-pack: support define shallow boundary by excluding revisions
- - refs: add expand_ref()
- - t5500, t5539: tests for shallow depth since a specific date
- - clone: define shallow clone boundary based on time with --shallow-since
- - fetch: define shallow boundary with --shallow-since
- - upload-pack: add deepen-since to cut shallow repos based on time
- - shallow.c: implement a generic shallow boundary finder based on rev-list
- - fetch-pack: use a separate flag for fetch in deepening mode
- - fetch-pack.c: mark strings for translating
- - fetch-pack: use a common function for verbose printing
- - fetch-pack: use skip_prefix() instead of starts_with()
- - upload-pack: move rev-list code out of check_non_tip()
- - upload-pack: make check_non_tip() clean things up on error
- - upload-pack: tighten number parsing at "deepen" lines
- - upload-pack: use skip_prefix() instead of starts_with()
- - upload-pack: move "unshallow" sending code out of deepen()
- - upload-pack: remove unused variable "backup"
- - upload-pack: move "shallow" sending code out of deepen()
- - upload-pack: move shallow deepen code out of receive_needs()
- - transport-helper.c: refactor set_helper_option()
- - remote-curl.c: convert fetch_git() to use argv_array
+  (merged to 'next' on 2016-09-22 at f0cf3e3)
+ + fetch, upload-pack: --deepen=N extends shallow boundary by N commits
+ + upload-pack: add get_reachable_list()
+ + upload-pack: split check_unreachable() in two, prep for get_reachable_list()
+ + t5500, t5539: tests for shallow depth excluding a ref
+ + clone: define shallow clone boundary with --shallow-exclude
+ + fetch: define shallow boundary with --shallow-exclude
+ + upload-pack: support define shallow boundary by excluding revisions
+ + refs: add expand_ref()
+ + t5500, t5539: tests for shallow depth since a specific date
+ + clone: define shallow clone boundary based on time with --shallow-since
+ + fetch: define shallow boundary with --shallow-since
+ + upload-pack: add deepen-since to cut shallow repos based on time
+ + shallow.c: implement a generic shallow boundary finder based on rev-list
+ + fetch-pack: use a separate flag for fetch in deepening mode
+ + fetch-pack.c: mark strings for translating
+ + fetch-pack: use a common function for verbose printing
+ + fetch-pack: use skip_prefix() instead of starts_with()
+ + upload-pack: move rev-list code out of check_non_tip()
+ + upload-pack: make check_non_tip() clean things up on error
+ + upload-pack: tighten number parsing at "deepen" lines
+ + upload-pack: use skip_prefix() instead of starts_with()
+ + upload-pack: move "unshallow" sending code out of deepen()
+ + upload-pack: remove unused variable "backup"
+ + upload-pack: move "shallow" sending code out of deepen()
+ + upload-pack: move shallow deepen code out of receive_needs()
+ + transport-helper.c: refactor set_helper_option()
+ + remote-curl.c: convert fetch_git() to use argv_array
 
  The existing "git fetch --depth=<n>" option was hard to use
  correctly when making the history of an existing shallow clone
@@ -910,72 +838,7 @@ of the repositories listed at
  "I am interested only in the recent N months worth of history" and
  "Give me only the history since that version".
 
- Needs review.
-
- Rerolled.  What this topic attempts to achieve is worthwhile, I
- would think.
-
-
-* pb/bisect (2016-08-23) 27 commits
- . bisect--helper: remove the dequote in bisect_start()
- . bisect--helper: retire `--bisect-auto-next` subcommand
- . bisect--helper: retire `--bisect-autostart` subcommand
- . bisect--helper: retire `--check-and-set-terms` subcommand
- . bisect--helper: retire `--bisect-write` subcommand
- . bisect--helper: `bisect_replay` shell function in C
- . bisect--helper: `bisect_log` shell function in C
- . bisect--helper: retire `--write-terms` subcommand
- . bisect--helper: retire `--check-expected-revs` subcommand
- . bisect--helper: `bisect_state` & `bisect_head` shell function in C
- . bisect--helper: `bisect_autostart` shell function in C
- . bisect--helper: retire `--next-all` subcommand
- . bisect--helper: retire `--bisect-clean-state` subcommand
- . bisect--helper: `bisect_next` and `bisect_auto_next` shell function in C
- . bisect--helper: `bisect_start` shell function partially in C
- . bisect--helper: `get_terms` & `bisect_terms` shell function in C
- . bisect--helper: `bisect_next_check` & bisect_voc shell function in C
- . bisect--helper: `check_and_set_terms` shell function in C
- . bisect--helper: `bisect_write` shell function in C
- . bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
- . bisect--helper: `bisect_reset` shell function in C
- . wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- . t6030: explicitly test for bisection cleanup
- . bisect--helper: `bisect_clean_state` shell function in C
- . bisect--helper: `write_terms` shell function in C
- . bisect: rewrite `check_term_format` shell function in C
- . bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
-
- GSoC "bisect" topic.
-
- I'd prefer to see early part solidified so that reviews can focus
- on the later part that is still in flux.  We are almost there but
- not quite yet.
-
-
-* kn/ref-filter-branch-list (2016-05-17) 17 commits
- - branch: implement '--format' option
- - branch: use ref-filter printing APIs
- - branch, tag: use porcelain output
- - ref-filter: allow porcelain to translate messages in the output
- - ref-filter: add `:dir` and `:base` options for ref printing atoms
- - ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
- - ref-filter: introduce symref_atom_parser() and refname_atom_parser()
- - ref-filter: introduce refname_atom_parser_internal()
- - ref-filter: make "%(symref)" atom work with the ':short' modifier
- - ref-filter: add support for %(upstream:track,nobracket)
- - ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
- - ref-filter: introduce format_ref_array_item()
- - ref-filter: move get_head_description() from branch.c
- - ref-filter: modify "%(objectname:short)" to take length
- - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
- - ref-filter: include reference to 'used_atom' within 'atom_value'
- - ref-filter: implement %(if), %(then), and %(else) atoms
-
- The code to list branches in "git branch" has been consolidated
- with the more generic ref-filter API.
-
- Rerolled.
- Needs review.
+ Will hold to see if it is broken.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
