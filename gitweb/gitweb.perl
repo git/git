@@ -3913,7 +3913,7 @@ sub blob_contenttype {
 # guess file syntax for syntax highlighting; return undef if no highlighting
 # the name of syntax can (in the future) depend on syntax highlighter used
 sub guess_file_syntax {
-	my ($highlight, $mimetype, $file_name) = @_;
+	my ($highlight, $file_name) = @_;
 	return undef unless ($highlight && defined $file_name);
 	my $basename = basename($file_name, '.in');
 	return $highlight_basename{$basename}
@@ -7062,7 +7062,7 @@ sub git_blob {
 	$have_blame &&= ($mimetype =~ m!^text/!);
 
 	my $highlight = gitweb_check_feature('highlight');
-	my $syntax = guess_file_syntax($highlight, $mimetype, $file_name);
+	my $syntax = guess_file_syntax($highlight, $file_name);
 	$fd = run_highlighter($fd, $highlight, $syntax)
 		if $syntax;
 
