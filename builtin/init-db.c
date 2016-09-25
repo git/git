@@ -311,8 +311,9 @@ static void create_object_directory(void)
 	strbuf_release(&path);
 }
 
-int set_git_dir_init(const char *git_dir, const char *real_git_dir,
-		     int exist_ok)
+static int set_git_dir_init(const char *git_dir,
+			    const char *real_git_dir,
+			    int exist_ok)
 {
 	if (real_git_dir) {
 		struct stat st;
@@ -359,10 +360,14 @@ static void separate_git_dir(const char *git_dir)
 	write_file(git_link, "gitdir: %s", git_dir);
 }
 
-int init_db(const char *template_dir, unsigned int flags)
+int init_db(const char *git_dir, const char *real_git_dir,
+	    const char *template_dir, unsigned int flags)
 {
 	int reinit;
-	const char *git_dir = get_git_dir();
+
+	set_git_dir_init(git_dir, real_git_dir, flags & INIT_DB_EXIST_OK);
+
+	git_dir = get_git_dir();
 
 	if (git_link)
 		separate_git_dir(git_dir);
@@ -582,7 +587,6 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			set_git_work_tree(work_tree);
 	}
 
-	set_git_dir_init(git_dir, real_git_dir, 1);
-
-	return init_db(template_dir, flags);
+	flags |= INIT_DB_EXIST_OK;
+	return init_db(git_dir, real_git_dir, template_dir, flags);
 }
