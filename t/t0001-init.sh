@@ -400,9 +400,11 @@ test_expect_success 're-init from a linked worktree' '
 		test_commit first &&
 		git worktree add ../linked-worktree &&
 		mv .git/info/exclude expected-exclude &&
+		cp .git/config expected-config &&
 		find .git/worktrees -print | sort >expected &&
 		git -C ../linked-worktree init &&
 		test_cmp expected-exclude .git/info/exclude &&
+		test_cmp expected-config .git/config &&
 		find .git/worktrees -print | sort >actual &&
 		test_cmp expected actual
 	)

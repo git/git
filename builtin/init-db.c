@@ -171,7 +171,8 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 	return 1;
 }
 
-static int create_default_files(const char *template_path)
+static int create_default_files(const char *template_path,
+				const char *original_git_dir)
 {
 	struct stat st1;
 	struct strbuf buf = STRBUF_INIT;
@@ -263,7 +264,7 @@ static int create_default_files(const char *template_path)
 		/* allow template config file to override the default */
 		if (log_all_ref_updates == -1)
 			git_config_set("core.logallrefupdates", "true");
-		if (needs_work_tree_config(get_git_dir(), work_tree))
+		if (needs_work_tree_config(original_git_dir, work_tree))
 			git_config_set("core.worktree", work_tree);
 	}
 
@@ -337,6 +338,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 {
 	int reinit;
 	int exist_ok = flags & INIT_DB_EXIST_OK;
+	char *original_git_dir = xstrdup(real_path(git_dir));
 
 	if (real_git_dir) {
 		struct stat st;
@@ -375,7 +377,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 */
 	check_repository_format();
 
-	reinit = create_default_files(template_dir);
+	reinit = create_default_files(template_dir, original_git_dir);
 
 	create_object_directory();
 
@@ -412,6 +414,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 	}
 
+	free(original_git_dir);
 	return 0;
 }
 
