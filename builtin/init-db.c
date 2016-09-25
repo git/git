@@ -138,7 +138,7 @@ static void copy_templates(const char *template_dir)
 		goto close_free_return;
 	}
 
-	strbuf_addstr(&path, get_git_dir());
+	strbuf_addstr(&path, get_git_common_dir());
 	strbuf_complete(&path, '/');
 	copy_templates_1(&path, &template_path, dir);
 close_free_return:
