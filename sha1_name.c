@@ -346,7 +346,7 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 	status = finish_object_disambiguation(&ds, sha1);
 
 	if (!quietly && (status == SHORT_NAME_AMBIGUOUS))
-		return error("short SHA1 %s is ambiguous.", ds.hex_pfx);
+		return error(_("short SHA1 %s is ambiguous"), ds.hex_pfx);
 	return status;
 }
 
