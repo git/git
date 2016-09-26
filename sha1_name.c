@@ -1386,6 +1386,9 @@ static int get_sha1_with_context_1(const char *name,
 	const char *cp;
 	int only_to_die = flags & GET_SHA1_ONLY_TO_DIE;
 
+	if (only_to_die)
+		flags |= GET_SHA1_QUIETLY;
+
 	memset(oc, 0, sizeof(*oc));
 	oc->mode = S_IFINVALID;
 	ret = get_sha1_1(name, namelen, sha1, flags);
