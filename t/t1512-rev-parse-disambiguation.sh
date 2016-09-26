@@ -280,6 +280,13 @@ test_expect_success 'rev-parse --disambiguate' '
 	test "$(sed -e "s/^\(.........\).*/\1/" actual | sort -u)" = 000000000
 '
 
+test_expect_success 'rev-parse --disambiguate drops duplicates' '
+	git rev-parse --disambiguate=000000000 >expect &&
+	git pack-objects .git/objects/pack/pack <expect &&
+	git rev-parse --disambiguate=000000000 >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'ambiguous 40-hex ref' '
 	TREE=$(git mktree </dev/null) &&
 	REF=$(git rev-parse HEAD) &&

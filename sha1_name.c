@@ -7,6 +7,7 @@
 #include "refs.h"
 #include "remote.h"
 #include "dir.h"
+#include "sha1-array.h"
 
 static int get_sha1_oneline(const char *, unsigned char *, struct commit_list *);
 
@@ -350,20 +351,30 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 	return status;
 }
 
+static int collect_ambiguous(const unsigned char *sha1, void *data)
+{
+	sha1_array_append(data, sha1);
+	return 0;
+}
+
 int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
 {
+	struct sha1_array collect = SHA1_ARRAY_INIT;
 	struct disambiguate_state ds;
+	int ret;
 
 	if (init_object_disambiguation(prefix, strlen(prefix), &ds) < 0)
 		return -1;
 
 	ds.always_call_fn = 1;
-	ds.cb_data = cb_data;
-	ds.fn = fn;
-
+	ds.fn = collect_ambiguous;
+	ds.cb_data = &collect;
 	find_short_object_filename(&ds);
 	find_short_packed_object(&ds);
-	return ds.ambiguous;
+
+	ret = sha1_array_for_each_unique(&collect, fn, cb_data);
+	sha1_array_clear(&collect);
+	return ret;
 }
 
 int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
