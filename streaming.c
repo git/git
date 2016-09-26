@@ -337,17 +337,17 @@ static open_method_decl(loose)
 	st->u.loose.mapped = map_sha1_file(sha1, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
 		return -1;
-	if (unpack_sha1_header(&st->z,
-			       st->u.loose.mapped,
-			       st->u.loose.mapsize,
-			       st->u.loose.hdr,
-			       sizeof(st->u.loose.hdr)) < 0) {
+	if ((unpack_sha1_header(&st->z,
+				st->u.loose.mapped,
+				st->u.loose.mapsize,
+				st->u.loose.hdr,
+				sizeof(st->u.loose.hdr)) < 0) ||
+	    (parse_sha1_header(st->u.loose.hdr, &st->size) < 0)) {
 		git_inflate_end(&st->z);
 		munmap(st->u.loose.mapped, st->u.loose.mapsize);
 		return -1;
 	}
 
-	parse_sha1_header(st->u.loose.hdr, &st->size);
 	st->u.loose.hdr_used = strlen(st->u.loose.hdr) + 1;
 	st->u.loose.hdr_avail = st->z.total_out;
 	st->z_state = z_used;
