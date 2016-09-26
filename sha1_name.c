@@ -14,7 +14,7 @@ typedef int (*disambiguate_hint_fn)(const unsigned char *, void *);
 
 struct disambiguate_state {
 	int len; /* length of prefix in hex chars */
-	char hex_pfx[GIT_SHA1_HEXSZ];
+	char hex_pfx[GIT_SHA1_HEXSZ + 1];
 	unsigned char bin_pfx[GIT_SHA1_RAWSZ];
 
 	disambiguate_hint_fn fn;
@@ -291,7 +291,6 @@ static int init_object_disambiguation(const char *name, int len,
 		return -1;
 
 	memset(ds, 0, sizeof(*ds));
-	memset(ds->hex_pfx, 'x', GIT_SHA1_HEXSZ);
 
 	for (i = 0; i < len ;i++) {
 		unsigned char c = name[i];
@@ -313,6 +312,7 @@ static int init_object_disambiguation(const char *name, int len,
 	}
 
 	ds->len = len;
+	ds->hex_pfx[len] = '\0';
 	prepare_alt_odb();
 	return 0;
 }
@@ -346,7 +346,7 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 	status = finish_object_disambiguation(&ds, sha1);
 
 	if (!quietly && (status == SHORT_NAME_AMBIGUOUS))
-		return error("short SHA1 %.*s is ambiguous.", ds.len, ds.hex_pfx);
+		return error("short SHA1 %s is ambiguous.", ds.hex_pfx);
 	return status;
 }
 
