@@ -291,8 +291,20 @@ test_expect_success 'ambiguous short sha1 ref' '
 	grep "refname.*${REF}.*ambiguous" err
 '
 
-test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated' '
+test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (raw)' '
 	test_must_fail git rev-parse 00000 2>stderr &&
+	grep "is ambiguous" stderr >errors &&
+	test_line_count = 1 errors
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (treeish)' '
+	test_must_fail git rev-parse 00000:foo 2>stderr &&
+	grep "is ambiguous" stderr >errors &&
+	test_line_count = 1 errors
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (peel)' '
+	test_must_fail git rev-parse 00000^{commit} 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
