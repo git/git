@@ -264,6 +264,13 @@ test_expect_success 'ambiguous commit-ish' '
 	test_must_fail git log 000000000...
 '
 
+# There are three objects with this prefix: a blob, a tree, and a tag. We know
+# the blob will not pass as a treeish, but the tree and tag should (and thus
+# cause an error).
+test_expect_success 'ambiguous tags peel to treeish' '
+	test_must_fail git rev-parse 0000000000f^{tree}
+'
+
 test_expect_success 'rev-parse --disambiguate' '
 	# The test creates 16 objects that share the prefix and two
 	# commits created by commit-tree in earlier tests share a
