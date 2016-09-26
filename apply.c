@@ -3334,10 +3334,8 @@ static void prepare_fn_table(struct apply_state *state, struct patch *patch)
 static int checkout_target(struct index_state *istate,
 			   struct cache_entry *ce, struct stat *st)
 {
-	struct checkout costate;
+	struct checkout costate = CHECKOUT_INIT;
 
-	memset(&costate, 0, sizeof(costate));
-	costate.base_dir = "";
 	costate.refresh_cache = 1;
 	costate.istate = istate;
 	if (checkout_entry(ce, &costate, NULL) || lstat(ce->name, st))
