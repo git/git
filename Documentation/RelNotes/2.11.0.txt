@@ -38,6 +38,22 @@ UI, Workflows & Features
    lacked an equivalent mechanism to run the "Git-to-outside-world"
    conversion.  The command learned the "--filters" option to do so.
 
+ * Output from "git diff" can be made easier to read by selecting
+   which lines are common and which lines are added/deleted
+   intelligently when the lines before and after the changed section
+   are the same.  A command line option is added to help with the
+   experiment to find a good heuristics.
+
+ * In some projects, it is common to use "[RFC PATCH]" as the subject
+   prefix for a patch meant for discussion rather than application.  A
+   new option "--rfc" was a short-hand for "--subject-prefix=RFC PATCH"
+   to help the participants of such projects.
+
+ * "git add --chmod=+x <pathspec>" added recently only toggled the
+   executable bit for paths that are either new or modified. This has
+   been corrected to flip the executable bit for all paths that match
+   the given pathspec.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -196,9 +212,59 @@ notes for details).
    50.
    (merge 07e7dbf jk/reduce-gc-aggressive-depth later to maint).
 
+ * Documentation for individual configuration variables to control use
+   of color (like `color.grep`) said that their default value is
+   'false', instead of saying their default is taken from `color.ui`.
+   When we updated the default value for color.ui from 'false' to
+   'auto' quite a while ago, all of them broke.  This has been
+   corrected.
+   (merge 14d16e2 mm/config-color-ui-default-to-auto later to maint).
+
+ * The pretty-format specifier "%C(auto)" used by the "log" family of
+   commands to enable coloring of the output is taught to also issue a
+   color-reset sequence to the output.
+   (merge c99ad27 rs/c-auto-resets-attributes later to maint).
+
+ * A shell script example in check-ref-format documentation has been
+   fixed.
+   (merge 92dece7 ep/doc-check-ref-format-example later to maint).
+
+ * "git checkout <word>" does not follow the usual disambiguation
+   rules when the <word> can be both a rev and a path, to allow
+   checking out a branch 'foo' in a project that happens to have a
+   file 'foo' in the working tree without having to disambiguate.
+   This was poorly documented and the check was incorrect when the
+   command was run from a subdirectory.
+   (merge b829b94 nd/checkout-disambiguation later to maint).
+
+ * Some codepaths in "git diff" used regexec(3) on a buffer that was
+   mmap(2)ed, which may not have a terminating NUL, leading to a read
+   beyond the end of the mapped region.  This was fixed by introducing
+   a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
+   extension.
+   (merge b7d36ff js/regexec-buf later to maint).
+
+ * The procedure to build Git on Mac OS X for Travis CI hardcoded the
+   internal directory structure we assumed HomeBrew uses, which was a
+   no-no.  The procedure has been updated to ask HomeBrew things we
+   need to know to fix this.
+   (merge f86f49b ls/travis-homebrew-path-fix later to maint).
+
+ * When "git rebase -i" is given a broken instruction, it told the
+   user to fix it with "--edit-todo", but didn't say what the step
+   after that was (i.e. "--continue").
+   (merge 37875b4 rt/rebase-i-broken-insn-advise later to maint).
+
+ * Documentation around tools to import from CVS was fairly outdated.
+   (merge 106b672 jk/doc-cvs-update later to maint).
+
+ * "git clone --recurse-submodules" lost the progress eye-candy in
+   recent update, which has been corrected.
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e78d57e bw/pathspec-remove-unused-extern-decl later to maint).
    (merge ce25e4c rs/checkout-some-states-are-const later to maint).
    (merge a8342a4 rs/strbuf-remove-fix later to maint).
    (merge b56aa5b rs/unpack-trees-reduce-file-scope-global later to maint).
    (merge 5efc60c mr/vcs-svn-printf-ulong later to maint).
+   (merge a22ae75 rs/cocci later to maint).
