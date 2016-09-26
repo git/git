@@ -89,6 +89,8 @@ include::blame-options.txt[]
 	abbreviated object name, use <n>+1 digits. Note that 1 column
 	is used for a caret to mark the boundary commit.
 
+include::diff-heuristic-options.txt[]
+
 
 THE PORCELAIN FORMAT
 --------------------
