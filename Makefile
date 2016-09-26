@@ -301,7 +301,8 @@ all::
 # crashes due to allocation and free working on different 'heaps'.
 # It's defined automatically if USE_NED_ALLOCATOR is set.
 #
-# Define NO_REGEX if you have no or inferior regex support in your C library.
+# Define NO_REGEX if your C library lacks regex support with REG_STARTEND
+# feature.
 #
 # Define HAVE_DEV_TTY if your system can open /dev/tty to interact with the
 # user.
