@@ -953,7 +953,8 @@ color.branch::
 	A boolean to enable/disable color in the output of
 	linkgit:git-branch[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
-	only when the output is to a terminal. Defaults to false.
+	only when the output is to a terminal. If unset, then the
+	value of `color.ui` is used (`auto` by default).
 
 color.branch.<slot>::
 	Use customized color for branch coloration. `<slot>` is one of
@@ -968,7 +969,8 @@ color.diff::
 	linkgit:git-log[1], and linkgit:git-show[1] will use color
 	for all patches.  If it is set to `true` or `auto`, those
 	commands will only use color when output is to the terminal.
-	Defaults to false.
+	If unset, then the value of `color.ui` is used (`auto` by
+	default).
 +
 This does not affect linkgit:git-format-patch[1] or the
 'git-diff-{asterisk}' plumbing commands.  Can be overridden on the
@@ -991,7 +993,8 @@ color.decorate.<slot>::
 color.grep::
 	When set to `always`, always highlight matches.  When `false` (or
 	`never`), never.  When set to `true` or `auto`, use color only
-	when the output is written to the terminal.  Defaults to `false`.
+	when the output is written to the terminal.  If unset, then the
+	value of `color.ui` is used (`auto` by default).
 
 color.grep.<slot>::
 	Use customized color for grep colorization.  `<slot>` specifies which
@@ -1024,7 +1027,8 @@ color.interactive::
 	and displays (such as those used by "git-add --interactive" and
 	"git-clean --interactive"). When false (or `never`), never.
 	When set to `true` or `auto`, use colors only when the output is
-	to the terminal. Defaults to false.
+	to the terminal. If unset, then the value of `color.ui` is
+	used (`auto` by default).
 
 color.interactive.<slot>::
 	Use customized color for 'git add --interactive' and 'git clean
@@ -1040,13 +1044,15 @@ color.showBranch::
 	A boolean to enable/disable color in the output of
 	linkgit:git-show-branch[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
-	only when the output is to a terminal. Defaults to false.
+	only when the output is to a terminal. If unset, then the
+	value of `color.ui` is used (`auto` by default).
 
 color.status::
 	A boolean to enable/disable color in the output of
 	linkgit:git-status[1]. May be set to `always`,
 	`false` (or `never`) or `auto` (or `true`), in which case colors are used
-	only when the output is to a terminal. Defaults to false.
+	only when the output is to a terminal. If unset, then the
+	value of `color.ui` is used (`auto` by default).
 
 color.status.<slot>::
 	Use customized color for status colorization. `<slot>` is
