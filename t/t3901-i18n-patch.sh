@@ -295,7 +295,7 @@ test_expect_success 'am --no-utf8 (U/L)' '
 
 	# commit-tree will warn that the commit message does not contain valid UTF-8
 	# as mailinfo did not convert it
-	grep "did not conform" err &&
+	test_i18ngrep "did not conform" err &&
 
 	check_encoding 2
 '
