@@ -3086,7 +3086,7 @@ static void fill_metainfo(struct strbuf *msg,
 		}
 		strbuf_addf(msg, "%s%sindex %s..", line_prefix, set,
 			    find_unique_abbrev(one->oid.hash, abbrev));
-		strbuf_addstr(msg, find_unique_abbrev(two->oid.hash, abbrev));
+		strbuf_add_unique_abbrev(msg, two->oid.hash, abbrev);
 		if (one->mode == two->mode)
 			strbuf_addf(msg, " %06o", one->mode);
 		strbuf_addf(msg, "%s\n", reset);
