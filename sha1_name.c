@@ -283,6 +283,36 @@ static int disambiguate_blob_only(const unsigned char *sha1, void *cb_data_unuse
 	return kind == OBJ_BLOB;
 }
 
+static disambiguate_hint_fn default_disambiguate_hint;
+
+int set_disambiguate_hint_config(const char *var, const char *value)
+{
+	static const struct {
+		const char *name;
+		disambiguate_hint_fn fn;
+	} hints[] = {
+		{ "none", NULL },
+		{ "commit", disambiguate_commit_only },
+		{ "committish", disambiguate_committish_only },
+		{ "tree", disambiguate_tree_only },
+		{ "treeish", disambiguate_treeish_only },
+		{ "blob", disambiguate_blob_only }
+	};
+	int i;
+
+	if (!value)
+		return config_error_nonbool(var);
+
+	for (i = 0; i < ARRAY_SIZE(hints); i++) {
+		if (!strcasecmp(value, hints[i].name)) {
+			default_disambiguate_hint = hints[i].fn;
+			return 0;
+		}
+	}
+
+	return error("unknown hint type for '%s': %s", var, value);
+}
+
 static int init_object_disambiguation(const char *name, int len,
 				      struct disambiguate_state *ds)
 {
@@ -373,6 +403,8 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 		ds.fn = disambiguate_treeish_only;
 	else if (flags & GET_SHA1_BLOB)
 		ds.fn = disambiguate_blob_only;
+	else
+		ds.fn = default_disambiguate_hint;
 
 	find_short_object_filename(&ds);
 	find_short_packed_object(&ds);

@@ -347,4 +347,18 @@ test_expect_success C_LOCALE_OUTPUT 'failed type-selector still shows hint' '
 	test_line_count = 3 hints
 '
 
+test_expect_success 'core.disambiguate config can prefer types' '
+	# ambiguous between tree and tag
+	sha1=0000000000f &&
+	test_must_fail git rev-parse $sha1 &&
+	git rev-parse $sha1^{commit} &&
+	git -c core.disambiguate=committish rev-parse $sha1
+'
+
+test_expect_success 'core.disambiguate does not override context' '
+	# treeish ambiguous between tag and tree
+	test_must_fail \
+		git -c core.disambiguate=committish rev-parse $sha1^{tree}
+'
+
 test_done

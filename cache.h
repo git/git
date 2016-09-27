@@ -1222,6 +1222,8 @@ extern int get_oid(const char *str, struct object_id *oid);
 typedef int each_abbrev_fn(const unsigned char *sha1, void *);
 extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
 
+extern int set_disambiguate_hint_config(const char *var, const char *value);
+
 /*
  * Try to read a SHA1 in hexadecimal format from the 40 characters
  * starting at hex.  Write the 20-byte result to sha1 in binary form.
