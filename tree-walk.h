@@ -25,14 +25,22 @@ static inline int tree_entry_len(const struct name_entry *ne)
 	return (const char *)ne->oid - ne->path - 1;
 }
 
+/*
+ * The _gently versions of these functions warn and return false on a
+ * corrupt tree entry rather than dying,
+ */
+
 void update_tree_entry(struct tree_desc *);
+int update_tree_entry_gently(struct tree_desc *);
 void init_tree_desc(struct tree_desc *desc, const void *buf, unsigned long size);
+int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long size);
 
 /*
  * Helper function that does both tree_entry_extract() and update_tree_entry()
  * and returns true for success
  */
 int tree_entry(struct tree_desc *, struct name_entry *);
+int tree_entry_gently(struct tree_desc *, struct name_entry *);
 
 void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1);
 
