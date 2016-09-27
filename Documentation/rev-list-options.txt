@@ -638,8 +638,9 @@ avoid showing the commits from two parallel development track mixed
 together.
 
 --reverse::
-	Output the commits in reverse order.
-	Cannot be combined with `--walk-reflogs`.
+	Output the commits chosen to be shown (see Commit Limiting
+	section above) in reverse order. Cannot be combined with
+	`--walk-reflogs`.
 
 Object Traversal
 ~~~~~~~~~~~~~~~~
