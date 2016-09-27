@@ -931,7 +931,7 @@ static int remove_redundant(struct commit **array, int cnt)
 	}
 
 	/* Now collect the result */
-	memcpy(work, array, sizeof(*array) * cnt);
+	COPY_ARRAY(work, array, cnt);
 	for (i = filled = 0; i < cnt; i++)
 		if (!redundant[i])
 			array[filled++] = work[i];

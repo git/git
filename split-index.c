@@ -83,8 +83,7 @@ void move_cache_to_base_index(struct index_state *istate)
 	si->base->timestamp = istate->timestamp;
 	ALLOC_GROW(si->base->cache, istate->cache_nr, si->base->cache_alloc);
 	si->base->cache_nr = istate->cache_nr;
-	memcpy(si->base->cache, istate->cache,
-	       sizeof(*istate->cache) * istate->cache_nr);
+	COPY_ARRAY(si->base->cache, istate->cache, istate->cache_nr);
 	mark_base_index_entries(si->base);
 	for (i = 0; i < si->base->cache_nr; i++)
 		si->base->cache[i]->ce_flags &= ~CE_UPDATE_IN_BASE;
@@ -141,8 +140,7 @@ void merge_base_index(struct index_state *istate)
 	istate->cache	    = NULL;
 	istate->cache_alloc = 0;
 	ALLOC_GROW(istate->cache, istate->cache_nr, istate->cache_alloc);
-	memcpy(istate->cache, si->base->cache,
-	       sizeof(*istate->cache) * istate->cache_nr);
+	COPY_ARRAY(istate->cache, si->base->cache, istate->cache_nr);
 
 	si->nr_deletions = 0;
 	si->nr_replacements = 0;
