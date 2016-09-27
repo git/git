@@ -283,7 +283,7 @@ empty range that is both reachable and unreachable from HEAD.
 
 Other <rev>{caret} Parent Shorthand Notations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Two other shorthands exist, particularly useful for merge commits,
+Three other shorthands exist, particularly useful for merge commits,
 for naming a set that is formed by a commit and its parent commits.
 
 The 'r1{caret}@' notation means all parents of 'r1'.
@@ -291,8 +291,15 @@ The 'r1{caret}@' notation means all parents of 'r1'.
 The 'r1{caret}!' notation includes commit 'r1' but excludes all of its parents.
 By itself, this notation denotes the single commit 'r1'.
 
+The '<rev>{caret}-{<n>}' notation includes '<rev>' but excludes the <n>th
+parent (i.e. a shorthand for '<rev>{caret}<n>..<rev>'), with '<n>' = 1 if
+not given. This is typically useful for merge commits where you
+can just pass '<commit>{caret}-' to get all the commits in the branch
+that was merged in merge commit '<commit>' (including '<commit>'
+itself).
+
 While '<rev>{caret}<n>' was about specifying a single commit parent, these
-two notations consider all its parents. For example you can say
+three notations also consider its parents. For example you can say
 'HEAD{caret}2{caret}@', however you cannot say 'HEAD{caret}@{caret}2'.
 
 Revision Range Summary
@@ -326,6 +333,10 @@ Revision Range Summary
   as giving commit '<rev>' and then all its parents prefixed with
   '{caret}' to exclude them (and their ancestors).
 
+'<rev>{caret}-{<n>}', e.g. 'HEAD{caret}-, HEAD{caret}-2'::
+	Equivalent to '<rev>{caret}<n>..<rev>', with '<n>' = 1 if not
+	given.
+
 Here are a handful of examples using the Loeliger illustration above,
 with each step in the notation's expansion and selection carefully
 spelt out:
@@ -339,6 +350,8 @@ spelt out:
    C                            I J F C
    B..C   = ^B C                C
    B...C  = B ^F C              G H D E B C
+   B^-    = B^..B
+	  = ^B^1 B              E I J F B
    C^@    = C^1
 	  = F                   I J F
    B^@    = B^1 B^2 B^3
