@@ -144,4 +144,18 @@ test_expect_success 'mailinfo unescapes with --mboxrd' '
 	test_cmp expect mboxrd/msg
 '
 
+test_expect_success 'mailinfo handles rfc2822 quoted-string' '
+	mkdir quoted-string &&
+	git mailinfo /dev/null /dev/null <"$DATA/quoted-string.in" \
+		>quoted-string/info &&
+	test_cmp "$DATA/quoted-string.expect" quoted-string/info
+'
+
+test_expect_success 'mailinfo handles rfc2822 comment' '
+	mkdir comment &&
+	git mailinfo /dev/null /dev/null <"$DATA/comment.in" \
+		>comment/info &&
+	test_cmp "$DATA/comment.expect" comment/info
+'
+
 test_done
