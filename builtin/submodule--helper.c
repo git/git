@@ -753,7 +753,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		if (suc->recursive_prefix)
 			strbuf_addf(&sb, "%s/%s", suc->recursive_prefix, ce->name);
 		else
-			strbuf_addf(&sb, "%s", ce->name);
+			strbuf_addstr(&sb, ce->name);
 		strbuf_addf(out, _("Skipping unmerged submodule %s"), sb.buf);
 		strbuf_addch(out, '\n');
 		goto cleanup;
