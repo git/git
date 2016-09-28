@@ -1206,6 +1206,11 @@ struct object_context {
 #define GET_SHA1_FOLLOW_SYMLINKS 0100
 #define GET_SHA1_ONLY_TO_DIE    04000
 
+#define GET_SHA1_DISAMBIGUATORS \
+	(GET_SHA1_COMMIT | GET_SHA1_COMMITTISH | \
+	GET_SHA1_TREE | GET_SHA1_TREEISH | \
+	GET_SHA1_BLOB)
+
 extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_commit(const char *str, unsigned char *sha1);
 extern int get_sha1_committish(const char *str, unsigned char *sha1);
@@ -1219,6 +1224,8 @@ extern int get_oid(const char *str, struct object_id *oid);
 
 typedef int each_abbrev_fn(const unsigned char *sha1, void *);
 extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
+
+extern int set_disambiguate_hint_config(const char *var, const char *value);
 
 /*
  * Try to read a SHA1 in hexadecimal format from the 40 characters
