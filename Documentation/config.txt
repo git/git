@@ -1730,6 +1730,20 @@ http.emptyAuth::
 	a username in the URL, as libcurl normally requires a username for
 	authentication.
 
+http.delegation::
+	Control GSSAPI credential delegation. The delegation is disabled
+	by default in libcurl since version 7.21.7. Set parameter to tell
+	the server what it is allowed to delegate when it comes to user
+	credentials. Used with GSS/kerberos. Possible values are:
++
+--
+* `none` - Don't allow any delegation.
+* `policy` - Delegates if and only if the OK-AS-DELEGATE flag is set in the
+  Kerberos service ticket, which is a matter of realm policy.
+* `always` - Unconditionally allow the server to delegate.
+--
+
+
 http.extraHeader::
 	Pass an additional HTTP header when communicating with a server.  If
 	more than one such entry exists, all of them are added as extra
