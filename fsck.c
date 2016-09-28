@@ -347,8 +347,9 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 		return -1;
 
 	name = get_object_name(options, &tree->object);
-	init_tree_desc(&desc, tree->buffer, tree->size);
-	while (tree_entry(&desc, &entry)) {
+	if (init_tree_desc_gently(&desc, tree->buffer, tree->size))
+		return -1;
+	while (tree_entry_gently(&desc, &entry)) {
 		struct object *obj;
 		int result;
 
@@ -520,7 +521,7 @@ static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, con
 
 static int fsck_tree(struct tree *item, struct fsck_options *options)
 {
-	int retval;
+	int retval = 0;
 	int has_null_sha1 = 0;
 	int has_full_path = 0;
 	int has_empty_name = 0;
@@ -535,7 +536,10 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 	unsigned o_mode;
 	const char *o_name;
 
-	init_tree_desc(&desc, item->buffer, item->size);
+	if (init_tree_desc_gently(&desc, item->buffer, item->size)) {
+		retval += report(options, &item->object, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
+		return retval;
+	}
 
 	o_mode = 0;
 	o_name = NULL;
@@ -556,7 +560,10 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 			       is_hfs_dotgit(name) ||
 			       is_ntfs_dotgit(name));
 		has_zero_pad |= *(char *)desc.buffer == '0';
-		update_tree_entry(&desc);
+		if (update_tree_entry_gently(&desc)) {
+			retval += report(options, &item->object, FSCK_MSG_BAD_TREE, "cannot be parsed as a tree");
+			break;
+		}
 
 		switch (mode) {
 		/*
@@ -597,7 +604,6 @@ static int fsck_tree(struct tree *item, struct fsck_options *options)
 		o_name = name;
 	}
 
-	retval = 0;
 	if (has_null_sha1)
 		retval += report(options, &item->object, FSCK_MSG_NULL_SHA1, "contains entries pointing to null sha1");
 	if (has_full_path)
