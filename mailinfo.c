@@ -54,6 +54,86 @@ static void parse_bogus_from(struct mailinfo *mi, const struct strbuf *line)
 	get_sane_name(&mi->name, &mi->name, &mi->email);
 }
 
+static const char *unquote_comment(struct strbuf *outbuf, const char *in)
+{
+	int c;
+	int take_next_litterally = 0;
+
+	strbuf_addch(outbuf, '(');
+
+	while ((c = *in++) != 0) {
+		if (take_next_litterally == 1) {
+			take_next_litterally = 0;
+		} else {
+			switch (c) {
+			case '\\':
+				take_next_litterally = 1;
+				continue;
+			case '(':
+				in = unquote_comment(outbuf, in);
+				continue;
+			case ')':
+				strbuf_addch(outbuf, ')');
+				return in;
+			}
+		}
+
+		strbuf_addch(outbuf, c);
+	}
+
+	return in;
+}
+
+static const char *unquote_quoted_string(struct strbuf *outbuf, const char *in)
+{
+	int c;
+	int take_next_litterally = 0;
+
+	while ((c = *in++) != 0) {
+		if (take_next_litterally == 1) {
+			take_next_litterally = 0;
+		} else {
+			switch (c) {
+			case '\\':
+				take_next_litterally = 1;
+				continue;
+			case '"':
+				return in;
+			}
+		}
+
+		strbuf_addch(outbuf, c);
+	}
+
+	return in;
+}
+
+static void unquote_quoted_pair(struct strbuf *line)
+{
+	struct strbuf outbuf;
+	const char *in = line->buf;
+	int c;
+
+	strbuf_init(&outbuf, line->len);
+
+	while ((c = *in++) != 0) {
+		switch (c) {
+		case '"':
+			in = unquote_quoted_string(&outbuf, in);
+			continue;
+		case '(':
+			in = unquote_comment(&outbuf, in);
+			continue;
+		}
+
+		strbuf_addch(&outbuf, c);
+	}
+
+	strbuf_swap(&outbuf, line);
+	strbuf_release(&outbuf);
+
+}
+
 static void handle_from(struct mailinfo *mi, const struct strbuf *from)
 {
 	char *at;
@@ -62,6 +142,8 @@ static void handle_from(struct mailinfo *mi, const struct strbuf *from)
 
 	strbuf_init(&f, from->len);
 	strbuf_addbuf(&f, from);
+
+	unquote_quoted_pair(&f);
 
 	at = strchr(f.buf, '@');
 	if (!at) {
