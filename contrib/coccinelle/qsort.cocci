@@ -17,3 +17,21 @@ expression nmemb, compar;
 @@
 - qsort(base, nmemb, sizeof(T), compar);
 + QSORT(base, nmemb, compar);
+
+@@
+expression base, nmemb, compar;
+@@
+- if (nmemb)
+    QSORT(base, nmemb, compar);
+
+@@
+expression base, nmemb, compar;
+@@
+- if (nmemb > 0)
+    QSORT(base, nmemb, compar);
+
+@@
+expression base, nmemb, compar;
+@@
+- if (nmemb > 1)
+    QSORT(base, nmemb, compar);
