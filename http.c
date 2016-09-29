@@ -201,6 +201,13 @@ static void finish_active_slot(struct active_request_slot *slot)
 		slot->callback_func(slot->callback_data);
 }
 
+static void xmulti_remove_handle(struct active_request_slot *slot)
+{
+#ifdef USE_CURL_MULTI
+	curl_multi_remove_handle(curlm, slot->curl);
+#endif
+}
+
 #ifdef USE_CURL_MULTI
 static void process_curl_messages(void)
 {
@@ -216,7 +223,7 @@ static void process_curl_messages(void)
 			       slot->curl != curl_message->easy_handle)
 				slot = slot->next;
 			if (slot != NULL) {
-				curl_multi_remove_handle(curlm, slot->curl);
+				xmulti_remove_handle(slot);
 				slot->curl_result = curl_result;
 				finish_active_slot(slot);
 			} else {
@@ -881,9 +888,7 @@ void http_cleanup(void)
 	while (slot != NULL) {
 		struct active_request_slot *next = slot->next;
 		if (slot->curl != NULL) {
-#ifdef USE_CURL_MULTI
-			curl_multi_remove_handle(curlm, slot->curl);
-#endif
+			xmulti_remove_handle(slot);
 			curl_easy_cleanup(slot->curl);
 		}
 		free(slot);
@@ -1022,6 +1027,8 @@ int start_active_slot(struct active_request_slot *slot)
 
 	if (curlm_result != CURLM_OK &&
 	    curlm_result != CURLM_CALL_MULTI_PERFORM) {
+		warning("curl_multi_add_handle failed: %s",
+			curl_multi_strerror(curlm_result));
 		active_requests--;
 		slot->in_use = 0;
 		return 0;
@@ -1161,13 +1168,13 @@ void run_active_slot(struct active_request_slot *slot)
 static void release_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
-	if (slot->curl && curl_session_count > min_curl_sessions) {
-#ifdef USE_CURL_MULTI
-		curl_multi_remove_handle(curlm, slot->curl);
-#endif
-		curl_easy_cleanup(slot->curl);
-		slot->curl = NULL;
-		curl_session_count--;
+	if (slot->curl) {
+		xmulti_remove_handle(slot);
+		if (curl_session_count > min_curl_sessions) {
+			curl_easy_cleanup(slot->curl);
+			slot->curl = NULL;
+			curl_session_count--;
+		}
 	}
 #ifdef USE_CURL_MULTI
 	fill_active_slots();
