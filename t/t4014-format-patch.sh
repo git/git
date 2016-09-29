@@ -754,9 +754,22 @@ test_expect_success 'format-patch --ignore-if-in-upstream HEAD' '
 	git format-patch --ignore-if-in-upstream HEAD
 '
 
+git_version="$(git --version | sed "s/.* //")"
+
+signature() {
+	printf "%s\n%s\n\n" "-- " "${1:-$git_version}"
+}
+
+test_expect_success 'format-patch default signature' '
+	git format-patch --stdout -1 | tail -n 3 >output &&
+	signature >expect &&
+	test_cmp expect output
+'
+
 test_expect_success 'format-patch --signature' '
-	git format-patch --stdout --signature="my sig" -1 >output &&
-	grep "my sig" output
+	git format-patch --stdout --signature="my sig" -1 | tail -n 3 >output &&
+	signature "my sig" >expect &&
+	test_cmp expect output
 '
 
 test_expect_success 'format-patch with format.signature config' '
@@ -1502,12 +1515,12 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 
 test_expect_success 'format-patch --base' '
 	git checkout side &&
-	git format-patch --stdout --base=HEAD~3 -1 >patch &&
-	grep "^base-commit:" patch >actual &&
-	grep "^prerequisite-patch-id:" patch >>actual &&
-	echo "base-commit: $(git rev-parse HEAD~3)" >expected &&
+	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual &&
+	echo >expected &&
+	echo "base-commit: $(git rev-parse HEAD~3)" >>expected &&
 	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --stable | awk "{print \$1}")" >>expected &&
 	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expected &&
+	signature >> expected &&
 	test_cmp expected actual
 '
 
@@ -1603,6 +1616,14 @@ test_expect_success 'format-patch --base overrides format.useAutoBase' '
 	grep "^base-commit:" patch >actual &&
 	echo "base-commit: $(git rev-parse HEAD~1)" >expected &&
 	test_cmp expected actual
+'
+
+test_expect_success 'format-patch --base with --attach' '
+	git format-patch --attach=mimemime --stdout --base=HEAD~ -1 >patch &&
+	sed -n -e "/^base-commit:/s/.*/1/p" -e "/^---*mimemime--$/s/.*/2/p" \
+		patch >actual &&
+	test_write_lines 1 2 >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'format-patch --pretty=mboxrd' '
