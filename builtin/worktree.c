@@ -528,6 +528,8 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 		OPT_END()
 	};
 
+	git_config(git_default_config, NULL);
+
 	if (ac < 2)
 		usage_with_options(worktree_usage, options);
 	if (!prefix)
