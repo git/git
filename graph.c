@@ -1138,6 +1138,7 @@ int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 {
 	int i;
+	int chars_written = 0;
 
 	if (graph->state != GRAPH_COMMIT) {
 		graph_next_line(graph, sb);
@@ -1153,14 +1154,21 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 	 */
 	for (i = 0; i < graph->num_columns; i++) {
 		struct column *col = &graph->columns[i];
+
 		strbuf_write_column(sb, col, '|');
-		if (col->commit == graph->commit && graph->num_parents > 2)
-			strbuf_addchars(sb, ' ', (graph->num_parents - 2) * 2);
-		else
+		chars_written++;
+
+		if (col->commit == graph->commit && graph->num_parents > 2) {
+			int len = (graph->num_parents - 2) * 2;
+			strbuf_addchars(sb, ' ', len);
+			chars_written += len;
+		} else {
 			strbuf_addch(sb, ' ');
+			chars_written++;
+		}
 	}
 
-	graph_pad_horizontally(graph, sb, graph->num_columns);
+	graph_pad_horizontally(graph, sb, chars_written);
 
 	/*
 	 * Update graph->prev_state since we have output a padding line
