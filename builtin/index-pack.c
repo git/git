@@ -1531,8 +1531,7 @@ static void read_v2_anomalous_offsets(struct packed_git *p,
 		opts->anomaly[opts->anomaly_nr++] = ntohl(idx2[off * 2 + 1]);
 	}
 
-	if (1 < opts->anomaly_nr)
-		qsort(opts->anomaly, opts->anomaly_nr, sizeof(uint32_t), cmp_uint32);
+	QSORT(opts->anomaly, opts->anomaly_nr, cmp_uint32);
 }
 
 static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
