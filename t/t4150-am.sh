@@ -977,4 +977,27 @@ test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
 	test_cmp msg out
 '
 
+test_expect_success 'am works with multi-line in-body headers' '
+	FORTY="String that has a length of more than forty characters" &&
+	LONG="$FORTY $FORTY" &&
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	echo one >> file &&
+	git commit -am "$LONG" --author="$LONG <long@example.com>" &&
+	git format-patch --stdout -1 >patch &&
+	# bump from, date, and subject down to in-body header
+	perl -lpe "
+		if (/^From:/) {
+			print \"From: x <x\@example.com>\";
+			print \"Date: Sat, 1 Jan 2000 00:00:00 +0000\";
+			print \"Subject: x\n\";
+		}
+	" patch >msg &&
+	git checkout HEAD^ &&
+	git am msg &&
+	# Ensure that the author and full message are present
+	git cat-file commit HEAD | grep "^author.*long@example.com" &&
+	git cat-file commit HEAD | grep "^$LONG"
+'
+
 test_done
