@@ -16,7 +16,7 @@ static int void_hashcmp(const void *a, const void *b)
 
 static void sha1_array_sort(struct sha1_array *array)
 {
-	qsort(array->sha1, array->nr, sizeof(*array->sha1), void_hashcmp);
+	QSORT(array->sha1, array->nr, void_hashcmp);
 	array->sorted = 1;
 }
 

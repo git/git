@@ -352,7 +352,7 @@ static void describe(const char *arg, int last_one)
 			    oid_to_hex(oid));
 	}
 
-	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
+	QSORT(all_matches, match_cnt, compare_pt);
 
 	if (gave_up_on) {
 		commit_list_insert_by_date(gave_up_on, &list);
