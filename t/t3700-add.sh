@@ -349,4 +349,52 @@ test_expect_success POSIXPERM,SYMLINKS 'git add --chmod=+x with symlinks' '
 	test_mode_in_index 100755 foo2
 '
 
+test_expect_success 'git add --chmod=[+-]x changes index with already added file' '
+	echo foo >foo3 &&
+	git add foo3 &&
+	git add --chmod=+x foo3 &&
+	test_mode_in_index 100755 foo3 &&
+	echo foo >xfoo3 &&
+	chmod 755 xfoo3 &&
+	git add xfoo3 &&
+	git add --chmod=-x xfoo3 &&
+	test_mode_in_index 100644 xfoo3
+'
+
+test_expect_success POSIXPERM 'git add --chmod=[+-]x does not change the working tree' '
+	echo foo >foo4 &&
+	git add foo4 &&
+	git add --chmod=+x foo4 &&
+	! test -x foo4
+'
+
+test_expect_success 'no file status change if no pathspec is given' '
+	>foo5 &&
+	>foo6 &&
+	git add foo5 foo6 &&
+	git add --chmod=+x &&
+	test_mode_in_index 100644 foo5 &&
+	test_mode_in_index 100644 foo6
+'
+
+test_expect_success 'no file status change if no pathspec is given in subdir' '
+	mkdir -p sub &&
+	(
+		cd sub &&
+		>sub-foo1 &&
+		>sub-foo2 &&
+		git add . &&
+		git add --chmod=+x &&
+		test_mode_in_index 100644 sub-foo1 &&
+		test_mode_in_index 100644 sub-foo2
+	)
+'
+
+test_expect_success 'all statuses changed in folder if . is given' '
+	git add --chmod=+x . &&
+	test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
+	git add --chmod=-x . &&
+	test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+'
+
 test_done
