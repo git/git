@@ -419,6 +419,18 @@ $ git reflog -2 HEAD # or
 $ git log -g -2 HEAD
 ------------
 
+ARGUMENT DISAMBIGUATION
+-----------------------
+
+When there is only one argument given and it is not `--` (e.g. "git
+checkout abc"), and when the argument is both a valid `<tree-ish>`
+(e.g. a branch "abc" exists) and a valid `<pathspec>` (e.g. a file
+or a directory whose name is "abc" exists), Git would usually ask
+you to disambiguate.  Because checking out a branch is so common an
+operation, however, "git checkout abc" takes "abc" as a `<tree-ish>`
+in such a situation.  Use `git checkout -- <pathspec>` if you want
+to checkout these paths out of the index.
+
 EXAMPLES
 --------
 
