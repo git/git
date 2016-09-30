@@ -54,6 +54,11 @@ UI, Workflows & Features
    been corrected to flip the executable bit for all paths that match
    the given pathspec.
 
+ * When "git format-patch --stdout" output is placed as an in-body
+   header and it uses the RFC2822 header folding, "git am" failed to
+   put the header line back into a single logical line.  The
+   underlying "git mailinfo" was taught to handle this properly.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -260,6 +265,29 @@ notes for details).
 
  * "git clone --recurse-submodules" lost the progress eye-candy in
    recent update, which has been corrected.
+
+ * A low-level function verify_packfile() was meant to show errors
+   that were detected without dying itself, but under some conditions
+   it didn't and died instead, which has been fixed.
+   (merge a9445d859e jk/verify-packfile-gently later to maint).
+
+ * When "git fetch" tries to find where the history of the repository
+   it runs in has diverged from what the other side has, it has a
+   mechanism to avoid digging too deep into irrelevant side branches.
+   This however did not work well over the "smart-http" transport due
+   to a design bug, which has been fixed.
+   (merge 06b3d386e0 jt/fetch-pack-in-vain-count-with-stateless later to maint).
+
+ * In the codepath that comes up with the hostname to be used in an
+   e-mail when the user didn't tell us, we looked at ai_canonname
+   field in struct addrinfo without making sure it is not NULL first.
+   (merge c375a7efa3 jk/ident-ai-canonname-could-be-null later to maint).
+
+ * "git worktree", even though it used the default_abbrev setting that
+   ought to be affected by core.abbrev configuration variable, ignored
+   the variable setting.  The command has been taught to read the
+   default set of configuration variables to correct this.
+   (merge d49028e6e7 jc/worktree-config later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge e78d57e bw/pathspec-remove-unused-extern-decl later to maint).
