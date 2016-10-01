@@ -3194,34 +3194,12 @@ if {$use_ttk} {
 }
 pack .vpane -anchor n -side top -fill both -expand 1
 
-# -- Index File List
-#
-${NS}::frame .vpane.files.index -height 100 -width 200
-tlabel .vpane.files.index.title \
-	-text [mc "Staged Changes (Will Commit)"] \
-	-background lightgreen -foreground black
-text $ui_index -background white -foreground black \
-	-borderwidth 0 \
-	-width 20 -height 10 \
-	-wrap none \
-	-takefocus 1 -highlightthickness 1\
-	-cursor $cursor_ptr \
-	-xscrollcommand {.vpane.files.index.sx set} \
-	-yscrollcommand {.vpane.files.index.sy set} \
-	-state disabled
-${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
-${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
-pack .vpane.files.index.title -side top -fill x
-pack .vpane.files.index.sx -side bottom -fill x
-pack .vpane.files.index.sy -side right -fill y
-pack $ui_index -side left -fill both -expand 1
-
 # -- Working Directory File List
-#
-${NS}::frame .vpane.files.workdir -height 100 -width 200
+
+textframe .vpane.files.workdir -height 100 -width 200
 tlabel .vpane.files.workdir.title -text [mc "Unstaged Changes"] \
 	-background lightsalmon -foreground black
-text $ui_workdir -background white -foreground black \
+ttext $ui_workdir -background white -foreground black \
 	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
@@ -3237,6 +3215,30 @@ pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
 pack $ui_workdir -side left -fill both -expand 1
 
+# -- Index File List
+#
+textframe .vpane.files.index -height 100 -width 200
+tlabel .vpane.files.index.title \
+	-text [mc "Staged Changes (Will Commit)"] \
+	-background lightgreen -foreground black
+ttext $ui_index -background white -foreground black \
+	-borderwidth 0 \
+	-width 20 -height 10 \
+	-wrap none \
+	-takefocus 1 -highlightthickness 1\
+	-cursor $cursor_ptr \
+	-xscrollcommand {.vpane.files.index.sx set} \
+	-yscrollcommand {.vpane.files.index.sy set} \
+	-state disabled
+${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
+${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
+pack .vpane.files.index.title -side top -fill x
+pack .vpane.files.index.sx -side bottom -fill x
+pack .vpane.files.index.sy -side right -fill y
+pack $ui_index -side left -fill both -expand 1
+
+# -- Insert the workdir and index into the panes
+#
 .vpane.files add .vpane.files.workdir
 .vpane.files add .vpane.files.index
 if {!$use_ttk} {
@@ -3319,7 +3321,7 @@ if {![is_enabled nocommit]} {
 #
 ${NS}::frame .vpane.lower.commarea.buffer
 ${NS}::frame .vpane.lower.commarea.buffer.header
-set ui_comm .vpane.lower.commarea.buffer.t
+set ui_comm .vpane.lower.commarea.buffer.frame.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
 if {![is_enabled nocommit]} {
@@ -3362,20 +3364,25 @@ if {![is_enabled nocommit]} {
 	pack .vpane.lower.commarea.buffer.header.new -side right
 }
 
-text $ui_comm -background white -foreground black \
+textframe .vpane.lower.commarea.buffer.frame
+ttext $ui_comm -background white -foreground black \
 	-borderwidth 1 \
 	-undo true \
 	-maxundo 20 \
 	-autoseparators true \
+	-takefocus 1 \
+	-highlightthickness 1 \
 	-relief sunken \
 	-width $repo_config(gui.commitmsgwidth) -height 9 -wrap none \
 	-font font_diff \
-	-yscrollcommand {.vpane.lower.commarea.buffer.sby set}
-${NS}::scrollbar .vpane.lower.commarea.buffer.sby \
+	-yscrollcommand {.vpane.lower.commarea.buffer.frame.sby set}
+${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sby \
 	-command [list $ui_comm yview]
-pack .vpane.lower.commarea.buffer.header -side top -fill x
-pack .vpane.lower.commarea.buffer.sby -side right -fill y
+
+pack .vpane.lower.commarea.buffer.frame.sby -side right -fill y
 pack $ui_comm -side left -fill y
+pack .vpane.lower.commarea.buffer.header -side top -fill x
+pack .vpane.lower.commarea.buffer.frame -side left -fill y
 pack .vpane.lower.commarea.buffer -side left -fill y
 
 # -- Commit Message Buffer Context Menu
@@ -3473,12 +3480,13 @@ bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
 
 # -- Diff Body
 #
-${NS}::frame .vpane.lower.diff.body
+textframe .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
-text $ui_diff -background white -foreground black \
+ttext $ui_diff -background white -foreground black \
 	-borderwidth 0 \
 	-width 80 -height 5 -wrap none \
 	-font font_diff \
+	-takefocus 1 -highlightthickness 1 \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
