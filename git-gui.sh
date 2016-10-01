@@ -2505,13 +2505,28 @@ proc force_first_diff {after} {
 	}
 }
 
-proc toggle_or_diff {w x y} {
+proc toggle_or_diff {mode w args} {
 	global file_states file_lists current_diff_path ui_index ui_workdir
 	global last_clicked selected_paths
 
-	set pos [split [$w index @$x,$y] .]
-	set lno [lindex $pos 0]
-	set col [lindex $pos 1]
+	if {$mode eq "click"} {
+		foreach {x y} $args break
+		set pos [split [$w index @$x,$y] .]
+		foreach {lno col} $pos break
+	} else {
+		if {$last_clicked ne {}} {
+			set lno [lindex $last_clicked 1]
+		} else {
+			set lno [expr {int([lindex [$w tag ranges in_diff] 0])}]
+		}
+		if {$mode eq "toggle"} {
+			set col 0; set y 2
+		} else {
+			incr lno [expr {$mode eq "up" ? -1 : 1}]
+			set col 1
+		}
+	}
+
 	set path [lindex $file_lists($w) [expr {$lno - 1}]]
 	if {$path eq {}} {
 		set last_clicked {}
@@ -2519,6 +2534,7 @@ proc toggle_or_diff {w x y} {
 	}
 
 	set last_clicked [list $w $lno]
+	focus $w
 	array unset selected_paths
 	$ui_index tag remove in_sel 0.0 end
 	$ui_workdir tag remove in_sel 0.0 end
@@ -2598,7 +2614,7 @@ proc add_range_to_selection {w x y} {
 	global file_lists last_clicked selected_paths
 
 	if {[lindex $last_clicked 0] ne $w} {
-		toggle_or_diff $w $x $y
+		toggle_or_diff click $w $x $y
 		return
 	}
 
@@ -3188,6 +3204,7 @@ text $ui_index -background white -foreground black \
 	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
+	-takefocus 1 -highlightthickness 1\
 	-cursor $cursor_ptr \
 	-xscrollcommand {.vpane.files.index.sx set} \
 	-yscrollcommand {.vpane.files.index.sy set} \
@@ -3208,6 +3225,7 @@ text $ui_workdir -background white -foreground black \
 	-borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
+	-takefocus 1 -highlightthickness 1\
 	-cursor $cursor_ptr \
 	-xscrollcommand {.vpane.files.workdir.sx set} \
 	-yscrollcommand {.vpane.files.workdir.sy set} \
@@ -3815,10 +3833,10 @@ bind .   <$M1B-Key-r> ui_do_rescan
 bind .   <$M1B-Key-R> ui_do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
-bind .   <$M1B-Key-t> do_add_selection
-bind .   <$M1B-Key-T> do_add_selection
-bind .   <$M1B-Key-u> do_unstage_selection
-bind .   <$M1B-Key-U> do_unstage_selection
+bind .   <$M1B-Key-t> { toggle_or_diff toggle %W }
+bind .   <$M1B-Key-T> { toggle_or_diff toggle %W }
+bind .   <$M1B-Key-u> { toggle_or_diff toggle %W }
+bind .   <$M1B-Key-U> { toggle_or_diff toggle %W }
 bind .   <$M1B-Key-j> do_revert_selection
 bind .   <$M1B-Key-J> do_revert_selection
 bind .   <$M1B-Key-i> do_add_all
@@ -3830,9 +3848,11 @@ bind .   <$M1B-Key-plus> {show_more_context;break}
 bind .   <$M1B-Key-KP_Add> {show_more_context;break}
 bind .   <$M1B-Key-Return> do_commit
 foreach i [list $ui_index $ui_workdir] {
-	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
-	bind $i <$M1B-Button-1>  "add_one_to_selection   $i %x %y; break"
-	bind $i <Shift-Button-1> "add_range_to_selection $i %x %y; break"
+	bind $i <Button-1>       { toggle_or_diff click %W %x %y; break }
+	bind $i <$M1B-Button-1>  { add_one_to_selection %W %x %y; break }
+	bind $i <Shift-Button-1> { add_range_to_selection %W %x %y; break }
+	bind $i <Key-Up>         { toggle_or_diff up %W; break }
+	bind $i <Key-Down>       { toggle_or_diff down %W; break }
 }
 unset i
 
