@@ -3399,7 +3399,7 @@ void diff_setup_done(struct diff_options *options)
 			 */
 			read_cache();
 	}
-	if (options->abbrev <= 0 || 40 < options->abbrev)
+	if (40 < options->abbrev)
 		options->abbrev = 40; /* full */
 
 	/*
