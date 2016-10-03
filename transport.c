@@ -1084,9 +1084,7 @@ static int refs_from_alternate_cb(struct alternate_object_database *e,
 	const struct ref *extra;
 	struct alternate_refs_data *cb = data;
 
-	e->name[-1] = '\0';
-	other = xstrdup(real_path(e->base));
-	e->name[-1] = '/';
+	other = xstrdup(real_path(e->path));
 	len = strlen(other);
 
 	while (other[len-1] == '/')

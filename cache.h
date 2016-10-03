@@ -1383,8 +1383,11 @@ extern void remove_scheduled_dirs(void);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
+
 	char *name;
-	char base[FLEX_ARRAY]; /* more */
+	char *scratch;
+
+	char path[FLEX_ARRAY];
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
 extern void read_info_alternates(const char * relative_base, int depth);

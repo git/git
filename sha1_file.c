@@ -208,7 +208,7 @@ static const char *alt_sha1_path(struct alternate_object_database *alt,
 				 const unsigned char *sha1)
 {
 	fill_sha1_path(alt->name, sha1);
-	return alt->base;
+	return alt->scratch;
 }
 
 /*
@@ -261,8 +261,7 @@ static int alt_odb_usable(struct strbuf *path, const char *normalized_objdir)
 	 * thing twice, or object directory itself.
 	 */
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		if (path->len == alt->name - alt->base - 1 &&
-		    !memcmp(path->buf, alt->base, path->len))
+		if (!strcmp(path->buf, alt->path))
 			return 0;
 	}
 	if (!fspathcmp(path->buf, normalized_objdir))
@@ -401,13 +400,14 @@ struct alternate_object_database *alloc_alt_odb(const char *dir)
 	size_t entlen;
 
 	entlen = st_add(dirlen, 43); /* '/' + 2 hex + '/' + 38 hex + NUL */
-	ent = xmalloc(st_add(sizeof(*ent), entlen));
-	memcpy(ent->base, dir, dirlen);
+	FLEX_ALLOC_STR(ent, path, dir);
+	ent->scratch = xmalloc(entlen);
+	xsnprintf(ent->scratch, entlen, "%s/", dir);
 
-	ent->name = ent->base + dirlen + 1;
-	ent->base[dirlen] = '/';
-	ent->base[dirlen + 3] = '/';
-	ent->base[entlen-1] = 0;
+	ent->name = ent->scratch + dirlen + 1;
+	ent->scratch[dirlen] = '/';
+	ent->scratch[dirlen + 3] = '/';
+	ent->scratch[entlen-1] = 0;
 
 	return ent;
 }
@@ -1485,11 +1485,8 @@ void prepare_packed_git(void)
 		return;
 	prepare_packed_git_one(get_object_directory(), 1);
 	prepare_alt_odb();
-	for (alt = alt_odb_list; alt; alt = alt->next) {
-		alt->name[-1] = 0;
-		prepare_packed_git_one(alt->base, 0);
-		alt->name[-1] = '/';
-	}
+	for (alt = alt_odb_list; alt; alt = alt->next)
+		prepare_packed_git_one(alt->path, 0);
 	rearrange_packed_git();
 	prepare_packed_git_mru();
 	prepare_packed_git_run_once = 1;
@@ -3692,8 +3689,7 @@ static int loose_from_alt_odb(struct alternate_object_database *alt,
 	struct strbuf buf = STRBUF_INIT;
 	int r;
 
-	/* copy base not including trailing '/' */
-	strbuf_add(&buf, alt->base, alt->name - alt->base - 1);
+	strbuf_addstr(&buf, alt->path);
 	r = for_each_loose_file_in_objdir_buf(&buf,
 					      data->cb, NULL, NULL,
 					      data->data);
