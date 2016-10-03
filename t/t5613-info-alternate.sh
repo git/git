@@ -95,8 +95,28 @@ test_expect_success 'that relative alternate is possible for current dir' '
 	git fsck
 '
 
-test_expect_success 'that relative alternate is only possible for current dir' '
-	test_must_fail git -C D fsck
+test_expect_success 'that relative alternate is recursive' '
+	git -C D fsck
+'
+
+# we can reach "A" from our new repo both directly, and via "C".
+# The deep/subdir is there to make sure we are not doing a stupid
+# pure-text comparison of the alternate names.
+test_expect_success 'relative duplicates are eliminated' '
+	mkdir -p deep/subdir &&
+	git init --bare deep/subdir/duplicate.git &&
+	cat >deep/subdir/duplicate.git/objects/info/alternates <<-\EOF &&
+	../../../../C/.git/objects
+	../../../../A/.git/objects
+	EOF
+	cat >expect <<-EOF &&
+	alternate: $(pwd)/C/.git/objects
+	alternate: $(pwd)/B/.git/objects
+	alternate: $(pwd)/A/.git/objects
+	EOF
+	git -C deep/subdir/duplicate.git count-objects -v >actual &&
+	grep ^alternate: actual >actual.alternates &&
+	test_cmp expect actual.alternates
 '
 
 test_done
