@@ -1,16 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2016, #08; Tue, 27)
-X-master-at: 21f862b498925194f8f1ebe8203b7a7df756555b
-X-next-at: 59e95dbc0e21ff4f326eb160a9f4c21e1a059f56
+Subject: What's cooking in git.git (Oct 2016, #01; Mon, 3)
+X-master-at: 0cf36115dce7438a0eafad54a81cc57175e8fb54
+X-next-at: 9af6bb63e9b9efbcd0064516a7811092873d1ddf
 
-What's cooking in git.git (Sep 2016, #08; Tue, 27)
+What's cooking in git.git (Oct 2016, #01; Mon, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+With fixes since 2.10 accumulated on the 'master' front, the first
+maintenance release 2.10.1 has been tagged.  The auto-abbreviation
+by Linus and Peff is now in 'next'.  The tip of 'master' has quite a
+many topics merged since the last report.  Pat is back and hopefully
+be more active as the git-gui maintainer.  Life is good ;-)
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,196 +26,34 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* mh/diff-indent-heuristic (2016-09-19) 8 commits
-  (merged to 'next' on 2016-09-22 at e71d742)
- + blame: honor the diff heuristic options and config
- + parse-options: add parse_opt_unknown_cb()
- + diff: improve positioning of add/delete blocks in diffs
- + xdl_change_compact(): introduce the concept of a change group
- + recs_match(): take two xrecord_t pointers as arguments
- + is_blank_line(): take a single xrecord_t as argument
- + xdl_change_compact(): only use heuristic if group can't be matched
- + xdl_change_compact(): fix compaction heuristic to adjust ixo
-
- Output from "git diff" can be made easier to read by selecting
- which lines are common and which lines are added/deleted
- intelligently when the lines before and after the changed section
- are the same.  A command line option is added to help with the
- experiment to find a good heuristics.
- * mh/diff-indent-heuristic (2016-09-27) 1 commit
- - xdiff: rename "struct group" to "struct xdlgroup"
-
- Clean-up for a recently graduated topic.
+* dt/mailinfo (2016-09-26) 1 commit
+  (merged to 'next' on 2016-09-27 at 59e95dbc0e)
+ + add David Turner's Two Sigma address
 
 
-* rs/cocci (2016-09-15) 3 commits
-  (merged to 'next' on 2016-09-22 at aa54fa4)
- + use strbuf_addstr() for adding constant strings to a strbuf, part 2
- + add coccicheck make target
- + contrib/coccinelle: fix semantic patch for oid_to_hex_r()
+* dt/tree-fsck (2016-09-27) 2 commits
+  (merged to 'next' on 2016-09-28 at afdfdbbf37)
+ + fsck: handle bad trees like other errors
+ + tree-walk: be more specific about corrupt tree errors
 
- Code cleanup.
-
-
-* ep/doc-check-ref-format-example (2016-09-21) 1 commit
-  (merged to 'next' on 2016-09-22 at 6d0d79e)
- + git-check-ref-format.txt: fixup documentation
-
- A shell script example in check-ref-format documentation has been
- fixed.
+ The codepath in "git fsck" to detect malformed tree objects has
+ been updated not to die but keep going after detecting them.
 
 
-* jk/clone-recursive-progress (2016-09-22) 1 commit
-  (merged to 'next' on 2016-09-22 at 8310c42)
- + clone: pass --progress decision to recursive submodules
+* ik/gitweb-force-highlight (2016-09-25) 2 commits
+  (merged to 'next' on 2016-09-27 at cbb8391a76)
+ + gitweb: use highlight's shebang detection
+ + gitweb: remove unused guess_file_syntax() parameter
 
- "git clone --recurse-submodules" lost the progress eye-candy in
- recent update, which has been corrected.
-
-
-* jk/doc-cvs-update (2016-09-22) 3 commits
-  (merged to 'next' on 2016-09-22 at c0f949f)
- + docs/cvs-migration: mention cvsimport caveats
- + docs/cvs-migration: update link to cvsps homepage
- + docs/cvsimport: prefer cvs-fast-export to parsecvs
-
- Documentation around tools to import from CVS was fairly outdated.
-
-
-* js/regexec-buf (2016-09-21) 3 commits
-  (merged to 'next' on 2016-09-22 at 2ee2477)
- + regex: use regexec_buf()
- + regex: add regexec_buf() that can work on a non NUL-terminated string
- + regex: -G<pattern> feeds a non NUL-terminated string to regexec() and fails
-
- Some codepaths in "git diff" used regexec(3) on a buffer that was
- mmap(2)ed, which may not have a terminating NUL, leading to a read
- beyond the end of the mapped region.  This was fixed by introducing
- a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
- extension.
-
-
-* jt/format-patch-rfc (2016-09-21) 1 commit
-  (merged to 'next' on 2016-09-22 at 3b39442)
- + format-patch: add "--rfc" for the common case of [RFC PATCH]
-
- In some projects, it is common to use "[RFC PATCH]" as the subject
- prefix for a patch meant for discussion rather than application.  A
- new option "--rfc" was a short-hand for "--subject-prefix=RFC PATCH"
- to help the participants of such projects.
-
-
-* ls/travis-homebrew-path-fix (2016-09-22) 1 commit
-  (merged to 'next' on 2016-09-22 at 310e620)
- + travis-ci: ask homebrew for its path instead of hardcoding it
-
- The procedure to build Git on Mac OS X for Travis CI hardcoded the
- internal directory structure we assumed HomeBrew uses, which was a
- no-no.  The procedure has been updated to ask HomeBrew things we
- need to know to fix this.
-
-
-* mm/config-color-ui-default-to-auto (2016-09-16) 1 commit
-  (merged to 'next' on 2016-09-22 at 4eac0cb)
- + Documentation/config: default for color.* is color.ui
-
- Documentation for individual configuration variables to control use
- of color (like `color.grep`) said that their default value is
- 'false', instead of saying their default is taken from `color.ui`.
- When we updated the default value for color.ui from 'false' to
- 'auto' quite a while ago, all of them broke.  This has been
- corrected.
-
-
-* nd/checkout-disambiguation (2016-09-21) 3 commits
-  (merged to 'next' on 2016-09-22 at ebfa365)
- + checkout: fix ambiguity check in subdir
- + checkout.txt: document a common case that ignores ambiguation rules
- + checkout: add some spaces between code and comment
-
- "git checkout <word>" does not follow the usual disambiguation
- rules when the <word> can be both a rev and a path, to allow
- checking out a branch 'foo' in a project that happens to have a
- file 'foo' in the working tree without having to disambiguate.
- This was poorly documented and the check was incorrect when the
- command was run from a subdirectory.
-
-
-* rs/c-auto-resets-attributes (2016-09-19) 1 commit
-  (merged to 'next' on 2016-09-22 at 68f2e4a)
- + pretty: let %C(auto) reset all attributes
-
- The pretty-format specifier "%C(auto)" used by the "log" family of
- commands to enable coloring of the output is taught to also issue a
- color-reset sequence to the output.
-
-
-* rs/checkout-init-macro (2016-09-22) 1 commit
-  (merged to 'next' on 2016-09-22 at 6513755)
- + introduce CHECKOUT_INIT
-
- Code cleanup.
-
-
-* rt/rebase-i-broken-insn-advise (2016-09-07) 1 commit
-  (merged to 'next' on 2016-09-23 at 0d12484)
- + rebase -i: improve advice on bad instruction lines
-
- When "git rebase -i" is given a broken instruction, it told the
- user to fix it with "--edit-todo", but didn't say what the step
- after that was (i.e. "--continue").
-
-
-* tg/add-chmod+x-fix (2016-09-21) 6 commits
-  (merged to 'next' on 2016-09-22 at 6afdd21)
- + t3700-add: do not check working tree file mode without POSIXPERM
- + t3700-add: create subdirectory gently
- + add: modify already added files when --chmod is given
- + read-cache: introduce chmod_index_entry
- + update-index: add test for chmod flags
- + Merge branch 'ib/t3700-add-chmod-x-updates' into tg/add-chmod+x-fix
-
- "git add --chmod=+x <pathspec>" added recently only toggled the
- executable bit for paths that are either new or modified. This has
- been corrected to flip the executable bit for all paths that match
- the given pathspec.
-
-
-* va/i18n-more (2016-09-21) 6 commits
-  (merged to 'next' on 2016-09-22 at bea26e8)
- + i18n: stash: mark messages for translation
- + i18n: notes-merge: mark die messages for translation
- + i18n: ident: mark hint for translation
- + i18n: i18n: diff: mark die messages for translation
- + i18n: connect: mark die messages for translation
- + i18n: commit: mark message for translation
-
- Even more i18n.
-
---------------------------------------------------
-[New Topics]
-
-* mh/diff-indent-heuristic (2016-09-27) 1 commit
-  (merged to 'next' on 2016-09-27 at 3d6fb66)
- + xdiff: rename "struct group" to "struct xdlgroup"
-
- Clean-up for a recently graduated topic.
-
- Will merge to 'master'.
-
-
-* rs/cocci (2016-09-27) 3 commits
- - use strbuf_add_unique_abbrev() for adding short hashes, part 2
- - use strbuf_addstr() instead of strbuf_addf() with "%s", part 2
- - gitignore: ignore output files of coccicheck make target
-
- Code clean-up with help from coccinelle tool continues.
-
- Will merge to 'next'.
+ "gitweb" can spawn "highlight" to show blob contents with
+ (programming) language-specific syntax highlighting, but only
+ when the language is known.  "highlight" can however be told
+ to make the guess itself by giving it "--force" option, which
+ has been enabled.
 
 
 * jc/verify-loose-object-header (2016-09-26) 2 commits
-  (merged to 'next' on 2016-09-27 at 2947f95)
+  (merged to 'next' on 2016-09-27 at 2947f95f14)
  + unpack_sha1_header(): detect malformed object header
  + streaming: make sure to notice corrupt object
 
@@ -218,45 +62,108 @@ of the repositories listed at
  sometimes read past the data they read from the disk, which has
  been corrected.  H/t to Gustavo Grieco for reporting.
 
- Will merge to 'master'.
+
+* jc/worktree-config (2016-09-27) 1 commit
+  (merged to 'next' on 2016-09-28 at 0c262f6)
+ + worktree: honor configuration variables
+
+ "git worktree", even though it used the default_abbrev setting that
+ ought to be affected by core.abbrev configuration variable, ignored
+ the variable setting.  The command has been taught to read the
+ default set of configuration variables to correct this.
 
 
-* jk/ambiguous-short-object-names (2016-09-27) 11 commits
- - get_short_sha1: make default disambiguation configurable
- - get_short_sha1: list ambiguous objects on error
- - for_each_abbrev: drop duplicate objects
- - sha1_array: let callbacks interrupt iteration
- - get_short_sha1: mark ambiguity error for translation
- - get_short_sha1: NUL-terminate hex prefix
- - get_short_sha1: refactor init of disambiguation code
- - get_short_sha1: parse tags when looking for treeish
- - get_sha1: propagate flags to child functions
- - get_sha1: avoid repeating ourselves via ONLY_TO_DIE
- - get_sha1: detect buggy calls with multiple disambiguators
+* jk/ident-ai-canonname-could-be-null (2016-09-23) 1 commit
+  (merged to 'next' on 2016-09-26 at 0eefb29)
+ + ident: handle NULL ai_canonname
 
- When given an abbreviated object name that is not (or more
- realistically, "no longer") unique, we gave a fatal error
- "ambiguous argument".  This error is now accompanied by hints that
- lists the objects that begins with the given prefix.  During the
- course of development of this new feature, numerous minor bugs were
- uncovered and corrected, the most notable one of which is that we
- gave "short SHA1 xxxx is ambiguous." twice without good reason.
+ In the codepath that comes up with the hostname to be used in an
+ e-mail when the user didn't tell us, we looked at ai_canonname
+ field in struct addrinfo without making sure it is not NULL first.
 
- Will merge to 'next'.
+
+* jk/verify-packfile-gently (2016-09-22) 1 commit
+  (merged to 'next' on 2016-09-26 at f5abba5)
+ + verify_packfile: check pack validity before accessing data
+
+ A low-level function verify_packfile() was meant to show errors
+ that were detected without dying itself, but under some conditions
+ it didn't and died instead, which has been fixed.
+
+
+* jt/fetch-pack-in-vain-count-with-stateless (2016-09-23) 1 commit
+  (merged to 'next' on 2016-09-26 at 9645629)
+ + fetch-pack: do not reset in_vain on non-novel acks
+
+ When "git fetch" tries to find where the history of the repository
+ it runs in has diverged from what the other side has, it has a
+ mechanism to avoid digging too deep into irrelevant side branches.
+ This however did not work well over the "smart-http" transport due
+ to a design bug, which has been fixed.
+
+
+* jt/mailinfo-fold-in-body-headers (2016-09-21) 3 commits
+  (merged to 'next' on 2016-09-26 at 4235eb6)
+ + mailinfo: handle in-body header continuations
+ + mailinfo: make is_scissors_line take plain char *
+ + mailinfo: separate in-body header processing
+
+ When "git format-patch --stdout" output is placed as an in-body
+ header and it uses the RFC2822 header folding, "git am" failed to
+ put the header line back into a single logical line.  The
+ underlying "git mailinfo" was taught to handle this properly.
+
+
+* kd/mailinfo-quoted-string (2016-09-28) 2 commits
+  (merged to 'next' on 2016-09-28 at 2aaeb57804)
+ + mailinfo: unescape quoted-pair in header fields
+ + t5100-mailinfo: replace common path prefix with variable
+
+ An author name, that spelled a backslash-quoted double quote in the
+ human readable part "My \"double quoted\" name", was not unquoted
+ correctly while applying a patch from a piece of e-mail.
+
+
+* mh/diff-indent-heuristic (2016-09-27) 1 commit
+  (merged to 'next' on 2016-09-27 at 3d6fb6605a)
+ + xdiff: rename "struct group" to "struct xdlgroup"
+
+ Clean-up for a recently graduated topic.
+
+
+* nd/init-core-worktree-in-multi-worktree-world (2016-09-25) 5 commits
+  (merged to 'next' on 2016-09-27 at 619f7f3a3b)
+ + init: kill git_link variable
+ + init: do not set unnecessary core.worktree
+ + init: kill set_git_dir_init()
+ + init: call set_git_dir_init() from within init_db()
+ + init: correct re-initialization from a linked worktree
+
+ "git init" tried to record core.worktree in the repository's
+ 'config' file when GIT_WORK_TREE environment variable was set and
+ it was different from where GIT_DIR appears as ".git" at its top,
+ but the logic was faulty when .git is a "gitdir:" file that points
+ at the real place, causing trouble in working trees that are
+ managed by "git worktree".  This has been corrected.
+
+
+* pb/rev-list-reverse-with-count (2016-09-27) 1 commit
+  (merged to 'next' on 2016-09-28 at 2905d0adbc)
+ + rev-list-options: clarify the usage of --reverse
+
+ Doc update to clarify what "log -3 --reverse" does.
 
 
 * rs/copy-array (2016-09-25) 2 commits
-  (merged to 'next' on 2016-09-27 at c92e020)
+  (merged to 'next' on 2016-09-27 at c92e020669)
  + use COPY_ARRAY
  + add COPY_ARRAY
 
  Code cleanup.
 
- Will merge to 'master'.
-
 
 * rs/git-gui-use-modern-git-merge-syntax (2016-09-26) 2 commits
-  (merged to 'next' on 2016-09-27 at f55850d)
+  (merged to 'next' on 2016-09-27 at f55850df7d)
  + Merge branch 'rs/use-modern-git-merge-syntax' of git-gui into rs/git-gui-use-modern-git-merge-syntax
  + git-gui: stop using deprecated merge syntax
 
@@ -265,107 +172,187 @@ of the repositories listed at
  time, and "git gui" was the last in-tree user of the syntax.  This
  is finally fixed, so that we can move forward with the deprecation.
 
- Will merge to 'master'.
-
 
 * va/git-gui-i18n (2016-09-26) 3 commits
-  (merged to 'next' on 2016-09-27 at ab0f66f)
+  (merged to 'next' on 2016-09-27 at ab0f66ff8a)
  + Merge branch 'va/i18n' of ../git-gui into va/git-gui-i18n
  + git-gui: l10n: add Portuguese translation
  + git-gui i18n: mark strings for translation
 
  "git gui" l10n to Portuguese.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* rs/cocci (2016-10-03) 4 commits
+  (merged to 'next' on 2016-10-03 at 758cc6de9c)
+ + coccicheck: make transformation for strbuf_addf(sb, "...") more precise
+  (merged to 'next' on 2016-09-28 at 26462645f9)
+ + use strbuf_add_unique_abbrev() for adding short hashes, part 2
+ + use strbuf_addstr() instead of strbuf_addf() with "%s", part 2
+ + gitignore: ignore output files of coccicheck make target
 
-* va/i18n-perl-scripts (2016-09-25) 11 commits
- - i18n: difftool: mark warnings for translation
- - i18n: send-email: mark string with interpolation for translation
- - i18n: send-email: mark warnings and errors for translation
- - i18n: send-email: mark strings for translation
- - i18n: add--interactive: mark edit_hunk_manually message for translation
- - i18n: add--interactive: i18n of help_patch_cmd
- - i18n: add--interactive: mark message for translation
- - i18n: add--interactive: mark plural strings
- - i18n: add--interactive: mark strings with interpolation for translation
- - i18n: add--interactive: mark simple here documents for translation
- - i18n: add--interactive: mark strings for translation
-
- Porcelain scripts written in Perl are getting internationalized.
-
- Waiting for a reroll.
- cf. <1474913721.1035.9.camel@sapo.pt>
-
-
-* vn/revision-shorthand-for-side-branch-log (2016-09-27) 1 commit
- - revision: new rev^-n shorthand for rev^n..rev
-
- "git log rev^..rev" is an often-used revision range specification
- to show what was done on a side branch merged at rev, which has
- gained a short-hand "rev^-1".  In general "rev^-$n" is the same as
- "^rev^$n rev", i.e. what was done while the history leading to nth
- parent was looking the other way.
-
- Will merge to 'next'.
-
-
-* dt/mailinfo (2016-09-26) 1 commit
-  (merged to 'next' on 2016-09-27 at 59e95db)
- + add David Turner's Two Sigma address
+ Code clean-up with help from coccinelle tool continues.
 
  Will merge to 'master'.
 
 
-* dt/tree-fsck (2016-09-27) 2 commits
- - fsck: handle bad trees like other errors
- - tree-walk: be more specific about corrupt tree errors
+* nd/ita-empty-commit (2016-09-28) 3 commits
+ - commit: don't be fooled by ita entries when creating initial commit
+ - diff-lib.c: enable --shift-ita in index_differs_from()
+ - Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
 
- The codepath in "git fsck" to detect malformed tree objects has
- been updated not to die but keep going after detecting them.
+ When new paths were added by "git add -N" to the index, it was
+ enough to circumvent the check by "git commit" to refrain from
+ making an empty commit without "--allow-empty".  The same logic
+ prevented "git status" to show such a path as "new file" in the
+ "Changes not staged for commit" section.
+
+ Expecting a reroll.
+ cf. <xmqqzimrj03j.fsf@gitster.mtv.corp.google.com>
+ cf. <xmqq8tubkgg5.fsf@gitster.mtv.corp.google.com>
+
+
+* jc/blame-abbrev (2016-09-28) 1 commit
+  (merged to 'next' on 2016-10-03 at 8ec86ff1e1)
+ + blame: use DEFAULT_ABBREV macro
+
+ Almost everybody uses DEFAULT_ABBREV to refer to the default
+ setting for the abbreviation, but "git blame" peeked into
+ underlying variable bypassing the macro for no good reason.
+
+ Will merge to 'master'.
+
+
+* lt/abbrev-auto (2016-10-03) 3 commits
+  (merged to 'next' on 2016-10-03 at bb188d00f7)
+ + abbrev: auto size the default abbreviation
+ + abbrev: prepare for new world order
+ + abbrev: add FALLBACK_DEFAULT_ABBREV to prepare for auto sizing
+ (this branch uses jk/ambiguous-short-object-names.)
+
+ Allow the default abbreviation length, which has historically been
+ 7, to scale as the repository grows.  The logic suggests to use 12
+ hexdigits for the Linux kernel, and 9 to 10 for Git itself.
+
+ Will merge to 'master'.
+
+
+* dt/http-empty-auth (2016-10-03) 1 commit
+ - http: http.emptyauth should allow empty (not just NULL) usernames
+
+ http.emptyauth configuration is a way to allow an empty username to
+ pass when attempting to authenticate using mechanisms like
+ Kerberos.  We took an unspecified (NULL) username and sent ":"
+ (i.e. no username, no password) to CURLOPT_USERPWD, but did not do
+ the same when the username is explicitly set to an empty string.
+
+ cf. <20161003210100.t5nqknwfotag3lmj@sigill.intra.peff.net>
+
+
+* jc/diff-unique-abbrev-comments (2016-09-30) 1 commit
+ - diff_unique_abbrev(): document its assumption and limitation
+
+
+* jk/graph-padding-fix (2016-09-29) 1 commit
+  (merged to 'next' on 2016-10-03 at 3f526e0f38)
+ + graph: fix extra spaces in graph_padding_line
+
+ The "graph" API used in "git log --graph" miscounted the number of
+ output columns consumed so far when drawing a padding line, which
+ has been fixed; this did not affect any existing code as nobody
+ tried to write anything after the padding on such a line, though.
+
+ Will merge to 'master'.
+
+
+* jk/quarantine-received-objects (2016-10-03) 5 commits
+ - tmp-objdir: do not migrate files starting with '.'
+ - tmp-objdir: put quarantine information in the environment
+ - receive-pack: quarantine objects until pre-receive accepts
+ - tmp-objdir: introduce API for temporary object directories
+ - check_connected: accept an env argument
+ (this branch uses jk/alt-odb-cleanup.)
+
+ In order for the receiving end of "git push" to inspect the
+ received history and decide to reject the push, the objects sent
+ from the sending end need to be made available to the hook and
+ the mechanism for the connectivity check, and this was done
+ traditionally by storing the objects in the receiving repository
+ and letting "git gc" to expire it.  Instead, store the newly
+ received objects in a temporary area, and make them available by
+ reusing the alternate object store mechanism to them only while we
+ decide if we accept the check, and once we decide, either migrate
+ them to the repository or purge them immediately.
+
+
+* ps/http-gssapi-cred-delegation (2016-09-29) 1 commit
+  (merged to 'next' on 2016-10-03 at 310fbe8f24)
+ + http: control GSSAPI credential delegation
+
+ In recent versions of cURL, GSSAPI credential delegation is
+ disabled by default due to CVE-2011-2192; introduce a configuration
+ to selectively allow enabling this.
+
+ Will merge to 'master'.
+
+
+* rs/c-auto-resets-attributes (2016-09-29) 1 commit
+  (merged to 'next' on 2016-10-03 at 6a0b946a79)
+ + pretty: avoid adding reset for %C(auto) if output is empty
+
+ When "%C(auto)" appears at the very beginning of the pretty format
+ string, it did not need to issue the reset sequence, but it did.
+
+ Will merge to 'master'.
+ This is a small optimization to already graduated topic.
+
+
+* rs/qsort (2016-10-03) 6 commits
+ - show-branch: use QSORT
+ - use QSORT, part 2
+ - coccicheck: use --all-includes by default
+ - remove unnecessary check before QSORT
+ - use QSORT
+ - add QSORT
+
+ We call "qsort(array, nelem, sizeof(array[0]), fn)", and most of
+ the time third parameter is redundant.  A new QSORT() macro lets us
+ omit it.
 
  Will merge to 'next'.
 
 
-* jc/latin-1 (2016-09-26) 2 commits
- - utf8: accept "latin-1" as ISO-8859-1
- - utf8: refactor code to decide fallback encoding
+* sg/ref-filter-parse-optim (2016-10-03) 1 commit
+  (merged to 'next' on 2016-10-03 at 9af6bb63e9)
+ + ref-filter: strip format option after a field name only once while parsing
 
- Some platforms no longer understand "latin-1" that is still seen in
- the wild in e-mail headers; replace them with "iso-8859-1" that is
- more widely known when conversion fails from/to it.
+ The code that parses the format parameter of for-each-ref command
+ has seen a micro-optimization.
 
- Will merge to 'next'.
-
-
-* jc/worktree-config (2016-09-27) 1 commit
- - worktree: honor configuration variables
-
- "git worktree", even though it used the default_abbrev setting that
- ought to be affected by core.abbrev configuration variable, ignored
- the variable setting.  The command has been taught to read the
- default set of configuration variables to correct this.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* mg/gpg-richer-status (2016-09-27) 1 commit
- - gpg-interface: use more status letters
-
- The GPG verification status shown in "%G?" pretty format specifier
- was not rich enough to differentiate a signature made by an expired
- key, a signature made by a revoked key, etc.  New output letters
- have been assigned to express them.
-
- Will merge to 'next'.
-
-
-* pb/rev-list-reverse-with-count (2016-09-27) 1 commit
- - rev-list-options: clarify the usage of --reverse
-
- Doc update.
-
- Will merge to 'next'.
+* jk/alt-odb-cleanup (2016-10-03) 18 commits
+ - alternates: use fspathcmp to detect duplicates
+ - sha1_file: always allow relative paths to alternates
+ - count-objects: report alternates via verbose mode
+ - fill_sha1_file: write into a strbuf
+ - alternates: store scratch buffer as strbuf
+ - fill_sha1_file: write "boring" characters
+ - alternates: use a separate scratch space
+ - alternates: encapsulate alt->base munging
+ - alternates: provide helper for allocating alternate
+ - alternates: provide helper for adding to alternates list
+ - link_alt_odb_entry: refactor string handling
+ - link_alt_odb_entry: handle normalize_path errors
+ - t5613: clarify "too deep" recursion tests
+ - t5613: do not chdir in main process
+ - t5613: whitespace/style cleanups
+ - t5613: use test_must_fail
+ - t5613: drop test_valid_repo function
+ - t5613: drop reachable_via function
+ (this branch is used by jk/quarantine-received-objects.)
 
 --------------------------------------------------
 [Stalled]
@@ -668,57 +655,87 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/verify-packfile-gently (2016-09-22) 1 commit
-  (merged to 'next' on 2016-09-26 at f5abba5)
- + verify_packfile: check pack validity before accessing data
+* jk/ambiguous-short-object-names (2016-09-27) 11 commits
+  (merged to 'next' on 2016-09-28 at 1b85295323)
+ + get_short_sha1: make default disambiguation configurable
+ + get_short_sha1: list ambiguous objects on error
+ + for_each_abbrev: drop duplicate objects
+ + sha1_array: let callbacks interrupt iteration
+ + get_short_sha1: mark ambiguity error for translation
+ + get_short_sha1: NUL-terminate hex prefix
+ + get_short_sha1: refactor init of disambiguation code
+ + get_short_sha1: parse tags when looking for treeish
+ + get_sha1: propagate flags to child functions
+ + get_sha1: avoid repeating ourselves via ONLY_TO_DIE
+ + get_sha1: detect buggy calls with multiple disambiguators
+ (this branch is used by lt/abbrev-auto.)
 
- A low-level function verify_packfile() was meant to show errors
- that were detected without dying itself, but under some conditions
- it didn't and died instead, which has been fixed.
-
- Will merge to 'master'.
-
-
-* jt/fetch-pack-in-vain-count-with-stateless (2016-09-23) 1 commit
-  (merged to 'next' on 2016-09-26 at 9645629)
- + fetch-pack: do not reset in_vain on non-novel acks
-
- When "git fetch" tries to find where the history of the repository
- it runs inhas diverged from what the other side has, it has a
- mechanism to avoid digging too deep into irrelevant side branches.
- This however did not work well over the "smart-http" transport due
- to a design bug, which has been fixed.
-
- Will merge to 'master'.
-
-
-* ik/gitweb-force-highlight (2016-09-25) 2 commits
-  (merged to 'next' on 2016-09-27 at cbb8391)
- + gitweb: use highlight's shebang detection
- + gitweb: remove unused guess_file_syntax() parameter
-
- "gitweb" can spawn "highlight" to show blob contents with
- (programming) language-specific syntax highlighting, but only
- when the language is known.  "highlight" can however be told
- to make the guess itself by giving it "--force" option, which
- has been enabled.
+ When given an abbreviated object name that is not (or more
+ realistically, "no longer") unique, we gave a fatal error
+ "ambiguous argument".  This error is now accompanied by hints that
+ lists the objects that begins with the given prefix.  During the
+ course of development of this new feature, numerous minor bugs were
+ uncovered and corrected, the most notable one of which is that we
+ gave "short SHA1 xxxx is ambiguous." twice without good reason.
 
  Will merge to 'master'.
 
 
-* jk/ident-ai-canonname-could-be-null (2016-09-23) 1 commit
-  (merged to 'next' on 2016-09-26 at 0eefb29)
- + ident: handle NULL ai_canonname
+* va/i18n-perl-scripts (2016-09-25) 11 commits
+ - i18n: difftool: mark warnings for translation
+ - i18n: send-email: mark string with interpolation for translation
+ - i18n: send-email: mark warnings and errors for translation
+ - i18n: send-email: mark strings for translation
+ - i18n: add--interactive: mark edit_hunk_manually message for translation
+ - i18n: add--interactive: i18n of help_patch_cmd
+ - i18n: add--interactive: mark message for translation
+ - i18n: add--interactive: mark plural strings
+ - i18n: add--interactive: mark strings with interpolation for translation
+ - i18n: add--interactive: mark simple here documents for translation
+ - i18n: add--interactive: mark strings for translation
 
- In the codepath that comes up with the hostname to be used in an
- e-mail when the user didn't tell us, we looked at ai_canonname
- field in struct addrinfo without making sure it is not NULL first.
+ Porcelain scripts written in Perl are getting internationalized.
+
+ Waiting for a reroll.
+ cf. <1474913721.1035.9.camel@sapo.pt>
+
+
+* vn/revision-shorthand-for-side-branch-log (2016-09-27) 1 commit
+  (merged to 'next' on 2016-09-28 at c1237b24f6)
+ + revision: new rev^-n shorthand for rev^n..rev
+
+ "git log rev^..rev" is an often-used revision range specification
+ to show what was done on a side branch merged at rev.  This has
+ gained a short-hand "rev^-1".  In general "rev^-$n" is the same as
+ "^rev^$n rev", i.e. what has happened on other branches while the
+ history leading to nth parent was looking the other way.
 
  Will merge to 'master'.
+
+
+* jc/latin-1 (2016-09-26) 2 commits
+  (merged to 'next' on 2016-09-28 at c8673e03c2)
+ + utf8: accept "latin-1" as ISO-8859-1
+ + utf8: refactor code to decide fallback encoding
+
+ Some platforms no longer understand "latin-1" that is still seen in
+ the wild in e-mail headers; replace them with "iso-8859-1" that is
+ more widely known when conversion fails from/to it.
+
+ Will hold to see if people scream.
+
+
+* mg/gpg-richer-status (2016-09-28) 1 commit
+ - gpg-interface: use more status letters
+
+ The GPG verification status shown in "%G?" pretty format specifier
+ was not rich enough to differentiate a signature made by an expired
+ key, a signature made by a revoked key, etc.  New output letters
+ have been assigned to express them.
 
 
 * jc/blame-reverse (2016-06-14) 2 commits
-  (merged to 'next' on 2016-09-22 at d1a8e9c)
+  (merged to 'next' on 2016-09-22 at d1a8e9ce99)
  + blame: dwim "blame --reverse OLD" as "blame --reverse OLD.."
  + blame: improve diagnosis for "--reverse NEW"
 
@@ -728,51 +745,6 @@ of the repositories listed at
  commit.
 
  Will hold to see if it is broken.
-
-
-* nd/init-core-worktree-in-multi-worktree-world (2016-09-25) 5 commits
-  (merged to 'next' on 2016-09-27 at 619f7f3)
- + init: kill git_link variable
- + init: do not set unnecessary core.worktree
- + init: kill set_git_dir_init()
- + init: call set_git_dir_init() from within init_db()
- + init: correct re-initialization from a linked worktree
-
- "git init" tried to record core.worktree in the repository's
- 'config' file when GIT_WORK_TREE environment variable was set and
- it was different from where GIT_DIR appears as ".git" at its top,
- but the logic was faulty when .git is a "gitdir:" file that points
- at the real place, causing trouble in working trees that are
- managed by "git worktree".  This has been corrected.
-
- Will merge to 'master'.
-
-
-* jt/mailinfo-fold-in-body-headers (2016-09-21) 3 commits
-  (merged to 'next' on 2016-09-26 at 4235eb6)
- + mailinfo: handle in-body header continuations
- + mailinfo: make is_scissors_line take plain char *
- + mailinfo: separate in-body header processing
-
- When "git format-patch --stdout" output is placed as an in-body
- header and it uses the RFC2822 header folding, "git am" failed to
- put the header line back into a single logical line.  The
- underlying "git mailinfo" was taught to handle this properly.
-
- Will merge to 'master'.
-
-
-* kd/mailinfo-quoted-string (2016-09-26) 3 commits
- - mailinfo: unescape quoted-pair in header fields
- - SQUASH???
- - t5100-mailinfo: replace common path prefix with variable
-
- An e-mail author named that spelled a backslash-quoted double quote
- in the human readable part "My \"double quoted\" name" was not
- unquoted correctly.
-
- Waiting for a reroll.
- cf. <20160926194455.GB19089@ikke.info>
 
 
 * js/libify-require-clean-work-tree (2016-09-12) 5 commits
@@ -792,9 +764,11 @@ of the repositories listed at
  cf. <xmqqpoo92bdr.fsf@gitster.mtv.corp.google.com>
 
 
-* bw/ls-files-recurse-submodules (2016-09-21) 2 commits
+* bw/ls-files-recurse-submodules (2016-10-03) 4 commits
  - ls-files: add pathspec matching for submodules
+ - ls-files: pass through safe options for --recurse-submodules
  - ls-files: optionally recurse into submodules
+ - git: make super-prefix option
 
  "git ls-files" learned "--recurse-submodules" option that can be
  used to get a listing of tracked files across submodules (i.e. this
@@ -803,7 +777,7 @@ of the repositories listed at
  side of a pipe that is read with xargs to work on all working tree
  files from the top-level superproject.
 
- Waiting for the discussion to conclude.
+ Looking good.  Is this ready for 'next'?
 
 
 * ls/filter-process (2016-09-23) 11 commits
@@ -825,6 +799,9 @@ of the repositories listed at
  request to run the filter for a path to spawn a single process, and
  all filtering need is served by this single process for multiple
  paths, reducing the process creation overhead.
+
+ Somehow I thought this was getting ready for 'next' but it seems
+ at least another round of reroll is coming?
 
 
 * hv/submodule-not-yet-pushed-fix (2016-09-14) 2 commits
@@ -860,7 +837,7 @@ of the repositories listed at
 
 
 * cp/completion-negative-refs (2016-08-24) 1 commit
-  (merged to 'next' on 2016-09-22 at abd1585)
+  (merged to 'next' on 2016-09-22 at abd1585aa6)
  + completion: support excluding refs
 
  The command-line completion script (in contrib/) learned to
@@ -883,7 +860,7 @@ of the repositories listed at
 
 
 * ak/curl-imap-send-explicit-scheme (2016-08-17) 1 commit
-  (merged to 'next' on 2016-09-22 at 4449584)
+  (merged to 'next' on 2016-09-22 at 4449584c26)
  + imap-send: Tell cURL to use imap:// or imaps://
 
  When we started cURL to talk to imap server when a new enough
@@ -895,7 +872,7 @@ of the repositories listed at
 
 
 * jk/pack-objects-optim-mru (2016-08-11) 4 commits
-  (merged to 'next' on 2016-09-21 at 97b919b)
+  (merged to 'next' on 2016-09-21 at 97b919bdbd)
  + pack-objects: use mru list when iterating over packs
  + pack-objects: break delta cycles before delta-search phase
  + sha1_file: make packed_object_info public
@@ -912,7 +889,7 @@ of the repositories listed at
 
 
 * dp/autoconf-curl-ssl (2016-06-28) 1 commit
-  (merged to 'next' on 2016-09-22 at 9c5aeec)
+  (merged to 'next' on 2016-09-22 at 9c5aeeced9)
  + ./configure.ac: detect SSL in libcurl using curl-config
 
  The ./configure script generated from configure.ac was taught how
@@ -932,7 +909,7 @@ of the repositories listed at
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2016-06-22) 1 commit
-  (merged to 'next' on 2016-09-21 at e19148e)
+  (merged to 'next' on 2016-09-21 at e19148ea63)
  + pathspec: warn on empty strings as pathspec
 
  Originally merged to 'next' on 2016-07-13
@@ -952,7 +929,7 @@ of the repositories listed at
 
 
 * nd/shallow-deepen (2016-06-13) 27 commits
-  (merged to 'next' on 2016-09-22 at f0cf3e3)
+  (merged to 'next' on 2016-09-22 at f0cf3e3385)
  + fetch, upload-pack: --deepen=N extends shallow boundary by N commits
  + upload-pack: add get_reachable_list()
  + upload-pack: split check_unreachable() in two, prep for get_reachable_list()
