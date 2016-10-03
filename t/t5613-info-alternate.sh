@@ -6,16 +6,6 @@
 test_description='test transitive info/alternate entries'
 . ./test-lib.sh
 
-# test that a file is not reachable in the current repository
-# but that it is after creating a info/alternate entry
-reachable_via() {
-	alternate="$1"
-	file="$2"
-	if git cat-file -e "HEAD:$file"; then return 1; fi
-	echo "$alternate" >> .git/objects/info/alternate
-	git cat-file -e "HEAD:$file"
-}
-
 test_valid_repo() {
 	git fsck --full > fsck.log &&
 	test_line_count = 0 fsck.log
