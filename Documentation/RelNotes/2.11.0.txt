@@ -59,6 +59,14 @@ UI, Workflows & Features
    put the header line back into a single logical line.  The
    underlying "git mailinfo" was taught to handle this properly.
 
+ * "gitweb" can spawn "highlight" to show blob contents with
+   (programming) language-specific syntax highlighting, but only
+   when the language is known.  "highlight" can however be told
+   to make the guess itself by giving it "--force" option, which
+   has been enabled.
+
+ * "git gui" l10n to Portuguese.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -102,6 +110,9 @@ Performance, Internal Implementation, Development Support etc.
  * Some codepaths in "git pack-objects" were not ready to use an
    existing pack bitmap; now they are and as the result they have
    become faster.
+
+ * The codepath in "git fsck" to detect malformed tree objects has
+   been updated not to die but keep going after detecting them.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -289,6 +300,33 @@ notes for details).
    default set of configuration variables to correct this.
    (merge d49028e6e7 jc/worktree-config later to maint).
 
+ * "git init" tried to record core.worktree in the repository's
+   'config' file when GIT_WORK_TREE environment variable was set and
+   it was different from where GIT_DIR appears as ".git" at its top,
+   but the logic was faulty when .git is a "gitdir:" file that points
+   at the real place, causing trouble in working trees that are
+   managed by "git worktree".  This has been corrected.
+
+ * Codepaths that read from an on-disk loose object were too loose in
+   validating what they are reading is a proper object file and
+   sometimes read past the data they read from the disk, which has
+   been corrected.  H/t to Gustavo Grieco for reporting.
+   (merge d21f842690 jc/verify-loose-object-header later to maint).
+
+ * The original command line syntax for "git merge", which was "git
+   merge <msg> HEAD <parent>...", has been deprecated for quite some
+   time, and "git gui" was the last in-tree user of the syntax.  This
+   is finally fixed, so that we can move forward with the deprecation.
+   (merge ff65e796f0 rs/git-gui-use-modern-git-merge-syntax later to maint).
+
+ * An author name, that spelled a backslash-quoted double quote in the
+   human readable part "My \"double quoted\" name", was not unquoted
+   correctly while applying a patch from a piece of e-mail.
+   (merge f357e5de31 kd/mailinfo-quoted-string later to maint).
+
+ * Doc update to clarify what "log -3 --reverse" does.
+   (merge 04be69478f pb/rev-list-reverse-with-count later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge e78d57e bw/pathspec-remove-unused-extern-decl later to maint).
    (merge ce25e4c rs/checkout-some-states-are-const later to maint).
@@ -296,3 +334,5 @@ notes for details).
    (merge b56aa5b rs/unpack-trees-reduce-file-scope-global later to maint).
    (merge 5efc60c mr/vcs-svn-printf-ulong later to maint).
    (merge a22ae75 rs/cocci later to maint).
+   (merge 45ccef87b3 rs/copy-array later to maint).
+   (merge 8201688ecd dt/mailinfo later to maint).
