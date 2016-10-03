@@ -1384,8 +1384,9 @@ extern void remove_scheduled_dirs(void);
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
 
-	char *name;
-	char *scratch;
+	/* see alt_scratch_buf() */
+	struct strbuf scratch;
+	size_t base_len;
 
 	char path[FLEX_ARRAY];
 } *alt_odb_list;
@@ -1413,6 +1414,14 @@ extern void add_to_alternates_file(const char *dir);
  * file.
  */
 extern void add_to_alternates_memory(const char *dir);
+
+/*
+ * Returns a scratch strbuf pre-filled with the alternate object directory,
+ * including a trailing slash, which can be used to access paths in the
+ * alternate. Always use this over direct access to alt->scratch, as it
+ * cleans up any previous use of the scratch buffer.
+ */
+extern struct strbuf *alt_scratch_buf(struct alternate_object_database *alt);
 
 struct pack_window {
 	struct pack_window *next;

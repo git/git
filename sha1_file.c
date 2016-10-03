@@ -204,11 +204,24 @@ const char *sha1_file_name(const unsigned char *sha1)
 	return buf;
 }
 
+struct strbuf *alt_scratch_buf(struct alternate_object_database *alt)
+{
+	strbuf_setlen(&alt->scratch, alt->base_len);
+	return &alt->scratch;
+}
+
 static const char *alt_sha1_path(struct alternate_object_database *alt,
 				 const unsigned char *sha1)
 {
-	fill_sha1_path(alt->name, sha1);
-	return alt->scratch;
+	/* hex sha1 plus internal "/" */
+	size_t len = GIT_SHA1_HEXSZ + 1;
+	struct strbuf *buf = alt_scratch_buf(alt);
+
+	strbuf_grow(buf, len);
+	fill_sha1_path(buf->buf + buf->len, sha1);
+	strbuf_setlen(buf, buf->len + len);
+
+	return buf->buf;
 }
 
 /*
@@ -396,16 +409,11 @@ void read_info_alternates(const char * relative_base, int depth)
 struct alternate_object_database *alloc_alt_odb(const char *dir)
 {
 	struct alternate_object_database *ent;
-	size_t dirlen = strlen(dir);
-	size_t entlen;
 
-	entlen = st_add(dirlen, 43); /* '/' + 2 hex + '/' + 38 hex + NUL */
 	FLEX_ALLOC_STR(ent, path, dir);
-	ent->scratch = xmalloc(entlen);
-	xsnprintf(ent->scratch, entlen, "%s/", dir);
-
-	ent->name = ent->scratch + dirlen + 1;
-	ent->scratch[dirlen] = '/';
+	strbuf_init(&ent->scratch, 0);
+	strbuf_addf(&ent->scratch, "%s/", dir);
+	ent->base_len = ent->scratch.len;
 
 	return ent;
 }
