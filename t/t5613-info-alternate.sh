@@ -39,6 +39,21 @@ test_expect_success 'preparing third repository' '
 	)
 '
 
+# Note: These tests depend on the hard-coded value of 5 as the maximum depth
+# we will follow recursion. We start the depth at 0 and count links, not
+# repositories. This means that in a chain like:
+#
+#   A --> B --> C --> D --> E --> F --> G --> H
+#      0     1     2     3     4     5     6
+#
+# we are OK at "G", but break at "H", even though "H" is actually the 8th
+# repository, not the 6th, which you might expect. Counting the links allows
+# N+1 repositories, and counting from 0 to 5 inclusive allows 6 links.
+#
+# Note also that we must use "--bare -l" to make the link to H. The "-l"
+# ensures we do not do a connectivity check, and the "--bare" makes sure
+# we do not try to checkout the result (which needs objects), either of
+# which would cause the clone to fail.
 test_expect_success 'creating too deep nesting' '
 	git clone -l -s C D &&
 	git clone -l -s D E &&
@@ -47,16 +62,12 @@ test_expect_success 'creating too deep nesting' '
 	git clone --bare -l -s G H
 '
 
-test_expect_success 'invalidity of deepest repository' '
+test_expect_success 'validity of seventh repository' '
+	git -C G fsck
+'
+
+test_expect_success 'invalidity of eighth repository' '
 	test_must_fail git -C H fsck
-'
-
-test_expect_success 'validity of third repository' '
-	git -C C fsck
-'
-
-test_expect_success 'validity of fourth repository' '
-	git -C D fsck
 '
 
 test_expect_success 'breaking of loops' '
