@@ -147,6 +147,8 @@ struct tmp_objdir *tmp_objdir_create(void)
 	env_append(&t->env, ALTERNATE_DB_ENVIRONMENT,
 		   absolute_path(get_object_directory()));
 	env_replace(&t->env, DB_ENVIRONMENT, absolute_path(t->path.buf));
+	env_replace(&t->env, GIT_QUARANTINE_ENVIRONMENT,
+		    absolute_path(t->path.buf));
 
 	return t;
 }
