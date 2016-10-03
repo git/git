@@ -196,6 +196,10 @@ in "pu" proves to be in a testable shape, it is merged to "next".
 You can run "git log --first-parent master..pu" to see what topics are
 currently in flight.  Sometimes, an idea that looked promising turns out
 to be not so good and the topic can be dropped from "pu" in such a case.
+The output of the above "git log" talks about a "jch" branch, which is an
+early part of the "pu" branch; that branch contains all topics that
+are in "next" and a bit more (but not all of "pu") and is used by the
+maintainer for his daily work.
 
 The two branches "master" and "maint" are never rewound, and "next"
 usually will not be either.  After a feature release is made from
