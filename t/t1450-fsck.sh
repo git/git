@@ -188,8 +188,7 @@ test_expect_success 'commit with NUL in header' '
 	grep "error in commit $new.*unterminated header: NUL at offset" out
 '
 
-test_expect_success 'malformatted tree object' '
-	test_when_finished "git update-ref -d refs/tags/wrong" &&
+test_expect_success 'tree object with duplicate entries' '
 	test_when_finished "remove_object \$T" &&
 	T=$(
 		GIT_INDEX_FILE=test-index &&
@@ -206,6 +205,19 @@ test_expect_success 'malformatted tree object' '
 	) &&
 	test_must_fail git fsck 2>out &&
 	grep "error in tree .*contains duplicate file entries" out
+'
+
+test_expect_success 'unparseable tree object' '
+	test_when_finished "git update-ref -d refs/heads/wrong" &&
+	test_when_finished "remove_object \$tree_sha1" &&
+	test_when_finished "remove_object \$commit_sha1" &&
+	tree_sha1=$(printf "100644 \0twenty-bytes-of-junk" | git hash-object -t tree --stdin -w --literally) &&
+	commit_sha1=$(git commit-tree $tree_sha1) &&
+	git update-ref refs/heads/wrong $commit_sha1 &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "error: empty filename in tree entry" out &&
+	test_i18ngrep "$tree_sha1" out &&
+	test_i18ngrep ! "fatal: empty filename in tree entry" out
 '
 
 test_expect_success 'tag pointing to nonexistent' '
