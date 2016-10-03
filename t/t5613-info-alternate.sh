@@ -119,4 +119,21 @@ test_expect_success 'relative duplicates are eliminated' '
 	test_cmp expect actual.alternates
 '
 
+test_expect_success CASE_INSENSITIVE_FS 'dup finding can be case-insensitive' '
+	git init --bare insensitive.git &&
+	# the previous entry for "A" will have used uppercase
+	cat >insensitive.git/objects/info/alternates <<-\EOF &&
+	../../C/.git/objects
+	../../a/.git/objects
+	EOF
+	cat >expect <<-EOF &&
+	alternate: $(pwd)/C/.git/objects
+	alternate: $(pwd)/B/.git/objects
+	alternate: $(pwd)/A/.git/objects
+	EOF
+	git -C insensitive.git count-objects -v >actual &&
+	grep ^alternate: actual >actual.alternates &&
+	test_cmp expect actual.alternates
+'
+
 test_done

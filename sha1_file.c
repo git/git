@@ -260,7 +260,7 @@ static int alt_odb_usable(struct strbuf *path, const char *normalized_objdir)
 	 * thing twice, or object directory itself.
 	 */
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		if (!strcmp(path->buf, alt->path))
+		if (!fspathcmp(path->buf, alt->path))
 			return 0;
 	}
 	if (!fspathcmp(path->buf, normalized_objdir))

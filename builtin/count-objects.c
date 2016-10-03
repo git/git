@@ -97,6 +97,8 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
+	git_config(git_default_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, opts, count_objects_usage, 0);
 	/* we do not take arguments other than flags for now */
 	if (argc)
