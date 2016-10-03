@@ -17,6 +17,9 @@
 #include "argv-array.h"
 #include "utf8.h"
 
+#define TRANSPORT_SUMMARY(x) \
+	(int)(TRANSPORT_SUMMARY_WIDTH + strlen(x) - gettext_width(x)), (x)
+
 static const char * const builtin_fetch_usage[] = {
 	N_("git fetch [<options>] [<repository> [<refspec>...]]"),
 	N_("git fetch [<options>] <group>"),
