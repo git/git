@@ -204,6 +204,13 @@ const char *sha1_file_name(const unsigned char *sha1)
 	return buf;
 }
 
+static const char *alt_sha1_path(struct alternate_object_database *alt,
+				 const unsigned char *sha1)
+{
+	fill_sha1_path(alt->name, sha1);
+	return alt->base;
+}
+
 /*
  * Return the name of the pack or index file with the specified sha1
  * in its filename.  *base and *name are scratch space that must be
@@ -601,8 +608,8 @@ static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
 	struct alternate_object_database *alt;
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		fill_sha1_path(alt->name, sha1);
-		if (check_and_freshen_file(alt->base, freshen))
+		const char *path = alt_sha1_path(alt, sha1);
+		if (check_and_freshen_file(path, freshen))
 			return 1;
 	}
 	return 0;
@@ -1600,8 +1607,8 @@ static int stat_sha1_file(const unsigned char *sha1, struct stat *st)
 	prepare_alt_odb();
 	errno = ENOENT;
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		fill_sha1_path(alt->name, sha1);
-		if (!lstat(alt->base, st))
+		const char *path = alt_sha1_path(alt, sha1);
+		if (!lstat(path, st))
 			return 0;
 	}
 
@@ -1621,8 +1628,8 @@ static int open_sha1_file(const unsigned char *sha1)
 
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		fill_sha1_path(alt->name, sha1);
-		fd = git_open_noatime(alt->base);
+		const char *path = alt_sha1_path(alt, sha1);
+		fd = git_open_noatime(path);
 		if (fd >= 0)
 			return fd;
 		if (most_interesting_errno == ENOENT)
