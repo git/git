@@ -188,7 +188,7 @@ static int read_dir_paths(struct string_list *out, const char *path)
 		return -1;
 
 	while ((de = readdir(dh)))
-		if (!is_dot_or_dotdot(de->d_name))
+		if (de->d_name[0] != '.')
 			string_list_append(out, de->d_name);
 
 	closedir(dh);
