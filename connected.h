@@ -33,6 +33,11 @@ struct check_connected_options {
 
 	/* If non-zero, show progress as we traverse the objects. */
 	int progress;
+
+	/*
+	 * Insert these variables into the environment of the child process.
+	 */
+	const char **env;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }
