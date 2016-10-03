@@ -2111,7 +2111,7 @@ static void find_alignment(struct scoreboard *sb, int *option)
 	unsigned largest_score = 0;
 	struct blame_entry *e;
 	int compute_auto_abbrev = (abbrev < 0);
-	int auto_abbrev = default_abbrev;
+	int auto_abbrev = DEFAULT_ABBREV;
 
 	for (e = sb->ent; e; e = e->next) {
 		struct origin *suspect = e->suspect;
