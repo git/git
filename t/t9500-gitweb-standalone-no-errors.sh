@@ -709,6 +709,14 @@ test_expect_success HIGHLIGHT \
 	 git commit -m "Add test.sh" &&
 	 gitweb_run "p=.git;a=blob;f=test.sh"'
 
+test_expect_success HIGHLIGHT \
+	'syntax highlighting (highlighter language autodetection)' \
+	'git config gitweb.highlight yes &&
+	 echo "#!/usr/bin/perl" > test &&
+	 git add test &&
+	 git commit -m "Add test" &&
+	 gitweb_run "p=.git;a=blob;f=test"'
+
 # ----------------------------------------------------------------------
 # forks of projects
 
