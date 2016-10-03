@@ -117,4 +117,15 @@ Fixes since v2.10
    been corrected to flip the executable bit for all paths that match
    the given pathspec.
 
+ * "git pack-objects --include-tag" was taught that when we know that
+   we are sending an object C, we want a tag B that directly points at
+   C but also a tag A that points at the tag B.  We used to miss the
+   intermediate tag B in some cases.
+
+ * Documentation around tools to import from CVS was fairly outdated.
+
+ * In the codepath that comes up with the hostname to be used in an
+   e-mail when the user didn't tell us, we looked at ai_canonname
+   field in struct addrinfo without making sure it is not NULL first.
+
 Also contains minor documentation updates and code clean-ups.
