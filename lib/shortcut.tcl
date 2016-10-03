@@ -5,7 +5,7 @@ proc do_windows_shortcut {} {
 	global _gitworktree
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
+		-title [mc "%s (%s): Create Desktop Icon" [appname] [reponame]] \
 		-initialfile "Git [reponame].lnk"]
 	if {$fn != {}} {
 		if {[file extension $fn] ne {.lnk}} {
@@ -40,7 +40,7 @@ proc do_cygwin_shortcut {} {
 	}
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
+		-title [mc "%s (%s): Create Desktop Icon" [appname] [reponame]] \
 		-initialdir $desktop \
 		-initialfile "Git [reponame].lnk"]
 	if {$fn != {}} {
@@ -72,7 +72,7 @@ proc do_macosx_app {} {
 
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
+		-title [mc "%s (%s): Create Desktop Icon" [appname] [reponame]] \
 		-initialdir [file join $env(HOME) Desktop] \
 		-initialfile "Git [reponame].app"]
 	if {$fn != {}} {

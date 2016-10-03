@@ -144,7 +144,7 @@ constructor dialog {} {
 	}
 
 	make_dialog top w
-	wm title $top [append "[appname] ([reponame]): " [mc "Merge"]]
+	wm title $top [mc "%s (%s): Merge" [appname] [reponame]]
 	if {$top ne {.}} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}

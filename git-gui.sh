@@ -3029,7 +3029,7 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 
 set subcommand_args {}
 proc usage {} {
-	set s "usage: $::argv0 $::subcommand $::subcommand_args"
+	set s "[mc usage:] $::argv0 $::subcommand $::subcommand_args"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
 		tk_messageBox -icon info -message $s \
@@ -3161,7 +3161,7 @@ gui {
 	# fall through to setup UI for commits
 }
 default {
-	set err "usage: $argv0 \[{blame|browser|citool}\]"
+	set err "[mc usage:] $argv0 \[{blame|browser|citool}\]"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
 		tk_messageBox -icon error -message $err \
