@@ -6,11 +6,6 @@
 test_description='test transitive info/alternate entries'
 . ./test-lib.sh
 
-test_valid_repo() {
-	git fsck --full > fsck.log &&
-	test_line_count = 0 fsck.log
-}
-
 base_dir=$(pwd)
 
 test_expect_success 'preparing first repository' \
@@ -52,7 +47,7 @@ git clone --bare -l -s G H'
 
 test_expect_success 'invalidity of deepest repository' \
 'cd H && {
-	test_valid_repo
+	git fsck
 	test $? -ne 0
 }'
 
@@ -60,41 +55,41 @@ cd "$base_dir"
 
 test_expect_success 'validity of third repository' \
 'cd C &&
-test_valid_repo'
+git fsck'
 
 cd "$base_dir"
 
 test_expect_success 'validity of fourth repository' \
 'cd D &&
-test_valid_repo'
+git fsck'
 
 cd "$base_dir"
 
 test_expect_success 'breaking of loops' \
 'echo "$base_dir"/B/.git/objects >> "$base_dir"/A/.git/objects/info/alternates&&
 cd C &&
-test_valid_repo'
+git fsck'
 
 cd "$base_dir"
 
 test_expect_success 'that info/alternates is necessary' \
 'cd C &&
 rm -f .git/objects/info/alternates &&
-! (test_valid_repo)'
+! (git fsck)'
 
 cd "$base_dir"
 
 test_expect_success 'that relative alternate is possible for current dir' \
 'cd C &&
 echo "../../../B/.git/objects" > .git/objects/info/alternates &&
-test_valid_repo'
+git fsck'
 
 cd "$base_dir"
 
 test_expect_success \
     'that relative alternate is only possible for current dir' '
     cd D &&
-    ! (test_valid_repo)
+    ! (git fsck)
 '
 
 cd "$base_dir"
