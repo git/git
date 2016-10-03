@@ -46,10 +46,9 @@ git clone -l -s F G &&
 git clone --bare -l -s G H'
 
 test_expect_success 'invalidity of deepest repository' \
-'cd H && {
-	git fsck
-	test $? -ne 0
-}'
+'cd H &&
+test_must_fail git fsck
+'
 
 cd "$base_dir"
 
@@ -75,7 +74,8 @@ cd "$base_dir"
 test_expect_success 'that info/alternates is necessary' \
 'cd C &&
 rm -f .git/objects/info/alternates &&
-! (git fsck)'
+test_must_fail git fsck
+'
 
 cd "$base_dir"
 
@@ -89,7 +89,7 @@ cd "$base_dir"
 test_expect_success \
     'that relative alternate is only possible for current dir' '
     cd D &&
-    ! (git fsck)
+    test_must_fail git fsck
 '
 
 cd "$base_dir"
