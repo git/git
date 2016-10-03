@@ -8,6 +8,7 @@
 #include "dir.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "quote.h"
 
 static unsigned long garbage;
 static off_t size_garbage;
@@ -70,6 +71,14 @@ static int count_loose(const unsigned char *sha1, const char *path, void *data)
 static int count_cruft(const char *basename, const char *path, void *data)
 {
 	loose_garbage(path);
+	return 0;
+}
+
+static int print_alternate(struct alternate_object_database *alt, void *data)
+{
+	printf("alternate: ");
+	quote_c_style(alt->path, NULL, stdout, 0);
+	putchar('\n');
 	return 0;
 }
 
@@ -140,6 +149,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
 		printf("size-garbage: %s\n", garbage_buf.buf);
+		foreach_alt_odb(print_alternate, NULL);
 		strbuf_release(&loose_buf);
 		strbuf_release(&pack_buf);
 		strbuf_release(&garbage_buf);

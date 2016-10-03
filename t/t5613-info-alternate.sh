@@ -39,6 +39,16 @@ test_expect_success 'preparing third repository' '
 	)
 '
 
+test_expect_success 'count-objects shows the alternates' '
+	cat >expect <<-EOF &&
+	alternate: $(pwd)/B/.git/objects
+	alternate: $(pwd)/A/.git/objects
+	EOF
+	git -C C count-objects -v >actual &&
+	grep ^alternate: actual >actual.alternates &&
+	test_cmp expect actual.alternates
+'
+
 # Note: These tests depend on the hard-coded value of 5 as the maximum depth
 # we will follow recursion. We start the depth at 0 and count links, not
 # repositories. This means that in a chain like:
