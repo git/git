@@ -263,7 +263,12 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	}
 	strbuf_addstr(&pathbuf, entry);
 
-	normalize_path_copy(pathbuf.buf, pathbuf.buf);
+	if (strbuf_normalize_path(&pathbuf) < 0) {
+		error("unable to normalize alternate object path: %s",
+		      pathbuf.buf);
+		strbuf_release(&pathbuf);
+		return -1;
+	}
 
 	pfxlen = strlen(pathbuf.buf);
 
@@ -335,7 +340,9 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 	}
 
 	strbuf_add_absolute_path(&objdirbuf, get_object_directory());
-	normalize_path_copy(objdirbuf.buf, objdirbuf.buf);
+	if (strbuf_normalize_path(&objdirbuf) < 0)
+		die("unable to normalize object directory: %s",
+		    objdirbuf.buf);
 
 	alt_copy = xmemdupz(alt, len);
 	string_list_split_in_place(&entries, alt_copy, sep, -1);
