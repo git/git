@@ -935,15 +935,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		set_git_work_tree(work_tree);
 	}
 
-	junk_git_dir = git_dir;
+	junk_git_dir = real_git_dir ? real_git_dir : git_dir;
 	if (safe_create_leading_directories_const(git_dir) < 0)
 		die(_("could not create leading directories of '%s'"), git_dir);
-
-	set_git_dir_init(git_dir, real_git_dir, 0);
-	if (real_git_dir) {
-		git_dir = real_git_dir;
-		junk_git_dir = real_git_dir;
-	}
 
 	if (0 <= option_verbosity) {
 		if (option_bare)
@@ -970,7 +964,11 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	init_db(option_template, INIT_DB_QUIET);
+	init_db(git_dir, real_git_dir, option_template, INIT_DB_QUIET);
+
+	if (real_git_dir)
+		git_dir = real_git_dir;
+
 	write_config(&option_config);
 
 	git_config(git_default_config, NULL);

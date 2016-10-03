@@ -393,4 +393,21 @@ test_expect_success 'remote init from does not use config from cwd' '
 	test_cmp expect actual
 '
 
+test_expect_success 're-init from a linked worktree' '
+	git init main-worktree &&
+	(
+		cd main-worktree &&
+		test_commit first &&
+		git worktree add ../linked-worktree &&
+		mv .git/info/exclude expected-exclude &&
+		cp .git/config expected-config &&
+		find .git/worktrees -print | sort >expected &&
+		git -C ../linked-worktree init &&
+		test_cmp expected-exclude .git/info/exclude &&
+		test_cmp expected-config .git/config &&
+		find .git/worktrees -print | sort >actual &&
+		test_cmp expected actual
+	)
+'
+
 test_done

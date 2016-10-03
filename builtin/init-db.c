@@ -22,7 +22,6 @@
 static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
 static const char *init_db_template_dir;
-static const char *git_link;
 
 static void copy_templates_1(struct strbuf *path, struct strbuf *template,
 			     DIR *dir)
@@ -138,7 +137,7 @@ static void copy_templates(const char *template_dir)
 		goto close_free_return;
 	}
 
-	strbuf_addstr(&path, get_git_dir());
+	strbuf_addstr(&path, get_git_common_dir());
 	strbuf_complete(&path, '/');
 	copy_templates_1(&path, &template_path, dir);
 close_free_return:
@@ -171,7 +170,8 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 	return 1;
 }
 
-static int create_default_files(const char *template_path)
+static int create_default_files(const char *template_path,
+				const char *original_git_dir)
 {
 	struct stat st1;
 	struct strbuf buf = STRBUF_INIT;
@@ -264,7 +264,7 @@ static int create_default_files(const char *template_path)
 		/* allow template config file to override the default */
 		if (log_all_ref_updates == -1)
 			git_config_set("core.logallrefupdates", "true");
-		if (needs_work_tree_config(get_git_dir(), work_tree))
+		if (needs_work_tree_config(original_git_dir, work_tree))
 			git_config_set("core.worktree", work_tree);
 	}
 
@@ -312,34 +312,7 @@ static void create_object_directory(void)
 	strbuf_release(&path);
 }
 
-int set_git_dir_init(const char *git_dir, const char *real_git_dir,
-		     int exist_ok)
-{
-	if (real_git_dir) {
-		struct stat st;
-
-		if (!exist_ok && !stat(git_dir, &st))
-			die(_("%s already exists"), git_dir);
-
-		if (!exist_ok && !stat(real_git_dir, &st))
-			die(_("%s already exists"), real_git_dir);
-
-		/*
-		 * make sure symlinks are resolved because we'll be
-		 * moving the target repo later on in separate_git_dir()
-		 */
-		git_link = xstrdup(real_path(git_dir));
-		set_git_dir(real_path(real_git_dir));
-	}
-	else {
-		set_git_dir(real_path(git_dir));
-		git_link = NULL;
-	}
-	startup_info->have_repository = 1;
-	return 0;
-}
-
-static void separate_git_dir(const char *git_dir)
+static void separate_git_dir(const char *git_dir, const char *git_link)
 {
 	struct stat st;
 
@@ -360,13 +333,31 @@ static void separate_git_dir(const char *git_dir)
 	write_file(git_link, "gitdir: %s", git_dir);
 }
 
-int init_db(const char *template_dir, unsigned int flags)
+int init_db(const char *git_dir, const char *real_git_dir,
+	    const char *template_dir, unsigned int flags)
 {
 	int reinit;
-	const char *git_dir = get_git_dir();
+	int exist_ok = flags & INIT_DB_EXIST_OK;
+	char *original_git_dir = xstrdup(real_path(git_dir));
 
-	if (git_link)
-		separate_git_dir(git_dir);
+	if (real_git_dir) {
+		struct stat st;
+
+		if (!exist_ok && !stat(git_dir, &st))
+			die(_("%s already exists"), git_dir);
+
+		if (!exist_ok && !stat(real_git_dir, &st))
+			die(_("%s already exists"), real_git_dir);
+
+		set_git_dir(real_path(real_git_dir));
+		git_dir = get_git_dir();
+		separate_git_dir(git_dir, original_git_dir);
+	}
+	else {
+		set_git_dir(real_path(git_dir));
+		git_dir = get_git_dir();
+	}
+	startup_info->have_repository = 1;
 
 	safe_create_dir(git_dir, 0);
 
@@ -379,7 +370,7 @@ int init_db(const char *template_dir, unsigned int flags)
 	 */
 	check_repository_format();
 
-	reinit = create_default_files(template_dir);
+	reinit = create_default_files(template_dir, original_git_dir);
 
 	create_object_directory();
 
@@ -419,6 +410,7 @@ int init_db(const char *template_dir, unsigned int flags)
 			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 	}
 
+	free(original_git_dir);
 	return 0;
 }
 
@@ -586,7 +578,6 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 			set_git_work_tree(work_tree);
 	}
 
-	set_git_dir_init(git_dir, real_git_dir, 1);
-
-	return init_db(template_dir, flags);
+	flags |= INIT_DB_EXIST_OK;
+	return init_db(git_dir, real_git_dir, template_dir, flags);
 }
