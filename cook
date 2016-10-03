@@ -65,7 +65,7 @@ sub topic_relation {
 
 	my $fh;
 	open($fh, '-|',
-	     qw(git log --abbrev=7), "--format=%m %h",
+	     qw(git log --abbrev), "--format=%m %h",
 	     "$one...$two", "^master")
 	    or die "$!: open log --left-right";
 	my (@left, @right);
@@ -203,7 +203,7 @@ sub get_commit {
 	}
 
 	open($fh, '-|',
-	     qw(git log --first-parent --abbrev=7),
+	     qw(git log --first-parent --abbrev),
 	     "--format=%ci %h %p :%s", "master..next")
 	    or die "$!: open log master..next";
 	while (<$fh>) {
