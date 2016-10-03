@@ -283,7 +283,6 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	int depth, const char *normalized_objdir)
 {
 	struct alternate_object_database *ent;
-	size_t entlen;
 	struct strbuf pathbuf = STRBUF_INIT;
 
 	if (!is_absolute_path(entry) && relative_base) {
@@ -311,14 +310,7 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 		return -1;
 	}
 
-	entlen = st_add(pathbuf.len, 43); /* '/' + 2 hex + '/' + 38 hex + NUL */
-	ent = xmalloc(st_add(sizeof(*ent), entlen));
-	memcpy(ent->base, pathbuf.buf, pathbuf.len);
-
-	ent->name = ent->base + pathbuf.len + 1;
-	ent->base[pathbuf.len] = '/';
-	ent->base[pathbuf.len + 3] = '/';
-	ent->base[entlen-1] = 0;
+	ent = alloc_alt_odb(pathbuf.buf);
 
 	/* add the alternate entry */
 	*alt_odb_tail = ent;
@@ -393,6 +385,24 @@ void read_info_alternates(const char * relative_base, int depth)
 	link_alt_odb_entries(map, mapsz, '\n', relative_base, depth);
 
 	munmap(map, mapsz);
+}
+
+struct alternate_object_database *alloc_alt_odb(const char *dir)
+{
+	struct alternate_object_database *ent;
+	size_t dirlen = strlen(dir);
+	size_t entlen;
+
+	entlen = st_add(dirlen, 43); /* '/' + 2 hex + '/' + 38 hex + NUL */
+	ent = xmalloc(st_add(sizeof(*ent), entlen));
+	memcpy(ent->base, dir, dirlen);
+
+	ent->name = ent->base + dirlen + 1;
+	ent->base[dirlen] = '/';
+	ent->base[dirlen + 3] = '/';
+	ent->base[entlen-1] = 0;
+
+	return ent;
 }
 
 void add_to_alternates_file(const char *reference)

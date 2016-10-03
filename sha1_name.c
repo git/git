@@ -86,12 +86,7 @@ static void find_short_object_filename(int len, const char *hex_pfx, struct disa
 		 * alt->name/alt->base while iterating over the
 		 * object databases including our own.
 		 */
-		const char *objdir = get_object_directory();
-		size_t objdir_len = strlen(objdir);
-		fakeent = xmalloc(st_add3(sizeof(*fakeent), objdir_len, 43));
-		memcpy(fakeent->base, objdir, objdir_len);
-		fakeent->name = fakeent->base + objdir_len + 1;
-		fakeent->name[-1] = '/';
+		fakeent = alloc_alt_odb(get_object_directory());
 	}
 	fakeent->next = alt_odb_list;
 

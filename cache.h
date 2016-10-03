@@ -1393,6 +1393,12 @@ typedef int alt_odb_fn(struct alternate_object_database *, void *);
 extern int foreach_alt_odb(alt_odb_fn, void*);
 
 /*
+ * Allocate a "struct alternate_object_database" but do _not_ actually
+ * add it to the list of alternates.
+ */
+struct alternate_object_database *alloc_alt_odb(const char *dir);
+
+/*
  * Add the directory to the on-disk alternates file; the new entry will also
  * take effect in the current process.
  */
