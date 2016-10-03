@@ -107,7 +107,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 	 * we have to move it back from the temporary storage.
 	 */
 	if (from != entries)
-		memcpy(entries, tmp, n * sizeof(*entries));
+		COPY_ARRAY(entries, tmp, n);
 	free(tmp);
 	free(pos);
 

@@ -26,7 +26,7 @@ static const char **internal_copy_pathspec(const char *prefix,
 	int i;
 	const char **result;
 	ALLOC_ARRAY(result, count + 1);
-	memcpy(result, pathspec, count * sizeof(const char *));
+	COPY_ARRAY(result, pathspec, count);
 	result[count] = NULL;
 	for (i = 0; i < count; i++) {
 		int length = strlen(result[i]);
