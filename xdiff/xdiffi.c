@@ -708,7 +708,7 @@ static int score_cmp(struct split_score *s1, struct split_score *s2)
  * Note that loops that are testing for changed lines in xdf->rchg do not need
  * index bounding since the array is prepared with a zero at position -1 and N.
  */
-struct group {
+struct xdlgroup {
 	/*
 	 * The index of the first changed line in the group, or the index of
 	 * the unchanged line above which the (empty) group is located.
@@ -725,7 +725,7 @@ struct group {
 /*
  * Initialize g to point at the first group in xdf.
  */
-static void group_init(xdfile_t *xdf, struct group *g)
+static void group_init(xdfile_t *xdf, struct xdlgroup *g)
 {
 	g->start = g->end = 0;
 	while (xdf->rchg[g->end])
@@ -736,7 +736,7 @@ static void group_init(xdfile_t *xdf, struct group *g)
  * Move g to describe the next (possibly empty) group in xdf and return 0. If g
  * is already at the end of the file, do nothing and return -1.
  */
-static inline int group_next(xdfile_t *xdf, struct group *g)
+static inline int group_next(xdfile_t *xdf, struct xdlgroup *g)
 {
 	if (g->end == xdf->nrec)
 		return -1;
@@ -752,7 +752,7 @@ static inline int group_next(xdfile_t *xdf, struct group *g)
  * Move g to describe the previous (possibly empty) group in xdf and return 0.
  * If g is already at the beginning of the file, do nothing and return -1.
  */
-static inline int group_previous(xdfile_t *xdf, struct group *g)
+static inline int group_previous(xdfile_t *xdf, struct xdlgroup *g)
 {
 	if (g->start == 0)
 		return -1;
@@ -769,7 +769,7 @@ static inline int group_previous(xdfile_t *xdf, struct group *g)
  * following group, expand this group to include it. Return 0 on success or -1
  * if g cannot be slid down.
  */
-static int group_slide_down(xdfile_t *xdf, struct group *g, long flags)
+static int group_slide_down(xdfile_t *xdf, struct xdlgroup *g, long flags)
 {
 	if (g->end < xdf->nrec &&
 	    recs_match(xdf->recs[g->start], xdf->recs[g->end], flags)) {
@@ -790,7 +790,7 @@ static int group_slide_down(xdfile_t *xdf, struct group *g, long flags)
  * into a previous group, expand this group to include it. Return 0 on success
  * or -1 if g cannot be slid up.
  */
-static int group_slide_up(xdfile_t *xdf, struct group *g, long flags)
+static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g, long flags)
 {
 	if (g->start > 0 &&
 	    recs_match(xdf->recs[g->start - 1], xdf->recs[g->end - 1], flags)) {
@@ -818,7 +818,7 @@ static void xdl_bug(const char *msg)
  * size.
  */
 int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
-	struct group g, go;
+	struct xdlgroup g, go;
 	long earliest_end, end_matching_other;
 	long groupsize;
 	unsigned int blank_lines;
