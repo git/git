@@ -182,3 +182,9 @@ diff.algorithm::
 	low-occurrence common elements".
 --
 +
+
+diff.wsErrorHighlight::
+	A comma separated list of `old`, `new`, `context`, that
+	specifies how whitespace errors on lines are highlighted
+	with `color.diff.whitespace`.  Can be overridden by the
+	command line option `--ws-error-highlight=<kind>`

@@ -41,6 +41,7 @@ static int diff_stat_graph_width;
 static int diff_dirstat_permille_default = 30;
 static struct diff_options default_diff_options;
 static long diff_algorithm;
+static unsigned ws_error_highlight_default = WSEH_NEW;
 
 static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -259,6 +260,14 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		diff_algorithm = parse_algorithm_value(value);
 		if (diff_algorithm < 0)
 			return -1;
+		return 0;
+	}
+
+	if (!strcmp(var, "diff.wserrorhighlight")) {
+		int val = parse_ws_error_highlight(value);
+		if (val < 0)
+			return -1;
+		ws_error_highlight_default = val;
 		return 0;
 	}
 
@@ -3306,7 +3315,7 @@ void diff_setup(struct diff_options *options)
 	options->rename_limit = -1;
 	options->dirstat_permille = diff_dirstat_permille_default;
 	options->context = diff_context_default;
-	options->ws_error_highlight = WSEH_NEW;
+	options->ws_error_highlight = ws_error_highlight_default;
 	DIFF_OPT_SET(options, RENAME_EMPTY);
 
 	/* pathchange left =NULL by default */

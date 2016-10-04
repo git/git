@@ -937,4 +937,39 @@ test_expect_success 'test --ws-error-highlight option' '
 
 '
 
+test_expect_success 'test diff.wsErrorHighlight config' '
+
+	git -c color.diff=always -c diff.wsErrorHighlight=default,old diff |
+	test_decode_color >current &&
+	test_cmp expect.default-old current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=all diff |
+	test_decode_color >current &&
+	test_cmp expect.all current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=none diff |
+	test_decode_color >current &&
+	test_cmp expect.none current
+
+'
+
+test_expect_success 'option overrides diff.wsErrorHighlight' '
+
+	git -c color.diff=always -c diff.wsErrorHighlight=none \
+		diff --ws-error-highlight=default,old |
+	test_decode_color >current &&
+	test_cmp expect.default-old current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=default \
+		diff --ws-error-highlight=all |
+	test_decode_color >current &&
+	test_cmp expect.all current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=all \
+		diff --ws-error-highlight=none |
+	test_decode_color >current &&
+	test_cmp expect.none current
+
+'
+
 test_done
