@@ -575,4 +575,45 @@ test_expect_success 'rename/rename/add-dest merge still knows about conflicting 
 	test ! -f c
 '
 
+test_expect_success 'move file/sparse-checkout/merge should not delete moved file' '
+	git rm -rf . &&
+	git clean -fdqx &&
+	rm -rf .git &&
+	git init &&
+
+	echo output >.gitignore &&
+	echo .gitignore >>.gitignore &&
+
+	echo b1 >b1 &&
+	git add b1 &&
+	git commit -m b1 &&
+
+	mkdir excluded &&
+	echo problem >excluded/to-be-moved.txt &&
+	git add excluded/to-be-moved.txt &&
+	git commit -m to-be-moved &&
+	git tag split_point &&
+
+	echo b2 >b2 &&
+	git add b2 &&
+	git commit -m b2 &&
+	git tag b2 &&
+
+	git reset --hard split_point &&
+
+	git mv excluded/to-be-moved.txt excluded/moved.txt &&
+	git commit -m move &&
+	git tag b1 &&
+
+	git config core.sparsecheckout true &&
+	echo "/*" >.git/info/sparse-checkout &&
+	echo "!excluded/" >>.git/info/sparse-checkout &&
+	git read-tree -mu HEAD &&
+
+	git merge -m merge b2 &&
+
+	git status >output &&
+	test_i18ngrep "nothing to commit" output
+'
+
 test_done

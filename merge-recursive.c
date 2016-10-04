@@ -1724,9 +1724,12 @@ static int merge_content(struct merge_options *o,
 		 */
 		path_renamed_outside_HEAD = !path2 || !strcmp(path, path2);
 		if (!path_renamed_outside_HEAD) {
-			add_cacheinfo(o, mfi.mode, &mfi.oid, path,
-				      0, (!o->call_depth), 0);
-			return mfi.clean;
+			struct stat st;
+			if (lstat(path, &st) == 0) {
+				add_cacheinfo(o, mfi.mode, &mfi.oid, path,
+					      0, (!o->call_depth), 0);
+				return mfi.clean;
+			}
 		}
 	} else
 		output(o, 2, _("Auto-merging %s"), path);
