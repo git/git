@@ -3666,10 +3666,11 @@ static int parse_one_token(const char **arg, const char *token)
 	return 0;
 }
 
-static int parse_ws_error_highlight(struct diff_options *opt, const char *arg)
+static int parse_ws_error_highlight(const char *arg)
 {
 	const char *orig_arg = arg;
 	unsigned val = 0;
+
 	while (*arg) {
 		if (parse_one_token(&arg, "none"))
 			val = 0;
@@ -3684,12 +3685,22 @@ static int parse_ws_error_highlight(struct diff_options *opt, const char *arg)
 		else if (parse_one_token(&arg, "context"))
 			val |= WSEH_CONTEXT;
 		else {
-			error("unknown value after ws-error-highlight=%.*s",
-			      (int)(arg - orig_arg), orig_arg);
-			return 0;
+			return -1 - (int)(arg - orig_arg);
 		}
 		if (*arg)
 			arg++;
+	}
+	return val;
+}
+
+static int parse_ws_error_highlight_opt(struct diff_options *opt, const char *arg)
+{
+	int val = parse_ws_error_highlight(arg);
+
+	if (val < 0) {
+		error("unknown value after ws-error-highlight=%.*s",
+		      -1 - val, arg);
+		return 0;
 	}
 	opt->ws_error_highlight = val;
 	return 1;
@@ -3894,7 +3905,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (skip_prefix(arg, "--submodule=", &arg))
 		return parse_submodule_opt(options, arg);
 	else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
-		return parse_ws_error_highlight(options, arg);
+		return parse_ws_error_highlight_opt(options, arg);
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
