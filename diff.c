@@ -163,6 +163,43 @@ long parse_algorithm_value(const char *value)
 	return -1;
 }
 
+static int parse_one_token(const char **arg, const char *token)
+{
+	const char *rest;
+	if (skip_prefix(*arg, token, &rest) && (!*rest || *rest == ',')) {
+		*arg = rest;
+		return 1;
+	}
+	return 0;
+}
+
+static int parse_ws_error_highlight(const char *arg)
+{
+	const char *orig_arg = arg;
+	unsigned val = 0;
+
+	while (*arg) {
+		if (parse_one_token(&arg, "none"))
+			val = 0;
+		else if (parse_one_token(&arg, "default"))
+			val = WSEH_NEW;
+		else if (parse_one_token(&arg, "all"))
+			val = WSEH_NEW | WSEH_OLD | WSEH_CONTEXT;
+		else if (parse_one_token(&arg, "new"))
+			val |= WSEH_NEW;
+		else if (parse_one_token(&arg, "old"))
+			val |= WSEH_OLD;
+		else if (parse_one_token(&arg, "context"))
+			val |= WSEH_CONTEXT;
+		else {
+			return -1 - (int)(arg - orig_arg);
+		}
+		if (*arg)
+			arg++;
+	}
+	return val;
+}
+
 /*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
@@ -3654,43 +3691,6 @@ static int parse_diff_filter_opt(const char *optarg, struct diff_options *opt)
 static void enable_patch_output(int *fmt) {
 	*fmt &= ~DIFF_FORMAT_NO_OUTPUT;
 	*fmt |= DIFF_FORMAT_PATCH;
-}
-
-static int parse_one_token(const char **arg, const char *token)
-{
-	const char *rest;
-	if (skip_prefix(*arg, token, &rest) && (!*rest || *rest == ',')) {
-		*arg = rest;
-		return 1;
-	}
-	return 0;
-}
-
-static int parse_ws_error_highlight(const char *arg)
-{
-	const char *orig_arg = arg;
-	unsigned val = 0;
-
-	while (*arg) {
-		if (parse_one_token(&arg, "none"))
-			val = 0;
-		else if (parse_one_token(&arg, "default"))
-			val = WSEH_NEW;
-		else if (parse_one_token(&arg, "all"))
-			val = WSEH_NEW | WSEH_OLD | WSEH_CONTEXT;
-		else if (parse_one_token(&arg, "new"))
-			val |= WSEH_NEW;
-		else if (parse_one_token(&arg, "old"))
-			val |= WSEH_OLD;
-		else if (parse_one_token(&arg, "context"))
-			val |= WSEH_CONTEXT;
-		else {
-			return -1 - (int)(arg - orig_arg);
-		}
-		if (*arg)
-			arg++;
-	}
-	return val;
 }
 
 static int parse_ws_error_highlight_opt(struct diff_options *opt, const char *arg)
