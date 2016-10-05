@@ -176,7 +176,7 @@ static int packet_write_gently(const int fd_out, const char *buf, size_t size)
 	static char packet_write_buffer[LARGE_PACKET_MAX];
 	const size_t packet_size = size + 4;
 
-	if (packet_size > sizeof(packet_write_buffer))
+	if (size > sizeof(packet_write_buffer) - 4)
 		return error("packet write failed - data exceeds max packet size");
 
 	packet_trace(buf, size, 1);
