@@ -21,6 +21,9 @@ void child_process_clear(struct child_process *child)
 
 struct child_to_clean {
 	pid_t pid;
+	char *name;
+	int stdin;
+	int wait;
 	struct child_to_clean *next;
 };
 static struct child_to_clean *children_to_clean;
@@ -28,12 +31,33 @@ static int installed_child_cleanup_handler;
 
 static void cleanup_children(int sig, int in_signal)
 {
+	int status;
+	struct child_to_clean *p = children_to_clean;
+
+	/* Close the the child's stdin as indicator that Git will exit soon */
+	while (p) {
+		if (p->wait)
+			if (p->stdin > 0)
+				close(p->stdin);
+		p = p->next;
+	}
+
 	while (children_to_clean) {
-		struct child_to_clean *p = children_to_clean;
+		p = children_to_clean;
 		children_to_clean = p->next;
+
+		if (p->wait) {
+			fprintf(stderr, _("Waiting for '%s' to finish..."), p->name);
+			while ((waitpid(p->pid, &status, 0)) < 0 && errno == EINTR)
+				;	/* nothing */
+			fprintf(stderr, _("done!\n"));
+		}
+
 		kill(p->pid, sig);
-		if (!in_signal)
+		if (!in_signal) {
+			free(p->name);
 			free(p);
+		}
 	}
 }
 
@@ -49,10 +73,16 @@ static void cleanup_children_on_exit(void)
 	cleanup_children(SIGTERM, 0);
 }
 
-static void mark_child_for_cleanup(pid_t pid)
+static void mark_child_for_cleanup(pid_t pid, const char *name, int stdin, int wait)
 {
 	struct child_to_clean *p = xmalloc(sizeof(*p));
 	p->pid = pid;
+	p->wait = wait;
+	p->stdin = stdin;
+	if (name)
+		p->name = xstrdup(name);
+	else
+		p->name = "process";
 	p->next = children_to_clean;
 	children_to_clean = p;
 
@@ -62,6 +92,13 @@ static void mark_child_for_cleanup(pid_t pid)
 		installed_child_cleanup_handler = 1;
 	}
 }
+
+#ifdef NO_PTHREADS
+static void mark_child_for_cleanup_no_wait(pid_t pid, const char *name, int timeout, int stdin)
+{
+	mark_child_for_cleanup(pid, NULL, 0, 0);
+}
+#endif
 
 static void clear_child_for_cleanup(pid_t pid)
 {
@@ -421,8 +458,9 @@ fail_pipe:
 	}
 	if (cmd->pid < 0)
 		error_errno("cannot fork() for %s", cmd->argv[0]);
-	else if (cmd->clean_on_exit)
-		mark_child_for_cleanup(cmd->pid);
+	else if (cmd->clean_on_exit || cmd->wait_on_exit)
+		mark_child_for_cleanup(
+			cmd->pid, cmd->argv[0], cmd->in, cmd->wait_on_exit);
 
 	/*
 	 * Wait for child's execvp. If the execvp succeeds (or if fork()
@@ -482,8 +520,9 @@ fail_pipe:
 	failed_errno = errno;
 	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
 		error_errno("cannot spawn %s", cmd->argv[0]);
-	if (cmd->clean_on_exit && cmd->pid >= 0)
-		mark_child_for_cleanup(cmd->pid);
+	if ((cmd->clean_on_exit || cmd->wait_on_exit) && cmd->pid >= 0)
+		mark_child_for_cleanup(
+			cmd->pid, cmd->argv[0], cmd->in, cmd->clean_on_exit_timeout);
 
 	argv_array_clear(&nargv);
 	cmd->argv = sargv;
@@ -634,7 +673,7 @@ int in_async(void)
 	return !pthread_equal(main_thread, pthread_self());
 }
 
-void NORETURN async_exit(int code)
+static void NORETURN async_exit(int code)
 {
 	pthread_exit((void *)(intptr_t)code);
 }
@@ -684,12 +723,25 @@ int in_async(void)
 	return process_is_async;
 }
 
-void NORETURN async_exit(int code)
+static void NORETURN async_exit(int code)
 {
 	exit(code);
 }
 
 #endif
+
+void check_pipe(int err)
+{
+	if (err == EPIPE) {
+		if (in_async())
+			async_exit(141);
+
+		signal(SIGPIPE, SIG_DFL);
+		raise(SIGPIPE);
+		/* Should never happen, but just in case... */
+		exit(141);
+	}
+}
 
 int start_async(struct async *async)
 {
@@ -752,7 +804,7 @@ int start_async(struct async *async)
 		exit(!!async->proc(proc_in, proc_out, async->data));
 	}
 
-	mark_child_for_cleanup(async->pid);
+	mark_child_for_cleanup_no_wait(async->pid);
 
 	if (need_in)
 		close(fdin[0]);

@@ -42,7 +42,10 @@ struct child_process {
 	unsigned silent_exec_failure:1;
 	unsigned stdout_to_stderr:1;
 	unsigned use_shell:1;
+	 /* kill the child on Git exit */
 	unsigned clean_on_exit:1;
+	/* close the child's stdin on Git exit and wait until it terminates */
+	unsigned wait_on_exit:1;
 };
 
 #define CHILD_PROCESS_INIT { NULL, ARGV_ARRAY_INIT, ARGV_ARRAY_INIT }
@@ -139,7 +142,7 @@ struct async {
 int start_async(struct async *async);
 int finish_async(struct async *async);
 int in_async(void);
-void NORETURN async_exit(int code);
+void check_pipe(int err);
 
 /**
  * This callback should initialize the child process and preload the
