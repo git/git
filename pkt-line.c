@@ -217,14 +217,13 @@ int write_packetized_from_fd(int fd_in, int fd_out)
 
 int write_packetized_from_buf(const char *src_in, size_t len, int fd_out)
 {
-	static char buf[LARGE_PACKET_DATA_MAX];
 	int err = 0;
 	size_t bytes_written = 0;
 	size_t bytes_to_write;
 
 	while (!err) {
-		if ((len - bytes_written) > sizeof(buf))
-			bytes_to_write = sizeof(buf);
+		if ((len - bytes_written) > LARGE_PACKET_DATA_MAX)
+			bytes_to_write = LARGE_PACKET_DATA_MAX;
 		else
 			bytes_to_write = len - bytes_written;
 		if (bytes_to_write == 0)
