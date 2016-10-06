@@ -90,6 +90,18 @@ static struct {
 	 * here, too
 	 */
 };
+#if LIBCURL_VERSION_NUM >= 0x071600
+static const char *curl_deleg;
+static struct {
+	const char *name;
+	long curl_deleg_param;
+} curl_deleg_levels[] = {
+	{ "none", CURLGSSAPI_DELEGATION_NONE },
+	{ "policy", CURLGSSAPI_DELEGATION_POLICY_FLAG },
+	{ "always", CURLGSSAPI_DELEGATION_FLAG },
+};
+#endif
+
 static struct credential proxy_auth = CREDENTIAL_INIT;
 static const char *curl_proxyuserpwd;
 static const char *curl_cookie_file;
@@ -321,6 +333,15 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.emptyauth", var)) {
 		curl_empty_auth = git_config_bool(var, value);
 		return 0;
+	}
+
+	if (!strcmp("http.delegation", var)) {
+#if LIBCURL_VERSION_NUM >= 0x071600
+		return git_config_string(&curl_deleg, var, value);
+#else
+		warning(_("Delegation control is not supported with cURL < 7.22.0"));
+		return 0;
+#endif
 	}
 
 	if (!strcmp("http.pinnedpubkey", var)) {
@@ -627,6 +648,22 @@ static CURL *get_curl_handle(void)
 #endif
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+#endif
+
+#if LIBCURL_VERSION_NUM >= 0x071600
+	if (curl_deleg) {
+		int i;
+		for (i = 0; i < ARRAY_SIZE(curl_deleg_levels); i++) {
+			if (!strcmp(curl_deleg, curl_deleg_levels[i].name)) {
+				curl_easy_setopt(result, CURLOPT_GSSAPI_DELEGATION,
+						curl_deleg_levels[i].curl_deleg_param);
+				break;
+			}
+		}
+		if (i == ARRAY_SIZE(curl_deleg_levels))
+			warning("Unknown delegation method '%s': using default",
+				curl_deleg);
+	}
 #endif
 
 	if (http_proactive_auth)
