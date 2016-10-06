@@ -1197,8 +1197,7 @@ static int show(int argc, const char **argv)
 
 		info.width = info.width2 = 0;
 		for_each_string_list(&states.push, add_push_to_show_info, &info);
-		qsort(info.list->items, info.list->nr,
-			sizeof(*info.list->items), cmp_string_with_push);
+		QSORT(info.list->items, info.list->nr, cmp_string_with_push);
 		if (info.list->nr)
 			printf_ln(Q_("  Local ref configured for 'git push'%s:",
 				     "  Local refs configured for 'git push'%s:",

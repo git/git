@@ -158,10 +158,7 @@ static struct spanhash_top *hash_chars(struct diff_filespec *one)
 		n = 0;
 		accum1 = accum2 = 0;
 	}
-	qsort(hash->data,
-		1ul << hash->alloc_log2,
-		sizeof(hash->data[0]),
-		spanhash_cmp);
+	QSORT(hash->data, 1ul << hash->alloc_log2, spanhash_cmp);
 	return hash;
 }
 

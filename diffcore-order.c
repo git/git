@@ -101,7 +101,7 @@ void order_objects(const char *orderfile, obj_path_fn_t obj_path,
 		objs[i].orig_order = i;
 		objs[i].order = match_order(obj_path(objs[i].obj));
 	}
-	qsort(objs, nr, sizeof(*objs), compare_objs_order);
+	QSORT(objs, nr, compare_objs_order);
 }
 
 static const char *pair_pathtwo(void *obj)

@@ -467,6 +467,7 @@ SPATCH = spatch
 export TCL_PATH TCLTK_PATH
 
 SPARSE_FLAGS =
+SPATCH_FLAGS = --all-includes
 
 
 
@@ -2314,7 +2315,7 @@ C_SOURCES = $(patsubst %.o,%.c,$(C_OBJ))
 %.cocci.patch: %.cocci $(C_SOURCES)
 	@echo '    ' SPATCH $<; \
 	for f in $(C_SOURCES); do \
-		$(SPATCH) --sp-file $< $$f; \
+		$(SPATCH) --sp-file $< $$f $(SPATCH_FLAGS); \
 	done >$@ 2>$@.log; \
 	if test -s $@; \
 	then \

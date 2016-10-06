@@ -1190,10 +1190,8 @@ static void resolve_deltas(void)
 		return;
 
 	/* Sort deltas by base SHA1/offset for fast searching */
-	qsort(ofs_deltas, nr_ofs_deltas, sizeof(struct ofs_delta_entry),
-	      compare_ofs_delta_entry);
-	qsort(ref_deltas, nr_ref_deltas, sizeof(struct ref_delta_entry),
-	      compare_ref_delta_entry);
+	QSORT(ofs_deltas, nr_ofs_deltas, compare_ofs_delta_entry);
+	QSORT(ref_deltas, nr_ref_deltas, compare_ref_delta_entry);
 
 	if (verbose || show_resolving_progress)
 		progress = start_progress(_("Resolving deltas"),
@@ -1356,7 +1354,7 @@ static void fix_unresolved_deltas(struct sha1file *f)
 	ALLOC_ARRAY(sorted_by_pos, nr_ref_deltas);
 	for (i = 0; i < nr_ref_deltas; i++)
 		sorted_by_pos[i] = &ref_deltas[i];
-	qsort(sorted_by_pos, nr_ref_deltas, sizeof(*sorted_by_pos), delta_pos_compare);
+	QSORT(sorted_by_pos, nr_ref_deltas, delta_pos_compare);
 
 	for (i = 0; i < nr_ref_deltas; i++) {
 		struct ref_delta_entry *d = sorted_by_pos[i];
@@ -1533,8 +1531,7 @@ static void read_v2_anomalous_offsets(struct packed_git *p,
 		opts->anomaly[opts->anomaly_nr++] = ntohl(idx2[off * 2 + 1]);
 	}
 
-	if (1 < opts->anomaly_nr)
-		qsort(opts->anomaly, opts->anomaly_nr, sizeof(uint32_t), cmp_uint32);
+	QSORT(opts->anomaly, opts->anomaly_nr, cmp_uint32);
 }
 
 static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)

@@ -501,7 +501,7 @@ static void sort_ref_dir(struct ref_dir *dir)
 	if (dir->sorted == dir->nr)
 		return;
 
-	qsort(dir->entries, dir->nr, sizeof(*dir->entries), ref_entry_cmp);
+	QSORT(dir->entries, dir->nr, ref_entry_cmp);
 
 	/* Remove any duplicates: */
 	for (i = 0, j = 0; j < dir->nr; j++) {

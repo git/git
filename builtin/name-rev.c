@@ -195,8 +195,7 @@ static const char *get_exact_ref_match(const struct object *o)
 		return NULL;
 
 	if (!tip_table.sorted) {
-		qsort(tip_table.table, tip_table.nr, sizeof(*tip_table.table),
-		      tipcmp);
+		QSORT(tip_table.table, tip_table.nr, tipcmp);
 		tip_table.sorted = 1;
 	}
 

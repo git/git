@@ -347,7 +347,7 @@ static void show_filemodify(struct diff_queue_struct *q,
 	 * Handle files below a directory first, in case they are all deleted
 	 * and the directory changes to a file or symlink.
 	 */
-	qsort(q->queue, q->nr, sizeof(q->queue[0]), depth_first);
+	QSORT(q->queue, q->nr, depth_first);
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filespec *ospec = q->queue[i]->one;
