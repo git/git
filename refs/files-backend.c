@@ -1496,6 +1496,11 @@ stat_ref:
 			ret = 0;
 			goto out;
 		}
+		/*
+		 * It doesn't look like a refname; fall through to just
+		 * treating it like a non-symlink, and reading whatever it
+		 * points to.
+		 */
 	}
 
 	/* Is it a directory? */
@@ -1519,7 +1524,7 @@ stat_ref:
 	 */
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		if (errno == ENOENT)
+		if (errno == ENOENT && !S_ISLNK(st.st_mode))
 			/* inconsistent with lstat; retry */
 			goto stat_ref;
 		else
