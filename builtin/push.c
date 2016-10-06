@@ -3,6 +3,7 @@
  */
 #include "cache.h"
 #include "refs.h"
+#include "dir.h"
 #include "run-command.h"
 #include "builtin.h"
 #include "remote.h"
@@ -22,6 +23,7 @@ static int deleterefs;
 static const char *receivepack;
 static int verbosity;
 static int progress = -1;
+static int has_submodules_configured;
 static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static enum transport_family family;
 
@@ -30,6 +32,15 @@ static struct push_cas_option cas;
 static const char **refspec;
 static int refspec_nr;
 static int refspec_alloc;
+
+static void preset_submodule_default(void)
+{
+	if (has_submodules_configured || file_exists(git_path("modules")) ||
+	    (!is_bare_repository() && file_exists(".gitmodules")))
+		recurse_submodules = RECURSE_SUBMODULES_CHECK;
+	else
+		recurse_submodules = RECURSE_SUBMODULES_OFF;
+}
 
 static void add_refspec(const char *ref)
 {
@@ -495,7 +506,9 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		const char *value;
 		if (!git_config_get_value("push.recursesubmodules", &value))
 			recurse_submodules = parse_push_recurse_submodules_arg(k, value);
-	}
+	} else if (starts_with(k, "submodule.") && ends_with(k, ".url"))
+		/* The submodule.<name>.url is used as a bit to indicate existence */
+		has_submodules_configured = 1;
 
 	return git_default_config(k, v, NULL);
 }
@@ -552,6 +565,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	};
 
 	packet_trace_identity("push");
+	preset_submodule_default();
 	git_config(git_push_config, &flags);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 	set_push_cert_flags(&flags, push_cert);
