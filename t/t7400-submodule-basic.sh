@@ -152,6 +152,20 @@ test_expect_success 'submodule add to .gitignored path with --force' '
 	)
 '
 
+test_expect_success 'submodule add to reconfigure existing submodule with --force' '
+	(
+		cd addtest-ignore &&
+		git submodule add --force bogus-url submod &&
+		git submodule add -b initial "$submodurl" submod-branch &&
+		test "bogus-url" = "$(git config -f .gitmodules submodule.submod.url)" &&
+		test "bogus-url" = "$(git config submodule.submod.url)" &&
+		# Restore the url
+		git submodule add --force "$submodurl" submod
+		test "$submodurl" = "$(git config -f .gitmodules submodule.submod.url)" &&
+		test "$submodurl" = "$(git config submodule.submod.url)"
+	)
+'
+
 test_expect_success 'submodule add --branch' '
 	echo "refs/heads/initial" >expect-head &&
 	cat <<-\EOF >expect-heads &&
