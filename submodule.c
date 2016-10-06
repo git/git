@@ -728,9 +728,10 @@ void check_for_new_submodule_commits(unsigned char new_sha1[20])
 	sha1_array_append(&ref_tips_after_fetch, new_sha1);
 }
 
-static void add_sha1_to_argv(const unsigned char sha1[20], void *data)
+static int add_sha1_to_argv(const unsigned char sha1[20], void *data)
 {
 	argv_array_push(data, sha1_to_hex(sha1));
+	return 0;
 }
 
 static void calculate_changed_submodule_paths(void)

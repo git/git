@@ -268,9 +268,10 @@ static int show_ref_cb(const char *path_full, const struct object_id *oid,
 	return 0;
 }
 
-static void show_one_alternate_sha1(const unsigned char sha1[20], void *unused)
+static int show_one_alternate_sha1(const unsigned char sha1[20], void *unused)
 {
 	show_ref(".have", sha1);
+	return 0;
 }
 
 static void collect_one_alternate_ref(const struct ref *ref, void *data)

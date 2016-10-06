@@ -38,16 +38,20 @@ Functions
 `sha1_array_for_each_unique`::
 	Efficiently iterate over each unique element of the list,
 	executing the callback function for each one. If the array is
-	not sorted, this function has the side effect of sorting it.
+	not sorted, this function has the side effect of sorting it. If
+	the callback returns a non-zero value, the iteration ends
+	immediately and the callback's return is propagated; otherwise,
+	0 is returned.
 
 Examples
 --------
 
 -----------------------------------------
-void print_callback(const unsigned char sha1[20],
+int print_callback(const unsigned char sha1[20],
 		    void *data)
 {
 	printf("%s\n", sha1_to_hex(sha1));
+	return 0; /* always continue */
 }
 
 void some_func(void)

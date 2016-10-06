@@ -264,6 +264,13 @@ test_expect_success 'ambiguous commit-ish' '
 	test_must_fail git log 000000000...
 '
 
+# There are three objects with this prefix: a blob, a tree, and a tag. We know
+# the blob will not pass as a treeish, but the tree and tag should (and thus
+# cause an error).
+test_expect_success 'ambiguous tags peel to treeish' '
+	test_must_fail git rev-parse 0000000000f^{tree}
+'
+
 test_expect_success 'rev-parse --disambiguate' '
 	# The test creates 16 objects that share the prefix and two
 	# commits created by commit-tree in earlier tests share a
@@ -271,6 +278,13 @@ test_expect_success 'rev-parse --disambiguate' '
 	git rev-parse --disambiguate=000000000 >actual &&
 	test $(wc -l <actual) = 16 &&
 	test "$(sed -e "s/^\(.........\).*/\1/" actual | sort -u)" = 000000000
+'
+
+test_expect_success 'rev-parse --disambiguate drops duplicates' '
+	git rev-parse --disambiguate=000000000 >expect &&
+	git pack-objects .git/objects/pack/pack <expect &&
+	git rev-parse --disambiguate=000000000 >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'ambiguous 40-hex ref' '
@@ -289,6 +303,62 @@ test_expect_success 'ambiguous short sha1 ref' '
 	git update-ref refs/heads/$REF $VAL &&
 	test $(git rev-parse $REF 2>err) = $VAL &&
 	grep "refname.*${REF}.*ambiguous" err
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (raw)' '
+	test_must_fail git rev-parse 00000 2>stderr &&
+	grep "is ambiguous" stderr >errors &&
+	test_line_count = 1 errors
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (treeish)' '
+	test_must_fail git rev-parse 00000:foo 2>stderr &&
+	grep "is ambiguous" stderr >errors &&
+	test_line_count = 1 errors
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguity errors are not repeated (peel)' '
+	test_must_fail git rev-parse 00000^{commit} 2>stderr &&
+	grep "is ambiguous" stderr >errors &&
+	test_line_count = 1 errors
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguity hints' '
+	test_must_fail git rev-parse 000000000 2>stderr &&
+	grep ^hint: stderr >hints &&
+	# 16 candidates, plus one intro line
+	test_line_count = 17 hints
+'
+
+test_expect_success C_LOCALE_OUTPUT 'ambiguity hints respect type' '
+	test_must_fail git rev-parse 000000000^{commit} 2>stderr &&
+	grep ^hint: stderr >hints &&
+	# 5 commits, 1 tag (which is a commitish), plus intro line
+	test_line_count = 7 hints
+'
+
+test_expect_success C_LOCALE_OUTPUT 'failed type-selector still shows hint' '
+	# these two blobs share the same prefix "ee3d", but neither
+	# will pass for a commit
+	echo 851 | git hash-object --stdin -w &&
+	echo 872 | git hash-object --stdin -w &&
+	test_must_fail git rev-parse ee3d^{commit} 2>stderr &&
+	grep ^hint: stderr >hints &&
+	test_line_count = 3 hints
+'
+
+test_expect_success 'core.disambiguate config can prefer types' '
+	# ambiguous between tree and tag
+	sha1=0000000000f &&
+	test_must_fail git rev-parse $sha1 &&
+	git rev-parse $sha1^{commit} &&
+	git -c core.disambiguate=committish rev-parse $sha1
+'
+
+test_expect_success 'core.disambiguate does not override context' '
+	# treeish ambiguous between tag and tree
+	test_must_fail \
+		git -c core.disambiguate=committish rev-parse $sha1^{tree}
 '
 
 test_done
