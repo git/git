@@ -1383,8 +1383,7 @@ static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
 	if (!strcmp(cb->buf.buf, "HEAD")) {
 		/* HEAD is relative. Resolve it to the right reflog entry. */
 		strbuf_reset(&cb->buf);
-		strbuf_addstr(&cb->buf,
-			      find_unique_abbrev(nsha1, DEFAULT_ABBREV));
+		strbuf_add_unique_abbrev(&cb->buf, nsha1, DEFAULT_ABBREV);
 	}
 	return 1;
 }
