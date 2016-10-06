@@ -1616,7 +1616,7 @@ sub esc_path {
 	return $str;
 }
 
-# Sanitize for use in XHTML + application/xml+xhtm (valid XML 1.0)
+# Sanitize for use in XHTML + application/xml+xhtml (valid XML 1.0)
 sub sanitize {
 	my $str = shift;
 
