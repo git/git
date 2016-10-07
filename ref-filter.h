@@ -107,4 +107,7 @@ struct ref_sorting *ref_default_sorting(void);
 /*  Function to parse --merged and --no-merged options */
 int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset);
 
+void pretty_print_ref(const char *name, const unsigned char *sha1,
+		const char *format, unsigned kind);
+
 #endif /*  REF_FILTER_H  */
