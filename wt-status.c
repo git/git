@@ -2214,7 +2214,7 @@ void wt_status_print(struct wt_status *s)
 /**
  * Returns 1 if there are unstaged changes, 0 otherwise.
  */
-static int has_unstaged_changes(void)
+int has_unstaged_changes(void)
 {
 	struct rev_info rev_info;
 	int result;
@@ -2230,7 +2230,7 @@ static int has_unstaged_changes(void)
 /**
  * Returns 1 if there are uncommitted changes, 0 otherwise.
  */
-static int has_uncommitted_changes(void)
+int has_uncommitted_changes(void)
 {
 	struct rev_info rev_info;
 	int result;
