@@ -3,6 +3,7 @@
 # This program resolves merge conflicts in git
 #
 # Copyright (c) 2006 Theodore Y. Ts'o
+# Copyright (c) 2009-2016 David Aguilar
 #
 # This file is licensed under the GPL v2, or a later version
 # at the discretion of Junio C Hamano.
