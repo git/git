@@ -51,7 +51,7 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 		const char *name = argv[i++];
 		if (get_sha1(name, sha1))
 			had_error = !!error("tag '%s' not found.", name);
-		else if (gpg_verify_tag(sha1, name, flags))
+		else if (verify_and_format_tag(sha1, name, NULL, flags))
 			had_error = 1;
 	}
 	return had_error;
