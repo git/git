@@ -606,4 +606,37 @@ test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToT
 	git reset --hard master >/dev/null 2>&1
 '
 
+test_expect_success 'diff.orderFile configuration is honored' '
+	test_config diff.orderFile order-file &&
+	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
+	test_config mergetool.myecho.trustExitCode true &&
+	echo b >order-file &&
+	echo a >>order-file &&
+	git checkout -b order-file-start master &&
+	echo start >a &&
+	echo start >b &&
+	git add a b &&
+	git commit -m start &&
+	git checkout -b order-file-side1 order-file-start &&
+	echo side1 >a &&
+	echo side1 >b &&
+	git add a b &&
+	git commit -m side1 &&
+	git checkout -b order-file-side2 order-file-start &&
+	echo side2 >a &&
+	echo side2 >b &&
+	git add a b &&
+	git commit -m side2 &&
+	test_must_fail git merge order-file-side1 &&
+	cat >expect <<-\EOF &&
+		Merging:
+		b
+		a
+	EOF
+	git mergetool --no-prompt --tool myecho >output &&
+	git grep --no-index -h -A2 Merging: output >actual &&
+	test_cmp expect actual &&
+	git reset --hard >/dev/null
+'
+
 test_done

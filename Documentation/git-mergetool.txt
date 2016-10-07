@@ -79,6 +79,11 @@ success of the resolution after the custom tool has exited.
 	Prompt before each invocation of the merge resolution program
 	to give the user a chance to skip the path.
 
+DIFF ORDER FILES
+----------------
+`git mergetool` honors the `diff.orderFile` configuration variable
+used by `git diff`.  See linkgit:git-config[1] for more details.
+
 TEMPORARY FILES
 ---------------
 `git mergetool` creates `*.orig` backup files while resolving merges.

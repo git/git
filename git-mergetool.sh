@@ -382,6 +382,11 @@ prompt_after_failed_merge () {
 	done
 }
 
+print_noop_and_exit () {
+	echo "No files need merging"
+	exit 0
+}
+
 main () {
 	prompt=$(git config --bool mergetool.prompt)
 	guessed_merge_tool=false
@@ -445,28 +450,23 @@ main () {
 	merge_keep_backup="$(git config --bool mergetool.keepBackup || echo true)"
 	merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
 
-	files=
-
-	if test $# -eq 0
+	if test $# -eq 0 && test -e "$GIT_DIR/MERGE_RR"
 	then
-		cd_to_toplevel
-
-		if test -e "$GIT_DIR/MERGE_RR"
+		set -- $(git rerere remaining)
+		if test $# -eq 0
 		then
-			files=$(git rerere remaining)
-		else
-			files=$(git ls-files -u |
-				sed -e 's/^[^	]*	//' | sort -u)
+			print_noop_and_exit
 		fi
-	else
-		files=$(git ls-files -u -- "$@" |
-			sed -e 's/^[^	]*	//' | sort -u)
 	fi
+
+	files=$(git -c core.quotePath=false \
+		diff --name-only --diff-filter=U -- "$@")
+
+	cd_to_toplevel
 
 	if test -z "$files"
 	then
-		echo "No files need merging"
-		exit 0
+		print_noop_and_exit
 	fi
 
 	printf "Merging:\n"
