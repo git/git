@@ -100,6 +100,8 @@ static char *work_tree;
 static const char *namespace;
 static size_t namespace_len;
 
+static const char *super_prefix;
+
 static const char *git_dir, *git_common_dir;
 static char *git_object_dir, *git_index_file, *git_graft_file;
 int git_db_env, git_index_env, git_graft_env, git_common_dir_env;
@@ -120,6 +122,7 @@ const char * const local_repo_env[] = {
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
 	GIT_REPLACE_REF_BASE_ENVIRONMENT,
 	GIT_PREFIX_ENVIRONMENT,
+	GIT_SUPER_PREFIX_ENVIRONMENT,
 	GIT_SHALLOW_FILE_ENVIRONMENT,
 	GIT_COMMON_DIR_ENVIRONMENT,
 	NULL
@@ -220,6 +223,16 @@ const char *strip_namespace(const char *namespaced_ref)
 	if (!starts_with(namespaced_ref, get_git_namespace()))
 		return NULL;
 	return namespaced_ref + namespace_len;
+}
+
+const char *get_super_prefix(void)
+{
+	static int initialized;
+	if (!initialized) {
+		super_prefix = getenv(GIT_SUPER_PREFIX_ENVIRONMENT);
+		initialized = 1;
+	}
+	return super_prefix;
 }
 
 static int git_work_tree_initialized;
