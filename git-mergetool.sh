@@ -9,7 +9,7 @@
 # at the discretion of Junio C Hamano.
 #
 
-USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [file to merge] ...'
+USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [-O<orderfile>] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
 NONGIT_OK=Yes
 OPTIONS_SPEC=
@@ -390,6 +390,7 @@ print_noop_and_exit () {
 main () {
 	prompt=$(git config --bool mergetool.prompt)
 	guessed_merge_tool=false
+	orderfile=
 
 	while test $# != 0
 	do
@@ -418,6 +419,9 @@ main () {
 			;;
 		--prompt)
 			prompt=true
+			;;
+		-O*)
+			orderfile="$1"
 			;;
 		--)
 			shift
@@ -460,7 +464,8 @@ main () {
 	fi
 
 	files=$(git -c core.quotePath=false \
-		diff --name-only --diff-filter=U -- "$@")
+		diff --name-only --diff-filter=U \
+		${orderfile:+"$orderfile"} -- "$@")
 
 	cd_to_toplevel
 

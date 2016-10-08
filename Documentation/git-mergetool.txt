@@ -79,10 +79,12 @@ success of the resolution after the custom tool has exited.
 	Prompt before each invocation of the merge resolution program
 	to give the user a chance to skip the path.
 
-DIFF ORDER FILES
-----------------
-`git mergetool` honors the `diff.orderFile` configuration variable
-used by `git diff`.  See linkgit:git-config[1] for more details.
+-O<orderfile>::
+	Process files in the order specified in the
+	<orderfile>, which has one shell glob pattern per line.
+	This overrides the `diff.orderFile` configuration variable
+	(see linkgit:git-config[1]).  To cancel `diff.orderFile`,
+	use `-O/dev/null`.
 
 TEMPORARY FILES
 ---------------

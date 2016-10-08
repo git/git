@@ -638,5 +638,32 @@ test_expect_success 'diff.orderFile configuration is honored' '
 	test_cmp expect actual &&
 	git reset --hard >/dev/null
 '
+test_expect_success 'mergetool -Oorder-file is honored' '
+	test_config diff.orderFile order-file &&
+	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
+	test_config mergetool.myecho.trustExitCode true &&
+	test_must_fail git merge order-file-side1 &&
+	cat >expect <<-\EOF &&
+		Merging:
+		a
+		b
+	EOF
+	git mergetool -O/dev/null --no-prompt --tool myecho >output &&
+	git grep --no-index -h -A2 Merging: output >actual &&
+	test_cmp expect actual &&
+	git reset --hard >/dev/null 2>&1 &&
+
+	git config --unset diff.orderFile &&
+	test_must_fail git merge order-file-side1 &&
+	cat >expect <<-\EOF &&
+		Merging:
+		b
+		a
+	EOF
+	git mergetool -Oorder-file --no-prompt --tool myecho >output &&
+	git grep --no-index -h -A2 Merging: output >actual &&
+	test_cmp expect actual &&
+	git reset --hard >/dev/null 2>&1
+'
 
 test_done
