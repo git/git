@@ -544,15 +544,13 @@ static void add_merge_info(const struct pretty_print_context *pp,
 	strbuf_addstr(sb, "Merge:");
 
 	while (parent) {
-		struct commit *p = parent->item;
-		const char *hex = NULL;
+		struct object_id *oidp = &parent->item->object.oid;
+		strbuf_addch(sb, ' ');
 		if (pp->abbrev)
-			hex = find_unique_abbrev(p->object.oid.hash, pp->abbrev);
-		if (!hex)
-			hex = oid_to_hex(&p->object.oid);
+			strbuf_add_unique_abbrev(sb, oidp->hash, pp->abbrev);
+		else
+			strbuf_addstr(sb, oid_to_hex(oidp));
 		parent = parent->next;
-
-		strbuf_addf(sb, " %s", hex);
 	}
 	strbuf_addch(sb, '\n');
 }
