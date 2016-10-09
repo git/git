@@ -776,6 +776,9 @@ static int parse_insn_buffer(char *buf, struct todo_list *todo_list)
 
 		next_p = *eol ? eol + 1 /* skip LF */ : eol;
 
+		if (p != eol && eol[-1] == '\r')
+			eol--; /* strip Carriage Return */
+
 		item = append_new_todo(todo_list);
 		item->offset_in_buf = p - todo_list->buf.buf;
 		if (parse_insn_line(item, p, eol)) {
