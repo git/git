@@ -23,6 +23,7 @@
 #include "reachable.h"
 #include "sha1-array.h"
 #include "argv-array.h"
+#include "mru.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"),
@@ -994,7 +995,7 @@ static int want_object_in_pack(const unsigned char *sha1,
 			       struct packed_git **found_pack,
 			       off_t *found_offset)
 {
-	struct packed_git *p;
+	struct mru_entry *entry;
 	int want;
 
 	if (!exclude && local && has_loose_object_nonlocal(sha1))
@@ -1011,7 +1012,8 @@ static int want_object_in_pack(const unsigned char *sha1,
 			return want;
 	}
 
-	for (p = packed_git; p; p = p->next) {
+	for (entry = packed_git_mru->head; entry; entry = entry->next) {
+		struct packed_git *p = entry->item;
 		off_t offset;
 
 		if (p == *found_pack)
@@ -1027,6 +1029,8 @@ static int want_object_in_pack(const unsigned char *sha1,
 				*found_pack = p;
 			}
 			want = want_found_object(exclude, p);
+			if (!exclude && want > 0)
+				mru_mark(packed_git_mru, entry);
 			if (want != -1)
 				return want;
 		}
@@ -1527,6 +1531,83 @@ static int pack_offset_sort(const void *_a, const void *_b)
 			(a->in_pack_offset > b->in_pack_offset);
 }
 
+/*
+ * Drop an on-disk delta we were planning to reuse. Naively, this would
+ * just involve blanking out the "delta" field, but we have to deal
+ * with some extra book-keeping:
+ *
+ *   1. Removing ourselves from the delta_sibling linked list.
+ *
+ *   2. Updating our size/type to the non-delta representation. These were
+ *      either not recorded initially (size) or overwritten with the delta type
+ *      (type) when check_object() decided to reuse the delta.
+ */
+static void drop_reused_delta(struct object_entry *entry)
+{
+	struct object_entry **p = &entry->delta->delta_child;
+	struct object_info oi = OBJECT_INFO_INIT;
+
+	while (*p) {
+		if (*p == entry)
+			*p = (*p)->delta_sibling;
+		else
+			p = &(*p)->delta_sibling;
+	}
+	entry->delta = NULL;
+
+	oi.sizep = &entry->size;
+	oi.typep = &entry->type;
+	if (packed_object_info(entry->in_pack, entry->in_pack_offset, &oi) < 0) {
+		/*
+		 * We failed to get the info from this pack for some reason;
+		 * fall back to sha1_object_info, which may find another copy.
+		 * And if that fails, the error will be recorded in entry->type
+		 * and dealt with in prepare_pack().
+		 */
+		entry->type = sha1_object_info(entry->idx.sha1, &entry->size);
+	}
+}
+
+/*
+ * Follow the chain of deltas from this entry onward, throwing away any links
+ * that cause us to hit a cycle (as determined by the DFS state flags in
+ * the entries).
+ */
+static void break_delta_chains(struct object_entry *entry)
+{
+	/* If it's not a delta, it can't be part of a cycle. */
+	if (!entry->delta) {
+		entry->dfs_state = DFS_DONE;
+		return;
+	}
+
+	switch (entry->dfs_state) {
+	case DFS_NONE:
+		/*
+		 * This is the first time we've seen the object. We mark it as
+		 * part of the active potential cycle and recurse.
+		 */
+		entry->dfs_state = DFS_ACTIVE;
+		break_delta_chains(entry->delta);
+		entry->dfs_state = DFS_DONE;
+		break;
+
+	case DFS_DONE:
+		/* object already examined, and not part of a cycle */
+		break;
+
+	case DFS_ACTIVE:
+		/*
+		 * We found a cycle that needs broken. It would be correct to
+		 * break any link in the chain, but it's convenient to
+		 * break this one.
+		 */
+		drop_reused_delta(entry);
+		entry->dfs_state = DFS_DONE;
+		break;
+	}
+}
+
 static void get_object_details(void)
 {
 	uint32_t i;
@@ -1543,6 +1624,13 @@ static void get_object_details(void)
 		if (big_file_threshold < entry->size)
 			entry->no_try_delta = 1;
 	}
+
+	/*
+	 * This must happen in a second pass, since we rely on the delta
+	 * information for the whole list being completed.
+	 */
+	for (i = 0; i < to_pack.nr_objects; i++)
+		break_delta_chains(&to_pack.objects[i]);
 
 	free(sorted_by_offset);
 }
