@@ -197,6 +197,14 @@ objects from the source repository into a pack in the cloned repository.
 	tips of all branches. If you want to clone submodules shallowly,
 	also pass `--shallow-submodules`.
 
+--shallow-since=<date>::
+	Create a shallow clone with a history after the specified time.
+
+--shallow-exclude=<revision>::
+	Create a shallow clone with a history, excluding commits
+	reachable from a specified remote branch or tag.  This option
+	can be specified multiple times.
+
 --[no-]single-branch::
 	Clone only the history leading to the tip of a single branch,
 	either specified by the `--branch` option or the primary
