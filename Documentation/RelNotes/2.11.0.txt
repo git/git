@@ -133,6 +133,16 @@ Performance, Internal Implementation, Development Support etc.
  * The codepath in "git fsck" to detect malformed tree objects has
    been updated not to die but keep going after detecting them.
 
+ * We call "qsort(array, nelem, sizeof(array[0]), fn)", and most of
+   the time third parameter is redundant.  A new QSORT() macro lets us
+   omit it.
+
+ * "git pack-objects" in a repository with many packfiles used to
+   spend a lot of time looking for/at objects in them; the accesses to
+   the packfiles are now optimized by checking the most-recently-used
+   packfile first.
+   (merge c9af708b1a jk/pack-objects-optim-mru later to maint).
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -174,35 +184,28 @@ notes for details).
    we are sending an object C, we want a tag B that directly points at
    C but also a tag A that points at the tag B.  We used to miss the
    intermediate tag B in some cases.
-   (merge b773dde jk/pack-tag-of-tag later to maint).
 
  * Update Japanese translation for "git-gui".
-   (merge 02748bc sy/git-gui-i18n-ja later to maint).
 
  * "git fetch http::/site/path" did not die correctly and segfaulted
    instead.
-   (merge d63ed6e jk/fix-remote-curl-url-wo-proto later to maint).
 
  * "git commit-tree" stopped reading commit.gpgsign configuration
    variable that was meant for Porcelain "git commit" in Git 2.9; we
    forgot to update "git gui" to look at the configuration to match
    this change.
-   (merge f14a310 js/git-gui-commit-gpgsign later to maint).
 
  * "git add --chmod=+x" added recently lacked documentation, which has
    been corrected.
-   (merge 7ef7903 et/add-chmod-x later to maint).
 
  * "git log --cherry-pick" used to include merge commits as candidates
    to be matched up with other commits, resulting a lot of wasted time.
    The patch-id generation logic has been updated to ignore merges to
    avoid the wastage.
-   (merge 7c81040 jk/patch-ids-no-merges later to maint).
 
  * The http transport (with curl-multi option, which is the default
    these days) failed to remove curl-easy handle from a curlm session,
    which led to unnecessary API failures.
-   (merge 2abc848 ew/http-do-not-forget-to-call-curl-multi-remove-handle later to maint).
 
  * There were numerous corner cases in which the configuration files
    are read and used or not read at all depending on the directory a
@@ -221,13 +224,11 @@ notes for details).
  * Performance tests done via "t/perf" did not use the same set of
    build configuration if the user relied on autoconf generated
    configuration.
-   (merge cd5c281 ks/perf-build-with-autoconf later to maint).
 
  * "git format-patch --base=..." feature that was recently added
    showed the base commit information after "-- " e-mail signature
    line, which turned out to be inconvenient.  The base information
    has been moved above the signature line.
-   (merge 480871e jt/format-patch-base-info-above-sig later to maint).
 
  * More i18n.
    (merge 43073f8 va/i18n later to maint).
@@ -239,13 +240,11 @@ notes for details).
    than nice.  As the underlying commands used inside "git rebase"
    would fail with a more meaningful error message and advice text
    when the bogus ident matters, this extra check was removed.
-   (merge 1e461c4 jk/rebase-i-drop-ident-check later to maint).
 
  * "git gc --aggressive" used to limit the delta-chain length to 250,
    which is way too deep for gaining additional space savings and is
    detrimental for runtime performance.  The limit has been reduced to
    50.
-   (merge 07e7dbf jk/reduce-gc-aggressive-depth later to maint).
 
  * Documentation for individual configuration variables to control use
    of color (like `color.grep`) said that their default value is
@@ -253,7 +252,6 @@ notes for details).
    When we updated the default value for color.ui from 'false' to
    'auto' quite a while ago, all of them broke.  This has been
    corrected.
-   (merge 14d16e2 mm/config-color-ui-default-to-auto later to maint).
 
  * The pretty-format specifier "%C(auto)" used by the "log" family of
    commands to enable coloring of the output is taught to also issue a
@@ -262,7 +260,6 @@ notes for details).
 
  * A shell script example in check-ref-format documentation has been
    fixed.
-   (merge 92dece7 ep/doc-check-ref-format-example later to maint).
 
  * "git checkout <word>" does not follow the usual disambiguation
    rules when the <word> can be both a rev and a path, to allow
@@ -270,7 +267,6 @@ notes for details).
    file 'foo' in the working tree without having to disambiguate.
    This was poorly documented and the check was incorrect when the
    command was run from a subdirectory.
-   (merge b829b94 nd/checkout-disambiguation later to maint).
 
  * Some codepaths in "git diff" used regexec(3) on a buffer that was
    mmap(2)ed, which may not have a terminating NUL, leading to a read
@@ -283,15 +279,12 @@ notes for details).
    internal directory structure we assumed HomeBrew uses, which was a
    no-no.  The procedure has been updated to ask HomeBrew things we
    need to know to fix this.
-   (merge f86f49b ls/travis-homebrew-path-fix later to maint).
 
  * When "git rebase -i" is given a broken instruction, it told the
    user to fix it with "--edit-todo", but didn't say what the step
    after that was (i.e. "--continue").
-   (merge 37875b4 rt/rebase-i-broken-insn-advise later to maint).
 
  * Documentation around tools to import from CVS was fairly outdated.
-   (merge 106b672 jk/doc-cvs-update later to maint).
 
  * "git clone --recurse-submodules" lost the progress eye-candy in
    recent update, which has been corrected.
@@ -311,7 +304,6 @@ notes for details).
  * In the codepath that comes up with the hostname to be used in an
    e-mail when the user didn't tell us, we looked at ai_canonname
    field in struct addrinfo without making sure it is not NULL first.
-   (merge c375a7efa3 jk/ident-ai-canonname-could-be-null later to maint).
 
  * "git worktree", even though it used the default_abbrev setting that
    ought to be affected by core.abbrev configuration variable, ignored
@@ -361,12 +353,37 @@ notes for details).
    has seen a micro-optimization.
    (merge e94ce1394e sg/ref-filter-parse-optim later to maint).
 
+ * When we started cURL to talk to imap server when a new enough
+   version of cURL library is available, we forgot to explicitly add
+   imap(s):// before the destination.  To some folks, that didn't work
+   and the library tried to make HTTP(s) requests instead.
+   (merge d2d07ab861 ak/curl-imap-send-explicit-scheme later to maint).
+
+ * The ./configure script generated from configure.ac was taught how
+   to detect support of SSL by libcurl better.
+   (merge 924b7eb1c9 dp/autoconf-curl-ssl later to maint).
+
+ * The command-line completion script (in contrib/) learned to
+   complete "git cmd ^mas<HT>" to complete the negative end of
+   reference to "git cmd ^master".
+   (merge 49416ad22a cp/completion-negative-refs later to maint).
+
+ * The existing "git fetch --depth=<n>" option was hard to use
+   correctly when making the history of an existing shallow clone
+   deeper.  A new option, "--deepen=<n>", has been added to make this
+   easier to use.  "git clone" also learned "--shallow-since=<date>"
+   and "--shallow-exclude=<tag>" options to make it easier to specify
+   "I am interested only in the recent N months worth of history" and
+   "Give me only the history since that version".
+   (merge cccf74e2da nd/shallow-deepen later to maint).
+
+ * It is a common mistake to say "git blame --reverse OLD path",
+   expecting that the command line is dwimmed as if asking how lines
+   in path in an old revision OLD have survived up to the current
+   commit.
+   (merge e1d09701a4 jc/blame-reverse later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
-   (merge e78d57e bw/pathspec-remove-unused-extern-decl later to maint).
-   (merge ce25e4c rs/checkout-some-states-are-const later to maint).
-   (merge a8342a4 rs/strbuf-remove-fix later to maint).
-   (merge b56aa5b rs/unpack-trees-reduce-file-scope-global later to maint).
-   (merge 5efc60c mr/vcs-svn-printf-ulong later to maint).
    (merge a22ae75 rs/cocci later to maint).
    (merge 45ccef87b3 rs/copy-array later to maint).
    (merge 8201688ecd dt/mailinfo later to maint).
