@@ -353,8 +353,7 @@ static int compare_ref_name(const void *a_, const void *b_)
 
 static void sort_ref_range(int bottom, int top)
 {
-	qsort(ref_name + bottom, top - bottom, sizeof(ref_name[0]),
-	      compare_ref_name);
+	QSORT(ref_name + bottom, top - bottom, compare_ref_name);
 }
 
 static int append_ref(const char *refname, const struct object_id *oid,
@@ -540,8 +539,7 @@ static void append_one_rev(const char *av)
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
 			error(_("no matching refs with %s"), av);
-		if (saved_matches + 1 < ref_name_cnt)
-			sort_ref_range(saved_matches, ref_name_cnt);
+		sort_ref_range(saved_matches, ref_name_cnt);
 		return;
 	}
 	die("bad sha1 reference %s", av);

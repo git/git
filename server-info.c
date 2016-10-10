@@ -229,7 +229,7 @@ static void init_pack_info(const char *infofile, int force)
 	}
 
 	/* renumber them */
-	qsort(info, num_pack, sizeof(info[0]), compare_info);
+	QSORT(info, num_pack, compare_info);
 	for (i = 0; i < num_pack; i++)
 		info[i]->new_num = i;
 }

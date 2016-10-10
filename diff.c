@@ -2019,7 +2019,7 @@ found_damage:
 		return;
 
 	/* Show all directories with more than x% of the changes */
-	qsort(dir.files, dir.nr, sizeof(dir.files[0]), dirstat_compare);
+	QSORT(dir.files, dir.nr, dirstat_compare);
 	gather_dirstat(options, &dir, changed, "", 0);
 }
 
@@ -2063,7 +2063,7 @@ static void show_dirstat_by_line(struct diffstat_t *data, struct diff_options *o
 		return;
 
 	/* Show all directories with more than x% of the changes */
-	qsort(dir.files, dir.nr, sizeof(dir.files[0]), dirstat_compare);
+	QSORT(dir.files, dir.nr, dirstat_compare);
 	gather_dirstat(options, &dir, changed, "", 0);
 }
 
@@ -4923,7 +4923,7 @@ static int diffnamecmp(const void *a_, const void *b_)
 void diffcore_fix_diff_index(struct diff_options *options)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	qsort(q->queue, q->nr, sizeof(q->queue[0]), diffnamecmp);
+	QSORT(q->queue, q->nr, diffnamecmp);
 }
 
 void diffcore_std(struct diff_options *options)

@@ -2005,8 +2005,8 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 	if (!len || treat_leading_path(dir, path, len, simplify))
 		read_directory_recursive(dir, path, len, untracked, 0, simplify);
 	free_simplify(simplify);
-	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
-	qsort(dir->ignored, dir->ignored_nr, sizeof(struct dir_entry *), cmp_name);
+	QSORT(dir->entries, dir->nr, cmp_name);
+	QSORT(dir->ignored, dir->ignored_nr, cmp_name);
 	if (dir->untracked) {
 		static struct trace_key trace_untracked_stats = TRACE_KEY_INIT(UNTRACKED_STATS);
 		trace_printf_key(&trace_untracked_stats,

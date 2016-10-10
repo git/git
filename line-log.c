@@ -113,7 +113,7 @@ void sort_and_merge_range_set(struct range_set *rs)
 	int i;
 	int o = 0; /* output cursor */
 
-	qsort(rs->ranges, rs->nr, sizeof(struct range), range_cmp);
+	QSORT(rs->ranges, rs->nr, range_cmp);
 
 	for (i = 0; i < rs->nr; i++) {
 		if (rs->ranges[i].start == rs->ranges[i].end)

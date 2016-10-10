@@ -96,7 +96,7 @@ static int verify_packfile(struct packed_git *p,
 		entries[i].offset = nth_packed_object_offset(p, i);
 		entries[i].nr = i;
 	}
-	qsort(entries, nr_objects, sizeof(*entries), compare_entries);
+	QSORT(entries, nr_objects, compare_entries);
 
 	for (i = 0; i < nr_objects; i++) {
 		void *data;
