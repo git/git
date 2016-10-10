@@ -492,20 +492,16 @@ static int add_possible_reference_from_superproject(
 {
 	struct submodule_alternate_setup *sas = sas_cb;
 
-	/* directory name, minus trailing slash */
-	size_t namelen = alt->name - alt->base - 1;
-	struct strbuf name = STRBUF_INIT;
-	strbuf_add(&name, alt->base, namelen);
-
 	/*
 	 * If the alternate object store is another repository, try the
 	 * standard layout with .git/modules/<name>/objects
 	 */
-	if (ends_with(name.buf, ".git/objects")) {
+	if (ends_with(alt->path, ".git/objects")) {
 		char *sm_alternate;
 		struct strbuf sb = STRBUF_INIT;
 		struct strbuf err = STRBUF_INIT;
-		strbuf_add(&sb, name.buf, name.len - strlen("objects"));
+		strbuf_add(&sb, alt->path, strlen(alt->path) - strlen("objects"));
+
 		/*
 		 * We need to end the new path with '/' to mark it as a dir,
 		 * otherwise a submodule name containing '/' will be broken
@@ -533,7 +529,6 @@ static int add_possible_reference_from_superproject(
 		strbuf_release(&sb);
 	}
 
-	strbuf_release(&name);
 	return 0;
 }
 

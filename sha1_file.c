@@ -172,36 +172,42 @@ enum scld_error safe_create_leading_directories_const(const char *path)
 	return result;
 }
 
-static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
+static void fill_sha1_path(struct strbuf *buf, const unsigned char *sha1)
 {
 	int i;
 	for (i = 0; i < 20; i++) {
 		static char hex[] = "0123456789abcdef";
 		unsigned int val = sha1[i];
-		char *pos = pathbuf + i*2 + (i > 0);
-		*pos++ = hex[val >> 4];
-		*pos = hex[val & 0xf];
+		strbuf_addch(buf, hex[val >> 4]);
+		strbuf_addch(buf, hex[val & 0xf]);
+		if (!i)
+			strbuf_addch(buf, '/');
 	}
 }
 
 const char *sha1_file_name(const unsigned char *sha1)
 {
-	static char buf[PATH_MAX];
-	const char *objdir;
-	int len;
+	static struct strbuf buf = STRBUF_INIT;
 
-	objdir = get_object_directory();
-	len = strlen(objdir);
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "%s/", get_object_directory());
 
-	/* '/' + sha1(2) + '/' + sha1(38) + '\0' */
-	if (len + 43 > PATH_MAX)
-		die("insanely long object directory %s", objdir);
-	memcpy(buf, objdir, len);
-	buf[len] = '/';
-	buf[len+3] = '/';
-	buf[len+42] = '\0';
-	fill_sha1_path(buf + len + 1, sha1);
-	return buf;
+	fill_sha1_path(&buf, sha1);
+	return buf.buf;
+}
+
+struct strbuf *alt_scratch_buf(struct alternate_object_database *alt)
+{
+	strbuf_setlen(&alt->scratch, alt->base_len);
+	return &alt->scratch;
+}
+
+static const char *alt_sha1_path(struct alternate_object_database *alt,
+				 const unsigned char *sha1)
+{
+	struct strbuf *buf = alt_scratch_buf(alt);
+	fill_sha1_path(buf, sha1);
+	return buf->buf;
 }
 
 /*
@@ -235,6 +241,35 @@ struct alternate_object_database *alt_odb_list;
 static struct alternate_object_database **alt_odb_tail;
 
 /*
+ * Return non-zero iff the path is usable as an alternate object database.
+ */
+static int alt_odb_usable(struct strbuf *path, const char *normalized_objdir)
+{
+	struct alternate_object_database *alt;
+
+	/* Detect cases where alternate disappeared */
+	if (!is_directory(path->buf)) {
+		error("object directory %s does not exist; "
+		      "check .git/objects/info/alternates.",
+		      path->buf);
+		return 0;
+	}
+
+	/*
+	 * Prevent the common mistake of listing the same
+	 * thing twice, or object directory itself.
+	 */
+	for (alt = alt_odb_list; alt; alt = alt->next) {
+		if (!fspathcmp(path->buf, alt->path))
+			return 0;
+	}
+	if (!fspathcmp(path->buf, normalized_objdir))
+		return 0;
+
+	return 1;
+}
+
+/*
  * Prepare alternate object database registry.
  *
  * The variable alt_odb_list points at the list of struct
@@ -253,8 +288,6 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	int depth, const char *normalized_objdir)
 {
 	struct alternate_object_database *ent;
-	struct alternate_object_database *alt;
-	size_t pfxlen, entlen;
 	struct strbuf pathbuf = STRBUF_INIT;
 
 	if (!is_absolute_path(entry) && relative_base) {
@@ -263,49 +296,26 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	}
 	strbuf_addstr(&pathbuf, entry);
 
-	normalize_path_copy(pathbuf.buf, pathbuf.buf);
-
-	pfxlen = strlen(pathbuf.buf);
+	if (strbuf_normalize_path(&pathbuf) < 0) {
+		error("unable to normalize alternate object path: %s",
+		      pathbuf.buf);
+		strbuf_release(&pathbuf);
+		return -1;
+	}
 
 	/*
 	 * The trailing slash after the directory name is given by
 	 * this function at the end. Remove duplicates.
 	 */
-	while (pfxlen && pathbuf.buf[pfxlen-1] == '/')
-		pfxlen -= 1;
+	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
+		strbuf_setlen(&pathbuf, pathbuf.len - 1);
 
-	entlen = st_add(pfxlen, 43); /* '/' + 2 hex + '/' + 38 hex + NUL */
-	ent = xmalloc(st_add(sizeof(*ent), entlen));
-	memcpy(ent->base, pathbuf.buf, pfxlen);
-	strbuf_release(&pathbuf);
-
-	ent->name = ent->base + pfxlen + 1;
-	ent->base[pfxlen + 3] = '/';
-	ent->base[pfxlen] = ent->base[entlen-1] = 0;
-
-	/* Detect cases where alternate disappeared */
-	if (!is_directory(ent->base)) {
-		error("object directory %s does not exist; "
-		      "check .git/objects/info/alternates.",
-		      ent->base);
-		free(ent);
+	if (!alt_odb_usable(&pathbuf, normalized_objdir)) {
+		strbuf_release(&pathbuf);
 		return -1;
 	}
 
-	/* Prevent the common mistake of listing the same
-	 * thing twice, or object directory itself.
-	 */
-	for (alt = alt_odb_list; alt; alt = alt->next) {
-		if (pfxlen == alt->name - alt->base - 1 &&
-		    !memcmp(ent->base, alt->base, pfxlen)) {
-			free(ent);
-			return -1;
-		}
-	}
-	if (!fspathcmp(ent->base, normalized_objdir)) {
-		free(ent);
-		return -1;
-	}
+	ent = alloc_alt_odb(pathbuf.buf);
 
 	/* add the alternate entry */
 	*alt_odb_tail = ent;
@@ -313,10 +323,9 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	ent->next = NULL;
 
 	/* recursively add alternates */
-	read_info_alternates(ent->base, depth + 1);
+	read_info_alternates(pathbuf.buf, depth + 1);
 
-	ent->base[pfxlen] = '/';
-
+	strbuf_release(&pathbuf);
 	return 0;
 }
 
@@ -335,7 +344,9 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 	}
 
 	strbuf_add_absolute_path(&objdirbuf, get_object_directory());
-	normalize_path_copy(objdirbuf.buf, objdirbuf.buf);
+	if (strbuf_normalize_path(&objdirbuf) < 0)
+		die("unable to normalize object directory: %s",
+		    objdirbuf.buf);
 
 	alt_copy = xmemdupz(alt, len);
 	string_list_split_in_place(&entries, alt_copy, sep, -1);
@@ -343,12 +354,7 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 		const char *entry = entries.items[i].string;
 		if (entry[0] == '\0' || entry[0] == '#')
 			continue;
-		if (!is_absolute_path(entry) && depth) {
-			error("%s: ignoring relative alternate object store %s",
-					relative_base, entry);
-		} else {
-			link_alt_odb_entry(entry, relative_base, depth, objdirbuf.buf);
-		}
+		link_alt_odb_entry(entry, relative_base, depth, objdirbuf.buf);
 	}
 	string_list_clear(&entries, 0);
 	free(alt_copy);
@@ -379,6 +385,18 @@ void read_info_alternates(const char * relative_base, int depth)
 	link_alt_odb_entries(map, mapsz, '\n', relative_base, depth);
 
 	munmap(map, mapsz);
+}
+
+struct alternate_object_database *alloc_alt_odb(const char *dir)
+{
+	struct alternate_object_database *ent;
+
+	FLEX_ALLOC_STR(ent, path, dir);
+	strbuf_init(&ent->scratch, 0);
+	strbuf_addf(&ent->scratch, "%s/", dir);
+	ent->base_len = ent->scratch.len;
+
+	return ent;
 }
 
 void add_to_alternates_file(const char *reference)
@@ -424,6 +442,17 @@ void add_to_alternates_file(const char *reference)
 			link_alt_odb_entries(reference, strlen(reference), '\n', NULL, 0);
 	}
 	free(alts);
+}
+
+void add_to_alternates_memory(const char *reference)
+{
+	/*
+	 * Make sure alternates are initialized, or else our entry may be
+	 * overwritten when they are.
+	 */
+	prepare_alt_odb();
+
+	link_alt_odb_entries(reference, strlen(reference), '\n', NULL, 0);
 }
 
 /*
@@ -566,8 +595,8 @@ static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
 	struct alternate_object_database *alt;
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		fill_sha1_path(alt->name, sha1);
-		if (check_and_freshen_file(alt->base, freshen))
+		const char *path = alt_sha1_path(alt, sha1);
+		if (check_and_freshen_file(path, freshen))
 			return 1;
 	}
 	return 0;
@@ -1443,11 +1472,8 @@ void prepare_packed_git(void)
 		return;
 	prepare_packed_git_one(get_object_directory(), 1);
 	prepare_alt_odb();
-	for (alt = alt_odb_list; alt; alt = alt->next) {
-		alt->name[-1] = 0;
-		prepare_packed_git_one(alt->base, 0);
-		alt->name[-1] = '/';
-	}
+	for (alt = alt_odb_list; alt; alt = alt->next)
+		prepare_packed_git_one(alt->path, 0);
 	rearrange_packed_git();
 	prepare_packed_git_mru();
 	prepare_packed_git_run_once = 1;
@@ -1565,8 +1591,8 @@ static int stat_sha1_file(const unsigned char *sha1, struct stat *st)
 	prepare_alt_odb();
 	errno = ENOENT;
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		fill_sha1_path(alt->name, sha1);
-		if (!lstat(alt->base, st))
+		const char *path = alt_sha1_path(alt, sha1);
+		if (!lstat(path, st))
 			return 0;
 	}
 
@@ -1586,8 +1612,8 @@ static int open_sha1_file(const unsigned char *sha1)
 
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		fill_sha1_path(alt->name, sha1);
-		fd = git_open_noatime(alt->base);
+		const char *path = alt_sha1_path(alt, sha1);
+		fd = git_open_noatime(path);
 		if (fd >= 0)
 			return fd;
 		if (most_interesting_errno == ENOENT)
@@ -3648,8 +3674,7 @@ static int loose_from_alt_odb(struct alternate_object_database *alt,
 	struct strbuf buf = STRBUF_INIT;
 	int r;
 
-	/* copy base not including trailing '/' */
-	strbuf_add(&buf, alt->base, alt->name - alt->base - 1);
+	strbuf_addstr(&buf, alt->path);
 	r = for_each_loose_file_in_objdir_buf(&buf,
 					      data->cb, NULL, NULL,
 					      data->data);

@@ -8,6 +8,7 @@
 #include "dir.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "quote.h"
 
 static unsigned long garbage;
 static off_t size_garbage;
@@ -73,6 +74,14 @@ static int count_cruft(const char *basename, const char *path, void *data)
 	return 0;
 }
 
+static int print_alternate(struct alternate_object_database *alt, void *data)
+{
+	printf("alternate: ");
+	quote_c_style(alt->path, NULL, stdout, 0);
+	putchar('\n');
+	return 0;
+}
+
 static char const * const count_objects_usage[] = {
 	N_("git count-objects [-v] [-H | --human-readable]"),
 	NULL
@@ -87,6 +96,8 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 			 N_("print sizes in human readable format")),
 		OPT_END(),
 	};
+
+	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, opts, count_objects_usage, 0);
 	/* we do not take arguments other than flags for now */
@@ -140,6 +151,7 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
 		printf("size-garbage: %s\n", garbage_buf.buf);
+		foreach_alt_odb(print_alternate, NULL);
 		strbuf_release(&loose_buf);
 		strbuf_release(&pack_buf);
 		strbuf_release(&garbage_buf);
