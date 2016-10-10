@@ -350,6 +350,7 @@ test_expect_success POSIXPERM,SYMLINKS 'git add --chmod=+x with symlinks' '
 '
 
 test_expect_success 'git add --chmod=[+-]x changes index with already added file' '
+	rm -f foo3 xfoo3 &&
 	echo foo >foo3 &&
 	git add foo3 &&
 	git add --chmod=+x foo3 &&
