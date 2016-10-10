@@ -479,6 +479,20 @@ static char **read_author_script(void)
 	return env;
 }
 
+static const char staged_changes_advice[] =
+N_("you have staged changes in your working tree\n"
+"If these changes are meant to be squashed into the previous commit, run:\n"
+"\n"
+"  git commit --amend %s\n"
+"\n"
+"If they are meant to go into a new commit, run:\n"
+"\n"
+"  git commit %s\n"
+"\n"
+"In both cases, once you're done, continue with:\n"
+"\n"
+"  git rebase --continue\n");
+
 /*
  * If we are cherry-pick, and if the merge did not result in
  * hand-editing, we will hit this commit and inherit the original
@@ -505,16 +519,8 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 		if (!env) {
 			const char *gpg_opt = gpg_sign_opt_quoted(opts);
 
-			return error("you have staged changes in your working "
-				"tree. If these changes are meant to be\n"
-				"squashed into the previous commit, run:\n\n"
-				"  git commit --amend %s\n\n"
-				"If they are meant to go into a new commit, "
-				"run:\n\n"
-				"  git commit %s\n\n"
-				"In both cases, once you're done, continue "
-				"with:\n\n"
-				"  git rebase --continue\n", gpg_opt, gpg_opt);
+			return error(_(staged_changes_advice),
+				     gpg_opt, gpg_opt);
 		}
 	}
 
