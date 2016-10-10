@@ -433,6 +433,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define GIT_GLOB_PATHSPECS_ENVIRONMENT "GIT_GLOB_PATHSPECS"
 #define GIT_NOGLOB_PATHSPECS_ENVIRONMENT "GIT_NOGLOB_PATHSPECS"
 #define GIT_ICASE_PATHSPECS_ENVIRONMENT "GIT_ICASE_PATHSPECS"
+#define GIT_QUARANTINE_ENVIRONMENT "GIT_QUARANTINE_PATH"
 
 /*
  * This environment variable is expected to contain a boolean indicating

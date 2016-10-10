@@ -20,6 +20,7 @@
 #include "gpg-interface.h"
 #include "sigchain.h"
 #include "fsck.h"
+#include "tmp-objdir.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -85,6 +86,8 @@ static enum {
 	KEEPALIVE_ALWAYS
 } use_keepalive;
 static int keepalive_in_sec = 5;
+
+static struct tmp_objdir *tmp_objdir;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
@@ -664,6 +667,9 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed,
 	} else
 		argv_array_pushf(&proc.env_array, "GIT_PUSH_OPTION_COUNT");
 
+	if (tmp_objdir)
+		argv_array_pushv(&proc.env_array, tmp_objdir_env(tmp_objdir));
+
 	if (use_sideband) {
 		memset(&muxer, 0, sizeof(muxer));
 		muxer.proc = copy_to_sideband;
@@ -763,6 +769,7 @@ static int run_update_hook(struct command *cmd)
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
 	proc.argv = argv;
+	proc.env = tmp_objdir_env(tmp_objdir);
 
 	code = start_command(&proc);
 	if (code)
@@ -834,6 +841,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 		    !delayed_reachability_test(si, i))
 			sha1_array_append(&extra, si->shallow->sha1[i]);
 
+	opt.env = tmp_objdir_env(tmp_objdir);
 	setup_alternate_shallow(&shallow_lock, &opt.shallow_file, &extra);
 	if (check_connected(command_singleton_iterator, cmd, &opt)) {
 		rollback_lock_file(&shallow_lock);
@@ -1241,12 +1249,17 @@ static void set_connectivity_errors(struct command *commands,
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		struct command *singleton = cmd;
+		struct check_connected_options opt = CHECK_CONNECTED_INIT;
+
 		if (shallow_update && si->shallow_ref[cmd->index])
 			/* to be checked in update_shallow_ref() */
 			continue;
+
+		opt.env = tmp_objdir_env(tmp_objdir);
 		if (!check_connected(command_singleton_iterator, &singleton,
-				     NULL))
+				     &opt))
 			continue;
+
 		cmd->error_string = "missing necessary objects";
 	}
 }
@@ -1429,6 +1442,7 @@ static void execute_commands(struct command *commands,
 	data.si = si;
 	opt.err_fd = err_fd;
 	opt.progress = err_fd && !quiet;
+	opt.env = tmp_objdir_env(tmp_objdir);
 	if (check_connected(iterate_receive_command_list, &data, &opt))
 		set_connectivity_errors(commands, si);
 
@@ -1444,6 +1458,19 @@ static void execute_commands(struct command *commands,
 		}
 		return;
 	}
+
+	/*
+	 * Now we'll start writing out refs, which means the objects need
+	 * to be in their final positions so that other processes can see them.
+	 */
+	if (tmp_objdir_migrate(tmp_objdir) < 0) {
+		for (cmd = commands; cmd; cmd = cmd->next) {
+			if (!cmd->error_string)
+				cmd->error_string = "unable to migrate objects to permanent storage";
+		}
+		return;
+	}
+	tmp_objdir = NULL;
 
 	check_aliased_updates(commands);
 
@@ -1639,6 +1666,18 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		argv_array_push(&child.args, "--shallow-file");
 		argv_array_push(&child.args, alt_shallow_file);
 	}
+
+	tmp_objdir = tmp_objdir_create();
+	if (!tmp_objdir)
+		return "unable to create temporary object directory";
+	child.env = tmp_objdir_env(tmp_objdir);
+
+	/*
+	 * Normally we just pass the tmp_objdir environment to the child
+	 * processes that do the heavy lifting, but we may need to see these
+	 * objects ourselves to set up shallow information.
+	 */
+	tmp_objdir_add_as_alternate(tmp_objdir);
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
 		argv_array_pushl(&child.args, "unpack-objects", hdr_arg, NULL);
