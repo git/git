@@ -1,0 +1,45 @@
+Git v2.10.2 Release Notes
+=========================
+
+Fixes since v2.10.1
+-------------------
+
+ * The code that parses the format parameter of for-each-ref command
+   has seen a micro-optimization.
+
+ * The "graph" API used in "git log --graph" miscounted the number of
+   output columns consumed so far when drawing a padding line, which
+   has been fixed; this did not affect any existing code as nobody
+   tried to write anything after the padding on such a line, though.
+
+ * Almost everybody uses DEFAULT_ABBREV to refer to the default
+   setting for the abbreviation, but "git blame" peeked into
+   underlying variable bypassing the macro for no good reason.
+
+ * Doc update to clarify what "log -3 --reverse" does.
+
+ * An author name, that spelled a backslash-quoted double quote in the
+   human readable part "My \"double quoted\" name", was not unquoted
+   correctly while applying a patch from a piece of e-mail.
+
+ * The original command line syntax for "git merge", which was "git
+   merge <msg> HEAD <parent>...", has been deprecated for quite some
+   time, and "git gui" was the last in-tree user of the syntax.  This
+   is finally fixed, so that we can move forward with the deprecation.
+
+ * Codepaths that read from an on-disk loose object were too loose in
+   validating what they are reading is a proper object file and
+   sometimes read past the data they read from the disk, which has
+   been corrected.  H/t to Gustavo Grieco for reporting.
+
+ * "git worktree", even though it used the default_abbrev setting that
+   ought to be affected by core.abbrev configuration variable, ignored
+   the variable setting.  The command has been taught to read the
+   default set of configuration variables to correct this.
+
+ * A low-level function verify_packfile() was meant to show errors
+   that were detected without dying itself, but under some conditions
+   it didn't and died instead, which has been fixed.
+
+
+Also contains minor documentation updates and code clean-ups.
