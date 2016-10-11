@@ -160,7 +160,8 @@ endif::git-rev-list[]
 - '%Cgreen': switch color to green
 - '%Cblue': switch color to blue
 - '%Creset': reset color
-- '%C(...)': color specification, as described in color.branch.* config option;
+- '%C(...)': color specification, as described under Values in the
+  "CONFIGURATION FILE" section of linkgit:git-config[1];
   adding `auto,` at the beginning will emit color only when colors are
   enabled for log output (by `color.diff`, `color.ui`, or `--color`, and
   respecting the `auto` settings of the former if we are going to a
