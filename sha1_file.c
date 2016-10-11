@@ -1572,7 +1572,9 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 	return used;
 }
 
-int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
+static int unpack_sha1_short_header(git_zstream *stream,
+				    unsigned char *map, unsigned long mapsize,
+				    void *buffer, unsigned long bufsiz)
 {
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
@@ -1585,13 +1587,31 @@ int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long ma
 	return git_inflate(stream, 0);
 }
 
+int unpack_sha1_header(git_zstream *stream,
+		       unsigned char *map, unsigned long mapsize,
+		       void *buffer, unsigned long bufsiz)
+{
+	int status = unpack_sha1_short_header(stream, map, mapsize,
+					      buffer, bufsiz);
+
+	if (status < Z_OK)
+		return status;
+
+	/* Make sure we have the terminating NUL */
+	if (!memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
+		return -1;
+	return 0;
+}
+
 static int unpack_sha1_header_to_strbuf(git_zstream *stream, unsigned char *map,
 					unsigned long mapsize, void *buffer,
 					unsigned long bufsiz, struct strbuf *header)
 {
 	int status;
 
-	status = unpack_sha1_header(stream, map, mapsize, buffer, bufsiz);
+	status = unpack_sha1_short_header(stream, map, mapsize, buffer, bufsiz);
+	if (status < Z_OK)
+		return -1;
 
 	/*
 	 * Check if entire header is unpacked in the first iteration.
@@ -1682,6 +1702,8 @@ static int parse_sha1_header_extended(const char *hdr, struct object_info *oi,
 	 */
 	for (;;) {
 		char c = *hdr++;
+		if (!c)
+			return -1;
 		if (c == ' ')
 			break;
 		type_len++;
