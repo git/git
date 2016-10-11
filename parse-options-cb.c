@@ -211,8 +211,7 @@ int parse_opt_passthru(const struct option *opt, const char *arg, int unset)
 	if (recreate_opt(&sb, opt, arg, unset) < 0)
 		return -1;
 
-	if (*opt_value)
-		free(*opt_value);
+	free(*opt_value);
 
 	*opt_value = strbuf_detach(&sb, NULL);
 

@@ -1110,7 +1110,6 @@ static void abbrev_sha1_in_line(struct strbuf *line)
 	split = strbuf_split_max(line, ' ', 3);
 	if (split[0] && split[1]) {
 		unsigned char sha1[20];
-		const char *abbrev;
 
 		/*
 		 * strbuf_split_max left a space. Trim it and re-add
@@ -1118,9 +1117,10 @@ static void abbrev_sha1_in_line(struct strbuf *line)
 		 */
 		strbuf_trim(split[1]);
 		if (!get_sha1(split[1]->buf, sha1)) {
-			abbrev = find_unique_abbrev(sha1, DEFAULT_ABBREV);
 			strbuf_reset(split[1]);
-			strbuf_addf(split[1], "%s ", abbrev);
+			strbuf_add_unique_abbrev(split[1], sha1,
+						 DEFAULT_ABBREV);
+			strbuf_addch(split[1], ' ');
 			strbuf_reset(line);
 			for (i = 0; split[i]; i++)
 				strbuf_addbuf(line, split[i]);
@@ -1343,10 +1343,8 @@ static char *get_branch(const struct worktree *wt, const char *path)
 	else if (starts_with(sb.buf, "refs/"))
 		;
 	else if (!get_sha1_hex(sb.buf, sha1)) {
-		const char *abbrev;
-		abbrev = find_unique_abbrev(sha1, DEFAULT_ABBREV);
 		strbuf_reset(&sb);
-		strbuf_addstr(&sb, abbrev);
+		strbuf_add_unique_abbrev(&sb, sha1, DEFAULT_ABBREV);
 	} else if (!strcmp(sb.buf, "detached HEAD")) /* rebase */
 		goto got_nothing;
 	else			/* bisect */
