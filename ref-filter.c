@@ -235,7 +235,7 @@ int parse_ref_filter_atom(const char *atom, const char *ep)
 {
 	const char *sp;
 	const char *arg;
-	int i, at;
+	int i, at, atom_len;
 
 	sp = atom;
 	if (*sp == '*' && sp < ep)
@@ -250,19 +250,19 @@ int parse_ref_filter_atom(const char *atom, const char *ep)
 			return i;
 	}
 
+	/*
+	 * If the atom name has a colon, strip it and everything after
+	 * it off - it specifies the format for this entry, and
+	 * shouldn't be used for checking against the valid_atom
+	 * table.
+	 */
+	arg = memchr(sp, ':', ep - sp);
+	atom_len = (arg ? arg : ep) - sp;
+
 	/* Is the atom a valid one? */
 	for (i = 0; i < ARRAY_SIZE(valid_atom); i++) {
 		int len = strlen(valid_atom[i].name);
-
-		/*
-		 * If the atom name has a colon, strip it and everything after
-		 * it off - it specifies the format for this entry, and
-		 * shouldn't be used for checking against the valid_atom
-		 * table.
-		 */
-		arg = memchr(sp, ':', ep - sp);
-		if (len == (arg ? arg : ep) - sp &&
-		    !memcmp(valid_atom[i].name, sp, len))
+		if (len == atom_len && !memcmp(valid_atom[i].name, sp, len))
 			break;
 	}
 
