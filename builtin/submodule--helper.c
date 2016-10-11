@@ -95,6 +95,8 @@ static int chop_last_dir(char **remoteurl, int is_relative)
  * NEEDSWORK: This works incorrectly on the domain and protocol part.
  * remote_url      url              outcome          expectation
  * http://a.com/b  ../c             http://a.com/c   as is
+ * http://a.com/b/ ../c             http://a.com/c   same as previous line, but
+ *                                                   ignore trailing slash in url
  * http://a.com/b  ../../c          http://c         error out
  * http://a.com/b  ../../../c       http:/c          error out
  * http://a.com/b  ../../../../c    http:c           error out
@@ -113,8 +115,8 @@ static char *relative_url(const char *remote_url,
 	struct strbuf sb = STRBUF_INIT;
 	size_t len = strlen(remoteurl);
 
-	if (is_dir_sep(remoteurl[len]))
-		remoteurl[len] = '\0';
+	if (is_dir_sep(remoteurl[len-1]))
+		remoteurl[len-1] = '\0';
 
 	if (!url_is_local_not_ssh(remoteurl) || is_absolute_path(remoteurl))
 		is_relative = 0;
@@ -147,6 +149,8 @@ static char *relative_url(const char *remote_url,
 	}
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s%s%s", remoteurl, colonsep ? ":" : "/", url);
+	if (ends_with(url, "/"))
+		strbuf_setlen(&sb, sb.len - 1);
 	free(remoteurl);
 
 	if (starts_with_dot_slash(sb.buf))
