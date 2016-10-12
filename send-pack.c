@@ -181,8 +181,7 @@ static int receive_status(int in, struct ref *refs)
 			hint->status = REF_STATUS_REMOTE_REJECT;
 			ret = -1;
 		}
-		if (msg)
-			hint->remote_status = xstrdup(msg);
+		hint->remote_status = xstrdup_or_null(msg);
 		/* start our next search from the next ref */
 		hint = hint->next;
 	}

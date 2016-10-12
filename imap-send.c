@@ -1082,10 +1082,8 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 			cred.protocol = xstrdup(srvc->use_ssl ? "imaps" : "imap");
 			cred.host = xstrdup(srvc->host);
 
-			if (srvc->user)
-				cred.username = xstrdup(srvc->user);
-			if (srvc->pass)
-				cred.password = xstrdup(srvc->pass);
+			cred.username = xstrdup_or_null(srvc->user);
+			cred.password = xstrdup_or_null(srvc->pass);
 
 			credential_fill(&cred);
 
