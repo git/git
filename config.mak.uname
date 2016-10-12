@@ -371,7 +371,6 @@ ifeq ($(uname_S),Windows)
 	NO_REGEX = YesPlease
 	NO_GETTEXT = YesPlease
 	NO_PYTHON = YesPlease
-	BLK_SHA1 = YesPlease
 	ETAGS_TARGET = ETAGS
 	NO_INET_PTON = YesPlease
 	NO_INET_NTOP = YesPlease
