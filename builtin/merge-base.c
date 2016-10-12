@@ -173,6 +173,9 @@ static int handle_fork_point(int argc, const char **argv)
 	revs.initial = 1;
 	for_each_reflog_ent(refname, collect_one_reflog_ent, &revs);
 
+	if (!revs.nr && !get_sha1(refname, sha1))
+		add_one_commit(sha1, &revs);
+
 	for (i = 0; i < revs.nr; i++)
 		revs.commit[i]->object.flags &= ~TMP_MARK;
 
