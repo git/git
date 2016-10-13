@@ -275,6 +275,10 @@ proc is_Cygwin {} {
 				set _iscygwin 0
 			} else {
 				set _iscygwin 1
+				# Handle MSys2 which is only cygwin when MSYSTEM is MSYS.
+				if {[info exists ::env(MSYSTEM)] && $::env(MSYSTEM) ne "MSYS"} {
+					set _iscygwin 0
+				}
 			}
 		} else {
 			set _iscygwin 0
