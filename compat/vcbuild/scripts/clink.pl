@@ -57,5 +57,5 @@ if ($is_linking) {
 	unshift(@args, "cl.exe");
 	push(@args, @cflags);
 }
-printf("**** @args\n\n\n");
+printf(STDERR "**** @args\n\n\n") if (!defined($ENV{'QUIET_GEN'}));
 exit (system(@args) != 0);
