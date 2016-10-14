@@ -122,9 +122,9 @@ int check_apply_state(struct apply_state *state, int force_apply)
 	int is_not_gitdir = !startup_info->have_repository;
 
 	if (state->apply_with_reject && state->threeway)
-		return error("--reject and --3way cannot be used together.");
+		return error(_("--reject and --3way cannot be used together."));
 	if (state->cached && state->threeway)
-		return error("--cached and --3way cannot be used together.");
+		return error(_("--cached and --3way cannot be used together."));
 	if (state->threeway) {
 		if (is_not_gitdir)
 			return error(_("--3way outside a repository"));
@@ -3095,8 +3095,8 @@ static int apply_binary_fragment(struct apply_state *state,
 	/* Binary patch is irreversible without the optional second hunk */
 	if (state->apply_in_reverse) {
 		if (!fragment->next)
-			return error("cannot reverse-apply a binary patch "
-				     "without the reverse hunk to '%s'",
+			return error(_("cannot reverse-apply a binary patch "
+				       "without the reverse hunk to '%s'"),
 				     patch->new_name
 				     ? patch->new_name : patch->old_name);
 		fragment = fragment->next;
@@ -3141,8 +3141,8 @@ static int apply_binary(struct apply_state *state,
 	    strlen(patch->new_sha1_prefix) != 40 ||
 	    get_oid_hex(patch->old_sha1_prefix, &oid) ||
 	    get_oid_hex(patch->new_sha1_prefix, &oid))
-		return error("cannot apply binary patch to '%s' "
-			     "without full index line", name);
+		return error(_("cannot apply binary patch to '%s' "
+			       "without full index line"), name);
 
 	if (patch->old_name) {
 		/*
@@ -3151,16 +3151,16 @@ static int apply_binary(struct apply_state *state,
 		 */
 		hash_sha1_file(img->buf, img->len, blob_type, oid.hash);
 		if (strcmp(oid_to_hex(&oid), patch->old_sha1_prefix))
-			return error("the patch applies to '%s' (%s), "
-				     "which does not match the "
-				     "current contents.",
+			return error(_("the patch applies to '%s' (%s), "
+				       "which does not match the "
+				       "current contents."),
 				     name, oid_to_hex(&oid));
 	}
 	else {
 		/* Otherwise, the old one must be empty. */
 		if (img->len)
-			return error("the patch applies to an empty "
-				     "'%s' but it is not empty", name);
+			return error(_("the patch applies to an empty "
+				       "'%s' but it is not empty"), name);
 	}
 
 	get_oid_hex(patch->new_sha1_prefix, &oid);
@@ -3177,8 +3177,8 @@ static int apply_binary(struct apply_state *state,
 
 		result = read_sha1_file(oid.hash, &type, &size);
 		if (!result)
-			return error("the necessary postimage %s for "
-				     "'%s' cannot be read",
+			return error(_("the necessary postimage %s for "
+				       "'%s' cannot be read"),
 				     patch->new_sha1_prefix, name);
 		clear_image(img);
 		img->buf = result;
@@ -3551,7 +3551,7 @@ static int try_threeway(struct apply_state *state,
 		write_sha1_file("", 0, blob_type, pre_oid.hash);
 	else if (get_sha1(patch->old_sha1_prefix, pre_oid.hash) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
-		return error("repository lacks the necessary blob to fall back on 3-way merge.");
+		return error(_("repository lacks the necessary blob to fall back on 3-way merge."));
 
 	if (state->apply_verbosity > verbosity_silent)
 		fprintf(stderr, _("Falling back to three-way merge...\n"));
@@ -3570,11 +3570,11 @@ static int try_threeway(struct apply_state *state,
 	/* our_oid is ours */
 	if (patch->is_new) {
 		if (load_current(state, &tmp_image, patch))
-			return error("cannot read the current contents of '%s'",
+			return error(_("cannot read the current contents of '%s'"),
 				     patch->new_name);
 	} else {
 		if (load_preimage(state, &tmp_image, patch, st, ce))
-			return error("cannot read the current contents of '%s'",
+			return error(_("cannot read the current contents of '%s'"),
 				     patch->old_name);
 	}
 	write_sha1_file(tmp_image.buf, tmp_image.len, blob_type, our_oid.hash);
@@ -4072,18 +4072,18 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			if (!preimage_oid_in_gitlink_patch(patch, &oid))
 				; /* ok, the textual part looks sane */
 			else
-				return error("sha1 information is lacking or "
-					     "useless for submodule %s", name);
+				return error(_("sha1 information is lacking or "
+					       "useless for submodule %s"), name);
 		} else if (!get_sha1_blob(patch->old_sha1_prefix, oid.hash)) {
 			; /* ok */
 		} else if (!patch->lines_added && !patch->lines_deleted) {
 			/* mode-only change: update the current */
 			if (get_current_oid(state, patch->old_name, &oid))
-				return error("mode change for %s, which is not "
-					     "in current HEAD", name);
+				return error(_("mode change for %s, which is not "
+					       "in current HEAD"), name);
 		} else
-			return error("sha1 information is lacking or useless "
-				     "(%s).", name);
+			return error(_("sha1 information is lacking or useless "
+				       "(%s)."), name);
 
 		ce = make_cache_entry(patch->old_mode, oid.hash, name, 0, 0);
 		if (!ce)
@@ -4091,7 +4091,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 				     name);
 		if (add_index_entry(&result, ce, ADD_CACHE_OK_TO_ADD)) {
 			free(ce);
-			return error("Could not add %s to temporary index",
+			return error(_("could not add %s to temporary index"),
 				     name);
 		}
 	}
@@ -4101,7 +4101,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 	discard_index(&result);
 
 	 if (res)
-		 return error("Could not write temporary index to %s",
+		 return error(_("could not write temporary index to %s"),
 			      state->fake_ancestor);
 
 	 return 0;
