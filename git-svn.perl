@@ -44,6 +44,7 @@ use Git qw(
 	command_close_pipe
 	command_bidi_pipe
 	command_close_bidi_pipe
+	get_record
 );
 
 BEGIN {
@@ -1880,10 +1881,9 @@ sub get_commit_entry {
 	{
 		require Encode;
 		# SVN requires messages to be UTF-8 when entering the repo
-		local $/;
 		open $log_fh, '<', $commit_msg or croak $!;
 		binmode $log_fh;
-		chomp($log_entry{log} = <$log_fh>);
+		chomp($log_entry{log} = get_record($log_fh, undef));
 
 		my $enc = Git::config('i18n.commitencoding') || 'UTF-8';
 		my $msg = $log_entry{log};

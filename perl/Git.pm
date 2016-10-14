@@ -59,7 +59,7 @@ require Exporter;
                 command_bidi_pipe command_close_bidi_pipe
                 version exec_path html_path hash_object git_cmd_try
                 remote_refs prompt
-                get_tz_offset
+                get_tz_offset get_record
                 credential credential_read credential_write
                 temp_acquire temp_is_locked temp_release temp_reset temp_path);
 
@@ -538,6 +538,20 @@ sub get_tz_offset {
 	return sprintf("%s%02d%02d", $sign, (gmtime(abs($t - $gm)))[2,1]);
 }
 
+=item get_record ( FILEHANDLE, INPUT_RECORD_SEPARATOR )
+
+Read one record from FILEHANDLE delimited by INPUT_RECORD_SEPARATOR,
+removing any trailing INPUT_RECORD_SEPARATOR.
+
+=cut
+
+sub get_record {
+	my ($fh, $rs) = @_;
+	local $/ = $rs;
+	my $rec = <$fh>;
+	chomp $rec if defined $rs;
+	$rec;
+}
 
 =item prompt ( PROMPT , ISPASSWORD  )
 

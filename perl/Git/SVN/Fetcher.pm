@@ -9,7 +9,8 @@ use Carp qw/croak/;
 use File::Basename qw/dirname/;
 use Git qw/command command_oneline command_noisy command_output_pipe
            command_input_pipe command_close_pipe
-           command_bidi_pipe command_close_bidi_pipe/;
+           command_bidi_pipe command_close_bidi_pipe
+           get_record/;
 BEGIN {
 	@ISA = qw(SVN::Delta::Editor);
 }
@@ -86,11 +87,9 @@ sub _mark_empty_symlinks {
 	my $printed_warning;
 	chomp(my $empty_blob = `git hash-object -t blob --stdin < /dev/null`);
 	my ($ls, $ctx) = command_output_pipe(qw/ls-tree -r -z/, $cmt);
-	local $/ = "\0";
 	my $pfx = defined($switch_path) ? $switch_path : $git_svn->path;
 	$pfx .= '/' if length($pfx);
-	while (<$ls>) {
-		chomp;
+	while (defined($_ = get_record($ls, "\0"))) {
 		s/\A100644 blob $empty_blob\t//o or next;
 		unless ($printed_warning) {
 			print STDERR "Scanning for empty symlinks, ",
@@ -179,9 +178,7 @@ sub delete_entry {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
 		                                     -r --name-only -z/,
 				                     $tree);
-		local $/ = "\0";
-		while (<$ls>) {
-			chomp;
+		while (defined($_ = get_record($ls, "\0"))) {
 			my $rmpath = "$gpath/$_";
 			$self->{gii}->remove($rmpath);
 			print "\tD\t$rmpath\n" unless $::_q;
@@ -247,9 +244,7 @@ sub add_directory {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
 		                                     -r --name-only -z/,
 				                     $self->{c});
-		local $/ = "\0";
-		while (<$ls>) {
-			chomp;
+		while (defined($_ = get_record($ls, "\0"))) {
 			$self->{gii}->remove($_);
 			print "\tD\t$_\n" unless $::_q;
 			push @deleted_gpath, $gpath;
