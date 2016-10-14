@@ -3554,7 +3554,7 @@ static int try_threeway(struct apply_state *state,
 		return error("repository lacks the necessary blob to fall back on 3-way merge.");
 
 	if (state->apply_verbosity > verbosity_silent)
-		fprintf(stderr, "Falling back to three-way merge...\n");
+		fprintf(stderr, _("Falling back to three-way merge...\n"));
 
 	img = strbuf_detach(&buf, &len);
 	prepare_image(&tmp_image, img, len, 1);
@@ -3586,7 +3586,7 @@ static int try_threeway(struct apply_state *state,
 	if (status < 0) {
 		if (state->apply_verbosity > verbosity_silent)
 			fprintf(stderr,
-				"Failed to fall back on three-way merge...\n");
+				_("Failed to fall back on three-way merge...\n"));
 		return status;
 	}
 
@@ -3600,12 +3600,12 @@ static int try_threeway(struct apply_state *state,
 		oidcpy(&patch->threeway_stage[2], &post_oid);
 		if (state->apply_verbosity > verbosity_silent)
 			fprintf(stderr,
-				"Applied patch to '%s' with conflicts.\n",
+				_("Applied patch to '%s' with conflicts.\n"),
 				patch->new_name);
 	} else {
 		if (state->apply_verbosity > verbosity_silent)
 			fprintf(stderr,
-				"Applied patch to '%s' cleanly.\n",
+				_("Applied patch to '%s' cleanly.\n"),
 				patch->new_name);
 	}
 	return 0;
