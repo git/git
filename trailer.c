@@ -27,8 +27,8 @@ static struct conf_info default_conf_info;
 struct trailer_item {
 	struct trailer_item *previous;
 	struct trailer_item *next;
-	const char *token;
-	const char *value;
+	char *token;
+	char *value;
 	struct conf_info conf;
 };
 
@@ -95,8 +95,8 @@ static void free_trailer_item(struct trailer_item *item)
 	free(item->conf.name);
 	free(item->conf.key);
 	free(item->conf.command);
-	free((char *)item->token);
-	free((char *)item->value);
+	free(item->token);
+	free(item->value);
 	free(item);
 }
 
@@ -215,13 +215,13 @@ static struct trailer_item *remove_first(struct trailer_item **first)
 	return item;
 }
 
-static const char *apply_command(const char *command, const char *arg)
+static char *apply_command(const char *command, const char *arg)
 {
 	struct strbuf cmd = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *argv[] = {NULL, NULL};
-	const char *result;
+	char *result;
 
 	strbuf_addstr(&cmd, command);
 	if (arg)
@@ -425,7 +425,7 @@ static int set_if_missing(struct conf_info *item, const char *value)
 	return 0;
 }
 
-static void duplicate_conf(struct conf_info *dst, struct conf_info *src)
+static void duplicate_conf(struct conf_info *dst, const struct conf_info *src)
 {
 	*dst = *src;
 	if (src->name)
