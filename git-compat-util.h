@@ -815,8 +815,9 @@ extern FILE *fopen_for_writing(const char *path);
  * times, and it must be assignable as an lvalue.
  */
 #define FLEX_ALLOC_MEM(x, flexname, buf, len) do { \
-	(x) = NULL; /* silence -Wuninitialized for offset calculation */ \
-	(x) = xalloc_flex(sizeof(*(x)), (char *)(&((x)->flexname)) - (char *)(x), (buf), (len)); \
+	size_t flex_array_len_ = (len); \
+	(x) = xcalloc(1, st_add3(sizeof(*(x)), flex_array_len_, 1)); \
+	memcpy((void *)(x)->flexname, (buf), flex_array_len_); \
 } while (0)
 #define FLEXPTR_ALLOC_MEM(x, ptrname, buf, len) do { \
 	(x) = xalloc_flex(sizeof(*(x)), sizeof(*(x)), (buf), (len)); \
