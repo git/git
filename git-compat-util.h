@@ -820,21 +820,15 @@ extern FILE *fopen_for_writing(const char *path);
 	memcpy((void *)(x)->flexname, (buf), flex_array_len_); \
 } while (0)
 #define FLEXPTR_ALLOC_MEM(x, ptrname, buf, len) do { \
-	(x) = xalloc_flex(sizeof(*(x)), sizeof(*(x)), (buf), (len)); \
+	size_t flex_array_len_ = (len); \
+	(x) = xcalloc(1, st_add3(sizeof(*(x)), flex_array_len_, 1)); \
+	memcpy((x) + 1, (buf), flex_array_len_); \
 	(x)->ptrname = (void *)((x)+1); \
 } while(0)
 #define FLEX_ALLOC_STR(x, flexname, str) \
 	FLEX_ALLOC_MEM((x), flexname, (str), strlen(str))
 #define FLEXPTR_ALLOC_STR(x, ptrname, str) \
 	FLEXPTR_ALLOC_MEM((x), ptrname, (str), strlen(str))
-
-static inline void *xalloc_flex(size_t base_len, size_t offset,
-				const void *src, size_t src_len)
-{
-	unsigned char *ret = xcalloc(1, st_add3(base_len, src_len, 1));
-	memcpy(ret + offset, src, src_len);
-	return ret;
-}
 
 static inline char *xstrdup_or_null(const char *str)
 {
