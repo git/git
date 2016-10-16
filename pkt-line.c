@@ -197,6 +197,46 @@ void packet_buf_write(struct strbuf *buf, const char *fmt, ...)
 	va_end(args);
 }
 
+int write_packetized_from_fd(int fd_in, int fd_out)
+{
+	static char buf[LARGE_PACKET_DATA_MAX];
+	int err = 0;
+	ssize_t bytes_to_write;
+
+	while (!err) {
+		bytes_to_write = xread(fd_in, buf, sizeof(buf));
+		if (bytes_to_write < 0)
+			return COPY_READ_ERROR;
+		if (bytes_to_write == 0)
+			break;
+		err = packet_write_gently(fd_out, buf, bytes_to_write);
+	}
+	if (!err)
+		err = packet_flush_gently(fd_out);
+	return err;
+}
+
+int write_packetized_from_buf(const char *src_in, size_t len, int fd_out)
+{
+	int err = 0;
+	size_t bytes_written = 0;
+	size_t bytes_to_write;
+
+	while (!err) {
+		if ((len - bytes_written) > LARGE_PACKET_DATA_MAX)
+			bytes_to_write = LARGE_PACKET_DATA_MAX;
+		else
+			bytes_to_write = len - bytes_written;
+		if (bytes_to_write == 0)
+			break;
+		err = packet_write_gently(fd_out, src_in + bytes_written, bytes_to_write);
+		bytes_written += bytes_to_write;
+	}
+	if (!err)
+		err = packet_flush_gently(fd_out);
+	return err;
+}
+
 static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 			   void *dst, unsigned size, int options)
 {
@@ -286,4 +326,36 @@ char *packet_read_line(int fd, int *len_p)
 char *packet_read_line_buf(char **src, size_t *src_len, int *dst_len)
 {
 	return packet_read_line_generic(-1, src, src_len, dst_len);
+}
+
+ssize_t read_packetized_to_strbuf(int fd_in, struct strbuf *sb_out)
+{
+	int packet_len;
+
+	size_t orig_len = sb_out->len;
+	size_t orig_alloc = sb_out->alloc;
+
+	for (;;) {
+		strbuf_grow(sb_out, LARGE_PACKET_DATA_MAX);
+		packet_len = packet_read(fd_in, NULL, NULL,
+			/* strbuf_grow() above always allocates one extra byte to
+			 * store a '\0' at the end of the string. packet_read()
+			 * writes a '\0' extra byte at the end, too. Let it know
+			 * that there is already room for the extra byte.
+			 */
+			sb_out->buf + sb_out->len, LARGE_PACKET_DATA_MAX+1,
+			PACKET_READ_GENTLE_ON_EOF);
+		if (packet_len <= 0)
+			break;
+		sb_out->len += packet_len;
+	}
+
+	if (packet_len < 0) {
+		if (orig_alloc == 0)
+			strbuf_release(sb_out);
+		else
+			strbuf_setlen(sb_out, orig_len);
+		return packet_len;
+	}
+	return sb_out->len - orig_len;
 }
