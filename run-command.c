@@ -21,6 +21,7 @@ void child_process_clear(struct child_process *child)
 
 struct child_to_clean {
 	pid_t pid;
+	struct child_process *process;
 	struct child_to_clean *next;
 };
 static struct child_to_clean *children_to_clean;
@@ -31,6 +32,18 @@ static void cleanup_children(int sig, int in_signal)
 	while (children_to_clean) {
 		struct child_to_clean *p = children_to_clean;
 		children_to_clean = p->next;
+
+		if (p->process && !in_signal) {
+			struct child_process *process = p->process;
+			if (process->clean_on_exit_handler) {
+				trace_printf(
+					"trace: run_command: running exit handler for pid %"
+					PRIuMAX, (uintmax_t)p->pid
+				);
+				process->clean_on_exit_handler(process);
+			}
+		}
+
 		kill(p->pid, sig);
 		if (!in_signal)
 			free(p);
@@ -49,10 +62,11 @@ static void cleanup_children_on_exit(void)
 	cleanup_children(SIGTERM, 0);
 }
 
-static void mark_child_for_cleanup(pid_t pid)
+static void mark_child_for_cleanup(pid_t pid, struct child_process *process)
 {
 	struct child_to_clean *p = xmalloc(sizeof(*p));
 	p->pid = pid;
+	p->process = process;
 	p->next = children_to_clean;
 	children_to_clean = p;
 
@@ -422,7 +436,7 @@ fail_pipe:
 	if (cmd->pid < 0)
 		error_errno("cannot fork() for %s", cmd->argv[0]);
 	else if (cmd->clean_on_exit)
-		mark_child_for_cleanup(cmd->pid);
+		mark_child_for_cleanup(cmd->pid, cmd);
 
 	/*
 	 * Wait for child's execvp. If the execvp succeeds (or if fork()
@@ -483,7 +497,7 @@ fail_pipe:
 	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
 		error_errno("cannot spawn %s", cmd->argv[0]);
 	if (cmd->clean_on_exit && cmd->pid >= 0)
-		mark_child_for_cleanup(cmd->pid);
+		mark_child_for_cleanup(cmd->pid, cmd);
 
 	argv_array_clear(&nargv);
 	cmd->argv = sargv;
@@ -765,7 +779,7 @@ int start_async(struct async *async)
 		exit(!!async->proc(proc_in, proc_out, async->data));
 	}
 
-	mark_child_for_cleanup(async->pid);
+	mark_child_for_cleanup(async->pid, NULL);
 
 	if (need_in)
 		close(fdin[0]);
