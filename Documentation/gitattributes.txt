@@ -516,7 +516,9 @@ the command pipe on exit. The filter is expected to detect EOF
 and exit gracefully on its own. Git will wait until the filter
 process has stopped.
 
-If you develop your own long running filter
+A long running filter demo implementation can be found in
+`contrib/long-running-filter/example.pl` located in the Git
+core repository. If you develop your own long running filter
 process then the `GIT_TRACE_PACKET` environment variables can be
 very helpful for debugging (see linkgit:git[1]).
 
