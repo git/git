@@ -18,7 +18,8 @@ SYNOPSIS
 		[--exclude-per-directory=<file>]
 		[--exclude-standard]
 		[--error-unmatch] [--with-tree=<tree-ish>]
-		[--full-name] [--abbrev] [--] [<file>...]
+		[--full-name] [--recurse-submodules]
+		[--abbrev] [--] [<file>...]
 
 DESCRIPTION
 -----------
@@ -136,6 +137,10 @@ a space) at the start of each line:
 	outputs paths relative to the current directory.  This
 	option forces paths to be output relative to the project
 	top directory.
+
+--recurse-submodules::
+	Recursively calls ls-files on each submodule in the repository.
+	Currently there is only support for the --cached mode.
 
 --abbrev[=<n>]::
 	Instead of showing the full 40-byte hexadecimal object
