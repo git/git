@@ -202,9 +202,9 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 		strbuf_addf(&o->obuf, "virtual %s\n",
 			merge_remote_util(commit)->name);
 	else {
-		strbuf_addf(&o->obuf, "%s ",
-			find_unique_abbrev(commit->object.oid.hash,
-				DEFAULT_ABBREV));
+		strbuf_add_unique_abbrev(&o->obuf, commit->object.oid.hash,
+					 DEFAULT_ABBREV);
+		strbuf_addch(&o->obuf, ' ');
 		if (parse_commit(commit) != 0)
 			strbuf_addstr(&o->obuf, _("(bad commit)\n"));
 		else {
