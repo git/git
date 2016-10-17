@@ -1353,6 +1353,7 @@ static int files_read_raw_ref(struct ref_store *ref_store,
 	int fd;
 	int ret = -1;
 	int save_errno;
+	int remaining_retries = 3;
 
 	*type = 0;
 	strbuf_reset(&sb_path);
@@ -1373,7 +1374,13 @@ stat_ref:
 	 * <-> symlink) between the lstat() and reading, then
 	 * we don't want to report that as an error but rather
 	 * try again starting with the lstat().
+	 *
+	 * We'll keep a count of the retries, though, just to avoid
+	 * any confusing situation sending us into an infinite loop.
 	 */
+
+	if (remaining_retries-- <= 0)
+		goto out;
 
 	if (lstat(path, &st) < 0) {
 		if (errno != ENOENT)
@@ -1403,6 +1410,11 @@ stat_ref:
 			ret = 0;
 			goto out;
 		}
+		/*
+		 * It doesn't look like a refname; fall through to just
+		 * treating it like a non-symlink, and reading whatever it
+		 * points to.
+		 */
 	}
 
 	/* Is it a directory? */
@@ -1426,7 +1438,7 @@ stat_ref:
 	 */
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		if (errno == ENOENT)
+		if (errno == ENOENT && !S_ISLNK(st.st_mode))
 			/* inconsistent with lstat; retry */
 			goto stat_ref;
 		else
