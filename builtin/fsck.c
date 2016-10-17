@@ -644,14 +644,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		fsck_object_dir(get_object_directory());
 
 		prepare_alt_odb();
-		for (alt = alt_odb_list; alt; alt = alt->next) {
-			/* directory name, minus trailing slash */
-			size_t namelen = alt->name - alt->base - 1;
-			struct strbuf name = STRBUF_INIT;
-			strbuf_add(&name, alt->base, namelen);
-			fsck_object_dir(name.buf);
-			strbuf_release(&name);
-		}
+		for (alt = alt_odb_list; alt; alt = alt->next)
+			fsck_object_dir(alt->path);
 	}
 
 	if (check_full) {

@@ -91,25 +91,18 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 		 * alt->name/alt->base while iterating over the
 		 * object databases including our own.
 		 */
-		const char *objdir = get_object_directory();
-		size_t objdir_len = strlen(objdir);
-		fakeent = xmalloc(st_add3(sizeof(*fakeent), objdir_len, 43));
-		memcpy(fakeent->base, objdir, objdir_len);
-		fakeent->name = fakeent->base + objdir_len + 1;
-		fakeent->name[-1] = '/';
+		fakeent = alloc_alt_odb(get_object_directory());
 	}
 	fakeent->next = alt_odb_list;
 
 	xsnprintf(hex, sizeof(hex), "%.2s", ds->hex_pfx);
 	for (alt = fakeent; alt && !ds->ambiguous; alt = alt->next) {
+		struct strbuf *buf = alt_scratch_buf(alt);
 		struct dirent *de;
 		DIR *dir;
-		/*
-		 * every alt_odb struct has 42 extra bytes after the base
-		 * for exactly this purpose
-		 */
-		xsnprintf(alt->name, 42, "%.2s/", ds->hex_pfx);
-		dir = opendir(alt->base);
+
+		strbuf_addf(buf, "%.2s/", ds->hex_pfx);
+		dir = opendir(buf->buf);
 		if (!dir)
 			continue;
 

@@ -443,6 +443,14 @@ extern int strbuf_getcwd(struct strbuf *sb);
  */
 extern void strbuf_add_absolute_path(struct strbuf *sb, const char *path);
 
+
+/**
+ * Normalize in-place the path contained in the strbuf. See
+ * normalize_path_copy() for details. If an error occurs, the contents of "sb"
+ * are left untouched, and -1 is returned.
+ */
+extern int strbuf_normalize_path(struct strbuf *sb);
+
 /**
  * Strip whitespace from a buffer. The second parameter controls if
  * comments are considered contents to be removed or not.
