@@ -86,6 +86,9 @@ UI, Workflows & Features
    to selectively allow enabling this.
    (merge 26a7b23429 ps/http-gssapi-cred-delegation later to maint).
 
+ * "git mergetool" learned to honor "-O<orderfile>" to control the
+   order of paths to present to the end user.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -142,6 +145,20 @@ Performance, Internal Implementation, Development Support etc.
    the packfiles are now optimized by checking the most-recently-used
    packfile first.
    (merge c9af708b1a jk/pack-objects-optim-mru later to maint).
+
+ * Codepaths involved in interacting alternate object store have
+   been cleaned up.
+
+ * In order for the receiving end of "git push" to inspect the
+   received history and decide to reject the push, the objects sent
+   from the sending end need to be made available to the hook and
+   the mechanism for the connectivity check, and this was done
+   traditionally by storing the objects in the receiving repository
+   and letting "git gc" to expire it.  Instead, store the newly
+   received objects in a temporary area, and make them available by
+   reusing the alternate object store mechanism to them only while we
+   decide if we accept the check, and once we decide, either migrate
+   them to the repository or purge them immediately.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -219,7 +236,6 @@ notes for details).
    include the body of the entire current function up to the header
    line of the next one.  This process may have to merge to adjacent
    hunks, but the code forgot to do so in some cases.
-   (merge 45d2f75 rs/xdiff-merge-overlapping-hunks-for-W-context later to maint).
 
  * Performance tests done via "t/perf" did not use the same set of
    build configuration if the user relied on autoconf generated
@@ -231,7 +247,6 @@ notes for details).
    has been moved above the signature line.
 
  * More i18n.
-   (merge 43073f8 va/i18n later to maint).
 
  * Even when "git pull --rebase=preserve" (and the underlying "git
    rebase --preserve") can complete without creating any new commit
@@ -256,7 +271,7 @@ notes for details).
  * The pretty-format specifier "%C(auto)" used by the "log" family of
    commands to enable coloring of the output is taught to also issue a
    color-reset sequence to the output.
-   (merge c99ad27 rs/c-auto-resets-attributes later to maint).
+   (merge 82b83da8d3 rs/c-auto-resets-attributes later to maint).
 
  * A shell script example in check-ref-format documentation has been
    fixed.
@@ -273,7 +288,7 @@ notes for details).
    beyond the end of the mapped region.  This was fixed by introducing
    a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
    extension.
-   (merge b7d36ff js/regexec-buf later to maint).
+   (merge 842a516cb0 js/regexec-buf later to maint).
 
  * The procedure to build Git on Mac OS X for Travis CI hardcoded the
    internal directory structure we assumed HomeBrew uses, which was a
@@ -292,7 +307,6 @@ notes for details).
  * A low-level function verify_packfile() was meant to show errors
    that were detected without dying itself, but under some conditions
    it didn't and died instead, which has been fixed.
-   (merge a9445d859e jk/verify-packfile-gently later to maint).
 
  * When "git fetch" tries to find where the history of the repository
    it runs in has diverged from what the other side has, it has a
@@ -309,7 +323,6 @@ notes for details).
    ought to be affected by core.abbrev configuration variable, ignored
    the variable setting.  The command has been taught to read the
    default set of configuration variables to correct this.
-   (merge d49028e6e7 jc/worktree-config later to maint).
 
  * "git init" tried to record core.worktree in the repository's
    'config' file when GIT_WORK_TREE environment variable was set and
@@ -322,36 +335,29 @@ notes for details).
    validating what they are reading is a proper object file and
    sometimes read past the data they read from the disk, which has
    been corrected.  H/t to Gustavo Grieco for reporting.
-   (merge d21f842690 jc/verify-loose-object-header later to maint).
 
  * The original command line syntax for "git merge", which was "git
    merge <msg> HEAD <parent>...", has been deprecated for quite some
    time, and "git gui" was the last in-tree user of the syntax.  This
    is finally fixed, so that we can move forward with the deprecation.
-   (merge ff65e796f0 rs/git-gui-use-modern-git-merge-syntax later to maint).
 
  * An author name, that spelled a backslash-quoted double quote in the
    human readable part "My \"double quoted\" name", was not unquoted
    correctly while applying a patch from a piece of e-mail.
-   (merge f357e5de31 kd/mailinfo-quoted-string later to maint).
 
  * Doc update to clarify what "log -3 --reverse" does.
-   (merge 04be69478f pb/rev-list-reverse-with-count later to maint).
 
  * Almost everybody uses DEFAULT_ABBREV to refer to the default
    setting for the abbreviation, but "git blame" peeked into
    underlying variable bypassing the macro for no good reason.
-   (merge 5293284b4d jc/blame-abbrev later to maint).
 
  * The "graph" API used in "git log --graph" miscounted the number of
    output columns consumed so far when drawing a padding line, which
    has been fixed; this did not affect any existing code as nobody
    tried to write anything after the padding on such a line, though.
-   (merge 1647793524 jk/graph-padding-fix later to maint).
 
  * The code that parses the format parameter of for-each-ref command
    has seen a micro-optimization.
-   (merge e94ce1394e sg/ref-filter-parse-optim later to maint).
 
  * When we started cURL to talk to imap server when a new enough
    version of cURL library is available, we forgot to explicitly add
@@ -383,7 +389,34 @@ notes for details).
    commit.
    (merge e1d09701a4 jc/blame-reverse later to maint).
 
+ * http.emptyauth configuration is a way to allow an empty username to
+   pass when attempting to authenticate using mechanisms like
+   Kerberos.  We took an unspecified (NULL) username and sent ":"
+   (i.e. no username, no password) to CURLOPT_USERPWD, but did not do
+   the same when the username is explicitly set to an empty string.
+   (merge 5275c3081c dt/http-empty-auth later to maint).
+
+ * "git clone" of a local repository can be done at the filesystem
+   level, but the codepath did not check errors while copying and
+   adjusting the file that lists alternate object stores.
+   (merge 22d3b8de1b jk/clone-copy-alternates-fix later to maint).
+
+ * Documentation for "git commit" was updated to clarify that "commit
+   -p <paths>" adds to the current contents of the index to come up
+   with what to commit.
+   (merge 7431596ab1 nd/commit-p-doc later to maint).
+
+ * A stray symbolic link in $GIT_DIR/refs/ directory could make name
+   resolution loop forever, which has been corrected.
+   (merge e8c42cb9ce jk/ref-symlink-loop later to maint).
+
+ * The "submodule.<name>.path" stored in .gitmodules is never copied
+   to .git/config and such a key in .git/config has no meaning, but
+   the documentation described it and submodule.<name>.url next to
+   each other as if both belong to .git/config.  This has been fixed.
+   (merge 72710165c9 sb/submodule-config-doc-drop-path later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
-   (merge a22ae75 rs/cocci later to maint).
-   (merge 45ccef87b3 rs/copy-array later to maint).
-   (merge 8201688ecd dt/mailinfo later to maint).
+   (merge a94bb68397 rs/cocci later to maint).
+   (merge 641c900b2c js/reset-usage later to maint).
+   (merge 30cfe72d37 rs/pretty-format-color-doc-fix later to maint).
