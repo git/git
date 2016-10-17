@@ -63,6 +63,7 @@ int check_connected(sha1_iterate_fn fn, void *cb_data,
 				 _("Checking connectivity"));
 
 	rev_list.git_cmd = 1;
+	rev_list.env = opt->env;
 	rev_list.in = -1;
 	rev_list.no_stdout = 1;
 	if (opt->err_fd)
