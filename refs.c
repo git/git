@@ -816,8 +816,7 @@ struct ref_update *ref_transaction_add_update(
 		hashcpy(update->new_sha1, new_sha1);
 	if (flags & REF_HAVE_OLD)
 		hashcpy(update->old_sha1, old_sha1);
-	if (msg)
-		update->msg = xstrdup(msg);
+	update->msg = xstrdup_or_null(msg);
 	return update;
 }
 
