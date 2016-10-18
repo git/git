@@ -888,11 +888,11 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-static int remove_redundant(struct commit **array, int cnt)
+static void mark_redundant(struct commit **array, int cnt)
 {
 	/*
 	 * Some commit in the array may be an ancestor of
-	 * another commit.  Move such commit to the end of
+	 * another commit.  Mark such commit as STALE in
 	 * the array, and return the number of commits that
 	 * are independent from each other.
 	 */
@@ -930,18 +930,16 @@ static int remove_redundant(struct commit **array, int cnt)
 		free_commit_list(common);
 	}
 
-	/* Now collect the result */
-	COPY_ARRAY(work, array, cnt);
-	for (i = filled = 0; i < cnt; i++)
-		if (!redundant[i])
-			array[filled++] = work[i];
-	for (j = filled, i = 0; i < cnt; i++)
+	/* Mark the result */
+	for (i = 0; i < cnt; i++)
 		if (redundant[i])
-			array[j++] = work[i];
+			array[i]->object.flags |= STALE;
+		else
+			array[i]->object.flags &= ~STALE;
+
 	free(work);
 	free(redundant);
 	free(filled_index);
-	return filled;
 }
 
 static struct commit_list *get_merge_bases_many_0(struct commit *one,
@@ -984,10 +982,13 @@ static struct commit_list *get_merge_bases_many_0(struct commit *one,
 	clear_commit_marks(one, all_flags);
 	clear_commit_marks_many(n, twos, all_flags);
 
-	cnt = remove_redundant(rslt, cnt);
+	mark_redundant(rslt, cnt);
 	result = NULL;
 	for (i = 0; i < cnt; i++)
-		commit_list_insert_by_date(rslt[i], &result);
+		if (!(rslt[i]->object.flags & STALE))
+			commit_list_insert_by_date(rslt[i], &result);
+		else
+			rslt[i]->object.flags &= ~STALE;
 	free(rslt);
 	return result;
 }
@@ -1086,9 +1087,12 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 			p->item->object.flags &= ~STALE;
 		}
 	}
-	num_head = remove_redundant(array, num_head);
+	mark_redundant(array, num_head);
 	for (i = 0; i < num_head; i++)
-		tail = &commit_list_insert(array[i], tail)->next;
+		if (!(array[i]->object.flags & STALE))
+			tail = &commit_list_insert(array[i], tail)->next;
+		else
+			array[i]->object.flags &= ~STALE;
 	return result;
 }
 
