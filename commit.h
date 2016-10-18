@@ -254,6 +254,7 @@ extern struct commit_list *get_merge_bases_many(struct commit *one, int n, struc
 extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 
 #define MB_POSTCLEAN 01
+#define MB_FPCHAIN 02
 extern struct commit_list *get_merge_bases_opt(struct commit *one, int n, struct commit **twos, unsigned flags);
 
 #define get_merge_bases_many_dirty(one, n, twos) get_merge_bases_opt((one),(n),(twos),MB_POSTCLEAN)

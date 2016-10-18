@@ -765,8 +765,9 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 #define PARENT2		(1u<<17)
 #define STALE		(1u<<18)
 #define RESULT		(1u<<19)
+#define FPCHAIN		(1u<<20)
 
-static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
+static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT | FPCHAIN);
 
 static int queue_has_nonstale(struct prio_queue *queue)
 {
@@ -802,6 +803,7 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n, struc
 		struct commit *commit = prio_queue_get(&queue);
 		struct commit_list *parents;
 		int flags;
+		int nth_parent = 0;
 
 		flags = commit->object.flags & (PARENT1 | PARENT2 | STALE);
 		if (flags == (PARENT1 | PARENT2)) {
@@ -816,11 +818,14 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n, struc
 		while (parents) {
 			struct commit *p = parents->item;
 			parents = parents->next;
+			nth_parent++;
 			if ((p->object.flags & flags) == flags)
 				continue;
 			if (parse_commit(p))
 				return NULL;
 			p->object.flags |= flags;
+			if (nth_parent == 1)
+				p->object.flags |= FPCHAIN;
 			prio_queue_put(&queue, p);
 		}
 	}
@@ -951,6 +956,8 @@ struct commit_list *get_merge_bases_opt(struct commit *one,
 	struct commit_list *result;
 	int cnt, i;
 	int cleanup = !!(flags & MB_POSTCLEAN);
+	int fpchain = !!(flags & MB_FPCHAIN);
+	char *on_fpchain;
 
 	result = merge_bases_many(one, n, twos);
 
@@ -975,9 +982,13 @@ struct commit_list *get_merge_bases_opt(struct commit *one,
 	/* There are more than one */
 	cnt = commit_list_count(result);
 	rslt = xcalloc(cnt, sizeof(*rslt));
+	on_fpchain = xcalloc(cnt, sizeof(*on_fpchain));
 	for (list = result, i = 0; list; list = list->next)
 		rslt[i++] = list->item;
 	free_commit_list(result);
+
+	for (i = 0; i < cnt; i++)
+		on_fpchain[i] = !!(rslt[i]->object.flags & FPCHAIN);
 
 	clear_commit_marks(one, all_flags);
 	clear_commit_marks_many(n, twos, all_flags);
@@ -985,11 +996,13 @@ struct commit_list *get_merge_bases_opt(struct commit *one,
 	mark_redundant(rslt, cnt);
 	result = NULL;
 	for (i = 0; i < cnt; i++)
-		if (!(rslt[i]->object.flags & STALE))
+		if (!(rslt[i]->object.flags & STALE) &&
+		    (!fpchain || on_fpchain[i]))
 			commit_list_insert_by_date(rslt[i], &result);
 		else
 			rslt[i]->object.flags &= ~STALE;
 	free(rslt);
+	free(on_fpchain);
 	return result;
 }
 
