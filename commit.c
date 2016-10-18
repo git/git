@@ -955,10 +955,17 @@ static struct commit_list *get_merge_bases_many_0(struct commit *one,
 	int cnt, i;
 
 	result = merge_bases_many(one, n, twos);
-	for (i = 0; i < n; i++) {
-		if (one == twos[i])
-			return result;
-	}
+
+	/*
+	 * The fast-path of 'one' being the merge-base; there is no
+	 * need to clean the object flags in this case.
+	 */
+	if (result && !result->next &&
+	    result->item == one &&
+	    !(one->object.flags & RESULT))
+		return result;
+
+	/* If we didn't get any, or there is only one, we are done */
 	if (!result || !result->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
