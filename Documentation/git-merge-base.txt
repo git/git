@@ -9,7 +9,7 @@ git-merge-base - Find as good common ancestors as possible for a merge
 SYNOPSIS
 --------
 [verse]
-'git merge-base' [-a|--all] <commit> <commit>...
+'git merge-base' [-a|--all] [--fp-only] <commit> <commit>...
 'git merge-base' [-a|--all] --octopus <commit>...
 'git merge-base' --is-ancestor <commit> <commit>
 'git merge-base' --independent <commit>...
@@ -71,6 +71,12 @@ OPTIONS
 -a::
 --all::
 	Output all merge bases for the commits, instead of just one.
+
+--fp-only::
+	Limit the output to merge bases that are on the first-parent
+	chain from none of the commits given on the command line.
+
+
 
 DISCUSSION
 ----------
