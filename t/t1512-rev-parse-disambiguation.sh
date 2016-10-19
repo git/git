@@ -42,7 +42,7 @@ test_expect_success 'blob and tree' '
 
 test_expect_success 'warn ambiguity when no candidate matches type hint' '
 	test_must_fail git rev-parse --verify 000000000^{commit} 2>actual &&
-	grep "short SHA1 000000000 is ambiguous" actual
+	test_i18ngrep "short SHA1 000000000 is ambiguous" actual
 '
 
 test_expect_success 'disambiguate tree-ish' '
