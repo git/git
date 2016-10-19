@@ -29,6 +29,10 @@ my ($fraginfo_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.frag', 'cyan'),
 	) : ();
+my ($funcname_color) =
+	$diff_use_color ? (
+		$repo->get_color('color.diff.func', ''),
+	) : ();
 my ($diff_plain_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.plain', ''),
@@ -792,11 +796,11 @@ sub hunk_splittable {
 
 sub parse_hunk_header {
 	my ($line) = @_;
-	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-	    $line =~ /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
+	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt, $heading) =
+	    $line =~ /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)/;
 	$o_cnt = 1 unless defined $o_cnt;
 	$n_cnt = 1 unless defined $n_cnt;
-	return ($o_ofs, $o_cnt, $n_ofs, $n_cnt);
+	return ($o_ofs, $o_cnt, $n_ofs, $n_cnt, $heading);
 }
 
 sub split_hunk {
@@ -808,8 +812,7 @@ sub split_hunk {
 	# If there are context lines in the middle of a hunk,
 	# it can be split, but we would need to take care of
 	# overlaps later.
-
-	my ($o_ofs, undef, $n_ofs) = parse_hunk_header($text->[0]);
+	my ($o_ofs, undef, $n_ofs, undef, $heading) = parse_hunk_header($text->[0]);
 	my $hunk_start = 1;
 
       OUTER:
@@ -886,17 +889,26 @@ sub split_hunk {
 		my $o_cnt = $hunk->{OCNT};
 		my $n_cnt = $hunk->{NCNT};
 
-		my $head = ("@@ -$o_ofs" .
-			    (($o_cnt != 1) ? ",$o_cnt" : '') .
-			    " +$n_ofs" .
-			    (($n_cnt != 1) ? ",$n_cnt" : '') .
-			    " @@\n");
-		my $display_head = $head;
-		unshift @{$hunk->{TEXT}}, $head;
-		if ($diff_use_color) {
-			$display_head = colored($fraginfo_color, $head);
-		}
-		unshift @{$hunk->{DISPLAY}}, $display_head;
+		my $fraginfo = join(
+			"",
+			"@@ -$o_ofs",
+			(($o_cnt != 1) ? ",$o_cnt" : ''),
+			" +$n_ofs",
+			(($n_cnt != 1) ? ",$n_cnt" : ''),
+			" @@"
+		);
+		unshift @{$hunk->{TEXT}}, join(
+			"",
+			$fraginfo,
+			$heading,
+			"\n"
+		);
+		unshift @{$hunk->{DISPLAY}}, join(
+			"",
+			$diff_use_color ? colored($fraginfo_color, $fraginfo) : $fraginfo,
+			$diff_use_color ? colored($funcname_color, $heading) : $heading,
+			"\n"
+		);
 	}
 	return @split;
 }

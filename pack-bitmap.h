@@ -5,11 +5,43 @@
 #include "khash.h"
 #include "pack-objects.h"
 
-struct bitmap_disk_entry {
-	uint32_t object_pos;
-	uint8_t xor_offset;
-	uint8_t flags;
-} __attribute__((packed));
+/*
+ * This is the equivalent of:
+ *
+ *	uint32_t object_pos;
+ *	uint8_t xor_offset;
+ *	uint8_t flags;
+ *
+ * but due to the funny sizing, we cannot rely on the compiler to give us the
+ * exact struct packing we want. So let's treat it as an array and just provide
+ * a few helpers for accessing the components.
+ */
+#define BITMAP_DISK_ENTRY_LEN 6
+
+static inline void bitmap_disk_entry_create(unsigned char *on_disk,
+					    uint32_t object_pos,
+					    uint8_t xor_offset,
+					    uint8_t flags)
+{
+	put_be32(on_disk, object_pos);
+	on_disk[4] = xor_offset;
+	on_disk[5] = flags;
+}
+
+static inline uint32_t bitmap_disk_entry_object_pos(unsigned char *on_disk)
+{
+	return get_be32(on_disk);
+}
+
+static inline uint8_t bitmap_disk_entry_xor_offset(unsigned char *on_disk)
+{
+	return on_disk[4];
+}
+
+static inline uint8_t bitmap_disk_entry_flags(unsigned char *on_disk)
+{
+	return on_disk[5];
+}
 
 struct bitmap_disk_header {
 	char magic[4];

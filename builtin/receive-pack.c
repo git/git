@@ -26,7 +26,8 @@ enum deny_action {
 	DENY_UNCONFIGURED,
 	DENY_IGNORE,
 	DENY_WARN,
-	DENY_REFUSE
+	DENY_REFUSE,
+	DENY_UPDATE_INSTEAD
 };
 
 static int deny_deletes;
@@ -40,6 +41,7 @@ static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
 static int use_sideband;
+static int use_atomic_push;
 static int quiet;
 static int prefer_ofs_delta = 1;
 static int auto_update_server_info;
@@ -66,6 +68,8 @@ static const char *NONCE_SLOP = "SLOP";
 static const char *nonce_status;
 static long nonce_stamp_slop;
 static unsigned long nonce_stamp_slop_limit;
+struct strbuf err = STRBUF_INIT;
+struct transaction *transaction;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
@@ -76,6 +80,8 @@ static enum deny_action parse_deny_action(const char *var, const char *value)
 			return DENY_WARN;
 		if (!strcasecmp(value, "refuse"))
 			return DENY_REFUSE;
+		if (!strcasecmp(value, "updateinstead"))
+			return DENY_UPDATE_INSTEAD;
 	}
 	if (git_config_bool(var, value))
 		return DENY_REFUSE;
@@ -171,7 +177,8 @@ static void show_ref(const char *path, const unsigned char *sha1)
 		struct strbuf cap = STRBUF_INIT;
 
 		strbuf_addstr(&cap,
-			      "report-status delete-refs side-band-64k quiet");
+			      "report-status delete-refs side-band-64k quiet "
+			      "atomic-push");
 		if (prefer_ofs_delta)
 			strbuf_addstr(&cap, " ofs-delta");
 		if (push_cert_nonce)
@@ -289,6 +296,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 }
 
 #define HMAC_BLOCK_SIZE 64
+#define HMAC_TRUNCATE 10 /* in bytes */
 
 static void hmac_sha1(unsigned char *out,
 		      const char *key_in, size_t key_len,
@@ -325,21 +333,23 @@ static void hmac_sha1(unsigned char *out,
 	/* RFC 2104 2. (6) & (7) */
 	git_SHA1_Init(&ctx);
 	git_SHA1_Update(&ctx, k_opad, sizeof(k_opad));
-	git_SHA1_Update(&ctx, out, 20);
+	git_SHA1_Update(&ctx, out, HMAC_TRUNCATE);
 	git_SHA1_Final(out, &ctx);
 }
 
 static char *prepare_push_cert_nonce(const char *path, unsigned long stamp)
 {
 	struct strbuf buf = STRBUF_INIT;
-	unsigned char sha1[20];
+	unsigned char hmac[HMAC_TRUNCATE];
+	char hmac_trunc[HMAC_TRUNCATE * 2 + 1];
 
 	strbuf_addf(&buf, "%s:%lu", path, stamp);
-	hmac_sha1(sha1, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));;
+	hmac_sha1(hmac, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));;
 	strbuf_release(&buf);
 
 	/* RFC 2104 5. HMAC-SHA1-80 */
-	strbuf_addf(&buf, "%lu-%.*s", stamp, 20, sha1_to_hex(sha1));
+	bin_to_hex(hmac, HMAC_TRUNCATE, hmac_trunc);
+	strbuf_addf(&buf, "%lu-%s", stamp, hmac_trunc);
 	return strbuf_detach(&buf, NULL);
 }
 
@@ -431,7 +441,7 @@ static const char *check_nonce(const char *buf, size_t len)
 	nonce_stamp_slop = (long)ostamp - (long)stamp;
 
 	if (nonce_stamp_slop_limit &&
-	    abs(nonce_stamp_slop) <= nonce_stamp_slop_limit) {
+	    labs(nonce_stamp_slop) <= nonce_stamp_slop_limit) {
 		/*
 		 * Pretend as if the received nonce (which passes the
 		 * HMAC check, so it is not a forged by third-party)
@@ -730,11 +740,74 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	return 0;
 }
 
+static const char *update_worktree(unsigned char *sha1)
+{
+	const char *update_refresh[] = {
+		"update-index", "--ignore-submodules", "--refresh", NULL
+	};
+	const char *diff_index[] = {
+		"diff-index", "--quiet", "--cached", "--ignore-submodules",
+		"HEAD", "--", NULL
+	};
+	const char *read_tree[] = {
+		"read-tree", "-u", "-m", sha1_to_hex(sha1), NULL
+	};
+	const char *work_tree = git_work_tree_cfg ? git_work_tree_cfg : "..";
+	struct argv_array env = ARGV_ARRAY_INIT;
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	if (is_bare_repository())
+		return "denyCurrentBranch = updateInstead needs a worktree";
+
+	argv_array_pushf(&env, "GIT_DIR=%s", absolute_path(get_git_dir()));
+
+	child.argv = update_refresh;
+	child.env = env.argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.stdout_to_stderr = 1;
+	child.git_cmd = 1;
+	if (run_command(&child)) {
+		argv_array_clear(&env);
+		return "Up-to-date check failed";
+	}
+
+	/* run_command() does not clean up completely; reinitialize */
+	child_process_init(&child);
+	child.argv = diff_index;
+	child.env = env.argv;
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.stdout_to_stderr = 0;
+	child.git_cmd = 1;
+	if (run_command(&child)) {
+		argv_array_clear(&env);
+		return "Working directory not clean";
+	}
+
+	/* run_command() does not clean up completely; reinitialize */
+	child_process_init(&child);
+	child.argv = read_tree;
+	child.env = env.argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.stdout_to_stderr = 0;
+	child.git_cmd = 1;
+	if (run_command(&child)) {
+		argv_array_clear(&env);
+		return "Could not update working tree to new HEAD";
+	}
+
+	argv_array_clear(&env);
+	return NULL;
+}
+
 static const char *update(struct command *cmd, struct shallow_info *si)
 {
 	const char *name = cmd->ref_name;
 	struct strbuf namespaced_name_buf = STRBUF_INIT;
-	const char *namespaced_name;
+	const char *namespaced_name, *ret;
 	unsigned char *old_sha1 = cmd->old_sha1;
 	unsigned char *new_sha1 = cmd->new_sha1;
 
@@ -760,6 +833,11 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			if (deny_current_branch == DENY_UNCONFIGURED)
 				refuse_unconfigured_deny();
 			return "branch is currently checked out";
+		case DENY_UPDATE_INSTEAD:
+			ret = update_worktree(new_sha1);
+			if (ret)
+				return ret;
+			break;
 		}
 	}
 
@@ -784,10 +862,13 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				break;
 			case DENY_REFUSE:
 			case DENY_UNCONFIGURED:
+			case DENY_UPDATE_INSTEAD:
 				if (deny_delete_current == DENY_UNCONFIGURED)
 					refuse_unconfigured_deny_delete_current();
 				rp_error("refusing to delete the current branch: %s", name);
 				return "deletion of the current branch prohibited";
+			default:
+				return "Invalid denyDeleteCurrent setting";
 			}
 		}
 	}
@@ -830,34 +911,55 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				cmd->did_not_exist = 1;
 			}
 		}
-		if (delete_ref(namespaced_name, old_sha1, 0)) {
-			rp_error("failed to delete %s", name);
-			return "failed to delete";
+		if (!use_atomic_push) {
+			if (delete_ref(namespaced_name, old_sha1, 0)) {
+				rp_error("failed to delete %s", name);
+				return "failed to delete";
+			}
+		} else {
+			if (transaction_delete_ref(transaction,
+						   namespaced_name,
+						   old_sha1,
+						   0, old_sha1 != NULL,
+						   "push", &err)) {
+				rp_error("%s", err.buf);
+				strbuf_release(&err);
+				return "failed to delete";
+			}
 		}
 		return NULL; /* good */
 	}
 	else {
-		struct strbuf err = STRBUF_INIT;
-		struct ref_transaction *transaction;
-
 		if (shallow_update && si->shallow_ref[cmd->index] &&
 		    update_shallow_ref(cmd, si))
 			return "shallow error";
 
-		transaction = ref_transaction_begin(&err);
-		if (!transaction ||
-		    ref_transaction_update(transaction, namespaced_name,
-					   new_sha1, old_sha1, 0, 1, "push",
-					   &err) ||
-		    ref_transaction_commit(transaction, &err)) {
-			ref_transaction_free(transaction);
-
+		if (!use_atomic_push) {
+			transaction = transaction_begin(&err);
+			if (!transaction) {
+				rp_error("%s", err.buf);
+				strbuf_release(&err);
+				return "failed to start transaction";
+			}
+		}
+		if (transaction_update_ref(transaction,
+					   namespaced_name,
+					   new_sha1, old_sha1,
+					   0, 1, "push",
+					   &err)) {
 			rp_error("%s", err.buf);
 			strbuf_release(&err);
 			return "failed to update ref";
 		}
-
-		ref_transaction_free(transaction);
+		if (!use_atomic_push) {
+			if (transaction_commit(transaction, &err)) {
+				transaction_free(transaction);
+				rp_error("%s", err.buf);
+				strbuf_release(&err);
+				return "failed to update ref";
+			}
+			transaction_free(transaction);
+		}
 		strbuf_release(&err);
 		return NULL; /* good */
 	}
@@ -1057,6 +1159,16 @@ static void execute_commands(struct command *commands,
 		return;
 	}
 
+	if (use_atomic_push) {
+		transaction = transaction_begin(&err);
+		if (!transaction) {
+			error("%s", err.buf);
+			strbuf_release(&err);
+			for (cmd = commands; cmd; cmd = cmd->next)
+				cmd->error_string = "transaction error";
+			return;
+		}
+	}
 	data.cmds = commands;
 	data.si = si;
 	if (check_everything_connected(iterate_receive_command_list, 0, &data))
@@ -1094,6 +1206,14 @@ static void execute_commands(struct command *commands,
 		}
 	}
 
+	if (use_atomic_push) {
+		if (transaction_commit(transaction, &err)) {
+			rp_error("%s", err.buf);
+			for (cmd = commands; cmd; cmd = cmd->next)
+				cmd->error_string = err.buf;
+		}
+		transaction_free(transaction);
+	}
 	if (shallow_update && !checked_connectivity)
 		error("BUG: run 'git fsck' for safety.\n"
 		      "If there are errors, try to remove "
@@ -1179,6 +1299,8 @@ static struct command *read_head_info(struct sha1_array *shallow)
 				use_sideband = LARGE_PACKET_MAX;
 			if (parse_feature_request(feature_list, "quiet"))
 				quiet = 1;
+			if (parse_feature_request(feature_list, "atomic-push"))
+				use_atomic_push = 1;
 		}
 
 		if (!strcmp(line, "push-cert")) {
@@ -1539,5 +1661,6 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	sha1_array_clear(&shallow);
 	sha1_array_clear(&ref);
 	free((void *)push_cert_nonce);
+	strbuf_release(&err);
 	return 0;
 }

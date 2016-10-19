@@ -593,7 +593,7 @@ test_expect_success 'push updates up-to-date local refs' '
 
 test_expect_success 'push preserves up-to-date packed refs' '
 
-	mk_test testrepo heads/master &&
+	mk_test testrepo heads/master heads/foo heads/bar &&
 	mk_child testrepo child &&
 	(
 		cd child &&
@@ -1327,6 +1327,23 @@ test_expect_success 'fetch into bare respects core.logallrefupdates' '
 		echo "two@{0} fetch .. master:two: storing head" >expect &&
 		git log -g --format="%gd %gs" two >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'receive.denyCurrentBranch = updateInstead' '
+	git push testrepo master &&
+	(cd testrepo &&
+		git reset --hard &&
+		git config receive.denyCurrentBranch updateInstead
+	) &&
+	test_commit third path2 &&
+	git push testrepo master &&
+	test $(git rev-parse HEAD) = $(cd testrepo && git rev-parse HEAD) &&
+	test third = "$(cat testrepo/path2)" &&
+	(cd testrepo &&
+		git update-index --refresh &&
+		git diff-files --quiet &&
+		git diff-index --cached HEAD --
 	)
 '
 

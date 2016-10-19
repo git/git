@@ -10,7 +10,7 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 {
 	struct commit_list *result;
 
-	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1, 0);
+	result = get_merge_bases_many_dirty(rev[0], rev_nr - 1, rev + 1);
 
 	if (!result)
 		return 1;
@@ -176,7 +176,7 @@ static int handle_fork_point(int argc, const char **argv)
 	for (i = 0; i < revs.nr; i++)
 		revs.commit[i]->object.flags &= ~TMP_MARK;
 
-	bases = get_merge_bases_many(derived, revs.nr, revs.commit, 0);
+	bases = get_merge_bases_many_dirty(derived, revs.nr, revs.commit);
 
 	/*
 	 * There should be one and only one merge base, when we found

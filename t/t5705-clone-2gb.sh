@@ -46,7 +46,7 @@ test_expect_success CLONE_2GB 'clone - bare' '
 
 test_expect_success CLONE_2GB 'clone - with worktree, file:// protocol' '
 
-	git clone file://. clone-wt
+	git clone "file://$(pwd)" clone-wt
 
 '
 

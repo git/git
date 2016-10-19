@@ -1548,8 +1548,11 @@ sub to_utf8 {
 sub esc_param {
 	my $str = shift;
 	return undef unless defined $str;
+
+	$str = to_utf8($str);
 	$str =~ s/([^A-Za-z0-9\-_.~()\/:@ ]+)/CGI::escape($1)/eg;
 	$str =~ s/ /\+/g;
+
 	return $str;
 }
 
@@ -1558,6 +1561,7 @@ sub esc_path_info {
 	my $str = shift;
 	return undef unless defined $str;
 
+	$str = to_utf8($str);
 	# path_info doesn't treat '+' as space (specially), but '?' must be escaped
 	$str =~ s/([^A-Za-z0-9\-_.~();\/;:@&= +]+)/CGI::escape($1)/eg;
 
@@ -1568,8 +1572,11 @@ sub esc_path_info {
 sub esc_url {
 	my $str = shift;
 	return undef unless defined $str;
+
+	$str = to_utf8($str);
 	$str =~ s/([^A-Za-z0-9\-_.~();\/;?:@&= ]+)/CGI::escape($1)/eg;
 	$str =~ s/ /\+/g;
+
 	return $str;
 }
 

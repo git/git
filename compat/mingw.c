@@ -312,7 +312,7 @@ int mingw_open (const char *filename, int oflags, ...)
 		return -1;
 	fd = _wopen(wfilename, oflags, mode);
 
-	if (fd < 0 && (oflags & O_CREAT) && errno == EACCES) {
+	if (fd < 0 && (oflags & O_ACCMODE) != O_RDONLY && errno == EACCES) {
 		DWORD attrs = GetFileAttributesW(wfilename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
 			errno = EISDIR;

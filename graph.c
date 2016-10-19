@@ -397,8 +397,7 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 	graph->num_new_columns++;
 }
 
-static void graph_update_width(struct git_graph *graph,
-			       int is_commit_in_existing_columns)
+static void graph_update_width(struct git_graph *graph)
 {
 	/*
 	 * Compute the width needed to display the graph for this commit.
@@ -421,10 +420,10 @@ static void graph_update_width(struct git_graph *graph,
 	/*
 	 * We added a column for the current commit as part of
 	 * graph->num_parents.  If the current commit was already in
-	 * graph->columns, then we have double counted it.
+	 * graph->columns, then we have double counted it.  If it
+	 * was not, we have added it in graph_update_columns().
 	 */
-	if (is_commit_in_existing_columns)
-		max_cols--;
+	max_cols--;
 
 	/*
 	 * Each column takes up 2 spaces
@@ -438,7 +437,7 @@ static void graph_update_columns(struct git_graph *graph)
 	struct column *tmp_columns;
 	int max_new_columns;
 	int mapping_idx;
-	int i, seen_this, is_commit_in_columns;
+	int i;
 
 	/*
 	 * Swap graph->columns with graph->new_columns
@@ -461,9 +460,10 @@ static void graph_update_columns(struct git_graph *graph)
 	 *
 	 * First, make sure we have enough room.  At most, there will
 	 * be graph->num_columns + graph->num_parents columns for the next
-	 * commit.
+	 * commit, and we add one to make sure we can add the current commit
+	 * on the graph->columns[] if we haven't shown any of its descendants.
 	 */
-	max_new_columns = graph->num_columns + graph->num_parents;
+	max_new_columns = graph->num_columns + graph->num_parents + 1;
 	graph_ensure_capacity(graph, max_new_columns);
 
 	/*
@@ -474,6 +474,23 @@ static void graph_update_columns(struct git_graph *graph)
 		graph->mapping[i] = -1;
 
 	/*
+	 * This commit will not be in graph->columns[] if we have
+	 * emitted no descendant of it so far.
+	 */
+	for (i = 0; i < graph->num_columns; i++)
+		if (graph->commit == graph->columns[i].commit)
+			break;
+	if (i == graph->num_columns) {
+		/* Append it at the end */
+		graph->columns[graph->num_columns].commit = graph->commit;
+		if (graph->num_columns)
+			graph_increment_column_color(graph);
+		graph->columns[graph->num_columns].color =
+			graph_find_commit_color(graph, graph->commit);
+		graph->num_columns++;
+	}
+
+	/*
 	 * Populate graph->new_columns and graph->mapping
 	 *
 	 * Some of the parents of this commit may already be in
@@ -482,36 +499,23 @@ static void graph_update_columns(struct git_graph *graph)
 	 * contain information about where each current branch line is
 	 * supposed to end up after the collapsing is performed.
 	 */
-	seen_this = 0;
 	mapping_idx = 0;
-	is_commit_in_columns = 1;
-	for (i = 0; i <= graph->num_columns; i++) {
+	for (i = 0; i < graph->num_columns; i++) {
 		struct commit *col_commit;
-		if (i == graph->num_columns) {
-			if (seen_this)
-				break;
-			is_commit_in_columns = 0;
-			col_commit = graph->commit;
-		} else {
-			col_commit = graph->columns[i].commit;
-		}
+		col_commit = graph->columns[i].commit;
 
 		if (col_commit == graph->commit) {
 			int old_mapping_idx = mapping_idx;
-			seen_this = 1;
 			graph->commit_index = i;
 			for (parent = first_interesting_parent(graph);
 			     parent;
 			     parent = next_interesting_parent(graph, parent)) {
 				/*
-				 * If this is a merge, or the start of a new
-				 * childless column, increment the current
+				 * If this is a merge, increment the current
 				 * color.
 				 */
-				if (graph->num_parents > 1 ||
-				    !is_commit_in_columns) {
+				if (graph->num_parents > 1)
 					graph_increment_column_color(graph);
-				}
 				graph_insert_into_new_columns(graph,
 							      parent->item,
 							      &mapping_idx);
@@ -540,7 +544,7 @@ static void graph_update_columns(struct git_graph *graph)
 	/*
 	 * Compute graph->width for this commit
 	 */
-	graph_update_width(graph, is_commit_in_columns);
+	graph_update_width(graph);
 }
 
 void graph_update(struct git_graph *graph, struct commit *commit)
@@ -809,24 +813,17 @@ static void graph_output_commit_line(struct git_graph *graph, struct strbuf *sb)
 	int i, chars_written;
 
 	/*
-	 * Output the row containing this commit
-	 * Iterate up to and including graph->num_columns,
-	 * since the current commit may not be in any of the existing
-	 * columns.  (This happens when the current commit doesn't have any
-	 * children that we have already processed.)
+	 * Output the row containing this commit.  When we haven't seen
+	 * any descendant of the current commit, we have added it at the
+	 * end of graph->columns[], so it is guaranteed we will see the
+	 * current commit somewhere in that array.
 	 */
 	seen_this = 0;
 	chars_written = 0;
-	for (i = 0; i <= graph->num_columns; i++) {
+	for (i = 0; i < graph->num_columns; i++) {
 		struct column *col = &graph->columns[i];
 		struct commit *col_commit;
-		if (i == graph->num_columns) {
-			if (seen_this)
-				break;
-			col_commit = graph->commit;
-		} else {
-			col_commit = graph->columns[i].commit;
-		}
+		col_commit = graph->columns[i].commit;
 
 		if (col_commit == graph->commit) {
 			seen_this = 1;
@@ -900,16 +897,10 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct strbuf 
 	 * Output the post-merge row
 	 */
 	chars_written = 0;
-	for (i = 0; i <= graph->num_columns; i++) {
+	for (i = 0; i < graph->num_columns; i++) {
 		struct column *col = &graph->columns[i];
 		struct commit *col_commit;
-		if (i == graph->num_columns) {
-			if (seen_this)
-				break;
-			col_commit = graph->commit;
-		} else {
-			col_commit = col->commit;
-		}
+		col_commit = col->commit;
 
 		if (col_commit == graph->commit) {
 			/*

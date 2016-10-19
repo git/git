@@ -35,6 +35,8 @@ const signed char hexval_table[256] = {
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* f8-ff */
 };
 
+const char hexchar_table[] = "0123456789abcdef";
+
 int get_sha1_hex(const char *hex, unsigned char *sha1)
 {
 	int i;
@@ -60,16 +62,8 @@ char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;
 	static char hexbuffer[4][50];
-	static const char hex[] = "0123456789abcdef";
-	char *buffer = hexbuffer[3 & ++bufno], *buf = buffer;
-	int i;
+	char *buffer = hexbuffer[3 & ++bufno];
 
-	for (i = 0; i < 20; i++) {
-		unsigned int val = *sha1++;
-		*buf++ = hex[val >> 4];
-		*buf++ = hex[val & 0xf];
-	}
-	*buf = '\0';
-
+	bin_to_hex(sha1, 20, buffer);
 	return buffer;
 }

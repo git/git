@@ -65,4 +65,19 @@ test_expect_success '--cacheinfo mode,sha1,path (new syntax)' '
 	test_cmp expect actual
 '
 
+test_expect_success '.lock files cleaned up' '
+	mkdir cleanup &&
+	(
+	cd cleanup &&
+	mkdir worktree &&
+	git init repo &&
+	cd repo &&
+	git config core.worktree ../../worktree &&
+	# --refresh triggers late setup_work_tree,
+	# active_cache_changed is zero, rollback_lock_file fails
+	git update-index --refresh &&
+	! test -f .git/index.lock
+	)
+'
+
 test_done

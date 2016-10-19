@@ -2129,6 +2129,11 @@ receive.denyCurrentBranch::
 	print a warning of such a push to stderr, but allow the push to
 	proceed. If set to false or "ignore", allow such pushes with no
 	message. Defaults to "refuse".
++
+Another option is "updateInstead" which will update the working
+directory (must be clean) if pushing into the current branch. This option is
+intended for synchronizing working directories when one side is not easily
+accessible via ssh (e.g. inside a VM).
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is

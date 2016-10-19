@@ -185,9 +185,9 @@ int cmd_patch_id(int argc, const char **argv, const char *prefix)
 
 	git_config(git_patch_id_config, &stable);
 
-	/* If nothing is set, default to unstable. */
+	/* If nothing is set, default to stable. */
 	if (stable < 0)
-		stable = 0;
+		stable = 1;
 
 	if (argc == 2 && !strcmp(argv[1], "--stable"))
 		stable = 1;

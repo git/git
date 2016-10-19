@@ -182,10 +182,9 @@ test_expect_success 'with failing hook (--no-verify)' '
 '
 
 test_expect_success 'with failing hook (merge)' '
-
 	test_when_finished "git checkout -f master" &&
 	git checkout -B other HEAD@{1} &&
-	echo "more" >> file &&
+	echo "more" >>file &&
 	git add file &&
 	rm -f "$HOOK" &&
 	git commit -m other &&
@@ -194,6 +193,24 @@ test_expect_success 'with failing hook (merge)' '
 	EOF
 	git checkout - &&
 	test_must_fail git merge --no-ff other
+'
+
+test_expect_success 'should have MERGE_HEAD (merge)' '
+
+	git checkout -B other HEAD@{1} &&
+	echo more >>file &&
+	git add file &&
+	rm -f "$HOOK" &&
+	git commit -m other &&
+	git checkout - &&
+	write_script "$HOOK" <<-\EOF &&
+	test -s "$(git rev-parse --git-dir)/MERGE_HEAD"
+	EOF
+	git merge --no-ff other &&
+	git log -1 --format=%s >actual &&
+	echo "Merge branch '\''other'\''" >expect &&
+	test_cmp expect actual &&
+	test ! -s "$(git rev-parse --git-dir)/MERGE_HEAD"
 
 '
 

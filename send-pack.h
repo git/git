@@ -11,6 +11,7 @@ struct send_pack_args {
 		force_update:1,
 		use_thin_pack:1,
 		use_ofs_delta:1,
+		use_atomic_push:1,
 		dry_run:1,
 		push_cert:1,
 		stateless_rpc:1;

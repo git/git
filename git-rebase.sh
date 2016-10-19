@@ -456,7 +456,13 @@ then
 	*)	upstream_name="$1"
 		if test "$upstream_name" = "-"
 		then
-			upstream_name="@{-1}"
+			upstream_name=`git rev-parse --symbolic-full-name @{-1}`
+			if test -n "$upstream_name"
+			then
+				upstream_name=${upstream_name#refs/heads/}
+			else
+				upstream_name="@{-1}"
+			fi
 		fi
 		shift
 		;;
