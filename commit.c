@@ -942,15 +942,15 @@ static void mark_redundant(struct commit **array, int cnt)
 	free(filled_index);
 }
 
-static struct commit_list *get_merge_bases_many_0(struct commit *one,
-						  int n,
-						  struct commit **twos,
-						  int cleanup)
+struct commit_list *get_merge_bases_opt(struct commit *one,
+					int n, struct commit **twos,
+					unsigned flags)
 {
 	struct commit_list *list;
 	struct commit **rslt;
 	struct commit_list *result;
 	int cnt, i;
+	int cleanup = !!(flags & MB_POSTCLEAN);
 
 	result = merge_bases_many(one, n, twos);
 
@@ -997,19 +997,12 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 					 int n,
 					 struct commit **twos)
 {
-	return get_merge_bases_many_0(one, n, twos, 1);
-}
-
-struct commit_list *get_merge_bases_many_dirty(struct commit *one,
-					       int n,
-					       struct commit **twos)
-{
-	return get_merge_bases_many_0(one, n, twos, 0);
+	return get_merge_bases_opt(one, n, twos, 0);
 }
 
 struct commit_list *get_merge_bases(struct commit *one, struct commit *two)
 {
-	return get_merge_bases_many_0(one, 1, &two, 1);
+	return get_merge_bases_opt(one, 1, &two, MB_POSTCLEAN);
 }
 
 /*
