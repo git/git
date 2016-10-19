@@ -1157,6 +1157,7 @@ static inline int has_sha1_file(const unsigned char *sha1)
 
 /* Same as the above, except for struct object_id. */
 extern int has_object_file(const struct object_id *oid);
+extern int has_object_file_with_flags(const struct object_id *oid, int flags);
 
 /*
  * Return true iff an alternate object database has a loose object

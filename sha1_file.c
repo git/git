@@ -3335,6 +3335,11 @@ int has_object_file(const struct object_id *oid)
 	return has_sha1_file(oid->hash);
 }
 
+int has_object_file_with_flags(const struct object_id *oid, int flags)
+{
+	return has_sha1_file_with_flags(oid->hash, flags);
+}
+
 static void check_tree(const void *buf, size_t size)
 {
 	struct tree_desc desc;
