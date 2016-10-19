@@ -31,7 +31,7 @@ test_expect_success 'try to apply corrupted patch' '
 test_expect_success 'compare diagnostic; ensure file is still here' '
 	echo "error: git diff header lacks filename information (line 4)" >expected &&
 	test_path_is_file f &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_done
