@@ -16,6 +16,7 @@
 #include "string-list.h"
 #include "parse-options.h"
 #include "argv-array.h"
+#include "prio-queue.h"
 
 static const char * const upload_pack_usage[] = {
 	N_("git upload-pack [<options>] <dir>"),
@@ -319,12 +320,12 @@ static int got_sha1(const char *hex, unsigned char *sha1)
 
 static int reachable(struct commit *want)
 {
-	struct commit_list *work = NULL;
+	struct prio_queue work = { compare_commits_by_commit_date };
 
-	commit_list_insert_by_date(want, &work);
-	while (work) {
+	prio_queue_put(&work, want);
+	while (work.nr) {
 		struct commit_list *list;
-		struct commit *commit = pop_commit(&work);
+		struct commit *commit = prio_queue_get(&work);
 
 		if (commit->object.flags & THEY_HAVE) {
 			want->object.flags |= COMMON_KNOWN;
@@ -340,12 +341,12 @@ static int reachable(struct commit *want)
 		for (list = commit->parents; list; list = list->next) {
 			struct commit *parent = list->item;
 			if (!(parent->object.flags & REACHABLE))
-				commit_list_insert_by_date(parent, &work);
+				prio_queue_put(&work, parent);
 		}
 	}
 	want->object.flags |= REACHABLE;
 	clear_commit_marks(want, REACHABLE);
-	free_commit_list(work);
+	clear_prio_queue(&work);
 	return (want->object.flags & COMMON_KNOWN);
 }
 
