@@ -17,7 +17,7 @@ proc error_popup {msg} {
 	set cmd [list tk_messageBox \
 		-icon error \
 		-type ok \
-		-title [append "$title: " [mc "error"]] \
+		-title [mc "%s: error" $title] \
 		-message $msg]
 	if {[winfo ismapped [_error_parent]]} {
 		lappend cmd -parent [_error_parent]
@@ -33,7 +33,7 @@ proc warn_popup {msg} {
 	set cmd [list tk_messageBox \
 		-icon warning \
 		-type ok \
-		-title [append "$title: " [mc "warning"]] \
+		-title [mc "%s: warning" $title] \
 		-message $msg]
 	if {[winfo ismapped [_error_parent]]} {
 		lappend cmd -parent [_error_parent]
@@ -77,7 +77,7 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 	wm withdraw $w
 
 	${NS}::frame $w.m
-	${NS}::label $w.m.l1 -text "$hook hook failed:" \
+	${NS}::label $w.m.l1 -text [mc "%s hook failed:" $hook] \
 		-anchor w \
 		-justify left \
 		-font font_uibold
@@ -113,7 +113,7 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
-	wm title $w [strcat "[appname] ([reponame]): " [mc "error"]]
+	wm title $w [mc "%s (%s): error" [appname] [reponame]]
 	wm deiconify $w
 	tkwait window $w
 }

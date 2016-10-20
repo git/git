@@ -54,7 +54,7 @@ proc do_stats {} {
 			set value "$value[lindex $s 2]"
 		}
 
-		${NS}::label $w.stat.l_$name -text "$label:" -anchor w
+		${NS}::label $w.stat.l_$name -text [mc "%s:" $label] -anchor w
 		${NS}::label $w.stat.v_$name -text $value -anchor w
 		grid $w.stat.l_$name $w.stat.v_$name -sticky we -padx {0 5}
 	}
@@ -63,7 +63,7 @@ proc do_stats {} {
 	bind $w <Visibility> "grab $w; focus $w.buttons.close"
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [list destroy $w]
-	wm title $w [append "[appname] ([reponame]): " [mc "Database Statistics"]]
+	wm title $w [mc "%s (%s): Database Statistics" [appname] [reponame]]
 	wm deiconify $w
 	tkwait window $w
 }
