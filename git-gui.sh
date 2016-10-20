@@ -534,28 +534,10 @@ proc _lappend_nice {cmd_var} {
 }
 
 proc git {args} {
-	set opt [list]
-
-	while {1} {
-		switch -- [lindex $args 0] {
-		--nice {
-			_lappend_nice opt
-		}
-
-		default {
-			break
-		}
-
-		}
-
-		set args [lrange $args 1 end]
-	}
-
-	set cmdp [_git_cmd [lindex $args 0]]
-	set args [lrange $args 1 end]
-
-	_trace_exec [concat $opt $cmdp $args]
-	set result [eval exec $opt $cmdp $args]
+	set fd [eval [list git_read] $args]
+	fconfigure $fd -translation binary -encoding utf-8
+	set result [string trimright [read $fd] "\n"]
+	close $fd
 	if {$::_trace} {
 		puts stderr "< $result"
 	}
@@ -1111,7 +1093,7 @@ git-version proc _parse_config {arr_name args} {
 				[list git_read config] \
 				$args \
 				[list --null --list]]
-			fconfigure $fd_rc -translation binary
+			fconfigure $fd_rc -translation binary -encoding utf-8
 			set buf [read $fd_rc]
 			close $fd_rc
 		}
@@ -1691,7 +1673,7 @@ proc read_diff_index {fd after} {
 		set i [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdi $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom $p] \
+			[encoding convertfrom utf-8 $p] \
 			[lindex $i 4]? \
 			[list [lindex $i 0] [lindex $i 2]] \
 			[list]
@@ -1724,7 +1706,7 @@ proc read_diff_files {fd after} {
 		set i [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdf $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom $p] \
+			[encoding convertfrom utf-8 $p] \
 			?[lindex $i 4] \
 			[list] \
 			[list [lindex $i 0] [lindex $i 2]]
@@ -1747,7 +1729,7 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		set p [encoding convertfrom $p]
+		set p [encoding convertfrom utf-8 $p]
 		if {[string index $p end] eq {/}} {
 			set p [string range $p 0 end-1]
 		}
