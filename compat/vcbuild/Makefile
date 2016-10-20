@@ -9,7 +9,8 @@ INST_BIN=$(INST)/bin
 PKGDIR=GEN.PKGS
 
 ##################################################################
-all:	unpack expat libssh libssh_redist curl curl_redist openssl zlib
+all:	unpack expat libssh libssh_redist curl curl_redist openssl zlib \
+	libiconv libiconv_redist
 
 unpack:
 	[ -d $(PKGDIR) ] || mkdir $(PKGDIR)
@@ -36,6 +37,25 @@ expat:	insdir
 	[ -d $(INST_INC)/expat ] || mkdir $(INST_INC)/expat
 	cp -r $(EXPAT_INC)/* $(INST_INC)/expat/
 	cp -r $(EXPAT_LIB)/* $(INST_LIB)/
+
+
+##################################################################
+
+LIBICONV_VER=1.14.0.11
+LIBICONV_ROOT=$(PKGDIR)/libiconv.$(LIBICONV_VER)/build/native
+LIBICONV_INC=$(LIBICONV_ROOT)/include
+LIBICONV_LIB=$(LIBICONV_ROOT)/lib/v110/x64/Release/dynamic/cdecl
+
+libiconv:	insdir
+	cp -r $(LIBICONV_INC)/* $(INST_INC)/
+	cp -r $(LIBICONV_LIB)/libiconv.lib $(INST_LIB)/iconv.lib
+
+
+LIBICONV_REDIST_ROOT=$(PKGDIR)/libiconv.redist.$(LIBICONV_VER)/build/native
+LIBICONV_REDIST_BIN=$(LIBICONV_REDIST_ROOT)/bin/v110/x64/Release/dynamic/cdecl
+
+libiconv_redist:	insdir
+	cp -r $(LIBICONV_REDIST_BIN)/* $(INST_BIN)/
 
 
 ##################################################################
