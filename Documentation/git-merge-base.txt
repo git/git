@@ -80,8 +80,8 @@ which is reachable from both 'A' and 'B' through the parent relationship.
 
 For example, with this topology:
 
-		 o---o---o---B
-		/
+	         o---o---o---B
+	        /
 	---o---1---o---o---o---A
 
 the merge base between 'A' and 'B' is '1'.
@@ -116,11 +116,11 @@ the best common ancestor of all commits.
 When the history involves criss-cross merges, there can be more than one
 'best' common ancestor for two commits.  For example, with this topology:
 
-       ---1---o---A
-	   \ /
-	    X
-	   / \
-       ---2---o---o---B
+	---1---o---A
+	    \ /
+	     X
+	    / \
+	---2---o---o---B
 
 both '1' and '2' are merge-bases of A and B.  Neither one is better than
 the other (both are 'best' merge bases).  When the `--all` option is not given,
@@ -154,13 +154,13 @@ topic origin/master`, the history of remote-tracking branch
 `origin/master` may have been rewound and rebuilt, leading to a
 history of this shape:
 
-			 o---B1
-			/
+	                 o---B1
+	                /
 	---o---o---B2--o---o---o---B (origin/master)
-		\
-		 B3
-		  \
-		   Derived (topic)
+	        \
+	         B3
+	          \
+	           Derived (topic)
 
 where `origin/master` used to point at commits B3, B2, B1 and now it
 points at B, and your `topic` branch was started on top of it back
