@@ -531,7 +531,11 @@ static void bootstrap_attr_stack(void)
 		debug_push(elem);
 	}
 
-	elem = read_attr_from_file(git_path_info_attributes(), 1);
+	if (startup_info->have_repository)
+		elem = read_attr_from_file(git_path_info_attributes(), 1);
+	else
+		elem = NULL;
+
 	if (!elem)
 		elem = xcalloc(1, sizeof(*elem));
 	elem->origin = NULL;

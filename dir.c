@@ -2237,8 +2237,6 @@ static GIT_PATH_FUNC(git_path_info_exclude, "info/exclude")
 
 void setup_standard_excludes(struct dir_struct *dir)
 {
-	const char *path;
-
 	dir->exclude_per_dir = ".gitignore";
 
 	/* core.excludefile defaulting to $XDG_HOME/git/ignore */
@@ -2249,10 +2247,12 @@ void setup_standard_excludes(struct dir_struct *dir)
 					 dir->untracked ? &dir->ss_excludes_file : NULL);
 
 	/* per repository user preference */
-	path = git_path_info_exclude();
-	if (!access_or_warn(path, R_OK, 0))
-		add_excludes_from_file_1(dir, path,
-					 dir->untracked ? &dir->ss_info_exclude : NULL);
+	if (startup_info->have_repository) {
+		const char *path = git_path_info_exclude();
+		if (!access_or_warn(path, R_OK, 0))
+			add_excludes_from_file_1(dir, path,
+						 dir->untracked ? &dir->ss_info_exclude : NULL);
+	}
 }
 
 int remove_path(const char *name)
