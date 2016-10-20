@@ -387,6 +387,8 @@ else
 	BASIC_CFLAGS += -Zi -MDd
 endif
 	X = .exe
+
+compat/msvc.o: compat/msvc.c compat/mingw.c GIT-CFLAGS
 endif
 ifeq ($(uname_S),Interix)
 	NO_INITGROUPS = YesPlease
