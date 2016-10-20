@@ -145,7 +145,7 @@ static void show_commit(struct commit *commit, void *data)
 			 */
 			if (buf.len && buf.buf[buf.len - 1] == '\n')
 				graph_show_padding(revs->graph);
-			putchar('\n');
+			putchar(info->hdr_termination);
 		} else {
 			/*
 			 * If the message buffer is empty, just show
