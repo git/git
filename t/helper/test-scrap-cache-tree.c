@@ -7,6 +7,7 @@ static struct lock_file index_lock;
 
 int cmd_main(int ac, const char **av)
 {
+	setup_git_directory();
 	hold_locked_index(&index_lock, 1);
 	if (read_cache() < 0)
 		die("unable to read index file");
