@@ -4157,14 +4157,15 @@ void diff_free_filepair(struct diff_filepair *p)
 	free(p);
 }
 
-const char *diff_aligned_abbrev(const unsigned char *sha1, int len)
+const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 {
 	int abblen;
 	const char *abbrev;
-	if (len == 40)
-		return sha1_to_hex(sha1);
 
-	abbrev = find_unique_abbrev(sha1, len);
+	if (len == GIT_SHA1_HEXSZ)
+		return oid_to_hex(oid);
+
+	abbrev = find_unique_abbrev(oid->hash, len);
 	abblen = strlen(abbrev);
 
 	/*
@@ -4186,15 +4187,16 @@ const char *diff_aligned_abbrev(const unsigned char *sha1, int len)
 	 * the automatic sizing is supposed to give abblen that ensures
 	 * uniqueness across all objects (statistically speaking).
 	 */
-	if (abblen < 37) {
-		static char hex[41];
+	if (abblen < GIT_SHA1_HEXSZ - 3) {
+		static char hex[GIT_SHA1_HEXSZ + 1];
 		if (len < abblen && abblen <= len + 2)
 			xsnprintf(hex, sizeof(hex), "%s%.*s", abbrev, len+3-abblen, "..");
 		else
 			xsnprintf(hex, sizeof(hex), "%s...", abbrev);
 		return hex;
 	}
-	return sha1_to_hex(sha1);
+
+	return oid_to_hex(oid);
 }
 
 static void diff_flush_raw(struct diff_filepair *p, struct diff_options *opt)
@@ -4205,9 +4207,9 @@ static void diff_flush_raw(struct diff_filepair *p, struct diff_options *opt)
 	fprintf(opt->file, "%s", diff_line_prefix(opt));
 	if (!(opt->output_format & DIFF_FORMAT_NAME_STATUS)) {
 		fprintf(opt->file, ":%06o %06o %s ", p->one->mode, p->two->mode,
-			diff_aligned_abbrev(p->one->oid.hash, opt->abbrev));
+			diff_aligned_abbrev(&p->one->oid, opt->abbrev));
 		fprintf(opt->file, "%s ",
-			diff_aligned_abbrev(p->two->oid.hash, opt->abbrev));
+			diff_aligned_abbrev(&p->two->oid, opt->abbrev));
 	}
 	if (p->score) {
 		fprintf(opt->file, "%c%03d%c", p->status, similarity_index(p),
