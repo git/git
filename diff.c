@@ -3096,6 +3096,19 @@ static int similarity_index(struct diff_filepair *p)
 	return p->score * 100 / MAX_SCORE;
 }
 
+static const char *diff_abbrev_oid(const struct object_id *oid, int abbrev)
+{
+	if (startup_info->have_repository)
+		return find_unique_abbrev(oid->hash, abbrev);
+	else {
+		char *hex = oid_to_hex(oid);
+		if (abbrev < 0 || abbrev > GIT_SHA1_HEXSZ)
+			die("BUG: oid abbreviation out of range: %d", abbrev);
+		hex[abbrev] = '\0';
+		return hex;
+	}
+}
+
 static void fill_metainfo(struct strbuf *msg,
 			  const char *name,
 			  const char *other,
@@ -3154,9 +3167,9 @@ static void fill_metainfo(struct strbuf *msg,
 			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
 				abbrev = 40;
 		}
-		strbuf_addf(msg, "%s%sindex %s..", line_prefix, set,
-			    find_unique_abbrev(one->oid.hash, abbrev));
-		strbuf_add_unique_abbrev(msg, two->oid.hash, abbrev);
+		strbuf_addf(msg, "%s%sindex %s..%s", line_prefix, set,
+			    diff_abbrev_oid(&one->oid, abbrev),
+			    diff_abbrev_oid(&two->oid, abbrev));
 		if (one->mode == two->mode)
 			strbuf_addf(msg, " %06o", one->mode);
 		strbuf_addf(msg, "%s\n", reset);
@@ -4165,7 +4178,7 @@ const char *diff_aligned_abbrev(const struct object_id *oid, int len)
 	if (len == GIT_SHA1_HEXSZ)
 		return oid_to_hex(oid);
 
-	abbrev = find_unique_abbrev(oid->hash, len);
+	abbrev = diff_abbrev_oid(oid, len);
 	abblen = strlen(abbrev);
 
 	/*
