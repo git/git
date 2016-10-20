@@ -340,7 +340,11 @@ extern void diff_warn_rename_limit(const char *varname, int needed, int degraded
 #define DIFF_STATUS_FILTER_AON		'*'
 #define DIFF_STATUS_FILTER_BROKEN	'B'
 
-extern const char *diff_unique_abbrev(const unsigned char *, int);
+/*
+ * This is different from find_unique_abbrev() in that
+ * it stuffs the result with dots for alignment.
+ */
+extern const char *diff_aligned_abbrev(const unsigned char *sha1, int);
 
 /* do not report anything on removed paths */
 #define DIFF_SILENT_ON_REMOVED 01

@@ -4157,11 +4157,7 @@ void diff_free_filepair(struct diff_filepair *p)
 	free(p);
 }
 
-/*
- * This is different from find_unique_abbrev() in that
- * it stuffs the result with dots for alignment.
- */
-const char *diff_unique_abbrev(const unsigned char *sha1, int len)
+const char *diff_aligned_abbrev(const unsigned char *sha1, int len)
 {
 	int abblen;
 	const char *abbrev;
@@ -4209,9 +4205,9 @@ static void diff_flush_raw(struct diff_filepair *p, struct diff_options *opt)
 	fprintf(opt->file, "%s", diff_line_prefix(opt));
 	if (!(opt->output_format & DIFF_FORMAT_NAME_STATUS)) {
 		fprintf(opt->file, ":%06o %06o %s ", p->one->mode, p->two->mode,
-			diff_unique_abbrev(p->one->oid.hash, opt->abbrev));
+			diff_aligned_abbrev(p->one->oid.hash, opt->abbrev));
 		fprintf(opt->file, "%s ",
-			diff_unique_abbrev(p->two->oid.hash, opt->abbrev));
+			diff_aligned_abbrev(p->two->oid.hash, opt->abbrev));
 	}
 	if (p->score) {
 		fprintf(opt->file, "%c%03d%c", p->status, similarity_index(p),
