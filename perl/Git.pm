@@ -870,6 +870,8 @@ Return an array of mailboxes extracted from a string.
 
 =cut
 
+# Very close to Mail::Address's parser, but we still have minor
+# differences in some cases (see t9000 for examples).
 sub parse_mailboxes {
 	my $re_comment = qr/\((?:[^)]*)\)/;
 	my $re_quote = qr/"(?:[^\"\\]|\\.)*"/;
