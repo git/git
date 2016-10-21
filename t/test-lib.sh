@@ -58,8 +58,8 @@ done,*)
 	mkdir -p "$TEST_OUTPUT_DIRECTORY/test-results"
 	BASE="$TEST_OUTPUT_DIRECTORY/test-results/$(basename "$0" .sh)"
 	(GIT_TEST_TEE_STARTED=done ${SHELL_PATH} "$0" "$@" 2>&1;
-	 echo $? > $BASE.exit) | tee $BASE.out
-	test "$(cat $BASE.exit)" = 0
+	 echo $? >"$BASE.exit") | tee "$BASE.out"
+	test "$(cat "$BASE.exit")" = 0
 	exit
 	;;
 esac
