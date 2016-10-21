@@ -429,6 +429,11 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count,
 	return 1;
 }
 
+int transport_summary_width(const struct ref *refs)
+{
+	return (2 * FALLBACK_DEFAULT_ABBREV + 3);
+}
+
 void transport_print_push_status(const char *dest, struct ref *refs,
 				  int verbose, int porcelain, unsigned int *reject_reasons)
 {
@@ -436,7 +441,7 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 	int n = 0;
 	unsigned char head_sha1[20];
 	char *head;
-	int summary_width = TRANSPORT_SUMMARY_WIDTH;
+	int summary_width = transport_summary_width(refs);
 
 	head = resolve_refdup("HEAD", RESOLVE_REF_READING, head_sha1, NULL);
 

@@ -722,7 +722,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	char *url;
 	const char *filename = dry_run ? "/dev/null" : git_path_fetch_head();
 	int want_status;
-	int summary_width = TRANSPORT_SUMMARY_WIDTH;
+	int summary_width = transport_summary_width(ref_map);
 
 	fp = fopen(filename, "a");
 	if (!fp)
@@ -906,7 +906,7 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 	int url_len, i, result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(refs, ref_count, ref_map);
 	char *url;
-	int summary_width = TRANSPORT_SUMMARY_WIDTH;
+	int summary_width = transport_summary_width(stale_refs);
 	const char *dangling_msg = dry_run
 		? _("   (%s will become dangling)")
 		: _("   (%s has become dangling)");
