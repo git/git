@@ -119,7 +119,7 @@ static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 	return 1;
 }
 
-static void remove_sequencer_state(const struct replay_opts *opts)
+int sequencer_remove_state(struct replay_opts *opts)
 {
 	struct strbuf dir = STRBUF_INIT;
 	int i;
@@ -133,6 +133,8 @@ static void remove_sequencer_state(const struct replay_opts *opts)
 	strbuf_addf(&dir, "%s", get_dir(opts));
 	remove_dir_recursively(&dir, 0);
 	strbuf_release(&dir);
+
+	return 0;
 }
 
 static const char *action_name(const struct replay_opts *opts)
@@ -975,7 +977,7 @@ static int rollback_single_pick(void)
 	return reset_for_rollback(head_sha1);
 }
 
-static int sequencer_rollback(struct replay_opts *opts)
+int sequencer_rollback(struct replay_opts *opts)
 {
 	FILE *f;
 	unsigned char sha1[20];
@@ -1010,9 +1012,8 @@ static int sequencer_rollback(struct replay_opts *opts)
 	}
 	if (reset_for_rollback(sha1))
 		goto fail;
-	remove_sequencer_state(opts);
 	strbuf_release(&buf);
-	return 0;
+	return sequencer_remove_state(opts);
 fail:
 	strbuf_release(&buf);
 	return -1;
@@ -1097,8 +1098,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 	 * Sequence of picks finished successfully; cleanup by
 	 * removing the .git/sequencer directory
 	 */
-	remove_sequencer_state(opts);
-	return 0;
+	return sequencer_remove_state(opts);
 }
 
 static int continue_single_pick(void)
@@ -1111,10 +1111,13 @@ static int continue_single_pick(void)
 	return run_command_v_opt(argv, RUN_GIT_CMD);
 }
 
-static int sequencer_continue(struct replay_opts *opts)
+int sequencer_continue(struct replay_opts *opts)
 {
 	struct todo_list todo_list = TODO_LIST_INIT;
 	int res;
+
+	if (read_and_refresh_cache(opts))
+		return -1;
 
 	if (!file_exists(get_todo_path(opts)))
 		return continue_single_pick();
@@ -1154,25 +1157,9 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 	unsigned char sha1[20];
 	int i, res;
 
-	if (opts->subcommand == REPLAY_NONE)
-		assert(opts->revs);
-
+	assert(opts->revs);
 	if (read_and_refresh_cache(opts))
 		return -1;
-
-	/*
-	 * Decide what to do depending on the arguments; a fresh
-	 * cherry-pick should be handled differently from an existing
-	 * one that is being continued
-	 */
-	if (opts->subcommand == REPLAY_REMOVE_STATE) {
-		remove_sequencer_state(opts);
-		return 0;
-	}
-	if (opts->subcommand == REPLAY_ROLLBACK)
-		return sequencer_rollback(opts);
-	if (opts->subcommand == REPLAY_CONTINUE)
-		return sequencer_continue(opts);
 
 	for (i = 0; i < opts->revs->pending.nr; i++) {
 		unsigned char sha1[20];
