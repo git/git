@@ -34,11 +34,11 @@ struct replay_opts {
 
 	int mainline;
 
-	const char *gpg_sign;
+	char *gpg_sign;
 
 	/* Merge strategy */
-	const char *strategy;
-	const char **xopts;
+	char *strategy;
+	char **xopts;
 	size_t xopts_nr, xopts_alloc;
 
 	/* Only used by REPLAY_NONE */
