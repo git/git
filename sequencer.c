@@ -243,7 +243,6 @@ static int write_message(struct strbuf *msgbuf, const char *filename)
 		return error_errno(_("Could not lock '%s'"), filename);
 	if (write_in_full(msg_fd, msgbuf->buf, msgbuf->len) < 0)
 		return error_errno(_("Could not write to %s"), filename);
-	strbuf_release(msgbuf);
 	if (commit_lock_file(&msg_file) < 0)
 		return error(_("Error wrapping up %s."), filename);
 
@@ -759,6 +758,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		free_commit_list(common);
 		free_commit_list(remotes);
 	}
+	strbuf_release(&msgbuf);
 
 	/*
 	 * If the merge was clean or if it failed due to conflict, we write
