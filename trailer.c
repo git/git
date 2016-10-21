@@ -619,12 +619,14 @@ static void parse_trailer(struct strbuf *tok, struct strbuf *val,
 	}
 }
 
-static void add_trailer_item(struct list_head *head, char *tok, char *val)
+static struct trailer_item *add_trailer_item(struct list_head *head, char *tok,
+					     char *val)
 {
 	struct trailer_item *new = xcalloc(sizeof(*new), 1);
 	new->token = tok;
 	new->value = val;
 	list_add_tail(&new->list, head);
+	return new;
 }
 
 static void add_arg_item(struct list_head *arg_head, char *tok, char *val,
@@ -732,6 +734,14 @@ static int find_trailer_start(struct strbuf **lines, int count)
 {
 	int start, end_of_title, only_spaces = 1;
 	int recognized_prefix = 0, trailer_lines = 0, non_trailer_lines = 0;
+	/*
+	 * Number of possible continuation lines encountered. This will be
+	 * reset to 0 if we encounter a trailer (since those lines are to be
+	 * considered continuations of that trailer), and added to
+	 * non_trailer_lines if we encounter a non-trailer (since those lines
+	 * are to be considered non-trailers).
+	 */
+	int possible_continuation_lines = 0;
 
 	/* The first paragraph is the title and cannot be trailers */
 	for (start = 0; start < count; start++) {
@@ -752,11 +762,15 @@ static int find_trailer_start(struct strbuf **lines, int count)
 		const char **p;
 		int separator_pos;
 
-		if (lines[start]->buf[0] == comment_line_char)
+		if (lines[start]->buf[0] == comment_line_char) {
+			non_trailer_lines += possible_continuation_lines;
+			possible_continuation_lines = 0;
 			continue;
+		}
 		if (contains_only_spaces(lines[start]->buf)) {
 			if (only_spaces)
 				continue;
+			non_trailer_lines += possible_continuation_lines;
 			if (recognized_prefix &&
 			    trailer_lines * 3 >= non_trailer_lines)
 				return start + 1;
@@ -769,16 +783,18 @@ static int find_trailer_start(struct strbuf **lines, int count)
 		for (p = git_generated_prefixes; *p; p++) {
 			if (starts_with(lines[start]->buf, *p)) {
 				trailer_lines++;
+				possible_continuation_lines = 0;
 				recognized_prefix = 1;
 				goto continue_outer_loop;
 			}
 		}
 
-		separator_pos = find_separator(lines[start]->buf);
+		separator_pos = find_separator(lines[start]->buf, separators);
 		if (separator_pos >= 1 && !isspace(lines[start]->buf[0])) {
 			struct list_head *pos;
 
 			trailer_lines++;
+			possible_continuation_lines = 0;
 			if (recognized_prefix)
 				continue;
 			list_for_each(pos, &conf_head) {
@@ -790,8 +806,13 @@ static int find_trailer_start(struct strbuf **lines, int count)
 					break;
 				}
 			}
-		} else
+		} else if (isspace(lines[start]->buf[0]))
+			possible_continuation_lines++;
+		else {
 			non_trailer_lines++;
+			non_trailer_lines += possible_continuation_lines;
+			possible_continuation_lines = 0;
+		}
 continue_outer_loop:
 		;
 	}
@@ -840,6 +861,7 @@ static int process_input_file(FILE *outfile,
 	int patch_start, trailer_start, trailer_end, i;
 	struct strbuf tok = STRBUF_INIT;
 	struct strbuf val = STRBUF_INIT;
+	struct trailer_item *last = NULL;
 
 	/* Get the line count */
 	while (lines[count])
@@ -860,19 +882,28 @@ static int process_input_file(FILE *outfile,
 		int separator_pos;
 		if (lines[i]->buf[0] == comment_line_char)
 			continue;
+		if (last && isspace(lines[i]->buf[0])) {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addf(&sb, "%s\n%s", last->value, lines[i]->buf);
+			strbuf_strip_suffix(&sb, "\n");
+			free(last->value);
+			last->value = strbuf_detach(&sb, NULL);
+			continue;
+		}
 		separator_pos = find_separator(lines[i]->buf, separators);
 		if (separator_pos >= 1) {
 			parse_trailer(&tok, &val, NULL, lines[i]->buf,
 				      separator_pos);
-			add_trailer_item(head,
-					 strbuf_detach(&tok, NULL),
-					 strbuf_detach(&val, NULL));
+			last = add_trailer_item(head,
+						strbuf_detach(&tok, NULL),
+						strbuf_detach(&val, NULL));
 		} else {
 			strbuf_addbuf(&val, lines[i]);
 			strbuf_strip_suffix(&val, "\n");
 			add_trailer_item(head,
 					 NULL,
 					 strbuf_detach(&val, NULL));
+			last = NULL;
 		}
 	}
 
