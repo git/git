@@ -775,7 +775,7 @@ static int find_trailer_start(struct strbuf **lines, int count)
 		}
 
 		separator_pos = find_separator(lines[start]->buf);
-		if (separator_pos >= 1) {
+		if (separator_pos >= 1 && !isspace(lines[start]->buf[0])) {
 			struct list_head *pos;
 
 			trailer_lines++;

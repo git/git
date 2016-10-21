@@ -55,7 +55,7 @@ The group must either be at the end of the message or be the last
 non-whitespace lines before a line that starts with '---'. Such three
 minus signs start the patch part of the message.
 
-When reading trailers, there can be whitespaces before and after the
+When reading trailers, there can be whitespaces after the
 token, the separator and the value. There can also be whitespaces
 inside the token and the value.
 

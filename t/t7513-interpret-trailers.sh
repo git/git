@@ -241,6 +241,21 @@ test_expect_success 'with non-trailer lines only' '
 	test_cmp expected actual
 '
 
+test_expect_success 'line with leading whitespace is not trailer' '
+	q_to_tab >patch <<-\EOF &&
+
+		Qtoken: value
+	EOF
+	q_to_tab >expected <<-\EOF &&
+
+		Qtoken: value
+
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'with config setup' '
 	git config trailer.ack.key "Acked-by: " &&
 	cat >expected <<-\EOF &&
