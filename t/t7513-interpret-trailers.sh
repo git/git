@@ -126,6 +126,121 @@ test_expect_success 'with multiline title in the message' '
 	test_cmp expected actual
 '
 
+test_expect_success 'with non-trailer lines mixed with Signed-off-by' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		Signed-off-by: a <a@example.com>
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		Signed-off-by: a <a@example.com>
+		this is not a trailer
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines mixed with cherry picked from' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		(cherry picked from commit x)
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		(cherry picked from commit x)
+		this is not a trailer
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines mixed with a configured trailer' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		My-trailer: x
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		My-trailer: x
+		this is not a trailer
+		token: value
+	EOF
+	test_config trailer.my.key "My-trailer: " &&
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines mixed with a non-configured trailer' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		I-am-not-configured: x
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+		this is not a trailer
+		I-am-not-configured: x
+		this is not a trailer
+
+		token: value
+	EOF
+	test_config trailer.my.key "My-trailer: " &&
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with all non-configured trailers' '
+	cat >patch <<-\EOF &&
+
+		I-am-not-configured: x
+		I-am-also-not-configured: x
+	EOF
+	cat >expected <<-\EOF &&
+
+		I-am-not-configured: x
+		I-am-also-not-configured: x
+		token: value
+	EOF
+	test_config trailer.my.key "My-trailer: " &&
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with non-trailer lines only' '
+	cat >patch <<-\EOF &&
+
+		this is not a trailer
+	EOF
+	cat >expected <<-\EOF &&
+
+		this is not a trailer
+
+		token: value
+	EOF
+	git interpret-trailers --trailer "token: value" patch >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'with config setup' '
 	git config trailer.ack.key "Acked-by: " &&
 	cat >expected <<-\EOF &&
