@@ -543,29 +543,37 @@ static int token_matches_item(const char *tok, struct arg_item *item, int tok_le
 	return item->conf.key ? !strncasecmp(tok, item->conf.key, tok_len) : 0;
 }
 
-static int parse_trailer(struct strbuf *tok, struct strbuf *val,
-			 const struct conf_info **conf, const char *trailer)
+/*
+ * Return the location of the first separator in line, or -1 if there is no
+ * separator.
+ */
+static int find_separator(const char *line, const char *separators)
 {
-	size_t len;
-	struct strbuf seps = STRBUF_INIT;
+	int loc = strcspn(line, separators);
+	if (!line[loc])
+		return -1;
+	return loc;
+}
+
+/*
+ * Obtain the token, value, and conf from the given trailer.
+ *
+ * separator_pos must not be 0, since the token cannot be an empty string.
+ *
+ * If separator_pos is -1, interpret the whole trailer as a token.
+ */
+static void parse_trailer(struct strbuf *tok, struct strbuf *val,
+			 const struct conf_info **conf, const char *trailer,
+			 int separator_pos)
+{
 	struct arg_item *item;
 	int tok_len;
 	struct list_head *pos;
 
-	strbuf_addstr(&seps, separators);
-	strbuf_addch(&seps, '=');
-	len = strcspn(trailer, seps.buf);
-	strbuf_release(&seps);
-	if (len == 0) {
-		int l = strlen(trailer);
-		while (l > 0 && isspace(trailer[l - 1]))
-			l--;
-		return error(_("empty trailer token in trailer '%.*s'"), l, trailer);
-	}
-	if (len < strlen(trailer)) {
-		strbuf_add(tok, trailer, len);
+	if (separator_pos != -1) {
+		strbuf_add(tok, trailer, separator_pos);
 		strbuf_trim(tok);
-		strbuf_addstr(val, trailer + len + 1);
+		strbuf_addstr(val, trailer + separator_pos + 1);
 		strbuf_trim(val);
 	} else {
 		strbuf_addstr(tok, trailer);
@@ -587,8 +595,6 @@ static int parse_trailer(struct strbuf *tok, struct strbuf *val,
 			break;
 		}
 	}
-
-	return 0;
 }
 
 static void add_trailer_item(struct list_head *head, char *tok, char *val)
@@ -619,6 +625,12 @@ static void process_command_line_args(struct list_head *arg_head,
 	const struct conf_info *conf;
 	struct list_head *pos;
 
+	/*
+	 * In command-line arguments, '=' is accepted (in addition to the
+	 * separators that are defined).
+	 */
+	char *cl_separators = xstrfmt("=%s", separators);
+
 	/* Add an arg item for each configured trailer with a command */
 	list_for_each(pos, &conf_head) {
 		item = list_entry(pos, struct arg_item, list);
@@ -631,12 +643,25 @@ static void process_command_line_args(struct list_head *arg_head,
 
 	/* Add an arg item for each trailer on the command line */
 	for_each_string_list_item(tr, trailers) {
-		if (!parse_trailer(&tok, &val, &conf, tr->string))
+		int separator_pos = find_separator(tr->string, cl_separators);
+		if (separator_pos == 0) {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addstr(&sb, tr->string);
+			strbuf_trim(&sb);
+			error(_("empty trailer token in trailer '%.*s'"),
+			      (int) sb.len, sb.buf);
+			strbuf_release(&sb);
+		} else {
+			parse_trailer(&tok, &val, &conf, tr->string,
+				      separator_pos);
 			add_arg_item(arg_head,
 				     strbuf_detach(&tok, NULL),
 				     strbuf_detach(&val, NULL),
 				     conf);
+		}
 	}
+
+	free(cl_separators);
 }
 
 static struct strbuf **read_input_file(const char *file)
@@ -775,11 +800,17 @@ static int process_input_file(FILE *outfile,
 
 	/* Parse trailer lines */
 	for (i = trailer_start; i < trailer_end; i++) {
-		if (lines[i]->buf[0] != comment_line_char &&
-		    !parse_trailer(&tok, &val, NULL, lines[i]->buf))
+		int separator_pos;
+		if (lines[i]->buf[0] == comment_line_char)
+			continue;
+		separator_pos = find_separator(lines[i]->buf, separators);
+		if (separator_pos >= 1) {
+			parse_trailer(&tok, &val, NULL, lines[i]->buf,
+				      separator_pos);
 			add_trailer_item(head,
 					 strbuf_detach(&tok, NULL),
 					 strbuf_detach(&val, NULL));
+		}
 	}
 
 	return trailer_end;
