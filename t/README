@@ -153,6 +153,12 @@ appropriately before running "make".
 	As the names depend on the tests' file names, it is safe to
 	run the tests with this option in parallel.
 
+--verbose-log::
+	Write verbose output to the same logfile as `--tee`, but do
+	_not_ write it to stdout. Unlike `--tee --verbose`, this option
+	is safe to use when stdout is being consumed by a TAP parser
+	like `prove`. Implies `--tee` and `--verbose`.
+
 --with-dashes::
 	By default tests are run without dashed forms of
 	commands (like git-commit) in the PATH (it only uses
