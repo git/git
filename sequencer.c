@@ -234,14 +234,14 @@ static void print_advice(int show_hint, struct replay_opts *opts)
 	}
 }
 
-static int write_message(struct strbuf *msgbuf, const char *filename)
+static int write_message(const void *buf, size_t len, const char *filename)
 {
 	static struct lock_file msg_file;
 
 	int msg_fd = hold_lock_file_for_update(&msg_file, filename, 0);
 	if (msg_fd < 0)
 		return error_errno(_("Could not lock '%s'"), filename);
-	if (write_in_full(msg_fd, msgbuf->buf, msgbuf->len) < 0) {
+	if (write_in_full(msg_fd, buf, len) < 0) {
 		rollback_lock_file(&msg_file);
 		return error_errno(_("Could not write to '%s'"), filename);
 	}
@@ -747,12 +747,14 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 					 head, &msgbuf, opts);
 		if (res < 0)
 			return res;
-		res |= write_message(&msgbuf, git_path_merge_msg());
+		res |= write_message(msgbuf.buf, msgbuf.len,
+				     git_path_merge_msg());
 	} else {
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
 
-		res = write_message(&msgbuf, git_path_merge_msg());
+		res = write_message(msgbuf.buf, msgbuf.len,
+				    git_path_merge_msg());
 
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
