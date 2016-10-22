@@ -429,9 +429,25 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count,
 	return 1;
 }
 
+static int measure_abbrev(const struct object_id *oid, int sofar)
+{
+	char hex[GIT_SHA1_HEXSZ + 1];
+	int w = find_unique_abbrev_r(hex, oid->hash, DEFAULT_ABBREV);
+
+	return (w < sofar) ? sofar : w;
+}
+
 int transport_summary_width(const struct ref *refs)
 {
-	return (2 * FALLBACK_DEFAULT_ABBREV + 3);
+	int maxw = -1;
+
+	for (; refs; refs = refs->next) {
+		maxw = measure_abbrev(&refs->old_oid, maxw);
+		maxw = measure_abbrev(&refs->new_oid, maxw);
+	}
+	if (maxw < 0)
+		maxw = FALLBACK_DEFAULT_ABBREV;
+	return (2 * maxw + 3);
 }
 
 void transport_print_push_status(const char *dest, struct ref *refs,
