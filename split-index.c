@@ -187,7 +187,7 @@ void prepare_to_write_split_index(struct index_state *istate)
 		/* Go through istate->cache[] and mark CE_MATCHED to
 		 * entry with positive index. We'll go through
 		 * base->cache[] later to delete all entries in base
-		 * that are not marked eith either CE_MATCHED or
+		 * that are not marked with either CE_MATCHED or
 		 * CE_UPDATE_IN_BASE. If istate->cache[i] is a
 		 * duplicate, deduplicate it.
 		 */
