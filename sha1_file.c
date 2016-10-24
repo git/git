@@ -1561,7 +1561,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 
 int git_open(const char *name)
 {
-	static int sha1_file_open_flag = O_NOATIME;
+	static int sha1_file_open_flag = O_NOATIME | O_CLOEXEC;
 
 	for (;;) {
 		int fd;
@@ -1571,12 +1571,17 @@ int git_open(const char *name)
 		if (fd >= 0)
 			return fd;
 
-		/* Might the failure be due to O_NOATIME? */
-		if (errno != ENOENT && sha1_file_open_flag) {
-			sha1_file_open_flag = 0;
+		/* Try again w/o O_CLOEXEC: the kernel might not support it */
+		if ((sha1_file_open_flag & O_CLOEXEC) && errno == EINVAL) {
+			sha1_file_open_flag &= ~O_CLOEXEC;
 			continue;
 		}
 
+		/* Might the failure be due to O_NOATIME? */
+		if (errno != ENOENT && (sha1_file_open_flag & O_NOATIME)) {
+			sha1_file_open_flag &= ~O_NOATIME;
+			continue;
+		}
 		return -1;
 	}
 }
