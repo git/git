@@ -3951,6 +3951,10 @@ int diff_opt_parse(struct diff_options *options,
 		return parse_submodule_opt(options, arg);
 	else if (skip_prefix(arg, "--ws-error-highlight=", &arg))
 		return parse_ws_error_highlight(options, arg);
+	else if (!strcmp(arg, "--ita-invisible-in-index"))
+		options->ita_invisible_in_index = 1;
+	else if (!strcmp(arg, "--ita-visible-in-index"))
+		options->ita_invisible_in_index = 0;
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
