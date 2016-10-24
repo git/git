@@ -105,16 +105,22 @@ static int is_executable(const char *name)
 		return 0;
 
 #if defined(GIT_WINDOWS_NATIVE)
-	/* On Windows we cannot use the executable bit. The executable
-	 * state is determined by extension only. We do this first
-	 * because with virus scanners opening an executeable for
-	 * reading is potentially expensive.
+	/*
+	 * On Windows there is no executable bit. The file extension
+	 * indicates whether it can be run as an executable, and Git
+	 * has special-handling to detect scripts and launch them
+	 * through the indicated script interpreter. We test for the
+	 * file extension first because virus scanners may make
+	 * opening an executable for reading expensive.
 	 */
 	if (ends_with(name, ".exe"))
 		return S_IXUSR;
 
-{	/* now that we know it does not have an executable extension,
-	   peek into the file instead */
+{
+	/*
+	 * Now that we know it does not have an executable extension,
+	 * peek into the file instead.
+	 */
 	char buf[3] = { 0 };
 	int n;
 	int fd = open(name, O_RDONLY);
