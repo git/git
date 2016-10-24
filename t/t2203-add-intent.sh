@@ -129,5 +129,16 @@ test_expect_success 'cache-tree does skip dir that becomes empty' '
 	)
 '
 
+test_expect_success 'commit: ita entries ignored in empty commit check' '
+	git init empty-subsequent-commit &&
+	(
+		cd empty-subsequent-commit &&
+		test_commit one &&
+		: >two &&
+		git add -N two &&
+		test_must_fail git commit -m nothing-new-here
+	)
+'
+
 test_done
 

@@ -910,7 +910,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			if (ignore_submodule_arg &&
 			    !strcmp(ignore_submodule_arg, "all"))
 				diff_flags |= DIFF_OPT_IGNORE_SUBMODULES;
-			commitable = index_differs_from(parent, diff_flags);
+			commitable = index_differs_from(parent, diff_flags, 1);
 		}
 	}
 	strbuf_release(&committer_ident);
