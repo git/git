@@ -437,7 +437,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 
 		switch (p->status) {
 		case DIFF_STATUS_ADDED:
-			die("BUG: worktree status add???");
+			d->mode_worktree = p->two->mode;
 			break;
 
 		case DIFF_STATUS_DELETED:
@@ -547,6 +547,7 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 	setup_revisions(0, NULL, &rev, NULL);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	DIFF_OPT_SET(&rev.diffopt, DIRTY_SUBMODULES);
+	rev.diffopt.ita_invisible_in_index = 1;
 	if (!s->show_untracked_files)
 		DIFF_OPT_SET(&rev.diffopt, IGNORE_UNTRACKED_IN_SUBMODULES);
 	if (s->ignore_submodule_arg) {
@@ -570,6 +571,7 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 	setup_revisions(0, NULL, &rev, &opt);
 
 	DIFF_OPT_SET(&rev.diffopt, OVERRIDE_SUBMODULE_CONFIG);
+	rev.diffopt.ita_invisible_in_index = 1;
 	if (s->ignore_submodule_arg) {
 		handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
 	} else {
@@ -604,6 +606,8 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 		const struct cache_entry *ce = active_cache[i];
 
 		if (!ce_path_match(ce, &s->pathspec, NULL))
+			continue;
+		if (ce_intent_to_add(ce))
 			continue;
 		it = string_list_insert(&s->change, ce->name);
 		d = it->util;
@@ -911,6 +915,7 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 
 	init_revisions(&rev, NULL);
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
+	rev.diffopt.ita_invisible_in_index = 1;
 
 	memset(&opt, 0, sizeof(opt));
 	opt.def = s->is_initial ? EMPTY_TREE_SHA1_HEX : s->reference;

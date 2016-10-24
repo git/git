@@ -246,8 +246,8 @@ test_expect_success 'verify --intent-to-add output' '
 	git add --intent-to-add intent1.add intent2.add &&
 
 	cat >expect <<-EOF &&
-	1 AM N... 000000 100644 100644 $_z40 $EMPTY_BLOB intent1.add
-	1 AM N... 000000 100644 100644 $_z40 $EMPTY_BLOB intent2.add
+	1 .A N... 000000 000000 100644 $_z40 $_z40 intent1.add
+	1 .A N... 000000 000000 100644 $_z40 $_z40 intent2.add
 	EOF
 
 	git status --porcelain=v2 >actual &&
