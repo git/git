@@ -266,7 +266,7 @@ static int open_pack_bitmap_1(struct packed_git *packfile)
 		return -1;
 
 	idx_name = pack_bitmap_filename(packfile);
-	fd = git_open_noatime(idx_name);
+	fd = git_open(idx_name);
 	free(idx_name);
 
 	if (fd < 0)
