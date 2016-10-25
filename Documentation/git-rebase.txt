@@ -33,7 +33,7 @@ of commits that would be shown by `git log <upstream>..HEAD`; or by
 description on `--fork-point` below); or by `git log HEAD`, if the
 `--root` option is specified.
 
-The current branch is reset to <upstream>, or <newbase> if the
+HEAD is reset to <upstream>, or <newbase> if the
 --onto option was supplied.  This has the exact same effect as
 `git reset --hard <upstream>` (or <newbase>).  ORIG_HEAD is set
 to point at the tip of the branch before the reset.
