@@ -1,16 +1,67 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2016, #05; Thu, 20)
+Subject: What's cooking in git.git (Oct 2016, #06; Mon, 24)
 X-master-at: 659889482ac63411daea38b2c3d127842ea04e4d
-X-next-at: ffd0de042c0ecacbb6661b2f7becf79fe3cf1d4b
+X-next-at: 5073a4de2dac30ca7cfaaa2d4bdd8eead108e4ca
 
-What's cooking in git.git (Oct 2016, #05; Thu, 20)
+What's cooking in git.git (Oct 2016, #06; Mon, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+Originally I planed to start concluding this cycle today, but
+waiting for the conclusion of a few test breakages on Windows, I
+didn't tag -rc0 today.
+
+Here are my current thinking on the notable topics.
+
+ - the "off-by-one fix" part of sb/submodule-ignore-trailing-slash
+   needs to be in the upcoming release but the "trailing /. in base
+   should not affect the resolution of ../relative/path" part that
+   is still under discussion can wait.  Which means we'd need a few
+   more !MINGW prerequisites in the tests by -rc0.
+
+ - js/prepare-sequencer topic is not yet in 'next' but it would be a
+   nice-to-have in the upcoming release if we can.  It does not yet
+   touch "rebase -i", but does touch the sequencer code that is used
+   in cherry-pick and revert, so I'd prefer to cook it for at least
+   a week and half in 'next' before merging.
+
+ - ls/filter-process topic has been in 'next' with one known test
+   breakage on Windows, whose resolution ls/git-open-cloexec is
+   close to its final shape.  Perhaps we can cook them for at least
+   a week and half in 'next' and have it in the upcoming release.
+
+ - ex/deprecate-empty-pathspec-as-match-all topic that makes it
+   illegal to say 'git add ""' when you mean 'git add .' has been in
+   'next' for more than a cycle.  I am inclined to merge it in the
+   upcoming release.
+
+ - jc/merge-drop-old-syntax is relatively new in 'next' after all
+   known in-tree dependents have been updated.  I am planning to
+   keep it cooking in 'next' but add a backward incompatibility
+   notice to the release notes to the upcoming release.
+
+ - lt/abbrev-auto and its follow-up jk/abbrev-auto are about auto
+   scaling the default abbreviation length when Git produces a short
+   object name to adjust to the modern times.  Peff noticed one
+   fallout from it recently and its fix jc/abbrev-auto is not yet in
+   'next'.  I would not be surprised if there are other uncovered
+   fallouts remaining in the code, but at the same time, I expect
+   they are all cosmetic kind that do not affect correctness, so I
+   am inclined to include all of them in the upcoming release.
+
+I plan to merge other smallish topics that have been in 'next' to
+'master' soonish, and relabel the remainder that have been labeled
+as "Will merge to 'master'" to "Will hold" and keep cooking them in
+'next'.  For this reason, please do not take the "Will merge to
+'master'" label too literally in this issue of "What's cooking"
+report.  It is always true that the label only means "the topic will
+be in 'master' eventually", not "the topic will be in the upcoming
+release", but in this issue that is even more true than usual.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,117 +71,107 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jc/merge-base-fp-only (2016-10-19) 8 commits
- . merge-base: fp experiment
- - merge: allow to use only the fp-only merge bases
- - merge-base: limit the output to bases that are on first-parent chain
- - merge-base: mark bases that are on first-parent chain
- - merge-base: expose get_merge_bases_many_0() a bit more
- - merge-base: stop moving commits around in remove_redundant()
- - sha1_name: remove ONELINE_SEEN bit
- - commit: simplify fastpath of merge-base
+* jk/tap-verbose-fix (2016-10-24) 4 commits
+  (merged to 'next' on 2016-10-24 at 5073a4de2d)
+ + test-lib: bail out when "-v" used under "prove"
+  (merged to 'next' on 2016-10-21 at 592679411c)
+ + travis: use --verbose-log test option
+ + test-lib: add --verbose-log option
+ + test-lib: handle TEST_OUTPUT_DIRECTORY with spaces
 
- An experiment of merge-base that ignores common ancestors that are
- not on the first parent chain.
-
-
-* bw/submodule-branch-dot-doc (2016-10-19) 1 commit
- - submodules doc: update documentation for "." used for submodule branches
-
- Recent git allows submodule.<name>.branch to use a special token
- "." instead of the branch name; the documentation has been updated
- to describe it.
-
- Will merge to 'next'.
-
-
-* tg/add-chmod+x-fix (2016-10-20) 1 commit
- - t3700: fix broken test under !SANITY
-
- A hot-fix for a test added by a recent topic that went to both
- 'master' and 'maint' already.
-
- Will merge to 'next'.
-
-
-* jk/diff-submodule-diff-inline (2016-10-20) 1 commit
- - rev-list: use hdr_termination instead of a always using a newline
-
- A recently graduated topic regressed "git rev-list --header"
- output, breaking "gitweb".  This has been fixed.
-
- Will merge to 'next'.
-
-
-* jk/no-looking-at-dotgit-outside-repo (2016-10-20) 8 commits
- - setup_git_env: avoid blind fall-back to ".git"
- - diff: handle sha1 abbreviations outside of repository
- - diff_aligned_abbrev: use "struct oid"
- - diff_unique_abbrev: rename to diff_aligned_abbrev
- - find_unique_abbrev: use 4-buffer ring
- - test-*-cache-tree: setup git dir
- - read info/{attributes,exclude} only when in repository
- - Merge branch 'jc/diff-unique-abbrev-comments' into jk/no-looking-at-dotgit-outside-repo
- (this branch uses jc/diff-unique-abbrev-comments.)
-
- Update "git diff --no-index" codepath not to try to peek into .git/
- directory that happens to be under the current directory, when we
- know we are operating outside any repository.
-
- Will wait until 'jc/diff-unique-abbrev-comments' graduates, rebase
- onto 'master' and then cook in 'next'.
-
-
-* pt/gitgui-updates (2016-10-20) 35 commits
- - Merge tag 'gitgui-0.21.0' of git://repo.or.cz/git-gui
- - git-gui: set version 0.21
- - Merge branch 'as/bulgarian' into pu
- - git-gui: Mark 'All' in remote.tcl for translation
- - git-gui i18n: Updated Bulgarian translation (565,0f,0u)
- - Merge branch 'os/preserve-author' into pu
- - git-gui: avoid persisting modified author identity
- - git-gui: Do not reset author details on amend
- - Merge branch 'kb/unicode' into pu
- - git-gui: handle the encoding of Git's output correctly
- - git-gui: unicode file name support on windows
- - Merge branch 'dr/ru' into pu
- - git-gui: Update Russian translation
- - git-gui: maintain backwards compatibility for merge syntax
- - Merge branch 'va/i18n_2' into pu
- - git-gui i18n: mark string in lib/error.tcl for translation
- - git-gui: fix incorrect use of Tcl append command
- - git-gui i18n: mark "usage:" strings for translation
- - git-gui i18n: internationalize use of colon punctuation
- - Merge branch 'pt/non-mouse-usage' into pu
- - Amend tab ordering and text widget border and highlighting.
- - Allow keyboard control to work in the staging widgets.
- - Merge branch 'pt/git4win-mods' into pu
- - git-gui (Windows): use git-gui.exe in `Create Desktop Shortcut`
- - git-gui: fix detection of Cygwin
- - Merge branch 'patches' into pu
- - git-gui: ensure the file in the diff pane is in the list of selected files
- - git-gui: support for $FILENAMES in tool definitions
- - git-gui: fix initial git gui message encoding
- - git-gui/po/glossary/txt-to-pot.sh: use the $( ... ) construct for command substitution
- - Merge branch 'va/i18n' into pu
- - Merge branch 'rs/use-modern-git-merge-syntax' into pu
- - Merge branch 'js/commit-gpgsign' into pu
- - Merge branch 'sy/i18n' into pu
- - git-gui: sort entries in tclIndex
+ The Travis CI configuration we ship ran the tests with --verbose
+ option but this risks non-TAP output that happens to be "ok" to be
+ misinterpreted as TAP signalling a test that passed.  This resulted
+ in unnecessary failure.  This has been corrected by introducing a
+ new mode to run our tests in the test harness to send the verbose
+ output separately to the log file.
 
  Will merge to 'master'.
- Parked here temporarily as I didn't have chance to double-check.
 
 
-* yk/git-tag-remove-mention-of-old-layout-in-doc (2016-10-20) 1 commit
- - doc: remove reference to the traditional layout in git-tag.txt
+* po/fix-doc-merge-base-illustration (2016-10-21) 1 commit
+  (merged to 'next' on 2016-10-21 at ac6f04a6c5)
+ + doc: fix merge-base ASCII art tab spacing
 
- Shorten description of auto-following in "git tag" by removing a
- mention of historical remotes layout which is not relevant to the
- main topic.
+ Some AsciiDoc formatter mishandles a displayed illustration with
+ tabs in it.  Adjust a few of them in merge-base documentation to
+ work around them.
+
+ Will merge to 'master'.
+
+
+* jc/abbrev-auto (2016-10-22) 4 commits
+ - transport: compute summary-width dynamically
+ - transport: allow summary-width to be computed dynamically
+ - fetch: pass summary_width down the callchain
+ - transport: pass summary_width down the callchain
+ (this branch uses jk/abbrev-auto and lt/abbrev-auto.)
+
+ "git push" and "git fetch" reports from what old object to what new
+ object each ref was updated, using abbreviated refnames, and they
+ attempt to align the columns for this and other pieces of
+ information.  The way these codepaths compute how many display
+ columns to allocate for the object names portion of this output has
+ been updated to match the recent "auto scale the default
+ abbreviation length" change.
 
  Will merge to 'next'.
 
+
+* jc/reset-unmerge (2016-10-24) 1 commit
+ - reset: --unmerge
+
+ After "git add" is run prematurely during a conflict resolution,
+ "git diff" can no longer be used as a way to sanity check by
+ looking at the combined diff.  "git reset" learned a new
+ "--unmerge" option to recover from this situation.
+
+
+
+* jk/daemon-path-ok-check-truncation (2016-10-24) 1 commit
+ - daemon: detect and reject too-long paths
+
+ "git daemon" used fixed-length buffers to turn URL to the
+ repository the client asked for into the server side directory
+ path, using snprintf() to avoid overflowing these buffers, but
+ allowed possibly truncated paths to the directory.  This has been
+ tightened to reject such a request that causes overlong path to be
+ required to serve.
+
+ Will merge to 'next'.
+
+
+* ls/git-open-cloexec (2016-10-24) 3 commits
+ - SQUASH???
+ - read-cache: make sure file handles are not inherited by child processes
+ - sha1_file: open window into packfiles with CLOEXEC
+
+ Git generally does not explicitly close file descriptors that were
+ open in the parent process when spawning a child process, but most
+ of the time the child does not want to access them. As Windows does
+ not allow removing or renaming a file that has a file descriptor
+ open, a slow-to-exit child can even break the parent process by
+ holding onto them.  Use O_CLOEXEC flag to open files in various
+ codepaths.
+
+ Under discussion.
+ cf. <20161024183900.GA12769@starla>
+
+ This needs to be merged before ls/filter-process so that it won't
+ break Windows.
+
+
+* rs/ring-buffer-wraparound (2016-10-24) 1 commit
+ - hex: make wraparound of the index into ring-buffer explicit
+
+ The code that we have used for the past 10+ years to cycle
+ 4-element ring buffers turns out to be not quite portable in
+ theoretical world.
+
+ Under discussion.
+ cf. <b1f9054e-fadb-c2d3-bf95-00e88e1fb85b@web.de>
+
+ 
 --------------------------------------------------
 [Stalled]
 
@@ -247,6 +288,124 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/merge-base-fp-only (2016-10-19) 8 commits
+ . merge-base: fp experiment
+ - merge: allow to use only the fp-only merge bases
+ - merge-base: limit the output to bases that are on first-parent chain
+ - merge-base: mark bases that are on first-parent chain
+ - merge-base: expose get_merge_bases_many_0() a bit more
+ - merge-base: stop moving commits around in remove_redundant()
+ - sha1_name: remove ONELINE_SEEN bit
+ - commit: simplify fastpath of merge-base
+
+ An experiment of merge-base that ignores common ancestors that are
+ not on the first parent chain.
+
+
+* bw/submodule-branch-dot-doc (2016-10-19) 1 commit
+  (merged to 'next' on 2016-10-21 at 18aad25ba8)
+ + submodules doc: update documentation for "." used for submodule branches
+
+ Recent git allows submodule.<name>.branch to use a special token
+ "." instead of the branch name; the documentation has been updated
+ to describe it.
+
+ Will merge to 'master'.
+
+
+* tg/add-chmod+x-fix (2016-10-20) 1 commit
+  (merged to 'next' on 2016-10-21 at 1585ac7139)
+ + t3700: fix broken test under !SANITY
+
+ A hot-fix for a test added by a recent topic that went to both
+ 'master' and 'maint' already.
+
+ Will merge to 'master'.
+
+
+* jk/diff-submodule-diff-inline (2016-10-20) 1 commit
+  (merged to 'next' on 2016-10-21 at 13f300805e)
+ + rev-list: use hdr_termination instead of a always using a newline
+
+ A recently graduated topic regressed "git rev-list --header"
+ output, breaking "gitweb".  This has been fixed.
+
+ Will merge to 'master'.
+
+
+* jk/no-looking-at-dotgit-outside-repo (2016-10-20) 8 commits
+ - setup_git_env: avoid blind fall-back to ".git"
+ - diff: handle sha1 abbreviations outside of repository
+ - diff_aligned_abbrev: use "struct oid"
+ - diff_unique_abbrev: rename to diff_aligned_abbrev
+ - find_unique_abbrev: use 4-buffer ring
+ - test-*-cache-tree: setup git dir
+ - read info/{attributes,exclude} only when in repository
+ - Merge branch 'jc/diff-unique-abbrev-comments' into jk/no-looking-at-dotgit-outside-repo
+ (this branch uses jc/diff-unique-abbrev-comments.)
+
+ Update "git diff --no-index" codepath not to try to peek into .git/
+ directory that happens to be under the current directory, when we
+ know we are operating outside any repository.
+
+ Will wait until 'jc/diff-unique-abbrev-comments' graduates, rebase
+ onto 'master' and then cook in 'next'.
+
+
+* pt/gitgui-updates (2016-10-20) 35 commits
+  (merged to 'next' on 2016-10-21 at 4c8214095a)
+ + Merge tag 'gitgui-0.21.0' of git://repo.or.cz/git-gui
+ + git-gui: set version 0.21
+ + Merge branch 'as/bulgarian' into pu
+ + git-gui: Mark 'All' in remote.tcl for translation
+ + git-gui i18n: Updated Bulgarian translation (565,0f,0u)
+ + Merge branch 'os/preserve-author' into pu
+ + git-gui: avoid persisting modified author identity
+ + git-gui: Do not reset author details on amend
+ + Merge branch 'kb/unicode' into pu
+ + git-gui: handle the encoding of Git's output correctly
+ + git-gui: unicode file name support on windows
+ + Merge branch 'dr/ru' into pu
+ + git-gui: Update Russian translation
+ + git-gui: maintain backwards compatibility for merge syntax
+ + Merge branch 'va/i18n_2' into pu
+ + git-gui i18n: mark string in lib/error.tcl for translation
+ + git-gui: fix incorrect use of Tcl append command
+ + git-gui i18n: mark "usage:" strings for translation
+ + git-gui i18n: internationalize use of colon punctuation
+ + Merge branch 'pt/non-mouse-usage' into pu
+ + Amend tab ordering and text widget border and highlighting.
+ + Allow keyboard control to work in the staging widgets.
+ + Merge branch 'pt/git4win-mods' into pu
+ + git-gui (Windows): use git-gui.exe in `Create Desktop Shortcut`
+ + git-gui: fix detection of Cygwin
+ + Merge branch 'patches' into pu
+ + git-gui: ensure the file in the diff pane is in the list of selected files
+ + git-gui: support for $FILENAMES in tool definitions
+ + git-gui: fix initial git gui message encoding
+ + git-gui/po/glossary/txt-to-pot.sh: use the $( ... ) construct for command substitution
+ + Merge branch 'va/i18n' into pu
+ + Merge branch 'rs/use-modern-git-merge-syntax' into pu
+ + Merge branch 'js/commit-gpgsign' into pu
+ + Merge branch 'sy/i18n' into pu
+ + git-gui: sort entries in tclIndex
+
+ A new version of git-gui, now at its 0.21.0 tag.
+
+ Will merge to 'master'.
+
+
+* yk/git-tag-remove-mention-of-old-layout-in-doc (2016-10-20) 1 commit
+  (merged to 'next' on 2016-10-21 at 8d9e23b023)
+ + doc: remove reference to the traditional layout in git-tag.txt
+
+ Shorten description of auto-following in "git tag" by removing a
+ mention of historical remotes layout which is not relevant to the
+ main topic.
+
+ Will merge to 'master'.
+
+
 * dk/worktree-dup-checkout-with-bare-is-ok (2016-10-14) 1 commit
   (merged to 'next' on 2016-10-17 at 24594d3e56)
  + worktree: allow the main brach of a bare repository to be checked out
@@ -327,7 +486,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jt/trailer-with-cruft (2016-10-20) 8 commits
+* jt/trailer-with-cruft (2016-10-21) 8 commits
  - trailer: support values folded to multiple lines
  - trailer: forbid leading whitespace in trailers
  - trailer: allow non-trailers in trailer block
@@ -345,7 +504,10 @@ of the repositories listed at
  Waiting for review.
 
 
-* mm/send-email-cc-cruft-after-address (2016-10-14) 1 commit
+* mm/send-email-cc-cruft-after-address (2016-10-21) 3 commits
+  (merged to 'next' on 2016-10-21 at c7ec2b5025)
+ + Git.pm: add comment pointing to t9000
+ + t9000-addresses: update expected results after fix
   (merged to 'next' on 2016-10-19 at 41e3f876cd)
  + parse_mailboxes: accept extra text after <...> address
 
@@ -438,15 +600,17 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* js/prepare-sequencer (2016-10-17) 25 commits
+* js/prepare-sequencer (2016-10-21) 27 commits
  - sequencer: mark all error messages for translation
  - sequencer: start error messages consistently with lower case
  - sequencer: quote filenames in error messages
  - sequencer: mark action_name() for translation
  - sequencer: remove overzealous assumption in rebase -i mode
- - sequencer: refactor write_message()
+ - sequencer: teach write_message() to append an optional LF
+ - sequencer: refactor write_message() to take a pointer/length
+ - sequencer: roll back lock file if write_message() failed
+ - sequencer: stop releasing the strbuf in write_message()
  - sequencer: left-trim lines read from the script
- - sequencer: do not try to commit when there were merge conflicts
  - sequencer: support cleaning up commit messages
  - sequencer: support amending commits
  - sequencer: allow editing the commit message on a case-by-case basis
@@ -459,7 +623,7 @@ of the repositories listed at
  - sequencer: completely revamp the "todo" script parsing
  - sequencer: refactor the code to obtain a short commit name
  - sequencer: future-proof read_populate_todo()
- - sequencer: eventually release memory allocated for the option values
+ - sequencer: plug memory leaks for the option values
  - sequencer: future-proof remove_sequencer_state()
  - sequencer: avoid unnecessary indirection
  - sequencer: use memoized sequencer directory path
@@ -468,7 +632,7 @@ of the repositories listed at
  Update of the sequencer codebase to make it reusable to reimplement
  "rebase -i" continues.
 
- Waiting for review.
+ Will merge to 'next'.
 
 
 * sb/submodule-ignore-trailing-slash (2016-10-18) 3 commits
@@ -485,6 +649,8 @@ of the repositories listed at
 
  cf. <alpine.DEB.2.20.1610131255001.197091@virtualbox>
  cf. <CAGZ79kYrKGLEOO72aWuX5OOM-AecdFZFXRqBkRzhdAM-VbPFxA@mail.gmail.com>
+
+ What's the current state of this topic?
 
 
 * st/verify-tag (2016-10-10) 7 commits
@@ -514,10 +680,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/attr (2016-10-11) 28 commits
+* sb/attr (2016-10-24) 36 commits
+ - completion: clone can initialize specific submodules
+ - clone: add --init-submodule=<pathspec> switch
+ - submodule update: add `--init-default-path` switch
+ - pathspec: allow escaped query values
+ - pathspec: allow querying for attributes
+ - pathspec: move prefix check out of the inner loop
+ - pathspec: move long magic parsing out of prefix_pathspec
+ - Documentation: fix a typo
+ - attr: keep attr stack for each check
  - attr: convert to new threadsafe API
  - attr: make git_check_attr_counted static
- - attr: make git_attr_counted static
  - attr.c: outline the future plans by heavily commenting
  - attr.c: always pass check[] to collect_some_attrs()
  - attr.c: introduce empty_attr_check_elems()
@@ -546,6 +720,8 @@ of the repositories listed at
 
  The attributes API has been updated so that it can later be
  optimized using the knowledge of which attributes are queried.
+ Building on top of the updated API, the pathspec machinery learned
+ to select only paths with given attributes set.
 
 
 * jc/ws-error-highlight (2016-10-04) 4 commits
@@ -562,8 +738,9 @@ of the repositories listed at
 
 
 * jk/abbrev-auto (2016-10-03) 1 commit
- - find_unique_abbrev: move logic out of get_short_sha1()
- (this branch uses lt/abbrev-auto.)
+  (merged to 'next' on 2016-10-21 at 8aa3d760d8)
+ + find_unique_abbrev: move logic out of get_short_sha1()
+ (this branch is used by jc/abbrev-auto; uses lt/abbrev-auto.)
 
  Updates the way approximate count of total objects is computed
  while attempting to come up with a unique abbreviated object name,
@@ -573,10 +750,11 @@ of the repositories listed at
  Undecided.
 
 
-* nd/ita-empty-commit (2016-09-28) 3 commits
+* nd/ita-empty-commit (2016-10-24) 4 commits
  - commit: don't be fooled by ita entries when creating initial commit
- - diff-lib.c: enable --shift-ita in index_differs_from()
- - Resurrect "diff-lib.c: adjust position of i-t-a entries in diff"
+ - commit: fix empty commit creation when there's no changes but ita entries
+ - diff: add --ita-[in]visible-in-index
+ - diff-lib: allow ita entries treated as "not yet exist in index"
 
  When new paths were added by "git add -N" to the index, it was
  enough to circumvent the check by "git commit" to refrain from
@@ -584,9 +762,7 @@ of the repositories listed at
  prevented "git status" to show such a path as "new file" in the
  "Changes not staged for commit" section.
 
- Expecting a reroll.
- cf. <xmqqzimrj03j.fsf@gitster.mtv.corp.google.com>
- cf. <xmqq8tubkgg5.fsf@gitster.mtv.corp.google.com>
+ Will merge to 'next'.
 
 
 * lt/abbrev-auto (2016-10-03) 3 commits
@@ -594,7 +770,7 @@ of the repositories listed at
  + abbrev: auto size the default abbreviation
  + abbrev: prepare for new world order
  + abbrev: add FALLBACK_DEFAULT_ABBREV to prepare for auto sizing
- (this branch is used by jk/abbrev-auto.)
+ (this branch is used by jc/abbrev-auto and jk/abbrev-auto.)
 
  Allow the default abbreviation length, which has historically been
  7, to scale as the repository grows.  The logic suggests to use 12
@@ -716,7 +892,7 @@ of the repositories listed at
  all filtering need is served by this single process for multiple
  paths, reducing the process creation overhead.
 
- Will merge to 'master'.
+ Will wait for ls/git-open-cloexec.
 
 
 * hv/submodule-not-yet-pushed-fix (2016-10-10) 3 commits
