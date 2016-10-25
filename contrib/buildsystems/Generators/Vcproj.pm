@@ -112,6 +112,8 @@ sub createLibProject {
     my $includes= join(";", sort(map("&quot;$rel_dir\\$_&quot;", @{$$build_structure{"LIBS_${libname}_INCLUDES"}})));
     my $cflags  = join(" ", sort(@{$$build_structure{"LIBS_${libname}_CFLAGS"}}));
     $cflags =~ s/\"/&quot;/g;
+    $cflags =~ s/</&lt;/g;
+    $cflags =~ s/>/&gt;/g;
 
     my $cflags_debug = $cflags;
     $cflags_debug =~ s/-MT/-MTd/;
@@ -133,6 +135,8 @@ sub createLibProject {
 
     $defines =~ s/-D//g;
     $defines =~ s/\"/\\&quot;/g;
+    $defines =~ s/</&lt;/g;
+    $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
     $includes =~ s/-I//g;
     mkdir "$target" || die "Could not create the directory $target for lib project!\n";
@@ -325,6 +329,8 @@ sub createAppProject {
     my $includes= join(";", sort(map("&quot;$rel_dir\\$_&quot;", @{$$build_structure{"APPS_${appname}_INCLUDES"}})));
     my $cflags  = join(" ", sort(@{$$build_structure{"APPS_${appname}_CFLAGS"}}));
     $cflags =~ s/\"/&quot;/g;
+    $cflags =~ s/</&lt;/g;
+    $cflags =~ s/>/&gt;/g;
 
     my $cflags_debug = $cflags;
     $cflags_debug =~ s/-MT/-MTd/;
@@ -351,6 +357,8 @@ sub createAppProject {
 
     $defines =~ s/-D//g;
     $defines =~ s/\"/\\&quot;/g;
+    $defines =~ s/</&lt;/g;
+    $defines =~ s/>/&gt;/g;
     $defines =~ s/\'//g;
     $defines =~ s/\\\\/\\/g;
     $includes =~ s/-I//g;
