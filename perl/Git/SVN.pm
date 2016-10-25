@@ -1658,7 +1658,17 @@ sub tie_for_persistent_memoization {
 	if ($memo_backend > 0) {
 		tie %$hash => 'Git::SVN::Memoize::YAML', "$path.yaml";
 	} else {
-		tie %$hash => 'Memoize::Storable', "$path.db", 'nstore';
+		# first verify that any existing file can actually be loaded
+		# (it may have been saved by an incompatible version)
+		my $db = "$path.db";
+		if (-e $db) {
+			use Storable qw(retrieve);
+
+			if (!eval { retrieve($db); 1 }) {
+				unlink $db or die "unlink $db failed: $!";
+			}
+		}
+		tie %$hash => 'Memoize::Storable', $db, 'nstore';
 	}
 }
 
