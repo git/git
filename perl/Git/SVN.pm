@@ -1660,10 +1660,15 @@ sub tie_for_persistent_memoization {
 	} else {
 		# first verify that any existing file can actually be loaded
 		# (it may have been saved by an incompatible version)
-		if (-e "$path.db") {
-			unlink "$path.db" unless eval { retrieve("$path.db"); 1 };
+		my $db = "$path.db";
+		if (-e $db) {
+			use Storable qw(retrieve);
+
+			if (!eval { retrieve($db); 1 }) {
+				unlink $db or die "unlink $db failed: $!";
+			}
 		}
-		tie %$hash => 'Memoize::Storable', "$path.db", 'nstore';
+		tie %$hash => 'Memoize::Storable', $db, 'nstore';
 	}
 }
 
