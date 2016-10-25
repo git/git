@@ -257,3 +257,6 @@
 *.manifest
 Debug/
 Release/
+/UpgradeLog*.htm
+/git.VC.VC.opendb
+/git.VC.db
