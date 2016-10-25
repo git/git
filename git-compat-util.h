@@ -383,6 +383,14 @@ static inline int git_skip_dos_drive_prefix(char **path)
 #define skip_dos_drive_prefix git_skip_dos_drive_prefix
 #endif
 
+#ifndef has_unc_prefix
+static inline int git_has_unc_prefix(const char *path)
+{
+	return 0;
+}
+#define has_unc_prefix git_has_unc_prefix
+#endif
+
 #ifndef is_dir_sep
 static inline int git_is_dir_sep(int c)
 {
