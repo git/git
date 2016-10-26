@@ -17,9 +17,6 @@
 #include "argv-array.h"
 #include "utf8.h"
 
-#define TRANSPORT_SUMMARY(x) \
-	(int)(TRANSPORT_SUMMARY_WIDTH + strlen(x) - gettext_width(x)), (x)
-
 static const char * const builtin_fetch_usage[] = {
 	N_("git fetch [<options>] [<repository> [<refspec>...]]"),
 	N_("git fetch [<options>] <group>"),
@@ -580,9 +577,12 @@ static void print_compact(struct strbuf *display,
 
 static void format_display(struct strbuf *display, char code,
 			   const char *summary, const char *error,
-			   const char *remote, const char *local)
+			   const char *remote, const char *local,
+			   int summary_width)
 {
-	strbuf_addf(display, "%c %-*s ", code, TRANSPORT_SUMMARY(summary));
+	int width = (summary_width + strlen(summary) - gettext_width(summary));
+
+	strbuf_addf(display, "%c %-*s ", code, width, summary);
 	if (!compact_format)
 		print_remote_to_local(display, remote, local);
 	else
@@ -594,7 +594,8 @@ static void format_display(struct strbuf *display, char code,
 static int update_local_ref(struct ref *ref,
 			    const char *remote,
 			    const struct ref *remote_ref,
-			    struct strbuf *display)
+			    struct strbuf *display,
+			    int summary_width)
 {
 	struct commit *current = NULL, *updated;
 	enum object_type type;
@@ -608,7 +609,7 @@ static int update_local_ref(struct ref *ref,
 	if (!oidcmp(&ref->old_oid, &ref->new_oid)) {
 		if (verbosity > 0)
 			format_display(display, '=', _("[up to date]"), NULL,
-				       remote, pretty_ref);
+				       remote, pretty_ref, summary_width);
 		return 0;
 	}
 
@@ -622,7 +623,7 @@ static int update_local_ref(struct ref *ref,
 		 */
 		format_display(display, '!', _("[rejected]"),
 			       _("can't fetch in current branch"),
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		return 1;
 	}
 
@@ -632,7 +633,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref("updating tag", ref, 0);
 		format_display(display, r ? '!' : 't', _("[tag update]"),
 			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		return r;
 	}
 
@@ -665,7 +666,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref(msg, ref, 0);
 		format_display(display, r ? '!' : '*', what,
 			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		return r;
 	}
 
@@ -681,7 +682,7 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref("fast-forward", ref, 1);
 		format_display(display, r ? '!' : ' ', quickref.buf,
 			       r ? _("unable to update local ref") : NULL,
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		strbuf_release(&quickref);
 		return r;
 	} else if (force || ref->force) {
@@ -696,12 +697,12 @@ static int update_local_ref(struct ref *ref,
 		r = s_update_ref("forced-update", ref, 1);
 		format_display(display, r ? '!' : '+', quickref.buf,
 			       r ? _("unable to update local ref") : _("forced update"),
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		strbuf_release(&quickref);
 		return r;
 	} else {
 		format_display(display, '!', _("[rejected]"), _("non-fast-forward"),
-			       remote, pretty_ref);
+			       remote, pretty_ref, summary_width);
 		return 1;
 	}
 }
@@ -732,6 +733,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	char *url;
 	const char *filename = dry_run ? "/dev/null" : git_path_fetch_head();
 	int want_status;
+	int summary_width = transport_summary_width(ref_map);
 
 	fp = fopen(filename, "a");
 	if (!fp)
@@ -841,13 +843,14 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			strbuf_reset(&note);
 			if (ref) {
-				rc |= update_local_ref(ref, what, rm, &note);
+				rc |= update_local_ref(ref, what, rm, &note,
+						       summary_width);
 				free(ref);
 			} else
 				format_display(&note, '*',
 					       *kind ? kind : "branch", NULL,
 					       *what ? what : "HEAD",
-					       "FETCH_HEAD");
+					       "FETCH_HEAD", summary_width);
 			if (note.len) {
 				if (verbosity >= 0 && !shown_url) {
 					fprintf(stderr, _("From %.*s\n"),
@@ -914,6 +917,7 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 	int url_len, i, result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(refs, ref_count, ref_map);
 	char *url;
+	int summary_width = transport_summary_width(stale_refs);
 	const char *dangling_msg = dry_run
 		? _("   (%s will become dangling)")
 		: _("   (%s has become dangling)");
@@ -949,7 +953,8 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 				shown_url = 1;
 			}
 			format_display(&sb, '-', _("[deleted]"), NULL,
-				       _("(none)"), prettify_refname(ref->name));
+				       _("(none)"), prettify_refname(ref->name),
+				       summary_width);
 			fprintf(stderr, " %s\n",sb.buf);
 			strbuf_release(&sb);
 			warn_dangling_symref(stderr, dangling_msg, ref->name);

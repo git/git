@@ -147,7 +147,7 @@ struct transport {
 #define TRANSPORT_PUSH_ATOMIC 8192
 #define TRANSPORT_PUSH_OPTIONS 16384
 
-#define TRANSPORT_SUMMARY_WIDTH (2 * FALLBACK_DEFAULT_ABBREV + 3)
+extern int transport_summary_width(const struct ref *refs);
 
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
