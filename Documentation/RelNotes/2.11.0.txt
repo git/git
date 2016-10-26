@@ -1,10 +1,31 @@
 Git 2.11 Release Notes
 ======================
 
+Backward compatibility notes.
+
+ * An empty string used as a pathspec element has always meant
+   'everything matches', but it is too easy to write a script that
+   finds a path to remove in $path and run 'git rm "$paht"', which
+   ends up removing everything.  This release starts warning about the
+   use of an empty string that is used for 'everything matches' and
+   asks users to use a more explicit '.' for that instead.
+
+   The hope is that existing users will not mind this change, and
+   eventually the warning can be turned into a hard error, upgrading
+   the deprecation into removal of this (mis)feature.
+
+
+ * The historical argument order "git merge <msg> HEAD <commit>..."
+   has been deprecated for quite some time, and will be removed in the
+   next release (not this one).
+
+
 Updates since v2.10
 -------------------
 
 UI, Workflows & Features
+
+ * Comes with new version of git-gui, now at its 0.21.0 tag.
 
  * "git format-patch --cover-letter HEAD^" to format a single patch
    with a separate cover letter now numbers the output as [PATCH 0/1]
@@ -89,6 +110,29 @@ UI, Workflows & Features
  * "git mergetool" learned to honor "-O<orderfile>" to control the
    order of paths to present to the end user.
 
+ * "git diff/log --ws-error-highlight=<kind>" lacked the corresponding
+   configuration variable to set it by default.
+
+ * "git ls-files" learned "--recurse-submodules" option that can be
+   used to get a listing of tracked files across submodules (i.e. this
+   only works with "--cached" option, not for listing untracked or
+   ignored files).  This would be a useful tool to sit on the upstream
+   side of a pipe that is read with xargs to work on all working tree
+   files from the top-level superproject.
+
+ * A new credential helper that talks via "libsecret" with
+   implementations of XDG Secret Service API has been added to
+   contrib/credential/.
+
+ * The GPG verification status shown in "%G?" pretty format specifier
+   was not rich enough to differentiate a signature made by an expired
+   key, a signature made by a revoked key, etc.  New output letters
+   have been assigned to express them.
+
+ * In addition to purely abbreviated commit object names, "gitweb"
+   learned to turn "git describe" output (e.g. v2.9.3-599-g2376d31787)
+   into clickable links in its output.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -159,6 +203,14 @@ Performance, Internal Implementation, Development Support etc.
    reusing the alternate object store mechanism to them only while we
    decide if we accept the check, and once we decide, either migrate
    them to the repository or purge them immediately.
+
+ * The require_clean_work_tree() helper was recreated in C when "git
+   pull" was rewritten from shell; the helper is now made available to
+   other callers in preparation for upcoming "rebase -i" work.
+
+ * "git upload-pack" had its code cleaned-up and performance improved
+   by reducing use of timestamp-ordered commit-list, which was
+   replaced with a priority queue.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -416,7 +468,61 @@ notes for details).
    each other as if both belong to .git/config.  This has been fixed.
    (merge 72710165c9 sb/submodule-config-doc-drop-path later to maint).
 
+ * In a worktree connected to a repository elsewhere, created via "git
+   worktree", "git checkout" attempts to protect users from confusion
+   by refusing to check out a branch that is already checked out in
+   another worktree.  However, this also prevented checking out a
+   branch, which is designated as the primary branch of a bare
+   reopsitory, in a worktree that is connected to the bare
+   repository.  The check has been corrected to allow it.
+   (merge 171c646f8c dk/worktree-dup-checkout-with-bare-is-ok later to maint).
+
+ * "git rebase" immediately after "git clone" failed to find the fork
+   point from the upstream.
+   (merge 4f21454b55 jk/merge-base-fork-point-without-reflog later to maint).
+
+ * When fetching from a remote that has many tags that are irrelevant
+   to branches we are following, we used to waste way too many cycles
+   when checking if the object pointed at by a tag (that we are not
+   going to fetch!) exists in our repository too carefully.
+   (merge 5827a03545 jk/fetch-quick-tag-following later to maint).
+
+ * Protect our code from over-eager compilers.
+   (merge 0ac52a38e8 jk/tighten-alloc later to maint).
+
+ * Recent git allows submodule.<name>.branch to use a special token
+   "." instead of the branch name; the documentation has been updated
+   to describe it.
+   (merge 15ef78008a bw/submodule-branch-dot-doc later to maint).
+
+ * A hot-fix for a test added by a recent topic that went to both
+   'master' and 'maint' already.
+   (merge 76e368c378 tg/add-chmod+x-fix later to maint).
+
+ * "git send-email" attempts to pick up valid e-mails from the
+   trailers, but people in real world write non-addresses there, like
+   "Cc: Stable <add@re.ss> # 4.8+", which broke the output depending
+   on the availability and vintage of Mail::Address perl module.
+   (merge dcfafc5214 mm/send-email-cc-cruft-after-address later to maint).
+
+ * The Travis CI configuration we ship ran the tests with --verbose
+   option but this risks non-TAP output that happens to be "ok" to be
+   misinterpreted as TAP signalling a test that passed.  This resulted
+   in unnecessary failure.  This has been corrected by introducing a
+   new mode to run our tests in the test harness to send the verbose
+   output separately to the log file.
+   (merge 614fe01521 jk/tap-verbose-fix later to maint).
+
+ * Some AsciiDoc formatter mishandles a displayed illustration with
+   tabs in it.  Adjust a few of them in merge-base documentation to
+   work around them.
+   (merge 6750f62699 po/fix-doc-merge-base-illustration later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge a94bb68397 rs/cocci later to maint).
    (merge 641c900b2c js/reset-usage later to maint).
    (merge 30cfe72d37 rs/pretty-format-color-doc-fix later to maint).
+   (merge d709f1fb9d jc/diff-unique-abbrev-comments later to maint).
+   (merge 13092a916d jc/cocci-xstrdup-or-null later to maint).
+   (merge 86009f32bb pb/test-parse-options-expect later to maint).
+   (merge 749a2279a4 yk/git-tag-remove-mention-of-old-layout-in-doc later to maint).
