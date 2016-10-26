@@ -903,8 +903,8 @@ extern char *sha1_pack_index_name(const unsigned char *sha1);
  * The result will be at least `len` characters long, and will be NUL
  * terminated.
  *
- * The non-`_r` version returns a static buffer which will be overwritten by
- * subsequent calls.
+ * The non-`_r` version returns a static buffer which remains valid until 4
+ * more calls to find_unique_abbrev are made.
  *
  * The `_r` variant writes to a buffer supplied by the caller, which must be at
  * least `GIT_SHA1_HEXSZ + 1` bytes. The return value is the number of bytes
