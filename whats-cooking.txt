@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2016, #06; Mon, 24)
-X-master-at: 659889482ac63411daea38b2c3d127842ea04e4d
-X-next-at: 5073a4de2dac30ca7cfaaa2d4bdd8eead108e4ca
+Subject: What's cooking in git.git (Oct 2016, #07; Wed, 26)
+X-master-at: 2cc2e70264e0fcba04f9ef791d144bbc8b501206
+X-next-at: d2da68a14ada34b7842a51c88751ffe4aaf8a1af
 
-What's cooking in git.git (Oct 2016, #06; Mon, 24)
+What's cooking in git.git (Oct 2016, #07; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,64 +12,138 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Originally I planed to start concluding this cycle today, but
-waiting for the conclusion of a few test breakages on Windows, I
-didn't tag -rc0 today.
-
-Here are my current thinking on the notable topics.
-
- - the "off-by-one fix" part of sb/submodule-ignore-trailing-slash
-   needs to be in the upcoming release but the "trailing /. in base
-   should not affect the resolution of ../relative/path" part that
-   is still under discussion can wait.  Which means we'd need a few
-   more !MINGW prerequisites in the tests by -rc0.
-
- - js/prepare-sequencer topic is not yet in 'next' but it would be a
-   nice-to-have in the upcoming release if we can.  It does not yet
-   touch "rebase -i", but does touch the sequencer code that is used
-   in cherry-pick and revert, so I'd prefer to cook it for at least
-   a week and half in 'next' before merging.
-
- - ls/filter-process topic has been in 'next' with one known test
-   breakage on Windows, whose resolution ls/git-open-cloexec is
-   close to its final shape.  Perhaps we can cook them for at least
-   a week and half in 'next' and have it in the upcoming release.
-
- - ex/deprecate-empty-pathspec-as-match-all topic that makes it
-   illegal to say 'git add ""' when you mean 'git add .' has been in
-   'next' for more than a cycle.  I am inclined to merge it in the
-   upcoming release.
-
- - jc/merge-drop-old-syntax is relatively new in 'next' after all
-   known in-tree dependents have been updated.  I am planning to
-   keep it cooking in 'next' but add a backward incompatibility
-   notice to the release notes to the upcoming release.
-
- - lt/abbrev-auto and its follow-up jk/abbrev-auto are about auto
-   scaling the default abbreviation length when Git produces a short
-   object name to adjust to the modern times.  Peff noticed one
-   fallout from it recently and its fix jc/abbrev-auto is not yet in
-   'next'.  I would not be surprised if there are other uncovered
-   fallouts remaining in the code, but at the same time, I expect
-   they are all cosmetic kind that do not affect correctness, so I
-   am inclined to include all of them in the upcoming release.
-
-I plan to merge other smallish topics that have been in 'next' to
-'master' soonish, and relabel the remainder that have been labeled
-as "Will merge to 'master'" to "Will hold" and keep cooking them in
-'next'.  For this reason, please do not take the "Will merge to
-'master'" label too literally in this issue of "What's cooking"
-report.  It is always true that the label only means "the topic will
-be in 'master' eventually", not "the topic will be in the upcoming
-release", but in this issue that is even more true than usual.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* ab/gitweb-abbrev-links (2016-10-14) 3 commits
+  (merged to 'next' on 2016-10-17 at 4868def05e)
+ + gitweb: link to "git describe"'d commits in log messages
+ + gitweb: link to 7-char+ SHA-1s, not only 8-char+
+ + gitweb: fix a typo in a comment
+
+ In addition to purely abbreviated commit object names, "gitweb"
+ learned to turn "git describe" output (e.g. v2.9.3-599-g2376d31787)
+ into clickable links in its output.
+
+
+* bw/ls-files-recurse-submodules (2016-10-10) 4 commits
+  (merged to 'next' on 2016-10-17 at f0e398946a)
+ + ls-files: add pathspec matching for submodules
+ + ls-files: pass through safe options for --recurse-submodules
+ + ls-files: optionally recurse into submodules
+ + git: make super-prefix option
+
+ "git ls-files" learned "--recurse-submodules" option that can be
+ used to get a listing of tracked files across submodules (i.e. this
+ only works with "--cached" option, not for listing untracked or
+ ignored files).  This would be a useful tool to sit on the upstream
+ side of a pipe that is read with xargs to work on all working tree
+ files from the top-level superproject.
+
+
+* bw/submodule-branch-dot-doc (2016-10-19) 1 commit
+  (merged to 'next' on 2016-10-21 at 18aad25ba8)
+ + submodules doc: update documentation for "." used for submodule branches
+
+ Recent git allows submodule.<name>.branch to use a special token
+ "." instead of the branch name; the documentation has been updated
+ to describe it.
+
+
+* dk/worktree-dup-checkout-with-bare-is-ok (2016-10-14) 1 commit
+  (merged to 'next' on 2016-10-17 at 24594d3e56)
+ + worktree: allow the main brach of a bare repository to be checked out
+
+ In a worktree connected to a repository elsewhere, created via "git
+ worktree", "git checkout" attempts to protect users from confusion
+ by refusing to check out a branch that is already checked out in
+ another worktree.  However, this also prevented checking out a
+ branch, which is designated as the primary branch of a bare
+ reopsitory, in a worktree that is connected to the bare
+ repository.  The check has been corrected to allow it.
+
+
+* ex/deprecate-empty-pathspec-as-match-all (2016-06-22) 1 commit
+  (merged to 'next' on 2016-09-21 at e19148ea63)
+ + pathspec: warn on empty strings as pathspec
+
+ Originally merged to 'next' on 2016-07-13
+
+ An empty string used as a pathspec element has always meant
+ 'everything matches', but it is too easy to write a script that
+ finds a path to remove in $path and run 'git rm "$paht"', which
+ ends up removing everything.  Start warning about this use of an
+ empty string used for 'everything matches' and ask users to use a
+ more explicit '.' for that instead.
+
+ The hope is that existing users will not mind this change, and
+ eventually the warning can be turned into a hard error, upgrading
+ the deprecation into removal of this (mis)feature.
+
+
+* jc/cocci-xstrdup-or-null (2016-10-12) 1 commit
+  (merged to 'next' on 2016-10-17 at 55ceaa465a)
+ + cocci: refactor common patterns to use xstrdup_or_null()
+
+ Code cleanup.
+
+
+* jc/diff-unique-abbrev-comments (2016-09-30) 1 commit
+  (merged to 'next' on 2016-10-17 at c7fb286102)
+ + diff_unique_abbrev(): document its assumption and limitation
+ (this branch is used by jk/no-looking-at-dotgit-outside-repo.)
+
+ A bit more comments in a tricky code.
+
+
+* jc/ws-error-highlight (2016-10-04) 4 commits
+  (merged to 'next' on 2016-10-17 at ecbdc57d77)
+ + diff: introduce diff.wsErrorHighlight option
+ + diff.c: move ws-error-highlight parsing helpers up
+ + diff.c: refactor parse_ws_error_highlight()
+ + t4015: split out the "setup" part of ws-error-highlight test
+
+ "git diff/log --ws-error-highlight=<kind>" lacked the corresponding
+ configuration variable to set it by default.
+
+
+* jk/ambiguous-short-object-names (2016-10-12) 1 commit
+  (merged to 'next' on 2016-10-19 at e7c55a9da5)
+ + t1512: become resilient to GETTEXT_POISON build
+
+ A test fixup to recently graduated topic.
+
+
+* jk/diff-submodule-diff-inline (2016-10-20) 1 commit
+  (merged to 'next' on 2016-10-21 at 13f300805e)
+ + rev-list: use hdr_termination instead of a always using a newline
+
+ A recently graduated topic regressed "git rev-list --header"
+ output, breaking "gitweb".  This has been fixed.
+
+
+* jk/fetch-quick-tag-following (2016-10-14) 1 commit
+  (merged to 'next' on 2016-10-19 at d7718dcdf5)
+ + fetch: use "quick" has_sha1_file for tag following
+
+ When fetching from a remote that has many tags that are irrelevant
+ to branches we are following, we used to waste way too many cycles
+ when checking if the object pointed at by a tag (that we are not
+ going to fetch!) exists in our repository too carefully.
+
+
+* jk/merge-base-fork-point-without-reflog (2016-10-12) 1 commit
+  (merged to 'next' on 2016-10-19 at 00a6797f62)
+ + merge-base: handle --fork-point without reflog
+
+ "git rebase" immediately after "git clone" failed to find the fork
+ point from the upstream.
+
 
 * jk/tap-verbose-fix (2016-10-24) 4 commits
   (merged to 'next' on 2016-10-24 at 5073a4de2d)
@@ -86,10 +160,80 @@ of the repositories listed at
  new mode to run our tests in the test harness to send the verbose
  output separately to the log file.
 
- Will merge to 'master'.
+
+* jk/tighten-alloc (2016-10-17) 2 commits
+  (merged to 'next' on 2016-10-19 at 548522a520)
+ + inline xalloc_flex() into FLEXPTR_ALLOC_MEM
+ + avoid pointer arithmetic involving NULL in FLEX_ALLOC_MEM
+
+ Protect our code from over-eager compilers.
 
 
-* po/fix-doc-merge-base-illustration (2016-10-21) 1 commit
+* jk/upload-pack-use-prio-queue (2016-10-11) 1 commit
+  (merged to 'next' on 2016-10-19 at 1d6efb07ac)
+ + upload-pack: use priority queue in reachable() check
+
+ "git upload-pack" had its code cleaned-up and performance improved
+ by reducing use of timestamp-ordered commit-list, which was
+ replaced with a priority queue.
+
+
+* js/libify-require-clean-work-tree (2016-10-07) 6 commits
+  (merged to 'next' on 2016-10-17 at f5c20df38b)
+ + wt-status: begin error messages with lower-case
+ + wt-status: teach has_{unstaged,uncommitted}_changes() about submodules
+ + wt-status: export also the has_un{staged,committed}_changes() functions
+ + wt-status: make the require_clean_work_tree() function reusable
+ + pull: make code more similar to the shell script again
+ + pull: drop confusing prefix parameter of die_on_unclean_work_tree()
+
+ The require_clean_work_tree() helper was recreated in C when "git
+ pull" was rewritten from shell; the helper is now made available to
+ other callers in preparation for upcoming "rebase -i" work.
+
+
+* mg/gpg-richer-status (2016-10-12) 1 commit
+  (merged to 'next' on 2016-10-17 at 8843a6a8be)
+ + gpg-interface: use more status letters
+
+ The GPG verification status shown in "%G?" pretty format specifier
+ was not rich enough to differentiate a signature made by an expired
+ key, a signature made by a revoked key, etc.  New output letters
+ have been assigned to express them.
+
+
+* mm/credential-libsecret (2016-10-11) 1 commit
+  (merged to 'next' on 2016-10-17 at 1b4af03ba4)
+ + contrib: add credential helper for libsecret
+
+ A new credential helper that talks via "libsecret" with
+ implementations of XDG Secret Service API has been added to
+ contrib/credential/.
+
+
+* mm/send-email-cc-cruft-after-address (2016-10-21) 3 commits
+  (merged to 'next' on 2016-10-21 at c7ec2b5025)
+ + Git.pm: add comment pointing to t9000
+ + t9000-addresses: update expected results after fix
+  (merged to 'next' on 2016-10-19 at 41e3f876cd)
+ + parse_mailboxes: accept extra text after <...> address
+
+ "git send-email" attempts to pick up valid e-mails from the
+ trailers, but people in real world write non-addresses there, like
+ "Cc: Stable <add@re.ss> # 4.8+", which broke the output depending
+ on the availability and vintage of Mail::Address perl module.
+
+
+* pb/test-parse-options-expect (2016-10-17) 1 commit
+  (merged to 'next' on 2016-10-19 at d3517d592f)
+ + t0040: convert all possible tests to use `test-parse-options --expect`
+
+ Test clean-up.
+
+
+* po/fix-doc-merge-base-illustration (2016-10-24) 2 commits
+  (merged to 'next' on 2016-10-24 at 6539e97fcf)
+ + doc: fix the 'revert a faulty merge' ASCII art tab spacing
   (merged to 'next' on 2016-10-21 at ac6f04a6c5)
  + doc: fix merge-base ASCII art tab spacing
 
@@ -97,83 +241,138 @@ of the repositories listed at
  tabs in it.  Adjust a few of them in merge-base documentation to
  work around them.
 
+
+* pt/gitgui-updates (2016-10-20) 35 commits
+  (merged to 'next' on 2016-10-21 at 4c8214095a)
+ + Merge tag 'gitgui-0.21.0' of git://repo.or.cz/git-gui
+ + git-gui: set version 0.21
+ + Merge branch 'as/bulgarian' into pu
+ + git-gui: Mark 'All' in remote.tcl for translation
+ + git-gui i18n: Updated Bulgarian translation (565,0f,0u)
+ + Merge branch 'os/preserve-author' into pu
+ + git-gui: avoid persisting modified author identity
+ + git-gui: Do not reset author details on amend
+ + Merge branch 'kb/unicode' into pu
+ + git-gui: handle the encoding of Git's output correctly
+ + git-gui: unicode file name support on windows
+ + Merge branch 'dr/ru' into pu
+ + git-gui: Update Russian translation
+ + git-gui: maintain backwards compatibility for merge syntax
+ + Merge branch 'va/i18n_2' into pu
+ + git-gui i18n: mark string in lib/error.tcl for translation
+ + git-gui: fix incorrect use of Tcl append command
+ + git-gui i18n: mark "usage:" strings for translation
+ + git-gui i18n: internationalize use of colon punctuation
+ + Merge branch 'pt/non-mouse-usage' into pu
+ + Amend tab ordering and text widget border and highlighting.
+ + Allow keyboard control to work in the staging widgets.
+ + Merge branch 'pt/git4win-mods' into pu
+ + git-gui (Windows): use git-gui.exe in `Create Desktop Shortcut`
+ + git-gui: fix detection of Cygwin
+ + Merge branch 'patches' into pu
+ + git-gui: ensure the file in the diff pane is in the list of selected files
+ + git-gui: support for $FILENAMES in tool definitions
+ + git-gui: fix initial git gui message encoding
+ + git-gui/po/glossary/txt-to-pot.sh: use the $( ... ) construct for command substitution
+ + Merge branch 'va/i18n' into pu
+ + Merge branch 'rs/use-modern-git-merge-syntax' into pu
+ + Merge branch 'js/commit-gpgsign' into pu
+ + Merge branch 'sy/i18n' into pu
+ + git-gui: sort entries in tclIndex
+
+ A new version of git-gui, now at its 0.21.0 tag.
+
+
+* tg/add-chmod+x-fix (2016-10-20) 1 commit
+  (merged to 'next' on 2016-10-21 at 1585ac7139)
+ + t3700: fix broken test under !SANITY
+
+ A hot-fix for a test added by a recent topic that went to both
+ 'master' and 'maint' already.
+
+
+* va/i18n (2016-10-17) 7 commits
+  (merged to 'next' on 2016-10-19 at b7d733698b)
+ + i18n: diff: mark warnings for translation
+ + i18n: credential-cache--daemon: mark advice for translation
+ + i18n: convert mark error messages for translation
+ + i18n: apply: mark error message for translation
+ + i18n: apply: mark error messages for translation
+ + i18n: apply: mark info messages for translation
+ + i18n: apply: mark plural string for translation
+
+ More i18n.
+
+
+* yk/git-tag-remove-mention-of-old-layout-in-doc (2016-10-20) 1 commit
+  (merged to 'next' on 2016-10-21 at 8d9e23b023)
+ + doc: remove reference to the traditional layout in git-tag.txt
+
+ Shorten description of auto-following in "git tag" by removing a
+ mention of historical remotes layout which is not relevant to the
+ main topic.
+
+--------------------------------------------------
+[New Topics]
+
+* aw/numbered-stash (2016-10-26) 1 commit
+  (merged to 'next' on 2016-10-26 at 8d9325fa3a)
+ + stash: allow stashes to be referenced by index only
+
+ The user always has to say "stash@{$N}" when naming a single
+ element in the default location of the stash, i.e. reflogs in
+ refs/stash.  The "git stash" command learned to accept "git stash
+ apply 4" as a short-hand for "git stash apply stash@{4}".
+
  Will merge to 'master'.
 
 
-* jc/abbrev-auto (2016-10-22) 4 commits
- - transport: compute summary-width dynamically
- - transport: allow summary-width to be computed dynamically
- - fetch: pass summary_width down the callchain
- - transport: pass summary_width down the callchain
- (this branch uses jk/abbrev-auto and lt/abbrev-auto.)
+* jk/no-looking-at-dotgit-outside-repo-final (2016-10-26) 1 commit
+  (merged to 'next' on 2016-10-26 at 220e160451)
+ + setup_git_env: avoid blind fall-back to ".git"
+ (this branch uses jk/no-looking-at-dotgit-outside-repo.)
 
- "git push" and "git fetch" reports from what old object to what new
- object each ref was updated, using abbreviated refnames, and they
- attempt to align the columns for this and other pieces of
- information.  The way these codepaths compute how many display
- columns to allocate for the object names portion of this output has
- been updated to match the recent "auto scale the default
- abbreviation length" change.
+ This is the endgame of the topic to avoid blindly falling back to
+ ".git" when the setup sequence said we are _not_ in Git repository.
+ A corner case that happens to work right now may be broken by a
+ call to die("BUG").
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* jc/reset-unmerge (2016-10-24) 1 commit
- - reset: --unmerge
+* ew/svn-wt (2016-10-14) 2 commits
+ - git-svn: "git worktree" awareness
+ - git-svn: reduce scope of input record separator change
 
- After "git add" is run prematurely during a conflict resolution,
- "git diff" can no longer be used as a way to sanity check by
- looking at the combined diff.  "git reset" learned a new
- "--unmerge" option to recover from this situation.
+ Will replace with a direct pulling from Eric to 'master'.
 
-
-
-* jk/daemon-path-ok-check-truncation (2016-10-24) 1 commit
- - daemon: detect and reject too-long paths
-
- "git daemon" used fixed-length buffers to turn URL to the
- repository the client asked for into the server side directory
- path, using snprintf() to avoid overflowing these buffers, but
- allowed possibly truncated paths to the directory.  This has been
- tightened to reject such a request that causes overlong path to be
- required to serve.
-
- Will merge to 'next'.
-
-
-* ls/git-open-cloexec (2016-10-24) 3 commits
- - SQUASH???
- - read-cache: make sure file handles are not inherited by child processes
- - sha1_file: open window into packfiles with CLOEXEC
-
- Git generally does not explicitly close file descriptors that were
- open in the parent process when spawning a child process, but most
- of the time the child does not want to access them. As Windows does
- not allow removing or renaming a file that has a file descriptor
- open, a slow-to-exit child can even break the parent process by
- holding onto them.  Use O_CLOEXEC flag to open files in various
- codepaths.
-
- Under discussion.
- cf. <20161024183900.GA12769@starla>
-
- This needs to be merged before ls/filter-process so that it won't
- break Windows.
-
-
-* rs/ring-buffer-wraparound (2016-10-24) 1 commit
- - hex: make wraparound of the index into ring-buffer explicit
-
- The code that we have used for the past 10+ years to cycle
- 4-element ring buffers turns out to be not quite portable in
- theoretical world.
-
- Under discussion.
- cf. <b1f9054e-fadb-c2d3-bf95-00e88e1fb85b@web.de>
-
- 
 --------------------------------------------------
 [Stalled]
+
+* hv/submodule-not-yet-pushed-fix (2016-10-10) 3 commits
+ - batch check whether submodule needs pushing into one call
+ - serialize collection of refs that contain submodule changes
+ - serialize collection of changed submodules
+
+ The code in "git push" to compute if any commit being pushed in the
+ superproject binds a commit in a submodule that hasn't been pushed
+ out was overly inefficient, making it unusable even for a small
+ project that does not have any submodule but have a reasonable
+ number of refs.
+
+ Waiting for review.
+ cf. <cover.1475851621.git.hvoigt@hvoigt.net>
+
+
+* sb/push-make-submodule-check-the-default (2016-10-10) 2 commits
+ - push: change submodule default to check when submodules exist
+ - submodule add: extend force flag to add existing repos
+
+ Turn the default of "push.recurseSubmodules" to "check" when
+ submodules seem to be in use.
+
+ Will hold to wait for hv/submodule-not-yet-pushed-fix
+
 
 * jc/bundle (2016-03-03) 6 commits
  - index-pack: --clone-bundle option
@@ -288,6 +487,76 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/abbrev-auto (2016-10-22) 4 commits
+  (merged to 'next' on 2016-10-26 at 92fdb66807)
+ + transport: compute summary-width dynamically
+ + transport: allow summary-width to be computed dynamically
+ + fetch: pass summary_width down the callchain
+ + transport: pass summary_width down the callchain
+ (this branch uses jk/abbrev-auto and lt/abbrev-auto.)
+
+ "git push" and "git fetch" reports from what old object to what new
+ object each ref was updated, using abbreviated refnames, and they
+ attempt to align the columns for this and other pieces of
+ information.  The way these codepaths compute how many display
+ columns to allocate for the object names portion of this output has
+ been updated to match the recent "auto scale the default
+ abbreviation length" change.
+
+ Will merge to 'master'.
+
+
+* jc/reset-unmerge (2016-10-24) 1 commit
+ - reset: --unmerge
+
+ After "git add" is run prematurely during a conflict resolution,
+ "git diff" can no longer be used as a way to sanity check by
+ looking at the combined diff.  "git reset" learned a new
+ "--unmerge" option to recover from this situation.
+
+
+* jk/daemon-path-ok-check-truncation (2016-10-24) 1 commit
+  (merged to 'next' on 2016-10-26 at 70c08241f6)
+ + daemon: detect and reject too-long paths
+
+ "git daemon" used fixed-length buffers to turn URL to the
+ repository the client asked for into the server side directory
+ path, using snprintf() to avoid overflowing these buffers, but
+ allowed possibly truncated paths to the directory.  This has been
+ tightened to reject such a request that causes overlong path to be
+ required to serve.
+
+ Will merge to 'master'.
+
+
+* ls/git-open-cloexec (2016-10-25) 3 commits
+  (merged to 'next' on 2016-10-26 at f7259cbddb)
+ + read-cache: make sure file handles are not inherited by child processes
+ + sha1_file: open window into packfiles with O_CLOEXEC
+ + sha1_file: rename git_open_noatime() to git_open()
+
+ Git generally does not explicitly close file descriptors that were
+ open in the parent process when spawning a child process, but most
+ of the time the child does not want to access them. As Windows does
+ not allow removing or renaming a file that has a file descriptor
+ open, a slow-to-exit child can even break the parent process by
+ holding onto them.  Use O_CLOEXEC flag to open files in various
+ codepaths.
+
+ Will merge to 'master'.
+
+
+* rs/ring-buffer-wraparound (2016-10-26) 1 commit
+  (merged to 'next' on 2016-10-26 at d2da68a14a)
+ + hex: make wraparound of the index into ring-buffer explicit
+
+ The code that we have used for the past 10+ years to cycle
+ 4-element ring buffers turns out to be not quite portable in
+ theoretical world.
+
+ Will merge to 'master'.
+
+
 * jc/merge-base-fp-only (2016-10-19) 8 commits
  . merge-base: fp experiment
  - merge: allow to use only the fp-only merge bases
@@ -302,130 +571,19 @@ of the repositories listed at
  not on the first parent chain.
 
 
-* bw/submodule-branch-dot-doc (2016-10-19) 1 commit
-  (merged to 'next' on 2016-10-21 at 18aad25ba8)
- + submodules doc: update documentation for "." used for submodule branches
-
- Recent git allows submodule.<name>.branch to use a special token
- "." instead of the branch name; the documentation has been updated
- to describe it.
-
- Will merge to 'master'.
-
-
-* tg/add-chmod+x-fix (2016-10-20) 1 commit
-  (merged to 'next' on 2016-10-21 at 1585ac7139)
- + t3700: fix broken test under !SANITY
-
- A hot-fix for a test added by a recent topic that went to both
- 'master' and 'maint' already.
-
- Will merge to 'master'.
-
-
-* jk/diff-submodule-diff-inline (2016-10-20) 1 commit
-  (merged to 'next' on 2016-10-21 at 13f300805e)
- + rev-list: use hdr_termination instead of a always using a newline
-
- A recently graduated topic regressed "git rev-list --header"
- output, breaking "gitweb".  This has been fixed.
-
- Will merge to 'master'.
-
-
-* jk/no-looking-at-dotgit-outside-repo (2016-10-20) 8 commits
- - setup_git_env: avoid blind fall-back to ".git"
- - diff: handle sha1 abbreviations outside of repository
- - diff_aligned_abbrev: use "struct oid"
- - diff_unique_abbrev: rename to diff_aligned_abbrev
- - find_unique_abbrev: use 4-buffer ring
- - test-*-cache-tree: setup git dir
- - read info/{attributes,exclude} only when in repository
- - Merge branch 'jc/diff-unique-abbrev-comments' into jk/no-looking-at-dotgit-outside-repo
- (this branch uses jc/diff-unique-abbrev-comments.)
+* jk/no-looking-at-dotgit-outside-repo (2016-10-26) 6 commits
+  (merged to 'next' on 2016-10-26 at 4aa877b578)
+ + diff: handle sha1 abbreviations outside of repository
+ + diff_aligned_abbrev: use "struct oid"
+ + diff_unique_abbrev: rename to diff_aligned_abbrev
+ + find_unique_abbrev: use 4-buffer ring
+ + test-*-cache-tree: setup git dir
+ + read info/{attributes,exclude} only when in repository
+ (this branch is used by jk/no-looking-at-dotgit-outside-repo-final.)
 
  Update "git diff --no-index" codepath not to try to peek into .git/
  directory that happens to be under the current directory, when we
  know we are operating outside any repository.
-
- Will wait until 'jc/diff-unique-abbrev-comments' graduates, rebase
- onto 'master' and then cook in 'next'.
-
-
-* pt/gitgui-updates (2016-10-20) 35 commits
-  (merged to 'next' on 2016-10-21 at 4c8214095a)
- + Merge tag 'gitgui-0.21.0' of git://repo.or.cz/git-gui
- + git-gui: set version 0.21
- + Merge branch 'as/bulgarian' into pu
- + git-gui: Mark 'All' in remote.tcl for translation
- + git-gui i18n: Updated Bulgarian translation (565,0f,0u)
- + Merge branch 'os/preserve-author' into pu
- + git-gui: avoid persisting modified author identity
- + git-gui: Do not reset author details on amend
- + Merge branch 'kb/unicode' into pu
- + git-gui: handle the encoding of Git's output correctly
- + git-gui: unicode file name support on windows
- + Merge branch 'dr/ru' into pu
- + git-gui: Update Russian translation
- + git-gui: maintain backwards compatibility for merge syntax
- + Merge branch 'va/i18n_2' into pu
- + git-gui i18n: mark string in lib/error.tcl for translation
- + git-gui: fix incorrect use of Tcl append command
- + git-gui i18n: mark "usage:" strings for translation
- + git-gui i18n: internationalize use of colon punctuation
- + Merge branch 'pt/non-mouse-usage' into pu
- + Amend tab ordering and text widget border and highlighting.
- + Allow keyboard control to work in the staging widgets.
- + Merge branch 'pt/git4win-mods' into pu
- + git-gui (Windows): use git-gui.exe in `Create Desktop Shortcut`
- + git-gui: fix detection of Cygwin
- + Merge branch 'patches' into pu
- + git-gui: ensure the file in the diff pane is in the list of selected files
- + git-gui: support for $FILENAMES in tool definitions
- + git-gui: fix initial git gui message encoding
- + git-gui/po/glossary/txt-to-pot.sh: use the $( ... ) construct for command substitution
- + Merge branch 'va/i18n' into pu
- + Merge branch 'rs/use-modern-git-merge-syntax' into pu
- + Merge branch 'js/commit-gpgsign' into pu
- + Merge branch 'sy/i18n' into pu
- + git-gui: sort entries in tclIndex
-
- A new version of git-gui, now at its 0.21.0 tag.
-
- Will merge to 'master'.
-
-
-* yk/git-tag-remove-mention-of-old-layout-in-doc (2016-10-20) 1 commit
-  (merged to 'next' on 2016-10-21 at 8d9e23b023)
- + doc: remove reference to the traditional layout in git-tag.txt
-
- Shorten description of auto-following in "git tag" by removing a
- mention of historical remotes layout which is not relevant to the
- main topic.
-
- Will merge to 'master'.
-
-
-* dk/worktree-dup-checkout-with-bare-is-ok (2016-10-14) 1 commit
-  (merged to 'next' on 2016-10-17 at 24594d3e56)
- + worktree: allow the main brach of a bare repository to be checked out
-
- In a worktree connected to a repository elsewhere, created via "git
- worktree", "git checkout" attempts to protect users from confusion
- by refusing to check out a branch that is already checked out in
- another worktree.  However, this also prevented checking out a
- branch, which is designated as the primary branch of a bare
- reopsitory, in a worktree that is connected to the bare
- repository.  The check has been corrected to allow it.
-
- Will merge to 'master'.
-
-
-* jc/cocci-xstrdup-or-null (2016-10-12) 1 commit
-  (merged to 'next' on 2016-10-17 at 55ceaa465a)
- + cocci: refactor common patterns to use xstrdup_or_null()
-
- Code cleanup.
 
  Will merge to 'master'.
 
@@ -444,48 +602,6 @@ of the repositories listed at
  Waiting for review.
 
 
-* jk/ambiguous-short-object-names (2016-10-12) 1 commit
-  (merged to 'next' on 2016-10-19 at e7c55a9da5)
- + t1512: become resilient to GETTEXT_POISON build
-
- A test fixup to recently graduated topic.
-
- Will merge to 'master'.
-
-
-* jk/merge-base-fork-point-without-reflog (2016-10-12) 1 commit
-  (merged to 'next' on 2016-10-19 at 00a6797f62)
- + merge-base: handle --fork-point without reflog
-
- "git rebase" immediately after "git clone" failed to find the fork
- point from the upstream.
-
- Will merge to 'master'.
-
-
-* jk/upload-pack-use-prio-queue (2016-10-11) 1 commit
-  (merged to 'next' on 2016-10-19 at 1d6efb07ac)
- + upload-pack: use priority queue in reachable() check
-
- Code clean-up and performance improvement to reduce use of
- timestamp-ordered commit-list by replacing it with a priority
- queue.
-
- Will merge to 'master'.
-
-
-* jk/fetch-quick-tag-following (2016-10-14) 1 commit
-  (merged to 'next' on 2016-10-19 at d7718dcdf5)
- + fetch: use "quick" has_sha1_file for tag following
-
- When fetching from a remote that has many tags that are irrelevant
- to branches we are following, we used to waste way too many cycles
- when checking if the object pointed at by a tag (that we are not
- going to fetch!) exists in our repository too carefully.
-
- Will merge to 'master'.
-
-
 * jt/trailer-with-cruft (2016-10-21) 8 commits
  - trailer: support values folded to multiple lines
  - trailer: forbid leading whitespace in trailers
@@ -502,55 +618,6 @@ of the repositories listed at
  and nothing else.
 
  Waiting for review.
-
-
-* mm/send-email-cc-cruft-after-address (2016-10-21) 3 commits
-  (merged to 'next' on 2016-10-21 at c7ec2b5025)
- + Git.pm: add comment pointing to t9000
- + t9000-addresses: update expected results after fix
-  (merged to 'next' on 2016-10-19 at 41e3f876cd)
- + parse_mailboxes: accept extra text after <...> address
-
- "git send-email" attempts to pick up valid e-mails from the
- trailers, but people in real world write non-addresses there, like
- "Cc: Stable <add@re.ss> # 4.8+", which broke the output depending
- on the availability and vintage of Mail::Address perl module.
-
- Will merge to 'master'.
-
-
-* va/i18n (2016-10-17) 7 commits
-  (merged to 'next' on 2016-10-19 at b7d733698b)
- + i18n: diff: mark warnings for translation
- + i18n: credential-cache--daemon: mark advice for translation
- + i18n: convert mark error messages for translation
- + i18n: apply: mark error message for translation
- + i18n: apply: mark error messages for translation
- + i18n: apply: mark info messages for translation
- + i18n: apply: mark plural string for translation
-
- More i18n.
-
- Will merge to 'master'.
-
-
-* jk/tighten-alloc (2016-10-17) 2 commits
-  (merged to 'next' on 2016-10-19 at 548522a520)
- + inline xalloc_flex() into FLEXPTR_ALLOC_MEM
- + avoid pointer arithmetic involving NULL in FLEX_ALLOC_MEM
-
- Protect our code from over-eager compilers.
-
- Will merge to 'master'.
-
-
-* pb/test-parse-options-expect (2016-10-17) 1 commit
-  (merged to 'next' on 2016-10-19 at d3517d592f)
- + t0040: convert all possible tests to use `test-parse-options --expect`
-
- Test clean-up.
-
- Will merge to 'master'.
 
 
 * pb/bisect (2016-10-18) 27 commits
@@ -587,70 +654,53 @@ of the repositories listed at
  Waiting for review.
 
 
-* ab/gitweb-abbrev-links (2016-10-14) 3 commits
-  (merged to 'next' on 2016-10-17 at 4868def05e)
- + gitweb: link to "git describe"'d commits in log messages
- + gitweb: link to 7-char+ SHA-1s, not only 8-char+
- + gitweb: fix a typo in a comment
-
- In addition to purely abbreviated commit object names, "gitweb"
- learned to turn "git describe" output (e.g. v2.9.3-599-g2376d31787)
- into clickable links in its output.
-
- Will merge to 'master'.
-
-
 * js/prepare-sequencer (2016-10-21) 27 commits
- - sequencer: mark all error messages for translation
- - sequencer: start error messages consistently with lower case
- - sequencer: quote filenames in error messages
- - sequencer: mark action_name() for translation
- - sequencer: remove overzealous assumption in rebase -i mode
- - sequencer: teach write_message() to append an optional LF
- - sequencer: refactor write_message() to take a pointer/length
- - sequencer: roll back lock file if write_message() failed
- - sequencer: stop releasing the strbuf in write_message()
- - sequencer: left-trim lines read from the script
- - sequencer: support cleaning up commit messages
- - sequencer: support amending commits
- - sequencer: allow editing the commit message on a case-by-case basis
- - sequencer: introduce a helper to read files written by scripts
- - sequencer: prepare for rebase -i's commit functionality
- - sequencer: remember the onelines when parsing the todo file
- - sequencer: get rid of the subcommand field
- - sequencer: avoid completely different messages for different actions
- - sequencer: strip CR from the todo script
- - sequencer: completely revamp the "todo" script parsing
- - sequencer: refactor the code to obtain a short commit name
- - sequencer: future-proof read_populate_todo()
- - sequencer: plug memory leaks for the option values
- - sequencer: future-proof remove_sequencer_state()
- - sequencer: avoid unnecessary indirection
- - sequencer: use memoized sequencer directory path
- - sequencer: use static initializers for replay_opts
+  (merged to 'next' on 2016-10-26 at 12be8ebe90)
+ + sequencer: mark all error messages for translation
+ + sequencer: start error messages consistently with lower case
+ + sequencer: quote filenames in error messages
+ + sequencer: mark action_name() for translation
+ + sequencer: remove overzealous assumption in rebase -i mode
+ + sequencer: teach write_message() to append an optional LF
+ + sequencer: refactor write_message() to take a pointer/length
+ + sequencer: roll back lock file if write_message() failed
+ + sequencer: stop releasing the strbuf in write_message()
+ + sequencer: left-trim lines read from the script
+ + sequencer: support cleaning up commit messages
+ + sequencer: support amending commits
+ + sequencer: allow editing the commit message on a case-by-case basis
+ + sequencer: introduce a helper to read files written by scripts
+ + sequencer: prepare for rebase -i's commit functionality
+ + sequencer: remember the onelines when parsing the todo file
+ + sequencer: get rid of the subcommand field
+ + sequencer: avoid completely different messages for different actions
+ + sequencer: strip CR from the todo script
+ + sequencer: completely revamp the "todo" script parsing
+ + sequencer: refactor the code to obtain a short commit name
+ + sequencer: future-proof read_populate_todo()
+ + sequencer: plug memory leaks for the option values
+ + sequencer: future-proof remove_sequencer_state()
+ + sequencer: avoid unnecessary indirection
+ + sequencer: use memoized sequencer directory path
+ + sequencer: use static initializers for replay_opts
 
  Update of the sequencer codebase to make it reusable to reimplement
  "rebase -i" continues.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sb/submodule-ignore-trailing-slash (2016-10-18) 3 commits
- . submodule--helper: normalize funny urls
+* sb/submodule-ignore-trailing-slash (2016-10-25) 3 commits
+  (merged to 'next' on 2016-10-26 at e56a8ebb38)
+ + t0060: sidestep surprising path mangling results on Windows
   (merged to 'next' on 2016-10-11 at e37425ed17)
  + submodule: ignore trailing slash in relative url
  + submodule: ignore trailing slash on superproject URL
 
  A minor regression fix for "git submodule".
 
- It seems that POSIX emulation layer of Windows is not cooperating;
- this may have to wait (or tentatively reverted in Windows port) for
- the resolution of the issue.
-
- cf. <alpine.DEB.2.20.1610131255001.197091@virtualbox>
- cf. <CAGZ79kYrKGLEOO72aWuX5OOM-AecdFZFXRqBkRzhdAM-VbPFxA@mail.gmail.com>
-
- What's the current state of this topic?
+ Will merge to 'master'.
+ Queued with a test breakage workaround on Windows from j6t.
 
 
 * st/verify-tag (2016-10-10) 7 commits
@@ -667,17 +717,6 @@ of the repositories listed at
 
  Waiting for review.
  cf. <20161007210721.20437-1-santiago@nyu.edu>
-
-
-* mm/credential-libsecret (2016-10-11) 1 commit
-  (merged to 'next' on 2016-10-17 at 1b4af03ba4)
- + contrib: add credential helper for libsecret
-
- A new credential helper that talks via "libsecret" with
- implementations of XDG Secret Service API has been added to
- contrib/credential/.
-
- Will merge to 'master'.
 
 
 * sb/attr (2016-10-24) 36 commits
@@ -723,18 +762,7 @@ of the repositories listed at
  Building on top of the updated API, the pathspec machinery learned
  to select only paths with given attributes set.
 
-
-* jc/ws-error-highlight (2016-10-04) 4 commits
-  (merged to 'next' on 2016-10-17 at ecbdc57d77)
- + diff: introduce diff.wsErrorHighlight option
- + diff.c: move ws-error-highlight parsing helpers up
- + diff.c: refactor parse_ws_error_highlight()
- + t4015: split out the "setup" part of ws-error-highlight test
-
- "git diff/log --ws-error-highlight=<kind>" lacked the corresponding
- configuration variable to set it by default.
-
- Will merge to 'master'.
+ Waiting for review.
 
 
 * jk/abbrev-auto (2016-10-03) 1 commit
@@ -747,14 +775,15 @@ of the repositories listed at
  which in turn needs to estimate how many hexdigits are necessary to
  ensure uniqueness.
 
- Undecided.
+ Will merge to 'master'.
 
 
 * nd/ita-empty-commit (2016-10-24) 4 commits
- - commit: don't be fooled by ita entries when creating initial commit
- - commit: fix empty commit creation when there's no changes but ita entries
- - diff: add --ita-[in]visible-in-index
- - diff-lib: allow ita entries treated as "not yet exist in index"
+  (merged to 'next' on 2016-10-26 at fb007cdae1)
+ + commit: don't be fooled by ita entries when creating initial commit
+ + commit: fix empty commit creation when there's no changes but ita entries
+ + diff: add --ita-[in]visible-in-index
+ + diff-lib: allow ita entries treated as "not yet exist in index"
 
  When new paths were added by "git add -N" to the index, it was
  enough to circumvent the check by "git commit" to refrain from
@@ -762,7 +791,7 @@ of the repositories listed at
  prevented "git status" to show such a path as "new file" in the
  "Changes not staged for commit" section.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * lt/abbrev-auto (2016-10-03) 3 commits
@@ -777,16 +806,6 @@ of the repositories listed at
  hexdigits for the Linux kernel, and 9 to 10 for Git itself.
 
  Will hold to see if people scream.
-
-
-* jc/diff-unique-abbrev-comments (2016-09-30) 1 commit
-  (merged to 'next' on 2016-10-17 at c7fb286102)
- + diff_unique_abbrev(): document its assumption and limitation
- (this branch is used by jk/no-looking-at-dotgit-outside-repo.)
-
- A bit more comments in a tricky code.
-
- Will merge to 'master'.
 
 
 * va/i18n-perl-scripts (2016-10-20) 14 commits
@@ -823,51 +842,6 @@ of the repositories listed at
  Will hold to see if people scream.
 
 
-* mg/gpg-richer-status (2016-10-12) 1 commit
-  (merged to 'next' on 2016-10-17 at 8843a6a8be)
- + gpg-interface: use more status letters
-
- The GPG verification status shown in "%G?" pretty format specifier
- was not rich enough to differentiate a signature made by an expired
- key, a signature made by a revoked key, etc.  New output letters
- have been assigned to express them.
-
- Will merge to 'master'.
-
-
-* js/libify-require-clean-work-tree (2016-10-07) 6 commits
-  (merged to 'next' on 2016-10-17 at f5c20df38b)
- + wt-status: begin error messages with lower-case
- + wt-status: teach has_{unstaged,uncommitted}_changes() about submodules
- + wt-status: export also the has_un{staged,committed}_changes() functions
- + wt-status: make the require_clean_work_tree() function reusable
- + pull: make code more similar to the shell script again
- + pull: drop confusing prefix parameter of die_on_unclean_work_tree()
-
- The require_clean_work_tree() helper was recreated in C when "git
- pull" was rewritten from shell; the helper is now made available to
- other callers in preparation for upcoming "rebase -i" work.
-
- Will merge to 'master'.
-
-
-* bw/ls-files-recurse-submodules (2016-10-10) 4 commits
-  (merged to 'next' on 2016-10-17 at f0e398946a)
- + ls-files: add pathspec matching for submodules
- + ls-files: pass through safe options for --recurse-submodules
- + ls-files: optionally recurse into submodules
- + git: make super-prefix option
-
- "git ls-files" learned "--recurse-submodules" option that can be
- used to get a listing of tracked files across submodules (i.e. this
- only works with "--cached" option, not for listing untracked or
- ignored files).  This would be a useful tool to sit on the upstream
- side of a pipe that is read with xargs to work on all working tree
- files from the top-level superproject.
-
- Will merge to 'master'.
-
-
 * ls/filter-process (2016-10-17) 14 commits
   (merged to 'next' on 2016-10-19 at ffd0de042c)
  + contrib/long-running-filter: add long running filter example
@@ -892,22 +866,7 @@ of the repositories listed at
  all filtering need is served by this single process for multiple
  paths, reducing the process creation overhead.
 
- Will wait for ls/git-open-cloexec.
-
-
-* hv/submodule-not-yet-pushed-fix (2016-10-10) 3 commits
- - batch check whether submodule needs pushing into one call
- - serialize collection of refs that contain submodule changes
- - serialize collection of changed submodules
-
- The code in "git push" to compute if any commit being pushed in the
- superproject binds a commit in a submodule that hasn't been pushed
- out was overly inefficient, making it unusable even for a small
- project that does not have any submodule but have a reasonable
- number of refs.
-
- Waiting for review.
- cf. <cover.1475851621.git.hvoigt@hvoigt.net>
+ Will merge to 'master'.
 
 
 * sg/fix-versioncmp-with-common-suffix (2016-09-08) 5 commits
@@ -926,16 +885,6 @@ of the repositories listed at
  cf. <20160908223727.Horde.jVOOJ278ssZ3qkyjkmyqZD-@webmail.informatik.kit.edu>
 
 
-* sb/push-make-submodule-check-the-default (2016-10-10) 2 commits
- - push: change submodule default to check when submodules exist
- - submodule add: extend force flag to add existing repos
-
- Turn the default of "push.recurseSubmodules" to "check" when
- submodules seem to be in use.
-
- Will hold to wait for hv/submodule-not-yet-pushed-fix
-
-
 * jc/pull-rebase-ff (2016-07-28) 1 commit
  - pull: fast-forward "pull --rebase=true"
 
@@ -944,26 +893,6 @@ of the repositories listed at
  invoking "git rebase", but it didn't.
 
  Needs a real log message and a few tests.
-
-
-* ex/deprecate-empty-pathspec-as-match-all (2016-06-22) 1 commit
-  (merged to 'next' on 2016-09-21 at e19148ea63)
- + pathspec: warn on empty strings as pathspec
-
- Originally merged to 'next' on 2016-07-13
-
- An empty string used as a pathspec element has always meant
- 'everything matches', but it is too easy to write a script that
- finds a path to remove in $path and run 'git rm "$paht"', which
- ends up removing everything.  Start warning about this use of an
- empty string used for 'everything matches' and ask users to use a
- more explicit '.' for that instead.
-
- The hope is that existing users will not mind this change, and
- eventually the warning can be turned into a hard error, upgrading
- the deprecation into removal of this (mis)feature.
-
- Will hold to see if people scream.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
@@ -978,4 +907,4 @@ of the repositories listed at
  which needs to be fixed before this final step can proceed.
  cf. <5671DB28.8020901@kdbg.org>
 
- Will merge to 'master'.
+ Will cook in 'next'.
