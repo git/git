@@ -1673,7 +1673,8 @@ int mingw_kill(pid_t pid, int sig)
 char *msc_getenv(const char *name)
 {
 	int len_key, len_value;
-	wchar_t *w_key, *value;
+	wchar_t *w_key;
+	char *value;
 	const wchar_t *w_value;
 
 	if (!name || !*name)
