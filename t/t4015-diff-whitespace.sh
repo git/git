@@ -869,7 +869,8 @@ test_expect_success 'diff that introduces and removes ws breakages' '
 	test_cmp expected current
 '
 
-test_expect_success 'the same with --ws-error-highlight' '
+test_expect_success 'ws-error-highlight test setup' '
+
 	git reset --hard &&
 	{
 		echo "0. blank-at-eol " &&
@@ -882,10 +883,7 @@ test_expect_success 'the same with --ws-error-highlight' '
 		echo "2. and a new line "
 	} >x &&
 
-	git -c color.diff=always diff --ws-error-highlight=default,old |
-	test_decode_color >current &&
-
-	cat >expected <<-\EOF &&
+	cat >expect.default-old <<-\EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
 	<BOLD>index d0233a2..700886e 100644<RESET>
 	<BOLD>--- a/x<RESET>
@@ -897,12 +895,7 @@ test_expect_success 'the same with --ws-error-highlight' '
 	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
 	EOF
 
-	test_cmp expected current &&
-
-	git -c color.diff=always diff --ws-error-highlight=all |
-	test_decode_color >current &&
-
-	cat >expected <<-\EOF &&
+	cat >expect.all <<-\EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
 	<BOLD>index d0233a2..700886e 100644<RESET>
 	<BOLD>--- a/x<RESET>
@@ -914,12 +907,7 @@ test_expect_success 'the same with --ws-error-highlight' '
 	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
 	EOF
 
-	test_cmp expected current &&
-
-	git -c color.diff=always diff --ws-error-highlight=none |
-	test_decode_color >current &&
-
-	cat >expected <<-\EOF &&
+	cat >expect.none <<-\EOF
 	<BOLD>diff --git a/x b/x<RESET>
 	<BOLD>index d0233a2..700886e 100644<RESET>
 	<BOLD>--- a/x<RESET>
@@ -931,7 +919,57 @@ test_expect_success 'the same with --ws-error-highlight' '
 	<GREEN>+2. and a new line <RESET>
 	EOF
 
-	test_cmp expected current
+'
+
+test_expect_success 'test --ws-error-highlight option' '
+
+	git -c color.diff=always diff --ws-error-highlight=default,old |
+	test_decode_color >current &&
+	test_cmp expect.default-old current &&
+
+	git -c color.diff=always diff --ws-error-highlight=all |
+	test_decode_color >current &&
+	test_cmp expect.all current &&
+
+	git -c color.diff=always diff --ws-error-highlight=none |
+	test_decode_color >current &&
+	test_cmp expect.none current
+
+'
+
+test_expect_success 'test diff.wsErrorHighlight config' '
+
+	git -c color.diff=always -c diff.wsErrorHighlight=default,old diff |
+	test_decode_color >current &&
+	test_cmp expect.default-old current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=all diff |
+	test_decode_color >current &&
+	test_cmp expect.all current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=none diff |
+	test_decode_color >current &&
+	test_cmp expect.none current
+
+'
+
+test_expect_success 'option overrides diff.wsErrorHighlight' '
+
+	git -c color.diff=always -c diff.wsErrorHighlight=none \
+		diff --ws-error-highlight=default,old |
+	test_decode_color >current &&
+	test_cmp expect.default-old current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=default \
+		diff --ws-error-highlight=all |
+	test_decode_color >current &&
+	test_cmp expect.all current &&
+
+	git -c color.diff=always -c diff.wsErrorHighlight=all \
+		diff --ws-error-highlight=none |
+	test_decode_color >current &&
+	test_cmp expect.none current
+
 '
 
 test_done

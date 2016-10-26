@@ -308,6 +308,8 @@ ifndef::git-format-patch[]
 	lines are highlighted.  E.g. `--ws-error-highlight=new,old`
 	highlights whitespace errors on both deleted and added lines.
 	`all` can be used as a short-hand for `old,new,context`.
+	The `diff.wsErrorHighlight` configuration variable can be
+	used to specify the default behaviour.
 
 endif::git-format-patch[]
 
