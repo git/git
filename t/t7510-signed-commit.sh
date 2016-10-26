@@ -2,6 +2,7 @@
 
 test_description='signed commit tests'
 . ./test-lib.sh
+GNUPGHOME_NOT_USED=$GNUPGHOME
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
 test_expect_success GPG 'create signed commits' '
@@ -190,13 +191,23 @@ test_expect_success GPG 'show bad signature with custom format' '
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'show unknown signature with custom format' '
+test_expect_success GPG 'show untrusted signature with custom format' '
 	cat >expect <<-\EOF &&
 	U
 	61092E85B7227189
 	Eris Discordia <discord@example.net>
 	EOF
 	git log -1 --format="%G?%n%GK%n%GS" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show unknown signature with custom format' '
+	cat >expect <<-\EOF &&
+	E
+	61092E85B7227189
+
+	EOF
+	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS" eighth-signed-alt >actual &&
 	test_cmp expect actual
 '
 
