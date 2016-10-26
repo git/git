@@ -39,7 +39,8 @@ The latest stash you created is stored in `refs/stash`; older
 stashes are found in the reflog of this reference and can be named using
 the usual reflog syntax (e.g. `stash@{0}` is the most recently
 created stash, `stash@{1}` is the one before it, `stash@{2.hours.ago}`
-is also possible).
+is also possible). Stashes may also be referenced by specifying just the
+stash index (e.g. the integer `n` is equivalent to `stash@{n}`).
 
 OPTIONS
 -------
