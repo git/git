@@ -871,6 +871,8 @@ Return an array of mailboxes extracted from a string.
 
 =cut
 
+# Very close to Mail::Address's parser, but we still have minor
+# differences in some cases (see t9000 for examples).
 sub parse_mailboxes {
 	my $re_comment = qr/\((?:[^)]*)\)/;
 	my $re_quote = qr/"(?:[^\"\\]|\\.)*"/;
@@ -879,6 +881,7 @@ sub parse_mailboxes {
 	# divide the string in tokens of the above form
 	my $re_token = qr/(?:$re_quote|$re_word|$re_comment|\S)/;
 	my @tokens = map { $_ =~ /\s*($re_token)\s*/g } @_;
+	my $end_of_addr_seen = 0;
 
 	# add a delimiter to simplify treatment for the last mailbox
 	push @tokens, ",";
@@ -888,10 +891,10 @@ sub parse_mailboxes {
 		if ($token =~ /^[,;]$/) {
 			# if buffer still contains undeterminated strings
 			# append it at the end of @address or @phrase
-			if (@address) {
-				push @address, @buffer;
-			} else {
+			if ($end_of_addr_seen) {
 				push @phrase, @buffer;
+			} else {
+				push @address, @buffer;
 			}
 
 			my $str_phrase = join ' ', @phrase;
@@ -915,16 +918,16 @@ sub parse_mailboxes {
 			push @addr_list, $str_mailbox if ($str_mailbox);
 
 			@phrase = @address = @comment = @buffer = ();
+			$end_of_addr_seen = 0;
 		} elsif ($token =~ /^\(/) {
 			push @comment, $token;
 		} elsif ($token eq "<") {
 			push @phrase, (splice @address), (splice @buffer);
 		} elsif ($token eq ">") {
+			$end_of_addr_seen = 1;
 			push @address, (splice @buffer);
-		} elsif ($token eq "@") {
+		} elsif ($token eq "@" && !$end_of_addr_seen) {
 			push @address, (splice @buffer), "@";
-		} elsif ($token eq ".") {
-			push @address, (splice @buffer), ".";
 		} else {
 			push @buffer, $token;
 		}
