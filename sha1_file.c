@@ -370,7 +370,7 @@ void read_info_alternates(const char * relative_base, int depth)
 	int fd;
 
 	path = xstrfmt("%s/info/alternates", relative_base);
-	fd = git_open_noatime(path);
+	fd = git_open(path);
 	free(path);
 	if (fd < 0)
 		return;
@@ -663,7 +663,7 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 	struct pack_idx_header *hdr;
 	size_t idx_size;
 	uint32_t version, nr, i, *index;
-	int fd = git_open_noatime(path);
+	int fd = git_open(path);
 	struct stat st;
 
 	if (fd < 0)
@@ -1069,7 +1069,7 @@ static int open_packed_git_1(struct packed_git *p)
 	while (pack_max_fds <= pack_open_fds && close_one_pack())
 		; /* nothing */
 
-	p->pack_fd = git_open_noatime(p->pack_name);
+	p->pack_fd = git_open(p->pack_name);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
 		return -1;
 	pack_open_fds++;
@@ -1586,9 +1586,9 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
-int git_open_noatime(const char *name)
+int git_open(const char *name)
 {
-	static int sha1_file_open_flag = O_NOATIME;
+	static int sha1_file_open_flag = O_NOATIME | O_CLOEXEC;
 
 	for (;;) {
 		int fd;
@@ -1598,12 +1598,17 @@ int git_open_noatime(const char *name)
 		if (fd >= 0)
 			return fd;
 
-		/* Might the failure be due to O_NOATIME? */
-		if (errno != ENOENT && sha1_file_open_flag) {
-			sha1_file_open_flag = 0;
+		/* Try again w/o O_CLOEXEC: the kernel might not support it */
+		if ((sha1_file_open_flag & O_CLOEXEC) && errno == EINVAL) {
+			sha1_file_open_flag &= ~O_CLOEXEC;
 			continue;
 		}
 
+		/* Might the failure be due to O_NOATIME? */
+		if (errno != ENOENT && (sha1_file_open_flag & O_NOATIME)) {
+			sha1_file_open_flag &= ~O_NOATIME;
+			continue;
+		}
 		return -1;
 	}
 }
@@ -1632,7 +1637,7 @@ static int open_sha1_file(const unsigned char *sha1)
 	struct alternate_object_database *alt;
 	int most_interesting_errno;
 
-	fd = git_open_noatime(sha1_file_name(sha1));
+	fd = git_open(sha1_file_name(sha1));
 	if (fd >= 0)
 		return fd;
 	most_interesting_errno = errno;
@@ -1640,7 +1645,7 @@ static int open_sha1_file(const unsigned char *sha1)
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		const char *path = alt_sha1_path(alt, sha1);
-		fd = git_open_noatime(path);
+		fd = git_open(path);
 		if (fd >= 0)
 			return fd;
 		if (most_interesting_errno == ENOENT)
