@@ -241,9 +241,10 @@ static void find_non_local_tags(struct transport *transport,
 		 * as one to ignore by setting util to NULL.
 		 */
 		if (ends_with(ref->name, "^{}")) {
-			if (item && !has_object_file(&ref->old_oid) &&
+			if (item &&
+			    !has_object_file_with_flags(&ref->old_oid, HAS_SHA1_QUICK) &&
 			    !will_fetch(head, ref->old_oid.hash) &&
-			    !has_sha1_file(item->util) &&
+			    !has_sha1_file_with_flags(item->util, HAS_SHA1_QUICK) &&
 			    !will_fetch(head, item->util))
 				item->util = NULL;
 			item = NULL;
@@ -256,7 +257,8 @@ static void find_non_local_tags(struct transport *transport,
 		 * to check if it is a lightweight tag that we want to
 		 * fetch.
 		 */
-		if (item && !has_sha1_file(item->util) &&
+		if (item &&
+		    !has_sha1_file_with_flags(item->util, HAS_SHA1_QUICK) &&
 		    !will_fetch(head, item->util))
 			item->util = NULL;
 
@@ -276,7 +278,8 @@ static void find_non_local_tags(struct transport *transport,
 	 * We may have a final lightweight tag that needs to be
 	 * checked to see if it needs fetching.
 	 */
-	if (item && !has_sha1_file(item->util) &&
+	if (item &&
+	    !has_sha1_file_with_flags(item->util, HAS_SHA1_QUICK) &&
 	    !will_fetch(head, item->util))
 		item->util = NULL;
 
