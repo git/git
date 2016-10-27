@@ -44,6 +44,7 @@ use Git qw(
 	command_close_pipe
 	command_bidi_pipe
 	command_close_bidi_pipe
+	get_record
 );
 
 BEGIN {
@@ -1699,7 +1700,7 @@ sub cmd_gc {
 		     "files will not be compressed.\n";
 	}
 	File::Find::find({ wanted => \&gc_directory, no_chdir => 1},
-			 "$ENV{GIT_DIR}/svn");
+			 Git::SVN::svn_dir());
 }
 
 ########################### utility functions #########################
@@ -1733,7 +1734,7 @@ sub post_fetch_checkout {
 	return unless verify_ref('HEAD^0');
 
 	return if $ENV{GIT_DIR} !~ m#^(?:.*/)?\.git$#;
-	my $index = $ENV{GIT_INDEX_FILE} || "$ENV{GIT_DIR}/index";
+	my $index = command_oneline(qw(rev-parse --git-path index));
 	return if -f $index;
 
 	return if command_oneline(qw/rev-parse --is-inside-work-tree/) eq 'false';
@@ -1835,8 +1836,9 @@ sub get_tree_from_treeish {
 sub get_commit_entry {
 	my ($treeish) = shift;
 	my %log_entry = ( log => '', tree => get_tree_from_treeish($treeish) );
-	my $commit_editmsg = "$ENV{GIT_DIR}/COMMIT_EDITMSG";
-	my $commit_msg = "$ENV{GIT_DIR}/COMMIT_MSG";
+	my @git_path = qw(rev-parse --git-path);
+	my $commit_editmsg = command_oneline(@git_path, 'COMMIT_EDITMSG');
+	my $commit_msg = command_oneline(@git_path, 'COMMIT_MSG');
 	open my $log_fh, '>', $commit_editmsg or croak $!;
 
 	my $type = command_oneline(qw/cat-file -t/, $treeish);
@@ -1880,10 +1882,9 @@ sub get_commit_entry {
 	{
 		require Encode;
 		# SVN requires messages to be UTF-8 when entering the repo
-		local $/;
 		open $log_fh, '<', $commit_msg or croak $!;
 		binmode $log_fh;
-		chomp($log_entry{log} = <$log_fh>);
+		chomp($log_entry{log} = get_record($log_fh, undef));
 
 		my $enc = Git::config('i18n.commitencoding') || 'UTF-8';
 		my $msg = $log_entry{log};
