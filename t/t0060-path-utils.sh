@@ -305,8 +305,9 @@ test_git_path GIT_COMMON_DIR=bar config                   bar/config
 test_git_path GIT_COMMON_DIR=bar packed-refs              bar/packed-refs
 test_git_path GIT_COMMON_DIR=bar shallow                  bar/shallow
 
-# In the tests below, the distinction between $PWD and $(pwd) is important:
-# on Windows, $PWD is POSIX style (/c/foo), $(pwd) has drive letter (c:/foo).
+# In the tests below, $(pwd) must be used because it is a native path on
+# Windows and avoids MSYS's path mangling (which simplifies "foo/../bar" and
+# strips the dot from trailing "/.").
 
 test_submodule_relative_url "../" "../foo" "../submodule" "../../submodule"
 test_submodule_relative_url "../" "../foo/bar" "../submodule" "../../foo/submodule"
@@ -314,27 +315,29 @@ test_submodule_relative_url "../" "../foo/submodule" "../submodule" "../../foo/s
 test_submodule_relative_url "../" "./foo" "../submodule" "../submodule"
 test_submodule_relative_url "../" "./foo/bar" "../submodule" "../foo/submodule"
 test_submodule_relative_url "../../../" "../foo/bar" "../sub/a/b/c" "../../../../foo/sub/a/b/c"
-test_submodule_relative_url "../" "$PWD/addtest" "../repo" "$(pwd)/repo"
+test_submodule_relative_url "../" "$(pwd)/addtest" "../repo" "$(pwd)/repo"
 test_submodule_relative_url "../" "foo/bar" "../submodule" "../foo/submodule"
 test_submodule_relative_url "../" "foo" "../submodule" "../submodule"
 
 test_submodule_relative_url "(null)" "../foo/bar" "../sub/a/b/c" "../foo/sub/a/b/c"
+test_submodule_relative_url "(null)" "../foo/bar" "../sub/a/b/c/" "../foo/sub/a/b/c"
+test_submodule_relative_url "(null)" "../foo/bar/" "../sub/a/b/c" "../foo/sub/a/b/c"
 test_submodule_relative_url "(null)" "../foo/bar" "../submodule" "../foo/submodule"
 test_submodule_relative_url "(null)" "../foo/submodule" "../submodule" "../foo/submodule"
 test_submodule_relative_url "(null)" "../foo" "../submodule" "../submodule"
 test_submodule_relative_url "(null)" "./foo/bar" "../submodule" "foo/submodule"
 test_submodule_relative_url "(null)" "./foo" "../submodule" "submodule"
 test_submodule_relative_url "(null)" "//somewhere else/repo" "../subrepo" "//somewhere else/subrepo"
-test_submodule_relative_url "(null)" "$PWD/subsuper_update_r" "../subsubsuper_update_r" "$(pwd)/subsubsuper_update_r"
-test_submodule_relative_url "(null)" "$PWD/super_update_r2" "../subsuper_update_r" "$(pwd)/subsuper_update_r"
-test_submodule_relative_url "(null)" "$PWD/." "../." "$(pwd)/."
-test_submodule_relative_url "(null)" "$PWD" "./." "$(pwd)/."
-test_submodule_relative_url "(null)" "$PWD/addtest" "../repo" "$(pwd)/repo"
-test_submodule_relative_url "(null)" "$PWD" "./å äö" "$(pwd)/å äö"
-test_submodule_relative_url "(null)" "$PWD/." "../submodule" "$(pwd)/submodule"
-test_submodule_relative_url "(null)" "$PWD/submodule" "../submodule" "$(pwd)/submodule"
-test_submodule_relative_url "(null)" "$PWD/home2/../remote" "../bundle1" "$(pwd)/home2/../bundle1"
-test_submodule_relative_url "(null)" "$PWD/submodule_update_repo" "./." "$(pwd)/submodule_update_repo/."
+test_submodule_relative_url "(null)" "$(pwd)/subsuper_update_r" "../subsubsuper_update_r" "$(pwd)/subsubsuper_update_r"
+test_submodule_relative_url "(null)" "$(pwd)/super_update_r2" "../subsuper_update_r" "$(pwd)/subsuper_update_r"
+test_submodule_relative_url "(null)" "$(pwd)/." "../." "$(pwd)/."
+test_submodule_relative_url "(null)" "$(pwd)" "./." "$(pwd)/."
+test_submodule_relative_url "(null)" "$(pwd)/addtest" "../repo" "$(pwd)/repo"
+test_submodule_relative_url "(null)" "$(pwd)" "./å äö" "$(pwd)/å äö"
+test_submodule_relative_url "(null)" "$(pwd)/." "../submodule" "$(pwd)/submodule"
+test_submodule_relative_url "(null)" "$(pwd)/submodule" "../submodule" "$(pwd)/submodule"
+test_submodule_relative_url "(null)" "$(pwd)/home2/../remote" "../bundle1" "$(pwd)/home2/../bundle1"
+test_submodule_relative_url "(null)" "$(pwd)/submodule_update_repo" "./." "$(pwd)/submodule_update_repo/."
 test_submodule_relative_url "(null)" "file:///tmp/repo" "../subrepo" "file:///tmp/subrepo"
 test_submodule_relative_url "(null)" "foo/bar" "../submodule" "foo/submodule"
 test_submodule_relative_url "(null)" "foo" "../submodule" "submodule"
