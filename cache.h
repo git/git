@@ -1190,6 +1190,9 @@ static inline int hex2chr(const char *s)
 #define MINIMUM_ABBREV minimum_abbrev
 #define DEFAULT_ABBREV default_abbrev
 
+/* used when the code does not know or care what the default abbrev is */
+#define FALLBACK_DEFAULT_ABBREV 7
+
 struct object_context {
 	unsigned char tree[20];
 	char path[PATH_MAX];
@@ -1208,6 +1211,7 @@ struct object_context {
 #define GET_SHA1_TREEISH          020
 #define GET_SHA1_BLOB             040
 #define GET_SHA1_FOLLOW_SYMLINKS 0100
+#define GET_SHA1_AUTOMATIC	 0200
 #define GET_SHA1_ONLY_TO_DIE    04000
 
 #define GET_SHA1_DISAMBIGUATORS \

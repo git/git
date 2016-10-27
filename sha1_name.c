@@ -15,6 +15,7 @@ typedef int (*disambiguate_hint_fn)(const unsigned char *, void *);
 
 struct disambiguate_state {
 	int len; /* length of prefix in hex chars */
+	unsigned int nrobjects;
 	char hex_pfx[GIT_SHA1_HEXSZ + 1];
 	unsigned char bin_pfx[GIT_SHA1_RAWSZ];
 
@@ -111,6 +112,14 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 
 			if (strlen(de->d_name) != 38)
 				continue;
+
+			/*
+			 * We only look at the one subdirectory, and we assume
+			 * each subdirectory is roughly similar, so each
+			 * object we find probably has 255 other objects in
+			 * the other fan-out directories.
+			 */
+			ds->nrobjects += 256;
 			if (memcmp(de->d_name, ds->hex_pfx + 2, ds->len - 2))
 				continue;
 			memcpy(hex + 2, de->d_name, 38);
@@ -144,6 +153,7 @@ static void unique_in_pack(struct packed_git *p,
 
 	open_pack_index(p);
 	num = p->num_objects;
+	ds->nrobjects += num;
 	last = num;
 	while (first < last) {
 		uint32_t mid = (first + last) / 2;
@@ -373,6 +383,9 @@ static int show_ambiguous_object(const unsigned char *sha1, void *data)
 	return 0;
 }
 
+/* start from our historical default before the automatic abbreviation */
+static int default_automatic_abbrev = FALLBACK_DEFAULT_ABBREV;
+
 static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 			  unsigned flags)
 {
@@ -419,6 +432,14 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 		for_each_abbrev(ds.hex_pfx, show_ambiguous_object, &ds);
 	}
 
+	if (len < 16 && !status && (flags & GET_SHA1_AUTOMATIC)) {
+		unsigned int expect_collision = 1 << (len * 2);
+		if (ds.nrobjects > expect_collision) {
+			default_automatic_abbrev = len+1;
+			return SHORT_NAME_AMBIGUOUS;
+		}
+	}
+
 	return status;
 }
 
@@ -451,14 +472,19 @@ int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
 int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 {
 	int status, exists;
+	int flags = GET_SHA1_QUIETLY;
 
+	if (len < 0) {
+		flags |= GET_SHA1_AUTOMATIC;
+		len = default_automatic_abbrev;
+	}
 	sha1_to_hex_r(hex, sha1);
 	if (len == 40 || !len)
 		return 40;
 	exists = has_sha1_file(sha1);
 	while (len < 40) {
 		unsigned char sha1_ret[20];
-		status = get_short_sha1(hex, len, sha1_ret, GET_SHA1_QUIETLY);
+		status = get_short_sha1(hex, len, sha1_ret, flags);
 		if (exists
 		    ? !status
 		    : status == SHORT_NAME_NOT_FOUND) {
