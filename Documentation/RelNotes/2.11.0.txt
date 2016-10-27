@@ -14,10 +14,15 @@ Backward compatibility notes.
    eventually the warning can be turned into a hard error, upgrading
    the deprecation into removal of this (mis)feature.
 
-
  * The historical argument order "git merge <msg> HEAD <commit>..."
    has been deprecated for quite some time, and will be removed in the
    next release (not this one).
+
+ * The default abbreviation length, which has historically been 7, now
+   scales as the repository grows, using the approximate number of
+   objects in the reopsitory and a bit of math around the birthday
+   paradox.  The logic suggests to use 12 hexdigits for the Linux
+   kernel, and 9 to 10 for Git itself.
 
 
 Updates since v2.10
@@ -133,6 +138,12 @@ UI, Workflows & Features
    learned to turn "git describe" output (e.g. v2.9.3-599-g2376d31787)
    into clickable links in its output.
 
+ * When new paths were added by "git add -N" to the index, it was
+   enough to circumvent the check by "git commit" to refrain from
+   making an empty commit without "--allow-empty".  The same logic
+   prevented "git status" to show such a path as "new file" in the
+   "Changes not staged for commit" section.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -211,6 +222,13 @@ Performance, Internal Implementation, Development Support etc.
  * "git upload-pack" had its code cleaned-up and performance improved
    by reducing use of timestamp-ordered commit-list, which was
    replaced with a priority queue.
+
+ * "git diff --no-index" codepath has been updated not to try to peek
+   into .git/ directory that happens to be under the current
+   directory, when we know we are operating outside any repository.
+
+ * Update of the sequencer codebase to make it reusable to reimplement
+   "rebase -i" continues.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -517,6 +535,23 @@ notes for details).
    tabs in it.  Adjust a few of them in merge-base documentation to
    work around them.
    (merge 6750f62699 po/fix-doc-merge-base-illustration later to maint).
+
+ * A minor regression fix for "git submodule" that was introduced
+   when more helper functions were reimplemented in C.
+   (merge 77b63ac31e sb/submodule-ignore-trailing-slash later to maint).
+
+ * The code that we have used for the past 10+ years to cycle
+   4-element ring buffers turns out to be not quite portable in
+   theoretical world.
+   (merge bb84735c80 rs/ring-buffer-wraparound later to maint).
+
+ * "git daemon" used fixed-length buffers to turn URL to the
+   repository the client asked for into the server side directory
+   path, using snprintf() to avoid overflowing these buffers, but
+   allowed possibly truncated paths to the directory.  This has been
+   tightened to reject such a request that causes overlong path to be
+   required to serve.
+   (merge 6bdb0083be jk/daemon-path-ok-check-truncation later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge a94bb68397 rs/cocci later to maint).
