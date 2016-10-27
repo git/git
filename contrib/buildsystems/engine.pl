@@ -347,7 +347,7 @@ sub handleLinkLine
             push(@libs, "libcurl.lib");
         } elsif ("$part" eq "-liconv") {
             push(@libs, "libiconv.lib");
-        } elsif ($part =~ /^-/) {
+        } elsif ($part =~ /^[-\/]/) {
             push(@lflags, $part);
         } elsif ($part =~ /\.(a|lib)$/) {
             $part =~ s/\.a$/.lib/;
