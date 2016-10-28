@@ -260,6 +260,12 @@ test_expect_success 'using reflog to find the fork point' '
 	test_cmp expect3 actual
 '
 
+test_expect_success '--fork-point works with empty reflog' '
+	git -c core.logallrefupdates=false branch no-reflog base &&
+	git merge-base --fork-point no-reflog derived &&
+	test_cmp expect3 actual
+'
+
 test_expect_success 'merge-base --octopus --all for complex tree' '
 	# Best common ancestor for JE, JAA and JDD is JC
 	#             JE
