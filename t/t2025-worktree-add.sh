@@ -138,6 +138,14 @@ test_expect_success 'checkout from a bare repo without "add"' '
 	)
 '
 
+test_expect_success '"add" default branch of a bare repo' '
+	(
+		git clone --bare . bare2 &&
+		cd bare2 &&
+		git worktree add ../there3 master
+	)
+'
+
 test_expect_success 'checkout with grafts' '
 	test_when_finished rm .git/info/grafts &&
 	test_commit abc &&

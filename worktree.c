@@ -345,6 +345,8 @@ const struct worktree *find_shared_symref(const char *symref,
 
 	for (i = 0; worktrees[i]; i++) {
 		struct worktree *wt = worktrees[i];
+		if (wt->is_bare)
+			continue;
 
 		if (wt->is_detached && !strcmp(symref, "HEAD")) {
 			if (is_worktree_being_rebased(wt, target)) {
