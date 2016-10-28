@@ -528,16 +528,6 @@ AC_CHECK_LIB([curl], [curl_global_init],
 [NO_CURL=],
 [NO_CURL=YesPlease])
 
-if test -z "${NO_CURL}" && test -z "${NO_OPENSSL}"; then
-
-AC_CHECK_LIB([curl], [Curl_ssl_init],
-[NEEDS_SSL_WITH_CURL=YesPlease],
-[NEEDS_SSL_WITH_CURL=])
-
-GIT_CONF_SUBST([NEEDS_SSL_WITH_CURL])
-
-fi
-
 GIT_UNSTASH_FLAGS($CURLDIR)
 
 GIT_CONF_SUBST([NO_CURL])
@@ -550,6 +540,17 @@ AC_CHECK_PROG([CURL_CONFIG], [curl-config],
 
 if test $CURL_CONFIG != no; then
     GIT_CONF_SUBST([CURL_CONFIG])
+    if test -z "${NO_OPENSSL}"; then
+      AC_MSG_CHECKING([if Curl supports SSL])
+      if test $(curl-config --features|grep SSL) = SSL; then
+         NEEDS_SSL_WITH_CURL=YesPlease
+         AC_MSG_RESULT([yes])
+      else
+         NEEDS_SSL_WITH_CURL=
+         AC_MSG_RESULT([no])
+      fi
+      GIT_CONF_SUBST([NEEDS_SSL_WITH_CURL])
+    fi
 fi
 
 fi
