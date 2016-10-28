@@ -2073,7 +2073,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			_("Your branch is based on '%s', but the upstream is gone.\n"),
 			base);
 		if (advice_status_hints)
-			strbuf_addf(sb,
+			strbuf_addstr(sb,
 				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
 	} else if (!ours && !theirs) {
 		strbuf_addf(sb,
@@ -2086,7 +2086,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			   ours),
 			base, ours);
 		if (advice_status_hints)
-			strbuf_addf(sb,
+			strbuf_addstr(sb,
 				_("  (use \"git push\" to publish your local commits)\n"));
 	} else if (!ours) {
 		strbuf_addf(sb,
@@ -2097,7 +2097,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			   theirs),
 			base, theirs);
 		if (advice_status_hints)
-			strbuf_addf(sb,
+			strbuf_addstr(sb,
 				_("  (use \"git pull\" to update your local branch)\n"));
 	} else {
 		strbuf_addf(sb,
@@ -2110,7 +2110,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb)
 			   ours + theirs),
 			base, ours, theirs);
 		if (advice_status_hints)
-			strbuf_addf(sb,
+			strbuf_addstr(sb,
 				_("  (use \"git pull\" to merge the remote branch into yours)\n"));
 	}
 	free(base);

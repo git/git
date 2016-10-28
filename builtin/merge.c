@@ -940,7 +940,7 @@ static void write_merge_state(struct commit_list *remoteheads)
 
 	strbuf_reset(&buf);
 	if (fast_forward == FF_NO)
-		strbuf_addf(&buf, "no-ff");
+		strbuf_addstr(&buf, "no-ff");
 	write_file_buf(git_path_merge_mode(), buf.buf, buf.len);
 }
 

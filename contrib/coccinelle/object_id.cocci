@@ -23,16 +23,16 @@ expression E1;
 + oid_to_hex(E1)
 
 @@
-expression E1;
+expression E1, E2;
 @@
-- sha1_to_hex_r(E1.hash)
-+ oid_to_hex_r(&E1)
+- sha1_to_hex_r(E1, E2.hash)
++ oid_to_hex_r(E1, &E2)
 
 @@
-expression E1;
+expression E1, E2;
 @@
-- sha1_to_hex_r(E1->hash)
-+ oid_to_hex_r(E1)
+- sha1_to_hex_r(E1, E2->hash)
++ oid_to_hex_r(E1, E2)
 
 @@
 expression E1;
