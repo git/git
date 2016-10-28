@@ -351,7 +351,7 @@ static int http_options(const char *var, const char *value, void *cb)
 
 static void init_curl_http_auth(CURL *result)
 {
-	if (!http_auth.username) {
+	if (!http_auth.username || !*http_auth.username) {
 		if (curl_empty_auth)
 			curl_easy_setopt(result, CURLOPT_USERPWD, ":");
 		return;
