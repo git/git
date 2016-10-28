@@ -259,7 +259,9 @@ OPTIONS
 --branch::
 	Branch of repository to add as submodule.
 	The name of the branch is recorded as `submodule.<name>.branch` in
-	`.gitmodules` for `update --remote`.
+	`.gitmodules` for `update --remote`.  A special value of `.` is used to
+	indicate that the name of the branch in the submodule should be the
+	same name as the current branch in the current repository.
 
 -f::
 --force::
