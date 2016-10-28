@@ -27,14 +27,6 @@
 #include "list.h"
 #include "mergesort.h"
 
-#ifndef O_NOATIME
-#if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
-#define O_NOATIME 01000000
-#else
-#define O_NOATIME 0
-#endif
-#endif
-
 #define SZ_FMT PRIuMAX
 static inline uintmax_t sz_fmt(size_t s) { return s; }
 
@@ -1583,19 +1575,6 @@ int git_open_cloexec(const char *name, int flags)
 		}
 	}
 #endif
-	return fd;
-}
-
-int git_open(const char *name)
-{
-	static int noatime = O_NOATIME;
-	int fd = git_open_cloexec(name, O_RDONLY);
-
-	if (0 <= fd && (noatime & O_NOATIME)) {
-		int flags = fcntl(fd, F_GETFL);
-		if (fcntl(fd, F_SETFL, flags | noatime))
-			noatime = 0;
-	}
 	return fd;
 }
 
