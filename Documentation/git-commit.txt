@@ -29,7 +29,8 @@ The content to be added can be specified in several ways:
 2. by using 'git rm' to remove files from the working tree
    and the index, again before using the 'commit' command;
 
-3. by listing files as arguments to the 'commit' command, in which
+3. by listing files as arguments to the 'commit' command
+   (without --interactive or --patch switch), in which
    case the commit will ignore changes staged in the index, and instead
    record the current content of the listed files (which must already
    be known to Git);
@@ -41,7 +42,8 @@ The content to be added can be specified in several ways:
    actual commit;
 
 5. by using the --interactive or --patch switches with the 'commit' command
-   to decide one by one which files or hunks should be part of the commit,
+   to decide one by one which files or hunks should be part of the commit
+   in addition to contents in the index,
    before finalizing the operation. See the ``Interactive Mode'' section of
    linkgit:git-add[1] to learn how to operate these modes.
 
