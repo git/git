@@ -35,8 +35,7 @@ static void save_env_before_alias(void)
 	orig_cwd = xgetcwd();
 	for (i = 0; i < ARRAY_SIZE(env_names); i++) {
 		orig_env[i] = getenv(env_names[i]);
-		if (orig_env[i])
-			orig_env[i] = xstrdup(orig_env[i]);
+		orig_env[i] = xstrdup_or_null(orig_env[i]);
 	}
 }
 
