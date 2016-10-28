@@ -253,9 +253,8 @@ On Automatic following
 ~~~~~~~~~~~~~~~~~~~~~~
 
 If you are following somebody else's tree, you are most likely
-using remote-tracking branches (`refs/heads/origin` in traditional
-layout, or `refs/remotes/origin/master` in the separate-remote
-layout).  You usually want the tags from the other end.
+using remote-tracking branches (eg. `refs/remotes/origin/master`).
+You usually want the tags from the other end.
 
 On the other hand, if you are fetching because you would want a
 one-shot merge from somebody else, you typically do not want to
