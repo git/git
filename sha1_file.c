@@ -1559,31 +1559,30 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
+int git_open_cloexec(const char *name, int flags)
+{
+	static int cloexec = O_CLOEXEC;
+	int fd = open(name, flags | cloexec);
+
+	if ((cloexec & O_CLOEXEC) && fd < 0 && errno == EINVAL) {
+		/* Try again w/o O_CLOEXEC: the kernel might not support it */
+		cloexec &= ~O_CLOEXEC;
+		fd = open(name, flags | cloexec);
+	}
+	return fd;
+}
+
 int git_open(const char *name)
 {
-	static int sha1_file_open_flag = O_NOATIME | O_CLOEXEC;
+	static int noatime = O_NOATIME;
+	int fd = git_open_cloexec(name, O_RDONLY);
 
-	for (;;) {
-		int fd;
-
-		errno = 0;
-		fd = open(name, O_RDONLY | sha1_file_open_flag);
-		if (fd >= 0)
-			return fd;
-
-		/* Try again w/o O_CLOEXEC: the kernel might not support it */
-		if ((sha1_file_open_flag & O_CLOEXEC) && errno == EINVAL) {
-			sha1_file_open_flag &= ~O_CLOEXEC;
-			continue;
-		}
-
-		/* Might the failure be due to O_NOATIME? */
-		if (errno != ENOENT && (sha1_file_open_flag & O_NOATIME)) {
-			sha1_file_open_flag &= ~O_NOATIME;
-			continue;
-		}
-		return -1;
+	if (0 <= fd && (noatime & O_NOATIME)) {
+		int flags = fcntl(fd, F_GETFL);
+		if (fcntl(fd, F_SETFL, flags | noatime))
+			noatime = 0;
 	}
+	return fd;
 }
 
 static int stat_sha1_file(const unsigned char *sha1, struct stat *st)
