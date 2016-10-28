@@ -835,9 +835,10 @@ AC_CHECK_TYPE([struct addrinfo],[
 ])
 GIT_CONF_SUBST([NO_IPV6])
 #
-# Define NO_REGEX if you have no or inferior regex support in your C library.
-AC_CACHE_CHECK([whether the platform regex can handle null bytes],
- [ac_cv_c_excellent_regex], [
+# Define NO_REGEX if your C library lacks regex support with REG_STARTEND
+# feature.
+AC_CACHE_CHECK([whether the platform regex supports REG_STARTEND],
+ [ac_cv_c_regex_with_reg_startend], [
 AC_EGREP_CPP(yippeeyeswehaveit,
 	AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
 #include <regex.h>
@@ -846,10 +847,10 @@ AC_EGREP_CPP(yippeeyeswehaveit,
 yippeeyeswehaveit
 #endif
 ]),
-	[ac_cv_c_excellent_regex=yes],
-	[ac_cv_c_excellent_regex=no])
+	[ac_cv_c_regex_with_reg_startend=yes],
+	[ac_cv_c_regex_with_reg_startend=no])
 ])
-if test $ac_cv_c_excellent_regex = yes; then
+if test $ac_cv_c_regex_with_reg_startend = yes; then
 	NO_REGEX=
 else
 	NO_REGEX=YesPlease
