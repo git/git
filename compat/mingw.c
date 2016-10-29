@@ -1187,6 +1187,158 @@ static char *path_lookup(const char *cmd, char **path, int exe_only)
 	return prog;
 }
 
+#if defined(_MSC_VER)
+/*
+ * Build an environment block combining the inherited environment
+ * merged with the given list of settings.
+ *
+ * Values of the form "KEY=VALUE" in deltaenv override inherited values.
+ * Values of the form "KEY" in deltaenv delete inherited values.
+ *
+ * We return a contiguous block of UNICODE strings with a final trailing
+ * zero word.
+ */
+static wchar_t *make_environment_block(char **deltaenv)
+{
+	/*
+	 * The CRT (at least as of UCRT) secretly declares "_wenviron"
+	 * as a function that returns a pointer to a mostly static table.
+	 * Grab the pointer and cache it for the duration of our loop.
+	 */
+	extern wchar_t **_wenviron;
+	const wchar_t **my_wenviron = _wenviron;
+
+	/*
+	 * Internally, we create normal 'C' arrays of strings (pointing
+	 * into the blocks) to help with some of the de-dup work.
+	 */
+	wchar_t **wptrs_ins = NULL;
+	wchar_t **wptrs_del = NULL;
+	wchar_t *wblock_ins = NULL;
+	wchar_t *wblock_del = NULL;
+	wchar_t *wend_ins;
+	wchar_t *wend_del;
+	wchar_t *w_ins;
+	wchar_t *w_del;
+
+	int maxlen = 0;
+	int nr_delta = 0;
+	int nr_delta_ins = 0;
+	int nr_delta_del = 0;
+	int nr_wenv = 0;
+	int j, k, k_ins, k_del;
+
+	/*
+	 * Count the number of inserts and deletes in the deltaenv list.
+	 * Allocate 'C' arrays for inserts and deletes.
+	 * Also estimate the block size of our results.
+	 */
+	if (deltaenv && deltaenv[0] && *deltaenv[0]) {
+		for (k = 0; deltaenv && deltaenv[k] && *deltaenv[k]; k++) {
+			if (strchr(deltaenv[k], '=') == NULL)
+				nr_delta_del++;
+			else {
+				maxlen += strlen(deltaenv[k]) + 1;
+				nr_delta_ins++;
+			}
+		}
+
+		if (nr_delta_ins)
+			wptrs_ins = (wchar_t**)calloc(nr_delta_ins + 1, sizeof(wchar_t*));
+		if (nr_delta_del)
+			wptrs_del = (wchar_t**)calloc(nr_delta_del + 1, sizeof(wchar_t*));
+
+		nr_delta = nr_delta_ins + nr_delta_del;
+	}
+	while (my_wenviron && my_wenviron[nr_wenv] && *my_wenviron[nr_wenv])
+		maxlen += wcslen(my_wenviron[nr_wenv++]) + 1;
+	maxlen++;
+
+	/*
+	 * Allocate blocks for inserted and deleted items.
+	 * The individual pointers in the 'C' arrays will point into here.
+	 * We will use the wblock_ins as the final result.
+	 */
+	if (nr_delta_del) {
+		wblock_del = (wchar_t*)calloc(maxlen, sizeof(wchar_t));
+		wend_del = wblock_del + maxlen;
+		w_del = wblock_del;
+	}
+	wblock_ins = (wchar_t*)calloc(maxlen, sizeof(wchar_t));
+	wend_ins = wblock_ins + maxlen;
+	w_ins = wblock_ins;
+
+	/*
+	 * deltaenv values override inherited environment, so put them
+	 * in the result list first (so that we can de-dup using the
+	 * wide versions of them.
+	 *
+	 * Items in the deltaenv list that DO NOT contain an "=" are
+	 * treated as unsetenv.
+	 *
+	 * I'm going assume that there are no duplicates in deltaenv itself.
+	 */
+	k_ins = 0;
+	k_del = 0;
+	for (k = 0; k < nr_delta; k++) {
+		if (strchr(deltaenv[k], '=') == NULL) {
+			wptrs_del[k_del++] = w_del;
+			w_del += xutftowcs(w_del, deltaenv[k], (wend_del - w_del));
+			*w_del++ = L'='; /* append '=' to make lookup easier in next step. */
+			*w_del++ = 0;
+		} else {
+			wptrs_ins[k_ins++] = w_ins;
+			w_ins += xutftowcs(w_ins, deltaenv[k], (wend_ins - w_ins)) + 1;
+		}
+	}
+	assert(k_ins == nr_delta_ins);
+	assert(k_del == nr_delta_del);
+
+	/*
+	 * Walk the inherited environment and copy over unique, non-deleted
+	 * ones into the result set. Note that we only have to de-dup WRT
+	 * the values from deltaenv, because the inherited set should be unique.
+	 */
+	for (j = 0; j < nr_wenv; j++) {
+		const wchar_t *v_j = my_wenviron[j];
+		wchar_t *v_j_eq = wcschr(v_j, L'=');
+		if (!v_j_eq)
+			continue; /* should not happen */
+		int len_j_eq = v_j_eq + 1 - v_j; /* length(v_j) including '=' */
+
+		/* lookup v_j in list of to-delete vars */
+		for (k_del = 0; k_del < nr_delta_del; k_del++) {
+			if (wcsnicmp(v_j, wptrs_del[k_del], len_j_eq) == 0)
+				goto skip_it;
+		}
+
+		/* lookup v_j in deltaenv portion of result set */
+		for (k_ins = 0; k_ins < nr_delta_ins; k_ins++) {
+			if (wcsnicmp(v_j, wptrs_ins[k_ins], len_j_eq) == 0)
+				goto skip_it;
+		}
+
+		/* item is unique, add it to results. */
+		int len_j = wcslen(v_j);
+		memcpy(w_ins, v_j, len_j * sizeof(wchar_t));
+		w_ins += len_j + 1;
+
+skip_it:
+		;
+	}
+
+	if (wptrs_ins)
+		free(wptrs_ins);
+	if (wptrs_del)
+		free(wptrs_del);
+	if (wblock_del)
+		free(wblock_del);
+
+	return wblock_ins;
+}
+
+#else
+
 static int do_putenv(char **env, const char *name, int size, int free_old);
 
 /* used number of elements of environ array, including terminating NULL */
@@ -1233,6 +1385,8 @@ static wchar_t *make_environment_block(char **deltaenv)
 	free(tmpenv);
 	return wenvblk;
 }
+
+#endif
 
 struct pinfo_t {
 	struct pinfo_t *next;
@@ -1414,7 +1568,10 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 	prog = path_lookup(interpr, path, 1);
 	if (prog) {
 		int argc = 0;
-		const char **argv2;
+#ifndef _MSC_VER
+		const
+#endif
+		char **argv2;
 		while (argv[argc]) argc++;
 		ALLOC_ARRAY(argv2, argc + 1);
 		argv2[0] = (char *)cmd;	/* full path to the script file */
@@ -1489,6 +1646,70 @@ int mingw_kill(pid_t pid, int sig)
 	errno = EINVAL;
 	return -1;
 }
+
+#if defined(_MSC_VER)
+
+/* UTF8 versions of getenv and putenv (and unsetenv).
+ * Internally, they use the CRT's stock UNICODE routines
+ * to avoid data loss.
+ *
+ * Unlike the mingw version, we DO NOT directly write to
+ * the CRT variables.  We also DO NOT try to manage/replace
+ * the CRT storage.
+ */
+char *msc_getenv(const char *name)
+{
+	int len_key, len_value;
+	wchar_t *w_key;
+	char *value;
+	const wchar_t *w_value;
+
+	if (!name || !*name)
+		return NULL;
+
+	len_key = strlen(name) + 1;
+	w_key = calloc(len_key, sizeof(wchar_t));
+	xutftowcs(w_key, name, len_key);
+	w_value = _wgetenv(w_key);
+	free(w_key);
+
+	if (!w_value)
+		return NULL;
+
+	len_value = wcslen(w_value) * 3 + 1;
+	value = calloc(len_value, sizeof(char));
+	xwcstoutf(value, w_value, len_value);
+
+	/* TODO Warning: We return "value" which is an allocated
+	 * value and the caller is NOT expecting to have to free
+	 * it, so we leak memory.
+	 */
+	return value;
+}
+
+int msc_putenv(const char *name)
+{
+	int len, result;
+	char *equal;
+	wchar_t *wide;
+
+	if (!name || !*name)
+		return 0;
+
+	len = strlen(name);
+	equal = strchr(name, '=');
+	wide = calloc(len+1+!equal, sizeof(wchar_t));
+	xutftowcs(wide, name, len+1);
+	if (!equal)
+		wcscat(wide, L"=");
+
+	result = _wputenv(wide);
+
+	free(wide);
+	return result;
+}
+
+#else
 
 /*
  * Compare environment entries by key (i.e. stopping at '=' or '\0').
@@ -1617,6 +1838,8 @@ int mingw_putenv(const char *namevalue)
 	environ_size = do_putenv(environ, namevalue, environ_size, 1);
 	return 0;
 }
+
+#endif
 
 /*
  * Note, this isn't a complete replacement for getaddrinfo. It assumes
@@ -2175,8 +2398,34 @@ int mingw_raise(int sig)
 			sigint_fn(SIGINT);
 		return 0;
 
+#if defined(_MSC_VER)
+		/*
+		 * <signal.h> in the CRT defines 8 signals as being
+		 * supported on the platform.  Anything else causes
+		 * an "Invalid signal or error" (which in DEBUG builds
+		 * causes the Abort/Retry/Ignore dialog).  We by-pass
+		 * the CRT for things we already know will fail.
+		 */
+		/*case SIGINT:*/
+	case SIGILL:
+	case SIGFPE:
+	case SIGSEGV:
+	case SIGTERM:
+	case SIGBREAK:
+	case SIGABRT:
+	case SIGABRT_COMPAT:
+		return raise(sig);
+	default:
+		errno = EINVAL;
+		return -1;
+
+#else
+
 	default:
 		return raise(sig);
+
+#endif
+
 	}
 }
 
@@ -2274,7 +2523,10 @@ typedef struct _REPARSE_DATA_BUFFER {
 	DWORD  ReparseTag;
 	WORD   ReparseDataLength;
 	WORD   Reserved;
-	_ANONYMOUS_UNION union {
+#ifndef _MSC_VER
+	_ANONYMOUS_UNION
+#endif
+	union {
 		struct {
 			WORD   SubstituteNameOffset;
 			WORD   SubstituteNameLength;
@@ -2652,6 +2904,7 @@ int handle_long_path(wchar_t *path, int len, int max_path, int expand)
 	}
 }
 
+#if !defined(_MSC_VER)
 /*
  * Disable MSVCRT command line wildcard expansion (__getmainargs called from
  * mingw startup code, see init.c in mingw runtime).
@@ -2664,6 +2917,7 @@ typedef struct {
 
 extern int __wgetmainargs(int *argc, wchar_t ***argv, wchar_t ***env, int glob,
 		_startupinfo *si);
+#endif
 
 static NORETURN void die_startup(void)
 {
@@ -2684,6 +2938,91 @@ static char *wcstoutfdup_startup(char *buffer, const wchar_t *wcs, size_t len)
 	len = xwcstoutf(buffer, wcs, len) + 1;
 	return memcpy(malloc_startup(len), buffer, len);
 }
+
+#if defined(_MSC_VER)
+
+/*
+ * This routine sits between wmain() and "main" in git.exe.
+ * We receive UNICODE (wchar_t) values for argv and env.
+ *
+ * To be more compatible with the core git code, we convert
+ * argv into UTF8 and pass them directly to the "main" routine.
+ *
+ * We don't bother converting the given UNICODE env vector,
+ * but rather leave them in the CRT.  We replaced the various
+ * getenv/putenv routines to pull them directly from the CRT.
+ *
+ * This is unlike the MINGW version:
+ * [] It does the UNICODE-2-UTF8 conversion on both sets and
+ *    stuffs the values back into the CRT using exported symbols.
+ * [] It also maintains a private copy of the environment and
+ *    tries to track external changes to it.
+ */
+int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
+{
+	char **my_utf8_argv = NULL, **save = NULL;
+	char *buffer = NULL;
+	int maxlen;
+	int k, x;
+
+#ifdef USE_MSVC_CRTDBG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+	/* determine size of argv conversion buffer */
+	maxlen = wcslen(_wpgmptr);
+	for (k = 1; k < argc; k++)
+		maxlen = max(maxlen, wcslen(w_argv[k]));
+
+	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
+	maxlen = 3 * maxlen + 1;
+	buffer = malloc_startup(maxlen);
+
+	/*
+	 * Create a UTF-8 version of w_argv. Also create a "save" copy
+	 * to remember all the string pointers because parse_options()
+	 * will remove claimed items from the argv that we pass down.
+	 */
+	ALLOC_ARRAY(my_utf8_argv, argc + 1);
+	ALLOC_ARRAY(save, argc + 1);
+	save[0] = my_utf8_argv[0] = wcstoutfdup_startup(buffer, _wpgmptr, maxlen);
+	for (k = 1; k < argc; k++)
+		save[k] = my_utf8_argv[k] = wcstoutfdup_startup(buffer, w_argv[k], maxlen);
+	save[k] = my_utf8_argv[k] = NULL;
+
+	free(buffer);
+
+	/* fix Windows specific environment settings */
+	setup_windows_environment();
+
+	/* initialize critical section for waitpid pinfo_t list */
+	InitializeCriticalSection(&pinfo_cs);
+	InitializeCriticalSection(&phantom_symlinks_cs);
+
+	/* set up default file mode and file modes for stdin/out/err */
+	_fmode = _O_BINARY;
+	_setmode(_fileno(stdin), _O_BINARY);
+	_setmode(_fileno(stdout), _O_BINARY);
+	_setmode(_fileno(stderr), _O_BINARY);
+
+	/* initialize Unicode console */
+	winansi_init();
+
+	/* init length of current directory for handle_long_path */
+	current_directory_len = GetCurrentDirectoryW(0, NULL);
+
+	/* invoke the real main() using our utf8 version of argv. */
+	int exit_status = msc_main(argc, my_utf8_argv);
+
+	for (k = 0; k < argc; k++)
+		free(save[k]);
+	free(save);
+	free(my_utf8_argv);
+
+	return exit_status;
+}
+
+#else
 
 void mingw_startup(void)
 {
@@ -2759,6 +3098,8 @@ void mingw_startup(void)
 	/* init length of current directory for handle_long_path */
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 }
+
+#endif
 
 int uname(struct utsname *buf)
 {
