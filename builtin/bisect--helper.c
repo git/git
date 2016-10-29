@@ -30,6 +30,7 @@ static const char * const git_bisect_helper_usage[] = {
 	N_("git bisect--helper --bisect-state (bad|new) [<rev>]"),
 	N_("git bisect--helper --bisect-state (good|old) [<rev>...]"),
 	N_("git bisect--helper --bisect-replay <filename>"),
+	N_("git bisect--helper --bisect-skip [(<rev>|<range>)...]"),
 	NULL
 };
 
@@ -969,6 +970,42 @@ finish:
 	return bisect_auto_next(terms, NULL);
 }
 
+static int bisect_skip(struct bisect_terms *terms, const char **argv, int argc)
+{
+	int i, res;
+	const char *pattern = "*..*";
+	struct argv_array argv_state = ARGV_ARRAY_INIT;
+
+	argv_array_push(&argv_state, "skip");
+
+	for (i = 0; i < argc; i++) {
+		if (!wildmatch(pattern, argv[i], 0, NULL)) {
+			struct rev_info revs;
+			struct commit *commit;
+			struct argv_array rev_argv = ARGV_ARRAY_INIT;
+
+			argv_array_pushl(&rev_argv, "skipped_commits", argv[i], NULL);
+			init_revisions(&revs, NULL);
+			setup_revisions(rev_argv.argc, rev_argv.argv, &revs, NULL);
+			argv_array_clear(&rev_argv);
+
+			if (prepare_revision_walk(&revs))
+				die(_("revision walk setup failed\n"));
+			while ((commit = get_revision(&revs)) != NULL)
+				argv_array_push(&argv_state,
+						oid_to_hex(&commit->object.oid));
+
+			reset_revision_walk();
+		}
+		else {
+			argv_array_push(&argv_state, argv[i]);
+		}
+	}
+	res = bisect_state(terms, argv_state.argv, argv_state.argc);
+	argv_array_clear(&argv_state);
+	return res;
+}
+
 int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 {
 	enum {
@@ -980,7 +1017,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		BISECT_NEXT,
 		BISECT_STATE,
 		BISECT_LOG,
-		BISECT_REPLAY
+		BISECT_REPLAY,
+		BISECT_SKIP
 	} cmdmode = 0;
 	int no_checkout = 0, res = 0;
 	struct option options[] = {
@@ -1002,6 +1040,8 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 			 N_("output the contents of BISECT_LOG"), BISECT_LOG),
 		OPT_CMDMODE(0, "bisect-replay", &cmdmode,
 			 N_("replay the bisection process from the given file"), BISECT_REPLAY),
+		OPT_CMDMODE(0, "bisect-skip", &cmdmode,
+			 N_("skip some commits for checkout"), BISECT_SKIP),
 		OPT_BOOL(0, "no-checkout", &no_checkout,
 			 N_("update BISECT_HEAD instead of checking out the current commit")),
 		OPT_END()
@@ -1070,6 +1110,11 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		terms.term_good = "good";
 		terms.term_bad = "bad";
 		res = bisect_replay(&terms, argv[0]);
+		break;
+	case BISECT_SKIP:
+		terms.term_good = "good";
+		terms.term_bad = "bad";
+		res = bisect_skip(&terms, argv, argc);
 		break;
 	default:
 		die("BUG: unknown subcommand '%d'", cmdmode);
