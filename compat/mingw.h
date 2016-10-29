@@ -474,6 +474,7 @@ HANDLE winansi_get_osfhandle(int fd);
 	(isalpha(*(path)) && (path)[1] == ':' ? 2 : 0)
 int mingw_skip_dos_drive_prefix(char **path);
 #define skip_dos_drive_prefix mingw_skip_dos_drive_prefix
+#define has_unc_prefix(path) (*(path) == '\\' && (path)[1] == '\\' ? 2 : 0)
 #define is_dir_sep(c) ((c) == '/' || (c) == '\\')
 static inline char *mingw_find_last_dir_sep(const char *path)
 {
