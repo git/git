@@ -232,4 +232,25 @@ test_expect_success 'status --branch with detached HEAD' '
 	test_i18ncmp expected actual
 '
 
+## Duplicate the above test and verify --porcelain=v1 arg parsing.
+test_expect_success 'status --porcelain=v1 --branch with detached HEAD' '
+	git reset --hard &&
+	git checkout master^0 &&
+	git status --branch --porcelain=v1 >actual &&
+	cat >expected <<-EOF &&
+	## HEAD (no branch)
+	?? .gitconfig
+	?? actual
+	?? expect
+	?? expected
+	?? mdconflict/
+	EOF
+	test_i18ncmp expected actual
+'
+
+## Verify parser error on invalid --porcelain argument.
+test_expect_success 'status --porcelain=bogus' '
+	test_must_fail git status --porcelain=bogus
+'
+
 test_done
