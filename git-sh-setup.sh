@@ -2,9 +2,6 @@
 # to set up some variables pointing at the normal git directories and
 # a few helper shell functions.
 
-# Source git-sh-i18n for gettext support.
-. git-sh-i18n
-
 # Having this variable in your environment would break scripts because
 # you would cause "cd" to be taken to unexpected places.  If you
 # like CDPATH, define it for your interactive shell sessions without
@@ -45,6 +42,9 @@ git_broken_path_fix () {
 }
 
 # @@BROKEN_PATH_FIX@@
+
+# Source git-sh-i18n for gettext support.
+. "$(git --exec-path)/git-sh-i18n"
 
 die () {
 	die_with_status 1 "$@"
