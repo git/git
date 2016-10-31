@@ -1101,6 +1101,6 @@ struct tm *git_gmtime_r(const time_t *, struct tm *);
 #define getc_unlocked(fh) getc(fh)
 #endif
 
-#endif
-
 extern int cmd_main(int, const char **);
+
+#endif
