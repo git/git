@@ -131,6 +131,26 @@ test_expect_success 'drop middle stash' '
 	test 1 = $(git show HEAD:file)
 '
 
+test_expect_success 'drop middle stash by index' '
+	git reset --hard &&
+	echo 8 >file &&
+	git stash &&
+	echo 9 >file &&
+	git stash &&
+	git stash drop 1 &&
+	test 2 = $(git stash list | wc -l) &&
+	git stash apply &&
+	test 9 = $(cat file) &&
+	test 1 = $(git show :file) &&
+	test 1 = $(git show HEAD:file) &&
+	git reset --hard &&
+	git stash drop &&
+	git stash apply &&
+	test 3 = $(cat file) &&
+	test 1 = $(git show :file) &&
+	test 1 = $(git show HEAD:file)
+'
+
 test_expect_success 'stash pop' '
 	git reset --hard &&
 	git stash pop &&
@@ -601,6 +621,21 @@ test_expect_success 'invalid ref of the form stash@{n}, n >= N' '
 	test_must_fail git stash apply stash@{1} &&
 	test_must_fail git stash show stash@{1} &&
 	test_must_fail git stash branch tmp stash@{1} &&
+	git stash drop
+'
+
+test_expect_success 'invalid ref of the form "n", n >= N' '
+	git stash clear &&
+	test_must_fail git stash drop 0 &&
+	echo bar5 >file &&
+	echo bar6 >file2 &&
+	git add file2 &&
+	git stash &&
+	test_must_fail git stash drop 1 &&
+	test_must_fail git stash pop 1 &&
+	test_must_fail git stash apply 1 &&
+	test_must_fail git stash show 1 &&
+	test_must_fail git stash branch tmp 1 &&
 	git stash drop
 '
 

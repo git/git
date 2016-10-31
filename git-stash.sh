@@ -384,9 +384,8 @@ parse_flags_and_rev()
 	i_tree=
 	u_tree=
 
-	REV=$(git rev-parse --no-flags --symbolic --sq "$@") || exit 1
-
 	FLAGS=
+	REV=
 	for opt
 	do
 		case "$opt" in
@@ -404,6 +403,9 @@ parse_flags_and_rev()
 					die "$(eval_gettext "unknown option: \$opt")"
 				FLAGS="${FLAGS}${FLAGS:+ }$opt"
 			;;
+			*)
+				REV="${REV}${REV:+ }'$opt'"
+			;;
 		esac
 	done
 
@@ -419,6 +421,15 @@ parse_flags_and_rev()
 		;;
 		*)
 			die "$(eval_gettext "Too many revisions specified: \$REV")"
+		;;
+	esac
+
+	case "$1" in
+		*[!0-9]*)
+			:
+		;;
+		*)
+			set -- "${ref_stash}@{$1}"
 		;;
 	esac
 
