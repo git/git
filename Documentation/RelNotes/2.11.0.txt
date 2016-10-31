@@ -5,8 +5,9 @@ Backward compatibility notes.
 
  * An empty string used as a pathspec element has always meant
    'everything matches', but it is too easy to write a script that
-   finds a path to remove in $path and run 'git rm "$paht"', which
-   ends up removing everything.  This release starts warning about the
+   finds a path to remove in $path and run 'git rm "$paht"' by
+   mistake (when the user meant to give "$path"), which ends up
+   removing everything.  This release starts warning about the
    use of an empty string that is used for 'everything matches' and
    asks users to use a more explicit '.' for that instead.
 
@@ -144,6 +145,18 @@ UI, Workflows & Features
    prevented "git status" to show such a path as "new file" in the
    "Changes not staged for commit" section.
 
+ * The smudge/clean filter API expect an external process is spawned
+   to filter the contents for each path that has a filter defined.  A
+   new type of "process" filter API has been added to allow the first
+   request to run the filter for a path to spawn a single process, and
+   all filtering need is served by this single process for multiple
+   paths, reducing the process creation overhead.
+
+ * The user always has to say "stash@{$N}" when naming a single
+   element in the default location of the stash, i.e. reflogs in
+   refs/stash.  The "git stash" command learned to accept "git stash
+   apply 4" as a short-hand for "git stash apply stash@{4}".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -229,6 +242,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * Update of the sequencer codebase to make it reusable to reimplement
    "rebase -i" continues.
+
+ * Git generally does not explicitly close file descriptors that were
+   open in the parent process when spawning a child process, but most
+   of the time the child does not want to access them. As Windows does
+   not allow removing or renaming a file that has a file descriptor
+   open, a slow-to-exit child can even break the parent process by
+   holding onto them.  Use O_CLOEXEC flag to open files in various
+   codepaths.
+
+ * Update "interpret-trailers" machinery and teaches it that people in
+   real world write all sorts of crufts in the "trailer" that was
+   originally designed to have the neat-o "Mail-Header: like thing"
+   and nothing else.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -341,7 +367,6 @@ notes for details).
  * The pretty-format specifier "%C(auto)" used by the "log" family of
    commands to enable coloring of the output is taught to also issue a
    color-reset sequence to the output.
-   (merge 82b83da8d3 rs/c-auto-resets-attributes later to maint).
 
  * A shell script example in check-ref-format documentation has been
    fixed.
@@ -358,7 +383,6 @@ notes for details).
    beyond the end of the mapped region.  This was fixed by introducing
    a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
    extension.
-   (merge 842a516cb0 js/regexec-buf later to maint).
 
  * The procedure to build Git on Mac OS X for Travis CI hardcoded the
    internal directory structure we assumed HomeBrew uses, which was a
@@ -383,7 +407,6 @@ notes for details).
    mechanism to avoid digging too deep into irrelevant side branches.
    This however did not work well over the "smart-http" transport due
    to a design bug, which has been fixed.
-   (merge 06b3d386e0 jt/fetch-pack-in-vain-count-with-stateless later to maint).
 
  * In the codepath that comes up with the hostname to be used in an
    e-mail when the user didn't tell us, we looked at ai_canonname
@@ -433,11 +456,9 @@ notes for details).
    version of cURL library is available, we forgot to explicitly add
    imap(s):// before the destination.  To some folks, that didn't work
    and the library tried to make HTTP(s) requests instead.
-   (merge d2d07ab861 ak/curl-imap-send-explicit-scheme later to maint).
 
  * The ./configure script generated from configure.ac was taught how
    to detect support of SSL by libcurl better.
-   (merge 924b7eb1c9 dp/autoconf-curl-ssl later to maint).
 
  * The command-line completion script (in contrib/) learned to
    complete "git cmd ^mas<HT>" to complete the negative end of
@@ -464,27 +485,22 @@ notes for details).
    Kerberos.  We took an unspecified (NULL) username and sent ":"
    (i.e. no username, no password) to CURLOPT_USERPWD, but did not do
    the same when the username is explicitly set to an empty string.
-   (merge 5275c3081c dt/http-empty-auth later to maint).
 
  * "git clone" of a local repository can be done at the filesystem
    level, but the codepath did not check errors while copying and
    adjusting the file that lists alternate object stores.
-   (merge 22d3b8de1b jk/clone-copy-alternates-fix later to maint).
 
  * Documentation for "git commit" was updated to clarify that "commit
    -p <paths>" adds to the current contents of the index to come up
    with what to commit.
-   (merge 7431596ab1 nd/commit-p-doc later to maint).
 
  * A stray symbolic link in $GIT_DIR/refs/ directory could make name
    resolution loop forever, which has been corrected.
-   (merge e8c42cb9ce jk/ref-symlink-loop later to maint).
 
  * The "submodule.<name>.path" stored in .gitmodules is never copied
    to .git/config and such a key in .git/config has no meaning, but
    the documentation described it and submodule.<name>.url next to
    each other as if both belong to .git/config.  This has been fixed.
-   (merge 72710165c9 sb/submodule-config-doc-drop-path later to maint).
 
  * In a worktree connected to a repository elsewhere, created via "git
    worktree", "git checkout" attempts to protect users from confusion
@@ -493,29 +509,23 @@ notes for details).
    branch, which is designated as the primary branch of a bare
    reopsitory, in a worktree that is connected to the bare
    repository.  The check has been corrected to allow it.
-   (merge 171c646f8c dk/worktree-dup-checkout-with-bare-is-ok later to maint).
 
  * "git rebase" immediately after "git clone" failed to find the fork
    point from the upstream.
-   (merge 4f21454b55 jk/merge-base-fork-point-without-reflog later to maint).
 
  * When fetching from a remote that has many tags that are irrelevant
    to branches we are following, we used to waste way too many cycles
    when checking if the object pointed at by a tag (that we are not
    going to fetch!) exists in our repository too carefully.
-   (merge 5827a03545 jk/fetch-quick-tag-following later to maint).
 
  * Protect our code from over-eager compilers.
-   (merge 0ac52a38e8 jk/tighten-alloc later to maint).
 
  * Recent git allows submodule.<name>.branch to use a special token
    "." instead of the branch name; the documentation has been updated
    to describe it.
-   (merge 15ef78008a bw/submodule-branch-dot-doc later to maint).
 
  * A hot-fix for a test added by a recent topic that went to both
    'master' and 'maint' already.
-   (merge 76e368c378 tg/add-chmod+x-fix later to maint).
 
  * "git send-email" attempts to pick up valid e-mails from the
    trailers, but people in real world write non-addresses there, like
@@ -529,12 +539,10 @@ notes for details).
    in unnecessary failure.  This has been corrected by introducing a
    new mode to run our tests in the test harness to send the verbose
    output separately to the log file.
-   (merge 614fe01521 jk/tap-verbose-fix later to maint).
 
  * Some AsciiDoc formatter mishandles a displayed illustration with
    tabs in it.  Adjust a few of them in merge-base documentation to
    work around them.
-   (merge 6750f62699 po/fix-doc-merge-base-illustration later to maint).
 
  * A minor regression fix for "git submodule" that was introduced
    when more helper functions were reimplemented in C.
@@ -553,11 +561,17 @@ notes for details).
    required to serve.
    (merge 6bdb0083be jk/daemon-path-ok-check-truncation later to maint).
 
+ * Recent update to git-sh-setup (a library of shell functions that
+   are used by our in-tree scripted Porcelain commands) included
+   another shell library git-sh-i18n without specifying where it is,
+   relying on the $PATH.  This has been fixed to be more explicit by
+   prefixing $(git --exec-path) output in front.
+   (merge 1073094f30 ak/sh-setup-dot-source-i18n-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
-   (merge a94bb68397 rs/cocci later to maint).
-   (merge 641c900b2c js/reset-usage later to maint).
-   (merge 30cfe72d37 rs/pretty-format-color-doc-fix later to maint).
-   (merge d709f1fb9d jc/diff-unique-abbrev-comments later to maint).
-   (merge 13092a916d jc/cocci-xstrdup-or-null later to maint).
-   (merge 86009f32bb pb/test-parse-options-expect later to maint).
-   (merge 749a2279a4 yk/git-tag-remove-mention-of-old-layout-in-doc later to maint).
+   (merge 5c238e29a8 jk/common-main later to maint).
+   (merge 5a5749e45b ak/pre-receive-hook-template-modefix later to maint).
+   (merge 6d834ac8f1 jk/rebase-config-insn-fmt-docfix later to maint).
+   (merge de9f7fa3b0 rs/commit-pptr-simplify later to maint).
+   (merge 4259d693fc sc/fmt-merge-msg-doc-markup-fix later to maint).
+   (merge 28fab7b23d nd/test-helpers later to maint).
