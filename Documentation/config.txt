@@ -2450,7 +2450,7 @@ rebase.missingCommitsCheck::
 	command in the todo-list.
 	Defaults to "ignore".
 
-rebase.instructionFormat
+rebase.instructionFormat::
 	A format string, as specified in linkgit:git-log[1], to be used for
 	the instruction list during an interactive rebase.  The format will automatically
 	have the long commit hash prepended to the format.
