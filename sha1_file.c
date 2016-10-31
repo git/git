@@ -1561,14 +1561,28 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 
 int git_open_cloexec(const char *name, int flags)
 {
-	static int cloexec = O_CLOEXEC;
-	int fd = open(name, flags | cloexec);
+	int fd;
+	static int o_cloexec = O_CLOEXEC;
 
-	if ((cloexec & O_CLOEXEC) && fd < 0 && errno == EINVAL) {
+	fd = open(name, flags | o_cloexec);
+	if ((o_cloexec & O_CLOEXEC) && fd < 0 && errno == EINVAL) {
 		/* Try again w/o O_CLOEXEC: the kernel might not support it */
-		cloexec &= ~O_CLOEXEC;
-		fd = open(name, flags | cloexec);
+		o_cloexec &= ~O_CLOEXEC;
+		fd = open(name, flags | o_cloexec);
 	}
+
+#if defined(F_GETFL) && defined(F_SETFL) && defined(FD_CLOEXEC)
+	{
+		static int fd_cloexec = FD_CLOEXEC;
+
+		if (!o_cloexec && 0 <= fd && fd_cloexec) {
+			/* Opened w/o O_CLOEXEC?  try with fcntl(2) to add it */
+			int flags = fcntl(fd, F_GETFL);
+			if (fcntl(fd, F_SETFL, flags | fd_cloexec))
+				fd_cloexec = 0;
+		}
+	}
+#endif
 	return fd;
 }
 
