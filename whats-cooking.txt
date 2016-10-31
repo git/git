@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2016, #08; Fri, 28)
-X-master-at: 7805bda2ac68c659b0042f45473723d9fdcece74
-X-next-at: 86d95836a33d12ccd9eed86457166d0222f77f17
+Subject: What's cooking in git.git (Oct 2016, #09; Mon, 31)
+X-master-at: 1fe8f2cf461179c41f64efbd1dc0a9fb3b7a0fb1
+X-next-at: 2c8536d0921902ede8654c83a512865ff5ecd153
 
-What's cooking in git.git (Oct 2016, #08; Fri, 28)
+What's cooking in git.git (Oct 2016, #09; Mon, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -13,8 +13,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 the integration branches, but I am still holding onto them.
 
 Git v2.10.2, the second maintenance release for 2.10.x track, has
-been tagged.  On the master front, things are getting close for the
-preview snapshot v2.11.0-rc0.
+been tagged.  On the master front, an early preview v2.11.0-rc0 has
+been tagged.  An updated, slightly slipped from the original,
+schedule is found at http://tinyurl.com/gitCal and I am hoping that
+we can conclude this cycle before US Thanksgiving.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,141 +26,33 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/abbrev-auto (2016-10-22) 4 commits
-  (merged to 'next' on 2016-10-26 at 92fdb66807)
- + transport: compute summary-width dynamically
- + transport: allow summary-width to be computed dynamically
- + fetch: pass summary_width down the callchain
- + transport: pass summary_width down the callchain
- (this branch uses jk/abbrev-auto and lt/abbrev-auto.)
+* ak/pre-receive-hook-template-modefix (2016-10-28) 1 commit
+  (merged to 'next' on 2016-10-28 at 86d95836a3)
+ + pre-receive.sample: mark it executable
 
- "git push" and "git fetch" reports from what old object to what new
- object each ref was updated, using abbreviated refnames, and they
- attempt to align the columns for this and other pieces of
- information.  The way these codepaths compute how many display
- columns to allocate for the object names portion of this output has
- been updated to match the recent "auto scale the default
- abbreviation length" change.
+ A trivial clean-up to a recently graduated topic.
 
 
-* jk/abbrev-auto (2016-10-03) 1 commit
-  (merged to 'next' on 2016-10-21 at 8aa3d760d8)
- + find_unique_abbrev: move logic out of get_short_sha1()
- (this branch is used by jc/abbrev-auto; uses lt/abbrev-auto.)
+* ak/sh-setup-dot-source-i18n-fix (2016-10-30) 1 commit
+  (merged to 'next' on 2016-10-31 at 538a72700e)
+ + git-sh-setup: be explicit where to dot-source git-sh-i18n from.
 
- Updates the way approximate count of total objects is computed
- while attempting to come up with a unique abbreviated object name,
- which in turn needs to estimate how many hexdigits are necessary to
- ensure uniqueness.
-
-
-* jk/daemon-path-ok-check-truncation (2016-10-24) 1 commit
-  (merged to 'next' on 2016-10-26 at 70c08241f6)
- + daemon: detect and reject too-long paths
-
- "git daemon" used fixed-length buffers to turn URL to the
- repository the client asked for into the server side directory
- path, using snprintf() to avoid overflowing these buffers, but
- allowed possibly truncated paths to the directory.  This has been
- tightened to reject such a request that causes overlong path to be
- required to serve.
+ Recent update to git-sh-setup (a library of shell functions that
+ are used by our in-tree scripted Porcelain commands) included
+ another shell library git-sh-i18n without specifying where it is,
+ relying on the $PATH.  This has been fixed to be more explicit by
+ prefixing $(git --exec-path) output in front.
 
 
-* jk/no-looking-at-dotgit-outside-repo (2016-10-26) 6 commits
-  (merged to 'next' on 2016-10-26 at 4aa877b578)
- + diff: handle sha1 abbreviations outside of repository
- + diff_aligned_abbrev: use "struct oid"
- + diff_unique_abbrev: rename to diff_aligned_abbrev
- + find_unique_abbrev: use 4-buffer ring
- + test-*-cache-tree: setup git dir
- + read info/{attributes,exclude} only when in repository
- (this branch is used by jk/no-looking-at-dotgit-outside-repo-final.)
+* aw/numbered-stash (2016-10-26) 1 commit
+  (merged to 'next' on 2016-10-26 at 8d9325fa3a)
+ + stash: allow stashes to be referenced by index only
 
- Update "git diff --no-index" codepath not to try to peek into .git/
- directory that happens to be under the current directory, when we
- know we are operating outside any repository.
+ The user always has to say "stash@{$N}" when naming a single
+ element in the default location of the stash, i.e. reflogs in
+ refs/stash.  The "git stash" command learned to accept "git stash
+ apply 4" as a short-hand for "git stash apply stash@{4}".
 
-
-* js/prepare-sequencer (2016-10-21) 27 commits
-  (merged to 'next' on 2016-10-26 at 12be8ebe90)
- + sequencer: mark all error messages for translation
- + sequencer: start error messages consistently with lower case
- + sequencer: quote filenames in error messages
- + sequencer: mark action_name() for translation
- + sequencer: remove overzealous assumption in rebase -i mode
- + sequencer: teach write_message() to append an optional LF
- + sequencer: refactor write_message() to take a pointer/length
- + sequencer: roll back lock file if write_message() failed
- + sequencer: stop releasing the strbuf in write_message()
- + sequencer: left-trim lines read from the script
- + sequencer: support cleaning up commit messages
- + sequencer: support amending commits
- + sequencer: allow editing the commit message on a case-by-case basis
- + sequencer: introduce a helper to read files written by scripts
- + sequencer: prepare for rebase -i's commit functionality
- + sequencer: remember the onelines when parsing the todo file
- + sequencer: get rid of the subcommand field
- + sequencer: avoid completely different messages for different actions
- + sequencer: strip CR from the todo script
- + sequencer: completely revamp the "todo" script parsing
- + sequencer: refactor the code to obtain a short commit name
- + sequencer: future-proof read_populate_todo()
- + sequencer: plug memory leaks for the option values
- + sequencer: future-proof remove_sequencer_state()
- + sequencer: avoid unnecessary indirection
- + sequencer: use memoized sequencer directory path
- + sequencer: use static initializers for replay_opts
-
- Update of the sequencer codebase to make it reusable to reimplement
- "rebase -i" continues.
-
-
-* lt/abbrev-auto (2016-10-03) 3 commits
-  (merged to 'next' on 2016-10-03 at bb188d00f7)
- + abbrev: auto size the default abbreviation
- + abbrev: prepare for new world order
- + abbrev: add FALLBACK_DEFAULT_ABBREV to prepare for auto sizing
- (this branch is used by jc/abbrev-auto and jk/abbrev-auto.)
-
- Allow the default abbreviation length, which has historically been
- 7, to scale as the repository grows.  The logic suggests to use 12
- hexdigits for the Linux kernel, and 9 to 10 for Git itself.
-
-
-* nd/ita-empty-commit (2016-10-24) 4 commits
-  (merged to 'next' on 2016-10-26 at fb007cdae1)
- + commit: don't be fooled by ita entries when creating initial commit
- + commit: fix empty commit creation when there's no changes but ita entries
- + diff: add --ita-[in]visible-in-index
- + diff-lib: allow ita entries treated as "not yet exist in index"
-
- When new paths were added by "git add -N" to the index, it was
- enough to circumvent the check by "git commit" to refrain from
- making an empty commit without "--allow-empty".  The same logic
- prevented "git status" to show such a path as "new file" in the
- "Changes not staged for commit" section.
-
-
-* rs/ring-buffer-wraparound (2016-10-26) 1 commit
-  (merged to 'next' on 2016-10-26 at d2da68a14a)
- + hex: make wraparound of the index into ring-buffer explicit
-
- The code that we have used for the past 10+ years to cycle
- 4-element ring buffers turns out to be not quite portable in
- theoretical world.
-
-
-* sb/submodule-ignore-trailing-slash (2016-10-25) 3 commits
-  (merged to 'next' on 2016-10-26 at e56a8ebb38)
- + t0060: sidestep surprising path mangling results on Windows
-  (merged to 'next' on 2016-10-11 at e37425ed17)
- + submodule: ignore trailing slash in relative url
- + submodule: ignore trailing slash on superproject URL
-
- A minor regression fix for "git submodule".
-
---------------------------------------------------
-[New Topics]
 
 * jk/common-main (2016-10-27) 1 commit
   (merged to 'next' on 2016-10-28 at fcdd4f8a26)
@@ -166,35 +60,117 @@ of the repositories listed at
 
  A trivial clean-up to a recently graduated topic.
 
- Will merge to 'master'.
+
+* jk/rebase-config-insn-fmt-docfix (2016-10-30) 1 commit
+  (merged to 'next' on 2016-10-31 at d48e20ffa2)
+ + doc: fix missing "::" in config list
+
+ Documentation fix.
 
 
-* ak/pre-receive-hook-template-modefix (2016-10-28) 1 commit
-  (merged to 'next' on 2016-10-28 at 86d95836a3)
- + pre-receive.sample: mark it executable
+* jt/trailer-with-cruft (2016-10-21) 8 commits
+  (merged to 'next' on 2016-10-27 at b5d1a21811)
+ + trailer: support values folded to multiple lines
+ + trailer: forbid leading whitespace in trailers
+ + trailer: allow non-trailers in trailer block
+ + trailer: clarify failure modes in parse_trailer
+ + trailer: make args have their own struct
+ + trailer: streamline trailer item create and add
+ + trailer: use list.h for doubly-linked list
+ + trailer: improve const correctness
+ (this branch is used by jt/use-trailer-api-in-commands.)
 
- A trivial clean-up to a recently graduated topic.
-
- Will merge to 'master'.
-
-
-* nd/rebase-forget (2016-10-28) 1 commit
- - rebase: add --forget to cleanup rebase, leave HEAD untouched
-
- "git rebase" learned "--forget" option, which allows a user to
- remove the metadata left by an earlier "git rebase" that was
- manually aborted without using "git rebase --abort".
+ Update "interpret-trailers" machinery and teaches it that people in
+ real world write all sorts of crufts in the "trailer" that was
+ originally designed to have the neat-o "Mail-Header: like thing"
+ and nothing else.
 
 
-* jc/git-open-cloexec (2016-10-28) 2 commits
- - sha1_file: stop opening files with O_NOATIME
- - git_open(): untangle possible NOATIME and CLOEXEC interactions
- (this branch uses ls/git-open-cloexec.)
+* ls/filter-process (2016-10-17) 14 commits
+  (merged to 'next' on 2016-10-19 at ffd0de042c)
+ + contrib/long-running-filter: add long running filter example
+ + convert: add filter.<driver>.process option
+ + convert: prepare filter.<driver>.process option
+ + convert: make apply_filter() adhere to standard Git error handling
+ + pkt-line: add functions to read/write flush terminated packet streams
+ + pkt-line: add packet_write_gently()
+ + pkt-line: add packet_flush_gently()
+ + pkt-line: add packet_write_fmt_gently()
+ + pkt-line: extract set_packet_header()
+ + pkt-line: rename packet_write() to packet_write_fmt()
+ + run-command: add clean_on_exit_handler
+ + run-command: move check_pipe() from write_or_die to run_command
+ + convert: modernize tests
+ + convert: quote filter names in error messages
 
- The codeflow of setting NOATIME and CLOEXEC on file descriptors Git
- opens has been simplified.
+ The smudge/clean filter API expect an external process is spawned
+ to filter the contents for each path that has a filter defined.  A
+ new type of "process" filter API has been added to allow the first
+ request to run the filter for a path to spawn a single process, and
+ all filtering need is served by this single process for multiple
+ paths, reducing the process creation overhead.
 
- We probably want to drop the tip one.
+
+* ls/git-open-cloexec (2016-10-25) 3 commits
+  (merged to 'next' on 2016-10-26 at f7259cbddb)
+ + read-cache: make sure file handles are not inherited by child processes
+ + sha1_file: open window into packfiles with O_CLOEXEC
+ + sha1_file: rename git_open_noatime() to git_open()
+ (this branch is used by jc/git-open-cloexec.)
+
+ Git generally does not explicitly close file descriptors that were
+ open in the parent process when spawning a child process, but most
+ of the time the child does not want to access them. As Windows does
+ not allow removing or renaming a file that has a file descriptor
+ open, a slow-to-exit child can even break the parent process by
+ holding onto them.  Use O_CLOEXEC flag to open files in various
+ codepaths.
+
+
+* nd/test-helpers (2016-10-27) 1 commit
+  (merged to 'next' on 2016-10-31 at 9780fe6d90)
+ + valgrind: support test helpers
+
+ Update to the test framework made in 2.9 timeframe broke running
+ the tests under valgrind, which has been fixed.
+
+
+* rs/commit-pptr-simplify (2016-10-30) 1 commit
+  (merged to 'next' on 2016-10-31 at ddeed2e66a)
+ + commit: simplify building parents list
+
+ Code simplification.
+
+
+* sc/fmt-merge-msg-doc-markup-fix (2016-10-28) 1 commit
+  (merged to 'next' on 2016-10-31 at 198c259bb2)
+ + Documentation/fmt-merge-msg: fix markup in example
+
+ Documentation fix.
+
+--------------------------------------------------
+[New Topics]
+
+* jc/push-default-explicit (2016-10-28) 1 commit
+ - push: do not use potentially ambiguous default refspec
+
+ A lazy "git push" without refspec did not internally use a fully
+ specified refspec to perform 'current', 'simple', or 'upstream'
+ push, causing unnecessary "ambiguous ref" errors.
+
+ Needs updates to the tests.
+
+
+* jt/use-trailer-api-in-commands (2016-10-28) 4 commits
+ - sequencer: use trailer's trailer layout
+ - trailer: have function to describe trailer layout
+ - trailer: avoid unnecessary splitting on lines
+ - commit: make ignore_non_trailer take buf/len
+
+ Commands that operate on a log message and add lines to the trailer
+ blocks, such as "format-patch -s", "cherry-pick (-x|-s)", and
+ "commit -s", have been taught to use the logic of and share the
+ code with "git interpret-trailer".
 
 --------------------------------------------------
 [Stalled]
@@ -337,16 +313,25 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* aw/numbered-stash (2016-10-26) 1 commit
-  (merged to 'next' on 2016-10-26 at 8d9325fa3a)
- + stash: allow stashes to be referenced by index only
+* nd/rebase-forget (2016-10-28) 1 commit
+ - rebase: add --forget to cleanup rebase, leave HEAD untouched
 
- The user always has to say "stash@{$N}" when naming a single
- element in the default location of the stash, i.e. reflogs in
- refs/stash.  The "git stash" command learned to accept "git stash
- apply 4" as a short-hand for "git stash apply stash@{4}".
+ "git rebase" learned "--forget" option, which allows a user to
+ remove the metadata left by an earlier "git rebase" that was
+ manually aborted without using "git rebase --abort".
 
- Will merge to 'master'.
+ Waiting for a reroll.
+
+
+* jc/git-open-cloexec (2016-10-31) 3 commits
+ - sha1_file: stop opening files with O_NOATIME
+ - git_open_cloexec(): use fcntl(2) w/ FD_CLOEXEC fallback
+ - git_open(): untangle possible NOATIME and CLOEXEC interactions
+
+ The codeflow of setting NOATIME and CLOEXEC on file descriptors Git
+ opens has been simplified.
+
+ We may want to drop the tip one.
 
 
 * jk/no-looking-at-dotgit-outside-repo-final (2016-10-26) 1 commit
@@ -368,24 +353,6 @@ of the repositories listed at
  "git diff" can no longer be used as a way to sanity check by
  looking at the combined diff.  "git reset" learned a new
  "--unmerge" option to recover from this situation.
-
-
-* ls/git-open-cloexec (2016-10-25) 3 commits
-  (merged to 'next' on 2016-10-26 at f7259cbddb)
- + read-cache: make sure file handles are not inherited by child processes
- + sha1_file: open window into packfiles with O_CLOEXEC
- + sha1_file: rename git_open_noatime() to git_open()
- (this branch is used by jc/git-open-cloexec.)
-
- Git generally does not explicitly close file descriptors that were
- open in the parent process when spawning a child process, but most
- of the time the child does not want to access them. As Windows does
- not allow removing or renaming a file that has a file descriptor
- open, a slow-to-exit child can even break the parent process by
- holding onto them.  Use O_CLOEXEC flag to open files in various
- codepaths.
-
- Will merge to 'master'.
 
 
 * jc/merge-base-fp-only (2016-10-19) 8 commits
@@ -417,25 +384,6 @@ of the repositories listed at
  The tip seems to do too much in a single commit and may be better split.
  cf. <20161012134724.28287-1-tboegi@web.de>
  cf. <xmqqd1il5w4e.fsf@gitster.mtv.corp.google.com>
-
-
-* jt/trailer-with-cruft (2016-10-21) 8 commits
-  (merged to 'next' on 2016-10-27 at b5d1a21811)
- + trailer: support values folded to multiple lines
- + trailer: forbid leading whitespace in trailers
- + trailer: allow non-trailers in trailer block
- + trailer: clarify failure modes in parse_trailer
- + trailer: make args have their own struct
- + trailer: streamline trailer item create and add
- + trailer: use list.h for doubly-linked list
- + trailer: improve const correctness
-
- Update "interpret-trailers" machinery and teaches it that people in
- real world write all sorts of crufts in the "trailer" that was
- originally designed to have the neat-o "Mail-Header: like thing"
- and nothing else.
-
- Will merge to 'master'.
 
 
 * pb/bisect (2016-10-18) 27 commits
@@ -567,33 +515,6 @@ of the repositories listed at
  more widely known when conversion fails from/to it.
 
  Will hold to see if people scream.
-
-
-* ls/filter-process (2016-10-17) 14 commits
-  (merged to 'next' on 2016-10-19 at ffd0de042c)
- + contrib/long-running-filter: add long running filter example
- + convert: add filter.<driver>.process option
- + convert: prepare filter.<driver>.process option
- + convert: make apply_filter() adhere to standard Git error handling
- + pkt-line: add functions to read/write flush terminated packet streams
- + pkt-line: add packet_write_gently()
- + pkt-line: add packet_flush_gently()
- + pkt-line: add packet_write_fmt_gently()
- + pkt-line: extract set_packet_header()
- + pkt-line: rename packet_write() to packet_write_fmt()
- + run-command: add clean_on_exit_handler
- + run-command: move check_pipe() from write_or_die to run_command
- + convert: modernize tests
- + convert: quote filter names in error messages
-
- The smudge/clean filter API expect an external process is spawned
- to filter the contents for each path that has a filter defined.  A
- new type of "process" filter API has been added to allow the first
- request to run the filter for a path to spawn a single process, and
- all filtering need is served by this single process for multiple
- paths, reducing the process creation overhead.
-
- Will merge to 'master'.
 
 
 * sg/fix-versioncmp-with-common-suffix (2016-09-08) 5 commits
