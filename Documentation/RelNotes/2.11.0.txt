@@ -21,7 +21,7 @@ Backward compatibility notes.
 
  * The default abbreviation length, which has historically been 7, now
    scales as the repository grows, using the approximate number of
-   objects in the reopsitory and a bit of math around the birthday
+   objects in the repository and a bit of math around the birthday
    paradox.  The logic suggests to use 12 hexdigits for the Linux
    kernel, and 9 to 10 for Git itself.
 
@@ -45,10 +45,10 @@ UI, Workflows & Features
    which was not intuitive, given that "git nosuchcommand" said "git:
    'nosuchcommand' is not a git command".
 
- * "git clone --resurse-submodules --reference $path $URL" is a way to
+ * "git clone --recurse-submodules --reference $path $URL" is a way to
    reduce network transfer cost by borrowing objects in an existing
    $path repository when cloning the superproject from $URL; it
-   learned to also peek into $path for presense of corresponding
+   learned to also peek into $path for presence of corresponding
    repositories of submodules and borrow objects from there when able.
 
  * The "git diff --submodule={short,log}" mechanism has been enhanced
@@ -73,7 +73,7 @@ UI, Workflows & Features
 
  * In some projects, it is common to use "[RFC PATCH]" as the subject
    prefix for a patch meant for discussion rather than application.  A
-   new option "--rfc" was a short-hand for "--subject-prefix=RFC PATCH"
+   new option "--rfc" is a short-hand for "--subject-prefix=RFC PATCH"
    to help the participants of such projects.
 
  * "git add --chmod=+x <pathspec>" added recently only toggled the
@@ -96,8 +96,8 @@ UI, Workflows & Features
 
  * When given an abbreviated object name that is not (or more
    realistically, "no longer") unique, we gave a fatal error
-   "ambiguous argument".  This error is now accompanied by hints that
-   lists the objects that begins with the given prefix.  During the
+   "ambiguous argument".  This error is now accompanied by a hint that
+   lists the objects beginning with the given prefix.  During the
    course of development of this new feature, numerous minor bugs were
    uncovered and corrected, the most notable one of which is that we
    gave "short SHA1 xxxx is ambiguous." twice without good reason.
@@ -330,7 +330,7 @@ notes for details).
  * "git diff -W" output needs to extend the context backward to
    include the header line of the current function and also forward to
    include the body of the entire current function up to the header
-   line of the next one.  This process may have to merge to adjacent
+   line of the next one.  This process may have to merge two adjacent
    hunks, but the code forgot to do so in some cases.
 
  * Performance tests done via "t/perf" did not use the same set of
@@ -575,3 +575,4 @@ notes for details).
    (merge de9f7fa3b0 rs/commit-pptr-simplify later to maint).
    (merge 4259d693fc sc/fmt-merge-msg-doc-markup-fix later to maint).
    (merge 28fab7b23d nd/test-helpers later to maint).
+   (merge c2bb0c1d1e rs/cocci later to maint).
