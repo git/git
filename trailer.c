@@ -46,6 +46,8 @@ static LIST_HEAD(conf_head);
 
 static char *separators = ":";
 
+static int configured;
+
 #define TRAILER_ARG_STRING "$ARG"
 
 static const char *git_generated_prefixes[] = {
@@ -546,6 +548,17 @@ static int git_trailer_config(const char *conf_key, const char *value, void *cb)
 	return 0;
 }
 
+static void ensure_configured(void)
+{
+	if (configured)
+		return;
+
+	/* Default config must be setup first */
+	git_config(git_trailer_default_config, NULL);
+	git_config(git_trailer_config, NULL);
+	configured = 1;
+}
+
 static const char *token_from_item(struct arg_item *item, char *tok)
 {
 	if (item->conf.key)
@@ -875,59 +888,43 @@ static int process_input_file(FILE *outfile,
 			      const char *str,
 			      struct list_head *head)
 {
-	int patch_start, trailer_start, trailer_end;
+	struct trailer_info info;
 	struct strbuf tok = STRBUF_INIT;
 	struct strbuf val = STRBUF_INIT;
-	struct trailer_item *last = NULL;
-	struct strbuf *trailer, **trailer_lines, **ptr;
+	int i;
 
-	patch_start = find_patch_start(str);
-	trailer_end = find_trailer_end(str, patch_start);
-	trailer_start = find_trailer_start(str, trailer_end);
+	trailer_info_get(&info, str);
 
 	/* Print lines before the trailers as is */
-	fwrite(str, 1, trailer_start, outfile);
+	fwrite(str, 1, info.trailer_start - str, outfile);
 
-	if (!ends_with_blank_line(str, trailer_start))
+	if (!info.blank_line_before_trailer)
 		fprintf(outfile, "\n");
 
-	/* Parse trailer lines */
-	trailer_lines = strbuf_split_buf(str + trailer_start,
-					 trailer_end - trailer_start,
-					 '\n',
-					 0);
-	for (ptr = trailer_lines; *ptr; ptr++) {
+	for (i = 0; i < info.trailer_nr; i++) {
 		int separator_pos;
-		trailer = *ptr;
-		if (trailer->buf[0] == comment_line_char)
+		char *trailer = info.trailers[i];
+		if (trailer[0] == comment_line_char)
 			continue;
-		if (last && isspace(trailer->buf[0])) {
-			struct strbuf sb = STRBUF_INIT;
-			strbuf_addf(&sb, "%s\n%s", last->value, trailer->buf);
-			strbuf_strip_suffix(&sb, "\n");
-			free(last->value);
-			last->value = strbuf_detach(&sb, NULL);
-			continue;
-		}
-		separator_pos = find_separator(trailer->buf, separators);
+		separator_pos = find_separator(trailer, separators);
 		if (separator_pos >= 1) {
-			parse_trailer(&tok, &val, NULL, trailer->buf,
+			parse_trailer(&tok, &val, NULL, trailer,
 				      separator_pos);
-			last = add_trailer_item(head,
-						strbuf_detach(&tok, NULL),
-						strbuf_detach(&val, NULL));
+			add_trailer_item(head,
+					 strbuf_detach(&tok, NULL),
+					 strbuf_detach(&val, NULL));
 		} else {
-			strbuf_addbuf(&val, trailer);
+			strbuf_addstr(&val, trailer);
 			strbuf_strip_suffix(&val, "\n");
 			add_trailer_item(head,
 					 NULL,
 					 strbuf_detach(&val, NULL));
-			last = NULL;
 		}
 	}
-	strbuf_list_free(trailer_lines);
 
-	return trailer_end;
+	trailer_info_release(&info);
+
+	return info.trailer_end - str;
 }
 
 static void free_all(struct list_head *head)
@@ -978,9 +975,7 @@ void process_trailers(const char *file, int in_place, int trim_empty, struct str
 	int trailer_end;
 	FILE *outfile = stdout;
 
-	/* Default config must be setup first */
-	git_config(git_trailer_default_config, NULL);
-	git_config(git_trailer_config, NULL);
+	ensure_configured();
 
 	read_input_file(&sb, file);
 
@@ -1006,4 +1001,55 @@ void process_trailers(const char *file, int in_place, int trim_empty, struct str
 			die_errno(_("could not rename temporary file to %s"), file);
 
 	strbuf_release(&sb);
+}
+
+void trailer_info_get(struct trailer_info *info, const char *str)
+{
+	int patch_start, trailer_end, trailer_start;
+	struct strbuf **trailer_lines, **ptr;
+	char **trailer_strings = NULL;
+	size_t nr = 0, alloc = 0;
+	char **last = NULL;
+
+	ensure_configured();
+
+	patch_start = find_patch_start(str);
+	trailer_end = find_trailer_end(str, patch_start);
+	trailer_start = find_trailer_start(str, trailer_end);
+
+	trailer_lines = strbuf_split_buf(str + trailer_start,
+					 trailer_end - trailer_start,
+					 '\n',
+					 0);
+	for (ptr = trailer_lines; *ptr; ptr++) {
+		if (last && isspace((*ptr)->buf[0])) {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_attach(&sb, *last, strlen(*last), strlen(*last));
+			strbuf_addbuf(&sb, *ptr);
+			*last = strbuf_detach(&sb, NULL);
+			continue;
+		}
+		ALLOC_GROW(trailer_strings, nr + 1, alloc);
+		trailer_strings[nr] = strbuf_detach(*ptr, NULL);
+		last = find_separator(trailer_strings[nr], separators) >= 1
+			? &trailer_strings[nr]
+			: NULL;
+		nr++;
+	}
+	strbuf_list_free(trailer_lines);
+
+	info->blank_line_before_trailer = ends_with_blank_line(str,
+							       trailer_start);
+	info->trailer_start = str + trailer_start;
+	info->trailer_end = str + trailer_end;
+	info->trailers = trailer_strings;
+	info->trailer_nr = nr;
+}
+
+void trailer_info_release(struct trailer_info *info)
+{
+	int i;
+	for (i = 0; i < info->trailer_nr; i++)
+		free(info->trailers[i]);
+	free(info->trailers);
 }
