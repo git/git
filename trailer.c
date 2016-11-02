@@ -563,15 +563,32 @@ static int token_matches_item(const char *tok, struct arg_item *item, int tok_le
 }
 
 /*
- * Return the location of the first separator in line, or -1 if there is no
- * separator.
+ * If the given line is of the form
+ * "<token><optional whitespace><separator>..." or "<separator>...", return the
+ * location of the separator. Otherwise, return -1.  The optional whitespace
+ * is allowed there primarily to allow things like "Bug #43" where <token> is
+ * "Bug" and <separator> is "#".
+ *
+ * The separator-starts-line case (in which this function returns 0) is
+ * distinguished from the non-well-formed-line case (in which this function
+ * returns -1) because some callers of this function need such a distinction.
  */
 static int find_separator(const char *line, const char *separators)
 {
-	int loc = strcspn(line, separators);
-	if (!line[loc])
-		return -1;
-	return loc;
+	int whitespace_found = 0;
+	const char *c;
+	for (c = line; *c; c++) {
+		if (strchr(separators, *c))
+			return c - line;
+		if (!whitespace_found && (isalnum(*c) || *c == '-'))
+			continue;
+		if (c != line && (*c == ' ' || *c == '\t')) {
+			whitespace_found = 1;
+			continue;
+		}
+		break;
+	}
+	return -1;
 }
 
 /*
