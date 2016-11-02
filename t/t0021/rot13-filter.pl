@@ -21,6 +21,7 @@
 
 use strict;
 use warnings;
+use IO::File;
 
 my $MAX_PACKET_CONTENT_SIZE = 65516;
 my @capabilities            = @ARGV;
