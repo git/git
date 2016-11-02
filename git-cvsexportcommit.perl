@@ -431,6 +431,7 @@ END
 sub safe_pipe_capture {
     my @output;
     if (my $pid = open my $child, '-|') {
+	binmode($child, ":crlf");
 	@output = (<$child>);
 	close $child or die join(' ',@_).": $! $?";
     } else {
