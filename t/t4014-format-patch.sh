@@ -1294,8 +1294,7 @@ EOF
 4:Subject: [PATCH] subject
 8:
 10:Signed-off-by: example happens to be wrapped here.
-11:
-12:Signed-off-by: C O Mitter <committer@example.com>
+11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
 	test_cmp expected actual
 '
@@ -1368,7 +1367,7 @@ EOF
 	test_cmp expected actual
 '
 
-test_expect_success 'signoff: detect garbage in non-conforming footer' '
+test_expect_success 'signoff: tolerate garbage in conforming footer' '
 	append_signoff <<\EOF >actual &&
 subject
 
@@ -1383,8 +1382,36 @@ EOF
 8:
 10:
 13:Signed-off-by: C O Mitter <committer@example.com>
-14:
-15:Signed-off-by: C O Mitter <committer@example.com>
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'signoff: respect trailer config' '
+	append_signoff <<\EOF >actual &&
+subject
+
+Myfooter: x
+Some Trash
+EOF
+	cat >expected <<\EOF &&
+4:Subject: [PATCH] subject
+8:
+11:
+12:Signed-off-by: C O Mitter <committer@example.com>
+EOF
+	test_cmp expected actual &&
+
+	test_config trailer.Myfooter.ifexists add &&
+	append_signoff <<\EOF >actual &&
+subject
+
+Myfooter: x
+Some Trash
+EOF
+	cat >expected <<\EOF &&
+4:Subject: [PATCH] subject
+8:
+11:Signed-off-by: C O Mitter <committer@example.com>
 EOF
 	test_cmp expected actual
 '
