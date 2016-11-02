@@ -5,6 +5,7 @@ test_description='blob conversion via gitattributes'
 . ./test-lib.sh
 
 TEST_ROOT="$(pwd)"
+PATH=$TEST_ROOT:$PATH
 
 write_script <<\EOF "$TEST_ROOT/rot13.sh"
 tr \
@@ -64,7 +65,7 @@ test_cmp_exclude_clean () {
 # is equal to the committed content.
 test_cmp_committed_rot13 () {
 	test_cmp "$1" "$2" &&
-	"$TEST_ROOT/rot13.sh" <"$1" >expected &&
+	rot13.sh <"$1" >expected &&
 	git cat-file blob :"$2" >actual &&
 	test_cmp expected actual
 }
@@ -513,7 +514,7 @@ test_expect_success PERL 'required process filter should process multiple packet
 		for FILE in "$TEST_ROOT"/*.file
 		do
 			cp "$FILE" . &&
-			"$TEST_ROOT/rot13.sh" <"$FILE" >"$FILE.rot13"
+			rot13.sh <"$FILE" >"$FILE.rot13"
 		done &&
 
 		echo "*.file filter=protocol" >.gitattributes &&
@@ -616,7 +617,7 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 
 		# Smudge failed
 		! test_cmp smudge-write-fail.o smudge-write-fail.r &&
-		"$TEST_ROOT/rot13.sh" <smudge-write-fail.o >expected &&
+		rot13.sh <smudge-write-fail.o >expected &&
 		git cat-file blob :smudge-write-fail.r >actual &&
 		test_cmp expected actual
 	)
