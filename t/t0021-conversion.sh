@@ -6,13 +6,11 @@ test_description='blob conversion via gitattributes'
 
 TEST_ROOT="$(pwd)"
 
-cat <<EOF >"$TEST_ROOT/rot13.sh"
-#!$SHELL_PATH
+write_script <<\EOF "$TEST_ROOT/rot13.sh"
 tr \
   'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' \
   'nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZABCDEFGHIJKLM'
 EOF
-chmod +x "$TEST_ROOT/rot13.sh"
 
 generate_random_characters () {
 	LEN=$1
