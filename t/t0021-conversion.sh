@@ -40,10 +40,9 @@ test_cmp_count () {
 	actual=$2
 	for FILE in "$expect" "$actual"
 	do
-		sort "$FILE" | uniq -c | sed "s/^[ ]*//" |
-			sed "s/^\([0-9]\) IN: clean/x IN: clean/" |
-			sed "s/^\([0-9]\) IN: smudge/x IN: smudge/" >"$FILE.tmp" &&
-		mv "$FILE.tmp" "$FILE"
+		sort "$FILE" | uniq -c |
+		sed -e "s/^ *[0-9][0-9]*[ 	]*IN: /x IN: /" >"$FILE.tmp" &&
+		mv "$FILE.tmp" "$FILE" || return
 	done &&
 	test_cmp "$expect" "$actual"
 }
