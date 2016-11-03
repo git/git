@@ -5,17 +5,19 @@
 #
 # Please use the following translation throughout the file for consistence:
 #
-# 	repository	版本库
-# 	commit		提交
-# 	revision	版本
-# 	branch		分支
-# 	tag		标签
-# 	annotation	标注
-# 	merge		合并
+# 	repository	  版本库
+# 	commit		    提交
+# 	revision	    版本
+# 	branch		    分支
+# 	tag		        标签
+# 	annotation	  标注
+# 	merge		      合并
 # 	fast forward	快速合并(??)
-# 	stage		缓存 (译自 index/cache)
-# 	amend		修正
-# 	reset		复位
+# 	stage		      缓存 (译自 index/cache)
+# 	amend		      修正
+# 	reset		      复位
+#   checkout      检出
+#   Spell Checker 拼写检查器
 #
 # 2008-01-06 Eric Miao <eric.y.miao@gmail.com>
 # FIXME: checkout 的标准翻译
@@ -268,7 +270,7 @@ msgstr "新建..."
 
 #: git-gui.sh:1974
 msgid "Checkout..."
-msgstr "Checkout..."
+msgstr "检出..."
 
 #: git-gui.sh:1980
 msgid "Rename..."
@@ -1863,20 +1865,20 @@ msgstr "无法修改图标:"
 
 #: lib/spellcheck.tcl:57
 msgid "Unsupported spell checker"
-msgstr ""
+msgstr "不支持拼写检查器"
 
 #: lib/spellcheck.tcl:65
 msgid "Spell checking is unavailable"
-msgstr ""
+msgstr "拼写检查不可用"
 
 #: lib/spellcheck.tcl:68
 msgid "Invalid spell checking configuration"
-msgstr ""
+msgstr "非法的拼写检查配置"
 
 #: lib/spellcheck.tcl:70
 #, tcl-format
 msgid "Reverting dictionary to %s."
-msgstr ""
+msgstr "反转字典到 %s
 
 #: lib/spellcheck.tcl:73
 msgid "Spell checker silently failed on startup"
@@ -1884,7 +1886,7 @@ msgstr ""
 
 #: lib/spellcheck.tcl:80
 msgid "Unrecognized spell checker"
-msgstr ""
+msgstr "无法识别的拼写检查器"
 
 #: lib/spellcheck.tcl:180
 msgid "No Suggestions"
@@ -1892,11 +1894,11 @@ msgstr ""
 
 #: lib/spellcheck.tcl:381
 msgid "Unexpected EOF from spell checker"
-msgstr ""
+msgstr "拼写检查器检测到异常的文件结尾"
 
 #: lib/spellcheck.tcl:385
 msgid "Spell Checker Failed"
-msgstr ""
+msgstr "拼写检查出错"
 
 #: lib/status_bar.tcl:83
 #, tcl-format
