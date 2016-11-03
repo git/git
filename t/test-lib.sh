@@ -49,9 +49,17 @@ export ASAN_OPTIONS
 : ${LSAN_OPTIONS=abort_on_error=1}
 export LSAN_OPTIONS
 
+if test ! -f "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
+then
+	echo >&2 'error: GIT-BUILD-OPTIONS missing (has Git been built?).'
+	exit 1
+fi
+. "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
+export PERL_PATH SHELL_PATH
+
 ################################################################
 # It appears that people try to run tests without building...
-"${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/git" >/dev/null
+"${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/git$X" >/dev/null
 if test $? != 1
 then
 	if test -n "$GIT_TEST_INSTALLED"
@@ -62,9 +70,6 @@ then
 	fi
 	exit 1
 fi
-
-. "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
-export PERL_PATH SHELL_PATH
 
 # if --tee was passed, write the output not only to the terminal, but
 # additionally to the file test-results/$BASENAME.out, too.
@@ -971,7 +976,7 @@ test -d "$GIT_BUILD_DIR"/templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
-if ! test -x "$GIT_BUILD_DIR"/t/helper/test-tool
+if ! test -x "$GIT_BUILD_DIR"/t/helper/test-tool$X
 then
 	echo >&2 'You need to build test-tool:'
 	echo >&2 'Run "make t/helper/test-tool" in the source (toplevel) directory'
