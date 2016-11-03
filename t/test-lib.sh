@@ -1021,7 +1021,7 @@ test -d "$GIT_BUILD_DIR"/templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
-if ! test -x "$GIT_BUILD_DIR"/t/helper/test-tool
+if ! test -x "$GIT_BUILD_DIR"/t/helper/test-tool$X
 then
 	echo >&2 'You need to build test-tool:'
 	echo >&2 'Run "make t/helper/test-tool" in the source (toplevel) directory'
