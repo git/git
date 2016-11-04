@@ -478,7 +478,6 @@ static HANDLE duplicate_handle(HANDLE hnd)
 #if defined(_MSC_VER)
 static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 {
-	assert((fd == 1) || (fd == 2));
 	DWORD key_std = ((fd == 1) ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
 
 	/*
@@ -490,6 +489,8 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 
 	/* Create a temp fd associated with the already open "new_handle". */
 	int fd_temp = _open_osfhandle((intptr_t)new_handle, O_BINARY);
+
+	assert((fd == 1) || (fd == 2));
 
 	/*
 	 * Use stock dup2() to re-bind fd to the new handle.  Note that
