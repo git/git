@@ -1822,7 +1822,7 @@ $(SCRIPT_LIB) : % : %.sh GIT-SCRIPT-DEFINES
 ifeq (,$(findstring .windows.,$(GIT_VERSION)))
 RC_VERSION_DEFS := $(join -DMAJOR= -DMINOR= -DMICRO=, $(wordlist 1,3,$(subst -, ,$(subst ., ,$(subst .windows., ,$(GIT_VERSION)))))) -DPATCHLEVEL=0
 else
-RC_VERSION_DEFS := $(join -DMAJOR= -DMINOR= -DMICRO= -DPATCHLEVEL=, $(wordlist 1,4,$(subst -, ,$(subst ., ,$(subst .windows., ,$(GIT_VERSION))))))
+RC_VERSION_DEFS := $(join -DMAJOR= -DMINOR= -DMICRO= -DPATCHLEVEL=, $(wordlist 1,4,$(subst -, ,$(subst ., ,$(subst .rc, ,$(subst .windows., ,$(GIT_VERSION)))))))
 endif
 
 git.res: git.rc GIT-VERSION-FILE GIT-PREFIX
