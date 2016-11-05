@@ -16,7 +16,7 @@ proc do_about {} {
 	pack $w.header -side top -fill x
 
 	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.close -text {Close} \
+	${NS}::button $w.buttons.close -text [mc Close] \
 		-default active \
 		-command [list destroy $w]
 	pack $w.buttons.close -side right
@@ -55,7 +55,7 @@ proc do_about {} {
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
-		-label {Copy} \
+		-label [mc Copy] \
 		-command "
 		clipboard clear
 		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
@@ -65,6 +65,6 @@ proc do_about {} {
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> "destroy $w"
 	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
-	wm title $w "About [appname]"
+	wm title $w [mc "About %s" [appname]]
 	tkwait window $w
 }
