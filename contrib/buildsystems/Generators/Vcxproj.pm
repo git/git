@@ -92,7 +92,7 @@ sub createProject {
     my ($name, $git_dir, $out_dir, $rel_dir, $build_structure, $static_library) = @_;
     my $label = $static_library ? "lib" : "app";
     my $prefix = $static_library ? "LIBS_" : "APPS_";
-    my $config_type = $static_library ? "StaticLibrary" : "Utility";
+    my $config_type = $static_library ? "StaticLibrary" : "Application";
     print "Generate $name vcxproj $label project\n";
     my $cdup = $name;
     $cdup =~ s/[^\/]+/../g;
@@ -129,7 +129,7 @@ sub createProject {
 
     my $libs = '';
     if (!$static_library) {
-      $libs = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
+      $libs = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib|libcurl\.lib|libeay32\.lib|libiconv\.lib|ssleay32\.lib|zlib\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
     }
 
     $defines =~ s/-D//g;
@@ -139,6 +139,39 @@ sub createProject {
     $defines =~ s/\'//g;
 
     die "Could not create the directory $target for $label project!\n" unless (-d "$target" || mkdir "$target");
+
+    use File::Copy;
+    copy("$git_dir/compat/vcbuild/packages.config", "$target/packages.config");
+
+    my $needsCurl = grep(/libcurl.lib/, @{$$build_structure{"$prefix${name}_LIBS"}});
+    my $targetsImport = '';
+    my $targetsErrors = '';
+    my $afterTargets = '';
+    open F, "<$git_dir/compat/vcbuild/packages.config";
+    while (<F>) {
+      if (/<package id="([^"]+)" version="([^"]+)"/) {
+        if ($1 eq 'libiconv') {
+	  # we have to link with the Release builds already because libiconv
+	  # is only available targeting v100 and v110, see
+	  # https://github.com/coapp-packages/libiconv/issues/2
+          $libs .= ";$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.$2\\build\\native\\lib\\v110\\\$(Platform)\\Release\\dynamic\\cdecl\\libiconv.lib";
+	  $afterTargets .= "\n    <Copy SourceFiles=\"$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.redist.$2\\build\\native\\bin\\v110\\\$(Platform)\\Release\\dynamic\\cdecl\\libiconv.dll\" DestinationFolder=\"\$(TargetDir)\" SkipUnchangedFiles=\"true\" />";
+        } elsif ($needsCurl && $1 eq 'curl') {
+	  # libcurl is only available targeting v100 and v110
+	  $libs .= ";$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.$2\\build\\native\\lib\\v110\\\$(Platform)\\Release\\dynamic\\libcurl.lib";
+	  $afterTargets .= "\n    <Copy SourceFiles=\"$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.redist.$2\\build\\native\\bin\\v110\\\$(Platform)\\Release\\dynamic\\libcurl.dll\" DestinationFolder=\"\$(TargetDir)\" SkipUnchangedFiles=\"true\" />";
+        } elsif ($needsCurl && $1 eq 'expat') {
+	  # libexpat is only available targeting v100 and v110
+	  $libs .= ";$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.$2\\build\\native\\lib\\v110\\\$(Platform)\\Release\\dynamic\\utf8\\libexpat.lib";
+	}
+        next if ($1 =~  /^(zlib$|openssl(?!.*(x64|x86)$))/);
+        my $targetsFile = "$rel_dir\\compat\\vcbuild\\GEN.PKGS\\$1.$2\\build\\native\\$1.targets";
+        $targetsImport .= "\n    <Import Project=\"$targetsFile\" Condition=\"Exists('$targetsFile')\" />";
+        $targetsErrors .= "\n    <Error Condition=\"!Exists('$targetsFile')\" Text=\"\$([System.String]::Format('\$(ErrorText)', '$targetsFile'))\" />";
+      }
+    }
+    close F;
+
     open F, ">$vcxproj" or die "Could not open $vcxproj for writing!\n";
     binmode F, ":crlf :utf8";
     print F chr(0xFEFF);
@@ -211,6 +244,7 @@ sub createProject {
     </Lib>
     <Link>
       <AdditionalDependencies>$libs;\$(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>invalidcontinue.obj %(AdditionalOptions)</AdditionalOptions>
       <ManifestFile>$cdup\\compat\\win32\\git.manifest</ManifestFile>
       <SubSystem>Console</SubSystem>
     </Link>
@@ -284,9 +318,25 @@ EOM
 EOM
     }
     print F << "EOM";
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="\$(VCTargetsPath)\\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
+  <ImportGroup Label="ExtensionTargets">$targetsImport
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>$targetsErrors
+  </Target>
+EOM
+    if (!$static_library && $afterTargets ne '') {
+      print F << "EOM";
+  <Target Name="${target}_AfterBuild" AfterTargets="AfterBuild">$afterTargets
+  </Target>
+EOM
+    }
+    print F << "EOM";
 </Project>
 EOM
     close F;
