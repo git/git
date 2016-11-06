@@ -491,7 +491,7 @@ static void get_default_heads(void)
 	}
 }
 
-static struct object *parse_loose_object(const unsigned char *sha1,
+static struct object *parse_loose_object(const struct object_id *oid,
 					 const char *path)
 {
 	struct object *obj;
@@ -500,27 +500,27 @@ static struct object *parse_loose_object(const unsigned char *sha1,
 	unsigned long size;
 	int eaten;
 
-	if (read_loose_object(path, sha1, &type, &size, &contents) < 0)
+	if (read_loose_object(path, oid->hash, &type, &size, &contents) < 0)
 		return NULL;
 
 	if (!contents && type != OBJ_BLOB)
 		die("BUG: read_loose_object streamed a non-blob");
 
-	obj = parse_object_buffer(sha1, type, size, contents, &eaten);
+	obj = parse_object_buffer(oid->hash, type, size, contents, &eaten);
 
 	if (!eaten)
 		free(contents);
 	return obj;
 }
 
-static int fsck_loose(const unsigned char *sha1, const char *path, void *data)
+static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 {
-	struct object *obj = parse_loose_object(sha1, path);
+	struct object *obj = parse_loose_object(oid, path);
 
 	if (!obj) {
 		errors_found |= ERROR_OBJECT;
 		error("%s: object corrupt or missing: %s",
-		      sha1_to_hex(sha1), path);
+		      oid_to_hex(oid), path);
 		return 0; /* keep checking other objects */
 	}
 
@@ -619,26 +619,26 @@ static int fsck_cache_tree(struct cache_tree *it)
 	return err;
 }
 
-static void mark_object_for_connectivity(const unsigned char *sha1)
+static void mark_object_for_connectivity(const struct object_id *oid)
 {
-	struct object *obj = lookup_unknown_object(sha1);
+	struct object *obj = lookup_unknown_object(oid->hash);
 	obj->flags |= HAS_OBJ;
 }
 
-static int mark_loose_for_connectivity(const unsigned char *sha1,
+static int mark_loose_for_connectivity(const struct object_id *oid,
 				       const char *path,
 				       void *data)
 {
-	mark_object_for_connectivity(sha1);
+	mark_object_for_connectivity(oid);
 	return 0;
 }
 
-static int mark_packed_for_connectivity(const unsigned char *sha1,
+static int mark_packed_for_connectivity(const struct object_id *oid,
 					struct packed_git *pack,
 					uint32_t pos,
 					void *data)
 {
-	mark_object_for_connectivity(sha1);
+	mark_object_for_connectivity(oid);
 	return 0;
 }
 
