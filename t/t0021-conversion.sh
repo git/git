@@ -22,7 +22,7 @@ generate_random_characters () {
 }
 
 file_size () {
-	cat "$1" | wc -c | sed "s/^[ ]*//"
+	perl -e 'print -s $ARGV[0]' "$1"
 }
 
 filter_git () {
