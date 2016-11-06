@@ -1373,7 +1373,7 @@ struct grab_1st_switch_cbdata {
 	unsigned char nsha1[20];
 };
 
-static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
+static int grab_1st_switch(struct object_id *ooid, struct object_id *noid,
 			   const char *email, unsigned long timestamp, int tz,
 			   const char *message, void *cb_data)
 {
@@ -1387,13 +1387,13 @@ static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
 		return 0;
 	target += strlen(" to ");
 	strbuf_reset(&cb->buf);
-	hashcpy(cb->nsha1, nsha1);
+	hashcpy(cb->nsha1, noid->hash);
 	end = strchrnul(target, '\n');
 	strbuf_add(&cb->buf, target, end - target);
 	if (!strcmp(cb->buf.buf, "HEAD")) {
 		/* HEAD is relative. Resolve it to the right reflog entry. */
 		strbuf_reset(&cb->buf);
-		strbuf_add_unique_abbrev(&cb->buf, nsha1, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&cb->buf, noid->hash, DEFAULT_ABBREV);
 	}
 	return 1;
 }
