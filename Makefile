@@ -1023,6 +1023,7 @@ ifeq ($(uname_S),Darwin)
 		endif
 	endif
 	ifndef NO_APPLE_COMMON_CRYPTO
+		NO_OPENSSL = YesPlease
 		APPLE_COMMON_CRYPTO = YesPlease
 		COMPAT_CFLAGS += -DAPPLE_COMMON_CRYPTO
 	endif
