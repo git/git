@@ -2406,7 +2406,7 @@ proc makewindow {} {
 
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
-	-state disabled -font textfont \
+	-state disabled -undo 0 -font textfont \
 	-yscrollcommand scrolltext -wrap none \
 	-xscrollcommand ".bleft.bottom.sbhorizontal set"
     if {$have_tk85} {
