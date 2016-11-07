@@ -588,7 +588,7 @@ proc updatecommits {} {
 proc reloadcommits {} {
     global curview viewcomplete selectedline currentid thickerline
     global showneartags treediffs commitinterest cached_commitrow
-    global targetid
+    global targetid commitinfo
 
     set selid {}
     if {$selectedline ne {}} {
@@ -609,6 +609,7 @@ proc reloadcommits {} {
 	getallcommits
     }
     clear_display
+    unset -nocomplain commitinfo
     unset -nocomplain commitinterest
     unset -nocomplain cached_commitrow
     unset -nocomplain targetid
