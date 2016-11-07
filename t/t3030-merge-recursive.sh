@@ -575,13 +575,13 @@ test_expect_success 'merge removes empty directories' '
 	test_must_fail test -d d
 '
 
-test_expect_failure 'merge-recursive simple w/submodule' '
+test_expect_success 'merge-recursive simple w/submodule' '
 
 	git checkout submod &&
 	git merge remove
 '
 
-test_expect_failure 'merge-recursive simple w/submodule result' '
+test_expect_success 'merge-recursive simple w/submodule result' '
 
 	git ls-files -s >actual &&
 	(
