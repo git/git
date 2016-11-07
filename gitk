@@ -8073,7 +8073,11 @@ proc getblobdiffline {bdf ids} {
     $ctext conf -state normal
     while {[incr nr] <= 1000 && [gets $bdf line] >= 0} {
 	if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
+	    # Older diff read. Abort it.
 	    catch {close $bdf}
+	    if {$ids != $diffids} {
+		array unset blobdifffd $ids
+	    }
 	    return 0
 	}
 	parseblobdiffline $ids $line
@@ -8082,6 +8086,7 @@ proc getblobdiffline {bdf ids} {
     blobdiffmaybeseehere [eof $bdf]
     if {[eof $bdf]} {
 	catch {close $bdf}
+	array unset blobdifffd $ids
 	return 0
     }
     return [expr {$nr >= 1000? 2: 1}]
