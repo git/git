@@ -51,6 +51,23 @@
 #endif
 #endif
 
+/*
+ * Under certain circumstances Git's source code is cleverer than the C
+ * compiler when the latter warns about some "uninitialized value", e.g. when
+ * a value is both initialized and used under the same condition.
+ *
+ * GCC can be fooled to not spit out this warning by using the construct:
+ * "int value = value;". Other C compilers are not that easily fooled and would
+ * require a #pragma (which is not portable, and would litter the source code).
+ *
+ * To keep things simple, we only fool GCC, and initialize such values instead
+ * when compiling with other C compilers.
+ */
+#ifdef __GNUC__
+#define FAKE_INIT(a, b, c) a b = b
+#else
+#define FAKE_INIT(a, b, c) a b = c
+#endif
 
 /*
  * BUILD_ASSERT_OR_ZERO - assert a build-time dependency, as an expression.
