@@ -2015,7 +2015,7 @@ int merge_recursive(struct merge_options *o,
 {
 	struct commit_list *iter;
 	struct commit *merged_common_ancestors;
-	struct tree *mrtree = mrtree;
+	FAKE_INIT(struct tree *, mrtree, NULL);
 	int clean;
 
 	if (show(o, 4)) {
