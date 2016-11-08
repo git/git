@@ -187,7 +187,7 @@ test_expect_success 'custom merge does not lock index' '
 		sleep 1 &
 		echo $! >sleep.pid
 	EOF
-	test_when_finished "kill \$(cat sleep.pid)" &&
+	test_when_finished "kill \$(cat sleep.pid) || :" &&
 
 	test_write_lines >.gitattributes \
 		"* merge=ours" "text merge=sleep-one-second" &&
