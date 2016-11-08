@@ -51,8 +51,4 @@ TODO List:
     developer command prompt is started.  This would also
     allow us to switch between 32- and 64-bit tool chains.
 
-[B] Currently, we leave the third-party DLLs we reference in
-    "compat/vcbuild/GEN.DEPS/bin".  We need an installer
-    step to move them next to git.exe (or into libexec/git-core).
-
-[C] We need to build SLN or VCPROJ files.
+[B] We need to build SLN or VCPROJ files.
