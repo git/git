@@ -253,6 +253,7 @@
 *.idb
 *.pdb
 *.ilk
+*.dll
 .vs/
 *.manifest
 Debug/
