@@ -419,7 +419,7 @@ ifeq ($(uname_S),Windows)
 	BASIC_CFLAGS += -Zi
 	BASIC_LDFLAGS += -debug
 ifndef DEBUG
-	BASIC_CFLAGS += -GL -Gy -Os -Oy- -MD -DNDEBUG
+	BASIC_CFLAGS += -GL -Gy -O2 -Oy- -MD -DNDEBUG
 	BASIC_LDFLAGS += -release -LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO /DEBUGTYPE:CV,FIXUP
 	AR += -LTCG
 else
