@@ -7,6 +7,10 @@ INST_LIB=$(INST)/lib
 INST_BIN=$(INST)/bin
 
 PKGDIR=GEN.PKGS
+NUGET ?= nuget.exe
+ifneq ($(shell $(NUGET) help 2>/dev/null; echo $$?),0)
+	NUGET := /usr/src/build-extra/nuget/nuget.exe
+endif
 
 ##################################################################
 all:	unpack expat libssh libssh_redist curl curl_redist openssl zlib \
@@ -14,7 +18,7 @@ all:	unpack expat libssh libssh_redist curl curl_redist openssl zlib \
 
 unpack:
 	[ -d $(PKGDIR) ] || mkdir $(PKGDIR)
-	nuget.exe restore packages.config -ConfigFile nuget.config \
+	"$(NUGET)" restore packages.config -ConfigFile nuget.config \
 		-NonInteractive -OutputDirectory $(PKGDIR)
 
 insdir:
