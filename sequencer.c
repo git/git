@@ -629,7 +629,7 @@ static const char *todo_command_strings[] = {
 
 static const char *command_to_string(const enum todo_command command)
 {
-	if (command < ARRAY_SIZE(todo_command_strings))
+	if ((size_t)command < ARRAY_SIZE(todo_command_strings))
 		return todo_command_strings[command];
 	die("Unknown command: %d", command);
 }
