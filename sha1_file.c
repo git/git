@@ -296,7 +296,7 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	}
 	strbuf_addstr(&pathbuf, entry);
 
-	if (strbuf_normalize_path(&pathbuf) < 0) {
+	if (strbuf_normalize_path(&pathbuf) < 0 && relative_base) {
 		error("unable to normalize alternate object path: %s",
 		      pathbuf.buf);
 		strbuf_release(&pathbuf);
