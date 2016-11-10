@@ -746,6 +746,14 @@ static int attr_check_is_dynamic(const struct git_attr_check *check)
 	return (void *)(check->check) != (void *)(check + 1);
 }
 
+static void empty_attr_check_elems(struct git_attr_check *check)
+{
+	if (!attr_check_is_dynamic(check))
+		die("BUG: emptying a statically initialized git_attr_check");
+	check->check_nr = 0;
+	check->finalized = 0;
+}
+
 /*
  * Collect attributes for path into the array pointed to by
  * check_all_attr.  If check is not NULL, only attributes in
@@ -912,12 +920,11 @@ struct git_attr_check_elem *git_attr_check_append(struct git_attr_check *check,
 
 void git_attr_check_clear(struct git_attr_check *check)
 {
+	empty_attr_check_elems(check);
 	if (!attr_check_is_dynamic(check))
 		die("BUG: clearing a statically initialized git_attr_check");
 	free(check->check);
-	check->check_nr = 0;
 	check->check_alloc = 0;
-	check->finalized = 0;
 }
 
 void git_attr_check_free(struct git_attr_check *check)
