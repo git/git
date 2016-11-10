@@ -14,6 +14,8 @@
 #include "dir.h"
 #include "utf8.h"
 #include "quote.h"
+#include "thread-utils.h"
+#include "argv-array.h"
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -46,6 +48,21 @@ struct git_attr {
 static int attr_nr;
 static struct git_attr *(git_attr_hash[HASHSIZE]);
 
+#ifndef NO_PTHREADS
+
+static pthread_mutex_t attr_mutex;
+#define attr_lock()		pthread_mutex_lock(&attr_mutex)
+#define attr_unlock()		pthread_mutex_unlock(&attr_mutex)
+void attr_start(void) { pthread_mutex_init(&attr_mutex, NULL); }
+
+#else
+
+#define attr_lock()		(void)0
+#define attr_unlock()		(void)0
+void attr_start(void) {;}
+
+#endif /* NO_PTHREADS */
+
 /*
  * NEEDSWORK: maybe-real, maybe-macro are not property of
  * an attribute, as it depends on what .gitattributes are
@@ -54,6 +71,16 @@ static struct git_attr *(git_attr_hash[HASHSIZE]);
  * become unnecessary and can go away.  So is this variable.
  */
 static int cannot_trust_maybe_real;
+
+/*
+ * Send one or more git_attr_check to git_check_attrs(), and
+ * each 'value' member tells what its value is.
+ * Unset one is returned as NULL.
+ */
+struct git_attr_check_elem {
+	const struct git_attr *attr;
+	const char *value;
+};
 
 /* NEEDSWORK: This will become per git_attr_check */
 static struct git_attr_check_elem *check_all_attr;
@@ -781,7 +808,7 @@ static int macroexpand_one(int nr, int rem)
 
 static int attr_check_is_dynamic(const struct git_attr_check *check)
 {
-	return (void *)(check->check) != (void *)(check + 1);
+	return (void *)(check->attr) != (void *)(check + 1);
 }
 
 static void empty_attr_check_elems(struct git_attr_check *check)
@@ -799,7 +826,9 @@ static void empty_attr_check_elems(struct git_attr_check *check)
  * any and all attributes that are visible are collected in it.
  */
 static void collect_some_attrs(const char *path, int pathlen,
-			       struct git_attr_check *check, int collect_all)
+			       struct git_attr_check *check,
+			       struct git_attr_result **result,
+			       int collect_all)
 
 {
 	struct attr_stack *stk;
@@ -825,13 +854,11 @@ static void collect_some_attrs(const char *path, int pathlen,
 		check_all_attr[i].value = ATTR__UNKNOWN;
 
 	if (!collect_all && !cannot_trust_maybe_real) {
-		struct git_attr_check_elem *celem = check->check;
-
 		rem = 0;
 		for (i = 0; i < check->check_nr; i++) {
-			if (!celem[i].attr->maybe_real) {
+			if (!check->attr[i]->maybe_real) {
 				struct git_attr_check_elem *c;
-				c = check_all_attr + celem[i].attr->attr_nr;
+				c = check_all_attr + check->attr[i]->attr_nr;
 				c->value = ATTR__UNSET;
 				rem++;
 			}
@@ -845,38 +872,53 @@ static void collect_some_attrs(const char *path, int pathlen,
 		rem = fill(path, pathlen, basename_offset, stk, rem);
 
 	if (collect_all) {
-		empty_attr_check_elems(check);
+		int check_nr = 0, check_alloc = 0;
+		const char **res = NULL;
+
 		for (i = 0; i < attr_nr; i++) {
 			const struct git_attr *attr = check_all_attr[i].attr;
 			const char *value = check_all_attr[i].value;
 			if (value == ATTR__UNSET || value == ATTR__UNKNOWN)
 				continue;
-			git_attr_check_append(check, attr)->value = value;
+
+			ALLOC_GROW(check->attr, check->check_nr + 1, check->check_alloc);
+			check->attr[check->check_nr++] = attr;
+
+			ALLOC_GROW(res, check_nr + 1, check_alloc);
+			res[check_nr++] = value;
 		}
+
+		*result = git_attr_result_alloc(check);
+		for (i = 0; i < check->check_nr; i++)
+			(*result)[i].value = res[i];
+
+		free(res);
 	}
 }
 
 static int git_check_attrs(const char *path, int pathlen,
-			   struct git_attr_check *check)
+			   struct git_attr_check *check,
+			   struct git_attr_result *result)
 {
 	int i;
-	struct git_attr_check_elem *celem = check->check;
 
-	collect_some_attrs(path, pathlen, check, 0);
+	collect_some_attrs(path, pathlen, check, &result, 0);
 
 	for (i = 0; i < check->check_nr; i++) {
-		const char *value = check_all_attr[celem[i].attr->attr_nr].value;
+		const char *value = check_all_attr[check->attr[i]->attr_nr].value;
 		if (value == ATTR__UNKNOWN)
 			value = ATTR__UNSET;
-		celem[i].value = value;
+		result[i].value = value;
 	}
 
 	return 0;
 }
 
-void git_all_attrs(const char *path, struct git_attr_check *check)
+void git_all_attrs(const char *path,
+		   struct git_attr_check *check,
+		   struct git_attr_result **result)
 {
-	collect_some_attrs(path, strlen(path), check, 1);
+	collect_some_attrs(path, strlen(path), check, result, 1);
 }
 
 void git_attr_set_direction(enum git_attr_direction new, struct index_state *istate)
@@ -892,69 +934,79 @@ void git_attr_set_direction(enum git_attr_direction new, struct index_state *ist
 	use_index = istate;
 }
 
-static int git_check_attr_counted(const char *path, int pathlen,
-				  struct git_attr_check *check)
+int git_check_attr(const char *path,
+		    struct git_attr_check *check,
+		    struct git_attr_result *result)
 {
 	check->finalized = 1;
-	return git_check_attrs(path, pathlen, check);
+	return git_check_attrs(path, strlen(path), check, result);
 }
 
-int git_check_attr(const char *path, struct git_attr_check *check)
+static void git_attr_check_initv_unlocked(struct git_attr_check **check_,
+				 const char **argv)
 {
-	return git_check_attr_counted(path, strlen(path), check);
-}
-
-struct git_attr_check *git_attr_check_initl(const char *one, ...)
-{
+	int cnt;
 	struct git_attr_check *check;
+
+	for (cnt = 0; argv[cnt] != NULL; cnt++)
+		;
+
+	check = xcalloc(1, sizeof(*check) + cnt * sizeof(*(check->attr)));
+	check->check_nr = cnt;
+	check->finalized = 1;
+	check->attr = (const struct git_attr **)(check + 1);
+
+	for (cnt = 0; cnt < check->check_nr; cnt++) {
+		struct git_attr *attr = git_attr(argv[cnt]);
+		if (!attr)
+			die("BUG: %s: not a valid attribute name", argv[cnt]);
+		check->attr[cnt] = attr;
+	}
+
+	*check_ = check;
+}
+
+void git_attr_check_initl(struct git_attr_check **check,
+			  const char *one, ...)
+{
 	int cnt;
 	va_list params;
 	const char *param;
+	struct argv_array attrs = ARGV_ARRAY_INIT;
 
-	va_start(params, one);
-	for (cnt = 1; (param = va_arg(params, const char *)) != NULL; cnt++)
-		;
-	va_end(params);
-	check = xcalloc(1,
-			sizeof(*check) + cnt * sizeof(*(check->check)));
-	check->check_nr = cnt;
-	check->finalized = 1;
-	check->check = (struct git_attr_check_elem *)(check + 1);
-
-	check->check[0].attr = git_attr(one);
-	va_start(params, one);
-	for (cnt = 1; cnt < check->check_nr; cnt++) {
-		struct git_attr *attr;
-		param = va_arg(params, const char *);
-		if (!param)
-			die("BUG: counted %d != ended at %d",
-			    check->check_nr, cnt);
-		attr = git_attr(param);
-		if (!attr)
-			die("BUG: %s: not a valid attribute name", param);
-		check->check[cnt].attr = attr;
+	attr_lock();
+	if (*check) {
+		attr_unlock();
+		return;
 	}
+
+	va_start(params, one);
+	argv_array_push(&attrs, one);
+	for (cnt = 1; (param = va_arg(params, const char *)) != NULL; cnt++)
+		argv_array_push(&attrs, param);
 	va_end(params);
-	return check;
+
+	git_attr_check_initv_unlocked(check, attrs.argv);
+
+	attr_unlock();
+	argv_array_clear(&attrs);
 }
 
-struct git_attr_check *git_attr_check_alloc(void)
+void git_attr_check_initv(struct git_attr_check **check, const char **argv)
 {
-	return xcalloc(1, sizeof(struct git_attr_check));
+	attr_lock();
+	if (*check) {
+		attr_unlock();
+		return;
+	}
+	git_attr_check_initv_unlocked(check, argv);
+
+	attr_unlock();
 }
 
-struct git_attr_check_elem *git_attr_check_append(struct git_attr_check *check,
-						  const struct git_attr *attr)
+struct git_attr_result *git_attr_result_alloc(struct git_attr_check *check)
 {
-	struct git_attr_check_elem *elem;
-	if (check->finalized)
-		die("BUG: append after git_attr_check structure is finalized");
-	if (!attr_check_is_dynamic(check))
-		die("BUG: appending to a statically initialized git_attr_check");
-	ALLOC_GROW(check->check, check->check_nr + 1, check->check_alloc);
-	elem = &check->check[check->check_nr++];
-	elem->attr = attr;
-	return elem;
+	return xcalloc(1, sizeof(struct git_attr_result) * check->check_nr);
 }
 
 void git_attr_check_clear(struct git_attr_check *check)
@@ -962,12 +1014,12 @@ void git_attr_check_clear(struct git_attr_check *check)
 	empty_attr_check_elems(check);
 	if (!attr_check_is_dynamic(check))
 		die("BUG: clearing a statically initialized git_attr_check");
-	free(check->check);
+	free(check->attr);
 	check->check_alloc = 0;
 }
 
-void git_attr_check_free(struct git_attr_check *check)
+void git_attr_result_free(struct git_attr_result *result)
 {
-	git_attr_check_clear(check);
-	free(check);
+	/* No need to free values as they are interned. */
+	free(result);
 }
