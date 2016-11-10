@@ -892,8 +892,8 @@ void git_attr_set_direction(enum git_attr_direction new, struct index_state *ist
 	use_index = istate;
 }
 
-int git_check_attr_counted(const char *path, int pathlen,
-			   struct git_attr_check *check)
+static int git_check_attr_counted(const char *path, int pathlen,
+				  struct git_attr_check *check)
 {
 	check->finalized = 1;
 	return git_check_attrs(path, pathlen, check);
