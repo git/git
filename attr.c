@@ -375,15 +375,17 @@ fail_return:
  * .gitignore file and info/excludes file as a fallback.
  */
 
-/* NEEDSWORK: This will become per git_attr_check */
-static struct attr_stack {
+struct attr_stack {
 	struct attr_stack *prev;
 	char *origin;
 	size_t originlen;
 	unsigned num_matches;
 	unsigned alloc;
 	struct match_attr **attrs;
-} *attr_stack;
+};
+
+static struct hashmap all_attr_stacks;
+static int all_attr_stacks_init;
 
 static void free_attr_elem(struct attr_stack *e)
 {
@@ -564,11 +566,23 @@ static void debug_set(const char *what, const char *match, struct git_attr *attr
 
 static void drop_attr_stack(void)
 {
-	while (attr_stack) {
-		struct attr_stack *elem = attr_stack;
-		attr_stack = elem->prev;
-		free_attr_elem(elem);
+	struct hashmap_iter iter;
+	struct git_attr_check *check;
+
+	attr_lock();
+	if (!all_attr_stacks_init) {
+		attr_unlock();
+		return;
 	}
+	hashmap_iter_init(&all_attr_stacks, &iter);
+	while ((check = hashmap_iter_next(&iter))) {
+		while (check->attr_stack) {
+			struct attr_stack *elem = check->attr_stack;
+			check->attr_stack = elem->prev;
+			free_attr_elem(elem);
+		}
+	}
+	attr_unlock();
 }
 
 static const char *git_etc_gitattributes(void)
@@ -598,40 +612,42 @@ static void push_stack(struct attr_stack **attr_stack_p,
 	}
 }
 
-static void bootstrap_attr_stack(void)
+static void bootstrap_attr_stack(struct git_attr_check *check)
 {
 	struct attr_stack *elem;
 
-	if (attr_stack)
+	if (check->attr_stack)
 		return;
 
-	push_stack(&attr_stack, read_attr_from_array(builtin_attr), NULL, 0);
+	push_stack(&check->attr_stack,
+		   read_attr_from_array(builtin_attr), NULL, 0);
 
 	if (git_attr_system())
-		push_stack(&attr_stack,
+		push_stack(&check->attr_stack,
 			   read_attr_from_file(git_etc_gitattributes(), 1),
 			   NULL, 0);
 
 	if (!git_attributes_file)
 		git_attributes_file = xdg_config_home("attributes");
 	if (git_attributes_file)
-		push_stack(&attr_stack,
+		push_stack(&check->attr_stack,
 			   read_attr_from_file(git_attributes_file, 1),
 			   NULL, 0);
 
 	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
 		elem = read_attr(GITATTRIBUTES_FILE, 1);
-		push_stack(&attr_stack, elem, xstrdup(""), 0);
+		push_stack(&check->attr_stack, elem, xstrdup(""), 0);
 		debug_push(elem);
 	}
 
 	elem = read_attr_from_file(git_path_info_attributes(), 1);
 	if (!elem)
 		elem = xcalloc(1, sizeof(*elem));
-	push_stack(&attr_stack, elem, NULL, 0);
+	push_stack(&check->attr_stack, elem, NULL, 0);
 }
 
-static void prepare_attr_stack(const char *path, int dirlen)
+static void prepare_attr_stack(const char *path, int dirlen,
+			       struct git_attr_check *check)
 {
 	struct attr_stack *elem, *info;
 	const char *cp;
@@ -651,13 +667,13 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	 * .gitattributes in deeper directories to shallower ones,
 	 * and finally use the built-in set as the default.
 	 */
-	bootstrap_attr_stack();
+	bootstrap_attr_stack(check);
 
 	/*
 	 * Pop the "info" one that is always at the top of the stack.
 	 */
-	info = attr_stack;
-	attr_stack = info->prev;
+	info = check->attr_stack;
+	check->attr_stack = info->prev;
 
 	/*
 	 * Pop the ones from directories that are not the prefix of
@@ -665,17 +681,17 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	 * the root one (whose origin is an empty string "") or the builtin
 	 * one (whose origin is NULL) without popping it.
 	 */
-	while (attr_stack->origin) {
-		int namelen = strlen(attr_stack->origin);
+	while (check->attr_stack->origin) {
+		int namelen = strlen(check->attr_stack->origin);
 
-		elem = attr_stack;
+		elem = check->attr_stack;
 		if (namelen <= dirlen &&
 		    !strncmp(elem->origin, path, namelen) &&
 		    (!namelen || path[namelen] == '/'))
 			break;
 
 		debug_pop(elem);
-		attr_stack = elem->prev;
+		check->attr_stack = elem->prev;
 		free_attr_elem(elem);
 	}
 
@@ -691,9 +707,9 @@ static void prepare_attr_stack(const char *path, int dirlen)
 		 */
 		struct strbuf pathbuf = STRBUF_INIT;
 
-		assert(attr_stack->origin);
+		assert(check->attr_stack->origin);
 		while (1) {
-			size_t len = strlen(attr_stack->origin);
+			size_t len = strlen(check->attr_stack->origin);
 			char *origin;
 
 			if (dirlen <= len)
@@ -707,7 +723,7 @@ static void prepare_attr_stack(const char *path, int dirlen)
 			elem = read_attr(pathbuf.buf, 0);
 			strbuf_setlen(&pathbuf, cp - path);
 			origin = strbuf_detach(&pathbuf, &len);
-			push_stack(&attr_stack, elem, origin, len);
+			push_stack(&check->attr_stack, elem, origin, len);
 			debug_push(elem);
 		}
 
@@ -717,7 +733,13 @@ static void prepare_attr_stack(const char *path, int dirlen)
 	/*
 	 * Finally push the "info" one at the top of the stack.
 	 */
-	push_stack(&attr_stack, info, NULL, 0);
+	push_stack(&check->attr_stack, info, NULL, 0);
+	if (!all_attr_stacks_init) {
+		hashmap_init(&all_attr_stacks, NULL, 0);
+		all_attr_stacks_init = 1;
+	}
+	if (!hashmap_get(&all_attr_stacks, check, NULL))
+		hashmap_put(&all_attr_stacks, check);
 }
 
 static int path_matches(const char *pathname, int pathlen,
@@ -743,9 +765,10 @@ static int path_matches(const char *pathname, int pathlen,
 			      pattern, prefix, pat->patternlen, pat->flags);
 }
 
-static int macroexpand_one(int attr_nr, int rem);
+static int macroexpand_one(int attr_nr, int rem, struct git_attr_check *check);
 
-static int fill_one(const char *what, struct match_attr *a, int rem)
+static int fill_one(const char *what, struct match_attr *a, int rem,
+		    struct git_attr_check *check)
 {
 	struct git_attr_check_elem *celem = check_all_attr;
 	int i;
@@ -761,14 +784,14 @@ static int fill_one(const char *what, struct match_attr *a, int rem)
 				  attr, v);
 			*n = v;
 			rem--;
-			rem = macroexpand_one(attr->attr_nr, rem);
+			rem = macroexpand_one(attr->attr_nr, rem, check);
 		}
 	}
 	return rem;
 }
 
 static int fill(const char *path, int pathlen, int basename_offset,
-		struct attr_stack *stk, int rem)
+		struct attr_stack *stk, int rem, struct git_attr_check *check)
 {
 	int i;
 	const char *base = stk->origin ? stk->origin : "";
@@ -779,12 +802,12 @@ static int fill(const char *path, int pathlen, int basename_offset,
 			continue;
 		if (path_matches(path, pathlen, basename_offset,
 				 &a->u.pat, base, stk->originlen))
-			rem = fill_one("fill", a, rem);
+			rem = fill_one("fill", a, rem, check);
 	}
 	return rem;
 }
 
-static int macroexpand_one(int nr, int rem)
+static int macroexpand_one(int nr, int rem, struct git_attr_check *check)
 {
 	struct attr_stack *stk;
 	int i;
@@ -793,13 +816,13 @@ static int macroexpand_one(int nr, int rem)
 	    !check_all_attr[nr].attr->maybe_macro)
 		return rem;
 
-	for (stk = attr_stack; stk; stk = stk->prev) {
+	for (stk = check->attr_stack; stk; stk = stk->prev) {
 		for (i = stk->num_matches - 1; 0 <= i; i--) {
 			struct match_attr *ma = stk->attrs[i];
 			if (!ma->is_macro)
 				continue;
 			if (ma->u.attr->attr_nr == nr)
-				return fill_one("expand", ma, rem);
+				return fill_one("expand", ma, rem, check);
 		}
 	}
 
@@ -848,7 +871,7 @@ static void collect_some_attrs(const char *path, int pathlen,
 		dirlen = 0;
 	}
 
-	prepare_attr_stack(path, dirlen);
+	prepare_attr_stack(path, dirlen, check);
 
 	for (i = 0; i < attr_nr; i++)
 		check_all_attr[i].value = ATTR__UNKNOWN;
@@ -868,8 +891,8 @@ static void collect_some_attrs(const char *path, int pathlen,
 	}
 
 	rem = attr_nr;
-	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
-		rem = fill(path, pathlen, basename_offset, stk, rem);
+	for (stk = check->attr_stack; 0 < rem && stk; stk = stk->prev)
+		rem = fill(path, pathlen, basename_offset, stk, rem, check);
 
 	if (collect_all) {
 		int check_nr = 0, check_alloc = 0;
@@ -902,6 +925,8 @@ static int git_check_attrs(const char *path, int pathlen,
 {
 	int i;
 
+	attr_lock();
+
 	collect_some_attrs(path, pathlen, check, &result, 0);
 
 	for (i = 0; i < check->check_nr; i++) {
@@ -910,6 +935,8 @@ static int git_check_attrs(const char *path, int pathlen,
 			value = ATTR__UNSET;
 		result[i].value = value;
 	}
+
+	attr_unlock();
 
 	return 0;
 }

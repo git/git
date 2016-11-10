@@ -30,12 +30,14 @@ extern const char git_attr__false[];
 #define ATTR_UNSET(v) ((v) == NULL)
 
 struct git_attr_check {
+	struct hashmap_entry entry;
 	int finalized;
 	int check_nr;
 	int check_alloc;
 	const struct git_attr **attr;
+	struct attr_stack *attr_stack;
 };
-#define GIT_ATTR_CHECK_INIT {0, 0, 0, NULL}
+#define GIT_ATTR_CHECK_INIT {HASHMAP_ENTRY_INIT, 0, 0, 0, NULL, NULL}
 
 struct git_attr_result {
 	const char *value;
