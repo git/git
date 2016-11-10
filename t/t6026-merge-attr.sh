@@ -193,8 +193,7 @@ test_expect_success 'custom merge does not lock index' '
 		"* merge=ours" "text merge=sleep-one-second" &&
 	test_config merge.ours.driver true &&
 	test_config merge.sleep-one-second.driver ./sleep-one-second.sh &&
-	git merge master &&
-	test -f sleep.pid
+	git merge master
 '
 
 test_done
