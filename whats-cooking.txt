@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2016, #01; Wed, 9)
-X-master-at: be5a750939c212bc0781ffa04fabcfd2b2bd744e
-X-next-at: f7463a1abc93dbed4ef482f037d1daa4a172805e
+Subject: What's cooking in git.git (Nov 2016, #02; Fri, 11)
+X-master-at: 3ab228137f980ff72dbdf5064a877d07bec76df9
+X-next-at: 34139e250de0af9c58221e12bf5da2af593901ac
 
-What's cooking in git.git (Nov 2016, #01; Wed, 9)
+What's cooking in git.git (Nov 2016, #02; Fri, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Hopefully 2.11-rc1 can be tagged by the end of the week.  Sorry for
-the delay (and thanks for great help from y'all, especially Peff).
+v2.11-rc1 has been tagged.  There might be a few updates necessary
+that remains due to timezone differences, but hopefully this should
+be good enough base.  Thanks y'all for finding and fixing these
+platform specific bits.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,34 +25,19 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cc/split-index-typofix (2016-11-01) 1 commit
- - split-index: s/eith/with/ typo fix
-
- Typofix in a comment in code
-
-
-* jk/no-looking-at-dotgit-outside-repo (2016-11-01) 1 commit
- - sha1_name: make wraparound of the index into ring-buffer explicit
-
- A small code cleanup.
-
-
-* rs/cocci (2016-11-01) 1 commit
- - cocci: avoid self-references in object_id transformations
-
- Improve the rule to convert "unsigned char [20]" into "struct
- object_id *" in contrib/coccinelle/
-
---------------------------------------------------
-[New Topics]
-
-* as/merge-attr-sleep (2016-11-08) 1 commit
+* as/merge-attr-sleep (2016-11-11) 6 commits
+  (merged to 'next' on 2016-11-11 at abb2ee960d)
+ + t6026: clarify the point of "kill $(cat sleep.pid)"
+  (merged to 'next' on 2016-11-10 at 93666a6dc2)
+ + t6026: ensure that long-running script really is
+ + Revert "t6026-merge-attr: don't fail if sleep exits early"
+ + Revert "t6026-merge-attr: ensure that the merge driver was called"
+  (merged to 'next' on 2016-11-10 at ed4623bafd)
+ + t6026-merge-attr: ensure that the merge driver was called
   (merged to 'next' on 2016-11-09 at 17fbe796e6)
  + t6026-merge-attr: don't fail if sleep exits early
 
  Fix for a racy false-positive test failure.
-
- Will merge to 'master'.
 
 
 * jk/alt-odb-cleanup (2016-11-08) 1 commit
@@ -59,8 +46,6 @@ of the repositories listed at
 
  Fix a corner-case regression in a topic that graduated during the
  v2.11 cycle.
-
- Will merge to 'master'.
 
 
 * jk/filter-process-fix (2016-11-02) 4 commits
@@ -72,50 +57,80 @@ of the repositories listed at
 
  Test portability improvements and cleanups for t0021.
 
- Will merge to 'master'.
-
 
 * js/prepare-sequencer (2016-11-08) 1 commit
- - sequencer: silence -Wtautological-constant-out-of-range-compare
+  (merged to 'next' on 2016-11-10 at 91f76470d1)
+ + sequencer: silence -Wtautological-constant-out-of-range-compare
 
  Silence a clang warning introduced by a recently graduated topic.
 
- Will merge to 'master'.
+
+* js/pwd-var-vs-pwd-cmd-fix (2016-11-11) 1 commit
+  (merged to 'next' on 2016-11-11 at 1bf8501637)
+ + t0021, t5615: use $PWD instead of $(pwd) in PATH-like shell variables
+
+ Last minute fixes to two fixups merged to 'master' recently.
 
 
-* ls/filter-process (2016-11-08) 2 commits
-  (merged to 'next' on 2016-11-09 at 7d217ebb5e)
- + t0021: compute file size with a single process instead of a pipeline
- + t0021: expect more variations in the output of uniq -c
+* ls/filter-process (2016-11-11) 1 commit
+  (merged to 'next' on 2016-11-11 at 2140b6d4ce)
+ + t0021: remove debugging cruft
 
  Test portability improvements and optimization for an
  already-graduated topic.
 
- Will merge to 'master'.
+
+* ls/macos-update (2016-11-10) 2 commits
+  (merged to 'next' on 2016-11-10 at b7fdaf4b98)
+ + travis-ci: disable GIT_TEST_HTTPD for macOS
+ + Makefile: set NO_OPENSSL on macOS by default
+
+ Portability update and workaround for builds on recent Mac OS X.
 
 
-* jc/retire-compaction-heuristics (2016-11-02) 3 commits
- - SQUASH???
- - SQUASH???
- - diff: retire the original experimental "compaction" heuristics
+* ps/common-info-doc (2016-11-11) 1 commit
+  (merged to 'next' on 2016-11-11 at 9300ea9190)
+ + doc: fix location of 'info/' with $GIT_COMMON_DIR
+
+ Doc fix.
 
 
-* jc/abbrev-autoscale-config (2016-11-01) 1 commit
- - config.abbrev: document the new default that auto-scales
+* rt/fetch-pack-error-message-fix (2016-11-11) 1 commit
+  (merged to 'next' on 2016-11-11 at 6fd41c83fe)
+ + fetch-pack.c: correct command at the beginning of an error message
+
+ An error message in fetch-pack executable that was newly marked for
+ translation was misspelt, which has been fixed.
+
+--------------------------------------------------
+[New Topics]
+
+* bw/transport-protocol-policy (2016-11-09) 2 commits
+ - transport: add protocol policy config option
+ - lib-proto-disable: variable name fix
+
+ Finer-grained control of what protocols are allowed for transports
+ during clone/fetch/push have been enabled via a new configuration
+ mechanism.
+
+ Will merge to 'next'.
 
 
-* jk/nofollow-attr-ignore (2016-11-02) 5 commits
- - exclude: do not respect symlinks for in-tree .gitignore
- - attr: do not respect symlinks for in-tree .gitattributes
- - exclude: convert "check_index" into a flags field
- - attr: convert "macro_ok" into a flags field
- - add open_nofollow() helper
+* jk/create-branch-remove-unused-param (2016-11-09) 1 commit
+ - create_branch: drop unused "head" parameter
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 
-* sb/submodule-config-cleanup (2016-11-02) 3 commits
- - submodule-config: clarify parsing of null_sha1 element
- - submodule-config: rename commit_sha1 to commit_or_tree
- - submodule config: inline config_from_{name, path}
+* jt/fetch-no-redundant-tag-fetch-map (2016-11-11) 1 commit
+ - fetch: do not redundantly calculate tag refmap
+
+ Code cleanup to avoid using redundant refspecs while fetching with
+ the --tags option.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -258,6 +273,30 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/retire-compaction-heuristics (2016-11-02) 3 commits
+ - SQUASH???
+ - SQUASH???
+ - diff: retire the original experimental "compaction" heuristics
+
+
+* jc/abbrev-autoscale-config (2016-11-01) 1 commit
+ - config.abbrev: document the new default that auto-scales
+
+
+* jk/nofollow-attr-ignore (2016-11-02) 5 commits
+ - exclude: do not respect symlinks for in-tree .gitignore
+ - attr: do not respect symlinks for in-tree .gitattributes
+ - exclude: convert "check_index" into a flags field
+ - attr: convert "macro_ok" into a flags field
+ - add open_nofollow() helper
+
+
+* sb/submodule-config-cleanup (2016-11-02) 3 commits
+ - submodule-config: clarify parsing of null_sha1 element
+ - submodule-config: rename commit_sha1 to commit_or_tree
+ - submodule config: inline config_from_{name, path}
+
+
 * jc/push-default-explicit (2016-10-31) 2 commits
   (merged to 'next' on 2016-11-01 at 8dc3a6cf25)
  + push: test pushing ambiguously named branches
@@ -267,7 +306,7 @@ of the repositories listed at
  specified refspec to perform 'current', 'simple', or 'upstream'
  push, causing unnecessary "ambiguous ref" errors.
 
- Will hold.
+ Will cook in 'next'.
 
 
 * jt/use-trailer-api-in-commands (2016-11-02) 6 commits
@@ -407,10 +446,9 @@ of the repositories listed at
  cf. <20161007210721.20437-1-santiago@nyu.edu>
 
 
-* sb/attr (2016-11-09) 38 commits
+* sb/attr (2016-11-11) 35 commits
  - completion: clone can initialize specific submodules
  - clone: add --init-submodule=<pathspec> switch
- - SQUASH to: submodule update: add `--init-default-path` switch
  - submodule update: add `--init-default-path` switch
  - pathspec: allow escaped query values
  - pathspec: allow querying for attributes
@@ -418,7 +456,6 @@ of the repositories listed at
  - pathspec: move long magic parsing out of prefix_pathspec
  - Documentation: fix a typo
  - attr: keep attr stack for each check
- - SQUASH???
  - attr: convert to new threadsafe API
  - attr: make git_check_attr_counted static
  - attr.c: outline the future plans by heavily commenting
@@ -430,7 +467,6 @@ of the repositories listed at
  - attr.c: add push_stack() helper
  - attr: support quoting pathname patterns in C style
  - attr: expose validity check for attribute names
- - attr: add counted string version of git_attr()
  - attr: add counted string version of git_check_attr()
  - attr: retire git_check_attrs() API
  - attr: convert git_check_attrs() callers to use the new API
@@ -455,8 +491,9 @@ of the repositories listed at
  Waiting for review.
 
 
-* va/i18n-perl-scripts (2016-10-20) 14 commits
+* va/i18n-perl-scripts (2016-11-11) 16 commits
  - i18n: difftool: mark warnings for translation
+ - i18n: send-email: mark composing message for translation
  - i18n: send-email: mark string with interpolation for translation
  - i18n: send-email: mark warnings and errors for translation
  - i18n: send-email: mark strings for translation
@@ -470,11 +507,11 @@ of the repositories listed at
  - i18n: add--interactive: mark strings with interpolation for translation
  - i18n: add--interactive: mark simple here-documents for translation
  - i18n: add--interactive: mark strings for translation
+ - Git.pm: add subroutines for commenting lines
 
  Porcelain scripts written in Perl are getting internationalized.
 
  Waiting for review.
- cf. <20161010125449.7929-1-vascomalmeida@sapo.pt>
 
 
 * jc/latin-1 (2016-09-26) 2 commits
