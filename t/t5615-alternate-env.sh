@@ -31,14 +31,14 @@ test_expect_success 'objects inaccessible without alternates' '
 '
 
 test_expect_success 'access alternate via absolute path' '
-	check_obj "$(pwd)/one.git/objects" <<-EOF
+	check_obj "$PWD/one.git/objects" <<-EOF
 	$one blob
 	$two missing
 	EOF
 '
 
 test_expect_success 'access multiple alternates' '
-	check_obj "$(pwd)/one.git/objects:$(pwd)/two.git/objects" <<-EOF
+	check_obj "$PWD/one.git/objects:$PWD/two.git/objects" <<-EOF
 	$one blob
 	$two blob
 	EOF
