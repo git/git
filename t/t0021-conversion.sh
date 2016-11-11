@@ -29,8 +29,7 @@ file_size () {
 
 filter_git () {
 	rm -f rot13-filter.log &&
-	git "$@" 2>git-stderr.log &&
-	rm -f git-stderr.log
+	git "$@"
 }
 
 # Compare two files and ensure that `clean` and `smudge` respectively are
