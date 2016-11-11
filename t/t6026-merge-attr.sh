@@ -187,12 +187,20 @@ test_expect_success 'custom merge does not lock index' '
 		sleep 3600 &
 		echo $! >sleep.pid
 	EOF
-	test_when_finished "kill \$(cat sleep.pid)" &&
 
 	test_write_lines >.gitattributes \
 		"* merge=ours" "text merge=sleep-an-hour" &&
 	test_config merge.ours.driver true &&
 	test_config merge.sleep-an-hour.driver ./sleep-an-hour.sh &&
+
+	# We are testing that the custom merge driver does not block
+	# index.lock on Windows due to an inherited file handle.
+	# To ensure that the backgrounded process ran sufficiently
+	# long (and has been started in the first place), we do not
+	# ignore the result of the kill command.
+	# By packaging the command in test_when_finished, we get both
+	# the correctness check and the clean-up.
+	test_when_finished "kill \$(cat sleep.pid)" &&
 	git merge master
 '
 
