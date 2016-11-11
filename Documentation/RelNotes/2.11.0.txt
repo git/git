@@ -568,6 +568,12 @@ notes for details).
    prefixing $(git --exec-path) output in front.
    (merge 1073094f30 ak/sh-setup-dot-source-i18n-fix later to maint).
 
+ * Fix for a racy false-positive test failure.
+   (merge fdf4f6c79b as/merge-attr-sleep later to maint).
+
+ * Portability update and workaround for builds on recent Mac OS X.
+   (merge a296bc0132 ls/macos-update later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 5c238e29a8 jk/common-main later to maint).
    (merge 5a5749e45b ak/pre-receive-hook-template-modefix later to maint).
@@ -576,3 +582,4 @@ notes for details).
    (merge 4259d693fc sc/fmt-merge-msg-doc-markup-fix later to maint).
    (merge 28fab7b23d nd/test-helpers later to maint).
    (merge c2bb0c1d1e rs/cocci later to maint).
+   (merge 3285b7badb ps/common-info-doc later to maint).
