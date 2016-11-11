@@ -2961,6 +2961,11 @@ uploadpack.allowReachableSHA1InWant::
 	calculating object reachability is computationally expensive.
 	Defaults to `false`.
 
+uploadpack.allowAnySHA1InWant::
+	Allow `upload-pack` to accept a fetch request that asks for any
+	object at all.
+	Defaults to `false`.
+
 uploadpack.keepAlive::
 	When `upload-pack` has started `pack-objects`, there may be a
 	quiet period while `pack-objects` prepares the pack. Normally
