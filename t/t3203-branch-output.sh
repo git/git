@@ -37,6 +37,14 @@ test_expect_success 'git branch --list shows local branches' '
 	test_cmp expect actual
 '
 
+test_expect_success 'same, but on an unborn branch' '
+	test_when_finished "git checkout master" &&
+	git checkout --orphan naster &&
+	git branch --list >actual &&
+	sed -e "s/\* /  /" expect >expect-unborn &&
+	test_cmp expect-unborn actual
+'
+
 cat >expect <<'EOF'
   branch-one
   branch-two
