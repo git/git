@@ -553,6 +553,17 @@ static int submodule_has_commits(const char *path, struct sha1_array *commits)
 static int submodule_needs_pushing(const char *path, struct sha1_array *commits)
 {
 	if (!submodule_has_commits(path, commits))
+		/*
+		 * NOTE: We do consider it safe to return "no" here. The
+		 * correct answer would be "We do not know" instead of
+		 * "No push needed", but it is quite hard to change
+		 * the submodule pointer without having the submodule
+		 * around. If a user did however change the submodules
+		 * without having the submodule around, this indicates
+		 * an expert who knows what they are doing or a
+		 * maintainer integrating work from other people. In
+		 * both cases it should be safe to skip this check.
+		 */
 		return 0;
 
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
