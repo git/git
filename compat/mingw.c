@@ -2629,12 +2629,6 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 	char tmpbuf[MAX_LONG_PATH];
 	int len;
 
-	/* fail if symlinks are disabled */
-	if (!has_symlinks) {
-		errno = ENOSYS;
-		return -1;
-	}
-
 	if (xutftowcs_long_path(wpath, path) < 0)
 		return -1;
 
