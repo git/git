@@ -554,19 +554,34 @@ static int submodule_needs_pushing(const char *path, const unsigned char sha1[20
 	return 0;
 }
 
+static struct sha1_array *submodule_commits(struct string_list *submodules,
+					    const char *path)
+{
+	struct string_list_item *item;
+
+	item = string_list_insert(submodules, path);
+	if (item->util)
+		return (struct sha1_array *) item->util;
+
+	/* NEEDSWORK: should we have sha1_array_init()? */
+	item->util = xcalloc(1, sizeof(struct sha1_array));
+	return (struct sha1_array *) item->util;
+}
+
 static void collect_submodules_from_diff(struct diff_queue_struct *q,
 					 struct diff_options *options,
 					 void *data)
 {
 	int i;
-	struct string_list *needs_pushing = data;
+	struct string_list *submodules = data;
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
+		struct sha1_array *commits;
 		if (!S_ISGITLINK(p->two->mode))
 			continue;
-		if (submodule_needs_pushing(p->two->path, p->two->oid.hash))
-			string_list_insert(needs_pushing, p->two->path);
+		commits = submodule_commits(submodules, p->two->path);
+		sha1_array_append(commits, p->two->oid.hash);
 	}
 }
 
@@ -582,6 +597,30 @@ static void find_unpushed_submodule_commits(struct commit *commit,
 	diff_tree_combined_merge(commit, 1, &rev);
 }
 
+struct collect_submodule_from_sha1s_data {
+	char *submodule_path;
+	struct string_list *needs_pushing;
+};
+
+static int collect_submodules_from_sha1s(const unsigned char sha1[20],
+		void *data)
+{
+	struct collect_submodule_from_sha1s_data *me = data;
+
+	if (submodule_needs_pushing(me->submodule_path, sha1))
+		string_list_insert(me->needs_pushing, me->submodule_path);
+
+	return 0;
+}
+
+static void free_submodules_sha1s(struct string_list *submodules)
+{
+	struct string_list_item *item;
+	for_each_string_list_item(item, submodules)
+		sha1_array_clear((struct sha1_array *) item->util);
+	string_list_clear(submodules, 1);
+}
+
 int find_unpushed_submodules(unsigned char new_sha1[20],
 		const char *remotes_name, struct string_list *needs_pushing)
 {
@@ -590,6 +629,8 @@ int find_unpushed_submodules(unsigned char new_sha1[20],
 	const char *argv[] = {NULL, NULL, "--not", "NULL", NULL};
 	int argc = ARRAY_SIZE(argv) - 1;
 	char *sha1_copy;
+	struct string_list submodules = STRING_LIST_INIT_DUP;
+	struct string_list_item *submodule;
 
 	struct strbuf remotes_arg = STRBUF_INIT;
 
@@ -603,11 +644,21 @@ int find_unpushed_submodules(unsigned char new_sha1[20],
 		die("revision walk setup failed");
 
 	while ((commit = get_revision(&rev)) != NULL)
-		find_unpushed_submodule_commits(commit, needs_pushing);
+		find_unpushed_submodule_commits(commit, &submodules);
 
 	reset_revision_walk();
 	free(sha1_copy);
 	strbuf_release(&remotes_arg);
+
+	for_each_string_list_item(submodule, &submodules) {
+		struct collect_submodule_from_sha1s_data data;
+		data.submodule_path = submodule->string;
+		data.needs_pushing = needs_pushing;
+		sha1_array_for_each_unique((struct sha1_array *) submodule->util,
+				collect_submodules_from_sha1s,
+				&data);
+	}
+	free_submodules_sha1s(&submodules);
 
 	return needs_pushing->nr;
 }
