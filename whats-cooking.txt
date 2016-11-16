@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2016, #02; Fri, 11)
+Subject: What's cooking in git.git (Nov 2016, #03; Wed, 16)
 X-master-at: 3ab228137f980ff72dbdf5064a877d07bec76df9
-X-next-at: 34139e250de0af9c58221e12bf5da2af593901ac
+X-next-at: 51e66c2fa76b5b5131e8804974eee02d13e08b0f
 
-What's cooking in git.git (Nov 2016, #02; Fri, 11)
+What's cooking in git.git (Nov 2016, #03; Wed, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,143 +12,111 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-v2.11-rc1 has been tagged.  There might be a few updates necessary
-that remains due to timezone differences, but hopefully this should
-be good enough base.  Thanks y'all for finding and fixing these
-platform specific bits.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* as/merge-attr-sleep (2016-11-11) 6 commits
-  (merged to 'next' on 2016-11-11 at abb2ee960d)
- + t6026: clarify the point of "kill $(cat sleep.pid)"
-  (merged to 'next' on 2016-11-10 at 93666a6dc2)
- + t6026: ensure that long-running script really is
- + Revert "t6026-merge-attr: don't fail if sleep exits early"
- + Revert "t6026-merge-attr: ensure that the merge driver was called"
-  (merged to 'next' on 2016-11-10 at ed4623bafd)
- + t6026-merge-attr: ensure that the merge driver was called
-  (merged to 'next' on 2016-11-09 at 17fbe796e6)
- + t6026-merge-attr: don't fail if sleep exits early
-
- Fix for a racy false-positive test failure.
-
-
-* jk/alt-odb-cleanup (2016-11-08) 1 commit
-  (merged to 'next' on 2016-11-09 at f7463a1abc)
- + alternates: re-allow relative paths from environment
-
- Fix a corner-case regression in a topic that graduated during the
- v2.11 cycle.
-
-
-* jk/filter-process-fix (2016-11-02) 4 commits
-  (merged to 'next' on 2016-11-09 at 535b4f4de9)
- + t0021: fix filehandle usage on older perl
- + t0021: use $PERL_PATH for rot13-filter.pl
- + t0021: put $TEST_ROOT in $PATH
- + t0021: use write_script to create rot13 shell script
-
- Test portability improvements and cleanups for t0021.
-
-
-* js/prepare-sequencer (2016-11-08) 1 commit
-  (merged to 'next' on 2016-11-10 at 91f76470d1)
- + sequencer: silence -Wtautological-constant-out-of-range-compare
-
- Silence a clang warning introduced by a recently graduated topic.
-
-
-* js/pwd-var-vs-pwd-cmd-fix (2016-11-11) 1 commit
-  (merged to 'next' on 2016-11-11 at 1bf8501637)
- + t0021, t5615: use $PWD instead of $(pwd) in PATH-like shell variables
-
- Last minute fixes to two fixups merged to 'master' recently.
-
-
-* ls/filter-process (2016-11-11) 1 commit
-  (merged to 'next' on 2016-11-11 at 2140b6d4ce)
- + t0021: remove debugging cruft
-
- Test portability improvements and optimization for an
- already-graduated topic.
-
-
-* ls/macos-update (2016-11-10) 2 commits
-  (merged to 'next' on 2016-11-10 at b7fdaf4b98)
- + travis-ci: disable GIT_TEST_HTTPD for macOS
- + Makefile: set NO_OPENSSL on macOS by default
-
- Portability update and workaround for builds on recent Mac OS X.
-
-
-* ps/common-info-doc (2016-11-11) 1 commit
-  (merged to 'next' on 2016-11-11 at 9300ea9190)
- + doc: fix location of 'info/' with $GIT_COMMON_DIR
-
- Doc fix.
-
-
-* rt/fetch-pack-error-message-fix (2016-11-11) 1 commit
-  (merged to 'next' on 2016-11-11 at 6fd41c83fe)
- + fetch-pack.c: correct command at the beginning of an error message
-
- An error message in fetch-pack executable that was newly marked for
- translation was misspelt, which has been fixed.
-
---------------------------------------------------
 [New Topics]
 
-* bw/transport-protocol-policy (2016-11-09) 2 commits
- - transport: add protocol policy config option
- - lib-proto-disable: variable name fix
+* dt/empty-submodule-in-merge (2016-11-12) 1 commit
+ - submodules: allow empty working-tree dirs in merge/cherry-pick
 
- Finer-grained control of what protocols are allowed for transports
- during clone/fetch/push have been enabled via a new configuration
- mechanism.
-
- Will merge to 'next'.
+ An empty directory in a working tree that can simply be nuked used
+ to interfere while merging or cherry-picking a change to create a
+ submodule directory there, which has been fixed..
 
 
-* jk/create-branch-remove-unused-param (2016-11-09) 1 commit
- - create_branch: drop unused "head" parameter
+* bw/grep-recurse-submodules (2016-11-14) 6 commits
+ - grep: search history of moved submodules
+ - grep: enable recurse-submodules to work on <tree> objects
+ - grep: optionally recurse into submodules
+ - grep: add submodules as a grep source type
+ - submodules: load gitmodules file from commit sha1
+ - submodules: add helper functions to determine presence of submodules
 
- Code clean-up.
-
- Will merge to 'next'.
+ "git grep" learns to optionally recurse into submodules
 
 
-* jt/fetch-no-redundant-tag-fetch-map (2016-11-11) 1 commit
- - fetch: do not redundantly calculate tag refmap
+* dt/smart-http-detect-server-going-away (2016-11-14) 2 commits
+ - upload-pack: optionally allow fetching any sha1
+ - remote-curl: don't hang when a server dies before any output
 
- Code cleanup to avoid using redundant refspecs while fetching with
- the --tags option.
+ When the http server gives an incomplete response to a smart-http
+ rpc call, it could lead to client waiting for a full response that
+ will never come.  Teach the client side to notice this condition
+ and abort the transfer.
+
+ An improvement counterproposal exists.
+ cf. <20161114194049.mktpsvgdhex2f4zv@sigill.intra.peff.net>
+
+
+* mm/push-social-engineering-attack-doc (2016-11-14) 1 commit
+  (merged to 'next' on 2016-11-16 at b7c1b27563)
+ + doc: mention transfer data leaks in more places
+
+ Doc update on fetching and pushing.
+
+ Will cook in 'next'.
+
+
+* nd/worktree-lock (2016-11-13) 1 commit
+  (merged to 'next' on 2016-11-16 at 67b731de07)
+ + git-worktree.txt: fix typo "to"/"two", and add comma
+
+ Typofix.
+
+ Will merge to 'master'.
+
+
+* nd/worktree-move (2016-11-12) 11 commits
+ . worktree remove: new command
+ . worktree move: refuse to move worktrees with submodules
+ . worktree move: accept destination as directory
+ . worktree move: new command
+ . worktree.c: add update_worktree_location()
+ . worktree.c: add validate_worktree()
+ . copy.c: convert copy_file() to copy_dir_recursively()
+ . copy.c: style fix
+ . copy.c: convert bb_(p)error_msg to error(_errno)
+ . copy.c: delete unused code in copy_file()
+ . copy.c: import copy_file() from busybox
+
+ "git worktree" learned move and remove subcommands.
+
+ Seems to break a test or two.
+
+
+* tk/diffcore-delta-remove-unused (2016-11-14) 1 commit
+  (merged to 'next' on 2016-11-16 at 51e66c2fa7)
+ + diffcore-delta: remove unused parameter to diffcore_count_changes()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* jc/compression-config (2016-11-15) 1 commit
+ - compression: unify pack.compression configuration parsing
+
+ Compression setting for producing packfiles were spread across
+ three codepaths, one of which did not honor any configuration.
+ Unify these so that all of them honor core.compression and
+ pack.compression variables the same way.
+
+ Needs tests for pack-objects and fast-import.
+
+
+* mm/gc-safety-doc (2016-11-16) 1 commit
+ - git-gc.txt: expand discussion of races with other processes
+
+ Doc update.
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* hv/submodule-not-yet-pushed-fix (2016-10-10) 3 commits
- - batch check whether submodule needs pushing into one call
- - serialize collection of refs that contain submodule changes
- - serialize collection of changed submodules
-
- The code in "git push" to compute if any commit being pushed in the
- superproject binds a commit in a submodule that hasn't been pushed
- out was overly inefficient, making it unusable even for a small
- project that does not have any submodule but have a reasonable
- number of refs.
-
- Waiting for review.
- cf. <cover.1475851621.git.hvoigt@hvoigt.net>
-
 
 * sb/push-make-submodule-check-the-default (2016-10-10) 2 commits
  - push: change submodule default to check when submodules exist
@@ -202,32 +170,6 @@ of the repositories listed at
  this.
 
 
-* kn/ref-filter-branch-list (2016-05-17) 17 commits
- - branch: implement '--format' option
- - branch: use ref-filter printing APIs
- - branch, tag: use porcelain output
- - ref-filter: allow porcelain to translate messages in the output
- - ref-filter: add `:dir` and `:base` options for ref printing atoms
- - ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
- - ref-filter: introduce symref_atom_parser() and refname_atom_parser()
- - ref-filter: introduce refname_atom_parser_internal()
- - ref-filter: make "%(symref)" atom work with the ':short' modifier
- - ref-filter: add support for %(upstream:track,nobracket)
- - ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
- - ref-filter: introduce format_ref_array_item()
- - ref-filter: move get_head_description() from branch.c
- - ref-filter: modify "%(objectname:short)" to take length
- - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
- - ref-filter: include reference to 'used_atom' within 'atom_value'
- - ref-filter: implement %(if), %(then), and %(else) atoms
-
- The code to list branches in "git branch" has been consolidated
- with the more generic ref-filter API.
-
- Rerolled.
- Needs review.
-
-
 * ec/annotate-deleted (2015-11-20) 1 commit
  - annotate: skip checking working tree if a revision is provided
 
@@ -272,6 +214,82 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* hv/submodule-not-yet-pushed-fix (2016-11-16) 4 commits
+ - submodule_needs_pushing(): explain the behaviour when we cannot answer
+ - batch check whether submodule needs pushing into one call
+ - serialize collection of refs that contain submodule changes
+ - serialize collection of changed submodules
+
+ The code in "git push" to compute if any commit being pushed in the
+ superproject binds a commit in a submodule that hasn't been pushed
+ out was overly inefficient, making it unusable even for a small
+ project that does not have any submodule but have a reasonable
+ number of refs.
+
+ Looking good.
+
+
+* kn/ref-filter-branch-list (2016-11-15) 18 commits
+ - for-each-ref: do not segv with %(HEAD) on an unborn branch
+ - branch: implement '--format' option
+ - branch: use ref-filter printing APIs
+ - branch, tag: use porcelain output
+ - ref-filter: allow porcelain to translate messages in the output
+ - ref-filter: add `:dir` and `:base` options for ref printing atoms
+ - ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
+ - ref-filter: introduce symref_atom_parser() and refname_atom_parser()
+ - ref-filter: introduce refname_atom_parser_internal()
+ - ref-filter: make "%(symref)" atom work with the ':short' modifier
+ - ref-filter: add support for %(upstream:track,nobracket)
+ - ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
+ - ref-filter: introduce format_ref_array_item()
+ - ref-filter: move get_head_description() from branch.c
+ - ref-filter: modify "%(objectname:short)" to take length
+ - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
+ - ref-filter: include reference to 'used_atom' within 'atom_value'
+ - ref-filter: implement %(if), %(then), and %(else) atoms
+
+ The code to list branches in "git branch" has been consolidated
+ with the more generic ref-filter API.
+
+ Rerolled, reviewed, looking good.
+ Expecting a reroll.
+ cf. <20161108201211.25213-1-Karthik.188@gmail.com>
+ cf. <CAOLa=ZQqe3vEj_428d41vd_4kfjzsm87Wam6Zm2dhXWkPdJ8Rw@mail.gmail.com>
+ cf. <xmqq7f84tqa7.fsf_-_@gitster.mtv.corp.google.com>
+
+
+* bw/transport-protocol-policy (2016-11-09) 2 commits
+  (merged to 'next' on 2016-11-16 at 1391d3eeed)
+ + transport: add protocol policy config option
+ + lib-proto-disable: variable name fix
+
+ Finer-grained control of what protocols are allowed for transports
+ during clone/fetch/push have been enabled via a new configuration
+ mechanism.
+
+ Will cook in 'next'.
+
+
+* jk/create-branch-remove-unused-param (2016-11-09) 1 commit
+  (merged to 'next' on 2016-11-16 at 621254c832)
+ + create_branch: drop unused "head" parameter
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jt/fetch-no-redundant-tag-fetch-map (2016-11-11) 1 commit
+  (merged to 'next' on 2016-11-16 at 5846c27cc5)
+ + fetch: do not redundantly calculate tag refmap
+
+ Code cleanup to avoid using redundant refspecs while fetching with
+ the --tags option.
+
+ Will cook in 'next'.
+
 
 * jc/retire-compaction-heuristics (2016-11-02) 3 commits
  - SQUASH???
