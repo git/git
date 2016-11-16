@@ -83,9 +83,21 @@ test_expect_success 'final^1^@ = final^1^1 final^1^2' '
 	test_cmp expect actual
 '
 
+test_expect_success 'symbolic final^1^@ = final^1^1 final^1^2' '
+	git rev-parse --symbolic final^1^1 final^1^2 >expect &&
+	git rev-parse --symbolic final^1^@ >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'final^1^! = final^1 ^final^1^1 ^final^1^2' '
 	git rev-parse final^1 ^final^1^1 ^final^1^2 >expect &&
 	git rev-parse final^1^! >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic final^1^! = final^1 ^final^1^1 ^final^1^2' '
+	git rev-parse --symbolic final^1 ^final^1^1 ^final^1^2 >expect &&
+	git rev-parse --symbolic final^1^! >actual &&
 	test_cmp expect actual
 '
 
@@ -140,6 +152,12 @@ test_expect_success 'rev-parse merge^-1 = merge^..merge' '
 test_expect_success 'rev-parse merge^-2 = merge^2..merge' '
 	git rev-parse merge^2..merge >expect &&
 	git rev-parse merge^-2 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'symbolic merge^-1 = merge^1..merge' '
+	git rev-parse --symbolic merge^1..merge >expect &&
+	git rev-parse --symbolic merge^-1 >actual &&
 	test_cmp expect actual
 '
 
