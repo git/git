@@ -202,8 +202,25 @@ static int ask_yes_no_if_possible(const char *format, ...)
 	}
 }
 
+/* Windows only */
+enum hide_dotfiles_type {
+	HIDE_DOTFILES_FALSE = 0,
+	HIDE_DOTFILES_TRUE,
+	HIDE_DOTFILES_DOTGITONLY
+};
+
+static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+
 int mingw_core_config(const char *var, const char *value)
 {
+	if (!strcmp(var, "core.hidedotfiles")) {
+		if (value && !strcasecmp(value, "dotgitonly"))
+			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
+		else
+			hide_dotfiles = git_config_bool(var, value);
+		return 0;
+	}
+
 	return 0;
 }
 
