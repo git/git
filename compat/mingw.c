@@ -238,6 +238,7 @@ enum hide_dotfiles_type {
 static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 int core_fscache;
 int core_long_paths;
+static char *unset_environment_variables;
 
 int mingw_core_config(const char *var, const char *value)
 {
@@ -256,6 +257,12 @@ int mingw_core_config(const char *var, const char *value)
 
 	if (!strcmp(var, "core.longpaths")) {
 		core_long_paths = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.unsetenvvars")) {
+		free(unset_environment_variables);
+		unset_environment_variables = xstrdup(value);
 		return 0;
 	}
 
@@ -1432,6 +1439,27 @@ static wchar_t *make_environment_block(char **deltaenv)
 
 #endif
 
+static void do_unset_environment_variables(void)
+{
+	static int done;
+	char *p = unset_environment_variables;
+
+	if (done || !p)
+		return;
+	done = 1;
+
+	for (;;) {
+		char *comma = strchr(p, ',');
+
+		if (comma)
+			*comma = '\0';
+		unsetenv(p);
+		if (!comma)
+			break;
+		p = comma + 1;
+	}
+}
+
 struct pinfo_t {
 	struct pinfo_t *next;
 	pid_t pid;
@@ -1450,9 +1478,12 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	wchar_t wcmd[MAX_PATH], wdir[MAX_PATH], *wargs, *wenvblk = NULL;
 	unsigned flags = CREATE_UNICODE_ENVIRONMENT;
 	BOOL ret;
+	HANDLE cons;
+
+	do_unset_environment_variables();
 
 	/* Determine whether or not we are associated to a console */
-	HANDLE cons = CreateFile("CONOUT$", GENERIC_WRITE,
+	cons = CreateFile("CONOUT$", GENERIC_WRITE,
 			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
 			FILE_ATTRIBUTE_NORMAL, NULL);
 	if (cons == INVALID_HANDLE_VALUE) {
@@ -3035,6 +3066,8 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	/* fix Windows specific environment settings */
 	setup_windows_environment();
 
+	unset_environment_variables = xstrdup("PERL5LIB");
+
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
 	InitializeCriticalSection(&phantom_symlinks_cs);
@@ -3110,6 +3143,8 @@ void mingw_startup(void)
 
 	/* fix Windows specific environment settings */
 	setup_windows_environment();
+
+	unset_environment_variables = xstrdup("PERL5LIB");
 
 	/*
 	 * Avoid a segmentation fault when cURL tries to set the CHARSET
