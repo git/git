@@ -228,6 +228,10 @@ static int retry_ask_yes_no(int *tries, const char *format, ...)
 	return result;
 }
 
+int mingw_core_config(const char *var, const char *value)
+{
+	return 0;
+}
 
 DECLARE_PROC_ADDR(kernel32.dll, BOOL, CreateSymbolicLinkW, LPCWSTR, LPCWSTR, DWORD);
 
