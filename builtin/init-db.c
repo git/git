@@ -154,13 +154,8 @@ static int git_init_db_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "init.templatedir"))
 		return git_config_pathname(&init_db_template_dir, k, v);
 
-	if (!strcmp(k, "core.hidedotfiles")) {
-		if (v && !strcasecmp(v, "dotgitonly"))
-			hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
-		else
-			hide_dotfiles = git_config_bool(k, v);
-		return 0;
-	}
+	if (starts_with(k, "core."))
+		return platform_core_config(k, v);
 
 	return 0;
 }
