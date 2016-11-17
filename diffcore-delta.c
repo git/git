@@ -166,7 +166,6 @@ int diffcore_count_changes(struct diff_filespec *src,
 			   struct diff_filespec *dst,
 			   void **src_count_p,
 			   void **dst_count_p,
-			   unsigned long delta_limit,
 			   unsigned long *src_copied,
 			   unsigned long *literal_added)
 {
