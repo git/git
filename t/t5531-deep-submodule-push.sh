@@ -431,7 +431,7 @@ test_expect_success 'push unpushable submodule recursively fails' '
 	test_cmp expected actual
 '
 
-test_expect_failure 'push --dry-run does not recursively update submodules' '
+test_expect_success 'push --dry-run does not recursively update submodules' '
 	(
 		cd work/gar/bage &&
 		git checkout master &&
