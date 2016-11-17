@@ -47,6 +47,8 @@ static void *preload_thread(void *_data)
 		struct cache_entry *ce = *cep++;
 		struct stat st;
 
+		precompute_istate_hashes(ce);
+
 		if (ce_stage(ce))
 			continue;
 		if (S_ISGITLINK(ce->ce_mode))

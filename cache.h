@@ -173,6 +173,9 @@ struct cache_entry {
 	unsigned int ce_flags;
 	unsigned int ce_namelen;
 	unsigned int index;	/* for link extension */
+	unsigned int precompute_hash_state;
+	unsigned int precompute_hash_name;
+	unsigned int precompute_hash_dir;
 	struct object_id oid;
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -228,6 +231,19 @@ struct cache_entry {
 #if CE_EXTENDED_FLAGS & 0x803FFFFF
 #error "CE_EXTENDED_FLAGS out of range"
 #endif
+
+/*
+ * Bit set if preload-index precomputed the hash value(s)
+ * for this cache-entry.
+ */ 
+#define CE_PRECOMPUTE_HASH_STATE__SET   (1 << 0)
+/*
+ * Bit set if precompute-index also precomputed the hash value
+ * for the parent directory.
+ */ 
+#define CE_PRECOMPUTE_HASH_STATE__DIR   (1 << 1)
+
+void precompute_istate_hashes(struct cache_entry *ce);
 
 /* Forward structure decls */
 struct pathspec;
