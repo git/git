@@ -583,3 +583,6 @@ notes for details).
    (merge 28fab7b23d nd/test-helpers later to maint).
    (merge c2bb0c1d1e rs/cocci later to maint).
    (merge 3285b7badb ps/common-info-doc later to maint).
+   (merge 2b090822e8 nd/worktree-lock later to maint).
+   (merge 4bd488ea7c jk/create-branch-remove-unused-param later to maint).
+   (merge 974e0044d6 tk/diffcore-delta-remove-unused later to maint).
