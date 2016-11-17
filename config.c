@@ -1093,7 +1093,7 @@ int git_config_color(char *dest, const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_core_config(const char *var, const char *value)
+static int git_default_core_config(const char *var, const char *value, void *cb)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
@@ -1363,7 +1363,7 @@ static int git_default_core_config(const char *var, const char *value)
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
-	return 0;
+	return platform_core_config(var, value, cb);
 }
 
 static int git_default_i18n_config(const char *var, const char *value)
@@ -1451,7 +1451,7 @@ static int git_default_mailmap_config(const char *var, const char *value)
 int git_default_config(const char *var, const char *value, void *cb)
 {
 	if (starts_with(var, "core."))
-		return git_default_core_config(var, value);
+		return git_default_core_config(var, value, cb);
 
 	if (starts_with(var, "user."))
 		return git_ident_config(var, value, cb);
