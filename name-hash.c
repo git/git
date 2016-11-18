@@ -53,7 +53,7 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	int use_precomputed_dir_hash = 0;
 
 	if (ce->precompute_hash_state & CE_PRECOMPUTE_HASH_STATE__SET) {
-		if (!ce->precompute_hash_state & CE_PRECOMPUTE_HASH_STATE__DIR)
+		if (!(ce->precompute_hash_state & CE_PRECOMPUTE_HASH_STATE__DIR))
 			return NULL; /* item does not have a parent directory */
 		if (namelen == ce_namelen(ce)) {
 			/* dir hash only valid for outer-most call (not recursive ones) */
