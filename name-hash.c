@@ -319,7 +319,7 @@ void precompute_istate_hashes(struct cache_entry *ce)
 	} else {
 		namelen--;
 		ce->precompute_hash_dir = memihash(ce->name, namelen);
-		ce->precompute_hash_name = memihash2(
+		ce->precompute_hash_name = memihash_cont(
 			ce->precompute_hash_dir, &ce->name[namelen],
 			ce_namelen(ce) - namelen);
 		ce->precompute_hash_state =
