@@ -775,6 +775,12 @@ core.longpaths::
 	(msys, bash, tcl, perl...). Only enable this if you know what you're
 	doing and are prepared to live with a few quirks.
 
+core.unsetenvvars::
+	EXPERIMENTAL, Windows-only: comma-separated list of environment
+	variables' names that need to be unset before spawning any other
+	process. Defaults to `PERL5LIB` to account for the fact that Git
+	for Windows insists on using its own Perl interpreter.
+
 core.createObject::
 	You can set this to 'link', in which case a hardlink followed by
 	a delete of the source are used to make sure that object creation
