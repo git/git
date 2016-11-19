@@ -10,6 +10,7 @@
 #include "color.h"
 #include "reflog-walk.h"
 #include "gpg-interface.h"
+#include "trailer.h"
 
 static char *user_format;
 static struct cmt_fmt_map {
@@ -889,6 +890,16 @@ const char *format_subject(struct strbuf *sb, const char *msg,
 	return msg;
 }
 
+static void format_trailers(struct strbuf *sb, const char *msg)
+{
+	struct trailer_info info;
+
+	trailer_info_get(&info, msg);
+	strbuf_add(sb, info.trailer_start,
+		   info.trailer_end - info.trailer_start);
+	trailer_info_release(&info);
+}
+
 static void parse_commit_message(struct format_commit_context *c)
 {
 	const char *msg = c->message + c->message_off;
@@ -1292,6 +1303,12 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		strbuf_addstr(sb, msg + c->body_off);
 		return 1;
 	}
+
+	if (starts_with(placeholder, "(trailers)")) {
+		format_trailers(sb, msg + c->subject_off);
+		return strlen("(trailers)");
+	}
+
 	return 0;	/* unknown placeholder */
 }
 
