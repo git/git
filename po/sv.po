@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.11.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-22 22:10+0800\n"
-"PO-Revision-Date: 2016-11-22 22:16+0800\n"
+"POT-Creation-Date: 2016-11-25 22:50+0800\n"
+"PO-Revision-Date: 2016-11-25 22:59+0800\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -2655,7 +2655,7 @@ msgstr "kunde inte skriva till \"%s\""
 
 #: sequencer.c:251
 #, c-format
-msgid "could not write eol to '%s"
+msgid "could not write eol to '%s'"
 msgstr "kunde inte skriva radslut till \"%s\""
 
 #: sequencer.c:255 sequencer.c:1130 sequencer.c:1216

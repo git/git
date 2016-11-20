@@ -135,8 +135,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-22 22:10+0800\n"
-"PO-Revision-Date: 2016-11-22 22:15+0800\n"
+"POT-Creation-Date: 2016-11-25 22:50+0800\n"
+"PO-Revision-Date: 2016-11-25 22:54+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -2732,7 +2732,7 @@ msgstr "不能写入 '%s'"
 
 #: sequencer.c:251
 #, c-format
-msgid "could not write eol to '%s"
+msgid "could not write eol to '%s'"
 msgstr "不能将换行符写入 '%s'"
 
 #: sequencer.c:255 sequencer.c:1130 sequencer.c:1216
