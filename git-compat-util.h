@@ -290,7 +290,8 @@ static inline size_t msvc_iconv(iconv_t conv,
 	const char **inpos, size_t *insize,
 	char **outpos, size_t *outsize)
 {
-	int saved_errno = errno, res;
+	int saved_errno = errno;
+	size_t res;
 
 	errno = ENOENT;
 	res = iconv(conv, inpos, insize, outpos, outsize);
