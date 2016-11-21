@@ -432,7 +432,7 @@ test_expect_success '-c with changed comment char' '
 	test_cmp expect actual
 '
 
-test_expect_failure '-c with comment char defined in .git/config' '
+test_expect_success '-c with comment char defined in .git/config' '
 	test_config core.commentchar = &&
 	printf "= foo\n" >expect &&
 	printf "foo" | (
