@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2016, #03; Wed, 16)
-X-master-at: 3ab228137f980ff72dbdf5064a877d07bec76df9
-X-next-at: 51e66c2fa76b5b5131e8804974eee02d13e08b0f
+Subject: What's cooking in git.git (Nov 2016, #04; Mon, 21)
+X-master-at: 1310affe024fba407bff55dbe65cd6d670c8a32d
+X-next-at: d50252334705fce146cd91a5045ecc87fd6ea92e
 
-What's cooking in git.git (Nov 2016, #03; Wed, 16)
+What's cooking in git.git (Nov 2016, #04; Mon, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,45 +20,67 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* dt/empty-submodule-in-merge (2016-11-12) 1 commit
- - submodules: allow empty working-tree dirs in merge/cherry-pick
+* jc/for-each-ref-head-segfault-fix (2016-11-18) 1 commit
+  (merged to 'next' on 2016-11-21 at 3c1f352316)
+ + for-each-ref: do not segv with %(HEAD) on an unborn branch
 
- An empty directory in a working tree that can simply be nuked used
- to interfere while merging or cherry-picking a change to create a
- submodule directory there, which has been fixed..
-
-
-* bw/grep-recurse-submodules (2016-11-14) 6 commits
- - grep: search history of moved submodules
- - grep: enable recurse-submodules to work on <tree> objects
- - grep: optionally recurse into submodules
- - grep: add submodules as a grep source type
- - submodules: load gitmodules file from commit sha1
- - submodules: add helper functions to determine presence of submodules
-
- "git grep" learns to optionally recurse into submodules
-
-
-* dt/smart-http-detect-server-going-away (2016-11-14) 2 commits
- - upload-pack: optionally allow fetching any sha1
- - remote-curl: don't hang when a server dies before any output
-
- When the http server gives an incomplete response to a smart-http
- rpc call, it could lead to client waiting for a full response that
- will never come.  Teach the client side to notice this condition
- and abort the transfer.
-
- An improvement counterproposal exists.
- cf. <20161114194049.mktpsvgdhex2f4zv@sigill.intra.peff.net>
-
-
-* mm/push-social-engineering-attack-doc (2016-11-14) 1 commit
-  (merged to 'next' on 2016-11-16 at b7c1b27563)
- + doc: mention transfer data leaks in more places
-
- Doc update on fetching and pushing.
+ Using a %(HEAD) placeholder in "for-each-ref --format=" option
+ caused the command to segfault when on an unborn branch.
 
  Will cook in 'next'.
+
+
+* js/prepare-sequencer (2016-11-21) 1 commit
+  (merged to 'next' on 2016-11-21 at 7cdf4ca421)
+ + i18n: fix unmatched single quote in error message
+
+ Fix for an error message string.
+ Will merge to 'master'.
+
+
+* js/rebase-i-commentchar-fix (2016-11-21) 3 commits
+ - rebase -i: handle core.commentChar=auto
+ - stripspace: respect repository config
+ - rebase -i: highlight problems with core.commentchar
+
+ "git rebase -i" did not work well with core.commentchar
+ configuration variable for two reasons, both of which have been
+ fixed.
+
+ Waiting for an ack for updates.
+ Hopefully we can merge this before 2.11 final, as one of the
+ breakages is a recent regression.
+
+
+* jc/cache-tree-wip (2016-11-18) 4 commits
+ - cache-tree: freshen the tree object at the top level
+ - cache-tree: retire cache_tree_fully_valid() API function
+ - commit: remove redundant check for active_cache_changed
+ - freshen_object(): factor out a helper function
+
+
+* jk/trailers-placeholder-in-pretty (2016-11-21) 2 commits
+ - ref-filter: add support to display trailers as part of contents
+ - pretty: add %(trailers) format for displaying trailers of a commit message
+
+
+* jt/trailer-with-cruft (2016-11-21) 1 commit
+ - doc: mention user-configured trailers
+
+
+* sb/submodule-intern-gitdir (2016-11-21) 3 commits
+ - submodule--helper: add intern-git-dir function
+ - test-lib-functions.sh: teach test_commit -C <dir>
+ - submodule: use absolute path for computing relative path connecting
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* jk/create-branch-remove-unused-param (2016-11-09) 1 commit
+  (merged to 'next' on 2016-11-16 at 621254c832)
+ + create_branch: drop unused "head" parameter
+
+ Code clean-up.
 
 
 * nd/worktree-lock (2016-11-13) 1 commit
@@ -67,53 +89,12 @@ of the repositories listed at
 
  Typofix.
 
- Will merge to 'master'.
-
-
-* nd/worktree-move (2016-11-12) 11 commits
- . worktree remove: new command
- . worktree move: refuse to move worktrees with submodules
- . worktree move: accept destination as directory
- . worktree move: new command
- . worktree.c: add update_worktree_location()
- . worktree.c: add validate_worktree()
- . copy.c: convert copy_file() to copy_dir_recursively()
- . copy.c: style fix
- . copy.c: convert bb_(p)error_msg to error(_errno)
- . copy.c: delete unused code in copy_file()
- . copy.c: import copy_file() from busybox
-
- "git worktree" learned move and remove subcommands.
-
- Seems to break a test or two.
-
 
 * tk/diffcore-delta-remove-unused (2016-11-14) 1 commit
   (merged to 'next' on 2016-11-16 at 51e66c2fa7)
  + diffcore-delta: remove unused parameter to diffcore_count_changes()
 
  Code cleanup.
-
- Will merge to 'master'.
-
-
-* jc/compression-config (2016-11-15) 1 commit
- - compression: unify pack.compression configuration parsing
-
- Compression setting for producing packfiles were spread across
- three codepaths, one of which did not honor any configuration.
- Unify these so that all of them honor core.compression and
- pack.compression variables the same way.
-
- Needs tests for pack-objects and fast-import.
-
-
-* mm/gc-safety-doc (2016-11-16) 1 commit
- - git-gc.txt: expand discussion of races with other processes
-
- Doc update.
-
- Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -215,11 +196,99 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* dt/empty-submodule-in-merge (2016-11-17) 1 commit
+ - submodules: allow empty working-tree dirs in merge/cherry-pick
+
+ An empty directory in a working tree that can simply be nuked used
+ to interfere while merging or cherry-picking a change to create a
+ submodule directory there, which has been fixed..
+
+ Waiting for review.
+
+
+* bw/grep-recurse-submodules (2016-11-18) 6 commits
+ - grep: search history of moved submodules
+ - grep: enable recurse-submodules to work on <tree> objects
+ - grep: optionally recurse into submodules
+ - grep: add submodules as a grep source type
+ - submodules: load gitmodules file from commit sha1
+ - submodules: add helper functions to determine presence of submodules
+
+ "git grep" learns to optionally recurse into submodules
+
+ Waiting for review.
+
+
+* dt/smart-http-detect-server-going-away (2016-11-18) 2 commits
+  (merged to 'next' on 2016-11-21 at d502523347)
+ + upload-pack: optionally allow fetching any sha1
+ + remote-curl: don't hang when a server dies before any output
+
+ When the http server gives an incomplete response to a smart-http
+ rpc call, it could lead to client waiting for a full response that
+ will never come.  Teach the client side to notice this condition
+ and abort the transfer.
+
+ An improvement counterproposal has failed.
+ cf. <20161114194049.mktpsvgdhex2f4zv@sigill.intra.peff.net>
+
+ Will cook in 'next'.
+
+
+* mm/push-social-engineering-attack-doc (2016-11-14) 1 commit
+  (merged to 'next' on 2016-11-16 at b7c1b27563)
+ + doc: mention transfer data leaks in more places
+
+ Doc update on fetching and pushing.
+
+ Will cook in 'next'.
+
+
+* nd/worktree-move (2016-11-12) 11 commits
+ . worktree remove: new command
+ . worktree move: refuse to move worktrees with submodules
+ . worktree move: accept destination as directory
+ . worktree move: new command
+ . worktree.c: add update_worktree_location()
+ . worktree.c: add validate_worktree()
+ . copy.c: convert copy_file() to copy_dir_recursively()
+ . copy.c: style fix
+ . copy.c: convert bb_(p)error_msg to error(_errno)
+ . copy.c: delete unused code in copy_file()
+ . copy.c: import copy_file() from busybox
+
+ "git worktree" learned move and remove subcommands.
+
+ Waiting for a reroll.
+ Seems to break a test or two.
+
+
+* jc/compression-config (2016-11-15) 1 commit
+ - compression: unify pack.compression configuration parsing
+
+ Compression setting for producing packfiles were spread across
+ three codepaths, one of which did not honor any configuration.
+ Unify these so that all of them honor core.compression and
+ pack.compression variables the same way.
+
+ Needs tests for pack-objects and fast-import.
+
+
+* mm/gc-safety-doc (2016-11-16) 1 commit
+  (merged to 'next' on 2016-11-17 at fc0d225b6b)
+ + git-gc.txt: expand discussion of races with other processes
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
 * hv/submodule-not-yet-pushed-fix (2016-11-16) 4 commits
- - submodule_needs_pushing(): explain the behaviour when we cannot answer
- - batch check whether submodule needs pushing into one call
- - serialize collection of refs that contain submodule changes
- - serialize collection of changed submodules
+  (merged to 'next' on 2016-11-21 at 1a599af962)
+ + submodule_needs_pushing(): explain the behaviour when we cannot answer
+ + batch check whether submodule needs pushing into one call
+ + serialize collection of refs that contain submodule changes
+ + serialize collection of changed submodules
 
  The code in "git push" to compute if any commit being pushed in the
  superproject binds a commit in a submodule that hasn't been pushed
@@ -227,7 +296,7 @@ of the repositories listed at
  project that does not have any submodule but have a reasonable
  number of refs.
 
- Looking good.
+ Will cook in 'next'.
 
 
 * kn/ref-filter-branch-list (2016-11-15) 18 commits
@@ -272,15 +341,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jk/create-branch-remove-unused-param (2016-11-09) 1 commit
-  (merged to 'next' on 2016-11-16 at 621254c832)
- + create_branch: drop unused "head" parameter
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * jt/fetch-no-redundant-tag-fetch-map (2016-11-11) 1 commit
   (merged to 'next' on 2016-11-16 at 5846c27cc5)
  + fetch: do not redundantly calculate tag refmap
@@ -296,9 +356,13 @@ of the repositories listed at
  - SQUASH???
  - diff: retire the original experimental "compaction" heuristics
 
+ Waiting for a reroll.
+
 
 * jc/abbrev-autoscale-config (2016-11-01) 1 commit
  - config.abbrev: document the new default that auto-scales
+
+ Waiting for a reroll.
 
 
 * jk/nofollow-attr-ignore (2016-11-02) 5 commits
@@ -308,11 +372,22 @@ of the repositories listed at
  - attr: convert "macro_ok" into a flags field
  - add open_nofollow() helper
 
+ As we do not follow symbolic links when reading control files like
+ .gitignore and .gitattributes from the index, match the behaviour
+ and not follow symbolic links when reading them from the working
+ tree.  This also tightens security a bit by not leaking contents of
+ an unrelated file in the error messages when it is pointed at by
+ one of these files that is a symbolic link.
+
+ Perhaps we want to cover .gitmodules too with the same mechanism?
+
 
 * sb/submodule-config-cleanup (2016-11-02) 3 commits
  - submodule-config: clarify parsing of null_sha1 element
  - submodule-config: rename commit_sha1 to commit_or_tree
  - submodule config: inline config_from_{name, path}
+
+ What's the doneness of this topic?
 
 
 * jc/push-default-explicit (2016-10-31) 2 commits
@@ -339,6 +414,8 @@ of the repositories listed at
  blocks, such as "format-patch -s", "cherry-pick (-x|-s)", and
  "commit -s", have been taught to use the logic of and share the
  code with "git interpret-trailer".
+
+ What's the doneness of this topic?
 
 
 * nd/rebase-forget (2016-10-28) 1 commit
@@ -382,6 +459,10 @@ of the repositories listed at
  looking at the combined diff.  "git reset" learned a new
  "--unmerge" option to recover from this situation.
 
+ Will discard.
+ This may not be needed, given that update-index has a similar
+ option.
+
 
 * jc/merge-base-fp-only (2016-10-19) 8 commits
  . merge-base: fp experiment
@@ -395,6 +476,9 @@ of the repositories listed at
 
  An experiment of merge-base that ignores common ancestors that are
  not on the first parent chain.
+
+ Will discard.
+ The whole premise feels wrong.
 
 
 * tb/convert-stream-check (2016-10-27) 2 commits
