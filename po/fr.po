@@ -73,8 +73,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-01 21:35+0800\n"
-"PO-Revision-Date: 2016-11-06 20:21+0100\n"
+"POT-Creation-Date: 2016-11-22 22:10+0800\n"
+"PO-Revision-Date: 2016-11-22 22:16+0800\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -269,7 +269,8 @@ msgstr[1] ""
 #: apply.c:1589
 #, c-format
 msgid "git diff header lacks filename information (line %d)"
-msgstr "information de nom de fichier manquante dans l'en-tête de git diff (ligne %d)"
+msgstr ""
+"information de nom de fichier manquante dans l'en-tête de git diff (ligne %d)"
 
 #: apply.c:1759
 msgid "new file depends on old contents"
@@ -358,18 +359,22 @@ msgstr "données de patch binaire manquantes pour '%s'"
 #: apply.c:3098
 #, c-format
 msgid "cannot reverse-apply a binary patch without the reverse hunk to '%s'"
-msgstr "impossible d'appliquer l'inverse d'un patch binaire à '%s' sans la section inverse"
+msgstr ""
+"impossible d'appliquer l'inverse d'un patch binaire à '%s' sans la section "
+"inverse"
 
 #: apply.c:3144
 #, c-format
 msgid "cannot apply binary patch to '%s' without full index line"
-msgstr "impossible d'appliquer un patch binaire à '%s' sans la ligne complète d'index"
+msgstr ""
+"impossible d'appliquer un patch binaire à '%s' sans la ligne complète d'index"
 
 #: apply.c:3154
 #, c-format
 msgid ""
 "the patch applies to '%s' (%s), which does not match the current contents."
-msgstr "le patch s'applique à '%s' (%s), ce qui ne correspond pas au contenu actuel."
+msgstr ""
+"le patch s'applique à '%s' (%s), ce qui ne correspond pas au contenu actuel."
 
 #: apply.c:3162
 #, c-format
@@ -430,7 +435,9 @@ msgstr "%s : ne correspond pas à l'index"
 
 #: apply.c:3554
 msgid "repository lacks the necessary blob to fall back on 3-way merge."
-msgstr "le dépôt n'a pas les blobs nécessaires pour un retour à une fusion à 3 points."
+msgstr ""
+"le dépôt n'a pas les blobs nécessaires pour un retour à une fusion à 3 "
+"points."
 
 #: apply.c:3557
 #, c-format
@@ -515,7 +522,8 @@ msgstr "Vérification du patch %s..."
 #: apply.c:4075
 #, c-format
 msgid "sha1 information is lacking or useless for submodule %s"
-msgstr "l'information sha1 est manquante ou inutilisable pour le sous-module %s"
+msgstr ""
+"l'information sha1 est manquante ou inutilisable pour le sous-module %s"
 
 #: apply.c:4082
 #, c-format
@@ -835,11 +843,11 @@ msgstr "préfixe"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "préfixer chaque chemin de fichier dans l'archive"
 
-#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603 builtin/blame.c:2604
-#: builtin/config.c:59 builtin/fast-export.c:987 builtin/fast-export.c:989
-#: builtin/grep.c:723 builtin/hash-object.c:101 builtin/ls-files.c:539
-#: builtin/ls-files.c:542 builtin/notes.c:401 builtin/notes.c:564
-#: builtin/read-tree.c:109 parse-options.h:153
+#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603
+#: builtin/blame.c:2604 builtin/config.c:59 builtin/fast-export.c:987
+#: builtin/fast-export.c:989 builtin/grep.c:723 builtin/hash-object.c:101
+#: builtin/ls-files.c:539 builtin/ls-files.c:542 builtin/notes.c:401
+#: builtin/notes.c:564 builtin/read-tree.c:109 parse-options.h:153
 msgid "file"
 msgstr "fichier"
 
@@ -1162,27 +1170,27 @@ msgstr ""
 "sa jumelle distante, vous pouvez utiliser \"git push -u\"\n"
 "pour paramétrer le suivi distant en même temps que vous poussez."
 
-#: branch.c:266
+#: branch.c:265
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr "Nom d'objet invalide : '%s'."
 
-#: branch.c:286
+#: branch.c:285
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr "Nom d'objet ambigu : '%s'."
 
-#: branch.c:291
+#: branch.c:290
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr "Point d'embranchement invalide : '%s'."
 
-#: branch.c:345
+#: branch.c:344
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "'%s' est déjà extrait dans '%s'"
 
-#: branch.c:364
+#: branch.c:363
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr "la HEAD de la copie de travail %s n'est pas mise à jour"
@@ -1289,8 +1297,10 @@ msgid ""
 "variable i18n.commitencoding to the encoding your project uses.\n"
 msgstr ""
 "Avertissement : le message de validation ne se conforme pas à UTF-8.\n"
-"Vous souhaitez peut-être le modifier après correction du message ou régler la\n"
-"variable de configuration i18n.commitencoding à l'encodage utilisé par votre projet.\n"
+"Vous souhaitez peut-être le modifier après correction du message ou régler "
+"la\n"
+"variable de configuration i18n.commitencoding à l'encodage utilisé par votre "
+"projet.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
@@ -1469,7 +1479,8 @@ msgid ""
 "The file will have its original line endings in your working directory."
 msgstr ""
 "Les CRLF seront remplacés par des LF dans %s.\n"
-"Le fichier conservera ses fins de ligne d'origine dans votre copie de travail."
+"Le fichier conservera ses fins de ligne d'origine dans votre copie de "
+"travail."
 
 #: convert.c:205
 #, c-format
@@ -1483,7 +1494,8 @@ msgid ""
 "The file will have its original line endings in your working directory."
 msgstr ""
 "Les LF seront remplacés par des CRLF dans %s.\n"
-"Le fichier conservera ses fins de ligne d'origine dans votre copie de travail."
+"Le fichier conservera ses fins de ligne d'origine dans votre copie de "
+"travail."
 
 #: convert.c:215
 #, c-format
@@ -1563,7 +1575,7 @@ msgstr[1] "il y a %lu ans"
 msgid "failed to read orderfile '%s'"
 msgstr "impossible de lire le fichier de commande '%s'"
 
-#: diffcore-rename.c:540
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr "Détection de renommage inexact en cours"
 
@@ -1627,17 +1639,23 @@ msgstr "Impossible d'analyser le paramètre de l'option --submodule : '%s'"
 
 #: diff.c:4700
 msgid "inexact rename detection was skipped due to too many files."
-msgstr "détection de renommage inexact annulée à cause d'un trop grand nombre de fichiers."
+msgstr ""
+"détection de renommage inexact annulée à cause d'un trop grand nombre de "
+"fichiers."
 
 #: diff.c:4703
 msgid "only found copies from modified paths due to too many files."
-msgstr "recherche uniquement des copies par modification de chemin à cause d'un trop grand nombre de fichiers."
+msgstr ""
+"recherche uniquement des copies par modification de chemin à cause d'un trop "
+"grand nombre de fichiers."
 
 #: diff.c:4706
 #, c-format
 msgid ""
 "you may want to set your %s variable to at least %d and retry the command."
-msgstr "vous souhaitez peut-être régler la variable %s à au moins %d et réessayer le commande."
+msgstr ""
+"vous souhaitez peut-être régler la variable %s à au moins %d et réessayer le "
+"commande."
 
 #: dir.c:1866
 msgid "failed to get kernel name and information"
@@ -1657,7 +1675,7 @@ msgstr "git fetch-pack : ACK/NACK attendu, EOF reçu"
 
 #: fetch-pack.c:243
 #, c-format
-msgid "git fetch_pack: expected ACK/NAK, got '%s'"
+msgid "git fetch-pack: expected ACK/NAK, got '%s'"
 msgstr "git fetch-pack : ACK/NACK attendu, '%s' reçu"
 
 #: fetch-pack.c:295
@@ -2214,7 +2232,8 @@ msgid ""
 "commit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Vous n'avez pas terminé votre précédente fusion de notes (%s existe).\n"
-"Veuillez utiliser 'git notes merge --commit' ou 'git notes merge --abort' pour valider/abandonner la fusion en cours avant d'en démarrer une nouvelle."
+"Veuillez utiliser 'git notes merge --commit' ou 'git notes merge --abort' "
+"pour valider/abandonner la fusion en cours avant d'en démarrer une nouvelle."
 
 #: notes-merge.c:280
 #, c-format
@@ -2341,7 +2360,10 @@ msgstr ""
 msgid ""
 "empty strings as pathspecs will be made invalid in upcoming releases. please "
 "use . instead if you meant to match all paths"
-msgstr "les chaines de caractères vides comme spécificateurs de chemin seront invalides dans les prochaines versions. Veuillez utiliser . à la place pour correspondre à tous le chemins"
+msgstr ""
+"les chaines de caractères vides comme spécificateurs de chemin seront "
+"invalides dans les prochaines versions. Veuillez utiliser . à la place pour "
+"correspondre à tous le chemins"
 
 #: pathspec.c:440
 #, c-format
@@ -2838,7 +2860,9 @@ msgstr "le commit %s n'a pas de parent %d"
 #: sequencer.c:687
 #, c-format
 msgid "mainline was specified but commit %s is not a merge."
-msgstr "une branche principale a été spécifiée mais le commit %s n'est pas une fusion."
+msgstr ""
+"une branche principale a été spécifiée mais le commit %s n'est pas une "
+"fusion."
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
@@ -3111,7 +3135,7 @@ msgstr "le SHA1 court %s est ambigu"
 msgid "The candidates are:"
 msgstr "Les candidats sont :"
 
-#: sha1_name.c:577
+#: sha1_name.c:578
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -3503,7 +3527,8 @@ msgid ""
 "update:\n"
 "%s"
 msgstr ""
-"Les fichiers suivants de la copie de travail seraient écrasés par la mise à jour par l'extraction creuse :\n"
+"Les fichiers suivants de la copie de travail seraient écrasés par la mise à "
+"jour par l'extraction creuse :\n"
 "%s"
 
 #: unpack-trees.c:128
@@ -3513,7 +3538,8 @@ msgid ""
 "update:\n"
 "%s"
 msgstr ""
-"Les fichiers suivants de la copie de travail seraient supprimés par la mise à jour par extraction creuse :\n"
+"Les fichiers suivants de la copie de travail seraient supprimés par la mise "
+"à jour par extraction creuse :\n"
 "%s"
 
 #: unpack-trees.c:205
@@ -4528,10 +4554,10 @@ msgid "pass it through git-apply"
 msgstr "le passer jusqu'à git-apply"
 
 #: builtin/am.c:2283 builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665
-#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135 builtin/pull.c:194
-#: builtin/repack.c:181 builtin/repack.c:185 builtin/show-branch.c:644
-#: builtin/show-ref.c:175 builtin/tag.c:340 parse-options.h:132
-#: parse-options.h:134 parse-options.h:245
+#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135
+#: builtin/pull.c:194 builtin/repack.c:181 builtin/repack.c:185
+#: builtin/show-branch.c:644 builtin/show-ref.c:175 builtin/tag.c:340
+#: parse-options.h:132 parse-options.h:134 parse-options.h:245
 msgid "n"
 msgstr "n"
 
@@ -4751,11 +4777,15 @@ msgstr "Ignorer les différences d'espace"
 
 #: builtin/blame.c:2599
 msgid "Use an experimental indent-based heuristic to improve diffs"
-msgstr "Utiliser une heuristique expérimentale reposant sur l'indentation pour améliorer les diffs"
+msgstr ""
+"Utiliser une heuristique expérimentale reposant sur l'indentation pour "
+"améliorer les diffs"
 
 #: builtin/blame.c:2600
 msgid "Use an experimental blank-line-based heuristic to improve diffs"
-msgstr "Utiliser une heuristique expérimentale reposant sur les lignes vides pour améliorer le diffs"
+msgstr ""
+"Utiliser une heuristique expérimentale reposant sur les lignes vides pour "
+"améliorer le diffs"
 
 #: builtin/blame.c:2602
 msgid "Spend extra cycles to find better match"
@@ -4794,7 +4824,9 @@ msgstr ""
 
 #: builtin/blame.c:2654
 msgid "--progress can't be used with --incremental or porcelain formats"
-msgstr "--progress ne peut pas être utilisé avec --incremental ou les formats porcelaine"
+msgstr ""
+"--progress ne peut pas être utilisé avec --incremental ou les formats "
+"porcelaine"
 
 #. TRANSLATORS: This string is used to tell us the maximum
 #. display width for a relative timestamp in "git blame"
@@ -4816,12 +4848,16 @@ msgstr "on ne peut pas utiliser --contents avec un nom d'objet commit final"
 
 #: builtin/blame.c:2805
 msgid "--reverse and --first-parent together require specified latest commit"
-msgstr "--reverse et --first-parent ensemble nécessitent la spécification d'un dernier commit"
+msgstr ""
+"--reverse et --first-parent ensemble nécessitent la spécification d'un "
+"dernier commit"
 
 #: builtin/blame.c:2832
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
-msgstr "--reverse --first-parent ensemble nécessitent une portée avec la chaîne de premier parent"
+msgstr ""
+"--reverse --first-parent ensemble nécessitent une portée avec la chaîne de "
+"premier parent"
 
 #: builtin/blame.c:2843
 #, c-format
@@ -5298,13 +5334,17 @@ msgstr "Le dépaquetage d'un colis requiert un dépôt."
 msgid ""
 "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
 "p | <type> | --textconv | --filters) [--path=<path>] <object>"
-msgstr "git cat-file (-t [--allow-unknow-type] | -s [--allow-unknow-type] | -e | -p | <type> | --textconv | --filters) [--path=<chemin>] <objet>"
+msgstr ""
+"git cat-file (-t [--allow-unknow-type] | -s [--allow-unknow-type] | -e | -p "
+"| <type> | --textconv | --filters) [--path=<chemin>] <objet>"
 
 #: builtin/cat-file.c:514
 msgid ""
 "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
 "filters]"
-msgstr "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --filters]"
+msgstr ""
+"git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
+"filters]"
 
 #: builtin/cat-file.c:551
 msgid "<type> can be one of: blob, tree, commit, tag"
@@ -6077,7 +6117,8 @@ msgstr "extraire <branche> au lieu de la HEAD du répertoire distant"
 msgid "path to git-upload-pack on the remote"
 msgstr "chemin vers git-upload-pack sur le serveur distant"
 
-#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668 builtin/pull.c:202
+#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668
+#: builtin/pull.c:202
 msgid "depth"
 msgstr "profondeur"
 
@@ -6100,7 +6141,8 @@ msgstr "révision"
 
 #: builtin/clone.c:102 builtin/fetch.c:125
 msgid "deepen history of shallow clone by excluding rev"
-msgstr "approfondir l'historique d'un clone superficiel en excluant une révision"
+msgstr ""
+"approfondir l'historique d'un clone superficiel en excluant une révision"
 
 #: builtin/clone.c:104
 msgid "clone only one branch, HEAD or --branch"
@@ -6286,7 +6328,9 @@ msgstr "Clonage dans '%s'...\n"
 msgid ""
 "clone --recursive is not compatible with both --reference and --reference-if-"
 "able"
-msgstr "clone --recursive n'est pas compatible avec à la fois --reference et --reference-if-able"
+msgstr ""
+"clone --recursive n'est pas compatible avec à la fois --reference et --"
+"reference-if-able"
 
 #: builtin/clone.c:1019
 msgid "--depth is ignored in local clones; use file:// instead."
@@ -6295,11 +6339,15 @@ msgstr ""
 
 #: builtin/clone.c:1021
 msgid "--shallow-since is ignored in local clones; use file:// instead."
-msgstr "--shallow-since est ignoré dans les clones locaux : utilisez plutôt \"file://\"."
+msgstr ""
+"--shallow-since est ignoré dans les clones locaux : utilisez plutôt \"file://"
+"\"."
 
 #: builtin/clone.c:1023
 msgid "--shallow-exclude is ignored in local clones; use file:// instead."
-msgstr "--shallow-exclude est ignoré dans les clones locaux : utilisez plutôt \"file://\"."
+msgstr ""
+"--shallow-exclude est ignoré dans les clones locaux : utilisez plutôt "
+"\"file://\"."
 
 #: builtin/clone.c:1026
 msgid "source repository is shallow, ignoring --local"
@@ -6435,7 +6483,8 @@ msgid ""
 "    git commit --allow-empty\n"
 "\n"
 msgstr ""
-"Le picorage précédent est à présent vide, vraisemblablement dû à une résolution de conflit.\n"
+"Le picorage précédent est à présent vide, vraisemblablement dû à une "
+"résolution de conflit.\n"
 "Si vous souhaitez tout de même le valider, utilisez :\n"
 "\n"
 "    git commit --allow-empty\n"
@@ -6955,7 +7004,7 @@ msgid "Aborting commit; you did not edit the message.\n"
 msgstr "Abandon de la validation ; vous n'avez pas édité le message\n"
 
 #: builtin/commit.c:1754
-#, c-format, fuzzy
+#, fuzzy, c-format
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "Abandon de la validation dû à un message de validation vide\n"
 
@@ -10251,7 +10300,8 @@ msgstr "une fusion de notes dans %s est déjà en cours avec %s"
 #: builtin/notes.c:863
 #, c-format
 msgid "failed to store link to current notes ref (%s)"
-msgstr "impossible de stocker le lien vers la référence actuelle aux notes (%s)"
+msgstr ""
+"impossible de stocker le lien vers la référence actuelle aux notes (%s)"
 
 #: builtin/notes.c:865
 #, c-format
@@ -12365,7 +12415,9 @@ msgstr ""
 #: builtin/show-branch.c:703
 msgid ""
 "--reflog is incompatible with --all, --remotes, --independent or --merge-base"
-msgstr "--reflog est incompatible avec --all, --remotes, --independant et --merge-base"
+msgstr ""
+"--reflog est incompatible avec --all, --remotes, --independant et --merge-"
+"base"
 
 #: builtin/show-branch.c:727
 msgid "no branches given, and HEAD is not valid"
@@ -12551,7 +12603,8 @@ msgstr "le sous-module '%s' ne peut pas ajouter d'alternative : %s"
 #: builtin/submodule--helper.c:563
 #, c-format
 msgid "Value '%s' for submodule.alternateErrorStrategy is not recognized"
-msgstr "La valeur '%s' pour submodule.alternateErrorStrategy n'est pas reconnue"
+msgstr ""
+"La valeur '%s' pour submodule.alternateErrorStrategy n'est pas reconnue"
 
 #: builtin/submodule--helper.c:570
 #, c-format
@@ -13127,7 +13180,9 @@ msgstr "activer le cache de non-suivis sans tester le système de fichier"
 msgid ""
 "core.untrackedCache is set to true; remove or change it, if you really want "
 "to disable the untracked cache"
-msgstr "core.untrackedCache est réglé à true ; supprimez-le ou changez-le si vous souhaitez vraiment désactiver le cache des fichiers non-suivis"
+msgstr ""
+"core.untrackedCache est réglé à true ; supprimez-le ou changez-le si vous "
+"souhaitez vraiment désactiver le cache des fichiers non-suivis"
 
 #: builtin/update-index.c:1123
 msgid "Untracked cache disabled"
@@ -13137,7 +13192,9 @@ msgstr "Le cache non suivi est désactivé"
 msgid ""
 "core.untrackedCache is set to false; remove or change it, if you really want "
 "to enable the untracked cache"
-msgstr "core.untrackedCache est réglé à false ; supprimez-le ou changez-le si vous souhaitez vraiment activer le cache des fichiers non-suivis"
+msgstr ""
+"core.untrackedCache est réglé à false ; supprimez-le ou changez-le si vous "
+"souhaitez vraiment activer le cache des fichiers non-suivis"
 
 #: builtin/update-index.c:1135
 #, c-format
@@ -13987,7 +14044,8 @@ msgstr ""
 
 #: git-stash.sh:251
 msgid "Can't use --patch and --include-untracked or --all at the same time"
-msgstr "Impossible d'utiliser --patch et --include-untracked ou --all en même temps"
+msgstr ""
+"Impossible d'utiliser --patch et --include-untracked ou --all en même temps"
 
 #: git-stash.sh:259
 msgid "No local changes to save"
@@ -14516,9 +14574,12 @@ msgid ""
 "before\n"
 "you are able to reword the commit."
 msgstr ""
-"Impossible de corriger le commit après avoir réussi à picorer $sha1... $rest\n"
-"C'est probablement dû à un message de validation vide ou le crochet pre-commit\n"
-"a échoué. Si le crochet pre-commit a échoué, vous devez peut-être résoudre le\n"
+"Impossible de corriger le commit après avoir réussi à picorer $sha1... "
+"$rest\n"
+"C'est probablement dû à un message de validation vide ou le crochet pre-"
+"commit\n"
+"a échoué. Si le crochet pre-commit a échoué, vous devez peut-être résoudre "
+"le\n"
 "problème avant de pouvoir reformuler le message du commit."
 
 #: git-rebase--interactive.sh:564
@@ -14647,7 +14708,9 @@ msgstr ""
 msgid ""
 "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
 "continue'."
-msgstr "Vous pouvez corriger ceci avec 'git rebase --edit-todo' puis lancez 'git rebase --continue'."
+msgstr ""
+"Vous pouvez corriger ceci avec 'git rebase --edit-todo' puis lancez 'git "
+"rebase --continue'."
 
 #: git-rebase--interactive.sh:1045
 msgid "Or you can abort the rebase with 'git rebase --abort'."

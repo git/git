@@ -135,8 +135,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-01 21:35+0800\n"
-"PO-Revision-Date: 2016-11-21 23:14+0800\n"
+"POT-Creation-Date: 2016-11-22 22:10+0800\n"
+"PO-Revision-Date: 2016-11-22 22:15+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -1183,27 +1183,27 @@ msgstr ""
 "如果您正计划推送一个能与对应远程分支建立跟踪的新的本地分支，\n"
 "您可能需要使用 \"git push -u\" 推送分支并配置和上游的关联。"
 
-#: branch.c:266
+#: branch.c:265
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr "不是一个有效的对象名：'%s'。"
 
-#: branch.c:286
+#: branch.c:285
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr "歧义的对象名：'%s'。"
 
-#: branch.c:291
+#: branch.c:290
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr "无效的分支点：'%s'。"
 
-#: branch.c:345
+#: branch.c:344
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "'%s' 已经检出到 '%s'"
 
-#: branch.c:364
+#: branch.c:363
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr "工作区 %s 的 HEAD 指向没有被更新"
@@ -1570,7 +1570,7 @@ msgstr[1] "%lu 年前"
 msgid "failed to read orderfile '%s'"
 msgstr "无法读取排序文件 '%s'"
 
-#: diffcore-rename.c:540
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr "正在进行非精确的重命名检测"
 
@@ -1664,7 +1664,7 @@ msgstr "git fetch-pack：应为 ACK/NAK，却得到 EOF"
 
 #: fetch-pack.c:243
 #, c-format
-msgid "git fetch_pack: expected ACK/NAK, got '%s'"
+msgid "git fetch-pack: expected ACK/NAK, got '%s'"
 msgstr "git fetch-pack：应为 ACK/NAK，却得到 '%s'"
 
 #: fetch-pack.c:295
@@ -2216,8 +2216,8 @@ msgid ""
 "commit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "您尚未结束您前一次注释合并（存在 %s）。\n"
-"请您在开始一个新的注释合并之前，使用 'git notes merge --commit' 或者 "
-"'git notes merge --abort' 来提交/终止前一次合并。"
+"请您在开始一个新的注释合并之前，使用 'git notes merge --commit' 或者 'git "
+"notes merge --abort' 来提交/终止前一次合并。"
 
 #: notes-merge.c:280
 #, c-format
@@ -3094,7 +3094,7 @@ msgstr "歧义的短 SHA1 %s"
 msgid "The candidates are:"
 msgstr "候选者有："
 
-#: sha1_name.c:577
+#: sha1_name.c:578
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -5237,13 +5237,17 @@ msgstr "需要一个仓库来解包。"
 msgid ""
 "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
 "p | <type> | --textconv | --filters) [--path=<path>] <object>"
-msgstr "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -p | <类型> | --textconv | --filters) [--path=<路径>] <对象>"
+msgstr ""
+"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
+"p | <类型> | --textconv | --filters) [--path=<路径>] <对象>"
 
 #: builtin/cat-file.c:514
 msgid ""
 "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
 "filters]"
-msgstr "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --filters]"
+msgstr ""
+"git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
+"filters]"
 
 #: builtin/cat-file.c:551
 msgid "<type> can be one of: blob, tree, commit, tag"
@@ -12813,7 +12817,9 @@ msgstr "无需检测文件系统，启用对未跟踪文件的缓存"
 msgid ""
 "core.untrackedCache is set to true; remove or change it, if you really want "
 "to disable the untracked cache"
-msgstr "core.untrackedCache 被设置为 true。如果您确实要禁用未跟踪文件缓存，请删除或修改它。"
+msgstr ""
+"core.untrackedCache 被设置为 true。如果您确实要禁用未跟踪文件缓存，请删除或修"
+"改它。"
 
 #: builtin/update-index.c:1123
 msgid "Untracked cache disabled"
@@ -12823,7 +12829,9 @@ msgstr "缓存未跟踪文件被禁用"
 msgid ""
 "core.untrackedCache is set to false; remove or change it, if you really want "
 "to enable the untracked cache"
-msgstr "core.untrackedCache 被设置为 false。如果您确实要启用未跟踪文件缓存，请删除或修改它。"
+msgstr ""
+"core.untrackedCache 被设置为 false。如果您确实要启用未跟踪文件缓存，请删除或"
+"修改它。"
 
 #: builtin/update-index.c:1135
 #, c-format

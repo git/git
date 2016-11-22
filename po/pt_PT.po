@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-01 21:35+0800\n"
+"POT-Creation-Date: 2016-11-22 22:10+0800\n"
 "PO-Revision-Date: 2016-11-13 16:37+0000\n"
 "Last-Translator: Vasco Almeida <vascomalmeida@sapo.pt>\n"
 "Language-Team: Portuguese\n"
@@ -767,11 +767,11 @@ msgstr "prefixo"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "preceder o prefixo a cada nome de caminho dentro do arquivo"
 
-#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603 builtin/blame.c:2604
-#: builtin/config.c:59 builtin/fast-export.c:987 builtin/fast-export.c:989
-#: builtin/grep.c:723 builtin/hash-object.c:101 builtin/ls-files.c:539
-#: builtin/ls-files.c:542 builtin/notes.c:401 builtin/notes.c:564
-#: builtin/read-tree.c:109 parse-options.h:153
+#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603
+#: builtin/blame.c:2604 builtin/config.c:59 builtin/fast-export.c:987
+#: builtin/fast-export.c:989 builtin/grep.c:723 builtin/hash-object.c:101
+#: builtin/ls-files.c:539 builtin/ls-files.c:542 builtin/notes.c:401
+#: builtin/notes.c:564 builtin/read-tree.c:109 parse-options.h:153
 msgid "file"
 msgstr "ficheiro"
 
@@ -1086,27 +1086,27 @@ msgstr ""
 "o seu homólogo remoto, pode usar \"git push -u\" para configurar\n"
 "o respetivo ramo a montante, ao mesmo tempo que publica."
 
-#: branch.c:266
+#: branch.c:265
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr "Nome de objeto inválido: '%s'."
 
-#: branch.c:286
+#: branch.c:285
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr "Nome de objeto ambíguo: '%s'."
 
-#: branch.c:291
+#: branch.c:290
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr "Ponto no ramo inválido: '%s'."
 
-#: branch.c:345
+#: branch.c:344
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "'%s' foi já extraído em '%s'"
 
-#: branch.c:364
+#: branch.c:363
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr "HEAD da árvore de trabalho %s não está atualizada"
@@ -1386,8 +1386,7 @@ msgid ""
 "The file will have its original line endings in your working directory."
 msgstr ""
 "CRLF será substituído por LF em %s.\n"
-"O final de linha original será mantido no ficheiro da sua árvore de "
-"trabalho."
+"O final de linha original será mantido no ficheiro da sua árvore de trabalho."
 
 #: convert.c:205
 #, c-format
@@ -1401,8 +1400,7 @@ msgid ""
 "The file will have its original line endings in your working directory."
 msgstr ""
 "LF será substituído por CRLF em %s.\n"
-"O final de linha original será mantido no ficheiro da sua árvore de "
-"trabalho."
+"O final de linha original será mantido no ficheiro da sua árvore de trabalho."
 
 #: convert.c:215
 #, c-format
@@ -1482,7 +1480,7 @@ msgstr[1] "há %lu anos"
 msgid "failed to read orderfile '%s'"
 msgstr "falha ao ler o ficheiro de comando '%s'"
 
-#: diffcore-rename.c:540
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr "Deteção de mudança de nome inexata em curso"
 
@@ -1579,7 +1577,7 @@ msgstr "git fetch-pack: esperava-se ACK/NAK, obteve-se EOF"
 
 #: fetch-pack.c:243
 #, c-format
-msgid "git fetch_pack: expected ACK/NAK, got '%s'"
+msgid "git fetch-pack: expected ACK/NAK, got '%s'"
 msgstr "git fetch-pack: esperava-se ACK/NAK, obteve-se '%s'"
 
 #: fetch-pack.c:295
@@ -1587,12 +1585,12 @@ msgid "--stateless-rpc requires multi_ack_detailed"
 msgstr "--stateless-rpc requer multi_ack_detailed"
 
 #: fetch-pack.c:381
-#, c-format, fuzzy
+#, fuzzy, c-format
 msgid "invalid shallow line: %s"
 msgstr "linha rasa inválida: %s"
 
 #: fetch-pack.c:387
-#, c-format, fuzzy
+#, fuzzy, c-format
 msgid "invalid unshallow line: %s"
 msgstr "linha para aprofundar inválida: %s"
 
@@ -1607,12 +1605,12 @@ msgid "error in object: %s"
 msgstr "erro no objeto: %s"
 
 #: fetch-pack.c:394
-#, c-format, fuzzy
+#, fuzzy, c-format
 msgid "no shallow found: %s"
 msgstr "raso não encontrado: %s"
 
 #: fetch-pack.c:397
-#, c-format, fuzzy
+#, fuzzy, c-format
 msgid "expected shallow/unshallow, got %s"
 msgstr "esperava-se raso/aprofundar, obteve-se %s"
 
@@ -2136,9 +2134,8 @@ msgid ""
 "commit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Não concluíu a integração de notas anterior (%s existe).\n"
-"Use 'git notes merge --commit' ou 'git notes merge --abort' para "
-"submeter/abortar a integração anterior antes de começar uma nova integração "
-"de notas."
+"Use 'git notes merge --commit' ou 'git notes merge --abort' para submeter/"
+"abortar a integração anterior antes de começar uma nova integração de notas."
 
 #: notes-merge.c:280
 #, c-format
@@ -3037,7 +3034,7 @@ msgstr "SHA1 curto %s é ambíguo"
 msgid "The candidates are:"
 msgstr "Os candidatos são:"
 
-#: sha1_name.c:577
+#: sha1_name.c:578
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -4462,10 +4459,10 @@ msgid "pass it through git-apply"
 msgstr "transmitir ao git-apply"
 
 #: builtin/am.c:2283 builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665
-#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135 builtin/pull.c:194
-#: builtin/repack.c:181 builtin/repack.c:185 builtin/show-branch.c:644
-#: builtin/show-ref.c:175 builtin/tag.c:340 parse-options.h:132
-#: parse-options.h:134 parse-options.h:245
+#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135
+#: builtin/pull.c:194 builtin/repack.c:181 builtin/repack.c:185
+#: builtin/show-branch.c:644 builtin/show-ref.c:175 builtin/tag.c:340
+#: parse-options.h:132 parse-options.h:134 parse-options.h:245
 msgid "n"
 msgstr "n"
 
@@ -5230,16 +5227,16 @@ msgid ""
 "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
 "p | <type> | --textconv | --filters) [--path=<path>] <object>"
 msgstr ""
-"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | "
-"-p | <tipo> | --textconv | --filters) [--path=<caminho>] <objeto>"
+"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
+"p | <tipo> | --textconv | --filters) [--path=<caminho>] <objeto>"
 
 #: builtin/cat-file.c:514
 msgid ""
 "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
 "filters]"
 msgstr ""
-"git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | "
-"--filters]"
+"git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
+"filters]"
 
 #: builtin/cat-file.c:551
 msgid "<type> can be one of: blob, tree, commit, tag"
@@ -6005,7 +6002,8 @@ msgstr "extrair <ramo> em vez da HEAD do remoto"
 msgid "path to git-upload-pack on the remote"
 msgstr "caminho para git-upload-pack no remoto"
 
-#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668 builtin/pull.c:202
+#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668
+#: builtin/pull.c:202
 msgid "depth"
 msgstr "profundidade"
 
@@ -14490,8 +14488,8 @@ msgid ""
 "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
 "continue'."
 msgstr ""
-"Pode corrí-lo com 'git rebase --edit-todo' e depois executar 'git rebase "
-"--continue'."
+"Pode corrí-lo com 'git rebase --edit-todo' e depois executar 'git rebase --"
+"continue'."
 
 #: git-rebase--interactive.sh:1045
 msgid "Or you can abort the rebase with 'git rebase --abort'."

@@ -58,8 +58,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-01 21:35+0800\n"
-"PO-Revision-Date: 2016-11-03 19:47+0900\n"
+"POT-Creation-Date: 2016-11-22 22:10+0800\n"
+"PO-Revision-Date: 2016-11-22 22:16+0800\n"
 "Last-Translator: Changwoo Ryu <cwryu@debian.org>\n"
 "Language-Team: Git Korean translation <http://github.com/changwoo/git-l10n-"
 "ko>\n"
@@ -332,12 +332,14 @@ msgstr "'%s'에 대한 바이너리 패치 데이터가 없습니다"
 #: apply.c:3098
 #, c-format
 msgid "cannot reverse-apply a binary patch without the reverse hunk to '%s'"
-msgstr "반대 헝크가 없으면 '%s'에 대한 바이너리 패치를 반대로 적용할 수 없습니다"
+msgstr ""
+"반대 헝크가 없으면 '%s'에 대한 바이너리 패치를 반대로 적용할 수 없습니다"
 
 #: apply.c:3144
 #, c-format
 msgid "cannot apply binary patch to '%s' without full index line"
-msgstr "전체 인덱스 라인이 없으면 '%s'에 대한 바이너리 패치를 적용할 수 없습니다"
+msgstr ""
+"전체 인덱스 라인이 없으면 '%s'에 대한 바이너리 패치를 적용할 수 없습니다"
 
 #: apply.c:3154
 #, c-format
@@ -796,11 +798,11 @@ msgstr "접두어"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "아카이브의 각 경로 이름의 앞에 지정한 경로를 붙입니다"
 
-#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603 builtin/blame.c:2604
-#: builtin/config.c:59 builtin/fast-export.c:987 builtin/fast-export.c:989
-#: builtin/grep.c:723 builtin/hash-object.c:101 builtin/ls-files.c:539
-#: builtin/ls-files.c:542 builtin/notes.c:401 builtin/notes.c:564
-#: builtin/read-tree.c:109 parse-options.h:153
+#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603
+#: builtin/blame.c:2604 builtin/config.c:59 builtin/fast-export.c:987
+#: builtin/fast-export.c:989 builtin/grep.c:723 builtin/hash-object.c:101
+#: builtin/ls-files.c:539 builtin/ls-files.c:542 builtin/notes.c:401
+#: builtin/notes.c:564 builtin/read-tree.c:109 parse-options.h:153
 msgid "file"
 msgstr "파일"
 
@@ -1115,27 +1117,27 @@ msgstr ""
 "새 로컬 브랜치를 거기에 해당하는 리모트 브랜치로 push하려면,\n"
 "\"git push -u\"로 push하는 업스트림을 설정할 수 있습니다."
 
-#: branch.c:266
+#: branch.c:265
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr "올바른 오브젝트 이름이 아닙니다: '%s'."
 
-#: branch.c:286
+#: branch.c:285
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr "애매한 오브젝트 이름: '%s'."
 
-#: branch.c:291
+#: branch.c:290
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr "올바른 브랜치 위치가 아닙니다: '%s'."
 
-#: branch.c:345
+#: branch.c:344
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "'%s'은(는) 이미 '%s' 위치에 받아져 있습니다"
 
-#: branch.c:364
+#: branch.c:363
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr "작업 폴더 %s의 헤드가 업데이트되지 않았습니다"
@@ -1492,7 +1494,7 @@ msgstr[0] "%lu년 전"
 msgid "failed to read orderfile '%s'"
 msgstr "'%s' 순서 파일을 읽는데 실패했습니다"
 
-#: diffcore-rename.c:540
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr "부정확한 이름 바꾸기 탐색을 수행하는 중"
 
@@ -1532,7 +1534,8 @@ msgstr "외부 diff 프로그램이 죽음, %s 위치에서 멈춤"
 
 #: diff.c:3412
 msgid "--name-only, --name-status, --check and -s are mutually exclusive"
-msgstr "\"--name-only, --name-status, --check, -s 옵션 중 하나만 쓸 수 있습니다"
+msgstr ""
+"\"--name-only, --name-status, --check, -s 옵션 중 하나만 쓸 수 있습니다"
 
 #: diff.c:3502
 msgid "--follow requires exactly one pathspec"
@@ -1584,8 +1587,8 @@ msgstr "git fetch-pack: ACK/NAK가 와야 하지만, EOF를 받았습니다"
 
 #: fetch-pack.c:243
 #, c-format
-msgid "git fetch_pack: expected ACK/NAK, got '%s'"
-msgstr "git fetch_pack: ACK/NAK가 와야 하지만, '%s'을(를) 받았습니다"
+msgid "git fetch-pack: expected ACK/NAK, got '%s'"
+msgstr "git fetch-pack: ACK/NAK가 와야 하지만, '%s'을(를) 받았습니다"
 
 #: fetch-pack.c:295
 msgid "--stateless-rpc requires multi_ack_detailed"
@@ -2258,7 +2261,9 @@ msgstr "%s: 경로명세 지시어가 이 명령어에서 지원하지 않습니
 msgid ""
 "empty strings as pathspecs will be made invalid in upcoming releases. please "
 "use . instead if you meant to match all paths"
-msgstr "경로명세로 빈 문자열을 넣는 일은 다음 릴리스에서 오류로 취급할 예정입니다. 모든 경로를 지정하려면 점(.)을 사용하십시오."
+msgstr ""
+"경로명세로 빈 문자열을 넣는 일은 다음 릴리스에서 오류로 취급할 예정입니다. 모"
+"든 경로를 지정하려면 점(.)을 사용하십시오."
 
 #: pathspec.c:440
 #, c-format
@@ -3012,7 +3017,7 @@ msgstr "짧은 SHA1 %s은(는) 여럿에 대응됩니다"
 msgid "The candidates are:"
 msgstr "후보는 다음과 같습니다:"
 
-#: sha1_name.c:577
+#: sha1_name.c:578
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -4388,10 +4393,10 @@ msgid "pass it through git-apply"
 msgstr "git-apply에 넘깁니다"
 
 #: builtin/am.c:2283 builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665
-#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135 builtin/pull.c:194
-#: builtin/repack.c:181 builtin/repack.c:185 builtin/show-branch.c:644
-#: builtin/show-ref.c:175 builtin/tag.c:340 parse-options.h:132
-#: parse-options.h:134 parse-options.h:245
+#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135
+#: builtin/pull.c:194 builtin/repack.c:181 builtin/repack.c:185
+#: builtin/show-branch.c:644 builtin/show-ref.c:175 builtin/tag.c:340
+#: parse-options.h:132 parse-options.h:134 parse-options.h:245
 msgid "n"
 msgstr "n"
 
@@ -4646,7 +4651,8 @@ msgstr "n,m줄 (1번 줄부터 시작) 사이의 범위만 처리"
 
 #: builtin/blame.c:2654
 msgid "--progress can't be used with --incremental or porcelain formats"
-msgstr "--progress 옵션은 --incremental 옵션이나 포스레인 형식에서 사용할 수 없습니다"
+msgstr ""
+"--progress 옵션은 --incremental 옵션이나 포스레인 형식에서 사용할 수 없습니다"
 
 #. TRANSLATORS: This string is used to tell us the maximum
 #. display width for a relative timestamp in "git blame"
@@ -4668,12 +4674,15 @@ msgstr "--contents 옵션을 마지막 오브젝트 이름에 사용할 수 없�
 
 #: builtin/blame.c:2805
 msgid "--reverse and --first-parent together require specified latest commit"
-msgstr "--reverse 및 --first-parent 옵션을 같이 쓰면 최근 커밋을 지정해야 합니다"
+msgstr ""
+"--reverse 및 --first-parent 옵션을 같이 쓰면 최근 커밋을 지정해야 합니다"
 
 #: builtin/blame.c:2832
 msgid ""
 "--reverse --first-parent together require range along first-parent chain"
-msgstr "--reverse 및 --first-parent 옵션을 같이 쓰면 최초-상위 체인과 범위가 필요합니다"
+msgstr ""
+"--reverse 및 --first-parent 옵션을 같이 쓰면 최초-상위 체인과 범위가 필요합니"
+"다"
 
 #: builtin/blame.c:2843
 #, c-format
@@ -5145,13 +5154,17 @@ msgstr "번들을 해제하려면 저장소가 필요합니다."
 msgid ""
 "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
 "p | <type> | --textconv | --filters) [--path=<path>] <object>"
-msgstr "git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -p | <종류> | --textconv | --filters) [--path=<경로>] <오브젝트>"
+msgstr ""
+"git cat-file (-t [--allow-unknown-type] | -s [--allow-unknown-type] | -e | -"
+"p | <종류> | --textconv | --filters) [--path=<경로>] <오브젝트>"
 
 #: builtin/cat-file.c:514
 msgid ""
 "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
 "filters]"
-msgstr "git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --filters]"
+msgstr ""
+"git cat-file (--batch | --batch-check) [--follow-symlinks] [--textconv | --"
+"filters]"
 
 #: builtin/cat-file.c:551
 msgid "<type> can be one of: blob, tree, commit, tag"
@@ -5902,7 +5915,8 @@ msgstr "리모트의 HEAD 대신 <브랜치>를 가져옵니다"
 msgid "path to git-upload-pack on the remote"
 msgstr "리모트의 git-upload-pack 경로"
 
-#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668 builtin/pull.c:202
+#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668
+#: builtin/pull.c:202
 msgid "depth"
 msgstr "깊이"
 
@@ -6108,7 +6122,9 @@ msgstr "'%s'에 복제합니다...\n"
 msgid ""
 "clone --recursive is not compatible with both --reference and --reference-if-"
 "able"
-msgstr "clone --recursive 옵션은 --reference 및 --reference-if-able 옵션을 같이 쓰는 것과 호환되지 않습니다"
+msgstr ""
+"clone --recursive 옵션은 --reference 및 --reference-if-able 옵션을 같이 쓰는 "
+"것과 호환되지 않습니다"
 
 #: builtin/clone.c:1019
 msgid "--depth is ignored in local clones; use file:// instead."
@@ -6117,11 +6133,15 @@ msgstr ""
 
 #: builtin/clone.c:1021
 msgid "--shallow-since is ignored in local clones; use file:// instead."
-msgstr "--shallow-since 옵션은 로컬 복제에서 무시됩니다. 대신에 'file://'을 사용하십시오."
+msgstr ""
+"--shallow-since 옵션은 로컬 복제에서 무시됩니다. 대신에 'file://'을 사용하십"
+"시오."
 
 #: builtin/clone.c:1023
 msgid "--shallow-exclude is ignored in local clones; use file:// instead."
-msgstr "--shallow-exclude 옵션은 로컬 복제에서 무시됩니다. 대신에 'file://'을 사용하십시오."
+msgstr ""
+"--shallow-exclude 옵션은 로컬 복제에서 무시됩니다. 대신에 'file://'을 사용하"
+"십시오."
 
 #: builtin/clone.c:1026
 msgid "source repository is shallow, ignoring --local"
@@ -12038,7 +12058,9 @@ msgstr "기준부터 시작해 최대 <n>개의 최근 ref-log 항목을 표시�
 #: builtin/show-branch.c:703
 msgid ""
 "--reflog is incompatible with --all, --remotes, --independent or --merge-base"
-msgstr "--reflog 옵션은 --all, --remotes, --independent, --merge-base 옵션과 호환되지 않습니다"
+msgstr ""
+"--reflog 옵션은 --all, --remotes, --independent, --merge-base 옵션과 호환되"
+"지 않습니다"
 
 #: builtin/show-branch.c:727
 msgid "no branches given, and HEAD is not valid"
@@ -12769,7 +12791,9 @@ msgstr "파일 시스템 시험 없이 추적하지 않는 캐시를 사용합�
 msgid ""
 "core.untrackedCache is set to true; remove or change it, if you really want "
 "to disable the untracked cache"
-msgstr "core.untrackedCache값이 참입니다. 정말로 추적하지 않는 파일 캐시를 사용하지 않으려면 이 값을 제거하거나 바꾸십시오."
+msgstr ""
+"core.untrackedCache값이 참입니다. 정말로 추적하지 않는 파일 캐시를 사용하지 "
+"않으려면 이 값을 제거하거나 바꾸십시오."
 
 #: builtin/update-index.c:1123
 msgid "Untracked cache disabled"
@@ -12779,7 +12803,9 @@ msgstr "추적되지 않는 파일 캐시를 사용하지 않습니다"
 msgid ""
 "core.untrackedCache is set to false; remove or change it, if you really want "
 "to enable the untracked cache"
-msgstr "core.untrackedCache값이 거짓입니다. 정말로 추적하지 않는 파일 캐시를 사용하려면 이 값을 제거하거나 바꾸십시오."
+msgstr ""
+"core.untrackedCache값이 거짓입니다. 정말로 추적하지 않는 파일 캐시를 사용하려"
+"면 이 값을 제거하거나 바꾸십시오."
 
 #: builtin/update-index.c:1135
 #, c-format
@@ -13603,7 +13629,8 @@ msgstr ""
 
 #: git-stash.sh:251
 msgid "Can't use --patch and --include-untracked or --all at the same time"
-msgstr "--patch 옵션과 --include-untracked 또는 --all 옵션을 동시에 쓸 수 없습니다"
+msgstr ""
+"--patch 옵션과 --include-untracked 또는 --all 옵션을 동시에 쓸 수 없습니다"
 
 #: git-stash.sh:259
 msgid "No local changes to save"
@@ -14241,7 +14268,9 @@ msgstr ""
 msgid ""
 "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
 "continue'."
-msgstr "'git rebase --edit-todo' 명령으로 바로잡을 수 있고 'git rebase --continue' 명령을 실행합니다."
+msgstr ""
+"'git rebase --edit-todo' 명령으로 바로잡을 수 있고 'git rebase --continue' 명"
+"령을 실행합니다."
 
 #: git-rebase--interactive.sh:1045
 msgid "Or you can abort the rebase with 'git rebase --abort'."

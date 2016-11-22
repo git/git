@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.11.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-01 21:35+0800\n"
-"PO-Revision-Date: 2016-11-05 16:01+0100\n"
+"POT-Creation-Date: 2016-11-22 22:10+0800\n"
+"PO-Revision-Date: 2016-11-22 22:16+0800\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -1087,27 +1087,27 @@ msgstr ""
 "spåra dess fjärrmotsvarighet kan du använda \"git push -u\"\n"
 "för att ställa in uppströmskonfigurationen när du sänder in."
 
-#: branch.c:266
+#: branch.c:265
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr "Objektnamnet är inte giltigt: \"%s\"."
 
-#: branch.c:286
+#: branch.c:285
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr "Objektnamnet är tvetydigt: \"%s\"."
 
-#: branch.c:291
+#: branch.c:290
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr "Avgreningspunkten är inte giltig: \"%s\""
 
-#: branch.c:345
+#: branch.c:344
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "\"%s\" är redan utcheckad på \"%s\""
 
-#: branch.c:364
+#: branch.c:363
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr "HEAD i arbetskatalogen %s har inte uppdaterats"
@@ -1484,7 +1484,7 @@ msgstr[1] "%lu år sedan"
 msgid "failed to read orderfile '%s'"
 msgstr "kunde inte läsa orderfilen \"%s\""
 
-#: diffcore-rename.c:540
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr "Utför onöjaktig namnbytesdetektering"
 
@@ -1578,8 +1578,8 @@ msgstr "git fetch-patch: förväntade ACK/NAK, fick EOF"
 
 #: fetch-pack.c:243
 #, c-format
-msgid "git fetch_pack: expected ACK/NAK, got '%s'"
-msgstr "git fetch_pack: förväntade ACK/NAK, fick \"%s\""
+msgid "git fetch-pack: expected ACK/NAK, got '%s'"
+msgstr "git fetch-pack: förväntade ACK/NAK, fick \"%s\""
 
 #: fetch-pack.c:295
 msgid "--stateless-rpc requires multi_ack_detailed"
@@ -3021,7 +3021,7 @@ msgstr "kort SHA1 %s är tvetydig"
 msgid "The candidates are:"
 msgstr "Kandidaterna är:"
 
-#: sha1_name.c:577
+#: sha1_name.c:578
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"

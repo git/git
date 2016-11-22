@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git v2.11.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-01 21:35+0800\n"
-"PO-Revision-Date: 2016-11-04 08:07+0700\n"
+"POT-Creation-Date: 2016-11-22 22:10+0800\n"
+"PO-Revision-Date: 2016-11-22 22:17+0800\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -768,11 +768,11 @@ msgstr "tiền_tố"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "nối thêm tiền tố vào từng đường dẫn tập tin trong kho lưu"
 
-#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603 builtin/blame.c:2604
-#: builtin/config.c:59 builtin/fast-export.c:987 builtin/fast-export.c:989
-#: builtin/grep.c:723 builtin/hash-object.c:101 builtin/ls-files.c:539
-#: builtin/ls-files.c:542 builtin/notes.c:401 builtin/notes.c:564
-#: builtin/read-tree.c:109 parse-options.h:153
+#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603
+#: builtin/blame.c:2604 builtin/config.c:59 builtin/fast-export.c:987
+#: builtin/fast-export.c:989 builtin/grep.c:723 builtin/hash-object.c:101
+#: builtin/ls-files.c:539 builtin/ls-files.c:542 builtin/notes.c:401
+#: builtin/notes.c:564 builtin/read-tree.c:109 parse-options.h:153
 msgid "file"
 msgstr "tập_tin"
 
@@ -1087,27 +1087,27 @@ msgstr ""
 "sẽ theo dõi bản đối chiếu máy chủ của nó, bạn cần dùng lệnh\n"
 "\"git push -u\" để đặt cấu hình thượng nguồn bạn muốn push."
 
-#: branch.c:266
+#: branch.c:265
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr "Không phải tên đối tượng hợp lệ: “%s”."
 
-#: branch.c:286
+#: branch.c:285
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr "Tên đối tượng chưa rõ ràng: “%s”."
 
-#: branch.c:291
+#: branch.c:290
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr "Nhánh không hợp lệ: “%s”."
 
-#: branch.c:345
+#: branch.c:344
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "“%s” đã được lấy ra tại “%s” rồi"
 
-#: branch.c:364
+#: branch.c:363
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr "HEAD của cây làm việc %s chưa được cập nhật"
@@ -1466,7 +1466,7 @@ msgstr[0] "%lu năm trước"
 msgid "failed to read orderfile '%s'"
 msgstr "gặp lỗi khi đọc tập-tin-thứ-tự “%s”"
 
-#: diffcore-rename.c:540
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr "Đang thực hiện dò tìm đổi tên không chính xác"
 
@@ -1562,8 +1562,8 @@ msgstr "git fetch-pack: cần ACK/NAK, nhưng lại nhận được EOF"
 
 #: fetch-pack.c:243
 #, c-format
-msgid "git fetch_pack: expected ACK/NAK, got '%s'"
-msgstr "git fetch_pack: cần ACK/NAK, nhưng lại nhận được “%s”"
+msgid "git fetch-pack: expected ACK/NAK, got '%s'"
+msgstr "git fetch-pack: cần ACK/NAK, nhưng lại nhận được “%s”"
 
 #: fetch-pack.c:295
 msgid "--stateless-rpc requires multi_ack_detailed"
@@ -3007,7 +3007,7 @@ msgstr "tóm lược SHA1 %s chưa rõ ràng"
 msgid "The candidates are:"
 msgstr "Các ứng cử là:"
 
-#: sha1_name.c:577
+#: sha1_name.c:578
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
@@ -4440,10 +4440,10 @@ msgid "pass it through git-apply"
 msgstr "chuyển nó qua git-apply"
 
 #: builtin/am.c:2283 builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665
-#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135 builtin/pull.c:194
-#: builtin/repack.c:181 builtin/repack.c:185 builtin/show-branch.c:644
-#: builtin/show-ref.c:175 builtin/tag.c:340 parse-options.h:132
-#: parse-options.h:134 parse-options.h:245
+#: builtin/grep.c:707 builtin/merge.c:200 builtin/pull.c:135
+#: builtin/pull.c:194 builtin/repack.c:181 builtin/repack.c:185
+#: builtin/show-branch.c:644 builtin/show-ref.c:175 builtin/tag.c:340
+#: parse-options.h:132 parse-options.h:134 parse-options.h:245
 msgid "n"
 msgstr "n"
 
@@ -5968,7 +5968,8 @@ msgstr "lấy ra <nhánh> thay cho HEAD của máy chủ"
 msgid "path to git-upload-pack on the remote"
 msgstr "đường dẫn đến git-upload-pack trên máy chủ"
 
-#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668 builtin/pull.c:202
+#: builtin/clone.c:97 builtin/fetch.c:120 builtin/grep.c:668
+#: builtin/pull.c:202
 msgid "depth"
 msgstr "độ-sâu"
 
