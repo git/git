@@ -438,6 +438,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	die_path_inside_submodule(&the_index, &pathspec);
 
+	enable_fscache(1);
+	/* We do not really re-read the index but update the up-to-date flags */
+	preload_index(&the_index, &pathspec);
+
 	if (add_new_files) {
 		int baselen;
 
