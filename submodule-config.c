@@ -471,18 +471,6 @@ out:
 	return submodule;
 }
 
-static const struct submodule *config_from_path(struct submodule_cache *cache,
-		const unsigned char *commit_sha1, const char *path)
-{
-	return config_from(cache, commit_sha1, path, lookup_path);
-}
-
-static const struct submodule *config_from_name(struct submodule_cache *cache,
-		const unsigned char *commit_sha1, const char *name)
-{
-	return config_from(cache, commit_sha1, name, lookup_name);
-}
-
 static void ensure_cache_init(void)
 {
 	if (is_cache_init)
@@ -508,14 +496,14 @@ const struct submodule *submodule_from_name(const unsigned char *commit_sha1,
 		const char *name)
 {
 	ensure_cache_init();
-	return config_from_name(&the_submodule_cache, commit_sha1, name);
+	return config_from(&the_submodule_cache, commit_sha1, name, lookup_name);
 }
 
 const struct submodule *submodule_from_path(const unsigned char *commit_sha1,
 		const char *path)
 {
 	ensure_cache_init();
-	return config_from_path(&the_submodule_cache, commit_sha1, path);
+	return config_from(&the_submodule_cache, commit_sha1, path, lookup_path);
 }
 
 void submodule_free(void)
