@@ -248,7 +248,7 @@ static int write_message(const void *buf, size_t len, const char *filename,
 	}
 	if (append_eol && write(msg_fd, "\n", 1) < 0) {
 		rollback_lock_file(&msg_file);
-		return error_errno(_("could not write eol to '%s"), filename);
+		return error_errno(_("could not write eol to '%s'"), filename);
 	}
 	if (commit_lock_file(&msg_file) < 0) {
 		rollback_lock_file(&msg_file);
