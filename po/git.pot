@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-01 21:35+0800\n"
+"POT-Creation-Date: 2016-11-22 22:10+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1015,27 +1015,27 @@ msgid ""
 "\"git push -u\" to set the upstream config as you push."
 msgstr ""
 
-#: branch.c:266
+#: branch.c:265
 #, c-format
 msgid "Not a valid object name: '%s'."
 msgstr ""
 
-#: branch.c:286
+#: branch.c:285
 #, c-format
 msgid "Ambiguous object name: '%s'."
 msgstr ""
 
-#: branch.c:291
+#: branch.c:290
 #, c-format
 msgid "Not a valid branch point: '%s'."
 msgstr ""
 
-#: branch.c:345
+#: branch.c:344
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr ""
 
-#: branch.c:364
+#: branch.c:363
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr ""
@@ -1392,7 +1392,7 @@ msgstr[1] ""
 msgid "failed to read orderfile '%s'"
 msgstr ""
 
-#: diffcore-rename.c:540
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr ""
 
@@ -1480,7 +1480,7 @@ msgstr ""
 
 #: fetch-pack.c:243
 #, c-format
-msgid "git fetch_pack: expected ACK/NAK, got '%s'"
+msgid "git fetch-pack: expected ACK/NAK, got '%s'"
 msgstr ""
 
 #: fetch-pack.c:295
@@ -2833,7 +2833,7 @@ msgstr ""
 msgid "The candidates are:"
 msgstr ""
 
-#: sha1_name.c:577
+#: sha1_name.c:578
 msgid ""
 "Git normally never creates a ref that ends with 40 hex characters\n"
 "because it will be ignored when you just specify 40-hex. These refs\n"
