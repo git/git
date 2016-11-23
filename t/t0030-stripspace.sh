@@ -432,6 +432,15 @@ test_expect_success '-c with changed comment char' '
 	test_cmp expect actual
 '
 
+test_expect_success '-c with comment char defined in .git/config' '
+	test_config core.commentchar = &&
+	printf "= foo\n" >expect &&
+	printf "foo" | (
+		mkdir sub && cd sub && git stripspace -c
+	) >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'avoid SP-HT sequence in commented line' '
 	printf "#\tone\n#\n# two\n" >expect &&
 	printf "\tone\n\ntwo\n" | git stripspace -c >actual &&
