@@ -574,6 +574,15 @@ notes for details).
  * Portability update and workaround for builds on recent Mac OS X.
    (merge a296bc0132 ls/macos-update later to maint).
 
+ * Using a %(HEAD) placeholder in "for-each-ref --format=" option
+   caused the command to segfault when on an unborn branch.
+   (merge 84679d470d jc/for-each-ref-head-segfault-fix later to maint).
+
+ * "git rebase -i" did not work well with core.commentchar
+   configuration variable for two reasons, both of which have been
+   fixed.
+   (merge 882cd23777 js/rebase-i-commentchar-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 5c238e29a8 jk/common-main later to maint).
    (merge 5a5749e45b ak/pre-receive-hook-template-modefix later to maint).
