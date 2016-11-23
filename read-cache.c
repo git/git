@@ -616,6 +616,7 @@ static struct cache_entry *create_alias_ce(struct index_state *istate,
 	new = xcalloc(1, cache_entry_size(len));
 	memcpy(new->name, alias->name, len);
 	copy_cache_entry(new, ce);
+	new->precompute_hash_state = 0;
 	save_or_free_index_entry(istate, ce);
 	return new;
 }
