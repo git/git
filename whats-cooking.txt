@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2016, #04; Mon, 21)
-X-master-at: 1310affe024fba407bff55dbe65cd6d670c8a32d
-X-next-at: d50252334705fce146cd91a5045ecc87fd6ea92e
+Subject: What's cooking in git.git (Nov 2016, #05; Wed, 23)
+X-master-at: e2b2d6a172b76d44cb7b1ddb12ea5bfac9613a44
+X-next-at: c8190e7bd5cf2478d6c76f2ae9bea11b360a6330
 
-What's cooking in git.git (Nov 2016, #04; Mon, 21)
+What's cooking in git.git (Nov 2016, #05; Wed, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,7 +18,7 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * jc/for-each-ref-head-segfault-fix (2016-11-18) 1 commit
   (merged to 'next' on 2016-11-21 at 3c1f352316)
@@ -27,7 +27,14 @@ of the repositories listed at
  Using a %(HEAD) placeholder in "for-each-ref --format=" option
  caused the command to segfault when on an unborn branch.
 
- Will cook in 'next'.
+
+* jc/setup-cleanup-fix (2016-11-22) 2 commits
+  (merged to 'next' on 2016-11-23 at e46785ec9c)
+ + archive: read local configuration
+ + mailinfo: read local configuration
+
+ "git archive" and "git mailinfo" stopped reading from local
+ configuration file with a recent update.
 
 
 * js/prepare-sequencer (2016-11-21) 1 commit
@@ -35,22 +42,27 @@ of the repositories listed at
  + i18n: fix unmatched single quote in error message
 
  Fix for an error message string.
- Will merge to 'master'.
 
 
 * js/rebase-i-commentchar-fix (2016-11-21) 3 commits
- - rebase -i: handle core.commentChar=auto
- - stripspace: respect repository config
- - rebase -i: highlight problems with core.commentchar
+  (merged to 'next' on 2016-11-22 at 88581dfe2e)
+ + rebase -i: handle core.commentChar=auto
+ + stripspace: respect repository config
+ + rebase -i: highlight problems with core.commentchar
 
  "git rebase -i" did not work well with core.commentchar
  configuration variable for two reasons, both of which have been
  fixed.
 
- Waiting for an ack for updates.
- Hopefully we can merge this before 2.11 final, as one of the
- breakages is a recent regression.
 
+* jt/trailer-with-cruft (2016-11-21) 1 commit
+  (merged to 'next' on 2016-11-22 at c68014088a)
+ + doc: mention user-configured trailers
+
+ Doc update.
+
+--------------------------------------------------
+[New Topics]
 
 * jc/cache-tree-wip (2016-11-18) 4 commits
  - cache-tree: freshen the tree object at the top level
@@ -59,42 +71,21 @@ of the repositories listed at
  - freshen_object(): factor out a helper function
 
 
-* jk/trailers-placeholder-in-pretty (2016-11-21) 2 commits
- - ref-filter: add support to display trailers as part of contents
- - pretty: add %(trailers) format for displaying trailers of a commit message
+* bw/push-dry-run (2016-11-23) 2 commits
+ - push: fix --dry-run to not push submodules
+ - push: --dry-run updates submodules when --recurse-submodules=on-demand
+ (this branch uses hv/submodule-not-yet-pushed-fix.)
 
 
-* jt/trailer-with-cruft (2016-11-21) 1 commit
- - doc: mention user-configured trailers
+* jk/rev-parse-symbolic-parents-fix (2016-11-16) 1 commit
+ - rev-parse: fix parent shorthands with --symbolic
 
 
-* sb/submodule-intern-gitdir (2016-11-21) 3 commits
- - submodule--helper: add intern-git-dir function
- - test-lib-functions.sh: teach test_commit -C <dir>
- - submodule: use absolute path for computing relative path connecting
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jk/create-branch-remove-unused-param (2016-11-09) 1 commit
-  (merged to 'next' on 2016-11-16 at 621254c832)
- + create_branch: drop unused "head" parameter
-
- Code clean-up.
-
-
-* nd/worktree-lock (2016-11-13) 1 commit
-  (merged to 'next' on 2016-11-16 at 67b731de07)
- + git-worktree.txt: fix typo "to"/"two", and add comma
-
- Typofix.
-
-
-* tk/diffcore-delta-remove-unused (2016-11-14) 1 commit
-  (merged to 'next' on 2016-11-16 at 51e66c2fa7)
- + diffcore-delta: remove unused parameter to diffcore_count_changes()
-
- Code cleanup.
+* nd/worktree-list-fixup (2016-11-23) 3 commits
+ - worktree list: keep the list sorted
+ - get_worktrees() must return main worktree as first item even on error
+ - worktree.c: zero new 'struct worktree' on allocation
+ (this branch is used by nd/worktree-move.)
 
 --------------------------------------------------
 [Stalled]
@@ -196,6 +187,19 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/trailers-placeholder-in-pretty (2016-11-21) 2 commits
+ - ref-filter: add support to display trailers as part of contents
+ - pretty: add %(trailers) format for displaying trailers of a commit message
+
+
+* sb/submodule-intern-gitdir (2016-11-22) 5 commits
+ - SQUASH
+ - submodule: add embed-git-dir function
+ - test-lib-functions.sh: teach test_commit -C <dir>
+ - submodule helper: support super prefix
+ - submodule: use absolute path for computing relative path connecting
+
+
 * dt/empty-submodule-in-merge (2016-11-17) 1 commit
  - submodules: allow empty working-tree dirs in merge/cherry-pick
 
@@ -206,7 +210,7 @@ of the repositories listed at
  Waiting for review.
 
 
-* bw/grep-recurse-submodules (2016-11-18) 6 commits
+* bw/grep-recurse-submodules (2016-11-22) 6 commits
  - grep: search history of moved submodules
  - grep: enable recurse-submodules to work on <tree> objects
  - grep: optionally recurse into submodules
@@ -215,8 +219,6 @@ of the repositories listed at
  - submodules: add helper functions to determine presence of submodules
 
  "git grep" learns to optionally recurse into submodules
-
- Waiting for review.
 
 
 * dt/smart-http-detect-server-going-away (2016-11-18) 2 commits
@@ -244,7 +246,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* nd/worktree-move (2016-11-12) 11 commits
+* nd/worktree-move (2016-11-23) 11 commits
  . worktree remove: new command
  . worktree move: refuse to move worktrees with submodules
  . worktree move: accept destination as directory
@@ -256,22 +258,24 @@ of the repositories listed at
  . copy.c: convert bb_(p)error_msg to error(_errno)
  . copy.c: delete unused code in copy_file()
  . copy.c: import copy_file() from busybox
+ (this branch uses nd/worktree-list-fixup.)
 
  "git worktree" learned move and remove subcommands.
 
- Waiting for a reroll.
- Seems to break a test or two.
+ Reported to break builds on Windows.  Perhaps it should just spawn
+ "cp -R" or something.
 
 
 * jc/compression-config (2016-11-15) 1 commit
- - compression: unify pack.compression configuration parsing
+  (merged to 'next' on 2016-11-23 at b3c9254897)
+ + compression: unify pack.compression configuration parsing
 
  Compression setting for producing packfiles were spread across
  three codepaths, one of which did not honor any configuration.
  Unify these so that all of them honor core.compression and
  pack.compression variables the same way.
 
- Needs tests for pack-objects and fast-import.
+ Will cook in 'next'.
 
 
 * mm/gc-safety-doc (2016-11-16) 1 commit
@@ -289,6 +293,7 @@ of the repositories listed at
  + batch check whether submodule needs pushing into one call
  + serialize collection of refs that contain submodule changes
  + serialize collection of changed submodules
+ (this branch is used by bw/push-dry-run.)
 
  The code in "git push" to compute if any commit being pushed in the
  superproject binds a commit in a submodule that hasn't been pushed
@@ -382,12 +387,15 @@ of the repositories listed at
  Perhaps we want to cover .gitmodules too with the same mechanism?
 
 
-* sb/submodule-config-cleanup (2016-11-02) 3 commits
- - submodule-config: clarify parsing of null_sha1 element
- - submodule-config: rename commit_sha1 to commit_or_tree
- - submodule config: inline config_from_{name, path}
+* sb/submodule-config-cleanup (2016-11-22) 3 commits
+  (merged to 'next' on 2016-11-23 at c02e578b49)
+ + submodule-config: clarify parsing of null_sha1 element
+ + submodule-config: rename commit_sha1 to treeish_name
+ + submodule config: inline config_from_{name, path}
 
- What's the doneness of this topic?
+ Minor code clean-up.
+
+ Will cook in 'next'.
 
 
 * jc/push-default-explicit (2016-10-31) 2 commits
@@ -492,10 +500,9 @@ of the repositories listed at
  single NUL, the blob will be handled as binary).  The codepaths
  have been optimized by using streaming interface.
 
- Waiting for review.
- The tip seems to do too much in a single commit and may be better split.
- cf. <20161012134724.28287-1-tboegi@web.de>
- cf. <xmqqd1il5w4e.fsf@gitster.mtv.corp.google.com>
+ Will discard.
+ Retracted.
+ cf. <20161102071646.GA5094@tb-raspi>
 
 
 * pb/bisect (2016-10-18) 27 commits
@@ -625,7 +632,7 @@ of the repositories listed at
  the wild in e-mail headers; replace them with "iso-8859-1" that is
  more widely known when conversion fails from/to it.
 
- Will hold to see if people scream.
+ Will cook in 'next'.
 
 
 * sg/fix-versioncmp-with-common-suffix (2016-09-08) 5 commits
@@ -661,9 +668,5 @@ of the repositories listed at
  Stop supporting "git merge <message> HEAD <commit>" syntax that has
  been deprecated since October 2007, and issues a deprecation
  warning message since v2.5.0.
-
- It has been reported that git-gui still uses the deprecated syntax,
- which needs to be fixed before this final step can proceed.
- cf. <5671DB28.8020901@kdbg.org>
 
  Will cook in 'next'.
