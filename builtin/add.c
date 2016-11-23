@@ -376,9 +376,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
-	if (read_cache() < 0)
-		die(_("index file corrupt"));
-
 	/*
 	 * Check the "pathspec '%s' did not match any files" block
 	 * below before enabling new magic.
@@ -388,6 +385,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_SYMLINK_LEADING_PATH |
 		       PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE,
 		       prefix, argv);
+
+	enable_fscache(1);
+	if (read_cache_preload(&pathspec) < 0)
+		die(_("index file corrupt"));
 
 	if (add_new_files) {
 		int baselen;
