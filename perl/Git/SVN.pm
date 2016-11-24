@@ -2446,7 +2446,9 @@ sub _new {
 		             "refs/remotes/$prefix$default_ref_id";
 	}
 	$_[1] = $repo_id;
-	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
+	my $ref_id_dir = $ref_id;
+	$ref_id_dir =~ s/[\\\/:\*\?"><\|]/_/g;
+	my $dir = "$ENV{GIT_DIR}/svn/$ref_id_dir";
 
 	# Older repos imported by us used $GIT_DIR/svn/foo instead of
 	# $GIT_DIR/svn/refs/remotes/foo when tracking refs/remotes/foo
