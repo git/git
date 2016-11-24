@@ -217,6 +217,8 @@
 *.user
 *.idb
 *.pdb
+*.ilk
+.vs/
 /Debug/
 /Release/
 /.vagrant/
