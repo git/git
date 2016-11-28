@@ -413,6 +413,37 @@ test_expect_success 'submit --prepare-p4-only' '
 	)
 '
 
+test_expect_success 'submit --shelve' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$cli" &&
+		p4 revert ... &&
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		test_commit "shelveme1" &&
+		git p4 submit --origin=HEAD^ &&
+
+		echo 654321 >shelveme2.t &&
+		echo 123456 >>shelveme1.t &&
+		git add shelveme* &&
+		git commit -m"shelvetest" &&
+		git p4 submit --shelve --origin=HEAD^ &&
+
+		test_path_is_file shelveme1.t &&
+		test_path_is_file shelveme2.t
+	) &&
+	(
+		cd "$cli" &&
+		change=$(p4 -G changes -s shelved -m 1 //depot/... | \
+			 marshal_dump change) &&
+		p4 describe -S $change | grep shelveme2 &&
+		p4 describe -S $change | grep 123456 &&
+		test_path_is_file shelveme1.t &&
+		test_path_is_missing shelveme2.t
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '

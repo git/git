@@ -1289,6 +1289,9 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--conflict", dest="conflict_behavior",
                                      choices=self.conflict_behavior_choices),
                 optparse.make_option("--branch", dest="branch"),
+                optparse.make_option("--shelve", dest="shelve", action="store_true",
+                                     help="Shelve instead of submit. Shelved files are reverted, "
+                                     "restoring the workspace to the state before the shelve"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -1296,6 +1299,7 @@ class P4Submit(Command, P4UserMap):
         self.detectRenames = False
         self.preserveUser = gitConfigBool("git-p4.preserveUser")
         self.dry_run = False
+        self.shelve = False
         self.prepare_p4_only = False
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
@@ -1785,7 +1789,14 @@ class P4Submit(Command, P4UserMap):
                 if self.isWindows:
                     message = message.replace("\r\n", "\n")
                 submitTemplate = message[:message.index(separatorLine)]
-                p4_write_pipe(['submit', '-i'], submitTemplate)
+                if self.shelve:
+                    p4_write_pipe(['shelve', '-i'], submitTemplate)
+                else:
+                    p4_write_pipe(['submit', '-i'], submitTemplate)
+                    # The rename/copy happened by applying a patch that created a
+                    # new file.  This leaves it writable, which confuses p4.
+                    for f in pureRenameCopy:
+                        p4_sync(f, "-f")
 
                 if self.preserveUser:
                     if p4User:
@@ -1795,23 +1806,20 @@ class P4Submit(Command, P4UserMap):
                         changelist = self.lastP4Changelist()
                         self.modifyChangelistUser(changelist, p4User)
 
-                # The rename/copy happened by applying a patch that created a
-                # new file.  This leaves it writable, which confuses p4.
-                for f in pureRenameCopy:
-                    p4_sync(f, "-f")
                 submitted = True
 
         finally:
             # skip this patch
-            if not submitted:
-                print "Submission cancelled, undoing p4 changes."
-                for f in editedFiles:
+            if not submitted or self.shelve:
+                if self.shelve:
+                    print ("Reverting shelved files.")
+                else:
+                    print ("Submission cancelled, undoing p4 changes.")
+                for f in editedFiles | filesToDelete:
                     p4_revert(f)
                 for f in filesToAdd:
                     p4_revert(f)
                     os.remove(f)
-                for f in filesToDelete:
-                    p4_revert(f)
 
         os.remove(fileName)
         return submitted
@@ -2067,13 +2075,13 @@ class P4Submit(Command, P4UserMap):
                         break
 
         chdir(self.oldWorkingDirectory)
-
+        shelved_applied = "shelved" if self.shelve else "applied"
         if self.dry_run:
             pass
         elif self.prepare_p4_only:
             pass
         elif len(commits) == len(applied):
-            print "All commits applied!"
+            print ("All commits {0}!".format(shelved_applied))
 
             sync = P4Sync()
             if self.branch:
@@ -2085,9 +2093,9 @@ class P4Submit(Command, P4UserMap):
 
         else:
             if len(applied) == 0:
-                print "No commits applied."
+                print ("No commits {0}.".format(shelved_applied))
             else:
-                print "Applied only the commits marked with '*':"
+                print ("{0} only the commits marked with '*':".format(shelved_applied.capitalize()))
                 for c in commits:
                     if c in applied:
                         star = "*"
