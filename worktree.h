@@ -23,7 +23,7 @@ struct worktree {
  * The caller is responsible for freeing the memory from the returned
  * worktree(s).
  */
-extern struct worktree **get_worktrees(void);
+extern struct worktree **get_worktrees(unsigned flags);
 
 /*
  * Return git dir of the worktree. Note that the path may be relative.

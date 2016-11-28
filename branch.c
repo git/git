@@ -348,7 +348,7 @@ void die_if_checked_out(const char *branch, int ignore_current_worktree)
 int replace_each_worktree_head_symref(const char *oldref, const char *newref)
 {
 	int ret = 0;
-	struct worktree **worktrees = get_worktrees();
+	struct worktree **worktrees = get_worktrees(0);
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {

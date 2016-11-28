@@ -531,7 +531,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 
 static void reject_rebase_or_bisect_branch(const char *target)
 {
-	struct worktree **worktrees = get_worktrees();
+	struct worktree **worktrees = get_worktrees(0);
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {
