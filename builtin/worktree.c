@@ -406,10 +406,10 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 	else {
 		strbuf_addf(&sb, "%-*s ", abbrev_len,
 				find_unique_abbrev(wt->head_sha1, DEFAULT_ABBREV));
-		if (!wt->is_detached)
-			strbuf_addf(&sb, "[%s]", shorten_unambiguous_ref(wt->head_ref, 0));
-		else
+		if (wt->is_detached)
 			strbuf_addstr(&sb, "(detached HEAD)");
+		else
+			strbuf_addf(&sb, "[%s]", shorten_unambiguous_ref(wt->head_ref, 0));
 	}
 	printf("%s\n", sb.buf);
 
