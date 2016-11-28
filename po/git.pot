@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-22 22:10+0800\n"
+"POT-Creation-Date: 2016-11-25 22:50+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -726,11 +726,11 @@ msgstr ""
 msgid "prepend prefix to each pathname in the archive"
 msgstr ""
 
-#: archive.c:432 builtin/archive.c:88 builtin/blame.c:2603
-#: builtin/blame.c:2604 builtin/config.c:59 builtin/fast-export.c:987
-#: builtin/fast-export.c:989 builtin/grep.c:723 builtin/hash-object.c:101
-#: builtin/ls-files.c:539 builtin/ls-files.c:542 builtin/notes.c:401
-#: builtin/notes.c:564 builtin/read-tree.c:109 parse-options.h:153
+#: archive.c:432 builtin/blame.c:2603 builtin/blame.c:2604 builtin/config.c:59
+#: builtin/fast-export.c:987 builtin/fast-export.c:989 builtin/grep.c:723
+#: builtin/hash-object.c:101 builtin/ls-files.c:539 builtin/ls-files.c:542
+#: builtin/notes.c:401 builtin/notes.c:564 builtin/read-tree.c:109
+#: parse-options.h:153
 msgid "file"
 msgstr ""
 
@@ -2494,7 +2494,7 @@ msgstr ""
 
 #: sequencer.c:251
 #, c-format
-msgid "could not write eol to '%s"
+msgid "could not write eol to '%s'"
 msgstr ""
 
 #: sequencer.c:255 sequencer.c:1130 sequencer.c:1216
@@ -13269,12 +13269,12 @@ msgstr ""
 msgid "See git-${cmd}(1) for details."
 msgstr ""
 
-#: git-rebase--interactive.sh:131
+#: git-rebase--interactive.sh:140
 #, sh-format
 msgid "Rebasing ($new_count/$total)"
 msgstr ""
 
-#: git-rebase--interactive.sh:147
+#: git-rebase--interactive.sh:156
 msgid ""
 "\n"
 "Commands:\n"
@@ -13289,19 +13289,19 @@ msgid ""
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:162
+#: git-rebase--interactive.sh:171
 msgid ""
 "\n"
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:166
+#: git-rebase--interactive.sh:175
 msgid ""
 "\n"
 "If you remove a line here THAT COMMIT WILL BE LOST.\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:202
+#: git-rebase--interactive.sh:211
 #, sh-format
 msgid ""
 "You can amend the commit now, with\n"
@@ -13313,87 +13313,87 @@ msgid ""
 "\tgit rebase --continue"
 msgstr ""
 
-#: git-rebase--interactive.sh:227
+#: git-rebase--interactive.sh:236
 #, sh-format
 msgid "$sha1: not a commit that can be picked"
 msgstr ""
 
-#: git-rebase--interactive.sh:266
+#: git-rebase--interactive.sh:275
 #, sh-format
 msgid "Invalid commit name: $sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:308
+#: git-rebase--interactive.sh:317
 msgid "Cannot write current commit's replacement sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:360
+#: git-rebase--interactive.sh:369
 #, sh-format
 msgid "Fast-forward to $sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:362
+#: git-rebase--interactive.sh:371
 #, sh-format
 msgid "Cannot fast-forward to $sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:371
+#: git-rebase--interactive.sh:380
 #, sh-format
 msgid "Cannot move HEAD to $first_parent"
 msgstr ""
 
-#: git-rebase--interactive.sh:376
+#: git-rebase--interactive.sh:385
 #, sh-format
 msgid "Refusing to squash a merge: $sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:390
+#: git-rebase--interactive.sh:399
 #, sh-format
 msgid "Error redoing merge $sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:398
+#: git-rebase--interactive.sh:407
 #, sh-format
 msgid "Could not pick $sha1"
 msgstr ""
 
-#: git-rebase--interactive.sh:407
+#: git-rebase--interactive.sh:416
 #, sh-format
 msgid "This is the commit message #${n}:"
 msgstr ""
 
-#: git-rebase--interactive.sh:412
+#: git-rebase--interactive.sh:421
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
 msgstr ""
 
-#: git-rebase--interactive.sh:423
+#: git-rebase--interactive.sh:432
 #, sh-format
 msgid "This is a combination of $count commit."
 msgid_plural "This is a combination of $count commits."
 msgstr[0] ""
 msgstr[1] ""
 
-#: git-rebase--interactive.sh:431
+#: git-rebase--interactive.sh:440
 #, sh-format
 msgid "Cannot write $fixup_msg"
 msgstr ""
 
-#: git-rebase--interactive.sh:434
+#: git-rebase--interactive.sh:443
 msgid "This is a combination of 2 commits."
 msgstr ""
 
-#: git-rebase--interactive.sh:435
+#: git-rebase--interactive.sh:444
 msgid "This is the 1st commit message:"
 msgstr ""
 
-#: git-rebase--interactive.sh:475 git-rebase--interactive.sh:518
-#: git-rebase--interactive.sh:521
+#: git-rebase--interactive.sh:484 git-rebase--interactive.sh:527
+#: git-rebase--interactive.sh:530
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:549
+#: git-rebase--interactive.sh:558
 #, sh-format
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
@@ -13403,31 +13403,31 @@ msgid ""
 "you are able to reword the commit."
 msgstr ""
 
-#: git-rebase--interactive.sh:564
+#: git-rebase--interactive.sh:573
 #, sh-format
 msgid "Stopped at $sha1_abbrev... $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:579
+#: git-rebase--interactive.sh:588
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
 msgstr ""
 
-#: git-rebase--interactive.sh:621
+#: git-rebase--interactive.sh:630
 #, sh-format
 msgid "Executing: $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:629
+#: git-rebase--interactive.sh:638
 #, sh-format
 msgid "Execution failed: $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:631
+#: git-rebase--interactive.sh:640
 msgid "and made changes to the index and/or the working tree"
 msgstr ""
 
-#: git-rebase--interactive.sh:633
+#: git-rebase--interactive.sh:642
 msgid ""
 "You can fix the problem, and then run\n"
 "\n"
@@ -13435,7 +13435,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: after these lines is a command to be issued by the user
-#: git-rebase--interactive.sh:646
+#: git-rebase--interactive.sh:655
 #, sh-format
 msgid ""
 "Execution succeeded: $rest\n"
@@ -13445,49 +13445,49 @@ msgid ""
 "\tgit rebase --continue"
 msgstr ""
 
-#: git-rebase--interactive.sh:657
+#: git-rebase--interactive.sh:666
 #, sh-format
 msgid "Unknown command: $command $sha1 $rest"
 msgstr ""
 
-#: git-rebase--interactive.sh:658
+#: git-rebase--interactive.sh:667
 msgid "Please fix this using 'git rebase --edit-todo'."
 msgstr ""
 
-#: git-rebase--interactive.sh:693
+#: git-rebase--interactive.sh:702
 #, sh-format
 msgid "Successfully rebased and updated $head_name."
 msgstr ""
 
-#: git-rebase--interactive.sh:740
+#: git-rebase--interactive.sh:749
 msgid "Could not skip unnecessary pick commands"
 msgstr ""
 
-#: git-rebase--interactive.sh:898
+#: git-rebase--interactive.sh:907
 #, sh-format
 msgid ""
 "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
 " - $line"
 msgstr ""
 
-#: git-rebase--interactive.sh:931
+#: git-rebase--interactive.sh:940
 #, sh-format
 msgid ""
 "Warning: the command isn't recognized in the following line:\n"
 " - $line"
 msgstr ""
 
-#: git-rebase--interactive.sh:970
+#: git-rebase--interactive.sh:979
 msgid "could not detach HEAD"
 msgstr ""
 
-#: git-rebase--interactive.sh:1008
+#: git-rebase--interactive.sh:1017
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
 msgstr ""
 
-#: git-rebase--interactive.sh:1016
+#: git-rebase--interactive.sh:1025
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
@@ -13496,28 +13496,28 @@ msgid ""
 "The possible behaviours are: ignore, warn, error."
 msgstr ""
 
-#: git-rebase--interactive.sh:1027
+#: git-rebase--interactive.sh:1036
 #, sh-format
 msgid ""
 "Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
 "Ignoring."
 msgstr ""
 
-#: git-rebase--interactive.sh:1044
+#: git-rebase--interactive.sh:1053
 msgid ""
 "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
 "continue'."
 msgstr ""
 
-#: git-rebase--interactive.sh:1045
+#: git-rebase--interactive.sh:1054
 msgid "Or you can abort the rebase with 'git rebase --abort'."
 msgstr ""
 
-#: git-rebase--interactive.sh:1069
+#: git-rebase--interactive.sh:1078
 msgid "Could not remove CHERRY_PICK_HEAD"
 msgstr ""
 
-#: git-rebase--interactive.sh:1074
+#: git-rebase--interactive.sh:1083
 #, sh-format
 msgid ""
 "You have staged changes in your working tree.\n"
@@ -13535,21 +13535,21 @@ msgid ""
 "  git rebase --continue\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:1091
+#: git-rebase--interactive.sh:1100
 msgid "Error trying to find the author identity to amend commit"
 msgstr ""
 
-#: git-rebase--interactive.sh:1096
+#: git-rebase--interactive.sh:1105
 msgid ""
 "You have uncommitted changes in your working tree. Please commit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 
-#: git-rebase--interactive.sh:1101 git-rebase--interactive.sh:1105
+#: git-rebase--interactive.sh:1110 git-rebase--interactive.sh:1114
 msgid "Could not commit staged changes."
 msgstr ""
 
-#: git-rebase--interactive.sh:1129
+#: git-rebase--interactive.sh:1138
 msgid ""
 "\n"
 "You are editing the todo file of an ongoing interactive rebase.\n"
@@ -13558,47 +13558,47 @@ msgid ""
 "\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:1137 git-rebase--interactive.sh:1295
+#: git-rebase--interactive.sh:1146 git-rebase--interactive.sh:1304
 msgid "Could not execute editor"
 msgstr ""
 
-#: git-rebase--interactive.sh:1150
+#: git-rebase--interactive.sh:1159
 #, sh-format
 msgid "Could not checkout $switch_to"
 msgstr ""
 
-#: git-rebase--interactive.sh:1155
+#: git-rebase--interactive.sh:1164
 msgid "No HEAD?"
 msgstr ""
 
-#: git-rebase--interactive.sh:1156
+#: git-rebase--interactive.sh:1165
 #, sh-format
 msgid "Could not create temporary $state_dir"
 msgstr ""
 
-#: git-rebase--interactive.sh:1158
+#: git-rebase--interactive.sh:1167
 msgid "Could not mark as interactive"
 msgstr ""
 
-#: git-rebase--interactive.sh:1168 git-rebase--interactive.sh:1173
+#: git-rebase--interactive.sh:1177 git-rebase--interactive.sh:1182
 msgid "Could not init rewritten commits"
 msgstr ""
 
-#: git-rebase--interactive.sh:1273
+#: git-rebase--interactive.sh:1282
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: git-rebase--interactive.sh:1278
+#: git-rebase--interactive.sh:1287
 msgid ""
 "\n"
 "However, if you remove everything, the rebase will be aborted.\n"
 "\n"
 msgstr ""
 
-#: git-rebase--interactive.sh:1285
+#: git-rebase--interactive.sh:1294
 msgid "Note that empty commits are commented out"
 msgstr ""
 

@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2016-11-22 22:10+0800\n"
-"PO-Revision-Date: 2016-11-13 16:37+0000\n"
+"POT-Creation-Date: 2016-11-25 22:50+0800\n"
+"PO-Revision-Date: 2016-11-25 22:58+0800\n"
 "Last-Translator: Vasco Almeida <vascomalmeida@sapo.pt>\n"
 "Language-Team: Portuguese\n"
 "Language: pt\n"
@@ -2665,7 +2665,7 @@ msgstr "não foi possível escrever em '%s'"
 
 #: sequencer.c:251
 #, c-format
-msgid "could not write eol to '%s"
+msgid "could not write eol to '%s'"
 msgstr "não foi possível escrever fim de linha em '%s'"
 
 #: sequencer.c:255 sequencer.c:1130 sequencer.c:1216
