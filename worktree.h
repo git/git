@@ -15,6 +15,8 @@ struct worktree {
 
 /* Functions for acting on the information about worktrees. */
 
+#define GWT_SORT_LINKED (1 << 0) /* keeps linked worktrees sorted */
+
 /*
  * Get the worktrees.  The primary worktree will always be the first returned,
  * and linked worktrees will be pointed to by 'next' in each subsequent

@@ -117,4 +117,23 @@ test_expect_success 'broken main worktree still at the top' '
 	)
 '
 
+test_expect_success 'linked worktrees are sorted' '
+	mkdir sorted &&
+	git init sorted/main &&
+	(
+		cd sorted/main &&
+		test_tick &&
+		test_commit new &&
+		git worktree add ../first &&
+		git worktree add ../second &&
+		git worktree list --porcelain | grep ^worktree >actual
+	) &&
+	cat >expected <<-EOF &&
+	worktree $(pwd)/sorted/main
+	worktree $(pwd)/sorted/first
+	worktree $(pwd)/sorted/second
+	EOF
+	test_cmp expected sorted/main/actual
+'
+
 test_done

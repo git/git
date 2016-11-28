@@ -447,7 +447,7 @@ static int list(int ac, const char **av, const char *prefix)
 	if (ac)
 		usage_with_options(worktree_usage, options);
 	else {
-		struct worktree **worktrees = get_worktrees(0);
+		struct worktree **worktrees = get_worktrees(GWT_SORT_LINKED);
 		int path_maxlen = 0, abbrev = DEFAULT_ABBREV, i;
 
 		if (!porcelain)
