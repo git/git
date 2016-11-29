@@ -140,6 +140,35 @@ test_expect_success $PREREQ 'Verify commandline' '
 	test_cmp expected commandline1
 '
 
+test_expect_success $PREREQ 'setup expect for cc trailer' "
+cat >expected-cc <<\EOF
+!recipient@example.com!
+!author@example.com!
+!one@example.com!
+!two@example.com!
+!three@example.com!
+!four@example.com!
+!five@example.com!
+EOF
+"
+
+test_expect_success $PREREQ 'cc trailer with various syntax' '
+	test_commit cc-trailer &&
+	test_when_finished "git reset --hard HEAD^" &&
+	git commit --amend -F - <<-EOF &&
+	Test Cc: trailers.
+
+	Cc: one@example.com
+	Cc: <two@example.com> # this is part of the name
+	Cc: <three@example.com>, <four@example.com> # not.five@example.com
+	Cc: "Some # Body" <five@example.com> [part.of.name.too]
+	EOF
+	clean_fake_sendmail &&
+	git send-email -1 --to=recipient@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" &&
+	test_cmp expected-cc commandline1
+'
+
 test_expect_success $PREREQ 'setup expect' "
 cat >expected-show-all-headers <<\EOF
 0001-Second.patch
