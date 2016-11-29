@@ -338,7 +338,7 @@ __git_tags ()
 __git_refs ()
 {
 	local i hash dir="$(__gitdir "${1-}")" track="${2-}"
-	local format refs
+	local format refs pfx
 	if [ -d "$dir" ]; then
 		case "$cur" in
 		refs|refs/*)
@@ -347,14 +347,15 @@ __git_refs ()
 			track=""
 			;;
 		*)
+			[[ "$cur" == ^* ]] && pfx="^"
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
-				if [ -e "$dir/$i" ]; then echo $i; fi
+				if [ -e "$dir/$i" ]; then echo $pfx$i; fi
 			done
 			format="refname:short"
 			refs="refs/tags refs/heads refs/remotes"
 			;;
 		esac
-		git --git-dir="$dir" for-each-ref --format="%($format)" \
+		git --git-dir="$dir" for-each-ref --format="$pfx%($format)" \
 			$refs
 		if [ -n "$track" ]; then
 			# employ the heuristic used by git checkout
