@@ -32,7 +32,6 @@ env:
     - DEFAULT_TEST_TARGET=prove
     - GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
     - GIT_TEST_OPTS="--verbose-log"
-    - GIT_TEST_HTTPD=true
     - GIT_TEST_CLONE_2GB=YesPlease
     # t9810 occasionally fails on Travis CI OS X
     # t9816 occasionally fails with "TAP out of sequence errors" on Travis CI OS X
@@ -57,6 +56,8 @@ before_install:
   - >
     case "${TRAVIS_OS_NAME:-linux}" in
     linux)
+      export GIT_TEST_HTTPD=YesPlease
+
       mkdir --parents custom/p4
       pushd custom/p4
         wget --quiet http://filehost.perforce.com/perforce/r$LINUX_P4_VERSION/bin.linux26x86_64/p4d
