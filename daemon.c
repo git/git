@@ -160,6 +160,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
+	size_t rlen;
 	const char *path;
 	const char *dir;
 
@@ -187,8 +188,12 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 			namlen = slash - dir;
 			restlen -= namlen;
 			loginfo("userpath <%s>, request <%s>, namlen %d, restlen %d, slash <%s>", user_path, dir, namlen, restlen, slash);
-			snprintf(rpath, PATH_MAX, "%.*s/%s%.*s",
-				 namlen, dir, user_path, restlen, slash);
+			rlen = snprintf(rpath, sizeof(rpath), "%.*s/%s%.*s",
+					namlen, dir, user_path, restlen, slash);
+			if (rlen >= sizeof(rpath)) {
+				logerror("user-path too large: %s", rpath);
+				return NULL;
+			}
 			dir = rpath;
 		}
 	}
@@ -207,7 +212,15 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 
 		strbuf_expand(&expanded_path, interpolated_path,
 			      expand_path, &context);
-		strlcpy(interp_path, expanded_path.buf, PATH_MAX);
+
+		rlen = strlcpy(interp_path, expanded_path.buf,
+			       sizeof(interp_path));
+		if (rlen >= sizeof(interp_path)) {
+			logerror("interpolated path too large: %s",
+				 interp_path);
+			return NULL;
+		}
+
 		strbuf_release(&expanded_path);
 		loginfo("Interpolated dir '%s'", interp_path);
 
@@ -219,7 +232,11 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 			logerror("'%s': Non-absolute path denied (base-path active)", dir);
 			return NULL;
 		}
-		snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
+		rlen = snprintf(rpath, sizeof(rpath), "%s%s", base_path, dir);
+		if (rlen >= sizeof(rpath)) {
+			logerror("base-path too large: %s", rpath);
+			return NULL;
+		}
 		dir = rpath;
 	}
 
