@@ -42,3 +42,7 @@ translate_merge_tool_path() {
 		;;
 	esac
 }
+
+exit_code_trustable () {
+	true
+}
