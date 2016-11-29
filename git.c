@@ -654,6 +654,11 @@ int cmd_main(int argc, const char **argv)
 	cmd = argv[0];
 	if (!cmd)
 		cmd = "git-help";
+	else {
+		const char *slash = find_last_dir_sep(cmd);
+		if (slash)
+			cmd = slash + 1;
+	}
 
 	trace_command_performance(argv);
 
