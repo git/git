@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2016, #05; Wed, 23)
-X-master-at: e2b2d6a172b76d44cb7b1ddb12ea5bfac9613a44
-X-next-at: c8190e7bd5cf2478d6c76f2ae9bea11b360a6330
+Subject: What's cooking in git.git (Nov 2016, #06; Mon, 28)
+X-master-at: aeddbfdfa48443c034a9b28b10dfddf2f71b907f
+X-next-at: d574c8c0ff66fadf263a4a532f5618d49dbcbf97
 
-What's cooking in git.git (Nov 2016, #05; Wed, 23)
+What's cooking in git.git (Nov 2016, #06; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,86 +18,85 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jc/for-each-ref-head-segfault-fix (2016-11-18) 1 commit
-  (merged to 'next' on 2016-11-21 at 3c1f352316)
- + for-each-ref: do not segv with %(HEAD) on an unborn branch
-
- Using a %(HEAD) placeholder in "for-each-ref --format=" option
- caused the command to segfault when on an unborn branch.
-
-
-* jc/setup-cleanup-fix (2016-11-22) 2 commits
-  (merged to 'next' on 2016-11-23 at e46785ec9c)
- + archive: read local configuration
- + mailinfo: read local configuration
-
- "git archive" and "git mailinfo" stopped reading from local
- configuration file with a recent update.
-
-
-* js/prepare-sequencer (2016-11-21) 1 commit
-  (merged to 'next' on 2016-11-21 at 7cdf4ca421)
- + i18n: fix unmatched single quote in error message
-
- Fix for an error message string.
-
-
-* js/rebase-i-commentchar-fix (2016-11-21) 3 commits
-  (merged to 'next' on 2016-11-22 at 88581dfe2e)
- + rebase -i: handle core.commentChar=auto
- + stripspace: respect repository config
- + rebase -i: highlight problems with core.commentchar
-
- "git rebase -i" did not work well with core.commentchar
- configuration variable for two reasons, both of which have been
- fixed.
-
-
-* jt/trailer-with-cruft (2016-11-21) 1 commit
-  (merged to 'next' on 2016-11-22 at c68014088a)
- + doc: mention user-configured trailers
-
- Doc update.
-
---------------------------------------------------
 [New Topics]
 
-* jc/cache-tree-wip (2016-11-18) 4 commits
- - cache-tree: freshen the tree object at the top level
- - cache-tree: retire cache_tree_fully_valid() API function
- - commit: remove redundant check for active_cache_changed
- - freshen_object(): factor out a helper function
+* jc/renormalize-merge-kill-safer-crlf (2016-11-28) 2 commits
+ - merge-recursive: handle NULL in add_cacheinfo() correctly
+ - cherry-pick: demonstrate a segmentation fault
+
+ Fix a corner case in merge-recursive regression that crept in
+ during 2.10 development cycle.
+
+ Will merge to 'next'.
 
 
-* bw/push-dry-run (2016-11-23) 2 commits
- - push: fix --dry-run to not push submodules
- - push: --dry-run updates submodules when --recurse-submodules=on-demand
- (this branch uses hv/submodule-not-yet-pushed-fix.)
+* js/difftool-builtin (2016-11-28) 2 commits
+ - difftool: implement the functionality in the builtin
+ - difftool: add a skeleton for the upcoming builtin
+
+ Rewrite a scripted porcelain "git difftool" in C.
+
+ Under discussion.
 
 
-* jk/rev-parse-symbolic-parents-fix (2016-11-16) 1 commit
- - rev-parse: fix parent shorthands with --symbolic
+* nd/qsort-in-merge-recursive (2016-11-28) 1 commit
+ - merge-recursive.c: use string_list_sort instead of qsort
 
+ Code simplification.
 
-* nd/worktree-list-fixup (2016-11-23) 3 commits
- - worktree list: keep the list sorted
- - get_worktrees() must return main worktree as first item even on error
- - worktree.c: zero new 'struct worktree' on allocation
- (this branch is used by nd/worktree-move.)
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
 
-* sb/push-make-submodule-check-the-default (2016-10-10) 2 commits
- - push: change submodule default to check when submodules exist
- - submodule add: extend force flag to add existing repos
+* jc/retire-compaction-heuristics (2016-11-02) 3 commits
+ - SQUASH???
+ - SQUASH???
+ - diff: retire the original experimental "compaction" heuristics
 
- Turn the default of "push.recurseSubmodules" to "check" when
- submodules seem to be in use.
+ Waiting for a reroll.
 
- Will hold to wait for hv/submodule-not-yet-pushed-fix
+
+* jc/abbrev-autoscale-config (2016-11-01) 1 commit
+ - config.abbrev: document the new default that auto-scales
+
+ Waiting for a reroll.
+
+
+* jk/nofollow-attr-ignore (2016-11-02) 5 commits
+ - exclude: do not respect symlinks for in-tree .gitignore
+ - attr: do not respect symlinks for in-tree .gitattributes
+ - exclude: convert "check_index" into a flags field
+ - attr: convert "macro_ok" into a flags field
+ - add open_nofollow() helper
+
+ As we do not follow symbolic links when reading control files like
+ .gitignore and .gitattributes from the index, match the behaviour
+ and not follow symbolic links when reading them from the working
+ tree.  This also tightens security a bit by not leaking contents of
+ an unrelated file in the error messages when it is pointed at by
+ one of these files that is a symbolic link.
+
+ Perhaps we want to cover .gitmodules too with the same mechanism?
+
+
+* nd/worktree-move (2016-11-28) 11 commits
+ . worktree remove: new command
+ . worktree move: refuse to move worktrees with submodules
+ . worktree move: accept destination as directory
+ . worktree move: new command
+ . worktree.c: add update_worktree_location()
+ . worktree.c: add validate_worktree()
+ . copy.c: convert copy_file() to copy_dir_recursively()
+ . copy.c: style fix
+ . copy.c: convert bb_(p)error_msg to error(_errno)
+ . copy.c: delete unused code in copy_file()
+ . copy.c: import copy_file() from busybox
+ (this branch uses nd/worktree-list-fixup.)
+
+ "git worktree" learned move and remove subcommands.
+
+ Reported to break builds on Windows.
 
 
 * jc/bundle (2016-03-03) 6 commits
@@ -187,9 +186,59 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bw/push-dry-run (2016-11-23) 2 commits
+ - push: fix --dry-run to not push submodules
+ - push: --dry-run updates submodules when --recurse-submodules=on-demand
+ (this branch uses hv/submodule-not-yet-pushed-fix.)
+
+ "git push --dry-run --recurse-submodule=on-demand" wasn't
+ "--dry-run" in the submodules.
+
+ Will merge to 'next'.
+
+
+* sb/push-make-submodule-check-the-default (2016-10-10) 2 commits
+ - push: change submodule default to check when submodules exist
+ - submodule add: extend force flag to add existing repos
+
+ Turn the default of "push.recurseSubmodules" to "check" when
+ submodules seem to be in use.
+
+ Need to rebase on hv/submodule-not-yet-pushed-fix and then consider
+ merging to 'next'.
+
+
+* jk/rev-parse-symbolic-parents-fix (2016-11-16) 1 commit
+ - rev-parse: fix parent shorthands with --symbolic
+
+ "git rev-parse --symbolic" failed with a more recent notation like
+ "HEAD^-1" and "HEAD^!".
+
+ Will merge to 'next'.
+
+
+* nd/worktree-list-fixup (2016-11-28) 5 commits
+ - worktree list: keep the list sorted
+ - worktree.c: get_worktrees() takes a new flag argument
+ - get_worktrees() must return main worktree as first item even on error
+ - worktree: reorder an if statement
+ - worktree.c: zero new 'struct worktree' on allocation
+ (this branch is used by nd/worktree-move.)
+
+ The output from "git worktree list" was made in readdir() order,
+ and was unstable.
+
+ Will merge to 'next'.
+
+
 * jk/trailers-placeholder-in-pretty (2016-11-21) 2 commits
  - ref-filter: add support to display trailers as part of contents
  - pretty: add %(trailers) format for displaying trailers of a commit message
+
+ In addition to %(subject), %(body), "log --pretty=format:..."
+ learned a new placeholder %(trailers).
+
+ Will merge to 'next'.
 
 
 * sb/submodule-intern-gitdir (2016-11-22) 5 commits
@@ -198,6 +247,14 @@ of the repositories listed at
  - test-lib-functions.sh: teach test_commit -C <dir>
  - submodule helper: support super prefix
  - submodule: use absolute path for computing relative path connecting
+
+ A new submodule helper "git submodule embedgitdirs" to make it
+ easier to move embedded .git/ directory for submodules in a
+ superproject to .git/modules/ (and point the latter with the former
+ that is turned into a "gitdir:" file) has been added.
+
+ Need to read it over again, deal with SQUASH, and may ask for a
+ reroll.
 
 
 * dt/empty-submodule-in-merge (2016-11-17) 1 commit
@@ -219,6 +276,8 @@ of the repositories listed at
  - submodules: add helper functions to determine presence of submodules
 
  "git grep" learns to optionally recurse into submodules
+
+ Has anybody else seen t7814 being flakey with this series?
 
 
 * dt/smart-http-detect-server-going-away (2016-11-18) 2 commits
@@ -244,26 +303,6 @@ of the repositories listed at
  Doc update on fetching and pushing.
 
  Will cook in 'next'.
-
-
-* nd/worktree-move (2016-11-23) 11 commits
- . worktree remove: new command
- . worktree move: refuse to move worktrees with submodules
- . worktree move: accept destination as directory
- . worktree move: new command
- . worktree.c: add update_worktree_location()
- . worktree.c: add validate_worktree()
- . copy.c: convert copy_file() to copy_dir_recursively()
- . copy.c: style fix
- . copy.c: convert bb_(p)error_msg to error(_errno)
- . copy.c: delete unused code in copy_file()
- . copy.c: import copy_file() from busybox
- (this branch uses nd/worktree-list-fixup.)
-
- "git worktree" learned move and remove subcommands.
-
- Reported to break builds on Windows.  Perhaps it should just spawn
- "cp -R" or something.
 
 
 * jc/compression-config (2016-11-15) 1 commit
@@ -356,37 +395,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jc/retire-compaction-heuristics (2016-11-02) 3 commits
- - SQUASH???
- - SQUASH???
- - diff: retire the original experimental "compaction" heuristics
-
- Waiting for a reroll.
-
-
-* jc/abbrev-autoscale-config (2016-11-01) 1 commit
- - config.abbrev: document the new default that auto-scales
-
- Waiting for a reroll.
-
-
-* jk/nofollow-attr-ignore (2016-11-02) 5 commits
- - exclude: do not respect symlinks for in-tree .gitignore
- - attr: do not respect symlinks for in-tree .gitattributes
- - exclude: convert "check_index" into a flags field
- - attr: convert "macro_ok" into a flags field
- - add open_nofollow() helper
-
- As we do not follow symbolic links when reading control files like
- .gitignore and .gitattributes from the index, match the behaviour
- and not follow symbolic links when reading them from the working
- tree.  This also tightens security a bit by not leaking contents of
- an unrelated file in the error messages when it is pointed at by
- one of these files that is a symbolic link.
-
- Perhaps we want to cover .gitmodules too with the same mechanism?
-
-
 * sb/submodule-config-cleanup (2016-11-22) 3 commits
   (merged to 'next' on 2016-11-23 at c02e578b49)
  + submodule-config: clarify parsing of null_sha1 element
@@ -423,17 +431,17 @@ of the repositories listed at
  "commit -s", have been taught to use the logic of and share the
  code with "git interpret-trailer".
 
- What's the doneness of this topic?
+ Will merge to 'next' after dealing with the SQUASH???
 
 
-* nd/rebase-forget (2016-10-28) 1 commit
- - rebase: add --forget to cleanup rebase, leave HEAD untouched
+* nd/rebase-forget (2016-11-28) 1 commit
+ - rebase: add --forget to cleanup rebase, leave everything else untouched
 
  "git rebase" learned "--forget" option, which allows a user to
  remove the metadata left by an earlier "git rebase" that was
  manually aborted without using "git rebase --abort".
 
- Waiting for a reroll.
+ Will merge to 'next'.
 
 
 * jc/git-open-cloexec (2016-11-02) 3 commits
