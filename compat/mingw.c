@@ -2421,6 +2421,10 @@ static void maybe_redirect_std_handles(void)
 #endif
 #endif
 
+#ifdef _DEBUG
+#include <crtdbg.h>
+#endif
+
 /*
  * We implement wmain() and compile with -municode, which would
  * normally ignore main(), but we call the latter from the former
@@ -2437,6 +2441,10 @@ int wmain(int argc, const wchar_t **wargv)
 	const char **argv;
 
 #ifdef _MSC_VER
+#ifdef _DEBUG
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+#endif
+
 #ifdef USE_MSVC_CRTDBG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
