@@ -13,7 +13,7 @@
  * the remote died unexpectedly.  A flush() concludes the stream.
  */
 
-#define PREFIX "remote: "
+#define DISPLAY_PREFIX "remote: "
 
 #define ANSI_SUFFIX "\033[K"
 #define DUMB_SUFFIX "        "
@@ -50,7 +50,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 		switch (band) {
 		case 3:
 			strbuf_addf(&outbuf, "%s%s%s", outbuf.len ? "\n" : "",
-				    PREFIX, buf + 1);
+				    DISPLAY_PREFIX, buf + 1);
 			retval = SIDEBAND_REMOTE_ERROR;
 			break;
 		case 2:
@@ -68,7 +68,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 				int linelen = brk - b;
 
 				if (!outbuf.len)
-					strbuf_addstr(&outbuf, PREFIX);
+					strbuf_addstr(&outbuf, DISPLAY_PREFIX);
 				if (linelen > 0) {
 					strbuf_addf(&outbuf, "%.*s%s%c",
 						    linelen, b, suffix, *brk);
@@ -82,8 +82,8 @@ int recv_sideband(const char *me, int in_stream, int out)
 			}
 
 			if (*b)
-				strbuf_addf(&outbuf, "%s%s",
-					    outbuf.len ? "" : PREFIX, b);
+				strbuf_addf(&outbuf, "%s%s", outbuf.len ?
+					    "" : DISPLAY_PREFIX, b);
 			break;
 		case 1:
 			write_or_die(out, buf + 1, len);
