@@ -78,7 +78,7 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		xstrfmt(msg, cmd, cmd);
 
 	msgs[ERROR_NOT_UPTODATE_DIR] =
-		_("Updating the following directories would lose untracked files in it:\n%s");
+		_("Updating the following directories would lose untracked files in them:\n%s");
 
 	if (!strcmp(cmd, "checkout"))
 		msg = advice_commit_before_merge
