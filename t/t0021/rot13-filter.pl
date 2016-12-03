@@ -109,13 +109,17 @@ print $debug "init handshake complete\n";
 $debug->flush();
 
 while (1) {
-	my ($command) = packet_txt_read() =~ /^command=([^=]+)$/;
+	my ($command) = packet_txt_read() =~ /^command=(.+)$/;
 	print $debug "IN: $command";
 	$debug->flush();
 
-	my ($pathname) = packet_txt_read() =~ /^pathname=([^=]+)$/;
+	my ($pathname) = packet_txt_read() =~ /^pathname=(.+)$/;
 	print $debug " $pathname";
 	$debug->flush();
+
+	if ( $pathname eq "" ) {
+		die "bad pathname '$pathname'";
+	}
 
 	# Flush
 	packet_bin_read();

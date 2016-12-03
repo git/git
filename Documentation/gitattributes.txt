@@ -435,7 +435,9 @@ to filter relative to the repository root. Right after the flush packet
 Git sends the content split in zero or more pkt-line packets and a
 flush packet to terminate content. Please note, that the filter
 must not send any response before it received the content and the
-final flush packet.
+final flush packet. Also note that the "value" of a "key=value" pair
+can contain the "=" character whereas the key would never contain
+that character.
 ------------------------
 packet:          git> command=smudge
 packet:          git> pathname=path/testfile.dat
