@@ -1206,7 +1206,7 @@ _git_describe ()
 
 __git_diff_algorithms="myers minimal patience histogram"
 
-__git_diff_submodule_formats="log short"
+__git_diff_submodule_formats="diff log short"
 
 __git_diff_common_options="--stat --numstat --shortstat --summary
 			--patch-with-stat --name-only --name-status --color
