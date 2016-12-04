@@ -99,7 +99,7 @@ static struct option builtin_clone_options[] = {
 	OPT_STRING(0, "shallow-since", &option_since, N_("time"),
 		    N_("create a shallow clone since a specific time")),
 	OPT_STRING_LIST(0, "shallow-exclude", &option_not, N_("revision"),
-			N_("deepen history of shallow clone by excluding rev")),
+			N_("deepen history of shallow clone, excluding rev")),
 	OPT_BOOL(0, "single-branch", &option_single_branch,
 		    N_("clone only one branch, HEAD or --branch")),
 	OPT_BOOL(0, "shallow-submodules", &option_shallow_submodules,
