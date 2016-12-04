@@ -27,8 +27,8 @@ env:
     # The Linux build installs the defined dependency versions below.
     # The OS X build installs the latest available versions. Keep that
     # in mind when you encounter a broken OS X build!
-    - LINUX_P4_VERSION="16.1"
-    - LINUX_GIT_LFS_VERSION="1.2.0"
+    - LINUX_P4_VERSION="16.2"
+    - LINUX_GIT_LFS_VERSION="1.5.2"
     - DEFAULT_TEST_TARGET=prove
     - GIT_PROVE_OPTS="--timer --jobs 3 --state=failed,slow,save"
     - GIT_TEST_OPTS="--verbose-log"
