@@ -79,6 +79,9 @@ OPTIONS
 	Only list refs which contain the specified commit (HEAD if not
 	specified).
 
+--ignore-case::
+	Sorting and filtering refs are case insensitive.
+
 FIELD NAMES
 -----------
 

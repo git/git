@@ -108,6 +108,10 @@ OPTIONS
 	variable if it exists, or lexicographic order otherwise. See
 	linkgit:git-config[1].
 
+-i::
+--ignore-case::
+	Sorting and filtering tags are case insensitive.
+
 --column[=<options>]::
 --no-column::
 	Display tag listing in columns. See configuration variable

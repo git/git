@@ -89,6 +89,11 @@ test_expect_success 'git branch --list -v pattern shows branch summaries' '
 	awk "{print \$NF}" <tmp >actual &&
 	test_cmp expect actual
 '
+test_expect_success 'git branch --ignore-case --list -v pattern shows branch summaries' '
+	git branch --list --ignore-case -v BRANCH* >tmp &&
+	awk "{print \$NF}" <tmp >actual &&
+	test_cmp expect actual
+'
 
 test_expect_success 'git branch -v pattern does not show branch summaries' '
 	test_must_fail git branch -v branch*
@@ -194,6 +199,30 @@ test_expect_success 'local-branch symrefs shortened properly' '
 	git branch >actual.raw &&
 	grep ref-to <actual.raw >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'sort branches, ignore case' '
+	(
+		git init sort-icase &&
+		cd sort-icase &&
+		test_commit initial &&
+		git branch branch-one &&
+		git branch BRANCH-two &&
+		git branch --list | awk "{print \$NF}" >actual &&
+		cat >expected <<-\EOF &&
+		BRANCH-two
+		branch-one
+		master
+		EOF
+		test_cmp expected actual &&
+		git branch --list -i | awk "{print \$NF}" >actual &&
+		cat >expected <<-\EOF &&
+		branch-one
+		BRANCH-two
+		master
+		EOF
+		test_cmp expected actual
+	)
 '
 
 test_done
