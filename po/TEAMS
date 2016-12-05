@@ -50,6 +50,10 @@ Language:	sv (Swedish)
 Repository:	https://github.com/nafmo/git-l10n-sv/
 Leader:		Peter Krefting <peter@softwolves.pp.se>
 
+Language:	ua (Ukrainian - Ukraine)
+Repository:	https://github.com/VitalyGorodetsky/git/git-po-ua/
+Leader: 	Vitaly Gorodetsky <VitalyGorodetsky AT mail.ru>
+
 Language:	vi (Vietnamese)
 Repository:	https://github.com/vnwildman/git/
 Leader:		Trần Ngọc Quân <vnwildman AT gmail.com>
