@@ -1,0 +1,43 @@
+Git 2.12 Release Notes
+======================
+
+Backward compatibility notes.
+
+ * Use of an empty string that is used for 'everything matches' is
+   still warned and Git asks users to use a more explicit '.' for that
+   instead.  The hope is that existing users will not mind this
+   change, and eventually the warning can be turned into a hard error,
+   upgrading the deprecation into removal of this (mis)feature.  That
+   is not scheduled to happen in the upcoming release (yet).
+
+ * The historical argument order "git merge <msg> HEAD <commit>..."
+   has been deprecated for quite some time, and will be removed in the
+   upcoming release.
+
+
+Updates since v2.11
+-------------------
+
+UI, Workflows & Features
+
+ *
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ *
+
+
+Also contains various documentation updates and code clean-ups.
+
+ *
+
+
+Fixes since v2.10
+-----------------
+
+Unless otherwise noted, all the fixes since v2.9 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * Other minor doc, test and build updates and code cleanups.
