@@ -1286,6 +1286,8 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--export-labels", dest="exportLabels", action="store_true"),
                 optparse.make_option("--dry-run", "-n", dest="dry_run", action="store_true"),
                 optparse.make_option("--prepare-p4-only", dest="prepare_p4_only", action="store_true"),
+                optparse.make_option("--shelve-only", dest="shelve_only", action="store_true", help="Create P4 shelf for first change that would be submitted (using a new CL)"),
+                optparse.make_option("--shelve-cl", dest="shelve_cl", help="Replace shelf under existing CL number (previously shelved files will be deleted)"),
                 optparse.make_option("--conflict", dest="conflict_behavior",
                                      choices=self.conflict_behavior_choices),
                 optparse.make_option("--branch", dest="branch"),
@@ -1297,6 +1299,8 @@ class P4Submit(Command, P4UserMap):
         self.preserveUser = gitConfigBool("git-p4.preserveUser")
         self.dry_run = False
         self.prepare_p4_only = False
+        self.shelve_only = False
+        self.shelve_cl = None
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
         self.exportLabels = False
@@ -1496,6 +1500,12 @@ class P4Submit(Command, P4UserMap):
                 else:
                     inFilesSection = False
             else:
+                if self.shelve_only and self.shelve_cl:
+                    if line.startswith("Change:"):
+                        line = "Change: %s\n" % self.shelve_cl
+                    if line.startswith("Status:"):
+                        line = "Status: pending\n"
+
                 if line.startswith("Files:"):
                     inFilesSection = True
 
@@ -1785,7 +1795,11 @@ class P4Submit(Command, P4UserMap):
                 if self.isWindows:
                     message = message.replace("\r\n", "\n")
                 submitTemplate = message[:message.index(separatorLine)]
-                p4_write_pipe(['submit', '-i'], submitTemplate)
+
+                if self.shelve_only:
+                    p4_write_pipe(['shelve', '-i', '-r'], submitTemplate)
+                else:
+                    p4_write_pipe(['submit', '-i'], submitTemplate)
 
                 if self.preserveUser:
                     if p4User:
@@ -1799,12 +1813,17 @@ class P4Submit(Command, P4UserMap):
                 # new file.  This leaves it writable, which confuses p4.
                 for f in pureRenameCopy:
                     p4_sync(f, "-f")
-                submitted = True
+
+                if not self.shelve_only:
+                    submitted = True
 
         finally:
             # skip this patch
             if not submitted:
-                print "Submission cancelled, undoing p4 changes."
+                if not self.shelve_only:
+                    print "Submission cancelled, undoing p4 changes."
+                else:
+                    print "Change shelved, undoing p4 changes."
                 for f in editedFiles:
                     p4_revert(f)
                 for f in filesToAdd:
@@ -2034,9 +2053,13 @@ class P4Submit(Command, P4UserMap):
             if ok:
                 applied.append(commit)
             else:
-                if self.prepare_p4_only and i < last:
-                    print "Processing only the first commit due to option" \
-                          " --prepare-p4-only"
+                if (self.prepare_p4_only or self.shelve_only) and i < last:
+                    if self.prepare_p4_only:
+                        print "Processing only the first commit due to option" \
+                              " --prepare-p4-only"
+                    else:
+                        print "Processing only the first commit due to option" \
+                              " --shelve-only"
                     break
                 if i < last:
                     quit = False
@@ -3638,6 +3661,7 @@ commands = {
     "debug" : P4Debug,
     "submit" : P4Submit,
     "commit" : P4Submit,
+    "shelve" : P4Submit,
     "sync" : P4Sync,
     "rebase" : P4Rebase,
     "clone" : P4Clone,
