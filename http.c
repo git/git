@@ -1500,7 +1500,7 @@ static int update_url_from_redirect(struct strbuf *base,
 				    const struct strbuf *got)
 {
 	const char *tail;
-	size_t tail_len;
+	size_t new_len;
 
 	if (!strcmp(asked, got->buf))
 		return 0;
@@ -1509,14 +1509,12 @@ static int update_url_from_redirect(struct strbuf *base,
 		die("BUG: update_url_from_redirect: %s is not a superset of %s",
 		    asked, base->buf);
 
-	tail_len = strlen(tail);
-
-	if (got->len < tail_len ||
-	    strcmp(tail, got->buf + got->len - tail_len))
+	new_len = got->len;
+	if (!strip_suffix_mem(got->buf, &new_len, tail))
 		return 0; /* insane redirect scheme */
 
 	strbuf_reset(base);
-	strbuf_add(base, got->buf, got->len - tail_len);
+	strbuf_add(base, got->buf, new_len);
 	return 1;
 }
 
