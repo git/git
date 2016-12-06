@@ -356,9 +356,9 @@ define_commit_slab(ref_bitmap, uint32_t *);
 struct paint_info {
 	struct ref_bitmap ref_bitmap;
 	unsigned nr_bits;
-	char **slab;
+	char **pools;
 	char *free, *end;
-	unsigned slab_count;
+	unsigned pool_count;
 };
 
 static uint32_t *paint_alloc(struct paint_info *info)
@@ -366,11 +366,11 @@ static uint32_t *paint_alloc(struct paint_info *info)
 	unsigned nr = (info->nr_bits + 31) / 32;
 	unsigned size = nr * sizeof(uint32_t);
 	void *p;
-	if (!info->slab_count || info->free + size > info->end) {
-		info->slab_count++;
-		REALLOC_ARRAY(info->slab, info->slab_count);
+	if (!info->pool_count || info->free + size > info->end) {
+		info->pool_count++;
+		REALLOC_ARRAY(info->pools, info->pool_count);
 		info->free = xmalloc(COMMIT_SLAB_SIZE);
-		info->slab[info->slab_count - 1] = info->free;
+		info->pools[info->pool_count - 1] = info->free;
 		info->end = info->free + COMMIT_SLAB_SIZE;
 	}
 	p = info->free;
@@ -546,9 +546,9 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 		post_assign_shallow(info, &pi.ref_bitmap, ref_status);
 
 	clear_ref_bitmap(&pi.ref_bitmap);
-	for (i = 0; i < pi.slab_count; i++)
-		free(pi.slab[i]);
-	free(pi.slab);
+	for (i = 0; i < pi.pool_count; i++)
+		free(pi.pools[i]);
+	free(pi.pools);
 	free(shallow);
 }
 
