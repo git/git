@@ -434,12 +434,8 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 			    oid_to_hex(&c->object.oid));
 
 		for (p = c->parents; p; p = p->next) {
-			uint32_t **p_refs = ref_bitmap_at(&info->ref_bitmap,
-							  p->item);
 			if (p->item->object.flags & SEEN)
 				continue;
-			if (*p_refs == NULL || *p_refs == *refs)
-				*p_refs = *refs;
 			commit_list_insert(p->item, &head);
 		}
 	}
