@@ -389,7 +389,7 @@ static uint32_t *paint_alloc(struct paint_info *info)
  * all walked commits.
  */
 static void paint_down(struct paint_info *info, const unsigned char *sha1,
-		       int id)
+		       unsigned int id)
 {
 	unsigned int i, nr;
 	struct commit_list *head = NULL;
@@ -401,7 +401,7 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 	if (!c)
 		return;
 	memset(bitmap, 0, bitmap_size);
-	bitmap[id / 32] |= (1 << (id % 32));
+	bitmap[id / 32] |= (1U << (id % 32));
 	commit_list_insert(c, &head);
 	while (head) {
 		struct commit_list *p;
@@ -575,11 +575,11 @@ static int add_ref(const char *refname, const struct object_id *oid,
 
 static void update_refstatus(int *ref_status, int nr, uint32_t *bitmap)
 {
-	int i;
+	unsigned int i;
 	if (!ref_status)
 		return;
 	for (i = 0; i < nr; i++)
-		if (bitmap[i / 32] & (1 << (i % 32)))
+		if (bitmap[i / 32] & (1U << (i % 32)))
 			ref_status[i]++;
 }
 
