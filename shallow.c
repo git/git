@@ -353,6 +353,8 @@ void remove_nonexistent_theirs_shallow(struct shallow_info *info)
 
 define_commit_slab(ref_bitmap, uint32_t *);
 
+#define POOL_SIZE (512 * 1024)
+
 struct paint_info {
 	struct ref_bitmap ref_bitmap;
 	unsigned nr_bits;
@@ -369,9 +371,9 @@ static uint32_t *paint_alloc(struct paint_info *info)
 	if (!info->pool_count || info->free + size > info->end) {
 		info->pool_count++;
 		REALLOC_ARRAY(info->pools, info->pool_count);
-		info->free = xmalloc(COMMIT_SLAB_SIZE);
+		info->free = xmalloc(POOL_SIZE);
 		info->pools[info->pool_count - 1] = info->free;
-		info->end = info->free + COMMIT_SLAB_SIZE;
+		info->end = info->free + POOL_SIZE;
 	}
 	p = info->free;
 	info->free += size;
