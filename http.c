@@ -98,6 +98,8 @@ static int http_proactive_auth;
 static const char *user_agent;
 static int curl_empty_auth;
 
+enum http_follow_config http_follow_config = HTTP_FOLLOW_INITIAL;
+
 #if LIBCURL_VERSION_NUM >= 0x071700
 /* Use CURLOPT_KEYPASSWD as is */
 #elif LIBCURL_VERSION_NUM >= 0x070903
@@ -337,6 +339,16 @@ static int http_options(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (!strcmp("http.followredirects", var)) {
+		if (value && !strcmp(value, "initial"))
+			http_follow_config = HTTP_FOLLOW_INITIAL;
+		else if (git_config_bool(var, value))
+			http_follow_config = HTTP_FOLLOW_ALWAYS;
+		else
+			http_follow_config = HTTP_FOLLOW_NONE;
+		return 0;
+	}
+
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
 }
@@ -553,7 +565,6 @@ static CURL *get_curl_handle(void)
 				 curl_low_speed_time);
 	}
 
-	curl_easy_setopt(result, CURLOPT_FOLLOWLOCATION, 1);
 	curl_easy_setopt(result, CURLOPT_MAXREDIRS, 20);
 #if LIBCURL_VERSION_NUM >= 0x071301
 	curl_easy_setopt(result, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
@@ -882,6 +893,16 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_RANGE, NULL);
 
+	/*
+	 * Default following to off unless "ALWAYS" is configured; this gives
+	 * callers a sane starting point, and they can tweak for individual
+	 * HTTP_FOLLOW_* cases themselves.
+	 */
+	if (http_follow_config == HTTP_FOLLOW_ALWAYS)
+		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 1);
+	else
+		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 0);
+
 #if LIBCURL_VERSION_NUM >= 0x070a08
 	curl_easy_setopt(slot->curl, CURLOPT_IPRESOLVE, git_curl_ipresolve);
 #endif
@@ -1122,9 +1143,12 @@ static int handle_curl_result(struct slot_results *results)
 	 * If we see a failing http code with CURLE_OK, we have turned off
 	 * FAILONERROR (to keep the server's custom error response), and should
 	 * translate the code into failure here.
+	 *
+	 * Likewise, if we see a redirect (30x code), that means we turned off
+	 * redirect-following, and we should treat the result as an error.
 	 */
 	if (results->curl_result == CURLE_OK &&
-	    results->http_code >= 400) {
+	    results->http_code >= 300) {
 		results->curl_result = CURLE_HTTP_RETURNED_ERROR;
 		/*
 		 * Normally curl will already have put the "reason phrase"
@@ -1443,6 +1467,9 @@ static int http_request(const char *url,
 		strbuf_addstr(&buf, " no-cache");
 	if (options && options->keep_error)
 		curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
+	if (options && options->initial_request &&
+	    http_follow_config == HTTP_FOLLOW_INITIAL)
+		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 1);
 
 	headers = curl_slist_append(headers, buf.buf);
 

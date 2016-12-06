@@ -276,6 +276,7 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	http_options.charset = &charset;
 	http_options.effective_url = &effective_url;
 	http_options.base_url = &url;
+	http_options.initial_request = 1;
 	http_options.no_cache = 1;
 	http_options.keep_error = 1;
 
@@ -293,6 +294,9 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		show_http_message(&type, &charset, &buffer);
 		die("unable to access '%s': %s", url.buf, curl_errorstr);
 	}
+
+	if (options.verbosity && !starts_with(refs_url.buf, url.buf))
+		warning(_("redirecting to %s"), url.buf);
 
 	last= xcalloc(1, sizeof(*last_discovery));
 	last->service = service;

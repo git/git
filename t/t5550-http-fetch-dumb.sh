@@ -299,5 +299,28 @@ test_expect_success 'git client does not send an empty Accept-Language' '
 	! grep "^Accept-Language:" stderr
 '
 
+test_expect_success 'redirects can be forbidden/allowed' '
+	test_must_fail git -c http.followRedirects=false \
+		clone $HTTPD_URL/dumb-redir/repo.git dumb-redir &&
+	git -c http.followRedirects=true \
+		clone $HTTPD_URL/dumb-redir/repo.git dumb-redir 2>stderr
+'
+
+test_expect_success 'redirects are reported to stderr' '
+	# just look for a snippet of the redirected-to URL
+	test_i18ngrep /dumb/ stderr
+'
+
+test_expect_success 'non-initial redirects can be forbidden' '
+	test_must_fail git -c http.followRedirects=initial \
+		clone $HTTPD_URL/redir-objects/repo.git redir-objects &&
+	git -c http.followRedirects=true \
+		clone $HTTPD_URL/redir-objects/repo.git redir-objects
+'
+
+test_expect_success 'http.followRedirects defaults to "initial"' '
+	test_must_fail git clone $HTTPD_URL/redir-objects/repo.git default
+'
+
 stop_httpd
 test_done
