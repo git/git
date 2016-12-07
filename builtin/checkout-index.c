@@ -205,7 +205,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	if (index_opt && !state.base_dir_len && !to_tempfile) {
 		state.refresh_cache = 1;
 		state.istate = &the_index;
-		newfd = hold_locked_index(&lock_file, 1);
+		newfd = hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
 	}
 
 	/* Check out named files first */

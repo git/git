@@ -4688,7 +4688,7 @@ static int apply_patch(struct apply_state *state,
 								 state->index_file,
 								 LOCK_DIE_ON_ERROR);
 		else
-			state->newfd = hold_locked_index(state->lock_file, 1);
+			state->newfd = hold_locked_index(state->lock_file, LOCK_DIE_ON_ERROR);
 	}
 
 	if (state->check_index && read_apply_cache(state) < 0) {
