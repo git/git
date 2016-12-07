@@ -45,11 +45,11 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, con
 	if (!format) {
 		if (filter->lines) {
 			to_free = xstrfmt("%s %%(contents:lines=%d)",
-					  "%(align:15)%(refname:strip=2)%(end)",
+					  "%(align:15)%(refname:lstrip=2)%(end)",
 					  filter->lines);
 			format = to_free;
 		} else
-			format = "%(refname:strip=2)";
+			format = "%(refname:lstrip=2)";
 	}
 
 	verify_ref_format(format);
