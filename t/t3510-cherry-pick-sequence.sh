@@ -147,7 +147,7 @@ test_expect_success '--abort to cancel single cherry-pick' '
 	git diff-index --exit-code HEAD
 '
 
-test_expect_failure '--abort does not unsafely change HEAD' '
+test_expect_success '--abort does not unsafely change HEAD' '
 	pristine_detach initial &&
 	test_must_fail git cherry-pick picked anotherpick &&
 	git reset --hard base &&

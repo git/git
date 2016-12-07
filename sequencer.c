@@ -27,6 +27,7 @@ GIT_PATH_FUNC(git_path_seq_dir, "sequencer")
 static GIT_PATH_FUNC(git_path_todo_file, "sequencer/todo")
 static GIT_PATH_FUNC(git_path_opts_file, "sequencer/opts")
 static GIT_PATH_FUNC(git_path_head_file, "sequencer/head")
+static GIT_PATH_FUNC(git_path_abort_safety_file, "sequencer/abort-safety")
 
 /*
  * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
@@ -310,6 +311,20 @@ static int error_dirty_index(struct replay_opts *opts)
 	return -1;
 }
 
+static void update_abort_safety_file(void)
+{
+	struct object_id head;
+
+	/* Do nothing on a single-pick */
+	if (!file_exists(git_path_seq_dir()))
+		return;
+
+	if (!get_oid("HEAD", &head))
+		write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
+	else
+		write_file(git_path_abort_safety_file(), "%s", "");
+}
+
 static int fast_forward_to(const unsigned char *to, const unsigned char *from,
 			int unborn, struct replay_opts *opts)
 {
@@ -339,6 +354,7 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from,
 	strbuf_release(&sb);
 	strbuf_release(&err);
 	ref_transaction_free(transaction);
+	update_abort_safety_file();
 	return 0;
 }
 
@@ -813,6 +829,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 
 leave:
 	free_message(commit, &msg);
+	update_abort_safety_file();
 
 	return res;
 }
@@ -1132,9 +1149,34 @@ static int save_head(const char *head)
 	return 0;
 }
 
+static int rollback_is_safe(void)
+{
+	struct strbuf sb = STRBUF_INIT;
+	struct object_id expected_head, actual_head;
+
+	if (strbuf_read_file(&sb, git_path_abort_safety_file(), 0) >= 0) {
+		strbuf_trim(&sb);
+		if (get_oid_hex(sb.buf, &expected_head)) {
+			strbuf_release(&sb);
+			die(_("could not parse %s"), git_path_abort_safety_file());
+		}
+		strbuf_release(&sb);
+	}
+	else if (errno == ENOENT)
+		oidclr(&expected_head);
+	else
+		die_errno(_("could not read '%s'"), git_path_abort_safety_file());
+
+	if (get_oid("HEAD", &actual_head))
+		oidclr(&actual_head);
+
+	return !oidcmp(&actual_head, &expected_head);
+}
+
 static int reset_for_rollback(const unsigned char *sha1)
 {
 	const char *argv[4];	/* reset --merge <arg> + NULL */
+
 	argv[0] = "reset";
 	argv[1] = "--merge";
 	argv[2] = sha1_to_hex(sha1);
@@ -1189,6 +1231,12 @@ int sequencer_rollback(struct replay_opts *opts)
 		error(_("cannot abort from a branch yet to be born"));
 		goto fail;
 	}
+
+	if (!rollback_is_safe()) {
+		/* Do not error, just do not rollback */
+		warning(_("You seem to have moved HEAD. "
+			  "Not rewinding, check your HEAD!"));
+	} else
 	if (reset_for_rollback(sha1))
 		goto fail;
 	strbuf_release(&buf);
@@ -1393,6 +1441,7 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 		return -1;
 	if (save_opts(opts))
 		return -1;
+	update_abort_safety_file();
 	res = pick_commits(&todo_list, opts);
 	todo_list_release(&todo_list);
 	return res;
