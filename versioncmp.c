@@ -24,6 +24,31 @@
 static const struct string_list *prereleases;
 static int initialized;
 
+struct suffix_match {
+	int conf_pos;
+	int start;
+	int len;
+};
+
+static void find_better_matching_suffix(const char *tagname, const char *suffix,
+					int suffix_len, int start, int conf_pos,
+					struct suffix_match *match)
+{
+	/*
+	 * A better match either starts earlier or starts at the same offset
+	 * but is longer.
+	 */
+	int end = match->len < suffix_len ? match->start : match->start-1;
+	int i;
+	for (i = start; i <= end; i++)
+		if (starts_with(tagname + i, suffix)) {
+			match->conf_pos = conf_pos;
+			match->start = i;
+			match->len = suffix_len;
+			break;
+		}
+}
+
 /*
  * off is the offset of the first different character in the two strings
  * s1 and s2. If either s1 or s2 contains a prerelease suffix containing
@@ -47,46 +72,35 @@ static int swap_prereleases(const char *s1,
 			    int off,
 			    int *diff)
 {
-	int i, i1 = -1, i2 = -1;
-	int start_at1 = off, start_at2 = off, match_len1 = -1, match_len2 = -1;
+	int i;
+	struct suffix_match match1 = { -1, off, -1 };
+	struct suffix_match match2 = { -1, off, -1 };
 
 	for (i = 0; i < prereleases->nr; i++) {
 		const char *suffix = prereleases->items[i].string;
-		int j, start, end, suffix_len = strlen(suffix);
+		int start, suffix_len = strlen(suffix);
 		if (suffix_len < off)
 			start = off - suffix_len;
 		else
 			start = 0;
-		end = match_len1 < suffix_len ? start_at1 : start_at1-1;
-		for (j = start; j <= end; j++)
-			if (starts_with(s1 + j, suffix)) {
-				i1 = i;
-				start_at1 = j;
-				match_len1 = suffix_len;
-				break;
-			}
-		end = match_len2 < suffix_len ? start_at2 : start_at2-1;
-		for (j = start; j <= end; j++)
-			if (starts_with(s2 + j, suffix)) {
-				i2 = i;
-				start_at2 = j;
-				match_len2 = suffix_len;
-				break;
-			}
+		find_better_matching_suffix(s1, suffix, suffix_len, start,
+					    i, &match1);
+		find_better_matching_suffix(s2, suffix, suffix_len, start,
+					    i, &match2);
 	}
-	if (i1 == -1 && i2 == -1)
+	if (match1.conf_pos == -1 && match2.conf_pos == -1)
 		return 0;
-	if (i1 == i2)
+	if (match1.conf_pos == match2.conf_pos)
 		/* Found the same suffix in both, e.g. "-rc" in "v1.0-rcX"
 		 * and "v1.0-rcY": the caller should decide based on "X"
 		 * and "Y". */
 		return 0;
 
-	if (i1 >= 0 && i2 >= 0)
-		*diff = i1 - i2;
-	else if (i1 >= 0)
+	if (match1.conf_pos >= 0 && match2.conf_pos >= 0)
+		*diff = match1.conf_pos - match2.conf_pos;
+	else if (match1.conf_pos >= 0)
 		*diff = -1;
-	else /* if (i2 >= 0) */
+	else /* if (match2.conf_pos >= 0) */
 		*diff = 1;
 	return 1;
 }
