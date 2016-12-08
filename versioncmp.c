@@ -26,12 +26,15 @@ static int initialized;
 
 /*
  * off is the offset of the first different character in the two strings
- * s1 and s2. If either s1 or s2 contains a prerelease suffix starting
- * at that offset, it will be forced to be on top.
+ * s1 and s2. If either s1 or s2 contains a prerelease suffix containing
+ * that offset, then that string will be forced to be on top.
  *
- * If both s1 and s2 contain a (different) suffix at that position,
+ * If both s1 and s2 contain a (different) suffix around that position,
  * their order is determined by the order of those two suffixes in the
  * configuration.
+ * If any of the strings contains more than one different suffixes around
+ * that position, then that string is sorted according to the contained
+ * suffix which comes first in the configuration.
  *
  * Return non-zero if *diff contains the return value for versioncmp()
  */
@@ -44,10 +47,21 @@ static int swap_prereleases(const char *s1,
 
 	for (i = 0; i < prereleases->nr; i++) {
 		const char *suffix = prereleases->items[i].string;
-		if (i1 == -1 && starts_with(s1 + off, suffix))
-			i1 = i;
-		if (i2 == -1 && starts_with(s2 + off, suffix))
-			i2 = i;
+		int j, start, suffix_len = strlen(suffix);
+		if (suffix_len < off)
+			start = off - suffix_len + 1;
+		else
+			start = 0;
+		for (j = start; j <= off; j++)
+			if (i1 == -1 && starts_with(s1 + j, suffix)) {
+				i1 = i;
+				break;
+			}
+		for (j = start; j <= off; j++)
+			if (i2 == -1 && starts_with(s2 + j, suffix)) {
+				i2 = i;
+				break;
+			}
 	}
 	if (i1 == -1 && i2 == -1)
 		return 0;

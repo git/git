@@ -3047,8 +3047,12 @@ versionsort.prereleaseSuffix::
 This variable can be specified multiple times, once per suffix. The
 order of suffixes in the config file determines the sorting order
 (e.g. if "-pre" appears before "-rc" in the config file then 1.0-preXX
-is sorted before 1.0-rcXX). The sorting order between different
-suffixes is undefined if they are in multiple config files.
+is sorted before 1.0-rcXX).
+If more than one suffixes match the same tagname, then that tagname will
+be sorted according to the matching suffix which comes first in the
+configuration.
+The sorting order between different suffixes is undefined if they are
+in multiple config files.
 
 web.browser::
 	Specify a web browser that may be used by some commands.

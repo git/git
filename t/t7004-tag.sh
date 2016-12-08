@@ -1538,7 +1538,7 @@ test_expect_success 'reverse version sort with prerelease reordering' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'version sort with prerelease reordering and common leading character' '
+test_expect_success 'version sort with prerelease reordering and common leading character' '
 	test_config versionsort.prereleaseSuffix -before &&
 	git tag foo1.7-before1 &&
 	git tag foo1.7 &&
@@ -1552,7 +1552,7 @@ test_expect_failure 'version sort with prerelease reordering and common leading 
 	test_cmp expect actual
 '
 
-test_expect_failure 'version sort with prerelease reordering, multiple suffixes and common leading character' '
+test_expect_success 'version sort with prerelease reordering, multiple suffixes and common leading character' '
 	test_config versionsort.prereleaseSuffix -before &&
 	git config --add versionsort.prereleaseSuffix -after &&
 	git tag -l --sort=version:refname "foo1.7*" >actual &&
@@ -1562,6 +1562,11 @@ test_expect_failure 'version sort with prerelease reordering, multiple suffixes 
 	foo1.7
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success 'version sort with very long prerelease suffix' '
+	test_config versionsort.prereleaseSuffix -very-looooooooooooooooooooooooong-prerelease-suffix &&
+	git tag -l --sort=version:refname
 '
 
 run_with_limited_stack () {
