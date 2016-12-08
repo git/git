@@ -27,14 +27,18 @@ static int initialized;
 /*
  * off is the offset of the first different character in the two strings
  * s1 and s2. If either s1 or s2 contains a prerelease suffix containing
- * that offset, then that string will be forced to be on top.
+ * that offset or a suffix ends right before that offset, then that
+ * string will be forced to be on top.
  *
  * If both s1 and s2 contain a (different) suffix around that position,
  * their order is determined by the order of those two suffixes in the
  * configuration.
  * If any of the strings contains more than one different suffixes around
  * that position, then that string is sorted according to the contained
- * suffix which comes first in the configuration.
+ * suffix which starts at the earliest offset in that string.
+ * If more than one different contained suffixes start at that earliest
+ * offset, then that string is sorted according to the longest of those
+ * suffixes.
  *
  * Return non-zero if *diff contains the return value for versioncmp()
  */
@@ -44,27 +48,40 @@ static int swap_prereleases(const char *s1,
 			    int *diff)
 {
 	int i, i1 = -1, i2 = -1;
+	int start_at1 = off, start_at2 = off, match_len1 = -1, match_len2 = -1;
 
 	for (i = 0; i < prereleases->nr; i++) {
 		const char *suffix = prereleases->items[i].string;
-		int j, start, suffix_len = strlen(suffix);
+		int j, start, end, suffix_len = strlen(suffix);
 		if (suffix_len < off)
-			start = off - suffix_len + 1;
+			start = off - suffix_len;
 		else
 			start = 0;
-		for (j = start; j <= off; j++)
-			if (i1 == -1 && starts_with(s1 + j, suffix)) {
+		end = match_len1 < suffix_len ? start_at1 : start_at1-1;
+		for (j = start; j <= end; j++)
+			if (starts_with(s1 + j, suffix)) {
 				i1 = i;
+				start_at1 = j;
+				match_len1 = suffix_len;
 				break;
 			}
-		for (j = start; j <= off; j++)
-			if (i2 == -1 && starts_with(s2 + j, suffix)) {
+		end = match_len2 < suffix_len ? start_at2 : start_at2-1;
+		for (j = start; j <= end; j++)
+			if (starts_with(s2 + j, suffix)) {
 				i2 = i;
+				start_at2 = j;
+				match_len2 = suffix_len;
 				break;
 			}
 	}
 	if (i1 == -1 && i2 == -1)
 		return 0;
+	if (i1 == i2)
+		/* Found the same suffix in both, e.g. "-rc" in "v1.0-rcX"
+		 * and "v1.0-rcY": the caller should decide based on "X"
+		 * and "Y". */
+		return 0;
+
 	if (i1 >= 0 && i2 >= 0)
 		*diff = i1 - i2;
 	else if (i1 >= 0)

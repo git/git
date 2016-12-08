@@ -3049,8 +3049,10 @@ order of suffixes in the config file determines the sorting order
 (e.g. if "-pre" appears before "-rc" in the config file then 1.0-preXX
 is sorted before 1.0-rcXX).
 If more than one suffixes match the same tagname, then that tagname will
-be sorted according to the matching suffix which comes first in the
-configuration.
+be sorted according to the suffix which starts at the earliest position in
+the tagname.  If more than one different matching suffixes start at
+that earliest position, then that tagname will be sorted according to the
+longest of those suffixes.
 The sorting order between different suffixes is undefined if they are
 in multiple config files.
 
