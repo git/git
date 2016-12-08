@@ -25,32 +25,28 @@ static const struct string_list *prereleases;
 static int initialized;
 
 /*
- * p1 and p2 point to the first different character in two strings. If
- * either p1 or p2 starts with a prerelease suffix, it will be forced
- * to be on top.
+ * off is the offset of the first different character in the two strings
+ * s1 and s2. If either s1 or s2 contains a prerelease suffix starting
+ * at that offset, it will be forced to be on top.
  *
- * If both p1 and p2 start with (different) suffix, the order is
- * determined by config file.
- *
- * Note that we don't have to deal with the situation when both p1 and
- * p2 start with the same suffix because the common part is already
- * consumed by the caller.
+ * If both s1 and s2 contain a (different) suffix at that position,
+ * their order is determined by the order of those two suffixes in the
+ * configuration.
  *
  * Return non-zero if *diff contains the return value for versioncmp()
  */
-static int swap_prereleases(const void *p1_,
-			    const void *p2_,
+static int swap_prereleases(const char *s1,
+			    const char *s2,
+			    int off,
 			    int *diff)
 {
-	const char *p1 = p1_;
-	const char *p2 = p2_;
 	int i, i1 = -1, i2 = -1;
 
 	for (i = 0; i < prereleases->nr; i++) {
 		const char *suffix = prereleases->items[i].string;
-		if (i1 == -1 && starts_with(p1, suffix))
+		if (i1 == -1 && starts_with(s1 + off, suffix))
 			i1 = i;
-		if (i2 == -1 && starts_with(p2, suffix))
+		if (i2 == -1 && starts_with(s2 + off, suffix))
 			i2 = i;
 	}
 	if (i1 == -1 && i2 == -1)
@@ -121,7 +117,8 @@ int versioncmp(const char *s1, const char *s2)
 		initialized = 1;
 		prereleases = git_config_get_value_multi("versionsort.prereleasesuffix");
 	}
-	if (prereleases && swap_prereleases(p1 - 1, p2 - 1, &diff))
+	if (prereleases && swap_prereleases(s1, s2, (const char *) p1 - s1 - 1,
+					    &diff))
 		return diff;
 
 	state = result_type[state * 3 + (((c2 == '0') + (isdigit (c2) != 0)))];
