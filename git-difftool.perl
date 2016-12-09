@@ -59,14 +59,14 @@ sub exit_cleanup
 
 sub use_wt_file
 {
-	my ($workdir, $file, $sha1) = @_;
+	my ($file, $sha1) = @_;
 	my $null_sha1 = '0' x 40;
 
-	if (-l "$workdir/$file" || ! -e _) {
+	if (-l $file || ! -e _) {
 		return (0, $null_sha1);
 	}
 
-	my $wt_sha1 = Git::command_oneline('hash-object', "$workdir/$file");
+	my $wt_sha1 = Git::command_oneline('hash-object', $file);
 	my $use = ($sha1 eq $null_sha1) || ($sha1 eq $wt_sha1);
 	return ($use, $wt_sha1);
 }
@@ -104,6 +104,12 @@ sub setup_dir_diff
 	my @gitargs = ('diff', '--raw', '--no-abbrev', '-z', @ARGV);
 	my $diffrtn = Git::command_oneline(@gitargs);
 	exit(0) unless defined($diffrtn);
+
+	# Go to the root of the worktree now that we've captured the list of
+	# changed files.  The paths returned by diff --raw are relative to the
+	# top-level of the repository, but we defer changing directories so
+	# that @ARGV can perform pathspec limiting in the current directory.
+	chdir($workdir);
 
 	# Build index info for left and right sides of the diff
 	my $submodule_mode = '160000';
@@ -172,7 +178,7 @@ EOF
 				next;
 			}
 			my ($use, $wt_sha1) =
-				use_wt_file($workdir, $dst_path, $rsha1);
+				use_wt_file($dst_path, $rsha1);
 			if ($use) {
 				push @working_tree, $dst_path;
 				$wtindex .= "$rmode $wt_sha1\t$dst_path\0";
@@ -181,10 +187,6 @@ EOF
 			}
 		}
 	}
-
-	# Go to the root of the worktree so that the left index files
-	# are properly setup -- the index is toplevel-relative.
-	chdir($workdir);
 
 	# Setup temp directories
 	my $tmpdir = tempdir('git-difftool.XXXXX', CLEANUP => 0, TMPDIR => 1);
@@ -235,10 +237,10 @@ EOF
 			symlink("$workdir/$file", "$rdir/$file") or
 			exit_cleanup($tmpdir, 1);
 		} else {
-			copy("$workdir/$file", "$rdir/$file") or
+			copy($file, "$rdir/$file") or
 			exit_cleanup($tmpdir, 1);
 
-			my $mode = stat("$workdir/$file")->mode;
+			my $mode = stat($file)->mode;
 			chmod($mode, "$rdir/$file") or
 			exit_cleanup($tmpdir, 1);
 		}
@@ -430,10 +432,10 @@ sub dir_diff
 			$error = 1;
 		} elsif (exists $tmp_modified{$file}) {
 			my $mode = stat("$b/$file")->mode;
-			copy("$b/$file", "$workdir/$file") or
+			copy("$b/$file", $file) or
 			exit_cleanup($tmpdir, 1);
 
-			chmod($mode, "$workdir/$file") or
+			chmod($mode, $file) or
 			exit_cleanup($tmpdir, 1);
 		}
 	}
