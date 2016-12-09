@@ -1478,7 +1478,7 @@ You can repack this private repository whenever you feel like.
 A recommended work cycle for a "subsystem maintainer" who works
 on that project and has an own "public repository" goes like this:
 
-1. Prepare your work repository, by 'git clone' the public
+1. Prepare your work repository, by running 'git clone' on the public
    repository of the "project lead". The URL used for the
    initial cloning is stored in the remote.origin.url
    configuration variable.
