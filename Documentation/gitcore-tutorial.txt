@@ -1368,7 +1368,7 @@ $ git repack
 will do it for you. If you followed the tutorial examples, you
 would have accumulated about 17 objects in `.git/objects/??/`
 directories by now. 'git repack' tells you how many objects it
-packed, and stores the packed file in `.git/objects/pack`
+packed, and stores the packed file in the `.git/objects/pack`
 directory.
 
 [NOTE]
@@ -1543,9 +1543,9 @@ like this:
 Working with Others, Shared Repository Style
 --------------------------------------------
 
-If you are coming from CVS background, the style of cooperation
+If you are coming from a CVS background, the style of cooperation
 suggested in the previous section may be new to you. You do not
-have to worry. Git supports "shared public repository" style of
+have to worry. Git supports the "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
 See linkgit:gitcvs-migration[7] for the details.
