@@ -1635,7 +1635,7 @@ $ git show-branch
 ++* [master~2] Pretty-print messages.
 ------------
 
-Note that you should not do Octopus because you can.  An octopus
+Note that you should not do Octopus just because you can.  An octopus
 is a valid thing to do and often makes it easier to view the
 commit history if you are merging more than two independent
 changes at the same time.  However, if you have merge conflicts
