@@ -224,9 +224,7 @@ EOF
 	delete($ENV{GIT_INDEX_FILE});
 
 	# Changes in the working tree need special treatment since they are
-	# not part of the index. Remove any trailing slash from $workdir
-	# before starting to avoid double slashes in symlink targets.
-	$workdir =~ s|/$||;
+	# not part of the index.
 	for my $file (@working_tree) {
 		my $dir = dirname($file);
 		unless (-d "$rdir/$dir") {
@@ -389,6 +387,7 @@ sub dir_diff
 	my $repo = Git->repository();
 	my $repo_path = $repo->repo_path();
 	my $workdir = $repo->wc_path();
+	$workdir =~ s|/$||; # Avoid double slashes in symlink targets
 	my ($a, $b, $tmpdir, @worktree) = setup_dir_diff($workdir, $symlinks);
 
 	if (defined($extcmd)) {
