@@ -7,6 +7,9 @@
 #include <wingdi.h>
 #include <winreg.h>
 
+/* In this file, we actually want to use Windows' own isatty(). */
+#undef isatty
+
 /*
  ANSI codes used by git: m, K
 
@@ -569,6 +572,36 @@ static void detect_msys_tty(int fd)
 }
 
 #endif
+
+int winansi_isatty(int fd)
+{
+	int res = isatty(fd);
+
+	if (res) {
+		/*
+		 * Make sure that /dev/null is not fooling Git into believing
+		 * that we are connected to a terminal, as "_isatty() returns a
+		 * nonzero value if the descriptor is associated with a
+		 * character device."; for more information, see
+		 *
+		 * https://msdn.microsoft.com/en-us/library/f4s0ddew.aspx
+		 */
+		HANDLE handle = (HANDLE)_get_osfhandle(fd);
+		if (fd == STDIN_FILENO) {
+			DWORD dummy;
+
+			if (!GetConsoleMode(handle, &dummy))
+				res = 0;
+		} else if (fd == STDOUT_FILENO || fd == STDERR_FILENO) {
+			CONSOLE_SCREEN_BUFFER_INFO dummy;
+
+			if (!GetConsoleScreenBufferInfo(handle, &dummy))
+				res = 0;
+		}
+	}
+
+	return res;
+}
 
 void winansi_init(void)
 {
