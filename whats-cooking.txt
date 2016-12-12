@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2016, #01; Tue, 6)
+Subject: What's cooking in git.git (Dec 2016, #02; Mon, 12)
 X-master-at: 8d7a455ed52e2a96debc080dfc011b6bb00db5d2
-X-next-at: fb549caa12ec67f9448f8f6b29b102ee5ec54c82
+X-next-at: 91ed5b3cf342af96e9d9acb6af19e59b39d46658
 
-What's cooking in git.git (Dec 2016, #01; Tue, 6)
+What's cooking in git.git (Dec 2016, #02; Mon, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The 'next' branch has been rewound, 'maint' now is for maintenance
-fixes post v2.11 release.
+Quite a many topics that have been waiting before the most recent
+release have now been merged to 'next'; hopefully they will be ready
+for 'master' in a week or two.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,228 +22,118 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/common-main (2016-11-29) 1 commit
-  (merged to 'next' on 2016-11-29 at 2985e7efba)
- + common-main: stop munging argv[0] path
-
- Fix for a small regression in a topic already in 'master'.
-
---------------------------------------------------
 [New Topics]
 
-* ak/lazy-prereq-mktemp (2016-11-29) 1 commit
- - t7610: clean up foo.XXXXXX tmpdir
+* jc/lock-report-on-error (2016-12-07) 3 commits
+ - lockfile: LOCK_REPORT_ON_ERROR
+ - hold_locked_index(): align error handling with hold_lockfile_for_update()
+ - wt-status: implement opportunisitc index update correctly
 
- Test code clean-up.
-
- Will merge to 'next'.
-
-
-* da/mergetool-trust-exit-code (2016-11-29) 2 commits
- - mergetools/vimdiff: trust Vim's exit code
- - mergetool: honor mergetool.$tool.trustExitCode for built-in tools
-
- mergetool.<tool>.trustExitCode configuration variable did not apply
- to built-in tools, but now it does.
+ Git 2.11 had a minor regression in "merge --ff-only" that competed
+ with another process that simultanously attempted to update the
+ index. We used to explain what went wrong with an error message,
+ but the new code silently failed.  This resurrects the error
+ message.
 
  Will merge to 'next'.
 
 
-* jb/diff-no-index-no-abbrev (2016-11-29) 1 commit
- - diff: handle --no-abbrev outside of repository
+* nd/shallow-fixup (2016-12-07) 6 commits
+ - shallow.c: remove useless code
+ - shallow.c: bit manipulation tweaks
+ - shallow.c: avoid theoretical pointer wrap-around
+ - shallow.c: make paint_alloc slightly more robust
+ - shallow.c: stop abusing COMMIT_SLAB_SIZE for paint_info's memory pools
+ - shallow.c: rename fields in paint_info to better express their purposes
 
- "git diff --no-index" did not take "--no-abbrev" option.
-
- Will merge to 'next'.
-
-
-* vk/p4-submit-shelve (2016-11-29) 1 commit
- - git-p4: allow submit to create shelved changelists.
- (this branch is used by ld/p4-update-shelve.)
+ Code cleanup in shallow boundary computation.
 
  Will merge to 'next'.
 
 
-* jk/http-walker-limit-redirect-2.9 (2016-12-06) 5 commits
- - http: treat http-alternates like redirects
- - http: make redirects more obvious
- - remote-curl: rename shadowed options variable
- - http: always update the base URL for redirects
- - http: simplify update_url_from_redirect
- (this branch is used by jk/http-walker-limit-redirect.)
+* sb/sequencer-abort-safety (2016-12-09) 5 commits
+ - sequencer: remove useless get_dir() function
+ - sequencer: make sequencer abort safer
+ - t3510: test that cherry-pick --abort does not unsafely change HEAD
+ - am: change safe_to_abort()'s not rewinding error into a warning
+ - am: fix filename in safe_to_abort() error message
 
- Transport with dumb http can be fooled into following foreign URLs
- that the end user does not intend to, especially with the server
- side redirects and http-alternates mechanism, which can lead to
- security issues.  Tighten the redirection and make it more obvious
- to the end user when it happens.
-
- Will merge to 'next'.
-
-
-* jk/http-walker-limit-redirect (2016-12-06) 2 commits
- - http-walker: complain about non-404 loose object errors
- - Merge branch 'ew/http-walker' into jk/http-walker-limit-redirect
- (this branch uses jk/http-walker-limit-redirect-2.9.)
-
- Update the error messages from the dumb-http client when it fails
- to obtain loose objects; we used to give sensible error message
- only upon 404 but we now forbid unexpected redirects that needs to
- be reported with something sensible.
+ Unlike "git am --abort", "git cherry-pick --abort" moved HEAD back
+ to where cherry-pick started while picking multiple changes, when
+ the cherry-pick stopped to ask for help from the user, and the user
+ did "git reset --hard" to a different commit in order to re-attempt
+ the operation.
 
  Will merge to 'next'.
 
 
-* ah/grammos (2016-12-05) 3 commits
- - clone,fetch: explain the shallow-clone option a little more clearly
- - receive-pack: improve English grammar of denyCurrentBranch message
- - bisect: improve English grammar of not-ancestors message
-
- A few messages have been fixed for their grammatical errors.
-
- Will merge to 'next'.
-
-
-* ak/commit-only-allow-empty (2016-12-05) 1 commit
- - commit: make --only --allow-empty work without paths
-
- "git commit --allow-empty --only" (no pathspec) with dirty index
- ought to be an acceptable way to create a new commit that does not
- change any paths, but it was forbidden (perhaps because nobody
- needed it).
+* kh/tutorial-grammofix (2016-12-09) 4 commits
+ - doc: omit needless "for"
+ - doc: make the intent of sentence clearer
+ - doc: add verb in front of command to run
+ - doc: add articles (grammar)
 
  Will merge to 'next'.
 
 
-* bb/unicode-9.0 (2016-12-05) 3 commits
- - unicode_width.h: update the tables to Unicode 9.0
- - update_unicode.sh: strip the plane offsets from the double_width[] table
- - update_unicode.sh: automatically download newer definition files
+* da/mergetool-xxdiff-hotkey (2016-12-11) 1 commit
+ - mergetools: fix xxdiff hotkeys
 
- The character width table has been updated to match Unicode 9.0
-
- Will merge to 'next'.
-
-
-* ld/p4-update-shelve (2016-12-05) 1 commit
- - git-p4: support updating an existing shelved changelist
- (this branch uses vk/p4-submit-shelve.)
+ The way to specify hotkeys to "xxdiff" that is used by "git
+ mergetool" has been modernized to match recent versions of xxdiff.
 
  Will merge to 'next'.
 
 
-* ld/p4-worktree (2016-12-05) 1 commit
- - git-p4: support secondary working trees managed by "git worktree"
-
- Iffy.
- cf. <20161202224319.5385-2-luke@diamand.org>
-
-
-* ls/p4-empty-file-on-lfs (2016-12-05) 1 commit
- - git-p4: fix empty file processing for large file system backend GitLFS
-
- "git p4" LFS support was broken when LFS stores an empty blob.
-
- Will merge to 'next'.
-
-
-* ls/p4-retry-thrice (2016-12-05) 1 commit
- - git-p4: add config to retry p4 commands; retry 3 times by default
-
- Will merge to 'next'.
-
-
-* ls/t0021-fixup (2016-12-05) 1 commit
- - t0021: minor filter process test cleanup
-
- Will merge to 'next'.
-
-
-* ls/travis-update-p4-and-lfs (2016-12-05) 1 commit
- - travis-ci: update P4 to 16.2 and GitLFS to 1.5.2 in Linux build
-
- The default Travis-CI configuration specifies newer P4 and GitLFS.
-
- Will merge to 'next'.
-
-
-* sb/t3600-cleanup (2016-12-05) 1 commit
- - t3600: remove useless redirect
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* sb/unpack-trees-grammofix (2016-12-05) 1 commit
- - unpack-trees: fix grammar for untracked files in directories
-
- Will merge to 'next'.
-
-
-* da/difftool-dir-diff-fix (2016-12-06) 1 commit
+* jk/difftool-in-subdir (2016-12-11) 4 commits
+ - difftool: rename variables for consistency
+ - difftool: chdir as early as possible
+ - difftool: sanitize $workdir as early as possible
  - difftool: fix dir-diff index creation when in a subdirectory
 
- "git difftool --dir-diff" had a minor regression when started from
- a subdirectory, which has been fixed.
+ Even though an fix was attempted in Git 2.9.3 days, but running
+ "git difftool --dir-diff" from a subdirectory never worked. This
+ has been fixed.
 
  Will merge to 'next'.
 
 
-* jc/lockfile-silent-on-error (2016-12-06) 1 commit
- - lockfile: LOCK_SILENT_ON_ERROR
+* js/mingw-isatty (2016-12-11) 1 commit
+  (merged to 'next' on 2016-12-12 at 60c1da6676)
+ + mingw: intercept isatty() to handle /dev/null as Git expects it
 
- Recent change to use "hold_lock*()" without die-on-error in the
- merge machinery made an error from "git merge" harder to spot.
- Introduce an opt-in "be silent because it has been verified that
- this particular caller produces a sensible error message itself"
- flag, and make everybody else show the error message when it
- returns to the caller with -1 without dying.
+ We often decide if a session is interactive by checking if the
+ standard I/O streams are connected to a TTY, but isatty() emulation
+ on Windows incorrectly returned true if it is used on NUL (i.e. an
+ equivalent to /dev/null). This has been fixed.
 
-
-* jk/stash-disable-renames-internally (2016-12-06) 1 commit
- - stash: prefer plumbing over git-diff
-
- When diff.renames configuration is on (and with Git 2.9 and later,
- it is enabled by default, which made it worse), "git stash"
- misbehaved if a file is removed and another file with a very
- similar content is added.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/xdiff-drop-xdl-fast-hash (2016-12-06) 1 commit
- - xdiff: drop XDL_FAST_HASH
+* ew/svn-fixes (2016-12-12) 2 commits
+  (merged to 'next' on 2016-12-12 at 91ed5b3cf3)
+ + git-svn: document useLogAuthor and addAuthorFrom config keys
+ + git-svn: allow "0" in SVN path components
 
- Retire the "fast hash" that had disastrous performance issues in
- some corner cases.
-
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* ls/filter-process (2016-12-06) 1 commit
- - docs: warn about possible '=' in clean/smudge filter process values
-
- Doc update.
+* lr/doc-fix-cet (2016-12-12) 1 commit
+ - date-formats.txt: Typo fix
 
  Will merge to 'next'.
 
 
-* nd/for-each-ref-ignore-case (2016-12-05) 1 commit
- - tag, branch, for-each-ref: add --ignore-case for sorting and filtering
+* vs/submodule-clone-nested-submodules-alternates (2016-12-12) 1 commit
+ - submodule--helper: set alternateLocation for cloned submodules
 
- "git branch --list" and friends learned "--ignore-case" option to
- optionally sort branches and tags case insensitively.
-
- Will merge to 'next'.
-
-
-* rj/git-version-gen-do-not-force-abbrev (2016-12-06) 1 commit
- - GIT-VERSION-GEN: do not force abbreviation length used by 'describe'
-
- A minor build update.
+ "git clone --reference $there --recurse-submodules $super" has been
+ taught to guess repositories usable as references for submodules of
+ $super that are embedded in $there while making a clone of the
+ superproject borrow objects from $there; extend the mechanism to
+ also allow submodules of these submodules to borrow repositories
+ embedded in these clones of the submodules embedded in the clone of
+ the superproject.
 
  Will merge to 'next'.
 
@@ -386,16 +277,245 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ak/lazy-prereq-mktemp (2016-11-29) 1 commit
+  (merged to 'next' on 2016-12-12 at f346d1f053)
+ + t7610: clean up foo.XXXXXX tmpdir
+
+ Test code clean-up.
+
+ Will merge to 'master'.
+
+
+* da/mergetool-trust-exit-code (2016-11-29) 2 commits
+  (merged to 'next' on 2016-12-12 at 28ae202868)
+ + mergetools/vimdiff: trust Vim's exit code
+ + mergetool: honor mergetool.$tool.trustExitCode for built-in tools
+
+ mergetool.<tool>.trustExitCode configuration variable did not apply
+ to built-in tools, but now it does.
+
+ Will merge to 'master'.
+
+
+* jb/diff-no-index-no-abbrev (2016-12-08) 1 commit
+  (merged to 'next' on 2016-12-12 at 959981ef50)
+ + diff: handle --no-abbrev in no-index case
+
+ "git diff --no-index" did not take "--no-abbrev" option.
+
+ Will merge to 'master'.
+
+
+* vk/p4-submit-shelve (2016-11-29) 1 commit
+  (merged to 'next' on 2016-12-12 at 3fce6df117)
+ + git-p4: allow submit to create shelved changelists.
+ (this branch is used by ld/p4-update-shelve.)
+
+ Will merge to 'master'.
+
+
+* jk/http-walker-limit-redirect-2.9 (2016-12-06) 5 commits
+  (merged to 'next' on 2016-12-12 at 3e4bcd7bca)
+ + http: treat http-alternates like redirects
+ + http: make redirects more obvious
+ + remote-curl: rename shadowed options variable
+ + http: always update the base URL for redirects
+ + http: simplify update_url_from_redirect
+ (this branch is used by jk/http-walker-limit-redirect.)
+
+ Transport with dumb http can be fooled into following foreign URLs
+ that the end user does not intend to, especially with the server
+ side redirects and http-alternates mechanism, which can lead to
+ security issues.  Tighten the redirection and make it more obvious
+ to the end user when it happens.
+
+ Will merge to 'master'.
+
+
+* jk/http-walker-limit-redirect (2016-12-06) 2 commits
+  (merged to 'next' on 2016-12-12 at 8b58025e3a)
+ + http-walker: complain about non-404 loose object errors
+ + Merge branch 'ew/http-walker' into jk/http-walker-limit-redirect
+ (this branch uses jk/http-walker-limit-redirect-2.9.)
+
+ Update the error messages from the dumb-http client when it fails
+ to obtain loose objects; we used to give sensible error message
+ only upon 404 but we now forbid unexpected redirects that needs to
+ be reported with something sensible.
+
+ Will merge to 'master'.
+
+
+* ah/grammos (2016-12-05) 3 commits
+  (merged to 'next' on 2016-12-12 at 13ad487b28)
+ + clone,fetch: explain the shallow-clone option a little more clearly
+ + receive-pack: improve English grammar of denyCurrentBranch message
+ + bisect: improve English grammar of not-ancestors message
+
+ A few messages have been fixed for their grammatical errors.
+
+ Will merge to 'master'.
+
+
+* ak/commit-only-allow-empty (2016-12-09) 2 commits
+  (merged to 'next' on 2016-12-12 at 54188ab23c)
+ + commit: remove 'Clever' message for --only --amend
+ + commit: make --only --allow-empty work without paths
+
+ "git commit --allow-empty --only" (no pathspec) with dirty index
+ ought to be an acceptable way to create a new commit that does not
+ change any paths, but it was forbidden (perhaps because nobody
+ needed it).
+
+ Will merge to 'master'.
+
+
+* bb/unicode-9.0 (2016-12-11) 6 commits
+ - update_unicode.sh: restore hexadecimal output
+ - update_unicode.sh: remove the plane filters
+ - update_unicode.sh: update the uniset repo if it exists
+ - unicode_width.h: update the tables to Unicode 9.0
+ - update_unicode.sh: strip the plane offsets from the double_width[] table
+ - update_unicode.sh: automatically download newer definition files
+
+ The character width table has been updated to match Unicode 9.0
+
+ Will merge to 'next'.
+
+
+* ld/p4-update-shelve (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at 22f6bec94c)
+ + git-p4: support updating an existing shelved changelist
+ (this branch uses vk/p4-submit-shelve.)
+
+ Will merge to 'master'.
+
+
+* ld/p4-worktree (2016-12-05) 1 commit
+ - git-p4: support secondary working trees managed by "git worktree"
+
+ Iffy.
+ cf. <20161202224319.5385-2-luke@diamand.org>
+
+
+* ls/p4-empty-file-on-lfs (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at 1fce8e037a)
+ + git-p4: fix empty file processing for large file system backend GitLFS
+
+ "git p4" LFS support was broken when LFS stores an empty blob.
+
+ Will merge to 'master'.
+
+
+* ls/p4-retry-thrice (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at 9462e660a8)
+ + git-p4: add config to retry p4 commands; retry 3 times by default
+
+ Will merge to 'master'.
+
+
+* ls/t0021-fixup (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at db652e691a)
+ + t0021: minor filter process test cleanup
+
+ Will merge to 'master'.
+
+
+* ls/travis-update-p4-and-lfs (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at 5496caa048)
+ + travis-ci: update P4 to 16.2 and GitLFS to 1.5.2 in Linux build
+
+ The default Travis-CI configuration specifies newer P4 and GitLFS.
+
+ Will merge to 'master'.
+
+
+* sb/t3600-cleanup (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at d9996af5e8)
+ + t3600: remove useless redirect
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* sb/unpack-trees-grammofix (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at 29e536f590)
+ + unpack-trees: fix grammar for untracked files in directories
+
+ Will merge to 'master'.
+
+
+* da/difftool-dir-diff-fix (2016-12-08) 1 commit
+  (merged to 'next' on 2016-12-12 at fd31a92ad6)
+ + difftool: fix dir-diff index creation when in a subdirectory
+
+ "git difftool --dir-diff" had a minor regression when started from
+ a subdirectory, which has been fixed.
+
+ Will merge to 'master'.
+
+
+* jk/stash-disable-renames-internally (2016-12-06) 1 commit
+  (merged to 'next' on 2016-12-12 at e2b97aae68)
+ + stash: prefer plumbing over git-diff
+
+ When diff.renames configuration is on (and with Git 2.9 and later,
+ it is enabled by default, which made it worse), "git stash"
+ misbehaved if a file is removed and another file with a very
+ similar content is added.
+
+ Will merge to 'master'.
+
+
+* jk/xdiff-drop-xdl-fast-hash (2016-12-06) 1 commit
+ - xdiff: drop XDL_FAST_HASH
+
+ Retire the "fast hash" that had disastrous performance issues in
+ some corner cases.
+
+ Will merge to 'next'.
+
+
+* ls/filter-process (2016-12-06) 1 commit
+  (merged to 'next' on 2016-12-12 at 8ed1f9eb02)
+ + docs: warn about possible '=' in clean/smudge filter process values
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* nd/for-each-ref-ignore-case (2016-12-05) 1 commit
+  (merged to 'next' on 2016-12-12 at 527cc4f275)
+ + tag, branch, for-each-ref: add --ignore-case for sorting and filtering
+
+ "git branch --list" and friends learned "--ignore-case" option to
+ optionally sort branches and tags case insensitively.
+
+ Will merge to 'master'.
+
+
+* rj/git-version-gen-do-not-force-abbrev (2016-12-06) 1 commit
+  (merged to 'next' on 2016-12-12 at e37970c3f5)
+ + GIT-VERSION-GEN: do not force abbreviation length used by 'describe'
+
+ A minor build update.
+
+ Will merge to 'master'.
+
+
 * jc/renormalize-merge-kill-safer-crlf (2016-12-01) 4 commits
- - convert: git cherry-pick -Xrenormalize did not work
- - Merge branch 'tb/t0027-raciness-fix' into jc/renormalize-merge-kill-safer-crlf
- - merge-recursive: handle NULL in add_cacheinfo() correctly
- - cherry-pick: demonstrate a segmentation fault
+  (merged to 'next' on 2016-12-12 at 041b834f81)
+ + convert: git cherry-pick -Xrenormalize did not work
+ + Merge branch 'tb/t0027-raciness-fix' into jc/renormalize-merge-kill-safer-crlf
+ + merge-recursive: handle NULL in add_cacheinfo() correctly
+ + cherry-pick: demonstrate a segmentation fault
 
  Fix a corner case in merge-recursive regression that crept in
  during 2.10 development cycle.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/difftool-builtin (2016-11-28) 2 commits
@@ -408,71 +528,79 @@ of the repositories listed at
 
 
 * nd/qsort-in-merge-recursive (2016-11-28) 1 commit
- - merge-recursive.c: use string_list_sort instead of qsort
+  (merged to 'next' on 2016-12-12 at e9700f5b93)
+ + merge-recursive.c: use string_list_sort instead of qsort
 
  Code simplification.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bw/push-dry-run (2016-11-23) 2 commits
- - push: fix --dry-run to not push submodules
- - push: --dry-run updates submodules when --recurse-submodules=on-demand
+  (merged to 'next' on 2016-12-12 at bde7a0f9ae)
+ + push: fix --dry-run to not push submodules
+ + push: --dry-run updates submodules when --recurse-submodules=on-demand
  (this branch uses hv/submodule-not-yet-pushed-fix; is tangled with sb/push-make-submodule-check-the-default.)
 
  "git push --dry-run --recurse-submodule=on-demand" wasn't
  "--dry-run" in the submodules.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/push-make-submodule-check-the-default (2016-11-29) 2 commits
- - push: change submodule default to check when submodules exist
- - submodule add: extend force flag to add existing repos
+  (merged to 'next' on 2016-12-12 at 1863e05af5)
+ + push: change submodule default to check when submodules exist
+ + submodule add: extend force flag to add existing repos
  (this branch uses hv/submodule-not-yet-pushed-fix; is tangled with bw/push-dry-run.)
 
  Turn the default of "push.recurseSubmodules" to "check" when
  submodules seem to be in use.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/rev-parse-symbolic-parents-fix (2016-11-16) 1 commit
- - rev-parse: fix parent shorthands with --symbolic
+  (merged to 'next' on 2016-12-12 at 6839c1ea28)
+ + rev-parse: fix parent shorthands with --symbolic
 
  "git rev-parse --symbolic" failed with a more recent notation like
  "HEAD^-1" and "HEAD^!".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/worktree-list-fixup (2016-11-28) 5 commits
- - worktree list: keep the list sorted
- - worktree.c: get_worktrees() takes a new flag argument
- - get_worktrees() must return main worktree as first item even on error
- - worktree: reorder an if statement
- - worktree.c: zero new 'struct worktree' on allocation
+  (merged to 'next' on 2016-12-12 at 1f46421a59)
+ + worktree list: keep the list sorted
+ + worktree.c: get_worktrees() takes a new flag argument
+ + get_worktrees() must return main worktree as first item even on error
+ + worktree: reorder an if statement
+ + worktree.c: zero new 'struct worktree' on allocation
  (this branch is used by nd/worktree-move and sb/submodule-embed-gitdir.)
 
  The output from "git worktree list" was made in readdir() order,
  and was unstable.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/trailers-placeholder-in-pretty (2016-11-21) 2 commits
- - ref-filter: add support to display trailers as part of contents
- - pretty: add %(trailers) format for displaying trailers of a commit message
+* jk/trailers-placeholder-in-pretty (2016-12-11) 2 commits
+  (merged to 'next' on 2016-12-12 at 57de4e699a)
+ + ref-filter: add support to display trailers as part of contents
+ + pretty: add %(trailers) format for displaying trailers of a commit message
+ (this branch uses jt/use-trailer-api-in-commands.)
 
  In addition to %(subject), %(body), "log --pretty=format:..."
  learned a new placeholder %(trailers).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sb/submodule-embed-gitdir (2016-12-05) 5 commits
- - submodule: add embed-git-dir function
- - worktree: get worktrees from submodules
+* sb/submodule-embed-gitdir (2016-12-09) 6 commits
+ - submodule: add absorb-git-dir function
+ - move connect_work_tree_and_git_dir to dir.h
+ - worktree: have a function to check if worktrees are in use
  - test-lib-functions.sh: teach test_commit -C <dir>
  - submodule helper: support super prefix
  - submodule: use absolute path for computing relative path connecting
@@ -483,17 +611,19 @@ of the repositories listed at
  superproject to .git/modules/ (and point the latter with the former
  that is turned into a "gitdir:" file) has been added.
 
- Waiting for review.
+ Waiting for review to conclude.
+ cf. <20161208014623.7588-1-sbeller@google.com>
 
 
 * dt/empty-submodule-in-merge (2016-11-17) 1 commit
- - submodules: allow empty working-tree dirs in merge/cherry-pick
+  (merged to 'next' on 2016-12-12 at 6de2350b2b)
+ + submodules: allow empty working-tree dirs in merge/cherry-pick
 
  An empty directory in a working tree that can simply be nuked used
  to interfere while merging or cherry-picking a change to create a
  submodule directory there, which has been fixed..
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bw/grep-recurse-submodules (2016-11-22) 6 commits
@@ -582,15 +712,16 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* kn/ref-filter-branch-list (2016-11-15) 18 commits
- - for-each-ref: do not segv with %(HEAD) on an unborn branch
+* kn/ref-filter-branch-list (2016-12-08) 20 commits
  - branch: implement '--format' option
  - branch: use ref-filter printing APIs
  - branch, tag: use porcelain output
  - ref-filter: allow porcelain to translate messages in the output
- - ref-filter: add `:dir` and `:base` options for ref printing atoms
+ - ref-filter: add an 'rstrip=<N>' option to atoms which deal with refnames
+ - ref-filter: modify the 'lstrip=<N>' option to work with negative '<N>'
+ - ref-filter: rename the 'strip' option to 'lstrip'
  - ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
- - ref-filter: introduce symref_atom_parser() and refname_atom_parser()
+ - ref-filter: introduce refname_atom_parser()
  - ref-filter: introduce refname_atom_parser_internal()
  - ref-filter: make "%(symref)" atom work with the ':short' modifier
  - ref-filter: add support for %(upstream:track,nobracket)
@@ -601,15 +732,12 @@ of the repositories listed at
  - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
  - ref-filter: include reference to 'used_atom' within 'atom_value'
  - ref-filter: implement %(if), %(then), and %(else) atoms
+ - for-each-ref: do not segv with %(HEAD) on an unborn branch
 
  The code to list branches in "git branch" has been consolidated
  with the more generic ref-filter API.
 
  Rerolled, reviewed, looking good.
- Expecting a reroll.
- cf. <20161108201211.25213-1-Karthik.188@gmail.com>
- cf. <CAOLa=ZQqe3vEj_428d41vd_4kfjzsm87Wam6Zm2dhXWkPdJ8Rw@mail.gmail.com>
- cf. <xmqq7f84tqa7.fsf_-_@gitster.mtv.corp.google.com>
 
 
 * bw/transport-protocol-policy (2016-12-05) 5 commits
@@ -664,28 +792,31 @@ of the repositories listed at
 
 
 * jt/use-trailer-api-in-commands (2016-11-29) 5 commits
- - sequencer: use trailer's trailer layout
- - trailer: have function to describe trailer layout
- - trailer: avoid unnecessary splitting on lines
- - commit: make ignore_non_trailer take buf/len
- - trailer: be stricter in parsing separators
+  (merged to 'next' on 2016-12-12 at da1f140ad4)
+ + sequencer: use trailer's trailer layout
+ + trailer: have function to describe trailer layout
+ + trailer: avoid unnecessary splitting on lines
+ + commit: make ignore_non_trailer take buf/len
+ + trailer: be stricter in parsing separators
+ (this branch is used by jk/trailers-placeholder-in-pretty.)
 
  Commands that operate on a log message and add lines to the trailer
  blocks, such as "format-patch -s", "cherry-pick (-x|-s)", and
  "commit -s", have been taught to use the logic of and share the
  code with "git interpret-trailer".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* nd/rebase-forget (2016-11-28) 1 commit
- - rebase: add --forget to cleanup rebase, leave everything else untouched
+* nd/rebase-forget (2016-12-11) 1 commit
+  (merged to 'next' on 2016-12-12 at 50b5d28af4)
+ + rebase: add --quit to cleanup rebase, leave everything else untouched
 
  "git rebase" learned "--forget" option, which allows a user to
  remove the metadata left by an earlier "git rebase" that was
  manually aborted without using "git rebase --abort".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/git-open-cloexec (2016-11-02) 3 commits
@@ -891,8 +1022,11 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* sg/fix-versioncmp-with-common-suffix (2016-09-08) 5 commits
- - versioncmp: cope with common leading parts in versionsort.prereleaseSuffix
+* sg/fix-versioncmp-with-common-suffix (2016-12-08) 8 commits
+ - versioncmp: generalize version sort suffix reordering
+ - squash! versioncmp: use earliest-longest contained suffix to determine sorting order
+ - versioncmp: use earliest-longest contained suffix to determine sorting order
+ - versioncmp: cope with common part overlapping with prerelease suffix
  - versioncmp: pass full tagnames to swap_prereleases()
  - t7004-tag: add version sort tests to show prerelease reordering issues
  - t7004-tag: use test_config helper
@@ -903,8 +1037,8 @@ of the repositories listed at
  same release were present (e.g. when 2.0, 2.0-beta1, and 2.0-beta2
  are there and the code needs to compare 2.0-beta1 and 2.0-beta2).
 
- Waiting for a reroll.
- cf. <20160908223727.Horde.jVOOJ278ssZ3qkyjkmyqZD-@webmail.informatik.kit.edu>
+ Waiting for review.
+ cf. <20161208142401.1329-1-szeder.dev@gmail.com>
 
 
 * jc/pull-rebase-ff (2016-11-29) 1 commit
