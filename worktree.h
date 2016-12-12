@@ -28,6 +28,11 @@ struct worktree {
 extern struct worktree **get_worktrees(unsigned flags);
 
 /*
+ * Returns 1 if linked worktrees exist, 0 otherwise.
+ */
+extern int submodule_uses_worktrees(const char *path);
+
+/*
  * Return git dir of the worktree. Note that the path may be relative.
  * If wt is NULL, git dir of current worktree is returned.
  */
