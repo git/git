@@ -33,4 +33,23 @@ test_expect_success 'rejected objects are removed' '
 	test_cmp expect actual
 '
 
+# MINGW does not allow colons in pathnames in the first place
+test_expect_success !MINGW 'push to repo path with colon' '
+	# The interesting failure case here is when the
+	# receiving end cannot access its original object directory,
+	# so make it likely for us to generate a delta by having
+	# a non-trivial file with multiple versions.
+
+	test-genrandom foo 4096 >file.bin &&
+	git add file.bin &&
+	git commit -m bin &&
+	git clone --bare . xxx:yyy.git &&
+
+	echo change >>file.bin &&
+	git commit -am change &&
+	# Note that we have to use the full path here, or it gets confused
+	# with the ssh host:path syntax.
+	git push "$PWD/xxx:yyy.git" HEAD
+'
+
 test_done
