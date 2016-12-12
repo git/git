@@ -68,4 +68,22 @@ test_expect_success 'access alternate via relative path (subdir)' '
 	EOF
 '
 
+# set variables outside test to avoid quote insanity; the \057 is '/',
+# which doesn't need quoting, but just confirms that de-quoting
+# is working.
+quoted='"one.git\057objects"'
+unquoted='two.git/objects'
+test_expect_success 'mix of quoted and unquoted alternates' '
+	check_obj "$quoted:$unquoted" <<-EOF
+	$one blob
+	$two blob
+'
+
+test_expect_success 'broken quoting falls back to interpreting raw' '
+	mv one.git \"one.git &&
+	check_obj \"one.git/objects <<-EOF
+	$one blob
+	EOF
+'
+
 test_done
