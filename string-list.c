@@ -41,10 +41,8 @@ static int add_entry(int insert_at, struct string_list *list, const char *string
 	if (exact_match)
 		return -1 - index;
 
-	if (list->nr + 1 >= list->alloc) {
-		list->alloc += 32;
-		REALLOC_ARRAY(list->items, list->alloc);
-	}
+	if (list->nr + 1 >= list->alloc)
+		ALLOC_GROW(list->items, list->nr+1, list->alloc);
 	if (index < list->nr)
 		memmove(list->items + index + 1, list->items + index,
 				(list->nr - index)
