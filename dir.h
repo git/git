@@ -336,4 +336,7 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 void add_untracked_cache(struct index_state *istate);
 void remove_untracked_cache(struct index_state *istate);
 extern void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
+extern void relocate_gitdir(const char *path,
+			    const char *old_git_dir,
+			    const char *new_git_dir);
 #endif

@@ -2773,3 +2773,15 @@ void connect_work_tree_and_git_dir(const char *work_tree_, const char *git_dir_)
 	free(work_tree);
 	free(git_dir);
 }
+
+/*
+ * Migrate the git directory of the given path from old_git_dir to new_git_dir.
+ */
+void relocate_gitdir(const char *path, const char *old_git_dir, const char *new_git_dir)
+{
+	if (rename(old_git_dir, new_git_dir) < 0)
+		die_errno(_("could not migrate git directory from '%s' to '%s'"),
+			old_git_dir, new_git_dir);
+
+	connect_work_tree_and_git_dir(path, new_git_dir);
+}
