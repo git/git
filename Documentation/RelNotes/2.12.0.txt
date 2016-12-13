@@ -40,4 +40,14 @@ Unless otherwise noted, all the fixes since v2.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
+ * We often decide if a session is interactive by checking if the
+   standard I/O streams are connected to a TTY, but isatty() that
+   comes with Windows incorrectly returned true if it is used on NUL
+   (i.e. an equivalent to /dev/null).  This has been fixed.
+   (merge cbb3f3c9b1 js/mingw-isatty later to maint).
+
+ * "git svn" did not work well with path components that are "0", and
+   some configuration variable it uses were not documented.
+   (merge ea9a93dcc2 ew/svn-fixes later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
