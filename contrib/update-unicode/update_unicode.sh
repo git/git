@@ -5,11 +5,9 @@
 #Mn Nonspacing_Mark a nonspacing combining mark (zero advance width)
 #Cf Format          a format control character
 #
-UNICODEWIDTH_H=../unicode_width.h
-if ! test -d unicode; then
-	mkdir unicode
-fi &&
-( cd unicode &&
+cd "$(dirname "$0")"
+UNICODEWIDTH_H=$(git rev-parse --show-toplevel)/unicode_width.h
+(
 	if ! test -f UnicodeData.txt; then
 		wget http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
 	fi &&
