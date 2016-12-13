@@ -179,7 +179,8 @@ static struct fsentry *fseentry_create_entry(struct fsentry *list,
  * Dir should not contain trailing '/'. Use an empty string for the current
  * directory (not "."!).
  */
-static struct fsentry *fsentry_create_list(const struct fsentry *dir)
+static struct fsentry *fsentry_create_list(const struct fsentry *dir,
+					   int *dir_not_found)
 {
 	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
 	WIN32_FIND_DATAW fdata;
@@ -187,6 +188,8 @@ static struct fsentry *fsentry_create_list(const struct fsentry *dir)
 	int wlen;
 	struct fsentry *list, **phead;
 	DWORD err;
+
+	*dir_not_found = 0;
 
 	/* convert name to UTF-16 and check length < MAX_PATH */
 	if ((wlen = xutftowcsn(pattern, dir->dirent.d_name, MAX_PATH,
@@ -206,6 +209,7 @@ static struct fsentry *fsentry_create_list(const struct fsentry *dir)
 	h = FindFirstFileW(pattern, &fdata);
 	if (h == INVALID_HANDLE_VALUE) {
 		err = GetLastError();
+		*dir_not_found = 1; /* or empty directory */
 		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(err);
 		trace_printf_key(&trace_fscache, "fscache: error(%d) '%s'\n",
 						 errno, dir->dirent.d_name);
@@ -214,6 +218,8 @@ static struct fsentry *fsentry_create_list(const struct fsentry *dir)
 
 	/* allocate object to hold directory listing */
 	list = fsentry_alloc(NULL, dir->dirent.d_name, dir->len);
+	list->st_mode = S_IFDIR;
+	list->dirent.d_type = DT_DIR;
 
 	/* walk directory and build linked list of fsentry structures */
 	phead = &list->next;
@@ -298,12 +304,16 @@ static struct fsentry *fscache_get_wait(struct fsentry *key)
 static struct fsentry *fscache_get(struct fsentry *key)
 {
 	struct fsentry *fse, *future, *waiter;
+	int dir_not_found;
 
 	EnterCriticalSection(&mutex);
 	/* check if entry is in cache */
 	fse = fscache_get_wait(key);
 	if (fse) {
-		fsentry_addref(fse);
+		if (fse->st_mode)
+			fsentry_addref(fse);
+		else
+			fse = NULL; /* non-existing directory */
 		LeaveCriticalSection(&mutex);
 		return fse;
 	}
@@ -312,7 +322,10 @@ static struct fsentry *fscache_get(struct fsentry *key)
 		fse = fscache_get_wait(key->list);
 		if (fse) {
 			LeaveCriticalSection(&mutex);
-			/* dir entry without file entry -> file doesn't exist */
+			/*
+			 * dir entry without file entry, or dir does not
+			 * exist -> file doesn't exist
+			 */
 			errno = ENOENT;
 			return NULL;
 		}
@@ -326,7 +339,7 @@ static struct fsentry *fscache_get(struct fsentry *key)
 
 	/* create the directory listing (outside mutex!) */
 	LeaveCriticalSection(&mutex);
-	fse = fsentry_create_list(future);
+	fse = fsentry_create_list(future, &dir_not_found);
 	EnterCriticalSection(&mutex);
 
 	/* remove future entry and signal waiting threads */
@@ -340,6 +353,18 @@ static struct fsentry *fscache_get(struct fsentry *key)
 
 	/* leave on error (errno set by fsentry_create_list) */
 	if (!fse) {
+		if (dir_not_found && key->list) {
+			/*
+			 * Record that the directory does not exist (or is
+			 * empty, which for all practical matters is the same
+			 * thing as far as fscache is concerned).
+			 */
+			fse = fsentry_alloc(key->list->list,
+					    key->list->dirent.d_name,
+					    key->list->len);
+			fse->st_mode = 0;
+			hashmap_add(&map, &fse->ent);
+		}
 		LeaveCriticalSection(&mutex);
 		return NULL;
 	}
@@ -350,6 +375,9 @@ static struct fsentry *fscache_get(struct fsentry *key)
 	/* lookup file entry if requested (fse already points to directory) */
 	if (key->list)
 		fse = hashmap_get_entry(&map, key, ent, NULL);
+
+	if (fse && !fse->st_mode)
+		fse = NULL; /* non-existing directory */
 
 	/* return entry or ENOENT */
 	if (fse)
