@@ -39,6 +39,12 @@ static GIT_PATH_FUNC(rebase_path, "rebase-merge")
  */
 static GIT_PATH_FUNC(rebase_path_todo, "rebase-merge/git-rebase-todo")
 /*
+ * The rebase command lines that have already been processed. A line
+ * is moved here when it is first handled, before any associated user
+ * actions.
+ */
+static GIT_PATH_FUNC(rebase_path_done, "rebase-merge/done")
+/*
  * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
  * GIT_AUTHOR_DATE that will be used for the commit that is currently
  * being rebased.
@@ -1295,6 +1301,23 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 		return error_errno(_("could not write to '%s'"), todo_path);
 	if (commit_lock_file(&todo_lock) < 0)
 		return error(_("failed to finalize '%s'."), todo_path);
+
+	if (is_rebase_i(opts)) {
+		const char *done_path = rebase_path_done();
+		int fd = open(done_path, O_CREAT | O_WRONLY | O_APPEND, 0666);
+		int prev_offset = !next ? 0 :
+			todo_list->items[next - 1].offset_in_buf;
+
+		if (fd >= 0 && offset > prev_offset &&
+		    write_in_full(fd, todo_list->buf.buf + prev_offset,
+				  offset - prev_offset) < 0) {
+			close(fd);
+			return error_errno(_("could not write to '%s'"),
+					   done_path);
+		}
+		if (fd >= 0)
+			close(fd);
+	}
 	return 0;
 }
 
