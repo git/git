@@ -7,32 +7,31 @@
 #
 cd "$(dirname "$0")"
 UNICODEWIDTH_H=$(git rev-parse --show-toplevel)/unicode_width.h
+
+if ! test -f UnicodeData.txt; then
+	wget http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+fi &&
+if ! test -f EastAsianWidth.txt; then
+	wget http://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt
+fi &&
+if ! test -d uniset; then
+	git clone https://github.com/depp/uniset.git
+fi &&
 (
-	if ! test -f UnicodeData.txt; then
-		wget http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
+	cd uniset &&
+	if ! test -x uniset; then
+		autoreconf -i &&
+		./configure --enable-warnings=-Werror CFLAGS='-O0 -ggdb'
 	fi &&
-	if ! test -f EastAsianWidth.txt; then
-		wget http://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt
-	fi &&
-	if ! test -d uniset; then
-		git clone https://github.com/depp/uniset.git
-	fi &&
-	(
-		cd uniset &&
-		if ! test -x uniset; then
-			autoreconf -i &&
-			./configure --enable-warnings=-Werror CFLAGS='-O0 -ggdb'
-		fi &&
-		make
-	) &&
-	UNICODE_DIR=. && export UNICODE_DIR &&
-	cat >$UNICODEWIDTH_H <<-EOF
-	static const struct interval zero_width[] = {
-		$(uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD |
-		  grep -v plane)
-	};
-	static const struct interval double_width[] = {
-		$(uniset/uniset --32 eaw:F,W)
-	};
-	EOF
-)
+	make
+) &&
+UNICODE_DIR=. && export UNICODE_DIR &&
+cat >$UNICODEWIDTH_H <<-EOF
+static const struct interval zero_width[] = {
+	$(uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD |
+	  grep -v plane)
+};
+static const struct interval double_width[] = {
+	$(uniset/uniset --32 eaw:F,W)
+};
+EOF
