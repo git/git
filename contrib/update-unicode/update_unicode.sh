@@ -8,12 +8,8 @@
 cd "$(dirname "$0")"
 UNICODEWIDTH_H=$(git rev-parse --show-toplevel)/unicode_width.h
 
-if ! test -f UnicodeData.txt; then
-	wget http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
-fi &&
-if ! test -f EastAsianWidth.txt; then
-	wget http://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt
-fi &&
+wget -N http://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt \
+	http://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt &&
 if ! test -d uniset; then
 	git clone https://github.com/depp/uniset.git &&
 	( cd uniset && git checkout 4b186196dd )
