@@ -769,7 +769,8 @@ enum todo_command {
 	/* commands that do something else than handling a single commit */
 	TODO_EXEC,
 	/* commands that do nothing but are counted for reporting progress */
-	TODO_NOOP
+	TODO_NOOP,
+	TODO_DROP
 };
 
 static struct {
@@ -783,7 +784,8 @@ static struct {
 	{ 'f', "fixup" },
 	{ 's', "squash" },
 	{ 'x', "exec" },
-	{ 0,   "noop" }
+	{ 0,   "noop" },
+	{ 'd', "drop" }
 };
 
 static const char *command_to_string(const enum todo_command command)
@@ -1317,7 +1319,7 @@ static int parse_insn_buffer(char *buf, struct todo_list *todo_list)
 		else if (is_fixup(item->command))
 			return error(_("cannot '%s' without a previous commit"),
 				command_to_string(item->command));
-		else if (item->command != TODO_NOOP)
+		else if (item->command < TODO_NOOP)
 			fixup_okay = 1;
 	}
 
@@ -1827,7 +1829,7 @@ static enum todo_command peek_command(struct todo_list *todo_list, int offset)
 	int i;
 
 	for (i = todo_list->current + offset; i < todo_list->nr; i++)
-		if (todo_list->items[i].command != TODO_NOOP)
+		if (todo_list->items[i].command < TODO_NOOP)
 			return todo_list->items[i].command;
 
 	return -1;
@@ -1960,7 +1962,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 			res = do_exec(item->arg);
 			*end_of_arg = saved;
 		}
-		else if (item->command != TODO_NOOP)
+		else if (item->command < TODO_NOOP)
 			return error(_("unknown command %d"), item->command);
 
 		todo_list->current++;
