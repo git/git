@@ -1777,6 +1777,9 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 				return error_failed_squash(item->commit, opts,
 					item->arg_len, item->arg);
 			}
+			else if (res && is_rebase_i(opts))
+				return res | error_with_patch(item->commit,
+					item->arg, item->arg_len, opts, res, 0);
 		}
 		else if (item->command == TODO_EXEC) {
 			char *end_of_arg = (char *)(item->arg + item->arg_len);
