@@ -15,7 +15,8 @@ if ! test -f EastAsianWidth.txt; then
 	wget http://www.unicode.org/Public/UCD/latest/ucd/EastAsianWidth.txt
 fi &&
 if ! test -d uniset; then
-	git clone https://github.com/depp/uniset.git
+	git clone https://github.com/depp/uniset.git &&
+	( cd uniset && git checkout 4b186196dd )
 fi &&
 (
 	cd uniset &&
