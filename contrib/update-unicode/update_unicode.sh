@@ -25,8 +25,7 @@ fi &&
 UNICODE_DIR=. && export UNICODE_DIR &&
 cat >$UNICODEWIDTH_H <<-EOF
 static const struct interval zero_width[] = {
-	$(uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD |
-	  grep -v plane)
+	$(uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD)
 };
 static const struct interval double_width[] = {
 	$(uniset/uniset --32 eaw:F,W)
