@@ -638,7 +638,7 @@ sub list_and_choose {
 }
 
 sub singleton_prompt_help_cmd {
-	print colored $help_color, <<\EOF ;
+	print colored $help_color, __ <<'EOF' ;
 Prompt help:
 1          - select a numbered item
 foo        - select item based on unique prefix
@@ -647,7 +647,7 @@ EOF
 }
 
 sub prompt_help_cmd {
-	print colored $help_color, <<\EOF ;
+	print colored $help_color, __ <<'EOF' ;
 Prompt help:
 1          - select a single item
 3-5        - select a range of items
@@ -1581,7 +1581,9 @@ sub quit_cmd {
 }
 
 sub help_cmd {
-	print colored $help_color, <<\EOF ;
+# TRANSLATORS: please do not translate the command names
+# 'status', 'update', 'revert', etc.
+	print colored $help_color, __ <<'EOF' ;
 status        - show paths with changes
 update        - add working tree state to the staged set of changes
 revert        - revert staged set of changes back to the HEAD version
