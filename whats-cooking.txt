@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2016, #02; Mon, 12)
-X-master-at: 8d7a455ed52e2a96debc080dfc011b6bb00db5d2
-X-next-at: 91ed5b3cf342af96e9d9acb6af19e59b39d46658
+Subject: What's cooking in git.git (Dec 2016, #03; Tue, 13)
+X-master-at: de2efebf7ce2b308ea77d8b06f971e935238cd2f
+X-next-at: 3074f9477c394cb6e81d163f738566535afd22ed
 
-What's cooking in git.git (Dec 2016, #02; Mon, 12)
+What's cooking in git.git (Dec 2016, #03; Tue, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Quite a many topics that have been waiting before the most recent
-release have now been merged to 'next'; hopefully they will be ready
-for 'master' in a week or two.
+A few topics were merged to 'master' and are meant for 'maint' to be
+in the first maintenance release for 2.11.x series.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,80 +21,14 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* jc/lock-report-on-error (2016-12-07) 3 commits
- - lockfile: LOCK_REPORT_ON_ERROR
- - hold_locked_index(): align error handling with hold_lockfile_for_update()
- - wt-status: implement opportunisitc index update correctly
+* ew/svn-fixes (2016-12-12) 2 commits
+  (merged to 'next' on 2016-12-12 at 91ed5b3cf3)
+ + git-svn: document useLogAuthor and addAuthorFrom config keys
+ + git-svn: allow "0" in SVN path components
 
- Git 2.11 had a minor regression in "merge --ff-only" that competed
- with another process that simultanously attempted to update the
- index. We used to explain what went wrong with an error message,
- but the new code silently failed.  This resurrects the error
- message.
-
- Will merge to 'next'.
-
-
-* nd/shallow-fixup (2016-12-07) 6 commits
- - shallow.c: remove useless code
- - shallow.c: bit manipulation tweaks
- - shallow.c: avoid theoretical pointer wrap-around
- - shallow.c: make paint_alloc slightly more robust
- - shallow.c: stop abusing COMMIT_SLAB_SIZE for paint_info's memory pools
- - shallow.c: rename fields in paint_info to better express their purposes
-
- Code cleanup in shallow boundary computation.
-
- Will merge to 'next'.
-
-
-* sb/sequencer-abort-safety (2016-12-09) 5 commits
- - sequencer: remove useless get_dir() function
- - sequencer: make sequencer abort safer
- - t3510: test that cherry-pick --abort does not unsafely change HEAD
- - am: change safe_to_abort()'s not rewinding error into a warning
- - am: fix filename in safe_to_abort() error message
-
- Unlike "git am --abort", "git cherry-pick --abort" moved HEAD back
- to where cherry-pick started while picking multiple changes, when
- the cherry-pick stopped to ask for help from the user, and the user
- did "git reset --hard" to a different commit in order to re-attempt
- the operation.
-
- Will merge to 'next'.
-
-
-* kh/tutorial-grammofix (2016-12-09) 4 commits
- - doc: omit needless "for"
- - doc: make the intent of sentence clearer
- - doc: add verb in front of command to run
- - doc: add articles (grammar)
-
- Will merge to 'next'.
-
-
-* da/mergetool-xxdiff-hotkey (2016-12-11) 1 commit
- - mergetools: fix xxdiff hotkeys
-
- The way to specify hotkeys to "xxdiff" that is used by "git
- mergetool" has been modernized to match recent versions of xxdiff.
-
- Will merge to 'next'.
-
-
-* jk/difftool-in-subdir (2016-12-11) 4 commits
- - difftool: rename variables for consistency
- - difftool: chdir as early as possible
- - difftool: sanitize $workdir as early as possible
- - difftool: fix dir-diff index creation when in a subdirectory
-
- Even though an fix was attempted in Git 2.9.3 days, but running
- "git difftool --dir-diff" from a subdirectory never worked. This
- has been fixed.
-
- Will merge to 'next'.
+ Meant eventually for 'maint'.
 
 
 * js/mingw-isatty (2016-12-11) 1 commit
@@ -103,39 +36,52 @@ of the repositories listed at
  + mingw: intercept isatty() to handle /dev/null as Git expects it
 
  We often decide if a session is interactive by checking if the
- standard I/O streams are connected to a TTY, but isatty() emulation
- on Windows incorrectly returned true if it is used on NUL (i.e. an
- equivalent to /dev/null). This has been fixed.
+ standard I/O streams are connected to a TTY, but isatty() that
+ comes with Windows incorrectly returned true if it is used on NUL
+ (i.e. an equivalent to /dev/null). This has been fixed.
 
- Will merge to 'master'.
+ Meant eventually for 'maint'.
+
+--------------------------------------------------
+[New Topics]
+
+* bw/realpath-wo-chdir (2016-12-12) 4 commits
+ - real_path: have callers use real_pathdup and strbuf_realpath
+ - real_path: create real_pathdup
+ - real_path: convert real_path_internal to strbuf_realpath
+ - real_path: resolve symlinks by hand
+
+ The implementation of "real_path()" was to go there with chdir(2)
+ and call getcwd(3), but this obviously wouldn't be usable in a
+ threaded environment.  Rewrite it to manually resolve relative
+ paths including symbolic links in path components.
+
+ What's the donness of the topic?  Is this ready for 'next'?
 
 
-* ew/svn-fixes (2016-12-12) 2 commits
-  (merged to 'next' on 2016-12-12 at 91ed5b3cf3)
- + git-svn: document useLogAuthor and addAuthorFrom config keys
- + git-svn: allow "0" in SVN path components
+* jk/quote-env-path-list-component (2016-12-13) 4 commits
+ - t5547-push-quarantine: run the path separator test on Windows, too
+ - tmp-objdir: quote paths we add to alternates
+ - alternates: accept double-quoted paths
+ - Merge branch 'jk/alt-odb-cleanup' into jk/quote-env-path-list-component
 
- Will merge to 'master'.
-
-
-* lr/doc-fix-cet (2016-12-12) 1 commit
- - date-formats.txt: Typo fix
+ A recent update to receive-pack to make it easier to drop garbage
+ objects made it clear that GIT_ALTERNATE_OBJECT_DIRECTORIES cannot
+ have a pathname with a colon in it (no surprise!), and this in turn
+ made it impossible to push into a repository at such a path.  This
+ has been fixed by introducing a quoting mechanism used when
+ appending such a path to the colon-separated list.
 
  Will merge to 'next'.
 
 
-* vs/submodule-clone-nested-submodules-alternates (2016-12-12) 1 commit
- - submodule--helper: set alternateLocation for cloned submodules
+* js/normalize-path-copy-ceil (2016-12-13) 1 commit
+ - normalize_path_copy(): fix pushing to //server/share/dir paths on Windows
 
- "git clone --reference $there --recurse-submodules $super" has been
- taught to guess repositories usable as references for submodules of
- $super that are embedded in $there while making a clone of the
- superproject borrow objects from $there; extend the mechanism to
- also allow submodules of these submodules to borrow repositories
- embedded in these clones of the submodules embedded in the clone of
- the superproject.
+ A pathname that begins with "//" or "\\" on Windows is special but
+ path normalization logic was unaware of it.
 
- Will merge to 'next'.
+ Will merge to 'next', but I'd appreciate a second set of eyes on this.
 
 --------------------------------------------------
 [Stalled]
@@ -277,6 +223,107 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/lock-report-on-error (2016-12-07) 3 commits
+  (merged to 'next' on 2016-12-13 at cb6c07ee92)
+ + lockfile: LOCK_REPORT_ON_ERROR
+ + hold_locked_index(): align error handling with hold_lockfile_for_update()
+ + wt-status: implement opportunisitc index update correctly
+
+ Git 2.11 had a minor regression in "merge --ff-only" that competed
+ with another process that simultanously attempted to update the
+ index. We used to explain what went wrong with an error message,
+ but the new code silently failed.  This resurrects the error
+ message.
+
+ Will merge to 'master'.
+
+
+* nd/shallow-fixup (2016-12-07) 6 commits
+  (merged to 'next' on 2016-12-13 at 1a3edb8bce)
+ + shallow.c: remove useless code
+ + shallow.c: bit manipulation tweaks
+ + shallow.c: avoid theoretical pointer wrap-around
+ + shallow.c: make paint_alloc slightly more robust
+ + shallow.c: stop abusing COMMIT_SLAB_SIZE for paint_info's memory pools
+ + shallow.c: rename fields in paint_info to better express their purposes
+
+ Code cleanup in shallow boundary computation.
+
+ Will merge to 'master'.
+
+
+* sb/sequencer-abort-safety (2016-12-09) 5 commits
+  (merged to 'next' on 2016-12-13 at 6107e43d65)
+ + sequencer: remove useless get_dir() function
+ + sequencer: make sequencer abort safer
+ + t3510: test that cherry-pick --abort does not unsafely change HEAD
+ + am: change safe_to_abort()'s not rewinding error into a warning
+ + am: fix filename in safe_to_abort() error message
+
+ Unlike "git am --abort", "git cherry-pick --abort" moved HEAD back
+ to where cherry-pick started while picking multiple changes, when
+ the cherry-pick stopped to ask for help from the user, and the user
+ did "git reset --hard" to a different commit in order to re-attempt
+ the operation.
+
+ Will merge to 'master'.
+
+
+* kh/tutorial-grammofix (2016-12-09) 4 commits
+  (merged to 'next' on 2016-12-13 at a951db78bc)
+ + doc: omit needless "for"
+ + doc: make the intent of sentence clearer
+ + doc: add verb in front of command to run
+ + doc: add articles (grammar)
+
+ Will merge to 'master'.
+
+
+* da/mergetool-xxdiff-hotkey (2016-12-11) 1 commit
+  (merged to 'next' on 2016-12-13 at a08f375c81)
+ + mergetools: fix xxdiff hotkeys
+
+ The way to specify hotkeys to "xxdiff" that is used by "git
+ mergetool" has been modernized to match recent versions of xxdiff.
+
+ Will merge to 'master'.
+
+
+* jk/difftool-in-subdir (2016-12-11) 4 commits
+ - difftool: rename variables for consistency
+ - difftool: chdir as early as possible
+ - difftool: sanitize $workdir as early as possible
+ - difftool: fix dir-diff index creation when in a subdirectory
+
+ Even though an fix was attempted in Git 2.9.3 days, but running
+ "git difftool --dir-diff" from a subdirectory never worked. This
+ has been fixed.
+
+ Will merge to 'next'.
+
+
+* lr/doc-fix-cet (2016-12-12) 1 commit
+  (merged to 'next' on 2016-12-13 at dbc9e07e57)
+ + date-formats.txt: Typo fix
+
+ Will merge to 'master'.
+
+
+* vs/submodule-clone-nested-submodules-alternates (2016-12-12) 1 commit
+  (merged to 'next' on 2016-12-13 at 8a317ab745)
+ + submodule--helper: set alternateLocation for cloned submodules
+
+ "git clone --reference $there --recurse-submodules $super" has been
+ taught to guess repositories usable as references for submodules of
+ $super that are embedded in $there while making a clone of the
+ superproject borrow objects from $there; extend the mechanism to
+ also allow submodules of these submodules to borrow repositories
+ embedded in these clones of the submodules embedded in the clone of
+ the superproject.
+
+ Will merge to 'master'.
+
+
 * ak/lazy-prereq-mktemp (2016-11-29) 1 commit
   (merged to 'next' on 2016-12-12 at f346d1f053)
  + t7610: clean up foo.XXXXXX tmpdir
@@ -370,13 +417,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* bb/unicode-9.0 (2016-12-11) 6 commits
- - update_unicode.sh: restore hexadecimal output
- - update_unicode.sh: remove the plane filters
- - update_unicode.sh: update the uniset repo if it exists
- - unicode_width.h: update the tables to Unicode 9.0
- - update_unicode.sh: strip the plane offsets from the double_width[] table
- - update_unicode.sh: automatically download newer definition files
+* bb/unicode-9.0 (2016-12-13) 6 commits
+ - unicode_width.h: update the width tables to Unicode 9.0
+ - update_unicode.sh: remove the plane filter
+ - update-unicode.sh: automatically download newer definition files
+ - update_unicode.sh: pin the uniset repo to a known good commit
+ - update_unicode.sh: remove an unnecessary subshell level
+ - update_unicode.sh: move it into contrib/update-unicode
 
  The character width table has been updated to match Unicode 9.0
 
@@ -391,11 +438,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ld/p4-worktree (2016-12-05) 1 commit
- - git-p4: support secondary working trees managed by "git worktree"
+* ld/p4-worktree (2016-12-13) 1 commit
+ - git-p4: support git worktrees
 
- Iffy.
- cf. <20161202224319.5385-2-luke@diamand.org>
+ "git p4" didn't interact with the internal of .git directory
+ correctly in the modern "git-worktree"-enabled world.
+
+ Will merge to 'next'.
+ Rerolled.  Looking good.
 
 
 * ls/p4-empty-file-on-lfs (2016-12-05) 1 commit
@@ -430,7 +480,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/t3600-cleanup (2016-12-05) 1 commit
+* sb/t3600-cleanup (2016-12-12) 2 commits
+  (merged to 'next' on 2016-12-13 at e06e6e702f)
+ + t3600: slightly modernize style
   (merged to 'next' on 2016-12-12 at d9996af5e8)
  + t3600: remove useless redirect
 
@@ -469,12 +521,13 @@ of the repositories listed at
 
 
 * jk/xdiff-drop-xdl-fast-hash (2016-12-06) 1 commit
- - xdiff: drop XDL_FAST_HASH
+  (merged to 'next' on 2016-12-13 at 914e306217)
+ + xdiff: drop XDL_FAST_HASH
 
  Retire the "fast hash" that had disastrous performance issues in
  some corner cases.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ls/filter-process (2016-12-06) 1 commit
@@ -524,7 +577,7 @@ of the repositories listed at
 
  Rewrite a scripted porcelain "git difftool" in C.
 
- Under discussion.
+ What's the doneness of this topic?
 
 
 * nd/qsort-in-merge-recursive (2016-11-28) 1 commit
@@ -597,10 +650,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/submodule-embed-gitdir (2016-12-09) 6 commits
+* sb/submodule-embed-gitdir (2016-12-12) 6 commits
  - submodule: add absorb-git-dir function
  - move connect_work_tree_and_git_dir to dir.h
- - worktree: have a function to check if worktrees are in use
+ - worktree: check if a submodule uses worktrees
  - test-lib-functions.sh: teach test_commit -C <dir>
  - submodule helper: support super prefix
  - submodule: use absolute path for computing relative path connecting
@@ -611,8 +664,7 @@ of the repositories listed at
  superproject to .git/modules/ (and point the latter with the former
  that is turned into a "gitdir:" file) has been added.
 
- Waiting for review to conclude.
- cf. <20161208014623.7588-1-sbeller@google.com>
+ Is this now pretty much done and ready for 'next'?
 
 
 * dt/empty-submodule-in-merge (2016-11-17) 1 commit
@@ -627,16 +679,16 @@ of the repositories listed at
 
 
 * bw/grep-recurse-submodules (2016-11-22) 6 commits
- - grep: search history of moved submodules
- - grep: enable recurse-submodules to work on <tree> objects
- - grep: optionally recurse into submodules
- - grep: add submodules as a grep source type
- - submodules: load gitmodules file from commit sha1
- - submodules: add helper functions to determine presence of submodules
+ . grep: search history of moved submodules
+ . grep: enable recurse-submodules to work on <tree> objects
+ . grep: optionally recurse into submodules
+ . grep: add submodules as a grep source type
+ . submodules: load gitmodules file from commit sha1
+ . submodules: add helper functions to determine presence of submodules
 
  "git grep" learns to optionally recurse into submodules
 
- Has anybody else seen t7814 being flakey with this series?
+ Will be redone on top of the bw/realpath-wo-chdir.
 
 
 * dt/smart-http-detect-server-going-away (2016-11-18) 2 commits
@@ -737,7 +789,8 @@ of the repositories listed at
  The code to list branches in "git branch" has been consolidated
  with the more generic ref-filter API.
 
- Rerolled, reviewed, looking good.
+ What's the doneness of the topic?  I recall discussing die vs empty
+ and also saw a "squash this in when you reroll", but I lost track.
 
 
 * bw/transport-protocol-policy (2016-12-05) 5 commits
@@ -750,6 +803,9 @@ of the repositories listed at
  Finer-grained control of what protocols are allowed for transports
  during clone/fetch/push have been enabled via a new configuration
  mechanism.
+
+ What's the doneness of this topic?  Did we agree that it should be
+ rebased on top of Peff's http-walker-limit-redirect series?
 
 
 * jt/fetch-no-redundant-tag-fetch-map (2016-11-11) 1 commit
@@ -1047,6 +1103,8 @@ of the repositories listed at
  "git pull --rebase", when there is no new commits on our side since
  we forked from the upstream, should be able to fast-forward without
  invoking "git rebase", but it didn't.
+
+ Will merge to 'next'.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
