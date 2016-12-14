@@ -34,7 +34,7 @@ test_expect_success clone '
 	git clone "file://$UNCPATH" clone
 '
 
-test_expect_failure push '
+test_expect_success push '
 	(
 		cd clone &&
 		git checkout -b to-push &&
