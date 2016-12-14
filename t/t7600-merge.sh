@@ -154,6 +154,8 @@ test_expect_success 'test option parsing' '
 	test_must_fail git merge -s foobar c1 &&
 	test_must_fail git merge -s=foobar c1 &&
 	test_must_fail git merge -m &&
+	test_must_fail git merge --continue foobar &&
+	test_must_fail git merge --continue --quiet &&
 	test_must_fail git merge
 '
 
@@ -761,6 +763,13 @@ test_expect_success 'merge nothing into void' '
 		git fetch up &&
 		test_must_fail git merge FETCH_HEAD
 	)
+'
+
+test_expect_success 'merge can be completed with --continue' '
+	git reset --hard c0 &&
+	git merge --no-ff --no-commit c1 &&
+	git merge --continue &&
+	verify_parents $c0 $c1
 '
 
 test_done

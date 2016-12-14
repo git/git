@@ -15,6 +15,7 @@ SYNOPSIS
 	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
 'git merge' <msg> HEAD <commit>...
 'git merge' --abort
+'git merge' --continue
 
 DESCRIPTION
 -----------
@@ -61,6 +62,8 @@ reconstruct the original (pre-merge) changes. Therefore:
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
+The fourth syntax ("`git merge --continue`") can only be run after the
+merge has resulted in conflicts.
 
 OPTIONS
 -------
@@ -98,6 +101,11 @@ commit or stash your changes before running 'git merge'.
 +
 'git merge --abort' is equivalent to 'git reset --merge' when
 `MERGE_HEAD` is present.
+
+--continue::
+	After a 'git merge' stops due to conflicts you can conclude the
+	merge by running 'git merge --continue' (see "HOW TO RESOLVE
+	CONFLICTS" section below).
 
 <commit>...::
 	Commits, usually other branch heads, to merge into our branch.
