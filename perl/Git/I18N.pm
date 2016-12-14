@@ -13,7 +13,7 @@ BEGIN {
 	}
 }
 
-our @EXPORT = qw(__ __n);
+our @EXPORT = qw(__ __n N__);
 our @EXPORT_OK = @EXPORT;
 
 sub __bootstrap_locale_messages {
@@ -54,6 +54,8 @@ BEGIN
 		*__ = sub ($) { $_[0] };
 		*__n = sub ($$$) { $_[2] == 1 ? $_[0] : $_[1] };
 	};
+
+	sub N__($) { return shift; }
 }
 
 1;
@@ -73,6 +75,7 @@ Git::I18N - Perl interface to Git's Gettext localizations
 	printf __("The following error occurred: %s\n"), $error;
 
 	printf __n("commited %d file\n", "commited %d files\n", $files), $files;
+
 
 =head1 DESCRIPTION
 
@@ -94,6 +97,12 @@ passthrough fallback function.
 =head2 __n($$$)
 
 L<Locale::Messages>'s ngettext function or passthrough fallback function.
+
+=head2 N__($)
+
+No-operation that only returns its argument. Use this if you want xgettext to
+extract the text to the pot template but do not want to trigger retrival of the
+translation at run time.
 
 =head1 AUTHOR
 

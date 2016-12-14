@@ -92,6 +92,7 @@ sub colored {
 }
 
 # command line options
+my $cmd;
 my $patch_mode;
 my $patch_mode_revision;
 
@@ -172,7 +173,8 @@ my %patch_modes = (
 	},
 );
 
-my %patch_mode_flavour = %{$patch_modes{stage}};
+$patch_mode = 'stage';
+my %patch_mode_flavour = %{$patch_modes{$patch_mode}};
 
 sub run_cmd_pipe {
 	if ($^O eq 'MSWin32') {
@@ -1308,6 +1310,44 @@ sub display_hunks {
 	return $i;
 }
 
+my %patch_update_prompt_modes = (
+	stage => {
+		mode => N__("Stage mode change [y,n,q,a,d,/%s,?]? "),
+		deletion => N__("Stage deletion [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Stage this hunk [y,n,q,a,d,/%s,?]? "),
+	},
+	stash => {
+		mode => N__("Stash mode change [y,n,q,a,d,/%s,?]? "),
+		deletion => N__("Stash deletion [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Stash this hunk [y,n,q,a,d,/%s,?]? "),
+	},
+	reset_head => {
+		mode => N__("Unstage mode change [y,n,q,a,d,/%s,?]? "),
+		deletion => N__("Unstage deletion [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Unstage this hunk [y,n,q,a,d,/%s,?]? "),
+	},
+	reset_nothead => {
+		mode => N__("Apply mode change to index [y,n,q,a,d,/%s,?]? "),
+		deletion => N__("Apply deletion to index [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Apply this hunk to index [y,n,q,a,d,/%s,?]? "),
+	},
+	checkout_index => {
+		mode => N__("Discard mode change from worktree [y,n,q,a,d,/%s,?]? "),
+		deletion => N__("Discard deletion from worktree [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Discard this hunk from worktree [y,n,q,a,d,/%s,?]? "),
+	},
+	checkout_head => {
+		mode => N__("Discard mode change from index and worktree [y,n,q,a,d,/%s,?]? "),
+		deletion => N__("Discard deletion from index and worktree [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Discard this hunk from index and worktree [y,n,q,a,d,/%s,?]? "),
+	},
+	checkout_nothead => {
+		mode => N__("Apply mode change to index and worktree [y,n,q,a,d,/%s,?]? "),
+		deletion => N__("Apply deletion to index and worktree [y,n,q,a,d,/%s,?]? "),
+		hunk => N__("Apply this hunk to index and worktree [y,n,q,a,d,/%s,?]? "),
+	},
+);
+
 sub patch_update_file {
 	my $quit = 0;
 	my ($ix, $num);
@@ -1380,12 +1420,9 @@ sub patch_update_file {
 		for (@{$hunk[$ix]{DISPLAY}}) {
 			print;
 		}
-		print colored $prompt_color, $patch_mode_flavour{VERB},
-		  ($hunk[$ix]{TYPE} eq 'mode' ? ' mode change' :
-		   $hunk[$ix]{TYPE} eq 'deletion' ? ' deletion' :
-		   ' this hunk'),
-		  $patch_mode_flavour{TARGET},
-		  " [y,n,q,a,d,/$other,?]? ";
+		print colored $prompt_color,
+			sprintf(__($patch_update_prompt_modes{$patch_mode}{$hunk[$ix]{TYPE}}), $other);
+
 		my $line = prompt_single_character;
 		last unless defined $line;
 		if ($line) {
@@ -1641,6 +1678,7 @@ sub process_args {
 		die sprintf(__("invalid argument %s, expecting --"),
 			       $arg) unless $arg eq "--";
 		%patch_mode_flavour = %{$patch_modes{$patch_mode}};
+		$cmd = 1;
 	}
 	elsif ($arg ne "--") {
 		die sprintf(__("invalid argument %s, expecting --"), $arg);
@@ -1677,7 +1715,7 @@ sub main_loop {
 
 process_args();
 refresh();
-if ($patch_mode) {
+if ($cmd) {
 	patch_update_cmd();
 }
 else {
