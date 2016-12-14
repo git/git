@@ -1055,6 +1055,30 @@ sub color_diff {
 	} @_;
 }
 
+my %edit_hunk_manually_modes = (
+	stage => N__(
+"If the patch applies cleanly, the edited hunk will immediately be
+marked for staging."),
+	stash => N__(
+"If the patch applies cleanly, the edited hunk will immediately be
+marked for stashing."),
+	reset_head => N__(
+"If the patch applies cleanly, the edited hunk will immediately be
+marked for unstaging."),
+	reset_nothead => N__(
+"If the patch applies cleanly, the edited hunk will immediately be
+marked for applying."),
+	checkout_index => N__(
+"If the patch applies cleanly, the edited hunk will immediately be
+marked for discarding"),
+	checkout_head => N__(
+"If the patch applies cleanly, the edited hunk will immediately be
+marked for discarding."),
+	checkout_nothead => N__(
+"If the patch applies cleanly, the edited hunk will immediately be
+marked for applying."),
+);
+
 sub edit_hunk_manually {
 	my ($oldtext) = @_;
 
@@ -1062,22 +1086,24 @@ sub edit_hunk_manually {
 	my $fh;
 	open $fh, '>', $hunkfile
 		or die sprintf(__("failed to open hunk edit file for writing: %s"), $!);
-	print $fh "# Manual hunk edit mode -- see bottom for a quick guide\n";
+	print $fh Git::comment_lines __("Manual hunk edit mode -- see bottom for a quick guide.\n");
 	print $fh @$oldtext;
-	my $participle = $patch_mode_flavour{PARTICIPLE};
 	my $is_reverse = $patch_mode_flavour{IS_REVERSE};
 	my ($remove_plus, $remove_minus) = $is_reverse ? ('-', '+') : ('+', '-');
-	print $fh <<EOF;
-# ---
-# To remove '$remove_minus' lines, make them ' ' lines (context).
-# To remove '$remove_plus' lines, delete them.
-# Lines starting with # will be removed.
-#
-# If the patch applies cleanly, the edited hunk will immediately be
-# marked for $participle. If it does not apply cleanly, you will be given
-# an opportunity to edit again. If all lines of the hunk are removed,
-# then the edit is aborted and the hunk is left unchanged.
+	my $comment_line_char = Git::get_comment_line_char;
+	print $fh Git::comment_lines sprintf(__ <<EOF, $remove_minus, $remove_plus, $comment_line_char),
+---
+To remove '%s' lines, make them ' ' lines (context).
+To remove '%s' lines, delete them.
+Lines starting with %s will be removed.
 EOF
+__($edit_hunk_manually_modes{$patch_mode}),
+# TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
+__ <<EOF2 ;
+If it does not apply cleanly, you will be given an opportunity to
+edit again.  If all lines of the hunk are removed, then the edit is
+aborted and the hunk is left unchanged.
+EOF2
 	close $fh;
 
 	chomp(my $editor = run_cmd_pipe(qw(git var GIT_EDITOR)));
@@ -1089,7 +1115,7 @@ EOF
 
 	open $fh, '<', $hunkfile
 		or die sprintf(__("failed to open hunk edit file for reading: %s"), $!);
-	my @newtext = grep { !/^#/ } <$fh>;
+	my @newtext = grep { !/^$comment_line_char/ } <$fh>;
 	close $fh;
 	unlink $hunkfile;
 
