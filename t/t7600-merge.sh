@@ -154,6 +154,8 @@ test_expect_success 'test option parsing' '
 	test_must_fail git merge -s foobar c1 &&
 	test_must_fail git merge -s=foobar c1 &&
 	test_must_fail git merge -m &&
+	test_must_fail git merge --abort foobar &&
+	test_must_fail git merge --abort --quiet &&
 	test_must_fail git merge --continue foobar &&
 	test_must_fail git merge --continue --quiet &&
 	test_must_fail git merge
