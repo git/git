@@ -4,7 +4,7 @@ use lib (split(/:/, $ENV{GITPERLLIB}));
 use strict;
 use warnings;
 use POSIX qw(:locale_h);
-use Test::More tests => 8;
+use Test::More tests => 11;
 use Git::I18N;
 
 my $has_gettext_library = $Git::I18N::__HAS_LIBRARY;
@@ -31,6 +31,7 @@ is_deeply(\@Git::I18N::EXPORT, \@Git::I18N::EXPORT_OK, "sanity: Git::I18N export
 	# more gettext wrapper functions.
 	my %prototypes = (qw(
 		__	$
+		__n	$$$
 	));
 	while (my ($sub, $proto) = each %prototypes) {
 		is(prototype(\&{"Git::I18N::$sub"}), $proto, "sanity: $sub has a $proto prototype");
@@ -46,6 +47,14 @@ is_deeply(\@Git::I18N::EXPORT, \@Git::I18N::EXPORT_OK, "sanity: Git::I18N export
 	my ($got, $expect) = (('TEST: A Perl test string') x 2);
 
 	is(__($got), $expect, "Passing a string through __() in the C locale works");
+
+	my ($got_singular, $got_plural, $expect_singular, $expect_plural) =
+		(('TEST: 1 file', 'TEST: n files') x 2);
+
+	is(__n($got_singular, $got_plural, 1), $expect_singular,
+		"Get singular string through __n() in C locale");
+	is(__n($got_singular, $got_plural, 2), $expect_plural,
+		"Get plural string through __n() in C locale");
 }
 
 # Test a basic message on different locales
