@@ -489,17 +489,17 @@ static void set_curl_keepalive(CURL *c)
 }
 #endif
 
-static long get_curl_allowed_protocols(void)
+static long get_curl_allowed_protocols(int from_user)
 {
 	long allowed_protocols = 0;
 
-	if (is_transport_allowed("http"))
+	if (is_transport_allowed("http", from_user))
 		allowed_protocols |= CURLPROTO_HTTP;
-	if (is_transport_allowed("https"))
+	if (is_transport_allowed("https", from_user))
 		allowed_protocols |= CURLPROTO_HTTPS;
-	if (is_transport_allowed("ftp"))
+	if (is_transport_allowed("ftp", from_user))
 		allowed_protocols |= CURLPROTO_FTP;
-	if (is_transport_allowed("ftps"))
+	if (is_transport_allowed("ftps", from_user))
 		allowed_protocols |= CURLPROTO_FTPS;
 
 	return allowed_protocols;
@@ -588,9 +588,9 @@ static CURL *get_curl_handle(void)
 #endif
 #if LIBCURL_VERSION_NUM >= 0x071304
 	curl_easy_setopt(result, CURLOPT_REDIR_PROTOCOLS,
-			 get_curl_allowed_protocols());
+			 get_curl_allowed_protocols(0));
 	curl_easy_setopt(result, CURLOPT_PROTOCOLS,
-			 get_curl_allowed_protocols());
+			 get_curl_allowed_protocols(-1));
 #else
 	warning("protocol restrictions not applied to curl redirects because\n"
 		"your curl version is too old (>= 7.19.4)");
