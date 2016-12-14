@@ -2149,9 +2149,12 @@ endif
 po/build/locale/%/LC_MESSAGES/git.mo: po/%.po
 	$(QUIET_MSGFMT)mkdir -p $(dir $@) && $(MSGFMT) -o $@ $<
 
-FIND_SOURCE_FILES = ( git ls-files '*.[hcS]' 2>/dev/null || \
-			$(FIND) . \( -name .git -type d -prune \) \
-				-o \( -name '*.[hcS]' -type f -print \) )
+FIND_SOURCE_FILES = ( \
+	git ls-files '*.[hcS]' 2>/dev/null || \
+	$(FIND) . \
+		\( -name .git -type d -prune \) \
+		-o \( -name '*.[hcS]' -type f -print \) \
+	)
 
 $(ETAGS_TARGET): FORCE
 	$(RM) $(ETAGS_TARGET)
