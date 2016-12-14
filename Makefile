@@ -2150,9 +2150,15 @@ po/build/locale/%/LC_MESSAGES/git.mo: po/%.po
 	$(QUIET_MSGFMT)mkdir -p $(dir $@) && $(MSGFMT) -o $@ $<
 
 FIND_SOURCE_FILES = ( \
-	git ls-files '*.[hcS]' 2>/dev/null || \
+	git ls-files \
+		'*.[hcS]' \
+		':!*[tp][0-9][0-9][0-9][0-9]*' \
+		2>/dev/null || \
 	$(FIND) . \
 		\( -name .git -type d -prune \) \
+		-o \( -name '[tp][0-9][0-9][0-9][0-9]' -type d -prune \) \
+		-o \( -name build -type d -prune \) \
+		-o \( -name 'trash*' -type d -prune \) \
 		-o \( -name '*.[hcS]' -type f -print \) \
 	)
 
