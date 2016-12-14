@@ -1129,30 +1129,20 @@ of clones and fetches.
 	cloning a repository to make a backup).
 
 `GIT_ALLOW_PROTOCOL`::
-	If set, provide a colon-separated list of protocols which are
-	allowed to be used with fetch/push/clone. This is useful to
-	restrict recursive submodule initialization from an untrusted
-	repository. Any protocol not mentioned will be disallowed (i.e.,
-	this is a whitelist, not a blacklist). If the variable is not
-	set at all, all protocols are enabled.  The protocol names
-	currently used by git are:
+	If set to a colon-separated list of protocols, behave as if
+	`protocol.allow` is set to `never`, and each of the listed
+	protocols has `protocol.<name>.allow` set to `always`
+	(overriding any existing configuration). In other words, any
+	protocol not mentioned will be disallowed (i.e., this is a
+	whitelist, not a blacklist). See the description of
+	`protocol.allow` in linkgit:git-config[1] for more details.
 
-	  - `file`: any local file-based path (including `file://` URLs,
-	    or local paths)
-
-	  - `git`: the anonymous git protocol over a direct TCP
-	    connection (or proxy, if configured)
-
-	  - `ssh`: git over ssh (including `host:path` syntax,
-	    `ssh://`, etc).
-
-	  - `http`: git over http, both "smart http" and "dumb http".
-	    Note that this does _not_ include `https`; if you want both,
-	    you should specify both as `http:https`.
-
-	  - any external helpers are named by their protocol (e.g., use
-	    `hg` to allow the `git-remote-hg` helper)
-
+`GIT_PROTOCOL_FROM_USER`::
+	Set to 0 to prevent protocols used by fetch/push/clone which are
+	configured to the `user` state.  This is useful to restrict recursive
+	submodule initialization from an untrusted repository or for programs
+	which feed potentially-untrusted URLS to git commands.  See
+	linkgit:git-config[1] for more details.
 
 Discussion[[Discussion]]
 ------------------------
