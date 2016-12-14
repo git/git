@@ -822,7 +822,7 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
                 die("cannot use --changes-block-size with non-numeric revisions")
             block_size = None
 
-    changes = []
+    changes = set()
 
     # Retrieve changes a block at a time, to prevent running
     # into a MaxResults/MaxScanRows error from the server.
@@ -841,7 +841,7 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
 
         # Insert changes in chronological order
         for line in reversed(p4_read_pipe_lines(cmd)):
-            changes.append(int(line.split(" ")[1]))
+            changes.add(int(line.split(" ")[1]))
 
         if not block_size:
             break
