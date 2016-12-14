@@ -47,6 +47,11 @@ static inline int is_rebase_i(const struct replay_opts *opts)
 	return 0;
 }
 
+static const char *get_dir(const struct replay_opts *opts)
+{
+	return git_path_seq_dir();
+}
+
 static const char *get_todo_path(const struct replay_opts *opts)
 {
 	return git_path_todo_file();
@@ -155,7 +160,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 		free(opts->xopts[i]);
 	free(opts->xopts);
 
-	strbuf_addf(&dir, "%s", git_path_seq_dir());
+	strbuf_addf(&dir, "%s", get_dir(opts));
 	remove_dir_recursively(&dir, 0);
 	strbuf_release(&dir);
 
