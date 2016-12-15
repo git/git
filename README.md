@@ -33,7 +33,7 @@ requests, comments and patches to git@vger.kernel.org (read
 [Documentation/SubmittingPatches][] for instructions on patch submission).
 To subscribe to the list, send an email with just "subscribe git" in
 the body to majordomo@vger.kernel.org. The mailing list archives are
-available at http://news.gmane.org/gmane.comp.version-control.git/,
+available at https://public-inbox.org/git,
 http://marc.info/?l=git and other archival sites.
 
 The maintainer frequently sends the "What's cooking" reports that
