@@ -406,6 +406,21 @@ test_expect_success 'verify resulting packs' '
 	git verify-pack test-11-*.pack
 '
 
+test_expect_success 'set up pack for non-repo tests' '
+	# make sure we have a pack with no matching index file
+	cp test-1-*.pack foo.pack
+'
+
+test_expect_success 'index-pack --stdin complains of non-repo' '
+	nongit test_must_fail git index-pack --stdin <foo.pack &&
+	test_path_is_missing non-repo/.git
+'
+
+test_expect_success 'index-pack <pack> works in non-repo' '
+	nongit git index-pack ../foo.pack &&
+	test_path_is_file foo.idx
+'
+
 #
 # WARNING!
 #
