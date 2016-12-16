@@ -94,20 +94,6 @@ check_tar() {
 	'
 }
 
-# run "$@" inside a non-git directory
-nongit () {
-	test -d non-repo ||
-	mkdir non-repo ||
-	return 1
-
-	(
-		GIT_CEILING_DIRECTORIES=$(pwd) &&
-		export GIT_CEILING_DIRECTORIES &&
-		cd non-repo &&
-		"$@"
-	)
-}
-
 test_expect_success \
     'populate workdir' \
     'mkdir a &&
