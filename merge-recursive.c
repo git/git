@@ -388,12 +388,10 @@ static struct string_list *get_unmerged(void)
 	return unmerged;
 }
 
-static int string_list_df_name_compare(const void *a, const void *b)
+static int string_list_df_name_compare(const char *one, const char *two)
 {
-	const struct string_list_item *one = a;
-	const struct string_list_item *two = b;
-	int onelen = strlen(one->string);
-	int twolen = strlen(two->string);
+	int onelen = strlen(one);
+	int twolen = strlen(two);
 	/*
 	 * Here we only care that entries for D/F conflicts are
 	 * adjacent, in particular with the file of the D/F conflict
@@ -406,8 +404,8 @@ static int string_list_df_name_compare(const void *a, const void *b)
 	 * since in other cases any changes in their order due to
 	 * sorting cause no problems for us.
 	 */
-	int cmp = df_name_compare(one->string, onelen, S_IFDIR,
-				  two->string, twolen, S_IFDIR);
+	int cmp = df_name_compare(one, onelen, S_IFDIR,
+				  two, twolen, S_IFDIR);
 	/*
 	 * Now that 'foo' and 'foo/bar' compare equal, we have to make sure
 	 * that 'foo' comes before 'foo/bar'.
@@ -451,8 +449,8 @@ static void record_df_conflict_files(struct merge_options *o,
 		string_list_append(&df_sorted_entries, next->string)->util =
 				   next->util;
 	}
-	qsort(df_sorted_entries.items, entries->nr, sizeof(*entries->items),
-	      string_list_df_name_compare);
+	df_sorted_entries.cmp = string_list_df_name_compare;
+	string_list_sort(&df_sorted_entries);
 
 	string_list_clear(&o->df_conflict_file_set, 1);
 	for (i = 0; i < df_sorted_entries.nr; i++) {
