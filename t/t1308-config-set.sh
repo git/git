@@ -219,14 +219,8 @@ test_expect_success 'check line errors for malformed values' '
 '
 
 test_expect_success 'error on modifying repo config without repo' '
-	mkdir no-repo &&
-	(
-		GIT_CEILING_DIRECTORIES=$(pwd) &&
-		export GIT_CEILING_DIRECTORIES &&
-		cd no-repo &&
-		test_must_fail git config a.b c 2>err &&
-		grep "not in a git directory" err
-	)
+	nongit test_must_fail git config a.b c 2>err &&
+	grep "not in a git directory" err
 '
 
 cmdline_config="'foo.bar=from-cmdline'"
