@@ -476,6 +476,10 @@ git-p4.client::
 	Client specified as an option to all p4 commands, with
 	'-c <client>', including the client spec.
 
+git-p4.retries::
+	Specifies the number of times to retry a p4 command (notably,
+	'p4 sync') if the network times out. The default value is 3.
+
 Clone and sync variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
 git-p4.syncFromOrigin::
