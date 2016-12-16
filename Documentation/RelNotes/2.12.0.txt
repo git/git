@@ -20,7 +20,7 @@ Updates since v2.11
 
 UI, Workflows & Features
 
- *
+ * Various updates to "git p4".
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -50,4 +50,37 @@ notes for details).
    some configuration variable it uses were not documented.
    (merge ea9a93dcc2 ew/svn-fixes later to maint).
 
+ * "git rev-parse --symbolic" failed with a more recent notation like
+   "HEAD^-1" and "HEAD^!".
+   (merge a2e7b04c44 jk/rev-parse-symbolic-parents-fix later to maint).
+
+ * An empty directory in a working tree that can simply be nuked used
+   to interfere while merging or cherry-picking a change to create a
+   submodule directory there, which has been fixed..
+   (merge 5423d2e700 dt/empty-submodule-in-merge later to maint).
+
+ * The code in "git push" to compute if any commit being pushed in the
+   superproject binds a commit in a submodule that hasn't been pushed
+   out was overly inefficient, making it unusable even for a small
+   project that does not have any submodule but have a reasonable
+   number of refs.
+   (merge 250ab24ab3 hv/submodule-not-yet-pushed-fix later to maint).
+
+ * "git push --dry-run --recurse-submodule=on-demand" wasn't
+   "--dry-run" in the submodules.
+   (merge 0301c821c5 bw/push-dry-run later to maint).
+
+ * The output from "git worktree list" was made in readdir() order,
+   and was unstable.
+   (merge 4df1d4d466 nd/worktree-list-fixup later to maint).
+
+ * mergetool.<tool>.trustExitCode configuration variable did not apply
+   to built-in tools, but now it does.
+   (merge 2967284456 da/mergetool-trust-exit-code later to maint).
+
+ * "git p4" LFS support was broken when LFS stores an empty blob.
+   (merge d5eb3cf5e7 ls/p4-empty-file-on-lfs later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
+   (merge fa6ca11105 nd/qsort-in-merge-recursive later to maint).
+   (merge fa3142c919 ak/lazy-prereq-mktemp later to maint).
