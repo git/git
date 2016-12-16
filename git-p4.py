@@ -262,6 +262,10 @@ def p4_revert(f):
 def p4_reopen(type, f):
     p4_system(["reopen", "-t", type, wildcard_encode(f)])
 
+def p4_reopen_in_change(changelist, files):
+    cmd = ["reopen", "-c", str(changelist)] + files
+    p4_system(cmd)
+
 def p4_move(src, dest):
     p4_system(["move", "-k", wildcard_encode(src), wildcard_encode(dest)])
 
@@ -1292,6 +1296,9 @@ class P4Submit(Command, P4UserMap):
                 optparse.make_option("--shelve", dest="shelve", action="store_true",
                                      help="Shelve instead of submit. Shelved files are reverted, "
                                      "restoring the workspace to the state before the shelve"),
+                optparse.make_option("--update-shelve", dest="update_shelve", action="store", type="int",
+                                     metavar="CHANGELIST",
+                                     help="update an existing shelved changelist, implies --shelve")
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -1300,6 +1307,7 @@ class P4Submit(Command, P4UserMap):
         self.preserveUser = gitConfigBool("git-p4.preserveUser")
         self.dry_run = False
         self.shelve = False
+        self.update_shelve = None
         self.prepare_p4_only = False
         self.conflict_behavior = None
         self.isWindows = (platform.system() == "Windows")
@@ -1468,7 +1476,7 @@ class P4Submit(Command, P4UserMap):
                     return 1
         return 0
 
-    def prepareSubmitTemplate(self):
+    def prepareSubmitTemplate(self, changelist=None):
         """Run "p4 change -o" to grab a change specification template.
            This does not use "p4 -G", as it is nice to keep the submission
            template in original order, since a human might edit it.
@@ -1480,7 +1488,11 @@ class P4Submit(Command, P4UserMap):
 
         template = ""
         inFilesSection = False
-        for line in p4_read_pipe_lines(['change', '-o']):
+        args = ['change', '-o']
+        if changelist:
+            args.append(str(changelist))
+
+        for line in p4_read_pipe_lines(args):
             if line.endswith("\r\n"):
                 line = line[:-2] + "\n"
             if inFilesSection:
@@ -1579,11 +1591,14 @@ class P4Submit(Command, P4UserMap):
         editedFiles = set()
         pureRenameCopy = set()
         filesToChangeExecBit = {}
+        all_files = list()
 
         for line in diff:
             diff = parseDiffTreeEntry(line)
             modifier = diff['status']
             path = diff['src']
+            all_files.append(path)
+
             if modifier == "M":
                 p4_edit(path)
                 if isModeExecChanged(diff['src_mode'], diff['dst_mode']):
@@ -1709,6 +1724,10 @@ class P4Submit(Command, P4UserMap):
             mode = filesToChangeExecBit[f]
             setP4ExecBit(f, mode)
 
+        if self.update_shelve:
+            print("all_files = %s" % str(all_files))
+            p4_reopen_in_change(self.update_shelve, all_files)
+
         #
         # Build p4 change description, starting with the contents
         # of the git commit message.
@@ -1717,7 +1736,7 @@ class P4Submit(Command, P4UserMap):
         logMessage = logMessage.strip()
         (logMessage, jobs) = self.separate_jobs_from_description(logMessage)
 
-        template = self.prepareSubmitTemplate()
+        template = self.prepareSubmitTemplate(self.update_shelve)
         submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
         if self.preserveUser:
@@ -1789,7 +1808,10 @@ class P4Submit(Command, P4UserMap):
                 if self.isWindows:
                     message = message.replace("\r\n", "\n")
                 submitTemplate = message[:message.index(separatorLine)]
-                if self.shelve:
+
+                if self.update_shelve:
+                    p4_write_pipe(['shelve', '-r', '-i'], submitTemplate)
+                elif self.shelve:
                     p4_write_pipe(['shelve', '-i'], submitTemplate)
                 else:
                     p4_write_pipe(['submit', '-i'], submitTemplate)
@@ -1914,6 +1936,9 @@ class P4Submit(Command, P4UserMap):
         self.depotPath = settings['depot-paths'][0]
         if len(self.origin) == 0:
             self.origin = upstream
+
+        if self.update_shelve:
+            self.shelve = True
 
         if self.preserveUser:
             if not self.canChangeChangelists():

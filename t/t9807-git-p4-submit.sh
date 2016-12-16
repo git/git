@@ -444,6 +444,44 @@ test_expect_success 'submit --shelve' '
 	)
 '
 
+# Update an existing shelved changelist
+
+test_expect_success 'submit --update-shelve' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$cli" &&
+		p4 revert ... &&
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		test_commit "test-update-shelved-change" &&
+		git p4 submit --origin=HEAD^ --shelve &&
+
+		shelf_cl=$(p4 -G changes -s shelved -m 1 |\
+			marshal_dump change) &&
+		test -n $shelf_cl &&
+		echo "updating shelved change list $shelf_cl" &&
+
+		echo "updated-line" >>shelf.t &&
+		echo added-file.t >added-file.t &&
+		git add shelf.t added-file.t &&
+		git rm -f test-update-shelved-change.t &&
+		git commit --amend -C HEAD &&
+		git show --stat HEAD &&
+		git p4 submit -v --origin HEAD^ --update-shelve $shelf_cl &&
+		echo "done git p4 submit"
+	) &&
+	(
+		cd "$cli" &&
+		change=$(p4 -G changes -s shelved -m 1 //depot/... | \
+			 marshal_dump change) &&
+		p4 unshelve -c $change -s $change &&
+		grep -q updated-line shelf.t &&
+		p4 describe -S $change | grep added-file.t &&
+		test_path_is_missing test-update-shelved-change.t
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
