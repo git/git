@@ -190,4 +190,17 @@ test_expect_success 'shortlog with --output=<file>' '
 	test_line_count = 3 shortlog
 '
 
+test_expect_success 'shortlog --committer (internal)' '
+	cat >expect <<-\EOF &&
+	     3	C O Mitter
+	EOF
+	git shortlog -nsc HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog --committer (external)' '
+	git log --format=full | git shortlog -nsc >actual &&
+	test_cmp expect actual
+'
+
 test_done
