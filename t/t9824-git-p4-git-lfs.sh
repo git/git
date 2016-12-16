@@ -42,6 +42,8 @@ test_expect_success 'Create repo with binary files' '
 	(
 		cd "$cli" &&
 
+		>file0.dat &&
+		p4 add file0.dat &&
 		echo "content 1 txt 23 bytes" >file1.txt &&
 		p4 add file1.txt &&
 		echo "content 2-3 bin 25 bytes" >file2.dat &&

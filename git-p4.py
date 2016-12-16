@@ -1009,18 +1009,20 @@ class LargeFileSystem(object):
            steps."""
         if self.exceedsLargeFileThreshold(relPath, contents) or self.hasLargeFileExtension(relPath):
             contentTempFile = self.generateTempFile(contents)
-            (git_mode, contents, localLargeFile) = self.generatePointer(contentTempFile)
-
-            # Move temp file to final location in large file system
-            largeFileDir = os.path.dirname(localLargeFile)
-            if not os.path.isdir(largeFileDir):
-                os.makedirs(largeFileDir)
-            shutil.move(contentTempFile, localLargeFile)
-            self.addLargeFile(relPath)
-            if gitConfigBool('git-p4.largeFilePush'):
-                self.pushFile(localLargeFile)
-            if verbose:
-                sys.stderr.write("%s moved to large file system (%s)\n" % (relPath, localLargeFile))
+            (pointer_git_mode, contents, localLargeFile) = self.generatePointer(contentTempFile)
+            if pointer_git_mode:
+                git_mode = pointer_git_mode
+            if localLargeFile:
+                # Move temp file to final location in large file system
+                largeFileDir = os.path.dirname(localLargeFile)
+                if not os.path.isdir(largeFileDir):
+                    os.makedirs(largeFileDir)
+                shutil.move(contentTempFile, localLargeFile)
+                self.addLargeFile(relPath)
+                if gitConfigBool('git-p4.largeFilePush'):
+                    self.pushFile(localLargeFile)
+                if verbose:
+                    sys.stderr.write("%s moved to large file system (%s)\n" % (relPath, localLargeFile))
         return (git_mode, contents)
 
 class MockLFS(LargeFileSystem):
@@ -1060,6 +1062,9 @@ class GitLFS(LargeFileSystem):
            the actual content. Return also the new location of the actual
            content.
            """
+        if os.path.getsize(contentFile) == 0:
+            return (None, '', None)
+
         pointerProcess = subprocess.Popen(
             ['git', 'lfs', 'pointer', '--file=' + contentFile],
             stdout=subprocess.PIPE
