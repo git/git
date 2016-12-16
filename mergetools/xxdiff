@@ -6,7 +6,6 @@ diff_cmd () {
 }
 
 merge_cmd () {
-	touch "$BACKUP"
 	if $base_present
 	then
 		"$merge_tool_path" -X --show-merged-pane \
@@ -21,5 +20,4 @@ merge_cmd () {
 			-R 'Accel.SearchForward: "Ctrl-G"' \
 			--merged-file "$MERGED" "$LOCAL" "$REMOTE"
 	fi
-	check_unchanged
 }
