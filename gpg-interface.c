@@ -95,6 +95,9 @@ int check_signature(const char *payload, size_t plen, const char *signature,
 
 void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 {
+	if (flags & GPG_VERIFY_QUIET)
+		return;
+
 	const char *output = flags & GPG_VERIFY_RAW ?
 		sigc->gpg_status : sigc->gpg_output;
 

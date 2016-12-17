@@ -1329,6 +1329,14 @@ static struct ref_array_item *new_ref_array_item(const char *refname,
 	return ref;
 }
 
+/* Wrapper: Create ref_array_item w/o referencing container in function name */
+struct ref_array_item *new_ref_item(const char *refname,
+						 const unsigned char *objectname,
+						 int flag)
+{
+	return new_ref_array_item(refname, objectname, flag);
+}
+
 static int filter_ref_kind(struct ref_filter *filter, const char *refname)
 {
 	unsigned int i;
@@ -1424,6 +1432,12 @@ static void free_array_item(struct ref_array_item *item)
 {
 	free((char *)item->symref);
 	free(item);
+}
+
+/* Wrapper: Free ref_array_item w/o referencing container in function name */
+void free_ref_item(struct ref_array_item *ref_item)
+{
+	free_array_item(ref_item);
 }
 
 /* Free all memory allocated for ref_array */
@@ -1635,6 +1649,12 @@ void show_ref_array_item(struct ref_array_item *info, const char *format, int qu
 	fwrite(final_buf->buf, 1, final_buf->len, stdout);
 	pop_stack_element(&state.stack);
 	putchar('\n');
+}
+
+/* Wrapper: Show ref_array_item w/o referencing container in function name */
+void show_ref_item(struct ref_array_item *ref_item, const char *format, int quote_style)
+{
+	show_ref_array_item(ref_item, format, quote_style);
 }
 
 /*  If no sorting option is given, use refname to sort as default */

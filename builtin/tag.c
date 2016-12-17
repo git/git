@@ -30,8 +30,9 @@ static const char * const git_tag_usage[] = {
 
 static unsigned int colopts;
 static int force_sign_annotate;
+static const char *fmt_pretty;
 
-static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, const char *format)
+static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting)
 {
 	struct ref_array array;
 	char *to_free = NULL;
@@ -42,23 +43,23 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, con
 	if (filter->lines == -1)
 		filter->lines = 0;
 
-	if (!format) {
+	if (!fmt_pretty) {
 		if (filter->lines) {
 			to_free = xstrfmt("%s %%(contents:lines=%d)",
 					  "%(align:15)%(refname:strip=2)%(end)",
 					  filter->lines);
-			format = to_free;
+			fmt_pretty= to_free;
 		} else
-			format = "%(refname:strip=2)";
+			fmt_pretty = "%(refname:strip=2)";
 	}
 
-	verify_ref_format(format);
+	verify_ref_format(fmt_pretty);
 	filter->with_commit_tag_algo = 1;
 	filter_refs(&array, filter, FILTER_REFS_TAGS);
 	ref_array_sort(sorting, &array);
 
 	for (i = 0; i < array.nr; i++)
-		show_ref_array_item(array.items[i], format, 0);
+		show_ref_array_item(array.items[i], fmt_pretty, 0);
 	ref_array_clear(&array);
 	free(to_free);
 
@@ -105,7 +106,22 @@ static int delete_tag(const char *name, const char *ref,
 static int verify_tag(const char *name, const char *ref,
 				const unsigned char *sha1)
 {
-	return gpg_verify_tag(sha1, name, GPG_VERIFY_VERBOSE);
+	int flags;
+	flags = GPG_VERIFY_VERBOSE;
+
+	if (fmt_pretty) {
+		verify_ref_format(fmt_pretty);
+		struct ref_array_item *ref_item;
+
+		ref_item = new_ref_item(name, sha1, 0);
+		ref_item->kind = FILTER_REFS_TAGS;
+		show_ref_item(ref_item, fmt_pretty, 0);
+		free_ref_item(ref_item);
+
+		flags = GPG_VERIFY_QUIET;
+	}
+
+	return gpg_verify_tag(sha1, name, flags);
 }
 
 static int do_sign(struct strbuf *buffer)
@@ -334,7 +350,6 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	struct strbuf err = STRBUF_INIT;
 	struct ref_filter filter;
 	static struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
-	const char *format = NULL;
 	struct option options[] = {
 		OPT_CMDMODE('l', "list", &cmdmode, N_("list tag names"), 'l'),
 		{ OPTION_INTEGER, 'n', NULL, &filter.lines, N_("n"),
@@ -369,7 +384,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			OPTION_CALLBACK, 0, "points-at", &filter.points_at, N_("object"),
 			N_("print only tags of the object"), 0, parse_opt_object_name
 		},
-		OPT_STRING(  0 , "format", &format, N_("format"), N_("format to use for the output")),
+		OPT_STRING(  0 , "format", &fmt_pretty, N_("format"), N_("format to use for the output")),
 		OPT_END()
 	};
 
@@ -410,7 +425,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			run_column_filter(colopts, &copts);
 		}
 		filter.name_patterns = argv;
-		ret = list_tags(&filter, sorting, format);
+		ret = list_tags(&filter, sorting);
 		if (column_active(colopts))
 			stop_column_filter();
 		return ret;
