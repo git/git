@@ -81,9 +81,9 @@ test_expect_success 'Store files in LFS based on size (>24 bytes)' '
 		#
 		# Git LFS (see https://git-lfs.github.com/)
 		#
-		/file2.dat filter=lfs -text
-		/file4.bin filter=lfs -text
-		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs -text
+		/file2.dat filter=lfs diff=lfs merge=lfs -text
+		/file4.bin filter=lfs diff=lfs merge=lfs -text
+		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
 		test_path_is_file .gitattributes &&
 		test_cmp expect .gitattributes
@@ -109,7 +109,7 @@ test_expect_success 'Store files in LFS based on size (>25 bytes)' '
 		#
 		# Git LFS (see https://git-lfs.github.com/)
 		#
-		/file4.bin filter=lfs -text
+		/file4.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
 		test_path_is_file .gitattributes &&
 		test_cmp expect .gitattributes
@@ -135,7 +135,7 @@ test_expect_success 'Store files in LFS based on extension (dat)' '
 		#
 		# Git LFS (see https://git-lfs.github.com/)
 		#
-		*.dat filter=lfs -text
+		*.dat filter=lfs diff=lfs merge=lfs -text
 		EOF
 		test_path_is_file .gitattributes &&
 		test_cmp expect .gitattributes
@@ -163,8 +163,8 @@ test_expect_success 'Store files in LFS based on size (>25 bytes) and extension 
 		#
 		# Git LFS (see https://git-lfs.github.com/)
 		#
-		*.dat filter=lfs -text
-		/file4.bin filter=lfs -text
+		*.dat filter=lfs diff=lfs merge=lfs -text
+		/file4.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
 		test_path_is_file .gitattributes &&
 		test_cmp expect .gitattributes
@@ -199,8 +199,8 @@ test_expect_success 'Remove file from repo and store files in LFS based on size 
 		#
 		# Git LFS (see https://git-lfs.github.com/)
 		#
-		/file2.dat filter=lfs -text
-		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs -text
+		/file2.dat filter=lfs diff=lfs merge=lfs -text
+		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
 		test_path_is_file .gitattributes &&
 		test_cmp expect .gitattributes
@@ -237,8 +237,8 @@ test_expect_success 'Add .gitattributes and store files in LFS based on size (>2
 		#
 		# Git LFS (see https://git-lfs.github.com/)
 		#
-		/file2.dat filter=lfs -text
-		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs -text
+		/file2.dat filter=lfs diff=lfs merge=lfs -text
+		/path[[:space:]]with[[:space:]]spaces/file3.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
 		test_path_is_file .gitattributes &&
 		test_cmp expect .gitattributes
@@ -278,7 +278,7 @@ test_expect_success 'Add big files to repo and store files in LFS based on compr
 		#
 		# Git LFS (see https://git-lfs.github.com/)
 		#
-		/file6.bin filter=lfs -text
+		/file6.bin filter=lfs diff=lfs merge=lfs -text
 		EOF
 		test_path_is_file .gitattributes &&
 		test_cmp expect .gitattributes
