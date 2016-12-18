@@ -376,22 +376,7 @@ test_expect_success PERL 'required process filter should filter data' '
 		EOF
 		test_cmp_count expected.log rot13-filter.log &&
 
-		filter_git commit . -m "test commit 2" &&
-		cat >expected.log <<-EOF &&
-			START
-			init handshake complete
-			IN: clean test.r $S [OK] -- OUT: $S . [OK]
-			IN: clean test2.r $S2 [OK] -- OUT: $S2 . [OK]
-			IN: clean test4-empty.r 0 [OK] -- OUT: 0  [OK]
-			IN: clean testsubdir/test3 '\''sq'\'',\$x=.r $S3 [OK] -- OUT: $S3 . [OK]
-			IN: clean test.r $S [OK] -- OUT: $S . [OK]
-			IN: clean test2.r $S2 [OK] -- OUT: $S2 . [OK]
-			IN: clean test4-empty.r 0 [OK] -- OUT: 0  [OK]
-			IN: clean testsubdir/test3 '\''sq'\'',\$x=.r $S3 [OK] -- OUT: $S3 . [OK]
-			STOP
-		EOF
-		test_cmp_count expected.log rot13-filter.log &&
-
+		git commit -m "test commit 2" &&
 		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 
 		filter_git checkout --quiet --no-progress . &&
