@@ -4927,7 +4927,7 @@ msgid ""
 "If you are sure you want to delete it, run 'git branch -D %s'."
 msgstr ""
 "La branche '%s' n'est pas totalement fusionnée.\n"
-"Si vous êtes sur que vous voulez la supprimer, lancez 'git branch -D %s'."
+"Si vous êtes sûr que vous voulez la supprimer, lancez 'git branch -D %s'."
 
 #: builtin/branch.c:178
 msgid "Update of config-file failed"
@@ -5314,7 +5314,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Si vous vouliez que '%s' suive '%s', faîtes ceci :\n"
+"Si vous vouliez que '%s' suive '%s', faites ceci :\n"
 "\n"
 
 #: builtin/bundle.c:51
@@ -15113,8 +15113,8 @@ msgstr "Impossible de déterminer le chemin absolu du répertoire git"
 #~ "or you are unsure what this means choose another name with the '--name' "
 #~ "option."
 #~ msgstr ""
-#~ "ou vous ne savez pas ce que cela signifie de choisir un autre nom avec "
-#~ "l'option '--name'."
+#~ "ou si vous ne savez pas ce que cela signifie, choisissez un autre nom "
+#~ "avec l'option '--name'."
 
 #~ msgid "Submodule work tree '$displaypath' contains a .git directory"
 #~ msgstr ""
