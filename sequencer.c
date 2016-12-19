@@ -750,14 +750,9 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		next = commit;
 		next_label = msg.label;
 
-		/*
-		 * Append the commit log message to msgbuf; it starts
-		 * after the tree, parent, author, committer
-		 * information followed by "\n\n".
-		 */
-		p = strstr(msg.message, "\n\n");
-		if (p)
-			strbuf_addstr(&msgbuf, skip_blank_lines(p + 2));
+		/* Append the commit log message to msgbuf. */
+		if (find_commit_subject(msg.message, &p))
+			strbuf_addstr(&msgbuf, p);
 
 		if (opts->record_origin) {
 			if (!has_conforming_footer(&msgbuf, NULL, 0))
