@@ -2058,7 +2058,7 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 		if (c != CURLE_OK)
 			die("BUG: curl_easy_getinfo for HTTP code failed: %s",
 				curl_easy_strerror(c));
-		if (slot->http_code >= 400)
+		if (slot->http_code >= 300)
 			return size;
 	}
 
