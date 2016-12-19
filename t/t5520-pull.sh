@@ -255,6 +255,23 @@ test_expect_success '--rebase' '
 	test new = "$(git show HEAD:file2)"
 '
 
+test_expect_success '--rebase fast forward' '
+	git reset --hard before-rebase &&
+	git checkout -b ff &&
+	echo another modification >file &&
+	git commit -m third file &&
+
+	git checkout to-rebase &&
+	git pull --rebase . ff &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse ff)" &&
+
+	# The above only validates the result.  Did we actually bypass rebase?
+	git reflog -1 >reflog.actual &&
+	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
+	echo "OBJID HEAD@{0}: pull --rebase . ff: Fast-forward" >reflog.expected &&
+	test_cmp reflog.expected reflog.fuzzy
+'
+
 test_expect_success '--rebase with conflicts shows advice' '
 	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
 	git checkout -b seq &&
