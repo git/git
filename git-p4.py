@@ -90,6 +90,16 @@ def p4_build_cmd(cmd):
         real_cmd += cmd
     return real_cmd
 
+def git_dir(path):
+    """ Return TRUE if the given path is a git directory (/path/to/dir/.git).
+        This won't automatically add ".git" to a directory.
+    """
+    d = read_pipe(["git", "--git-dir", path, "rev-parse", "--git-dir"], True).strip()
+    if not d or len(d) == 0:
+        return None
+    else:
+        return d
+
 def chdir(path, is_client_path=False):
     """Do chdir to the given path, and set the PWD environment
        variable for use by P4.  It does not look at getcwd() output.
@@ -572,10 +582,7 @@ def currentGitBranch():
         return read_pipe(["git", "name-rev", "HEAD"]).split(" ")[1].strip()
 
 def isValidGitDir(path):
-    if (os.path.exists(path + "/HEAD")
-        and os.path.exists(path + "/refs") and os.path.exists(path + "/objects")):
-        return True;
-    return False
+    return git_dir(path) != None
 
 def parseRevision(ref):
     return read_pipe("git rev-parse %s" % ref).strip()
@@ -3725,6 +3732,7 @@ def main():
         if cmd.gitdir == None:
             cmd.gitdir = os.path.abspath(".git")
             if not isValidGitDir(cmd.gitdir):
+                # "rev-parse --git-dir" without arguments will try $PWD/.git
                 cmd.gitdir = read_pipe("git rev-parse --git-dir").strip()
                 if os.path.exists(cmd.gitdir):
                     cdup = read_pipe("git rev-parse --show-cdup").strip()
@@ -3737,6 +3745,7 @@ def main():
             else:
                 die("fatal: cannot locate git repository at %s" % cmd.gitdir)
 
+        # so git commands invoked from the P4 workspace will succeed
         os.environ["GIT_DIR"] = cmd.gitdir
 
     if not cmd.run(args):

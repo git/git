@@ -257,6 +257,26 @@ test_expect_success 'submit from detached head' '
 	)
 '
 
+test_expect_success 'submit from worktree' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git worktree add ../worktree-test
+	) &&
+	(
+		cd "$git/../worktree-test" &&
+		test_commit "worktree-commit" &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit
+	) &&
+	(
+		cd "$cli" &&
+		p4 sync &&
+		test_path_is_file worktree-commit.t
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
