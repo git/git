@@ -57,7 +57,7 @@ int checkout_fast_forward(const unsigned char *head,
 
 	refresh_cache(REFRESH_QUIET);
 
-	if (hold_locked_index(lock_file, 0) < 0)
+	if (hold_locked_index(lock_file, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
 
 	memset(&trees, 0, sizeof(trees));
