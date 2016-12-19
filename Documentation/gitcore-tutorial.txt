@@ -25,7 +25,7 @@ you want to understand Git's internals.
 The core Git is often called "plumbing", with the prettier user
 interfaces on top of it called "porcelain". You may not want to use the
 plumbing directly very often, but it can be good to know what the
-plumbing does for when the porcelain isn't flushing.
+plumbing does when the porcelain isn't flushing.
 
 Back when this document was originally written, many porcelain
 commands were shell scripts. For simplicity, it still uses them as
@@ -1368,7 +1368,7 @@ $ git repack
 will do it for you. If you followed the tutorial examples, you
 would have accumulated about 17 objects in `.git/objects/??/`
 directories by now. 'git repack' tells you how many objects it
-packed, and stores the packed file in `.git/objects/pack`
+packed, and stores the packed file in the `.git/objects/pack`
 directory.
 
 [NOTE]
@@ -1478,7 +1478,7 @@ You can repack this private repository whenever you feel like.
 A recommended work cycle for a "subsystem maintainer" who works
 on that project and has an own "public repository" goes like this:
 
-1. Prepare your work repository, by 'git clone' the public
+1. Prepare your work repository, by running 'git clone' on the public
    repository of the "project lead". The URL used for the
    initial cloning is stored in the remote.origin.url
    configuration variable.
@@ -1543,9 +1543,9 @@ like this:
 Working with Others, Shared Repository Style
 --------------------------------------------
 
-If you are coming from CVS background, the style of cooperation
+If you are coming from a CVS background, the style of cooperation
 suggested in the previous section may be new to you. You do not
-have to worry. Git supports "shared public repository" style of
+have to worry. Git supports the "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
 See linkgit:gitcvs-migration[7] for the details.
@@ -1635,7 +1635,7 @@ $ git show-branch
 ++* [master~2] Pretty-print messages.
 ------------
 
-Note that you should not do Octopus because you can.  An octopus
+Note that you should not do Octopus just because you can.  An octopus
 is a valid thing to do and often makes it easier to view the
 commit history if you are merging more than two independent
 changes at the same time.  However, if you have merge conflicts
