@@ -679,9 +679,8 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 	}
 	discard_cache();
 
-	if (!commit->parents) {
+	if (!commit->parents)
 		parent = NULL;
-	}
 	else if (commit->parents->next) {
 		/* Reverting or cherry-picking a merge commit */
 		int cnt;
