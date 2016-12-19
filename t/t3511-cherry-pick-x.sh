@@ -25,9 +25,8 @@ Signed-off-by: B.U. Thor <buthor@example.com>"
 
 mesg_broken_footer="$mesg_no_footer
 
-The signed-off-by string should begin with the words Signed-off-by followed
-by a colon and space, and then the signers name and email address. e.g.
-Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+This is not recognized as a footer because Myfooter is not a recognized token.
+Myfooter: A.U. Thor <author@example.com>"
 
 mesg_with_footer_sob="$mesg_with_footer
 Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
@@ -106,6 +105,17 @@ test_expect_success 'cherry-pick -s inserts blank line after non-conforming foot
 	cat <<-EOF >expect &&
 		$mesg_broken_footer
 
+		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick -s recognizes trailer config' '
+	pristine_detach initial &&
+	git -c "trailer.Myfooter.ifexists=add" cherry-pick -s mesg-broken-footer &&
+	cat <<-EOF >expect &&
+		$mesg_broken_footer
 		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
 	EOF
 	git log -1 --pretty=format:%B >actual &&

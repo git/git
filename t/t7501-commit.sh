@@ -460,6 +460,42 @@ $alt" &&
 	test_cmp expected actual
 '
 
+test_expect_success 'signoff respects trailer config' '
+
+	echo 5 >positive &&
+	git add positive &&
+	git commit -s -m "subject
+
+non-trailer line
+Myfooter: x" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo subject
+		echo
+		echo non-trailer line
+		echo Myfooter: x
+		echo
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+	) >expected &&
+	test_cmp expected actual &&
+
+	echo 6 >positive &&
+	git add positive &&
+	git -c "trailer.Myfooter.ifexists=add" commit -s -m "subject
+
+non-trailer line
+Myfooter: x" &&
+	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	(
+		echo subject
+		echo
+		echo non-trailer line
+		echo Myfooter: x
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+	) >expected &&
+	test_cmp expected actual
+'
+
 test_expect_success 'multiple -m' '
 
 	>negative &&

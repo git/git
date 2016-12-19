@@ -16,6 +16,7 @@
 #include "refs.h"
 #include "argv-array.h"
 #include "quote.h"
+#include "trailer.h"
 
 #define GIT_REFLOG_ACTION "GIT_REFLOG_ACTION"
 
@@ -56,30 +57,6 @@ static const char *get_todo_path(const struct replay_opts *opts)
 	return git_path_todo_file();
 }
 
-static int is_rfc2822_line(const char *buf, int len)
-{
-	int i;
-
-	for (i = 0; i < len; i++) {
-		int ch = buf[i];
-		if (ch == ':')
-			return 1;
-		if (!isalnum(ch) && ch != '-')
-			break;
-	}
-
-	return 0;
-}
-
-static int is_cherry_picked_from_line(const char *buf, int len)
-{
-	/*
-	 * We only care that it looks roughly like (cherry picked from ...)
-	 */
-	return len > strlen(cherry_picked_prefix) + 1 &&
-		starts_with(buf, cherry_picked_prefix) && buf[len - 1] == ')';
-}
-
 /*
  * Returns 0 for non-conforming footer
  * Returns 1 for conforming footer
@@ -89,49 +66,25 @@ static int is_cherry_picked_from_line(const char *buf, int len)
 static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 	int ignore_footer)
 {
-	char prev;
-	int i, k;
-	int len = sb->len - ignore_footer;
-	const char *buf = sb->buf;
-	int found_sob = 0;
+	struct trailer_info info;
+	int i;
+	int found_sob = 0, found_sob_last = 0;
 
-	/* footer must end with newline */
-	if (!len || buf[len - 1] != '\n')
+	trailer_info_get(&info, sb->buf);
+
+	if (info.trailer_start == info.trailer_end)
 		return 0;
 
-	prev = '\0';
-	for (i = len - 1; i > 0; i--) {
-		char ch = buf[i];
-		if (prev == '\n' && ch == '\n') /* paragraph break */
-			break;
-		prev = ch;
-	}
+	for (i = 0; i < info.trailer_nr; i++)
+		if (sob && !strncmp(info.trailers[i], sob->buf, sob->len)) {
+			found_sob = 1;
+			if (i == info.trailer_nr - 1)
+				found_sob_last = 1;
+		}
 
-	/* require at least one blank line */
-	if (prev != '\n' || buf[i] != '\n')
-		return 0;
+	trailer_info_release(&info);
 
-	/* advance to start of last paragraph */
-	while (i < len - 1 && buf[i] == '\n')
-		i++;
-
-	for (; i < len; i = k) {
-		int found_rfc2822;
-
-		for (k = i; k < len && buf[k] != '\n'; k++)
-			; /* do nothing */
-		k++;
-
-		found_rfc2822 = is_rfc2822_line(buf + i, k - i - 1);
-		if (found_rfc2822 && sob &&
-		    !strncmp(buf + i, sob->buf, sob->len))
-			found_sob = k;
-
-		if (!(found_rfc2822 ||
-		      is_cherry_picked_from_line(buf + i, k - i - 1)))
-			return 0;
-	}
-	if (found_sob == i)
+	if (found_sob_last)
 		return 3;
 	if (found_sob)
 		return 2;
