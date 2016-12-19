@@ -118,6 +118,10 @@ OPTIONS
 	default to color output.
 	Same as `--color=never`.
 
+-i::
+--ignore-case::
+	Sorting and filtering branches are case insensitive.
+
 --column[=<options>]::
 --no-column::
 	Display branch listing in columns. See configuration variable

@@ -29,6 +29,7 @@ struct ref_sorting {
 	struct ref_sorting *next;
 	int atom; /* index into used_atom array (internal) */
 	unsigned reverse : 1,
+		ignore_case : 1,
 		version : 1;
 };
 
@@ -62,6 +63,7 @@ struct ref_filter {
 
 	unsigned int with_commit_tag_algo : 1,
 		match_as_path : 1,
+		ignore_case : 1,
 		detached : 1;
 	unsigned int kind,
 		lines;
