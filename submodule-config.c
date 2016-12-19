@@ -251,6 +251,8 @@ static int parse_push_recurse(const char *opt, const char *arg,
 			return RECURSE_SUBMODULES_ON_DEMAND;
 		else if (!strcmp(arg, "check"))
 			return RECURSE_SUBMODULES_CHECK;
+		else if (!strcmp(arg, "only"))
+			return RECURSE_SUBMODULES_ONLY;
 		else if (die_on_error)
 			die("bad %s argument: %s", opt, arg);
 		else

@@ -6,6 +6,7 @@ struct argv_array;
 struct sha1_array;
 
 enum {
+	RECURSE_SUBMODULES_ONLY = -5,
 	RECURSE_SUBMODULES_CHECK = -4,
 	RECURSE_SUBMODULES_ERROR = -3,
 	RECURSE_SUBMODULES_NONE = -2,
