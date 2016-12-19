@@ -182,6 +182,10 @@ EOF
 		}
 	}
 
+	# Go to the root of the worktree so that the left index files
+	# are properly setup -- the index is toplevel-relative.
+	chdir($workdir);
+
 	# Setup temp directories
 	my $tmpdir = tempdir('git-difftool.XXXXX', CLEANUP => 0, TMPDIR => 1);
 	my $ldir = "$tmpdir/left";
