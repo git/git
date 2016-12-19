@@ -146,6 +146,7 @@ struct transport {
 #define TRANSPORT_PUSH_CERT_IF_ASKED		(1<<12)
 #define TRANSPORT_PUSH_ATOMIC			(1<<13)
 #define TRANSPORT_PUSH_OPTIONS			(1<<14)
+#define TRANSPORT_RECURSE_SUBMODULES_ONLY	(1<<15)
 
 extern int transport_summary_width(const struct ref *refs);
 
