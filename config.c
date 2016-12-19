@@ -2107,7 +2107,12 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 			goto out_free;
 		}
 
-		fstat(in_fd, &st);
+		if (fstat(in_fd, &st) == -1) {
+			error_errno(_("fstat on %s failed"), config_filename);
+			ret = CONFIG_INVALID_FILE;
+			goto out_free;
+		}
+
 		contents_sz = xsize_t(st.st_size);
 		contents = xmmap_gently(NULL, contents_sz, PROT_READ,
 					MAP_PRIVATE, in_fd, 0);
@@ -2327,7 +2332,10 @@ int git_config_rename_section_in_file(const char *config_filename,
 		goto unlock_and_out;
 	}
 
-	fstat(fileno(config_file), &st);
+	if (fstat(fileno(config_file), &st) == -1) {
+		ret = error_errno(_("fstat on %s failed"), config_filename);
+		goto out;
+	}
 
 	if (chmod(get_lock_file_path(lock), st.st_mode & 07777) < 0) {
 		ret = error_errno("chmod on %s failed",
