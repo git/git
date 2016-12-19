@@ -265,7 +265,8 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 	If this option is specified together with `--amend`, then
 	no paths need to be specified, which can be used to amend
 	the last commit without committing changes that have
-	already been staged.
+	already been staged. If used together with `--allow-empty`
+	paths are also not required, and an empty commit will be created.
 
 -u[<mode>]::
 --untracked-files[=<mode>]::
