@@ -43,6 +43,7 @@ continue!          continue
 abort!             abort and check out the original branch
 skip!              skip current patch and continue
 edit-todo!         edit the todo list during an interactive rebase
+quit!              abort but keep HEAD where it is
 "
 . git-sh-setup
 set_reflog_action rebase
@@ -241,7 +242,7 @@ do
 	--verify)
 		ok_to_skip_pre_rebase=
 		;;
-	--continue|--skip|--abort|--edit-todo)
+	--continue|--skip|--abort|--quit|--edit-todo)
 		test $total_argc -eq 2 || usage
 		action=${1##--}
 		;;
@@ -398,6 +399,9 @@ abort)
 	output git reset --hard $orig_head
 	finish_rebase
 	exit
+	;;
+quit)
+	exec rm -rf "$state_dir"
 	;;
 edit-todo)
 	run_specific_rebase
