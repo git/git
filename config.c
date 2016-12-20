@@ -2329,7 +2329,7 @@ int git_config_rename_section_in_file(const char *config_filename,
 
 	if (!(config_file = fopen(config_filename, "rb"))) {
 		/* no config file means nothing to rename, no error */
-		goto unlock_and_out;
+		goto commit_and_out;
 	}
 
 	if (fstat(fileno(config_file), &st) == -1) {
@@ -2391,7 +2391,7 @@ int git_config_rename_section_in_file(const char *config_filename,
 		}
 	}
 	fclose(config_file);
-unlock_and_out:
+commit_and_out:
 	if (commit_lock_file(lock) < 0)
 		ret = error_errno("could not write config file %s",
 				  config_filename);
