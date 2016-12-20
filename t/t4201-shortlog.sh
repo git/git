@@ -191,8 +191,14 @@ test_expect_success 'shortlog with --output=<file>' '
 '
 
 test_expect_success 'shortlog --committer (internal)' '
+	git checkout --orphan side &&
+	git commit --allow-empty -m one &&
+	git commit --allow-empty -m two &&
+	GIT_COMMITTER_NAME="Sin Nombre" git commit --allow-empty -m three &&
+
 	cat >expect <<-\EOF &&
-	     3	C O Mitter
+	     2	C O Mitter
+	     1	Sin Nombre
 	EOF
 	git shortlog -nsc HEAD >actual &&
 	test_cmp expect actual
