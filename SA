@@ -1,8 +1,0 @@
-#!/bin/sh
-# Take a snapshot of master and next *after* making an
-# "What's in git.git" announcement, for the next round.
-
-git update-ref refs/hold/sa/master refs/heads/master
-git update-ref refs/hold/sa/maint refs/heads/maint
-
-
