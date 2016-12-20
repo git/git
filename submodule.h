@@ -59,7 +59,11 @@ extern int fetch_populated_submodules(const struct argv_array *options,
 			       int quiet, int max_parallel_jobs);
 extern unsigned is_submodule_modified(const char *path, int ignore_untracked);
 extern int submodule_uses_gitfile(const char *path);
-extern int ok_to_remove_submodule(const char *path);
+
+#define SUBMODULE_REMOVAL_DIE_ON_ERROR (1<<0)
+#define SUBMODULE_REMOVAL_IGNORE_UNTRACKED (1<<1)
+#define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1<<2)
+extern int bad_to_remove_submodule(const char *path, unsigned flags);
 extern int merge_submodule(unsigned char result[20], const char *path,
 			   const unsigned char base[20],
 			   const unsigned char a[20],
