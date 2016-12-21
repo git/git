@@ -787,13 +787,15 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			const unsigned char *sha1)
 {
 	void *new_data = NULL;
-	int collision_test_needed;
+	int collision_test_needed = 0;
 
 	assert(data || obj_entry);
 
-	read_lock();
-	collision_test_needed = has_sha1_file_with_flags(sha1, HAS_SHA1_QUICK);
-	read_unlock();
+	if (startup_info->have_repository) {
+		read_lock();
+		collision_test_needed = has_sha1_file_with_flags(sha1, HAS_SHA1_QUICK);
+		read_unlock();
+	}
 
 	if (collision_test_needed && !data) {
 		read_lock();
@@ -1730,6 +1732,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		usage(index_pack_usage);
 	if (fix_thin_pack && !from_stdin)
 		die(_("--fix-thin cannot be used without --stdin"));
+	if (from_stdin && !startup_info->have_repository)
+		die(_("--stdin requires a git repository"));
 	if (!index_name && pack_name)
 		index_name = derive_filename(pack_name, ".idx", &index_name_buf);
 	if (keep_msg && !keep_name && pack_name)
