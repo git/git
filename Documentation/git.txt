@@ -871,6 +871,12 @@ Git so take care if using a foreign front-end.
 	specifies a ":" separated (on Windows ";" separated) list
 	of Git object directories which can be used to search for Git
 	objects. New objects will not be written to these directories.
++
+	Entries that begin with `"` (double-quote) will be interpreted
+	as C-style quoted paths, removing leading and trailing
+	double-quotes and respecting backslash escapes. E.g., the value
+	`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
+	`path-with-"-and-:-in-it` and `vanilla-path`.
 
 `GIT_DIR`::
 	If the `GIT_DIR` environment variable is set then it

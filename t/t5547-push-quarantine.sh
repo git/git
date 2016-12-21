@@ -33,4 +33,29 @@ test_expect_success 'rejected objects are removed' '
 	test_cmp expect actual
 '
 
+test_expect_success 'push to repo path with path separator (colon)' '
+	# The interesting failure case here is when the
+	# receiving end cannot access its original object directory,
+	# so make it likely for us to generate a delta by having
+	# a non-trivial file with multiple versions.
+
+	test-genrandom foo 4096 >file.bin &&
+	git add file.bin &&
+	git commit -m bin &&
+
+	if test_have_prereq MINGW
+	then
+		pathsep=";"
+	else
+		pathsep=":"
+	fi &&
+	git clone --bare . "xxx${pathsep}yyy.git" &&
+
+	echo change >>file.bin &&
+	git commit -am change &&
+	# Note that we have to use the full path here, or it gets confused
+	# with the ssh host:path syntax.
+	git push "$(pwd)/xxx${pathsep}yyy.git" HEAD
+'
+
 test_done
