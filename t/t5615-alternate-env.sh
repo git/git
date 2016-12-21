@@ -79,7 +79,7 @@ test_expect_success 'mix of quoted and unquoted alternates' '
 	$two blob
 '
 
-test_expect_success 'broken quoting falls back to interpreting raw' '
+test_expect_success !MINGW 'broken quoting falls back to interpreting raw' '
 	mv one.git \"one.git &&
 	check_obj \"one.git/objects <<-EOF
 	$one blob
