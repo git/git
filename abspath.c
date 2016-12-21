@@ -48,6 +48,19 @@ static void get_next_component(struct strbuf *next, struct strbuf *remaining)
 	strbuf_remove(remaining, 0, end - remaining->buf);
 }
 
+/* copies root part from remaining to resolved, canonicalizing it on the way */
+static void get_root_part(struct strbuf *resolved, struct strbuf *remaining)
+{
+	int offset = offset_1st_component(remaining->buf);
+
+	strbuf_reset(resolved);
+	strbuf_add(resolved, remaining->buf, offset);
+#ifdef GIT_WINDOWS_NATIVE
+	convert_slashes(resolved->buf);
+#endif
+	strbuf_remove(remaining, 0, offset);
+}
+
 /* We allow "recursive" symbolic links. Only within reason, though. */
 #define MAXSYMLINKS 5
 
@@ -80,14 +93,10 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 			goto error_out;
 	}
 
-	strbuf_reset(resolved);
+	strbuf_addstr(&remaining, path);
+	get_root_part(resolved, &remaining);
 
-	if (is_absolute_path(path)) {
-		/* absolute path; start with only root as being resolved */
-		int offset = offset_1st_component(path);
-		strbuf_add(resolved, path, offset);
-		strbuf_addstr(&remaining, path + offset);
-	} else {
+	if (!resolved->len) {
 		/* relative path; can use CWD as the initial resolved path */
 		if (strbuf_getcwd(resolved)) {
 			if (die_on_error)
@@ -95,7 +104,6 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 			else
 				goto error_out;
 		}
-		strbuf_addstr(&remaining, path);
 	}
 
 	/* Iterate over the remaining path components */
@@ -150,10 +158,7 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 
 			if (is_absolute_path(symlink.buf)) {
 				/* absolute symlink; set resolved to root */
-				int offset = offset_1st_component(symlink.buf);
-				strbuf_reset(resolved);
-				strbuf_add(resolved, symlink.buf, offset);
-				strbuf_remove(&symlink, 0, offset);
+				get_root_part(resolved, &symlink);
 			} else {
 				/*
 				 * relative symlink
