@@ -149,6 +149,10 @@ do
 			done | tr '\012' ' '
 		)
 		;;
+	--long)
+		GIT_TEST_LONG=YesPlease
+		export GIT_TEST_LONG
+		;;
 	--dash)
 		with_dash=y
 		;;

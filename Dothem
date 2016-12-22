@@ -16,12 +16,13 @@ inst_prefix=$(
 	echo $HOME
 )
 
-force= with_dash= M= install= nodoc= notest= bootstrap= branches= jobs=
-scratch=
+force= with_dash= test_long= M= install= nodoc= notest= bootstrap= branches= jobs=
+scratch= noprove=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
 	--dash) with_dash=y ;;
+	--long) test_long=--long ;;
 	--noinstall) install=noinstall ;;
 	--nodoc) nodoc=y ;;
 	--notest) notest=y ;;
@@ -30,6 +31,7 @@ while	case "$1" in
 	--bootstrap) bootstrap=y ;;
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
+	--noprove) noprove=$1 ;;
 	-j*) jobs=$1 ;;
 	--) shift; break ;;
 	-*) echo >&2 "Unknown option: $1"; exit 1 ;;
@@ -194,7 +196,7 @@ do
 
 		save=$(git rev-parse HEAD) &&
 
-		Meta/Make $M ${test+"$test"} $jobs --memtrash \
+		Meta/Make $M $noprove ${test+"$test"} $jobs $test_long --memtrash \
 		    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
 
 		{
