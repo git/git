@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2016, #06; Wed, 21)
+Subject: What's cooking in git.git (Dec 2016, #07; Thu, 22)
 X-master-at: 1d1bdafd64266e5ee3bd46c6965228f32e4022ea
-X-next-at: 71d7989c69ecdcefd19d2521182237e1294395ca
+X-next-at: 1ede815b8d1562f46b7aa5d55af084a3cad2ecf8
 
-What's cooking in git.git (Dec 2016, #06; Wed, 21)
+What's cooking in git.git (Dec 2016, #07; Thu, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,147 +18,7 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/index-pack-wo-repo-from-stdin (2016-12-16) 4 commits
-  (merged to 'next' on 2016-12-19 at 9a88221347)
- + index-pack: skip collision check when not in repository
- + t: use nongit() function where applicable
- + index-pack: complain when --stdin is used outside of a repo
- + t5000: extract nongit function to test-lib-functions.sh
-
- "git index-pack --stdin" needs an access to an existing repository,
- but "git index-pack file.pack" to generate an .idx file that
- corresponds to a packfile does not.
-
-
-* jk/parseopt-usage-msg-opt (2016-12-14) 1 commit
-  (merged to 'next' on 2016-12-19 at c488c7c6e1)
- + parse-options: print "fatal:" before usage_msg_opt()
-
- The function usage_msg_opt() has been updated to say "fatal:"
- before the custom message programs give, when they want to die
- with a message about wrong command line options followed by the
- standard usage string.
-
-
-* jk/quote-env-path-list-component (2016-12-21) 5 commits
-  (merged to 'next' on 2016-12-21 at 729971d31e)
- + t5615-alternate-env: double-quotes in file names do not work on Windows
-  (merged to 'next' on 2016-12-16 at d2cd6008b9)
- + t5547-push-quarantine: run the path separator test on Windows, too
- + tmp-objdir: quote paths we add to alternates
- + alternates: accept double-quoted paths
- + Merge branch 'jk/alt-odb-cleanup' into jk/quote-env-path-list-component
-
- A recent update to receive-pack to make it easier to drop garbage
- objects made it clear that GIT_ALTERNATE_OBJECT_DIRECTORIES cannot
- have a pathname with a colon in it (no surprise!), and this in turn
- made it impossible to push into a repository at such a path.  This
- has been fixed by introducing a quoting mechanism used when
- appending such a path to the colon-separated list.
-
-
-* jt/mailinfo-fold-in-body-headers (2016-12-20) 1 commit
-  (merged to 'next' on 2016-12-20 at ec9ae616aa)
- + mailinfo.c: move side-effects outside of assert
-
- Fix for NDEBUG builds.
-
-
-* nd/shallow-fixup (2016-12-07) 6 commits
-  (merged to 'next' on 2016-12-13 at 1a3edb8bce)
- + shallow.c: remove useless code
- + shallow.c: bit manipulation tweaks
- + shallow.c: avoid theoretical pointer wrap-around
- + shallow.c: make paint_alloc slightly more robust
- + shallow.c: stop abusing COMMIT_SLAB_SIZE for paint_info's memory pools
- + shallow.c: rename fields in paint_info to better express their purposes
-
- Code cleanup in shallow boundary computation.
-
-
-* sb/sequencer-abort-safety (2016-12-14) 6 commits
-  (merged to 'next' on 2016-12-16 at ec71fb1217)
- + Revert "sequencer: remove useless get_dir() function"
-  (merged to 'next' on 2016-12-13 at 6107e43d65)
- + sequencer: remove useless get_dir() function
- + sequencer: make sequencer abort safer
- + t3510: test that cherry-pick --abort does not unsafely change HEAD
- + am: change safe_to_abort()'s not rewinding error into a warning
- + am: fix filename in safe_to_abort() error message
-
- Unlike "git am --abort", "git cherry-pick --abort" moved HEAD back
- to where cherry-pick started while picking multiple changes, when
- the cherry-pick stopped to ask for help from the user, and the user
- did "git reset --hard" to a different commit in order to re-attempt
- the operation.
-
-
-* vs/submodule-clone-nested-submodules-alternates (2016-12-12) 1 commit
-  (merged to 'next' on 2016-12-13 at 8a317ab745)
- + submodule--helper: set alternateLocation for cloned submodules
-
- "git clone --reference $there --recurse-submodules $super" has been
- taught to guess repositories usable as references for submodules of
- $super that are embedded in $there while making a clone of the
- superproject borrow objects from $there; extend the mechanism to
- also allow submodules of these submodules to borrow repositories
- embedded in these clones of the submodules embedded in the clone of
- the superproject.
-
---------------------------------------------------
-[New Topics]
-
-* bw/push-submodule-only (2016-12-20) 3 commits
- - push: add option to push only submodules
- - submodules: add RECURSE_SUBMODULES_ONLY value
- - transport: reformat flag #defines to be more readable
-
- "git submodule push" learned "--recurse-submodules=only option to
- push submodules out without pushing the top-level superproject.
-
-
-* mk/mingw-winansi-ttyname-termination-fix (2016-12-20) 1 commit
-  (merged to 'next' on 2016-12-21 at 1e8e994605)
- + mingw: consider that UNICODE_STRING::Length counts bytes
-
- A potential but unlikely buffer overflow in Windows port has been
- fixed.
-
- Will merge to 'master'.
-
-
-* nd/config-misc-fixes (2016-12-20) 4 commits
- - SQUASH???
- - config.c: handle lock file in error case in git_config_rename_...
- - config.c: rename label unlock_and_out
- - config.c: handle error case for fstat() calls
-
- Leakage of lockfiles in the config subsystem has been fixed.
-
-
-* va/i18n-even-more (2016-12-20) 1 commit
- - i18n: fix misconversion in shell scripts
-
- Will merge to 'next'.
-
---------------------------------------------------
 [Stalled]
-
-* jc/retire-compaction-heuristics (2016-11-02) 3 commits
- - SQUASH???
- - SQUASH???
- - diff: retire the original experimental "compaction" heuristics
-
- Waiting for a reroll.
-
-
-* jc/abbrev-autoscale-config (2016-11-01) 1 commit
- - config.abbrev: document the new default that auto-scales
-
- Waiting for a reroll.
-
 
 * jk/nofollow-attr-ignore (2016-11-02) 5 commits
  - exclude: do not respect symlinks for in-tree .gitignore
@@ -282,6 +142,54 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/abbrev-autoscale-config (2016-12-22) 1 commit
+ - config.abbrev: document the new default that auto-scales
+
+ Will merge to 'next'.
+
+
+* jc/retire-compaction-heuristics (2016-12-22) 1 commit
+ - diff: retire the original experimental "compaction" heuristics
+
+ Will merge to 'next'.
+
+
+* bw/push-submodule-only (2016-12-20) 3 commits
+ - push: add option to push only submodules
+ - submodules: add RECURSE_SUBMODULES_ONLY value
+ - transport: reformat flag #defines to be more readable
+
+ "git submodule push" learned "--recurse-submodules=only option to
+ push submodules out without pushing the top-level superproject.
+
+
+* mk/mingw-winansi-ttyname-termination-fix (2016-12-20) 1 commit
+  (merged to 'next' on 2016-12-21 at 1e8e994605)
+ + mingw: consider that UNICODE_STRING::Length counts bytes
+
+ A potential but unlikely buffer overflow in Windows port has been
+ fixed.
+
+ Will merge to 'master'.
+
+
+* nd/config-misc-fixes (2016-12-22) 3 commits
+ - config.c: handle lock file in error case in git_config_rename_...
+ - config.c: rename label unlock_and_out
+ - config.c: handle error case for fstat() calls
+
+ Leakage of lockfiles in the config subsystem has been fixed.
+
+ Will merge to 'next'.
+
+
+* va/i18n-even-more (2016-12-20) 1 commit
+  (merged to 'next' on 2016-12-22 at 209eee0530)
+ + i18n: fix misconversion in shell scripts
+
+ Will merge to 'master'.
+
+
 * gv/p4-multi-path-commit-fix (2016-12-19) 1 commit
   (merged to 'next' on 2016-12-21 at f7ba714387)
  + git-p4: fix multi-path changelist empty commits
@@ -293,22 +201,25 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* js/mingw-isatty (2016-12-21) 2 commits
- - mingw: replace isatty() hack
- - mingw: adjust is_console() to work with stdin
+* js/mingw-isatty (2016-12-22) 3 commits
+  (merged to 'next' on 2016-12-22 at 5be6c1a083)
+ + mingw: replace isatty() hack
+ + mingw: fix colourization on Cygwin pseudo terminals
+ + mingw: adjust is_console() to work with stdin
 
  Update the isatty() emulation for Windows by updating the previous
  hack that depended on internals of (older) MSVC runtime.
 
- Waiting for review to conclude.
+ Will merge to 'master'.
 
 
 * ls/p4-lfs (2016-12-20) 1 commit
- - git-p4: add diff/merge properties to .gitattributes for GitLFS files
+  (merged to 'next' on 2016-12-22 at 0759f94c65)
+ + git-p4: add diff/merge properties to .gitattributes for GitLFS files
 
  Update GitLFS integration with "git p4".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ls/p4-path-encoding (2016-12-18) 1 commit
@@ -318,7 +229,7 @@ of the repositories listed at
  convert pathnames when the p4 used encoding different from the one
  used on the Git side.  This has been corrected.
 
- Waiting for review to conclude.
+ Will merge to 'next'.
 
 
 * mh/fast-import-notes-fix-new (2016-12-20) 1 commit
@@ -427,12 +338,16 @@ of the repositories listed at
  "git shortlog" learned "--committer" option to group commits by
  committer, instead of author.
 
+ Will merge to 'master'.
 
-* bw/realpath-wo-chdir (2016-12-12) 4 commits
- - real_path: have callers use real_pathdup and strbuf_realpath
- - real_path: create real_pathdup
- - real_path: convert real_path_internal to strbuf_realpath
- - real_path: resolve symlinks by hand
+
+* bw/realpath-wo-chdir (2016-12-22) 5 commits
+  (merged to 'next' on 2016-12-22 at fea8fa870f)
+ + real_path: canonicalize directory separators in root parts
+ + real_path: have callers use real_pathdup and strbuf_realpath
+ + real_path: create real_pathdup
+ + real_path: convert real_path_internal to strbuf_realpath
+ + real_path: resolve symlinks by hand
  (this branch is used by bw/grep-recurse-submodules.)
 
  The implementation of "real_path()" was to go there with chdir(2)
@@ -440,8 +355,7 @@ of the repositories listed at
  threaded environment.  Rewrite it to manually resolve relative
  paths including symbolic links in path components.
 
- Will wait for an issue on Windows to be resolved.
- cf. <097e3e2e-f46d-b0aa-be9c-68c274c5e3dc@kdbg.org>
+ Will merge to 'master'.
 
 
 * jk/difftool-in-subdir (2016-12-11) 4 commits
@@ -506,19 +420,20 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* bw/grep-recurse-submodules (2016-12-16) 7 commits
- - grep: search history of moved submodules
- - grep: enable recurse-submodules to work on <tree> objects
- - grep: optionally recurse into submodules
- - grep: add submodules as a grep source type
- - submodules: load gitmodules file from commit sha1
- - submodules: add helper to determine if a submodule is initialized
- - submodules: add helper to determine if a submodule is populated
+* bw/grep-recurse-submodules (2016-12-22) 7 commits
+  (merged to 'next' on 2016-12-22 at 1ede815b8d)
+ + grep: search history of moved submodules
+ + grep: enable recurse-submodules to work on <tree> objects
+ + grep: optionally recurse into submodules
+ + grep: add submodules as a grep source type
+ + submodules: load gitmodules file from commit sha1
+ + submodules: add helper to determine if a submodule is initialized
+ + submodules: add helper to determine if a submodule is populated
  (this branch uses bw/realpath-wo-chdir.)
 
  "git grep" learns to optionally recurse into submodules.
 
- Will hold until bw/realpath-wo-chdir settles.
+ Will merge to 'master'.
 
 
 * dt/smart-http-detect-server-going-away (2016-11-18) 2 commits
@@ -600,8 +515,8 @@ of the repositories listed at
  The code to list branches in "git branch" has been consolidated
  with the more generic ref-filter API.
 
- What's the doneness of the topic?  I recall discussing die vs empty
- and also saw a "squash this in when you reroll", but I lost track.
+ Waiting for a reroll.
+ cf. <CAOLa=ZREUWqdH_2HNn_JQcf4RW9k1dAN5BtwPN2HnzuDoUdkWw@mail.gmail.com>
 
 
 * bw/transport-protocol-policy (2016-12-15) 6 commits
@@ -642,7 +557,7 @@ of the repositories listed at
 
  Minor code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/push-default-explicit (2016-10-31) 2 commits
@@ -656,7 +571,7 @@ of the repositories listed at
  specified refspec to perform 'current', 'simple', or 'upstream'
  push, causing unnecessary "ambiguous ref" errors.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/git-open-cloexec (2016-11-02) 3 commits
@@ -667,7 +582,8 @@ of the repositories listed at
  The codeflow of setting NOATIME and CLOEXEC on file descriptors Git
  opens has been simplified.
 
- We may want to drop the tip one.
+ Will merge to 'next'.
+ We may want to drop the tip one, but we'll see.
 
 
 * jk/no-looking-at-dotgit-outside-repo-final (2016-10-26) 1 commit
