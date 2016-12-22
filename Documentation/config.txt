@@ -1409,7 +1409,9 @@ gc.pruneExpire::
 	Override the grace period with this config variable.  The value
 	"now" may be used to disable this grace period and always prune
 	unreachable objects immediately, or "never" may be used to
-	suppress pruning.
+	suppress pruning.  This feature helps prevent corruption when
+	'git gc' runs concurrently with another process writing to the
+	repository; see the "NOTES" section of linkgit:git-gc[1].
 
 gc.worktreePruneExpire::
 	When 'git gc' is run, it calls

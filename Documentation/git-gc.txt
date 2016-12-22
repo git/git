@@ -63,11 +63,10 @@ automatic consolidation of packs.
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
 	overridable by the config variable `gc.pruneExpire`).
-	--prune=all prunes loose objects regardless of their age (do
-	not use --prune=all unless you know exactly what you are doing.
-	Unless the repository is quiescent, you will lose newly created
-	objects that haven't been anchored with the refs and end up
-	corrupting your repository).  --prune is on by default.
+	--prune=all prunes loose objects regardless of their age and
+	increases the risk of corruption if another process is writing to
+	the repository concurrently; see "NOTES" below. --prune is on by
+	default.
 
 --no-prune::
 	Do not prune any loose objects.
@@ -138,16 +137,35 @@ default is "2 weeks ago".
 Notes
 -----
 
-'git gc' tries very hard to be safe about the garbage it collects. In
+'git gc' tries very hard not to delete objects that are referenced
+anywhere in your repository. In
 particular, it will keep not only objects referenced by your current set
 of branches and tags, but also objects referenced by the index,
 remote-tracking branches, refs saved by 'git filter-branch' in
 refs/original/, or reflogs (which may reference commits in branches
 that were later amended or rewound).
-
-If you are expecting some objects to be collected and they aren't, check
+If you are expecting some objects to be deleted and they aren't, check
 all of those locations and decide whether it makes sense in your case to
 remove those references.
+
+On the other hand, when 'git gc' runs concurrently with another process,
+there is a risk of it deleting an object that the other process is using
+but hasn't created a reference to. This may just cause the other process
+to fail or may corrupt the repository if the other process later adds a
+reference to the deleted object. Git has two features that significantly
+mitigate this problem:
+
+. Any object with modification time newer than the `--prune` date is kept,
+  along with everything reachable from it.
+
+. Most operations that add an object to the database update the
+  modification time of the object if it is already present so that #1
+  applies.
+
+However, these features fall short of a complete solution, so users who
+run commands concurrently have to live with some risk of corruption (which
+seems to be low in practice) unless they turn off automatic garbage
+collection with 'git config gc.auto 0'.
 
 HOOKS
 -----
