@@ -192,6 +192,8 @@ The first command fetches the `maint` branch from the repository at
 objects will eventually be removed by git's built-in housekeeping (see
 linkgit:git-gc[1]).
 
+include::transfer-data-leaks.txt[]
+
 BUGS
 ----
 Using --recurse-submodules can only fetch new commits in already checked

@@ -559,6 +559,8 @@ Commits A and B would no longer belong to a branch with a symbolic name,
 and so would be unreachable.  As such, these commits would be removed by
 a `git gc` command on the origin repository.
 
+include::transfer-data-leaks.txt[]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

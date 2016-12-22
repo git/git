@@ -2986,6 +2986,11 @@ is omitted from the advertisements but `refs/heads/master` and
 `refs/namespaces/bar/refs/heads/master` are still advertised as so-called
 "have" lines. In order to match refs before stripping, add a `^` in front of
 the ref name. If you combine `!` and `^`, `!` must be specified first.
++
+Even if you hide refs, a client may still be able to steal the target
+objects via the techniques described in the "SECURITY" section of the
+linkgit:gitnamespaces[7] man page; it's best to keep private data in a
+separate repository.
 
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
@@ -2995,7 +3000,7 @@ transfer.unpackLimit::
 uploadarchive.allowUnreachable::
 	If true, allow clients to use `git archive --remote` to request
 	any tree, whether reachable from the ref tips or not. See the
-	discussion in the `SECURITY` section of
+	discussion in the "SECURITY" section of
 	linkgit:git-upload-archive[1] for more details. Defaults to
 	`false`.
 
@@ -3009,13 +3014,19 @@ uploadpack.allowTipSHA1InWant::
 	When `uploadpack.hideRefs` is in effect, allow `upload-pack`
 	to accept a fetch request that asks for an object at the tip
 	of a hidden ref (by default, such a request is rejected).
-	see also `uploadpack.hideRefs`.
+	See also `uploadpack.hideRefs`.  Even if this is false, a client
+	may be able to steal objects via the techniques described in the
+	"SECURITY" section of the linkgit:gitnamespaces[7] man page; it's
+	best to keep private data in a separate repository.
 
 uploadpack.allowReachableSHA1InWant::
 	Allow `upload-pack` to accept a fetch request that asks for an
 	object that is reachable from any ref tip. However, note that
 	calculating object reachability is computationally expensive.
-	Defaults to `false`.
+	Defaults to `false`.  Even if this is false, a client may be able
+	to steal objects via the techniques described in the "SECURITY"
+	section of the linkgit:gitnamespaces[7] man page; it's best to
+	keep private data in a separate repository.
 
 uploadpack.keepAlive::
 	When `upload-pack` has started `pack-objects`, there may be a
