@@ -119,9 +119,9 @@ be in a separate packet, and the list must end with a flush packet.
 	$GIT_DIR (e.g. "HEAD", "refs/heads/master").  When
 	unspecified, update from all heads the remote side has.
 +
-If the remote has enabled the options `uploadpack.allowTipSHA1InWant` or
-`uploadpack.allowReachableSHA1InWant`, they may alternatively be 40-hex
-sha1s present on the remote.
+If the remote has enabled the options `uploadpack.allowTipSHA1InWant`,
+`uploadpack.allowReachableSHA1InWant`, or `uploadpack.allowAnySHA1InWant`,
+they may alternatively be 40-hex sha1s present on the remote.
 
 SEE ALSO
 --------

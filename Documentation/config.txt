@@ -3030,6 +3030,11 @@ uploadpack.allowReachableSHA1InWant::
 	section of the linkgit:gitnamespaces[7] man page; it's best to
 	keep private data in a separate repository.
 
+uploadpack.allowAnySHA1InWant::
+	Allow `upload-pack` to accept a fetch request that asks for any
+	object at all.
+	Defaults to `false`.
+
 uploadpack.keepAlive::
 	When `upload-pack` has started `pack-objects`, there may be a
 	quiet period while `pack-objects` prepares the pack. Normally
