@@ -1552,7 +1552,7 @@ _git_merge ()
 	case "$cur" in
 	--*)
 		__gitcomp "$__git_merge_options
-			--rerere-autoupdate --no-rerere-autoupdate --abort"
+			--rerere-autoupdate --no-rerere-autoupdate --abort --continue"
 		return
 	esac
 	__gitcomp_nl "$(__git_refs)"
