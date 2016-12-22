@@ -1004,6 +1004,19 @@ static enum interesting do_match(const struct name_entry *entry,
 				 */
 				if (ps->recursive && S_ISDIR(entry->mode))
 					return entry_interesting;
+
+				/*
+				 * When matching against submodules with
+				 * wildcard characters, ensure that the entry
+				 * at least matches up to the first wild
+				 * character.  More accurate matching can then
+				 * be performed in the submodule itself.
+				 */
+				if (ps->recursive && S_ISGITLINK(entry->mode) &&
+				    !ps_strncmp(item, match + baselen,
+						entry->path,
+						item->nowildcard_len - baselen))
+					return entry_interesting;
 			}
 
 			continue;
@@ -1040,6 +1053,21 @@ match_wildcards:
 			strbuf_setlen(base, base_offset + baselen);
 			return entry_interesting;
 		}
+
+		/*
+		 * When matching against submodules with
+		 * wildcard characters, ensure that the entry
+		 * at least matches up to the first wild
+		 * character.  More accurate matching can then
+		 * be performed in the submodule itself.
+		 */
+		if (ps->recursive && S_ISGITLINK(entry->mode) &&
+		    !ps_strncmp(item, match, base->buf + base_offset,
+				item->nowildcard_len)) {
+			strbuf_setlen(base, base_offset + baselen);
+			return entry_interesting;
+		}
+
 		strbuf_setlen(base, base_offset + baselen);
 
 		/*
