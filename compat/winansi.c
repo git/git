@@ -540,7 +540,7 @@ static void detect_msys_tty(int fd)
 			buffer, sizeof(buffer) - 2, &result)))
 		return;
 	name = nameinfo->Name.Buffer;
-	name[nameinfo->Name.Length] = 0;
+	name[nameinfo->Name.Length / sizeof(*name)] = 0;
 
 	/*
 	 * Check if this could be a MSYS2 pty pipe ('msys-XXXX-ptyN-XX')
