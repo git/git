@@ -203,8 +203,14 @@ cmd_add()
 			tstart
 			s|/*$||
 		')
-	git ls-files --error-unmatch "$sm_path" > /dev/null 2>&1 &&
-	die "$(eval_gettext "'\$sm_path' already exists in the index")"
+	if test -z "$force"
+	then
+		git ls-files --error-unmatch "$sm_path" > /dev/null 2>&1 &&
+		die "$(eval_gettext "'\$sm_path' already exists in the index")"
+	else
+		git ls-files -s "$sm_path" | sane_grep -v "^160000" > /dev/null 2>&1 &&
+		die "$(eval_gettext "'\$sm_path' already exists in the index and is not a submodule")"
+	fi
 
 	if test -z "$force" && ! git add --dry-run --ignore-missing "$sm_path" > /dev/null 2>&1
 	then
