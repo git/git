@@ -131,6 +131,26 @@ test_expect_success 'clone two dirs, @all, conflicting files' '
 	)
 '
 
+test_expect_success 'clone two dirs, each edited by submit, single git commit' '
+	(
+		cd "$cli" &&
+		echo sub1/f4 >sub1/f4 &&
+		p4 add sub1/f4 &&
+		echo sub2/f4 >sub2/f4 &&
+		p4 add sub2/f4 &&
+		p4 submit -d "sub1/f4 and sub2/f4"
+	) &&
+	git p4 clone --dest="$git" //depot/sub1@all //depot/sub2@all &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git ls-files >lines &&
+		test_line_count = 4 lines &&
+		git log --oneline p4/master >lines &&
+		test_line_count = 5 lines
+	)
+'
+
 revision_ranges="2000/01/01,#head \
 		 1,2080/01/01 \
 		 2000/01/01,2080/01/01 \
@@ -147,7 +167,7 @@ test_expect_success 'clone using non-numeric revision ranges' '
 		(
 			cd "$git" &&
 			git ls-files >lines &&
-			test_line_count = 6 lines
+			test_line_count = 8 lines
 		)
 	done
 '
