@@ -84,6 +84,7 @@ static void warn_if_raster_font(void)
 static int is_console(int fd)
 {
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
+	DWORD mode;
 	HANDLE hcon;
 
 	static int initialized = 0;
@@ -98,7 +99,10 @@ static int is_console(int fd)
 		return 0;
 
 	/* check if its a handle to a console output screen buffer */
-	if (!GetConsoleScreenBufferInfo(hcon, &sbi))
+	if (!fd) {
+		if (!GetConsoleMode(hcon, &mode))
+			return 0;
+	} else if (!GetConsoleScreenBufferInfo(hcon, &sbi))
 		return 0;
 
 	/* initialize attributes */
