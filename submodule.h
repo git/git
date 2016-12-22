@@ -68,7 +68,6 @@ int find_unpushed_submodules(struct sha1_array *commits, const char *remotes_nam
 extern int push_unpushed_submodules(struct sha1_array *commits,
 				    const char *remotes_name,
 				    int dry_run);
-void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
 int parallel_submodules(void);
 
 /*
@@ -78,4 +77,8 @@ int parallel_submodules(void);
  */
 void prepare_submodule_repo_env(struct argv_array *out);
 
+#define ABSORB_GITDIR_RECURSE_SUBMODULES (1<<0)
+extern void absorb_git_dir_into_superproject(const char *prefix,
+					     const char *path,
+					     unsigned flags);
 #endif
