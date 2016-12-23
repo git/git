@@ -4,6 +4,7 @@
 #include "quote.h"
 #include "sigchain.h"
 #include "pkt-line.h"
+#include "streaming.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -14,10 +15,12 @@
  * translation when the "text" attribute or "auto_crlf" option is set.
  */
 
-/* Stat bits: When BIN is set, the txt bits are unset */
 #define CONVERT_STAT_BITS_TXT_LF    0x1
 #define CONVERT_STAT_BITS_TXT_CRLF  0x2
 #define CONVERT_STAT_BITS_BIN       0x4
+#define CONVERT_STAT_BITS_ANY_CR    0x8
+
+#define STREAM_BUFFER_SIZE (1024*16)
 
 enum crlf_action {
 	CRLF_UNDEFINED,
@@ -32,30 +35,36 @@ enum crlf_action {
 
 struct text_stat {
 	/* NUL, CR, LF and CRLF counts */
-	unsigned nul, lonecr, lonelf, crlf;
+	unsigned stat_bits, lonecr, lonelf, crlf;
 
 	/* These are just approximations! */
 	unsigned printable, nonprintable;
 };
 
-static void gather_stats(const char *buf, unsigned long size, struct text_stat *stats)
+static void gather_stats_partly(const char *buf, unsigned long size,
+				struct text_stat *stats, unsigned search_only)
 {
 	unsigned long i;
 
-	memset(stats, 0, sizeof(*stats));
-
+	if (!buf || !size)
+		return;
 	for (i = 0; i < size; i++) {
 		unsigned char c = buf[i];
 		if (c == '\r') {
+			stats->stat_bits |= CONVERT_STAT_BITS_ANY_CR;
 			if (i+1 < size && buf[i+1] == '\n') {
 				stats->crlf++;
 				i++;
-			} else
+				stats->stat_bits |= CONVERT_STAT_BITS_TXT_CRLF;
+			} else {
 				stats->lonecr++;
+				stats->stat_bits |= CONVERT_STAT_BITS_BIN;
+			}
 			continue;
 		}
 		if (c == '\n') {
 			stats->lonelf++;
+			stats->stat_bits |= CONVERT_STAT_BITS_TXT_LF;
 			continue;
 		}
 		if (c == 127)
@@ -68,7 +77,7 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 				stats->printable++;
 				break;
 			case 0:
-				stats->nul++;
+				stats->stat_bits |= CONVERT_STAT_BITS_BIN;
 				/* fall through */
 			default:
 				stats->nonprintable++;
@@ -76,6 +85,8 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 		}
 		else
 			stats->printable++;
+		if (stats->stat_bits & search_only)
+			break; /* We found what we have been searching for */
 	}
 
 	/* If file ends with EOF then don't count this EOF as non-printable. */
@@ -87,41 +98,62 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
  * The same heuristics as diff.c::mmfile_is_binary()
  * We treat files with bare CR as binary
  */
-static int convert_is_binary(unsigned long size, const struct text_stat *stats)
+static void convert_nonprintable(struct text_stat *stats)
 {
-	if (stats->lonecr)
-		return 1;
-	if (stats->nul)
-		return 1;
 	if ((stats->printable >> 7) < stats->nonprintable)
-		return 1;
-	return 0;
+		stats->stat_bits |= CONVERT_STAT_BITS_BIN;
 }
 
-static unsigned int gather_convert_stats(const char *data, unsigned long size)
+static void gather_all_stats(const char *buf, unsigned long size,
+			 struct text_stat *stats, unsigned search_only)
 {
+	memset(stats, 0, sizeof(*stats));
+	gather_stats_partly(buf, size, stats, search_only);
+	convert_nonprintable(stats);
+}
+
+
+static unsigned get_convert_stats_sha1(unsigned const char *sha1,
+				       unsigned search_only)
+{
+	struct git_istream *st;
 	struct text_stat stats;
-	int ret = 0;
-	if (!data || !size)
-		return 0;
-	gather_stats(data, size, &stats);
-	if (convert_is_binary(size, &stats))
-		ret |= CONVERT_STAT_BITS_BIN;
-	if (stats.crlf)
-		ret |= CONVERT_STAT_BITS_TXT_CRLF;
-	if (stats.lonelf)
-		ret |=  CONVERT_STAT_BITS_TXT_LF;
+	enum object_type type;
+	unsigned long sz;
 
-	return ret;
+	if (!sha1)
+		return 0;
+	memset(&stats, 0, sizeof(stats));
+	st = open_istream(sha1, &type, &sz, NULL);
+	if (!st) {
+		return 0;
+	}
+	if (type != OBJ_BLOB)
+		goto close_and_exit_i;
+	for (;;) {
+		char buf[STREAM_BUFFER_SIZE];
+		ssize_t readlen = read_istream(st, buf, sizeof(buf));
+		if (readlen < 0)
+			break;
+		if (!readlen)
+			break;
+		gather_stats_partly(buf, (unsigned long)readlen, &stats, search_only);
+		if (stats.stat_bits & search_only)
+			break; /* We found what we have been searching for */
+	}
+close_and_exit_i:
+	close_istream(st);
+	convert_nonprintable(&stats);
+	return stats.stat_bits;
 }
 
-static const char *gather_convert_stats_ascii(const char *data, unsigned long size)
+static const char *convert_stats_ascii(unsigned convert_stats)
 {
-	unsigned int convert_stats = gather_convert_stats(data, size);
-
+	const unsigned eol_bits = CONVERT_STAT_BITS_TXT_LF |
+		CONVERT_STAT_BITS_TXT_CRLF;
 	if (convert_stats & CONVERT_STAT_BITS_BIN)
 		return "-text";
-	switch (convert_stats) {
+	switch (convert_stats & eol_bits) {
 	case CONVERT_STAT_BITS_TXT_LF:
 		return "lf";
 	case CONVERT_STAT_BITS_TXT_CRLF:
@@ -133,24 +165,45 @@ static const char *gather_convert_stats_ascii(const char *data, unsigned long si
 	}
 }
 
+static unsigned get_convert_stats_wt(const char *path)
+{
+	struct text_stat stats;
+	unsigned search_only = CONVERT_STAT_BITS_BIN;
+	int fd;
+	memset(&stats, 0, sizeof(stats));
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return 0;
+	for (;;) {
+		char buf[STREAM_BUFFER_SIZE];
+		ssize_t readlen = read(fd, buf, sizeof(buf));
+		if (readlen < 0)
+			break;
+		if (!readlen)
+			break;
+		gather_stats_partly(buf, (unsigned long)readlen, &stats, search_only);
+		if (stats.stat_bits & search_only)
+			break; /* We found what we have been searching for */
+	}
+	close(fd);
+	convert_nonprintable(&stats);
+	return stats.stat_bits;
+}
+
 const char *get_cached_convert_stats_ascii(const char *path)
 {
-	const char *ret;
-	unsigned long sz;
-	void *data = read_blob_data_from_cache(path, &sz);
-	ret = gather_convert_stats_ascii(data, sz);
-	free(data);
-	return ret;
+	unsigned convert_stats;
+	unsigned search_only = CONVERT_STAT_BITS_BIN;
+	convert_stats = get_convert_stats_sha1(get_sha1_from_cache(path),
+					       search_only);
+	return convert_stats_ascii(convert_stats);
 }
 
 const char *get_wt_convert_stats_ascii(const char *path)
 {
-	const char *ret = "";
-	struct strbuf sb = STRBUF_INIT;
-	if (strbuf_read_file(&sb, path, 0) >= 0)
-		ret = gather_convert_stats_ascii(sb.buf, sb.len);
-	strbuf_release(&sb);
-	return ret;
+	unsigned convert_stats;
+	convert_stats = get_convert_stats_wt(path);
+	return convert_stats_ascii(convert_stats);
 }
 
 static int text_eol_is_crlf(void)
@@ -218,16 +271,10 @@ static void check_safe_crlf(const char *path, enum crlf_action crlf_action,
 
 static int has_cr_in_index(const char *path)
 {
-	unsigned long sz;
-	void *data;
-	int has_cr;
-
-	data = read_blob_data_from_cache(path, &sz);
-	if (!data)
-		return 0;
-	has_cr = memchr(data, '\r', sz) != NULL;
-	free(data);
-	return has_cr;
+	unsigned convert_stats;
+	convert_stats = get_convert_stats_sha1(get_sha1_from_cache(path),
+					       CONVERT_STAT_BITS_ANY_CR);
+	return convert_stats & CONVERT_STAT_BITS_ANY_CR;
 }
 
 static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
@@ -239,13 +286,13 @@ static int will_convert_lf_to_crlf(size_t len, struct text_stat *stats,
 	if (!stats->lonelf)
 		return 0;
 
-	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_CRLF) {
 		/* If we have any CR or CRLF line endings, we do not touch it */
 		/* This is the new safer autocrlf-handling */
 		if (stats->lonecr || stats->crlf)
 			return 0;
 
-		if (convert_is_binary(len, stats))
+		if (stats->stat_bits & CONVERT_STAT_BITS_BIN)
 			return 0;
 	}
 	return 1;
@@ -258,7 +305,8 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 {
 	struct text_stat stats;
 	char *dst;
-	int convert_crlf_into_lf;
+	int has_crlf_to_convert;
+	unsigned search_only = 0;
 
 	if (crlf_action == CRLF_BINARY ||
 	    (src && !len))
@@ -271,12 +319,16 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	if (!buf && !src)
 		return 1;
 
-	gather_stats(src, len, &stats);
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF)
+		search_only = CONVERT_STAT_BITS_BIN;
+
+	gather_all_stats(src, len, &stats, search_only);
+
 	/* Optimization: No CRLF? Nothing to convert, regardless. */
-	convert_crlf_into_lf = !!stats.crlf;
+	has_crlf_to_convert = !!stats.crlf;
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
-		if (convert_is_binary(len, &stats))
+		if (stats.stat_bits & CONVERT_STAT_BITS_BIN)
 			return 0;
 		/*
 		 * If the file in the index has any CR in it, do not
@@ -285,25 +337,36 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		 * cherry-pick.
 		 */
 		if ((checksafe != SAFE_CRLF_RENORMALIZE) && has_cr_in_index(path))
-			convert_crlf_into_lf = 0;
+			has_crlf_to_convert = 0;
 	}
 	if ((checksafe == SAFE_CRLF_WARN ||
 	    (checksafe == SAFE_CRLF_FAIL)) && len) {
 		struct text_stat new_stats;
 		memcpy(&new_stats, &stats, sizeof(new_stats));
 		/* simulate "git add" */
-		if (convert_crlf_into_lf) {
+		if (has_crlf_to_convert) {
 			new_stats.lonelf += new_stats.crlf;
 			new_stats.crlf = 0;
+			/* all crlf, if any, are gone. Update the bits */
+			new_stats.stat_bits = stats.stat_bits & CONVERT_STAT_BITS_BIN;
+			if (new_stats.lonelf)
+				new_stats.stat_bits |= CONVERT_STAT_BITS_TXT_LF;
+			if (new_stats.lonecr)
+				new_stats.stat_bits |= CONVERT_STAT_BITS_ANY_CR;
 		}
 		/* simulate "git checkout" */
 		if (will_convert_lf_to_crlf(len, &new_stats, crlf_action)) {
 			new_stats.crlf += new_stats.lonelf;
 			new_stats.lonelf = 0;
+			new_stats.stat_bits = stats.stat_bits & CONVERT_STAT_BITS_BIN;
+			if (new_stats.crlf)
+				new_stats.stat_bits |= CONVERT_STAT_BITS_TXT_CRLF | CONVERT_STAT_BITS_ANY_CR;
+			if (new_stats.lonecr)
+				new_stats.stat_bits |= CONVERT_STAT_BITS_ANY_CR;
 		}
 		check_safe_crlf(path, crlf_action, &stats, &new_stats, checksafe);
 	}
-	if (!convert_crlf_into_lf)
+	if (!has_crlf_to_convert)
 		return 0;
 
 	/*
@@ -344,11 +407,15 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 {
 	char *to_free = NULL;
 	struct text_stat stats;
+	unsigned search_only = 0;
 
 	if (!len || output_eol(crlf_action) != EOL_CRLF)
 		return 0;
 
-	gather_stats(src, len, &stats);
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_CRLF)
+		search_only = CONVERT_STAT_BITS_ANY_CR | CONVERT_STAT_BITS_BIN;
+
+	gather_all_stats(src, len, &stats, search_only);
 	if (!will_convert_lf_to_crlf(len, &stats, crlf_action))
 		return 0;
 

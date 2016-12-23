@@ -2287,13 +2287,27 @@ int index_name_is_other(const struct index_state *istate, const char *name,
 
 void *read_blob_data_from_index(struct index_state *istate, const char *path, unsigned long *size)
 {
-	int pos, len;
+	const unsigned char *sha1;
 	unsigned long sz;
 	enum object_type type;
 	void *data;
 
-	len = strlen(path);
-	pos = index_name_pos(istate, path, len);
+	sha1 = get_sha1_from_index(istate, path);
+	if (!sha1)
+		return NULL;
+	data = read_sha1_file(sha1, &type, &sz);
+	if (!data || type != OBJ_BLOB) {
+		free(data);
+		return NULL;
+	}
+	if (size)
+		*size = sz;
+	return data;
+}
+
+const unsigned char *get_sha1_from_index(struct index_state *istate, const char *path)
+{
+	int pos = index_name_pos(istate, path, strlen(path));
 	if (pos < 0) {
 		/*
 		 * We might be in the middle of a merge, in which
@@ -2309,14 +2323,7 @@ void *read_blob_data_from_index(struct index_state *istate, const char *path, un
 	}
 	if (pos < 0)
 		return NULL;
-	data = read_sha1_file(istate->cache[pos]->oid.hash, &type, &sz);
-	if (!data || type != OBJ_BLOB) {
-		free(data);
-		return NULL;
-	}
-	if (size)
-		*size = sz;
-	return data;
+	return istate->cache[pos]->oid.hash;
 }
 
 void stat_validity_clear(struct stat_validity *sv)
