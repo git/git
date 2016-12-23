@@ -1353,9 +1353,11 @@ static wchar_t *make_environment_block(char **deltaenv)
 	for (j = 0; j < nr_wenv; j++) {
 		const wchar_t *v_j = my_wenviron[j];
 		wchar_t *v_j_eq = wcschr(v_j, L'=');
+		int len_j_eq, len_j;
+
 		if (!v_j_eq)
 			continue; /* should not happen */
-		int len_j_eq = v_j_eq + 1 - v_j; /* length(v_j) including '=' */
+		len_j_eq = v_j_eq + 1 - v_j; /* length(v_j) including '=' */
 
 		/* lookup v_j in list of to-delete vars */
 		for (k_del = 0; k_del < nr_delta_del; k_del++) {
@@ -1370,7 +1372,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 		}
 
 		/* item is unique, add it to results. */
-		int len_j = wcslen(v_j);
+		len_j = wcslen(v_j);
 		memcpy(w_ins, v_j, len_j * sizeof(wchar_t));
 		w_ins += len_j + 1;
 
