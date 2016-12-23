@@ -764,8 +764,9 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 #define PARENT2		(1u<<17)
 #define STALE		(1u<<18)
 #define RESULT		(1u<<19)
+#define FPCHAIN		(1u<<20)
 
-static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
+static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT | FPCHAIN);
 
 static int queue_has_nonstale(struct prio_queue *queue)
 {
@@ -801,6 +802,7 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n, struc
 		struct commit *commit = prio_queue_get(&queue);
 		struct commit_list *parents;
 		int flags;
+		int nth_parent = 0;
 
 		flags = commit->object.flags & (PARENT1 | PARENT2 | STALE);
 		if (flags == (PARENT1 | PARENT2)) {
@@ -815,11 +817,14 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n, struc
 		while (parents) {
 			struct commit *p = parents->item;
 			parents = parents->next;
+			nth_parent++;
 			if ((p->object.flags & flags) == flags)
 				continue;
 			if (parse_commit(p))
 				return NULL;
 			p->object.flags |= flags;
+			if (nth_parent == 1)
+				p->object.flags |= FPCHAIN;
 			prio_queue_put(&queue, p);
 		}
 	}
@@ -887,11 +892,11 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 	return ret;
 }
 
-static int remove_redundant(struct commit **array, int cnt)
+static void mark_redundant(struct commit **array, int cnt)
 {
 	/*
 	 * Some commit in the array may be an ancestor of
-	 * another commit.  Move such commit to the end of
+	 * another commit.  Mark such commit as STALE in
 	 * the array, and return the number of commits that
 	 * are independent from each other.
 	 */
@@ -929,35 +934,42 @@ static int remove_redundant(struct commit **array, int cnt)
 		free_commit_list(common);
 	}
 
-	/* Now collect the result */
-	COPY_ARRAY(work, array, cnt);
-	for (i = filled = 0; i < cnt; i++)
-		if (!redundant[i])
-			array[filled++] = work[i];
-	for (j = filled, i = 0; i < cnt; i++)
+	/* Mark the result */
+	for (i = 0; i < cnt; i++)
 		if (redundant[i])
-			array[j++] = work[i];
+			array[i]->object.flags |= STALE;
+		else
+			array[i]->object.flags &= ~STALE;
+
 	free(work);
 	free(redundant);
 	free(filled_index);
-	return filled;
 }
 
-static struct commit_list *get_merge_bases_many_0(struct commit *one,
-						  int n,
-						  struct commit **twos,
-						  int cleanup)
+struct commit_list *get_merge_bases_opt(struct commit *one,
+					int n, struct commit **twos,
+					unsigned flags)
 {
 	struct commit_list *list;
 	struct commit **rslt;
 	struct commit_list *result;
 	int cnt, i;
+	int cleanup = !!(flags & MB_POSTCLEAN);
+	int fpchain = !!(flags & MB_FPCHAIN);
+	char *on_fpchain;
 
 	result = merge_bases_many(one, n, twos);
-	for (i = 0; i < n; i++) {
-		if (one == twos[i])
-			return result;
-	}
+
+	/*
+	 * The fast-path of 'one' being the merge-base; there is no
+	 * need to clean the object flags in this case.
+	 */
+	if (result && !result->next &&
+	    result->item == one &&
+	    !(one->object.flags & RESULT))
+		return result;
+
+	/* If we didn't get any, or there is only one, we are done */
 	if (!result || !result->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
@@ -969,18 +981,27 @@ static struct commit_list *get_merge_bases_many_0(struct commit *one,
 	/* There are more than one */
 	cnt = commit_list_count(result);
 	rslt = xcalloc(cnt, sizeof(*rslt));
+	on_fpchain = xcalloc(cnt, sizeof(*on_fpchain));
 	for (list = result, i = 0; list; list = list->next)
 		rslt[i++] = list->item;
 	free_commit_list(result);
 
+	for (i = 0; i < cnt; i++)
+		on_fpchain[i] = !!(rslt[i]->object.flags & FPCHAIN);
+
 	clear_commit_marks(one, all_flags);
 	clear_commit_marks_many(n, twos, all_flags);
 
-	cnt = remove_redundant(rslt, cnt);
+	mark_redundant(rslt, cnt);
 	result = NULL;
 	for (i = 0; i < cnt; i++)
-		commit_list_insert_by_date(rslt[i], &result);
+		if (!(rslt[i]->object.flags & STALE) &&
+		    (!fpchain || on_fpchain[i]))
+			commit_list_insert_by_date(rslt[i], &result);
+		else
+			rslt[i]->object.flags &= ~STALE;
 	free(rslt);
+	free(on_fpchain);
 	return result;
 }
 
@@ -988,19 +1009,12 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 					 int n,
 					 struct commit **twos)
 {
-	return get_merge_bases_many_0(one, n, twos, 1);
-}
-
-struct commit_list *get_merge_bases_many_dirty(struct commit *one,
-					       int n,
-					       struct commit **twos)
-{
-	return get_merge_bases_many_0(one, n, twos, 0);
+	return get_merge_bases_opt(one, n, twos, 0);
 }
 
 struct commit_list *get_merge_bases(struct commit *one, struct commit *two)
 {
-	return get_merge_bases_many_0(one, 1, &two, 1);
+	return get_merge_bases_opt(one, 1, &two, MB_POSTCLEAN);
 }
 
 /*
@@ -1078,9 +1092,12 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 			p->item->object.flags &= ~STALE;
 		}
 	}
-	num_head = remove_redundant(array, num_head);
+	mark_redundant(array, num_head);
 	for (i = 0; i < num_head; i++)
-		tail = &commit_list_insert(array[i], tail)->next;
+		if (!(array[i]->object.flags & STALE))
+			tail = &commit_list_insert(array[i], tail)->next;
+		else
+			array[i]->object.flags &= ~STALE;
 	return result;
 }
 

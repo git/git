@@ -89,6 +89,8 @@ enum ff_type {
 
 static enum ff_type fast_forward = FF_ALLOW;
 
+static int fp_base_only;
+
 static int option_parse_message(const struct option *opt,
 				const char *arg, int unset)
 {
@@ -211,6 +213,8 @@ static struct option builtin_merge_options[] = {
 	{ OPTION_SET_INT, 0, "ff-only", &fast_forward, NULL,
 		N_("abort if fast-forward is not possible"),
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, FF_ONLY },
+	OPT_BOOL(0, "fp-base-only", &fp_base_only,
+		 N_("use only merge bases on first-parent chain")),
 	OPT_RERERE_AUTOUPDATE(&allow_rerere_auto),
 	OPT_BOOL(0, "verify-signatures", &verify_signatures,
 		N_("verify that the named commit has a valid GPG signature")),
@@ -1324,9 +1328,14 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (!remoteheads)
 		; /* already up-to-date */
-	else if (!remoteheads->next)
-		common = get_merge_bases(head_commit, remoteheads->item);
-	else {
+	else if (!remoteheads->next) {
+		unsigned flags = MB_POSTCLEAN;
+		if (fp_base_only)
+			flags |= MB_FPCHAIN;
+		common = get_merge_bases_opt(head_commit,
+					     1, &remoteheads->item,
+					     flags);
+	} else {
 		struct commit_list *list = remoteheads;
 		commit_list_insert(head_commit, &list);
 		common = get_octopus_merge_bases(list);
