@@ -38,11 +38,10 @@ create <file>::
 	'git-rev-list-args' arguments to define the bundle contents.
 
 verify <file>::
-	Used to check that a bundle file is valid and will apply
-	cleanly to the current repository.  This includes checks on the
-	bundle format itself as well as checking that the prerequisite
-	commits exist and are fully linked in the current repository.
-	'git bundle' prints a list of missing commits, if any, and exits
+	Verifies that the given 'file' has a valid-looking bundle
+	header, and that your repository has all prerequisite
+	objects necessary to unpack the file as a bundle.  The
+	command prints a list of missing commits, if any, and exits
 	with a non-zero status.
 
 list-heads <file>::

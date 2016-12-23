@@ -81,7 +81,8 @@ static struct ref *get_refs_from_bundle(struct transport *transport, int for_pus
 
 	if (data->fd > 0)
 		close(data->fd);
-	data->fd = read_bundle_header(transport->url, &data->header);
+	init_bundle_header(&data->header, transport->url);
+	data->fd = read_bundle_header(&data->header);
 	if (data->fd < 0)
 		die ("Could not read bundle '%s'.", transport->url);
 	for (i = 0; i < data->header.references.nr; i++) {
@@ -107,6 +108,7 @@ static int close_bundle(struct transport *transport)
 	struct bundle_transport_data *data = transport->data;
 	if (data->fd > 0)
 		close(data->fd);
+	release_bundle_header(&data->header);
 	free(data);
 	return 0;
 }
