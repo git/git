@@ -2430,6 +2430,15 @@ class P4Sync(Command, P4UserMap):
                     break
 
         path = wildcard_decode(path)
+        try:
+            path.decode('ascii')
+        except:
+            encoding = 'utf8'
+            if gitConfig('git-p4.pathEncoding'):
+                encoding = gitConfig('git-p4.pathEncoding')
+            path = path.decode(encoding, 'replace').encode('utf8', 'replace')
+            if self.verbose:
+                print 'Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, path)
         return path
 
     def splitFilesIntoBranches(self, commit):
@@ -2558,16 +2567,6 @@ class P4Sync(Command, P4UserMap):
             text = ''.join(contents)
             text = regexp.sub(r'$\1$', text)
             contents = [ text ]
-
-        try:
-            relPath.decode('ascii')
-        except:
-            encoding = 'utf8'
-            if gitConfig('git-p4.pathEncoding'):
-                encoding = gitConfig('git-p4.pathEncoding')
-            relPath = relPath.decode(encoding, 'replace').encode('utf8', 'replace')
-            if self.verbose:
-                print 'Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, relPath)
 
         if self.largeFileSystem:
             (git_mode, contents) = self.largeFileSystem.processContent(git_mode, relPath, contents)
