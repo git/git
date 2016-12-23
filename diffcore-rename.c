@@ -73,11 +73,10 @@ static struct diff_rename_src {
 } *rename_src;
 static int rename_src_nr, rename_src_alloc;
 
-static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
+static struct diff_rename_src *locate_rename_src(struct diff_filespec *one,
+						 int insert_ok)
 {
 	int first, last;
-	struct diff_filespec *one = p->one;
-	unsigned short score = p->score;
 
 	first = 0;
 	last = rename_src_nr;
@@ -94,15 +93,28 @@ static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
 		first = next+1;
 	}
 
+	if (!insert_ok)
+		return NULL;
+
 	/* insert to make it at "first" */
 	ALLOC_GROW(rename_src, rename_src_nr + 1, rename_src_alloc);
 	rename_src_nr++;
 	if (first < rename_src_nr)
 		memmove(rename_src + first + 1, rename_src + first,
 			(rename_src_nr - first - 1) * sizeof(*rename_src));
-	rename_src[first].p = p;
-	rename_src[first].score = score;
 	return &(rename_src[first]);
+}
+
+static struct diff_rename_src *register_rename_src(struct diff_filepair *p)
+{
+	struct diff_filespec *one = p->one;
+	struct diff_rename_src *src;
+
+	src = locate_rename_src(one, 1);
+
+	src->p = p;
+	src->score = p->score;
+	return src;
 }
 
 static int basename_same(struct diff_filespec *src, struct diff_filespec *dst)
@@ -584,9 +596,12 @@ void diffcore_rename(struct diff_options *options)
 	free(mx);
 
  cleanup:
-	/* At this point, we have found some renames and copies and they
+	/*
+	 * At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
+	diff_debug_queue("begin turning a/d into renames", q);
+
 	DIFF_QUEUE_CLEAR(&outq);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -599,8 +614,9 @@ void diffcore_rename(struct diff_options *options)
 			/*
 			 * Creation
 			 *
-			 * We would output this create record if it has
-			 * not been turned into a rename/copy already.
+			 * Did the content come from somewhere else?
+			 * If so, show that as a rename.  Otherwise
+			 * show it as a creation (i.e. as-is).
 			 */
 			struct diff_rename_dst *dst = locate_rename_dst(p->two);
 			if (dst && dst->pair) {
@@ -658,11 +674,10 @@ void diffcore_rename(struct diff_options *options)
 		if (pair_to_free)
 			diff_free_filepair(pair_to_free);
 	}
-	diff_debug_queue("done copying original", &outq);
 
 	free(q->queue);
 	*q = outq;
-	diff_debug_queue("done collapsing", q);
+	diff_debug_queue("end turning a/d into renames", q);
 
 	for (i = 0; i < rename_dst_nr; i++)
 		free_filespec(rename_dst[i].two);
