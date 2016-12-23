@@ -400,11 +400,6 @@ static xdchange_t *xdl_add_change(xdchange_t *xscr, long i1, long i2, long chg1,
 }
 
 
-static int is_blank_line(xrecord_t *rec, long flags)
-{
-	return xdl_blankline(rec->ptr, rec->size, flags);
-}
-
 static int recs_match(xrecord_t *rec1, xrecord_t *rec2, long flags)
 {
 	return (rec1->ha == rec2->ha &&
@@ -821,7 +816,6 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 	struct xdlgroup g, go;
 	long earliest_end, end_matching_other;
 	long groupsize;
-	unsigned int blank_lines;
 
 	group_init(xdf, &g);
 	group_init(xdfo, &go);
@@ -846,13 +840,6 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			 */
 			end_matching_other = -1;
 
-			/*
-			 * Boolean value that records whether there are any blank
-			 * lines that could be made to be the last line of this
-			 * group.
-			 */
-			blank_lines = 0;
-
 			/* Shift the group backward as much as possible: */
 			while (!group_slide_up(xdf, &g, flags))
 				if (group_previous(xdfo, &go))
@@ -869,11 +856,6 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 
 			/* Now shift the group forward as far as possible: */
 			while (1) {
-				if (!blank_lines)
-					blank_lines = is_blank_line(
-							xdf->recs[g.end - 1],
-							flags);
-
 				if (group_slide_down(xdf, &g, flags))
 					break;
 				if (group_next(xdfo, &go))
@@ -905,21 +887,6 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 					xdl_bug("match disappeared");
 				if (group_previous(xdfo, &go))
 					xdl_bug("group sync broken sliding to match");
-			}
-		} else if ((flags & XDF_COMPACTION_HEURISTIC) && blank_lines) {
-			/*
-			 * Compaction heuristic: if it is possible to shift the
-			 * group to make its bottom line a blank line, do so.
-			 *
-			 * As we already shifted the group forward as far as
-			 * possible in the earlier loop, we only need to handle
-			 * backward shifts, not forward ones.
-			 */
-			while (!is_blank_line(xdf->recs[g.end - 1], flags)) {
-				if (group_slide_up(xdf, &g, flags))
-					xdl_bug("blank line disappeared");
-				if (group_previous(xdfo, &go))
-					xdl_bug("group sync broken sliding to blank line");
 			}
 		} else if (flags & XDF_INDENT_HEURISTIC) {
 			/*
