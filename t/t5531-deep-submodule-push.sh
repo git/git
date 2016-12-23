@@ -458,4 +458,25 @@ test_expect_success 'push --dry-run does not recursively update submodules' '
 	test_cmp expected_submodule actual_submodule
 '
 
+test_expect_success 'push --dry-run does not recursively update submodules' '
+	git -C work push --dry-run --recurse-submodules=only ../pub.git master &&
+
+	git -C submodule.git rev-parse master >actual_submodule &&
+	git -C pub.git rev-parse master >actual_pub &&
+	test_cmp expected_pub actual_pub &&
+	test_cmp expected_submodule actual_submodule
+'
+
+test_expect_success 'push only unpushed submodules recursively' '
+	git -C work/gar/bage rev-parse master >expected_submodule &&
+	git -C pub.git rev-parse master >expected_pub &&
+
+	git -C work push --recurse-submodules=only ../pub.git master &&
+
+	git -C submodule.git rev-parse master >actual_submodule &&
+	git -C pub.git rev-parse master >actual_pub &&
+	test_cmp expected_submodule actual_submodule &&
+	test_cmp expected_pub actual_pub
+'
+
 test_done
