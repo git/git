@@ -794,14 +794,13 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 			ssh = get_ssh_command();
 			if (ssh) {
-				char* split_ssh;
-				const char** ssh_argv;
+				char *split_ssh = xstrdup(ssh);
+				const char **ssh_argv;
 
-				split_ssh = xstrdup(ssh);
-				if (split_cmdline(split_ssh, &ssh_argv) >= 1) {
+				if (split_cmdline(split_ssh, &ssh_argv))
 					ssh_argv0 = xstrdup(ssh_argv[0]);
-				}
 				free(split_ssh);
+				free((void *)ssh_argv);
 			} else {
 				/*
 				 * GIT_SSH is the no-shell version of
@@ -818,9 +817,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 			}
 
 			if (ssh_argv0) {
-				const char *base;
-
-				base = basename(ssh_argv0);
+				const char *base = basename(ssh_argv0);
 
 				tortoiseplink = !strcasecmp(base, "tortoiseplink") ||
 					!strcasecmp(base, "tortoiseplink.exe");
