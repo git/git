@@ -1320,7 +1320,9 @@ void (*report_garbage)(unsigned seen_bits, const char *path);
 static void report_helper(const struct string_list *list,
 			  int seen_bits, int first, int last)
 {
-	if (seen_bits == (PACKDIR_FILE_PACK|PACKDIR_FILE_IDX))
+	static const int pack_and_index = PACKDIR_FILE_PACK|PACKDIR_FILE_IDX;
+
+	if ((seen_bits & pack_and_index) == pack_and_index)
 		return;
 
 	for (; first < last; first++)
@@ -1354,9 +1356,13 @@ static void report_pack_garbage(struct string_list *list)
 			first = i;
 		}
 		if (!strcmp(path + baselen, "pack"))
-			seen_bits |= 1;
+			seen_bits |= PACKDIR_FILE_PACK;
 		else if (!strcmp(path + baselen, "idx"))
-			seen_bits |= 2;
+			seen_bits |= PACKDIR_FILE_IDX;
+		else if (!strcmp(path + baselen, "bitmap"))
+			seen_bits |= PACKDIR_FILE_BITMAP;
+		else if (!strcmp(path + baselen, "keep"))
+			seen_bits |= PACKDIR_FILE_KEEP;
 	}
 	report_helper(list, seen_bits, first, list->nr);
 }
