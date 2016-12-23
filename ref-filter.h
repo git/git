@@ -116,4 +116,7 @@ char *get_head_description(void);
 /*  Set up translated strings in the output. */
 void setup_ref_filter_porcelain_msg(void);
 
+void pretty_print_ref(const char *name, const unsigned char *sha1,
+		const char *format, unsigned kind);
+
 #endif /*  REF_FILTER_H  */

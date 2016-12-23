@@ -871,6 +871,22 @@ test_expect_success GPG 'verifying a forged tag should fail' '
 	test_must_fail git tag -v forged-tag
 '
 
+test_expect_success 'verifying a proper tag with --format pass and format accordingly' '
+	cat >expect <<-\EOF &&
+	tagname : signed-tag
+	EOF
+	git tag -v --format="tagname : %(tag)" "signed-tag" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'verifying a forged tag with --format fail and format accordingly' '
+	cat >expect <<-\EOF &&
+	tagname : forged-tag
+	EOF
+	test_must_fail git tag -v --format="tagname : %(tag)" "forged-tag" >actual &&
+	test_cmp expect actual
+'
+
 # blank and empty messages for signed tags:
 
 get_tag_header empty-signed-tag $commit commit $time >expect
