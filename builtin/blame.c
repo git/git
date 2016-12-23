@@ -2762,12 +2762,13 @@ parse_done:
 		argv[argc - 1] = "--";
 
 		setup_work_tree();
-		if (!file_exists(path))
-			die_errno("cannot stat path '%s'", path);
 	}
 
 	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
+	if (!revs.pending.nr && !file_exists(path))
+		die_errno("cannot stat path '%s'", path);
+
 	memset(&sb, 0, sizeof(sb));
 
 	sb.revs = &revs;
