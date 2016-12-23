@@ -691,6 +691,10 @@ static void invalidate_directory(struct untracked_cache *uc,
 		dir->dirs[i]->recurse = 0;
 }
 
+/* Flags for add_excludes() */
+#define EXCLUDE_CHECK_INDEX (1<<0)
+#define EXCLUDE_NOFOLLOW (1<<1)
+
 /*
  * Given a file with name "fname", read it (either from disk, or from
  * the index if "check_index" is non-zero), parse it and store the
@@ -701,15 +705,20 @@ static void invalidate_directory(struct untracked_cache *uc,
  * ss_valid is non-zero, "ss" must contain good value as input.
  */
 static int add_excludes(const char *fname, const char *base, int baselen,
-			struct exclude_list *el, int check_index,
+			struct exclude_list *el, unsigned flags,
 			struct sha1_stat *sha1_stat)
 {
+	int check_index = !!(flags & EXCLUDE_CHECK_INDEX);
 	struct stat st;
 	int fd, i, lineno = 1;
 	size_t size = 0;
 	char *buf, *entry;
 
-	fd = open(fname, O_RDONLY);
+	if (flags & EXCLUDE_NOFOLLOW)
+		fd = open_nofollow(fname, O_RDONLY);
+	else
+		fd = open(fname, O_RDONLY);
+
 	if (fd < 0 || fstat(fd, &st) < 0) {
 		if (errno != ENOENT)
 			warn_on_inaccessible(fname);
@@ -787,9 +796,9 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 
 int add_excludes_from_file_to_list(const char *fname, const char *base,
 				   int baselen, struct exclude_list *el,
-				   int check_index)
+				   unsigned flags)
 {
-	return add_excludes(fname, base, baselen, el, check_index, NULL);
+	return add_excludes(fname, base, baselen, el, flags, NULL);
 }
 
 struct exclude_list *add_exclude_list(struct dir_struct *dir,
@@ -1125,7 +1134,8 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 			strbuf_addbuf(&sb, &dir->basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			el->src = strbuf_detach(&sb, NULL);
-			add_excludes(el->src, el->src, stk->baselen, el, 1,
+			add_excludes(el->src, el->src, stk->baselen, el,
+				     EXCLUDE_CHECK_INDEX | EXCLUDE_NOFOLLOW,
 				     untracked ? &sha1_stat : NULL);
 		}
 		/*

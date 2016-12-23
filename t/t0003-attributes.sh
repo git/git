@@ -297,4 +297,35 @@ test_expect_success 'bare repository: test info/attributes' '
 	)
 '
 
+check_symlink () {
+	echo "$1: symlink: $2" >expect &&
+	git check-attr symlink "$1" >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success SYMLINKS 'set up attr file for symlink tests' '
+	echo "* symlink" >attr
+'
+
+test_expect_success SYMLINKS 'symlinks respected in core.attributesFile' '
+	test_when_finished "rm symlink" &&
+	ln -s attr symlink &&
+	test_config core.attributesFile "$(pwd)/symlink" &&
+	check_symlink file set
+'
+
+test_expect_success SYMLINKS 'symlinks respected in info/attributes' '
+	test_when_finished "rm .git/info/attributes" &&
+	ln -s ../../attr .git/info/attributes &&
+	check_symlink file set
+'
+
+test_expect_success SYMLINKS 'symlinks not respected in-tree' '
+	test_when_finished "rm .gitattributes" &&
+	ln -sf attr .gitattributes &&
+	mkdir subdir &&
+	ln -sf ../attr subdir/.gitattributes &&
+	check_symlink subdir/file unspecified
+'
+
 test_done
