@@ -702,6 +702,7 @@ extern CRITICAL_SECTION pinfo_cs;
 #if defined(_MSC_VER)
 
 int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env);
+extern int msc_main(int argc, const char **argv);
 
 #define main(c,v) dummy_decl_msc_main(void);				\
 int wmain(int my_argc,									\

@@ -3039,7 +3039,7 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	char **my_utf8_argv = NULL, **save = NULL;
 	char *buffer = NULL;
 	int maxlen;
-	int k, x;
+	int k, exit_status;
 
 #ifdef _DEBUG
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
@@ -3094,7 +3094,7 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 
 	/* invoke the real main() using our utf8 version of argv. */
-	int exit_status = msc_main(argc, my_utf8_argv);
+	exit_status = msc_main(argc, my_utf8_argv);
 
 	for (k = 0; k < argc; k++)
 		free(save[k]);
