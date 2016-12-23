@@ -894,26 +894,19 @@ static void write_pack_file(void)
 			written, nr_result);
 }
 
-static void setup_delta_attr_check(struct git_attr_check *check)
-{
-	static struct git_attr *attr_delta;
-
-	if (!attr_delta)
-		attr_delta = git_attr("delta");
-
-	check[0].attr = attr_delta;
-}
-
 static int no_try_delta(const char *path)
 {
-	struct git_attr_check check[1];
+	static struct git_attr_check *check;
+	int ret = 0;
+	struct git_attr_result result[1];
 
-	setup_delta_attr_check(check);
-	if (git_check_attr(path, ARRAY_SIZE(check), check))
-		return 0;
-	if (ATTR_FALSE(check->value))
-		return 1;
-	return 0;
+	git_attr_check_initl(&check, "delta", NULL);
+
+	if (!git_check_attr(path, check, result)) {
+		if (ATTR_FALSE(result[0].value))
+			ret = 1;
+	}
+	return ret;
 }
 
 /*
