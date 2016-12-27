@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2016, #07; Thu, 22)
-X-master-at: 1d1bdafd64266e5ee3bd46c6965228f32e4022ea
-X-next-at: 1ede815b8d1562f46b7aa5d55af084a3cad2ecf8
+Subject: What's cooking in git.git (Dec 2016, #08; Tue, 27)
+X-master-at: e05806da9ec4aff8adfed142ab2a2b3b02e33c8c
+X-next-at: c69c2f50cfc0dcd4bcd014c7fd56e344a7c5522f
 
-What's cooking in git.git (Dec 2016, #07; Thu, 22)
+What's cooking in git.git (Dec 2016, #08; Tue, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,258 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
+This will be the last issue of the "What's cooking" report this
+year.  I will be travelling and expect to be slow to respond for a
+week or so.  Hence there is no "short-term" summary; the topics
+marked as "Will merge to 'master'" may stay until the second week of
+next month.
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bw/transport-protocol-policy (2016-12-15) 6 commits
+  (merged to 'next' on 2016-12-19 at 166168205c)
+ + http: respect protocol.*.allow=user for http-alternates
+ + transport: add from_user parameter to is_transport_allowed
+ + http: create function to get curl allowed protocols
+ + transport: add protocol policy config option
+ + http: always warn if libcurl version is too old
+ + lib-proto-disable: variable name fix
+
+ Finer-grained control of what protocols are allowed for transports
+ during clone/fetch/push have been enabled via a new configuration
+ mechanism.
+
+
+* cp/merge-continue (2016-12-15) 4 commits
+  (merged to 'next' on 2016-12-19 at 8ba0094f45)
+ + merge: mark usage error strings for translation
+ + merge: ensure '--abort' option takes no arguments
+ + completion: add --continue option for merge
+ + merge: add '--continue' option as a synonym for 'git commit'
+
+ "git merge --continue" has been added as a synonym to "git commit"
+ to conclude a merge that has stopped due to conflicts.
+
+
+* gv/p4-multi-path-commit-fix (2016-12-19) 1 commit
+  (merged to 'next' on 2016-12-21 at f7ba714387)
+ + git-p4: fix multi-path changelist empty commits
+
+ "git p4" that tracks multile p4 paths imported a single changelist
+ that touches files in these multiple paths as one commit, followed
+ by many empty commits.  This has been fixed.
+
+
+* jc/lock-report-on-error (2016-12-27) 1 commit
+  (merged to 'next' on 2016-12-27 at ab2ae230f4)
+ + lockfile: move REPORT_ON_ERROR bit elsewhere
+
+ Hotfix for a topic already merged to 'master'.
+
+
+* jc/push-default-explicit (2016-10-31) 2 commits
+  (merged to 'next' on 2016-12-05 at d63f3777af)
+ + push: test pushing ambiguously named branches
+ + push: do not use potentially ambiguous default refspec
+
+ Originally merged to 'next' on 2016-11-01
+
+ A lazy "git push" without refspec did not internally use a fully
+ specified refspec to perform 'current', 'simple', or 'upstream'
+ push, causing unnecessary "ambiguous ref" errors.
+
+
+* jk/difftool-in-subdir (2016-12-11) 4 commits
+  (merged to 'next' on 2016-12-21 at c1056e014b)
+ + difftool: rename variables for consistency
+ + difftool: chdir as early as possible
+ + difftool: sanitize $workdir as early as possible
+ + difftool: fix dir-diff index creation when in a subdirectory
+
+ Even though an fix was attempted in Git 2.9.3 days, but running
+ "git difftool --dir-diff" from a subdirectory never worked. This
+ has been fixed.
+
+
+* js/mingw-isatty (2016-12-22) 3 commits
+  (merged to 'next' on 2016-12-22 at 5be6c1a083)
+ + mingw: replace isatty() hack
+ + mingw: fix colourization on Cygwin pseudo terminals
+ + mingw: adjust is_console() to work with stdin
+
+ Update the isatty() emulation for Windows by updating the previous
+ hack that depended on internals of (older) MSVC runtime.
+
+
+* ld/p4-compare-dir-vs-symlink (2016-12-18) 1 commit
+  (merged to 'next' on 2016-12-20 at f58fed9ef8)
+ + git-p4: avoid crash adding symlinked directory
+
+ "git p4" misbehaved when swapping a directory and a symbolic link.
+
+
+* ls/filter-process (2016-12-18) 2 commits
+  (merged to 'next' on 2016-12-19 at 5ed29656db)
+ + t0021: fix flaky test
+  (merged to 'next' on 2016-12-12 at 8ed1f9eb02)
+ + docs: warn about possible '=' in clean/smudge filter process values
+
+ Doc update.
+
+
+* ls/p4-lfs (2016-12-20) 1 commit
+  (merged to 'next' on 2016-12-22 at 0759f94c65)
+ + git-p4: add diff/merge properties to .gitattributes for GitLFS files
+
+ Update GitLFS integration with "git p4".
+
+
+* lt/shortlog-by-committer (2016-12-20) 3 commits
+  (merged to 'next' on 2016-12-21 at c72e6e7f76)
+ + t4201: make tests work with and without the MINGW prerequiste
+  (merged to 'next' on 2016-12-19 at 555976fc0a)
+ + shortlog: test and document --committer option
+ + shortlog: group by committer information
+
+ "git shortlog" learned "--committer" option to group commits by
+ committer, instead of author.
+
+
+* mk/mingw-winansi-ttyname-termination-fix (2016-12-20) 1 commit
+  (merged to 'next' on 2016-12-21 at 1e8e994605)
+ + mingw: consider that UNICODE_STRING::Length counts bytes
+
+ A potential but unlikely buffer overflow in Windows port has been
+ fixed.
+
+
+* sb/submodule-config-cleanup (2016-11-22) 3 commits
+  (merged to 'next' on 2016-12-05 at 658b8764bf)
+ + submodule-config: clarify parsing of null_sha1 element
+ + submodule-config: rename commit_sha1 to treeish_name
+ + submodule config: inline config_from_{name, path}
+
+ Originally merged to 'next' on 2016-11-23
+
+ Minor code clean-up.
+
+
+* va/i18n-even-more (2016-12-20) 1 commit
+  (merged to 'next' on 2016-12-22 at 209eee0530)
+ + i18n: fix misconversion in shell scripts
+
+ Hotfix for a topic already merged to 'master'.
+
+
+* va/i18n-perl-scripts (2016-12-14) 16 commits
+  (merged to 'next' on 2016-12-19 at ec800aba9f)
+ + i18n: difftool: mark warnings for translation
+ + i18n: send-email: mark composing message for translation
+ + i18n: send-email: mark string with interpolation for translation
+ + i18n: send-email: mark warnings and errors for translation
+ + i18n: send-email: mark strings for translation
+ + i18n: add--interactive: mark status words for translation
+ + i18n: add--interactive: remove %patch_modes entries
+ + i18n: add--interactive: mark edit_hunk_manually message for translation
+ + i18n: add--interactive: i18n of help_patch_cmd
+ + i18n: add--interactive: mark patch prompt for translation
+ + i18n: add--interactive: mark plural strings
+ + i18n: clean.c: match string with git-add--interactive.perl
+ + i18n: add--interactive: mark strings with interpolation for translation
+ + i18n: add--interactive: mark simple here-documents for translation
+ + i18n: add--interactive: mark strings for translation
+ + Git.pm: add subroutines for commenting lines
+
+ Porcelain scripts written in Perl are getting internationalized.
+
+--------------------------------------------------
+[New Topics]
+
+* dt/disable-bitmap-in-auto-gc (2016-12-23) 2 commits
+ - repack: die on incremental + write-bitmap-index
+ - auto gc: don't write bitmaps for incremental repacks
+
+ It is natural that "git gc --auto" may not attempt to pack
+ everything into a single pack, and there is no point in warning
+ when the user has configured the system to use the pack bitmap,
+ leading to disabling further "gc".
+
+ Waiting for review to conclude.
+ cf. <20161224025730.vwz2k4af6z6piinl@sigill.intra.peff.net>
+ (GNUism must go.)
+
+
+* js/mingw-test-push-unc-path (2016-12-23) 1 commit
+ - mingw: add a regression test for pushing to UNC paths
+
+ "git push \\server\share\dir" has recently regressed and then
+ fixed.  A test has retroactively been added for this breakage.
+
+ Waiting for review to conclude.
+ cf. <6d69b529-a42c-9f93-f342-7c6c19170285@kdbg.org>
+ (check the final result.)
+
+
+* nd/log-graph-configurable-colors (2016-12-25) 1 commit
+ - log --graph: customize the graph lines with config log.graphColors
+
+ Some people feel the default set of colors used by "git log --graph"
+ rather limiting.  A mechanism to customize the set of colors has
+ been introduced.
+
+ Waiting for review to conclude.
+ cf. <xmqqzijjd34j.fsf@gitster.mtv.corp.google.com>
+ (Should it be cumulative?)
+
+
+* sb/submodule-rm-absorb (2016-12-27) 4 commits
+ - rm: absorb a submodules git dir before deletion
+ - submodule: rename and add flags to ok_to_remove_submodule
+ - submodule: modernize ok_to_remove_submodule to use argv_array
+ - submodule.h: add extern keyword to functions
+ (this branch uses sb/submodule-embed-gitdir.)
+
+ "git rm" used to refuse to remove a submodule when it has its own
+ git repository embedded in its working tree.  It learned to move
+ the repository away to $GIT_DIR/modules/ of the superproject
+ instead, and allow the submodule to be deleted (as long as there
+ will be no loss of local modifications, that is).
+
+
+* cc/split-index-config (2016-12-26) 21 commits
+ - Documentation/git-update-index: explain splitIndex.*
+ - Documentation/config: add splitIndex.sharedIndexExpire
+ - read-cache: use freshen_shared_index() in read_index_from()
+ - read-cache: refactor read_index_from()
+ - t1700: test shared index file expiration
+ - read-cache: unlink old sharedindex files
+ - config: add git_config_get_expiry() from gc.c
+ - read-cache: touch shared index files when used
+ - sha1_file: make check_and_freshen_file() non static
+ - Documentation/config: add splitIndex.maxPercentChange
+ - t1700: add tests for splitIndex.maxPercentChange
+ - read-cache: regenerate shared index if necessary
+ - config: add git_config_get_max_percent_split_change()
+ - Documentation/git-update-index: talk about core.splitIndex config var
+ - Documentation/config: add information for core.splitIndex
+ - t1700: add tests for core.splitIndex
+ - update-index: warn in case of split-index incoherency
+ - read-cache: add and then use tweak_split_index()
+ - split-index: add {add,remove}_split_index() functions
+ - config: add git_config_get_split_index()
+ - config: mark an error message up for translation
+
+ The experimental "split index" feature has gained a few
+ configuration variables to make it easier to use.
+
+ Waiting for review to conclude.
+ cf. <20161226102222.17150-1-chriscool@tuxfamily.org>
 
 --------------------------------------------------
 [Stalled]
@@ -143,15 +391,25 @@ of the repositories listed at
 [Cooking]
 
 * jc/abbrev-autoscale-config (2016-12-22) 1 commit
- - config.abbrev: document the new default that auto-scales
+  (merged to 'next' on 2016-12-27 at 631e4200e2)
+ + config.abbrev: document the new default that auto-scales
 
- Will merge to 'next'.
+ Recent update to the default abbreviation length that auto-scales
+ lacked documentation update, which has been corrected.
+
+ Will merge to 'master'.
 
 
-* jc/retire-compaction-heuristics (2016-12-22) 1 commit
- - diff: retire the original experimental "compaction" heuristics
+* jc/retire-compaction-heuristics (2016-12-23) 1 commit
+  (merged to 'next' on 2016-12-27 at c69c2f50cf)
+ + diff: retire "compaction" heuristics
 
- Will merge to 'next'.
+ "git diff" and its family had two experimental heuristics to shift
+ the contents of a hunk to make the patch easier to read.  One of
+ them turns out to be better than the other, so leave only the
+ "--indent-heuristic" option and remove the other one.
+
+ Will merge to 'master'.
 
 
 * bw/push-submodule-only (2016-12-20) 3 commits
@@ -163,61 +421,13 @@ of the repositories listed at
  push submodules out without pushing the top-level superproject.
 
 
-* mk/mingw-winansi-ttyname-termination-fix (2016-12-20) 1 commit
-  (merged to 'next' on 2016-12-21 at 1e8e994605)
- + mingw: consider that UNICODE_STRING::Length counts bytes
-
- A potential but unlikely buffer overflow in Windows port has been
- fixed.
-
- Will merge to 'master'.
-
-
 * nd/config-misc-fixes (2016-12-22) 3 commits
- - config.c: handle lock file in error case in git_config_rename_...
- - config.c: rename label unlock_and_out
- - config.c: handle error case for fstat() calls
+  (merged to 'next' on 2016-12-27 at 6be64a8671)
+ + config.c: handle lock file in error case in git_config_rename_...
+ + config.c: rename label unlock_and_out
+ + config.c: handle error case for fstat() calls
 
  Leakage of lockfiles in the config subsystem has been fixed.
-
- Will merge to 'next'.
-
-
-* va/i18n-even-more (2016-12-20) 1 commit
-  (merged to 'next' on 2016-12-22 at 209eee0530)
- + i18n: fix misconversion in shell scripts
-
- Will merge to 'master'.
-
-
-* gv/p4-multi-path-commit-fix (2016-12-19) 1 commit
-  (merged to 'next' on 2016-12-21 at f7ba714387)
- + git-p4: fix multi-path changelist empty commits
-
- "git p4" that tracks multile p4 paths imported a single changelist
- that touches files in these multiple paths as one commit, followed
- by many empty commits.  This has been fixed.
-
- Will merge to 'master'.
-
-
-* js/mingw-isatty (2016-12-22) 3 commits
-  (merged to 'next' on 2016-12-22 at 5be6c1a083)
- + mingw: replace isatty() hack
- + mingw: fix colourization on Cygwin pseudo terminals
- + mingw: adjust is_console() to work with stdin
-
- Update the isatty() emulation for Windows by updating the previous
- hack that depended on internals of (older) MSVC runtime.
-
- Will merge to 'master'.
-
-
-* ls/p4-lfs (2016-12-20) 1 commit
-  (merged to 'next' on 2016-12-22 at 0759f94c65)
- + git-p4: add diff/merge properties to .gitattributes for GitLFS files
-
- Update GitLFS integration with "git p4".
 
  Will merge to 'master'.
 
@@ -229,16 +439,18 @@ of the repositories listed at
  convert pathnames when the p4 used encoding different from the one
  used on the Git side.  This has been corrected.
 
- Will merge to 'next'.
+ Will be rerolled.
+ cf. <7E1C7387-4F37-423F-803D-3B5690B49D40@gmail.com>
 
 
 * mh/fast-import-notes-fix-new (2016-12-20) 1 commit
- - fast-import: properly fanout notes when tree is imported
+  (merged to 'next' on 2016-12-27 at b63805e6f6)
+ + fast-import: properly fanout notes when tree is imported
 
  "git fast-import" sometimes mishandled while rebalancing notes
  tree, which has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bw/pathspec-cleanup (2016-12-14) 16 commits
@@ -262,28 +474,6 @@ of the repositories listed at
  Code clean-up in the pathspec API.
 
  Waiting for the (hopefully) final round of review before 'next'.
-
-
-* cp/merge-continue (2016-12-15) 4 commits
-  (merged to 'next' on 2016-12-19 at 8ba0094f45)
- + merge: mark usage error strings for translation
- + merge: ensure '--abort' option takes no arguments
- + completion: add --continue option for merge
- + merge: add '--continue' option as a synonym for 'git commit'
-
- "git merge --continue" has been added as a synonym to "git commit"
- to conclude a merge that has stopped due to conflicts.
-
- Will merge to 'master'.
-
-
-* ld/p4-compare-dir-vs-symlink (2016-12-18) 1 commit
-  (merged to 'next' on 2016-12-20 at f58fed9ef8)
- + git-p4: avoid crash adding symlinked directory
-
- "git p4" misbehaved when swapping a directory and a symbolic link.
-
- Will merge to 'master'.
 
 
 * js/prepare-sequencer-more (2016-12-14) 34 commits
@@ -328,19 +518,6 @@ of the repositories listed at
  Waiting for review to conclude.
 
 
-* lt/shortlog-by-committer (2016-12-20) 3 commits
-  (merged to 'next' on 2016-12-21 at c72e6e7f76)
- + t4201: make tests work with and without the MINGW prerequiste
-  (merged to 'next' on 2016-12-19 at 555976fc0a)
- + shortlog: test and document --committer option
- + shortlog: group by committer information
-
- "git shortlog" learned "--committer" option to group commits by
- committer, instead of author.
-
- Will merge to 'master'.
-
-
 * bw/realpath-wo-chdir (2016-12-22) 5 commits
   (merged to 'next' on 2016-12-22 at fea8fa870f)
  + real_path: canonicalize directory separators in root parts
@@ -354,31 +531,6 @@ of the repositories listed at
  and call getcwd(3), but this obviously wouldn't be usable in a
  threaded environment.  Rewrite it to manually resolve relative
  paths including symbolic links in path components.
-
- Will merge to 'master'.
-
-
-* jk/difftool-in-subdir (2016-12-11) 4 commits
-  (merged to 'next' on 2016-12-21 at c1056e014b)
- + difftool: rename variables for consistency
- + difftool: chdir as early as possible
- + difftool: sanitize $workdir as early as possible
- + difftool: fix dir-diff index creation when in a subdirectory
-
- Even though an fix was attempted in Git 2.9.3 days, but running
- "git difftool --dir-diff" from a subdirectory never worked. This
- has been fixed.
-
- Will merge to 'master'.
-
-
-* ls/filter-process (2016-12-18) 2 commits
-  (merged to 'next' on 2016-12-19 at 5ed29656db)
- + t0021: fix flaky test
-  (merged to 'next' on 2016-12-12 at 8ed1f9eb02)
- + docs: warn about possible '=' in clean/smudge filter process values
-
- Doc update.
 
  Will merge to 'master'.
 
@@ -403,7 +555,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* sb/submodule-embed-gitdir (2016-12-12) 6 commits
+* sb/submodule-embed-gitdir (2016-12-27) 7 commits
+  (merged to 'next' on 2016-12-27 at 2b43c15479)
+ + worktree: initialize return value for submodule_uses_worktrees
   (merged to 'next' on 2016-12-21 at e6cdbcf013)
  + submodule: add absorb-git-dir function
  + move connect_work_tree_and_git_dir to dir.h
@@ -411,6 +565,7 @@ of the repositories listed at
  + test-lib-functions.sh: teach test_commit -C <dir>
  + submodule helper: support super prefix
  + submodule: use absolute path for computing relative path connecting
+ (this branch is used by sb/submodule-rm-absorb.)
 
  A new submodule helper "git submodule embedgitdirs" to make it
  easier to move embedded .git/ directory for submodules in a
@@ -451,7 +606,7 @@ of the repositories listed at
  An improvement counterproposal has failed.
  cf. <20161114194049.mktpsvgdhex2f4zv@sigill.intra.peff.net>
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * mm/push-social-engineering-attack-doc (2016-11-14) 1 commit
@@ -462,7 +617,7 @@ of the repositories listed at
 
  Doc update on fetching and pushing.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/compression-config (2016-11-15) 1 commit
@@ -476,7 +631,7 @@ of the repositories listed at
  Unify these so that all of them honor core.compression and
  pack.compression variables the same way.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * mm/gc-safety-doc (2016-11-16) 1 commit
@@ -487,16 +642,17 @@ of the repositories listed at
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* kn/ref-filter-branch-list (2016-12-08) 20 commits
+* kn/ref-filter-branch-list (2016-12-27) 20 commits
  - branch: implement '--format' option
  - branch: use ref-filter printing APIs
  - branch, tag: use porcelain output
  - ref-filter: allow porcelain to translate messages in the output
  - ref-filter: add an 'rstrip=<N>' option to atoms which deal with refnames
  - ref-filter: modify the 'lstrip=<N>' option to work with negative '<N>'
+ - ref-filter: Do not abruptly die when using the 'lstrip=<N>' option
  - ref-filter: rename the 'strip' option to 'lstrip'
  - ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
  - ref-filter: introduce refname_atom_parser()
@@ -510,29 +666,11 @@ of the repositories listed at
  - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
  - ref-filter: include reference to 'used_atom' within 'atom_value'
  - ref-filter: implement %(if), %(then), and %(else) atoms
- - for-each-ref: do not segv with %(HEAD) on an unborn branch
 
  The code to list branches in "git branch" has been consolidated
  with the more generic ref-filter API.
 
- Waiting for a reroll.
- cf. <CAOLa=ZREUWqdH_2HNn_JQcf4RW9k1dAN5BtwPN2HnzuDoUdkWw@mail.gmail.com>
-
-
-* bw/transport-protocol-policy (2016-12-15) 6 commits
-  (merged to 'next' on 2016-12-19 at 166168205c)
- + http: respect protocol.*.allow=user for http-alternates
- + transport: add from_user parameter to is_transport_allowed
- + http: create function to get curl allowed protocols
- + transport: add protocol policy config option
- + http: always warn if libcurl version is too old
- + lib-proto-disable: variable name fix
-
- Finer-grained control of what protocols are allowed for transports
- during clone/fetch/push have been enabled via a new configuration
- mechanism.
-
- Will merge to 'master'.
+ Waiting for review to conclude.
 
 
 * jt/fetch-no-redundant-tag-fetch-map (2016-11-11) 1 commit
@@ -544,45 +682,19 @@ of the repositories listed at
  Code cleanup to avoid using redundant refspecs while fetching with
  the --tags option.
 
- Will cook in 'next'.
-
-
-* sb/submodule-config-cleanup (2016-11-22) 3 commits
-  (merged to 'next' on 2016-12-05 at 658b8764bf)
- + submodule-config: clarify parsing of null_sha1 element
- + submodule-config: rename commit_sha1 to treeish_name
- + submodule config: inline config_from_{name, path}
-
- Originally merged to 'next' on 2016-11-23
-
- Minor code clean-up.
-
- Will merge to 'master'.
-
-
-* jc/push-default-explicit (2016-10-31) 2 commits
-  (merged to 'next' on 2016-12-05 at d63f3777af)
- + push: test pushing ambiguously named branches
- + push: do not use potentially ambiguous default refspec
-
- Originally merged to 'next' on 2016-11-01
-
- A lazy "git push" without refspec did not internally use a fully
- specified refspec to perform 'current', 'simple', or 'upstream'
- push, causing unnecessary "ambiguous ref" errors.
-
  Will merge to 'master'.
 
 
 * jc/git-open-cloexec (2016-11-02) 3 commits
- - sha1_file: stop opening files with O_NOATIME
- - git_open_cloexec(): use fcntl(2) w/ FD_CLOEXEC fallback
- - git_open(): untangle possible NOATIME and CLOEXEC interactions
+  (merged to 'next' on 2016-12-27 at 487682eb6e)
+ + sha1_file: stop opening files with O_NOATIME
+ + git_open_cloexec(): use fcntl(2) w/ FD_CLOEXEC fallback
+ + git_open(): untangle possible NOATIME and CLOEXEC interactions
 
  The codeflow of setting NOATIME and CLOEXEC on file descriptors Git
  opens has been simplified.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  We may want to drop the tip one, but we'll see.
 
 
@@ -742,30 +854,6 @@ of the repositories listed at
  with bw/pathspec-cleanup topic and has been dropped for now.
 
 
-* va/i18n-perl-scripts (2016-12-14) 16 commits
-  (merged to 'next' on 2016-12-19 at ec800aba9f)
- + i18n: difftool: mark warnings for translation
- + i18n: send-email: mark composing message for translation
- + i18n: send-email: mark string with interpolation for translation
- + i18n: send-email: mark warnings and errors for translation
- + i18n: send-email: mark strings for translation
- + i18n: add--interactive: mark status words for translation
- + i18n: add--interactive: remove %patch_modes entries
- + i18n: add--interactive: mark edit_hunk_manually message for translation
- + i18n: add--interactive: i18n of help_patch_cmd
- + i18n: add--interactive: mark patch prompt for translation
- + i18n: add--interactive: mark plural strings
- + i18n: clean.c: match string with git-add--interactive.perl
- + i18n: add--interactive: mark strings with interpolation for translation
- + i18n: add--interactive: mark simple here-documents for translation
- + i18n: add--interactive: mark strings for translation
- + Git.pm: add subroutines for commenting lines
-
- Porcelain scripts written in Perl are getting internationalized.
-
- Will merge to 'master'.
-
-
 * jc/latin-1 (2016-09-26) 2 commits
   (merged to 'next' on 2016-12-05 at fb549caa12)
  + utf8: accept "latin-1" as ISO-8859-1
@@ -777,7 +865,7 @@ of the repositories listed at
  the wild in e-mail headers; replace them with "iso-8859-1" that is
  more widely known when conversion fails from/to it.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * sg/fix-versioncmp-with-common-suffix (2016-12-08) 8 commits
