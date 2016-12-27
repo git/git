@@ -43,6 +43,24 @@ UI, Workflows & Features
    embedded in these clones of the submodules embedded in the clone of
    the superproject.
 
+ * Porcelain scripts written in Perl are getting internationalized.
+
+ * "git merge --continue" has been added as a synonym to "git commit"
+   to conclude a merge that has stopped due to conflicts.
+
+ * Finer-grained control of what protocols are allowed for transports
+   during clone/fetch/push have been enabled via a new configuration
+   mechanism.
+
+ * "git shortlog" learned "--committer" option to group commits by
+   committer, instead of author.
+
+ * GitLFS integration with "git p4" has been updated.
+
+ * The isatty() emulation for Windows has been updated to eradicate
+   the previous hack that depended on internals of (older) MSVC
+   runtime.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -202,6 +220,28 @@ notes for details).
  * Fix for NDEBUG builds.
    (merge 08414938a2 jt/mailinfo-fold-in-body-headers later to maint).
 
+ * A lazy "git push" without refspec did not internally use a fully
+   specified refspec to perform 'current', 'simple', or 'upstream'
+   push, causing unnecessary "ambiguous ref" errors.
+   (merge b284495e93 jc/push-default-explicit later to maint).
+
+ * "git p4" misbehaved when swapping a directory and a symbolic link.
+   (merge df8a9e86db ld/p4-compare-dir-vs-symlink later to maint).
+
+ * Even though an fix was attempted in Git 2.9.3 days, but running
+   "git difftool --dir-diff" from a subdirectory never worked. This
+   has been fixed.
+   (merge ce6926974e jk/difftool-in-subdir later to maint).
+
+ * "git p4" that tracks multile p4 paths imported a single changelist
+   that touches files in these multiple paths as one commit, followed
+   by many empty commits.  This has been fixed.
+   (merge 9943e5b979 gv/p4-multi-path-commit-fix later to maint).
+
+ * A potential but unlikely buffer overflow in Windows port has been
+   fixed.
+   (merge c46458e82f mk/mingw-winansi-ttyname-termination-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge fa6ca11105 nd/qsort-in-merge-recursive later to maint).
    (merge fa3142c919 ak/lazy-prereq-mktemp later to maint).
@@ -211,3 +251,5 @@ notes for details).
    (merge 9e189f1a5c sb/t3600-cleanup later to maint).
    (merge e2c20be57c lr/doc-fix-cet later to maint).
    (merge 47437fd3bd kh/tutorial-grammofix later to maint).
+   (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
+   (merge 7eeda8b821 ls/filter-process later to maint).
