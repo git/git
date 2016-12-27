@@ -81,8 +81,12 @@ packet_txt_write("capability=smudge");
 packet_flush();
 
 while (1) {
-	my ($command)  = packet_txt_read() =~ /^command=([^=]+)$/;
-	my ($pathname) = packet_txt_read() =~ /^pathname=([^=]+)$/;
+	my ($command)  = packet_txt_read() =~ /^command=(.+)$/;
+	my ($pathname) = packet_txt_read() =~ /^pathname=(.+)$/;
+
+	if ( $pathname eq "" ) {
+		die "bad pathname '$pathname'";
+	}
 
 	packet_bin_read();
 

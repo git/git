@@ -116,6 +116,15 @@ ifndef::git-pull[]
 	Note that not all merge strategies may support progress
 	reporting.
 
+--fp-base-only::
+	Instead of using all merge bases when computing the
+	three-way merge result, use only the merge bases on the
+	first-parent chain of the commits being merged.  This
+	experimental feature is meant to be used when merging an
+	older integration branch back to a newer integration branch
+	in the topic-branch workflow.
+
+
 endif::git-pull[]
 
 --allow-unrelated-histories::

@@ -93,7 +93,7 @@ test_expect_success setup '
 	git checkout -- test test.t test.i &&
 
 	echo "content-test2" >test2.o &&
-	echo "content-test3 - filename with special characters" >"test3 '\''sq'\'',\$x.o"
+	echo "content-test3 - filename with special characters" >"test3 '\''sq'\'',\$x=.o"
 '
 
 script='s/^\$Id: \([0-9a-f]*\) \$/\1/p'
@@ -358,12 +358,12 @@ test_expect_success PERL 'required process filter should filter data' '
 		cp "$TEST_ROOT/test.o" test.r &&
 		cp "$TEST_ROOT/test2.o" test2.r &&
 		mkdir testsubdir &&
-		cp "$TEST_ROOT/test3 '\''sq'\'',\$x.o" "testsubdir/test3 '\''sq'\'',\$x.r" &&
+		cp "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 		>test4-empty.r &&
 
 		S=$(file_size test.r) &&
 		S2=$(file_size test2.r) &&
-		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x.r") &&
+		S3=$(file_size "testsubdir/test3 '\''sq'\'',\$x=.r") &&
 
 		filter_git add . &&
 		cat >expected.log <<-EOF &&
@@ -372,35 +372,20 @@ test_expect_success PERL 'required process filter should filter data' '
 			IN: clean test.r $S [OK] -- OUT: $S . [OK]
 			IN: clean test2.r $S2 [OK] -- OUT: $S2 . [OK]
 			IN: clean test4-empty.r 0 [OK] -- OUT: 0  [OK]
-			IN: clean testsubdir/test3 '\''sq'\'',\$x.r $S3 [OK] -- OUT: $S3 . [OK]
+			IN: clean testsubdir/test3 '\''sq'\'',\$x=.r $S3 [OK] -- OUT: $S3 . [OK]
 			STOP
 		EOF
 		test_cmp_count expected.log rot13-filter.log &&
 
-		filter_git commit -m "test commit 2" &&
-		cat >expected.log <<-EOF &&
-			START
-			init handshake complete
-			IN: clean test.r $S [OK] -- OUT: $S . [OK]
-			IN: clean test2.r $S2 [OK] -- OUT: $S2 . [OK]
-			IN: clean test4-empty.r 0 [OK] -- OUT: 0  [OK]
-			IN: clean testsubdir/test3 '\''sq'\'',\$x.r $S3 [OK] -- OUT: $S3 . [OK]
-			IN: clean test.r $S [OK] -- OUT: $S . [OK]
-			IN: clean test2.r $S2 [OK] -- OUT: $S2 . [OK]
-			IN: clean test4-empty.r 0 [OK] -- OUT: 0  [OK]
-			IN: clean testsubdir/test3 '\''sq'\'',\$x.r $S3 [OK] -- OUT: $S3 . [OK]
-			STOP
-		EOF
-		test_cmp_count expected.log rot13-filter.log &&
-
-		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x.r" &&
+		git commit -m "test commit 2" &&
+		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x=.r" &&
 
 		filter_git checkout --quiet --no-progress . &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
 			IN: smudge test2.r $S2 [OK] -- OUT: $S2 . [OK]
-			IN: smudge testsubdir/test3 '\''sq'\'',\$x.r $S3 [OK] -- OUT: $S3 . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $S3 [OK] -- OUT: $S3 . [OK]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log rot13-filter.log &&
@@ -421,14 +406,14 @@ test_expect_success PERL 'required process filter should filter data' '
 			IN: smudge test.r $S [OK] -- OUT: $S . [OK]
 			IN: smudge test2.r $S2 [OK] -- OUT: $S2 . [OK]
 			IN: smudge test4-empty.r 0 [OK] -- OUT: 0  [OK]
-			IN: smudge testsubdir/test3 '\''sq'\'',\$x.r $S3 [OK] -- OUT: $S3 . [OK]
+			IN: smudge testsubdir/test3 '\''sq'\'',\$x=.r $S3 [OK] -- OUT: $S3 . [OK]
 			STOP
 		EOF
 		test_cmp_exclude_clean expected.log rot13-filter.log &&
 
 		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.r &&
 		test_cmp_committed_rot13 "$TEST_ROOT/test2.o" test2.r &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test3 '\''sq'\'',\$x.o" "testsubdir/test3 '\''sq'\'',\$x.r"
+		test_cmp_committed_rot13 "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r"
 	)
 '
 

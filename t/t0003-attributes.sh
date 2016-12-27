@@ -13,10 +13,31 @@ attr_check () {
 	test_line_count = 0 err
 }
 
+attr_check_quote () {
+
+	path="$1"
+	quoted_path="$2"
+	expect="$3"
+
+	git check-attr test -- "$path" >actual &&
+	echo "\"$quoted_path\": test: $expect" >expect &&
+	test_cmp expect actual
+
+}
+
+test_expect_success 'open-quoted pathname' '
+	echo "\"a test=a" >.gitattributes &&
+	test_must_fail attr_check a a
+'
+
+
 test_expect_success 'setup' '
 	mkdir -p a/b/d a/c b &&
 	(
 		echo "[attr]notest !test"
+		echo "\" d \"	test=d"
+		echo " e	test=e"
+		echo " e\"	test=e"
 		echo "f	test=f"
 		echo "a/i test=a/i"
 		echo "onoff test -test"
@@ -69,6 +90,11 @@ test_expect_success 'command line checks' '
 '
 
 test_expect_success 'attribute test' '
+
+	attr_check " d " d &&
+	attr_check e e &&
+	attr_check_quote e\" e\\\" e &&
+
 	attr_check f f &&
 	attr_check a/f f &&
 	attr_check a/c/f f &&
@@ -295,6 +321,37 @@ test_expect_success 'bare repository: test info/attributes' '
 		attr_check a/i a/i &&
 		attr_check subdir/a/i unspecified
 	)
+'
+
+check_symlink () {
+	echo "$1: symlink: $2" >expect &&
+	git check-attr symlink "$1" >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success SYMLINKS 'set up attr file for symlink tests' '
+	echo "* symlink" >attr
+'
+
+test_expect_success SYMLINKS 'symlinks respected in core.attributesFile' '
+	test_when_finished "rm symlink" &&
+	ln -s attr symlink &&
+	test_config core.attributesFile "$(pwd)/symlink" &&
+	check_symlink file set
+'
+
+test_expect_success SYMLINKS 'symlinks respected in info/attributes' '
+	test_when_finished "rm .git/info/attributes" &&
+	ln -s ../../attr .git/info/attributes &&
+	check_symlink file set
+'
+
+test_expect_success SYMLINKS 'symlinks not respected in-tree' '
+	test_when_finished "rm .gitattributes" &&
+	ln -sf attr .gitattributes &&
+	mkdir subdir &&
+	ln -sf ../attr subdir/.gitattributes &&
+	check_symlink subdir/file unspecified
 '
 
 test_done

@@ -483,6 +483,48 @@ test_expect_success 'verify that lots of notes trigger a fanout scheme' '
 
 '
 
+# Create another notes tree from the one above
+SP=" "
+cat >>input <<INPUT_END
+commit refs/heads/other_commits
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+commit #$(($num_commit + 1))
+COMMIT
+
+from refs/heads/many_commits
+M 644 inline file
+data <<EOF
+file contents in commit #$(($num_commit + 1))
+EOF
+
+commit refs/notes/other_notes
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+committing one more note on a tree imported from a previous notes tree
+COMMIT
+
+M 040000 $(git log --no-walk --format=%T refs/notes/many_notes)$SP
+N inline :$(($num_commit + 1))
+data <<EOF
+note for commit #$(($num_commit + 1))
+EOF
+INPUT_END
+
+test_expect_success 'verify that importing a notes tree respects the fanout scheme' '
+	git fast-import <input &&
+
+	# None of the entries in the top-level notes tree should be a full SHA1
+	git ls-tree --name-only refs/notes/other_notes |
+	while read path
+	do
+		if test $(expr length "$path") -ge 40
+		then
+			return 1
+		fi
+	done
+'
+
 cat >>expect_non-note1 << EOF
 This is not a note, but rather a regular file residing in a notes tree
 EOF

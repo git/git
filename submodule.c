@@ -14,6 +14,7 @@
 #include "blob.h"
 #include "thread-utils.h"
 #include "quote.h"
+#include "worktree.h"
 
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
 static int parallel_jobs = 1;
@@ -196,6 +197,56 @@ void gitmodules_config(void)
 			git_config_from_file(submodule_config, gitmodules_path.buf, NULL);
 		strbuf_release(&gitmodules_path);
 	}
+}
+
+void gitmodules_config_sha1(const unsigned char *commit_sha1)
+{
+	struct strbuf rev = STRBUF_INIT;
+	unsigned char sha1[20];
+
+	if (gitmodule_sha1_from_commit(commit_sha1, sha1, &rev)) {
+		git_config_from_blob_sha1(submodule_config, rev.buf,
+					  sha1, NULL);
+	}
+	strbuf_release(&rev);
+}
+
+/*
+ * Determine if a submodule has been initialized at a given 'path'
+ */
+int is_submodule_initialized(const char *path)
+{
+	int ret = 0;
+	const struct submodule *module = NULL;
+
+	module = submodule_from_path(null_sha1, path);
+
+	if (module) {
+		char *key = xstrfmt("submodule.%s.url", module->name);
+		char *value = NULL;
+
+		ret = !git_config_get_string(key, &value);
+
+		free(value);
+		free(key);
+	}
+
+	return ret;
+}
+
+/*
+ * Determine if a submodule has been populated at a given 'path'
+ */
+int is_submodule_populated(const char *path)
+{
+	int ret = 0;
+	char *gitdir = xstrfmt("%s/.git", path);
+
+	if (resolve_gitdir(gitdir))
+		ret = 1;
+
+	free(gitdir);
+	return ret;
 }
 
 int parse_submodule_update_strategy(const char *value,
@@ -1092,45 +1143,64 @@ int submodule_uses_gitfile(const char *path)
 	return 1;
 }
 
-int ok_to_remove_submodule(const char *path)
+/*
+ * Check if it is a bad idea to remove a submodule, i.e. if we'd lose data
+ * when doing so.
+ *
+ * Return 1 if we'd lose data, return 0 if the removal is fine,
+ * and negative values for errors.
+ */
+int bad_to_remove_submodule(const char *path, unsigned flags)
 {
 	ssize_t len;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	const char *argv[] = {
-		"status",
-		"--porcelain",
-		"-u",
-		"--ignore-submodules=none",
-		NULL,
-	};
 	struct strbuf buf = STRBUF_INIT;
-	int ok_to_remove = 1;
+	int ret = 0;
 
 	if (!file_exists(path) || is_empty_dir(path))
-		return 1;
-
-	if (!submodule_uses_gitfile(path))
 		return 0;
 
-	cp.argv = argv;
+	if (!submodule_uses_gitfile(path))
+		return 1;
+
+	argv_array_pushl(&cp.args, "status", "--porcelain",
+				   "--ignore-submodules=none", NULL);
+
+	if (flags & SUBMODULE_REMOVAL_IGNORE_UNTRACKED)
+		argv_array_push(&cp.args, "-uno");
+	else
+		argv_array_push(&cp.args, "-uall");
+
+	if (!(flags & SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED))
+		argv_array_push(&cp.args, "--ignored");
+
 	prepare_submodule_repo_env(&cp.env_array);
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
 	cp.out = -1;
 	cp.dir = path;
-	if (start_command(&cp))
-		die("Could not run 'git status --porcelain -uall --ignore-submodules=none' in submodule %s", path);
+	if (start_command(&cp)) {
+		if (flags & SUBMODULE_REMOVAL_DIE_ON_ERROR)
+			die(_("could not start 'git status in submodule '%s'"),
+				path);
+		ret = -1;
+		goto out;
+	}
 
 	len = strbuf_read(&buf, cp.out, 1024);
 	if (len > 2)
-		ok_to_remove = 0;
+		ret = 1;
 	close(cp.out);
 
-	if (finish_command(&cp))
-		die("'git status --porcelain -uall --ignore-submodules=none' failed in submodule %s", path);
-
+	if (finish_command(&cp)) {
+		if (flags & SUBMODULE_REMOVAL_DIE_ON_ERROR)
+			die(_("could not run 'git status in submodule '%s'"),
+				path);
+		ret = -1;
+	}
+out:
 	strbuf_release(&buf);
-	return ok_to_remove;
+	return ret;
 }
 
 static int find_first_merges(struct object_array *result, const char *path,
@@ -1296,30 +1366,6 @@ int merge_submodule(unsigned char result[20], const char *path,
 	return 0;
 }
 
-/* Update gitfile and core.worktree setting to connect work tree and git dir */
-void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir)
-{
-	struct strbuf file_name = STRBUF_INIT;
-	struct strbuf rel_path = STRBUF_INIT;
-	const char *real_work_tree = xstrdup(real_path(work_tree));
-
-	/* Update gitfile */
-	strbuf_addf(&file_name, "%s/.git", work_tree);
-	write_file(file_name.buf, "gitdir: %s",
-		   relative_path(git_dir, real_work_tree, &rel_path));
-
-	/* Update core.worktree setting */
-	strbuf_reset(&file_name);
-	strbuf_addf(&file_name, "%s/config", git_dir);
-	git_config_set_in_file(file_name.buf, "core.worktree",
-			       relative_path(real_work_tree, git_dir,
-					     &rel_path));
-
-	strbuf_release(&file_name);
-	strbuf_release(&rel_path);
-	free((void *)real_work_tree);
-}
-
 int parallel_submodules(void)
 {
 	return parallel_jobs;
@@ -1334,4 +1380,106 @@ void prepare_submodule_repo_env(struct argv_array *out)
 			argv_array_push(out, *var);
 	}
 	argv_array_push(out, "GIT_DIR=.git");
+}
+
+/*
+ * Embeds a single submodules git directory into the superprojects git dir,
+ * non recursively.
+ */
+static void relocate_single_git_dir_into_superproject(const char *prefix,
+						      const char *path)
+{
+	char *old_git_dir = NULL, *real_old_git_dir = NULL, *real_new_git_dir = NULL;
+	const char *new_git_dir;
+	const struct submodule *sub;
+
+	if (submodule_uses_worktrees(path))
+		die(_("relocate_gitdir for submodule '%s' with "
+		      "more than one worktree not supported"), path);
+
+	old_git_dir = xstrfmt("%s/.git", path);
+	if (read_gitfile(old_git_dir))
+		/* If it is an actual gitfile, it doesn't need migration. */
+		return;
+
+	real_old_git_dir = real_pathdup(old_git_dir);
+
+	sub = submodule_from_path(null_sha1, path);
+	if (!sub)
+		die(_("could not lookup name for submodule '%s'"), path);
+
+	new_git_dir = git_path("modules/%s", sub->name);
+	if (safe_create_leading_directories_const(new_git_dir) < 0)
+		die(_("could not create directory '%s'"), new_git_dir);
+	real_new_git_dir = real_pathdup(new_git_dir);
+
+	if (!prefix)
+		prefix = get_super_prefix();
+
+	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
+		prefix ? prefix : "", path,
+		real_old_git_dir, real_new_git_dir);
+
+	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
+
+	free(old_git_dir);
+	free(real_old_git_dir);
+	free(real_new_git_dir);
+}
+
+/*
+ * Migrate the git directory of the submodule given by path from
+ * having its git directory within the working tree to the git dir nested
+ * in its superprojects git dir under modules/.
+ */
+void absorb_git_dir_into_superproject(const char *prefix,
+				      const char *path,
+				      unsigned flags)
+{
+	const char *sub_git_dir, *v;
+	char *real_sub_git_dir = NULL, *real_common_git_dir = NULL;
+	struct strbuf gitdir = STRBUF_INIT;
+
+	strbuf_addf(&gitdir, "%s/.git", path);
+	sub_git_dir = resolve_gitdir(gitdir.buf);
+
+	/* Not populated? */
+	if (!sub_git_dir)
+		goto out;
+
+	/* Is it already absorbed into the superprojects git dir? */
+	real_sub_git_dir = real_pathdup(sub_git_dir);
+	real_common_git_dir = real_pathdup(get_git_common_dir());
+	if (!skip_prefix(real_sub_git_dir, real_common_git_dir, &v))
+		relocate_single_git_dir_into_superproject(prefix, path);
+
+	if (flags & ABSORB_GITDIR_RECURSE_SUBMODULES) {
+		struct child_process cp = CHILD_PROCESS_INIT;
+		struct strbuf sb = STRBUF_INIT;
+
+		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
+			die("BUG: we don't know how to pass the flags down?");
+
+		if (get_super_prefix())
+			strbuf_addstr(&sb, get_super_prefix());
+		strbuf_addstr(&sb, path);
+		strbuf_addch(&sb, '/');
+
+		cp.dir = path;
+		cp.git_cmd = 1;
+		cp.no_stdin = 1;
+		argv_array_pushl(&cp.args, "--super-prefix", sb.buf,
+					   "submodule--helper",
+					   "absorb-git-dirs", NULL);
+		prepare_submodule_repo_env(&cp.env_array);
+		if (run_command(&cp))
+			die(_("could not recurse into submodule '%s'"), path);
+
+		strbuf_release(&sb);
+	}
+
+out:
+	strbuf_release(&gitdir);
+	free(real_sub_git_dir);
+	free(real_common_git_dir);
 }

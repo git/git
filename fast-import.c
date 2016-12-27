@@ -284,8 +284,6 @@ static unsigned long max_depth = 10;
 static off_t max_packsize;
 static int unpack_limit = 100;
 static int force_update;
-static int pack_compression_level = Z_DEFAULT_COMPRESSION;
-static int pack_compression_seen;
 
 /* Stats and misc. counters */
 static uintmax_t alloc_count;
@@ -2220,12 +2218,16 @@ static uintmax_t do_change_note_fanout(
 		char *fullpath, unsigned int fullpath_len,
 		unsigned char fanout)
 {
-	struct tree_content *t = root->tree;
+	struct tree_content *t;
 	struct tree_entry *e, leaf;
 	unsigned int i, tmp_hex_sha1_len, tmp_fullpath_len;
 	uintmax_t num_notes = 0;
 	unsigned char sha1[20];
 	char realpath[60];
+
+	if (!root->tree)
+		load_tree(root);
+	t = root->tree;
 
 	for (i = 0; t && i < t->entry_count; i++) {
 		e = t->entries[i];
@@ -2278,8 +2280,6 @@ static uintmax_t do_change_note_fanout(
 				leaf.tree);
 		} else if (S_ISDIR(e->versions[1].mode)) {
 			/* This is a subdir that may contain note entries */
-			if (!e->tree)
-				load_tree(e);
 			num_notes += do_change_note_fanout(orig_root, e,
 				hex_sha1, tmp_hex_sha1_len,
 				fullpath, tmp_fullpath_len, fanout);
@@ -3381,15 +3381,6 @@ static void git_pack_config(void)
 		if (max_depth > MAX_DEPTH)
 			max_depth = MAX_DEPTH;
 	}
-	if (!git_config_get_int("pack.compression", &pack_compression_level)) {
-		if (pack_compression_level == -1)
-			pack_compression_level = Z_DEFAULT_COMPRESSION;
-		else if (pack_compression_level < 0 ||
-			 pack_compression_level > Z_BEST_COMPRESSION)
-			git_die_config("pack.compression",
-					"bad pack compression level %d", pack_compression_level);
-		pack_compression_seen = 1;
-	}
 	if (!git_config_get_int("pack.indexversion", &indexversion_value)) {
 		pack_idx_opts.version = indexversion_value;
 		if (pack_idx_opts.version > 2)
@@ -3454,8 +3445,6 @@ int cmd_main(int argc, const char **argv)
 	setup_git_directory();
 	reset_pack_idx_option(&pack_idx_opts);
 	git_pack_config();
-	if (!pack_compression_seen && core_compression_seen)
-		pack_compression_level = core_compression_level;
 
 	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf, 0);

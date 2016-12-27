@@ -841,4 +841,33 @@ test_expect_success 'info/exclude trumps core.excludesfile' '
 	test_cmp expect actual
 '
 
+test_expect_success SYMLINKS 'set up ignore file for symlink tests' '
+	echo "*" >ignore
+'
+
+test_expect_success SYMLINKS 'symlinks respected in core.excludesFile' '
+	test_when_finished "rm symlink" &&
+	ln -s ignore symlink &&
+	test_config core.excludesFile "$(pwd)/symlink" &&
+	echo file >expect &&
+	git check-ignore file >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'symlinks respected in info/exclude' '
+	test_when_finished "rm .git/info/exclude" &&
+	ln -sf ../../ignore .git/info/exclude &&
+	echo file >expect &&
+	git check-ignore file >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SYMLINKS 'symlinks not respected in-tree' '
+	test_when_finished "rm .gitignore" &&
+	ln -sf ignore .gitignore &&
+	>expect &&
+	test_must_fail git check-ignore file >actual &&
+	test_cmp expect actual
+'
+
 test_done

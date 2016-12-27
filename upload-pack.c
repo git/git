@@ -46,6 +46,8 @@ static int no_progress, daemon_mode;
 #define ALLOW_TIP_SHA1	01
 /* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
 #define ALLOW_REACHABLE_SHA1	02
+/* Allow request of any sha1. Implies ALLOW_TIP_SHA1 and ALLOW_REACHABLE_SHA1. */
+#define ALLOW_ANY_SHA1	07
 static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
 static struct object_array have_obj;
@@ -825,7 +827,8 @@ static void receive_needs(void)
 			    sha1_to_hex(sha1_buf));
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
-			if (!is_our_ref(o))
+			if (!((allow_unadvertised_object_request & ALLOW_ANY_SHA1) == ALLOW_ANY_SHA1
+			      || is_our_ref(o)))
 				has_non_tip = 1;
 			add_object_array(o, NULL, &want_obj);
 		}
@@ -1008,6 +1011,11 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 			allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
 		else
 			allow_unadvertised_object_request &= ~ALLOW_REACHABLE_SHA1;
+	} else if (!strcmp("uploadpack.allowanysha1inwant", var)) {
+		if (git_config_bool(var, value))
+			allow_unadvertised_object_request |= ALLOW_ANY_SHA1;
+		else
+			allow_unadvertised_object_request &= ~ALLOW_ANY_SHA1;
 	} else if (!strcmp("uploadpack.keepalive", var)) {
 		keepalive = git_config_int(var, value);
 		if (!keepalive)

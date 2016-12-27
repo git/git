@@ -6,11 +6,12 @@
 #include "revision.h"
 #include "parse-options.h"
 
-static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
+static int show_merge_base(struct commit **rev, int rev_nr, int show_all, int fp_only)
 {
 	struct commit_list *result;
+	unsigned flags = fp_only ? MB_FPCHAIN : 0;
 
-	result = get_merge_bases_many_dirty(rev[0], rev_nr - 1, rev + 1);
+	result = get_merge_bases_opt(rev[0], rev_nr - 1, rev + 1, flags);
 
 	if (!result)
 		return 1;
@@ -211,10 +212,13 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	struct commit **rev;
 	int rev_nr = 0;
 	int show_all = 0;
+	int fp_only = 0;
 	int cmdmode = 0;
 
 	struct option options[] = {
 		OPT_BOOL('a', "all", &show_all, N_("output all common ancestors")),
+		OPT_BOOL(0, "fp-only", &fp_only,
+			 N_("limit to bases that are on first-parent chain")),
 		OPT_CMDMODE(0, "octopus", &cmdmode,
 			    N_("find ancestors for a single n-way merge"), 'o'),
 		OPT_CMDMODE(0, "independent", &cmdmode,
@@ -258,5 +262,5 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	ALLOC_ARRAY(rev, argc);
 	while (argc-- > 0)
 		rev[rev_nr++] = get_commit_reference(*argv++);
-	return show_merge_base(rev, rev_nr, show_all);
+	return show_merge_base(rev, rev_nr, show_all, fp_only);
 }

@@ -25,6 +25,7 @@ import stat
 import zipfile
 import zlib
 import ctypes
+import errno
 
 try:
     from subprocess import CalledProcessError
@@ -838,7 +839,7 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
                 die("cannot use --changes-block-size with non-numeric revisions")
             block_size = None
 
-    changes = []
+    changes = set()
 
     # Retrieve changes a block at a time, to prevent running
     # into a MaxResults/MaxScanRows error from the server.
@@ -857,7 +858,7 @@ def p4ChangesForPaths(depotPaths, changeRange, requestedBlockSize):
 
         # Insert changes in chronological order
         for line in reversed(p4_read_pipe_lines(cmd)):
-            changes.append(int(line.split(" ")[1]))
+            changes.add(int(line.split(" ")[1]))
 
         if not block_size:
             break
@@ -1119,10 +1120,10 @@ class GitLFS(LargeFileSystem):
                 '# Git LFS (see https://git-lfs.github.com/)\n',
                 '#\n',
             ] +
-            ['*.' + f.replace(' ', '[[:space:]]') + ' filter=lfs -text\n'
+            ['*.' + f.replace(' ', '[[:space:]]') + ' filter=lfs diff=lfs merge=lfs -text\n'
                 for f in sorted(gitConfigList('git-p4.largeFileExtensions'))
             ] +
-            ['/' + f.replace(' ', '[[:space:]]') + ' filter=lfs -text\n'
+            ['/' + f.replace(' ', '[[:space:]]') + ' filter=lfs diff=lfs merge=lfs -text\n'
                 for f in sorted(self.largeFiles) if not self.hasLargeFileExtension(f)
             ]
         )
@@ -1571,7 +1572,7 @@ class P4Submit(Command, P4UserMap):
             if response == 'n':
                 return False
 
-    def get_diff_description(self, editedFiles, filesToAdd):
+    def get_diff_description(self, editedFiles, filesToAdd, symlinks):
         # diff
         if os.environ.has_key("P4DIFF"):
             del(os.environ["P4DIFF"])
@@ -1586,10 +1587,17 @@ class P4Submit(Command, P4UserMap):
             newdiff += "==== new file ====\n"
             newdiff += "--- /dev/null\n"
             newdiff += "+++ %s\n" % newFile
-            f = open(newFile, "r")
-            for line in f.readlines():
-                newdiff += "+" + line
-            f.close()
+
+            is_link = os.path.islink(newFile)
+            expect_link = newFile in symlinks
+
+            if is_link and expect_link:
+                newdiff += "+%s\n" % os.readlink(newFile)
+            else:
+                f = open(newFile, "r")
+                for line in f.readlines():
+                    newdiff += "+" + line
+                f.close()
 
         return (diff + newdiff).replace('\r\n', '\n')
 
@@ -1607,6 +1615,7 @@ class P4Submit(Command, P4UserMap):
         filesToDelete = set()
         editedFiles = set()
         pureRenameCopy = set()
+        symlinks = set()
         filesToChangeExecBit = {}
         all_files = list()
 
@@ -1626,6 +1635,11 @@ class P4Submit(Command, P4UserMap):
                 filesToChangeExecBit[path] = diff['dst_mode']
                 if path in filesToDelete:
                     filesToDelete.remove(path)
+
+                dst_mode = int(diff['dst_mode'], 8)
+                if dst_mode == 0120000:
+                    symlinks.add(path)
+
             elif modifier == "D":
                 filesToDelete.add(path)
                 if path in filesToAdd:
@@ -1767,7 +1781,7 @@ class P4Submit(Command, P4UserMap):
         separatorLine = "######## everything below this line is just the diff #######\n"
         if not self.prepare_p4_only:
             submitTemplate += separatorLine
-            submitTemplate += self.get_diff_description(editedFiles, filesToAdd)
+            submitTemplate += self.get_diff_description(editedFiles, filesToAdd, symlinks)
 
         (handle, fileName) = tempfile.mkstemp()
         tmpFile = os.fdopen(handle, "w+b")
@@ -2416,6 +2430,15 @@ class P4Sync(Command, P4UserMap):
                     break
 
         path = wildcard_decode(path)
+        try:
+            path.decode('ascii')
+        except:
+            encoding = 'utf8'
+            if gitConfig('git-p4.pathEncoding'):
+                encoding = gitConfig('git-p4.pathEncoding')
+            path = path.decode(encoding, 'replace').encode('utf8', 'replace')
+            if self.verbose:
+                print 'Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, path)
         return path
 
     def splitFilesIntoBranches(self, commit):
@@ -2544,16 +2567,6 @@ class P4Sync(Command, P4UserMap):
             text = ''.join(contents)
             text = regexp.sub(r'$\1$', text)
             contents = [ text ]
-
-        try:
-            relPath.decode('ascii')
-        except:
-            encoding = 'utf8'
-            if gitConfig('git-p4.pathEncoding'):
-                encoding = gitConfig('git-p4.pathEncoding')
-            relPath = relPath.decode(encoding, 'replace').encode('utf8', 'replace')
-            if self.verbose:
-                print 'Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, relPath)
 
         if self.largeFileSystem:
             (git_mode, contents) = self.largeFileSystem.processContent(git_mode, relPath, contents)

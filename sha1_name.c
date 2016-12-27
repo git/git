@@ -8,6 +8,7 @@
 #include "remote.h"
 #include "dir.h"
 #include "sha1-array.h"
+#include "revision.h"
 
 static int get_sha1_oneline(const char *, unsigned char *, struct commit_list *);
 
@@ -972,9 +973,6 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned l
  * For future extension, all other sequences beginning with ':/!' are reserved.
  */
 
-/* Remember to update object flag allocation in object.h */
-#define ONELINE_SEEN (1u<<20)
-
 static int handle_one_ref(const char *path, const struct object_id *oid,
 			  int flag, void *cb_data)
 {
@@ -1016,7 +1014,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 		return -1;
 
 	for (l = list; l; l = l->next) {
-		l->item->object.flags |= ONELINE_SEEN;
+		l->item->object.flags |= TMP_MARK;
 		commit_list_insert(l->item, &backup);
 	}
 	while (list) {
@@ -1024,7 +1022,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 		struct commit *commit;
 		int matches;
 
-		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
+		commit = pop_most_recent_commit(&list, TMP_MARK);
 		if (!parse_object(commit->object.oid.hash))
 			continue;
 		buf = get_commit_buffer(commit, NULL);
@@ -1041,7 +1039,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 	regfree(&regex);
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
-		clear_commit_marks(l->item, ONELINE_SEEN);
+		clear_commit_marks(l->item, TMP_MARK);
 	free_commit_list(backup);
 	return found ? 0 : -1;
 }
