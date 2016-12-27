@@ -437,7 +437,8 @@ update_squash_messages () {
 			}' <"$squash_msg".bak
 		} >"$squash_msg"
 	else
-		commit_message HEAD > "$fixup_msg" || die "$(gettext "Cannot write \$fixup_msg")"
+		commit_message HEAD >"$fixup_msg" ||
+		die "$(eval_gettext "Cannot write \$fixup_msg")"
 		count=2
 		{
 			printf '%s\n' "$comment_char $(gettext "This is a combination of 2 commits.")"
