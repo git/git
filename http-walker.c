@@ -3,6 +3,7 @@
 #include "walker.h"
 #include "http.h"
 #include "list.h"
+#include "transport.h"
 
 struct alt_base {
 	char *base;
@@ -160,6 +161,32 @@ static void prefetch(struct walker *walker, unsigned char *sha1)
 #endif
 }
 
+static int is_alternate_allowed(const char *url)
+{
+	const char *protocols[] = {
+		"http", "https", "ftp", "ftps"
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(protocols); i++) {
+		const char *end;
+		if (skip_prefix(url, protocols[i], &end) &&
+		    starts_with(end, "://"))
+			break;
+	}
+
+	if (i >= ARRAY_SIZE(protocols)) {
+		warning("ignoring alternate with unknown protocol: %s", url);
+		return 0;
+	}
+	if (!is_transport_allowed(protocols[i], 0)) {
+		warning("ignoring alternate with restricted protocol: %s", url);
+		return 0;
+	}
+
+	return 1;
+}
+
 static void process_alternates_response(void *callback_data)
 {
 	struct alternates_request *alt_req =
@@ -274,17 +301,20 @@ static void process_alternates_response(void *callback_data)
 				struct strbuf target = STRBUF_INIT;
 				strbuf_add(&target, base, serverlen);
 				strbuf_add(&target, data + i, posn - i - 7);
-				warning("adding alternate object store: %s",
-					target.buf);
-				newalt = xmalloc(sizeof(*newalt));
-				newalt->next = NULL;
-				newalt->base = strbuf_detach(&target, NULL);
-				newalt->got_indices = 0;
-				newalt->packs = NULL;
 
-				while (tail->next != NULL)
-					tail = tail->next;
-				tail->next = newalt;
+				if (is_alternate_allowed(target.buf)) {
+					warning("adding alternate object store: %s",
+						target.buf);
+					newalt = xmalloc(sizeof(*newalt));
+					newalt->next = NULL;
+					newalt->base = strbuf_detach(&target, NULL);
+					newalt->got_indices = 0;
+					newalt->packs = NULL;
+
+					while (tail->next != NULL)
+						tail = tail->next;
+					tail->next = newalt;
+				}
 			}
 		}
 		i = posn + 1;

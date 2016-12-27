@@ -368,5 +368,15 @@ test_expect_success 'http-alternates cannot point at funny protocols' '
 		clone "$HTTPD_URL/dumb/evil.git" evil-file
 '
 
+test_expect_success 'http-alternates triggers not-from-user protocol check' '
+	echo "$HTTPD_URL/dumb/victim.git/objects" \
+		>"$evil/objects/info/http-alternates" &&
+	test_config_global http.followRedirects true &&
+	test_must_fail git -c protocol.http.allow=user \
+		clone $HTTPD_URL/dumb/evil.git evil-user &&
+	git -c protocol.http.allow=always \
+		clone $HTTPD_URL/dumb/evil.git evil-user
+'
+
 stop_httpd
 test_done
