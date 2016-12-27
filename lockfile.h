@@ -137,7 +137,7 @@ struct lock_file {
  * ... this flag can be passed instead to return -1 and give the usual
  * error message upon an error.
  */
-#define LOCK_REPORT_ON_ERROR 2
+#define LOCK_REPORT_ON_ERROR 4
 
 /*
  * Usually symbolic links in the destination path are resolved. This
