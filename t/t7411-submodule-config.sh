@@ -140,6 +140,27 @@ test_expect_success 'reading of local configuration' '
 	)
 '
 
+cat >super/expect_url <<EOF
+Submodule url: '../submodule' for path 'b'
+Submodule url: 'git@somewhere.else.net:submodule.git' for path 'submodule'
+EOF
+
+test_expect_success 'reading of local configuration for uninitialized submodules' '
+	(
+		cd super &&
+		git submodule deinit -f b &&
+		old_submodule=$(git config submodule.submodule.url) &&
+		git config submodule.submodule.url git@somewhere.else.net:submodule.git &&
+		test-submodule-config --url \
+			"" b \
+			"" submodule \
+				>actual &&
+		test_cmp expect_url actual &&
+		git config submodule.submodule.url "$old_submodule" &&
+		git submodule init b
+	)
+'
+
 cat >super/expect_fetchrecurse_die.err <<EOF
 fatal: bad submodule.submodule.fetchrecursesubmodules argument: blabla
 EOF
