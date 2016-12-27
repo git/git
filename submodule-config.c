@@ -263,12 +263,12 @@ int parse_push_recurse_submodules_arg(const char *opt, const char *arg)
 	return parse_push_recurse(opt, arg, 1);
 }
 
-static void warn_multiple_config(const unsigned char *commit_sha1,
+static void warn_multiple_config(const unsigned char *treeish_name,
 				 const char *name, const char *option)
 {
 	const char *commit_string = "WORKTREE";
-	if (commit_sha1)
-		commit_string = sha1_to_hex(commit_sha1);
+	if (treeish_name)
+		commit_string = sha1_to_hex(treeish_name);
 	warning("%s:.gitmodules, multiple configurations found for "
 			"'submodule.%s.%s'. Skipping second one!",
 			commit_string, name, option);
@@ -276,7 +276,7 @@ static void warn_multiple_config(const unsigned char *commit_sha1,
 
 struct parse_config_parameter {
 	struct submodule_cache *cache;
-	const unsigned char *commit_sha1;
+	const unsigned char *treeish_name;
 	const unsigned char *gitmodules_sha1;
 	int overwrite;
 };
@@ -300,7 +300,7 @@ static int parse_config(const char *var, const char *value, void *data)
 		if (!value)
 			ret = config_error_nonbool(var);
 		else if (!me->overwrite && submodule->path)
-			warn_multiple_config(me->commit_sha1, submodule->name,
+			warn_multiple_config(me->treeish_name, submodule->name,
 					"path");
 		else {
 			if (submodule->path)
@@ -314,7 +314,7 @@ static int parse_config(const char *var, const char *value, void *data)
 		int die_on_error = is_null_sha1(me->gitmodules_sha1);
 		if (!me->overwrite &&
 		    submodule->fetch_recurse != RECURSE_SUBMODULES_NONE)
-			warn_multiple_config(me->commit_sha1, submodule->name,
+			warn_multiple_config(me->treeish_name, submodule->name,
 					"fetchrecursesubmodules");
 		else
 			submodule->fetch_recurse = parse_fetch_recurse(
@@ -324,7 +324,7 @@ static int parse_config(const char *var, const char *value, void *data)
 		if (!value)
 			ret = config_error_nonbool(var);
 		else if (!me->overwrite && submodule->ignore)
-			warn_multiple_config(me->commit_sha1, submodule->name,
+			warn_multiple_config(me->treeish_name, submodule->name,
 					"ignore");
 		else if (strcmp(value, "untracked") &&
 			 strcmp(value, "dirty") &&
@@ -340,7 +340,7 @@ static int parse_config(const char *var, const char *value, void *data)
 		if (!value) {
 			ret = config_error_nonbool(var);
 		} else if (!me->overwrite && submodule->url) {
-			warn_multiple_config(me->commit_sha1, submodule->name,
+			warn_multiple_config(me->treeish_name, submodule->name,
 					"url");
 		} else {
 			free((void *) submodule->url);
@@ -351,21 +351,21 @@ static int parse_config(const char *var, const char *value, void *data)
 			ret = config_error_nonbool(var);
 		else if (!me->overwrite &&
 			 submodule->update_strategy.type != SM_UPDATE_UNSPECIFIED)
-			warn_multiple_config(me->commit_sha1, submodule->name,
+			warn_multiple_config(me->treeish_name, submodule->name,
 					     "update");
 		else if (parse_submodule_update_strategy(value,
 			 &submodule->update_strategy) < 0)
 				die(_("invalid value for %s"), var);
 	} else if (!strcmp(item.buf, "shallow")) {
 		if (!me->overwrite && submodule->recommend_shallow != -1)
-			warn_multiple_config(me->commit_sha1, submodule->name,
+			warn_multiple_config(me->treeish_name, submodule->name,
 					     "shallow");
 		else
 			submodule->recommend_shallow =
 				git_config_bool(var, value);
 	} else if (!strcmp(item.buf, "branch")) {
 		if (!me->overwrite && submodule->branch)
-			warn_multiple_config(me->commit_sha1, submodule->name,
+			warn_multiple_config(me->treeish_name, submodule->name,
 					     "branch");
 		else {
 			free((void *)submodule->branch);
@@ -379,18 +379,18 @@ static int parse_config(const char *var, const char *value, void *data)
 	return ret;
 }
 
-static int gitmodule_sha1_from_commit(const unsigned char *commit_sha1,
+static int gitmodule_sha1_from_commit(const unsigned char *treeish_name,
 				      unsigned char *gitmodules_sha1,
 				      struct strbuf *rev)
 {
 	int ret = 0;
 
-	if (is_null_sha1(commit_sha1)) {
+	if (is_null_sha1(treeish_name)) {
 		hashclr(gitmodules_sha1);
 		return 1;
 	}
 
-	strbuf_addf(rev, "%s:.gitmodules", sha1_to_hex(commit_sha1));
+	strbuf_addf(rev, "%s:.gitmodules", sha1_to_hex(treeish_name));
 	if (get_sha1(rev->buf, gitmodules_sha1) >= 0)
 		ret = 1;
 
@@ -402,7 +402,7 @@ static int gitmodule_sha1_from_commit(const unsigned char *commit_sha1,
  * revisions.
  */
 static const struct submodule *config_from(struct submodule_cache *cache,
-		const unsigned char *commit_sha1, const char *key,
+		const unsigned char *treeish_name, const char *key,
 		enum lookup_type lookup_type)
 {
 	struct strbuf rev = STRBUF_INIT;
@@ -418,7 +418,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	 * return the first submodule. Can be used to check whether
 	 * there are any submodules parsed.
 	 */
-	if (!commit_sha1 || !key) {
+	if (!treeish_name || !key) {
 		struct hashmap_iter iter;
 		struct submodule_entry *entry;
 
@@ -428,7 +428,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		return entry->config;
 	}
 
-	if (!gitmodule_sha1_from_commit(commit_sha1, sha1, &rev))
+	if (!gitmodule_sha1_from_commit(treeish_name, sha1, &rev))
 		goto out;
 
 	switch (lookup_type) {
@@ -448,7 +448,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 
 	/* fill the submodule config into the cache */
 	parameter.cache = cache;
-	parameter.commit_sha1 = commit_sha1;
+	parameter.treeish_name = treeish_name;
 	parameter.gitmodules_sha1 = sha1;
 	parameter.overwrite = 0;
 	git_config_from_mem(parse_config, CONFIG_ORIGIN_SUBMODULE_BLOB, rev.buf,
@@ -471,18 +471,6 @@ out:
 	return submodule;
 }
 
-static const struct submodule *config_from_path(struct submodule_cache *cache,
-		const unsigned char *commit_sha1, const char *path)
-{
-	return config_from(cache, commit_sha1, path, lookup_path);
-}
-
-static const struct submodule *config_from_name(struct submodule_cache *cache,
-		const unsigned char *commit_sha1, const char *name)
-{
-	return config_from(cache, commit_sha1, name, lookup_name);
-}
-
 static void ensure_cache_init(void)
 {
 	if (is_cache_init)
@@ -496,7 +484,7 @@ int parse_submodule_config_option(const char *var, const char *value)
 {
 	struct parse_config_parameter parameter;
 	parameter.cache = &the_submodule_cache;
-	parameter.commit_sha1 = NULL;
+	parameter.treeish_name = NULL;
 	parameter.gitmodules_sha1 = null_sha1;
 	parameter.overwrite = 1;
 
@@ -504,18 +492,18 @@ int parse_submodule_config_option(const char *var, const char *value)
 	return parse_config(var, value, &parameter);
 }
 
-const struct submodule *submodule_from_name(const unsigned char *commit_sha1,
+const struct submodule *submodule_from_name(const unsigned char *treeish_name,
 		const char *name)
 {
 	ensure_cache_init();
-	return config_from_name(&the_submodule_cache, commit_sha1, name);
+	return config_from(&the_submodule_cache, treeish_name, name, lookup_name);
 }
 
-const struct submodule *submodule_from_path(const unsigned char *commit_sha1,
+const struct submodule *submodule_from_path(const unsigned char *treeish_name,
 		const char *path)
 {
 	ensure_cache_init();
-	return config_from_path(&the_submodule_cache, commit_sha1, path);
+	return config_from(&the_submodule_cache, treeish_name, path, lookup_path);
 }
 
 void submodule_free(void)

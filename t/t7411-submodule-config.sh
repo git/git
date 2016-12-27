@@ -93,6 +93,20 @@ test_expect_success 'error message contains blob reference' '
 	)
 '
 
+test_expect_success 'using different treeishs works' '
+	(
+		cd super &&
+		git tag new_tag &&
+		tree=$(git rev-parse HEAD^{tree}) &&
+		commit=$(git rev-parse HEAD^{commit}) &&
+		test-submodule-config $commit b >expect &&
+		test-submodule-config $tree b >actual.1 &&
+		test-submodule-config new_tag b >actual.2 &&
+		test_cmp expect actual.1 &&
+		test_cmp expect actual.2
+	)
+'
+
 cat >super/expect_url <<EOF
 Submodule url: 'git@somewhere.else.net:a.git' for path 'b'
 Submodule url: 'git@somewhere.else.net:submodule.git' for path 'submodule'
