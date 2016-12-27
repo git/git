@@ -134,8 +134,8 @@ test_expect_success 'reading of local configuration' '
 			"" submodule \
 				>actual &&
 		test_cmp expect_local_path actual &&
-		git config submodule.a.url $old_a &&
-		git config submodule.submodule.url $old_submodule &&
+		git config submodule.a.url "$old_a" &&
+		git config submodule.submodule.url "$old_submodule" &&
 		git config --unset submodule.a.path c
 	)
 '
