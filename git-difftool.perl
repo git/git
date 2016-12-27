@@ -60,14 +60,14 @@ sub exit_cleanup
 
 sub use_wt_file
 {
-	my ($workdir, $file, $sha1) = @_;
+	my ($file, $sha1) = @_;
 	my $null_sha1 = '0' x 40;
 
-	if (-l "$workdir/$file" || ! -e _) {
+	if (-l $file || ! -e _) {
 		return (0, $null_sha1);
 	}
 
-	my $wt_sha1 = Git::command_oneline('hash-object', "$workdir/$file");
+	my $wt_sha1 = Git::command_oneline('hash-object', $file);
 	my $use = ($sha1 eq $null_sha1) || ($sha1 eq $wt_sha1);
 	return ($use, $wt_sha1);
 }
@@ -101,10 +101,16 @@ sub changed_files
 
 sub setup_dir_diff
 {
-	my ($workdir, $symlinks) = @_;
+	my ($worktree, $symlinks) = @_;
 	my @gitargs = ('diff', '--raw', '--no-abbrev', '-z', @ARGV);
 	my $diffrtn = Git::command_oneline(@gitargs);
 	exit(0) unless defined($diffrtn);
+
+	# Go to the root of the worktree now that we've captured the list of
+	# changed files.  The paths returned by diff --raw are relative to the
+	# top-level of the repository, but we defer changing directories so
+	# that @ARGV can perform pathspec limiting in the current directory.
+	chdir($worktree);
 
 	# Build index info for left and right sides of the diff
 	my $submodule_mode = '160000';
@@ -116,7 +122,7 @@ sub setup_dir_diff
 	my $wtindex = '';
 	my %submodule;
 	my %symlink;
-	my @working_tree = ();
+	my @files = ();
 	my %working_tree_dups = ();
 	my @rawdiff = split('\0', $diffrtn);
 
@@ -168,14 +174,14 @@ EOF
 		}
 
 		if ($rmode ne $null_mode) {
-			# Avoid duplicate working_tree entries
+			# Avoid duplicate entries
 			if ($working_tree_dups{$dst_path}++) {
 				next;
 			}
 			my ($use, $wt_sha1) =
-				use_wt_file($workdir, $dst_path, $rsha1);
+				use_wt_file($dst_path, $rsha1);
 			if ($use) {
-				push @working_tree, $dst_path;
+				push @files, $dst_path;
 				$wtindex .= "$rmode $wt_sha1\t$dst_path\0";
 			} else {
 				$rindex .= "$rmode $rsha1\t$dst_path\0";
@@ -185,7 +191,7 @@ EOF
 
 	# Go to the root of the worktree so that the left index files
 	# are properly setup -- the index is toplevel-relative.
-	chdir($workdir);
+	chdir($worktree);
 
 	# Setup temp directories
 	my $tmpdir = tempdir('git-difftool.XXXXX', CLEANUP => 0, TMPDIR => 1);
@@ -225,23 +231,21 @@ EOF
 	delete($ENV{GIT_INDEX_FILE});
 
 	# Changes in the working tree need special treatment since they are
-	# not part of the index. Remove any trailing slash from $workdir
-	# before starting to avoid double slashes in symlink targets.
-	$workdir =~ s|/$||;
-	for my $file (@working_tree) {
+	# not part of the index.
+	for my $file (@files) {
 		my $dir = dirname($file);
 		unless (-d "$rdir/$dir") {
 			mkpath("$rdir/$dir") or
 			exit_cleanup($tmpdir, 1);
 		}
 		if ($symlinks) {
-			symlink("$workdir/$file", "$rdir/$file") or
+			symlink("$worktree/$file", "$rdir/$file") or
 			exit_cleanup($tmpdir, 1);
 		} else {
-			copy("$workdir/$file", "$rdir/$file") or
+			copy($file, "$rdir/$file") or
 			exit_cleanup($tmpdir, 1);
 
-			my $mode = stat("$workdir/$file")->mode;
+			my $mode = stat($file)->mode;
 			chmod($mode, "$rdir/$file") or
 			exit_cleanup($tmpdir, 1);
 		}
@@ -279,7 +283,7 @@ EOF
 		exit_cleanup($tmpdir, 1) if not $ok;
 	}
 
-	return ($ldir, $rdir, $tmpdir, @working_tree);
+	return ($ldir, $rdir, $tmpdir, @files);
 }
 
 sub write_to_file
@@ -389,8 +393,9 @@ sub dir_diff
 	my $error = 0;
 	my $repo = Git->repository();
 	my $repo_path = $repo->repo_path();
-	my $workdir = $repo->wc_path();
-	my ($a, $b, $tmpdir, @worktree) = setup_dir_diff($workdir, $symlinks);
+	my $worktree = $repo->wc_path();
+	$worktree =~ s|/$||; # Avoid double slashes in symlink targets
+	my ($a, $b, $tmpdir, @files) = setup_dir_diff($worktree, $symlinks);
 
 	if (defined($extcmd)) {
 		$rc = system($extcmd, $a, $b);
@@ -411,13 +416,13 @@ sub dir_diff
 	my %tmp_modified;
 	my $indices_loaded = 0;
 
-	for my $file (@worktree) {
+	for my $file (@files) {
 		next if $symlinks && -l "$b/$file";
 		next if ! -f "$b/$file";
 
 		if (!$indices_loaded) {
 			%wt_modified = changed_files(
-				$repo_path, "$tmpdir/wtindex", $workdir);
+				$repo_path, "$tmpdir/wtindex", $worktree);
 			%tmp_modified = changed_files(
 				$repo_path, "$tmpdir/wtindex", $b);
 			$indices_loaded = 1;
@@ -428,14 +433,14 @@ sub dir_diff
 				"warning: Both files modified:\n" .
 				"'%s/%s' and '%s/%s'.\n" .
 				"warning: Working tree file has been left.\n" .
-				"warning:\n"), $workdir, $file, $b, $file);
+				"warning:\n"), $worktree, $file, $b, $file);
 			$error = 1;
 		} elsif (exists $tmp_modified{$file}) {
 			my $mode = stat("$b/$file")->mode;
-			copy("$b/$file", "$workdir/$file") or
+			copy("$b/$file", $file) or
 			exit_cleanup($tmpdir, 1);
 
-			chmod($mode, "$workdir/$file") or
+			chmod($mode, $file) or
 			exit_cleanup($tmpdir, 1);
 		}
 	}
