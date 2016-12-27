@@ -387,7 +387,7 @@ int submodule_uses_worktrees(const char *path)
 	struct strbuf sb = STRBUF_INIT;
 	DIR *dir;
 	struct dirent *d;
-	int ret;
+	int ret = 0;
 	struct repository_format format;
 
 	submodule_gitdir = git_pathdup_submodule(path, "%s", "");
