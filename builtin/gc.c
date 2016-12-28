@@ -191,6 +191,11 @@ static void add_repack_all_option(void)
 	}
 }
 
+static void add_repack_incremental_option(void)
+{
+       argv_array_push(&repack, "--no-write-bitmap-index");
+}
+
 static int need_to_gc(void)
 {
 	/*
@@ -208,7 +213,9 @@ static int need_to_gc(void)
 	 */
 	if (too_many_packs())
 		add_repack_all_option();
-	else if (!too_many_loose_objects())
+	else if (too_many_loose_objects())
+		add_repack_incremental_option();
+	else
 		return 0;
 
 	if (run_hook_le(NULL, "pre-auto-gc", NULL))
