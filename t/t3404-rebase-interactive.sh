@@ -237,6 +237,22 @@ test_expect_success 'retain authorship' '
 	git show HEAD | grep "^Author: Twerp Snog"
 '
 
+test_expect_success 'retain authorship w/ conflicts' '
+	git reset --hard twerp &&
+	test_commit a conflict a conflict-a &&
+	git reset --hard twerp &&
+	GIT_AUTHOR_NAME=AttributeMe \
+	test_commit b conflict b conflict-b &&
+	set_fake_editor &&
+	test_must_fail git rebase -i conflict-a &&
+	echo resolved >conflict &&
+	git add conflict &&
+	git rebase --continue &&
+	test $(git rev-parse conflict-a^0) = $(git rev-parse HEAD^) &&
+	git show >out &&
+	grep AttributeMe out
+'
+
 test_expect_success 'squash' '
 	git reset --hard twerp &&
 	echo B > file7 &&

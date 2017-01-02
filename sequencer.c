@@ -591,18 +591,17 @@ missing_author:
 }
 
 /*
- * Read the author-script file into an environment block, ready for use in
- * run_command(), that can be free()d afterwards.
+ * Read a list of environment variable assignments (such as the author-script
+ * file) into an environment block. Returns -1 on error, 0 otherwise.
  */
-static char **read_author_script(void)
+static int read_env_script(struct argv_array *env)
 {
 	struct strbuf script = STRBUF_INIT;
 	int i, count = 0;
-	char *p, *p2, **env;
-	size_t env_size;
+	char *p, *p2;
 
 	if (strbuf_read_file(&script, rebase_path_author_script(), 256) <= 0)
-		return NULL;
+		return -1;
 
 	for (p = script.buf; *p; p++)
 		if (skip_prefix(p, "'\\\\''", (const char **)&p2))
@@ -614,19 +613,12 @@ static char **read_author_script(void)
 			count++;
 		}
 
-	env_size = (count + 1) * sizeof(*env);
-	strbuf_grow(&script, env_size);
-	memmove(script.buf + env_size, script.buf, script.len);
-	p = script.buf + env_size;
-	env = (char **)strbuf_detach(&script, NULL);
-
-	for (i = 0; i < count; i++) {
-		env[i] = p;
+	for (i = 0, p = script.buf; i < count; i++) {
+		argv_array_push(env, p);
 		p += strlen(p) + 1;
 	}
-	env[count] = NULL;
 
-	return env;
+	return 0;
 }
 
 static const char staged_changes_advice[] =
@@ -659,14 +651,12 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 			  int allow_empty, int edit, int amend,
 			  int cleanup_commit_message)
 {
-	char **env = NULL;
-	struct argv_array array;
+	struct argv_array env = ARGV_ARRAY_INIT, array;
 	int rc;
 	const char *value;
 
 	if (is_rebase_i(opts)) {
-		env = read_author_script();
-		if (!env) {
+		if (!read_env_script(&env)) {
 			const char *gpg_opt = gpg_sign_opt_quoted(opts);
 
 			return error(_(staged_changes_advice),
@@ -702,9 +692,9 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 		argv_array_push(&array, "--allow-empty-message");
 
 	rc = run_command_v_opt_cd_env(array.argv, RUN_GIT_CMD, NULL,
-			(const char *const *)env);
+			(const char *const *)env.argv);
 	argv_array_clear(&array);
-	free(env);
+	argv_array_clear(&env);
 
 	return rc;
 }
