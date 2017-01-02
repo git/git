@@ -736,7 +736,8 @@ enum todo_command {
 	/* commands that do something else than handling a single commit */
 	TODO_EXEC,
 	/* commands that do nothing but are counted for reporting progress */
-	TODO_NOOP
+	TODO_NOOP,
+	TODO_DROP
 };
 
 static struct {
@@ -750,7 +751,8 @@ static struct {
 	{ 'f', "fixup" },
 	{ 's', "squash" },
 	{ 'x', "exec" },
-	{ 0,   "noop" }
+	{ 0,   "noop" },
+	{ 'd', "drop" }
 };
 
 static const char *command_to_string(const enum todo_command command)
@@ -762,7 +764,7 @@ static const char *command_to_string(const enum todo_command command)
 
 static int is_noop(const enum todo_command command)
 {
-	return TODO_NOOP <= (size_t)command;
+	return TODO_NOOP <= command;
 }
 
 static int is_fixup(enum todo_command command)
