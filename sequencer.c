@@ -1215,8 +1215,7 @@ static int parse_insn_buffer(char *buf, struct todo_list *todo_list)
 		else if (!is_noop(item->command))
 			fixup_okay = 1;
 	}
-	if (!todo_list->nr)
-		return error(_("no commits parsed."));
+
 	return res;
 }
 
@@ -1239,6 +1238,10 @@ static int read_populate_todo(struct todo_list *todo_list,
 	res = parse_insn_buffer(todo_list->buf.buf, todo_list);
 	if (res)
 		return error(_("unusable instruction sheet: '%s'"), todo_file);
+
+	if (!todo_list->nr &&
+	    (!is_rebase_i(opts) || !file_exists(rebase_path_done())))
+		return error(_("no commits parsed."));
 
 	if (!is_rebase_i(opts)) {
 		enum todo_command valid =
