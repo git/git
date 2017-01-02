@@ -65,6 +65,8 @@ static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
  * command-line (and are only consumed, not modified, by the sequencer).
  */
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
+static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
+static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
 
 static inline int is_rebase_i(const struct replay_opts *opts)
 {
@@ -1088,6 +1090,9 @@ static int read_populate_opts(struct replay_opts *opts)
 		}
 		strbuf_release(&buf);
 
+		if (file_exists(rebase_path_verbose()))
+			opts->verbose = 1;
+
 		return 0;
 	}
 
@@ -1491,9 +1496,32 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 	}
 
 	if (is_rebase_i(opts)) {
+		struct strbuf buf = STRBUF_INIT;
+
 		/* Stopped in the middle, as planned? */
 		if (todo_list->current < todo_list->nr)
 			return 0;
+
+		if (opts->verbose) {
+			struct rev_info log_tree_opt;
+			struct object_id orig, head;
+
+			memset(&log_tree_opt, 0, sizeof(log_tree_opt));
+			init_revisions(&log_tree_opt, NULL);
+			log_tree_opt.diff = 1;
+			log_tree_opt.diffopt.output_format =
+				DIFF_FORMAT_DIFFSTAT;
+			log_tree_opt.disable_stdin = 1;
+
+			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
+			    !get_sha1(buf.buf, orig.hash) &&
+			    !get_sha1("HEAD", head.hash)) {
+				diff_tree_sha1(orig.hash, head.hash,
+					       "", &log_tree_opt.diffopt);
+				log_tree_diff_flush(&log_tree_opt);
+			}
+		}
+		strbuf_release(&buf);
 	}
 
 	/*
