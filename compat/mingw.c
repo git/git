@@ -3009,6 +3009,47 @@ static char *wcstoutfdup_startup(char *buffer, const wchar_t *wcs, size_t len)
 	return memcpy(malloc_startup(len), buffer, len);
 }
 
+static void maybe_redirect_std_handle(const wchar_t *key, DWORD std_id, int fd,
+				      DWORD desired_access, DWORD flags)
+{
+	DWORD create_flag = fd ? OPEN_ALWAYS : OPEN_EXISTING;
+	wchar_t buf[MAX_LONG_PATH];
+	DWORD max = ARRAY_SIZE(buf);
+	HANDLE handle;
+	DWORD ret = GetEnvironmentVariableW(key, buf, max);
+
+	if (!ret || ret >= max)
+		return;
+
+	/* make sure this does not leak into child processes */
+	SetEnvironmentVariableW(key, NULL);
+	if (!wcscmp(buf, L"off")) {
+		close(fd);
+		handle = GetStdHandle(std_id);
+		if (handle != INVALID_HANDLE_VALUE)
+			CloseHandle(handle);
+		return;
+	}
+	handle = CreateFileW(buf, desired_access, 0, NULL, create_flag,
+			     flags, NULL);
+	if (handle != INVALID_HANDLE_VALUE) {
+		int new_fd = _open_osfhandle((intptr_t)handle, O_BINARY);
+		SetStdHandle(std_id, handle);
+		dup2(new_fd, fd);
+		close(new_fd);
+	}
+}
+
+static void maybe_redirect_std_handles(void)
+{
+	maybe_redirect_std_handle(L"GIT_REDIRECT_STDIN", STD_INPUT_HANDLE, 0,
+				  GENERIC_READ, FILE_ATTRIBUTE_NORMAL);
+	maybe_redirect_std_handle(L"GIT_REDIRECT_STDOUT", STD_OUTPUT_HANDLE, 1,
+				  GENERIC_WRITE, FILE_ATTRIBUTE_NORMAL);
+	maybe_redirect_std_handle(L"GIT_REDIRECT_STDERR", STD_ERROR_HANDLE, 2,
+				  GENERIC_WRITE, FILE_FLAG_NO_BUFFERING);
+}
+
 #if defined(_MSC_VER)
 
 #ifdef _DEBUG
@@ -3046,6 +3087,8 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 #ifdef USE_MSVC_CRTDBG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
+
+	maybe_redirect_std_handles();
 
 	/* determine size of argv conversion buffer */
 	maxlen = wcslen(_wpgmptr);
@@ -3110,6 +3153,8 @@ void mingw_startup(void)
 	char *buffer;
 	wchar_t **wenv, **wargv;
 	_startupinfo si;
+
+	maybe_redirect_std_handles();
 
 	/* get wide char arguments and environment */
 	si.newmode = 0;
