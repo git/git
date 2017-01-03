@@ -126,13 +126,13 @@ test_expect_success 'not preserving user with mixed authorship' '
 		grep "git author charlie@example.com does not match" &&
 
 		make_change_by_user usernamefile3 alice alice@example.com &&
-		git p4 commit |\
-		test_must_fail grep "git author.*does not match" &&
+		git p4 commit >actual &&
+		! grep "git author.*does not match" actual &&
 
 		git config git-p4.skipUserNameCheck true &&
 		make_change_by_user usernamefile3 Charlie charlie@example.com &&
-		git p4 commit |\
-		test_must_fail grep "git author.*does not match" &&
+		git p4 commit >actual &&
+		! grep "git author.*does not match" actual &&
 
 		p4_check_commit_author usernamefile3 alice
 	)
