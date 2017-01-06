@@ -2710,6 +2710,14 @@ static int commit_ref(struct ref_lock *lock)
 	return 0;
 }
 
+static int open_or_create_logfile(const char *path, void *cb)
+{
+	int *fd = cb;
+
+	*fd = open(path, O_APPEND | O_WRONLY | O_CREAT, 0666);
+	return (*fd < 0) ? -1 : 0;
+}
+
 /*
  * Create a reflog for a ref.  If force_create = 0, the reflog will
  * only be created for certain refs (those for which
@@ -2723,31 +2731,18 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 	strbuf_git_path(logfile, "logs/%s", refname);
 
 	if (force_create || should_autocreate_reflog(refname)) {
-		if (safe_create_leading_directories(logfile->buf) < 0) {
-			strbuf_addf(err, "unable to create directory for '%s': "
-				    "%s", logfile->buf, strerror(errno));
-			return -1;
-		}
-		logfd = open(logfile->buf, O_APPEND | O_WRONLY | O_CREAT, 0666);
-		if (logfd < 0) {
-			if (errno == EISDIR) {
-				/*
-				 * The directory that is in the way might be
-				 * empty. Try to remove it.
-				 */
-				if (remove_empty_directories(logfile)) {
-					strbuf_addf(err, "there are still logs under "
-						    "'%s'", logfile->buf);
-					return -1;
-				}
-				logfd = open(logfile->buf, O_APPEND | O_WRONLY | O_CREAT, 0666);
-			}
-
-			if (logfd < 0) {
+		if (raceproof_create_file(logfile->buf, open_or_create_logfile, &logfd)) {
+			if (errno == ENOENT)
+				strbuf_addf(err, "unable to create directory for '%s': "
+					    "%s", logfile->buf, strerror(errno));
+			else if (errno == EISDIR)
+				strbuf_addf(err, "there are still logs under '%s'",
+					    logfile->buf);
+			else
 				strbuf_addf(err, "unable to append to '%s': %s",
 					    logfile->buf, strerror(errno));
-				return -1;
-			}
+
+			return -1;
 		}
 	} else {
 		logfd = open(logfile->buf, O_APPEND | O_WRONLY, 0666);
