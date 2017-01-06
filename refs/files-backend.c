@@ -2430,10 +2430,7 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 		 * loose.  The loose file name is the same as the
 		 * lockfile name, minus ".lock":
 		 */
-		char *loose_filename = get_locked_file_path(lock->lk);
-		int res = unlink_or_msg(loose_filename, err);
-		free(loose_filename);
-		if (res)
+		if (unlink_or_msg(git_path("%s", lock->ref_name), err))
 			return 1;
 	}
 	return 0;
