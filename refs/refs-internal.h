@@ -56,6 +56,12 @@
 #define REF_UPDATE_VIA_HEAD 0x100
 
 /*
+ * Used as a flag in ref_update::flags when the loose reference has
+ * been deleted.
+ */
+#define REF_DELETED_LOOSE 0x200
+
+/*
  * Return true iff refname is minimally safe. "Safe" here means that
  * deleting a loose reference by this name will not do any damage, for
  * example by causing a file that is not a reference to be deleted.
@@ -158,8 +164,9 @@ struct ref_update {
 
 	/*
 	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,
-	 * REF_DELETING, REF_ISPRUNING, REF_LOG_ONLY, and
-	 * REF_UPDATE_VIA_HEAD:
+	 * REF_DELETING, REF_ISPRUNING, REF_LOG_ONLY,
+	 * REF_UPDATE_VIA_HEAD, REF_NEEDS_COMMIT, and
+	 * REF_DELETED_LOOSE:
 	 */
 	unsigned int flags;
 
