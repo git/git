@@ -2838,14 +2838,18 @@ static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
 	result = log_ref_write_fd(logfd, old_sha1, new_sha1,
 				  git_committer_info(0), msg);
 	if (result) {
-		strbuf_addf(err, "unable to append to '%s': %s", logfile->buf,
-			    strerror(errno));
+		int save_errno = errno;
+
+		strbuf_addf(err, "unable to append to '%s': %s",
+			    git_path("logs/%s", refname), strerror(save_errno));
 		close(logfd);
 		return -1;
 	}
 	if (close(logfd)) {
-		strbuf_addf(err, "unable to append to '%s': %s", logfile->buf,
-			    strerror(errno));
+		int save_errno = errno;
+
+		strbuf_addf(err, "unable to append to '%s': %s",
+			    git_path("logs/%s", refname), strerror(save_errno));
 		return -1;
 	}
 	return 0;
