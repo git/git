@@ -2719,37 +2719,36 @@ static int open_or_create_logfile(const char *path, void *cb)
 }
 
 /*
- * Create a reflog for a ref. Store its path to *logfile. If
- * force_create = 0, only create the reflog for certain refs (those
- * for which should_autocreate_reflog returns non-zero). Otherwise,
- * create it regardless of the reference name. If the logfile already
- * existed or was created, return 0 and set *logfd to the file
- * descriptor opened for appending to the file. If no logfile exists
- * and we decided not to create one, return 0 and set *logfd to -1. On
- * failure, fill in *err, set *logfd to -1, and return -1.
+ * Create a reflog for a ref. If force_create = 0, only create the
+ * reflog for certain refs (those for which should_autocreate_reflog
+ * returns non-zero). Otherwise, create it regardless of the reference
+ * name. If the logfile already existed or was created, return 0 and
+ * set *logfd to the file descriptor opened for appending to the file.
+ * If no logfile exists and we decided not to create one, return 0 and
+ * set *logfd to -1. On failure, fill in *err, set *logfd to -1, and
+ * return -1.
  */
-static int log_ref_setup(const char *refname,
-			 struct strbuf *logfile, int *logfd,
-			 struct strbuf *err, int force_create)
+static int log_ref_setup(const char *refname, int force_create,
+			 int *logfd, struct strbuf *err)
 {
-	strbuf_git_path(logfile, "logs/%s", refname);
+	char *logfile = git_pathdup("logs/%s", refname);
 
 	if (force_create || should_autocreate_reflog(refname)) {
-		if (raceproof_create_file(logfile->buf, open_or_create_logfile, logfd)) {
+		if (raceproof_create_file(logfile, open_or_create_logfile, logfd)) {
 			if (errno == ENOENT)
 				strbuf_addf(err, "unable to create directory for '%s': "
-					    "%s", logfile->buf, strerror(errno));
+					    "%s", logfile, strerror(errno));
 			else if (errno == EISDIR)
 				strbuf_addf(err, "there are still logs under '%s'",
-					    logfile->buf);
+					    logfile);
 			else
 				strbuf_addf(err, "unable to append to '%s': %s",
-					    logfile->buf, strerror(errno));
+					    logfile, strerror(errno));
 
-			return -1;
+			goto error;
 		}
 	} else {
-		*logfd = open(logfile->buf, O_APPEND | O_WRONLY, 0666);
+		*logfd = open(logfile, O_APPEND | O_WRONLY, 0666);
 		if (*logfd < 0) {
 			if (errno == ENOENT || errno == EISDIR) {
 				/*
@@ -2761,34 +2760,39 @@ static int log_ref_setup(const char *refname,
 				;
 			} else {
 				strbuf_addf(err, "unable to append to '%s': %s",
-					    logfile->buf, strerror(errno));
-				return -1;
+					    logfile, strerror(errno));
+				goto error;
 			}
 		}
 	}
 
 	if (*logfd >= 0)
-		adjust_shared_perm(logfile->buf);
+		adjust_shared_perm(logfile);
 
+	free(logfile);
 	return 0;
+
+error:
+	free(logfile);
+	return -1;
 }
 
 static int files_create_reflog(struct ref_store *ref_store,
 			       const char *refname, int force_create,
 			       struct strbuf *err)
 {
-	int ret;
-	struct strbuf sb = STRBUF_INIT;
 	int fd;
 
 	/* Check validity (but we don't need the result): */
 	files_downcast(ref_store, 0, "create_reflog");
 
-	ret = log_ref_setup(refname, &sb, &fd, err, force_create);
+	if (log_ref_setup(refname, force_create, &fd, err))
+		return -1;
+
 	if (fd >= 0)
 		close(fd);
-	strbuf_release(&sb);
-	return ret;
+
+	return 0;
 }
 
 static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
@@ -2819,16 +2823,15 @@ static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
 
 static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
 			   const unsigned char *new_sha1, const char *msg,
-			   struct strbuf *logfile, int flags,
-			   struct strbuf *err)
+			   int flags, struct strbuf *err)
 {
 	int logfd, result;
 
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	result = log_ref_setup(refname, logfile, &logfd, err,
-			       flags & REF_FORCE_CREATE_REFLOG);
+	result = log_ref_setup(refname, flags & REF_FORCE_CREATE_REFLOG,
+			       &logfd, err);
 
 	if (result)
 		return result;
@@ -2859,11 +2862,7 @@ int files_log_ref_write(const char *refname, const unsigned char *old_sha1,
 			const unsigned char *new_sha1, const char *msg,
 			int flags, struct strbuf *err)
 {
-	struct strbuf sb = STRBUF_INIT;
-	int ret = log_ref_write_1(refname, old_sha1, new_sha1, msg, &sb, flags,
-				  err);
-	strbuf_release(&sb);
-	return ret;
+	return log_ref_write_1(refname, old_sha1, new_sha1, msg, flags, err);
 }
 
 /*
