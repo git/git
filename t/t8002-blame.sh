@@ -114,4 +114,8 @@ test_expect_success 'blame --abbrev=40 behaves like -l' '
 	check_abbrev 39 --abbrev=40 ^HEAD
 '
 
+test_expect_success '--no-abbrev works like --abbrev=40' '
+	check_abbrev 40 --no-abbrev
+'
+
 test_done

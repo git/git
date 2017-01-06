@@ -2609,6 +2609,8 @@ parse_done:
 	if (0 < abbrev && abbrev < GIT_SHA1_HEXSZ)
 		/* one more abbrev length is needed for the boundary commit */
 		abbrev++;
+	else if (!abbrev)
+		abbrev = GIT_SHA1_HEXSZ;
 
 	if (revs_file && read_ancestry(revs_file))
 		die_errno("reading graft file '%s' failed", revs_file);
