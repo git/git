@@ -62,11 +62,12 @@
  * This function does not check that the reference name is legal; for
  * that, use check_refname_format().
  *
- * We consider a refname that starts with "refs/" to be safe as long
- * as any ".." components that it might contain do not escape "refs/".
- * Names that do not start with "refs/" are considered safe iff they
- * consist entirely of upper case characters and '_' (like "HEAD" and
- * "MERGE_HEAD" but not "config" or "FOO/BAR").
+ * A refname that starts with "refs/" is considered safe iff it
+ * doesn't contain any "." or ".." components or consecutive '/'
+ * characters, end with '/', or (on Windows) contain any '\'
+ * characters. Names that do not start with "refs/" are considered
+ * safe iff they consist entirely of upper case characters and '_'
+ * (like "HEAD" and "MERGE_HEAD" but not "config" or "FOO/BAR").
  */
 int refname_is_safe(const char *refname);
 
