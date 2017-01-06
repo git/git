@@ -2719,19 +2719,23 @@ static int open_or_create_logfile(const char *path, void *cb)
 }
 
 /*
- * Create a reflog for a ref.  If force_create = 0, the reflog will
- * only be created for certain refs (those for which
- * should_autocreate_reflog returns non-zero.  Otherwise, create it
- * regardless of the ref name.  Fill in *err and return -1 on failure.
+ * Create a reflog for a ref. Store its path to *logfile. If
+ * force_create = 0, only create the reflog for certain refs (those
+ * for which should_autocreate_reflog returns non-zero). Otherwise,
+ * create it regardless of the reference name. If the logfile already
+ * existed or was created, return 0 and set *logfd to the file
+ * descriptor opened for appending to the file. If no logfile exists
+ * and we decided not to create one, return 0 and set *logfd to -1. On
+ * failure, fill in *err, set *logfd to -1, and return -1.
  */
-static int log_ref_setup(const char *refname, struct strbuf *logfile, struct strbuf *err, int force_create)
+static int log_ref_setup(const char *refname,
+			 struct strbuf *logfile, int *logfd,
+			 struct strbuf *err, int force_create)
 {
-	int logfd;
-
 	strbuf_git_path(logfile, "logs/%s", refname);
 
 	if (force_create || should_autocreate_reflog(refname)) {
-		if (raceproof_create_file(logfile->buf, open_or_create_logfile, &logfd)) {
+		if (raceproof_create_file(logfile->buf, open_or_create_logfile, logfd)) {
 			if (errno == ENOENT)
 				strbuf_addf(err, "unable to create directory for '%s': "
 					    "%s", logfile->buf, strerror(errno));
@@ -2745,8 +2749,8 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 			return -1;
 		}
 	} else {
-		logfd = open(logfile->buf, O_APPEND | O_WRONLY, 0666);
-		if (logfd < 0) {
+		*logfd = open(logfile->buf, O_APPEND | O_WRONLY, 0666);
+		if (*logfd < 0) {
 			if (errno == ENOENT || errno == EISDIR) {
 				/*
 				 * The logfile doesn't already exist,
@@ -2763,10 +2767,8 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 		}
 	}
 
-	if (logfd >= 0) {
+	if (*logfd >= 0)
 		adjust_shared_perm(logfile->buf);
-		close(logfd);
-	}
 
 	return 0;
 }
@@ -2777,11 +2779,14 @@ static int files_create_reflog(struct ref_store *ref_store,
 {
 	int ret;
 	struct strbuf sb = STRBUF_INIT;
+	int fd;
 
 	/* Check validity (but we don't need the result): */
 	files_downcast(ref_store, 0, "create_reflog");
 
-	ret = log_ref_setup(refname, &sb, err, force_create);
+	ret = log_ref_setup(refname, &sb, &fd, err, force_create);
+	if (fd >= 0)
+		close(fd);
 	strbuf_release(&sb);
 	return ret;
 }
@@ -2817,17 +2822,17 @@ static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
 			   struct strbuf *logfile, int flags,
 			   struct strbuf *err)
 {
-	int logfd, result, oflags = O_APPEND | O_WRONLY;
+	int logfd, result;
 
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	result = log_ref_setup(refname, logfile, err, flags & REF_FORCE_CREATE_REFLOG);
+	result = log_ref_setup(refname, logfile, &logfd, err,
+			       flags & REF_FORCE_CREATE_REFLOG);
 
 	if (result)
 		return result;
 
-	logfd = open(logfile->buf, oflags);
 	if (logfd < 0)
 		return 0;
 	result = log_ref_write_fd(logfd, old_sha1, new_sha1,
