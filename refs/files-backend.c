@@ -2821,9 +2821,9 @@ static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
 	return 0;
 }
 
-static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
-			   const unsigned char *new_sha1, const char *msg,
-			   int flags, struct strbuf *err)
+int files_log_ref_write(const char *refname, const unsigned char *old_sha1,
+			const unsigned char *new_sha1, const char *msg,
+			int flags, struct strbuf *err)
 {
 	int logfd, result;
 
@@ -2856,13 +2856,6 @@ static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
 		return -1;
 	}
 	return 0;
-}
-
-int files_log_ref_write(const char *refname, const unsigned char *old_sha1,
-			const unsigned char *new_sha1, const char *msg,
-			int flags, struct strbuf *err)
-{
-	return log_ref_write_1(refname, old_sha1, new_sha1, msg, flags, err);
 }
 
 /*
