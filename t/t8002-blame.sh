@@ -86,4 +86,32 @@ test_expect_success 'blame with showEmail config true' '
 	test_cmp expected_n result
 '
 
+test_expect_success 'set up abbrev tests' '
+	test_commit abbrev &&
+	sha1=$(git rev-parse --verify HEAD) &&
+	check_abbrev () {
+		expect=$1; shift
+		echo $sha1 | cut -c 1-$expect >expect &&
+		git blame "$@" abbrev.t >actual &&
+		perl -lne "/[0-9a-f]+/ and print \$&" <actual >actual.sha &&
+		test_cmp expect actual.sha
+	}
+'
+
+test_expect_success 'blame --abbrev=<n> works' '
+	# non-boundary commits get +1 for alignment
+	check_abbrev 31 --abbrev=30 HEAD &&
+	check_abbrev 30 --abbrev=30 ^HEAD
+'
+
+test_expect_success 'blame -l aligns regular and boundary commits' '
+	check_abbrev 40 -l HEAD &&
+	check_abbrev 39 -l ^HEAD
+'
+
+test_expect_success 'blame --abbrev=40 behaves like -l' '
+	check_abbrev 40 --abbrev=40 HEAD &&
+	check_abbrev 39 --abbrev=40 ^HEAD
+'
+
 test_done
