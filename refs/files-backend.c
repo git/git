@@ -2631,7 +2631,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 	if (!read_ref_full(newrefname, RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 			   sha1, NULL) &&
 	    delete_ref(newrefname, NULL, REF_NODEREF)) {
-		if (errno==EISDIR) {
+		if (errno == EISDIR) {
 			struct strbuf path = STRBUF_INIT;
 			int result;
 
