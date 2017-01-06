@@ -2518,10 +2518,11 @@ static int rename_tmp_log(const char *newrefname)
 	ret = raceproof_create_file(path, rename_tmp_log_callback, &true_errno);
 	if (ret) {
 		if (errno == EISDIR)
-			error("Directory not empty: %s", path);
+			error("directory not empty: %s", path);
 		else
-			error("unable to move logfile "TMP_RENAMED_LOG" to logs/%s: %s",
-				newrefname, strerror(true_errno));
+			error("unable to move logfile %s to %s: %s",
+			      git_path(TMP_RENAMED_LOG), path,
+			      strerror(true_errno));
 	}
 
 	free(path);
