@@ -2282,13 +2282,13 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 
 /*
  * Remove empty parents, but spare refs/ and immediate subdirs.
- * Note: munges *name.
+ * Note: munges *refname.
  */
-static void try_remove_empty_parents(char *name)
+static void try_remove_empty_parents(char *refname)
 {
 	char *p, *q;
 	int i;
-	p = name;
+	p = refname;
 	for (i = 0; i < 2; i++) { /* refs/{heads,tags,...}/ */
 		while (*p && *p != '/')
 			p++;
@@ -2306,7 +2306,7 @@ static void try_remove_empty_parents(char *name)
 		if (q == p)
 			break;
 		*q = '\0';
-		if (rmdir(git_path("%s", name)))
+		if (rmdir(git_path("%s", refname)))
 			break;
 	}
 }
