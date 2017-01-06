@@ -2282,13 +2282,15 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 
 /*
  * Remove empty parents, but spare refs/ and immediate subdirs.
- * Note: munges *refname.
  */
-static void try_remove_empty_parents(char *refname)
+static void try_remove_empty_parents(const char *refname)
 {
+	struct strbuf buf = STRBUF_INIT;
 	char *p, *q;
 	int i;
-	p = refname;
+
+	strbuf_addstr(&buf, refname);
+	p = buf.buf;
 	for (i = 0; i < 2; i++) { /* refs/{heads,tags,...}/ */
 		while (*p && *p != '/')
 			p++;
@@ -2296,8 +2298,7 @@ static void try_remove_empty_parents(char *refname)
 		while (*p == '/')
 			p++;
 	}
-	for (q = p; *q; q++)
-		;
+	q = buf.buf + buf.len;
 	while (1) {
 		while (q > p && *q != '/')
 			q--;
@@ -2305,10 +2306,11 @@ static void try_remove_empty_parents(char *refname)
 			q--;
 		if (q == p)
 			break;
-		*q = '\0';
-		if (rmdir(git_path("%s", refname)))
+		strbuf_setlen(&buf, q - buf.buf);
+		if (rmdir(git_path("%s", buf.buf)))
 			break;
 	}
+	strbuf_release(&buf);
 }
 
 /* make sure nobody touched the ref, and unlink */
