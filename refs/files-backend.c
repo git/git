@@ -2489,55 +2489,42 @@ out:
  */
 #define TMP_RENAMED_LOG  "logs/refs/.tmp-renamed-log"
 
+static int rename_tmp_log_callback(const char *path, void *cb)
+{
+	int *true_errno = cb;
+
+	if (rename(git_path(TMP_RENAMED_LOG), path)) {
+		/*
+		 * rename(a, b) when b is an existing directory ought
+		 * to result in ISDIR, but Solaris 5.8 gives ENOTDIR.
+		 * Sheesh. Record the true errno for error reporting,
+		 * but report EISDIR to raceproof_create_file() so
+		 * that it knows to retry.
+		 */
+		*true_errno = errno;
+		if (errno == ENOTDIR)
+			errno = EISDIR;
+		return -1;
+	} else {
+		return 0;
+	}
+}
+
 static int rename_tmp_log(const char *newrefname)
 {
-	int attempts_remaining = 4;
-	struct strbuf path = STRBUF_INIT;
-	int ret = -1;
+	char *path = git_pathdup("logs/%s", newrefname);
+	int ret, true_errno;
 
- retry:
-	strbuf_reset(&path);
-	strbuf_git_path(&path, "logs/%s", newrefname);
-	switch (safe_create_leading_directories_const(path.buf)) {
-	case SCLD_OK:
-		break; /* success */
-	case SCLD_VANISHED:
-		if (--attempts_remaining > 0)
-			goto retry;
-		/* fall through */
-	default:
-		error("unable to create directory for %s", newrefname);
-		goto out;
-	}
-
-	if (rename(git_path(TMP_RENAMED_LOG), path.buf)) {
-		if ((errno==EISDIR || errno==ENOTDIR) && --attempts_remaining > 0) {
-			/*
-			 * rename(a, b) when b is an existing
-			 * directory ought to result in ISDIR, but
-			 * Solaris 5.8 gives ENOTDIR.  Sheesh.
-			 */
-			if (remove_empty_directories(&path)) {
-				error("Directory not empty: logs/%s", newrefname);
-				goto out;
-			}
-			goto retry;
-		} else if (errno == ENOENT && --attempts_remaining > 0) {
-			/*
-			 * Maybe another process just deleted one of
-			 * the directories in the path to newrefname.
-			 * Try again from the beginning.
-			 */
-			goto retry;
-		} else {
+	ret = raceproof_create_file(path, rename_tmp_log_callback, &true_errno);
+	if (ret) {
+		if (errno == EISDIR)
+			error("Directory not empty: %s", path);
+		else
 			error("unable to move logfile "TMP_RENAMED_LOG" to logs/%s: %s",
-				newrefname, strerror(errno));
-			goto out;
-		}
+				newrefname, strerror(true_errno));
 	}
-	ret = 0;
-out:
-	strbuf_release(&path);
+
+	free(path);
 	return ret;
 }
 
