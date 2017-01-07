@@ -1835,7 +1835,7 @@ endif
 
 git.res: git.rc GIT-VERSION-FILE GIT-PREFIX
 	$(QUIET_RC)$(RC) $(RC_VERSION_DEFS) \
-	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" $< -o $@
+	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" -i $< -o $@
 
 # This makes sure we depend on the NO_PERL setting itself.
 $(SCRIPT_PERL_GEN): GIT-BUILD-OPTIONS
