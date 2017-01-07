@@ -593,12 +593,16 @@ static void execv_dashed_external(const char **argv)
 	trace_argv_printf(cmd.args.argv, "trace: exec:");
 
 	/*
-	 * if we fail because the command is not found, it is
-	 * OK to return. Otherwise, we just pass along the status code.
+	 * If we fail because the command is not found, it is
+	 * OK to return. Otherwise, we just pass along the status code,
+	 * or our usual generic code if we were not even able to exec
+	 * the program.
 	 */
 	status = run_command(&cmd);
-	if (status >= 0 || errno != ENOENT)
+	if (status >= 0)
 		exit(status);
+	else if (errno != ENOENT)
+		exit(128);
 }
 
 static int run_argv(int *argcp, const char ***argv)
