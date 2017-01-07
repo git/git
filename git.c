@@ -588,6 +588,7 @@ static void execv_dashed_external(const char **argv)
 	argv_array_pushf(&cmd.args, "git-%s", argv[0]);
 	argv_array_pushv(&cmd.args, argv + 1);
 	cmd.clean_on_exit = 1;
+	cmd.wait_after_clean = 1;
 	cmd.silent_exec_failure = 1;
 
 	trace_argv_printf(cmd.args.argv, "trace: exec:");
