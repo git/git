@@ -68,20 +68,19 @@ void git_set_argv_exec_path(const char *exec_path)
 /* Returns the highest-priority, location to look for git programs. */
 const char *git_exec_path(void)
 {
-	const char *env;
-	static char *system_exec_path;
+	static char *cached_exec_path;
 
 	if (argv_exec_path)
 		return argv_exec_path;
 
-	env = getenv(EXEC_PATH_ENVIRONMENT);
-	if (env && *env) {
-		return env;
+	if (!cached_exec_path) {
+		const char *env = getenv(EXEC_PATH_ENVIRONMENT);
+		if (env && *env)
+			cached_exec_path = xstrdup(env);
+		else
+			cached_exec_path = system_path(GIT_EXEC_PATH);
 	}
-
-	if (!system_exec_path)
-		system_exec_path = system_path(GIT_EXEC_PATH);
-	return system_exec_path;
+	return cached_exec_path;
 }
 
 static void add_path(struct strbuf *out, const char *path)
