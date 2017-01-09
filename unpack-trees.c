@@ -253,7 +253,6 @@ static int check_updates(struct unpack_trees_options *o)
 			display_progress(progress, ++cnt);
 			if (o->update && !o->dry_run)
 				unlink_entry(ce);
-			continue;
 		}
 	}
 	remove_marked_cache_entries(index);
