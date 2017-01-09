@@ -218,9 +218,27 @@ static void unlink_entry(const struct cache_entry *ce)
 	schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
 
-static int check_updates(struct unpack_trees_options *o)
+static struct progress *get_progress(struct unpack_trees_options *o)
 {
 	unsigned cnt = 0, total = 0;
+	struct index_state *index = &o->result;
+
+	if (!o->update || !o->verbose_update)
+		return NULL;
+
+	for (; cnt < index->cache_nr; cnt++) {
+		const struct cache_entry *ce = index->cache[cnt];
+		if (ce->ce_flags & (CE_UPDATE | CE_WT_REMOVE))
+			total++;
+	}
+
+	return start_progress_delay(_("Checking out files"),
+				    total, 50, 1);
+}
+
+static int check_updates(struct unpack_trees_options *o)
+{
+	unsigned cnt = 0;
 	int errs = 0;
 	struct progress *progress = NULL;
 	struct index_state *index = &o->result;
@@ -232,17 +250,7 @@ static int check_updates(struct unpack_trees_options *o)
 	state.refresh_cache = 1;
 	state.istate = index;
 
-	if (o->update && o->verbose_update) {
-		for (total = cnt = 0; cnt < index->cache_nr; cnt++) {
-			const struct cache_entry *ce = index->cache[cnt];
-			if (ce->ce_flags & (CE_UPDATE | CE_WT_REMOVE))
-				total++;
-		}
-
-		progress = start_progress_delay(_("Checking out files"),
-						total, 50, 1);
-		cnt = 0;
-	}
+	progress = get_progress(o);
 
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT, index);
