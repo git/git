@@ -2160,6 +2160,21 @@ static void maybe_redirect_std_handle(const wchar_t *key, DWORD std_id, int fd,
 			CloseHandle(handle);
 		return;
 	}
+	if (std_id == STD_ERROR_HANDLE && !wcscmp(buf, L"2>&1")) {
+		handle = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (handle == INVALID_HANDLE_VALUE) {
+			close(fd);
+			handle = GetStdHandle(std_id);
+			if (handle != INVALID_HANDLE_VALUE)
+				CloseHandle(handle);
+		} else {
+			int new_fd = _open_osfhandle((intptr_t)handle, O_BINARY);
+			SetStdHandle(std_id, handle);
+			dup2(new_fd, fd);
+			/* do *not* close the new_fd: that would close stdout */
+		}
+		return;
+	}
 	handle = CreateFileW(buf, desired_access, 0, NULL, create_flag,
 			     flags, NULL);
 	if (handle != INVALID_HANDLE_VALUE) {
