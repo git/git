@@ -425,7 +425,13 @@ test_expect_success MINGW 'core.hidedotfiles = false' '
 test_expect_success MINGW 'redirect std handles' '
 	GIT_REDIRECT_STDOUT=output.txt git rev-parse --git-dir &&
 	test .git = "$(cat output.txt)" &&
-	test -z "$(GIT_REDIRECT_STDOUT=off git rev-parse --git-dir)"
+	test -z "$(GIT_REDIRECT_STDOUT=off git rev-parse --git-dir)" &&
+	test_must_fail env \
+		GIT_REDIRECT_STDOUT=output.txt \
+		GIT_REDIRECT_STDERR="2>&1" \
+		git rev-parse --git-dir --verify refs/invalid &&
+	printf ".git\nfatal: Needed a single revision\n" >expect &&
+	test_cmp expect output.txt
 '
 
 
