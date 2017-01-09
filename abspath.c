@@ -141,6 +141,8 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 			strbuf_reset(&symlink);
 
 			if (num_symlinks++ > MAXSYMLINKS) {
+				errno = ELOOP;
+
 				if (die_on_error)
 					die("More than %d nested symlinks "
 					    "on path '%s'", MAXSYMLINKS, path);
