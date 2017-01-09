@@ -62,7 +62,9 @@ static void get_root_part(struct strbuf *resolved, struct strbuf *remaining)
 }
 
 /* We allow "recursive" symbolic links. Only within reason, though. */
-#define MAXSYMLINKS 5
+#ifndef MAXSYMLINKS
+#define MAXSYMLINKS 32
+#endif
 
 /*
  * Return the real path (i.e., absolute path, with symlinks resolved
