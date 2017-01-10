@@ -29,7 +29,8 @@ static inline void *get_proc_addr(struct proc_addr *proc)
 	if (!proc->initialized) {
 		HANDLE hnd;
 		proc->initialized = 1;
-		hnd = LoadLibraryA(proc->dll);
+		hnd = LoadLibraryExA(proc->dll, NULL,
+				     LOAD_LIBRARY_SEARCH_SYSTEM32);
 		if (hnd)
 			proc->pfunction = GetProcAddress(hnd, proc->function);
 	}
