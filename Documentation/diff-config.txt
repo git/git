@@ -172,10 +172,8 @@ diff.tool::
 include::mergetools-diff.txt[]
 
 diff.indentHeuristic::
-diff.compactionHeuristic::
-	Set one of these options to `true` to enable one of two
-	experimental heuristics that shift diff hunk boundaries to
-	make patches easier to read.
+	Set this option to `true` to enable experimental heuristics
+	that shift diff hunk boundaries to make patches easier to read.
 
 diff.algorithm::
 	Choose a diff algorithm.  The variants are as follows:
