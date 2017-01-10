@@ -115,7 +115,6 @@
 /git-read-tree
 /git-rebase
 /git-rebase--am
-/git-rebase--helper
 /git-rebase--interactive
 /git-rebase--merge
 /git-receive-pack
