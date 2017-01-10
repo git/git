@@ -184,6 +184,7 @@ test_expect_success 'mergetool in subdir' '
 
 test_expect_success 'mergetool on file in parent dir' '
 	test_when_finished "git reset --hard" &&
+	git checkout -b test$test_count &&
 	git submodule update -N &&
 	(
 		cd subdir &&
@@ -217,6 +218,7 @@ test_expect_success 'mergetool skips autoresolved' '
 
 test_expect_success 'mergetool merges all from subdir' '
 	test_when_finished "git reset --hard" &&
+	git checkout -b test$test_count &&
 	test_config rerere.enabled false &&
 	(
 		cd subdir &&
@@ -288,7 +290,7 @@ test_expect_success 'mergetool takes partial path' '
 
 test_expect_success 'mergetool delete/delete conflict' '
 	test_when_finished "git reset --hard HEAD" &&
-	git checkout move-to-c &&
+	git checkout -b test$test_count move-to-c &&
 	test_must_fail git merge move-to-b &&
 	echo d | git mergetool a/a/file.txt &&
 	! test -f a/a/file.txt &&
@@ -304,6 +306,7 @@ test_expect_success 'mergetool delete/delete conflict' '
 
 test_expect_success 'mergetool produces no errors when keepBackup is used' '
 	test_when_finished "git reset --hard HEAD" &&
+	git checkout -b test$test_count &&
 	test_config mergetool.keepBackup true &&
 	test_must_fail git merge move-to-b &&
 	: >expect &&
@@ -314,6 +317,7 @@ test_expect_success 'mergetool produces no errors when keepBackup is used' '
 
 test_expect_success 'mergetool honors tempfile config for deleted files' '
 	test_when_finished "git reset --hard HEAD" &&
+	git checkout -b test$test_count &&
 	test_config mergetool.keepTemporaries false &&
 	test_must_fail git merge move-to-b &&
 	echo d | git mergetool a/a/file.txt &&
@@ -323,6 +327,7 @@ test_expect_success 'mergetool honors tempfile config for deleted files' '
 test_expect_success 'mergetool keeps tempfiles when aborting delete/delete' '
 	test_when_finished "git reset --hard HEAD" &&
 	test_when_finished "git clean -fdx" &&
+	git checkout -b test$test_count &&
 	test_config mergetool.keepTemporaries true &&
 	test_must_fail git merge move-to-b &&
 	! (echo a; echo n) | git mergetool a/a/file.txt &&
@@ -641,7 +646,7 @@ test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToT
 
 test_expect_success 'diff.orderFile configuration is honored' '
 	test_when_finished "git reset --hard >/dev/null" &&
-	git checkout order-file-side2 &&
+	git checkout -b test$test_count order-file-side2 &&
 	test_config diff.orderFile order-file &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
@@ -659,6 +664,7 @@ test_expect_success 'diff.orderFile configuration is honored' '
 '
 test_expect_success 'mergetool -Oorder-file is honored' '
 	test_when_finished "git reset --hard >/dev/null 2>&1" &&
+	git checkout -b test$test_count &&
 	test_config diff.orderFile order-file &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
