@@ -181,8 +181,12 @@ test_expect_success 'mergetool in subdir' '
 '
 
 test_expect_success 'mergetool on file in parent dir' '
+	git reset --hard &&
+	git submodule update -N &&
 	(
 		cd subdir &&
+		test_must_fail git merge master >/dev/null 2>&1 &&
+		( yes "" | git mergetool file3 >/dev/null 2>&1 ) &&
 		( yes "" | git mergetool ../file1 >/dev/null 2>&1 ) &&
 		( yes "" | git mergetool ../file2 ../spaced\ name >/dev/null 2>&1 ) &&
 		( yes "" | git mergetool ../both >/dev/null 2>&1 ) &&
@@ -652,6 +656,8 @@ test_expect_success 'mergetool -Oorder-file is honored' '
 	test_config diff.orderFile order-file &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
+	echo b >order-file &&
+	echo a >>order-file &&
 	test_must_fail git merge order-file-side1 &&
 	cat >expect <<-\EOF &&
 		Merging:
