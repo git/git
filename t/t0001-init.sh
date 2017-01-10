@@ -427,4 +427,10 @@ test_expect_success 're-init from a linked worktree' '
 	)
 '
 
+test_expect_success MINGW 'redirect std handles' '
+	GIT_REDIRECT_STDOUT=output.txt git rev-parse --git-dir &&
+	test .git = "$(cat output.txt)" &&
+	test -z "$(GIT_REDIRECT_STDOUT=off git rev-parse --git-dir)"
+'
+
 test_done
