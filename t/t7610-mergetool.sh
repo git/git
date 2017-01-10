@@ -184,7 +184,6 @@ test_expect_success 'mergetool in subdir' '
 
 test_expect_success 'mergetool on file in parent dir' '
 	test_when_finished "git reset --hard" &&
-	git reset --hard &&
 	git submodule update -N &&
 	(
 		cd subdir &&
@@ -277,7 +276,6 @@ test_expect_success 'conflicted stash sets up rerere'  '
 
 test_expect_success 'mergetool takes partial path' '
 	test_when_finished "git reset --hard" &&
-	git reset --hard &&
 	test_config rerere.enabled false &&
 	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
