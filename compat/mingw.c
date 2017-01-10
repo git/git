@@ -2075,24 +2075,18 @@ int mingw_raise(int sig)
 
 int link(const char *oldpath, const char *newpath)
 {
-	typedef BOOL (WINAPI *T)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
-	static T create_hard_link = NULL;
+	DECLARE_PROC_ADDR(kernel32.dll, BOOL, CreateHardLinkW,
+			LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	wchar_t woldpath[MAX_LONG_PATH], wnewpath[MAX_LONG_PATH];
+
+	if (!INIT_PROC_ADDR(CreateHardLinkW))
+		return -1;
+
 	if (xutftowcs_long_path(woldpath, oldpath) < 0 ||
 	    xutftowcs_long_path(wnewpath, newpath) < 0)
 		return -1;
 
-	if (!create_hard_link) {
-		create_hard_link = (T) GetProcAddress(
-			GetModuleHandle("kernel32.dll"), "CreateHardLinkW");
-		if (!create_hard_link)
-			create_hard_link = (T)-1;
-	}
-	if (create_hard_link == (T)-1) {
-		errno = ENOSYS;
-		return -1;
-	}
-	if (!create_hard_link(wnewpath, woldpath, NULL)) {
+	if (!CreateHardLinkW(wnewpath, woldpath, NULL)) {
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
