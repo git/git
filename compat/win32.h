@@ -6,6 +6,8 @@
 #include <windows.h>
 #endif
 
+#include "compat/win32/lazyload.h"
+
 static inline int file_attr_to_st_mode (DWORD attr)
 {
 	int fMode = S_IREAD;
