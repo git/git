@@ -34,7 +34,7 @@ struct if_then_else {
 
 struct refname_atom {
 	enum { R_NORMAL, R_SHORT, R_LSTRIP } option;
-	unsigned int lstrip;
+	int lstrip;
 };
 
 /*
@@ -93,8 +93,8 @@ static void refname_atom_parser_internal(struct refname_atom *atom,
 		atom->option = R_SHORT;
 	else if (skip_prefix(arg, "lstrip=", &arg)) {
 		atom->option = R_LSTRIP;
-		if (strtoul_ui(arg, 10, &atom->lstrip) || atom->lstrip <= 0)
-			die(_("positive value expected refname:lstrip=%s"), arg);
+		if (strtol_i(arg, 10, &atom->lstrip))
+			die(_("Integer value expected refname:lstrip=%s"), arg);
 	} else
 		die(_("unrecognized %%(%s) argument: %s"), name, arg);
 }
@@ -1091,12 +1091,28 @@ static inline char *copy_advance(char *dst, const char *src)
 	return dst;
 }
 
-static const char *lstrip_ref_components(const char *refname, unsigned int len)
+static const char *lstrip_ref_components(const char *refname, int len)
 {
 	long remaining = len;
 	const char *start = refname;
 
-	while (remaining) {
+	if (len < 0) {
+		int i;
+		const char *p = refname;
+
+		/* Find total no of '/' separated path-components */
+		for (i = 0; p[i]; p[i] == '/' ? i++ : *p++)
+			;
+		/*
+		 * The number of components we need to strip is now
+		 * the total minus the components to be left (Plus one
+		 * because we count the number of '/', but the number
+		 * of components is one more than the no of '/').
+		 */
+		remaining = i + len + 1;
+	}
+
+	while (remaining > 0) {
 		switch (*start++) {
 		case '\0':
 			return "";
@@ -1105,6 +1121,7 @@ static const char *lstrip_ref_components(const char *refname, unsigned int len)
 			break;
 		}
 	}
+
 	return start;
 }
 

@@ -97,8 +97,14 @@ refname::
 	The option core.warnAmbiguousRefs is used to select the strict
 	abbreviation mode. If `lstrip=<N>` is appended, strips `<N>`
 	slash-separated path components from the front of the refname
-	(e.g., `%(refname:lstrip=2)` turns `refs/tags/foo` into `foo`.
-	`<N>` must be a positive integer.
+	(e.g. `%(refname:lstrip=2)` turns `refs/tags/foo` into `foo`.
+	If `<N>` is a negative number, strip as many path components as
+	necessary from the left to leave `-<N>` path components
+	(e.g. `%(refname:lstrip=-2)` turns
+	`refs/tags/foo` into `tags/foo`). When the ref does not have
+	enough components, the result becomes an empty string if
+	stripping with positive <N>, or it becomes the full refname if
+	stripping with negative <N>.  Neither is an error.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
