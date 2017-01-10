@@ -1019,9 +1019,9 @@ const char *remove_leading_path(const char *in, const char *prefix)
 int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 {
 	char *dst0;
-	int i;
+	int i = has_unc_prefix(src);
 
-	for (i = has_dos_drive_prefix(src); i > 0; i--)
+	for (i = i ? i : has_dos_drive_prefix(src); i > 0; i--)
 		*dst++ = *src++;
 	dst0 = dst;
 
