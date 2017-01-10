@@ -147,10 +147,6 @@ test_expect_success 'arguments to :lstrip must be positive integers' '
 	test_must_fail git for-each-ref --format="%(refname:lstrip=foo)"
 '
 
-test_expect_success 'stripping refnames too far gives an error' '
-	test_must_fail git for-each-ref --format="%(refname:lstrip=3)"
-'
-
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
 	git for-each-ref --format="%(authordate)" refs/heads &&
 	git for-each-ref --format="%(authordate:default) %(authordate)" refs/heads &&

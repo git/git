@@ -1099,8 +1099,7 @@ static const char *lstrip_ref_components(const char *refname, unsigned int len)
 	while (remaining) {
 		switch (*start++) {
 		case '\0':
-			die(_("ref '%s' does not have %ud components to :lstrip"),
-			    refname, len);
+			return "";
 		case '/':
 			remaining--;
 			break;

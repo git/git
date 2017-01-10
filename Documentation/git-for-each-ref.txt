@@ -98,8 +98,7 @@ refname::
 	abbreviation mode. If `lstrip=<N>` is appended, strips `<N>`
 	slash-separated path components from the front of the refname
 	(e.g., `%(refname:lstrip=2)` turns `refs/tags/foo` into `foo`.
-	`<N>` must be a positive integer.  If a displayed ref has fewer
-	components than `<N>`, the command aborts with an error.
+	`<N>` must be a positive integer.
 
 objecttype::
 	The type of the object (`blob`, `tree`, `commit`, `tag`).
