@@ -33,8 +33,8 @@ struct if_then_else {
 };
 
 struct refname_atom {
-	enum { R_NORMAL, R_SHORT, R_STRIP } option;
-	unsigned int strip;
+	enum { R_NORMAL, R_SHORT, R_LSTRIP } option;
+	unsigned int lstrip;
 };
 
 /*
@@ -91,10 +91,10 @@ static void refname_atom_parser_internal(struct refname_atom *atom,
 		atom->option = R_NORMAL;
 	else if (!strcmp(arg, "short"))
 		atom->option = R_SHORT;
-	else if (skip_prefix(arg, "strip=", &arg)) {
-		atom->option = R_STRIP;
-		if (strtoul_ui(arg, 10, &atom->strip) || atom->strip <= 0)
-			die(_("positive value expected refname:strip=%s"), arg);
+	else if (skip_prefix(arg, "lstrip=", &arg)) {
+		atom->option = R_LSTRIP;
+		if (strtoul_ui(arg, 10, &atom->lstrip) || atom->lstrip <= 0)
+			die(_("positive value expected refname:lstrip=%s"), arg);
 	} else
 		die(_("unrecognized %%(%s) argument: %s"), name, arg);
 }
@@ -1091,7 +1091,7 @@ static inline char *copy_advance(char *dst, const char *src)
 	return dst;
 }
 
-static const char *strip_ref_components(const char *refname, unsigned int len)
+static const char *lstrip_ref_components(const char *refname, unsigned int len)
 {
 	long remaining = len;
 	const char *start = refname;
@@ -1099,7 +1099,7 @@ static const char *strip_ref_components(const char *refname, unsigned int len)
 	while (remaining) {
 		switch (*start++) {
 		case '\0':
-			die(_("ref '%s' does not have %ud components to :strip"),
+			die(_("ref '%s' does not have %ud components to :lstrip"),
 			    refname, len);
 		case '/':
 			remaining--;
@@ -1113,8 +1113,8 @@ static const char *show_ref(struct refname_atom *atom, const char *refname)
 {
 	if (atom->option == R_SHORT)
 		return shorten_unambiguous_ref(refname, warn_ambiguous_refs);
-	else if (atom->option == R_STRIP)
-		return strip_ref_components(refname, atom->strip);
+	else if (atom->option == R_LSTRIP)
+		return lstrip_ref_components(refname, atom->lstrip);
 	else
 		return refname;
 }
