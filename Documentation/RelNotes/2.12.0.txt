@@ -61,6 +61,11 @@ UI, Workflows & Features
    the previous hack that depended on internals of (older) MSVC
    runtime.
 
+ * Some platforms no longer understand "latin-1" that is still seen in
+   the wild in e-mail headers; replace them with "iso-8859-1" that is
+   more widely known when conversion fails from/to it.
+   (merge df3755888b jc/latin-1 later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -81,6 +86,20 @@ Performance, Internal Implementation, Development Support etc.
  * Update the procedure to generate "tags" for developer support.
    (merge 046e4c1c09 jk/make-tags-find-sources-tweak later to maint).
 
+ * The codeflow of setting NOATIME and CLOEXEC on file descriptors Git
+   opens has been simplified.
+   (merge b4d065df03 jc/git-open-cloexec later to maint).
+
+ * "git diff" and its family had two experimental heuristics to shift
+   the contents of a hunk to make the patch easier to read.  One of
+   them turns out to be better than the other, so leave only the
+   "--indent-heuristic" option and remove the other one.
+   (merge 3cde4e02ee jc/retire-compaction-heuristics later to maint).
+
+ * A new submodule helper "git submodule embedgitdirs" to make it
+   easier to move embedded .git/ directory for submodules in a
+   superproject to .git/modules/ (and point the latter with the former
+   that is turned into a "gitdir:" file) has been added.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -242,6 +261,29 @@ notes for details).
    fixed.
    (merge c46458e82f mk/mingw-winansi-ttyname-termination-fix later to maint).
 
+ * When the http server gives an incomplete response to a smart-http
+   rpc call, it could lead to client waiting for a full response that
+   will never come.  Teach the client side to notice this condition
+   and abort the transfer.
+   (merge f8edeaa05d dt/smart-http-detect-server-going-away later to maint).
+
+ * Compression setting for producing packfiles were spread across
+   three codepaths, one of which did not honor any configuration.
+   Unify these so that all of them honor core.compression and
+   pack.compression variables the same way.
+   (merge 8de7eeb54b jc/compression-config later to maint).
+
+ * "git fast-import" sometimes mishandled while rebalancing notes
+   tree, which has been fixed.
+   (merge 405d7f4af6 mh/fast-import-notes-fix-new later to maint).
+
+ * Recent update to the default abbreviation length that auto-scales
+   lacked documentation update, which has been corrected.
+   (merge 48d5014dd4 jc/abbrev-autoscale-config later to maint).
+
+ * Leakage of lockfiles in the config subsystem has been fixed.
+   (merge c06fa62dfc nd/config-misc-fixes later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge fa6ca11105 nd/qsort-in-merge-recursive later to maint).
    (merge fa3142c919 ak/lazy-prereq-mktemp later to maint).
@@ -253,3 +295,6 @@ notes for details).
    (merge 47437fd3bd kh/tutorial-grammofix later to maint).
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
    (merge 7eeda8b821 ls/filter-process later to maint).
+   (merge 6cc823c5c1 jt/fetch-no-redundant-tag-fetch-map later to maint).
+   (merge 235ec24352 mm/push-social-engineering-attack-doc later to maint).
+   (merge f1350d0c12 mm/gc-safety-doc later to maint).
