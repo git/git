@@ -234,7 +234,7 @@ test_expect_success 'mergetool merges all from subdir (rerere disabled)' '
 	)
 '
 
-test_expect_failure 'mergetool merges all from subdir (rerere enabled)' '
+test_expect_success 'mergetool merges all from subdir (rerere enabled)' '
 	test_when_finished "git reset --hard" &&
 	git checkout -b test$test_count branch1 &&
 	test_config rerere.enabled true &&
@@ -678,6 +678,11 @@ test_expect_success 'diff.orderFile configuration is honored' '
 		b
 		a
 	EOF
+
+	# make sure "order-file" that is ambiguous between
+	# rev and path is understood correctly.
+	git branch order-file HEAD &&
+
 	git mergetool --no-prompt --tool myecho >output &&
 	git grep --no-index -h -A2 Merging: output >actual &&
 	test_cmp expect actual
