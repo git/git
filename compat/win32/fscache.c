@@ -149,7 +149,8 @@ static struct fsentry *fseentry_create_entry(struct fsentry *list,
 
 	fse = fsentry_alloc(list, buf, len);
 
-	fse->st_mode = file_attr_to_st_mode(fdata->dwFileAttributes);
+	fse->st_mode = file_attr_to_st_mode(fdata->dwFileAttributes,
+			fdata->dwReserved0);
 	fse->st_size = (((off64_t) (fdata->nFileSizeHigh)) << 32)
 			| fdata->nFileSizeLow;
 	filetime_to_timespec(&(fdata->ftLastAccessTime), &(fse->st_atim));
@@ -442,7 +443,8 @@ static struct dirent *fscache_readdir(DIR *base_dir)
 	if (!next)
 		return NULL;
 	dir->pfsentry = next;
-	dir->dirent.d_type = S_ISDIR(next->st_mode) ? DT_DIR : DT_REG;
+	dir->dirent.d_type = S_ISREG(next->st_mode) ? DT_REG :
+			S_ISDIR(next->st_mode) ? DT_DIR : DT_LNK;
 	dir->dirent.d_name = (char*) next->name;
 	return &(dir->dirent);
 }
