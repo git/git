@@ -94,7 +94,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'custom mergetool' '
-	git checkout -b test1 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master >/dev/null 2>&1 &&
 	( yes "" | git mergetool both >/dev/null 2>&1 ) &&
@@ -113,7 +113,7 @@ test_expect_success 'custom mergetool' '
 
 test_expect_success 'mergetool crlf' '
 	test_config core.autocrlf true &&
-	git checkout -b test2 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	test_must_fail git merge master >/dev/null 2>&1 &&
 	( yes "" | git mergetool file1 >/dev/null 2>&1 ) &&
 	( yes "" | git mergetool file2 >/dev/null 2>&1 ) &&
@@ -134,7 +134,7 @@ test_expect_success 'mergetool crlf' '
 '
 
 test_expect_success 'mergetool in subdir' '
-	git checkout -b test3 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	(
 		cd subdir &&
@@ -161,7 +161,7 @@ test_expect_success 'mergetool on file in parent dir' '
 '
 
 test_expect_success 'mergetool skips autoresolved' '
-	git checkout -b test4 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master &&
 	test -n "$(git ls-files -u)" &&
@@ -192,7 +192,7 @@ test_expect_success 'mergetool merges all from subdir' '
 test_expect_success 'mergetool skips resolved paths when rerere is active' '
 	test_config rerere.enabled true &&
 	rm -rf .git/rr-cache &&
-	git checkout -b test5 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master >/dev/null 2>&1 &&
 	( yes "l" | git mergetool --no-prompt submod >/dev/null 2>&1 ) &&
@@ -233,7 +233,7 @@ test_expect_success 'conflicted stash sets up rerere'  '
 test_expect_success 'mergetool takes partial path' '
 	git reset --hard &&
 	test_config rerere.enabled false &&
-	git checkout -b test12 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master &&
 
@@ -308,12 +308,12 @@ test_expect_success 'mergetool keeps tempfiles when aborting delete/delete' '
 '
 
 test_expect_success 'deleted vs modified submodule' '
-	git checkout -b test6 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	mv submod submod-movedaside &&
 	git rm --cached submod &&
 	git commit -m "Submodule deleted from branch" &&
-	git checkout -b test6.a test6 &&
+	git checkout -b test$test_count.a test$test_count &&
 	test_must_fail git merge master &&
 	test -n "$(git ls-files -u)" &&
 	( yes "" | git mergetool file1 file2 spaced\ name subdir/file3 >/dev/null 2>&1 ) &&
@@ -329,7 +329,7 @@ test_expect_success 'deleted vs modified submodule' '
 	git commit -m "Merge resolved by keeping module" &&
 
 	mv submod submod-movedaside &&
-	git checkout -b test6.b test6 &&
+	git checkout -b test$test_count.b test$test_count &&
 	git submodule update -N &&
 	test_must_fail git merge master &&
 	test -n "$(git ls-files -u)" &&
@@ -343,9 +343,9 @@ test_expect_success 'deleted vs modified submodule' '
 	git commit -m "Merge resolved by deleting module" &&
 
 	mv submod-movedaside submod &&
-	git checkout -b test6.c master &&
+	git checkout -b test$test_count.c master &&
 	git submodule update -N &&
-	test_must_fail git merge test6 &&
+	test_must_fail git merge test$test_count &&
 	test -n "$(git ls-files -u)" &&
 	( yes "" | git mergetool file1 file2 spaced\ name subdir/file3 >/dev/null 2>&1 ) &&
 	( yes "" | git mergetool both >/dev/null 2>&1 ) &&
@@ -359,9 +359,9 @@ test_expect_success 'deleted vs modified submodule' '
 	git commit -m "Merge resolved by deleting module" &&
 	mv submod.orig submod &&
 
-	git checkout -b test6.d master &&
+	git checkout -b test$test_count.d master &&
 	git submodule update -N &&
-	test_must_fail git merge test6 &&
+	test_must_fail git merge test$test_count &&
 	test -n "$(git ls-files -u)" &&
 	( yes "" | git mergetool file1 file2 spaced\ name subdir/file3 >/dev/null 2>&1 ) &&
 	( yes "" | git mergetool both >/dev/null 2>&1 ) &&
@@ -377,14 +377,14 @@ test_expect_success 'deleted vs modified submodule' '
 '
 
 test_expect_success 'file vs modified submodule' '
-	git checkout -b test7 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	mv submod submod-movedaside &&
 	git rm --cached submod &&
 	echo not a submodule >submod &&
 	git add submod &&
 	git commit -m "Submodule path becomes file" &&
-	git checkout -b test7.a branch1 &&
+	git checkout -b test$test_count.a branch1 &&
 	test_must_fail git merge master &&
 	test -n "$(git ls-files -u)" &&
 	( yes "" | git mergetool file1 file2 spaced\ name subdir/file3 >/dev/null 2>&1 ) &&
@@ -400,7 +400,7 @@ test_expect_success 'file vs modified submodule' '
 	git commit -m "Merge resolved by keeping module" &&
 
 	mv submod submod-movedaside &&
-	git checkout -b test7.b test7 &&
+	git checkout -b test$test_count.b test$test_count &&
 	test_must_fail git merge master &&
 	test -n "$(git ls-files -u)" &&
 	( yes "" | git mergetool file1 file2 spaced\ name subdir/file3 >/dev/null 2>&1 ) &&
@@ -413,11 +413,11 @@ test_expect_success 'file vs modified submodule' '
 	test "$output" = "No files need merging" &&
 	git commit -m "Merge resolved by keeping file" &&
 
-	git checkout -b test7.c master &&
+	git checkout -b test$test_count.c master &&
 	rmdir submod && mv submod-movedaside submod &&
 	test ! -e submod.orig &&
 	git submodule update -N &&
-	test_must_fail git merge test7 &&
+	test_must_fail git merge test$test_count &&
 	test -n "$(git ls-files -u)" &&
 	( yes "" | git mergetool file1 file2 spaced\ name subdir/file3 >/dev/null 2>&1 ) &&
 	( yes "" | git mergetool both >/dev/null 2>&1 ) &&
@@ -430,10 +430,10 @@ test_expect_success 'file vs modified submodule' '
 	test "$output" = "No files need merging" &&
 	git commit -m "Merge resolved by keeping file" &&
 
-	git checkout -b test7.d master &&
+	git checkout -b test$test_count.d master &&
 	rmdir submod && mv submod.orig submod &&
 	git submodule update -N &&
-	test_must_fail git merge test7 &&
+	test_must_fail git merge test$test_count &&
 	test -n "$(git ls-files -u)" &&
 	( yes "" | git mergetool file1 file2 spaced\ name subdir/file3 >/dev/null 2>&1 ) &&
 	( yes "" | git mergetool both>/dev/null 2>&1 ) &&
@@ -448,7 +448,7 @@ test_expect_success 'file vs modified submodule' '
 '
 
 test_expect_success 'submodule in subdirectory' '
-	git checkout -b test10 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	(
 		cd subdir &&
@@ -464,52 +464,52 @@ test_expect_success 'submodule in subdirectory' '
 	git add subdir/subdir_module &&
 	git commit -m "add submodule in subdirectory" &&
 
-	git checkout -b test10.a test10 &&
+	git checkout -b test$test_count.a test$test_count &&
 	git submodule update -N &&
 	(
 	cd subdir/subdir_module &&
 		git checkout -b super10.a &&
-		echo test10.a >file15 &&
+		echo test$test_count.a >file15 &&
 		git add file15 &&
 		git commit -m "on branch 10.a"
 	) &&
 	git add subdir/subdir_module &&
-	git commit -m "change submodule in subdirectory on test10.a" &&
+	git commit -m "change submodule in subdirectory on test$test_count.a" &&
 
-	git checkout -b test10.b test10 &&
+	git checkout -b test$test_count.b test$test_count &&
 	git submodule update -N &&
 	(
 		cd subdir/subdir_module &&
 		git checkout -b super10.b &&
-		echo test10.b >file15 &&
+		echo test$test_count.b >file15 &&
 		git add file15 &&
 		git commit -m "on branch 10.b"
 	) &&
 	git add subdir/subdir_module &&
-	git commit -m "change submodule in subdirectory on test10.b" &&
+	git commit -m "change submodule in subdirectory on test$test_count.b" &&
 
-	test_must_fail git merge test10.a >/dev/null 2>&1 &&
+	test_must_fail git merge test$test_count.a >/dev/null 2>&1 &&
 	(
 		cd subdir &&
 		( yes "l" | git mergetool subdir_module )
 	) &&
-	test "$(cat subdir/subdir_module/file15)" = "test10.b" &&
+	test "$(cat subdir/subdir_module/file15)" = "test$test_count.b" &&
 	git submodule update -N &&
-	test "$(cat subdir/subdir_module/file15)" = "test10.b" &&
+	test "$(cat subdir/subdir_module/file15)" = "test$test_count.b" &&
 	git reset --hard &&
 	git submodule update -N &&
 
-	test_must_fail git merge test10.a >/dev/null 2>&1 &&
+	test_must_fail git merge test$test_count.a >/dev/null 2>&1 &&
 	( yes "r" | git mergetool subdir/subdir_module ) &&
-	test "$(cat subdir/subdir_module/file15)" = "test10.b" &&
+	test "$(cat subdir/subdir_module/file15)" = "test$test_count.b" &&
 	git submodule update -N &&
-	test "$(cat subdir/subdir_module/file15)" = "test10.a" &&
+	test "$(cat subdir/subdir_module/file15)" = "test$test_count.a" &&
 	git commit -m "branch1 resolved with mergetool" &&
 	rm -rf subdir/subdir_module
 '
 
 test_expect_success 'directory vs modified submodule' '
-	git checkout -b test11 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	mv submod submod-movedaside &&
 	git rm --cached submod &&
 	mkdir submod &&
@@ -537,9 +537,9 @@ test_expect_success 'directory vs modified submodule' '
 	test "$(cat submod/bar)" = "master submodule" &&
 	git reset --hard >/dev/null 2>&1 && rm -rf submod-movedaside &&
 
-	git checkout -b test11.c master &&
+	git checkout -b test$test_count.c master &&
 	git submodule update -N &&
-	test_must_fail git merge test11 &&
+	test_must_fail git merge test$test_count &&
 	test -n "$(git ls-files -u)" &&
 	( yes "l" | git mergetool submod ) &&
 	git submodule update -N &&
@@ -547,7 +547,7 @@ test_expect_success 'directory vs modified submodule' '
 
 	git reset --hard >/dev/null 2>&1 &&
 	git submodule update -N &&
-	test_must_fail git merge test11 &&
+	test_must_fail git merge test$test_count &&
 	test -n "$(git ls-files -u)" &&
 	test ! -e submod.orig &&
 	( yes "r" | git mergetool submod ) &&
@@ -559,7 +559,7 @@ test_expect_success 'directory vs modified submodule' '
 '
 
 test_expect_success 'file with no base' '
-	git checkout -b test13 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool mybase -- both &&
 	>expected &&
@@ -568,7 +568,7 @@ test_expect_success 'file with no base' '
 '
 
 test_expect_success 'custom commands override built-ins' '
-	git checkout -b test14 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	test_config mergetool.defaults.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
 	test_config mergetool.defaults.trustExitCode true &&
 	test_must_fail git merge master &&
@@ -579,7 +579,7 @@ test_expect_success 'custom commands override built-ins' '
 '
 
 test_expect_success 'filenames seen by tools start with ./' '
-	git checkout -b test15 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	test_config mergetool.writeToTemp false &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
@@ -596,7 +596,7 @@ test_lazy_prereq MKTEMP '
 '
 
 test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToTemp' '
-	git checkout -b test16 branch1 &&
+	git checkout -b test$test_count branch1 &&
 	test_config mergetool.writeToTemp true &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
