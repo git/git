@@ -626,21 +626,14 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 		buf->st_gid = 0;
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
-		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
+		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes,
+				findbuf.dwReserved0);
 		buf->st_size = fdata.nFileSizeLow |
 			(((off_t)fdata.nFileSizeHigh)<<32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
-		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
-					buf->st_mode = S_IFLNK | S_IREAD;
-					if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-						buf->st_mode |= S_IWRITE;
-				}
-		}
 		return 0;
 	}
 error:
@@ -683,7 +676,7 @@ static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 	buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 	buf->st_gid = buf->st_uid = 0;
 	buf->st_nlink = 1;
-	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
+	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0);
 	buf->st_size = fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
 	buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
 	buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
