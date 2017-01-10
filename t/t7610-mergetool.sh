@@ -145,6 +145,11 @@ test_expect_success 'custom mergetool' '
 '
 
 test_expect_success 'mergetool crlf' '
+	test_when_finished "git reset --hard" &&
+	# This test_config line must go after the above reset line so that
+	# core.autocrlf is unconfigured before reset runs.  (The
+	# test_config command uses test_when_finished internally and
+	# test_when_finished is LIFO.)
 	test_config core.autocrlf true &&
 	git checkout -b test$test_count branch1 &&
 	test_must_fail git merge master >/dev/null 2>&1 &&
@@ -161,9 +166,7 @@ test_expect_success 'mergetool crlf' '
 	test "$(printf x | cat subdir/file3 -)" = "$(printf "master new sub\r\nx")" &&
 	git submodule update -N &&
 	test "$(cat submod/bar)" = "master submodule" &&
-	git commit -m "branch1 resolved with mergetool - autocrlf" &&
-	test_config core.autocrlf false &&
-	git reset --hard
+	git commit -m "branch1 resolved with mergetool - autocrlf"
 '
 
 test_expect_success 'mergetool in subdir' '
@@ -194,6 +197,7 @@ test_expect_success 'mergetool on file in parent dir' '
 '
 
 test_expect_success 'mergetool skips autoresolved' '
+	test_when_finished "git reset --hard" &&
 	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master &&
@@ -202,8 +206,7 @@ test_expect_success 'mergetool skips autoresolved' '
 	( yes "d" | git mergetool file12 >/dev/null 2>&1 ) &&
 	( yes "l" | git mergetool submod >/dev/null 2>&1 ) &&
 	output="$(git mergetool --no-prompt)" &&
-	test "$output" = "No files need merging" &&
-	git reset --hard
+	test "$output" = "No files need merging"
 '
 
 test_expect_success 'mergetool merges all from subdir' '
@@ -223,6 +226,7 @@ test_expect_success 'mergetool merges all from subdir' '
 '
 
 test_expect_success 'mergetool skips resolved paths when rerere is active' '
+	test_when_finished "git reset --hard" &&
 	test_config rerere.enabled true &&
 	rm -rf .git/rr-cache &&
 	git checkout -b test$test_count branch1 &&
@@ -232,8 +236,7 @@ test_expect_success 'mergetool skips resolved paths when rerere is active' '
 	( yes "d" "d" | git mergetool --no-prompt >/dev/null 2>&1 ) &&
 	git submodule update -N &&
 	output="$(yes "n" | git mergetool --no-prompt)" &&
-	test "$output" = "No files need merging" &&
-	git reset --hard
+	test "$output" = "No files need merging"
 '
 
 test_expect_success 'conflicted stash sets up rerere'  '
@@ -264,6 +267,7 @@ test_expect_success 'conflicted stash sets up rerere'  '
 '
 
 test_expect_success 'mergetool takes partial path' '
+	test_when_finished "git reset --hard" &&
 	git reset --hard &&
 	test_config rerere.enabled false &&
 	git checkout -b test$test_count branch1 &&
@@ -272,11 +276,11 @@ test_expect_success 'mergetool takes partial path' '
 
 	( yes "" | git mergetool subdir ) &&
 
-	test "$(cat subdir/file3)" = "master new sub" &&
-	git reset --hard
+	test "$(cat subdir/file3)" = "master new sub"
 '
 
 test_expect_success 'mergetool delete/delete conflict' '
+	test_when_finished "git reset --hard HEAD" &&
 	git checkout move-to-c &&
 	test_must_fail git merge move-to-b &&
 	echo d | git mergetool a/a/file.txt &&
@@ -288,29 +292,30 @@ test_expect_success 'mergetool delete/delete conflict' '
 	git reset --hard HEAD &&
 	test_must_fail git merge move-to-b &&
 	! echo a | git mergetool a/a/file.txt &&
-	! test -f a/a/file.txt &&
-	git reset --hard HEAD
+	! test -f a/a/file.txt
 '
 
 test_expect_success 'mergetool produces no errors when keepBackup is used' '
+	test_when_finished "git reset --hard HEAD" &&
 	test_config mergetool.keepBackup true &&
 	test_must_fail git merge move-to-b &&
 	: >expect &&
 	echo d | git mergetool a/a/file.txt 2>actual &&
 	test_cmp expect actual &&
-	! test -d a &&
-	git reset --hard HEAD
+	! test -d a
 '
 
 test_expect_success 'mergetool honors tempfile config for deleted files' '
+	test_when_finished "git reset --hard HEAD" &&
 	test_config mergetool.keepTemporaries false &&
 	test_must_fail git merge move-to-b &&
 	echo d | git mergetool a/a/file.txt &&
-	! test -d a &&
-	git reset --hard HEAD
+	! test -d a
 '
 
 test_expect_success 'mergetool keeps tempfiles when aborting delete/delete' '
+	test_when_finished "git reset --hard HEAD" &&
+	test_when_finished "git clean -fdx" &&
 	test_config mergetool.keepTemporaries true &&
 	test_must_fail git merge move-to-b &&
 	! (echo a; echo n) | git mergetool a/a/file.txt &&
@@ -321,12 +326,11 @@ test_expect_success 'mergetool keeps tempfiles when aborting delete/delete' '
 	file_REMOTE_.txt
 	EOF
 	ls -1 a/a | sed -e "s/[0-9]*//g" >actual &&
-	test_cmp expect actual &&
-	git clean -fdx &&
-	git reset --hard HEAD
+	test_cmp expect actual
 '
 
 test_expect_success 'deleted vs modified submodule' '
+	test_when_finished "git reset --hard HEAD" &&
 	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	mv submod submod-movedaside &&
@@ -391,8 +395,7 @@ test_expect_success 'deleted vs modified submodule' '
 	test "$(cat submod/bar)" = "master submodule" &&
 	output="$(git mergetool --no-prompt)" &&
 	test "$output" = "No files need merging" &&
-	git commit -m "Merge resolved by keeping module" &&
-	git reset --hard HEAD
+	git commit -m "Merge resolved by keeping module"
 '
 
 test_expect_success 'file vs modified submodule' '
@@ -479,6 +482,7 @@ test_expect_success 'submodule in subdirectory' '
 		git commit -m "add initial versions"
 		)
 	) &&
+	test_when_finished "rm -rf subdir/subdir_module" &&
 	git submodule add git://example.com/subsubmodule subdir/subdir_module &&
 	git add subdir/subdir_module &&
 	git commit -m "add submodule in subdirectory" &&
@@ -523,8 +527,7 @@ test_expect_success 'submodule in subdirectory' '
 	test "$(cat subdir/subdir_module/file15)" = "test$test_count.b" &&
 	git submodule update -N &&
 	test "$(cat subdir/subdir_module/file15)" = "test$test_count.a" &&
-	git commit -m "branch1 resolved with mergetool" &&
-	rm -rf subdir/subdir_module
+	git commit -m "branch1 resolved with mergetool"
 '
 
 test_expect_success 'directory vs modified submodule' '
@@ -578,34 +581,34 @@ test_expect_success 'directory vs modified submodule' '
 '
 
 test_expect_success 'file with no base' '
+	test_when_finished "git reset --hard master >/dev/null 2>&1" &&
 	git checkout -b test$test_count branch1 &&
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool mybase -- both &&
 	>expected &&
-	test_cmp both expected &&
-	git reset --hard master >/dev/null 2>&1
+	test_cmp both expected
 '
 
 test_expect_success 'custom commands override built-ins' '
+	test_when_finished "git reset --hard master >/dev/null 2>&1" &&
 	git checkout -b test$test_count branch1 &&
 	test_config mergetool.defaults.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
 	test_config mergetool.defaults.trustExitCode true &&
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool defaults -- both &&
 	echo master both added >expected &&
-	test_cmp both expected &&
-	git reset --hard master >/dev/null 2>&1
+	test_cmp both expected
 '
 
 test_expect_success 'filenames seen by tools start with ./' '
+	test_when_finished "git reset --hard master >/dev/null 2>&1" &&
 	git checkout -b test$test_count branch1 &&
 	test_config mergetool.writeToTemp false &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool myecho -- both >actual &&
-	grep ^\./both_LOCAL_ actual >/dev/null &&
-	git reset --hard master >/dev/null 2>&1
+	grep ^\./both_LOCAL_ actual >/dev/null
 '
 
 test_lazy_prereq MKTEMP '
@@ -615,6 +618,7 @@ test_lazy_prereq MKTEMP '
 '
 
 test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToTemp' '
+	test_when_finished "git reset --hard master >/dev/null 2>&1" &&
 	git checkout -b test$test_count branch1 &&
 	test_config mergetool.writeToTemp true &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
@@ -622,11 +626,11 @@ test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToT
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool myecho -- both >actual &&
 	test_must_fail grep ^\./both_LOCAL_ actual >/dev/null &&
-	grep /both_LOCAL_ actual >/dev/null &&
-	git reset --hard master >/dev/null 2>&1
+	grep /both_LOCAL_ actual >/dev/null
 '
 
 test_expect_success 'diff.orderFile configuration is honored' '
+	test_when_finished "git reset --hard >/dev/null" &&
 	git checkout order-file-side2 &&
 	test_config diff.orderFile order-file &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
@@ -641,10 +645,10 @@ test_expect_success 'diff.orderFile configuration is honored' '
 	EOF
 	git mergetool --no-prompt --tool myecho >output &&
 	git grep --no-index -h -A2 Merging: output >actual &&
-	test_cmp expect actual &&
-	git reset --hard >/dev/null
+	test_cmp expect actual
 '
 test_expect_success 'mergetool -Oorder-file is honored' '
+	test_when_finished "git reset --hard >/dev/null 2>&1" &&
 	test_config diff.orderFile order-file &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
@@ -668,8 +672,7 @@ test_expect_success 'mergetool -Oorder-file is honored' '
 	EOF
 	git mergetool -Oorder-file --no-prompt --tool myecho >output &&
 	git grep --no-index -h -A2 Merging: output >actual &&
-	test_cmp expect actual &&
-	git reset --hard >/dev/null 2>&1
+	test_cmp expect actual
 '
 
 test_done
