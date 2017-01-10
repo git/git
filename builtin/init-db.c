@@ -154,6 +154,9 @@ static int git_init_db_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "init.templatedir"))
 		return git_config_pathname(&init_db_template_dir, k, v);
 
+	if (starts_with(k, "core."))
+		return platform_core_config(k, v);
+
 	return 0;
 }
 
@@ -359,6 +362,9 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		git_dir = get_git_dir();
 	}
 	startup_info->have_repository = 1;
+
+	/* Just look for `init.templatedir` and `core.hidedotfiles` */
+	git_config(git_init_db_config, NULL);
 
 	safe_create_dir(git_dir, 0);
 
