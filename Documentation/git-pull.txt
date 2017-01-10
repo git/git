@@ -237,6 +237,8 @@ If you tried a pull which resulted in complex conflicts and
 would want to start over, you can recover with 'git reset'.
 
 
+include::transfer-data-leaks.txt[]
+
 BUGS
 ----
 Using --recurse-submodules can only fetch new commits in already checked
