@@ -127,6 +127,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'custom mergetool' '
+	test_when_finished "git reset --hard" &&
 	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master >/dev/null 2>&1 &&
@@ -170,6 +171,7 @@ test_expect_success 'mergetool crlf' '
 '
 
 test_expect_success 'mergetool in subdir' '
+	test_when_finished "git reset --hard" &&
 	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	(
@@ -181,6 +183,7 @@ test_expect_success 'mergetool in subdir' '
 '
 
 test_expect_success 'mergetool on file in parent dir' '
+	test_when_finished "git reset --hard" &&
 	git reset --hard &&
 	git submodule update -N &&
 	(
@@ -214,6 +217,7 @@ test_expect_success 'mergetool skips autoresolved' '
 '
 
 test_expect_success 'mergetool merges all from subdir' '
+	test_when_finished "git reset --hard" &&
 	test_config rerere.enabled false &&
 	(
 		cd subdir &&
@@ -244,6 +248,7 @@ test_expect_success 'mergetool skips resolved paths when rerere is active' '
 '
 
 test_expect_success 'conflicted stash sets up rerere'  '
+	test_when_finished "git reset --hard" &&
 	test_config rerere.enabled true &&
 	git checkout stash1 &&
 	echo "Conflicting stash content" >file11 &&
@@ -403,6 +408,7 @@ test_expect_success 'deleted vs modified submodule' '
 '
 
 test_expect_success 'file vs modified submodule' '
+	test_when_finished "git reset --hard" &&
 	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	mv submod submod-movedaside &&
@@ -474,6 +480,7 @@ test_expect_success 'file vs modified submodule' '
 '
 
 test_expect_success 'submodule in subdirectory' '
+	test_when_finished "git reset --hard" &&
 	git checkout -b test$test_count branch1 &&
 	git submodule update -N &&
 	(
@@ -535,6 +542,7 @@ test_expect_success 'submodule in subdirectory' '
 '
 
 test_expect_success 'directory vs modified submodule' '
+	test_when_finished "git reset --hard" &&
 	git checkout -b test$test_count branch1 &&
 	mv submod submod-movedaside &&
 	git rm --cached submod &&
