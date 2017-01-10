@@ -2931,6 +2931,7 @@ int handle_long_path(wchar_t *path, int len, int max_path, int expand)
 	}
 }
 
+#if !defined(_MSC_VER)
 /*
  * Disable MSVCRT command line wildcard expansion (__getmainargs called from
  * mingw startup code, see init.c in mingw runtime).
@@ -2943,6 +2944,7 @@ typedef struct {
 
 extern int __wgetmainargs(int *argc, wchar_t ***argv, wchar_t ***env, int glob,
 		_startupinfo *si);
+#endif
 
 static NORETURN void die_startup(void)
 {
@@ -3019,6 +3021,95 @@ static void maybe_redirect_std_handles(void)
 	maybe_redirect_std_handle(L"GIT_REDIRECT_STDERR", STD_ERROR_HANDLE, 2,
 				  GENERIC_WRITE, FILE_FLAG_NO_BUFFERING);
 }
+
+#if defined(_MSC_VER)
+
+/*
+ * This routine sits between wmain() and "main" in git.exe.
+ * We receive UNICODE (wchar_t) values for argv and env.
+ *
+ * To be more compatible with the core git code, we convert
+ * argv into UTF8 and pass them directly to the "main" routine.
+ *
+ * We don't bother converting the given UNICODE env vector,
+ * but rather leave them in the CRT.  We replaced the various
+ * getenv/putenv routines to pull them directly from the CRT.
+ *
+ * This is unlike the MINGW version:
+ * [] It does the UNICODE-2-UTF8 conversion on both sets and
+ *    stuffs the values back into the CRT using exported symbols.
+ * [] It also maintains a private copy of the environment and
+ *    tries to track external changes to it.
+ */
+int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
+{
+	char **my_utf8_argv = NULL, **save = NULL;
+	char *buffer = NULL;
+	int maxlen;
+	int k, exit_status;
+
+#ifdef USE_MSVC_CRTDBG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+	maybe_redirect_std_handles();
+
+	/* determine size of argv conversion buffer */
+	maxlen = wcslen(_wpgmptr);
+	for (k = 1; k < argc; k++)
+		maxlen = max(maxlen, wcslen(w_argv[k]));
+
+	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
+	maxlen = 3 * maxlen + 1;
+	buffer = malloc_startup(maxlen);
+
+	/*
+	 * Create a UTF-8 version of w_argv. Also create a "save" copy
+	 * to remember all the string pointers because parse_options()
+	 * will remove claimed items from the argv that we pass down.
+	 */
+	ALLOC_ARRAY(my_utf8_argv, argc + 1);
+	ALLOC_ARRAY(save, argc + 1);
+	save[0] = my_utf8_argv[0] = wcstoutfdup_startup(buffer, _wpgmptr, maxlen);
+	for (k = 1; k < argc; k++)
+		save[k] = my_utf8_argv[k] = wcstoutfdup_startup(buffer, w_argv[k], maxlen);
+	save[k] = my_utf8_argv[k] = NULL;
+
+	free(buffer);
+
+	/* fix Windows specific environment settings */
+	setup_windows_environment();
+
+	unset_environment_variables = xstrdup("PERL5LIB");
+
+	/* initialize critical section for waitpid pinfo_t list */
+	InitializeCriticalSection(&pinfo_cs);
+	InitializeCriticalSection(&phantom_symlinks_cs);
+
+	/* set up default file mode and file modes for stdin/out/err */
+	_fmode = _O_BINARY;
+	_setmode(_fileno(stdin), _O_BINARY);
+	_setmode(_fileno(stdout), _O_BINARY);
+	_setmode(_fileno(stderr), _O_BINARY);
+
+	/* initialize Unicode console */
+	winansi_init();
+
+	/* init length of current directory for handle_long_path */
+	current_directory_len = GetCurrentDirectoryW(0, NULL);
+
+	/* invoke the real main() using our utf8 version of argv. */
+	exit_status = msc_main(argc, my_utf8_argv);
+
+	for (k = 0; k < argc; k++)
+		free(save[k]);
+	free(save);
+	free(my_utf8_argv);
+
+	return exit_status;
+}
+
+#else
 
 void mingw_startup(void)
 {
@@ -3098,6 +3189,8 @@ void mingw_startup(void)
 	/* init length of current directory for handle_long_path */
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 }
+
+#endif
 
 int uname(struct utsname *buf)
 {
