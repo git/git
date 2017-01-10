@@ -65,7 +65,6 @@ void git_set_argv_exec_path(const char *exec_path)
 const char *git_exec_path(void)
 {
 	const char *env;
-	static char *system_exec_path;
 
 	if (argv_exec_path)
 		return argv_exec_path;
@@ -75,9 +74,7 @@ const char *git_exec_path(void)
 		return env;
 	}
 
-	if (!system_exec_path)
-		system_exec_path = system_path(GIT_EXEC_PATH);
-	return system_exec_path;
+	return system_path(GIT_EXEC_PATH);
 }
 
 static void add_path(struct strbuf *out, const char *path)
