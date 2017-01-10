@@ -472,9 +472,6 @@ int mingw_raise(int sig);
  * ANSI emulation wrappers
  */
 
-int winansi_isatty(int fd);
-#define isatty winansi_isatty
-
 void winansi_init(void);
 HANDLE winansi_get_osfhandle(int fd);
 
