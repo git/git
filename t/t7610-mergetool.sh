@@ -55,6 +55,22 @@ test_expect_success 'setup' '
 	git rm file12 &&
 	git commit -m "branch1 changes" &&
 
+	git checkout -b delete-base branch1 &&
+	mkdir -p a/a &&
+	(echo one; echo two; echo 3; echo 4) >a/a/file.txt &&
+	git add a/a/file.txt &&
+	git commit -m"base file" &&
+	git checkout -b move-to-b delete-base &&
+	mkdir -p b/b &&
+	git mv a/a/file.txt b/b/file.txt &&
+	(echo one; echo two; echo 4) >b/b/file.txt &&
+	git commit -a -m"move to b" &&
+	git checkout -b move-to-c delete-base &&
+	mkdir -p c/c &&
+	git mv a/a/file.txt c/c/file.txt &&
+	(echo one; echo two; echo 3) >c/c/file.txt &&
+	git commit -a -m"move to c" &&
+
 	git checkout -b stash1 master &&
 	echo stash1 change file11 >file11 &&
 	git add file11 &&
@@ -85,6 +101,23 @@ test_expect_success 'setup' '
 	git add both &&
 	git rm file11 &&
 	git commit -m "master updates" &&
+
+	git clean -fdx &&
+	git checkout -b order-file-start master &&
+	echo start >a &&
+	echo start >b &&
+	git add a b &&
+	git commit -m start &&
+	git checkout -b order-file-side1 order-file-start &&
+	echo side1 >a &&
+	echo side1 >b &&
+	git add a b &&
+	git commit -m side1 &&
+	git checkout -b order-file-side2 order-file-start &&
+	echo side2 >a &&
+	echo side2 >b &&
+	git add a b &&
+	git commit -m side2 &&
 
 	git config merge.tool mytool &&
 	git config mergetool.mytool.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
@@ -244,21 +277,7 @@ test_expect_success 'mergetool takes partial path' '
 '
 
 test_expect_success 'mergetool delete/delete conflict' '
-	git checkout -b delete-base branch1 &&
-	mkdir -p a/a &&
-	(echo one; echo two; echo 3; echo 4) >a/a/file.txt &&
-	git add a/a/file.txt &&
-	git commit -m"base file" &&
-	git checkout -b move-to-b delete-base &&
-	mkdir -p b/b &&
-	git mv a/a/file.txt b/b/file.txt &&
-	(echo one; echo two; echo 4) >b/b/file.txt &&
-	git commit -a -m"move to b" &&
-	git checkout -b move-to-c delete-base &&
-	mkdir -p c/c &&
-	git mv a/a/file.txt c/c/file.txt &&
-	(echo one; echo two; echo 3) >c/c/file.txt &&
-	git commit -a -m"move to c" &&
+	git checkout move-to-c &&
 	test_must_fail git merge move-to-b &&
 	echo d | git mergetool a/a/file.txt &&
 	! test -f a/a/file.txt &&
@@ -608,26 +627,12 @@ test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToT
 '
 
 test_expect_success 'diff.orderFile configuration is honored' '
+	git checkout order-file-side2 &&
 	test_config diff.orderFile order-file &&
 	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
 	test_config mergetool.myecho.trustExitCode true &&
 	echo b >order-file &&
 	echo a >>order-file &&
-	git checkout -b order-file-start master &&
-	echo start >a &&
-	echo start >b &&
-	git add a b &&
-	git commit -m start &&
-	git checkout -b order-file-side1 order-file-start &&
-	echo side1 >a &&
-	echo side1 >b &&
-	git add a b &&
-	git commit -m side1 &&
-	git checkout -b order-file-side2 order-file-start &&
-	echo side2 >a &&
-	echo side2 >b &&
-	git add a b &&
-	git commit -m side2 &&
 	test_must_fail git merge order-file-side1 &&
 	cat >expect <<-\EOF &&
 		Merging:
