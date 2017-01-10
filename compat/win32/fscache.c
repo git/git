@@ -202,10 +202,13 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 		fdata->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
 		fdata->EaSize : 0;
 
-	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes);
-	fse->dirent.d_type = S_ISDIR(fse->st_mode) ? DT_DIR : DT_REG;
-	fse->u.s.st_size = fdata->EndOfFile.LowPart |
-		(((off_t)fdata->EndOfFile.HighPart) << 32);
+	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes,
+					    fdata->EaSize);
+	fse->dirent.d_type = S_ISREG(fse->st_mode) ? DT_REG :
+			S_ISDIR(fse->st_mode) ? DT_DIR : DT_LNK;
+	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_LONG_PATH :
+			fdata->EndOfFile.LowPart |
+			(((off_t)fdata->EndOfFile.HighPart) << 32);
 	filetime_to_timespec((FILETIME *)&(fdata->LastAccessTime),
 			     &(fse->u.s.st_atim));
 	filetime_to_timespec((FILETIME *)&(fdata->LastWriteTime),
