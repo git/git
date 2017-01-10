@@ -421,7 +421,7 @@ main () {
 			prompt=true
 			;;
 		-O*)
-			orderfile="$1"
+			orderfile="${1#-O}"
 			;;
 		--)
 			shift
@@ -465,7 +465,7 @@ main () {
 
 	files=$(git -c core.quotePath=false \
 		diff --name-only --diff-filter=U \
-		${orderfile:+"$orderfile"} -- "$@")
+		${orderfile:+"-O$orderfile"} -- "$@")
 
 	cd_to_toplevel
 
