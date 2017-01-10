@@ -690,7 +690,26 @@ extern CRITICAL_SECTION pinfo_cs;
 
 /*
  * A replacement of main() that adds win32 specific initialization.
+ *
+ * Note that the end of these macros are unterminated so that the
+ * brace group following the use of the macro is the body of the
+ * function.
  */
+#if defined(_MSC_VER)
+
+int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env);
+extern int msc_main(int argc, const char **argv);
+
+#define main(c,v) dummy_decl_msc_main(void);				\
+int wmain(int my_argc,									\
+		  wchar_t **my_w_argv,							\
+		  wchar_t **my_w_env)							\
+{														\
+	return msc_startup(my_argc, my_w_argv, my_w_env);	\
+}														\
+int msc_main(c, v)
+
+#else
 
 void mingw_startup(void);
 #define main(c,v) dummy_decl_mingw_main(void); \
@@ -701,6 +720,8 @@ int main(int argc, const char **argv) \
 	return mingw_main(__argc, (void *)__argv); \
 } \
 static int mingw_main(c,v)
+
+#endif
 
 /*
  * Used by Pthread API implementation for Windows
