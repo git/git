@@ -12,7 +12,8 @@ USAGE="[--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <re
    or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
-   or: $dashless [--quiet] sync [--recursive] [--] [<path>...]"
+   or: $dashless [--quiet] sync [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] absorbgitdirs [--] [<path>...]"
 OPTIONS_SPEC=
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
