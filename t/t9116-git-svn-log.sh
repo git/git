@@ -43,14 +43,18 @@ test_expect_success 'setup repository and import' '
 
 test_expect_success 'run log' "
 	git reset --hard origin/a &&
-	git svn log -r2 origin/trunk | grep ^r2 &&
-	git svn log -r4 origin/trunk | grep ^r4 &&
-	git svn log -r3 | grep ^r3
+	git svn log -r2 origin/trunk >out &&
+	grep ^r2 out &&
+	git svn log -r4 origin/trunk >out &&
+	grep ^r4 out &&
+	git svn log -r3 >out &&
+	grep ^r3 out
 	"
 
 test_expect_success 'run log against a from trunk' "
 	git reset --hard origin/trunk &&
-	git svn log -r3 origin/a | grep ^r3
+	git svn log -r3 origin/a >out &&
+	grep ^r3 out
 	"
 
 printf 'r1 \nr2 \nr4 \n' > expected-range-r1-r2-r4
