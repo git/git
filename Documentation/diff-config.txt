@@ -60,6 +60,12 @@ diff.context::
 	Generate diffs with <n> lines of context instead of the default
 	of 3. This value is overridden by the -U option.
 
+diff.interHunkContext::
+	Show the context between diff hunks, up to the specified number
+	of lines, thereby fusing the hunks that are close to each other.
+	This value serves as the default for the `--inter-hunk-context`
+	command line option.
+
 diff.external::
 	If this config variable is set, diff generation is not
 	performed using the internal diff machinery, but using the
