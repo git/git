@@ -18,8 +18,8 @@ on the subcommand:
 
  git bisect start [--term-{old,good}=<term> --term-{new,bad}=<term>]
 		  [--no-checkout] [<bad> [<good>...]] [--] [<paths>...]
- git bisect (bad|new) [<rev>]
- git bisect (good|old) [<rev>...]
+ git bisect (bad|new|<term-new>) [<rev>]
+ git bisect (good|old|<term-old>) [<rev>...]
  git bisect terms [--term-good | --term-bad]
  git bisect skip [(<rev>|<range>)...]
  git bisect reset [<commit>]
