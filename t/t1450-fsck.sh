@@ -581,4 +581,20 @@ test_expect_success 'fsck errors in packed objects' '
 	! grep corrupt out
 '
 
+test_expect_success 'fsck finds problems in duplicate loose objects' '
+	rm -rf broken-duplicate &&
+	git init broken-duplicate &&
+	(
+		cd broken-duplicate &&
+		test_commit duplicate &&
+		# no "-d" here, so we end up with duplicates
+		git repack &&
+		# now corrupt the loose copy
+		file=$(sha1_file "$(git rev-parse HEAD)") &&
+		rm "$file" &&
+		echo broken >"$file" &&
+		test_must_fail git fsck
+	)
+'
+
 test_done
