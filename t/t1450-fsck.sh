@@ -560,4 +560,25 @@ test_expect_success 'alternate objects are correctly blamed' '
 	grep alt.git out
 '
 
+test_expect_success 'fsck errors in packed objects' '
+	git cat-file commit HEAD >basis &&
+	sed "s/</one/" basis >one &&
+	sed "s/</foo/" basis >two &&
+	one=$(git hash-object -t commit -w one) &&
+	two=$(git hash-object -t commit -w two) &&
+	pack=$(
+		{
+			echo $one &&
+			echo $two
+		} | git pack-objects .git/objects/pack/pack
+	) &&
+	test_when_finished "rm -f .git/objects/pack/pack-$pack.*" &&
+	remove_object $one &&
+	remove_object $two &&
+	test_must_fail git fsck 2>out &&
+	grep "error in commit $one.* - bad name" out &&
+	grep "error in commit $two.* - bad name" out &&
+	! grep corrupt out
+'
+
 test_done
