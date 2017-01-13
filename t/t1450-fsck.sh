@@ -43,13 +43,13 @@ test_expect_success 'HEAD is part of refs, valid objects appear valid' '
 
 test_expect_success 'setup: helpers for corruption tests' '
 	sha1_file() {
-		echo "$*" | sed "s#..#.git/objects/&/#"
+		remainder=${1#??} &&
+		firsttwo=${1%$remainder} &&
+		echo ".git/objects/$firsttwo/$remainder"
 	} &&
 
 	remove_object() {
-		file=$(sha1_file "$*") &&
-		test -e "$file" &&
-		rm -f "$file"
+		rm "$(sha1_file "$1")"
 	}
 '
 
@@ -535,13 +535,6 @@ test_expect_success 'fsck --connectivity-only' '
 	)
 '
 
-remove_loose_object () {
-	sha1="$(git rev-parse "$1")" &&
-	remainder=${sha1#??} &&
-	firsttwo=${sha1%$remainder} &&
-	rm .git/objects/$firsttwo/$remainder
-}
-
 test_expect_success 'fsck --name-objects' '
 	rm -rf name-objects &&
 	git init name-objects &&
@@ -550,7 +543,7 @@ test_expect_success 'fsck --name-objects' '
 		test_commit julius caesar.t &&
 		test_commit augustus &&
 		test_commit caesar &&
-		remove_loose_object $(git rev-parse julius:caesar.t) &&
+		remove_object $(git rev-parse julius:caesar.t) &&
 		test_must_fail git fsck --name-objects >out &&
 		tree=$(git rev-parse --verify julius:) &&
 		grep "$tree (\(refs/heads/master\|HEAD\)@{[0-9]*}:" out
