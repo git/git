@@ -597,4 +597,26 @@ test_expect_success 'fsck finds problems in duplicate loose objects' '
 	)
 '
 
+test_expect_success 'fsck detects trailing loose garbage (commit)' '
+	git cat-file commit HEAD >basis &&
+	echo bump-commit-sha1 >>basis &&
+	commit=$(git hash-object -w -t commit basis) &&
+	file=$(sha1_file $commit) &&
+	test_when_finished "remove_object $commit" &&
+	chmod +w "$file" &&
+	echo garbage >>"$file" &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "garbage.*$commit" out
+'
+
+test_expect_success 'fsck detects trailing loose garbage (blob)' '
+	blob=$(echo trailing | git hash-object -w --stdin) &&
+	file=$(sha1_file $blob) &&
+	test_when_finished "remove_object $blob" &&
+	chmod +w "$file" &&
+	echo garbage >>"$file" &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "garbage.*$blob" out
+'
+
 test_done
