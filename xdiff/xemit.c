@@ -183,16 +183,14 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 
 				/*
 				 * We don't need additional context if
-				 * a whole function was added, possibly
-				 * starting with empty lines.
+				 * a whole function was added.
 				 */
-				while (i2 < xe->xdf2.nrec &&
-				       is_empty_rec(&xe->xdf2, i2))
+				while (i2 < xe->xdf2.nrec) {
+					if (match_func_rec(&xe->xdf2, xecfg, i2,
+						dummy, sizeof(dummy)) >= 0)
+						goto post_context_calculation;
 					i2++;
-				if (i2 < xe->xdf2.nrec &&
-				    match_func_rec(&xe->xdf2, xecfg, i2,
-						   dummy, sizeof(dummy)) >= 0)
-					goto post_context_calculation;
+				}
 
 				/*
 				 * Otherwise get more context from the
