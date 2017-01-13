@@ -1613,39 +1613,54 @@ int git_open(const char *name)
 	}
 }
 
-static int stat_sha1_file(const unsigned char *sha1, struct stat *st)
+/*
+ * Find "sha1" as a loose object in the local repository or in an alternate.
+ * Returns 0 on success, negative on failure.
+ *
+ * The "path" out-parameter will give the path of the object we found (if any).
+ * Note that it may point to static storage and is only valid until another
+ * call to sha1_file_name(), etc.
+ */
+static int stat_sha1_file(const unsigned char *sha1, struct stat *st,
+			  const char **path)
 {
 	struct alternate_object_database *alt;
 
-	if (!lstat(sha1_file_name(sha1), st))
+	*path = sha1_file_name(sha1);
+	if (!lstat(*path, st))
 		return 0;
 
 	prepare_alt_odb();
 	errno = ENOENT;
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		const char *path = alt_sha1_path(alt, sha1);
-		if (!lstat(path, st))
+		*path = alt_sha1_path(alt, sha1);
+		if (!lstat(*path, st))
 			return 0;
 	}
 
 	return -1;
 }
 
-static int open_sha1_file(const unsigned char *sha1)
+/*
+ * Like stat_sha1_file(), but actually open the object and return the
+ * descriptor. See the caveats on the "path" parameter above.
+ */
+static int open_sha1_file(const unsigned char *sha1, const char **path)
 {
 	int fd;
 	struct alternate_object_database *alt;
 	int most_interesting_errno;
 
-	fd = git_open(sha1_file_name(sha1));
+	*path = sha1_file_name(sha1);
+	fd = git_open(*path);
 	if (fd >= 0)
 		return fd;
 	most_interesting_errno = errno;
 
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		const char *path = alt_sha1_path(alt, sha1);
-		fd = git_open(path);
+		*path = alt_sha1_path(alt, sha1);
+		fd = git_open(*path);
 		if (fd >= 0)
 			return fd;
 		if (most_interesting_errno == ENOENT)
@@ -1657,10 +1672,11 @@ static int open_sha1_file(const unsigned char *sha1)
 
 void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
+	const char *path;
 	void *map;
 	int fd;
 
-	fd = open_sha1_file(sha1);
+	fd = open_sha1_file(sha1, &path);
 	map = NULL;
 	if (fd >= 0) {
 		struct stat st;
@@ -1669,7 +1685,7 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 			*size = xsize_t(st.st_size);
 			if (!*size) {
 				/* mmap() is forbidden on empty files */
-				error("object file %s is empty", sha1_file_name(sha1));
+				error("object file %s is empty", path);
 				return NULL;
 			}
 			map = xmmap(NULL, *size, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -2789,8 +2805,9 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	 * object even exists.
 	 */
 	if (!oi->typep && !oi->typename && !oi->sizep) {
+		const char *path;
 		struct stat st;
-		if (stat_sha1_file(sha1, &st) < 0)
+		if (stat_sha1_file(sha1, &st, &path) < 0)
 			return -1;
 		if (oi->disk_sizep)
 			*oi->disk_sizep = st.st_size;
@@ -2986,6 +3003,8 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 {
 	void *data;
 	const struct packed_git *p;
+	const char *path;
+	struct stat st;
 	const unsigned char *repl = lookup_replace_object_extended(sha1, flag);
 
 	errno = 0;
@@ -3001,12 +3020,9 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 		die("replacement %s not found for %s",
 		    sha1_to_hex(repl), sha1_to_hex(sha1));
 
-	if (has_loose_object(repl)) {
-		const char *path = sha1_file_name(sha1);
-
+	if (!stat_sha1_file(repl, &st, &path))
 		die("loose object %s (stored in %s) is corrupt",
 		    sha1_to_hex(repl), path);
-	}
 
 	if ((p = has_packed_and_bad(repl)) != NULL)
 		die("packed object %s (stored in %s) is corrupt",

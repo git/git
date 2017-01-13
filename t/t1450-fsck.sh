@@ -550,4 +550,14 @@ test_expect_success 'fsck --name-objects' '
 	)
 '
 
+test_expect_success 'alternate objects are correctly blamed' '
+	test_when_finished "rm -rf alt.git .git/objects/info/alternates" &&
+	git init --bare alt.git &&
+	echo "../../alt.git/objects" >.git/objects/info/alternates &&
+	mkdir alt.git/objects/12 &&
+	>alt.git/objects/12/34567890123456789012345678901234567890 &&
+	test_must_fail git fsck >out 2>&1 &&
+	grep alt.git out
+'
+
 test_done
