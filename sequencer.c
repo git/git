@@ -612,7 +612,7 @@ static int read_env_script(struct argv_array *env)
 			count++;
 		}
 
-	for (i = 0; i < count; i++) {
+	for (i = 0, p = script.buf; i < count; i++) {
 		argv_array_push(env, p);
 		p += strlen(p) + 1;
 	}
