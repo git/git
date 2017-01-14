@@ -694,10 +694,14 @@ static const char *get_ssh_command(void)
 static int handle_ssh_variant(const char *ssh_command, int is_cmdline,
 			      int *port_option, int *needs_batch)
 {
-	const char *variant;
+	const char *variant = getenv("GIT_SSH_VARIANT");
 	char *p = NULL;
 
-	if (!is_cmdline) {
+	if (variant)
+		; /* okay, fall through */
+	else if (!git_config_get_string("ssh.variant", &p))
+		variant = p;
+	else if (!is_cmdline) {
 		p = xstrdup(ssh_command);
 		variant = basename(p);
 	} else {
@@ -717,7 +721,8 @@ static int handle_ssh_variant(const char *ssh_command, int is_cmdline,
 	}
 
 	if (!strcasecmp(variant, "plink") ||
-	    !strcasecmp(variant, "plink.exe"))
+	    !strcasecmp(variant, "plink.exe") ||
+	    !strcasecmp(variant, "putty"))
 		*port_option = 'P';
 	else if (!strcasecmp(variant, "tortoiseplink") ||
 		 !strcasecmp(variant, "tortoiseplink.exe")) {
