@@ -616,4 +616,15 @@ test_expect_success 'fsck $name notices bogus $name' '
 	test_must_fail git fsck $_z40
 '
 
+test_expect_success 'bogus head does not fallback to all heads' '
+	# set up a case that will cause a reachability complaint
+	echo to-be-deleted >foo &&
+	git add foo &&
+	blob=$(git rev-parse :foo) &&
+	test_when_finished "git rm --cached foo" &&
+	remove_object $blob &&
+	test_must_fail git fsck $_z40 >out 2>&1 &&
+	! grep $blob out
+'
+
 test_done

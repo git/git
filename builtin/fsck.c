@@ -778,7 +778,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	 * default ones from .git/refs. We also consider the index file
 	 * in this case (ie this implies --cache).
 	 */
-	if (!heads) {
+	if (!argc) {
 		get_default_heads();
 		keep_cache_objects = 1;
 	}
