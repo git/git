@@ -611,4 +611,9 @@ test_expect_success 'fsck notices dangling objects' '
 	)
 '
 
+test_expect_success 'fsck $name notices bogus $name' '
+	test_must_fail git fsck bogus &&
+	test_must_fail git fsck $_z40
+'
+
 test_done
