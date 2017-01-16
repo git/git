@@ -559,4 +559,31 @@ test_expect_success 'fsck --name-objects' '
 	)
 '
 
+# for each of type, we have one version which is referenced by another object
+# (and so while unreachable, not dangling), and another variant which really is
+# dangling.
+test_expect_success 'fsck notices dangling objects' '
+	git init dangling &&
+	(
+		cd dangling &&
+		blob=$(echo not-dangling | git hash-object -w --stdin) &&
+		dblob=$(echo dangling | git hash-object -w --stdin) &&
+		tree=$(printf "100644 blob %s\t%s\n" $blob one | git mktree) &&
+		dtree=$(printf "100644 blob %s\t%s\n" $blob two | git mktree) &&
+		commit=$(git commit-tree $tree) &&
+		dcommit=$(git commit-tree -p $commit $tree) &&
+
+		cat >expect <<-EOF &&
+		dangling blob $dblob
+		dangling commit $dcommit
+		dangling tree $dtree
+		EOF
+
+		git fsck >actual &&
+		# the output order is non-deterministic, as it comes from a hash
+		sort <actual >actual.sorted &&
+		test_cmp expect actual.sorted
+	)
+'
+
 test_done

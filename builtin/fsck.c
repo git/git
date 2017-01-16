@@ -225,7 +225,7 @@ static void check_unreachable_object(struct object *obj)
 	 * to complain about it being unreachable (since it does
 	 * not exist).
 	 */
-	if (!obj->parsed)
+	if (!(obj->flags & HAS_OBJ))
 		return;
 
 	/*
