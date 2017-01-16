@@ -398,7 +398,7 @@ static void fsck_handle_reflog_sha1(const char *refname, unsigned char *sha1,
 
 	if (!is_null_sha1(sha1)) {
 		obj = lookup_object(sha1);
-		if (obj) {
+		if (obj && (obj->flags & HAS_OBJ)) {
 			if (timestamp && name_objects)
 				add_decoration(fsck_walk_options.object_names,
 					obj,
@@ -755,7 +755,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		if (!get_sha1(arg, sha1)) {
 			struct object *obj = lookup_object(sha1);
 
-			if (!obj) {
+			if (!obj || !(obj->flags & HAS_OBJ)) {
 				error("%s: object missing", sha1_to_hex(sha1));
 				errors_found |= ERROR_OBJECT;
 				continue;
