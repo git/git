@@ -189,14 +189,16 @@ test_expect_success 'commit with NUL in header' '
 '
 
 test_expect_success 'tree object with duplicate entries' '
-	test_when_finished "remove_object \$T" &&
+	test_when_finished "for i in \$T; do remove_object \$i; done" &&
 	T=$(
 		GIT_INDEX_FILE=test-index &&
 		export GIT_INDEX_FILE &&
 		rm -f test-index &&
 		>x &&
 		git add x &&
+		git rev-parse :x &&
 		T=$(git write-tree) &&
+		echo $T &&
 		(
 			git cat-file tree $T &&
 			git cat-file tree $T
