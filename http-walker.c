@@ -274,9 +274,8 @@ static void process_alternates_response(void *callback_data)
 				struct strbuf target = STRBUF_INIT;
 				strbuf_add(&target, base, serverlen);
 				strbuf_add(&target, data + i, posn - i - 7);
-				if (walker->get_verbosely)
-					fprintf(stderr, "Also look at %s\n",
-						target.buf);
+				warning("adding alternate object store: %s",
+					target.buf);
 				newalt = xmalloc(sizeof(*newalt));
 				newalt->next = NULL;
 				newalt->base = strbuf_detach(&target, NULL);
@@ -301,6 +300,9 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	struct active_request_slot *slot;
 	struct alternates_request alt_req;
 	struct walker_data *cdata = walker->data;
+
+	if (http_follow_config != HTTP_FOLLOW_ALWAYS)
+		return;
 
 	/*
 	 * If another request has already started fetching alternates,
@@ -480,10 +482,13 @@ static int fetch_object(struct walker *walker, unsigned char *sha1)
 	 * we turned off CURLOPT_FAILONERROR to avoid losing a
 	 * persistent connection and got CURLE_OK.
 	 */
-	if (req->http_code == 404 && req->curl_result == CURLE_OK &&
+	if (req->http_code >= 300 && req->curl_result == CURLE_OK &&
 			(starts_with(req->url, "http://") ||
-			 starts_with(req->url, "https://")))
+			 starts_with(req->url, "https://"))) {
 		req->curl_result = CURLE_HTTP_RETURNED_ERROR;
+		xsnprintf(req->errorstr, sizeof(req->errorstr),
+			  "HTTP request failed");
+	}
 
 	if (obj_req->state == ABORTED) {
 		ret = error("Request for %s aborted", hex);
