@@ -350,10 +350,9 @@ test_expect_success PERL 'required process filter should filter data' '
 		cd repo &&
 		git init &&
 
-		echo "git-stderr.log" >.gitignore &&
 		echo "*.r filter=protocol" >.gitattributes &&
 		git add . &&
-		git commit . -m "test commit 1" &&
+		git commit -m "test commit 1" &&
 		git branch empty-branch &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
@@ -378,7 +377,7 @@ test_expect_success PERL 'required process filter should filter data' '
 		EOF
 		test_cmp_count expected.log rot13-filter.log &&
 
-		filter_git commit . -m "test commit 2" &&
+		filter_git commit -m "test commit 2" &&
 		cat >expected.log <<-EOF &&
 			START
 			init handshake complete
