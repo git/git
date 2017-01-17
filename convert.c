@@ -279,15 +279,16 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 		if (convert_is_binary(len, &stats))
 			return 0;
 		/*
-		 * If the file in the index has any CR in it, do not convert.
-		 * This is the new safer autocrlf handling.
+		 * If the file in the index has any CR in it, do not
+		 * convert.  This is the new safer autocrlf handling,
+		 * unless we want to renormalize in a merge or
+		 * cherry-pick.
 		 */
-		if (checksafe == SAFE_CRLF_RENORMALIZE)
-			checksafe = SAFE_CRLF_FALSE;
-		else if (has_cr_in_index(path))
+		if ((checksafe != SAFE_CRLF_RENORMALIZE) && has_cr_in_index(path))
 			convert_crlf_into_lf = 0;
 	}
-	if (checksafe && len) {
+	if ((checksafe == SAFE_CRLF_WARN ||
+	    (checksafe == SAFE_CRLF_FAIL)) && len) {
 		struct text_stat new_stats;
 		memcpy(&new_stats, &stats, sizeof(new_stats));
 		/* simulate "git add" */
