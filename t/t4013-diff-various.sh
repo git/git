@@ -311,6 +311,13 @@ diff --line-prefix=abc master master^ side
 diff --dirstat master~1 master~2
 diff --dirstat initial rearrange
 diff --dirstat-by-file initial rearrange
+# No-index --abbrev and --no-abbrev
+diff --raw initial
+diff --raw --abbrev=4 initial
+diff --raw --no-abbrev initial
+diff --no-index --raw dir2 dir
+diff --no-index --raw --abbrev=4 dir2 dir
+diff --no-index --raw --no-abbrev dir2 dir
 EOF
 
 test_expect_success 'log -S requires an argument' '
