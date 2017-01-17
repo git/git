@@ -75,13 +75,11 @@ Performance, Internal Implementation, Development Support etc.
    code with "git interpret-trailer".
 
  * The default Travis-CI configuration specifies newer P4 and GitLFS.
-   (merge 5f703e8f02 ls/travis-update-p4-and-lfs later to maint).
 
  * The "fast hash" that had disastrous performance issues in some
    corner cases has been retired from the internal diff.
 
  * The character width table has been updated to match Unicode 9.0
-   (merge 9e6e9aefdf bb/unicode-9.0 later to maint).
 
  * Update the procedure to generate "tags" for developer support.
    (merge 046e4c1c09 jk/make-tags-find-sources-tweak later to maint).
@@ -115,7 +113,6 @@ notes for details).
    standard I/O streams are connected to a TTY, but isatty() that
    comes with Windows incorrectly returned true if it is used on NUL
    (i.e. an equivalent to /dev/null).  This has been fixed.
-   (merge cbb3f3c9b1 js/mingw-isatty later to maint).
 
  * "git svn" did not work well with path components that are "0", and
    some configuration variable it uses were not documented.
@@ -123,70 +120,56 @@ notes for details).
 
  * "git rev-parse --symbolic" failed with a more recent notation like
    "HEAD^-1" and "HEAD^!".
-   (merge a2e7b04c44 jk/rev-parse-symbolic-parents-fix later to maint).
 
  * An empty directory in a working tree that can simply be nuked used
    to interfere while merging or cherry-picking a change to create a
    submodule directory there, which has been fixed..
-   (merge 5423d2e700 dt/empty-submodule-in-merge later to maint).
 
  * The code in "git push" to compute if any commit being pushed in the
    superproject binds a commit in a submodule that hasn't been pushed
    out was overly inefficient, making it unusable even for a small
    project that does not have any submodule but have a reasonable
    number of refs.
-   (merge 250ab24ab3 hv/submodule-not-yet-pushed-fix later to maint).
 
  * "git push --dry-run --recurse-submodule=on-demand" wasn't
    "--dry-run" in the submodules.
-   (merge 0301c821c5 bw/push-dry-run later to maint).
 
  * The output from "git worktree list" was made in readdir() order,
    and was unstable.
-   (merge 4df1d4d466 nd/worktree-list-fixup later to maint).
 
  * mergetool.<tool>.trustExitCode configuration variable did not apply
    to built-in tools, but now it does.
-   (merge 2967284456 da/mergetool-trust-exit-code later to maint).
 
  * "git p4" LFS support was broken when LFS stores an empty blob.
-   (merge d5eb3cf5e7 ls/p4-empty-file-on-lfs later to maint).
 
  * A corner case in merge-recursive regression that crept in
    during 2.10 development cycle has been fixed.
-   (merge 1c25d2d8ed jc/renormalize-merge-kill-safer-crlf later to maint).
 
  * Transport with dumb http can be fooled into following foreign URLs
    that the end user does not intend to, especially with the server
    side redirects and http-alternates mechanism, which can lead to
    security issues.  Tighten the redirection and make it more obvious
    to the end user when it happens.
-   (merge cb4d2d35c4 jk/http-walker-limit-redirect-2.9 later to maint).
 
  * Update the error messages from the dumb-http client when it fails
    to obtain loose objects; we used to give sensible error message
    only upon 404 but we now forbid unexpected redirects that needs to
    be reported with something sensible.
-   (merge 3680f16f9d jk/http-walker-limit-redirect later to maint).
 
  * When diff.renames configuration is on (and with Git 2.9 and later,
    it is enabled by default, which made it worse), "git stash"
    misbehaved if a file is removed and another file with a very
    similar content is added.
-   (merge 9d4e28ead5 jk/stash-disable-renames-internally later to maint).
 
  * "git diff --no-index" did not take "--no-abbrev" option.
-   (merge 43d1948b7b jb/diff-no-index-no-abbrev later to maint).
 
  * "git difftool --dir-diff" had a minor regression when started from
    a subdirectory, which has been fixed.
-   (merge 853e10c197 da/difftool-dir-diff-fix later to maint).
 
  * "git commit --allow-empty --only" (no pathspec) with dirty index
    ought to be an acceptable way to create a new commit that does not
    change any paths, but it was forbidden, perhaps because nobody
    needed it so far.
-   (merge beb635ca9c ak/commit-only-allow-empty later to maint).
 
  * Git 2.11 had a minor regression in "merge --ff-only" that competed
    with another process that simultanously attempted to update the
@@ -196,26 +179,21 @@ notes for details).
 
  * A pathname that begins with "//" or "\\" on Windows is special but
    path normalization logic was unaware of it.
-   (merge 7814fbe3f1 js/normalize-path-copy-ceil later to maint).
 
  * "git pull --rebase", when there is no new commits on our side since
    we forked from the upstream, should be able to fast-forward without
    invoking "git rebase", but it didn't.
-   (merge 33b842a1e9 jc/pull-rebase-ff later to maint).
 
  * The way to specify hotkeys to "xxdiff" that is used by "git
    mergetool" has been modernized to match recent versions of xxdiff.
-   (merge 6cf5f6cef7 da/mergetool-xxdiff-hotkey later to maint).
 
  * Unlike "git am --abort", "git cherry-pick --abort" moved HEAD back
    to where cherry-pick started while picking multiple changes, when
    the cherry-pick stopped to ask for help from the user, and the user
    did "git reset --hard" to a different commit in order to re-attempt
    the operation.
-   (merge ce73bb22d8 sb/sequencer-abort-safety later to maint).
 
  * Code cleanup in shallow boundary computation.
-   (merge 649b0c316a nd/shallow-fixup later to maint).
 
  * A recent update to receive-pack to make it easier to drop garbage
    objects made it clear that GIT_ALTERNATE_OBJECT_DIRECTORIES cannot
@@ -223,49 +201,39 @@ notes for details).
    made it impossible to push into a repository at such a path.  This
    has been fixed by introducing a quoting mechanism used when
    appending such a path to the colon-separated list.
-   (merge 5e74824fac jk/quote-env-path-list-component later to maint).
 
  * The function usage_msg_opt() has been updated to say "fatal:"
    before the custom message programs give, when they want to die
    with a message about wrong command line options followed by the
    standard usage string.
-   (merge 87433261a4 jk/parseopt-usage-msg-opt later to maint).
 
  * "git index-pack --stdin" needs an access to an existing repository,
    but "git index-pack file.pack" to generate an .idx file that
    corresponds to a packfile does not.
-   (merge 29401e1575 jk/index-pack-wo-repo-from-stdin later to maint).
 
  * Fix for NDEBUG builds.
-   (merge 08414938a2 jt/mailinfo-fold-in-body-headers later to maint).
 
  * A lazy "git push" without refspec did not internally use a fully
    specified refspec to perform 'current', 'simple', or 'upstream'
    push, causing unnecessary "ambiguous ref" errors.
-   (merge b284495e93 jc/push-default-explicit later to maint).
 
  * "git p4" misbehaved when swapping a directory and a symbolic link.
-   (merge df8a9e86db ld/p4-compare-dir-vs-symlink later to maint).
 
  * Even though an fix was attempted in Git 2.9.3 days, but running
    "git difftool --dir-diff" from a subdirectory never worked. This
    has been fixed.
-   (merge ce6926974e jk/difftool-in-subdir later to maint).
 
  * "git p4" that tracks multile p4 paths imported a single changelist
    that touches files in these multiple paths as one commit, followed
    by many empty commits.  This has been fixed.
-   (merge 9943e5b979 gv/p4-multi-path-commit-fix later to maint).
 
  * A potential but unlikely buffer overflow in Windows port has been
    fixed.
-   (merge c46458e82f mk/mingw-winansi-ttyname-termination-fix later to maint).
 
  * When the http server gives an incomplete response to a smart-http
    rpc call, it could lead to client waiting for a full response that
    will never come.  Teach the client side to notice this condition
    and abort the transfer.
-   (merge f8edeaa05d dt/smart-http-detect-server-going-away later to maint).
 
  * Compression setting for producing packfiles were spread across
    three codepaths, one of which did not honor any configuration.
@@ -285,16 +253,4 @@ notes for details).
    (merge c06fa62dfc nd/config-misc-fixes later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge fa6ca11105 nd/qsort-in-merge-recursive later to maint).
-   (merge fa3142c919 ak/lazy-prereq-mktemp later to maint).
-   (merge 9c48b4fb23 ls/t0021-fixup later to maint).
-   (merge 584f99c87b sb/unpack-trees-grammofix later to maint).
-   (merge 54471fdcc3 jk/readme-gmane-is-no-more later to maint).
-   (merge 9e189f1a5c sb/t3600-cleanup later to maint).
-   (merge e2c20be57c lr/doc-fix-cet later to maint).
-   (merge 47437fd3bd kh/tutorial-grammofix later to maint).
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
-   (merge 7eeda8b821 ls/filter-process later to maint).
-   (merge 6cc823c5c1 jt/fetch-no-redundant-tag-fetch-map later to maint).
-   (merge 235ec24352 mm/push-social-engineering-attack-doc later to maint).
-   (merge f1350d0c12 mm/gc-safety-doc later to maint).
