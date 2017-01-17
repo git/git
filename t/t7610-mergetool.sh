@@ -591,7 +591,8 @@ test_expect_success 'filenames seen by tools start with ./' '
 
 test_lazy_prereq MKTEMP '
 	tempdir=$(mktemp -d -t foo.XXXXXX) &&
-	test -d "$tempdir"
+	test -d "$tempdir" &&
+	rmdir "$tempdir"
 '
 
 test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToTemp' '
