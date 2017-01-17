@@ -96,4 +96,44 @@ test_expect_success 'bare repo cleanup' '
 	rm -rf bare1
 '
 
+test_expect_success 'broken main worktree still at the top' '
+	git init broken-main &&
+	(
+		cd broken-main &&
+		test_commit new &&
+		git worktree add linked &&
+		cat >expected <<-EOF &&
+		worktree $(pwd)
+		HEAD $_z40
+
+		EOF
+		cd linked &&
+		echo "worktree $(pwd)" >expected &&
+		echo "ref: .broken" >../.git/HEAD &&
+		git worktree list --porcelain | head -n 3 >actual &&
+		test_cmp ../expected actual &&
+		git worktree list | head -n 1 >actual.2 &&
+		grep -F "(error)" actual.2
+	)
+'
+
+test_expect_success 'linked worktrees are sorted' '
+	mkdir sorted &&
+	git init sorted/main &&
+	(
+		cd sorted/main &&
+		test_tick &&
+		test_commit new &&
+		git worktree add ../first &&
+		git worktree add ../second &&
+		git worktree list --porcelain | grep ^worktree >actual
+	) &&
+	cat >expected <<-EOF &&
+	worktree $(pwd)/sorted/main
+	worktree $(pwd)/sorted/first
+	worktree $(pwd)/sorted/second
+	EOF
+	test_cmp expected sorted/main/actual
+'
+
 test_done

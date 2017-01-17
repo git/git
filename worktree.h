@@ -15,6 +15,8 @@ struct worktree {
 
 /* Functions for acting on the information about worktrees. */
 
+#define GWT_SORT_LINKED (1 << 0) /* keeps linked worktrees sorted */
+
 /*
  * Get the worktrees.  The primary worktree will always be the first returned,
  * and linked worktrees will be pointed to by 'next' in each subsequent
@@ -23,7 +25,7 @@ struct worktree {
  * The caller is responsible for freeing the memory from the returned
  * worktree(s).
  */
-extern struct worktree **get_worktrees(void);
+extern struct worktree **get_worktrees(unsigned flags);
 
 /*
  * Return git dir of the worktree. Note that the path may be relative.
