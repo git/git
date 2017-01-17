@@ -257,12 +257,7 @@ test_expect_success SYMLINKS '__gitdir - resulting path avoids symlinks' '
 '
 
 test_expect_success '__gitdir - not a git repository' '
-	(
-		cd subdir/subsubdir &&
-		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY" &&
-		export GIT_CEILING_DIRECTORIES &&
-		test_must_fail __gitdir
-	)
+	nongit test_must_fail __gitdir
 '
 
 test_expect_success '__gitcomp - trailing space - options' '
