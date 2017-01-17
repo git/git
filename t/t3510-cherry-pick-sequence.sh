@@ -147,6 +147,16 @@ test_expect_success '--abort to cancel single cherry-pick' '
 	git diff-index --exit-code HEAD
 '
 
+test_expect_success '--abort does not unsafely change HEAD' '
+	pristine_detach initial &&
+	test_must_fail git cherry-pick picked anotherpick &&
+	git reset --hard base &&
+	test_must_fail git cherry-pick picked anotherpick &&
+	git cherry-pick --abort 2>actual &&
+	test_i18ngrep "You seem to have moved HEAD" actual &&
+	test_cmp_rev base HEAD
+'
+
 test_expect_success 'cherry-pick --abort to cancel multiple revert' '
 	pristine_detach anotherpick &&
 	test_expect_code 1 git revert base..picked &&
