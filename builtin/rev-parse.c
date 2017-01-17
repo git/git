@@ -342,11 +342,16 @@ static int try_parent_shorthands(const char *arg)
 	for (parents = commit->parents, parent_number = 1;
 	     parents;
 	     parents = parents->next, parent_number++) {
+		char *name = NULL;
+
 		if (exclude_parent && parent_number != exclude_parent)
 			continue;
 
+		if (symbolic)
+			name = xstrfmt("%s^%d", arg, parent_number);
 		show_rev(include_parents ? NORMAL : REVERSED,
-			 parents->item->object.oid.hash, arg);
+			 parents->item->object.oid.hash, name);
+		free(name);
 	}
 
 	*dotdot = '^';
