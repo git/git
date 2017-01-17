@@ -955,15 +955,18 @@ int transport_push(struct transport *transport,
 				if (!is_null_oid(&ref->new_oid))
 					sha1_array_append(&commits, ref->new_oid.hash);
 
-			if (!push_unpushed_submodules(&commits, transport->remote->name)) {
+			if (!push_unpushed_submodules(&commits,
+						      transport->remote->name,
+						      pretend)) {
 				sha1_array_clear(&commits);
 				die("Failed to push all needed submodules!");
 			}
 			sha1_array_clear(&commits);
 		}
 
-		if ((flags & (TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND |
-			      TRANSPORT_RECURSE_SUBMODULES_CHECK)) && !is_bare_repository()) {
+		if (((flags & TRANSPORT_RECURSE_SUBMODULES_CHECK) ||
+		     ((flags & TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND) &&
+		      !pretend)) && !is_bare_repository()) {
 			struct ref *ref = remote_refs;
 			struct string_list needs_pushing = STRING_LIST_INIT_DUP;
 			struct sha1_array commits = SHA1_ARRAY_INIT;

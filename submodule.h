@@ -65,7 +65,9 @@ int merge_submodule(unsigned char result[20], const char *path, const unsigned c
 		    const unsigned char a[20], const unsigned char b[20], int search);
 int find_unpushed_submodules(struct sha1_array *commits, const char *remotes_name,
 		struct string_list *needs_pushing);
-int push_unpushed_submodules(struct sha1_array *commits, const char *remotes_name);
+extern int push_unpushed_submodules(struct sha1_array *commits,
+				    const char *remotes_name,
+				    int dry_run);
 void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
 int parallel_submodules(void);
 
