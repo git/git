@@ -44,9 +44,10 @@ unreleased) version of Git, that is available from the 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v2.11.0/git.html[documentation for release 2.11]
+* link:v2.11.1/git.html[documentation for release 2.11.1]
 
 * release notes for
+  link:RelNotes/2.11.1.txt[2.11.1],
   link:RelNotes/2.11.0.txt[2.11].
 
 * link:v2.10.2/git.html[documentation for release 2.10.2]
