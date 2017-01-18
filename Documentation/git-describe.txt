@@ -83,7 +83,10 @@ OPTIONS
 --match <pattern>::
 	Only consider tags matching the given `glob(7)` pattern,
 	excluding the "refs/tags/" prefix.  This can be used to avoid
-	leaking private tags from the repository.
+	leaking private tags from the repository. If given multiple times, a
+	list of patterns will be accumulated, and tags matching any of the
+	patterns will be considered. Use `--no-match` to clear and reset the
+	list of patterns.
 
 --always::
 	Show uniquely abbreviated commit object as fallback.
