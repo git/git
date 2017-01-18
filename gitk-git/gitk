@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright © 2005-2014 Paul Mackerras.  All rights reserved.
+# Copyright © 2005-2016 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -588,7 +588,7 @@ proc updatecommits {} {
 proc reloadcommits {} {
     global curview viewcomplete selectedline currentid thickerline
     global showneartags treediffs commitinterest cached_commitrow
-    global targetid
+    global targetid commitinfo
 
     set selid {}
     if {$selectedline ne {}} {
@@ -609,6 +609,7 @@ proc reloadcommits {} {
 	getallcommits
     }
     clear_display
+    unset -nocomplain commitinfo
     unset -nocomplain commitinterest
     unset -nocomplain cached_commitrow
     unset -nocomplain targetid
@@ -1315,7 +1316,7 @@ proc commitonrow {row} {
 
 proc closevarcs {v} {
     global varctok varccommits varcid parents children
-    global cmitlisted commitidx vtokmod
+    global cmitlisted commitidx vtokmod curview numcommits
 
     set missing_parents 0
     set scripts {}
@@ -1340,6 +1341,9 @@ proc closevarcs {v} {
 	    }
 	    lappend varccommits($v,$b) $p
 	    incr commitidx($v)
+	    if {$v == $curview} {
+		set numcommits $commitidx($v)
+	    }
 	    set scripts [check_interest $p $scripts]
 	}
     }
@@ -2265,7 +2269,7 @@ proc makewindow {} {
 	set h [expr {[font metrics uifont -linespace] + 2}]
 	set progresscanv .tf.bar.progress
 	canvas $progresscanv -relief sunken -height $h -borderwidth 2
-	set progressitem [$progresscanv create rect -1 0 0 $h -fill lime]
+	set progressitem [$progresscanv create rect -1 0 0 $h -fill "#00ff00"]
 	set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
 	set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
     }
@@ -2403,7 +2407,7 @@ proc makewindow {} {
 
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
-	-state disabled -font textfont \
+	-state disabled -undo 0 -font textfont \
 	-yscrollcommand scrolltext -wrap none \
 	-xscrollcommand ".bleft.bottom.sbhorizontal set"
     if {$have_tk85} {
@@ -2664,6 +2668,7 @@ proc makewindow {} {
     set headctxmenu .headctxmenu
     makemenu $headctxmenu {
 	{mc "Check out this branch" command cobranch}
+	{mc "Rename this branch" command mvbranch}
 	{mc "Remove this branch" command rmbranch}
 	{mc "Copy branch name" command {clipboard clear; clipboard append $headmenuhead}}
     }
@@ -3033,7 +3038,7 @@ proc about {} {
     message $w.m -text [mc "
 Gitk - a commit viewer for git
 
-Copyright \u00a9 2005-2014 Paul Mackerras
+Copyright \u00a9 2005-2016 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License"] \
 	    -justify center -aspect 400 -border 2 -bg $bgcolor -relief groove
@@ -3397,7 +3402,7 @@ set rectmask {
        0x00, 0x00, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f,
        0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0x00, 0x00};
 }
-image create bitmap reficon-H -background black -foreground lime \
+image create bitmap reficon-H -background black -foreground "#00ff00" \
     -data $rectdata -maskdata $rectmask
 image create bitmap reficon-o -background black -foreground "#ddddff" \
     -data $rectdata -maskdata $rectmask
@@ -8069,7 +8074,11 @@ proc getblobdiffline {bdf ids} {
     $ctext conf -state normal
     while {[incr nr] <= 1000 && [gets $bdf line] >= 0} {
 	if {$ids != $diffids || $bdf != $blobdifffd($ids)} {
+	    # Older diff read. Abort it.
 	    catch {close $bdf}
+	    if {$ids != $diffids} {
+		array unset blobdifffd $ids
+	    }
 	    return 0
 	}
 	parseblobdiffline $ids $line
@@ -8078,6 +8087,7 @@ proc getblobdiffline {bdf ids} {
     blobdiffmaybeseehere [eof $bdf]
     if {[eof $bdf]} {
 	catch {close $bdf}
+	array unset blobdifffd $ids
 	return 0
     }
     return [expr {$nr >= 1000? 2: 1}]
@@ -9452,26 +9462,63 @@ proc wrcomcan {} {
 }
 
 proc mkbranch {} {
-    global rowmenuid mkbrtop NS
+    global NS rowmenuid
 
-    set top .makebranch
+    set top .branchdialog
+
+    set val(name) ""
+    set val(id) $rowmenuid
+    set val(command) [list mkbrgo $top]
+
+    set ui(title) [mc "Create branch"]
+    set ui(accept) [mc "Create"]
+
+    branchdia $top val ui
+}
+
+proc mvbranch {} {
+    global NS
+    global headmenuid headmenuhead
+
+    set top .branchdialog
+
+    set val(name) $headmenuhead
+    set val(id) $headmenuid
+    set val(command) [list mvbrgo $top $headmenuhead]
+
+    set ui(title) [mc "Rename branch %s" $headmenuhead]
+    set ui(accept) [mc "Rename"]
+
+    branchdia $top val ui
+}
+
+proc branchdia {top valvar uivar} {
+    global NS commitinfo
+    upvar $valvar val $uivar ui
+
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Create new branch"]
+    ${NS}::label $top.title -text $ui(title)
     grid $top.title - -pady 10
     ${NS}::label $top.id -text [mc "ID:"]
     ${NS}::entry $top.sha1 -width 40
-    $top.sha1 insert 0 $rowmenuid
+    $top.sha1 insert 0 $val(id)
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
+    ${NS}::entry $top.head -width 60
+    $top.head insert 0 [lindex $commitinfo($val(id)) 0]
+    $top.head conf -state readonly
+    grid x $top.head -sticky ew
+    grid columnconfigure $top 1 -weight 1
     ${NS}::label $top.nlab -text [mc "Name:"]
     ${NS}::entry $top.name -width 40
+    $top.name insert 0 $val(name)
     grid $top.nlab $top.name -sticky w
     ${NS}::frame $top.buts
-    ${NS}::button $top.buts.go -text [mc "Create"] -command [list mkbrgo $top]
+    ${NS}::button $top.buts.go -text $ui(accept) -command $val(command)
     ${NS}::button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
-    bind $top <Key-Return> [list mkbrgo $top]
+    bind $top <Key-Return> $val(command)
     bind $top <Key-Escape> "catch {destroy $top}"
     grid $top.buts.go $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
@@ -9521,6 +9568,46 @@ proc mkbrgo {top} {
 	    addedhead $id $name
 	    redrawtags $id
 	}
+	dispneartags 0
+	run refill_reflist
+    }
+}
+
+proc mvbrgo {top prevname} {
+    global headids idheads mainhead mainheadid
+
+    set name [$top.name get]
+    set id [$top.sha1 get]
+    set cmdargs {}
+    if {$name eq $prevname} {
+	catch {destroy $top}
+	return
+    }
+    if {$name eq {}} {
+	error_popup [mc "Please specify a new name for the branch"] $top
+	return
+    }
+    catch {destroy $top}
+    lappend cmdargs -m $prevname $name
+    nowbusy renamebranch
+    update
+    if {[catch {
+	eval exec git branch $cmdargs
+    } err]} {
+	notbusy renamebranch
+	error_popup $err
+    } else {
+	notbusy renamebranch
+	removehead $id $prevname
+	removedhead $id $prevname
+	set headids($name) $id
+	lappend idheads($id) $name
+	addedhead $id $name
+	if {$prevname eq $mainhead} {
+	    set mainhead $name
+	    set mainheadid $id
+	}
+	redrawtags $id
 	dispneartags 0
 	run refill_reflist
     }
@@ -9751,20 +9838,25 @@ proc readresetstat {fd} {
 
 # context menu for a head
 proc headmenu {x y id head} {
-    global headmenuid headmenuhead headctxmenu mainhead
+    global headmenuid headmenuhead headctxmenu mainhead headids
 
     stopfinding
     set headmenuid $id
     set headmenuhead $head
-    set state normal
+    array set state {0 normal 1 normal 2 normal}
     if {[string match "remotes/*" $head]} {
-	set state disabled
+	set localhead [string range $head [expr [string last / $head] + 1] end]
+	if {[info exists headids($localhead)]} {
+	    set state(0) disabled
+	}
+	array set state {1 disabled 2 disabled}
     }
     if {$head eq $mainhead} {
-	set state disabled
+	array set state {0 disabled 2 disabled}
     }
-    $headctxmenu entryconfigure 0 -state $state
-    $headctxmenu entryconfigure 1 -state $state
+    foreach i {0 1 2} {
+	$headctxmenu entryconfigure $i -state $state($i)
+    }
     tk_popup $headctxmenu $x $y
 }
 
@@ -9773,11 +9865,27 @@ proc cobranch {} {
     global showlocalchanges
 
     # check the tree is clean first??
+    set newhead $headmenuhead
+    set command [list | git checkout]
+    if {[string match "remotes/*" $newhead]} {
+	set remote $newhead
+	set newhead [string range $newhead [expr [string last / $newhead] + 1] end]
+	# The following check is redundant - the menu option should
+	# be disabled to begin with...
+	if {[info exists headids($newhead)]} {
+	    error_popup [mc "A local branch named %s exists already" $newhead]
+	    return
+	}
+	lappend command -b $newhead --track $remote
+    } else {
+	lappend command $newhead
+    }
+    lappend command 2>@1
     nowbusy checkout [mc "Checking out"]
     update
     dohidelocalchanges
     if {[catch {
-	set fd [open [list | git checkout $headmenuhead 2>@1] r]
+	set fd [open $command r]
     } err]} {
 	notbusy checkout
 	error_popup $err
@@ -9785,12 +9893,12 @@ proc cobranch {} {
 	    dodiffindex
 	}
     } else {
-	filerun $fd [list readcheckoutstat $fd $headmenuhead $headmenuid]
+	filerun $fd [list readcheckoutstat $fd $newhead $headmenuid]
     }
 }
 
 proc readcheckoutstat {fd newhead newheadid} {
-    global mainhead mainheadid headids showlocalchanges progresscoords
+    global mainhead mainheadid headids idheads showlocalchanges progresscoords
     global viewmainheadid curview
 
     if {[gets $fd line] >= 0} {
@@ -9805,8 +9913,14 @@ proc readcheckoutstat {fd newhead newheadid} {
     notbusy checkout
     if {[catch {close $fd} err]} {
 	error_popup $err
+	return
     }
     set oldmainid $mainheadid
+    if {! [info exists headids($newhead)]} {
+	set headids($newhead) $newheadid
+	lappend idheads($newheadid) $newhead
+	addedhead $newheadid $newhead
+    }
     set mainhead $newhead
     set mainheadid $newheadid
     set viewmainheadid($curview) $newheadid
@@ -12188,7 +12302,7 @@ if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "meld"
 }
 
-set colors {lime red blue magenta darkgrey brown orange}
+set colors {"#00ff00" red blue magenta darkgrey brown orange}
 if {[tk windowingsystem] eq "win32"} {
     set uicolor SystemButtonFace
     set uifgcolor SystemButtonText
@@ -12206,12 +12320,12 @@ if {[tk windowingsystem] eq "win32"} {
 }
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
-set mergecolors {red blue lime purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
+set mergecolors {red blue "#00ff00" purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
 set ignorespace 0
 set worddiff ""
 set markbgcolor "#e0e0ff"
 
-set headbgcolor lime
+set headbgcolor "#00ff00"
 set headfgcolor black
 set headoutlinecolor black
 set remotebgcolor #ffddaa
@@ -12226,7 +12340,7 @@ set linehoverfgcolor black
 set linehoveroutlinecolor black
 set mainheadcirclecolor yellow
 set workingfilescirclecolor red
-set indexcirclecolor lime
+set indexcirclecolor "#00ff00"
 set circlecolors {white blue gray blue blue}
 set linkfgcolor blue
 set circleoutlinecolor $fgcolor
