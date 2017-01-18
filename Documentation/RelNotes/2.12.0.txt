@@ -66,6 +66,17 @@ UI, Workflows & Features
    more widely known when conversion fails from/to it.
    (merge df3755888b jc/latin-1 later to maint).
 
+ * "git grep" has been taught to optionally recurse into submodules.
+
+ * "git rm" used to refuse to remove a submodule when it has its own
+   git repository embedded in its working tree.  It learned to move
+   the repository away to $GIT_DIR/modules/ of the superproject
+   instead, and allow the submodule to be deleted (as long as there
+   will be no loss of local modifications, that is).
+
+ * A recent updates to "git p4" was not usable for older p4 but it
+   could be made to work with minimum changes.  Do so.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -98,6 +109,19 @@ Performance, Internal Implementation, Development Support etc.
    easier to move embedded .git/ directory for submodules in a
    superproject to .git/modules/ (and point the latter with the former
    that is turned into a "gitdir:" file) has been added.
+
+ * "git push \\server\share\dir" has recently regressed and then
+   fixed.  A test has retroactively been added for this breakage.
+
+ * Build updates for Cygwin.
+
+ * The implementation of "real_path()" was to go there with chdir(2)
+   and call getcwd(3), but this obviously wouldn't be usable in a
+   threaded environment.  Rewrite it to manually resolve relative
+   paths including symbolic links in path components.
+
+ * Adjust documentation to help AsciiDoctor render better while not
+   breaking the rendering done by AsciiDoc.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -252,5 +276,45 @@ notes for details).
  * Leakage of lockfiles in the config subsystem has been fixed.
    (merge c06fa62dfc nd/config-misc-fixes later to maint).
 
+ * It is natural that "git gc --auto" may not attempt to pack
+   everything into a single pack, and there is no point in warning
+   when the user has configured the system to use the pack bitmap,
+   leading to disabling further "gc".
+   (merge 1c409a705c dt/disable-bitmap-in-auto-gc later to maint).
+
+ * "git archive" did not read the standard configuration files, and
+   failed to notice a file that is marked as binary via the userdiff
+   driver configuration.
+   (merge 965cba2e7e jk/archive-zip-userdiff-config later to maint).
+
+ * "git blame --porcelain" misidentified the "previous" <commit, path>
+   pair (aka "source") when contents came from two or more files.
+   (merge 4e76832984 jk/blame-fixes later to maint).
+
+ * "git rebase -i" with a recent update started showing an incorrect
+   count when squashing more than 10 commits.
+   (merge 356b8ecff1 jk/rebase-i-squash-count-fix later to maint).
+
+ * "git <cmd> @{push}" on a detached HEAD used to segfault; it has
+   been corrected to error out with a message.
+   (merge b10731f43d km/branch-get-push-while-detached later to maint).
+
+ * Running "git add a/b" when "a" is a submodule correctly errored
+   out, but without a meaningful error message.
+   (merge 2d81c48fa7 sb/pathspec-errors later to maint).
+
+ * Typing ^C to pager, which usually does not kill it, killed Git and
+   took the pager down as a collateral damage in certain process-tree
+   structure.  This has been fixed.
+   (merge 46df6906f3 jk/execv-dashed-external later to maint).
+
+ * "git mergetool" without any pathspec on the command line that is
+   run from a subdirectory became no-op in Git v2.11 by mistake, which
+   has been fixed.
+
+ * Retire long unused/unmaintained gitview from the contrib/ area.
+   (merge 3120925c25 sb/remove-gitview later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
+   (merge 384f1a167b sb/unpack-trees-cleanup later to maint).
