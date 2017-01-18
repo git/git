@@ -23,6 +23,22 @@ prompt_given ()
 	test "$prompt" = "Launch 'test-tool' [Y/n]? branch"
 }
 
+for use_builtin_difftool in false true
+do
+
+test_expect_success 'verify we are running the correct difftool' '
+	if test true = '$use_builtin_difftool'
+	then
+		test_must_fail ok=129 git difftool -h >help &&
+		grep "g, --gui" help
+	else
+		git difftool -h >help &&
+		grep "g|--gui" help
+	fi
+'
+
+# NEEDSWORK: lose all the PERL prereqs once legacy-difftool is retired.
+
 # Create a file on master and change it on branch
 test_expect_success PERL 'setup' '
 	echo master >file &&
@@ -603,5 +619,18 @@ test_expect_success PERL,SYMLINKS 'difftool --dir-diff symlinked directories' '
 		test_cmp expect actual
 	)
 '
+
+test true != $use_builtin_difftool || break
+
+test_expect_success 'tear down for re-run' '
+	rm -rf * .[a-z]* &&
+	git init
+'
+
+# run as builtin difftool now
+GIT_CONFIG_PARAMETERS="'difftool.usebuiltin=true'"
+export GIT_CONFIG_PARAMETERS
+
+done
 
 test_done
