@@ -26,7 +26,9 @@ OPTIONS
 
 --refs=<pattern>::
 	Only use refs whose names match a given shell pattern.  The pattern
-	can be one of branch name, tag name or fully qualified ref name.
+	can be one of branch name, tag name or fully qualified ref name. If
+	given multiple times, use refs whose names match any of the given shell
+	patterns. Use `--no-refs` to clear any previous ref patterns given.
 
 --all::
 	List all commits reachable from all refs
