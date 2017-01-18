@@ -421,7 +421,7 @@ main () {
 			prompt=true
 			;;
 		-O*)
-			orderfile="$1"
+			orderfile="${1#-O}"
 			;;
 		--)
 			shift
@@ -454,6 +454,17 @@ main () {
 	merge_keep_backup="$(git config --bool mergetool.keepBackup || echo true)"
 	merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
 
+	prefix=$(git rev-parse --show-prefix) || exit 1
+	cd_to_toplevel
+
+	if test -n "$orderfile"
+	then
+		orderfile=$(
+			git rev-parse --prefix "$prefix" -- "$orderfile" |
+			sed -e 1d
+		)
+	fi
+
 	if test $# -eq 0 && test -e "$GIT_DIR/MERGE_RR"
 	then
 		set -- $(git rerere remaining)
@@ -461,13 +472,15 @@ main () {
 		then
 			print_noop_and_exit
 		fi
+	elif test $# -ge 0
+	then
+		# rev-parse provides the -- needed for 'set'
+		eval "set $(git rev-parse --sq --prefix "$prefix" -- "$@")"
 	fi
 
 	files=$(git -c core.quotePath=false \
 		diff --name-only --diff-filter=U \
-		${orderfile:+"$orderfile"} -- "$@")
-
-	cd_to_toplevel
+		${orderfile:+"-O$orderfile"} -- "$@")
 
 	if test -z "$files"
 	then
