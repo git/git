@@ -425,7 +425,7 @@ update_squash_messages () {
 	if test -f "$squash_msg"; then
 		mv "$squash_msg" "$squash_msg".bak || exit
 		count=$(($(sed -n \
-			-e "1s/^$comment_char.*\([0-9][0-9]*\).*/\1/p" \
+			-e "1s/^$comment_char[^0-9]*\([0-9][0-9]*\).*/\1/p" \
 			-e "q" < "$squash_msg".bak)+1))
 		{
 			printf '%s\n' "$comment_char $(eval_ngettext \
