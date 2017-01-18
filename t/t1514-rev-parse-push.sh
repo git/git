@@ -60,4 +60,10 @@ test_expect_success '@{push} with push refspecs' '
 	resolve topic@{push} refs/remotes/origin/magic/topic
 '
 
+test_expect_success 'resolving @{push} fails with a detached HEAD' '
+	git checkout HEAD^0 &&
+	test_when_finished "git checkout -" &&
+	test_must_fail git rev-parse @{push}
+'
+
 test_done
