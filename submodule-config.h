@@ -29,6 +29,9 @@ const struct submodule *submodule_from_name(const unsigned char *commit_or_tree,
 		const char *name);
 const struct submodule *submodule_from_path(const unsigned char *commit_or_tree,
 		const char *path);
+extern int gitmodule_sha1_from_commit(const unsigned char *commit_sha1,
+				      unsigned char *gitmodules_sha1,
+				      struct strbuf *rev);
 void submodule_free(void);
 
 #endif /* SUBMODULE_CONFIG_H */

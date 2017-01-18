@@ -199,6 +199,56 @@ void gitmodules_config(void)
 	}
 }
 
+void gitmodules_config_sha1(const unsigned char *commit_sha1)
+{
+	struct strbuf rev = STRBUF_INIT;
+	unsigned char sha1[20];
+
+	if (gitmodule_sha1_from_commit(commit_sha1, sha1, &rev)) {
+		git_config_from_blob_sha1(submodule_config, rev.buf,
+					  sha1, NULL);
+	}
+	strbuf_release(&rev);
+}
+
+/*
+ * Determine if a submodule has been initialized at a given 'path'
+ */
+int is_submodule_initialized(const char *path)
+{
+	int ret = 0;
+	const struct submodule *module = NULL;
+
+	module = submodule_from_path(null_sha1, path);
+
+	if (module) {
+		char *key = xstrfmt("submodule.%s.url", module->name);
+		char *value = NULL;
+
+		ret = !git_config_get_string(key, &value);
+
+		free(value);
+		free(key);
+	}
+
+	return ret;
+}
+
+/*
+ * Determine if a submodule has been populated at a given 'path'
+ */
+int is_submodule_populated(const char *path)
+{
+	int ret = 0;
+	char *gitdir = xstrfmt("%s/.git", path);
+
+	if (resolve_gitdir(gitdir))
+		ret = 1;
+
+	free(gitdir);
+	return ret;
+}
+
 int parse_submodule_update_strategy(const char *value,
 		struct submodule_update_strategy *dst)
 {
@@ -1333,7 +1383,7 @@ static void relocate_single_git_dir_into_superproject(const char *prefix,
 		/* If it is an actual gitfile, it doesn't need migration. */
 		return;
 
-	real_old_git_dir = xstrdup(real_path(old_git_dir));
+	real_old_git_dir = real_pathdup(old_git_dir);
 
 	sub = submodule_from_path(null_sha1, path);
 	if (!sub)
@@ -1342,7 +1392,7 @@ static void relocate_single_git_dir_into_superproject(const char *prefix,
 	new_git_dir = git_path("modules/%s", sub->name);
 	if (safe_create_leading_directories_const(new_git_dir) < 0)
 		die(_("could not create directory '%s'"), new_git_dir);
-	real_new_git_dir = xstrdup(real_path(new_git_dir));
+	real_new_git_dir = real_pathdup(new_git_dir);
 
 	if (!prefix)
 		prefix = get_super_prefix();
@@ -1379,8 +1429,8 @@ void absorb_git_dir_into_superproject(const char *prefix,
 		goto out;
 
 	/* Is it already absorbed into the superprojects git dir? */
-	real_sub_git_dir = xstrdup(real_path(sub_git_dir));
-	real_common_git_dir = xstrdup(real_path(get_git_common_dir()));
+	real_sub_git_dir = real_pathdup(sub_git_dir);
+	real_common_git_dir = real_pathdup(get_git_common_dir());
 	if (!skip_prefix(real_sub_git_dir, real_common_git_dir, &v))
 		relocate_single_git_dir_into_superproject(prefix, path);
 

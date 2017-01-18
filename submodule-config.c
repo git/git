@@ -379,7 +379,7 @@ static int parse_config(const char *var, const char *value, void *data)
 	return ret;
 }
 
-static int gitmodule_sha1_from_commit(const unsigned char *treeish_name,
+int gitmodule_sha1_from_commit(const unsigned char *treeish_name,
 				      unsigned char *gitmodules_sha1,
 				      struct strbuf *rev)
 {
