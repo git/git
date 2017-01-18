@@ -218,6 +218,14 @@ test_expect_success 'describe --contains and --match' '
 	test_cmp expect actual
 '
 
+test_expect_success 'describe --exclude' '
+	echo "c~1" >expect &&
+	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
+	test_must_fail git describe --contains --match="B" $tagged_commit &&
+	git describe --contains --match="?" --exclude="A" $tagged_commit >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'describe --contains and --no-match' '
 	echo "A^0" >expect &&
 	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
