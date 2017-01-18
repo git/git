@@ -118,12 +118,10 @@ test_expect_success 'fetch (partial bitmap)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'incremental repack cannot create bitmaps' '
+test_expect_success 'incremental repack fails when bitmaps are requested' '
 	test_commit more-1 &&
-	find .git/objects/pack -name "*.bitmap" >expect &&
-	git repack -d &&
-	find .git/objects/pack -name "*.bitmap" >actual &&
-	test_cmp expect actual
+	test_must_fail git repack -d 2>err &&
+	test_i18ngrep "Incremental repacks are incompatible with bitmap" err
 '
 
 test_expect_success 'incremental repack can disable bitmaps' '
