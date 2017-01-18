@@ -83,7 +83,9 @@ def p4_build_cmd(cmd):
     if retries is None:
         # Perform 3 retries by default
         retries = 3
-    real_cmd += ["-r", str(retries)]
+    if retries > 0:
+        # Provide a way to not pass this option by setting git-p4.retries to 0
+        real_cmd += ["-r", str(retries)]
 
     if isinstance(cmd,basestring):
         real_cmd = ' '.join(real_cmd) + ' ' + cmd

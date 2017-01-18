@@ -479,6 +479,8 @@ git-p4.client::
 git-p4.retries::
 	Specifies the number of times to retry a p4 command (notably,
 	'p4 sync') if the network times out. The default value is 3.
+	Set the value to 0 to disable retries or if your p4 version
+	does not support retries (pre 2012.2).
 
 Clone and sync variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
