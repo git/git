@@ -168,6 +168,11 @@ There are some macros to easily define options:
 	Introduce an option with string argument.
 	The string argument is put into `str_var`.
 
+`OPT_STRING_LIST(short, long, &struct string_list, arg_str, description)`::
+	Introduce an option with string argument.
+	The string argument is stored as an element in `string_list`.
+	Use of `--no-option` will clear the list of preceding values.
+
 `OPT_INTEGER(short, long, &int_var, description)`::
 	Introduce an option with integer argument.
 	The integer is put into `int_var`.
