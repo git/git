@@ -109,6 +109,7 @@ struct name_ref_data {
 	int tags_only;
 	int name_only;
 	struct string_list ref_filters;
+	struct string_list exclude_filters;
 };
 
 static struct tip_table {
@@ -149,6 +150,15 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 
 	if (data->tags_only && !starts_with(path, "refs/tags/"))
 		return 0;
+
+	if (data->exclude_filters.nr) {
+		struct string_list_item *item;
+
+		for_each_string_list_item(item, &data->exclude_filters) {
+			if (subpath_matches(path, item->string) >= 0)
+				return 0;
+		}
+	}
 
 	if (data->ref_filters.nr) {
 		struct string_list_item *item;
@@ -328,12 +338,14 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = OBJECT_ARRAY_INIT;
 	int all = 0, transform_stdin = 0, allow_undefined = 1, always = 0, peel_tag = 0;
-	struct name_ref_data data = { 0, 0, STRING_LIST_INIT_NODUP };
+	struct name_ref_data data = { 0, 0, STRING_LIST_INIT_NODUP, STRING_LIST_INIT_NODUP };
 	struct option opts[] = {
 		OPT_BOOL(0, "name-only", &data.name_only, N_("print only names (no SHA-1)")),
 		OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
 		OPT_STRING_LIST(0, "refs", &data.ref_filters, N_("pattern"),
 				   N_("only use refs matching <pattern>")),
+		OPT_STRING_LIST(0, "exclude", &data.exclude_filters, N_("pattern"),
+				   N_("ignore refs matching <pattern>")),
 		OPT_GROUP(""),
 		OPT_BOOL(0, "all", &all, N_("list all commits reachable from all refs")),
 		OPT_BOOL(0, "stdin", &transform_stdin, N_("read from stdin")),
