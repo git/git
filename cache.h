@@ -575,7 +575,26 @@ extern int verify_path(const char *path);
 extern int index_dir_exists(struct index_state *istate, const char *name, int namelen);
 extern void adjust_dirname_case(struct index_state *istate, char *name);
 extern struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int igncase);
+
+/*
+ * Searches for an entry defined by name and namelen in the given index.
+ * If the return value is positive (including 0) it is the position of an
+ * exact match. If the return value is negative, the negated value minus 1
+ * is the position where the entry would be inserted.
+ * Example: The current index consists of these files and its stages:
+ *
+ *   b#0, d#0, f#1, f#3
+ *
+ * index_name_pos(&index, "a", 1) -> -1
+ * index_name_pos(&index, "b", 1) ->  0
+ * index_name_pos(&index, "c", 1) -> -2
+ * index_name_pos(&index, "d", 1) ->  1
+ * index_name_pos(&index, "e", 1) -> -3
+ * index_name_pos(&index, "f", 1) -> -3
+ * index_name_pos(&index, "g", 1) -> -5
+ */
 extern int index_name_pos(const struct index_state *, const char *name, int namelen);
+
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
