@@ -23,10 +23,8 @@ prompt_given ()
 	test "$prompt" = "Launch 'test-tool' [Y/n]? branch"
 }
 
-# NEEDSWORK: lose all the PERL prereqs once legacy-difftool is retired.
-
 # Create a file on master and change it on branch
-test_expect_success PERL 'setup' '
+test_expect_success 'setup' '
 	echo master >file &&
 	git add file &&
 	git commit -m "added file" &&
@@ -38,7 +36,7 @@ test_expect_success PERL 'setup' '
 '
 
 # Configure a custom difftool.<tool>.cmd and use it
-test_expect_success PERL 'custom commands' '
+test_expect_success 'custom commands' '
 	difftool_test_setup &&
 	test_config difftool.test-tool.cmd "cat \"\$REMOTE\"" &&
 	echo master >expect &&
@@ -51,21 +49,21 @@ test_expect_success PERL 'custom commands' '
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'custom tool commands override built-ins' '
+test_expect_success 'custom tool commands override built-ins' '
 	test_config difftool.vimdiff.cmd "cat \"\$REMOTE\"" &&
 	echo master >expect &&
 	git difftool --tool vimdiff --no-prompt branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool ignores bad --tool values' '
+test_expect_success 'difftool ignores bad --tool values' '
 	: >expect &&
 	test_must_fail \
 		git difftool --no-prompt --tool=bad-tool branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool forwards arguments to diff' '
+test_expect_success 'difftool forwards arguments to diff' '
 	difftool_test_setup &&
 	>for-diff &&
 	git add for-diff &&
@@ -78,40 +76,40 @@ test_expect_success PERL 'difftool forwards arguments to diff' '
 	rm for-diff
 '
 
-test_expect_success PERL 'difftool ignores exit code' '
+test_expect_success 'difftool ignores exit code' '
 	test_config difftool.error.cmd false &&
 	git difftool -y -t error branch
 '
 
-test_expect_success PERL 'difftool forwards exit code with --trust-exit-code' '
+test_expect_success 'difftool forwards exit code with --trust-exit-code' '
 	test_config difftool.error.cmd false &&
 	test_must_fail git difftool -y --trust-exit-code -t error branch
 '
 
-test_expect_success PERL 'difftool forwards exit code with --trust-exit-code for built-ins' '
+test_expect_success 'difftool forwards exit code with --trust-exit-code for built-ins' '
 	test_config difftool.vimdiff.path false &&
 	test_must_fail git difftool -y --trust-exit-code -t vimdiff branch
 '
 
-test_expect_success PERL 'difftool honors difftool.trustExitCode = true' '
+test_expect_success 'difftool honors difftool.trustExitCode = true' '
 	test_config difftool.error.cmd false &&
 	test_config difftool.trustExitCode true &&
 	test_must_fail git difftool -y -t error branch
 '
 
-test_expect_success PERL 'difftool honors difftool.trustExitCode = false' '
+test_expect_success 'difftool honors difftool.trustExitCode = false' '
 	test_config difftool.error.cmd false &&
 	test_config difftool.trustExitCode false &&
 	git difftool -y -t error branch
 '
 
-test_expect_success PERL 'difftool ignores exit code with --no-trust-exit-code' '
+test_expect_success 'difftool ignores exit code with --no-trust-exit-code' '
 	test_config difftool.error.cmd false &&
 	test_config difftool.trustExitCode true &&
 	git difftool -y --no-trust-exit-code -t error branch
 '
 
-test_expect_success PERL 'difftool stops on error with --trust-exit-code' '
+test_expect_success 'difftool stops on error with --trust-exit-code' '
 	test_when_finished "rm -f for-diff .git/fail-right-file" &&
 	test_when_finished "git reset -- for-diff" &&
 	write_script .git/fail-right-file <<-\EOF &&
@@ -126,13 +124,13 @@ test_expect_success PERL 'difftool stops on error with --trust-exit-code' '
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool honors exit status if command not found' '
+test_expect_success 'difftool honors exit status if command not found' '
 	test_config difftool.nonexistent.cmd i-dont-exist &&
 	test_config difftool.trustExitCode false &&
 	test_must_fail git difftool -y -t nonexistent branch
 '
 
-test_expect_success PERL 'difftool honors --gui' '
+test_expect_success 'difftool honors --gui' '
 	difftool_test_setup &&
 	test_config merge.tool bogus-tool &&
 	test_config diff.tool bogus-tool &&
@@ -143,7 +141,7 @@ test_expect_success PERL 'difftool honors --gui' '
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool --gui last setting wins' '
+test_expect_success 'difftool --gui last setting wins' '
 	difftool_test_setup &&
 	: >expect &&
 	git difftool --no-prompt --gui --no-gui >actual &&
@@ -157,7 +155,7 @@ test_expect_success PERL 'difftool --gui last setting wins' '
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool --gui works without configured diff.guitool' '
+test_expect_success 'difftool --gui works without configured diff.guitool' '
 	difftool_test_setup &&
 	echo branch >expect &&
 	git difftool --no-prompt --gui branch >actual &&
@@ -165,7 +163,7 @@ test_expect_success PERL 'difftool --gui works without configured diff.guitool' 
 '
 
 # Specify the diff tool using $GIT_DIFF_TOOL
-test_expect_success PERL 'GIT_DIFF_TOOL variable' '
+test_expect_success 'GIT_DIFF_TOOL variable' '
 	difftool_test_setup &&
 	git config --unset diff.tool &&
 	echo branch >expect &&
@@ -175,7 +173,7 @@ test_expect_success PERL 'GIT_DIFF_TOOL variable' '
 
 # Test the $GIT_*_TOOL variables and ensure
 # that $GIT_DIFF_TOOL always wins unless --tool is specified
-test_expect_success PERL 'GIT_DIFF_TOOL overrides' '
+test_expect_success 'GIT_DIFF_TOOL overrides' '
 	difftool_test_setup &&
 	test_config diff.tool bogus-tool &&
 	test_config merge.tool bogus-tool &&
@@ -193,7 +191,7 @@ test_expect_success PERL 'GIT_DIFF_TOOL overrides' '
 
 # Test that we don't have to pass --no-prompt to difftool
 # when $GIT_DIFFTOOL_NO_PROMPT is true
-test_expect_success PERL 'GIT_DIFFTOOL_NO_PROMPT variable' '
+test_expect_success 'GIT_DIFFTOOL_NO_PROMPT variable' '
 	difftool_test_setup &&
 	echo branch >expect &&
 	GIT_DIFFTOOL_NO_PROMPT=true git difftool branch >actual &&
@@ -202,7 +200,7 @@ test_expect_success PERL 'GIT_DIFFTOOL_NO_PROMPT variable' '
 
 # git-difftool supports the difftool.prompt variable.
 # Test that GIT_DIFFTOOL_PROMPT can override difftool.prompt = false
-test_expect_success PERL 'GIT_DIFFTOOL_PROMPT variable' '
+test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
 	difftool_test_setup &&
 	test_config difftool.prompt false &&
 	echo >input &&
@@ -212,7 +210,7 @@ test_expect_success PERL 'GIT_DIFFTOOL_PROMPT variable' '
 '
 
 # Test that we don't have to pass --no-prompt when difftool.prompt is false
-test_expect_success PERL 'difftool.prompt config variable is false' '
+test_expect_success 'difftool.prompt config variable is false' '
 	difftool_test_setup &&
 	test_config difftool.prompt false &&
 	echo branch >expect &&
@@ -221,7 +219,7 @@ test_expect_success PERL 'difftool.prompt config variable is false' '
 '
 
 # Test that we don't have to pass --no-prompt when mergetool.prompt is false
-test_expect_success PERL 'difftool merge.prompt = false' '
+test_expect_success 'difftool merge.prompt = false' '
 	difftool_test_setup &&
 	test_might_fail git config --unset difftool.prompt &&
 	test_config mergetool.prompt false &&
@@ -231,7 +229,7 @@ test_expect_success PERL 'difftool merge.prompt = false' '
 '
 
 # Test that the -y flag can override difftool.prompt = true
-test_expect_success PERL 'difftool.prompt can overridden with -y' '
+test_expect_success 'difftool.prompt can overridden with -y' '
 	difftool_test_setup &&
 	test_config difftool.prompt true &&
 	echo branch >expect &&
@@ -240,7 +238,7 @@ test_expect_success PERL 'difftool.prompt can overridden with -y' '
 '
 
 # Test that the --prompt flag can override difftool.prompt = false
-test_expect_success PERL 'difftool.prompt can overridden with --prompt' '
+test_expect_success 'difftool.prompt can overridden with --prompt' '
 	difftool_test_setup &&
 	test_config difftool.prompt false &&
 	echo >input &&
@@ -250,7 +248,7 @@ test_expect_success PERL 'difftool.prompt can overridden with --prompt' '
 '
 
 # Test that the last flag passed on the command-line wins
-test_expect_success PERL 'difftool last flag wins' '
+test_expect_success 'difftool last flag wins' '
 	difftool_test_setup &&
 	echo branch >expect &&
 	git difftool --prompt --no-prompt branch >actual &&
@@ -263,7 +261,7 @@ test_expect_success PERL 'difftool last flag wins' '
 
 # git-difftool falls back to git-mergetool config variables
 # so test that behavior here
-test_expect_success PERL 'difftool + mergetool config variables' '
+test_expect_success 'difftool + mergetool config variables' '
 	test_config merge.tool test-tool &&
 	test_config mergetool.test-tool.cmd "cat \$LOCAL" &&
 	echo branch >expect &&
@@ -277,49 +275,49 @@ test_expect_success PERL 'difftool + mergetool config variables' '
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool.<tool>.path' '
+test_expect_success 'difftool.<tool>.path' '
 	test_config difftool.tkdiff.path echo &&
 	git difftool --tool=tkdiff --no-prompt branch >output &&
 	lines=$(grep file output | wc -l) &&
 	test "$lines" -eq 1
 '
 
-test_expect_success PERL 'difftool --extcmd=cat' '
+test_expect_success 'difftool --extcmd=cat' '
 	echo branch >expect &&
 	echo master >>expect &&
 	git difftool --no-prompt --extcmd=cat branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool --extcmd cat' '
+test_expect_success 'difftool --extcmd cat' '
 	echo branch >expect &&
 	echo master >>expect &&
 	git difftool --no-prompt --extcmd=cat branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool -x cat' '
+test_expect_success 'difftool -x cat' '
 	echo branch >expect &&
 	echo master >>expect &&
 	git difftool --no-prompt -x cat branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool --extcmd echo arg1' '
+test_expect_success 'difftool --extcmd echo arg1' '
 	echo file >expect &&
 	git difftool --no-prompt \
 		--extcmd sh\ -c\ \"echo\ \$1\" branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool --extcmd cat arg1' '
+test_expect_success 'difftool --extcmd cat arg1' '
 	echo master >expect &&
 	git difftool --no-prompt \
 		--extcmd sh\ -c\ \"cat\ \$1\" branch >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'difftool --extcmd cat arg2' '
+test_expect_success 'difftool --extcmd cat arg2' '
 	echo branch >expect &&
 	git difftool --no-prompt \
 		--extcmd sh\ -c\ \"cat\ \$2\" branch >actual &&
@@ -327,7 +325,7 @@ test_expect_success PERL 'difftool --extcmd cat arg2' '
 '
 
 # Create a second file on master and a different version on branch
-test_expect_success PERL 'setup with 2 files different' '
+test_expect_success 'setup with 2 files different' '
 	echo m2 >file2 &&
 	git add file2 &&
 	git commit -m "added file2" &&
@@ -339,7 +337,7 @@ test_expect_success PERL 'setup with 2 files different' '
 	git checkout master
 '
 
-test_expect_success PERL 'say no to the first file' '
+test_expect_success 'say no to the first file' '
 	(echo n && echo) >input &&
 	git difftool -x cat branch <input >output &&
 	grep m2 output &&
@@ -348,7 +346,7 @@ test_expect_success PERL 'say no to the first file' '
 	! grep branch output
 '
 
-test_expect_success PERL 'say no to the second file' '
+test_expect_success 'say no to the second file' '
 	(echo && echo n) >input &&
 	git difftool -x cat branch <input >output &&
 	grep master output &&
@@ -357,7 +355,7 @@ test_expect_success PERL 'say no to the second file' '
 	! grep br2 output
 '
 
-test_expect_success PERL 'ending prompt input with EOF' '
+test_expect_success 'ending prompt input with EOF' '
 	git difftool -x cat branch </dev/null >output &&
 	! grep master output &&
 	! grep branch output &&
@@ -365,12 +363,12 @@ test_expect_success PERL 'ending prompt input with EOF' '
 	! grep br2 output
 '
 
-test_expect_success PERL 'difftool --tool-help' '
+test_expect_success 'difftool --tool-help' '
 	git difftool --tool-help >output &&
 	grep tool output
 '
 
-test_expect_success PERL 'setup change in subdirectory' '
+test_expect_success 'setup change in subdirectory' '
 	git checkout master &&
 	mkdir sub &&
 	echo master >sub/sub &&
@@ -384,11 +382,11 @@ test_expect_success PERL 'setup change in subdirectory' '
 '
 
 run_dir_diff_test () {
-	test_expect_success PERL "$1 --no-symlinks" "
+	test_expect_success "$1 --no-symlinks" "
 		symlinks=--no-symlinks &&
 		$2
 	"
-	test_expect_success PERL,SYMLINKS "$1 --symlinks" "
+	test_expect_success SYMLINKS "$1 --symlinks" "
 		symlinks=--symlinks &&
 		$2
 	"
@@ -510,7 +508,7 @@ do
 done >actual
 EOF
 
-test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
+test_expect_success SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
 	cat >expect <<-EOF &&
 	file
 	$PWD/file
@@ -547,7 +545,7 @@ write_script modify-file <<\EOF
 echo "new content" >file
 EOF
 
-test_expect_success PERL 'difftool --no-symlinks does not overwrite working tree file ' '
+test_expect_success 'difftool --no-symlinks does not overwrite working tree file ' '
 	echo "orig content" >file &&
 	git difftool --dir-diff --no-symlinks --extcmd "$PWD/modify-file" branch &&
 	echo "new content" >expect &&
@@ -560,7 +558,7 @@ echo "tmp content" >"$2/file" &&
 echo "$2" >tmpdir
 EOF
 
-test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
+test_expect_success 'difftool --no-symlinks detects conflict ' '
 	(
 		TMPDIR=$TRASH_DIRECTORY &&
 		export TMPDIR &&
@@ -573,7 +571,7 @@ test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
 	)
 '
 
-test_expect_success PERL 'difftool properly honors gitlink and core.worktree' '
+test_expect_success 'difftool properly honors gitlink and core.worktree' '
 	git submodule add ./. submod/ule &&
 	test_config -C submod/ule diff.tool checktrees &&
 	test_config -C submod/ule difftool.checktrees.cmd '\''
@@ -587,7 +585,7 @@ test_expect_success PERL 'difftool properly honors gitlink and core.worktree' '
 	)
 '
 
-test_expect_success PERL,SYMLINKS 'difftool --dir-diff symlinked directories' '
+test_expect_success SYMLINKS 'difftool --dir-diff symlinked directories' '
 	git init dirlinks &&
 	(
 		cd dirlinks &&
