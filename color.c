@@ -207,10 +207,15 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 	struct color fg = { COLOR_UNSPECIFIED };
 	struct color bg = { COLOR_UNSPECIFIED };
 
+	while (len > 0 && isspace(*ptr)) {
+		ptr++;
+		len--;
+	}
+
 	if (!len)
 		return -1;
 
-	if (!strncasecmp(value, "reset", len)) {
+	if (!strncasecmp(ptr, "reset", len)) {
 		xsnprintf(dst, end - dst, GIT_COLOR_RESET);
 		return 0;
 	}
