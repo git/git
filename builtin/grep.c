@@ -814,7 +814,9 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 
 			/* Add a delimiter if there isn't one already */
 			if (name[len - 1] != '/' && name[len - 1] != ':') {
-				strbuf_addch(&base, ':');
+				/* rev: or rev:path/ */
+				char delim = obj->type == OBJ_COMMIT ? ':' : '/';
+				strbuf_addch(&base, delim);
 			}
 		}
 		init_tree_desc(&tree, data, size);

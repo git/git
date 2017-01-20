@@ -1445,6 +1445,11 @@ test_expect_success 'grep outputs valid <rev>:<path> for HEAD:t/' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep outputs valid <rev>:<path> for HEAD:t' '
+	git grep vvv HEAD:t >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<EOF
 HEAD:t/a/v:vvv
 HEAD:t/v:vvv
