@@ -211,21 +211,18 @@ struct string_list_item *string_list_append(struct string_list *list,
 			list->strdup_strings ? xstrdup(string) : (char *)string);
 }
 
-/* Yuck */
-static compare_strings_fn compare_for_qsort;
-
-/* Only call this from inside string_list_sort! */
-static int cmp_items(const void *a, const void *b)
+static int cmp_items(const void *a, const void *b, void *ctx)
 {
+	compare_strings_fn cmp = ctx;
 	const struct string_list_item *one = a;
 	const struct string_list_item *two = b;
-	return compare_for_qsort(one->string, two->string);
+	return cmp(one->string, two->string);
 }
 
 void string_list_sort(struct string_list *list)
 {
-	compare_for_qsort = list->cmp ? list->cmp : strcmp;
-	QSORT(list->items, list->nr, cmp_items);
+	QSORT_S(list->items, list->nr, cmp_items,
+		list->cmp ? list->cmp : strcmp);
 }
 
 struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
