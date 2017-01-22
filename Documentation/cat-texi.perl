@@ -20,7 +20,7 @@ while (<STDIN>) {
 }
 close $tmp;
 
-printf '\input texinfo
+print '\input texinfo
 @setfilename gitman.info
 @documentencoding UTF-8
 @dircategory Development
@@ -31,7 +31,7 @@ printf '\input texinfo
 @top Git Manual Pages
 @documentlanguage en
 @menu
-', $menu[0];
+';
 
 for (@menu) {
 	print "* ${_}::\n";
