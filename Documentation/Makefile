@@ -371,10 +371,11 @@ user-manual.pdf: user-manual.xml
 	$(DBLATEX) -o $@+ -p $(ASCIIDOC_DBLATEX_DIR)/asciidoc-dblatex.xsl -s $(ASCIIDOC_DBLATEX_DIR)/asciidoc-dblatex.sty $< && \
 	mv $@+ $@
 
-gitman.texi: $(MAN_XML) cat-texi.perl
+gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	($(foreach xml,$(sort $(MAN_XML)),$(DOCBOOK2X_TEXI) --encoding=UTF-8 \
-		--to-stdout $(xml) &&) true) > $@++ && \
+	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml)+ texi.xsl $(xml) && \
+		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml)+ && \
+		rm $(xml)+ &&) true) > $@++ && \
 	$(PERL_PATH) cat-texi.perl $@ <$@++ >$@+ && \
 	rm $@++ && \
 	mv $@+ $@
