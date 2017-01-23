@@ -317,8 +317,12 @@ static void init_submodule(const char *path, const char *prefix, int quiet)
 	/* Only loads from .gitmodules, no overlay with .git/config */
 	gitmodules_config();
 
-	if (prefix) {
-		strbuf_addf(&sb, "%s%s", prefix, path);
+	if (prefix && get_super_prefix())
+		die("BUG: cannot have prefix and superprefix");
+	else if (prefix)
+		displaypath = xstrdup(relative_path(path, prefix, &sb));
+	else if (get_super_prefix()) {
+		strbuf_addf(&sb, "%s%s", get_super_prefix(), path);
 		displaypath = strbuf_detach(&sb, NULL);
 	} else
 		displaypath = xstrdup(path);
@@ -403,9 +407,6 @@ static int module_init(int argc, const char **argv, const char *prefix)
 	int i;
 
 	struct option module_init_options[] = {
-		OPT_STRING(0, "prefix", &prefix,
-			   N_("path"),
-			   N_("alternative anchor for relative paths")),
 		OPT__QUIET(&quiet, N_("Suppress output for initializing a submodule")),
 		OPT_END()
 	};
@@ -1144,7 +1145,7 @@ static struct cmd_struct commands[] = {
 	{"relative-path", resolve_relative_path, 0},
 	{"resolve-relative-url", resolve_relative_url, 0},
 	{"resolve-relative-url-test", resolve_relative_url_test, 0},
-	{"init", module_init, 0},
+	{"init", module_init, SUPPORT_SUPER_PREFIX},
 	{"remote-branch", resolve_remote_submodule_branch, 0},
 	{"absorb-git-dirs", absorb_git_dirs, SUPPORT_SUPER_PREFIX},
 };

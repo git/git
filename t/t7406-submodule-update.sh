@@ -140,6 +140,23 @@ test_expect_success 'submodule update --init --recursive from subdirectory' '
 	test_i18ncmp expect2 actual2
 '
 
+cat <<EOF >expect2
+Submodule 'foo/sub' ($pwd/withsubs/../rebasing) registered for path 'sub'
+EOF
+
+test_expect_success 'submodule update --init from and of subdirectory' '
+	git init withsubs &&
+	(cd withsubs &&
+	 mkdir foo &&
+	 git submodule add "$(pwd)/../rebasing" foo/sub &&
+	 (cd foo &&
+	  git submodule deinit -f sub &&
+	  git submodule update --init sub 2>../../actual2
+	 )
+	) &&
+	test_i18ncmp expect2 actual2
+'
+
 apos="'";
 test_expect_success 'submodule update does not fetch already present commits' '
 	(cd submodule &&
