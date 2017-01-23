@@ -184,4 +184,26 @@ test_expect_success 'show-ref --verify HEAD' '
 	test_cmp expect actual
 '
 
+test_expect_success 'show-ref --verify with dangling ref' '
+	sha1_file() {
+		echo "$*" | sed "s#..#.git/objects/&/#"
+	} &&
+
+	remove_object() {
+		file=$(sha1_file "$*") &&
+		test -e "$file" &&
+		rm -f "$file"
+	} &&
+
+	test_when_finished "rm -rf dangling" &&
+	(
+		git init dangling &&
+		cd dangling &&
+		test_commit dangling &&
+		sha=$(git rev-parse refs/tags/dangling) &&
+		remove_object $sha &&
+		test_must_fail git show-ref --verify refs/tags/dangling
+	)
+'
+
 test_done
