@@ -105,9 +105,10 @@ diff.noprefix::
 	If set, 'git diff' does not show any source or destination prefix.
 
 diff.orderFile::
-	File indicating how to order files within a diff, using
-	one shell glob pattern per line.
-	Can be overridden by the '-O' option to linkgit:git-diff[1].
+	File indicating how to order files within a diff.
+	See the '-O' option to linkgit:git-diff[1] for details.
+	If `diff.orderFile` is a relative pathname, it is treated as
+	relative to the top of the working tree.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
