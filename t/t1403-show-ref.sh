@@ -97,6 +97,9 @@ test_expect_success 'show-ref -d' '
 	git show-ref -d refs/tags/A refs/tags/C >actual &&
 	test_cmp expect actual &&
 
+	git show-ref --verify -d refs/tags/A refs/tags/C >actual &&
+	test_cmp expect actual &&
+
 	echo $(git rev-parse refs/heads/master) refs/heads/master >expect &&
 	git show-ref -d master >actual &&
 	test_cmp expect actual &&
@@ -116,6 +119,12 @@ test_expect_success 'show-ref -d' '
 	test_cmp expect actual &&
 
 	test_must_fail git show-ref -d --verify heads/master >actual &&
+	test_cmp expect actual &&
+
+	test_must_fail git show-ref --verify -d A C >actual &&
+	test_cmp expect actual &&
+
+	test_must_fail git show-ref --verify -d tags/A tags/C >actual &&
 	test_cmp expect actual
 
 '
