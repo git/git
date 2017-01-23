@@ -101,8 +101,8 @@ OPTIONS
 	multiple times, in which case the last key becomes the primary
 	key. Also supports "version:refname" or "v:refname" (tag
 	names are treated as versions). The "version:refname" sort
-	order can also be affected by the
-	"versionsort.prereleaseSuffix" configuration variable.
+	order can also be affected by the "versionsort.suffix"
+	configuration variable.
 	The keys supported are the same as those in `git for-each-ref`.
 	Sort order defaults to the value configured for the `tag.sort`
 	variable if it exists, or lexicographic order otherwise. See

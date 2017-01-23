@@ -149,11 +149,11 @@ test_expect_success '--force can create a tag with the name of one existing' '
 	tag_exists mytag'
 
 test_expect_success '--force is moot with a non-existing tag name' '
+	test_when_finished git tag -d newtag forcetag &&
 	git tag newtag >expect &&
 	git tag --force forcetag >actual &&
 	test_cmp expect actual
 '
-git tag -d newtag forcetag
 
 # deleting tags:
 
@@ -324,11 +324,9 @@ EOF
 '
 
 test_expect_success 'listing tags in column with column.*' '
-	git config column.tag row &&
-	git config column.ui dense &&
+	test_config column.tag row &&
+	test_config column.ui dense &&
 	COLUMNS=40 git tag -l >actual &&
-	git config --unset column.ui &&
-	git config --unset column.tag &&
 	cat >expected <<\EOF &&
 a1      aa1   cba     t210    t211
 v0.2.1  v1.0  v1.0.1  v1.1.3
@@ -341,9 +339,8 @@ test_expect_success 'listing tag with -n --column should fail' '
 '
 
 test_expect_success 'listing tags -n in column with column.ui ignored' '
-	git config column.ui "row dense" &&
+	test_config column.ui "row dense" &&
 	COLUMNS=40 git tag -l -n >actual &&
-	git config --unset column.ui &&
 	cat >expected <<\EOF &&
 a1              Foo
 aa1             Foo
@@ -1227,11 +1224,10 @@ test_expect_success GPG,RFC1991 \
 '
 
 # try to sign with bad user.signingkey
-git config user.signingkey BobTheMouse
 test_expect_success GPG \
 	'git tag -s fails if gpg is misconfigured (bad key)' \
-	'test_must_fail git tag -s -m tail tag-gpg-failure'
-git config --unset user.signingkey
+	'test_config user.signingkey BobTheMouse &&
+	test_must_fail git tag -s -m tail tag-gpg-failure'
 
 # try to produce invalid signature
 test_expect_success GPG \
@@ -1511,7 +1507,7 @@ test_expect_success 'reverse lexical sort' '
 '
 
 test_expect_success 'configured lexical sort' '
-	git config tag.sort "v:refname" &&
+	test_config tag.sort "v:refname" &&
 	git tag -l "foo*" >actual &&
 	cat >expect <<-\EOF &&
 	foo1.3
@@ -1522,6 +1518,7 @@ test_expect_success 'configured lexical sort' '
 '
 
 test_expect_success 'option override configured sort' '
+	test_config tag.sort "v:refname" &&
 	git tag -l --sort=-refname "foo*" >actual &&
 	cat >expect <<-\EOF &&
 	foo1.6
@@ -1536,13 +1533,12 @@ test_expect_success 'invalid sort parameter on command line' '
 '
 
 test_expect_success 'invalid sort parameter in configuratoin' '
-	git config tag.sort "v:notvalid" &&
+	test_config tag.sort "v:notvalid" &&
 	test_must_fail git tag -l "foo*"
 '
 
 test_expect_success 'version sort with prerelease reordering' '
-	git config --unset tag.sort &&
-	git config versionsort.prereleaseSuffix -rc &&
+	test_config versionsort.prereleaseSuffix -rc &&
 	git tag foo1.6-rc1 &&
 	git tag foo1.6-rc2 &&
 	git tag -l --sort=version:refname "foo*" >actual &&
@@ -1557,6 +1553,7 @@ test_expect_success 'version sort with prerelease reordering' '
 '
 
 test_expect_success 'reverse version sort with prerelease reordering' '
+	test_config versionsort.prereleaseSuffix -rc &&
 	git tag -l --sort=-version:refname "foo*" >actual &&
 	cat >expect <<-\EOF &&
 	foo1.10
@@ -1566,6 +1563,103 @@ test_expect_success 'reverse version sort with prerelease reordering' '
 	foo1.3
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success 'version sort with prerelease reordering and common leading character' '
+	test_config versionsort.prereleaseSuffix -before &&
+	git tag foo1.7-before1 &&
+	git tag foo1.7 &&
+	git tag foo1.7-after1 &&
+	git tag -l --sort=version:refname "foo1.7*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.7-before1
+	foo1.7
+	foo1.7-after1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'version sort with prerelease reordering, multiple suffixes and common leading character' '
+	test_config versionsort.prereleaseSuffix -before &&
+	git config --add versionsort.prereleaseSuffix -after &&
+	git tag -l --sort=version:refname "foo1.7*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.7-before1
+	foo1.7-after1
+	foo1.7
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'version sort with prerelease reordering, multiple suffixes match the same tag' '
+	test_config versionsort.prereleaseSuffix -bar &&
+	git config --add versionsort.prereleaseSuffix -foo-baz &&
+	git config --add versionsort.prereleaseSuffix -foo-bar &&
+	git tag foo1.8-foo-bar &&
+	git tag foo1.8-foo-baz &&
+	git tag foo1.8 &&
+	git tag -l --sort=version:refname "foo1.8*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.8-foo-baz
+	foo1.8-foo-bar
+	foo1.8
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'version sort with prerelease reordering, multiple suffixes match starting at the same position' '
+	test_config versionsort.prereleaseSuffix -pre &&
+	git config --add versionsort.prereleaseSuffix -prerelease &&
+	git tag foo1.9-pre1 &&
+	git tag foo1.9-pre2 &&
+	git tag foo1.9-prerelease1 &&
+	git tag -l --sort=version:refname "foo1.9*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.9-pre1
+	foo1.9-pre2
+	foo1.9-prerelease1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'version sort with general suffix reordering' '
+	test_config versionsort.suffix -alpha &&
+	git config --add versionsort.suffix -beta &&
+	git config --add versionsort.suffix ""  &&
+	git config --add versionsort.suffix -gamma &&
+	git config --add versionsort.suffix -delta &&
+	git tag foo1.10-alpha &&
+	git tag foo1.10-beta &&
+	git tag foo1.10-gamma &&
+	git tag foo1.10-delta &&
+	git tag foo1.10-unlisted-suffix &&
+	git tag -l --sort=version:refname "foo1.10*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10-alpha
+	foo1.10-beta
+	foo1.10
+	foo1.10-unlisted-suffix
+	foo1.10-gamma
+	foo1.10-delta
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'versionsort.suffix overrides versionsort.prereleaseSuffix' '
+	test_config versionsort.suffix -before &&
+	test_config versionsort.prereleaseSuffix -after &&
+	git tag -l --sort=version:refname "foo1.7*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.7-before1
+	foo1.7
+	foo1.7-after1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'version sort with very long prerelease suffix' '
+	test_config versionsort.prereleaseSuffix -very-looooooooooooooooooooooooong-prerelease-suffix &&
+	git tag -l --sort=version:refname
 '
 
 run_with_limited_stack () {
@@ -1596,13 +1690,11 @@ EOF"
 
 test_expect_success '--format should list tags as per format given' '
 	cat >expect <<-\EOF &&
-	refname : refs/tags/foo1.10
-	refname : refs/tags/foo1.3
-	refname : refs/tags/foo1.6
-	refname : refs/tags/foo1.6-rc1
-	refname : refs/tags/foo1.6-rc2
+	refname : refs/tags/v1.0
+	refname : refs/tags/v1.0.1
+	refname : refs/tags/v1.1.3
 	EOF
-	git tag -l --format="refname : %(refname)" "foo*" >actual &&
+	git tag -l --format="refname : %(refname)" "v1*" >actual &&
 	test_cmp expect actual
 '
 
