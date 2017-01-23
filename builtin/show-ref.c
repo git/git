@@ -22,6 +22,9 @@ static void show_one(const char *refname, const struct object_id *oid)
 	const char *hex;
 	struct object_id peeled;
 
+	if (quiet)
+		return;
+
 	hex = find_unique_abbrev(oid->hash, abbrev);
 	if (hash_only)
 		printf("%s\n", hex);
@@ -81,9 +84,6 @@ match:
 	if (!has_sha1_file(oid->hash))
 		die("git show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
-
-	if (quiet)
-		return 0;
 
 	show_one(refname, oid);
 
@@ -205,8 +205,7 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 
 			if ((starts_with(*pattern, "refs/") || !strcmp(*pattern, "HEAD")) &&
 			    !read_ref(*pattern, oid.hash)) {
-				if (!quiet)
-					show_one(*pattern, &oid);
+				show_one(*pattern, &oid);
 			}
 			else if (!quiet)
 				die("'%s' - not a valid ref", *pattern);
