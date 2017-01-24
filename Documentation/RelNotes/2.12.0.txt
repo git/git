@@ -77,6 +77,14 @@ UI, Workflows & Features
  * A recent updates to "git p4" was not usable for older p4 but it
    could be made to work with minimum changes.  Do so.
 
+ * "git diff" learned diff.interHunkContext configuration variable
+   that gives the default value for its --inter-hunk-context option.
+
+ * The prereleaseSuffix feature of version comparison that is used in
+   "git tag -l" did not correctly when two or more prereleases for the
+   same release were present (e.g. when 2.0, 2.0-beta1, and 2.0-beta2
+   are there and the code needs to compare 2.0-beta1 and 2.0-beta2).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -315,6 +323,13 @@ notes for details).
  * Retire long unused/unmaintained gitview from the contrib/ area.
    (merge 3120925c25 sb/remove-gitview later to maint).
 
+ * Tighten a test to avoid mistaking an extended ERE regexp engine as
+   a PRE regexp engine.
+   (merge 7675c7bd01 jk/grep-e-could-be-extended-beyond-posix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
    (merge 384f1a167b sb/unpack-trees-cleanup later to maint).
+   (merge 3f05402ac0 ad/bisect-terms later to maint).
+   (merge 874444b704 rh/diff-orderfile-doc later to maint).
+   (merge c68d2d7c2b ws/request-pull-code-cleanup later to maint).
