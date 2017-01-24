@@ -509,7 +509,9 @@ extern int is_nonbare_repository_dir(struct strbuf *path);
 #define READ_GITFILE_ERR_TOO_LARGE 8
 extern const char *read_gitfile_gently(const char *path, int *return_error_code);
 #define read_gitfile(path) read_gitfile_gently((path), NULL)
-extern const char *resolve_gitdir(const char *suspect);
+extern const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
+#define resolve_gitdir(path) resolve_gitdir_gently((path), NULL)
+
 extern void set_git_work_tree(const char *tree);
 
 #define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"

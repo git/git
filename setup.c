@@ -1017,11 +1017,11 @@ const char *setup_git_directory(void)
 	return setup_git_directory_gently(NULL);
 }
 
-const char *resolve_gitdir(const char *suspect)
+const char *resolve_gitdir_gently(const char *suspect, int *return_error_code)
 {
 	if (is_git_directory(suspect))
 		return suspect;
-	return read_gitfile(suspect);
+	return read_gitfile_gently(suspect, return_error_code);
 }
 
 /* if any standard file descriptor is missing open it to /dev/null */
