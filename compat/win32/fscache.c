@@ -7,6 +7,7 @@ static int initialized;
 static volatile long enabled;
 static struct hashmap map;
 static CRITICAL_SECTION mutex;
+static struct trace_key trace_fscache = TRACE_KEY_INIT(FSCACHE);
 
 /*
  * An entry in the file system cache. Used for both entire directory listings
@@ -192,6 +193,8 @@ static struct fsentry *fsentry_create_list(const struct fsentry *dir)
 	if (h == INVALID_HANDLE_VALUE) {
 		err = GetLastError();
 		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(err);
+		trace_printf_key(&trace_fscache, "fscache: error(%d) '%.*s'\n",
+						 errno, dir->len, dir->name);
 		return NULL;
 	}
 
@@ -377,6 +380,7 @@ int fscache_enable(int enable)
 		fscache_clear();
 		LeaveCriticalSection(&mutex);
 	}
+	trace_printf_key(&trace_fscache, "fscache: enable(%d)\n", enable);
 	return result;
 }
 
