@@ -1,19 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2017, #03; Thu, 19)
-X-master-at: 787f75f0567aa8c7347544c65e9d3bc6640a27d4
-X-next-at: b2604e8deeffe49d7b8c9b0cfef08f9a79f8cf14
+Subject: What's cooking in git.git (Jan 2017, #04; Mon, 23)
+X-master-at: 4e59582ff70d299f5a88449891e78d15b4b3fabe
+X-next-at: a5e2989ef8dcd0c4cdb34f9e7d116c2159b8845d
 
-What's cooking in git.git (Jan 2017, #03; Thu, 19)
+What's cooking in git.git (Jan 2017, #04; Mon, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The sixth batch of topics have been merged to 'master'.  This batch
-is fairly large, and regression-hunting is very much appreciated.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,277 +20,238 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bw/grep-recurse-submodules (2016-12-22) 12 commits
-  (merged to 'next' on 2016-12-22 at 1ede815b8d)
- + grep: search history of moved submodules
- + grep: enable recurse-submodules to work on <tree> objects
- + grep: optionally recurse into submodules
- + grep: add submodules as a grep source type
- + submodules: load gitmodules file from commit sha1
- + submodules: add helper to determine if a submodule is initialized
- + submodules: add helper to determine if a submodule is populated
-  (merged to 'next' on 2016-12-22 at fea8fa870f)
- + real_path: canonicalize directory separators in root parts
- + real_path: have callers use real_pathdup and strbuf_realpath
- + real_path: create real_pathdup
- + real_path: convert real_path_internal to strbuf_realpath
- + real_path: resolve symlinks by hand
- (this branch is tangled with bw/realpath-wo-chdir.)
+* ad/bisect-terms (2017-01-13) 1 commit
+  (merged to 'next' on 2017-01-18 at 9f500d6cf5)
+ + Documentation/bisect: improve on (bad|new) and (good|bad)
 
- "git grep" has been taught to optionally recurse into submodules.
+ Documentation fix.
 
 
-* bw/pathspec-cleanup (2017-01-08) 16 commits
-  (merged to 'next' on 2017-01-10 at 79291ff506)
- + pathspec: rename prefix_pathspec to init_pathspec_item
- + pathspec: small readability changes
- + pathspec: create strip submodule slash helpers
- + pathspec: create parse_element_magic helper
- + pathspec: create parse_long_magic function
- + pathspec: create parse_short_magic function
- + pathspec: factor global magic into its own function
- + pathspec: simpler logic to prefix original pathspec elements
- + pathspec: always show mnemonic and name in unsupported_magic
- + pathspec: remove unused variable from unsupported_magic
- + pathspec: copy and free owned memory
- + pathspec: remove the deprecated get_pathspec function
- + ls-tree: convert show_recursive to use the pathspec struct interface
- + dir: convert fill_directory to use the pathspec struct interface
- + dir: remove struct path_simplify
- + mv: remove use of deprecated 'get_pathspec()'
- (this branch is used by sb/pathspec-errors.)
+* bw/read-blob-data-does-not-modify-index-state (2017-01-11) 1 commit
+  (merged to 'next' on 2017-01-18 at f33363fb07)
+ + index: improve constness for reading blob data
 
- Code clean-up in the pathspec API.
+ Code clean-up.
 
 
-* bw/realpath-wo-chdir (2017-01-09) 7 commits
-  (merged to 'next' on 2017-01-10 at ed315a40c8)
- + real_path: set errno when max number of symlinks is exceeded
- + real_path: prevent redefinition of MAXSYMLINKS
-  (merged to 'next' on 2016-12-22 at fea8fa870f)
- + real_path: canonicalize directory separators in root parts
- + real_path: have callers use real_pathdup and strbuf_realpath
- + real_path: create real_pathdup
- + real_path: convert real_path_internal to strbuf_realpath
- + real_path: resolve symlinks by hand
- (this branch is tangled with bw/grep-recurse-submodules.)
+* jk/grep-e-could-be-extended-beyond-posix (2017-01-11) 1 commit
+  (merged to 'next' on 2017-01-18 at dd1b9d1fa8)
+ + t7810: avoid assumption about invalid regex syntax
 
- The implementation of "real_path()" was to go there with chdir(2)
- and call getcwd(3), but this obviously wouldn't be usable in a
- threaded environment.  Rewrite it to manually resolve relative
- paths including symbolic links in path components.
+ Tighten a test to avoid mistaking an extended ERE regexp engine as
+ a PRE regexp engine.
 
 
-* dt/disable-bitmap-in-auto-gc (2016-12-29) 2 commits
-  (merged to 'next' on 2017-01-10 at 9f4e89e15d)
- + repack: die on incremental + write-bitmap-index
- + auto gc: don't write bitmaps for incremental repacks
+* rh/diff-orderfile-doc (2017-01-15) 2 commits
+  (merged to 'next' on 2017-01-18 at cc2af9c628)
+ + diff: document the format of the -O (diff.orderFile) file
+ + diff: document behavior of relative diff.orderFile
 
- It is natural that "git gc --auto" may not attempt to pack
- everything into a single pack, and there is no point in warning
- when the user has configured the system to use the pack bitmap,
- leading to disabling further "gc".
+ Documentation fix.
 
 
-* jk/archive-zip-userdiff-config (2017-01-07) 1 commit
-  (merged to 'next' on 2017-01-10 at ac42e4958c)
- + archive-zip: load userdiff config
+* sb/cd-then-git-can-be-written-as-git-c (2017-01-13) 1 commit
+  (merged to 'next' on 2017-01-18 at 8923d2d001)
+ + lib-submodule-update.sh: reduce use of subshell by using "git -C"
 
- "git archive" did not read the standard configuration files, and
- failed to notice a file that is marked as binary via the userdiff
- driver configuration.
+ Test clean-up.
 
 
-* jk/blame-fixes (2017-01-07) 3 commits
-  (merged to 'next' on 2017-01-10 at 18f909da61)
- + blame: output porcelain "previous" header for each file
- + blame: handle --no-abbrev
- + blame: fix alignment with --abbrev=40
+* sb/submodule-config-tests (2017-01-12) 2 commits
+  (merged to 'next' on 2017-01-18 at bd850f6ad3)
+ + t7411: test lookup of uninitialized submodules
+ + t7411: quote URLs
 
- "git blame --porcelain" misidentified the "previous" <commit, path>
- pair (aka "source") when contents came from two or more files.
+ Test updates.
 
 
-* jk/execv-dashed-external (2017-01-09) 3 commits
-  (merged to 'next' on 2017-01-10 at 117b506cb0)
- + execv_dashed_external: wait for child on signal death
- + execv_dashed_external: stop exiting with negative code
- + execv_dashed_external: use child_process struct
+* sb/submodule-embed-gitdir (2017-01-12) 1 commit
+  (merged to 'next' on 2017-01-18 at 0a5e24a3f0)
+ + submodule absorbgitdirs: mention in docstring help
 
- Typing ^C to pager, which usually does not kill it, killed Git and
- took the pager down as a collateral damage in certain process-tree
- structure.  This has been fixed.
+ Help-text fix.
 
 
-* jk/rebase-i-squash-count-fix (2017-01-07) 1 commit
-  (merged to 'next' on 2017-01-10 at d6cfc6ace2)
- + rebase--interactive: count squash commits above 10 correctly
+* sb/submodule-init (2017-01-12) 1 commit
+  (merged to 'next' on 2017-01-18 at 2e8a38b1cc)
+ + submodule update --init: display correct path from submodule
 
- "git rebase -i" with a recent update started showing an incorrect
- count when squashing more than 10 commits.
-
-
-* js/asciidoctor-tweaks (2017-01-13) 2 commits
-  (merged to 'next' on 2017-01-15 at 8553c6e513)
- + asciidoctor: fix user-manual to be built by `asciidoctor`
-  (merged to 'next' on 2017-01-10 at 087da7b7c1)
- + giteveryday: unbreak rendering with AsciiDoctor
-
- Adjust documentation to help AsciiDoctor render better while not
- breaking the rendering done by AsciiDoc.
+ Error message fix.
 
 
-* js/mingw-test-push-unc-path (2017-01-07) 1 commit
-  (merged to 'next' on 2017-01-10 at 249d9f26f3)
- + mingw: add a regression test for pushing to UNC paths
+* sg/fix-versioncmp-with-common-suffix (2017-01-12) 8 commits
+  (merged to 'next' on 2017-01-18 at f79c24a291)
+ + versioncmp: generalize version sort suffix reordering
+ + versioncmp: factor out helper for suffix matching
+ + versioncmp: use earliest-longest contained suffix to determine sorting order
+ + versioncmp: cope with common part overlapping with prerelease suffix
+ + versioncmp: pass full tagnames to swap_prereleases()
+ + t7004-tag: add version sort tests to show prerelease reordering issues
+ + t7004-tag: use test_config helper
+ + t7004-tag: delete unnecessary tags with test_when_finished
 
- "git push \\server\share\dir" has recently regressed and then
- fixed.  A test has retroactively been added for this breakage.
-
-
-* km/branch-get-push-while-detached (2017-01-07) 1 commit
-  (merged to 'next' on 2017-01-10 at a7f8af8c55)
- + branch_get_push: do not segfault when HEAD is detached
-
- "git <cmd> @{push}" on a detached HEAD used to segfault; it has
- been corrected to error out with a message.
-
-
-* ls/p4-retry-thrice (2016-12-29) 1 commit
-  (merged to 'next' on 2017-01-10 at c733e27410)
- + git-p4: do not pass '-r 0' to p4 commands
-
- A recent updates to "git p4" was not usable for older p4 but it
- could be made to work with minimum changes.  Do so.
+ The prereleaseSuffix feature of version comparison that is used in
+ "git tag -l" did not correctly when two or more prereleases for the
+ same release were present (e.g. when 2.0, 2.0-beta1, and 2.0-beta2
+ are there and the code needs to compare 2.0-beta1 and 2.0-beta2).
 
 
-* pb/test-must-fail-is-for-git (2017-01-09) 2 commits
-  (merged to 'next' on 2017-01-10 at 5f24a98779)
- + t9813: avoid using pipes
- + don't use test_must_fail with grep
+* vn/diff-ihc-config (2017-01-12) 1 commit
+  (merged to 'next' on 2017-01-18 at ac4915dbe6)
+ + diff: add interhunk context config option
 
- Test cleanup.
-
-
-* rh/mergetool-regression-fix (2017-01-10) 14 commits
-  (merged to 'next' on 2017-01-10 at e8e00c798b)
- + mergetool: fix running in subdir when rerere enabled
- + mergetool: take the "-O" out of $orderfile
- + t7610: add test case for rerere+mergetool+subdir bug
- + t7610: spell 'git reset --hard' consistently
- + t7610: don't assume the checked-out commit
- + t7610: always work on a test-specific branch
- + t7610: delete some now-unnecessary 'git reset --hard' lines
- + t7610: run 'git reset --hard' after each test to clean up
- + t7610: don't rely on state from previous test
- + t7610: use test_when_finished for cleanup tasks
- + t7610: move setup code to the 'setup' test case
- + t7610: update branch names to match test number
- + rev-parse doc: pass "--" to rev-parse in the --prefix example
- + .mailmap: record canonical email for Richard Hansen
-
- "git mergetool" without any pathspec on the command line that is
- run from a subdirectory became no-op in Git v2.11 by mistake, which
- has been fixed.
+ "git diff" learned diff.interHunkContext configuration variable
+ that gives the default value for its --inter-hunk-context option.
 
 
-* sb/pathspec-errors (2017-01-09) 1 commit
-  (merged to 'next' on 2017-01-10 at 432375cb62)
- + pathspec: give better message for submodule related pathspec error
- (this branch uses bw/pathspec-cleanup.)
+* ws/request-pull-code-cleanup (2017-01-15) 1 commit
+  (merged to 'next' on 2017-01-18 at dfcb1405de)
+ + request-pull: drop old USAGE stuff
 
- Running "git add a/b" when "a" is a submodule correctly errored
- out, but without a meaningful error message.
-
-
-* sb/remove-gitview (2017-01-13) 4 commits
-  (merged to 'next' on 2017-01-15 at 7c9eae479e)
- + doc: git-gui browser does not default to HEAD
- + doc: gitk: add the upstream repo location
- + doc: gitk: remove gitview reference
-  (merged to 'next' on 2017-01-10 at dcb3abd146)
- + contrib: remove gitview
-
- Retire long unused/unmaintained gitview from the contrib/ area.
-
-
-* sb/submodule-cleanup-export-git-dir-env (2017-01-07) 1 commit
-  (merged to 'next' on 2017-01-10 at 2d5db6821e)
- + submodule.c: use GIT_DIR_ENVIRONMENT consistently
-
- Code cleanup.
-
-
-* sb/submodule-rm-absorb (2016-12-27) 4 commits
-  (merged to 'next' on 2017-01-10 at 1fc2000a92)
- + rm: absorb a submodules git dir before deletion
- + submodule: rename and add flags to ok_to_remove_submodule
- + submodule: modernize ok_to_remove_submodule to use argv_array
- + submodule.h: add extern keyword to functions
-
- "git rm" used to refuse to remove a submodule when it has its own
- git repository embedded in its working tree.  It learned to move
- the repository away to $GIT_DIR/modules/ of the superproject
- instead, and allow the submodule to be deleted (as long as there
- will be no loss of local modifications, that is).
-
-
-* sb/unpack-trees-cleanup (2017-01-10) 3 commits
-  (merged to 'next' on 2017-01-10 at 95a5f3127c)
- + unpack-trees: factor progress setup out of check_updates
- + unpack-trees: remove unneeded continue
- + unpack-trees: move checkout state into check_updates
-
- Code cleanup.
-
-
-* sp/cygwin-build-fixes (2017-01-09) 2 commits
-  (merged to 'next' on 2017-01-10 at 2010fb6c03)
- + Makefile: put LIBS after LDFLAGS for imap-send
- + Makefile: POSIX windres
-
- Build updates for Cygwin.
+ Code clean-up.
 
 --------------------------------------------------
 [New Topics]
 
+* sh/grep-tree-obj-tweak-output (2017-01-20) 2 commits
+ - grep: use '/' delimiter for paths
+ - grep: only add delimiter if there isn't one already
+
+ "git grep", when fed a tree-ish as an input, shows each hit
+ prefixed with "<tree-ish>:<path>:<lineno>:".  As <tree-ish> is
+ almost always either a commit or a tag that points at a commit, the
+ early part of the output "<tree-ish>:<path>" can be used as the
+ name of the blob and given to "git show".  When <tree-ish> is a
+ tree given in the extended SHA-1 syntax (e.g. "<commit>:", or
+ "<commit>:<dir>"), however, this results in a string that does not
+ name a blob (e.g. "<commit>::<path>" or "<commit>:<dir>:<path>").
+ "git grep" has been taught to be a bit more intelligent about these
+ cases and omit a colon (in the former case) or use slash (in the
+ latter case) to produce "<commit>:<path>" and
+ "<commit>:<dir>/<path>" that can be used as the name of a blob.
+
+ Waiting for the review discussion to settle, followed by a reroll.
+
+
+* vp/show-ref-verify-head (2017-01-23) 5 commits
+ - show-ref: remove dead `if (verify)' check
+ - show-ref: detect dangling refs under --verify as well
+ - show-ref: move --quiet handling into show_one()
+ - show-ref: allow -d to work with --verify
+ - show-ref: accept HEAD with --verify
+
+ "git show-ref HEAD" used with "--verify" because the user is not
+ interested in seeing refs/remotes/origin/HEAD, and used with
+ "--head" because the user does not want HEAD to be filtered out,
+ i.e. "git show-ref --head --verify HEAD", did not work as expected.
+
+ Will merge to 'next'.
+
+
+* bc/use-asciidoctor-opt (2017-01-23) 7 commits
+ - Makefile: add a knob to enable the use of Asciidoctor
+ - Documentation: move dblatex arguments into variable
+ - Documentation: add XSLT to fix DocBook for Texinfo
+ - Documentation: sort sources for gitman.texi
+ - Documentation: remove unneeded argument in cat-texi.perl
+ - Documentation: modernize cat-texi.perl
+ - Documentation: fix warning in cat-texi.perl
+
+ Asciidoctor, an alternative reimplementation of AsciiDoc, still
+ needs some changes to work with documents meant to be formatted
+ with AsciiDoc.  "make USE_ASCIIDOCTOR=YesPlease" to use it out of
+ the box to document our pages is getting closer to reality.
+
+
+* ls/travis-p4-on-macos (2017-01-23) 1 commit
+  (merged to 'next' on 2017-01-23 at 2d51987faa)
+ + travis-ci: fix Perforce install on macOS
+
+ Update the definition of the MacOSX test environment used by
+ TravisCI.
+
+ Will merge to 'master'.
+
+
+* rs/qsort-s (2017-01-23) 5 commits
+ - ref-filter: use QSORT_S in ref_array_sort()
+ - string-list: use QSORT_S in string_list_sort()
+ - perf: add basic sort performance test
+ - add QSORT_S
+ - compat: add qsort_s()
+
+ A few codepaths had to rely on a global variable when sorting
+ elements of an array because sort(3) API does not allow extra data
+ to be passed to the comparison function.  Use qsort_s() when
+ natively available, and a fallback implementation of it when not,
+ to eliminate the need, which is a prerequisite for making the
+ codepath reentrant.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* jc/diff-b-m (2015-02-23) 5 commits
+ . WIPWIP
+ . WIP: diff-b-m
+ - diffcore-rename: allow easier debugging
+ - diffcore-rename.c: add locate_rename_src()
+ - diffcore-break: allow debugging
+
+ "git diff -B -M" produced incorrect patch when the postimage of a
+ completely rewritten file is similar to the preimage of a removed
+ file; such a resulting file must not be expressed as a rename from
+ other place.
+
+ The fix in this patch is broken, unfortunately.
+
+ Will discard.
+
+--------------------------------------------------
+[Cooking]
+
 * jk/coding-guidelines-update (2017-01-17) 1 commit
- - CodingGuidelines: clarify multi-line brace style
+  (merged to 'next' on 2017-01-23 at 8c57afa288)
+ + CodingGuidelines: clarify multi-line brace style
 
  Developer doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/fsck-connectivity-check-fix (2017-01-17) 6 commits
- - fsck: check HAS_OBJ more consistently
- - fsck: do not fallback "git fsck <bogus>" to "git fsck"
- - fsck: tighten error-checks of "git fsck <head>"
- - fsck: prepare dummy objects for --connectivity-check
- - fsck: report trees as dangling
- - t1450: clean up sub-objects in duplicate-entry test
+  (merged to 'next' on 2017-01-23 at e8e9b76b84)
+ + fsck: check HAS_OBJ more consistently
+ + fsck: do not fallback "git fsck <bogus>" to "git fsck"
+ + fsck: tighten error-checks of "git fsck <head>"
+ + fsck: prepare dummy objects for --connectivity-check
+ + fsck: report trees as dangling
+ + t1450: clean up sub-objects in duplicate-entry test
 
  "git fsck --connectivity-check" was not working at all.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/exec-path-coverity-workaround (2017-01-09) 2 commits
- - git_exec_path: do not return the result of getenv()
- - git_exec_path: avoid Coverity warning about unfree()d result
+  (merged to 'next' on 2017-01-23 at bf5dfbf860)
+ + git_exec_path: do not return the result of getenv()
+ + git_exec_path: avoid Coverity warning about unfree()d result
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  Split out of another topic.
 
 
 * js/mingw-isatty (2017-01-18) 1 commit
- - mingw: follow-up to "replace isatty() hack"
+  (merged to 'next' on 2017-01-23 at ae0f80e058)
+ + mingw: follow-up to "replace isatty() hack"
 
  An update to a topic that is already in 'master'.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/sequencer-i-countdown-3 (2017-01-17) 38 commits
@@ -339,18 +297,18 @@ of the repositories listed at
  The sequencer machinery has been further enhanced so that a later
  set of patches can start using it to reimplement "rebase -i".
 
- I think I've said everything that needs to be said on this topic;
- will wait for a few days and merge it to 'next', perhaps early next
- week.
+ Will merge to 'next'.
+ I think I've said everything that needs to be said on this topic.
 
 
 * jk/clear-delta-base-cache-fix (2017-01-19) 1 commit
- - clear_delta_base_cache(): don't modify hashmap while iterating
+  (merged to 'next' on 2017-01-23 at 5f4af2b0a5)
+ + clear_delta_base_cache(): don't modify hashmap while iterating
 
  A crashing bug introduced in v2.11 timeframe has been found (it is
  triggerable only in fast-import) and fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/describe-omit-some-refs (2017-01-19) 6 commits
@@ -371,8 +329,9 @@ of the repositories listed at
 
 
 * js/remote-rename-with-half-configured-remote (2017-01-19) 2 commits
- - remote rename: more carefully determine whether a remote is configured
- - remote rename: demonstrate a bogus "remote exists" bug
+  (merged to 'next' on 2017-01-23 at a1b655dbac)
+ + remote rename: more carefully determine whether a remote is configured
+ + remote rename: demonstrate a bogus "remote exists" bug
 
  With anticipatory tweaking for remotes defined in ~/.gitconfig
  (e.g. "remote.origin.prune" set to true, even though there may or
@@ -380,54 +339,26 @@ of the repositories listed at
  repository), "git remote rename" and other commands misinterpreted
  and behaved as if such a non-existing remote actually existed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/in-core-index-doc (2017-01-19) 4 commits
- - documentation: retire unfinished documentation
- - cache.h: document add_[file_]to_index
- - cache.h: document remove_index_entry_at
- - cache.h: document index_name_pos
+  (merged to 'next' on 2017-01-23 at 30224463e8)
+ + documentation: retire unfinished documentation
+ + cache.h: document add_[file_]to_index
+ + cache.h: document remove_index_entry_at
+ + cache.h: document index_name_pos
 
  Documentation and in-code comments updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/retire-convert-objects-from-contrib (2017-01-19) 1 commit
- - contrib: remove git-convert-objects
+  (merged to 'next' on 2017-01-23 at decc1e237d)
+ + contrib: remove git-convert-objects
 
  Remove an ancient tool left in contrib/.
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
-
-* jc/diff-b-m (2015-02-23) 5 commits
- . WIPWIP
- . WIP: diff-b-m
- - diffcore-rename: allow easier debugging
- - diffcore-rename.c: add locate_rename_src()
- - diffcore-break: allow debugging
-
- "git diff -B -M" produced incorrect patch when the postimage of a
- completely rewritten file is similar to the preimage of a removed
- file; such a resulting file must not be expressed as a rename from
- other place.
-
- The fix in this patch is broken, unfortunately.
-
- Will discard.
-
---------------------------------------------------
-[Cooking]
-
-* bw/read-blob-data-does-not-modify-index-state (2017-01-11) 1 commit
-  (merged to 'next' on 2017-01-18 at f33363fb07)
- + index: improve constness for reading blob data
-
- Code clean-up.
 
  Will merge to 'master'.
 
@@ -441,16 +372,6 @@ of the repositories listed at
  Expecting a reroll.
  The tip one would instead be done with strbuf.
  cf. <CA+EOSB=4-TKpi6mr-yVbwRsFrVzE=vo4Y9Qm3VMm7pn=UB1_hQ@mail.gmail.com>
-
-
-* jk/grep-e-could-be-extended-beyond-posix (2017-01-11) 1 commit
-  (merged to 'next' on 2017-01-18 at dd1b9d1fa8)
- + t7810: avoid assumption about invalid regex syntax
-
- Tighten a test to avoid mistaking an extended ERE regexp engine as
- a PRE regexp engine.
-
- Will merge to 'master'.
 
 
 * jk/vreport-sanitize (2017-01-11) 2 commits
@@ -482,16 +403,6 @@ of the repositories listed at
  cf. <CAGZ79kaHDnVLQr8WLoaD5KKs7EqeW=KbkptF=iHpU5t054Xcdw@mail.gmail.com>
 
 
-* sb/submodule-config-tests (2017-01-12) 2 commits
-  (merged to 'next' on 2017-01-18 at bd850f6ad3)
- + t7411: test lookup of uninitialized submodules
- + t7411: quote URLs
-
- Test updates.
-
- Will merge to 'master'.
-
-
 * sb/submodule-doc (2017-01-12) 3 commits
  - submodules: add a background story
  - submodule update documentation: don't repeat ourselves
@@ -500,47 +411,10 @@ of the repositories listed at
  Needs review.
 
 
-* sb/submodule-embed-gitdir (2017-01-12) 1 commit
-  (merged to 'next' on 2017-01-18 at 0a5e24a3f0)
- + submodule absorbgitdirs: mention in docstring help
-
- Help-text fix.
-
- Will merge to 'master'.
-
-
-* sb/submodule-init (2017-01-12) 1 commit
-  (merged to 'next' on 2017-01-18 at 2e8a38b1cc)
- + submodule update --init: display correct path from submodule
-
- Error message fix.
-
- Will merge to 'master'.
-
-
-* vn/diff-ihc-config (2017-01-12) 1 commit
-  (merged to 'next' on 2017-01-18 at ac4915dbe6)
- + diff: add interhunk context config option
-
- "git diff" learned diff.interHunkContext configuration variable
- that gives the default value for its --inter-hunk-context option.
-
- Will merge to 'master'.
-
-
-* ad/bisect-terms (2017-01-13) 1 commit
-  (merged to 'next' on 2017-01-18 at 9f500d6cf5)
- + Documentation/bisect: improve on (bad|new) and (good|bad)
-
- Documentation fix.
-
- Will merge to 'master'.
-
-
-* bw/attr (2017-01-15) 27 commits
+* bw/attr (2017-01-23) 27 commits
  - attr: reformat git_attr_set_direction() function
  - attr: push the bare repo check into read_attr()
- - attr: store attribute stacks in hashmap
+ - attr: store attribute stack in attr_check structure
  - attr: tighten const correctness with git_attr and match_attr
  - attr: remove maybe-real, maybe-macro from git_attr
  - attr: eliminate global check_all_attr array
@@ -569,37 +443,19 @@ of the repositories listed at
  The gitattributes machinery is being taught to work better in a
  multi-threaded environment.
 
- Needs review.
+ Expecting a reroll.
 
 
 * jk/loose-object-fsck (2017-01-15) 6 commits
- - fsck: detect trailing garbage in all object types
- - fsck: parse loose object paths directly
- - sha1_file: add read_loose_object() function
- - t1450: test fsck of packed objects
- - sha1_file: fix error message for alternate objects
- - t1450: refactor loose-object removal
+  (merged to 'next' on 2017-01-23 at 4302ad090d)
+ + fsck: detect trailing garbage in all object types
+ + fsck: parse loose object paths directly
+ + sha1_file: add read_loose_object() function
+ + t1450: test fsck of packed objects
+ + sha1_file: fix error message for alternate objects
+ + t1450: refactor loose-object removal
 
  "git fsck" inspects loose objects more carefully now.
-
- Will merge to 'next'.
-
-
-* rh/diff-orderfile-doc (2017-01-15) 2 commits
-  (merged to 'next' on 2017-01-18 at cc2af9c628)
- + diff: document the format of the -O (diff.orderFile) file
- + diff: document behavior of relative diff.orderFile
-
- Documentation fix.
-
- Will merge to 'master'.
-
-
-* sb/cd-then-git-can-be-written-as-git-c (2017-01-13) 1 commit
-  (merged to 'next' on 2017-01-18 at 8923d2d001)
- + lib-submodule-update.sh: reduce use of subshell by using "git -C"
-
- Test clean-up.
 
  Will merge to 'master'.
 
@@ -614,15 +470,6 @@ of the repositories listed at
  An follow-up change to go back from the line that matches the
  funcline to show comments before the function definition is still
  being discussed.
-
-
-* ws/request-pull-code-cleanup (2017-01-15) 1 commit
-  (merged to 'next' on 2017-01-18 at dfcb1405de)
- + request-pull: drop old USAGE stuff
-
- Code clean-up.
-
- Will merge to 'master'.
 
 
 * mh/ref-remove-empty-directory (2017-01-07) 23 commits
@@ -723,14 +570,15 @@ of the repositories listed at
 
 
 * bw/push-submodule-only (2016-12-20) 3 commits
- - push: add option to push only submodules
- - submodules: add RECURSE_SUBMODULES_ONLY value
- - transport: reformat flag #defines to be more readable
+  (merged to 'next' on 2017-01-23 at d6cd1c60ae)
+ + push: add option to push only submodules
+ + submodules: add RECURSE_SUBMODULES_ONLY value
+ + transport: reformat flag #defines to be more readable
 
  "git submodule push" learned "--recurse-submodules=only option to
  push submodules out without pushing the top-level superproject.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ls/p4-path-encoding (2016-12-18) 1 commit
@@ -745,13 +593,14 @@ of the repositories listed at
 
 
 * js/difftool-builtin (2017-01-19) 3 commits
- - difftool: retire the scripted version
- - difftool: implement the functionality in the builtin
- - difftool: add a skeleton for the upcoming builtin
+  (merged to 'next' on 2017-01-23 at 6f4810dbd9)
+ + difftool: retire the scripted version
+ + difftool: implement the functionality in the builtin
+ + difftool: add a skeleton for the upcoming builtin
 
  Rewrite a scripted porcelain "git difftool" in C.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/push-make-submodule-check-the-default (2016-11-29) 2 commits
@@ -846,34 +695,16 @@ of the repositories listed at
 
 
 * st/verify-tag (2017-01-18) 6 commits
- - t/t7004-tag: Add --format specifier tests
- - t/t7030-verify-tag: Add --format specifier tests
- - builtin/tag: add --format argument for tag -v
- - builtin/verify-tag: add --format to verify-tag
- - ref-filter: add function to print single ref_array_item
- - gpg-interface, tag: add GPG_VERIFY_OMIT_STATUS flag
+  (merged to 'next' on 2017-01-23 at 2810959427)
+ + t/t7004-tag: Add --format specifier tests
+ + t/t7030-verify-tag: Add --format specifier tests
+ + builtin/tag: add --format argument for tag -v
+ + builtin/verify-tag: add --format to verify-tag
+ + ref-filter: add function to print single ref_array_item
+ + gpg-interface, tag: add GPG_VERIFY_OMIT_STATUS flag
 
  "git tag" and "git verify-tag" learned to put GPG verification
  status in their "--format=<placeholders>" output format.
-
- Will merge to 'next'.
-
-
-* sg/fix-versioncmp-with-common-suffix (2017-01-12) 8 commits
-  (merged to 'next' on 2017-01-18 at f79c24a291)
- + versioncmp: generalize version sort suffix reordering
- + versioncmp: factor out helper for suffix matching
- + versioncmp: use earliest-longest contained suffix to determine sorting order
- + versioncmp: cope with common part overlapping with prerelease suffix
- + versioncmp: pass full tagnames to swap_prereleases()
- + t7004-tag: add version sort tests to show prerelease reordering issues
- + t7004-tag: use test_config helper
- + t7004-tag: delete unnecessary tags with test_when_finished
-
- The prereleaseSuffix feature of version comparison that is used in
- "git tag -l" did not correctly when two or more prereleases for the
- same release were present (e.g. when 2.0, 2.0-beta1, and 2.0-beta2
- are there and the code needs to compare 2.0-beta1 and 2.0-beta2).
 
  Will merge to 'master'.
 
