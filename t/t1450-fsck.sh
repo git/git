@@ -536,7 +536,7 @@ test_expect_success 'fsck --connectivity-only' '
 		# free to examine the type if it chooses.
 		empty=.git/objects/e6/9de29bb2d1d6434b8b29ae775ad8c2e48c5391 &&
 		blob=$(echo unrelated | git hash-object -w --stdin) &&
-		mv $(sha1_file $blob) $empty &&
+		mv -f $(sha1_file $blob) $empty &&
 
 		test_must_fail git fsck --strict &&
 		git fsck --strict --connectivity-only &&
