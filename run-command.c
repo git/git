@@ -859,6 +859,7 @@ const char *find_hook(const char *name)
 			return path.buf;
 #endif
 		return NULL;
+	}
 	return path.buf;
 }
 
