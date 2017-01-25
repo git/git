@@ -118,7 +118,6 @@
 /git-rebase--merge
 /git-receive-pack
 /git-reflog
-/git-relink
 /git-remote
 /git-remote-http
 /git-remote-https
