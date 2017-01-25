@@ -49,4 +49,24 @@ test_expect_success 'return to full checkout of master' '
 	test "$(cat b)" = "modified"
 '
 
+test_expect_success MINGW 'no unnecessary opendir() with fscache' '
+	git clone . fscache-test &&
+	(
+		cd fscache-test &&
+		git config core.fscache 1 &&
+		echo "/excluded/*" >.git/info/sparse-checkout &&
+		for f in $(test_seq 10)
+		do
+			sha1=$(echo $f | git hash-object -w --stdin) &&
+			git update-index --add \
+				--cacheinfo 100644,$sha1,excluded/$f || break
+		done &&
+		test_tick &&
+		git commit -m excluded &&
+		GIT_TRACE_FSCACHE=1 git status >out 2>err &&
+		grep excluded err >grep.out &&
+		test_line_count = 1 grep.out
+	)
+'
+
 test_done
