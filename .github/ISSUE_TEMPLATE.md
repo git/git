@@ -6,14 +6,16 @@
 
 ```
 $ git --version --build-options
-_TODO_
+
+** insert your machine's response here **
 ```
 
  - Which version of Windows are you running? Vista, 7, 8, 10? Is it 32-bit or 64-bit?
 
 ```
 $ cmd.exe /c ver
-_TODO_
+
+** insert your machine's response here **
 ```
 
  - What options did you set as part of the installation? Or did you choose the
@@ -25,36 +27,37 @@ _TODO_
 > type "C:\Program Files (x86)\Git\etc\install-options.txt"
 > type "%USERPROFILE%\AppData\Local\Programs\Git\etc\install-options.txt"
 $ cat /etc/install-options.txt
-_TODO_
+
+** insert your machine's response here **
 ```
 
  - Any other interesting things about your environment that might be related
    to the issue you're seeing?
 
- _TODO_
+** insert your response here **
 
 ### Details
 
  - Which terminal/shell are you running Git from? e.g Bash/CMD/PowerShell/other
 
- _TODO_
+** insert your response here **
 
  - What commands did you run to trigger this issue? If you can provide a
    [Minimal, Complete, and Verifiable example](http://stackoverflow.com/help/mcve)
    this will help us understand the issue.
 
 ```
-TODO
+** insert your commands here **
 ```
  - What did you expect to occur after running these commands?
 
- _TODO_
+** insert here **
 
  - What actually happened instead?
 
- _TODO_
+** insert here **
 
  - If the problem was occurring with a specific repository, can you provide the
    URL to that repository to help us with testing?
 
- _TODO_
+** insert URL here **
