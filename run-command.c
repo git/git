@@ -854,7 +854,7 @@ const char *find_hook(const char *name)
 	strbuf_git_path(&path, "hooks/%s", name);
 	if (access(path.buf, X_OK) < 0) {
 #ifdef STRIP_EXTENSION
-		strbuf_addstr(&path, ".exe");
+		strbuf_addstr(&path, STRIP_EXTENSION);
 		if (access(path.buf, X_OK) >= 0)
 			return path.buf;
 #endif
