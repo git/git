@@ -179,9 +179,7 @@ ASCIIDOC = asciidoctor
 ASCIIDOC_CONF =
 ASCIIDOC_HTML = xhtml5
 ASCIIDOC_DOCBOOK = docbook45
-ifdef ASCIIDOCTOR_EXTENSIONS_LAB
-ASCIIDOC_EXTRA = -I$(ASCIIDOCTOR_EXTENSIONS_LAB) -rasciidoctor/extensions -rman-inline-macro
-endif
+ASCIIDOC_EXTRA += -I. -rasciidoctor-extensions
 ASCIIDOC_EXTRA += -alitdd='&\#x2d;&\#x2d;'
 DBLATEX_COMMON =
 endif
