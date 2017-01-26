@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2017, #04; Mon, 23)
+Subject: What's cooking in git.git (Jan 2017, #05; Thu, 26)
 X-master-at: 4e59582ff70d299f5a88449891e78d15b4b3fabe
-X-next-at: a5e2989ef8dcd0c4cdb34f9e7d116c2159b8845d
+X-next-at: 5f4715cea687c4077e2acd25706e1369a5cb338e
 
-What's cooking in git.git (Jan 2017, #04; Mon, 23)
+What's cooking in git.git (Jan 2017, #05; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,100 +18,123 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ad/bisect-terms (2017-01-13) 1 commit
-  (merged to 'next' on 2017-01-18 at 9f500d6cf5)
- + Documentation/bisect: improve on (bad|new) and (good|bad)
+* js/mingw-hooks-with-exe-suffix (2017-01-26) 1 commit
+ - mingw: allow hooks to be .exe files
 
- Documentation fix.
+ Names of the various hook scripts must be spelled exactly, but on
+ Windows, an .exe binary must be named with .exe suffix; notice
+ $GIT_DIR/hooks/<hookname>.exe as a valid <hookname> hook.
 
-
-* bw/read-blob-data-does-not-modify-index-state (2017-01-11) 1 commit
-  (merged to 'next' on 2017-01-18 at f33363fb07)
- + index: improve constness for reading blob data
-
- Code clean-up.
+ Will merge to 'next'.
 
 
-* jk/grep-e-could-be-extended-beyond-posix (2017-01-11) 1 commit
-  (merged to 'next' on 2017-01-18 at dd1b9d1fa8)
- + t7810: avoid assumption about invalid regex syntax
+* js/retire-relink (2017-01-25) 2 commits
+ - relink: really remove the command
+ - relink: retire the command
 
- Tighten a test to avoid mistaking an extended ERE regexp engine as
- a PRE regexp engine.
+ Cruft removal.
 
-
-* rh/diff-orderfile-doc (2017-01-15) 2 commits
-  (merged to 'next' on 2017-01-18 at cc2af9c628)
- + diff: document the format of the -O (diff.orderFile) file
- + diff: document behavior of relative diff.orderFile
-
- Documentation fix.
+ Will merge to 'next'.
 
 
-* sb/cd-then-git-can-be-written-as-git-c (2017-01-13) 1 commit
-  (merged to 'next' on 2017-01-18 at 8923d2d001)
- + lib-submodule-update.sh: reduce use of subshell by using "git -C"
+* js/status-pre-rebase-i (2017-01-26) 1 commit
+ - status: be prepared for not-yet-started interactive rebase
 
- Test clean-up.
+ After starting "git rebase -i", which first opens the user's editor
+ to edit the series of patches to apply, but before saving the
+ contents of that file, "git status" failed to show the current
+ state (i.e. you are in an interactive rebase session, but you have
+ applied no steps yet) correctly.
 
-
-* sb/submodule-config-tests (2017-01-12) 2 commits
-  (merged to 'next' on 2017-01-18 at bd850f6ad3)
- + t7411: test lookup of uninitialized submodules
- + t7411: quote URLs
-
- Test updates.
+ Will merge to 'next'.
 
 
-* sb/submodule-embed-gitdir (2017-01-12) 1 commit
-  (merged to 'next' on 2017-01-18 at 0a5e24a3f0)
- + submodule absorbgitdirs: mention in docstring help
+* ps/urlmatch-wildcard (2017-01-26) 5 commits
+ - SQUASH???
+ - urlmatch: allow globbing for the URL host part
+ - urlmatch: split host and port fields in `struct url_info`
+ - urlmatch: enable normalization of URLs with globs
+ - mailmap: add Patrick Steinhardt's work address
 
- Help-text fix.
-
-
-* sb/submodule-init (2017-01-12) 1 commit
-  (merged to 'next' on 2017-01-18 at 2e8a38b1cc)
- + submodule update --init: display correct path from submodule
-
- Error message fix.
-
-
-* sg/fix-versioncmp-with-common-suffix (2017-01-12) 8 commits
-  (merged to 'next' on 2017-01-18 at f79c24a291)
- + versioncmp: generalize version sort suffix reordering
- + versioncmp: factor out helper for suffix matching
- + versioncmp: use earliest-longest contained suffix to determine sorting order
- + versioncmp: cope with common part overlapping with prerelease suffix
- + versioncmp: pass full tagnames to swap_prereleases()
- + t7004-tag: add version sort tests to show prerelease reordering issues
- + t7004-tag: use test_config helper
- + t7004-tag: delete unnecessary tags with test_when_finished
-
- The prereleaseSuffix feature of version comparison that is used in
- "git tag -l" did not correctly when two or more prereleases for the
- same release were present (e.g. when 2.0, 2.0-beta1, and 2.0-beta2
- are there and the code needs to compare 2.0-beta1 and 2.0-beta2).
+ The <url> part in "http.<url>.<variable>" configuration variable
+ can now be spelled with '*' that serves as wildcard.
+ E.g. "http.https://*.example.com.proxy" can be used to specify the
+ proxy used for https://a.example.com, https://b.example.com, etc.,
+ i.e. any host in the example.com domain.
 
 
-* vn/diff-ihc-config (2017-01-12) 1 commit
-  (merged to 'next' on 2017-01-18 at ac4915dbe6)
- + diff: add interhunk context config option
+* rs/absolute-pathdup (2017-01-26) 2 commits
+ - use absolute_pathdup()
+ - abspath: add absolute_pathdup()
 
- "git diff" learned diff.interHunkContext configuration variable
- that gives the default value for its --inter-hunk-context option.
+ Code cleanup.
+
+ Will merge to 'next'.
 
 
-* ws/request-pull-code-cleanup (2017-01-15) 1 commit
-  (merged to 'next' on 2017-01-18 at dfcb1405de)
- + request-pull: drop old USAGE stuff
+* sb/submodule-recursive-absorb (2017-01-26) 3 commits
+ - submodule absorbing: fix worktree/gitdir pointers recursively for non-moves
+ - cache.h: expose the dying procedure for reading gitlinks
+ - setup: add gentle version of resolve_git_dir
 
- Code clean-up.
+ When a submodule "sub", which has another submodule "module" nested
+ within it, is "absorbed" into the top-level superproject, the inner
+ submodule "module" is left in a strange state.
+
+ Will merge to 'next'.
+
+
+* sb/submodule-update-initial-runs-custom-script (2017-01-26) 1 commit
+ - submodule update: run custom update script for initial populating as well
+
+ The user can specify a custom update method that is run when
+ "submodule update" updates an already checked out submodule.  This
+ was ignored when checking the submodule out for the first time and
+ we instead always just checked out the commit that is bound to the
+ path in the superproject's index.
+
+ Will merge to 'next'.
+
+
+* sf/putty-w-args (2017-01-26) 3 commits
+ - connect: support GIT_SSH_VARIANT and ssh.variant
+ - connect: rename tortoiseplink and putty variables
+ - connect: handle putty/plink also in GIT_SSH_COMMAND
+
+ The command line options for ssh invocation needs to be tweaked for
+ some implementations of SSH (e.g. PuTTY plink wants "-P <port>"
+ while OpenSSH wants "-p <port>" to specify port to connect to), and
+ the variant was guessed when GIT_SSH environment variable is used
+ to specify it.  Extend the guess to the command specified by the
+ newer GIT_SSH_COMMAND and also core.sshcommand configuration
+ variable, and give an escape hatch for users to deal with
+ misdetected cases.
+
+ Expecting a reroll of the last step.
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* jc/diff-b-m (2015-02-23) 5 commits
+ . WIPWIP
+ . WIP: diff-b-m
+ - diffcore-rename: allow easier debugging
+ - diffcore-rename.c: add locate_rename_src()
+ - diffcore-break: allow debugging
+
+ "git diff -B -M" produced incorrect patch when the postimage of a
+ completely rewritten file is similar to the preimage of a removed
+ file; such a resulting file must not be expressed as a rename from
+ other place.
+
+ The fix in this patch is broken, unfortunately.
+
+ Will discard.
+
+--------------------------------------------------
+[Cooking]
 
 * sh/grep-tree-obj-tweak-output (2017-01-20) 2 commits
  - grep: use '/' delimiter for paths
@@ -133,22 +156,26 @@ of the repositories listed at
  Waiting for the review discussion to settle, followed by a reroll.
 
 
-* vp/show-ref-verify-head (2017-01-23) 5 commits
- - show-ref: remove dead `if (verify)' check
- - show-ref: detect dangling refs under --verify as well
- - show-ref: move --quiet handling into show_one()
- - show-ref: allow -d to work with --verify
- - show-ref: accept HEAD with --verify
+* vp/show-ref-verify-head (2017-01-23) 6 commits
+  (merged to 'next' on 2017-01-23 at af6dd9d239)
+ + show-ref: remove a stale comment
+ + show-ref: remove dead `if (verify)' check
+ + show-ref: detect dangling refs under --verify as well
+ + show-ref: move --quiet handling into show_one()
+ + show-ref: allow -d to work with --verify
+ + show-ref: accept HEAD with --verify
 
  "git show-ref HEAD" used with "--verify" because the user is not
  interested in seeing refs/remotes/origin/HEAD, and used with
  "--head" because the user does not want HEAD to be filtered out,
  i.e. "git show-ref --head --verify HEAD", did not work as expected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* bc/use-asciidoctor-opt (2017-01-23) 7 commits
+* bc/use-asciidoctor-opt (2017-01-26) 9 commits
+ - SQUASH???
+ - Documentation: implement linkgit macro for Asciidoctor
  - Makefile: add a knob to enable the use of Asciidoctor
  - Documentation: move dblatex arguments into variable
  - Documentation: add XSLT to fix DocBook for Texinfo
@@ -174,11 +201,12 @@ of the repositories listed at
 
 
 * rs/qsort-s (2017-01-23) 5 commits
- - ref-filter: use QSORT_S in ref_array_sort()
- - string-list: use QSORT_S in string_list_sort()
- - perf: add basic sort performance test
- - add QSORT_S
- - compat: add qsort_s()
+  (merged to 'next' on 2017-01-23 at 7e2813848b)
+ + ref-filter: use QSORT_S in ref_array_sort()
+ + string-list: use QSORT_S in string_list_sort()
+ + perf: add basic sort performance test
+ + add QSORT_S
+ + compat: add qsort_s()
 
  A few codepaths had to rely on a global variable when sorting
  elements of an array because sort(3) API does not allow extra data
@@ -187,29 +215,8 @@ of the repositories listed at
  to eliminate the need, which is a prerequisite for making the
  codepath reentrant.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
---------------------------------------------------
-[Stalled]
-
-* jc/diff-b-m (2015-02-23) 5 commits
- . WIPWIP
- . WIP: diff-b-m
- - diffcore-rename: allow easier debugging
- - diffcore-rename.c: add locate_rename_src()
- - diffcore-break: allow debugging
-
- "git diff -B -M" produced incorrect patch when the postimage of a
- completely rewritten file is similar to the preimage of a removed
- file; such a resulting file must not be expressed as a rename from
- other place.
-
- The fix in this patch is broken, unfortunately.
-
- Will discard.
-
---------------------------------------------------
-[Cooking]
 
 * jk/coding-guidelines-update (2017-01-17) 1 commit
   (merged to 'next' on 2017-01-23 at 8c57afa288)
@@ -220,7 +227,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/fsck-connectivity-check-fix (2017-01-17) 6 commits
+* jk/fsck-connectivity-check-fix (2017-01-26) 9 commits
+  (merged to 'next' on 2017-01-26 at dd03f7a17f)
+ + fsck: lazily load types under --connectivity-only
+ + fsck: move typename() printing to its own function
+  (merged to 'next' on 2017-01-25 at f3d7d93785)
+ + t1450: use "mv -f" within loose object directory
   (merged to 'next' on 2017-01-23 at e8e9b76b84)
  + fsck: check HAS_OBJ more consistently
  + fsck: do not fallback "git fsck <bogus>" to "git fsck"
@@ -255,49 +267,50 @@ of the repositories listed at
 
 
 * js/sequencer-i-countdown-3 (2017-01-17) 38 commits
- - sequencer (rebase -i): write out the final message
- - sequencer (rebase -i): write the progress into files
- - sequencer (rebase -i): show the progress
- - sequencer (rebase -i): suggest --edit-todo upon unknown command
- - sequencer (rebase -i): show only failed cherry-picks' output
- - sequencer (rebase -i): show only failed `git commit`'s output
- - sequencer: use run_command() directly
- - sequencer: update reading author-script
- - sequencer (rebase -i): differentiate between comments and 'noop'
- - sequencer (rebase -i): implement the 'drop' command
- - sequencer (rebase -i): allow rescheduling commands
- - sequencer (rebase -i): respect strategy/strategy_opts settings
- - sequencer (rebase -i): respect the rebase.autostash setting
- - sequencer (rebase -i): run the post-rewrite hook, if needed
- - sequencer (rebase -i): record interrupted commits in rewritten, too
- - sequencer (rebase -i): copy commit notes at end
- - sequencer (rebase -i): set the reflog message consistently
- - sequencer (rebase -i): refactor setting the reflog message
- - sequencer (rebase -i): allow fast-forwarding for edit/reword
- - sequencer (rebase -i): implement the 'reword' command
- - sequencer (rebase -i): leave a patch upon error
- - sequencer (rebase -i): update refs after a successful rebase
- - sequencer (rebase -i): the todo can be empty when continuing
- - sequencer (rebase -i): skip some revert/cherry-pick specific code path
- - sequencer (rebase -i): remove CHERRY_PICK_HEAD when no longer needed
- - sequencer (rebase -i): allow continuing with staged changes
- - sequencer (rebase -i): write an author-script file
- - sequencer (rebase -i): implement the short commands
- - sequencer (rebase -i): add support for the 'fixup' and 'squash' commands
- - sequencer (rebase -i): write the 'done' file
- - sequencer (rebase -i): learn about the 'verbose' mode
- - sequencer (rebase -i): implement the 'exec' command
- - sequencer (rebase -i): implement the 'edit' command
- - sequencer (rebase -i): implement the 'noop' command
- - sequencer: support a new action: 'interactive rebase'
- - sequencer: use a helper to find the commit message
- - sequencer: move "else" keyword onto the same line as preceding brace
- - sequencer: avoid unnecessary curly braces
+  (merged to 'next' on 2017-01-23 at 251dd15139)
+ + sequencer (rebase -i): write out the final message
+ + sequencer (rebase -i): write the progress into files
+ + sequencer (rebase -i): show the progress
+ + sequencer (rebase -i): suggest --edit-todo upon unknown command
+ + sequencer (rebase -i): show only failed cherry-picks' output
+ + sequencer (rebase -i): show only failed `git commit`'s output
+ + sequencer: use run_command() directly
+ + sequencer: update reading author-script
+ + sequencer (rebase -i): differentiate between comments and 'noop'
+ + sequencer (rebase -i): implement the 'drop' command
+ + sequencer (rebase -i): allow rescheduling commands
+ + sequencer (rebase -i): respect strategy/strategy_opts settings
+ + sequencer (rebase -i): respect the rebase.autostash setting
+ + sequencer (rebase -i): run the post-rewrite hook, if needed
+ + sequencer (rebase -i): record interrupted commits in rewritten, too
+ + sequencer (rebase -i): copy commit notes at end
+ + sequencer (rebase -i): set the reflog message consistently
+ + sequencer (rebase -i): refactor setting the reflog message
+ + sequencer (rebase -i): allow fast-forwarding for edit/reword
+ + sequencer (rebase -i): implement the 'reword' command
+ + sequencer (rebase -i): leave a patch upon error
+ + sequencer (rebase -i): update refs after a successful rebase
+ + sequencer (rebase -i): the todo can be empty when continuing
+ + sequencer (rebase -i): skip some revert/cherry-pick specific code path
+ + sequencer (rebase -i): remove CHERRY_PICK_HEAD when no longer needed
+ + sequencer (rebase -i): allow continuing with staged changes
+ + sequencer (rebase -i): write an author-script file
+ + sequencer (rebase -i): implement the short commands
+ + sequencer (rebase -i): add support for the 'fixup' and 'squash' commands
+ + sequencer (rebase -i): write the 'done' file
+ + sequencer (rebase -i): learn about the 'verbose' mode
+ + sequencer (rebase -i): implement the 'exec' command
+ + sequencer (rebase -i): implement the 'edit' command
+ + sequencer (rebase -i): implement the 'noop' command
+ + sequencer: support a new action: 'interactive rebase'
+ + sequencer: use a helper to find the commit message
+ + sequencer: move "else" keyword onto the same line as preceding brace
+ + sequencer: avoid unnecessary curly braces
 
  The sequencer machinery has been further enhanced so that a later
  set of patches can start using it to reimplement "rebase -i".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  I think I've said everything that needs to be said on this topic.
 
 
@@ -311,21 +324,20 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/describe-omit-some-refs (2017-01-19) 6 commits
- - SQUASH???
- - describe: teach describe negative pattern matches
- - describe: teach --match to accept multiple patterns
- - name-rev: add support to exclude refs by pattern match
- - name-rev: extend --refs to accept multiple patterns
- - doc: add documentation for OPT_STRING_LIST
+* jk/describe-omit-some-refs (2017-01-23) 5 commits
+  (merged to 'next' on 2017-01-23 at f8a14b4996)
+ + describe: teach describe negative pattern matches
+ + describe: teach --match to accept multiple patterns
+ + name-rev: add support to exclude refs by pattern match
+ + name-rev: extend --refs to accept multiple patterns
+ + doc: add documentation for OPT_STRING_LIST
 
  "git describe" and "git name-rev" have been taught to take more
  than one refname patterns to restrict the set of refs to base their
  naming output on, and also learned to take negative patterns to
  name refs not to be used for naming via their "--exclude" option.
 
- Will merge to 'next' after making sure SQUASH??? is correctly
- squashed in.
+ Will merge to 'next'.
 
 
 * js/remote-rename-with-half-configured-remote (2017-01-19) 2 commits
@@ -387,8 +399,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/unpack-trees-super-prefix (2017-01-12) 5 commits
- - SQUASH
+* sb/unpack-trees-super-prefix (2017-01-25) 4 commits
  - unpack-trees: support super-prefix option
  - t1001: modernize style
  - t1000: modernize style
@@ -397,10 +408,7 @@ of the repositories listed at
  "git read-tree" and its underlying unpack_trees() machinery learned
  to report problematic paths prefixed with the --super-prefix option.
 
- Expecting a reroll.
- The first three are in good shape.  The last one needs a better
- explanation and possibly an update to its test.
- cf. <CAGZ79kaHDnVLQr8WLoaD5KKs7EqeW=KbkptF=iHpU5t054Xcdw@mail.gmail.com>
+ Will merge to 'next'.
 
 
 * sb/submodule-doc (2017-01-12) 3 commits
@@ -524,18 +532,17 @@ of the repositories listed at
  Needs review.
 
 
-* nd/log-graph-configurable-colors (2017-01-19) 4 commits
- - SQUASH???
- - log --graph: customize the graph lines with config log.graphColors
- - color.c: trim leading spaces in color_parse_mem()
- - color.c: fix color_parse_mem() with value_len == 0
+* nd/log-graph-configurable-colors (2017-01-23) 3 commits
+  (merged to 'next' on 2017-01-23 at c369982ad8)
+ + log --graph: customize the graph lines with config log.graphColors
+ + color.c: trim leading spaces in color_parse_mem()
+ + color.c: fix color_parse_mem() with value_len == 0
 
  Some people feel the default set of colors used by "git log --graph"
  rather limiting.  A mechanism to customize the set of colors has
  been introduced.
 
- Will merge to 'next' after making sure SQUASH??? is correctly
- squashed in.
+ Will merge to 'next'.
 
 
 * cc/split-index-config (2016-12-26) 21 commits
@@ -592,7 +599,9 @@ of the repositories listed at
  cf. <7E1C7387-4F37-423F-803D-3B5690B49D40@gmail.com>
 
 
-* js/difftool-builtin (2017-01-19) 3 commits
+* js/difftool-builtin (2017-01-25) 4 commits
+  (merged to 'next' on 2017-01-25 at 87d2a0976a)
+ + difftool: hack around -Wzero-length-format warning
   (merged to 'next' on 2017-01-23 at 6f4810dbd9)
  + difftool: retire the scripted version
  + difftool: implement the functionality in the builtin
@@ -603,7 +612,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/push-make-submodule-check-the-default (2016-11-29) 2 commits
+* sb/push-make-submodule-check-the-default (2017-01-26) 3 commits
+  (merged to 'next' on 2017-01-26 at 5f4715cea6)
+ + Revert "push: change submodule default to check when submodules exist"
   (merged to 'next' on 2016-12-12 at 1863e05af5)
  + push: change submodule default to check when submodules exist
  + submodule add: extend force flag to add existing repos
@@ -611,7 +622,8 @@ of the repositories listed at
  Turn the default of "push.recurseSubmodules" to "check" when
  submodules seem to be in use.
 
- Will cook in 'next'.
+ I'll probably remove the tip-two commits and advance the bottom one
+ separately.
 
 
 * kn/ref-filter-branch-list (2017-01-10) 21 commits
