@@ -216,12 +216,11 @@ that it will be postponed.
 Exception:  If your mailer is mangling patches then someone may ask
 you to re-send them using MIME, that is OK.
 
-Do not PGP sign your patch, at least for now.  Most likely, your
-maintainer or other people on the list would not have your PGP
-key and would not bother obtaining it anyway.  Your patch is not
-judged by who you are; a good patch from an unknown origin has a
-far better chance of being accepted than a patch from a known,
-respected origin that is done poorly or does incorrect things.
+Do not PGP sign your patch. Most likely, your maintainer or other people on the
+list would not have your PGP key and would not bother obtaining it anyway.
+Your patch is not judged by who you are; a good patch from an unknown origin
+has a far better chance of being accepted than a patch from a known, respected
+origin that is done poorly or does incorrect things.
 
 If you really really really really want to do a PGP signed
 patch, format it as "multipart/signed", not a text/plain message
@@ -246,7 +245,7 @@ patch.
      *2* The mailing list: git@vger.kernel.org
 
 
-(5) Sign your work
+(5) Certify your work by adding your "Signed-off-by: " line
 
 To improve tracking of who did what, we've borrowed the
 "sign-off" procedure from the Linux kernel project on patches
