@@ -71,6 +71,7 @@ test_expect_success 'creating a tag for an unknown revision should fail' '
 
 # commit used in the tests, test_tick is also called here to freeze the date:
 test_expect_success 'creating a tag using default HEAD should succeed' '
+	test_config core.logAllRefUpdates true &&
 	test_tick &&
 	echo foo >foo &&
 	git add foo &&
@@ -88,6 +89,13 @@ test_expect_success 'creating a tag with --create-reflog should create reflog' '
 test_expect_success '--create-reflog does not create reflog on failure' '
 	test_must_fail git tag --create-reflog mytag &&
 	test_must_fail git reflog exists refs/tags/mytag
+'
+
+test_expect_success 'option core.logAllRefUpdates=always creates reflog' '
+	test_when_finished "git tag -d tag_with_reflog" &&
+	test_config core.logAllRefUpdates always &&
+	git tag tag_with_reflog &&
+	git reflog exists refs/tags/tag_with_reflog
 '
 
 test_expect_success 'listing all tags if one exists should succeed' '

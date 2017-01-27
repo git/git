@@ -150,7 +150,8 @@ This option is only applicable when listing tags without annotation lines.
 	'strip' removes both whitespace and commentary.
 
 --create-reflog::
-	Create a reflog for the tag.
+	Create a reflog for the tag. To globally enable reflogs for tags, see
+	`core.logAllRefUpdates` in linkgit:git-config[1].
 
 <tagname>::
 	The name of the tag to create, delete, or describe.
