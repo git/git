@@ -747,25 +747,28 @@ static struct attr_stack *read_attr_from_index(const char *path, int macro_ok)
 
 static struct attr_stack *read_attr(const char *path, int macro_ok)
 {
-	struct attr_stack *res;
+	struct attr_stack *res = NULL;
 
-	if (direction == GIT_ATTR_CHECKOUT) {
+	if (direction == GIT_ATTR_INDEX) {
 		res = read_attr_from_index(path, macro_ok);
-		if (!res)
-			res = read_attr_from_file(path, macro_ok);
-	}
-	else if (direction == GIT_ATTR_CHECKIN) {
-		res = read_attr_from_file(path, macro_ok);
-		if (!res)
-			/*
-			 * There is no checked out .gitattributes file there, but
-			 * we might have it in the index.  We allow operation in a
-			 * sparsely checked out work tree, so read from it.
-			 */
+	} else if (!is_bare_repository()) {
+		if (direction == GIT_ATTR_CHECKOUT) {
 			res = read_attr_from_index(path, macro_ok);
+			if (!res)
+				res = read_attr_from_file(path, macro_ok);
+		} else if (direction == GIT_ATTR_CHECKIN) {
+			res = read_attr_from_file(path, macro_ok);
+			if (!res)
+				/*
+				 * There is no checked out .gitattributes file
+				 * there, but we might have it in the index.
+				 * We allow operation in a sparsely checked out
+				 * work tree, so read from it.
+				 */
+				res = read_attr_from_index(path, macro_ok);
+		}
 	}
-	else
-		res = read_attr_from_index(path, macro_ok);
+
 	if (!res)
 		res = xcalloc(1, sizeof(*res));
 	return res;
@@ -857,10 +860,7 @@ static void bootstrap_attr_stack(struct attr_stack **stack)
 	}
 
 	/* root directory */
-	if (!is_bare_repository() || direction == GIT_ATTR_INDEX)
-		e = read_attr(GITATTRIBUTES_FILE, 1);
-	else
-		e = xcalloc(1, sizeof(struct attr_stack));
+	e = read_attr(GITATTRIBUTES_FILE, 1);
 	push_stack(stack, e, xstrdup(""), 0);
 
 	/* info frame */
@@ -877,6 +877,7 @@ static void prepare_attr_stack(const char *path, int dirlen,
 			       struct attr_stack **stack)
 {
 	struct attr_stack *info;
+	struct strbuf pathbuf = STRBUF_INIT;
 
 	/*
 	 * At the bottom of the attribute stack is the built-in
@@ -923,54 +924,47 @@ static void prepare_attr_stack(const char *path, int dirlen,
 	}
 
 	/*
-	 * Read from parent directories and push them down
+	 * bootstrap_attr_stack() should have added, and the
+	 * above loop should have stopped before popping, the
+	 * root element whose attr_stack->origin is set to an
+	 * empty string.
 	 */
-	if (!is_bare_repository() || direction == GIT_ATTR_INDEX) {
-		/*
-		 * bootstrap_attr_stack() should have added, and the
-		 * above loop should have stopped before popping, the
-		 * root element whose attr_stack->origin is set to an
-		 * empty string.
-		 */
-		struct strbuf pathbuf = STRBUF_INIT;
+	assert((*stack)->origin);
 
-		assert((*stack)->origin);
-		strbuf_addstr(&pathbuf, (*stack)->origin);
-		/* Build up to the directory 'path' is in */
-		while (pathbuf.len < dirlen) {
-			size_t len = pathbuf.len;
-			struct attr_stack *next;
-			char *origin;
+	strbuf_addstr(&pathbuf, (*stack)->origin);
+	/* Build up to the directory 'path' is in */
+	while (pathbuf.len < dirlen) {
+		size_t len = pathbuf.len;
+		struct attr_stack *next;
+		char *origin;
 
-			/* Skip path-separator */
-			if (len < dirlen && is_dir_sep(path[len]))
-				len++;
-			/* Find the end of the next component */
-			while (len < dirlen && !is_dir_sep(path[len]))
-				len++;
+		/* Skip path-separator */
+		if (len < dirlen && is_dir_sep(path[len]))
+			len++;
+		/* Find the end of the next component */
+		while (len < dirlen && !is_dir_sep(path[len]))
+			len++;
 
-			if (pathbuf.len > 0)
-				strbuf_addch(&pathbuf, '/');
-			strbuf_add(&pathbuf, path + pathbuf.len,
-				   (len - pathbuf.len));
-			strbuf_addf(&pathbuf, "/%s", GITATTRIBUTES_FILE);
+		if (pathbuf.len > 0)
+			strbuf_addch(&pathbuf, '/');
+		strbuf_add(&pathbuf, path + pathbuf.len, (len - pathbuf.len));
+		strbuf_addf(&pathbuf, "/%s", GITATTRIBUTES_FILE);
 
-			next = read_attr(pathbuf.buf, 0);
+		next = read_attr(pathbuf.buf, 0);
 
-			/* reset the pathbuf to not include "/.gitattributes" */
-			strbuf_setlen(&pathbuf, len);
+		/* reset the pathbuf to not include "/.gitattributes" */
+		strbuf_setlen(&pathbuf, len);
 
-			origin = xstrdup(pathbuf.buf);
-			push_stack(stack, next, origin, len);
-
-		}
-		strbuf_release(&pathbuf);
+		origin = xstrdup(pathbuf.buf);
+		push_stack(stack, next, origin, len);
 	}
 
 	/*
 	 * Finally push the "info" one at the top of the stack.
 	 */
 	push_stack(stack, info, NULL, 0);
+
+	strbuf_release(&pathbuf);
 }
 
 static int path_matches(const char *pathname, int pathlen,
