@@ -14,6 +14,7 @@
 #include "dir.h"
 #include "utf8.h"
 #include "quote.h"
+#include "thread-utils.h"
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -23,28 +24,17 @@ static const char git_attr__unknown[] = "(builtin)unknown";
 #define ATTR__UNSET NULL
 #define ATTR__UNKNOWN git_attr__unknown
 
-/* This is a randomly chosen prime. */
-#define HASHSIZE 257
-
 #ifndef DEBUG_ATTR
 #define DEBUG_ATTR 0
 #endif
 
-/*
- * NEEDSWORK: the global dictionary of the interned attributes
- * must stay a singleton even after we become thread-ready.
- * Access to these must be surrounded with mutex when it happens.
- */
 struct git_attr {
-	struct git_attr *next;
-	unsigned h;
-	int attr_nr;
+	int attr_nr; /* unique attribute number */
 	int maybe_macro;
 	int maybe_real;
-	char name[FLEX_ARRAY];
+	char name[FLEX_ARRAY]; /* attribute name */
 };
 static int attr_nr;
-static struct git_attr *(git_attr_hash[HASHSIZE]);
 
 /*
  * NEEDSWORK: maybe-real, maybe-macro are not property of
@@ -63,15 +53,94 @@ const char *git_attr_name(const struct git_attr *attr)
 	return attr->name;
 }
 
-static unsigned hash_name(const char *name, int namelen)
-{
-	unsigned val = 0, c;
+struct attr_hashmap {
+	struct hashmap map;
+#ifndef NO_PTHREADS
+	pthread_mutex_t mutex;
+#endif
+};
 
-	while (namelen--) {
-		c = *name++;
-		val = ((val << 7) | (val >> 22)) ^ c;
-	}
-	return val;
+static inline void hashmap_lock(struct attr_hashmap *map)
+{
+#ifndef NO_PTHREADS
+	pthread_mutex_lock(&map->mutex);
+#endif
+}
+
+static inline void hashmap_unlock(struct attr_hashmap *map)
+{
+#ifndef NO_PTHREADS
+	pthread_mutex_unlock(&map->mutex);
+#endif
+}
+
+/*
+ * The global dictionary of all interned attributes.  This
+ * is a singleton object which is shared between threads.
+ * Access to this dictionary must be surrounded with a mutex.
+ */
+static struct attr_hashmap g_attr_hashmap;
+
+/* The container for objects stored in "struct attr_hashmap" */
+struct attr_hash_entry {
+	struct hashmap_entry ent; /* must be the first member! */
+	const char *key; /* the key; memory should be owned by value */
+	size_t keylen; /* length of the key */
+	void *value; /* the stored value */
+};
+
+/* attr_hashmap comparison function */
+static int attr_hash_entry_cmp(const struct attr_hash_entry *a,
+			       const struct attr_hash_entry *b,
+			       void *unused)
+{
+	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
+}
+
+/* Initialize an 'attr_hashmap' object */
+static void attr_hashmap_init(struct attr_hashmap *map)
+{
+	hashmap_init(&map->map, (hashmap_cmp_fn) attr_hash_entry_cmp, 0);
+}
+
+/*
+ * Retrieve the 'value' stored in a hashmap given the provided 'key'.
+ * If there is no matching entry, return NULL.
+ */
+static void *attr_hashmap_get(struct attr_hashmap *map,
+			      const char *key, size_t keylen)
+{
+	struct attr_hash_entry k;
+	struct attr_hash_entry *e;
+
+	if (!map->map.tablesize)
+		attr_hashmap_init(map);
+
+	hashmap_entry_init(&k, memhash(key, keylen));
+	k.key = key;
+	k.keylen = keylen;
+	e = hashmap_get(&map->map, &k, NULL);
+
+	return e ? e->value : NULL;
+}
+
+/* Add 'value' to a hashmap based on the provided 'key'. */
+static void attr_hashmap_add(struct attr_hashmap *map,
+			     const char *key, size_t keylen,
+			     void *value)
+{
+	struct attr_hash_entry *e;
+
+	if (!map->map.tablesize)
+		attr_hashmap_init(map);
+
+	e = xmalloc(sizeof(struct attr_hash_entry));
+	hashmap_entry_init(e, memhash(key, keylen));
+	e->key = key;
+	e->keylen = keylen;
+	e->value = value;
+
+	hashmap_add(&map->map, e);
 }
 
 static int attr_name_valid(const char *name, size_t namelen)
@@ -103,37 +172,44 @@ static void report_invalid_attr(const char *name, size_t len,
 	strbuf_release(&err);
 }
 
-static struct git_attr *git_attr_internal(const char *name, int len)
+/*
+ * Given a 'name', lookup and return the corresponding attribute in the global
+ * dictionary.  If no entry is found, create a new attribute and store it in
+ * the dictionary.
+ */
+static struct git_attr *git_attr_internal(const char *name, int namelen)
 {
-	unsigned hval = hash_name(name, len);
-	unsigned pos = hval % HASHSIZE;
 	struct git_attr *a;
 
-	for (a = git_attr_hash[pos]; a; a = a->next) {
-		if (a->h == hval &&
-		    !memcmp(a->name, name, len) && !a->name[len])
-			return a;
-	}
-
-	if (!attr_name_valid(name, len))
+	if (!attr_name_valid(name, namelen))
 		return NULL;
 
-	FLEX_ALLOC_MEM(a, name, name, len);
-	a->h = hval;
-	a->next = git_attr_hash[pos];
-	a->attr_nr = attr_nr++;
-	a->maybe_macro = 0;
-	a->maybe_real = 0;
-	git_attr_hash[pos] = a;
+	hashmap_lock(&g_attr_hashmap);
 
-	/*
-	 * NEEDSWORK: per git_attr_check check_all_attr
-	 * will be initialized a lot more lazily, not
-	 * like this, and not here.
-	 */
-	REALLOC_ARRAY(check_all_attr, attr_nr);
-	check_all_attr[a->attr_nr].attr = a;
-	check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
+	a = attr_hashmap_get(&g_attr_hashmap, name, namelen);
+
+	if (!a) {
+		FLEX_ALLOC_MEM(a, name, name, namelen);
+		a->attr_nr = g_attr_hashmap.map.size;
+		a->maybe_real = 0;
+		a->maybe_macro = 0;
+
+		attr_hashmap_add(&g_attr_hashmap, a->name, namelen, a);
+		assert(a->attr_nr == (g_attr_hashmap.map.size - 1));
+
+		/*
+		 * NEEDSWORK: per git_attr_check check_all_attr
+		 * will be initialized a lot more lazily, not
+		 * like this, and not here.
+		 */
+		REALLOC_ARRAY(check_all_attr, ++attr_nr);
+		check_all_attr[a->attr_nr].attr = a;
+		check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
+		assert(a->attr_nr == (attr_nr - 1));
+	}
+
+	hashmap_unlock(&g_attr_hashmap);
+
 	return a;
 }
 
@@ -940,4 +1016,11 @@ void git_attr_set_direction(enum git_attr_direction new, struct index_state *ist
 	if (new != old)
 		drop_attr_stack();
 	use_index = istate;
+}
+
+void attr_start(void)
+{
+#ifndef NO_PTHREADS
+	pthread_mutex_init(&g_attr_hashmap.mutex, NULL);
+#endif
 }
