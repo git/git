@@ -166,7 +166,8 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	check = attr_check_alloc();
 	if (!all_attrs) {
 		for (i = 0; i < cnt; i++) {
-			struct git_attr *a = git_attr(argv[i]);
+			const struct git_attr *a = git_attr(argv[i]);
+
 			if (!a)
 				return error("%s: not a valid attribute name",
 					     argv[i]);

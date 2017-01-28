@@ -11,7 +11,7 @@ struct all_attrs_item;
  * Given a string, return the gitattribute object that
  * corresponds to it.
  */
-struct git_attr *git_attr(const char *);
+const struct git_attr *git_attr(const char *);
 
 /* Internal use */
 extern const char git_attr__true[];
