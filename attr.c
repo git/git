@@ -677,25 +677,29 @@ static struct attr_stack *read_attr_from_array(const char **list)
 }
 
 /*
- * NEEDSWORK: these two are tricky.  The callers assume there is a
- * single, system-wide global state "where we read attributes from?"
- * and when the state is flipped by calling git_attr_set_direction(),
- * attr_stack is discarded so that subsequent attr_check will lazily
- * read from the right place.  And they do not know or care who called
- * by them uses the attribute subsystem, hence have no knowledge of
- * existing git_attr_check instances or future ones that will be
- * created).
- *
- * Probably we need a thread_local that holds these two variables,
- * and a list of git_attr_check instances (which need to be maintained
- * by hooking into git_attr_check_alloc(), git_attr_check_initl(), and
- * git_attr_check_clear().  Then git_attr_set_direction() updates the
- * fields in that thread_local for these two variables, iterate over
- * all the active git_attr_check instances and discard the attr_stack
- * they hold.  Yuck, but it sounds doable.
+ * Callers into the attribute system assume there is a single, system-wide
+ * global state where attributes are read from and when the state is flipped by
+ * calling git_attr_set_direction(), the stack frames that have been
+ * constructed need to be discarded so so that subsequent calls into the
+ * attribute system will lazily read from the right place.  Since changing
+ * direction causes a global paradigm shift, it should not ever be called while
+ * another thread could potentially be calling into the attribute system.
  */
 static enum git_attr_direction direction;
 static struct index_state *use_index;
+
+void git_attr_set_direction(enum git_attr_direction new_direction,
+			    struct index_state *istate)
+{
+	if (is_bare_repository() && new_direction != GIT_ATTR_INDEX)
+		die("BUG: non-INDEX attr direction in a bare repo");
+
+	if (new_direction != direction)
+		drop_all_attr_stacks();
+
+	direction = new_direction;
+	use_index = istate;
+}
 
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 {
@@ -1146,19 +1150,6 @@ void git_all_attrs(const char *path, struct attr_check *check)
 		item = attr_check_append(check, git_attr(name));
 		item->value = value;
 	}
-}
-
-void git_attr_set_direction(enum git_attr_direction new, struct index_state *istate)
-{
-	enum git_attr_direction old = direction;
-
-	if (is_bare_repository() && new != GIT_ATTR_INDEX)
-		die("BUG: non-INDEX attr direction in a bare repo");
-
-	direction = new;
-	if (new != old)
-		drop_all_attr_stacks();
-	use_index = istate;
 }
 
 void attr_start(void)
