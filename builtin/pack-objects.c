@@ -1541,6 +1541,8 @@ static int pack_offset_sort(const void *_a, const void *_b)
  *   2. Updating our size/type to the non-delta representation. These were
  *      either not recorded initially (size) or overwritten with the delta type
  *      (type) when check_object() decided to reuse the delta.
+ *
+ *   3. Resetting our delta depth, as we are now a base object.
  */
 static void drop_reused_delta(struct object_entry *entry)
 {
@@ -1554,6 +1556,7 @@ static void drop_reused_delta(struct object_entry *entry)
 			p = &(*p)->delta_sibling;
 	}
 	entry->delta = NULL;
+	entry->depth = 0;
 
 	oi.sizep = &entry->size;
 	oi.typep = &entry->type;
@@ -1572,6 +1575,9 @@ static void drop_reused_delta(struct object_entry *entry)
  * Follow the chain of deltas from this entry onward, throwing away any links
  * that cause us to hit a cycle (as determined by the DFS state flags in
  * the entries).
+ *
+ * We also detect too-long reused chains that would violate our --depth
+ * limit.
  */
 static void break_delta_chains(struct object_entry *entry)
 {
@@ -1589,6 +1595,18 @@ static void break_delta_chains(struct object_entry *entry)
 		 */
 		entry->dfs_state = DFS_ACTIVE;
 		break_delta_chains(entry->delta);
+
+		/*
+		 * Once we've recursed, our base (if we still have one) knows
+		 * its depth, so we can compute ours (and check it against
+		 * the limit).
+		 */
+		if (entry->delta) {
+			entry->depth = entry->delta->depth + 1;
+			if (entry->depth > depth)
+				drop_reused_delta(entry);
+		}
+
 		entry->dfs_state = DFS_DONE;
 		break;
 
