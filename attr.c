@@ -890,7 +890,8 @@ static void collect_some_attrs(const char *path, int num,
 		rem = fill(path, pathlen, basename_offset, stk, rem);
 }
 
-int git_check_attrs(const char *path, int num, struct attr_check_item *check)
+static int git_check_attrs(const char *path, int num,
+			   struct attr_check_item *check)
 {
 	int i;
 
