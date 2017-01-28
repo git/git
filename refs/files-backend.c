@@ -697,7 +697,7 @@ static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
 
 	if (peel_entry(entry, 0))
 		return -1;
-	hashcpy(peeled->hash, entry->u.value.peeled.hash);
+	oidcpy(peeled, &entry->u.value.peeled);
 	return 0;
 }
 
