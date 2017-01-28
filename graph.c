@@ -463,7 +463,6 @@ static void graph_update_width(struct git_graph *graph,
 static void graph_update_columns(struct git_graph *graph)
 {
 	struct commit_list *parent;
-	struct column *tmp_columns;
 	int max_new_columns;
 	int mapping_idx;
 	int i, seen_this, is_commit_in_columns;
@@ -476,11 +475,8 @@ static void graph_update_columns(struct git_graph *graph)
 	 * We'll re-use the old columns array as storage to compute the new
 	 * columns list for the commit after this one.
 	 */
-	tmp_columns = graph->columns;
-	graph->columns = graph->new_columns;
+	SWAP(graph->columns, graph->new_columns);
 	graph->num_columns = graph->num_new_columns;
-
-	graph->new_columns = tmp_columns;
 	graph->num_new_columns = 0;
 
 	/*
