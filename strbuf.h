@@ -109,9 +109,7 @@ extern void strbuf_attach(struct strbuf *, void *, size_t, size_t);
  */
 static inline void strbuf_swap(struct strbuf *a, struct strbuf *b)
 {
-	struct strbuf tmp = *a;
-	*a = *b;
-	*b = tmp;
+	SWAP(*a, *b);
 }
 
 

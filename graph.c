@@ -997,7 +997,6 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct strbuf 
 static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf *sb)
 {
 	int i;
-	int *tmp_mapping;
 	short used_horizontal = 0;
 	int horizontal_edge = -1;
 	int horizontal_edge_target = -1;
@@ -1132,9 +1131,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct strbuf 
 	/*
 	 * Swap mapping and new_mapping
 	 */
-	tmp_mapping = graph->mapping;
-	graph->mapping = graph->new_mapping;
-	graph->new_mapping = tmp_mapping;
+	SWAP(graph->mapping, graph->new_mapping);
 
 	/*
 	 * If graph->mapping indicates that all of the branch lines

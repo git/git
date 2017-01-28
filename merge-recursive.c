@@ -1390,14 +1390,11 @@ static int process_renames(struct merge_options *o,
 			branch1 = o->branch1;
 			branch2 = o->branch2;
 		} else {
-			struct rename *tmp;
 			renames1 = b_renames;
 			renames2Dst = &a_by_dst;
 			branch1 = o->branch2;
 			branch2 = o->branch1;
-			tmp = ren2;
-			ren2 = ren1;
-			ren1 = tmp;
+			SWAP(ren2, ren1);
 		}
 
 		if (ren1->processed)

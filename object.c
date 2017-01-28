@@ -104,9 +104,7 @@ struct object *lookup_object(const unsigned char *sha1)
 		 * that we do not need to walk the hash table the next
 		 * time we look for it.
 		 */
-		struct object *tmp = obj_hash[i];
-		obj_hash[i] = obj_hash[first];
-		obj_hash[first] = tmp;
+		SWAP(obj_hash[i], obj_hash[first]);
 	}
 	return obj;
 }
