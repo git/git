@@ -5117,11 +5117,9 @@ void diff_change(struct diff_options *options,
 		return;
 
 	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {
-		unsigned tmp;
 		SWAP(old_mode, new_mode);
 		SWAP(old_sha1, new_sha1);
-		tmp = old_sha1_valid; old_sha1_valid = new_sha1_valid;
-			new_sha1_valid = tmp;
+		SWAP(old_sha1_valid, new_sha1_valid);
 		SWAP(old_dirty_submodule, new_dirty_submodule);
 	}
 

@@ -185,8 +185,7 @@ static int queue_diff(struct diff_options *o,
 		struct diff_filespec *d1, *d2;
 
 		if (DIFF_OPT_TST(o, REVERSE_DIFF)) {
-			unsigned tmp;
-			tmp = mode1; mode1 = mode2; mode2 = tmp;
+			SWAP(mode1, mode2);
 			SWAP(name1, name2);
 		}
 
