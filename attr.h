@@ -4,8 +4,9 @@
 /* An attribute is a pointer to this opaque structure */
 struct git_attr;
 
-/* opaque structure used internally for attribute collection */
+/* opaque structures used internally for attribute collection */
 struct all_attrs_item;
+struct attr_stack;
 
 /*
  * Given a string, return the gitattribute object that
@@ -38,6 +39,7 @@ struct attr_check {
 	struct attr_check_item *items;
 	int all_attrs_nr;
 	struct all_attrs_item *all_attrs;
+	struct attr_stack *stack;
 };
 
 extern struct attr_check *attr_check_alloc(void);
