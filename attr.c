@@ -906,32 +906,22 @@ int git_check_attrs(const char *path, int num, struct attr_check_item *check)
 	return 0;
 }
 
-int git_all_attrs(const char *path, int *num, struct attr_check_item **check)
+void git_all_attrs(const char *path, struct attr_check *check)
 {
-	int i, count, j;
+	int i;
 
-	collect_some_attrs(path, 0, NULL);
+	attr_check_reset(check);
+	collect_some_attrs(path, check->nr, check->items);
 
-	/* Count the number of attributes that are set. */
-	count = 0;
 	for (i = 0; i < attr_nr; i++) {
+		const char *name = check_all_attr[i].attr->name;
 		const char *value = check_all_attr[i].value;
-		if (value != ATTR__UNSET && value != ATTR__UNKNOWN)
-			++count;
+		struct attr_check_item *item;
+		if (value == ATTR__UNSET || value == ATTR__UNKNOWN)
+			continue;
+		item = attr_check_append(check, git_attr(name));
+		item->value = value;
 	}
-	*num = count;
-	ALLOC_ARRAY(*check, count);
-	j = 0;
-	for (i = 0; i < attr_nr; i++) {
-		const char *value = check_all_attr[i].value;
-		if (value != ATTR__UNSET && value != ATTR__UNKNOWN) {
-			(*check)[j].attr = check_all_attr[i].attr;
-			(*check)[j].value = value;
-			++j;
-		}
-	}
-
-	return 0;
 }
 
 int git_check_attr(const char *path, struct attr_check *check)
