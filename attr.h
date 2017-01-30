@@ -29,6 +29,22 @@ struct attr_check_item {
 	const char *value;
 };
 
+struct attr_check {
+	int nr;
+	int alloc;
+	struct attr_check_item *items;
+};
+
+extern struct attr_check *attr_check_alloc(void);
+extern struct attr_check *attr_check_initl(const char *, ...);
+
+extern struct attr_check_item *attr_check_append(struct attr_check *check,
+						 const struct git_attr *attr);
+
+extern void attr_check_reset(struct attr_check *check);
+extern void attr_check_clear(struct attr_check *check);
+extern void attr_check_free(struct attr_check *check);
+
 /*
  * Return the name of the attribute represented by the argument.  The
  * return value is a pointer to a null-delimited string that is part
@@ -37,6 +53,7 @@ struct attr_check_item {
 extern const char *git_attr_name(const struct git_attr *);
 
 int git_check_attrs(const char *path, int, struct attr_check_item *);
+extern int git_check_attr(const char *path, struct attr_check *check);
 
 /*
  * Retrieve all attributes that apply to the specified path.  *num
