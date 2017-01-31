@@ -43,13 +43,13 @@ test_expect_success 'HEAD is part of refs, valid objects appear valid' '
 
 test_expect_success 'setup: helpers for corruption tests' '
 	sha1_file() {
-		echo "$*" | sed "s#..#.git/objects/&/#"
+		remainder=${1#??} &&
+		firsttwo=${1%$remainder} &&
+		echo ".git/objects/$firsttwo/$remainder"
 	} &&
 
 	remove_object() {
-		file=$(sha1_file "$*") &&
-		test -e "$file" &&
-		rm -f "$file"
+		rm "$(sha1_file "$1")"
 	}
 '
 
@@ -535,13 +535,6 @@ test_expect_success 'fsck --connectivity-only' '
 	)
 '
 
-remove_loose_object () {
-	sha1="$(git rev-parse "$1")" &&
-	remainder=${sha1#??} &&
-	firsttwo=${sha1%$remainder} &&
-	rm .git/objects/$firsttwo/$remainder
-}
-
 test_expect_success 'fsck --name-objects' '
 	rm -rf name-objects &&
 	git init name-objects &&
@@ -550,11 +543,80 @@ test_expect_success 'fsck --name-objects' '
 		test_commit julius caesar.t &&
 		test_commit augustus &&
 		test_commit caesar &&
-		remove_loose_object $(git rev-parse julius:caesar.t) &&
+		remove_object $(git rev-parse julius:caesar.t) &&
 		test_must_fail git fsck --name-objects >out &&
 		tree=$(git rev-parse --verify julius:) &&
 		grep "$tree (\(refs/heads/master\|HEAD\)@{[0-9]*}:" out
 	)
+'
+
+test_expect_success 'alternate objects are correctly blamed' '
+	test_when_finished "rm -rf alt.git .git/objects/info/alternates" &&
+	git init --bare alt.git &&
+	echo "../../alt.git/objects" >.git/objects/info/alternates &&
+	mkdir alt.git/objects/12 &&
+	>alt.git/objects/12/34567890123456789012345678901234567890 &&
+	test_must_fail git fsck >out 2>&1 &&
+	grep alt.git out
+'
+
+test_expect_success 'fsck errors in packed objects' '
+	git cat-file commit HEAD >basis &&
+	sed "s/</one/" basis >one &&
+	sed "s/</foo/" basis >two &&
+	one=$(git hash-object -t commit -w one) &&
+	two=$(git hash-object -t commit -w two) &&
+	pack=$(
+		{
+			echo $one &&
+			echo $two
+		} | git pack-objects .git/objects/pack/pack
+	) &&
+	test_when_finished "rm -f .git/objects/pack/pack-$pack.*" &&
+	remove_object $one &&
+	remove_object $two &&
+	test_must_fail git fsck 2>out &&
+	grep "error in commit $one.* - bad name" out &&
+	grep "error in commit $two.* - bad name" out &&
+	! grep corrupt out
+'
+
+test_expect_success 'fsck finds problems in duplicate loose objects' '
+	rm -rf broken-duplicate &&
+	git init broken-duplicate &&
+	(
+		cd broken-duplicate &&
+		test_commit duplicate &&
+		# no "-d" here, so we end up with duplicates
+		git repack &&
+		# now corrupt the loose copy
+		file=$(sha1_file "$(git rev-parse HEAD)") &&
+		rm "$file" &&
+		echo broken >"$file" &&
+		test_must_fail git fsck
+	)
+'
+
+test_expect_success 'fsck detects trailing loose garbage (commit)' '
+	git cat-file commit HEAD >basis &&
+	echo bump-commit-sha1 >>basis &&
+	commit=$(git hash-object -w -t commit basis) &&
+	file=$(sha1_file $commit) &&
+	test_when_finished "remove_object $commit" &&
+	chmod +w "$file" &&
+	echo garbage >>"$file" &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "garbage.*$commit" out
+'
+
+test_expect_success 'fsck detects trailing loose garbage (blob)' '
+	blob=$(echo trailing | git hash-object -w --stdin) &&
+	file=$(sha1_file $blob) &&
+	test_when_finished "remove_object $blob" &&
+	chmod +w "$file" &&
+	echo garbage >>"$file" &&
+	test_must_fail git fsck 2>out &&
+	test_i18ngrep "garbage.*$blob" out
 '
 
 test_done
