@@ -426,7 +426,7 @@ static size_t url_match_prefix(const char *url,
 
 static int match_urls(const struct url_info *url,
 		      const struct url_info *url_prefix,
-		      int *exactusermatch)
+		      struct urlmatch_item *match)
 {
 	/*
 	 * url_prefix matches url if the scheme, host and port of url_prefix
@@ -445,8 +445,8 @@ static int match_urls(const struct url_info *url,
 	 * contained a user name or false if url_prefix did not have a
 	 * user name.  If there is no match *exactusermatch is left untouched.
 	 */
-	int usermatched = 0;
-	int pathmatchlen;
+	char usermatched = 0;
+	size_t pathmatchlen;
 
 	if (!url || !url_prefix || !url->url || !url_prefix->url)
 		return 0;
@@ -483,22 +483,38 @@ static int match_urls(const struct url_info *url,
 		url->url + url->path_off,
 		url_prefix->url + url_prefix->path_off,
 		url_prefix->url_len - url_prefix->path_off);
+	if (!pathmatchlen)
+		return 0; /* paths do not match */
 
-	if (pathmatchlen && exactusermatch)
-		*exactusermatch = usermatched;
-	return pathmatchlen;
+	if (match) {
+		match->hostmatch_len = url_prefix->host_len;
+		match->pathmatch_len = pathmatchlen;
+		match->user_matched = usermatched;
+	}
+
+	return 1;
+}
+
+static int cmp_matches(const struct urlmatch_item *a,
+		       const struct urlmatch_item *b)
+{
+	if (a->hostmatch_len != b->hostmatch_len)
+		return a->hostmatch_len < b->hostmatch_len ? -1 : 1;
+	if (a->pathmatch_len != b->pathmatch_len)
+		return a->pathmatch_len < b->pathmatch_len ? -1 : 1;
+	if (a->user_matched != b->user_matched)
+		return b->user_matched ? -1 : 1;
+	return 0;
 }
 
 int urlmatch_config_entry(const char *var, const char *value, void *cb)
 {
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
-	struct urlmatch_item *matched;
+	struct urlmatch_item matched = {0};
 	struct url_info *url = &collect->url;
 	const char *key, *dot;
 	struct strbuf synthkey = STRBUF_INIT;
-	size_t matched_len = 0;
-	int user_matched = 0;
 	int retval;
 
 	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
@@ -516,9 +532,9 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 		free(config_url);
 		if (!norm_url)
 			return 0;
-		matched_len = match_urls(url, &norm_info, &user_matched);
+		retval = match_urls(url, &norm_info, &matched);
 		free(norm_url);
-		if (!matched_len)
+		if (!retval)
 			return 0;
 		key = dot + 1;
 	}
@@ -528,24 +544,18 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 
 	item = string_list_insert(&collect->vars, key);
 	if (!item->util) {
-		matched = xcalloc(1, sizeof(*matched));
-		item->util = matched;
+		item->util = xcalloc(1, sizeof(matched));
 	} else {
-		matched = item->util;
-		/*
-		 * Is our match shorter?  Is our match the same
-		 * length, and without user while the current
-		 * candidate is with user?  Then we cannot use it.
-		 */
-		if (matched_len < matched->matched_len ||
-		    ((matched_len == matched->matched_len) &&
-		     (!user_matched && matched->user_matched)))
+		if (cmp_matches(&matched, item->util) < 0)
+			 /*
+			  * Our match is worse than the old one,
+			  * we cannot use it.
+			  */
 			return 0;
 		/* Otherwise, replace it with this one. */
 	}
 
-	matched->matched_len = matched_len;
-	matched->user_matched = user_matched;
+	memcpy(item->util, &matched, sizeof(matched));
 	strbuf_addstr(&synthkey, collect->section);
 	strbuf_addch(&synthkey, '.');
 	strbuf_addstr(&synthkey, key);

@@ -1177,6 +1177,39 @@ test_expect_success 'urlmatch' '
 	test_cmp expect actual
 '
 
+test_expect_success 'urlmatch favors more specific URLs' '
+	cat >.git/config <<-\EOF &&
+	[http "https://example.com/"]
+		cookieFile = /tmp/root.txt
+	[http "https://example.com/subdirectory"]
+		cookieFile = /tmp/subdirectory.txt
+	[http "https://user@example.com/"]
+		cookieFile = /tmp/user.txt
+	[http "https://averylonguser@example.com/"]
+		cookieFile = /tmp/averylonguser.txt
+	EOF
+
+	echo http.cookiefile /tmp/root.txt >expect &&
+	git config --get-urlmatch HTTP https://example.com >actual &&
+	test_cmp expect actual &&
+
+	echo http.cookiefile /tmp/subdirectory.txt >expect &&
+	git config --get-urlmatch HTTP https://example.com/subdirectory >actual &&
+	test_cmp expect actual &&
+
+	echo http.cookiefile /tmp/subdirectory.txt >expect &&
+	git config --get-urlmatch HTTP https://example.com/subdirectory/nested >actual &&
+	test_cmp expect actual &&
+
+	echo http.cookiefile /tmp/user.txt >expect &&
+	git config --get-urlmatch HTTP https://user@example.com/ >actual &&
+	test_cmp expect actual &&
+
+	echo http.cookiefile /tmp/subdirectory.txt >expect &&
+	git config --get-urlmatch HTTP https://averylonguser@example.com/subdirectory >actual &&
+	test_cmp expect actual
+'
+
 # good section hygiene
 test_expect_failure 'unsetting the last key in a section removes header' '
 	cat >.git/config <<-\EOF &&

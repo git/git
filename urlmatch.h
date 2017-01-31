@@ -34,7 +34,8 @@ struct url_info {
 extern char *url_normalize(const char *, struct url_info *);
 
 struct urlmatch_item {
-	size_t matched_len;
+	size_t hostmatch_len;
+	size_t pathmatch_len;
 	char user_matched;
 };
 
