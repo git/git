@@ -1594,8 +1594,7 @@ static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, stru
 	return (s->reverse) ? -cmp : cmp;
 }
 
-static struct ref_sorting *ref_sorting;
-static int compare_refs(const void *a_, const void *b_)
+static int compare_refs(const void *a_, const void *b_, void *ref_sorting)
 {
 	struct ref_array_item *a = *((struct ref_array_item **)a_);
 	struct ref_array_item *b = *((struct ref_array_item **)b_);
@@ -1611,8 +1610,7 @@ static int compare_refs(const void *a_, const void *b_)
 
 void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
 {
-	ref_sorting = sorting;
-	QSORT(array->items, array->nr, compare_refs);
+	QSORT_S(array->items, array->nr, compare_refs, sorting);
 }
 
 static void append_literal(const char *cp, const char *ep, struct ref_formatting_state *state)
