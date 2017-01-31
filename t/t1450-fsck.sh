@@ -189,14 +189,16 @@ test_expect_success 'commit with NUL in header' '
 '
 
 test_expect_success 'tree object with duplicate entries' '
-	test_when_finished "remove_object \$T" &&
+	test_when_finished "for i in \$T; do remove_object \$i; done" &&
 	T=$(
 		GIT_INDEX_FILE=test-index &&
 		export GIT_INDEX_FILE &&
 		rm -f test-index &&
 		>x &&
 		git add x &&
+		git rev-parse :x &&
 		T=$(git write-tree) &&
+		echo $T &&
 		(
 			git cat-file tree $T &&
 			git cat-file tree $T
@@ -521,9 +523,21 @@ test_expect_success 'fsck --connectivity-only' '
 		touch empty &&
 		git add empty &&
 		test_commit empty &&
+
+		# Drop the index now; we want to be sure that we
+		# recursively notice the broken objects
+		# because they are reachable from refs, not because
+		# they are in the index.
+		rm -f .git/index &&
+
+		# corrupt the blob, but in a way that we can still identify
+		# its type. That lets us see that --connectivity-only is
+		# not actually looking at the contents, but leaves it
+		# free to examine the type if it chooses.
 		empty=.git/objects/e6/9de29bb2d1d6434b8b29ae775ad8c2e48c5391 &&
-		rm -f $empty &&
-		echo invalid >$empty &&
+		blob=$(echo unrelated | git hash-object -w --stdin) &&
+		mv -f $(sha1_file $blob) $empty &&
+
 		test_must_fail git fsck --strict &&
 		git fsck --strict --connectivity-only &&
 		tree=$(git rev-parse HEAD:) &&
@@ -532,6 +546,19 @@ test_expect_success 'fsck --connectivity-only' '
 		rm -f $tree &&
 		echo invalid >$tree &&
 		test_must_fail git fsck --strict --connectivity-only
+	)
+'
+
+test_expect_success 'fsck --connectivity-only with explicit head' '
+	rm -rf connectivity-only &&
+	git init connectivity-only &&
+	(
+		cd connectivity-only &&
+		test_commit foo &&
+		rm -f .git/index &&
+		tree=$(git rev-parse HEAD^{tree}) &&
+		remove_object $(git rev-parse HEAD:foo.t) &&
+		test_must_fail git fsck --connectivity-only $tree
 	)
 '
 
@@ -617,6 +644,49 @@ test_expect_success 'fsck detects trailing loose garbage (blob)' '
 	echo garbage >>"$file" &&
 	test_must_fail git fsck 2>out &&
 	test_i18ngrep "garbage.*$blob" out
+'
+
+# for each of type, we have one version which is referenced by another object
+# (and so while unreachable, not dangling), and another variant which really is
+# dangling.
+test_expect_success 'fsck notices dangling objects' '
+	git init dangling &&
+	(
+		cd dangling &&
+		blob=$(echo not-dangling | git hash-object -w --stdin) &&
+		dblob=$(echo dangling | git hash-object -w --stdin) &&
+		tree=$(printf "100644 blob %s\t%s\n" $blob one | git mktree) &&
+		dtree=$(printf "100644 blob %s\t%s\n" $blob two | git mktree) &&
+		commit=$(git commit-tree $tree) &&
+		dcommit=$(git commit-tree -p $commit $tree) &&
+
+		cat >expect <<-EOF &&
+		dangling blob $dblob
+		dangling commit $dcommit
+		dangling tree $dtree
+		EOF
+
+		git fsck >actual &&
+		# the output order is non-deterministic, as it comes from a hash
+		sort <actual >actual.sorted &&
+		test_cmp expect actual.sorted
+	)
+'
+
+test_expect_success 'fsck $name notices bogus $name' '
+	test_must_fail git fsck bogus &&
+	test_must_fail git fsck $_z40
+'
+
+test_expect_success 'bogus head does not fallback to all heads' '
+	# set up a case that will cause a reachability complaint
+	echo to-be-deleted >foo &&
+	git add foo &&
+	blob=$(git rev-parse :foo) &&
+	test_when_finished "git rm --cached foo" &&
+	remove_object $blob &&
+	test_must_fail git fsck $_z40 >out 2>&1 &&
+	! grep $blob out
 '
 
 test_done
