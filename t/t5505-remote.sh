@@ -764,6 +764,13 @@ test_expect_success 'rename a remote with name prefix of other remote' '
 	)
 '
 
+test_expect_success 'rename succeeds with existing remote.<target>.prune' '
+	git clone one four.four &&
+	test_when_finished git config --global --unset remote.upstream.prune &&
+	git config --global remote.upstream.prune true &&
+	git -C four.four remote rename origin upstream
+'
+
 cat >remotes_origin <<EOF
 URL: $(pwd)/one
 Push: refs/heads/master:refs/heads/upstream

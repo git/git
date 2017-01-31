@@ -255,6 +255,7 @@ static void read_remotes_file(struct remote *remote)
 
 	if (!f)
 		return;
+	remote->configured_in_repo = 1;
 	remote->origin = REMOTE_REMOTES;
 	while (strbuf_getline(&buf, f) != EOF) {
 		const char *v;
@@ -289,6 +290,7 @@ static void read_branches_file(struct remote *remote)
 		return;
 	}
 
+	remote->configured_in_repo = 1;
 	remote->origin = REMOTE_BRANCHES;
 
 	/*
@@ -371,6 +373,8 @@ static int handle_config(const char *key, const char *value, void *cb)
 	}
 	remote = make_remote(name, namelen);
 	remote->origin = REMOTE_CONFIG;
+	if (current_config_scope() == CONFIG_SCOPE_REPO)
+		remote->configured_in_repo = 1;
 	if (!strcmp(subkey, "mirror"))
 		remote->mirror = git_config_bool(key, value);
 	else if (!strcmp(subkey, "skipdefaultupdate"))
@@ -714,9 +718,13 @@ struct remote *pushremote_get(const char *name)
 	return remote_get_1(name, pushremote_for_branch);
 }
 
-int remote_is_configured(struct remote *remote)
+int remote_is_configured(struct remote *remote, int in_repo)
 {
-	return remote && remote->origin;
+	if (!remote)
+		return 0;
+	if (in_repo)
+		return remote->configured_in_repo;
+	return !!remote->origin;
 }
 
 int for_each_remote(each_remote_fn fn, void *priv)

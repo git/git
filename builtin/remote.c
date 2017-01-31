@@ -186,7 +186,7 @@ static int add(int argc, const char **argv)
 	url = argv[1];
 
 	remote = remote_get(name);
-	if (remote_is_configured(remote))
+	if (remote_is_configured(remote, 1))
 		die(_("remote %s already exists."), name);
 
 	strbuf_addf(&buf2, "refs/heads/test:refs/remotes/%s/test", name);
@@ -618,14 +618,14 @@ static int mv(int argc, const char **argv)
 	rename.remote_branches = &remote_branches;
 
 	oldremote = remote_get(rename.old);
-	if (!remote_is_configured(oldremote))
+	if (!remote_is_configured(oldremote, 1))
 		die(_("No such remote: %s"), rename.old);
 
 	if (!strcmp(rename.old, rename.new) && oldremote->origin != REMOTE_CONFIG)
 		return migrate_file(oldremote);
 
 	newremote = remote_get(rename.new);
-	if (remote_is_configured(newremote))
+	if (remote_is_configured(newremote, 1))
 		die(_("remote %s already exists."), rename.new);
 
 	strbuf_addf(&buf, "refs/heads/test:refs/remotes/%s/test", rename.new);
@@ -753,7 +753,7 @@ static int rm(int argc, const char **argv)
 		usage_with_options(builtin_remote_rm_usage, options);
 
 	remote = remote_get(argv[1]);
-	if (!remote_is_configured(remote))
+	if (!remote_is_configured(remote, 1))
 		die(_("No such remote: %s"), argv[1]);
 
 	known_remotes.to_delete = remote;
@@ -1415,7 +1415,7 @@ static int set_remote_branches(const char *remotename, const char **branches,
 	strbuf_addf(&key, "remote.%s.fetch", remotename);
 
 	remote = remote_get(remotename);
-	if (!remote_is_configured(remote))
+	if (!remote_is_configured(remote, 1))
 		die(_("No such remote '%s'"), remotename);
 
 	if (!add_mode && remove_all_fetch_refspecs(remotename, key.buf)) {
@@ -1469,7 +1469,7 @@ static int get_url(int argc, const char **argv)
 	remotename = argv[0];
 
 	remote = remote_get(remotename);
-	if (!remote_is_configured(remote))
+	if (!remote_is_configured(remote, 1))
 		die(_("No such remote '%s'"), remotename);
 
 	url_nr = 0;
@@ -1537,7 +1537,7 @@ static int set_url(int argc, const char **argv)
 		oldurl = newurl;
 
 	remote = remote_get(remotename);
-	if (!remote_is_configured(remote))
+	if (!remote_is_configured(remote, 1))
 		die(_("No such remote '%s'"), remotename);
 
 	if (push_mode) {

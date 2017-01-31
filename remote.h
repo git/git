@@ -15,7 +15,7 @@ struct remote {
 	struct hashmap_entry ent;  /* must be first */
 
 	const char *name;
-	int origin;
+	int origin, configured_in_repo;
 
 	const char *foreign_vcs;
 
@@ -60,7 +60,7 @@ struct remote {
 
 struct remote *remote_get(const char *name);
 struct remote *pushremote_get(const char *name);
-int remote_is_configured(struct remote *remote);
+int remote_is_configured(struct remote *remote, int in_repo);
 
 typedef int each_remote_fn(struct remote *remote, void *priv);
 int for_each_remote(each_remote_fn fn, void *priv);
