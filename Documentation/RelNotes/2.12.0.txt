@@ -11,8 +11,8 @@ Backward compatibility notes.
    is not scheduled to happen in the upcoming release (yet).
 
  * The historical argument order "git merge <msg> HEAD <commit>..."
-   has been deprecated for quite some time, and will be removed in the
-   upcoming release.
+   has been deprecated for quite some time, and will be removed in a
+   future release.
 
 
 Updates since v2.11
@@ -85,6 +85,20 @@ UI, Workflows & Features
    same release were present (e.g. when 2.0, 2.0-beta1, and 2.0-beta2
    are there and the code needs to compare 2.0-beta1 and 2.0-beta2).
 
+ * "git submodule push" learned "--recurse-submodules=only option to
+   push submodules out without pushing the top-level superproject.
+
+ * "git tag" and "git verify-tag" learned to put GPG verification
+   status in their "--format=<placeholders>" output format.
+
+ * An ancient repository conversion tool left in contrib/ has been
+   removed.
+
+ * "git show-ref HEAD" used with "--verify" because the user is not
+   interested in seeing refs/remotes/origin/HEAD, and used with
+   "--head" because the user does not want HEAD to be filtered out,
+   i.e. "git show-ref --head --verify HEAD", did not work as expected.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -130,6 +144,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * Adjust documentation to help AsciiDoctor render better while not
    breaking the rendering done by AsciiDoc.
+
+ * The sequencer machinery has been further enhanced so that a later
+   set of patches can start using it to reimplement "rebase -i".
+
+ * Update the definition of the MacOSX test environment used by
+   TravisCI.
+   (merge 672f51cb83 ls/travis-p4-on-macos later to maint).
+
+ * Rewrite a scripted porcelain "git difftool" in C.
+   (merge 94d3997ecc js/difftool-builtin later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -327,9 +351,44 @@ notes for details).
    a PRE regexp engine.
    (merge 7675c7bd01 jk/grep-e-could-be-extended-beyond-posix later to maint).
 
+ * An error message with an ASCII control character like '\r' in it
+   can alter the message to hide its early part, which is problematic
+   when a remote side gives such an error message that the local side
+   will relay with a "remote: " prefix.
+   (merge f290089879 jk/vreport-sanitize later to maint).
+
+ * "git fsck" inspects loose objects more carefully now.
+   (merge cce044df7f jk/loose-object-fsck later to maint).
+
+ * A crashing bug introduced in v2.11 timeframe has been found (it is
+   triggerable only in fast-import) and fixed.
+   (merge abd5a00268 jk/clear-delta-base-cache-fix later to maint).
+
+ * With an anticipatory tweak for remotes defined in ~/.gitconfig
+   (e.g. "remote.origin.prune" set to true, even though there may or
+   may not actually be "origin" remote defined in a particular Git
+   repository), "git remote rename" and other commands misinterpreted
+   and behaved as if such a non-existing remote actually existed.
+   (merge e459b073fb js/remote-rename-with-half-configured-remote later to maint).
+
+ * A few codepaths had to rely on a global variable when sorting
+   elements of an array because sort(3) API does not allow extra data
+   to be passed to the comparison function.  Use qsort_s() when
+   natively available, and a fallback implementation of it when not,
+   to eliminate the need, which is a prerequisite for making the
+   codepath reentrant.
+   (merge 83fc4d64fe rs/qsort-s later to maint).
+
+ * "git fsck --connectivity-check" was not working at all.
+   (merge a2b22854bd jk/fsck-connectivity-check-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
    (merge 384f1a167b sb/unpack-trees-cleanup later to maint).
    (merge 3f05402ac0 ad/bisect-terms later to maint).
    (merge 874444b704 rh/diff-orderfile-doc later to maint).
    (merge c68d2d7c2b ws/request-pull-code-cleanup later to maint).
+   (merge 007ac54401 js/exec-path-coverity-workaround later to maint).
+   (merge 1797dc5176 jk/coding-guidelines-update later to maint).
+   (merge 1d3f065e0e js/mingw-isatty later to maint).
+   (merge 830c912a0e sb/in-core-index-doc later to maint).
