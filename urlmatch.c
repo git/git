@@ -104,7 +104,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 	struct strbuf norm;
 	size_t spanned;
 	size_t scheme_len, user_off=0, user_len=0, passwd_off=0, passwd_len=0;
-	size_t host_off=0, host_len=0, port_len=0, path_off, path_len, result_len;
+	size_t host_off=0, host_len=0, port_off=0, port_len=0, path_off, path_len, result_len;
 	const char *slash_ptr, *at_ptr, *colon_ptr, *path_start;
 	char *result;
 
@@ -263,6 +263,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 				return NULL;
 			}
 			strbuf_addch(&norm, ':');
+			port_off = norm.len;
 			strbuf_add(&norm, url, slash_ptr - url);
 			port_len = slash_ptr - url;
 		}
@@ -270,7 +271,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 		url = slash_ptr;
 	}
 	if (host_off)
-		host_len = norm.len - host_off;
+		host_len = norm.len - host_off - (port_len ? port_len + 1 : 0);
 
 
 	/*
@@ -378,6 +379,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 		out_info->passwd_len = passwd_len;
 		out_info->host_off = host_off;
 		out_info->host_len = host_len;
+		out_info->port_off = port_off;
 		out_info->port_len = port_len;
 		out_info->path_off = path_off;
 		out_info->path_len = path_len;
@@ -464,11 +466,17 @@ static int match_urls(const struct url_info *url,
 		usermatched = 1;
 	}
 
-	/* check the host and port */
+	/* check the host */
 	if (url_prefix->host_len != url->host_len ||
 	    strncmp(url->url + url->host_off,
 		    url_prefix->url + url_prefix->host_off, url->host_len))
-		return 0; /* host names and/or ports do not match */
+		return 0; /* host names do not match */
+
+	/* check the port */
+	if (url_prefix->port_len != url->port_len ||
+	    strncmp(url->url + url->port_off,
+		    url_prefix->url + url_prefix->port_off, url->port_len))
+		return 0; /* ports do not match */
 
 	/* check the path */
 	pathmatchlen = url_match_prefix(
