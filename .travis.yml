@@ -75,20 +75,12 @@ before_install:
       popd
       ;;
     osx)
-      brew_force_set_latest_binary_hash () {
-        FORMULA=$1
-        SHA=$(brew fetch --force $FORMULA 2>&1 | grep ^SHA256: | cut -d ' ' -f 2)
-        sed -E -i.bak "s/sha256 \"[0-9a-f]{64}\"/sha256 \"$SHA\"/g" \
-          "$(brew --repository homebrew/homebrew-binary)/$FORMULA.rb"
-      }
       brew update --quiet
-      brew tap homebrew/binary --quiet
-      brew_force_set_latest_binary_hash perforce
-      brew_force_set_latest_binary_hash perforce-server
       # Uncomment this if you want to run perf tests:
       # brew install gnu-time
-      brew install git-lfs perforce-server perforce gettext
+      brew install git-lfs gettext
       brew link --force gettext
+      brew install caskroom/cask/perforce
       ;;
     esac;
     echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)";
