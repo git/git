@@ -63,7 +63,7 @@ static int append_normalized_escapes(struct strbuf *buf,
 	return 1;
 }
 
-char *url_normalize(const char *url, struct url_info *out_info)
+static char *url_normalize_1(const char *url, struct url_info *out_info, char allow_globs)
 {
 	/*
 	 * Normalize NUL-terminated url using the following rules:
@@ -191,7 +191,12 @@ char *url_normalize(const char *url, struct url_info *out_info)
 		strbuf_release(&norm);
 		return NULL;
 	}
-	spanned = strspn(url, URL_HOST_CHARS);
+
+	if (allow_globs)
+		spanned = strspn(url, URL_HOST_CHARS "*");
+	else
+		spanned = strspn(url, URL_HOST_CHARS);
+
 	if (spanned < colon_ptr - url) {
 		/* Host name has invalid characters */
 		if (out_info) {
@@ -378,6 +383,11 @@ char *url_normalize(const char *url, struct url_info *out_info)
 		out_info->path_len = path_len;
 	}
 	return result;
+}
+
+char *url_normalize(const char *url, struct url_info *out_info)
+{
+	return url_normalize_1(url, out_info, 0);
 }
 
 static size_t url_match_prefix(const char *url,
