@@ -188,7 +188,9 @@ Returns the removed entry, or NULL if not found.
 `void *hashmap_iter_next(struct hashmap_iter *iter)`::
 `void *hashmap_iter_first(struct hashmap *map, struct hashmap_iter *iter)`::
 
-	Used to iterate over all entries of a hashmap.
+	Used to iterate over all entries of a hashmap. Note that it is
+	not safe to add or remove entries to the hashmap while
+	iterating.
 +
 `hashmap_iter_init` initializes a `hashmap_iter` structure.
 +
