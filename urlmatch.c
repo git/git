@@ -63,6 +63,49 @@ static int append_normalized_escapes(struct strbuf *buf,
 	return 1;
 }
 
+static const char *end_of_token(const char *s, int c, size_t n)
+{
+	const char *next = memchr(s, c, n);
+	if (!next)
+		next = s + n;
+	return next;
+}
+
+static int match_host(const struct url_info *url_info,
+		      const struct url_info *pattern_info)
+{
+	const char *url = url_info->url + url_info->host_off;
+	const char *pat = pattern_info->url + pattern_info->host_off;
+	int url_len = url_info->host_len;
+	int pat_len = pattern_info->host_len;
+
+	while (url_len && pat_len) {
+		const char *url_next = end_of_token(url, '.', url_len);
+		const char *pat_next = end_of_token(pat, '.', pat_len);
+
+		if (pat_next == pat + 1 && pat[0] == '*')
+			/* wildcard matches anything */
+			;
+		else if ((pat_next - pat) == (url_next - url) &&
+			 !memcmp(url, pat, url_next - url))
+			/* the components are the same */
+			;
+		else
+			return 0; /* found an unmatch */
+
+		if (url_next < url + url_len)
+			url_next++;
+		url_len -= url_next - url;
+		url = url_next;
+		if (pat_next < pat + pat_len)
+			pat_next++;
+		pat_len -= pat_next - pat;
+		pat = pat_next;
+	}
+
+	return (!url_len && !pat_len);
+}
+
 static char *url_normalize_1(const char *url, struct url_info *out_info, char allow_globs)
 {
 	/*
@@ -467,9 +510,7 @@ static int match_urls(const struct url_info *url,
 	}
 
 	/* check the host */
-	if (url_prefix->host_len != url->host_len ||
-	    strncmp(url->url + url->host_off,
-		    url_prefix->url + url_prefix->host_off, url->host_len))
+	if (!match_host(url, url_prefix))
 		return 0; /* host names do not match */
 
 	/* check the port */
@@ -528,7 +569,7 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 		struct url_info norm_info;
 
 		config_url = xmemdupz(key, dot - key);
-		norm_url = url_normalize(config_url, &norm_info);
+		norm_url = url_normalize_1(config_url, &norm_info, 1);
 		free(config_url);
 		if (!norm_url)
 			return 0;
