@@ -554,10 +554,17 @@ static void dos_time(time_t *time, int *dos_date, int *dos_time)
 	*dos_time = t->tm_sec / 2 + t->tm_min * 32 + t->tm_hour * 2048;
 }
 
+static int archive_zip_config(const char *var, const char *value, void *data)
+{
+	return userdiff_config(var, value);
+}
+
 static int write_zip_archive(const struct archiver *ar,
 			     struct archiver_args *args)
 {
 	int err;
+
+	git_config(archive_zip_config, NULL);
 
 	dos_time(&args->time, &zip_date, &zip_time);
 
