@@ -2218,12 +2218,16 @@ static uintmax_t do_change_note_fanout(
 		char *fullpath, unsigned int fullpath_len,
 		unsigned char fanout)
 {
-	struct tree_content *t = root->tree;
+	struct tree_content *t;
 	struct tree_entry *e, leaf;
 	unsigned int i, tmp_hex_sha1_len, tmp_fullpath_len;
 	uintmax_t num_notes = 0;
 	unsigned char sha1[20];
 	char realpath[60];
+
+	if (!root->tree)
+		load_tree(root);
+	t = root->tree;
 
 	for (i = 0; t && i < t->entry_count; i++) {
 		e = t->entries[i];
@@ -2276,8 +2280,6 @@ static uintmax_t do_change_note_fanout(
 				leaf.tree);
 		} else if (S_ISDIR(e->versions[1].mode)) {
 			/* This is a subdir that may contain note entries */
-			if (!e->tree)
-				load_tree(e);
 			num_notes += do_change_note_fanout(orig_root, e,
 				hex_sha1, tmp_hex_sha1_len,
 				fullpath, tmp_fullpath_len, fanout);
