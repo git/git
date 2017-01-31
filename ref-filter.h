@@ -109,4 +109,11 @@ struct ref_sorting *ref_default_sorting(void);
 /*  Function to parse --merged and --no-merged options */
 int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset);
 
+/*
+ * Print a single ref, outside of any ref-filter. Note that the
+ * name must be a fully qualified refname.
+ */
+void pretty_print_ref(const char *name, const unsigned char *sha1,
+		const char *format);
+
 #endif /*  REF_FILTER_H  */
