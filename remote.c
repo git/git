@@ -1716,9 +1716,6 @@ static const char *branch_get_push_1(struct branch *branch, struct strbuf *err)
 {
 	struct remote *remote;
 
-	if (!branch)
-		return error_buf(err, _("HEAD does not point to a branch"));
-
 	remote = remote_get(pushremote_for_branch(branch, NULL));
 	if (!remote)
 		return error_buf(err,
@@ -1778,6 +1775,9 @@ static const char *branch_get_push_1(struct branch *branch, struct strbuf *err)
 
 const char *branch_get_push(struct branch *branch, struct strbuf *err)
 {
+	if (!branch)
+		return error_buf(err, _("HEAD does not point to a branch"));
+
 	if (!branch->push_tracking_ref)
 		branch->push_tracking_ref = branch_get_push_1(branch, err);
 	return branch->push_tracking_ref;
