@@ -18,6 +18,12 @@ static const char *const git_repack_usage[] = {
 	NULL
 };
 
+static const char incremental_bitmap_conflict_error[] = N_(
+"Incremental repacks are incompatible with bitmap indexes.  Use\n"
+"--no-write-bitmap-index or disable the pack.writebitmaps configuration."
+);
+
+
 static int repack_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "repack.usedeltabaseoffset")) {
@@ -205,6 +211,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	if (pack_kept_objects < 0)
 		pack_kept_objects = write_bitmaps;
+
+	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE))
+		die(_(incremental_bitmap_conflict_error));
 
 	packdir = mkpathdup("%s/pack", get_object_directory());
 	packtmp = mkpathdup("%s/.tmp-%d-pack", packdir, (int)getpid());
