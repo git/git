@@ -212,8 +212,10 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 		len--;
 	}
 
-	if (!len)
-		return -1;
+	if (!len) {
+		dst[0] = '\0';
+		return 0;
+	}
 
 	if (!strncasecmp(ptr, "reset", len)) {
 		xsnprintf(dst, end - dst, GIT_COLOR_RESET);
