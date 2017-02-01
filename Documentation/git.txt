@@ -1020,6 +1020,12 @@ Usually it is easier to configure any desired options through your
 personal `.ssh/config` file.  Please consult your ssh documentation
 for further details.
 
+`GIT_SSH_VARIANT`::
+	If this environment variable is set, it overrides Git's autodetection
+	whether `GIT_SSH`/`GIT_SSH_COMMAND`/`core.sshCommand` refer to OpenSSH,
+	plink or tortoiseplink. This variable overrides the config setting
+	`ssh.variant` that serves the same purpose.
+
 `GIT_ASKPASS`::
 	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
