@@ -109,7 +109,7 @@ static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
 static int http_proactive_auth;
 static const char *user_agent;
-static int curl_empty_auth;
+static int curl_empty_auth = 1;
 
 enum http_follow_config http_follow_config = HTTP_FOLLOW_INITIAL;
 
