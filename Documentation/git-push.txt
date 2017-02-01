@@ -272,7 +272,7 @@ origin +master` to force a push to the `master` branch). See the
 	standard error stream is not directed to a terminal.
 
 --no-recurse-submodules::
---recurse-submodules=check|on-demand|no::
+--recurse-submodules=check|on-demand|only|no::
 	May be used to make sure all submodule commits used by the
 	revisions to be pushed are available on a remote-tracking branch.
 	If 'check' is used Git will verify that all submodule commits that
@@ -280,11 +280,12 @@ origin +master` to force a push to the `master` branch). See the
 	remote of the submodule. If any commits are missing the push will
 	be aborted and exit with non-zero status. If 'on-demand' is used
 	all submodules that changed in the revisions to be pushed will be
-	pushed. If on-demand was not able to push all necessary revisions
-	it will also be aborted and exit with non-zero status. A value of
-	'no' or using `--no-recurse-submodules` can be used to override the
-	push.recurseSubmodules configuration variable when no submodule
-	recursion is required.
+	pushed. If on-demand was not able to push all necessary revisions it will
+	also be aborted and exit with non-zero status. If 'only' is used all
+	submodules will be recursively pushed while the superproject is left
+	unpushed. A value of 'no' or using `--no-recurse-submodules` can be used
+	to override the push.recurseSubmodules configuration variable when no
+	submodule recursion is required.
 
 --[no-]verify::
 	Toggle the pre-push hook (see linkgit:githooks[5]).  The
