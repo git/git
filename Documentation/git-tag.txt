@@ -152,6 +152,9 @@ This option is only applicable when listing tags without annotation lines.
 --create-reflog::
 	Create a reflog for the tag. To globally enable reflogs for tags, see
 	`core.logAllRefUpdates` in linkgit:git-config[1].
+	The negated form `--no-create-reflog` only overrides an earlier
+	`--create-reflog`, but currently does not negate the setting of
+	`core.logallrefupdates`.
 
 <tagname>::
 	The name of the tag to create, delete, or describe.
