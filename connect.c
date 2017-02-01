@@ -691,6 +691,44 @@ static const char *get_ssh_command(void)
 	return NULL;
 }
 
+static int handle_ssh_variant(const char *ssh_command, int is_cmdline,
+			      int *port_option, int *needs_batch)
+{
+	const char *variant;
+	char *p = NULL;
+
+	if (!is_cmdline) {
+		p = xstrdup(ssh_command);
+		variant = basename(p);
+	} else {
+		const char **ssh_argv;
+
+		p = xstrdup(ssh_command);
+		if (split_cmdline(p, &ssh_argv)) {
+			variant = basename((char *)ssh_argv[0]);
+			/*
+			 * At this point, variant points into the buffer
+			 * referenced by p, hence we do not need ssh_argv
+			 * any longer.
+			 */
+			free(ssh_argv);
+		} else
+			return 0;
+	}
+
+	if (!strcasecmp(variant, "plink") ||
+	    !strcasecmp(variant, "plink.exe"))
+		*port_option = 'P';
+	else if (!strcasecmp(variant, "tortoiseplink") ||
+		 !strcasecmp(variant, "tortoiseplink.exe")) {
+		*port_option = 'P';
+		*needs_batch = 1;
+	}
+	free(p);
+
+	return 1;
+}
+
 /*
  * This returns a dummy child_process if the transport protocol does not
  * need fork(2), or a struct child_process object if it does.  Once done,
@@ -773,7 +811,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 			int port_option = 'p';
 			char *ssh_host = hostandport;
 			const char *port = NULL;
-			char *ssh_argv0 = NULL;
 			transport_check_allowed("ssh");
 			get_host_and_port(&ssh_host, &port);
 
@@ -794,15 +831,10 @@ struct child_process *git_connect(int fd[2], const char *url,
 			}
 
 			ssh = get_ssh_command();
-			if (ssh) {
-				char *split_ssh = xstrdup(ssh);
-				const char **ssh_argv;
-
-				if (split_cmdline(split_ssh, &ssh_argv))
-					ssh_argv0 = xstrdup(ssh_argv[0]);
-				free(split_ssh);
-				free((void *)ssh_argv);
-			} else {
+			if (ssh)
+				handle_ssh_variant(ssh, 1, &port_option,
+						   &needs_batch);
+			else {
 				/*
 				 * GIT_SSH is the no-shell version of
 				 * GIT_SSH_COMMAND (and must remain so for
@@ -813,22 +845,10 @@ struct child_process *git_connect(int fd[2], const char *url,
 				ssh = getenv("GIT_SSH");
 				if (!ssh)
 					ssh = "ssh";
-
-				ssh_argv0 = xstrdup(ssh);
-			}
-
-			if (ssh_argv0) {
-				const char *base = basename(ssh_argv0);
-
-				if (!strcasecmp(base, "tortoiseplink") ||
-				    !strcasecmp(base, "tortoiseplink.exe")) {
-					port_option = 'P';
-					needs_batch = 1;
-				} else if (!strcasecmp(base, "plink") ||
-					   !strcasecmp(base, "plink.exe")) {
-					port_option = 'P';
-				}
-				free(ssh_argv0);
+				else
+					handle_ssh_variant(ssh, 0,
+							   &port_option,
+							   &needs_batch);
 			}
 
 			argv_array_push(&conn->args, ssh);
