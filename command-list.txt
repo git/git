@@ -107,7 +107,6 @@ git-read-tree                           plumbingmanipulators
 git-rebase                              mainporcelain           history
 git-receive-pack                        synchelpers
 git-reflog                              ancillarymanipulators
-git-relink                              ancillarymanipulators
 git-remote                              ancillarymanipulators
 git-repack                              ancillarymanipulators
 git-replace                             ancillarymanipulators
