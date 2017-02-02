@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2017, #06; Tue, 31)
-X-master-at: 8f60064c1f538f06e1c579cbd9840b86b10bcd3d
-X-next-at: d13081a61a6c1d42f310f616f74992dc2def6583
+Subject: What's cooking in git.git (Feb 2017, #01; Thu, 2)
+X-master-at: 8a8f121049fdd881981799755a041b3f81449805
+X-next-at: 3e11673fcc32f542ad8901f843cb6952beb23c51
 
-What's cooking in git.git (Jan 2017, #06; Tue, 31)
+What's cooking in git.git (Feb 2017, #01; Thu, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,12 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Two biggies from Dscho are now in 'master'.  Another thanks goes to
-him for pointing out that I had a wrong version of isatty() fix
-earlier in 'maint' and 'master', which is now fixed by merging the
-updated one in both of these branches.  Please give the tip of
-'maint' a quick look, as I want to tag and push out 2.11.1 later
-this week, probably at the same time as 2.12-rc0 goes out.
+The tip of 'master' has most of the topics (and all the big ones)
+that should be in the upcoming release.  I'll tag 2.12-rc0 sometime
+tomorrow.  On the 'maint' front, Git 2.11.1 has been tagged with
+bugfixes that are already in 'master'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -27,356 +25,142 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bw/push-submodule-only (2016-12-20) 3 commits
-  (merged to 'next' on 2017-01-23 at d6cd1c60ae)
- + push: add option to push only submodules
- + submodules: add RECURSE_SUBMODULES_ONLY value
- + transport: reformat flag #defines to be more readable
+* bc/use-asciidoctor-opt (2017-01-31) 8 commits
+  (merged to 'next' on 2017-01-31 at f2a641f6f3)
+ + Documentation: implement linkgit macro for Asciidoctor
+ + Makefile: add a knob to enable the use of Asciidoctor
+ + Documentation: move dblatex arguments into variable
+ + Documentation: add XSLT to fix DocBook for Texinfo
+ + Documentation: sort sources for gitman.texi
+ + Documentation: remove unneeded argument in cat-texi.perl
+ + Documentation: modernize cat-texi.perl
+ + Documentation: fix warning in cat-texi.perl
 
- "git submodule push" learned "--recurse-submodules=only option to
- push submodules out without pushing the top-level superproject.
+ Asciidoctor, an alternative reimplementation of AsciiDoc, still
+ needs some changes to work with documents meant to be formatted
+ with AsciiDoc.  "make USE_ASCIIDOCTOR=YesPlease" to use it out of
+ the box to document our pages is getting closer to reality.
 
-
-* jk/clear-delta-base-cache-fix (2017-01-19) 1 commit
-  (merged to 'next' on 2017-01-23 at 5f4af2b0a5)
- + clear_delta_base_cache(): don't modify hashmap while iterating
-
- A crashing bug introduced in v2.11 timeframe has been found (it is
- triggerable only in fast-import) and fixed.
-
-
-* jk/coding-guidelines-update (2017-01-17) 1 commit
-  (merged to 'next' on 2017-01-23 at 8c57afa288)
- + CodingGuidelines: clarify multi-line brace style
-
- Developer doc update.
-
-
-* jk/fsck-connectivity-check-fix (2017-01-26) 9 commits
-  (merged to 'next' on 2017-01-26 at dd03f7a17f)
- + fsck: lazily load types under --connectivity-only
- + fsck: move typename() printing to its own function
-  (merged to 'next' on 2017-01-25 at f3d7d93785)
- + t1450: use "mv -f" within loose object directory
-  (merged to 'next' on 2017-01-23 at e8e9b76b84)
- + fsck: check HAS_OBJ more consistently
- + fsck: do not fallback "git fsck <bogus>" to "git fsck"
- + fsck: tighten error-checks of "git fsck <head>"
- + fsck: prepare dummy objects for --connectivity-check
- + fsck: report trees as dangling
- + t1450: clean up sub-objects in duplicate-entry test
-
- "git fsck --connectivity-check" was not working at all.
-
-
-* jk/loose-object-fsck (2017-01-15) 6 commits
-  (merged to 'next' on 2017-01-23 at 4302ad090d)
- + fsck: detect trailing garbage in all object types
- + fsck: parse loose object paths directly
- + sha1_file: add read_loose_object() function
- + t1450: test fsck of packed objects
- + sha1_file: fix error message for alternate objects
- + t1450: refactor loose-object removal
-
- "git fsck" inspects loose objects more carefully now.
-
-
-* jk/vreport-sanitize (2017-01-11) 2 commits
-  (merged to 'next' on 2017-01-18 at 4bbf370981)
- + vreport: sanitize ASCII control chars
- + Revert "vreportf: avoid intermediate buffer"
-
- An error message with an ASCII control character like '\r' in it
- can alter the message to hide its early part, which is problematic
- when a remote side gives such an error message that the local side
- will relay with a "remote: " prefix.
-
-
-* js/difftool-builtin (2017-01-25) 4 commits
-  (merged to 'next' on 2017-01-25 at 87d2a0976a)
- + difftool: hack around -Wzero-length-format warning
-  (merged to 'next' on 2017-01-23 at 6f4810dbd9)
- + difftool: retire the scripted version
- + difftool: implement the functionality in the builtin
- + difftool: add a skeleton for the upcoming builtin
-
- Rewrite a scripted porcelain "git difftool" in C.
-
-
-* js/exec-path-coverity-workaround (2017-01-09) 2 commits
-  (merged to 'next' on 2017-01-23 at bf5dfbf860)
- + git_exec_path: do not return the result of getenv()
- + git_exec_path: avoid Coverity warning about unfree()d result
-
- Code cleanup.
- Split out of another topic.
-
-
-* js/mingw-isatty (2017-01-18) 1 commit
-  (merged to 'next' on 2017-01-23 at ae0f80e058)
- + mingw: follow-up to "replace isatty() hack"
-
- An update to a topic that is already in 'master'.
-
-
-* js/remote-rename-with-half-configured-remote (2017-01-19) 2 commits
-  (merged to 'next' on 2017-01-23 at a1b655dbac)
- + remote rename: more carefully determine whether a remote is configured
- + remote rename: demonstrate a bogus "remote exists" bug
-
- With anticipatory tweaking for remotes defined in ~/.gitconfig
- (e.g. "remote.origin.prune" set to true, even though there may or
- may not actually be "origin" remote defined in a particular Git
- repository), "git remote rename" and other commands misinterpreted
- and behaved as if such a non-existing remote actually existed.
-
-
-* js/sequencer-i-countdown-3 (2017-01-17) 38 commits
-  (merged to 'next' on 2017-01-23 at 251dd15139)
- + sequencer (rebase -i): write out the final message
- + sequencer (rebase -i): write the progress into files
- + sequencer (rebase -i): show the progress
- + sequencer (rebase -i): suggest --edit-todo upon unknown command
- + sequencer (rebase -i): show only failed cherry-picks' output
- + sequencer (rebase -i): show only failed `git commit`'s output
- + sequencer: use run_command() directly
- + sequencer: update reading author-script
- + sequencer (rebase -i): differentiate between comments and 'noop'
- + sequencer (rebase -i): implement the 'drop' command
- + sequencer (rebase -i): allow rescheduling commands
- + sequencer (rebase -i): respect strategy/strategy_opts settings
- + sequencer (rebase -i): respect the rebase.autostash setting
- + sequencer (rebase -i): run the post-rewrite hook, if needed
- + sequencer (rebase -i): record interrupted commits in rewritten, too
- + sequencer (rebase -i): copy commit notes at end
- + sequencer (rebase -i): set the reflog message consistently
- + sequencer (rebase -i): refactor setting the reflog message
- + sequencer (rebase -i): allow fast-forwarding for edit/reword
- + sequencer (rebase -i): implement the 'reword' command
- + sequencer (rebase -i): leave a patch upon error
- + sequencer (rebase -i): update refs after a successful rebase
- + sequencer (rebase -i): the todo can be empty when continuing
- + sequencer (rebase -i): skip some revert/cherry-pick specific code path
- + sequencer (rebase -i): remove CHERRY_PICK_HEAD when no longer needed
- + sequencer (rebase -i): allow continuing with staged changes
- + sequencer (rebase -i): write an author-script file
- + sequencer (rebase -i): implement the short commands
- + sequencer (rebase -i): add support for the 'fixup' and 'squash' commands
- + sequencer (rebase -i): write the 'done' file
- + sequencer (rebase -i): learn about the 'verbose' mode
- + sequencer (rebase -i): implement the 'exec' command
- + sequencer (rebase -i): implement the 'edit' command
- + sequencer (rebase -i): implement the 'noop' command
- + sequencer: support a new action: 'interactive rebase'
- + sequencer: use a helper to find the commit message
- + sequencer: move "else" keyword onto the same line as preceding brace
- + sequencer: avoid unnecessary curly braces
-
- The sequencer machinery has been further enhanced so that a later
- set of patches can start using it to reimplement "rebase -i".
- I think I've said everything that needs to be said on this topic.
-
-
-* ls/travis-p4-on-macos (2017-01-23) 1 commit
-  (merged to 'next' on 2017-01-23 at 2d51987faa)
- + travis-ci: fix Perforce install on macOS
-
- Update the definition of the MacOSX test environment used by
- TravisCI.
-
-
-* rs/qsort-s (2017-01-23) 5 commits
-  (merged to 'next' on 2017-01-23 at 7e2813848b)
- + ref-filter: use QSORT_S in ref_array_sort()
- + string-list: use QSORT_S in string_list_sort()
- + perf: add basic sort performance test
- + add QSORT_S
- + compat: add qsort_s()
-
- A few codepaths had to rely on a global variable when sorting
- elements of an array because sort(3) API does not allow extra data
- to be passed to the comparison function.  Use qsort_s() when
- natively available, and a fallback implementation of it when not,
- to eliminate the need, which is a prerequisite for making the
- codepath reentrant.
-
-
-* sb/in-core-index-doc (2017-01-19) 4 commits
-  (merged to 'next' on 2017-01-23 at 30224463e8)
- + documentation: retire unfinished documentation
- + cache.h: document add_[file_]to_index
- + cache.h: document remove_index_entry_at
- + cache.h: document index_name_pos
-
- Documentation and in-code comments updates.
-
-
-* sb/retire-convert-objects-from-contrib (2017-01-19) 1 commit
-  (merged to 'next' on 2017-01-23 at decc1e237d)
- + contrib: remove git-convert-objects
-
- Remove an ancient tool left in contrib/.
-
-
-* st/verify-tag (2017-01-18) 6 commits
-  (merged to 'next' on 2017-01-23 at 2810959427)
- + t/t7004-tag: Add --format specifier tests
- + t/t7030-verify-tag: Add --format specifier tests
- + builtin/tag: add --format argument for tag -v
- + builtin/verify-tag: add --format to verify-tag
- + ref-filter: add function to print single ref_array_item
- + gpg-interface, tag: add GPG_VERIFY_OMIT_STATUS flag
-
- "git tag" and "git verify-tag" learned to put GPG verification
- status in their "--format=<placeholders>" output format.
-
-
-* vp/show-ref-verify-head (2017-01-23) 6 commits
-  (merged to 'next' on 2017-01-23 at af6dd9d239)
- + show-ref: remove a stale comment
- + show-ref: remove dead `if (verify)' check
- + show-ref: detect dangling refs under --verify as well
- + show-ref: move --quiet handling into show_one()
- + show-ref: allow -d to work with --verify
- + show-ref: accept HEAD with --verify
-
- "git show-ref HEAD" used with "--verify" because the user is not
- interested in seeing refs/remotes/origin/HEAD, and used with
- "--head" because the user does not want HEAD to be filtered out,
- i.e. "git show-ref --head --verify HEAD", did not work as expected.
-
---------------------------------------------------
-[New Topics]
 
 * cw/doc-sign-off (2017-01-27) 1 commit
- - doc: clarify distinction between sign-off and pgp-signing
+  (merged to 'next' on 2017-01-31 at 133cc2886d)
+ + doc: clarify distinction between sign-off and pgp-signing
 
  Doc update.
 
- Will merge to 'next'.
 
+* ep/commit-static-buf-cleanup (2017-01-31) 2 commits
+  (merged to 'next' on 2017-01-31 at 02d3c25219)
+ + builtin/commit.c: switch to strbuf, instead of snprintf()
+ + builtin/commit.c: remove the PATH_MAX limitation via dynamic allocation
 
-* jk/delta-chain-limit (2017-01-27) 2 commits
- - pack-objects: convert recursion to iteration in break_delta_chain()
- - pack-objects: enforce --depth limit in reused deltas
-
- "git repack --depth=<n>" for a long time busted the specified depth
- when reusing delta from existing packs.  This has been corrected.
-
- Will merge to 'next'.
-
-
-* js/re-running-failed-tests (2017-01-27) 1 commit
- - t/Makefile: add a rule to re-run previously-failed tests
-
- "make -C t failed" will now run only the tests that failed in the
- previous run.  This is usable only when prove is not use, and gives
- a useless error message when run after "make clean".
-
- Will merge to 'next'.
-
-
-* js/unzip-in-usr-bin-workaround (2017-01-27) 1 commit
- - test-lib: on FreeBSD, look for unzip(1) in /usr/local/bin/
-
- Test tweak for FreeBSD where /usr/bin/unzip is unsuitable to run
- our tests but /usr/local/bin/unzip is usable.
-
- Will merge to 'next'.
+ Code clean-up.
 
 
 * gv/mingw-p4-mapuser (2017-01-30) 1 commit
- - git-p4: fix git-p4.mapUser on Windows
+  (merged to 'next' on 2017-01-31 at 5a9f2c96f6)
+ + git-p4: fix git-p4.mapUser on Windows
 
  "git p4" did not work well with multiple git-p4.mapUser entries on
  Windows.
 
- Will merge to 'next'.
-
 
 * hv/mingw-help-is-executable (2017-01-30) 1 commit
- - help: improve is_executable() on Windows
+  (merged to 'next' on 2017-01-31 at 89aae8d018)
+ + help: improve is_executable() on Windows
 
  "git help" enumerates executable files in $PATH; the implementation
  of "is this file executable?" on Windows has been optimized.
 
- Will merge to 'next'.
+
+* js/mingw-hooks-with-exe-suffix (2017-01-30) 1 commit
+  (merged to 'next' on 2017-01-31 at 3b7863c578)
+ + mingw: allow hooks to be .exe files
+
+ Names of the various hook scripts must be spelled exactly, but on
+ Windows, an .exe binary must be named with .exe suffix; notice
+ $GIT_DIR/hooks/<hookname>.exe as a valid <hookname> hook.
 
 
-* cw/log-updates-for-all-refs-really (2017-01-31) 3 commits
- - update-ref: add test cases for bare repository
- - refs: add option core.logAllRefUpdates = always
- - config: add markup to core.logAllRefUpdates doc
+* js/retire-relink (2017-01-25) 2 commits
+  (merged to 'next' on 2017-01-31 at c6c6f9b902)
+ + relink: really remove the command
+ + relink: retire the command
 
- The "core.logAllRefUpdates" that used to be boolean has been
- enhanced to take 'always' as well, to record ref updates to refs
- other than the ones that are expected to be updated (i.e. branches,
- remote-tracking branches and notes).
-
- Will merge to 'next'.
+ Cruft removal.
 
 
-* mm/merge-rename-delete-message (2017-01-30) 1 commit
- - merge-recursive: make "CONFLICT (rename/delete)" message show both paths
+* js/status-pre-rebase-i (2017-01-26) 1 commit
+  (merged to 'next' on 2017-01-31 at 09e51b2e39)
+ + status: be prepared for not-yet-started interactive rebase
+
+ After starting "git rebase -i", which first opens the user's editor
+ to edit the series of patches to apply, but before saving the
+ contents of that file, "git status" failed to show the current
+ state (i.e. you are in an interactive rebase session, but you have
+ applied no steps yet) correctly.
+
+
+* js/unzip-in-usr-bin-workaround (2017-01-27) 1 commit
+  (merged to 'next' on 2017-01-31 at 515d1d1f90)
+ + test-lib: on FreeBSD, look for unzip(1) in /usr/local/bin/
+
+ Test tweak for FreeBSD where /usr/bin/unzip is unsuitable to run
+ our tests but /usr/local/bin/unzip is usable.
 
 
 * mm/reset-facl-before-umask-test (2017-01-30) 1 commit
- - t0001: don't let a default ACL interfere with the umask test
+  (merged to 'next' on 2017-01-31 at 4a2031e49c)
+ + t0001: don't let a default ACL interfere with the umask test
 
  Test tweaks for those who have default ACL in their git source tree
  that interfere with the umask test.
 
- Will merge to 'next'.
+
+* nd/log-graph-configurable-colors (2017-01-31) 4 commits
+  (merged to 'next' on 2017-01-31 at 36df9e2376)
+ + color_parse_mem: allow empty color spec
+  (merged to 'next' on 2017-01-23 at c369982ad8)
+ + log --graph: customize the graph lines with config log.graphColors
+ + color.c: trim leading spaces in color_parse_mem()
+ + color.c: fix color_parse_mem() with value_len == 0
+
+ Some people feel the default set of colors used by "git log --graph"
+ rather limiting.  A mechanism to customize the set of colors has
+ been introduced.
 
 
-* rs/object-id (2017-01-30) 3 commits
- - checkout: convert post_checkout_hook() to struct object_id
- - use oidcpy() for copying hashes between instances of struct object_id
- - use oid_to_hex_r() for converting struct object_id hashes to hex strings
+* rs/absolute-pathdup (2017-01-27) 2 commits
+  (merged to 'next' on 2017-01-31 at f751f64876)
+ + use absolute_pathdup()
+ + abspath: add absolute_pathdup()
 
- "uchar [40]" to "struct object_id" conversion continues.
-
- Will merge to 'next'.
-
-
-* rs/swap (2017-01-30) 5 commits
- - graph: use SWAP macro
- - diff: use SWAP macro
- - use SWAP macro
- - apply: use SWAP macro
- - add SWAP macro
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* pl/complete-diff-submodule-diff (2017-01-30) 1 commit
- - Completion: Add support for --submodule=diff
-
- The command line completion (in contrib/) learned that
- "git diff --submodule=" can take "diff" as a recently added option.
-
- Will merge to 'next'.
+ Code cleanup.
 
 
 * rs/receive-pack-cleanup (2017-01-30) 1 commit
- - receive-pack: call string_list_clear() unconditionally
+  (merged to 'next' on 2017-01-31 at d660881f69)
+ + receive-pack: call string_list_clear() unconditionally
 
  Code clean-up.
-
- Will merge to 'next'.
 
 
 * sb/submodule-add-force (2016-11-29) 1 commit
  + submodule add: extend force flag to add existing repos
  (this branch is used by sb/push-make-submodule-check-the-default.)
 
+ Originally merged to 'next' on 2016-12-12
+
  "git submodule add" used to be confused and refused to add a
  locally created repository; users can now use "--force" option
  to add them.
 
- Will merge to 'next'.
+
+* sg/mailmap-self (2017-01-31) 1 commit
+  (merged to 'next' on 2017-01-31 at 2e7641759c)
+ + .mailmap: update Gábor Szeder's email address
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -464,63 +248,93 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* js/mingw-hooks-with-exe-suffix (2017-01-30) 1 commit
- - mingw: allow hooks to be .exe files
+* jk/delta-chain-limit (2017-01-27) 2 commits
+ - pack-objects: convert recursion to iteration in break_delta_chain()
+ - pack-objects: enforce --depth limit in reused deltas
 
- Names of the various hook scripts must be spelled exactly, but on
- Windows, an .exe binary must be named with .exe suffix; notice
- $GIT_DIR/hooks/<hookname>.exe as a valid <hookname> hook.
-
- Will merge to 'next'.
-
-
-* js/retire-relink (2017-01-25) 2 commits
- - relink: really remove the command
- - relink: retire the command
-
- Cruft removal.
+ "git repack --depth=<n>" for a long time busted the specified depth
+ when reusing delta from existing packs.  This has been corrected.
 
  Will merge to 'next'.
 
 
-* js/status-pre-rebase-i (2017-01-26) 1 commit
-  (merged to 'next' on 2017-01-31 at 09e51b2e39)
- + status: be prepared for not-yet-started interactive rebase
+* js/re-running-failed-tests (2017-01-27) 1 commit
+  (merged to 'next' on 2017-01-31 at 30c3a9e0cf)
+ + t/Makefile: add a rule to re-run previously-failed tests
 
- After starting "git rebase -i", which first opens the user's editor
- to edit the series of patches to apply, but before saving the
- contents of that file, "git status" failed to show the current
- state (i.e. you are in an interactive rebase session, but you have
- applied no steps yet) correctly.
+ "make -C t failed" will now run only the tests that failed in the
+ previous run.  This is usable only when prove is not use, and gives
+ a useless error message when run after "make clean", but otherwise
+ is serviceable.
 
  Will merge to 'master'.
 
 
-* ps/urlmatch-wildcard (2017-01-31) 5 commits
- . urlmatch: allow globbing for the URL host part
- . urlmatch: include host in urlmatch ranking
- . urlmatch: split host and port fields in `struct url_info`
- . urlmatch: enable normalization of URLs with globs
- . mailmap: add Patrick Steinhardt's work address
+* cw/log-updates-for-all-refs-really (2017-02-01) 4 commits
+  (merged to 'next' on 2017-02-02 at 3e11673fcc)
+ + doc: add note about ignoring '--no-create-reflog'
+  (merged to 'next' on 2017-01-31 at 53f71d2401)
+ + update-ref: add test cases for bare repository
+ + refs: add option core.logAllRefUpdates = always
+ + config: add markup to core.logAllRefUpdates doc
+
+ The "core.logAllRefUpdates" that used to be boolean has been
+ enhanced to take 'always' as well, to record ref updates to refs
+ other than the ones that are expected to be updated (i.e. branches,
+ remote-tracking branches and notes).
+
+ Will merge to 'master'.
+
+
+* mm/merge-rename-delete-message (2017-01-30) 1 commit
+ - merge-recursive: make "CONFLICT (rename/delete)" message show both paths
+
+
+* rs/object-id (2017-01-30) 3 commits
+  (merged to 'next' on 2017-01-31 at c442e4780c)
+ + checkout: convert post_checkout_hook() to struct object_id
+ + use oidcpy() for copying hashes between instances of struct object_id
+ + use oid_to_hex_r() for converting struct object_id hashes to hex strings
+
+ "uchar [40]" to "struct object_id" conversion continues.
+
+ Will merge to 'master'.
+
+
+* rs/swap (2017-01-30) 5 commits
+ - graph: use SWAP macro
+ - diff: use SWAP macro
+ - use SWAP macro
+ - apply: use SWAP macro
+ - add SWAP macro
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* pl/complete-diff-submodule-diff (2017-01-30) 1 commit
+  (merged to 'next' on 2017-01-31 at 7e668d325c)
+ + Completion: Add support for --submodule=diff
+
+ The command line completion (in contrib/) learned that
+ "git diff --submodule=" can take "diff" as a recently added option.
+
+ Will merge to 'master'.
+
+
+* ps/urlmatch-wildcard (2017-02-01) 5 commits
+ - urlmatch: allow globbing for the URL host part
+ - urlmatch: include host in urlmatch ranking
+ - urlmatch: split host and port fields in `struct url_info`
+ - urlmatch: enable normalization of URLs with globs
+ - mailmap: add Patrick Steinhardt's work address
 
  The <url> part in "http.<url>.<variable>" configuration variable
  can now be spelled with '*' that serves as wildcard.
  E.g. "http.https://*.example.com.proxy" can be used to specify the
  proxy used for https://a.example.com, https://b.example.com, etc.,
  i.e. any host in the example.com domain.
-
- With the update it still seems to fail the same t5551#31
- cf. <cover.1485853153.git.ps@pks.im>
-
-
-* rs/absolute-pathdup (2017-01-27) 2 commits
-  (merged to 'next' on 2017-01-31 at f751f64876)
- + use absolute_pathdup()
- + abspath: add absolute_pathdup()
-
- Code cleanup.
-
- Will merge to 'master'.
 
 
 * sb/submodule-recursive-absorb (2017-01-26) 3 commits
@@ -549,8 +363,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sf/putty-w-args (2017-01-26) 3 commits
- - connect: support GIT_SSH_VARIANT and ssh.variant
+* sf/putty-w-args (2017-02-01) 5 commits
+ - SQUASH???
+ - connect: Add the envvar GIT_SSH_VARIANT and ssh.variant config
+ - git_connect(): factor out SSH variant handling
  - connect: rename tortoiseplink and putty variables
  - connect: handle putty/plink also in GIT_SSH_COMMAND
 
@@ -567,24 +383,6 @@ of the repositories listed at
  cf. <xmqqpoj8z7su.fsf@gitster.mtv.corp.google.com>
 
 
-* bc/use-asciidoctor-opt (2017-01-31) 8 commits
- - Documentation: implement linkgit macro for Asciidoctor
- - Makefile: add a knob to enable the use of Asciidoctor
- - Documentation: move dblatex arguments into variable
- - Documentation: add XSLT to fix DocBook for Texinfo
- - Documentation: sort sources for gitman.texi
- - Documentation: remove unneeded argument in cat-texi.perl
- - Documentation: modernize cat-texi.perl
- - Documentation: fix warning in cat-texi.perl
-
- Asciidoctor, an alternative reimplementation of AsciiDoc, still
- needs some changes to work with documents meant to be formatted
- with AsciiDoc.  "make USE_ASCIIDOCTOR=YesPlease" to use it out of
- the box to document our pages is getting closer to reality.
-
- Will merge to 'next'.
-
-
 * jk/describe-omit-some-refs (2017-01-23) 5 commits
   (merged to 'next' on 2017-01-23 at f8a14b4996)
  + describe: teach describe negative pattern matches
@@ -599,16 +397,6 @@ of the repositories listed at
  name refs not to be used for naming via their "--exclude" option.
 
  Will cook in 'next'.
-
-
-* ep/commit-static-buf-cleanup (2017-01-31) 2 commits
-  (merged to 'next' on 2017-01-31 at 02d3c25219)
- + builtin/commit.c: switch to strbuf, instead of snprintf()
- + builtin/commit.c: remove the PATH_MAX limitation via dynamic allocation
-
- Code clean-up.
-
- Will merge to 'master'.
 
 
 * sb/unpack-trees-super-prefix (2017-01-25) 4 commits
@@ -632,7 +420,7 @@ of the repositories listed at
  Needs review.
 
 
-* bw/attr (2017-01-23) 27 commits
+* bw/attr (2017-02-01) 27 commits
  - attr: reformat git_attr_set_direction() function
  - attr: push the bare repo check into read_attr()
  - attr: store attribute stack in attr_check structure
@@ -648,7 +436,7 @@ of the repositories listed at
  - attr: (re)introduce git_check_attr() and struct attr_check
  - attr: rename function and struct related to checking attributes
  - attr.c: outline the future plans by heavily commenting
- - Documentation/gitattributes.txt: fix a typo
+ - Documentation: fix a typo
  - attr.c: add push_stack() helper
  - attr: support quoting pathname patterns in C style
  - attr.c: plug small leak in parse_attr_line()
@@ -699,20 +487,6 @@ of the repositories listed at
  Needs review.
 
 
-* nd/log-graph-configurable-colors (2017-01-23) 3 commits
-  (merged to 'next' on 2017-01-23 at c369982ad8)
- + log --graph: customize the graph lines with config log.graphColors
- + color.c: trim leading spaces in color_parse_mem()
- + color.c: fix color_parse_mem() with value_len == 0
-
- Some people feel the default set of colors used by "git log --graph"
- rather limiting.  A mechanism to customize the set of colors has
- been introduced.
-
- Reported to break "add -p".
- cf. <20170128040709.tqx4u45ktgpkbfm4@sigill.intra.peff.net>
-
-
 * cc/split-index-config (2016-12-26) 21 commits
  - Documentation/git-update-index: explain splitIndex.*
  - Documentation/config: add splitIndex.sharedIndexExpire
@@ -749,7 +523,6 @@ of the repositories listed at
  + Revert "push: change submodule default to check when submodules exist"
   (merged to 'next' on 2016-12-12 at 1863e05af5)
  + push: change submodule default to check when submodules exist
- (this branch uses sb/submodule-add-force.)
 
  Turn the default of "push.recurseSubmodules" to "check" when
  submodules seem to be in use.
@@ -758,31 +531,32 @@ of the repositories listed at
 
 
 * kn/ref-filter-branch-list (2017-01-31) 20 commits
- - branch: implement '--format' option
- - branch: use ref-filter printing APIs
- - branch, tag: use porcelain output
- - ref-filter: allow porcelain to translate messages in the output
- - ref-filter: add an 'rstrip=<N>' option to atoms which deal with refnames
- - ref-filter: modify the 'lstrip=<N>' option to work with negative '<N>'
- - ref-filter: Do not abruptly die when using the 'lstrip=<N>' option
- - ref-filter: rename the 'strip' option to 'lstrip'
- - ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
- - ref-filter: introduce refname_atom_parser()
- - ref-filter: introduce refname_atom_parser_internal()
- - ref-filter: make "%(symref)" atom work with the ':short' modifier
- - ref-filter: add support for %(upstream:track,nobracket)
- - ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
- - ref-filter: introduce format_ref_array_item()
- - ref-filter: move get_head_description() from branch.c
- - ref-filter: modify "%(objectname:short)" to take length
- - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
- - ref-filter: include reference to 'used_atom' within 'atom_value'
- - ref-filter: implement %(if), %(then), and %(else) atoms
+  (merged to 'next' on 2017-01-31 at e7592a5461)
+ + branch: implement '--format' option
+ + branch: use ref-filter printing APIs
+ + branch, tag: use porcelain output
+ + ref-filter: allow porcelain to translate messages in the output
+ + ref-filter: add an 'rstrip=<N>' option to atoms which deal with refnames
+ + ref-filter: modify the 'lstrip=<N>' option to work with negative '<N>'
+ + ref-filter: Do not abruptly die when using the 'lstrip=<N>' option
+ + ref-filter: rename the 'strip' option to 'lstrip'
+ + ref-filter: make remote_ref_atom_parser() use refname_atom_parser_internal()
+ + ref-filter: introduce refname_atom_parser()
+ + ref-filter: introduce refname_atom_parser_internal()
+ + ref-filter: make "%(symref)" atom work with the ':short' modifier
+ + ref-filter: add support for %(upstream:track,nobracket)
+ + ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
+ + ref-filter: introduce format_ref_array_item()
+ + ref-filter: move get_head_description() from branch.c
+ + ref-filter: modify "%(objectname:short)" to take length
+ + ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
+ + ref-filter: include reference to 'used_atom' within 'atom_value'
+ + ref-filter: implement %(if), %(then), and %(else) atoms
 
  The code to list branches in "git branch" has been consolidated
  with the more generic ref-filter API.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jk/no-looking-at-dotgit-outside-repo-final (2016-10-26) 1 commit
