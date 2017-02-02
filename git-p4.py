@@ -674,7 +674,7 @@ def gitConfigInt(key):
 def gitConfigList(key):
     if not _gitConfig.has_key(key):
         s = read_pipe(["git", "config", "--get-all", key], ignore_error=True)
-        _gitConfig[key] = s.strip().split(os.linesep)
+        _gitConfig[key] = s.strip().splitlines()
         if _gitConfig[key] == ['']:
             _gitConfig[key] = []
     return _gitConfig[key]
