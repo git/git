@@ -145,7 +145,7 @@ done:
 
 static void mark_current_worktree(struct worktree **worktrees)
 {
-	char *git_dir = xstrdup(absolute_path(get_git_dir()));
+	char *git_dir = absolute_pathdup(get_git_dir());
 	int i;
 
 	for (i = 0; worktrees[i]; i++) {

@@ -239,6 +239,13 @@ const char *absolute_path(const char *path)
 	return sb.buf;
 }
 
+char *absolute_pathdup(const char *path)
+{
+	struct strbuf sb = STRBUF_INIT;
+	strbuf_add_absolute_path(&sb, path);
+	return strbuf_detach(&sb, NULL);
+}
+
 /*
  * Unlike prefix_path, this should be used if the named file does
  * not have to interact with index entry; i.e. name of a random file

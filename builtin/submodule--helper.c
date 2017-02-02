@@ -626,7 +626,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 				   module_clone_options);
 
 	strbuf_addf(&sb, "%s/modules/%s", get_git_dir(), name);
-	sm_gitdir = xstrdup(absolute_path(sb.buf));
+	sm_gitdir = absolute_pathdup(sb.buf);
 	strbuf_reset(&sb);
 
 	if (!is_absolute_path(path)) {

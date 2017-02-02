@@ -170,7 +170,7 @@ static char *get_repo_path(const char *repo, int *is_bundle)
 
 	strbuf_addstr(&path, repo);
 	raw = get_repo_path_1(&path, is_bundle);
-	canon = raw ? xstrdup(absolute_path(raw)) : NULL;
+	canon = raw ? absolute_pathdup(raw) : NULL;
 	strbuf_release(&path);
 	return canon;
 }
@@ -894,7 +894,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	path = get_repo_path(repo_name, &is_bundle);
 	if (path)
-		repo = xstrdup(absolute_path(repo_name));
+		repo = absolute_pathdup(repo_name);
 	else if (!strchr(repo_name, ':'))
 		die(_("repository '%s' does not exist"), repo_name);
 	else
