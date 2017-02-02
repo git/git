@@ -170,6 +170,9 @@ The position of any attributes with respect to the colors
 be turned off by prefixing them with `no` or `no-` (e.g., `noreverse`,
 `no-ul`, etc).
 +
+An empty color string produces no color effect at all. This can be used
+to avoid coloring specific elements without disabling color entirely.
++
 For git's pre-defined color slots, the attributes are meant to be reset
 at the beginning of each item in the colored output. So setting
 `color.decorate.branch` to `black` will paint that branch name in a
