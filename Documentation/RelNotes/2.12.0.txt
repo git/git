@@ -14,6 +14,8 @@ Backward compatibility notes.
    has been deprecated for quite some time, and will be removed in a
    future release.
 
+ * An ancient script "git relink" has been removed.
+
 
 Updates since v2.11
 -------------------
@@ -64,7 +66,6 @@ UI, Workflows & Features
  * Some platforms no longer understand "latin-1" that is still seen in
    the wild in e-mail headers; replace them with "iso-8859-1" that is
    more widely known when conversion fails from/to it.
-   (merge df3755888b jc/latin-1 later to maint).
 
  * "git grep" has been taught to optionally recurse into submodules.
 
@@ -99,6 +100,16 @@ UI, Workflows & Features
    "--head" because the user does not want HEAD to be filtered out,
    i.e. "git show-ref --head --verify HEAD", did not work as expected.
 
+ * "git submodule add" used to be confused and refused to add a
+   locally created repository; users can now use "--force" option
+   to add them.
+   (merge 619acfc78c sb/submodule-add-force later to maint).
+
+ * Some people feel the default set of colors used by "git log --graph"
+   rather limiting.  A mechanism to customize the set of colors has
+   been introduced.
+   (merge 512aba261a nd/log-graph-configurable-colors later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -115,7 +126,6 @@ Performance, Internal Implementation, Development Support etc.
  * The character width table has been updated to match Unicode 9.0
 
  * Update the procedure to generate "tags" for developer support.
-   (merge 046e4c1c09 jk/make-tags-find-sources-tweak later to maint).
 
  * The codeflow of setting NOATIME and CLOEXEC on file descriptors Git
    opens has been simplified.
@@ -150,7 +160,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * Update the definition of the MacOSX test environment used by
    TravisCI.
-   (merge 672f51cb83 ls/travis-p4-on-macos later to maint).
 
  * Rewrite a scripted porcelain "git difftool" in C.
    (merge 94d3997ecc js/difftool-builtin later to maint).
@@ -172,7 +181,6 @@ notes for details).
 
  * "git svn" did not work well with path components that are "0", and
    some configuration variable it uses were not documented.
-   (merge ea9a93dcc2 ew/svn-fixes later to maint).
 
  * "git rev-parse --symbolic" failed with a more recent notation like
    "HEAD^-1" and "HEAD^!".
@@ -295,41 +303,32 @@ notes for details).
    three codepaths, one of which did not honor any configuration.
    Unify these so that all of them honor core.compression and
    pack.compression variables the same way.
-   (merge 8de7eeb54b jc/compression-config later to maint).
 
  * "git fast-import" sometimes mishandled while rebalancing notes
    tree, which has been fixed.
-   (merge 405d7f4af6 mh/fast-import-notes-fix-new later to maint).
 
  * Recent update to the default abbreviation length that auto-scales
    lacked documentation update, which has been corrected.
-   (merge 48d5014dd4 jc/abbrev-autoscale-config later to maint).
 
  * Leakage of lockfiles in the config subsystem has been fixed.
-   (merge c06fa62dfc nd/config-misc-fixes later to maint).
 
  * It is natural that "git gc --auto" may not attempt to pack
    everything into a single pack, and there is no point in warning
    when the user has configured the system to use the pack bitmap,
    leading to disabling further "gc".
-   (merge 1c409a705c dt/disable-bitmap-in-auto-gc later to maint).
 
  * "git archive" did not read the standard configuration files, and
    failed to notice a file that is marked as binary via the userdiff
    driver configuration.
-   (merge 965cba2e7e jk/archive-zip-userdiff-config later to maint).
 
  * "git blame --porcelain" misidentified the "previous" <commit, path>
    pair (aka "source") when contents came from two or more files.
-   (merge 4e76832984 jk/blame-fixes later to maint).
 
  * "git rebase -i" with a recent update started showing an incorrect
    count when squashing more than 10 commits.
-   (merge 356b8ecff1 jk/rebase-i-squash-count-fix later to maint).
 
  * "git <cmd> @{push}" on a detached HEAD used to segfault; it has
    been corrected to error out with a message.
-   (merge b10731f43d km/branch-get-push-while-detached later to maint).
 
  * Running "git add a/b" when "a" is a submodule correctly errored
    out, but without a meaningful error message.
@@ -338,7 +337,6 @@ notes for details).
  * Typing ^C to pager, which usually does not kill it, killed Git and
    took the pager down as a collateral damage in certain process-tree
    structure.  This has been fixed.
-   (merge 46df6906f3 jk/execv-dashed-external later to maint).
 
  * "git mergetool" without any pathspec on the command line that is
    run from a subdirectory became no-op in Git v2.11 by mistake, which
@@ -349,7 +347,6 @@ notes for details).
 
  * Tighten a test to avoid mistaking an extended ERE regexp engine as
    a PRE regexp engine.
-   (merge 7675c7bd01 jk/grep-e-could-be-extended-beyond-posix later to maint).
 
  * An error message with an ASCII control character like '\r' in it
    can alter the message to hide its early part, which is problematic
@@ -382,13 +379,45 @@ notes for details).
  * "git fsck --connectivity-check" was not working at all.
    (merge a2b22854bd jk/fsck-connectivity-check-fix later to maint).
 
+ * After starting "git rebase -i", which first opens the user's editor
+   to edit the series of patches to apply, but before saving the
+   contents of that file, "git status" failed to show the current
+   state (i.e. you are in an interactive rebase session, but you have
+   applied no steps yet) correctly.
+   (merge df9ded4984 js/status-pre-rebase-i later to maint).
+
+ * Test tweak for FreeBSD where /usr/bin/unzip is unsuitable to run
+   our tests but /usr/local/bin/unzip is usable.
+   (merge d98b2c5fce js/unzip-in-usr-bin-workaround later to maint).
+
+ * "git p4" did not work well with multiple git-p4.mapUser entries on
+   Windows.
+   (merge c3c2b05776 gv/mingw-p4-mapuser later to maint).
+
+ * "git help" enumerates executable files in $PATH; the implementation
+   of "is this file executable?" on Windows has been optimized.
+   (merge c755015f79 hv/mingw-help-is-executable later to maint).
+
+ * Test tweaks for those who have default ACL in their git source tree
+   that interfere with the umask test.
+   (merge d549d21307 mm/reset-facl-before-umask-test later to maint).
+
+ * Names of the various hook scripts must be spelled exactly, but on
+   Windows, an .exe binary must be named with .exe suffix; notice
+   $GIT_DIR/hooks/<hookname>.exe as a valid <hookname> hook.
+   (merge 235be51fbe js/mingw-hooks-with-exe-suffix later to maint).
+
+ * Asciidoctor, an alternative reimplementation of AsciiDoc, still
+   needs some changes to work with documents meant to be formatted
+   with AsciiDoc.  "make USE_ASCIIDOCTOR=YesPlease" to use it out of
+   the box to document our pages is getting closer to reality.
+   (merge 55d2d812e4 bc/use-asciidoctor-opt later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
    (merge 384f1a167b sb/unpack-trees-cleanup later to maint).
-   (merge 3f05402ac0 ad/bisect-terms later to maint).
    (merge 874444b704 rh/diff-orderfile-doc later to maint).
-   (merge c68d2d7c2b ws/request-pull-code-cleanup later to maint).
-   (merge 007ac54401 js/exec-path-coverity-workaround later to maint).
-   (merge 1797dc5176 jk/coding-guidelines-update later to maint).
-   (merge 1d3f065e0e js/mingw-isatty later to maint).
-   (merge 830c912a0e sb/in-core-index-doc later to maint).
+   (merge eafd5d9483 cw/doc-sign-off later to maint).
+   (merge 0aaad415bc rs/absolute-pathdup later to maint).
+   (merge 4432dd6b5b rs/receive-pack-cleanup later to maint).
+   (merge 540a398e9c sg/mailmap-self later to maint).
