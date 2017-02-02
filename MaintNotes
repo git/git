@@ -161,8 +161,8 @@ of last-minute issues.  The maintenance releases used to be named with
 four dotted decimal, named after the feature release they are updates
 to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
 feature release).  These days, maintenance releases are named by
-incrementing the last digit of three-dotted decimal name (e.g. "2.10.2"
-is the second maintenance release for the "2.10" series).
+incrementing the last digit of three-dotted decimal name (e.g. "2.11.1"
+is the first maintenance release for the "2.11" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
