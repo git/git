@@ -161,5 +161,8 @@ Fixes since v2.11
  * Tighten a test to avoid mistaking an extended ERE regexp engine as
    a PRE regexp engine.
 
+ * Typing ^C to pager, which usually does not kill it, killed Git and
+   took the pager down as a collateral damage in certain process-tree
+   structure.  This has been fixed.
 
 Also contains various documentation updates and code clean-ups.
