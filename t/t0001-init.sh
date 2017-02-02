@@ -258,6 +258,9 @@ test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shar
 	(
 		# Leading directories should honor umask while
 		# the repository itself should follow "shared"
+		mkdir newdir &&
+		# Remove a default ACL if possible.
+		(setfacl -k newdir 2>/dev/null || true) &&
 		umask 002 &&
 		git init --bare --shared=0660 newdir/a/b/c &&
 		test_path_is_dir newdir/a/b/c/refs &&
