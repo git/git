@@ -1216,7 +1216,7 @@ _git_commit ()
 {
 	case "$prev" in
 	-c|-C)
-		__gitcomp_nl "$(__git_refs)" "" "${cur}"
+		__gitcomp_nl "$(__git_refs)"
 		return
 		;;
 	esac
