@@ -2408,6 +2408,12 @@ _git_remote ()
 
 _git_replace ()
 {
+	case "$cur" in
+	--*)
+		__gitcomp "--edit --graft --format= --list --delete"
+		return
+		;;
+	esac
 	__gitcomp_nl "$(__git_refs)"
 }
 
