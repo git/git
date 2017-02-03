@@ -2401,6 +2401,17 @@ _git_replace ()
 	__gitcomp_nl "$(__git_refs)"
 }
 
+_git_rerere ()
+{
+	local subcommands="clear forget diff remaining status gc"
+	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	if test -z "$subcommand"
+	then
+		__gitcomp "$subcommands"
+		return
+	fi
+}
+
 _git_reset ()
 {
 	__git_has_doubledash && return
