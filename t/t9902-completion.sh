@@ -847,7 +847,6 @@ test_expect_success 'setup for filtering matching refs' '
 
 test_expect_success '__git_refs - only matching refs' '
 	cat >expected <<-EOF &&
-	HEAD
 	matching-branch
 	matching/branch
 	matching-tag
@@ -874,7 +873,6 @@ test_expect_success '__git_refs - only matching refs - full refs' '
 
 test_expect_success '__git_refs - only matching refs - remote on local file system' '
 	cat >expected <<-EOF &&
-	HEAD
 	master-in-other
 	matching/branch-in-other
 	EOF
@@ -887,7 +885,6 @@ test_expect_success '__git_refs - only matching refs - remote on local file syst
 
 test_expect_success '__git_refs - only matching refs - configured remote' '
 	cat >expected <<-EOF &&
-	HEAD
 	master-in-other
 	matching/branch-in-other
 	EOF
@@ -912,7 +909,6 @@ test_expect_success '__git_refs - only matching refs - remote - full refs' '
 
 test_expect_success '__git_refs - only matching refs - checkout DWIMery' '
 	cat >expected <<-EOF &&
-	HEAD
 	matching-branch
 	matching/branch
 	matching-tag

@@ -355,7 +355,8 @@ __git_tags ()
 # 2: In addition to local refs, list unique branches from refs/remotes/ for
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
 # 3: Currently ignored.
-# 4: The current ref to be completed (optional).
+# 4: List only refs matching this word instead of the current word being
+#    completed (optional).
 #
 # Use __git_complete_refs() instead.
 __git_refs ()
@@ -399,7 +400,12 @@ __git_refs ()
 			;;
 		*)
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
-				if [ -e "$dir/$i" ]; then echo $pfx$i; fi
+				case "$i" in
+				$cur_*)	if [ -e "$dir/$i" ]; then
+						echo $pfx$i
+					fi
+					;;
+				esac
 			done
 			format="refname:strip=2"
 			refs=("refs/tags/$cur_*" "refs/tags/$cur_*/**"
@@ -432,12 +438,18 @@ __git_refs ()
 		;;
 	*)
 		if [ "$list_refs_from" = remote ]; then
-			echo "HEAD"
+			case "HEAD" in
+			$cur_*)	echo "HEAD" ;;
+			esac
 			__git for-each-ref --format="%(refname:strip=3)" \
 				"refs/remotes/$remote/$cur_*" \
 				"refs/remotes/$remote/$cur_*/**"
 		else
-			__git ls-remote "$remote" HEAD \
+			local query_symref
+			case "HEAD" in
+			$cur_*)	query_symref="HEAD" ;;
+			esac
+			__git ls-remote "$remote" $query_symref \
 				"refs/tags/$cur_*" "refs/heads/$cur_*" \
 				"refs/remotes/$cur_*" |
 			while read -r hash i; do
