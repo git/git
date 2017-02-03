@@ -612,22 +612,25 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	const char *old_desc, *reflog_msg;
 	if (opts->new_branch) {
 		if (opts->new_orphan_branch) {
-			if (opts->new_branch_log && !log_all_ref_updates) {
+			char *refname;
+
+			refname = mkpathdup("refs/heads/%s", opts->new_orphan_branch);
+			if (opts->new_branch_log &&
+			    !should_autocreate_reflog(refname)) {
 				int ret;
-				char *refname;
 				struct strbuf err = STRBUF_INIT;
 
-				refname = mkpathdup("refs/heads/%s", opts->new_orphan_branch);
 				ret = safe_create_reflog(refname, 1, &err);
-				free(refname);
 				if (ret) {
 					fprintf(stderr, _("Can not do reflog for '%s': %s\n"),
 						opts->new_orphan_branch, err.buf);
 					strbuf_release(&err);
+					free(refname);
 					return;
 				}
 				strbuf_release(&err);
 			}
+			free(refname);
 		}
 		else
 			create_branch(opts->new_branch, new->name,

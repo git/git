@@ -133,8 +133,6 @@ int verify_refname_available(const char *newname,
  */
 int copy_reflog_msg(char *buf, const char *msg);
 
-int should_autocreate_reflog(const char *refname);
-
 /**
  * Information needed for a single ref update. Set new_sha1 to the new
  * value or to null_sha1 to delete the ref. To check the old value
