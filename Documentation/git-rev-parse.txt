@@ -217,6 +217,10 @@ If `$GIT_DIR` is not defined and the current directory
 is not detected to lie in a Git repository or work tree
 print a message to stderr and exit with nonzero status.
 
+--absolute-git-dir::
+	Like `--git-dir`, but its output is always the canonicalized
+	absolute path.
+
 --git-common-dir::
 	Show `$GIT_COMMON_DIR` if defined, else `$GIT_DIR`.
 
