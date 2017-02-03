@@ -775,6 +775,37 @@ test_expect_success '__git_refs - unique remote branches for git checkout DWIMer
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__git_refs - after --opt=' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	other/branch-in-other
+	other/master-in-other
+	matching-tag
+	EOF
+	(
+		cur="--opt=" &&
+		__git_refs "" "" "" "" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - after --opt= - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master
+	refs/heads/matching-branch
+	refs/remotes/other/branch-in-other
+	refs/remotes/other/master-in-other
+	refs/tags/matching-tag
+	EOF
+	(
+		cur="--opt=refs/" &&
+		__git_refs "" "" "" refs/ >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success '__git_complete_refs - simple' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
 	HEAD Z
