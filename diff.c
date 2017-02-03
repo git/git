@@ -3015,7 +3015,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			if (!one->oid_valid)
 				sha1_to_hex_r(temp->hex, null_sha1);
 			else
-				sha1_to_hex_r(temp->hex, one->oid.hash);
+				oid_to_hex_r(temp->hex, &one->oid);
 			/* Even though we may sometimes borrow the
 			 * contents from the work tree, we always want
 			 * one->mode.  mode is trustworthy even when

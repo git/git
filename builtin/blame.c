@@ -1901,7 +1901,7 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
 	struct origin *suspect = ent->suspect;
 	char hex[GIT_SHA1_HEXSZ + 1];
 
-	sha1_to_hex_r(hex, suspect->commit->object.oid.hash);
+	oid_to_hex_r(hex, &suspect->commit->object.oid);
 	printf("%s %d %d %d\n",
 	       hex,
 	       ent->s_lno + 1,
@@ -1941,7 +1941,7 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
 
 	get_commit_info(suspect->commit, &ci, 1);
-	sha1_to_hex_r(hex, suspect->commit->object.oid.hash);
+	oid_to_hex_r(hex, &suspect->commit->object.oid);
 
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
