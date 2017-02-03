@@ -52,6 +52,41 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_ERROR_TYPES] = {
 	  ? ((o)->msgs[(type)])      \
 	  : (unpack_plumbing_errors[(type)]) )
 
+static const char *super_prefixed(const char *path)
+{
+	/*
+	 * It is necessary and sufficient to have two static buffers
+	 * here, as the return value of this function is fed to
+	 * error() using the unpack_*_errors[] templates we see above.
+	 */
+	static struct strbuf buf[2] = {STRBUF_INIT, STRBUF_INIT};
+	static int super_prefix_len = -1;
+	static unsigned idx = ARRAY_SIZE(buf) - 1;
+
+	if (super_prefix_len < 0) {
+		const char *super_prefix = get_super_prefix();
+		if (!super_prefix) {
+			super_prefix_len = 0;
+		} else {
+			int i;
+			for (i = 0; i < ARRAY_SIZE(buf); i++)
+				strbuf_addstr(&buf[i], super_prefix);
+			super_prefix_len = buf[0].len;
+		}
+	}
+
+	if (!super_prefix_len)
+		return path;
+
+	if (++idx >= ARRAY_SIZE(buf))
+		idx = 0;
+
+	strbuf_setlen(&buf[idx], super_prefix_len);
+	strbuf_addstr(&buf[idx], path);
+
+	return buf[idx].buf;
+}
+
 void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 				  const char *cmd)
 {
@@ -172,7 +207,7 @@ static int add_rejected_path(struct unpack_trees_options *o,
 			     const char *path)
 {
 	if (!o->show_all_errors)
-		return error(ERRORMSG(o, e), path);
+		return error(ERRORMSG(o, e), super_prefixed(path));
 
 	/*
 	 * Otherwise, insert in a list for future display by
@@ -196,7 +231,7 @@ static void display_error_msgs(struct unpack_trees_options *o)
 			something_displayed = 1;
 			for (i = 0; i < rejects->nr; i++)
 				strbuf_addf(&path, "\t%s\n", rejects->items[i].string);
-			error(ERRORMSG(o, e), path.buf);
+			error(ERRORMSG(o, e), super_prefixed(path.buf));
 			strbuf_release(&path);
 		}
 		string_list_clear(rejects, 0);
@@ -1925,7 +1960,9 @@ int bind_merge(const struct cache_entry * const *src,
 			     o->merge_size);
 	if (a && old)
 		return o->gently ? -1 :
-			error(ERRORMSG(o, ERROR_BIND_OVERLAP), a->name, old->name);
+			error(ERRORMSG(o, ERROR_BIND_OVERLAP),
+			      super_prefixed(a->name),
+			      super_prefixed(old->name));
 	if (!a)
 		return keep_entry(old, o);
 	else
