@@ -947,13 +947,17 @@ _git_add ()
 	--*)
 		__gitcomp "
 			--interactive --refresh --patch --update --dry-run
-			--ignore-errors --intent-to-add
+			--ignore-errors --intent-to-add --force --edit --chmod=
 			"
 		return
 	esac
 
-	# XXX should we check for --update and --all options ?
-	__git_complete_index_file "--others --modified --directory --no-empty-directory"
+	local complete_opt="--others --modified --directory --no-empty-directory"
+	if test -n "$(__git_find_on_cmdline "-u --update")"
+	then
+		complete_opt="--modified"
+	fi
+	__git_complete_index_file "$complete_opt"
 }
 
 _git_archive ()
