@@ -338,6 +338,7 @@ __git_tags ()
 # Lists refs from the local (by default) or from a remote repository.
 # It accepts 0, 1 or 2 arguments:
 # 1: The remote to list refs from (optional; ignored, if set but empty).
+#    Can be the name of a configured remote, a path, or a URL.
 # 2: In addition to local refs, list unique branches from refs/remotes/ for
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
 __git_refs ()
@@ -410,9 +411,21 @@ __git_refs ()
 		done
 		;;
 	*)
-		echo "HEAD"
-		git --git-dir="$dir" for-each-ref --format="%(refname:short)" \
-			"refs/remotes/$remote/" 2>/dev/null | sed -e "s#^$remote/##"
+		if [ "$list_refs_from" = remote ]; then
+			echo "HEAD"
+			git --git-dir="$dir" for-each-ref --format="%(refname:short)" \
+				"refs/remotes/$remote/" 2>/dev/null | sed -e "s#^$remote/##"
+		else
+			git --git-dir="$dir" ls-remote "$remote" HEAD \
+				"refs/tags/*" "refs/heads/*" "refs/remotes/*" 2>/dev/null |
+			while read -r hash i; do
+				case "$i" in
+				*^{})	;;
+				refs/*)	echo "${i#refs/*/}" ;;
+				*)	echo "$i" ;;  # symbolic refs
+				esac
+			done
+		fi
 		;;
 	esac
 }
