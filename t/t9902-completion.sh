@@ -806,6 +806,37 @@ test_expect_success '__git_refs - after --opt= - full refs' '
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__git refs - exluding refs' '
+	cat >expected <<-EOF &&
+	^HEAD
+	^master
+	^matching-branch
+	^other/branch-in-other
+	^other/master-in-other
+	^matching-tag
+	EOF
+	(
+		cur=^ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git refs - exluding full refs' '
+	cat >expected <<-EOF &&
+	^refs/heads/master
+	^refs/heads/matching-branch
+	^refs/remotes/other/branch-in-other
+	^refs/remotes/other/master-in-other
+	^refs/tags/matching-tag
+	EOF
+	(
+		cur=^refs/ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success '__git_complete_refs - simple' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
 	HEAD Z
