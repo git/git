@@ -215,8 +215,9 @@ test_expect_success '__gitdir - non-existing $GIT_DIR' '
 	(
 		GIT_DIR="$ROOT/non-existing" &&
 		export GIT_DIR &&
-		test_must_fail __gitdir
-	)
+		test_must_fail __gitdir >"$actual"
+	) &&
+	test_must_be_empty "$actual"
 '
 
 test_expect_success '__gitdir - gitfile in cwd' '
@@ -255,7 +256,8 @@ test_expect_success SYMLINKS '__gitdir - resulting path avoids symlinks' '
 '
 
 test_expect_success '__gitdir - not a git repository' '
-	nongit test_must_fail __gitdir
+	nongit test_must_fail __gitdir >"$actual" &&
+	test_must_be_empty "$actual"
 '
 
 test_expect_success '__gitcomp - trailing space - options' '
