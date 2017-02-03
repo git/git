@@ -400,6 +400,22 @@ test_expect_success '__gitdir - remote as argument' '
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__gitcomp_direct - puts everything into COMPREPLY as-is' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	with-trailing-space Z
+	without-trailing-spaceZ
+	--option Z
+	--option=Z
+	$invalid_variable_name Z
+	EOF
+	(
+		cur=should_be_ignored &&
+		__gitcomp_direct "$(cat expected)" &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
 test_expect_success '__gitcomp - trailing space - options' '
 	test_gitcomp "--re" "--dry-run --reuse-message= --reedit-message=
 		--reset-author" <<-EOF

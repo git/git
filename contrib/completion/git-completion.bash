@@ -213,6 +213,20 @@ _get_comp_words_by_ref ()
 }
 fi
 
+# Fills the COMPREPLY array with prefiltered words without any additional
+# processing.
+# Callers must take care of providing only words that match the current word
+# to be completed and adding any prefix and/or suffix (trailing space!), if
+# necessary.
+# 1: List of newline-separated matching completion words, complete with
+#    prefix and suffix.
+__gitcomp_direct ()
+{
+	local IFS=$'\n'
+
+	COMPREPLY=($1)
+}
+
 __gitcompappend ()
 {
 	local x i=${#COMPREPLY[@]}
@@ -354,17 +368,19 @@ __git_tags ()
 #    Can be the name of a configured remote, a path, or a URL.
 # 2: In addition to local refs, list unique branches from refs/remotes/ for
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
-# 3: Currently ignored.
+# 3: A prefix to be added to each listed ref (optional).
 # 4: List only refs matching this word instead of the current word being
-#    completed (optional).
+#    completed (optional; NOT ignored, if empty, but lists all refs).
+# 5: A suffix to be appended to each listed ref (optional; ignored, if set
+#    but empty).
 #
 # Use __git_complete_refs() instead.
 __git_refs ()
 {
 	local i hash dir track="${2-}"
 	local list_refs_from=path remote="${1-}"
-	local format refs pfx
-	local cur_="${4-$cur}"
+	local format refs
+	local pfx="${3-}" cur_="${4-$cur}" sfx="${5-}"
 
 	__git_find_repo_path
 	dir="$__git_repo_path"
@@ -389,7 +405,7 @@ __git_refs ()
 
 	if [ "$list_refs_from" = path ]; then
 		if [[ "$cur_" == ^* ]]; then
-			pfx="^"
+			pfx="$pfx^"
 			cur_=${cur_#^}
 		fi
 		case "$cur_" in
@@ -402,7 +418,7 @@ __git_refs ()
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
 				case "$i" in
 				$cur_*)	if [ -e "$dir/$i" ]; then
-						echo $pfx$i
+						echo "$pfx$i$sfx"
 					fi
 					;;
 				esac
@@ -413,13 +429,13 @@ __git_refs ()
 				"refs/remotes/$cur_*" "refs/remotes/$cur_*/**")
 			;;
 		esac
-		__git_dir="$dir" __git for-each-ref --format="$pfx%($format)" \
+		__git_dir="$dir" __git for-each-ref --format="$pfx%($format)$sfx" \
 			"${refs[@]}"
 		if [ -n "$track" ]; then
 			# employ the heuristic used by git checkout
 			# Try to find a remote branch that matches the completion word
 			# but only output if the branch name is unique
-			__git for-each-ref --format="%(refname:strip=3)" \
+			__git for-each-ref --format="$pfx%(refname:strip=3)$sfx" \
 				--sort="refname:strip=3" \
 				"refs/remotes/*/$cur_*" "refs/remotes/*/$cur_*/**" | \
 			uniq -u
@@ -432,16 +448,16 @@ __git_refs ()
 		while read -r hash i; do
 			case "$i" in
 			*^{}) ;;
-			*) echo "$i" ;;
+			*) echo "$pfx$i$sfx" ;;
 			esac
 		done
 		;;
 	*)
 		if [ "$list_refs_from" = remote ]; then
 			case "HEAD" in
-			$cur_*)	echo "HEAD" ;;
+			$cur_*)	echo "${pfx}HEAD$sfx" ;;
 			esac
-			__git for-each-ref --format="%(refname:strip=3)" \
+			__git for-each-ref --format="$pfx%(refname:strip=3)$sfx" \
 				"refs/remotes/$remote/$cur_*" \
 				"refs/remotes/$remote/$cur_*/**"
 		else
@@ -455,8 +471,8 @@ __git_refs ()
 			while read -r hash i; do
 				case "$i" in
 				*^{})	;;
-				refs/*)	echo "${i#refs/*/}" ;;
-				*)	echo "$i" ;;  # symbolic refs
+				refs/*)	echo "$pfx${i#refs/*/}$sfx" ;;
+				*)	echo "$pfx$i$sfx" ;;  # symbolic refs
 				esac
 			done
 		fi
@@ -491,8 +507,7 @@ __git_complete_refs ()
 		shift
 	done
 
-	__gitcomp_nl "$(__git_refs "$remote" "$track" "" "$cur_")" \
-		"$pfx" "$cur_" "$sfx"
+	__gitcomp_direct "$(__git_refs "$remote" "$track" "$pfx" "$cur_" "$sfx")"
 }
 
 # __git_refs2 requires 1 argument (to pass to __git_refs)
@@ -2973,6 +2988,15 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 			compadd -Q -S '' -p "${2-}" -a -- array && _ret=0
 			;;
 		esac
+	}
+
+	__gitcomp_direct ()
+	{
+		emulate -L zsh
+
+		local IFS=$'\n'
+		compset -P '*[=:]'
+		compadd -Q -- ${=1} && _ret=0
 	}
 
 	__gitcomp_nl ()
