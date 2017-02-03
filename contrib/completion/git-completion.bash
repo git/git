@@ -2384,24 +2384,55 @@ _git_config ()
 
 _git_remote ()
 {
-	local subcommands="add rename remove set-head set-branches set-url show prune update"
+	local subcommands="
+		add rename remove set-head set-branches
+		get-url set-url show prune update
+		"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
-		__gitcomp "$subcommands"
+		case "$cur" in
+		--*)
+			__gitcomp "--verbose"
+			;;
+		*)
+			__gitcomp "$subcommands"
+			;;
+		esac
 		return
 	fi
 
-	case "$subcommand" in
-	rename|remove|set-url|show|prune)
-		__gitcomp_nl "$(__git_remotes)"
+	case "$subcommand,$cur" in
+	add,--*)
+		__gitcomp "--track --master --fetch --tags --no-tags --mirror="
 		;;
-	set-head|set-branches)
+	add,*)
+		;;
+	set-head,--*)
+		__gitcomp "--auto --delete"
+		;;
+	set-branches,--*)
+		__gitcomp "--add"
+		;;
+	set-head,*|set-branches,*)
 		__git_complete_remote_or_refspec
 		;;
-	update)
+	update,--*)
+		__gitcomp "--prune"
+		;;
+	update,*)
 		__gitcomp "$(__git_get_config_variables "remotes")"
 		;;
+	set-url,--*)
+		__gitcomp "--push --add --delete"
+		;;
+	get-url,--*)
+		__gitcomp "--push --all"
+		;;
+	prune,--*)
+		__gitcomp "--dry-run"
+		;;
 	*)
+		__gitcomp_nl "$(__git_remotes)"
 		;;
 	esac
 }
