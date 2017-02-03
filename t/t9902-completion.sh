@@ -365,6 +365,269 @@ test_expect_success '__git_remotes - list remotes from $GIT_DIR/remotes and from
 	test_cmp expect actual
 '
 
+test_expect_success 'setup for ref completion' '
+	git commit --allow-empty -m initial &&
+	git branch matching-branch &&
+	git tag matching-tag &&
+	(
+		cd otherrepo &&
+		git commit --allow-empty -m initial &&
+		git branch -m master master-in-other &&
+		git branch branch-in-other &&
+		git tag tag-in-other
+	) &&
+	git remote add other "$ROOT/otherrepo/.git" &&
+	git fetch --no-tags other &&
+	rm -f .git/FETCH_HEAD &&
+	git init thirdrepo
+'
+
+test_expect_success '__git_refs - simple' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	other/branch-in-other
+	other/master-in-other
+	matching-tag
+	EOF
+	(
+		cur= &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master
+	refs/heads/matching-branch
+	EOF
+	(
+		cur=refs/heads/ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - repo given on the command line' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	tag-in-other
+	EOF
+	(
+		__git_dir="$ROOT/otherrepo/.git" &&
+		cur= &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - remote on local file system' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	tag-in-other
+	EOF
+	(
+		cur= &&
+		__git_refs otherrepo >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - remote on local file system - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cur=refs/ &&
+		__git_refs otherrepo >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	EOF
+	(
+		cur= &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cur=refs/ &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_failure '__git_refs - configured remote - repo given on the command line' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	EOF
+	(
+		cd thirdrepo &&
+		__git_dir="$ROOT/.git" &&
+		cur= &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_failure '__git_refs - configured remote - full refs - repo given on the command line' '
+	cat >expected <<-EOF &&
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cd thirdrepo &&
+		__git_dir="$ROOT/.git" &&
+		cur=refs/ &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_failure '__git_refs - configured remote - remote name matches a directory' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	EOF
+	mkdir other &&
+	test_when_finished "rm -rf other" &&
+	(
+		cur= &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_failure '__git_refs - URL remote' '
+	cat >expected <<-EOF &&
+	HEAD
+	branch-in-other
+	master-in-other
+	tag-in-other
+	EOF
+	(
+		cur= &&
+		__git_refs "file://$ROOT/otherrepo/.git" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - URL remote - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/branch-in-other
+	refs/heads/master-in-other
+	refs/tags/tag-in-other
+	EOF
+	(
+		cur=refs/ &&
+		__git_refs "file://$ROOT/otherrepo/.git" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_failure '__git_refs - non-existing remote' '
+	(
+		cur= &&
+		__git_refs non-existing >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - non-existing remote - full refs' '
+	(
+		cur=refs/ &&
+		__git_refs non-existing >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_failure '__git_refs - non-existing URL remote' '
+	(
+		cur= &&
+		__git_refs "file://$ROOT/non-existing" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - non-existing URL remote - full refs' '
+	(
+		cur=refs/ &&
+		__git_refs "file://$ROOT/non-existing" >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_failure '__git_refs - not in a git repository' '
+	(
+		GIT_CEILING_DIRECTORIES="$ROOT" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd subdir &&
+		cur= &&
+		__git_refs >"$actual"
+	) &&
+	test_must_be_empty "$actual"
+'
+
+test_expect_success '__git_refs - unique remote branches for git checkout DWIMery' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	other/ambiguous
+	other/branch-in-other
+	other/master-in-other
+	remote/ambiguous
+	remote/branch-in-remote
+	matching-tag
+	branch-in-other
+	branch-in-remote
+	master-in-other
+	EOF
+	for remote_ref in refs/remotes/other/ambiguous \
+		refs/remotes/remote/ambiguous \
+		refs/remotes/remote/branch-in-remote
+	do
+		git update-ref $remote_ref master &&
+		test_when_finished "git update-ref -d $remote_ref"
+	done &&
+	(
+		cur= &&
+		__git_refs "" 1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'teardown after ref completion' '
+	git branch -d matching-branch &&
+	git tag -d matching-tag &&
+	git remote remove other
+'
+
 test_expect_success '__git_get_config_variables' '
 	cat >expect <<-EOF &&
 	name-1
@@ -483,7 +746,7 @@ test_expect_success 'git --help completion' '
 	test_completion "git --help core" "core-tutorial "
 '
 
-test_expect_success 'setup for ref completion' '
+test_expect_success 'setup for integration tests' '
 	echo content >file1 &&
 	echo more >file2 &&
 	git add file1 file2 &&
