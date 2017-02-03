@@ -354,6 +354,8 @@ __git_tags ()
 #    Can be the name of a configured remote, a path, or a URL.
 # 2: In addition to local refs, list unique branches from refs/remotes/ for
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
+#
+# Use __git_complete_refs() instead.
 __git_refs ()
 {
 	local i hash dir track="${2-}"
@@ -444,6 +446,36 @@ __git_refs ()
 		fi
 		;;
 	esac
+}
+
+# Completes refs, short and long, local and remote, symbolic and pseudo.
+#
+# Usage: __git_complete_refs [<option>]...
+# --remote=<remote>: The remote to list refs from, can be the name of a
+#                    configured remote, a path, or a URL.
+# --track: List unique remote branches for 'git checkout's tracking DWIMery.
+# --pfx=<prefix>: A prefix to be added to each ref.
+# --cur=<word>: The current ref to be completed.  Defaults to the current
+#               word to be completed.
+# --sfx=<suffix>: A suffix to be appended to each ref instead of the default
+#                 space.
+__git_complete_refs ()
+{
+	local remote track pfx cur_="$cur" sfx=" "
+
+	while test $# != 0; do
+		case "$1" in
+		--remote=*)	remote="${1##--remote=}" ;;
+		--track)	track="yes" ;;
+		--pfx=*)	pfx="${1##--pfx=}" ;;
+		--cur=*)	cur_="${1##--cur=}" ;;
+		--sfx=*)	sfx="${1##--sfx=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+
+	__gitcomp_nl "$(__git_refs "$remote" "$track")" "$pfx" "$cur_" "$sfx"
 }
 
 # __git_refs2 requires 1 argument (to pass to __git_refs)
@@ -554,15 +586,15 @@ __git_complete_revlist_file ()
 	*...*)
 		pfx="${cur_%...*}..."
 		cur_="${cur_#*...}"
-		__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
+		__git_complete_refs --pfx="$pfx" --cur="$cur_"
 		;;
 	*..*)
 		pfx="${cur_%..*}.."
 		cur_="${cur_#*..}"
-		__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
+		__git_complete_refs --pfx="$pfx" --cur="$cur_"
 		;;
 	*)
-		__gitcomp_nl "$(__git_refs)"
+		__git_complete_refs
 		;;
 	esac
 }
@@ -649,21 +681,21 @@ __git_complete_remote_or_refspec ()
 		if [ $lhs = 1 ]; then
 			__gitcomp_nl "$(__git_refs2 "$remote")" "$pfx" "$cur_"
 		else
-			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
+			__git_complete_refs --pfx="$pfx" --cur="$cur_"
 		fi
 		;;
 	pull|remote)
 		if [ $lhs = 1 ]; then
-			__gitcomp_nl "$(__git_refs "$remote")" "$pfx" "$cur_"
+			__git_complete_refs --remote="$remote" --pfx="$pfx" --cur="$cur_"
 		else
-			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
+			__git_complete_refs --pfx="$pfx" --cur="$cur_"
 		fi
 		;;
 	push)
 		if [ $lhs = 1 ]; then
-			__gitcomp_nl "$(__git_refs)" "$pfx" "$cur_"
+			__git_complete_refs --pfx="$pfx" --cur="$cur_"
 		else
-			__gitcomp_nl "$(__git_refs "$remote")" "$pfx" "$cur_"
+			__git_complete_refs --remote="$remote" --pfx="$pfx" --cur="$cur_"
 		fi
 		;;
 	esac
@@ -1061,7 +1093,7 @@ _git_bisect ()
 
 	case "$subcommand" in
 	bad|good|reset|skip|start)
-		__gitcomp_nl "$(__git_refs)"
+		__git_complete_refs
 		;;
 	*)
 		;;
@@ -1083,7 +1115,7 @@ _git_branch ()
 
 	case "$cur" in
 	--set-upstream-to=*)
-		__gitcomp_nl "$(__git_refs)" "" "${cur##--set-upstream-to=}"
+		__git_complete_refs --cur="${cur##--set-upstream-to=}"
 		;;
 	--*)
 		__gitcomp "
@@ -1097,7 +1129,7 @@ _git_branch ()
 		if [ $only_local_ref = "y" -a $has_r = "n" ]; then
 			__gitcomp_nl "$(__git_heads)"
 		else
-			__gitcomp_nl "$(__git_refs)"
+			__git_complete_refs
 		fi
 		;;
 	esac
@@ -1140,18 +1172,18 @@ _git_checkout ()
 	*)
 		# check if --track, --no-track, or --no-guess was specified
 		# if so, disable DWIM mode
-		local flags="--track --no-track --no-guess" track=1
+		local flags="--track --no-track --no-guess" track_opt="--track"
 		if [ -n "$(__git_find_on_cmdline "$flags")" ]; then
-			track=''
+			track_opt=''
 		fi
-		__gitcomp_nl "$(__git_refs '' $track)"
+		__git_complete_refs $track_opt
 		;;
 	esac
 }
 
 _git_cherry ()
 {
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_cherry_pick ()
@@ -1166,7 +1198,7 @@ _git_cherry_pick ()
 		__gitcomp "--edit --no-commit --signoff --strategy= --mainline"
 		;;
 	*)
-		__gitcomp_nl "$(__git_refs)"
+		__git_complete_refs
 		;;
 	esac
 }
@@ -1216,7 +1248,7 @@ _git_commit ()
 {
 	case "$prev" in
 	-c|-C)
-		__gitcomp_nl "$(__git_refs)"
+		__git_complete_refs
 		return
 		;;
 	esac
@@ -1229,7 +1261,7 @@ _git_commit ()
 		;;
 	--reuse-message=*|--reedit-message=*|\
 	--fixup=*|--squash=*)
-		__gitcomp_nl "$(__git_refs)" "" "${cur#*=}"
+		__git_complete_refs --cur="${cur#*=}"
 		return
 		;;
 	--untracked-files=*)
@@ -1267,7 +1299,7 @@ _git_describe ()
 			"
 		return
 	esac
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 __git_diff_algorithms="myers minimal patience histogram"
@@ -1453,7 +1485,7 @@ _git_grep ()
 		;;
 	esac
 
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_help ()
@@ -1621,7 +1653,7 @@ _git_merge ()
 			--rerere-autoupdate --no-rerere-autoupdate --abort --continue"
 		return
 	esac
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_mergetool ()
@@ -1646,7 +1678,7 @@ _git_merge_base ()
 		return
 		;;
 	esac
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_mv ()
@@ -1684,7 +1716,7 @@ _git_notes ()
 	,*)
 		case "$prev" in
 		--ref)
-			__gitcomp_nl "$(__git_refs)"
+			__git_complete_refs
 			;;
 		*)
 			__gitcomp "$subcommands --ref"
@@ -1693,7 +1725,7 @@ _git_notes ()
 		;;
 	add,--reuse-message=*|append,--reuse-message=*|\
 	add,--reedit-message=*|append,--reedit-message=*)
-		__gitcomp_nl "$(__git_refs)" "" "${cur#*=}"
+		__git_complete_refs --cur="${cur#*=}"
 		;;
 	add,--*|append,--*)
 		__gitcomp '--file= --message= --reedit-message=
@@ -1712,7 +1744,7 @@ _git_notes ()
 		-m|-F)
 			;;
 		*)
-			__gitcomp_nl "$(__git_refs)"
+			__git_complete_refs
 			;;
 		esac
 		;;
@@ -1750,10 +1782,10 @@ __git_complete_force_with_lease ()
 	--*=)
 		;;
 	*:*)
-		__gitcomp_nl "$(__git_refs)" "" "${cur_#*:}"
+		__git_complete_refs --cur="${cur_#*:}"
 		;;
 	*)
-		__gitcomp_nl "$(__git_refs)" "" "$cur_"
+		__git_complete_refs --cur="$cur_"
 		;;
 	esac
 }
@@ -1829,7 +1861,7 @@ _git_rebase ()
 
 		return
 	esac
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_reflog ()
@@ -1840,7 +1872,7 @@ _git_reflog ()
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
 	else
-		__gitcomp_nl "$(__git_refs)"
+		__git_complete_refs
 	fi
 }
 
@@ -1986,7 +2018,7 @@ _git_config ()
 		return
 		;;
 	branch.*.merge)
-		__gitcomp_nl "$(__git_refs)"
+		__git_complete_refs
 		return
 		;;
 	branch.*.rebase)
@@ -2460,7 +2492,7 @@ _git_remote ()
 
 _git_replace ()
 {
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_reset ()
@@ -2473,7 +2505,7 @@ _git_reset ()
 		return
 		;;
 	esac
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_revert ()
@@ -2489,7 +2521,7 @@ _git_revert ()
 		return
 		;;
 	esac
-	__gitcomp_nl "$(__git_refs)"
+	__git_complete_refs
 }
 
 _git_rm ()
@@ -2597,7 +2629,7 @@ _git_stash ()
 			;;
 		branch,*)
 			if [ $cword -eq 3 ]; then
-				__gitcomp_nl "$(__git_refs)";
+				__git_complete_refs
 			else
 				__gitcomp_nl "$(__git stash list \
 						| sed -n -e 's/:.*//p')"
@@ -2755,7 +2787,7 @@ _git_tag ()
 		fi
 		;;
 	*)
-		__gitcomp_nl "$(__git_refs)"
+		__git_complete_refs
 		;;
 	esac
 

@@ -775,6 +775,112 @@ test_expect_success '__git_refs - unique remote branches for git checkout DWIMer
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__git_complete_refs - simple' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	HEAD Z
+	master Z
+	matching-branch Z
+	other/branch-in-other Z
+	other/master-in-other Z
+	matching-tag Z
+	EOF
+	(
+		cur= &&
+		__git_complete_refs &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - matching' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	matching-branch Z
+	matching-tag Z
+	EOF
+	(
+		cur=mat &&
+		__git_complete_refs &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - remote' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	HEAD Z
+	branch-in-other Z
+	master-in-other Z
+	EOF
+	(
+		cur=
+		__git_complete_refs --remote=other &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - track' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	HEAD Z
+	master Z
+	matching-branch Z
+	other/branch-in-other Z
+	other/master-in-other Z
+	matching-tag Z
+	branch-in-other Z
+	master-in-other Z
+	EOF
+	(
+		cur=
+		__git_complete_refs --track &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - current word' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	matching-branch Z
+	matching-tag Z
+	EOF
+	(
+		cur="--option=mat" &&
+		__git_complete_refs --cur="${cur#*=}" &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - prefix' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	v1.0..matching-branch Z
+	v1.0..matching-tag Z
+	EOF
+	(
+		cur=v1.0..mat &&
+		__git_complete_refs --pfx=v1.0.. --cur=mat &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - suffix' '
+	cat >expected <<-EOF &&
+	HEAD.
+	master.
+	matching-branch.
+	other/branch-in-other.
+	other/master-in-other.
+	matching-tag.
+	EOF
+	(
+		cur= &&
+		__git_complete_refs --sfx=. &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
 test_expect_success 'teardown after ref completion' '
 	git branch -d matching-branch &&
 	git tag -d matching-tag &&
