@@ -486,7 +486,7 @@ test_expect_success '__git_refs - configured remote - full refs' '
 	test_cmp expected "$actual"
 '
 
-test_expect_failure '__git_refs - configured remote - repo given on the command line' '
+test_expect_success '__git_refs - configured remote - repo given on the command line' '
 	cat >expected <<-EOF &&
 	HEAD
 	branch-in-other
@@ -501,7 +501,7 @@ test_expect_failure '__git_refs - configured remote - repo given on the command 
 	test_cmp expected "$actual"
 '
 
-test_expect_failure '__git_refs - configured remote - full refs - repo given on the command line' '
+test_expect_success '__git_refs - configured remote - full refs - repo given on the command line' '
 	cat >expected <<-EOF &&
 	refs/heads/branch-in-other
 	refs/heads/master-in-other
