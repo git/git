@@ -108,7 +108,28 @@ UI, Workflows & Features
  * Some people feel the default set of colors used by "git log --graph"
    rather limiting.  A mechanism to customize the set of colors has
    been introduced.
-   (merge 512aba261a nd/log-graph-configurable-colors later to maint).
+
+ * "git read-tree" and its underlying unpack_trees() machinery learned
+   to report problematic paths prefixed with the --super-prefix option.
+
+ * When a submodule "A", which has another submodule "B" nested within
+   it, is "absorbed" into the top-level superproject, the inner
+   submodule "B" used to be left in a strange state.  The logic to
+   adjust the .git pointers in these submodules has been corrected.
+
+ * The user can specify a custom update method that is run when
+   "submodule update" updates an already checked out submodule.  This
+   was ignored when checking the submodule out for the first time and
+   we instead always just checked out the commit that is bound to the
+   path in the superproject's index.
+
+ * The command line completion (in contrib/) learned that
+   "git diff --submodule=" can take "diff" as a recently added option.
+
+ * The "core.logAllRefUpdates" that used to be boolean has been
+   enhanced to take 'always' as well, to record ref updates to refs
+   other than the ones that are expected to be updated (i.e. branches,
+   remote-tracking branches and notes).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -129,13 +150,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * The codeflow of setting NOATIME and CLOEXEC on file descriptors Git
    opens has been simplified.
-   (merge b4d065df03 jc/git-open-cloexec later to maint).
 
  * "git diff" and its family had two experimental heuristics to shift
    the contents of a hunk to make the patch easier to read.  One of
    them turns out to be better than the other, so leave only the
    "--indent-heuristic" option and remove the other one.
-   (merge 3cde4e02ee jc/retire-compaction-heuristics later to maint).
 
  * A new submodule helper "git submodule embedgitdirs" to make it
    easier to move embedded .git/ directory for submodules in a
@@ -162,7 +181,13 @@ Performance, Internal Implementation, Development Support etc.
    TravisCI.
 
  * Rewrite a scripted porcelain "git difftool" in C.
-   (merge 94d3997ecc js/difftool-builtin later to maint).
+
+ * "make -C t failed" will now run only the tests that failed in the
+   previous run.  This is usable only when prove is not use, and gives
+   a useless error message when run after "make clean", but otherwise
+   is serviceable.
+
+ * "uchar [40]" to "struct object_id" conversion continues.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -374,7 +399,6 @@ notes for details).
    natively available, and a fallback implementation of it when not,
    to eliminate the need, which is a prerequisite for making the
    codepath reentrant.
-   (merge 83fc4d64fe rs/qsort-s later to maint).
 
  * "git fsck --connectivity-check" was not working at all.
    (merge a2b22854bd jk/fsck-connectivity-check-fix later to maint).
@@ -411,7 +435,6 @@ notes for details).
    needs some changes to work with documents meant to be formatted
    with AsciiDoc.  "make USE_ASCIIDOCTOR=YesPlease" to use it out of
    the box to document our pages is getting closer to reality.
-   (merge 55d2d812e4 bc/use-asciidoctor-opt later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
