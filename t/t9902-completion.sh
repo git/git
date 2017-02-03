@@ -837,6 +837,108 @@ test_expect_success '__git refs - exluding full refs' '
 	test_cmp expected "$actual"
 '
 
+test_expect_success 'setup for filtering matching refs' '
+	git branch matching/branch &&
+	git tag matching/tag &&
+	git -C otherrepo branch matching/branch-in-other &&
+	git fetch --no-tags other &&
+	rm -f .git/FETCH_HEAD
+'
+
+test_expect_success '__git_refs - only matching refs' '
+	cat >expected <<-EOF &&
+	HEAD
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	EOF
+	(
+		cur=mat &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/matching-branch
+	refs/heads/matching/branch
+	EOF
+	(
+		cur=refs/heads/mat &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote on local file system' '
+	cat >expected <<-EOF &&
+	HEAD
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs otherrepo >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - configured remote' '
+	cat >expected <<-EOF &&
+	HEAD
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master-in-other
+	refs/heads/matching/branch-in-other
+	EOF
+	(
+		cur=refs/heads/ma &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - checkout DWIMery' '
+	cat >expected <<-EOF &&
+	HEAD
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	matching/branch-in-other
+	EOF
+	for remote_ref in refs/remotes/other/ambiguous \
+		refs/remotes/remote/ambiguous \
+		refs/remotes/remote/branch-in-remote
+	do
+		git update-ref $remote_ref master &&
+		test_when_finished "git update-ref -d $remote_ref"
+	done &&
+	(
+		cur=mat &&
+		__git_refs "" 1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'teardown after filtering matching refs' '
+	git branch -d matching/branch &&
+	git tag -d matching/tag &&
+	git update-ref -d refs/remotes/other/matching/branch-in-other
+'
+
 test_expect_success '__git_complete_refs - simple' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
 	HEAD Z

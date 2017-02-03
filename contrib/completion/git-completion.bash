@@ -394,7 +394,7 @@ __git_refs ()
 		case "$cur_" in
 		refs|refs/*)
 			format="refname"
-			refs="${cur_%/*}"
+			refs=("$cur_*" "$cur_*/**")
 			track=""
 			;;
 		*)
@@ -402,11 +402,13 @@ __git_refs ()
 				if [ -e "$dir/$i" ]; then echo $pfx$i; fi
 			done
 			format="refname:strip=2"
-			refs="refs/tags refs/heads refs/remotes"
+			refs=("refs/tags/$cur_*" "refs/tags/$cur_*/**"
+				"refs/heads/$cur_*" "refs/heads/$cur_*/**"
+				"refs/remotes/$cur_*" "refs/remotes/$cur_*/**")
 			;;
 		esac
 		__git_dir="$dir" __git for-each-ref --format="$pfx%($format)" \
-			$refs
+			"${refs[@]}"
 		if [ -n "$track" ]; then
 			# employ the heuristic used by git checkout
 			# Try to find a remote branch that matches the completion word
@@ -438,10 +440,12 @@ __git_refs ()
 		if [ "$list_refs_from" = remote ]; then
 			echo "HEAD"
 			__git for-each-ref --format="%(refname:strip=2)" \
-				"refs/remotes/$remote/" | sed -e "s#^$remote/##"
+				"refs/remotes/$remote/$cur_*" \
+				"refs/remotes/$remote/$cur_*/**" | sed -e "s#^$remote/##"
 		else
 			__git ls-remote "$remote" HEAD \
-				"refs/tags/*" "refs/heads/*" "refs/remotes/*" |
+				"refs/tags/$cur_*" "refs/heads/$cur_*" \
+				"refs/remotes/$cur_*" |
 			while read -r hash i; do
 				case "$i" in
 				*^{})	;;
