@@ -98,7 +98,7 @@ test_gitcomp ()
 {
 	local -a COMPREPLY &&
 	sed -e 's/Z$//' >expected &&
-	cur="$1" &&
+	local cur="$1" &&
 	shift &&
 	__gitcomp "$@" &&
 	print_comp &&
@@ -113,7 +113,7 @@ test_gitcomp_nl ()
 {
 	local -a COMPREPLY &&
 	sed -e 's/Z$//' >expected &&
-	cur="$1" &&
+	local cur="$1" &&
 	shift &&
 	__gitcomp_nl "$@" &&
 	print_comp &&
