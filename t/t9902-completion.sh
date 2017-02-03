@@ -599,7 +599,7 @@ test_expect_success '__git_refs - non-existing URL remote - full refs' '
 	test_must_be_empty "$actual"
 '
 
-test_expect_failure '__git_refs - not in a git repository' '
+test_expect_success '__git_refs - not in a git repository' '
 	(
 		GIT_CEILING_DIRECTORIES="$ROOT" &&
 		export GIT_CEILING_DIRECTORIES &&

@@ -346,7 +346,11 @@ __git_refs ()
 	local list_refs_from=path remote="${1-}"
 	local format refs pfx
 
-	if [ -n "$remote" ]; then
+	if [ -z "$remote" ]; then
+		if [ -z "$dir" ]; then
+			return
+		fi
+	else
 		if __git_is_configured_remote "$remote"; then
 			# configured remote takes precedence over a
 			# local directory with the same name
@@ -360,7 +364,7 @@ __git_refs ()
 		fi
 	fi
 
-	if [ "$list_refs_from" = path ] && [ -d "$dir" ]; then
+	if [ "$list_refs_from" = path ]; then
 		case "$cur" in
 		refs|refs/*)
 			format="refname"
