@@ -49,7 +49,7 @@ test_expect_success 'return to full checkout of master' '
 	test "$(cat b)" = "modified"
 '
 
-test_expect_success 'no unnecessary opendir() with fscache' '
+test_expect_success MINGW 'no unnecessary opendir() with fscache' '
 	git clone . fscache-test &&
 	(
 		cd fscache-test &&
