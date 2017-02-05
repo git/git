@@ -13,6 +13,13 @@ test_expect_success 'repack' '
 	export PACK
 '
 
+test_expect_success 'create target repositories' '
+	for repo in t1 t2 t3 t4 t5 t6
+	do
+		git init --bare $repo
+	done
+'
+
 test_perf 'index-pack 0 threads' '
 	GIT_DIR=t1 git index-pack --threads=1 --stdin < $PACK
 '
