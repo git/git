@@ -1,21 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2017, #01; Thu, 2)
-X-master-at: 8a8f121049fdd881981799755a041b3f81449805
-X-next-at: 3e11673fcc32f542ad8901f843cb6952beb23c51
+Subject: What's cooking in git.git (Feb 2017, #02; Mon, 6)
+X-master-at: 6e3a7b3398559305c7a239a42e447c21a8f39ff8
+X-next-at: 6ec89f72d55e6d68bc583df597c35ed94a9731fd
 
-What's cooking in git.git (Feb 2017, #01; Thu, 2)
+What's cooking in git.git (Feb 2017, #02; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The tip of 'master' has most of the topics (and all the big ones)
-that should be in the upcoming release.  I'll tag 2.12-rc0 sometime
-tomorrow.  On the 'maint' front, Git 2.11.1 has been tagged with
-bugfixes that are already in 'master'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,145 +20,273 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/use-asciidoctor-opt (2017-01-31) 8 commits
-  (merged to 'next' on 2017-01-31 at f2a641f6f3)
- + Documentation: implement linkgit macro for Asciidoctor
- + Makefile: add a knob to enable the use of Asciidoctor
- + Documentation: move dblatex arguments into variable
- + Documentation: add XSLT to fix DocBook for Texinfo
- + Documentation: sort sources for gitman.texi
- + Documentation: remove unneeded argument in cat-texi.perl
- + Documentation: modernize cat-texi.perl
- + Documentation: fix warning in cat-texi.perl
+* cw/log-updates-for-all-refs-really (2017-02-01) 4 commits
+  (merged to 'next' on 2017-02-02 at 3e11673fcc)
+ + doc: add note about ignoring '--no-create-reflog'
+  (merged to 'next' on 2017-01-31 at 53f71d2401)
+ + update-ref: add test cases for bare repository
+ + refs: add option core.logAllRefUpdates = always
+ + config: add markup to core.logAllRefUpdates doc
 
- Asciidoctor, an alternative reimplementation of AsciiDoc, still
- needs some changes to work with documents meant to be formatted
- with AsciiDoc.  "make USE_ASCIIDOCTOR=YesPlease" to use it out of
- the box to document our pages is getting closer to reality.
+ The "core.logAllRefUpdates" that used to be boolean has been
+ enhanced to take 'always' as well, to record ref updates to refs
+ other than the ones that are expected to be updated (i.e. branches,
+ remote-tracking branches and notes).
 
 
-* cw/doc-sign-off (2017-01-27) 1 commit
-  (merged to 'next' on 2017-01-31 at 133cc2886d)
- + doc: clarify distinction between sign-off and pgp-signing
+* js/re-running-failed-tests (2017-01-27) 1 commit
+  (merged to 'next' on 2017-01-31 at 30c3a9e0cf)
+ + t/Makefile: add a rule to re-run previously-failed tests
 
- Doc update.
+ "make -C t failed" will now run only the tests that failed in the
+ previous run.  This is usable only when prove is not use, and gives
+ a useless error message when run after "make clean", but otherwise
+ is serviceable.
 
 
-* ep/commit-static-buf-cleanup (2017-01-31) 2 commits
-  (merged to 'next' on 2017-01-31 at 02d3c25219)
- + builtin/commit.c: switch to strbuf, instead of snprintf()
- + builtin/commit.c: remove the PATH_MAX limitation via dynamic allocation
+* pl/complete-diff-submodule-diff (2017-01-30) 1 commit
+  (merged to 'next' on 2017-01-31 at 7e668d325c)
+ + Completion: Add support for --submodule=diff
+
+ The command line completion (in contrib/) learned that
+ "git diff --submodule=" can take "diff" as a recently added option.
+
+
+* rs/object-id (2017-01-30) 3 commits
+  (merged to 'next' on 2017-01-31 at c442e4780c)
+ + checkout: convert post_checkout_hook() to struct object_id
+ + use oidcpy() for copying hashes between instances of struct object_id
+ + use oid_to_hex_r() for converting struct object_id hashes to hex strings
+
+ "uchar [40]" to "struct object_id" conversion continues.
+
+
+* sb/submodule-recursive-absorb (2017-01-26) 3 commits
+  (merged to 'next' on 2017-01-31 at 0a24cfd06b)
+ + submodule absorbing: fix worktree/gitdir pointers recursively for non-moves
+ + cache.h: expose the dying procedure for reading gitlinks
+ + setup: add gentle version of resolve_git_dir
+
+ When a submodule "A", which has another submodule "B" nested within
+ it, is "absorbed" into the top-level superproject, the inner
+ submodule "B" used to be left in a strange state.  The logic to
+ adjust the .git pointers in these submodules has been corrected.
+
+
+* sb/submodule-update-initial-runs-custom-script (2017-01-26) 1 commit
+  (merged to 'next' on 2017-01-31 at d794f894c6)
+ + submodule update: run custom update script for initial populating as well
+
+ The user can specify a custom update method that is run when
+ "submodule update" updates an already checked out submodule.  This
+ was ignored when checking the submodule out for the first time and
+ we instead always just checked out the commit that is bound to the
+ path in the superproject's index.
+
+
+* sb/unpack-trees-super-prefix (2017-01-25) 4 commits
+  (merged to 'next' on 2017-01-31 at dabe6ca2b1)
+ + unpack-trees: support super-prefix option
+ + t1001: modernize style
+ + t1000: modernize style
+ + read-tree: use OPT_BOOL instead of OPT_SET_INT
+
+ "git read-tree" and its underlying unpack_trees() machinery learned
+ to report problematic paths prefixed with the --super-prefix option.
+
+--------------------------------------------------
+[New Topics]
+
+* bw/push-submodule-only (2017-02-01) 2 commits
+  (merged to 'next' on 2017-02-06 at 851edafb14)
+ + completion: add completion for --recurse-submodules=only
+ + doc: add doc for git-push --recurse-submodules=only
+
+ Add missing documentation update to a recent topic.
+
+ Will merge to 'master'.
+
+
+* cw/completion (2017-02-03) 7 commits
+ - completion: recognize more long-options
+ - completion: teach remote subcommands to complete options
+ - completion: teach replace to complete options
+ - completion: teach ls-remote to complete options
+ - completion: improve bash completion for git-add
+ - completion: add subcommand completion for rerere
+ - completion: teach submodule subcommands to complete options
+
+ More command line completion (in contrib/) for recent additions.
+
+ Needs review.
+
+
+* cw/tag-reflog-message (2017-02-06) 1 commit
+ - tag: generate useful reflog message
+
+ "git tag", because refs/tags/* doesn't keep reflog by default, did
+ not leave useful message when adding a new entry to reflog.
+
+ Waiting for review to conclude.
+ An uneven error handling is somewhat disturbing.
+
+
+* dl/document-that-difftool-takes-no-gui-option (2017-02-06) 1 commit
+ - Document the --no-gui option in difftool
+
+ A minor doc update.
+
+ Waiting for review to conclude.
+ A minor inconsistency is somewhat disturbing.
+
+
+* ew/complete-svn-authorship-options (2017-02-06) 1 commit
+  (merged to 'next' on 2017-02-06 at dca324db7c)
+ + completion: fix git svn authorship switches
+
+ Correct command line completion (in contrib/) on "git svn"
+
+ Will merge to 'master'.
+
+
+* jk/reset-to-break-a-commit-doc (2017-02-03) 1 commit
+  (merged to 'next' on 2017-02-06 at 7f571e62e9)
+ + reset: add an example of how to split a commit into two
+
+ A minor doc update.
+
+ Will merge to 'master'.
+
+
+* js/difftool-builtin (2017-02-06) 1 commit
+  (merged to 'next' on 2017-02-06 at 6a90549f38)
+ + difftool: fix bug when printing usage
+
+ A hot-fix to C-rewrite of "git difftool".
+
+ Will merge to 'master'.
+
+
+* ps/worktree-prune-help-fix (2017-02-06) 1 commit
+  (merged to 'next' on 2017-02-06 at eeb96f1677)
+ + worktree: fix option descriptions for `prune`
+
+ Incorrect usage help message for "git worktree prune" has been fixed.
+
+ Will merge to 'master'.
+
+
+* rs/p5302-create-repositories-before-tests (2017-02-06) 1 commit
+  (merged to 'next' on 2017-02-06 at f93bd2ed47)
+ + p5302: create repositories for index-pack results explicitly
+
+ Adjust a perf test to new world order where commands that do
+ require a repository are really strict about having a repository.
+
+ Will merge to 'master'.
+
+
+* sg/completion (2017-02-03) 21 commits
+ - completion: cache the path to the repository
+ - completion: extract repository discovery from __gitdir()
+ - completion: don't guard git executions with __gitdir()
+ - completion: consolidate silencing errors from git commands
+ - completion: don't use __gitdir() for git commands
+ - completion: respect 'git -C <path>'
+ - rev-parse: add '--absolute-git-dir' option
+ - completion: fix completion after 'git -C <path>'
+ - completion: don't offer commands when 'git --opt' needs an argument
+ - completion: list short refs from a remote given as a URL
+ - completion: don't list 'HEAD' when trying refs completion outside of a repo
+ - completion: list refs from remote when remote's name matches a directory
+ - completion: respect 'git --git-dir=<path>' when listing remote refs
+ - completion: fix most spots not respecting 'git --git-dir=<path>'
+ - completion: ensure that the repository path given on the command line exists
+ - completion tests: add tests for the __git_refs() helper function
+ - completion tests: check __gitdir()'s output in the error cases
+ - completion tests: consolidate getting path of current working directory
+ - completion tests: make the $cur variable local to the test helper functions
+ - completion tests: don't add test cruft to the test repository
+ - completion: improve __git_refs()'s in-code documentation
+ (this branch is used by sg/completion-refs-speedup.)
+
+ Clean-up and updates to command line completion (in contrib/).
+
+ Will merge to 'next'.
+
+
+* sg/completion-refs-speedup (2017-02-06) 13 commits
+ - squash! completion: fill COMPREPLY directly when completing refs
+ - completion: fill COMPREPLY directly when completing refs
+ - completion: list only matching symbolic and pseudorefs when completing refs
+ - completion: let 'for-each-ref' sort remote branches for 'checkout' DWIMery
+ - completion: let 'for-each-ref' filter remote branches for 'checkout' DWIMery
+ - completion: let 'for-each-ref' strip the remote name from remote branches
+ - completion: let 'for-each-ref' and 'ls-remote' filter matching refs
+ - completion: don't disambiguate short refs
+ - completion: don't disambiguate tags and branches
+ - completion: support excluding full refs
+ - completion: support completing full refs after '--option=refs/<TAB>'
+ - completion: wrap __git_refs() for better option parsing
+ - completion: remove redundant __gitcomp_nl() options from _git_commit()
+ (this branch uses sg/completion.)
+
+ Will hold.
+ This seems to break 9902 when merged to 'pu'.
+
+
+* sk/parse-remote-cleanup (2017-02-06) 1 commit
+  (merged to 'next' on 2017-02-06 at 6ec89f72d5)
+ + parse-remote: remove reference to unused op_prep
 
  Code clean-up.
-
-
-* gv/mingw-p4-mapuser (2017-01-30) 1 commit
-  (merged to 'next' on 2017-01-31 at 5a9f2c96f6)
- + git-p4: fix git-p4.mapUser on Windows
-
- "git p4" did not work well with multiple git-p4.mapUser entries on
- Windows.
-
-
-* hv/mingw-help-is-executable (2017-01-30) 1 commit
-  (merged to 'next' on 2017-01-31 at 89aae8d018)
- + help: improve is_executable() on Windows
-
- "git help" enumerates executable files in $PATH; the implementation
- of "is this file executable?" on Windows has been optimized.
-
-
-* js/mingw-hooks-with-exe-suffix (2017-01-30) 1 commit
-  (merged to 'next' on 2017-01-31 at 3b7863c578)
- + mingw: allow hooks to be .exe files
-
- Names of the various hook scripts must be spelled exactly, but on
- Windows, an .exe binary must be named with .exe suffix; notice
- $GIT_DIR/hooks/<hookname>.exe as a valid <hookname> hook.
-
-
-* js/retire-relink (2017-01-25) 2 commits
-  (merged to 'next' on 2017-01-31 at c6c6f9b902)
- + relink: really remove the command
- + relink: retire the command
-
- Cruft removal.
-
-
-* js/status-pre-rebase-i (2017-01-26) 1 commit
-  (merged to 'next' on 2017-01-31 at 09e51b2e39)
- + status: be prepared for not-yet-started interactive rebase
-
- After starting "git rebase -i", which first opens the user's editor
- to edit the series of patches to apply, but before saving the
- contents of that file, "git status" failed to show the current
- state (i.e. you are in an interactive rebase session, but you have
- applied no steps yet) correctly.
-
-
-* js/unzip-in-usr-bin-workaround (2017-01-27) 1 commit
-  (merged to 'next' on 2017-01-31 at 515d1d1f90)
- + test-lib: on FreeBSD, look for unzip(1) in /usr/local/bin/
-
- Test tweak for FreeBSD where /usr/bin/unzip is unsuitable to run
- our tests but /usr/local/bin/unzip is usable.
-
-
-* mm/reset-facl-before-umask-test (2017-01-30) 1 commit
-  (merged to 'next' on 2017-01-31 at 4a2031e49c)
- + t0001: don't let a default ACL interfere with the umask test
-
- Test tweaks for those who have default ACL in their git source tree
- that interfere with the umask test.
-
-
-* nd/log-graph-configurable-colors (2017-01-31) 4 commits
-  (merged to 'next' on 2017-01-31 at 36df9e2376)
- + color_parse_mem: allow empty color spec
-  (merged to 'next' on 2017-01-23 at c369982ad8)
- + log --graph: customize the graph lines with config log.graphColors
- + color.c: trim leading spaces in color_parse_mem()
- + color.c: fix color_parse_mem() with value_len == 0
-
- Some people feel the default set of colors used by "git log --graph"
- rather limiting.  A mechanism to customize the set of colors has
- been introduced.
-
-
-* rs/absolute-pathdup (2017-01-27) 2 commits
-  (merged to 'next' on 2017-01-31 at f751f64876)
- + use absolute_pathdup()
- + abspath: add absolute_pathdup()
-
- Code cleanup.
-
-
-* rs/receive-pack-cleanup (2017-01-30) 1 commit
-  (merged to 'next' on 2017-01-31 at d660881f69)
- + receive-pack: call string_list_clear() unconditionally
-
- Code clean-up.
-
-
-* sb/submodule-add-force (2016-11-29) 1 commit
- + submodule add: extend force flag to add existing repos
- (this branch is used by sb/push-make-submodule-check-the-default.)
-
- Originally merged to 'next' on 2016-12-12
-
- "git submodule add" used to be confused and refused to add a
- locally created repository; users can now use "--force" option
- to add them.
-
-
-* sg/mailmap-self (2017-01-31) 1 commit
-  (merged to 'next' on 2017-01-31 at 2e7641759c)
- + .mailmap: update Gábor Szeder's email address
 
  Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
+
+* pb/bisect (2016-10-18) 27 commits
+ - bisect--helper: remove the dequote in bisect_start()
+ - bisect--helper: retire `--bisect-auto-next` subcommand
+ - bisect--helper: retire `--bisect-autostart` subcommand
+ - bisect--helper: retire `--bisect-write` subcommand
+ - bisect--helper: `bisect_replay` shell function in C
+ - bisect--helper: `bisect_log` shell function in C
+ - bisect--helper: retire `--write-terms` subcommand
+ - bisect--helper: retire `--check-expected-revs` subcommand
+ - bisect--helper: `bisect_state` & `bisect_head` shell function in C
+ - bisect--helper: `bisect_autostart` shell function in C
+ - bisect--helper: retire `--next-all` subcommand
+ - bisect--helper: retire `--bisect-clean-state` subcommand
+ - bisect--helper: `bisect_next` and `bisect_auto_next` shell function in C
+ - t6030: no cleanup with bad merge base
+ - bisect--helper: `bisect_start` shell function partially in C
+ - bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ - bisect--helper: `bisect_next_check` & bisect_voc shell function in C
+ - bisect--helper: `check_and_set_terms` shell function in C
+ - bisect--helper: `bisect_write` shell function in C
+ - bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
+ - bisect--helper: `bisect_reset` shell function in C
+ - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ - t6030: explicitly test for bisection cleanup
+ - bisect--helper: `bisect_clean_state` shell function in C
+ - bisect--helper: `write_terms` shell function in C
+ - bisect: rewrite `check_term_format` shell function in C
+ - bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+
+ Move more parts of "git bisect" to C.
+
+ Expecting a reroll.
+ cf. <CAFZEwPPXPPHi8KiEGS9ggzNHDCGhuqMgH9Z8-Pf9GLshg8+LPA@mail.gmail.com>
+ cf. <CAFZEwPM9RSTGN54dzaw9gO9iZmsYjJ_d1SjUD4EzSDDbmh-XuA@mail.gmail.com>
+
+
+* ls/filter-process-delayed (2017-01-08) 1 commit
+ . convert: add "status=delayed" to filter process protocol
+
+ Ejected, as does not build when merged to 'pu'.
+
 
 * ls/p4-path-encoding (2016-12-18) 1 commit
  - git-p4: fix git-p4.pathEncoding for removed files
@@ -249,56 +372,25 @@ of the repositories listed at
 [Cooking]
 
 * jk/delta-chain-limit (2017-01-27) 2 commits
- - pack-objects: convert recursion to iteration in break_delta_chain()
- - pack-objects: enforce --depth limit in reused deltas
+  (merged to 'next' on 2017-02-06 at 9ff36ae9b2)
+ + pack-objects: convert recursion to iteration in break_delta_chain()
+ + pack-objects: enforce --depth limit in reused deltas
 
  "git repack --depth=<n>" for a long time busted the specified depth
  when reusing delta from existing packs.  This has been corrected.
 
- Will merge to 'next'.
-
-
-* js/re-running-failed-tests (2017-01-27) 1 commit
-  (merged to 'next' on 2017-01-31 at 30c3a9e0cf)
- + t/Makefile: add a rule to re-run previously-failed tests
-
- "make -C t failed" will now run only the tests that failed in the
- previous run.  This is usable only when prove is not use, and gives
- a useless error message when run after "make clean", but otherwise
- is serviceable.
-
- Will merge to 'master'.
-
-
-* cw/log-updates-for-all-refs-really (2017-02-01) 4 commits
-  (merged to 'next' on 2017-02-02 at 3e11673fcc)
- + doc: add note about ignoring '--no-create-reflog'
-  (merged to 'next' on 2017-01-31 at 53f71d2401)
- + update-ref: add test cases for bare repository
- + refs: add option core.logAllRefUpdates = always
- + config: add markup to core.logAllRefUpdates doc
-
- The "core.logAllRefUpdates" that used to be boolean has been
- enhanced to take 'always' as well, to record ref updates to refs
- other than the ones that are expected to be updated (i.e. branches,
- remote-tracking branches and notes).
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * mm/merge-rename-delete-message (2017-01-30) 1 commit
  - merge-recursive: make "CONFLICT (rename/delete)" message show both paths
 
+ When "git merge" detects a path that is renamed in one history
+ while the other history deleted (or modified) it, it now reports
+ both paths to help the user understand what is going on in the two
+ histories being merged.
 
-* rs/object-id (2017-01-30) 3 commits
-  (merged to 'next' on 2017-01-31 at c442e4780c)
- + checkout: convert post_checkout_hook() to struct object_id
- + use oidcpy() for copying hashes between instances of struct object_id
- + use oid_to_hex_r() for converting struct object_id hashes to hex strings
-
- "uchar [40]" to "struct object_id" conversion continues.
-
- Will merge to 'master'.
+ Will merge to and then cook in 'next'.
 
 
 * rs/swap (2017-01-30) 5 commits
@@ -311,16 +403,8 @@ of the repositories listed at
  Code clean-up.
 
  Will merge to 'next'.
-
-
-* pl/complete-diff-submodule-diff (2017-01-30) 1 commit
-  (merged to 'next' on 2017-01-31 at 7e668d325c)
- + Completion: Add support for --submodule=diff
-
- The command line completion (in contrib/) learned that
- "git diff --submodule=" can take "diff" as a recently added option.
-
- Will merge to 'master'.
+ ... unless there is an objection with better alternative.  The
+ discussion seems to have quieted down.
 
 
 * ps/urlmatch-wildcard (2017-02-01) 5 commits
@@ -336,31 +420,7 @@ of the repositories listed at
  proxy used for https://a.example.com, https://b.example.com, etc.,
  i.e. any host in the example.com domain.
 
-
-* sb/submodule-recursive-absorb (2017-01-26) 3 commits
-  (merged to 'next' on 2017-01-31 at 0a24cfd06b)
- + submodule absorbing: fix worktree/gitdir pointers recursively for non-moves
- + cache.h: expose the dying procedure for reading gitlinks
- + setup: add gentle version of resolve_git_dir
-
- When a submodule "sub", which has another submodule "module" nested
- within it, is "absorbed" into the top-level superproject, the inner
- submodule "module" is left in a strange state.
-
- Will merge to 'master'.
-
-
-* sb/submodule-update-initial-runs-custom-script (2017-01-26) 1 commit
-  (merged to 'next' on 2017-01-31 at d794f894c6)
- + submodule update: run custom update script for initial populating as well
-
- The user can specify a custom update method that is run when
- "submodule update" updates an already checked out submodule.  This
- was ignored when checking the submodule out for the first time and
- we instead always just checked out the commit that is bound to the
- path in the superproject's index.
-
- Will merge to 'master'.
+ Will merge to and then cook in 'next'.
 
 
 * sf/putty-w-args (2017-02-01) 5 commits
@@ -379,8 +439,8 @@ of the repositories listed at
  variable, and give an escape hatch for users to deal with
  misdetected cases.
 
- Expecting a reroll of the last step to plug new memory leak.
- cf. <xmqqpoj8z7su.fsf@gitster.mtv.corp.google.com>
+ Stalled?
+ cf. <alpine.DEB.2.20.1702012319460.3496@virtualbox>
 
 
 * jk/describe-omit-some-refs (2017-01-23) 5 commits
@@ -397,19 +457,6 @@ of the repositories listed at
  name refs not to be used for naming via their "--exclude" option.
 
  Will cook in 'next'.
-
-
-* sb/unpack-trees-super-prefix (2017-01-25) 4 commits
-  (merged to 'next' on 2017-01-31 at dabe6ca2b1)
- + unpack-trees: support super-prefix option
- + t1001: modernize style
- + t1000: modernize style
- + read-tree: use OPT_BOOL instead of OPT_SET_INT
-
- "git read-tree" and its underlying unpack_trees() machinery learned
- to report problematic paths prefixed with the --super-prefix option.
-
- Will merge to 'master'.
 
 
 * sb/submodule-doc (2017-01-12) 3 commits
@@ -452,7 +499,7 @@ of the repositories listed at
  The gitattributes machinery is being taught to work better in a
  multi-threaded environment.
 
- Expecting a reroll.
+ Will merge to and then cook in 'next'.
 
 
 * vn/xdiff-func-context (2017-01-15) 1 commit
@@ -465,12 +512,6 @@ of the repositories listed at
  An follow-up change to go back from the line that matches the
  funcline to show comments before the function definition is still
  being discussed.
-
-
-* ls/filter-process-delayed (2017-01-08) 1 commit
- . convert: add "status=delayed" to filter process protocol
-
- Ejected, as does not build when merged to 'pu'.
 
 
 * nd/worktree-move (2017-01-27) 7 commits
@@ -518,18 +559,6 @@ of the repositories listed at
  cf. <a1a44640-ff6c-2294-72ac-46322eff8505@ramsayjones.plus.com>
 
 
-* sb/push-make-submodule-check-the-default (2017-01-26) 2 commits
-  (merged to 'next' on 2017-01-26 at 5f4715cea6)
- + Revert "push: change submodule default to check when submodules exist"
-  (merged to 'next' on 2016-12-12 at 1863e05af5)
- + push: change submodule default to check when submodules exist
-
- Turn the default of "push.recurseSubmodules" to "check" when
- submodules seem to be in use.
-
- Retracted.
-
-
 * kn/ref-filter-branch-list (2017-01-31) 20 commits
   (merged to 'next' on 2017-01-31 at e7592a5461)
  + branch: implement '--format' option
@@ -573,42 +602,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* pb/bisect (2016-10-18) 27 commits
- - bisect--helper: remove the dequote in bisect_start()
- - bisect--helper: retire `--bisect-auto-next` subcommand
- - bisect--helper: retire `--bisect-autostart` subcommand
- - bisect--helper: retire `--bisect-write` subcommand
- - bisect--helper: `bisect_replay` shell function in C
- - bisect--helper: `bisect_log` shell function in C
- - bisect--helper: retire `--write-terms` subcommand
- - bisect--helper: retire `--check-expected-revs` subcommand
- - bisect--helper: `bisect_state` & `bisect_head` shell function in C
- - bisect--helper: `bisect_autostart` shell function in C
- - bisect--helper: retire `--next-all` subcommand
- - bisect--helper: retire `--bisect-clean-state` subcommand
- - bisect--helper: `bisect_next` and `bisect_auto_next` shell function in C
- - t6030: no cleanup with bad merge base
- - bisect--helper: `bisect_start` shell function partially in C
- - bisect--helper: `get_terms` & `bisect_terms` shell function in C
- - bisect--helper: `bisect_next_check` & bisect_voc shell function in C
- - bisect--helper: `check_and_set_terms` shell function in C
- - bisect--helper: `bisect_write` shell function in C
- - bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
- - bisect--helper: `bisect_reset` shell function in C
- - wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- - t6030: explicitly test for bisection cleanup
- - bisect--helper: `bisect_clean_state` shell function in C
- - bisect--helper: `write_terms` shell function in C
- - bisect: rewrite `check_term_format` shell function in C
- - bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
-
- Move more parts of "git bisect" to C.
-
- Expecting a reroll.
- cf. <CAFZEwPPXPPHi8KiEGS9ggzNHDCGhuqMgH9Z8-Pf9GLshg8+LPA@mail.gmail.com>
- cf. <CAFZEwPM9RSTGN54dzaw9gO9iZmsYjJ_d1SjUD4EzSDDbmh-XuA@mail.gmail.com>
-
-
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
   (merged to 'next' on 2016-12-05 at 041946dae0)
  + merge: drop 'git merge <message> HEAD <commit>' syntax
@@ -621,8 +614,6 @@ of the repositories listed at
 
  Will cook in 'next'.
 
---------------------------------------------------
-[Discarded]
 
 * jc/bundle (2016-03-03) 6 commits
  . index-pack: --clone-bundle option
@@ -644,6 +635,8 @@ of the repositories listed at
  would need a lot more than just "these are the heads and the pack
  data is over there", so this may not be sufficient.
 
+--------------------------------------------------
+[Discarded]
 
 * jk/nofollow-attr-ignore (2016-11-02) 5 commits
  . exclude: do not respect symlinks for in-tree .gitignore
@@ -660,3 +653,17 @@ of the repositories listed at
  one of these files that is a symbolic link.
 
  Perhaps we want to cover .gitmodules too with the same mechanism?
+
+
+* sb/push-make-submodule-check-the-default (2017-01-26) 2 commits
+  (merged to 'next' on 2017-01-26 at 5f4715cea6)
+ + Revert "push: change submodule default to check when submodules exist"
+  (merged to 'next' on 2016-12-12 at 1863e05af5)
+ + push: change submodule default to check when submodules exist
+
+ Turn the default of "push.recurseSubmodules" to "check" when
+ submodules seem to be in use.
+
+ Retracted.
+
+
