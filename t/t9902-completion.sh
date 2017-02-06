@@ -951,6 +951,17 @@ test_expect_success 'teardown after filtering matching refs' '
 	git update-ref -d refs/remotes/other/matching/branch-in-other
 '
 
+test_expect_success '__git_refs - for-each-ref format specifiers in prefix' '
+	cat >expected <<-EOF &&
+	evil-%%-%42-%(refname)..master
+	EOF
+	(
+		cur="evil-%%-%42-%(refname)..mas" &&
+		__git_refs "" "" "evil-%%-%42-%(refname).." mas >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success '__git_complete_refs - simple' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
 	HEAD Z

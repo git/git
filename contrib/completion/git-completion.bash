@@ -381,6 +381,7 @@ __git_refs ()
 	local list_refs_from=path remote="${1-}"
 	local format refs
 	local pfx="${3-}" cur_="${4-$cur}" sfx="${5-}"
+	local fer_pfx="${pfx//\%/%%}"
 
 	__git_find_repo_path
 	dir="$__git_repo_path"
@@ -406,6 +407,7 @@ __git_refs ()
 	if [ "$list_refs_from" = path ]; then
 		if [[ "$cur_" == ^* ]]; then
 			pfx="$pfx^"
+			fer_pfx="$fer_pfx^"
 			cur_=${cur_#^}
 		fi
 		case "$cur_" in
@@ -429,13 +431,13 @@ __git_refs ()
 				"refs/remotes/$cur_*" "refs/remotes/$cur_*/**")
 			;;
 		esac
-		__git_dir="$dir" __git for-each-ref --format="$pfx%($format)$sfx" \
+		__git_dir="$dir" __git for-each-ref --format="$fer_pfx%($format)$sfx" \
 			"${refs[@]}"
 		if [ -n "$track" ]; then
 			# employ the heuristic used by git checkout
 			# Try to find a remote branch that matches the completion word
 			# but only output if the branch name is unique
-			__git for-each-ref --format="$pfx%(refname:strip=3)$sfx" \
+			__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
 				--sort="refname:strip=3" \
 				"refs/remotes/*/$cur_*" "refs/remotes/*/$cur_*/**" | \
 			uniq -u
@@ -457,7 +459,7 @@ __git_refs ()
 			case "HEAD" in
 			$cur_*)	echo "${pfx}HEAD$sfx" ;;
 			esac
-			__git for-each-ref --format="$pfx%(refname:strip=3)$sfx" \
+			__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
 				"refs/remotes/$remote/$cur_*" \
 				"refs/remotes/$remote/$cur_*/**"
 		else
