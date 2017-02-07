@@ -174,20 +174,19 @@ char *common_prefix(const struct pathspec *pathspec)
 
 int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
 {
-	char *prefix;
+	const char *prefix;
 	size_t prefix_len;
 
 	/*
 	 * Calculate common prefix for the pathspec, and
 	 * use that to optimize the directory walk
 	 */
-	prefix = common_prefix(pathspec);
-	prefix_len = prefix ? strlen(prefix) : 0;
+	prefix_len = common_prefix_len(pathspec);
+	prefix = prefix_len ? pathspec->items[0].match : "";
 
 	/* Read the directory and prune it */
 	read_directory(dir, prefix, prefix_len, pathspec);
 
-	free(prefix);
 	return prefix_len;
 }
 
