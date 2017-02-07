@@ -957,6 +957,15 @@ def wildcard_present(path):
     m = re.search("[*#@%]", path)
     return m is not None
 
+def p4TextEncoding(text, from_p4_to_git):
+    textEncoding = gitConfig("git-p4.textEncoding")
+    if textEncoding:
+        if from_p4_to_git:
+            text = text.decode(textEncoding, "replace").encode("utf8", "replace")
+        else:
+            text = text.decode("utf8", "replace").encode(textEncoding, "replace")
+    return text
+
 class LargeFileSystem(object):
     """Base class for large file system support."""
 
@@ -1179,6 +1188,10 @@ class P4UserMap:
         home = os.environ.get("HOME", os.environ.get("USERPROFILE"))
         return home + "/.gitp4-usercache.txt"
 
+    def addUserToMap(self, user, fullname, email):
+        self.users[user] = p4TextEncoding(fullname, True) + " <" + email + ">"
+        self.emails[email] = user
+
     def getUserMapFromPerforceServer(self):
         if self.userMapFromPerforceServer:
             return
@@ -1186,20 +1199,14 @@ class P4UserMap:
         self.emails = {}
 
         for output in p4CmdList("users"):
-            if not output.has_key("User"):
-                continue
-            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
-            self.emails[output["Email"]] = output["User"]
+            if output.has_key("User"):
+                self.addUserToMap(output["User"], output["FullName"], output["Email"])
 
         mapUserConfigRegex = re.compile(r"^\s*(\S+)\s*=\s*(.+)\s*<(\S+)>\s*$", re.VERBOSE)
         for mapUserConfig in gitConfigList("git-p4.mapUser"):
             mapUser = mapUserConfigRegex.findall(mapUserConfig)
             if mapUser and len(mapUser[0]) == 3:
-                user = mapUser[0][0]
-                fullname = mapUser[0][1]
-                email = mapUser[0][2]
-                self.users[user] = fullname + " <" + email + ">"
-                self.emails[email] = user
+                self.addUserToMap(mapUser[0][0], mapUser[0][1], mapUser[0][2])
 
         s = ''
         for (key, val) in self.users.items():
@@ -1770,6 +1777,7 @@ class P4Submit(Command, P4UserMap):
         (logMessage, jobs) = self.separate_jobs_from_description(logMessage)
 
         template = self.prepareSubmitTemplate(self.update_shelve)
+        logMessage = p4TextEncoding(logMessage, False)
         submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
         if self.preserveUser:
@@ -2747,6 +2755,9 @@ class P4Sync(Command, P4UserMap):
     def commit(self, details, files, branch, parent = ""):
         epoch = details["time"]
         author = details["user"]
+        change = details["change"]
+        desc = details["desc"]
+        options = details["options"]
         jobs = self.extractJobsFromCommit(details)
 
         if self.verbose:
@@ -2760,12 +2771,12 @@ class P4Sync(Command, P4UserMap):
 
         if not files and not gitConfigBool('git-p4.keepEmptyCommits'):
             print('Ignoring revision {0} as it would produce an empty commit.'
-                .format(details['change']))
+                .format(change))
             return
 
         self.gitStream.write("commit %s\n" % branch)
-        self.gitStream.write("mark :%s\n" % details["change"])
-        self.committedChanges.add(int(details["change"]))
+        self.gitStream.write("mark :%s\n" % change)
+        self.committedChanges.add(int(change))
         committer = ""
         if author not in self.users:
             self.getUserMapFromPerforceServer()
@@ -2774,13 +2785,13 @@ class P4Sync(Command, P4UserMap):
         self.gitStream.write("committer %s\n" % committer)
 
         self.gitStream.write("data <<EOT\n")
-        self.gitStream.write(details["desc"])
+        self.gitStream.write(p4TextEncoding(desc, True))
         if len(jobs) > 0:
             self.gitStream.write("\nJobs: %s" % (' '.join(jobs)))
         self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s" %
-                             (','.join(self.branchPrefixes), details["change"]))
-        if len(details['options']) > 0:
-            self.gitStream.write(": options = %s" % details['options'])
+                             (','.join(self.branchPrefixes), change))
+        if len(options) > 0:
+            self.gitStream.write(": options = %s" % options)
         self.gitStream.write("]\nEOT\n\n")
 
         if len(parent) > 0:
@@ -2791,10 +2802,8 @@ class P4Sync(Command, P4UserMap):
         self.streamP4Files(files)
         self.gitStream.write("\n")
 
-        change = int(details["change"])
-
-        if self.labels.has_key(change):
-            label = self.labels[change]
+        if self.labels.has_key(int(change)):
+            label = self.labels[int(change)]
             labelDetails = label[0]
             labelRevisions = label[1]
             if self.verbose:
