@@ -1222,6 +1222,8 @@ static int refs_from_alternate_cb(struct alternate_object_database *e,
 	struct alternate_refs_data *cb = data;
 
 	other = real_pathdup(e->path);
+	if (!other)
+		return 0;
 	len = strlen(other);
 
 	while (other[len-1] == '/')
