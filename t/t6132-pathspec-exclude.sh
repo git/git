@@ -25,8 +25,10 @@ EOF
 	test_cmp expect actual
 '
 
-test_expect_success 'exclude only should error out' '
-	test_must_fail git log --oneline --format=%s -- ":(exclude)sub"
+test_expect_success 'exclude only no longer errors out' '
+	git log --oneline --format=%s -- . ":(exclude)sub" >expect &&
+	git log --oneline --format=%s -- ":(exclude)sub" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 't_e_i() exclude sub' '

@@ -522,7 +522,7 @@ void parse_pathspec(struct pathspec *pathspec,
 	}
 
 	pathspec->nr = n;
-	ALLOC_ARRAY(pathspec->items, n);
+	ALLOC_ARRAY(pathspec->items, n + 1);
 	item = pathspec->items;
 	prefixlen = prefix ? strlen(prefix) : 0;
 
@@ -546,10 +546,15 @@ void parse_pathspec(struct pathspec *pathspec,
 		pathspec->magic |= item[i].magic;
 	}
 
-	if (nr_exclude == n)
-		die(_("There is nothing to exclude from by :(exclude) patterns.\n"
-		      "Perhaps you forgot to add either ':/' or '.' ?"));
-
+	/*
+	 * If everything is an exclude pattern, add one positive pattern
+	 * that matches everyting. We allocated an extra one for this.
+	 */
+	if (nr_exclude == n) {
+		int plen = (!(flags & PATHSPEC_PREFER_CWD)) ? 0 : prefixlen;
+		init_pathspec_item(item + n, 0, prefix, plen, "");
+		pathspec->nr++;
+	}
 
 	if (pathspec->magic & PATHSPEC_MAXDEPTH) {
 		if (flags & PATHSPEC_KEEP_ORDER)
