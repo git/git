@@ -251,8 +251,9 @@ static void show_ref(const char *path, const unsigned char *sha1)
 }
 
 static int show_ref_cb(const char *path_full, const struct object_id *oid,
-		       int flag, void *unused)
+		       int flag, void *data)
 {
+	struct oidset *seen = data;
 	const char *path = strip_namespace(path_full);
 
 	if (ref_is_hidden(path, path_full))
@@ -263,8 +264,11 @@ static int show_ref_cb(const char *path_full, const struct object_id *oid,
 	 * refs, so that the client can use them to minimize data
 	 * transfer but will otherwise ignore them.
 	 */
-	if (!path)
+	if (!path) {
+		if (oidset_insert(seen, oid))
+			return 0;
 		path = ".have";
+	}
 	show_ref(path, oid->hash);
 	return 0;
 }
@@ -287,7 +291,7 @@ static void write_head_info(void)
 
 	for_each_alternate_ref(show_one_alternate_ref, &seen);
 	oidset_clear(&seen);
-	for_each_ref(show_ref_cb, NULL);
+	for_each_ref(show_ref_cb, &seen);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1);
 
