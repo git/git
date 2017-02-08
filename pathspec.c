@@ -224,6 +224,12 @@ static const char *parse_short_magic(unsigned *magic, const char *elem)
 		char ch = *pos;
 		int i;
 
+		/* Special case alias for '!' */
+		if (ch == '^') {
+			*magic |= PATHSPEC_EXCLUDE;
+			continue;
+		}
+
 		if (!is_pathspec_magic(ch))
 			break;
 

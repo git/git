@@ -386,8 +386,8 @@ Glob magic is incompatible with literal magic.
 
 exclude;;
 	After a path matches any non-exclude pathspec, it will be run
-	through all exclude pathspec (magic signature: `!`). If it
-	matches, the path is ignored.
+	through all exclude pathspec (magic signature: `!` or its
+	synonym `^`). If it matches, the path is ignored.
 --
 
 [[def_parent]]parent::
