@@ -268,6 +268,8 @@ static int show_ref_cb(const char *path_full, const struct object_id *oid,
 		if (oidset_insert(seen, oid))
 			return 0;
 		path = ".have";
+	} else {
+		oidset_insert(seen, oid);
 	}
 	show_ref(path, oid->hash);
 	return 0;
@@ -289,9 +291,9 @@ static void write_head_info(void)
 {
 	static struct oidset seen = OIDSET_INIT;
 
+	for_each_ref(show_ref_cb, &seen);
 	for_each_alternate_ref(show_one_alternate_ref, &seen);
 	oidset_clear(&seen);
-	for_each_ref(show_ref_cb, &seen);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1);
 
