@@ -277,10 +277,12 @@ static int show_one_alternate_sha1(const unsigned char sha1[20], void *unused)
 	return 0;
 }
 
-static void collect_one_alternate_ref(const struct ref *ref, void *data)
+static void collect_one_alternate_ref(const char *refname,
+				      const struct object_id *oid,
+				      void *data)
 {
 	struct sha1_array *sa = data;
-	sha1_array_append(sa, ref->old_oid.hash);
+	sha1_array_append(sa, oid->hash);
 }
 
 static void write_head_info(void)

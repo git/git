@@ -1238,7 +1238,7 @@ static int refs_from_alternate_cb(struct alternate_object_database *e,
 	for (extra = transport_get_remote_refs(transport);
 	     extra;
 	     extra = extra->next)
-		cb->fn(extra, cb->data);
+		cb->fn(extra->name, &extra->old_oid, cb->data);
 	transport_disconnect(transport);
 out:
 	strbuf_release(&path);

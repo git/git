@@ -253,9 +253,11 @@ static void send_request(struct fetch_pack_args *args,
 		write_or_die(fd, buf->buf, buf->len);
 }
 
-static void insert_one_alternate_ref(const struct ref *ref, void *unused)
+static void insert_one_alternate_ref(const char *refname,
+				     const struct object_id *oid,
+				     void *unused)
 {
-	rev_list_insert_ref(NULL, ref->old_oid.hash);
+	rev_list_insert_ref(NULL, oid->hash);
 }
 
 #define INITIAL_FLUSH 16
@@ -619,9 +621,11 @@ static void filter_refs(struct fetch_pack_args *args,
 	*refs = newlist;
 }
 
-static void mark_alternate_complete(const struct ref *ref, void *unused)
+static void mark_alternate_complete(const char *refname,
+				    const struct object_id *oid,
+				    void *unused)
 {
-	mark_complete(ref->old_oid.hash);
+	mark_complete(oid->hash);
 }
 
 static int everything_local(struct fetch_pack_args *args,
