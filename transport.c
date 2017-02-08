@@ -1214,34 +1214,34 @@ struct alternate_refs_data {
 static int refs_from_alternate_cb(struct alternate_object_database *e,
 				  void *data)
 {
-	char *other;
-	size_t len;
+	struct strbuf path = STRBUF_INIT;
+	size_t base_len;
 	struct remote *remote;
 	struct transport *transport;
 	const struct ref *extra;
 	struct alternate_refs_data *cb = data;
 
-	other = real_pathdup(e->path);
-	if (!other)
-		return 0;
-	len = strlen(other);
+	if (!strbuf_realpath(&path, e->path, 0))
+		goto out;
+	if (!strbuf_strip_suffix(&path, "/objects"))
+		goto out;
+	base_len = path.len;
 
-	if (len < 8 || memcmp(other + len - 8, "/objects", 8))
-		goto out;
 	/* Is this a git repository with refs? */
-	memcpy(other + len - 8, "/refs", 6);
-	if (!is_directory(other))
+	strbuf_addstr(&path, "/refs");
+	if (!is_directory(path.buf))
 		goto out;
-	other[len - 8] = '\0';
-	remote = remote_get(other);
-	transport = transport_get(remote, other);
+	strbuf_setlen(&path, base_len);
+
+	remote = remote_get(path.buf);
+	transport = transport_get(remote, path.buf);
 	for (extra = transport_get_remote_refs(transport);
 	     extra;
 	     extra = extra->next)
 		cb->fn(extra, cb->data);
 	transport_disconnect(transport);
 out:
-	free(other);
+	strbuf_release(&path);
 	return 0;
 }
 
