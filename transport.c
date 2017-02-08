@@ -1226,8 +1226,6 @@ static int refs_from_alternate_cb(struct alternate_object_database *e,
 		return 0;
 	len = strlen(other);
 
-	while (other[len-1] == '/')
-		other[--len] = '\0';
 	if (len < 8 || memcmp(other + len - 8, "/objects", 8))
 		goto out;
 	/* Is this a git repository with refs? */
