@@ -1267,20 +1267,10 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 					 create_dir_entry(refs, refname.buf,
 							  refname.len, 1));
 		} else {
-			int read_ok;
-
-			if (refs->submodule) {
-				hashclr(sha1);
-				flag = 0;
-				read_ok = !resolve_gitlink_ref(refs->submodule,
-							       refname.buf, sha1);
-			} else {
-				read_ok = !read_ref_full(refname.buf,
-							 RESOLVE_REF_READING,
-							 sha1, &flag);
-			}
-
-			if (!read_ok) {
+			if (!resolve_ref_recursively(&refs->base,
+						     refname.buf,
+						     RESOLVE_REF_READING,
+						     sha1, &flag)) {
 				hashclr(sha1);
 				flag |= REF_ISBROKEN;
 			} else if (is_null_sha1(sha1)) {

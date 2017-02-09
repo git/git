@@ -650,4 +650,9 @@ void base_ref_store_init(struct ref_store *refs,
  */
 struct ref_store *get_ref_store(const char *submodule);
 
+const char *resolve_ref_recursively(struct ref_store *refs,
+				    const char *refname,
+				    int resolve_flags,
+				    unsigned char *sha1, int *flags);
+
 #endif /* REFS_REFS_INTERNAL_H */
