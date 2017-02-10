@@ -292,6 +292,44 @@ $ git reset --keep start                    <3>
 <3> But you can use "reset --keep" to remove the unwanted commit after
     you switched to "branch2".
 
+Split a commit into two::
++
+Suppose that you have created a commit, but later decide that you want to break
+apart the changes into two logical chunks and commit each separately. You want
+to include part of the original commit into the first commit, while including
+the remainder in a second commit. You can use git reset to rewind the history
+without changing the index, and then use git add -p to interactively select
+which hunks to put into the first commit.
++
+------------
+$ git reset HEAD^                           <1>
+$ git add -p                                <2>
+$ git diff --cached                         <3>
+$ git commit -c HEAD@{1}                    <4>
+...
+$ git add ...                               <5>
+$ git diff --cached                         <6>
+$ git commit ...                            <7>
+------------
++
+<1> First, reset the history back one commit so that we remove the original
+    commit, but leave the working tree with all the changes.
+<2> Now, interactively select hunks to add to a new commit using git add -p.
+    This will ask for each hunk separately and you can use simple commands like
+    "yes, include", "no don't include" or even "edit".
+<3> Once satisfied with the hunks, you should verify that it is what you
+    expected by using git diff --cached to show all changes in the index.
+<4> Next, commit the changes stored in the index. "-c" specifies to load the
+    editor with a commit message from a previous commit so that you can re-use the
+    original commit message. HEAD@{1} is special notation to reference what
+    HEAD used to be prior to the reset command. See linkgit:git-reflog[1] for
+    more details.
+<5> Now you've created the first commit, and can repeat steps 2-4 as often as
+    you like to break the work into any number of commits. Here we show a second
+    step which simply adds the remaining changes.
+<6> Then check again that the changes are what you expected to add.
+<7> And finally commit the remaining changes.
+
 
 DISCUSSION
 ----------
