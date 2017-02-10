@@ -1674,7 +1674,7 @@ _git_pull ()
 	__git_complete_remote_or_refspec
 }
 
-__git_push_recurse_submodules="check on-demand"
+__git_push_recurse_submodules="check on-demand only"
 
 __git_complete_force_with_lease ()
 {
