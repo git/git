@@ -915,8 +915,8 @@ struct files_ref_store {
 
 	/*
 	 * The name of the submodule represented by this object, or
-	 * the empty string if it represents the main repository's
-	 * reference store:
+	 * NULL if it represents the main repository's reference
+	 * store:
 	 */
 	const char *submodule;
 
@@ -982,7 +982,7 @@ static struct ref_store *files_ref_store_create(const char *submodule)
 
 	base_ref_store_init(ref_store, &refs_be_files);
 
-	refs->submodule = submodule ? xstrdup(submodule) : "";
+	refs->submodule = xstrdup_or_null(submodule);
 
 	return ref_store;
 }
@@ -994,7 +994,7 @@ static struct ref_store *files_ref_store_create(const char *submodule)
 static void files_assert_main_repository(struct files_ref_store *refs,
 					 const char *caller)
 {
-	if (*refs->submodule)
+	if (refs->submodule)
 		die("BUG: %s called for a submodule", caller);
 }
 
@@ -1158,7 +1158,7 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 {
 	char *packed_refs_file;
 
-	if (*refs->submodule)
+	if (refs->submodule)
 		packed_refs_file = git_pathdup_submodule(refs->submodule,
 							 "packed-refs");
 	else
@@ -1228,7 +1228,7 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 	size_t path_baselen;
 	int err = 0;
 
-	if (*refs->submodule)
+	if (refs->submodule)
 		err = strbuf_git_path_submodule(&path, refs->submodule, "%s", dirname);
 	else
 		strbuf_git_path(&path, "%s", dirname);
@@ -1269,7 +1269,7 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 		} else {
 			int read_ok;
 
-			if (*refs->submodule) {
+			if (refs->submodule) {
 				hashclr(sha1);
 				flag = 0;
 				read_ok = !resolve_gitlink_ref(refs->submodule,
@@ -1383,7 +1383,7 @@ static int files_read_raw_ref(struct ref_store *ref_store,
 	*type = 0;
 	strbuf_reset(&sb_path);
 
-	if (*refs->submodule)
+	if (refs->submodule)
 		strbuf_git_path_submodule(&sb_path, refs->submodule, "%s", refname);
 	else
 		strbuf_git_path(&sb_path, "%s", refname);
