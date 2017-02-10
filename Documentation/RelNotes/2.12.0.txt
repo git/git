@@ -436,6 +436,20 @@ notes for details).
    with AsciiDoc.  "make USE_ASCIIDOCTOR=YesPlease" to use it out of
    the box to document our pages is getting closer to reality.
 
+ * Correct command line completion (in contrib/) on "git svn"
+   (merge 2cbad17642 ew/complete-svn-authorship-options later to maint).
+
+ * Incorrect usage help message for "git worktree prune" has been fixed.
+   (merge 2488dcab22 ps/worktree-prune-help-fix later to maint).
+
+ * Adjust a perf test to new world order where commands that do
+   require a repository are really strict about having a repository.
+   (merge c86000c1a7 rs/p5302-create-repositories-before-tests later to maint).
+
+ * "git log --graph" did not work well with "--name-only", even though
+   other forms of "diff" output were handled correctly.
+   (merge f5022b5fed jk/log-graph-name-only later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
    (merge 384f1a167b sb/unpack-trees-cleanup later to maint).
@@ -444,3 +458,4 @@ notes for details).
    (merge 0aaad415bc rs/absolute-pathdup later to maint).
    (merge 4432dd6b5b rs/receive-pack-cleanup later to maint).
    (merge 540a398e9c sg/mailmap-self later to maint).
+   (merge 209df269a6 nd/rev-list-all-includes-HEAD-doc later to maint).
