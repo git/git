@@ -125,9 +125,9 @@ static int prune(int ac, const char **av, const char *prefix)
 {
 	struct option options[] = {
 		OPT__DRY_RUN(&show_only, N_("do not remove, show only")),
-		OPT__VERBOSE(&verbose, N_("report pruned objects")),
+		OPT__VERBOSE(&verbose, N_("report pruned working trees")),
 		OPT_EXPIRY_DATE(0, "expire", &expire,
-				N_("expire objects older than <time>")),
+				N_("expire working trees older than <time>")),
 		OPT_END()
 	};
 
