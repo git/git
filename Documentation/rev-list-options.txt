@@ -133,8 +133,8 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	for all following revision specifiers, up to the next `--not`.
 
 --all::
-	Pretend as if all the refs in `refs/` are listed on the
-	command line as '<commit>'.
+	Pretend as if all the refs in `refs/`, along with `HEAD`, are
+	listed on the command line as '<commit>'.
 
 --branches[=<pattern>]::
 	Pretend as if all the refs in `refs/heads` are listed
