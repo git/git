@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "hashmap.h"
 #include "lockfile.h"
 #include "refs.h"
 #include "refs/refs-internal.h"
@@ -1352,11 +1353,41 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 	return 0;
 }
 
+struct submodule_hash_entry
+{
+	struct hashmap_entry ent; /* must be the first member! */
+
+	struct ref_store *refs;
+
+	/* NUL-terminated name of submodule: */
+	char submodule[FLEX_ARRAY];
+};
+
+static int submodule_hash_cmp(const void *entry, const void *entry_or_key,
+			      const void *keydata)
+{
+	const struct submodule_hash_entry *e1 = entry, *e2 = entry_or_key;
+	const char *submodule = keydata ? keydata : e2->submodule;
+
+	return strcmp(e1->submodule, submodule);
+}
+
+static struct submodule_hash_entry *alloc_submodule_hash_entry(
+		const char *submodule, struct ref_store *refs)
+{
+	struct submodule_hash_entry *entry;
+
+	FLEX_ALLOC_STR(entry, submodule, submodule);
+	hashmap_entry_init(entry, strhash(submodule));
+	entry->refs = refs;
+	return entry;
+}
+
 /* A pointer to the ref_store for the main repository: */
 static struct ref_store *main_ref_store;
 
-/* A linked list of ref_stores for submodules: */
-static struct ref_store *submodule_ref_stores;
+/* A hashmap of ref_stores, stored by submodule name: */
+static struct hashmap submodule_ref_stores;
 
 /*
  * Return the ref_store instance for the specified submodule (or the
@@ -1365,17 +1396,18 @@ static struct ref_store *submodule_ref_stores;
  */
 static struct ref_store *lookup_ref_store(const char *submodule)
 {
-	struct ref_store *refs;
+	struct submodule_hash_entry *entry;
 
 	if (!submodule)
 		return main_ref_store;
 
-	for (refs = submodule_ref_stores; refs; refs = refs->next) {
-		if (!strcmp(submodule, refs->submodule))
-			return refs;
-	}
+	if (!submodule_ref_stores.tablesize)
+		/* It's initialized on demand in register_ref_store(). */
+		return NULL;
 
-	return NULL;
+	entry = hashmap_get_from_hash(&submodule_ref_stores,
+				      strhash(submodule), submodule);
+	return entry ? entry->refs : NULL;
 }
 
 /*
@@ -1389,15 +1421,15 @@ static void register_ref_store(struct ref_store *refs, const char *submodule)
 		if (main_ref_store)
 			die("BUG: main_ref_store initialized twice");
 
-		refs->next = NULL;
 		main_ref_store = refs;
 	} else {
-		if (lookup_ref_store(submodule))
+		if (!submodule_ref_stores.tablesize)
+			hashmap_init(&submodule_ref_stores, submodule_hash_cmp, 0);
+
+		if (hashmap_put(&submodule_ref_stores,
+				alloc_submodule_hash_entry(submodule, refs)))
 			die("BUG: ref_store for submodule '%s' initialized twice",
 			    submodule);
-
-		refs->next = submodule_ref_stores;
-		submodule_ref_stores = refs;
 	}
 }
 

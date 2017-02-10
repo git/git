@@ -636,12 +636,6 @@ struct ref_store {
 	 * reference store:
 	 */
 	const char *submodule;
-
-	/*
-	 * Submodule reference store instances are stored in a linked
-	 * list using this pointer.
-	 */
-	struct ref_store *next;
 };
 
 /*
