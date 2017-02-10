@@ -1379,6 +1379,29 @@ static struct ref_store *lookup_ref_store(const char *submodule)
 }
 
 /*
+ * Register the specified ref_store to be the one that should be used
+ * for submodule (or the main repository if submodule is NULL). It is
+ * a fatal error to call this function twice for the same submodule.
+ */
+static void register_ref_store(struct ref_store *refs, const char *submodule)
+{
+	if (!submodule) {
+		if (main_ref_store)
+			die("BUG: main_ref_store initialized twice");
+
+		refs->next = NULL;
+		main_ref_store = refs;
+	} else {
+		if (lookup_ref_store(submodule))
+			die("BUG: ref_store for submodule '%s' initialized twice",
+			    submodule);
+
+		refs->next = submodule_ref_stores;
+		submodule_ref_stores = refs;
+	}
+}
+
+/*
  * Create, record, and return a ref_store instance for the specified
  * submodule (or the main repository if submodule is NULL).
  */
@@ -1386,11 +1409,14 @@ static struct ref_store *ref_store_init(const char *submodule)
 {
 	const char *be_name = "files";
 	struct ref_storage_be *be = find_ref_storage_backend(be_name);
+	struct ref_store *refs;
 
 	if (!be)
 		die("BUG: reference backend %s is unknown", be_name);
 
-	return be->init(submodule);
+	refs = be->init(submodule);
+	register_ref_store(refs, submodule);
+	return refs;
 }
 
 struct ref_store *get_ref_store(const char *submodule)
@@ -1423,22 +1449,11 @@ void base_ref_store_init(struct ref_store *refs,
 			 const char *submodule)
 {
 	refs->be = be;
-	if (!submodule) {
-		if (main_ref_store)
-			die("BUG: main_ref_store initialized twice");
 
+	if (!submodule)
 		refs->submodule = "";
-		refs->next = NULL;
-		main_ref_store = refs;
-	} else {
-		if (lookup_ref_store(submodule))
-			die("BUG: ref_store for submodule '%s' initialized twice",
-			    submodule);
-
+	else
 		refs->submodule = xstrdup(submodule);
-		refs->next = submodule_ref_stores;
-		submodule_ref_stores = refs;
-	}
 }
 
 void assert_main_repository(struct ref_store *refs, const char *caller)
