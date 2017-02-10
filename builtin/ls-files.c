@@ -379,10 +379,7 @@ static void prune_cache(const char *prefix, size_t prefixlen)
 	pos = cache_name_pos(prefix, prefixlen);
 	if (pos < 0)
 		pos = -pos-1;
-	memmove(active_cache, active_cache + pos,
-		(active_nr - pos) * sizeof(struct cache_entry *));
-	active_nr -= pos;
-	first = 0;
+	first = pos;
 	last = active_nr;
 	while (last > first) {
 		int next = (last + first) >> 1;
@@ -393,7 +390,9 @@ static void prune_cache(const char *prefix, size_t prefixlen)
 		}
 		last = next;
 	}
-	active_nr = last;
+	memmove(active_cache, active_cache + pos,
+		(last - pos) * sizeof(struct cache_entry *));
+	active_nr = last - pos;
 }
 
 /*
