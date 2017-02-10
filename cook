@@ -557,6 +557,8 @@ sub tweak_willdo {
 	$desc =~ s/\n<<\n.*//s;
 	if ($desc =~ /^  \(merged to 'next'/m) {
 		$text =~ s/^ Will merge to 'next'\.$/ Will merge to 'master'./m;
+		$text =~ s/^ Will merge to and then cook in 'next'\.$/ Will cook in 'next'./m;
+		$text =~ s/^ Will merge to 'next' and then to 'master'\.$/ Will merge to 'master'./m;
 	}
 	$td->{'text'} = $text;
 }
