@@ -1362,15 +1362,12 @@ static struct ref_store *submodule_ref_stores;
  * Return the ref_store instance for the specified submodule (or the
  * main repository if submodule is NULL). If that ref_store hasn't
  * been initialized yet, return NULL.
- *
- * For backwards compatibility, submodule=="" is treated the same as
- * submodule==NULL.
  */
 static struct ref_store *lookup_ref_store(const char *submodule)
 {
 	struct ref_store *refs;
 
-	if (!submodule || !*submodule)
+	if (!submodule)
 		return main_ref_store;
 
 	for (refs = submodule_ref_stores; refs; refs = refs->next) {
@@ -1384,9 +1381,6 @@ static struct ref_store *lookup_ref_store(const char *submodule)
 /*
  * Create, record, and return a ref_store instance for the specified
  * submodule (or the main repository if submodule is NULL).
- *
- * For backwards compatibility, submodule=="" is treated the same as
- * submodule==NULL.
  */
 static struct ref_store *ref_store_init(const char *submodule)
 {
@@ -1396,10 +1390,7 @@ static struct ref_store *ref_store_init(const char *submodule)
 	if (!be)
 		die("BUG: reference backend %s is unknown", be_name);
 
-	if (!submodule || !*submodule)
-		return be->init(NULL);
-	else
-		return be->init(submodule);
+	return be->init(submodule);
 }
 
 struct ref_store *get_ref_store(const char *submodule)
