@@ -1477,8 +1477,7 @@ struct ref_store *get_ref_store(const char *submodule)
 }
 
 void base_ref_store_init(struct ref_store *refs,
-			 const struct ref_storage_be *be,
-			 const char *submodule)
+			 const struct ref_storage_be *be)
 {
 	refs->be = be;
 }

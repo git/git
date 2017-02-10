@@ -632,12 +632,11 @@ struct ref_store {
 };
 
 /*
- * Fill in the generic part of refs for the specified submodule and
- * add it to our collection of reference stores.
+ * Fill in the generic part of refs and add it to our collection of
+ * reference stores.
  */
 void base_ref_store_init(struct ref_store *refs,
-			 const struct ref_storage_be *be,
-			 const char *submodule);
+			 const struct ref_storage_be *be);
 
 /*
  * Return the ref_store instance for the specified submodule. For the
