@@ -1481,17 +1481,6 @@ void base_ref_store_init(struct ref_store *refs,
 			 const char *submodule)
 {
 	refs->be = be;
-
-	if (!submodule)
-		refs->submodule = "";
-	else
-		refs->submodule = xstrdup(submodule);
-}
-
-void assert_main_repository(struct ref_store *refs, const char *caller)
-{
-	if (*refs->submodule)
-		die("BUG: %s called for a submodule", caller);
 }
 
 /* backend functions */
