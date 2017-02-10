@@ -653,25 +653,6 @@ void base_ref_store_init(struct ref_store *refs,
 			 const char *submodule);
 
 /*
- * Create, record, and return a ref_store instance for the specified
- * submodule (or the main repository if submodule is NULL).
- *
- * For backwards compatibility, submodule=="" is treated the same as
- * submodule==NULL.
- */
-struct ref_store *ref_store_init(const char *submodule);
-
-/*
- * Return the ref_store instance for the specified submodule (or the
- * main repository if submodule is NULL). If that ref_store hasn't
- * been initialized yet, return NULL.
- *
- * For backwards compatibility, submodule=="" is treated the same as
- * submodule==NULL.
- */
-struct ref_store *lookup_ref_store(const char *submodule);
-
-/*
  * Return the ref_store instance for the specified submodule. For the
  * main repository, use submodule==NULL; such a call cannot fail. For
  * a submodule, the submodule must exist and be a nonbare repository,

@@ -1358,7 +1358,15 @@ static struct ref_store *main_ref_store;
 /* A linked list of ref_stores for submodules: */
 static struct ref_store *submodule_ref_stores;
 
-struct ref_store *lookup_ref_store(const char *submodule)
+/*
+ * Return the ref_store instance for the specified submodule (or the
+ * main repository if submodule is NULL). If that ref_store hasn't
+ * been initialized yet, return NULL.
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+static struct ref_store *lookup_ref_store(const char *submodule)
 {
 	struct ref_store *refs;
 
@@ -1373,7 +1381,14 @@ struct ref_store *lookup_ref_store(const char *submodule)
 	return NULL;
 }
 
-struct ref_store *ref_store_init(const char *submodule)
+/*
+ * Create, record, and return a ref_store instance for the specified
+ * submodule (or the main repository if submodule is NULL).
+ *
+ * For backwards compatibility, submodule=="" is treated the same as
+ * submodule==NULL.
+ */
+static struct ref_store *ref_store_init(const char *submodule)
 {
 	const char *be_name = "files";
 	struct ref_storage_be *be = find_ref_storage_backend(be_name);
