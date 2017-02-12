@@ -53,6 +53,14 @@ int get_oid_hex(const char *hex, struct object_id *oid)
 	return get_sha1_hex(hex, oid->hash);
 }
 
+int parse_oid_hex(const char *hex, struct object_id *oid, const char **end)
+{
+	int ret = get_oid_hex(hex, oid);
+	if (!ret)
+		*end = hex + GIT_SHA1_HEXSZ;
+	return ret;
+}
+
 char *sha1_to_hex_r(char *buffer, const unsigned char *sha1)
 {
 	static const char hex[] = "0123456789abcdef";
