@@ -47,8 +47,9 @@ OPTIONS
 
 save [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q|--quiet] [<message>]::
 
-	Save your local modifications to a new 'stash', and run `git reset
-	--hard` to revert them.  The <message> part is optional and gives
+	Save your local modifications to a new 'stash' and roll them
+	back to HEAD (in the working tree and in the index).
+	The <message> part is optional and gives
 	the description along with the stashed state.  For quickly making
 	a snapshot, you can omit _both_ "save" and <message>, but giving
 	only <message> does not trigger this action to prevent a misspelled
