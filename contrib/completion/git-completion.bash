@@ -2010,7 +2010,7 @@ _git_config ()
 	remote.*.push)
 		local remote="${prev#remote.}"
 		remote="${remote%.push}"
-		__gitcomp_nl "$(__git for-each-ref
+		__gitcomp_nl "$(__git for-each-ref \
 			--format='%(refname):%(refname)' refs/heads)"
 		return
 		;;
