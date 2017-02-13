@@ -280,7 +280,7 @@ static int bisect_next_check(const struct bisect_terms *terms,
 	int missing_good = 1, missing_bad = 1, retval = 0;
 	char *bad_ref = xstrfmt("refs/bisect/%s", terms->term_bad);
 	char *good_glob = xstrfmt("%s-*", terms->term_good);
-	char *bad_syn, *good_syn;
+	char *bad_syn = NULL, *good_syn = NULL;
 
 	if (ref_exists(bad_ref))
 		missing_bad = 0;
@@ -341,14 +341,10 @@ static int bisect_next_check(const struct bisect_terms *terms,
 	}
 	goto finish;
 finish:
-	if (!bad_ref)
-		free(bad_ref);
-	if (!good_glob)
-		free(good_glob);
-	if (!bad_syn)
-		free(bad_syn);
-	if (!good_syn)
-		free(good_syn);
+	free(bad_ref);
+	free(good_glob);
+	free(bad_syn);
+	free(good_syn);
 	return retval;
 }
 
