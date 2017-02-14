@@ -1032,7 +1032,7 @@ test_expect_success 'grep --no-index pattern -- path' '
 
 test_expect_success 'grep --no-index complains of revs' '
 	test_must_fail git grep --no-index o master -- 2>err &&
-	test_i18ngrep "no-index cannot be used with revs" err
+	test_i18ngrep "cannot be used with revs" err
 '
 
 test_expect_success 'grep --no-index prefers paths to revs' '

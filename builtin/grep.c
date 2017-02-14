@@ -967,6 +967,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	int dummy;
 	int use_index = 1;
 	int pattern_type_arg = GREP_PATTERN_TYPE_UNSPECIFIED;
+	int allow_revs;
 
 	struct option options[] = {
 		OPT_BOOL(0, "cached", &cached,
@@ -1165,6 +1166,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	 * to it must resolve as a rev. If not, then we stop at the first
 	 * non-rev and assume everything else is a path.
 	 */
+	allow_revs = use_index && !untracked;
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		unsigned char sha1[20];
@@ -1176,9 +1178,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			break;
 		}
 
-		if (!use_index) {
+		if (!allow_revs) {
 			if (seen_dashdash)
-				die(_("--no-index cannot be used with revs"));
+				die(_("--no-index or --untracked cannot be used with revs"));
 			break;
 		}
 
@@ -1201,7 +1203,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (!seen_dashdash) {
 		int j;
 		for (j = i; j < argc; j++)
-			verify_filename(prefix, argv[j], j == i && use_index);
+			verify_filename(prefix, argv[j], j == i && allow_revs);
 	}
 
 	parse_pathspec(&pathspec, 0,
@@ -1273,8 +1275,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (!use_index || untracked) {
 		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
-		if (list.nr)
-			die(_("--no-index or --untracked cannot be used with revs."));
 		hit = grep_directory(&opt, &pathspec, use_exclude, use_index);
 	} else if (0 <= opt_exclude) {
 		die(_("--[no-]exclude-standard cannot be used for tracked contents."));
