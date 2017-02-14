@@ -473,8 +473,7 @@ static void snarf_refs(int head, int remotes)
 static int rev_is_head(char *head, char *name,
 		       unsigned char *head_sha1, unsigned char *sha1)
 {
-	if ((!head[0]) ||
-	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
+	if (!head || (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
 		return 0;
 	if (starts_with(head, "refs/heads/"))
 		head += 11;
@@ -621,8 +620,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int all_heads = 0, all_remotes = 0;
 	int all_mask, all_revs;
 	enum rev_sort_order sort_order = REV_SORT_IN_GRAPH_ORDER;
-	char head[128];
-	const char *head_p;
+	char *head;
 	struct object_id head_oid;
 	int merge_base = 0;
 	int independent = 0;
@@ -786,17 +784,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			snarf_refs(all_heads, all_remotes);
 	}
 
-	head_p = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-				    head_oid.hash, NULL);
-	if (head_p) {
-		size_t head_len = strlen(head_p);
-		memcpy(head, head_p, head_len + 1);
-	}
-	else {
-		head[0] = 0;
-	}
+	head = resolve_refdup("HEAD", RESOLVE_REF_READING,
+			      head_oid.hash, NULL);
 
-	if (with_current_branch && head_p) {
+	if (with_current_branch && head) {
 		int has_head = 0;
 		for (i = 0; !has_head && i < ref_name_cnt; i++) {
 			/* We are only interested in adding the branch
