@@ -1149,7 +1149,22 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	compile_grep_patterns(&opt);
 
-	/* Check revs and then paths */
+	/*
+	 * We have to find "--" in a separate pass, because its presence
+	 * influences how we will parse arguments that come before it.
+	 */
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "--")) {
+			seen_dashdash = 1;
+			break;
+		}
+	}
+
+	/*
+	 * Resolve any rev arguments. If we have a dashdash, then everything up
+	 * to it must resolve as a rev. If not, then we stop at the first
+	 * non-rev and assume everything else is a path.
+	 */
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		unsigned char sha1[20];
@@ -1158,13 +1173,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 		if (!strcmp(arg, "--")) {
 			i++;
-			seen_dashdash = 1;
 			break;
 		}
 
-		/* Stop at the first non-rev */
-		if (get_sha1_with_context(arg, 0, sha1, &oc))
+		if (get_sha1_with_context(arg, 0, sha1, &oc)) {
+			if (seen_dashdash)
+				die(_("unable to resolve revision: %s"), arg);
 			break;
+		}
 
 		object = parse_object_or_die(sha1, arg);
 		if (!seen_dashdash)
@@ -1172,7 +1188,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		add_object_array_with_path(object, arg, &list, oc.mode, oc.path);
 	}
 
-	/* The rest are paths */
+	/*
+	 * Anything left over is presumed to be a path. But in the non-dashdash
+	 * "do what I mean" case, we verify and complain when that isn't true.
+	 */
 	if (!seen_dashdash) {
 		int j;
 		for (j = i; j < argc; j++)
