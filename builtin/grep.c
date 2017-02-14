@@ -1154,6 +1154,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		unsigned char sha1[20];
 		struct object_context oc;
+		if (!strcmp(arg, "--")) {
+			i++;
+			seen_dashdash = 1;
+			break;
+		}
 		/* Is it a rev? */
 		if (!get_sha1_with_context(arg, 0, sha1, &oc)) {
 			struct object *object = parse_object_or_die(sha1, arg);
@@ -1161,10 +1166,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 				verify_non_filename(prefix, arg);
 			add_object_array_with_path(object, arg, &list, oc.mode, oc.path);
 			continue;
-		}
-		if (!strcmp(arg, "--")) {
-			i++;
-			seen_dashdash = 1;
 		}
 		break;
 	}
