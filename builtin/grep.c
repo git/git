@@ -1201,7 +1201,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (!seen_dashdash) {
 		int j;
 		for (j = i; j < argc; j++)
-			verify_filename(prefix, argv[j], j == i);
+			verify_filename(prefix, argv[j], j == i && use_index);
 	}
 
 	parse_pathspec(&pathspec, 0,

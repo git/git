@@ -1043,6 +1043,11 @@ test_expect_success 'grep --no-index prefers paths to revs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'grep --no-index does not "diagnose" revs' '
+	test_must_fail git grep --no-index o :1:hello.c 2>err &&
+	test_i18ngrep ! -i "did you mean" err
+'
+
 cat >expected <<EOF
 hello.c:int main(int argc, const char **argv)
 hello.c:	printf("Hello world.\n");
