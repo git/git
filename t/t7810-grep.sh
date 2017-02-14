@@ -1030,6 +1030,19 @@ test_expect_success 'grep --no-index pattern -- path' '
 	)
 '
 
+test_expect_success 'grep --no-index complains of revs' '
+	test_must_fail git grep --no-index o master -- 2>err &&
+	test_i18ngrep "no-index cannot be used with revs" err
+'
+
+test_expect_success 'grep --no-index prefers paths to revs' '
+	test_when_finished "rm -f master" &&
+	echo content >master &&
+	echo master:content >expect &&
+	git grep --no-index o master >actual &&
+	test_cmp expect actual
+'
+
 cat >expected <<EOF
 hello.c:int main(int argc, const char **argv)
 hello.c:	printf("Hello world.\n");

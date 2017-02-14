@@ -1176,6 +1176,12 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			break;
 		}
 
+		if (!use_index) {
+			if (seen_dashdash)
+				die(_("--no-index cannot be used with revs"));
+			break;
+		}
+
 		if (get_sha1_with_context(arg, 0, sha1, &oc)) {
 			if (seen_dashdash)
 				die(_("unable to resolve revision: %s"), arg);
