@@ -50,6 +50,10 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	 */
 	struct dir_entry *dir;
 	unsigned int hash;
+	int orig_namelen = namelen;
+
+	if (ce->precomputed_hash.initialized && ce->precomputed_hash.root_entry)
+		return NULL; /* item does not have a parent directory */
 
 	/* get length of parent directory */
 	while (namelen > 0 && !is_dir_sep(ce->name[namelen - 1]))
@@ -59,7 +63,10 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	namelen--;
 
 	/* lookup existing entry for that directory */
-	hash = memihash(ce->name, namelen);
+	if (ce->precomputed_hash.initialized && orig_namelen == ce_namelen(ce))
+		hash = ce->precomputed_hash.dir;
+	else
+		hash = memihash(ce->name, namelen);
 	dir = find_dir_entry_1(istate, ce->name, namelen, hash);
 	if (!dir) {
 		/* not found, create it and add to hash table */
@@ -99,10 +106,18 @@ static void remove_dir_entry(struct index_state *istate, struct cache_entry *ce)
 
 static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 {
+	unsigned int h;
+
 	if (ce->ce_flags & CE_HASHED)
 		return;
 	ce->ce_flags |= CE_HASHED;
-	hashmap_entry_init(ce, memihash(ce->name, ce_namelen(ce)));
+
+	if (ce->precomputed_hash.initialized)
+		h = ce->precomputed_hash.name;
+	else
+		h = memihash(ce->name, ce_namelen(ce));
+
+	hashmap_entry_init(ce, h);
 	hashmap_add(&istate->name_hash, ce);
 
 	if (ignore_case)
@@ -243,4 +258,42 @@ void free_name_hash(struct index_state *istate)
 
 	hashmap_free(&istate->name_hash, 0);
 	hashmap_free(&istate->dir_hash, 1);
+}
+
+/*
+ * Precompute the hash values for this cache_entry
+ * for use in the istate.name_hash and istate.dir_hash.
+ *
+ * If the item is in the root directory, just compute the hash value (for
+ * istate.name_hash) on the full path.
+ *
+ * If the item is in a subdirectory, first compute the hash value for the
+ * immediate parent directory (for istate.dir_hash) and then the hash value for
+ * the full path by continuing the computation.
+ *
+ * Note that these hashes will be used by wt_status_collect_untracked() as it
+ * scans the worktree and maps observed paths back to the index (optionally
+ * ignoring case). Technically, we only *NEED* to precompute this for
+ * non-skip-worktree items (since status should not observe skipped items), but
+ * because lazy_init_name_hash() hashes everything, we force it here.
+ */
+void precompute_istate_hashes(struct cache_entry *ce)
+{
+	int namelen = ce_namelen(ce);
+
+	while (namelen > 0 && !is_dir_sep(ce->name[namelen - 1]))
+		namelen--;
+
+	if (namelen <= 0) {
+		ce->precomputed_hash.name = memihash(ce->name, ce_namelen(ce));
+		ce->precomputed_hash.root_entry = 1;
+	} else {
+		namelen--;
+		ce->precomputed_hash.dir = memihash(ce->name, namelen);
+		ce->precomputed_hash.name = memihash_continue(
+			ce->precomputed_hash.dir, ce->name + namelen,
+			ce_namelen(ce) - namelen);
+		ce->precomputed_hash.root_entry = 0;
+	}
+	ce->precomputed_hash.initialized = 1;
 }
