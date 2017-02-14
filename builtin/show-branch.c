@@ -470,7 +470,7 @@ static void snarf_refs(int head, int remotes)
 	}
 }
 
-static int rev_is_head(char *head, int headlen, char *name,
+static int rev_is_head(char *head, char *name,
 		       unsigned char *head_sha1, unsigned char *sha1)
 {
 	if ((!head[0]) ||
@@ -623,7 +623,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	enum rev_sort_order sort_order = REV_SORT_IN_GRAPH_ORDER;
 	char head[128];
 	const char *head_p;
-	int head_len;
 	struct object_id head_oid;
 	int merge_base = 0;
 	int independent = 0;
@@ -790,11 +789,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	head_p = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
 				    head_oid.hash, NULL);
 	if (head_p) {
-		head_len = strlen(head_p);
+		size_t head_len = strlen(head_p);
 		memcpy(head, head_p, head_len + 1);
 	}
 	else {
-		head_len = 0;
 		head[0] = 0;
 	}
 
@@ -805,7 +803,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			 * HEAD points at.
 			 */
 			if (rev_is_head(head,
-					head_len,
 					ref_name[i],
 					head_oid.hash, NULL))
 				has_head++;
@@ -864,7 +861,6 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		for (i = 0; i < num_rev; i++) {
 			int j;
 			int is_head = rev_is_head(head,
-						  head_len,
 						  ref_name[i],
 						  head_oid.hash,
 						  rev[i]->object.oid.hash);
