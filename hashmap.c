@@ -50,6 +50,20 @@ unsigned int memihash(const void *buf, size_t len)
 	return hash;
 }
 
+/* Incoporate another chunk of data into a memihash computation. */
+unsigned int memihash_continue(unsigned int hash,
+			       const void *buf, size_t len)
+{
+	const unsigned char *p = buf;
+	while (len--) {
+		unsigned int c = *p++;
+		if (c >= 'a' && c <= 'z')
+			c -= 'a' - 'A';
+		hash = (hash * FNV32_PRIME) ^ c;
+	}
+	return hash;
+}
+
 #define HASHMAP_INITIAL_SIZE 64
 /* grow / shrink by 2^2 */
 #define HASHMAP_RESIZE_BITS 2
