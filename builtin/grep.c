@@ -1169,6 +1169,20 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		break;
 	}
 
+	/* The rest are paths */
+	if (!seen_dashdash) {
+		int j;
+		for (j = i; j < argc; j++)
+			verify_filename(prefix, argv[j], j == i);
+	}
+
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_CWD |
+		       (opt.max_depth != -1 ? PATHSPEC_MAXDEPTH_VALID : 0),
+		       prefix, argv + i);
+	pathspec.max_depth = opt.max_depth;
+	pathspec.recursive = 1;
+
 #ifndef NO_PTHREADS
 	if (list.nr || cached || show_in_pager)
 		num_threads = 0;
@@ -1189,20 +1203,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		start_threads(&opt);
 	}
 #endif
-
-	/* The rest are paths */
-	if (!seen_dashdash) {
-		int j;
-		for (j = i; j < argc; j++)
-			verify_filename(prefix, argv[j], j == i);
-	}
-
-	parse_pathspec(&pathspec, 0,
-		       PATHSPEC_PREFER_CWD |
-		       (opt.max_depth != -1 ? PATHSPEC_MAXDEPTH_VALID : 0),
-		       prefix, argv + i);
-	pathspec.max_depth = opt.max_depth;
-	pathspec.recursive = 1;
 
 	if (recurse_submodules) {
 		gitmodules_config();
