@@ -452,14 +452,14 @@ set by Git if the remote helper has the 'option' capability.
 	Request the helper to perform a force update.  Defaults to
 	'false'.
 
-'option cloning {'true'|'false'}::
+'option cloning' {'true'|'false'}::
 	Notify the helper this is a clone request (i.e. the current
 	repository is guaranteed empty).
 
-'option update-shallow {'true'|'false'}::
+'option update-shallow' {'true'|'false'}::
 	Allow to extend .git/shallow if the new refs require it.
 
-'option pushcert {'true'|'false'}::
+'option pushcert' {'true'|'false'}::
 	GPG sign pushes.
 
 'option push-option <string>::
