@@ -3,6 +3,8 @@
 test_description='pushing to a repository using push options'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-httpd.sh
+start_httpd
 
 mk_repo_pair () {
 	rm -rf workbench upstream &&
@@ -99,5 +101,18 @@ test_expect_success 'two push options work' '
 	test_cmp expect upstream/.git/hooks/pre-receive.push_options &&
 	test_cmp expect upstream/.git/hooks/post-receive.push_options
 '
+
+test_expect_success 'push option denied properly by http remote helper' '\
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions false &&
+	git -C upstream config http.receivepack true &&
+	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
+	git clone "$HTTPD_URL"/smart/upstream test_http_clone &&
+	test_commit -C test_http_clone one &&
+	test_must_fail git -C test_http_clone push --push-option=asdf origin master &&
+	git -C test_http_clone push origin master
+'
+
+stop_httpd
 
 test_done
