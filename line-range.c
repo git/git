@@ -269,8 +269,7 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 		return -1;
 
 	if (*begin && *end && *end < *begin) {
-		long tmp;
-		tmp = *end; *end = *begin; *begin = tmp;
+		SWAP(*end, *begin);
 	}
 
 	return 0;

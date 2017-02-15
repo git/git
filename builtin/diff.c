@@ -45,12 +45,9 @@ static void stuff_change(struct diff_options *opt,
 		return;
 
 	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
-		unsigned tmp;
-		const unsigned char *tmp_u;
-		const char *tmp_c;
-		tmp = old_mode; old_mode = new_mode; new_mode = tmp;
-		tmp_u = old_sha1; old_sha1 = new_sha1; new_sha1 = tmp_u;
-		tmp_c = old_name; old_name = new_name; new_name = tmp_c;
+		SWAP(old_mode, new_mode);
+		SWAP(old_sha1, new_sha1);
+		SWAP(old_name, new_name);
 	}
 
 	if (opt->prefix &&
