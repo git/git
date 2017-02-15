@@ -477,4 +477,4 @@ linkgit:git-am[1]
 
 GIT
 ---
-Part of the linkgit:git[1] suite.
+Part of the linkgit:git[1] suite
