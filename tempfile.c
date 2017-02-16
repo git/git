@@ -247,12 +247,8 @@ int close_tempfile(struct tempfile *tempfile)
 	tempfile->fd = -1;
 	if (fp) {
 		tempfile->fp = NULL;
-
-		/*
-		 * Note: no short-circuiting here; we want to fclose()
-		 * in any case!
-		 */
-		err = ferror(fp) | fclose(fp);
+		err = ferror(fp);
+		err |= fclose(fp);
 	} else {
 		err = close(fd);
 	}
