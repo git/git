@@ -462,6 +462,22 @@ notes for details).
    --hard", which was exposing an unnecessary implementation detail.
    (merge 20a7e06172 tg/stash-doc-cleanup later to maint).
 
+ * When "git p4" imports changelist that removes paths, it failed to
+   convert pathnames when the p4 used encoding different from the one
+   used on the Git side.  This has been corrected.
+   (merge a8b05162e8 ls/p4-path-encoding later to maint).
+
+ * A new coccinelle rule that catches a check of !pointer before the
+   pointer is free(3)d, which most likely is a bug.
+   (merge ec6cd14c7a rs/cocci-check-free-only-null later to maint).
+
+ * "ls-files" run with pathspec has been micro-optimized to avoid
+   having to memmove(3) unnecessary bytes.
+   (merge 96f6d3f61a rs/ls-files-partial-optim later to maint).
+
+ * A hotfix for a topic already in 'master'.
+   (merge a4d92d579f js/mingw-isatty later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge f2627d9b19 sb/submodule-config-cleanup later to maint).
    (merge 384f1a167b sb/unpack-trees-cleanup later to maint).
@@ -474,3 +490,5 @@ notes for details).
    (merge 941b9c5270 sb/doc-unify-bottom later to maint).
    (merge 2aaf37b62c jk/doc-remote-helpers-markup-fix later to maint).
    (merge e91461b332 jk/doc-submodule-markup-fix later to maint).
+   (merge 8ab9740d9f dp/submodule-doc-markup-fix later to maint).
+   (merge 0838cbc22f jk/tempfile-ferror-fclose-confusion later to maint).
