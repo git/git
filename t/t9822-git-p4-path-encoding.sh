@@ -51,6 +51,22 @@ test_expect_success 'Clone repo containing iso8859-1 encoded paths with git-p4.p
 	)
 '
 
+test_expect_success 'Delete iso8859-1 encoded paths and clone' '
+	(
+		cd "$cli" &&
+		ISO8859="$(printf "$ISO8859_ESCAPED")" &&
+		p4 delete "$ISO8859" &&
+		p4 submit -d "remove file"
+	) &&
+	git p4 clone --destination="$git" //depot@all &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git -c core.quotepath=false ls-files >actual &&
+		test_must_be_empty actual
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
