@@ -360,15 +360,14 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 */
 	if (!index_only) {
 		int removed = 0, gitmodules_modified = 0;
+		struct strbuf buf = STRBUF_INIT;
 		for (i = 0; i < list.nr; i++) {
 			const char *path = list.entry[i].name;
 			if (list.entry[i].is_submodule) {
-				struct strbuf buf = STRBUF_INIT;
-
+				strbuf_reset(&buf);
 				strbuf_addstr(&buf, path);
 				if (remove_dir_recursively(&buf, 0))
 					die(_("could not remove '%s'"), path);
-				strbuf_release(&buf);
 
 				removed = 1;
 				if (!remove_path_from_gitmodules(path))
@@ -382,6 +381,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			if (!removed)
 				die_errno("git rm: '%s'", path);
 		}
+		strbuf_release(&buf);
 		if (gitmodules_modified)
 			stage_updated_gitmodules();
 	}
