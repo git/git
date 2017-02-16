@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2017, #04; Tue, 14)
-X-master-at: 5588dbffbd61e4906e453808c6ad32f792fea521
-X-next-at: 43f2dcbe297dfe2f60b416943dbccdf0cec2750b
+Subject: What's cooking in git.git (Feb 2017, #05; Thu, 16)
+X-master-at: 076c05393a047247ea723896289b48d6549ed7d0
+X-next-at: 5b76565f74de0c6d73806355784e00e3b7756169
 
-What's cooking in git.git (Feb 2017, #04; Tue, 14)
+What's cooking in git.git (Feb 2017, #05; Thu, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Topic descriptions of some new topics I just wrote are all iffy.
-Suggestion to clarify them are very much welcomed.
-
-Oh, also I'd like to get pull requests for gitk and git-gui updates
-soonish, if we are to have one during this cycle.
+I'd like to get pull requests for gitk and git-gui updates soonish,
+if we are to have one during this cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,24 +21,26 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* jh/preload-index-skip-skip (2017-02-10) 1 commit
- - preload-index: avoid lstat for skip-worktree items
+* cw/completion (2017-02-03) 7 commits
+  (merged to 'next' on 2017-02-10 at b3a5cbf39c)
+ + completion: recognize more long-options
+ + completion: teach remote subcommands to complete options
+ + completion: teach replace to complete options
+ + completion: teach ls-remote to complete options
+ + completion: improve bash completion for git-add
+ + completion: add subcommand completion for rerere
+ + completion: teach submodule subcommands to complete options
 
- The preload-index code has been taught not to bother with the index
- entries that are paths that are not checked out by "sparse checkout".
-
- Will merge to and cook in 'next'.
+ More command line completion (in contrib/) for recent additions.
 
 
-* rs/cocci-check-free-only-null (2017-02-11) 1 commit
- - cocci: detect useless free(3) calls
+* dp/submodule-doc-markup-fix (2017-02-16) 1 commit
+  (merged to 'next' on 2017-02-16 at 698cdcff0a)
+ + config.txt: fix formatting of submodule.alternateErrorStrategy section
 
- A new coccinelle rule that catches a check of !pointer before the
- pointer is free(3)d, which most likely is a bug.
-
- Will merge to 'next'.
+ Doc fix.
 
 
 * jk/doc-remote-helpers-markup-fix (2017-02-13) 1 commit
@@ -50,8 +49,6 @@ of the repositories listed at
 
  Doc markup fix.
 
- Will merge to 'master'.
-
 
 * jk/doc-submodule-markup-fix (2017-02-13) 1 commit
   (merged to 'next' on 2017-02-14 at b2f807f7d8)
@@ -59,25 +56,103 @@ of the repositories listed at
 
  Doc markup fix.
 
- Will merge to 'master'.
+
+* jk/reset-to-break-a-commit-doc (2017-02-16) 1 commit
+  (merged to 'next' on 2017-02-16 at 3203e91525)
+ + Revert "reset: add an example of how to split a commit into two"
+ (this branch is used by jk/reset-to-break-a-commit-doc-updated.)
+
+ Doc update.
 
 
-* rs/ls-files-partial-optim (2017-02-13) 2 commits
- - ls-files: move only kept cache entries in prune_cache()
- - ls-files: pass prefix length explicitly to prune_cache()
+* jk/reset-to-break-a-commit-doc-updated (2017-02-16) 1 commit
+  (merged to 'next' on 2017-02-16 at bf729e9e25)
+ + reset: add an example of how to split a commit into two
+ (this branch uses jk/reset-to-break-a-commit-doc.)
 
- "ls-files" run with pathspec has been micro-optimized to avoid one
- extra call to memmove().
-
- Will merge to 'next'.
+ Doc update.
 
 
-* rs/strbuf-cleanup-in-rmdir-recursively (2017-02-13) 1 commit
- - rm: reuse strbuf for all remove_dir_recursively() calls, again
+* jk/tempfile-ferror-fclose-confusion (2017-02-16) 1 commit
+  (merged to 'next' on 2017-02-16 at 86cc4e77d7)
+ + tempfile: avoid "ferror | fclose" trick
 
  Code clean-up.
 
- Will merge to 'next'.
+
+* js/mingw-isatty (2017-02-14) 1 commit
+  (merged to 'next' on 2017-02-15 at f3d3ccc978)
+ + mingw: make stderr unbuffered again
+
+ A hotfix for a topic already in 'master'.
+
+
+* ls/p4-path-encoding (2017-02-10) 1 commit
+  (merged to 'next' on 2017-02-15 at 73af90bf0f)
+ + git-p4: fix git-p4.pathEncoding for removed files
+
+ When "git p4" imports changelist that removes paths, it failed to
+ convert pathnames when the p4 used encoding different from the one
+ used on the Git side.  This has been corrected.
+
+
+* rs/cocci-check-free-only-null (2017-02-11) 1 commit
+  (merged to 'next' on 2017-02-15 at a628ee7142)
+ + cocci: detect useless free(3) calls
+
+ A new coccinelle rule that catches a check of !pointer before the
+ pointer is free(3)d, which most likely is a bug.
+
+
+* rs/ls-files-partial-optim (2017-02-13) 2 commits
+  (merged to 'next' on 2017-02-15 at 7a21b55424)
+ + ls-files: move only kept cache entries in prune_cache()
+ + ls-files: pass prefix length explicitly to prune_cache()
+
+ "ls-files" run with pathspec has been micro-optimized to avoid
+ having to memmove(3) unnecessary bytes.
+
+
+* rs/strbuf-cleanup-in-rmdir-recursively (2017-02-13) 1 commit
+  (merged to 'next' on 2017-02-15 at 920f58b3b1)
+ + rm: reuse strbuf for all remove_dir_recursively() calls, again
+
+ Code clean-up.
+
+
+* rs/swap (2017-01-30) 5 commits
+  (merged to 'next' on 2017-02-10 at 5253797d0a)
+ + graph: use SWAP macro
+ + diff: use SWAP macro
+ + use SWAP macro
+ + apply: use SWAP macro
+ + add SWAP macro
+
+ Code clean-up.
+
+
+* sb/doc-unify-bottom (2017-02-09) 1 commit
+  (merged to 'next' on 2017-02-10 at 7229c4c1f7)
+ + Documentation: unify bottom "part of git suite" lines
+
+ Doc clean-up.
+
+
+* sb/push-options-via-transport (2017-02-08) 1 commit
+  (merged to 'next' on 2017-02-10 at 3e2d08e1fa)
+ + push options: pass push options to the transport helper
+
+ The push-options given via the "--push-options" option were not
+ passed through to external remote helpers such as "smart HTTP" that
+ are invoked via the transport helper.
+
+
+* sb/submodule-doc (2017-01-12) 2 commits
+  (merged to 'next' on 2017-02-10 at 5bfad5f30e)
+ + submodule update documentation: don't repeat ourselves
+ + submodule documentation: add options to the subcommand
+
+ Doc updates.
 
 
 * tg/stash-doc-cleanup (2017-02-13) 1 commit
@@ -89,106 +164,58 @@ of the repositories listed at
  tree (after stashing away the local changes) in terms of "reset
  --hard", which was exposing an unnecessary implementation detail.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* ls/submodule-config-ucase (2017-02-15) 2 commits
+ - submodule config does not apply to upper case submodules?
+ - t7400: cleanup "submodule add clone shallow submodule" test
+
+ Demonstrate a breakage in handling submodule.UPPERCASENAME.update
+ configuration variables.
+
+ cf. <f238248f-0df2-19a5-581d-95c8a61b4632@google.com>
+ Jonathan Tan already found the root cause of this, which is not
+ limited to submodules.
 
 
-* tg/stash-push (2017-02-13) 6 commits
- - stash: allow pathspecs in the no verb form
- - stash: use stash_push for no verb form
- - stash: teach 'push' (and 'create') to honor pathspec
- - stash: introduce new format create
- - stash: add test for the create command line arguments
- - stash: introduce push verb
- (this branch uses tg/stash-doc-cleanup.)
+* nd/clean-preserve-errno-in-warning (2017-02-16) 1 commit
+  (merged to 'next' on 2017-02-16 at c0802f7627)
+ + clean: use warning_errno() when appropriate
 
- Allow "git stash" to take pathspec so that the local changes can be
- stashed away only partially.
+ Some warning() messages from "git clean" were updated to show the
+ errno from failed system calls.
 
- Waiting for the review discussion to settle, followed by a reroll.
- cf. <20170212215420.16701-1-t.gummerer@gmail.com>
+ Will cook in 'next'.
 
 
-* bc/object-id (2017-02-14) 19 commits
- - wt-status: convert to struct object_id
- - builtin/merge-base: convert to struct object_id
- - object_id: use struct object_id in object iteration callbacks
- - sha1_file: introduce an nth_packed_object_oid function
- - refs: simplify parsing of reflog entries
- - hex: introduce parse_oid_hex
- - refs: convert each_reflog_ent_fn to struct object_id
- - reflog-walk: convert struct reflog_info to struct object_id
- - builtin/replace: convert to struct object_id
- - object_id: convert remaining callers of resolve_refdup()
- - builtin/merge: convert to struct object_id
- - builtin/clone: convert to struct object_id
- - builtin/branch: convert to struct object_id
- - builtin/grep: convert to struct object_id
- - builtin/fmt-merge-message: convert to struct object_id
- - builtin/fast-export: convert to struct object_id
- - builtin/describe: convert to struct object_id
- - builtin/diff-tree: convert to struct object_id
- - builtin/commit: convert to struct object_id
+* mm/two-more-xstrfmt (2017-02-16) 2 commits
+ - bisect_next_all: convert xsnprintf to xstrfmt
+ - stop_progress_msg: convert xsnprintf to xstrfmt
 
- "uchar [40]" to "struct object_id" conversion continues.
+ Code clean-up and a string truncation fix.
+
+ Will merge to 'next' and then to 'master'.
 
 
-* jk/grep-no-index-fix (2017-02-14) 7 commits
- - grep: treat revs the same for --untracked as for --no-index
- - grep: do not diagnose misspelt revs with --no-index
- - grep: avoid resolving revision names in --no-index case
- - grep: fix "--" rev/pathspec disambiguation
- - grep: re-order rev-parsing loop
- - grep: do not unnecessarily query repo for "--"
- - grep: move thread initialization a little lower
+* sb/checkout-recurse-submodules (2017-02-16) 15 commits
+ - builtin/checkout: add --recurse-submodules switch
+ - entry.c: update submodules when interesting
+ - read-cache: remove_marked_cache_entries to wipe selected submodules.
+ - unpack-trees: check if we can perform the operation for submodules
+ - unpack-trees: pass old oid to verify_clean_submodule
+ - update submodules: add submodule_go_from_to
+ - update submodules: move up prepare_submodule_repo_env
+ - submodules: introduce check to see whether to touch a submodule
+ - update submodules: add a config option to determine if submodules are updated
+ - update submodules: add submodule config parsing
+ - connect_work_tree_and_git_dir: safely create leading directories
+ - make is_submodule_populated gently
+ - lib-submodule-update.sh: define tests for recursing into submodules
+ - lib-submodule-update.sh: do not use ./. as submodule remote
+ - lib-submodule-update.sh: reorder create_lib_submodule_repo
 
- The code to parse the command line "git grep <patterns>... <rev>
- [[--] <pathspec>...]" has been cleaned up, and a handful of bugs
- have been fixed (e.g. we used to check "--" if it is a rev).
-
- Will merge to and cook in 'next'.
-
-
-* jk/show-branch-lift-name-len-limit (2017-02-14) 3 commits
- - show-branch: use skip_prefix to drop magic numbers
- - show-branch: store resolved head in heap buffer
- - show-branch: drop head_len variable
-
- "git show-branch" expected there were only very short branch names
- in the repository and used a fixed-length buffer to hold them
- without checking for overflow.
-
- Will merge to and cook in 'next'.
-
-
-* js/mingw-isatty (2017-02-14) 1 commit
- - mingw: make stderr unbuffered again
-
- A hotfix for a topic already in 'master'.
-
- Will merge to 'next'.
-
-
-* lt/oneline-decoration-at-end (2017-02-14) 1 commit
- - show decorations at the end of the line
-
- The output from "git log --oneline --decorate" has been updated to
- show the extra information at the end of the line, not near the
- front.
-
- Will merge to and cook in 'next'.
-
-
-* jn/remote-helpers-with-git-dir (2017-02-14) 2 commits
- - remote helpers: avoid blind fall-back to ".git" when setting GIT_DIR
- - remote: avoid reading $GIT_DIR config in non-repo
-
- "git ls-remote" and "git archive --remote" are designed to work
- without being in a directory under Git's control.  However, recent
- updates revealed that we randomly look into a directory called
- .git/ without actually doing necessary set-up when working in a
- repository.  Stop doing so.
-
- Will merge to and cook in 'next'.
+ "git checkout" is taught --recurse-submodules option.
 
 --------------------------------------------------
 [Stalled]
@@ -239,6 +266,7 @@ of the repositories listed at
  Expecting a reroll.
  cf. <CAFZEwPPXPPHi8KiEGS9ggzNHDCGhuqMgH9Z8-Pf9GLshg8+LPA@mail.gmail.com>
  cf. <CAFZEwPM9RSTGN54dzaw9gO9iZmsYjJ_d1SjUD4EzSDDbmh-XuA@mail.gmail.com>
+ cf. <CAFZEwPNUXcNY9Qdz=_B7q2kQuaecPzJtTMGdv8YMUPEz2vnp8A@mail.gmail.com>
 
 
 * ls/filter-process-delayed (2017-01-08) 1 commit
@@ -286,6 +314,110 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jh/preload-index-skip-skip (2017-02-10) 1 commit
+  (merged to 'next' on 2017-02-16 at 39077062f9)
+ + preload-index: avoid lstat for skip-worktree items
+
+ The preload-index code has been taught not to bother with the index
+ entries that are paths that are not checked out by "sparse checkout".
+
+ Will cook in 'next'.
+
+
+* tg/stash-push (2017-02-13) 6 commits
+ - stash: allow pathspecs in the no verb form
+ - stash: use stash_push for no verb form
+ - stash: teach 'push' (and 'create') to honor pathspec
+ - stash: introduce new format create
+ - stash: add test for the create command line arguments
+ - stash: introduce push verb
+
+ Allow "git stash" to take pathspec so that the local changes can be
+ stashed away only partially.
+
+ Waiting for the review discussion to settle, followed by a reroll.
+ cf. <20170212215420.16701-1-t.gummerer@gmail.com>
+
+
+* bc/object-id (2017-02-14) 19 commits
+ - wt-status: convert to struct object_id
+ - builtin/merge-base: convert to struct object_id
+ - object_id: use struct object_id in object iteration callbacks
+ - sha1_file: introduce an nth_packed_object_oid function
+ - refs: simplify parsing of reflog entries
+ - hex: introduce parse_oid_hex
+ - refs: convert each_reflog_ent_fn to struct object_id
+ - reflog-walk: convert struct reflog_info to struct object_id
+ - builtin/replace: convert to struct object_id
+ - object_id: convert remaining callers of resolve_refdup()
+ - builtin/merge: convert to struct object_id
+ - builtin/clone: convert to struct object_id
+ - builtin/branch: convert to struct object_id
+ - builtin/grep: convert to struct object_id
+ - builtin/fmt-merge-message: convert to struct object_id
+ - builtin/fast-export: convert to struct object_id
+ - builtin/describe: convert to struct object_id
+ - builtin/diff-tree: convert to struct object_id
+ - builtin/commit: convert to struct object_id
+
+ "uchar [40]" to "struct object_id" conversion continues.
+
+
+* jk/grep-no-index-fix (2017-02-14) 7 commits
+  (merged to 'next' on 2017-02-16 at c84c927fa8)
+ + grep: treat revs the same for --untracked as for --no-index
+ + grep: do not diagnose misspelt revs with --no-index
+ + grep: avoid resolving revision names in --no-index case
+ + grep: fix "--" rev/pathspec disambiguation
+ + grep: re-order rev-parsing loop
+ + grep: do not unnecessarily query repo for "--"
+ + grep: move thread initialization a little lower
+
+ The code to parse the command line "git grep <patterns>... <rev>
+ [[--] <pathspec>...]" has been cleaned up, and a handful of bugs
+ have been fixed (e.g. we used to check "--" if it is a rev).
+
+ Will cook in 'next'.
+
+
+* jk/show-branch-lift-name-len-limit (2017-02-15) 3 commits
+  (merged to 'next' on 2017-02-16 at 40d22f5f34)
+ + show-branch: use skip_prefix to drop magic numbers
+ + show-branch: store resolved head in heap buffer
+ + show-branch: drop head_len variable
+
+ "git show-branch" expected there were only very short branch names
+ in the repository and used a fixed-length buffer to hold them
+ without checking for overflow.
+
+ Will cook in 'next'.
+
+
+* lt/oneline-decoration-at-end (2017-02-14) 1 commit
+  (merged to 'next' on 2017-02-16 at 5854e58811)
+ + show decorations at the end of the line
+
+ The output from "git log --oneline --decorate" has been updated to
+ show the extra information at the end of the line, not near the
+ front.
+
+ Will cook in 'next'.
+
+
+* jn/remote-helpers-with-git-dir (2017-02-14) 2 commits
+  (merged to 'next' on 2017-02-16 at c093c543c4)
+ + remote helpers: avoid blind fall-back to ".git" when setting GIT_DIR
+ + remote: avoid reading $GIT_DIR config in non-repo
+
+ "git ls-remote" and "git archive --remote" are designed to work
+ without being in a directory under Git's control.  However, recent
+ updates revealed that we randomly look into a directory called
+ .git/ without actually doing necessary set-up when working in a
+ repository.  Stop doing so.
+
+ Will cook in 'next'.
+
+
 * jk/alternate-ref-optim (2017-02-08) 11 commits
   (merged to 'next' on 2017-02-10 at f26f32cff6)
  + receive-pack: avoid duplicates between our refs and alternates
@@ -332,17 +464,6 @@ of the repositories listed at
  cf. <CACsJy8Diy92CNbJ1OBn893VFFrSsxBFWSyQHjt_Dzq9x7jfibQ@mail.gmail.com>
 
 
-* sb/push-options-via-transport (2017-02-08) 1 commit
-  (merged to 'next' on 2017-02-10 at 3e2d08e1fa)
- + push options: pass push options to the transport helper
-
- The push-options given via the "--push-options" option were not
- passed through to external remote helpers such as "smart HTTP" that
- are invoked via the transport helper.
-
- Will merge to 'master'.
-
-
 * js/rebase-helper (2017-02-09) 2 commits
   (merged to 'next' on 2017-02-14 at ae2474048e)
  + rebase -i: use the rebase--helper builtin
@@ -385,23 +506,15 @@ of the repositories listed at
  cf. <31bb0b9f-d498-24b3-57d5-9f34cb8e3914@kdbg.org>
 
 
-* sb/doc-unify-bottom (2017-02-09) 1 commit
-  (merged to 'next' on 2017-02-10 at 7229c4c1f7)
- + Documentation: unify bottom "part of git suite" lines
-
- Doc clean-up.
-
- Will merge to 'master'.
-
-
 * dt/gc-ignore-old-gc-logs (2017-02-13) 1 commit
- - gc: ignore old gc.log files
+  (merged to 'next' on 2017-02-16 at 8f48e1b405)
+ + gc: ignore old gc.log files
 
  A "gc.log" file left by a backgrounded "gc --auto" disables further
  automatic gc; it has been taught to run at least once a day (by
  default) by ignoring a stale "gc.log" file that is too old.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
  This is v6 posted on Feb 10th.
 
 
@@ -414,18 +527,8 @@ of the repositories listed at
  now updated to show the path to the correct file, relative to where
  the caller is.
 
- Waiting for Review/Ack.
+ Review comments sent; expecting an update.
  cf. <cover.1486740772.git.johannes.schindelin@gmx.de>
-
-
-* ls/p4-path-encoding (2017-02-10) 1 commit
- - git-p4: fix git-p4.pathEncoding for removed files
-
- When "git p4" imports changelist that removes paths, it failed to
- convert pathnames when the p4 used encoding different from the one
- used on the Git side.  This has been corrected.
-
- Will merge to 'next'.
 
 
 * mh/ref-remove-empty-directory (2017-01-07) 23 commits
@@ -459,21 +562,6 @@ of the repositories listed at
  "foo/", but we didn't do so so far.  Now we do.
 
  Will cook in 'next'.
-
-
-* cw/completion (2017-02-03) 7 commits
-  (merged to 'next' on 2017-02-10 at b3a5cbf39c)
- + completion: recognize more long-options
- + completion: teach remote subcommands to complete options
- + completion: teach replace to complete options
- + completion: teach ls-remote to complete options
- + completion: improve bash completion for git-add
- + completion: add subcommand completion for rerere
- + completion: teach submodule subcommands to complete options
-
- More command line completion (in contrib/) for recent additions.
-
- Will merge to 'master'.
 
 
 * cw/tag-reflog-message (2017-02-08) 1 commit
@@ -575,19 +663,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* rs/swap (2017-01-30) 5 commits
-  (merged to 'next' on 2017-02-10 at 5253797d0a)
- + graph: use SWAP macro
- + diff: use SWAP macro
- + use SWAP macro
- + apply: use SWAP macro
- + add SWAP macro
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * ps/urlmatch-wildcard (2017-02-01) 5 commits
   (merged to 'next' on 2017-02-10 at 2ed9ea48ee)
  + urlmatch: allow globbing for the URL host part
@@ -617,10 +692,10 @@ of the repositories listed at
  some implementations of SSH (e.g. PuTTY plink wants "-P <port>"
  while OpenSSH wants "-p <port>" to specify port to connect to), and
  the variant was guessed when GIT_SSH environment variable is used
- to specify it.  Extend the guess to the command specified by the
- newer GIT_SSH_COMMAND and also core.sshcommand configuration
- variable, and give an escape hatch for users to deal with
- misdetected cases.
+ to specify it.  The logic to guess now applies to the command
+ specified by the newer GIT_SSH_COMMAND and also core.sshcommand
+ configuration variable, and comes with an escape hatch for users to
+ deal with misdetected cases.
 
  Will cook in 'next'.
 
@@ -639,16 +714,6 @@ of the repositories listed at
  name refs not to be used for naming via their "--exclude" option.
 
  Will cook in 'next'.
-
-
-* sb/submodule-doc (2017-01-12) 2 commits
-  (merged to 'next' on 2017-02-10 at 5bfad5f30e)
- + submodule update documentation: don't repeat ourselves
- + submodule documentation: add options to the subcommand
-
- Doc updates.
-
- Will merge to 'master'.
 
 
 * bw/attr (2017-02-01) 27 commits
