@@ -510,6 +510,8 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 	 */
 	close(new_fd);
 
+	if (fd == 2)
+		setvbuf(stderr, NULL, _IONBF, BUFSIZ);
 	fd_is_interactive[fd] |= FD_SWAPPED;
 
 	return duplicate;
@@ -547,6 +549,8 @@ static void detect_msys_tty(int fd)
 			!wcsstr(name, L"-pty"))
 		return;
 
+	if (fd == 2)
+		setvbuf(stderr, NULL, _IONBF, BUFSIZ);
 	fd_is_interactive[fd] |= FD_MSYS;
 }
 
