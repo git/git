@@ -292,6 +292,54 @@ $ git reset --keep start                    <3>
 <3> But you can use "reset --keep" to remove the unwanted commit after
     you switched to "branch2".
 
+Split a commit apart into a sequence of commits::
++
+Suppose that you have created lots of logically separate changes and commited
+them together. Then, later you decide that it might be better to have each
+logical chunk associated with its own commit. You can use git reset to rewind
+history without changing the contents of your local files, and then successively
+use `git add -p` to interactively select which hunks to include into each commit,
+using `git commit -c` to pre-populate the commit message.
++
+------------
+$ git reset -N HEAD^                        <1>
+$ git add -p                                <2>
+$ git diff --cached                         <3>
+$ git commit -c HEAD@{1}                    <4>
+...                                         <5>
+$ git add ...                               <6>
+$ git diff --cached                         <7>
+$ git commit ...                            <8>
+------------
++
+<1> First, reset the history back one commit so that we remove the original
+    commit, but leave the working tree with all the changes. The -N ensures
+    that any new files added with HEAD are still marked so that git add -p
+    will find them.
+<2> Next, we interactively select diff hunks to add using the git add -p
+    facility. This will ask you about each diff hunk in sequence and you can
+    use simple commands such as "yes, include this", "No don't include this"
+    or even the very powerful "edit" facility.
+<3> Once satisfied with the hunks you want to include, you should verify what
+    has been prepared for the first commit by using git diff --cached. This
+    shows all the changes that have been moved into the index and are about
+    to be committed.
+<4> Next, commit the changes stored in the index. The -c option specifies to
+    pre-populate the commit message from the original message that you started
+    with in the first commit. This is helpful to avoid retyping it. The HEAD@{1}
+    is a special notation for the commit that HEAD used to be at prior to the
+    original reset commit (1 change ago). See linkgit:git-reflog[1] for more
+    details. You may also use any other valid commit reference.
+<5> You can repeat steps 2-4 multiple times to break the original code into
+    any number of commits.
+<6> Now you've split out many of the changes into their own commits, and might
+    no longer use the patch mode of git add, in order to select all remaining
+    uncommitted changes.
+<7> Once again, check to verify that you've included what you want to. You may
+    also wish to verify that git diff doesn't show any remaining changes to be
+    committed later.
+<8> And finally create the final commit.
+
 
 DISCUSSION
 ----------
