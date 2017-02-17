@@ -8,7 +8,7 @@ test_expect_success 'setup' '
 	test_commit init
 '
 
-test_expect_failure 'rev-parse --git-common-dir on main worktree' '
+test_expect_success 'rev-parse --git-common-dir on main worktree' '
 	git rev-parse --git-common-dir >actual &&
 	echo .git >expected &&
 	test_cmp expected actual &&
@@ -18,7 +18,7 @@ test_expect_failure 'rev-parse --git-common-dir on main worktree' '
 	test_cmp expected2 actual2
 '
 
-test_expect_failure 'rev-parse --git-path objects linked worktree' '
+test_expect_success 'rev-parse --git-path objects linked worktree' '
 	echo "$(git rev-parse --show-toplevel)/.git/objects" >expect &&
 	test_when_finished "rm -rf linked-tree && git worktree prune" &&
 	git worktree add --detach linked-tree master &&

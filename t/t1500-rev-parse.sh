@@ -93,7 +93,7 @@ test_expect_success 'git-common-dir from worktree root' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'git-common-dir inside sub-dir' '
+test_expect_success 'git-common-dir inside sub-dir' '
 	mkdir -p path/to/child &&
 	test_when_finished "rm -rf path" &&
 	echo "$(git -C path/to/child rev-parse --show-cdup).git" >expect &&
@@ -107,7 +107,7 @@ test_expect_success 'git-path from worktree root' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'git-path inside sub-dir' '
+test_expect_success 'git-path inside sub-dir' '
 	mkdir -p path/to/child &&
 	test_when_finished "rm -rf path" &&
 	echo "$(git -C path/to/child rev-parse --show-cdup).git/objects" >expect &&
