@@ -247,8 +247,13 @@ int close_tempfile(struct tempfile *tempfile)
 	tempfile->fd = -1;
 	if (fp) {
 		tempfile->fp = NULL;
-		err = ferror(fp);
-		err |= fclose(fp);
+		if (ferror(fp)) {
+			err = -1;
+			if (!fclose(fp))
+				errno = EIO;
+		} else {
+			err = fclose(fp);
+		}
 	} else {
 		err = close(fd);
 	}
