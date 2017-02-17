@@ -117,7 +117,7 @@ TEMPLATE DIRECTORY
 ------------------
 
 The template directory contains files and directories that will be copied to
-the `$GIT_DIR` after it is created.
+the `$GIT_DIR` after it is created, unless their name starts with a dot.
 
 The template directory will be one of the following (in order):
 
