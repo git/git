@@ -58,8 +58,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-02-04 13:02+0800\n"
-"PO-Revision-Date: 2017-02-11 11:31+0900\n"
+"POT-Creation-Date: 2017-02-18 01:00+0800\n"
+"PO-Revision-Date: 2017-02-19 19:33+0900\n"
 "Last-Translator: Changwoo Ryu <cwryu@debian.org>\n"
 "Language-Team: Git Korean translation <http://github.com/changwoo/git-l10n-"
 "ko>\n"
@@ -289,33 +289,33 @@ msgstr "%d번 줄에 바이너리 패치가 이해할 수 없습니다"
 msgid "patch with only garbage at line %d"
 msgstr "%d번 줄에 쓰레기 데이터만 있는 패치"
 
-#: apply.c:2274
+#: apply.c:2265
 #, c-format
 msgid "unable to read symlink %s"
 msgstr "%s 심볼릭 링크를 읽을 수 없습니다"
 
-#: apply.c:2278
+#: apply.c:2269
 #, c-format
 msgid "unable to open or read %s"
 msgstr "%s을(를) 열거나 읽을 수 없습니다"
 
-#: apply.c:2931
+#: apply.c:2922
 #, c-format
 msgid "invalid start of line: '%c'"
 msgstr "줄 시작이 잘못됨: '%c'"
 
-#: apply.c:3050
+#: apply.c:3041
 #, c-format
 msgid "Hunk #%d succeeded at %d (offset %d line)."
 msgid_plural "Hunk #%d succeeded at %d (offset %d lines)."
 msgstr[0] "패치 %d번 부분 %d번 줄에서 성공 (오프셋 %d번 줄)"
 
-#: apply.c:3062
+#: apply.c:3053
 #, c-format
 msgid "Context reduced to (%ld/%ld) to apply fragment at %d"
 msgstr "컨텍스트가 (%ld/%ld)로 줄어듭니다. (%d번 줄에서 적용)"
 
-#: apply.c:3068
+#: apply.c:3059
 #, c-format
 msgid ""
 "while searching for:\n"
@@ -324,315 +324,315 @@ msgstr ""
 "다음을 검색하던 중:\n"
 "%.*s"
 
-#: apply.c:3090
+#: apply.c:3081
 #, c-format
 msgid "missing binary patch data for '%s'"
 msgstr "'%s'에 대한 바이너리 패치 데이터가 없습니다"
 
-#: apply.c:3098
+#: apply.c:3089
 #, c-format
 msgid "cannot reverse-apply a binary patch without the reverse hunk to '%s'"
 msgstr ""
 "반대 헝크가 없으면 '%s'에 대한 바이너리 패치를 반대로 적용할 수 없습니다"
 
-#: apply.c:3144
+#: apply.c:3135
 #, c-format
 msgid "cannot apply binary patch to '%s' without full index line"
 msgstr ""
 "전체 인덱스 라인이 없으면 '%s'에 대한 바이너리 패치를 적용할 수 없습니다"
 
-#: apply.c:3154
+#: apply.c:3145
 #, c-format
 msgid ""
 "the patch applies to '%s' (%s), which does not match the current contents."
 msgstr "패치가 '%s'(%s)에 적용되지만, 현재 내용과 일치하지 않습니다."
 
-#: apply.c:3162
+#: apply.c:3153
 #, c-format
 msgid "the patch applies to an empty '%s' but it is not empty"
 msgstr "패치는 빈 '%s'에 적용되지만, 현재 비어 있지 않습니다"
 
-#: apply.c:3180
+#: apply.c:3171
 #, c-format
 msgid "the necessary postimage %s for '%s' cannot be read"
 msgstr "'%2$s'에 대한 필요한 %1$s 포스트이미지를 읽을 수 없습니다"
 
-#: apply.c:3193
+#: apply.c:3184
 #, c-format
 msgid "binary patch does not apply to '%s'"
 msgstr "바이너리 패치를 '%s'에 적용할 수 없습니다"
 
-#: apply.c:3199
+#: apply.c:3190
 #, c-format
 msgid "binary patch to '%s' creates incorrect result (expecting %s, got %s)"
 msgstr ""
 "'%s'에 대한 바이너리 패치가 올바르지 않은 결과를 만듭니다. (기대한 값 %s, 실"
 "제 %s)"
 
-#: apply.c:3220
+#: apply.c:3211
 #, c-format
 msgid "patch failed: %s:%ld"
 msgstr "패치 실패: %s:%ld"
 
-#: apply.c:3342
+#: apply.c:3333
 #, c-format
 msgid "cannot checkout %s"
 msgstr "%s을(를) 가져올 수 없습니다"
 
-#: apply.c:3390 apply.c:3401 apply.c:3447 setup.c:248
+#: apply.c:3381 apply.c:3392 apply.c:3438 setup.c:248
 #, c-format
 msgid "failed to read %s"
 msgstr "%s을(를) 읽는데 실패했습니다"
 
-#: apply.c:3398
+#: apply.c:3389
 #, c-format
 msgid "reading from '%s' beyond a symbolic link"
 msgstr "심볼릭 링크 뒤에 있는 '%s' 읽기"
 
-#: apply.c:3427 apply.c:3667
+#: apply.c:3418 apply.c:3658
 #, c-format
 msgid "path %s has been renamed/deleted"
 msgstr "%s 경로가 이름이 바뀌었거나 삭제되었습니다"
 
-#: apply.c:3510 apply.c:3681
+#: apply.c:3501 apply.c:3672
 #, c-format
 msgid "%s: does not exist in index"
 msgstr "%s: 인덱스에 없습니다"
 
-#: apply.c:3519 apply.c:3689
+#: apply.c:3510 apply.c:3680
 #, c-format
 msgid "%s: does not match index"
 msgstr "%s: 인덱스와 맞지 않습니다"
 
-#: apply.c:3554
+#: apply.c:3545
 msgid "repository lacks the necessary blob to fall back on 3-way merge."
 msgstr "저장소에 3-방향 병합으로 대신할 때 필요한 블롭이 없습니다."
 
-#: apply.c:3557
+#: apply.c:3548
 #, c-format
 msgid "Falling back to three-way merge...\n"
 msgstr "3-방향 병합으로 대신합니다...\n"
 
-#: apply.c:3573 apply.c:3577
+#: apply.c:3564 apply.c:3568
 #, c-format
 msgid "cannot read the current contents of '%s'"
 msgstr "'%s'의 현재 내용을 읽을 수 없습니다"
 
-#: apply.c:3589
+#: apply.c:3580
 #, c-format
 msgid "Failed to fall back on three-way merge...\n"
 msgstr "3-방향 병합으로 대신하는데 실패했습니다...\n"
 
-#: apply.c:3603
+#: apply.c:3594
 #, c-format
 msgid "Applied patch to '%s' with conflicts.\n"
 msgstr "패치를 '%s'에 충돌이 있는 상태로 적용.\n"
 
-#: apply.c:3608
+#: apply.c:3599
 #, c-format
 msgid "Applied patch to '%s' cleanly.\n"
 msgstr "패치를 '%s'에 패치 문제 없이 적용.\n"
 
-#: apply.c:3634
+#: apply.c:3625
 msgid "removal patch leaves file contents"
 msgstr "제거하는 패치 다음에 파일 내용이 남았습니다"
 
-#: apply.c:3706
+#: apply.c:3697
 #, c-format
 msgid "%s: wrong type"
 msgstr "%s: 잘못된 종류"
 
-#: apply.c:3708
+#: apply.c:3699
 #, c-format
 msgid "%s has type %o, expected %o"
 msgstr "%s의 종류가 %o이지만 %o이(가) 되어야 합니다"
 
-#: apply.c:3859 apply.c:3861
+#: apply.c:3850 apply.c:3852
 #, c-format
 msgid "invalid path '%s'"
 msgstr "잘못된 경로 '%s'"
 
-#: apply.c:3917
+#: apply.c:3908
 #, c-format
 msgid "%s: already exists in index"
 msgstr "%s: 이미 인덱스에 있습니다"
 
-#: apply.c:3920
+#: apply.c:3911
 #, c-format
 msgid "%s: already exists in working directory"
 msgstr "%s: 이미 작업 디렉터리에 있습니다"
 
-#: apply.c:3940
+#: apply.c:3931
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o)"
 msgstr "%2$s의 새 모드(%1$o)가 예전 모드(%3$o)와 다릅니다"
 
-#: apply.c:3945
+#: apply.c:3936
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o) of %s"
 msgstr "%2$s의 새 모드(%1$o)가 %4$s의 예전 모드(%3$o)와 다릅니다"
 
-#: apply.c:3965
+#: apply.c:3956
 #, c-format
 msgid "affected file '%s' is beyond a symbolic link"
 msgstr "영향 받는 '%s' 파일이 심볼릭 링크 뒤에 있습니다"
 
-#: apply.c:3969
+#: apply.c:3960
 #, c-format
 msgid "%s: patch does not apply"
 msgstr "%s: 패치를 적용하지 않습니다"
 
-#: apply.c:3984
+#: apply.c:3975
 #, c-format
 msgid "Checking patch %s..."
 msgstr "%s 패치를 확인하는 중입니다..."
 
-#: apply.c:4075
+#: apply.c:4066
 #, c-format
 msgid "sha1 information is lacking or useless for submodule %s"
 msgstr "sha1 정보가 없거나 %s 하위 모듈에서 쓸 수 없습니다"
 
-#: apply.c:4082
+#: apply.c:4073
 #, c-format
 msgid "mode change for %s, which is not in current HEAD"
 msgstr "%s에 대한 모드 변경이지만, 현재 HEAD에 없습니다"
 
-#: apply.c:4085
+#: apply.c:4076
 #, c-format
 msgid "sha1 information is lacking or useless (%s)."
 msgstr "sha1 정보가 없거나 쓸 수 없습니다 (%s)."
 
-#: apply.c:4090 builtin/checkout.c:233 builtin/reset.c:135
+#: apply.c:4081 builtin/checkout.c:233 builtin/reset.c:135
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "경로 '%s'에 대해 make_cache_entry 실패"
 
-#: apply.c:4094
+#: apply.c:4085
 #, c-format
 msgid "could not add %s to temporary index"
 msgstr "임시 인덱스에 %s 항목을 추가할 수 없습니다"
 
-#: apply.c:4104
+#: apply.c:4095
 #, c-format
 msgid "could not write temporary index to %s"
 msgstr "임시 인덱스를 %s에 쓸 수 없습니다"
 
-#: apply.c:4242
+#: apply.c:4233
 #, c-format
 msgid "unable to remove %s from index"
 msgstr "인덱스에서 %s을(를) 제거할 수 없습니다"
 
-#: apply.c:4277
+#: apply.c:4268
 #, c-format
 msgid "corrupt patch for submodule %s"
 msgstr "하위 모듈 %s에 대해 손상된 패치"
 
-#: apply.c:4283
+#: apply.c:4274
 #, c-format
 msgid "unable to stat newly created file '%s'"
 msgstr "새로 만든 파일 '%s'에 대해 stat()할 수 없습니다"
 
-#: apply.c:4291
+#: apply.c:4282
 #, c-format
 msgid "unable to create backing store for newly created file %s"
 msgstr "새로 만든 파일 '%s'에 대해 예비 저장소를 만들 수 없습니다"
 
-#: apply.c:4297 apply.c:4441
+#: apply.c:4288 apply.c:4432
 #, c-format
 msgid "unable to add cache entry for %s"
 msgstr "%s에 대해 캐시 항목을 추가할 수 없습니다"
 
-#: apply.c:4338
+#: apply.c:4329
 #, c-format
 msgid "failed to write to '%s'"
 msgstr "'%s'에 쓰는데 실패했습니다"
 
-#: apply.c:4342
+#: apply.c:4333
 #, c-format
 msgid "closing file '%s'"
 msgstr "'%s' 파일을 닫는 중입니다"
 
-#: apply.c:4412
+#: apply.c:4403
 #, c-format
 msgid "unable to write file '%s' mode %o"
 msgstr "'%s' 파일에 쓸 수 없습니다 ('%o' 모드)"
 
-#: apply.c:4510
+#: apply.c:4501
 #, c-format
 msgid "Applied patch %s cleanly."
 msgstr "%s 패치 깔끔하게 적용."
 
-#: apply.c:4518
+#: apply.c:4509
 msgid "internal error"
 msgstr "내부 오류"
 
-#: apply.c:4521
+#: apply.c:4512
 #, c-format
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
 msgstr[0] "%%s 패치를 (%d개 거부) 적용..."
 
-#: apply.c:4532
+#: apply.c:4523
 #, c-format
 msgid "truncating .rej filename to %.*s.rej"
 msgstr "truncating .rej 파일 이름을 '%.*s.rej'(으)로 자름"
 
-#: apply.c:4540 builtin/fetch.c:737 builtin/fetch.c:986
+#: apply.c:4531 builtin/fetch.c:737 builtin/fetch.c:986
 #, c-format
 msgid "cannot open %s"
 msgstr "%s을(를) 열 수 없습니다"
 
-#: apply.c:4554
+#: apply.c:4545
 #, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "패치 부위 #%d 깔끔하게 적용."
 
-#: apply.c:4558
+#: apply.c:4549
 #, c-format
 msgid "Rejected hunk #%d."
 msgstr "패치 부위 #%d 거부됨."
 
-#: apply.c:4668
+#: apply.c:4659
 #, c-format
 msgid "Skipped patch '%s'."
 msgstr "패치 '%s' 건너뜀."
 
-#: apply.c:4676
+#: apply.c:4667
 msgid "unrecognized input"
 msgstr "인식할 수 없는 입력"
 
-#: apply.c:4695
+#: apply.c:4686
 msgid "unable to read index file"
 msgstr "인덱스 파일을 읽을 수 없습니다"
 
-#: apply.c:4833
+#: apply.c:4824
 #, c-format
 msgid "can't open patch '%s': %s"
 msgstr "'%s' 패치를 열 수 없습니다: %s"
 
-#: apply.c:4858
+#: apply.c:4849
 #, c-format
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
 msgstr[0] "공백 오류 %d개를 넘어갑니다"
 
-#: apply.c:4864 apply.c:4879
+#: apply.c:4855 apply.c:4870
 #, c-format
 msgid "%d line adds whitespace errors."
 msgid_plural "%d lines add whitespace errors."
 msgstr[0] "%d번 줄에서 공백 오류를 추가합니다."
 
-#: apply.c:4872
+#: apply.c:4863
 #, c-format
 msgid "%d line applied after fixing whitespace errors."
 msgid_plural "%d lines applied after fixing whitespace errors."
 msgstr[0] "공백 오류를 바로잡은 뒤에 %d번 줄 적용."
 
-#: apply.c:4888 builtin/add.c:463 builtin/mv.c:298 builtin/rm.c:391
+#: apply.c:4879 builtin/add.c:463 builtin/mv.c:298 builtin/rm.c:391
 msgid "Unable to write new index file"
 msgstr "새 인덱스 파일에 쓸 수 없습니다"
 
-#: apply.c:4919 apply.c:4922 builtin/am.c:2277 builtin/am.c:2280
+#: apply.c:4910 apply.c:4913 builtin/am.c:2277 builtin/am.c:2280
 #: builtin/clone.c:95 builtin/fetch.c:98 builtin/pull.c:180
 #: builtin/submodule--helper.c:281 builtin/submodule--helper.c:591
 #: builtin/submodule--helper.c:594 builtin/submodule--helper.c:960
@@ -641,121 +641,121 @@ msgstr "새 인덱스 파일에 쓸 수 없습니다"
 msgid "path"
 msgstr "경로"
 
-#: apply.c:4920
+#: apply.c:4911
 msgid "don't apply changes matching the given path"
 msgstr "주어진 경로에 해당하는 변경 사항을 적용하지 않습니다"
 
-#: apply.c:4923
+#: apply.c:4914
 msgid "apply changes matching the given path"
 msgstr "주어진 경로에 해당하는 변경 사항을 적용합니다"
 
-#: apply.c:4925 builtin/am.c:2286
+#: apply.c:4916 builtin/am.c:2286
 msgid "num"
 msgstr "개수"
 
-#: apply.c:4926
+#: apply.c:4917
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr "전통적인 diff 경로 앞의 <개수>개의 앞 슬래시(/)를 제거합니다"
 
-#: apply.c:4929
+#: apply.c:4920
 msgid "ignore additions made by the patch"
 msgstr "패치에서 추가하는 파일을 무시합니다"
 
-#: apply.c:4931
+#: apply.c:4922
 msgid "instead of applying the patch, output diffstat for the input"
 msgstr "패치를 적용하는 대신, 입력에 대한 diffstat을 출력합니다"
 
-#: apply.c:4935
+#: apply.c:4926
 msgid "show number of added and deleted lines in decimal notation"
 msgstr "십진수로 추가 및 삭제한 줄 수를 표시합니다"
 
-#: apply.c:4937
+#: apply.c:4928
 msgid "instead of applying the patch, output a summary for the input"
 msgstr "패치를 적용하는 대신, 입력에 대한 요약을 출력합니다"
 
-#: apply.c:4939
+#: apply.c:4930
 msgid "instead of applying the patch, see if the patch is applicable"
 msgstr "패치를 적용하는 대신, 패치를 적용 가능한지 확인합니다"
 
-#: apply.c:4941
+#: apply.c:4932
 msgid "make sure the patch is applicable to the current index"
 msgstr "현재 인덱스에서 패치가 적용 가능한지 확인합니다"
 
-#: apply.c:4943
+#: apply.c:4934
 msgid "apply a patch without touching the working tree"
 msgstr "작업 폴더를 바꾸지 않고 패치를 적용합니다"
 
-#: apply.c:4945
+#: apply.c:4936
 msgid "accept a patch that touches outside the working area"
 msgstr "작업 영역 밖의 파일을 바꾸는 패치를 허용합니다"
 
-#: apply.c:4947
+#: apply.c:4938
 msgid "also apply the patch (use with --stat/--summary/--check)"
 msgstr "그리고 패치도 적용합니다 (--stat/--summary/--check 옵션과 같이 사용)"
 
-#: apply.c:4949
+#: apply.c:4940
 msgid "attempt three-way merge if a patch does not apply"
 msgstr "패치를 적용하지 않으면 3-방향 병합을 시도합니다"
 
-#: apply.c:4951
+#: apply.c:4942
 msgid "build a temporary index based on embedded index information"
 msgstr "내장 인덱스 정보를 사용해 임시 인덱스를 만듭니다"
 
-#: apply.c:4954 builtin/checkout-index.c:169 builtin/ls-files.c:505
+#: apply.c:4945 builtin/checkout-index.c:169 builtin/ls-files.c:507
 msgid "paths are separated with NUL character"
 msgstr "경로를 NUL 문자로 구분합니다"
 
-#: apply.c:4956
+#: apply.c:4947
 msgid "ensure at least <n> lines of context match"
 msgstr "최소한 <n>줄이 컨텍스트와 일치하는지 확인합니다"
 
-#: apply.c:4957 builtin/am.c:2265
+#: apply.c:4948 builtin/am.c:2265
 msgid "action"
 msgstr "동작"
 
-#: apply.c:4958
+#: apply.c:4949
 msgid "detect new or modified lines that have whitespace errors"
 msgstr "공백 오류가 있는 추가됐거나 수정된 줄을 찾습니다"
 
-#: apply.c:4961 apply.c:4964
+#: apply.c:4952 apply.c:4955
 msgid "ignore changes in whitespace when finding context"
 msgstr "컨텍스트를 찾을 때 공백 변경 사항을 무시합니다"
 
-#: apply.c:4967
+#: apply.c:4958
 msgid "apply the patch in reverse"
 msgstr "패치를 반대 순서로 적용합니다"
 
-#: apply.c:4969
+#: apply.c:4960
 msgid "don't expect at least one line of context"
 msgstr "최소한의 컨텍스트 한 줄도 없이 적용합니다"
 
-#: apply.c:4971
+#: apply.c:4962
 msgid "leave the rejected hunks in corresponding *.rej files"
 msgstr "거부된 패치 부분을 대응되는 *.rej 파일에 남겨둡니다"
 
-#: apply.c:4973
+#: apply.c:4964
 msgid "allow overlapping hunks"
 msgstr "패치 부분이 겹쳐도 허용합니다"
 
-#: apply.c:4974 builtin/add.c:267 builtin/check-ignore.c:19
+#: apply.c:4965 builtin/add.c:267 builtin/check-ignore.c:19
 #: builtin/commit.c:1337 builtin/count-objects.c:94 builtin/fsck.c:651
 #: builtin/log.c:1860 builtin/mv.c:122 builtin/read-tree.c:114
 msgid "be verbose"
 msgstr "자세히 표시"
 
-#: apply.c:4976
+#: apply.c:4967
 msgid "tolerate incorrectly detected missing new-line at the end of file"
 msgstr "파일 끝에 줄바꿈이 빠졌음을 잘못 검색한 경우에 무시합니다"
 
-#: apply.c:4979
+#: apply.c:4970
 msgid "do not trust the line counts in the hunk headers"
 msgstr "패치 부분의 헤더의 줄 수를 신용하지 않습니다"
 
-#: apply.c:4981 builtin/am.c:2274
+#: apply.c:4972 builtin/am.c:2274
 msgid "root"
 msgstr "최상위"
 
-#: apply.c:4982
+#: apply.c:4973
 msgid "prepend <root> to all filenames"
 msgstr "모든 파일 이름에 <최상위>를 앞에 붙입니다"
 
@@ -801,7 +801,7 @@ msgstr "아카이브의 각 경로 이름의 앞에 지정한 경로를 붙입�
 
 #: archive.c:432 builtin/blame.c:2607 builtin/blame.c:2608 builtin/config.c:59
 #: builtin/fast-export.c:987 builtin/fast-export.c:989 builtin/grep.c:1054
-#: builtin/hash-object.c:101 builtin/ls-files.c:539 builtin/ls-files.c:542
+#: builtin/hash-object.c:101 builtin/ls-files.c:541 builtin/ls-files.c:544
 #: builtin/notes.c:401 builtin/notes.c:564 builtin/read-tree.c:109
 #: parse-options.h:153
 msgid "file"
@@ -1566,29 +1566,29 @@ msgstr ""
 msgid "Failed to parse --submodule option parameter: '%s'"
 msgstr "--submodule 옵션 파라미터 파싱에 실패했습니다: '%s'"
 
-#: diff.c:4695
+#: diff.c:4696
 msgid "inexact rename detection was skipped due to too many files."
 msgstr "파일이 너무 많아서 부정확한 이름 바꾸기 검색 기능을 건너뜁니다."
 
-#: diff.c:4698
+#: diff.c:4699
 msgid "only found copies from modified paths due to too many files."
 msgstr "파일이 너무 많아서 수정한 경로의 복사본만 찾았습니다."
 
-#: diff.c:4701
+#: diff.c:4702
 #, c-format
 msgid ""
 "you may want to set your %s variable to at least %d and retry the command."
 msgstr "%s 변수를 최소한 %d(으)로 설정하고 명령을 다시 시도해 보십시오."
 
-#: dir.c:1863
+#: dir.c:1862
 msgid "failed to get kernel name and information"
 msgstr "커널 이름과 정보를 가져오는데 실패했습니다"
 
-#: dir.c:1982
+#: dir.c:1981
 msgid "Untracked cache is disabled on this system or location."
 msgstr "이 시스템 또는 위치에서는 추적되지 않는 캐시를 사용하지 않습니다."
 
-#: dir.c:2760
+#: dir.c:2759
 #, c-format
 msgid "could not migrate git directory from '%s' to '%s'"
 msgstr "'%s'에서 '%s'(으)로 git 디렉터리를 옮겨올 수 없습니다"
@@ -1783,7 +1783,7 @@ msgstr "log.graphColors에 잘못된 색을 ('%.*s') 무시합니다"
 msgid "'%s': unable to read %s"
 msgstr "'%s': %s을(를) 읽을 수 없습니다"
 
-#: grep.c:1811 builtin/clone.c:381 builtin/diff.c:84 builtin/rm.c:133
+#: grep.c:1811 builtin/clone.c:381 builtin/diff.c:81 builtin/rm.c:133
 #, c-format
 msgid "failed to stat '%s'"
 msgstr "'%s'에 대해 stat()이 실패했습니다"
@@ -2034,120 +2034,120 @@ msgstr ""
 msgid "Renaming %s to %s and %s to %s instead"
 msgstr "대신 이름을 %s에서 %s(으)로 바꾸고 %s에서 %s(으)로 바꿉니다"
 
-#: merge-recursive.c:1538
+#: merge-recursive.c:1535
 #, c-format
 msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
 msgstr "충돌! (rename/add): 이름 바꾸기 %s->%s (위치 %s). %s 추가 (위치 %s)"
 
-#: merge-recursive.c:1553
+#: merge-recursive.c:1550
 #, c-format
 msgid "Adding merged %s"
 msgstr "병합된 %s을(를) 추가합니다"
 
-#: merge-recursive.c:1560 merge-recursive.c:1774
+#: merge-recursive.c:1557 merge-recursive.c:1771
 #, c-format
 msgid "Adding as %s instead"
 msgstr "대신 %s(으)로 추가합니다"
 
-#: merge-recursive.c:1617
+#: merge-recursive.c:1614
 #, c-format
 msgid "cannot read object %s"
 msgstr "%s 오브젝트를 읽을 수 없습니다"
 
-#: merge-recursive.c:1620
+#: merge-recursive.c:1617
 #, c-format
 msgid "object %s is not a blob"
 msgstr "%s 오브젝트는 블롭이 아닙니다"
 
-#: merge-recursive.c:1673
+#: merge-recursive.c:1670
 msgid "modify"
 msgstr "수정"
 
-#: merge-recursive.c:1673
+#: merge-recursive.c:1670
 msgid "modified"
 msgstr "수정됨"
 
-#: merge-recursive.c:1683
+#: merge-recursive.c:1680
 msgid "content"
 msgstr "내용"
 
-#: merge-recursive.c:1690
+#: merge-recursive.c:1687
 msgid "add/add"
 msgstr "추가/추가"
 
-#: merge-recursive.c:1726
+#: merge-recursive.c:1723
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr "건너뛰기: %s (기존과 같게 병합)"
 
-#: merge-recursive.c:1740
+#: merge-recursive.c:1737
 #, c-format
 msgid "Auto-merging %s"
 msgstr "자동 병합: %s"
 
-#: merge-recursive.c:1744 git-submodule.sh:930
+#: merge-recursive.c:1741 git-submodule.sh:930
 msgid "submodule"
 msgstr "하위 모듈"
 
-#: merge-recursive.c:1745
+#: merge-recursive.c:1742
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "충돌! (%s): %s에 병합 충돌"
 
-#: merge-recursive.c:1839
+#: merge-recursive.c:1836
 #, c-format
 msgid "Removing %s"
 msgstr "제거: %s"
 
-#: merge-recursive.c:1865
+#: merge-recursive.c:1862
 msgid "file/directory"
 msgstr "파일/디렉터리"
 
-#: merge-recursive.c:1871
+#: merge-recursive.c:1868
 msgid "directory/file"
 msgstr "디렉터리/파일"
 
-#: merge-recursive.c:1877
+#: merge-recursive.c:1874
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr ""
 "충돌! (%s): 이름이 %s인 디렉터리가 %s에 있습니다. %s을(를) %s(으)로 추가합니"
 "다"
 
-#: merge-recursive.c:1886
+#: merge-recursive.c:1883
 #, c-format
 msgid "Adding %s"
 msgstr "추가: %s"
 
-#: merge-recursive.c:1923
+#: merge-recursive.c:1920
 msgid "Already up-to-date!"
 msgstr "이미 업데이트 상태입니다!"
 
-#: merge-recursive.c:1932
+#: merge-recursive.c:1929
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr "%s 및 %s 트리의 병합이 실패했습니다"
 
-#: merge-recursive.c:2015
+#: merge-recursive.c:2012
 msgid "Merging:"
 msgstr "병합:"
 
-#: merge-recursive.c:2028
+#: merge-recursive.c:2025
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "과거의 공통 커밋 %u개 발견:"
 
-#: merge-recursive.c:2067
+#: merge-recursive.c:2064
 msgid "merge returned no commit"
 msgstr "병합 결과에 커밋이 없습니다"
 
-#: merge-recursive.c:2130
+#: merge-recursive.c:2127
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "'%s' 오브젝트를 파싱할 수 없습니다"
 
-#: merge-recursive.c:2144 builtin/merge.c:645 builtin/merge.c:792
+#: merge-recursive.c:2141 builtin/merge.c:645 builtin/merge.c:792
 msgid "Unable to write index."
 msgstr "인덱스를 쓸 수 없습니다."
 
@@ -2188,7 +2188,7 @@ msgstr "%s에서 노트를 다시 쓰기를 거부합니다 (refs/notes/ 밖임)
 msgid "Bad %s value: '%s'"
 msgstr "잘못된 %s 값: '%s'"
 
-#: object.c:242
+#: object.c:240
 #, c-format
 msgid "unable to parse object: %s"
 msgstr "오브젝트를 파싱할 수 없습니다: %s"
@@ -3344,7 +3344,9 @@ msgstr "서브모듈 '%s'에서 'git status'를 실행할 수 없습니다"
 #, c-format
 msgid ""
 "relocate_gitdir for submodule '%s' with more than one worktree not supported"
-msgstr "여러 개의 작업 폴더가 있는 하위 모듈 '%s'에 대해 relocate_gitdir은 지원하지 않습니다"
+msgstr ""
+"여러 개의 작업 폴더가 있는 하위 모듈 '%s'에 대해 relocate_gitdir은 지원하지 "
+"않습니다"
 
 #: submodule.c:1410 submodule.c:1471
 #, c-format
@@ -3482,7 +3484,7 @@ msgstr ""
 msgid "Aborting."
 msgstr "중지함."
 
-#: transport-helper.c:1075
+#: transport-helper.c:1082
 #, c-format
 msgid "Could not read ref %s"
 msgstr "%s 레퍼런스를 읽을 수 없습니다"
@@ -6124,7 +6126,7 @@ msgid "remove whole directories"
 msgstr "전체 디렉터리 제거"
 
 #: builtin/clean.c:875 builtin/describe.c:407 builtin/grep.c:1056
-#: builtin/ls-files.c:536 builtin/name-rev.c:313 builtin/show-ref.c:176
+#: builtin/ls-files.c:538 builtin/name-rev.c:313 builtin/show-ref.c:176
 msgid "pattern"
 msgstr "패턴"
 
@@ -7428,31 +7430,31 @@ msgstr "이름이 없습니다. 아무것도 설명할 수 없습니다."
 msgid "--dirty is incompatible with commit-ishes"
 msgstr "--dirty 옵션은 커밋같은 항목과 호환되지 않습니다"
 
-#: builtin/diff.c:86
+#: builtin/diff.c:83
 #, c-format
 msgid "'%s': not a regular file or symlink"
 msgstr "'%s': 일반 파일이나 심볼릭 링크가 아닙니다"
 
-#: builtin/diff.c:237
+#: builtin/diff.c:234
 #, c-format
 msgid "invalid option: %s"
 msgstr "잘못된 옵션: %s"
 
-#: builtin/diff.c:361
+#: builtin/diff.c:358
 msgid "Not a git repository"
 msgstr "깃 저장소가 아닙니다"
 
-#: builtin/diff.c:404
+#: builtin/diff.c:401
 #, c-format
 msgid "invalid object '%s' given."
 msgstr "잘못된 '%s' 오브젝트가 주어졌습니다."
 
-#: builtin/diff.c:413
+#: builtin/diff.c:410
 #, c-format
 msgid "more than two blobs given: '%s'"
 msgstr "두 개보다 많은 블롭이 주어졌습니다: '%s'"
 
-#: builtin/diff.c:420
+#: builtin/diff.c:417
 #, c-format
 msgid "unhandled object '%s' given."
 msgstr "처리하지 않은 '%s' 오브젝트가 주어졌습니다."
@@ -7524,7 +7526,8 @@ msgstr "`--tool` 옵션에서 사용할 수 있는 diff 도구 목록을 표시�
 msgid ""
 "make 'git-difftool' exit when an invoked diff tool returns a non - zero exit "
 "code"
-msgstr "실행한 diff 도구가 0이 아닌 코드를 리턴하면 'git-difftool'이 끝나게 합니다"
+msgstr ""
+"실행한 diff 도구가 0이 아닌 코드를 리턴하면 'git-difftool'이 끝나게 합니다"
 
 #: builtin/difftool.c:645
 msgid "<command>"
@@ -9264,103 +9267,103 @@ msgstr ""
 "추적되는 리모트 브랜치를 찾을 수 없습니다. <업스트림>을 수동으로 지정하십시"
 "오.\n"
 
-#: builtin/ls-files.c:458
+#: builtin/ls-files.c:460
 msgid "git ls-files [<options>] [<file>...]"
 msgstr "git ls-files [<옵션>] [<파일>...]"
 
-#: builtin/ls-files.c:507
+#: builtin/ls-files.c:509
 msgid "identify the file status with tags"
 msgstr "파일 상태를 태그와 같이 표시합니다"
 
-#: builtin/ls-files.c:509
+#: builtin/ls-files.c:511
 msgid "use lowercase letters for 'assume unchanged' files"
 msgstr "'변경되지 않았다고 가정' 파일에 소문자를 사용합니다"
 
-#: builtin/ls-files.c:511
+#: builtin/ls-files.c:513
 msgid "show cached files in the output (default)"
 msgstr "출력에 캐시된 파일을 표시합니다 (기본값)"
 
-#: builtin/ls-files.c:513
+#: builtin/ls-files.c:515
 msgid "show deleted files in the output"
 msgstr "출력에 삭제된 파일을 표시합니다"
 
-#: builtin/ls-files.c:515
+#: builtin/ls-files.c:517
 msgid "show modified files in the output"
 msgstr "출력에 수정된 파일을 표시합니다"
 
-#: builtin/ls-files.c:517
+#: builtin/ls-files.c:519
 msgid "show other files in the output"
 msgstr "출력에 기타 파일을 표시합니다"
 
-#: builtin/ls-files.c:519
+#: builtin/ls-files.c:521
 msgid "show ignored files in the output"
 msgstr "출력에 무시된 파일을 표시합니다"
 
-#: builtin/ls-files.c:522
+#: builtin/ls-files.c:524
 msgid "show staged contents' object name in the output"
 msgstr "출력에 커밋 표시된 내용의 오브젝트 이름을 표시합니다"
 
-#: builtin/ls-files.c:524
+#: builtin/ls-files.c:526
 msgid "show files on the filesystem that need to be removed"
 msgstr "파일 시스템에서 제거해야 하는 파일을 표시합니다"
 
-#: builtin/ls-files.c:526
+#: builtin/ls-files.c:528
 msgid "show 'other' directories' names only"
 msgstr "기타 디렉터리의 이름만 표시합니다"
 
-#: builtin/ls-files.c:528
+#: builtin/ls-files.c:530
 msgid "show line endings of files"
 msgstr "파일의 줄 끝을 표시합니다"
 
-#: builtin/ls-files.c:530
+#: builtin/ls-files.c:532
 msgid "don't show empty directories"
 msgstr "빈 디렉터리 표시하지 않기"
 
-#: builtin/ls-files.c:533
+#: builtin/ls-files.c:535
 msgid "show unmerged files in the output"
 msgstr "출력에 병합하지 않은 파일을 표시합니다"
 
-#: builtin/ls-files.c:535
+#: builtin/ls-files.c:537
 msgid "show resolve-undo information"
 msgstr "resolve-undo 정보를 표시합니다"
 
-#: builtin/ls-files.c:537
+#: builtin/ls-files.c:539
 msgid "skip files matching pattern"
 msgstr "패턴에 일치하는 파일을 건너뜁니다"
 
-#: builtin/ls-files.c:540
+#: builtin/ls-files.c:542
 msgid "exclude patterns are read from <file>"
 msgstr "제외할 패턴을 <파일>에서 읽습니다"
 
-#: builtin/ls-files.c:543
+#: builtin/ls-files.c:545
 msgid "read additional per-directory exclude patterns in <file>"
 msgstr "<파일>에서 추가적인 디렉터리별 제외 패턴을 읽습니다"
 
-#: builtin/ls-files.c:545
+#: builtin/ls-files.c:547
 msgid "add the standard git exclusions"
 msgstr "표준 깃 제외 패턴을 추가합니다"
 
-#: builtin/ls-files.c:548
+#: builtin/ls-files.c:550
 msgid "make the output relative to the project top directory"
 msgstr "최상위 디렉터리 상대 경로로 출력합니다"
 
-#: builtin/ls-files.c:551
+#: builtin/ls-files.c:553
 msgid "recurse through submodules"
 msgstr "하위 모듈에 재귀적으로 적용"
 
-#: builtin/ls-files.c:553
+#: builtin/ls-files.c:555
 msgid "if any <file> is not in the index, treat this as an error"
 msgstr "<파일>이 인덱스 안에 없으면 오류로 취급합니다"
 
-#: builtin/ls-files.c:554
+#: builtin/ls-files.c:556
 msgid "tree-ish"
 msgstr "트리-따위"
 
-#: builtin/ls-files.c:555
+#: builtin/ls-files.c:557
 msgid "pretend that paths removed since <tree-ish> are still present"
 msgstr "<트리-따위> 뒤로 제거한 경로가 있다고 가정합니다"
 
-#: builtin/ls-files.c:557
+#: builtin/ls-files.c:559
 msgid "show debugging data"
 msgstr "디버깅 데이터를 표시합니다"
 
@@ -10713,13 +10716,13 @@ msgstr "중복된 오브젝트 제거"
 msgid "git prune [-n] [-v] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--expire <시각>] [--] [<헤드>...]"
 
-#: builtin/prune.c:106 builtin/worktree.c:128
+#: builtin/prune.c:106
 msgid "report pruned objects"
 msgstr "잘라낸 오브젝트를 알립니다"
 
-#: builtin/prune.c:109 builtin/worktree.c:130
+#: builtin/prune.c:109
 msgid "expire objects older than <time>"
-msgstr "<시각>보다 오래 된 오브젝트가 만료됩니다"
+msgstr "<시각>보다 오래 된 오브젝트를 만료합니다"
 
 #: builtin/prune.c:123
 msgid "cannot prune in a precious-objects repo"
@@ -13365,6 +13368,14 @@ msgstr "worktrees/%s 제거: gitdir 파일이 올바르지 않습니다"
 msgid "Removing worktrees/%s: gitdir file points to non-existent location"
 msgstr "worktrees/%s 제거: gitdir 파일이 없는 위치를 가리킵니다"
 
+#: builtin/worktree.c:128
+msgid "report pruned working trees"
+msgstr "잘라낸 작업 폴더를 알립니다"
+
+#: builtin/worktree.c:130
+msgid "expire working trees older than <time>"
+msgstr "<시각>보다 오래 된 작업 폴더를 만료합니다"
+
 #: builtin/worktree.c:204
 #, c-format
 msgid "'%s' already exists"
@@ -15037,7 +15048,8 @@ msgid ""
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
 "aborted and the hunk is left unchanged.\n"
 msgstr ""
-"깔끔하게 적용되지 않으면, 다시 편집할 기회가 있습니다. 모든 줄을 제거할 경우,\n"
+"깔끔하게 적용되지 않으면, 다시 편집할 기회가 있습니다. 모든 줄을 제거할 경"
+"우,\n"
 "편집은 중단되고 이 부분은 변경되지 않은 상태로 남아있게 됩니다.\n"
 
 #: git-add--interactive.perl:1096
@@ -15054,7 +15066,9 @@ msgstr "부분 편집 파일을 읽기용으로 여는데 실패: '%s'"
 #: git-add--interactive.perl:1187
 msgid ""
 "Your edited hunk does not apply. Edit again (saying \"no\" discards!) [y/n]? "
-msgstr "편집한 부분이 적용되지 않습니다. 다시 편집하시겠습니까 (\"no\"라고 하면 버립니다!) [y/n]? "
+msgstr ""
+"편집한 부분이 적용되지 않습니다. 다시 편집하시겠습니까 (\"no\"라고 하면 버립"
+"니다!) [y/n]? "
 
 #: git-add--interactive.perl:1196
 msgid ""
@@ -15377,7 +15391,8 @@ msgstr ""
 "revert        - 변경 사항 스테이징 모음을 HEAD 버전으로 되돌립니다\n"
 "patch         - 바뀐 부분을 골라서 개별적으로 업데이트합니다\n"
 "diff          - HEAD와 인덱스 사이의 차이점을 봅니다\n"
-"add untracked - 추적되지 않는 파일의 내용을 변경 사항 스테이징 모음에 추가합니다\n"
+"add untracked - 추적되지 않는 파일의 내용을 변경 사항 스테이징 모음에 추가합"
+"니다\n"
 
 #: git-add--interactive.perl:1694 git-add--interactive.perl:1699
 #: git-add--interactive.perl:1702 git-add--interactive.perl:1709
@@ -15491,7 +15506,10 @@ msgid ""
 "\n"
 "No patch files specified!\n"
 "\n"
-msgstr "\n패치 파일을 지정하지 않았습니다\n\n"
+msgstr ""
+"\n"
+"패치 파일을 지정하지 않았습니다\n"
+"\n"
 
 #: git-send-email.perl:658
 #, perl-format
@@ -15546,7 +15564,8 @@ msgstr "정말로 <%s>을(를) 사용하시겠습니까 [y/N]? "
 msgid ""
 "The following files are 8bit, but do not declare a Content-Transfer-"
 "Encoding.\n"
-msgstr "다음 파일이 8bit이지만, Content-Transfer-Encoding을 설정하지 않았습니다.\n"
+msgstr ""
+"다음 파일이 8bit이지만, Content-Transfer-Encoding을 설정하지 않았습니다.\n"
 
 # 주의: '8bit'이라고 그대로 쓴다. 메일 encoding 헤더에 쓸 literal을 가리킴
 #: git-send-email.perl:814
@@ -15563,7 +15582,8 @@ msgid ""
 msgstr ""
 "보내지 않습니다. 다음 패치가\n"
 "\t%s\n"
-"제목 서식인 '*** SUBJECT HERE ***'가 들어 있습니다. 정말로 보내려면 --force 옵션을 사용하십시오.\n"
+"제목 서식인 '*** SUBJECT HERE ***'가 들어 있습니다. 정말로 보내려면 --force "
+"옵션을 사용하십시오.\n"
 
 #: git-send-email.perl:841
 msgid "To whom should the emails be sent (if anyone)?"
@@ -15641,7 +15661,9 @@ msgstr "서버에서 STARTTLS를 지원하지 않습니다! %s"
 
 #: git-send-email.perl:1403
 msgid "Unable to initialize SMTP properly. Check config and use --smtp-debug."
-msgstr "SMTP를 제대로 초기화할 수 없습니다. 설정을 확인하고 --smtp-debug 옵션을 사용하십시오."
+msgstr ""
+"SMTP를 제대로 초기화할 수 없습니다. 설정을 확인하고 --smtp-debug 옵션을 사용"
+"하십시오."
 
 #: git-send-email.perl:1421
 #, perl-format
