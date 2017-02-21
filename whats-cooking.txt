@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2017, #05; Thu, 16)
-X-master-at: 076c05393a047247ea723896289b48d6549ed7d0
-X-next-at: 5b76565f74de0c6d73806355784e00e3b7756169
+Subject: What's cooking in git.git (Feb 2017, #06; Tue, 21)
+X-master-at: 80ba04ed9b07c34af9cc644f2183b3b80fd81744
+X-next-at: 302250072e59acfdf6a5a069d54402b4f1478844
 
-What's cooking in git.git (Feb 2017, #05; Thu, 16)
+What's cooking in git.git (Feb 2017, #06; Tue, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-I'd like to get pull requests for gitk and git-gui updates soonish,
-if we are to have one during this cycle.
+The tip of the 'master' is still at -rc2 but with a git-svn update
+from Eric.  I'd like to get pull requests for gitk and git-gui
+updates soonish, if we are to have one during this cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,218 +22,186 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* cw/completion (2017-02-03) 7 commits
-  (merged to 'next' on 2017-02-10 at b3a5cbf39c)
- + completion: recognize more long-options
- + completion: teach remote subcommands to complete options
- + completion: teach replace to complete options
- + completion: teach ls-remote to complete options
- + completion: improve bash completion for git-add
- + completion: add subcommand completion for rerere
- + completion: teach submodule subcommands to complete options
-
- More command line completion (in contrib/) for recent additions.
-
-
-* dp/submodule-doc-markup-fix (2017-02-16) 1 commit
-  (merged to 'next' on 2017-02-16 at 698cdcff0a)
- + config.txt: fix formatting of submodule.alternateErrorStrategy section
-
- Doc fix.
-
-
-* jk/doc-remote-helpers-markup-fix (2017-02-13) 1 commit
-  (merged to 'next' on 2017-02-14 at 95af1267c7)
- + docs/gitremote-helpers: fix unbalanced quotes
-
- Doc markup fix.
-
-
-* jk/doc-submodule-markup-fix (2017-02-13) 1 commit
-  (merged to 'next' on 2017-02-14 at b2f807f7d8)
- + docs/git-submodule: fix unbalanced quote
-
- Doc markup fix.
-
-
-* jk/reset-to-break-a-commit-doc (2017-02-16) 1 commit
-  (merged to 'next' on 2017-02-16 at 3203e91525)
- + Revert "reset: add an example of how to split a commit into two"
- (this branch is used by jk/reset-to-break-a-commit-doc-updated.)
-
- Doc update.
-
-
-* jk/reset-to-break-a-commit-doc-updated (2017-02-16) 1 commit
-  (merged to 'next' on 2017-02-16 at bf729e9e25)
- + reset: add an example of how to split a commit into two
- (this branch uses jk/reset-to-break-a-commit-doc.)
-
- Doc update.
-
-
-* jk/tempfile-ferror-fclose-confusion (2017-02-16) 1 commit
-  (merged to 'next' on 2017-02-16 at 86cc4e77d7)
- + tempfile: avoid "ferror | fclose" trick
-
- Code clean-up.
-
-
-* js/mingw-isatty (2017-02-14) 1 commit
-  (merged to 'next' on 2017-02-15 at f3d3ccc978)
- + mingw: make stderr unbuffered again
-
- A hotfix for a topic already in 'master'.
-
-
-* ls/p4-path-encoding (2017-02-10) 1 commit
-  (merged to 'next' on 2017-02-15 at 73af90bf0f)
- + git-p4: fix git-p4.pathEncoding for removed files
-
- When "git p4" imports changelist that removes paths, it failed to
- convert pathnames when the p4 used encoding different from the one
- used on the Git side.  This has been corrected.
-
-
-* rs/cocci-check-free-only-null (2017-02-11) 1 commit
-  (merged to 'next' on 2017-02-15 at a628ee7142)
- + cocci: detect useless free(3) calls
-
- A new coccinelle rule that catches a check of !pointer before the
- pointer is free(3)d, which most likely is a bug.
-
-
-* rs/ls-files-partial-optim (2017-02-13) 2 commits
-  (merged to 'next' on 2017-02-15 at 7a21b55424)
- + ls-files: move only kept cache entries in prune_cache()
- + ls-files: pass prefix length explicitly to prune_cache()
-
- "ls-files" run with pathspec has been micro-optimized to avoid
- having to memmove(3) unnecessary bytes.
-
-
-* rs/strbuf-cleanup-in-rmdir-recursively (2017-02-13) 1 commit
-  (merged to 'next' on 2017-02-15 at 920f58b3b1)
- + rm: reuse strbuf for all remove_dir_recursively() calls, again
-
- Code clean-up.
-
-
-* rs/swap (2017-01-30) 5 commits
-  (merged to 'next' on 2017-02-10 at 5253797d0a)
- + graph: use SWAP macro
- + diff: use SWAP macro
- + use SWAP macro
- + apply: use SWAP macro
- + add SWAP macro
-
- Code clean-up.
-
-
-* sb/doc-unify-bottom (2017-02-09) 1 commit
-  (merged to 'next' on 2017-02-10 at 7229c4c1f7)
- + Documentation: unify bottom "part of git suite" lines
-
- Doc clean-up.
-
-
-* sb/push-options-via-transport (2017-02-08) 1 commit
-  (merged to 'next' on 2017-02-10 at 3e2d08e1fa)
- + push options: pass push options to the transport helper
-
- The push-options given via the "--push-options" option were not
- passed through to external remote helpers such as "smart HTTP" that
- are invoked via the transport helper.
-
-
-* sb/submodule-doc (2017-01-12) 2 commits
-  (merged to 'next' on 2017-02-10 at 5bfad5f30e)
- + submodule update documentation: don't repeat ourselves
- + submodule documentation: add options to the subcommand
-
- Doc updates.
-
-
-* tg/stash-doc-cleanup (2017-02-13) 1 commit
-  (merged to 'next' on 2017-02-14 at 5b9ffbc741)
- + Documentation/stash: remove mention of git reset --hard
- (this branch is used by tg/stash-push.)
-
- The documentation explained what "git stash" does to the working
- tree (after stashing away the local changes) in terms of "reset
- --hard", which was exposing an unnecessary implementation detail.
-
---------------------------------------------------
 [New Topics]
 
-* ls/submodule-config-ucase (2017-02-15) 2 commits
- - submodule config does not apply to upper case submodules?
- - t7400: cleanup "submodule add clone shallow submodule" test
+* jk/tempfile-ferror-fclose-confusion (2017-02-17) 1 commit
+  (merged to 'next' on 2017-02-21 at 479ba0131f)
+ + tempfile: set errno to a known value before calling ferror()
 
- Demonstrate a breakage in handling submodule.UPPERCASENAME.update
- configuration variables.
-
- cf. <f238248f-0df2-19a5-581d-95c8a61b4632@google.com>
- Jonathan Tan already found the root cause of this, which is not
- limited to submodules.
-
-
-* nd/clean-preserve-errno-in-warning (2017-02-16) 1 commit
-  (merged to 'next' on 2017-02-16 at c0802f7627)
- + clean: use warning_errno() when appropriate
-
- Some warning() messages from "git clean" were updated to show the
- errno from failed system calls.
+ A caller of tempfile API that uses stdio interface to write to
+ files may ignore errors while writing, which is detected when
+ tempfile is closed (with a call to ferror()).  By that time, the
+ original errno that may have told us what went wrong is likely to
+ be long gone and was overwritten by an irrelevant value.
+ close_tempfile() now resets errno to EIO to make errno at least
+ predictable.
 
  Will cook in 'next'.
 
 
-* mm/two-more-xstrfmt (2017-02-16) 2 commits
- - bisect_next_all: convert xsnprintf to xstrfmt
- - stop_progress_msg: convert xsnprintf to xstrfmt
+* ah/doc-ls-files-quotepath (2017-02-20) 1 commit
+ - Documentation: link git-ls-files to core.quotePath variable
 
- Code clean-up and a string truncation fix.
+ Documentation for "git ls-files" did not refer to core.quotePath
 
- Will merge to 'next' and then to 'master'.
+ Needs review.
 
 
-* sb/checkout-recurse-submodules (2017-02-16) 15 commits
- - builtin/checkout: add --recurse-submodules switch
- - entry.c: update submodules when interesting
- - read-cache: remove_marked_cache_entries to wipe selected submodules.
- - unpack-trees: check if we can perform the operation for submodules
- - unpack-trees: pass old oid to verify_clean_submodule
- - update submodules: add submodule_go_from_to
- - update submodules: move up prepare_submodule_repo_env
- - submodules: introduce check to see whether to touch a submodule
- - update submodules: add a config option to determine if submodules are updated
- - update submodules: add submodule config parsing
- - connect_work_tree_and_git_dir: safely create leading directories
- - make is_submodule_populated gently
- - lib-submodule-update.sh: define tests for recursing into submodules
- - lib-submodule-update.sh: do not use ./. as submodule remote
- - lib-submodule-update.sh: reorder create_lib_submodule_repo
+* dr/doc-check-ref-format-normalize (2017-02-21) 1 commit
+  (merged to 'next' on 2017-02-21 at 5e88b7a93d)
+ + git-check-ref-format: clarify documentation for --normalize
 
- "git checkout" is taught --recurse-submodules option.
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* gp/document-dotfiles-in-templates-are-not-copied (2017-02-17) 1 commit
+  (merged to 'next' on 2017-02-21 at bbfa2bb7d4)
+ + init: document dotfiles exclusion on template copy
+
+ Doc update.
+
+ Will cook in 'next'.
+
+
+* jc/config-case-cmdline (2017-02-21) 2 commits
+  (merged to 'next' on 2017-02-21 at 354f023a3a)
+ + config: reject invalid VAR in 'git -c VAR=VAL command'
+ + config: preserve <subsection> case for one-shot config on the command line
+
+ The code to parse "git -c VAR=VAL cmd" and set configuration
+ variable for the duration of cmd had two small bugs, which have
+ been fixed.
+
+ Will cook in 'next'.
+
+
+* jh/memihash-opt (2017-02-17) 5 commits
+ - name-hash: remember previous dir_entry during lazy_init_name_hash
+ - name-hash: specify initial size for istate.dir_hash table
+ - name-hash: precompute hash values during preload-index
+ - hashmap: allow memihash computation to be continued
+ - name-hash: eliminate duplicate memihash call
+
+ Expecting an update for perf?
+
+
+* km/delete-ref-reflog-message (2017-02-20) 4 commits
+  (merged to 'next' on 2017-02-21 at 4ee4ce3f64)
+ + branch: record creation of renamed branch in HEAD's log
+ + rename_ref: replace empty message in HEAD's log
+ + update-ref: pass reflog message to delete_ref()
+ + delete_ref: accept a reflog message argument
+
+ "git update-ref -d" and other operations to delete references did
+ not leave any entry in HEAD's reflog when the reference being
+ deleted was the current branch.  This is not a problem in practice
+ because you do not want to delete the branch you are currently on,
+ but caused renaming of the current branch to something else not to
+ be logged in a useful way.
+
+ Will cook in 'next'.
+
+
+* nd/prune-in-worktree (2017-02-19) 15 commits
+ - rev-list: expose and document --single-worktree
+ - revision.c: --reflog add HEAD reflog from all worktrees
+ - files-backend: make reflog iterator go through per-worktree reflog
+ - refs: add refs_for_each_reflog[_ent]()
+ - revision.c: --all adds HEAD from all worktrees
+ - refs: remove dead for_each_*_submodule()
+ - revision.c: use refs_for_each*() instead of for_each_*_submodule()
+ - refs: add a refs_for_each_in() and friends
+ - refs: add refs_for_each_ref()
+ - refs: add refs_head_ref()
+ - refs: add refs_read_ref[_full]()
+ - refs: move submodule slash stripping code to get_submodule_ref_store
+ - revision.c: --indexed-objects add objects from all worktrees
+ - revision.c: refactor add_index_objects_to_pending()
+ - revision.h: new flag in struct rev_info wrt. worktree-related refs
+ (this branch uses mh/ref-remove-empty-directory, mh/submodule-hash, nd/files-backend-git-dir and nd/worktree-kill-parse-ref.)
+
+ "git gc" and friends when multiple worktrees are used off of a
+ single repository did not consider the index and per-worktree refs
+ of other worktrees as the root for reachability traversal, making
+ objects that are in use only in other worktrees to be subject to
+ garbage collection.
+
+
+* mm/fetch-show-error-message-on-unadvertised-object (2017-02-21) 1 commit
+ - fetch: print an error when declining to request an unadvertised object
+
+ "git fetch" that requests a commit by object name, when the other
+ side does not allow such an request, failed without much
+ explanation.
+
+ Expecting a split series?
+
+
+* rl/remote-allow-missing-branch-name-merge (2017-02-21) 1 commit
+ - remote: ignore failure to remove missing branch.<name>.merge
+
+ "git remote rm X", when a branch has remote X configured as the
+ value of its branch.*.remote, tried to remove branch.*.remote and
+ branch.*.merge and failed if either is unset.
+
+ Will merge to and then cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
 
-* vn/xdiff-func-context (2017-01-15) 1 commit
- - xdiff -W: relax end-of-file function detection
+* nd/worktree-move (2017-01-27) 7 commits
+ . fixup! worktree move: new command
+ . worktree remove: new command
+ . worktree move: refuse to move worktrees with submodules
+ . worktree move: accept destination as directory
+ . worktree move: new command
+ . worktree.c: add update_worktree_location()
+ . worktree.c: add validate_worktree()
 
- "git diff -W" has been taught to handle the case where a new
- function is added at the end of the file better.
+ "git worktree" learned move and remove subcommands.
 
- Will hold.
- Discussion on an follow-up change to go back from the line that
- matches the funcline to show comments before the function
- definition has not resulted in an actionable conclusion.
+ Tentatively ejected as it seems to break 'pu' when merged.
 
 
-* pb/bisect (2016-10-18) 27 commits
+* cc/split-index-config (2016-12-26) 21 commits
+ - Documentation/git-update-index: explain splitIndex.*
+ - Documentation/config: add splitIndex.sharedIndexExpire
+ - read-cache: use freshen_shared_index() in read_index_from()
+ - read-cache: refactor read_index_from()
+ - t1700: test shared index file expiration
+ - read-cache: unlink old sharedindex files
+ - config: add git_config_get_expiry() from gc.c
+ - read-cache: touch shared index files when used
+ - sha1_file: make check_and_freshen_file() non static
+ - Documentation/config: add splitIndex.maxPercentChange
+ - t1700: add tests for splitIndex.maxPercentChange
+ - read-cache: regenerate shared index if necessary
+ - config: add git_config_get_max_percent_split_change()
+ - Documentation/git-update-index: talk about core.splitIndex config var
+ - Documentation/config: add information for core.splitIndex
+ - t1700: add tests for core.splitIndex
+ - update-index: warn in case of split-index incoherency
+ - read-cache: add and then use tweak_split_index()
+ - split-index: add {add,remove}_split_index() functions
+ - config: add git_config_get_split_index()
+ - config: mark an error message up for translation
+
+ The experimental "split index" feature has gained a few
+ configuration variables to make it easier to use.
+
+ Expecting a reroll.
+ cf. <20161226102222.17150-1-chriscool@tuxfamily.org>
+ cf. <a1a44640-ff6c-2294-72ac-46322eff8505@ramsayjones.plus.com>
+ cf. <CAP8UFD3_1EN=0EsD12Cew1MuW8yhtPAZw0M_g3wmvKFk-uGXxw@mail.gmail.com>
+ cf. <CAP8UFD1wmbR_rHyqn0q=0hw6-hHYFTzr=3yxS2XS9qTdY1kWFA@mail.gmail.com>
+ cf. <xmqqbmunq6mg.fsf@gitster.mtv.corp.google.com>
+ cf. <CAP8UFD0bgxVrc=RGHs1GrZ_5PF4cdfhqXLMiCSJTNw9axrr=_w@mail.gmail.com>
+
+
+* pb/bisect (2017-02-18) 28 commits
+ - fixup! bisect--helper: `bisect_next_check` & bisect_voc shell function in C
  - bisect--helper: remove the dequote in bisect_start()
  - bisect--helper: retire `--bisect-auto-next` subcommand
  - bisect--helper: retire `--bisect-autostart` subcommand
@@ -292,7 +261,7 @@ of the repositories listed at
  latter case) to produce "<commit>:<path>" and
  "<commit>:<dir>/<path>" that can be used as the name of a blob.
 
- Waiting for the review discussion to settle, followed by a reroll.
+ Expecting a reroll?  Is this good enough with known limitations?
 
 
 * jc/diff-b-m (2015-02-23) 5 commits
@@ -314,6 +283,100 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* vn/xdiff-func-context (2017-01-15) 1 commit
+  (merged to 'next' on 2017-02-21 at 838eab8d93)
+ + xdiff -W: relax end-of-file function detection
+
+ "git diff -W" has been taught to handle the case where a new
+ function is added at the end of the file better.
+
+ Will cook in 'next'.
+
+
+* nd/worktree-kill-parse-ref (2017-02-19) 5 commits
+ - refs: kill set_worktree_head_symref()
+ - refs: add refs_create_symref()
+ - worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
+ - refs.c: add refs_resolve_ref_unsafe()
+ - refs: introduce get_worktree_ref_store()
+ (this branch is used by nd/prune-in-worktree; uses mh/ref-remove-empty-directory, mh/submodule-hash and nd/files-backend-git-dir.)
+
+ (hopefully) a beginning of safer "git worktree" that is resistant
+ to "gc".
+
+ Needs review.
+
+
+* nd/files-backend-git-dir (2017-02-19) 17 commits
+ - refs: rename get_ref_store() to get_submodule_ref_store() and make it public
+ - files-backend: remove submodule_allowed from files_downcast()
+ - refs: move submodule code out of files-backend.c
+ - path.c: move some code out of strbuf_git_path_submodule()
+ - refs.c: make get_main_ref_store() public and use it
+ - refs.c: kill register_ref_store(), add register_submodule_ref_store()
+ - refs.c: flatten get_ref_store() a bit
+ - refs: rename lookup_ref_store() to lookup_submodule_ref_store()
+ - refs.c: introduce get_main_ref_store()
+ - files-backend: remove the use of git_path()
+ - refs.c: share is_per_worktree_ref() to files-backend.c
+ - files-backend: replace *git_path*() with files_path()
+ - files-backend: add files_path()
+ - files-backend: convert git_path() to strbuf_git_path()
+ - refs-internal.c: make files_log_ref_write() static
+ - Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
+ - Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
+ (this branch is used by nd/prune-in-worktree and nd/worktree-kill-parse-ref; uses mh/ref-remove-empty-directory and mh/submodule-hash.)
+
+ The "submodule" specific field in the ref_store structure is
+ replaced with a more generic "gitdir" that can later be used also
+ when dealing with ref_store that represents the set of refs visible
+ from the other worktrees.
+
+ Needs review.
+
+
+* nd/clean-preserve-errno-in-warning (2017-02-16) 1 commit
+  (merged to 'next' on 2017-02-16 at c0802f7627)
+ + clean: use warning_errno() when appropriate
+
+ Some warning() messages from "git clean" were updated to show the
+ errno from failed system calls.
+
+ Will cook in 'next'.
+
+
+* mm/two-more-xstrfmt (2017-02-16) 2 commits
+  (merged to 'next' on 2017-02-17 at 2454ee9847)
+ + bisect_next_all: convert xsnprintf to xstrfmt
+ + stop_progress_msg: convert xsnprintf to xstrfmt
+
+ Code clean-up and a string truncation fix.
+
+ Will cook in 'next'.
+
+
+* sb/checkout-recurse-submodules (2017-02-16) 15 commits
+ - builtin/checkout: add --recurse-submodules switch
+ - entry.c: update submodules when interesting
+ - read-cache: remove_marked_cache_entries to wipe selected submodules.
+ - unpack-trees: check if we can perform the operation for submodules
+ - unpack-trees: pass old oid to verify_clean_submodule
+ - update submodules: add submodule_go_from_to
+ - update submodules: move up prepare_submodule_repo_env
+ - submodules: introduce check to see whether to touch a submodule
+ - update submodules: add a config option to determine if submodules are updated
+ - update submodules: add submodule config parsing
+ - connect_work_tree_and_git_dir: safely create leading directories
+ - make is_submodule_populated gently
+ - lib-submodule-update.sh: define tests for recursing into submodules
+ - lib-submodule-update.sh: do not use ./. as submodule remote
+ - lib-submodule-update.sh: reorder create_lib_submodule_repo
+
+ "git checkout" is taught --recurse-submodules option.
+
+ Needs review.
+
+
 * jh/preload-index-skip-skip (2017-02-10) 1 commit
   (merged to 'next' on 2017-02-16 at 39077062f9)
  + preload-index: avoid lstat for skip-worktree items
@@ -324,32 +387,31 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* tg/stash-push (2017-02-13) 6 commits
+* tg/stash-push (2017-02-19) 6 commits
  - stash: allow pathspecs in the no verb form
  - stash: use stash_push for no verb form
- - stash: teach 'push' (and 'create') to honor pathspec
- - stash: introduce new format create
+ - stash: teach 'push' (and 'create_stash') to honor pathspec
+ - stash: refactor stash_create
  - stash: add test for the create command line arguments
  - stash: introduce push verb
 
  Allow "git stash" to take pathspec so that the local changes can be
  stashed away only partially.
 
- Waiting for the review discussion to settle, followed by a reroll.
- cf. <20170212215420.16701-1-t.gummerer@gmail.com>
+ Needs review.
+ cf. <xmqqmvdfh4az.fsf@gitster.mtv.corp.google.com>
 
 
-* bc/object-id (2017-02-14) 19 commits
+* bc/object-id (2017-02-20) 19 commits
  - wt-status: convert to struct object_id
  - builtin/merge-base: convert to struct object_id
- - object_id: use struct object_id in object iteration callbacks
+ - Convert object iteration callbacks to struct object_id
  - sha1_file: introduce an nth_packed_object_oid function
  - refs: simplify parsing of reflog entries
- - hex: introduce parse_oid_hex
  - refs: convert each_reflog_ent_fn to struct object_id
  - reflog-walk: convert struct reflog_info to struct object_id
  - builtin/replace: convert to struct object_id
- - object_id: convert remaining callers of resolve_refdup()
+ - Convert remaining callers of resolve_refdup to object_id
  - builtin/merge: convert to struct object_id
  - builtin/clone: convert to struct object_id
  - builtin/branch: convert to struct object_id
@@ -359,8 +421,12 @@ of the repositories listed at
  - builtin/describe: convert to struct object_id
  - builtin/diff-tree: convert to struct object_id
  - builtin/commit: convert to struct object_id
+ - hex: introduce parse_oid_hex
 
  "uchar [40]" to "struct object_id" conversion continues.
+
+ Expecting a reroll.
+ cf. <20170221011058.cpx7uio6ibkvrtbv@genre.crustytoothpaste.net>
 
 
 * jk/grep-no-index-fix (2017-02-14) 7 commits
@@ -393,7 +459,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* lt/oneline-decoration-at-end (2017-02-14) 1 commit
+* lt/oneline-decoration-at-end (2017-02-21) 2 commits
+  (merged to 'next' on 2017-02-21 at 35c7731ee3)
+ + log: fix regression to "--source" when "--decorate" was updated
   (merged to 'next' on 2017-02-16 at 5854e58811)
  + show decorations at the end of the line
 
@@ -402,6 +470,8 @@ of the repositories listed at
  front.
 
  Will cook in 'next'.
+ Perhaps this is not such a cool idea?
+ cf. <CA+55aFwT2HUBzZO8Gpt9tHoJtdRxv9oe3TDoSH5jcEOixRNBXg@mail.gmail.com>
 
 
 * jn/remote-helpers-with-git-dir (2017-02-14) 2 commits
@@ -451,19 +521,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* nd/worktree-gc-protection (2017-02-08) 2 commits
- - worktree.c: use submodule interface to access refs from another worktree
- - refs.c: add resolve_ref_submodule()
-
- (hopefully) a beginning of safer "git worktree" that is resistant
- to "gc".
-
- Michael had a suggestion for a (hopefully) better alternative way
- to do this.  Expecting a reroll (either a tenative but quicker way,
- or a better but slower way).
- cf. <CACsJy8Diy92CNbJ1OBn893VFFrSsxBFWSyQHjt_Dzq9x7jfibQ@mail.gmail.com>
-
-
 * js/rebase-helper (2017-02-09) 2 commits
   (merged to 'next' on 2017-02-14 at ae2474048e)
  + rebase -i: use the rebase--helper builtin
@@ -487,6 +544,7 @@ of the repositories listed at
  + refs: remove some unnecessary handling of submodule == ""
  + refs: make some ref_store lookup functions private
  + refs: reorder some function definitions
+ (this branch is used by nd/files-backend-git-dir, nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
 
  Code and design clean-up for the refs API.
 
@@ -518,17 +576,17 @@ of the repositories listed at
  This is v6 posted on Feb 10th.
 
 
-* js/git-path-in-subdir (2017-02-10) 2 commits
- - rev-parse: fix several options when running in a subdirectory
- - rev-parse tests: add tests executed from a subdirectory
+* js/git-path-in-subdir (2017-02-17) 2 commits
+  (merged to 'next' on 2017-02-17 at b3c3b2dce6)
+ + rev-parse: fix several options when running in a subdirectory
+ + rev-parse tests: add tests executed from a subdirectory
 
  The "--git-path", "--git-common-dir", and "--shared-index-path"
  options of "git rev-parse" did not produce usable output.  They are
  now updated to show the path to the correct file, relative to where
  the caller is.
 
- Review comments sent; expecting an update.
- cf. <cover.1486740772.git.johannes.schindelin@gmx.de>
+ Will cook in 'next'.
 
 
 * mh/ref-remove-empty-directory (2017-01-07) 23 commits
@@ -556,6 +614,7 @@ of the repositories listed at
  + t5505: use "for-each-ref" to test for the non-existence of references
  + refname_is_safe(): correct docstring
  + files_rename_ref(): tidy up whitespace
+ (this branch is used by nd/files-backend-git-dir, nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
 
  Deletion of a branch "foo/bar" could remove .git/refs/heads/foo
  once there no longer is any other branch whose name begins with
@@ -630,14 +689,16 @@ of the repositories listed at
  Will hold.
 
 
-* sk/parse-remote-cleanup (2017-02-06) 1 commit
+* sk/parse-remote-cleanup (2017-02-21) 2 commits
+  (merged to 'next' on 2017-02-21 at 302250072e)
+ + Revert "parse-remote: remove reference to unused op_prep"
   (merged to 'next' on 2017-02-06 at 6ec89f72d5)
  + parse-remote: remove reference to unused op_prep
 
  Code clean-up.
 
- Undecided.  There may be third-party scripts that are dot-sourcing
- this one.
+ Will discard.
+ There may be third-party scripts that are dot-sourcing this one.
 
 
 * jk/delta-chain-limit (2017-01-27) 2 commits
@@ -752,51 +813,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* nd/worktree-move (2017-01-27) 7 commits
- . fixup! worktree move: new command
- . worktree remove: new command
- . worktree move: refuse to move worktrees with submodules
- . worktree move: accept destination as directory
- . worktree move: new command
- . worktree.c: add update_worktree_location()
- . worktree.c: add validate_worktree()
-
- "git worktree" learned move and remove subcommands.
-
- Tentatively ejected as it seems to break 'pu' when merged.
-
-
-* cc/split-index-config (2016-12-26) 21 commits
- - Documentation/git-update-index: explain splitIndex.*
- - Documentation/config: add splitIndex.sharedIndexExpire
- - read-cache: use freshen_shared_index() in read_index_from()
- - read-cache: refactor read_index_from()
- - t1700: test shared index file expiration
- - read-cache: unlink old sharedindex files
- - config: add git_config_get_expiry() from gc.c
- - read-cache: touch shared index files when used
- - sha1_file: make check_and_freshen_file() non static
- - Documentation/config: add splitIndex.maxPercentChange
- - t1700: add tests for splitIndex.maxPercentChange
- - read-cache: regenerate shared index if necessary
- - config: add git_config_get_max_percent_split_change()
- - Documentation/git-update-index: talk about core.splitIndex config var
- - Documentation/config: add information for core.splitIndex
- - t1700: add tests for core.splitIndex
- - update-index: warn in case of split-index incoherency
- - read-cache: add and then use tweak_split_index()
- - split-index: add {add,remove}_split_index() functions
- - config: add git_config_get_split_index()
- - config: mark an error message up for translation
-
- The experimental "split index" feature has gained a few
- configuration variables to make it easier to use.
-
- Waiting for review comments to be addressed.
- cf. <20161226102222.17150-1-chriscool@tuxfamily.org>
- cf. <a1a44640-ff6c-2294-72ac-46322eff8505@ramsayjones.plus.com>
-
-
 * kn/ref-filter-branch-list (2017-02-07) 21 commits
   (merged to 'next' on 2017-02-10 at 794bb8284d)
  + ref-filter: resurrect "strip" as a synonym to "lstrip"
@@ -870,23 +886,6 @@ of the repositories listed at
 --------------------------------------------------
 [Discarded]
 
-* jk/nofollow-attr-ignore (2016-11-02) 5 commits
- . exclude: do not respect symlinks for in-tree .gitignore
- . attr: do not respect symlinks for in-tree .gitattributes
- . exclude: convert "check_index" into a flags field
- . attr: convert "macro_ok" into a flags field
- . add open_nofollow() helper
-
- As we do not follow symbolic links when reading control files like
- .gitignore and .gitattributes from the index, match the behaviour
- and not follow symbolic links when reading them from the working
- tree.  This also tightens security a bit by not leaking contents of
- an unrelated file in the error messages when it is pointed at by
- one of these files that is a symbolic link.
-
- Perhaps we want to cover .gitmodules too with the same mechanism?
-
-
 * sb/push-make-submodule-check-the-default (2017-01-26) 2 commits
   (merged to 'next' on 2017-01-26 at 5f4715cea6)
  + Revert "push: change submodule default to check when submodules exist"
@@ -897,3 +896,13 @@ of the repositories listed at
  submodules seem to be in use.
 
  Retracted.
+
+
+* ls/submodule-config-ucase (2017-02-15) 2 commits
+ . submodule config does not apply to upper case submodules?
+ . t7400: cleanup "submodule add clone shallow submodule" test
+
+ Demonstrate a breakage in handling submodule.UPPERCASENAME.update
+ configuration variables.
+
+ Superseded by jc/config-case-cmdline.
