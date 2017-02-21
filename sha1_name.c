@@ -1051,7 +1051,7 @@ struct grab_nth_branch_switch_cbdata {
 	struct strbuf buf;
 };
 
-static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
+static int grab_nth_branch_switch(struct object_id *ooid, struct object_id *noid,
 				  const char *email, unsigned long timestamp, int tz,
 				  const char *message, void *cb_data)
 {

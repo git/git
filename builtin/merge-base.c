@@ -131,7 +131,7 @@ static void add_one_commit(unsigned char *sha1, struct rev_collect *revs)
 	commit->object.flags |= TMP_MARK;
 }
 
-static int collect_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
 				  const char *ident, unsigned long timestamp,
 				  int tz, const char *message, void *cbdata)
 {
@@ -139,9 +139,9 @@ static int collect_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 
 	if (revs->initial) {
 		revs->initial = 0;
-		add_one_commit(osha1, revs);
+		add_one_commit(ooid->hash, revs);
 	}
-	add_one_commit(nsha1, revs);
+	add_one_commit(noid->hash, revs);
 	return 0;
 }
 
