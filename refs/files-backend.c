@@ -2616,7 +2616,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 		return error("unable to move logfile logs/%s to "TMP_RENAMED_LOG": %s",
 			oldrefname, strerror(errno));
 
-	if (delete_ref(NULL, oldrefname, orig_sha1, REF_NODEREF)) {
+	if (delete_ref(logmsg, oldrefname, orig_sha1, REF_NODEREF)) {
 		error("unable to delete old %s", oldrefname);
 		goto rollback;
 	}
