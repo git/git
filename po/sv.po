@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.12.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-02-04 13:02+0800\n"
-"PO-Revision-Date: 2017-02-11 20:13+0100\n"
+"POT-Creation-Date: 2017-02-18 01:00+0800\n"
+"PO-Revision-Date: 2017-02-20 19:38+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -250,34 +250,34 @@ msgstr "binärpatchen på rad %d känns inte igen"
 msgid "patch with only garbage at line %d"
 msgstr "patch med bara skräp på rad %d"
 
-#: apply.c:2274
+#: apply.c:2265
 #, c-format
 msgid "unable to read symlink %s"
 msgstr "kunde inte läsa symboliska länken %s"
 
-#: apply.c:2278
+#: apply.c:2269
 #, c-format
 msgid "unable to open or read %s"
 msgstr "kunde inte öppna eller läsa %s"
 
-#: apply.c:2931
+#: apply.c:2922
 #, c-format
 msgid "invalid start of line: '%c'"
 msgstr "felaktig inledning på rad: \"%c\""
 
-#: apply.c:3050
+#: apply.c:3041
 #, c-format
 msgid "Hunk #%d succeeded at %d (offset %d line)."
 msgid_plural "Hunk #%d succeeded at %d (offset %d lines)."
 msgstr[0] "Stycke %d lyckades på %d (offset %d rad)."
 msgstr[1] "Stycke %d lyckades på %d (offset %d rader)."
 
-#: apply.c:3062
+#: apply.c:3053
 #, c-format
 msgid "Context reduced to (%ld/%ld) to apply fragment at %d"
 msgstr "Sammanhang reducerat till (%ld/%ld) för att tillämpa fragment vid %d"
 
-#: apply.c:3068
+#: apply.c:3059
 #, c-format
 msgid ""
 "while searching for:\n"
@@ -286,25 +286,25 @@ msgstr ""
 "vid sökning efter:\n"
 "%.*s"
 
-#: apply.c:3090
+#: apply.c:3081
 #, c-format
 msgid "missing binary patch data for '%s'"
 msgstr "saknar binära patchdata för \"%s\""
 
-#: apply.c:3098
+#: apply.c:3089
 #, c-format
 msgid "cannot reverse-apply a binary patch without the reverse hunk to '%s'"
 msgstr ""
 "kan inte applicera en binärpatch baklänges utan den omvända patchen för \"%s"
 "\""
 
-#: apply.c:3144
+#: apply.c:3135
 #, c-format
 msgid "cannot apply binary patch to '%s' without full index line"
 msgstr ""
 "kan inte applicera binärpatch på \"%s\" utan den fullständiga indexraden"
 
-#: apply.c:3154
+#: apply.c:3145
 #, c-format
 msgid ""
 "the patch applies to '%s' (%s), which does not match the current contents."
@@ -312,296 +312,296 @@ msgstr ""
 "patchen appliceras på \"%s\" (%s), som inte motsvarar det nuvarande "
 "innehållet."
 
-#: apply.c:3162
+#: apply.c:3153
 #, c-format
 msgid "the patch applies to an empty '%s' but it is not empty"
 msgstr "patchen appliceras på en tom \"%s\", men den är inte tom"
 
-#: apply.c:3180
+#: apply.c:3171
 #, c-format
 msgid "the necessary postimage %s for '%s' cannot be read"
 msgstr "nödvändig efterbild %s för \"%s\" kan inte läsas"
 
-#: apply.c:3193
+#: apply.c:3184
 #, c-format
 msgid "binary patch does not apply to '%s'"
 msgstr "binärpatchen kan inte tillämpas på \"%s\""
 
-#: apply.c:3199
+#: apply.c:3190
 #, c-format
 msgid "binary patch to '%s' creates incorrect result (expecting %s, got %s)"
 msgstr "binärpatchen på \"%s\" ger felaktigt resultat (förväntade %s, fick %s)"
 
-#: apply.c:3220
+#: apply.c:3211
 #, c-format
 msgid "patch failed: %s:%ld"
 msgstr "patch misslyckades: %s:%ld"
 
-#: apply.c:3342
+#: apply.c:3333
 #, c-format
 msgid "cannot checkout %s"
 msgstr "kan inte checka ut %s"
 
-#: apply.c:3390 apply.c:3401 apply.c:3447 setup.c:248
+#: apply.c:3381 apply.c:3392 apply.c:3438 setup.c:248
 #, c-format
 msgid "failed to read %s"
 msgstr "misslyckades läsa %s"
 
-#: apply.c:3398
+#: apply.c:3389
 #, c-format
 msgid "reading from '%s' beyond a symbolic link"
 msgstr "läser från \"%s\" som är på andra sidan av en symbolisk länk"
 
-#: apply.c:3427 apply.c:3667
+#: apply.c:3418 apply.c:3658
 #, c-format
 msgid "path %s has been renamed/deleted"
 msgstr "sökvägen %s har ändrat namn/tagits bort"
 
-#: apply.c:3510 apply.c:3681
+#: apply.c:3501 apply.c:3672
 #, c-format
 msgid "%s: does not exist in index"
 msgstr "%s: finns inte i indexet"
 
-#: apply.c:3519 apply.c:3689
+#: apply.c:3510 apply.c:3680
 #, c-format
 msgid "%s: does not match index"
 msgstr "%s: motsvarar inte indexet"
 
-#: apply.c:3554
+#: apply.c:3545
 msgid "repository lacks the necessary blob to fall back on 3-way merge."
 msgstr ""
 "arkivet saknar objekt som behövs för att falla tillbaka på 3-"
 "vägssammanslagning."
 
-#: apply.c:3557
+#: apply.c:3548
 #, c-format
 msgid "Falling back to three-way merge...\n"
 msgstr "Faller tillbaka på trevägssammanslagning...\n"
 
-#: apply.c:3573 apply.c:3577
+#: apply.c:3564 apply.c:3568
 #, c-format
 msgid "cannot read the current contents of '%s'"
 msgstr "kunde inte läsa aktuellt innehåll i \"%s\""
 
-#: apply.c:3589
+#: apply.c:3580
 #, c-format
 msgid "Failed to fall back on three-way merge...\n"
 msgstr "Misslyckades falla tillbaka på trevägssammanslagning...\n"
 
-#: apply.c:3603
+#: apply.c:3594
 #, c-format
 msgid "Applied patch to '%s' with conflicts.\n"
 msgstr "Applicerade patchen på \"%s\" med konflikter.\n"
 
-#: apply.c:3608
+#: apply.c:3599
 #, c-format
 msgid "Applied patch to '%s' cleanly.\n"
 msgstr "Tillämpade patchen på  \"%s\" rent.\n"
 
-#: apply.c:3634
+#: apply.c:3625
 msgid "removal patch leaves file contents"
 msgstr "patch för borttagning lämnar kvar filinnehåll"
 
-#: apply.c:3706
+#: apply.c:3697
 #, c-format
 msgid "%s: wrong type"
 msgstr "%s: fel typ"
 
-#: apply.c:3708
+#: apply.c:3699
 #, c-format
 msgid "%s has type %o, expected %o"
 msgstr "%s har typen %o, förväntade %o"
 
-#: apply.c:3859 apply.c:3861
+#: apply.c:3850 apply.c:3852
 #, c-format
 msgid "invalid path '%s'"
 msgstr "ogiltig sökväg: %s"
 
-#: apply.c:3917
+#: apply.c:3908
 #, c-format
 msgid "%s: already exists in index"
 msgstr "%s: finns redan i indexet"
 
-#: apply.c:3920
+#: apply.c:3911
 #, c-format
 msgid "%s: already exists in working directory"
 msgstr "%s: finns redan i arbetskatalogen"
 
-#: apply.c:3940
+#: apply.c:3931
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o)"
 msgstr "nytt läge (%o) för %s motsvarar inte gammalt läge (%o)"
 
-#: apply.c:3945
+#: apply.c:3936
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o) of %s"
 msgstr "nytt läge (%o) för %s motsvarar inte gammalt läge (%o) för %s"
 
-#: apply.c:3965
+#: apply.c:3956
 #, c-format
 msgid "affected file '%s' is beyond a symbolic link"
 msgstr "den berörda filen \"%s\" är på andra sidan av en symbolisk länk"
 
-#: apply.c:3969
+#: apply.c:3960
 #, c-format
 msgid "%s: patch does not apply"
 msgstr "%s: patchen kan inte tillämpas"
 
-#: apply.c:3984
+#: apply.c:3975
 #, c-format
 msgid "Checking patch %s..."
 msgstr "Kontrollerar patchen %s..."
 
-#: apply.c:4075
+#: apply.c:4066
 #, c-format
 msgid "sha1 information is lacking or useless for submodule %s"
 msgstr "sha1-informationen saknas eller är oanvändbar för undermodulen %s"
 
-#: apply.c:4082
+#: apply.c:4073
 #, c-format
 msgid "mode change for %s, which is not in current HEAD"
 msgstr "nytt läge för %s, som inte finns i nuvarande HEAD"
 
-#: apply.c:4085
+#: apply.c:4076
 #, c-format
 msgid "sha1 information is lacking or useless (%s)."
 msgstr "sha1-informationen saknas eller är oanvändbar (%s)."
 
-#: apply.c:4090 builtin/checkout.c:233 builtin/reset.c:135
+#: apply.c:4081 builtin/checkout.c:233 builtin/reset.c:135
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "make_cache_entry misslyckades för sökvägen \"%s\""
 
-#: apply.c:4094
+#: apply.c:4085
 #, c-format
 msgid "could not add %s to temporary index"
 msgstr "kunde inte lägga till %s till temporärt index"
 
-#: apply.c:4104
+#: apply.c:4095
 #, c-format
 msgid "could not write temporary index to %s"
 msgstr "kunde inte skriva temporärt index till %s"
 
-#: apply.c:4242
+#: apply.c:4233
 #, c-format
 msgid "unable to remove %s from index"
 msgstr "kan inte ta bort %s från indexet"
 
-#: apply.c:4277
+#: apply.c:4268
 #, c-format
 msgid "corrupt patch for submodule %s"
 msgstr "trasig patch för undermodulen %s"
 
-#: apply.c:4283
+#: apply.c:4274
 #, c-format
 msgid "unable to stat newly created file '%s'"
 msgstr "kan inte ta status på nyligen skapade filen \"%s\""
 
-#: apply.c:4291
+#: apply.c:4282
 #, c-format
 msgid "unable to create backing store for newly created file %s"
 msgstr "kan inte skapa säkerhetsminne för nyligen skapade filen %s"
 
-#: apply.c:4297 apply.c:4441
+#: apply.c:4288 apply.c:4432
 #, c-format
 msgid "unable to add cache entry for %s"
 msgstr "kan inte lägga till cachepost för %s"
 
-#: apply.c:4338
+#: apply.c:4329
 #, c-format
 msgid "failed to write to '%s'"
 msgstr "misslyckades skriva till \"%s\""
 
-#: apply.c:4342
+#: apply.c:4333
 #, c-format
 msgid "closing file '%s'"
 msgstr "stänger filen \"%s\""
 
-#: apply.c:4412
+#: apply.c:4403
 #, c-format
 msgid "unable to write file '%s' mode %o"
 msgstr "kan inte skriva filen \"%s\" läge %o"
 
-#: apply.c:4510
+#: apply.c:4501
 #, c-format
 msgid "Applied patch %s cleanly."
 msgstr "Tillämpade patchen %s rent."
 
-#: apply.c:4518
+#: apply.c:4509
 msgid "internal error"
 msgstr "internt fel"
 
-#: apply.c:4521
+#: apply.c:4512
 #, c-format
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
 msgstr[0] "Tillämpade patchen %%s med %d refuserad..."
 msgstr[1] "Tillämpade patchen %%s med %d refuserade..."
 
-#: apply.c:4532
+#: apply.c:4523
 #, c-format
 msgid "truncating .rej filename to %.*s.rej"
 msgstr "trunkerar .rej-filnamnet till %.*s.rej"
 
-#: apply.c:4540 builtin/fetch.c:737 builtin/fetch.c:986
+#: apply.c:4531 builtin/fetch.c:737 builtin/fetch.c:986
 #, c-format
 msgid "cannot open %s"
 msgstr "kan inte öppna %s"
 
-#: apply.c:4554
+#: apply.c:4545
 #, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "Stycke %d tillämpades rent."
 
-#: apply.c:4558
+#: apply.c:4549
 #, c-format
 msgid "Rejected hunk #%d."
 msgstr "Refuserar stycke %d."
 
-#: apply.c:4668
+#: apply.c:4659
 #, c-format
 msgid "Skipped patch '%s'."
 msgstr "Ignorerar patch \"%s\"."
 
-#: apply.c:4676
+#: apply.c:4667
 msgid "unrecognized input"
 msgstr "indata känns inte igen"
 
-#: apply.c:4695
+#: apply.c:4686
 msgid "unable to read index file"
 msgstr "kan inte läsa indexfilen"
 
-#: apply.c:4833
+#: apply.c:4824
 #, c-format
 msgid "can't open patch '%s': %s"
 msgstr "kan inte öppna patchen \"%s\": %s"
 
-#: apply.c:4858
+#: apply.c:4849
 #, c-format
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
 msgstr[0] "undertryckte %d fel i blanksteg"
 msgstr[1] "undertryckte %d fel i blanksteg"
 
-#: apply.c:4864 apply.c:4879
+#: apply.c:4855 apply.c:4870
 #, c-format
 msgid "%d line adds whitespace errors."
 msgid_plural "%d lines add whitespace errors."
 msgstr[0] "%d rad lägger till fel i blanksteg."
 msgstr[1] "%d rader lägger till fel i blanksteg."
 
-#: apply.c:4872
+#: apply.c:4863
 #, c-format
 msgid "%d line applied after fixing whitespace errors."
 msgid_plural "%d lines applied after fixing whitespace errors."
 msgstr[0] "%d rad applicerade efter att ha rättat fel i blanksteg."
 msgstr[1] "%d rader applicerade efter att ha rättat fel i blanksteg."
 
-#: apply.c:4888 builtin/add.c:463 builtin/mv.c:298 builtin/rm.c:391
+#: apply.c:4879 builtin/add.c:463 builtin/mv.c:298 builtin/rm.c:391
 msgid "Unable to write new index file"
 msgstr "Kunde inte skriva ny indexfil"
 
-#: apply.c:4919 apply.c:4922 builtin/am.c:2277 builtin/am.c:2280
+#: apply.c:4910 apply.c:4913 builtin/am.c:2277 builtin/am.c:2280
 #: builtin/clone.c:95 builtin/fetch.c:98 builtin/pull.c:180
 #: builtin/submodule--helper.c:281 builtin/submodule--helper.c:591
 #: builtin/submodule--helper.c:594 builtin/submodule--helper.c:960
@@ -610,121 +610,121 @@ msgstr "Kunde inte skriva ny indexfil"
 msgid "path"
 msgstr "sökväg"
 
-#: apply.c:4920
+#: apply.c:4911
 msgid "don't apply changes matching the given path"
 msgstr "tillämpa inte ändringar som motsvarar given sökväg"
 
-#: apply.c:4923
+#: apply.c:4914
 msgid "apply changes matching the given path"
 msgstr "tillämpa ändringar som motsvarar given sökväg"
 
-#: apply.c:4925 builtin/am.c:2286
+#: apply.c:4916 builtin/am.c:2286
 msgid "num"
 msgstr "antal"
 
-#: apply.c:4926
+#: apply.c:4917
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr "ta bort <antal> inledande snedstreck från traditionella diff-sökvägar"
 
-#: apply.c:4929
+#: apply.c:4920
 msgid "ignore additions made by the patch"
 msgstr "ignorera tillägg gjorda av patchen"
 
-#: apply.c:4931
+#: apply.c:4922
 msgid "instead of applying the patch, output diffstat for the input"
 msgstr "istället för att tillämpa patchen, skriv ut diffstat för indata"
 
-#: apply.c:4935
+#: apply.c:4926
 msgid "show number of added and deleted lines in decimal notation"
 msgstr "visa antal tillagda och borttagna rader decimalt"
 
-#: apply.c:4937
+#: apply.c:4928
 msgid "instead of applying the patch, output a summary for the input"
 msgstr "istället för att tillämpa patchen, skriv ut en summering av indata"
 
-#: apply.c:4939
+#: apply.c:4930
 msgid "instead of applying the patch, see if the patch is applicable"
 msgstr "istället för att tillämpa patchen, se om patchen kan tillämpas"
 
-#: apply.c:4941
+#: apply.c:4932
 msgid "make sure the patch is applicable to the current index"
 msgstr "se till att patchen kan tillämpas på aktuellt index"
 
-#: apply.c:4943
+#: apply.c:4934
 msgid "apply a patch without touching the working tree"
 msgstr "tillämpa en patch utan att röra arbetskatalogen"
 
-#: apply.c:4945
+#: apply.c:4936
 msgid "accept a patch that touches outside the working area"
 msgstr "godta en patch som rör filer utanför arbetskatalogen"
 
-#: apply.c:4947
+#: apply.c:4938
 msgid "also apply the patch (use with --stat/--summary/--check)"
 msgstr "tillämpa också patchen (använd med --stat/--summary/--check)"
 
-#: apply.c:4949
+#: apply.c:4940
 msgid "attempt three-way merge if a patch does not apply"
 msgstr "försök en trevägssammanslagning om patchen inte kan tillämpas"
 
-#: apply.c:4951
+#: apply.c:4942
 msgid "build a temporary index based on embedded index information"
 msgstr "bygg ett temporärt index baserat på inbyggd indexinformation"
 
-#: apply.c:4954 builtin/checkout-index.c:169 builtin/ls-files.c:505
+#: apply.c:4945 builtin/checkout-index.c:169 builtin/ls-files.c:507
 msgid "paths are separated with NUL character"
 msgstr "sökvägar avdelas med NUL-tecken"
 
-#: apply.c:4956
+#: apply.c:4947
 msgid "ensure at least <n> lines of context match"
 msgstr "se till att åtminstone <n> rader sammanhang är lika"
 
-#: apply.c:4957 builtin/am.c:2265
+#: apply.c:4948 builtin/am.c:2265
 msgid "action"
 msgstr "åtgärd"
 
-#: apply.c:4958
+#: apply.c:4949
 msgid "detect new or modified lines that have whitespace errors"
 msgstr "detektera nya eller ändrade rader som har fel i blanktecken"
 
-#: apply.c:4961 apply.c:4964
+#: apply.c:4952 apply.c:4955
 msgid "ignore changes in whitespace when finding context"
 msgstr "ignorera ändringar i blanktecken för sammanhang"
 
-#: apply.c:4967
+#: apply.c:4958
 msgid "apply the patch in reverse"
 msgstr "tillämpa patchen baklänges"
 
-#: apply.c:4969
+#: apply.c:4960
 msgid "don't expect at least one line of context"
 msgstr "förvänta inte minst en rad sammanhang"
 
-#: apply.c:4971
+#: apply.c:4962
 msgid "leave the rejected hunks in corresponding *.rej files"
 msgstr "lämna refuserade stycken i motsvarande *.rej-filer"
 
-#: apply.c:4973
+#: apply.c:4964
 msgid "allow overlapping hunks"
 msgstr "tillåt överlappande stycken"
 
-#: apply.c:4974 builtin/add.c:267 builtin/check-ignore.c:19
+#: apply.c:4965 builtin/add.c:267 builtin/check-ignore.c:19
 #: builtin/commit.c:1337 builtin/count-objects.c:94 builtin/fsck.c:651
 #: builtin/log.c:1860 builtin/mv.c:122 builtin/read-tree.c:114
 msgid "be verbose"
 msgstr "var pratsam"
 
-#: apply.c:4976
+#: apply.c:4967
 msgid "tolerate incorrectly detected missing new-line at the end of file"
 msgstr "tolerera felaktigt detekterade saknade nyradstecken vid filslut"
 
-#: apply.c:4979
+#: apply.c:4970
 msgid "do not trust the line counts in the hunk headers"
 msgstr "lite inte på antalet linjer i styckehuvuden"
 
-#: apply.c:4981 builtin/am.c:2274
+#: apply.c:4972 builtin/am.c:2274
 msgid "root"
 msgstr "rot"
 
-#: apply.c:4982
+#: apply.c:4973
 msgid "prepend <root> to all filenames"
 msgstr "lägg till <rot> i alla filnamn"
 
@@ -770,7 +770,7 @@ msgstr "lägg till prefix till varje sökväg i arkivet"
 
 #: archive.c:432 builtin/blame.c:2607 builtin/blame.c:2608 builtin/config.c:59
 #: builtin/fast-export.c:987 builtin/fast-export.c:989 builtin/grep.c:1054
-#: builtin/hash-object.c:101 builtin/ls-files.c:539 builtin/ls-files.c:542
+#: builtin/hash-object.c:101 builtin/ls-files.c:541 builtin/ls-files.c:544
 #: builtin/notes.c:401 builtin/notes.c:564 builtin/read-tree.c:109
 #: parse-options.h:153
 msgid "file"
@@ -1555,31 +1555,31 @@ msgstr ""
 msgid "Failed to parse --submodule option parameter: '%s'"
 msgstr "Misslyckades tolka argument till flaggan --submodule: \"%s\""
 
-#: diff.c:4695
+#: diff.c:4696
 msgid "inexact rename detection was skipped due to too many files."
 msgstr ""
 "onöjaktig namnbytesdetektering utfördes inte på grund av för många filer"
 
-#: diff.c:4698
+#: diff.c:4699
 msgid "only found copies from modified paths due to too many files."
 msgstr "hittade bara kopior från ändrade sökvägar på grund av för många filer."
 
-#: diff.c:4701
+#: diff.c:4702
 #, c-format
 msgid ""
 "you may want to set your %s variable to at least %d and retry the command."
 msgstr ""
 "du kan sätta variabeln %s till åtminstone %d och försöka kommandot på nytt."
 
-#: dir.c:1863
+#: dir.c:1862
 msgid "failed to get kernel name and information"
 msgstr "misslyckades hämta kärnans namn och information"
 
-#: dir.c:1982
+#: dir.c:1981
 msgid "Untracked cache is disabled on this system or location."
 msgstr "Ospårad cache är inaktiverad på systemet eller platsen."
 
-#: dir.c:2760
+#: dir.c:2759
 #, c-format
 msgid "could not migrate git directory from '%s' to '%s'"
 msgstr "kunde inte migrera git-katalog från \"%s\" till \"%s\""
@@ -1774,7 +1774,7 @@ msgstr "ignorera felaktig färg \"%.*s\" i log.graphColors"
 msgid "'%s': unable to read %s"
 msgstr "\"%s\" kunde inte läsa %s"
 
-#: grep.c:1811 builtin/clone.c:381 builtin/diff.c:84 builtin/rm.c:133
+#: grep.c:1811 builtin/clone.c:381 builtin/diff.c:81 builtin/rm.c:133
 #, c-format
 msgid "failed to stat '%s'"
 msgstr "misslyckades ta status på \"%s\""
@@ -2029,120 +2029,120 @@ msgstr ""
 msgid "Renaming %s to %s and %s to %s instead"
 msgstr "Byter namn på %s till %s och %s till %s istället"
 
-#: merge-recursive.c:1538
+#: merge-recursive.c:1535
 #, c-format
 msgid "CONFLICT (rename/add): Rename %s->%s in %s. %s added in %s"
 msgstr "KONFLIKT (namnbyte/tillägg): Namnbyte %s->%s i %s. %s tillagd i %s"
 
-#: merge-recursive.c:1553
+#: merge-recursive.c:1550
 #, c-format
 msgid "Adding merged %s"
 msgstr "Lägger till sammanslagen %s"
 
-#: merge-recursive.c:1560 merge-recursive.c:1774
+#: merge-recursive.c:1557 merge-recursive.c:1771
 #, c-format
 msgid "Adding as %s instead"
 msgstr "Lägger till som %s istället"
 
-#: merge-recursive.c:1617
+#: merge-recursive.c:1614
 #, c-format
 msgid "cannot read object %s"
 msgstr "kan inte läsa objektet %s"
 
-#: merge-recursive.c:1620
+#: merge-recursive.c:1617
 #, c-format
 msgid "object %s is not a blob"
 msgstr "objektet %s är inte en blob"
 
-#: merge-recursive.c:1673
+#: merge-recursive.c:1670
 msgid "modify"
 msgstr "ändra"
 
-#: merge-recursive.c:1673
+#: merge-recursive.c:1670
 msgid "modified"
 msgstr "ändrad"
 
-#: merge-recursive.c:1683
+#: merge-recursive.c:1680
 msgid "content"
 msgstr "innehåll"
 
-#: merge-recursive.c:1690
+#: merge-recursive.c:1687
 msgid "add/add"
 msgstr "tillägg/tillägg"
 
-#: merge-recursive.c:1726
+#: merge-recursive.c:1723
 #, c-format
 msgid "Skipped %s (merged same as existing)"
 msgstr "Hoppade över %s (sammanslagen samma som befintlig)"
 
-#: merge-recursive.c:1740
+#: merge-recursive.c:1737
 #, c-format
 msgid "Auto-merging %s"
 msgstr "Slår ihop %s automatiskt"
 
-#: merge-recursive.c:1744 git-submodule.sh:930
+#: merge-recursive.c:1741 git-submodule.sh:930
 msgid "submodule"
 msgstr "undermodul"
 
-#: merge-recursive.c:1745
+#: merge-recursive.c:1742
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "KONFLIKT (%s): Sammanslagningskonflikt i %s"
 
-#: merge-recursive.c:1839
+#: merge-recursive.c:1836
 #, c-format
 msgid "Removing %s"
 msgstr "Tar bort %s"
 
-#: merge-recursive.c:1865
+#: merge-recursive.c:1862
 msgid "file/directory"
 msgstr "fil/katalog"
 
-#: merge-recursive.c:1871
+#: merge-recursive.c:1868
 msgid "directory/file"
 msgstr "katalog/fil"
 
-#: merge-recursive.c:1877
+#: merge-recursive.c:1874
 #, c-format
 msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
 msgstr ""
 "KONFLIKT (%s): Det finns en katalog med namnet %s i %s. Lägger till %s som %s"
 
-#: merge-recursive.c:1886
+#: merge-recursive.c:1883
 #, c-format
 msgid "Adding %s"
 msgstr "Lägger till %s"
 
-#: merge-recursive.c:1923
+#: merge-recursive.c:1920
 msgid "Already up-to-date!"
 msgstr "Redan à jour!"
 
-#: merge-recursive.c:1932
+#: merge-recursive.c:1929
 #, c-format
 msgid "merging of trees %s and %s failed"
 msgstr "sammanslagning av träden %s och %s misslyckades"
 
-#: merge-recursive.c:2015
+#: merge-recursive.c:2012
 msgid "Merging:"
 msgstr "Slår ihop:"
 
-#: merge-recursive.c:2028
+#: merge-recursive.c:2025
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "hittade %u gemensam förfader:"
 msgstr[1] "hittade %u gemensamma förfäder:"
 
-#: merge-recursive.c:2067
+#: merge-recursive.c:2064
 msgid "merge returned no commit"
 msgstr "sammanslagningen returnerade ingen incheckning"
 
-#: merge-recursive.c:2130
+#: merge-recursive.c:2127
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "Kunde inte tolka objektet \"%s\""
 
-#: merge-recursive.c:2144 builtin/merge.c:645 builtin/merge.c:792
+#: merge-recursive.c:2141 builtin/merge.c:645 builtin/merge.c:792
 msgid "Unable to write index."
 msgstr "Kunde inte skriva indexet."
 
@@ -2184,7 +2184,7 @@ msgstr "Vägrar skriva över anteckningar i %s (utanför refs/notes/)"
 msgid "Bad %s value: '%s'"
 msgstr "Felaktigt värde på %s: \"%s\""
 
-#: object.c:242
+#: object.c:240
 #, c-format
 msgid "unable to parse object: %s"
 msgstr "kunde inte tolka objektet: %s"
@@ -3491,7 +3491,7 @@ msgstr ""
 msgid "Aborting."
 msgstr "Avbryter."
 
-#: transport-helper.c:1075
+#: transport-helper.c:1082
 #, c-format
 msgid "Could not read ref %s"
 msgstr "Kunde inte läsa referensen %s"
@@ -6161,7 +6161,7 @@ msgid "remove whole directories"
 msgstr "ta bort hela kataloger"
 
 #: builtin/clean.c:875 builtin/describe.c:407 builtin/grep.c:1056
-#: builtin/ls-files.c:536 builtin/name-rev.c:313 builtin/show-ref.c:176
+#: builtin/ls-files.c:538 builtin/name-rev.c:313 builtin/show-ref.c:176
 msgid "pattern"
 msgstr "mönster"
 
@@ -7463,31 +7463,31 @@ msgstr "Inga namn hittades, kan inte beskriva något."
 msgid "--dirty is incompatible with commit-ishes"
 msgstr "--dirty är inkompatibelt med \"commit-ish\"-värden"
 
-#: builtin/diff.c:86
+#: builtin/diff.c:83
 #, c-format
 msgid "'%s': not a regular file or symlink"
 msgstr "\"%s\": inte en normal fil eller symbolisk länk"
 
-#: builtin/diff.c:237
+#: builtin/diff.c:234
 #, c-format
 msgid "invalid option: %s"
 msgstr "ogiltig flagga: %s"
 
-#: builtin/diff.c:361
+#: builtin/diff.c:358
 msgid "Not a git repository"
 msgstr "Inte ett git-arkiv"
 
-#: builtin/diff.c:404
+#: builtin/diff.c:401
 #, c-format
 msgid "invalid object '%s' given."
 msgstr "objektet \"%s\" som angavs är felaktigt."
 
-#: builtin/diff.c:413
+#: builtin/diff.c:410
 #, c-format
 msgid "more than two blobs given: '%s'"
 msgstr "mer än två blobbar angavs: \"%s\""
 
-#: builtin/diff.c:420
+#: builtin/diff.c:417
 #, c-format
 msgid "unhandled object '%s' given."
 msgstr "ej hanterat objekt \"%s\" angavs."
@@ -9308,103 +9308,103 @@ msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
 msgstr "Kunde inte hitta en spårad fjärrgren, ange <uppström> manuellt.\n"
 
-#: builtin/ls-files.c:458
+#: builtin/ls-files.c:460
 msgid "git ls-files [<options>] [<file>...]"
 msgstr "git ls-files [<flaggor>] [<fil>...]"
 
-#: builtin/ls-files.c:507
+#: builtin/ls-files.c:509
 msgid "identify the file status with tags"
 msgstr "identifiera filstatus med taggar"
 
-#: builtin/ls-files.c:509
+#: builtin/ls-files.c:511
 msgid "use lowercase letters for 'assume unchanged' files"
 msgstr "använd små bokstäver för \"anta oförändrade\"-filer"
 
-#: builtin/ls-files.c:511
+#: builtin/ls-files.c:513
 msgid "show cached files in the output (default)"
 msgstr "visa cachade filer i utdata (standard)"
 
-#: builtin/ls-files.c:513
+#: builtin/ls-files.c:515
 msgid "show deleted files in the output"
 msgstr "visa borttagna filer i utdata"
 
-#: builtin/ls-files.c:515
+#: builtin/ls-files.c:517
 msgid "show modified files in the output"
 msgstr "visa modifierade filer i utdata"
 
-#: builtin/ls-files.c:517
+#: builtin/ls-files.c:519
 msgid "show other files in the output"
 msgstr "visa andra filer i utdata"
 
-#: builtin/ls-files.c:519
+#: builtin/ls-files.c:521
 msgid "show ignored files in the output"
 msgstr "visa ignorerade filer i utdata"
 
-#: builtin/ls-files.c:522
+#: builtin/ls-files.c:524
 msgid "show staged contents' object name in the output"
 msgstr "visa köat innehålls objektnamn i utdata"
 
-#: builtin/ls-files.c:524
+#: builtin/ls-files.c:526
 msgid "show files on the filesystem that need to be removed"
 msgstr "visa filer i filsystemet som behöver tas bort"
 
-#: builtin/ls-files.c:526
+#: builtin/ls-files.c:528
 msgid "show 'other' directories' names only"
 msgstr "visa endast namn för \"andra\" kataloger"
 
-#: builtin/ls-files.c:528
+#: builtin/ls-files.c:530
 msgid "show line endings of files"
 msgstr "visa radslut i filer"
 
-#: builtin/ls-files.c:530
+#: builtin/ls-files.c:532
 msgid "don't show empty directories"
 msgstr "visa inte tomma kataloger"
 
-#: builtin/ls-files.c:533
+#: builtin/ls-files.c:535
 msgid "show unmerged files in the output"
 msgstr "visa ej sammanslagna filer i utdata"
 
-#: builtin/ls-files.c:535
+#: builtin/ls-files.c:537
 msgid "show resolve-undo information"
 msgstr "visa \"resolve-undo\"-information"
 
-#: builtin/ls-files.c:537
+#: builtin/ls-files.c:539
 msgid "skip files matching pattern"
 msgstr "hoppa över filer som motsvarar mönster"
 
-#: builtin/ls-files.c:540
+#: builtin/ls-files.c:542
 msgid "exclude patterns are read from <file>"
 msgstr "exkludera mönster som läses från <fil>"
 
-#: builtin/ls-files.c:543
+#: builtin/ls-files.c:545
 msgid "read additional per-directory exclude patterns in <file>"
 msgstr "läs ytterligare per-katalog-exkluderingsmönster från <fil>"
 
-#: builtin/ls-files.c:545
+#: builtin/ls-files.c:547
 msgid "add the standard git exclusions"
 msgstr "lägg till git:s standardexkluderingar"
 
-#: builtin/ls-files.c:548
+#: builtin/ls-files.c:550
 msgid "make the output relative to the project top directory"
 msgstr "gör utdata relativ till projektets toppkatalog"
 
-#: builtin/ls-files.c:551
+#: builtin/ls-files.c:553
 msgid "recurse through submodules"
 msgstr "rekursera ner i undermoduler"
 
-#: builtin/ls-files.c:553
+#: builtin/ls-files.c:555
 msgid "if any <file> is not in the index, treat this as an error"
 msgstr "om en <fil> inte är indexet, betrakta det som ett fel"
 
-#: builtin/ls-files.c:554
+#: builtin/ls-files.c:556
 msgid "tree-ish"
 msgstr "träd-igt"
 
-#: builtin/ls-files.c:555
+#: builtin/ls-files.c:557
 msgid "pretend that paths removed since <tree-ish> are still present"
 msgstr "låtsas att sökvägar borttagna sedan <träd-igt> fortfarande finns"
 
-#: builtin/ls-files.c:557
+#: builtin/ls-files.c:559
 msgid "show debugging data"
 msgstr "visa felsökningsutdata"
 
@@ -10766,11 +10766,11 @@ msgstr "Tar bort duplicerade objekt"
 msgid "git prune [-n] [-v] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--expire <tid>] [--] [<huvud>...]"
 
-#: builtin/prune.c:106 builtin/worktree.c:128
+#: builtin/prune.c:106
 msgid "report pruned objects"
 msgstr "rapportera borttagna objekt"
 
-#: builtin/prune.c:109 builtin/worktree.c:130
+#: builtin/prune.c:109
 msgid "expire objects older than <time>"
 msgstr "låt tid gå ut för objekt äldre än <tid>"
 
@@ -13437,6 +13437,14 @@ msgstr "Tar bort worktrees/%s: felaktig gitdir-fil"
 #, c-format
 msgid "Removing worktrees/%s: gitdir file points to non-existent location"
 msgstr "Tar bort worktrees/%s: gitdir-filen pekar på en ickeexisterande plats"
+
+#: builtin/worktree.c:128
+msgid "report pruned working trees"
+msgstr "rapportera borttagna arbetskataloger"
+
+#: builtin/worktree.c:130
+msgid "expire working trees older than <time>"
+msgstr "låt tid gå ut för arbetskataloger äldre än <tid>"
 
 #: builtin/worktree.c:204
 #, c-format
