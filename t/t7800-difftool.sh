@@ -23,13 +23,41 @@ prompt_given ()
 	test "$prompt" = "Launch 'test-tool' [Y/n]? branch"
 }
 
+for use_builtin_difftool in false true
+do
+
+case "$use_builtin_difftool" in
+true)
+	GIT_CONFIG_PARAMETERS="'difftool.usebuiltin=true'"
+	export GIT_CONFIG_PARAMETERS
+	;;
+false)
+	test_have_prereq PERL || {
+		say 'Skipping scripted difftool (missing PERL)'
+		continue
+	}
+	;;
+esac
+
+test_expect_success 'verify we are running the correct difftool' '
+	if test true = '$use_builtin_difftool'
+	then
+		test_must_fail ok=129 git difftool -h >help &&
+		grep "g, --gui" help
+	else
+		git difftool -h >help &&
+		grep "g|--gui" help
+	fi
+'
+
 test_expect_success 'basic usage requires no repo' '
-	test_expect_code 129 git difftool -h >output &&
+	code='$(test "$use_builtin_difftool" = true && echo 129 || echo 0)' &&
+	test_expect_code $code git difftool -h >output &&
 	grep ^usage: output &&
 	# create a ceiling directory to prevent Git from finding a repo
 	mkdir -p not/repo &&
 	test_when_finished rm -r not &&
-	test_expect_code 129 \
+	test_expect_code $code \
 	env GIT_CEILING_DIRECTORIES="$(pwd)/not" \
 	git -C not/repo difftool -h >output &&
 	grep ^usage: output
@@ -615,5 +643,14 @@ test_expect_success SYMLINKS 'difftool --dir-diff symlinked directories' '
 		test_cmp expect actual
 	)
 '
+
+test true != $use_builtin_difftool || break
+
+test_expect_success 'tear down for re-run' '
+	rm -rf * .[a-z]* &&
+	git init
+'
+
+done
 
 test_done
