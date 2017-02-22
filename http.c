@@ -1340,6 +1340,8 @@ static int handle_curl_result(struct slot_results *results)
 		} else {
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
+			if (results->auth_avail)
+				http_auth_methods &= results->auth_avail;
 #endif
 			return HTTP_REAUTH;
 		}
