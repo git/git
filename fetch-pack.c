@@ -1094,3 +1094,16 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	clear_shallow_info(&si);
 	return ref_cpy;
 }
+
+int report_unmatched_refs(struct ref **sought, int nr_sought)
+{
+	int i, ret = 0;
+
+	for (i = 0; i < nr_sought; i++) {
+		if (!sought[i] || sought[i]->matched)
+			continue;
+		error(_("no such remote ref %s"), sought[i]->name);
+		ret = 1;
+	}
+	return ret;
+}

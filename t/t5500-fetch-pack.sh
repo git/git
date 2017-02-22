@@ -484,7 +484,7 @@ test_expect_success 'test lonely missing ref' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy
 	) >/dev/null 2>error-m &&
-	test_cmp expect-error error-m
+	test_i18ncmp expect-error error-m
 '
 
 test_expect_success 'test missing ref after existing' '
@@ -492,7 +492,7 @@ test_expect_success 'test missing ref after existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/A refs/heads/xyzzy
 	) >/dev/null 2>error-em &&
-	test_cmp expect-error error-em
+	test_i18ncmp expect-error error-em
 '
 
 test_expect_success 'test missing ref before existing' '
@@ -500,7 +500,7 @@ test_expect_success 'test missing ref before existing' '
 		cd client &&
 		test_must_fail git fetch-pack --no-progress .. refs/heads/xyzzy refs/heads/A
 	) >/dev/null 2>error-me &&
-	test_cmp expect-error error-me
+	test_i18ncmp expect-error error-me
 '
 
 test_expect_success 'test --all, --depth, and explicit head' '
