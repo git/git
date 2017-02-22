@@ -109,7 +109,7 @@ static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
 static int http_proactive_auth;
 static const char *user_agent;
-static int curl_empty_auth;
+static int curl_empty_auth = -1;
 
 enum http_follow_config http_follow_config = HTTP_FOLLOW_INITIAL;
 
@@ -125,6 +125,7 @@ static struct credential cert_auth = CREDENTIAL_INIT;
 static int ssl_cert_password_required;
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 static unsigned long http_auth_methods = CURLAUTH_ANY;
+static int http_auth_methods_restricted;
 #endif
 
 static struct curl_slist *pragma_header;
@@ -382,10 +383,37 @@ static int http_options(const char *var, const char *value, void *cb)
 	return git_default_config(var, value, cb);
 }
 
+static int curl_empty_auth_enabled(void)
+{
+	if (curl_empty_auth < 0) {
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+		/*
+		 * In the automatic case, kick in the empty-auth
+		 * hack as long as we would potentially try some
+		 * method more exotic than "Basic".
+		 *
+		 * But only do so when this is _not_ our initial
+		 * request, as we would not then yet know what
+		 * methods are available.
+		 */
+		return http_auth_methods_restricted &&
+		       http_auth_methods != CURLAUTH_BASIC;
+#else
+		/*
+		 * Our libcurl is too old to do AUTH_ANY in the first place;
+		 * just default to turning the feature off.
+		 */
+		return 0;
+#endif
+	}
+
+	return curl_empty_auth;
+}
+
 static void init_curl_http_auth(CURL *result)
 {
 	if (!http_auth.username || !*http_auth.username) {
-		if (curl_empty_auth)
+		if (curl_empty_auth_enabled())
 			curl_easy_setopt(result, CURLOPT_USERPWD, ":");
 		return;
 	}
@@ -1072,7 +1100,7 @@ struct active_request_slot *get_active_slot(void)
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPAUTH, http_auth_methods);
 #endif
-	if (http_auth.password || curl_empty_auth)
+	if (http_auth.password || curl_empty_auth_enabled())
 		init_curl_http_auth(slot->curl);
 
 	return slot;
@@ -1340,8 +1368,10 @@ static int handle_curl_result(struct slot_results *results)
 		} else {
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
-			if (results->auth_avail)
+			if (results->auth_avail) {
 				http_auth_methods &= results->auth_avail;
+				http_auth_methods_restricted = 1;
+			}
 #endif
 			return HTTP_REAUTH;
 		}
