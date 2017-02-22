@@ -1566,7 +1566,7 @@ status        - show paths with changes
 update        - add working tree state to the staged set of changes
 revert        - revert staged set of changes back to the HEAD version
 patch         - pick hunks and update selectively
-diff	      - view diff between HEAD and index
+diff          - view diff between HEAD and index
 add untracked - add contents of untracked files to the staged set of changes
 EOF
 }
