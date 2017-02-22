@@ -1099,7 +1099,7 @@ test_expect_success 'fetch exact SHA1' '
 
 		# fetching the hidden object should fail by default
 		test_must_fail git fetch -v ../testrepo $the_commit:refs/heads/copy 2>err &&
-		test_i18ngrep "no such remote ref" err &&
+		test_i18ngrep "Server does not allow request for unadvertised object" err &&
 		test_must_fail git rev-parse --verify refs/heads/copy &&
 
 		# the server side can allow it to succeed
