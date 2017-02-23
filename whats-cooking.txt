@@ -1,20 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2017, #06; Tue, 21)
+Subject: What's cooking in git.git (Feb 2017, #07; Thu, 23)
 X-master-at: 80ba04ed9b07c34af9cc644f2183b3b80fd81744
-X-next-at: 302250072e59acfdf6a5a069d54402b4f1478844
+X-next-at: cbe923c8da4a7f6cf4861a317ae620497394d507
 
-What's cooking in git.git (Feb 2017, #06; Tue, 21)
+What's cooking in git.git (Feb 2017, #07; Thu, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The tip of the 'master' is still at -rc2 but with a git-svn update
-from Eric.  I'd like to get pull requests for gitk and git-gui
-updates soonish, if we are to have one during this cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,127 +20,84 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jk/tempfile-ferror-fclose-confusion (2017-02-17) 1 commit
-  (merged to 'next' on 2017-02-21 at 479ba0131f)
- + tempfile: set errno to a known value before calling ferror()
+* js/curl-empty-auth-set-by-default (2017-02-22) 1 commit
+ - http(s): automatically try NTLM authentication first
 
- A caller of tempfile API that uses stdio interface to write to
- files may ignore errors while writing, which is detected when
- tempfile is closed (with a call to ferror()).  By that time, the
- original errno that may have told us what went wrong is likely to
- be long gone and was overwritten by an irrelevant value.
- close_tempfile() now resets errno to EIO to make errno at least
- predictable.
+ Flip "http.emptyAuth" on by default to help OOB experience for
+ users of HTTP Negotiate authentication scheme.
 
- Will cook in 'next'.
+ Under discussion.
+ cf. <20170222233419.q3fxqmrscosumbjm@genre.crustytoothpaste.net>
 
 
-* ah/doc-ls-files-quotepath (2017-02-20) 1 commit
- - Documentation: link git-ls-files to core.quotePath variable
-
- Documentation for "git ls-files" did not refer to core.quotePath
-
- Needs review.
-
-
-* dr/doc-check-ref-format-normalize (2017-02-21) 1 commit
-  (merged to 'next' on 2017-02-21 at 5e88b7a93d)
- + git-check-ref-format: clarify documentation for --normalize
+* bc/blame-doc-fix (2017-02-22) 1 commit
+  (merged to 'next' on 2017-02-22 at 81c0ff2283)
+ + Documentation: use brackets for optional arguments
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* gp/document-dotfiles-in-templates-are-not-copied (2017-02-17) 1 commit
-  (merged to 'next' on 2017-02-21 at bbfa2bb7d4)
- + init: document dotfiles exclusion on template copy
+* bc/worktree-doc-fix-detached (2017-02-22) 1 commit
+  (merged to 'next' on 2017-02-22 at 8257025363)
+ + Documentation: correctly spell git worktree --detach
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* jc/config-case-cmdline (2017-02-21) 2 commits
-  (merged to 'next' on 2017-02-21 at 354f023a3a)
- + config: reject invalid VAR in 'git -c VAR=VAL command'
- + config: preserve <subsection> case for one-shot config on the command line
+* rt/align-add-i-help-text (2017-02-22) 1 commit
+  (merged to 'next' on 2017-02-22 at a8573afb9a)
+ + git add -i: replace \t with blanks in the help message
 
- The code to parse "git -c VAR=VAL cmd" and set configuration
- variable for the duration of cmd had two small bugs, which have
- been fixed.
+ Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* jh/memihash-opt (2017-02-17) 5 commits
- - name-hash: remember previous dir_entry during lazy_init_name_hash
- - name-hash: specify initial size for istate.dir_hash table
- - name-hash: precompute hash values during preload-index
- - hashmap: allow memihash computation to be continued
- - name-hash: eliminate duplicate memihash call
+* jh/send-email-one-cc (2017-02-23) 1 commit
+ - send-email: only allow one address per body tag
 
- Expecting an update for perf?
+ "Cc:" on the trailer part does not have to conform to RFC strictly,
+ unlike in the e-mail header.  "git send-email" has been updated to
+ ignore anything after '>' when picking addresses, to allow non-address
+ cruft like " # stable 4.4" after the address.
 
-
-* km/delete-ref-reflog-message (2017-02-20) 4 commits
-  (merged to 'next' on 2017-02-21 at 4ee4ce3f64)
- + branch: record creation of renamed branch in HEAD's log
- + rename_ref: replace empty message in HEAD's log
- + update-ref: pass reflog message to delete_ref()
- + delete_ref: accept a reflog message argument
-
- "git update-ref -d" and other operations to delete references did
- not leave any entry in HEAD's reflog when the reference being
- deleted was the current branch.  This is not a problem in practice
- because you do not want to delete the branch you are currently on,
- but caused renaming of the current branch to something else not to
- be logged in a useful way.
-
- Will cook in 'next'.
+ Will merge to and then cook in 'next'.
 
 
-* nd/prune-in-worktree (2017-02-19) 15 commits
- - rev-list: expose and document --single-worktree
- - revision.c: --reflog add HEAD reflog from all worktrees
- - files-backend: make reflog iterator go through per-worktree reflog
- - refs: add refs_for_each_reflog[_ent]()
- - revision.c: --all adds HEAD from all worktrees
- - refs: remove dead for_each_*_submodule()
- - revision.c: use refs_for_each*() instead of for_each_*_submodule()
- - refs: add a refs_for_each_in() and friends
- - refs: add refs_for_each_ref()
- - refs: add refs_head_ref()
- - refs: add refs_read_ref[_full]()
- - refs: move submodule slash stripping code to get_submodule_ref_store
- - revision.c: --indexed-objects add objects from all worktrees
- - revision.c: refactor add_index_objects_to_pending()
- - revision.h: new flag in struct rev_info wrt. worktree-related refs
- (this branch uses mh/ref-remove-empty-directory, mh/submodule-hash, nd/files-backend-git-dir and nd/worktree-kill-parse-ref.)
+* jk/http-auth (2017-02-23) 1 commit
+ - http: restrict auth methods to what the server advertises
 
- "git gc" and friends when multiple worktrees are used off of a
- single repository did not consider the index and per-worktree refs
- of other worktrees as the root for reachability traversal, making
- objects that are in use only in other worktrees to be subject to
- garbage collection.
+ Reduce authentication round-trip over HTTP when the server supports
+ just a single authentication method.
+
+ Will merge to and then cook in 'next'.
+ There is a follow-up that would supersede js/curl-empty-auth-set-by-default
+ topic; as it expected to be refined further, it is not queued here yet.
 
 
-* mm/fetch-show-error-message-on-unadvertised-object (2017-02-21) 1 commit
- - fetch: print an error when declining to request an unadvertised object
+* jk/ident-empty (2017-02-23) 4 commits
+ - ident: do not ignore empty config name/email
+ - ident: reject all-crud ident name
+ - ident: handle NULL email when complaining of empty name
+ - ident: mark error messages for translation
 
- "git fetch" that requests a commit by object name, when the other
- side does not allow such an request, failed without much
- explanation.
+ user.email that consists of only cruft chars should have
+ consistently errored out, but didn't.
 
- Expecting a split series?
+ Will merge to and then cook in 'next'.
 
 
-* rl/remote-allow-missing-branch-name-merge (2017-02-21) 1 commit
- - remote: ignore failure to remove missing branch.<name>.merge
+* jt/upload-pack-error-report (2017-02-23) 1 commit
+ - upload-pack: report "not our ref" to client
 
- "git remote rm X", when a branch has remote X configured as the
- value of its branch.*.remote, tried to remove branch.*.remote and
- branch.*.merge and failed if either is unset.
+ "git upload-pack", which is a counter-part of "git fetch", did not
+ report a request for a ref that was not advertised as invalid.
+ This is generally not a problem (because "git fetch" will stop
+ before making such a request), but is the right thing to do.
 
  Will merge to and then cook in 'next'.
 
@@ -283,6 +236,136 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/tempfile-ferror-fclose-confusion (2017-02-17) 1 commit
+  (merged to 'next' on 2017-02-21 at 479ba0131f)
+ + tempfile: set errno to a known value before calling ferror()
+
+ A caller of tempfile API that uses stdio interface to write to
+ files may ignore errors while writing, which is detected when
+ tempfile is closed (with a call to ferror()).  By that time, the
+ original errno that may have told us what went wrong is likely to
+ be long gone and was overwritten by an irrelevant value.
+ close_tempfile() now resets errno to EIO to make errno at least
+ predictable.
+
+ Will cook in 'next'.
+
+
+* ah/doc-ls-files-quotepath (2017-02-22) 1 commit
+ - Documentation: clarify core.quotePath and update git-ls-files doc
+
+ Documentation for "git ls-files" did not refer to core.quotePath
+
+ Looked good, but another reroll is still incoming?
+ cf. <3c801e54-28c7-52d0-6915-ee7aaf1d89c9@gmail.com>
+
+
+* dr/doc-check-ref-format-normalize (2017-02-21) 1 commit
+  (merged to 'next' on 2017-02-21 at 5e88b7a93d)
+ + git-check-ref-format: clarify documentation for --normalize
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* gp/document-dotfiles-in-templates-are-not-copied (2017-02-17) 1 commit
+  (merged to 'next' on 2017-02-21 at bbfa2bb7d4)
+ + init: document dotfiles exclusion on template copy
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* jc/config-case-cmdline (2017-02-21) 3 commits
+  (merged to 'next' on 2017-02-21 at 63d3652c77)
+ + config: squelch stupid compiler
+  (merged to 'next' on 2017-02-21 at 354f023a3a)
+ + config: reject invalid VAR in 'git -c VAR=VAL command'
+ + config: preserve <subsection> case for one-shot config on the command line
+
+ The code to parse "git -c VAR=VAL cmd" and set configuration
+ variable for the duration of cmd had two small bugs, which have
+ been fixed.
+
+ Will cook in 'next'.
+
+
+* jh/memihash-opt (2017-02-17) 5 commits
+ - name-hash: remember previous dir_entry during lazy_init_name_hash
+ - name-hash: specify initial size for istate.dir_hash table
+ - name-hash: precompute hash values during preload-index
+ - hashmap: allow memihash computation to be continued
+ - name-hash: eliminate duplicate memihash call
+
+ Expecting an update for perf?
+
+
+* km/delete-ref-reflog-message (2017-02-20) 4 commits
+  (merged to 'next' on 2017-02-21 at 4ee4ce3f64)
+ + branch: record creation of renamed branch in HEAD's log
+ + rename_ref: replace empty message in HEAD's log
+ + update-ref: pass reflog message to delete_ref()
+ + delete_ref: accept a reflog message argument
+
+ "git update-ref -d" and other operations to delete references did
+ not leave any entry in HEAD's reflog when the reference being
+ deleted was the current branch.  This is not a problem in practice
+ because you do not want to delete the branch you are currently on,
+ but caused renaming of the current branch to something else not to
+ be logged in a useful way.
+
+ Will cook in 'next'.
+
+
+* nd/prune-in-worktree (2017-02-19) 15 commits
+ . rev-list: expose and document --single-worktree
+ . revision.c: --reflog add HEAD reflog from all worktrees
+ . files-backend: make reflog iterator go through per-worktree reflog
+ . refs: add refs_for_each_reflog[_ent]()
+ . revision.c: --all adds HEAD from all worktrees
+ . refs: remove dead for_each_*_submodule()
+ . revision.c: use refs_for_each*() instead of for_each_*_submodule()
+ . refs: add a refs_for_each_in() and friends
+ . refs: add refs_for_each_ref()
+ . refs: add refs_head_ref()
+ . refs: add refs_read_ref[_full]()
+ . refs: move submodule slash stripping code to get_submodule_ref_store
+ . revision.c: --indexed-objects add objects from all worktrees
+ . revision.c: refactor add_index_objects_to_pending()
+ . revision.h: new flag in struct rev_info wrt. worktree-related refs
+ (this branch uses mh/ref-remove-empty-directory, mh/submodule-hash and nd/worktree-kill-parse-ref; is tangled with nd/files-backend-git-dir.)
+
+ "git gc" and friends when multiple worktrees are used off of a
+ single repository did not consider the index and per-worktree refs
+ of other worktrees as the root for reachability traversal, making
+ objects that are in use only in other worktrees to be subject to
+ garbage collection.
+
+
+* mm/fetch-show-error-message-on-unadvertised-object (2017-02-22) 4 commits
+ - fetch-pack: add specific error for fetching an unadvertised object
+ - fetch_refs_via_pack: call report_unmatched_refs
+ - squash??? remove unfinished sentence
+ - fetch-pack: move code to report unmatched refs to a function
+
+ "git fetch" that requests a commit by object name, when the other
+ side does not allow such an request, failed without much
+ explanation.
+
+
+* rl/remote-allow-missing-branch-name-merge (2017-02-21) 1 commit
+  (merged to 'next' on 2017-02-22 at cbe923c8da)
+ + remote: ignore failure to remove missing branch.<name>.merge
+
+ "git remote rm X", when a branch has remote X configured as the
+ value of its branch.*.remote, tried to remove branch.*.remote and
+ branch.*.merge and failed if either is unset.
+
+ Will cook in 'next'.
+
+
 * vn/xdiff-func-context (2017-01-15) 1 commit
   (merged to 'next' on 2017-02-21 at 838eab8d93)
  + xdiff -W: relax end-of-file function detection
@@ -293,13 +376,30 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* nd/worktree-kill-parse-ref (2017-02-19) 5 commits
- - refs: kill set_worktree_head_symref()
- - refs: add refs_create_symref()
- - worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
- - refs.c: add refs_resolve_ref_unsafe()
- - refs: introduce get_worktree_ref_store()
- (this branch is used by nd/prune-in-worktree; uses mh/ref-remove-empty-directory, mh/submodule-hash and nd/files-backend-git-dir.)
+* nd/worktree-kill-parse-ref (2017-02-19) 22 commits
+ . refs: kill set_worktree_head_symref()
+ . refs: add refs_create_symref()
+ . worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
+ . refs.c: add refs_resolve_ref_unsafe()
+ . refs: introduce get_worktree_ref_store()
+ . refs: rename get_ref_store() to get_submodule_ref_store() and make it public
+ . files-backend: remove submodule_allowed from files_downcast()
+ . refs: move submodule code out of files-backend.c
+ . path.c: move some code out of strbuf_git_path_submodule()
+ . refs.c: make get_main_ref_store() public and use it
+ . refs.c: kill register_ref_store(), add register_submodule_ref_store()
+ . refs.c: flatten get_ref_store() a bit
+ . refs: rename lookup_ref_store() to lookup_submodule_ref_store()
+ . refs.c: introduce get_main_ref_store()
+ . files-backend: remove the use of git_path()
+ . refs.c: share is_per_worktree_ref() to files-backend.c
+ . files-backend: replace *git_path*() with files_path()
+ . files-backend: add files_path()
+ . files-backend: convert git_path() to strbuf_git_path()
+ . refs-internal.c: make files_log_ref_write() static
+ . Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
+ . Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
+ (this branch is used by nd/prune-in-worktree; uses mh/ref-remove-empty-directory and mh/submodule-hash; is tangled with nd/files-backend-git-dir.)
 
  (hopefully) a beginning of safer "git worktree" that is resistant
  to "gc".
@@ -307,25 +407,34 @@ of the repositories listed at
  Needs review.
 
 
-* nd/files-backend-git-dir (2017-02-19) 17 commits
- - refs: rename get_ref_store() to get_submodule_ref_store() and make it public
- - files-backend: remove submodule_allowed from files_downcast()
- - refs: move submodule code out of files-backend.c
- - path.c: move some code out of strbuf_git_path_submodule()
- - refs.c: make get_main_ref_store() public and use it
- - refs.c: kill register_ref_store(), add register_submodule_ref_store()
- - refs.c: flatten get_ref_store() a bit
- - refs: rename lookup_ref_store() to lookup_submodule_ref_store()
- - refs.c: introduce get_main_ref_store()
- - files-backend: remove the use of git_path()
- - refs.c: share is_per_worktree_ref() to files-backend.c
- - files-backend: replace *git_path*() with files_path()
- - files-backend: add files_path()
- - files-backend: convert git_path() to strbuf_git_path()
- - refs-internal.c: make files_log_ref_write() static
- - Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
- - Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
- (this branch is used by nd/prune-in-worktree and nd/worktree-kill-parse-ref; uses mh/ref-remove-empty-directory and mh/submodule-hash.)
+* nd/files-backend-git-dir (2017-02-22) 26 commits
+ . t1406: new tests for submodule ref store
+ . t1405: some basic tests on main ref store
+ . t/helper: add test-ref-store to test ref-store functions
+ . refs: delete pack_refs() in favor of refs_pack_refs()
+ . files-backend: avoid ref api targetting main ref store
+ . refs: new transaction related ref-store api
+ . refs: add new ref-store api
+ . refs: rename get_ref_store() to get_submodule_ref_store() and make it public
+ . files-backend: replace submodule_allowed check in files_downcast()
+ . refs: move submodule code out of files-backend.c
+ . path.c: move some code out of strbuf_git_path_submodule()
+ . refs.c: make get_main_ref_store() public and use it
+ . refs.c: kill register_ref_store(), add register_submodule_ref_store()
+ . refs.c: flatten get_ref_store() a bit
+ . refs: rename lookup_ref_store() to lookup_submodule_ref_store()
+ . refs.c: introduce get_main_ref_store()
+ . files-backend: remove the use of git_path()
+ . files-backend: add and use files_refname_path()
+ . files-backend: add and use files_reflog_path()
+ . files-backend: move "logs/" out of TMP_RENAMED_LOG
+ . files-backend: convert git_path() to strbuf_git_path()
+ . files-backend: add and use files_packed_refs_path()
+ . files-backend: make files_log_ref_write() static
+ . refs.h: add forward declaration for structs used in this file
+ . Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
+ . Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
+ (this branch uses mh/ref-remove-empty-directory and mh/submodule-hash; is tangled with nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
 
  The "submodule" specific field in the ref_store structure is
  replaced with a more generic "gitdir" that can later be used also
@@ -402,7 +511,7 @@ of the repositories listed at
  cf. <xmqqmvdfh4az.fsf@gitster.mtv.corp.google.com>
 
 
-* bc/object-id (2017-02-20) 19 commits
+* bc/object-id (2017-02-22) 19 commits
  - wt-status: convert to struct object_id
  - builtin/merge-base: convert to struct object_id
  - Convert object iteration callbacks to struct object_id
@@ -425,8 +534,8 @@ of the repositories listed at
 
  "uchar [40]" to "struct object_id" conversion continues.
 
- Expecting a reroll.
- cf. <20170221011058.cpx7uio6ibkvrtbv@genre.crustytoothpaste.net>
+ Now at v5; looked alright.
+ cf. <20170221234737.894681-1-sandals@crustytoothpaste.net>
 
 
 * jk/grep-no-index-fix (2017-02-14) 7 commits
