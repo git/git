@@ -17,4 +17,9 @@ test_expect_success 'empty name and missing email' '
 	)
 '
 
+test_expect_success 'commit rejects all-crud name' '
+	test_must_fail env GIT_AUTHOR_NAME=" .;<>" \
+		git commit --allow-empty -m foo
+'
+
 test_done

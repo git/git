@@ -203,6 +203,15 @@ static int crud(unsigned char c)
 		c == '\'';
 }
 
+static int has_non_crud(const char *str)
+{
+	for (; *str; str++) {
+		if (!crud(*str))
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * Copy over a string to the destination, but avoid special
  * characters ('\n', '<' and '>') and remove crud at the end
@@ -389,6 +398,8 @@ const char *fmt_ident(const char *name, const char *email,
 			pw = xgetpwuid_self(NULL);
 			name = pw->pw_name;
 		}
+		if (strict && !has_non_crud(name))
+			die(_("name consists only of disallowed characters: %s"), name);
 	}
 
 	strbuf_reset(&ident);
