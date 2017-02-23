@@ -295,7 +295,9 @@ int git_config_parse_parameter(const char *text,
 			       config_fn_t fn, void *data)
 {
 	const char *value;
+	char *canonical_name;
 	struct strbuf **pair;
+	int ret;
 
 	pair = strbuf_split_str(text, '=', 2);
 	if (!pair[0])
@@ -313,13 +315,15 @@ int git_config_parse_parameter(const char *text,
 		strbuf_list_free(pair);
 		return error("bogus config parameter: %s", text);
 	}
-	strbuf_tolower(pair[0]);
-	if (fn(pair[0]->buf, value, data) < 0) {
-		strbuf_list_free(pair);
-		return -1;
+
+	if (git_config_parse_key(pair[0]->buf, &canonical_name, NULL)) {
+		ret = -1;
+	} else {
+		ret = (fn(canonical_name, value, data) < 0) ? -1 : 0;
+		free(canonical_name);
 	}
 	strbuf_list_free(pair);
-	return 0;
+	return ret;
 }
 
 int git_config_from_parameters(config_fn_t fn, void *data)
