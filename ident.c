@@ -351,6 +351,19 @@ const char *fmt_ident(const char *name, const char *email,
 	int want_date = !(flag & IDENT_NO_DATE);
 	int want_name = !(flag & IDENT_NO_NAME);
 
+	if (!email) {
+		if (strict && ident_use_config_only
+		    && !(ident_config_given & IDENT_MAIL_GIVEN)) {
+			fputs(_(env_hint), stderr);
+			die(_("no email was given and auto-detection is disabled"));
+		}
+		email = ident_default_email();
+		if (strict && default_email_is_bogus) {
+			fputs(_(env_hint), stderr);
+			die(_("unable to auto-detect email address (got '%s')"), email);
+		}
+	}
+
 	if (want_name) {
 		int using_default = 0;
 		if (!name) {
@@ -375,19 +388,6 @@ const char *fmt_ident(const char *name, const char *email,
 			}
 			pw = xgetpwuid_self(NULL);
 			name = pw->pw_name;
-		}
-	}
-
-	if (!email) {
-		if (strict && ident_use_config_only
-		    && !(ident_config_given & IDENT_MAIL_GIVEN)) {
-			fputs(_(env_hint), stderr);
-			die(_("no email was given and auto-detection is disabled"));
-		}
-		email = ident_default_email();
-		if (strict && default_email_is_bogus) {
-			fputs(_(env_hint), stderr);
-			die(_("unable to auto-detect email address (got '%s')"), email);
 		}
 	}
 
