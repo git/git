@@ -357,13 +357,13 @@ const char *fmt_ident(const char *name, const char *email,
 			if (strict && ident_use_config_only
 			    && !(ident_config_given & IDENT_NAME_GIVEN)) {
 				fputs(_(env_hint), stderr);
-				die("no name was given and auto-detection is disabled");
+				die(_("no name was given and auto-detection is disabled"));
 			}
 			name = ident_default_name();
 			using_default = 1;
 			if (strict && default_name_is_bogus) {
 				fputs(_(env_hint), stderr);
-				die("unable to auto-detect name (got '%s')", name);
+				die(_("unable to auto-detect name (got '%s')"), name);
 			}
 		}
 		if (!*name) {
@@ -371,7 +371,7 @@ const char *fmt_ident(const char *name, const char *email,
 			if (strict) {
 				if (using_default)
 					fputs(_(env_hint), stderr);
-				die("empty ident name (for <%s>) not allowed", email);
+				die(_("empty ident name (for <%s>) not allowed"), email);
 			}
 			pw = xgetpwuid_self(NULL);
 			name = pw->pw_name;
@@ -382,12 +382,12 @@ const char *fmt_ident(const char *name, const char *email,
 		if (strict && ident_use_config_only
 		    && !(ident_config_given & IDENT_MAIL_GIVEN)) {
 			fputs(_(env_hint), stderr);
-			die("no email was given and auto-detection is disabled");
+			die(_("no email was given and auto-detection is disabled"));
 		}
 		email = ident_default_email();
 		if (strict && default_email_is_bogus) {
 			fputs(_(env_hint), stderr);
-			die("unable to auto-detect email address (got '%s')", email);
+			die(_("unable to auto-detect email address (got '%s')"), email);
 		}
 	}
 
@@ -403,7 +403,7 @@ const char *fmt_ident(const char *name, const char *email,
 		strbuf_addch(&ident, ' ');
 		if (date_str && date_str[0]) {
 			if (parse_date(date_str, &ident) < 0)
-				die("invalid date format: %s", date_str);
+				die(_("invalid date format: %s"), date_str);
 		}
 		else
 			strbuf_addstr(&ident, ident_default_date());
