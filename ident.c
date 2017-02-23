@@ -153,7 +153,7 @@ static void copy_email(const struct passwd *pw, struct strbuf *email,
 
 const char *ident_default_name(void)
 {
-	if (!git_default_name.len) {
+	if (!(ident_config_given & IDENT_NAME_GIVEN) && !git_default_name.len) {
 		copy_gecos(xgetpwuid_self(&default_name_is_bogus), &git_default_name);
 		strbuf_trim(&git_default_name);
 	}
@@ -162,7 +162,7 @@ const char *ident_default_name(void)
 
 const char *ident_default_email(void)
 {
-	if (!git_default_email.len) {
+	if (!(ident_config_given & IDENT_MAIL_GIVEN) && !git_default_email.len) {
 		const char *email = getenv("EMAIL");
 
 		if (email && email[0]) {
