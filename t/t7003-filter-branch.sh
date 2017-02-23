@@ -362,7 +362,7 @@ test_expect_success 'prune empty works even without index/tree filters' '
 	test_cmp expect actual
 '
 
-test_expect_failure '--prune-empty is able to prune root commit' '
+test_expect_success '--prune-empty is able to prune root commit' '
 	git rev-list branch-no-a >expect &&
 	git branch testing H &&
 	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t" testing &&
@@ -371,7 +371,7 @@ test_expect_failure '--prune-empty is able to prune root commit' '
 	test_cmp expect actual
 '
 
-test_expect_failure '--prune-empty is able to prune entire branch' '
+test_expect_success '--prune-empty is able to prune entire branch' '
 	git branch prune-entire B &&
 	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t B.t" prune-entire &&
 	test_path_is_missing .git/refs/heads/prune-entire &&
