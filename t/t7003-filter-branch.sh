@@ -371,6 +371,13 @@ test_expect_failure '--prune-empty is able to prune root commit' '
 	test_cmp expect actual
 '
 
+test_expect_failure '--prune-empty is able to prune entire branch' '
+	git branch prune-entire B &&
+	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t B.t" prune-entire &&
+	test_path_is_missing .git/refs/heads/prune-entire &&
+	test_must_fail git reflog exists refs/heads/prune-entire
+'
+
 test_expect_success '--remap-to-ancestor with filename filters' '
 	git checkout master &&
 	git reset --hard A &&
