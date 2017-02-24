@@ -492,3 +492,9 @@ notes for details).
    (merge e91461b332 jk/doc-submodule-markup-fix later to maint).
    (merge 8ab9740d9f dp/submodule-doc-markup-fix later to maint).
    (merge 0838cbc22f jk/tempfile-ferror-fclose-confusion later to maint).
+   (merge 115a40add6 dr/doc-check-ref-format-normalize later to maint).
+   (merge 133f0a299d gp/document-dotfiles-in-templates-are-not-copied later to maint).
+   (merge 2b35a9f4c7 bc/blame-doc-fix later to maint).
+   (merge 7e82388024 ps/doc-gc-aggressive-depth-update later to maint).
+   (merge 9993a7c5f1 bc/worktree-doc-fix-detached later to maint).
+   (merge e519eccdf4 rt/align-add-i-help-text later to maint).
