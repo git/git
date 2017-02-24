@@ -100,10 +100,10 @@ OPTIONS
 --normalize::
 	Normalize 'refname' by removing any leading slash (`/`)
 	characters and collapsing runs of adjacent slashes between
-	name components into a single slash.  Iff the normalized
+	name components into a single slash.  If the normalized
 	refname is valid then print it to standard output and exit
-	with a status of 0.  (`--print` is a deprecated way to spell
-	`--normalize`.)
+	with a status of 0, otherwise exit with a non-zero status.
+	(`--print` is a deprecated way to spell `--normalize`.)
 
 
 EXAMPLES
