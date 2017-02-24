@@ -127,7 +127,7 @@ the documentation for the --window' option in linkgit:git-repack[1] for
 more details.  This defaults to 250.
 
 Similarly, the optional configuration variable `gc.aggressiveDepth`
-controls --depth option in linkgit:git-repack[1]. This defaults to 250.
+controls --depth option in linkgit:git-repack[1]. This defaults to 50.
 
 The optional configuration variable `gc.pruneExpire` controls how old
 the unreferenced loose objects have to be before they are pruned.  The
