@@ -148,7 +148,7 @@ named with three dotted decimal digits (e.g. "1.8.5"), but recently we
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 2.11 done on Nov 29th, 2016. You can expect
+The last such release was 2.12 done on Feb 24th, 2017. You can expect
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
@@ -162,7 +162,7 @@ four dotted decimal, named after the feature release they are updates
 to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
 feature release).  These days, maintenance releases are named by
 incrementing the last digit of three-dotted decimal name (e.g. "2.11.1"
-is the first maintenance release for the "2.11" series).
+was the first maintenance release for the "2.11" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
@@ -205,6 +205,13 @@ The two branches "master" and "maint" are never rewound, and "next"
 usually will not be either.  After a feature release is made from
 "master", however, "next" will be rebuilt from the tip of "master"
 using the topics that didn't make the cut in the feature release.
+
+A natural consequence of how "next" and "pu" bundles topics together
+is that until a topic is merged to "next", updates to it is expected
+by replacing the patch(es) in the topic with an improved version,
+and once a topic is merged to "next", updates to it needs to come as
+incremental patches, pointing out what was wrong in the previous
+patches and how the problem was corrected.
 
 Note that being in "next" is not a guarantee to appear in the next
 release, nor even in any future release.  There were cases that topics
