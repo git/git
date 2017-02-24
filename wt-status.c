@@ -121,7 +121,7 @@ static void status_printf_more(struct wt_status *s, const char *color,
 
 void wt_status_prepare(struct wt_status *s)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	memset(s, 0, sizeof(*s));
 	memcpy(s->color_palette, default_wt_status_colors,
@@ -129,7 +129,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 	s->use_color = -1;
 	s->relative_paths = 1;
-	s->branch = resolve_refdup("HEAD", 0, sha1, NULL);
+	s->branch = resolve_refdup("HEAD", 0, oid.hash, NULL);
 	s->reference = "HEAD";
 	s->fp = stdout;
 	s->index_file = get_index_file();
@@ -1115,16 +1115,16 @@ static void abbrev_sha1_in_line(struct strbuf *line)
 
 	split = strbuf_split_max(line, ' ', 3);
 	if (split[0] && split[1]) {
-		unsigned char sha1[20];
+		struct object_id oid;
 
 		/*
 		 * strbuf_split_max left a space. Trim it and re-add
 		 * it after abbreviation.
 		 */
 		strbuf_trim(split[1]);
-		if (!get_sha1(split[1]->buf, sha1)) {
+		if (!get_oid(split[1]->buf, &oid)) {
 			strbuf_reset(split[1]);
-			strbuf_add_unique_abbrev(split[1], sha1,
+			strbuf_add_unique_abbrev(split[1], oid.hash,
 						 DEFAULT_ABBREV);
 			strbuf_addch(split[1], ' ');
 			strbuf_reset(line);
@@ -1340,7 +1340,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 static char *get_branch(const struct worktree *wt, const char *path)
 {
 	struct strbuf sb = STRBUF_INIT;
-	unsigned char sha1[20];
+	struct object_id oid;
 	const char *branch_name;
 
 	if (strbuf_read_file(&sb, worktree_git_path(wt, "%s", path), 0) <= 0)
@@ -1354,9 +1354,9 @@ static char *get_branch(const struct worktree *wt, const char *path)
 		strbuf_remove(&sb, 0, branch_name - sb.buf);
 	else if (starts_with(sb.buf, "refs/"))
 		;
-	else if (!get_sha1_hex(sb.buf, sha1)) {
+	else if (!get_oid_hex(sb.buf, &oid)) {
 		strbuf_reset(&sb);
-		strbuf_add_unique_abbrev(&sb, sha1, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&sb, oid.hash, DEFAULT_ABBREV);
 	} else if (!strcmp(sb.buf, "detached HEAD")) /* rebase */
 		goto got_nothing;
 	else			/* bisect */
@@ -1370,10 +1370,10 @@ got_nothing:
 
 struct grab_1st_switch_cbdata {
 	struct strbuf buf;
-	unsigned char nsha1[20];
+	struct object_id noid;
 };
 
-static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
+static int grab_1st_switch(struct object_id *ooid, struct object_id *noid,
 			   const char *email, unsigned long timestamp, int tz,
 			   const char *message, void *cb_data)
 {
@@ -1387,13 +1387,13 @@ static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
 		return 0;
 	target += strlen(" to ");
 	strbuf_reset(&cb->buf);
-	hashcpy(cb->nsha1, nsha1);
+	oidcpy(&cb->noid, noid);
 	end = strchrnul(target, '\n');
 	strbuf_add(&cb->buf, target, end - target);
 	if (!strcmp(cb->buf.buf, "HEAD")) {
 		/* HEAD is relative. Resolve it to the right reflog entry. */
 		strbuf_reset(&cb->buf);
-		strbuf_add_unique_abbrev(&cb->buf, nsha1, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&cb->buf, noid->hash, DEFAULT_ABBREV);
 	}
 	return 1;
 }
@@ -1402,7 +1402,7 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 {
 	struct grab_1st_switch_cbdata cb;
 	struct commit *commit;
-	unsigned char sha1[20];
+	struct object_id oid;
 	char *ref = NULL;
 
 	strbuf_init(&cb.buf, 0);
@@ -1411,22 +1411,22 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 		return;
 	}
 
-	if (dwim_ref(cb.buf.buf, cb.buf.len, sha1, &ref) == 1 &&
+	if (dwim_ref(cb.buf.buf, cb.buf.len, oid.hash, &ref) == 1 &&
 	    /* sha1 is a commit? match without further lookup */
-	    (!hashcmp(cb.nsha1, sha1) ||
+	    (!oidcmp(&cb.noid, &oid) ||
 	     /* perhaps sha1 is a tag, try to dereference to a commit */
-	     ((commit = lookup_commit_reference_gently(sha1, 1)) != NULL &&
-	      !hashcmp(cb.nsha1, commit->object.oid.hash)))) {
+	     ((commit = lookup_commit_reference_gently(oid.hash, 1)) != NULL &&
+	      !oidcmp(&cb.noid, &commit->object.oid)))) {
 		const char *from = ref;
 		if (!skip_prefix(from, "refs/tags/", &from))
 			skip_prefix(from, "refs/remotes/", &from);
 		state->detached_from = xstrdup(from);
 	} else
 		state->detached_from =
-			xstrdup(find_unique_abbrev(cb.nsha1, DEFAULT_ABBREV));
-	hashcpy(state->detached_sha1, cb.nsha1);
-	state->detached_at = !get_sha1("HEAD", sha1) &&
-			     !hashcmp(sha1, state->detached_sha1);
+			xstrdup(find_unique_abbrev(cb.noid.hash, DEFAULT_ABBREV));
+	hashcpy(state->detached_sha1, cb.noid.hash);
+	state->detached_at = !get_oid("HEAD", &oid) &&
+			     !hashcmp(oid.hash, state->detached_sha1);
 
 	free(ref);
 	strbuf_release(&cb.buf);
@@ -1476,22 +1476,22 @@ void wt_status_get_state(struct wt_status_state *state,
 			 int get_detached_from)
 {
 	struct stat st;
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	if (!stat(git_path_merge_head(), &st)) {
 		state->merge_in_progress = 1;
 	} else if (wt_status_check_rebase(NULL, state)) {
 		;		/* all set */
 	} else if (!stat(git_path_cherry_pick_head(), &st) &&
-			!get_sha1("CHERRY_PICK_HEAD", sha1)) {
+			!get_oid("CHERRY_PICK_HEAD", &oid)) {
 		state->cherry_pick_in_progress = 1;
-		hashcpy(state->cherry_pick_head_sha1, sha1);
+		hashcpy(state->cherry_pick_head_sha1, oid.hash);
 	}
 	wt_status_check_bisect(NULL, state);
 	if (!stat(git_path_revert_head(), &st) &&
-	    !get_sha1("REVERT_HEAD", sha1)) {
+	    !get_oid("REVERT_HEAD", &oid)) {
 		state->revert_in_progress = 1;
-		hashcpy(state->revert_head_sha1, sha1);
+		hashcpy(state->revert_head_sha1, oid.hash);
 	}
 
 	if (get_detached_from)

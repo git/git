@@ -53,7 +53,7 @@ static void loose_garbage(const char *path)
 		report_garbage(PACKDIR_FILE_GARBAGE, path);
 }
 
-static int count_loose(const unsigned char *sha1, const char *path, void *data)
+static int count_loose(const struct object_id *oid, const char *path, void *data)
 {
 	struct stat st;
 
@@ -62,7 +62,7 @@ static int count_loose(const unsigned char *sha1, const char *path, void *data)
 	else {
 		loose_size += on_disk_bytes(st);
 		loose++;
-		if (verbose && has_sha1_pack(sha1))
+		if (verbose && has_sha1_pack(oid->hash))
 			packed_loose++;
 	}
 	return 0;
