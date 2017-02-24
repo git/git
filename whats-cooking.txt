@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2017, #07; Thu, 23)
-X-master-at: 80ba04ed9b07c34af9cc644f2183b3b80fd81744
-X-next-at: cbe923c8da4a7f6cf4861a317ae620497394d507
+Subject: What's cooking in git.git (Feb 2017, #08; Fri, 24)
+X-master-at: e7e07d5a4fcc2a203d9873968ad3e6bd4d7419d7
+X-next-at: 67fe103aa68d54c3706f4a9cdf52c50f21979829
 
-What's cooking in git.git (Feb 2017, #07; Thu, 23)
+What's cooking in git.git (Feb 2017, #08; Fri, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,31 +12,26 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
+v2.12 has been tagged.  Special thanks go to Dscho, who (among other
+things) laid the groundwork for speeding up "rebase -i" (which I am
+hoping to be finalized in the upcoming cycle) and rewrote "difftool"
+in C and to Peff who was all over the place cleaning the code up,
+fixing surfaced and unsurfaced bugs.  Thanks for everybody else,
+too, who worked hard on the release.
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* js/curl-empty-auth-set-by-default (2017-02-22) 1 commit
- - http(s): automatically try NTLM authentication first
-
- Flip "http.emptyAuth" on by default to help OOB experience for
- users of HTTP Negotiate authentication scheme.
-
- Under discussion.
- cf. <20170222233419.q3fxqmrscosumbjm@genre.crustytoothpaste.net>
-
+[Graduated to "master"]
 
 * bc/blame-doc-fix (2017-02-22) 1 commit
   (merged to 'next' on 2017-02-22 at 81c0ff2283)
  + Documentation: use brackets for optional arguments
 
  Doc update.
-
- Will merge to 'master'.
 
 
 * bc/worktree-doc-fix-detached (2017-02-22) 1 commit
@@ -45,7 +40,26 @@ of the repositories listed at
 
  Doc update.
 
- Will merge to 'master'.
+
+* dr/doc-check-ref-format-normalize (2017-02-21) 1 commit
+  (merged to 'next' on 2017-02-21 at 5e88b7a93d)
+ + git-check-ref-format: clarify documentation for --normalize
+
+ Doc update.
+
+
+* gp/document-dotfiles-in-templates-are-not-copied (2017-02-17) 1 commit
+  (merged to 'next' on 2017-02-21 at bbfa2bb7d4)
+ + init: document dotfiles exclusion on template copy
+
+ Doc update.
+
+
+* ps/doc-gc-aggressive-depth-update (2017-02-24) 1 commit
+  (merged to 'next' on 2017-02-24 at f023322bbb)
+ + docs/git-gc: fix default value for `--aggressiveDepth`
+
+ Doc update.
 
 
 * rt/align-add-i-help-text (2017-02-22) 1 commit
@@ -54,52 +68,31 @@ of the repositories listed at
 
  Doc update.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* dp/filter-branch-prune-empty (2017-02-23) 4 commits
+ - p7000: add test for filter-branch with --prune-empty
+ - filter-branch: fix --prune-empty on parentless commits
+ - t7003: ensure --prune-empty removes entire branch when applicable
+ - t7003: ensure --prune-empty can prune root commit
+
+ "git filter-branch --prune-empty" drops a single-parent commit that
+ becomes a no-op, but did not drop a root commit whose tree is empty.
+
+ Needs review.
 
 
-* jh/send-email-one-cc (2017-02-23) 1 commit
- - send-email: only allow one address per body tag
+* jc/config-case-cmdline-take-2 (2017-02-23) 2 commits
+ - config: use git_config_parse_key() in git_config_parse_parameter()
+ - config: move a few helper functions up
 
- "Cc:" on the trailer part does not have to conform to RFC strictly,
- unlike in the e-mail header.  "git send-email" has been updated to
- ignore anything after '>' when picking addresses, to allow non-address
- cruft like " # stable 4.4" after the address.
-
- Will merge to and then cook in 'next'.
-
-
-* jk/http-auth (2017-02-23) 1 commit
- - http: restrict auth methods to what the server advertises
-
- Reduce authentication round-trip over HTTP when the server supports
- just a single authentication method.
-
- Will merge to and then cook in 'next'.
- There is a follow-up that would supersede js/curl-empty-auth-set-by-default
- topic; as it expected to be refined further, it is not queued here yet.
-
-
-* jk/ident-empty (2017-02-23) 4 commits
- - ident: do not ignore empty config name/email
- - ident: reject all-crud ident name
- - ident: handle NULL email when complaining of empty name
- - ident: mark error messages for translation
-
- user.email that consists of only cruft chars should have
- consistently errored out, but didn't.
+ The code to parse "git -c VAR=VAL cmd" and set configuration
+ variable for the duration of cmd had two small bugs, which have
+ been fixed.
 
  Will merge to and then cook in 'next'.
-
-
-* jt/upload-pack-error-report (2017-02-23) 1 commit
- - upload-pack: report "not our ref" to client
-
- "git upload-pack", which is a counter-part of "git fetch", did not
- report a request for a ref that was not advertised as invalid.
- This is generally not a problem (because "git fetch" will stop
- before making such a request), but is the right thing to do.
-
- Will merge to and then cook in 'next'.
+ This supersedes jc/config-case-cmdline topic.
 
 --------------------------------------------------
 [Stalled]
@@ -236,6 +229,61 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* js/curl-empty-auth-set-by-default (2017-02-22) 1 commit
+ - http(s): automatically try NTLM authentication first
+
+ Flip "http.emptyAuth" on by default to help OOB experience for
+ users of HTTP Negotiate authentication scheme.
+
+ Under discussion.
+ cf. <20170222233419.q3fxqmrscosumbjm@genre.crustytoothpaste.net>
+
+
+* jh/send-email-one-cc (2017-02-23) 1 commit
+ - send-email: only allow one address per body tag
+
+ "Cc:" on the trailer part does not have to conform to RFC strictly,
+ unlike in the e-mail header.  "git send-email" has been updated to
+ ignore anything after '>' when picking addresses, to allow non-address
+ cruft like " # stable 4.4" after the address.
+
+ Will merge to and then cook in 'next'.
+
+
+* jk/http-auth (2017-02-23) 1 commit
+ - http: restrict auth methods to what the server advertises
+
+ Reduce authentication round-trip over HTTP when the server supports
+ just a single authentication method.
+
+ Will merge to and then cook in 'next'.
+ There is a follow-up that would supersede js/curl-empty-auth-set-by-default
+ topic; as it expected to be refined further, it is not queued here yet.
+
+
+* jk/ident-empty (2017-02-23) 4 commits
+ - ident: do not ignore empty config name/email
+ - ident: reject all-crud ident name
+ - ident: handle NULL email when complaining of empty name
+ - ident: mark error messages for translation
+
+ user.email that consists of only cruft chars should have
+ consistently errored out, but didn't.
+
+ Will merge to and then cook in 'next'.
+
+
+* jt/upload-pack-error-report (2017-02-23) 1 commit
+ - upload-pack: report "not our ref" to client
+
+ "git upload-pack", which is a counter-part of "git fetch", did not
+ report a request for a ref that was not advertised as invalid.
+ This is generally not a problem (because "git fetch" will stop
+ before making such a request), but is the right thing to do.
+
+ Will merge to and then cook in 'next'.
+
+
 * jk/tempfile-ferror-fclose-confusion (2017-02-17) 1 commit
   (merged to 'next' on 2017-02-21 at 479ba0131f)
  + tempfile: set errno to a known value before calling ferror()
@@ -260,24 +308,6 @@ of the repositories listed at
  cf. <3c801e54-28c7-52d0-6915-ee7aaf1d89c9@gmail.com>
 
 
-* dr/doc-check-ref-format-normalize (2017-02-21) 1 commit
-  (merged to 'next' on 2017-02-21 at 5e88b7a93d)
- + git-check-ref-format: clarify documentation for --normalize
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* gp/document-dotfiles-in-templates-are-not-copied (2017-02-17) 1 commit
-  (merged to 'next' on 2017-02-21 at bbfa2bb7d4)
- + init: document dotfiles exclusion on template copy
-
- Doc update.
-
- Will merge to 'master'.
-
-
 * jc/config-case-cmdline (2017-02-21) 3 commits
   (merged to 'next' on 2017-02-21 at 63d3652c77)
  + config: squelch stupid compiler
@@ -289,7 +319,7 @@ of the repositories listed at
  variable for the duration of cmd had two small bugs, which have
  been fixed.
 
- Will cook in 'next'.
+ Will discard.
 
 
 * jh/memihash-opt (2017-02-17) 5 commits
@@ -464,13 +494,13 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* sb/checkout-recurse-submodules (2017-02-16) 15 commits
+* sb/checkout-recurse-submodules (2017-02-23) 15 commits
  - builtin/checkout: add --recurse-submodules switch
  - entry.c: update submodules when interesting
- - read-cache: remove_marked_cache_entries to wipe selected submodules.
+ - read-cache, remove_marked_cache_entries: wipe selected submodules.
  - unpack-trees: check if we can perform the operation for submodules
  - unpack-trees: pass old oid to verify_clean_submodule
- - update submodules: add submodule_go_from_to
+ - update submodules: add submodule_move_head
  - update submodules: move up prepare_submodule_repo_env
  - submodules: introduce check to see whether to touch a submodule
  - update submodules: add a config option to determine if submodules are updated
