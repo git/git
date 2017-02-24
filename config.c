@@ -2547,10 +2547,14 @@ int parse_config_key(const char *var,
 
 	/* Did we have a subsection at all? */
 	if (dot == var) {
-		*subsection = NULL;
-		*subsection_len = 0;
+		if (subsection) {
+			*subsection = NULL;
+			*subsection_len = 0;
+		}
 	}
 	else {
+		if (!subsection)
+			return -1;
 		*subsection = var + 1;
 		*subsection_len = dot - *subsection;
 	}
