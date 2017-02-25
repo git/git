@@ -2351,6 +2351,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	while (delta_stack_nr) {
 		void *delta_data;
 		void *base = data;
+		void *external_base = NULL;
 		unsigned long delta_size, base_size = size;
 		int i;
 
@@ -2377,6 +2378,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 				      p->pack_name);
 				mark_bad_packed_object(p, base_sha1);
 				base = read_object(base_sha1, &type, &base_size);
+				external_base = base;
 			}
 		}
 
@@ -2395,6 +2397,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 			      "at offset %"PRIuMAX" from %s",
 			      (uintmax_t)curpos, p->pack_name);
 			data = NULL;
+			free(external_base);
 			continue;
 		}
 
@@ -2414,6 +2417,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 			error("failed to apply delta");
 
 		free(delta_data);
+		free(external_base);
 	}
 
 	*final_type = type;
