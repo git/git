@@ -1354,8 +1354,8 @@ static struct commit_extra_header *read_commit_extra_header_lines(
 		strbuf_reset(&buf);
 		it = NULL;
 
-		eof = strchr(line, ' ');
-		if (next <= eof)
+		eof = memchr(line, ' ', next - line);
+		if (!eof)
 			eof = next;
 
 		if (standard_header_field(line, eof - line) ||
