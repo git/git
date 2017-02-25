@@ -2238,7 +2238,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		}
 
 
-		if (handle_revision_arg(arg, revs, flags, revarg_opt)) {
+		if (!handle_revision_arg(arg, revs, flags, revarg_opt))
+			got_rev_arg = 1;
+		else {
 			int j;
 			if (seen_dashdash || *arg == '^')
 				die("bad revision '%s'", arg);
@@ -2255,8 +2257,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			append_prune_data(&prune_data, argv + i);
 			break;
 		}
-		else
-			got_rev_arg = 1;
 	}
 
 	if (prune_data.nr) {
