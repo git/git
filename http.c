@@ -334,7 +334,10 @@ static int http_options(const char *var, const char *value, void *cb)
 		return git_config_string(&user_agent, var, value);
 
 	if (!strcmp("http.emptyauth", var)) {
-		curl_empty_auth = git_config_bool(var, value);
+		if (value && !strcmp("auto", value))
+			curl_empty_auth = -1;
+		else
+			curl_empty_auth = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -385,29 +388,37 @@ static int http_options(const char *var, const char *value, void *cb)
 
 static int curl_empty_auth_enabled(void)
 {
-	if (curl_empty_auth < 0) {
-#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
-		/*
-		 * In the automatic case, kick in the empty-auth
-		 * hack as long as we would potentially try some
-		 * method more exotic than "Basic".
-		 *
-		 * But only do so when this is _not_ our initial
-		 * request, as we would not then yet know what
-		 * methods are available.
-		 */
-		return http_auth_methods_restricted &&
-		       http_auth_methods != CURLAUTH_BASIC;
-#else
-		/*
-		 * Our libcurl is too old to do AUTH_ANY in the first place;
-		 * just default to turning the feature off.
-		 */
-		return 0;
-#endif
-	}
+	if (curl_empty_auth >= 0)
+		return curl_empty_auth;
 
-	return curl_empty_auth;
+#ifndef LIBCURL_CAN_HANDLE_AUTH_ANY
+	/*
+	 * Our libcurl is too old to do AUTH_ANY in the first place;
+	 * just default to turning the feature off.
+	 */
+#else
+	/*
+	 * In the automatic case, kick in the empty-auth
+	 * hack as long as we would potentially try some
+	 * method more exotic than "Basic".
+	 *
+	 * But only do this when this is our second or
+	 * subsequent * request, as by then we know what
+	 * methods are available.
+	 */
+	if (http_auth_methods_restricted)
+		switch (http_auth_methods) {
+		case CURLAUTH_BASIC:
+		case CURLAUTH_DIGEST:
+#ifdef CURLAUTH_DIGEST_IE
+		case CURLAUTH_DIGEST_IE:
+#endif
+			return 0;
+		default:
+			return 1;
+		}
+#endif
+	return 0;
 }
 
 static void init_curl_http_auth(CURL *result)
