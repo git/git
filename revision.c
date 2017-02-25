@@ -2203,6 +2203,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
+		int maybe_opt = 0;
 		if (*arg == '-') {
 			int opts;
 
@@ -2232,15 +2233,17 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			}
 			if (opts < 0)
 				exit(128);
-			/* arg is an unknown option */
-			argv[left++] = arg;
-			continue;
+			maybe_opt = 1;
 		}
 
 
 		if (!handle_revision_arg(arg, revs, flags, revarg_opt))
 			got_rev_arg = 1;
-		else {
+		else if (maybe_opt) {
+			/* arg is an unknown option */
+			argv[left++] = arg;
+			continue;
+		} else {
 			int j;
 			if (seen_dashdash || *arg == '^')
 				die("bad revision '%s'", arg);
