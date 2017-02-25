@@ -623,6 +623,32 @@ static int run_argv(int *argcp, const char ***argv)
 		 */
 		if (!done_alias)
 			handle_builtin(*argcp, *argv);
+		else if (get_builtin(**argv)) {
+			struct argv_array args = ARGV_ARRAY_INIT;
+			int i;
+
+			argv_array_push(&args, "git");
+			for (i = 0; i < *argcp; i++)
+				argv_array_push(&args, (*argv)[i]);
+
+			if (get_super_prefix())
+				die("%s doesn't support --super-prefix", args.argv[0]);
+
+			if (use_pager == -1)
+				use_pager = check_pager_config(args.argv[0]);
+			commit_pager_choice();
+
+			trace_argv_printf(args.argv, "trace: exec:");
+
+			/*
+			 * if we fail because the command is not found, it is
+			 * OK to return. Otherwise, we just pass along the status code.
+			 */
+			i = run_command_v_opt(args.argv, RUN_SILENT_EXEC_FAILURE | RUN_CLEAN_ON_EXIT);
+			if (i >= 0 || errno != ENOENT)
+				exit(i);
+			die("could not execute builtin %s", args.argv[1]);
+		}
 
 		/* .. then try the external ones */
 		execv_dashed_external(*argv);
