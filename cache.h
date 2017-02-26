@@ -1375,6 +1375,7 @@ struct checkout {
 
 #define TEMPORARY_FILENAME_LENGTH 25
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
+extern int checkout_delayed_entries(const struct checkout *state);
 
 struct cache_def {
 	struct strbuf path;
