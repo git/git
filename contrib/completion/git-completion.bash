@@ -1207,6 +1207,7 @@ _git_describe ()
 		__gitcomp "
 			--all --tags --contains --abbrev= --candidates=
 			--exact-match --debug --long --match --always --first-parent
+			--exclude
 			"
 		return
 	esac
