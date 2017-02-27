@@ -1263,11 +1263,12 @@ int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 {
 	char *at;
 	const char *start;
-	int len = interpret_nth_prior_checkout(name, namelen, buf);
+	int len;
 
 	if (!namelen)
 		namelen = strlen(name);
 
+	len = interpret_nth_prior_checkout(name, namelen, buf);
 	if (!len) {
 		return len; /* syntax Ok, not enough switches */
 	} else if (len > 0) {
