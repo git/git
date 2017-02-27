@@ -725,7 +725,7 @@ test_expect_success 'rename a remote' '
 	(
 		cd four &&
 		git remote rename origin upstream &&
-		rmdir .git/refs/remotes/origin &&
+		test -z "$(git for-each-ref refs/remotes/origin)" &&
 		test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/master" &&
 		test "$(git rev-parse upstream/master)" = "$(git rev-parse master)" &&
 		test "$(git config remote.upstream.fetch)" = "+refs/heads/*:refs/remotes/upstream/*" &&
