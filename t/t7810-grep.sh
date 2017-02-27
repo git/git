@@ -982,6 +982,72 @@ test_expect_success 'grep -e -- -- path' '
 	test_cmp expected actual
 '
 
+test_expect_success 'dashdash disambiguates rev as rev' '
+	test_when_finished "rm -f master" &&
+	echo content >master &&
+	echo master:hello.c >expect &&
+	git grep -l o master -- hello.c >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'dashdash disambiguates pathspec as pathspec' '
+	test_when_finished "git rm -f master" &&
+	echo content >master &&
+	git add master &&
+	echo master:content >expect &&
+	git grep o -- master >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'report bogus arg without dashdash' '
+	test_must_fail git grep o does-not-exist
+'
+
+test_expect_success 'report bogus rev with dashdash' '
+	test_must_fail git grep o hello.c --
+'
+
+test_expect_success 'allow non-existent path with dashdash' '
+	# We need a real match so grep exits with success.
+	tree=$(git ls-tree HEAD |
+	       sed s/hello.c/not-in-working-tree/ |
+	       git mktree) &&
+	git grep o "$tree" -- not-in-working-tree
+'
+
+test_expect_success 'grep --no-index pattern -- path' '
+	rm -fr non &&
+	mkdir -p non/git &&
+	(
+		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+		echo hello >hello &&
+		echo goodbye >goodbye &&
+		echo hello:hello >expect &&
+		git grep --no-index o -- hello >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'grep --no-index complains of revs' '
+	test_must_fail git grep --no-index o master -- 2>err &&
+	test_i18ngrep "cannot be used with revs" err
+'
+
+test_expect_success 'grep --no-index prefers paths to revs' '
+	test_when_finished "rm -f master" &&
+	echo content >master &&
+	echo master:content >expect &&
+	git grep --no-index o master >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'grep --no-index does not "diagnose" revs' '
+	test_must_fail git grep --no-index o :1:hello.c 2>err &&
+	test_i18ngrep ! -i "did you mean" err
+'
+
 cat >expected <<EOF
 hello.c:int main(int argc, const char **argv)
 hello.c:	printf("Hello world.\n");
