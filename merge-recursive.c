@@ -1061,16 +1061,20 @@ static int merge_file_one(struct merge_options *o,
 }
 
 static int handle_change_delete(struct merge_options *o,
-				 const char *path,
+				 const char *path, const char *old_path,
 				 const struct object_id *o_oid, int o_mode,
-				 const struct object_id *a_oid, int a_mode,
-				 const struct object_id *b_oid, int b_mode,
+				 const struct object_id *changed_oid,
+				 int changed_mode,
+				 const char *change_branch,
+				 const char *delete_branch,
 				 const char *change, const char *change_past)
 {
-	char *renamed = NULL;
+	char *alt_path = NULL;
+	const char *update_path = path;
 	int ret = 0;
+
 	if (dir_in_way(path, !o->call_depth, 0)) {
-		renamed = unique_path(o, path, a_oid ? o->branch1 : o->branch2);
+		update_path = alt_path = unique_path(o, path, change_branch);
 	}
 
 	if (o->call_depth) {
@@ -1081,43 +1085,43 @@ static int handle_change_delete(struct merge_options *o,
 		 */
 		ret = remove_file_from_cache(path);
 		if (!ret)
-			ret = update_file(o, 0, o_oid, o_mode,
-					  renamed ? renamed : path);
-	} else if (!a_oid) {
-		if (!renamed) {
-			output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
-			       "and %s in %s. Version %s of %s left in tree."),
-			       change, path, o->branch1, change_past,
-			       o->branch2, o->branch2, path);
-			ret = update_file(o, 0, b_oid, b_mode, path);
-		} else {
-			output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
-			       "and %s in %s. Version %s of %s left in tree at %s."),
-			       change, path, o->branch1, change_past,
-			       o->branch2, o->branch2, path, renamed);
-			ret = update_file(o, 0, b_oid, b_mode, renamed);
-		}
+			ret = update_file(o, 0, o_oid, o_mode, update_path);
 	} else {
-		if (!renamed) {
-			output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
-			       "and %s in %s. Version %s of %s left in tree."),
-			       change, path, o->branch2, change_past,
-			       o->branch1, o->branch1, path);
+		if (!alt_path) {
+			if (!old_path) {
+				output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
+				       "and %s in %s. Version %s of %s left in tree."),
+				       change, path, delete_branch, change_past,
+				       change_branch, change_branch, path);
+			} else {
+				output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
+				       "and %s to %s in %s. Version %s of %s left in tree."),
+				       change, old_path, delete_branch, change_past, path,
+				       change_branch, change_branch, path);
+			}
 		} else {
-			output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
-			       "and %s in %s. Version %s of %s left in tree at %s."),
-			       change, path, o->branch2, change_past,
-			       o->branch1, o->branch1, path, renamed);
-			ret = update_file(o, 0, a_oid, a_mode, renamed);
+			if (!old_path) {
+				output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
+				       "and %s in %s. Version %s of %s left in tree at %s."),
+				       change, path, delete_branch, change_past,
+				       change_branch, change_branch, path, alt_path);
+			} else {
+				output(o, 1, _("CONFLICT (%s/delete): %s deleted in %s "
+				       "and %s to %s in %s. Version %s of %s left in tree at %s."),
+				       change, old_path, delete_branch, change_past, path,
+				       change_branch, change_branch, path, alt_path);
+			}
 		}
 		/*
-		 * No need to call update_file() on path when !renamed, since
-		 * that would needlessly touch path.  We could call
-		 * update_file_flags() with update_cache=0 and update_wd=0,
-		 * but that's a no-op.
+		 * No need to call update_file() on path when change_branch ==
+		 * o->branch1 && !alt_path, since that would needlessly touch
+		 * path.  We could call update_file_flags() with update_cache=0
+		 * and update_wd=0, but that's a no-op.
 		 */
+		if (change_branch != o->branch1 || alt_path)
+			ret = update_file(o, 0, changed_oid, changed_mode, update_path);
 	}
-	free(renamed);
+	free(alt_path);
 
 	return ret;
 }
@@ -1125,28 +1129,17 @@ static int handle_change_delete(struct merge_options *o,
 static int conflict_rename_delete(struct merge_options *o,
 				   struct diff_filepair *pair,
 				   const char *rename_branch,
-				   const char *other_branch)
+				   const char *delete_branch)
 {
 	const struct diff_filespec *orig = pair->one;
 	const struct diff_filespec *dest = pair->two;
-	const struct object_id *a_oid = NULL;
-	const struct object_id *b_oid = NULL;
-	int a_mode = 0;
-	int b_mode = 0;
-
-	if (rename_branch == o->branch1) {
-		a_oid = &dest->oid;
-		a_mode = dest->mode;
-	} else {
-		b_oid = &dest->oid;
-		b_mode = dest->mode;
-	}
 
 	if (handle_change_delete(o,
 				 o->call_depth ? orig->path : dest->path,
+				 o->call_depth ? NULL : orig->path,
 				 &orig->oid, orig->mode,
-				 a_oid, a_mode,
-				 b_oid, b_mode,
+				 &dest->oid, dest->mode,
+				 rename_branch, delete_branch,
 				 _("rename"), _("renamed")))
 		return -1;
 
@@ -1662,11 +1655,27 @@ static int handle_modify_delete(struct merge_options *o,
 				 struct object_id *a_oid, int a_mode,
 				 struct object_id *b_oid, int b_mode)
 {
+	const char *modify_branch, *delete_branch;
+	struct object_id *changed_oid;
+	int changed_mode;
+
+	if (a_oid) {
+		modify_branch = o->branch1;
+		delete_branch = o->branch2;
+		changed_oid = a_oid;
+		changed_mode = a_mode;
+	} else {
+		modify_branch = o->branch2;
+		delete_branch = o->branch1;
+		changed_oid = b_oid;
+		changed_mode = b_mode;
+	}
+
 	return handle_change_delete(o,
-				    path,
+				    path, NULL,
 				    o_oid, o_mode,
-				    a_oid, a_mode,
-				    b_oid, b_mode,
+				    changed_oid, changed_mode,
+				    modify_branch, delete_branch,
 				    _("modify"), _("modified"));
 }
 
