@@ -1752,7 +1752,7 @@ static int update_branch(struct branch *b)
 
 	if (is_null_sha1(b->sha1)) {
 		if (b->delete)
-			delete_ref(b->name, NULL, 0);
+			delete_ref(NULL, b->name, NULL, 0);
 		return 0;
 	}
 	if (read_ref(b->name, old_sha1))

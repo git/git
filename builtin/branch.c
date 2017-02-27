@@ -252,7 +252,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			goto next;
 		}
 
-		if (delete_ref(name, is_null_sha1(sha1) ? NULL : sha1,
+		if (delete_ref(NULL, name, is_null_sha1(sha1) ? NULL : sha1,
 			       REF_NODEREF)) {
 			error(remote_branch
 			      ? _("Error deleting remote-tracking branch '%s'")
@@ -471,13 +471,14 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 
 	if (rename_ref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch rename failed"));
-	strbuf_release(&logmsg);
 
 	if (recovery)
 		warning(_("Renamed a misnamed branch '%s' away"), oldref.buf + 11);
 
-	if (replace_each_worktree_head_symref(oldref.buf, newref.buf))
+	if (replace_each_worktree_head_symref(oldref.buf, newref.buf, logmsg.buf))
 		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
+
+	strbuf_release(&logmsg);
 
 	strbuf_addf(&oldsection, "branch.%s", oldref.buf + 11);
 	strbuf_release(&oldref);

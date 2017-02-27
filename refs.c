@@ -592,8 +592,8 @@ static int delete_pseudoref(const char *pseudoref, const unsigned char *old_sha1
 	return 0;
 }
 
-int delete_ref(const char *refname, const unsigned char *old_sha1,
-	       unsigned int flags)
+int delete_ref(const char *msg, const char *refname,
+	       const unsigned char *old_sha1, unsigned int flags)
 {
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
@@ -604,7 +604,7 @@ int delete_ref(const char *refname, const unsigned char *old_sha1,
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
 	    ref_transaction_delete(transaction, refname, old_sha1,
-				   flags, NULL, &err) ||
+				   flags, msg, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		error("%s", err.buf);
 		ref_transaction_free(transaction);

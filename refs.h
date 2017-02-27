@@ -276,8 +276,8 @@ int reflog_exists(const char *refname);
  * exists, regardless of its old value. It is an error for old_sha1 to
  * be NULL_SHA1. flags is passed through to ref_transaction_delete().
  */
-int delete_ref(const char *refname, const unsigned char *old_sha1,
-	       unsigned int flags);
+int delete_ref(const char *msg, const char *refname,
+	       const unsigned char *old_sha1, unsigned int flags);
 
 /*
  * Delete the specified references. If there are any problems, emit
@@ -334,7 +334,8 @@ int create_symref(const char *refname, const char *target, const char *logmsg);
  * $GIT_DIR points to.
  * Return 0 if successful, non-zero otherwise.
  * */
-int set_worktree_head_symref(const char *gitdir, const char *target);
+int set_worktree_head_symref(const char *gitdir, const char *target,
+			     const char *logmsg);
 
 enum action_on_err {
 	UPDATE_REFS_MSG_ON_ERR,

@@ -1049,7 +1049,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	} else {
 		write_state_text(state, "abort-safety", "");
 		if (!state->rebasing)
-			delete_ref("ORIG_HEAD", NULL, 0);
+			delete_ref(NULL, "ORIG_HEAD", NULL, 0);
 	}
 
 	/*
@@ -2172,7 +2172,7 @@ static void am_abort(struct am_state *state)
 				has_curr_head ? &curr_head : NULL, 0,
 				UPDATE_REFS_DIE_ON_ERR);
 	else if (curr_branch)
-		delete_ref(curr_branch, NULL, REF_NODEREF);
+		delete_ref(NULL, curr_branch, NULL, REF_NODEREF);
 
 	free(curr_branch);
 	am_destroy(state);
