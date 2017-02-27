@@ -44,7 +44,6 @@ struct strategy {
 
 static const char * const builtin_merge_usage[] = {
 	N_("git merge [<options>] [<commit>...]"),
-	N_("git merge [<options>] <msg> HEAD <commit>"),
 	N_("git merge --abort"),
 	N_("git merge --continue"),
 	NULL
@@ -634,9 +633,10 @@ static void write_tree_trivial(unsigned char *sha1)
 
 static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			      struct commit_list *remoteheads,
-			      struct commit *head, const char *head_arg)
+			      struct commit *head)
 {
 	static struct lock_file lock;
+	const char *head_arg = "HEAD";
 
 	hold_locked_index(&lock, LOCK_DIE_ON_ERROR);
 	refresh_cache(REFRESH_QUIET);
@@ -851,24 +851,6 @@ static int suggest_conflicts(void)
 	printf(_("Automatic merge failed; "
 			"fix conflicts and then commit the result.\n"));
 	return 1;
-}
-
-static struct commit *is_old_style_invocation(int argc, const char **argv,
-					      const unsigned char *head)
-{
-	struct commit *second_token = NULL;
-	if (argc > 2) {
-		unsigned char second_sha1[20];
-
-		if (get_sha1(argv[1], second_sha1))
-			return NULL;
-		second_token = lookup_commit_reference_gently(second_sha1, 0);
-		if (!second_token)
-			die(_("'%s' is not a commit"), argv[1]);
-		if (hashcmp(second_token->object.oid.hash, head))
-			return NULL;
-	}
-	return second_token;
 }
 
 static int evaluate_result(void)
@@ -1122,7 +1104,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	unsigned char head_sha1[20];
 	struct commit *head_commit;
 	struct strbuf buf = STRBUF_INIT;
-	const char *head_arg;
 	int i, ret = 0, head_subsumed;
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
 	struct commit_list *common = NULL;
@@ -1262,34 +1243,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 
 	/*
-	 * This could be traditional "merge <msg> HEAD <commit>..."  and
-	 * the way we can tell it is to see if the second token is HEAD,
-	 * but some people might have misused the interface and used a
-	 * commit-ish that is the same as HEAD there instead.
-	 * Traditional format never would have "-m" so it is an
-	 * additional safety measure to check for it.
+	 * All the rest are the commits being merged; prepare
+	 * the standard merge summary message to be appended
+	 * to the given message.
 	 */
-	if (!have_message &&
-	    is_old_style_invocation(argc, argv, head_commit->object.oid.hash)) {
-		warning("old-style 'git merge <msg> HEAD <commit>' is deprecated.");
-		strbuf_addstr(&merge_msg, argv[0]);
-		head_arg = argv[1];
-		argv += 2;
-		argc -= 2;
-		remoteheads = collect_parents(head_commit, &head_subsumed,
-					      argc, argv, NULL);
-	} else {
-		/* We are invoked directly as the first-class UI. */
-		head_arg = "HEAD";
-
-		/*
-		 * All the rest are the commits being merged; prepare
-		 * the standard merge summary message to be appended
-		 * to the given message.
-		 */
-		remoteheads = collect_parents(head_commit, &head_subsumed,
-					      argc, argv, &merge_msg);
-	}
+	remoteheads = collect_parents(head_commit, &head_subsumed,
+				      argc, argv, &merge_msg);
 
 	if (!head_commit || !argc)
 		usage_with_options(builtin_merge_usage,
@@ -1515,7 +1474,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		ret = try_merge_strategy(use_strategies[i]->name,
 					 common, remoteheads,
-					 head_commit, head_arg);
+					 head_commit);
 		if (!option_commit && !ret) {
 			merge_was_ok = 1;
 			/*
@@ -1585,7 +1544,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		printf(_("Using the %s to prepare resolving by hand.\n"),
 			best_strategy);
 		try_merge_strategy(best_strategy, common, remoteheads,
-				   head_commit, head_arg);
+				   head_commit);
 	}
 
 	if (squash)
