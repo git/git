@@ -545,6 +545,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	unsigned int flags = 0;
 	const char *name = NULL;
 	struct object_context unused;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -599,7 +600,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--git-path")) {
 			if (!argv[i + 1])
 				die("--git-path requires an argument");
-			puts(git_path("%s", argv[i + 1]));
+			strbuf_reset(&buf);
+			puts(relative_path(git_path("%s", argv[i + 1]),
+					   prefix, &buf));
 			i++;
 			continue;
 		}
@@ -831,8 +834,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--git-common-dir")) {
-				const char *pfx = prefix ? prefix : "";
-				puts(prefix_filename(pfx, strlen(pfx), get_git_common_dir()));
+				strbuf_reset(&buf);
+				puts(relative_path(get_git_common_dir(),
+						   prefix, &buf));
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {
@@ -855,7 +859,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 					die(_("Could not read the index"));
 				if (the_index.split_index) {
 					const unsigned char *sha1 = the_index.split_index->base_sha1;
-					puts(git_path("sharedindex.%s", sha1_to_hex(sha1)));
+					const char *path = git_path("sharedindex.%s", sha1_to_hex(sha1));
+					strbuf_reset(&buf);
+					puts(relative_path(path, prefix, &buf));
 				}
 				continue;
 			}
@@ -907,6 +913,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			continue;
 		verify_filename(prefix, arg, 1);
 	}
+	strbuf_release(&buf);
 	if (verify) {
 		if (revs_count == 1) {
 			show_rev(type, sha1, name);
