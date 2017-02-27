@@ -1,0 +1,151 @@
+Git 2.13 Release Notes
+======================
+
+Backward compatibility notes.
+
+ * Use of an empty string as a pathspec element that is used for
+   'everything matches' is still warned and Git asks users to use a
+   more explicit '.' for that instead.  The hope is that existing
+   users will not mind this change, and eventually the warning can be
+   turned into a hard error, upgrading the deprecation into removal of
+   this (mis)feature.  That is not scheduled to happen in the upcoming
+   release (yet).
+
+ * The historical argument order "git merge <msg> HEAD <commit>..."
+   has been deprecated for quite some time, and will be removed in a
+   future release.
+
+
+Updates since v2.12
+-------------------
+
+UI, Workflows & Features
+
+ * "git describe" and "git name-rev" have been taught to take more
+   than one refname patterns to restrict the set of refs to base their
+   naming output on, and also learned to take negative patterns to
+   name refs not to be used for naming via their "--exclude" option.
+
+ * Deletion of a branch "foo/bar" could remove .git/refs/heads/foo
+   once there no longer is any other branch whose name begins with
+   "foo/", but we didn't do so so far.  Now we do.
+
+ * When "git merge" detects a path that is renamed in one history
+   while the other history deleted (or modified) it, it now reports
+   both paths to help the user understand what is going on in the two
+   histories being merged.
+
+ * The <url> part in "http.<url>.<variable>" configuration variable
+   can now be spelled with '*' that serves as wildcard.
+   E.g. "http.https://*.example.com.proxy" can be used to specify the
+   proxy used for https://a.example.com, https://b.example.com, etc.,
+   i.e. any host in the example.com domain.
+
+ * "git tag" did not leave useful message when adding a new entry to
+   reflog; this was left unnoticed for a long time because refs/tags/*
+   doesn't keep reflog by default.
+
+ * The "negative" pathspec feature was somewhat more cumbersome to use
+   than necessary in that its short-hand used "!" which needed to be
+   escaped from shells, and it required "exclude from what?" specified.
+
+ * The command line options for ssh invocation needs to be tweaked for
+   some implementations of SSH (e.g. PuTTY plink wants "-P <port>"
+   while OpenSSH wants "-p <port>" to specify port to connect to), and
+   the variant was guessed when GIT_SSH environment variable is used
+   to specify it.  The logic to guess now applies to the command
+   specified by the newer GIT_SSH_COMMAND and also core.sshcommand
+   configuration variable, and comes with an escape hatch for users to
+   deal with misdetected cases.
+
+ * The "--git-path", "--git-common-dir", and "--shared-index-path"
+   options of "git rev-parse" did not produce usable output.  They are
+   now updated to show the path to the correct file, relative to where
+   the caller is.
+
+ * "git diff -W" has been taught to handle the case where a new
+   function is added at the end of the file better.
+
+ * "git update-ref -d" and other operations to delete references did
+   not leave any entry in HEAD's reflog when the reference being
+   deleted was the current branch.  This is not a problem in practice
+   because you do not want to delete the branch you are currently on,
+   but caused renaming of the current branch to something else not to
+   be logged in a useful way.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The code to list branches in "git branch" has been consolidated
+   with the more generic ref-filter API.
+
+ * Resource usage while enumerating refs from alternate object store
+   has been optimized to help receiving end of "push" that hosts a
+   repository with many "forks".
+
+ * The gitattributes machinery is being taught to work better in a
+   multi-threaded environment.
+
+ * "git rebase -i" starts using the recently updated "sequencer" code.
+
+ * Code and design clean-up for the refs API.
+
+ * The preload-index code has been taught not to bother with the index
+   entries that are paths that are not checked out by "sparse checkout".
+
+ * Some warning() messages from "git clean" were updated to show the
+   errno from failed system calls.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.12
+-----------------
+
+Unless otherwise noted, all the fixes since v2.9 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * "git repack --depth=<n>" for a long time busted the specified depth
+   when reusing delta from existing packs.  This has been corrected.
+   (merge 42b766d765 jk/delta-chain-limit later to maint).
+
+ * The code to parse the command line "git grep <patterns>... <rev>
+   [[--] <pathspec>...]" has been cleaned up, and a handful of bugs
+   have been fixed (e.g. we used to check "--" if it is a rev).
+   (merge 131f3c96d2 jk/grep-no-index-fix later to maint).
+
+ * "git ls-remote" and "git archive --remote" are designed to work
+   without being in a directory under Git's control.  However, recent
+   updates revealed that we randomly look into a directory called
+   .git/ without actually doing necessary set-up when working in a
+   repository.  Stop doing so.
+   (merge 4b0c3c7735 jn/remote-helpers-with-git-dir later to maint).
+
+ * "git show-branch" expected there were only very short branch names
+   in the repository and used a fixed-length buffer to hold them
+   without checking for overflow.
+   (merge d3cc5f4c44 jk/show-branch-lift-name-len-limit later to maint).
+
+ * A caller of tempfile API that uses stdio interface to write to
+   files may ignore errors while writing, which is detected when
+   tempfile is closed (with a call to ferror()).  By that time, the
+   original errno that may have told us what went wrong is likely to
+   be long gone and was overwritten by an irrelevant value.
+   close_tempfile() now resets errno to EIO to make errno at least
+   predictable.
+   (merge 7e8c9355b7 jk/tempfile-ferror-fclose-confusion later to maint).
+
+ * "git remote rm X", when a branch has remote X configured as the
+   value of its branch.*.remote, tried to remove branch.*.remote and
+   branch.*.merge and failed if either is unset.
+   (merge 20690b2139 rl/remote-allow-missing-branch-name-merge later to maint).
+
+ * A "gc.log" file left by a backgrounded "gc --auto" disables further
+   automatic gc; it has been taught to run at least once a day (by
+   default) by ignoring a stale "gc.log" file that is too old.
+   (merge a831c06a2b dt/gc-ignore-old-gc-logs later to maint).
+
+ * Other minor doc, test and build updates and code cleanups.
+   (merge 2cfa83574c mm/two-more-xstrfmt later to maint).
