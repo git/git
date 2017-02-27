@@ -302,6 +302,54 @@ static void create_tag(const unsigned char *object, const char *tag,
 	}
 }
 
+static void create_reflog_msg(const unsigned char *sha1, struct strbuf *sb)
+{
+	enum object_type type;
+	struct commit *c;
+	char *buf;
+	unsigned long size;
+	int subject_len = 0;
+	const char *subject_start;
+
+	char *rla = getenv("GIT_REFLOG_ACTION");
+	if (rla) {
+		strbuf_addstr(sb, rla);
+	} else {
+		strbuf_addstr(sb, _("tag: tagging "));
+		strbuf_add_unique_abbrev(sb, sha1, DEFAULT_ABBREV);
+	}
+
+	strbuf_addstr(sb, " (");
+	type = sha1_object_info(sha1, NULL);
+	switch (type) {
+	default:
+		strbuf_addstr(sb, _("object of unknown type"));
+		break;
+	case OBJ_COMMIT:
+		if ((buf = read_sha1_file(sha1, &type, &size)) != NULL) {
+			subject_len = find_commit_subject(buf, &subject_start);
+			strbuf_insert(sb, sb->len, subject_start, subject_len);
+		} else {
+			strbuf_addstr(sb, _("commit object"));
+		}
+		free(buf);
+
+		if ((c = lookup_commit_reference(sha1)) != NULL)
+			strbuf_addf(sb, ", %s", show_date(c->date, 0, DATE_MODE(SHORT)));
+		break;
+	case OBJ_TREE:
+		strbuf_addstr(sb, _("tree object"));
+		break;
+	case OBJ_BLOB:
+		strbuf_addstr(sb, _("blob object"));
+		break;
+	case OBJ_TAG:
+		strbuf_addstr(sb, _("other tag object"));
+		break;
+	}
+	strbuf_addch(sb, ')');
+}
+
 struct msg_arg {
 	int given;
 	struct strbuf buf;
@@ -335,6 +383,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf ref = STRBUF_INIT;
+	struct strbuf reflog_msg = STRBUF_INIT;
 	unsigned char object[20], prev[20];
 	const char *object_ref, *tag;
 	struct create_tag_options opt;
@@ -496,6 +545,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	else
 		die(_("Invalid cleanup mode %s"), cleanup_arg);
 
+	create_reflog_msg(object, &reflog_msg);
+
 	if (create_tag_object) {
 		if (force_sign_annotate && !annotate)
 			opt.sign = 1;
@@ -506,7 +557,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref.buf, object, prev,
 				   create_reflog ? REF_FORCE_CREATE_REFLOG : 0,
-				   NULL, &err) ||
+				   reflog_msg.buf, &err) ||
 	    ref_transaction_commit(transaction, &err))
 		die("%s", err.buf);
 	ref_transaction_free(transaction);
@@ -516,5 +567,6 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	strbuf_release(&err);
 	strbuf_release(&buf);
 	strbuf_release(&ref);
+	strbuf_release(&reflog_msg);
 	return 0;
 }

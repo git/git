@@ -81,9 +81,25 @@ test_expect_success 'creating a tag using default HEAD should succeed' '
 '
 
 test_expect_success 'creating a tag with --create-reflog should create reflog' '
+	git log -1 \
+		--format="format:tag: tagging %h (%s, %cd)%n" \
+		--date=format:%Y-%m-%d >expected &&
 	test_when_finished "git tag -d tag_with_reflog" &&
 	git tag --create-reflog tag_with_reflog &&
-	git reflog exists refs/tags/tag_with_reflog
+	git reflog exists refs/tags/tag_with_reflog &&
+	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'annotated tag with --create-reflog has correct message' '
+	git log -1 \
+		--format="format:tag: tagging %h (%s, %cd)%n" \
+		--date=format:%Y-%m-%d >expected &&
+	test_when_finished "git tag -d tag_with_reflog" &&
+	git tag -m "annotated tag" --create-reflog tag_with_reflog &&
+	git reflog exists refs/tags/tag_with_reflog &&
+	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success '--create-reflog does not create reflog on failure' '
