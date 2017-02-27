@@ -35,6 +35,7 @@ static const char *alternate_shallow_file;
 #define COMMON_REF	(1U << 2)
 #define SEEN		(1U << 3)
 #define POPPED		(1U << 4)
+#define ALTERNATE	(1U << 5)
 
 static int marked;
 
@@ -65,6 +66,41 @@ static inline void print_verbose(const struct fetch_pack_args *args,
 	vfprintf(stderr, fmt, params);
 	va_end(params);
 	fputc('\n', stderr);
+}
+
+struct alternate_object_cache {
+	struct object **items;
+	size_t nr, alloc;
+};
+
+static void cache_one_alternate(const char *refname,
+				const struct object_id *oid,
+				void *vcache)
+{
+	struct alternate_object_cache *cache = vcache;
+	struct object *obj = parse_object(oid->hash);
+
+	if (!obj || (obj->flags & ALTERNATE))
+		return;
+
+	obj->flags |= ALTERNATE;
+	ALLOC_GROW(cache->items, cache->nr + 1, cache->alloc);
+	cache->items[cache->nr++] = obj;
+}
+
+static void for_each_cached_alternate(void (*cb)(struct object *))
+{
+	static int initialized;
+	static struct alternate_object_cache cache;
+	size_t i;
+
+	if (!initialized) {
+		for_each_alternate_ref(cache_one_alternate, &cache);
+		initialized = 1;
+	}
+
+	for (i = 0; i < cache.nr; i++)
+		cb(cache.items[i]);
 }
 
 static void rev_list_push(struct commit *commit, int mark)
@@ -253,9 +289,9 @@ static void send_request(struct fetch_pack_args *args,
 		write_or_die(fd, buf->buf, buf->len);
 }
 
-static void insert_one_alternate_ref(const struct ref *ref, void *unused)
+static void insert_one_alternate_object(struct object *obj)
 {
-	rev_list_insert_ref(NULL, ref->old_oid.hash);
+	rev_list_insert_ref(NULL, obj->oid.hash);
 }
 
 #define INITIAL_FLUSH 16
@@ -298,7 +334,7 @@ static int find_common(struct fetch_pack_args *args,
 	marked = 1;
 
 	for_each_ref(rev_list_insert_ref_oid, NULL);
-	for_each_alternate_ref(insert_one_alternate_ref, NULL);
+	for_each_cached_alternate(insert_one_alternate_object);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
@@ -619,9 +655,9 @@ static void filter_refs(struct fetch_pack_args *args,
 	*refs = newlist;
 }
 
-static void mark_alternate_complete(const struct ref *ref, void *unused)
+static void mark_alternate_complete(struct object *obj)
 {
-	mark_complete(ref->old_oid.hash);
+	mark_complete(obj->oid.hash);
 }
 
 static int everything_local(struct fetch_pack_args *args,
@@ -657,7 +693,7 @@ static int everything_local(struct fetch_pack_args *args,
 
 	if (!args->deepen) {
 		for_each_ref(mark_complete_oid, NULL);
-		for_each_alternate_ref(mark_alternate_complete, NULL);
+		for_each_cached_alternate(mark_alternate_complete);
 		commit_list_sort_by_date(&complete);
 		if (cutoff)
 			mark_recent_complete_commits(args, cutoff);

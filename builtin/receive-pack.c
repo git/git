@@ -21,6 +21,7 @@
 #include "sigchain.h"
 #include "fsck.h"
 #include "tmp-objdir.h"
+#include "oidset.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -250,8 +251,9 @@ static void show_ref(const char *path, const unsigned char *sha1)
 }
 
 static int show_ref_cb(const char *path_full, const struct object_id *oid,
-		       int flag, void *unused)
+		       int flag, void *data)
 {
+	struct oidset *seen = data;
 	const char *path = strip_namespace(path_full);
 
 	if (ref_is_hidden(path, path_full))
@@ -260,37 +262,38 @@ static int show_ref_cb(const char *path_full, const struct object_id *oid,
 	/*
 	 * Advertise refs outside our current namespace as ".have"
 	 * refs, so that the client can use them to minimize data
-	 * transfer but will otherwise ignore them. This happens to
-	 * cover ".have" that are thrown in by add_one_alternate_ref()
-	 * to mark histories that are complete in our alternates as
-	 * well.
+	 * transfer but will otherwise ignore them.
 	 */
-	if (!path)
+	if (!path) {
+		if (oidset_insert(seen, oid))
+			return 0;
 		path = ".have";
+	} else {
+		oidset_insert(seen, oid);
+	}
 	show_ref(path, oid->hash);
 	return 0;
 }
 
-static int show_one_alternate_sha1(const unsigned char sha1[20], void *unused)
+static void show_one_alternate_ref(const char *refname,
+				   const struct object_id *oid,
+				   void *data)
 {
-	show_ref(".have", sha1);
-	return 0;
-}
+	struct oidset *seen = data;
 
-static void collect_one_alternate_ref(const struct ref *ref, void *data)
-{
-	struct sha1_array *sa = data;
-	sha1_array_append(sa, ref->old_oid.hash);
+	if (oidset_insert(seen, oid))
+		return;
+
+	show_ref(".have", oid->hash);
 }
 
 static void write_head_info(void)
 {
-	struct sha1_array sa = SHA1_ARRAY_INIT;
+	static struct oidset seen = OIDSET_INIT;
 
-	for_each_alternate_ref(collect_one_alternate_ref, &sa);
-	sha1_array_for_each_unique(&sa, show_one_alternate_sha1, NULL);
-	sha1_array_clear(&sa);
-	for_each_ref(show_ref_cb, NULL);
+	for_each_ref(show_ref_cb, &seen);
+	for_each_alternate_ref(show_one_alternate_ref, &seen);
+	oidset_clear(&seen);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1);
 

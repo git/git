@@ -29,7 +29,7 @@ struct object_array {
 /*
  * object flag allocation:
  * revision.h:      0---------10                                26
- * fetch-pack.c:    0---4
+ * fetch-pack.c:    0---5
  * walker.c:        0-2
  * upload-pack.c:       4       11----------------19
  * builtin/blame.c:               12-13
