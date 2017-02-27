@@ -1769,6 +1769,8 @@ class P4Submit(Command, P4UserMap):
         logMessage = logMessage.strip()
         (logMessage, jobs) = self.separate_jobs_from_description(logMessage)
 
+        logMessage += "\n[git-p4: commit = %s]" % id
+
         template = self.prepareSubmitTemplate(self.update_shelve)
         submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
@@ -2766,7 +2768,13 @@ class P4Sync(Command, P4UserMap):
         self.gitStream.write("commit %s\n" % branch)
         self.gitStream.write("mark :%s\n" % details["change"])
         self.committedChanges.add(int(details["change"]))
-        committer = ""
+
+        settings = extractSettingsGitLog(desc)
+        id = settings.get("commit")
+        if id:
+            desc = re.sub(r"\n *\[git-p4: .*\]", "", desc)
+            (author, email) = P4Submit().p4UserForCommit(id)
+
         if author not in self.users:
             self.getUserMapFromPerforceServer()
         committer = "%s %s %s" % (self.make_email(author), epoch, self.tz)
