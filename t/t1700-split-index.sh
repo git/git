@@ -200,4 +200,41 @@ test_expect_success 'unify index, two files remain' '
 	test_cmp expect actual
 '
 
+test_expect_success 'set core.splitIndex config variable to true' '
+	git config core.splitIndex true &&
+	: >three &&
+	git update-index --add three &&
+	git ls-files --stage >ls-files.actual &&
+	cat >ls-files.expect <<-EOF &&
+	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	one
+	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	three
+	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	two
+	EOF
+	test_cmp ls-files.expect ls-files.actual &&
+	BASE=$(test-dump-split-index .git/index | grep "^base") &&
+	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	cat >expect <<-EOF &&
+	$BASE
+	replacements:
+	deletions:
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'set core.splitIndex config variable to false' '
+	git config core.splitIndex false &&
+	git update-index --force-remove three &&
+	git ls-files --stage >ls-files.actual &&
+	cat >ls-files.expect <<-EOF &&
+	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	one
+	100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	two
+	EOF
+	test_cmp ls-files.expect ls-files.actual &&
+	test-dump-split-index .git/index | sed "/^own/d" >actual &&
+	cat >expect <<-EOF &&
+	not a split index
+	EOF
+	test_cmp expect actual
+'
+
 test_done
