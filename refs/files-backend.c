@@ -912,6 +912,14 @@ struct packed_ref_cache {
  */
 struct files_ref_store {
 	struct ref_store base;
+
+	/*
+	 * The name of the submodule represented by this object, or
+	 * NULL if it represents the main repository's reference
+	 * store:
+	 */
+	const char *submodule;
+
 	struct ref_entry *loose;
 	struct packed_ref_cache *packed;
 };
@@ -972,9 +980,22 @@ static struct ref_store *files_ref_store_create(const char *submodule)
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 
-	base_ref_store_init(ref_store, &refs_be_files, submodule);
+	base_ref_store_init(ref_store, &refs_be_files);
+
+	refs->submodule = xstrdup_or_null(submodule);
 
 	return ref_store;
+}
+
+/*
+ * Die if refs is for a submodule (i.e., not for the main repository).
+ * caller is used in any necessary error messages.
+ */
+static void files_assert_main_repository(struct files_ref_store *refs,
+					 const char *caller)
+{
+	if (refs->submodule)
+		die("BUG: %s called for a submodule", caller);
 }
 
 /*
@@ -987,14 +1008,18 @@ static struct files_ref_store *files_downcast(
 		struct ref_store *ref_store, int submodule_allowed,
 		const char *caller)
 {
+	struct files_ref_store *refs;
+
 	if (ref_store->be != &refs_be_files)
 		die("BUG: ref_store is type \"%s\" not \"files\" in %s",
 		    ref_store->be->name, caller);
 
-	if (!submodule_allowed)
-		assert_main_repository(ref_store, caller);
+	refs = (struct files_ref_store *)ref_store;
 
-	return (struct files_ref_store *)ref_store;
+	if (!submodule_allowed)
+		files_assert_main_repository(refs, caller);
+
+	return refs;
 }
 
 /* The length of a peeled reference line in packed-refs, including EOL: */
@@ -1133,8 +1158,8 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 {
 	char *packed_refs_file;
 
-	if (*refs->base.submodule)
-		packed_refs_file = git_pathdup_submodule(refs->base.submodule,
+	if (refs->submodule)
+		packed_refs_file = git_pathdup_submodule(refs->submodule,
 							 "packed-refs");
 	else
 		packed_refs_file = git_pathdup("packed-refs");
@@ -1203,8 +1228,8 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 	size_t path_baselen;
 	int err = 0;
 
-	if (*refs->base.submodule)
-		err = strbuf_git_path_submodule(&path, refs->base.submodule, "%s", dirname);
+	if (refs->submodule)
+		err = strbuf_git_path_submodule(&path, refs->submodule, "%s", dirname);
 	else
 		strbuf_git_path(&path, "%s", dirname);
 	path_baselen = path.len;
@@ -1242,20 +1267,10 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 					 create_dir_entry(refs, refname.buf,
 							  refname.len, 1));
 		} else {
-			int read_ok;
-
-			if (*refs->base.submodule) {
-				hashclr(sha1);
-				flag = 0;
-				read_ok = !resolve_gitlink_ref(refs->base.submodule,
-							       refname.buf, sha1);
-			} else {
-				read_ok = !read_ref_full(refname.buf,
-							 RESOLVE_REF_READING,
-							 sha1, &flag);
-			}
-
-			if (!read_ok) {
+			if (!resolve_ref_recursively(&refs->base,
+						     refname.buf,
+						     RESOLVE_REF_READING,
+						     sha1, &flag)) {
 				hashclr(sha1);
 				flag |= REF_ISBROKEN;
 			} else if (is_null_sha1(sha1)) {
@@ -1358,8 +1373,8 @@ static int files_read_raw_ref(struct ref_store *ref_store,
 	*type = 0;
 	strbuf_reset(&sb_path);
 
-	if (*refs->base.submodule)
-		strbuf_git_path_submodule(&sb_path, refs->base.submodule, "%s", refname);
+	if (refs->submodule)
+		strbuf_git_path_submodule(&sb_path, refs->submodule, "%s", refname);
 	else
 		strbuf_git_path(&sb_path, "%s", refname);
 
@@ -1540,7 +1555,7 @@ static int lock_raw_ref(struct files_ref_store *refs,
 	int ret = TRANSACTION_GENERIC_ERROR;
 
 	assert(err);
-	assert_main_repository(&refs->base, "lock_raw_ref");
+	files_assert_main_repository(refs, "lock_raw_ref");
 
 	*type = 0;
 
@@ -2011,7 +2026,7 @@ static struct ref_lock *lock_ref_sha1_basic(struct files_ref_store *refs,
 	int resolve_flags = RESOLVE_REF_NO_RECURSE;
 	int resolved;
 
-	assert_main_repository(&refs->base, "lock_ref_sha1_basic");
+	files_assert_main_repository(refs, "lock_ref_sha1_basic");
 	assert(err);
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
@@ -2134,7 +2149,7 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 	static int timeout_value = 1000;
 	struct packed_ref_cache *packed_ref_cache;
 
-	assert_main_repository(&refs->base, "lock_packed_refs");
+	files_assert_main_repository(refs, "lock_packed_refs");
 
 	if (!timeout_configured) {
 		git_config_get_int("core.packedrefstimeout", &timeout_value);
@@ -2172,7 +2187,7 @@ static int commit_packed_refs(struct files_ref_store *refs)
 	int save_errno = 0;
 	FILE *out;
 
-	assert_main_repository(&refs->base, "commit_packed_refs");
+	files_assert_main_repository(refs, "commit_packed_refs");
 
 	if (!packed_ref_cache->lock)
 		die("internal error: packed-refs not locked");
@@ -2205,7 +2220,7 @@ static void rollback_packed_refs(struct files_ref_store *refs)
 	struct packed_ref_cache *packed_ref_cache =
 		get_packed_ref_cache(refs);
 
-	assert_main_repository(&refs->base, "rollback_packed_refs");
+	files_assert_main_repository(refs, "rollback_packed_refs");
 
 	if (!packed_ref_cache->lock)
 		die("internal error: packed-refs not locked");
@@ -2392,7 +2407,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 	struct string_list_item *refname;
 	int ret, needs_repacking = 0, removed = 0;
 
-	assert_main_repository(&refs->base, "repack_without_refs");
+	files_assert_main_repository(refs, "repack_without_refs");
 	assert(err);
 
 	/* Look for a packed ref */
@@ -2902,7 +2917,7 @@ static int commit_ref_update(struct files_ref_store *refs,
 			     const unsigned char *sha1, const char *logmsg,
 			     struct strbuf *err)
 {
-	assert_main_repository(&refs->base, "commit_ref_update");
+	files_assert_main_repository(refs, "commit_ref_update");
 
 	clear_loose_ref_cache(refs);
 	if (files_log_ref_write(lock->ref_name, lock->old_oid.hash, sha1,
@@ -3534,7 +3549,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	int ret;
 	struct ref_lock *lock;
 
-	assert_main_repository(&refs->base, "lock_ref_for_update");
+	files_assert_main_repository(refs, "lock_ref_for_update");
 
 	if ((update->flags & REF_HAVE_NEW) && is_null_sha1(update->new_sha1))
 		update->flags |= REF_DELETING;
