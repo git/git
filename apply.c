@@ -288,7 +288,7 @@ static uint32_t hash_line(const char *cp, size_t len)
 {
 	size_t i;
 	uint32_t h;
-	for (i = 0, h = 0; i < len; i++) {
+	for (i = 0, h = 0; i < len; ++i) {
 		if (!isspace(cp[i])) {
 			h = h * 3 + (cp[i] & 0xff);
 		}
@@ -381,7 +381,7 @@ static void prepare_image(struct image *image, char *buf, size_t len,
 	cp = image->buf;
 	while (cp < ep) {
 		const char *next;
-		for (next = cp; next < ep && *next != '\n'; next++)
+		for (next = cp; next < ep && *next != '\n'; ++next)
 			;
 		if (next < ep)
 			next++;
@@ -499,7 +499,7 @@ static char *find_name_gnu(struct apply_state *state,
 		return NULL;
 	}
 
-	for (cp = name.buf; p_value; p_value--) {
+	for (cp = name.buf; p_value; --p_value) {
 		cp = strchr(cp, '/');
 		if (!cp) {
 			strbuf_release(&name);
@@ -525,7 +525,7 @@ static size_t sane_tz_len(const char *line, size_t len)
 	if (tz[1] != '+' && tz[1] != '-')
 		return 0;
 
-	for (p = tz + 2; p != line + len; p++)
+	for (p = tz + 2; p != line + len; ++p)
 		if (!isdigit(*p))
 			return 0;
 
@@ -833,7 +833,7 @@ static int has_epoch_timestamp(const char *nameline)
 	int hourminute;
 	int status;
 
-	for (cp = nameline; *cp != '\n'; cp++) {
+	for (cp = nameline; *cp != '\n'; ++cp) {
 		if (*cp == '\t')
 			timestamp = cp + 1;
 	}
@@ -1168,7 +1168,7 @@ static const char *skip_tree_prefix(struct apply_state *state,
 		return (llen && line[0] == '/') ? NULL : line;
 
 	nslash = state->p_value;
-	for (i = 0; i < llen; i++) {
+	for (i = 0; i < llen; ++i) {
 		int ch = line[i];
 		if (ch == '/' && --nslash <= 0)
 			return (i == 0) ? NULL : &line[i + 1];
@@ -1255,7 +1255,7 @@ static char *git_header_name(struct apply_state *state,
 	 * since the first name is unquoted, a dq if exists must be
 	 * the beginning of the second name.
 	 */
-	for (second = name; second < line + llen; second++) {
+	for (second = name; second < line + llen; ++second) {
 		if (*second == '"') {
 			struct strbuf sp = STRBUF_INIT;
 			const char *np;
@@ -1290,7 +1290,7 @@ static char *git_header_name(struct apply_state *state,
 	if (!second)
 		return NULL;
 	line_len = second - name;
-	for (len = 0 ; ; len++) {
+	for (len = 0 ; ; ++len) {
 		switch (name[len]) {
 		default:
 			continue;
@@ -1379,7 +1379,7 @@ static int parse_git_header(struct apply_state *state,
 		len = linelen(line, size);
 		if (!len || line[len-1] != '\n')
 			break;
-		for (i = 0; i < ARRAY_SIZE(optable); i++) {
+		for (i = 0; i < ARRAY_SIZE(optable); ++i) {
 			const struct opentry *p = optable + i;
 			int oplen = strlen(p->str);
 			int res;
@@ -2086,7 +2086,7 @@ static int use_patch(struct apply_state *state, struct patch *p)
 	}
 
 	/* See if it matches any of exclude/include rule */
-	for (i = 0; i < state->limit_by_name.nr; i++) {
+	for (i = 0; i < state->limit_by_name.nr; ++i) {
 		struct string_list_item *it = &state->limit_by_name.items[i];
 		if (!wildmatch(it->string, pathname, 0, NULL))
 			return (it->util != NULL);
@@ -2143,9 +2143,8 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 
 		if (llen == sizeof(git_binary) - 1 &&
 		    !memcmp(git_binary, buffer + hd, llen)) {
-			int used;
 			state->linenr++;
-			used = parse_binary(state, buffer + hd + llen,
+			int used = parse_binary(state, buffer + hd + llen,
 					    size - hd - llen, patch);
 			if (used < 0)
 				return -1;
@@ -2161,7 +2160,7 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 				NULL,
 			};
 			int i;
-			for (i = 0; binhdr[i]; i++) {
+			for (i = 0; binhdr[i]; ++i) {
 				int len = strlen(binhdr[i]);
 				if (len < size - hd &&
 				    !memcmp(binhdr[i], buffer + hd, len)) {
@@ -2299,7 +2298,7 @@ static void update_pre_post_images(struct image *preimage,
 	assert(postlen
 	       ? fixed_preimage.nr == preimage->nr
 	       : fixed_preimage.nr <= preimage->nr);
-	for (i = 0; i < fixed_preimage.nr; i++)
+	for (i = 0; i < fixed_preimage.nr; ++i)
 		fixed_preimage.line[i].flag = preimage->line[i].flag;
 	free(preimage->line_allocated);
 	*preimage = fixed_preimage;
@@ -2320,7 +2319,7 @@ static void update_pre_post_images(struct image *preimage,
 		new = old;
 	fixed = preimage->buf;
 
-	for (i = reduced = ctx = 0; i < postimage->nr; i++) {
+	for (i = reduced = ctx = 0; i < postimage->nr; ++i) {
 		size_t l_len = postimage->line[i].len;
 		if (!(postimage->line[i].flag & LINE_COMMON)) {
 			/* an added line -- no counterparts in preimage */
@@ -2377,18 +2376,13 @@ static int line_by_line_fuzzy_match(struct image *img,
 				    int preimage_limit)
 {
 	int i;
-	size_t imgoff = 0;
-	size_t preoff = 0;
-	size_t postlen = postimage->len;
-	size_t extra_chars;
-	char *buf;
-	char *preimage_eof;
-	char *preimage_end;
+	size_t imgoff,preoff;
+	preoff = imgoff = 0;
+	size_t postlen = postimage->len , extra_chars, fixed_len;
+	char *buf, *preimage_eof, *preimage_end, *fixed_buf;
 	struct strbuf fixed;
-	char *fixed_buf;
-	size_t fixed_len;
 
-	for (i = 0; i < preimage_limit; i++) {
+	for (i = 0; i < preimage_limit; ++i) {
 		size_t prelen = preimage->line[i].len;
 		size_t imglen = img->line[try_lno+i].len;
 
@@ -2413,10 +2407,10 @@ static int line_by_line_fuzzy_match(struct image *img,
 	 * we are removing blank lines at the end of the file.)
 	 */
 	buf = preimage_eof = preimage->buf + preoff;
-	for ( ; i < preimage->nr; i++)
+	for ( ; i < preimage->nr; ++i)
 		preoff += preimage->line[i].len;
 	preimage_end = preimage->buf + preoff;
-	for ( ; buf < preimage_end; buf++)
+	for ( ; buf < preimage_end; ++buf)
 		if (!isspace(*buf))
 			return 0;
 
@@ -2446,11 +2440,10 @@ static int match_fragment(struct apply_state *state,
 			  unsigned ws_rule,
 			  int match_beginning, int match_end)
 {
-	int i;
 	char *fixed_buf, *buf, *orig, *target;
 	struct strbuf fixed;
 	size_t fixed_len, postlen;
-	int preimage_limit;
+	int i, preimage_limit;
 
 	if (preimage->nr + try_lno <= img->nr) {
 		/*
@@ -2482,7 +2475,7 @@ static int match_fragment(struct apply_state *state,
 		return 0;
 
 	/* Quick hash check */
-	for (i = 0; i < preimage_limit; i++)
+	for (i = 0; i < preimage_limit; ++i)
 		if ((img->line[try_lno + i].flag & LINE_PATCHED) ||
 		    (preimage->line[i].hash != img->line[try_lno + i].hash))
 			return 0;
@@ -2512,10 +2505,10 @@ static int match_fragment(struct apply_state *state,
 
 		buf = preimage->buf;
 		buf_end = buf;
-		for (i = 0; i < preimage_limit; i++)
+		for (i = 0; i < preimage_limit; ++i)
 			buf_end += preimage->line[i].len;
 
-		for ( ; buf < buf_end; buf++)
+		for ( ; buf < buf_end; ++buf)
 			if (!isspace(*buf))
 				break;
 		if (buf == buf_end)
@@ -2551,7 +2544,7 @@ static int match_fragment(struct apply_state *state,
 
 	/* First count added lines in postimage */
 	postlen = 0;
-	for (i = 0; i < postimage->nr; i++) {
+	for (i = 0; i < postimage->nr; ++i) {
 		if (!(postimage->line[i].flag & LINE_COMMON))
 			postlen += postimage->line[i].len;
 	}
@@ -2564,7 +2557,7 @@ static int match_fragment(struct apply_state *state,
 	strbuf_init(&fixed, preimage->len + 1);
 	orig = preimage->buf;
 	target = img->buf + try;
-	for (i = 0; i < preimage_limit; i++) {
+	for (i = 0; i < preimage_limit; ++i) {
 		size_t oldlen = preimage->line[i].len;
 		size_t tgtlen = img->line[try_lno + i].len;
 		size_t fixstart = fixed.len;
@@ -2611,7 +2604,7 @@ static int match_fragment(struct apply_state *state,
 	 * empty or only contain whitespace (if WS_BLANK_AT_EOL is
 	 * false).
 	 */
-	for ( ; i < preimage->nr; i++) {
+	for ( ; i < preimage->nr; ++i) {
 		size_t fixstart = fixed.len; /* start of the fixed preimage */
 		size_t oldlen = preimage->line[i].len;
 		int j;
@@ -2619,7 +2612,7 @@ static int match_fragment(struct apply_state *state,
 		/* Try fixing the line in the preimage */
 		ws_fix_copy(&fixed, orig, oldlen, ws_rule, NULL);
 
-		for (j = fixstart; j < fixed.len; j++)
+		for (j = fixstart; j < fixed.len; ++j)
 			if (!isspace(fixed.buf[j]))
 				goto unmatch_exit;
 
@@ -2651,9 +2644,8 @@ static int find_pos(struct apply_state *state,
 		    unsigned ws_rule,
 		    int match_beginning, int match_end)
 {
-	int i;
 	unsigned long backwards, forwards, try;
-	int backwards_lno, forwards_lno, try_lno;
+	int i, backwards_lno, forwards_lno, try_lno;
 
 	/*
 	 * If match_beginning or match_end is specified, there is no
@@ -2674,7 +2666,7 @@ static int find_pos(struct apply_state *state,
 		line = img->nr;
 
 	try = 0;
-	for (i = 0; i < line; i++)
+	for (i = 0; i < line; ++i)
 		try += img->line[i].len;
 
 	/*
@@ -2687,7 +2679,7 @@ static int find_pos(struct apply_state *state,
 	forwards_lno = line;
 	try_lno = line;
 
-	for (i = 0; ; i++) {
+	for (i = 0; ; ++i) {
 		if (match_fragment(state, img, preimage, postimage,
 				   try, try_lno, ws_rule,
 				   match_beginning, match_end))
@@ -2767,11 +2759,11 @@ static void update_image(struct apply_state *state,
 	if (preimage_limit > img->nr - applied_pos)
 		preimage_limit = img->nr - applied_pos;
 
-	for (i = 0; i < applied_pos; i++)
+	for (i = 0; i < applied_pos; ++i)
 		applied_at += img->line[i].len;
 
 	remove_count = 0;
-	for (i = 0; i < preimage_limit; i++)
+	for (i = 0; i < preimage_limit; ++i)
 		remove_count += img->line[applied_pos + i].len;
 	insert_count = postimage->len;
 
@@ -2806,7 +2798,7 @@ static void update_image(struct apply_state *state,
 	       postimage->line,
 	       postimage->nr * sizeof(*img->line));
 	if (!state->allow_overlap)
-		for (i = 0; i < postimage->nr; i++)
+		for (i = 0; i < postimage->nr; ++i)
 			img->line[applied_pos + i].flag |= LINE_PATCHED;
 	img->nr = nr;
 }
@@ -2844,8 +2836,8 @@ static int apply_one_fragment(struct apply_state *state,
 		char first;
 		int len = linelen(patch, size);
 		int plen;
-		int added_blank_line = 0;
-		int is_blank_context = 0;
+		int added_blank_line, is_blank_context;
+		added_blank_line = is_blank_context = 0;
 		size_t start;
 
 		if (!len)
@@ -3411,7 +3403,7 @@ static int load_preimage(struct apply_state *state,
 	size_t len;
 	char *img;
 	struct patch *previous;
-	int status;
+	auto status;
 
 	previous = previous_patch(state, patch, &status);
 	if (status)
@@ -3865,8 +3857,7 @@ static int check_patch(struct apply_state *state, struct patch *patch)
 	const char *name = old_name ? old_name : new_name;
 	struct cache_entry *ce = NULL;
 	struct patch *tpatch;
-	int ok_if_exists;
-	int status;
+	int ok_if_exists, status;
 
 	patch->rejected = 1; /* we will drop this after we succeed */
 
@@ -3994,7 +3985,7 @@ static int read_apply_cache(struct apply_state *state)
 static int get_current_oid(struct apply_state *state, const char *path,
 			   struct object_id *oid)
 {
-	int pos;
+	int pos = 0;
 
 	if (read_apply_cache(state) < 0)
 		return -1;
@@ -4350,7 +4341,7 @@ static int create_one_file(struct apply_state *state,
 			   const char *buf,
 			   unsigned long size)
 {
-	int res;
+	int res = 0;
 
 	if (state->cached)
 		return 0;
@@ -4418,7 +4409,7 @@ static int add_conflicted_stages_file(struct apply_state *state,
 	mode = patch->new_mode ? patch->new_mode : (S_IFREG | 0644);
 
 	remove_file_from_cache(patch->new_name);
-	for (stage = 1; stage < 4; stage++) {
+	for (stage = 1; stage < 4; ++stage) {
 		if (is_null_oid(&patch->threeway_stage[stage - 1]))
 			continue;
 		ce = xcalloc(1, ce_size);
@@ -4539,7 +4530,7 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 		patch->new_name, patch->new_name);
 	for (cnt = 1, frag = patch->fragments;
 	     frag;
-	     cnt++, frag = frag->next) {
+	     ++cnt, frag = frag->next) {
 		if (!frag->rejected) {
 			if (state->apply_verbosity > verbosity_silent)
 				fprintf_ln(stderr, _("Hunk #%d applied cleanly."), cnt);
@@ -4568,7 +4559,7 @@ static int write_out_results(struct apply_state *state, struct patch *list)
 	struct patch *l;
 	struct string_list cpath = STRING_LIST_INIT_DUP;
 
-	for (phase = 0; phase < 2; phase++) {
+	for (phase = 0; phase < 2; ++phase) {
 		l = list;
 		while (l) {
 			if (l->rejected)
@@ -4803,7 +4794,7 @@ int apply_all_patches(struct apply_state *state,
 	int errs = 0;
 	int read_stdin = 1;
 
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < argc; ++i) {
 		const char *arg = argv[i];
 		int fd;
 
