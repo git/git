@@ -693,7 +693,7 @@ static struct remote *remote_get_1(const char *name,
 		name = get_default(current_branch, &name_given);
 
 	ret = make_remote(name, 0);
-	if (valid_remote_nick(name)) {
+	if (valid_remote_nick(name) && have_git_dir()) {
 		if (!valid_remote(ret))
 			read_remotes_file(ret);
 		if (!valid_remote(ret))
