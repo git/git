@@ -39,6 +39,17 @@ env:
 
 matrix:
   include:
+    - env: Linux32
+      os: linux
+      compiler: clang
+      sudo: required
+      services:
+        - docker
+      before_install:
+        - docker pull daald/ubuntu32:xenial
+      before_script:
+      script:
+        - "sudo docker run -i -v \"${PWD}:/usr/src/git\" daald/ubuntu32:xenial /bin/bash -c \"linux32 --32bit i386 sh -c 'apt update && apt install -y build-essential libcurl4-openssl-dev libssl-dev libexpat-dev gettext python && cd /usr/src/git && DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS=\\\"--timer --jobs 3 --state=failed,slow,save\\\" GIT_TEST_OPTS=--verbose-log GIT_TEST_CLONE_2GB=YesPlease make -j2 test'\""
     - env: Documentation
       os: linux
       compiler: clang
