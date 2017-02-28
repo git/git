@@ -5,7 +5,8 @@ test_description='see how we handle various forms of corruption'
 
 # convert "1234abcd" to ".git/objects/12/34abcd"
 obj_to_file() {
-	echo "$(git rev-parse --git-dir)/objects/$(git rev-parse "$1" | sed 's,..,&/,')"
+	echo "$(git rev-parse --git-dir)/objects/$(git rev-parse "$1" >out &&
+	sed 's,..,&/,' <out)"
 }
 
 # Convert byte at offset "$2" of object "$1" into '\0'
