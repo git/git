@@ -54,10 +54,13 @@ push [-p|--patch] [-k|--[no-]keep-index] [-u|--include-untracked] [-a|--all] [-q
 	Save your local modifications to a new 'stash' and roll them
 	back to HEAD (in the working tree and in the index).
 	The <message> part is optional and gives
-	the description along with the stashed state.  For quickly making
-	a snapshot, you can omit _both_ "save" and <message>, but giving
-	only <message> does not trigger this action to prevent a misspelled
-	subcommand from making an unwanted stash.
+	the description along with the stashed state.
++
+For quickly making a snapshot, you can omit "push".  In this mode,
+non-option arguments are not allowed to prevent a misspelled
+subcommand from making an unwanted stash.  The two exceptions to this
+are `stash -p` which acts as alias for `stash push -p` and pathspecs,
+which are allowed after a double hyphen `--` for disambiguation.
 +
 When pathspec is given to 'git stash push', the new stash records the
 modified states only for the files that match the pathspec.  The index
