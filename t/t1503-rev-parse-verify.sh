@@ -129,7 +129,7 @@ test_expect_success 'use --default' '
 '
 
 test_expect_success 'master@{n} for various n' '
-	N=$(git reflog | wc -l) &&
+	N=$(git reflog >out && wc -l <out) &&
 	Nm1=$(($N-1)) &&
 	Np1=$(($N+1)) &&
 	git rev-parse --verify master@{0} &&
