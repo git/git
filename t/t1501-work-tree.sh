@@ -386,7 +386,7 @@ test_expect_success 'Auto discovery' '
 		test_cmp expect actual &&
 		echo haha >data1 &&
 		git add data1 &&
-		git ls-files --full-name :/ | grep data1 >actual &&
+		git ls-files --full-name :/ >out && grep data1 out >actual &&
 		echo work/data1 >expect &&
 		test_cmp expect actual
 	)
@@ -404,7 +404,7 @@ test_expect_success '$GIT_DIR/common overrides core.worktree' '
 		test_cmp expect actual &&
 		echo haha >data2 &&
 		git add data2 &&
-		git ls-files --full-name :/ | grep data2 >actual &&
+		git ls-files --full-name :/ >out && grep data2 out >actual &&
 		echo work/data2 >expect &&
 		test_cmp expect actual
 	)
@@ -417,7 +417,7 @@ test_expect_success '$GIT_WORK_TREE overrides $GIT_DIR/common' '
 		cd work &&
 		echo haha >data3 &&
 		git --git-dir=../.git --work-tree=. add data3 &&
-		git ls-files --full-name -- :/ | grep data3 >actual &&
+		git ls-files --full-name -- :/ >out && grep data3 out >actual &&
 		echo data3 >expect &&
 		test_cmp expect actual
 	)
