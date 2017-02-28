@@ -119,7 +119,7 @@ the original is used), and can be customized by giving a number
 after "-B" option (e.g. "-B75" to tell it to use 75%).
 
 
-diffcore-rename: For Detection Renames and Copies
+diffcore-rename: For Detecting Renames and Copies
 -------------------------------------------------
 
 This transformation is used to detect renames and copies, and is
