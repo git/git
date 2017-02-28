@@ -186,8 +186,8 @@ test_expect_success 'delete' '
 	test_tick &&
 	git commit -m tiger C &&
 
-	HEAD_entry_count=$(git reflog | wc -l) &&
-	master_entry_count=$(git reflog show master | wc -l) &&
+	HEAD_entry_count=$(git reflog >out && wc -l <out) &&
+	master_entry_count=$(git reflog show master >out && wc -l <out) &&
 
 	test $HEAD_entry_count = 5 &&
 	test $master_entry_count = 5 &&
@@ -195,17 +195,17 @@ test_expect_success 'delete' '
 
 	git reflog delete master@{1} &&
 	git reflog show master > output &&
-	test $(($master_entry_count - 1)) = $(wc -l < output) &&
-	test $HEAD_entry_count = $(git reflog | wc -l) &&
+	test $(($master_entry_count - 1)) = $(wc -l <output) &&
+	test $HEAD_entry_count = $(git reflog >out && wc -l <out) &&
 	! grep ox < output &&
 
 	master_entry_count=$(wc -l < output) &&
 
 	git reflog delete HEAD@{1} &&
-	test $(($HEAD_entry_count -1)) = $(git reflog | wc -l) &&
-	test $master_entry_count = $(git reflog show master | wc -l) &&
+	test $(($HEAD_entry_count -1)) = $(git reflog >out && wc -l <out) &&
+	test $master_entry_count = $(git reflog show master >out && wc -l <out) &&
 
-	HEAD_entry_count=$(git reflog | wc -l) &&
+	HEAD_entry_count=$(git reflog >out && wc -l <out) &&
 
 	git reflog delete master@{07.04.2005.15:15:00.-0700} &&
 	git reflog show master > output &&
@@ -254,11 +254,11 @@ test_expect_success 'gc.reflogexpire=false' '
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '
-	test $(git reflog master | wc -l) = 4 &&
+	test $(git reflog master >out && wc -l <out) = 4 &&
 	git branch foo &&
 	git pack-refs --all &&
 	git checkout foo &&
-	test $(git reflog master | wc -l) = 4
+	test $(git reflog master >out && wc -l <out) = 4
 '
 
 test_expect_success 'stale dirs do not cause d/f conflicts (reflogs on)' '
