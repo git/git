@@ -1325,22 +1325,39 @@ static wchar_t *make_environment_block(char **deltaenv)
 	 * Items in the deltaenv list that DO NOT contain an "=" are
 	 * treated as unsetenv.
 	 *
-	 * I'm going assume that there are no duplicates in deltaenv itself.
+	 * Care needs to be taken to handle entries that are added first, and
+	 * then deleted.
 	 */
 	k_ins = 0;
 	k_del = 0;
 	for (k = 0; k < nr_delta; k++) {
 		if (strchr(deltaenv[k], '=') == NULL) {
+			wchar_t *save = w_del;
 			wptrs_del[k_del++] = w_del;
 			w_del += xutftowcs(w_del, deltaenv[k], (wend_del - w_del));
 			*w_del++ = L'='; /* append '=' to make lookup easier in next step. */
 			*w_del++ = 0;
+
+			/* If we added this key, we have to remove it again */
+			for (j = 0; j < k_ins; j++)
+				if (!wcsnicmp(wptrs_ins[j], save, w_del - save - 1)) {
+					if (j + 1 < k_ins) {
+						int delta = sizeof(wchar_t) * (wptrs_ins[j + 1] - wptrs_ins[j]), i;
+						memmove(wptrs_ins[j], wptrs_ins[j + 1], sizeof(wchar_t) * (w_ins - wptrs_ins[j + 1]));
+						for (i = j; i < --k_ins; i++)
+							wptrs_ins[i] = wptrs_ins[i + 1] - delta;
+						w_ins -= delta;
+					} else
+						w_ins = wptrs_ins[j];
+					k_ins--;
+					j--;
+				}
 		} else {
 			wptrs_ins[k_ins++] = w_ins;
 			w_ins += xutftowcs(w_ins, deltaenv[k], (wend_ins - w_ins)) + 1;
 		}
 	}
-	assert(k_ins == nr_delta_ins);
+	assert(k_ins <= nr_delta_ins);
 	assert(k_del == nr_delta_del);
 
 	/*
