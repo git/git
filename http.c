@@ -126,6 +126,13 @@ static int ssl_cert_password_required;
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 static unsigned long http_auth_methods = CURLAUTH_ANY;
 static int http_auth_methods_restricted;
+/* Modes for which empty_auth cannot actually help us. */
+static unsigned long empty_auth_useless =
+	CURLAUTH_BASIC
+#ifdef CURLAUTH_DIGEST_IE
+	| CURLAUTH_DIGEST_IE
+#endif
+	| CURLAUTH_DIGEST;
 #endif
 
 static struct curl_slist *pragma_header;
@@ -400,23 +407,15 @@ static int curl_empty_auth_enabled(void)
 	/*
 	 * In the automatic case, kick in the empty-auth
 	 * hack as long as we would potentially try some
-	 * method more exotic than "Basic".
+	 * method more exotic than "Basic" or "Digest".
 	 *
 	 * But only do this when this is our second or
-	 * subsequent * request, as by then we know what
+	 * subsequent request, as by then we know what
 	 * methods are available.
 	 */
-	if (http_auth_methods_restricted)
-		switch (http_auth_methods) {
-		case CURLAUTH_BASIC:
-		case CURLAUTH_DIGEST:
-#ifdef CURLAUTH_DIGEST_IE
-		case CURLAUTH_DIGEST_IE:
-#endif
-			return 0;
-		default:
-			return 1;
-		}
+	if (http_auth_methods_restricted &&
+	    (http_auth_methods & ~empty_auth_useless))
+		return 1;
 #endif
 	return 0;
 }
