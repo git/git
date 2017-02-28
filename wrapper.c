@@ -514,13 +514,6 @@ int git_mkstemp_mode(char *pattern, int mode)
 	return git_mkstemps_mode(pattern, 0, mode);
 }
 
-#ifdef NO_MKSTEMPS
-int gitmkstemps(char *pattern, int suffix_len)
-{
-	return git_mkstemps_mode(pattern, suffix_len, 0600);
-}
-#endif
-
 int xmkstemp_mode(char *template, int mode)
 {
 	int fd;
