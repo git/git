@@ -1286,7 +1286,7 @@ test_expect_success 'handle per-worktree refs in refs/bisect' '
 		! grep refs/bisect for-each-ref.out &&
 		git update-ref refs/bisect/something HEAD &&
 		git rev-parse refs/bisect/something >../worktree-head &&
-		git for-each-ref | grep refs/bisect/something
+		git for-each-ref >out && grep refs/bisect/something out
 	) &&
 	test_path_is_missing .git/refs/bisect &&
 	test_must_fail git rev-parse refs/bisect/something &&
