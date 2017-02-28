@@ -61,7 +61,7 @@ test_expect_success 'add a large file or two' '
 	done &&
 	test -z "$bad" &&
 	test $count = 1 &&
-	cnt=$(git show-index <"$idx" | wc -l) &&
+	cnt=$(git show-index <"$idx" >out && wc -l <out) &&
 	test $cnt = 2 &&
 	for l in .git/objects/??/??????????????????????????????????????
 	do
@@ -185,8 +185,8 @@ test_expect_success 'repack' '
 test_expect_success 'pack-objects with large loose object' '
 	SHA1=$(git hash-object huge) &&
 	test_create_repo loose &&
-	echo $SHA1 | git pack-objects --stdout |
-		GIT_ALLOC_LIMIT=0 GIT_DIR=loose/.git git unpack-objects &&
+	echo $SHA1 | git pack-objects --stdout >out &&
+	GIT_ALLOC_LIMIT=0 GIT_DIR=loose/.git git unpack-objects <out &&
 	echo $SHA1 | GIT_DIR=loose/.git git pack-objects pack &&
 	test_create_repo packed &&
 	mv pack-* packed/.git/objects/pack &&
