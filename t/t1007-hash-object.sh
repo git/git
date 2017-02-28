@@ -95,8 +95,10 @@ test_expect_success 'git hash-object --stdin file1 <file0 first operates on file
 	echo foo > file1 &&
 	obname0=$(echo bar | git hash-object --stdin) &&
 	obname1=$(git hash-object file1) &&
-	obname0new=$(echo bar | git hash-object --stdin file1 | sed -n -e 1p) &&
-	obname1new=$(echo bar | git hash-object --stdin file1 | sed -n -e 2p) &&
+	obname0new=$(echo bar | git hash-object --stdin file1 >out &&
+	sed -n -e 1p <out) &&
+	obname1new=$(echo bar | git hash-object --stdin file1 >out &&
+	sed -n -e 2p <out) &&
 	test "$obname0" = "$obname0new" &&
 	test "$obname1" = "$obname1new"
 '
