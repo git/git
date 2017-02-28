@@ -225,32 +225,32 @@ test_expect_success \
 
 test_expect_success \
     'text without newline at end should end with newline' '
-    test $(printf "$ttt" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$ttt" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$ttt$ttt" | git stripspace | wc -l) -gt 0
+    test $(printf "$ttt" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$ttt" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$ttt$ttt" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$ttt$ttt$ttt" | git stripspace >out && wc -l out) -gt 0
 '
 
 # text plus spaces at the end:
 
 test_expect_success \
     'text plus spaces without newline at end should end with newline' '
-    test $(printf "$ttt$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$ttt$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$sss$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$ttt$sss$sss" | git stripspace | wc -l) -gt 0 &&
-    test $(printf "$ttt$sss$sss$sss" | git stripspace | wc -l) -gt 0
+    test $(printf "$ttt$sss" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$ttt$sss" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$ttt$ttt$sss" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$sss$sss" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$ttt$sss$sss" | git stripspace >out && wc -l out) -gt 0 &&
+    test $(printf "$ttt$sss$sss$sss" | git stripspace >out && wc -l out) -gt 0
 '
 
 test_expect_success \
     'text plus spaces without newline at end should not show spaces' '
-    ! (printf "$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (printf "$ttt$sss$sss$sss" | git stripspace | grep "  " >/dev/null)
+    ! (printf "$ttt$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (printf "$ttt$ttt$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (printf "$ttt$ttt$ttt$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (printf "$ttt$sss$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (printf "$ttt$ttt$sss$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (printf "$ttt$sss$sss$sss" | git stripspace >out && grep "  " out >/dev/null)
 '
 
 test_expect_success \
@@ -282,12 +282,12 @@ test_expect_success \
 
 test_expect_success \
     'text plus spaces at end should not show spaces' '
-    ! (echo "$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$ttt$ttt$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$ttt$sss$sss" | git stripspace | grep "  " >/dev/null) &&
-    ! (echo "$ttt$sss$sss$sss" | git stripspace | grep "  " >/dev/null)
+    ! (echo "$ttt$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (echo "$ttt$ttt$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (echo "$ttt$ttt$ttt$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (echo "$ttt$sss$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (echo "$ttt$ttt$sss$sss" | git stripspace >out && grep "  " out >/dev/null) &&
+    ! (echo "$ttt$sss$sss$sss" | git stripspace >out && grep "  " out >/dev/null)
 '
 
 test_expect_success \
@@ -341,11 +341,11 @@ test_expect_success \
 
 test_expect_success \
     'spaces without newline at end should not show spaces' '
-    ! (printf "" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss$sss" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss$sss$sss" | git stripspace | grep " " >/dev/null) &&
-    ! (printf "$sss$sss$sss$sss" | git stripspace | grep " " >/dev/null)
+    ! (printf "" | git stripspace >out && grep " " out >/dev/null) &&
+    ! (printf "$sss" | git stripspace >out && grep " " out >/dev/null) &&
+    ! (printf "$sss$sss" | git stripspace >out && grep " " out >/dev/null) &&
+    ! (printf "$sss$sss$sss" | git stripspace >out && grep " " out >/dev/null) &&
+    ! (printf "$sss$sss$sss$sss" | git stripspace >out && grep " " out >/dev/null)
 '
 
 test_expect_success \
