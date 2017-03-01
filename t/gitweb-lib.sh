@@ -114,4 +114,9 @@ perl -MCGI -MCGI::Util -MCGI::Carp -e 0 >/dev/null 2>&1 || {
 	test_done
 }
 
+perl -mTime::HiRes -e 0 >/dev/null 2>&1 || {
+	skip_all='skipping gitweb tests, Time::HiRes module not available'
+	test_done
+}
+
 gitweb_init
