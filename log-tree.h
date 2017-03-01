@@ -30,5 +30,6 @@ void load_ref_decorations(int flags);
 #define FORMAT_PATCH_NAME_MAX 64
 void fmt_output_commit(struct strbuf *, struct commit *, struct rev_info *);
 void fmt_output_subject(struct strbuf *, const char *subject, struct rev_info *);
+void fmt_output_email_subject(struct strbuf *, struct rev_info *);
 
 #endif
