@@ -31,8 +31,8 @@ commit_sha5=$(git rev-parse 5th^{commit})
 
 verify_notes () {
 	notes_ref="$1"
-	git -c core.notesRef="refs/notes/$notes_ref" notes |
-		sort >"output_notes_$notes_ref" &&
+	git -c core.notesRef="refs/notes/$notes_ref" notes >out &&
+	sort out >"output_notes_$notes_ref" &&
 	test_cmp "expect_notes_$notes_ref" "output_notes_$notes_ref" &&
 	git -c core.notesRef="refs/notes/$notes_ref" log --format="%H %s%n%N" \
 		>"output_log_$notes_ref" &&
