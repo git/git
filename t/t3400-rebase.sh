@@ -71,12 +71,12 @@ test_expect_success 'rebase, with <onto> and <upstream> specified as :/quuxery' 
 '
 
 test_expect_success 'the rebase operation should not have destroyed author information' '
-	! (git log | grep "Author:" | grep "<>")
+	! (git log >out && grep "Author:" out | grep "<>")
 '
 
 test_expect_success 'the rebase operation should not have destroyed author information (2)' "
-	git log -1 |
-	grep 'Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>'
+	git log -1 >out &&
+	grep 'Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>' out
 "
 
 test_expect_success 'HEAD was detached during rebase' '
