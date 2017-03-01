@@ -171,7 +171,7 @@ test_expect_success 'bogus OFS_DELTA in packfile' '
 	# enough to fit in the first byte (which it should be, since it
 	# is a pure deletion from the base), and that original ofs_delta
 	# takes 2 bytes (which it should, as it should be ~3000).
-	ofs=$(git show-index <$idx | grep $delta | cut -d" " -f1) &&
+	ofs=$(git show-index <$idx >out && grep $delta <out | cut -d" " -f1) &&
 	munge $pack $(($ofs + 1)) "\177\377" &&
 	test_must_fail git cat-file blob $delta >/dev/null
 '
