@@ -349,11 +349,9 @@ void fmt_output_email_subject(struct strbuf *sb, struct rev_info *opt)
 }
 
 void log_write_email_headers(struct rev_info *opt, struct commit *commit,
-			     const char **subject_p,
 			     const char **extra_headers_p,
 			     int *need_8bit_cte_p)
 {
-	static struct strbuf subject = STRBUF_INIT;
 	const char *extra_headers = opt->extra_headers;
 	const char *name = oid_to_hex(opt->zero_commit ?
 				      &null_oid : &commit->object.oid);
@@ -415,9 +413,6 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		opt->diffopt.stat_sep = buffer;
 		strbuf_release(&filename);
 	}
-	strbuf_reset(&subject);
-	fmt_output_email_subject(&subject, opt);
-	*subject_p = subject.buf;
 	*extra_headers_p = extra_headers;
 }
 
@@ -602,8 +597,10 @@ void show_log(struct rev_info *opt)
 	 */
 
 	if (cmit_fmt_is_mail(opt->commit_format)) {
-		log_write_email_headers(opt, commit, &ctx.subject, &extra_headers,
+		log_write_email_headers(opt, commit, &extra_headers,
 					&ctx.need_8bit_cte);
+		ctx.rev = opt;
+		ctx.print_email_subject = 1;
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), opt->diffopt.file);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
