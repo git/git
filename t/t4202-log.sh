@@ -333,8 +333,8 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph with merge' '
-	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
+	git log --graph --date-order --pretty=tformat:%s >out &&
+	sed "s/ *\$//" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -354,8 +354,8 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph --line-prefix="| | | " with merge' '
-	git log --line-prefix="| | | " --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
+	git log --line-prefix="| | | " --graph --date-order --pretty=tformat:%s >out &&
+	sed "s/ *\$//" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -376,18 +376,18 @@ EOF
 
 test_expect_success 'log --graph with merge with log.graphColors' '
 	test_config log.graphColors " blue,invalid-color, cyan, red  , " &&
-	git log --color=always --graph --date-order --pretty=tformat:%s |
-		test_decode_color | sed "s/ *\$//" >actual &&
+	git log --color=always --graph --date-order --pretty=tformat:%s >out &&
+	test_decode_color <out | sed "s/ *\$//" >actual &&
 	test_cmp expect.colors actual
 '
 
 test_expect_success 'log --raw --graph -m with merge' '
-	git log --raw --graph --oneline -m master | head -n 500 >actual &&
+	git log --raw --graph --oneline -m master >out && head -n 500 <out >actual &&
 	grep "initial" actual
 '
 
 test_expect_success 'diff-tree --graph' '
-	git diff-tree --graph master^ | head -n 500 >actual &&
+	git diff-tree --graph master^ >out && head -n 500 <out >actual &&
 	grep "one" actual
 '
 
@@ -445,9 +445,9 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph with full output' '
-	git log --graph --date-order --pretty=short |
-		git name-rev --name-only --stdin |
-		sed "s/Merge:.*/Merge: A B/;s/ *\$//" >actual &&
+	git log --graph --date-order --pretty=short >out &&
+	git name-rev --name-only --stdin <out >out1 &&
+	sed "s/Merge:.*/Merge: A B/;s/ *\$//" <out1 >actual &&
 	test_cmp expect actual
 '
 
@@ -514,8 +514,8 @@ cat > expect <<\EOF
 EOF
 
 test_expect_success 'log --graph with merge' '
-	git log --graph --date-order --pretty=tformat:%s |
-		sed "s/ *\$//" >actual &&
+	git log --graph --date-order --pretty=tformat:%s >out &&
+	sed "s/ *\$//" <out >actual &&
 	test_cmp expect actual
 '
 
