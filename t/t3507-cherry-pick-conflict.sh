@@ -345,7 +345,7 @@ test_expect_success 'commit after failed cherry-pick does not add duplicated -s'
 	pristine_detach initial &&
 	test_must_fail git cherry-pick -s picked-signed &&
 	git commit -a -s &&
-	test $(git show -s |grep -c "Signed-off-by") = 1
+	test $(git show -s >out && grep -c "Signed-off-by" out) = 1
 '
 
 test_expect_success 'commit after failed cherry-pick adds -s at the right place' '
