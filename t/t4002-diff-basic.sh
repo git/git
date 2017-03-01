@@ -257,10 +257,10 @@ test_expect_success \
 
 test_expect_success \
     'diff can read from stdin' \
-    'test_must_fail git diff --no-index -- MN - < NN |
-        grep -v "^index" | sed "s#/-#/NN#" >.test-a &&
-    test_must_fail git diff --no-index -- MN NN |
-        grep -v "^index" >.test-b &&
+    'test_must_fail git diff --no-index -- MN - < NN >out &&
+    grep -v "^index" <out | sed "s#/-#/NN#" >.test-a &&
+    test_must_fail git diff --no-index -- MN NN >out &&
+    grep -v "^index" <out >.test-b &&
     test_cmp .test-a .test-b'
 
 test_done
