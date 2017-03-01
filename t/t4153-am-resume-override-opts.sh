@@ -77,11 +77,11 @@ test_expect_success '--signoff overrides --no-signoff' '
 
 	# Applied side1 will be signed off
 	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >expected &&
-	git cat-file commit HEAD^ | grep "Signed-off-by:" >actual &&
+	git cat-file commit HEAD^ >out && grep "Signed-off-by:" <out >actual &&
 	test_cmp expected actual &&
 
 	# Applied side2 will not be signed off
-	test $(git cat-file commit HEAD | grep -c "Signed-off-by:") -eq 0
+	test $(git cat-file commit HEAD >out && grep -c "Signed-off-by:" <out) -eq 0
 '
 
 test_expect_success TTY '--reject overrides --no-reject' '
