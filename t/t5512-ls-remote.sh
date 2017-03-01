@@ -10,10 +10,10 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m initial &&
 	git tag mark &&
-	git show-ref --tags -d | sed -e "s/ /	/" >expected.tag &&
+	git show-ref --tags -d >out && sed -e "s/ /	/" <out >expected.tag &&
 	(
 		echo "$(git rev-parse HEAD)	HEAD"
-		git show-ref -d	| sed -e "s/ /	/"
+		git show-ref -d	>out && sed -e "s/ /	/" <out
 	) >expected.all &&
 
 	git remote add self "$(pwd)/.git"
@@ -70,7 +70,7 @@ test_expect_success 'use branch.<name>.remote if possible' '
 	(
 		cd other.git &&
 		echo "$(git rev-parse HEAD)	HEAD"
-		git show-ref	| sed -e "s/ /	/"
+		git show-ref >out && sed -e "s/ /	/" <out
 	) >exp &&
 
 	URL="other.git" &&
@@ -139,8 +139,8 @@ do
 		test_config $configsection.hiderefs refs/tags &&
 		git ls-remote . >actual &&
 		test_unconfig $configsection.hiderefs &&
-		git ls-remote . |
-		sed -e "/	refs\/tags\//d" >expect &&
+		git ls-remote . >out &&
+		sed -e "/	refs\/tags\//d" <out >expect &&
 		test_cmp expect actual
 	'
 
