@@ -144,7 +144,7 @@ test_expect_success 'show notes' '
 		Notes:
 		${indent}b1
 	EOF
-	! (git cat-file commit HEAD | grep b1) &&
+	! (git cat-file commit HEAD >out && grep b1 out) &&
 	git log -1 >actual &&
 	test_cmp expect actual
 '
@@ -391,7 +391,7 @@ test_expect_success 'removing more than one' '
 	git notes add -m "extra" &&
 	git notes list HEAD >after-removal-expect &&
 	git notes remove HEAD^^ HEAD^^^ &&
-	git notes list | sed -e "s/ .*//" >actual &&
+	git notes list >out && sed -e "s/ .*//" <out >actual &&
 	test_cmp after-removal-expect actual
 '
 
@@ -411,7 +411,7 @@ test_expect_success 'removing with --ignore-missing' '
 	git notes add -m "extra" &&
 	git notes list HEAD >after-removal-expect &&
 	git notes remove --ignore-missing HEAD^^ HEAD^^^ HEAD^ &&
-	git notes list | sed -e "s/ .*//" >actual &&
+	git notes list >out && sed -e "s/ .*//" <out >actual &&
 	test_cmp after-removal-expect actual
 '
 
@@ -432,7 +432,7 @@ test_expect_success 'remove reads from --stdin' '
 	git notes list HEAD >after-removal-expect &&
 	git rev-parse HEAD^^ HEAD^^^ >input &&
 	git notes remove --stdin <input &&
-	git notes list | sed -e "s/ .*//" >actual &&
+	git notes list >out && sed -e "s/ .*//" <out >actual &&
 	test_cmp after-removal-expect actual
 '
 
@@ -454,7 +454,7 @@ test_expect_success 'removing with --stdin --ignore-missing' '
 	git notes list HEAD >after-removal-expect &&
 	git rev-parse HEAD^^ HEAD^^^ HEAD^ >input &&
 	git notes remove --ignore-missing --stdin <input &&
-	git notes list | sed -e "s/ .*//" >actual &&
+	git notes list >out && sed -e "s/ .*//" <out >actual &&
 	test_cmp after-removal-expect actual
 '
 
@@ -702,7 +702,7 @@ test_expect_success 'Allow notes on non-commits (trees, blobs, tags)' '
 	git notes show HEAD: >actual &&
 	test_cmp expect actual &&
 	echo "Note on a blob" >expect &&
-	filename=$(git ls-tree --name-only HEAD | head -n1) &&
+	filename=$(git ls-tree --name-only HEAD >out && head -n1 <out) &&
 	git notes add -m "Note on a blob" HEAD:$filename &&
 	git notes show HEAD:$filename >actual &&
 	test_cmp expect actual &&
