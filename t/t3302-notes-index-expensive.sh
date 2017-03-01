@@ -61,7 +61,7 @@ create_repo () {
 test_notes () {
 	count=$1 &&
 	git config core.notesRef refs/notes/commits &&
-	git log | grep "^    " >output &&
+	git log >out && grep "^    " <out >output &&
 	i=$count &&
 	while test $i -gt 0
 	do
