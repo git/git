@@ -42,8 +42,8 @@ test_expect_success 'merge an octopus, fast-forward (ff)' '
 	git merge left right &&
 	# one is ancestor of three (left) and four (right)
 	test_must_fail git rev-parse --verify HEAD^3 &&
-	git rev-parse HEAD^1 HEAD^2 | sort >actual &&
-	git rev-parse three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 >out && sort <out >actual &&
+	git rev-parse three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
@@ -53,8 +53,8 @@ test_expect_success 'merge octopus, non-fast-forward (ff)' '
 	git merge --no-ff left right &&
 	# one is ancestor of three (left) and four (right)
 	test_must_fail git rev-parse --verify HEAD^4 &&
-	git rev-parse HEAD^1 HEAD^2 HEAD^3 | sort >actual &&
-	git rev-parse one three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 HEAD^3 >out && sort <out >actual &&
+	git rev-parse one three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
@@ -63,8 +63,8 @@ test_expect_success 'merge octopus, fast-forward (does not ff)' '
 	git merge left right &&
 	# two (master) is not an ancestor of three (left) and four (right)
 	test_must_fail git rev-parse --verify HEAD^4 &&
-	git rev-parse HEAD^1 HEAD^2 HEAD^3 | sort >actual &&
-	git rev-parse two three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 HEAD^3 >out && sort <out >actual &&
+	git rev-parse two three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
@@ -72,8 +72,8 @@ test_expect_success 'merge octopus, non-fast-forward' '
 	t3033_reset &&
 	git merge --no-ff left right &&
 	test_must_fail git rev-parse --verify HEAD^4 &&
-	git rev-parse HEAD^1 HEAD^2 HEAD^3 | sort >actual &&
-	git rev-parse two three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 HEAD^3 >out && sort <out >actual &&
+	git rev-parse two three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
@@ -97,8 +97,8 @@ test_expect_success 'merge FETCH_HEAD octopus fast-forward (ff)' '
 	git merge FETCH_HEAD &&
 	# one is ancestor of three (left) and four (right)
 	test_must_fail git rev-parse --verify HEAD^3 &&
-	git rev-parse HEAD^1 HEAD^2 | sort >actual &&
-	git rev-parse three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 >out && sort <out >actual &&
+	git rev-parse three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
@@ -109,8 +109,8 @@ test_expect_success 'merge FETCH_HEAD octopus non-fast-forward (ff)' '
 	git merge --no-ff FETCH_HEAD &&
 	# one is ancestor of three (left) and four (right)
 	test_must_fail git rev-parse --verify HEAD^4 &&
-	git rev-parse HEAD^1 HEAD^2 HEAD^3 | sort >actual &&
-	git rev-parse one three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 HEAD^3 >out && sort <out >actual &&
+	git rev-parse one three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
@@ -120,8 +120,8 @@ test_expect_success 'merge FETCH_HEAD octopus fast-forward (does not ff)' '
 	git merge FETCH_HEAD &&
 	# two (master) is not an ancestor of three (left) and four (right)
 	test_must_fail git rev-parse --verify HEAD^4 &&
-	git rev-parse HEAD^1 HEAD^2 HEAD^3 | sort >actual &&
-	git rev-parse two three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 HEAD^3 >out && sort <out >actual &&
+	git rev-parse two three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
@@ -130,8 +130,8 @@ test_expect_success 'merge FETCH_HEAD octopus non-fast-forward' '
 	git fetch . left right &&
 	git merge --no-ff FETCH_HEAD &&
 	test_must_fail git rev-parse --verify HEAD^4 &&
-	git rev-parse HEAD^1 HEAD^2 HEAD^3 | sort >actual &&
-	git rev-parse two three four | sort >expect &&
+	git rev-parse HEAD^1 HEAD^2 HEAD^3 >out && sort <out >actual &&
+	git rev-parse two three four >out && sort <out >expect &&
 	test_cmp expect actual
 '
 
