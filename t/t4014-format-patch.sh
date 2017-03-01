@@ -34,7 +34,7 @@ test_expect_success setup '
 	git commit -m "Side changes #3 with \\n backslash-n in it." &&
 
 	git checkout master &&
-	git diff-tree -p C2 | git apply --index &&
+	git diff-tree -p C2 >out && git apply --index <out &&
 	test_tick &&
 	git commit -m "Master accepts moral equivalent of #2"
 
@@ -77,7 +77,7 @@ test_expect_success "format-patch doesn't consider merge commits" '
 	git checkout -b merger master &&
 	test_tick &&
 	git merge --no-ff slave &&
-	cnt=$(git format-patch -3 --stdout | grep "^From " | wc -l) &&
+	cnt=$(git format-patch -3 --stdout >out && grep "^From " <out | wc -l) &&
 	test $cnt = 3
 '
 
@@ -85,7 +85,7 @@ test_expect_success "format-patch result applies" '
 
 	git checkout -b rebuild-0 master &&
 	git am -3 patch0 &&
-	cnt=$(git rev-list master.. | wc -l) &&
+	cnt=$(git rev-list master.. >out && wc -l <out) &&
 	test $cnt = 2
 '
 
@@ -93,13 +93,14 @@ test_expect_success "format-patch --ignore-if-in-upstream result applies" '
 
 	git checkout -b rebuild-1 master &&
 	git am -3 patch1 &&
-	cnt=$(git rev-list master.. | wc -l) &&
+	cnt=$(git rev-list master.. >out && wc -l <out) &&
 	test $cnt = 2
 '
 
 test_expect_success 'commit did not screw up the log message' '
 
-	git cat-file commit side | grep "^Side .* with .* backslash-n"
+	git cat-file commit side >out &&
+	grep "^Side .* with .* backslash-n" <out
 
 '
 
@@ -112,7 +113,8 @@ test_expect_success 'format-patch did not screw up the log message' '
 
 test_expect_success 'replay did not screw up the log message' '
 
-	git cat-file commit rebuild-1 | grep "^Side .* with .* backslash-n"
+	git cat-file commit rebuild-1 >out &&
+	grep "^Side .* with .* backslash-n" <out
 
 '
 
@@ -153,7 +155,8 @@ test_expect_success 'extra headers with multiple To:s' '
 test_expect_success 'additional command line cc (ascii)' '
 
 	git config --replace-all format.headers "Cc: R E Cipient <rcipient@example.com>" &&
-	git format-patch --cc="S E Cipient <scipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch5 &&
+	git format-patch --cc="S E Cipient <scipient@example.com>" --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch5 &&
 	grep "^Cc: R E Cipient <rcipient@example.com>,\$" patch5 &&
 	grep "^ *S E Cipient <scipient@example.com>\$" patch5
 '
@@ -161,7 +164,8 @@ test_expect_success 'additional command line cc (ascii)' '
 test_expect_failure 'additional command line cc (rfc822)' '
 
 	git config --replace-all format.headers "Cc: R E Cipient <rcipient@example.com>" &&
-	git format-patch --cc="S. E. Cipient <scipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch5 &&
+	git format-patch --cc="S. E. Cipient <scipient@example.com>" --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch5 &&
 	grep "^Cc: R E Cipient <rcipient@example.com>,\$" patch5 &&
 	grep "^ *\"S. E. Cipient\" <scipient@example.com>\$" patch5
 '
@@ -169,14 +173,16 @@ test_expect_failure 'additional command line cc (rfc822)' '
 test_expect_success 'command line headers' '
 
 	git config --unset-all format.headers &&
-	git format-patch --add-header="Cc: R E Cipient <rcipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch6 &&
+	git format-patch --add-header="Cc: R E Cipient <rcipient@example.com>" --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch6 &&
 	grep "^Cc: R E Cipient <rcipient@example.com>\$" patch6
 '
 
 test_expect_success 'configuration headers and command line headers' '
 
 	git config --replace-all format.headers "Cc: R E Cipient <rcipient@example.com>" &&
-	git format-patch --add-header="Cc: S E Cipient <scipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch7 &&
+	git format-patch --add-header="Cc: S E Cipient <scipient@example.com>" --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch7 &&
 	grep "^Cc: R E Cipient <rcipient@example.com>,\$" patch7 &&
 	grep "^ *S E Cipient <scipient@example.com>\$" patch7
 '
@@ -184,40 +190,46 @@ test_expect_success 'configuration headers and command line headers' '
 test_expect_success 'command line To: header (ascii)' '
 
 	git config --unset-all format.headers &&
-	git format-patch --to="R E Cipient <rcipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch8 &&
+	git format-patch --to="R E Cipient <rcipient@example.com>" --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch8 &&
 	grep "^To: R E Cipient <rcipient@example.com>\$" patch8
 '
 
 test_expect_failure 'command line To: header (rfc822)' '
 
-	git format-patch --to="R. E. Cipient <rcipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch8 &&
+	git format-patch --to="R. E. Cipient <rcipient@example.com>" --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch8 &&
 	grep "^To: \"R. E. Cipient\" <rcipient@example.com>\$" patch8
 '
 
 test_expect_failure 'command line To: header (rfc2047)' '
 
-	git format-patch --to="R Ä Cipient <rcipient@example.com>" --stdout master..side | sed -e "/^\$/q" >patch8 &&
+	git format-patch --to="R Ä Cipient <rcipient@example.com>" --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch8 &&
 	grep "^To: =?UTF-8?q?R=20=C3=84=20Cipient?= <rcipient@example.com>\$" patch8
 '
 
 test_expect_success 'configuration To: header (ascii)' '
 
 	git config format.to "R E Cipient <rcipient@example.com>" &&
-	git format-patch --stdout master..side | sed -e "/^\$/q" >patch9 &&
+	git format-patch --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch9 &&
 	grep "^To: R E Cipient <rcipient@example.com>\$" patch9
 '
 
 test_expect_failure 'configuration To: header (rfc822)' '
 
 	git config format.to "R. E. Cipient <rcipient@example.com>" &&
-	git format-patch --stdout master..side | sed -e "/^\$/q" >patch9 &&
+	git format-patch --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch9 &&
 	grep "^To: \"R. E. Cipient\" <rcipient@example.com>\$" patch9
 '
 
 test_expect_failure 'configuration To: header (rfc2047)' '
 
 	git config format.to "R Ä Cipient <rcipient@example.com>" &&
-	git format-patch --stdout master..side | sed -e "/^\$/q" >patch9 &&
+	git format-patch --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch9 &&
 	grep "^To: =?UTF-8?q?R=20=C3=84=20Cipient?= <rcipient@example.com>\$" patch9
 '
 
@@ -231,40 +243,40 @@ check_patch () {
 
 test_expect_success 'format.from=false' '
 
-	git -c format.from=false format-patch --stdout master..side |
-	sed -e "/^\$/q" >patch &&
+	git -c format.from=false format-patch --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch &&
 	check_patch patch &&
 	! grep "^From: C O Mitter <committer@example.com>\$" patch
 '
 
 test_expect_success 'format.from=true' '
 
-	git -c format.from=true format-patch --stdout master..side |
-	sed -e "/^\$/q" >patch &&
+	git -c format.from=true format-patch --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch &&
 	check_patch patch &&
 	grep "^From: C O Mitter <committer@example.com>\$" patch
 '
 
 test_expect_success 'format.from with address' '
 
-	git -c format.from="F R Om <from@example.com>" format-patch --stdout master..side |
-	sed -e "/^\$/q" >patch &&
+	git -c format.from="F R Om <from@example.com>" format-patch --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch &&
 	check_patch patch &&
 	grep "^From: F R Om <from@example.com>\$" patch
 '
 
 test_expect_success '--no-from overrides format.from' '
 
-	git -c format.from="F R Om <from@example.com>" format-patch --no-from --stdout master..side |
-	sed -e "/^\$/q" >patch &&
+	git -c format.from="F R Om <from@example.com>" format-patch --no-from --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch &&
 	check_patch patch &&
 	! grep "^From: F R Om <from@example.com>\$" patch
 '
 
 test_expect_success '--from overrides format.from' '
 
-	git -c format.from="F R Om <from@example.com>" format-patch --from --stdout master..side |
-	sed -e "/^\$/q" >patch &&
+	git -c format.from="F R Om <from@example.com>" format-patch --from --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch &&
 	check_patch patch &&
 	! grep "^From: F R Om <from@example.com>\$" patch
 '
@@ -273,8 +285,8 @@ test_expect_success '--no-to overrides config.to' '
 
 	git config --replace-all format.to \
 		"R E Cipient <rcipient@example.com>" &&
-	git format-patch --no-to --stdout master..side |
-	sed -e "/^\$/q" >patch10 &&
+	git format-patch --no-to --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch10 &&
 	check_patch patch10 &&
 	! grep "^To: R E Cipient <rcipient@example.com>\$" patch10
 '
@@ -284,8 +296,8 @@ test_expect_success '--no-to and --to replaces config.to' '
 	git config --replace-all format.to \
 		"Someone <someone@out.there>" &&
 	git format-patch --no-to --to="Someone Else <else@out.there>" \
-		--stdout master..side |
-	sed -e "/^\$/q" >patch11 &&
+		--stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch11 &&
 	check_patch patch11 &&
 	! grep "^To: Someone <someone@out.there>\$" patch11 &&
 	grep "^To: Someone Else <else@out.there>\$" patch11
@@ -295,8 +307,8 @@ test_expect_success '--no-cc overrides config.cc' '
 
 	git config --replace-all format.cc \
 		"C E Cipient <rcipient@example.com>" &&
-	git format-patch --no-cc --stdout master..side |
-	sed -e "/^\$/q" >patch12 &&
+	git format-patch --no-cc --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch12 &&
 	check_patch patch12 &&
 	! grep "^Cc: C E Cipient <rcipient@example.com>\$" patch12
 '
@@ -305,8 +317,8 @@ test_expect_success '--no-add-header overrides config.headers' '
 
 	git config --replace-all format.headers \
 		"Header1: B E Cipient <rcipient@example.com>" &&
-	git format-patch --no-add-header --stdout master..side |
-	sed -e "/^\$/q" >patch13 &&
+	git format-patch --no-add-header --stdout master..side >out &&
+	sed -e "/^\$/q" <out >patch13 &&
 	check_patch patch13 &&
 	! grep "^Header1: B E Cipient <rcipient@example.com>\$" patch13
 '
@@ -341,7 +353,7 @@ check_threading () {
 	(git format-patch --stdout "$@"; echo $? > status.out) |
 	# Prints everything between the Message-ID and In-Reply-To,
 	# and replaces all Message-ID-lookalikes by a sequence number
-	perl -ne '
+	perl -ne'
 		if (/^(message-id|references|in-reply-to)/i) {
 			$printing = 1;
 		} elsif (/^\S/) {
@@ -743,7 +755,7 @@ test_expect_success 'options no longer allowed for format-patch' '
 
 test_expect_success 'format-patch --numstat should produce a patch' '
 	git format-patch --numstat --stdout master..side > output &&
-	test 5 = $(grep "^diff --git a/" output | wc -l)'
+	test 5 = $(grep "^diff --git a/" output >out && wc -l <out)'
 
 test_expect_success 'format-patch -- <path>' '
 	git format-patch master..side -- file 2>error &&
@@ -754,20 +766,20 @@ test_expect_success 'format-patch --ignore-if-in-upstream HEAD' '
 	git format-patch --ignore-if-in-upstream HEAD
 '
 
-git_version="$(git --version | sed "s/.* //")"
+git_version="$(git --version >out && sed "s/.* //" <out)"
 
 signature() {
 	printf "%s\n%s\n\n" "-- " "${1:-$git_version}"
 }
 
 test_expect_success 'format-patch default signature' '
-	git format-patch --stdout -1 | tail -n 3 >output &&
+	git format-patch --stdout -1 >out && tail -n 3 <out >output &&
 	signature >expect &&
 	test_cmp expect output
 '
 
 test_expect_success 'format-patch --signature' '
-	git format-patch --stdout --signature="my sig" -1 | tail -n 3 >output &&
+	git format-patch --stdout --signature="my sig" -1 >out && tail -n 3 <out >output &&
 	signature "my sig" >expect &&
 	test_cmp expect output
 '
@@ -1538,7 +1550,7 @@ test_expect_success 'format-patch format.outputDirectory option' '
 	test_config format.outputDirectory patches &&
 	rm -fr patches &&
 	git format-patch master..side &&
-	test $(git rev-list master..side | wc -l) -eq $(ls patches | wc -l)
+	test $(git rev-list master..side >out && wc -l <out) -eq $(ls patches | wc -l)
 '
 
 test_expect_success 'format-patch -o overrides format.outputDirectory' '
@@ -1551,11 +1563,13 @@ test_expect_success 'format-patch -o overrides format.outputDirectory' '
 
 test_expect_success 'format-patch --base' '
 	git checkout side &&
-	git format-patch --stdout --base=HEAD~3 -1 | tail -n 7 >actual &&
+	git format-patch --stdout --base=HEAD~3 -1 >out && tail -n 7 <out >actual &&
 	echo >expected &&
 	echo "base-commit: $(git rev-parse HEAD~3)" >>expected &&
-	echo "prerequisite-patch-id: $(git show --patch HEAD~2 | git patch-id --stable | awk "{print \$1}")" >>expected &&
-	echo "prerequisite-patch-id: $(git show --patch HEAD~1 | git patch-id --stable | awk "{print \$1}")" >>expected &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~2 >out &&
+		git patch-id --stable <out >out1 && awk "{print \$1}" <out1)" >>expected &&
+	echo "prerequisite-patch-id: $(git show --patch HEAD~1 >out &&
+		git patch-id --stable <out >out1 && awk "{print \$1}" <out1)" >>expected &&
 	signature >> expected &&
 	test_cmp expected actual
 '
