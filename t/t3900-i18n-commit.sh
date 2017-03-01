@@ -8,7 +8,7 @@ test_description='commit and log output encodings'
 . ./test-lib.sh
 
 compare_with () {
-	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' >current &&
+	git show -s $1 >out && sed -e '1,/^$/d' -e 's/^    //' <out >current &&
 	case "$3" in
 	'')
 		test_cmp "$2" current ;;
@@ -30,7 +30,7 @@ test_expect_success setup '
 '
 
 test_expect_success 'no encoding header for base case' '
-	E=$(git cat-file commit C0 | sed -ne "s/^encoding //p") &&
+	E=$(git cat-file commit C0 >out && sed -ne "s/^encoding //p" <out) &&
 	test z = "z$E"
 '
 
@@ -89,7 +89,7 @@ done
 for H in ISO8859-1 eucJP ISO-2022-JP
 do
 	test_expect_success "check encoding header for $H" '
-		E=$(git cat-file commit '$H' | sed -ne "s/^encoding //p") &&
+		E=$(git cat-file commit '$H' >out && sed -ne "s/^encoding //p" <out) &&
 		test "z$E" = "z'$H'"
 	'
 done
@@ -190,8 +190,8 @@ test_commit_autosquash_flags () {
 		test_tick &&
 		echo $H $flag >>F &&
 		git commit -a --$flag HEAD~1 &&
-		E=$(git cat-file commit '$H-$flag' |
-			sed -ne "s/^encoding //p") &&
+		E=$(git cat-file commit '$H-$flag' >out &&
+		sed -ne "s/^encoding //p" <out) &&
 		test "z$E" = "z$H" &&
 		git config --unset-all i18n.commitencoding &&
 		git rebase --autosquash -i HEAD^^^ &&
