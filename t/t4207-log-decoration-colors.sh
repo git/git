@@ -58,8 +58,8 @@ EOF
 # We want log to show all, but the second parent to refs/stash is irrelevant
 # to this test since it does not contain any decoration, hence --first-parent
 test_expect_success 'Commit Decorations Colored Correctly' '
-	git log --first-parent --abbrev=10 --all --decorate --oneline --color=always |
-	sed "s/[0-9a-f]\{10,10\}/COMMIT_ID/" >out &&
+	git log --first-parent --abbrev=10 --all --decorate --oneline --color=always >out1 &&
+	sed "s/[0-9a-f]\{10,10\}/COMMIT_ID/" <out1 >out &&
 	test_cmp expected out
 '
 
