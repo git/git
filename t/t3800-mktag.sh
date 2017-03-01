@@ -359,7 +359,7 @@ test_expect_success \
 
 test_expect_success \
     'check mytag' \
-    'git tag -l | grep mytag'
+    'git tag -l >out && grep mytag out'
 
 
 test_done
