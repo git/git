@@ -187,7 +187,7 @@ test_expect_success 'cherry-pick --stdin works' '
 	git checkout -f master &&
 	git reset --hard first &&
 	test_tick &&
-	git rev-list --reverse first..fourth | git cherry-pick --stdin &&
+	git rev-list --reverse first..fourth >out && git cherry-pick --stdin out &&
 	git diff --quiet other &&
 	git diff --quiet HEAD other &&
 	check_head_differs_from fourth
