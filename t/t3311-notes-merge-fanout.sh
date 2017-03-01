@@ -12,8 +12,8 @@ verify_notes () {
 	commit="$2"
 	if test -f "expect_notes_$notes_ref"
 	then
-		git -c core.notesRef="refs/notes/$notes_ref" notes |
-			sort >"output_notes_$notes_ref" &&
+		git -c core.notesRef="refs/notes/$notes_ref" notes >out &&
+		sort out >"output_notes_$notes_ref" &&
 		test_cmp "expect_notes_$notes_ref" "output_notes_$notes_ref" ||
 			return 1
 	fi &&
@@ -26,7 +26,7 @@ verify_fanout () {
 	notes_ref="$1"
 	# Expect entire notes tree to have a fanout == 1
 	git rev-parse --quiet --verify "refs/notes/$notes_ref" >/dev/null &&
-	git ls-tree -r --name-only "refs/notes/$notes_ref" |
+	git ls-tree -r --name-only "refs/notes/$notes_ref" >out &&
 	while read path
 	do
 		case "$path" in
@@ -38,14 +38,14 @@ verify_fanout () {
 			return 1
 			;;
 		esac
-	done
+	done <out
 }
 
 verify_no_fanout () {
 	notes_ref="$1"
 	# Expect entire notes tree to have a fanout == 0
 	git rev-parse --quiet --verify "refs/notes/$notes_ref" >/dev/null &&
-	git ls-tree -r --name-only "refs/notes/$notes_ref" |
+	git ls-tree -r --name-only "refs/notes/$notes_ref" >out &&
 	while read path
 	do
 		case "$path" in
@@ -57,7 +57,7 @@ verify_no_fanout () {
 			return 1
 			;;
 		esac
-	done
+	done <out
 }
 
 # Set up a notes merge scenario with different kinds of conflicts
@@ -123,8 +123,8 @@ test_expect_success 'Add a few hundred commits w/notes to trigger fanout (x -> y
 	done &&
 	test "$(git rev-parse refs/notes/y)" != "$(git rev-parse refs/notes/x)" &&
 	# Expected number of commits and notes
-	test $(git rev-list HEAD | wc -l) = $num &&
-	test $(git notes list | wc -l) = $num &&
+	test $(git rev-list HEAD >out && wc -l <out) = $num &&
+	test $(git notes list >out && wc -l <out) = $num &&
 	# 5 first notes unchanged
 	verify_notes y commit5
 '
