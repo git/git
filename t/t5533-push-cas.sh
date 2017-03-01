@@ -185,8 +185,8 @@ test_expect_success 'cover everything with default force-with-lease (allowed)' '
 		git fetch &&
 		git push --force-with-lease origin master master:naster
 	) &&
-	git ls-remote dst refs/heads/master |
-	sed -e "s/master/naster/" >expect &&
+	git ls-remote dst refs/heads/master >out &&
+	sed -e "s/master/naster/" <out >expect &&
 	git ls-remote src refs/heads/naster >actual &&
 	test_cmp expect actual
 '
