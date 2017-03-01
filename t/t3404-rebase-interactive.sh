@@ -172,8 +172,8 @@ test_expect_success 'reflog for the branch shows state before rebase' '
 test_expect_success 'exchange two commits' '
 	set_fake_editor &&
 	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
-	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
-	test G = $(git cat-file commit HEAD | sed -ne \$p)
+	test H = $(git cat-file commit HEAD^ >out && sed -ne \$p <out) &&
+	test G = $(git cat-file commit HEAD >out && sed -ne \$p <out)
 '
 
 cat > expect << EOF
@@ -201,8 +201,8 @@ test_expect_success 'stop on conflicting pick' '
 	test "$(git rev-parse HEAD~3)" = "$(git rev-parse master)" &&
 	test_cmp expect .git/rebase-merge/patch &&
 	test_cmp expect2 file1 &&
-	test "$(git diff --name-status |
-		sed -n -e "/^U/s/^U[^a-z]*//p")" = file1 &&
+	test "$(git diff --name-status >out &&
+	sed -n -e "/^U/s/^U[^a-z]*//p" <out)" = file1 &&
 	test 4 = $(grep -v "^#" < .git/rebase-merge/done | wc -l) &&
 	test 0 = $(grep -c "^[^#]" < .git/rebase-merge/git-rebase-todo)
 '
@@ -234,7 +234,7 @@ test_expect_success 'retain authorship' '
 	git tag twerp &&
 	set_fake_editor &&
 	git rebase -i --onto master HEAD^ &&
-	git show HEAD | grep "^Author: Twerp Snog"
+	git show HEAD >out && grep "^Author: Twerp Snog" out
 '
 
 test_expect_success 'retain authorship w/ conflicts' '
@@ -267,7 +267,7 @@ test_expect_success 'squash' '
 '
 
 test_expect_success 'retain authorship when squashing' '
-	git show HEAD | grep "^Author: Twerp Snog"
+	git show HEAD >out && grep "^Author: Twerp Snog" out
 '
 
 test_expect_success '-p handles "no changes" gracefully' '
@@ -284,8 +284,8 @@ test_expect_failure 'exchange two commits with -p' '
 	git checkout H &&
 	set_fake_editor &&
 	FAKE_LINES="2 1" git rebase -i -p HEAD~2 &&
-	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
-	test G = $(git cat-file commit HEAD | sed -ne \$p)
+	test H = $(git cat-file commit HEAD^ >out && sed -ne \$p <out) &&
+	test G = $(git cat-file commit HEAD >out sed -ne \$p <out)
 '
 
 test_expect_success 'preserve merges with -p' '
@@ -352,7 +352,7 @@ test_expect_success '--continue tries to commit' '
 	git add file1 &&
 	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
 	test $(git rev-parse HEAD^) = $(git rev-parse new-branch1) &&
-	git show HEAD | grep chouette
+	git show HEAD >out && grep chouette out
 '
 
 test_expect_success 'verbose flag is heeded, even after --continue' '
@@ -373,7 +373,7 @@ test_expect_success 'multi-squash only fires up editor once' '
 		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
-	test 1 = $(git show | grep ONCE | wc -l)
+	test 1 = $(git show >out && grep ONCE out | wc -l)
 '
 
 test_expect_success 'multi-fixup does not fire up editor' '
@@ -383,7 +383,7 @@ test_expect_success 'multi-fixup does not fire up editor' '
 	FAKE_COMMIT_AMEND="NEVER" FAKE_LINES="1 fixup 2 fixup 3 fixup 4" \
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
-	test 0 = $(git show | grep NEVER | wc -l) &&
+	test 0 = $(git show >out && grep NEVER out | wc -l) &&
 	git checkout to-be-rebased &&
 	git branch -D multi-fixup
 '
@@ -398,7 +398,7 @@ test_expect_success 'commit message used after conflict' '
 	FAKE_COMMIT_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
 		git rebase --continue &&
 	test $base = $(git rev-parse HEAD^) &&
-	test 1 = $(git show | grep ONCE | wc -l) &&
+	test 1 = $(git show >out && grep ONCE out | wc -l) &&
 	git checkout to-be-rebased &&
 	git branch -D conflict-fixup
 '
@@ -413,7 +413,7 @@ test_expect_success 'commit message retained after conflict' '
 	FAKE_COMMIT_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
 		git rebase --continue &&
 	test $base = $(git rev-parse HEAD^) &&
-	test 2 = $(git show | grep TWICE | wc -l) &&
+	test 2 = $(git show >out && grep TWICE out | wc -l) &&
 	git checkout to-be-rebased &&
 	git branch -D conflict-squash
 '
@@ -433,7 +433,7 @@ test_expect_success 'squash and fixup generate correct log messages' '
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 fixup 2 squash 3 fixup 4" \
 		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
-	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
+	git cat-file commit HEAD >out && sed -e 1,/^\$/d <out >actual-squash-fixup &&
 	test_cmp expect-squash-fixup actual-squash-fixup &&
 	git checkout to-be-rebased &&
 	git branch -D squash-fixup
@@ -447,7 +447,7 @@ test_expect_success 'squash ignores comments' '
 		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
-	test 1 = $(git show | grep ONCE | wc -l) &&
+	test 1 = $(git show >out && grep ONCE out | wc -l) &&
 	git checkout to-be-rebased &&
 	git branch -D skip-comments
 '
@@ -460,7 +460,7 @@ test_expect_success 'squash ignores blank lines' '
 		EXPECT_HEADER_COUNT=4 \
 		git rebase -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
-	test 1 = $(git show | grep ONCE | wc -l) &&
+	test 1 = $(git show >out && grep ONCE out | wc -l) &&
 	git checkout to-be-rebased &&
 	git branch -D skip-blank-lines
 '
@@ -518,7 +518,7 @@ test_expect_success '--continue tries to commit, even for "edit"' '
 	git add file7 &&
 	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
 	test edited = $(git show HEAD:file7) &&
-	git show HEAD | grep chouette &&
+	git show HEAD >out && grep chouette out &&
 	test $parent = $(git rev-parse HEAD^)
 '
 
@@ -695,15 +695,15 @@ test_expect_success 'reword' '
 	git checkout -b reword-branch master &&
 	set_fake_editor &&
 	FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" git rebase -i A &&
-	git show HEAD | grep "E changed" &&
+	git show HEAD >out && grep "E changed" out &&
 	test $(git rev-parse master) != $(git rev-parse HEAD) &&
 	test $(git rev-parse master^) = $(git rev-parse HEAD^) &&
 	FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" git rebase -i A &&
-	git show HEAD^ | grep "D changed" &&
+	git show HEAD^ >out && grep "D changed" out &&
 	FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" git rebase -i A &&
-	git show HEAD~3 | grep "B changed" &&
+	git show HEAD~3 >out && grep "B changed" out &&
 	FAKE_LINES="1 reword 2 3 4" FAKE_COMMIT_MESSAGE="C changed" git rebase -i A &&
-	git show HEAD~2 | grep "C changed"
+	git show HEAD~2 >out && grep "C changed" out
 '
 
 test_expect_success 'rebase -i can copy notes' '
@@ -908,11 +908,11 @@ test_expect_success 'rebase -i --root re-order and drop commits' '
 	git checkout E &&
 	set_fake_editor &&
 	FAKE_LINES="3 1 2 5" git rebase -i --root &&
-	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test B = $(git cat-file commit HEAD^ | sed -ne \$p) &&
-	test A = $(git cat-file commit HEAD^^ | sed -ne \$p) &&
-	test C = $(git cat-file commit HEAD^^^ | sed -ne \$p) &&
-	test 0 = $(git cat-file commit HEAD^^^ | grep -c ^parent\ )
+	test E = $(git cat-file commit HEAD >out && sed -ne \$p <out) &&
+	test B = $(git cat-file commit HEAD^ >out && sed -ne \$p <out) &&
+	test A = $(git cat-file commit HEAD^^ >out && sed -ne \$p <out) &&
+	test C = $(git cat-file commit HEAD^^^ >out && sed -ne \$p <out) &&
+	test 0 = $(git cat-file commit HEAD^^^ >out && grep -c ^parent\ out )
 '
 
 test_expect_success 'rebase -i --root retain root commit author and message' '
@@ -922,15 +922,15 @@ test_expect_success 'rebase -i --root retain root commit author and message' '
 	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
 	set_fake_editor &&
 	FAKE_LINES="2" git rebase -i --root &&
-	git cat-file commit HEAD | grep -q "^author Twerp Snog" &&
-	git cat-file commit HEAD | grep -q "^different author$"
+	git cat-file commit HEAD >out && grep -q "^author Twerp Snog" out &&
+	git cat-file commit HEAD >out && grep -q "^different author$" out
 '
 
 test_expect_success 'rebase -i --root temporary sentinel commit' '
 	git checkout B &&
 	set_fake_editor &&
 	test_must_fail env FAKE_LINES="2" git rebase -i --root &&
-	git cat-file commit HEAD | grep "^tree 4b825dc642cb" &&
+	git cat-file commit HEAD >out && grep "^tree 4b825dc642cb" out &&
 	git rebase --abort
 '
 
@@ -938,9 +938,9 @@ test_expect_success 'rebase -i --root fixup root commit' '
 	git checkout B &&
 	set_fake_editor &&
 	FAKE_LINES="1 fixup 2" git rebase -i --root &&
-	test A = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test A = $(git cat-file commit HEAD >out && sed -ne \$p <out) &&
 	test B = $(git show HEAD:file1) &&
-	test 0 = $(git cat-file commit HEAD | grep -c ^parent\ )
+	test 0 = $(git cat-file commit HEAD >out && grep -c ^parent\ out)
 '
 
 test_expect_success 'rebase --edit-todo does not works on non-interactive rebase' '
@@ -959,8 +959,8 @@ test_expect_success 'rebase --edit-todo can be used to modify todo' '
 	FAKE_LINES="edit 1 2 3" git rebase -i HEAD~3 &&
 	FAKE_LINES="2 1" git rebase --edit-todo &&
 	git rebase --continue &&
-	test M = $(git cat-file commit HEAD^ | sed -ne \$p) &&
-	test L = $(git cat-file commit HEAD | sed -ne \$p)
+	test M = $(git cat-file commit HEAD^ >out && sed -ne \$p <out) &&
+	test L = $(git cat-file commit HEAD >out && sed -ne \$p <out)
 '
 
 test_expect_success 'rebase -i produces readable reflog' '
@@ -974,8 +974,8 @@ test_expect_success 'rebase -i produces readable reflog' '
 	rebase -i (pick): G
 	rebase -i (start): checkout I
 	EOF
-	git reflog -n4 HEAD |
-	sed "s/[^:]*: //" >actual &&
+	git reflog -n4 HEAD >out &&
+	sed "s/[^:]*: //" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -989,7 +989,7 @@ test_expect_success 'rebase -i respects core.commentchar' '
 	EOF
 	test_set_editor "$(pwd)/remove-all-but-first.sh" &&
 	git rebase -i B &&
-	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
+	test B = $(git cat-file commit HEAD^ >out && sed -ne \$p <out)
 '
 
 test_expect_success 'rebase -i respects core.commentchar=auto' '
@@ -1118,7 +1118,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	test_cmp_rev HEAD F &&
 	rm file6 &&
 	git rebase --continue &&
-	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
+	test $(git cat-file commit HEAD >out && sed -ne \$p <out) = I &&
 	git reset --hard original-branch2
 '
 
@@ -1127,14 +1127,14 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	git clean -f &&
 	set_fake_editor &&
 	FAKE_LINES="edit 1 2" git rebase -i --no-ff A &&
-	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
+	test $(git cat-file commit HEAD >out && sed -ne \$p <out) = F &&
 	test_path_is_missing file6 &&
 	>file6 &&
 	test_must_fail git rebase --continue &&
-	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
+	test $(git cat-file commit HEAD >out && sed -ne \$p <out) = F &&
 	rm file6 &&
 	git rebase --continue &&
-	test $(git cat-file commit HEAD | sed -ne \$p) = I
+	test $(git cat-file commit HEAD >out && sed -ne \$p <out) = I
 '
 
 test_expect_success 'rebase --continue removes CHERRY_PICK_HEAD' '
@@ -1171,9 +1171,9 @@ test_expect_success 'drop' '
 	rebase_setup_and_clean drop-test &&
 	set_fake_editor &&
 	FAKE_LINES="1 drop 2 3 drop 4 5" git rebase -i --root &&
-	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test C = $(git cat-file commit HEAD^ | sed -ne \$p) &&
-	test A = $(git cat-file commit HEAD^^ | sed -ne \$p)
+	test E = $(git cat-file commit HEAD >out && sed -ne \$p <out) &&
+	test C = $(git cat-file commit HEAD^ >out && sed -ne \$p <out) &&
+	test A = $(git cat-file commit HEAD^^ >out && sed -ne \$p <out)
 '
 
 cat >expect <<EOF
@@ -1186,7 +1186,7 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = ignore' '
 	set_fake_editor &&
 	FAKE_LINES="1 2 3 4" \
 		git rebase -i --root 2>actual &&
-	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test D = $(git cat-file commit HEAD >out && sed -ne \$p <out) &&
 	test_i18ncmp expect actual
 '
 
@@ -1209,7 +1209,7 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = warn' '
 	FAKE_LINES="1 2 3 4" \
 		git rebase -i --root 2>actual &&
 	test_i18ncmp expect actual &&
-	test D = $(git cat-file commit HEAD | sed -ne \$p)
+	test D = $(git cat-file commit HEAD >out && sed -ne \$p <out)
 '
 
 cat >expect <<EOF
@@ -1238,8 +1238,8 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
 	FAKE_LINES="1 2 drop 3 4 drop 5" \
 		git rebase --edit-todo &&
 	git rebase --continue &&
-	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
+	test D = $(git cat-file commit HEAD >out && sed -ne \$p <out) &&
+	test B = $(git cat-file commit HEAD^ >out && sed -ne \$p <out)
 '
 
 cat >expect <<EOF
@@ -1258,8 +1258,8 @@ test_expect_success 'static check of bad command' '
 	test_i18ncmp expect actual &&
 	FAKE_LINES="1 2 3 drop 4 5" git rebase --edit-todo &&
 	git rebase --continue &&
-	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test C = $(git cat-file commit HEAD^ | sed -ne \$p)
+	test E = $(git cat-file commit HEAD >out && sed -ne \$p <out) &&
+	test C = $(git cat-file commit HEAD^ >out && sed -ne \$p <out)
 '
 
 test_expect_success 'tabs and spaces are accepted in the todolist' '
@@ -1274,7 +1274,7 @@ test_expect_success 'tabs and spaces are accepted in the todolist' '
 	EOF
 	test_set_editor "$(pwd)/add-indent.sh" &&
 	git rebase -i HEAD^^^ &&
-	test E = $(git cat-file commit HEAD | sed -ne \$p)
+	test E = $(git cat-file commit HEAD >out && sed -ne \$p out)
 '
 
 cat >expect <<EOF
@@ -1293,7 +1293,7 @@ test_expect_success 'static check of bad SHA-1' '
 	test_i18ncmp expect actual &&
 	FAKE_LINES="1 2 4 5 6" git rebase --edit-todo &&
 	git rebase --continue &&
-	test E = $(git cat-file commit HEAD | sed -ne \$p)
+	test E = $(git cat-file commit HEAD >out && sed -ne \$p out)
 '
 
 test_expect_success 'editor saves as CR/LF' '
