@@ -118,7 +118,7 @@ test_expect_success 'drop middle stash' '
 	echo 9 > file &&
 	git stash &&
 	git stash drop stash@{1} &&
-	test 2 = $(git stash list | wc -l) &&
+	test 2 = $(git stash list >out && wc -l <out) &&
 	git stash apply &&
 	test 9 = $(cat file) &&
 	test 1 = $(git show :file) &&
@@ -138,7 +138,7 @@ test_expect_success 'drop middle stash by index' '
 	echo 9 >file &&
 	git stash &&
 	git stash drop 1 &&
-	test 2 = $(git stash list | wc -l) &&
+	test 2 = $(git stash list >out && wc -l <out) &&
 	git stash apply &&
 	test 9 = $(cat file) &&
 	test 1 = $(git show :file) &&
@@ -157,7 +157,7 @@ test_expect_success 'stash pop' '
 	test 3 = $(cat file) &&
 	test 1 = $(git show :file) &&
 	test 1 = $(git show HEAD:file) &&
-	test 0 = $(git stash list | wc -l)
+	test 0 = $(git stash list >out && wc -l <out)
 '
 
 cat > expect << EOF
@@ -217,7 +217,7 @@ test_expect_success 'stash branch' '
 	git commit -m alternate\ second &&
 	git diff master..stashbranch > output &&
 	test_cmp output expect2 &&
-	test 0 = $(git stash list | wc -l)
+	test 0 = $(git stash list >out && wc -l <out)
 '
 
 test_expect_success 'apply -q is quiet' '
@@ -455,7 +455,7 @@ test_expect_success 'stash branch - no stashes on stack, stash-like argument' '
 	git reset --hard &&
 	git stash branch stash-branch ${STASH_ID} &&
 	test_when_finished "git reset --hard HEAD && git checkout master && git branch -D stash-branch" &&
-	test $(git ls-files --modified | wc -l) -eq 1
+	test $(git ls-files --modified >out && wc -l <out) -eq 1
 '
 
 test_expect_success 'stash branch - stashes on stack, stash-like argument' '
@@ -470,7 +470,7 @@ test_expect_success 'stash branch - stashes on stack, stash-like argument' '
 	git reset --hard &&
 	git stash branch stash-branch ${STASH_ID} &&
 	test_when_finished "git reset --hard HEAD && git checkout master && git branch -D stash-branch" &&
-	test $(git ls-files --modified | wc -l) -eq 1
+	test $(git ls-files --modified >out && wc -l <out) -eq 1
 '
 
 test_expect_success 'stash show format defaults to --stat' '
@@ -707,7 +707,7 @@ test_expect_success 'store updates stash ref and reflog' '
 	! grep quux bazzy &&
 	git stash store -m quuxery $STASH_ID &&
 	test $(cat .git/refs/stash) = $STASH_ID &&
-	git reflog --format=%H stash| grep $STASH_ID &&
+	git reflog --format=%H stash >out && grep $STASH_ID out &&
 	git stash pop &&
 	grep quux bazzy
 '
