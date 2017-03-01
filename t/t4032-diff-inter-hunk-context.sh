@@ -37,12 +37,12 @@ t() {
 	fi
 
 	test_expect_success "$label: count hunks ($hunks)" "
-		test $(git $cmd $file | grep '^@@ ' | wc -l) = $hunks
+		test $(git $cmd $file >out && grep '^@@ ' out | wc -l) = $hunks
 	"
 
 	test -f $expected &&
 	test_expect_success "$label: check output" "
-		git $cmd $file | grep -v '^index ' >actual &&
+		git $cmd $file >out && grep -v '^index '<out  >actual &&
 		test_cmp $expected actual
 	"
 }
