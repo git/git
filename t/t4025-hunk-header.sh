@@ -32,7 +32,7 @@ test_expect_success setup '
 
 test_expect_success 'hunk header truncation with an overly long line' '
 
-	git diff | sed -n -e "s/^.*@@//p" >actual &&
+	git diff >out && sed -n -e "s/^.*@@//p" <out >actual &&
 	(
 		echo " A $N$N$N$N$N$N$N$N$N2"
 		echo " L  $N$N$N$N$N$N$N$N$N1"
