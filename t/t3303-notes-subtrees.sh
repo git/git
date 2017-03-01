@@ -22,13 +22,13 @@ INPUT_END
 }
 
 verify_notes () {
-	git log | grep "^    " > output &&
+	git log >out && grep "^    " <out >output &&
 	i=$number_of_commits &&
 	while [ $i -gt 0 ]; do
 		echo "    commit #$i" &&
 		echo "    note for commit #$i" &&
 		i=$(($i-1));
-	done > expect &&
+	done >expect &&
 	test_cmp expect output
 }
 
@@ -75,7 +75,7 @@ test_sha1_based () {
 	(
 		start_note_commit &&
 		nr=$number_of_commits &&
-		git rev-list refs/heads/master |
+		git rev-list refs/heads/master >out &&
 		while read sha1; do
 			note_path=$(echo "$sha1" | sed "$1")
 			cat <<INPUT_END &&
@@ -87,7 +87,7 @@ EOF
 INPUT_END
 
 			nr=$(($nr-1))
-		done
+		done <out
 	) |
 	git fast-import --quiet
 }
@@ -105,7 +105,7 @@ test_same_notes () {
 	(
 		start_note_commit &&
 		nr=$number_of_commits &&
-		git rev-list refs/heads/master |
+		git rev-list refs/heads/master >out &&
 		while read sha1; do
 			first_note_path=$(echo "$sha1" | sed "$1")
 			second_note_path=$(echo "$sha1" | sed "$2")
@@ -123,7 +123,7 @@ EOF
 INPUT_END
 
 			nr=$(($nr-1))
-		done
+		done <out
 	) |
 	git fast-import --quiet
 }
@@ -144,7 +144,7 @@ test_concatenated_notes () {
 	(
 		start_note_commit &&
 		nr=$number_of_commits &&
-		git rev-list refs/heads/master |
+		git rev-list refs/heads/master >out &&
 		while read sha1; do
 			first_note_path=$(echo "$sha1" | sed "$1")
 			second_note_path=$(echo "$sha1" | sed "$2")
@@ -162,13 +162,13 @@ EOF
 INPUT_END
 
 			nr=$(($nr-1))
-		done
+		done <out
 	) |
 	git fast-import --quiet
 }
 
 verify_concatenated_notes () {
-	git log | grep "^    " > output &&
+	git log >out && grep "^    " <out >output &&
 	i=$number_of_commits &&
 	while [ $i -gt 0 ]; do
 		echo "    commit #$i" &&
@@ -176,7 +176,7 @@ verify_concatenated_notes () {
 		echo "    " &&
 		echo "    second note for commit #$i" &&
 		i=$(($i-1));
-	done > expect &&
+	done >expect &&
 	test_cmp expect output
 }
 
