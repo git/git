@@ -713,7 +713,7 @@ test_expect_success 'line numbers in --check output are correct' '
 test_expect_success 'checkdiff detects new trailing blank lines (1)' '
 	echo "foo();" >x &&
 	echo "" >>x &&
-	git diff --check | grep "new blank line"
+	git diff --check | grep "new blank line" 
 '
 
 test_expect_success 'checkdiff detects new trailing blank lines (2)' '
@@ -761,8 +761,8 @@ test_expect_success 'whitespace-only changes reported across renames' '
 	sed -e "5s/^/ /" x >z &&
 	git rm x &&
 	git add z &&
-	git diff -w -M --cached |
-	sed -e "/^similarity index /s/[0-9][0-9]*/NUM/" >actual &&
+	git diff -w -M --cached >out &&
+	sed -e "/^similarity index /s/[0-9][0-9]*/NUM/" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -794,7 +794,7 @@ test_expect_success 'combined diff with autocrlf conversion' '
 	git config core.autocrlf true &&
 	test_must_fail git merge master &&
 
-	git diff | sed -e "1,/^@@@/d" >actual &&
+	git diff >out && sed -e "1,/^@@@/d" <out >actual &&
 	! grep "^-" actual
 
 '
@@ -821,7 +821,7 @@ test_expect_success 'diff that introduces a line with only tabs' '
 	echo "test" >x &&
 	git commit -m "initial" x &&
 	echo "{NTN}" | tr "NT" "\n\t" >>x &&
-	git -c color.diff=always diff | test_decode_color >current &&
+	git -c color.diff=always diff >out && test_decode_color <out >current &&
 
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
@@ -851,8 +851,8 @@ test_expect_success 'diff that introduces and removes ws breakages' '
 		echo "2. and a new line "
 	} >x &&
 
-	git -c color.diff=always diff |
-	test_decode_color >current &&
+	git -c color.diff=always diff >out &&
+	test_decode_color <out >current &&
 
 	cat >expected <<-\EOF &&
 	<BOLD>diff --git a/x b/x<RESET>
@@ -923,32 +923,32 @@ test_expect_success 'ws-error-highlight test setup' '
 
 test_expect_success 'test --ws-error-highlight option' '
 
-	git -c color.diff=always diff --ws-error-highlight=default,old |
-	test_decode_color >current &&
+	git -c color.diff=always diff --ws-error-highlight=default,old >out &&
+	test_decode_color <out >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always diff --ws-error-highlight=all |
-	test_decode_color >current &&
+	git -c color.diff=always diff --ws-error-highlight=all >out &&
+	test_decode_color <out >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always diff --ws-error-highlight=none |
-	test_decode_color >current &&
+	git -c color.diff=always diff --ws-error-highlight=none >out &&
+	test_decode_color <out >current &&
 	test_cmp expect.none current
 
 '
 
 test_expect_success 'test diff.wsErrorHighlight config' '
 
-	git -c color.diff=always -c diff.wsErrorHighlight=default,old diff |
-	test_decode_color >current &&
+	git -c color.diff=always -c diff.wsErrorHighlight=default,old diff >out &&
+	test_decode_color <out >current &&
 	test_cmp expect.default-old current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=all diff |
-	test_decode_color >current &&
+	git -c color.diff=always -c diff.wsErrorHighlight=all diff >out &&
+	test_decode_color <out >current &&
 	test_cmp expect.all current &&
 
-	git -c color.diff=always -c diff.wsErrorHighlight=none diff |
-	test_decode_color >current &&
+	git -c color.diff=always -c diff.wsErrorHighlight=none diff >out &&
+	test_decode_color <out >current &&
 	test_cmp expect.none current
 
 '
