@@ -253,7 +253,7 @@ test_expect_success 'modified submodule(backward and forward)' '
 commit_file sm1 &&
 mv sm1 sm1-bak &&
 echo sm1 >sm1 &&
-head5=$(git hash-object sm1 | cut -c1-7) &&
+head5=$(git hash-object sm1 >out && cut -c1-7 <out) &&
 git add sm1 &&
 rm -f sm1 &&
 mv sm1-bak sm1
