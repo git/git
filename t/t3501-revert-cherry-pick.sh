@@ -66,7 +66,7 @@ test_expect_success 'cherry-pick after renaming branch' '
 	test $(git rev-parse HEAD^) = $(git rev-parse rename2) &&
 	test -f opos &&
 	grep "Add extra line at the end" opos &&
-	git reflog -1 | grep cherry-pick
+	git reflog -1 >out && grep cherry-pick out
 
 '
 
@@ -77,7 +77,7 @@ test_expect_success 'revert after renaming branch' '
 	test $(git rev-parse HEAD^) = $(git rev-parse rename1) &&
 	test -f spoo &&
 	! grep "Add extra line at the end" spoo &&
-	git reflog -1 | grep revert
+	git reflog -1 >out && grep revert out
 
 '
 
@@ -135,7 +135,7 @@ test_expect_success 'cherry-pick "-" works with arguments' '
 	git checkout master &&
 	git cherry-pick -s - &&
 	echo "Signed-off-by: C O Mitter <committer@example.com>" >expect &&
-	git cat-file commit HEAD | grep ^Signed-off-by: >signoff &&
+	git cat-file commit HEAD >out && grep ^Signed-off-by: <out >signoff &&
 	test_cmp expect signoff &&
 	echo change >expect &&
 	test_cmp expect actual
