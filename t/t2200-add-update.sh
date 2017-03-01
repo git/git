@@ -58,10 +58,10 @@ test_expect_success 'update did not touch untracked files' '
 
 test_expect_success 'cache tree has not been corrupted' '
 
-	git ls-files -s |
-	sed -e "s/ 0	/	/" >expect &&
-	git ls-tree -r $(git write-tree) |
-	sed -e "s/ blob / /" >current &&
+	git ls-files -s >out &&
+	sed -e "s/ 0	/	/" <out >expect &&
+	git ls-tree -r $(git write-tree) >out &&
+	sed -e "s/ blob / /" <out >current &&
 	test_cmp expect current
 
 '
@@ -180,7 +180,7 @@ test_expect_success 'add -u resolves unmerged paths' '
 
 test_expect_success '"add -u non-existent" should fail' '
 	test_must_fail git add -u non-existent &&
-	! (git ls-files | grep "non-existent")
+	! (git ls-files >out && grep "non-existent" out)
 '
 
 test_done
