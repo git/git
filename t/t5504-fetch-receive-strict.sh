@@ -8,8 +8,8 @@ test_expect_success setup '
 	git add greetings &&
 	git commit -m greetings &&
 
-	S=$(git rev-parse :greetings | sed -e "s|^..|&/|") &&
-	X=$(echo bye | git hash-object -w --stdin | sed -e "s|^..|&/|") &&
+	S=$(git rev-parse :greetings >out && sed -e "s|^..|&/|" <out) &&
+	X=$(echo bye | git hash-object -w --stdin >out && sed -e "s|^..|&/|" <out) &&
 	mv -f .git/objects/$X .git/objects/$S &&
 
 	test_must_fail git fsck
