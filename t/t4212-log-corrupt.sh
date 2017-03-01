@@ -7,8 +7,8 @@ test_description='git log with invalid commit headers'
 test_expect_success 'setup' '
 	test_commit foo &&
 
-	git cat-file commit HEAD |
-	sed "/^author /s/>/>-<>/" >broken_email.commit &&
+	git cat-file commit HEAD >out &&
+	sed "/^author /s/>/>-<>/" <out >broken_email.commit &&
 	git hash-object -w -t commit broken_email.commit >broken_email.hash &&
 	git update-ref refs/heads/broken_email $(cat broken_email.hash)
 '
