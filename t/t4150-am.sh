@@ -102,20 +102,20 @@ test_expect_success setup '
 		echo "X-Fake-Field: Line One" &&
 		echo "X-Fake-Field: Line Two" &&
 		echo "X-Fake-Field: Line Three" &&
-		git format-patch --stdout first | sed -e "1d"
+		git format-patch --stdout first >out && sed -e "1d" <out
 	} > patch1.eml &&
 	{
 		echo "X-Fake-Field: Line One" &&
 		echo "X-Fake-Field: Line Two" &&
 		echo "X-Fake-Field: Line Three" &&
-		git format-patch --stdout first | sed -e "1d"
+		git format-patch --stdout first >out && sed -e "1d" <out
 	} | append_cr >patch1-crlf.eml &&
 	{
 		printf "%255s\\n" ""
 		echo "X-Fake-Field: Line One" &&
 		echo "X-Fake-Field: Line Two" &&
 		echo "X-Fake-Field: Line Three" &&
-		git format-patch --stdout first | sed -e "1d"
+		git format-patch --stdout first >out && sed -e "1d" <out
 	} > patch1-ws.eml &&
 	{
 		sed -ne "1p" msg &&
@@ -444,8 +444,8 @@ test_expect_success 'setup: new author and committer' '
 '
 
 compare () {
-	a=$(git cat-file commit "$2" | grep "^$1 ") &&
-	b=$(git cat-file commit "$3" | grep "^$1 ") &&
+	a=$(git cat-file commit "$2" >out && grep "^$1 " <out) &&
+	b=$(git cat-file commit "$3" >out && grep "^$1 " <out) &&
 	test "$a" = "$b"
 }
 
@@ -472,10 +472,10 @@ test_expect_success 'am --signoff adds Signed-off-by: line' '
 	git am --signoff <patch2 &&
 	printf "%s\n" "$signoff" >expected &&
 	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >>expected &&
-	git cat-file commit HEAD^ | grep "Signed-off-by:" >actual &&
+	git cat-file commit HEAD^ >out && grep "Signed-off-by:" <out >actual &&
 	test_cmp expected actual &&
 	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >expected &&
-	git cat-file commit HEAD | grep "Signed-off-by:" >actual &&
+	git cat-file commit HEAD >out && grep "Signed-off-by:" <out >actual &&
 	test_cmp expected actual
 '
 
@@ -758,7 +758,7 @@ test_expect_success 'am --committer-date-is-author-date' '
 	git checkout first &&
 	test_tick &&
 	git am --committer-date-is-author-date patch1 &&
-	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
+	git cat-file commit HEAD >out && sed -e "/^\$/q" <out >head1 &&
 	sed -ne "/^author /s/.*> //p" head1 >at &&
 	sed -ne "/^committer /s/.*> //p" head1 >ct &&
 	test_cmp at ct
@@ -770,7 +770,7 @@ test_expect_success 'am without --committer-date-is-author-date' '
 	git checkout first &&
 	test_tick &&
 	git am patch1 &&
-	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
+	git cat-file commit HEAD >out && sed -e "/^\$/q" <out >head1 &&
 	sed -ne "/^author /s/.*> //p" head1 >at &&
 	sed -ne "/^committer /s/.*> //p" head1 >ct &&
 	! test_cmp at ct
@@ -786,7 +786,7 @@ test_expect_success 'am --ignore-date' '
 	git checkout first &&
 	test_tick &&
 	git am --ignore-date patch1 &&
-	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
+	git cat-file commit HEAD >out && sed -e "/^\$/q" <out >head1 &&
 	sed -ne "/^author /s/.*> //p" head1 >at &&
 	grep "+0000" at
 '
@@ -845,7 +845,7 @@ test_expect_success 'am --message-id really adds the message id' '
 	git checkout HEAD^ &&
 	git am --message-id patch1.eml &&
 	test_path_is_missing .git/rebase-apply &&
-	git cat-file commit HEAD | tail -n1 >actual &&
+	git cat-file commit HEAD >out && tail -n1 <out >actual &&
 	grep Message-Id patch1.eml >expected &&
 	test_cmp expected actual
 '
@@ -857,7 +857,7 @@ test_expect_success 'am.messageid really adds the message id' '
 	test_config am.messageid true &&
 	git am patch1.eml &&
 	test_path_is_missing .git/rebase-apply &&
-	git cat-file commit HEAD | tail -n1 >actual &&
+	git cat-file commit HEAD >out && tail -n1 <out >actual &&
 	grep Message-Id patch1.eml >expected &&
 	test_cmp expected actual
 '
@@ -868,7 +868,7 @@ test_expect_success 'am --message-id -s signs off after the message id' '
 	git checkout HEAD^ &&
 	git am -s --message-id patch1.eml &&
 	test_path_is_missing .git/rebase-apply &&
-	git cat-file commit HEAD | tail -n2 | head -n1 >actual &&
+	git cat-file commit HEAD >out && tail -n2 <out | head -n1 >actual &&
 	grep Message-Id patch1.eml >expected &&
 	test_cmp expected actual
 '
@@ -922,7 +922,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	Signed-off-by: J C H <j@c.h>
 	EOF
 	git commit -F msg &&
-	git cat-file commit HEAD | sed -e '1,/^$/d' >original &&
+	git cat-file commit HEAD >out && sed -e '1,/^$/d' <out >original &&
 	git format-patch --stdout -1 >patch &&
 
 	git reset --hard HEAD^ &&
@@ -931,7 +931,7 @@ test_expect_success 'am -s unexpected trailer block' '
 		cat original &&
 		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 	) >expect &&
-	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
+	git cat-file commit HEAD >out && sed -e '1,/^$/d' <out >actual &&
 	test_cmp expect actual &&
 
 	cat >msg <<-\EOF &&
@@ -942,7 +942,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	EOF
 	git reset HEAD^ &&
 	git commit -F msg file &&
-	git cat-file commit HEAD | sed -e '1,/^$/d' >original &&
+	git cat-file commit HEAD >out && sed -e '1,/^$/d' <out >original &&
 	git format-patch --stdout -1 >patch &&
 
 	git reset --hard HEAD^ &&
@@ -953,7 +953,7 @@ test_expect_success 'am -s unexpected trailer block' '
 		echo &&
 		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 	) >expect &&
-	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
+	git cat-file commit HEAD >out && sed -e '1,/^$/d' <out >actual &&
 	test_cmp expect actual
 '
 
@@ -973,7 +973,7 @@ test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
 	grep "^>From could trip up a loose mbox parser" mboxrd1 &&
 	git checkout -f first &&
 	git am --patch-format=mboxrd mboxrd1 &&
-	git cat-file commit HEAD | tail -n4 >out &&
+	git cat-file commit HEAD >out1 && tail -n4 <out1 >out &&
 	test_cmp msg out
 '
 
@@ -996,8 +996,8 @@ test_expect_success 'am works with multi-line in-body headers' '
 	git checkout HEAD^ &&
 	git am msg &&
 	# Ensure that the author and full message are present
-	git cat-file commit HEAD | grep "^author.*long@example.com" &&
-	git cat-file commit HEAD | grep "^$LONG"
+	git cat-file commit HEAD >out && grep "^author.*long@example.com" out &&
+	git cat-file commit HEAD >out && grep "^$LONG" out
 '
 
 test_done
