@@ -48,12 +48,14 @@ test_expect_success 'apply in reverse' '
 
 test_expect_success 'setup separate repository lacking postimage' '
 
-	git archive --format=tar --prefix=initial/ initial | $TAR xf - &&
+	git archive --format=tar --prefix=initial/ initial >out &&
+	$TAR xf - <out &&
 	(
 		cd initial && git init && git add .
 	) &&
 
-	git archive --format=tar --prefix=second/ second | $TAR xf - &&
+	git archive --format=tar --prefix=second/ second >out &&
+	$TAR xf - <out &&
 	(
 		cd second && git init && git add .
 	)
@@ -85,7 +87,7 @@ test_expect_success 'apply in reverse without postimage' '
 test_expect_success 'reversing a whitespace introduction' '
 	sed "s/a/a /" < file1 > file1.new &&
 	mv file1.new file1 &&
-	git diff | git apply --reverse --whitespace=error
+	git diff >out && git apply --reverse --whitespace=error <out
 '
 
 test_done
