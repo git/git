@@ -84,12 +84,11 @@ You can include a config file from another by setting the special
 variable takes a pathname as its value, and is subject to tilde
 expansion. `include.path` can be given multiple times.
 
-The
-included file is expanded immediately, as if its contents had been
+The included file is expanded immediately, as if its contents had been
 found at the location of the include directive. If the value of the
-`include.path` variable is a relative path, the path is considered to be
-relative to the configuration file in which the include directive was
-found.  See below for examples.
+`include.path` variable is a relative path, the path is considered to
+be relative to the configuration file in which the include directive
+was found.  See below for examples.
 
 
 Example
