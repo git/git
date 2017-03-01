@@ -268,7 +268,7 @@ test_expect_success 'git branch --column -v should fail' '
 
 test_expect_success 'git branch -v with column.ui ignored' '
 	git config column.ui column &&
-	COLUMNS=80 git branch -v | cut -c -10 | sed "s/ *$//" >actual &&
+	COLUMNS=80 git branch -v >out && cut -c -10 <out | sed "s/ *$//" >actual &&
 	git config --unset column.ui &&
 	cat >expected <<\EOF &&
   a/b/c
@@ -433,7 +433,7 @@ test_expect_success 'test deleting branch deletes branch config' '
 
 test_expect_success 'test deleting branch without config' '
 	git branch my7 s &&
-	sha1=$(git rev-parse my7 | cut -c 1-7) &&
+	sha1=$(git rev-parse my7 >out && cut -c 1-7 <out) &&
 	echo "Deleted branch my7 (was $sha1)." >expect &&
 	git branch -d my7 >actual 2>&1 &&
 	test_i18ncmp expect actual
