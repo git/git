@@ -68,8 +68,8 @@ make_pack () {
 		printf '%s dummy\n' "$(git rev-parse $1:dummy)"
 		printf '%s file\n' "$(git rev-parse $1:file)"
 	} |
-	git pack-objects --stdout |
-	git index-pack --stdin --fix-thin
+	git pack-objects --stdout >out &&
+	git index-pack --stdin --fix-thin <out
 }
 
 test_expect_success 'setup' '
