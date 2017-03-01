@@ -7,8 +7,8 @@ Tests if git rebase --root --onto <newparent> can rebase the root commit.
 . ./test-lib.sh
 
 log_with_names () {
-	git rev-list --topo-order --parents --pretty="tformat:%s" HEAD |
-	git name-rev --stdin --name-only --refs=refs/heads/$1
+	git rev-list --topo-order --parents --pretty="tformat:%s" HEAD >out &&
+	git name-rev --stdin --name-only --refs=refs/heads/$1 out
 }
 
 
@@ -175,14 +175,14 @@ test_expect_success 'pre-rebase hook stops rebase' '
 	git checkout -b stops1 other &&
 	test_must_fail git rebase --root --onto master &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops1 &&
-	test 0 = $(git rev-list other...stops1 | wc -l)
+	test 0 = $(git rev-list other...stops1 >out && wc -l out)
 '
 
 test_expect_success 'pre-rebase hook stops rebase -i' '
 	git checkout -b stops2 other &&
 	test_must_fail git rebase --root --onto master &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/stops2 &&
-	test 0 = $(git rev-list other...stops2 | wc -l)
+	test 0 = $(git rev-list other...stops2 >out && wc -l out)
 '
 
 test_expect_success 'remove pre-rebase hook' '
@@ -199,7 +199,7 @@ test_expect_success 'set up a conflict' '
 test_expect_success 'rebase --root with conflict (first part)' '
 	git checkout -b conflict1 other &&
 	test_must_fail git rebase --root --onto master &&
-	git ls-files -u | grep "B$"
+	git ls-files -u >out && grep "B$" out
 '
 
 test_expect_success 'fix the conflict' '
@@ -226,7 +226,7 @@ test_expect_success 'rebase --root with conflict (second part)' '
 test_expect_success 'rebase -i --root with conflict (first part)' '
 	git checkout -b conflict2 other &&
 	test_must_fail git rebase -i --root --onto master &&
-	git ls-files -u | grep "B$"
+	git ls-files -u >out && grep "B$" out
 '
 
 test_expect_success 'fix the conflict' '
@@ -264,7 +264,7 @@ EOF
 test_expect_success 'rebase -i -p --root with conflict (first part)' '
 	git checkout -b conflict3 other &&
 	test_must_fail git rebase -i -p --root --onto master &&
-	git ls-files -u | grep "B$"
+	git ls-files -u >out && grep "B$" out
 '
 
 test_expect_success 'fix the conflict' '
