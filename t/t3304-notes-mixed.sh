@@ -22,13 +22,13 @@ INPUT_END
 }
 
 verify_notes () {
-	git log | grep "^    " > output &&
+	git log >out && grep "^    " <out >output &&
 	i=$number_of_commits &&
 	while [ $i -gt 0 ]; do
 		echo "    commit #$i" &&
 		echo "    note for commit #$i" &&
 		i=$(($i-1));
-	done > expect &&
+	done >expect &&
 	test_cmp expect output
 }
 
@@ -156,7 +156,7 @@ EXPECT_END
 
 test_expect_success "verify contents of notes" '
 
-	git log | grep "^    " > actual &&
+	git log >out && grep "^    " <out >actual &&
 	test_cmp expect actual
 '
 
