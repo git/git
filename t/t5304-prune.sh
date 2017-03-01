@@ -10,10 +10,10 @@ day=$((60*60*24))
 week=$(($day*7))
 
 add_blob() {
-	before=$(git count-objects | sed "s/ .*//") &&
+	before=$(git count-objects >out && sed "s/ .*//" <out) &&
 	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	verbose test $((1 + $before)) = $(git count-objects >out && sed "s/ .*//" <out) &&
 	test_path_is_file $BLOB_FILE &&
 	test-chmtime =+0 $BLOB_FILE
 }
@@ -45,11 +45,11 @@ test_expect_success 'prune --expire' '
 
 	add_blob &&
 	git prune --expire=1.hour.ago &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	verbose test $((1 + $before)) = $(git count-objects >out && sed "s/ .*//" <out) &&
 	test_path_is_file $BLOB_FILE &&
 	test-chmtime =-86500 $BLOB_FILE &&
 	git prune --expire 1.day &&
-	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	verbose test $before = $(git count-objects >out && sed "s/ .*//" <out) &&
 	test_path_is_missing $BLOB_FILE
 
 '
@@ -59,11 +59,11 @@ test_expect_success 'gc: implicit prune --expire' '
 	add_blob &&
 	test-chmtime =-$((2*$week-30)) $BLOB_FILE &&
 	git gc &&
-	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	verbose test $((1 + $before)) = $(git count-objects >out && sed "s/ .*//" <out) &&
 	test_path_is_file $BLOB_FILE &&
 	test-chmtime =-$((2*$week+1)) $BLOB_FILE &&
 	git gc &&
-	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	verbose test $before = $(git count-objects >out && sed "s/ .*//" <out) &&
 	test_path_is_missing $BLOB_FILE
 
 '
@@ -144,7 +144,7 @@ test_expect_success 'gc --no-prune' '
 	test-chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git config gc.pruneExpire 2.days.ago &&
 	git gc --no-prune &&
-	verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+	verbose test 1 = $(git count-objects >out && sed "s/ .*//" <out) &&
 	test_path_is_file $BLOB_FILE
 
 '
@@ -209,10 +209,10 @@ test_expect_success 'gc: prune old objects after local clone' '
 	git clone --no-hardlinks . aclone &&
 	(
 		cd aclone &&
-		verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+		verbose test 1 = $(git count-objects >out && sed "s/ .*//" <out) &&
 		test_path_is_file $BLOB_FILE &&
 		git gc --prune &&
-		verbose test 0 = $(git count-objects | sed "s/ .*//") &&
+		verbose test 0 = $(git count-objects >out && sed "s/ .*//" <out) &&
 		test_path_is_missing $BLOB_FILE
 	)
 '
