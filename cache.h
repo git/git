@@ -1863,8 +1863,11 @@ extern int git_config_include(const char *name, const char *value, void *data);
  *
  * (i.e., what gets handed to a config_fn_t). The caller provides the section;
  * we return -1 if it does not match, 0 otherwise. The subsection and key
- * out-parameters are filled by the function (and subsection is NULL if it is
+ * out-parameters are filled by the function (and *subsection is NULL if it is
  * missing).
+ *
+ * If the subsection pointer-to-pointer passed in is NULL, returns 0 only if
+ * there is no subsection at all.
  */
 extern int parse_config_key(const char *var,
 			    const char *section,
