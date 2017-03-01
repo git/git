@@ -6,9 +6,9 @@ test_description='fetch/push involving alternates'
 count_objects () {
 	loose=0 inpack=0
 	eval "$(
-		git count-objects -v |
+		git count-objects -v >out &&
 		sed -n -e 's/^count: \(.*\)/loose=\1/p' \
-		    -e 's/^in-pack: \(.*\)/inpack=\1/p'
+		    -e 's/^in-pack: \(.*\)/inpack=\1/p' <out
 	)" &&
 	echo $(( $loose + $inpack ))
 }
