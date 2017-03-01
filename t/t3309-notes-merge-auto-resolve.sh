@@ -45,8 +45,8 @@ commit_sha15=$(git rev-parse 15th^{commit})
 verify_notes () {
 	notes_ref="$1"
 	suffix="$2"
-	git -c core.notesRef="refs/notes/$notes_ref" notes |
-		sort >"output_notes_$suffix" &&
+	git -c core.notesRef="refs/notes/$notes_ref" notes >out &&
+	sort out >"output_notes_$suffix" &&
 	test_cmp "expect_notes_$suffix" "output_notes_$suffix" &&
 	git -c core.notesRef="refs/notes/$notes_ref" log --format="%H %s%n%N" \
 		>"output_log_$suffix" &&
