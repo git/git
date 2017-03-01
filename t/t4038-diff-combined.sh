@@ -49,10 +49,10 @@ verify_helper () {
 		s/^.\(.\)/\1/
 	' "$it" >"$it.actual.2" &&
 
-	git diff "$it^" "$it" -- | sed -e '1,/^@@/d' >"$it.expect.1" &&
+	git diff "$it^" "$it" -- >out && sed -e '1,/^@@/d' <out >"$it.expect.1" &&
 	test_cmp "$it.expect.1" "$it.actual.1" &&
 
-	git diff "$it^2" "$it" -- | sed -e '1,/^@@/d' >"$it.expect.2" &&
+	git diff "$it^2" "$it" -- >out && sed -e '1,/^@@/d' <out >"$it.expect.2" &&
 	test_cmp "$it.expect.2" "$it.actual.2"
 }
 
