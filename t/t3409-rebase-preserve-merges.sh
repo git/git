@@ -86,15 +86,18 @@ test_expect_success '--continue works after a conflict' '
 	cd clone2 &&
 	git fetch &&
 	test_must_fail git rebase -p origin/topic &&
-	test 2 = $(git ls-files B | wc -l) &&
+	test 2 = $(git ls-files B >out && wc -l <out) &&
 	echo Resolved again > B &&
 	test_must_fail git rebase --continue &&
 	grep "^@@@ " .git/rebase-merge/patch &&
 	git add B &&
 	git rebase --continue &&
-	test 1 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
-	test 1 = $(git rev-list --all --pretty=oneline | grep "Add different" | wc -l) &&
-	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge origin" | wc -l)
+	test 1 = $(git rev-list --all --pretty=oneline >out &&
+	grep "Modify A" out | wc -l) &&
+	test 1 = $(git rev-list --all --pretty=oneline >out &&
+	grep "Add different" out | wc -l) &&
+	test 1 = $(git rev-list --all --pretty=oneline >out &&
+	grep "Merge origin" out | wc -l)
 	)
 '
 
@@ -103,8 +106,10 @@ test_expect_success 'rebase -p preserves no-ff merges' '
 	cd clone3 &&
 	git fetch &&
 	git rebase -p origin/topic &&
-	test 3 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
-	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge branch" | wc -l)
+	test 3 = $(git rev-list --all --pretty=oneline >out &&
+	grep "Modify A" out | wc -l) &&
+	test 1 = $(git rev-list --all --pretty=oneline >out &&
+	grep "Merge branch" out | wc -l)
 	)
 '
 
