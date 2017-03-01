@@ -58,8 +58,8 @@ test_expect_success 'setup' '
 	git commit -q -a -m first &&
 
 	git checkout -b second master &&
-	git show first:a1 |
-	sed -e "s/To die, t/To die! T/" -e "s/Some title/Some Title/" >a1 &&
+	git show first:a1 >out &&
+	sed -e "s/To die, t/To die! T/" -e "s/Some title/Some Title/" <out >a1 &&
 	echo "* END *" >>a1 &&
 	test_tick &&
 	git commit -q -a -m second
@@ -161,7 +161,7 @@ test_expect_success 'rerere status' '
 '
 
 test_expect_success 'first postimage wins' '
-	git show first:a1 | sed "s/To die: t/To die! T/" >expect &&
+	git show first:a1 >out && sed "s/To die: t/To die! T/" <out >expect &&
 
 	git commit -q -a -m "prefer first over second" &&
 	test -f $rr/postimage &&
@@ -169,7 +169,7 @@ test_expect_success 'first postimage wins' '
 	oldmtimepost=$(test-chmtime -v -60 $rr/postimage | cut -f 1) &&
 
 	git checkout -b third master &&
-	git show second^:a1 | sed "s/To die: t/To die! T/" >a1 &&
+	git show second^:a1 >out && sed "s/To die: t/To die! T/" <out >a1 &&
 	git commit -q -a -m third &&
 
 	test_must_fail git merge first &&
@@ -479,10 +479,10 @@ test_expect_success 'multiple identical conflicts' '
 	# Check that rerere knows that file1 and file2 have conflicts
 
 	printf "%s\n" file1 file2 >expect &&
-	git ls-files -u | sed -e "s/^.*	//" | sort -u >actual &&
+	git ls-files -u >out && sed -e "s/^.*	//" <out | sort -u >actual &&
 	test_cmp expect actual &&
 
-	git rerere status | sort >actual &&
+	git rerere status >out && sort <out >actual &&
 	test_cmp expect actual &&
 
 	git rerere remaining >actual &&
