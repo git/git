@@ -27,7 +27,7 @@ test_expect_success \
 
 test_expect_success \
     'Post-check that foo is in the index' \
-    'git ls-files foo | grep foo'
+    'git ls-files foo >out && grep foo out'
 
 test_expect_success \
     'Test that "git add -- -q" works' \
@@ -77,24 +77,24 @@ test_expect_success '.gitignore test setup' '
 
 test_expect_success '.gitignore is honored' '
 	git add . &&
-	! (git ls-files | grep "\\.ig")
+	! (git ls-files >out && grep "\\.ig" out)
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
 	test_must_fail git add a.?? &&
-	! (git ls-files | grep "\\.ig")
+	! (git ls-files >out && grep "\\.ig" out)
 '
 
 test_expect_success 'error out when attempting to add ignored ones without -f' '
 	test_must_fail git add d.?? &&
-	! (git ls-files | grep "\\.ig")
+	! (git ls-files >out && grep "\\.ig" out)
 '
 
 test_expect_success 'error out when attempting to add ignored ones but add others' '
 	touch a.if &&
 	test_must_fail git add a.?? &&
-	! (git ls-files | grep "\\.ig") &&
-	(git ls-files | grep a.if)
+	! (git ls-files >out && grep "\\.ig" out) &&
+	(git ls-files >out && grep a.if out)
 '
 
 test_expect_success 'add ignored ones with -f' '
@@ -149,8 +149,8 @@ test_expect_success 'git add with filemode=0, symlinks=0, and unmerged entries' 
 	echo new > file &&
 	echo new > symlink &&
 	git add file symlink &&
-	git ls-files --stage | grep "^100755 .* 0	file$" &&
-	git ls-files --stage | grep "^120000 .* 0	symlink$"
+	git ls-files --stage >out && grep "^100755 .* 0	file$" out &&
+	git ls-files --stage >out && grep "^120000 .* 0	symlink$" out
 '
 
 test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over stage 1' '
@@ -166,8 +166,8 @@ test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over st
 	echo new > file &&
 	echo new > symlink &&
 	git add file symlink &&
-	git ls-files --stage | grep "^100755 .* 0	file$" &&
-	git ls-files --stage | grep "^120000 .* 0	symlink$"
+	git ls-files --stage >out && grep "^100755 .* 0	file$" out &&
+	git ls-files --stage >out && grep "^120000 .* 0	symlink$" out
 '
 
 test_expect_success 'git add --refresh' '
@@ -203,7 +203,7 @@ test_expect_success POSIXPERM,SANITY 'git add should fail atomically upon an unr
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
-	! ( git ls-files foo1 | grep foo1 )
+	! ( git ls-files foo1 >out && grep foo1 out )
 '
 
 rm -f foo2
@@ -214,7 +214,7 @@ test_expect_success POSIXPERM,SANITY 'git add --ignore-errors' '
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose --ignore-errors . &&
-	git ls-files foo1 | grep foo1
+	git ls-files foo1 >out && grep foo1 out
 '
 
 rm -f foo2
@@ -226,7 +226,7 @@ test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors)' '
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
-	git ls-files foo1 | grep foo1
+	git ls-files foo1 >out && grep foo1 out
 '
 rm -f foo2
 
@@ -237,7 +237,7 @@ test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors = false)' '
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
-	! ( git ls-files foo1 | grep foo1 )
+	! ( git ls-files foo1 >out && grep foo1 out)
 '
 rm -f foo2
 
@@ -248,7 +248,7 @@ test_expect_success POSIXPERM,SANITY '--no-ignore-errors overrides config' '
        date >foo2 &&
        chmod 0 foo2 &&
        test_must_fail git add --verbose --no-ignore-errors . &&
-       ! ( git ls-files foo1 | grep foo1 ) &&
+       ! ( git ls-files foo1 >out && grep foo1 out) &&
        git config add.ignore-errors 0
 '
 rm -f foo2
@@ -257,8 +257,8 @@ test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	git reset --hard &&
 	touch fo\[ou\]bar foobar &&
 	git add '\''fo\[ou\]bar'\'' &&
-	git ls-files fo\[ou\]bar | fgrep fo\[ou\]bar &&
-	! ( git ls-files foobar | grep foobar )
+	git ls-files fo\[ou\]bar >out && fgrep fo\[ou\]bar out &&
+	! ( git ls-files foobar >out && grep foobar out)
 '
 
 test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
@@ -275,7 +275,7 @@ test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
 
 test_expect_success '"add non-existent" should fail' '
 	test_must_fail git add non-existent &&
-	! (git ls-files | grep "non-existent")
+	! (git ls-files >out && grep "non-existent" out)
 '
 
 test_expect_success 'git add -A on empty repo does not error out' '
@@ -398,9 +398,9 @@ test_expect_success 'no file status change if no pathspec is given in subdir' '
 
 test_expect_success 'all statuses changed in folder if . is given' '
 	git add --chmod=+x . &&
-	test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
+	test $(git ls-files --stage >out && grep ^100644 out | wc -l) -eq 0 &&
 	git add --chmod=-x . &&
-	test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+	test $(git ls-files --stage >out && grep ^100755 out | wc -l) -eq 0
 '
 
 test_done
