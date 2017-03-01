@@ -120,9 +120,9 @@ test_expect_success '--quit keeps HEAD and conflicted index intact' '
 	test_path_is_missing .git/sequencer &&
 	test_must_fail git update-index --refresh &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	test_cmp expect actual
 '
@@ -218,9 +218,9 @@ test_expect_success 'cherry-pick still writes sequencer state when one commit is
 	git add foo &&
 	git commit &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	cat >expect <<-\EOF &&
 	OBJID
@@ -315,9 +315,9 @@ test_expect_success '--continue after resolving conflicts' '
 	git add foo &&
 	git cherry-pick --continue &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual.log &&
 	test_cmp expect foo &&
 	test_cmp expect.log actual.log
@@ -332,9 +332,9 @@ test_expect_success '--continue after resolving conflicts and committing' '
 	git cherry-pick --continue &&
 	test_path_is_missing .git/sequencer &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	cat >expect <<-\EOF &&
 	OBJID
