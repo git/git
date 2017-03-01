@@ -423,7 +423,7 @@ Author: A U Thor <author@example.com>
 EOF
 
 test_expect_success 'Log output with --use-mailmap' '
-	git log --use-mailmap | grep Author >actual &&
+	git log --use-mailmap >out && grep Author <out >actual &&
 	test_cmp expect actual
 '
 
@@ -438,7 +438,7 @@ Author: A U Thor <author@example.com>
 EOF
 
 test_expect_success 'Log output with log.mailmap' '
-	git -c log.mailmap=True log | grep Author >actual &&
+	git -c log.mailmap=True log >out && grep Author <out >actual &&
 	test_cmp expect actual
 '
 
@@ -448,7 +448,7 @@ Author: Santa Claus <santa.claus@northpole.xx>
 EOF
 
 test_expect_success 'Grep author with --use-mailmap' '
-	git log --use-mailmap --author Santa | grep Author >actual &&
+	git log --use-mailmap --author Santa >out && grep Author <out >actual &&
 	test_cmp expect actual
 '
 cat >expect <<\EOF
@@ -457,7 +457,7 @@ Author: Santa Claus <santa.claus@northpole.xx>
 EOF
 
 test_expect_success 'Grep author with log.mailmap' '
-	git -c log.mailmap=True log --author Santa | grep Author >actual &&
+	git -c log.mailmap=True log --author Santa >out && grep Author <out >actual &&
 	test_cmp expect actual
 '
 
