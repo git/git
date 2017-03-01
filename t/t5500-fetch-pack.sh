@@ -61,7 +61,7 @@ pull_to_client () {
 			git fsck --full &&
 
 			idx=$(echo pack-*.idx) &&
-			pack_count=$(git show-index <$idx | wc -l) &&
+			pack_count=$(git show-index <$idx >out && wc -l <out) &&
 			test $pack_count = $count &&
 			rm -f pack-*
 		)
@@ -119,8 +119,8 @@ test_expect_success 'single branch clone' '
 '
 
 test_expect_success 'single branch object count' '
-	GIT_DIR=singlebranch/.git git count-objects -v |
-		grep "^in-pack:" > count.singlebranch &&
+	GIT_DIR=singlebranch/.git git count-objects -v >out &&
+	grep "^in-pack:" <out >count.singlebranch &&
 	echo "in-pack: 198" >expected &&
 	test_cmp expected count.singlebranch
 '
@@ -324,8 +324,8 @@ test_expect_success 'clone shallow with --branch' '
 
 test_expect_success 'clone shallow object count' '
 	echo "in-pack: 3" > count3.expected &&
-	GIT_DIR=shallow3/.git git count-objects -v |
-		grep "^in-pack" > count3.actual &&
+	GIT_DIR=shallow3/.git git count-objects -v >out &&
+	grep "^in-pack" <out >count3.actual &&
 	test_cmp count3.expected count3.actual
 '
 
@@ -353,8 +353,8 @@ EOF
 	test_cmp taglist.expected taglist.actual &&
 
 	echo "in-pack: 4" > count6.expected &&
-	GIT_DIR=shallow6/.git git count-objects -v |
-		grep "^in-pack" > count6.actual &&
+	GIT_DIR=shallow6/.git git count-objects -v >out &&
+	grep "^in-pack" <out >count6.actual &&
 	test_cmp count6.expected count6.actual
 '
 
@@ -368,8 +368,8 @@ EOF
 	test_cmp taglist.expected taglist.actual &&
 
 	echo "in-pack: 4" > count7.expected &&
-	GIT_DIR=shallow7/.git git count-objects -v |
-		grep "^in-pack" > count7.actual &&
+	GIT_DIR=shallow7/.git git count-objects -v >out &&
+	grep "^in-pack" <out >count7.actual &&
 	test_cmp count7.expected count7.actual
 '
 
@@ -377,8 +377,8 @@ test_expect_success 'clone shallow with packed refs' '
 	git pack-refs --all &&
 	git clone --depth 1 --branch A "file://$(pwd)/." shallow8 &&
 	echo "in-pack: 4" > count8.expected &&
-	GIT_DIR=shallow8/.git git count-objects -v |
-		grep "^in-pack" > count8.actual &&
+	GIT_DIR=shallow8/.git git count-objects -v >out &&
+	grep "^in-pack" <out >count8.actual &&
 	test_cmp count8.expected count8.actual
 '
 
@@ -553,7 +553,7 @@ check_prot_path () {
 	Diag: protocol=$2
 	Diag: path=$3
 	EOF
-	git fetch-pack --diag-url "$1" | grep -v hostandport= >actual &&
+	git fetch-pack --diag-url "$1" >out && grep -v hostandport= <out >actual &&
 	test_cmp expected actual
 }
 
