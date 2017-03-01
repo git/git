@@ -79,10 +79,10 @@ escape sequences) are invalid.
 Includes
 ~~~~~~~~
 
-You can include one config file from another by setting the special
+You can include a config file from another by setting the special
 `include.path` variable to the name of the file to be included. The
 variable takes a pathname as its value, and is subject to tilde
-expansion.
+expansion. `include.path` can be given multiple times.
 
 The
 included file is expanded immediately, as if its contents had been
