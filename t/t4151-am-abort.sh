@@ -67,7 +67,7 @@ done
 test_expect_success 'am -3 --skip removes otherfile-4' '
 	git reset --hard initial &&
 	test_must_fail git am -3 0003-*.patch &&
-	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 3 -eq $(git ls-files -u >out && wc -l <out) &&
 	test 4 = "$(cat otherfile-4)" &&
 	git am --skip &&
 	test_cmp_rev initial HEAD &&
@@ -78,7 +78,7 @@ test_expect_success 'am -3 --skip removes otherfile-4' '
 test_expect_success 'am -3 --abort removes otherfile-4' '
 	git reset --hard initial &&
 	test_must_fail git am -3 0003-*.patch &&
-	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 3 -eq $(git ls-files -u >out && wc -l <out) &&
 	test 4 = "$(cat otherfile-4)" &&
 	git am --abort &&
 	test_cmp_rev initial HEAD &&
@@ -115,7 +115,7 @@ test_expect_success 'am -3 stops on conflict on unborn branch' '
 	git reset &&
 	rm -f otherfile-4 &&
 	test_must_fail git am -3 0003-*.patch &&
-	test 2 -eq $(git ls-files -u | wc -l) &&
+	test 2 -eq $(git ls-files -u >out && wc -l <out) &&
 	test 4 = "$(cat otherfile-4)"
 '
 
@@ -134,7 +134,7 @@ test_expect_success 'am -3 --abort removes otherfile-4 on unborn branch' '
 	git reset &&
 	rm -f otherfile-4 file-1 &&
 	test_must_fail git am -3 0003-*.patch &&
-	test 2 -eq $(git ls-files -u | wc -l) &&
+	test 2 -eq $(git ls-files -u >out && wc -l <out) &&
 	test 4 = "$(cat otherfile-4)" &&
 	git am --abort &&
 	test -z "$(git ls-files -u)" &&
@@ -146,14 +146,14 @@ test_expect_success 'am -3 --abort on unborn branch removes applied commits' '
 	git reset &&
 	rm -f otherfile-4 otherfile-2 file-1 file-2 &&
 	test_must_fail git am -3 initial.patch 0003-*.patch &&
-	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 3 -eq $(git ls-files -u >out && wc -l <out) &&
 	test 4 = "$(cat otherfile-4)" &&
 	git am --abort &&
 	test -z "$(git ls-files -u)" &&
 	test_path_is_missing otherfile-4 &&
 	test_path_is_missing file-1 &&
 	test_path_is_missing file-2 &&
-	test 0 -eq $(git log --oneline 2>/dev/null | wc -l) &&
+	test 0 -eq $(git log --oneline 2>/dev/null &>out && wc -l <out) &&
 	test refs/heads/orphan = "$(git symbolic-ref HEAD)"
 '
 
