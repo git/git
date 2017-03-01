@@ -385,7 +385,7 @@ test_expect_success 'push with colon-less refspec (3)' '
 	git branch -f frotz master &&
 	git push testrepo frotz &&
 	check_push_result testrepo $the_commit heads/frotz &&
-	test 1 = $( cd testrepo && git show-ref | wc -l )
+	test 1 = $( cd testrepo && git show-ref >out && wc -l <out )
 '
 
 test_expect_success 'push with colon-less refspec (4)' '
@@ -398,7 +398,7 @@ test_expect_success 'push with colon-less refspec (4)' '
 	git tag -f frotz &&
 	git push testrepo frotz &&
 	check_push_result testrepo $the_commit tags/frotz &&
-	test 1 = $( cd testrepo && git show-ref | wc -l )
+	test 1 = $( cd testrepo && git show-ref >out && wc -l <out )
 
 '
 
@@ -1214,8 +1214,8 @@ test_expect_success 'pushing a specific ref applies remote.$name.push as refmap'
 		git config remote.dst.url ../dst &&
 		git config remote.dst.push "+refs/heads/*:refs/remotes/src/*" &&
 		git push dst master &&
-		git show-ref refs/heads/master |
-		sed -e "s|refs/heads/|refs/remotes/src/|" >../dst/expect
+		git show-ref refs/heads/master >out &&
+		sed -e "s|refs/heads/|refs/remotes/src/|" <out >../dst/expect
 	) &&
 	(
 		cd dst &&
@@ -1265,8 +1265,8 @@ test_expect_success 'with no remote.$name.push, upstream mapping is used' '
 		git config branch.master.remote dst &&
 
 		git push dst master &&
-		git show-ref refs/heads/master |
-		sed -e "s|refs/heads/master|refs/heads/trunk|" >../dst/expect
+		git show-ref refs/heads/master >out &&
+		sed -e "s|refs/heads/master|refs/heads/trunk|" <out >../dst/expect
 	) &&
 	(
 		cd dst &&
