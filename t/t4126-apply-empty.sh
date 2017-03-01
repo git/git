@@ -14,11 +14,11 @@ test_expect_success setup '
 		echo $i
 	done >empty &&
 	cat empty >expect &&
-	git diff |
+	git diff >out &&
 	sed -e "/^diff --git/d" \
 	    -e "/^index /d" \
 	    -e "s|a/empty|empty.orig|" \
-	    -e "s|b/empty|empty|" >patch0 &&
+	    -e "s|b/empty|empty|" <out >patch0 &&
 	sed -e "s|empty|missing|" patch0 >patch1 &&
 	>empty &&
 	git update-index --refresh
