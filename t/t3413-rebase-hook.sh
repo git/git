@@ -112,7 +112,7 @@ test_expect_success 'pre-rebase hook stops rebase (1)' '
 	git reset --hard side &&
 	test_must_fail git rebase master &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
-	test 0 = $(git rev-list HEAD...side | wc -l)
+	test 0 = $(git rev-list HEAD...side >out && wc -l out)
 '
 
 test_expect_success 'pre-rebase hook stops rebase (2)' '
@@ -120,7 +120,7 @@ test_expect_success 'pre-rebase hook stops rebase (2)' '
 	git reset --hard side &&
 	test_must_fail env EDITOR=: git rebase -i master &&
 	test "z$(git symbolic-ref HEAD)" = zrefs/heads/test &&
-	test 0 = $(git rev-list HEAD...side | wc -l)
+	test 0 = $(git rev-list HEAD...side >out && wc -l out)
 '
 
 test_expect_success 'rebase --no-verify overrides pre-rebase (1)' '
