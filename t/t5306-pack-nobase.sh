@@ -42,11 +42,11 @@ test_expect_success \
       git update-ref HEAD $(echo C | git commit-tree $(git write-tree) -p $B) &&
       rm .git/objects/info/alternates &&
 
-      git --git-dir=../.git cat-file commit $B |
-      git hash-object -t commit -w --stdin &&
+      git --git-dir=../.git cat-file commit $B >out &&
+      git hash-object -t commit -w --stdin <out &&
 
-      git --git-dir=../.git cat-file tree "$B^{tree}" |
-      git hash-object -t tree -w --stdin
+      git --git-dir=../.git cat-file tree "$B^{tree}" >out &&
+      git hash-object -t tree -w --stdin <out
      ) &&
      C=$(git --git-dir=patch_clone/.git rev-parse HEAD)
     '
