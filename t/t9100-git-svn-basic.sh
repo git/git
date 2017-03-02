@@ -200,8 +200,10 @@ GIT_SVN_ID=alt
 export GIT_SVN_ID
 test_expect_success "$name" \
     'git svn init "$svnrepo" && git svn fetch &&
-     git rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
-     git rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
+     git rev-list --pretty=raw remotes/git-svn >out &&
+     grep ^tree <out | uniq > a &&
+     git rev-list --pretty=raw remotes/alt >out &&
+     grep ^tree <out | uniq > b &&
      test_cmp a b'
 
 name='check imported tree checksums expected tree checksums'
@@ -259,8 +261,8 @@ test_expect_success 'dcommit $rev does not clobber current branch' '
 	git svn dcommit -i bar HEAD^ &&
 	test $old_head = $(git rev-parse HEAD) &&
 	test refs/heads/my-bar = $(git symbolic-ref HEAD) &&
-	git log refs/remotes/bar | grep "change 1" &&
-	! git log refs/remotes/bar | grep "change 2" &&
+	git log refs/remotes/bar >out && grep "change 1" <out &&
+	!(git log refs/remotes/bar >out && grep "change 2" <out) &&
 	git checkout master &&
 	git branch -D my-bar
 	'
