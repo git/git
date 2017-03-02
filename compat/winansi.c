@@ -469,6 +469,18 @@ static void die_lasterr(const char *fmt, ...)
 	va_end(params);
 }
 
+#undef dup2
+int winansi_dup2(int oldfd, int newfd)
+{
+	int ret = dup2(oldfd, newfd);
+
+	if (!ret && newfd >= 0 && newfd <= 2)
+		fd_is_interactive[newfd] = oldfd < 0 || oldfd > 2 ?
+			0 : fd_is_interactive[oldfd];
+
+	return ret;
+}
+
 static HANDLE duplicate_handle(HANDLE hnd)
 {
 	HANDLE hresult, hproc = GetCurrentProcess();
