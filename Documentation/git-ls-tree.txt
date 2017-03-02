@@ -53,7 +53,8 @@ OPTIONS
 	Show object size of blob (file) entries.
 
 -z::
-	\0 line termination on output.
+	\0 line termination on output and do not quote filenames.
+	See OUTPUT FORMAT below for more information.
 
 --name-only::
 --name-status::
@@ -82,8 +83,6 @@ Output Format
 -------------
         <mode> SP <type> SP <object> TAB <file>
 
-Unless the `-z` option is used, TAB, LF, and backslash characters
-in pathnames are represented as `\t`, `\n`, and `\\`, respectively.
 This output format is compatible with what `--index-info --stdin` of
 'git update-index' expects.
 
@@ -94,6 +93,11 @@ When the `-l` option is used, format changes to
 Object size identified by <object> is given in bytes, and right-justified
 with minimum width of 7 characters.  Object size is given only for blobs
 (file) entries; for other entries `-` character is used in place of size.
+
+Without the `-z` option, pathnames with "unusual" characters are
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]).  Using `-z` the filename is output
+verbatim and the line is terminated by a NUL byte.
 
 GIT
 ---

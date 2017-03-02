@@ -78,9 +78,10 @@ Example:
 :100644 100644 5be4a4...... 000000...... M file.c
 ------------------------------------------------
 
-When `-z` option is not used, TAB, LF, and backslash characters
-in pathnames are represented as `\t`, `\n`, and `\\`,
-respectively.
+Without the `-z` option, pathnames with "unusual" characters are
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]).  Using `-z` the filename is output
+verbatim and the line is terminated by a NUL byte.
 
 diff format for merges
 ----------------------

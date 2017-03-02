@@ -322,10 +322,9 @@ When the `-z` option is given, pathnames are printed as is and
 without any quoting and lines are terminated with a NUL (ASCII 0x00)
 byte.
 
-Otherwise, all pathnames will be "C-quoted" if they contain any tab,
-linefeed, double quote, or backslash characters. In C-quoting, these
-characters will be replaced with the corresponding C-style escape
-sequences and the resulting pathname will be double quoted.
+Without the `-z` option, pathnames with "unusual" characters are
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]).
 
 
 CONFIGURATION
