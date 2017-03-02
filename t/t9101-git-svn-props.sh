@@ -174,7 +174,7 @@ test_expect_success 'test create-ignore' "
 	cmp ./deeply/.gitignore create-ignore.expect &&
 	cmp ./deeply/nested/.gitignore create-ignore.expect &&
 	cmp ./deeply/nested/directory/.gitignore create-ignore.expect &&
-	git ls-files -s | grep gitignore | cmp - create-ignore-index.expect
+	git ls-files -s >out && grep gitignore <out | cmp - create-ignore-index.expect
 	"
 
 cat >prop.expect <<\EOF
@@ -190,15 +190,15 @@ EOF
 # pattern, it can pass even though the propget did not execute on the
 # right directory.
 test_expect_success 'test propget' "
-	git svn propget svn:ignore . | cmp - prop.expect &&
+	git svn propget svn:ignore . >out && cmp - prop.expect <out &&
 	cd deeply &&
-	git svn propget svn:ignore . | cmp - ../prop.expect &&
-	git svn propget svn:entry:committed-rev nested/directory/.keep \
-	  | cmp - ../prop2.expect &&
-	git svn propget svn:ignore .. | cmp - ../prop.expect &&
-	git svn propget svn:ignore nested/ | cmp - ../prop.expect &&
-	git svn propget svn:ignore ./nested | cmp - ../prop.expect &&
-	git svn propget svn:ignore .././deeply/nested | cmp - ../prop.expect
+	git svn propget svn:ignore . >out && cmp - ../prop.expect <out &&
+	git svn propget svn:entry:committed-rev nested/directory/.keep >out &&
+	cmp - ../prop2.expect <out &&
+	git svn propget svn:ignore .. >out && cmp - ../prop.expect <out &&
+	git svn propget svn:ignore nested/ >out && cmp - ../prop.expect <out &&
+	git svn propget svn:ignore ./nested >out && cmp - ../prop.expect <out &&
+	git svn propget svn:ignore .././deeply/nested >out && cmp - ../prop.expect <out
 	"
 
 cat >prop.expect <<\EOF
@@ -218,8 +218,8 @@ Properties on 'nested/directory/.keep':
 EOF
 
 test_expect_success 'test proplist' "
-	git svn proplist . | cmp - prop.expect &&
-	git svn proplist nested/directory/.keep | cmp - prop2.expect
+	git svn proplist . >out && cmp - prop.expect <out &&
+	git svn proplist nested/directory/.keep >out && cmp - prop2.expect <out
 	"
 
 test_done
