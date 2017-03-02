@@ -30,7 +30,7 @@ test_expect_success 'setup' \
 
 test_expect_success 'verify number of revisions' \
    '
-   revs=$(git rev-list --all | wc -l) &&
+   revs=$(git rev-list --all >out && wc -l <out) &&
    test $revs -eq 4 &&
    first_commit=$(git rev-parse HEAD~3)
    '
