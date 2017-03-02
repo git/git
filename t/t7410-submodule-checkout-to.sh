@@ -36,7 +36,7 @@ test_expect_success 'checkout main' \
 	git worktree add "$base_path/default_checkout/main" "$rev1_hash_main")'
 
 test_expect_failure 'can see submodule diffs just after checkout' \
-    '(cd default_checkout/main && git diff --submodule master"^!" | grep "file1 updated")'
+    '(cd default_checkout/main && git diff --submodule master"^!" >out && grep "file1 updated" <out)'
 
 test_expect_success 'checkout main and initialize independed clones' \
     'mkdir fully_cloned_submodule &&
@@ -45,7 +45,7 @@ test_expect_success 'checkout main and initialize independed clones' \
     (cd fully_cloned_submodule/main && git submodule update)'
 
 test_expect_success 'can see submodule diffs after independed cloning' \
-    '(cd fully_cloned_submodule/main && git diff --submodule master"^!" | grep "file1 updated")'
+    '(cd fully_cloned_submodule/main && git diff --submodule master"^!" >out && grep "file1 updated" <out)'
 
 test_expect_success 'checkout sub manually' \
     'mkdir linked_submodule &&
@@ -55,6 +55,6 @@ test_expect_success 'checkout sub manually' \
 	git worktree add "$base_path/linked_submodule/main/sub" "$rev1_hash_sub")'
 
 test_expect_success 'can see submodule diffs after manual checkout of linked submodule' \
-    '(cd linked_submodule/main && git diff --submodule master"^!" | grep "file1 updated")'
+    '(cd linked_submodule/main && git diff --submodule master"^!" >out && grep "file1 updated" <out)'
 
 test_done
