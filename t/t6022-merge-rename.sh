@@ -232,8 +232,8 @@ test_expect_success 'interference with untracked working tree file' '
 	git pull . master &&
 	test_path_is_file M &&
 	! {
-		git ls-files -s |
-		grep M
+		git ls-files -s >out &&
+		grep M out
 	} &&
 	git reset --hard anchor
 '
@@ -242,10 +242,12 @@ test_expect_success 'merge of identical changes in a renamed file' '
 	rm -f A M N &&
 	git reset --hard &&
 	git checkout change+rename &&
-	GIT_MERGE_VERBOSITY=3 git merge change | test_i18ngrep "^Skipped B" &&
+	GIT_MERGE_VERBOSITY=3 git merge change >out &&
+	test_i18ngrep "^Skipped B" <out &&
 	git reset --hard HEAD^ &&
 	git checkout change &&
-	GIT_MERGE_VERBOSITY=3 git merge change+rename | test_i18ngrep "^Skipped B"
+	GIT_MERGE_VERBOSITY=3 git merge change+rename >out &&
+	test_i18ngrep "^Skipped B" <out
 '
 
 test_expect_success 'setup for rename + d/f conflicts' '
@@ -307,8 +309,8 @@ test_expect_success 'Rename+D/F conflict; renamed file merges but dir in way' '
 	test_i18ngrep "Auto-merging dir" output &&
 	test_i18ngrep "Adding as dir~HEAD instead" output &&
 
-	test 3 -eq "$(git ls-files -u | wc -l)" &&
-	test 2 -eq "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+	test 3 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 2 -eq "$(git ls-files -u dir/file-in-the-way >out && wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 	test_must_fail git diff --cached --quiet &&
@@ -329,8 +331,8 @@ test_expect_success 'Same as previous, but merged other way' '
 	test_i18ngrep "Auto-merging dir" output &&
 	test_i18ngrep "Adding as dir~renamed-file-has-no-conflicts instead" output &&
 
-	test 3 -eq "$(git ls-files -u | wc -l)" &&
-	test 2 -eq "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+	test 3 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 2 -eq "$(git ls-files -u dir/file-in-the-way >out && wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 	test_must_fail git diff --cached --quiet &&
@@ -364,8 +366,8 @@ test_expect_success 'Rename+D/F conflict; renamed file cannot merge, dir not in 
 	git checkout -q renamed-file-has-conflicts^0 &&
 	test_must_fail git merge --strategy=recursive dir-not-in-way &&
 
-	test 3 -eq "$(git ls-files -u | wc -l)" &&
-	test 3 -eq "$(git ls-files -u dir | wc -l)" &&
+	test 3 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 3 -eq "$(git ls-files -u dir >out && wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 	test_must_fail git diff --cached --quiet &&
@@ -382,9 +384,9 @@ test_expect_success 'Rename+D/F conflict; renamed file cannot merge and dir in t
 	git checkout -q renamed-file-has-conflicts^0 &&
 	test_must_fail git merge --strategy=recursive dir-in-way &&
 
-	test 5 -eq "$(git ls-files -u | wc -l)" &&
-	test 3 -eq "$(git ls-files -u dir | grep -v file-in-the-way | wc -l)" &&
-	test 2 -eq "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+	test 5 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 3 -eq "$(git ls-files -u dir >out && grep -v file-in-the-way <out | wc -l)" &&
+	test 2 -eq "$(git ls-files -u dir/file-in-the-way >out && wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 	test_must_fail git diff --cached --quiet &&
@@ -418,9 +420,9 @@ test_expect_success 'Same as previous, but merged other way' '
 	git checkout -q dir-in-way^0 &&
 	test_must_fail git merge --strategy=recursive renamed-file-has-conflicts &&
 
-	test 5 -eq "$(git ls-files -u | wc -l)" &&
-	test 3 -eq "$(git ls-files -u dir | grep -v file-in-the-way | wc -l)" &&
-	test 2 -eq "$(git ls-files -u dir/file-in-the-way | wc -l)" &&
+	test 5 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 3 -eq "$(git ls-files -u dir >out && grep -v file-in-the-way <out | wc -l)" &&
+	test 2 -eq "$(git ls-files -u dir/file-in-the-way >out && wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 	test_must_fail git diff --cached --quiet &&
@@ -458,7 +460,7 @@ test_expect_success 'both rename source and destination involved in D/F conflict
 	git checkout -q rename-dest^0 &&
 	test_must_fail git merge --strategy=recursive source-conflict &&
 
-	test 1 -eq "$(git ls-files -u | wc -l)" &&
+	test 1 -eq "$(git ls-files -u >out && wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 
@@ -497,9 +499,9 @@ test_expect_success 'pair rename to parent of other (D/F conflicts) w/ untracked
 	mkdir one &&
 	test_must_fail git merge --strategy=recursive rename-two &&
 
-	test 2 -eq "$(git ls-files -u | wc -l)" &&
-	test 1 -eq "$(git ls-files -u one | wc -l)" &&
-	test 1 -eq "$(git ls-files -u two | wc -l)" &&
+	test 2 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u one >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u two >out wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 
@@ -517,9 +519,9 @@ test_expect_success 'pair rename to parent of other (D/F conflicts) w/ clean sta
 	git clean -fdqx &&
 	test_must_fail git merge --strategy=recursive rename-two &&
 
-	test 2 -eq "$(git ls-files -u | wc -l)" &&
-	test 1 -eq "$(git ls-files -u one | wc -l)" &&
-	test 1 -eq "$(git ls-files -u two | wc -l)" &&
+	test 2 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u one >out wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u two >out wc -l <out)" &&
 
 	test_must_fail git diff --quiet &&
 
@@ -559,12 +561,12 @@ test_expect_success 'check handling of differently renamed file with D/F conflic
 	git checkout -q first-rename^0 &&
 	test_must_fail git merge --strategy=recursive second-rename &&
 
-	test 5 -eq "$(git ls-files -s | wc -l)" &&
-	test 3 -eq "$(git ls-files -u | wc -l)" &&
-	test 1 -eq "$(git ls-files -u one | wc -l)" &&
-	test 1 -eq "$(git ls-files -u two | wc -l)" &&
-	test 1 -eq "$(git ls-files -u original | wc -l)" &&
-	test 2 -eq "$(git ls-files -o | wc -l)" &&
+	test 5 -eq "$(git ls-files -s >out && wc -l <out)" &&
+	test 3 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u one >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u two >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u original >out && wc -l <out)" &&
+	test 2 -eq "$(git ls-files -o >out && wc -l <out)" &&
 
 	test -f one/file &&
 	test -f two/file &&
@@ -599,11 +601,11 @@ test_expect_success 'check handling of differently renamed file with D/F conflic
 	git checkout -q first-rename-redo^0 &&
 	test_must_fail git merge --strategy=recursive second-rename-redo &&
 
-	test 3 -eq "$(git ls-files -u | wc -l)" &&
-	test 1 -eq "$(git ls-files -u one | wc -l)" &&
-	test 1 -eq "$(git ls-files -u two | wc -l)" &&
-	test 1 -eq "$(git ls-files -u original | wc -l)" &&
-	test 0 -eq "$(git ls-files -o | wc -l)" &&
+	test 3 -eq "$(git ls-files -u >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u one >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u two >out && wc -l <out)" &&
+	test 1 -eq "$(git ls-files -u original >out && wc -l <out)" &&
+	test 0 -eq "$(git ls-files -o >out && wc -l <out)" &&
 
 	test -f one &&
 	test -f two &&
@@ -786,8 +788,8 @@ test_expect_success 'setup merge of rename + small change' '
 test_expect_success 'merge rename + small change' '
 	git merge rename_branch &&
 
-	test 1 -eq $(git ls-files -s | wc -l) &&
-	test 0 -eq $(git ls-files -o | wc -l) &&
+	test 1 -eq $(git ls-files -s >out && wc -l <out) &&
+	test 0 -eq $(git ls-files -o >out && wc -l <out) &&
 	test $(git rev-parse HEAD:renamed_file) = $(git rev-parse HEAD~1:file)
 '
 
