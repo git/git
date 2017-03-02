@@ -83,7 +83,7 @@ test_expect_success 'delete branch via remote @{upstream}' '
 # Note that we create two oddly named local branches here. We want to make
 # sure that we do not accidentally delete either of them, even if
 # shorten_unambiguous_ref() tweaks the name to avoid ambiguity.
-test_expect_failure 'delete @{upstream} expansion matches -r option' '
+test_expect_success 'delete @{upstream} expansion matches -r option' '
 	git update-ref refs/remotes/origin/remote-del two &&
 	git branch --set-upstream-to=origin/remote-del &&
 	git update-ref refs/heads/origin/remote-del two &&
@@ -94,7 +94,7 @@ test_expect_failure 'delete @{upstream} expansion matches -r option' '
 	expect_branch refs/heads/remotes/origin/remote-del two
 '
 
-test_expect_failure 'disallow deleting remote branch via @{-1}' '
+test_expect_success 'disallow deleting remote branch via @{-1}' '
 	git update-ref refs/remotes/origin/previous one &&
 
 	git checkout -b origin/previous two &&
@@ -114,7 +114,7 @@ test_expect_failure 'create branch named "@"' '
 	expect_branch refs/heads/@ one
 '
 
-test_expect_failure 'delete branch named "@"' '
+test_expect_success 'delete branch named "@"' '
 	git update-ref refs/heads/@ two &&
 	git branch -D @ &&
 	expect_deleted refs/heads/@
