@@ -95,7 +95,7 @@ test_expect_success 'paths in subdir ended up in one tree' '
 
 test_expect_success 'tag points to branch tip' '
 	git rev-parse $other_branch >expect &&
-	git for-each-ref --format="%(*objectname)" | grep . >actual &&
+	git for-each-ref --format="%(*objectname)" >out && grep . <out >actual &&
 	test_cmp expect actual
 '
 
