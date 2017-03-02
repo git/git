@@ -43,26 +43,26 @@ test_expect_success 'setup repository and import' '
 
 test_expect_success 'run log' "
 	git reset --hard origin/a &&
-	git svn log -r2 origin/trunk | grep ^r2 &&
-	git svn log -r4 origin/trunk | grep ^r4 &&
-	git svn log -r3 | grep ^r3
+	git svn log -r2 origin/trunk >out && grep ^r2 <out &&
+	git svn log -r4 origin/trunk >out && grep ^r4 <out &&
+	git svn log -r3 >out && grep ^r3 <out
 	"
 
 test_expect_success 'run log against a from trunk' "
 	git reset --hard origin/trunk &&
-	git svn log -r3 origin/a | grep ^r3
+	git svn log -r3 origin/a >out && grep ^r3 <out
 	"
 
 printf 'r1 \nr2 \nr4 \n' > expected-range-r1-r2-r4
 
 test_expect_success 'test ascending revision range' "
 	git reset --hard origin/trunk &&
-	git svn log -r 1:4 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r1-r2-r4 -
+	git svn log -r 1:4 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r1-r2-r4 -
 	"
 
 test_expect_success 'test ascending revision range with --show-commit' "
 	git reset --hard origin/trunk &&
-	git svn log --show-commit -r 1:4 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r1-r2-r4 -
+	git svn log --show-commit -r 1:4 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r1-r2-r4 -
 	"
 
 test_expect_success 'test ascending revision range with --show-commit (sha1)' "
@@ -70,7 +70,7 @@ test_expect_success 'test ascending revision range with --show-commit (sha1)' "
 	git svn find-rev r2 >>expected-range-r1-r2-r4-sha1 &&
 	git svn find-rev r4 >>expected-range-r1-r2-r4-sha1 &&
 	git reset --hard origin/trunk &&
-	git svn log --show-commit -r 1:4 | grep '^r[0-9]' | cut -d'|' -f2 >out &&
+	git svn log --show-commit -r 1:4 >out1 && grep '^r[0-9]' <out1 | cut -d'|' -f2 >out &&
 	git rev-parse \$(cat out) >actual &&
 	test_cmp expected-range-r1-r2-r4-sha1 actual
 	"
@@ -79,67 +79,67 @@ printf 'r4 \nr2 \nr1 \n' > expected-range-r4-r2-r1
 
 test_expect_success 'test descending revision range' "
 	git reset --hard origin/trunk &&
-	git svn log -r 4:1 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r4-r2-r1 -
+	git svn log -r 4:1 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r4-r2-r1 -
 	"
 
 printf 'r1 \nr2 \n' > expected-range-r1-r2
 
 test_expect_success 'test ascending revision range with unreachable revision' "
 	git reset --hard origin/trunk &&
-	git svn log -r 1:3 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r1-r2 -
+	git svn log -r 1:3 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r1-r2 -
 	"
 
 printf 'r2 \nr1 \n' > expected-range-r2-r1
 
 test_expect_success 'test descending revision range with unreachable revision' "
 	git reset --hard origin/trunk &&
-	git svn log -r 3:1 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r2-r1 -
+	git svn log -r 3:1 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r2-r1 -
 	"
 
 printf 'r2 \n' > expected-range-r2
 
 test_expect_success 'test ascending revision range with unreachable upper boundary revision and 1 commit' "
 	git reset --hard origin/trunk &&
-	git svn log -r 2:3 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r2 -
+	git svn log -r 2:3 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r2 -
 	"
 
 test_expect_success 'test descending revision range with unreachable upper boundary revision and 1 commit' "
 	git reset --hard origin/trunk &&
-	git svn log -r 3:2 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r2 -
+	git svn log -r 3:2 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r2 -
 	"
 
 printf 'r4 \n' > expected-range-r4
 
 test_expect_success 'test ascending revision range with unreachable lower boundary revision and 1 commit' "
 	git reset --hard origin/trunk &&
-	git svn log -r 3:4 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r4 -
+	git svn log -r 3:4 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r4 -
 	"
 
 test_expect_success 'test descending revision range with unreachable lower boundary revision and 1 commit' "
 	git reset --hard origin/trunk &&
-	git svn log -r 4:3 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r4 -
+	git svn log -r 4:3 >out &&  grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r4 -
 	"
 
 printf -- '------------------------------------------------------------------------\n' > expected-separator
 
 test_expect_success 'test ascending revision range with unreachable boundary revisions and no commits' "
 	git reset --hard origin/trunk &&
-	git svn log -r 5:6 | test_cmp expected-separator -
+	git svn log -r 5:6 >out && test_cmp expected-separator - <out
 	"
 
 test_expect_success 'test descending revision range with unreachable boundary revisions and no commits' "
 	git reset --hard origin/trunk &&
-	git svn log -r 6:5 | test_cmp expected-separator -
+	git svn log -r 6:5 >out && test_cmp expected-separator - <out
 	"
 
 test_expect_success 'test ascending revision range with unreachable boundary revisions and 1 commit' "
 	git reset --hard origin/trunk &&
-	git svn log -r 3:5 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r4 -
+	git svn log -r 3:5 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r4 -
 	"
 
 test_expect_success 'test descending revision range with unreachable boundary revisions and 1 commit' "
 	git reset --hard origin/trunk &&
-	git svn log -r 5:3 | grep '^r[0-9]' | cut -d'|' -f1 | test_cmp expected-range-r4 -
+	git svn log -r 5:3 >out && grep '^r[0-9]' <out | cut -d'|' -f1 | test_cmp expected-range-r4 -
 	"
 
 test_done
