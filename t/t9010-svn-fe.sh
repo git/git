@@ -357,8 +357,8 @@ test_expect_success PIPE 'branch name with backslash' '
 	} >branch.dump &&
 	try_dump branch.dump &&
 
-	git ls-tree -r --name-only HEAD |
-	sort >actual.branch-files &&
+	git ls-tree -r --name-only HEAD >out &&
+	sort <out >actual.branch-files &&
 	test_cmp expect.branch-files actual.branch-files
 '
 
@@ -470,9 +470,9 @@ test_expect_failure PIPE 'change file mode but keep old content' '
 	EOF
 	try_dump filemode.dump &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	git show HEAD:greeting >actual.blob &&
 	git show HEAD^:greeting >actual.target &&
@@ -570,17 +570,17 @@ test_expect_success PIPE 'NUL in log message, file content, and property name' '
 	} >8bitclean.dump &&
 	try_dump 8bitclean.dump &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	{
-		git cat-file commit HEAD | nul_to_q &&
+		git cat-file commit HEAD >out && nul_to_q <out &&
 		echo
 	} |
 	sed -ne "/^\$/,\$ p" >actual.message &&
-	git cat-file blob HEAD^:greeting | nul_to_q >actual.hello1 &&
-	git cat-file blob HEAD:greeting | nul_to_q >actual.hello2 &&
+	git cat-file blob HEAD^:greeting >out && nul_to_q <out >actual.hello1 &&
+	git cat-file blob HEAD:greeting >out && nul_to_q <out >actual.hello2 &&
 	test_cmp expect actual &&
 	test_cmp expect.message actual.message &&
 	test_cmp expect.hello1 actual.hello1 &&
@@ -656,9 +656,9 @@ test_expect_success PIPE 'change file mode and reiterate content' '
 	EOF
 	try_dump filemode2.dump &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	git show HEAD:greeting >actual.blob &&
 	git show HEAD^:greeting >actual.target &&
@@ -789,9 +789,9 @@ test_expect_success PIPE 'property deltas supported' '
 	} >propdelta.dump &&
 	try_dump propdelta.dump &&
 	{
-		git rev-list HEAD |
-		git diff-tree --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	test_cmp expect actual
 '
@@ -843,9 +843,9 @@ test_expect_success PIPE 'properties on /' '
 	EOF
 	try_dump changeroot.dump &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --always --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --always --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	test_cmp expect actual
 '
@@ -928,9 +928,9 @@ test_expect_success PIPE 'deltas for typechange' '
 	EOF
 	try_dump deleteprop.dump &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	test_cmp expect actual
 '
@@ -1027,9 +1027,9 @@ test_expect_success PIPE 'deltas need not consume the whole preimage' '
 	} >deltapartial.dump &&
 	try_dump deltapartial.dump &&
 	{
-		git rev-list HEAD |
-		git diff-tree --root --stdin |
-		sed "s/$_x40/OBJID/g"
+		git rev-list HEAD >out &&
+		git diff-tree --root --stdin <out >out1 &&
+		sed "s/$_x40/OBJID/g" <out1
 	} >actual &&
 	test_cmp expect actual &&
 	git show HEAD:postimage >actual.3 &&
