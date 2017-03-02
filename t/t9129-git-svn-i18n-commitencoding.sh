@@ -10,7 +10,7 @@ compare_git_head_with () {
 	nr=$(wc -l < "$1")
 	a=7
 	b=$(($a + $nr - 1))
-	git cat-file commit HEAD | sed -ne "$a,${b}p" >current &&
+	git cat-file commit HEAD >out && sed -ne "$a,${b}p" <out >current &&
 	test_cmp current "$1"
 }
 
@@ -50,7 +50,7 @@ do
 		echo $H >F &&
 		git add F &&
 		git commit -a -F "$TEST_DIRECTORY"/t3900/$H.txt &&
-		E=$(git cat-file commit HEAD | sed -ne "s/^encoding //p") &&
+		E=$(git cat-file commit HEAD >out && sed -ne "s/^encoding //p" <out) &&
 		test "z$E" = "z$H"
 		compare_git_head_with "$TEST_DIRECTORY"/t3900/$H.txt
 	)
@@ -63,8 +63,8 @@ do
 	(
 		cd $H &&
 		git svn dcommit &&
-		git cat-file commit HEAD | grep git-svn-id: &&
-		E=$(git cat-file commit HEAD | sed -ne "s/^encoding //p") &&
+		git cat-file commit HEAD >out && grep git-svn-id: <out &&
+		E=$(git cat-file commit HEAD >out && sed -ne "s/^encoding //p" <out) &&
 		test "z$E" = "z$H" &&
 		compare_git_head_with "$TEST_DIRECTORY"/t3900/$H.txt
 	)
