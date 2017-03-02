@@ -116,8 +116,8 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with relative prefix' '
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	would_clean=$(
 		cd docs &&
-		git clean -n ../src |
-		sed -n -e "s|^Would remove ||p"
+		git clean -n ../src >out &&
+		sed -n -e "s|^Would remove ||p" <out
 	) &&
 	verbose test "$would_clean" = ../src/part3.c
 '
@@ -128,8 +128,8 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with absolute path' '
 	touch a.out src/part3.c docs/manual.txt obj.o build/lib.so &&
 	would_clean=$(
 		cd docs &&
-		git clean -n "$(pwd)/../src" |
-		sed -n -e "s|^Would remove ||p"
+		git clean -n "$(pwd)/../src" >out &&
+		sed -n -e "s|^Would remove ||p" <out
 	) &&
 	verbose test "$would_clean" = ../src/part3.c
 '
