@@ -42,7 +42,7 @@ test_expect_success 'update branch via local @{upstream}' '
 	expect_branch local two
 '
 
-test_expect_failure 'disallow updating branch via remote @{upstream}' '
+test_expect_success 'disallow updating branch via remote @{upstream}' '
 	git update-ref refs/remotes/origin/remote one &&
 	git branch --set-upstream-to=origin/remote &&
 
@@ -109,7 +109,7 @@ test_expect_success 'disallow deleting remote branch via @{-1}' '
 # and not refs/heads/HEAD. These tests should not imply that refs/heads/@ is a
 # sane thing, but it _is_ technically allowed for now. If we disallow it, these
 # can be switched to test_must_fail.
-test_expect_failure 'create branch named "@"' '
+test_expect_success 'create branch named "@"' '
 	git branch -f @ one &&
 	expect_branch refs/heads/@ one
 '
