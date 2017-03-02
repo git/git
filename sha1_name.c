@@ -1279,17 +1279,14 @@ int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 	return -1;
 }
 
-int strbuf_branchname(struct strbuf *sb, const char *name)
+void strbuf_branchname(struct strbuf *sb, const char *name)
 {
 	int len = strlen(name);
 	int used = interpret_branch_name(name, len, sb);
 
-	if (used == len)
-		return 0;
 	if (used < 0)
 		used = 0;
 	strbuf_add(sb, name + used, len - used);
-	return len;
 }
 
 int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
