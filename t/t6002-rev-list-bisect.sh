@@ -17,10 +17,10 @@ test_bisection_diff()
 	_bisect_option=$2
 	shift 2
 	_bisection=$(git rev-list $_bisect_option "$@")
-	_list_size=$(git rev-list "$@" | wc -l)
+	_list_size=$(git rev-list "$@" >out && wc -l <out)
         _head=$1
 	shift 1
-	_bisection_size=$(git rev-list $_bisection "$@" | wc -l)
+	_bisection_size=$(git rev-list $_bisection "$@" >out && wc -l <out)
 	[ -n "$_list_size" -a -n "$_bisection_size" ] ||
 	error "test_bisection_diff failed"
 
