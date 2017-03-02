@@ -1312,8 +1312,17 @@ extern char *oid_to_hex(const struct object_id *oid);	/* same static buffer as s
  *
  * If the input was ok but there are not N branch switches in the
  * reflog, it returns 0.
+ *
+ * If "allowed" is non-zero, it is a treated as a bitfield of allowable
+ * expansions: local branches ("refs/heads/"), remote branches
+ * ("refs/remotes/"), or "HEAD". If no "allowed" bits are set, any expansion is
+ * allowed, even ones to refs outside of those namespaces.
  */
-extern int interpret_branch_name(const char *str, int len, struct strbuf *);
+#define INTERPRET_BRANCH_LOCAL (1<<0)
+#define INTERPRET_BRANCH_REMOTE (1<<1)
+#define INTERPRET_BRANCH_HEAD (1<<2)
+extern int interpret_branch_name(const char *str, int len, struct strbuf *,
+				 unsigned allowed);
 extern int get_oid_mb(const char *str, struct object_id *oid);
 
 extern int validate_headref(const char *ref);

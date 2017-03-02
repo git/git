@@ -569,8 +569,12 @@ static inline void strbuf_complete_line(struct strbuf *sb)
  * "refs/remotes/origin/master").
  *
  * Note that the resulting name may not be a syntactically valid refname.
+ *
+ * If "allowed" is non-zero, restrict the set of allowed expansions. See
+ * interpret_branch_name() for details.
  */
-extern void strbuf_branchname(struct strbuf *sb, const char *name);
+extern void strbuf_branchname(struct strbuf *sb, const char *name,
+			      unsigned allowed);
 
 /*
  * Like strbuf_branchname() above, but confirm that the result is

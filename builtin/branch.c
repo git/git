@@ -215,7 +215,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		char *target = NULL;
 		int flags = 0;
 
-		strbuf_branchname(&bname, argv[i]);
+		strbuf_branchname(&bname, argv[i], 0);
 		free(name);
 		name = mkpathdup(fmt, bname.buf);
 
