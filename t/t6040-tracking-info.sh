@@ -141,7 +141,7 @@ test_expect_success 'status -s -b (diverged from upstream)' '
 	(
 		cd test &&
 		git checkout b1 >/dev/null &&
-		git status -s -b | head -1
+		git status -s -b >out && head -1 <out
 	) >actual &&
 	test_i18ncmp expect actual
 '
@@ -154,7 +154,7 @@ test_expect_success 'status -s -b (upstream is gone)' '
 	(
 		cd test &&
 		git checkout b5 >/dev/null &&
-		git status -s -b | head -1
+		git status -s -b >out && head -1 <out
 	) >actual &&
 	test_i18ncmp expect actual
 '
@@ -167,7 +167,7 @@ test_expect_success 'status -s -b (up-to-date with upstream)' '
 	(
 		cd test &&
 		git checkout b6 >/dev/null &&
-		git status -s -b | head -1
+		git status -s -b >out && head -1 <out
 	) >actual &&
 	test_i18ncmp expect actual
 '
