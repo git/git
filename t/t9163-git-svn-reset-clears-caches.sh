@@ -59,7 +59,7 @@ test_expect_success 'fetch to merge-base (a)' '
 test_expect_success 'rebase looses SVN merge (m)' '
 	git svn rebase &&
 	git svn fetch &&
-	test 1 = $(git cat-file -p master|grep parent|wc -l)
+	test 1 = $(git cat-file -p master >out && grep parent <out | wc -l)
 '
 
 # git svn fetch creates correct history with merge commit
@@ -72,7 +72,7 @@ test_expect_success 'reset and fetch gets the SVN merge (m) correctly' '
 	git svn reset -r 3 &&
 	git reset --hard origin/trunk &&
 	git svn fetch &&
-	test 2 = $(git cat-file -p origin/trunk|grep parent|wc -l)
+	test 2 = $(git cat-file -p origin/trunk >out && grep parent <out | wc -l)
 '
 
 test_done
