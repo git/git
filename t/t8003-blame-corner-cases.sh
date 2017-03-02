@@ -54,67 +54,67 @@ test_expect_success setup '
 
 test_expect_success 'straight copy without -C' '
 
-	git blame uno | grep Second
+	git blame uno >out && grep Second <out
 
 '
 
 test_expect_success 'straight move without -C' '
 
-	git blame dos | grep Initial
+	git blame dos >out && grep Initial <out
 
 '
 
 test_expect_success 'straight copy with -C' '
 
-	git blame -C1 uno | grep Second
+	git blame -C1 uno >out && grep Second <out
 
 '
 
 test_expect_success 'straight move with -C' '
 
-	git blame -C1 dos | grep Initial
+	git blame -C1 dos >out && grep Initial <out
 
 '
 
 test_expect_success 'straight copy with -C -C' '
 
-	git blame -C -C1 uno | grep Initial
+	git blame -C -C1 uno >out && grep Initial <out
 
 '
 
 test_expect_success 'straight move with -C -C' '
 
-	git blame -C -C1 dos | grep Initial
+	git blame -C -C1 dos >out && grep Initial <out
 
 '
 
 test_expect_success 'append without -C' '
 
-	git blame -L2 tres | grep Second
+	git blame -L2 tres >out && grep Second <out
 
 '
 
 test_expect_success 'append with -C' '
 
-	git blame -L2 -C1 tres | grep Second
+	git blame -L2 -C1 tres >out && grep Second <out
 
 '
 
 test_expect_success 'append with -C -C' '
 
-	git blame -L2 -C -C1 tres | grep Second
+	git blame -L2 -C -C1 tres >out && grep Second <out
 
 '
 
 test_expect_success 'append with -C -C -C' '
 
-	git blame -L2 -C -C -C1 tres | grep Initial
+	git blame -L2 -C -C -C1 tres >out && grep Initial <out
 
 '
 
 test_expect_success 'blame wholesale copy' '
 
-	git blame -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 HEAD^ -- cow >out && sed -e "$pick_fc" <out >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -126,7 +126,7 @@ test_expect_success 'blame wholesale copy' '
 
 test_expect_success 'blame wholesale copy and more' '
 
-	git blame -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 HEAD -- cow >out && sed -e "$pick_fc" <out >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -148,7 +148,7 @@ test_expect_success 'blame wholesale copy and more in the index' '
 	EOF
 	git add horse &&
 	test_when_finished "git rm -f horse" &&
-	git blame -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 -- horse >out && sed -e "$pick_fc" <out >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -172,7 +172,7 @@ test_expect_success 'blame during cherry-pick with file rename conflict' '
 	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
 	git show HEAD@{1}:rodent > rodent &&
 	git add rodent &&
-	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 rodent >out && sed -e "$pick_fc" <out >current &&
 	cat current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
