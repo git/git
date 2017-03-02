@@ -24,16 +24,16 @@ test_expect_success 'set up --reverse example' '
 	'
 
 test_expect_success '--reverse --parents --full-history combines correctly' '
-	git rev-list --parents --full-history master -- foo |
-		perl -e "print reverse <>" > expected &&
+	git rev-list --parents --full-history master -- foo >out &&
+		perl -e "print reverse <>" <out >expected &&
 	git rev-list --reverse --parents --full-history master -- foo \
 		> actual &&
 	test_cmp actual expected
 	'
 
 test_expect_success '--boundary does too' '
-	git rev-list --boundary --parents --full-history master ^root -- foo |
-		perl -e "print reverse <>" > expected &&
+	git rev-list --boundary --parents --full-history master ^root -- foo >out &&
+		perl -e "print reverse <>" <out >expected &&
 	git rev-list --boundary --reverse --parents --full-history \
 		master ^root -- foo > actual &&
 	test_cmp actual expected
