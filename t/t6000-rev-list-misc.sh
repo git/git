@@ -104,8 +104,8 @@ test_expect_success '--header shows a NUL after each commit' '
 	# We know that there is no Q in the true payload; names and
 	# addresses of the authors and the committers do not have
 	# any, and object names or header names do not, either.
-	git rev-list --header --max-count=2 HEAD |
-	nul_to_q |
+	git rev-list --header --max-count=2 HEAD >out &&
+	nul_to_q <out |
 	grep "^Q" >actual &&
 	cat >expect <<-EOF &&
 	Q$(git rev-parse HEAD~1)
