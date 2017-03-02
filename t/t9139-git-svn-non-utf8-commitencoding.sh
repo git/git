@@ -27,7 +27,7 @@ do
 		echo $H >F &&
 		git add F &&
 		git commit -a -F "$TEST_DIRECTORY"/t3900/$H.txt &&
-		E=$(git cat-file commit HEAD | sed -ne "s/^encoding //p") &&
+		E=$(git cat-file commit HEAD >out && sed -ne "s/^encoding //p" <out) &&
 		test "z$E" = "z$H"
 	)
 	'
