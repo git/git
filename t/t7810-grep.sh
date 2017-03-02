@@ -180,7 +180,7 @@ do
 	'
 
 	test_expect_success "grep -c $L (no /dev/null)" '
-		! git grep -c test $H | grep /dev/null
+		!(git grep -c test $H >out && grep /dev/null <out)
 	'
 
 	test_expect_success "grep --max-depth -1 $L" '
@@ -1267,8 +1267,8 @@ test_expect_success 'grep --color, separator' '
 	test_config color.grep.selected		normal &&
 	test_config color.grep.separator	red &&
 
-	git grep --color=always -A1 -e char -e lo_w hello.c hello_world |
-	test_decode_color >actual &&
+	git grep --color=always -A1 -e char -e lo_w hello.c hello_world >out &&
+	test_decode_color <out >actual &&
 	test_cmp expected actual
 '
 
@@ -1371,8 +1371,8 @@ test_expect_success 'grep --color -e A -e B with context' '
 	test_config color.grep.selected		normal &&
 	test_config color.grep.separator	normal &&
 
-	git grep --color=always -C2 -e "with " -e space2  space |
-	test_decode_color >actual &&
+	git grep --color=always -C2 -e "with " -e space2  space >out &&
+	test_decode_color <out >actual &&
 	test_cmp expected actual
 '
 
@@ -1394,8 +1394,8 @@ test_expect_success 'grep --color -e A --and -e B with context' '
 	test_config color.grep.selected		normal &&
 	test_config color.grep.separator	normal &&
 
-	git grep --color=always -C2 -e "with " --and -e space2  space |
-	test_decode_color >actual &&
+	git grep --color=always -C2 -e "with " --and -e space2  space >out &&
+	test_decode_color <out >actual &&
 	test_cmp expected actual
 '
 
@@ -1417,8 +1417,8 @@ test_expect_success 'grep --color -e A --and --not -e B with context' '
 	test_config color.grep.selected		normal &&
 	test_config color.grep.separator	normal &&
 
-	git grep --color=always -C2 -e "with " --and --not -e space2  space |
-	test_decode_color >actual &&
+	git grep --color=always -C2 -e "with " --and --not -e space2  space >out &&
+	test_decode_color <out >actual &&
 	test_cmp expected actual
 '
 
@@ -1442,8 +1442,8 @@ test_expect_success 'grep --color -e A --and -e B -p with context' '
 	test_config color.grep.selected		normal &&
 	test_config color.grep.separator	normal &&
 
-	git grep --color=always -p -C3 -e int --and -e Hello --no-index hello.c |
-	test_decode_color >actual &&
+	git grep --color=always -p -C3 -e int --and -e Hello --no-index hello.c >out &&
+	test_decode_color <out >actual &&
 	test_cmp expected actual
 '
 
@@ -1490,7 +1490,7 @@ test_expect_success 'grep does not report i-t-a with -L --cached' '
 	echo "intend to add this" >intend-to-add &&
 	git add -N intend-to-add &&
 	test_when_finished "git rm -f intend-to-add" &&
-	git ls-files | grep -v "^intend-to-add\$" >expected &&
+	git ls-files >out && grep -v "^intend-to-add\$" <out >expected &&
 	git grep -L --cached "nonexistent_string" >actual &&
 	test_cmp expected actual
 '
@@ -1500,7 +1500,7 @@ test_expect_success 'grep does not report i-t-a and assume unchanged with -L' '
 	git add -N intend-to-add-assume-unchanged &&
 	test_when_finished "git rm -f intend-to-add-assume-unchanged" &&
 	git update-index --assume-unchanged intend-to-add-assume-unchanged &&
-	git ls-files | grep -v "^intend-to-add-assume-unchanged\$" >expected &&
+	git ls-files >out && grep -v "^intend-to-add-assume-unchanged\$" <out >expected &&
 	git grep -L "nonexistent_string" >actual &&
 	test_cmp expected actual
 '
