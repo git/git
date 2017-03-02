@@ -21,8 +21,8 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep "^R100..*path0/COPYING..*path1/COPYING"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >out &&\
+    grep "^R100..*path0/COPYING..*path1/COPYING" <out'
 
 test_expect_success \
     'moving the file back into subdirectory' \
@@ -35,8 +35,8 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-    grep "^R100..*path1/COPYING..*path0/COPYING"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >out &&\
+    grep "^R100..*path1/COPYING..*path0/COPYING" <out'
 
 test_expect_success \
     'checking -k on non-existing file' \
@@ -116,10 +116,10 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path0/COPYING..*path2/COPYING" &&
-     git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path0/README..*path2/README"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >out && \
+     grep "^R100..*path0/COPYING..*path2/COPYING"  <out &&
+     git diff-tree -r -M --name-status  HEAD^ HEAD >out && \
+     grep "^R100..*path0/README..*path2/README" <out'
 
 test_expect_success \
     'succeed when source is a prefix of destination' \
@@ -135,10 +135,10 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path2/COPYING..*path1/path2/COPYING" &&
-     git diff-tree -r -M --name-status  HEAD^ HEAD | \
-     grep "^R100..*path2/README..*path1/path2/README"'
+    'git diff-tree -r -M --name-status  HEAD^ HEAD >out &&\
+     grep "^R100..*path2/COPYING..*path1/path2/COPYING" <out &&
+     git diff-tree -r -M --name-status  HEAD^ HEAD >out && \
+     grep "^R100..*path2/README..*path1/path2/README" <out'
 
 test_expect_success \
     'do not move directory over existing directory' \
@@ -161,7 +161,7 @@ test_expect_success "Michael Cassar's test case" '
 	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
 
 	T=$(git write-tree) &&
-	git ls-tree -r $T | verbose grep partA/outline.txt
+	git ls-tree -r $T >out && verbose grep partA/outline.txt <out
 '
 
 rm -fr papers partA path?
@@ -233,12 +233,12 @@ test_expect_success 'git mv should not change sha1 of moved cache entry' '
 	git init &&
 	echo 1 >dirty &&
 	git add dirty &&
-	entry="$(git ls-files --stage dirty | cut -f 1)" &&
+	entry="$(git ls-files --stage dirty >out &&cut -f 1 <out)" &&
 	git mv dirty dirty2 &&
-	[ "$entry" = "$(git ls-files --stage dirty2 | cut -f 1)" ] &&
+	[ "$entry" = "$(git ls-files --stage dirty2 >out && cut -f 1 <out)" ] &&
 	echo 2 >dirty2 &&
 	git mv dirty2 dirty &&
-	[ "$entry" = "$(git ls-files --stage dirty | cut -f 1)" ]
+	[ "$entry" = "$(git ls-files --stage dirty >out && cut -f 1 <out)" ]
 
 '
 
@@ -303,7 +303,7 @@ test_expect_success 'git mv cannot move a submodule in a file' '
 '
 
 test_expect_success 'git mv moves a submodule with a .git directory and no .gitmodules' '
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(git ls-files --stage sub >out && cut -f 1 <out)" &&
 	git rm .gitmodules &&
 	(
 		cd sub &&
@@ -314,7 +314,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and no .gitm
 	mkdir mod &&
 	git mv sub mod/sub &&
 	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	[ "$entry" = "$(git ls-files --stage mod/sub >out && cut -f 1 <out)" ] &&
 	(
 		cd mod/sub &&
 		git status
@@ -327,7 +327,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(git ls-files --stage sub >out && cut -f 1 <out)" &&
 	(
 		cd sub &&
 		rm -f .git &&
@@ -337,7 +337,7 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	mkdir mod &&
 	git mv sub mod/sub &&
 	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	[ "$entry" = "$(git ls-files --stage mod/sub >out && cut -f 1 <out)" ] &&
 	(
 		cd mod/sub &&
 		git status
@@ -353,14 +353,14 @@ test_expect_success 'git mv moves a submodule with gitfile' '
 	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(git ls-files --stage sub >out && cut -f 1 <out)" &&
 	mkdir mod &&
 	(
 		cd mod &&
 		git mv ../sub/ .
 	) &&
 	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	[ "$entry" = "$(git ls-files --stage mod/sub >out && cut -f 1 <out)" ] &&
 	(
 		cd mod/sub &&
 		git status
@@ -377,12 +377,12 @@ test_expect_success 'mv does not complain when no .gitmodules file is found' '
 	git reset --hard &&
 	git submodule update &&
 	git rm .gitmodules &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(git ls-files --stage sub >out && cut -f 1 <out)" &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	! test -s actual.err &&
 	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	[ "$entry" = "$(git ls-files --stage mod/sub >out && cut -f 1 <out)" ] &&
 	(
 		cd mod/sub &&
 		git status
@@ -396,7 +396,7 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 	git reset --hard &&
 	git submodule update &&
 	git config -f .gitmodules foo.bar true &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(git ls-files --stage sub >out && cut -f 1 <out)" &&
 	mkdir mod &&
 	test_must_fail git mv sub mod/sub 2>actual.err &&
 	test -s actual.err &&
@@ -406,7 +406,7 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 	git mv sub mod/sub 2>actual.err &&
 	! test -s actual.err &&
 	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	[ "$entry" = "$(git ls-files --stage mod/sub >out && cut -f 1 <out)" ] &&
 	(
 		cd mod/sub &&
 		git status
@@ -421,13 +421,13 @@ test_expect_success 'mv issues a warning when section is not found in .gitmodule
 	git submodule update &&
 	git config -f .gitmodules --remove-section submodule.sub &&
 	git add .gitmodules &&
-	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	entry="$(git ls-files --stage sub >out && cut -f 1 <out)" &&
 	echo "warning: Could not find section in .gitmodules where path=sub" >expect.err &&
 	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	test_i18ncmp expect.err actual.err &&
 	! test -e sub &&
-	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	[ "$entry" = "$(git ls-files --stage mod/sub >out && cut -f 1 <out)" ] &&
 	(
 		cd mod/sub &&
 		git status
