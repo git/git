@@ -37,31 +37,31 @@ test_expect_success 'import authors with prog and file' '
 test_expect_success 'imported 6 revisions successfully' '
 	(
 		cd x
-		test "$(git rev-list refs/remotes/git-svn | wc -l)" -eq 6
+		test "$(git rev-list refs/remotes/git-svn >out && wc -l <out)" -eq 6
 	)
 '
 
 test_expect_success 'authors-prog ran correctly' '
 	(
 		cd x
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 | \
-		  grep "^author ee-foo <ee-foo@example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~2 | \
-		  grep "^author dd <dd@sub\.example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~3 | \
-		  grep "^author cc <cc@sub\.example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~4 | \
-		  grep "^author bb <bb@example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~5 | \
-		  grep "^author aa <aa@example\.com> "
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >out &&
+		grep "^author ee-foo <ee-foo@example\.com> " <out &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~2 >out &&
+		grep "^author dd <dd@sub\.example\.com> " <out &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~3 >out &&
+		grep "^author cc <cc@sub\.example\.com> " <out &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~4 >out &&
+		grep "^author bb <bb@example\.com> " <out &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~5 >out &&
+		grep "^author aa <aa@example\.com> " <out
 	)
 '
 
 test_expect_success 'authors-file overrode authors-prog' '
 	(
 		cd x
-		git rev-list -1 --pretty=raw refs/remotes/git-svn | \
-		  grep "^author FFFFFFF FFFFFFF <fFf@other\.example\.com> "
+		git rev-list -1 --pretty=raw refs/remotes/git-svn >out &&
+		grep "^author FFFFFFF FFFFFFF <fFf@other\.example\.com> " <out
 	)
 '
 
@@ -73,8 +73,8 @@ test_expect_success 'authors-prog handled special characters in username' '
 	(
 		cd x &&
 		git svn --authors-prog=../svn-authors-prog fetch &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn |
-		grep "^author xyz; touch evil <xyz; touch evil@example\.com> " &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn >out &&
+		grep "^author xyz; touch evil <xyz; touch evil@example\.com> " <out &&
 		! test -f evil
 	)
 '
