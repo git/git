@@ -63,7 +63,7 @@ test_expect_success 'basic p4 labels' '
 		git checkout tag_tag_with\$_shell_char &&
 		test -f f1 && test -f f2 && test -f file_with_\$metachar &&
 
-		git show tag_long_label | grep -q "A Label second line"
+		git show tag_long_label >out && grep -q "A Label second line" <out
 	)
 '
 
@@ -92,9 +92,9 @@ test_expect_failure 'two labels on the same changelist' '
 		git p4 clone --dest="$git" --detect-labels //depot@all &&
 		cd "$git" &&
 
-		git tag | grep tag_f1 &&
-		git tag | grep -q tag_f1_1 &&
-		git tag | grep -q tag_f1_2 &&
+		git tag >out && grep tag_f1 <out &&
+		git tag >out && grep -q tag_f1_1 <out &&
+		git tag >out && grep -q tag_f1_2 <out &&
 
 		cd main &&
 
