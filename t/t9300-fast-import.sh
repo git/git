@@ -101,7 +101,7 @@ test_expect_success 'A: verify commit' '
 
 	initial
 	EOF
-	git cat-file commit master | sed 1d >actual &&
+	git cat-file commit master >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -111,7 +111,7 @@ test_expect_success 'A: verify tree' '
 	100644 blob file3
 	100755 blob file4
 	EOF
-	git cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	git cat-file -p master^{tree} >out && sed "s/ [0-9a-f]*	/ /" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -500,7 +500,7 @@ test_expect_success 'C: verify commit' '
 	second
 	EOF
 
-	git cat-file commit branch | sed 1d >actual &&
+	git cat-file commit branch >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -603,7 +603,7 @@ test_expect_success 'E: verify commit' '
 
 	RFC 2822 type date
 	EOF
-	git cat-file commit branch | sed 1,2d >actual &&
+	git cat-file commit branch >out && sed 1,2d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -783,8 +783,8 @@ test_expect_success 'J: reset existing branch creates empty commit' '
 	git fast-import <input
 '
 test_expect_success 'J: branch has 1 commit, empty tree' '
-	test 1 = $(git rev-list J | wc -l) &&
-	test 0 = $(git ls-tree J | wc -l)
+	test 1 = $(git rev-list J >out && wc -l <out) &&
+	test 0 = $(git ls-tree J >out && wc -l <out)
 '
 
 test_expect_success 'J: tag must fail on empty branch' '
@@ -1183,9 +1183,9 @@ test_expect_success PIPE 'N: empty directory reads as missing' '
 	) |
 	git fast-import --cat-blob-fd=3 3>backflow &&
 	test_cmp expect.response response &&
-	git rev-list read-empty |
-	git diff-tree -r --root --stdin |
-	sed "s/$_x40/OBJNAME/g" >actual &&
+	git rev-list read-empty >out &&
+	git diff-tree -r --root --stdin <out >out1 &&
+	sed "s/$_x40/OBJNAME/g" <out1 >actual &&
 	test_cmp expect actual
 '
 
@@ -1269,9 +1269,9 @@ test_expect_success 'N: delete directory by copying' '
 	M 040000 $empty_tree foo/bar/qux
 	INPUT_END
 	git fast-import <input &&
-	git rev-list N-delete |
-		git diff-tree -r --stdin --root --always |
-		sed -e "s/$_x40/OBJID/g" >actual &&
+	git rev-list N-delete >out &&
+	git diff-tree -r --stdin --root --always <out >out1 &&
+	sed -e "s/$_x40/OBJID/g" <out1 >actual &&
 	test_cmp expect actual
 '
 
@@ -1560,7 +1560,7 @@ test_expect_success 'O: blank lines not necessary after other commands' '
 	git fast-import <input &&
 	test 8 = $(find .git/objects/pack -type f | wc -l) &&
 	test $(git rev-parse refs/tags/O3-2nd) = $(git rev-parse O3^) &&
-	git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
+	git log --reverse --pretty=oneline O3 >out && sed s/^.*z// <out >actual &&
 	test_cmp expect actual
 '
 
@@ -1896,7 +1896,7 @@ test_expect_success 'Q: verify first commit' '
 
 	first (:3)
 	EOF
-	git cat-file commit notes-test~2 | sed 1d >actual &&
+	git cat-file commit notes-test~2 >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -1908,7 +1908,7 @@ test_expect_success 'Q: verify second commit' '
 
 	second (:5)
 	EOF
-	git cat-file commit notes-test^ | sed 1d >actual &&
+	git cat-file commit notes-test^ >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -1920,7 +1920,7 @@ test_expect_success 'Q: verify third commit' '
 
 	third (:6)
 	EOF
-	git cat-file commit notes-test | sed 1d >actual &&
+	git cat-file commit notes-test >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -1931,7 +1931,7 @@ test_expect_success 'Q: verify first notes commit' '
 
 	notes (:9)
 	EOF
-	git cat-file commit refs/notes/foobar~2 | sed 1d >actual &&
+	git cat-file commit refs/notes/foobar~2 >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -1942,7 +1942,7 @@ test_expect_success 'Q: verify first notes tree' '
 	100644 blob $commit3
 	EOF
 	cat expect.unsorted | sort >expect &&
-	git cat-file -p refs/notes/foobar~2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	git cat-file -p refs/notes/foobar~2^{tree} >out && sed "s/ [0-9a-f]*	/ /" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -1972,7 +1972,7 @@ test_expect_success 'Q: verify second notes commit' '
 
 	notes (:10)
 	EOF
-	git cat-file commit refs/notes/foobar^ | sed 1d >actual &&
+	git cat-file commit refs/notes/foobar^ >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -1983,7 +1983,7 @@ test_expect_success 'Q: verify second notes tree' '
 	100644 blob $commit3
 	EOF
 	cat expect.unsorted | sort >expect &&
-	git cat-file -p refs/notes/foobar^^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	git cat-file -p refs/notes/foobar^^{tree} >out && sed "s/ [0-9a-f]*	/ /" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -2012,7 +2012,7 @@ test_expect_success 'Q: verify third notes commit' '
 
 	notes (:11)
 	EOF
-	git cat-file commit refs/notes/foobar2 | sed 1d >actual &&
+	git cat-file commit refs/notes/foobar2 >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -2021,7 +2021,7 @@ test_expect_success 'Q: verify third notes tree' '
 	100644 blob $commit1
 	EOF
 	cat expect.unsorted | sort >expect &&
-	git cat-file -p refs/notes/foobar2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	git cat-file -p refs/notes/foobar2^{tree} >out && sed "s/ [0-9a-f]*	/ /" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -2039,7 +2039,7 @@ test_expect_success 'Q: verify fourth notes commit' '
 
 	notes (:12)
 	EOF
-	git cat-file commit refs/notes/foobar | sed 1d >actual &&
+	git cat-file commit refs/notes/foobar >out && sed 1d <out >actual &&
 	test_cmp expect actual
 '
 
@@ -2048,7 +2048,7 @@ test_expect_success 'Q: verify fourth notes tree' '
 	100644 blob $commit2
 	EOF
 	cat expect.unsorted | sort >expect &&
-	git cat-file -p refs/notes/foobar^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	git cat-file -p refs/notes/foobar^{tree} >out && sed "s/ [0-9a-f]*	/ /" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -2600,9 +2600,9 @@ test_expect_success 'R: terminating "done" within commit' '
 	C hello.c hello2.c
 	done
 	EOF
-	git rev-list done-ends |
-	git diff-tree -r --stdin --root --always |
-	sed -e "s/$_x40/OBJID/g" >actual &&
+	git rev-list done-ends >out &&
+	git diff-tree -r --stdin --root --always <out >out1&&
+	sed -e "s/$_x40/OBJID/g" <out1 >actual &&
 	test_cmp expect actual
 '
 
