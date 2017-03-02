@@ -36,13 +36,13 @@ test_expect_success GETTEXT_LOCALE,LIBPCRE 'grep pcre utf-8 string with "+"' '
 '
 
 test_expect_success REGEX_LOCALE 'grep literal string, with -F' '
-	git grep --debug -i -F "TILRAUN: Halló Heimur!"  2>&1 >/dev/null |
-		 grep fixed >debug1 &&
+	git grep --debug -i -F "TILRAUN: Halló Heimur!" >out 2>&1 >/dev/null &&
+	grep fixed >debug1 <out &&
 	test_write_lines "fixed TILRAUN: Halló Heimur!" >expect1 &&
 	test_cmp expect1 debug1 &&
 
-	git grep --debug -i -F "TILRAUN: HALLÓ HEIMUR!"  2>&1 >/dev/null |
-		 grep fixed >debug2 &&
+	git grep --debug -i -F "TILRAUN: HALLÓ HEIMUR!" >out 2>&1 >/dev/null &&
+	grep fixed <out >debug2 &&
 	test_write_lines "fixed TILRAUN: HALLÓ HEIMUR!" >expect2 &&
 	test_cmp expect2 debug2
 '
@@ -50,13 +50,13 @@ test_expect_success REGEX_LOCALE 'grep literal string, with -F' '
 test_expect_success REGEX_LOCALE 'grep string with regex, with -F' '
 	test_write_lines "^*TILR^AUN:.* \\Halló \$He[]imur!\$" >file &&
 
-	git grep --debug -i -F "^*TILR^AUN:.* \\Halló \$He[]imur!\$" 2>&1 >/dev/null |
-		 grep fixed >debug1 &&
+	git grep --debug -i -F "^*TILR^AUN:.* \\Halló \$He[]imur!\$" >out 2>&1 >/dev/null &&
+	grep fixed <out >debug1 &&
 	test_write_lines "fixed \\^*TILR^AUN:\\.\\* \\\\Halló \$He\\[]imur!\\\$" >expect1 &&
 	test_cmp expect1 debug1 &&
 
-	git grep --debug -i -F "^*TILR^AUN:.* \\HALLÓ \$HE[]IMUR!\$"  2>&1 >/dev/null |
-		 grep fixed >debug2 &&
+	git grep --debug -i -F "^*TILR^AUN:.* \\HALLÓ \$HE[]IMUR!\$" >out 2>&1 >/dev/null &&
+	grep fixed <out >debug2 &&
 	test_write_lines "fixed \\^*TILR^AUN:\\.\\* \\\\HALLÓ \$HE\\[]IMUR!\\\$" >expect2 &&
 	test_cmp expect2 debug2
 '
