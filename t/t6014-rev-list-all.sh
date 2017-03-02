@@ -23,7 +23,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'rev-list --all lists detached HEAD' '
 
-	test 3 = $(git rev-list --all | wc -l)
+	test 3 = $(git rev-list --all >out && wc -l <out)
 
 '
 
