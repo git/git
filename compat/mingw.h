@@ -475,6 +475,9 @@ int mingw_raise(int sig);
 int winansi_isatty(int fd);
 #define isatty winansi_isatty
 
+int winansi_dup2(int oldfd, int newfd);
+#define dup2 winansi_dup2
+
 void winansi_init(void);
 HANDLE winansi_get_osfhandle(int fd);
 
