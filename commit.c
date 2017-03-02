@@ -1307,11 +1307,11 @@ void for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data)
 
 static inline int standard_header_field(const char *field, size_t len)
 {
-	return ((len == 4 && !memcmp(field, "tree ", 5)) ||
-		(len == 6 && !memcmp(field, "parent ", 7)) ||
-		(len == 6 && !memcmp(field, "author ", 7)) ||
-		(len == 9 && !memcmp(field, "committer ", 10)) ||
-		(len == 8 && !memcmp(field, "encoding ", 9)));
+	return ((len == 4 && !memcmp(field, "tree", 4)) ||
+		(len == 6 && !memcmp(field, "parent", 6)) ||
+		(len == 6 && !memcmp(field, "author", 6)) ||
+		(len == 9 && !memcmp(field, "committer", 9)) ||
+		(len == 8 && !memcmp(field, "encoding", 8)));
 }
 
 static int excluded_header_field(const char *field, size_t len, const char **exclude)
@@ -1321,8 +1321,7 @@ static int excluded_header_field(const char *field, size_t len, const char **exc
 
 	while (*exclude) {
 		size_t xlen = strlen(*exclude);
-		if (len == xlen &&
-		    !memcmp(field, *exclude, xlen) && field[xlen] == ' ')
+		if (len == xlen && !memcmp(field, *exclude, xlen))
 			return 1;
 		exclude++;
 	}
@@ -1353,12 +1352,11 @@ static struct commit_extra_header *read_commit_extra_header_lines(
 		strbuf_reset(&buf);
 		it = NULL;
 
-		eof = strchr(line, ' ');
-		if (next <= eof)
+		eof = memchr(line, ' ', next - line);
+		if (!eof)
 			eof = next;
-
-		if (standard_header_field(line, eof - line) ||
-		    excluded_header_field(line, eof - line, exclude))
+		else if (standard_header_field(line, eof - line) ||
+			 excluded_header_field(line, eof - line, exclude))
 			continue;
 
 		it = xcalloc(1, sizeof(*it));
