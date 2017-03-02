@@ -573,7 +573,7 @@ test_expect_success 'test bisection on bare repo - --no-checkout specified' '
 		git bisect good $HASH1 &&
 		git bisect bad $HASH4 &&
 		git bisect run eval \
-			"test \$(git rev-list BISECT_HEAD ^$HASH2 --max-count=1 | wc -l) = 0" \
+			"test \$(git rev-list BISECT_HEAD ^$HASH2 --max-count=1 >out && wc -l <out) = 0" \
 			>../nocheckout.log
 	) &&
 	grep "$HASH3 is the first bad commit" nocheckout.log
@@ -588,7 +588,7 @@ test_expect_success 'test bisection on bare repo - --no-checkout defaulted' '
 		git bisect good $HASH1 &&
 		git bisect bad $HASH4 &&
 		git bisect run eval \
-			"test \$(git rev-list BISECT_HEAD ^$HASH2 --max-count=1 | wc -l) = 0" \
+			"test \$(git rev-list BISECT_HEAD ^$HASH2 --max-count=1 >out && wc -l <out) = 0" \
 			>../defaulted.log
 	) &&
 	grep "$HASH3 is the first bad commit" defaulted.log
