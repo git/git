@@ -116,7 +116,7 @@ test_expect_success 'merge with one side as a fast-forward of the other' '
 	(cd merge-search &&
 	 git checkout -b test-forward b &&
 	 git merge d &&
-	 git ls-tree test-forward sub | cut -f1 | cut -f3 -d" " > actual &&
+	 git ls-tree test-forward sub >out && cut -f1 <out | cut -f3 -d" " > actual &&
 	 (cd sub &&
 	  git rev-parse sub-d > ../expect) &&
 	 test_cmp actual expect)
