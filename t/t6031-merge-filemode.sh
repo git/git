@@ -24,7 +24,7 @@ do_one_mode () {
 	test_expect_success "resolve single mode change ($strategy, $us)" '
 		git checkout -f $us &&
 		git merge -s $strategy $them &&
-		git ls-files -s file1 | grep ^100755
+		git ls-files -s file1 >out && grep ^100755 <out
 	'
 
 	test_expect_success FILEMODE "verify executable bit on file ($strategy, $us)" '
@@ -62,7 +62,7 @@ do_both_modes () {
 		test_must_fail git merge -s $strategy b2 &&
 		git ls-files -u >actual &&
 		test_cmp actual expect &&
-		git ls-files -s file2 | grep ^100755
+		git ls-files -s file2 >out && grep ^100755 <out
 	'
 
 	test_expect_success FILEMODE "verify executable bit on file ($strategy)" '
