@@ -394,4 +394,22 @@ test_expect_success 'diffs can be colorized' '
 	grep "$(printf "\\033")" output
 '
 
+test_expect_success 'patch-mode via -i prompts for files' '
+	git reset --hard &&
+
+	echo one >file &&
+	echo two >test &&
+	git add -i <<-\EOF &&
+	patch
+	test
+
+	y
+	quit
+	EOF
+
+	echo test >expect &&
+	git diff --cached --name-only >actual &&
+	test_cmp expect actual
+'
+
 test_done
