@@ -100,9 +100,9 @@ test_expect_failure 'conflict caused if rename not detected' '
 	git checkout -q C^0 &&
 	git merge -s recursive B^0 &&
 
-	test 3 -eq $(git ls-files -s | wc -l) &&
-	test 0 -eq $(git ls-files -u | wc -l) &&
-	test 0 -eq $(git ls-files -o | wc -l) &&
+	test 3 -eq $(git ls-files -s >out && wc -l <out) &&
+	test 0 -eq $(git ls-files -u >out && wc -l <out) &&
+	test 0 -eq $(git ls-files -o >out && wc -l <out) &&
 
 	test_line_count = 6 c &&
 	test $(git rev-parse HEAD:a) = $(git rev-parse B:a) &&
@@ -171,9 +171,9 @@ test_expect_failure 'detect rename/add-source and preserve all data' '
 
 	git merge -s recursive C^0 &&
 
-	test 2 -eq $(git ls-files -s | wc -l) &&
-	test 2 -eq $(git ls-files -u | wc -l) &&
-	test 0 -eq $(git ls-files -o | wc -l) &&
+	test 2 -eq $(git ls-files -s >out && wc -l <out) &&
+	test 2 -eq $(git ls-files -u >out && wc -l <out) &&
+	test 0 -eq $(git ls-files -o >out && wc -l <out) &&
 
 	test -f a &&
 	test -f b &&
