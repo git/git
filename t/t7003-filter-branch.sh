@@ -139,7 +139,7 @@ test_expect_success 'filter subdirectory only' '
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
-	test 2 = $(git rev-list sub | wc -l) &&
+	test 2 = $(git rev-list sub >out && wc -l <out) &&
 	git show sub:new &&
 	test_must_fail git show sub:subdir &&
 	git show sub-earlier:new &&
@@ -162,7 +162,7 @@ test_expect_success 'more setup' '
 test_expect_success 'use index-filter to move into a subdirectory' '
 	git branch directorymoved &&
 	git filter-branch -f --index-filter \
-		 "git ls-files -s | sed \"s-	-&newsubdir/-\" |
+		 "git ls-files -s >out && sed \"s-	-&newsubdir/-\" <out |
 	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
 			git update-index --index-info &&
 		  mv \"\$GIT_INDEX_FILE.new\" \"\$GIT_INDEX_FILE\"" directorymoved &&
@@ -187,7 +187,7 @@ test_expect_success 'author information is preserved' '
 			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
 		preserved-author) &&
-	test 1 = $(git rev-list --author="B V Uips" preserved-author | wc -l)
+	test 1 = $(git rev-list --author="B V Uips" preserved-author >out && wc -l <out)
 '
 
 test_expect_success "remove a certain author's commits" '
@@ -202,10 +202,10 @@ test_expect_success "remove a certain author's commits" '
 		else\
 			git commit-tree \"\$@\";\
 		fi" removed-author &&
-	cnt1=$(git rev-list master | wc -l) &&
-	cnt2=$(git rev-list removed-author | wc -l) &&
+	cnt1=$(git rev-list master >out && wc -l <out) &&
+	cnt2=$(git rev-list removed-author >out && wc -l <out) &&
 	test $cnt1 -eq $(($cnt2 + 1)) &&
-	test 0 = $(git rev-list --author="B V Uips" removed-author | wc -l)
+	test 0 = $(git rev-list --author="B V Uips" removed-author >out && wc -l <out)
 '
 
 test_expect_success 'barf on invalid name' '
@@ -258,7 +258,7 @@ test_expect_success 'Subdirectory filter with disappearing trees' '
 	git commit -m "Re-adding foo" &&
 
 	git filter-branch -f --subdirectory-filter foo &&
-	test $(git rev-list master | wc -l) = 3
+	test $(git rev-list master >out && wc -l <out) = 3
 '
 
 test_expect_success 'Tag name filtering retains tag message' '
@@ -308,7 +308,7 @@ test_expect_success GPG 'Filtering retains message of gpg signed commit' '
 
 test_expect_success 'Tag name filtering allows slashes in tag names' '
 	git tag -m tag-with-slash X/1 &&
-	git cat-file tag X/1 | sed -e s,X/1,X/2, > expect &&
+	git cat-file tag X/1 >out && sed -e s,X/1,X/2, <out >expect &&
 	git filter-branch -f --tag-name-filter "echo X/2" &&
 	git cat-file tag X/2 > actual &&
 	test_cmp expect actual
