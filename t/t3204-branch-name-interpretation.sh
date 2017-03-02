@@ -120,4 +120,14 @@ test_expect_success 'delete branch named "@"' '
 	expect_deleted refs/heads/@
 '
 
+test_expect_success 'checkout does not treat remote @{upstream} as a branch' '
+	git update-ref refs/remotes/origin/checkout one &&
+	git branch --set-upstream-to=origin/checkout &&
+	git update-ref refs/heads/origin/checkout two &&
+	git update-ref refs/heads/remotes/origin/checkout two &&
+
+	git checkout @{upstream} &&
+	expect_branch HEAD one
+'
+
 test_done
