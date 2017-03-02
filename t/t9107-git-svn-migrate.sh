@@ -107,7 +107,7 @@ test_expect_success 'migrate --minimize on old inited layout' '
 		return 1
 	done &&
 	git svn migrate --minimize &&
-	test -z "$(git config -l | grep "^svn-remote\.git-svn\.")" &&
+	test -z "$(git config -l >out && grep "^svn-remote\.git-svn\." <out)" &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
 	grep "^branches/a:refs/remotes/origin/a$" fetch.out &&
