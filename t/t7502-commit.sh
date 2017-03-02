@@ -16,7 +16,7 @@ commit_msg_is () {
 # Arguments: [<prefix] [<commit message>] [<commit options>]
 check_summary_oneline() {
 	test_tick &&
-	git commit ${3+"$3"} -m "$2" | head -1 > act &&
+	git commit ${3+"$3"} -m "$2" >out && head -1 <out >act &&
 
 	# branch name
 	SUMMARY_PREFIX="$(git name-rev --name-only HEAD)" &&
@@ -142,8 +142,8 @@ test_expect_success 'sign off' '
 	>positive &&
 	git add positive &&
 	git commit -s -m "thank you" &&
-	actual=$(git cat-file commit HEAD | sed -ne "s/Signed-off-by: //p") &&
-	expected=$(git var GIT_COMMITTER_IDENT | sed -e "s/>.*/>/") &&
+	actual=$(git cat-file commit HEAD >out && sed -ne "s/Signed-off-by: //p" <out) &&
+	expected=$(git var GIT_COMMITTER_IDENT >out && sed -e "s/>.*/>/" <out) &&
 	test "z$actual" = "z$expected"
 
 '
@@ -153,7 +153,7 @@ test_expect_success 'multiple -m' '
 	>negative &&
 	git add negative &&
 	git commit -m "one" -m "two" -m "three" &&
-	actual=$(git cat-file commit HEAD | sed -e "1,/^\$/d") &&
+	actual=$(git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out) &&
 	expected=$(echo one; echo; echo two; echo; echo three) &&
 	test "z$actual" = "z$expected"
 
@@ -163,7 +163,7 @@ test_expect_success 'verbose' '
 
 	echo minus >negative &&
 	git add negative &&
-	git status -v | sed -ne "/^diff --git /p" >actual &&
+	git status -v >out && sed -ne "/^diff --git /p" <out >actual &&
 	echo "diff --git a/negative b/negative" >expect &&
 	test_cmp expect actual
 
@@ -189,7 +189,7 @@ test_expect_success 'cleanup commit messages (verbatim option,-t)' '
 
 	echo >>negative &&
 	git commit --cleanup=verbatim --no-status -t expect -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d" >actual &&
+	git cat-file -p HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	test_cmp expect actual
 
 '
@@ -198,7 +198,7 @@ test_expect_success 'cleanup commit messages (verbatim option,-F)' '
 
 	echo >>negative &&
 	git commit --cleanup=verbatim -F expect -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	git cat-file -p HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	test_cmp expect actual
 
 '
@@ -207,7 +207,7 @@ test_expect_success 'cleanup commit messages (verbatim option,-m)' '
 
 	echo >>negative &&
 	git commit --cleanup=verbatim -m "$mesg_with_comment_and_newlines" -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	git cat-file -p HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	test_cmp expect actual
 
 '
@@ -218,7 +218,7 @@ test_expect_success 'cleanup commit messages (whitespace option,-F)' '
 	{ echo;echo "# text";echo; } >text &&
 	echo "# text" >expect &&
 	git commit --cleanup=whitespace -F text -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	git cat-file -p HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	test_cmp expect actual
 
 '
@@ -245,7 +245,7 @@ EOF
 # to be kept, too
 EOF
 	git commit --cleanup=scissors -e -F text -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	git cat-file -p HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	test_cmp expect actual
 '
 
@@ -257,7 +257,7 @@ test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on
 to be removed
 EOF
 	git commit --cleanup=scissors -e -F text -a --allow-empty-message &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	git cat-file -p HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	test_must_be_empty actual
 '
 
@@ -267,7 +267,7 @@ test_expect_success 'cleanup commit messages (strip option,-F)' '
 	{ echo;echo "# text";echo sample;echo; } >text &&
 	echo sample >expect &&
 	git commit --cleanup=strip -F text -a &&
-	git cat-file -p HEAD |sed -e "1,/^\$/d">actual &&
+	git cat-file -p HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	test_cmp expect actual
 
 '
@@ -472,7 +472,8 @@ test_expect_success 'Hand committing of a redundant merge removes dups' '
 	test_must_fail git merge second master &&
 	git checkout master g &&
 	EDITOR=: git commit -a &&
-	git cat-file commit HEAD | sed -n -e "s/^parent //p" -e "/^$/q" >actual &&
+	git cat-file commit HEAD >out &&
+	sed -n -e "s/^parent //p" -e "/^$/q" <out >actual &&
 	test_cmp expect actual
 
 '
@@ -481,7 +482,7 @@ test_expect_success 'A single-liner subject with a token plus colon is not a foo
 
 	git reset --hard &&
 	git commit -s -m "hello: kitty" --allow-empty &&
-	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^$/d" <out >actual &&
 	test_line_count = 3 actual
 
 '
