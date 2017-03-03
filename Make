@@ -143,6 +143,7 @@ do
 	--test=*)
 		tests=$(
 			cd t &&
+			IFS="$IFS,"
 			for t in ${1#*=}
 			do
 				eval echo "t$t-*.sh"
