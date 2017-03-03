@@ -72,7 +72,7 @@ test_expect_success modify '
 	rm -f zifmia &&
 	mkdir zifmia &&
 	{
-		git ls-tree -r HEAD |
+		git ls-tree -r HEAD >out &&
 		sed -e "s/^/:/" -e "
 			/	caskly/{
 				s/	caskly/ $_z40 D&/
@@ -94,7 +94,7 @@ test_expect_success modify '
 			    s/	yomin/ $_z40 T&/
 				s/blob/160000/
 			}
-		"
+		" <out
 	} >expect &&
 	{
 		cat expect
