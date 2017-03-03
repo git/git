@@ -20,7 +20,7 @@ note () {
 }
 
 unnote () {
-	git name-rev --tags --stdin | sed -e "s|$_x40 (tags/\([^)]*\))\([ 	]\)|\1\2|g"
+	git name-rev --tags --stdin >out1 && sed -e "s|$_x40 (tags/\([^)]*\))\([ 	]\)|\1\2|g" <out1
 }
 
 test_expect_success setup '
@@ -89,8 +89,8 @@ check_outcome () {
 
 	param="$*" &&
 	test_expect_$outcome "log $param" '
-		git log --format="$FMT" $param |
-		unnote >actual &&
+		git log --format="$FMT" $param >out &&
+		unnote <out >actual &&
 		sed -e "$munge_actual" <actual >check &&
 		test_cmp expect check
 	'
