@@ -83,7 +83,7 @@ test_perf_create_repo_from () {
 	error "bug in the test script: not 2 parameters to test-create-repo"
 	repo="$1"
 	source="$2"
-	source_git="$(git -C "$source" rev-parse --git-dir)"
+	source_git="$("$MODERN_GIT" -C "$source" rev-parse --git-dir)"
 	objects_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-path objects)"
 	mkdir -p "$repo/.git"
 	(
@@ -102,7 +102,7 @@ test_perf_create_repo_from () {
 	) &&
 	(
 		cd "$repo" &&
-		git init -q && {
+		"$MODERN_GIT" init -q && {
 			test_have_prereq SYMLINKS ||
 			git config core.symlinks false
 		} &&
