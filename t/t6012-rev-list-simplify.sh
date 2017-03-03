@@ -9,7 +9,7 @@ note () {
 }
 
 unnote () {
-	git name-rev --tags --stdin | sed -e "s|$_x40 (tags/\([^)]*\)) |\1 |g"
+	git name-rev --tags --stdin >out1 && sed -e "s|$_x40 (tags/\([^)]*\)) |\1 |g" <out1
 }
 
 test_expect_success setup '
@@ -92,8 +92,8 @@ check_outcome () {
 	shift &&
 	param="$*" &&
 	test_expect_$outcome "log $param" '
-		git log --pretty="$FMT" --parents $param |
-		unnote >actual &&
+		git log --pretty="$FMT" --parents $param >out &&
+		unnote <out >actual &&
 		sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
 		test_cmp expect check
 	'
@@ -115,8 +115,8 @@ check_result 'H' --first-parent -- another-file
 check_result 'E C B A' --full-history E -- lost
 test_expect_success 'full history simplification without parent' '
 	printf "%s\n" E C B A >expect &&
-	git log --pretty="$FMT" --full-history E -- lost |
-	unnote >actual &&
+	git log --pretty="$FMT" --full-history E -- lost >out &&
+	unnote <out >actual &&
 	sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
 	test_cmp expect check
 '
