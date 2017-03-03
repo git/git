@@ -12,15 +12,15 @@ check_encoding () {
 	cnt="$1" header="$2" i=1 j=0
 	while test "$i" -le $cnt
 	do
-		git format-patch --encoding=UTF-8 --stdout HEAD~$i..HEAD~$j |
-		grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD=20=C3=B3=C3=BA?=" &&
-		git cat-file commit HEAD~$j |
+		git format-patch --encoding=UTF-8 --stdout HEAD~$i..HEAD~$j >out &&
+		grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD=20=C3=B3=C3=BA?=" <out &&
+		git cat-file commit HEAD~$j >out &&
 		case "$header" in
 		8859)
 			grep "^encoding ISO8859-1" ;;
 		*)
 			grep "^encoding ISO8859-1"; test "$?" != 0 ;;
-		esac || return 1
+		esac <out || return 1
 		j=$i
 		i=$(($i+1))
 	done
