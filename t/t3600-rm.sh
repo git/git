@@ -247,8 +247,8 @@ test_expect_success 'choking "git rm" should not let it die with cruft' '
 	    echo "100644 1234567890123456789012345678901234567890 0	some-file-$i"
 	    i=$(( $i + 1 ))
 	done | git update-index --index-info &&
-	git rm -n "some-file-*" | : &&
-	test_path_is_missing .git/index.lock
+	git rm -n "some-file-*" >out && : &&
+	test_path_is_missing .git/index.lock <out
 '
 
 test_expect_success 'rm removes subdirectories recursively' '
