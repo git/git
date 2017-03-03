@@ -84,10 +84,10 @@ index 0000000..557db03
 EOF
 
 test_expect_success 'git whatchanged -p --root' '
-	git whatchanged -p --root |
-		sed -e "1s/^\(.\{7\}\).\{40\}/\1VARIABLE/" \
-		-e "2,3s/^\(.\{8\}\).*$/\1VARIABLE/" \
-	> whatchanged.output &&
+	git whatchanged -p --root >out &&
+	sed -e "1s/^\(.\{7\}\).\{40\}/\1VARIABLE/" \
+	-e "2,3s/^\(.\{8\}\).*$/\1VARIABLE/" <out \
+	>whatchanged.output &&
 	test_cmp whatchanged.expect whatchanged.output
 '
 
@@ -161,9 +161,9 @@ EOF
 
 test_expect_success 'git resolve' '
 	git checkout mybranch &&
-	git merge -m "Merge upstream changes." master |
-		sed -e "1s/[0-9a-f]\{7\}/VARIABLE/g" \
-		-e "s/^Fast[- ]forward /FASTFORWARD /" >resolve.output
+	git merge -m "Merge upstream changes." master >out &&
+	sed -e "1s/[0-9a-f]\{7\}/VARIABLE/g" \
+	-e "s/^Fast[- ]forward /FASTFORWARD /" <out >resolve.output
 '
 
 test_expect_success 'git resolve output' '
