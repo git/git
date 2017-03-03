@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2017, #01; Wed, 1)
+Subject: What's cooking in git.git (Mar 2017, #02; Fri, 3)
 X-master-at: 3bc53220cb2dcf709f7a027a3f526befd021d858
-X-next-at: e531d8d3a95fec6ab73587571eb5e2443b8523e7
+X-next-at: a2ecc84866b651ad965003275b748da92fd99ab4
 
-What's cooking in git.git (Mar 2017, #01; Wed, 1)
+What's cooking in git.git (Mar 2017, #02; Fri, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,130 +20,75 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jk/interpret-branch-name (2017-02-28) 8 commits
- - checkout: restrict @-expansions when finding branch
- - strbuf_check_ref_format(): expand only local branches
- - branch: restrict @-expansions when deleting
- - t3204: test git-branch @-expansion corner cases
- - interpret_branch_name: allow callers to restrict expansions
- - strbuf_branchname: add docstring
- - strbuf_branchname: drop return value
- - interpret_branch_name: move docstring to header file
-
- "git branch @" created refs/heads/@ as a branch, and in general the
- code that handled @{-1} and @{upstream} was a bit too loose in
- disambiguating.
-
- Expecting a reroll.
- cf. <20170228123331.wubqplp5zjwzz6is@sigill.intra.peff.net>
-
-
-* jk/sha1dc (2017-03-01) 7 commits
- - Put sha1dc on a diet
- - sha1dc: avoid 'for' loop initial decl
- - sha1dc: resurrect LICENSE file
- - sha1dc: avoid c99 declaration-after-statement
- - Makefile: add USE_SHA1DC knob
- - sha1dc: adjust header includes for git
- - add collision-detecting sha1 implementation
-
- Borrow "detect attempt to create collisions" variant of SHA-1
- implementation by Marc Stevens (CWI) and Dan Shumow (Microsoft).
-
- Expecting a cleaned-up reroll after discussion settles.
- cf. <CA+55aFxTWqsTTiDKo4DBZT-8Z9t80bGMD3uijzKONa_bYEZABQ@mail.gmail.com>
-
-
-* js/travis-32bit-linux (2017-02-28) 1 commit
- - Travis: also test on 32-bit Linux
-
- Add 32-bit Linux variant to the set of platforms to be tested with
- Travis CI.
-
- Will merge to 'next'.
-
-
-* jt/http-base-url-update-upon-redirect (2017-02-28) 1 commit
- - http: attempt updating base URL only if no error
-
- When a redirected http transport gets an error during the
- redirected request, we ignored the error we got from the server,
- and ended up giving a not-so-useful error message.
-
- Will merge to 'next'.
-
-
-* jt/mark-tree-uninteresting-for-uninteresting-commit (2017-02-28) 3 commits
- - upload-pack: compute blob reachability correctly
- - revision: exclude trees/blobs given commit
- - revision: unify {tree,blob}_objects in rev_info
-
- The revision/object traversal machinery did not mark all tree and
- blob objects that are contained in an uninteresting commit as
- uninteresting, because that is quite costly.  Instead, it only
- marked those that are contained in an uninteresting boundary commit
- as uninteresting.
-
-
-* ps/docs-diffcore (2017-02-28) 2 commits
- - docs/diffcore: unquote "Complete Rewrites" in headers
- - docs/diffcore: fix grammar in diffcore-rename header
+* ew/markdown-url-in-readme (2017-03-01) 1 commit
+  (merged to 'next' on 2017-03-03 at 3d35e3a991)
+ + README: create HTTP/HTTPS links from URLs in Markdown
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* rj/remove-unused-mktemp (2017-02-28) 2 commits
- - wrapper.c: remove unused gitmkstemps() function
- - wrapper.c: remove unused git_mkstemp() function
+* jk/add-i-patch-do-prompt (2017-03-02) 1 commit
+ - add--interactive: fix missing file prompt for patch mode with "-i"
 
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* sb/submodule-init-url-selection (2017-02-28) 1 commit
- - submodule init: warn about falling back to a local path
-
- Give a warning when "git submodule init" decides that the submodule
- in the working tree is its upstream, as it is not a very common
- setup.
+ The patch subcommand of "git add -i" was meant to have paths
+ selection prompt just like other subcommand, unlike "git add -p"
+ directly jumps to hunk selection.  Recently, this was broken and
+ "add -i" lost the paths selection dialog, but it now has been
+ fixed.
 
  Will merge to 'next'.
 
 
-* jc/diff-populate-filespec-size-only-fix (2017-03-01) 1 commit
- - diff: do not short-cut CHECK_SIZE_ONLY check in diff_populate_filespec()
+* ax/line-log-range-merge-fix (2017-03-03) 1 commit
+ - line-log.c: prevent crash during union of too many ranges
 
- "git diff --quiet" relies on the size field in diff_filespec to be
- correctly populated, but diff_populate_filespec() helper function
- made an incorrect short-cut when asked only to populate the size
- field for paths that need to go through convert_to_git() (e.g. CRLF
- conversion).
+ The code to parse "git log -L..." command line was buggy when there
+ are many ranges specified with -L; overrun of the allocated buffer
+ has been fixed.
 
  Will merge to 'next'.
 
 
-* nd/conditional-config-include (2017-03-01) 4 commits
- - SQUASH???
- - config: add conditional include
- - config.txt: reflow the second include.path paragraph
- - config.txt: clarify multiple key values in include.path
+* js/early-config (2017-03-03) 11 commits
+ - t1309: test read_early_config()
+ - read_early_config(): really discover .git/
+ - read_early_config(): avoid .git/config hack when unneeded
+ - setup: make read_early_config() reusable
+ - setup: export the discover_git_directory() function
+ - SQUASH??? ERROR: trailing statements should be on next line
+ - setup_git_directory_1(): avoid changing global state
+ - setup: prepare setup_discovered_git_directory() the root directory
+ - SQUASH??? ERROR: trailing statements should be on next line
+ - setup_git_directory(): use is_dir_sep() helper
+ - t7006: replace dubious test
 
- The configuration file learned a new "includeIf.<condition>.path"
- that includes the contents of the given path only when the
- condition holds.  This allows you to say "include this work-related
- bit only in the repositories under my ~/work/ directory".
+ The start-up sequence of "git" needs to figure out some configured
+ settings before it finds and set itself up in the location of the
+ repository and was quite messy due to its "chicken-and-egg" nature.
+ The code has been restructured.
 
- I think this is almost ready for 'next'.
+ Will merge to 'next' after squashing niggle-fixes in.
 
 
-* rs/log-email-subject (2017-03-01) 2 commits
- - pretty: use fmt_output_email_subject()
- - log-tree: factor out fmt_output_email_subject()
+* jt/perf-updates (2017-03-03) 3 commits
+ - t/perf: add fallback for pre-bin-wrappers versions of git
+ - t/perf: use $MODERN_GIT for all repo-copying steps
+ - t/perf: export variable used in other blocks
 
- Code clean-up.
+ The t/perf performance test suite was not prepared to test not so
+ old versions of Git, but now it covers versions of Git that are not
+ so ancient.
+
+ Will merge to 'next'.
+
+
+* ss/remote-bzr-hg-placeholder-wo-python (2017-03-03) 1 commit
+ - contrib: git-remote-{bzr,hg} placeholders don't need Python
+
+ There is no need for Python only to give a few messages to the
+ standard error stream, but we somehow did.
 
  Will merge to 'next'.
 
@@ -247,6 +192,142 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/interpret-branch-name (2017-03-02) 9 commits
+ - checkout: restrict @-expansions when finding branch
+ - strbuf_check_ref_format(): expand only local branches
+ - branch: restrict @-expansions when deleting
+ - t3204: test git-branch @-expansion corner cases
+ - interpret_branch_name: allow callers to restrict expansions
+ - strbuf_branchname: add docstring
+ - strbuf_branchname: drop return value
+ - interpret_branch_name: move docstring to header file
+ - interpret_branch_name(): handle auto-namelen for @{-1}
+
+ "git branch @" created refs/heads/@ as a branch, and in general the
+ code that handled @{-1} and @{upstream} was a bit too loose in
+ disambiguating.
+
+ Will merge to 'next'.
+
+
+* jk/sha1dc (2017-03-01) 7 commits
+ - Put sha1dc on a diet
+ - sha1dc: avoid 'for' loop initial decl
+ - sha1dc: resurrect LICENSE file
+ - sha1dc: avoid c99 declaration-after-statement
+ - Makefile: add USE_SHA1DC knob
+ - sha1dc: adjust header includes for git
+ - add collision-detecting sha1 implementation
+
+ Borrow "detect attempt to create collisions" variant of SHA-1
+ implementation by Marc Stevens (CWI) and Dan Shumow (Microsoft).
+
+ Expecting a cleaned-up reroll after discussion settles.
+ cf. <CA+55aFxTWqsTTiDKo4DBZT-8Z9t80bGMD3uijzKONa_bYEZABQ@mail.gmail.com>
+
+
+* js/travis-32bit-linux (2017-03-03) 1 commit
+ - Travis: also test on 32-bit Linux
+
+ Add 32-bit Linux variant to the set of platforms to be tested with
+ Travis CI.
+
+ Will merge to 'next'.
+
+
+* jt/http-base-url-update-upon-redirect (2017-02-28) 1 commit
+  (merged to 'next' on 2017-03-03 at 5225bd3ef8)
+ + http: attempt updating base URL only if no error
+
+ When a redirected http transport gets an error during the
+ redirected request, we ignored the error we got from the server,
+ and ended up giving a not-so-useful error message.
+
+ Will merge to 'master'.
+
+
+* jt/mark-tree-uninteresting-for-uninteresting-commit (2017-02-28) 3 commits
+ - upload-pack: compute blob reachability correctly
+ - revision: exclude trees/blobs given commit
+ - revision: unify {tree,blob}_objects in rev_info
+
+ The revision/object traversal machinery did not mark all tree and
+ blob objects that are contained in an uninteresting commit as
+ uninteresting, because that is quite costly.  Instead, it only
+ marked those that are contained in an uninteresting boundary commit
+ as uninteresting.
+
+ cf. <20170228215937.yd4juycjf7y3vish@sigill.intra.peff.net>
+
+
+* ps/docs-diffcore (2017-02-28) 2 commits
+  (merged to 'next' on 2017-03-03 at 9ca5691de2)
+ + docs/diffcore: unquote "Complete Rewrites" in headers
+ + docs/diffcore: fix grammar in diffcore-rename header
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* rj/remove-unused-mktemp (2017-02-28) 2 commits
+  (merged to 'next' on 2017-03-03 at 4512f0c5ab)
+ + wrapper.c: remove unused gitmkstemps() function
+ + wrapper.c: remove unused git_mkstemp() function
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-init-url-selection (2017-02-28) 1 commit
+  (merged to 'next' on 2017-03-03 at 847d1f9a91)
+ + submodule init: warn about falling back to a local path
+
+ Give a warning when "git submodule init" decides that the submodule
+ in the working tree is its upstream, as it is not a very common
+ setup.
+
+ Will merge to 'master'.
+
+
+* jc/diff-populate-filespec-size-only-fix (2017-03-02) 1 commit
+ - diff: do not short-cut CHECK_SIZE_ONLY check in diff_populate_filespec()
+
+ "git diff --quiet" relies on the size field in diff_filespec to be
+ correctly populated, but diff_populate_filespec() helper function
+ made an incorrect short-cut when asked only to populate the size
+ field for paths that need to go through convert_to_git() (e.g. CRLF
+ conversion).
+
+ Will merge to 'next'.
+
+
+* nd/conditional-config-include (2017-03-03) 5 commits
+ - SQUASH??? cond config include test
+ - SQUASH???
+ - config: add conditional include
+ - config.txt: reflow the second include.path paragraph
+ - config.txt: clarify multiple key values in include.path
+
+ The configuration file learned a new "includeIf.<condition>.path"
+ that includes the contents of the given path only when the
+ condition holds.  This allows you to say "include this work-related
+ bit only in the repositories under my ~/work/ directory".
+
+ Will merge to 'next' after squashing niggle-fixes in.
+
+
+* rs/log-email-subject (2017-03-01) 2 commits
+  (merged to 'next' on 2017-03-03 at a2ecc84866)
+ + pretty: use fmt_output_email_subject()
+ + log-tree: factor out fmt_output_email_subject()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
 * cc/split-index-config (2017-03-01) 22 commits
  - Documentation/git-update-index: explain splitIndex.*
  - Documentation/config: add splitIndex.sharedIndexExpire
@@ -277,7 +358,7 @@ of the repositories listed at
  I think this is almost ready for 'next'.
 
 
-* dp/filter-branch-prune-empty (2017-02-23) 4 commits
+* dp/filter-branch-prune-empty (2017-03-03) 4 commits
  - p7000: add test for filter-branch with --prune-empty
  - filter-branch: fix --prune-empty on parentless commits
  - t7003: ensure --prune-empty removes entire branch when applicable
@@ -286,7 +367,7 @@ of the repositories listed at
  "git filter-branch --prune-empty" drops a single-parent commit that
  becomes a no-op, but did not drop a root commit whose tree is empty.
 
- Needs review.
+ Will merge to 'next'.
 
 
 * jc/config-case-cmdline-take-2 (2017-02-23) 2 commits
@@ -302,20 +383,13 @@ of the repositories listed at
  This supersedes jc/config-case-cmdline topic that has been discarded.
 
 
-* ab/cond-skip-tests (2017-02-27) 2 commits
+* ab/cond-skip-tests (2017-03-01) 3 commits
  - gitweb tests: skip tests when we don't have Time::HiRes
+ - gitweb tests: change confusing "skip_all" phrasing
  - cvs tests: skip tests that call "cvs commit" when running as root
 
  A few tests were run conditionally under (rare) conditions where
  they cannot be run (like running cvs tests under 'root' account).
-
- Will merge to 'next'.
-
-
-* jk/auto-namelen-in-interpret-branch-name (2017-02-27) 1 commit
- - interpret_branch_name(): handle auto-namelen for @{-1}
-
- A small bug in the code that parses @{...} has been fixed.
 
  Will merge to 'next'.
 
@@ -344,41 +418,45 @@ of the repositories listed at
 
 
 * jk/t6300-cleanup (2017-02-27) 1 commit
- - t6300: avoid creating refs/heads/HEAD
+  (merged to 'next' on 2017-03-02 at 3087521bea)
+ + t6300: avoid creating refs/heads/HEAD
 
- A test that creats a confusing branch whose name is HEAD when any
- branch name would have sufficed has been corrected.
+ A test that creates a confusing branch whose name is HEAD has been
+ corrected not to do so.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/commit-parsing-optim (2017-02-27) 2 commits
- - commit: don't check for space twice when looking for header
- - commit: be more precise when searching for headers
+  (merged to 'next' on 2017-03-02 at 22239f35df)
+ + commit: don't check for space twice when looking for header
+ + commit: be more precise when searching for headers
 
  The code that parses header fields in the commit object has been
  updated for (micro)performance and code hygiene.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/sha1-file-plug-fallback-base-leak (2017-02-27) 1 commit
- - sha1_file: release fallback base's memory in unpack_entry()
+  (merged to 'next' on 2017-03-02 at 03344b1119)
+ + sha1_file: release fallback base's memory in unpack_entry()
 
  A leak in a codepath to read from a packed object in (rare) cases
  has been plugged.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/strbuf-add-real-path (2017-02-27) 2 commits
- - strbuf: add strbuf_add_real_path()
- - cocci: use ALLOC_ARRAY
+  (merged to 'next' on 2017-03-02 at 69191becd6)
+ + strbuf: add strbuf_add_real_path()
+ + cocci: use ALLOC_ARRAY
 
  An helper function to make it easier to append the result from
  real_path() to a strbuf has been added.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/parse-hide-refs-config-cleanup (2017-02-24) 1 commit
@@ -398,9 +476,8 @@ of the repositories listed at
  cf. <20170227211217.73gydlxb2qu2sp3m@sigill.intra.peff.net>
 
 
-* sk/dash-is-previous (2017-02-27) 6 commits
+* sk/dash-is-previous (2017-03-01) 5 commits
  - revert.c: delegate handling of "-" shorthand to setup_revisions
- - merge.c: delegate handling of "-" shorthand to revision.c:get_sha1
  - sha1_name.c: teach get_sha1_1 "-" shorthand for "@{-1}"
  - revision.c: args starting with "-" might be a revision
  - revision.c: swap if/else blocks
@@ -414,24 +491,26 @@ of the repositories listed at
 
 
 * jh/send-email-one-cc (2017-02-27) 1 commit
- - send-email: only allow one address per body tag
+  (merged to 'next' on 2017-03-02 at 32c0e6ad88)
+ + send-email: only allow one address per body tag
 
  "Cc:" on the trailer part does not have to conform to RFC strictly,
  unlike in the e-mail header.  "git send-email" has been updated to
  ignore anything after '>' when picking addresses, to allow non-address
  cruft like " # stable 4.4" after the address.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/http-auth (2017-02-27) 2 commits
- - http: add an "auto" mode for http.emptyauth
- - http: restrict auth methods to what the server advertises
+  (merged to 'next' on 2017-03-02 at 87f81b4395)
+ + http: add an "auto" mode for http.emptyauth
+ + http: restrict auth methods to what the server advertises
 
  Reduce authentication round-trip over HTTP when the server supports
  just a single authentication method.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/ident-empty (2017-02-23) 4 commits
@@ -441,8 +520,8 @@ of the repositories listed at
  + ident: handle NULL email when complaining of empty name
  + ident: mark error messages for translation
 
- user.email that consists of only cruft chars should have
- consistently errored out, but didn't.
+ user.email that consists of only cruft chars should consistently
+ error out, but didn't.
 
  Will merge to 'master'.
 
@@ -459,12 +538,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ah/doc-ls-files-quotepath (2017-02-28) 3 commits
- - SQUASH???
- - Documentation: Link descriptions of -z to core.quotePath
- - Documentation: Improve description for core.quotePath
+* ah/doc-ls-files-quotepath (2017-03-02) 1 commit
+ - Documentation: improve description for core.quotePath
 
  Documentation for "git ls-files" did not refer to core.quotePath
+
+ Will merge to 'next'.
 
 
 * jh/memihash-opt (2017-02-17) 5 commits
@@ -474,7 +553,8 @@ of the repositories listed at
  - hashmap: allow memihash computation to be continued
  - name-hash: eliminate duplicate memihash call
 
- Expecting an update for perf?
+ Expecting an update for perf.
+ cf. <MWHPR03MB29581B0EDDEDCA7D51EC396F8A280@MWHPR03MB2958.namprd03.prod.outlook.com>
 
 
 * nd/prune-in-worktree (2017-02-19) 15 commits
@@ -502,17 +582,16 @@ of the repositories listed at
  garbage collection.
 
 
-* mm/fetch-show-error-message-on-unadvertised-object (2017-02-22) 4 commits
+* mm/fetch-show-error-message-on-unadvertised-object (2017-03-02) 3 commits
  - fetch-pack: add specific error for fetching an unadvertised object
  - fetch_refs_via_pack: call report_unmatched_refs
- - squash??? remove unfinished sentence
  - fetch-pack: move code to report unmatched refs to a function
 
  "git fetch" that requests a commit by object name, when the other
  side does not allow such an request, failed without much
  explanation.
 
- Will squash the change in before merging to 'next'.
+ Will merge to 'next'.
 
 
 * nd/worktree-kill-parse-ref (2017-02-19) 22 commits
@@ -580,8 +659,6 @@ of the repositories listed at
  when dealing with ref_store that represents the set of refs visible
  from the other worktrees.
 
- Needs review.
-
 
 * sb/checkout-recurse-submodules (2017-02-23) 15 commits
  - builtin/checkout: add --recurse-submodules switch
@@ -602,21 +679,23 @@ of the repositories listed at
 
  "git checkout" is taught --recurse-submodules option.
 
- Needs review.
+ Reroll exists, but it appears it still needs minor work on top.
+ cf. <20170302004759.27852-1-sbeller@google.com>
 
 
 * tg/stash-push (2017-02-28) 6 commits
- - stash: allow pathspecs in the no verb form
- - stash: use stash_push for no verb form
- - stash: teach 'push' (and 'create_stash') to honor pathspec
- - stash: refactor stash_create
- - stash: add test for the create command line arguments
- - stash: introduce push verb
+  (merged to 'next' on 2017-03-03 at b50fda0389)
+ + stash: allow pathspecs in the no verb form
+ + stash: use stash_push for no verb form
+ + stash: teach 'push' (and 'create_stash') to honor pathspec
+ + stash: refactor stash_create
+ + stash: add test for the create command line arguments
+ + stash: introduce push verb
 
  Allow "git stash" to take pathspec so that the local changes can be
  stashed away only partially.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * bc/object-id (2017-02-22) 19 commits
@@ -652,8 +731,7 @@ of the repositories listed at
  Windows port wants to use OpenSSL's implementation of SHA-1
  routines, so let them.
 
- Kicked back to 'pu'
- cf. <9913e513-553e-eba6-e81a-9c21030dd767@kdbg.org>
+ Will merge to 'next'.
 
 
 * sg/completion-refs-speedup (2017-02-13) 13 commits
@@ -717,64 +795,9 @@ of the repositories listed at
 --------------------------------------------------
 [Discarded]
 
-* sb/push-make-submodule-check-the-default (2017-01-26) 2 commits
- . Revert "push: change submodule default to check when submodules exist"
- . push: change submodule default to check when submodules exist
+* jk/auto-namelen-in-interpret-branch-name (2017-02-27) 1 commit
+ . interpret_branch_name(): handle auto-namelen for @{-1}
 
- Turn the default of "push.recurseSubmodules" to "check" when
- submodules seem to be in use.
+ A small bug in the code that parses @{...} has been fixed.
 
- Retracted.
-
-
-* ls/submodule-config-ucase (2017-02-15) 2 commits
- . submodule config does not apply to upper case submodules?
- . t7400: cleanup "submodule add clone shallow submodule" test
-
- Demonstrate a breakage in handling submodule.UPPERCASENAME.update
- configuration variables.
-
- Superseded by jc/config-case-cmdline.
-
-
-* js/curl-empty-auth-set-by-default (2017-02-22) 1 commit
- . http(s): automatically try NTLM authentication first
-
- Flip "http.emptyAuth" on by default to help OOB experience for
- users of HTTP Negotiate authentication scheme.
-
- Superseded by jk/http-auth topic.
-
-
-* jc/config-case-cmdline (2017-02-21) 3 commits
- . config: squelch stupid compiler
- . config: reject invalid VAR in 'git -c VAR=VAL command'
- . config: preserve <subsection> case for one-shot config on the command line
-
- The code to parse "git -c VAR=VAL cmd" and set configuration
- variable for the duration of cmd had two small bugs, which have
- been fixed.
-
- Superseded by jc/config-case-cmdline-take-2
-
-
-* lt/oneline-decoration-at-end (2017-02-21) 2 commits
- . log: fix regression to "--source" when "--decorate" was updated
- . show decorations at the end of the line
-
- The output from "git log --oneline --decorate" has been updated to
- show the extra information at the end of the line, not near the
- front.
-
- Retracted.
- cf. <CA+55aFwT2HUBzZO8Gpt9tHoJtdRxv9oe3TDoSH5jcEOixRNBXg@mail.gmail.com>
-
-
-* sk/parse-remote-cleanup (2017-02-21) 2 commits
- . Revert "parse-remote: remove reference to unused op_prep"
- . parse-remote: remove reference to unused op_prep
-
- Code clean-up.
-
- Will discard.
- There may be third-party scripts that are dot-sourcing this one.
+ This is now a part of jk/interpret-branch-name topic.
