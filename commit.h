@@ -142,21 +142,24 @@ static inline int cmit_fmt_is_mail(enum cmit_fmt fmt)
 	return (fmt == CMIT_FMT_EMAIL || fmt == CMIT_FMT_MBOXRD);
 }
 
+struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
+
 struct pretty_print_context {
 	/*
 	 * Callers should tweak these to change the behavior of pp_* functions.
 	 */
 	enum cmit_fmt fmt;
 	int abbrev;
-	const char *subject;
 	const char *after_subject;
 	int preserve_subject;
 	struct date_mode date_mode;
 	unsigned date_mode_explicit:1;
+	int print_email_subject;
 	int expand_tabs_in_log;
 	int need_8bit_cte;
 	char *notes_message;
 	struct reflog_walk_info *reflog_info;
+	struct rev_info *rev;
 	const char *output_encoding;
 	struct string_list *mailmap;
 	int color;
@@ -175,7 +178,6 @@ struct userformat_want {
 };
 
 extern int has_non_ascii(const char *text);
-struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 extern const char *logmsg_reencode(const struct commit *commit,
 				   char **commit_encoding,
 				   const char *output_encoding);

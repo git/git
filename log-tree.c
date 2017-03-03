@@ -332,35 +332,31 @@ void fmt_output_commit(struct strbuf *filename,
 	strbuf_release(&subject);
 }
 
+void fmt_output_email_subject(struct strbuf *sb, struct rev_info *opt)
+{
+	if (opt->total > 0) {
+		strbuf_addf(sb, "Subject: [%s%s%0*d/%d] ",
+			    opt->subject_prefix,
+			    *opt->subject_prefix ? " " : "",
+			    digits_in_number(opt->total),
+			    opt->nr, opt->total);
+	} else if (opt->total == 0 && opt->subject_prefix && *opt->subject_prefix) {
+		strbuf_addf(sb, "Subject: [%s] ",
+			    opt->subject_prefix);
+	} else {
+		strbuf_addstr(sb, "Subject: ");
+	}
+}
+
 void log_write_email_headers(struct rev_info *opt, struct commit *commit,
-			     const char **subject_p,
 			     const char **extra_headers_p,
 			     int *need_8bit_cte_p)
 {
-	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
 	const char *name = oid_to_hex(opt->zero_commit ?
 				      &null_oid : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
-	if (opt->total > 0) {
-		static char buffer[64];
-		snprintf(buffer, sizeof(buffer),
-			 "Subject: [%s%s%0*d/%d] ",
-			 opt->subject_prefix,
-			 *opt->subject_prefix ? " " : "",
-			 digits_in_number(opt->total),
-			 opt->nr, opt->total);
-		subject = buffer;
-	} else if (opt->total == 0 && opt->subject_prefix && *opt->subject_prefix) {
-		static char buffer[256];
-		snprintf(buffer, sizeof(buffer),
-			 "Subject: [%s] ",
-			 opt->subject_prefix);
-		subject = buffer;
-	} else {
-		subject = "Subject: ";
-	}
 
 	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
 	graph_show_oneline(opt->graph);
@@ -417,7 +413,6 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		opt->diffopt.stat_sep = buffer;
 		strbuf_release(&filename);
 	}
-	*subject_p = subject;
 	*extra_headers_p = extra_headers;
 }
 
@@ -602,8 +597,10 @@ void show_log(struct rev_info *opt)
 	 */
 
 	if (cmit_fmt_is_mail(opt->commit_format)) {
-		log_write_email_headers(opt, commit, &ctx.subject, &extra_headers,
+		log_write_email_headers(opt, commit, &extra_headers,
 					&ctx.need_8bit_cte);
+		ctx.rev = opt;
+		ctx.print_email_subject = 1;
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_COMMIT), opt->diffopt.file);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
