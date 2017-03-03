@@ -31,8 +31,8 @@ settree () {
 }
 
 checkindex () {
-	git ls-files -s |
-	sed "s|^[0-7][0-7]* $_x40 \([0-3]\)	|\1 |" >current &&
+	git ls-files -s >out &&
+	sed "s|^[0-7][0-7]* $_x40 \([0-3]\)	|\1 |" <out >current &&
 	cat >expect &&
 	test_cmp expect current
 }
