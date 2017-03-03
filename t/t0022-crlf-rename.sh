@@ -23,8 +23,8 @@ test_expect_success setup '
 
 test_expect_success 'diff -M' '
 
-	git diff-tree -M -r --name-status HEAD^ HEAD |
-	sed -e "s/R[0-9]*/RNUM/" >actual &&
+	git diff-tree -M -r --name-status HEAD^ HEAD >out &&
+	sed -e "s/R[0-9]*/RNUM/" <out >actual &&
 	echo "RNUM	sample	elpmas" >expect &&
 	test_cmp expect actual
 
