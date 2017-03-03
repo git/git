@@ -18,8 +18,8 @@ test_expect_success setup '
 
 test_expect_success 'tar archive' '
 
-	git archive --format=tar HEAD |
-	( mkdir untarred && cd untarred && "$TAR" -xf - ) &&
+	git archive --format=tar HEAD >out.tar &&
+	( mkdir untarred && cd untarred && "$TAR" -xf ../out.tar) &&
 
 	test_cmp sample untarred/sample
 
