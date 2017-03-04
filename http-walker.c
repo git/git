@@ -319,6 +319,8 @@ static void process_alternates_response(void *callback_data)
 					while (tail->next != NULL)
 						tail = tail->next;
 					tail->next = newalt;
+				} else {
+					strbuf_release(&target);
 				}
 			}
 		}
