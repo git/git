@@ -2795,7 +2795,7 @@ splitIndex.sharedIndexExpire::
 	The default value is "2.weeks.ago".
 	Note that a shared index file is considered modified (for the
 	purpose of expiration) each time a new split-index file is
-	created based on it.
+	either created based on it or read from it.
 	See linkgit:git-update-index[1].
 
 status.relativePaths::
