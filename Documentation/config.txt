@@ -2786,6 +2786,18 @@ splitIndex.maxPercentChange::
 	than 20 percent of the total number of entries.
 	See linkgit:git-update-index[1].
 
+splitIndex.sharedIndexExpire::
+	When the split index feature is used, shared index files that
+	were not modified since the time this variable specifies will
+	be removed when a new shared index file is created. The value
+	"now" expires all entries immediately, and "never" suppresses
+	expiration altogether.
+	The default value is "2.weeks.ago".
+	Note that a shared index file is considered modified (for the
+	purpose of expiration) each time a new split-index file is
+	created based on it.
+	See linkgit:git-update-index[1].
+
 status.relativePaths::
 	By default, linkgit:git-status[1] shows paths relative to the
 	current directory. Setting this variable to `false` shows paths
