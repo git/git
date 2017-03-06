@@ -139,7 +139,7 @@ test_expect_success '--stable overrides patchid.stable = false' '
 test_expect_success 'patch-id supports git-format-patch MIME output' '
 	get_patch_id master &&
 	git checkout same &&
-	git format-patch -1 --attach --stdout | calc_patch_id same &&
+	git format-patch -1 --attach --stdout >out.mbox && calc_patch_id same <out.mbox &&
 	test_cmp patch-id_master patch-id_same
 '
 
