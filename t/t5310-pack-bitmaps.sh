@@ -136,7 +136,7 @@ test_expect_success 'pack-objects respects --local (non-local loose)' '
 	# non-local loose object which is not present in bitmapped pack
 	altblob=$(GIT_DIR=alt.git git hash-object -w file1) &&
 	# non-local loose object which is also present in bitmapped pack
-	git cat-file blob $blob | GIT_DIR=alt.git git hash-object -w --stdin &&
+	git cat-file blob $blob >out && GIT_DIR=alt.git git hash-object -w --stdin <out &&
 	git add file1 &&
 	test_tick &&
 	git commit -m commit_file1 &&
