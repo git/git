@@ -1664,8 +1664,11 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 	}
 
 	tmp_objdir = tmp_objdir_create();
-	if (!tmp_objdir)
+	if (!tmp_objdir) {
+		if (err_fd > 0)
+			close(err_fd);
 		return "unable to create temporary object directory";
+	}
 	child.env = tmp_objdir_env(tmp_objdir);
 
 	/*
