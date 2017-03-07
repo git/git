@@ -130,22 +130,27 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 	return 0;
 }
 
+static int receive_unpack_status(int in)
+{
+	const char *line = packet_read_line(in, NULL);
+	if (!starts_with(line, "unpack "))
+		return error("did not receive remote status");
+	if (strcmp(line, "unpack ok"))
+		return error("unpack failed: %s", line + 7);
+	return 0;
+}
+
 static int receive_status(int in, struct ref *refs)
 {
 	struct ref *hint;
-	int ret = 0;
-	char *line = packet_read_line(in, NULL);
-	if (!starts_with(line, "unpack "))
-		return error("did not receive remote status");
-	if (strcmp(line, "unpack ok")) {
-		error("unpack failed: %s", line + 7);
-		ret = -1;
-	}
+	int ret;
+
 	hint = NULL;
+	ret = receive_unpack_status(in);
 	while (1) {
 		char *refname;
 		char *msg;
-		line = packet_read_line(in, NULL);
+		char *line = packet_read_line(in, NULL);
 		if (!line)
 			break;
 		if (!starts_with(line, "ok ") && !starts_with(line, "ng ")) {
