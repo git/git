@@ -133,10 +133,10 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 static int receive_unpack_status(int in)
 {
 	const char *line = packet_read_line(in, NULL);
-	if (!starts_with(line, "unpack "))
+	if (!skip_prefix(line, "unpack ", &line))
 		return error("did not receive remote status");
-	if (strcmp(line, "unpack ok"))
-		return error("unpack failed: %s", line + 7);
+	if (strcmp(line, "ok"))
+		return error("unpack failed: %s", line);
 	return 0;
 }
 
