@@ -1175,10 +1175,10 @@ sub cmd_branch {
 	::_req_svn();
 	require SVN::Client;
 
+	my ($config, $baton, undef) = Git::SVN::Ra::prepare_config_once();
 	my $ctx = SVN::Client->new(
-		config => SVN::Core::config_get_config(
-			$Git::SVN::Ra::config_dir
-		),
+		auth => $baton,
+		config => $config,
 		log_msg => sub {
 			${ $_[0] } = defined $_message
 				? $_message
