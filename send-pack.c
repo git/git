@@ -562,6 +562,14 @@ int send_pack(struct send_pack_args *args,
 				close(out);
 			if (git_connection_is_socket(conn))
 				shutdown(fd[0], SHUT_WR);
+
+			/*
+			 * Do not even bother with the return value; we know we
+			 * are failing, and just want the error() side effects.
+			 */
+			if (status_report)
+				receive_unpack_status(in);
+
 			if (use_sideband) {
 				close(demux.out);
 				finish_async(&demux);
