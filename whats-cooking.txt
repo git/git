@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2017, #02; Fri, 3)
-X-master-at: 3bc53220cb2dcf709f7a027a3f526befd021d858
-X-next-at: a2ecc84866b651ad965003275b748da92fd99ab4
+Subject: What's cooking in git.git (Mar 2017, #03; Wed, 8)
+X-master-at: e0688e9b28f2c5ff711460ee8b62077be5df2360
+X-next-at: 76c07830f9451c898309f3a605eb1f610cf92335
 
-What's cooking in git.git (Mar 2017, #02; Fri, 3)
+What's cooking in git.git (Mar 2017, #03; Wed, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,77 +20,80 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ew/markdown-url-in-readme (2017-03-01) 1 commit
-  (merged to 'next' on 2017-03-03 at 3d35e3a991)
- + README: create HTTP/HTTPS links from URLs in Markdown
+* ew/http-alternates-as-redirects-warning (2017-03-06) 2 commits
+ - http: release strbuf on disabled alternates
+ - http: inform about alternates-as-redirects behavior
 
- Doc update.
-
- Will merge to 'master'.
-
-
-* jk/add-i-patch-do-prompt (2017-03-02) 1 commit
- - add--interactive: fix missing file prompt for patch mode with "-i"
-
- The patch subcommand of "git add -i" was meant to have paths
- selection prompt just like other subcommand, unlike "git add -p"
- directly jumps to hunk selection.  Recently, this was broken and
- "add -i" lost the paths selection dialog, but it now has been
- fixed.
+ Recent versions of Git treats http alternates (used in dumb http
+ transport) just like HTTP redirects and requires the client to
+ enable following it, due to security concerns.  But we forgot to
+ give a warning when we decide not to honor the alternates.
 
  Will merge to 'next'.
 
 
-* ax/line-log-range-merge-fix (2017-03-03) 1 commit
- - line-log.c: prevent crash during union of too many ranges
+* jk/ewah-use-right-type-in-sizeof (2017-03-06) 1 commit
+ - ewah: fix eword_t/uint64_t confusion
 
- The code to parse "git log -L..." command line was buggy when there
- are many ranges specified with -L; overrun of the allocated buffer
- has been fixed.
+ Code clean-up.
 
  Will merge to 'next'.
 
 
-* js/early-config (2017-03-03) 11 commits
- - t1309: test read_early_config()
- - read_early_config(): really discover .git/
- - read_early_config(): avoid .git/config hack when unneeded
- - setup: make read_early_config() reusable
- - setup: export the discover_git_directory() function
- - SQUASH??? ERROR: trailing statements should be on next line
- - setup_git_directory_1(): avoid changing global state
- - setup: prepare setup_discovered_git_directory() the root directory
- - SQUASH??? ERROR: trailing statements should be on next line
- - setup_git_directory(): use is_dir_sep() helper
- - t7006: replace dubious test
+* jk/push-deadlock-regression-fix (2017-03-07) 6 commits
+ - send-pack: report signal death of pack-objects
+ - send-pack: read "unpack" status even on pack-objects failure
+ - send-pack: improve unpack-status error messages
+ - send-pack: use skip_prefix for parsing unpack status
+ - send-pack: extract parsing of "unpack" response
+ - receive-pack: fix deadlock when we cannot create tmpdir
 
- The start-up sequence of "git" needs to figure out some configured
- settings before it finds and set itself up in the location of the
- repository and was quite messy due to its "chicken-and-egg" nature.
- The code has been restructured.
-
- Will merge to 'next' after squashing niggle-fixes in.
-
-
-* jt/perf-updates (2017-03-03) 3 commits
- - t/perf: add fallback for pre-bin-wrappers versions of git
- - t/perf: use $MODERN_GIT for all repo-copying steps
- - t/perf: export variable used in other blocks
-
- The t/perf performance test suite was not prepared to test not so
- old versions of Git, but now it covers versions of Git that are not
- so ancient.
+ "git push" had a handful of codepaths that could lead to a deadlock
+ when unexpected error happened, which has been fixed.
 
  Will merge to 'next'.
 
 
-* ss/remote-bzr-hg-placeholder-wo-python (2017-03-03) 1 commit
- - contrib: git-remote-{bzr,hg} placeholders don't need Python
+* vn/line-log-memcpy-size-fix (2017-03-06) 1 commit
+ - line-log: use COPY_ARRAY to fix mis-sized memcpy
 
- There is no need for Python only to give a few messages to the
- standard error stream, but we somehow did.
+ The command-line parsing of "git log -L" copied internal data
+ structures using incorrect size on ILP32 systems.
 
  Will merge to 'next'.
+
+
+* js/realpath-pathdup-fix (2017-03-08) 2 commits
+ - real_pathdup(): fix callsites that wanted it to die on error
+ - t1501: demonstrate NULL pointer access with invalid GIT_WORK_TREE
+
+ Git v2.12 was shipped with an embarrassing breakage where various
+ operations that verify paths given from the user stopped dying when
+ seeing an issue, and instead later triggering segfault.
+
+ Will merge to 'next' and then to 'master', eventually down to 'maint'.
+
+
+* kn/ref-filter-branch-list (2017-03-08) 1 commit
+ - branch: honor --abbrev/--no-abbrev in --list mode
+
+ "git branch --list" takes the "--abbrev" and "--no-abbrev" options
+ to control the output of the object name in its "-v"(erbose)
+ output, but a recent update started ignoring them; this fixes it
+ before the breakage reaches to any released version.
+
+ Will merge to 'next'.
+
+
+* sb/rev-parse-show-superproject-root (2017-03-08) 1 commit
+ - rev-parse: add --show-superproject-working-tree
+
+ From a working tree of a repository, a new option of "rev-parse"
+ lets you ask if the repository is used as a submodule of another
+ project, and where the root level of the working tree of that
+ project (i.e. your superproject) is.
+
+ Almost there, but documentation needs a bit more work.
 
 --------------------------------------------------
 [Stalled]
@@ -147,12 +150,6 @@ of the repositories listed at
  cf. <CAFZEwPNUXcNY9Qdz=_B7q2kQuaecPzJtTMGdv8YMUPEz2vnp8A@mail.gmail.com>
 
 
-* ls/filter-process-delayed (2017-01-08) 1 commit
- . convert: add "status=delayed" to filter process protocol
-
- Ejected, as does not build when merged to 'pu'.
-
-
 * sh/grep-tree-obj-tweak-output (2017-01-20) 2 commits
  - grep: use '/' delimiter for paths
  - grep: only add delimiter if there isn't one already
@@ -192,6 +189,84 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ls/filter-process-delayed (2017-03-06) 1 commit
+ - convert: add "status=delayed" to filter process protocol
+
+ cf. <xmqq60jmnmef.fsf@junio-linux.mtv.corp.google.com>
+
+
+* ew/markdown-url-in-readme (2017-03-01) 1 commit
+  (merged to 'next' on 2017-03-03 at 3d35e3a991)
+ + README: create HTTP/HTTPS links from URLs in Markdown
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* jk/add-i-patch-do-prompt (2017-03-02) 1 commit
+ - add--interactive: fix missing file prompt for patch mode with "-i"
+
+ The patch subcommand of "git add -i" was meant to have paths
+ selection prompt just like other subcommand, unlike "git add -p"
+ directly jumps to hunk selection.  Recently, this was broken and
+ "add -i" lost the paths selection dialog, but it now has been
+ fixed.
+
+ Will merge to 'next'.
+
+
+* ax/line-log-range-merge-fix (2017-03-03) 1 commit
+ - line-log.c: prevent crash during union of too many ranges
+
+ The code to parse "git log -L..." command line was buggy when there
+ are many ranges specified with -L; overrun of the allocated buffer
+ has been fixed.
+
+ Will merge to 'next'.
+
+
+* js/early-config (2017-03-07) 10 commits
+ - setup_git_directory_gently_1(): avoid die()ing
+ - t1309: test read_early_config()
+ - read_early_config(): really discover .git/
+ - read_early_config(): avoid .git/config hack when unneeded
+ - setup: make read_early_config() reusable
+ - setup: introduce the discover_git_directory() function
+ - setup_git_directory_1(): avoid changing global state
+ - setup: prepare setup_discovered_git_directory() the root directory
+ - setup_git_directory(): use is_dir_sep() helper
+ - t7006: replace dubious test
+
+ The start-up sequence of "git" needs to figure out some configured
+ settings before it finds and set itself up in the location of the
+ repository and was quite messy due to its "chicken-and-egg" nature.
+ The code has been restructured.
+
+ Will merge to 'next' after waiting for a few days.
+
+
+* jt/perf-updates (2017-03-03) 3 commits
+ - t/perf: add fallback for pre-bin-wrappers versions of git
+ - t/perf: use $MODERN_GIT for all repo-copying steps
+ - t/perf: export variable used in other blocks
+
+ The t/perf performance test suite was not prepared to test not so
+ old versions of Git, but now it covers versions of Git that are not
+ so ancient.
+
+ Will merge to 'next'.
+
+
+* ss/remote-bzr-hg-placeholder-wo-python (2017-03-03) 1 commit
+ - contrib: git-remote-{bzr,hg} placeholders don't need Python
+
+ There is no need for Python only to give a few messages to the
+ standard error stream, but we somehow did.
+
+ Will merge to 'next'.
+
+
 * jk/interpret-branch-name (2017-03-02) 9 commits
  - checkout: restrict @-expansions when finding branch
  - strbuf_check_ref_format(): expand only local branches
@@ -226,7 +301,7 @@ of the repositories listed at
  cf. <CA+55aFxTWqsTTiDKo4DBZT-8Z9t80bGMD3uijzKONa_bYEZABQ@mail.gmail.com>
 
 
-* js/travis-32bit-linux (2017-03-03) 1 commit
+* js/travis-32bit-linux (2017-03-06) 1 commit
  - Travis: also test on 32-bit Linux
 
  Add 32-bit Linux variant to the set of platforms to be tested with
@@ -328,7 +403,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* cc/split-index-config (2017-03-01) 22 commits
+* cc/split-index-config (2017-03-06) 22 commits
  - Documentation/git-update-index: explain splitIndex.*
  - Documentation/config: add splitIndex.sharedIndexExpire
  - read-cache: use freshen_shared_index() in read_index_from()
@@ -660,7 +735,8 @@ of the repositories listed at
  from the other worktrees.
 
 
-* sb/checkout-recurse-submodules (2017-02-23) 15 commits
+* sb/checkout-recurse-submodules (2017-03-07) 18 commits
+ - builtin/read-tree: add --recurse-submodules switch
  - builtin/checkout: add --recurse-submodules switch
  - entry.c: update submodules when interesting
  - read-cache, remove_marked_cache_entries: wipe selected submodules.
@@ -674,13 +750,12 @@ of the repositories listed at
  - connect_work_tree_and_git_dir: safely create leading directories
  - make is_submodule_populated gently
  - lib-submodule-update.sh: define tests for recursing into submodules
+ - lib-submodule-update.sh: replace sha1 by hash
+ - lib-submodule-update: teach test_submodule_content the -C <dir> flag
  - lib-submodule-update.sh: do not use ./. as submodule remote
  - lib-submodule-update.sh: reorder create_lib_submodule_repo
 
  "git checkout" is taught --recurse-submodules option.
-
- Reroll exists, but it appears it still needs minor work on top.
- cf. <20170302004759.27852-1-sbeller@google.com>
 
 
 * tg/stash-push (2017-02-28) 6 commits
