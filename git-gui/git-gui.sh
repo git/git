@@ -1271,21 +1271,25 @@ if {![file isdirectory $_gitdir]} {
 load_config 0
 apply_config
 
+proc _set_gitworktree {arg} {
+	global _gitworktree
+	if { [is_Cygwin] } {
+		catch {set arg [exec cygpath --windows $arg]}
+	}
+	set _gitworktree $arg
+}
+
 # v1.7.0 introduced --show-toplevel to return the canonical work-tree
 if {[package vcompare $_git_version 1.7.0] >= 0} {
-	if { [is_Cygwin] } {
-		catch {set _gitworktree [exec cygpath --windows [git rev-parse --show-toplevel]]}
-	} else {
-		set _gitworktree [git rev-parse --show-toplevel]
-	}
+	_set_gitworktree [git rev-parse --show-toplevel]
 } else {
 	# try to set work tree from environment, core.worktree or use
 	# cdup to obtain a relative path to the top of the worktree. If
 	# run from the top, the ./ prefix ensures normalize expands pwd.
 	if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
-		set _gitworktree [get_config core.worktree]
+		_set_gitworktree [get_config core.worktree]
 		if {$_gitworktree eq ""} {
-			set _gitworktree [file normalize ./[git rev-parse --show-cdup]]
+			_set_gitworktree [file normalize ./[git rev-parse --show-cdup]]
 		}
 	}
 }
@@ -1301,7 +1305,7 @@ if {$_prefix ne {}} {
 		error_popup [strcat [mc "Cannot move to top of working directory:"] "\n\n$err"]
 		exit 1
 	}
-	set _gitworktree [pwd]
+	_set_gitworktree [pwd]
 	unset cdup
 } elseif {![is_enabled bare]} {
 	if {[is_bare]} {
@@ -1310,15 +1314,16 @@ if {$_prefix ne {}} {
 		exit 1
 	}
 	if {$_gitworktree eq {}} {
-		set _gitworktree [file dirname $_gitdir]
+		_set_gitworktree [file dirname $_gitdir]
 	}
 	if {[catch {cd $_gitworktree} err]} {
 		catch {wm withdraw .}
 		error_popup [strcat [mc "No working directory"] " $_gitworktree:\n\n$err"]
 		exit 1
 	}
-	set _gitworktree [pwd]
+	_set_gitworktree [pwd]
 }
+
 set _reponame [file split [file normalize $_gitdir]]
 if {[lindex $_reponame end] eq {.git}} {
 	set _reponame [lindex $_reponame end-1]
