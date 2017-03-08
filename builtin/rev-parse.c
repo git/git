@@ -12,6 +12,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "split-index.h"
+#include "submodule.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -777,6 +778,12 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				const char *work_tree = get_git_work_tree();
 				if (work_tree)
 					puts(work_tree);
+				continue;
+			}
+			if (!strcmp(arg, "--show-superproject-working-tree")) {
+				const char *superproject = get_superproject_working_tree();
+				if (superproject)
+					puts(superproject);
 				continue;
 			}
 			if (!strcmp(arg, "--show-prefix")) {
