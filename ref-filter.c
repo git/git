@@ -1513,20 +1513,20 @@ static enum contains_result contains_test(struct commit *candidate,
 {
 	/* was it previously marked as containing a want commit? */
 	if (candidate->object.flags & TMP_MARK)
-		return 1;
+		return CONTAINS_YES;
 	/* or marked as not possibly containing a want commit? */
 	if (candidate->object.flags & UNINTERESTING)
-		return 0;
+		return CONTAINS_NO;
 	/* or are we it? */
 	if (in_commit_list(want, candidate)) {
 		candidate->object.flags |= TMP_MARK;
-		return 1;
+		return CONTAINS_YES;
 	}
 
 	if (parse_commit(candidate) < 0)
-		return 0;
+		return CONTAINS_NO;
 
-	return -1;
+	return CONTAINS_UNKNOWN;
 }
 
 static void push_to_contains_stack(struct commit *candidate, struct contains_stack *contains_stack)
@@ -1540,7 +1540,7 @@ static enum contains_result contains_tag_algo(struct commit *candidate,
 		const struct commit_list *want)
 {
 	struct contains_stack contains_stack = { 0, 0, NULL };
-	int result = contains_test(candidate, want);
+	enum contains_result result = contains_test(candidate, want);
 
 	if (result != CONTAINS_UNKNOWN)
 		return result;
@@ -1557,7 +1557,7 @@ static enum contains_result contains_tag_algo(struct commit *candidate,
 		}
 		/*
 		 * If we just popped the stack, parents->item has been marked,
-		 * therefore contains_test will return a meaningful 0 or 1.
+		 * therefore contains_test will return a meaningful yes/no.
 		 */
 		else switch (contains_test(parents->item, want)) {
 		case CONTAINS_YES:
@@ -1579,7 +1579,7 @@ static enum contains_result contains_tag_algo(struct commit *candidate,
 static int commit_contains(struct ref_filter *filter, struct commit *commit)
 {
 	if (filter->with_commit_tag_algo)
-		return contains_tag_algo(commit, filter->with_commit);
+		return contains_tag_algo(commit, filter->with_commit) == CONTAINS_YES;
 	return is_descendant_of(commit, filter->with_commit);
 }
 
