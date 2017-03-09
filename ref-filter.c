@@ -1476,6 +1476,11 @@ enum contains_result {
 	CONTAINS_YES = 1
 };
 
+struct ref_filter_cbdata {
+	struct ref_array *array;
+	struct ref_filter *filter;
+};
+
 /*
  * Mimicking the real stack, this stack lives on the heap, avoiding stack
  * overflows.
