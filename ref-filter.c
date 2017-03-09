@@ -1523,9 +1523,7 @@ static enum contains_result contains_test(struct commit *candidate,
 		return CONTAINS_YES;
 	}
 
-	if (parse_commit(candidate) < 0)
-		return CONTAINS_NO;
-
+	parse_commit_or_die(candidate);
 	return CONTAINS_UNKNOWN;
 }
 
