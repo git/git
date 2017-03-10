@@ -1050,12 +1050,6 @@ GIT_CHECK_FUNC(mkdtemp,
 [NO_MKDTEMP=YesPlease])
 GIT_CONF_SUBST([NO_MKDTEMP])
 #
-# Define NO_MKSTEMPS if you don't have mkstemps in the C library.
-GIT_CHECK_FUNC(mkstemps,
-[NO_MKSTEMPS=],
-[NO_MKSTEMPS=YesPlease])
-GIT_CONF_SUBST([NO_MKSTEMPS])
-#
 # Define NO_INITGROUPS if you don't have initgroups in the C library.
 GIT_CHECK_FUNC(initgroups,
 [NO_INITGROUPS=],

@@ -440,23 +440,6 @@ int xmkstemp(char *template)
 	return fd;
 }
 
-/* git_mkstemp() - create tmp file honoring TMPDIR variable */
-int git_mkstemp(char *path, size_t len, const char *template)
-{
-	const char *tmp;
-	size_t n;
-
-	tmp = getenv("TMPDIR");
-	if (!tmp)
-		tmp = "/tmp";
-	n = snprintf(path, len, "%s/%s", tmp, template);
-	if (len <= n) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	return mkstemp(path);
-}
-
 /* Adapted from libiberty's mkstemp.c. */
 
 #undef TMP_MAX
@@ -530,13 +513,6 @@ int git_mkstemp_mode(char *pattern, int mode)
 	/* mkstemp is just mkstemps with no suffix */
 	return git_mkstemps_mode(pattern, 0, mode);
 }
-
-#ifdef NO_MKSTEMPS
-int gitmkstemps(char *pattern, int suffix_len)
-{
-	return git_mkstemps_mode(pattern, suffix_len, 0600);
-}
-#endif
 
 int xmkstemp_mode(char *template, int mode)
 {
