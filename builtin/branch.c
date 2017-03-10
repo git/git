@@ -191,17 +191,20 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	int ret = 0;
 	int remote_branch = 0;
 	struct strbuf bname = STRBUF_INIT;
+	unsigned allowed_interpret;
 
 	switch (kinds) {
 	case FILTER_REFS_REMOTES:
 		fmt = "refs/remotes/%s";
 		/* For subsequent UI messages */
 		remote_branch = 1;
+		allowed_interpret = INTERPRET_BRANCH_REMOTE;
 
 		force = 1;
 		break;
 	case FILTER_REFS_BRANCHES:
 		fmt = "refs/heads/%s";
+		allowed_interpret = INTERPRET_BRANCH_LOCAL;
 		break;
 	default:
 		die(_("cannot use -a with -d"));
@@ -216,7 +219,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		char *target = NULL;
 		int flags = 0;
 
-		strbuf_branchname(&bname, argv[i]);
+		strbuf_branchname(&bname, argv[i], allowed_interpret);
 		free(name);
 		name = mkpathdup(fmt, bname.buf);
 

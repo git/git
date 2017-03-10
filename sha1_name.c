@@ -1176,7 +1176,8 @@ static int interpret_empty_at(const char *name, int namelen, int len, struct str
 	return 1;
 }
 
-static int reinterpret(const char *name, int namelen, int len, struct strbuf *buf)
+static int reinterpret(const char *name, int namelen, int len,
+		       struct strbuf *buf, unsigned allowed)
 {
 	/* we have extra data, which might need further processing */
 	struct strbuf tmp = STRBUF_INIT;
@@ -1184,7 +1185,7 @@ static int reinterpret(const char *name, int namelen, int len, struct strbuf *bu
 	int ret;
 
 	strbuf_add(buf, name + len, namelen - len);
-	ret = interpret_branch_name(buf->buf, buf->len, &tmp);
+	ret = interpret_branch_name(buf->buf, buf->len, &tmp, allowed);
 	/* that data was not interpreted, remove our cruft */
 	if (ret < 0) {
 		strbuf_setlen(buf, used);
@@ -1205,11 +1206,27 @@ static void set_shortened_ref(struct strbuf *buf, const char *ref)
 	free(s);
 }
 
+static int branch_interpret_allowed(const char *refname, unsigned allowed)
+{
+	if (!allowed)
+		return 1;
+
+	if ((allowed & INTERPRET_BRANCH_LOCAL) &&
+	    starts_with(refname, "refs/heads/"))
+		return 1;
+	if ((allowed & INTERPRET_BRANCH_REMOTE) &&
+	    starts_with(refname, "refs/remotes/"))
+		return 1;
+
+	return 0;
+}
+
 static int interpret_branch_mark(const char *name, int namelen,
 				 int at, struct strbuf *buf,
 				 int (*get_mark)(const char *, int),
 				 const char *(*get_data)(struct branch *,
-							 struct strbuf *))
+							 struct strbuf *),
+				 unsigned allowed)
 {
 	int len;
 	struct branch *branch;
@@ -1234,64 +1251,55 @@ static int interpret_branch_mark(const char *name, int namelen,
 	if (!value)
 		die("%s", err.buf);
 
+	if (!branch_interpret_allowed(value, allowed))
+		return -1;
+
 	set_shortened_ref(buf, value);
 	return len + at;
 }
 
-/*
- * This reads short-hand syntax that not only evaluates to a commit
- * object name, but also can act as if the end user spelled the name
- * of the branch from the command line.
- *
- * - "@{-N}" finds the name of the Nth previous branch we were on, and
- *   places the name of the branch in the given buf and returns the
- *   number of characters parsed if successful.
- *
- * - "<branch>@{upstream}" finds the name of the other ref that
- *   <branch> is configured to merge with (missing <branch> defaults
- *   to the current branch), and places the name of the branch in the
- *   given buf and returns the number of characters parsed if
- *   successful.
- *
- * If the input is not of the accepted format, it returns a negative
- * number to signal an error.
- *
- * If the input was ok but there are not N branch switches in the
- * reflog, it returns 0.
- */
-int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
+int interpret_branch_name(const char *name, int namelen, struct strbuf *buf,
+			  unsigned allowed)
 {
 	char *at;
 	const char *start;
-	int len = interpret_nth_prior_checkout(name, namelen, buf);
+	int len;
 
 	if (!namelen)
 		namelen = strlen(name);
 
-	if (!len) {
-		return len; /* syntax Ok, not enough switches */
-	} else if (len > 0) {
-		if (len == namelen)
-			return len; /* consumed all */
-		else
-			return reinterpret(name, namelen, len, buf);
+	if (!allowed || (allowed & INTERPRET_BRANCH_LOCAL)) {
+		len = interpret_nth_prior_checkout(name, namelen, buf);
+		if (!len) {
+			return len; /* syntax Ok, not enough switches */
+		} else if (len > 0) {
+			if (len == namelen)
+				return len; /* consumed all */
+			else
+				return reinterpret(name, namelen, len, buf, allowed);
+		}
 	}
 
 	for (start = name;
 	     (at = memchr(start, '@', namelen - (start - name)));
 	     start = at + 1) {
 
-		len = interpret_empty_at(name, namelen, at - name, buf);
-		if (len > 0)
-			return reinterpret(name, namelen, len, buf);
+		if (!allowed || (allowed & INTERPRET_BRANCH_HEAD)) {
+			len = interpret_empty_at(name, namelen, at - name, buf);
+			if (len > 0)
+				return reinterpret(name, namelen, len, buf,
+						   allowed);
+		}
 
 		len = interpret_branch_mark(name, namelen, at - name, buf,
-					    upstream_mark, branch_get_upstream);
+					    upstream_mark, branch_get_upstream,
+					    allowed);
 		if (len > 0)
 			return len;
 
 		len = interpret_branch_mark(name, namelen, at - name, buf,
-					    push_mark, branch_get_push);
+					    push_mark, branch_get_push,
+					    allowed);
 		if (len > 0)
 			return len;
 	}
@@ -1299,22 +1307,19 @@ int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 	return -1;
 }
 
-int strbuf_branchname(struct strbuf *sb, const char *name)
+void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed)
 {
 	int len = strlen(name);
-	int used = interpret_branch_name(name, len, sb);
+	int used = interpret_branch_name(name, len, sb, allowed);
 
-	if (used == len)
-		return 0;
 	if (used < 0)
 		used = 0;
 	strbuf_add(sb, name + used, len - used);
-	return len;
 }
 
 int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 {
-	strbuf_branchname(sb, name);
+	strbuf_branchname(sb, name, INTERPRET_BRANCH_LOCAL);
 	if (name[0] == '-')
 		return -1;
 	strbuf_splice(sb, 0, 0, "refs/heads/", 11);
