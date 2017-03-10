@@ -614,7 +614,7 @@ static void filter_refs(struct fetch_pack_args *args,
 					break; /* definitely do not have it */
 				else if (cmp == 0) {
 					keep = 1; /* definitely have it */
-					sought[i]->matched = 1;
+					sought[i]->match_status = REF_MATCHED;
 				}
 				i++;
 			}
@@ -634,22 +634,24 @@ static void filter_refs(struct fetch_pack_args *args,
 	}
 
 	/* Append unmatched requests to the list */
-	if ((allow_unadvertised_object_request &
-	    (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1))) {
-		for (i = 0; i < nr_sought; i++) {
-			unsigned char sha1[20];
+	for (i = 0; i < nr_sought; i++) {
+		unsigned char sha1[20];
 
-			ref = sought[i];
-			if (ref->matched)
-				continue;
-			if (get_sha1_hex(ref->name, sha1) ||
-			    ref->name[40] != '\0' ||
-			    hashcmp(sha1, ref->old_oid.hash))
-				continue;
+		ref = sought[i];
+		if (ref->match_status != REF_NOT_MATCHED)
+			continue;
+		if (get_sha1_hex(ref->name, sha1) ||
+		    ref->name[40] != '\0' ||
+		    hashcmp(sha1, ref->old_oid.hash))
+			continue;
 
-			ref->matched = 1;
+		if ((allow_unadvertised_object_request &
+		    (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1))) {
+			ref->match_status = REF_MATCHED;
 			*newtail = copy_ref(ref);
 			newtail = &(*newtail)->next;
+		} else {
+			ref->match_status = REF_UNADVERTISED_NOT_ALLOWED;
 		}
 	}
 	*refs = newlist;
@@ -1129,4 +1131,27 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	update_shallow(args, sought, nr_sought, &si);
 	clear_shallow_info(&si);
 	return ref_cpy;
+}
+
+int report_unmatched_refs(struct ref **sought, int nr_sought)
+{
+	int i, ret = 0;
+
+	for (i = 0; i < nr_sought; i++) {
+		if (!sought[i])
+			continue;
+		switch (sought[i]->match_status) {
+		case REF_MATCHED:
+			continue;
+		case REF_NOT_MATCHED:
+			error(_("no such remote ref %s"), sought[i]->name);
+			break;
+		case REF_UNADVERTISED_NOT_ALLOWED:
+			error(_("Server does not allow request for unadvertised object %s"),
+			      sought[i]->name);
+			break;
+		}
+		ret = 1;
+	}
+	return ret;
 }
