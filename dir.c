@@ -2730,8 +2730,8 @@ void connect_work_tree_and_git_dir(const char *work_tree_, const char *git_dir_)
 {
 	struct strbuf file_name = STRBUF_INIT;
 	struct strbuf rel_path = STRBUF_INIT;
-	char *git_dir = real_pathdup(git_dir_);
-	char *work_tree = real_pathdup(work_tree_);
+	char *git_dir = real_pathdup(git_dir_, 1);
+	char *work_tree = real_pathdup(work_tree_, 1);
 
 	/* Update gitfile */
 	strbuf_addf(&file_name, "%s/.git", work_tree);
