@@ -1035,10 +1035,11 @@ static struct string_list *hide_refs;
 
 int parse_hide_refs_config(const char *var, const char *value, const char *section)
 {
+	const char *subsection, *key;
+	int subsection_len;
 	if (!strcmp("transfer.hiderefs", var) ||
-	    /* NEEDSWORK: use parse_config_key() once both are merged */
-	    (starts_with(var, section) && var[strlen(section)] == '.' &&
-	     !strcmp(var + strlen(section), ".hiderefs"))) {
+	    (!parse_config_key(var, section, &subsection, &subsection_len, &key)
+	    && !subsection && !strcmp(key, "hiderefs"))) {
 		char *ref;
 		int len;
 
