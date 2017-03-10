@@ -313,6 +313,27 @@ test_expect_success 'Tag name filtering allows slashes in tag names' '
 	git cat-file tag X/2 > actual &&
 	test_cmp expect actual
 '
+test_expect_success 'setup --prune-empty comparisons' '
+	git checkout --orphan master-no-a &&
+	git rm -rf . &&
+	unset test_tick &&
+	test_tick &&
+	GIT_COMMITTER_DATE="@0 +0000" GIT_AUTHOR_DATE="@0 +0000" &&
+	test_commit --notick B B.t B Bx &&
+	git checkout -b branch-no-a Bx &&
+	test_commit D D.t D Dx &&
+	mkdir dir &&
+	test_commit dir/D dir/D.t dir/D dir/Dx &&
+	test_commit E E.t E Ex &&
+	git checkout master-no-a &&
+	test_commit C C.t C Cx &&
+	git checkout branch-no-a &&
+	git merge Cx -m "Merge tag '\''C'\'' into branch" &&
+	git tag Fx &&
+	test_commit G G.t G Gx &&
+	test_commit H H.t H Hx &&
+	git checkout branch
+'
 
 test_expect_success 'Prune empty commits' '
 	git rev-list HEAD > expect &&
@@ -339,6 +360,22 @@ test_expect_success 'prune empty works even without index/tree filters' '
 	git filter-branch -f --prune-empty HEAD &&
 	git rev-list HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--prune-empty is able to prune root commit' '
+	git rev-list branch-no-a >expect &&
+	git branch testing H &&
+	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t" testing &&
+	git rev-list testing >actual &&
+	git branch -D testing &&
+	test_cmp expect actual
+'
+
+test_expect_success '--prune-empty is able to prune entire branch' '
+	git branch prune-entire B &&
+	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t B.t" prune-entire &&
+	test_path_is_missing .git/refs/heads/prune-entire &&
+	test_must_fail git reflog exists refs/heads/prune-entire
 '
 
 test_expect_success '--remap-to-ancestor with filename filters' '

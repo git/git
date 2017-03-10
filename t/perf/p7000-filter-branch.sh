@@ -16,4 +16,9 @@ test_perf 'noop filter' '
 	git filter-branch -f base..HEAD
 '
 
+test_perf 'noop prune-empty' '
+	git checkout --detach tip &&
+	git filter-branch -f --prune-empty base..HEAD
+'
+
 test_done

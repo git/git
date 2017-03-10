@@ -167,14 +167,12 @@ to other tags will be rewritten to point to the underlying commit.
 	project root. Implies <<Remap_to_ancestor>>.
 
 --prune-empty::
-	Some kind of filters will generate empty commits, that left the tree
-	untouched.  This switch allow git-filter-branch to ignore such
-	commits.  Though, this switch only applies for commits that have one
-	and only one parent, it will hence keep merges points. Also, this
-	option is not compatible with the use of `--commit-filter`. Though you
-	just need to use the function 'git_commit_non_empty_tree "$@"' instead
-	of the `git commit-tree "$@"` idiom in your commit filter to make that
-	happen.
+	Some filters will generate empty commits that leave the tree untouched.
+	This option instructs git-filter-branch to remove such commits if they
+	have exactly one or zero non-pruned parents; merge commits will
+	therefore remain intact.  This option cannot be used together with
+	`--commit-filter`, though the same effect can be achieved by using the
+	provided `git_commit_non_empty_tree` function in a commit filter.
 
 --original <namespace>::
 	Use this option to set the namespace where the original commits
