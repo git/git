@@ -73,6 +73,21 @@ UI, Workflows & Features
    but caused renaming of the current branch to something else not to
    be logged in a useful way.
 
+ * "Cc:" on the trailer part does not have to conform to RFC strictly,
+   unlike in the e-mail header.  "git send-email" has been updated to
+   ignore anything after '>' when picking addresses, to allow non-address
+   cruft like " # stable 4.4" after the address.
+   (merge 9d3343961b jh/send-email-one-cc later to maint).
+
+ * When "git submodule init" decides that the submodule in the working
+   tree is its upstream, it now gives a warning as it is not a very
+   common setup.
+   (merge d1b3b81aab sb/submodule-init-url-selection later to maint).
+
+ * "git stash save" takes a pathspec so that the local changes can be
+   stashed away only partially.
+   (merge 9e140909f6 tg/stash-push later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -95,6 +110,29 @@ Performance, Internal Implementation, Development Support etc.
 
  * Some warning() messages from "git clean" were updated to show the
    errno from failed system calls.
+
+ * The "parse_config_key()" API function has been cleaned up.
+   (merge ad8c7cdadd jk/parse-config-key-cleanup later to maint).
+
+ * A test that creates a confusing branch whose name is HEAD has been
+   corrected not to do so.
+   (merge f0252ca23c jk/t6300-cleanup later to maint).
+
+ * The code that parses header fields in the commit object has been
+   updated for (micro)performance and code hygiene.
+   (merge b072504ce1 rs/commit-parsing-optim later to maint).
+
+ * An helper function to make it easier to append the result from
+   real_path() to a strbuf has been added.
+   (merge 33ad9ddd0b rs/strbuf-add-real-path later to maint).
+
+ * Reduce authentication round-trip over HTTP when the server supports
+   just a single authentication method.  This also improves the
+   behaviour when Git is misconfigured to enable http.emptyAuth
+   against a server that does not authenticate without a username
+   (i.e. not using Kerberos etc., which makes http.emptyAuth
+   pointless).
+   (merge 40a18fc77c jk/http-auth later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -147,5 +185,32 @@ notes for details).
    default) by ignoring a stale "gc.log" file that is too old.
    (merge a831c06a2b dt/gc-ignore-old-gc-logs later to maint).
 
+ * The code to parse "git -c VAR=VAL cmd" and set configuration
+   variable for the duration of cmd had two small bugs, which have
+   been fixed.
+   (merge 1274a155af jc/config-case-cmdline-take-2 later to maint).
+
+ * user.email that consists of only cruft chars should consistently
+   error out, but didn't.
+   (merge 94425552f3 jk/ident-empty later to maint).
+
+ * "git upload-pack", which is a counter-part of "git fetch", did not
+   report a request for a ref that was not advertised as invalid.
+   This is generally not a problem (because "git fetch" will stop
+   before making such a request), but is the right thing to do.
+   (merge bdb31eada7 jt/upload-pack-error-report later to maint).
+
+ * A leak in a codepath to read from a packed object in (rare) cases
+   has been plugged.
+   (merge 886ddf4777 rs/sha1-file-plug-fallback-base-leak later to maint).
+
+ * When a redirected http transport gets an error during the
+   redirected request, we ignored the error we got from the server,
+   and ended up giving a not-so-useful error message.
+   (merge 8e27391a5f jt/http-base-url-update-upon-redirect later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 2cfa83574c mm/two-more-xstrfmt later to maint).
+   (merge b803ae4427 ps/docs-diffcore later to maint).
+   (merge bcd886d897 ew/markdown-url-in-readme later to maint).
+   (merge b2d593a779 rj/remove-unused-mktemp later to maint).
