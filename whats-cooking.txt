@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2017, #03; Wed, 8)
-X-master-at: e0688e9b28f2c5ff711460ee8b62077be5df2360
-X-next-at: 76c07830f9451c898309f3a605eb1f610cf92335
+Subject: What's cooking in git.git (Mar 2017, #04; Fri, 10)
+X-master-at: 625568cd8813bf32b2172eaf59e45e9da5978ce3
+X-next-at: 88fb0023506122bc4e8d1df1648518e0b0d264db
 
-What's cooking in git.git (Mar 2017, #03; Wed, 8)
+What's cooking in git.git (Mar 2017, #04; Fri, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,85 +18,279 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* ew/http-alternates-as-redirects-warning (2017-03-06) 2 commits
- - http: release strbuf on disabled alternates
- - http: inform about alternates-as-redirects behavior
+* ew/markdown-url-in-readme (2017-03-01) 1 commit
+  (merged to 'next' on 2017-03-03 at 3d35e3a991)
+ + README: create HTTP/HTTPS links from URLs in Markdown
 
- Recent versions of Git treats http alternates (used in dumb http
- transport) just like HTTP redirects and requires the client to
- enable following it, due to security concerns.  But we forgot to
- give a warning when we decide not to honor the alternates.
-
- Will merge to 'next'.
+ Doc update.
 
 
-* jk/ewah-use-right-type-in-sizeof (2017-03-06) 1 commit
- - ewah: fix eword_t/uint64_t confusion
+* jc/config-case-cmdline-take-2 (2017-02-23) 2 commits
+  (merged to 'next' on 2017-03-01 at 2e9920eeeb)
+ + config: use git_config_parse_key() in git_config_parse_parameter()
+ + config: move a few helper functions up
+
+ The code to parse "git -c VAR=VAL cmd" and set configuration
+ variable for the duration of cmd had two small bugs, which have
+ been fixed.
+ This supersedes jc/config-case-cmdline topic that has been discarded.
+
+
+* jh/send-email-one-cc (2017-02-27) 1 commit
+  (merged to 'next' on 2017-03-02 at 32c0e6ad88)
+ + send-email: only allow one address per body tag
+
+ "Cc:" on the trailer part does not have to conform to RFC strictly,
+ unlike in the e-mail header.  "git send-email" has been updated to
+ ignore anything after '>' when picking addresses, to allow non-address
+ cruft like " # stable 4.4" after the address.
+
+
+* jk/http-auth (2017-02-27) 2 commits
+  (merged to 'next' on 2017-03-02 at 87f81b4395)
+ + http: add an "auto" mode for http.emptyauth
+ + http: restrict auth methods to what the server advertises
+
+ Reduce authentication round-trip over HTTP when the server supports
+ just a single authentication method.
+
+
+* jk/ident-empty (2017-02-23) 4 commits
+  (merged to 'next' on 2017-03-01 at ff80031ce6)
+ + ident: do not ignore empty config name/email
+ + ident: reject all-crud ident name
+ + ident: handle NULL email when complaining of empty name
+ + ident: mark error messages for translation
+
+ user.email that consists of only cruft chars should consistently
+ error out, but didn't.
+
+
+* jk/parse-config-key-cleanup (2017-02-24) 3 commits
+  (merged to 'next' on 2017-03-01 at e531d8d3a9)
+ + parse_hide_refs_config: tell parse_config_key we don't want a subsection
+ + parse_config_key: allow matching single-level config
+ + parse_config_key: use skip_prefix instead of starts_with
+ (this branch uses sb/parse-hide-refs-config-cleanup.)
+
+ The "parse_config_key()" API function has been cleaned up.
+
+
+* jk/t6300-cleanup (2017-02-27) 1 commit
+  (merged to 'next' on 2017-03-02 at 3087521bea)
+ + t6300: avoid creating refs/heads/HEAD
+
+ A test that creates a confusing branch whose name is HEAD has been
+ corrected not to do so.
+
+
+* jt/http-base-url-update-upon-redirect (2017-02-28) 1 commit
+  (merged to 'next' on 2017-03-03 at 5225bd3ef8)
+ + http: attempt updating base URL only if no error
+
+ When a redirected http transport gets an error during the
+ redirected request, we ignored the error we got from the server,
+ and ended up giving a not-so-useful error message.
+
+
+* jt/upload-pack-error-report (2017-02-23) 1 commit
+  (merged to 'next' on 2017-03-01 at aea583dbe5)
+ + upload-pack: report "not our ref" to client
+
+ "git upload-pack", which is a counter-part of "git fetch", did not
+ report a request for a ref that was not advertised as invalid.
+ This is generally not a problem (because "git fetch" will stop
+ before making such a request), but is the right thing to do.
+
+
+* ps/docs-diffcore (2017-02-28) 2 commits
+  (merged to 'next' on 2017-03-03 at 9ca5691de2)
+ + docs/diffcore: unquote "Complete Rewrites" in headers
+ + docs/diffcore: fix grammar in diffcore-rename header
+
+ Doc update.
+
+
+* rj/remove-unused-mktemp (2017-02-28) 2 commits
+  (merged to 'next' on 2017-03-03 at 4512f0c5ab)
+ + wrapper.c: remove unused gitmkstemps() function
+ + wrapper.c: remove unused git_mkstemp() function
+
+ Code cleanup.
+
+
+* rs/commit-parsing-optim (2017-02-27) 2 commits
+  (merged to 'next' on 2017-03-02 at 22239f35df)
+ + commit: don't check for space twice when looking for header
+ + commit: be more precise when searching for headers
+
+ The code that parses header fields in the commit object has been
+ updated for (micro)performance and code hygiene.
+
+
+* rs/log-email-subject (2017-03-01) 2 commits
+  (merged to 'next' on 2017-03-03 at a2ecc84866)
+ + pretty: use fmt_output_email_subject()
+ + log-tree: factor out fmt_output_email_subject()
 
  Code clean-up.
 
- Will merge to 'next'.
+
+* rs/sha1-file-plug-fallback-base-leak (2017-02-27) 1 commit
+  (merged to 'next' on 2017-03-02 at 03344b1119)
+ + sha1_file: release fallback base's memory in unpack_entry()
+
+ A leak in a codepath to read from a packed object in (rare) cases
+ has been plugged.
 
 
-* jk/push-deadlock-regression-fix (2017-03-07) 6 commits
- - send-pack: report signal death of pack-objects
- - send-pack: read "unpack" status even on pack-objects failure
- - send-pack: improve unpack-status error messages
- - send-pack: use skip_prefix for parsing unpack status
- - send-pack: extract parsing of "unpack" response
- - receive-pack: fix deadlock when we cannot create tmpdir
+* rs/strbuf-add-real-path (2017-02-27) 2 commits
+  (merged to 'next' on 2017-03-02 at 69191becd6)
+ + strbuf: add strbuf_add_real_path()
+ + cocci: use ALLOC_ARRAY
 
- "git push" had a handful of codepaths that could lead to a deadlock
- when unexpected error happened, which has been fixed.
-
- Will merge to 'next'.
+ An helper function to make it easier to append the result from
+ real_path() to a strbuf has been added.
 
 
-* vn/line-log-memcpy-size-fix (2017-03-06) 1 commit
- - line-log: use COPY_ARRAY to fix mis-sized memcpy
+* sb/parse-hide-refs-config-cleanup (2017-02-24) 1 commit
+  (merged to 'next' on 2017-03-01 at fd722ba039)
+ + refs: parse_hide_refs_config to use parse_config_key
+ (this branch is used by jk/parse-config-key-cleanup.)
 
- The command-line parsing of "git log -L" copied internal data
- structures using incorrect size on ILP32 systems.
-
- Will merge to 'next'.
-
-
-* js/realpath-pathdup-fix (2017-03-08) 2 commits
- - real_pathdup(): fix callsites that wanted it to die on error
- - t1501: demonstrate NULL pointer access with invalid GIT_WORK_TREE
-
- Git v2.12 was shipped with an embarrassing breakage where various
- operations that verify paths given from the user stopped dying when
- seeing an issue, and instead later triggering segfault.
-
- Will merge to 'next' and then to 'master', eventually down to 'maint'.
+ Code clean-up.
 
 
-* kn/ref-filter-branch-list (2017-03-08) 1 commit
- - branch: honor --abbrev/--no-abbrev in --list mode
+* sb/submodule-init-url-selection (2017-02-28) 1 commit
+  (merged to 'next' on 2017-03-03 at 847d1f9a91)
+ + submodule init: warn about falling back to a local path
 
- "git branch --list" takes the "--abbrev" and "--no-abbrev" options
- to control the output of the object name in its "-v"(erbose)
- output, but a recent update started ignoring them; this fixes it
- before the breakage reaches to any released version.
-
- Will merge to 'next'.
+ When "git submodule init" decides that the submodule in the working
+ tree is its upstream, it now gives a warning as it is not a very
+ common setup.
 
 
-* sb/rev-parse-show-superproject-root (2017-03-08) 1 commit
- - rev-parse: add --show-superproject-working-tree
+* tg/stash-push (2017-02-28) 6 commits
+  (merged to 'next' on 2017-03-03 at b50fda0389)
+ + stash: allow pathspecs in the no verb form
+ + stash: use stash_push for no verb form
+ + stash: teach 'push' (and 'create_stash') to honor pathspec
+ + stash: refactor stash_create
+ + stash: add test for the create command line arguments
+ + stash: introduce push verb
 
- From a working tree of a repository, a new option of "rev-parse"
- lets you ask if the repository is used as a submodule of another
- project, and where the root level of the working tree of that
- project (i.e. your superproject) is.
+ "git stash save" takes a pathspec so that the local changes can be
+ stashed away only partially.
 
- Almost there, but documentation needs a bit more work.
+--------------------------------------------------
+[New Topics]
+
+* jk/ref-filter-flags-cleanup (2017-03-10) 4 commits
+ - ref-filter: use separate cache for contains_tag_algo
+ - ref-filter: die on parse_commit errors
+ - ref-filter: use contains_result enum consistently
+ - ref-filter: move ref_cbdata definition into ref-filter.c
+
+ "git tag --contains" used to (ab)use the object bits to keep track
+ of the state of object reachability without clearing them after
+ use; this has been cleaned up and made to use the newer commit-slab
+ facility.
 
 --------------------------------------------------
 [Stalled]
+
+* nd/prune-in-worktree (2017-02-19) 15 commits
+ . rev-list: expose and document --single-worktree
+ . revision.c: --reflog add HEAD reflog from all worktrees
+ . files-backend: make reflog iterator go through per-worktree reflog
+ . refs: add refs_for_each_reflog[_ent]()
+ . revision.c: --all adds HEAD from all worktrees
+ . refs: remove dead for_each_*_submodule()
+ . revision.c: use refs_for_each*() instead of for_each_*_submodule()
+ . refs: add a refs_for_each_in() and friends
+ . refs: add refs_for_each_ref()
+ . refs: add refs_head_ref()
+ . refs: add refs_read_ref[_full]()
+ . refs: move submodule slash stripping code to get_submodule_ref_store
+ . revision.c: --indexed-objects add objects from all worktrees
+ . revision.c: refactor add_index_objects_to_pending()
+ . revision.h: new flag in struct rev_info wrt. worktree-related refs
+ (this branch uses nd/worktree-kill-parse-ref; is tangled with nd/files-backend-git-dir.)
+
+ "git gc" and friends when multiple worktrees are used off of a
+ single repository did not consider the index and per-worktree refs
+ of other worktrees as the root for reachability traversal, making
+ objects that are in use only in other worktrees to be subject to
+ garbage collection.
+
+
+* nd/worktree-kill-parse-ref (2017-02-19) 22 commits
+ . refs: kill set_worktree_head_symref()
+ . refs: add refs_create_symref()
+ . worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
+ . refs.c: add refs_resolve_ref_unsafe()
+ . refs: introduce get_worktree_ref_store()
+ . refs: rename get_ref_store() to get_submodule_ref_store() and make it public
+ . files-backend: remove submodule_allowed from files_downcast()
+ . refs: move submodule code out of files-backend.c
+ . path.c: move some code out of strbuf_git_path_submodule()
+ . refs.c: make get_main_ref_store() public and use it
+ . refs.c: kill register_ref_store(), add register_submodule_ref_store()
+ . refs.c: flatten get_ref_store() a bit
+ . refs: rename lookup_ref_store() to lookup_submodule_ref_store()
+ . refs.c: introduce get_main_ref_store()
+ . files-backend: remove the use of git_path()
+ . refs.c: share is_per_worktree_ref() to files-backend.c
+ . files-backend: replace *git_path*() with files_path()
+ . files-backend: add files_path()
+ . files-backend: convert git_path() to strbuf_git_path()
+ . refs-internal.c: make files_log_ref_write() static
+ . Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
+ . Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
+ (this branch is used by nd/prune-in-worktree; is tangled with nd/files-backend-git-dir.)
+
+ (hopefully) a beginning of safer "git worktree" that is resistant
+ to "gc".
+
+ Waiting for nd/files-backend-git-dir to settle.
+
+
+* nd/files-backend-git-dir (2017-02-22) 26 commits
+ . t1406: new tests for submodule ref store
+ . t1405: some basic tests on main ref store
+ . t/helper: add test-ref-store to test ref-store functions
+ . refs: delete pack_refs() in favor of refs_pack_refs()
+ . files-backend: avoid ref api targetting main ref store
+ . refs: new transaction related ref-store api
+ . refs: add new ref-store api
+ . refs: rename get_ref_store() to get_submodule_ref_store() and make it public
+ . files-backend: replace submodule_allowed check in files_downcast()
+ . refs: move submodule code out of files-backend.c
+ . path.c: move some code out of strbuf_git_path_submodule()
+ . refs.c: make get_main_ref_store() public and use it
+ . refs.c: kill register_ref_store(), add register_submodule_ref_store()
+ . refs.c: flatten get_ref_store() a bit
+ . refs: rename lookup_ref_store() to lookup_submodule_ref_store()
+ . refs.c: introduce get_main_ref_store()
+ . files-backend: remove the use of git_path()
+ . files-backend: add and use files_refname_path()
+ . files-backend: add and use files_reflog_path()
+ . files-backend: move "logs/" out of TMP_RENAMED_LOG
+ . files-backend: convert git_path() to strbuf_git_path()
+ . files-backend: add and use files_packed_refs_path()
+ . files-backend: make files_log_ref_write() static
+ . refs.h: add forward declaration for structs used in this file
+ . Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
+ . Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
+ (this branch is tangled with nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
+
+ The "submodule" specific field in the ref_store structure is
+ replaced with a more generic "gitdir" that can later be used also
+ when dealing with ref_store that represents the set of refs visible
+ from the other worktrees.
+
 
 * nd/worktree-move (2017-01-27) 7 commits
  . fixup! worktree move: new command
@@ -189,23 +383,98 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ew/http-alternates-as-redirects-warning (2017-03-06) 2 commits
+  (merged to 'next' on 2017-03-10 at 23be072a07)
+ + http: release strbuf on disabled alternates
+ + http: inform about alternates-as-redirects behavior
+
+ Recent versions of Git treats http alternates (used in dumb http
+ transport) just like HTTP redirects and requires the client to
+ enable following it, due to security concerns.  But we forgot to
+ give a warning when we decide not to honor the alternates.
+
+ Will merge to 'master'.
+
+
+* jk/ewah-use-right-type-in-sizeof (2017-03-06) 1 commit
+  (merged to 'next' on 2017-03-10 at ad66adacda)
+ + ewah: fix eword_t/uint64_t confusion
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/push-deadlock-regression-fix (2017-03-07) 6 commits
+  (merged to 'next' on 2017-03-10 at ceb0b819bf)
+ + send-pack: report signal death of pack-objects
+ + send-pack: read "unpack" status even on pack-objects failure
+ + send-pack: improve unpack-status error messages
+ + send-pack: use skip_prefix for parsing unpack status
+ + send-pack: extract parsing of "unpack" response
+ + receive-pack: fix deadlock when we cannot create tmpdir
+
+ "git push" had a handful of codepaths that could lead to a deadlock
+ when unexpected error happened, which has been fixed.
+
+ Will merge to 'master'.
+
+
+* vn/line-log-memcpy-size-fix (2017-03-06) 1 commit
+  (merged to 'next' on 2017-03-10 at 2e65ff89b7)
+ + line-log: use COPY_ARRAY to fix mis-sized memcpy
+
+ The command-line parsing of "git log -L" copied internal data
+ structures using incorrect size on ILP32 systems.
+
+ Will merge to 'master'.
+
+
+* js/realpath-pathdup-fix (2017-03-08) 2 commits
+  (merged to 'next' on 2017-03-10 at 5a84dbbd1d)
+ + real_pathdup(): fix callsites that wanted it to die on error
+ + t1501: demonstrate NULL pointer access with invalid GIT_WORK_TREE
+
+ Git v2.12 was shipped with an embarrassing breakage where various
+ operations that verify paths given from the user stopped dying when
+ seeing an issue, and instead later triggering segfault.
+
+ Will merge to 'master'.
+ ... and then to down to 'maint'.
+
+
+* kn/ref-filter-branch-list (2017-03-10) 1 commit
+  (merged to 'next' on 2017-03-10 at 73b43443f1)
+ + branch: honor --abbrev/--no-abbrev in --list mode
+
+ "git branch --list" takes the "--abbrev" and "--no-abbrev" options
+ to control the output of the object name in its "-v"(erbose)
+ output, but a recent update started ignoring them; this fixes it
+ before the breakage reaches to any released version.
+
+ Will merge to 'master'.
+
+
+* sb/rev-parse-show-superproject-root (2017-03-08) 1 commit
+ - rev-parse: add --show-superproject-working-tree
+
+ From a working tree of a repository, a new option of "rev-parse"
+ lets you ask if the repository is used as a submodule of another
+ project, and where the root level of the working tree of that
+ project (i.e. your superproject) is.
+
+ Almost there, but documentation needs a bit more work.
+
+
 * ls/filter-process-delayed (2017-03-06) 1 commit
  - convert: add "status=delayed" to filter process protocol
 
  cf. <xmqq60jmnmef.fsf@junio-linux.mtv.corp.google.com>
 
 
-* ew/markdown-url-in-readme (2017-03-01) 1 commit
-  (merged to 'next' on 2017-03-03 at 3d35e3a991)
- + README: create HTTP/HTTPS links from URLs in Markdown
-
- Doc update.
-
- Will merge to 'master'.
-
-
 * jk/add-i-patch-do-prompt (2017-03-02) 1 commit
- - add--interactive: fix missing file prompt for patch mode with "-i"
+  (merged to 'next' on 2017-03-10 at 891ec6f5ba)
+ + add--interactive: fix missing file prompt for patch mode with "-i"
 
  The patch subcommand of "git add -i" was meant to have paths
  selection prompt just like other subcommand, unlike "git add -p"
@@ -213,20 +482,22 @@ of the repositories listed at
  "add -i" lost the paths selection dialog, but it now has been
  fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ax/line-log-range-merge-fix (2017-03-03) 1 commit
- - line-log.c: prevent crash during union of too many ranges
+  (merged to 'next' on 2017-03-10 at 201073f113)
+ + line-log.c: prevent crash during union of too many ranges
 
  The code to parse "git log -L..." command line was buggy when there
  are many ranges specified with -L; overrun of the allocated buffer
  has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* js/early-config (2017-03-07) 10 commits
+* js/early-config (2017-03-10) 11 commits
+ - t1309: document cases where we would want early config not to die()
  - setup_git_directory_gently_1(): avoid die()ing
  - t1309: test read_early_config()
  - read_early_config(): really discover .git/
@@ -243,46 +514,51 @@ of the repositories listed at
  repository and was quite messy due to its "chicken-and-egg" nature.
  The code has been restructured.
 
- Will merge to 'next' after waiting for a few days.
+ Almost perfect.
+ cf. <xmqqefy5yn4k.fsf@gitster.mtv.corp.google.com>
+ cf. <xmqq4lz1ylgv.fsf@gitster.mtv.corp.google.com>
 
 
 * jt/perf-updates (2017-03-03) 3 commits
- - t/perf: add fallback for pre-bin-wrappers versions of git
- - t/perf: use $MODERN_GIT for all repo-copying steps
- - t/perf: export variable used in other blocks
+  (merged to 'next' on 2017-03-10 at 0c0b124ed4)
+ + t/perf: add fallback for pre-bin-wrappers versions of git
+ + t/perf: use $MODERN_GIT for all repo-copying steps
+ + t/perf: export variable used in other blocks
 
  The t/perf performance test suite was not prepared to test not so
  old versions of Git, but now it covers versions of Git that are not
  so ancient.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ss/remote-bzr-hg-placeholder-wo-python (2017-03-03) 1 commit
- - contrib: git-remote-{bzr,hg} placeholders don't need Python
+  (merged to 'next' on 2017-03-10 at c8c4bb78a2)
+ + contrib: git-remote-{bzr,hg} placeholders don't need Python
 
  There is no need for Python only to give a few messages to the
  standard error stream, but we somehow did.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/interpret-branch-name (2017-03-02) 9 commits
- - checkout: restrict @-expansions when finding branch
- - strbuf_check_ref_format(): expand only local branches
- - branch: restrict @-expansions when deleting
- - t3204: test git-branch @-expansion corner cases
- - interpret_branch_name: allow callers to restrict expansions
- - strbuf_branchname: add docstring
- - strbuf_branchname: drop return value
- - interpret_branch_name: move docstring to header file
- - interpret_branch_name(): handle auto-namelen for @{-1}
+  (merged to 'next' on 2017-03-10 at 95cc55f9a3)
+ + checkout: restrict @-expansions when finding branch
+ + strbuf_check_ref_format(): expand only local branches
+ + branch: restrict @-expansions when deleting
+ + t3204: test git-branch @-expansion corner cases
+ + interpret_branch_name: allow callers to restrict expansions
+ + strbuf_branchname: add docstring
+ + strbuf_branchname: drop return value
+ + interpret_branch_name: move docstring to header file
+ + interpret_branch_name(): handle auto-namelen for @{-1}
 
  "git branch @" created refs/heads/@ as a branch, and in general the
  code that handled @{-1} and @{upstream} was a bit too loose in
  disambiguating.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/sha1dc (2017-03-01) 7 commits
@@ -302,21 +578,11 @@ of the repositories listed at
 
 
 * js/travis-32bit-linux (2017-03-06) 1 commit
- - Travis: also test on 32-bit Linux
+  (merged to 'next' on 2017-03-10 at 4cb69d0f77)
+ + Travis: also test on 32-bit Linux
 
  Add 32-bit Linux variant to the set of platforms to be tested with
  Travis CI.
-
- Will merge to 'next'.
-
-
-* jt/http-base-url-update-upon-redirect (2017-02-28) 1 commit
-  (merged to 'next' on 2017-03-03 at 5225bd3ef8)
- + http: attempt updating base URL only if no error
-
- When a redirected http transport gets an error during the
- redirected request, we ignored the error we got from the server,
- and ended up giving a not-so-useful error message.
 
  Will merge to 'master'.
 
@@ -335,39 +601,9 @@ of the repositories listed at
  cf. <20170228215937.yd4juycjf7y3vish@sigill.intra.peff.net>
 
 
-* ps/docs-diffcore (2017-02-28) 2 commits
-  (merged to 'next' on 2017-03-03 at 9ca5691de2)
- + docs/diffcore: unquote "Complete Rewrites" in headers
- + docs/diffcore: fix grammar in diffcore-rename header
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* rj/remove-unused-mktemp (2017-02-28) 2 commits
-  (merged to 'next' on 2017-03-03 at 4512f0c5ab)
- + wrapper.c: remove unused gitmkstemps() function
- + wrapper.c: remove unused git_mkstemp() function
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* sb/submodule-init-url-selection (2017-02-28) 1 commit
-  (merged to 'next' on 2017-03-03 at 847d1f9a91)
- + submodule init: warn about falling back to a local path
-
- Give a warning when "git submodule init" decides that the submodule
- in the working tree is its upstream, as it is not a very common
- setup.
-
- Will merge to 'master'.
-
-
 * jc/diff-populate-filespec-size-only-fix (2017-03-02) 1 commit
- - diff: do not short-cut CHECK_SIZE_ONLY check in diff_populate_filespec()
+  (merged to 'next' on 2017-03-10 at 9b2d1ca50f)
+ + diff: do not short-cut CHECK_SIZE_ONLY check in diff_populate_filespec()
 
  "git diff --quiet" relies on the size field in diff_filespec to be
  correctly populated, but diff_populate_filespec() helper function
@@ -375,7 +611,7 @@ of the repositories listed at
  field for paths that need to go through convert_to_git() (e.g. CRLF
  conversion).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/conditional-config-include (2017-03-03) 5 commits
@@ -391,16 +627,6 @@ of the repositories listed at
  bit only in the repositories under my ~/work/ directory".
 
  Will merge to 'next' after squashing niggle-fixes in.
-
-
-* rs/log-email-subject (2017-03-01) 2 commits
-  (merged to 'next' on 2017-03-03 at a2ecc84866)
- + pretty: use fmt_output_email_subject()
- + log-tree: factor out fmt_output_email_subject()
-
- Code clean-up.
-
- Will merge to 'master'.
 
 
 * cc/split-index-config (2017-03-06) 22 commits
@@ -430,46 +656,35 @@ of the repositories listed at
  The experimental "split index" feature has gained a few
  configuration variables to make it easier to use.
 
- I think this is almost ready for 'next'.
+ Will merge to 'next'.
 
 
 * dp/filter-branch-prune-empty (2017-03-03) 4 commits
- - p7000: add test for filter-branch with --prune-empty
- - filter-branch: fix --prune-empty on parentless commits
- - t7003: ensure --prune-empty removes entire branch when applicable
- - t7003: ensure --prune-empty can prune root commit
+  (merged to 'next' on 2017-03-10 at 9317e24cd3)
+ + p7000: add test for filter-branch with --prune-empty
+ + filter-branch: fix --prune-empty on parentless commits
+ + t7003: ensure --prune-empty removes entire branch when applicable
+ + t7003: ensure --prune-empty can prune root commit
 
  "git filter-branch --prune-empty" drops a single-parent commit that
  becomes a no-op, but did not drop a root commit whose tree is empty.
 
- Will merge to 'next'.
-
-
-* jc/config-case-cmdline-take-2 (2017-02-23) 2 commits
-  (merged to 'next' on 2017-03-01 at 2e9920eeeb)
- + config: use git_config_parse_key() in git_config_parse_parameter()
- + config: move a few helper functions up
-
- The code to parse "git -c VAR=VAL cmd" and set configuration
- variable for the duration of cmd had two small bugs, which have
- been fixed.
-
  Will merge to 'master'.
- This supersedes jc/config-case-cmdline topic that has been discarded.
 
 
 * ab/cond-skip-tests (2017-03-01) 3 commits
- - gitweb tests: skip tests when we don't have Time::HiRes
- - gitweb tests: change confusing "skip_all" phrasing
- - cvs tests: skip tests that call "cvs commit" when running as root
+  (merged to 'next' on 2017-03-10 at 38124fb5ce)
+ + gitweb tests: skip tests when we don't have Time::HiRes
+ + gitweb tests: change confusing "skip_all" phrasing
+ + cvs tests: skip tests that call "cvs commit" when running as root
 
  A few tests were run conditionally under (rare) conditions where
  they cannot be run (like running cvs tests under 'root' account).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/interop-test (2017-02-27) 2 commits
+* jk/interop-test (2017-03-10) 2 commits
  - t/interop: add test of old clients against modern git-daemon
  - t: add an interoperability test harness
 
@@ -477,71 +692,7 @@ of the repositories listed at
  older one and the newer one interoperate happily has now become
  possible.
 
- Needs review.
-
-
-* jk/parse-config-key-cleanup (2017-02-24) 3 commits
-  (merged to 'next' on 2017-03-01 at e531d8d3a9)
- + parse_hide_refs_config: tell parse_config_key we don't want a subsection
- + parse_config_key: allow matching single-level config
- + parse_config_key: use skip_prefix instead of starts_with
- (this branch uses sb/parse-hide-refs-config-cleanup.)
-
- The "parse_config_key()" API function has been cleaned up.
-
- Will merge to 'master'.
-
-
-* jk/t6300-cleanup (2017-02-27) 1 commit
-  (merged to 'next' on 2017-03-02 at 3087521bea)
- + t6300: avoid creating refs/heads/HEAD
-
- A test that creates a confusing branch whose name is HEAD has been
- corrected not to do so.
-
- Will merge to 'master'.
-
-
-* rs/commit-parsing-optim (2017-02-27) 2 commits
-  (merged to 'next' on 2017-03-02 at 22239f35df)
- + commit: don't check for space twice when looking for header
- + commit: be more precise when searching for headers
-
- The code that parses header fields in the commit object has been
- updated for (micro)performance and code hygiene.
-
- Will merge to 'master'.
-
-
-* rs/sha1-file-plug-fallback-base-leak (2017-02-27) 1 commit
-  (merged to 'next' on 2017-03-02 at 03344b1119)
- + sha1_file: release fallback base's memory in unpack_entry()
-
- A leak in a codepath to read from a packed object in (rare) cases
- has been plugged.
-
- Will merge to 'master'.
-
-
-* rs/strbuf-add-real-path (2017-02-27) 2 commits
-  (merged to 'next' on 2017-03-02 at 69191becd6)
- + strbuf: add strbuf_add_real_path()
- + cocci: use ALLOC_ARRAY
-
- An helper function to make it easier to append the result from
- real_path() to a strbuf has been added.
-
- Will merge to 'master'.
-
-
-* sb/parse-hide-refs-config-cleanup (2017-02-24) 1 commit
-  (merged to 'next' on 2017-03-01 at fd722ba039)
- + refs: parse_hide_refs_config to use parse_config_key
- (this branch is used by jk/parse-config-key-cleanup.)
-
- Code clean-up.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * sg/clone-refspec-from-command-line-config (2017-02-27) 1 commit
@@ -565,60 +716,13 @@ of the repositories listed at
  cf. <1488007487-12965-1-git-send-email-kannan.siddharth12@gmail.com>
 
 
-* jh/send-email-one-cc (2017-02-27) 1 commit
-  (merged to 'next' on 2017-03-02 at 32c0e6ad88)
- + send-email: only allow one address per body tag
-
- "Cc:" on the trailer part does not have to conform to RFC strictly,
- unlike in the e-mail header.  "git send-email" has been updated to
- ignore anything after '>' when picking addresses, to allow non-address
- cruft like " # stable 4.4" after the address.
-
- Will merge to 'master'.
-
-
-* jk/http-auth (2017-02-27) 2 commits
-  (merged to 'next' on 2017-03-02 at 87f81b4395)
- + http: add an "auto" mode for http.emptyauth
- + http: restrict auth methods to what the server advertises
-
- Reduce authentication round-trip over HTTP when the server supports
- just a single authentication method.
-
- Will merge to 'master'.
-
-
-* jk/ident-empty (2017-02-23) 4 commits
-  (merged to 'next' on 2017-03-01 at ff80031ce6)
- + ident: do not ignore empty config name/email
- + ident: reject all-crud ident name
- + ident: handle NULL email when complaining of empty name
- + ident: mark error messages for translation
-
- user.email that consists of only cruft chars should consistently
- error out, but didn't.
-
- Will merge to 'master'.
-
-
-* jt/upload-pack-error-report (2017-02-23) 1 commit
-  (merged to 'next' on 2017-03-01 at aea583dbe5)
- + upload-pack: report "not our ref" to client
-
- "git upload-pack", which is a counter-part of "git fetch", did not
- report a request for a ref that was not advertised as invalid.
- This is generally not a problem (because "git fetch" will stop
- before making such a request), but is the right thing to do.
-
- Will merge to 'master'.
-
-
 * ah/doc-ls-files-quotepath (2017-03-02) 1 commit
- - Documentation: improve description for core.quotePath
+  (merged to 'next' on 2017-03-10 at 5dfa78423a)
+ + Documentation: improve description for core.quotePath
 
  Documentation for "git ls-files" did not refer to core.quotePath
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jh/memihash-opt (2017-02-17) 5 commits
@@ -632,110 +736,21 @@ of the repositories listed at
  cf. <MWHPR03MB29581B0EDDEDCA7D51EC396F8A280@MWHPR03MB2958.namprd03.prod.outlook.com>
 
 
-* nd/prune-in-worktree (2017-02-19) 15 commits
- . rev-list: expose and document --single-worktree
- . revision.c: --reflog add HEAD reflog from all worktrees
- . files-backend: make reflog iterator go through per-worktree reflog
- . refs: add refs_for_each_reflog[_ent]()
- . revision.c: --all adds HEAD from all worktrees
- . refs: remove dead for_each_*_submodule()
- . revision.c: use refs_for_each*() instead of for_each_*_submodule()
- . refs: add a refs_for_each_in() and friends
- . refs: add refs_for_each_ref()
- . refs: add refs_head_ref()
- . refs: add refs_read_ref[_full]()
- . refs: move submodule slash stripping code to get_submodule_ref_store
- . revision.c: --indexed-objects add objects from all worktrees
- . revision.c: refactor add_index_objects_to_pending()
- . revision.h: new flag in struct rev_info wrt. worktree-related refs
- (this branch uses nd/worktree-kill-parse-ref; is tangled with nd/files-backend-git-dir.)
-
- "git gc" and friends when multiple worktrees are used off of a
- single repository did not consider the index and per-worktree refs
- of other worktrees as the root for reachability traversal, making
- objects that are in use only in other worktrees to be subject to
- garbage collection.
-
-
 * mm/fetch-show-error-message-on-unadvertised-object (2017-03-02) 3 commits
- - fetch-pack: add specific error for fetching an unadvertised object
- - fetch_refs_via_pack: call report_unmatched_refs
- - fetch-pack: move code to report unmatched refs to a function
+  (merged to 'next' on 2017-03-10 at 69e2023804)
+ + fetch-pack: add specific error for fetching an unadvertised object
+ + fetch_refs_via_pack: call report_unmatched_refs
+ + fetch-pack: move code to report unmatched refs to a function
 
  "git fetch" that requests a commit by object name, when the other
  side does not allow such an request, failed without much
  explanation.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* nd/worktree-kill-parse-ref (2017-02-19) 22 commits
- . refs: kill set_worktree_head_symref()
- . refs: add refs_create_symref()
- . worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
- . refs.c: add refs_resolve_ref_unsafe()
- . refs: introduce get_worktree_ref_store()
- . refs: rename get_ref_store() to get_submodule_ref_store() and make it public
- . files-backend: remove submodule_allowed from files_downcast()
- . refs: move submodule code out of files-backend.c
- . path.c: move some code out of strbuf_git_path_submodule()
- . refs.c: make get_main_ref_store() public and use it
- . refs.c: kill register_ref_store(), add register_submodule_ref_store()
- . refs.c: flatten get_ref_store() a bit
- . refs: rename lookup_ref_store() to lookup_submodule_ref_store()
- . refs.c: introduce get_main_ref_store()
- . files-backend: remove the use of git_path()
- . refs.c: share is_per_worktree_ref() to files-backend.c
- . files-backend: replace *git_path*() with files_path()
- . files-backend: add files_path()
- . files-backend: convert git_path() to strbuf_git_path()
- . refs-internal.c: make files_log_ref_write() static
- . Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
- . Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
- (this branch is used by nd/prune-in-worktree; is tangled with nd/files-backend-git-dir.)
-
- (hopefully) a beginning of safer "git worktree" that is resistant
- to "gc".
-
- Waiting for nd/files-backend-git-dir to settle.
-
-
-* nd/files-backend-git-dir (2017-02-22) 26 commits
- . t1406: new tests for submodule ref store
- . t1405: some basic tests on main ref store
- . t/helper: add test-ref-store to test ref-store functions
- . refs: delete pack_refs() in favor of refs_pack_refs()
- . files-backend: avoid ref api targetting main ref store
- . refs: new transaction related ref-store api
- . refs: add new ref-store api
- . refs: rename get_ref_store() to get_submodule_ref_store() and make it public
- . files-backend: replace submodule_allowed check in files_downcast()
- . refs: move submodule code out of files-backend.c
- . path.c: move some code out of strbuf_git_path_submodule()
- . refs.c: make get_main_ref_store() public and use it
- . refs.c: kill register_ref_store(), add register_submodule_ref_store()
- . refs.c: flatten get_ref_store() a bit
- . refs: rename lookup_ref_store() to lookup_submodule_ref_store()
- . refs.c: introduce get_main_ref_store()
- . files-backend: remove the use of git_path()
- . files-backend: add and use files_refname_path()
- . files-backend: add and use files_reflog_path()
- . files-backend: move "logs/" out of TMP_RENAMED_LOG
- . files-backend: convert git_path() to strbuf_git_path()
- . files-backend: add and use files_packed_refs_path()
- . files-backend: make files_log_ref_write() static
- . refs.h: add forward declaration for structs used in this file
- . Merge branch 'mh/ref-remove-empty-directory' into nd/files-backend-git-dir
- . Merge branch 'mh/submodule-hash' into nd/files-backend-git-dir
- (this branch is tangled with nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
-
- The "submodule" specific field in the ref_store structure is
- replaced with a more generic "gitdir" that can later be used also
- when dealing with ref_store that represents the set of refs visible
- from the other worktrees.
-
-
-* sb/checkout-recurse-submodules (2017-03-07) 18 commits
+* sb/checkout-recurse-submodules (2017-03-10) 19 commits
+ - submodule--helper.c: remove duplicate code
  - builtin/read-tree: add --recurse-submodules switch
  - builtin/checkout: add --recurse-submodules switch
  - entry.c: update submodules when interesting
@@ -756,21 +771,6 @@ of the repositories listed at
  - lib-submodule-update.sh: reorder create_lib_submodule_repo
 
  "git checkout" is taught --recurse-submodules option.
-
-
-* tg/stash-push (2017-02-28) 6 commits
-  (merged to 'next' on 2017-03-03 at b50fda0389)
- + stash: allow pathspecs in the no verb form
- + stash: use stash_push for no verb form
- + stash: teach 'push' (and 'create_stash') to honor pathspec
- + stash: refactor stash_create
- + stash: add test for the create command line arguments
- + stash: introduce push verb
-
- Allow "git stash" to take pathspec so that the local changes can be
- stashed away only partially.
-
- Will merge to 'master'.
 
 
 * bc/object-id (2017-02-22) 19 commits
@@ -801,12 +801,13 @@ of the repositories listed at
 
 
 * jh/mingw-openssl-sha1 (2017-02-09) 1 commit
- - mingw: use OpenSSL's SHA-1 routines
+  (merged to 'next' on 2017-03-10 at 8a1aa07def)
+ + mingw: use OpenSSL's SHA-1 routines
 
  Windows port wants to use OpenSSL's implementation of SHA-1
  routines, so let them.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/completion-refs-speedup (2017-02-13) 13 commits
