@@ -192,10 +192,9 @@ ifndef::git-log[]
 	given, do not munge pathnames and use NULs as output field terminators.
 endif::git-log[]
 +
-Without this option, each pathname output will have TAB, LF, double quotes,
-and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
-respectively, and the pathname will be enclosed in double quotes if
-any of those replacements occurred.
+Without this option, pathnames with "unusual" characters are quoted as
+explained for the configuration variable `core.quotePath` (see
+linkgit:git-config[1]).
 
 --name-only::
 	Show only names of changed files.

@@ -108,10 +108,9 @@ the information is read from the current index instead.
 	When `--numstat` has been given, do not munge pathnames,
 	but use a NUL-terminated machine-readable format.
 +
-Without this option, each pathname output will have TAB, LF, double quotes,
-and backslash characters replaced with `\t`, `\n`, `\"`, and `\\`,
-respectively, and the pathname will be enclosed in double quotes if
-any of those replacements occurred.
+Without this option, pathnames with "unusual" characters are quoted as
+explained for the configuration variable `core.quotePath` (see
+linkgit:git-config[1]).
 
 -p<n>::
 	Remove <n> leading slashes from traditional diff paths. The

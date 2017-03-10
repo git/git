@@ -77,7 +77,8 @@ OPTIONS
 	succeed.
 
 -z::
-	\0 line termination on output.
+	\0 line termination on output and do not quote filenames.
+	See OUTPUT below for more information.
 
 -x <pattern>::
 --exclude=<pattern>::
@@ -196,9 +197,10 @@ the index records up to three such pairs; one from tree O in stage
 the user (or the porcelain) to see what should eventually be recorded at the
 path. (see linkgit:git-read-tree[1] for more information on state)
 
-When `-z` option is not used, TAB, LF, and backslash characters
-in pathnames are represented as `\t`, `\n`, and `\\`,
-respectively.
+Without the `-z` option, pathnames with "unusual" characters are
+quoted as explained for the configuration variable `core.quotePath`
+(see linkgit:git-config[1]).  Using `-z` the filename is output
+verbatim and the line is terminated by a NUL byte.
 
 
 Exclude Patterns

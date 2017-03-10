@@ -53,10 +53,9 @@ The index line includes the SHA-1 checksum before and after the change.
 The <mode> is included if the file mode does not change; otherwise,
 separate lines indicate the old and the new mode.
 
-3.  TAB, LF, double quote and backslash characters in pathnames
-    are represented as `\t`, `\n`, `\"` and `\\`, respectively.
-    If there is need for such substitution then the whole
-    pathname is put in double quotes.
+3.  Pathnames with "unusual" characters are quoted as explained for
+    the configuration variable `core.quotePath` (see
+    linkgit:git-config[1]).
 
 4.  All the `file1` files in the output refer to files before the
     commit, and all the `file2` files refer to files after the commit.
