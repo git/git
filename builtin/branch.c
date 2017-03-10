@@ -338,9 +338,18 @@ static char *build_format(struct ref_filter *filter, int maxwidth, const char *r
 		    branch_get_color(BRANCH_COLOR_CURRENT));
 
 	if (filter->verbose) {
+		struct strbuf obname = STRBUF_INIT;
+
+		if (filter->abbrev < 0)
+			strbuf_addf(&obname, "%%(objectname:short)");
+		else if (!filter->abbrev)
+			strbuf_addf(&obname, "%%(objectname)");
+		else
+			strbuf_addf(&obname, "%%(objectname:short=%d)", filter->abbrev);
+
 		strbuf_addf(&local, "%%(align:%d,left)%%(refname:lstrip=2)%%(end)", maxwidth);
 		strbuf_addf(&local, "%s", branch_get_color(BRANCH_COLOR_RESET));
-		strbuf_addf(&local, " %%(objectname:short=7) ");
+		strbuf_addf(&local, " %s ", obname.buf);
 
 		if (filter->verbose > 1)
 			strbuf_addf(&local, "%%(if)%%(upstream)%%(then)[%s%%(upstream:short)%s%%(if)%%(upstream:track)"
@@ -349,10 +358,12 @@ static char *build_format(struct ref_filter *filter, int maxwidth, const char *r
 		else
 			strbuf_addf(&local, "%%(if)%%(upstream:track)%%(then)%%(upstream:track) %%(end)%%(contents:subject)");
 
-		strbuf_addf(&remote, "%s%%(align:%d,left)%s%%(refname:lstrip=2)%%(end)%s%%(if)%%(symref)%%(then) -> %%(symref:short)"
-			    "%%(else) %%(objectname:short=7) %%(contents:subject)%%(end)",
+		strbuf_addf(&remote, "%s%%(align:%d,left)%s%%(refname:lstrip=2)%%(end)%s"
+			    "%%(if)%%(symref)%%(then) -> %%(symref:short)"
+			    "%%(else) %s %%(contents:subject)%%(end)",
 			    branch_get_color(BRANCH_COLOR_REMOTE), maxwidth, quote_literal_for_format(remote_prefix),
-			    branch_get_color(BRANCH_COLOR_RESET));
+			    branch_get_color(BRANCH_COLOR_RESET), obname.buf);
+		strbuf_release(&obname);
 	} else {
 		strbuf_addf(&local, "%%(refname:lstrip=2)%s%%(if)%%(symref)%%(then) -> %%(symref:short)%%(end)",
 			    branch_get_color(BRANCH_COLOR_RESET));
