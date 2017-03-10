@@ -2540,11 +2540,10 @@ int parse_config_key(const char *var,
 		     const char **subsection, int *subsection_len,
 		     const char **key)
 {
-	int section_len = strlen(section);
 	const char *dot;
 
 	/* Does it start with "section." ? */
-	if (!starts_with(var, section) || var[section_len] != '.')
+	if (!skip_prefix(var, section, &var) || *var != '.')
 		return -1;
 
 	/*
@@ -2556,12 +2555,16 @@ int parse_config_key(const char *var,
 	*key = dot + 1;
 
 	/* Did we have a subsection at all? */
-	if (dot == var + section_len) {
-		*subsection = NULL;
-		*subsection_len = 0;
+	if (dot == var) {
+		if (subsection) {
+			*subsection = NULL;
+			*subsection_len = 0;
+		}
 	}
 	else {
-		*subsection = var + section_len + 1;
+		if (!subsection)
+			return -1;
+		*subsection = var + 1;
 		*subsection_len = dot - *subsection;
 	}
 
