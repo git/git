@@ -584,7 +584,7 @@ test_expect_success 'do not dereference NULL upon %(HEAD) on unborn branch' '
 	test_when_finished "git checkout master" &&
 	git for-each-ref --format="%(HEAD) %(refname:short)" refs/heads/ >actual &&
 	sed -e "s/^\* /  /" actual >expect &&
-	git checkout --orphan HEAD &&
+	git checkout --orphan orphaned-branch &&
 	git for-each-ref --format="%(HEAD) %(refname:short)" refs/heads/ >actual &&
 	test_cmp expect actual
 '
