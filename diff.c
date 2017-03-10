@@ -2870,8 +2870,25 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 			s->should_free = 1;
 			return 0;
 		}
-		if (size_only)
+
+		/*
+		 * Even if the caller would be happy with getting
+		 * only the size, we cannot return early at this
+		 * point if the path requires us to run the content
+		 * conversion.
+		 */
+		if (size_only && !would_convert_to_git(s->path))
 			return 0;
+
+		/*
+		 * Note: this check uses xsize_t(st.st_size) that may
+		 * not be the true size of the blob after it goes
+		 * through convert_to_git().  This may not strictly be
+		 * correct, but the whole point of big_file_threshold
+		 * and is_binary check being that we want to avoid
+		 * opening the file and inspecting the contents, this
+		 * is probably fine.
+		 */
 		if ((flags & CHECK_BINARY) &&
 		    s->size > big_file_threshold && s->is_binary == -1) {
 			s->is_binary = 1;
