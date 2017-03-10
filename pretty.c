@@ -1607,8 +1607,9 @@ void pp_title_line(struct pretty_print_context *pp,
 				pp->preserve_subject ? "\n" : " ");
 
 	strbuf_grow(sb, title.len + 1024);
-	if (pp->subject) {
-		strbuf_addstr(sb, pp->subject);
+	if (pp->print_email_subject) {
+		if (pp->rev)
+			fmt_output_email_subject(sb, pp->rev);
 		if (needs_rfc2047_encoding(title.buf, title.len, RFC2047_SUBJECT))
 			add_rfc2047(sb, title.buf, title.len,
 						encoding, RFC2047_SUBJECT);
@@ -1818,7 +1819,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	}
 
 	pp_header(pp, encoding, commit, &msg, sb);
-	if (pp->fmt != CMIT_FMT_ONELINE && !pp->subject) {
+	if (pp->fmt != CMIT_FMT_ONELINE && !pp->print_email_subject) {
 		strbuf_addch(sb, '\n');
 	}
 
