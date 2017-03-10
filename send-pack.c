@@ -72,6 +72,7 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 	struct child_process po = CHILD_PROCESS_INIT;
 	FILE *po_in;
 	int i;
+	int rc;
 
 	i = 4;
 	if (args->use_thin_pack)
@@ -125,27 +126,44 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		po.out = -1;
 	}
 
-	if (finish_command(&po))
+	rc = finish_command(&po);
+	if (rc) {
+		/*
+		 * For a normal non-zero exit, we assume pack-objects wrote
+		 * something useful to stderr. For death by signal, though,
+		 * we should mention it to the user. The exception is SIGPIPE
+		 * (141), because that's a normal occurence if the remote end
+		 * hangs up (and we'll report that by trying to read the unpack
+		 * status).
+		 */
+		if (rc > 128 && rc != 141)
+			error("pack-objects died of signal %d", rc - 128);
 		return -1;
+	}
+	return 0;
+}
+
+static int receive_unpack_status(int in)
+{
+	const char *line = packet_read_line(in, NULL);
+	if (!skip_prefix(line, "unpack ", &line))
+		return error(_("unable to parse remote unpack status: %s"), line);
+	if (strcmp(line, "ok"))
+		return error(_("remote unpack failed: %s"), line);
 	return 0;
 }
 
 static int receive_status(int in, struct ref *refs)
 {
 	struct ref *hint;
-	int ret = 0;
-	char *line = packet_read_line(in, NULL);
-	if (!starts_with(line, "unpack "))
-		return error("did not receive remote status");
-	if (strcmp(line, "unpack ok")) {
-		error("unpack failed: %s", line + 7);
-		ret = -1;
-	}
+	int ret;
+
 	hint = NULL;
+	ret = receive_unpack_status(in);
 	while (1) {
 		char *refname;
 		char *msg;
-		line = packet_read_line(in, NULL);
+		char *line = packet_read_line(in, NULL);
 		if (!line)
 			break;
 		if (!starts_with(line, "ok ") && !starts_with(line, "ng ")) {
@@ -557,6 +575,14 @@ int send_pack(struct send_pack_args *args,
 				close(out);
 			if (git_connection_is_socket(conn))
 				shutdown(fd[0], SHUT_WR);
+
+			/*
+			 * Do not even bother with the return value; we know we
+			 * are failing, and just want the error() side effects.
+			 */
+			if (status_report)
+				receive_unpack_status(in);
+
 			if (use_sideband) {
 				close(demux.out);
 				finish_async(&demux);
