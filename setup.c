@@ -254,7 +254,7 @@ int get_common_dir_noenv(struct strbuf *sb, const char *gitdir)
 		if (!is_absolute_path(data.buf))
 			strbuf_addf(&path, "%s/", gitdir);
 		strbuf_addbuf(&path, &data);
-		strbuf_addstr(sb, real_path(path.buf));
+		strbuf_add_real_path(sb, path.buf);
 		ret = 1;
 	} else {
 		strbuf_addstr(sb, gitdir);

@@ -175,7 +175,7 @@ struct worktree **get_worktrees(unsigned flags)
 	struct dirent *d;
 	int counter = 0, alloc = 2;
 
-	list = xmalloc(alloc * sizeof(struct worktree *));
+	ALLOC_ARRAY(list, alloc);
 
 	list[counter++] = get_main_worktree();
 
