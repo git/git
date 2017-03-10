@@ -1769,6 +1769,9 @@ static int http_request_reauth(const char *url,
 {
 	int ret = http_request(url, result, target, options);
 
+	if (ret != HTTP_OK && ret != HTTP_REAUTH)
+		return ret;
+
 	if (options && options->effective_url && options->base_url) {
 		if (update_url_from_redirect(options->base_url,
 					     url, options->effective_url)) {
