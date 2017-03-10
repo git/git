@@ -356,12 +356,10 @@ static void init_submodule(const char *path, const char *prefix, int quiet)
 			strbuf_addf(&remotesb, "remote.%s.url", remote);
 			free(remote);
 
-			if (git_config_get_string(remotesb.buf, &remoteurl))
-				/*
-				 * The repository is its own
-				 * authoritative upstream
-				 */
+			if (git_config_get_string(remotesb.buf, &remoteurl)) {
+				warning(_("could not lookup configuration '%s'. Assuming this repository is its own authoritative upstream."), remotesb.buf);
 				remoteurl = xgetcwd();
+			}
 			relurl = relative_url(remoteurl, url, NULL);
 			strbuf_release(&remotesb);
 			free(remoteurl);

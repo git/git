@@ -73,13 +73,17 @@ configuration entries unless `--name` is used to specify a logical name.
 +
 <repository> is the URL of the new submodule's origin repository.
 This may be either an absolute URL, or (if it begins with ./
-or ../), the location relative to the superproject's origin
+or ../), the location relative to the superproject's default remote
 repository (Please note that to specify a repository 'foo.git'
 which is located right next to a superproject 'bar.git', you'll
 have to use '../foo.git' instead of './foo.git' - as one might expect
 when following the rules for relative URLs - because the evaluation
 of relative URLs in Git is identical to that of relative directories).
-If the superproject doesn't have an origin configured
++
+The default remote is the remote of the remote tracking branch
+of the current branch. If no such remote tracking branch exists or
+the HEAD is detached, "origin" is assumed to be the default remote.
+If the superproject doesn't have a default remote configured
 the superproject is its own authoritative upstream and the current
 working directory is used instead.
 +
@@ -118,18 +122,24 @@ too (and can also report changes to a submodule's work tree).
 
 init [--] [<path>...]::
 	Initialize the submodules recorded in the index (which were
-	added and committed elsewhere) by copying submodule
-	names and urls from .gitmodules to .git/config.
-	Optional <path> arguments limit which submodules will be initialized.
-	It will also copy the value of `submodule.$name.update` into
-	.git/config.
-	The key used in .git/config is `submodule.$name.url`.
-	This command does not alter existing information in .git/config.
-	You can then customize the submodule clone URLs in .git/config
-	for your local setup and proceed to `git submodule update`;
-	you can also just use `git submodule update --init` without
-	the explicit 'init' step if you do not intend to customize
-	any submodule locations.
+	added and committed elsewhere) by setting `submodule.$name.url`
+	in .git/config. It uses the same setting from .gitmodules as
+	a template. If the URL is relative, it will be resolved using
+	the default remote. If there is no default remote, the current
+	repository will be assumed to be upstream.
++
+Optional <path> arguments limit which submodules will be initialized.
+If no path is specified, all submodules are initialized.
++
+When present, it will also copy the value of `submodule.$name.update`.
+This command does not alter existing information in .git/config.
+You can then customize the submodule clone URLs in .git/config
+for your local setup and proceed to `git submodule update`;
+you can also just use `git submodule update --init` without
+the explicit 'init' step if you do not intend to customize
+any submodule locations.
++
+See the add subcommand for the defintion of default remote.
 
 deinit [-f|--force] (--all|[--] <path>...)::
 	Unregister the given submodules, i.e. remove the whole
