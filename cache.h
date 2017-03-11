@@ -10,8 +10,8 @@
 #include "trace.h"
 #include "string-list.h"
 #include "pack-revindex.h"
+#include "hash.h"
 
-#include SHA1_HEADER
 #ifndef platform_SHA_CTX
 /*
  * platform's underlying implementation of SHA-1; could be OpenSSL,
