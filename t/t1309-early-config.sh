@@ -47,4 +47,28 @@ test_expect_success 'ceiling #2' '
 	test xdg = "$(cat output)"
 '
 
+test_with_config () {
+	rm -rf throwaway &&
+	git init throwaway &&
+	(
+		cd throwaway &&
+		echo "$*" >.git/config &&
+		test-config read_early_config early.config
+	)
+}
+
+test_expect_success 'ignore .git/ with incompatible repository version' '
+	test_with_config "[core]repositoryformatversion = 999999" 2>err &&
+	grep "warning:.* Expected git repo version <= [1-9]" err
+'
+
+test_expect_failure 'ignore .git/ with invalid repository version' '
+	test_with_config "[core]repositoryformatversion = invalid"
+'
+
+
+test_expect_failure 'ignore .git/ with invalid config' '
+	test_with_config "["
+'
+
 test_done
