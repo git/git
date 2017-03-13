@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2017, #04; Fri, 10)
-X-master-at: 625568cd8813bf32b2172eaf59e45e9da5978ce3
-X-next-at: 88fb0023506122bc4e8d1df1648518e0b0d264db
+Subject: What's cooking in git.git (Mar 2017, #05; Mon, 13)
+X-master-at: d6db3f216544d05e09159756812ccbcb16861d71
+X-next-at: 23dc2f6d3cd0230fcc0aabcb98a39cbef9ded585
 
-What's cooking in git.git (Mar 2017, #04; Fri, 10)
+What's cooking in git.git (Mar 2017, #05; Mon, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,183 +20,156 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ew/markdown-url-in-readme (2017-03-01) 1 commit
-  (merged to 'next' on 2017-03-03 at 3d35e3a991)
- + README: create HTTP/HTTPS links from URLs in Markdown
+* ah/doc-ls-files-quotepath (2017-03-02) 1 commit
+  (merged to 'next' on 2017-03-10 at 5dfa78423a)
+ + Documentation: improve description for core.quotePath
 
- Doc update.
-
-
-* jc/config-case-cmdline-take-2 (2017-02-23) 2 commits
-  (merged to 'next' on 2017-03-01 at 2e9920eeeb)
- + config: use git_config_parse_key() in git_config_parse_parameter()
- + config: move a few helper functions up
-
- The code to parse "git -c VAR=VAL cmd" and set configuration
- variable for the duration of cmd had two small bugs, which have
- been fixed.
- This supersedes jc/config-case-cmdline topic that has been discarded.
+ Documentation for "git ls-files" did not refer to core.quotePath
 
 
-* jh/send-email-one-cc (2017-02-27) 1 commit
-  (merged to 'next' on 2017-03-02 at 32c0e6ad88)
- + send-email: only allow one address per body tag
+* ax/line-log-range-merge-fix (2017-03-03) 1 commit
+  (merged to 'next' on 2017-03-10 at 201073f113)
+ + line-log.c: prevent crash during union of too many ranges
 
- "Cc:" on the trailer part does not have to conform to RFC strictly,
- unlike in the e-mail header.  "git send-email" has been updated to
- ignore anything after '>' when picking addresses, to allow non-address
- cruft like " # stable 4.4" after the address.
-
-
-* jk/http-auth (2017-02-27) 2 commits
-  (merged to 'next' on 2017-03-02 at 87f81b4395)
- + http: add an "auto" mode for http.emptyauth
- + http: restrict auth methods to what the server advertises
-
- Reduce authentication round-trip over HTTP when the server supports
- just a single authentication method.
+ The code to parse "git log -L..." command line was buggy when there
+ are many ranges specified with -L; overrun of the allocated buffer
+ has been fixed.
 
 
-* jk/ident-empty (2017-02-23) 4 commits
-  (merged to 'next' on 2017-03-01 at ff80031ce6)
- + ident: do not ignore empty config name/email
- + ident: reject all-crud ident name
- + ident: handle NULL email when complaining of empty name
- + ident: mark error messages for translation
+* jc/diff-populate-filespec-size-only-fix (2017-03-02) 1 commit
+  (merged to 'next' on 2017-03-10 at 9b2d1ca50f)
+ + diff: do not short-cut CHECK_SIZE_ONLY check in diff_populate_filespec()
 
- user.email that consists of only cruft chars should consistently
- error out, but didn't.
-
-
-* jk/parse-config-key-cleanup (2017-02-24) 3 commits
-  (merged to 'next' on 2017-03-01 at e531d8d3a9)
- + parse_hide_refs_config: tell parse_config_key we don't want a subsection
- + parse_config_key: allow matching single-level config
- + parse_config_key: use skip_prefix instead of starts_with
- (this branch uses sb/parse-hide-refs-config-cleanup.)
-
- The "parse_config_key()" API function has been cleaned up.
+ "git diff --quiet" relies on the size field in diff_filespec to be
+ correctly populated, but diff_populate_filespec() helper function
+ made an incorrect short-cut when asked only to populate the size
+ field for paths that need to go through convert_to_git() (e.g. CRLF
+ conversion).
 
 
-* jk/t6300-cleanup (2017-02-27) 1 commit
-  (merged to 'next' on 2017-03-02 at 3087521bea)
- + t6300: avoid creating refs/heads/HEAD
+* jh/mingw-openssl-sha1 (2017-02-09) 1 commit
+  (merged to 'next' on 2017-03-10 at 8a1aa07def)
+ + mingw: use OpenSSL's SHA-1 routines
 
- A test that creates a confusing branch whose name is HEAD has been
- corrected not to do so.
-
-
-* jt/http-base-url-update-upon-redirect (2017-02-28) 1 commit
-  (merged to 'next' on 2017-03-03 at 5225bd3ef8)
- + http: attempt updating base URL only if no error
-
- When a redirected http transport gets an error during the
- redirected request, we ignored the error we got from the server,
- and ended up giving a not-so-useful error message.
+ Windows port wants to use OpenSSL's implementation of SHA-1
+ routines, so let them.
 
 
-* jt/upload-pack-error-report (2017-02-23) 1 commit
-  (merged to 'next' on 2017-03-01 at aea583dbe5)
- + upload-pack: report "not our ref" to client
+* jk/add-i-patch-do-prompt (2017-03-02) 1 commit
+  (merged to 'next' on 2017-03-10 at 891ec6f5ba)
+ + add--interactive: fix missing file prompt for patch mode with "-i"
 
- "git upload-pack", which is a counter-part of "git fetch", did not
- report a request for a ref that was not advertised as invalid.
- This is generally not a problem (because "git fetch" will stop
- before making such a request), but is the right thing to do.
-
-
-* ps/docs-diffcore (2017-02-28) 2 commits
-  (merged to 'next' on 2017-03-03 at 9ca5691de2)
- + docs/diffcore: unquote "Complete Rewrites" in headers
- + docs/diffcore: fix grammar in diffcore-rename header
-
- Doc update.
+ The patch subcommand of "git add -i" was meant to have paths
+ selection prompt just like other subcommand, unlike "git add -p"
+ directly jumps to hunk selection.  Recently, this was broken and
+ "add -i" lost the paths selection dialog, but it now has been
+ fixed.
 
 
-* rj/remove-unused-mktemp (2017-02-28) 2 commits
-  (merged to 'next' on 2017-03-03 at 4512f0c5ab)
- + wrapper.c: remove unused gitmkstemps() function
- + wrapper.c: remove unused git_mkstemp() function
-
- Code cleanup.
-
-
-* rs/commit-parsing-optim (2017-02-27) 2 commits
-  (merged to 'next' on 2017-03-02 at 22239f35df)
- + commit: don't check for space twice when looking for header
- + commit: be more precise when searching for headers
-
- The code that parses header fields in the commit object has been
- updated for (micro)performance and code hygiene.
-
-
-* rs/log-email-subject (2017-03-01) 2 commits
-  (merged to 'next' on 2017-03-03 at a2ecc84866)
- + pretty: use fmt_output_email_subject()
- + log-tree: factor out fmt_output_email_subject()
+* jk/ewah-use-right-type-in-sizeof (2017-03-06) 1 commit
+  (merged to 'next' on 2017-03-10 at ad66adacda)
+ + ewah: fix eword_t/uint64_t confusion
 
  Code clean-up.
 
 
-* rs/sha1-file-plug-fallback-base-leak (2017-02-27) 1 commit
-  (merged to 'next' on 2017-03-02 at 03344b1119)
- + sha1_file: release fallback base's memory in unpack_entry()
+* js/realpath-pathdup-fix (2017-03-08) 2 commits
+  (merged to 'next' on 2017-03-10 at 5a84dbbd1d)
+ + real_pathdup(): fix callsites that wanted it to die on error
+ + t1501: demonstrate NULL pointer access with invalid GIT_WORK_TREE
 
- A leak in a codepath to read from a packed object in (rare) cases
- has been plugged.
-
-
-* rs/strbuf-add-real-path (2017-02-27) 2 commits
-  (merged to 'next' on 2017-03-02 at 69191becd6)
- + strbuf: add strbuf_add_real_path()
- + cocci: use ALLOC_ARRAY
-
- An helper function to make it easier to append the result from
- real_path() to a strbuf has been added.
+ Git v2.12 was shipped with an embarrassing breakage where various
+ operations that verify paths given from the user stopped dying when
+ seeing an issue, and instead later triggering segfault.
+ ... and then to down to 'maint'.
 
 
-* sb/parse-hide-refs-config-cleanup (2017-02-24) 1 commit
-  (merged to 'next' on 2017-03-01 at fd722ba039)
- + refs: parse_hide_refs_config to use parse_config_key
- (this branch is used by jk/parse-config-key-cleanup.)
+* ss/remote-bzr-hg-placeholder-wo-python (2017-03-03) 1 commit
+  (merged to 'next' on 2017-03-10 at c8c4bb78a2)
+ + contrib: git-remote-{bzr,hg} placeholders don't need Python
 
- Code clean-up.
-
-
-* sb/submodule-init-url-selection (2017-02-28) 1 commit
-  (merged to 'next' on 2017-03-03 at 847d1f9a91)
- + submodule init: warn about falling back to a local path
-
- When "git submodule init" decides that the submodule in the working
- tree is its upstream, it now gives a warning as it is not a very
- common setup.
+ There is no need for Python only to give a few messages to the
+ standard error stream, but we somehow did.
 
 
-* tg/stash-push (2017-02-28) 6 commits
-  (merged to 'next' on 2017-03-03 at b50fda0389)
- + stash: allow pathspecs in the no verb form
- + stash: use stash_push for no verb form
- + stash: teach 'push' (and 'create_stash') to honor pathspec
- + stash: refactor stash_create
- + stash: add test for the create command line arguments
- + stash: introduce push verb
+* vn/line-log-memcpy-size-fix (2017-03-06) 1 commit
+  (merged to 'next' on 2017-03-10 at 2e65ff89b7)
+ + line-log: use COPY_ARRAY to fix mis-sized memcpy
 
- "git stash save" takes a pathspec so that the local changes can be
- stashed away only partially.
+ The command-line parsing of "git log -L" copied internal data
+ structures using incorrect size on ILP32 systems.
 
 --------------------------------------------------
 [New Topics]
 
-* jk/ref-filter-flags-cleanup (2017-03-10) 4 commits
- - ref-filter: use separate cache for contains_tag_algo
- - ref-filter: die on parse_commit errors
- - ref-filter: use contains_result enum consistently
- - ref-filter: move ref_cbdata definition into ref-filter.c
+* ab/ref-filter-no-contains (2017-03-11) 1 commit
+ - ref-filter: add --no-contains option to tag/branch/for-each-ref
+ (this branch uses jk/ref-filter-flags-cleanup.)
 
- "git tag --contains" used to (ab)use the object bits to keep track
- of the state of object reachability without clearing them after
- use; this has been cleaned up and made to use the newer commit-slab
- facility.
+ "git tag/branch/for-each-ref" family of commands long allowed to
+ filter the refs by "--contains X" (show only the refs that are
+ descendants of X), "--merged X" (show only the refs that are
+ ancestors of X), "--no-merged X" (show only the refs that are not
+ ancestors of X).  One curious omission, "--no-contains X" (show
+ only the refs that are not descendants of X) has been added to
+ them.
+
+ Expecting a reroll.
+ cf. <CACBZZX4v49zfyGVpcxGSKsxbMfVaUcGHtitpfaZMUtG82YzW-g@mail.gmail.com>
+ The topic is almost there.
+
+
+* bc/sha1-header-selection-with-cpp-macros (2017-03-11) 1 commit
+ - Move SHA-1 implementation selection into a header file
+
+ Our source code has used the SHA1_HEADER cpp macro after "#include"
+ in the C code to switch among the SHA-1 implementations. Instead,
+ list the exact header file names and switch among implementations
+ using "#ifdef BLK_SHA1/#include "block-sha1/sha1.h"/.../#endif";
+ this helps some IDE tools.
+
+ Expecting a reroll.
+
+
+* bw/attr-pathspec (2017-03-13) 2 commits
+ - pathspec: allow escaped query values
+ - pathspec: allow querying for attributes
+
+ The pathspec mechanism learned to further limit the paths that
+ match the pattern to those that have specified attributes attached
+ via the gitattributes mechanism.
+
+ Will merge to 'next'.
+
+
+* jk/http-walker-buffer-underflow-fix (2017-03-13) 1 commit
+ - http-walker: fix buffer underflow processing remote alternates
+
+ "Dumb http" transport used to misparse a nonsense http-alternates
+ response, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* rs/blame-code-cleanup (2017-03-11) 1 commit
+  (merged to 'next' on 2017-03-12 at 8fd4bf325a)
+ + blame: move blame_entry duplication to add_blame_entry()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* dl/credential-cache-socket-in-xdg-cache (2017-03-13) 1 commit
+ - path.c: add xdg_cache_home
+
+ The default location "~/.git-credential-cache/socket" for the
+ socket used to communicate with the credential-cache daemon has
+ been moved to "~/.cache/git/credential/socket".
+
+ Waiting for a reroll.
+ The patches do not yet match the above description without
+ the second one that is not queued here.
 
 --------------------------------------------------
 [Stalled]
@@ -383,6 +356,21 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/ref-filter-flags-cleanup (2017-03-10) 4 commits
+ - ref-filter: use separate cache for contains_tag_algo
+ - ref-filter: die on parse_commit errors
+ - ref-filter: use contains_result enum consistently
+ - ref-filter: move ref_cbdata definition into ref-filter.c
+ (this branch is used by ab/ref-filter-no-contains.)
+
+ "git tag --contains" used to (ab)use the object bits to keep track
+ of the state of object reachability without clearing them after
+ use; this has been cleaned up and made to use the newer commit-slab
+ facility.
+
+ Will merge to 'next'.
+
+
 * ew/http-alternates-as-redirects-warning (2017-03-06) 2 commits
   (merged to 'next' on 2017-03-10 at 23be072a07)
  + http: release strbuf on disabled alternates
@@ -392,15 +380,6 @@ of the repositories listed at
  transport) just like HTTP redirects and requires the client to
  enable following it, due to security concerns.  But we forgot to
  give a warning when we decide not to honor the alternates.
-
- Will merge to 'master'.
-
-
-* jk/ewah-use-right-type-in-sizeof (2017-03-06) 1 commit
-  (merged to 'next' on 2017-03-10 at ad66adacda)
- + ewah: fix eword_t/uint64_t confusion
-
- Code clean-up.
 
  Will merge to 'master'.
 
@@ -418,29 +397,6 @@ of the repositories listed at
  when unexpected error happened, which has been fixed.
 
  Will merge to 'master'.
-
-
-* vn/line-log-memcpy-size-fix (2017-03-06) 1 commit
-  (merged to 'next' on 2017-03-10 at 2e65ff89b7)
- + line-log: use COPY_ARRAY to fix mis-sized memcpy
-
- The command-line parsing of "git log -L" copied internal data
- structures using incorrect size on ILP32 systems.
-
- Will merge to 'master'.
-
-
-* js/realpath-pathdup-fix (2017-03-08) 2 commits
-  (merged to 'next' on 2017-03-10 at 5a84dbbd1d)
- + real_pathdup(): fix callsites that wanted it to die on error
- + t1501: demonstrate NULL pointer access with invalid GIT_WORK_TREE
-
- Git v2.12 was shipped with an embarrassing breakage where various
- operations that verify paths given from the user stopped dying when
- seeing an issue, and instead later triggering segfault.
-
- Will merge to 'master'.
- ... and then to down to 'maint'.
 
 
 * kn/ref-filter-branch-list (2017-03-10) 1 commit
@@ -469,34 +425,13 @@ of the repositories listed at
 * ls/filter-process-delayed (2017-03-06) 1 commit
  - convert: add "status=delayed" to filter process protocol
 
+ What's the status of this one???
+
  cf. <xmqq60jmnmef.fsf@junio-linux.mtv.corp.google.com>
 
 
-* jk/add-i-patch-do-prompt (2017-03-02) 1 commit
-  (merged to 'next' on 2017-03-10 at 891ec6f5ba)
- + add--interactive: fix missing file prompt for patch mode with "-i"
-
- The patch subcommand of "git add -i" was meant to have paths
- selection prompt just like other subcommand, unlike "git add -p"
- directly jumps to hunk selection.  Recently, this was broken and
- "add -i" lost the paths selection dialog, but it now has been
- fixed.
-
- Will merge to 'master'.
-
-
-* ax/line-log-range-merge-fix (2017-03-03) 1 commit
-  (merged to 'next' on 2017-03-10 at 201073f113)
- + line-log.c: prevent crash during union of too many ranges
-
- The code to parse "git log -L..." command line was buggy when there
- are many ranges specified with -L; overrun of the allocated buffer
- has been fixed.
-
- Will merge to 'master'.
-
-
-* js/early-config (2017-03-10) 11 commits
+* js/early-config (2017-03-13) 12 commits
+ - setup.c: mention unresolved problems
  - t1309: document cases where we would want early config not to die()
  - setup_git_directory_gently_1(): avoid die()ing
  - t1309: test read_early_config()
@@ -505,7 +440,7 @@ of the repositories listed at
  - setup: make read_early_config() reusable
  - setup: introduce the discover_git_directory() function
  - setup_git_directory_1(): avoid changing global state
- - setup: prepare setup_discovered_git_directory() the root directory
+ - setup: do not append '/' to root in setup_discovered_git_dir()
  - setup_git_directory(): use is_dir_sep() helper
  - t7006: replace dubious test
 
@@ -514,9 +449,7 @@ of the repositories listed at
  repository and was quite messy due to its "chicken-and-egg" nature.
  The code has been restructured.
 
- Almost perfect.
- cf. <xmqqefy5yn4k.fsf@gitster.mtv.corp.google.com>
- cf. <xmqq4lz1ylgv.fsf@gitster.mtv.corp.google.com>
+ Will merge to 'next'.
 
 
 * jt/perf-updates (2017-03-03) 3 commits
@@ -528,16 +461,6 @@ of the repositories listed at
  The t/perf performance test suite was not prepared to test not so
  old versions of Git, but now it covers versions of Git that are not
  so ancient.
-
- Will merge to 'master'.
-
-
-* ss/remote-bzr-hg-placeholder-wo-python (2017-03-03) 1 commit
-  (merged to 'next' on 2017-03-10 at c8c4bb78a2)
- + contrib: git-remote-{bzr,hg} placeholders don't need Python
-
- There is no need for Python only to give a few messages to the
- standard error stream, but we somehow did.
 
  Will merge to 'master'.
 
@@ -598,25 +521,11 @@ of the repositories listed at
  marked those that are contained in an uninteresting boundary commit
  as uninteresting.
 
+ Retracted?
  cf. <20170228215937.yd4juycjf7y3vish@sigill.intra.peff.net>
 
 
-* jc/diff-populate-filespec-size-only-fix (2017-03-02) 1 commit
-  (merged to 'next' on 2017-03-10 at 9b2d1ca50f)
- + diff: do not short-cut CHECK_SIZE_ONLY check in diff_populate_filespec()
-
- "git diff --quiet" relies on the size field in diff_filespec to be
- correctly populated, but diff_populate_filespec() helper function
- made an incorrect short-cut when asked only to populate the size
- field for paths that need to go through convert_to_git() (e.g. CRLF
- conversion).
-
- Will merge to 'master'.
-
-
-* nd/conditional-config-include (2017-03-03) 5 commits
- - SQUASH??? cond config include test
- - SQUASH???
+* nd/conditional-config-include (2017-03-11) 3 commits
  - config: add conditional include
  - config.txt: reflow the second include.path paragraph
  - config.txt: clarify multiple key values in include.path
@@ -630,33 +539,34 @@ of the repositories listed at
 
 
 * cc/split-index-config (2017-03-06) 22 commits
- - Documentation/git-update-index: explain splitIndex.*
- - Documentation/config: add splitIndex.sharedIndexExpire
- - read-cache: use freshen_shared_index() in read_index_from()
- - read-cache: refactor read_index_from()
- - t1700: test shared index file expiration
- - read-cache: unlink old sharedindex files
- - config: add git_config_get_expiry() from gc.c
- - read-cache: touch shared index files when used
- - sha1_file: make check_and_freshen_file() non static
- - Documentation/config: add splitIndex.maxPercentChange
- - t1700: add tests for splitIndex.maxPercentChange
- - read-cache: regenerate shared index if necessary
- - config: add git_config_get_max_percent_split_change()
- - Documentation/git-update-index: talk about core.splitIndex config var
- - Documentation/config: add information for core.splitIndex
- - t1700: add tests for core.splitIndex
- - update-index: warn in case of split-index incoherency
- - read-cache: add and then use tweak_split_index()
- - split-index: add {add,remove}_split_index() functions
- - config: add git_config_get_split_index()
- - t1700: change here document style
- - config: mark an error message up for translation
+  (merged to 'next' on 2017-03-12 at 53cdc2016d)
+ + Documentation/git-update-index: explain splitIndex.*
+ + Documentation/config: add splitIndex.sharedIndexExpire
+ + read-cache: use freshen_shared_index() in read_index_from()
+ + read-cache: refactor read_index_from()
+ + t1700: test shared index file expiration
+ + read-cache: unlink old sharedindex files
+ + config: add git_config_get_expiry() from gc.c
+ + read-cache: touch shared index files when used
+ + sha1_file: make check_and_freshen_file() non static
+ + Documentation/config: add splitIndex.maxPercentChange
+ + t1700: add tests for splitIndex.maxPercentChange
+ + read-cache: regenerate shared index if necessary
+ + config: add git_config_get_max_percent_split_change()
+ + Documentation/git-update-index: talk about core.splitIndex config var
+ + Documentation/config: add information for core.splitIndex
+ + t1700: add tests for core.splitIndex
+ + update-index: warn in case of split-index incoherency
+ + read-cache: add and then use tweak_split_index()
+ + split-index: add {add,remove}_split_index() functions
+ + config: add git_config_get_split_index()
+ + t1700: change here document style
+ + config: mark an error message up for translation
 
  The experimental "split index" feature has gained a few
  configuration variables to make it easier to use.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dp/filter-branch-prune-empty (2017-03-03) 4 commits
@@ -685,21 +595,23 @@ of the repositories listed at
 
 
 * jk/interop-test (2017-03-10) 2 commits
- - t/interop: add test of old clients against modern git-daemon
- - t: add an interoperability test harness
+  (merged to 'next' on 2017-03-12 at 704b328022)
+ + t/interop: add test of old clients against modern git-daemon
+ + t: add an interoperability test harness
 
  Picking two versions of Git and running tests to make sure the
  older one and the newer one interoperate happily has now become
  possible.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/clone-refspec-from-command-line-config (2017-02-27) 1 commit
  - clone: respect configured fetch respecs during initial fetch
 
- Needs review.
+ Expecting a reroll.
  cf. <20170227211217.73gydlxb2qu2sp3m@sigill.intra.peff.net>
+ cf. <CAM0VKj=rsAfKvVccOMOoo5==Q1yW1U0zJBbUV=faKppWFm-u+g@mail.gmail.com>
 
 
 * sk/dash-is-previous (2017-03-01) 5 commits
@@ -714,15 +626,6 @@ of the repositories listed at
 
  Needs review.
  cf. <1488007487-12965-1-git-send-email-kannan.siddharth12@gmail.com>
-
-
-* ah/doc-ls-files-quotepath (2017-03-02) 1 commit
-  (merged to 'next' on 2017-03-10 at 5dfa78423a)
- + Documentation: improve description for core.quotePath
-
- Documentation for "git ls-files" did not refer to core.quotePath
-
- Will merge to 'master'.
 
 
 * jh/memihash-opt (2017-02-17) 5 commits
@@ -749,12 +652,11 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/checkout-recurse-submodules (2017-03-10) 19 commits
+* sb/checkout-recurse-submodules (2017-03-11) 18 commits
  - submodule--helper.c: remove duplicate code
  - builtin/read-tree: add --recurse-submodules switch
  - builtin/checkout: add --recurse-submodules switch
- - entry.c: update submodules when interesting
- - read-cache, remove_marked_cache_entries: wipe selected submodules.
+ - entry.c: create submodules when interesting
  - unpack-trees: check if we can perform the operation for submodules
  - unpack-trees: pass old oid to verify_clean_submodule
  - update submodules: add submodule_move_head
@@ -796,18 +698,7 @@ of the repositories listed at
 
  "uchar [40]" to "struct object_id" conversion continues.
 
- Now at v5.
- cf. <20170221234737.894681-1-sandals@crustytoothpaste.net>
-
-
-* jh/mingw-openssl-sha1 (2017-02-09) 1 commit
-  (merged to 'next' on 2017-03-10 at 8a1aa07def)
- + mingw: use OpenSSL's SHA-1 routines
-
- Windows port wants to use OpenSSL's implementation of SHA-1
- routines, so let them.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * sg/completion-refs-speedup (2017-02-13) 13 commits
