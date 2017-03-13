@@ -117,9 +117,12 @@ OPTIONS
 
 -z::
 --null::
-	When showing `short` or `porcelain` status output, terminate
-	entries in the status output with NUL, instead of LF. If no
-	format is given, implies the `--porcelain` output format.
+	When showing `short` or `porcelain` status output, print the
+	filename verbatim and terminate the entries with NUL, instead of LF.
+	If no format is given, implies the `--porcelain` output format.
+	Without the `-z` option, filenames with "unusual" characters are
+	quoted as explained for the configuration variable `core.quotePath`
+	(see linkgit:git-config[1]).
 
 -F <file>::
 --file=<file>::
