@@ -44,6 +44,7 @@ struct attr_check {
 
 extern struct attr_check *attr_check_alloc(void);
 extern struct attr_check *attr_check_initl(const char *, ...);
+extern struct attr_check *attr_check_dup(const struct attr_check *check);
 
 extern struct attr_check_item *attr_check_append(struct attr_check *check,
 						 const struct git_attr *attr);
