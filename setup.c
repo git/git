@@ -531,6 +531,7 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 	ssize_t len;
 
 	if (stat(path, &st)) {
+		/* NEEDSWORK: discern between ENOENT vs other errors */
 		error_code = READ_GITFILE_ERR_STAT_FAILED;
 		goto cleanup_return;
 	}
@@ -902,6 +903,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		if (!gitdirenv) {
 			if (die_on_error ||
 			    error_code == READ_GITFILE_ERR_NOT_A_FILE) {
+				/* NEEDSWORK: fail if .git is not file nor dir */
 				if (is_git_directory(dir->buf))
 					gitdirenv = DEFAULT_GIT_DIR_ENVIRONMENT;
 			} else if (error_code != READ_GITFILE_ERR_STAT_FAILED)
