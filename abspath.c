@@ -214,12 +214,12 @@ const char *real_path_if_valid(const char *path)
 	return strbuf_realpath(&realpath, path, 0);
 }
 
-char *real_pathdup(const char *path)
+char *real_pathdup(const char *path, int die_on_error)
 {
 	struct strbuf realpath = STRBUF_INIT;
 	char *retval = NULL;
 
-	if (strbuf_realpath(&realpath, path, 0))
+	if (strbuf_realpath(&realpath, path, die_on_error))
 		retval = strbuf_detach(&realpath, NULL);
 
 	strbuf_release(&realpath);
