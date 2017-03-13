@@ -178,4 +178,23 @@ test_expect_success 'abort on asking for wrong magic' '
 	test_must_fail git ls-files . ":(attr:!label=foo)"
 '
 
+test_expect_success 'check attribute list' '
+	cat <<-EOF >>.gitattributes &&
+	* whitespace=indent,trail,space
+	EOF
+	git ls-files ":(attr:whitespace=indent\,trail\,space)" >actual &&
+	git ls-files >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'backslash cannot be the last character' '
+	test_must_fail git ls-files ":(attr:label=foo\\ labelA=bar)" 2>actual &&
+	test_i18ngrep "not allowed as last character in attr value" actual
+'
+
+test_expect_success 'backslash cannot be used as a value' '
+	test_must_fail git ls-files ":(attr:label=f\\\oo)" 2>actual &&
+	test_i18ngrep "for value matching" actual
+'
+
 test_done
