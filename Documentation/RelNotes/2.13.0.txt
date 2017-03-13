@@ -88,6 +88,8 @@ UI, Workflows & Features
    stashed away only partially.
    (merge 9e140909f6 tg/stash-push later to maint).
 
+ * Documentation for "git ls-files" did not refer to core.quotePath.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -133,6 +135,10 @@ Performance, Internal Implementation, Development Support etc.
    (i.e. not using Kerberos etc., which makes http.emptyAuth
    pointless).
    (merge 40a18fc77c jk/http-auth later to maint).
+
+ * Windows port wants to use OpenSSL's implementation of SHA-1
+   routines, so let them.
+   (merge 2cfc70f0de jh/mingw-openssl-sha1 later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -209,8 +215,41 @@ notes for details).
    and ended up giving a not-so-useful error message.
    (merge 8e27391a5f jt/http-base-url-update-upon-redirect later to maint).
 
+ * The patch subcommand of "git add -i" was meant to have paths
+   selection prompt just like other subcommand, unlike "git add -p"
+   directly jumps to hunk selection.  Recently, this was broken and
+   "add -i" lost the paths selection dialog, but it now has been
+   fixed.
+   (merge c852bd54bd jk/add-i-patch-do-prompt later to maint).
+
+ * Git v2.12 was shipped with an embarrassing breakage where various
+   operations that verify paths given from the user stopped dying when
+   seeing an issue, and instead later triggering segfault.
+   (merge ce83eadd9a js/realpath-pathdup-fix later to maint).
+
+ * There is no need for Python only to give a few messages to the
+   standard error stream, but we somehow did.
+   (merge b8686c661d ss/remote-bzr-hg-placeholder-wo-python later to maint).
+
+ * The code to parse "git log -L..." command line was buggy when there
+   are many ranges specified with -L; overrun of the allocated buffer
+   has been fixed.
+   (merge aaae0bf787 ax/line-log-range-merge-fix later to maint).
+
+ * The command-line parsing of "git log -L" copied internal data
+   structures using incorrect size on ILP32 systems.
+   (merge 07f546cda5 vn/line-log-memcpy-size-fix later to maint).
+
+ * "git diff --quiet" relies on the size field in diff_filespec to be
+   correctly populated, but diff_populate_filespec() helper function
+   made an incorrect short-cut when asked only to populate the size
+   field for paths that need to go through convert_to_git() (e.g. CRLF
+   conversion).
+   (merge 12426e114b jc/diff-populate-filespec-size-only-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 2cfa83574c mm/two-more-xstrfmt later to maint).
    (merge b803ae4427 ps/docs-diffcore later to maint).
    (merge bcd886d897 ew/markdown-url-in-readme later to maint).
    (merge b2d593a779 rj/remove-unused-mktemp later to maint).
+   (merge 3255e512a8 jk/ewah-use-right-type-in-sizeof later to maint).
