@@ -1239,6 +1239,14 @@ out:
 	return ret;
 }
 
+static const char *get_super_prefix_or_empty(void)
+{
+	const char *s = get_super_prefix();
+	if (!s)
+		s = "";
+	return s;
+}
+
 static int find_first_merges(struct object_array *result, const char *path,
 		struct commit *a, struct commit *b)
 {
@@ -1438,11 +1446,8 @@ static void relocate_single_git_dir_into_superproject(const char *prefix,
 		die(_("could not create directory '%s'"), new_git_dir);
 	real_new_git_dir = real_pathdup(new_git_dir);
 
-	if (!prefix)
-		prefix = get_super_prefix();
-
 	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
-		prefix ? prefix : "", path,
+		get_super_prefix_or_empty(), path,
 		real_old_git_dir, real_new_git_dir);
 
 	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
@@ -1513,8 +1518,7 @@ void absorb_git_dir_into_superproject(const char *prefix,
 		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
 			die("BUG: we don't know how to pass the flags down?");
 
-		if (get_super_prefix())
-			strbuf_addstr(&sb, get_super_prefix());
+		strbuf_addstr(&sb, get_super_prefix_or_empty());
 		strbuf_addstr(&sb, path);
 		strbuf_addch(&sb, '/');
 
