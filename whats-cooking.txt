@@ -1,16 +1,39 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2017, #05; Mon, 13)
-X-master-at: d6db3f216544d05e09159756812ccbcb16861d71
-X-next-at: 23dc2f6d3cd0230fcc0aabcb98a39cbef9ded585
+Subject: What's cooking in git.git (Mar 2017, #06; Tue, 14)
+X-master-at: 4a9b9b32d47212e4ea43cd1fa3c11afef6d4c491
+X-next-at: 48829862c7ec047bdce13a3e5d758eb4d703d5b8
 
-What's cooking in git.git (Mar 2017, #05; Mon, 13)
+What's cooking in git.git (Mar 2017, #06; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+Among the topics merged to 'master' since v2.12 was tagged, 40+ of
+them could be also merged to 'maint' (some of these are new features
+and by default should not be, though).  Among them two are fixes for
+regressions found in v2.12:
+
+ * The patch subcommand of "git add -i" was meant to have paths
+   selection prompt just like other subcommand, unlike "git add -p"
+   directly jumps to hunk selection.  Recently, this was broken and
+   "add -i" lost the paths selection dialog, but it now has been
+   fixed.
+   (merge c852bd54bd jk/add-i-patch-do-prompt later to maint).
+
+ * Git v2.12 was shipped with an embarrassing breakage where various
+   operations that verify paths given from the user stopped dying when
+   seeing an issue, and instead later triggering segfault.
+   (merge ce83eadd9a js/realpath-pathdup-fix later to maint).
+
+These two have been merged to 'master' only a few days ago;
+additional tests on 'master' to make sure they fix the issues, and
+more importantly they do not introduce new regressions, are greatly
+appreciated.  I am hoping we can merge them (and probably others)
+to 'maint' to cut v2.12.1 by early next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,159 +43,182 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ah/doc-ls-files-quotepath (2017-03-02) 1 commit
-  (merged to 'next' on 2017-03-10 at 5dfa78423a)
- + Documentation: improve description for core.quotePath
+* ab/cond-skip-tests (2017-03-01) 3 commits
+  (merged to 'next' on 2017-03-10 at 38124fb5ce)
+ + gitweb tests: skip tests when we don't have Time::HiRes
+ + gitweb tests: change confusing "skip_all" phrasing
+ + cvs tests: skip tests that call "cvs commit" when running as root
 
- Documentation for "git ls-files" did not refer to core.quotePath
-
-
-* ax/line-log-range-merge-fix (2017-03-03) 1 commit
-  (merged to 'next' on 2017-03-10 at 201073f113)
- + line-log.c: prevent crash during union of too many ranges
-
- The code to parse "git log -L..." command line was buggy when there
- are many ranges specified with -L; overrun of the allocated buffer
- has been fixed.
+ A few tests were run conditionally under (rare) conditions where
+ they cannot be run (like running cvs tests under 'root' account).
 
 
-* jc/diff-populate-filespec-size-only-fix (2017-03-02) 1 commit
-  (merged to 'next' on 2017-03-10 at 9b2d1ca50f)
- + diff: do not short-cut CHECK_SIZE_ONLY check in diff_populate_filespec()
+* dp/filter-branch-prune-empty (2017-03-03) 4 commits
+  (merged to 'next' on 2017-03-10 at 9317e24cd3)
+ + p7000: add test for filter-branch with --prune-empty
+ + filter-branch: fix --prune-empty on parentless commits
+ + t7003: ensure --prune-empty removes entire branch when applicable
+ + t7003: ensure --prune-empty can prune root commit
 
- "git diff --quiet" relies on the size field in diff_filespec to be
- correctly populated, but diff_populate_filespec() helper function
- made an incorrect short-cut when asked only to populate the size
- field for paths that need to go through convert_to_git() (e.g. CRLF
- conversion).
-
-
-* jh/mingw-openssl-sha1 (2017-02-09) 1 commit
-  (merged to 'next' on 2017-03-10 at 8a1aa07def)
- + mingw: use OpenSSL's SHA-1 routines
-
- Windows port wants to use OpenSSL's implementation of SHA-1
- routines, so let them.
+ "git filter-branch --prune-empty" drops a single-parent commit that
+ becomes a no-op, but did not drop a root commit whose tree is empty.
 
 
-* jk/add-i-patch-do-prompt (2017-03-02) 1 commit
-  (merged to 'next' on 2017-03-10 at 891ec6f5ba)
- + add--interactive: fix missing file prompt for patch mode with "-i"
+* ew/http-alternates-as-redirects-warning (2017-03-06) 2 commits
+  (merged to 'next' on 2017-03-10 at 23be072a07)
+ + http: release strbuf on disabled alternates
+ + http: inform about alternates-as-redirects behavior
 
- The patch subcommand of "git add -i" was meant to have paths
- selection prompt just like other subcommand, unlike "git add -p"
- directly jumps to hunk selection.  Recently, this was broken and
- "add -i" lost the paths selection dialog, but it now has been
- fixed.
-
-
-* jk/ewah-use-right-type-in-sizeof (2017-03-06) 1 commit
-  (merged to 'next' on 2017-03-10 at ad66adacda)
- + ewah: fix eword_t/uint64_t confusion
-
- Code clean-up.
+ Recent versions of Git treats http alternates (used in dumb http
+ transport) just like HTTP redirects and requires the client to
+ enable following it, due to security concerns.  But we forgot to
+ give a warning when we decide not to honor the alternates.
 
 
-* js/realpath-pathdup-fix (2017-03-08) 2 commits
-  (merged to 'next' on 2017-03-10 at 5a84dbbd1d)
- + real_pathdup(): fix callsites that wanted it to die on error
- + t1501: demonstrate NULL pointer access with invalid GIT_WORK_TREE
+* jk/interpret-branch-name (2017-03-02) 9 commits
+  (merged to 'next' on 2017-03-10 at 95cc55f9a3)
+ + checkout: restrict @-expansions when finding branch
+ + strbuf_check_ref_format(): expand only local branches
+ + branch: restrict @-expansions when deleting
+ + t3204: test git-branch @-expansion corner cases
+ + interpret_branch_name: allow callers to restrict expansions
+ + strbuf_branchname: add docstring
+ + strbuf_branchname: drop return value
+ + interpret_branch_name: move docstring to header file
+ + interpret_branch_name(): handle auto-namelen for @{-1}
 
- Git v2.12 was shipped with an embarrassing breakage where various
- operations that verify paths given from the user stopped dying when
- seeing an issue, and instead later triggering segfault.
- ... and then to down to 'maint'.
-
-
-* ss/remote-bzr-hg-placeholder-wo-python (2017-03-03) 1 commit
-  (merged to 'next' on 2017-03-10 at c8c4bb78a2)
- + contrib: git-remote-{bzr,hg} placeholders don't need Python
-
- There is no need for Python only to give a few messages to the
- standard error stream, but we somehow did.
+ "git branch @" created refs/heads/@ as a branch, and in general the
+ code that handled @{-1} and @{upstream} was a bit too loose in
+ disambiguating.
 
 
-* vn/line-log-memcpy-size-fix (2017-03-06) 1 commit
-  (merged to 'next' on 2017-03-10 at 2e65ff89b7)
- + line-log: use COPY_ARRAY to fix mis-sized memcpy
+* jk/push-deadlock-regression-fix (2017-03-07) 6 commits
+  (merged to 'next' on 2017-03-10 at ceb0b819bf)
+ + send-pack: report signal death of pack-objects
+ + send-pack: read "unpack" status even on pack-objects failure
+ + send-pack: improve unpack-status error messages
+ + send-pack: use skip_prefix for parsing unpack status
+ + send-pack: extract parsing of "unpack" response
+ + receive-pack: fix deadlock when we cannot create tmpdir
 
- The command-line parsing of "git log -L" copied internal data
- structures using incorrect size on ILP32 systems.
+ "git push" had a handful of codepaths that could lead to a deadlock
+ when unexpected error happened, which has been fixed.
+
+
+* js/travis-32bit-linux (2017-03-06) 1 commit
+  (merged to 'next' on 2017-03-10 at 4cb69d0f77)
+ + Travis: also test on 32-bit Linux
+
+ Add 32-bit Linux variant to the set of platforms to be tested with
+ Travis CI.
+
+
+* jt/perf-updates (2017-03-03) 3 commits
+  (merged to 'next' on 2017-03-10 at 0c0b124ed4)
+ + t/perf: add fallback for pre-bin-wrappers versions of git
+ + t/perf: use $MODERN_GIT for all repo-copying steps
+ + t/perf: export variable used in other blocks
+
+ The t/perf performance test suite was not prepared to test not so
+ old versions of Git, but now it covers versions of Git that are not
+ so ancient.
+
+
+* kn/ref-filter-branch-list (2017-03-10) 1 commit
+  (merged to 'next' on 2017-03-10 at 73b43443f1)
+ + branch: honor --abbrev/--no-abbrev in --list mode
+
+ "git branch --list" takes the "--abbrev" and "--no-abbrev" options
+ to control the output of the object name in its "-v"(erbose)
+ output, but a recent update started ignoring them; this fixes it
+ before the breakage reaches to any released version.
+
+
+* mm/fetch-show-error-message-on-unadvertised-object (2017-03-02) 3 commits
+  (merged to 'next' on 2017-03-10 at 69e2023804)
+ + fetch-pack: add specific error for fetching an unadvertised object
+ + fetch_refs_via_pack: call report_unmatched_refs
+ + fetch-pack: move code to report unmatched refs to a function
+
+ "git fetch" that requests a commit by object name, when the other
+ side does not allow such an request, failed without much
+ explanation.
 
 --------------------------------------------------
 [New Topics]
 
-* ab/ref-filter-no-contains (2017-03-11) 1 commit
- - ref-filter: add --no-contains option to tag/branch/for-each-ref
- (this branch uses jk/ref-filter-flags-cleanup.)
+* bw/submodule-is-active (2017-03-14) 10 commits
+ - submodule add: respect submodule.active and submodule.<name>.active
+ - submodule--helper init: set submodule.<name>.active
+ - completion: clone can initialize specific submodules
+ - clone: add --submodule-spec=<pathspec> switch
+ - submodule update: add `--init-active` switch
+ - submodule: decouple url and submodule existence
+ - submodule--helper clone: check for configured submodules using helper
+ - submodule sync: use submodule--helper is-active
+ - submodule status: use submodule--helper is-active
+ - submodule--helper: add is-active command
 
- "git tag/branch/for-each-ref" family of commands long allowed to
- filter the refs by "--contains X" (show only the refs that are
- descendants of X), "--merged X" (show only the refs that are
- ancestors of X), "--no-merged X" (show only the refs that are not
- ancestors of X).  One curious omission, "--no-contains X" (show
- only the refs that are not descendants of X) has been added to
- them.
+ "what URL do we want to update this submodule?" and "are we
+ interested in this submodule?" are split into two distinct
+ concepts, and then the way used to express the latter got extended,
+ paving a way to make it easier to manage a project with many
+ submodules and make it possible to later extend use of multiple
+ worktrees for a project with submodules.
 
- Expecting a reroll.
- cf. <CACBZZX4v49zfyGVpcxGSKsxbMfVaUcGHtitpfaZMUtG82YzW-g@mail.gmail.com>
- The topic is almost there.
-
-
-* bc/sha1-header-selection-with-cpp-macros (2017-03-11) 1 commit
- - Move SHA-1 implementation selection into a header file
-
- Our source code has used the SHA1_HEADER cpp macro after "#include"
- in the C code to switch among the SHA-1 implementations. Instead,
- list the exact header file names and switch among implementations
- using "#ifdef BLK_SHA1/#include "block-sha1/sha1.h"/.../#endif";
- this helps some IDE tools.
-
- Expecting a reroll.
+ This looks like almost ready for 'next' modulo minor niggles.
 
 
-* bw/attr-pathspec (2017-03-13) 2 commits
- - pathspec: allow escaped query values
- - pathspec: allow querying for attributes
+* jk/add-i-use-pathspecs (2017-03-14) 1 commit
+  (merged to 'next' on 2017-03-14 at 13ce4d91e1)
+ + add--interactive: do not expand pathspecs with ls-files
 
- The pathspec mechanism learned to further limit the paths that
- match the pattern to those that have specified attributes attached
- via the gitattributes mechanism.
-
- Will merge to 'next'.
-
-
-* jk/http-walker-buffer-underflow-fix (2017-03-13) 1 commit
- - http-walker: fix buffer underflow processing remote alternates
-
- "Dumb http" transport used to misparse a nonsense http-alternates
- response, which has been fixed.
-
- Will merge to 'next'.
-
-
-* rs/blame-code-cleanup (2017-03-11) 1 commit
-  (merged to 'next' on 2017-03-12 at 8fd4bf325a)
- + blame: move blame_entry duplication to add_blame_entry()
-
- Code clean-up.
+ "git add -p <pathspec>" unnecessarily expanded the pathspec to a
+ list of individual files that matches the pathspec by running "git
+ ls-files <pathspec>", before feeding it to "git diff-index" to see
+ which paths have changes, because historically the pathspec
+ language supported by "diff-index" was weaker.  These days they are
+ equivalent and there is no reason to internally expand it.  This
+ helps both performance and avoids command line argument limit on
+ some platforms.
 
  Will merge to 'master'.
 
 
-* dl/credential-cache-socket-in-xdg-cache (2017-03-13) 1 commit
- - path.c: add xdg_cache_home
+* mg/status-porcelain-no-i18n (2017-03-14) 1 commit
+  (merged to 'next' on 2017-03-14 at 0955895825)
+ + git-status: make porcelain more robust
 
- The default location "~/.git-credential-cache/socket" for the
- socket used to communicate with the credential-cache daemon has
- been moved to "~/.cache/git/credential/socket".
+ "git status --porcelain" is supposed to give a stable output, but a
+ few strings were left as translatable by mistake.
 
- Waiting for a reroll.
- The patches do not yet match the above description without
- the second one that is not queued here.
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
+
+* sg/completion-refs-speedup (2017-02-13) 13 commits
+ - squash! completion: fill COMPREPLY directly when completing refs
+ - completion: fill COMPREPLY directly when completing refs
+ - completion: list only matching symbolic and pseudorefs when completing refs
+ - completion: let 'for-each-ref' sort remote branches for 'checkout' DWIMery
+ - completion: let 'for-each-ref' filter remote branches for 'checkout' DWIMery
+ - completion: let 'for-each-ref' strip the remote name from remote branches
+ - completion: let 'for-each-ref' and 'ls-remote' filter matching refs
+ - completion: don't disambiguate short refs
+ - completion: don't disambiguate tags and branches
+ - completion: support excluding full refs
+ - completion: support completing full refs after '--option=refs/<TAB>'
+ - completion: wrap __git_refs() for better option parsing
+ - completion: remove redundant __gitcomp_nl() options from _git_commit()
+
+ The refs completion for large number of refs has been sped up,
+ partly by giving up disambiguating ambiguous refs and partly by
+ eliminating most of the shell processing between 'git for-each-ref'
+ and 'ls-remote' and Bash's completion facility.
+
+ What's the donness of this topic?
+
 
 * nd/prune-in-worktree (2017-02-19) 15 commits
  . rev-list: expose and document --single-worktree
@@ -356,11 +402,85 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ab/ref-filter-no-contains (2017-03-11) 1 commit
+ - ref-filter: add --no-contains option to tag/branch/for-each-ref
+ (this branch uses jk/ref-filter-flags-cleanup.)
+
+ "git tag/branch/for-each-ref" family of commands long allowed to
+ filter the refs by "--contains X" (show only the refs that are
+ descendants of X), "--merged X" (show only the refs that are
+ ancestors of X), "--no-merged X" (show only the refs that are not
+ ancestors of X).  One curious omission, "--no-contains X" (show
+ only the refs that are not descendants of X) has been added to
+ them.
+
+ Expecting a reroll.
+ cf. <CACBZZX4v49zfyGVpcxGSKsxbMfVaUcGHtitpfaZMUtG82YzW-g@mail.gmail.com>
+ The topic is almost there.
+
+
+* bc/sha1-header-selection-with-cpp-macros (2017-03-14) 1 commit
+  (merged to 'next' on 2017-03-14 at 60bf8c5822)
+ + hash.h: move SHA-1 implementation selection into a header file
+
+ Our source code has used the SHA1_HEADER cpp macro after "#include"
+ in the C code to switch among the SHA-1 implementations. Instead,
+ list the exact header file names and switch among implementations
+ using "#ifdef BLK_SHA1/#include "block-sha1/sha1.h"/.../#endif";
+ this helps some IDE tools.
+
+ Will merge to 'master'.
+
+
+* bw/attr-pathspec (2017-03-13) 2 commits
+  (merged to 'next' on 2017-03-14 at 3af5d6c1fc)
+ + pathspec: allow escaped query values
+ + pathspec: allow querying for attributes
+
+ The pathspec mechanism learned to further limit the paths that
+ match the pattern to those that have specified attributes attached
+ via the gitattributes mechanism.
+
+ Will merge to 'master'.
+
+
+* jk/http-walker-buffer-underflow-fix (2017-03-13) 1 commit
+  (merged to 'next' on 2017-03-14 at 02020b475d)
+ + http-walker: fix buffer underflow processing remote alternates
+
+ "Dumb http" transport used to misparse a nonsense http-alternates
+ response, which has been fixed.
+
+ Will merge to 'master'.
+
+
+* rs/blame-code-cleanup (2017-03-11) 1 commit
+  (merged to 'next' on 2017-03-12 at 8fd4bf325a)
+ + blame: move blame_entry duplication to add_blame_entry()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* dl/credential-cache-socket-in-xdg-cache (2017-03-13) 1 commit
+ - path.c: add xdg_cache_home
+
+ The default location "~/.git-credential-cache/socket" for the
+ socket used to communicate with the credential-cache daemon has
+ been moved to "~/.cache/git/credential/socket".
+
+ Waiting for a reroll.
+ The patches do not yet match the above description without
+ the second one that is not queued here.
+
+
 * jk/ref-filter-flags-cleanup (2017-03-10) 4 commits
- - ref-filter: use separate cache for contains_tag_algo
- - ref-filter: die on parse_commit errors
- - ref-filter: use contains_result enum consistently
- - ref-filter: move ref_cbdata definition into ref-filter.c
+  (merged to 'next' on 2017-03-14 at c335c9cf6e)
+ + ref-filter: use separate cache for contains_tag_algo
+ + ref-filter: die on parse_commit errors
+ + ref-filter: use contains_result enum consistently
+ + ref-filter: move ref_cbdata definition into ref-filter.c
  (this branch is used by ab/ref-filter-no-contains.)
 
  "git tag --contains" used to (ab)use the object bits to keep track
@@ -368,58 +488,19 @@ of the repositories listed at
  use; this has been cleaned up and made to use the newer commit-slab
  facility.
 
- Will merge to 'next'.
-
-
-* ew/http-alternates-as-redirects-warning (2017-03-06) 2 commits
-  (merged to 'next' on 2017-03-10 at 23be072a07)
- + http: release strbuf on disabled alternates
- + http: inform about alternates-as-redirects behavior
-
- Recent versions of Git treats http alternates (used in dumb http
- transport) just like HTTP redirects and requires the client to
- enable following it, due to security concerns.  But we forgot to
- give a warning when we decide not to honor the alternates.
-
- Will merge to 'master'.
-
-
-* jk/push-deadlock-regression-fix (2017-03-07) 6 commits
-  (merged to 'next' on 2017-03-10 at ceb0b819bf)
- + send-pack: report signal death of pack-objects
- + send-pack: read "unpack" status even on pack-objects failure
- + send-pack: improve unpack-status error messages
- + send-pack: use skip_prefix for parsing unpack status
- + send-pack: extract parsing of "unpack" response
- + receive-pack: fix deadlock when we cannot create tmpdir
-
- "git push" had a handful of codepaths that could lead to a deadlock
- when unexpected error happened, which has been fixed.
-
- Will merge to 'master'.
-
-
-* kn/ref-filter-branch-list (2017-03-10) 1 commit
-  (merged to 'next' on 2017-03-10 at 73b43443f1)
- + branch: honor --abbrev/--no-abbrev in --list mode
-
- "git branch --list" takes the "--abbrev" and "--no-abbrev" options
- to control the output of the object name in its "-v"(erbose)
- output, but a recent update started ignoring them; this fixes it
- before the breakage reaches to any released version.
-
  Will merge to 'master'.
 
 
 * sb/rev-parse-show-superproject-root (2017-03-08) 1 commit
- - rev-parse: add --show-superproject-working-tree
+  (merged to 'next' on 2017-03-14 at 537c299db6)
+ + rev-parse: add --show-superproject-working-tree
 
  From a working tree of a repository, a new option of "rev-parse"
  lets you ask if the repository is used as a submodule of another
  project, and where the root level of the working tree of that
  project (i.e. your superproject) is.
 
- Almost there, but documentation needs a bit more work.
+ Will merge to 'master'.
 
 
 * ls/filter-process-delayed (2017-03-06) 1 commit
@@ -430,56 +511,25 @@ of the repositories listed at
  cf. <xmqq60jmnmef.fsf@junio-linux.mtv.corp.google.com>
 
 
-* js/early-config (2017-03-13) 12 commits
- - setup.c: mention unresolved problems
- - t1309: document cases where we would want early config not to die()
- - setup_git_directory_gently_1(): avoid die()ing
- - t1309: test read_early_config()
- - read_early_config(): really discover .git/
- - read_early_config(): avoid .git/config hack when unneeded
- - setup: make read_early_config() reusable
- - setup: introduce the discover_git_directory() function
- - setup_git_directory_1(): avoid changing global state
- - setup: do not append '/' to root in setup_discovered_git_dir()
- - setup_git_directory(): use is_dir_sep() helper
- - t7006: replace dubious test
+* js/early-config (2017-03-14) 12 commits
+  (merged to 'next' on 2017-03-14 at ce43b4a309)
+ + setup.c: mention unresolved problems
+ + t1309: document cases where we would want early config not to die()
+ + setup_git_directory_gently_1(): avoid die()ing
+ + t1309: test read_early_config()
+ + read_early_config(): really discover .git/
+ + read_early_config(): avoid .git/config hack when unneeded
+ + setup: make read_early_config() reusable
+ + setup: introduce the discover_git_directory() function
+ + setup_git_directory_1(): avoid changing global state
+ + setup: prepare setup_discovered_git_dir() for the root directory
+ + setup_git_directory(): use is_dir_sep() helper
+ + t7006: replace dubious test
 
  The start-up sequence of "git" needs to figure out some configured
  settings before it finds and set itself up in the location of the
  repository and was quite messy due to its "chicken-and-egg" nature.
  The code has been restructured.
-
- Will merge to 'next'.
-
-
-* jt/perf-updates (2017-03-03) 3 commits
-  (merged to 'next' on 2017-03-10 at 0c0b124ed4)
- + t/perf: add fallback for pre-bin-wrappers versions of git
- + t/perf: use $MODERN_GIT for all repo-copying steps
- + t/perf: export variable used in other blocks
-
- The t/perf performance test suite was not prepared to test not so
- old versions of Git, but now it covers versions of Git that are not
- so ancient.
-
- Will merge to 'master'.
-
-
-* jk/interpret-branch-name (2017-03-02) 9 commits
-  (merged to 'next' on 2017-03-10 at 95cc55f9a3)
- + checkout: restrict @-expansions when finding branch
- + strbuf_check_ref_format(): expand only local branches
- + branch: restrict @-expansions when deleting
- + t3204: test git-branch @-expansion corner cases
- + interpret_branch_name: allow callers to restrict expansions
- + strbuf_branchname: add docstring
- + strbuf_branchname: drop return value
- + interpret_branch_name: move docstring to header file
- + interpret_branch_name(): handle auto-namelen for @{-1}
-
- "git branch @" created refs/heads/@ as a branch, and in general the
- code that handled @{-1} and @{upstream} was a bit too loose in
- disambiguating.
 
  Will merge to 'master'.
 
@@ -498,31 +548,6 @@ of the repositories listed at
 
  Expecting a cleaned-up reroll after discussion settles.
  cf. <CA+55aFxTWqsTTiDKo4DBZT-8Z9t80bGMD3uijzKONa_bYEZABQ@mail.gmail.com>
-
-
-* js/travis-32bit-linux (2017-03-06) 1 commit
-  (merged to 'next' on 2017-03-10 at 4cb69d0f77)
- + Travis: also test on 32-bit Linux
-
- Add 32-bit Linux variant to the set of platforms to be tested with
- Travis CI.
-
- Will merge to 'master'.
-
-
-* jt/mark-tree-uninteresting-for-uninteresting-commit (2017-02-28) 3 commits
- - upload-pack: compute blob reachability correctly
- - revision: exclude trees/blobs given commit
- - revision: unify {tree,blob}_objects in rev_info
-
- The revision/object traversal machinery did not mark all tree and
- blob objects that are contained in an uninteresting commit as
- uninteresting, because that is quite costly.  Instead, it only
- marked those that are contained in an uninteresting boundary commit
- as uninteresting.
-
- Retracted?
- cf. <20170228215937.yd4juycjf7y3vish@sigill.intra.peff.net>
 
 
 * nd/conditional-config-include (2017-03-11) 3 commits
@@ -565,31 +590,6 @@ of the repositories listed at
 
  The experimental "split index" feature has gained a few
  configuration variables to make it easier to use.
-
- Will merge to 'master'.
-
-
-* dp/filter-branch-prune-empty (2017-03-03) 4 commits
-  (merged to 'next' on 2017-03-10 at 9317e24cd3)
- + p7000: add test for filter-branch with --prune-empty
- + filter-branch: fix --prune-empty on parentless commits
- + t7003: ensure --prune-empty removes entire branch when applicable
- + t7003: ensure --prune-empty can prune root commit
-
- "git filter-branch --prune-empty" drops a single-parent commit that
- becomes a no-op, but did not drop a root commit whose tree is empty.
-
- Will merge to 'master'.
-
-
-* ab/cond-skip-tests (2017-03-01) 3 commits
-  (merged to 'next' on 2017-03-10 at 38124fb5ce)
- + gitweb tests: skip tests when we don't have Time::HiRes
- + gitweb tests: change confusing "skip_all" phrasing
- + cvs tests: skip tests that call "cvs commit" when running as root
-
- A few tests were run conditionally under (rare) conditions where
- they cannot be run (like running cvs tests under 'root' account).
 
  Will merge to 'master'.
 
@@ -639,19 +639,6 @@ of the repositories listed at
  cf. <MWHPR03MB29581B0EDDEDCA7D51EC396F8A280@MWHPR03MB2958.namprd03.prod.outlook.com>
 
 
-* mm/fetch-show-error-message-on-unadvertised-object (2017-03-02) 3 commits
-  (merged to 'next' on 2017-03-10 at 69e2023804)
- + fetch-pack: add specific error for fetching an unadvertised object
- + fetch_refs_via_pack: call report_unmatched_refs
- + fetch-pack: move code to report unmatched refs to a function
-
- "git fetch" that requests a commit by object name, when the other
- side does not allow such an request, failed without much
- explanation.
-
- Will merge to 'master'.
-
-
 * sb/checkout-recurse-submodules (2017-03-11) 18 commits
  - submodule--helper.c: remove duplicate code
  - builtin/read-tree: add --recurse-submodules switch
@@ -676,52 +663,30 @@ of the repositories listed at
 
 
 * bc/object-id (2017-02-22) 19 commits
- - wt-status: convert to struct object_id
- - builtin/merge-base: convert to struct object_id
- - Convert object iteration callbacks to struct object_id
- - sha1_file: introduce an nth_packed_object_oid function
- - refs: simplify parsing of reflog entries
- - refs: convert each_reflog_ent_fn to struct object_id
- - reflog-walk: convert struct reflog_info to struct object_id
- - builtin/replace: convert to struct object_id
- - Convert remaining callers of resolve_refdup to object_id
- - builtin/merge: convert to struct object_id
- - builtin/clone: convert to struct object_id
- - builtin/branch: convert to struct object_id
- - builtin/grep: convert to struct object_id
- - builtin/fmt-merge-message: convert to struct object_id
- - builtin/fast-export: convert to struct object_id
- - builtin/describe: convert to struct object_id
- - builtin/diff-tree: convert to struct object_id
- - builtin/commit: convert to struct object_id
- - hex: introduce parse_oid_hex
+  (merged to 'next' on 2017-03-14 at 0b3ec5a05e)
+ + wt-status: convert to struct object_id
+ + builtin/merge-base: convert to struct object_id
+ + Convert object iteration callbacks to struct object_id
+ + sha1_file: introduce an nth_packed_object_oid function
+ + refs: simplify parsing of reflog entries
+ + refs: convert each_reflog_ent_fn to struct object_id
+ + reflog-walk: convert struct reflog_info to struct object_id
+ + builtin/replace: convert to struct object_id
+ + Convert remaining callers of resolve_refdup to object_id
+ + builtin/merge: convert to struct object_id
+ + builtin/clone: convert to struct object_id
+ + builtin/branch: convert to struct object_id
+ + builtin/grep: convert to struct object_id
+ + builtin/fmt-merge-message: convert to struct object_id
+ + builtin/fast-export: convert to struct object_id
+ + builtin/describe: convert to struct object_id
+ + builtin/diff-tree: convert to struct object_id
+ + builtin/commit: convert to struct object_id
+ + hex: introduce parse_oid_hex
 
  "uchar [40]" to "struct object_id" conversion continues.
 
- Will merge to 'next'.
-
-
-* sg/completion-refs-speedup (2017-02-13) 13 commits
- - squash! completion: fill COMPREPLY directly when completing refs
- - completion: fill COMPREPLY directly when completing refs
- - completion: list only matching symbolic and pseudorefs when completing refs
- - completion: let 'for-each-ref' sort remote branches for 'checkout' DWIMery
- - completion: let 'for-each-ref' filter remote branches for 'checkout' DWIMery
- - completion: let 'for-each-ref' strip the remote name from remote branches
- - completion: let 'for-each-ref' and 'ls-remote' filter matching refs
- - completion: don't disambiguate short refs
- - completion: don't disambiguate tags and branches
- - completion: support excluding full refs
- - completion: support completing full refs after '--option=refs/<TAB>'
- - completion: wrap __git_refs() for better option parsing
- - completion: remove redundant __gitcomp_nl() options from _git_commit()
-
- The refs completion for large number of refs has been sped up,
- partly by giving up disambiguating ambiguous refs and partly by
- eliminating most of the shell processing between 'git for-each-ref'
- and 'ls-remote' and Bash's completion facility.
-
- What's the donness of this topic?
+ Will merge to 'master'.
 
 
 * jk/no-looking-at-dotgit-outside-repo-final (2016-10-26) 1 commit
@@ -768,3 +733,17 @@ of the repositories listed at
  A small bug in the code that parses @{...} has been fixed.
 
  This is now a part of jk/interpret-branch-name topic.
+
+
+* jt/mark-tree-uninteresting-for-uninteresting-commit (2017-02-28) 3 commits
+ . upload-pack: compute blob reachability correctly
+ . revision: exclude trees/blobs given commit
+ . revision: unify {tree,blob}_objects in rev_info
+
+ The revision/object traversal machinery did not mark all tree and
+ blob objects that are contained in an uninteresting commit as
+ uninteresting, because that is quite costly.  Instead, it only
+ marked those that are contained in an uninteresting boundary commit
+ as uninteresting.
+
+ Retracted.
