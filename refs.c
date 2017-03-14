@@ -405,7 +405,7 @@ int refname_match(const char *abbrev_name, const char *full_name)
 static char *substitute_branch_name(const char **string, int *len)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int ret = interpret_branch_name(*string, *len, &buf);
+	int ret = interpret_branch_name(*string, *len, &buf, 0);
 
 	if (ret == *len) {
 		size_t size;
