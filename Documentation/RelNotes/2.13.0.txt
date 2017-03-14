@@ -140,6 +140,20 @@ Performance, Internal Implementation, Development Support etc.
    routines, so let them.
    (merge 2cfc70f0de jh/mingw-openssl-sha1 later to maint).
 
+ * The t/perf performance test suite was not prepared to test not so
+   old versions of Git, but now it covers versions of Git that are not
+   so ancient.
+   (merge 28e1fb5466 jt/perf-updates later to maint).
+
+ * Add 32-bit Linux variant to the set of platforms to be tested with
+   Travis CI.
+   (merge 88dedd5e72 js/travis-32bit-linux later to maint).
+
+ * "git branch --list" takes the "--abbrev" and "--no-abbrev" options
+   to control the output of the object name in its "-v"(erbose)
+   output, but a recent update started ignoring them; fix it before
+   the breakage reaches to any released version.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -246,6 +260,34 @@ notes for details).
    field for paths that need to go through convert_to_git() (e.g. CRLF
    conversion).
    (merge 12426e114b jc/diff-populate-filespec-size-only-fix later to maint).
+
+ * A few tests were run conditionally under (rare) conditions where
+   they cannot be run (like running cvs tests under 'root' account).
+   (merge c6507484a2 ab/cond-skip-tests later to maint).
+
+ * "git branch @" created refs/heads/@ as a branch, and in general the
+   code that handled @{-1} and @{upstream} was a bit too loose in
+   disambiguating.
+   (merge fd4692ff70 jk/interpret-branch-name later to maint).
+
+ * "git fetch" that requests a commit by object name, when the other
+   side does not allow such an request, failed without much
+   explanation.
+   (merge d56583ded6 mm/fetch-show-error-message-on-unadvertised-object later to maint).
+
+ * "git filter-branch --prune-empty" drops a single-parent commit that
+   becomes a no-op, but did not drop a root commit whose tree is empty.
+   (merge 32da7467eb dp/filter-branch-prune-empty later to maint).
+
+ * Recent versions of Git treats http alternates (used in dumb http
+   transport) just like HTTP redirects and requires the client to
+   enable following it, due to security concerns.  But we forgot to
+   give a warning when we decide not to honor the alternates.
+   (merge 5cae73d5d2 ew/http-alternates-as-redirects-warning later to maint).
+
+ * "git push" had a handful of codepaths that could lead to a deadlock
+   when unexpected error happened, which has been fixed.
+   (merge d1a13d3fcb jk/push-deadlock-regression-fix later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge 2cfa83574c mm/two-more-xstrfmt later to maint).
