@@ -15,7 +15,8 @@ test_perf 'rev-list --all --objects' '
 '
 
 test_expect_success 'create new unreferenced commit' '
-	commit=$(git commit-tree HEAD^{tree} -p HEAD)
+	commit=$(git commit-tree HEAD^{tree} -p HEAD) &&
+	test_export commit
 '
 
 test_perf 'rev-list $commit --not --all' '

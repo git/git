@@ -63,6 +63,9 @@ run_dirs_helper () {
 		unset GIT_TEST_INSTALLED
 	else
 		GIT_TEST_INSTALLED="$mydir/bin-wrappers"
+		# Older versions of git lacked bin-wrappers; fallback to the
+		# files in the root.
+		test -d "$GIT_TEST_INSTALLED" || GIT_TEST_INSTALLED=$mydir
 		export GIT_TEST_INSTALLED
 	fi
 	run_one_dir "$@"
