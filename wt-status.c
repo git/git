@@ -1661,12 +1661,14 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		return;
 	branch_name = s->branch;
 
+#define LABEL(string) (s->no_gettext ? (string) : _(string))
+
 	if (s->is_initial)
-		color_fprintf(s->fp, header_color, _("Initial commit on "));
+		color_fprintf(s->fp, header_color, LABEL(N_("Initial commit on ")));
 
 	if (!strcmp(s->branch, "HEAD")) {
 		color_fprintf(s->fp, color(WT_STATUS_NOBRANCH, s), "%s",
-			      _("HEAD (no branch)"));
+			      LABEL(N_("HEAD (no branch)")));
 		goto conclude;
 	}
 
@@ -1690,8 +1692,6 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	if (!upstream_is_gone && !num_ours && !num_theirs)
 		goto conclude;
-
-#define LABEL(string) (s->no_gettext ? (string) : _(string))
 
 	color_fprintf(s->fp, header_color, " [");
 	if (upstream_is_gone) {
