@@ -58,7 +58,7 @@ struct recent_data {
 	unsigned long timestamp;
 };
 
-static void add_recent_object(const unsigned char *sha1,
+static void add_recent_object(const struct object_id *oid,
 			      unsigned long mtime,
 			      struct recent_data *data)
 {
@@ -75,37 +75,37 @@ static void add_recent_object(const unsigned char *sha1,
 	 * later processing, and the revision machinery expects
 	 * commits and tags to have been parsed.
 	 */
-	type = sha1_object_info(sha1, NULL);
+	type = sha1_object_info(oid->hash, NULL);
 	if (type < 0)
-		die("unable to get object info for %s", sha1_to_hex(sha1));
+		die("unable to get object info for %s", oid_to_hex(oid));
 
 	switch (type) {
 	case OBJ_TAG:
 	case OBJ_COMMIT:
-		obj = parse_object_or_die(sha1, NULL);
+		obj = parse_object_or_die(oid->hash, NULL);
 		break;
 	case OBJ_TREE:
-		obj = (struct object *)lookup_tree(sha1);
+		obj = (struct object *)lookup_tree(oid->hash);
 		break;
 	case OBJ_BLOB:
-		obj = (struct object *)lookup_blob(sha1);
+		obj = (struct object *)lookup_blob(oid->hash);
 		break;
 	default:
 		die("unknown object type for %s: %s",
-		    sha1_to_hex(sha1), typename(type));
+		    oid_to_hex(oid), typename(type));
 	}
 
 	if (!obj)
-		die("unable to lookup %s", sha1_to_hex(sha1));
+		die("unable to lookup %s", oid_to_hex(oid));
 
 	add_pending_object(data->revs, obj, "");
 }
 
-static int add_recent_loose(const unsigned char *sha1,
+static int add_recent_loose(const struct object_id *oid,
 			    const char *path, void *data)
 {
 	struct stat st;
-	struct object *obj = lookup_object(sha1);
+	struct object *obj = lookup_object(oid->hash);
 
 	if (obj && obj->flags & SEEN)
 		return 0;
@@ -119,22 +119,22 @@ static int add_recent_loose(const unsigned char *sha1,
 		 */
 		if (errno == ENOENT)
 			return 0;
-		return error_errno("unable to stat %s", sha1_to_hex(sha1));
+		return error_errno("unable to stat %s", oid_to_hex(oid));
 	}
 
-	add_recent_object(sha1, st.st_mtime, data);
+	add_recent_object(oid, st.st_mtime, data);
 	return 0;
 }
 
-static int add_recent_packed(const unsigned char *sha1,
+static int add_recent_packed(const struct object_id *oid,
 			     struct packed_git *p, uint32_t pos,
 			     void *data)
 {
-	struct object *obj = lookup_object(sha1);
+	struct object *obj = lookup_object(oid->hash);
 
 	if (obj && obj->flags & SEEN)
 		return 0;
-	add_recent_object(sha1, p->mtime, data);
+	add_recent_object(oid, p->mtime, data);
 	return 0;
 }
 
