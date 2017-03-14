@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "pathspec.h"
+#include "attr.h"
 
 /*
  * Finds which of the given pathspecs match items in the index.
@@ -72,6 +73,7 @@ static struct pathspec_magic {
 	{ PATHSPEC_GLOB,    '\0', "glob" },
 	{ PATHSPEC_ICASE,   '\0', "icase" },
 	{ PATHSPEC_EXCLUDE,  '!', "exclude" },
+	{ PATHSPEC_ATTR,    '\0', "attr" },
 };
 
 static void prefix_magic(struct strbuf *sb, int prefixlen, unsigned magic)
@@ -85,6 +87,116 @@ static void prefix_magic(struct strbuf *sb, int prefixlen, unsigned magic)
 			strbuf_addstr(sb, pathspec_magic[i].name);
 		}
 	strbuf_addf(sb, ",prefix:%d)", prefixlen);
+}
+
+static size_t strcspn_escaped(const char *s, const char *stop)
+{
+	const char *i;
+
+	for (i = s; *i; i++) {
+		/* skip the escaped character */
+		if (i[0] == '\\' && i[1]) {
+			i++;
+			continue;
+		}
+
+		if (strchr(stop, *i))
+			break;
+	}
+	return i - s;
+}
+
+static inline int invalid_value_char(const char ch)
+{
+	if (isalnum(ch) || strchr(",-_", ch))
+		return 0;
+	return -1;
+}
+
+static char *attr_value_unescape(const char *value)
+{
+	const char *src;
+	char *dst, *ret;
+
+	ret = xmallocz(strlen(value));
+	for (src = value, dst = ret; *src; src++, dst++) {
+		if (*src == '\\') {
+			if (!src[1])
+				die(_("Escape character '\\' not allowed as "
+				      "last character in attr value"));
+			src++;
+		}
+		if (invalid_value_char(*src))
+			die("cannot use '%c' for value matching", *src);
+		*dst = *src;
+	}
+	*dst = '\0';
+	return ret;
+}
+
+static void parse_pathspec_attr_match(struct pathspec_item *item, const char *value)
+{
+	struct string_list_item *si;
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	if (item->attr_check || item->attr_match)
+		die(_("Only one 'attr:' specification is allowed."));
+
+	if (!value || !*value)
+		die(_("attr spec must not be empty"));
+
+	string_list_split(&list, value, ' ', -1);
+	string_list_remove_empty_items(&list, 0);
+
+	item->attr_check = attr_check_alloc();
+	item->attr_match = xcalloc(list.nr, sizeof(struct attr_match));
+
+	for_each_string_list_item(si, &list) {
+		size_t attr_len;
+		char *attr_name;
+		const struct git_attr *a;
+
+		int j = item->attr_match_nr++;
+		const char *attr = si->string;
+		struct attr_match *am = &item->attr_match[j];
+
+		switch (*attr) {
+		case '!':
+			am->match_mode = MATCH_UNSPECIFIED;
+			attr++;
+			attr_len = strlen(attr);
+			break;
+		case '-':
+			am->match_mode = MATCH_UNSET;
+			attr++;
+			attr_len = strlen(attr);
+			break;
+		default:
+			attr_len = strcspn(attr, "=");
+			if (attr[attr_len] != '=')
+				am->match_mode = MATCH_SET;
+			else {
+				const char *v = &attr[attr_len + 1];
+				am->match_mode = MATCH_VALUE;
+				am->value = attr_value_unescape(v);
+			}
+			break;
+		}
+
+		attr_name = xmemdupz(attr, attr_len);
+		a = git_attr(attr_name);
+		if (!a)
+			die(_("invalid attribute name %s"), attr_name);
+
+		attr_check_append(item->attr_check, a);
+
+		free(attr_name);
+	}
+
+	if (item->attr_check->nr != item->attr_match_nr)
+		die("BUG: should have same number of entries");
+
+	string_list_clear(&list, 0);
 }
 
 static inline int get_literal_global(void)
@@ -164,13 +276,14 @@ static int get_global_magic(int element_magic)
  * returns the position in 'elem' after all magic has been parsed
  */
 static const char *parse_long_magic(unsigned *magic, int *prefix_len,
+				    struct pathspec_item *item,
 				    const char *elem)
 {
 	const char *pos;
 	const char *nextat;
 
 	for (pos = elem + 2; *pos && *pos != ')'; pos = nextat) {
-		size_t len = strcspn(pos, ",)");
+		size_t len = strcspn_escaped(pos, ",)");
 		int i;
 
 		if (pos[len] == ',')
@@ -186,6 +299,14 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
 			*prefix_len = strtol(pos + 7, &endptr, 10);
 			if (endptr - pos != len)
 				die(_("invalid parameter for pathspec magic 'prefix'"));
+			continue;
+		}
+
+		if (starts_with(pos, "attr:")) {
+			char *attr_body = xmemdupz(pos + 5, len - 5);
+			parse_pathspec_attr_match(item, attr_body);
+			*magic |= PATHSPEC_ATTR;
+			free(attr_body);
 			continue;
 		}
 
@@ -252,13 +373,14 @@ static const char *parse_short_magic(unsigned *magic, const char *elem)
 }
 
 static const char *parse_element_magic(unsigned *magic, int *prefix_len,
+				       struct pathspec_item *item,
 				       const char *elem)
 {
 	if (elem[0] != ':' || get_literal_global())
 		return elem; /* nothing to do */
 	else if (elem[1] == '(')
 		/* longhand */
-		return parse_long_magic(magic, prefix_len, elem);
+		return parse_long_magic(magic, prefix_len, item, elem);
 	else
 		/* shorthand */
 		return parse_short_magic(magic, elem);
@@ -335,12 +457,17 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 	char *match;
 	int pathspec_prefix = -1;
 
+	item->attr_check = NULL;
+	item->attr_match = NULL;
+	item->attr_match_nr = 0;
+
 	/* PATHSPEC_LITERAL_PATH ignores magic */
 	if (flags & PATHSPEC_LITERAL_PATH) {
 		magic = PATHSPEC_LITERAL;
 	} else {
 		copyfrom = parse_element_magic(&element_magic,
 					       &pathspec_prefix,
+					       item,
 					       elt);
 		magic |= element_magic;
 		magic |= get_global_magic(element_magic);
@@ -565,26 +692,46 @@ void parse_pathspec(struct pathspec *pathspec,
 
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 {
-	int i;
+	int i, j;
 
 	*dst = *src;
 	ALLOC_ARRAY(dst->items, dst->nr);
 	COPY_ARRAY(dst->items, src->items, dst->nr);
 
 	for (i = 0; i < dst->nr; i++) {
-		dst->items[i].match = xstrdup(src->items[i].match);
-		dst->items[i].original = xstrdup(src->items[i].original);
+		struct pathspec_item *d = &dst->items[i];
+		struct pathspec_item *s = &src->items[i];
+
+		d->match = xstrdup(s->match);
+		d->original = xstrdup(s->original);
+
+		ALLOC_ARRAY(d->attr_match, d->attr_match_nr);
+		COPY_ARRAY(d->attr_match, s->attr_match, d->attr_match_nr);
+		for (j = 0; j < d->attr_match_nr; j++) {
+			const char *value = s->attr_match[j].value;
+			d->attr_match[j].value = xstrdup_or_null(value);
+		}
+
+		d->attr_check = attr_check_dup(s->attr_check);
 	}
 }
 
 void clear_pathspec(struct pathspec *pathspec)
 {
-	int i;
+	int i, j;
 
 	for (i = 0; i < pathspec->nr; i++) {
 		free(pathspec->items[i].match);
 		free(pathspec->items[i].original);
+
+		for (j = 0; j < pathspec->items[j].attr_match_nr; j++)
+			free(pathspec->items[i].attr_match[j].value);
+		free(pathspec->items[i].attr_match);
+
+		if (pathspec->items[i].attr_check)
+			attr_check_free(pathspec->items[i].attr_check);
 	}
+
 	free(pathspec->items);
 	pathspec->items = NULL;
 	pathspec->nr = 0;
