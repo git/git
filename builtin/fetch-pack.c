@@ -219,12 +219,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	 * remote no-such-ref' would silently succeed without issuing
 	 * an error.
 	 */
-	for (i = 0; i < nr_sought; i++) {
-		if (!sought[i] || sought[i]->matched)
-			continue;
-		error("no such remote ref %s", sought[i]->name);
-		ret = 1;
-	}
+	ret |= report_unmatched_refs(sought, nr_sought);
 
 	while (ref) {
 		printf("%s %s\n",
