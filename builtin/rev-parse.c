@@ -535,6 +535,25 @@ N_("git rev-parse --parseopt [<options>] -- [<args>...]\n"
    "\n"
    "Run \"git rev-parse --parseopt -h\" for more information on the first usage.");
 
+/*
+ * Parse "opt" or "opt=<value>", setting value respectively to either
+ * NULL or the string after "=".
+ */
+static int opt_with_value(const char *arg, const char *opt, const char **value)
+{
+	if (skip_prefix(arg, opt, &arg)) {
+		if (!*arg) {
+			*value = NULL;
+			return 1;
+		}
+		if (*arg++ == '=') {
+			*value = arg;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
@@ -671,14 +690,13 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				flags |= GET_SHA1_QUIETLY;
 				continue;
 			}
-			if (!strcmp(arg, "--short") ||
-			    starts_with(arg, "--short=")) {
+			if (opt_with_value(arg, "--short", &arg)) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
 				verify = 1;
 				abbrev = DEFAULT_ABBREV;
-				if (!arg[7])
+				if (!arg)
 					continue;
-				abbrev = strtoul(arg + 8, NULL, 10);
+				abbrev = strtoul(arg, NULL, 10);
 				if (abbrev < MINIMUM_ABBREV)
 					abbrev = MINIMUM_ABBREV;
 				else if (40 <= abbrev)
@@ -701,17 +719,17 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				symbolic = SHOW_SYMBOLIC_FULL;
 				continue;
 			}
-			if (starts_with(arg, "--abbrev-ref") &&
-			    (!arg[12] || arg[12] == '=')) {
+			if (opt_with_value(arg, "--abbrev-ref", &arg)) {
 				abbrev_ref = 1;
 				abbrev_ref_strict = warn_ambiguous_refs;
-				if (arg[12] == '=') {
-					if (!strcmp(arg + 13, "strict"))
+				if (arg) {
+					if (!strcmp(arg, "strict"))
 						abbrev_ref_strict = 1;
-					else if (!strcmp(arg + 13, "loose"))
+					else if (!strcmp(arg, "loose"))
 						abbrev_ref_strict = 0;
 					else
-						die("unknown mode for %s", arg);
+						die("unknown mode for --abbrev-ref: %s",
+						    arg);
 				}
 				continue;
 			}
