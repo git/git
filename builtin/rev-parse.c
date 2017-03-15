@@ -554,6 +554,15 @@ static int opt_with_value(const char *arg, const char *opt, const char **value)
 	return 0;
 }
 
+static void handle_ref_opt(const char *pattern, const char *prefix)
+{
+	if (pattern)
+		for_each_glob_ref_in(show_reference, pattern, prefix, NULL);
+	else
+		for_each_ref_in(prefix, show_reference, NULL);
+	clear_ref_exclusion(&ref_excludes);
+}
+
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
@@ -746,42 +755,20 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				for_each_ref_in("refs/bisect/good", anti_reference, NULL);
 				continue;
 			}
-			if (skip_prefix(arg, "--branches=", &arg)) {
-				for_each_glob_ref_in(show_reference, arg,
-					"refs/heads/", NULL);
-				clear_ref_exclusion(&ref_excludes);
+			if (opt_with_value(arg, "--branches", &arg)) {
+				handle_ref_opt(arg, "refs/heads/");
 				continue;
 			}
-			if (!strcmp(arg, "--branches")) {
-				for_each_branch_ref(show_reference, NULL);
-				clear_ref_exclusion(&ref_excludes);
-				continue;
-			}
-			if (skip_prefix(arg, "--tags=", &arg)) {
-				for_each_glob_ref_in(show_reference, arg,
-					"refs/tags/", NULL);
-				clear_ref_exclusion(&ref_excludes);
-				continue;
-			}
-			if (!strcmp(arg, "--tags")) {
-				for_each_tag_ref(show_reference, NULL);
-				clear_ref_exclusion(&ref_excludes);
+			if (opt_with_value(arg, "--tags", &arg)) {
+				handle_ref_opt(arg, "refs/tags/");
 				continue;
 			}
 			if (skip_prefix(arg, "--glob=", &arg)) {
-				for_each_glob_ref(show_reference, arg, NULL);
-				clear_ref_exclusion(&ref_excludes);
+				handle_ref_opt(arg, NULL);
 				continue;
 			}
-			if (skip_prefix(arg, "--remotes=", &arg)) {
-				for_each_glob_ref_in(show_reference, arg,
-					"refs/remotes/", NULL);
-				clear_ref_exclusion(&ref_excludes);
-				continue;
-			}
-			if (!strcmp(arg, "--remotes")) {
-				for_each_remote_ref(show_reference, NULL);
-				clear_ref_exclusion(&ref_excludes);
+			if (opt_with_value(arg, "--remotes", &arg)) {
+				handle_ref_opt(arg, "refs/remotes/");
 				continue;
 			}
 			if (skip_prefix(arg, "--exclude=", &arg)) {
