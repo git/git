@@ -20,6 +20,17 @@ static long cutoff = LONG_MAX;
 /* How many generations are maximally preferred over _one_ merge traversal? */
 #define MERGE_TRAVERSAL_WEIGHT 65535
 
+static int is_better_name(struct rev_name *name,
+			  const char *tip_name,
+			  unsigned long taggerdate,
+			  int generation,
+			  int distance)
+{
+	return (name->taggerdate > taggerdate ||
+		(name->taggerdate == taggerdate &&
+		 name->distance > distance));
+}
+
 static void name_rev(struct commit *commit,
 		const char *tip_name, unsigned long taggerdate,
 		int generation, int distance,
@@ -45,9 +56,8 @@ static void name_rev(struct commit *commit,
 		name = xmalloc(sizeof(rev_name));
 		commit->util = name;
 		goto copy_data;
-	} else if (name->taggerdate > taggerdate ||
-			(name->taggerdate == taggerdate &&
-			 name->distance > distance)) {
+	} else if (is_better_name(name, tip_name, taggerdate,
+				  generation, distance)) {
 copy_data:
 		name->tip_name = tip_name;
 		name->taggerdate = taggerdate;
