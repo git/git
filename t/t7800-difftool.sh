@@ -623,4 +623,64 @@ test_expect_success SYMLINKS 'difftool --dir-diff symlinked directories' '
 	)
 '
 
+test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
+	test_when_finished git reset --hard &&
+	touch b &&
+	ln -s b c &&
+	git add b c &&
+	test_tick &&
+	git commit -m initial &&
+	touch d &&
+	rm c &&
+	ln -s d c &&
+	cat >expect <<-EOF &&
+		b
+		c
+
+		c
+	EOF
+	git difftool --symlinks --dir-diff --extcmd ls >output &&
+	grep -v ^/ output >actual &&
+	test_cmp expect actual &&
+
+	git difftool --no-symlinks --dir-diff --extcmd ls >output &&
+	grep -v ^/ output >actual &&
+	test_cmp expect actual &&
+
+	# The left side contains symlink "c" that points to "b"
+	test_config difftool.cat.cmd "cat \$LOCAL/c" &&
+	printf "%s\n" b >expect &&
+
+	git difftool --symlinks --dir-diff --tool cat >actual &&
+	test_cmp expect actual &&
+
+	git difftool --symlinks --no-symlinks --dir-diff --tool cat >actual &&
+	test_cmp expect actual &&
+
+	# The right side contains symlink "c" that points to "d"
+	test_config difftool.cat.cmd "cat \$REMOTE/c" &&
+	printf "%s\n" d >expect &&
+
+	git difftool --symlinks --dir-diff --tool cat >actual &&
+	test_cmp expect actual &&
+
+	git difftool --no-symlinks --dir-diff --tool cat >actual &&
+	test_cmp expect actual &&
+
+	# Deleted symlinks
+	rm -f c &&
+	cat >expect <<-EOF &&
+		b
+		c
+
+	EOF
+	git difftool --symlinks --dir-diff --extcmd ls >output &&
+	grep -v ^/ output >actual &&
+	test_cmp expect actual &&
+
+	git difftool --no-symlinks --dir-diff --extcmd ls >output &&
+	grep -v ^/ output >actual &&
+	test_cmp expect actual
+'
+
 test_done
