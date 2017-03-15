@@ -610,6 +610,7 @@ test_expect_success 'difftool --no-symlinks detects conflict ' '
 '
 
 test_expect_success 'difftool properly honors gitlink and core.worktree' '
+	test_when_finished rm -rf submod/ule &&
 	git submodule add ./. submod/ule &&
 	test_config -C submod/ule diff.tool checktrees &&
 	test_config -C submod/ule difftool.checktrees.cmd '\''
@@ -619,11 +620,13 @@ test_expect_success 'difftool properly honors gitlink and core.worktree' '
 		cd submod/ule &&
 		echo good >expect &&
 		git difftool --tool=checktrees --dir-diff HEAD~ >actual &&
-		test_cmp expect actual
+		test_cmp expect actual &&
+		rm -f expect actual
 	)
 '
 
 test_expect_success SYMLINKS 'difftool --dir-diff symlinked directories' '
+	test_when_finished git reset --hard &&
 	git init dirlinks &&
 	(
 		cd dirlinks &&
