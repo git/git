@@ -1569,6 +1569,15 @@ extern void pack_report(void);
 extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
 
 /*
+ * Generate the filename to be used for a pack file with checksum "sha1" and
+ * extension "ext". The result is written into the strbuf "buf", overwriting
+ * any existing contents. A pointer to buf->buf is returned as a convenience.
+ *
+ * Example: odb_pack_name(out, sha1, "idx") => ".git/objects/pack/pack-1234..idx"
+ */
+extern char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1, const char *ext);
+
+/*
  * Create a pack .keep file in the object database's pack directory, for
  * a pack with checksum "sha1". The return value is a file descriptor opened
  * for writing, or -1 on error. The name of the keep file is written to "name".
