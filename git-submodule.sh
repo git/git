@@ -1089,14 +1089,14 @@ cmd_sync()
 	while read mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode" "$sha1"
-		name=$(git submodule--helper name "$sm_path")
 
 		# skip inactive submodules
-		if ! git config "submodule.$name.url" >/dev/null 2>/dev/null
+		if ! git submodule--helper is-active "$sm_path"
 		then
 			continue
 		fi
 
+		name=$(git submodule--helper name "$sm_path")
 		url=$(git config -f .gitmodules --get submodule."$name".url)
 
 		# Possibly a url relative to parent
