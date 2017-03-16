@@ -1564,6 +1564,18 @@ extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
 extern void pack_report(void);
 
 /*
+ * Create a temporary file rooted in the object database directory.
+ */
+extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
+
+/*
+ * Create a pack .keep file in the object database's pack directory, for
+ * a pack with checksum "sha1". The return value is a file descriptor opened
+ * for writing, or -1 on error. The name of the keep file is written to "name".
+ */
+extern int odb_pack_keep(char *name, size_t namesz, const unsigned char *sha1);
+
+/*
  * mmap the index file for the specified packfile (if it is not
  * already mmapped).  Return 0 on success.
  */
