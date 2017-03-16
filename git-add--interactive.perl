@@ -92,7 +92,7 @@ sub colored {
 }
 
 # command line options
-my $cmd;
+my $patch_mode_only;
 my $patch_mode;
 my $patch_mode_revision;
 
@@ -1299,7 +1299,7 @@ sub patch_update_cmd {
 		}
 		return 0;
 	}
-	if ($patch_mode) {
+	if ($patch_mode_only) {
 		@them = @mods;
 	}
 	else {
@@ -1721,7 +1721,7 @@ sub process_args {
 		die sprintf(__("invalid argument %s, expecting --"),
 			       $arg) unless $arg eq "--";
 		%patch_mode_flavour = %{$patch_modes{$patch_mode}};
-		$cmd = 1;
+		$patch_mode_only = 1;
 	}
 	elsif ($arg ne "--") {
 		die sprintf(__("invalid argument %s, expecting --"), $arg);
@@ -1758,7 +1758,7 @@ sub main_loop {
 
 process_args();
 refresh();
-if ($cmd) {
+if ($patch_mode_only) {
 	patch_update_cmd();
 }
 else {
