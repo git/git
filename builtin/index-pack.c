@@ -1402,10 +1402,10 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		int keep_fd, keep_msg_len = strlen(keep_msg);
 
 		if (!keep_name)
-			keep_fd = odb_pack_keep(name, sizeof(name), sha1);
-		else
-			keep_fd = open(keep_name, O_RDWR|O_CREAT|O_EXCL, 0600);
+			snprintf(name, sizeof(name), "%s/pack/pack-%s.keep",
+				 get_object_directory(), sha1_to_hex(sha1));
 
+		keep_fd = odb_pack_keep(keep_name ? keep_name : name);
 		if (keep_fd < 0) {
 			if (errno != EEXIST)
 				die_errno(_("cannot write keep file '%s'"),

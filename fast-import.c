@@ -944,7 +944,9 @@ static char *keep_pack(const char *curr_index_name)
 	static const char *keep_msg = "fast-import";
 	int keep_fd;
 
-	keep_fd = odb_pack_keep(name, sizeof(name), pack_data->sha1);
+	snprintf(name, sizeof(name), "%s/pack/pack-%s.keep",
+		 get_object_directory(), sha1_to_hex(pack_data->sha1));
+	keep_fd = odb_pack_keep(name);
 	if (keep_fd < 0)
 		die_errno("cannot create keep file");
 	write_or_die(keep_fd, keep_msg, strlen(keep_msg));

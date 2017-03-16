@@ -1578,11 +1578,11 @@ extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
 extern char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1, const char *ext);
 
 /*
- * Create a pack .keep file in the object database's pack directory, for
- * a pack with checksum "sha1". The return value is a file descriptor opened
- * for writing, or -1 on error. The name of the keep file is written to "name".
+ * Create a pack .keep file named "name" (which should generally be the output
+ * of odb_pack_name). Returns a file descriptor opened for writing, or -1 on
+ * error.
  */
-extern int odb_pack_keep(char *name, size_t namesz, const unsigned char *sha1);
+extern int odb_pack_keep(const char *name);
 
 /*
  * mmap the index file for the specified packfile (if it is not
