@@ -5,13 +5,9 @@
 * https://opensource.org/licenses/MIT
 ***/
 
-#include <string.h>
-#include <memory.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "sha1.h"
-#include "ubc_check.h"
+#include "cache.h"
+#include "sha1dc/sha1.h"
+#include "sha1dc/ubc_check.h"
 
 
 /*

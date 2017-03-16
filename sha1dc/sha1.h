@@ -4,12 +4,12 @@
 * See accompanying file LICENSE.txt or copy at
 * https://opensource.org/licenses/MIT
 ***/
+#ifndef SHA1DC_SHA1_H
+#define SHA1DC_SHA1_H
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-#include <stdint.h>
 
 /* uses SHA-1 message expansion to expand the first 16 words of W[] to 80 words */
 /* void sha1_message_expansion(uint32_t W[80]); */
@@ -103,3 +103,5 @@ int  SHA1DCFinal(unsigned char[20], SHA1_CTX*);
 #if defined(__cplusplus)
 }
 #endif
+
+#endif /* SHA1DC_SHA1_H */

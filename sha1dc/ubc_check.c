@@ -24,8 +24,8 @@
 // ubc_check has been verified against ubc_check_verify using the 'ubc_check_test' program in the tools section
 */
 
-#include <stdint.h>
-#include "ubc_check.h"
+#include "git-compat-util.h"
+#include "sha1dc/ubc_check.h"
 
 static const uint32_t DV_I_43_0_bit 	= (uint32_t)(1) << 0;
 static const uint32_t DV_I_44_0_bit 	= (uint32_t)(1) << 1;
