@@ -423,4 +423,12 @@ test_expect_success '$GIT_WORK_TREE overrides $GIT_DIR/common' '
 	)
 '
 
+test_expect_success 'error out gracefully on invalid $GIT_WORK_TREE' '
+	(
+		GIT_WORK_TREE=/.invalid/work/tree &&
+		export GIT_WORK_TREE &&
+		test_expect_code 128 git rev-parse
+	)
+'
+
 test_done
