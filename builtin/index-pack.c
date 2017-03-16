@@ -1386,7 +1386,9 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		  unsigned char *sha1)
 {
 	const char *report = "pack";
-	char name[PATH_MAX];
+	struct strbuf pack_name = STRBUF_INIT;
+	struct strbuf index_name = STRBUF_INIT;
+	struct strbuf keep_name_buf = STRBUF_INIT;
 	int err;
 
 	if (!from_stdin) {
@@ -1402,14 +1404,13 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		int keep_fd, keep_msg_len = strlen(keep_msg);
 
 		if (!keep_name)
-			keep_fd = odb_pack_keep(name, sizeof(name), sha1);
-		else
-			keep_fd = open(keep_name, O_RDWR|O_CREAT|O_EXCL, 0600);
+			keep_name = odb_pack_name(&keep_name_buf, sha1, "keep");
 
+		keep_fd = odb_pack_keep(keep_name);
 		if (keep_fd < 0) {
 			if (errno != EEXIST)
 				die_errno(_("cannot write keep file '%s'"),
-					  keep_name ? keep_name : name);
+					  keep_name);
 		} else {
 			if (keep_msg_len > 0) {
 				write_or_die(keep_fd, keep_msg, keep_msg_len);
@@ -1417,28 +1418,22 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 			}
 			if (close(keep_fd) != 0)
 				die_errno(_("cannot close written keep file '%s'"),
-					  keep_name ? keep_name : name);
+					  keep_name);
 			report = "keep";
 		}
 	}
 
 	if (final_pack_name != curr_pack_name) {
-		if (!final_pack_name) {
-			snprintf(name, sizeof(name), "%s/pack/pack-%s.pack",
-				 get_object_directory(), sha1_to_hex(sha1));
-			final_pack_name = name;
-		}
+		if (!final_pack_name)
+			final_pack_name = odb_pack_name(&pack_name, sha1, "pack");
 		if (finalize_object_file(curr_pack_name, final_pack_name))
 			die(_("cannot store pack file"));
 	} else if (from_stdin)
 		chmod(final_pack_name, 0444);
 
 	if (final_index_name != curr_index_name) {
-		if (!final_index_name) {
-			snprintf(name, sizeof(name), "%s/pack/pack-%s.idx",
-				 get_object_directory(), sha1_to_hex(sha1));
-			final_index_name = name;
-		}
+		if (!final_index_name)
+			final_index_name = odb_pack_name(&index_name, sha1, "idx");
 		if (finalize_object_file(curr_index_name, final_index_name))
 			die(_("cannot store index file"));
 	} else
@@ -1464,6 +1459,10 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 			input_offset += err;
 		}
 	}
+
+	strbuf_release(&index_name);
+	strbuf_release(&pack_name);
+	strbuf_release(&keep_name_buf);
 }
 
 static int git_index_pack_config(const char *k, const char *v, void *cb)
