@@ -978,7 +978,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT(0, "exclude-standard", &opt_exclude,
 			    N_("ignore files specified via '.gitignore'"), 1),
 		OPT_BOOL(0, "recurse-submodules", &recurse_submodules,
-			 N_("recursivley search in each submodule")),
+			 N_("recursively search in each submodule")),
 		OPT_STRING(0, "parent-basename", &parent_basename,
 			   N_("basename"),
 			   N_("prepend parent project's basename to output")),
