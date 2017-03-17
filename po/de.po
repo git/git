@@ -7611,7 +7611,7 @@ msgid ""
 "more than %i tags found; listed %i most recent\n"
 "gave up search at %s\n"
 msgstr ""
-"mehr als %i Tags gefunden; Führe die ersten %i auf\n"
+"mehr als %i Tags gefunden; führe die ersten %i auf\n"
 "Suche bei %s aufgegeben\n"
 
 #: builtin/describe.c:396
