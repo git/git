@@ -90,6 +90,29 @@ UI, Workflows & Features
 
  * Documentation for "git ls-files" did not refer to core.quotePath.
 
+ * The experimental "split index" feature has gained a few
+   configuration variables to make it easier to use.
+
+ * From a working tree of a repository, a new option of "rev-parse"
+   lets you ask if the repository is used as a submodule of another
+   project, and where the root level of the working tree of that
+   project (i.e. your superproject) is.
+
+ * The pathspec mechanism learned to further limit the paths that
+   match the pattern to those that have specified attributes attached
+   via the gitattributes mechanism.
+
+ * Our source code has used the SHA1_HEADER cpp macro after "#include"
+   in the C code to switch among the SHA-1 implementations. Instead,
+   list the exact header file names and switch among implementations
+   using "#ifdef BLK_SHA1/#include "block-sha1/sha1.h"/.../#endif";
+   this helps some IDE tools.
+
+ * The start-up sequence of "git" needs to figure out some configured
+   settings before it finds and set itself up in the location of the
+   repository and was quite messy due to its "chicken-and-egg" nature.
+   The code has been restructured.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -134,11 +157,9 @@ Performance, Internal Implementation, Development Support etc.
    against a server that does not authenticate without a username
    (i.e. not using Kerberos etc., which makes http.emptyAuth
    pointless).
-   (merge 40a18fc77c jk/http-auth later to maint).
 
  * Windows port wants to use OpenSSL's implementation of SHA-1
    routines, so let them.
-   (merge 2cfc70f0de jh/mingw-openssl-sha1 later to maint).
 
  * The t/perf performance test suite was not prepared to test not so
    old versions of Git, but now it covers versions of Git that are not
@@ -147,12 +168,23 @@ Performance, Internal Implementation, Development Support etc.
 
  * Add 32-bit Linux variant to the set of platforms to be tested with
    Travis CI.
-   (merge 88dedd5e72 js/travis-32bit-linux later to maint).
 
  * "git branch --list" takes the "--abbrev" and "--no-abbrev" options
    to control the output of the object name in its "-v"(erbose)
    output, but a recent update started ignoring them; fix it before
    the breakage reaches to any released version.
+
+ * Picking two versions of Git and running tests to make sure the
+   older one and the newer one interoperate happily has now become
+   possible.
+   (merge bd4d9d993c jk/interop-test later to maint).
+
+ * "uchar [40]" to "struct object_id" conversion continues.
+
+ * "git tag --contains" used to (ab)use the object bits to keep track
+   of the state of object reachability without clearing them after
+   use; this has been cleaned up and made to use the newer commit-slab
+   facility.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -227,19 +259,16 @@ notes for details).
  * When a redirected http transport gets an error during the
    redirected request, we ignored the error we got from the server,
    and ended up giving a not-so-useful error message.
-   (merge 8e27391a5f jt/http-base-url-update-upon-redirect later to maint).
 
  * The patch subcommand of "git add -i" was meant to have paths
    selection prompt just like other subcommand, unlike "git add -p"
    directly jumps to hunk selection.  Recently, this was broken and
    "add -i" lost the paths selection dialog, but it now has been
    fixed.
-   (merge c852bd54bd jk/add-i-patch-do-prompt later to maint).
 
  * Git v2.12 was shipped with an embarrassing breakage where various
    operations that verify paths given from the user stopped dying when
    seeing an issue, and instead later triggering segfault.
-   (merge ce83eadd9a js/realpath-pathdup-fix later to maint).
 
  * There is no need for Python only to give a few messages to the
    standard error stream, but we somehow did.
@@ -248,11 +277,9 @@ notes for details).
  * The code to parse "git log -L..." command line was buggy when there
    are many ranges specified with -L; overrun of the allocated buffer
    has been fixed.
-   (merge aaae0bf787 ax/line-log-range-merge-fix later to maint).
 
  * The command-line parsing of "git log -L" copied internal data
    structures using incorrect size on ILP32 systems.
-   (merge 07f546cda5 vn/line-log-memcpy-size-fix later to maint).
 
  * "git diff --quiet" relies on the size field in diff_filespec to be
    correctly populated, but diff_populate_filespec() helper function
@@ -289,9 +316,27 @@ notes for details).
    when unexpected error happened, which has been fixed.
    (merge d1a13d3fcb jk/push-deadlock-regression-fix later to maint).
 
+ * "Dumb http" transport used to misparse a nonsense http-alternates
+   response, which has been fixed.
+   (merge d61434ae81 jk/http-walker-buffer-underflow-fix later to maint).
+
+ * "git add -p <pathspec>" unnecessarily expanded the pathspec to a
+   list of individual files that matches the pathspec by running "git
+   ls-files <pathspec>", before feeding it to "git diff-index" to see
+   which paths have changes, because historically the pathspec
+   language supported by "diff-index" was weaker.  These days they are
+   equivalent and there is no reason to internally expand it.  This
+   helps both performance and avoids command line argument limit on
+   some platforms.
+   (merge 7288e12cce jk/add-i-use-pathspecs later to maint).
+
+ * "git status --porcelain" is supposed to give a stable output, but a
+   few strings were left as translatable by mistake.
+   (merge b9e2bc560a mg/status-porcelain-no-i18n later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
-   (merge 2cfa83574c mm/two-more-xstrfmt later to maint).
    (merge b803ae4427 ps/docs-diffcore later to maint).
    (merge bcd886d897 ew/markdown-url-in-readme later to maint).
    (merge b2d593a779 rj/remove-unused-mktemp later to maint).
    (merge 3255e512a8 jk/ewah-use-right-type-in-sizeof later to maint).
+   (merge dfa3ad3238 rs/blame-code-cleanup later to maint).
