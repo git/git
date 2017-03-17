@@ -939,9 +939,14 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 
 const char *setup_git_directory_gently(int *nongit_ok)
 {
-	const char *prefix;
+	const char *prefix, *env_prefix;
 
 	prefix = setup_git_directory_gently_1(nongit_ok);
+	env_prefix = getenv(GIT_TOPLEVEL_PREFIX_ENVIRONMENT);
+
+	if (env_prefix)
+		prefix = env_prefix;
+
 	if (prefix)
 		setenv(GIT_PREFIX_ENVIRONMENT, prefix, 1);
 	else
