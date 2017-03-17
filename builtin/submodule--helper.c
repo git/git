@@ -270,6 +270,29 @@ static int module_list_compute(int argc, const char **argv,
 	return result;
 }
 
+static void module_list_active(struct module_list *list)
+{
+	int i;
+	struct module_list active_modules = MODULE_LIST_INIT;
+
+	gitmodules_config();
+
+	for (i = 0; i < list->nr; i++) {
+		const struct cache_entry *ce = list->entries[i];
+
+		if (!is_submodule_initialized(ce->name))
+			continue;
+
+		ALLOC_GROW(active_modules.entries,
+			   active_modules.nr + 1,
+			   active_modules.alloc);
+		active_modules.entries[active_modules.nr++] = ce;
+	}
+
+	free(list->entries);
+	*list = active_modules;
+}
+
 static int module_list(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -419,6 +442,13 @@ static int module_init(int argc, const char **argv, const char *prefix)
 
 	if (module_list_compute(argc, argv, prefix, &pathspec, &list) < 0)
 		return 1;
+
+	/*
+	 * If there are no path args and submodule.active is set then,
+	 * by default, only initialize 'active' modules.
+	 */
+	if (!argc && git_config_get_value_multi("submodule.active"))
+		module_list_active(&list);
 
 	for (i = 0; i < list.nr; i++)
 		init_submodule(list.entries[i]->name, prefix, quiet);
