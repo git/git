@@ -30,7 +30,7 @@ static int line_terminator = '\n';
 static int debug_mode;
 static int show_eol;
 static int recurse_submodules;
-static struct argv_array submodules_options = ARGV_ARRAY_INIT;
+static struct argv_array submodule_options = ARGV_ARRAY_INIT;
 
 static const char *prefix;
 static const char *super_prefix;
@@ -175,17 +175,17 @@ static void show_killed_files(struct dir_struct *dir)
 static void compile_submodule_options(const struct dir_struct *dir, int show_tag)
 {
 	if (line_terminator == '\0')
-		argv_array_push(&submodules_options, "-z");
+		argv_array_push(&submodule_options, "-z");
 	if (show_tag)
-		argv_array_push(&submodules_options, "-t");
+		argv_array_push(&submodule_options, "-t");
 	if (show_valid_bit)
-		argv_array_push(&submodules_options, "-v");
+		argv_array_push(&submodule_options, "-v");
 	if (show_cached)
-		argv_array_push(&submodules_options, "--cached");
+		argv_array_push(&submodule_options, "--cached");
 	if (show_eol)
-		argv_array_push(&submodules_options, "--eol");
+		argv_array_push(&submodule_options, "--eol");
 	if (debug_mode)
-		argv_array_push(&submodules_options, "--debug");
+		argv_array_push(&submodule_options, "--debug");
 }
 
 /**
@@ -204,7 +204,7 @@ static void show_gitlink(const struct cache_entry *ce)
 	argv_array_push(&cp.args, "--recurse-submodules");
 
 	/* add supported options */
-	argv_array_pushv(&cp.args, submodules_options.argv);
+	argv_array_pushv(&cp.args, submodule_options.argv);
 
 	/*
 	 * Pass in the original pathspec args.  The submodule will be
