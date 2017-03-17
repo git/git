@@ -8,13 +8,15 @@
 #define PATHSPEC_GLOB		(1<<3)
 #define PATHSPEC_ICASE		(1<<4)
 #define PATHSPEC_EXCLUDE	(1<<5)
+#define PATHSPEC_ATTR		(1<<6)
 #define PATHSPEC_ALL_MAGIC	  \
 	(PATHSPEC_FROMTOP	| \
 	 PATHSPEC_MAXDEPTH	| \
 	 PATHSPEC_LITERAL	| \
 	 PATHSPEC_GLOB		| \
 	 PATHSPEC_ICASE		| \
-	 PATHSPEC_EXCLUDE)
+	 PATHSPEC_EXCLUDE	| \
+	 PATHSPEC_ATTR)
 
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern satisfies GFNM_ONESTAR */
 
@@ -31,6 +33,17 @@ struct pathspec {
 		int len, prefix;
 		int nowildcard_len;
 		int flags;
+		int attr_match_nr;
+		struct attr_match {
+			char *value;
+			enum attr_match_mode {
+				MATCH_SET,
+				MATCH_UNSET,
+				MATCH_VALUE,
+				MATCH_UNSPECIFIED
+			} match_mode;
+		} *attr_match;
+		struct attr_check *attr_check;
 	} *items;
 };
 
