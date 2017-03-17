@@ -15,6 +15,12 @@ test_expect_success 'setup' '
 	test_commit -C super initial &&
 	git -C super submodule add ../sub sub1 &&
 	git -C super submodule add ../sub sub2 &&
+
+	# Remove submodule.<name>.active entries in order to test in an
+	# environment where only URLs are present in the conifg
+	git -C super config --unset submodule.sub1.active &&
+	git -C super config --unset submodule.sub2.active &&
+
 	git -C super commit -a -m "add 2 submodules at sub{1,2}"
 '
 
@@ -81,6 +87,21 @@ test_expect_success 'is-active with submodule.active and submodule.<name>.active
 
 	test_must_fail git -C super submodule--helper is-active sub1 &&
 	git -C super submodule--helper is-active sub2
+'
+
+test_expect_success 'is-active, submodule.active and submodule add' '
+	test_when_finished "rm -rf super2" &&
+	git init super2 &&
+	test_commit -C super2 initial &&
+	git -C super2 config --add submodule.active "sub*" &&
+
+	# submodule add should only add submodule.<name>.active
+	# to the config if not matched by the pathspec
+	git -C super2 submodule add ../sub sub1 &&
+	test_must_fail git -C super2 config --get submodule.sub1.active &&
+
+	git -C super2 submodule add ../sub mod &&
+	git -C super2 config --get submodule.mod.active
 '
 
 test_done
