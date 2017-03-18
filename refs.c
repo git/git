@@ -1208,27 +1208,26 @@ int refs_rename_ref_available(struct ref_store *refs,
 	return ok;
 }
 
-int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 {
 	struct object_id oid;
 	int flag;
 
-	if (submodule) {
-		if (resolve_gitlink_ref(submodule, "HEAD", oid.hash) == 0)
-			return fn("HEAD", &oid, 0, cb_data);
-
-		return 0;
-	}
-
-	if (!read_ref_full("HEAD", RESOLVE_REF_READING, oid.hash, &flag))
+	if (!refs_read_ref_full(refs, "HEAD", RESOLVE_REF_READING,
+				oid.hash, &flag))
 		return fn("HEAD", &oid, flag, cb_data);
 
 	return 0;
 }
 
+int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data)
+{
+	return refs_head_ref(get_submodule_ref_store(submodule), fn, cb_data);
+}
+
 int head_ref(each_ref_fn fn, void *cb_data)
 {
-	return head_ref_submodule(NULL, fn, cb_data);
+	return refs_head_ref(get_main_ref_store(), fn, cb_data);
 }
 
 /*
