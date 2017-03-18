@@ -2513,7 +2513,7 @@ out:
  * IOW, to avoid cross device rename errors, the temporary renamed log must
  * live into logs/refs.
  */
-#define TMP_RENAMED_LOG  "logs/refs/.tmp-renamed-log"
+#define TMP_RENAMED_LOG  "refs/.tmp-renamed-log"
 
 struct rename_cb {
 	const char *tmp_renamed_log;
@@ -2549,7 +2549,7 @@ static int rename_tmp_log(const char *newrefname)
 	int ret;
 
 	strbuf_git_path(&path, "logs/%s", newrefname);
-	strbuf_git_path(&tmp, TMP_RENAMED_LOG);
+	strbuf_git_path(&tmp, "logs/%s", TMP_RENAMED_LOG);
 	cb.tmp_renamed_log = tmp.buf;
 	ret = raceproof_create_file(path.buf, rename_tmp_log_callback, &cb);
 	if (ret) {
@@ -2611,7 +2611,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 
 	strbuf_git_path(&sb_oldref, "logs/%s", oldrefname);
 	strbuf_git_path(&sb_newref, "logs/%s", newrefname);
-	strbuf_git_path(&tmp_renamed_log, TMP_RENAMED_LOG);
+	strbuf_git_path(&tmp_renamed_log, "logs/%s", TMP_RENAMED_LOG);
 
 	log = !lstat(sb_oldref.buf, &loginfo);
 	if (log && S_ISLNK(loginfo.st_mode)) {
@@ -2636,7 +2636,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 	}
 
 	if (log && rename(sb_oldref.buf, tmp_renamed_log.buf)) {
-		ret = error("unable to move logfile logs/%s to "TMP_RENAMED_LOG": %s",
+		ret = error("unable to move logfile logs/%s to logs/"TMP_RENAMED_LOG": %s",
 			    oldrefname, strerror(errno));
 		goto out;
 	}
@@ -2722,7 +2722,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 			oldrefname, newrefname, strerror(errno));
 	if (!logmoved && log &&
 	    rename(tmp_renamed_log.buf, sb_oldref.buf))
-		error("unable to restore logfile %s from "TMP_RENAMED_LOG": %s",
+		error("unable to restore logfile %s from logs/"TMP_RENAMED_LOG": %s",
 			oldrefname, strerror(errno));
 	ret = 1;
  out:
