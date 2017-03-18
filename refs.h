@@ -297,7 +297,6 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
  * flags: Combination of the above PACK_REFS_* flags.
  */
 int refs_pack_refs(struct ref_store *refs, unsigned int flags);
-int pack_refs(unsigned int flags);
 
 /*
  * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
