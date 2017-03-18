@@ -1422,25 +1422,10 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 int resolve_gitlink_ref(const char *submodule, const char *refname,
 			unsigned char *sha1)
 {
-	size_t len = strlen(submodule);
 	struct ref_store *refs;
 	int flags;
 
-	while (len && submodule[len - 1] == '/')
-		len--;
-
-	if (!len)
-		return -1;
-
-	if (submodule[len]) {
-		/* We need to strip off one or more trailing slashes */
-		char *stripped = xmemdupz(submodule, len);
-
-		refs = get_submodule_ref_store(stripped);
-		free(stripped);
-	} else {
-		refs = get_submodule_ref_store(submodule);
-	}
+	refs = get_submodule_ref_store(submodule);
 
 	if (!refs)
 		return -1;
@@ -1559,7 +1544,17 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 {
 	struct strbuf submodule_sb = STRBUF_INIT;
 	struct ref_store *refs;
+	char *to_free = NULL;
 	int ret;
+	size_t len;
+
+	if (submodule) {
+		len = strlen(submodule);
+		while (len && submodule[len - 1] == '/')
+			len--;
+		if (!len)
+			submodule = NULL;
+	}
 
 	if (!submodule || !*submodule) {
 		/*
@@ -1568,6 +1563,10 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 		 */
 		return get_main_ref_store();
 	}
+
+	if (submodule[len])
+		/* We need to strip off one or more trailing slashes */
+		submodule = to_free = xmemdupz(submodule, len);
 
 	refs = lookup_submodule_ref_store(submodule);
 	if (refs)
@@ -1589,6 +1588,8 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 
 done:
 	strbuf_release(&submodule_sb);
+	free(to_free);
+
 	return refs;
 }
 
