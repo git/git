@@ -5,6 +5,7 @@ struct object_id;
 struct ref_store;
 struct strbuf;
 struct string_list;
+struct worktree;
 
 /*
  * Resolve a reference, recursively following symbolic refererences.
@@ -655,5 +656,6 @@ struct ref_store *get_main_ref_store(void);
  * submodule==NULL.
  */
 struct ref_store *get_submodule_ref_store(const char *submodule);
+struct ref_store *get_worktree_ref_store(const struct worktree *wt);
 
 #endif /* REFS_H */
