@@ -230,7 +230,7 @@ typedef int each_ref_fn(const char *refname,
  * it is not safe to modify references while an iteration is in
  * progress, unless the same callback function invocation that
  * modifies the reference also returns a nonzero value to immediately
- * stop the iteration.
+ * stop the iteration. Returned references are sorted.
  */
 int refs_for_each_ref(struct ref_store *refs,
 		      each_ref_fn fn, void *cb_data);
@@ -370,7 +370,7 @@ int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void
 
 /*
  * Calls the specified function for each reflog file until it returns nonzero,
- * and returns the value
+ * and returns the value. Reflog file order is unspecified.
  */
 int refs_for_each_reflog(struct ref_store *refs, each_ref_fn fn, void *cb_data);
 int for_each_reflog(each_ref_fn fn, void *cb_data);
