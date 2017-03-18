@@ -11,7 +11,7 @@ SYNOPSIS
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
 		   [--points-at <object>] [(--merged | --no-merged) [<object>]]
-		   [--contains [<object>]]
+		   [(--contains | --no-contains) [<object>]]
 
 DESCRIPTION
 -----------
@@ -78,6 +78,10 @@ OPTIONS
 --contains [<object>]::
 	Only list refs which contain the specified commit (HEAD if not
 	specified).
+
+--no-contains [<object>]::
+	Only list refs which don't contain the specified commit (HEAD
+	if not specified).
 
 --ignore-case::
 	Sorting and filtering refs are case insensitive.
