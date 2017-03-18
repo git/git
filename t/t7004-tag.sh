@@ -118,6 +118,18 @@ test_expect_success 'listing all tags if one exists should succeed' '
 	git tag
 '
 
+cat >expect <<EOF
+mytag
+EOF
+test_expect_success 'Multiple -l or --list options are equivalent to one -l option' '
+	git tag -l -l >actual &&
+	test_cmp expect actual &&
+	git tag --list --list >actual &&
+	test_cmp expect actual &&
+	git tag --list -l --list >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'listing all tags if one exists should output that tag' '
 	test $(git tag -l) = mytag &&
 	test $(git tag) = mytag
@@ -333,6 +345,15 @@ test_expect_success \
 
 test_expect_success 'tag -l can accept multiple patterns' '
 	git tag -l "v1*" "v0*" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'tag -l can accept multiple patterns interleaved with -l or --list options' '
+	git tag -l "v1*" "v0*" >actual &&
+	test_cmp expect actual &&
+	git tag -l "v1*" --list "v0*" >actual &&
+	test_cmp expect actual &&
+	git tag -l "v1*" "v0*" -l --list >actual &&
 	test_cmp expect actual
 '
 
