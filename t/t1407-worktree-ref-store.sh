@@ -37,4 +37,16 @@ test_expect_success 'resolve_ref(<per-worktree-ref>)' '
 	test_cmp expected actual
 '
 
+test_expect_success 'create_symref(FOO, refs/heads/master)' '
+	$RWT create-symref FOO refs/heads/master nothing &&
+	echo refs/heads/master >expected &&
+	git -C wt symbolic-ref FOO >actual &&
+	test_cmp expected actual &&
+
+	$RMAIN create-symref FOO refs/heads/wt-master nothing &&
+	echo refs/heads/wt-master >expected &&
+	git symbolic-ref FOO >actual &&
+	test_cmp expected actual
+'
+
 test_done
