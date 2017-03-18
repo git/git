@@ -639,6 +639,11 @@ test_expect_success \
 	git tag -n0 -l tag-one-line >actual &&
 	test_cmp expect actual &&
 
+	git tag -n0 | grep "^tag-one-line" >actual &&
+	test_cmp expect actual &&
+	git tag -n0 tag-one-line >actual &&
+	test_cmp expect actual &&
+
 	echo "tag-one-line    A msg" >expect &&
 	git tag -n1 -l | grep "^tag-one-line" >actual &&
 	test_cmp expect actual &&
@@ -649,6 +654,17 @@ test_expect_success \
 	git tag -n2 -l tag-one-line >actual &&
 	test_cmp expect actual &&
 	git tag -n999 -l tag-one-line >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'The -n 100 invocation means -n --list 100, not -n100' '
+	>expect &&
+	git tag -n 100 >actual &&
+	test_cmp expect actual &&
+
+	git tag -m "A msg" 100 &&
+	echo "100             A msg" >expect &&
+	git tag -n 100 >actual &&
 	test_cmp expect actual
 '
 
@@ -1495,7 +1511,6 @@ test_expect_success 'mixing incompatibles modes and options is forbidden' '
 	test_must_fail git tag -a -s -m -F &&
 	test_must_fail git tag -a -s -m -F -l &&
 	test_must_fail git tag -l -v &&
-	test_must_fail git tag -n 100 &&
 	test_must_fail git tag -n 100 -v &&
 	test_must_fail git tag -l -m msg &&
 	test_must_fail git tag -l -F some file &&
