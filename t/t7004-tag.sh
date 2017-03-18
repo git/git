@@ -1592,7 +1592,7 @@ test_expect_success 'mixing incompatibles modes and options is forbidden' '
 	test_must_fail git tag --contains --no-contains
 '
 
-for option in --contains --no-contains --merged --no-merged --points-at
+for option in --contains --with --no-contains --without --merged --no-merged --points-at
 do
 	test_expect_success "mixing incompatible modes with $option is forbidden" "
 		test_must_fail git tag -d $option HEAD &&
