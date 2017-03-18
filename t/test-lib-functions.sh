@@ -154,7 +154,7 @@ test_pause () {
 #
 # Example: "debug git checkout master".
 debug () {
-	 GIT_TEST_GDB=1 "$@"
+	 GIT_TEST_GDB=1 "$@" <&6 >&5 2>&7
 }
 
 # Call test_commit with the arguments
