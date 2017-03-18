@@ -454,10 +454,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 	create_tag_object = (opt.sign || annotate || msg.given || msgfile);
 
-	if (argc == 0 && !cmdmode)
+	if (argc == 0 && !cmdmode && !create_tag_object)
 		cmdmode = 'l';
 
-	if ((create_tag_object || force) && (cmdmode != 0))
+	if ((create_tag_object || force) && (cmdmode || (!cmdmode && !argc)))
 		usage_with_options(git_tag_usage, options);
 
 	finalize_colopts(&colopts, -1);
