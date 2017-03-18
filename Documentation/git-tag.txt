@@ -136,7 +136,8 @@ This option is only applicable when listing tags without annotation lines.
 	not specified). Implies `--list`.
 
 --points-at <object>::
-	Only list tags of the given object. Implies `--list`.
+	Only list tags of the given object (HEAD if not
+	specified). Implies `--list`.
 
 -m <msg>::
 --message=<msg>::
