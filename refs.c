@@ -1416,7 +1416,8 @@ static struct ref_store *lookup_submodule_ref_store(const char *submodule)
  * Create, record, and return a ref_store instance for the specified
  * gitdir.
  */
-static struct ref_store *ref_store_init(const char *gitdir)
+static struct ref_store *ref_store_init(const char *gitdir,
+					unsigned int flags)
 {
 	const char *be_name = "files";
 	struct ref_storage_be *be = find_ref_storage_backend(be_name);
@@ -1425,7 +1426,7 @@ static struct ref_store *ref_store_init(const char *gitdir)
 	if (!be)
 		die("BUG: reference backend %s is unknown", be_name);
 
-	refs = be->init(gitdir);
+	refs = be->init(gitdir, flags);
 	return refs;
 }
 
@@ -1436,7 +1437,11 @@ struct ref_store *get_main_ref_store(void)
 	if (main_ref_store)
 		return main_ref_store;
 
-	refs = ref_store_init(get_git_dir());
+	refs = ref_store_init(get_git_dir(),
+			      (REF_STORE_READ |
+			       REF_STORE_WRITE |
+			       REF_STORE_ODB |
+			       REF_STORE_MAIN));
 	main_ref_store = refs;
 	return refs;
 }
@@ -1484,7 +1489,9 @@ struct ref_store *get_ref_store(const char *submodule)
 		return NULL;
 	}
 
-	refs = ref_store_init(submodule_sb.buf);
+	/* pretend that add_submodule_odb() has been called */
+	refs = ref_store_init(submodule_sb.buf,
+			      REF_STORE_READ | REF_STORE_ODB);
 	register_submodule_ref_store(refs, submodule);
 
 	strbuf_release(&submodule_sb);
