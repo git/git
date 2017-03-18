@@ -57,15 +57,49 @@ struct string_list;
 #define RESOLVE_REF_NO_RECURSE 0x02
 #define RESOLVE_REF_ALLOW_BAD_NAME 0x04
 
+const char *refs_resolve_ref_unsafe(struct ref_store *refs,
+				    const char *refname,
+				    int resolve_flags,
+				    unsigned char *sha1,
+				    int *flags);
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 			       unsigned char *sha1, int *flags);
 
+char *refs_resolve_refdup(struct ref_store *refs,
+			  const char *refname, int resolve_flags,
+			  unsigned char *sha1, int *flags);
 char *resolve_refdup(const char *refname, int resolve_flags,
 		     unsigned char *sha1, int *flags);
 
+int refs_read_ref_full(struct ref_store *refs, const char *refname,
+		       int resolve_flags, unsigned char *sha1, int *flags);
 int read_ref_full(const char *refname, int resolve_flags,
 		  unsigned char *sha1, int *flags);
 int read_ref(const char *refname, unsigned char *sha1);
+
+/*
+ * Return 0 if a reference named refname could be created without
+ * conflicting with the name of an existing reference. Otherwise,
+ * return a negative value and write an explanation to err. If extras
+ * is non-NULL, it is a list of additional refnames with which refname
+ * is not allowed to conflict. If skip is non-NULL, ignore potential
+ * conflicts with refs in skip (e.g., because they are scheduled for
+ * deletion in the same operation). Behavior is undefined if the same
+ * name is listed in both extras and skip.
+ *
+ * Two reference names conflict if one of them exactly matches the
+ * leading components of the other; e.g., "foo/bar" conflicts with
+ * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
+ * "foo/barbados".
+ *
+ * extras and skip must be sorted.
+ */
+
+int refs_verify_refname_available(struct ref_store *refs,
+				  const char *refname,
+				  const struct string_list *extra,
+				  const struct string_list *skip,
+				  struct strbuf *err);
 
 int ref_exists(const char *refname);
 
@@ -83,6 +117,8 @@ extern int refs_init_db(struct strbuf *err);
  * Symbolic references are considered unpeelable, even if they
  * ultimately resolve to a peelable tag.
  */
+int refs_peel_ref(struct ref_store *refs, const char *refname,
+		  unsigned char *sha1);
 int peel_ref(const char *refname, unsigned char *sha1);
 
 /**
@@ -196,6 +232,17 @@ typedef int each_ref_fn(const char *refname,
  * modifies the reference also returns a nonzero value to immediately
  * stop the iteration.
  */
+int refs_for_each_ref(struct ref_store *refs,
+		      each_ref_fn fn, void *cb_data);
+int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
+			 each_ref_fn fn, void *cb_data);
+int refs_for_each_tag_ref(struct ref_store *refs,
+			  each_ref_fn fn, void *cb_data);
+int refs_for_each_branch_ref(struct ref_store *refs,
+			     each_ref_fn fn, void *cb_data);
+int refs_for_each_remote_ref(struct ref_store *refs,
+			     each_ref_fn fn, void *cb_data);
+
 int head_ref(each_ref_fn fn, void *cb_data);
 int for_each_ref(each_ref_fn fn, void *cb_data);
 int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
@@ -225,6 +272,7 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data);
 int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
 
 /* can be used to learn about broken ref and symref */
+int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data);
 int for_each_rawref(each_ref_fn fn, void *cb_data);
 
 static inline const char *has_glob_specials(const char *pattern)
@@ -248,6 +296,7 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
  * Write a packed-refs file for the current repository.
  * flags: Combination of the above PACK_REFS_* flags.
  */
+int refs_pack_refs(struct ref_store *refs, unsigned int flags);
 int pack_refs(unsigned int flags);
 
 /*
@@ -263,6 +312,8 @@ int pack_refs(unsigned int flags);
 /*
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
+int refs_create_reflog(struct ref_store *refs, const char *refname,
+		       int force_create, struct strbuf *err);
 int safe_create_reflog(const char *refname, int force_create, struct strbuf *err);
 
 /** Reads log for the value of ref during at_time. **/
@@ -272,6 +323,7 @@ int read_ref_at(const char *refname, unsigned int flags,
 		unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt);
 
 /** Check if a particular reflog exists */
+int refs_reflog_exists(struct ref_store *refs, const char *refname);
 int reflog_exists(const char *refname);
 
 /*
@@ -290,9 +342,12 @@ int delete_ref(const char *msg, const char *refname,
  * an all-or-nothing transaction). flags is passed through to
  * ref_transaction_delete().
  */
+int refs_delete_refs(struct ref_store *refs, struct string_list *refnames,
+		     unsigned int flags);
 int delete_refs(struct string_list *refnames, unsigned int flags);
 
 /** Delete a reflog */
+int refs_delete_reflog(struct ref_store *refs, const char *refname);
 int delete_reflog(const char *refname);
 
 /* iterate over reflog entries */
@@ -301,6 +356,12 @@ typedef int each_reflog_ent_fn(
 		const char *committer, unsigned long timestamp,
 		int tz, const char *msg, void *cb_data);
 
+int refs_for_each_reflog_ent(struct ref_store *refs, const char *refname,
+			     each_reflog_ent_fn fn, void *cb_data);
+int refs_for_each_reflog_ent_reverse(struct ref_store *refs,
+				     const char *refname,
+				     each_reflog_ent_fn fn,
+				     void *cb_data);
 int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 
@@ -308,6 +369,7 @@ int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void
  * Calls the specified function for each reflog file until it returns nonzero,
  * and returns the value
  */
+int refs_for_each_reflog(struct ref_store *refs, each_ref_fn fn, void *cb_data);
 int for_each_reflog(each_ref_fn fn, void *cb_data);
 
 #define REFNAME_ALLOW_ONELEVEL 1
@@ -328,8 +390,12 @@ const char *prettify_refname(const char *refname);
 char *shorten_unambiguous_ref(const char *refname, int strict);
 
 /** rename ref, return 0 on success **/
+int refs_rename_ref(struct ref_store *refs, const char *oldref,
+		    const char *newref, const char *logmsg);
 int rename_ref(const char *oldref, const char *newref, const char *logmsg);
 
+int refs_create_symref(struct ref_store *refs, const char *refname,
+		       const char *target, const char *logmsg);
 int create_symref(const char *refname, const char *target, const char *logmsg);
 
 /*
@@ -552,6 +618,14 @@ typedef void reflog_expiry_cleanup_fn(void *cb_data);
  * enum expire_reflog_flags. The three function pointers are described
  * above. On success, return zero.
  */
+int refs_reflog_expire(struct ref_store *refs,
+		       const char *refname,
+		       const unsigned char *sha1,
+		       unsigned int flags,
+		       reflog_expiry_prepare_fn prepare_fn,
+		       reflog_expiry_should_prune_fn should_prune_fn,
+		       reflog_expiry_cleanup_fn cleanup_fn,
+		       void *policy_cb_data);
 int reflog_expire(const char *refname, const unsigned char *sha1,
 		  unsigned int flags,
 		  reflog_expiry_prepare_fn prepare_fn,
