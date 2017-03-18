@@ -454,8 +454,12 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 	create_tag_object = (opt.sign || annotate || msg.given || msgfile);
 
-	if (argc == 0 && !cmdmode && !create_tag_object)
-		cmdmode = 'l';
+	if (!cmdmode && !create_tag_object) {
+		if (argc == 0)
+			cmdmode = 'l';
+		else if (filter.with_commit || filter.points_at.nr || filter.merge_commit)
+			cmdmode = 'l';
+	}
 
 	if ((create_tag_object || force) && (cmdmode || (!cmdmode && !argc)))
 		usage_with_options(git_tag_usage, options);
@@ -483,15 +487,16 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		if (column_active(colopts))
 			stop_column_filter();
 		return ret;
+	} else {
+		if (filter.lines != -1)
+			die(_("-n option is only allowed in list mode."));
+		if (filter.with_commit)
+			die(_("--contains option is only allowed in list mode."));
+		if (filter.points_at.nr)
+			die(_("--points-at option is only allowed in list mode."));
+		if (filter.merge_commit)
+			die(_("--merged and --no-merged options are only allowed in list mode."));
 	}
-	if (filter.lines != -1)
-		die(_("-n option is only allowed with -l."));
-	if (filter.with_commit)
-		die(_("--contains option is only allowed with -l."));
-	if (filter.points_at.nr)
-		die(_("--points-at option is only allowed with -l."));
-	if (filter.merge_commit)
-		die(_("--merged and --no-merged option are only allowed with -l"));
 	if (cmdmode == 'd')
 		return for_each_tag_name(argv, delete_tag, NULL);
 	if (cmdmode == 'v') {

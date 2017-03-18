@@ -96,6 +96,10 @@ OPTIONS
 Running "git tag" without arguments also lists all tags. The pattern
 is a shell wildcard (i.e., matched using fnmatch(3)). Multiple
 patterns may be given; if any of them matches, the tag is shown.
++
+This option is implicitly supplied if any other list-like option such
+as `--contains` is provided. See the documentation for each of those
+options for details.
 
 --sort=<key>::
 	Sort based on the key given.  Prefix `-` to sort in
@@ -124,10 +128,10 @@ This option is only applicable when listing tags without annotation lines.
 
 --contains [<commit>]::
 	Only list tags which contain the specified commit (HEAD if not
-	specified).
+	specified). Implies `--list`.
 
 --points-at <object>::
-	Only list tags of the given object.
+	Only list tags of the given object. Implies `--list`.
 
 -m <msg>::
 --message=<msg>::
@@ -178,7 +182,7 @@ This option is only applicable when listing tags without annotation lines.
 --[no-]merged [<commit>]::
 	Only list tags whose tips are reachable, or not reachable
 	if `--no-merged` is used, from the specified commit (`HEAD`
-	if not specified).
+	if not specified). Implies `--list`.
 
 CONFIGURATION
 -------------
