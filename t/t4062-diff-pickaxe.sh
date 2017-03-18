@@ -19,4 +19,9 @@ test_expect_success '-G matches' '
 	test 4096-zeroes.txt = "$(cat out)"
 '
 
+test_expect_success '-S --pickaxe-regex' '
+	git diff --name-only -S0 --pickaxe-regex HEAD^ >out &&
+	verbose test 4096-zeroes.txt = "$(cat out)"
+'
+
 test_done
