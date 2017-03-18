@@ -1,6 +1,10 @@
 #ifndef REFS_H
 #define REFS_H
 
+struct object_id;
+struct strbuf;
+struct string_list;
+
 /*
  * Resolve a reference, recursively following symbolic refererences.
  *
