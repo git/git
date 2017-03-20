@@ -4,6 +4,7 @@
 #include "quote.h"
 #include "sigchain.h"
 #include "pkt-line.h"
+#include "list.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -36,6 +37,13 @@ struct text_stat {
 
 	/* These are just approximations! */
 	unsigned printable, nonprintable;
+};
+
+static LIST_HEAD(delayed_item_queue_head);
+
+struct delayed_item {
+	void* item;
+	struct list_head node;
 };
 
 static void gather_stats(const char *buf, unsigned long size, struct text_stat *stats)
@@ -672,7 +680,7 @@ done:
 }
 
 static int apply_multi_file_filter(const char *path, const char *src, size_t len,
-				   int fd, struct strbuf *dst, const char *cmd,
+				   int fd, struct strbuf *dst, int *delayed, const char *cmd,
 				   const unsigned int wanted_capability)
 {
 	int err;
@@ -738,9 +746,14 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 		goto done;
 
 	read_multi_file_filter_status(process->out, &filter_status);
-	err = strcmp(filter_status.buf, "success");
-	if (err)
+	if (delayed && !strcmp(filter_status.buf, "delayed")) {
+		*delayed = 1;
 		goto done;
+	} else {
+		err = strcmp(filter_status.buf, "success");
+		if (err)
+			goto done;
+	}
 
 	err = read_packetized_to_strbuf(process->out, &nbuf) < 0;
 	if (err)
@@ -787,8 +800,8 @@ static struct convert_driver {
 } *user_convert, **user_convert_tail;
 
 static int apply_filter(const char *path, const char *src, size_t len,
-			int fd, struct strbuf *dst, struct convert_driver *drv,
-			const unsigned int wanted_capability)
+			int fd, struct strbuf *dst, int *delayed,
+			struct convert_driver *drv, const unsigned int wanted_capability)
 {
 	const char *cmd = NULL;
 
@@ -806,7 +819,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	if (cmd && *cmd)
 		return apply_single_file_filter(path, src, len, fd, dst, cmd);
 	else if (drv->process && *drv->process)
-		return apply_multi_file_filter(path, src, len, fd, dst, drv->process, wanted_capability);
+		return apply_multi_file_filter(path, src, len, fd, dst, delayed, drv->process, wanted_capability);
 
 	return 0;
 }
@@ -1147,7 +1160,7 @@ int would_convert_to_git_filter_fd(const char *path)
 	if (!ca.drv->required)
 		return 0;
 
-	return apply_filter(path, NULL, 0, -1, NULL, ca.drv, CAP_CLEAN);
+	return apply_filter(path, NULL, 0, -1, NULL, NULL, ca.drv, CAP_CLEAN);
 }
 
 const char *get_convert_attr_ascii(const char *path)
@@ -1184,7 +1197,7 @@ int convert_to_git(const char *path, const char *src, size_t len,
 
 	convert_attrs(&ca, path);
 
-	ret |= apply_filter(path, src, len, -1, dst, ca.drv, CAP_CLEAN);
+	ret |= apply_filter(path, src, len, -1, dst, NULL, ca.drv, CAP_CLEAN);
 	if (!ret && ca.drv && ca.drv->required)
 		die("%s: clean filter '%s' failed", path, ca.drv->name);
 
@@ -1209,7 +1222,7 @@ void convert_to_git_filter_fd(const char *path, int fd, struct strbuf *dst,
 	assert(ca.drv);
 	assert(ca.drv->clean || ca.drv->process);
 
-	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv, CAP_CLEAN))
+	if (!apply_filter(path, NULL, 0, fd, dst, NULL, ca.drv, CAP_CLEAN))
 		die("%s: clean filter '%s' failed", path, ca.drv->name);
 
 	crlf_to_git(path, dst->buf, dst->len, dst, ca.crlf_action, checksafe);
@@ -1217,7 +1230,7 @@ void convert_to_git_filter_fd(const char *path, int fd, struct strbuf *dst,
 }
 
 static int convert_to_working_tree_internal(const char *path, const char *src,
-					    size_t len, struct strbuf *dst,
+					    size_t len, struct strbuf *dst, int *delayed,
 					    int normalizing)
 {
 	int ret = 0, ret_filter = 0;
@@ -1243,21 +1256,50 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 		}
 	}
 
-	ret_filter = apply_filter(path, src, len, -1, dst, ca.drv, CAP_SMUDGE);
+	ret_filter = apply_filter(path, src, len, -1, dst, delayed, ca.drv, CAP_SMUDGE);
 	if (!ret_filter && ca.drv && ca.drv->required)
 		die("%s: smudge filter %s failed", path, ca.drv->name);
 
 	return ret | ret_filter;
 }
 
+int async_convert_to_working_tree(const char *path, const char *src,
+								  size_t len, struct strbuf *dst, void *item)
+{
+	int delayed = 0;
+	struct delayed_item *delayed_item;
+	if (convert_to_working_tree_internal(path, src, len, dst, &delayed, 0)) {
+		if (delayed) {
+			delayed_item = xmalloc(sizeof(*delayed_item));
+			delayed_item->item = item;
+			list_add_tail(&delayed_item->node, &delayed_item_queue_head);
+			return ASYNC_FILTER_DELAYED;
+		}
+		return ASYNC_FILTER_SUCCESS;
+	}
+	return ASYNC_FILTER_FAIL;
+}
+
+void* async_filter_finish(void)
+{
+	struct delayed_item *head;
+	if (!list_empty(&delayed_item_queue_head)) {
+		head = list_first_entry(&delayed_item_queue_head,
+			struct delayed_item, node);
+		list_del(&head->node);
+		return head->item;
+	}
+	return NULL;
+}
+
 int convert_to_working_tree(const char *path, const char *src, size_t len, struct strbuf *dst)
 {
-	return convert_to_working_tree_internal(path, src, len, dst, 0);
+	return convert_to_working_tree_internal(path, src, len, dst, NULL, 0);
 }
 
 int renormalize_buffer(const char *path, const char *src, size_t len, struct strbuf *dst)
 {
-	int ret = convert_to_working_tree_internal(path, src, len, dst, 1);
+	int ret = convert_to_working_tree_internal(path, src, len, dst, NULL, 1);
 	if (ret) {
 		src = dst->buf;
 		len = dst->len;

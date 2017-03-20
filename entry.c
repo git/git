@@ -179,11 +179,17 @@ static int write_entry(struct cache_entry *ce,
 		/*
 		 * Convert from git internal format to working tree format
 		 */
-		if (ce_mode_s_ifmt == S_IFREG &&
-		    convert_to_working_tree(ce->name, new, size, &buf)) {
-			free(new);
-			new = strbuf_detach(&buf, &newsize);
-			size = newsize;
+		if (ce_mode_s_ifmt == S_IFREG) {
+			ret = async_convert_to_working_tree(ce->name, new, size, &buf, ce);
+			if (ret == ASYNC_FILTER_SUCCESS) {
+				free(new);
+				new = strbuf_detach(&buf, &newsize);
+				size = newsize;
+			}
+			else if (ret == ASYNC_FILTER_DELAYED) {
+				free(new);
+				goto finish;
+			}
 		}
 
 		fd = open_output_fd(path, ce, to_tempfile);
@@ -320,4 +326,17 @@ int checkout_entry(struct cache_entry *ce,
 
 	create_directories(path.buf, path.len, state);
 	return write_entry(ce, path.buf, state, 0);
+}
+
+int checkout_delayed_entries(const struct checkout *state)
+{
+	struct cache_entry *ce;
+	int errs = 0;
+
+	while ((ce = async_filter_finish())) {
+		ce->ce_flags &= ~CE_UPDATE;
+		errs |= checkout_entry(ce, state, NULL);
+	}
+
+	return errs;
 }

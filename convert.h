@@ -4,6 +4,15 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
+enum async_filter {
+	ASYNC_FILTER_SUCCESS = 0,
+	ASYNC_FILTER_FAIL = 1,
+	ASYNC_FILTER_DELAYED = 2
+};
+
+extern enum async_filter async_filter;
+
+
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,
 	SAFE_CRLF_FAIL = 1,
@@ -42,6 +51,10 @@ extern int convert_to_git(const char *path, const char *src, size_t len,
 			  struct strbuf *dst, enum safe_crlf checksafe);
 extern int convert_to_working_tree(const char *path, const char *src,
 				   size_t len, struct strbuf *dst);
+extern int async_convert_to_working_tree(const char *path, const char *src,
+					 size_t len, struct strbuf *dst,
+					 void *item);
+extern void* async_filter_finish(void);
 extern int renormalize_buffer(const char *path, const char *src, size_t len,
 			      struct strbuf *dst);
 static inline int would_convert_to_git(const char *path)
