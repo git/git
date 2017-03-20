@@ -1128,25 +1128,22 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 static void run_update_post_hook(struct command *commands)
 {
 	struct command *cmd;
-	int argc;
 	struct child_process proc = CHILD_PROCESS_INIT;
 	const char *hook;
 
 	hook = find_hook("post-update");
-	for (argc = 0, cmd = commands; cmd; cmd = cmd->next) {
-		if (cmd->error_string || cmd->did_not_exist)
-			continue;
-		argc++;
-	}
-	if (!argc || !hook)
+	if (!hook)
 		return;
 
-	argv_array_push(&proc.args, hook);
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string || cmd->did_not_exist)
 			continue;
+		if (!proc.args.argc)
+			argv_array_push(&proc.args, hook);
 		argv_array_push(&proc.args, cmd->ref_name);
 	}
+	if (!proc.args.argc)
+		return;
 
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
