@@ -73,6 +73,7 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 	copy_cache_entry(new, old);
 	new->ce_flags &= ~CE_HASHED;
 	new->ce_namelen = namelen;
+	new->precomputed_hash.initialized = 0;
 	new->index = 0;
 	memcpy(new->name, new_name, namelen + 1);
 
@@ -614,6 +615,7 @@ static struct cache_entry *create_alias_ce(struct index_state *istate,
 	new = xcalloc(1, cache_entry_size(len));
 	memcpy(new->name, alias->name, len);
 	copy_cache_entry(new, ce);
+	new->precomputed_hash.initialized = 0;
 	save_or_free_index_entry(istate, ce);
 	return new;
 }
@@ -1446,6 +1448,7 @@ static struct cache_entry *cache_entry_from_ondisk(struct ondisk_cache_entry *on
 	ce->ce_stat_data.sd_size  = get_be32(&ondisk->size);
 	ce->ce_flags = flags & ~CE_NAMEMASK;
 	ce->ce_namelen = len;
+	ce->precomputed_hash.initialized = 0;
 	ce->index = 0;
 	hashcpy(ce->oid.hash, ondisk->sha1);
 	memcpy(ce->name, name, len);

@@ -173,6 +173,10 @@ struct cache_entry {
 	unsigned int ce_flags;
 	unsigned int ce_namelen;
 	unsigned int index;	/* for link extension */
+	struct {
+		unsigned initialized:1, root_entry:1;
+		unsigned int name, dir;
+	} precomputed_hash;
 	struct object_id oid;
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -228,6 +232,8 @@ struct cache_entry {
 #if CE_EXTENDED_FLAGS & 0x803FFFFF
 #error "CE_EXTENDED_FLAGS out of range"
 #endif
+
+void precompute_istate_hashes(struct cache_entry *ce);
 
 /* Forward structure decls */
 struct pathspec;
