@@ -165,6 +165,10 @@ struct ref_update {
 	const char refname[FLEX_ARRAY];
 };
 
+int refs_read_raw_ref(struct ref_store *ref_store,
+		      const char *refname, unsigned char *sha1,
+		      struct strbuf *referent, unsigned int *type);
+
 /*
  * Add a ref_update with the specified properties to transaction, and
  * return a pointer to the new object. This function does not verify

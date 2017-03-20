@@ -1326,6 +1326,13 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 	return refs_for_each_rawref(get_main_ref_store(), fn, cb_data);
 }
 
+int refs_read_raw_ref(struct ref_store *ref_store,
+		      const char *refname, unsigned char *sha1,
+		      struct strbuf *referent, unsigned int *type)
+{
+	return ref_store->be->read_raw_ref(ref_store, refname, sha1, referent, type);
+}
+
 /* This function needs to return a meaningful errno on failure */
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
@@ -1362,8 +1369,8 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 	for (symref_count = 0; symref_count < SYMREF_MAXDEPTH; symref_count++) {
 		unsigned int read_flags = 0;
 
-		if (refs->be->read_raw_ref(refs, refname,
-					   sha1, &sb_refname, &read_flags)) {
+		if (refs_read_raw_ref(refs, refname,
+				      sha1, &sb_refname, &read_flags)) {
 			*flags |= read_flags;
 			if (errno != ENOENT || (resolve_flags & RESOLVE_REF_READING))
 				return NULL;
