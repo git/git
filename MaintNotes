@@ -117,6 +117,11 @@ My public git.git repositories are at:
   git://git.sourceforge.jp/gitroot/git-core/git.git/
   git://git-core.git.sourceforge.net/gitroot/git-core/git-core/
 
+This one shows not just the main integration branches, but also
+individual topics broken out:
+
+  git://github.com/gitster/git/
+
 A few web interfaces are found at:
 
   http://git.kernel.org/cgit/git/git.git
@@ -161,15 +166,16 @@ of last-minute issues.  The maintenance releases used to be named with
 four dotted decimal, named after the feature release they are updates
 to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
 feature release).  These days, maintenance releases are named by
-incrementing the last digit of three-dotted decimal name (e.g. "2.11.1"
-was the first maintenance release for the "2.11" series).
+incrementing the last digit of three-dotted decimal name (e.g. "2.12.1"
+was the first maintenance release for the "2.12" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
 
 A new development does not usually happen on "master". When you send a
 series of patches, after review on the mailing list, a separate topic
-branch is forked from the tip of "master" and your patches are queued
+branch is forked from the tip of "master" (or somewhere older, especially
+when the topic is about fixing an earlier bug) and your patches are queued
 there, and kept out of "master" while people test it out. The quality of
 topic branches are judged primarily by the mailing list discussions.
 
