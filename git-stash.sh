@@ -299,10 +299,10 @@ push_stash () {
 	then
 		if test $# != 0
 		then
-			git reset ${GIT_QUIET:+-q} -- "$@"
+			git reset -q -- "$@"
 			git ls-files -z --modified -- "$@" |
 			git checkout-index -z --force --stdin
-			git clean --force ${GIT_QUIET:+-q} -d -- "$@"
+			git clean --force -q -d -- "$@"
 		else
 			git reset --hard ${GIT_QUIET:+-q}
 		fi
@@ -322,7 +322,7 @@ push_stash () {
 
 		if test "$keep_index" != "t"
 		then
-			git reset
+			git reset ${GIT_QUIET:+-q} -- "$@"
 		fi
 	fi
 }
