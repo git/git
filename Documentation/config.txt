@@ -79,18 +79,69 @@ escape sequences) are invalid.
 Includes
 ~~~~~~~~
 
-You can include one config file from another by setting the special
+You can include a config file from another by setting the special
 `include.path` variable to the name of the file to be included. The
 variable takes a pathname as its value, and is subject to tilde
-expansion.
+expansion. `include.path` can be given multiple times.
 
-The
-included file is expanded immediately, as if its contents had been
+The included file is expanded immediately, as if its contents had been
 found at the location of the include directive. If the value of the
-`include.path` variable is a relative path, the path is considered to be
-relative to the configuration file in which the include directive was
-found.  See below for examples.
+`include.path` variable is a relative path, the path is considered to
+be relative to the configuration file in which the include directive
+was found.  See below for examples.
 
+Conditional includes
+~~~~~~~~~~~~~~~~~~~~
+
+You can include a config file from another conditionally by setting a
+`includeIf.<condition>.path` variable to the name of the file to be
+included. The variable's value is treated the same way as
+`include.path`. `includeIf.<condition>.path` can be given multiple times.
+
+The condition starts with a keyword followed by a colon and some data
+whose format and meaning depends on the keyword. Supported keywords
+are:
+
+`gitdir`::
+
+	The data that follows the keyword `gitdir:` is used as a glob
+	pattern. If the location of the .git directory matches the
+	pattern, the include condition is met.
++
+The .git location may be auto-discovered, or come from `$GIT_DIR`
+environment variable. If the repository is auto discovered via a .git
+file (e.g. from submodules, or a linked worktree), the .git location
+would be the final location where the .git directory is, not where the
+.git file is.
++
+The pattern can contain standard globbing wildcards and two additional
+ones, `**/` and `/**`, that can match multiple path components. Please
+refer to linkgit:gitignore[5] for details. For convenience:
+
+ * If the pattern starts with `~/`, `~` will be substituted with the
+   content of the environment variable `HOME`.
+
+ * If the pattern starts with `./`, it is replaced with the directory
+   containing the current config file.
+
+ * If the pattern does not start with either `~/`, `./` or `/`, `**/`
+   will be automatically prepended. For example, the pattern `foo/bar`
+   becomes `**/foo/bar` and would match `/any/path/to/foo/bar`.
+
+ * If the pattern ends with `/`, `**` will be automatically added. For
+   example, the pattern `foo/` becomes `foo/**`. In other words, it
+   matches "foo" and everything inside, recursively.
+
+`gitdir/i`::
+	This is the same as `gitdir` except that matching is done
+	case-insensitively (e.g. on case-insensitive file sytems)
+
+A few more notes on matching via `gitdir` and `gitdir/i`:
+
+ * Symlinks in `$GIT_DIR` are not resolved before matching.
+
+ * Note that "../" is not special and will match literally, which is
+   unlikely what you want.
 
 Example
 ~~~~~~~
@@ -119,6 +170,17 @@ Example
 		path = foo ; expand "foo" relative to the current file
 		path = ~/foo ; expand "foo" in your `$HOME` directory
 
+	; include if $GIT_DIR is /path/to/foo/.git
+	[includeIf "gitdir:/path/to/foo/.git"]
+		path = /path/to/foo.inc
+
+	; include for all repositories inside /path/to/group
+	[includeIf "gitdir:/path/to/group/"]
+		path = /path/to/foo.inc
+
+	; include for all repositories inside $HOME/to/group
+	[includeIf "gitdir:~/to/group/"]
+		path = /path/to/foo.inc
 
 Values
 ~~~~~~
