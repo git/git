@@ -89,7 +89,7 @@ See the CONFIGURATION section for `sendemail.multiEdit`.
 	reply to the given Message-Id, which avoids breaking threads to
 	provide a new patch series.
 	The second and subsequent emails will be sent as replies according to
-	the `--[no]-chain-reply-to` setting.
+	the `--[no-]chain-reply-to` setting.
 +
 So for example when `--thread` and `--no-chain-reply-to` are specified, the
 second and subsequent patches will be replies to the first one like in the

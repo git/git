@@ -475,6 +475,15 @@ packet:          git< 0000  # empty content!
 packet:          git< 0000  # empty list, keep "status=success" unchanged!
 ------------------------
 
+If the request cannot be fulfilled within a reasonable amount of time
+then the filter can respond with a "delayed" status and a flush packet.
+Git will perform the same request at a later point in time, again. The
+filter can delay a response multiple times for a single request.
+------------------------
+packet:          git< status=delayed
+packet:          git< 0000
+------------------------
+
 In case the filter cannot or does not want to process the content,
 it is expected to respond with an "error" status.
 ------------------------

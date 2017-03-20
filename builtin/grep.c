@@ -310,15 +310,19 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 {
 	struct strbuf pathbuf = STRBUF_INIT;
 
-	if (opt->relative && opt->prefix_length) {
-		quote_path_relative(filename + tree_name_len, opt->prefix, &pathbuf);
-		strbuf_insert(&pathbuf, 0, filename, tree_name_len);
-	} else if (super_prefix) {
+	if (super_prefix) {
 		strbuf_add(&pathbuf, filename, tree_name_len);
 		strbuf_addstr(&pathbuf, super_prefix);
 		strbuf_addstr(&pathbuf, filename + tree_name_len);
 	} else {
 		strbuf_addstr(&pathbuf, filename);
+	}
+
+	if (opt->relative && opt->prefix_length) {
+		char *name = strbuf_detach(&pathbuf, NULL);
+		quote_path_relative(name + tree_name_len, opt->prefix, &pathbuf);
+		strbuf_insert(&pathbuf, 0, name, tree_name_len);
+		free(name);
 	}
 
 #ifndef NO_PTHREADS
@@ -345,12 +349,14 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
 
+	if (super_prefix)
+		strbuf_addstr(&buf, super_prefix);
+	strbuf_addstr(&buf, filename);
+
 	if (opt->relative && opt->prefix_length) {
-		quote_path_relative(filename, opt->prefix, &buf);
-	} else {
-		if (super_prefix)
-			strbuf_addstr(&buf, super_prefix);
-		strbuf_addstr(&buf, filename);
+		char *name = strbuf_detach(&buf, NULL);
+		quote_path_relative(name, opt->prefix, &buf);
+		free(name);
 	}
 
 #ifndef NO_PTHREADS
@@ -399,13 +405,12 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 }
 
 static void compile_submodule_options(const struct grep_opt *opt,
-				      const struct pathspec *pathspec,
+				      const char **argv,
 				      int cached, int untracked,
 				      int opt_exclude, int use_index,
 				      int pattern_type_arg)
 {
 	struct grep_pat *pattern;
-	int i;
 
 	if (recurse_submodules)
 		argv_array_push(&submodule_options, "--recurse-submodules");
@@ -523,9 +528,8 @@ static void compile_submodule_options(const struct grep_opt *opt,
 
 	/* Add Pathspecs */
 	argv_array_push(&submodule_options, "--");
-	for (i = 0; i < pathspec->nr; i++)
-		argv_array_push(&submodule_options,
-				pathspec->items[i].original);
+	for (; *argv; argv++)
+		argv_array_push(&submodule_options, *argv);
 }
 
 /*
@@ -538,7 +542,7 @@ static int grep_submodule_launch(struct grep_opt *opt,
 	int status, i;
 	const char *end_of_base;
 	const char *name;
-	struct work_item *w = opt->output_priv;
+	struct strbuf child_output = STRBUF_INIT;
 
 	end_of_base = strchr(gs->name, ':');
 	if (gs->identifier && end_of_base)
@@ -548,6 +552,11 @@ static int grep_submodule_launch(struct grep_opt *opt,
 
 	prepare_submodule_repo_env(&cp.env_array);
 	argv_array_push(&cp.env_array, GIT_DIR_ENVIRONMENT);
+
+	if (opt->relative && opt->prefix_length)
+		argv_array_pushf(&cp.env_array, "%s=%s",
+				 GIT_TOPLEVEL_PREFIX_ENVIRONMENT,
+				 opt->prefix);
 
 	/* Add super prefix */
 	argv_array_pushf(&cp.args, "--super-prefix=%s%s/",
@@ -593,14 +602,16 @@ static int grep_submodule_launch(struct grep_opt *opt,
 	 * child process.  A '0' indicates a hit, a '1' indicates no hit and
 	 * anything else is an error.
 	 */
-	status = capture_command(&cp, &w->out, 0);
+	status = capture_command(&cp, &child_output, 0);
 	if (status && (status != 1)) {
 		/* flush the buffer */
-		write_or_die(1, w->out.buf, w->out.len);
+		write_or_die(1, child_output.buf, child_output.len);
 		die("process for submodule '%s' failed with exit code: %d",
 		    gs->name, status);
 	}
 
+	opt->output(opt, child_output.buf, child_output.len);
+	strbuf_release(&child_output);
 	/* invert the return code to make a hit equal to 1 */
 	return !status;
 }
@@ -616,7 +627,7 @@ static int grep_submodule(struct grep_opt *opt, const unsigned char *sha1,
 {
 	if (!is_submodule_initialized(path))
 		return 0;
-	if (!is_submodule_populated(path)) {
+	if (!is_submodule_populated_gently(path, NULL)) {
 		/*
 		 * If searching history, check for the presense of the
 		 * submodule's gitdir before skipping the submodule.
@@ -641,19 +652,14 @@ static int grep_submodule(struct grep_opt *opt, const unsigned char *sha1,
 	} else
 #endif
 	{
-		struct work_item w;
+		struct grep_source gs;
 		int hit;
 
-		grep_source_init(&w.source, GREP_SOURCE_SUBMODULE,
+		grep_source_init(&gs, GREP_SOURCE_SUBMODULE,
 				 filename, path, sha1);
-		strbuf_init(&w.out, 0);
-		opt->output_priv = &w;
-		hit = grep_submodule_launch(opt, &w.source);
+		hit = grep_submodule_launch(opt, &gs);
 
-		write_or_die(1, w.out.buf, w.out.len);
-
-		grep_source_clear(&w.source);
-		strbuf_release(&w.out);
+		grep_source_clear(&gs);
 		return hit;
 	}
 }
@@ -811,7 +817,13 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		strbuf_init(&base, PATH_MAX + len + 1);
 		if (len) {
 			strbuf_add(&base, name, len);
-			strbuf_addch(&base, ':');
+
+			/* Add a delimiter if there isn't one already */
+			if (name[len - 1] != '/' && name[len - 1] != ':') {
+				/* rev: or rev:path/ */
+				char delim = obj->type == OBJ_COMMIT ? ':' : '/';
+				strbuf_addch(&base, delim);
+			}
 		}
 		init_tree_desc(&tree, data, size);
 		hit = grep_tree(opt, pathspec, &tree, &base, base.len,
@@ -979,7 +991,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_SET_INT(0, "exclude-standard", &opt_exclude,
 			    N_("ignore files specified via '.gitignore'"), 1),
 		OPT_BOOL(0, "recurse-submodules", &recurse_submodules,
-			 N_("recursivley search in each submodule")),
+			 N_("recursively search in each submodule")),
 		OPT_STRING(0, "parent-basename", &parent_basename,
 			   N_("basename"),
 			   N_("prepend parent project's basename to output")),
@@ -1236,7 +1248,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (recurse_submodules) {
 		gitmodules_config();
-		compile_submodule_options(&opt, &pathspec, cached, untracked,
+		compile_submodule_options(&opt, argv + i, cached, untracked,
 					  opt_exclude, use_index,
 					  pattern_type_arg);
 	}

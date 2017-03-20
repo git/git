@@ -79,18 +79,69 @@ escape sequences) are invalid.
 Includes
 ~~~~~~~~
 
-You can include one config file from another by setting the special
+You can include a config file from another by setting the special
 `include.path` variable to the name of the file to be included. The
 variable takes a pathname as its value, and is subject to tilde
-expansion.
+expansion. `include.path` can be given multiple times.
 
-The
-included file is expanded immediately, as if its contents had been
+The included file is expanded immediately, as if its contents had been
 found at the location of the include directive. If the value of the
-`include.path` variable is a relative path, the path is considered to be
-relative to the configuration file in which the include directive was
-found.  See below for examples.
+`include.path` variable is a relative path, the path is considered to
+be relative to the configuration file in which the include directive
+was found.  See below for examples.
 
+Conditional includes
+~~~~~~~~~~~~~~~~~~~~
+
+You can include a config file from another conditionally by setting a
+`includeIf.<condition>.path` variable to the name of the file to be
+included. The variable's value is treated the same way as
+`include.path`. `includeIf.<condition>.path` can be given multiple times.
+
+The condition starts with a keyword followed by a colon and some data
+whose format and meaning depends on the keyword. Supported keywords
+are:
+
+`gitdir`::
+
+	The data that follows the keyword `gitdir:` is used as a glob
+	pattern. If the location of the .git directory matches the
+	pattern, the include condition is met.
++
+The .git location may be auto-discovered, or come from `$GIT_DIR`
+environment variable. If the repository is auto discovered via a .git
+file (e.g. from submodules, or a linked worktree), the .git location
+would be the final location where the .git directory is, not where the
+.git file is.
++
+The pattern can contain standard globbing wildcards and two additional
+ones, `**/` and `/**`, that can match multiple path components. Please
+refer to linkgit:gitignore[5] for details. For convenience:
+
+ * If the pattern starts with `~/`, `~` will be substituted with the
+   content of the environment variable `HOME`.
+
+ * If the pattern starts with `./`, it is replaced with the directory
+   containing the current config file.
+
+ * If the pattern does not start with either `~/`, `./` or `/`, `**/`
+   will be automatically prepended. For example, the pattern `foo/bar`
+   becomes `**/foo/bar` and would match `/any/path/to/foo/bar`.
+
+ * If the pattern ends with `/`, `**` will be automatically added. For
+   example, the pattern `foo/` becomes `foo/**`. In other words, it
+   matches "foo" and everything inside, recursively.
+
+`gitdir/i`::
+	This is the same as `gitdir` except that matching is done
+	case-insensitively (e.g. on case-insensitive file sytems)
+
+A few more notes on matching via `gitdir` and `gitdir/i`:
+
+ * Symlinks in `$GIT_DIR` are not resolved before matching.
+
+ * Note that "../" is not special and will match literally, which is
+   unlikely what you want.
 
 Example
 ~~~~~~~
@@ -119,6 +170,17 @@ Example
 		path = foo ; expand "foo" relative to the current file
 		path = ~/foo ; expand "foo" in your `$HOME` directory
 
+	; include if $GIT_DIR is /path/to/foo/.git
+	[includeIf "gitdir:/path/to/foo/.git"]
+		path = /path/to/foo.inc
+
+	; include for all repositories inside /path/to/group
+	[includeIf "gitdir:/path/to/group/"]
+		path = /path/to/foo.inc
+
+	; include for all repositories inside $HOME/to/group
+	[includeIf "gitdir:~/to/group/"]
+		path = /path/to/foo.inc
 
 Values
 ~~~~~~
@@ -2459,6 +2521,8 @@ push.default::
   pushing to the same repository you would normally pull from
   (i.e. central workflow).
 
+* `tracking` - This is a deprecated synonym for `upstream`.
+
 * `simple` - in centralized workflow, work like `upstream` with an
   added safety to refuse to push if the upstream branch's name is
   different from the local one.
@@ -2949,8 +3013,9 @@ submodule.<name>.url::
 	The URL for a submodule. This variable is copied from the .gitmodules
 	file to the git config via 'git submodule init'. The user can change
 	the configured URL before obtaining the submodule via 'git submodule
-	update'. After obtaining the submodule, the presence of this variable
-	is used as a sign whether the submodule is of interest to git commands.
+	update'. If neither submodule.<name>.active or submodule.active are
+	set, the presence of this variable is used as a fallback to indicate
+	whether the submodule is of interest to git commands.
 	See linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
 
 submodule.<name>.update::
@@ -2987,6 +3052,16 @@ submodule.<name>.ignore::
 	both settings can be overridden on the command line by using the
 	"--ignore-submodules" option. The 'git submodule' commands are not
 	affected by this setting.
+
+submodule.<name>.active::
+	Boolean value indicating if the submodule is of interest to git
+	commands.  This config option takes precedence over the
+	submodule.active config option.
+
+submodule.active::
+	A repeated field which contains a pathspec used to match against a
+	submodule's path to determine if the submodule is of interest to git
+	commands.
 
 submodule.fetchJobs::
 	Specifies how many submodules are fetched/cloned at the same time.

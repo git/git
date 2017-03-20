@@ -17,6 +17,10 @@
 #     operation then the filter signals that it cannot or does not want
 #     to process the file and any file after that is processed with the
 #     same command.
+# (5) If data with a pathname that is a key in the DELAY hash is
+#     processed (e.g. 'test-delay1.r') then the filter signals n times
+#     to Git that the processing is delayed (n being the value of the
+#     DELAY hash key).
 #
 
 use strict;
@@ -25,6 +29,12 @@ use IO::File;
 
 my $MAX_PACKET_CONTENT_SIZE = 65516;
 my @capabilities            = @ARGV;
+my $DELAY3 = 3;
+my $DELAY1 = 1;
+
+my %DELAY;
+$DELAY{'test-delay1.r'} = 1;
+$DELAY{'test-delay3.r'} = 3;
 
 open my $debug, ">>", "rot13-filter.log" or die "cannot open log file: $!";
 
@@ -164,6 +174,15 @@ while (1) {
 		print $debug "[ABORT]\n";
 		$debug->flush();
 		packet_txt_write("status=abort");
+		packet_flush();
+	}
+	elsif ( $command eq "smudge" and
+		    exists $DELAY{$pathname} and
+		    $DELAY{$pathname} > 0 ) {
+		$DELAY{$pathname} = $DELAY{$pathname} - 1;
+		print $debug "[DELAYED]\n";
+		$debug->flush();
+		packet_txt_write("status=delayed");
 		packet_flush();
 	}
 	else {

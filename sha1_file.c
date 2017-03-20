@@ -277,31 +277,26 @@ static const char *alt_sha1_path(struct alternate_object_database *alt,
 	return buf->buf;
 }
 
-/*
- * Return the name of the pack or index file with the specified sha1
- * in its filename.  *base and *name are scratch space that must be
- * provided by the caller.  which should be "pack" or "idx".
- */
-static char *sha1_get_pack_name(const unsigned char *sha1,
-				struct strbuf *buf,
-				const char *which)
+ char *odb_pack_name(struct strbuf *buf,
+		     const unsigned char *sha1,
+		     const char *ext)
 {
 	strbuf_reset(buf);
 	strbuf_addf(buf, "%s/pack/pack-%s.%s", get_object_directory(),
-		    sha1_to_hex(sha1), which);
+		    sha1_to_hex(sha1), ext);
 	return buf->buf;
 }
 
 char *sha1_pack_name(const unsigned char *sha1)
 {
 	static struct strbuf buf = STRBUF_INIT;
-	return sha1_get_pack_name(sha1, &buf, "pack");
+	return odb_pack_name(&buf, sha1, "pack");
 }
 
 char *sha1_pack_index_name(const unsigned char *sha1)
 {
 	static struct strbuf buf = STRBUF_INIT;
-	return sha1_get_pack_name(sha1, &buf, "idx");
+	return odb_pack_name(&buf, sha1, "idx");
 }
 
 struct alternate_object_database *alt_odb_list;

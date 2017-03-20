@@ -10,7 +10,8 @@
 #include "refs.h"
 #include "argv-array.h"
 
-static const char bundle_signature[] = "# v2 git bundle\n";
+static const char bundle_signature_v2[] = "# v2 git bundle\n";
+static const char bundle_signature_v3[] = "# v3 git bundle\n";
 
 static void add_to_ref_list(const unsigned char *sha1, const char *name,
 		struct ref_list *list)
@@ -21,23 +22,73 @@ static void add_to_ref_list(const unsigned char *sha1, const char *name,
 	list->nr++;
 }
 
-static int parse_bundle_header(int fd, struct bundle_header *header,
-			       const char *report_path)
+void init_bundle_header(struct bundle_header *header, const char *name)
+{
+	memset(header, '\0', sizeof(*header));
+	header->filename = xstrdup(name);
+}
+
+static int parse_bundle_header(int fd, struct bundle_header *header, int quiet)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int status = 0;
 
 	/* The bundle header begins with the signature */
-	if (strbuf_getwholeline_fd(&buf, fd, '\n') ||
-	    strcmp(buf.buf, bundle_signature)) {
-		if (report_path)
-			error(_("'%s' does not look like a v2 bundle file"),
-			      report_path);
+	if (strbuf_getwholeline_fd(&buf, fd, '\n')) {
+	bad_bundle:
+		if (!quiet)
+			error(_("'%s' does not look like a supported bundle file"),
+			      header->filename);
 		status = -1;
 		goto abort;
 	}
 
-	/* The bundle header ends with an empty line */
+	if (!strcmp(buf.buf, bundle_signature_v2))
+		header->version = 2;
+	else if (!strcmp(buf.buf, bundle_signature_v3))
+		header->version = 3;
+	else
+		goto bad_bundle;
+
+	if (header->version == 3) {
+		/*
+		 * bundle version v3 has extended headers before the
+		 * list of prerequisites and references.  The extended
+		 * headers end with an empty line.
+		 */
+		while (!strbuf_getwholeline_fd(&buf, fd, '\n')) {
+			const char *cp;
+			if (buf.len && buf.buf[buf.len - 1] == '\n')
+				buf.buf[--buf.len] = '\0';
+			if (!buf.len)
+				break;
+			if (skip_prefix(buf.buf, "data: ", &cp)) {
+				header->datafile = xstrdup(cp);
+				continue;
+			}
+			if (skip_prefix(buf.buf, "sha1: ", &cp)) {
+				unsigned char sha1[GIT_SHA1_RAWSZ];
+				if (get_sha1_hex(cp, sha1) ||
+				    cp[GIT_SHA1_HEXSZ])
+					goto bad_bundle;
+				hashcpy(header->csum, sha1);
+				continue;
+			}
+			if (skip_prefix(buf.buf, "size: ", &cp)) {
+				char *ep;
+				uintmax_t sz = strtoumax(cp, &ep, 10);
+				if (!*ep && sz < UINTMAX_MAX)
+					header->size = sz;
+				continue;
+			}
+			goto bad_bundle;
+		}
+	}
+
+	/*
+	 * The bundle header lists prerequisites and
+	 * references, and the list ends with an empty line.
+	 */
 	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
 	       buf.len && buf.buf[0] != '\n') {
 		unsigned char sha1[20];
@@ -57,7 +108,7 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		if (get_sha1_hex(buf.buf, sha1) ||
 		    (buf.len > 40 && !isspace(buf.buf[40])) ||
 		    (!is_prereq && buf.len <= 40)) {
-			if (report_path)
+			if (!quiet)
 				error(_("unrecognized header: %s%s (%d)"),
 				      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
 			status = -1;
@@ -72,20 +123,21 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 
  abort:
 	if (status) {
-		close(fd);
+		if (0 <= fd)
+			close(fd);
 		fd = -1;
 	}
 	strbuf_release(&buf);
 	return fd;
 }
 
-int read_bundle_header(const char *path, struct bundle_header *header)
+int read_bundle_header(struct bundle_header *header)
 {
-	int fd = open(path, O_RDONLY);
+	int fd = open(header->filename, O_RDONLY);
 
 	if (fd < 0)
-		return error(_("could not open '%s'"), path);
-	return parse_bundle_header(fd, header, path);
+		return error(_("could not open '%s'"), header->filename);
+	return parse_bundle_header(fd, header, 0);
 }
 
 int is_bundle(const char *path, int quiet)
@@ -96,10 +148,25 @@ int is_bundle(const char *path, int quiet)
 	if (fd < 0)
 		return 0;
 	memset(&header, 0, sizeof(header));
-	fd = parse_bundle_header(fd, &header, quiet ? NULL : path);
+	fd = parse_bundle_header(fd, &header, quiet);
 	if (fd >= 0)
 		close(fd);
 	return (fd >= 0);
+}
+
+void release_bundle_header(struct bundle_header *header)
+{
+	int i;
+
+	for (i = 0; i < header->prerequisites.nr; i++)
+		free(header->prerequisites.list[i].name);
+	free(header->prerequisites.list);
+	for (i = 0; i < header->references.nr; i++)
+		free(header->references.list[i].name);
+	free(header->references.list);
+
+	free(header->filename);
+	free(header->datafile);
 }
 
 static int list_refs(struct ref_list *r, int argc, const char **argv)
@@ -407,6 +474,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	int bundle_to_stdout;
 	int ref_count = 0;
 	struct rev_info revs;
+	const char *bundle_signature = bundle_signature_v2;
 
 	bundle_to_stdout = !strcmp(path, "-");
 	if (bundle_to_stdout)
@@ -472,22 +540,65 @@ err:
 	return -1;
 }
 
+/*
+ * v3 "split bundle" allows a separate packfile to be named
+ * as "data: $URL/$name_of_the_packfile".  This file is expected
+ * to be downloaded next to the bundle header file when the
+ * bundle is used.  Hence we find the path to the directory
+ * that contains the bundle header file, and append the basename
+ * part of the bundle_data_file to it, to form the name of the
+ * file that holds the pack data stream.
+ */
+static int open_bundle_data(struct bundle_header *header)
+{
+	const char *cp;
+	struct strbuf filename = STRBUF_INIT;
+	int fd;
+
+	assert(header->datafile);
+
+	cp = find_last_dir_sep(header->filename);
+	if (cp)
+		strbuf_add(&filename, header->filename,
+			   (cp - header->filename) + 1);
+	cp = find_last_dir_sep(header->datafile);
+	if (!cp)
+		cp = header->datafile;
+	strbuf_addstr(&filename, cp);
+
+	fd = open(filename.buf, O_RDONLY);
+	strbuf_release(&filename);
+	return fd;
+}
+
 int unbundle(struct bundle_header *header, int bundle_fd, int flags)
 {
 	const char *argv_index_pack[] = {"index-pack",
 					 "--fix-thin", "--stdin", NULL, NULL};
 	struct child_process ip = CHILD_PROCESS_INIT;
+	int status = 0, data_fd = -1;
 
 	if (flags & BUNDLE_VERBOSE)
 		argv_index_pack[3] = "-v";
 
 	if (verify_bundle(header, 0))
 		return -1;
+
+	if (header->datafile) {
+		data_fd = open_bundle_data(header);
+		if (data_fd < 0)
+			return error(_("bundle data not found"));
+		ip.in = data_fd;
+	} else {
+		ip.in = bundle_fd;
+	}
+
 	ip.argv = argv_index_pack;
-	ip.in = bundle_fd;
 	ip.no_stdout = 1;
 	ip.git_cmd = 1;
 	if (run_command(&ip))
-		return error(_("index-pack died"));
-	return 0;
+		status = error(_("index-pack died"));
+	if (0 <= data_fd)
+		close(data_fd);
+	return status;
 }

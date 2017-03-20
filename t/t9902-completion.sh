@@ -400,6 +400,22 @@ test_expect_success '__gitdir - remote as argument' '
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__gitcomp_direct - puts everything into COMPREPLY as-is' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	with-trailing-space Z
+	without-trailing-spaceZ
+	--option Z
+	--option=Z
+	$invalid_variable_name Z
+	EOF
+	(
+		cur=should_be_ignored &&
+		__gitcomp_direct "$(cat expected)" &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
 test_expect_success '__gitcomp - trailing space - options' '
 	test_gitcomp "--re" "--dry-run --reuse-message= --reedit-message=
 		--reset-author" <<-EOF
@@ -773,6 +789,283 @@ test_expect_success '__git_refs - unique remote branches for git checkout DWIMer
 		__git_refs "" 1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - after --opt=' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	other/branch-in-other
+	other/master-in-other
+	matching-tag
+	EOF
+	(
+		cur="--opt=" &&
+		__git_refs "" "" "" "" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - after --opt= - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master
+	refs/heads/matching-branch
+	refs/remotes/other/branch-in-other
+	refs/remotes/other/master-in-other
+	refs/tags/matching-tag
+	EOF
+	(
+		cur="--opt=refs/" &&
+		__git_refs "" "" "" refs/ >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git refs - exluding refs' '
+	cat >expected <<-EOF &&
+	^HEAD
+	^master
+	^matching-branch
+	^other/branch-in-other
+	^other/master-in-other
+	^matching-tag
+	EOF
+	(
+		cur=^ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git refs - exluding full refs' '
+	cat >expected <<-EOF &&
+	^refs/heads/master
+	^refs/heads/matching-branch
+	^refs/remotes/other/branch-in-other
+	^refs/remotes/other/master-in-other
+	^refs/tags/matching-tag
+	EOF
+	(
+		cur=^refs/ &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'setup for filtering matching refs' '
+	git branch matching/branch &&
+	git tag matching/tag &&
+	git -C otherrepo branch matching/branch-in-other &&
+	git fetch --no-tags other &&
+	rm -f .git/FETCH_HEAD
+'
+
+test_expect_success '__git_refs - only matching refs' '
+	cat >expected <<-EOF &&
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	EOF
+	(
+		cur=mat &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/matching-branch
+	refs/heads/matching/branch
+	EOF
+	(
+		cur=refs/heads/mat &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote on local file system' '
+	cat >expected <<-EOF &&
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs otherrepo >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - configured remote' '
+	cat >expected <<-EOF &&
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master-in-other
+	refs/heads/matching/branch-in-other
+	EOF
+	(
+		cur=refs/heads/ma &&
+		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - checkout DWIMery' '
+	cat >expected <<-EOF &&
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	matching/branch-in-other
+	EOF
+	for remote_ref in refs/remotes/other/ambiguous \
+		refs/remotes/remote/ambiguous \
+		refs/remotes/remote/branch-in-remote
+	do
+		git update-ref $remote_ref master &&
+		test_when_finished "git update-ref -d $remote_ref"
+	done &&
+	(
+		cur=mat &&
+		__git_refs "" 1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'teardown after filtering matching refs' '
+	git branch -d matching/branch &&
+	git tag -d matching/tag &&
+	git update-ref -d refs/remotes/other/matching/branch-in-other
+'
+
+test_expect_success '__git_refs - for-each-ref format specifiers in prefix' '
+	cat >expected <<-EOF &&
+	evil-%%-%42-%(refname)..master
+	EOF
+	(
+		cur="evil-%%-%42-%(refname)..mas" &&
+		__git_refs "" "" "evil-%%-%42-%(refname).." mas >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_complete_refs - simple' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	HEAD Z
+	master Z
+	matching-branch Z
+	other/branch-in-other Z
+	other/master-in-other Z
+	matching-tag Z
+	EOF
+	(
+		cur= &&
+		__git_complete_refs &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - matching' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	matching-branch Z
+	matching-tag Z
+	EOF
+	(
+		cur=mat &&
+		__git_complete_refs &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - remote' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	HEAD Z
+	branch-in-other Z
+	master-in-other Z
+	EOF
+	(
+		cur=
+		__git_complete_refs --remote=other &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - track' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	HEAD Z
+	master Z
+	matching-branch Z
+	other/branch-in-other Z
+	other/master-in-other Z
+	matching-tag Z
+	branch-in-other Z
+	master-in-other Z
+	EOF
+	(
+		cur=
+		__git_complete_refs --track &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - current word' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	matching-branch Z
+	matching-tag Z
+	EOF
+	(
+		cur="--option=mat" &&
+		__git_complete_refs --cur="${cur#*=}" &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - prefix' '
+	sed -e "s/Z$//g" >expected <<-EOF &&
+	v1.0..matching-branch Z
+	v1.0..matching-tag Z
+	EOF
+	(
+		cur=v1.0..mat &&
+		__git_complete_refs --pfx=v1.0.. --cur=mat &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_refs - suffix' '
+	cat >expected <<-EOF &&
+	HEAD.
+	master.
+	matching-branch.
+	other/branch-in-other.
+	other/master-in-other.
+	matching-tag.
+	EOF
+	(
+		cur= &&
+		__git_complete_refs --sfx=. &&
+		print_comp
+	) &&
+	test_cmp expected out
 '
 
 test_expect_success 'teardown after ref completion' '

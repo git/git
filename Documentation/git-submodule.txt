@@ -129,7 +129,9 @@ init [--] [<path>...]::
 	repository will be assumed to be upstream.
 +
 Optional <path> arguments limit which submodules will be initialized.
-If no path is specified, all submodules are initialized.
+If no path is specified and submodule.active has been configured, submodules
+configured to be active will be initialized, otherwise all submodules are
+initialized.
 +
 When present, it will also copy the value of `submodule.$name.update`.
 This command does not alter existing information in .git/config.

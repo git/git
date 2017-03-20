@@ -88,6 +88,7 @@ struct rev_info {
 			topo_order:1,
 			simplify_merges:1,
 			simplify_by_decoration:1,
+			single_worktree:1,
 			tag_objects:1,
 			tree_objects:1,
 			blob_objects:1,
@@ -258,8 +259,6 @@ extern void put_revision_mark(const struct rev_info *revs,
 
 extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);
-
-char *path_name(struct strbuf *path, const char *name);
 
 extern void show_object_with_name(FILE *, struct object *, const char *);
 

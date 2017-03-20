@@ -1505,4 +1505,30 @@ test_expect_success 'grep does not report i-t-a and assume unchanged with -L' '
 	test_cmp expected actual
 '
 
+cat >expected <<EOF
+HEAD:t/a/v:vvv
+HEAD:t/v:vvv
+EOF
+
+test_expect_success 'grep outputs valid <rev>:<path> for HEAD:t/' '
+	git grep vvv HEAD:t/ >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'grep outputs valid <rev>:<path> for HEAD:t' '
+	git grep vvv HEAD:t >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+HEAD:t/a/v:vvv
+HEAD:t/v:vvv
+HEAD:v:vvv
+EOF
+
+test_expect_success 'grep outputs valid <rev>:<path> for HEAD:' '
+	git grep vvv HEAD: >actual &&
+	test_cmp expected actual
+'
+
 test_done

@@ -13,6 +13,7 @@ typedef struct rev_name {
 	unsigned long taggerdate;
 	int generation;
 	int distance;
+	int from_tag;
 } rev_name;
 
 static long cutoff = LONG_MAX;
@@ -20,9 +21,51 @@ static long cutoff = LONG_MAX;
 /* How many generations are maximally preferred over _one_ merge traversal? */
 #define MERGE_TRAVERSAL_WEIGHT 65535
 
+static int is_better_name(struct rev_name *name,
+			  const char *tip_name,
+			  unsigned long taggerdate,
+			  int generation,
+			  int distance,
+			  int from_tag)
+{
+	/*
+	 * When comparing names based on tags, prefer names
+	 * based on the older tag, even if it is farther away.
+	 */
+	if (from_tag && name->from_tag)
+		return (name->taggerdate > taggerdate ||
+			(name->taggerdate == taggerdate &&
+			 name->distance > distance));
+
+#define COMPARE(attribute, smaller_is_better)	 \
+	if (name->attribute > attribute) \
+		return smaller_is_better; \
+	if (name->attribute < attribute) \
+		return !smaller_is_better
+
+	/*
+	 * We know that at least one of them is a non-tag at this point.
+	 * favor a tag over a non-tag.
+	 */
+	COMPARE(from_tag, 0);
+
+	/*
+	 * We are now looking at two non-tags.  Tiebreak to favor
+	 * shorter hops.
+	 */
+	COMPARE(distance, 1);
+
+	/* ... or tiebreak to favor older date */
+	COMPARE(taggerdate, 1);
+
+	/* keep the current one if we cannot decide */
+	return 0;
+#undef COMPARE
+}
+
 static void name_rev(struct commit *commit,
 		const char *tip_name, unsigned long taggerdate,
-		int generation, int distance,
+		int generation, int distance, int from_tag,
 		int deref)
 {
 	struct rev_name *name = (struct rev_name *)commit->util;
@@ -45,14 +88,14 @@ static void name_rev(struct commit *commit,
 		name = xmalloc(sizeof(rev_name));
 		commit->util = name;
 		goto copy_data;
-	} else if (name->taggerdate > taggerdate ||
-			(name->taggerdate == taggerdate &&
-			 name->distance > distance)) {
+	} else if (is_better_name(name, tip_name, taggerdate,
+				  generation, distance, from_tag)) {
 copy_data:
 		name->tip_name = tip_name;
 		name->taggerdate = taggerdate;
 		name->generation = generation;
 		name->distance = distance;
+		name->from_tag = from_tag;
 	} else
 		return;
 
@@ -72,10 +115,12 @@ copy_data:
 						   parent_number);
 
 			name_rev(parents->item, new_name, taggerdate, 0,
-				distance + MERGE_TRAVERSAL_WEIGHT, 0);
+				 distance + MERGE_TRAVERSAL_WEIGHT,
+				 from_tag, 0);
 		} else {
 			name_rev(parents->item, tip_name, taggerdate,
-				generation + 1, distance + 1, 0);
+				 generation + 1, distance + 1,
+				 from_tag, 0);
 		}
 	}
 }
@@ -206,9 +251,13 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 	}
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
+		int from_tag = starts_with(path, "refs/tags/");
 
+		if (taggerdate == ULONG_MAX)
+			taggerdate = ((struct commit *)o)->date;
 		path = name_ref_abbrev(path, can_abbreviate_output);
-		name_rev(commit, xstrdup(path), taggerdate, 0, 0, deref);
+		name_rev(commit, xstrdup(path), taggerdate, 0, 0,
+			 from_tag, deref);
 	}
 	return 0;
 }
