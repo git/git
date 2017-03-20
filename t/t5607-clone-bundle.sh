@@ -71,4 +71,73 @@ test_expect_success 'prerequisites with an empty commit message' '
 	git bundle verify bundle
 '
 
+# bundle v3 (experimental)
+test_expect_success 'clone from v3' '
+
+	# as "bundle create" does not exist yet for v3
+	# prepare it by hand here
+	head=$(git rev-parse HEAD) &&
+	name=$(echo $head | git pack-objects --revs v3) &&
+	test_when_finished "rm v3-$name.pack v3-$name.idx" &&
+	size=$(wc -c <v3-$name.pack) &&
+	cat >v3.bndl <<-EOF &&
+	# v3 git bundle
+	size: $size
+	sha1: $name
+	data: v3-$name.pack
+
+	$head HEAD
+	$head refs/heads/master
+	EOF
+
+	git bundle verify v3.bndl &&
+	git bundle list-heads v3.bndl >actual &&
+	cat >expect <<-EOF &&
+	$head HEAD
+	$head refs/heads/master
+	EOF
+	test_cmp expect actual &&
+
+	git clone v3.bndl v3dst &&
+	git -C v3dst for-each-ref --format="%(objectname) %(refname)" >actual &&
+	cat >expect <<-EOF &&
+	$head refs/heads/master
+	$head refs/remotes/origin/HEAD
+	$head refs/remotes/origin/master
+	EOF
+	test_cmp expect actual &&
+	git -C v3dst fsck &&
+
+	# an "inline" v3 is still possible.
+	cat >v3i.bndl <<-EOF &&
+	# v3 git bundle
+	size: $size
+	sha1: $name
+
+	$head HEAD
+	$head refs/heads/master
+
+	EOF
+	cat v3-$name.pack >>v3i.bndl &&
+	test_when_finished "rm v3i.bndl" &&
+
+	git bundle verify v3i.bndl &&
+	git bundle list-heads v3i.bndl >actual &&
+	cat >expect <<-EOF &&
+	$head HEAD
+	$head refs/heads/master
+	EOF
+	test_cmp expect actual &&
+
+	git clone v3i.bndl v3idst &&
+	git -C v3idst for-each-ref --format="%(objectname) %(refname)" >actual &&
+	cat >expect <<-EOF &&
+	$head refs/heads/master
+	$head refs/remotes/origin/HEAD
+	$head refs/remotes/origin/master
+	EOF
+	test_cmp expect actual &&
+	git -C v3idst fsck
+'
+
 test_done
