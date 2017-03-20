@@ -1,13 +1,13 @@
 #!/bin/sh
 # Merge later...
 
-target=maint
+: "${target:=maint}" "${here:=master}"
 
 # Read from RelNotes and find mergeable topics
 search_topics () {
 	tmp=/tmp/ML.$$
 	trap 'rm -f "$tmp"' 0
-	git rev-list --parents --first-parent $target..master >"$tmp"
+	git rev-list --parents --first-parent $target..$here >"$tmp"
 
 	x40='[0-9a-f]'
 	x40="$x40$x40$x40$x40$x40"
