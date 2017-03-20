@@ -25,6 +25,7 @@
 /test-sha1
 /test-sha1-array
 /test-sigchain
+/test-strcmp-offset
 /test-string-list
 /test-submodule-config
 /test-subprocess
