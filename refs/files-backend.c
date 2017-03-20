@@ -191,8 +191,6 @@ static struct ref_dir *get_ref_dir(struct ref_entry *entry)
 							       "refs/bisect/",
 							       12, 1);
 				add_entry_to_dir(dir, child_entry);
-				read_loose_refs("refs/bisect",
-						&child_entry->u.subdir);
 			}
 		}
 		entry->flag &= ~REF_INCOMPLETE;
