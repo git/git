@@ -49,4 +49,34 @@ test_expect_success 'create_symref(FOO, refs/heads/master)' '
 	test_cmp expected actual
 '
 
+test_expect_success 'for_each_reflog()' '
+	echo $_z40 > .git/logs/PSEUDO-MAIN &&
+	mkdir -p     .git/logs/refs/bisect &&
+	echo $_z40 > .git/logs/refs/bisect/random &&
+
+	echo $_z40 > .git/worktrees/wt/logs/PSEUDO-WT &&
+	mkdir -p     .git/worktrees/wt/logs/refs/bisect &&
+	echo $_z40 > .git/worktrees/wt/logs/refs/bisect/wt-random &&
+
+	$RWT for-each-reflog | cut -c 42- | sort >actual &&
+	cat >expected <<-\EOF &&
+	HEAD 0x1
+	PSEUDO-WT 0x0
+	refs/bisect/wt-random 0x0
+	refs/heads/master 0x0
+	refs/heads/wt-master 0x0
+	EOF
+	test_cmp expected actual &&
+
+	$RMAIN for-each-reflog | cut -c 42- | sort >actual &&
+	cat >expected <<-\EOF &&
+	HEAD 0x1
+	PSEUDO-MAIN 0x0
+	refs/bisect/random 0x0
+	refs/heads/master 0x0
+	refs/heads/wt-master 0x0
+	EOF
+	test_cmp expected actual
+'
+
 test_done

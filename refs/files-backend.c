@@ -1172,15 +1172,6 @@ static void files_reflog_path(struct files_ref_store *refs,
 			      struct strbuf *sb,
 			      const char *refname)
 {
-	if (!refname) {
-		/*
-		 * FIXME: of course this is wrong in multi worktree
-		 * setting. To be fixed real soon.
-		 */
-		strbuf_addf(sb, "%s/logs", refs->gitcommondir);
-		return;
-	}
-
 	switch (ref_type(refname)) {
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
@@ -3371,6 +3362,7 @@ struct files_reflog_iterator {
 
 	struct ref_store *ref_store;
 	struct dir_iterator *dir_iterator;
+	struct dir_iterator *worktree_dir_iterator;
 	struct object_id oid;
 };
 
@@ -3391,6 +3383,21 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		if (ends_with(diter->basename, ".lock"))
 			continue;
 
+		if (iter->worktree_dir_iterator) {
+			const char *refname = diter->relative_path;
+
+			switch (ref_type(refname)) {
+			case REF_TYPE_PER_WORKTREE:
+			case REF_TYPE_PSEUDOREF:
+				continue;
+			case REF_TYPE_NORMAL:
+				break;
+			default:
+				die("BUG: unknown ref type %d of ref %s",
+				    ref_type(refname), refname);
+			}
+		}
+
 		if (refs_read_ref_full(iter->ref_store,
 				       diter->relative_path, 0,
 				       iter->oid.hash, &flags)) {
@@ -3404,7 +3411,11 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		return ITER_OK;
 	}
 
-	iter->dir_iterator = NULL;
+	iter->dir_iterator = iter->worktree_dir_iterator;
+	if (iter->worktree_dir_iterator) {
+		iter->worktree_dir_iterator = NULL;
+		return files_reflog_iterator_advance(ref_iterator);
+	}
 	if (ref_iterator_abort(ref_iterator) == ITER_ERROR)
 		ok = ITER_ERROR;
 	return ok;
@@ -3424,6 +3435,12 @@ static int files_reflog_iterator_abort(struct ref_iterator *ref_iterator)
 
 	if (iter->dir_iterator)
 		ok = dir_iterator_abort(iter->dir_iterator);
+
+	if (iter->worktree_dir_iterator) {
+		int ok2 = dir_iterator_abort(iter->worktree_dir_iterator);
+		if (ok2 == ITER_ERROR)
+			ok = ok2;
+	}
 
 	base_ref_iterator_free(ref_iterator);
 	return ok;
@@ -3445,10 +3462,17 @@ static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_st
 	struct strbuf sb = STRBUF_INIT;
 
 	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable);
-	files_reflog_path(refs, &sb, NULL);
+	strbuf_addf(&sb, "%s/logs", refs->gitcommondir);
 	iter->dir_iterator = dir_iterator_begin(sb.buf);
 	iter->ref_store = ref_store;
 	strbuf_release(&sb);
+
+	if (strcmp(refs->gitdir, refs->gitcommondir)) {
+		strbuf_addf(&sb, "%s/logs", refs->gitdir);
+		iter->worktree_dir_iterator = dir_iterator_begin(sb.buf);
+		strbuf_release(&sb);
+	}
+
 	return ref_iterator;
 }
 
