@@ -235,9 +235,19 @@ then
 	set "SHELL_PATH=/bin/dash" "$@"
 fi
 
+if grep >/dev/null DC_SHA1 Makefile
+then
+	SHA1IMPLEMENTATION=DC_SHA1=YesPlease
+elif grep >/dev/null BLK_SHA1 Makefile
+then
+	SHA1IMPLEMENTATION=BLK_SHA1=YesPlease
+else
+	SHA1IMPLEMENTATION=
+fi
+
 set	MAN_BASE_URL='"http://www.kernel.org/pub/software/scm/git/docs/"' \
 	MAN_BOLD_LITERAL=YesPlease \
-	BLK_SHA1=YesPlease \
+	$SHA1IMPLEMENTATION \
 	GNU_ROFF=YesPlease \
 	"$@"
 
