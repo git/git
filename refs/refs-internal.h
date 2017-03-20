@@ -336,6 +336,17 @@ struct ref_iterator *empty_ref_iterator_begin(void);
 int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
 
 /*
+ * Return an iterator that goes over each reference in `refs` for
+ * which the refname begins with prefix. If trim is non-zero, then
+ * trim that many characters off the beginning of each refname. flags
+ * can be DO_FOR_EACH_INCLUDE_BROKEN to include broken references in
+ * the iteration.
+ */
+struct ref_iterator *refs_ref_iterator_begin(
+		struct ref_store *refs,
+		const char *prefix, int trim, int flags);
+
+/*
  * A callback function used to instruct merge_ref_iterator how to
  * interleave the entries from iter0 and iter1. The function should
  * return one of the constants defined in enum iterator_selection. It
