@@ -1,4 +1,5 @@
 # Guard against environment variables
+MAN1_L10N_TXT =
 MAN1_TXT =
 MAN5_TXT =
 MAN7_TXT =
@@ -10,6 +11,7 @@ OBSOLETE_HTML =
 MAN1_TXT += $(filter-out \
 		$(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt))
+MAN1_L10N_TXT += $(wildcard po/*/man1/git-*.txt)
 MAN1_TXT += git.txt
 MAN1_TXT += gitk.txt
 MAN1_TXT += gitremote-helpers.txt
@@ -86,6 +88,7 @@ DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 DOC_MAN1 = $(patsubst %.txt,%.1,$(MAN1_TXT))
 DOC_MAN5 = $(patsubst %.txt,%.5,$(MAN5_TXT))
 DOC_MAN7 = $(patsubst %.txt,%.7,$(MAN7_TXT))
+DOC_MAN1_L10N = $(patsubst %.txt,%.1,$(MAN1_L10N_TXT))
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
@@ -209,6 +212,7 @@ endif
 
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
+	QUIET_PO4A      = @echo '   ' PO4A $@;
 	QUIET_ASCIIDOC	= @echo '   ' ASCIIDOC $@;
 	QUIET_XMLTO	= @echo '   ' XMLTO $@;
 	QUIET_DB2TEXI	= @echo '   ' DB2TEXI $@;
@@ -234,6 +238,15 @@ man1: $(DOC_MAN1)
 man5: $(DOC_MAN5)
 man7: $(DOC_MAN7)
 
+man_l10n: po4a man1_p_l10n
+po4a: po4a.conf
+	$(QUIET_PO4A)po4a po4a.conf
+
+man1_p_l10n: po4a
+	$(MAKE) man1_l10n
+
+man1_l10n: $(DOC_MAN1_L10N)
+
 info: git.info gitman.info
 
 pdf: user-manual.pdf
@@ -247,6 +260,11 @@ install-man: man
 	$(INSTALL) -m 644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
 	$(INSTALL) -m 644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
 	$(INSTALL) -m 644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
+	$(MAKE) install-man-l10n
+
+install-man-l10n: $(DOC_MAN1_L10N)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(mandir)/$(firstword $(subst /man1/, ,$(subst po/,,$<)))/man1
+	$(INSTALL) -m 644 $< $(DESTDIR)$(mandir)$(subst po,,$<)
 
 install-info: info
 	$(INSTALL) -d -m 755 $(DESTDIR)$(infodir)
@@ -323,6 +341,7 @@ clean:
 	$(RM) technical/*.html technical/api-index.txt
 	$(RM) $(cmds_txt) $(mergetools_txt) *.made
 	$(RM) manpage-base-url.xsl
+	$(RM) po/*/*.1 po/*/*.txt
 
 $(MAN_HTML): %.html : %.txt asciidoc.conf
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
@@ -339,7 +358,7 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 
 %.1 %.5 %.7 : %.xml manpage-base-url.xsl
 	$(QUIET_XMLTO)$(RM) $@ && \
-	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
+	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) -o $(dir $<) man $<
 
 %.xml : %.txt asciidoc.conf
 	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
