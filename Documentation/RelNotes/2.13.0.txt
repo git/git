@@ -77,7 +77,6 @@ UI, Workflows & Features
    unlike in the e-mail header.  "git send-email" has been updated to
    ignore anything after '>' when picking addresses, to allow non-address
    cruft like " # stable 4.4" after the address.
-   (merge 9d3343961b jh/send-email-one-cc later to maint).
 
  * When "git submodule init" decides that the submodule in the working
    tree is its upstream, it now gives a warning as it is not a very
@@ -113,6 +112,18 @@ UI, Workflows & Features
    repository and was quite messy due to its "chicken-and-egg" nature.
    The code has been restructured.
 
+ * The command line prompt (in contrib/) learned a new 'tag' style
+   that can be specified with GIT_PS1_DESCRIBE_STYLE, to describe a
+   detached HEAD with "git describe --tags".
+
+ * The configuration file learned a new "includeIf.<condition>.path"
+   that includes the contents of the given path only when the
+   condition holds.  This allows you to say "include this work-related
+   bit only in the repositories under my ~/work/ directory".
+
+ * Recent update to "rebase -i" started showing a message that is not
+   a warning with "warning:" prefix by mistake.  This has been fixed.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -141,11 +152,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * A test that creates a confusing branch whose name is HEAD has been
    corrected not to do so.
-   (merge f0252ca23c jk/t6300-cleanup later to maint).
 
  * The code that parses header fields in the commit object has been
    updated for (micro)performance and code hygiene.
-   (merge b072504ce1 rs/commit-parsing-optim later to maint).
 
  * An helper function to make it easier to append the result from
    real_path() to a strbuf has been added.
@@ -216,7 +225,6 @@ notes for details).
  * "git show-branch" expected there were only very short branch names
    in the repository and used a fixed-length buffer to hold them
    without checking for overflow.
-   (merge d3cc5f4c44 jk/show-branch-lift-name-len-limit later to maint).
 
  * A caller of tempfile API that uses stdio interface to write to
    files may ignore errors while writing, which is detected when
@@ -225,17 +233,14 @@ notes for details).
    be long gone and was overwritten by an irrelevant value.
    close_tempfile() now resets errno to EIO to make errno at least
    predictable.
-   (merge 7e8c9355b7 jk/tempfile-ferror-fclose-confusion later to maint).
 
  * "git remote rm X", when a branch has remote X configured as the
    value of its branch.*.remote, tried to remove branch.*.remote and
    branch.*.merge and failed if either is unset.
-   (merge 20690b2139 rl/remote-allow-missing-branch-name-merge later to maint).
 
  * A "gc.log" file left by a backgrounded "gc --auto" disables further
    automatic gc; it has been taught to run at least once a day (by
    default) by ignoring a stale "gc.log" file that is too old.
-   (merge a831c06a2b dt/gc-ignore-old-gc-logs later to maint).
 
  * The code to parse "git -c VAR=VAL cmd" and set configuration
    variable for the duration of cmd had two small bugs, which have
@@ -250,11 +255,9 @@ notes for details).
    report a request for a ref that was not advertised as invalid.
    This is generally not a problem (because "git fetch" will stop
    before making such a request), but is the right thing to do.
-   (merge bdb31eada7 jt/upload-pack-error-report later to maint).
 
  * A leak in a codepath to read from a packed object in (rare) cases
    has been plugged.
-   (merge 886ddf4777 rs/sha1-file-plug-fallback-base-leak later to maint).
 
  * When a redirected http transport gets an error during the
    redirected request, we ignored the error we got from the server,
@@ -272,7 +275,6 @@ notes for details).
 
  * There is no need for Python only to give a few messages to the
    standard error stream, but we somehow did.
-   (merge b8686c661d ss/remote-bzr-hg-placeholder-wo-python later to maint).
 
  * The code to parse "git log -L..." command line was buggy when there
    are many ranges specified with -L; overrun of the allocated buffer
@@ -286,7 +288,6 @@ notes for details).
    made an incorrect short-cut when asked only to populate the size
    field for paths that need to go through convert_to_git() (e.g. CRLF
    conversion).
-   (merge 12426e114b jc/diff-populate-filespec-size-only-fix later to maint).
 
  * A few tests were run conditionally under (rare) conditions where
    they cannot be run (like running cvs tests under 'root' account).
@@ -318,7 +319,6 @@ notes for details).
 
  * "Dumb http" transport used to misparse a nonsense http-alternates
    response, which has been fixed.
-   (merge d61434ae81 jk/http-walker-buffer-underflow-fix later to maint).
 
  * "git add -p <pathspec>" unnecessarily expanded the pathspec to a
    list of individual files that matches the pathspec by running "git
@@ -332,11 +332,17 @@ notes for details).
 
  * "git status --porcelain" is supposed to give a stable output, but a
    few strings were left as translatable by mistake.
-   (merge b9e2bc560a mg/status-porcelain-no-i18n later to maint).
+
+ * Code to read submodule.<name>.ignore config did not state the
+   variable name correctly when giving an error message diagnosing
+   misconfiguration.
+   (merge 5ea304896e sb/submodule-config-parse-ignore-fix later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge b803ae4427 ps/docs-diffcore later to maint).
-   (merge bcd886d897 ew/markdown-url-in-readme later to maint).
-   (merge b2d593a779 rj/remove-unused-mktemp later to maint).
-   (merge 3255e512a8 jk/ewah-use-right-type-in-sizeof later to maint).
    (merge dfa3ad3238 rs/blame-code-cleanup later to maint).
+   (merge ffddfc6328 jk/rev-parse-cleanup later to maint).
+   (merge f20754802a jk/pack-name-cleanups later to maint).
+   (merge d4aae459cd sb/wt-status-cleanup later to maint).
+   (merge 2c7ee986c7 ab/doc-no-option-notation-fix later to maint).
+   (merge e4e016f65d ab/push-default-doc-fix later to maint).
+   (merge baced9e4e5 nd/commit-hook-doc-fix later to maint).
