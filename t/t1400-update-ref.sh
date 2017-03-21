@@ -64,8 +64,8 @@ rm -f .git/$m
 test_expect_success \
 	"fail to create $n" \
 	"touch .git/$n_dir &&
-	 test_must_fail git update-ref $n $A >out 2>err"
-rm -f .git/$n_dir out err
+	 test_must_fail git update-ref $n $A"
+rm -f .git/$n_dir
 
 test_expect_success \
 	"create $m (by HEAD)" \
