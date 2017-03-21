@@ -49,7 +49,7 @@ test_expect_success "fail to delete $m with stale ref" '
 '
 test_expect_success "delete $m" '
 	git update-ref -d $m $B &&
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 '
 rm -f .git/$m
 
@@ -57,7 +57,7 @@ test_expect_success "delete $m without oldvalue verification" "
 	git update-ref $m $A &&
 	test $A = \$(cat .git/$m) &&
 	git update-ref -d $m &&
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 "
 rm -f .git/$m
 
@@ -81,7 +81,7 @@ test_expect_success "fail to delete $m (by HEAD) with stale ref" '
 '
 test_expect_success "delete $m (by HEAD)" '
 	git update-ref -d HEAD $B &&
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 '
 rm -f .git/$m
 
@@ -89,7 +89,7 @@ test_expect_success "deleting current branch adds message to HEAD's log" '
 	git update-ref $m $A &&
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-$m -d $m &&
-	! test -f .git/$m &&
+	test_path_is_missing .git/$m &&
 	grep "delete-$m$" .git/logs/HEAD
 '
 rm -f .git/$m
@@ -98,7 +98,7 @@ test_expect_success "deleting by HEAD adds message to HEAD's log" '
 	git update-ref $m $A &&
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-by-head -d HEAD &&
-	! test -f .git/$m &&
+	test_path_is_missing .git/$m &&
 	grep "delete-by-head$" .git/logs/HEAD
 '
 rm -f .git/$m
@@ -190,14 +190,14 @@ test_expect_success \
 test_expect_success "delete $m (by HEAD) should remove both packed and loose $m" '
 	git update-ref -d HEAD $B &&
 	! grep "$m" .git/packed-refs &&
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 '
 rm -f .git/$m
 
 cp -f .git/HEAD .git/HEAD.orig
 test_expect_success "delete symref without dereference" '
 	git update-ref --no-deref -d HEAD &&
-	! test -f .git/HEAD
+	test_path_is_missing .git/HEAD
 '
 cp -f .git/HEAD.orig .git/HEAD
 
@@ -207,7 +207,7 @@ test_expect_success "delete symref without dereference when the referred ref is 
 	git commit -m foo &&
 	git pack-refs --all &&
 	git update-ref --no-deref -d HEAD &&
-	! test -f .git/HEAD
+	test_path_is_missing .git/HEAD
 '
 cp -f .git/HEAD.orig .git/HEAD
 git update-ref -d $m
@@ -242,7 +242,7 @@ test_expect_success '(not) create HEAD with old sha1' "
 	test_must_fail git update-ref HEAD $A $B
 "
 test_expect_success "(not) prior created .git/$m" "
-	! test -f .git/$m
+	test_path_is_missing .git/$m
 "
 rm -f .git/$m
 
@@ -280,13 +280,13 @@ test_expect_success \
 test_expect_success "empty directory removal" '
 	git branch d1/d2/r1 HEAD &&
 	git branch d1/r2 HEAD &&
-	test -f .git/refs/heads/d1/d2/r1 &&
-	test -f .git/logs/refs/heads/d1/d2/r1 &&
+	test_path_is_file .git/refs/heads/d1/d2/r1 &&
+	test_path_is_file .git/logs/refs/heads/d1/d2/r1 &&
 	git branch -d d1/d2/r1 &&
-	! test -e .git/refs/heads/d1/d2 &&
-	! test -e .git/logs/refs/heads/d1/d2 &&
-	test -f .git/refs/heads/d1/r2 &&
-	test -f .git/logs/refs/heads/d1/r2
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	test_path_is_missing .git/logs/refs/heads/d1/d2 &&
+	test_path_is_file .git/refs/heads/d1/r2 &&
+	test_path_is_file .git/logs/refs/heads/d1/r2
 '
 
 test_expect_success "symref empty directory removal" '
@@ -294,14 +294,14 @@ test_expect_success "symref empty directory removal" '
 	git branch e1/r2 HEAD &&
 	git checkout e1/e2/r1 &&
 	test_when_finished "git checkout master" &&
-	test -f .git/refs/heads/e1/e2/r1 &&
-	test -f .git/logs/refs/heads/e1/e2/r1 &&
+	test_path_is_file .git/refs/heads/e1/e2/r1 &&
+	test_path_is_file .git/logs/refs/heads/e1/e2/r1 &&
 	git update-ref -d HEAD &&
-	! test -e .git/refs/heads/e1/e2 &&
-	! test -e .git/logs/refs/heads/e1/e2 &&
-	test -f .git/refs/heads/e1/r2 &&
-	test -f .git/logs/refs/heads/e1/r2 &&
-	test -f .git/logs/HEAD
+	test_path_is_missing .git/refs/heads/e1/e2 &&
+	test_path_is_missing .git/logs/refs/heads/e1/e2 &&
+	test_path_is_file .git/refs/heads/e1/r2 &&
+	test_path_is_file .git/logs/refs/heads/e1/r2 &&
+	test_path_is_file .git/logs/HEAD
 '
 
 cat >expect <<EOF
