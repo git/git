@@ -48,24 +48,24 @@ test_expect_success "fail to delete $m with stale ref" '
 	test $B = "$(cat .git/$m)"
 '
 test_expect_success "delete $m" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref -d $m $B &&
 	test_path_is_missing .git/$m
 '
-rm -f .git/$m
 
-test_expect_success "delete $m without oldvalue verification" "
+test_expect_success "delete $m without oldvalue verification" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref $m $A &&
-	test $A = \$(cat .git/$m) &&
+	test $A = $(cat .git/$m) &&
 	git update-ref -d $m &&
 	test_path_is_missing .git/$m
-"
-rm -f .git/$m
+'
 
-test_expect_success \
-	"fail to create $n" \
-	"touch .git/$n_dir &&
-	 test_must_fail git update-ref $n $A"
-rm -f .git/$n_dir
+test_expect_success "fail to create $n" '
+	test_when_finished "rm -f .git/$n_dir" &&
+	touch .git/$n_dir &&
+	test_must_fail git update-ref $n $A
+'
 
 test_expect_success \
 	"create $m (by HEAD)" \
@@ -80,28 +80,28 @@ test_expect_success "fail to delete $m (by HEAD) with stale ref" '
 	test $B = $(cat .git/$m)
 '
 test_expect_success "delete $m (by HEAD)" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref -d HEAD $B &&
 	test_path_is_missing .git/$m
 '
-rm -f .git/$m
 
 test_expect_success "deleting current branch adds message to HEAD's log" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref $m $A &&
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-$m -d $m &&
 	test_path_is_missing .git/$m &&
 	grep "delete-$m$" .git/logs/HEAD
 '
-rm -f .git/$m
 
 test_expect_success "deleting by HEAD adds message to HEAD's log" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref $m $A &&
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-by-head -d HEAD &&
 	test_path_is_missing .git/$m &&
 	grep "delete-by-head$" .git/logs/HEAD
 '
-rm -f .git/$m
 
 test_expect_success 'update-ref does not create reflogs by default' '
 	test_when_finished "git update-ref -d $outside" &&
@@ -188,20 +188,21 @@ test_expect_success \
 	"git update-ref HEAD $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
 test_expect_success "delete $m (by HEAD) should remove both packed and loose $m" '
+	test_when_finished "rm -f .git/$m" &&
 	git update-ref -d HEAD $B &&
 	! grep "$m" .git/packed-refs &&
 	test_path_is_missing .git/$m
 '
-rm -f .git/$m
 
 cp -f .git/HEAD .git/HEAD.orig
 test_expect_success "delete symref without dereference" '
+	test_when_finished "cp -f .git/HEAD.orig .git/HEAD" &&
 	git update-ref --no-deref -d HEAD &&
 	test_path_is_missing .git/HEAD
 '
-cp -f .git/HEAD.orig .git/HEAD
 
 test_expect_success "delete symref without dereference when the referred ref is packed" '
+	test_when_finished "cp -f .git/HEAD.orig .git/HEAD" &&
 	echo foo >foo.c &&
 	git add foo.c &&
 	git commit -m foo &&
@@ -209,7 +210,7 @@ test_expect_success "delete symref without dereference when the referred ref is 
 	git update-ref --no-deref -d HEAD &&
 	test_path_is_missing .git/HEAD
 '
-cp -f .git/HEAD.orig .git/HEAD
+
 git update-ref -d $m
 
 test_expect_success 'update-ref -d is not confused by self-reference' '
@@ -241,10 +242,10 @@ test_expect_success 'update-ref --no-deref -d can delete reference to bad ref' '
 test_expect_success '(not) create HEAD with old sha1' "
 	test_must_fail git update-ref HEAD $A $B
 "
-test_expect_success "(not) prior created .git/$m" "
+test_expect_success "(not) prior created .git/$m" '
+	test_when_finished "rm -f .git/$m" &&
 	test_path_is_missing .git/$m
-"
-rm -f .git/$m
+'
 
 test_expect_success \
 	"create HEAD" \
@@ -252,10 +253,10 @@ test_expect_success \
 test_expect_success '(not) change HEAD with wrong SHA1' "
 	test_must_fail git update-ref HEAD $B $Z
 "
-test_expect_success "(not) changed .git/$m" "
-	! test $B"' = $(cat .git/'"$m"')
+test_expect_success "(not) changed .git/$m" '
+	test_when_finished "rm -f .git/$m" &&
+	! test $B = $(cat .git/$m)
 '
-rm -f .git/$m
 
 rm -f .git/logs/refs/heads/master
 test_expect_success \
@@ -309,10 +310,10 @@ $Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	Initial Creati
 $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150260 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
-test_expect_success \
-	"verifying $m's log (logged by touch)" \
-	"test_cmp expect .git/logs/$m"
-rm -rf .git/$m .git/logs expect
+test_expect_success "verifying $m's log (logged by touch)" '
+	test_when_finished "rm -rf .git/$m .git/logs expect" &&
+	test_cmp expect .git/logs/$m
+'
 
 test_expect_success \
 	"create $m (logged by config)" \
@@ -340,8 +341,8 @@ $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success \
 	"verifying $m's log (logged by config)" \
-	'test_cmp expect .git/logs/$m'
-rm -f .git/$m .git/logs/$m expect
+	'test_when_finished "rm -f .git/$m .git/logs/$m expect" &&
+	 test_cmp expect .git/logs/$m'
 
 git update-ref $m $D
 cat >.git/logs/$m <<EOF
@@ -357,55 +358,55 @@ gd="Thu, 26 May 2005 18:33:00 -0500"
 ld="Thu, 26 May 2005 18:43:00 -0500"
 test_expect_success \
 	'Query "master@{May 25 2005}" (before history)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{May 25 2005}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	"Query master@{2005-05-25} (before history)" \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify master@{2005-05-25} >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 echo test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:31:59}" (1 second before history)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:32:00}" (exactly history start)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:32:30}" (first non-creation change)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{May 26 2005 23:32:30}" >o 2>e &&
 	 test '"$A"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{2005-05-26 23:33:01}" >o 2>e &&
 	 test '"$B"' = $(cat o) &&
 	 test "warning: Log for ref '"$m has gap after $gd"'." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:38:00}" (middle of history)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
 	 test '"$Z"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:43:00}" (exact end of history)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
 	 test '"$E"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-28}" (past end of history)' \
-	'rm -f o e &&
+	'test_when_finished "rm -f o e" &&
 	 git rev-parse --verify "master@{2005-05-28}" >o 2>e &&
 	 test '"$D"' = $(cat o) &&
 	 test "warning: Log for ref '"$m unexpectedly ended on $ld"'." = "$(cat e)"'
@@ -415,7 +416,8 @@ rm -f .git/$m .git/logs/$m expect
 
 test_expect_success \
     'creating initial files' \
-    'echo TEST >F &&
+    'test_when_finished rm -f M &&
+     echo TEST >F &&
      git add F &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:30" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:30" git commit -m add -a &&
@@ -433,8 +435,7 @@ test_expect_success \
 	 echo $h_TEST >.git/MERGE_HEAD &&
 	 GIT_AUTHOR_DATE="2005-05-26 23:45" \
 	 GIT_COMMITTER_DATE="2005-05-26 23:45" git commit -F M &&
-	 h_MERGED=$(git rev-parse --verify HEAD) &&
-	 rm -f M'
+	 h_MERGED=$(git rev-parse --verify HEAD)'
 
 cat >expect <<EOF
 $Z $h_TEST $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	commit (initial): add
