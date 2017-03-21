@@ -134,8 +134,9 @@ with the subject enclosed in a pair of double-quotes, like this:
     noticed that ...
 
 The "Copy commit summary" command of gitk can be used to obtain this
-format.
+format, or this invocation of "git show":
 
+    git show -s --date=short --pretty='format:%h ("%s", %ad)' <commit>
 
 (3) Generate your patch using Git tools out of your commits.
 
