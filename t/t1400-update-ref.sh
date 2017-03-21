@@ -260,17 +260,20 @@ rm -f .git/$m
 rm -f .git/logs/refs/heads/master
 test_expect_success \
 	"create $m (logged by touch)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
+	'test_config core.logAllRefUpdates false &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	 git update-ref --create-reflog HEAD '"$A"' -m "Initial Creation" &&
 	 test '"$A"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"update $m (logged by touch)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:31" \
+	'test_config core.logAllRefUpdates false &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:31" \
 	 git update-ref HEAD'" $B $A "'-m "Switch" &&
 	 test '"$B"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"set $m (logged by touch)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:41" \
+	'test_config core.logAllRefUpdates false &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:41" \
 	 git update-ref HEAD'" $A &&
 	 test $A"' = $(cat .git/'"$m"')'
 
@@ -312,23 +315,21 @@ test_expect_success \
 rm -rf .git/$m .git/logs expect
 
 test_expect_success \
-	'enable core.logAllRefUpdates' \
-	'git config core.logAllRefUpdates true &&
-	 test true = $(git config --bool --get core.logAllRefUpdates)'
-
-test_expect_success \
 	"create $m (logged by config)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:32" \
+	'test_config core.logAllRefUpdates true &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:32" \
 	 git update-ref HEAD'" $A "'-m "Initial Creation" &&
 	 test '"$A"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"update $m (logged by config)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:33" \
+	'test_config core.logAllRefUpdates true &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:33" \
 	 git update-ref HEAD'" $B $A "'-m "Switch" &&
 	 test '"$B"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"set $m (logged by config)" \
-	'GIT_COMMITTER_DATE="2005-05-26 23:43" \
+	'test_config core.logAllRefUpdates true &&
+	 GIT_COMMITTER_DATE="2005-05-26 23:43" \
 	 git update-ref HEAD '"$A &&
 	 test $A"' = $(cat .git/'"$m"')'
 
