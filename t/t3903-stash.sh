@@ -907,4 +907,18 @@ test_expect_success 'stash without verb with pathspec' '
 	test_path_is_file bar
 '
 
+test_expect_success 'stash -k -- <pathspec> leaves unstaged files intact' '
+	git reset &&
+	>foo &&
+	>bar &&
+	git add foo bar &&
+	git commit -m "test" &&
+	echo "foo" >foo &&
+	echo "bar" >bar &&
+	git stash -k -- foo &&
+	test "",bar = $(cat foo),$(cat bar) &&
+	git stash pop &&
+	test foo,bar = $(cat foo),$(cat bar)
+'
+
 test_done

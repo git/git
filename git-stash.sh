@@ -314,7 +314,9 @@ push_stash () {
 
 		if test "$keep_index" = "t" && test -n "$i_tree"
 		then
-			git read-tree --reset -u $i_tree
+			git read-tree --reset $i_tree
+			git ls-files -z --modified -- "$@" |
+			git checkout-index -z --force --stdin
 		fi
 	else
 		git apply -R < "$TMP-patch" ||
