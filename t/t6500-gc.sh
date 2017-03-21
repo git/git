@@ -67,5 +67,20 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 	test_line_count = 2 new # There is one new pack and its .idx
 '
 
+test_expect_success 'background auto gc does not run if gc.log is present and recent but does if it is old' '
+	test_commit foo &&
+	test_commit bar &&
+	git repack &&
+	test_config gc.autopacklimit 1 &&
+	test_config gc.autodetach true &&
+	echo fleem >.git/gc.log &&
+	test_must_fail git gc --auto 2>err &&
+	test_i18ngrep "^error:" err &&
+	test_config gc.logexpiry 5.days &&
+	test-chmtime =-345600 .git/gc.log &&
+	test_must_fail git gc --auto &&
+	test_config gc.logexpiry 2.days &&
+	git gc --auto
+'
 
 test_done
