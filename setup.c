@@ -142,7 +142,7 @@ int check_filename(const char *prefix, const char *arg)
 			return 1;
 		name = arg + 2;
 	} else if (prefix)
-		name = prefix_filename(prefix, strlen(prefix), arg);
+		name = prefix_filename(prefix, arg);
 	else
 		name = arg;
 	if (!lstat(name, &st))

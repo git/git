@@ -2046,7 +2046,7 @@ static void prefix_one(struct apply_state *state, char **name)
 	char *old_name = *name;
 	if (!old_name)
 		return;
-	*name = xstrdup(prefix_filename(state->prefix, state->prefix_length, *name));
+	*name = xstrdup(prefix_filename(state->prefix, *name));
 	free(old_name);
 }
 
@@ -4815,9 +4815,7 @@ int apply_all_patches(struct apply_state *state,
 			read_stdin = 0;
 			continue;
 		} else if (0 < state->prefix_length)
-			arg = prefix_filename(state->prefix,
-					      state->prefix_length,
-					      arg);
+			arg = prefix_filename(state->prefix, arg);
 
 		fd = open(arg, O_RDONLY);
 		if (fd < 0) {

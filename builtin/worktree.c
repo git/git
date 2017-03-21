@@ -338,7 +338,7 @@ static int add(int ac, const char **av, const char *prefix)
 	if (ac < 1 || ac > 2)
 		usage_with_options(worktree_usage, options);
 
-	path = prefix_filename(prefix, strlen(prefix), av[0]);
+	path = prefix_filename(prefix, av[0]);
 	branch = ac < 2 ? "HEAD" : av[1];
 
 	if (!strcmp(branch, "-"))

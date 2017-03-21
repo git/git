@@ -246,9 +246,11 @@ char *absolute_pathdup(const char *path)
 	return strbuf_detach(&sb, NULL);
 }
 
-const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
+const char *prefix_filename(const char *pfx, const char *arg)
 {
 	static struct strbuf path = STRBUF_INIT;
+	size_t pfx_len = pfx ? strlen(pfx) : 0;
+
 #ifndef GIT_WINDOWS_NATIVE
 	if (!pfx_len || is_absolute_path(arg))
 		return arg;

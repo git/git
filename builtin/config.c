@@ -528,7 +528,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (!is_absolute_path(given_config_source.file) && prefix)
 			given_config_source.file =
 				xstrdup(prefix_filename(prefix,
-							strlen(prefix),
 							given_config_source.file));
 	}
 

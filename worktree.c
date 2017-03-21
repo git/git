@@ -254,7 +254,7 @@ struct worktree *find_worktree(struct worktree **list,
 	if ((wt = find_worktree_by_suffix(list, arg)))
 		return wt;
 
-	arg = prefix_filename(prefix, strlen(prefix), arg);
+	arg = prefix_filename(prefix, arg);
 	path = real_pathdup(arg, 1);
 	for (; *list; list++)
 		if (!fspathcmp(path, real_path((*list)->path)))

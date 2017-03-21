@@ -540,7 +540,7 @@ extern char *prefix_path_gently(const char *prefix, int len, int *remaining, con
  * The return value may point to static storage which will be overwritten by
  * further calls.
  */
-extern const char *prefix_filename(const char *prefix, int len, const char *path);
+extern const char *prefix_filename(const char *prefix, const char *path);
 
 extern int check_filename(const char *prefix, const char *name);
 extern void verify_filename(const char *prefix,
