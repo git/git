@@ -333,7 +333,7 @@ static int parse_config(const char *var, const char *value, void *data)
 			 strcmp(value, "all") &&
 			 strcmp(value, "none"))
 			warning("Invalid parameter '%s' for config option "
-					"'submodule.%s.ignore'", value, var);
+					"'submodule.%s.ignore'", value, name.buf);
 		else {
 			free((void *) submodule->ignore);
 			submodule->ignore = xstrdup(value);
