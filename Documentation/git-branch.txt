@@ -215,11 +215,13 @@ start-point is either a local or remote-tracking branch.
 
 --merged [<commit>]::
 	Only list branches whose tips are reachable from the
-	specified commit (HEAD if not specified). Implies `--list`.
+	specified commit (HEAD if not specified). Implies `--list`,
+	incompatible with `--no-merged`.
 
 --no-merged [<commit>]::
 	Only list branches whose tips are not reachable from the
-	specified commit (HEAD if not specified). Implies `--list`.
+	specified commit (HEAD if not specified). Implies `--list`,
+	incompatible with `--merged`.
 
 <branchname>::
 	The name of the branch to create or delete.

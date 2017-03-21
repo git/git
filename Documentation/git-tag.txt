@@ -126,11 +126,11 @@ This option is only applicable when listing tags without annotation lines.
 
 --merged [<commit>]::
 	Only list tags whose commits are reachable from the specified
-	commit (`HEAD` if not specified).
+	commit (`HEAD` if not specified), incompatible with `--no-merged`.
 
 --no-merged [<commit>]::
 	Only list tags whose commits are not reachable from the specified
-	commit (`HEAD` if not specified).
+	commit (`HEAD` if not specified), incompatible with `--merged`.
 
 --points-at <object>::
 	Only list tags of the given object.
