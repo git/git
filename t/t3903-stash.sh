@@ -663,7 +663,7 @@ test_expect_success 'stash apply shows status same as git status (relative to cu
 		sane_unset GIT_MERGE_VERBOSITY &&
 		git stash apply
 	) |
-	sed -e 1,2d >actual && # drop "Saved..." and "HEAD is now..."
+	sed -e 1d >actual && # drop "Saved..."
 	test_i18ncmp expect actual
 '
 
