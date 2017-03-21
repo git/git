@@ -322,7 +322,7 @@ push_stash () {
 
 		if test "$keep_index" != "t"
 		then
-			git reset -q
+			git reset -q -- "$@"
 		fi
 	fi
 }
