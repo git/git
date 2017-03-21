@@ -115,7 +115,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 
 	prefix_length = prefix ? strlen(prefix) : 0;
 	if (vpath && prefix)
-		vpath = prefix_filename(prefix, prefix_length, vpath);
+		vpath = xstrdup(prefix_filename(prefix, prefix_length, vpath));
 
 	git_config(git_default_config, NULL);
 
@@ -144,11 +144,14 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 
 	for (i = 0 ; i < argc; i++) {
 		const char *arg = argv[i];
+		char *to_free = NULL;
 
 		if (0 <= prefix_length)
-			arg = prefix_filename(prefix, prefix_length, arg);
+			arg = to_free =
+				xstrdup(prefix_filename(prefix, prefix_length, arg));
 		hash_object(arg, type, no_filters ? NULL : vpath ? vpath : arg,
 			    flags, literally);
+		free(to_free);
 	}
 
 	if (stdin_paths)
