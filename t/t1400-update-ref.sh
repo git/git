@@ -40,7 +40,7 @@ test_expect_success \
 	"git update-ref $m $A &&
 	 test $A"' = $(cat .git/'"$m"')'
 test_expect_success \
-	"create $m" \
+	"create $m with oldvalue verification" \
 	"git update-ref $m $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
 test_expect_success "fail to delete $m with stale ref" '
@@ -72,7 +72,7 @@ test_expect_success \
 	"git update-ref HEAD $A &&
 	 test $A"' = $(cat .git/'"$m"')'
 test_expect_success \
-	"create $m (by HEAD)" \
+	"create $m (by HEAD) with oldvalue verification" \
 	"git update-ref HEAD $B $A &&
 	 test $B"' = $(cat .git/'"$m"')'
 test_expect_success "fail to delete $m (by HEAD) with stale ref" '
@@ -307,7 +307,7 @@ $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150260 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success \
-	"verifying $m's log" \
+	"verifying $m's log (logged by touch)" \
 	"test_cmp expect .git/logs/$m"
 rm -rf .git/$m .git/logs expect
 
@@ -338,7 +338,7 @@ $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success \
-	"verifying $m's log" \
+	"verifying $m's log (logged by config)" \
 	'test_cmp expect .git/logs/$m'
 rm -f .git/$m .git/logs/$m expect
 
