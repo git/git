@@ -251,18 +251,15 @@ char *prefix_filename(const char *pfx, const char *arg)
 	struct strbuf path = STRBUF_INIT;
 	size_t pfx_len = pfx ? strlen(pfx) : 0;
 
-#ifndef GIT_WINDOWS_NATIVE
-	if (!pfx_len || is_absolute_path(arg))
-		return xstrdup(arg);
-	strbuf_add(&path, pfx, pfx_len);
-	strbuf_addstr(&path, arg);
-#else
-	/* don't add prefix to absolute paths, but still replace '\' by '/' */
-	if (is_absolute_path(arg))
+	if (!pfx_len)
+		; /* nothing to prefix */
+	else if (is_absolute_path(arg))
 		pfx_len = 0;
-	else if (pfx_len)
+	else
 		strbuf_add(&path, pfx, pfx_len);
+
 	strbuf_addstr(&path, arg);
+#ifdef GIT_WINDOWS_NATIVE
 	convert_slashes(path.buf + pfx_len);
 #endif
 	return strbuf_detach(&path, NULL);
