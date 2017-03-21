@@ -538,7 +538,7 @@ static int grep_submodule_launch(struct grep_opt *opt,
 	int status, i;
 	const char *end_of_base;
 	const char *name;
-	struct work_item *w = opt->output_priv;
+	struct strbuf child_output = STRBUF_INIT;
 
 	end_of_base = strchr(gs->name, ':');
 	if (gs->identifier && end_of_base)
@@ -593,14 +593,16 @@ static int grep_submodule_launch(struct grep_opt *opt,
 	 * child process.  A '0' indicates a hit, a '1' indicates no hit and
 	 * anything else is an error.
 	 */
-	status = capture_command(&cp, &w->out, 0);
+	status = capture_command(&cp, &child_output, 0);
 	if (status && (status != 1)) {
 		/* flush the buffer */
-		write_or_die(1, w->out.buf, w->out.len);
+		write_or_die(1, child_output.buf, child_output.len);
 		die("process for submodule '%s' failed with exit code: %d",
 		    gs->name, status);
 	}
 
+	opt->output(opt, child_output.buf, child_output.len);
+	strbuf_release(&child_output);
 	/* invert the return code to make a hit equal to 1 */
 	return !status;
 }
@@ -641,19 +643,14 @@ static int grep_submodule(struct grep_opt *opt, const unsigned char *sha1,
 	} else
 #endif
 	{
-		struct work_item w;
+		struct grep_source gs;
 		int hit;
 
-		grep_source_init(&w.source, GREP_SOURCE_SUBMODULE,
+		grep_source_init(&gs, GREP_SOURCE_SUBMODULE,
 				 filename, path, sha1);
-		strbuf_init(&w.out, 0);
-		opt->output_priv = &w;
-		hit = grep_submodule_launch(opt, &w.source);
+		hit = grep_submodule_launch(opt, &gs);
 
-		write_or_die(1, w.out.buf, w.out.len);
-
-		grep_source_clear(&w.source);
-		strbuf_release(&w.out);
+		grep_source_clear(&gs);
 		return hit;
 	}
 }
