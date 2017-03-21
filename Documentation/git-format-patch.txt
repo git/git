@@ -239,7 +239,7 @@ keeping them as Git notes allows them to be maintained between versions
 of the patch series (but see the discussion of the `notes.rewrite`
 configuration options in linkgit:git-notes[1] to use this workflow).
 
---[no]-signature=<signature>::
+--[no-]signature=<signature>::
 	Add a signature to each message produced. Per RFC 3676 the signature
 	is separated from the body by a line with '-- ' on it. If the
 	signature option is omitted the signature defaults to the Git version
