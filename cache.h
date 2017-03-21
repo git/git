@@ -1045,9 +1045,6 @@ static inline int is_empty_tree_oid(const struct object_id *oid)
 	return !hashcmp(oid->hash, EMPTY_TREE_SHA1_BIN);
 }
 
-
-int git_mkstemp(char *path, size_t n, const char *template);
-
 /* set default permissions by passing mode arguments to open(2) */
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
 int git_mkstemp_mode(char *pattern, int mode);
