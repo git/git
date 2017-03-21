@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2017, #08; Mon, 20)
-X-master-at: c0f9c705890ac30871c70219c4b08d740fb40e2e
-X-next-at: ab5fba24ee0096b15bf4e814f5ebf1f0cc20c7a5
+Subject: What's cooking in git.git (Mar 2017, #09; Tue, 21)
+X-master-at: afd6726309f57f532b4b989a75c1392359c611cc
+X-next-at: 7cedf66e54510904cda1d8cb365d851f9d4dcdb4
 
-What's cooking in git.git (Mar 2017, #08; Mon, 20)
+What's cooking in git.git (Mar 2017, #09; Tue, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,117 +20,11 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* js/difftool-builtin (2017-03-15) 3 commits
-  (merged to 'next' on 2017-03-16 at 3fccb60a07)
- + difftool: handle modified symlinks in dir-diff mode
- + t7800: cleanup cruft left behind by tests
- + t7800: remove whitespace before redirect
-
- "git difftool --dir-diff" used to die a controlled death giving a
- "fatal" message when encountering a locally modified symbolic link,
- but it started segfaulting since v2.12.  This has been fixed.
-
---------------------------------------------------
-[New Topics]
-
-* ab/doc-submitting (2017-03-18) 2 commits
- - doc/SubmittingPatches: show how to get a CLI commit summary
- - doc/SubmittingPatches: clarify the casing convention for "area: change..."
-
- Doc update.
-
- The example added by the second one may want to be shortened.
-
-
-* bw/grep-recurse-submodules (2017-03-18) 2 commits
- - grep: fix builds with with no thread support
- - grep: set default output method
-
- Build fix for NO_PTHREADS build.
-
- Will merge to 'next'.
-
-
-* ja/doc-l10n (2017-03-18) 2 commits
- . l10n: Add git-add.txt to localized man pages
- . l10n: Introduce framework for localizing man pages
-
- A proposal to use po4a to localize our manual pages.
-
-
-* jk/execv-dashed-external (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at 62119fa314)
- + run-command: fix segfault when cleaning forked async process
-
- Fix for NO_PTHREADS build.
-
- Will merge to 'master'.
-
-
-* js/regexec-buf (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at 7381595eb7)
- + pickaxe: fix segfault with '-S<...> --pickaxe-regex'
-
- Fix for potential segv introduced in v2.11.0 and later (also
- v2.10.2).
-
- Will merge to 'master'.
-
-
-* rs/http-push-cleanup (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at fcf8d30bc0)
- + http-push: don't check return value of lookup_unknown_object()
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/path-name-safety-cleanup (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at 78ea574469)
- + revision: remove declaration of path_name()
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/shortlog-cleanup (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at a826dff5cf)
- + shortlog: don't set after_subject to an empty string
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* rs/update-hook-optim (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at f36ede55be)
- + receive-pack: simplify run_update_post_hook()
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* sg/test-with-stdin (2017-03-18) 2 commits
-  (merged to 'next' on 2017-03-20 at a66fec5692)
- + tests: make the 'test_pause' helper work in non-verbose mode
- + tests: create an interactive gdb session with the 'debug' helper
-
- Teach the "debug" helper used in the test framework that allows a
- command to run under "gdb" to make the session interactive.
-
- Will merge to 'master'.
-
-
 * ab/doc-no-option-notation-fix (2017-03-20) 1 commit
   (merged to 'next' on 2017-03-20 at a6afe78ab4)
  + doc: change erroneous --[no]-whatever into --[no-]whatever
 
  Doc fix.
-
- Will merge to 'master'.
 
 
 * ab/push-default-doc-fix (2017-03-20) 1 commit
@@ -139,7 +33,42 @@ of the repositories listed at
 
  Doc fix.
 
- Will merge to 'master'.
+
+* jk/pack-name-cleanups (2017-03-16) 5 commits
+  (merged to 'next' on 2017-03-16 at 6aa72195f5)
+ + index-pack: make pointer-alias fallbacks safer
+ + replace snprintf with odb_pack_name()
+ + odb_pack_keep(): stop generating keepfile name
+ + sha1_file.c: make pack-name helper globally accessible
+ + move odb_* declarations out of git-compat-util.h
+
+ Code clean-up.
+
+
+* jk/rev-parse-cleanup (2017-03-15) 3 commits
+  (merged to 'next' on 2017-03-16 at 2799b37404)
+ + rev-parse: simplify parsing of ref options
+ + rev-parse: add helper for parsing "--foo/--foo="
+ + rev-parse: use skip_prefix when parsing options
+
+ Code clean-up.
+
+
+* js/rebase-helper (2017-03-17) 1 commit
+  (merged to 'next' on 2017-03-20 at 2b72d03e0e)
+ + sequencer: drop "warning:" when stopping for edit
+
+ Recent update to "rebase -i" started showing a message that is not
+ a warning with "warning:" prefix by mistake.  This has been fixed.
+
+
+* mg/prompt-describe-tags (2017-03-15) 1 commit
+  (merged to 'next' on 2017-03-16 at 4de192caf4)
+ + git-prompt: add a describe style for any tags
+
+ The command line prompt (in contrib/) learned a new 'tag' style
+ that can be specified with GIT_PS1_DESCRIBE_STYLE, to describe a
+ detached HEAD with "git describe --tags".
 
 
 * nd/commit-hook-doc-fix (2017-03-20) 1 commit
@@ -148,23 +77,99 @@ of the repositories listed at
 
  Doc fix.
 
- Will merge to 'master'.
+
+* nd/conditional-config-include (2017-03-11) 3 commits
+  (merged to 'next' on 2017-03-17 at 788a931e39)
+ + config: add conditional include
+ + config.txt: reflow the second include.path paragraph
+ + config.txt: clarify multiple key values in include.path
+
+ The configuration file learned a new "includeIf.<condition>.path"
+ that includes the contents of the given path only when the
+ condition holds.  This allows you to say "include this work-related
+ bit only in the repositories under my ~/work/ directory".
 
 
-* tg/stash-push-fixup (2017-03-20) 3 commits
- - stash: pass the pathspec argument to git reset
- - stash: make push -p -q --no-keep-index quiet
- - stash: show less information for stash push -- <pathspec>
+* sb/submodule-config-parse-ignore-fix (2017-03-15) 1 commit
+  (merged to 'next' on 2017-03-16 at 99d2524abd)
+ + submodule-config: correct error reporting for invalid ignore value
 
- Recent enhancement to "git stash push" command to support pathspec
- to allow only a subset of working tree changes to be stashed away
- was found to be too chatty and exposed the internal implementation
- detail (e.g. when it uses reset to match the index to HEAD before
- doing other things, output from reset seeped out).  These, and
- other chattyness has been fixed.
+ Code to read submodule.<name>.ignore config did not state the
+ variable name correctly when giving an error message diagnosing
+ misconfiguration.
 
- Looked alright.
- cf. <20170317145039.dmcb3qyqbzfvtmgz@sigill.intra.peff.net>
+
+* sb/wt-status-cleanup (2017-03-17) 1 commit
+  (merged to 'next' on 2017-03-20 at ce800cd91b)
+ + wt-status: simplify by using for_each_string_list_item
+
+ Code clean-up.
+
+--------------------------------------------------
+[New Topics]
+
+* mh/separate-ref-cache (2017-03-20) 20 commits
+ - do_for_each_entry_in_dir(): delete function
+ - files_pack_refs(): use reference iteration
+ - commit_packed_refs(): use reference iteration
+ - cache_ref_iterator_begin(): make function smarter
+ - get_loose_ref_cache(): new function
+ - get_loose_ref_dir(): function renamed from get_loose_refs()
+ - do_for_each_entry_in_dir(): eliminate `offset` argument
+ - refs: handle "refs/bisect/" in `loose_fill_ref_dir()`
+ - ref-cache: use a callback function to fill the cache
+ - refs: record the ref_store in ref_cache, not ref_dir
+ - ref-cache: introduce a new type, ref_cache
+ - refs: split `ref_cache` code into separate files
+ - ref-cache: rename `remove_entry()` to `remove_entry_from_dir()`
+ - ref-cache: rename `find_ref()` to `find_ref_entry()`
+ - ref-cache: rename `add_ref()` to `add_ref_entry()`
+ - refs_verify_refname_available(): use function in more places
+ - refs_verify_refname_available(): implement once for all backends
+ - refs_ref_iterator_begin(): new function
+ - refs_read_raw_ref(): new function
+ - get_ref_dir(): don't call read_loose_refs() for "refs/bisect"
+ (this branch uses nd/files-backend-git-dir; is tangled with nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
+
+ The internals of the refs API around the cached refs has been
+ streamlined.
+
+
+* jk/prefix-filename (2017-03-21) 6 commits
+ - bundle: use prefix_filename with bundle path
+ - prefix_filename: simplify windows #ifdef
+ - prefix_filename: return newly allocated string
+ - prefix_filename: drop length parameter
+ - prefix_filename: move docstring to header file
+ - hash-object: fix buffer reuse with --path in a subdirectory
+
+ Code clean-up with minor bugfixes.
+
+ Will merge to 'next'.
+
+
+* km/t1400-modernization (2017-03-21) 5 commits
+ - t1400: use test_when_finished for cleanup
+ - t1400: remove a set of unused output files
+ - t1400: use test_path_is_* helpers
+ - t1400: set core.logAllRefUpdates in "logged by touch" tests
+ - t1400: rename test descriptions to be unique
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* ah/log-decorate-default-to-auto (2017-03-21) 1 commit
+ - log: if --decorate is not given, default to --decorate=auto
+
+
+* sb/describe-broken (2017-03-21) 1 commit
+ - builtin/describe: introduce --broken flag
+
+
+* sb/t3600-rephrase (2017-03-21) 1 commit
+ - t3600: rename test to describe its functionality
 
 --------------------------------------------------
 [Stalled]
@@ -323,6 +328,114 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ab/doc-submitting (2017-03-21) 3 commits
+ - SQUASH??? remove "alias" thing
+ - doc/SubmittingPatches: show how to get a CLI commit summary
+ - doc/SubmittingPatches: clarify the casing convention for "area: change..."
+
+ Doc update.
+
+
+* bw/grep-recurse-submodules (2017-03-18) 2 commits
+  (merged to 'next' on 2017-03-21 at a57e2f0129)
+ + grep: fix builds with with no thread support
+ + grep: set default output method
+
+ Build fix for NO_PTHREADS build.
+
+ Will merge to 'master'.
+
+
+* ja/doc-l10n (2017-03-20) 3 commits
+ - SQUASH???
+ - l10n: add git-add.txt to localized man pages
+ - l10n: introduce framework for localizing man pages
+
+ A proposal to use po4a to localize our manual pages.
+
+
+* jk/execv-dashed-external (2017-03-18) 1 commit
+  (merged to 'next' on 2017-03-20 at 62119fa314)
+ + run-command: fix segfault when cleaning forked async process
+
+ Fix for NO_PTHREADS build.
+
+ Will merge to 'master'.
+
+
+* js/regexec-buf (2017-03-18) 1 commit
+  (merged to 'next' on 2017-03-20 at 7381595eb7)
+ + pickaxe: fix segfault with '-S<...> --pickaxe-regex'
+
+ Fix for potential segv introduced in v2.11.0 and later (also
+ v2.10.2).
+
+ Will merge to 'master'.
+
+
+* rs/http-push-cleanup (2017-03-18) 1 commit
+  (merged to 'next' on 2017-03-20 at fcf8d30bc0)
+ + http-push: don't check return value of lookup_unknown_object()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/path-name-safety-cleanup (2017-03-18) 1 commit
+  (merged to 'next' on 2017-03-20 at 78ea574469)
+ + revision: remove declaration of path_name()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/shortlog-cleanup (2017-03-18) 1 commit
+  (merged to 'next' on 2017-03-20 at a826dff5cf)
+ + shortlog: don't set after_subject to an empty string
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/update-hook-optim (2017-03-18) 1 commit
+  (merged to 'next' on 2017-03-20 at f36ede55be)
+ + receive-pack: simplify run_update_post_hook()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* sg/test-with-stdin (2017-03-18) 2 commits
+  (merged to 'next' on 2017-03-20 at a66fec5692)
+ + tests: make the 'test_pause' helper work in non-verbose mode
+ + tests: create an interactive gdb session with the 'debug' helper
+
+ Teach the "debug" helper used in the test framework that allows a
+ command to run under "gdb" to make the session interactive.
+
+ Will merge to 'master'.
+
+
+* tg/stash-push-fixup (2017-03-20) 3 commits
+ - stash: pass the pathspec argument to git reset
+ - stash: make push -p -q --no-keep-index quiet
+ - stash: show less information for stash push -- <pathspec>
+
+ Recent enhancement to "git stash push" command to support pathspec
+ to allow only a subset of working tree changes to be stashed away
+ was found to be too chatty and exposed the internal implementation
+ detail (e.g. when it uses reset to match the index to HEAD before
+ doing other things, output from reset seeped out).  These, and
+ other chattyness has been fixed.
+
+ Looked alright.
+ cf. <20170317145039.dmcb3qyqbzfvtmgz@sigill.intra.peff.net>
+
+
 * nd/prune-in-worktree (2017-03-18) 12 commits
  - rev-list: expose and document --single-worktree
  - revision.c: --reflog add HEAD reflog from all worktrees
@@ -336,7 +449,7 @@ of the repositories listed at
  - revision.c: --indexed-objects add objects from all worktrees
  - revision.c: refactor add_index_objects_to_pending()
  - revision.h: new flag in struct rev_info wrt. worktree-related refs
- (this branch uses nd/files-backend-git-dir and nd/worktree-kill-parse-ref.)
+ (this branch uses nd/files-backend-git-dir and nd/worktree-kill-parse-ref; is tangled with mh/separate-ref-cache.)
 
  "git gc" and friends when multiple worktrees are used off of a
  single repository did not consider the index and per-worktree refs
@@ -352,7 +465,7 @@ of the repositories listed at
  - worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
  - refs: introduce get_worktree_ref_store()
  - environment.c: fix potential segfault by get_git_common_dir()
- (this branch is used by nd/prune-in-worktree; uses nd/files-backend-git-dir.)
+ (this branch is used by nd/prune-in-worktree; uses nd/files-backend-git-dir; is tangled with mh/separate-ref-cache.)
 
  (hopefully) a beginning of safer "git worktree" that is resistant
  to "gc".
@@ -388,7 +501,7 @@ of the repositories listed at
  - files-backend: delete dead code in files_init_db()
  - files-backend: make files_log_ref_write() static
  - refs.h: add forward declaration for structs used in this file
- (this branch is used by nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
+ (this branch is used by mh/separate-ref-cache, nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
 
  The "submodule" specific field in the ref_store structure is
  replaced with a more generic "gitdir" that can later be used also
@@ -401,15 +514,23 @@ of the repositories listed at
  It is almost there; only a few minor niggles remain.
 
 
-* ab/ref-filter-no-contains (2017-03-18) 8 commits
- - tag: change --point-at to default to HEAD
+* ab/ref-filter-no-contains (2017-03-21) 16 commits
  - tag: add tests for --with and --without
- - ref-filter: add --no-contains option to tag/branch/for-each-ref
  - tag: implicitly supply --list given the -n option
+ - ref-filter: reflow recently changed branch/tag/for-each-ref docs
+ - ref-filter: add --no-contains option to tag/branch/for-each-ref
+ - tag: change --point-at to default to HEAD
  - tag: implicitly supply --list given another list-like option
  - tag: change misleading --list <pattern> documentation
- - tag: refactor the options handling code to be less bizarre
+ - tag: add more incompatibles mode tests
+ - for-each-ref: partly change <object> to <commit> in help
+ - tag tests: fix a typo in a test description
  - tag: remove a TODO item from the test suite
+ - ref-filter: add test for --contains on a non-commit
+ - ref-filter: make combining --merged & --no-merged an error
+ - tag doc: reword --[no-]merged to talk about commits, not tips
+ - tag doc: split up the --[no-]merged documentation
+ - tag doc: move the description of --[no-]merged earlier
 
  "git tag/branch/for-each-ref" family of commands long allowed to
  filter the refs by "--contains X" (show only the refs that are
@@ -418,10 +539,6 @@ of the repositories listed at
  ancestors of X).  One curious omission, "--no-contains X" (show
  only the refs that are not descendants of X) has been added to
  them.
-
- Expecting a reroll.
- cf. <CACBZZX5GErSBsiCz0Y2SgtvckcPE51ekfUgBpvYjNF1u44piMA@mail.gmail.com>
- Again, this is almost there and a reroll is expected to be very minor.
 
 
 * jc/name-rev (2017-03-16) 2 commits
@@ -433,51 +550,7 @@ of the repositories listed at
  Give the same precedence to lightweight tags as annotated tags as
  the base for naming a commit.
 
-
-* jk/pack-name-cleanups (2017-03-16) 5 commits
-  (merged to 'next' on 2017-03-16 at 6aa72195f5)
- + index-pack: make pointer-alias fallbacks safer
- + replace snprintf with odb_pack_name()
- + odb_pack_keep(): stop generating keepfile name
- + sha1_file.c: make pack-name helper globally accessible
- + move odb_* declarations out of git-compat-util.h
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/rev-parse-cleanup (2017-03-15) 3 commits
-  (merged to 'next' on 2017-03-16 at 2799b37404)
- + rev-parse: simplify parsing of ref options
- + rev-parse: add helper for parsing "--foo/--foo="
- + rev-parse: use skip_prefix when parsing options
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* mg/prompt-describe-tags (2017-03-15) 1 commit
-  (merged to 'next' on 2017-03-16 at 4de192caf4)
- + git-prompt: add a describe style for any tags
-
- The command line prompt (in contrib/) learned a new 'tag' style
- that can be specified with GIT_PS1_DESCRIBE_STYLE, to describe a
- detached HEAD with "git describe --tags".
-
- Will merge to 'master'.
-
-
-* sb/submodule-config-parse-ignore-fix (2017-03-15) 1 commit
-  (merged to 'next' on 2017-03-16 at 99d2524abd)
- + submodule-config: correct error reporting for invalid ignore value
-
- Code to read submodule.<name>.ignore config did not state the
- variable name correctly when giving an error message diagnosing
- misconfiguration.
-
- Will merge to 'master'.
+ Any further comments?
 
 
 * bw/recurse-submodules-relative-fix (2017-03-17) 5 commits
@@ -501,25 +574,6 @@ of the repositories listed at
  Waiting for git-p4 folks to send a finished patch.
 
 
-* js/rebase-helper (2017-03-17) 1 commit
-  (merged to 'next' on 2017-03-20 at 2b72d03e0e)
- + sequencer: drop "warning:" when stopping for edit
-
- Recent update to "rebase -i" started showing a message that is not
- a warning with "warning:" prefix by mistake.  This has been fixed.
-
- Will merge to 'master'.
-
-
-* sb/wt-status-cleanup (2017-03-17) 1 commit
-  (merged to 'next' on 2017-03-20 at ce800cd91b)
- + wt-status: simplify by using for_each_string_list_item
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * bw/submodule-is-active (2017-03-18) 10 commits
  - submodule add: respect submodule.active and submodule.<name>.active
  - submodule--helper init: set submodule.<name>.active
@@ -539,7 +593,7 @@ of the repositories listed at
  submodules and make it possible to later extend use of multiple
  worktrees for a project with submodules.
 
- This looks almost ready for 'next'.  Any more comments?
+ Will merge to 'next'.
 
 
 * dl/credential-cache-socket-in-xdg-cache (2017-03-17) 3 commits
@@ -571,20 +625,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/conditional-config-include (2017-03-11) 3 commits
-  (merged to 'next' on 2017-03-17 at 788a931e39)
- + config: add conditional include
- + config.txt: reflow the second include.path paragraph
- + config.txt: clarify multiple key values in include.path
-
- The configuration file learned a new "includeIf.<condition>.path"
- that includes the contents of the given path only when the
- condition holds.  This allows you to say "include this work-related
- bit only in the repositories under my ~/work/ directory".
-
- Will merge to 'master'.
-
-
 * sb/checkout-recurse-submodules (2017-03-16) 19 commits
  - builtin/read-tree: add --recurse-submodules switch
  - builtin/checkout: add --recurse-submodules switch
@@ -608,7 +648,7 @@ of the repositories listed at
 
  "git checkout" is taught --recurse-submodules option.
 
- This looks almost ready for 'next'.  Any more comments?
+ Will merge to 'next'.
 
 
 * jk/no-looking-at-dotgit-outside-repo-final (2016-10-26) 1 commit
