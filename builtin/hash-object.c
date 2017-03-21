@@ -145,7 +145,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 		char *to_free = NULL;
 
 		if (prefix)
-			arg = to_free = xstrdup(prefix_filename(prefix, arg));
+			arg = to_free = prefix_filename(prefix, arg);
 		hash_object(arg, type, no_filters ? NULL : vpath ? vpath : arg,
 			    flags, literally);
 		free(to_free);

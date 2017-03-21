@@ -65,11 +65,18 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < 3; i++) {
-		const char *fname = prefix_filename(prefix, argv[i]);
+		char *fname;
+		int ret;
+
 		if (!names[i])
 			names[i] = argv[i];
-		if (read_mmfile(mmfs + i, fname))
+
+		fname = prefix_filename(prefix, argv[i]);
+		ret = read_mmfile(mmfs + i, fname);
+		free(fname);
+		if (ret)
 			return -1;
+
 		if (mmfs[i].size > MAX_XDIFF_SIZE ||
 		    buffer_is_binary(mmfs[i].ptr, mmfs[i].size))
 			return error("Cannot merge binary files: %s",
@@ -86,7 +93,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 	if (ret >= 0) {
 		const char *filename = argv[0];
-		const char *fpath = prefix_filename(prefix, argv[0]);
+		char *fpath = prefix_filename(prefix, argv[0]);
 		FILE *f = to_stdout ? stdout : fopen(fpath, "wb");
 
 		if (!f)
@@ -98,6 +105,7 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 		else if (fclose(f))
 			ret = error_errno("Could not close %s", filename);
 		free(result.ptr);
+		free(fpath);
 	}
 
 	if (ret > 127)

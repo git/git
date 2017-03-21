@@ -318,7 +318,8 @@ static int add(int ac, const char **av, const char *prefix)
 {
 	struct add_opts opts;
 	const char *new_branch_force = NULL;
-	const char *path, *branch;
+	char *path;
+	const char *branch;
 	struct option options[] = {
 		OPT__FORCE(&opts.force, N_("checkout <branch> even if already checked out in other worktree")),
 		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),

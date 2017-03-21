@@ -266,7 +266,7 @@ void diff_no_index(struct rev_info *revs,
 			 */
 			p = file_from_standard_input;
 		else if (prefix)
-			p = xstrdup(prefix_filename(prefix, p));
+			p = prefix_filename(prefix, p);
 		paths[i] = p;
 	}
 

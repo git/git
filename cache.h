@@ -537,10 +537,10 @@ extern char *prefix_path_gently(const char *prefix, int len, int *remaining, con
  * not have to interact with index entry; i.e. name of a random file
  * on the filesystem.
  *
- * The return value may point to static storage which will be overwritten by
- * further calls.
+ * The return value is always a newly allocated string (even if the
+ * prefix was empty).
  */
-extern const char *prefix_filename(const char *prefix, const char *path);
+extern char *prefix_filename(const char *prefix, const char *path);
 
 extern int check_filename(const char *prefix, const char *name);
 extern void verify_filename(const char *prefix,
