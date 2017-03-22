@@ -22,6 +22,7 @@ struct options {
 	unsigned long depth;
 	char *deepen_since;
 	struct string_list deepen_not;
+	struct string_list push_options;
 	unsigned progress : 1,
 		check_self_contained_and_connected : 1,
 		cloning : 1,
@@ -138,6 +139,9 @@ static int set_option(const char *name, const char *value)
 			options.push_cert = SEND_PACK_PUSH_CERT_IF_ASKED;
 		else
 			return -1;
+		return 0;
+	} else if (!strcmp(name, "push-option")) {
+		string_list_append(&options.push_options, value);
 		return 0;
 
 #if LIBCURL_VERSION_NUM >= 0x070a08
@@ -943,6 +947,9 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 		argv_array_push(&args, "--quiet");
 	else if (options.verbosity > 1)
 		argv_array_push(&args, "--verbose");
+	for (i = 0; i < options.push_options.nr; i++)
+		argv_array_pushf(&args, "--push-option=%s",
+				 options.push_options.items[i].string);
 	argv_array_push(&args, options.progress ? "--progress" : "--no-progress");
 	for_each_string_list_item(cas_option, &cas_options)
 		argv_array_push(&args, cas_option->string);
@@ -1028,6 +1035,7 @@ int cmd_main(int argc, const char **argv)
 	options.progress = !!isatty(2);
 	options.thin = 1;
 	string_list_init(&options.deepen_not, 1);
+	string_list_init(&options.push_options, 1);
 
 	remote = remote_get(argv[1]);
 
