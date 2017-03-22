@@ -471,7 +471,7 @@ Don't:
    their output.
 
    You can glean some further possible issues from the TAP grammar
-   (see http://search.cpan.org/perldoc?TAP::Parser::Grammar#TAP_Grammar)
+   (see https://metacpan.org/pod/TAP::Parser::Grammar#TAP-GRAMMAR)
    but the best indication is to just run the tests with prove(1),
    it'll complain if anything is amiss.
 
