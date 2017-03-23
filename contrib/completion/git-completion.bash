@@ -1518,8 +1518,15 @@ _git_gitk ()
 	_gitk
 }
 
-__git_match_ctag() {
-	awk "/^${1//\//\\/}/ { print \$1 }" "$2"
+# Lists matching symbol names from a tag (as in ctags) file.
+# 1: List symbol names matching this word.
+# 2: The tag file to list symbol names from.
+# 3: A prefix to be added to each listed symbol name (optional).
+# 4: A suffix to be appended to each listed symbol name (optional).
+__git_match_ctag () {
+	awk -v pfx="${3-}" -v sfx="${4-}" "
+		/^${1//\//\\/}/ { print pfx \$1 sfx }
+		" "$2"
 }
 
 _git_grep ()
@@ -1548,7 +1555,7 @@ _git_grep ()
 	case "$cword,$prev" in
 	2,*|*,-*)
 		if test -r tags; then
-			__gitcomp_nl "$(__git_match_ctag "$cur" tags)"
+			__gitcomp_direct "$(__git_match_ctag "$cur" tags "" " ")"
 			return
 		fi
 		;;
