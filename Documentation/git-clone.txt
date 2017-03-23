@@ -14,7 +14,7 @@ SYNOPSIS
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch]
-	  [--recursive | --recurse-submodules] [--[no-]shallow-submodules]
+	  [--recurse-submodules] [--[no-]shallow-submodules]
 	  [--jobs <n>] [--] <repository> [<directory>]
 
 DESCRIPTION
@@ -215,10 +215,14 @@ objects from the source repository into a pack in the cloned repository.
 	branch when `--single-branch` clone was made, no remote-tracking
 	branch is created.
 
---recursive::
---recurse-submodules::
-	After the clone is created, initialize all submodules within,
-	using their default settings. This is equivalent to running
+--recurse-submodules[=<pathspec]::
+	After the clone is created, initialize and clone submodules
+	within based on the provided pathspec.  If no pathspec is
+	provided, all submodules are initialized and cloned.
+	Submodules are initialized and cloned using their default
+	settings.  The resulting clone has `submodule.active` set to
+	the provided pathspec, or "." (meaning all submodules) if no
+	pathspec is provided.  This is equivalent to running
 	`git submodule update --init --recursive` immediately after
 	the clone is finished. This option is ignored if the cloned
 	repository does not have a worktree/checkout (i.e. if any of
