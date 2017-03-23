@@ -536,11 +536,11 @@ __git_complete_fetch_refspecs ()
 {
 	local i remote="$1" pfx="${2-}" cur_="${3-$cur}" sfx="${4- }"
 
-	__gitcomp_nl "$(
+	__gitcomp_direct "$(
 		for i in $(__git_refs "$remote" "" "" "$cur_") ; do
-			echo "$i:$i"
+			echo "$pfx$i:$i$sfx"
 		done
-		)" "$pfx" "$cur_" "$sfx"
+		)"
 }
 
 # __git_refs_remotes requires 1 argument (to pass to ls-remote)
