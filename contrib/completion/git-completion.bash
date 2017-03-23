@@ -486,12 +486,31 @@ __git_complete_refs ()
 }
 
 # __git_refs2 requires 1 argument (to pass to __git_refs)
+# Deprecated: use __git_complete_fetch_refspecs() instead.
 __git_refs2 ()
 {
 	local i
 	for i in $(__git_refs "$1"); do
 		echo "$i:$i"
 	done
+}
+
+# Completes refspecs for fetching from a remote repository.
+# 1: The remote repository.
+# 2: A prefix to be added to each listed refspec (optional).
+# 3: The ref to be completed as a refspec instead of the current word to be
+#    completed (optional)
+# 4: A suffix to be appended to each listed refspec instead of the default
+#    space (optional).
+__git_complete_fetch_refspecs ()
+{
+	local i remote="$1" pfx="${2-}" cur_="${3-$cur}" sfx="${4- }"
+
+	__gitcomp_nl "$(
+		for i in $(__git_refs "$remote" "" "" "$cur_") ; do
+			echo "$i:$i"
+		done
+		)" "$pfx" "$cur_" "$sfx"
 }
 
 # __git_refs_remotes requires 1 argument (to pass to ls-remote)
@@ -686,7 +705,7 @@ __git_complete_remote_or_refspec ()
 	case "$cmd" in
 	fetch)
 		if [ $lhs = 1 ]; then
-			__gitcomp_nl "$(__git_refs2 "$remote")" "$pfx" "$cur_"
+			__git_complete_fetch_refspecs "$remote" "$pfx" "$cur_"
 		else
 			__git_complete_refs --pfx="$pfx" --cur="$cur_"
 		fi

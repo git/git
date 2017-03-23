@@ -912,6 +912,74 @@ test_expect_success '__git_complete_refs - suffix' '
 	test_cmp expected out
 '
 
+test_expect_success '__git_complete_fetch_refspecs - simple' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	HEAD:HEAD Z
+	branch-in-other:branch-in-other Z
+	master-in-other:master-in-other Z
+	EOF
+	(
+		cur= &&
+		__git_complete_fetch_refspecs other &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - matching' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	branch-in-other:branch-in-other Z
+	EOF
+	(
+		cur=br &&
+		__git_complete_fetch_refspecs other "" br &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - prefix' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	+HEAD:HEAD Z
+	+branch-in-other:branch-in-other Z
+	+master-in-other:master-in-other Z
+	EOF
+	(
+		cur="+" &&
+		__git_complete_fetch_refspecs other "+" ""  &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - fully qualified' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	refs/heads/branch-in-other:refs/heads/branch-in-other Z
+	refs/heads/master-in-other:refs/heads/master-in-other Z
+	refs/tags/tag-in-other:refs/tags/tag-in-other Z
+	EOF
+	(
+		cur=refs/ &&
+		__git_complete_fetch_refspecs other "" refs/ &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - fully qualified & prefix' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	+refs/heads/branch-in-other:refs/heads/branch-in-other Z
+	+refs/heads/master-in-other:refs/heads/master-in-other Z
+	+refs/tags/tag-in-other:refs/tags/tag-in-other Z
+	EOF
+	(
+		cur=+refs/ &&
+		__git_complete_fetch_refspecs other + refs/ &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
 test_expect_success 'teardown after ref completion' '
 	git branch -d matching-branch &&
 	git tag -d matching-tag &&
