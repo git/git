@@ -130,6 +130,15 @@ test_expect_success 'implicit --list conflicts with modification options' '
 
 '
 
+test_expect_success 'Assert that --contains only works on commits, not trees & blobs' '
+	test_must_fail git branch --contains master^{tree} &&
+	blob=$(git hash-object -w --stdin <<-\EOF
+	Some blob
+	EOF
+	) &&
+	test_must_fail git branch --contains $blob
+'
+
 # We want to set up a case where the walk for the tracking info
 # of one branch crosses the tip of another branch (and make sure
 # that the latter walk does not mess up our flag to see if it was

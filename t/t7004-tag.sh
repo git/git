@@ -1461,7 +1461,9 @@ test_expect_success 'mixing incompatibles modes and options is forbidden' '
 	test_must_fail git tag -n 100 &&
 	test_must_fail git tag -l -m msg &&
 	test_must_fail git tag -l -F some file &&
-	test_must_fail git tag -v -s
+	test_must_fail git tag -v -s &&
+	test_must_fail git tag --contains tag-tree &&
+	test_must_fail git tag --contains tag-blob
 '
 
 # check points-at
