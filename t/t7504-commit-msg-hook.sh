@@ -230,7 +230,7 @@ chmod +x reword-editor
 REWORD_EDITOR="$(pwd)/reword-editor"
 export REWORD_EDITOR
 
-test_expect_failure 'hook is called for reword during `rebase -i`' '
+test_expect_success 'hook is called for reword during `rebase -i`' '
 
 	GIT_SEQUENCE_EDITOR="\"$REWORD_EDITOR\"" git rebase -i HEAD^ &&
 	commit_msg_is "new message"

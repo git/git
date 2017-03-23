@@ -606,6 +606,7 @@ N_("you have staged changes in your working tree\n"
 #define EDIT_MSG    (1<<1)
 #define AMEND_MSG   (1<<2)
 #define CLEANUP_MSG (1<<3)
+#define VERIFY_MSG  (1<<4)
 
 /*
  * If we are cherry-pick, and if the merge did not result in
@@ -642,8 +643,9 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 	}
 
 	argv_array_push(&cmd.args, "commit");
-	argv_array_push(&cmd.args, "-n");
 
+	if (!(flags & VERIFY_MSG))
+		argv_array_push(&cmd.args, "-n");
 	if ((flags & AMEND_MSG))
 		argv_array_push(&cmd.args, "--amend");
 	if (opts->gpg_sign)
@@ -996,6 +998,8 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 		if (res || command != TODO_REWORD)
 			goto leave;
 		flags |= EDIT_MSG | AMEND_MSG;
+		if (command == TODO_REWORD)
+			flags |= VERIFY_MSG;
 		msg_file = NULL;
 		goto fast_forward_edit;
 	}
@@ -1050,7 +1054,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 	}
 
 	if (command == TODO_REWORD)
-		flags |= EDIT_MSG;
+		flags |= EDIT_MSG | VERIFY_MSG;
 	else if (is_fixup(command)) {
 		if (update_squash_messages(command, commit, opts))
 			return -1;
