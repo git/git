@@ -102,7 +102,6 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	int i;
-	int prefix_length = -1;
 	const char *errstr = NULL;
 
 	argc = parse_options(argc, argv, NULL, hash_object_options,
@@ -113,9 +112,8 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	else
 		prefix = setup_git_directory_gently(&nongit);
 
-	prefix_length = prefix ? strlen(prefix) : 0;
 	if (vpath && prefix)
-		vpath = prefix_filename(prefix, prefix_length, vpath);
+		vpath = xstrdup(prefix_filename(prefix, vpath));
 
 	git_config(git_default_config, NULL);
 
@@ -144,11 +142,13 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 
 	for (i = 0 ; i < argc; i++) {
 		const char *arg = argv[i];
+		char *to_free = NULL;
 
-		if (0 <= prefix_length)
-			arg = prefix_filename(prefix, prefix_length, arg);
+		if (prefix)
+			arg = to_free = prefix_filename(prefix, arg);
 		hash_object(arg, type, no_filters ? NULL : vpath ? vpath : arg,
 			    flags, literally);
+		free(to_free);
 	}
 
 	if (stdin_paths)

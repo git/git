@@ -236,7 +236,7 @@ static void fixup_paths(const char **path, struct strbuf *replacement)
 void diff_no_index(struct rev_info *revs,
 		   int argc, const char **argv)
 {
-	int i, prefixlen;
+	int i;
 	const char *paths[2];
 	struct strbuf replacement = STRBUF_INIT;
 	const char *prefix = revs->prefix;
@@ -257,7 +257,6 @@ void diff_no_index(struct rev_info *revs,
 		}
 	}
 
-	prefixlen = prefix ? strlen(prefix) : 0;
 	for (i = 0; i < 2; i++) {
 		const char *p = argv[argc - 2 + i];
 		if (!strcmp(p, "-"))
@@ -266,8 +265,8 @@ void diff_no_index(struct rev_info *revs,
 			 * path that is "-", spell it as "./-".
 			 */
 			p = file_from_standard_input;
-		else if (prefixlen)
-			p = xstrdup(prefix_filename(prefix, prefixlen, p));
+		else if (prefix)
+			p = prefix_filename(prefix, p);
 		paths[i] = p;
 	}
 

@@ -527,9 +527,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (given_config_source.file) {
 		if (!is_absolute_path(given_config_source.file) && prefix)
 			given_config_source.file =
-				xstrdup(prefix_filename(prefix,
-							strlen(prefix),
-							given_config_source.file));
+				prefix_filename(prefix, given_config_source.file);
 	}
 
 	if (respect_includes == -1)

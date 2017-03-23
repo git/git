@@ -2046,7 +2046,7 @@ static void prefix_one(struct apply_state *state, char **name)
 	char *old_name = *name;
 	if (!old_name)
 		return;
-	*name = xstrdup(prefix_filename(state->prefix, state->prefix_length, *name));
+	*name = prefix_filename(state->prefix, *name);
 	free(old_name);
 }
 
@@ -4805,6 +4805,7 @@ int apply_all_patches(struct apply_state *state,
 
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
+		char *to_free = NULL;
 		int fd;
 
 		if (!strcmp(arg, "-")) {
@@ -4814,21 +4815,21 @@ int apply_all_patches(struct apply_state *state,
 			errs |= res;
 			read_stdin = 0;
 			continue;
-		} else if (0 < state->prefix_length)
-			arg = prefix_filename(state->prefix,
-					      state->prefix_length,
-					      arg);
+		} else
+			arg = to_free = prefix_filename(state->prefix, arg);
 
 		fd = open(arg, O_RDONLY);
 		if (fd < 0) {
 			error(_("can't open patch '%s': %s"), arg, strerror(errno));
 			res = -128;
+			free(to_free);
 			goto end;
 		}
 		read_stdin = 0;
 		set_default_whitespace_mode(state);
 		res = apply_patch(state, fd, arg, options);
 		close(fd);
+		free(to_free);
 		if (res < 0)
 			goto end;
 		errs |= res;
