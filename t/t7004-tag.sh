@@ -136,7 +136,7 @@ test_expect_success \
 	'test $(git tag -l mytag) = mytag'
 
 test_expect_success \
-	'listing tags using a non-matching pattern should suceed' \
+	'listing tags using a non-matching pattern should succeed' \
 	'git tag -l xxx'
 
 test_expect_success \
