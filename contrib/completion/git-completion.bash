@@ -422,15 +422,9 @@ __git_refs ()
 			# employ the heuristic used by git checkout
 			# Try to find a remote branch that matches the completion word
 			# but only output if the branch name is unique
-			local ref entry
-			__git for-each-ref --shell --format="ref=%(refname:strip=3)" \
-				"refs/remotes/" | \
-			while read -r entry; do
-				eval "$entry"
-				if [[ "$ref" == "$match"* ]]; then
-					echo "$ref"
-				fi
-			done | sort | uniq -u
+			__git for-each-ref --format="%(refname:strip=3)" \
+				"refs/remotes/*/$match*" "refs/remotes/*/$match*/**" | \
+			sort | uniq -u
 		fi
 		return
 	fi
