@@ -354,6 +354,8 @@ __git_tags ()
 #    Can be the name of a configured remote, a path, or a URL.
 # 2: In addition to local refs, list unique branches from refs/remotes/ for
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
+# 3: Currently ignored.
+# 4: The current ref to be completed (optional).
 #
 # Use __git_complete_refs() instead.
 __git_refs ()
@@ -361,6 +363,7 @@ __git_refs ()
 	local i hash dir track="${2-}"
 	local list_refs_from=path remote="${1-}"
 	local format refs pfx
+	local cur_="${4-$cur}"
 
 	__git_find_repo_path
 	dir="$__git_repo_path"
@@ -384,14 +387,17 @@ __git_refs ()
 	fi
 
 	if [ "$list_refs_from" = path ]; then
-		case "$cur" in
+		case "$cur_" in
 		refs|refs/*)
 			format="refname"
-			refs="${cur%/*}"
+			refs="${cur_%/*}"
 			track=""
 			;;
 		*)
-			[[ "$cur" == ^* ]] && pfx="^"
+			if [[ "$cur_" == ^* ]]; then
+				pfx="^"
+				cur_=${cur_#^}
+			fi
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
 				if [ -e "$dir/$i" ]; then echo $pfx$i; fi
 			done
@@ -411,16 +417,16 @@ __git_refs ()
 			while read -r entry; do
 				eval "$entry"
 				ref="${ref#*/}"
-				if [[ "$ref" == "$cur"* ]]; then
+				if [[ "$ref" == "$cur_"* ]]; then
 					echo "$ref"
 				fi
 			done | sort | uniq -u
 		fi
 		return
 	fi
-	case "$cur" in
+	case "$cur_" in
 	refs|refs/*)
-		__git ls-remote "$remote" "$cur*" | \
+		__git ls-remote "$remote" "$cur_*" | \
 		while read -r hash i; do
 			case "$i" in
 			*^{}) ;;
@@ -475,7 +481,8 @@ __git_complete_refs ()
 		shift
 	done
 
-	__gitcomp_nl "$(__git_refs "$remote" "$track")" "$pfx" "$cur_" "$sfx"
+	__gitcomp_nl "$(__git_refs "$remote" "$track" "" "$cur_")" \
+		"$pfx" "$cur_" "$sfx"
 }
 
 # __git_refs2 requires 1 argument (to pass to __git_refs)
