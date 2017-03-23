@@ -423,8 +423,9 @@ __git_refs ()
 			# Try to find a remote branch that matches the completion word
 			# but only output if the branch name is unique
 			__git for-each-ref --format="%(refname:strip=3)" \
+				--sort="refname:strip=3" \
 				"refs/remotes/*/$match*" "refs/remotes/*/$match*/**" | \
-			sort | uniq -u
+			uniq -u
 		fi
 		return
 	fi
