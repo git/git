@@ -423,11 +423,10 @@ __git_refs ()
 			# Try to find a remote branch that matches the completion word
 			# but only output if the branch name is unique
 			local ref entry
-			__git for-each-ref --shell --format="ref=%(refname:strip=2)" \
+			__git for-each-ref --shell --format="ref=%(refname:strip=3)" \
 				"refs/remotes/" | \
 			while read -r entry; do
 				eval "$entry"
-				ref="${ref#*/}"
 				if [[ "$ref" == "$match"* ]]; then
 					echo "$ref"
 				fi
@@ -450,9 +449,9 @@ __git_refs ()
 			case "HEAD" in
 			$match*)	echo "HEAD" ;;
 			esac
-			__git for-each-ref --format="%(refname:strip=2)" \
+			__git for-each-ref --format="%(refname:strip=3)" \
 				"refs/remotes/$remote/$match*" \
-				"refs/remotes/$remote/$match*/**" | sed -e "s#^$remote/##"
+				"refs/remotes/$remote/$match*/**"
 		else
 			local query_symref
 			case "HEAD" in
