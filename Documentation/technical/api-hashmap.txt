@@ -21,6 +21,9 @@ that the hashmap is initialized. It may also be useful for statistical purposes
 `cmpfn` stores the comparison function specified in `hashmap_init()`. In
 advanced scenarios, it may be useful to change this, e.g. to switch between
 case-sensitive and case-insensitive lookup.
++
+When `disallow_rehash` is set, automatic rehashes are prevented during inserts
+and deletes.
 
 `struct hashmap_entry`::
 
@@ -57,6 +60,7 @@ Functions
 `unsigned int strihash(const char *buf)`::
 `unsigned int memhash(const void *buf, size_t len)`::
 `unsigned int memihash(const void *buf, size_t len)`::
+`unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len)`::
 
 	Ready-to-use hash functions for strings, using the FNV-1 algorithm (see
 	http://www.isthe.com/chongo/tech/comp/fnv).
@@ -65,6 +69,9 @@ Functions
 `memihash` operate on arbitrary-length memory.
 +
 `strihash` and `memihash` are case insensitive versions.
++
+`memihash_cont` is a variant of `memihash` that allows a computation to be
+continued with another chunk of data.
 
 `unsigned int sha1hash(const unsigned char *sha1)`::
 
@@ -183,6 +190,21 @@ If an entry with matching hash code is found, `key` and `keydata` are
 passed to `hashmap_cmp_fn` to decide whether the entry matches the key.
 +
 Returns the removed entry, or NULL if not found.
+
+`void hashmap_disallow_rehash(struct hashmap *map, unsigned value)`::
+
+	Disallow/allow automatic rehashing of the hashmap during inserts
+	and deletes.
++
+This is useful if the caller knows that the hashmap will be accessed
+by multiple threads.
++
+The caller is still responsible for any necessary locking; this simply
+prevents unexpected rehashing.  The caller is also responsible for properly
+sizing the initial hashmap to ensure good performance.
++
+A call to allow rehashing does not force a rehash; that might happen
+with the next insert or delete.
 
 `void hashmap_iter_init(struct hashmap *map, struct hashmap_iter *iter)`::
 `void *hashmap_iter_next(struct hashmap_iter *iter)`::
