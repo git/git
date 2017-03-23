@@ -352,14 +352,27 @@ __git_index_files ()
 	done | sort | uniq
 }
 
+# Lists branches from the local repository.
+# 1: A prefix to be added to each listed branch (optional).
+# 2: List only branches matching this word (optional; list all branches if
+#    unset or empty).
+# 3: A suffix to be appended to each listed branch (optional).
 __git_heads ()
 {
-	__git for-each-ref --format='%(refname:strip=2)' refs/heads
+	local pfx="${1-}" cur_="${2-}" sfx="${3-}"
+
+	__git for-each-ref --format="${pfx//\%/%%}%(refname:strip=2)$sfx" \
+			"refs/heads/$cur_*" "refs/heads/$cur_*/**"
 }
 
+# Lists tags from the local repository.
+# Accepts the same positional parameters as __git_heads() above.
 __git_tags ()
 {
-	__git for-each-ref --format='%(refname:strip=2)' refs/tags
+	local pfx="${1-}" cur_="${2-}" sfx="${3-}"
+
+	__git for-each-ref --format="${pfx//\%/%%}%(refname:strip=2)$sfx" \
+			"refs/tags/$cur_*" "refs/tags/$cur_*/**"
 }
 
 # Lists refs from the local (by default) or from a remote repository.
@@ -1183,7 +1196,7 @@ _git_branch ()
 		;;
 	*)
 		if [ $only_local_ref = "y" -a $has_r = "n" ]; then
-			__gitcomp_nl "$(__git_heads)"
+			__gitcomp_direct "$(__git_heads "" "$cur" " ")"
 		else
 			__git_complete_refs
 		fi
@@ -2178,7 +2191,7 @@ _git_config ()
 		;;
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
-		__gitcomp_nl "$(__git_heads)" "$pfx" "$cur_" "."
+		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
 		__gitcomp_nl_append $'autosetupmerge\nautosetuprebase\n' "$pfx" "$cur_"
 		return
 		;;
@@ -2824,7 +2837,7 @@ _git_tag ()
 		i="${words[c]}"
 		case "$i" in
 		-d|-v)
-			__gitcomp_nl "$(__git_tags)"
+			__gitcomp_direct "$(__git_tags "" "$cur" " ")"
 			return
 			;;
 		-f)
@@ -2839,7 +2852,7 @@ _git_tag ()
 		;;
 	-*|tag)
 		if [ $f = 1 ]; then
-			__gitcomp_nl "$(__git_tags)"
+			__gitcomp_direct "$(__git_tags "" "$cur" " ")"
 		fi
 		;;
 	*)
