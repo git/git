@@ -340,12 +340,12 @@ __git_index_files ()
 
 __git_heads ()
 {
-	__git for-each-ref --format='%(refname:short)' refs/heads
+	__git for-each-ref --format='%(refname:strip=2)' refs/heads
 }
 
 __git_tags ()
 {
-	__git for-each-ref --format='%(refname:short)' refs/tags
+	__git for-each-ref --format='%(refname:strip=2)' refs/tags
 }
 
 # Lists refs from the local (by default) or from a remote repository.
