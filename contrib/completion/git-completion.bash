@@ -401,7 +401,7 @@ __git_refs ()
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
 				if [ -e "$dir/$i" ]; then echo $pfx$i; fi
 			done
-			format="refname:short"
+			format="refname:strip=2"
 			refs="refs/tags refs/heads refs/remotes"
 			;;
 		esac
@@ -412,7 +412,7 @@ __git_refs ()
 			# Try to find a remote branch that matches the completion word
 			# but only output if the branch name is unique
 			local ref entry
-			__git for-each-ref --shell --format="ref=%(refname:short)" \
+			__git for-each-ref --shell --format="ref=%(refname:strip=2)" \
 				"refs/remotes/" | \
 			while read -r entry; do
 				eval "$entry"
@@ -437,7 +437,7 @@ __git_refs ()
 	*)
 		if [ "$list_refs_from" = remote ]; then
 			echo "HEAD"
-			__git for-each-ref --format="%(refname:short)" \
+			__git for-each-ref --format="%(refname:strip=2)" \
 				"refs/remotes/$remote/" | sed -e "s#^$remote/##"
 		else
 			__git ls-remote "$remote" HEAD \
