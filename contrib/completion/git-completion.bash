@@ -1529,6 +1529,34 @@ __git_match_ctag () {
 		" "$2"
 }
 
+# Complete symbol names from a tag file.
+# Usage: __git_complete_symbol [<option>]...
+# --tags=<file>: The tag file to list symbol names from instead of the
+#                default "tags".
+# --pfx=<prefix>: A prefix to be added to each symbol name.
+# --cur=<word>: The current symbol name to be completed.  Defaults to
+#               the current word to be completed.
+# --sfx=<suffix>: A suffix to be appended to each symbol name instead
+#                 of the default space.
+__git_complete_symbol () {
+	local tags=tags pfx="" cur_="${cur-}" sfx=" "
+
+	while test $# != 0; do
+		case "$1" in
+		--tags=*)	tags="${1##--tags=}" ;;
+		--pfx=*)	pfx="${1##--pfx=}" ;;
+		--cur=*)	cur_="${1##--cur=}" ;;
+		--sfx=*)	sfx="${1##--sfx=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+
+	if test -r "$tags"; then
+		__gitcomp_direct "$(__git_match_ctag "$cur_" "$tags" "$pfx" "$sfx")"
+	fi
+}
+
 _git_grep ()
 {
 	__git_has_doubledash && return
@@ -1554,10 +1582,7 @@ _git_grep ()
 
 	case "$cword,$prev" in
 	2,*|*,-*)
-		if test -r tags; then
-			__gitcomp_direct "$(__git_match_ctag "$cur" tags "" " ")"
-			return
-		fi
+		__git_complete_symbol && return
 		;;
 	esac
 
