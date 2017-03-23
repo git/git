@@ -387,6 +387,10 @@ __git_refs ()
 	fi
 
 	if [ "$list_refs_from" = path ]; then
+		if [[ "$cur_" == ^* ]]; then
+			pfx="^"
+			cur_=${cur_#^}
+		fi
 		case "$cur_" in
 		refs|refs/*)
 			format="refname"
@@ -394,10 +398,6 @@ __git_refs ()
 			track=""
 			;;
 		*)
-			if [[ "$cur_" == ^* ]]; then
-				pfx="^"
-				cur_=${cur_#^}
-			fi
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
 				if [ -e "$dir/$i" ]; then echo $pfx$i; fi
 			done
