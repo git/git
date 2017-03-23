@@ -355,7 +355,8 @@ __git_tags ()
 # 2: In addition to local refs, list unique branches from refs/remotes/ for
 #    'git checkout's tracking DWIMery (optional; ignored, if set but empty).
 # 3: Currently ignored.
-# 4: The current ref to be completed (optional).
+# 4: List only refs matching this word (optional; list all refs if unset or
+#    empty).
 #
 # Use __git_complete_refs() instead.
 __git_refs ()
@@ -364,6 +365,7 @@ __git_refs ()
 	local list_refs_from=path remote="${1-}"
 	local format refs pfx
 	local cur_="${4-$cur}"
+	local match="${4-}"
 
 	__git_find_repo_path
 	dir="$__git_repo_path"
@@ -390,23 +392,32 @@ __git_refs ()
 		if [[ "$cur_" == ^* ]]; then
 			pfx="^"
 			cur_=${cur_#^}
+			match=${match#^}
 		fi
 		case "$cur_" in
 		refs|refs/*)
 			format="refname"
-			refs="${cur_%/*}"
+			refs=("$match*" "$match*/**")
 			track=""
 			;;
 		*)
 			for i in HEAD FETCH_HEAD ORIG_HEAD MERGE_HEAD; do
-				if [ -e "$dir/$i" ]; then echo $pfx$i; fi
+				case "$i" in
+				$match*)
+					if [ -e "$dir/$i" ]; then
+						echo $pfx$i
+					fi
+					;;
+				esac
 			done
 			format="refname:strip=2"
-			refs="refs/tags refs/heads refs/remotes"
+			refs=("refs/tags/$match*" "refs/tags/$match*/**"
+				"refs/heads/$match*" "refs/heads/$match*/**"
+				"refs/remotes/$match*" "refs/remotes/$match*/**")
 			;;
 		esac
 		__git_dir="$dir" __git for-each-ref --format="$pfx%($format)" \
-			$refs
+			"${refs[@]}"
 		if [ -n "$track" ]; then
 			# employ the heuristic used by git checkout
 			# Try to find a remote branch that matches the completion word
@@ -417,7 +428,7 @@ __git_refs ()
 			while read -r entry; do
 				eval "$entry"
 				ref="${ref#*/}"
-				if [[ "$ref" == "$cur_"* ]]; then
+				if [[ "$ref" == "$match"* ]]; then
 					echo "$ref"
 				fi
 			done | sort | uniq -u
@@ -426,7 +437,7 @@ __git_refs ()
 	fi
 	case "$cur_" in
 	refs|refs/*)
-		__git ls-remote "$remote" "$cur_*" | \
+		__git ls-remote "$remote" "$match*" | \
 		while read -r hash i; do
 			case "$i" in
 			*^{}) ;;
@@ -436,12 +447,20 @@ __git_refs ()
 		;;
 	*)
 		if [ "$list_refs_from" = remote ]; then
-			echo "HEAD"
+			case "HEAD" in
+			$match*)	echo "HEAD" ;;
+			esac
 			__git for-each-ref --format="%(refname:strip=2)" \
-				"refs/remotes/$remote/" | sed -e "s#^$remote/##"
+				"refs/remotes/$remote/$match*" \
+				"refs/remotes/$remote/$match*/**" | sed -e "s#^$remote/##"
 		else
-			__git ls-remote "$remote" HEAD \
-				"refs/tags/*" "refs/heads/*" "refs/remotes/*" |
+			local query_symref
+			case "HEAD" in
+			$match*)	query_symref="HEAD" ;;
+			esac
+			__git ls-remote "$remote" $query_symref \
+				"refs/tags/$match*" "refs/heads/$match*" \
+				"refs/remotes/$match*" |
 			while read -r hash i; do
 				case "$i" in
 				*^{})	;;

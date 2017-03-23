@@ -555,6 +555,9 @@ test_expect_success '__git_refs - full refs' '
 	cat >expected <<-EOF &&
 	refs/heads/master
 	refs/heads/matching-branch
+	refs/remotes/other/branch-in-other
+	refs/remotes/other/master-in-other
+	refs/tags/matching-tag
 	EOF
 	(
 		cur=refs/heads/ &&
@@ -620,6 +623,7 @@ test_expect_success '__git_refs - configured remote' '
 
 test_expect_success '__git_refs - configured remote - full refs' '
 	cat >expected <<-EOF &&
+	HEAD
 	refs/heads/branch-in-other
 	refs/heads/master-in-other
 	refs/tags/tag-in-other
@@ -648,6 +652,7 @@ test_expect_success '__git_refs - configured remote - repo given on the command 
 
 test_expect_success '__git_refs - configured remote - full refs - repo given on the command line' '
 	cat >expected <<-EOF &&
+	HEAD
 	refs/heads/branch-in-other
 	refs/heads/master-in-other
 	refs/tags/tag-in-other
@@ -692,6 +697,7 @@ test_expect_success '__git_refs - URL remote' '
 
 test_expect_success '__git_refs - URL remote - full refs' '
 	cat >expected <<-EOF &&
+	HEAD
 	refs/heads/branch-in-other
 	refs/heads/master-in-other
 	refs/tags/tag-in-other
@@ -835,6 +841,124 @@ test_expect_success '__git refs - exluding full refs' '
 		__git_refs >"$actual"
 	) &&
 	test_cmp expected "$actual"
+'
+
+test_expect_success 'setup for filtering matching refs' '
+	git branch matching/branch &&
+	git tag matching/tag &&
+	git -C otherrepo branch matching/branch-in-other &&
+	git fetch --no-tags other &&
+	rm -f .git/FETCH_HEAD
+'
+
+test_expect_success '__git_refs - dont filter refs unless told so' '
+	cat >expected <<-EOF &&
+	HEAD
+	master
+	matching-branch
+	matching/branch
+	other/branch-in-other
+	other/master-in-other
+	other/matching/branch-in-other
+	matching-tag
+	matching/tag
+	EOF
+	(
+		cur=master &&
+		__git_refs >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs' '
+	cat >expected <<-EOF &&
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	EOF
+	(
+		cur=mat &&
+		__git_refs "" "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/matching-branch
+	refs/heads/matching/branch
+	EOF
+	(
+		cur=refs/heads/mat &&
+		__git_refs "" "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote on local file system' '
+	cat >expected <<-EOF &&
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs otherrepo "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - configured remote' '
+	cat >expected <<-EOF &&
+	master-in-other
+	matching/branch-in-other
+	EOF
+	(
+		cur=ma &&
+		__git_refs other "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - remote - full refs' '
+	cat >expected <<-EOF &&
+	refs/heads/master-in-other
+	refs/heads/matching/branch-in-other
+	EOF
+	(
+		cur=refs/heads/ma &&
+		__git_refs other "" "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - only matching refs - checkout DWIMery' '
+	cat >expected <<-EOF &&
+	matching-branch
+	matching/branch
+	matching-tag
+	matching/tag
+	matching/branch-in-other
+	EOF
+	for remote_ref in refs/remotes/other/ambiguous \
+		refs/remotes/remote/ambiguous \
+		refs/remotes/remote/branch-in-remote
+	do
+		git update-ref $remote_ref master &&
+		test_when_finished "git update-ref -d $remote_ref"
+	done &&
+	(
+		cur=mat &&
+		__git_refs "" 1 "" "$cur" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'teardown after filtering matching refs' '
+	git branch -d matching/branch &&
+	git tag -d matching/tag &&
+	git update-ref -d refs/remotes/other/matching/branch-in-other &&
+	git -C otherrepo branch -D matching/branch-in-other
 '
 
 test_expect_success '__git_complete_refs - simple' '
