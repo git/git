@@ -58,4 +58,26 @@ Fixes since v2.12.1
    ignore anything after '>' when picking addresses, to allow non-address
    cruft like " # stable 4.4" after the address.
 
+ * "git push" had a handful of codepaths that could lead to a deadlock
+   when unexpected error happened, which has been fixed.
+
+ * Code to read submodule.<name>.ignore config did not state the
+   variable name correctly when giving an error message diagnosing
+   misconfiguration.
+
+ * "git ls-remote" and "git archive --remote" are designed to work
+   without being in a directory under Git's control.  However, recent
+   updates revealed that we randomly look into a directory called
+   .git/ without actually doing necessary set-up when working in a
+   repository.  Stop doing so.
+
+ * The code to parse the command line "git grep <patterns>... <rev>
+   [[--] <pathspec>...]" has been cleaned up, and a handful of bugs
+   have been fixed (e.g. we used to check "--" if it is a rev).
+
+ * The code to parse "git -c VAR=VAL cmd" and set configuration
+   variable for the duration of cmd had two small bugs, which have
+   been fixed.
+   This supersedes jc/config-case-cmdline topic that has been discarded.
+
 Also contains various documentation updates and code clean-ups.
