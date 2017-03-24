@@ -12,7 +12,7 @@ SYNOPSIS
 'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>]
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
-'git tag' [-n[<num>]] -l [--contains <commit>] [--points-at <object>]
+'git tag' [-n[<num>]] -l [--contains <commit>] [--contains <commit>] [--points-at <object>]
 	[--column[=<options>] | --no-column] [--create-reflog] [--sort=<key>]
 	[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]
 'git tag' -v [--format=<format>] <tagname>...
@@ -129,6 +129,10 @@ This option is only applicable when listing tags without annotation lines.
 --contains [<commit>]::
 	Only list tags which contain the specified commit (HEAD if not
 	specified). Implies `--list`.
+
+--no-contains [<commit>]::
+	Only list tags which don't contain the specified commit (HEAD if
+	not specified). Implies `--list`.
 
 --merged [<commit>]::
 	Only list tags whose commits are reachable from the specified
