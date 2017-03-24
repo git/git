@@ -1097,6 +1097,68 @@ test_expect_success 'multiple git -c appends config' '
 	test_cmp expect actual
 '
 
+test_expect_success 'last one wins: two level vars' '
+
+	# sec.var and sec.VAR are the same variable, as the first
+	# and the last level of a configuration variable name is
+	# case insensitive.
+
+	echo VAL >expect &&
+
+	git -c sec.var=val -c sec.VAR=VAL config --get sec.var >actual &&
+	test_cmp expect actual &&
+	git -c SEC.var=val -c sec.var=VAL config --get sec.var >actual &&
+	test_cmp expect actual &&
+
+	git -c sec.var=val -c sec.VAR=VAL config --get SEC.var >actual &&
+	test_cmp expect actual &&
+	git -c SEC.var=val -c sec.var=VAL config --get sec.VAR >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'last one wins: three level vars' '
+
+	# v.a.r and v.A.r are not the same variable, as the middle
+	# level of a three-level configuration variable name is
+	# case sensitive.
+
+	echo val >expect &&
+	git -c v.a.r=val -c v.A.r=VAL config --get v.a.r >actual &&
+	test_cmp expect actual &&
+	git -c v.a.r=val -c v.A.r=VAL config --get V.a.R >actual &&
+	test_cmp expect actual &&
+
+	# v.a.r and V.a.R are the same variable, as the first
+	# and the last level of a configuration variable name is
+	# case insensitive.
+
+	echo VAL >expect &&
+	git -c v.a.r=val -c v.a.R=VAL config --get v.a.r >actual &&
+	test_cmp expect actual &&
+	git -c v.a.r=val -c V.a.r=VAL config --get v.a.r >actual &&
+	test_cmp expect actual &&
+	git -c v.a.r=val -c v.a.R=VAL config --get V.a.R >actual &&
+	test_cmp expect actual &&
+	git -c v.a.r=val -c V.a.r=VAL config --get V.a.R >actual &&
+	test_cmp expect actual
+'
+
+for VAR in a .a a. a.0b a."b c". a."b c".0d
+do
+	test_expect_success "git -c $VAR=VAL rejects invalid '$VAR'" '
+		test_must_fail git -c "$VAR=VAL" config -l
+	'
+done
+
+for VAR in a.b a."b c".d
+do
+	test_expect_success "git -c $VAR=VAL works with valid '$VAR'" '
+		echo VAL >expect &&
+		git -c "$VAR=VAL" config --get "$VAR" >actual &&
+		test_cmp expect actual
+	'
+done
+
 test_expect_success 'git -c is not confused by empty environment' '
 	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config --list
 '
