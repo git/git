@@ -1534,7 +1534,8 @@ do
 	"
 	test_expect_success "Doing 'git tag --list-like $option <commit> <pattern> is permitted" "
 		git tag -n $option HEAD HEAD &&
-		git tag $option HEAD HEAD
+		git tag $option HEAD HEAD &&
+		git tag $option
 	"
 done
 
@@ -1543,6 +1544,12 @@ done
 test_expect_success '--points-at can be used in non-list mode' '
 	echo v4.0 >expect &&
 	git tag --points-at=v4.0 "v*" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--points-at is a synonym for --points-at HEAD' '
+	echo v4.0 >expect &&
+	git tag --points-at >actual &&
 	test_cmp expect actual
 '
 

@@ -139,7 +139,8 @@ This option is only applicable when listing tags without annotation lines.
 	commit (`HEAD` if not specified), incompatible with `--merged`.
 
 --points-at <object>::
-	Only list tags of the given object. Implies `--list`.
+	Only list tags of the given object (HEAD if not
+	specified). Implies `--list`.
 
 -m <msg>::
 --message=<msg>::
