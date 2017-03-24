@@ -3003,7 +3003,7 @@ static void parse_get_mark(const char *p)
 	if (!oe)
 		die("Unknown mark: %s", command_buf.buf);
 
-	snprintf(output, sizeof(output), "%s\n", sha1_to_hex(oe->idx.sha1));
+	xsnprintf(output, sizeof(output), "%s\n", sha1_to_hex(oe->idx.sha1));
 	cat_blob_write(output, 41);
 }
 
