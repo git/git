@@ -82,10 +82,11 @@ OPTIONS
 
 -n<num>::
 	<num> specifies how many lines from the annotation, if any,
-	are printed when using -l.
-	The default is not to print any annotation lines.
-	If no number is given to `-n`, only the first line is printed.
-	If the tag is not annotated, the commit message is displayed instead.
+	are printed when using -l. Implies `--list`.
++
+The default is not to print any annotation lines.
+If no number is given to `-n`, only the first line is printed.
+If the tag is not annotated, the commit message is displayed instead.
 
 -l::
 --list::
@@ -95,6 +96,10 @@ OPTIONS
 Running "git tag" without arguments also lists all tags. The pattern
 is a shell wildcard (i.e., matched using fnmatch(3)). Multiple
 patterns may be given; if any of them matches, the tag is shown.
++
+This option is implicitly supplied if any other list-like option such
+as `--contains` is provided. See the documentation for each of those
+options for details.
 
 --sort=<key>::
 	Sort based on the key given.  Prefix `-` to sort in
@@ -123,7 +128,7 @@ This option is only applicable when listing tags without annotation lines.
 
 --contains [<commit>]::
 	Only list tags which contain the specified commit (HEAD if not
-	specified).
+	specified). Implies `--list`.
 
 --merged [<commit>]::
 	Only list tags whose commits are reachable from the specified
@@ -134,7 +139,7 @@ This option is only applicable when listing tags without annotation lines.
 	commit (`HEAD` if not specified), incompatible with `--merged`.
 
 --points-at <object>::
-	Only list tags of the given object.
+	Only list tags of the given object. Implies `--list`.
 
 -m <msg>::
 --message=<msg>::
