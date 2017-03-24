@@ -460,7 +460,7 @@ order).  See linkgit:git-var[1] for details.
 HOOKS
 -----
 This command can run `commit-msg`, `prepare-commit-msg`, `pre-commit`,
-and `post-commit` hooks.  See linkgit:githooks[5] for more
+`post-commit` and `post-rewrite` hooks.  See linkgit:githooks[5] for more
 information.
 
 FILES
