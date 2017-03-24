@@ -166,9 +166,7 @@ void setup_pager(void)
 
 int pager_in_use(void)
 {
-	const char *env;
-	env = getenv("GIT_PAGER_IN_USE");
-	return env ? git_config_bool("GIT_PAGER_IN_USE", env) : 0;
+	return git_env_bool("GIT_PAGER_IN_USE", 0);
 }
 
 /*
