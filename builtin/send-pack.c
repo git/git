@@ -144,6 +144,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	unsigned force_update = 0;
 	unsigned quiet = 0;
 	int push_cert = 0;
+	struct string_list push_options = STRING_LIST_INIT_NODUP;
 	unsigned use_thin_pack = 0;
 	unsigned atomic = 0;
 	unsigned stateless_rpc = 0;
@@ -165,6 +166,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK,
 		  0, "signed", &push_cert, "yes|no|if-asked", N_("GPG sign the push"),
 		  PARSE_OPT_OPTARG, option_parse_push_signed },
+		OPT_STRING_LIST(0, "push-option", &push_options,
+				N_("server-specific"),
+				N_("option to transmit")),
 		OPT_BOOL(0, "progress", &progress, N_("force progress reporting")),
 		OPT_BOOL(0, "thin", &use_thin_pack, N_("use thin pack")),
 		OPT_BOOL(0, "atomic", &atomic, N_("request atomic transaction on remote side")),
@@ -199,6 +203,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	args.use_thin_pack = use_thin_pack;
 	args.atomic = atomic;
 	args.stateless_rpc = stateless_rpc;
+	args.push_options = push_options.nr ? &push_options : NULL;
 
 	if (from_stdin) {
 		struct argv_array all_refspecs = ARGV_ARRAY_INIT;
