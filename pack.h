@@ -84,7 +84,8 @@ extern int verify_pack(struct packed_git *, verify_fn fn, struct progress *, uin
 extern off_t write_pack_header(struct sha1file *f, uint32_t);
 extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
 extern char *index_pack_lockfile(int fd);
-extern int encode_in_pack_object_header(enum object_type, uintmax_t, unsigned char *);
+extern int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
+					enum object_type, uintmax_t);
 
 #define PH_ERROR_EOF		(-1)
 #define PH_ERROR_PACK_SIGNATURE	(-2)
