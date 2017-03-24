@@ -15,6 +15,10 @@ Backward compatibility notes.
    has been deprecated for quite some time, and will be removed in a
    future release.
 
+ * The default location "~/.git-credential-cache/socket" for the
+   socket used to communicate with the credential-cache daemon has
+   been moved to "~/.cache/git/credential/socket".
+
 
 Updates since v2.12
 -------------------
@@ -195,6 +199,13 @@ Performance, Internal Implementation, Development Support etc.
    use; this has been cleaned up and made to use the newer commit-slab
    facility.
 
+ * The "debug" helper used in the test framework learned to run
+   a command under "gdb" interactively.
+   (merge 59210dd56c sg/test-with-stdin later to maint).
+
+ * The "detect attempt to create collisions" variant of SHA-1
+   implementation by Marc Stevens (CWI) and Dan Shumow (Microsoft)
+   has been integrated and made the default.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -202,7 +213,7 @@ Also contains various documentation updates and code clean-ups.
 Fixes since v2.12
 -----------------
 
-Unless otherwise noted, all the fixes since v2.9 in the maintenance
+Unless otherwise noted, all the fixes since v2.12 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
@@ -213,14 +224,12 @@ notes for details).
  * The code to parse the command line "git grep <patterns>... <rev>
    [[--] <pathspec>...]" has been cleaned up, and a handful of bugs
    have been fixed (e.g. we used to check "--" if it is a rev).
-   (merge 131f3c96d2 jk/grep-no-index-fix later to maint).
 
  * "git ls-remote" and "git archive --remote" are designed to work
    without being in a directory under Git's control.  However, recent
    updates revealed that we randomly look into a directory called
    .git/ without actually doing necessary set-up when working in a
    repository.  Stop doing so.
-   (merge 4b0c3c7735 jn/remote-helpers-with-git-dir later to maint).
 
  * "git show-branch" expected there were only very short branch names
    in the repository and used a fixed-length buffer to hold them
@@ -245,7 +254,6 @@ notes for details).
  * The code to parse "git -c VAR=VAL cmd" and set configuration
    variable for the duration of cmd had two small bugs, which have
    been fixed.
-   (merge 1274a155af jc/config-case-cmdline-take-2 later to maint).
 
  * user.email that consists of only cruft chars should consistently
    error out, but didn't.
@@ -315,7 +323,6 @@ notes for details).
 
  * "git push" had a handful of codepaths that could lead to a deadlock
    when unexpected error happened, which has been fixed.
-   (merge d1a13d3fcb jk/push-deadlock-regression-fix later to maint).
 
  * "Dumb http" transport used to misparse a nonsense http-alternates
    response, which has been fixed.
@@ -333,16 +340,29 @@ notes for details).
  * "git status --porcelain" is supposed to give a stable output, but a
    few strings were left as translatable by mistake.
 
+ * "git revert -m 0 $merge_commit" complained that reverting a merge
+   needs to say relative to which parent the reversion needs to
+   happen, as if "-m 0" weren't given.  The correct diagnosis is that
+   "-m 0" does not refer to the first parent ("-m 1" does).  This has
+   been fixed.
+
  * Code to read submodule.<name>.ignore config did not state the
    variable name correctly when giving an error message diagnosing
    misconfiguration.
-   (merge 5ea304896e sb/submodule-config-parse-ignore-fix later to maint).
+
+ * Fix for NO_PTHREADS build.
+   (merge 7b91929ba0 jk/execv-dashed-external later to maint).
+
+ * Fix for potential segv introduced in v2.11.0 and later (also
+   v2.10.2) to "git log --pickaxe-regex -S".
+   (merge f53c5de29c js/regexec-buf later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge dfa3ad3238 rs/blame-code-cleanup later to maint).
    (merge ffddfc6328 jk/rev-parse-cleanup later to maint).
    (merge f20754802a jk/pack-name-cleanups later to maint).
    (merge d4aae459cd sb/wt-status-cleanup later to maint).
-   (merge 2c7ee986c7 ab/doc-no-option-notation-fix later to maint).
-   (merge e4e016f65d ab/push-default-doc-fix later to maint).
-   (merge baced9e4e5 nd/commit-hook-doc-fix later to maint).
+   (merge e94eac49e6 rs/http-push-cleanup later to maint).
+   (merge ba6746c08f rs/path-name-safety-cleanup later to maint).
+   (merge d41626ff9e rs/shortlog-cleanup later to maint).
+   (merge dce96c41f9 rs/update-hook-optim later to maint).
