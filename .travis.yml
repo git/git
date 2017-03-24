@@ -39,6 +39,17 @@ env:
 
 matrix:
   include:
+    - env: Windows
+      os: linux
+      compiler:
+      addons:
+      before_install:
+      before_script:
+      script:
+        - >
+          test "$TRAVIS_REPO_SLUG" != "git/git" ||
+          ci/run-windows-build.sh $TRAVIS_BRANCH $(git rev-parse HEAD)
+      after_failure:
     - env: Linux32
       os: linux
       services:
