@@ -239,7 +239,8 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 					   unsigned long limit, int usable_delta)
 {
 	unsigned long size, datalen;
-	unsigned char header[10], dheader[10];
+	unsigned char header[MAX_PACK_OBJECT_HEADER],
+		      dheader[MAX_PACK_OBJECT_HEADER];
 	unsigned hdrlen;
 	enum object_type type;
 	void *buf;
@@ -353,7 +354,8 @@ static off_t write_reuse_object(struct sha1file *f, struct object_entry *entry,
 	off_t offset;
 	enum object_type type = entry->type;
 	off_t datalen;
-	unsigned char header[10], dheader[10];
+	unsigned char header[MAX_PACK_OBJECT_HEADER],
+		      dheader[MAX_PACK_OBJECT_HEADER];
 	unsigned hdrlen;
 
 	if (entry->delta)
