@@ -663,7 +663,7 @@ test_expect_success 'stash apply shows status same as git status (relative to cu
 		sane_unset GIT_MERGE_VERBOSITY &&
 		git stash apply
 	) |
-	sed -e 1,2d >actual && # drop "Saved..." and "HEAD is now..."
+	sed -e 1d >actual && # drop "Saved..."
 	test_i18ncmp expect actual
 '
 
@@ -905,6 +905,20 @@ test_expect_success 'stash without verb with pathspec' '
 	test_path_is_file "foo bar" &&
 	test_path_is_file foo &&
 	test_path_is_file bar
+'
+
+test_expect_success 'stash -k -- <pathspec> leaves unstaged files intact' '
+	git reset &&
+	>foo &&
+	>bar &&
+	git add foo bar &&
+	git commit -m "test" &&
+	echo "foo" >foo &&
+	echo "bar" >bar &&
+	git stash -k -- foo &&
+	test "",bar = $(cat foo),$(cat bar) &&
+	git stash pop &&
+	test foo,bar = $(cat foo),$(cat bar)
 '
 
 test_done

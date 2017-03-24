@@ -77,6 +77,14 @@ test_expect_success 'git stash --no-keep-index -p' '
 	verify_state dir/foo work index
 '
 
+test_expect_success 'stash -p --no-keep-index -- <pathspec> does not unstage other files' '
+	set_state HEAD HEADfile_work HEADfile_index &&
+	set_state dir/foo work index &&
+	echo y | git stash push -p --no-keep-index -- HEAD &&
+	verify_state HEAD committed committed &&
+	verify_state dir/foo work index
+'
+
 test_expect_success 'none of this moved HEAD' '
 	verify_saved_head
 '
