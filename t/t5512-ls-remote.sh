@@ -248,4 +248,13 @@ test_expect_success PIPE,JGIT,GIT_DAEMON 'indicate no refs in standards-complian
 	test_expect_code 2 git ls-remote --exit-code git://localhost:$JGIT_DAEMON_PORT/empty.git
 '
 
+test_expect_success 'ls-remote works outside repository' '
+	# It is important for this repo to be inside the nongit
+	# area, as we want a repo name that does not include
+	# slashes (because those inhibit some of our configuration
+	# lookups).
+	nongit git init --bare dst.git &&
+	nongit git ls-remote dst.git
+'
+
 test_done

@@ -34,6 +34,15 @@ test_expect_success 'clone http repository' '
 	test_cmp file clone/file
 '
 
+test_expect_success 'list refs from outside any repository' '
+	cat >expect <<-EOF &&
+	$(git rev-parse master)	HEAD
+	$(git rev-parse master)	refs/heads/master
+	EOF
+	nongit git ls-remote "$HTTPD_URL/dumb/repo.git" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'create password-protected repository' '
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/" &&
 	cp -Rf "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
