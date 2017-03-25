@@ -45,4 +45,16 @@ test_expect_success push '
 	test "$rev" = "$(git rev-parse --verify refs/heads/to-push)"
 '
 
+test_expect_success 'unc alternates' '
+	tree="$(git rev-parse HEAD:)" &&
+	mkdir test-unc-alternate &&
+	(
+		cd test-unc-alternate &&
+		git init &&
+		test_must_fail git show $tree &&
+		echo "$UNCPATH/.git/objects" >.git/objects/info/alternates &&
+		git show $tree
+	)
+'
+
 test_done
