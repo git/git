@@ -177,8 +177,24 @@ test_expect_success 'status with added file in modified submodule with .git file
 	test_i18ngrep "modified:   sub (new commits, modified content)" output
 '
 
+test_expect_success 'status with a lot of untracked files in the submodule' '
+	(
+		cd sub
+		i=0 &&
+		while test $i -lt 1024
+		do
+			>some-file-$i
+			i=$(( $i + 1 ))
+		done
+	) &&
+	git status --porcelain sub 2>err.actual &&
+	test_must_be_empty err.actual &&
+	rm err.actual
+'
+
 test_expect_success 'rm submodule contents' '
-	rm -rf sub/* sub/.git
+	rm -rf sub &&
+	mkdir sub
 '
 
 test_expect_success 'status clean (empty submodule dir)' '

@@ -1041,12 +1041,12 @@ out:
 
 unsigned is_submodule_modified(const char *path, int ignore_untracked)
 {
-	ssize_t len;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
+	FILE *fp;
 	unsigned dirty_submodule = 0;
-	const char *line, *next_line;
 	const char *git_dir;
+	int ignore_cp_exit_code = 0;
 
 	strbuf_addf(&buf, "%s/.git", path);
 	git_dir = read_gitfile(buf.buf);
@@ -1072,29 +1072,27 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	if (start_command(&cp))
 		die("Could not run 'git status --porcelain' in submodule %s", path);
 
-	len = strbuf_read(&buf, cp.out, 1024);
-	line = buf.buf;
-	while (len > 2) {
-		if ((line[0] == '?') && (line[1] == '?'))
+	fp = xfdopen(cp.out, "r");
+	while (strbuf_getwholeline(&buf, fp, '\n') != EOF) {
+		if ((buf.buf[0] == '?') && (buf.buf[1] == '?'))
 			dirty_submodule |= DIRTY_SUBMODULE_UNTRACKED;
 		else
 			dirty_submodule |= DIRTY_SUBMODULE_MODIFIED;
 
 		if ((dirty_submodule & DIRTY_SUBMODULE_MODIFIED) &&
 		    ((dirty_submodule & DIRTY_SUBMODULE_UNTRACKED) ||
-		     ignore_untracked))
+		     ignore_untracked)) {
+			/*
+			 * We're not interested in any further information from
+			 * the child any more, neither output nor its exit code.
+			 */
+			ignore_cp_exit_code = 1;
 			break;
-
-		next_line = strchr(line, '\n');
-		if (!next_line)
-			break;
-		next_line++;
-		len -= (next_line - line);
-		line = next_line;
+		}
 	}
-	close(cp.out);
+	fclose(fp);
 
-	if (finish_command(&cp))
+	if (finish_command(&cp) && !ignore_cp_exit_code)
 		die("'git status --porcelain' failed in submodule %s", path);
 
 	strbuf_release(&buf);
