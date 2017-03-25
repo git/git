@@ -1075,16 +1075,16 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	len = strbuf_read(&buf, cp.out, 1024);
 	line = buf.buf;
 	while (len > 2) {
-		if ((line[0] == '?') && (line[1] == '?')) {
+		if ((line[0] == '?') && (line[1] == '?'))
 			dirty_submodule |= DIRTY_SUBMODULE_UNTRACKED;
-			if (dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
-				break;
-		} else {
+		else
 			dirty_submodule |= DIRTY_SUBMODULE_MODIFIED;
-			if (ignore_untracked ||
-			    (dirty_submodule & DIRTY_SUBMODULE_UNTRACKED))
-				break;
-		}
+
+		if ((dirty_submodule & DIRTY_SUBMODULE_MODIFIED) &&
+		    ((dirty_submodule & DIRTY_SUBMODULE_UNTRACKED) ||
+		     ignore_untracked))
+			break;
+
 		next_line = strchr(line, '\n');
 		if (!next_line)
 			break;
