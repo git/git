@@ -1462,22 +1462,25 @@ static struct ref_store *get_main_ref_store(void)
 
 struct ref_store *get_ref_store(const char *submodule)
 {
+	struct strbuf submodule_sb = STRBUF_INIT;
 	struct ref_store *refs;
+	int ret;
 
 	if (!submodule || !*submodule) {
 		return get_main_ref_store();
-	} else {
-		refs = lookup_submodule_ref_store(submodule);
-
-		if (!refs) {
-			struct strbuf submodule_sb = STRBUF_INIT;
-
-			strbuf_addstr(&submodule_sb, submodule);
-			if (is_nonbare_repository_dir(&submodule_sb))
-				refs = ref_store_init(submodule);
-			strbuf_release(&submodule_sb);
-		}
 	}
+
+	refs = lookup_submodule_ref_store(submodule);
+	if (refs)
+		return refs;
+
+	strbuf_addstr(&submodule_sb, submodule);
+	ret = is_nonbare_repository_dir(&submodule_sb);
+	strbuf_release(&submodule_sb);
+	if (!ret)
+		return NULL;
+
+	refs = ref_store_init(submodule);
 	return refs;
 }
 
