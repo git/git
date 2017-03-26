@@ -158,8 +158,8 @@ static void init_skiplist(struct fsck_options *options, const char *path)
 			die("Invalid SHA-1: %s", buffer);
 		sha1_array_append(&skiplist, oid.hash);
 		if (sorted && skiplist.nr > 1 &&
-				hashcmp(skiplist.sha1[skiplist.nr - 2],
-					oid.hash) > 0)
+				oidcmp(&skiplist.oid[skiplist.nr - 2],
+				       &oid) > 0)
 			sorted = 0;
 	}
 	close(fd);

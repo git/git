@@ -457,7 +457,7 @@ static char *join_sha1_array_hex(struct sha1_array *array, char delim)
 	int i;
 
 	for (i = 0; i < array->nr; i++) {
-		strbuf_addstr(&joined_hexs, sha1_to_hex(array->sha1[i]));
+		strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i));
 		if (i + 1 < array->nr)
 			strbuf_addch(&joined_hexs, delim);
 	}
@@ -621,7 +621,7 @@ static void bisect_rev_setup(struct rev_info *revs, const char *prefix,
 	argv_array_pushf(&rev_argv, bad_format, oid_to_hex(current_bad_oid));
 	for (i = 0; i < good_revs.nr; i++)
 		argv_array_pushf(&rev_argv, good_format,
-				 sha1_to_hex(good_revs.sha1[i]));
+				 oid_to_hex(good_revs.oid + i));
 	argv_array_push(&rev_argv, "--");
 	if (read_paths)
 		read_bisect_paths(&rev_argv);
@@ -701,11 +701,11 @@ static int bisect_checkout(const unsigned char *bisect_rev, int no_checkout)
 	return run_command_v_opt(argv_show_branch, RUN_GIT_CMD);
 }
 
-static struct commit *get_commit_reference(const unsigned char *sha1)
+static struct commit *get_commit_reference(const struct object_id *oid)
 {
-	struct commit *r = lookup_commit_reference(sha1);
+	struct commit *r = lookup_commit_reference(oid->hash);
 	if (!r)
-		die(_("Not a valid commit name %s"), sha1_to_hex(sha1));
+		die(_("Not a valid commit name %s"), oid_to_hex(oid));
 	return r;
 }
 
@@ -715,9 +715,9 @@ static struct commit **get_bad_and_good_commits(int *rev_nr)
 	int i, n = 0;
 
 	ALLOC_ARRAY(rev, 1 + good_revs.nr);
-	rev[n++] = get_commit_reference(current_bad_oid->hash);
+	rev[n++] = get_commit_reference(current_bad_oid);
 	for (i = 0; i < good_revs.nr; i++)
-		rev[n++] = get_commit_reference(good_revs.sha1[i]);
+		rev[n++] = get_commit_reference(good_revs.oid + i);
 	*rev_nr = n;
 
 	return rev;

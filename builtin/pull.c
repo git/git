@@ -514,7 +514,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 /**
  * "Pulls into void" by branching off merge_head.
  */
-static int pull_into_void(const unsigned char *merge_head,
+static int pull_into_void(const struct object_id *merge_head,
 		const struct object_id *curr_head)
 {
 	/*
@@ -523,10 +523,10 @@ static int pull_into_void(const unsigned char *merge_head,
 	 * index/worktree changes that the user already made on the unborn
 	 * branch.
 	 */
-	if (checkout_fast_forward(EMPTY_TREE_SHA1_BIN, merge_head, 0))
+	if (checkout_fast_forward(EMPTY_TREE_SHA1_BIN, merge_head->hash, 0))
 		return 1;
 
-	if (update_ref("initial pull", "HEAD", merge_head, curr_head->hash, 0, UPDATE_REFS_DIE_ON_ERR))
+	if (update_ref("initial pull", "HEAD", merge_head->hash, curr_head->hash, 0, UPDATE_REFS_DIE_ON_ERR))
 		return 1;
 
 	return 0;
@@ -693,13 +693,13 @@ cleanup:
  */
 static int get_octopus_merge_base(struct object_id *merge_base,
 		const struct object_id *curr_head,
-		const unsigned char *merge_head,
+		const struct object_id *merge_head,
 		const struct object_id *fork_point)
 {
 	struct commit_list *revs = NULL, *result;
 
 	commit_list_insert(lookup_commit_reference(curr_head->hash), &revs);
-	commit_list_insert(lookup_commit_reference(merge_head), &revs);
+	commit_list_insert(lookup_commit_reference(merge_head->hash), &revs);
 	if (!is_null_oid(fork_point))
 		commit_list_insert(lookup_commit_reference(fork_point->hash), &revs);
 
@@ -718,7 +718,7 @@ static int get_octopus_merge_base(struct object_id *merge_base,
  * appropriate arguments and returns its exit status.
  */
 static int run_rebase(const struct object_id *curr_head,
-		const unsigned char *merge_head,
+		const struct object_id *merge_head,
 		const struct object_id *fork_point)
 {
 	int ret;
@@ -754,12 +754,12 @@ static int run_rebase(const struct object_id *curr_head,
 		warning(_("ignoring --verify-signatures for rebase"));
 
 	argv_array_push(&args, "--onto");
-	argv_array_push(&args, sha1_to_hex(merge_head));
+	argv_array_push(&args, oid_to_hex(merge_head));
 
 	if (fork_point && !is_null_oid(fork_point))
 		argv_array_push(&args, oid_to_hex(fork_point));
 	else
-		argv_array_push(&args, sha1_to_hex(merge_head));
+		argv_array_push(&args, oid_to_hex(merge_head));
 
 	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
 	argv_array_clear(&args);
@@ -856,7 +856,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (is_null_oid(&orig_head)) {
 		if (merge_heads.nr > 1)
 			die(_("Cannot merge multiple branches into empty head."));
-		return pull_into_void(*merge_heads.sha1, &curr_head);
+		return pull_into_void(merge_heads.oid, &curr_head);
 	}
 	if (opt_rebase && merge_heads.nr > 1)
 		die(_("Cannot rebase onto multiple branches."));
@@ -867,13 +867,13 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 		head = lookup_commit_reference(orig_head.hash);
 		commit_list_insert(head, &list);
-		merge_head = lookup_commit_reference(merge_heads.sha1[0]);
+		merge_head = lookup_commit_reference(merge_heads.oid[0].hash);
 		if (is_descendant_of(merge_head, list)) {
 			/* we can fast-forward this without invoking rebase */
 			opt_ff = "--ff-only";
 			return run_merge();
 		}
-		return run_rebase(&curr_head, *merge_heads.sha1, &rebase_fork_point);
+		return run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
 	} else {
 		return run_merge();
 	}

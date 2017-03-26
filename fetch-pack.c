@@ -1039,10 +1039,10 @@ static void update_shallow(struct fetch_pack_args *args,
 		 * after get_pack() and reprepare_packed_git())
 		 */
 		struct sha1_array extra = SHA1_ARRAY_INIT;
-		unsigned char (*sha1)[20] = si->shallow->sha1;
+		struct object_id *oid = si->shallow->oid;
 		for (i = 0; i < si->shallow->nr; i++)
-			if (has_sha1_file(sha1[i]))
-				sha1_array_append(&extra, sha1[i]);
+			if (has_object_file(&oid[i]))
+				sha1_array_append(&extra, oid[i].hash);
 		if (extra.nr) {
 			setup_alternate_shallow(&shallow_lock,
 						&alternate_shallow_file,
@@ -1071,16 +1071,16 @@ static void update_shallow(struct fetch_pack_args *args,
 		 * refs.
 		 */
 		struct sha1_array extra = SHA1_ARRAY_INIT;
-		unsigned char (*sha1)[20] = si->shallow->sha1;
+		struct object_id *oid = si->shallow->oid;
 		assign_shallow_commits_to_refs(si, NULL, NULL);
 		if (!si->nr_ours && !si->nr_theirs) {
 			sha1_array_clear(&ref);
 			return;
 		}
 		for (i = 0; i < si->nr_ours; i++)
-			sha1_array_append(&extra, sha1[si->ours[i]]);
+			sha1_array_append(&extra, oid[si->ours[i]].hash);
 		for (i = 0; i < si->nr_theirs; i++)
-			sha1_array_append(&extra, sha1[si->theirs[i]]);
+			sha1_array_append(&extra, oid[si->theirs[i]].hash);
 		setup_alternate_shallow(&shallow_lock,
 					&alternate_shallow_file,
 					&extra);

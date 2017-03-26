@@ -2,7 +2,7 @@
 #define SHA1_ARRAY_H
 
 struct sha1_array {
-	unsigned char (*sha1)[20];
+	struct object_id *oid;
 	int nr;
 	int alloc;
 	int sorted;

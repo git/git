@@ -98,7 +98,7 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 	 */
 	po_in = xfdopen(po.in, "w");
 	for (i = 0; i < extra->nr; i++)
-		feed_object(extra->sha1[i], po_in, 1);
+		feed_object(extra->oid[i].hash, po_in, 1);
 
 	while (refs) {
 		if (!is_null_oid(&refs->old_oid))
