@@ -917,12 +917,6 @@ struct packed_ref_cache {
 struct files_ref_store {
 	struct ref_store base;
 
-	/*
-	 * The name of the submodule represented by this object, or
-	 * NULL if it represents the main repository's reference
-	 * store:
-	 */
-	const char *submodule;
 	char *gitdir;
 	char *gitcommondir;
 	char *packed_refs_path;
@@ -982,21 +976,13 @@ static void clear_loose_ref_cache(struct files_ref_store *refs)
  * Create a new submodule ref cache and add it to the internal
  * set of caches.
  */
-static struct ref_store *files_ref_store_create(const char *submodule)
+static struct ref_store *files_ref_store_create(const char *gitdir)
 {
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
-	const char *gitdir = get_git_dir();
 
 	base_ref_store_init(ref_store, &refs_be_files);
-
-	if (submodule) {
-		refs->submodule = xstrdup(submodule);
-		refs->packed_refs_path = git_pathdup_submodule(
-			refs->submodule, "packed-refs");
-		return ref_store;
-	}
 
 	refs->gitdir = xstrdup(gitdir);
 	get_common_dir_noenv(&sb, gitdir);
@@ -1014,8 +1000,7 @@ static struct ref_store *files_ref_store_create(const char *submodule)
 static void files_assert_main_repository(struct files_ref_store *refs,
 					 const char *caller)
 {
-	if (refs->submodule)
-		die("BUG: %s called for a submodule", caller);
+	/* This function is to be fixed up in the next patch */
 }
 
 /*
@@ -1206,11 +1191,6 @@ static void files_ref_path(struct files_ref_store *refs,
 			   struct strbuf *sb,
 			   const char *refname)
 {
-	if (refs->submodule) {
-		strbuf_git_path_submodule(sb, refs->submodule, "%s", refname);
-		return;
-	}
-
 	switch (ref_type(refname)) {
 	case REF_TYPE_PER_WORKTREE:
 	case REF_TYPE_PSEUDOREF:
