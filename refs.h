@@ -2,6 +2,7 @@
 #define REFS_H
 
 struct object_id;
+struct ref_store;
 struct strbuf;
 struct string_list;
 
@@ -559,5 +560,7 @@ int reflog_expire(const char *refname, const unsigned char *sha1,
 		  void *policy_cb_data);
 
 int ref_storage_backend_exists(const char *name);
+
+struct ref_store *get_main_ref_store(void);
 
 #endif /* REFS_H */

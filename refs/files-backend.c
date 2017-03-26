@@ -3163,7 +3163,7 @@ int set_worktree_head_symref(const char *gitdir, const char *target, const char 
 	 * backends. This function needs to die.
 	 */
 	struct files_ref_store *refs =
-		files_downcast(get_ref_store(NULL), 0, "set_head_symref");
+		files_downcast(get_main_ref_store(), 0, "set_head_symref");
 
 	static struct lock_file head_lock;
 	struct ref_lock *lock;
