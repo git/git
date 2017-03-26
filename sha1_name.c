@@ -16,11 +16,11 @@ typedef int (*disambiguate_hint_fn)(const unsigned char *, void *);
 struct disambiguate_state {
 	int len; /* length of prefix in hex chars */
 	char hex_pfx[GIT_MAX_HEXSZ + 1];
-	unsigned char bin_pfx[GIT_SHA1_RAWSZ];
+	unsigned char bin_pfx[GIT_MAX_RAWSZ];
 
 	disambiguate_hint_fn fn;
 	void *cb_data;
-	unsigned char candidate[GIT_SHA1_RAWSZ];
+	unsigned char candidate[GIT_MAX_RAWSZ];
 	unsigned candidate_exists:1;
 	unsigned candidate_checked:1;
 	unsigned candidate_ok:1;

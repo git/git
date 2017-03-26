@@ -1606,7 +1606,7 @@ static void mark_bad_packed_object(struct packed_git *p,
 		if (!hashcmp(sha1, p->bad_object_sha1 + GIT_SHA1_RAWSZ * i))
 			return;
 	p->bad_object_sha1 = xrealloc(p->bad_object_sha1,
-				      st_mult(GIT_SHA1_RAWSZ,
+				      st_mult(GIT_MAX_RAWSZ,
 					      st_add(p->num_bad_objects, 1)));
 	hashcpy(p->bad_object_sha1 + GIT_SHA1_RAWSZ * p->num_bad_objects, sha1);
 	p->num_bad_objects++;
@@ -3913,7 +3913,7 @@ static int check_stream_sha1(git_zstream *stream,
 			     const unsigned char *expected_sha1)
 {
 	git_SHA_CTX c;
-	unsigned char real_sha1[GIT_SHA1_RAWSZ];
+	unsigned char real_sha1[GIT_MAX_RAWSZ];
 	unsigned char buf[4096];
 	unsigned long total_read;
 	int status = Z_OK;
