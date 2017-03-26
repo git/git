@@ -53,6 +53,12 @@ test_expect_success 'for_each_ref(refs/heads/)' '
 	test_cmp expected actual
 '
 
+test_expect_success 'for_each_ref() is sorted' '
+	$RUN for-each-ref refs/heads/ | cut -c 42- >actual &&
+	sort actual > expected &&
+	test_cmp expected actual
+'
+
 test_expect_success 'resolve_ref(new-master)' '
 	SHA1=`git rev-parse new-master` &&
 	echo "$SHA1 refs/heads/new-master 0x0" >expected &&
