@@ -15,7 +15,7 @@ typedef int (*disambiguate_hint_fn)(const unsigned char *, void *);
 
 struct disambiguate_state {
 	int len; /* length of prefix in hex chars */
-	char hex_pfx[GIT_SHA1_HEXSZ + 1];
+	char hex_pfx[GIT_MAX_HEXSZ + 1];
 	unsigned char bin_pfx[GIT_SHA1_RAWSZ];
 
 	disambiguate_hint_fn fn;
@@ -80,7 +80,7 @@ static void update_candidates(struct disambiguate_state *ds, const unsigned char
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
 	struct alternate_object_database *alt;
-	char hex[GIT_SHA1_HEXSZ];
+	char hex[GIT_MAX_HEXSZ];
 	static struct alternate_object_database *fakeent;
 
 	if (!fakeent) {
@@ -509,7 +509,7 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 const char *find_unique_abbrev(const unsigned char *sha1, int len)
 {
 	static int bufno;
-	static char hexbuffer[4][GIT_SHA1_HEXSZ + 1];
+	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
 	char *hex = hexbuffer[bufno];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
 	find_unique_abbrev_r(hex, sha1, len);

@@ -3759,7 +3759,7 @@ static int for_each_file_in_obj_subdir(int subdir_nr,
 		strbuf_addf(path, "/%s", de->d_name);
 
 		if (strlen(de->d_name) == GIT_SHA1_HEXSZ - 2)  {
-			char hex[GIT_SHA1_HEXSZ+1];
+			char hex[GIT_MAX_HEXSZ+1];
 			struct object_id oid;
 
 			snprintf(hex, sizeof(hex), "%02x%s",
