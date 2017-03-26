@@ -112,28 +112,6 @@ enum peel_status {
 enum peel_status peel_object(const unsigned char *name, unsigned char *sha1);
 
 /*
- * Return 0 if a reference named refname could be created without
- * conflicting with the name of an existing reference. Otherwise,
- * return a negative value and write an explanation to err. If extras
- * is non-NULL, it is a list of additional refnames with which refname
- * is not allowed to conflict. If skip is non-NULL, ignore potential
- * conflicts with refs in skip (e.g., because they are scheduled for
- * deletion in the same operation). Behavior is undefined if the same
- * name is listed in both extras and skip.
- *
- * Two reference names conflict if one of them exactly matches the
- * leading components of the other; e.g., "foo/bar" conflicts with
- * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
- * "foo/barbados".
- *
- * extras and skip must be sorted.
- */
-int verify_refname_available(const char *newname,
-			     const struct string_list *extras,
-			     const struct string_list *skip,
-			     struct strbuf *err);
-
-/*
  * Copy the reflog message msg to buf, which has been allocated sufficiently
  * large, while cleaning up the whitespaces.  Especially, convert LF to space,
  * because reflog file is one line per entry.
@@ -252,7 +230,9 @@ const char *find_descendant_ref(const char *dirname,
  * processes (though rename_ref() catches some races that might get by
  * this check).
  */
-int rename_ref_available(const char *old_refname, const char *new_refname);
+int refs_rename_ref_available(struct ref_store *refs,
+			      const char *old_refname,
+			      const char *new_refname);
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define SYMREF_MAXDEPTH 5
@@ -645,10 +625,5 @@ struct ref_store {
  */
 void base_ref_store_init(struct ref_store *refs,
 			 const struct ref_storage_be *be);
-
-const char *resolve_ref_recursively(struct ref_store *refs,
-				    const char *refname,
-				    int resolve_flags,
-				    unsigned char *sha1, int *flags);
 
 #endif /* REFS_REFS_INTERNAL_H */

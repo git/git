@@ -1313,7 +1313,7 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 					 create_dir_entry(refs, refname.buf,
 							  refname.len, 1));
 		} else {
-			if (!resolve_ref_recursively(&refs->base,
+			if (!refs_resolve_ref_unsafe(&refs->base,
 						     refname.buf,
 						     RESOLVE_REF_READING,
 						     sha1, &flag)) {
@@ -1622,7 +1622,8 @@ retry:
 		 * another reference such as "refs/foo". There is no
 		 * reason to expect this error to be transitory.
 		 */
-		if (verify_refname_available(refname, extras, skip, err)) {
+		if (refs_verify_refname_available(&refs->base, refname,
+						  extras, skip, err)) {
 			if (mustexist) {
 				/*
 				 * To the user the relevant error is
@@ -2670,7 +2671,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 			    oldrefname);
 		goto out;
 	}
-	if (!rename_ref_available(oldrefname, newrefname)) {
+	if (!refs_rename_ref_available(&refs->base, oldrefname, newrefname)) {
 		ret = 1;
 		goto out;
 	}
@@ -4054,9 +4055,9 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		if ((update->flags & REF_HAVE_OLD) &&
 		    !is_null_sha1(update->old_sha1))
 			die("BUG: initial ref transaction with old_sha1 set");
-		if (verify_refname_available(update->refname,
-					     &affected_refnames, NULL,
-					     err)) {
+		if (refs_verify_refname_available(&refs->base, update->refname,
+						  &affected_refnames, NULL,
+						  err)) {
 			ret = TRANSACTION_NAME_CONFLICT;
 			goto cleanup;
 		}
