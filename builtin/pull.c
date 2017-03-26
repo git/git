@@ -515,7 +515,7 @@ static int run_fetch(const char *repo, const char **refspecs)
  * "Pulls into void" by branching off merge_head.
  */
 static int pull_into_void(const unsigned char *merge_head,
-		const unsigned char *curr_head)
+		const struct object_id *curr_head)
 {
 	/*
 	 * Two-way merge: we treat the index as based on an empty tree,
@@ -526,7 +526,7 @@ static int pull_into_void(const unsigned char *merge_head,
 	if (checkout_fast_forward(EMPTY_TREE_SHA1_BIN, merge_head, 0))
 		return 1;
 
-	if (update_ref("initial pull", "HEAD", merge_head, curr_head, 0, UPDATE_REFS_DIE_ON_ERR))
+	if (update_ref("initial pull", "HEAD", merge_head, curr_head->hash, 0, UPDATE_REFS_DIE_ON_ERR))
 		return 1;
 
 	return 0;
@@ -647,7 +647,7 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
  * current branch forked from its remote tracking branch. Returns 0 on success,
  * -1 on failure.
  */
-static int get_rebase_fork_point(unsigned char *fork_point, const char *repo,
+static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 		const char *refspec)
 {
 	int ret;
@@ -678,7 +678,7 @@ static int get_rebase_fork_point(unsigned char *fork_point, const char *repo,
 	if (ret)
 		goto cleanup;
 
-	ret = get_sha1_hex(sb.buf, fork_point);
+	ret = get_oid_hex(sb.buf, fork_point);
 	if (ret)
 		goto cleanup;
 
@@ -691,24 +691,24 @@ cleanup:
  * Sets merge_base to the octopus merge base of curr_head, merge_head and
  * fork_point. Returns 0 if a merge base is found, 1 otherwise.
  */
-static int get_octopus_merge_base(unsigned char *merge_base,
-		const unsigned char *curr_head,
+static int get_octopus_merge_base(struct object_id *merge_base,
+		const struct object_id *curr_head,
 		const unsigned char *merge_head,
-		const unsigned char *fork_point)
+		const struct object_id *fork_point)
 {
 	struct commit_list *revs = NULL, *result;
 
-	commit_list_insert(lookup_commit_reference(curr_head), &revs);
+	commit_list_insert(lookup_commit_reference(curr_head->hash), &revs);
 	commit_list_insert(lookup_commit_reference(merge_head), &revs);
-	if (!is_null_sha1(fork_point))
-		commit_list_insert(lookup_commit_reference(fork_point), &revs);
+	if (!is_null_oid(fork_point))
+		commit_list_insert(lookup_commit_reference(fork_point->hash), &revs);
 
 	result = reduce_heads(get_octopus_merge_bases(revs));
 	free_commit_list(revs);
 	if (!result)
 		return 1;
 
-	hashcpy(merge_base, result->item->object.oid.hash);
+	oidcpy(merge_base, &result->item->object.oid);
 	return 0;
 }
 
@@ -717,16 +717,16 @@ static int get_octopus_merge_base(unsigned char *merge_base,
  * fork point calculated by get_rebase_fork_point(), runs git-rebase with the
  * appropriate arguments and returns its exit status.
  */
-static int run_rebase(const unsigned char *curr_head,
+static int run_rebase(const struct object_id *curr_head,
 		const unsigned char *merge_head,
-		const unsigned char *fork_point)
+		const struct object_id *fork_point)
 {
 	int ret;
-	unsigned char oct_merge_base[GIT_SHA1_RAWSZ];
+	struct object_id oct_merge_base;
 	struct argv_array args = ARGV_ARRAY_INIT;
 
-	if (!get_octopus_merge_base(oct_merge_base, curr_head, merge_head, fork_point))
-		if (!is_null_sha1(fork_point) && !hashcmp(oct_merge_base, fork_point))
+	if (!get_octopus_merge_base(&oct_merge_base, curr_head, merge_head, fork_point))
+		if (!is_null_oid(fork_point) && !oidcmp(&oct_merge_base, fork_point))
 			fork_point = NULL;
 
 	argv_array_push(&args, "rebase");
@@ -756,8 +756,8 @@ static int run_rebase(const unsigned char *curr_head,
 	argv_array_push(&args, "--onto");
 	argv_array_push(&args, sha1_to_hex(merge_head));
 
-	if (fork_point && !is_null_sha1(fork_point))
-		argv_array_push(&args, sha1_to_hex(fork_point));
+	if (fork_point && !is_null_oid(fork_point))
+		argv_array_push(&args, oid_to_hex(fork_point));
 	else
 		argv_array_push(&args, sha1_to_hex(merge_head));
 
@@ -770,8 +770,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 {
 	const char *repo, **refspecs;
 	struct sha1_array merge_heads = SHA1_ARRAY_INIT;
-	unsigned char orig_head[GIT_SHA1_RAWSZ], curr_head[GIT_SHA1_RAWSZ];
-	unsigned char rebase_fork_point[GIT_SHA1_RAWSZ];
+	struct object_id orig_head, curr_head;
+	struct object_id rebase_fork_point;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -794,8 +794,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (file_exists(git_path("MERGE_HEAD")))
 		die_conclude_merge();
 
-	if (get_sha1("HEAD", orig_head))
-		hashclr(orig_head);
+	if (get_oid("HEAD", &orig_head))
+		oidclr(&orig_head);
 
 	if (!opt_rebase && opt_autostash != -1)
 		die(_("--[no-]autostash option is only valid with --rebase."));
@@ -805,15 +805,15 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (opt_autostash != -1)
 			autostash = opt_autostash;
 
-		if (is_null_sha1(orig_head) && !is_cache_unborn())
+		if (is_null_oid(&orig_head) && !is_cache_unborn())
 			die(_("Updating an unborn branch with changes added to the index."));
 
 		if (!autostash)
 			require_clean_work_tree(N_("pull with rebase"),
 				_("please commit or stash them."), 1, 0);
 
-		if (get_rebase_fork_point(rebase_fork_point, repo, *refspecs))
-			hashclr(rebase_fork_point);
+		if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
+			oidclr(&rebase_fork_point);
 	}
 
 	if (run_fetch(repo, refspecs))
@@ -822,11 +822,11 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (opt_dry_run)
 		return 0;
 
-	if (get_sha1("HEAD", curr_head))
-		hashclr(curr_head);
+	if (get_oid("HEAD", &curr_head))
+		oidclr(&curr_head);
 
-	if (!is_null_sha1(orig_head) && !is_null_sha1(curr_head) &&
-			hashcmp(orig_head, curr_head)) {
+	if (!is_null_oid(&orig_head) && !is_null_oid(&curr_head) &&
+			oidcmp(&orig_head, &curr_head)) {
 		/*
 		 * The fetch involved updating the current branch.
 		 *
@@ -837,15 +837,15 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 		warning(_("fetch updated the current branch head.\n"
 			"fast-forwarding your working tree from\n"
-			"commit %s."), sha1_to_hex(orig_head));
+			"commit %s."), oid_to_hex(&orig_head));
 
-		if (checkout_fast_forward(orig_head, curr_head, 0))
+		if (checkout_fast_forward(orig_head.hash, curr_head.hash, 0))
 			die(_("Cannot fast-forward your working tree.\n"
 				"After making sure that you saved anything precious from\n"
 				"$ git diff %s\n"
 				"output, run\n"
 				"$ git reset --hard\n"
-				"to recover."), sha1_to_hex(orig_head));
+				"to recover."), oid_to_hex(&orig_head));
 	}
 
 	get_merge_heads(&merge_heads);
@@ -853,10 +853,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!merge_heads.nr)
 		die_no_merge_candidates(repo, refspecs);
 
-	if (is_null_sha1(orig_head)) {
+	if (is_null_oid(&orig_head)) {
 		if (merge_heads.nr > 1)
 			die(_("Cannot merge multiple branches into empty head."));
-		return pull_into_void(*merge_heads.sha1, curr_head);
+		return pull_into_void(*merge_heads.sha1, &curr_head);
 	}
 	if (opt_rebase && merge_heads.nr > 1)
 		die(_("Cannot rebase onto multiple branches."));
@@ -865,7 +865,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		struct commit_list *list = NULL;
 		struct commit *merge_head, *head;
 
-		head = lookup_commit_reference(orig_head);
+		head = lookup_commit_reference(orig_head.hash);
 		commit_list_insert(head, &list);
 		merge_head = lookup_commit_reference(merge_heads.sha1[0]);
 		if (is_descendant_of(merge_head, list)) {
@@ -873,7 +873,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			opt_ff = "--ff-only";
 			return run_merge();
 		}
-		return run_rebase(curr_head, *merge_heads.sha1, rebase_fork_point);
+		return run_rebase(&curr_head, *merge_heads.sha1, &rebase_fork_point);
 	} else {
 		return run_merge();
 	}
