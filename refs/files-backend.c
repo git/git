@@ -1897,9 +1897,6 @@ static struct ref_iterator *files_ref_iterator_begin(
 	struct files_ref_iterator *iter;
 	struct ref_iterator *ref_iterator;
 
-	if (!refs)
-		return empty_ref_iterator_begin();
-
 	if (ref_paranoia < 0)
 		ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
 	if (ref_paranoia)
