@@ -923,7 +923,8 @@ struct files_ref_store {
 	 * store:
 	 */
 	const char *submodule;
-
+	char *gitdir;
+	char *gitcommondir;
 	char *packed_refs_path;
 
 	struct ref_entry *loose;
@@ -985,6 +986,8 @@ static struct ref_store *files_ref_store_create(const char *submodule)
 {
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
+	struct strbuf sb = STRBUF_INIT;
+	const char *gitdir = get_git_dir();
 
 	base_ref_store_init(ref_store, &refs_be_files);
 
@@ -995,7 +998,11 @@ static struct ref_store *files_ref_store_create(const char *submodule)
 		return ref_store;
 	}
 
-	refs->packed_refs_path = git_pathdup("packed-refs");
+	refs->gitdir = xstrdup(gitdir);
+	get_common_dir_noenv(&sb, gitdir);
+	refs->gitcommondir = strbuf_detach(&sb, NULL);
+	strbuf_addf(&sb, "%s/packed-refs", refs->gitcommondir);
+	refs->packed_refs_path = strbuf_detach(&sb, NULL);
 
 	return ref_store;
 }
@@ -1173,11 +1180,26 @@ static void files_reflog_path(struct files_ref_store *refs,
 			      const char *refname)
 {
 	if (!refname) {
-		strbuf_git_path(sb, "logs");
+		/*
+		 * FIXME: of course this is wrong in multi worktree
+		 * setting. To be fixed real soon.
+		 */
+		strbuf_addf(sb, "%s/logs", refs->gitcommondir);
 		return;
 	}
 
-	strbuf_git_path(sb, "logs/%s", refname);
+	switch (ref_type(refname)) {
+	case REF_TYPE_PER_WORKTREE:
+	case REF_TYPE_PSEUDOREF:
+		strbuf_addf(sb, "%s/logs/%s", refs->gitdir, refname);
+		break;
+	case REF_TYPE_NORMAL:
+		strbuf_addf(sb, "%s/logs/%s", refs->gitcommondir, refname);
+		break;
+	default:
+		die("BUG: unknown ref type %d of ref %s",
+		    ref_type(refname), refname);
+	}
 }
 
 static void files_ref_path(struct files_ref_store *refs,
@@ -1189,7 +1211,18 @@ static void files_ref_path(struct files_ref_store *refs,
 		return;
 	}
 
-	strbuf_git_path(sb, "%s", refname);
+	switch (ref_type(refname)) {
+	case REF_TYPE_PER_WORKTREE:
+	case REF_TYPE_PSEUDOREF:
+		strbuf_addf(sb, "%s/%s", refs->gitdir, refname);
+		break;
+	case REF_TYPE_NORMAL:
+		strbuf_addf(sb, "%s/%s", refs->gitcommondir, refname);
+		break;
+	default:
+		die("BUG: unknown ref type %d of ref %s",
+		    ref_type(refname), refname);
+	}
 }
 
 /*
