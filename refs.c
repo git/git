@@ -1602,11 +1602,6 @@ int refs_pack_refs(struct ref_store *refs, unsigned int flags)
 	return refs->be->pack_refs(refs, flags);
 }
 
-int pack_refs(unsigned int flags)
-{
-	return refs_pack_refs(get_main_ref_store(), flags);
-}
-
 int refs_peel_ref(struct ref_store *refs, const char *refname,
 		  unsigned char *sha1)
 {
