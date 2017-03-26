@@ -21,7 +21,7 @@
 #define DIFF_NO_INDEX_IMPLICIT 2
 
 struct blobinfo {
-	unsigned char sha1[20];
+	struct object_id oid;
 	const char *name;
 	unsigned mode;
 };
@@ -31,22 +31,22 @@ static const char builtin_diff_usage[] =
 
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
-			 const unsigned char *old_sha1,
-			 const unsigned char *new_sha1,
-			 int old_sha1_valid,
-			 int new_sha1_valid,
+			 const struct object_id *old_oid,
+			 const struct object_id *new_oid,
+			 int old_oid_valid,
+			 int new_oid_valid,
 			 const char *old_name,
 			 const char *new_name)
 {
 	struct diff_filespec *one, *two;
 
-	if (!is_null_sha1(old_sha1) && !is_null_sha1(new_sha1) &&
-	    !hashcmp(old_sha1, new_sha1) && (old_mode == new_mode))
+	if (!is_null_oid(old_oid) && !is_null_oid(new_oid) &&
+	    !oidcmp(old_oid, new_oid) && (old_mode == new_mode))
 		return;
 
 	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
 		SWAP(old_mode, new_mode);
-		SWAP(old_sha1, new_sha1);
+		SWAP(old_oid, new_oid);
 		SWAP(old_name, new_name);
 	}
 
@@ -57,8 +57,8 @@ static void stuff_change(struct diff_options *opt,
 
 	one = alloc_filespec(old_name);
 	two = alloc_filespec(new_name);
-	fill_filespec(one, old_sha1, old_sha1_valid, old_mode);
-	fill_filespec(two, new_sha1, new_sha1_valid, new_mode);
+	fill_filespec(one, old_oid->hash, old_oid_valid, old_mode);
+	fill_filespec(two, new_oid->hash, new_oid_valid, new_mode);
 
 	diff_queue(&diff_queued_diff, one, two);
 }
@@ -89,7 +89,7 @@ static int builtin_diff_b_f(struct rev_info *revs,
 
 	stuff_change(&revs->diffopt,
 		     blob[0].mode, canon_mode(st.st_mode),
-		     blob[0].sha1, null_sha1,
+		     &blob[0].oid, &null_oid,
 		     1, 0,
 		     path, path);
 	diffcore_std(&revs->diffopt);
@@ -114,7 +114,7 @@ static int builtin_diff_blobs(struct rev_info *revs,
 
 	stuff_change(&revs->diffopt,
 		     blob[0].mode, blob[1].mode,
-		     blob[0].sha1, blob[1].sha1,
+		     &blob[0].oid, &blob[1].oid,
 		     1, 1,
 		     blob[0].name, blob[1].name);
 	diffcore_std(&revs->diffopt);
@@ -160,7 +160,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 			     struct object_array_entry *ent0,
 			     struct object_array_entry *ent1)
 {
-	const unsigned char *(sha1[2]);
+	const struct object_id *(oid[2]);
 	int swap = 0;
 
 	if (argc > 1)
@@ -172,9 +172,9 @@ static int builtin_diff_tree(struct rev_info *revs,
 	 */
 	if (ent1->item->flags & UNINTERESTING)
 		swap = 1;
-	sha1[swap] = ent0->item->oid.hash;
-	sha1[1 - swap] = ent1->item->oid.hash;
-	diff_tree_sha1(sha1[0], sha1[1], "", &revs->diffopt);
+	oid[swap] = &ent0->item->oid;
+	oid[1 - swap] = &ent1->item->oid;
+	diff_tree_sha1(oid[0]->hash, oid[1]->hash, "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
 }
@@ -408,7 +408,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		} else if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die(_("more than two blobs given: '%s'"), name);
-			hashcpy(blob[blobs].sha1, obj->oid.hash);
+			hashcpy(blob[blobs].oid.hash, obj->oid.hash);
 			blob[blobs].name = name;
 			blob[blobs].mode = entry->mode;
 			blobs++;
