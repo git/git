@@ -923,6 +923,8 @@ struct files_ref_store {
 	 */
 	const char *submodule;
 
+	char *packed_refs_path;
+
 	struct ref_entry *loose;
 	struct packed_ref_cache *packed;
 };
@@ -985,7 +987,14 @@ static struct ref_store *files_ref_store_create(const char *submodule)
 
 	base_ref_store_init(ref_store, &refs_be_files);
 
-	refs->submodule = xstrdup_or_null(submodule);
+	if (submodule) {
+		refs->submodule = xstrdup(submodule);
+		refs->packed_refs_path = git_pathdup_submodule(
+			refs->submodule, "packed-refs");
+		return ref_store;
+	}
+
+	refs->packed_refs_path = git_pathdup("packed-refs");
 
 	return ref_store;
 }
@@ -1153,19 +1162,18 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 	strbuf_release(&line);
 }
 
+static const char *files_packed_refs_path(struct files_ref_store *refs)
+{
+	return refs->packed_refs_path;
+}
+
 /*
  * Get the packed_ref_cache for the specified files_ref_store,
  * creating it if necessary.
  */
 static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *refs)
 {
-	char *packed_refs_file;
-
-	if (refs->submodule)
-		packed_refs_file = git_pathdup_submodule(refs->submodule,
-							 "packed-refs");
-	else
-		packed_refs_file = git_pathdup("packed-refs");
+	const char *packed_refs_file = files_packed_refs_path(refs);
 
 	if (refs->packed &&
 	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
@@ -1184,7 +1192,6 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 			fclose(f);
 		}
 	}
-	free(packed_refs_file);
 	return refs->packed;
 }
 
@@ -2157,7 +2164,7 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 	}
 
 	if (hold_lock_file_for_update_timeout(
-			    &packlock, git_path("packed-refs"),
+			    &packlock, files_packed_refs_path(refs),
 			    flags, timeout_value) < 0)
 		return -1;
 	/*
@@ -2423,7 +2430,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 		return 0; /* no refname exists in packed refs */
 
 	if (lock_packed_refs(refs, 0)) {
-		unable_to_lock_message(git_path("packed-refs"), errno, err);
+		unable_to_lock_message(files_packed_refs_path(refs), errno, err);
 		return -1;
 	}
 	packed = get_packed_refs(refs);
