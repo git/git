@@ -1173,7 +1173,8 @@ static int store_object(
 		delta_count_by_type[type]++;
 		e->depth = last->depth + 1;
 
-		hdrlen = encode_in_pack_object_header(OBJ_OFS_DELTA, deltalen, hdr);
+		hdrlen = encode_in_pack_object_header(hdr, sizeof(hdr),
+						      OBJ_OFS_DELTA, deltalen);
 		sha1write(pack_file, hdr, hdrlen);
 		pack_size += hdrlen;
 
@@ -1184,7 +1185,8 @@ static int store_object(
 		pack_size += sizeof(hdr) - pos;
 	} else {
 		e->depth = 0;
-		hdrlen = encode_in_pack_object_header(type, dat->len, hdr);
+		hdrlen = encode_in_pack_object_header(hdr, sizeof(hdr),
+						      type, dat->len);
 		sha1write(pack_file, hdr, hdrlen);
 		pack_size += hdrlen;
 	}
@@ -1237,9 +1239,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 	sha1file_checkpoint(pack_file, &checkpoint);
 	offset = checkpoint.offset;
 
-	hdrlen = snprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
-	if (out_sz <= hdrlen)
-		die("impossibly large object header");
+	hdrlen = xsnprintf((char *)out_buf, out_sz, "blob %" PRIuMAX, len) + 1;
 
 	git_SHA1_Init(&c);
 	git_SHA1_Update(&c, out_buf, hdrlen);
@@ -1248,9 +1248,7 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 
 	git_deflate_init(&s, pack_compression_level);
 
-	hdrlen = encode_in_pack_object_header(OBJ_BLOB, len, out_buf);
-	if (out_sz <= hdrlen)
-		die("impossibly large object header");
+	hdrlen = encode_in_pack_object_header(out_buf, out_sz, OBJ_BLOB, len);
 
 	s.next_out = out_buf + hdrlen;
 	s.avail_out = out_sz - hdrlen;
@@ -3003,7 +3001,7 @@ static void parse_get_mark(const char *p)
 	if (!oe)
 		die("Unknown mark: %s", command_buf.buf);
 
-	snprintf(output, sizeof(output), "%s\n", sha1_to_hex(oe->idx.sha1));
+	xsnprintf(output, sizeof(output), "%s\n", sha1_to_hex(oe->idx.sha1));
 	cat_blob_write(output, 41);
 }
 
