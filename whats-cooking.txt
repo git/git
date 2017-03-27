@@ -1,19 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2017, #10; Fri, 24)
-X-master-at: 034667a458057ef1e571973a38ebbdf0045a63e9
-X-next-at: 063fe858b89ef8ee27965115fd6b1ed12e42e793
+Subject: What's cooking in git.git (Mar 2017, #11; Mon, 27)
+X-master-at: e0ef7fe78c46e6919d249b9547948a3bb7321dea
+X-next-at: f7d0c115f90496503bfc6438d37aefdbb8a4e9f5
 
-What's cooking in git.git (Mar 2017, #10; Fri, 24)
+What's cooking in git.git (Mar 2017, #11; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-The second maintenance release for v2.12.x series has just been
-tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,94 +20,23 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* dl/credential-cache-socket-in-xdg-cache (2017-03-17) 3 commits
-  (merged to 'next' on 2017-03-20 at 9de71bcce8)
- + credential-cache: add tests for XDG functionality
- + credential-cache: use XDG_CACHE_HOME for socket
- + path.c: add xdg_cache_home
+* jc/lint-runaway-here-doc (2017-03-23) 1 commit
+  (merged to 'next' on 2017-03-24 at c1f1ca1bd7)
+ + tests: lint for run-away here-doc
 
- The default location "~/.git-credential-cache/socket" for the
- socket used to communicate with the credential-cache daemon has
- been moved to "~/.cache/git/credential/socket".
+ The test framework learned to detect unterminated here documents.
 
 
-* jk/execv-dashed-external (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at 62119fa314)
- + run-command: fix segfault when cleaning forked async process
+* jk/prefix-filename (2017-03-21) 6 commits
+  (merged to 'next' on 2017-03-22 at 6d180ed430)
+ + bundle: use prefix_filename with bundle path
+ + prefix_filename: simplify windows #ifdef
+ + prefix_filename: return newly allocated string
+ + prefix_filename: drop length parameter
+ + prefix_filename: move docstring to header file
+ + hash-object: fix buffer reuse with --path in a subdirectory
 
- Fix for NO_PTHREADS build.
-
-
-* jk/sha1dc (2017-03-17) 6 commits
-  (merged to 'next' on 2017-03-20 at 3455b6c19f)
- + Makefile: make DC_SHA1 the default
- + t0013: add a basic sha1 collision detection test
- + Makefile: add DC_SHA1 knob
- + sha1dc: disable safe_hash feature
- + sha1dc: adjust header includes for git
- + sha1dc: add collision-detecting sha1 implementation
-
- The "detect attempt to create collisions" variant of SHA-1
- implementation by Marc Stevens (CWI) and Dan Shumow (Microsoft)
- has been integrated and made the default.
-
-
-* js/regexec-buf (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at 7381595eb7)
- + pickaxe: fix segfault with '-S<...> --pickaxe-regex'
-
- Fix for potential segv introduced in v2.11.0 and later (also
- v2.10.2).
-
-
-* rs/http-push-cleanup (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at fcf8d30bc0)
- + http-push: don't check return value of lookup_unknown_object()
-
- Code clean-up.
-
-
-* rs/path-name-safety-cleanup (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at 78ea574469)
- + revision: remove declaration of path_name()
-
- Code clean-up.
-
-
-* rs/shortlog-cleanup (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at a826dff5cf)
- + shortlog: don't set after_subject to an empty string
-
- Code clean-up.
-
-
-* rs/update-hook-optim (2017-03-18) 1 commit
-  (merged to 'next' on 2017-03-20 at f36ede55be)
- + receive-pack: simplify run_update_post_hook()
-
- Code clean-up.
-
-
-* sg/test-with-stdin (2017-03-18) 2 commits
-  (merged to 'next' on 2017-03-20 at a66fec5692)
- + tests: make the 'test_pause' helper work in non-verbose mode
- + tests: create an interactive gdb session with the 'debug' helper
-
- Teach the "debug" helper used in the test framework that allows a
- command to run under "gdb" to make the session interactive.
-
---------------------------------------------------
-[New Topics]
-
-* ab/test-readme-updates (2017-03-23) 4 commits
- - SQUASH???
- - t/README: clarify the test_have_prereq documentation
- - t/README: change "Inside <X> part" to "Inside the <X> part"
- - t/README: link to metacpan.org, not search.cpan.org
-
- Doc updates.
-
- Waiting for a reaction to SQUASH???
+ Code clean-up with minor bugfixes.
 
 
 * jk/quote-env-path-list-component (2017-03-22) 1 commit
@@ -119,19 +45,34 @@ of the repositories listed at
 
  A test fix.
 
- Will merge to 'master'.
+
+* km/config-grammofix (2017-03-23) 1 commit
+  (merged to 'next' on 2017-03-24 at 75ddbbc6f9)
+ + doc/config: grammar fixes for core.{editor,commentChar}
+
+ Doc update.
 
 
-* js/rebase-i-reword-to-run-hooks (2017-03-23) 4 commits
- - SQUASH???
- - sequencer: allow the commit-msg hooks to run during a `reword`
- - sequencer: make commit options more extensible
- - t7504: document regression: reword no longer calls commit-msg
+* km/t1400-modernization (2017-03-21) 5 commits
+  (merged to 'next' on 2017-03-22 at e9c3154ca4)
+ + t1400: use test_when_finished for cleanup
+ + t1400: remove a set of unused output files
+ + t1400: use test_path_is_* helpers
+ + t1400: set core.logAllRefUpdates in "logged by touch" tests
+ + t1400: rename test descriptions to be unique
 
- A recent update to "rebase -i" stopped running hooks for the "git
- commit" command during "reword" action, which has been fixed.
+ Code clean-up.
 
- Waiting for a reaction to SQUASH???
+
+* sb/describe-broken (2017-03-22) 1 commit
+  (merged to 'next' on 2017-03-24 at 2262cbf415)
+ + builtin/describe: introduce --broken flag
+
+ "git describe --dirty" dies when it cannot be determined if the
+ state in the working tree matches that of HEAD (e.g. broken
+ repository or broken submodule).  The command learned a new option
+ "git describe --broken" to give "$name-broken" (where $name is the
+ description of HEAD) in such a case.
 
 
 * sb/push-options-via-transport (2017-03-22) 2 commits
@@ -143,8 +84,6 @@ of the repositories listed at
  external remote helper interface; now the "smart HTTP" remote
  helper understands what to do with the passed information.
 
- Will merge to 'master'.
-
 
 * sb/submodule-update-initial-runs-custom-script (2017-03-22) 1 commit
   (merged to 'next' on 2017-03-24 at 628200c3b1)
@@ -152,64 +91,12 @@ of the repositories listed at
 
  A test fix.
 
- Will merge to 'master'.
 
+* sb/t3600-rephrase (2017-03-22) 1 commit
+  (merged to 'next' on 2017-03-24 at 5ec1eee490)
+ + t3600: rename test to describe its functionality
 
-* ab/branch-list-doc (2017-03-24) 2 commits
- - branch doc: update description for `--list`
- - branch doc: change `git branch <pattern>` to use `<branchname>`
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* km/config-grammofix (2017-03-23) 1 commit
-  (merged to 'next' on 2017-03-24 at 75ddbbc6f9)
- + doc/config: grammar fixes for core.{editor,commentChar}
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* sg/completion-ctags (2017-03-23) 3 commits
- - completion: offer ctags symbol names for 'git log -S', '-G' and '-L:'
- - completion: extract completing ctags symbol names into helper function
- - completion: put matching ctags symbol names directly into COMPREPLY
- (this branch uses sg/completion-refs-speedup.)
-
- Command line completion updates.
-
- Will merge to 'next'.
-
-
-* sg/skip-prefix-in-prettify-refname (2017-03-23) 1 commit
- - refs.c: use skip_prefix() in prettify_refname()
-
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* jc/lint-runaway-here-doc (2017-03-23) 1 commit
-  (merged to 'next' on 2017-03-24 at c1f1ca1bd7)
- + tests: lint for run-away here-doc
-
- The test framework learned to detect unterminated here documents.
-
- Will wait until all the other topics that correct unterminated here-doc
- graduates.
-
-
-* sb/submodule-short-status (2017-03-24) 7 commits
- - submodule.c: correctly handle nested submodules in is_submodule_modified
- - short status: improve reporting for submodule changes
- - submodule.c: stricter checking for submodules in is_submodule_modified
- - submodule.c: port is_submodule_modified to use porcelain 2
- - submodule.c: convert is_submodule_modified to use strbuf_getwholeline
- - submodule.c: factor out early loop termination in is_submodule_modified
- - submodule.c: use argv_array in is_submodule_modified
+ A test retitling.
 
 
 * st/verify-tag (2017-03-24) 1 commit
@@ -220,24 +107,81 @@ of the repositories listed at
  turn revealed incorrect expectations the tests make. These tests
  have been updated.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* ab/case-insensitive-upstream-and-push-marker (2017-03-27) 1 commit
+ - rev-parse: match @{upstream}, @{u} and @{push} case-insensitively
 
-* jk/fast-import-cleanup (2017-03-24) 4 commits
- - pack.h: define largest possible encoded object size
- - encode_in_pack_object_header: respect output buffer length
- - fast-import: use xsnprintf for formatting headers
- - fast-import: use xsnprintf for writing sha1s
-
- Code clean-up.
+ On many keyboards, typing "@{" involves holding down SHIFT key and
+ one can easily end up with "@{Up..." when typing "@{upstream}".  As
+ the upstream/push keywords do not appear anywhere else in the syntax,
+ we can safely accept them case insensitively without introducing
+ ambiguity or confusion  to solve this.
 
  Will merge to 'next'.
 
 
-* jk/pager-in-use (2017-03-24) 1 commit
- - pager_in_use: use git_env_bool()
+* bc/object-id (2017-03-26) 21 commits
+ - Documentation: update and rename api-sha1-array.txt
+ - Rename sha1_array to oid_array
+ - Convert sha1_array_for_each_unique and for_each_abbrev to object_id
+ - Convert sha1_array_lookup to take struct object_id
+ - Convert remaining callers of sha1_array_lookup to object_id
+ - Make sha1_array_append take a struct object_id *
+ - sha1-array: convert internal storage for struct sha1_array to object_id
+ - builtin/pull: convert to struct object_id
+ - submodule: convert check_for_new_submodule_commits to object_id
+ - sha1_name: convert disambiguate_hint_fn to take object_id
+ - sha1_name: convert struct disambiguate_state to object_id
+ - test-sha1-array: convert most code to struct object_id
+ - parse-options-cb: convert sha1_array_append caller to struct object_id
+ - fsck: convert init_skiplist to struct object_id
+ - builtin/receive-pack: convert portions to struct object_id
+ - builtin/receive-pack: fix incorrect pointer arithmetic
+ - builtin/pull: convert portions to struct object_id
+ - builtin/diff: convert to struct object_id
+ - Convert GIT_SHA1_RAWSZ used for allocation to GIT_MAX_RAWSZ
+ - Convert GIT_SHA1_HEXSZ used for allocation to GIT_MAX_HEXSZ
+ - Define new hash-size constants for allocating memory
 
- Code clean-up.
+ Conversion from unsigned char [40] to struct object_id continues.
+
+
+* rs/freebsd-getcwd-workaround (2017-03-26) 1 commit
+ - strbuf: support long paths w/o read rights in strbuf_getcwd() on FreeBSD
+
+ FreeBSD implementation of getcwd(3) behaved differently when an
+ intermediate directory is unreadable/unsearchable depending on the
+ length of the buffer provided, which our strbuf_getcwd() was not
+ aware of.  strbuf_getcwd() has been taught to cope with it better.
+
+ Will merge to 'next'.
+
+
+* jk/sha1dc (2017-03-26) 1 commit
+  (merged to 'next' on 2017-03-27 at 91bf9f06b4)
+ + sha1dc: avoid CPP macro collisions
+
+ sha1dc/sha1.c wanted to check the endianness of the target platform
+ at compilation time and used a CPP macro with a rather overly
+ generic name, "BIGENDIAN", to pass the result of the check around
+ in the file.  It wasn't prepared for the same macro set to 0
+ (false) by the platform to signal that the target is _not_ a big
+ endian box, and assumed that the endianness detection logic it has
+ alone would be the one that is setting the macro, resulting in a
+ breakage on Windows.  This has been fixed by using a bit less
+ generic name for the same purpose.
+
+ Will merge to 'master'.
+
+
+* mg/describe-debug-l10n (2017-03-27) 2 commits
+ - l10n: de: translate describe debug terms
+ - describe: localize debug output fully
+
+ Some debugging output from "git describe" were marked for l10n,
+ but some weren't.  Mark missing ones for l10n.
 
  Will merge to 'next'.
 
@@ -250,6 +194,7 @@ of the repositories listed at
  Expecting a reroll.
  cf. <20170227211217.73gydlxb2qu2sp3m@sigill.intra.peff.net>
  cf. <CAM0VKj=rsAfKvVccOMOoo5==Q1yW1U0zJBbUV=faKppWFm-u+g@mail.gmail.com>
+ Some nits but looks ok.
 
 
 * sk/dash-is-previous (2017-03-01) 5 commits
@@ -364,6 +309,98 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ab/test-readme-updates (2017-03-26) 3 commits
+ - t/README: clarify the test_have_prereq documentation
+ - t/README: change "Inside <X> part" to "Inside the <X> part"
+ - t/README: link to metacpan.org, not search.cpan.org
+
+ Doc updates.
+
+ Will merge to 'next'.
+
+
+* js/rebase-i-reword-to-run-hooks (2017-03-27) 3 commits
+ - sequencer: allow the commit-msg hooks to run during a `reword`
+ - sequencer: make commit options more extensible
+ - t7504: document regression: reword no longer calls commit-msg
+
+ A recent update to "rebase -i" stopped running hooks for the "git
+ commit" command during "reword" action, which has been fixed.
+
+ Will merge to 'next'.
+
+
+* ab/branch-list-doc (2017-03-24) 2 commits
+  (merged to 'next' on 2017-03-27 at 4bb47907ee)
+ + branch doc: update description for `--list`
+ + branch doc: change `git branch <pattern>` to use `<branchname>`
+
+ Doc update.
+
+ Will merge to 'master'.
+
+
+* sg/completion-ctags (2017-03-23) 3 commits
+  (merged to 'next' on 2017-03-27 at cf8c081f7d)
+ + completion: offer ctags symbol names for 'git log -S', '-G' and '-L:'
+ + completion: extract completing ctags symbol names into helper function
+ + completion: put matching ctags symbol names directly into COMPREPLY
+ (this branch uses sg/completion-refs-speedup.)
+
+ Command line completion updates.
+
+ Will merge to 'master'.
+
+
+* sg/skip-prefix-in-prettify-refname (2017-03-23) 1 commit
+  (merged to 'next' on 2017-03-27 at f7d0c115f9)
+ + refs.c: use skip_prefix() in prettify_refname()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-short-status (2017-03-27) 7 commits
+ - submodule.c: correctly handle nested submodules in is_submodule_modified
+ - short status: improve reporting for submodule changes
+ - submodule.c: stricter checking for submodules in is_submodule_modified
+ - submodule.c: port is_submodule_modified to use porcelain 2
+ - submodule.c: convert is_submodule_modified to use strbuf_getwholeline
+ - submodule.c: factor out early loop termination in is_submodule_modified
+ - submodule.c: use argv_array in is_submodule_modified
+
+ The output from "git status --short" has been extended to show
+ various kinds of dirtyness in submodules differently; instead of to
+ "M" for modified, 'm' and '?' can be shown to signal changes only
+ to the working tree of the submodule but not the commit that is
+ checked out.
+
+ Waiting for further comments.
+ The endgame looked mostly OK.
+
+
+* jk/fast-import-cleanup (2017-03-24) 4 commits
+  (merged to 'next' on 2017-03-27 at 9f6058007f)
+ + pack.h: define largest possible encoded object size
+ + encode_in_pack_object_header: respect output buffer length
+ + fast-import: use xsnprintf for formatting headers
+ + fast-import: use xsnprintf for writing sha1s
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/pager-in-use (2017-03-24) 1 commit
+  (merged to 'next' on 2017-03-27 at 513f007025)
+ + pager_in_use: use git_env_bool()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
 * jh/memihash-opt (2017-03-24) 8 commits
   (merged to 'next' on 2017-03-24 at f1aa0c4d37)
  + name-hash: add test-lazy-init-name-hash to .gitignore
@@ -383,20 +420,21 @@ of the repositories listed at
 
 
 * sg/completion-refs-speedup (2017-03-23) 14 commits
- - completion: speed up branch and tag completion
- - completion: fill COMPREPLY directly when completing fetch refspecs
- - completion: fill COMPREPLY directly when completing refs
- - completion: let 'for-each-ref' sort remote branches for 'checkout' DWIMery
- - completion: let 'for-each-ref' filter remote branches for 'checkout' DWIMery
- - completion: let 'for-each-ref' strip the remote name from remote branches
- - completion: let 'for-each-ref' and 'ls-remote' filter matching refs
- - completion: don't disambiguate short refs
- - completion: don't disambiguate tags and branches
- - completion: support excluding full refs
- - completion: support completing fully qualified non-fast-forward refspecs
- - completion: support completing full refs after '--option=refs/<TAB>'
- - completion: wrap __git_refs() for better option parsing
- - completion: remove redundant __gitcomp_nl() options from _git_commit()
+  (merged to 'next' on 2017-03-27 at 6bb275710d)
+ + completion: speed up branch and tag completion
+ + completion: fill COMPREPLY directly when completing fetch refspecs
+ + completion: fill COMPREPLY directly when completing refs
+ + completion: let 'for-each-ref' sort remote branches for 'checkout' DWIMery
+ + completion: let 'for-each-ref' filter remote branches for 'checkout' DWIMery
+ + completion: let 'for-each-ref' strip the remote name from remote branches
+ + completion: let 'for-each-ref' and 'ls-remote' filter matching refs
+ + completion: don't disambiguate short refs
+ + completion: don't disambiguate tags and branches
+ + completion: support excluding full refs
+ + completion: support completing fully qualified non-fast-forward refspecs
+ + completion: support completing full refs after '--option=refs/<TAB>'
+ + completion: wrap __git_refs() for better option parsing
+ + completion: remove redundant __gitcomp_nl() options from _git_commit()
  (this branch is used by sg/completion-ctags.)
 
  The refs completion for large number of refs has been sped up,
@@ -404,10 +442,10 @@ of the repositories listed at
  eliminating most of the shell processing between 'git for-each-ref'
  and 'ls-remote' and Bash's completion facility.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* mh/separate-ref-cache (2017-03-20) 20 commits
+* mh/separate-ref-cache (2017-03-27) 20 commits
  - do_for_each_entry_in_dir(): delete function
  - files_pack_refs(): use reference iteration
  - commit_packed_refs(): use reference iteration
@@ -436,33 +474,6 @@ of the repositories listed at
  Waiting for nd/files-backend-git-dir to settle.
 
 
-* jk/prefix-filename (2017-03-21) 6 commits
-  (merged to 'next' on 2017-03-22 at 6d180ed430)
- + bundle: use prefix_filename with bundle path
- + prefix_filename: simplify windows #ifdef
- + prefix_filename: return newly allocated string
- + prefix_filename: drop length parameter
- + prefix_filename: move docstring to header file
- + hash-object: fix buffer reuse with --path in a subdirectory
-
- Code clean-up with minor bugfixes.
-
- Will merge to 'master'.
-
-
-* km/t1400-modernization (2017-03-21) 5 commits
-  (merged to 'next' on 2017-03-22 at e9c3154ca4)
- + t1400: use test_when_finished for cleanup
- + t1400: remove a set of unused output files
- + t1400: use test_path_is_* helpers
- + t1400: set core.logAllRefUpdates in "logged by touch" tests
- + t1400: rename test descriptions to be unique
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * ah/log-decorate-default-to-auto (2017-03-24) 1 commit
   (merged to 'next' on 2017-03-24 at ce353ebfb5)
  + log: if --decorate is not given, default to --decorate=auto
@@ -473,36 +484,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/describe-broken (2017-03-22) 1 commit
-  (merged to 'next' on 2017-03-24 at 2262cbf415)
- + builtin/describe: introduce --broken flag
-
- "git describe --dirty" dies when it cannot be determined if the
- state in the working tree matches that of HEAD (e.g. broken
- repository or broken submodule).  The command learned a new option
- "git describe --broken" to give "$name-broken" (where $name is the
- description of HEAD) in such a case.
-
- Will merge to 'master'.
-
-
-* sb/t3600-rephrase (2017-03-22) 1 commit
-  (merged to 'next' on 2017-03-24 at 5ec1eee490)
- + t3600: rename test to describe its functionality
-
- A test retitling.
-
- Will merge to 'master'.
-
-
-* ab/doc-submitting (2017-03-21) 3 commits
- - SQUASH??? remove "alias" thing
+* ab/doc-submitting (2017-03-26) 2 commits
  - doc/SubmittingPatches: show how to get a CLI commit summary
  - doc/SubmittingPatches: clarify the casing convention for "area: change..."
 
  Doc update.
 
- Any further comments?
+ Will merge to 'next'.
 
 
 * bw/grep-recurse-submodules (2017-03-18) 2 commits
@@ -539,7 +527,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/prune-in-worktree (2017-03-18) 12 commits
+* nd/prune-in-worktree (2017-03-27) 12 commits
  - rev-list: expose and document --single-worktree
  - revision.c: --reflog add HEAD reflog from all worktrees
  - files-backend: make reflog iterator go through per-worktree reflog
@@ -563,7 +551,7 @@ of the repositories listed at
  Waiting for nd/files-backend-git-dir to settle.
 
 
-* nd/worktree-kill-parse-ref (2017-03-18) 4 commits
+* nd/worktree-kill-parse-ref (2017-03-27) 4 commits
  - refs: kill set_worktree_head_symref()
  - worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
  - refs: introduce get_worktree_ref_store()
@@ -576,7 +564,7 @@ of the repositories listed at
  Waiting for nd/files-backend-git-dir to settle.
 
 
-* nd/files-backend-git-dir (2017-03-18) 27 commits
+* nd/files-backend-git-dir (2017-03-27) 28 commits
  - refs.h: add a note about sorting order of for_each_ref_*
  - t1406: new tests for submodule ref store
  - t1405: some basic tests on main ref store
@@ -595,13 +583,14 @@ of the repositories listed at
  - refs: rename lookup_ref_store() to lookup_submodule_ref_store()
  - refs.c: introduce get_main_ref_store()
  - files-backend: remove the use of git_path()
- - files-backend: add and use files_refname_path()
+ - files-backend: add and use files_ref_path()
  - files-backend: add and use files_reflog_path()
  - files-backend: move "logs/" out of TMP_RENAMED_LOG
  - files-backend: convert git_path() to strbuf_git_path()
  - files-backend: make sure files_rename_ref() always reach the end
  - files-backend: add and use files_packed_refs_path()
  - files-backend: delete dead code in files_init_db()
+ - files-backend.c: delete dead code in files_ref_iterator_begin()
  - files-backend: make files_log_ref_write() static
  - refs.h: add forward declaration for structs used in this file
  (this branch is used by mh/separate-ref-cache, nd/prune-in-worktree and nd/worktree-kill-parse-ref.)
@@ -611,11 +600,8 @@ of the repositories listed at
  when dealing with ref_store that represents the set of refs visible
  from the other worktrees.
 
- Expecting a reroll.
- cf. <CACsJy8A6mZGjNdFbhKgWAR=XSK+2mO-HG7Vayp7VODRJwu1ixA@mail.gmail.com>
- cf. <CACsJy8CC-BDHPLnE8DAXCxpttwgEsrQU9gzzc=PGsmFnh=XNpw@mail.gmail.com>
- cf. <20170322133412.e2oqmqekreyuf4gr@sigill.intra.peff.net>
- It is almost there; only a few minor niggles remain.
+ Will merge to 'next' after waiting for a few days for further comments.
+ Looking good.
 
 
 * ab/ref-filter-no-contains (2017-03-24) 16 commits
@@ -644,7 +630,7 @@ of the repositories listed at
  only the refs that are not descendants of X) has been added to
  them.
 
- This looks ready for 'next'.  Any comments?
+ Will merge to 'next'.
 
 
 * jc/name-rev (2017-03-16) 2 commits
@@ -656,7 +642,7 @@ of the repositories listed at
  Give the same precedence to lightweight tags as annotated tags as
  the base for naming a commit.
 
- Any further comments?
+ Waiting for jc/p4-current-branch-fix to settle.
 
 
 * bw/recurse-submodules-relative-fix (2017-03-17) 5 commits
@@ -670,14 +656,18 @@ of the repositories listed at
  option misbehaved when started from a subdirectory of the
  superproject.
 
+ Will merge to 'next'.
 
-* jc/p4-current-branch-fix (2017-03-17) 1 commit
+
+* jc/p4-current-branch-fix (2017-03-27) 2 commits
  - DONTMERGE git-p4: "name-rev HEAD" is not a way to find the current branch
+ - git-p4: add failing test for name-rev rather than symbolic-ref
 
  "git p4" used "name-rev HEAD" when it wants to learn what branch is
  checked out; it should use "symbolic-ref HEAD".
 
- Waiting for git-p4 folks to send a finished patch.
+ The tip one (i.e. real fix) needs to be redone by somebody
+ competent with Python and git-p4 codebase.
 
 
 * bw/submodule-is-active (2017-03-18) 10 commits
