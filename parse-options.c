@@ -40,7 +40,7 @@ static void fix_filename(const char *prefix, const char **file)
 	if (!file || !*file || !prefix || is_absolute_path(*file)
 	    || !strcmp("-", *file))
 		return;
-	*file = xstrdup(prefix_filename(prefix, strlen(prefix), *file));
+	*file = prefix_filename(prefix, *file);
 }
 
 static int opt_command_mode_error(const struct option *opt,

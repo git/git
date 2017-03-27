@@ -1084,8 +1084,7 @@ static const char *set_outdir(const char *prefix, const char *output_directory)
 	if (!output_directory)
 		return prefix;
 
-	return xstrdup(prefix_filename(prefix, outdir_offset,
-				       output_directory));
+	return prefix_filename(prefix, output_directory);
 }
 
 static const char * const builtin_format_patch_usage[] = {

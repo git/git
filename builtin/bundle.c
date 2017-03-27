@@ -20,20 +20,14 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 	struct bundle_header header;
 	const char *cmd, *bundle_file;
 	int bundle_fd = -1;
-	char buffer[PATH_MAX];
 
 	if (argc < 3)
 		usage(builtin_bundle_usage);
 
 	cmd = argv[1];
-	bundle_file = argv[2];
+	bundle_file = prefix_filename(prefix, argv[2]);
 	argc -= 2;
 	argv += 2;
-
-	if (prefix && bundle_file[0] != '/') {
-		snprintf(buffer, sizeof(buffer), "%s/%s", prefix, bundle_file);
-		bundle_file = buffer;
-	}
 
 	memset(&header, 0, sizeof(header));
 	if (strcmp(cmd, "create") && (bundle_fd =
