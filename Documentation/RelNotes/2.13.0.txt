@@ -128,6 +128,16 @@ UI, Workflows & Features
  * Recent update to "rebase -i" started showing a message that is not
    a warning with "warning:" prefix by mistake.  This has been fixed.
 
+ * Recently we started passing the "--push-options" through the
+   external remote helper interface; now the "smart HTTP" remote
+   helper understands what to do with the passed information.
+
+ * "git describe --dirty" dies when it cannot be determined if the
+   state in the working tree matches that of HEAD (e.g. broken
+   repository or broken submodule).  The command learned a new option
+   "git describe --broken" to give "$name-broken" (where $name is the
+   description of HEAD) in such a case.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -206,6 +216,9 @@ Performance, Internal Implementation, Development Support etc.
  * The "detect attempt to create collisions" variant of SHA-1
    implementation by Marc Stevens (CWI) and Dan Shumow (Microsoft)
    has been integrated and made the default.
+
+ * The test framework learned to detect unterminated here documents.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -357,6 +370,11 @@ notes for details).
    v2.10.2) to "git log --pickaxe-regex -S".
    (merge f53c5de29c js/regexec-buf later to maint).
 
+ * A few unterminated here documents in tests were fixed, which in
+   turn revealed incorrect expectations the tests make. These tests
+   have been updated.
+   (merge b42ca35e5c st/verify-tag later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge dfa3ad3238 rs/blame-code-cleanup later to maint).
    (merge ffddfc6328 jk/rev-parse-cleanup later to maint).
@@ -366,3 +384,7 @@ notes for details).
    (merge ba6746c08f rs/path-name-safety-cleanup later to maint).
    (merge d41626ff9e rs/shortlog-cleanup later to maint).
    (merge dce96c41f9 rs/update-hook-optim later to maint).
+   (merge 37e61153e2 jk/quote-env-path-list-component later to maint).
+   (merge a4dded0189 sb/submodule-update-initial-runs-custom-script later to maint).
+   (merge 70471ed9bb sb/t3600-rephrase later to maint).
+   (merge e7e183d6ee km/config-grammofix later to maint).
