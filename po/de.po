@@ -7530,7 +7530,19 @@ msgstr "git describe [<Optionen>] [<Commit-Angabe>...]"
 msgid "git describe [<options>] --dirty"
 msgstr "git describe [<Optionen>] --dirty"
 
-#: builtin/describe.c:217
+#: builtin/describe.c:52
+msgid "head"
+msgstr "Branch"
+
+#: builtin/describe.c:52
+msgid "lightweight"
+msgstr "nicht-annotiert"
+
+#: builtin/describe.c:52
+msgid "annotated"
+msgstr "annotiert"
+
+#: builtin/describe.c:249
 #, c-format
 msgid "annotated tag %s not available"
 msgstr "annotiertes Tag %s ist nicht verfügbar"
