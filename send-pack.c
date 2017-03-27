@@ -532,6 +532,14 @@ int send_pack(struct send_pack_args *args,
 		}
 	}
 
+	if (use_push_options) {
+		struct string_list_item *item;
+
+		packet_buf_flush(&req_buf);
+		for_each_string_list_item(item, args->push_options)
+			packet_buf_write(&req_buf, "%s", item->string);
+	}
+
 	if (args->stateless_rpc) {
 		if (!args->dry_run && (cmds_sent || is_repository_shallow())) {
 			packet_buf_flush(&req_buf);
@@ -543,18 +551,6 @@ int send_pack(struct send_pack_args *args,
 	}
 	strbuf_release(&req_buf);
 	strbuf_release(&cap_buf);
-
-	if (use_push_options) {
-		struct string_list_item *item;
-		struct strbuf sb = STRBUF_INIT;
-
-		for_each_string_list_item(item, args->push_options)
-			packet_buf_write(&sb, "%s", item->string);
-
-		write_or_die(out, sb.buf, sb.len);
-		packet_flush(out);
-		strbuf_release(&sb);
-	}
 
 	if (use_sideband && cmds_sent) {
 		memset(&demux, 0, sizeof(demux));

@@ -81,6 +81,12 @@ be in a separate packet, and the list must end with a flush packet.
 	will also fail if the actual call to `gpg --sign` fails.  See
 	linkgit:git-receive-pack[1] for the details on the receiving end.
 
+--push-option=<string>::
+	Pass the specified string as a push option for consumption by
+	hooks on the server side.  If the server doesn't support push
+	options, error out.  See linkgit:git-push[1] and
+	linkgit:githooks[5] for details.
+
 <host>::
 	A remote host to house the repository.  When this
 	part is specified, 'git-receive-pack' is invoked via
