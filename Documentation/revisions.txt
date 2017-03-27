@@ -96,7 +96,8 @@ some output processing may assume ref names in UTF-8.
   refers to the branch that the branch specified by branchname is set to build on
   top of (configured with `branch.<name>.remote` and
   `branch.<name>.merge`).  A missing branchname defaults to the
-  current one.
+  current one. These suffixes are also accepted when spelled in uppercase, and
+  they mean the same thing no matter the case.
 
 '<branchname>@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
@@ -122,6 +123,9 @@ refs/remotes/myfork/mybranch
 Note in the example that we set up a triangular workflow, where we pull
 from one location and push to another. In a non-triangular workflow,
 '@\{push}' is the same as '@\{upstream}', and there is no need for it.
++
+This suffix is also accepted when spelled in uppercase, and means the same
+thing no matter the case.
 
 '<rev>{caret}', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
