@@ -142,8 +142,13 @@ This option is only applicable in non-verbose mode.
 	List both remote-tracking branches and local branches.
 
 --list::
-	Activate the list mode. `git branch <pattern>` would try to create a branch,
-	use `git branch --list <pattern>` to list matching branches.
+	List branches.  With optional `<pattern>...`, e.g. `git
+	branch --list 'maint-*'`, list only the branches that match
+	the pattern(s).
++
+This should not be confused with `git branch -l <branchname>`,
+which creates a branch named `<branchname>` with a reflog.
+See `--create-reflog` above for details.
 
 -v::
 -vv::
