@@ -12,7 +12,7 @@
 
 /*
    Because Little-Endian architectures are most common,
-   we only set BIGENDIAN if one of these conditions is met.
+   we only set SHA1DC_BIGENDIAN if one of these conditions is met.
    Note that all MSFT platforms are little endian,
    so none of these will be defined under the MSC compiler.
    If you are compiling on a big endian platform and your compiler does not define one of these,
@@ -23,8 +23,9 @@
     defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) ||  defined(__AARCH64EB__) || \
     defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
 
-#define BIGENDIAN	(1)
-
+#define SHA1DC_BIGENDIAN	1
+#else
+#undef SHA1DC_BIGENDIAN
 #endif /*ENDIANNESS SELECTION*/
 
 #define rotate_right(x,n) (((x)>>(n))|((x)<<(32-(n))))
@@ -35,11 +36,11 @@
 
 #define sha1_mix(W, t)  (rotate_left(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16], 1))
 
-#if defined(BIGENDIAN)
+#if defined(SHA1DC_BIGENDIAN)
 	#define sha1_load(m, t, temp)  { temp = m[t]; }
 #else
 	#define sha1_load(m, t, temp)  { temp = m[t]; sha1_bswap32(temp); }
-#endif /*define(BIGENDIAN)*/
+#endif /* !defined(SHA1DC_BIGENDIAN) */
 
 #define sha1_store(W, t, x)	*(volatile uint32_t *)&W[t] = x
 
