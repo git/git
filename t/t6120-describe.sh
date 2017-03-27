@@ -233,4 +233,24 @@ test_expect_success 'describe --contains and --no-match' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup and absorb a submodule' '
+	test_create_repo sub1 &&
+	test_commit -C sub1 initial &&
+	git submodule add ./sub1 &&
+	git submodule absorbgitdirs &&
+	git commit -a -m "add submodule" &&
+	git describe --dirty >expect &&
+	git describe --broken >out &&
+	test_cmp expect out
+'
+
+test_expect_success 'describe chokes on severly broken submodules' '
+	mv .git/modules/sub1/ .git/modules/sub_moved &&
+	test_must_fail git describe --dirty
+'
+test_expect_success 'describe ignoring a borken submodule' '
+	git describe --broken >out &&
+	grep broken out
+'
+
 test_done
