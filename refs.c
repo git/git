@@ -366,11 +366,11 @@ int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data)
 
 const char *prettify_refname(const char *name)
 {
-	return name + (
-		starts_with(name, "refs/heads/") ? 11 :
-		starts_with(name, "refs/tags/") ? 10 :
-		starts_with(name, "refs/remotes/") ? 13 :
-		0);
+	if (skip_prefix(name, "refs/heads/", &name) ||
+	    skip_prefix(name, "refs/tags/", &name) ||
+	    skip_prefix(name, "refs/remotes/", &name))
+		; /* nothing */
+	return name;
 }
 
 static const char *ref_rev_parse_rules[] = {
