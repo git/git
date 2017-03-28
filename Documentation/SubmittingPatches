@@ -98,11 +98,16 @@ should skip the full stop.  It is also conventional in most cases to
 prefix the first line with "area: " where the area is a filename or
 identifier for the general area of the code being modified, e.g.
 
-  . archive: ustar header checksum is computed unsigned
-  . git-cherry-pick.txt: clarify the use of revision range notation
+  . doc: clarify distinction between sign-off and pgp-signing
+  . githooks.txt: improve the intro section
 
 If in doubt which identifier to use, run "git log --no-merges" on the
 files you are modifying to see the current conventions.
+
+It's customary to start the remainder of the first line after "area: "
+with a lower-case letter. E.g. "doc: clarify...", not "doc:
+Clarify...", or "githooks.txt: improve...", not "githooks.txt:
+Improve...".
 
 The body should provide a meaningful commit message, which:
 
@@ -129,8 +134,9 @@ with the subject enclosed in a pair of double-quotes, like this:
     noticed that ...
 
 The "Copy commit summary" command of gitk can be used to obtain this
-format.
+format, or this invocation of "git show":
 
+    git show -s --date=short --pretty='format:%h ("%s", %ad)' <commit>
 
 (3) Generate your patch using Git tools out of your commits.
 
