@@ -577,9 +577,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	const char *name = NULL, *url = NULL, *depth = NULL;
 	int quiet = 0;
 	int progress = 0;
-	FILE *submodule_dot_git;
 	char *p, *path = NULL, *sm_gitdir;
-	struct strbuf rel_path = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	struct string_list reference = STRING_LIST_INIT_NODUP;
 	char *sm_alternate = NULL, *error_strategy = NULL;
@@ -651,27 +649,12 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&sb);
 	}
 
-	/* Write a .git file in the submodule to redirect to the superproject. */
-	strbuf_addf(&sb, "%s/.git", path);
-	if (safe_create_leading_directories_const(sb.buf) < 0)
-		die(_("could not create leading directories of '%s'"), sb.buf);
-	submodule_dot_git = fopen(sb.buf, "w");
-	if (!submodule_dot_git)
-		die_errno(_("cannot open file '%s'"), sb.buf);
+	/* Connect module worktree and git dir */
+	connect_work_tree_and_git_dir(path, sm_gitdir);
 
-	fprintf_or_die(submodule_dot_git, "gitdir: %s\n",
-		       relative_path(sm_gitdir, path, &rel_path));
-	if (fclose(submodule_dot_git))
-		die(_("could not close file %s"), sb.buf);
-	strbuf_reset(&sb);
-	strbuf_reset(&rel_path);
-
-	/* Redirect the worktree of the submodule in the superproject's config */
 	p = git_pathdup_submodule(path, "config");
 	if (!p)
 		die(_("could not get submodule directory for '%s'"), path);
-	git_config_set_in_file(p, "core.worktree",
-			       relative_path(path, sm_gitdir, &rel_path));
 
 	/* setup alternateLocation and alternateErrorStrategy in the cloned submodule if needed */
 	git_config_get_string("submodule.alternateLocation", &sm_alternate);
@@ -687,7 +670,6 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 	free(error_strategy);
 
 	strbuf_release(&sb);
-	strbuf_release(&rel_path);
 	free(sm_gitdir);
 	free(path);
 	free(p);
