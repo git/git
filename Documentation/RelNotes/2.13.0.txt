@@ -85,11 +85,9 @@ UI, Workflows & Features
  * When "git submodule init" decides that the submodule in the working
    tree is its upstream, it now gives a warning as it is not a very
    common setup.
-   (merge d1b3b81aab sb/submodule-init-url-selection later to maint).
 
- * "git stash save" takes a pathspec so that the local changes can be
+ * "git stash push" takes a pathspec so that the local changes can be
    stashed away only partially.
-   (merge 9e140909f6 tg/stash-push later to maint).
 
  * Documentation for "git ls-files" did not refer to core.quotePath.
 
@@ -138,6 +136,15 @@ UI, Workflows & Features
    "git describe --broken" to give "$name-broken" (where $name is the
    description of HEAD) in such a case.
 
+ * "git checkout" is taught the "--recurse-submodules" option.
+
+ * Recent enhancement to "git stash push" command to support pathspec
+   to allow only a subset of working tree changes to be stashed away
+   was found to be too chatty and exposed the internal implementation
+   detail (e.g. when it uses reset to match the index to HEAD before
+   doing other things, output from reset seeped out).  These, and
+   other chattyness has been fixed.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -162,7 +169,6 @@ Performance, Internal Implementation, Development Support etc.
    errno from failed system calls.
 
  * The "parse_config_key()" API function has been cleaned up.
-   (merge ad8c7cdadd jk/parse-config-key-cleanup later to maint).
 
  * A test that creates a confusing branch whose name is HEAD has been
    corrected not to do so.
@@ -172,7 +178,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * An helper function to make it easier to append the result from
    real_path() to a strbuf has been added.
-   (merge 33ad9ddd0b rs/strbuf-add-real-path later to maint).
 
  * Reduce authentication round-trip over HTTP when the server supports
    just a single authentication method.  This also improves the
@@ -187,7 +192,6 @@ Performance, Internal Implementation, Development Support etc.
  * The t/perf performance test suite was not prepared to test not so
    old versions of Git, but now it covers versions of Git that are not
    so ancient.
-   (merge 28e1fb5466 jt/perf-updates later to maint).
 
  * Add 32-bit Linux variant to the set of platforms to be tested with
    Travis CI.
@@ -200,7 +204,6 @@ Performance, Internal Implementation, Development Support etc.
  * Picking two versions of Git and running tests to make sure the
    older one and the newer one interoperate happily has now become
    possible.
-   (merge bd4d9d993c jk/interop-test later to maint).
 
  * "uchar [40]" to "struct object_id" conversion continues.
 
@@ -211,13 +214,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * The "debug" helper used in the test framework learned to run
    a command under "gdb" interactively.
-   (merge 59210dd56c sg/test-with-stdin later to maint).
 
  * The "detect attempt to create collisions" variant of SHA-1
    implementation by Marc Stevens (CWI) and Dan Shumow (Microsoft)
    has been integrated and made the default.
 
  * The test framework learned to detect unterminated here documents.
+
+ * The name-hash used for detecting paths that are different only in
+   cases (which matter on case insensitive filesystems) has been
+   optimized to take advantage of multi-threading when it makes sense.
+
+ * An earlier version of sha1dc/sha1.c that was merged to 'master'
+   compiled incorrectly on Windows, which has been fixed.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -232,7 +241,6 @@ notes for details).
 
  * "git repack --depth=<n>" for a long time busted the specified depth
    when reusing delta from existing packs.  This has been corrected.
-   (merge 42b766d765 jk/delta-chain-limit later to maint).
 
  * The code to parse the command line "git grep <patterns>... <rev>
    [[--] <pathspec>...]" has been cleaned up, and a handful of bugs
@@ -270,7 +278,6 @@ notes for details).
 
  * user.email that consists of only cruft chars should consistently
    error out, but didn't.
-   (merge 94425552f3 jk/ident-empty later to maint).
 
  * "git upload-pack", which is a counter-part of "git fetch", did not
    report a request for a ref that was not advertised as invalid.
@@ -312,27 +319,22 @@ notes for details).
 
  * A few tests were run conditionally under (rare) conditions where
    they cannot be run (like running cvs tests under 'root' account).
-   (merge c6507484a2 ab/cond-skip-tests later to maint).
 
  * "git branch @" created refs/heads/@ as a branch, and in general the
    code that handled @{-1} and @{upstream} was a bit too loose in
    disambiguating.
-   (merge fd4692ff70 jk/interpret-branch-name later to maint).
 
  * "git fetch" that requests a commit by object name, when the other
    side does not allow such an request, failed without much
    explanation.
-   (merge d56583ded6 mm/fetch-show-error-message-on-unadvertised-object later to maint).
 
  * "git filter-branch --prune-empty" drops a single-parent commit that
    becomes a no-op, but did not drop a root commit whose tree is empty.
-   (merge 32da7467eb dp/filter-branch-prune-empty later to maint).
 
  * Recent versions of Git treats http alternates (used in dumb http
    transport) just like HTTP redirects and requires the client to
    enable following it, due to security concerns.  But we forgot to
    give a warning when we decide not to honor the alternates.
-   (merge 5cae73d5d2 ew/http-alternates-as-redirects-warning later to maint).
 
  * "git push" had a handful of codepaths that could lead to a deadlock
    when unexpected error happened, which has been fixed.
@@ -364,27 +366,19 @@ notes for details).
    misconfiguration.
 
  * Fix for NO_PTHREADS build.
-   (merge 7b91929ba0 jk/execv-dashed-external later to maint).
 
  * Fix for potential segv introduced in v2.11.0 and later (also
    v2.10.2) to "git log --pickaxe-regex -S".
-   (merge f53c5de29c js/regexec-buf later to maint).
 
  * A few unterminated here documents in tests were fixed, which in
    turn revealed incorrect expectations the tests make. These tests
    have been updated.
-   (merge b42ca35e5c st/verify-tag later to maint).
+
+ * Fix for NO_PTHREADS option.
+   (merge 2225e1ea20 bw/grep-recurse-submodules later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge dfa3ad3238 rs/blame-code-cleanup later to maint).
-   (merge ffddfc6328 jk/rev-parse-cleanup later to maint).
-   (merge f20754802a jk/pack-name-cleanups later to maint).
-   (merge d4aae459cd sb/wt-status-cleanup later to maint).
-   (merge e94eac49e6 rs/http-push-cleanup later to maint).
-   (merge ba6746c08f rs/path-name-safety-cleanup later to maint).
-   (merge d41626ff9e rs/shortlog-cleanup later to maint).
-   (merge dce96c41f9 rs/update-hook-optim later to maint).
-   (merge 37e61153e2 jk/quote-env-path-list-component later to maint).
-   (merge a4dded0189 sb/submodule-update-initial-runs-custom-script later to maint).
-   (merge 70471ed9bb sb/t3600-rephrase later to maint).
-   (merge e7e183d6ee km/config-grammofix later to maint).
+   (merge df2a6e38b7 jk/pager-in-use later to maint).
+   (merge 75ec4a6cb0 ab/branch-list-doc later to maint).
+   (merge 3e5b36c637 sg/skip-prefix-in-prettify-refname later to maint).
+   (merge 2c5e2865cc jk/fast-import-cleanup later to maint).
