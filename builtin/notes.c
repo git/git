@@ -554,7 +554,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	struct notes_tree *t;
 	unsigned char object[20], new_note[20];
 	const unsigned char *note;
-	char logmsg[100];
+	char *logmsg;
 	const char * const *usage;
 	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
 	struct option options[] = {
@@ -618,17 +618,16 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		write_note_data(&d, new_note);
 		if (add_note(t, object, new_note, combine_notes_overwrite))
 			die("BUG: combine_notes_overwrite failed");
-		snprintf(logmsg, sizeof(logmsg), "Notes added by 'git notes %s'",
-			argv[0]);
+		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
 	} else {
 		fprintf(stderr, _("Removing note for object %s\n"),
 			sha1_to_hex(object));
 		remove_note(t, object);
-		snprintf(logmsg, sizeof(logmsg), "Notes removed by 'git notes %s'",
-			argv[0]);
+		logmsg = xstrfmt("Notes removed by 'git notes %s'", argv[0]);
 	}
 	commit_notes(t, logmsg);
 
+	free(logmsg);
 	free_note_data(&d);
 	free_notes(t);
 	return 0;
