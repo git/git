@@ -438,7 +438,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	char *found_ref;
 	int len, early;
 
-	strbuf_branchname(&bname, remote);
+	strbuf_branchname(&bname, remote, 0);
 	remote = bname.buf;
 
 	memset(branch_head, 0, sizeof(branch_head));
