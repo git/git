@@ -50,6 +50,23 @@ unsigned int memihash(const void *buf, size_t len)
 	return hash;
 }
 
+/*
+ * Incoporate another chunk of data into a memihash
+ * computation.
+ */
+unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len)
+{
+	unsigned int hash = hash_seed;
+	unsigned char *ucbuf = (unsigned char *) buf;
+	while (len--) {
+		unsigned int c = *ucbuf++;
+		if (c >= 'a' && c <= 'z')
+			c -= 'a' - 'A';
+		hash = (hash * FNV32_PRIME) ^ c;
+	}
+	return hash;
+}
+
 #define HASHMAP_INITIAL_SIZE 64
 /* grow / shrink by 2^2 */
 #define HASHMAP_RESIZE_BITS 2
@@ -87,10 +104,18 @@ static inline unsigned int bucket(const struct hashmap *map,
 	return key->hash & (map->tablesize - 1);
 }
 
+int hashmap_bucket(const struct hashmap *map, unsigned int hash)
+{
+	return hash & (map->tablesize - 1);
+}
+
 static void rehash(struct hashmap *map, unsigned int newsize)
 {
 	unsigned int i, oldsize = map->tablesize;
 	struct hashmap_entry **oldtable = map->table;
+
+	if (map->disallow_rehash)
+		return;
 
 	alloc_table(map, newsize);
 	for (i = 0; i < oldsize; i++) {
@@ -124,7 +149,9 @@ void hashmap_init(struct hashmap *map, hashmap_cmp_fn equals_function,
 		size_t initial_size)
 {
 	unsigned int size = HASHMAP_INITIAL_SIZE;
-	map->size = 0;
+
+	memset(map, 0, sizeof(*map));
+
 	map->cmpfn = equals_function ? equals_function : always_equal;
 
 	/* calculate initial table size and allocate the table */

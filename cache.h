@@ -343,6 +343,7 @@ struct index_state {
 extern struct index_state the_index;
 
 /* Name hashing */
+extern int test_lazy_init_name_hash(struct index_state *istate, int try_threaded);
 extern void add_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void remove_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void free_name_hash(struct index_state *istate);
