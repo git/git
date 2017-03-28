@@ -77,6 +77,7 @@ test_expect_success 'mix of quoted and unquoted alternates' '
 	check_obj "$quoted:$unquoted" <<-EOF
 	$one blob
 	$two blob
+	EOF
 '
 
 test_expect_success !MINGW 'broken quoting falls back to interpreting raw' '
