@@ -220,4 +220,21 @@ test_expect_success "hook doesn't edit commit message (editor)" '
 
 '
 
+# set up fake editor to replace `pick` by `reword`
+cat > reword-editor <<'EOF'
+#!/bin/sh
+mv "$1" "$1".bup &&
+sed 's/^pick/reword/' <"$1".bup >"$1"
+EOF
+chmod +x reword-editor
+REWORD_EDITOR="$(pwd)/reword-editor"
+export REWORD_EDITOR
+
+test_expect_success 'hook is called for reword during `rebase -i`' '
+
+	GIT_SEQUENCE_EDITOR="\"$REWORD_EDITOR\"" git rebase -i HEAD^ &&
+	commit_msg_is "new message"
+
+'
+
 test_done
