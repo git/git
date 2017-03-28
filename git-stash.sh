@@ -299,12 +299,12 @@ push_stash () {
 	then
 		if test $# != 0
 		then
-			git reset ${GIT_QUIET:+-q} -- "$@"
+			git reset -q -- "$@"
 			git ls-files -z --modified -- "$@" |
 			git checkout-index -z --force --stdin
-			git clean --force ${GIT_QUIET:+-q} -d -- "$@"
+			git clean --force -q -d -- "$@"
 		else
-			git reset --hard ${GIT_QUIET:+-q}
+			git reset --hard -q
 		fi
 		test "$untracked" = "all" && CLEAN_X_OPTION=-x || CLEAN_X_OPTION=
 		if test -n "$untracked"
@@ -314,7 +314,9 @@ push_stash () {
 
 		if test "$keep_index" = "t" && test -n "$i_tree"
 		then
-			git read-tree --reset -u $i_tree
+			git read-tree --reset $i_tree
+			git ls-files -z --modified -- "$@" |
+			git checkout-index -z --force --stdin
 		fi
 	else
 		git apply -R < "$TMP-patch" ||
@@ -322,7 +324,7 @@ push_stash () {
 
 		if test "$keep_index" != "t"
 		then
-			git reset
+			git reset -q -- "$@"
 		fi
 	fi
 }
