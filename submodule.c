@@ -1402,7 +1402,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 	memset(&rev_opts, 0, sizeof(rev_opts));
 
 	/* get all revisions that merge commit a */
-	snprintf(merged_revision, sizeof(merged_revision), "^%s",
+	xsnprintf(merged_revision, sizeof(merged_revision), "^%s",
 			oid_to_hex(&a->object.oid));
 	init_revisions(&revs, NULL);
 	rev_opts.submodule = path;

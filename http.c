@@ -1366,9 +1366,9 @@ static int handle_curl_result(struct slot_results *results)
 		 * FAILONERROR it is lost, so we can give only the numeric
 		 * status code.
 		 */
-		snprintf(curl_errorstr, sizeof(curl_errorstr),
-			 "The requested URL returned error: %ld",
-			 results->http_code);
+		xsnprintf(curl_errorstr, sizeof(curl_errorstr),
+			  "The requested URL returned error: %ld",
+			  results->http_code);
 	}
 
 	if (results->curl_result == CURLE_OK) {
@@ -1410,8 +1410,8 @@ int run_one_slot(struct active_request_slot *slot,
 {
 	slot->results = results;
 	if (!start_active_slot(slot)) {
-		snprintf(curl_errorstr, sizeof(curl_errorstr),
-			 "failed to start HTTP request");
+		xsnprintf(curl_errorstr, sizeof(curl_errorstr),
+			  "failed to start HTTP request");
 		return HTTP_START_FAILED;
 	}
 

@@ -964,7 +964,7 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 		int gai;
 		char portstr[6];
 
-		snprintf(portstr, sizeof(portstr), "%d", srvc->port);
+		xsnprintf(portstr, sizeof(portstr), "%d", srvc->port);
 
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_socktype = SOCK_STREAM;
