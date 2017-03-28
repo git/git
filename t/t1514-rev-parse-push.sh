@@ -24,12 +24,16 @@ test_expect_success 'setup' '
 
 test_expect_success '@{push} with default=nothing' '
 	test_config push.default nothing &&
-	test_must_fail git rev-parse master@{push}
+	test_must_fail git rev-parse master@{push} &&
+	test_must_fail git rev-parse master@{PUSH} &&
+	test_must_fail git rev-parse master@{PuSH}
 '
 
 test_expect_success '@{push} with default=simple' '
 	test_config push.default simple &&
-	resolve master@{push} refs/remotes/origin/master
+	resolve master@{push} refs/remotes/origin/master &&
+	resolve master@{PUSH} refs/remotes/origin/master &&
+	resolve master@{pUSh} refs/remotes/origin/master
 '
 
 test_expect_success 'triangular @{push} fails with default=simple' '
