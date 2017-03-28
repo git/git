@@ -1679,7 +1679,7 @@ extern void pack_report(void);
  * usual "XXXXXX" trailer, and the resulting filename is written into the
  * "template" buffer. Returns the open descriptor.
  */
-extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
+extern int odb_mkstemp(struct strbuf *template, const char *pattern);
 
 /*
  * Generate the filename to be used for a pack file with checksum "sha1" and
