@@ -48,7 +48,7 @@ static void cleanup_children(int sig, int in_signal)
 
 		kill(p->pid, sig);
 
-		if (p->process->wait_after_clean) {
+		if (p->process && p->process->wait_after_clean) {
 			p->next = children_to_wait_for;
 			children_to_wait_for = p;
 		} else {
