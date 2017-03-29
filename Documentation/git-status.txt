@@ -189,6 +189,8 @@ Submodules have more state and instead report
 since modified content or untracked files in a submodule cannot be added
 via `git add` in the superproject to prepare a commit.
 
+'m' and '?' are applied recursively. For example if a nested submodule
+in a submodule contains an untracked file, this is reported as '?' as well.
 
 If -b is used the short-format status is preceded by a line
 

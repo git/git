@@ -356,7 +356,7 @@ test_expect_success 'status with untracked file in nested submodule (porcelain=2
 	git -C super status --porcelain=2 >output &&
 	sanitize_output output &&
 	diff output - <<-\EOF
-	1 .M S.M. 160000 160000 160000 HASH HASH sub1
+	1 .M S..U 160000 160000 160000 HASH HASH sub1
 	1 .M S..U 160000 160000 160000 HASH HASH sub2
 	1 .M S..U 160000 160000 160000 HASH HASH sub3
 	EOF
@@ -365,7 +365,7 @@ test_expect_success 'status with untracked file in nested submodule (porcelain=2
 test_expect_success 'status with untracked file in nested submodule (short)' '
 	git -C super status --short >output &&
 	diff output - <<-\EOF
-	 m sub1
+	 ? sub1
 	 ? sub2
 	 ? sub3
 	EOF
