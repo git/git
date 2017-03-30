@@ -12,12 +12,18 @@ Backward compatibility notes.
    release (yet).
 
  * The historical argument order "git merge <msg> HEAD <commit>..."
-   has been deprecated for quite some time, and will be removed in a
-   future release.
+   has been deprecated for quite some time, and is now removed.
 
  * The default location "~/.git-credential-cache/socket" for the
    socket used to communicate with the credential-cache daemon has
    been moved to "~/.cache/git/credential/socket".
+
+ * Git now avoids blindly falling back to ".git" when the setup
+   sequence said we are _not_ in Git repository.  A corner case that
+   happens to work right now may be broken by a call to die("BUG").
+   We've tried hard to locate such cases and fixed them, but there
+   might still be cases that need to be addressed--bug reports are
+   greatly appreciated.
 
 
 Updates since v2.12
@@ -145,6 +151,20 @@ UI, Workflows & Features
    doing other things, output from reset seeped out).  These, and
    other chattyness has been fixed.
 
+ * "git merge <message> HEAD <commit>" syntax that has been deprecated
+   since October 2007 has been removed.
+
+ * The refs completion for large number of refs has been sped up,
+   partly by giving up disambiguating ambiguous refs and partly by
+   eliminating most of the shell processing between 'git for-each-ref'
+   and 'ls-remote' and Bash's completion facility.
+
+ * On many keyboards, typing "@{" involves holding down SHIFT key and
+   one can easily end up with "@{Up..." when typing "@{upstream}".  As
+   the upstream/push keywords do not appear anywhere else in the syntax,
+   we can safely accept them case insensitively without introducing
+   ambiguity or confusion to solve this.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -227,6 +247,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * An earlier version of sha1dc/sha1.c that was merged to 'master'
    compiled incorrectly on Windows, which has been fixed.
+
+ * "what URL do we want to update this submodule?" and "are we
+   interested in this submodule?" are split into two distinct
+   concepts, and then the way used to express the latter got extended,
+   paving a way to make it easier to manage a project with many
+   submodules and make it possible to later extend use of multiple
+   worktrees for a project with submodules.
+
+ * Some debugging output from "git describe" were marked for l10n,
+   but some weren't.  Mark missing ones for l10n.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -377,8 +407,40 @@ notes for details).
  * Fix for NO_PTHREADS option.
    (merge 2225e1ea20 bw/grep-recurse-submodules later to maint).
 
+ * Git now avoids blindly falling back to ".git" when the setup
+   sequence said we are _not_ in Git repository.  A corner case that
+   happens to work right now may be broken by a call to die("BUG").
+   (merge b1ef400eec jk/no-looking-at-dotgit-outside-repo-final later to maint).
+
+ * A few commands that recently learned the "--recurse-submodule"
+   option misbehaved when started from a subdirectory of the
+   superproject.
+   (merge b2dfeb7c00 bw/recurse-submodules-relative-fix later to maint).
+
+ * FreeBSD implementation of getcwd(3) behaved differently when an
+   intermediate directory is unreadable/unsearchable depending on the
+   length of the buffer provided, which our strbuf_getcwd() was not
+   aware of.  strbuf_getcwd() has been taught to cope with it better.
+   (merge a54e938e5b rs/freebsd-getcwd-workaround later to maint).
+
+ * A recent update to "rebase -i" stopped running hooks for the "git
+   commit" command during "reword" action, which has been fixed.
+
+ * Removing an entry from a notes tree and then looking another note
+   entry from the resulting tree using the internal notes API
+   functions did not work as expected.  No in-tree users of the API
+   has such access pattern, but it still is worth fixing.
+
+ * "git receive-pack" could have been forced to die by attempting
+   allocate an unreasonably large amount of memory with a crafted push
+   certificate; this has been fixed.
+   (merge f2214dede9 bc/push-cert-receive-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge df2a6e38b7 jk/pager-in-use later to maint).
    (merge 75ec4a6cb0 ab/branch-list-doc later to maint).
    (merge 3e5b36c637 sg/skip-prefix-in-prettify-refname later to maint).
    (merge 2c5e2865cc jk/fast-import-cleanup later to maint).
+   (merge 4473060bc2 ab/test-readme-updates later to maint).
+   (merge 48a96972fd ab/doc-submitting later to maint).
+   (merge f5c2bc2b96 jk/make-coccicheck-detect-errors later to maint).
