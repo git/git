@@ -297,6 +297,19 @@ static char *get_symlink(const struct object_id *oid, const char *path)
 	return data;
 }
 
+static int checkout_path(unsigned mode, struct object_id *oid,
+			 const char *path, const struct checkout *state)
+{
+	struct cache_entry *ce;
+	int ret;
+
+	ce = make_cache_entry(mode, oid->hash, path, 0, 0);
+	ret = checkout_entry(ce, state, NULL);
+
+	free(ce);
+	return ret;
+}
+
 static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			int argc, const char **argv)
 {
@@ -306,7 +319,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct strbuf ldir = STRBUF_INIT, rdir = STRBUF_INIT;
 	struct strbuf wtdir = STRBUF_INIT;
 	size_t ldir_len, rdir_len, wtdir_len;
-	struct cache_entry *ce = xcalloc(1, sizeof(ce) + PATH_MAX + 1);
 	const char *workdir, *tmp;
 	int ret = 0, i;
 	FILE *fp;
@@ -377,7 +389,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		struct object_id loid, roid;
 		char status;
 		const char *src_path, *dst_path;
-		size_t src_path_len, dst_path_len;
 
 		if (starts_with(info.buf, "::"))
 			die(N_("combined diff formats('-c' and '--cc') are "
@@ -390,17 +401,14 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		if (strbuf_getline_nul(&lpath, fp))
 			break;
 		src_path = lpath.buf;
-		src_path_len = lpath.len;
 
 		i++;
 		if (status != 'C' && status != 'R') {
 			dst_path = src_path;
-			dst_path_len = src_path_len;
 		} else {
 			if (strbuf_getline_nul(&rpath, fp))
 				break;
 			dst_path = rpath.buf;
-			dst_path_len = rpath.len;
 		}
 
 		if (S_ISGITLINK(lmode) || S_ISGITLINK(rmode)) {
@@ -430,11 +438,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		}
 
 		if (lmode && status != 'C') {
-			ce->ce_mode = lmode;
-			oidcpy(&ce->oid, &loid);
-			strcpy(ce->name, src_path);
-			ce->ce_namelen = src_path_len;
-			if (checkout_entry(ce, &lstate, NULL))
+			if (checkout_path(lmode, &loid, src_path, &lstate))
 				return error("could not write '%s'", src_path);
 		}
 
@@ -451,11 +455,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			hashmap_add(&working_tree_dups, entry);
 
 			if (!use_wt_file(workdir, dst_path, &roid)) {
-				ce->ce_mode = rmode;
-				oidcpy(&ce->oid, &roid);
-				strcpy(ce->name, dst_path);
-				ce->ce_namelen = dst_path_len;
-				if (checkout_entry(ce, &rstate, NULL))
+				if (checkout_path(rmode, &roid, dst_path, &rstate))
 					return error("could not write '%s'",
 						     dst_path);
 			} else if (!is_null_oid(&roid)) {
@@ -625,7 +625,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		exit_cleanup(tmpdir, rc);
 
 finish:
-	free(ce);
 	strbuf_release(&ldir);
 	strbuf_release(&rdir);
 	strbuf_release(&wtdir);
