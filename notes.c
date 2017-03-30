@@ -153,8 +153,8 @@ static struct leaf_node *note_tree_find(struct notes_tree *t,
  * How to consolidate an int_node:
  * If there are > 1 non-NULL entries, give up and return non-zero.
  * Otherwise replace the int_node at the given index in the given parent node
- * with the only entry (or a NULL entry if no entries) from the given tree,
- * and return 0.
+ * with the only NOTE entry (or a NULL entry if no entries) from the given
+ * tree, and return 0.
  */
 static int note_tree_consolidate(struct int_node *tree,
 	struct int_node *parent, unsigned char index)
@@ -173,6 +173,8 @@ static int note_tree_consolidate(struct int_node *tree,
 		}
 	}
 
+	if (p && (GET_PTR_TYPE(p) != PTR_TYPE_NOTE))
+		return -2;
 	/* replace tree with p in parent[index] */
 	parent->a[index] = p;
 	free(tree);
