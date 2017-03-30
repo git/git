@@ -3013,8 +3013,9 @@ submodule.<name>.url::
 	The URL for a submodule. This variable is copied from the .gitmodules
 	file to the git config via 'git submodule init'. The user can change
 	the configured URL before obtaining the submodule via 'git submodule
-	update'. After obtaining the submodule, the presence of this variable
-	is used as a sign whether the submodule is of interest to git commands.
+	update'. If neither submodule.<name>.active or submodule.active are
+	set, the presence of this variable is used as a fallback to indicate
+	whether the submodule is of interest to git commands.
 	See linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
 
 submodule.<name>.update::
@@ -3051,6 +3052,16 @@ submodule.<name>.ignore::
 	both settings can be overridden on the command line by using the
 	"--ignore-submodules" option. The 'git submodule' commands are not
 	affected by this setting.
+
+submodule.<name>.active::
+	Boolean value indicating if the submodule is of interest to git
+	commands.  This config option takes precedence over the
+	submodule.active config option.
+
+submodule.active::
+	A repeated field which contains a pathspec used to match against a
+	submodule's path to determine if the submodule is of interest to git
+	commands.
 
 submodule.fetchJobs::
 	Specifies how many submodules are fetched/cloned at the same time.
