@@ -1529,8 +1529,43 @@ _git_gitk ()
 	_gitk
 }
 
-__git_match_ctag() {
-	awk "/^${1//\//\\/}/ { print \$1 }" "$2"
+# Lists matching symbol names from a tag (as in ctags) file.
+# 1: List symbol names matching this word.
+# 2: The tag file to list symbol names from.
+# 3: A prefix to be added to each listed symbol name (optional).
+# 4: A suffix to be appended to each listed symbol name (optional).
+__git_match_ctag () {
+	awk -v pfx="${3-}" -v sfx="${4-}" "
+		/^${1//\//\\/}/ { print pfx \$1 sfx }
+		" "$2"
+}
+
+# Complete symbol names from a tag file.
+# Usage: __git_complete_symbol [<option>]...
+# --tags=<file>: The tag file to list symbol names from instead of the
+#                default "tags".
+# --pfx=<prefix>: A prefix to be added to each symbol name.
+# --cur=<word>: The current symbol name to be completed.  Defaults to
+#               the current word to be completed.
+# --sfx=<suffix>: A suffix to be appended to each symbol name instead
+#                 of the default space.
+__git_complete_symbol () {
+	local tags=tags pfx="" cur_="${cur-}" sfx=" "
+
+	while test $# != 0; do
+		case "$1" in
+		--tags=*)	tags="${1##--tags=}" ;;
+		--pfx=*)	pfx="${1##--pfx=}" ;;
+		--cur=*)	cur_="${1##--cur=}" ;;
+		--sfx=*)	sfx="${1##--sfx=}" ;;
+		*)		return 1 ;;
+		esac
+		shift
+	done
+
+	if test -r "$tags"; then
+		__gitcomp_direct "$(__git_match_ctag "$cur_" "$tags" "$pfx" "$sfx")"
+	fi
 }
 
 _git_grep ()
@@ -1560,10 +1595,7 @@ _git_grep ()
 
 	case "$cword,$prev" in
 	2,*|*,-*)
-		if test -r tags; then
-			__gitcomp_nl "$(__git_match_ctag "$cur" tags)"
-			return
-		fi
+		__git_complete_symbol && return
 		;;
 	esac
 
@@ -1674,6 +1706,19 @@ _git_log ()
 	if [ -f "$__git_repo_path/MERGE_HEAD" ]; then
 		merge="--merge"
 	fi
+	case "$prev,$cur" in
+	-L,:*:*)
+		return	# fall back to Bash filename completion
+		;;
+	-L,:*)
+		__git_complete_symbol --cur="${cur#:}" --sfx=":"
+		return
+		;;
+	-G,*|-S,*)
+		__git_complete_symbol
+		return
+		;;
+	esac
 	case "$cur" in
 	--pretty=*|--format=*)
 		__gitcomp "$__git_log_pretty_formats $(__git_pretty_aliases)
@@ -1717,6 +1762,21 @@ _git_log ()
 			$__git_diff_common_options
 			--pickaxe-all --pickaxe-regex
 			"
+		return
+		;;
+	-L:*:*)
+		return	# fall back to Bash filename completion
+		;;
+	-L:*)
+		__git_complete_symbol --cur="${cur#-L:}" --sfx=":"
+		return
+		;;
+	-G*)
+		__git_complete_symbol --pfx="-G" --cur="${cur#-G}"
+		return
+		;;
+	-S*)
+		__git_complete_symbol --pfx="-S" --cur="${cur#-S}"
 		return
 		;;
 	esac
