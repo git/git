@@ -650,7 +650,7 @@ static void collect_submodules_from_diff(struct diff_queue_struct *q,
 		if (!S_ISGITLINK(p->two->mode))
 			continue;
 		commits = submodule_commits(submodules, p->two->path);
-		sha1_array_append(commits, p->two->oid.hash);
+		sha1_array_append(commits, &p->two->oid);
 	}
 }
 
@@ -817,7 +817,7 @@ static void submodule_collect_changed_cb(struct diff_queue_struct *q,
 static int add_sha1_to_array(const char *ref, const struct object_id *oid,
 			     int flags, void *data)
 {
-	sha1_array_append(data, oid->hash);
+	sha1_array_append(data, oid);
 	return 0;
 }
 
@@ -828,7 +828,7 @@ void check_for_new_submodule_commits(struct object_id *oid)
 		initialized_fetch_ref_tips = 1;
 	}
 
-	sha1_array_append(&ref_tips_after_fetch, oid->hash);
+	sha1_array_append(&ref_tips_after_fetch, oid);
 }
 
 static int add_sha1_to_argv(const unsigned char sha1[20], void *data)

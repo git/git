@@ -106,7 +106,7 @@ int parse_opt_object_name(const struct option *opt, const char *arg, int unset)
 		return -1;
 	if (get_oid(arg, &oid))
 		return error(_("malformed object name '%s'"), arg);
-	sha1_array_append(opt->value, oid.hash);
+	sha1_array_append(opt->value, &oid);
 	return 0;
 }
 

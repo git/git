@@ -344,7 +344,7 @@ static void get_merge_heads(struct sha1_array *merge_heads)
 			continue;  /* invalid line: does not start with SHA1 */
 		if (starts_with(sb.buf + GIT_SHA1_HEXSZ, "\tnot-for-merge\t"))
 			continue;  /* ref is not-for-merge */
-		sha1_array_append(merge_heads, oid.hash);
+		sha1_array_append(merge_heads, &oid);
 	}
 	fclose(fp);
 	strbuf_release(&sb);

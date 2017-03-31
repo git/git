@@ -1042,7 +1042,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		struct object_id *oid = si->shallow->oid;
 		for (i = 0; i < si->shallow->nr; i++)
 			if (has_object_file(&oid[i]))
-				sha1_array_append(&extra, oid[i].hash);
+				sha1_array_append(&extra, &oid[i]);
 		if (extra.nr) {
 			setup_alternate_shallow(&shallow_lock,
 						&alternate_shallow_file,
@@ -1060,7 +1060,7 @@ static void update_shallow(struct fetch_pack_args *args,
 	if (!si->nr_ours && !si->nr_theirs)
 		return;
 	for (i = 0; i < nr_sought; i++)
-		sha1_array_append(&ref, sought[i]->old_oid.hash);
+		sha1_array_append(&ref, &sought[i]->old_oid);
 	si->ref = &ref;
 
 	if (args->update_shallow) {
@@ -1078,9 +1078,9 @@ static void update_shallow(struct fetch_pack_args *args,
 			return;
 		}
 		for (i = 0; i < si->nr_ours; i++)
-			sha1_array_append(&extra, oid[si->ours[i]].hash);
+			sha1_array_append(&extra, &oid[si->ours[i]]);
 		for (i = 0; i < si->nr_theirs; i++)
-			sha1_array_append(&extra, oid[si->theirs[i]].hash);
+			sha1_array_append(&extra, &oid[si->theirs[i]]);
 		setup_alternate_shallow(&shallow_lock,
 					&alternate_shallow_file,
 					&extra);

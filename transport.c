@@ -1027,7 +1027,8 @@ int transport_push(struct transport *transport,
 
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
-					sha1_array_append(&commits, ref->new_oid.hash);
+					sha1_array_append(&commits,
+							  &ref->new_oid);
 
 			if (!push_unpushed_submodules(&commits,
 						      transport->remote->name,
@@ -1048,7 +1049,8 @@ int transport_push(struct transport *transport,
 
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
-					sha1_array_append(&commits, ref->new_oid.hash);
+					sha1_array_append(&commits,
+							  &ref->new_oid);
 
 			if (find_unpushed_submodules(&commits, transport->remote->name,
 						&needs_pushing)) {

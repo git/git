@@ -2,10 +2,10 @@
 #include "sha1-array.h"
 #include "sha1-lookup.h"
 
-void sha1_array_append(struct sha1_array *array, const unsigned char *sha1)
+void sha1_array_append(struct sha1_array *array, const struct object_id *oid)
 {
 	ALLOC_GROW(array->oid, array->nr + 1, array->alloc);
-	hashcpy(array->oid[array->nr++].hash, sha1);
+	oidcpy(&array->oid[array->nr++], oid);
 	array->sorted = 0;
 }
 

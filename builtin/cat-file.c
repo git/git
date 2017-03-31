@@ -413,7 +413,7 @@ static int batch_loose_object(const struct object_id *oid,
 			      const char *path,
 			      void *data)
 {
-	sha1_array_append(data, oid->hash);
+	sha1_array_append(data, oid);
 	return 0;
 }
 
@@ -422,7 +422,7 @@ static int batch_packed_object(const struct object_id *oid,
 			       uint32_t pos,
 			       void *data)
 {
-	sha1_array_append(data, oid->hash);
+	sha1_array_append(data, oid);
 	return 0;
 }
 

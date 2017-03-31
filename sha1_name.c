@@ -428,7 +428,7 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 
 static int collect_ambiguous(const struct object_id *oid, void *data)
 {
-	sha1_array_append(data, oid->hash);
+	sha1_array_append(data, oid);
 	return 0;
 }
 

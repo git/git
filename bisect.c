@@ -413,9 +413,9 @@ static int register_ref(const char *refname, const struct object_id *oid,
 		current_bad_oid = xmalloc(sizeof(*current_bad_oid));
 		oidcpy(current_bad_oid, oid);
 	} else if (starts_with(refname, good_prefix.buf)) {
-		sha1_array_append(&good_revs, oid->hash);
+		sha1_array_append(&good_revs, oid);
 	} else if (starts_with(refname, "skip-")) {
-		sha1_array_append(&skipped_revs, oid->hash);
+		sha1_array_append(&skipped_revs, oid);
 	}
 
 	strbuf_release(&good_prefix);
