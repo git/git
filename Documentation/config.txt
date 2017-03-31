@@ -2957,6 +2957,10 @@ status.branch::
 	Set to true to enable --branch by default in linkgit:git-status[1].
 	The option --no-branch takes precedence over this variable.
 
+status.inprogress::
+	Set to true to enable --inprogress by default in linkgit:git-status[1].
+	The option --no-inprogress takes precedence over this variable.
+
 status.displayCommentPrefix::
 	If set to true, linkgit:git-status[1] will insert a comment
 	prefix before each output line (starting with
