@@ -510,8 +510,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int push_cert = -1;
 	int rc;
 	const char *repo = NULL;	/* default repository */
-	static struct string_list push_options = STRING_LIST_INIT_DUP;
-	static struct string_list_item *item;
+	struct string_list push_options = STRING_LIST_INIT_DUP;
+	const struct string_list_item *item;
 
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -584,6 +584,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			die(_("push options must not have new line characters"));
 
 	rc = do_push(repo, flags, &push_options);
+	string_list_clear(&push_options, 0);
 	if (rc == -1)
 		usage_with_options(push_usage, options);
 	else
