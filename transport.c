@@ -116,8 +116,8 @@ struct git_transport_data {
 	struct child_process *conn;
 	int fd[2];
 	unsigned got_remote_heads : 1;
-	struct sha1_array extra_have;
-	struct sha1_array shallow;
+	struct oid_array extra_have;
+	struct oid_array shallow;
 };
 
 static int set_git_option(struct git_transport_options *opts,
@@ -1023,20 +1023,20 @@ int transport_push(struct transport *transport,
 			      TRANSPORT_RECURSE_SUBMODULES_ONLY)) &&
 		    !is_bare_repository()) {
 			struct ref *ref = remote_refs;
-			struct sha1_array commits = SHA1_ARRAY_INIT;
+			struct oid_array commits = OID_ARRAY_INIT;
 
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
-					sha1_array_append(&commits,
+					oid_array_append(&commits,
 							  &ref->new_oid);
 
 			if (!push_unpushed_submodules(&commits,
 						      transport->remote->name,
 						      pretend)) {
-				sha1_array_clear(&commits);
+				oid_array_clear(&commits);
 				die("Failed to push all needed submodules!");
 			}
-			sha1_array_clear(&commits);
+			oid_array_clear(&commits);
 		}
 
 		if (((flags & TRANSPORT_RECURSE_SUBMODULES_CHECK) ||
@@ -1045,20 +1045,20 @@ int transport_push(struct transport *transport,
 		      !pretend)) && !is_bare_repository()) {
 			struct ref *ref = remote_refs;
 			struct string_list needs_pushing = STRING_LIST_INIT_DUP;
-			struct sha1_array commits = SHA1_ARRAY_INIT;
+			struct oid_array commits = OID_ARRAY_INIT;
 
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
-					sha1_array_append(&commits,
+					oid_array_append(&commits,
 							  &ref->new_oid);
 
 			if (find_unpushed_submodules(&commits, transport->remote->name,
 						&needs_pushing)) {
-				sha1_array_clear(&commits);
+				oid_array_clear(&commits);
 				die_with_unpushed_submodules(&needs_pushing);
 			}
 			string_list_clear(&needs_pushing, 0);
-			sha1_array_clear(&commits);
+			oid_array_clear(&commits);
 		}
 
 		if (!(flags & TRANSPORT_RECURSE_SUBMODULES_ONLY))

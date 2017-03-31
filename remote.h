@@ -149,11 +149,11 @@ int check_ref_type(const struct ref *ref, int flags);
  */
 void free_refs(struct ref *ref);
 
-struct sha1_array;
+struct oid_array;
 extern struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 				     struct ref **list, unsigned int flags,
-				     struct sha1_array *extra_have,
-				     struct sha1_array *shallow);
+				     struct oid_array *extra_have,
+				     struct oid_array *shallow);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);

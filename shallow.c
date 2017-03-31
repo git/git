@@ -260,7 +260,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 }
 
 static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
-				   const struct sha1_array *extra,
+				   const struct oid_array *extra,
 				   unsigned flags)
 {
 	struct write_shallow_data data;
@@ -281,14 +281,14 @@ static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
 }
 
 int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
-			  const struct sha1_array *extra)
+			  const struct oid_array *extra)
 {
 	return write_shallow_commits_1(out, use_pack_protocol, extra, 0);
 }
 
 static struct tempfile temporary_shallow;
 
-const char *setup_temporary_shallow(const struct sha1_array *extra)
+const char *setup_temporary_shallow(const struct oid_array *extra)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
@@ -312,7 +312,7 @@ const char *setup_temporary_shallow(const struct sha1_array *extra)
 
 void setup_alternate_shallow(struct lock_file *shallow_lock,
 			     const char **alternate_shallow_file,
-			     const struct sha1_array *extra)
+			     const struct oid_array *extra)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
@@ -385,7 +385,7 @@ struct trace_key trace_shallow = TRACE_KEY_INIT(SHALLOW);
  * Step 1, split sender shallow commits into "ours" and "theirs"
  * Step 2, clean "ours" based on .git/shallow
  */
-void prepare_shallow_info(struct shallow_info *info, struct sha1_array *sa)
+void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 {
 	int i;
 	trace_printf_key(&trace_shallow, "shallow: prepare_shallow_info\n");
@@ -560,7 +560,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 				    uint32_t **used, int *ref_status)
 {
 	struct object_id *oid = info->shallow->oid;
-	struct sha1_array *ref = info->ref;
+	struct oid_array *ref = info->ref;
 	unsigned int i, nr;
 	int *shallow, nr_shallow = 0;
 	struct paint_info pi;

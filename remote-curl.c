@@ -163,7 +163,7 @@ struct discovery {
 	char *buf;
 	size_t len;
 	struct ref *refs;
-	struct sha1_array shallow;
+	struct oid_array shallow;
 	unsigned proto_git : 1;
 };
 static struct discovery *last_discovery;

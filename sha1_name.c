@@ -426,13 +426,13 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 
 static int collect_ambiguous(const struct object_id *oid, void *data)
 {
-	sha1_array_append(data, oid);
+	oid_array_append(data, oid);
 	return 0;
 }
 
 int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
 {
-	struct sha1_array collect = SHA1_ARRAY_INIT;
+	struct oid_array collect = OID_ARRAY_INIT;
 	struct disambiguate_state ds;
 	int ret;
 
@@ -445,8 +445,8 @@ int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
 	find_short_object_filename(&ds);
 	find_short_packed_object(&ds);
 
-	ret = sha1_array_for_each_unique(&collect, fn, cb_data);
-	sha1_array_clear(&collect);
+	ret = oid_array_for_each_unique(&collect, fn, cb_data);
+	oid_array_clear(&collect);
 	return ret;
 }
 

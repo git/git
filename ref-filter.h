@@ -51,7 +51,7 @@ struct ref_array {
 
 struct ref_filter {
 	const char **name_patterns;
-	struct sha1_array points_at;
+	struct oid_array points_at;
 	struct commit_list *with_commit;
 
 	enum {

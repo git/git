@@ -261,7 +261,7 @@ extern struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n,
 /* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
 
-struct sha1_array;
+struct oid_array;
 struct ref;
 extern int register_shallow(const unsigned char *sha1);
 extern int unregister_shallow(const unsigned char *sha1);
@@ -273,18 +273,18 @@ extern struct commit_list *get_shallow_commits_by_rev_list(
 		int ac, const char **av, int shallow_flag, int not_shallow_flag);
 extern void set_alternate_shallow_file(const char *path, int override);
 extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
-				 const struct sha1_array *extra);
+				 const struct oid_array *extra);
 extern void setup_alternate_shallow(struct lock_file *shallow_lock,
 				    const char **alternate_shallow_file,
-				    const struct sha1_array *extra);
-extern const char *setup_temporary_shallow(const struct sha1_array *extra);
+				    const struct oid_array *extra);
+extern const char *setup_temporary_shallow(const struct oid_array *extra);
 extern void advertise_shallow_grafts(int);
 
 struct shallow_info {
-	struct sha1_array *shallow;
+	struct oid_array *shallow;
 	int *ours, nr_ours;
 	int *theirs, nr_theirs;
-	struct sha1_array *ref;
+	struct oid_array *ref;
 
 	/* for receive-pack */
 	uint32_t **used_shallow;
@@ -295,7 +295,7 @@ struct shallow_info {
 	int nr_commits;
 };
 
-extern void prepare_shallow_info(struct shallow_info *, struct sha1_array *);
+extern void prepare_shallow_info(struct shallow_info *, struct oid_array *);
 extern void clear_shallow_info(struct shallow_info *);
 extern void remove_nonexistent_theirs_shallow(struct shallow_info *);
 extern void assign_shallow_commits_to_refs(struct shallow_info *info,

@@ -34,7 +34,7 @@ struct fsck_options {
 	fsck_error error_func;
 	unsigned strict:1;
 	int *msg_type;
-	struct sha1_array *skiplist;
+	struct oid_array *skiplist;
 	struct decoration *object_names;
 };
 

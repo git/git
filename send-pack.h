@@ -32,6 +32,6 @@ int option_parse_push_signed(const struct option *opt,
 
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
-	      struct ref *remote_refs, struct sha1_array *extra_have);
+	      struct ref *remote_refs, struct oid_array *extra_have);
 
 #endif

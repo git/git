@@ -413,7 +413,7 @@ static int batch_loose_object(const struct object_id *oid,
 			      const char *path,
 			      void *data)
 {
-	sha1_array_append(data, oid);
+	oid_array_append(data, oid);
 	return 0;
 }
 
@@ -422,7 +422,7 @@ static int batch_packed_object(const struct object_id *oid,
 			       uint32_t pos,
 			       void *data)
 {
-	sha1_array_append(data, oid);
+	oid_array_append(data, oid);
 	return 0;
 }
 
@@ -462,7 +462,7 @@ static int batch_objects(struct batch_options *opt)
 		data.info.typep = &data.type;
 
 	if (opt->all_objects) {
-		struct sha1_array sa = SHA1_ARRAY_INIT;
+		struct oid_array sa = OID_ARRAY_INIT;
 		struct object_cb_data cb;
 
 		for_each_loose_object(batch_loose_object, &sa, 0);
@@ -470,9 +470,9 @@ static int batch_objects(struct batch_options *opt)
 
 		cb.opt = opt;
 		cb.expand = &data;
-		sha1_array_for_each_unique(&sa, batch_object_cb, &cb);
+		oid_array_for_each_unique(&sa, batch_object_cb, &cb);
 
-		sha1_array_clear(&sa);
+		oid_array_clear(&sa);
 		return 0;
 	}
 

@@ -1311,7 +1311,7 @@ static const char *path_path(void *obj)
 
 /* find set of paths that every parent touches */
 static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
-	const struct sha1_array *parents, struct diff_options *opt)
+	const struct oid_array *parents, struct diff_options *opt)
 {
 	struct combine_diff_path *paths = NULL;
 	int i, num_parent = parents->nr;
@@ -1359,7 +1359,7 @@ static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
  * rename/copy detection, etc, comparing all trees simultaneously (= faster).
  */
 static struct combine_diff_path *find_paths_multitree(
-	const unsigned char *sha1, const struct sha1_array *parents,
+	const unsigned char *sha1, const struct oid_array *parents,
 	struct diff_options *opt)
 {
 	int i, nparent = parents->nr;
@@ -1384,7 +1384,7 @@ static struct combine_diff_path *find_paths_multitree(
 
 
 void diff_tree_combined(const unsigned char *sha1,
-			const struct sha1_array *parents,
+			const struct oid_array *parents,
 			int dense,
 			struct rev_info *rev)
 {
@@ -1532,12 +1532,12 @@ void diff_tree_combined_merge(const struct commit *commit, int dense,
 			      struct rev_info *rev)
 {
 	struct commit_list *parent = get_saved_parents(rev, commit);
-	struct sha1_array parents = SHA1_ARRAY_INIT;
+	struct oid_array parents = OID_ARRAY_INIT;
 
 	while (parent) {
-		sha1_array_append(&parents, &parent->item->object.oid);
+		oid_array_append(&parents, &parent->item->object.oid);
 		parent = parent->next;
 	}
 	diff_tree_combined(commit->object.oid.hash, &parents, dense, rev);
-	sha1_array_clear(&parents);
+	oid_array_clear(&parents);
 }

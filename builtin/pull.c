@@ -330,7 +330,7 @@ static int git_pull_config(const char *var, const char *value, void *cb)
  * Appends merge candidates from FETCH_HEAD that are not marked not-for-merge
  * into merge_heads.
  */
-static void get_merge_heads(struct sha1_array *merge_heads)
+static void get_merge_heads(struct oid_array *merge_heads)
 {
 	const char *filename = git_path("FETCH_HEAD");
 	FILE *fp;
@@ -344,7 +344,7 @@ static void get_merge_heads(struct sha1_array *merge_heads)
 			continue;  /* invalid line: does not start with SHA1 */
 		if (starts_with(sb.buf + GIT_SHA1_HEXSZ, "\tnot-for-merge\t"))
 			continue;  /* ref is not-for-merge */
-		sha1_array_append(merge_heads, &oid);
+		oid_array_append(merge_heads, &oid);
 	}
 	fclose(fp);
 	strbuf_release(&sb);
@@ -769,7 +769,7 @@ static int run_rebase(const struct object_id *curr_head,
 int cmd_pull(int argc, const char **argv, const char *prefix)
 {
 	const char *repo, **refspecs;
-	struct sha1_array merge_heads = SHA1_ARRAY_INIT;
+	struct oid_array merge_heads = OID_ARRAY_INIT;
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
 

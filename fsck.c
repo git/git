@@ -132,7 +132,7 @@ static int fsck_msg_type(enum fsck_msg_id msg_id,
 
 static void init_skiplist(struct fsck_options *options, const char *path)
 {
-	static struct sha1_array skiplist = SHA1_ARRAY_INIT;
+	static struct oid_array skiplist = OID_ARRAY_INIT;
 	int sorted, fd;
 	char buffer[GIT_MAX_HEXSZ + 1];
 	struct object_id oid;
@@ -156,7 +156,7 @@ static void init_skiplist(struct fsck_options *options, const char *path)
 			break;
 		if (parse_oid_hex(buffer, &oid, &p) || *p != '\n')
 			die("Invalid SHA-1: %s", buffer);
-		sha1_array_append(&skiplist, &oid);
+		oid_array_append(&skiplist, &oid);
 		if (sorted && skiplist.nr > 1 &&
 				oidcmp(&skiplist.oid[skiplist.nr - 2],
 				       &oid) > 0)
@@ -280,7 +280,7 @@ static int report(struct fsck_options *options, struct object *object,
 		return 0;
 
 	if (options->skiplist && object &&
-			sha1_array_lookup(options->skiplist, &object->oid) >= 0)
+			oid_array_lookup(options->skiplist, &object->oid) >= 0)
 		return 0;
 
 	if (msg_type == FSCK_FATAL)

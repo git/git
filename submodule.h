@@ -3,7 +3,7 @@
 
 struct diff_options;
 struct argv_array;
-struct sha1_array;
+struct oid_array;
 
 enum {
 	RECURSE_SUBMODULES_ONLY = -5,
@@ -73,10 +73,10 @@ extern int merge_submodule(unsigned char result[20], const char *path,
 			   const unsigned char base[20],
 			   const unsigned char a[20],
 			   const unsigned char b[20], int search);
-extern int find_unpushed_submodules(struct sha1_array *commits,
+extern int find_unpushed_submodules(struct oid_array *commits,
 				    const char *remotes_name,
 				    struct string_list *needs_pushing);
-extern int push_unpushed_submodules(struct sha1_array *commits,
+extern int push_unpushed_submodules(struct oid_array *commits,
 				    const char *remotes_name,
 				    int dry_run);
 extern void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);

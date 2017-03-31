@@ -2668,7 +2668,7 @@ static int has_sha1_pack_kept_or_nonlocal(const unsigned char *sha1)
  *
  * This is filled by get_object_list.
  */
-static struct sha1_array recent_objects;
+static struct oid_array recent_objects;
 
 static int loosened_object_can_be_discarded(const struct object_id *oid,
 					    unsigned long mtime)
@@ -2677,7 +2677,7 @@ static int loosened_object_can_be_discarded(const struct object_id *oid,
 		return 0;
 	if (mtime > unpack_unreachable_expiration)
 		return 0;
-	if (sha1_array_lookup(&recent_objects, oid) >= 0)
+	if (oid_array_lookup(&recent_objects, oid) >= 0)
 		return 0;
 	return 1;
 }
@@ -2739,12 +2739,12 @@ static void record_recent_object(struct object *obj,
 				 const char *name,
 				 void *data)
 {
-	sha1_array_append(&recent_objects, &obj->oid);
+	oid_array_append(&recent_objects, &obj->oid);
 }
 
 static void record_recent_commit(struct commit *commit, void *data)
 {
-	sha1_array_append(&recent_objects, &commit->object.oid);
+	oid_array_append(&recent_objects, &commit->object.oid);
 }
 
 static void get_object_list(int ac, const char **av)
@@ -2812,7 +2812,7 @@ static void get_object_list(int ac, const char **av)
 	if (unpack_unreachable)
 		loosen_unused_packed_objects(&revs);
 
-	sha1_array_clear(&recent_objects);
+	oid_array_clear(&recent_objects);
 }
 
 static int option_parse_index_version(const struct option *opt,

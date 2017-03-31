@@ -50,7 +50,7 @@ static void feed_object(const unsigned char *sha1, FILE *fh, int negative)
 /*
  * Make a pack stream and spit it out into file descriptor fd
  */
-static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, struct send_pack_args *args)
+static int pack_objects(int fd, struct ref *refs, struct oid_array *extra, struct send_pack_args *args)
 {
 	/*
 	 * The child becomes pack-objects --revs; we feed
@@ -376,7 +376,7 @@ static void reject_invalid_nonce(const char *nonce, int len)
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs,
-	      struct sha1_array *extra_have)
+	      struct oid_array *extra_have)
 {
 	int in = fd[0];
 	int out = fd[1];

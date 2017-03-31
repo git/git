@@ -12,8 +12,8 @@
 #include "sha1-array.h"
 #include "argv-array.h"
 
-static struct sha1_array good_revs;
-static struct sha1_array skipped_revs;
+static struct oid_array good_revs;
+static struct oid_array skipped_revs;
 
 static struct object_id *current_bad_oid;
 
@@ -413,9 +413,9 @@ static int register_ref(const char *refname, const struct object_id *oid,
 		current_bad_oid = xmalloc(sizeof(*current_bad_oid));
 		oidcpy(current_bad_oid, oid);
 	} else if (starts_with(refname, good_prefix.buf)) {
-		sha1_array_append(&good_revs, oid);
+		oid_array_append(&good_revs, oid);
 	} else if (starts_with(refname, "skip-")) {
-		sha1_array_append(&skipped_revs, oid);
+		oid_array_append(&skipped_revs, oid);
 	}
 
 	strbuf_release(&good_prefix);
@@ -451,7 +451,7 @@ static void read_bisect_paths(struct argv_array *array)
 	fclose(fp);
 }
 
-static char *join_sha1_array_hex(struct sha1_array *array, char delim)
+static char *join_sha1_array_hex(struct oid_array *array, char delim)
 {
 	struct strbuf joined_hexs = STRBUF_INIT;
 	int i;
@@ -499,7 +499,7 @@ struct commit_list *filter_skipped(struct commit_list *list,
 	while (list) {
 		struct commit_list *next = list->next;
 		list->next = NULL;
-		if (0 <= sha1_array_lookup(&skipped_revs, &list->item->object.oid)) {
+		if (0 <= oid_array_lookup(&skipped_revs, &list->item->object.oid)) {
 			if (skipped_first && !*skipped_first)
 				*skipped_first = 1;
 			/* Move current to tried list */
@@ -789,9 +789,9 @@ static void check_merge_bases(int no_checkout)
 		const struct object_id *mb = &result->item->object.oid;
 		if (!oidcmp(mb, current_bad_oid)) {
 			handle_bad_merge_base();
-		} else if (0 <= sha1_array_lookup(&good_revs, mb)) {
+		} else if (0 <= oid_array_lookup(&good_revs, mb)) {
 			continue;
-		} else if (0 <= sha1_array_lookup(&skipped_revs, mb)) {
+		} else if (0 <= oid_array_lookup(&skipped_revs, mb)) {
 			handle_skipped_merge_base(mb);
 		} else {
 			printf(_("Bisecting: a merge base must be tested\n"));
