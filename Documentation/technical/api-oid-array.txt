@@ -1,7 +1,7 @@
-sha1-array API
+oid-array API
 ==============
 
-The sha1-array API provides storage and manipulation of sets of SHA-1
+The oid-array API provides storage and manipulation of sets of object
 identifiers. The emphasis is on storage and processing efficiency,
 making them suitable for large lists. Note that the ordering of items is
 not preserved over some operations.
@@ -9,10 +9,10 @@ not preserved over some operations.
 Data Structures
 ---------------
 
-`struct sha1_array`::
+`struct oid_array`::
 
-	A single array of SHA-1 hashes. This should be initialized by
-	assignment from `SHA1_ARRAY_INIT`.  The `sha1` member contains
+	A single array of object IDs. This should be initialized by
+	assignment from `OID_ARRAY_INIT`.  The `oid` member contains
 	the actual data. The `nr` member contains the number of items in
 	the set.  The `alloc` and `sorted` members are used internally,
 	and should not be needed by API callers.
@@ -20,22 +20,22 @@ Data Structures
 Functions
 ---------
 
-`sha1_array_append`::
-	Add an item to the set. The sha1 will be placed at the end of
+`oid_array_append`::
+	Add an item to the set. The object ID will be placed at the end of
 	the array (but note that some operations below may lose this
 	ordering).
 
-`sha1_array_lookup`::
-	Perform a binary search of the array for a specific sha1.
+`oid_array_lookup`::
+	Perform a binary search of the array for a specific object ID.
 	If found, returns the offset (in number of elements) of the
-	sha1. If not found, returns a negative integer. If the array is
-	not sorted, this function has the side effect of sorting it.
+	object ID. If not found, returns a negative integer. If the array
+	is not sorted, this function has the side effect of sorting it.
 
-`sha1_array_clear`::
+`oid_array_clear`::
 	Free all memory associated with the array and return it to the
 	initial, empty state.
 
-`sha1_array_for_each_unique`::
+`oid_array_for_each_unique`::
 	Efficiently iterate over each unique element of the list,
 	executing the callback function for each one. If the array is
 	not sorted, this function has the side effect of sorting it. If
@@ -47,25 +47,25 @@ Examples
 --------
 
 -----------------------------------------
-int print_callback(const unsigned char sha1[20],
+int print_callback(const struct object_id *oid,
 		    void *data)
 {
-	printf("%s\n", sha1_to_hex(sha1));
+	printf("%s\n", oid_to_hex(oid));
 	return 0; /* always continue */
 }
 
 void some_func(void)
 {
-	struct sha1_array hashes = SHA1_ARRAY_INIT;
-	unsigned char sha1[20];
+	struct sha1_array hashes = OID_ARRAY_INIT;
+	struct object_id oid;
 
 	/* Read objects into our set */
-	while (read_object_from_stdin(sha1))
-		sha1_array_append(&hashes, sha1);
+	while (read_object_from_stdin(oid.hash))
+		oid_array_append(&hashes, &oid);
 
 	/* Check if some objects are in our set */
-	while (read_object_from_stdin(sha1)) {
-		if (sha1_array_lookup(&hashes, sha1) >= 0)
+	while (read_object_from_stdin(oid.hash)) {
+		if (oid_array_lookup(&hashes, &oid) >= 0)
 			printf("it's in there!\n");
 
 	/*
@@ -75,6 +75,6 @@ void some_func(void)
 	 * Instead, this will sort once and then skip duplicates
 	 * in linear time.
 	 */
-	sha1_array_for_each_unique(&hashes, print_callback, NULL);
+	oid_array_for_each_unique(&hashes, print_callback, NULL);
 }
 -----------------------------------------
