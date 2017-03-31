@@ -746,4 +746,33 @@ test_expect_success 'diff --submodule=diff with .git file' '
 	test_cmp expected actual
 '
 
+test_expect_success 'setup nested submodule' '
+	git submodule add -f ./sm2 &&
+	git commit -a -m "add sm2" &&
+	git -C sm2 submodule add ../sm2 nested &&
+	git -C sm2 commit -a -m "nested sub"
+'
+
+test_expect_success 'move nested submodule HEAD' '
+	echo "nested content" >sm2/nested/file &&
+	git -C sm2/nested add file &&
+	git -C sm2/nested commit --allow-empty -m "new HEAD"
+'
+
+test_expect_success 'diff --submodule=diff with moved nested submodule HEAD' '
+	cat >expected <<-EOF &&
+	Submodule nested a5a65c9..b55928c:
+	diff --git a/nested/file b/nested/file
+	new file mode 100644
+	index 0000000..ca281f5
+	--- /dev/null
+	+++ b/nested/file
+	@@ -0,0 +1 @@
+	+nested content
+	EOF
+	git -C sm2 diff --submodule=diff >actual 2>err &&
+	test_must_be_empty err &&
+	test_cmp expected actual
+'
+
 test_done
