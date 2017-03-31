@@ -26,11 +26,11 @@ static const unsigned char *sha1_access(size_t index, void *table)
 	return array[index].hash;
 }
 
-int sha1_array_lookup(struct sha1_array *array, const unsigned char *sha1)
+int sha1_array_lookup(struct sha1_array *array, const struct object_id *oid)
 {
 	if (!array->sorted)
 		sha1_array_sort(array);
-	return sha1_pos(sha1, array->oid, array->nr, sha1_access);
+	return sha1_pos(oid->hash, array->oid, array->nr, sha1_access);
 }
 
 void sha1_array_clear(struct sha1_array *array)

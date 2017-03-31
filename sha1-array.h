@@ -11,7 +11,7 @@ struct sha1_array {
 #define SHA1_ARRAY_INIT { NULL, 0, 0, 0 }
 
 void sha1_array_append(struct sha1_array *array, const struct object_id *oid);
-int sha1_array_lookup(struct sha1_array *array, const unsigned char *sha1);
+int sha1_array_lookup(struct sha1_array *array, const struct object_id *oid);
 void sha1_array_clear(struct sha1_array *array);
 
 typedef int (*for_each_sha1_fn)(const unsigned char sha1[20],
