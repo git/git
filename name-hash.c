@@ -342,7 +342,9 @@ static int handle_range_dir(
 	 * Scan forward in the index array for index entries having the same
 	 * path prefix (that are also in this directory).
 	 */
-	if (strncmp(istate->cache[k_start + 1]->name, prefix->buf, prefix->len) > 0)
+	if (k_start + 1 >= k_end)
+		k = k_end;
+	else if (strncmp(istate->cache[k_start + 1]->name, prefix->buf, prefix->len) > 0)
 		k = k_start + 1;
 	else if (strncmp(istate->cache[k_end - 1]->name, prefix->buf, prefix->len) == 0)
 		k = k_end;
