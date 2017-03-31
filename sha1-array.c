@@ -43,7 +43,7 @@ void sha1_array_clear(struct sha1_array *array)
 }
 
 int sha1_array_for_each_unique(struct sha1_array *array,
-				for_each_sha1_fn fn,
+				for_each_oid_fn fn,
 				void *data)
 {
 	int i;
@@ -55,7 +55,7 @@ int sha1_array_for_each_unique(struct sha1_array *array,
 		int ret;
 		if (i > 0 && !oidcmp(array->oid + i, array->oid + i - 1))
 			continue;
-		ret = fn(array->oid[i].hash, data);
+		ret = fn(array->oid + i, data);
 		if (ret)
 			return ret;
 	}

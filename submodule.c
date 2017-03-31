@@ -551,18 +551,18 @@ static int has_remote(const char *refname, const struct object_id *oid,
 	return 1;
 }
 
-static int append_sha1_to_argv(const unsigned char sha1[20], void *data)
+static int append_oid_to_argv(const struct object_id *oid, void *data)
 {
 	struct argv_array *argv = data;
-	argv_array_push(argv, sha1_to_hex(sha1));
+	argv_array_push(argv, oid_to_hex(oid));
 	return 0;
 }
 
-static int check_has_commit(const unsigned char sha1[20], void *data)
+static int check_has_commit(const struct object_id *oid, void *data)
 {
 	int *has_commit = data;
 
-	if (!lookup_commit_reference(sha1))
+	if (!lookup_commit_reference(oid->hash))
 		*has_commit = 0;
 
 	return 0;
@@ -601,7 +601,7 @@ static int submodule_needs_pushing(const char *path, struct sha1_array *commits)
 		int needs_pushing = 0;
 
 		argv_array_push(&cp.args, "rev-list");
-		sha1_array_for_each_unique(commits, append_sha1_to_argv, &cp.args);
+		sha1_array_for_each_unique(commits, append_oid_to_argv, &cp.args);
 		argv_array_pushl(&cp.args, "--not", "--remotes", "-n", "1" , NULL);
 
 		prepare_submodule_repo_env(&cp.env_array);
@@ -687,7 +687,7 @@ int find_unpushed_submodules(struct sha1_array *commits,
 
 	/* argv.argv[0] will be ignored by setup_revisions */
 	argv_array_push(&argv, "find_unpushed_submodules");
-	sha1_array_for_each_unique(commits, append_sha1_to_argv, &argv);
+	sha1_array_for_each_unique(commits, append_oid_to_argv, &argv);
 	argv_array_push(&argv, "--not");
 	argv_array_pushf(&argv, "--remotes=%s", remotes_name);
 
@@ -831,9 +831,9 @@ void check_for_new_submodule_commits(struct object_id *oid)
 	sha1_array_append(&ref_tips_after_fetch, oid);
 }
 
-static int add_sha1_to_argv(const unsigned char sha1[20], void *data)
+static int add_oid_to_argv(const struct object_id *oid, void *data)
 {
-	argv_array_push(data, sha1_to_hex(sha1));
+	argv_array_push(data, oid_to_hex(oid));
 	return 0;
 }
 
@@ -850,10 +850,10 @@ static void calculate_changed_submodule_paths(void)
 	init_revisions(&rev, NULL);
 	argv_array_push(&argv, "--"); /* argv[0] program name */
 	sha1_array_for_each_unique(&ref_tips_after_fetch,
-				   add_sha1_to_argv, &argv);
+				   add_oid_to_argv, &argv);
 	argv_array_push(&argv, "--not");
 	sha1_array_for_each_unique(&ref_tips_before_fetch,
-				   add_sha1_to_argv, &argv);
+				   add_oid_to_argv, &argv);
 	setup_revisions(argv.argc, argv.argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");

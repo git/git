@@ -342,34 +342,32 @@ static int init_object_disambiguation(const char *name, int len,
 	return 0;
 }
 
-static int show_ambiguous_object(const unsigned char *sha1, void *data)
+static int show_ambiguous_object(const struct object_id *oid, void *data)
 {
 	const struct disambiguate_state *ds = data;
-	struct object_id oid;
 	struct strbuf desc = STRBUF_INIT;
 	int type;
 
 
-	hashcpy(oid.hash, sha1);
-	if (ds->fn && !ds->fn(&oid, ds->cb_data))
+	if (ds->fn && !ds->fn(oid, ds->cb_data))
 		return 0;
 
-	type = sha1_object_info(sha1, NULL);
+	type = sha1_object_info(oid->hash, NULL);
 	if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(sha1);
+		struct commit *commit = lookup_commit(oid->hash);
 		if (commit) {
 			struct pretty_print_context pp = {0};
 			pp.date_mode.type = DATE_SHORT;
 			format_commit_message(commit, " %ad - %s", &desc, &pp);
 		}
 	} else if (type == OBJ_TAG) {
-		struct tag *tag = lookup_tag(sha1);
+		struct tag *tag = lookup_tag(oid->hash);
 		if (!parse_tag(tag) && tag->tag)
 			strbuf_addf(&desc, " %s", tag->tag);
 	}
 
 	advise("  %s %s%s",
-	       find_unique_abbrev(sha1, DEFAULT_ABBREV),
+	       find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
 	       typename(type) ? typename(type) : "unknown type",
 	       desc.buf);
 
