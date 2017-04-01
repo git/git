@@ -983,7 +983,9 @@ test_expect_success 'am works with multi-line in-body headers' '
 	rm -fr .git/rebase-apply &&
 	git checkout -f first &&
 	echo one >> file &&
-	git commit -am "$LONG" --author="$LONG <long@example.com>" &&
+	git commit -am "$LONG
+
+    Body test" --author="$LONG <long@example.com>" &&
 	git format-patch --stdout -1 >patch &&
 	# bump from, date, and subject down to in-body header
 	perl -lpe "
@@ -997,7 +999,7 @@ test_expect_success 'am works with multi-line in-body headers' '
 	git am msg &&
 	# Ensure that the author and full message are present
 	git cat-file commit HEAD | grep "^author.*long@example.com" &&
-	git cat-file commit HEAD | grep "^$LONG"
+	git cat-file commit HEAD | grep "^$LONG$"
 '
 
 test_done
