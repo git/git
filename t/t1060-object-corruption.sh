@@ -53,6 +53,13 @@ test_expect_success 'streaming a corrupt blob fails' '
 	)
 '
 
+test_expect_success 'getting type of a corrupt blob fails' '
+	(
+		cd bit-error &&
+		test_must_fail git cat-file -s HEAD:content.t
+	)
+'
+
 test_expect_success 'read-tree -u detects bit-errors in blobs' '
 	(
 		cd bit-error &&
