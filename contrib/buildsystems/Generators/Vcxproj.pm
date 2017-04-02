@@ -131,7 +131,6 @@ sub createProject {
     if (!$static_library) {
       $libs = join(";", sort(grep /^(?!libgit\.lib|xdiff\/lib\.lib|vcs-svn\/lib\.lib|libcurl\.lib|libeay32\.lib|libiconv\.lib|ssleay32\.lib|zlib\.lib)/, @{$$build_structure{"$prefix${name}_LIBS"}}));
     }
-    my $ldirs = join(";", map { /^-L(?!TCG)(.*)/ ? (File::Spec->file_name_is_absolute($1) ? $1 : "$rel_dir\\$1") : () } @{$$build_structure{"$prefix${name}_LFLAGS"}});
 
     $defines =~ s/-D//g;
     $defines =~ s/\"/&quot;/g;
@@ -245,7 +244,6 @@ sub createProject {
     </Lib>
     <Link>
       <AdditionalDependencies>$libs;\$(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$ldirs</AdditionalLibraryDirectories>
       <AdditionalOptions>invalidcontinue.obj %(AdditionalOptions)</AdditionalOptions>
       <ManifestFile>$cdup\\compat\\win32\\git.manifest</ManifestFile>
       <SubSystem>Console</SubSystem>
