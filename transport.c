@@ -1030,7 +1030,8 @@ int transport_push(struct transport *transport,
 					sha1_array_append(&commits, ref->new_oid.hash);
 
 			if (!push_unpushed_submodules(&commits,
-						      transport->remote->name,
+						      transport->remote,
+						      refspec, refspec_nr,
 						      transport->push_options,
 						      pretend)) {
 				sha1_array_clear(&commits);
