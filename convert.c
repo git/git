@@ -392,7 +392,6 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	struct child_process child_process = CHILD_PROCESS_INIT;
 	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
-	const char *argv[] = { NULL, NULL };
 
 	/* apply % substitution to cmd */
 	struct strbuf cmd = STRBUF_INIT;
@@ -410,9 +409,8 @@ static int filter_buffer_or_fd(int in, int out, void *data)
 	strbuf_expand(&cmd, params->cmd, strbuf_expand_dict_cb, &dict);
 	strbuf_release(&path);
 
-	argv[0] = cmd.buf;
-
-	child_process.argv = argv;
+	child_process.argv = xcalloc(2, sizeof(const char *));
+	child_process.argv[0] = cmd.buf;
 	child_process.use_shell = 1;
 	child_process.in = -1;
 	child_process.out = out;
@@ -589,7 +587,6 @@ static struct cmd2process *start_multi_file_filter(struct hashmap *hashmap, cons
 	int err;
 	struct cmd2process *entry;
 	struct child_process *process;
-	const char *argv[] = { cmd, NULL };
 	struct string_list cap_list = STRING_LIST_INIT_NODUP;
 	char *cap_buf;
 	const char *cap_name;
@@ -600,7 +597,8 @@ static struct cmd2process *start_multi_file_filter(struct hashmap *hashmap, cons
 	process = &entry->process;
 
 	child_process_init(process);
-	process->argv = argv;
+	process->argv = xcalloc(2, sizeof(const char *));
+	process->argv[0] = cmd;
 	process->use_shell = 1;
 	process->in = -1;
 	process->out = -1;
