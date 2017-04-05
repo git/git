@@ -92,6 +92,7 @@ extern int find_unpushed_submodules(struct sha1_array *commits,
 				    struct string_list *needs_pushing);
 extern int push_unpushed_submodules(struct sha1_array *commits,
 				    const char *remotes_name,
+				    const struct string_list *push_options,
 				    int dry_run);
 extern void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir);
 extern int parallel_submodules(void);

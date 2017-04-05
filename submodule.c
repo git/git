@@ -782,7 +782,9 @@ int find_unpushed_submodules(struct sha1_array *commits,
 	return needs_pushing->nr;
 }
 
-static int push_submodule(const char *path, int dry_run)
+static int push_submodule(const char *path,
+			  const struct string_list *push_options,
+			  int dry_run)
 {
 	if (add_submodule_odb(path))
 		return 1;
@@ -793,6 +795,12 @@ static int push_submodule(const char *path, int dry_run)
 		if (dry_run)
 			argv_array_push(&cp.args, "--dry-run");
 
+		if (push_options && push_options->nr) {
+			const struct string_list_item *item;
+			for_each_string_list_item(item, push_options)
+				argv_array_pushf(&cp.args, "--push-option=%s",
+						 item->string);
+		}
 		prepare_submodule_repo_env(&cp.env_array);
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
@@ -807,6 +815,7 @@ static int push_submodule(const char *path, int dry_run)
 
 int push_unpushed_submodules(struct sha1_array *commits,
 			     const char *remotes_name,
+			     const struct string_list *push_options,
 			     int dry_run)
 {
 	int i, ret = 1;
@@ -818,7 +827,7 @@ int push_unpushed_submodules(struct sha1_array *commits,
 	for (i = 0; i < needs_pushing.nr; i++) {
 		const char *path = needs_pushing.items[i].string;
 		fprintf(stderr, "Pushing submodule '%s'\n", path);
-		if (!push_submodule(path, dry_run)) {
+		if (!push_submodule(path, push_options, dry_run)) {
 			fprintf(stderr, "Unable to push submodule '%s'\n", path);
 			ret = 0;
 		}

@@ -1031,6 +1031,7 @@ int transport_push(struct transport *transport,
 
 			if (!push_unpushed_submodules(&commits,
 						      transport->remote->name,
+						      transport->push_options,
 						      pretend)) {
 				sha1_array_clear(&commits);
 				die("Failed to push all needed submodules!");
