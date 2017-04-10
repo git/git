@@ -256,6 +256,9 @@ environment variables will not be set. If the client selects
 to use push options, but doesn't transmit any, the count variable
 will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
 
+See the section on "Quarantine Environment" in
+linkgit:git-receive-pack[1] for some caveats.
+
 [[update]]
 update
 ~~~~~~
