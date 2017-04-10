@@ -33,4 +33,15 @@ test_expect_success 'rejected objects are removed' '
 	test_cmp expect actual
 '
 
+test_expect_success 'updating a ref from quarantine is forbidden' '
+	git init --bare update.git &&
+	write_script update.git/hooks/pre-receive <<-\EOF &&
+	read old new refname
+	git update-ref refs/heads/unrelated $new
+	exit 1
+	EOF
+	test_must_fail git push update.git HEAD &&
+	git -C update.git fsck
+'
+
 test_done

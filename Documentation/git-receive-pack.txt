@@ -239,7 +239,8 @@ This has a few user-visible effects and caveats:
   3. The `pre-receive` hook MUST NOT update any refs to point to
      quarantined objects. Other programs accessing the repository will
      not be able to see the objects (and if the pre-receive hook fails,
-     those refs would become corrupted).
+     those refs would become corrupted). For safety, any ref updates
+     from within `pre-receive` are automatically rejected.
 
 
 SEE ALSO

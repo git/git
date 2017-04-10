@@ -1465,6 +1465,12 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 {
 	struct ref_store *refs = get_ref_store(NULL);
 
+	if (getenv(GIT_QUARANTINE_ENVIRONMENT)) {
+		strbuf_addstr(err,
+			      _("ref updates forbidden inside quarantine environment"));
+		return -1;
+	}
+
 	return refs->be->transaction_commit(refs, transaction, err);
 }
 
