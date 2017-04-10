@@ -768,7 +768,6 @@ static int run_update_hook(struct command *cmd)
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
 	proc.argv = argv;
-	proc.env = tmp_objdir_env(tmp_objdir);
 
 	code = start_command(&proc);
 	if (code)
