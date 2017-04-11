@@ -427,6 +427,12 @@ test_expect_success 'GIT_SSH_VARIANT overrides plink to tortoiseplink' '
 	expect_ssh "-batch -P 123" myhost src
 '
 
+test_expect_success 'clean failure on broken quoting' '
+	test_must_fail \
+		env GIT_SSH_COMMAND="${SQ}plink.exe -v" \
+		git clone "[myhost:123]:src" sq-failure
+'
+
 # Reset the GIT_SSH environment variable for clone tests.
 setup_ssh_wrapper
 
