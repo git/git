@@ -93,9 +93,13 @@ typedef int (*each_replace_name_fn)(const char *name, const char *ref,
 static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 {
 	const char **p, *full_hex;
-	char ref[PATH_MAX];
+	struct strbuf ref = STRBUF_INIT;
+	size_t base_len;
 	int had_error = 0;
 	struct object_id oid;
+
+	strbuf_addstr(&ref, git_replace_ref_base);
+	base_len = ref.len;
 
 	for (p = argv; *p; p++) {
 		if (get_oid(*p, &oid)) {
@@ -103,16 +107,17 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 			had_error = 1;
 			continue;
 		}
-		full_hex = oid_to_hex(&oid);
-		snprintf(ref, sizeof(ref), "%s%s", git_replace_ref_base, full_hex);
-		/* read_ref() may reuse the buffer */
-		full_hex = ref + strlen(git_replace_ref_base);
-		if (read_ref(ref, oid.hash)) {
+
+		strbuf_setlen(&ref, base_len);
+		strbuf_addstr(&ref, oid_to_hex(&oid));
+		full_hex = ref.buf + base_len;
+
+		if (read_ref(ref.buf, oid.hash)) {
 			error("replace ref '%s' not found.", full_hex);
 			had_error = 1;
 			continue;
 		}
-		if (fn(full_hex, ref, &oid))
+		if (fn(full_hex, ref.buf, &oid))
 			had_error = 1;
 	}
 	return had_error;
@@ -129,21 +134,18 @@ static int delete_replace_ref(const char *name, const char *ref,
 
 static void check_ref_valid(struct object_id *object,
 			    struct object_id *prev,
-			    char *ref,
-			    int ref_size,
+			    struct strbuf *ref,
 			    int force)
 {
-	if (snprintf(ref, ref_size,
-		     "%s%s", git_replace_ref_base,
-		     oid_to_hex(object)) > ref_size - 1)
-		die("replace ref name too long: %.*s...", 50, ref);
-	if (check_refname_format(ref, 0))
-		die("'%s' is not a valid ref name.", ref);
+	strbuf_reset(ref);
+	strbuf_addf(ref, "%s%s", git_replace_ref_base, oid_to_hex(object));
+	if (check_refname_format(ref->buf, 0))
+		die("'%s' is not a valid ref name.", ref->buf);
 
-	if (read_ref(ref, prev->hash))
+	if (read_ref(ref->buf, prev->hash))
 		oidclr(prev);
 	else if (!force)
-		die("replace ref '%s' already exists", ref);
+		die("replace ref '%s' already exists", ref->buf);
 }
 
 static int replace_object_oid(const char *object_ref,
@@ -154,7 +156,7 @@ static int replace_object_oid(const char *object_ref,
 {
 	struct object_id prev;
 	enum object_type obj_type, repl_type;
-	char ref[PATH_MAX];
+	struct strbuf ref = STRBUF_INIT;
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 
@@ -167,16 +169,17 @@ static int replace_object_oid(const char *object_ref,
 		    object_ref, typename(obj_type),
 		    replace_ref, typename(repl_type));
 
-	check_ref_valid(object, &prev, ref, sizeof(ref), force);
+	check_ref_valid(object, &prev, &ref, force);
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_update(transaction, ref, repl->hash, prev.hash,
+	    ref_transaction_update(transaction, ref.buf, repl->hash, prev.hash,
 				   0, NULL, &err) ||
 	    ref_transaction_commit(transaction, &err))
 		die("%s", err.buf);
 
 	ref_transaction_free(transaction);
+	strbuf_release(&ref);
 	return 0;
 }
 
@@ -280,7 +283,7 @@ static int edit_and_replace(const char *object_ref, int force, int raw)
 	char *tmpfile = git_pathdup("REPLACE_EDITOBJ");
 	enum object_type type;
 	struct object_id old, new, prev;
-	char ref[PATH_MAX];
+	struct strbuf ref = STRBUF_INIT;
 
 	if (get_oid(object_ref, &old) < 0)
 		die("Not a valid object name: '%s'", object_ref);
@@ -289,7 +292,8 @@ static int edit_and_replace(const char *object_ref, int force, int raw)
 	if (type < 0)
 		die("unable to get object type for %s", oid_to_hex(&old));
 
-	check_ref_valid(&old, &prev, ref, sizeof(ref), force);
+	check_ref_valid(&old, &prev, &ref, force);
+	strbuf_release(&ref);
 
 	export_object(&old, type, raw, tmpfile);
 	if (launch_editor(tmpfile, NULL, NULL) < 0)
