@@ -165,6 +165,17 @@ UI, Workflows & Features
    we can safely accept them case insensitively without introducing
    ambiguity or confusion to solve this.
 
+ * "git tag/branch/for-each-ref" family of commands long allowed to
+   filter the refs by "--contains X" (show only the refs that are
+   descendants of X), "--merged X" (show only the refs that are
+   ancestors of X), "--no-merged X" (show only the refs that are not
+   ancestors of X).  One curious omission, "--no-contains X" (show
+   only the refs that are not descendants of X) has been added to
+   them.
+
+ * The default behaviour of "git log" in an interactive session has
+   been changed to enable "--decorate".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -258,6 +269,8 @@ Performance, Internal Implementation, Development Support etc.
  * Some debugging output from "git describe" were marked for l10n,
    but some weren't.  Mark missing ones for l10n.
 
+ * Define a new task in .travis.yml that triggers a test session on
+   Windows run elsewhere.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -444,3 +457,4 @@ notes for details).
    (merge 4473060bc2 ab/test-readme-updates later to maint).
    (merge 48a96972fd ab/doc-submitting later to maint).
    (merge f5c2bc2b96 jk/make-coccicheck-detect-errors later to maint).
+   (merge c105f563d1 cc/untracked later to maint).
