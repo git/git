@@ -41,6 +41,7 @@ matrix:
   include:
     - env: Linux32
       os: linux
+      compiler:
       services:
         - docker
       before_install:
@@ -62,7 +63,7 @@ matrix:
         # root@container:/# /usr/src/git/ci/run-linux32-build.sh
     - env: Documentation
       os: linux
-      compiler: clang
+      compiler:
       addons:
         apt:
           packages:
