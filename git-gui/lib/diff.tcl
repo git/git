@@ -698,6 +698,7 @@ proc apply_range_or_line {x y} {
 		set hh [$ui_diff get $i_l "$i_l + 1 lines"]
 		set hh [lindex [split $hh ,] 0]
 		set hln [lindex [split $hh -] 1]
+		set hln [lindex [split $hln " "] 0]
 
 		# There is a special situation to take care of. Consider this
 		# hunk:
