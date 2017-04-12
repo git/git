@@ -351,14 +351,19 @@ ACK after 'done' if there is at least one common base and multi_ack or
 multi_ack_detailed is enabled. The server always sends NAK after 'done'
 if there is no common base found.
 
+Instead of 'ACK' or 'NAK', the server may send an error message (for
+example, if it does not recognize an object in a 'want' line received
+from the client).
+
 Then the server will start sending its packfile data.
 
 ----
-  server-response = *ack_multi ack / nak
+  server-response = *ack_multi ack / nak / error-line
   ack_multi       = PKT-LINE("ACK" SP obj-id ack_status)
   ack_status      = "continue" / "common" / "ready"
   ack             = PKT-LINE("ACK" SP obj-id)
   nak             = PKT-LINE("NAK")
+  error-line     =  PKT-LINE("ERR" SP explanation-text)
 ----
 
 A simple clone may look like this (with no 'have' lines):
