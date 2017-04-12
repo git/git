@@ -11,6 +11,7 @@
 /test-genrandom
 /test-hashmap
 /test-index-version
+/test-lazy-init-name-hash
 /test-line-buffer
 /test-match-trees
 /test-mergesort
