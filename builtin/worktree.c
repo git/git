@@ -24,6 +24,7 @@ struct add_opts {
 	int force;
 	int detach;
 	int checkout;
+	int keep_locked;
 	const char *new_branch;
 	int force_new_branch;
 };
@@ -242,7 +243,10 @@ static int add_worktree(const char *path, const char *refname,
 	 * after the preparation is over.
 	 */
 	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
-	write_file(sb.buf, "initializing");
+	if (!opts->keep_locked)
+		write_file(sb.buf, "initializing");
+	else
+		write_file(sb.buf, "added with --lock");
 
 	strbuf_addf(&sb_git, "%s/.git", path);
 	if (safe_create_leading_directories_const(sb_git.buf))
@@ -303,9 +307,11 @@ static int add_worktree(const char *path, const char *refname,
 	junk_git_dir = NULL;
 
 done:
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
-	unlink_or_warn(sb.buf);
+	if (ret || !opts->keep_locked) {
+		strbuf_reset(&sb);
+		strbuf_addf(&sb, "%s/locked", sb_repo.buf);
+		unlink_or_warn(sb.buf);
+	}
 	argv_array_clear(&child_env);
 	strbuf_release(&sb);
 	strbuf_release(&symref);
@@ -328,6 +334,7 @@ static int add(int ac, const char **av, const char *prefix)
 			   N_("create or reset a branch")),
 		OPT_BOOL(0, "detach", &opts.detach, N_("detach HEAD at named commit")),
 		OPT_BOOL(0, "checkout", &opts.checkout, N_("populate the new working tree")),
+		OPT_BOOL(0, "lock", &opts.keep_locked, N_("keep the new working tree locked")),
 		OPT_END()
 	};
 
