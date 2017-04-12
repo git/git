@@ -386,6 +386,47 @@ test_expect_success 'tortoiseplink is like putty, with extra arguments' '
 	expect_ssh "-batch -P 123" myhost src
 '
 
+test_expect_success 'double quoted plink.exe in GIT_SSH_COMMAND' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
+	GIT_SSH_COMMAND="\"$TRASH_DIRECTORY/plink.exe\" -v" \
+		git clone "[myhost:123]:src" ssh-bracket-clone-plink-3 &&
+	expect_ssh "-v -P 123" myhost src
+'
+
+SQ="'"
+test_expect_success 'single quoted plink.exe in GIT_SSH_COMMAND' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
+	GIT_SSH_COMMAND="$SQ$TRASH_DIRECTORY/plink.exe$SQ -v" \
+		git clone "[myhost:123]:src" ssh-bracket-clone-plink-4 &&
+	expect_ssh "-v -P 123" myhost src
+'
+
+test_expect_success 'GIT_SSH_VARIANT overrides plink detection' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
+	GIT_SSH_VARIANT=ssh \
+	git clone "[myhost:123]:src" ssh-bracket-clone-variant-1 &&
+	expect_ssh "-p 123" myhost src
+'
+
+test_expect_success 'ssh.variant overrides plink detection' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
+	git -c ssh.variant=ssh \
+		clone "[myhost:123]:src" ssh-bracket-clone-variant-2 &&
+	expect_ssh "-p 123" myhost src
+'
+
+test_expect_success 'GIT_SSH_VARIANT overrides plink detection to plink' '
+	GIT_SSH_VARIANT=plink \
+	git clone "[myhost:123]:src" ssh-bracket-clone-variant-3 &&
+	expect_ssh "-P 123" myhost src
+'
+
+test_expect_success 'GIT_SSH_VARIANT overrides plink to tortoiseplink' '
+	GIT_SSH_VARIANT=tortoiseplink \
+	git clone "[myhost:123]:src" ssh-bracket-clone-variant-4 &&
+	expect_ssh "-batch -P 123" myhost src
+'
+
 # Reset the GIT_SSH environment variable for clone tests.
 setup_ssh_wrapper
 
