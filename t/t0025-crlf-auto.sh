@@ -152,4 +152,30 @@ test_expect_success 'eol=crlf _does_ normalize binary files' '
 	test -z "$LFwithNULdiff"
 '
 
+test_expect_success 'prepare unnormalized' '
+	> .gitattributes &&
+	git config core.autocrlf false &&
+	printf "LINEONE\nLINETWO\r\n"     >mixed &&
+	git add mixed .gitattributes &&
+	git commit -m "Add mixed" &&
+	git ls-files --eol | egrep "i/crlf" &&
+	git ls-files --eol | egrep "i/mixed"
+'
+
+test_expect_success 'normalize unnormalized' '
+	echo "* text=auto" >.gitattributes &&
+	rm .git/index &&
+	git add . &&
+	git commit -m "Introduce end-of-line normalization" &&
+	git ls-files --eol | tr "\\t" " " | sort >act &&
+cat >exp <<EOF &&
+i/-text w/-text attr/text=auto         LFwithNUL
+i/lf    w/crlf  attr/text=auto         CRLFonly
+i/lf    w/crlf  attr/text=auto         LFonly
+i/lf    w/lf    attr/text=auto         .gitattributes
+i/lf    w/mixed attr/text=auto         mixed
+EOF
+	test_cmp exp act
+'
+
 test_done
