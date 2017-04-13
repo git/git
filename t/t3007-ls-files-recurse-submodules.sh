@@ -82,6 +82,17 @@ test_expect_success 'ls-files recurses more than 1 level' '
 	test_cmp expect actual
 '
 
+test_expect_success 'ls-files works with GIT_DIR' '
+	cat >expect <<-\EOF &&
+	.gitmodules
+	c
+	subsub/d
+	EOF
+
+	git --git-dir=submodule/.git ls-files --recurse-submodules >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--recurse-submodules and pathspecs setup' '
 	echo e >submodule/subsub/e.txt &&
 	git -C submodule/subsub add e.txt &&

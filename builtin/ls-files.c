@@ -203,6 +203,7 @@ static void show_gitlink(const struct cache_entry *ce)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int status;
+	char *dir;
 
 	prepare_submodule_repo_env(&cp.env_array);
 	argv_array_push(&cp.env_array, GIT_DIR_ENVIRONMENT);
@@ -221,8 +222,10 @@ static void show_gitlink(const struct cache_entry *ce)
 	argv_array_pushv(&cp.args, submodule_options.argv);
 
 	cp.git_cmd = 1;
-	cp.dir = ce->name;
+	dir = mkpathdup("%s/%s", get_git_work_tree(), ce->name);
+	cp.dir = dir;
 	status = run_command(&cp);
+	free(dir);
 	if (status)
 		exit(status);
 }
