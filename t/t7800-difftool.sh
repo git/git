@@ -393,6 +393,25 @@ test_expect_success 'setup change in subdirectory' '
 	git commit -m "modified both"
 '
 
+test_expect_success 'difftool -d with growing paths' '
+	a=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
+	git init growing &&
+	(
+		cd growing &&
+		echo "test -f \"\$2/b\"" | write_script .git/test-for-b.sh &&
+		one=$(printf 1 | git hash-object -w --stdin) &&
+		two=$(printf 2 | git hash-object -w --stdin) &&
+		git update-index --add \
+			--cacheinfo 100644,$one,$a --cacheinfo 100644,$two,b &&
+		tree1=$(git write-tree) &&
+		git update-index --add \
+			--cacheinfo 100644,$two,$a --cacheinfo 100644,$one,b &&
+		tree2=$(git write-tree) &&
+		git checkout -- $a &&
+		git difftool -d --extcmd .git/test-for-b.sh $tree1 $tree2
+	)
+'
+
 run_dir_diff_test () {
 	test_expect_success "$1 --no-symlinks" "
 		symlinks=--no-symlinks &&
