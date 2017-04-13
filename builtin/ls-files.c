@@ -15,6 +15,7 @@
 #include "string-list.h"
 #include "pathspec.h"
 #include "run-command.h"
+#include "submodule.h"
 
 static int abbrev;
 static int show_deleted;
@@ -202,6 +203,9 @@ static void show_gitlink(const struct cache_entry *ce)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int status;
+
+	prepare_submodule_repo_env(&cp.env_array);
+	argv_array_push(&cp.env_array, GIT_DIR_ENVIRONMENT);
 
 	if (prefix_len)
 		argv_array_pushf(&cp.env_array, "%s=%s",

@@ -77,6 +77,7 @@ test_expect_success 'ls-files recurses more than 1 level' '
 	git -C submodule/subsub commit -m "add d" &&
 	git -C submodule submodule add ./subsub &&
 	git -C submodule commit -m "added subsub" &&
+	git submodule absorbgitdirs &&
 	git ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
 '
