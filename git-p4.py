@@ -602,12 +602,7 @@ def p4Where(depotPath):
     return clientPath
 
 def currentGitBranch():
-    retcode = system(["git", "symbolic-ref", "-q", "HEAD"], ignore_error=True)
-    if retcode != 0:
-        # on a detached head
-        return None
-    else:
-        return read_pipe(["git", "name-rev", "HEAD"]).split(" ")[1].strip()
+    return read_pipe_text(["git", "symbolic-ref", "--short", "-q", "HEAD"])
 
 def isValidGitDir(path):
     return git_dir(path) != None

@@ -139,7 +139,7 @@ test_expect_success 'submit with master branch name from argv' '
 	)
 '
 
-test_expect_failure 'allow submit from branch with same revision but different name' '
+test_expect_success 'allow submit from branch with same revision but different name' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
