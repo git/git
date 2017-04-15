@@ -1321,9 +1321,6 @@ static int parse_mail(struct am_state *state, const char *mail)
 	strbuf_addbuf(&msg, &mi.log_message);
 	strbuf_stripspace(&msg, 0);
 
-	if (state->signoff)
-		am_signoff(&msg);
-
 	assert(!state->author_name);
 	state->author_name = strbuf_detach(&author_name, NULL);
 
@@ -1847,6 +1844,9 @@ static void am_run(struct am_state *state, int resume)
 
 			if (skip)
 				goto next; /* mail should be skipped */
+
+			if (state->signoff)
+				am_append_signoff(state);
 
 			write_author_script(state);
 			write_commit_msg(state);
