@@ -318,6 +318,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct strbuf rpath = STRBUF_INIT, buf = STRBUF_INIT;
 	struct strbuf ldir = STRBUF_INIT, rdir = STRBUF_INIT;
 	struct strbuf wtdir = STRBUF_INIT;
+	char *lbase_dir, *rbase_dir;
 	size_t ldir_len, rdir_len, wtdir_len;
 	const char *workdir, *tmp;
 	int ret = 0, i;
@@ -351,11 +352,11 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	memset(&wtindex, 0, sizeof(wtindex));
 
 	memset(&lstate, 0, sizeof(lstate));
-	lstate.base_dir = ldir.buf;
+	lstate.base_dir = lbase_dir = xstrdup(ldir.buf);
 	lstate.base_dir_len = ldir.len;
 	lstate.force = 1;
 	memset(&rstate, 0, sizeof(rstate));
-	rstate.base_dir = rdir.buf;
+	rstate.base_dir = rbase_dir = xstrdup(rdir.buf);
 	rstate.base_dir_len = rdir.len;
 	rstate.force = 1;
 
@@ -625,6 +626,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		exit_cleanup(tmpdir, rc);
 
 finish:
+	free(lbase_dir);
+	free(rbase_dir);
 	strbuf_release(&ldir);
 	strbuf_release(&rdir);
 	strbuf_release(&wtdir);
