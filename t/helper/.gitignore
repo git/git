@@ -16,6 +16,7 @@
 /test-match-trees
 /test-mergesort
 /test-mktemp
+/test-online-cpus
 /test-parse-options
 /test-path-utils
 /test-prio-queue
