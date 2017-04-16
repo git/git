@@ -258,13 +258,12 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_dir *dir);
 typedef int each_ref_entry_fn(struct ref_entry *entry, void *cb_data);
 
 /*
- * Call fn for each reference in dir that has index in the range
- * offset <= index < dir->nr.  Recurse into subdirectories that are in
- * that index range, sorting them before iterating.  This function
- * does not sort dir itself; it should be sorted beforehand.  fn is
- * called for all references, including broken ones.
+ * Call `fn` for each reference in `dir`. Recurse into subdirectories,
+ * sorting them before iterating. This function does not sort `dir`
+ * itself; it should be sorted beforehand. `fn` is called for all
+ * references, including broken ones.
  */
-int do_for_each_entry_in_dir(struct ref_dir *dir, int offset,
+int do_for_each_entry_in_dir(struct ref_dir *dir,
 			     each_ref_entry_fn fn, void *cb_data);
 
 /*
