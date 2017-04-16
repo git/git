@@ -524,7 +524,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	}
 }
 
-static struct ref_dir *get_loose_refs(struct files_ref_store *refs)
+static struct ref_dir *get_loose_ref_dir(struct files_ref_store *refs)
 {
 	if (!refs->loose) {
 		/*
@@ -1110,7 +1110,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 	 * date with what is on disk, and re-reads it if not.
 	 */
 
-	loose_dir = get_loose_refs(refs);
+	loose_dir = get_loose_ref_dir(refs);
 
 	if (prefix && *prefix)
 		loose_dir = find_containing_dir(loose_dir, prefix, 0);
@@ -1581,7 +1581,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	lock_packed_refs(refs, LOCK_DIE_ON_ERROR);
 	cbdata.packed_refs = get_packed_refs(refs);
 
-	do_for_each_entry_in_dir(get_loose_refs(refs),
+	do_for_each_entry_in_dir(get_loose_ref_dir(refs),
 				 pack_if_possible_fn, &cbdata);
 
 	if (commit_packed_refs(refs))
