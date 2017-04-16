@@ -36,7 +36,7 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry)
 			int pos = search_ref_dir(dir, "refs/bisect/", 12);
 			if (pos < 0) {
 				struct ref_entry *child_entry;
-				child_entry = create_dir_entry(dir->ref_store,
+				child_entry = create_dir_entry(dir->cache,
 							       "refs/bisect/",
 							       12, 1);
 				add_entry_to_dir(dir, child_entry);
@@ -67,7 +67,8 @@ struct ref_cache *create_ref_cache(struct files_ref_store *refs)
 {
 	struct ref_cache *ret = xcalloc(1, sizeof(*ret));
 
-	ret->root = create_dir_entry(refs, "", 0, 1);
+	ret->ref_store = refs;
+	ret->root = create_dir_entry(ret, "", 0, 1);
 	return ret;
 }
 
@@ -104,13 +105,14 @@ static void clear_ref_dir(struct ref_dir *dir)
 	dir->entries = NULL;
 }
 
-struct ref_entry *create_dir_entry(struct files_ref_store *ref_store,
+struct ref_entry *create_dir_entry(struct ref_cache *cache,
 				   const char *dirname, size_t len,
 				   int incomplete)
 {
 	struct ref_entry *direntry;
+
 	FLEX_ALLOC_MEM(direntry, name, dirname, len);
-	direntry->u.subdir.ref_store = ref_store;
+	direntry->u.subdir.cache = cache;
 	direntry->flag = REF_DIR | (incomplete ? REF_INCOMPLETE : 0);
 	return direntry;
 }
@@ -181,7 +183,7 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 		 * therefore, create an empty record for it but mark
 		 * the record complete.
 		 */
-		entry = create_dir_entry(dir->ref_store, subdirname, len, 0);
+		entry = create_dir_entry(dir->cache, subdirname, len, 0);
 		add_entry_to_dir(dir, entry);
 	} else {
 		entry = dir->entries[entry_index];

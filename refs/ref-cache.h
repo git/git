@@ -3,6 +3,9 @@
 
 struct ref_cache {
 	struct ref_entry *root;
+
+	/* A pointer to the files_ref_store whose cache this is: */
+	struct files_ref_store *ref_store;
 };
 
 /*
@@ -66,8 +69,8 @@ struct ref_dir {
 	 */
 	int sorted;
 
-	/* A pointer to the files_ref_store that contains this ref_dir. */
-	struct files_ref_store *ref_store;
+	/* The ref_cache containing this entry: */
+	struct ref_cache *cache;
 
 	struct ref_entry **entries;
 };
@@ -161,7 +164,7 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry);
  * dirname is the name of the directory with a trailing slash (e.g.,
  * "refs/heads/") or "" for the top-level directory.
  */
-struct ref_entry *create_dir_entry(struct files_ref_store *ref_store,
+struct ref_entry *create_dir_entry(struct ref_cache *cache,
 				   const char *dirname, size_t len,
 				   int incomplete);
 

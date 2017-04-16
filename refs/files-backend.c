@@ -432,7 +432,7 @@ static void add_packed_ref(struct files_ref_store *refs,
  */
 void read_loose_refs(const char *dirname, struct ref_dir *dir)
 {
-	struct files_ref_store *refs = dir->ref_store;
+	struct files_ref_store *refs = dir->cache->ref_store;
 	DIR *d;
 	struct dirent *de;
 	int dirnamelen = strlen(dirname);
@@ -468,7 +468,7 @@ void read_loose_refs(const char *dirname, struct ref_dir *dir)
 		} else if (S_ISDIR(st.st_mode)) {
 			strbuf_addch(&refname, '/');
 			add_entry_to_dir(dir,
-					 create_dir_entry(refs, refname.buf,
+					 create_dir_entry(dir->cache, refname.buf,
 							  refname.len, 1));
 		} else {
 			if (!refs_resolve_ref_unsafe(&refs->base,
@@ -525,7 +525,7 @@ static struct ref_dir *get_loose_refs(struct files_ref_store *refs)
 		 * lazily):
 		 */
 		add_entry_to_dir(get_ref_dir(refs->loose->root),
-				 create_dir_entry(refs, "refs/", 5, 1));
+				 create_dir_entry(refs->loose, "refs/", 5, 1));
 	}
 	return get_ref_dir(refs->loose->root);
 }
