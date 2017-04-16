@@ -507,6 +507,21 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	strbuf_release(&refname);
 	strbuf_release(&path);
 	closedir(d);
+
+	/*
+	 * Manually add refs/bisect, which, being per-worktree, might
+	 * not appear in the directory listing for refs/ in the main
+	 * repo.
+	 */
+	if (!strcmp(dirname, "refs/")) {
+		int pos = search_ref_dir(dir, "refs/bisect/", 12);
+
+		if (pos < 0) {
+			struct ref_entry *child_entry = create_dir_entry(
+					dir->cache, "refs/bisect/", 12, 1);
+			add_entry_to_dir(dir, child_entry);
+		}
+	}
 }
 
 static struct ref_dir *get_loose_refs(struct files_ref_store *refs)
