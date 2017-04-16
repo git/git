@@ -14,19 +14,21 @@ static int update_info_file(char *path, int (*generate)(FILE *))
 	char *tmp = mkpathdup("%s_XXXXXX", path);
 	int ret = -1;
 	int fd = -1;
-	FILE *fp = NULL;
+	FILE *fp = NULL, *to_close;
 
 	safe_create_leading_directories(path);
 	fd = git_mkstemp_mode(tmp, 0666);
 	if (fd < 0)
 		goto out;
-	fp = fdopen(fd, "w");
+	to_close = fp = fdopen(fd, "w");
 	if (!fp)
 		goto out;
+	fd = -1;
 	ret = generate(fp);
 	if (ret)
 		goto out;
-	if (fclose(fp))
+	fp = NULL;
+	if (fclose(to_close))
 		goto out;
 	if (adjust_shared_perm(tmp) < 0)
 		goto out;
