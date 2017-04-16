@@ -3970,7 +3970,6 @@ int read_loose_object(const char *path,
 		      void **contents)
 {
 	int ret = -1;
-	int fd = -1;
 	void *map = NULL;
 	unsigned long mapsize;
 	git_zstream stream;
@@ -4020,7 +4019,5 @@ int read_loose_object(const char *path,
 out:
 	if (map)
 		munmap(map, mapsize);
-	if (fd >= 0)
-		close(fd);
 	return ret;
 }
