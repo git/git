@@ -455,7 +455,7 @@ static int remove_entry(struct ref_dir *dir, const char *refname)
  * subdirectories as necessary.  dir must represent the top-level
  * directory.  Return 0 on success.
  */
-static int add_ref(struct ref_dir *dir, struct ref_entry *ref)
+static int add_ref_entry(struct ref_dir *dir, struct ref_entry *ref)
 {
 	dir = find_containing_dir(dir, ref->name, 1);
 	if (!dir)
@@ -993,7 +993,7 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 			if (peeled == PEELED_FULLY ||
 			    (peeled == PEELED_TAGS && starts_with(refname, "refs/tags/")))
 				last->flag |= REF_KNOWS_PEELED;
-			add_ref(dir, last);
+			add_ref_entry(dir, last);
 			continue;
 		}
 		if (last &&
@@ -1115,7 +1115,7 @@ static void add_packed_ref(struct files_ref_store *refs,
 
 	if (!packed_ref_cache->lock)
 		die("internal error: packed refs not locked");
-	add_ref(get_packed_ref_dir(packed_ref_cache),
+	add_ref_entry(get_packed_ref_dir(packed_ref_cache),
 		create_ref_entry(refname, sha1, REF_ISPACKED, 1));
 }
 
@@ -2176,7 +2176,7 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 	} else {
 		packed_entry = create_ref_entry(entry->name, entry->u.value.oid.hash,
 						REF_ISPACKED | REF_KNOWS_PEELED, 0);
-		add_ref(cb->packed_refs, packed_entry);
+		add_ref_entry(cb->packed_refs, packed_entry);
 	}
 	oidcpy(&packed_entry->u.value.peeled, &entry->u.value.peeled);
 
