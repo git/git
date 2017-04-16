@@ -524,7 +524,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	}
 }
 
-static struct ref_dir *get_loose_ref_dir(struct files_ref_store *refs)
+static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
 {
 	if (!refs->loose) {
 		/*
@@ -544,7 +544,12 @@ static struct ref_dir *get_loose_ref_dir(struct files_ref_store *refs)
 		add_entry_to_dir(get_ref_dir(refs->loose->root),
 				 create_dir_entry(refs->loose, "refs/", 5, 1));
 	}
-	return get_ref_dir(refs->loose->root);
+	return refs->loose;
+}
+
+static struct ref_dir *get_loose_ref_dir(struct files_ref_store *refs)
+{
+	return get_ref_dir(get_loose_ref_cache(refs)->root);
 }
 
 /*
