@@ -413,7 +413,7 @@ static struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname
  * empty by the removal.  dir must represent the top-level directory
  * and must already be complete.
  */
-static int remove_entry(struct ref_dir *dir, const char *refname)
+static int remove_entry_from_dir(struct ref_dir *dir, const char *refname)
 {
 	int refname_len = strlen(refname);
 	int entry_index;
@@ -2335,7 +2335,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 
 	/* Remove refnames from the cache */
 	for_each_string_list_item(refname, refnames)
-		if (remove_entry(packed, refname->string) != -1)
+		if (remove_entry_from_dir(packed, refname->string) != -1)
 			removed = 1;
 	if (!removed) {
 		/*
