@@ -251,17 +251,6 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 					      const char *prefix,
 					      int prime_dir);
 
-typedef int each_ref_entry_fn(struct ref_entry *entry, void *cb_data);
-
-/*
- * Call `fn` for each reference in `dir`. Recurse into subdirectories,
- * sorting them before iterating. This function does not sort `dir`
- * itself; it should be sorted beforehand. `fn` is called for all
- * references, including broken ones.
- */
-int do_for_each_entry_in_dir(struct ref_dir *dir,
-			     each_ref_entry_fn fn, void *cb_data);
-
 /*
  * Peel the entry (if possible) and return its new peel_status.  If
  * repeel is true, re-peel the entry even if there is an old peeled
