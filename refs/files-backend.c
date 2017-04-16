@@ -385,7 +385,7 @@ static struct ref_dir *find_containing_dir(struct ref_dir *dir,
  * and recursing into subdirectories as necessary.  If the name is not
  * found or it corresponds to a directory entry, return NULL.
  */
-static struct ref_entry *find_ref(struct ref_dir *dir, const char *refname)
+static struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname)
 {
 	int entry_index;
 	struct ref_entry *entry;
@@ -1226,7 +1226,7 @@ static struct ref_dir *get_loose_refs(struct files_ref_store *refs)
 static struct ref_entry *get_packed_ref(struct files_ref_store *refs,
 					const char *refname)
 {
-	return find_ref(get_packed_refs(refs), refname);
+	return find_ref_entry(get_packed_refs(refs), refname);
 }
 
 /*
@@ -2168,7 +2168,7 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 	if (peel_status != PEEL_PEELED && peel_status != PEEL_NON_TAG)
 		die("internal error peeling reference %s (%s)",
 		    entry->name, oid_to_hex(&entry->u.value.oid));
-	packed_entry = find_ref(cb->packed_refs, entry->name);
+	packed_entry = find_ref_entry(cb->packed_refs, entry->name);
 	if (packed_entry) {
 		/* Overwrite existing packed entry with info from loose entry */
 		packed_entry->flag = REF_ISPACKED | REF_KNOWS_PEELED;
