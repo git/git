@@ -32,17 +32,6 @@ static int ref_resolves_to_object(const char *refname,
 	return 1;
 }
 
-/*
- * Return true if the reference described by entry can be resolved to
- * an object in the database; otherwise, emit a warning and return
- * false.
- */
-static int entry_resolves_to_object(struct ref_entry *entry)
-{
-	return ref_resolves_to_object(entry->name,
-				      &entry->u.value.oid, entry->flag);
-}
-
 struct packed_ref_cache {
 	struct ref_cache *cache;
 
@@ -545,11 +534,6 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
 				 create_dir_entry(refs->loose, "refs/", 5, 1));
 	}
 	return refs->loose;
-}
-
-static struct ref_dir *get_loose_ref_dir(struct files_ref_store *refs)
-{
-	return get_ref_dir(get_loose_ref_cache(refs)->root);
 }
 
 /*
@@ -1408,65 +1392,6 @@ struct ref_to_prune {
 	char name[FLEX_ARRAY];
 };
 
-struct pack_refs_cb_data {
-	unsigned int flags;
-	struct ref_dir *packed_refs;
-	struct ref_to_prune *ref_to_prune;
-};
-
-/*
- * An each_ref_entry_fn that is run over loose references only.  If
- * the loose reference can be packed, add an entry in the packed ref
- * cache.  If the reference should be pruned, also add it to
- * ref_to_prune in the pack_refs_cb_data.
- */
-static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
-{
-	struct pack_refs_cb_data *cb = cb_data;
-	enum peel_status peel_status;
-	struct ref_entry *packed_entry;
-	int is_tag_ref = starts_with(entry->name, "refs/tags/");
-
-	/* Do not pack per-worktree refs: */
-	if (ref_type(entry->name) != REF_TYPE_NORMAL)
-		return 0;
-
-	/* ALWAYS pack tags */
-	if (!(cb->flags & PACK_REFS_ALL) && !is_tag_ref)
-		return 0;
-
-	/* Do not pack symbolic or broken refs: */
-	if ((entry->flag & REF_ISSYMREF) || !entry_resolves_to_object(entry))
-		return 0;
-
-	/* Add a packed ref cache entry equivalent to the loose entry. */
-	peel_status = peel_entry(entry, 1);
-	if (peel_status != PEEL_PEELED && peel_status != PEEL_NON_TAG)
-		die("internal error peeling reference %s (%s)",
-		    entry->name, oid_to_hex(&entry->u.value.oid));
-	packed_entry = find_ref_entry(cb->packed_refs, entry->name);
-	if (packed_entry) {
-		/* Overwrite existing packed entry with info from loose entry */
-		packed_entry->flag = REF_ISPACKED | REF_KNOWS_PEELED;
-		oidcpy(&packed_entry->u.value.oid, &entry->u.value.oid);
-	} else {
-		packed_entry = create_ref_entry(entry->name, entry->u.value.oid.hash,
-						REF_ISPACKED | REF_KNOWS_PEELED, 0);
-		add_ref_entry(cb->packed_refs, packed_entry);
-	}
-	oidcpy(&packed_entry->u.value.peeled, &entry->u.value.peeled);
-
-	/* Schedule the loose reference for pruning if requested. */
-	if ((cb->flags & PACK_REFS_PRUNE)) {
-		struct ref_to_prune *n;
-		FLEX_ALLOC_STR(n, name, entry->name);
-		hashcpy(n->sha1, entry->u.value.oid.hash);
-		n->next = cb->ref_to_prune;
-		cb->ref_to_prune = n;
-	}
-	return 0;
-}
-
 enum {
 	REMOVE_EMPTY_PARENTS_REF = 0x01,
 	REMOVE_EMPTY_PARENTS_REFLOG = 0x02
@@ -1556,21 +1481,73 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE | REF_STORE_ODB,
 			       "pack_refs");
-	struct pack_refs_cb_data cbdata;
-
-	memset(&cbdata, 0, sizeof(cbdata));
-	cbdata.flags = flags;
+	struct ref_iterator *iter;
+	struct ref_dir *packed_refs;
+	int ok;
+	struct ref_to_prune *refs_to_prune = NULL;
 
 	lock_packed_refs(refs, LOCK_DIE_ON_ERROR);
-	cbdata.packed_refs = get_packed_refs(refs);
+	packed_refs = get_packed_refs(refs);
 
-	do_for_each_entry_in_dir(get_loose_ref_dir(refs),
-				 pack_if_possible_fn, &cbdata);
+	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL, 0);
+	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
+		/*
+		 * If the loose reference can be packed, add an entry
+		 * in the packed ref cache. If the reference should be
+		 * pruned, also add it to refs_to_prune.
+		 */
+		struct ref_entry *packed_entry;
+		int is_tag_ref = starts_with(iter->refname, "refs/tags/");
+
+		/* Do not pack per-worktree refs: */
+		if (ref_type(iter->refname) != REF_TYPE_NORMAL)
+			continue;
+
+		/* ALWAYS pack tags */
+		if (!(flags & PACK_REFS_ALL) && !is_tag_ref)
+			continue;
+
+		/* Do not pack symbolic or broken refs: */
+		if (iter->flags & REF_ISSYMREF)
+			continue;
+
+		if (!ref_resolves_to_object(iter->refname, iter->oid, iter->flags))
+			continue;
+
+		/*
+		 * Create an entry in the packed-refs cache equivalent
+		 * to the one from the loose ref cache, except that
+		 * we don't copy the peeled status, because we want it
+		 * to be re-peeled.
+		 */
+		packed_entry = find_ref_entry(packed_refs, iter->refname);
+		if (packed_entry) {
+			/* Overwrite existing packed entry with info from loose entry */
+			packed_entry->flag = REF_ISPACKED;
+			oidcpy(&packed_entry->u.value.oid, iter->oid);
+		} else {
+			packed_entry = create_ref_entry(iter->refname, iter->oid->hash,
+							REF_ISPACKED, 0);
+			add_ref_entry(packed_refs, packed_entry);
+		}
+		oidclr(&packed_entry->u.value.peeled);
+
+		/* Schedule the loose reference for pruning if requested. */
+		if ((flags & PACK_REFS_PRUNE)) {
+			struct ref_to_prune *n;
+			FLEX_ALLOC_STR(n, name, iter->refname);
+			hashcpy(n->sha1, iter->oid->hash);
+			n->next = refs_to_prune;
+			refs_to_prune = n;
+		}
+	}
+	if (ok != ITER_DONE)
+		die("error while iterating over references");
 
 	if (commit_packed_refs(refs))
 		die_errno("unable to overwrite old ref-pack file");
 
-	prune_refs(refs, cbdata.ref_to_prune);
+	prune_refs(refs, refs_to_prune);
 	return 0;
 }
 
