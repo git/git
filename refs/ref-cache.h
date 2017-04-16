@@ -235,25 +235,21 @@ int remove_entry_from_dir(struct ref_dir *dir, const char *refname);
 int add_ref_entry(struct ref_dir *dir, struct ref_entry *ref);
 
 /*
- * If refname is a reference name, find the ref_dir within the dir
- * tree that should hold refname. If refname is a directory name
- * (i.e., it ends in '/'), then return that ref_dir itself. dir must
- * represent the top-level directory and must already be complete.
- * Sort ref_dirs and recurse into subdirectories as necessary. If
- * mkdir is set, then create any missing directories; otherwise,
- * return NULL if the desired directory cannot be found.
- */
-struct ref_dir *find_containing_dir(struct ref_dir *dir,
-				    const char *refname, int mkdir);
-
-/*
  * Find the value entry with the given name in dir, sorting ref_dirs
  * and recursing into subdirectories as necessary.  If the name is not
  * found or it corresponds to a directory entry, return NULL.
  */
 struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname);
 
-struct ref_iterator *cache_ref_iterator_begin(struct ref_dir *dir);
+/*
+ * Start iterating over references in `cache`. If `prefix` is
+ * specified, only include references whose names start with that
+ * prefix. If `prime_dir` is true, then fill any incomplete
+ * directories before beginning the iteration.
+ */
+struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
+					      const char *prefix,
+					      int prime_dir);
 
 typedef int each_ref_entry_fn(struct ref_entry *entry, void *cb_data);
 
@@ -278,10 +274,5 @@ int do_for_each_entry_in_dir(struct ref_dir *dir,
  * PEEL_PEELED or PEEL_NON_TAG; otherwise, return PEEL_INVALID.
  */
 enum peel_status peel_entry(struct ref_entry *entry, int repeel);
-
-/*
- * Load all of the refs from `dir` into our in-memory cache.
- */
-void prime_ref_dir(struct ref_dir *dir);
 
 #endif /* REFS_REF_CACHE_H */

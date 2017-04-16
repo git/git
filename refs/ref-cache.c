@@ -177,8 +177,17 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
 	return get_ref_dir(entry);
 }
 
-struct ref_dir *find_containing_dir(struct ref_dir *dir,
-				    const char *refname, int mkdir)
+/*
+ * If refname is a reference name, find the ref_dir within the dir
+ * tree that should hold refname. If refname is a directory name
+ * (i.e., it ends in '/'), then return that ref_dir itself. dir must
+ * represent the top-level directory and must already be complete.
+ * Sort ref_dirs and recurse into subdirectories as necessary. If
+ * mkdir is set, then create any missing directories; otherwise,
+ * return NULL if the desired directory cannot be found.
+ */
+static struct ref_dir *find_containing_dir(struct ref_dir *dir,
+					   const char *refname, int mkdir)
 {
 	const char *slash;
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
@@ -328,7 +337,11 @@ int do_for_each_entry_in_dir(struct ref_dir *dir,
 	return 0;
 }
 
-void prime_ref_dir(struct ref_dir *dir)
+/*
+ * Load all of the refs from `dir` (recursively) into our in-memory
+ * cache.
+ */
+static void prime_ref_dir(struct ref_dir *dir)
 {
 	/*
 	 * The hard work of loading loose refs is done by get_ref_dir(), so we
@@ -494,11 +507,24 @@ static struct ref_iterator_vtable cache_ref_iterator_vtable = {
 	cache_ref_iterator_abort
 };
 
-struct ref_iterator *cache_ref_iterator_begin(struct ref_dir *dir)
+struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
+					      const char *prefix,
+					      int prime_dir)
 {
+	struct ref_dir *dir;
 	struct cache_ref_iterator *iter;
 	struct ref_iterator *ref_iterator;
 	struct cache_ref_iterator_level *level;
+
+	dir = get_ref_dir(cache->root);
+	if (prefix && *prefix)
+		dir = find_containing_dir(dir, prefix, 0);
+	if (!dir)
+		/* There's nothing to iterate over. */
+		return  empty_ref_iterator_begin();
+
+	if (prime_dir)
+		prime_ref_dir(dir);
 
 	iter = xcalloc(1, sizeof(*iter));
 	ref_iterator = &iter->base;
@@ -509,6 +535,10 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_dir *dir)
 	level = &iter->levels[0];
 	level->index = -1;
 	level->dir = dir;
+
+	if (prefix && *prefix)
+		ref_iterator = prefix_ref_iterator_begin(ref_iterator,
+							 prefix, 0);
 
 	return ref_iterator;
 }
