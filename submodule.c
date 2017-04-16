@@ -1396,8 +1396,7 @@ int submodule_move_head(const char *path,
 			cp1.no_stdin = 1;
 			cp1.dir = path;
 
-			argv_array_pushl(&cp1.args, "update-ref", "HEAD",
-					 new ? new : EMPTY_TREE_SHA1_HEX, NULL);
+			argv_array_pushl(&cp1.args, "update-ref", "HEAD", new, NULL);
 
 			if (run_command(&cp1)) {
 				ret = -1;
