@@ -1,6 +1,10 @@
 #ifndef REFS_REF_CACHE_H
 #define REFS_REF_CACHE_H
 
+struct ref_cache {
+	struct ref_entry *root;
+};
+
 /*
  * Information used (along with the information in ref_entry) to
  * describe a single cached reference.  This data structure only
@@ -165,7 +169,16 @@ struct ref_entry *create_ref_entry(const char *refname,
 				   const unsigned char *sha1, int flag,
 				   int check_name);
 
-void free_ref_entry(struct ref_entry *entry);
+/*
+ * Return a pointer to a new `ref_cache`. Its top-level starts out
+ * marked incomplete.
+ */
+struct ref_cache *create_ref_cache(struct files_ref_store *refs);
+
+/*
+ * Free the `ref_cache` and all of its associated data.
+ */
+void free_ref_cache(struct ref_cache *cache);
 
 /*
  * Add a ref_entry to the end of dir (unsorted).  Entry is always

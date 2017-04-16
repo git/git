@@ -44,7 +44,7 @@ static int entry_resolves_to_object(struct ref_entry *entry)
 }
 
 struct packed_ref_cache {
-	struct ref_entry *root;
+	struct ref_cache *cache;
 
 	/*
 	 * Count of references to the data structure in this instance,
@@ -79,7 +79,7 @@ struct files_ref_store {
 	char *gitcommondir;
 	char *packed_refs_path;
 
-	struct ref_entry *loose;
+	struct ref_cache *loose;
 	struct packed_ref_cache *packed;
 };
 
@@ -101,7 +101,7 @@ static void acquire_packed_ref_cache(struct packed_ref_cache *packed_refs)
 static int release_packed_ref_cache(struct packed_ref_cache *packed_refs)
 {
 	if (!--packed_refs->referrers) {
-		free_ref_entry(packed_refs->root);
+		free_ref_cache(packed_refs->cache);
 		stat_validity_clear(&packed_refs->validity);
 		free(packed_refs);
 		return 1;
@@ -125,7 +125,7 @@ static void clear_packed_ref_cache(struct files_ref_store *refs)
 static void clear_loose_ref_cache(struct files_ref_store *refs)
 {
 	if (refs->loose) {
-		free_ref_entry(refs->loose);
+		free_ref_cache(refs->loose);
 		refs->loose = NULL;
 	}
 }
@@ -386,11 +386,12 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 
 		refs->packed = xcalloc(1, sizeof(*refs->packed));
 		acquire_packed_ref_cache(refs->packed);
-		refs->packed->root = create_dir_entry(refs, "", 0, 0);
+		refs->packed->cache = create_ref_cache(refs);
+		refs->packed->cache->root->flag &= ~REF_INCOMPLETE;
 		f = fopen(packed_refs_file, "r");
 		if (f) {
 			stat_validity_update(&refs->packed->validity, fileno(f));
-			read_packed_refs(f, get_ref_dir(refs->packed->root));
+			read_packed_refs(f, get_ref_dir(refs->packed->cache->root));
 			fclose(f);
 		}
 	}
@@ -399,7 +400,7 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 
 static struct ref_dir *get_packed_ref_dir(struct packed_ref_cache *packed_ref_cache)
 {
-	return get_ref_dir(packed_ref_cache->root);
+	return get_ref_dir(packed_ref_cache->cache->root);
 }
 
 static struct ref_dir *get_packed_refs(struct files_ref_store *refs)
@@ -514,14 +515,19 @@ static struct ref_dir *get_loose_refs(struct files_ref_store *refs)
 		 * are about to read the only subdirectory that can
 		 * hold references:
 		 */
-		refs->loose = create_dir_entry(refs, "", 0, 0);
+		refs->loose = create_ref_cache(refs);
+
+		/* We're going to fill the top level ourselves: */
+		refs->loose->root->flag &= ~REF_INCOMPLETE;
+
 		/*
-		 * Create an incomplete entry for "refs/":
+		 * Add an incomplete entry for "refs/" (to be filled
+		 * lazily):
 		 */
-		add_entry_to_dir(get_ref_dir(refs->loose),
+		add_entry_to_dir(get_ref_dir(refs->loose->root),
 				 create_dir_entry(refs, "refs/", 5, 1));
 	}
-	return get_ref_dir(refs->loose);
+	return get_ref_dir(refs->loose->root);
 }
 
 /*

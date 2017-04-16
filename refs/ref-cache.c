@@ -63,9 +63,17 @@ struct ref_entry *create_ref_entry(const char *refname,
 	return ref;
 }
 
+struct ref_cache *create_ref_cache(struct files_ref_store *refs)
+{
+	struct ref_cache *ret = xcalloc(1, sizeof(*ret));
+
+	ret->root = create_dir_entry(refs, "", 0, 1);
+	return ret;
+}
+
 static void clear_ref_dir(struct ref_dir *dir);
 
-void free_ref_entry(struct ref_entry *entry)
+static void free_ref_entry(struct ref_entry *entry)
 {
 	if (entry->flag & REF_DIR) {
 		/*
@@ -75,6 +83,12 @@ void free_ref_entry(struct ref_entry *entry)
 		clear_ref_dir(&entry->u.subdir);
 	}
 	free(entry);
+}
+
+void free_ref_cache(struct ref_cache *cache)
+{
+	free_ref_entry(cache->root);
+	free(cache);
 }
 
 /*
