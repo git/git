@@ -1,11 +1,27 @@
 #ifndef REFS_REF_CACHE_H
 #define REFS_REF_CACHE_H
 
+struct ref_dir;
+
+/*
+ * If this ref_cache is filled lazily, this function is used to load
+ * information into the specified ref_dir (shallow or deep, at the
+ * option of the ref_store). dirname includes a trailing slash.
+ */
+typedef void fill_ref_dir_fn(struct ref_store *ref_store,
+			     struct ref_dir *dir, const char *dirname);
+
 struct ref_cache {
 	struct ref_entry *root;
 
-	/* A pointer to the files_ref_store whose cache this is: */
-	struct files_ref_store *ref_store;
+	/* A pointer to the ref_store whose cache this is: */
+	struct ref_store *ref_store;
+
+	/*
+	 * Function used (if necessary) to lazily-fill cache. May be
+	 * NULL.
+	 */
+	fill_ref_dir_fn *fill_ref_dir;
 };
 
 /*
@@ -174,9 +190,14 @@ struct ref_entry *create_ref_entry(const char *refname,
 
 /*
  * Return a pointer to a new `ref_cache`. Its top-level starts out
- * marked incomplete.
+ * marked incomplete. If `fill_ref_dir` is non-NULL, it is the
+ * function called to fill in incomplete directories in the
+ * `ref_cache` when they are accessed. If it is NULL, then the whole
+ * `ref_cache` must be filled (including clearing its directories'
+ * `REF_INCOMPLETE` bits) before it is used.
  */
-struct ref_cache *create_ref_cache(struct files_ref_store *refs);
+struct ref_cache *create_ref_cache(struct ref_store *refs,
+				   fill_ref_dir_fn *fill_ref_dir);
 
 /*
  * Free the `ref_cache` and all of its associated data.

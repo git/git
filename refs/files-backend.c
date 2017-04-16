@@ -386,7 +386,7 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 
 		refs->packed = xcalloc(1, sizeof(*refs->packed));
 		acquire_packed_ref_cache(refs->packed);
-		refs->packed->cache = create_ref_cache(refs);
+		refs->packed->cache = create_ref_cache(&refs->base, NULL);
 		refs->packed->cache->root->flag &= ~REF_INCOMPLETE;
 		f = fopen(packed_refs_file, "r");
 		if (f) {
@@ -430,9 +430,11 @@ static void add_packed_ref(struct files_ref_store *refs,
  * (without recursing).  dirname must end with '/'.  dir must be the
  * directory entry corresponding to dirname.
  */
-void read_loose_refs(const char *dirname, struct ref_dir *dir)
+static void loose_fill_ref_dir(struct ref_store *ref_store,
+			       struct ref_dir *dir, const char *dirname)
 {
-	struct files_ref_store *refs = dir->cache->ref_store;
+	struct files_ref_store *refs =
+		files_downcast(ref_store, REF_STORE_READ, "fill_ref_dir");
 	DIR *d;
 	struct dirent *de;
 	int dirnamelen = strlen(dirname);
@@ -515,7 +517,7 @@ static struct ref_dir *get_loose_refs(struct files_ref_store *refs)
 		 * are about to read the only subdirectory that can
 		 * hold references:
 		 */
-		refs->loose = create_ref_cache(refs);
+		refs->loose = create_ref_cache(&refs->base, loose_fill_ref_dir);
 
 		/* We're going to fill the top level ourselves: */
 		refs->loose->root->flag &= ~REF_INCOMPLETE;

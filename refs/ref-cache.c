@@ -4,9 +4,6 @@
 #include "ref-cache.h"
 #include "../iterator.h"
 
-/* FIXME: This declaration shouldn't be here */
-void read_loose_refs(const char *dirname, struct ref_dir *dir);
-
 void add_entry_to_dir(struct ref_dir *dir, struct ref_entry *entry)
 {
 	ALLOC_GROW(dir->entries, dir->nr + 1, dir->alloc);
@@ -25,7 +22,10 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry)
 	assert(entry->flag & REF_DIR);
 	dir = &entry->u.subdir;
 	if (entry->flag & REF_INCOMPLETE) {
-		read_loose_refs(entry->name, dir);
+		if (!dir->cache->fill_ref_dir)
+			die("BUG: incomplete ref_store without fill_ref_dir function");
+
+		dir->cache->fill_ref_dir(dir->cache->ref_store, dir, entry->name);
 
 		/*
 		 * Manually add refs/bisect, which, being
@@ -63,11 +63,13 @@ struct ref_entry *create_ref_entry(const char *refname,
 	return ref;
 }
 
-struct ref_cache *create_ref_cache(struct files_ref_store *refs)
+struct ref_cache *create_ref_cache(struct ref_store *refs,
+				   fill_ref_dir_fn *fill_ref_dir)
 {
 	struct ref_cache *ret = xcalloc(1, sizeof(*ret));
 
 	ret->ref_store = refs;
+	ret->fill_ref_dir = fill_ref_dir;
 	ret->root = create_dir_entry(ret, "", 0, 1);
 	return ret;
 }
