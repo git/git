@@ -1031,7 +1031,9 @@ int transport_push(struct transport *transport,
 							  &ref->new_oid);
 
 			if (!push_unpushed_submodules(&commits,
-						      transport->remote->name,
+						      transport->remote,
+						      refspec, refspec_nr,
+						      transport->push_options,
 						      pretend)) {
 				oid_array_clear(&commits);
 				die("Failed to push all needed submodules!");
