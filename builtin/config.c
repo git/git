@@ -26,7 +26,8 @@ static int use_global_config, use_system_config, use_local_config;
 static struct git_config_source given_config_source;
 static int actions, types;
 static int end_null;
-static int respect_includes = -1;
+static int respect_includes_opt = -1;
+static struct config_options config_options;
 static int show_origin;
 
 #define ACTION_GET (1<<0)
@@ -81,7 +82,7 @@ static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Other")),
 	OPT_BOOL('z', "null", &end_null, N_("terminate values with NUL byte")),
 	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
-	OPT_BOOL(0, "includes", &respect_includes, N_("respect include directives on lookup")),
+	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
 	OPT_END(),
 };
@@ -242,7 +243,7 @@ static int get_value(const char *key_, const char *regex_)
 	}
 
 	git_config_with_options(collect_config, &values,
-				&given_config_source, respect_includes);
+				&given_config_source, &config_options);
 
 	ret = !values.nr;
 
@@ -320,7 +321,7 @@ static void get_color(const char *var, const char *def_color)
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	git_config_with_options(git_get_color_config, NULL,
-				&given_config_source, respect_includes);
+				&given_config_source, &config_options);
 
 	if (!get_color_found && def_color) {
 		if (color_parse(def_color, parsed_color) < 0)
@@ -352,7 +353,7 @@ static int get_colorbool(const char *var, int print)
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
 	git_config_with_options(git_get_colorbool_config, NULL,
-				&given_config_source, respect_includes);
+				&given_config_source, &config_options);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -441,7 +442,7 @@ static int get_urlmatch(const char *var, const char *url)
 	}
 
 	git_config_with_options(urlmatch_config_entry, &config,
-				&given_config_source, respect_includes);
+				&given_config_source, &config_options);
 
 	ret = !values.nr;
 
@@ -530,8 +531,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 				prefix_filename(prefix, given_config_source.file);
 	}
 
-	if (respect_includes == -1)
-		respect_includes = !given_config_source.file;
+	if (respect_includes_opt == -1)
+		config_options.respect_includes = !given_config_source.file;
+	else
+		config_options.respect_includes = respect_includes_opt;
 
 	if (end_null) {
 		term = '\0';
@@ -578,7 +581,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 0, 0);
 		if (git_config_with_options(show_all_config, NULL,
 					    &given_config_source,
-					    respect_includes) < 0) {
+					    &config_options) < 0) {
 			if (given_config_source.file)
 				die_errno("unable to read config file '%s'",
 					  given_config_source.file);

@@ -1530,13 +1530,14 @@ static int do_git_config_sequence(config_fn_t fn, void *data)
 
 int git_config_with_options(config_fn_t fn, void *data,
 			    struct git_config_source *config_source,
-			    int respect_includes)
+			    const struct config_options *opts)
 {
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
 
-	if (respect_includes) {
+	if (opts->respect_includes) {
 		inc.fn = fn;
 		inc.data = data;
+		inc.opts = opts;
 		fn = git_config_include;
 		data = &inc;
 	}
@@ -1557,7 +1558,10 @@ int git_config_with_options(config_fn_t fn, void *data,
 
 static void git_config_raw(config_fn_t fn, void *data)
 {
-	if (git_config_with_options(fn, data, NULL, 1) < 0)
+	struct config_options opts = {0};
+
+	opts.respect_includes = 1;
+	if (git_config_with_options(fn, data, NULL, &opts) < 0)
 		/*
 		 * git_config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
@@ -1597,9 +1601,11 @@ static void configset_iter(struct config_set *cs, config_fn_t fn, void *data)
 
 void read_early_config(config_fn_t cb, void *data)
 {
+	struct config_options opts = {0};
 	struct strbuf buf = STRBUF_INIT;
 
-	git_config_with_options(cb, data, NULL, 1);
+	opts.respect_includes = 1;
+	git_config_with_options(cb, data, NULL, &opts);
 
 	/*
 	 * When setup_git_directory() was not yet asked to discover the
@@ -1615,7 +1621,7 @@ void read_early_config(config_fn_t cb, void *data)
 		memset(&repo_config, 0, sizeof(repo_config));
 		strbuf_addstr(&buf, "/config");
 		repo_config.file = buf.buf;
-		git_config_with_options(cb, data, &repo_config, 1);
+		git_config_with_options(cb, data, &repo_config, &opts);
 	}
 	strbuf_release(&buf);
 }
