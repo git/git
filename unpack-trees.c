@@ -167,7 +167,7 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 	msgs[ERROR_WOULD_LOSE_ORPHANED_REMOVED] =
 		_("The following working tree files would be removed by sparse checkout update:\n%s");
 	msgs[ERROR_WOULD_LOSE_SUBMODULE] =
-		_("Submodule '%s' cannot checkout new HEAD");
+		_("Cannot update submodule:\n%s");
 
 	opts->show_all_errors = 1;
 	/* rejected paths may not have a static buffer */
