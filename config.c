@@ -1504,12 +1504,20 @@ int git_config_system(void)
 	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
-static int do_git_config_sequence(config_fn_t fn, void *data)
+static int do_git_config_sequence(const struct config_options *opts,
+				  config_fn_t fn, void *data)
 {
 	int ret = 0;
 	char *xdg_config = xdg_config_home("config");
 	char *user_config = expand_user_path("~/.gitconfig");
-	char *repo_config = have_git_dir() ? git_pathdup("config") : NULL;
+	char *repo_config;
+
+	if (opts->git_dir)
+		repo_config = mkpathdup("%s/config", opts->git_dir);
+	else if (have_git_dir())
+		repo_config = git_pathdup("config");
+	else
+		repo_config = NULL;
 
 	current_parsing_scope = CONFIG_SCOPE_SYSTEM;
 	if (git_config_system() && !access_or_die(git_etc_gitconfig(), R_OK, 0))
@@ -1563,7 +1571,7 @@ int git_config_with_options(config_fn_t fn, void *data,
 	else if (config_source && config_source->blob)
 		return git_config_from_blob_ref(fn, config_source->blob, data);
 
-	return do_git_config_sequence(fn, data);
+	return do_git_config_sequence(opts, fn, data);
 }
 
 static void git_config_raw(config_fn_t fn, void *data)
@@ -1613,7 +1621,6 @@ void read_early_config(config_fn_t cb, void *data)
 {
 	struct config_options opts = {0};
 	struct strbuf buf = STRBUF_INIT;
-	char *to_free = NULL;
 
 	opts.respect_includes = 1;
 
@@ -1628,20 +1635,11 @@ void read_early_config(config_fn_t cb, void *data)
 	 * call).
 	 */
 	else if (discover_git_directory(&buf))
-		opts.git_dir = to_free = xstrdup(buf.buf);
+		opts.git_dir = buf.buf;
 
 	git_config_with_options(cb, data, NULL, &opts);
 
-	if (!have_git_dir() && opts.git_dir) {
-		struct git_config_source repo_config;
-
-		memset(&repo_config, 0, sizeof(repo_config));
-		strbuf_addstr(&buf, "/config");
-		repo_config.file = buf.buf;
-		git_config_with_options(cb, data, &repo_config, &opts);
-	}
 	strbuf_release(&buf);
-	free(to_free);
 }
 
 static void git_config_check_init(void);
