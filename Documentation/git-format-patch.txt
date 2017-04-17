@@ -551,7 +551,7 @@ series A, B, C, the history would be like:
 ................................................
 
 With `git format-patch --base=P -3 C` (or variants thereof, e.g. with
-`--cover-letter` of using `Z..C` instead of `-3 C` to specify the
+`--cover-letter` or using `Z..C` instead of `-3 C` to specify the
 range), the base tree information block is shown at the end of the
 first message the command outputs (either the first patch, or the
 cover letter), like this:
