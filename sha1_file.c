@@ -2952,7 +2952,7 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	if (status && oi->typep)
 		*oi->typep = status;
 	strbuf_release(&hdrbuf);
-	return 0;
+	return (status < 0) ? status : 0;
 }
 
 int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi, unsigned flags)
