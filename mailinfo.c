@@ -1094,7 +1094,7 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 
 	do {
 		peek = fgetc(mi->input);
-	} while (isspace(peek));
+	} while (peek >= 0 && isspace(peek));
 	ungetc(peek, mi->input);
 
 	/* process the email header */
