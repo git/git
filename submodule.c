@@ -576,6 +576,7 @@ void show_submodule_inline_diff(FILE *f, const char *path,
 	if (!(dirty_submodule & DIRTY_SUBMODULE_MODIFIED))
 		argv_array_push(&cp.args, oid_to_hex(new));
 
+	prepare_submodule_repo_env(&cp.env_array);
 	if (run_command(&cp))
 		fprintf(f, "(diff failed)\n");
 
