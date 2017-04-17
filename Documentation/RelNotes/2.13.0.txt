@@ -449,6 +449,18 @@ notes for details).
    certificate; this has been fixed.
    (merge f2214dede9 bc/push-cert-receive-fix later to maint).
 
+ * Update error handling for codepath that deals with corrupt loose
+   objects.
+   (merge 51054177b3 jk/loose-object-info-report-error later to maint).
+
+ * "git diff --submodule=diff" learned to work better in a project
+   with a submodule that in turn has its own submodules.
+   (merge 17b254cda6 sb/show-diff-for-submodule-in-diff-fix later to maint).
+
+ * Update the build dependency so that an update to /usr/bin/perl
+   etc. result in recomputation of perl.mak file.
+   (merge c59c4939c2 ab/regen-perl-mak-with-different-perl later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge df2a6e38b7 jk/pager-in-use later to maint).
    (merge 75ec4a6cb0 ab/branch-list-doc later to maint).
@@ -458,3 +470,7 @@ notes for details).
    (merge 48a96972fd ab/doc-submitting later to maint).
    (merge f5c2bc2b96 jk/make-coccicheck-detect-errors later to maint).
    (merge c105f563d1 cc/untracked later to maint).
+   (merge 8668976b53 jc/unused-symbols later to maint).
+   (merge fba275dc93 jc/bs-t-is-not-a-tab-for-sed later to maint).
+   (merge be6ed145de mm/ls-files-s-doc later to maint).
+   (merge 60b091c679 qp/bisect-docfix later to maint).
