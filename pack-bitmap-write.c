@@ -508,18 +508,16 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 			  const char *filename,
 			  uint16_t options)
 {
-	static char tmp_file[PATH_MAX];
 	static uint16_t default_version = 1;
 	static uint16_t flags = BITMAP_OPT_FULL_DAG;
+	struct strbuf tmp_file = STRBUF_INIT;
 	struct sha1file *f;
 
 	struct bitmap_disk_header header;
 
-	int fd = odb_mkstemp(tmp_file, sizeof(tmp_file), "pack/tmp_bitmap_XXXXXX");
+	int fd = odb_mkstemp(&tmp_file, "pack/tmp_bitmap_XXXXXX");
 
-	if (fd < 0)
-		die_errno("unable to create '%s'", tmp_file);
-	f = sha1fd(fd, tmp_file);
+	f = sha1fd(fd, tmp_file.buf);
 
 	memcpy(header.magic, BITMAP_IDX_SIGNATURE, sizeof(BITMAP_IDX_SIGNATURE));
 	header.version = htons(default_version);
@@ -539,9 +537,11 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 
 	sha1close(f, NULL, CSUM_FSYNC);
 
-	if (adjust_shared_perm(tmp_file))
+	if (adjust_shared_perm(tmp_file.buf))
 		die_errno("unable to make temporary bitmap file readable");
 
-	if (rename(tmp_file, filename))
+	if (rename(tmp_file.buf, filename))
 		die_errno("unable to rename temporary bitmap file to '%s'", filename);
+
+	strbuf_release(&tmp_file);
 }

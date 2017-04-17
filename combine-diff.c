@@ -292,9 +292,10 @@ static char *grab_blob(const struct object_id *oid, unsigned int mode,
 	enum object_type type;
 
 	if (S_ISGITLINK(mode)) {
-		blob = xmalloc(100);
-		*size = snprintf(blob, 100,
-				 "Subproject commit %s\n", oid_to_hex(oid));
+		struct strbuf buf = STRBUF_INIT;
+		strbuf_addf(&buf, "Subproject commit %s\n", oid_to_hex(oid));
+		*size = buf.len;
+		blob = strbuf_detach(&buf, NULL);
 	} else if (is_null_oid(oid)) {
 		/* deleted blob */
 		*size = 0;

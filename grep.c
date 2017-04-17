@@ -1171,7 +1171,7 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 	}
 	if (opt->linenum) {
 		char buf[32];
-		snprintf(buf, sizeof(buf), "%d", lno);
+		xsnprintf(buf, sizeof(buf), "%d", lno);
 		output_color(opt, buf, strlen(buf), opt->color_lineno);
 		output_sep(opt, sign);
 	}
@@ -1653,7 +1653,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 				     opt->color_filename);
 			output_sep(opt, ':');
 		}
-		snprintf(buf, sizeof(buf), "%u\n", count);
+		xsnprintf(buf, sizeof(buf), "%u\n", count);
 		opt->output(opt, buf, strlen(buf));
 		return 1;
 	}

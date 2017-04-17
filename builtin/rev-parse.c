@@ -213,13 +213,14 @@ static int show_abbrev(const unsigned char *sha1, void *cb_data)
 
 static void show_datestring(const char *flag, const char *datestr)
 {
-	static char buffer[100];
+	char *buffer;
 
 	/* date handling requires both flags and revs */
 	if ((filter & (DO_FLAGS | DO_REVS)) != (DO_FLAGS | DO_REVS))
 		return;
-	snprintf(buffer, sizeof(buffer), "%s%lu", flag, approxidate(datestr));
+	buffer = xstrfmt("%s%lu", flag, approxidate(datestr));
 	show(buffer);
+	free(buffer);
 }
 
 static int show_file(const char *arg, int output_prefix)

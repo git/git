@@ -1634,12 +1634,17 @@ static const char *parse_pack_header(struct pack_header *hdr)
 
 static const char *pack_lockfile;
 
+static void push_header_arg(struct argv_array *args, struct pack_header *hdr)
+{
+	argv_array_pushf(args, "--pack_header=%"PRIu32",%"PRIu32,
+			ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
+}
+
 static const char *unpack(int err_fd, struct shallow_info *si)
 {
 	struct pack_header hdr;
 	const char *hdr_err;
 	int status;
-	char hdr_arg[38];
 	struct child_process child = CHILD_PROCESS_INIT;
 	int fsck_objects = (receive_fsck_objects >= 0
 			    ? receive_fsck_objects
@@ -1653,9 +1658,6 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 			close(err_fd);
 		return hdr_err;
 	}
-	snprintf(hdr_arg, sizeof(hdr_arg),
-			"--pack_header=%"PRIu32",%"PRIu32,
-			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
 
 	if (si->nr_ours || si->nr_theirs) {
 		alt_shallow_file = setup_temporary_shallow(si->shallow);
@@ -1679,7 +1681,8 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 	tmp_objdir_add_as_alternate(tmp_objdir);
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
-		argv_array_pushl(&child.args, "unpack-objects", hdr_arg, NULL);
+		argv_array_push(&child.args, "unpack-objects");
+		push_header_arg(&child.args, &hdr);
 		if (quiet)
 			argv_array_push(&child.args, "-q");
 		if (fsck_objects)
@@ -1697,8 +1700,8 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 	} else {
 		char hostname[256];
 
-		argv_array_pushl(&child.args, "index-pack",
-				 "--stdin", hdr_arg, NULL);
+		argv_array_pushl(&child.args, "index-pack", "--stdin", NULL);
+		push_header_arg(&child.args, &hdr);
 
 		if (gethostname(hostname, sizeof(hostname)))
 			xsnprintf(hostname, sizeof(hostname), "localhost");
