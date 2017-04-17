@@ -100,6 +100,8 @@ static int is_console(int fd)
 	if (!fd) {
 		if (!GetConsoleMode(hcon, &mode))
 			return 0;
+		sbi.wAttributes = FOREGROUND_BLUE | FOREGROUND_GREEN |
+			FOREGROUND_RED;
 	} else if (!GetConsoleScreenBufferInfo(hcon, &sbi))
 		return 0;
 
