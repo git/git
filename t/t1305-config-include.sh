@@ -208,6 +208,17 @@ test_expect_success 'conditional include, both unanchored, icase' '
 	)
 '
 
+test_expect_success 'conditional include, early config reading' '
+	(
+		cd foo &&
+		echo "[includeIf \"gitdir:foo/\"]path=bar6" >>.git/config &&
+		echo "[test]six=6" >.git/bar6 &&
+		echo 6 >expect &&
+		test-config read_early_config test.six >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'include cycles are detected' '
 	cat >.gitconfig <<-\EOF &&
 	[test]value = gitconfig
