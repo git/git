@@ -137,7 +137,7 @@ respectively, in place of "good" and "bad". (But note that you cannot
 mix "good" and "bad" with "old" and "new" in a single session.)
 
 In this more general usage, you provide `git bisect` with a "new"
-commit has some property and an "old" commit that doesn't have that
+commit that has some property and an "old" commit that doesn't have that
 property. Each time `git bisect` checks out a commit, you test if that
 commit has the property. If it does, mark the commit as "new";
 otherwise, mark it as "old". When the bisection is done, `git bisect`
