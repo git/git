@@ -8,7 +8,7 @@ test_expect_success setup '
 
 	cat "$TEST_DIRECTORY"/test-binary-1.png >m &&
 	git add m &&
-	git ls-files -s | sed -e "s/ 0	/ 1	/" >E1 &&
+	git ls-files -s >out && sed -e "s/ 0	/ 1	/" <out >E1 &&
 	test_tick &&
 	git commit -m "initial" &&
 
@@ -18,14 +18,14 @@ test_expect_success setup '
 	echo nitfol >>m &&
 	git add a m &&
 	git ls-files -s a >E0 &&
-	git ls-files -s m | sed -e "s/ 0	/ 3	/" >E3 &&
+	git ls-files -s m >out && sed -e "s/ 0	/ 3	/" <out >E3 &&
 	test_tick &&
 	git commit -m "master adds some" &&
 
 	git checkout side &&
 	echo rezrov >>m &&
 	git add m &&
-	git ls-files -s m | sed -e "s/ 0	/ 2	/" >E2 &&
+	git ls-files -s m >out && sed -e "s/ 0	/ 2	/" <out >E2 &&
 	test_tick &&
 	git commit -m "side modifies" &&
 

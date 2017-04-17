@@ -70,7 +70,7 @@ test_expect_success TTY 'some commands do not use a pager' '
 
 test_expect_success 'no pager when stdout is a pipe' '
 	rm -f paginated.out &&
-	git log | cat &&
+	git log >out && cat <out &&
 	! test -e paginated.out
 '
 
@@ -88,7 +88,7 @@ test_expect_success TTY 'git --paginate rev-list uses a pager' '
 
 test_expect_success 'no pager even with --paginate when stdout is a pipe' '
 	rm -f file paginated.out &&
-	git --paginate log | cat &&
+	git --paginate log >out && cat <out &&
 	! test -e paginated.out
 '
 

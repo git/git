@@ -26,11 +26,11 @@ test_expect_success 'start import with incomplete authors file' '
 test_expect_success 'imported 2 revisions successfully' '
 	(
 		cd x
-		test "$(git rev-list refs/remotes/git-svn | wc -l)" -eq 2 &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn | \
-		  grep "^author BBBBBBB BBBBBBB <bb@example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 | \
-		  grep "^author AAAAAAA AAAAAAA <aa@example\.com> "
+		test "$(git rev-list refs/remotes/git-svn >out && wc -l <out)" -eq 2 &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn >out &&
+		grep "^author BBBBBBB BBBBBBB <bb@example\.com> " <out &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >out &&
+		grep "^author AAAAAAA AAAAAAA <aa@example\.com> " <out
 	)
 	'
 
@@ -43,11 +43,11 @@ test_expect_success 'continues to import once authors have been added' '
 	(
 		cd x
 		git svn fetch --authors-file=../svn-authors &&
-		test "$(git rev-list refs/remotes/git-svn | wc -l)" -eq 4 &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn | \
-		  grep "^author DDDDDDD DDDDDDD <dd@example\.com> " &&
-		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 | \
-		  grep "^author CCCCCCC CCCCCCC <cc@example\.com> "
+		test "$(git rev-list refs/remotes/git-svn >out && wc -l <out)" -eq 4 &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn >out &&
+		grep "^author DDDDDDD DDDDDDD <dd@example\.com> " <out &&
+		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >out &&
+		grep "^author CCCCCCC CCCCCCC <cc@example\.com> " <out
 	)
 	'
 
@@ -102,8 +102,8 @@ test_expect_success !MINGW 'fresh clone with svn.authors-file in config' '
 		test x"$HOME"/svn-authors = x"$(git config svn.authorsfile)" &&
 		git svn clone "$svnrepo" gitconfig.clone &&
 		cd gitconfig.clone &&
-		nr_ex=$(git log | grep "^Author:.*example.com" | wc -l) &&
-		nr_rev=$(git rev-list HEAD | wc -l) &&
+		nr_ex=$(git log >out && grep "^Author:.*example.com" <out | wc -l) &&
+		nr_rev=$(git rev-list HEAD >out && wc -l <out) &&
 		test $nr_rev -eq $nr_ex
 	)
 '

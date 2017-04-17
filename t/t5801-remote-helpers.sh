@@ -237,8 +237,8 @@ test_expect_success 'push update refs failure' '
 
 clean_mark () {
 	cut -f 2 -d ' ' "$1" |
-	git cat-file --batch-check |
-	grep commit |
+	git cat-file --batch-check >out &&
+	grep commit <out |
 	sort >$(basename "$1")
 }
 

@@ -209,8 +209,8 @@ test_expect_success 'loosely defined local base branch is reported correctly' '
 	test_config branch.strict.merge refs/heads/master &&
 	test_config branch.loose.merge master &&
 
-	git checkout strict | sed -e "s/strict/BRANCHNAME/g" >expect &&
-	git checkout loose | sed -e "s/loose/BRANCHNAME/g" >actual &&
+	git checkout strict >out && sed -e "s/strict/BRANCHNAME/g" <out >expect &&
+	git checkout loose >out && sed -e "s/loose/BRANCHNAME/g" <out >actual &&
 
 	test_cmp expect actual
 '

@@ -95,24 +95,24 @@ test_expect_success 'set up buggy branch' '
 '
 
 test_expect_success 'replace the author' '
-     git cat-file commit $HASH2 | grep "author A U Thor" &&
-     R=$(git cat-file commit $HASH2 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
-     git cat-file commit $R | grep "author O Thor" &&
+     git cat-file commit $HASH2 >out && grep "author A U Thor" <out &&
+     R=$(git cat-file commit $HASH2 >out && sed -e "s/A U/O/" <out | git hash-object -t commit --stdin -w) &&
+     git cat-file commit $R >out && grep "author O Thor" <out &&
      git update-ref refs/replace/$HASH2 $R &&
-     git show HEAD~5 | grep "O Thor" &&
-     git show $HASH2 | grep "O Thor"
+     git show HEAD~5 >out && grep "O Thor" <out &&
+     git show $HASH2 >out && grep "O Thor" <out
 '
 
 test_expect_success 'test --no-replace-objects option' '
-     git cat-file commit $HASH2 | grep "author O Thor" &&
-     git --no-replace-objects cat-file commit $HASH2 | grep "author A U Thor" &&
-     git show $HASH2 | grep "O Thor" &&
-     git --no-replace-objects show $HASH2 | grep "A U Thor"
+     git cat-file commit $HASH2 >out && grep "author O Thor" <out &&
+     git --no-replace-objects cat-file commit $HASH2 >out && grep "author A U Thor" <out &&
+     git show $HASH2 >out && grep "O Thor" <out &&
+     git --no-replace-objects show $HASH2 >out && grep "A U Thor" <out
 '
 
 test_expect_success 'test GIT_NO_REPLACE_OBJECTS env variable' '
-     GIT_NO_REPLACE_OBJECTS=1 git cat-file commit $HASH2 | grep "author A U Thor" &&
-     GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 | grep "A U Thor"
+     GIT_NO_REPLACE_OBJECTS=1 git cat-file commit $HASH2 >out && grep "author A U Thor" <out &&
+     GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 >out && grep "A U Thor" <out
 '
 
 cat >tag.sig <<EOF
@@ -139,14 +139,14 @@ test_expect_success 'repack, clone and fetch work' '
      git clone --no-hardlinks . clone_dir &&
      (
 	  cd clone_dir &&
-	  git show HEAD~5 | grep "A U Thor" &&
-	  git show $HASH2 | grep "A U Thor" &&
+	  git show HEAD~5 >out && grep "A U Thor" <out &&
+	  git show $HASH2 >out && grep "A U Thor" <out &&
 	  git cat-file commit $R &&
 	  git repack -a -d &&
 	  test_must_fail git cat-file commit $R &&
 	  git fetch ../ "refs/replace/*:refs/replace/*" &&
-	  git show HEAD~5 | grep "O Thor" &&
-	  git show $HASH2 | grep "O Thor" &&
+	  git show HEAD~5 >out && grep "O Thor" <out &&
+	  git show $HASH2 >out && grep "O Thor" <out &&
 	  git cat-file commit $R
      )
 '
@@ -160,13 +160,13 @@ test_expect_success '"git replace" listing and deleting' '
      test_must_fail git replace --delete &&
      test_must_fail git replace -l -d $HASH2 &&
      git replace -d $HASH2 &&
-     git show $HASH2 | grep "A U Thor" &&
+     git show $HASH2 >out &&grep "A U Thor" <out &&
      test -z "$(git replace -l)"
 '
 
 test_expect_success '"git replace" replacing' '
      git replace $HASH2 $R &&
-     git show $HASH2 | grep "O Thor" &&
+     git show $HASH2 >out && grep "O Thor" <out &&
      test_must_fail git replace $HASH2 $R &&
      git replace -f $HASH2 $R &&
      test_must_fail git replace -f &&
@@ -177,7 +177,7 @@ test_expect_success '"git replace" resolves sha1' '
      SHORTHASH2=$(git rev-parse --short=8 $HASH2) &&
      git replace -d $SHORTHASH2 &&
      git replace $SHORTHASH2 $R &&
-     git show $HASH2 | grep "O Thor" &&
+     git show $HASH2 >out && grep "O Thor" <out &&
      test_must_fail git replace $HASH2 $R &&
      git replace -f $HASH2 $R &&
      test_must_fail git replace --force &&
@@ -200,10 +200,10 @@ test_expect_success '"git replace" resolves sha1' '
 #
 test_expect_success 'create parallel branch without the bug' '
      git replace -d $HASH2 &&
-     git show $HASH2 | grep "A U Thor" &&
+     git show $HASH2 >out && grep "A U Thor" <out &&
      git checkout $HASH1 &&
      git cherry-pick $HASH2 &&
-     git show $HASH5 | git apply &&
+     git show $HASH5 >out && git apply <out &&
      git commit --amend -m "hello: 4 more lines WITHOUT the bug" hello &&
      PARA2=$(git rev-parse --verify HEAD) &&
      git cherry-pick $HASH3 &&
@@ -216,7 +216,7 @@ test_expect_success 'create parallel branch without the bug' '
      git checkout master &&
      cur=$(git rev-parse --verify HEAD) &&
      test "$cur" = "$HASH7" &&
-     git log --pretty=oneline | grep $PARA2 &&
+     git log --pretty=oneline >out && grep $PARA2 <out &&
      git remote add cloned ./clone_dir
 '
 
@@ -225,23 +225,23 @@ test_expect_success 'push to cloned repo' '
      (
 	  cd clone_dir &&
 	  git checkout parallel &&
-	  git log --pretty=oneline | grep $PARA2
+	  git log --pretty=oneline >out && grep $PARA2 <out
      )
 '
 
 test_expect_success 'push branch with replacement' '
-     git cat-file commit $PARA3 | grep "author A U Thor" &&
-     S=$(git cat-file commit $PARA3 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
-     git cat-file commit $S | grep "author O Thor" &&
+     git cat-file commit $PARA3 >out && grep "author A U Thor" <out &&
+     S=$(git cat-file commit $PARA3 >out && sed -e "s/A U/O/" <out | git hash-object -t commit --stdin -w) &&
+     git cat-file commit $S >out && grep "author O Thor" <out &&
      git replace $PARA3 $S &&
-     git show $HASH6~2 | grep "O Thor" &&
-     git show $PARA3 | grep "O Thor" &&
+     git show $HASH6~2 >out && grep "O Thor" <out &&
+     git show $PARA3 >out && grep "O Thor" <out &&
      git push cloned $HASH6^:refs/heads/parallel2 &&
      (
 	  cd clone_dir &&
 	  git checkout parallel2 &&
-	  git log --pretty=oneline | grep $PARA3 &&
-	  git show $PARA3 | grep "A U Thor"
+	  git log --pretty=oneline >out && grep $PARA3 <out &&
+	  git show $PARA3 >out && grep "A U Thor" <out
      )
 '
 
@@ -275,8 +275,8 @@ test_expect_success 'bisect and replacements' '
 '
 
 test_expect_success 'index-pack and replacements' '
-	git --no-replace-objects rev-list --objects HEAD |
-	git --no-replace-objects pack-objects test- &&
+	git --no-replace-objects rev-list --objects HEAD >out &&
+	git --no-replace-objects pack-objects test- <out &&
 	git index-pack test-*.pack
 '
 
@@ -310,7 +310,7 @@ test_expect_success '-f option bypasses the type check' '
 '
 
 test_expect_success 'git cat-file --batch works on replace objects' '
-	git replace | grep $PARA3 &&
+	git replace >out && grep $PARA3 <out &&
 	echo $PARA3 | git cat-file --batch
 '
 
@@ -335,7 +335,7 @@ test_expect_success 'test --format medium' '
 		echo "$PARA3 -> $S" &&
 		echo "$MYTAG -> $HASH1"
 	} | sort >expected &&
-	git replace -l --format medium | sort >actual &&
+	git replace -l --format medium >out && sort <out >actual &&
 	test_cmp expected actual
 '
 
@@ -347,7 +347,7 @@ test_expect_success 'test --format long' '
 		echo "$PARA3 (commit) -> $S (commit)" &&
 		echo "$MYTAG (tag) -> $HASH1 (commit)"
 	} | sort >expected &&
-	git replace --format=long | sort >actual &&
+	git replace --format=long >out && sort <out >actual &&
 	test_cmp expected actual
 '
 
@@ -365,12 +365,12 @@ test_expect_success 'setup fake editors' '
 test_expect_success '--edit with and without already replaced object' '
 	test_must_fail env GIT_EDITOR=./fakeeditor git replace --edit "$PARA3" &&
 	GIT_EDITOR=./fakeeditor git replace --force --edit "$PARA3" &&
-	git replace -l | grep "$PARA3" &&
-	git cat-file commit "$PARA3" | grep "A fake Thor" &&
+	git replace -l >out && grep "$PARA3" <out &&
+	git cat-file commit "$PARA3" >out && grep "A fake Thor" <out &&
 	git replace -d "$PARA3" &&
 	GIT_EDITOR=./fakeeditor git replace --edit "$PARA3" &&
-	git replace -l | grep "$PARA3" &&
-	git cat-file commit "$PARA3" | grep "A fake Thor"
+	git replace -l >out && grep "$PARA3" <out &&
+	git cat-file commit "$PARA3" >out && grep "A fake Thor" <out
 '
 
 test_expect_success '--edit and change nothing or command failed' '
@@ -378,8 +378,8 @@ test_expect_success '--edit and change nothing or command failed' '
 	test_must_fail env GIT_EDITOR=true git replace --edit "$PARA3" &&
 	test_must_fail env GIT_EDITOR="./failingfakeeditor" git replace --edit "$PARA3" &&
 	GIT_EDITOR=./fakeeditor git replace --edit "$PARA3" &&
-	git replace -l | grep "$PARA3" &&
-	git cat-file commit "$PARA3" | grep "A fake Thor"
+	git replace -l >out && grep "$PARA3" <out &&
+	git cat-file commit "$PARA3" >out && grep "A fake Thor" <out
 '
 
 test_expect_success 'replace ref cleanup' '
@@ -389,9 +389,9 @@ test_expect_success 'replace ref cleanup' '
 '
 
 test_expect_success '--graft with and without already replaced object' '
-	test $(git log --oneline | wc -l) = 7 &&
+	test $(git log --oneline >out && wc -l <out) = 7 &&
 	git replace --graft $HASH5 &&
-	test $(git log --oneline | wc -l) = 3 &&
+	test $(git log --oneline >out && wc -l <out) = 3 &&
 	commit_has_parents $HASH5 &&
 	test_must_fail git replace --graft $HASH5 $HASH4 $HASH3 &&
 	git replace --force -g $HASH5 $HASH4 $HASH3 &&
@@ -435,7 +435,7 @@ test_expect_success GPG 'set up a merge commit with a mergetag' '
 	git checkout master &&
 	git merge -s ours test_tag &&
 	HASH10=$(git rev-parse --verify HEAD) &&
-	git cat-file commit $HASH10 | grep "^mergetag object"
+	git cat-file commit $HASH10 >out && grep "^mergetag object" <out
 '
 
 test_expect_success GPG '--graft on a commit with a mergetag' '

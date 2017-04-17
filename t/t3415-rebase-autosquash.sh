@@ -38,7 +38,7 @@ test_auto_fixup () {
 	test_line_count = 3 actual &&
 	git diff --exit-code $1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD^ | grep first | wc -l)
+	test 1 = $(git cat-file commit HEAD^ >out && grep first out | wc -l)
 }
 
 test_expect_success 'auto fixup (option)' '
@@ -67,7 +67,7 @@ test_auto_squash () {
 	test_line_count = 3 actual &&
 	git diff --exit-code $1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 2 = $(git cat-file commit HEAD^ | grep first | wc -l)
+	test 2 = $(git cat-file commit HEAD^ >out && grep first out | wc -l)
 }
 
 test_expect_success 'auto squash (option)' '
@@ -94,7 +94,7 @@ test_expect_success 'misspelled auto squash' '
 	git log --oneline >actual &&
 	test_line_count = 4 actual &&
 	git diff --exit-code final-missquash &&
-	test 0 = $(git rev-list final-missquash...HEAD | wc -l)
+	test 0 = $(git rev-list final-missquash...HEAD >out && wc -l out)
 '
 
 test_expect_success 'auto squash that matches 2 commits' '
@@ -114,8 +114,8 @@ test_expect_success 'auto squash that matches 2 commits' '
 	test_line_count = 4 actual &&
 	git diff --exit-code final-multisquash &&
 	test 1 = "$(git cat-file blob HEAD^^:file1)" &&
-	test 2 = $(git cat-file commit HEAD^^ | grep first | wc -l) &&
-	test 1 = $(git cat-file commit HEAD | grep first | wc -l)
+	test 2 = $(git cat-file commit HEAD^^ >out && grep first out | wc -l) &&
+	test 1 = $(git cat-file commit HEAD >out && grep first out | wc -l)
 '
 
 test_expect_success 'auto squash that matches a commit after the squash' '
@@ -136,8 +136,8 @@ test_expect_success 'auto squash that matches a commit after the squash' '
 	git diff --exit-code final-presquash &&
 	test 0 = "$(git cat-file blob HEAD^^:file1)" &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD | grep third | wc -l) &&
-	test 1 = $(git cat-file commit HEAD^ | grep third | wc -l)
+	test 1 = $(git cat-file commit HEAD >out && grep third out | wc -l) &&
+	test 1 = $(git cat-file commit HEAD^ >out && grep third out | wc -l)
 '
 test_expect_success 'auto squash that matches a sha1' '
 	git reset --hard base &&
@@ -152,7 +152,7 @@ test_expect_success 'auto squash that matches a sha1' '
 	test_line_count = 3 actual &&
 	git diff --exit-code final-shasquash &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+	test 1 = $(git cat-file commit HEAD^ >out && grep squash out | wc -l)
 '
 
 test_expect_success 'auto squash that matches longer sha1' '
@@ -168,7 +168,7 @@ test_expect_success 'auto squash that matches longer sha1' '
 	test_line_count = 3 actual &&
 	git diff --exit-code final-longshasquash &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+	test 1 = $(git cat-file commit HEAD^ >out && grep squash out | wc -l)
 '
 
 test_auto_commit_flags () {
@@ -184,7 +184,7 @@ test_auto_commit_flags () {
 	test_line_count = 3 actual &&
 	git diff --exit-code final-commit-$1 &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test $2 = $(git cat-file commit HEAD^ | grep first | wc -l)
+	test $2 = $(git cat-file commit HEAD^ >out && grep first out | wc -l)
 }
 
 test_expect_success 'use commit --fixup' '
@@ -225,10 +225,10 @@ test_auto_fixup_fixup () {
 	test 2 = "$(git cat-file blob HEAD^:file1)" &&
 	if test "$1" = "fixup"
 	then
-		test 1 = $(git cat-file commit HEAD^ | grep first | wc -l)
+		test 1 = $(git cat-file commit HEAD^ >out && grep first out | wc -l)
 	elif test "$1" = "squash"
 	then
-		test 3 = $(git cat-file commit HEAD^ | grep first | wc -l)
+		test 3 = $(git cat-file commit HEAD^ >out && grep first out | wc -l)
 	else
 		false
 	fi
@@ -268,7 +268,7 @@ test_expect_success 'autosquash with custom inst format' '
 	test_line_count = 3 actual &&
 	git diff --exit-code final-squash-instFmt &&
 	test 1 = "$(git cat-file blob HEAD^:file1)" &&
-	test 2 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+	test 2 = $(git cat-file commit HEAD^ >out && grep squash out | wc -l)
 '
 
 set_backup_editor () {

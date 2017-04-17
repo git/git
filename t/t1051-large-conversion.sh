@@ -12,7 +12,7 @@ check_input() {
 	git read-tree --empty &&
 	git add small large &&
 	git cat-file blob :small >small.index &&
-	git cat-file blob :large | head -n 1 >large.index &&
+	git cat-file blob :large >out && head -n 1 <out >large.index &&
 	test_cmp small.index large.index
 }
 

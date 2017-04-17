@@ -140,7 +140,7 @@ test_expect_success 'git svn gc-ed files work' '
 		if test -f "$unhandled".gz
 		then
 			svn_cmd mkdir -m gz "$svnrepo"/gz &&
-			git reset --hard $(git rev-list HEAD | tail -1) &&
+			git reset --hard $(git rev-list HEAD >out && tail -1 <out) &&
 			git svn rebase &&
 			test -f "$unhandled".gz &&
 			test -f "$unhandled" &&

@@ -53,9 +53,9 @@ test_expect_success merge '
 
 test_expect_success 'check merge result in index' '
 
-	git ls-files -u | grep binary &&
-	git ls-files -u | grep text &&
-	! (git ls-files -u | grep union)
+	git ls-files -u >out && grep binary <out &&
+	git ls-files -u >out grep text <out &&
+	! (git ls-files -u >out && grep union <out)
 
 '
 

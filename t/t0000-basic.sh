@@ -1010,26 +1010,26 @@ P=087704a96baf1c2d1c869a8b084481e121c88b5b
 
 test_expect_success 'git commit-tree records the correct tree in a commit' '
 	commit0=$(echo NO | git commit-tree $P) &&
-	tree=$(git show --pretty=raw $commit0 |
-		 sed -n -e "s/^tree //p" -e "/^author /q") &&
+	tree=$(git show --pretty=raw $commit0 >out &&
+	sed -n -e "s/^tree //p" -e "/^author /q" <out) &&
 	test "z$tree" = "z$P"
 '
 
 test_expect_success 'git commit-tree records the correct parent in a commit' '
 	commit1=$(echo NO | git commit-tree $P -p $commit0) &&
-	parent=$(git show --pretty=raw $commit1 |
-		sed -n -e "s/^parent //p" -e "/^author /q") &&
+	parent=$(git show --pretty=raw $commit1 >out &&
+	sed -n -e "s/^parent //p" -e "/^author /q" <out) &&
 	test "z$commit0" = "z$parent"
 '
 
 test_expect_success 'git commit-tree omits duplicated parent in a commit' '
 	commit2=$(echo NO | git commit-tree $P -p $commit0 -p $commit0) &&
-	     parent=$(git show --pretty=raw $commit2 |
-		sed -n -e "s/^parent //p" -e "/^author /q" |
+	parent=$(git show --pretty=raw $commit2 >out &&
+	sed -n -e "s/^parent //p" -e "/^author /q" <out |
 		sort -u) &&
 	test "z$commit0" = "z$parent" &&
-	numparent=$(git show --pretty=raw $commit2 |
-		sed -n -e "s/^parent //p" -e "/^author /q" |
+	numparent=$(git show --pretty=raw $commit2 >out &&
+	sed -n -e "s/^parent //p" -e "/^author /q" <out |
 		wc -l) &&
 	test $numparent = 1
 '
@@ -1039,7 +1039,7 @@ test_expect_success 'update-index D/F conflict' '
 	mv path2 path0 &&
 	mv tmp path2 &&
 	git update-index --add --replace path2 path0/file2 &&
-	numpath0=$(git ls-files path0 | wc -l) &&
+	numpath0=$(git ls-files path0 >out && wc -l out) &&
 	test $numpath0 = 1
 '
 
@@ -1054,12 +1054,12 @@ test_expect_success 'very long name in the index handled sanely' '
 	>path4 &&
 	git update-index --add path4 &&
 	(
-		git ls-files -s path4 |
-		sed -e "s/	.*/	/" |
+		git ls-files -s path4 >out &&
+		sed -e "s/	.*/	/" <out |
 		tr -d "\012"
 		echo "$a"
 	) | git update-index --index-info &&
-	len=$(git ls-files "a*" | wc -c) &&
+	len=$(git ls-files "a*" >out && wc -c out) &&
 	test $len = 4098
 '
 

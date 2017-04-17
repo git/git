@@ -30,8 +30,8 @@ test_expect_success \
      tree=$(git write-tree) &&
      commit=$(git commit-tree $tree </dev/null) && {
 	 echo $tree &&
-	 git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
-     } >obj-list &&
+	 git ls-tree $tree >out && sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"<out
+	 } >obj-list &&
      git update-ref HEAD $commit'
 
 test_expect_success \
@@ -121,14 +121,14 @@ index_obj_nr()
     idx_file=$1
     object_sha1=$2
     nr=0
-    git show-index < $idx_file |
+    git show-index < $idx_file >out &&
     while read offs sha1 extra
     do
       nr=$(($nr + 1))
       test "$sha1" = "$object_sha1" || continue
       echo "$(($nr - 1))"
       break
-    done
+    done <out
 }
 
 # returns the pack offset for given object as found in given pack index
@@ -136,7 +136,7 @@ index_obj_offset()
 {
     idx_file=$1
     object_sha1=$2
-    git show-index < $idx_file | grep $object_sha1 |
+    git show-index < $idx_file >out && grep $object_sha1 <out |
     ( read offs extra && echo "$offs" )
 }
 
@@ -144,7 +144,7 @@ test_expect_success \
     '[index v1] 1) stream pack to repository' \
     'git index-pack --index-version=1 --stdin < "test-1-${pack1}.pack" &&
      git prune-packed &&
-     git count-objects | ( read nr rest && test "$nr" -eq 1 ) &&
+     git count-objects >out && ( read nr rest <out && test "$nr" -eq 1 <out) &&
      cmp "test-1-${pack1}.pack" ".git/objects/pack/pack-${pack1}.pack" &&
      cmp "test-1-${pack1}.idx"  ".git/objects/pack/pack-${pack1}.idx"'
 
@@ -185,7 +185,7 @@ test_expect_success \
     'rm -f .git/objects/pack/* &&
      git index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
      git prune-packed &&
-     git count-objects | ( read nr rest && test "$nr" -eq 1 ) &&
+     git count-objects >out && ( read nr rest <out && test "$nr" -eq 1 <out) &&
      cmp "test-1-${pack1}.pack" ".git/objects/pack/pack-${pack1}.pack" &&
      cmp "test-2-${pack1}.idx"  ".git/objects/pack/pack-${pack1}.idx"'
 

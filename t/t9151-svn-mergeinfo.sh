@@ -17,20 +17,20 @@ test_expect_success 'load svn dump' "
 	"
 
 test_expect_success 'all svn merges became git merge commits' '
-	unmarked=$(git rev-list --parents --all --grep=Merge |
-		grep -v " .* " | cut -f1 -d" ") &&
+	unmarked=$(git rev-list --parents --all --grep=Merge >out &&
+		grep -v " .* " <out | cut -f1 -d" ") &&
 	[ -z "$unmarked" ]
 	'
 
 test_expect_success 'cherry picks did not become git merge commits' '
-	bad_cherries=$(git rev-list --parents --all --grep=Cherry |
-		grep " .* " | cut -f1 -d" ") &&
+	bad_cherries=$(git rev-list --parents --all --grep=Cherry >out &&
+		grep " .* " <out | cut -f1 -d" ") &&
 	[ -z "$bad_cherries" ]
 	'
 
 test_expect_success 'svn non-merge merge commits did not become git merge commits' '
-	bad_non_merges=$(git rev-list --parents --all --grep=non-merge |
-		grep " .* " | cut -f1 -d" ") &&
+	bad_non_merges=$(git rev-list --parents --all --grep=non-merge >out &&
+		grep " .* " <out | cut -f1 -d" ") &&
 	[ -z "$bad_non_merges" ]
 	'
 

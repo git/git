@@ -208,14 +208,14 @@ test_expect_success 'sort branches, ignore case' '
 		test_commit initial &&
 		git branch branch-one &&
 		git branch BRANCH-two &&
-		git branch --list | awk "{print \$NF}" >actual &&
+		git branch --list >out && awk "{print \$NF}" <out >actual &&
 		cat >expected <<-\EOF &&
 		BRANCH-two
 		branch-one
 		master
 		EOF
 		test_cmp expected actual &&
-		git branch --list -i | awk "{print \$NF}" >actual &&
+		git branch --list -i >out && awk "{print \$NF}" <out >actual &&
 		cat >expected <<-\EOF &&
 		branch-one
 		BRANCH-two

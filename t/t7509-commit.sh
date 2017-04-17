@@ -8,13 +8,13 @@ test_description='git commit --reset-author'
 . ./test-lib.sh
 
 author_header () {
-	git cat-file commit "$1" |
-	sed -n -e '/^$/q' -e '/^author /p'
+	git cat-file commit "$1" >out &&
+	sed -n -e '/^$/q' -e '/^author /p' <out
 }
 
 message_body () {
-	git cat-file commit "$1" |
-	sed -e '1,/^$/d'
+	git cat-file commit "$1" >out &&
+	sed -e '1,/^$/d' <out
 }
 
 test_expect_success '-C option copies authorship and message' '

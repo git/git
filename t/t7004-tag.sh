@@ -22,8 +22,8 @@ test_expect_success 'listing all tags in an empty tree should succeed' '
 '
 
 test_expect_success 'listing all tags in an empty tree should output nothing' '
-	test $(git tag -l | wc -l) -eq 0 &&
-	test $(git tag | wc -l) -eq 0
+	test $(git tag -l >out && wc -l <out) -eq 0 &&
+	test $(git tag >out && wc -l <out) -eq 0
 '
 
 test_expect_success 'sort tags, ignore case' '
@@ -153,7 +153,7 @@ test_expect_success \
 
 test_expect_success \
 	'listing tags using a non-matching pattern should output nothing' \
-	'test $(git tag -l xxx | wc -l) -eq 0'
+	'test $(git tag -l xxx >out && wc -l <out) -eq 0'
 
 # special cases for creating tags:
 
@@ -163,13 +163,13 @@ test_expect_success \
 
 test_expect_success \
 	'trying to create a tag with a non-valid name should fail' '
-	test $(git tag -l | wc -l) -eq 1 &&
+	test $(git tag -l >out && wc -l <out) -eq 1 &&
 	test_must_fail git tag "" &&
 	test_must_fail git tag .othertag &&
 	test_must_fail git tag "other tag" &&
 	test_must_fail git tag "othertag^" &&
 	test_must_fail git tag "other~tag" &&
-	test $(git tag -l | wc -l) -eq 1
+	test $(git tag -l >out && wc -l <out) -eq 1
 '
 
 test_expect_success 'creating a tag using HEAD directly should succeed' '
@@ -425,7 +425,7 @@ test_expect_success \
 # creating annotated tags:
 
 get_tag_msg () {
-	git cat-file tag "$1" | sed -e "/BEGIN PGP/q"
+	git cat-file tag "$1" >out && sed -e "/BEGIN PGP/q" <out
 }
 
 # run test_tick before committing always gives the time in that timezone
@@ -636,9 +636,9 @@ test_expect_success \
 	git tag -m "A msg" tag-one-line &&
 
 	echo "tag-one-line" >expect &&
-	git tag -l | grep "^tag-one-line" >actual &&
+	git tag -l >out && grep "^tag-one-line" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n0 -l | grep "^tag-one-line" >actual &&
+	git tag -n0 -l >out && grep "^tag-one-line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n0 -l tag-one-line >actual &&
 	test_cmp expect actual &&
@@ -649,9 +649,9 @@ test_expect_success \
 	test_cmp expect actual &&
 
 	echo "tag-one-line    A msg" >expect &&
-	git tag -n1 -l | grep "^tag-one-line" >actual &&
+	git tag -n1 -l >out && grep "^tag-one-line" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n -l | grep "^tag-one-line" >actual &&
+	git tag -n -l >out && grep "^tag-one-line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n1 -l tag-one-line >actual &&
 	test_cmp expect actual &&
@@ -677,17 +677,17 @@ test_expect_success \
 	git tag -m "" tag-zero-lines &&
 
 	echo "tag-zero-lines" >expect &&
-	git tag -l | grep "^tag-zero-lines" >actual &&
+	git tag -l >out && grep "^tag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n0 -l | grep "^tag-zero-lines" >actual &&
+	git tag -n0 -l >out && grep "^tag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n0 -l tag-zero-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "tag-zero-lines  " >expect &&
-	git tag -n1 -l | grep "^tag-zero-lines" >actual &&
+	git tag -n1 -l >out && grep "^tag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n -l | grep "^tag-zero-lines" >actual &&
+	git tag -n -l >out && grep "^tag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n1 -l tag-zero-lines >actual &&
 	test_cmp expect actual &&
@@ -705,37 +705,37 @@ test_expect_success \
 	git tag -F annotagmsg tag-lines &&
 
 	echo "tag-lines" >expect &&
-	git tag -l | grep "^tag-lines" >actual &&
+	git tag -l >out && grep "^tag-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n0 -l | grep "^tag-lines" >actual &&
+	git tag -n0 -l >out && grep "^tag-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n0 -l tag-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "tag-lines       tag line one" >expect &&
-	git tag -n1 -l | grep "^tag-lines" >actual &&
+	git tag -n1 -l >out && grep "^tag-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n -l | grep "^tag-lines" >actual &&
+	git tag -n -l >out && grep "^tag-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n1 -l tag-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "    tag line two" >>expect &&
-	git tag -n2 -l | grep "^ *tag.line" >actual &&
+	git tag -n2 -l >out && grep "^ *tag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n2 -l tag-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "    tag line three" >>expect &&
-	git tag -n3 -l | grep "^ *tag.line" >actual &&
+	git tag -n3 -l >out && grep "^ *tag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n3 -l tag-lines >actual &&
 	test_cmp expect actual &&
-	git tag -n4 -l | grep "^ *tag.line" >actual &&
+	git tag -n4 -l >out && grep "^ *tag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n4 -l tag-lines >actual &&
 	test_cmp expect actual &&
-	git tag -n99 -l | grep "^ *tag.line" >actual &&
+	git tag -n99 -l >out && grep "^ *tag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n99 -l tag-lines >actual &&
 	test_cmp expect actual
@@ -927,8 +927,8 @@ test_expect_success GPG \
 '
 
 test_expect_success GPG 'verifying a forged tag should fail' '
-	forged=$(git cat-file tag signed-tag |
-		sed -e "s/signed-tag/forged-tag/" |
+	forged=$(git cat-file tag signed-tag >out &&
+		sed -e "s/signed-tag/forged-tag/" <out |
 		git mktag) &&
 	git tag forged-tag $forged &&
 	test_must_fail git tag -v forged-tag
@@ -1106,17 +1106,17 @@ test_expect_success GPG \
 	git tag -s -m "A message line signed" stag-one-line &&
 
 	echo "stag-one-line" >expect &&
-	git tag -l | grep "^stag-one-line" >actual &&
+	git tag -l >out && grep "^stag-one-line" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n0 -l | grep "^stag-one-line" >actual &&
+	git tag -n0 -l >out && grep "^stag-one-line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n0 -l stag-one-line >actual &&
 	test_cmp expect actual &&
 
 	echo "stag-one-line   A message line signed" >expect &&
-	git tag -n1 -l | grep "^stag-one-line" >actual &&
+	git tag -n1 -l >out && grep "^stag-one-line" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n -l | grep "^stag-one-line" >actual &&
+	git tag -n -l >out && grep "^stag-one-line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n1 -l stag-one-line >actual &&
 	test_cmp expect actual &&
@@ -1131,17 +1131,17 @@ test_expect_success GPG \
 	git tag -s -m "" stag-zero-lines &&
 
 	echo "stag-zero-lines" >expect &&
-	git tag -l | grep "^stag-zero-lines" >actual &&
+	git tag -l >out && grep "^stag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n0 -l | grep "^stag-zero-lines" >actual &&
+	git tag -n0 -l >out && grep "^stag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n0 -l stag-zero-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "stag-zero-lines " >expect &&
-	git tag -n1 -l | grep "^stag-zero-lines" >actual &&
+	git tag -n1 -l >out && grep "^stag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n -l | grep "^stag-zero-lines" >actual &&
+	git tag -n -l >out && grep "^stag-zero-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n1 -l stag-zero-lines >actual &&
 	test_cmp expect actual &&
@@ -1159,37 +1159,37 @@ test_expect_success GPG \
 	git tag -s -F sigtagmsg stag-lines &&
 
 	echo "stag-lines" >expect &&
-	git tag -l | grep "^stag-lines" >actual &&
+	git tag -l >out && grep "^stag-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n0 -l | grep "^stag-lines" >actual &&
+	git tag -n0 -l >out && grep "^stag-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n0 -l stag-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "stag-lines      stag line one" >expect &&
-	git tag -n1 -l | grep "^stag-lines" >actual &&
+	git tag -n1 -l >out &&  grep "^stag-lines" <out >actual &&
 	test_cmp expect actual &&
-	git tag -n -l | grep "^stag-lines" >actual &&
+	git tag -n -l >out && grep "^stag-lines" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n1 -l stag-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "    stag line two" >>expect &&
-	git tag -n2 -l | grep "^ *stag.line" >actual &&
+	git tag -n2 -l >out && grep "^ *stag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n2 -l stag-lines >actual &&
 	test_cmp expect actual &&
 
 	echo "    stag line three" >>expect &&
-	git tag -n3 -l | grep "^ *stag.line" >actual &&
+	git tag -n3 -l >out && grep "^ *stag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n3 -l stag-lines >actual &&
 	test_cmp expect actual &&
-	git tag -n4 -l | grep "^ *stag.line" >actual &&
+	git tag -n4 -l >out && grep "^ *stag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n4 -l stag-lines >actual &&
 	test_cmp expect actual &&
-	git tag -n99 -l | grep "^ *stag.line" >actual &&
+	git tag -n99 -l >out && grep "^ *stag.line" <out >actual &&
 	test_cmp expect actual &&
 	git tag -n99 -l stag-lines >actual &&
 	test_cmp expect actual
@@ -1363,7 +1363,7 @@ test_expect_success 'filename for the message is relative to cwd' '
 		cd subdir &&
 		git tag -a -F msgfile-5 tag-from-subdir
 	) &&
-	git cat-file tag tag-from-subdir | grep "in sub directory"
+	git cat-file tag tag-from-subdir >out && grep "in sub directory" <out
 '
 
 test_expect_success 'filename for the message is relative to cwd' '
@@ -1372,7 +1372,7 @@ test_expect_success 'filename for the message is relative to cwd' '
 		cd subdir &&
 		git tag -a -F msgfile-6 tag-from-subdir-2
 	) &&
-	git cat-file tag tag-from-subdir-2 | grep "in sub directory"
+	git cat-file tag tag-from-subdir-2 >out && grep "in sub directory" <out
 '
 
 # create a few more commits to test --contains

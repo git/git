@@ -120,9 +120,9 @@ test_expect_success 'dcommit error handling' '
 		# but still should leave the repository in reasonable state
 		test_must_fail git svn dcommit &&
 		git update-index --refresh &&
-		git show HEAD~2   | grep -q git-svn-id &&
-		! git show HEAD~1 | grep -q git-svn-id &&
-		! git show HEAD   | grep -q git-svn-id
+		git show HEAD~2 >out && grep -q git-svn-id <out &&
+		!(git show HEAD~1 >out && grep -q git-svn-id <out) &&
+		!(git show HEAD   >out && grep -q git-svn-id <out)
 	)
 '
 
@@ -138,10 +138,10 @@ test_expect_success 'dcommit concurrent change in non-changed file' '
 		git svn dcommit &&
 		git update-index --refresh &&
 		check_contents &&
-		git show HEAD~3 | grep -q git-svn-id &&
-		git show HEAD~2 | grep -q git-svn-id &&
-		git show HEAD~1 | grep -q auto-committing &&
-		git show HEAD   | grep -q git-svn-id
+		git show HEAD~3 >out && grep -q git-svn-id <out &&
+		git show HEAD~2 >out && grep -q git-svn-id <out &&
+		git show HEAD~1 >out && grep -q auto-committing <out &&
+		git show HEAD >out && grep -q git-svn-id <out
 	)
 '
 
@@ -169,10 +169,10 @@ test_expect_success 'dcommit concurrent non-conflicting change' '
 		git svn dcommit &&
 		git update-index --refresh &&
 		check_contents &&
-		git show HEAD~3 | grep -q git-svn-id &&
-		git show HEAD~2 | grep -q git-svn-id &&
-		git show HEAD~1 | grep -q auto-committing &&
-		git show HEAD   | grep -q git-svn-id
+		git show HEAD~3 >out && grep -q git-svn-id <out &&
+		git show HEAD~2 >out && grep -q git-svn-id <out &&
+		git show HEAD~1 >out && grep -q auto-committing <out &&
+		git show HEAD >out && grep -q git-svn-id <out
 	)
 '
 
@@ -191,9 +191,9 @@ test_expect_success 'dcommit --no-rebase concurrent non-conflicting change' '
 		test_must_fail git svn dcommit --no-rebase &&
 		# but should leave HEAD unchanged
 		git update-index --refresh &&
-		! git show HEAD~2 | grep -q git-svn-id &&
-		! git show HEAD~1 | grep -q git-svn-id &&
-		! git show HEAD   | grep -q git-svn-id
+		! (git show HEAD~2 >out && grep -q git-svn-id <out) &&
+		! (git show HEAD~1 >out && grep -q git-svn-id <out)&&
+		! (git show HEAD >out && grep -q git-svn-id <out)
 	)
 '
 

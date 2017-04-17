@@ -274,8 +274,8 @@ test_expect_success 'overriding author from command line' '
 
 test_expect_success PERL 'interactive add' '
 	echo 7 |
-	git commit --interactive |
-	grep "What now"
+	git commit --interactive >out &&
+	grep "What now" out
 '
 
 test_expect_success PERL "commit --interactive doesn't change index if editor aborts" '
@@ -350,10 +350,10 @@ test_expect_success 'amend commit to fix author' '
 	oldtick=$GIT_AUTHOR_DATE &&
 	test_tick &&
 	git reset --hard &&
-	git cat-file -p HEAD |
+	git cat-file -p HEAD >out &&
 	sed -e "s/author.*/author $author $oldtick/" \
-		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
-		expected &&
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" <out \
+		>expected &&
 	git commit --amend --author="$author" &&
 	git cat-file -p HEAD > current &&
 	test_cmp expected current
@@ -365,10 +365,10 @@ test_expect_success 'amend commit to fix date' '
 	test_tick &&
 	newtick=$GIT_AUTHOR_DATE &&
 	git reset --hard &&
-	git cat-file -p HEAD |
+	git cat-file -p HEAD >out &&
 	sed -e "s/author.*/author $author $newtick/" \
-		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
-		expected &&
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" <out \
+		>expected &&
 	git commit --amend --date="$newtick" &&
 	git cat-file -p HEAD > current &&
 	test_cmp expected current
@@ -397,12 +397,12 @@ test_expect_success 'sign off (1)' '
 	echo 1 >positive &&
 	git add positive &&
 	git commit -s -m "thank you" &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	(
 		echo thank you
 		echo
-		git var GIT_COMMITTER_IDENT |
-		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+		git var GIT_COMMITTER_IDENT >out &&
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" <out
 	) >expected &&
 	test_cmp expected actual
 
@@ -416,13 +416,13 @@ test_expect_success 'sign off (2)' '
 	git commit -s -m "thank you
 
 $existing" &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	(
 		echo thank you
 		echo
 		echo $existing
-		git var GIT_COMMITTER_IDENT |
-		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+		git var GIT_COMMITTER_IDENT >out &&
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" <out
 	) >expected &&
 	test_cmp expected actual
 
@@ -436,13 +436,13 @@ test_expect_success 'signoff gap' '
 	git commit -s -m "welcome
 
 $alt" &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	(
 		echo welcome
 		echo
 		echo $alt
-		git var GIT_COMMITTER_IDENT |
-		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+		git var GIT_COMMITTER_IDENT >out &&
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" <out
 	) >expected &&
 	test_cmp expected actual
 '
@@ -456,15 +456,15 @@ test_expect_success 'signoff gap 2' '
 
 We have now
 $alt" &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	(
 		echo welcome
 		echo
 		echo We have now
 		echo $alt
 		echo
-		git var GIT_COMMITTER_IDENT |
-		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /"
+		git var GIT_COMMITTER_IDENT >out &&
+		sed -e "s/>.*/>/" -e "s/^/Signed-off-by: /" <out
 	) >expected &&
 	test_cmp expected actual
 '
@@ -477,7 +477,7 @@ test_expect_success 'signoff respects trailer config' '
 
 non-trailer line
 Myfooter: x" &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	(
 		echo subject
 		echo
@@ -494,7 +494,7 @@ Myfooter: x" &&
 
 non-trailer line
 Myfooter: x" &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" > actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	(
 		echo subject
 		echo
@@ -510,7 +510,7 @@ test_expect_success 'multiple -m' '
 	>negative &&
 	git add negative &&
 	git commit -m "one" -m "two" -m "three" &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	git cat-file commit HEAD >out && sed -e "1,/^\$/d" <out >actual &&
 	(
 		echo one
 		echo
@@ -527,10 +527,10 @@ test_expect_success 'amend commit to fix author' '
 	oldtick=$GIT_AUTHOR_DATE &&
 	test_tick &&
 	git reset --hard &&
-	git cat-file -p HEAD |
+	git cat-file -p HEAD >out &&
 	sed -e "s/author.*/author $author $oldtick/" \
-		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" > \
-		expected &&
+		-e "s/^\(committer.*> \).*$/\1$GIT_COMMITTER_DATE/" <out \
+		>expected &&
 	git commit --amend --author="$author" &&
 	git cat-file -p HEAD > current &&
 	test_cmp expected current
@@ -542,8 +542,8 @@ test_expect_success 'git commit <file> with dirty index' '
 	echo tehlulz > chz &&
 	git add chz &&
 	git commit elif -m "tacocat is a palindrome" &&
-	git show --stat | grep elif &&
-	git diff --cached | grep chz
+	git show --stat >out && grep elif <out &&
+	git diff --cached >out && grep chz <out
 '
 
 test_expect_success 'same tree (single parent)' '
@@ -556,7 +556,7 @@ test_expect_success 'same tree (single parent)' '
 test_expect_success 'same tree (single parent) --allow-empty' '
 
 	git commit --allow-empty -m "forced empty" &&
-	git cat-file commit HEAD | grep forced
+	git cat-file commit HEAD >out && grep forced <out
 
 '
 

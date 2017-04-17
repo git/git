@@ -544,8 +544,8 @@ test_expect_success 'gracefully add/reset submodule with a trailing slash' '
 	 git rev-parse HEAD) &&
 	git add init/ &&
 	test_must_fail git diff --exit-code --cached init &&
-	test $commit = $(git ls-files --stage |
-		sed -n "s/^160000 \([^ ]*\).*/\1/p") &&
+	test $commit = $(git ls-files --stage >out &&
+		sed -n "s/^160000 \([^ ]*\).*/\1/p" <out) &&
 	git reset init/ &&
 	git diff --exit-code --cached init
 
@@ -1088,7 +1088,7 @@ test_expect_success 'submodule with UTF-8 name' '
 	) &&
 	git submodule add ./"$svname" &&
 	git submodule >&2 &&
-	test -n "$(git submodule | grep "$svname")"
+	test -n "$(git submodule >out && grep "$svname" <out)"
 '
 
 test_expect_success 'submodule add clone shallow submodule' '
@@ -1100,7 +1100,7 @@ test_expect_success 'submodule add clone shallow submodule' '
 		git submodule add --depth=1 file://"$pwd"/example2 submodule &&
 		(
 			cd submodule &&
-			test 1 = $(git log --oneline | wc -l)
+			test 1 = $(git log --oneline >out && wc -l <out)
 		)
 	)
 '
@@ -1125,7 +1125,7 @@ test_expect_success 'submodule helper list is not confused by common prefixes' '
 	git submodule add /dir1/b dir1/b &&
 	git submodule add /dir2/b dir2/b &&
 	git commit -m "first submodule commit" &&
-	git submodule--helper list dir1/b |cut -c51- >actual &&
+	git submodule--helper list dir1/b >out && cut -c51- <out >actual &&
 	echo "dir1/b" >expect &&
 	test_cmp expect actual
 '

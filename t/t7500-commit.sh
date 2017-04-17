@@ -175,7 +175,7 @@ EOF
 test_expect_success '--signoff' '
 	echo "yet another content *narf*" >> foo &&
 	echo "zort" | git commit -s -F - foo &&
-	git cat-file commit HEAD | sed "1,/^\$/d" > output &&
+	git cat-file commit HEAD >out && sed "1,/^\$/d" <out >output &&
 	test_cmp expect output
 '
 

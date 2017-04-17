@@ -314,7 +314,7 @@ test_expect_success 'setup for version sort' '
 '
 
 test_expect_success 'version sort' '
-	git for-each-ref --sort=version:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
+	git for-each-ref --sort=version:refname --format="%(refname:short)" refs/tags/ >out && grep "foo" <out >actual &&
 	cat >expect <<-\EOF &&
 	foo1.3
 	foo1.6
@@ -324,7 +324,7 @@ test_expect_success 'version sort' '
 '
 
 test_expect_success 'version sort (shortened)' '
-	git for-each-ref --sort=v:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
+	git for-each-ref --sort=v:refname --format="%(refname:short)" refs/tags/ >out && grep "foo" <out >actual &&
 	cat >expect <<-\EOF &&
 	foo1.3
 	foo1.6
@@ -334,7 +334,7 @@ test_expect_success 'version sort (shortened)' '
 '
 
 test_expect_success 'reverse version sort' '
-	git for-each-ref --sort=-version:refname --format="%(refname:short)" refs/tags/ | grep "foo" >actual &&
+	git for-each-ref --sort=-version:refname --format="%(refname:short)" refs/tags/ >out && grep "foo" <out >actual &&
 	cat >expect <<-\EOF &&
 	foo1.10
 	foo1.6

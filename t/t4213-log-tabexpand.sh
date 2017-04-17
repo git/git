@@ -46,8 +46,8 @@ count_expand ()
 
 	{
 		echo "git show -s $*"
-		git show -s "$@" |
-		sed -n -e "/$line\$/p"
+		git show -s "$@" >out &&
+		sed -n -e "/$line\$/p" <out
 	} | sed -e 's/ /./g' >actual
 
 	test_cmp expect actual

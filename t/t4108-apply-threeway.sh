@@ -61,14 +61,14 @@ test_expect_success 'apply with --3way' '
 	git checkout master^0 &&
 	test_must_fail git merge --no-commit side &&
 	git ls-files -s >expect.ls &&
-	git diff HEAD | sanitize_conflicted_diff >expect.diff &&
+	git diff HEAD >out && sanitize_conflicted_diff <out >expect.diff &&
 
 	# should fail to apply
 	git reset --hard &&
 	git checkout master^0 &&
 	test_must_fail git apply --index --3way P.diff &&
 	git ls-files -s >actual.ls &&
-	git diff HEAD | sanitize_conflicted_diff >actual.diff &&
+	git diff HEAD >out && sanitize_conflicted_diff <out >actual.diff &&
 
 	# The result should resemble the corresponding merge
 	test_cmp expect.ls actual.ls &&
@@ -121,7 +121,7 @@ test_expect_success 'apply -3 with add/add conflict setup' '
 	git checkout adder^0 &&
 	test_must_fail git merge --no-commit another &&
 	git ls-files -s >expect.ls &&
-	git diff HEAD | sanitize_conflicted_diff >expect.diff
+	git diff HEAD >out && sanitize_conflicted_diff <out >expect.diff
 '
 
 test_expect_success 'apply -3 with add/add conflict' '
@@ -131,7 +131,7 @@ test_expect_success 'apply -3 with add/add conflict' '
 	test_must_fail git apply --index --3way P.diff &&
 	# ... and leave conflicts in the index and in the working tree
 	git ls-files -s >actual.ls &&
-	git diff HEAD | sanitize_conflicted_diff >actual.diff &&
+	git diff HEAD >out && sanitize_conflicted_diff <out >actual.diff &&
 
 	# The result should resemble the corresponding merge
 	test_cmp expect.ls actual.ls &&

@@ -56,7 +56,7 @@ test_expect_success '--ignore-missing --refresh' '
 
 test_expect_success '--unmerged --refresh' '
 	git reset --hard initial &&
-	info=$(git ls-files -s one | sed -e "s/ 0	/ 1	/") &&
+	info=$(git ls-files -s one >out && sed -e "s/ 0	/ 1	/" <out) &&
 	git rm --cached one &&
 	echo "$info" | git update-index --index-info &&
 	test_must_fail git update-index --refresh &&

@@ -28,15 +28,15 @@ tokens_match () {
 }
 
 check_remote_track () {
-	actual=$(git remote show "$1" | sed -ne 's|^    \(.*\) tracked$|\1|p')
+	actual=$(git remote show "$1" >out && sed -ne 's|^    \(.*\) tracked$|\1|p' <out)
 	shift &&
 	tokens_match "$*" "$actual"
 }
 
 check_tracking_branch () {
 	f="" &&
-	r=$(git for-each-ref "--format=%(refname)" |
-		sed -ne "s|^refs/remotes/$1/||p") &&
+	r=$(git for-each-ref "--format=%(refname)" >out &&
+	sed -ne "s|^refs/remotes/$1/||p" <out) &&
 	shift &&
 	tokens_match "$*" "$r"
 }
@@ -71,8 +71,8 @@ test_expect_success 'add another remote' '
 		git remote add -f second ../two &&
 		tokens_match "origin second" "$(git remote)" &&
 		check_tracking_branch second master side another &&
-		git for-each-ref "--format=%(refname)" refs/remotes |
-		sed -e "/^refs\/remotes\/origin\//d" \
+		git for-each-ref "--format=%(refname)" refs/remotes >out &&
+		sed -e "/^refs\/remotes\/origin\//d" <out \
 		    -e "/^refs\/remotes\/second\//d" >actual &&
 		>expect &&
 		test_cmp expect actual
@@ -110,8 +110,8 @@ test_expect_success C_LOCALE_OUTPUT 'remove remote' '
 		cd test &&
 		tokens_match origin "$(git remote)" &&
 		check_remote_track origin master side &&
-		git for-each-ref "--format=%(refname)" refs/remotes |
-		sed -e "/^refs\/remotes\/origin\//d" >actual &&
+		git for-each-ref "--format=%(refname)" refs/remotes >out &&
+		sed -e "/^refs\/remotes\/origin\//d" <out >actual &&
 		>expect &&
 		test_cmp expect actual
 	)

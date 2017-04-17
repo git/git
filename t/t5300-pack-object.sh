@@ -24,7 +24,7 @@ test_expect_success \
      commit=$(git commit-tree $tree </dev/null) && {
 	 echo $tree &&
 	 echo $commit &&
-	 git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
+	 git ls-tree $tree >out && sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/" <out
      } >obj-list && {
 	 git diff-tree --root -p $commit &&
 	 while read object
@@ -311,8 +311,8 @@ test_expect_success 'unpacking with --strict' '
 	rm -f .git/index &&
 	tail -n 10 LIST | git update-index --index-info &&
 	ST=$(git write-tree) &&
-	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
-		git pack-objects test-5 ) &&
+	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" >out &&
+		git pack-objects test-5 <out ) &&
 	PACK6=$( (
 			echo "$LIST"
 			echo "$LI"
@@ -358,8 +358,8 @@ test_expect_success 'index-pack with --strict' '
 	rm -f .git/index &&
 	tail -n 10 LIST | git update-index --index-info &&
 	ST=$(git write-tree) &&
-	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" | \
-		git pack-objects test-5 ) &&
+	PACK5=$( git rev-list --objects "$LIST" "$LI" "$ST" >out &&
+		git pack-objects test-5 <out) &&
 	PACK6=$( (
 			echo "$LIST"
 			echo "$LI"

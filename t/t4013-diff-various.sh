@@ -109,7 +109,7 @@ test_expect_success setup '
 +*++ [initial] Initial
 EOF
 
-V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
+V=$(git version >out && sed -e 's/^git version //' -e 's/\./\\./g' <out)
 while read cmd
 do
 	case "$cmd" in
@@ -123,9 +123,9 @@ do
 	test_expect_success "git $cmd" '
 		{
 			echo "\$ git $cmd"
-			git $cmd |
+			git $cmd >out
 			sed -e "s/^\\(-*\\)$V\\(-*\\)\$/\\1g-i-t--v-e-r-s-i-o-n\2/" \
-			    -e "s/^\\(.*mixed; boundary=\"-*\\)$V\\(-*\\)\"\$/\\1g-i-t--v-e-r-s-i-o-n\2\"/"
+			    -e "s/^\\(.*mixed; boundary=\"-*\\)$V\\(-*\\)\"\$/\\1g-i-t--v-e-r-s-i-o-n\2\"/" <out
 			echo "\$"
 		} >"$actual" &&
 		if test -f "$expect"
@@ -345,7 +345,7 @@ test_expect_success 'diff-tree --stdin with log formatting' '
 	Third
 	Second
 	EOF
-	git rev-list master | git diff-tree --stdin --format=%s -s >actual &&
+	git rev-list master >out && git diff-tree --stdin --format=%s -s <out >actual &&
 	test_cmp expect actual
 '
 

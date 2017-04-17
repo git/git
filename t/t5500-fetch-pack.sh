@@ -61,7 +61,7 @@ pull_to_client () {
 			git fsck --full &&
 
 			idx=$(echo pack-*.idx) &&
-			pack_count=$(git show-index <$idx | wc -l) &&
+			pack_count=$(git show-index <$idx >out && wc -l <out) &&
 			test $pack_count = $count &&
 			rm -f pack-*
 		)
@@ -553,7 +553,7 @@ check_prot_path () {
 	Diag: protocol=$2
 	Diag: path=$3
 	EOF
-	git fetch-pack --diag-url "$1" | grep -v hostandport= >actual &&
+	git fetch-pack --diag-url "$1" >out && grep -v hostandport= <out >actual &&
 	test_cmp expected actual
 }
 

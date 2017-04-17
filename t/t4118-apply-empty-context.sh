@@ -27,8 +27,8 @@ test_expect_success setup '
 	echo Q | tr -d "\\012" >>file2 &&
 	cat file1 >file1.mods &&
 	cat file2 >file2.mods &&
-	git diff |
-	sed -e "s/^ \$//" >diff.output
+	git diff >out &&
+	sed -e "s/^ \$//" <out >diff.output
 '
 
 test_expect_success 'apply --numstat' '

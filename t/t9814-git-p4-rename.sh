@@ -93,7 +93,7 @@ test_expect_success 'detect renames' '
 		git add file6 &&
 		git commit -a -m "Rename file5 to file6 with changes" &&
 		git diff-tree -r -M HEAD &&
-		level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
+		level=$(git diff-tree -r -M HEAD >out && sed 1d <out | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
 		test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
 		git config git-p4.detectRenames $(($level + 2)) &&
 		git p4 submit &&
@@ -105,7 +105,7 @@ test_expect_success 'detect renames' '
 		git add file7 &&
 		git commit -a -m "Rename file6 to file7 with changes" &&
 		git diff-tree -r -M HEAD &&
-		level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
+		level=$(git diff-tree -r -M HEAD >out && sed 1d <out | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
 		test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
 		git config git-p4.detectRenames $(($level - 2)) &&
 		git p4 submit &&
@@ -165,7 +165,7 @@ test_expect_success 'detect copies' '
 		git add file2 file10 &&
 		git commit -a -m "Modify and copy file2 to file10" &&
 		git diff-tree -r -C HEAD &&
-		src=$(git diff-tree -r -C HEAD | sed 1d | sed 2d | cut -f2) &&
+		src=$(git diff-tree -r -C HEAD >out && sed 1d <out | sed 2d | cut -f2) &&
 		test "$src" = file2 &&
 		git p4 submit &&
 		p4 filelog //depot/file10 &&
@@ -179,7 +179,7 @@ test_expect_success 'detect copies' '
 		git add file11 &&
 		git commit -a -m "Copy file2 to file11" &&
 		git diff-tree -r -C --find-copies-harder HEAD &&
-		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
+		src=$(git diff-tree -r -C --find-copies-harder HEAD >out && sed 1d <out | cut -f2) &&
 		test "$src" = file2 &&
 		git config git-p4.detectCopiesHarder true &&
 		git p4 submit &&
@@ -195,9 +195,9 @@ test_expect_success 'detect copies' '
 		git add file12 &&
 		git commit -a -m "Copy file2 to file12 with changes" &&
 		git diff-tree -r -C --find-copies-harder HEAD &&
-		level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
+		level=$(git diff-tree -r -C --find-copies-harder HEAD >out && sed 1d <out | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
 		test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
-		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
+		src=$(git diff-tree -r -C --find-copies-harder HEAD >out && sed 1d <out | cut -f2) &&
 		test "$src" = file2 &&
 		git config git-p4.detectCopies $(($level + 2)) &&
 		git p4 submit &&
@@ -213,9 +213,9 @@ test_expect_success 'detect copies' '
 		git add file13 &&
 		git commit -a -m "Copy file2 to file13 with changes" &&
 		git diff-tree -r -C --find-copies-harder HEAD &&
-		level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
+		level=$(git diff-tree -r -C --find-copies-harder HEAD >out && sed 1d <out | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
 		test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
-		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
+		src=$(git diff-tree -r -C --find-copies-harder HEAD >out && sed 1d <out | cut -f2) &&
 		test "$src" = file2 &&
 		git config git-p4.detectCopies $(($level - 2)) &&
 		git p4 submit &&

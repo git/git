@@ -37,8 +37,8 @@ merge_c1_to_c2_cmds='
 	test -f c0.c &&
 	test -f c1.c &&
 	test -f c2.c &&
-	test 3 = $(git ls-tree -r HEAD | wc -l) &&
-	test 3 = $(git ls-files | wc -l)
+	test 3 = $(git ls-tree -r HEAD >out && wc -l <out) &&
+	test 3 = $(git ls-files >out && wc -l <out)
 '
 
 test_expect_success 'merge c1 to c2'        "$merge_c1_to_c2_cmds"

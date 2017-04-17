@@ -83,8 +83,8 @@ do
 	esac
 	test_expect_success "Using $i" '
 		git --exec-path=. commit --amend &&
-		git show -s --pretty=oneline |
-		sed -e "s/^[0-9a-f]* //" >actual &&
+		git show -s --pretty=oneline >out &&
+		sed -e "s/^[0-9a-f]* //" <out >actual &&
 		test_cmp actual expect
 	'
 done
@@ -105,8 +105,8 @@ do
 	esac
 	test_expect_success "Using $i (override)" '
 		git --exec-path=. commit --amend &&
-		git show -s --pretty=oneline |
-		sed -e "s/^[0-9a-f]* //" >actual &&
+		git show -s --pretty=oneline >out &&
+		sed -e "s/^[0-9a-f]* //" <out >actual &&
 		test_cmp actual expect
 	'
 done

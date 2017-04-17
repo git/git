@@ -21,7 +21,7 @@ test_expect_success setup '
 	git update-ref refs/tags/mytag $tag && {
 		echo $tree &&
 		echo $commit &&
-		git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
+		git ls-tree $tree >out && sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/" <out
 	} >obj-list
 '
 

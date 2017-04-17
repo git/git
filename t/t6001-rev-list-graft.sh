@@ -81,8 +81,8 @@ check () {
 		git rev-list --parents $arg >test.actual
 	elif test $type = parents-raw
 	then
-		git rev-list --parents --pretty=raw $arg |
-		sed -n -e 's/^commit //p' >test.actual
+		git rev-list --parents --pretty=raw $arg >out &&
+		sed -n -e 's/^commit //p' <out >test.actual
 	fi
 	test_cmp test.expect test.actual
 }

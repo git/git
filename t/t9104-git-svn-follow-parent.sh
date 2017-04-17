@@ -33,8 +33,8 @@ test_expect_success 'init and fetch a moved directory' '
 	git svn fetch -i thunk &&
 	test "$(git rev-parse --verify refs/remotes/thunk@2)" \
 	   = "$(git rev-parse --verify refs/remotes/thunk~1)" &&
-	test "$(git cat-file blob refs/remotes/thunk:readme |\
-		 sed -n -e "3p")" = goodbye &&
+	test "$(git cat-file blob refs/remotes/thunk:readme >out &&\
+		 sed -n -e "3p" <out)" = goodbye &&
 	test -z "$(git config --get svn-remote.svn.fetch \
 		 "^trunk:refs/remotes/thunk@2$")"
 	'
@@ -48,8 +48,8 @@ test_expect_success 'init and fetch from one svn-remote' '
         git svn fetch -i svn/thunk &&
 	test "$(git rev-parse --verify refs/remotes/svn/trunk)" \
 	   = "$(git rev-parse --verify refs/remotes/svn/thunk~1)" &&
-	test "$(git cat-file blob refs/remotes/svn/thunk:readme |\
-		 sed -n -e "3p")" = goodbye
+	test "$(git cat-file blob refs/remotes/svn/thunk:readme >out &&\
+		 sed -n -e "3p" <out)" = goodbye
         '
 
 test_expect_success 'follow deleted parent' '
@@ -107,7 +107,7 @@ test_expect_success 'follow deleted directory' '
 	git svn init --minimize-url -i glob "$svnrepo"/glob &&
 	git svn fetch -i glob &&
 	test "$(git cat-file blob refs/remotes/glob:blob/bye)" = hi &&
-	test "$(git ls-tree refs/remotes/glob | wc -l )" -eq 1
+	test "$(git ls-tree refs/remotes/glob >out && wc -l <out)" -eq 1
 	'
 
 # ref: r9270 of the Subversion repository: (http://svn.collab.net/repos/svn)
@@ -142,7 +142,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 	git svn init --minimize-url -i r9270-t \
 	  "$svnrepo"/r9270/trunk/subversion/bindings/swig/perl/native/t &&
 	git svn fetch -i r9270-t &&
-	test $(git rev-list r9270-t | wc -l) -eq 2 &&
+	test $(git rev-list r9270-t >out && wc -l <out) -eq 2 &&
 	test "$(git ls-tree --name-only r9270-t~1)" = \
 	     "$(git ls-tree --name-only r9270-t)"
 	'
@@ -152,7 +152,7 @@ test_expect_success "track initial change if it was only made to parent" '
 	git svn init --minimize-url -i r9270-d \
 	  "$svnrepo"/r9270/drunk/subversion/bindings/swig/perl/native/t &&
 	git svn fetch -i r9270-d &&
-	test $(git rev-list r9270-d | wc -l) -eq 3 &&
+	test $(git rev-list r9270-d >out && wc -l <out) -eq 3 &&
 	test "$(git ls-tree --name-only r9270-t)" = \
 	     "$(git ls-tree --name-only r9270-d)" &&
 	test "$(git rev-parse r9270-t)" = \
@@ -204,8 +204,8 @@ test_expect_success "follow-parent is atomic" '
 test_expect_success "track multi-parent paths" '
 	svn_cmd cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
 	git svn multi-fetch &&
-	test $(git cat-file commit refs/remotes/glob | \
-	       grep "^parent " | wc -l) -eq 2
+	test $(git cat-file commit refs/remotes/glob >out &&\
+	       grep "^parent " <out | wc -l) -eq 2
 	'
 
 test_expect_success "multi-fetch continues to work" "

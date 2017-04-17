@@ -205,7 +205,7 @@ test_expect_success 'shortlog --committer (internal)' '
 '
 
 test_expect_success 'shortlog --committer (external)' '
-	git log --format=full | git shortlog -nsc >actual &&
+	git log --format=full >out && git shortlog -nsc <out >actual &&
 	test_cmp expect actual
 '
 

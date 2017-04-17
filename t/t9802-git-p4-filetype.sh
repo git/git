@@ -75,11 +75,11 @@ test_expect_success 'ensure blobs store only lf newlines' '
 		git p4 sync //depot@all &&
 
 		# verify the files in .git are stored only with newlines
-		o=$(git ls-tree p4/master -- f-unix | cut -f1 | cut -d\  -f3) &&
+		o=$(git ls-tree p4/master -- f-unix >out && cut -f1 <out | cut -d\  -f3) &&
 		git cat-file blob $o >f-unix-blob &&
 		test_cmp "$cli"/f-unix-orig f-unix-blob &&
 
-		o=$(git ls-tree p4/master -- f-win | cut -f1 | cut -d\  -f3) &&
+		o=$(git ls-tree p4/master -- f-win >out && cut -f1 <out | cut -d\  -f3) &&
 		git cat-file blob $o >f-win-blob &&
 		test_cmp "$cli"/f-win-as-lf f-win-blob &&
 

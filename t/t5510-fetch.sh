@@ -292,7 +292,7 @@ test_expect_success 'bundle 1 has only 3 files ' '
 test_expect_success 'unbundle 2' '
 	cd "$D/bundle" &&
 	git fetch ../bundle2 master:master &&
-	test "tip" = "$(git log -1 --pretty=oneline master | cut -b42-)"
+	test "tip" = "$(git log -1 --pretty=oneline master >out && cut -b42- <out)"
 '
 
 test_expect_success 'bundle does not prerequisite objects' '
@@ -641,7 +641,7 @@ test_expect_success 'fetch --prune prints the remotes url' '
 	git branch -D goodbye &&
 	(
 		cd only-prunes &&
-		git fetch --prune origin 2>&1 | head -n1 >../actual
+		git fetch --prune origin >out 2>&1 && head -n1 <out >../actual
 	) &&
 	echo "From ${D}/." >expect &&
 	test_i18ncmp expect actual
@@ -708,8 +708,8 @@ test_expect_success C_LOCALE_OUTPUT 'fetch compact output' '
 	test_commit extraaa &&
 	(
 		cd compact &&
-		git -c fetch.output=compact fetch origin 2>&1 | \
-			grep -e "->" | cut -c 22- >../actual
+		git -c fetch.output=compact fetch origin >out 2>&1 && \
+			grep -e "->" <out | cut -c 22- >../actual
 	) &&
 	cat >expect <<-\EOF &&
 	master     -> origin/*

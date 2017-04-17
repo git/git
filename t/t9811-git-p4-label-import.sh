@@ -63,7 +63,7 @@ test_expect_success 'basic p4 labels' '
 		git checkout TAG_WITH\$_SHELL_CHAR &&
 		test -f f1 && test -f f2 && test -f file_with_\$metachar &&
 
-		git show TAG_LONG_LABEL | grep -q "A Label second line"
+		git show TAG_LONG_LABEL >out && grep -q "A Label second line" <out
 	)
 '
 # Test some label corner cases:
@@ -92,9 +92,9 @@ test_expect_success 'two labels on the same changelist' '
 		cd "$git" &&
 		git p4 sync --import-labels &&
 
-		git tag | grep TAG_F1 &&
-		git tag | grep -q TAG_F1_1 &&
-		git tag | grep -q TAG_F1_2 &&
+		git tag >out && grep TAG_F1 <out &&
+		git tag >out && grep -q TAG_F1_1 <out &&
+		git tag >out && grep -q TAG_F1_2 <out &&
 
 		cd main &&
 
@@ -205,7 +205,7 @@ test_expect_success 'use git config to enable import/export of tags' '
 		git p4 rebase --verbose &&
 		git p4 submit --verbose &&
 		git tag &&
-		git tag | grep TAG_F1_1
+		git tag >out && grep TAG_F1_1 <out
 	) &&
 	(
 		cd "$cli" &&

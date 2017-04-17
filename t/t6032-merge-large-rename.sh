@@ -96,7 +96,7 @@ test_expect_success 'setup large simple rename' '
 
 test_expect_success 'massive simple rename does not spam added files' '
 	sane_unset GIT_MERGE_VERBOSITY &&
-	git merge --no-stat simple-rename | grep -v Removing >output &&
+	git merge --no-stat simple-rename >out && grep -v Removing <out >output &&
 	test_line_count -lt 5 output
 '
 

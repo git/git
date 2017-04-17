@@ -275,7 +275,8 @@ test_expect_success 'cleanup copy after submit fail' '
 		git config git-p4.detectCopies true &&
 		git config git-p4.detectCopiesHarder true &&
 		# make sure setup is okay
-		git diff-tree -r -C --find-copies-harder HEAD | grep text2 | grep C100 &&
+		git diff-tree -r -C --find-copies-harder HEAD >out &&
+		grep text2 <out | grep C100 &&
 		test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -293,7 +294,7 @@ test_expect_success 'cleanup rename after submit fail' '
 		git commit -m "conflict" &&
 		git config git-p4.detectRenames true &&
 		# make sure setup is okay
-		git diff-tree -r -M HEAD | grep text2 | grep R100 &&
+		git diff-tree -r -M HEAD >out && grep text2 <out | grep R100 &&
 		test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -370,7 +371,8 @@ test_expect_success 'cleanup copy after submit cancel' '
 		git commit -m text2 &&
 		git config git-p4.detectCopies true &&
 		git config git-p4.detectCopiesHarder true &&
-		git diff-tree -r -C --find-copies-harder HEAD | grep text2 | grep C100 &&
+		git diff-tree -r -C --find-copies-harder HEAD >out &&
+		grep text2 <out | grep C100 &&
 		echo n | test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -388,7 +390,7 @@ test_expect_success 'cleanup rename after submit cancel' '
 		git mv text text2 &&
 		git commit -m text2 &&
 		git config git-p4.detectRenames true &&
-		git diff-tree -r -M HEAD | grep text2 | grep R100 &&
+		git diff-tree -r -M HEAD >out && grep text2 <out | grep R100 &&
 		echo n | test_expect_code 1 git p4 submit
 	) &&
 	(

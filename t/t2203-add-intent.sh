@@ -16,7 +16,7 @@ test_expect_success 'intent to add' '
 '
 
 test_expect_success 'git status' '
-	git status --porcelain | grep -v actual >actual &&
+	git status --porcelain >out && grep -v actual <out >actual &&
 	cat >expect <<-\EOF &&
 	DA 1.t
 	A  elif
@@ -35,7 +35,7 @@ test_expect_success 'check result of "add -N"' '
 test_expect_success 'intent to add is just an ordinary empty blob' '
 	git add -u &&
 	git ls-files -s file >actual &&
-	git ls-files -s elif | sed -e "s/elif/file/" >expect &&
+	git ls-files -s elif >out && sed -e "s/elif/file/" <out >expect &&
 	test_cmp expect actual
 '
 
@@ -56,10 +56,10 @@ test_expect_success 'i-t-a entry is simply ignored' '
 	git add rezrov &&
 	git add -N nitfol &&
 	git commit -m second &&
-	test $(git ls-tree HEAD -- nitfol | wc -l) = 0 &&
-	test $(git diff --name-only HEAD -- nitfol | wc -l) = 1 &&
-	test $(git diff --name-only --ita-invisible-in-index HEAD -- nitfol | wc -l) = 0 &&
-	test $(git diff --name-only --ita-invisible-in-index -- nitfol | wc -l) = 1
+	test $(git ls-tree HEAD -- nitfol >out && wc -l out) = 0 &&
+	test $(git diff --name-only HEAD -- nitfol >out && wc -l out) = 1 &&
+	test $(git diff --name-only --ita-invisible-in-index HEAD -- nitfol >out && wc -l out) = 0 &&
+	test $(git diff --name-only --ita-invisible-in-index -- nitfol >out && wc -l out) = 1
 '
 
 test_expect_success 'can commit with an unrelated i-t-a entry in index' '

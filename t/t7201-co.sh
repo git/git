@@ -158,8 +158,8 @@ test_expect_success 'checkout -m with merge conflict' '
 
 	git checkout -m renamer &&
 
-	git diff master:one :3:uno |
-	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
+	git diff master:one :3:uno >out &&
+	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" <out >current &&
 	fill d2 aT d7 aS >expect &&
 	test_cmp current expect &&
 	git diff --cached two >current &&

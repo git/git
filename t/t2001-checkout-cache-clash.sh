@@ -26,11 +26,11 @@ show_files() {
 	find path? -ls |
 	sed -e 's/^[0-9]* * [0-9]* * \([-bcdl]\)[^ ]* *[0-9]* *[^ ]* *[^ ]* *[0-9]* [A-Z][a-z][a-z] [0-9][0-9] [^ ]* /fs: \1 /'
 	# what's in the cache, just mode and name
-	git ls-files --stage |
-	sed -e 's/^\([0-9]*\) [0-9a-f]* [0-3] /ca: \1 /'
+	git ls-files --stage >out &&
+	sed -e 's/^\([0-9]*\) [0-9a-f]* [0-3] /ca: \1 /' out
 	# what's in the tree, just mode and name.
-	git ls-tree -r "$1" |
-	sed -e 's/^\([0-9]*\)	[^ ]*	[0-9a-f]*	/tr: \1 /'
+	git ls-tree -r "$1" >out &&
+	sed -e 's/^\([0-9]*\)	[^ ]*	[0-9a-f]*	/tr: \1 /' out
 }
 
 mkdir path0

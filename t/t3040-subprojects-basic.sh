@@ -19,7 +19,8 @@ test_expect_success 'setup: create subprojects' '
 	git update-index --add sub1 &&
 	git add sub2 &&
 	git commit -q -m "subprojects added" &&
-	git diff-tree --abbrev=5 HEAD^ HEAD |cut -d" " -f-3,5- >current &&
+	git diff-tree --abbrev=5 HEAD^ HEAD >out &&
+	cut -d" " -f-3,5- <out >current &&
 	git branch save HEAD &&
 	cat >expected <<-\EOF &&
 	:000000 160000 00000... A	sub1

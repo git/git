@@ -28,7 +28,7 @@ index 51d27384..51d2738e 100644
 EOF
 
 test_expect_success 'diff does not produce ambiguous index line' '
-	git diff HEAD^..HEAD | grep index > actual &&
+	git diff HEAD^..HEAD >out && grep index <out >actual &&
 	test_cmp expect actual
 '
 

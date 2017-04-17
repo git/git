@@ -246,7 +246,7 @@ test_expect_success 'merge --squash c3 with c7' '
 		#	file
 		EOF
 	} >expect &&
-	git cat-file commit HEAD | sed -e '1,/^$/d' >actual &&
+	git cat-file commit HEAD >out && sed -e '1,/^$/d' <out >actual &&
 	test_cmp expect actual
 '
 

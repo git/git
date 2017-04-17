@@ -45,7 +45,7 @@ test_expect_success 'init+fetch an SVN repository with included qqq directory' '
 test_expect_success 'verify include-paths config saved by clone' '
 	(
 	    cd g &&
-	    git config --get svn-remote.svn.include-paths | fgrep "qqq"
+	    git config --get svn-remote.svn.include-paths >out && fgrep "qqq" <out
 	)
 '
 

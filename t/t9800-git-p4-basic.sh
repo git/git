@@ -273,7 +273,7 @@ test_expect_success 'submit from detached head' '
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
 		git p4 rebase &&
-		git log p4/master | grep detached_head
+		git log p4/master >out && grep detached_head <out
 	)
 '
 

@@ -12,7 +12,7 @@ test_expect_success setup '
 	git commit -m initial &&
 
 	cnt=$( (
-		git count-objects | sed -e "s/ *objects,.*//"
+		git count-objects >out && sed -e "s/ *objects,.*//" <out
 	) ) &&
 	test $cnt -eq 3
 '
@@ -27,7 +27,7 @@ test_expect_success 'clone without alternate' '
 	) &&
 	cnt=$( (
 		cd cloned &&
-		git count-objects | sed -e "s/ *objects,.*//"
+		git count-objects >out && sed -e "s/ *objects,.*//" <out
 	) ) &&
 	test $cnt -eq 3
 '
@@ -39,15 +39,15 @@ test_expect_success 'further commits in the original' '
 	git commit -a -m second &&
 
 	cnt=$( (
-		git count-objects | sed -e "s/ *objects,.*//"
+		git count-objects >out && sed -e "s/ *objects,.*//" <out
 	) ) &&
 	test $cnt -eq 6
 '
 
 test_expect_success 'copy commit and tree but not blob by hand' '
 
-	git rev-list --objects HEAD |
-	git pack-objects --stdout |
+	git rev-list --objects HEAD >out &&
+	git pack-objects --stdout <out |
 	(
 		cd cloned &&
 		git unpack-objects
@@ -55,17 +55,17 @@ test_expect_success 'copy commit and tree but not blob by hand' '
 
 	cnt=$( (
 		cd cloned &&
-		git count-objects | sed -e "s/ *objects,.*//"
+		git count-objects >out && sed -e "s/ *objects,.*//" <out
 	) ) &&
 	test $cnt -eq 6 &&
 
-	blob=$(git rev-parse HEAD:file | sed -e "s|..|&/|") &&
+	blob=$(git rev-parse HEAD:file >out && sed -e "s|..|&/|" <out) &&
 	test -f "cloned/.git/objects/$blob" &&
 	rm -f "cloned/.git/objects/$blob" &&
 
 	cnt=$( (
 		cd cloned &&
-		git count-objects | sed -e "s/ *objects,.*//"
+		git count-objects >out && sed -e "s/ *objects,.*//" <out
 	) ) &&
 	test $cnt -eq 5
 
@@ -80,7 +80,7 @@ test_expect_success 'quickfetch should not leave a corrupted repository' '
 
 	cnt=$( (
 		cd cloned &&
-		git count-objects | sed -e "s/ *objects,.*//"
+		git count-objects >out && sed -e "s/ *objects,.*//" <out
 	) ) &&
 	test $cnt -eq 6
 
@@ -98,15 +98,15 @@ test_expect_success 'quickfetch should not copy from alternate' '
 	) &&
 	obj_cnt=$( (
 		cd quickclone &&
-		git count-objects | sed -e "s/ *objects,.*//"
+		git count-objects >out && sed -e "s/ *objects,.*//" <out
 	) ) &&
 	pck_cnt=$( (
 		cd quickclone &&
-		git count-objects -v | sed -n -e "/packs:/{
+		git count-objects -v >out && sed -n -e "/packs:/{
 				s/packs://
 				p
 				q
-			}"
+			}" <out
 	) ) &&
 	origin_master=$( (
 		cd quickclone &&

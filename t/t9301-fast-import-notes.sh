@@ -113,7 +113,7 @@ EXPECT_END
 test_expect_success 'add notes with simple M command' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/test git log | grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/test git log >out && grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -154,7 +154,7 @@ EXPECT_END
 test_expect_success 'add notes with simple N command' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/test git log | grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/test git log >out && grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -204,7 +204,7 @@ EXPECT_END
 test_expect_success 'update existing notes with N command' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/test git log | grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/test git log >out && grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -278,7 +278,7 @@ EXPECT_END
 test_expect_success 'add concatentation notes with M command' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/test git log | grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/test git log >out && grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -306,7 +306,7 @@ EXPECT_END
 test_expect_success 'verify that deleteall also removes notes' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/test git log | grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/test git log >out && grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -354,7 +354,7 @@ EXPECT_END
 test_expect_success 'verify that later N commands override earlier M commands' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/test git log | grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/test git log >out && grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -463,8 +463,8 @@ done
 test_expect_success 'add lots of commits and notes' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits |
-	    grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits >out &&
+	grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -472,14 +472,14 @@ test_expect_success 'add lots of commits and notes' '
 test_expect_success 'verify that lots of notes trigger a fanout scheme' '
 
 	# None of the entries in the top-level notes tree should be a full SHA1
-	git ls-tree --name-only refs/notes/many_notes |
+	git ls-tree --name-only refs/notes/many_notes >out &&
 	while read path
 	do
 		if test $(expr length "$path") -ge 40
 		then
 			return 1
 		fi
-	done
+	done <out
 
 '
 
@@ -515,14 +515,14 @@ test_expect_success 'verify that importing a notes tree respects the fanout sche
 	git fast-import <input &&
 
 	# None of the entries in the top-level notes tree should be a full SHA1
-	git ls-tree --name-only refs/notes/other_notes |
+	git ls-tree --name-only refs/notes/other_notes >out &&
 	while read path
 	do
 		if test $(expr length "$path") -ge 40
 		then
 			return 1
 		fi
-	done
+	done <out
 '
 
 cat >>expect_non-note1 << EOF
@@ -581,8 +581,8 @@ done
 test_expect_success 'change a few existing notes' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/many_notes git log -n3 refs/heads/many_commits |
-	    grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/many_notes git log -n3 refs/heads/many_commits >out &&
+	grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -590,14 +590,14 @@ test_expect_success 'change a few existing notes' '
 test_expect_success 'verify that changing notes respect existing fanout' '
 
 	# None of the entries in the top-level notes tree should be a full SHA1
-	git ls-tree --name-only refs/notes/many_notes |
+	git ls-tree --name-only refs/notes/many_notes >out &&
 	while read path
 	do
 		if test $(expr length "$path") -ge 40
 		then
 			return 1
 		fi
-	done
+	done <out
 
 '
 
@@ -639,8 +639,8 @@ done
 test_expect_success 'remove lots of notes' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits |
-	    grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits >out &&
+	grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '
@@ -648,7 +648,7 @@ test_expect_success 'remove lots of notes' '
 test_expect_success 'verify that removing notes trigger fanout consolidation' '
 
 	# All entries in the top-level notes tree should be a full SHA1
-	git ls-tree --name-only -r refs/notes/many_notes |
+	git ls-tree --name-only -r refs/notes/many_notes >out &&
 	while read path
 	do
 		# Explicitly ignore the non-note paths
@@ -660,7 +660,7 @@ test_expect_success 'verify that removing notes trigger fanout consolidation' '
 		then
 			return 1
 		fi
-	done
+	done <out
 
 '
 
@@ -715,8 +715,8 @@ done
 test_expect_success "add notes to $num_commits commits in each of $num_notes_refs refs" '
 
 	git fast-import --active-branches=5 <input &&
-	GIT_NOTES_REF=refs/notes/more_notes_1 git log refs/heads/more_commits |
-	    grep "^    " > actual &&
+	GIT_NOTES_REF=refs/notes/more_notes_1 git log refs/heads/more_commits >out &&
+	grep "^    " <out >actual &&
 	test_cmp expect actual
 
 '

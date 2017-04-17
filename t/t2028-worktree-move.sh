@@ -7,7 +7,7 @@ test_description='test git worktree move, remove, lock and unlock'
 test_expect_success 'setup' '
 	test_commit init &&
 	git worktree add source &&
-	git worktree list --porcelain | grep "^worktree" >actual &&
+	git worktree list --porcelain >out && grep "^worktree" out >actual &&
 	cat <<-EOF >expected &&
 	worktree $(pwd)
 	worktree $(pwd)/source
