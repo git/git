@@ -21,8 +21,8 @@ static int config_update_recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int parallel_jobs = 1;
 static struct string_list changed_submodule_paths = STRING_LIST_INIT_NODUP;
 static int initialized_fetch_ref_tips;
-static struct sha1_array ref_tips_before_fetch;
-static struct sha1_array ref_tips_after_fetch;
+static struct oid_array ref_tips_before_fetch;
+static struct oid_array ref_tips_after_fetch;
 
 /*
  * The following flag is set if the .gitmodules file is unmerged. We then
@@ -622,35 +622,35 @@ static int has_remote(const char *refname, const struct object_id *oid,
 	return 1;
 }
 
-static int append_sha1_to_argv(const unsigned char sha1[20], void *data)
+static int append_oid_to_argv(const struct object_id *oid, void *data)
 {
 	struct argv_array *argv = data;
-	argv_array_push(argv, sha1_to_hex(sha1));
+	argv_array_push(argv, oid_to_hex(oid));
 	return 0;
 }
 
-static int check_has_commit(const unsigned char sha1[20], void *data)
+static int check_has_commit(const struct object_id *oid, void *data)
 {
 	int *has_commit = data;
 
-	if (!lookup_commit_reference(sha1))
+	if (!lookup_commit_reference(oid->hash))
 		*has_commit = 0;
 
 	return 0;
 }
 
-static int submodule_has_commits(const char *path, struct sha1_array *commits)
+static int submodule_has_commits(const char *path, struct oid_array *commits)
 {
 	int has_commit = 1;
 
 	if (add_submodule_odb(path))
 		return 0;
 
-	sha1_array_for_each_unique(commits, check_has_commit, &has_commit);
+	oid_array_for_each_unique(commits, check_has_commit, &has_commit);
 	return has_commit;
 }
 
-static int submodule_needs_pushing(const char *path, struct sha1_array *commits)
+static int submodule_needs_pushing(const char *path, struct oid_array *commits)
 {
 	if (!submodule_has_commits(path, commits))
 		/*
@@ -672,7 +672,7 @@ static int submodule_needs_pushing(const char *path, struct sha1_array *commits)
 		int needs_pushing = 0;
 
 		argv_array_push(&cp.args, "rev-list");
-		sha1_array_for_each_unique(commits, append_sha1_to_argv, &cp.args);
+		oid_array_for_each_unique(commits, append_oid_to_argv, &cp.args);
 		argv_array_pushl(&cp.args, "--not", "--remotes", "-n", "1" , NULL);
 
 		prepare_submodule_repo_env(&cp.env_array);
@@ -694,18 +694,18 @@ static int submodule_needs_pushing(const char *path, struct sha1_array *commits)
 	return 0;
 }
 
-static struct sha1_array *submodule_commits(struct string_list *submodules,
+static struct oid_array *submodule_commits(struct string_list *submodules,
 					    const char *path)
 {
 	struct string_list_item *item;
 
 	item = string_list_insert(submodules, path);
 	if (item->util)
-		return (struct sha1_array *) item->util;
+		return (struct oid_array *) item->util;
 
-	/* NEEDSWORK: should we have sha1_array_init()? */
-	item->util = xcalloc(1, sizeof(struct sha1_array));
-	return (struct sha1_array *) item->util;
+	/* NEEDSWORK: should we have oid_array_init()? */
+	item->util = xcalloc(1, sizeof(struct oid_array));
+	return (struct oid_array *) item->util;
 }
 
 static void collect_submodules_from_diff(struct diff_queue_struct *q,
@@ -717,11 +717,11 @@ static void collect_submodules_from_diff(struct diff_queue_struct *q,
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		struct sha1_array *commits;
+		struct oid_array *commits;
 		if (!S_ISGITLINK(p->two->mode))
 			continue;
 		commits = submodule_commits(submodules, p->two->path);
-		sha1_array_append(commits, p->two->oid.hash);
+		oid_array_append(commits, &p->two->oid);
 	}
 }
 
@@ -741,11 +741,11 @@ static void free_submodules_sha1s(struct string_list *submodules)
 {
 	struct string_list_item *item;
 	for_each_string_list_item(item, submodules)
-		sha1_array_clear((struct sha1_array *) item->util);
+		oid_array_clear((struct oid_array *) item->util);
 	string_list_clear(submodules, 1);
 }
 
-int find_unpushed_submodules(struct sha1_array *commits,
+int find_unpushed_submodules(struct oid_array *commits,
 		const char *remotes_name, struct string_list *needs_pushing)
 {
 	struct rev_info rev;
@@ -758,7 +758,7 @@ int find_unpushed_submodules(struct sha1_array *commits,
 
 	/* argv.argv[0] will be ignored by setup_revisions */
 	argv_array_push(&argv, "find_unpushed_submodules");
-	sha1_array_for_each_unique(commits, append_sha1_to_argv, &argv);
+	oid_array_for_each_unique(commits, append_oid_to_argv, &argv);
 	argv_array_push(&argv, "--not");
 	argv_array_pushf(&argv, "--remotes=%s", remotes_name);
 
@@ -773,7 +773,7 @@ int find_unpushed_submodules(struct sha1_array *commits,
 	argv_array_clear(&argv);
 
 	for_each_string_list_item(submodule, &submodules) {
-		struct sha1_array *commits = (struct sha1_array *) submodule->util;
+		struct oid_array *commits = (struct oid_array *) submodule->util;
 
 		if (submodule_needs_pushing(submodule->string, commits))
 			string_list_insert(needs_pushing, submodule->string);
@@ -806,7 +806,7 @@ static int push_submodule(const char *path, int dry_run)
 	return 1;
 }
 
-int push_unpushed_submodules(struct sha1_array *commits,
+int push_unpushed_submodules(struct oid_array *commits,
 			     const char *remotes_name,
 			     int dry_run)
 {
@@ -888,23 +888,23 @@ static void submodule_collect_changed_cb(struct diff_queue_struct *q,
 static int add_sha1_to_array(const char *ref, const struct object_id *oid,
 			     int flags, void *data)
 {
-	sha1_array_append(data, oid->hash);
+	oid_array_append(data, oid);
 	return 0;
 }
 
-void check_for_new_submodule_commits(unsigned char new_sha1[20])
+void check_for_new_submodule_commits(struct object_id *oid)
 {
 	if (!initialized_fetch_ref_tips) {
 		for_each_ref(add_sha1_to_array, &ref_tips_before_fetch);
 		initialized_fetch_ref_tips = 1;
 	}
 
-	sha1_array_append(&ref_tips_after_fetch, new_sha1);
+	oid_array_append(&ref_tips_after_fetch, oid);
 }
 
-static int add_sha1_to_argv(const unsigned char sha1[20], void *data)
+static int add_oid_to_argv(const struct object_id *oid, void *data)
 {
-	argv_array_push(data, sha1_to_hex(sha1));
+	argv_array_push(data, oid_to_hex(oid));
 	return 0;
 }
 
@@ -920,11 +920,11 @@ static void calculate_changed_submodule_paths(void)
 
 	init_revisions(&rev, NULL);
 	argv_array_push(&argv, "--"); /* argv[0] program name */
-	sha1_array_for_each_unique(&ref_tips_after_fetch,
-				   add_sha1_to_argv, &argv);
+	oid_array_for_each_unique(&ref_tips_after_fetch,
+				   add_oid_to_argv, &argv);
 	argv_array_push(&argv, "--not");
-	sha1_array_for_each_unique(&ref_tips_before_fetch,
-				   add_sha1_to_argv, &argv);
+	oid_array_for_each_unique(&ref_tips_before_fetch,
+				   add_oid_to_argv, &argv);
 	setup_revisions(argv.argc, argv.argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
@@ -950,8 +950,8 @@ static void calculate_changed_submodule_paths(void)
 	}
 
 	argv_array_clear(&argv);
-	sha1_array_clear(&ref_tips_before_fetch);
-	sha1_array_clear(&ref_tips_after_fetch);
+	oid_array_clear(&ref_tips_before_fetch);
+	oid_array_clear(&ref_tips_after_fetch);
 	initialized_fetch_ref_tips = 0;
 }
 

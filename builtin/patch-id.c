@@ -55,7 +55,7 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 
 static void flush_one_hunk(struct object_id *result, git_SHA_CTX *ctx)
 {
-	unsigned char hash[GIT_SHA1_RAWSZ];
+	unsigned char hash[GIT_MAX_RAWSZ];
 	unsigned short carry = 0;
 	int i;
 
