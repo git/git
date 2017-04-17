@@ -2678,11 +2678,13 @@ int skip_unnecessary_picks(void)
 		if (write_in_full(fd, todo_list.buf.buf + offset,
 				todo_list.buf.len - offset) < 0) {
 			todo_list_release(&todo_list);
+			close(fd);
 			return error_errno(_("could not write to '%s'"),
 				rebase_path_todo());
 		}
 		if (ftruncate(fd, todo_list.buf.len - offset) < 0) {
 			todo_list_release(&todo_list);
+			close(fd);
 			return error_errno(_("could not truncate '%s'"),
 				rebase_path_todo());
 		}
