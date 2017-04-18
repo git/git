@@ -882,6 +882,8 @@ extern int xsnprintf(char *dst, size_t max, const char *fmt, ...);
 #define HOST_NAME_MAX 256
 #endif
 
+extern int xgethostname(char *buf, size_t len);
+
 /* in ctype.c, for kwset users */
 extern const unsigned char tolower_trans_tbl[256];
 

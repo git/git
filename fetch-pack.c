@@ -746,7 +746,7 @@ static int get_pack(struct fetch_pack_args *args,
 			argv_array_push(&cmd.args, "--fix-thin");
 		if (args->lock_pack || unpack_limit) {
 			char hostname[HOST_NAME_MAX + 1];
-			if (gethostname(hostname, sizeof(hostname)))
+			if (xgethostname(hostname, sizeof(hostname)))
 				xsnprintf(hostname, sizeof(hostname), "localhost");
 			argv_array_pushf(&cmd.args,
 					"--keep=fetch-pack %"PRIuMAX " on %s",
