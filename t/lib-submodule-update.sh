@@ -73,6 +73,7 @@ create_lib_submodule_repo () {
 
 		git checkout -b "add_sub1" &&
 		git submodule add ../submodule_update_sub1 sub1 &&
+		git submodule add ../submodule_update_sub1 uninitialized_sub &&
 		git config -f .gitmodules submodule.sub1.ignore all &&
 		git config submodule.sub1.ignore all &&
 		git add .gitmodules &&
