@@ -120,7 +120,7 @@ static int canonical_name(const char *host, struct strbuf *out)
 
 static void add_domainname(struct strbuf *out, int *is_bogus)
 {
-	char buf[1024];
+	char buf[HOST_NAME_MAX + 1];
 
 	if (gethostname(buf, sizeof(buf))) {
 		warning_errno("cannot get host name");

@@ -745,7 +745,7 @@ static int get_pack(struct fetch_pack_args *args,
 		if (args->use_thin_pack)
 			argv_array_push(&cmd.args, "--fix-thin");
 		if (args->lock_pack || unpack_limit) {
-			char hostname[256];
+			char hostname[HOST_NAME_MAX + 1];
 			if (gethostname(hostname, sizeof(hostname)))
 				xsnprintf(hostname, sizeof(hostname), "localhost");
 			argv_array_pushf(&cmd.args,
