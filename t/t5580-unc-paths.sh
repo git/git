@@ -33,7 +33,7 @@ case "$UNCPATH" in
 	;;
 esac
 
-test_expect_failure 'clone into absolute path lacking a drive prefix' '
+test_expect_success 'clone into absolute path lacking a drive prefix' '
 	USINGBACKSLASHES="$(echo "$WITHOUTDRIVE"/without-drive-prefix |
 		tr / \\\\)" &&
 	git clone . "$USINGBACKSLASHES" &&
