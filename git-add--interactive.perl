@@ -1040,7 +1040,7 @@ marked for unstaging."),
 marked for applying."),
 	checkout_index => N__(
 "If the patch applies cleanly, the edited hunk will immediately be
-marked for discarding"),
+marked for discarding."),
 	checkout_head => N__(
 "If the patch applies cleanly, the edited hunk will immediately be
 marked for discarding."),
