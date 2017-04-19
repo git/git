@@ -43,6 +43,7 @@ diffpatterns="
 	python
 	ruby
 	tex
+	swift
 	custom1
 	custom2
 	custom3

@@ -160,6 +160,21 @@ IPATTERN("css",
 	 "-?[_a-zA-Z][-_a-zA-Z0-9]*" /* identifiers */
 	 "|-?[0-9]+|\\#[0-9a-fA-F]+" /* numbers */
 ),
+PATTERNS("swift",
+	/* Statements */
+	"!^[ \t]*(defer|if|guard|do|repeat|else|for|while|return|break|continue|fallthrough|switch|case|default|where|catch)\n"
+	/* Methods and type declarations */
+	"^[ \t]*((fileprivate|internal|private|public|static|override)[ \t]+)*(class|deinit|enum|extension|func|protocol|struct)[ \t]+.*)$\n"
+	/* Properties and other declarations */
+	"^[ \t]*((fileprivate|internal|private|public|static|override)[ \t]+)*(let|var|associatedtype|operator|typealias|precedencegroup|import)[ \t]+.*)"
+	/* Subscript */
+	"^[ \t]*((fileprivate|internal|private|public|static|override)[ \t]+)*(subscript)[( \t<].*)$\n"
+	/* Init */
+	"^[ \t]*((fileprivate|internal|private|public|static|override|required|convenience)[ \t]+)*(init)[!( \t<?].*)$\n",
+	/* -- */
+	"[a-zA-Z_][a-zA-Z0-9_]*"
+	"|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
+	"|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
 { "default", NULL, -1, { NULL, 0 } },
 };
 #undef PATTERNS
