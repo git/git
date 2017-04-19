@@ -3481,6 +3481,8 @@ int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 {
 	struct pack_entry e;
 
+	if (!startup_info->have_repository)
+		return 0;
 	if (find_pack_entry(sha1, &e))
 		return 1;
 	if (has_loose_object(sha1))
