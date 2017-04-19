@@ -1166,8 +1166,10 @@ static char **get_path_split(void)
 			++n;
 		}
 	}
-	if (!n)
+	if (!n) {
+		free(envpath);
 		return NULL;
+	}
 
 	ALLOC_ARRAY(path, n + 1);
 	p = envpath;
