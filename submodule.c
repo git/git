@@ -1329,7 +1329,7 @@ int bad_to_remove_submodule(const char *path, unsigned flags)
 	cp.dir = path;
 	if (start_command(&cp)) {
 		if (flags & SUBMODULE_REMOVAL_DIE_ON_ERROR)
-			die(_("could not start 'git status in submodule '%s'"),
+			die(_("could not start 'git status' in submodule '%s'"),
 				path);
 		ret = -1;
 		goto out;
@@ -1342,7 +1342,7 @@ int bad_to_remove_submodule(const char *path, unsigned flags)
 
 	if (finish_command(&cp)) {
 		if (flags & SUBMODULE_REMOVAL_DIE_ON_ERROR)
-			die(_("could not run 'git status in submodule '%s'"),
+			die(_("could not run 'git status' in submodule '%s'"),
 				path);
 		ret = -1;
 	}
