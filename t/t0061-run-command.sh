@@ -26,6 +26,17 @@ test_expect_success 'run_command can run a command' '
 	test_cmp empty err
 '
 
+test_expect_success !MINGW 'run_command can run a script without a #! line' '
+	cat >hello <<-\EOF &&
+	cat hello-script
+	EOF
+	chmod +x hello &&
+	test-run-command run-command ./hello >actual 2>err &&
+
+	test_cmp hello-script actual &&
+	test_cmp empty err
+'
+
 test_expect_success POSIXPERM 'run_command reports EACCES' '
 	cat hello-script >hello.sh &&
 	chmod -x hello.sh &&
