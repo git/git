@@ -724,7 +724,7 @@ void clear_pathspec(struct pathspec *pathspec)
 		free(pathspec->items[i].match);
 		free(pathspec->items[i].original);
 
-		for (j = 0; j < pathspec->items[j].attr_match_nr; j++)
+		for (j = 0; j < pathspec->items[i].attr_match_nr; j++)
 			free(pathspec->items[i].attr_match[j].value);
 		free(pathspec->items[i].attr_match);
 
