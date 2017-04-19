@@ -965,7 +965,7 @@ static int has_dir_name(struct index_state *istate,
 	}
 
 	for (;;) {
-		int len;
+		size_t len;
 
 		for (;;) {
 			if (*--slash == '/')
@@ -974,6 +974,67 @@ static int has_dir_name(struct index_state *istate,
 				return retval;
 		}
 		len = slash - name;
+
+		if (cmp_last > 0) {
+			/*
+			 * (len + 1) is a directory boundary (including
+			 * the trailing slash).  And since the loop is
+			 * decrementing "slash", the first iteration is
+			 * the longest directory prefix; subsequent
+			 * iterations consider parent directories.
+			 */
+
+			if (len + 1 <= len_eq_last) {
+				/*
+				 * The directory prefix (including the trailing
+				 * slash) also appears as a prefix in the last
+				 * entry, so the remainder cannot collide (because
+				 * strcmp said the whole path was greater).
+				 *
+				 * EQ: last: xxx/A
+				 *     this: xxx/B
+				 *
+				 * LT: last: xxx/file_A
+				 *     this: xxx/file_B
+				 */
+				return retval;
+			}
+
+			if (len > len_eq_last) {
+				/*
+				 * This part of the directory prefix (excluding
+				 * the trailing slash) is longer than the known
+				 * equal portions, so this sub-directory cannot
+				 * collide with a file.
+				 *
+				 * GT: last: xxxA
+				 *     this: xxxB/file
+				 */
+				return retval;
+			}
+
+			if (istate->cache_nr > 0 &&
+				ce_namelen(istate->cache[istate->cache_nr - 1]) > len) {
+				/*
+				 * The directory prefix lines up with part of
+				 * a longer file or directory name, but sorts
+				 * after it, so this sub-directory cannot
+				 * collide with a file.
+				 *
+				 * last: xxx/yy-file (because '-' sorts before '/')
+				 * this: xxx/yy/abc
+				 */
+				return retval;
+			}
+
+			/*
+			 * This is a possible collision. Fall through and
+			 * let the regular search code handle it.
+			 *
+			 * last: xxx
+			 * this: xxx/file
+			 */
+		}
 
 		pos = index_name_stage_pos(istate, name, len, stage);
 		if (pos >= 0) {
