@@ -730,7 +730,7 @@ static void handle_ssh_variant(const char *ssh_command, int is_cmdline,
 		const char **ssh_argv;
 
 		p = xstrdup(ssh_command);
-		if (split_cmdline(p, &ssh_argv)) {
+		if (split_cmdline(p, &ssh_argv) > 0) {
 			variant = basename((char *)ssh_argv[0]);
 			/*
 			 * At this point, variant points into the buffer
