@@ -238,6 +238,12 @@ static void prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 	if (!cmd->argv[0])
 		die("BUG: command is empty");
 
+	/*
+	 * Add SHELL_PATH so in the event exec fails with ENOEXEC we can
+	 * attempt to interpret the command with 'sh'.
+	 */
+	argv_array_push(out, SHELL_PATH);
+
 	if (cmd->git_cmd) {
 		argv_array_push(out, "git");
 		argv_array_pushv(out, cmd->argv);
@@ -245,6 +251,20 @@ static void prepare_cmd(struct argv_array *out, const struct child_process *cmd)
 		prepare_shell_cmd(out, cmd->argv);
 	} else {
 		argv_array_pushv(out, cmd->argv);
+	}
+
+	/*
+	 * If there are no '/' characters in the command then perform a path
+	 * lookup and use the resolved path as the command to exec.  If there
+	 * are no '/' characters or if the command wasn't found in the path,
+	 * have exec attempt to invoke the command directly.
+	 */
+	if (!strchr(out->argv[1], '/')) {
+		char *program = locate_in_PATH(out->argv[1]);
+		if (program) {
+			free((char *)out->argv[1]);
+			out->argv[1] = program;
+		}
 	}
 }
 #endif
@@ -445,7 +465,15 @@ fail_pipe:
 			}
 		}
 
-		sane_execvp(argv.argv[0], (char *const *) argv.argv);
+		/*
+		 * Attempt to exec using the command and arguments starting at
+		 * argv.argv[1].  argv.argv[0] contains SHELL_PATH which will
+		 * be used in the event exec failed with ENOEXEC at which point
+		 * we will try to interpret the command using 'sh'.
+		 */
+		execv(argv.argv[1], (char *const *) argv.argv + 1);
+		if (errno == ENOEXEC)
+			execv(argv.argv[0], (char *const *) argv.argv);
 
 		if (errno == ENOENT) {
 			if (!cmd->silent_exec_failure)
