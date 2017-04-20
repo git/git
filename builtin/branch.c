@@ -600,7 +600,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	strbuf_release(&newsection);
 }
 
-static const char edit_description[] = "BRANCH_DESCRIPTION";
+static GIT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
 
 static int edit_branch_description(const char *branch_name)
 {
@@ -615,9 +615,9 @@ static int edit_branch_description(const char *branch_name)
 		      "  %s\n"
 		      "Lines starting with '%c' will be stripped.\n"),
 		    branch_name, comment_line_char);
-	write_file_buf(git_path(edit_description), buf.buf, buf.len);
+	write_file_buf(edit_description(), buf.buf, buf.len);
 	strbuf_reset(&buf);
-	if (launch_editor(git_path(edit_description), &buf, NULL)) {
+	if (launch_editor(edit_description(), &buf, NULL)) {
 		strbuf_release(&buf);
 		return -1;
 	}
