@@ -58,6 +58,11 @@ extern int is_main_worktree(const struct worktree *wt);
 extern const char *is_worktree_locked(struct worktree *wt);
 
 /*
+ * Return zero if the worktree is in good condition.
+ */
+extern int validate_worktree(const struct worktree *wt, int quiet);
+
+/*
  * Free up the memory for worktree(s)
  */
 extern void free_worktrees(struct worktree **);
