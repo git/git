@@ -97,6 +97,20 @@ OPTIONS
 :git-diff: 1
 include::diff-options.txt[]
 
+-1 --base::
+-2 --ours::
+-3 --theirs::
+	Compare the working tree with the "base" version (stage #1),
+	"our branch" (stage #2) or "their branch" (stage #3).  The
+	index contains these stages only for unmerged entries i.e.
+	while resolving conflicts.  See linkgit:git-read-tree[1]
+	section "3-Way Merge" for detailed information.
+
+-0::
+	Omit diff output for unmerged entries and just show
+	"Unmerged".  Can be used only when comparing the working tree
+	with the index.
+
 <path>...::
 	The <paths> parameters, when given, are used to limit
 	the diff to the named paths (you can give directory
