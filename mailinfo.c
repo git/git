@@ -757,8 +757,13 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 	assert(!mi->filter_stage);
 
 	if (mi->header_stage) {
-		if (!line->len || (line->len == 1 && line->buf[0] == '\n'))
+		if (!line->len || (line->len == 1 && line->buf[0] == '\n')) {
+			if (mi->inbody_header_accum.len) {
+				flush_inbody_header_accum(mi);
+				mi->header_stage = 0;
+			}
 			return 0;
+		}
 	}
 
 	if (mi->use_inbody_headers && mi->header_stage) {
