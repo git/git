@@ -134,17 +134,15 @@ struct am_state {
 };
 
 /**
- * Initializes am_state with the default values. The state directory is set to
- * dir.
+ * Initializes am_state with the default values.
  */
-static void am_state_init(struct am_state *state, const char *dir)
+static void am_state_init(struct am_state *state)
 {
 	int gpgsign;
 
 	memset(state, 0, sizeof(*state));
 
-	assert(dir);
-	state->dir = xstrdup(dir);
+	state->dir = git_pathdup("rebase-apply");
 
 	state->prec = 4;
 
@@ -2322,7 +2320,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 
 	git_config(git_am_config, NULL);
 
-	am_state_init(&state, git_path("rebase-apply"));
+	am_state_init(&state);
 
 	in_progress = am_in_progress(&state);
 	if (in_progress)
