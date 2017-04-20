@@ -4,10 +4,6 @@
 #include "strbuf.h"
 #include "string-list.h"
 
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 256
-#endif
-
 #ifdef NO_INITGROUPS
 #define initgroups(x, y) (0) /* nothing */
 #endif
