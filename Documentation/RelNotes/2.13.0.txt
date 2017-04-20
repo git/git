@@ -176,6 +176,12 @@ UI, Workflows & Features
  * The default behaviour of "git log" in an interactive session has
    been changed to enable "--decorate".
 
+ * The output from "git status --short" has been extended to show
+   various kinds of dirtyness in submodules differently; instead of to
+   "M" for modified, 'm' and '?' can be shown to signal changes only
+   to the working tree of the submodule but not the commit that is
+   checked out.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -271,6 +277,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Define a new task in .travis.yml that triggers a test session on
    Windows run elsewhere.
+
+ * Conversion from unsigned char [40] to struct object_id continues.
+
+ * The "submodule" specific field in the ref_store structure is
+   replaced with a more generic "gitdir" that can later be used also
+   when dealing with ref_store that represents the set of refs visible
+   from the other worktrees.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -461,6 +474,24 @@ notes for details).
    etc. result in recomputation of perl.mak file.
    (merge c59c4939c2 ab/regen-perl-mak-with-different-perl later to maint).
 
+ * "git push --recurse-submodules --push-option=<string>" learned to
+   propagate the push option recursively down to pushes in submodules.
+
+ * If a patch e-mail had its first paragraph after an in-body header
+   indented (even after a blank line after the in-body header line),
+   the indented line was mistook as a continuation of the in-body
+   header.  This has been fixed.
+   (merge fd1062e52e lt/mailinfo-in-body-header-continuation later to maint).
+
+ * Clean up fallouts from recent tightening of the set-up sequence,
+   where Git barfs when repository information is accessed without
+   first ensuring that it was started in a repository.
+   (merge bccb22cbb1 jk/no-looking-at-dotgit-outside-repo later to maint).
+
+ * "git p4" used "name-rev HEAD" when it wants to learn what branch is
+   checked out; it should use "symbolic-ref HEAD".
+   (merge eff451101d ld/p4-current-branch-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge df2a6e38b7 jk/pager-in-use later to maint).
    (merge 75ec4a6cb0 ab/branch-list-doc later to maint).
@@ -474,3 +505,7 @@ notes for details).
    (merge fba275dc93 jc/bs-t-is-not-a-tab-for-sed later to maint).
    (merge be6ed145de mm/ls-files-s-doc later to maint).
    (merge 60b091c679 qp/bisect-docfix later to maint).
+   (merge 47242cd103 ah/diff-files-ours-theirs-doc later to maint).
+   (merge 35ad44cbd8 sb/submodule-rm-absorb later to maint).
+   (merge 0301f1fd92 va/i18n-perl-scripts later to maint).
+   (merge 733e064d98 vn/revision-shorthand-for-side-branch-log later to maint).
