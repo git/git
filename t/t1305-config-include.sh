@@ -3,6 +3,16 @@
 test_description='test config file include directives'
 . ./test-lib.sh
 
+# Force setup_explicit_git_dir() to run until the end. This is needed
+# by some tests to make sure real_path() is called on $GIT_DIR. The
+# caller needs to make sure git commands are run from a subdirectory
+# though or real_path() will not be called.
+force_setup_explicit_git_dir() {
+    GIT_DIR="$(pwd)/.git"
+    GIT_WORK_TREE="$(pwd)"
+    export GIT_DIR GIT_WORK_TREE
+}
+
 test_expect_success 'include file by absolute path' '
 	echo "[test]one = 1" >one &&
 	echo "[include]path = \"$(pwd)/one\"" >.gitconfig &&
@@ -204,6 +214,50 @@ test_expect_success 'conditional include, both unanchored, icase' '
 		echo "[test]five=5" >.git/bar5 &&
 		echo 5 >expect &&
 		git config test.five >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success SYMLINKS 'conditional include, set up symlinked $HOME' '
+	mkdir real-home &&
+	ln -s real-home home &&
+	(
+		HOME="$TRASH_DIRECTORY/home" &&
+		export HOME &&
+		cd "$HOME" &&
+
+		git init foo &&
+		cd foo &&
+		mkdir sub
+	)
+'
+
+test_expect_success SYMLINKS 'conditional include, $HOME expansion with symlinks' '
+	(
+		HOME="$TRASH_DIRECTORY/home" &&
+		export HOME &&
+		cd "$HOME"/foo &&
+
+		echo "[includeIf \"gitdir:~/foo/\"]path=bar2" >>.git/config &&
+		echo "[test]two=2" >.git/bar2 &&
+		echo 2 >expect &&
+		force_setup_explicit_git_dir &&
+		git -C sub config test.two >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success SYMLINKS 'conditional include, relative path with symlinks' '
+	echo "[includeIf \"gitdir:./foo/.git\"]path=bar4" >home/.gitconfig &&
+	echo "[test]four=4" >home/bar4 &&
+	(
+		HOME="$TRASH_DIRECTORY/home" &&
+		export HOME &&
+		cd "$HOME"/foo &&
+
+		echo 4 >expect &&
+		force_setup_explicit_git_dir &&
+		git -C sub config test.four >actual &&
 		test_cmp expect actual
 	)
 '
