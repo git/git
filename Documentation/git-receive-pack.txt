@@ -114,6 +114,8 @@ will be performed, and the update, post-receive and post-update
 hooks will not be invoked either.  This can be useful to quickly
 bail out if the update is not to be supported.
 
+See the notes on the quarantine environment below.
+
 update Hook
 -----------
 Before each ref is updated, if $GIT_DIR/hooks/update file exists
@@ -212,6 +214,33 @@ if the repository is packed and is served via a dumb transport.
 
 	#!/bin/sh
 	exec git update-server-info
+
+
+Quarantine Environment
+----------------------
+
+When `receive-pack` takes in objects, they are placed into a temporary
+"quarantine" directory within the `$GIT_DIR/objects` directory and
+migrated into the main object store only after the `pre-receive` hook
+has completed. If the push fails before then, the temporary directory is
+removed entirely.
+
+This has a few user-visible effects and caveats:
+
+  1. Pushes which fail due to problems with the incoming pack, missing
+     objects, or due to the `pre-receive` hook will not leave any
+     on-disk data. This is usually helpful to prevent repeated failed
+     pushes from filling up your disk, but can make debugging more
+     challenging.
+
+  2. Any objects created by the `pre-receive` hook will be created in
+     the quarantine directory (and migrated only if it succeeds).
+
+  3. The `pre-receive` hook MUST NOT update any refs to point to
+     quarantined objects. Other programs accessing the repository will
+     not be able to see the objects (and if the pre-receive hook fails,
+     those refs would become corrupted). For safety, any ref updates
+     from within `pre-receive` are automatically rejected.
 
 
 SEE ALSO
