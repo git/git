@@ -11,16 +11,16 @@
 
 static int get_sha1_oneline(const char *, unsigned char *, struct commit_list *);
 
-typedef int (*disambiguate_hint_fn)(const unsigned char *, void *);
+typedef int (*disambiguate_hint_fn)(const struct object_id *, void *);
 
 struct disambiguate_state {
 	int len; /* length of prefix in hex chars */
-	char hex_pfx[GIT_SHA1_HEXSZ + 1];
-	unsigned char bin_pfx[GIT_SHA1_RAWSZ];
+	char hex_pfx[GIT_MAX_HEXSZ + 1];
+	struct object_id bin_pfx;
 
 	disambiguate_hint_fn fn;
 	void *cb_data;
-	unsigned char candidate[GIT_SHA1_RAWSZ];
+	struct object_id candidate;
 	unsigned candidate_exists:1;
 	unsigned candidate_checked:1;
 	unsigned candidate_ok:1;
@@ -29,7 +29,7 @@ struct disambiguate_state {
 	unsigned always_call_fn:1;
 };
 
-static void update_candidates(struct disambiguate_state *ds, const unsigned char *current)
+static void update_candidates(struct disambiguate_state *ds, const struct object_id *current)
 {
 	if (ds->always_call_fn) {
 		ds->ambiguous = ds->fn(current, ds->cb_data) ? 1 : 0;
@@ -37,10 +37,10 @@ static void update_candidates(struct disambiguate_state *ds, const unsigned char
 	}
 	if (!ds->candidate_exists) {
 		/* this is the first candidate */
-		hashcpy(ds->candidate, current);
+		oidcpy(&ds->candidate, current);
 		ds->candidate_exists = 1;
 		return;
-	} else if (!hashcmp(ds->candidate, current)) {
+	} else if (!oidcmp(&ds->candidate, current)) {
 		/* the same as what we already have seen */
 		return;
 	}
@@ -52,14 +52,14 @@ static void update_candidates(struct disambiguate_state *ds, const unsigned char
 	}
 
 	if (!ds->candidate_checked) {
-		ds->candidate_ok = ds->fn(ds->candidate, ds->cb_data);
+		ds->candidate_ok = ds->fn(&ds->candidate, ds->cb_data);
 		ds->disambiguate_fn_used = 1;
 		ds->candidate_checked = 1;
 	}
 
 	if (!ds->candidate_ok) {
 		/* discard the candidate; we know it does not satisfy fn */
-		hashcpy(ds->candidate, current);
+		oidcpy(&ds->candidate, current);
 		ds->candidate_checked = 0;
 		return;
 	}
@@ -80,7 +80,7 @@ static void update_candidates(struct disambiguate_state *ds, const unsigned char
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
 	struct alternate_object_database *alt;
-	char hex[GIT_SHA1_HEXSZ];
+	char hex[GIT_MAX_HEXSZ];
 	static struct alternate_object_database *fakeent;
 
 	if (!fakeent) {
@@ -107,15 +107,15 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 			continue;
 
 		while (!ds->ambiguous && (de = readdir(dir)) != NULL) {
-			unsigned char sha1[20];
+			struct object_id oid;
 
-			if (strlen(de->d_name) != 38)
+			if (strlen(de->d_name) != GIT_SHA1_HEXSZ - 2)
 				continue;
 			if (memcmp(de->d_name, ds->hex_pfx + 2, ds->len - 2))
 				continue;
-			memcpy(hex + 2, de->d_name, 38);
-			if (!get_sha1_hex(hex, sha1))
-				update_candidates(ds, sha1);
+			memcpy(hex + 2, de->d_name, GIT_SHA1_HEXSZ - 2);
+			if (!get_oid_hex(hex, &oid))
+				update_candidates(ds, &oid);
 		}
 		closedir(dir);
 	}
@@ -140,7 +140,7 @@ static void unique_in_pack(struct packed_git *p,
 			   struct disambiguate_state *ds)
 {
 	uint32_t num, last, i, first = 0;
-	const unsigned char *current = NULL;
+	const struct object_id *current = NULL;
 
 	open_pack_index(p);
 	num = p->num_objects;
@@ -151,7 +151,7 @@ static void unique_in_pack(struct packed_git *p,
 		int cmp;
 
 		current = nth_packed_object_sha1(p, mid);
-		cmp = hashcmp(ds->bin_pfx, current);
+		cmp = hashcmp(ds->bin_pfx.hash, current);
 		if (!cmp) {
 			first = mid;
 			break;
@@ -169,8 +169,9 @@ static void unique_in_pack(struct packed_git *p,
 	 * 0, 1 or more objects that actually match(es).
 	 */
 	for (i = first; i < num && !ds->ambiguous; i++) {
-		current = nth_packed_object_sha1(p, i);
-		if (!match_sha(ds->len, ds->bin_pfx, current))
+		struct object_id oid;
+		current = nth_packed_object_oid(&oid, p, i);
+		if (!match_sha(ds->len, ds->bin_pfx.hash, current->hash))
 			break;
 		update_candidates(ds, current);
 	}
@@ -213,66 +214,66 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 		 * same repository!
 		 */
 		ds->candidate_ok = (!ds->disambiguate_fn_used ||
-				    ds->fn(ds->candidate, ds->cb_data));
+				    ds->fn(&ds->candidate, ds->cb_data));
 
 	if (!ds->candidate_ok)
 		return SHORT_NAME_AMBIGUOUS;
 
-	hashcpy(sha1, ds->candidate);
+	hashcpy(sha1, ds->candidate.hash);
 	return 0;
 }
 
-static int disambiguate_commit_only(const unsigned char *sha1, void *cb_data_unused)
+static int disambiguate_commit_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = sha1_object_info(sha1, NULL);
+	int kind = sha1_object_info(oid->hash, NULL);
 	return kind == OBJ_COMMIT;
 }
 
-static int disambiguate_committish_only(const unsigned char *sha1, void *cb_data_unused)
+static int disambiguate_committish_only(const struct object_id *oid, void *cb_data_unused)
 {
 	struct object *obj;
 	int kind;
 
-	kind = sha1_object_info(sha1, NULL);
+	kind = sha1_object_info(oid->hash, NULL);
 	if (kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
 		return 0;
 
 	/* We need to do this the hard way... */
-	obj = deref_tag(parse_object(sha1), NULL, 0);
+	obj = deref_tag(parse_object(oid->hash), NULL, 0);
 	if (obj && obj->type == OBJ_COMMIT)
 		return 1;
 	return 0;
 }
 
-static int disambiguate_tree_only(const unsigned char *sha1, void *cb_data_unused)
+static int disambiguate_tree_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = sha1_object_info(sha1, NULL);
+	int kind = sha1_object_info(oid->hash, NULL);
 	return kind == OBJ_TREE;
 }
 
-static int disambiguate_treeish_only(const unsigned char *sha1, void *cb_data_unused)
+static int disambiguate_treeish_only(const struct object_id *oid, void *cb_data_unused)
 {
 	struct object *obj;
 	int kind;
 
-	kind = sha1_object_info(sha1, NULL);
+	kind = sha1_object_info(oid->hash, NULL);
 	if (kind == OBJ_TREE || kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
 		return 0;
 
 	/* We need to do this the hard way... */
-	obj = deref_tag(parse_object(sha1), NULL, 0);
+	obj = deref_tag(parse_object(oid->hash), NULL, 0);
 	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_COMMIT))
 		return 1;
 	return 0;
 }
 
-static int disambiguate_blob_only(const unsigned char *sha1, void *cb_data_unused)
+static int disambiguate_blob_only(const struct object_id *oid, void *cb_data_unused)
 {
-	int kind = sha1_object_info(sha1, NULL);
+	int kind = sha1_object_info(oid->hash, NULL);
 	return kind == OBJ_BLOB;
 }
 
@@ -332,7 +333,7 @@ static int init_object_disambiguation(const char *name, int len,
 		ds->hex_pfx[i] = c;
 		if (!(i & 1))
 			val <<= 4;
-		ds->bin_pfx[i >> 1] |= val;
+		ds->bin_pfx.hash[i >> 1] |= val;
 	}
 
 	ds->len = len;
@@ -341,31 +342,32 @@ static int init_object_disambiguation(const char *name, int len,
 	return 0;
 }
 
-static int show_ambiguous_object(const unsigned char *sha1, void *data)
+static int show_ambiguous_object(const struct object_id *oid, void *data)
 {
 	const struct disambiguate_state *ds = data;
 	struct strbuf desc = STRBUF_INIT;
 	int type;
 
-	if (ds->fn && !ds->fn(sha1, ds->cb_data))
+
+	if (ds->fn && !ds->fn(oid, ds->cb_data))
 		return 0;
 
-	type = sha1_object_info(sha1, NULL);
+	type = sha1_object_info(oid->hash, NULL);
 	if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(sha1);
+		struct commit *commit = lookup_commit(oid->hash);
 		if (commit) {
 			struct pretty_print_context pp = {0};
 			pp.date_mode.type = DATE_SHORT;
 			format_commit_message(commit, " %ad - %s", &desc, &pp);
 		}
 	} else if (type == OBJ_TAG) {
-		struct tag *tag = lookup_tag(sha1);
+		struct tag *tag = lookup_tag(oid->hash);
 		if (!parse_tag(tag) && tag->tag)
 			strbuf_addf(&desc, " %s", tag->tag);
 	}
 
 	advise("  %s %s%s",
-	       find_unique_abbrev(sha1, DEFAULT_ABBREV),
+	       find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
 	       typename(type) ? typename(type) : "unknown type",
 	       desc.buf);
 
@@ -422,15 +424,15 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 	return status;
 }
 
-static int collect_ambiguous(const unsigned char *sha1, void *data)
+static int collect_ambiguous(const struct object_id *oid, void *data)
 {
-	sha1_array_append(data, sha1);
+	oid_array_append(data, oid);
 	return 0;
 }
 
 int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
 {
-	struct sha1_array collect = SHA1_ARRAY_INIT;
+	struct oid_array collect = OID_ARRAY_INIT;
 	struct disambiguate_state ds;
 	int ret;
 
@@ -443,8 +445,8 @@ int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
 	find_short_object_filename(&ds);
 	find_short_packed_object(&ds);
 
-	ret = sha1_array_for_each_unique(&collect, fn, cb_data);
-	sha1_array_clear(&collect);
+	ret = oid_array_for_each_unique(&collect, fn, cb_data);
+	oid_array_clear(&collect);
 	return ret;
 }
 
@@ -509,7 +511,7 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 const char *find_unique_abbrev(const unsigned char *sha1, int len)
 {
 	static int bufno;
-	static char hexbuffer[4][GIT_SHA1_HEXSZ + 1];
+	static char hexbuffer[4][GIT_MAX_HEXSZ + 1];
 	char *hex = hexbuffer[bufno];
 	bufno = (bufno + 1) % ARRAY_SIZE(hexbuffer);
 	find_unique_abbrev_r(hex, sha1, len);

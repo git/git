@@ -205,9 +205,9 @@ static int anti_reference(const char *refname, const struct object_id *oid, int 
 	return 0;
 }
 
-static int show_abbrev(const unsigned char *sha1, void *cb_data)
+static int show_abbrev(const struct object_id *oid, void *cb_data)
 {
-	show_rev(NORMAL, sha1, NULL);
+	show_rev(NORMAL, oid->hash, NULL);
 	return 0;
 }
 

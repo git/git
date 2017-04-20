@@ -50,7 +50,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	char **pack_lockfile_ptr = NULL;
 	struct child_process *conn;
 	struct fetch_pack_args args;
-	struct sha1_array shallow = SHA1_ARRAY_INIT;
+	struct oid_array shallow = OID_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 
 	packet_trace_identity("fetch-pack");

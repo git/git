@@ -4,7 +4,7 @@
 #include "string-list.h"
 #include "run-command.h"
 
-struct sha1_array;
+struct oid_array;
 
 struct fetch_pack_args {
 	const char *uploadpack;
@@ -42,7 +42,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       const char *dest,
 		       struct ref **sought,
 		       int nr_sought,
-		       struct sha1_array *shallow,
+		       struct oid_array *shallow,
 		       char **pack_lockfile);
 
 /*

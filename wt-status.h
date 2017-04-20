@@ -80,7 +80,7 @@ struct wt_status {
 	int hints;
 
 	enum wt_status_format status_format;
-	unsigned char sha1_commit[GIT_SHA1_RAWSZ]; /* when not Initial */
+	unsigned char sha1_commit[GIT_MAX_RAWSZ]; /* when not Initial */
 
 	/* These are computed during processing of the individual sections */
 	int commitable;

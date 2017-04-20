@@ -1015,7 +1015,7 @@ static void update_shallow(struct fetch_pack_args *args,
 			   struct ref **sought, int nr_sought,
 			   struct shallow_info *si)
 {
-	struct sha1_array ref = SHA1_ARRAY_INIT;
+	struct oid_array ref = OID_ARRAY_INIT;
 	int *status;
 	int i;
 
@@ -1038,18 +1038,18 @@ static void update_shallow(struct fetch_pack_args *args,
 		 * shallow points that exist in the pack (iow in repo
 		 * after get_pack() and reprepare_packed_git())
 		 */
-		struct sha1_array extra = SHA1_ARRAY_INIT;
-		unsigned char (*sha1)[20] = si->shallow->sha1;
+		struct oid_array extra = OID_ARRAY_INIT;
+		struct object_id *oid = si->shallow->oid;
 		for (i = 0; i < si->shallow->nr; i++)
-			if (has_sha1_file(sha1[i]))
-				sha1_array_append(&extra, sha1[i]);
+			if (has_object_file(&oid[i]))
+				oid_array_append(&extra, &oid[i]);
 		if (extra.nr) {
 			setup_alternate_shallow(&shallow_lock,
 						&alternate_shallow_file,
 						&extra);
 			commit_lock_file(&shallow_lock);
 		}
-		sha1_array_clear(&extra);
+		oid_array_clear(&extra);
 		return;
 	}
 
@@ -1060,7 +1060,7 @@ static void update_shallow(struct fetch_pack_args *args,
 	if (!si->nr_ours && !si->nr_theirs)
 		return;
 	for (i = 0; i < nr_sought; i++)
-		sha1_array_append(&ref, sought[i]->old_oid.hash);
+		oid_array_append(&ref, &sought[i]->old_oid);
 	si->ref = &ref;
 
 	if (args->update_shallow) {
@@ -1070,23 +1070,23 @@ static void update_shallow(struct fetch_pack_args *args,
 		 * shallow roots that are actually reachable from new
 		 * refs.
 		 */
-		struct sha1_array extra = SHA1_ARRAY_INIT;
-		unsigned char (*sha1)[20] = si->shallow->sha1;
+		struct oid_array extra = OID_ARRAY_INIT;
+		struct object_id *oid = si->shallow->oid;
 		assign_shallow_commits_to_refs(si, NULL, NULL);
 		if (!si->nr_ours && !si->nr_theirs) {
-			sha1_array_clear(&ref);
+			oid_array_clear(&ref);
 			return;
 		}
 		for (i = 0; i < si->nr_ours; i++)
-			sha1_array_append(&extra, sha1[si->ours[i]]);
+			oid_array_append(&extra, &oid[si->ours[i]]);
 		for (i = 0; i < si->nr_theirs; i++)
-			sha1_array_append(&extra, sha1[si->theirs[i]]);
+			oid_array_append(&extra, &oid[si->theirs[i]]);
 		setup_alternate_shallow(&shallow_lock,
 					&alternate_shallow_file,
 					&extra);
 		commit_lock_file(&shallow_lock);
-		sha1_array_clear(&extra);
-		sha1_array_clear(&ref);
+		oid_array_clear(&extra);
+		oid_array_clear(&ref);
 		return;
 	}
 
@@ -1102,7 +1102,7 @@ static void update_shallow(struct fetch_pack_args *args,
 				sought[i]->status = REF_STATUS_REJECT_SHALLOW;
 	}
 	free(status);
-	sha1_array_clear(&ref);
+	oid_array_clear(&ref);
 }
 
 struct ref *fetch_pack(struct fetch_pack_args *args,
@@ -1110,7 +1110,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       const struct ref *ref,
 		       const char *dest,
 		       struct ref **sought, int nr_sought,
-		       struct sha1_array *shallow,
+		       struct oid_array *shallow,
 		       char **pack_lockfile)
 {
 	struct ref *ref_cpy;
