@@ -332,7 +332,7 @@ cmd_foreach()
 		git submodule--helper list --prefix "$wt_prefix" ||
 		echo "#unmatched" $?
 	} |
-	while read mode sha1 stage sm_path
+	while read -r mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode" "$sha1"
 		if test -e "$sm_path"/.git
@@ -441,7 +441,7 @@ cmd_deinit()
 		git submodule--helper list --prefix "$wt_prefix" "$@" ||
 		echo "#unmatched" $?
 	} |
-	while read mode sha1 stage sm_path
+	while read -r mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode" "$sha1"
 		name=$(git submodule--helper name "$sm_path") || exit
@@ -605,7 +605,7 @@ cmd_update()
 		"$@" || echo "#unmatched" $?
 	} | {
 	err=
-	while read mode sha1 stage just_cloned sm_path
+	while read -r mode sha1 stage just_cloned sm_path
 	do
 		die_if_unmatched "$mode" "$sha1"
 
@@ -847,7 +847,7 @@ cmd_summary() {
 	# Get modified modules cared by user
 	modules=$(git $diff_cmd $cached --ignore-submodules=dirty --raw $head -- "$@" |
 		sane_egrep '^:([0-7]* )?160000' |
-		while read mod_src mod_dst sha1_src sha1_dst status sm_path
+		while read -r mod_src mod_dst sha1_src sha1_dst status sm_path
 		do
 			# Always show modules deleted or type-changed (blob<->module)
 			if test "$status" = D || test "$status" = T
@@ -873,7 +873,7 @@ cmd_summary() {
 	git $diff_cmd $cached --ignore-submodules=dirty --raw $head -- $modules |
 	sane_egrep '^:([0-7]* )?160000' |
 	cut -c2- |
-	while read mod_src mod_dst sha1_src sha1_dst status name
+	while read -r mod_src mod_dst sha1_src sha1_dst status name
 	do
 		if test -z "$cached" &&
 			test $sha1_dst = 0000000000000000000000000000000000000000
@@ -1020,7 +1020,7 @@ cmd_status()
 		git submodule--helper list --prefix "$wt_prefix" "$@" ||
 		echo "#unmatched" $?
 	} |
-	while read mode sha1 stage sm_path
+	while read -r mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode" "$sha1"
 		name=$(git submodule--helper name "$sm_path") || exit
@@ -1100,7 +1100,7 @@ cmd_sync()
 		git submodule--helper list --prefix "$wt_prefix" "$@" ||
 		echo "#unmatched" $?
 	} |
-	while read mode sha1 stage sm_path
+	while read -r mode sha1 stage sm_path
 	do
 		die_if_unmatched "$mode" "$sha1"
 

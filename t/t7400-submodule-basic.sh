@@ -273,6 +273,20 @@ test_expect_success 'submodule add with ./, /.. and // in path' '
 	test_cmp empty untracked
 '
 
+test_expect_success 'submodule add with \\ in path' '
+	test_when_finished "rm -rf parent sub\\with\\backslash" &&
+
+	# Initialize a repo with a backslash in its name
+	git init sub\\with\\backslash &&
+	touch sub\\with\\backslash/empty.file &&
+	git -C sub\\with\\backslash add empty.file &&
+	git -C sub\\with\\backslash commit -m "Added empty.file" &&
+
+	# Add that repository as a submodule
+	git init parent &&
+	git -C parent submodule add ../sub\\with\\backslash
+'
+
 test_expect_success 'submodule add in subdirectory' '
 	echo "refs/heads/master" >expect &&
 	>empty &&
