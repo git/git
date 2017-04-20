@@ -540,7 +540,13 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 		usage_with_options(worktree_usage, options);
 
 	strbuf_addstr(&dst, prefix_filename(prefix, av[1]));
-	if (file_exists(dst.buf))
+	if (is_directory(dst.buf))
+		/*
+		 * keep going, dst will be appended after we get the
+		 * source's absolute path
+		 */
+		;
+	else if (file_exists(dst.buf))
 		die(_("target '%s' already exists"), av[1]);
 
 	worktrees = get_worktrees(0);
@@ -557,6 +563,17 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 	}
 	if (validate_worktree(wt, 0))
 		return -1;
+
+	if (is_directory(dst.buf)) {
+		const char *sep = find_last_dir_sep(wt->path);
+
+		if (!sep)
+			die(_("could not figure out destination name from '%s'"),
+			    wt->path);
+		strbuf_addstr(&dst, sep);
+		if (file_exists(dst.buf))
+			die(_("target '%s' already exists"), dst.buf);
+	}
 
 	if (rename(wt->path, dst.buf) == -1)
 		die_errno(_("failed to move '%s' to '%s'"), wt->path, dst.buf);
