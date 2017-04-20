@@ -52,6 +52,7 @@ matrix:
       after_failure:
     - env: Linux32
       os: linux
+      compiler:
       services:
         - docker
       before_install:
@@ -73,14 +74,14 @@ matrix:
         # root@container:/# /usr/src/git/ci/run-linux32-build.sh
     - env: Documentation
       os: linux
-      compiler: clang
+      compiler:
       addons:
         apt:
           packages:
           - asciidoc
           - xmlto
       before_install:
-      before_script:
+      before_script: gem install asciidoctor
       script: ci/test-documentation.sh
       after_failure:
 
