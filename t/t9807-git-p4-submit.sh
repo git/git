@@ -139,6 +139,22 @@ test_expect_success 'submit with master branch name from argv' '
 	)
 '
 
+test_expect_success 'allow submit from branch with same revision but different name' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_commit "file8" &&
+		git checkout -b branch1 &&
+		git checkout -b branch2 &&
+		git config git-p4.skipSubmitEdit true &&
+		git config git-p4.allowSubmit "branch1" &&
+		test_must_fail git p4 submit &&
+		git checkout branch1 &&
+		git p4 submit
+	)
+'
+
 #
 # Basic submit tests, the five handled cases
 #
