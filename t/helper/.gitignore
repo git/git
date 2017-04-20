@@ -20,6 +20,7 @@
 /test-path-utils
 /test-prio-queue
 /test-read-cache
+/test-ref-store
 /test-regex
 /test-revision-walking
 /test-run-command
