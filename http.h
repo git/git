@@ -111,7 +111,7 @@ extern struct curl_slist *http_copy_default_headers(void);
 extern long int git_curl_ipresolve;
 extern int active_requests;
 extern int http_is_verbose;
-extern size_t http_post_buffer;
+extern ssize_t http_post_buffer;
 extern struct credential http_auth;
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
