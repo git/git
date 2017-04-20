@@ -67,6 +67,16 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 	test_line_count = 2 new # There is one new pack and its .idx
 '
 
+run_and_wait_for_auto_gc () {
+	# We read stdout from gc for the side effect of waiting until the
+	# background gc process exits, closing its fd 9.  Furthermore, the
+	# variable assignment from a command substitution preserves the
+	# exit status of the main gc process.
+	# Note: this fd trickery doesn't work on Windows, but there is no
+	# need to, because on Win the auto gc always runs in the foreground.
+	doesnt_matter=$(git gc --auto 9>&1)
+}
+
 test_expect_success 'background auto gc does not run if gc.log is present and recent but does if it is old' '
 	test_commit foo &&
 	test_commit bar &&
@@ -80,7 +90,13 @@ test_expect_success 'background auto gc does not run if gc.log is present and re
 	test-chmtime =-345600 .git/gc.log &&
 	test_must_fail git gc --auto &&
 	test_config gc.logexpiry 2.days &&
-	git gc --auto
+	run_and_wait_for_auto_gc &&
+	ls .git/objects/pack/pack-*.pack >packs &&
+	test_line_count = 1 packs
 '
+
+# DO NOT leave a detached auto gc process running near the end of the
+# test script: it can run long enough in the background to racily
+# interfere with the cleanup in 'test_done'.
 
 test_done
