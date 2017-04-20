@@ -295,7 +295,7 @@ The 'r1{caret}@' notation means all parents of 'r1'.
 The 'r1{caret}!' notation includes commit 'r1' but excludes all of its parents.
 By itself, this notation denotes the single commit 'r1'.
 
-The '<rev>{caret}-{<n>}' notation includes '<rev>' but excludes the <n>th
+The '<rev>{caret}-<n>' notation includes '<rev>' but excludes the <n>th
 parent (i.e. a shorthand for '<rev>{caret}<n>..<rev>'), with '<n>' = 1 if
 not given. This is typically useful for merge commits where you
 can just pass '<commit>{caret}-' to get all the commits in the branch
@@ -337,7 +337,7 @@ Revision Range Summary
   as giving commit '<rev>' and then all its parents prefixed with
   '{caret}' to exclude them (and their ancestors).
 
-'<rev>{caret}-{<n>}', e.g. 'HEAD{caret}-, HEAD{caret}-2'::
+'<rev>{caret}-<n>', e.g. 'HEAD{caret}-, HEAD{caret}-2'::
 	Equivalent to '<rev>{caret}<n>..<rev>', with '<n>' = 1 if not
 	given.
 
