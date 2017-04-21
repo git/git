@@ -354,7 +354,9 @@ static int update_one(struct cache_tree *it,
 			entlen = pathlen - baselen;
 			i++;
 		}
-		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1)) {
+
+		if (is_null_sha1(sha1) ||
+		    (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1))) {
 			strbuf_release(&buffer);
 			if (expected_missing)
 				return -1;
