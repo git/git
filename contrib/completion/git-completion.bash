@@ -709,6 +709,7 @@ __git_complete_remote_or_refspec ()
 		i="${words[c]}"
 		case "$i" in
 		--mirror) [ "$cmd" = "push" ] && no_complete_refspec=1 ;;
+		-d|--delete) [ "$cmd" = "push" ] && lhs=0 ;;
 		--all)
 			case "$cmd" in
 			push) no_complete_refspec=1 ;;
