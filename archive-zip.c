@@ -11,16 +11,14 @@
 static int zip_date;
 static int zip_time;
 
-static unsigned char *zip_dir;
-static unsigned int zip_dir_size;
+/* We only care about the "buf" part here. */
+static struct strbuf zip_dir;
 
 static unsigned int zip_offset;
-static unsigned int zip_dir_offset;
 static uint64_t zip_dir_entries;
 
 static unsigned int max_creator_version;
 
-#define ZIP_DIRECTORY_MIN_SIZE	(1024 * 1024)
 #define ZIP_STREAM	(1 <<  3)
 #define ZIP_UTF8	(1 << 11)
 
@@ -268,7 +266,6 @@ static int write_zip_entry(struct archiver_args *args,
 	unsigned long attr2;
 	unsigned long compressed_size;
 	unsigned long crc;
-	unsigned long direntsize;
 	int method;
 	unsigned char *out;
 	void *deflated = NULL;
@@ -355,13 +352,6 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(extra.extra_size, ZIP_EXTRA_MTIME_PAYLOAD_SIZE);
 	extra.flags[0] = 1;	/* just mtime */
 	copy_le32(extra.mtime, args->time);
-
-	/* make sure we have enough free space in the dictionary */
-	direntsize = ZIP_DIR_HEADER_SIZE + pathlen + ZIP_EXTRA_MTIME_SIZE;
-	while (zip_dir_size < zip_dir_offset + direntsize) {
-		zip_dir_size += ZIP_DIRECTORY_MIN_SIZE;
-		zip_dir = xrealloc(zip_dir, zip_dir_size);
-	}
 
 	copy_le32(dirent.magic, 0x02014b50);
 	copy_le16(dirent.creator_version, creator_version);
@@ -486,12 +476,9 @@ static int write_zip_entry(struct archiver_args *args,
 
 	copy_le16(dirent.attr1, !is_binary);
 
-	memcpy(zip_dir + zip_dir_offset, &dirent, ZIP_DIR_HEADER_SIZE);
-	zip_dir_offset += ZIP_DIR_HEADER_SIZE;
-	memcpy(zip_dir + zip_dir_offset, path, pathlen);
-	zip_dir_offset += pathlen;
-	memcpy(zip_dir + zip_dir_offset, &extra, ZIP_EXTRA_MTIME_SIZE);
-	zip_dir_offset += ZIP_EXTRA_MTIME_SIZE;
+	strbuf_add(&zip_dir, &dirent, ZIP_DIR_HEADER_SIZE);
+	strbuf_add(&zip_dir, path, pathlen);
+	strbuf_add(&zip_dir, &extra, ZIP_EXTRA_MTIME_SIZE);
 	zip_dir_entries++;
 
 	return 0;
@@ -510,12 +497,12 @@ static void write_zip64_trailer(void)
 	copy_le32(trailer64.directory_start_disk, 0);
 	copy_le64(trailer64.entries_on_this_disk, zip_dir_entries);
 	copy_le64(trailer64.entries, zip_dir_entries);
-	copy_le64(trailer64.size, zip_dir_offset);
+	copy_le64(trailer64.size, zip_dir.len);
 	copy_le64(trailer64.offset, zip_offset);
 
 	copy_le32(locator64.magic, 0x07064b50);
 	copy_le32(locator64.disk, 0);
-	copy_le64(locator64.offset, zip_offset + zip_dir_offset);
+	copy_le64(locator64.offset, zip_offset + zip_dir.len);
 	copy_le32(locator64.number_of_disks, 1);
 
 	write_or_die(1, &trailer64, ZIP64_DIR_TRAILER_SIZE);
@@ -533,11 +520,11 @@ static void write_zip_trailer(const unsigned char *sha1)
 	copy_le16_clamp(trailer.entries_on_this_disk, zip_dir_entries,
 			&clamped);
 	copy_le16_clamp(trailer.entries, zip_dir_entries, &clamped);
-	copy_le32(trailer.size, zip_dir_offset);
+	copy_le32(trailer.size, zip_dir.len);
 	copy_le32(trailer.offset, zip_offset);
 	copy_le16(trailer.comment_length, sha1 ? GIT_SHA1_HEXSZ : 0);
 
-	write_or_die(1, zip_dir, zip_dir_offset);
+	write_or_die(1, zip_dir.buf, zip_dir.len);
 	if (clamped)
 		write_zip64_trailer();
 	write_or_die(1, &trailer, ZIP_DIR_TRAILER_SIZE);
@@ -568,14 +555,13 @@ static int write_zip_archive(const struct archiver *ar,
 
 	dos_time(&args->time, &zip_date, &zip_time);
 
-	zip_dir = xmalloc(ZIP_DIRECTORY_MIN_SIZE);
-	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
+	strbuf_init(&zip_dir, 0);
 
 	err = write_archive_entries(args, write_zip_entry);
 	if (!err)
 		write_zip_trailer(args->commit_sha1);
 
-	free(zip_dir);
+	strbuf_release(&zip_dir);
 
 	return err;
 }
