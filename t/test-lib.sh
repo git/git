@@ -760,15 +760,14 @@ test_done () {
 			say "1..$test_count$skip_all"
 		fi
 
-		if test -n "$remove_trash"
+		if test -z "$debug"
 		then
-			test -d "$remove_trash" ||
+			test -d "$TRASH_DIRECTORY" ||
 			error "Tests passed but trash directory already removed before test cleanup; aborting"
 
-			cd "$(dirname "$remove_trash")" &&
-			rm -rf "$(basename "$remove_trash")" ||
+			cd "$TRASH_DIRECTORY/.." &&
+			rm -fr "$TRASH_DIRECTORY" ||
 			error "Tests passed but test cleanup failed; aborting"
-
 		fi
 		test_at_end_hook_
 
@@ -924,7 +923,6 @@ case "$TRASH_DIRECTORY" in
 /*) ;; # absolute path is good
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
 esac
-test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
 rm -fr "$TRASH_DIRECTORY" || {
 	GIT_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
