@@ -762,14 +762,18 @@ static int split_mail_conv(mail_conv_fn fn, struct am_state *state,
 		mail = mkpath("%s/%0*d", state->dir, state->prec, i + 1);
 
 		out = fopen(mail, "w");
-		if (!out)
+		if (!out) {
+			if (in != stdin)
+				fclose(in);
 			return error_errno(_("could not open '%s' for writing"),
 					   mail);
+		}
 
 		ret = fn(out, in, keep_cr);
 
 		fclose(out);
-		fclose(in);
+		if (in != stdin)
+			fclose(in);
 
 		if (ret)
 			return error(_("could not parse patch '%s'"), *paths);
