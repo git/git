@@ -120,6 +120,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 		if (fn(full_hex, ref.buf, &oid))
 			had_error = 1;
 	}
+	strbuf_release(&ref);
 	return had_error;
 }
 
