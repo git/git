@@ -14,7 +14,7 @@ static int zip_time;
 /* We only care about the "buf" part here. */
 static struct strbuf zip_dir;
 
-static unsigned int zip_offset;
+static uintmax_t zip_offset;
 static uint64_t zip_dir_entries;
 
 static unsigned int max_creator_version;
@@ -145,6 +145,11 @@ static void copy_le16_clamp(unsigned char *dest, uint64_t n, int *clamped)
 	copy_le16(dest, clamp_max(n, 0xffff, clamped));
 }
 
+static void copy_le32_clamp(unsigned char *dest, uint64_t n, int *clamped)
+{
+	copy_le32(dest, clamp_max(n, 0xffffffff, clamped));
+}
+
 static int strbuf_add_le(struct strbuf *sb, size_t size, uintmax_t n)
 {
 	while (size-- > 0) {
@@ -152,6 +157,12 @@ static int strbuf_add_le(struct strbuf *sb, size_t size, uintmax_t n)
 		n >>= 8;
 	}
 	return -!!n;
+}
+
+static uint32_t clamp32(uintmax_t n)
+{
+	const uintmax_t max = 0xffffffff;
+	return (n < max) ? n : max;
 }
 
 static void *zlib_deflate_raw(void *data, unsigned long size,
@@ -254,6 +265,8 @@ static int write_zip_entry(struct archiver_args *args,
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
 	unsigned int creator_version = 0;
+	size_t zip_dir_extra_size = ZIP_EXTRA_MTIME_SIZE;
+	size_t zip64_dir_extra_payload_size = 0;
 
 	crc = crc32(0, NULL, 0);
 
@@ -433,6 +446,11 @@ static int write_zip_entry(struct archiver_args *args,
 	free(deflated);
 	free(buffer);
 
+	if (offset > 0xffffffff) {
+		zip64_dir_extra_payload_size += 8;
+		zip_dir_extra_size += 2 + 2 + zip64_dir_extra_payload_size;
+	}
+
 	strbuf_add_le(&zip_dir, 4, 0x02014b50);	/* magic */
 	strbuf_add_le(&zip_dir, 2, creator_version);
 	strbuf_add_le(&zip_dir, 2, 10);		/* version */
@@ -444,14 +462,20 @@ static int write_zip_entry(struct archiver_args *args,
 	strbuf_add_le(&zip_dir, 4, compressed_size);
 	strbuf_add_le(&zip_dir, 4, size);
 	strbuf_add_le(&zip_dir, 2, pathlen);
-	strbuf_add_le(&zip_dir, 2, ZIP_EXTRA_MTIME_SIZE);
+	strbuf_add_le(&zip_dir, 2, zip_dir_extra_size);
 	strbuf_add_le(&zip_dir, 2, 0);		/* comment length */
 	strbuf_add_le(&zip_dir, 2, 0);		/* disk */
 	strbuf_add_le(&zip_dir, 2, !is_binary);
 	strbuf_add_le(&zip_dir, 4, attr2);
-	strbuf_add_le(&zip_dir, 4, offset);
+	strbuf_add_le(&zip_dir, 4, clamp32(offset));
 	strbuf_add(&zip_dir, path, pathlen);
 	strbuf_add(&zip_dir, &extra, ZIP_EXTRA_MTIME_SIZE);
+	if (zip64_dir_extra_payload_size) {
+		strbuf_add_le(&zip_dir, 2, 0x0001);	/* magic */
+		strbuf_add_le(&zip_dir, 2, zip64_dir_extra_payload_size);
+		if (offset >= 0xffffffff)
+			strbuf_add_le(&zip_dir, 8, offset);
+	}
 	zip_dir_entries++;
 
 	return 0;
@@ -494,7 +518,7 @@ static void write_zip_trailer(const unsigned char *sha1)
 			&clamped);
 	copy_le16_clamp(trailer.entries, zip_dir_entries, &clamped);
 	copy_le32(trailer.size, zip_dir.len);
-	copy_le32(trailer.offset, zip_offset);
+	copy_le32_clamp(trailer.offset, zip_offset, &clamped);
 	copy_le16(trailer.comment_length, sha1 ? GIT_SHA1_HEXSZ : 0);
 
 	write_or_die(1, zip_dir.buf, zip_dir.len);

@@ -155,7 +155,7 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 	test_cmp expect actual
 '
 
-test_expect_failure EXPENSIVE,UNZIP 'zip archive bigger than 4GB' '
+test_expect_success EXPENSIVE,UNZIP 'zip archive bigger than 4GB' '
 	# build string containing 65536 characters
 	s=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef &&
 	s=$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s &&
