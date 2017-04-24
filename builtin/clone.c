@@ -40,6 +40,7 @@ static const char * const builtin_clone_usage[] = {
 
 static int option_no_checkout, option_bare, option_mirror, option_single_branch = -1;
 static int option_local = -1, option_no_hardlinks, option_shared;
+static int option_no_tags;
 static int option_shallow_submodules;
 static int deepen;
 static char *option_template, *option_depth, *option_since;
@@ -120,6 +121,8 @@ static struct option builtin_clone_options[] = {
 			N_("deepen history of shallow clone, excluding rev")),
 	OPT_BOOL(0, "single-branch", &option_single_branch,
 		    N_("clone only one branch, HEAD or --branch")),
+	OPT_BOOL(0, "no-tags", &option_no_tags,
+		 N_("don't clone any tags, and make later fetches not to follow them")),
 	OPT_BOOL(0, "shallow-submodules", &option_shallow_submodules,
 		    N_("any cloned submodules will be shallow")),
 	OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
@@ -563,7 +566,7 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 	} else
 		get_fetch_map(refs, refspec, &tail, 0);
 
-	if (!option_mirror && !option_single_branch)
+	if (!option_mirror && !option_single_branch && !option_no_tags)
 		get_fetch_map(refs, tag_refspec, &tail, 0);
 
 	return local_refs;
@@ -652,7 +655,7 @@ static void update_remote_refs(const struct ref *refs,
 
 	if (refs) {
 		write_remote_refs(mapped_refs);
-		if (option_single_branch)
+		if (option_single_branch && !option_no_tags)
 			write_followtags(refs, msg);
 	}
 
@@ -1034,6 +1037,12 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_addf(&key, "remote.%s.url", option_origin);
 	git_config_set(key.buf, repo);
 	strbuf_reset(&key);
+
+	if (option_no_tags) {
+		strbuf_addf(&key, "remote.%s.tagOpt", option_origin);
+		git_config_set(key.buf, "--no-tags");
+		strbuf_reset(&key);
+	}
 
 	if (option_required_reference.nr || option_optional_reference.nr)
 		setup_reference();
