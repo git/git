@@ -178,7 +178,7 @@ test_expect_success EXPENSIVE,UNZIP 'zip archive bigger than 4GB' '
 	"$GIT_UNZIP" -t many-big.zip
 '
 
-test_expect_failure EXPENSIVE,UNZIP,ZIPINFO 'zip archive with files bigger than 4GB' '
+test_expect_success EXPENSIVE,UNZIP,ZIPINFO 'zip archive with files bigger than 4GB' '
 	# Pack created with:
 	#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
 	mkdir -p .git/objects/pack &&
