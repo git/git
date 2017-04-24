@@ -45,27 +45,6 @@ struct zip_data_desc {
 	unsigned char _end[1];
 };
 
-struct zip_dir_header {
-	unsigned char magic[4];
-	unsigned char creator_version[2];
-	unsigned char version[2];
-	unsigned char flags[2];
-	unsigned char compression_method[2];
-	unsigned char mtime[2];
-	unsigned char mdate[2];
-	unsigned char crc32[4];
-	unsigned char compressed_size[4];
-	unsigned char size[4];
-	unsigned char filename_length[2];
-	unsigned char extra_length[2];
-	unsigned char comment_length[2];
-	unsigned char disk[2];
-	unsigned char attr1[2];
-	unsigned char attr2[4];
-	unsigned char offset[4];
-	unsigned char _end[1];
-};
-
 struct zip_dir_trailer {
 	unsigned char magic[4];
 	unsigned char disk[2];
@@ -166,6 +145,15 @@ static void copy_le16_clamp(unsigned char *dest, uint64_t n, int *clamped)
 	copy_le16(dest, clamp_max(n, 0xffff, clamped));
 }
 
+static int strbuf_add_le(struct strbuf *sb, size_t size, uintmax_t n)
+{
+	while (size-- > 0) {
+		strbuf_addch(sb, n & 0xff);
+		n >>= 8;
+	}
+	return -!!n;
+}
+
 static void *zlib_deflate_raw(void *data, unsigned long size,
 			      int compression_level,
 			      unsigned long *compressed_size)
@@ -212,16 +200,6 @@ static void write_zip_data_desc(unsigned long size,
 	write_or_die(1, &trailer, ZIP_DATA_DESC_SIZE);
 }
 
-static void set_zip_dir_data_desc(struct zip_dir_header *header,
-				  unsigned long size,
-				  unsigned long compressed_size,
-				  unsigned long crc)
-{
-	copy_le32(header->crc32, crc);
-	copy_le32(header->compressed_size, compressed_size);
-	copy_le32(header->size, size);
-}
-
 static void set_zip_header_data_desc(struct zip_local_header *header,
 				     unsigned long size,
 				     unsigned long compressed_size,
@@ -261,7 +239,7 @@ static int write_zip_entry(struct archiver_args *args,
 			   unsigned int mode)
 {
 	struct zip_local_header header;
-	struct zip_dir_header dirent;
+	uintmax_t offset = zip_offset;
 	struct zip_extra_mtime extra;
 	unsigned long attr2;
 	unsigned long compressed_size;
@@ -353,21 +331,6 @@ static int write_zip_entry(struct archiver_args *args,
 	extra.flags[0] = 1;	/* just mtime */
 	copy_le32(extra.mtime, args->time);
 
-	copy_le32(dirent.magic, 0x02014b50);
-	copy_le16(dirent.creator_version, creator_version);
-	copy_le16(dirent.version, 10);
-	copy_le16(dirent.flags, flags);
-	copy_le16(dirent.compression_method, method);
-	copy_le16(dirent.mtime, zip_time);
-	copy_le16(dirent.mdate, zip_date);
-	set_zip_dir_data_desc(&dirent, size, compressed_size, crc);
-	copy_le16(dirent.filename_length, pathlen);
-	copy_le16(dirent.extra_length, ZIP_EXTRA_MTIME_SIZE);
-	copy_le16(dirent.comment_length, 0);
-	copy_le16(dirent.disk, 0);
-	copy_le32(dirent.attr2, attr2);
-	copy_le32(dirent.offset, zip_offset);
-
 	copy_le32(header.magic, 0x04034b50);
 	copy_le16(header.version, 10);
 	copy_le16(header.flags, flags);
@@ -406,8 +369,6 @@ static int write_zip_entry(struct archiver_args *args,
 
 		write_zip_data_desc(size, compressed_size, crc);
 		zip_offset += ZIP_DATA_DESC_SIZE;
-
-		set_zip_dir_data_desc(&dirent, size, compressed_size, crc);
 	} else if (stream && method == 8) {
 		unsigned char buf[STREAM_BUFFER_SIZE];
 		ssize_t readlen;
@@ -464,8 +425,6 @@ static int write_zip_entry(struct archiver_args *args,
 
 		write_zip_data_desc(size, compressed_size, crc);
 		zip_offset += ZIP_DATA_DESC_SIZE;
-
-		set_zip_dir_data_desc(&dirent, size, compressed_size, crc);
 	} else if (compressed_size > 0) {
 		write_or_die(1, out, compressed_size);
 		zip_offset += compressed_size;
@@ -474,9 +433,23 @@ static int write_zip_entry(struct archiver_args *args,
 	free(deflated);
 	free(buffer);
 
-	copy_le16(dirent.attr1, !is_binary);
-
-	strbuf_add(&zip_dir, &dirent, ZIP_DIR_HEADER_SIZE);
+	strbuf_add_le(&zip_dir, 4, 0x02014b50);	/* magic */
+	strbuf_add_le(&zip_dir, 2, creator_version);
+	strbuf_add_le(&zip_dir, 2, 10);		/* version */
+	strbuf_add_le(&zip_dir, 2, flags);
+	strbuf_add_le(&zip_dir, 2, method);
+	strbuf_add_le(&zip_dir, 2, zip_time);
+	strbuf_add_le(&zip_dir, 2, zip_date);
+	strbuf_add_le(&zip_dir, 4, crc);
+	strbuf_add_le(&zip_dir, 4, compressed_size);
+	strbuf_add_le(&zip_dir, 4, size);
+	strbuf_add_le(&zip_dir, 2, pathlen);
+	strbuf_add_le(&zip_dir, 2, ZIP_EXTRA_MTIME_SIZE);
+	strbuf_add_le(&zip_dir, 2, 0);		/* comment length */
+	strbuf_add_le(&zip_dir, 2, 0);		/* disk */
+	strbuf_add_le(&zip_dir, 2, !is_binary);
+	strbuf_add_le(&zip_dir, 4, attr2);
+	strbuf_add_le(&zip_dir, 4, offset);
 	strbuf_add(&zip_dir, path, pathlen);
 	strbuf_add(&zip_dir, &extra, ZIP_EXTRA_MTIME_SIZE);
 	zip_dir_entries++;
