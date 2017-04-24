@@ -689,4 +689,17 @@ test_expect_success 'bogus head does not fallback to all heads' '
 	! grep $blob out
 '
 
+test_expect_success 'detect corrupt index file in fsck' '
+	cp .git/index .git/index.backup &&
+	test_when_finished "mv .git/index.backup .git/index" &&
+	echo zzzzzzzz >zzzzzzzz &&
+	git add zzzzzzzz &&
+	sed -e "s/zzzzzzzz/yyyyyyyy/" .git/index >.git/index.yyy &&
+	mv .git/index.yyy .git/index &&
+	# Confirm that fsck detects invalid checksum
+	test_must_fail git fsck --cache &&
+	# Confirm that status no longer complains about invalid checksum
+	git status
+'
+
 test_done
