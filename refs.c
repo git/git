@@ -10,6 +10,7 @@
 #include "object.h"
 #include "tag.h"
 #include "submodule.h"
+#include "worktree.h"
 
 /*
  * List of all available backends
@@ -1486,6 +1487,9 @@ static struct ref_store *main_ref_store;
 /* A hashmap of ref_stores, stored by submodule name: */
 static struct hashmap submodule_ref_stores;
 
+/* A hashmap of ref_stores, stored by worktree id: */
+static struct hashmap worktree_ref_stores;
+
 /*
  * Look up a ref store by name. If that ref_store hasn't been
  * registered yet, return NULL.
@@ -1583,6 +1587,32 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 			       refs, submodule);
 
 	strbuf_release(&submodule_sb);
+	return refs;
+}
+
+struct ref_store *get_worktree_ref_store(const struct worktree *wt)
+{
+	struct ref_store *refs;
+	const char *id;
+
+	if (wt->is_current)
+		return get_main_ref_store();
+
+	id = wt->id ? wt->id : "/";
+	refs = lookup_ref_store_map(&worktree_ref_stores, id);
+	if (refs)
+		return refs;
+
+	if (wt->id)
+		refs = ref_store_init(git_common_path("worktrees/%s", wt->id),
+				      REF_STORE_ALL_CAPS);
+	else
+		refs = ref_store_init(get_git_common_dir(),
+				      REF_STORE_ALL_CAPS);
+
+	if (refs)
+		register_ref_store_map(&worktree_ref_stores, "worktree",
+				       refs, id);
 	return refs;
 }
 
