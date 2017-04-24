@@ -106,8 +106,7 @@ static void prune_worktrees(void)
 			printf("%s\n", reason.buf);
 		if (show_only)
 			continue;
-		strbuf_reset(&path);
-		strbuf_addstr(&path, git_path("worktrees/%s", d->d_name));
+		git_path_buf(&path, "worktrees/%s", d->d_name);
 		ret = remove_dir_recursively(&path, 0);
 		if (ret < 0 && errno == ENOTDIR)
 			ret = unlink(path.buf);
@@ -215,8 +214,7 @@ static int add_worktree(const char *path, const char *refname,
 	}
 
 	name = worktree_basename(path, &len);
-	strbuf_addstr(&sb_repo,
-		      git_path("worktrees/%.*s", (int)(path + len - name), name));
+	git_path_buf(&sb_repo, "worktrees/%.*s", (int)(path + len - name), name);
 	len = sb_repo.len;
 	if (safe_create_leading_directories_const(sb_repo.buf))
 		die_errno(_("could not create leading directories of '%s'"),

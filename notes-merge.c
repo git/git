@@ -676,7 +676,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 	const char *msg = strstr(buffer, "\n\n");
 	int baselen;
 
-	strbuf_addstr(&path, git_path(NOTES_MERGE_WORKTREE));
+	git_path_buf(&path, NOTES_MERGE_WORKTREE);
 	if (o->verbosity >= 3)
 		printf("Committing notes in notes merge worktree at %s\n",
 			path.buf);
@@ -741,7 +741,7 @@ int notes_merge_abort(struct notes_merge_options *o)
 	struct strbuf buf = STRBUF_INIT;
 	int ret;
 
-	strbuf_addstr(&buf, git_path(NOTES_MERGE_WORKTREE));
+	git_path_buf(&buf, NOTES_MERGE_WORKTREE);
 	if (o->verbosity >= 3)
 		printf("Removing notes merge worktree at %s/*\n", buf.buf);
 	ret = remove_dir_recursively(&buf, REMOVE_DIR_KEEP_TOPLEVEL);
