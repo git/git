@@ -165,6 +165,10 @@ struct ref_update {
 	const char refname[FLEX_ARRAY];
 };
 
+int refs_read_raw_ref(struct ref_store *ref_store,
+		      const char *refname, unsigned char *sha1,
+		      struct strbuf *referent, unsigned int *type);
+
 /*
  * Add a ref_update with the specified properties to transaction, and
  * return a pointer to the new object. This function does not verify
@@ -330,6 +334,17 @@ struct ref_iterator *empty_ref_iterator_begin(void);
  * Return true iff ref_iterator is an empty_ref_iterator.
  */
 int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
+
+/*
+ * Return an iterator that goes over each reference in `refs` for
+ * which the refname begins with prefix. If trim is non-zero, then
+ * trim that many characters off the beginning of each refname. flags
+ * can be DO_FOR_EACH_INCLUDE_BROKEN to include broken references in
+ * the iteration.
+ */
+struct ref_iterator *refs_ref_iterator_begin(
+		struct ref_store *refs,
+		const char *prefix, int trim, int flags);
 
 /*
  * A callback function used to instruct merge_ref_iterator how to
@@ -575,12 +590,6 @@ typedef int read_raw_ref_fn(struct ref_store *ref_store,
 			    const char *refname, unsigned char *sha1,
 			    struct strbuf *referent, unsigned int *type);
 
-typedef int verify_refname_available_fn(struct ref_store *ref_store,
-					const char *newname,
-					const struct string_list *extras,
-					const struct string_list *skip,
-					struct strbuf *err);
-
 struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
@@ -597,7 +606,6 @@ struct ref_storage_be {
 
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
-	verify_refname_available_fn *verify_refname_available;
 
 	reflog_iterator_begin_fn *reflog_iterator_begin;
 	for_each_reflog_ent_fn *for_each_reflog_ent;

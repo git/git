@@ -97,7 +97,7 @@ int read_ref(const char *refname, unsigned char *sha1);
 
 int refs_verify_refname_available(struct ref_store *refs,
 				  const char *refname,
-				  const struct string_list *extra,
+				  const struct string_list *extras,
 				  const struct string_list *skip,
 				  struct strbuf *err);
 
