@@ -159,6 +159,23 @@ int is_executable(const char *name)
 	return st.st_mode & S_IXUSR;
 }
 
+/*
+ * Search $PATH for a command.  This emulates the path search that
+ * execvp would perform, without actually executing the command so it
+ * can be used before fork() to prepare to run a command using
+ * execve() or after execvp() to diagnose why it failed.
+ *
+ * The caller should ensure that file contains no directory
+ * separators.
+ *
+ * Returns the path to the command, as found in $PATH or NULL if the
+ * command could not be found.  The caller inherits ownership of the memory
+ * used to store the resultant path.
+ *
+ * This should not be used on Windows, where the $PATH search rules
+ * are more complicated (e.g., a search for "foo" should find
+ * "foo.exe").
+ */
 static char *locate_in_PATH(const char *file)
 {
 	const char *p = getenv("PATH");
@@ -179,7 +196,7 @@ static char *locate_in_PATH(const char *file)
 		}
 		strbuf_addstr(&buf, file);
 
-		if (!access(buf.buf, F_OK))
+		if (is_executable(buf.buf))
 			return strbuf_detach(&buf, NULL);
 
 		if (!*end)
