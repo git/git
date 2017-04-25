@@ -38,6 +38,14 @@ test_expect_success 'submodule update aborts on missing .gitmodules file' '
 	test_i18ngrep "Submodule path .sub. not initialized" actual
 '
 
+test_expect_success 'submodule update aborts on missing gitmodules url' '
+	test_when_finished "git update-index --remove sub" &&
+	git update-index --add --cacheinfo 160000,$(git rev-parse HEAD),sub &&
+	test_when_finished "rm -f .gitmodules" &&
+	git config -f .gitmodules submodule.s.path sub &&
+	test_must_fail git submodule init
+'
+
 test_expect_success 'configuration parsing' '
 	test_when_finished "rm -f .gitmodules" &&
 	cat >.gitmodules <<-\EOF &&
