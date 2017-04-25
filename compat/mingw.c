@@ -1509,6 +1509,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	unsigned flags = CREATE_UNICODE_ENVIRONMENT;
 	BOOL ret;
 	HANDLE cons;
+	const char *strace_env;
 
 	do_unset_environment_variables();
 
@@ -1568,7 +1569,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(quoted);
 	}
 
-	if (getenv("GIT_STRACE_COMMANDS")) {
+	strace_env = getenv("GIT_STRACE_COMMANDS");
+	if (strace_env) {
 		char **path = get_path_split();
 		char *p = path_lookup("strace.exe", path, 1);
 		if (!p) {
@@ -1580,8 +1582,20 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(p);
 			return -1;
 		}
-		strbuf_insert(&args, 0, "strace ", 7);
 		free(p);
+		if (!strcmp("1", strace_env) ||
+		    !strcasecmp("yes", strace_env) ||
+		    !strcasecmp("true", strace_env))
+			strbuf_insert(&args, 0, "strace ", 7);
+		else {
+			const char *quoted = quote_arg(strace_env);
+			struct strbuf buf = STRBUF_INIT;
+			strbuf_addf(&buf, "strace -o %s ", quoted);
+			if (quoted != strace_env)
+				free((char *)quoted);
+			strbuf_insert(&args, 0, buf.buf, buf.len);
+			strbuf_release(&buf);
+		}
 	}
 
 	ALLOC_ARRAY(wargs, st_add(st_mult(2, args.len), 1));
