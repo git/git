@@ -760,13 +760,16 @@ test_done () {
 			say "1..$test_count$skip_all"
 		fi
 
-		test -d "$remove_trash" ||
-		error "Tests passed but trash directory already removed before test cleanup; aborting"
+		if test -n "$remove_trash"
+		then
+			test -d "$remove_trash" ||
+			error "Tests passed but trash directory already removed before test cleanup; aborting"
 
-		cd "$(dirname "$remove_trash")" &&
-		rm -rf "$(basename "$remove_trash")" ||
-		error "Tests passed but test cleanup failed; aborting"
+			cd "$(dirname "$remove_trash")" &&
+			rm -rf "$(basename "$remove_trash")" ||
+			error "Tests passed but test cleanup failed; aborting"
 
+		fi
 		test_at_end_hook_
 
 		exit 0 ;;
