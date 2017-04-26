@@ -738,8 +738,10 @@ static void handle_ssh_variant(const char *ssh_command, int is_cmdline,
 			 * any longer.
 			 */
 			free(ssh_argv);
-		} else
+		} else {
+			free(p);
 			return;
+		}
 	}
 
 	if (!strcasecmp(variant, "plink") ||
