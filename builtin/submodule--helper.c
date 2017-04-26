@@ -376,11 +376,11 @@ static void init_submodule(const char *path, const char *prefix, int quiet)
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
 	if (git_config_get_string(sb.buf, &url)) {
-		url = xstrdup(sub->url);
-
-		if (!url)
+		if (!sub->url)
 			die(_("No url found for submodule path '%s' in .gitmodules"),
 				displaypath);
+
+		url = xstrdup(sub->url);
 
 		/* Possibly a url relative to parent */
 		if (starts_with_dot_dot_slash(url) ||
