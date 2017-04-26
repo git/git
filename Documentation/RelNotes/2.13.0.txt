@@ -186,6 +186,15 @@ UI, Workflows & Features
    size that can be expressed in size_t, which can be larger than
    ulong on some platforms.
 
+ * "git rebase" learns "--signoff" option.
+
+ * The completion script (in contrib/) learned to complete "git push
+   --delete b<TAB>" to complete branch name to be deleted.
+
+ * "git worktree add --lock" allows to lock a worktree immediately
+   after it's created. This helps prevent a race between "git worktree
+   add; git worktree lock" and "git worktree prune".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -301,6 +310,20 @@ Performance, Internal Implementation, Development Support etc.
    corruption, and historically we checked it every time the index
    file is used.  Omit the validation during normal use, and instead
    verify only in "git fsck".
+
+ * Having a git command on the upstream side of a pipe in a test
+   script will hide the exit status from the command, which may cause
+   us to fail to notice a breakage; rewrite tests in a script to avoid
+   this issue.
+
+ * Travis CI learns to run coccicheck.
+
+ * "git checkout" that handles a lot of paths has been optimized by
+   reducing the number of unnecessary checks of paths in the
+   has_dir_name() function.
+
+ * The internals of the refs API around the cached refs has been
+   streamlined.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -535,6 +558,19 @@ notes for details).
    using garbage past the end of the buffer.
    (merge 5781a9a270 dt/xgethostname-nul-termination later to maint).
 
+ * A recent update broke "git add -p ../foo" from a subdirectory.
+
+ * While handy, "git_path()" is a dangerous function to use as a
+   callsite that uses it safely one day can be broken by changes
+   to other code that calls it.  Reduction of its use continues.
+   (merge 16d2676c9e jk/war-on-git-path later to maint).
+
+ * The split-index code configuration code used an unsafe git_path()
+   function without copying its result out.
+
+ * Many stale HTTP(s) links have been updated in our documentation.
+   (merge 613416f0be jk/update-links-in-docs later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge df2a6e38b7 jk/pager-in-use later to maint).
    (merge 75ec4a6cb0 ab/branch-list-doc later to maint).
@@ -557,3 +593,6 @@ notes for details).
    (merge d8f4481c4f jk/quarantine-received-objects later to maint).
    (merge 7ba1ceef95 xy/format-patch-base later to maint).
    (merge fa1912c89a rs/misc-cppcheck-fixes later to maint).
+   (merge f17d642d3b ab/push-cas-doc-n-test later to maint).
+   (merge 61e282425a ss/gitmodules-ignore-doc later to maint).
+   (merge 8d3047cd5b ss/submodule-shallow-doc later to maint).
