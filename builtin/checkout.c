@@ -232,6 +232,7 @@ static int checkout_merged(int pos, const struct checkout *state)
 	if (!ce)
 		die(_("make_cache_entry failed for path '%s'"), path);
 	status = checkout_entry(ce, state, NULL);
+	free(ce);
 	return status;
 }
 

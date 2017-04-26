@@ -226,6 +226,7 @@ static void changed_files(struct hashmap *result, const char *index_path,
 		hashmap_entry_init(entry, strhash(buf.buf));
 		hashmap_add(result, entry);
 	}
+	fclose(fp);
 	if (finish_command(&diff_files))
 		die("diff-files did not exit properly");
 	strbuf_release(&index_env);
@@ -497,6 +498,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		}
 	}
 
+	fclose(fp);
 	if (finish_command(&child)) {
 		ret = error("error occurred running diff --raw");
 		goto finish;
