@@ -368,8 +368,8 @@ $logo_url::
 $logo_label::
 	URI and label (title) for the Git logo link (or your site logo,
 	if you chose to use different logo image). By default, these both
-	refer to Git homepage, http://git-scm.com[]; in the past, they pointed
-	to Git documentation at http://www.kernel.org[].
+	refer to Git homepage, https://git-scm.com[]; in the past, they pointed
+	to Git documentation at https://www.kernel.org[].
 
 
 Changing gitweb's look
