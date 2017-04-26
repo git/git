@@ -370,6 +370,11 @@ default is `--no-fork-point`, otherwise the default is `--fork-point`.
 	of the rebased commits (see linkgit:git-am[1]).
 	Incompatible with the --interactive option.
 
+--signoff::
+	This flag is passed to 'git am' to sign off all the rebased
+	commits (see linkgit:git-am[1]). Incompatible with the
+	--interactive option.
+
 -i::
 --interactive::
 	Make a list of the commits which are about to be rebased.  Let the
