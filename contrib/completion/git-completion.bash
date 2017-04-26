@@ -28,6 +28,14 @@
 # completion style.  For example '!f() { : git commit ; ... }; f' will
 # tell the completion to use commit completion.  This also works with aliases
 # of form "!sh -c '...'".  For example, "!sh -c ': git commit ; ... '".
+#
+# You can set the following environment variables to influence the behavior of
+# the completion routines:
+#
+#   GIT_COMPLETION_CHECKOUT_NO_GUESS
+#
+#     When set to "1", do not include "DWIM" suggestions in git-checkout
+#     completion (e.g., completing "foo" when "origin/foo" exists).
 
 case "$COMP_WORDBREAKS" in
 *:*) : great ;;
@@ -1249,7 +1257,8 @@ _git_checkout ()
 		# check if --track, --no-track, or --no-guess was specified
 		# if so, disable DWIM mode
 		local flags="--track --no-track --no-guess" track_opt="--track"
-		if [ -n "$(__git_find_on_cmdline "$flags")" ]; then
+		if [ "$GIT_COMPLETION_CHECKOUT_NO_GUESS" = "1" ] ||
+		   [ -n "$(__git_find_on_cmdline "$flags")" ]; then
 			track_opt=''
 		fi
 		__git_complete_refs $track_opt
