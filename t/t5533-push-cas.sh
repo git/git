@@ -229,4 +229,33 @@ test_expect_success 'new branch already exists' '
 	)
 '
 
+test_expect_success 'background updates of REMOTE can be mitigated with a non-updated REMOTE-push' '
+	rm -rf src dst &&
+	git init --bare src.bare &&
+	test_when_finished "rm -rf src.bare" &&
+	git clone --no-local src.bare dst &&
+	test_when_finished "rm -rf dst" &&
+	(
+		cd dst &&
+		test_commit G &&
+		git remote add origin-push ../src.bare &&
+		git push origin-push master:master
+	) &&
+	git clone --no-local src.bare dst2 &&
+	test_when_finished "rm -rf dst2" &&
+	(
+		cd dst2 &&
+		test_commit H &&
+		git push
+	) &&
+	(
+		cd dst &&
+		test_commit I &&
+		git fetch origin &&
+		test_must_fail git push --force-with-lease origin-push &&
+		git fetch origin-push &&
+		git push --force-with-lease origin-push
+	)
+'
+
 test_done
