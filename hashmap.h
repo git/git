@@ -12,6 +12,7 @@ extern unsigned int strhash(const char *buf);
 extern unsigned int strihash(const char *buf);
 extern unsigned int memhash(const void *buf, size_t len);
 extern unsigned int memihash(const void *buf, size_t len);
+extern unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len);
 
 static inline unsigned int sha1hash(const unsigned char *sha1)
 {
@@ -38,6 +39,7 @@ struct hashmap {
 	struct hashmap_entry **table;
 	hashmap_cmp_fn cmpfn;
 	unsigned int size, tablesize, grow_at, shrink_at;
+	unsigned disallow_rehash : 1;
 };
 
 struct hashmap_iter {
@@ -74,6 +76,29 @@ static inline void *hashmap_get_from_hash(const struct hashmap *map,
 	struct hashmap_entry key;
 	hashmap_entry_init(&key, hash);
 	return hashmap_get(map, &key, keydata);
+}
+
+int hashmap_bucket(const struct hashmap *map, unsigned int hash);
+
+/*
+ * Disallow/allow rehashing of the hashmap.
+ * This is useful if the caller knows that the hashmap
+ * needs multi-threaded access.  The caller is still
+ * required to guard/lock searches and inserts in a
+ * manner appropriate to their usage.  This simply
+ * prevents the table from being unexpectedly re-mapped.
+ *
+ * If is up to the caller to ensure that the hashmap is
+ * initialized to a reasonable size to prevent poor
+ * performance.
+ *
+ * When value=1, prevent future rehashes on adds and deleted.
+ * When value=0, allow future rehahses.  This DOES NOT force
+ * a rehash now.
+ */
+static inline void hashmap_disallow_rehash(struct hashmap *map, unsigned value)
+{
+	map->disallow_rehash = value;
 }
 
 /* hashmap_iter functions */
