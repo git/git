@@ -1200,6 +1200,7 @@ struct todo_list {
 	struct todo_item *items;
 	int nr, alloc, current;
 	int done_nr, total_nr;
+	struct stat_data stat;
 };
 
 #define TODO_LIST_INIT { STRBUF_INIT }
@@ -1330,6 +1331,7 @@ static int count_commands(struct todo_list *todo_list)
 static int read_populate_todo(struct todo_list *todo_list,
 			struct replay_opts *opts)
 {
+	struct stat st;
 	const char *todo_file = get_todo_path(opts);
 	int fd, res;
 
@@ -1342,6 +1344,11 @@ static int read_populate_todo(struct todo_list *todo_list,
 		return error(_("could not read '%s'."), todo_file);
 	}
 	close(fd);
+
+	res = stat(todo_file, &st);
+	if (res)
+		return error(_("could not stat '%s'"), todo_file);
+	fill_stat_data(&todo_list->stat, &st);
 
 	res = parse_insn_buffer(todo_list->buf.buf, todo_list);
 	if (res) {
@@ -2028,10 +2035,25 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 		} else if (item->command == TODO_EXEC) {
 			char *end_of_arg = (char *)(item->arg + item->arg_len);
 			int saved = *end_of_arg;
+			struct stat st;
 
 			*end_of_arg = '\0';
 			res = do_exec(item->arg);
 			*end_of_arg = saved;
+
+			/* Reread the todo file if it has changed. */
+			if (res)
+				; /* fall through */
+			else if (stat(get_todo_path(opts), &st))
+				res = error_errno(_("could not stat '%s'"),
+						  get_todo_path(opts));
+			else if (match_stat_data(&todo_list->stat, &st)) {
+				todo_list_release(todo_list);
+				if (read_populate_todo(todo_list, opts))
+					res = -1; /* message was printed */
+				/* `current` will be incremented below */
+				todo_list->current = -1;
+			}
 		} else if (!is_noop(item->command))
 			return error(_("unknown command %d"), item->command);
 
