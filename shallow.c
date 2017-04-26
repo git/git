@@ -473,11 +473,15 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 	struct commit_list *head = NULL;
 	int bitmap_nr = (info->nr_bits + 31) / 32;
 	size_t bitmap_size = st_mult(sizeof(uint32_t), bitmap_nr);
-	uint32_t *tmp = xmalloc(bitmap_size); /* to be freed before return */
-	uint32_t *bitmap = paint_alloc(info);
 	struct commit *c = lookup_commit_reference_gently(sha1, 1);
+	uint32_t *tmp; /* to be freed before return */
+	uint32_t *bitmap;
+
 	if (!c)
 		return;
+
+	tmp = xmalloc(bitmap_size);
+	bitmap = paint_alloc(info);
 	memset(bitmap, 0, bitmap_size);
 	bitmap[id / 32] |= (1U << (id % 32));
 	commit_list_insert(c, &head);

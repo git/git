@@ -232,7 +232,7 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
 
 	do {
 		peek = fgetc(f);
-	} while (isspace(peek));
+	} while (peek >= 0 && isspace(peek));
 	ungetc(peek, f);
 
 	if (strbuf_getwholeline(&buf, f, '\n')) {

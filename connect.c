@@ -716,8 +716,10 @@ static int handle_ssh_variant(const char *ssh_command, int is_cmdline,
 			 * any longer.
 			 */
 			free(ssh_argv);
-		} else
+		} else {
+			free(ssh_argv);
 			return 0;
+		}
 	}
 
 	if (!strcasecmp(variant, "plink") ||

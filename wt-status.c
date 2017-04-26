@@ -1075,8 +1075,13 @@ static int split_commit_in_progress(struct wt_status *s)
 	char *rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
 
 	if (!head || !orig_head || !rebase_amend || !rebase_orig_head ||
-	    !s->branch || strcmp(s->branch, "HEAD"))
+	    !s->branch || strcmp(s->branch, "HEAD")) {
+		free(head);
+		free(orig_head);
+		free(rebase_amend);
+		free(rebase_orig_head);
 		return split_in_progress;
+	}
 
 	if (!strcmp(rebase_amend, rebase_orig_head)) {
 		if (strcmp(head, rebase_amend))
@@ -1155,6 +1160,7 @@ static int read_rebase_todolist(const char *fname, struct string_list *lines)
 		abbrev_sha1_in_line(&line);
 		string_list_append(lines, line.buf);
 	}
+	fclose(f);
 	return 0;
 }
 
