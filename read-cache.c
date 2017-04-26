@@ -2197,6 +2197,7 @@ static int do_write_index(struct index_state *istate, int newfd,
 	int entries = istate->cache_nr;
 	struct stat st;
 	struct strbuf previous_name_buf = STRBUF_INIT, *previous_name;
+	int drop_cache_tree = 0;
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)
@@ -2247,6 +2248,8 @@ static int do_write_index(struct index_state *istate, int newfd,
 				warning(msg, ce->name);
 			else
 				return error(msg, ce->name);
+
+			drop_cache_tree = 1;
 		}
 		if (ce_write_entry(&c, newfd, ce, previous_name) < 0)
 			return -1;
@@ -2265,7 +2268,7 @@ static int do_write_index(struct index_state *istate, int newfd,
 		if (err)
 			return -1;
 	}
-	if (!strip_extensions && istate->cache_tree) {
+	if (!strip_extensions && !drop_cache_tree && istate->cache_tree) {
 		struct strbuf sb = STRBUF_INIT;
 
 		cache_tree_write(&sb, istate->cache_tree);
