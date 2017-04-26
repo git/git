@@ -432,6 +432,7 @@ static int read_bisect_refs(void)
 
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
 static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
+static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
 
 static void read_bisect_paths(struct argv_array *array)
 {
@@ -906,7 +907,7 @@ static void show_diff_tree(const char *prefix, struct commit *commit)
 void read_bisect_terms(const char **read_bad, const char **read_good)
 {
 	struct strbuf str = STRBUF_INIT;
-	const char *filename = git_path("BISECT_TERMS");
+	const char *filename = git_path_bisect_terms();
 	FILE *fp = fopen(filename, "r");
 
 	if (!fp) {
