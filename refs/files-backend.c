@@ -3237,7 +3237,7 @@ static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *c
 {
 	struct object_id ooid, noid;
 	char *email_end, *message;
-	unsigned long timestamp;
+	timestamp_t timestamp;
 	int tz;
 	const char *p = sb->buf;
 
@@ -4114,7 +4114,7 @@ struct expire_reflog_cb {
 };
 
 static int expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
-			     const char *email, unsigned long timestamp, int tz,
+			     const char *email, timestamp_t timestamp, int tz,
 			     const char *message, void *cb_data)
 {
 	struct expire_reflog_cb *cb = cb_data;

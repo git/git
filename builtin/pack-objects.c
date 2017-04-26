@@ -44,7 +44,7 @@ static uint32_t nr_result, nr_written;
 static int non_empty;
 static int reuse_delta = 1, reuse_object = 1;
 static int keep_unreachable, unpack_unreachable, include_tag;
-static unsigned long unpack_unreachable_expiration;
+static timestamp_t unpack_unreachable_expiration;
 static int pack_loose_unreachable;
 static int local;
 static int have_non_local_packs;
@@ -2675,7 +2675,7 @@ static int has_sha1_pack_kept_or_nonlocal(const unsigned char *sha1)
 static struct oid_array recent_objects;
 
 static int loosened_object_can_be_discarded(const struct object_id *oid,
-					    unsigned long mtime)
+					    timestamp_t mtime)
 {
 	if (!unpack_unreachable_expiration)
 		return 0;

@@ -27,7 +27,7 @@ static void show_dates(const char **argv, const char *format)
 	parse_date_format(format, &mode);
 	for (; *argv; argv++) {
 		char *arg;
-		time_t t;
+		timestamp_t t;
 		int tz;
 
 		/*
@@ -48,7 +48,7 @@ static void parse_dates(const char **argv, struct timeval *now)
 	struct strbuf result = STRBUF_INIT;
 
 	for (; *argv; argv++) {
-		unsigned long t;
+		timestamp_t t;
 		int tz;
 
 		strbuf_reset(&result);
@@ -65,7 +65,7 @@ static void parse_dates(const char **argv, struct timeval *now)
 static void parse_approxidate(const char **argv, struct timeval *now)
 {
 	for (; *argv; argv++) {
-		time_t t;
+		timestamp_t t;
 		t = approxidate_relative(*argv, now);
 		printf("%s -> %s\n", *argv, show_date(t, 0, DATE_MODE(ISO8601)));
 	}
@@ -96,7 +96,7 @@ int cmd_main(int argc, const char **argv)
 	else if (!strcmp(*argv, "approxidate"))
 		parse_approxidate(argv+1, &now);
 	else if (!strcmp(*argv, "is64bit"))
-		return sizeof(unsigned long) == 8 ? 0 : 1;
+		return sizeof(timestamp_t) == 8 ? 0 : 1;
 	else if (!strcmp(*argv, "time_t-is64bit"))
 		return sizeof(time_t) == 8 ? 0 : 1;
 	else

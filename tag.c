@@ -97,7 +97,7 @@ struct tag *lookup_tag(const unsigned char *sha1)
 	return object_as_type(obj, OBJ_TAG, 0);
 }
 
-static unsigned long parse_tag_date(const char *buf, const char *tail)
+static timestamp_t parse_tag_date(const char *buf, const char *tail)
 {
 	const char *dateptr;
 

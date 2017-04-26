@@ -35,7 +35,7 @@ static const char * const upload_pack_usage[] = {
 #define CLIENT_SHALLOW	(1u << 18)
 #define HIDDEN_REF	(1u << 19)
 
-static unsigned long oldest_have;
+static timestamp_t oldest_have;
 
 static int deepen_relative;
 static int multi_ack;
@@ -735,7 +735,7 @@ static void receive_needs(void)
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 	int depth = 0;
 	int has_non_tip = 0;
-	unsigned long deepen_since = 0;
+	timestamp_t deepen_since = 0;
 	int deepen_rev_list = 0;
 
 	shallow_nr = 0;
