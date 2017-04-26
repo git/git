@@ -406,7 +406,7 @@ proc start_rev_list {view} {
 	if {$revs eq {}} {
 	    return 0
 	}
-	set args [concat $vflags($view) $revs]
+	set args [limit_arg_length [concat $vflags($view) $revs]]
     } else {
 	set args $vorigargs($view)
     }
@@ -2076,7 +2076,7 @@ proc makewindow {} {
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
-    global have_tk85 use_ttk NS
+    global have_tk85 have_tk86 use_ttk NS
     global git_version
     global worddiff
 
@@ -2566,8 +2566,13 @@ proc makewindow {} {
     bind . <Key-Down> "selnextline 1"
     bind . <Shift-Key-Up> "dofind -1 0"
     bind . <Shift-Key-Down> "dofind 1 0"
-    bindkey <Key-Right> "goforw"
-    bindkey <Key-Left> "goback"
+    if {$have_tk86} {
+        bindkey <<NextChar>> "goforw"
+        bindkey <<PrevChar>> "goback"
+    } else {
+        bindkey <Key-Right> "goforw"
+        bindkey <Key-Left> "goback"
+    }
     bind . <Key-Prior> "selnextpage -1"
     bind . <Key-Next> "selnextpage 1"
     bind . <$M1B-Home> "allcanvs yview moveto 0.0"
@@ -7634,7 +7639,7 @@ proc gettreeline {gtf id} {
 	if {[string index $fname 0] eq "\""} {
 	    set fname [lindex $fname 0]
 	}
-	set fname [encoding convertfrom $fname]
+	set fname [encoding convertfrom utf-8 $fname]
 	lappend treefilelist($id) $fname
     }
     if {![eof $gtf]} {
@@ -7896,7 +7901,7 @@ proc gettreediffline {gdtf ids} {
 	    if {[string index $file 0] eq "\""} {
 		set file [lindex $file 0]
 	    }
-	    set file [encoding convertfrom $file]
+	    set file [encoding convertfrom utf-8 $file]
 	    if {$file ne [lindex $treediff end]} {
 		lappend treediff $file
 		lappend sublist $file
@@ -8041,7 +8046,7 @@ proc makediffhdr {fname ids} {
     global ctext curdiffstart treediffs diffencoding
     global ctext_file_names jump_to_here targetline diffline
 
-    set fname [encoding convertfrom $fname]
+    set fname [encoding convertfrom utf-8 $fname]
     set diffencoding [get_path_encoding $fname]
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
@@ -8103,7 +8108,7 @@ proc parseblobdiffline {ids line} {
 
     if {![string compare -length 5 "diff " $line]} {
 	if {![regexp {^diff (--cc|--git) } $line m type]} {
-	    set line [encoding convertfrom $line]
+	    set line [encoding convertfrom utf-8 $line]
 	    $ctext insert end "$line\n" hunksep
 	    continue
 	}
@@ -8150,7 +8155,7 @@ proc parseblobdiffline {ids line} {
 	makediffhdr $fname $ids
 
     } elseif {![string compare -length 16 "* Unmerged path " $line]} {
-	set fname [encoding convertfrom [string range $line 16 end]]
+	set fname [encoding convertfrom utf-8 [string range $line 16 end]]
 	$ctext insert end "\n"
 	set curdiffstart [$ctext index "end - 1c"]
 	lappend ctext_file_names $fname
@@ -8205,7 +8210,7 @@ proc parseblobdiffline {ids line} {
 	    if {[string index $fname 0] eq "\""} {
 		set fname [lindex $fname 0]
 	    }
-	    set fname [encoding convertfrom $fname]
+	    set fname [encoding convertfrom utf-8 $fname]
 	    set i [lsearch -exact $treediffs($ids) $fname]
 	    if {$i >= 0} {
 		setinlist difffilestart $i $curdiffstart
@@ -8224,6 +8229,7 @@ proc parseblobdiffline {ids line} {
 	    set diffinhdr 0
 	    return
 	}
+	set line [encoding convertfrom utf-8 $line]
 	$ctext insert end "$line\n" filesep
 
     } else {
@@ -9982,7 +9988,7 @@ proc showrefs {} {
     text $top.list -background $bgcolor -foreground $fgcolor \
 	-selectbackground $selectbgcolor -font mainfont \
 	-xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
-	-width 30 -height 20 -cursor $maincursor \
+	-width 60 -height 20 -cursor $maincursor \
 	-spacing1 1 -spacing3 1 -state disabled
     $top.list tag configure highlight -background $selectbgcolor
     if {![lsearch -exact $bglist $top.list]} {
@@ -10171,7 +10177,8 @@ proc getallcommits {} {
 	}
     }
     if {$ids ne {}} {
-	set fd [open [concat $cmd $ids] r]
+	set cmd [limit_arg_length [concat $cmd $ids]]
+	set fd [open $cmd r]
 	fconfigure $fd -blocking 0
 	incr allcommits
 	nowbusy allcommits
@@ -10179,6 +10186,21 @@ proc getallcommits {} {
     } else {
 	dispneartags 0
     }
+}
+
+# The maximum command line length for the CreateProcess function is 32767 characters, see
+# http://blogs.msdn.com/oldnewthing/archive/2003/12/10/56028.aspx
+# Be a little conservative in case Tcl adds some more stuff to the command line we do not
+# know about and truncate the command line at a SHA1-boundary below 32000 characters.
+proc limit_arg_length {cmd} {
+    if {[tk windowingsystem] == "win32" &&
+       [string length $cmd] > 32000} {
+        set ndx [string last " " $cmd 32000]
+        if {$ndx != -1} {
+            return [string range $cmd 0 $ndx]
+        }
+    }
+    return $cmd
 }
 
 # Since most commits have 1 parent and 1 child, we group strings of
@@ -12161,7 +12183,7 @@ proc cache_gitattr {attr pathlist} {
 	    foreach row [split $rlist "\n"] {
 		if {[regexp "(.*): $attr: (.*)" $row m path value]} {
 		    if {[string index $path 0] eq "\""} {
-			set path [encoding convertfrom [lindex $path 0]]
+			set path [encoding convertfrom utf-8 [lindex $path 0]]
 		    }
 		    set path_attr_cache($attr,$path) $value
 		}
@@ -12191,7 +12213,6 @@ if { [info exists ::env(GITK_MSGSDIR)] } {
     set gitk_prefix [file dirname [file dirname [file normalize $argv0]]]
     set gitk_libdir [file join $gitk_prefix share gitk lib]
     set gitk_msgsdir [file join $gitk_libdir msgs]
-    unset gitk_prefix
 }
 
 ## Internationalization (i18n) through msgcat and gettext. See
@@ -12482,6 +12503,7 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
+set have_tk86 [expr {[package vcompare $tk_version "8.6"] >= 0}]
 if {![info exists have_ttk]} {
     set have_ttk [llength [info commands ::ttk::style]]
 }
@@ -12546,28 +12568,32 @@ if {[expr {[exec git rev-parse --is-inside-work-tree] == "true"}]} {
 set worktree [exec git rev-parse --show-toplevel]
 setcoords
 makewindow
-catch {
-    image create photo gitlogo      -width 16 -height 16
+if {$::tcl_platform(platform) eq {windows} && [file exists $gitk_prefix/etc/git.ico]} {
+    wm iconbitmap . -default $gitk_prefix/etc/git.ico
+} else {
+    catch {
+        image create photo gitlogo      -width 16 -height 16
 
-    image create photo gitlogominus -width  4 -height  2
-    gitlogominus put #C00000 -to 0 0 4 2
-    gitlogo copy gitlogominus -to  1 5
-    gitlogo copy gitlogominus -to  6 5
-    gitlogo copy gitlogominus -to 11 5
-    image delete gitlogominus
+        image create photo gitlogominus -width  4 -height  2
+        gitlogominus put #C00000 -to 0 0 4 2
+        gitlogo copy gitlogominus -to  1 5
+        gitlogo copy gitlogominus -to  6 5
+        gitlogo copy gitlogominus -to 11 5
+        image delete gitlogominus
 
-    image create photo gitlogoplus  -width  4 -height  4
-    gitlogoplus  put #008000 -to 1 0 3 4
-    gitlogoplus  put #008000 -to 0 1 4 3
-    gitlogo copy gitlogoplus  -to  1 9
-    gitlogo copy gitlogoplus  -to  6 9
-    gitlogo copy gitlogoplus  -to 11 9
-    image delete gitlogoplus
+        image create photo gitlogoplus  -width  4 -height  4
+        gitlogoplus  put #008000 -to 1 0 3 4
+        gitlogoplus  put #008000 -to 0 1 4 3
+        gitlogo copy gitlogoplus  -to  1 9
+        gitlogo copy gitlogoplus  -to  6 9
+        gitlogo copy gitlogoplus  -to 11 9
+        image delete gitlogoplus
 
-    image create photo gitlogo32    -width 32 -height 32
-    gitlogo32 copy gitlogo -zoom 2 2
+        image create photo gitlogo32    -width 32 -height 32
+        gitlogo32 copy gitlogo -zoom 2 2
 
-    wm iconphoto . -default gitlogo gitlogo32
+        wm iconphoto . -default gitlogo gitlogo32
+    }
 }
 # wait for the window to become visible
 tkwait visibility .
