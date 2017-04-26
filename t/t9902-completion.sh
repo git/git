@@ -1457,4 +1457,38 @@ test_expect_failure 'complete with tilde expansion' '
 	test_completion "git add ~/tmp/" "~/tmp/file"
 '
 
+test_expect_success 'setup other remote for remote reference completion' '
+	git remote add other otherrepo &&
+	git fetch other
+'
+
+for flag in -d --delete
+do
+	test_expect_success "__git_complete_remote_or_refspec - push $flag other" '
+		sed -e "s/Z$//" >expected <<-EOF &&
+		master-in-other Z
+		EOF
+		(
+			words=(git push '$flag' other ma) &&
+			cword=${#words[@]} cur=${words[cword-1]} &&
+			__git_complete_remote_or_refspec &&
+			print_comp
+		) &&
+		test_cmp expected out
+	'
+
+	test_expect_failure "__git_complete_remote_or_refspec - push other $flag" '
+		sed -e "s/Z$//" >expected <<-EOF &&
+		master-in-other Z
+		EOF
+		(
+			words=(git push other '$flag' ma) &&
+			cword=${#words[@]} cur=${words[cword-1]} &&
+			__git_complete_remote_or_refspec &&
+			print_comp
+		) &&
+		test_cmp expected out
+	'
+done
+
 test_done
