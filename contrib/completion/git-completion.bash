@@ -1309,6 +1309,7 @@ _git_clone ()
 			--template=
 			--depth
 			--single-branch
+			--no-tags
 			--branch
 			--recurse-submodules
 			--no-single-branch

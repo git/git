@@ -17,12 +17,19 @@ test_expect_success 'setup' '
 	echo four >file &&
 	git commit -a -m four &&
 	git checkout master &&
+	git tag five &&
 
 	# default clone
 	git clone . dir_all &&
 
+	# default clone --no-tags
+	git clone --no-tags . dir_all_no_tags &&
+
 	# default --single that follows HEAD=master
 	git clone --single-branch . dir_master &&
+
+	# default --single that follows HEAD=master with no tags
+	git clone --single-branch --no-tags . dir_master_no_tags &&
 
 	# default --single that follows HEAD=side
 	git checkout side &&
@@ -44,6 +51,9 @@ test_expect_success 'setup' '
 
 	# explicit --single with tag
 	git clone --single-branch --branch two . dir_tag &&
+
+	# explicit --single with tag and --no-tags
+	git clone --single-branch --no-tags --branch two . dir_tag_no_tags &&
 
 	# advance both "master" and "side" branches
 	git checkout side &&
@@ -77,7 +87,18 @@ test_expect_success 'by default no tags will be kept updated' '
 		git for-each-ref refs/tags >../actual
 	) &&
 	git for-each-ref refs/tags >expect &&
-	test_must_fail test_cmp expect actual
+	test_must_fail test_cmp expect actual &&
+	test_line_count = 2 actual
+'
+
+test_expect_success 'clone with --no-tags' '
+	(
+		cd dir_all_no_tags &&
+		git fetch &&
+		git for-each-ref refs/tags >../actual
+	) &&
+	>expect &&
+	test_cmp expect actual
 '
 
 test_expect_success '--single-branch while HEAD pointing at master' '
@@ -90,7 +111,47 @@ test_expect_success '--single-branch while HEAD pointing at master' '
 	) &&
 	# only follow master
 	git for-each-ref refs/heads/master >expect &&
-	test_cmp expect actual
+	# get & check latest tags
+	test_cmp expect actual &&
+	(
+		cd dir_master &&
+		git fetch --tags &&
+		git for-each-ref refs/tags >../actual
+	) &&
+	git for-each-ref refs/tags >expect &&
+	test_cmp expect actual &&
+	test_line_count = 2 actual
+'
+
+test_expect_success '--single-branch while HEAD pointing at master and --no-tags' '
+	(
+		cd dir_master_no_tags &&
+		git fetch &&
+		git for-each-ref refs/remotes/origin |
+		sed -e "/HEAD$/d" \
+		    -e "s|/remotes/origin/|/heads/|" >../actual
+	) &&
+	# only follow master
+	git for-each-ref refs/heads/master >expect &&
+	test_cmp expect actual &&
+	# get tags (noop)
+	(
+		cd dir_master_no_tags &&
+		git fetch &&
+		git for-each-ref refs/tags >../actual
+	) &&
+	>expect &&
+	test_cmp expect actual &&
+	test_line_count = 0 actual &&
+	# get tags with --tags overrides tagOpt
+	(
+		cd dir_master_no_tags &&
+		git fetch --tags &&
+		git for-each-ref refs/tags >../actual
+	) &&
+	git for-each-ref refs/tags >expect &&
+	test_cmp expect actual &&
+	test_line_count = 2 actual
 '
 
 test_expect_success '--single-branch while HEAD pointing at side' '
@@ -127,6 +188,17 @@ test_expect_success '--single-branch with explicit --branch with tag fetches upd
 	) &&
 	git for-each-ref refs/tags >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success '--single-branch with explicit --branch with tag fetches updated tag despite --no-tags' '
+	(
+		cd dir_tag_no_tags &&
+		git fetch &&
+		git for-each-ref refs/tags >../actual
+	) &&
+	git for-each-ref refs/tags/two >expect &&
+	test_cmp expect actual &&
+	test_line_count = 1 actual
 '
 
 test_expect_success '--single-branch with --mirror' '
