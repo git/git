@@ -1,16 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2017, #05; Tue, 25)
-X-master-at: e2cb6ab84c94f147f1259260961513b40c36108a
-X-next-at: 87b477812d19226f71786936237a1aa4e7df378e
+Subject: What's cooking in git.git (Apr 2017, #06; Wed, 26)
+X-master-at: 027a3b943b444a3e3a76f9a89803fc10245b858f
+X-next-at: 01180b72fb0ab3645b79bab9296e451329296545
 
-What's cooking in git.git (Apr 2017, #05; Tue, 25)
+What's cooking in git.git (Apr 2017, #06; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+2.13-rc1 was tagged and we are now in a pre-release freeze.  The
+topics marked to be merged to 'next' in the list below may be merged
+to 'next' as usual, but the ones marked for 'master' may stay in
+'next' until the final release, unless they are small bug/doc fixes
+or hotfixes to topics that are already in -rc1 from now on.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,181 +26,61 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jh/verify-index-checksum-only-in-fsck (2017-04-15) 1 commit
-  (merged to 'next' on 2017-04-19 at a089b97d34)
- + read-cache: force_verify_index_checksum
+* ab/completion-push-delete-ref (2017-04-23) 1 commit
+  (merged to 'next' on 2017-04-23 at e227df80bf)
+ + completion: expand "push --delete <remote> <ref>" for refs on that <remote>
 
- The index file has a trailing SHA-1 checksum to detect file
- corruption, and historically we checked it every time the index
- file is used.  Omit the validation during normal use, and instead
- verify only in "git fsck".
-
- There is an update to the test script as a follow-up.
+ The completion script (in contrib/) learned to complete "git push
+ --delete b<TAB>" to complete branch name to be deleted.
 
 
-* bw/submodule-with-bs-path (2017-04-16) 1 commit
-  (merged to 'next' on 2017-04-19 at 692775477b)
- + submodule: prevent backslash expantion in submodule names
-
- "git submodule" script does not work well with strange pathnames.
- Protect it from a path with slashes in them, at least.
-
-
-* dt/http-postbuffer-can-be-large (2017-04-13) 1 commit
-  (merged to 'next' on 2017-04-19 at dc9de26fc9)
- + http.postbuffer: allow full range of ssize_t values
-
- Allow the http.postbuffer configuration variable to be set to a
- size that can be expressed in size_t, which can be larger than
- ulong on some platforms.
-
-
-* dt/xgethostname-nul-termination (2017-04-18) 2 commits
-  (merged to 'next' on 2017-04-19 at 4035f442cc)
- + xgethostname: handle long hostnames
- + use HOST_NAME_MAX to size buffers for gethostname(2)
-
- gethostname(2) may not NUL terminate the buffer if hostname does
- not fit; unfortunately there is no easy way to see if our buffer
- was too small, but at least this will make sure we will not end up
- using garbage past the end of the buffer.
-
-
-* jh/string-list-micro-optim (2017-04-15) 1 commit
-  (merged to 'next' on 2017-04-19 at 2a5e339df9)
- + string-list: use ALLOC_GROW macro when reallocing string_list
-
- The string-list API used a custom reallocation strategy that was
- very inefficient, instead of using the usual ALLOC_GROW() macro,
- which has been fixed.
-
-
-* jh/unpack-trees-micro-optim (2017-04-15) 1 commit
-  (merged to 'next' on 2017-04-19 at 970c47a2f9)
- + unpack-trees: avoid duplicate ODB lookups during checkout
-
- In a 2- and 3-way merge of trees, more than one source trees often
- end up sharing an identical subtree; optimize by not reading the
- same tree multiple times in such a case.
-
-
-* jk/loose-object-fsck (2017-04-16) 1 commit
-  (merged to 'next' on 2017-04-19 at 0cc7810018)
- + sha1_file: remove an used fd variable
-
- Code cleanup.
-
-
-* jk/ls-files-recurse-submodules-fix (2017-04-18) 2 commits
-  (merged to 'next' on 2017-04-19 at d4682ceaae)
- + ls-files: fix path used when recursing into submodules
- + ls-files: fix recurse-submodules with nested submodules
-
- "ls-files --recurse-submodules" did not quite work well in a
- project with nested submodules.
-
-
-* jk/quarantine-received-objects (2017-04-16) 3 commits
-  (merged to 'next' on 2017-04-19 at 2c6fcf1d6d)
- + refs: reject ref updates while GIT_QUARANTINE_PATH is set
- + receive-pack: document user-visible quarantine effects
- + receive-pack: drop tmp_objdir_env from run_update_hook
-
- Add finishing touches to a recent topic.
-
-
-* jk/snprintf-cleanups (2017-04-17) 1 commit
-  (merged to 'next' on 2017-04-19 at 4a18ea9971)
- + replace: plug a memory leak
-
- Hotfix for a topic that is already in 'master'.
-
-
-* jt/fetch-pack-error-reporting (2017-04-17) 1 commit
-  (merged to 'next' on 2017-04-19 at 6da61f7236)
- + fetch-pack: show clearer error message upon ERR
-
- "git fetch-pack" was not prepared to accept ERR packet that the
- upload-pack can send with a human-readable error message.  It
- showed the packet contents with ERR prefix, so there was no data
- loss, but it was redundant to say "ERR" in an error message.
-
-
-* km/t1400-modernization (2017-04-16) 1 commit
-  (merged to 'next' on 2017-04-19 at 7490be39bf)
- + t1400: use consistent style for test_expect_success calls
-
- Code cleanup.
-
-
-* nd/conditional-config-include (2017-04-14) 2 commits
-  (merged to 'next' on 2017-04-19 at 2e94c40b46)
- + config: resolve symlinks in conditional include's patterns
- + path.c: and an option to call real_path() in expand_user_path()
-
- $GIT_DIR may in some cases be normalized with all symlinks resolved
- while "gitdir" path expansion in the pattern does not receive the
- same treatment, leading to incorrect mismatch.  This has been fixed.
-
-
-* rs/misc-cppcheck-fixes (2017-04-17) 3 commits
-  (merged to 'next' on 2017-04-19 at e8fca7f593)
- + server-info: avoid calling fclose(3) twice in update_info_file()
- + files_for_each_reflog_ent_reverse(): close stream and free strbuf on error
- + am: close stream on error, but not stdin
-
- Various small fixes.
-
-
-* sb/checkout-recurse-submodules (2017-04-17) 1 commit
-  (merged to 'next' on 2017-04-19 at 414e18fd9b)
- + submodule: remove a superfluous second check for the "new" variable
-
- Code cleanup.
-
-
-* sr/http-proxy-configuration-fix (2017-04-13) 2 commits
-  (merged to 'next' on 2017-04-19 at d8f507e951)
- + http: fix the silent ignoring of proxy misconfiguraion
- + http: honor empty http.proxy option to bypass proxy
-
- "http.proxy" set to an empty string is used to disable the usage of
- proxy.  We broke this early last year.
-
-
-* tb/doc-eol-normalization (2017-04-13) 1 commit
-  (merged to 'next' on 2017-04-19 at fe15d04d0a)
- + gitattributes.txt: document how to normalize the line endings
+* ab/push-cas-doc-n-test (2017-04-19) 1 commit
+  (merged to 'next' on 2017-04-23 at 0ef31ab624)
+ + push: document & test --force-with-lease with multiple remotes
 
  Doc update.
 
 
-* xy/format-patch-base (2017-04-17) 1 commit
-  (merged to 'next' on 2017-04-19 at c10723d486)
- + doc: trivial typo in git-format-patch.txt
+* cc/split-index-config (2017-04-20) 1 commit
+  (merged to 'next' on 2017-04-23 at 5996ddc3f2)
+ + read-cache: avoid using git_path() in freshen_shared_index()
 
- Doc cleanup.
-
---------------------------------------------------
-[New Topics]
-
-* jh/verify-index-checksum-only-in-fsck (2017-04-25) 1 commit
- - t1450: avoid use of "sed" on the index, which is a binary file
-
- Update an unportable constructin a new test.
-
- Will merge to 'next' and then to 'master'.
+ The split-index code configuration code used an unsafe git_path()
+ function without copying its result out.
 
 
-* dt/gc-ignore-old-gc-logs (2017-04-24) 3 commits
- - test-lib: retire $remove_trash variable
- - test-lib.sh: do not barf under --debug at the end of the test
- - test-lib: abort when can't remove trash directory
+* gb/rebase-signoff (2017-04-18) 3 commits
+  (merged to 'next' on 2017-04-19 at c3c04e6a71)
+ + rebase: pass --[no-]signoff option to git am
+ + builtin/am: fold am_signoff() into am_append_signoff()
+ + builtin/am: honor --signoff also when --rebasing
 
- An attempt to allow us notice "fishy" situation where we fail to
- remove the temporary directory used during the test.
+ "git rebase" learns "--signoff" option.
 
- Will merge to 'next'.
+
+* jh/add-index-entry-optim (2017-04-19) 5 commits
+  (merged to 'next' on 2017-04-23 at 295d4066a8)
+ + read-cache: speed up has_dir_name (part 2)
+ + read-cache: speed up has_dir_name (part 1)
+ + read-cache: speed up add_index_entry during checkout
+ + p0006-read-tree-checkout: perf test to time read-tree
+ + read-cache: add strcmp_offset function
+
+ "git checkout" that handles a lot of paths has been optimized by
+ reducing the number of unnecessary checks of paths in the
+ has_dir_name() function.
+
+
+* jk/update-links-in-docs (2017-04-20) 6 commits
+  (merged to 'next' on 2017-04-23 at f64249bbdf)
+ + docs/bisect-lk2009: update java code conventions link
+ + docs/bisect-lk2009: update nist report link
+ + docs/archimport: quote sourcecontrol.net reference
+ + gitcore-tutorial: update broken link
+ + doc: replace or.cz gitwiki link with git.wiki.kernel.org
+ + doc: use https links to avoid http redirect
+
+ Many stale HTTP(s) links have been updated in our documentation.
 
 
 * jk/war-on-git-path (2017-04-20) 6 commits
@@ -210,95 +96,75 @@ of the repositories listed at
  callsite that uses it safely one day can be broken by changes
  to other code that calls it.  Reduction of its use continues.
 
- Will merge to 'master'.
+
+* ls/travis-coccicheck (2017-04-16) 1 commit
+  (merged to 'next' on 2017-04-23 at fa42ffe6b2)
+ + travis-ci: add static analysis build job to run coccicheck
+
+ Travis CI learns to run coccicheck.
 
 
-* nd/fopen-errors (2017-04-23) 17 commits
- - warn_failure_to_open_read_optional_path(): a new helper
- - t1308: add a test case on open a config directory
- - config.c: handle error on failing to fopen()
- - xdiff-interface.c: report errno on failure to stat() or fopen()
- - wt-status.c: report error on failure to fopen()
- - server-info: report error on failure to fopen()
- - sequencer.c: report error on failure to fopen()
- - rerere.c: report correct errno
- - rerere.c: report error on failure to fopen()
- - remote.c: report error on failure to fopen()
- - commit.c: report error on failure to fopen() the graft file
- - log: report errno on failure to fopen() a file
- - clone: use xfopen() instead of fopen()
- - blame: report error on open if graft_file is a directory
- - bisect: report on fopen() error
- - config.mak.uname: set FREAD_READS_DIRECTORIES for Linux and FreeBSD
- - git_fopen: fix a sparse 'not declared' warning
+* mh/separate-ref-cache (2017-04-16) 20 commits
+  (merged to 'next' on 2017-04-23 at bd74983456)
+ + do_for_each_entry_in_dir(): delete function
+ + files_pack_refs(): use reference iteration
+ + commit_packed_refs(): use reference iteration
+ + cache_ref_iterator_begin(): make function smarter
+ + get_loose_ref_cache(): new function
+ + get_loose_ref_dir(): function renamed from get_loose_refs()
+ + do_for_each_entry_in_dir(): eliminate `offset` argument
+ + refs: handle "refs/bisect/" in `loose_fill_ref_dir()`
+ + ref-cache: use a callback function to fill the cache
+ + refs: record the ref_store in ref_cache, not ref_dir
+ + ref-cache: introduce a new type, ref_cache
+ + refs: split `ref_cache` code into separate files
+ + ref-cache: rename `remove_entry()` to `remove_entry_from_dir()`
+ + ref-cache: rename `find_ref()` to `find_ref_entry()`
+ + ref-cache: rename `add_ref()` to `add_ref_entry()`
+ + refs_verify_refname_available(): use function in more places
+ + refs_verify_refname_available(): implement once for all backends
+ + refs_ref_iterator_begin(): new function
+ + refs_read_raw_ref(): new function
+ + get_ref_dir(): don't call read_loose_refs() for "refs/bisect"
 
- We often try to open a file for reading whose existence is
- optional, and silently ignore errors from open/fopen; report such
- errors if they are not due to missing files.
-
- Expecting a reroll that would be much simplified thanks to a higher
- level helper.
-
- cf. <xmqqk26e5swj.fsf@gitster.mtv.corp.google.com>
- cf. <CACsJy8D1LuH6qVp15MSkCM_oQphVUUK0r9SeKC5AzX+9Xi2dcw@mail.gmail.com>
+ The internals of the refs API around the cached refs has been
+ streamlined.
 
 
-* dt/raise-core-packed-git-limit (2017-04-20) 1 commit
- - Increase core.packedGitLimit
+* nd/conditional-config-in-early-config (2017-04-19) 3 commits
+  (merged to 'next' on 2017-04-23 at 1803ee72a9)
+ + config: correct file reading order in read_early_config()
+ + config: handle conditional include when $GIT_DIR is not set up
+ + config: prepare to pass more info in git_config_with_options()
 
- Raise the default packed-git limit value on larger platforms to
- avoid "git fetch" from a (recoverable) failure while "gc" is
- running in parallel.
-
- Will merge to 'next'.
-
-
-* jk/complete-checkout-sans-dwim-remote (2017-04-23) 1 commit
- - completion: optionally disable checkout DWIM
-
- Completion for "git checkout <branch>" that auto-creates the branch
- out of a remote tracking branch can now be disabled, as this
- completion often gets in the way when completing to checkout an
- existing local branch that happens to share the same prefix with
- bunch of remote tracking branches.
-
- Will merge to 'next'.
+ The recently introduced conditional inclusion of configuration did
+ not work well when early-config mechanism was involved.
 
 
-* jk/update-links-in-docs (2017-04-20) 6 commits
-  (merged to 'next' on 2017-04-23 at f64249bbdf)
- + docs/bisect-lk2009: update java code conventions link
- + docs/bisect-lk2009: update nist report link
- + docs/archimport: quote sourcecontrol.net reference
- + gitcore-tutorial: update broken link
- + doc: replace or.cz gitwiki link with git.wiki.kernel.org
- + doc: use https links to avoid http redirect
+* nd/worktree-add-lock (2017-04-20) 1 commit
+  (merged to 'next' on 2017-04-23 at 160b955fbb)
+ + worktree add: add --lock option
 
- Many stale HTTP(s) links have been updated in our documentation.
-
- Will merge to 'next'.
+ Allow to lock a worktree immediately after it's created. This helps
+ prevent a race between "git worktree add; git worktree lock" and
+ "git worktree prune".
 
 
-* js/larger-timestamps (2017-04-24) 8 commits
- - use uintmax_t for timestamps
- - date.c: abort if the system time cannot handle one of our timestamps
- - timestamp_t: introduce a new data type for timestamps
- - PRItime: introduce a new "printf format" for timestamps
- - parse_timestamp(): specify explicitly where we parse timestamps
- - t0006 & t5000: skip "far in the future" test when time_t is too limited
- - t0006 & t5000: prepare for 64-bit timestamps
- - ref-filter: avoid using `unsigned long` for catch-all data type
+* pc/t2027-git-to-pipe-cleanup (2017-04-14) 1 commit
+  (merged to 'next' on 2017-04-23 at b5c28345a9)
+ + t2027: avoid using pipes
 
- Some platforms have ulong that is smaller than time_t, and our
- historical use of ulong for timestamp would mean they cannot
- represent some timestamp that the platform allows.  Invent a
- separate and dedicated timestamp_t (so that we can distingiuish
- timestamps and a vanilla ulongs, which along is already a good
- move), and then declare uintmax_t is the type to be used as the
- timestamp_t
+ Having a git command on the upstream side of a pipe in a test
+ script will hide the exit status from the command, which may cause
+ us to fail to notice a breakage; rewrite tests in a script to avoid
+ this issue.
 
- At v5.
- cf. <cover.1493042239.git.johannes.schindelin@gmx.de>
+
+* ps/pathspec-empty-prefix-origin (2017-04-14) 1 commit
+  (merged to 'next' on 2017-04-23 at b91098d1f7)
+ + pathspec: honor `PATHSPEC_PREFIX_ORIGIN` with empty prefix
+
+ A recent update broke "git add -p ../foo" from a subdirectory.
 
 
 * sf/putty-w-args (2017-04-20) 1 commit
@@ -307,175 +173,54 @@ of the repositories listed at
 
  Plug a memleak.
 
- Will merge to 'next'.
+
+* ss/gitmodules-ignore-doc (2017-04-19) 1 commit
+  (merged to 'next' on 2017-04-23 at 3963ab5013)
+ + gitmodules: clarify the ignore option values
+
+ Doc update.
 
 
-* ab/align-perf-descriptions (2017-04-23) 1 commit
- - t/perf: correctly align non-ASCII descriptions in output
+* ss/submodule-shallow-doc (2017-04-19) 1 commit
+  (merged to 'next' on 2017-04-23 at 56a80f913d)
+ + gitmodules: clarify what history depth a shallow clone has
 
- Output from perf tests have been updated to align their titles.
+ Doc update.
 
- Will merge to 'next'.
+--------------------------------------------------
+[New Topics]
 
+* jc/repack-threads (2017-04-27) 1 commit
+ - repack: accept --threads=<n> and pass it down to pack-objects
 
-* ab/grep-pcre-v2 (2017-04-25) 19 commits
- - Makefile & configure: make PCRE v2 the default PCRE implementation
- - grep: remove support for concurrent use of both PCRE v1 & v2
- - grep: add support for PCRE v2
- - grep: add support for the PCRE v1 JIT API
- - perf: add a performance comparison test of grep -E and -P
- - grep: change the internal PCRE code & header names to be PCRE1
- - grep: change the internal PCRE macro names to be PCRE1
- - test-lib: rename the LIBPCRE prerequisite to PCRE
- - grep: make grep.patternType=[pcre|pcre1] a synonym for "perl"
- - grep & rev-list doc: stop promising libpcre for --perl-regexp
- - log: add -P as a synonym for --perl-regexp
- - log: add exhaustive tests for pattern style options & config
- - grep: add a test for backreferences in PCRE patterns
- - Makefile & configure: reword outdated comment about PCRE
- - grep: remove redundant `regflags &= ~REG_EXTENDED` assignments
- - grep: remove redundant regflags assignment under PCRE
- - grep: submodule-related case statements should die if new fields are added
- - grep: add tests for grep pattern types being passed to submodules
- - grep: amend submodule recursion test in preparation for rx engine testing
-
- PCRE2, which has an API different from and incompatible with PCRE,
- can now be chosen to support "grep -P -e '<pattern>'" and friends.
+ "git repack" learned to accept the --threads=<n> option and pass it
+ to pack-objects.
 
 
-* bc/object-id (2017-04-23) 53 commits
- - object: convert parse_object* to take struct object_id
- - tree: convert parse_tree_indirect to struct object_id
- - sequencer: convert do_recursive_merge to struct object_id
- - diff-lib: convert do_diff_cache to struct object_id
- - builtin/ls-tree: convert to struct object_id
- - merge: convert checkout_fast_forward to struct object_id
- - sequencer: convert fast_forward_to to struct object_id
- - builtin/ls-files: convert overlay_tree_on_cache to object_id
- - builtin/read-tree: convert to struct object_id
- - sha1_name: convert internals of peel_onion to object_id
- - upload-pack: convert remaining parse_object callers to object_id
- - revision: convert remaining parse_object callers to object_id
- - revision: rename add_pending_sha1 to add_pending_oid
- - http-push: convert process_ls_object and descendants to object_id
- - refs/files-backend: convert many internals to struct object_id
- - refs: convert struct ref_update to use struct object_id
- - ref-filter: convert some static functions to struct object_id
- - Convert struct ref_array_item to struct object_id
- - Convert the verify_pack callback to struct object_id
- - Convert lookup_tag to struct object_id
- - log-tree: convert to struct object_id
- - Convert lookup_tree to struct object_id
- - builtin/reflog: convert tree_is_complete to take struct object_id
- - tree: convert read_tree_1 to use struct object_id internally
- - Convert lookup_blob to struct object_id
- - Convert remaining callers of lookup_blob to object_id
- - builtin/unpack-objects: convert to struct object_id
- - pack: convert struct pack_idx_entry to struct object_id
- - Convert lookup_commit* to struct object_id
- - Convert remaining callers of lookup_commit_reference* to object_id
- - builtin/tag: convert to struct object_id
- - sequencer: convert some functions to struct object_id
- - shallow: convert shallow registration functions to object_id
- - revision: convert prepare_show_merge to struct object_id
- - notes-utils: convert internals to struct object_id
- - http-push: convert some static functions to struct object_id
- - tag: convert parse_tag_buffer to struct object_id
- - builtin/verify-commit: convert to struct object_id
- - reflog_expire: convert to struct object_id
- - parse-options-cb: convert to struct object_id
- - notes-cache: convert to struct object_id
- - submodule: convert merge_submodule to use struct object_id
- - fast-import: convert to struct object_id
- - fast-import: convert internal structs to struct object_id
- - builtin/rev-parse: convert to struct object_id
- - builtin/blame: convert static function to struct object_id
- - branch: convert to struct object_id
- - bundle: convert to struct object_id
- - builtin/prune: convert to struct object_id
- - builtin/name-rev: convert to struct object_id
- - Convert struct cache_tree to use struct object_id
- - Clean up outstanding object_id transforms.
- - fetch-pack: convert to struct object_id
+* ls/travis-stricter-linux32-builds (2017-04-27) 1 commit
+ - travis-ci: set DEVELOPER knob for Linux32 build
 
- Conversion from uchar[20] to struct object_id continues.
-
-
-* jk/no-null-sha1-in-cache-tree (2017-04-23) 1 commit
- - cache-tree: reject entries with null sha1
-
- Tighten code to update cache-tree so that we won't accidentally
- write out any 0{40} entry in the tree object.
-
-
-* rg/a-the-typo (2017-04-23) 1 commit
- - NEEDSSIGNOFF: fix minor typing mistakes
-
- Typofix.
-
- Needs sign-off.
-
-
-* jk/prio-queue-avoid-swap-with-self (2017-04-24) 1 commit
- - prio_queue_reverse: don't swap elements with themselves
-
- Code clean-up.
+ 32-bit Linux build on Travis CI uses stricter compilation options.
 
  Will merge to 'next'.
 
 
-* jk/submodule-init-segv-fix (2017-04-24) 1 commit
- - submodule_init: die cleanly on submodules without url defined
+* ls/travis-win-fix-status (2017-04-26) 1 commit
+ - travis-ci: printf $STATUS as string
 
- Fix a segv in 'submodule init' when url is not given for a submodule.
-
- Will merge to 'next'.
-
-
-* rs/large-zip (2017-04-24) 5 commits
- - archive-zip: support files bigger than 4GB
- - archive-zip: support archives bigger than 4GB
- - archive-zip: write ZIP dir entry directly to strbuf
- - archive-zip: use strbuf for ZIP directory
- - archive-zip: add tests for big ZIP archives
-
- "git archive --format=zip" learned to use zip64 extension when
- necessary to go beyond the 4GB limit.
+ Relaying status from Windows build by Travis CI was done with an
+ unsafe invocation of printf.
 
  Will merge to 'next'.
 
 
-* jc/checkout-working-tree-only (2017-04-25) 1 commit
- - checkout: add --working-tree-only option
+* sh/rebase-i-reread-todo-after-exec (2017-04-27) 1 commit
+ - rebase -i: reread the todo list if `exec` touched it
 
- "git checkout <tree-ish> <pathspec>" learned a variant that does
- not update the index when doing its thing.
+ "git rebase -i" failed to re-read the todo list file when the
+ command specified with the `exec` instruction updated it.
 
-
-* js/rebase-i-final (2017-04-25) 9 commits
- - rebase -i: rearrange fixup/squash lines using the rebase--helper
- - t3415: test fixup with wrapped oneline
- - rebase -i: skip unnecessary picks using the rebase--helper
- - rebase -i: check for missing commits in the rebase--helper
- - t3404: relax rebase.missingCommitsCheck tests
- - rebase -i: also expand/collapse the SHA-1s via the rebase--helper
- - rebase -i: do not invent onelines when expanding/collapsing SHA-1s
- - rebase -i: remove useless indentation
- - rebase -i: generate the script via rebase--helper
-
- The final batch to "git rebase -i" updates to move more code from
- the shell script to C.
-
-
-* jt/use-trailer-api-in-commands (2017-04-25) 2 commits
- - SQUASH??? suggested by jrnieder
- - sequencer: require trailing NL in footers
-
- "git cherry-pick" and other uses of the sequencer machinery
- mishandled a trailer block whose last line is an incomplete line.
- This has been fixed so that an additional sign-off etc. are added
- after completing the existing incomplete line.
- 
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -588,6 +333,281 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jh/verify-index-checksum-only-in-fsck (2017-04-27) 1 commit
+ - t1450: avoid use of "sed" on the index, which is a binary file
+
+ Update an unportable constructin a new test.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* dt/gc-ignore-old-gc-logs (2017-04-24) 3 commits
+  (merged to 'next' on 2017-04-26 at 4f4cab8368)
+ + test-lib: retire $remove_trash variable
+ + test-lib.sh: do not barf under --debug at the end of the test
+ + test-lib: abort when can't remove trash directory
+
+ An attempt to allow us notice "fishy" situation where we fail to
+ remove the temporary directory used during the test.
+
+ Will merge to 'master'.
+
+
+* nd/fopen-errors (2017-04-23) 17 commits
+ - warn_failure_to_open_read_optional_path(): a new helper
+ - t1308: add a test case on open a config directory
+ - config.c: handle error on failing to fopen()
+ - xdiff-interface.c: report errno on failure to stat() or fopen()
+ - wt-status.c: report error on failure to fopen()
+ - server-info: report error on failure to fopen()
+ - sequencer.c: report error on failure to fopen()
+ - rerere.c: report correct errno
+ - rerere.c: report error on failure to fopen()
+ - remote.c: report error on failure to fopen()
+ - commit.c: report error on failure to fopen() the graft file
+ - log: report errno on failure to fopen() a file
+ - clone: use xfopen() instead of fopen()
+ - blame: report error on open if graft_file is a directory
+ - bisect: report on fopen() error
+ - config.mak.uname: set FREAD_READS_DIRECTORIES for Linux and FreeBSD
+ - git_fopen: fix a sparse 'not declared' warning
+
+ We often try to open a file for reading whose existence is
+ optional, and silently ignore errors from open/fopen; report such
+ errors if they are not due to missing files.
+
+ Expecting a reroll that would be much simplified thanks to a higher
+ level helper.
+
+ cf. <xmqqk26e5swj.fsf@gitster.mtv.corp.google.com>
+ cf. <CACsJy8D1LuH6qVp15MSkCM_oQphVUUK0r9SeKC5AzX+9Xi2dcw@mail.gmail.com>
+
+
+* dt/raise-core-packed-git-limit (2017-04-20) 1 commit
+  (merged to 'next' on 2017-04-26 at c72dd8c62f)
+ + Increase core.packedGitLimit
+
+ Raise the default packed-git limit value on larger platforms to
+ avoid "git fetch" from a (recoverable) failure while "gc" is
+ running in parallel.
+
+ Will merge to 'master'.
+
+
+* jk/complete-checkout-sans-dwim-remote (2017-04-23) 1 commit
+  (merged to 'next' on 2017-04-26 at 0c69cff69f)
+ + completion: optionally disable checkout DWIM
+
+ Completion for "git checkout <branch>" that auto-creates the branch
+ out of a remote tracking branch can now be disabled, as this
+ completion often gets in the way when completing to checkout an
+ existing local branch that happens to share the same prefix with
+ bunch of remote tracking branches.
+
+ Will merge to 'master'.
+
+
+* js/larger-timestamps (2017-04-24) 8 commits
+ - use uintmax_t for timestamps
+ - date.c: abort if the system time cannot handle one of our timestamps
+ - timestamp_t: introduce a new data type for timestamps
+ - PRItime: introduce a new "printf format" for timestamps
+ - parse_timestamp(): specify explicitly where we parse timestamps
+ - t0006 & t5000: skip "far in the future" test when time_t is too limited
+ - t0006 & t5000: prepare for 64-bit timestamps
+ - ref-filter: avoid using `unsigned long` for catch-all data type
+
+ Some platforms have ulong that is smaller than time_t, and our
+ historical use of ulong for timestamp would mean they cannot
+ represent some timestamp that the platform allows.  Invent a
+ separate and dedicated timestamp_t (so that we can distingiuish
+ timestamps and a vanilla ulongs, which along is already a good
+ move), and then declare uintmax_t is the type to be used as the
+ timestamp_t
+
+ Will merge to 'next'.
+
+
+* ab/align-perf-descriptions (2017-04-23) 1 commit
+  (merged to 'next' on 2017-04-26 at 7d66e7019e)
+ + t/perf: correctly align non-ASCII descriptions in output
+
+ Output from perf tests have been updated to align their titles.
+
+ Will merge to 'master'.
+
+
+* ab/grep-pcre-v2 (2017-04-25) 20 commits
+ - SQUASH???
+ - Makefile & configure: make PCRE v2 the default PCRE implementation
+ - grep: remove support for concurrent use of both PCRE v1 & v2
+ - grep: add support for PCRE v2
+ - grep: add support for the PCRE v1 JIT API
+ - perf: add a performance comparison test of grep -E and -P
+ - grep: change the internal PCRE code & header names to be PCRE1
+ - grep: change the internal PCRE macro names to be PCRE1
+ - test-lib: rename the LIBPCRE prerequisite to PCRE
+ - grep: make grep.patternType=[pcre|pcre1] a synonym for "perl"
+ - grep & rev-list doc: stop promising libpcre for --perl-regexp
+ - log: add -P as a synonym for --perl-regexp
+ - log: add exhaustive tests for pattern style options & config
+ - grep: add a test for backreferences in PCRE patterns
+ - Makefile & configure: reword outdated comment about PCRE
+ - grep: remove redundant `regflags &= ~REG_EXTENDED` assignments
+ - grep: remove redundant regflags assignment under PCRE
+ - grep: submodule-related case statements should die if new fields are added
+ - grep: add tests for grep pattern types being passed to submodules
+ - grep: amend submodule recursion test in preparation for rx engine testing
+
+ PCRE2, which has an API different from and incompatible with PCRE,
+ can now be chosen to support "grep -P -e '<pattern>'" and friends.
+
+
+* bc/object-id (2017-04-23) 53 commits
+ - object: convert parse_object* to take struct object_id
+ - tree: convert parse_tree_indirect to struct object_id
+ - sequencer: convert do_recursive_merge to struct object_id
+ - diff-lib: convert do_diff_cache to struct object_id
+ - builtin/ls-tree: convert to struct object_id
+ - merge: convert checkout_fast_forward to struct object_id
+ - sequencer: convert fast_forward_to to struct object_id
+ - builtin/ls-files: convert overlay_tree_on_cache to object_id
+ - builtin/read-tree: convert to struct object_id
+ - sha1_name: convert internals of peel_onion to object_id
+ - upload-pack: convert remaining parse_object callers to object_id
+ - revision: convert remaining parse_object callers to object_id
+ - revision: rename add_pending_sha1 to add_pending_oid
+ - http-push: convert process_ls_object and descendants to object_id
+ - refs/files-backend: convert many internals to struct object_id
+ - refs: convert struct ref_update to use struct object_id
+ - ref-filter: convert some static functions to struct object_id
+ - Convert struct ref_array_item to struct object_id
+ - Convert the verify_pack callback to struct object_id
+ - Convert lookup_tag to struct object_id
+ - log-tree: convert to struct object_id
+ - Convert lookup_tree to struct object_id
+ - builtin/reflog: convert tree_is_complete to take struct object_id
+ - tree: convert read_tree_1 to use struct object_id internally
+ - Convert lookup_blob to struct object_id
+ - Convert remaining callers of lookup_blob to object_id
+ - builtin/unpack-objects: convert to struct object_id
+ - pack: convert struct pack_idx_entry to struct object_id
+ - Convert lookup_commit* to struct object_id
+ - Convert remaining callers of lookup_commit_reference* to object_id
+ - builtin/tag: convert to struct object_id
+ - sequencer: convert some functions to struct object_id
+ - shallow: convert shallow registration functions to object_id
+ - revision: convert prepare_show_merge to struct object_id
+ - notes-utils: convert internals to struct object_id
+ - http-push: convert some static functions to struct object_id
+ - tag: convert parse_tag_buffer to struct object_id
+ - builtin/verify-commit: convert to struct object_id
+ - reflog_expire: convert to struct object_id
+ - parse-options-cb: convert to struct object_id
+ - notes-cache: convert to struct object_id
+ - submodule: convert merge_submodule to use struct object_id
+ - fast-import: convert to struct object_id
+ - fast-import: convert internal structs to struct object_id
+ - builtin/rev-parse: convert to struct object_id
+ - builtin/blame: convert static function to struct object_id
+ - branch: convert to struct object_id
+ - bundle: convert to struct object_id
+ - builtin/prune: convert to struct object_id
+ - builtin/name-rev: convert to struct object_id
+ - Convert struct cache_tree to use struct object_id
+ - Clean up outstanding object_id transforms.
+ - fetch-pack: convert to struct object_id
+
+ Conversion from uchar[20] to struct object_id continues.
+
+ Needs review.
+
+
+* jk/no-null-sha1-in-cache-tree (2017-04-23) 1 commit
+  (merged to 'next' on 2017-04-26 at 45fbe9d57d)
+ + cache-tree: reject entries with null sha1
+
+ Tighten code to update cache-tree so that we won't accidentally
+ write out any 0{40} entry in the tree object.
+
+ Will merge to 'master'.
+
+
+* rg/a-the-typo (2017-04-23) 1 commit
+ - NEEDSSIGNOFF: fix minor typing mistakes
+
+ Typofix.
+
+ Needs sign-off.
+
+
+* jk/prio-queue-avoid-swap-with-self (2017-04-24) 1 commit
+  (merged to 'next' on 2017-04-26 at 6a55996734)
+ + prio_queue_reverse: don't swap elements with themselves
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/submodule-init-segv-fix (2017-04-24) 1 commit
+  (merged to 'next' on 2017-04-26 at 9a6eaaff89)
+ + submodule_init: die cleanly on submodules without url defined
+
+ Fix a segv in 'submodule init' when url is not given for a submodule.
+
+ Will merge to 'master'.
+
+
+* rs/large-zip (2017-04-24) 5 commits
+  (merged to 'next' on 2017-04-26 at a6beab60f2)
+ + archive-zip: support files bigger than 4GB
+ + archive-zip: support archives bigger than 4GB
+ + archive-zip: write ZIP dir entry directly to strbuf
+ + archive-zip: use strbuf for ZIP directory
+ + archive-zip: add tests for big ZIP archives
+
+ "git archive --format=zip" learned to use zip64 extension when
+ necessary to go beyond the 4GB limit.
+
+ Will merge to 'master'.
+
+
+* jc/checkout-working-tree-only (2017-04-27) 1 commit
+ - checkout: add --working-tree-only option
+
+ "git checkout <tree-ish> <pathspec>" learned a variant that does
+ not update the index when doing its thing.
+
+
+* js/rebase-i-final (2017-04-27) 9 commits
+ - rebase -i: rearrange fixup/squash lines using the rebase--helper
+ - t3415: test fixup with wrapped oneline
+ - rebase -i: skip unnecessary picks using the rebase--helper
+ - rebase -i: check for missing commits in the rebase--helper
+ - t3404: relax rebase.missingCommitsCheck tests
+ - rebase -i: also expand/collapse the SHA-1s via the rebase--helper
+ - rebase -i: do not invent onelines when expanding/collapsing SHA-1s
+ - rebase -i: remove useless indentation
+ - rebase -i: generate the script via rebase--helper
+
+ The final batch to "git rebase -i" updates to move more code from
+ the shell script to C.
+
+ Needs review.
+
+
+* jt/use-trailer-api-in-commands (2017-04-26) 1 commit
+ - sequencer: add newline before adding footers
+
+ "git cherry-pick" and other uses of the sequencer machinery
+ mishandled a trailer block whose last line is an incomplete line.
+ This has been fixed so that an additional sign-off etc. are added
+ after completing the existing incomplete line.
+
+ Will merge to 'next'.
+
+
 * nd/worktree-move (2017-04-20) 6 commits
  - worktree remove: new command
  - worktree move: refuse to move worktrees with submodules
@@ -598,21 +618,13 @@ of the repositories listed at
 
  "git worktree" learned move and remove subcommands.
 
+ Expecting a reroll.
  cf. <20170420101024.7593-1-pclouds@gmail.com>
  cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
  cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
 
 
-* ab/push-cas-doc-n-test (2017-04-19) 1 commit
-  (merged to 'next' on 2017-04-23 at 0ef31ab624)
- + push: document & test --force-with-lease with multiple remotes
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* jk/parse-options-no-no-no (2017-04-19) 2 commits
+* jk/parse-options-no-no-no (2017-04-25) 2 commits
  - SQUASH???
  - parse-options: disallow double-negations of options starting with no-
 
@@ -627,24 +639,6 @@ of the repositories listed at
  use it".  Perhaps we can drop it?
 
 
-* ss/gitmodules-ignore-doc (2017-04-19) 1 commit
-  (merged to 'next' on 2017-04-23 at 3963ab5013)
- + gitmodules: clarify the ignore option values
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* ss/submodule-shallow-doc (2017-04-19) 1 commit
-  (merged to 'next' on 2017-04-23 at 56a80f913d)
- + gitmodules: clarify what history depth a shallow clone has
-
- Doc update.
-
- Will merge to 'master'.
-
-
 * df/dir-iter-remove-subtree (2017-04-19) 5 commits
  - remove_subtree(): reimplement using iterators
  - dir_iterator: rewrite state machine model
@@ -655,20 +649,10 @@ of the repositories listed at
  Update the dir-iterator API and use it to reimplement
  remove_subtree().
 
- Almost there except for a minor nit.
+ A reroll exists that is based on the updated 'master', but I ran
+ out of time trying to get it to work with other topics in flight
+ in 'pu'.
  GSoC microproject.
-
-
-* nd/conditional-config-in-early-config (2017-04-19) 3 commits
-  (merged to 'next' on 2017-04-23 at 1803ee72a9)
- + config: correct file reading order in read_early_config()
- + config: handle conditional include when $GIT_DIR is not set up
- + config: prepare to pass more info in git_config_with_options()
-
- The recently introduced conditional inclusion of configuration did
- not work well when early-config mechanism was involved.
-
- Will merge to 'master'.
 
 
 * ab/clone-no-tags (2017-04-19) 1 commit
@@ -682,19 +666,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ab/completion-push-delete-ref (2017-04-23) 1 commit
-  (merged to 'next' on 2017-04-23 at e227df80bf)
- + completion: expand "push --delete <remote> <ref>" for refs on that <remote>
-
- The completion script (in contrib/) learned to complete "git push
- --delete b<TAB>" to complete branch name to be deleted.
-
- Will merge to 'master'.
-
-
 * bw/forking-and-threading (2017-04-25) 13 commits
- - run-command: restrict PATH search to executable files
- - run-command: expose is_executable function
+  (merged to 'next' on 2017-04-26 at 89c495e37f)
+ + run-command: restrict PATH search to executable files
+ + run-command: expose is_executable function
   (merged to 'next' on 2017-04-23 at 7754b5ebc3)
  + run-command: block signals between fork and execve
  + run-command: add note about forking and threading
@@ -708,10 +683,10 @@ of the repositories listed at
  + t0061: run_command executes scripts without a #! line
  + t5550: use write_script to generate post-update hook
 
- The "run-command" APIimplementation has been made more robust
+ The "run-command" API implementation has been made more robust
  against dead-locking in a threaded environment.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/reset-recurse-submodules (2017-04-23) 4 commits
@@ -723,7 +698,8 @@ of the repositories listed at
  "git reset" learned "--recurse-submodules" option.
 
 
-* ls/travis-doc-asciidoctor (2017-04-16) 3 commits
+* ls/travis-doc-asciidoctor (2017-04-26) 4 commits
+ - travis-ci: check AsciiDoc/AsciiDoctor stderr output
   (merged to 'next' on 2017-04-19 at 359c32953b)
  + travis-ci: unset compiler for jobs that do not need one
  + travis-ci: parallelize documentation build
@@ -732,8 +708,7 @@ of the repositories listed at
  Have Travis CI format the documentation with both AsciiDoc and
  AsciiDoctor.
 
- Will hold in 'next' waiting for a small update.
- cf. <25191991-F4EA-4D91-B291-854F46A34DC2@gmail.com>
+ Will merge to 'next' after a few CI run in 'pu'.
 
 
 * mg/status-in-progress-info (2017-04-14) 1 commit
@@ -746,52 +721,6 @@ of the repositories listed at
  cf. <xmqqwpajikd2.fsf@gitster.mtv.corp.google.com>
 
 
-* nd/worktree-add-lock (2017-04-20) 1 commit
-  (merged to 'next' on 2017-04-23 at 160b955fbb)
- + worktree add: add --lock option
-
- Allow to lock a worktree immediately after it's created. This helps
- prevent a race between "git worktree add; git worktree lock" and
- "git worktree prune".
-
- Will merge to 'master'.
-
-
-* ps/pathspec-empty-prefix-origin (2017-04-14) 1 commit
-  (merged to 'next' on 2017-04-23 at b91098d1f7)
- + pathspec: honor `PATHSPEC_PREFIX_ORIGIN` with empty prefix
-
- A recent update broke "git add -p ../foo" from a subdirectory.
-
- Will merge to 'master'.
-
-
-* gb/rebase-signoff (2017-04-18) 3 commits
-  (merged to 'next' on 2017-04-19 at c3c04e6a71)
- + rebase: pass --[no-]signoff option to git am
- + builtin/am: fold am_signoff() into am_append_signoff()
- + builtin/am: honor --signoff also when --rebasing
-
- "git rebase" learns "--signoff" option.
-
- Will merge to 'master'.
-
-
-* jh/add-index-entry-optim (2017-04-19) 5 commits
-  (merged to 'next' on 2017-04-23 at 295d4066a8)
- + read-cache: speed up has_dir_name (part 2)
- + read-cache: speed up has_dir_name (part 1)
- + read-cache: speed up add_index_entry during checkout
- + p0006-read-tree-checkout: perf test to time read-tree
- + read-cache: add strcmp_offset function
-
- "git checkout" that handles a lot of paths has been optimized by
- reducing the number of unnecessary checks of paths in the
- has_dir_name() function.
-
- Will merge to 'master'.
-
-
 * ab/grep-threading-cleanup (2017-04-16) 8 commits
  - grep: given --threads with NO_PTHREADS=YesPlease, warn
  - pack-objects: fix buggy warning about threads under NO_PTHREADS=YesPlease
@@ -802,26 +731,9 @@ of the repositories listed at
  - grep: add tests for --threads=N and grep.threads
  - grep: assert that threading is enabled when calling grep_{lock,unlock}
 
+ Code cleanup.
 
-* ls/travis-coccicheck (2017-04-16) 1 commit
-  (merged to 'next' on 2017-04-23 at fa42ffe6b2)
- + travis-ci: add static analysis build job to run coccicheck
-
- Travis CI learns to run coccicheck.
-
- Will merge to 'master'.
-
-
-* pc/t2027-git-to-pipe-cleanup (2017-04-14) 1 commit
-  (merged to 'next' on 2017-04-23 at b5c28345a9)
- + t2027: avoid using pipes
-
- Having a git command on the upstream side of a pipe in a test
- script will hide the exit status from the command, which may cause
- us to fail to notice a breakage; rewrite tests in a script to avoid
- this issue.
-
- Will merge to 'master'.
+ Needs review.
 
 
 * bp/sub-process-convert-filter (2017-04-23) 8 commits
@@ -837,18 +749,8 @@ of the repositories listed at
  Code from "conversion using external process" codepath has been
  extracted to a separate sub-process.[ch] module.
 
- Reroll exists but needs more work.
+ Reroll exists but needs a bit more work.
  cf. <20170407120354.17736-1-benpeart@microsoft.com>
-
-
-* cc/split-index-config (2017-04-20) 1 commit
-  (merged to 'next' on 2017-04-23 at 5996ddc3f2)
- + read-cache: avoid using git_path() in freshen_shared_index()
-
- The split-index code configuration code used an unsafe git_path()
- function without copying its result out.
-
- Will merge to 'master'.
 
 
 * mg/name-rev-debug (2017-03-31) 4 commits
@@ -862,35 +764,6 @@ of the repositories listed at
 
  Expecting a reroll of the tip two.
  cf. <xmqqshltxnwt.fsf@gitster.mtv.corp.google.com>
-
-
-* mh/separate-ref-cache (2017-04-16) 20 commits
-  (merged to 'next' on 2017-04-23 at bd74983456)
- + do_for_each_entry_in_dir(): delete function
- + files_pack_refs(): use reference iteration
- + commit_packed_refs(): use reference iteration
- + cache_ref_iterator_begin(): make function smarter
- + get_loose_ref_cache(): new function
- + get_loose_ref_dir(): function renamed from get_loose_refs()
- + do_for_each_entry_in_dir(): eliminate `offset` argument
- + refs: handle "refs/bisect/" in `loose_fill_ref_dir()`
- + ref-cache: use a callback function to fill the cache
- + refs: record the ref_store in ref_cache, not ref_dir
- + ref-cache: introduce a new type, ref_cache
- + refs: split `ref_cache` code into separate files
- + ref-cache: rename `remove_entry()` to `remove_entry_from_dir()`
- + ref-cache: rename `find_ref()` to `find_ref_entry()`
- + ref-cache: rename `add_ref()` to `add_ref_entry()`
- + refs_verify_refname_available(): use function in more places
- + refs_verify_refname_available(): implement once for all backends
- + refs_ref_iterator_begin(): new function
- + refs_read_raw_ref(): new function
- + get_ref_dir(): don't call read_loose_refs() for "refs/bisect"
-
- The internals of the refs API around the cached refs has been
- streamlined.
-
- Will merge to 'master'.
 
 
 * ja/doc-l10n (2017-03-20) 3 commits
@@ -928,18 +801,19 @@ of the repositories listed at
 
 
 * nd/worktree-kill-parse-ref (2017-04-24) 6 commits
- - refs: kill set_worktree_head_symref()
- - worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
- - refs: introduce get_worktree_ref_store()
- - refs: add REFS_STORE_ALL_CAPS
- - refs.c: make submodule ref store hashmap generic
- - environment.c: fix potential segfault by get_git_common_dir()
+  (merged to 'next' on 2017-04-26 at b8e40da709)
+ + refs: kill set_worktree_head_symref()
+ + worktree.c: kill parse_ref() in favor of refs_resolve_ref_unsafe()
+ + refs: introduce get_worktree_ref_store()
+ + refs: add REFS_STORE_ALL_CAPS
+ + refs.c: make submodule ref store hashmap generic
+ + environment.c: fix potential segfault by get_git_common_dir()
  (this branch is used by nd/prune-in-worktree.)
 
  "git gc" did not interact well with "git worktree"-managed
  per-worktree refs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/bundle (2016-03-03) 6 commits
