@@ -1393,6 +1393,7 @@ class P4Submit(Command, P4UserMap):
         result = ""
 
         inDescriptionSection = False
+        descEncoding = gitConfig("git-p4.descEncoding")
 
         for line in template.split("\n"):
             if line.startswith("#"):
@@ -1412,6 +1413,8 @@ class P4Submit(Command, P4UserMap):
                     inDescriptionSection = True
                     line += "\n"
                     for messageLine in message.split("\n"):
+                        if len(descEncoding) > 0:
+                            messageLine = messageLine.decode('utf-8').encode(descEncoding)
                         line += "\t" + messageLine + "\n"
 
             result += line + "\n"
@@ -2798,7 +2801,12 @@ class P4Sync(Command, P4UserMap):
         self.gitStream.write("committer %s\n" % committer)
 
         self.gitStream.write("data <<EOT\n")
-        self.gitStream.write(details["desc"])
+
+        descEncoding = gitConfig("git-p4.descEncoding")
+        desc = details["desc"]
+        if len(descEncoding) > 0:
+            desc = desc.decode(descEncoding).encode('utf-8')
+        self.gitStream.write(desc)
         if len(jobs) > 0:
             self.gitStream.write("\nJobs: %s" % (' '.join(jobs)))
         self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s" %
