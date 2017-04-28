@@ -20,7 +20,7 @@
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int parallel_jobs = 1;
-static struct string_list changed_submodule_paths = STRING_LIST_INIT_NODUP;
+static struct string_list changed_submodule_paths = STRING_LIST_INIT_DUP;
 static int initialized_fetch_ref_tips;
 static struct oid_array ref_tips_before_fetch;
 static struct oid_array ref_tips_after_fetch;
@@ -939,7 +939,7 @@ static void submodule_collect_changed_cb(struct diff_queue_struct *q,
 			struct string_list_item *path;
 			path = unsorted_string_list_lookup(&changed_submodule_paths, p->two->path);
 			if (!path && !is_submodule_commit_present(p->two->path, p->two->oid.hash))
-				string_list_append(&changed_submodule_paths, xstrdup(p->two->path));
+				string_list_append(&changed_submodule_paths, p->two->path);
 		} else {
 			/* Submodule is new or was moved here */
 			/* NEEDSWORK: When the .git directories of submodules
