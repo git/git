@@ -271,6 +271,18 @@ test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
 	test 2 = $(git cat-file commit HEAD^ | grep squash | wc -l)
 '
 
+test_expect_success 'autosquash with empty custom instructionFormat' '
+	git reset --hard base &&
+	test_commit empty-instructionFormat-test &&
+	(
+		set_cat_todo_editor &&
+		test_must_fail git -c rebase.instructionFormat= \
+			rebase --autosquash  --force -i HEAD^ >actual &&
+		git log -1 --format="pick %h %s" >expect &&
+		test_cmp expect actual
+	)
+'
+
 set_backup_editor () {
 	write_script backup-editor.sh <<-\EOF
 	cp "$1" .git/backup-"$(basename "$1")"
