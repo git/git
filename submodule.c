@@ -738,7 +738,7 @@ static void find_unpushed_submodule_commits(struct commit *commit,
 	diff_tree_combined_merge(commit, 1, &rev);
 }
 
-static void free_submodules_sha1s(struct string_list *submodules)
+static void free_submodules_oids(struct string_list *submodules)
 {
 	struct string_list_item *item;
 	for_each_string_list_item(item, submodules)
@@ -779,7 +779,8 @@ int find_unpushed_submodules(struct oid_array *commits,
 		if (submodule_needs_pushing(submodule->string, commits))
 			string_list_insert(needs_pushing, submodule->string);
 	}
-	free_submodules_sha1s(&submodules);
+
+	free_submodules_oids(&submodules);
 
 	return needs_pushing->nr;
 }
