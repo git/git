@@ -970,12 +970,6 @@ void check_for_new_submodule_commits(struct object_id *oid)
 	oid_array_append(&ref_tips_after_fetch, oid);
 }
 
-static int add_oid_to_argv(const struct object_id *oid, void *data)
-{
-	argv_array_push(data, oid_to_hex(oid));
-	return 0;
-}
-
 static void calculate_changed_submodule_paths(void)
 {
 	struct rev_info rev;
@@ -989,10 +983,10 @@ static void calculate_changed_submodule_paths(void)
 	init_revisions(&rev, NULL);
 	argv_array_push(&argv, "--"); /* argv[0] program name */
 	oid_array_for_each_unique(&ref_tips_after_fetch,
-				   add_oid_to_argv, &argv);
+				   append_oid_to_argv, &argv);
 	argv_array_push(&argv, "--not");
 	oid_array_for_each_unique(&ref_tips_before_fetch,
-				   add_oid_to_argv, &argv);
+				   append_oid_to_argv, &argv);
 	setup_revisions(argv.argc, argv.argv, &rev, NULL);
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
