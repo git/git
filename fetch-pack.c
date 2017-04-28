@@ -394,8 +394,8 @@ static int find_common(struct fetch_pack_args *args,
 	if (args->depth > 0)
 		packet_buf_write(&req_buf, "deepen %d", args->depth);
 	if (args->deepen_since) {
-		unsigned long max_age = approxidate(args->deepen_since);
-		packet_buf_write(&req_buf, "deepen-since %lu", max_age);
+		timestamp_t max_age = approxidate(args->deepen_since);
+		packet_buf_write(&req_buf, "deepen-since %"PRItime, max_age);
 	}
 	if (args->deepen_not) {
 		int i;
@@ -583,7 +583,7 @@ static int mark_complete_oid(const char *refname, const struct object_id *oid,
 }
 
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
-					 unsigned long cutoff)
+					 timestamp_t cutoff)
 {
 	while (complete && cutoff <= complete->item->date) {
 		print_verbose(args, _("Marking %s as complete"),
@@ -670,7 +670,7 @@ static int everything_local(struct fetch_pack_args *args,
 {
 	struct ref *ref;
 	int retval;
-	unsigned long cutoff = 0;
+	timestamp_t cutoff = 0;
 
 	save_commit_buffer = 0;
 
