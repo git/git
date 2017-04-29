@@ -61,7 +61,8 @@ do
 	case "$STATUS" in
 	inProgress|postponed|notStarted) sleep 10               ;; # continue
 		 "completed: succeeded") RESULT="success"; break;; # success
-	*) echo "Unhandled status: $STATUS";               break;; # failure
+		    "completed: failed")                   break;; # failure
+	*) echo "Unhandled status: $STATUS";               break;; # unknown
 	esac
 done
 
