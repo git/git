@@ -27,6 +27,9 @@ check_dir() {
 	test_cmp expect actual
 }
 
+test_lazy_prereq UNZIP_ZIP64_SUPPORT '
+	"$GIT_UNZIP" -v | grep ZIP64_SUPPORT
+'
 
 # bsdtar/libarchive versions before 3.1.3 consider a tar file with a
 # global pax header that is not followed by a file record as corrupt.
@@ -155,7 +158,8 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 	test_cmp expect actual
 '
 
-test_expect_success EXPENSIVE,UNZIP 'zip archive bigger than 4GB' '
+test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
+	'zip archive bigger than 4GB' '
 	# build string containing 65536 characters
 	s=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef &&
 	s=$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s &&
@@ -178,7 +182,8 @@ test_expect_success EXPENSIVE,UNZIP 'zip archive bigger than 4GB' '
 	"$GIT_UNZIP" -t many-big.zip
 '
 
-test_expect_success EXPENSIVE,UNZIP,ZIPINFO 'zip archive with files bigger than 4GB' '
+test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
+	'zip archive with files bigger than 4GB' '
 	# Pack created with:
 	#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
 	mkdir -p .git/objects/pack &&
