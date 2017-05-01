@@ -463,7 +463,7 @@ set by Git if the remote helper has the 'option' capability.
 	GPG sign pushes.
 
 'option push-option <string>::
-	Transmit <string> as a push option. As the a push option
+	Transmit <string> as a push option. As the push option
 	must not contain LF or NUL characters, the string is not encoded.
 
 SEE ALSO

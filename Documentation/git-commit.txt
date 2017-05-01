@@ -95,7 +95,7 @@ OPTIONS
 
 --reset-author::
 	When used with -C/-c/--amend options, or when committing after a
-	a conflicting cherry-pick, declare that the authorship of the
+	conflicting cherry-pick, declare that the authorship of the
 	resulting commit now belongs to the committer. This also renews
 	the author timestamp.
 
@@ -112,7 +112,7 @@ OPTIONS
 	`--dry-run`.
 
 --long::
-	When doing a dry-run, give the output in a the long-format.
+	When doing a dry-run, give the output in the long-format.
 	Implies `--dry-run`.
 
 -z::
