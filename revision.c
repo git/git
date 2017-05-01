@@ -1249,7 +1249,7 @@ static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
 	int i;
 
 	if (it->entry_count >= 0) {
-		struct tree *tree = lookup_tree(it->sha1);
+		struct tree *tree = lookup_tree(it->oid.hash);
 		add_pending_object_with_path(revs, &tree->object, "",
 					     040000, path->buf);
 	}

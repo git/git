@@ -304,7 +304,7 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 		return NULL;
 	}
 
-	result = lookup_tree(active_cache_tree->sha1);
+	result = lookup_tree(active_cache_tree->oid.hash);
 
 	return result;
 }
