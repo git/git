@@ -55,7 +55,7 @@ while true
 do
 	LAST_STATUS=$STATUS
 	STATUS=$(gfwci "action=status&buildId=$BUILD_ID")
-	test "$STATUS" = "$LAST_STATUS" || printf "\nStatus: $STATUS "
+	test "$STATUS" = "$LAST_STATUS" || printf "\nStatus: %s " "$STATUS"
 	printf "."
 
 	case "$STATUS" in
