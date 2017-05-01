@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2017, #06; Wed, 26)
-X-master-at: 027a3b943b444a3e3a76f9a89803fc10245b858f
-X-next-at: 01180b72fb0ab3645b79bab9296e451329296545
+Subject: What's cooking in git.git (May 2017, #01; Mon, 1)
+X-master-at: d2bbb7c2bcf6e77ebfcabf4e12110fe6d5c91de6
+X-next-at: 07d810a77faeacef1f1f4c78e6e47457d65ebbe0
 
-What's cooking in git.git (Apr 2017, #06; Wed, 26)
+What's cooking in git.git (May 2017, #01; Mon, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -26,204 +26,201 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/completion-push-delete-ref (2017-04-23) 1 commit
-  (merged to 'next' on 2017-04-23 at e227df80bf)
- + completion: expand "push --delete <remote> <ref>" for refs on that <remote>
+* ab/align-perf-descriptions (2017-04-23) 1 commit
+  (merged to 'next' on 2017-04-26 at 7d66e7019e)
+ + t/perf: correctly align non-ASCII descriptions in output
 
- The completion script (in contrib/) learned to complete "git push
- --delete b<TAB>" to complete branch name to be deleted.
-
-
-* ab/push-cas-doc-n-test (2017-04-19) 1 commit
-  (merged to 'next' on 2017-04-23 at 0ef31ab624)
- + push: document & test --force-with-lease with multiple remotes
-
- Doc update.
+ Output from perf tests have been updated to align their titles.
 
 
-* cc/split-index-config (2017-04-20) 1 commit
-  (merged to 'next' on 2017-04-23 at 5996ddc3f2)
- + read-cache: avoid using git_path() in freshen_shared_index()
+* jk/complete-checkout-sans-dwim-remote (2017-04-23) 1 commit
+  (merged to 'next' on 2017-04-26 at 0c69cff69f)
+ + completion: optionally disable checkout DWIM
 
- The split-index code configuration code used an unsafe git_path()
- function without copying its result out.
-
-
-* gb/rebase-signoff (2017-04-18) 3 commits
-  (merged to 'next' on 2017-04-19 at c3c04e6a71)
- + rebase: pass --[no-]signoff option to git am
- + builtin/am: fold am_signoff() into am_append_signoff()
- + builtin/am: honor --signoff also when --rebasing
-
- "git rebase" learns "--signoff" option.
+ Completion for "git checkout <branch>" that auto-creates the branch
+ out of a remote tracking branch can now be disabled, as this
+ completion often gets in the way when completing to checkout an
+ existing local branch that happens to share the same prefix with
+ bunch of remote tracking branches.
 
 
-* jh/add-index-entry-optim (2017-04-19) 5 commits
-  (merged to 'next' on 2017-04-23 at 295d4066a8)
- + read-cache: speed up has_dir_name (part 2)
- + read-cache: speed up has_dir_name (part 1)
- + read-cache: speed up add_index_entry during checkout
- + p0006-read-tree-checkout: perf test to time read-tree
- + read-cache: add strcmp_offset function
+* jk/prio-queue-avoid-swap-with-self (2017-04-24) 1 commit
+  (merged to 'next' on 2017-04-26 at 6a55996734)
+ + prio_queue_reverse: don't swap elements with themselves
 
- "git checkout" that handles a lot of paths has been optimized by
- reducing the number of unnecessary checks of paths in the
- has_dir_name() function.
+ Code clean-up.
 
 
-* jk/update-links-in-docs (2017-04-20) 6 commits
-  (merged to 'next' on 2017-04-23 at f64249bbdf)
- + docs/bisect-lk2009: update java code conventions link
- + docs/bisect-lk2009: update nist report link
- + docs/archimport: quote sourcecontrol.net reference
- + gitcore-tutorial: update broken link
- + doc: replace or.cz gitwiki link with git.wiki.kernel.org
- + doc: use https links to avoid http redirect
+* jk/submodule-init-segv-fix (2017-04-24) 1 commit
+  (merged to 'next' on 2017-04-26 at 9a6eaaff89)
+ + submodule_init: die cleanly on submodules without url defined
 
- Many stale HTTP(s) links have been updated in our documentation.
-
-
-* jk/war-on-git-path (2017-04-20) 6 commits
-  (merged to 'next' on 2017-04-23 at 212e0a58ff)
- + am: drop "dir" parameter from am_state_init
- + replace strbuf_addstr(git_path()) with git_path_buf()
- + replace xstrdup(git_path(...)) with git_pathdup(...)
- + use git_path_* helper functions
- + branch: add edit_description() helper
- + bisect: add git_path_bisect_terms helper
-
- While handy, "git_path()" is a dangerous function to use as a
- callsite that uses it safely one day can be broken by changes
- to other code that calls it.  Reduction of its use continues.
-
-
-* ls/travis-coccicheck (2017-04-16) 1 commit
-  (merged to 'next' on 2017-04-23 at fa42ffe6b2)
- + travis-ci: add static analysis build job to run coccicheck
-
- Travis CI learns to run coccicheck.
-
-
-* mh/separate-ref-cache (2017-04-16) 20 commits
-  (merged to 'next' on 2017-04-23 at bd74983456)
- + do_for_each_entry_in_dir(): delete function
- + files_pack_refs(): use reference iteration
- + commit_packed_refs(): use reference iteration
- + cache_ref_iterator_begin(): make function smarter
- + get_loose_ref_cache(): new function
- + get_loose_ref_dir(): function renamed from get_loose_refs()
- + do_for_each_entry_in_dir(): eliminate `offset` argument
- + refs: handle "refs/bisect/" in `loose_fill_ref_dir()`
- + ref-cache: use a callback function to fill the cache
- + refs: record the ref_store in ref_cache, not ref_dir
- + ref-cache: introduce a new type, ref_cache
- + refs: split `ref_cache` code into separate files
- + ref-cache: rename `remove_entry()` to `remove_entry_from_dir()`
- + ref-cache: rename `find_ref()` to `find_ref_entry()`
- + ref-cache: rename `add_ref()` to `add_ref_entry()`
- + refs_verify_refname_available(): use function in more places
- + refs_verify_refname_available(): implement once for all backends
- + refs_ref_iterator_begin(): new function
- + refs_read_raw_ref(): new function
- + get_ref_dir(): don't call read_loose_refs() for "refs/bisect"
-
- The internals of the refs API around the cached refs has been
- streamlined.
-
-
-* nd/conditional-config-in-early-config (2017-04-19) 3 commits
-  (merged to 'next' on 2017-04-23 at 1803ee72a9)
- + config: correct file reading order in read_early_config()
- + config: handle conditional include when $GIT_DIR is not set up
- + config: prepare to pass more info in git_config_with_options()
-
- The recently introduced conditional inclusion of configuration did
- not work well when early-config mechanism was involved.
-
-
-* nd/worktree-add-lock (2017-04-20) 1 commit
-  (merged to 'next' on 2017-04-23 at 160b955fbb)
- + worktree add: add --lock option
-
- Allow to lock a worktree immediately after it's created. This helps
- prevent a race between "git worktree add; git worktree lock" and
- "git worktree prune".
-
-
-* pc/t2027-git-to-pipe-cleanup (2017-04-14) 1 commit
-  (merged to 'next' on 2017-04-23 at b5c28345a9)
- + t2027: avoid using pipes
-
- Having a git command on the upstream side of a pipe in a test
- script will hide the exit status from the command, which may cause
- us to fail to notice a breakage; rewrite tests in a script to avoid
- this issue.
-
-
-* ps/pathspec-empty-prefix-origin (2017-04-14) 1 commit
-  (merged to 'next' on 2017-04-23 at b91098d1f7)
- + pathspec: honor `PATHSPEC_PREFIX_ORIGIN` with empty prefix
-
- A recent update broke "git add -p ../foo" from a subdirectory.
-
-
-* sf/putty-w-args (2017-04-20) 1 commit
-  (merged to 'next' on 2017-04-23 at fdafbe6b73)
- + connect.c: fix leak in handle_ssh_variant
-
- Plug a memleak.
-
-
-* ss/gitmodules-ignore-doc (2017-04-19) 1 commit
-  (merged to 'next' on 2017-04-23 at 3963ab5013)
- + gitmodules: clarify the ignore option values
-
- Doc update.
-
-
-* ss/submodule-shallow-doc (2017-04-19) 1 commit
-  (merged to 'next' on 2017-04-23 at 56a80f913d)
- + gitmodules: clarify what history depth a shallow clone has
-
- Doc update.
-
---------------------------------------------------
-[New Topics]
-
-* jc/repack-threads (2017-04-27) 1 commit
- - repack: accept --threads=<n> and pass it down to pack-objects
-
- "git repack" learned to accept the --threads=<n> option and pass it
- to pack-objects.
+ Fix a segv in 'submodule init' when url is not given for a submodule.
 
 
 * ls/travis-stricter-linux32-builds (2017-04-27) 1 commit
- - travis-ci: set DEVELOPER knob for Linux32 build
+  (merged to 'next' on 2017-04-28 at b0a56aec83)
+ + travis-ci: set DEVELOPER knob for Linux32 build
 
  32-bit Linux build on Travis CI uses stricter compilation options.
 
- Will merge to 'next'.
-
 
 * ls/travis-win-fix-status (2017-04-26) 1 commit
- - travis-ci: printf $STATUS as string
+  (merged to 'next' on 2017-04-28 at 5c5e4d3278)
+ + travis-ci: printf $STATUS as string
 
  Relaying status from Windows build by Travis CI was done with an
  unsafe invocation of printf.
 
- Will merge to 'next'.
-
 
 * sh/rebase-i-reread-todo-after-exec (2017-04-27) 1 commit
- - rebase -i: reread the todo list if `exec` touched it
+  (merged to 'next' on 2017-04-28 at 1ea7e62026)
+ + rebase -i: reread the todo list if `exec` touched it
 
  "git rebase -i" failed to re-read the todo list file when the
  command specified with the `exec` instruction updated it.
 
- Will merge to 'next'.
+--------------------------------------------------
+[New Topics]
+
+* bw/submodule-with-bs-path (2017-05-01) 1 commit
+ - t7400: add !CYGWIN prerequisite to 'add with \\ in path'
+
+ A hotfix to a topic that is already in 'master'.
+
+ Wait for a few days for Acks and then merge to 'master'.
+
+
+* jk/am-leakfix (2017-04-27) 3 commits
+  (merged to 'next' on 2017-04-30 at 78becd7a96)
+ + am: shorten ident_split variable name in get_commit_info()
+ + am: simplify allocations in get_commit_info()
+ + am: fix commit buffer leak in get_commit_info()
+
+ The codepath in "git am" that is used when running "git rebase"
+ leaked memory held for the log message of the commits being rebased.
+
+ Will cook in 'next'.
+
+
+* js/plug-leaks (2017-04-27) 13 commits
+ - checkout: fix memory leak
+ - cat-file: fix memory leak
+ - mailinfo & mailsplit: check for EOF while parsing mails
+ - status: close file descriptor after reading git-rebase-todo
+ - difftool: close file descriptors after reading
+ - http-backend: avoid memory leaks
+ - SQUASH???
+ - get_mail_commit_oid(): avoid resource leak
+ - git_config_rename_section_in_file(): avoid resource leak
+ - add_commit_patch_id(): avoid allocating memory unnecessarily
+ - winansi: avoid buffer overrun
+ - winansi: avoid use of uninitialized value
+ - mingw: avoid memory leak when splitting PATH
+
+ An attempt to fix memory leaks pointed out by Coverity.
+
+ A reroll exists and needs to be picked up.  What's queued here is
+ just an early parts of the first iteration.
+
+
+* sk/status-short-branch-color-config (2017-04-28) 2 commits
+  (merged to 'next' on 2017-04-30 at 2a7eb05d7b)
+ + status: add color config slots for branch info in "--short --branch"
+ + status: fix missing newline when comment chars are disabled
+
+ The colors in which "git status --short --branch" showed the names
+ of the current branch and its remote-tracking branch are now
+ configurable.
+
+ Will cook in 'next'.
+
+
+* jh/close-index-before-stat (2017-04-28) 1 commit
+  (merged to 'next' on 2017-04-30 at 918d4f3378)
+ + read-cache: close index.lock in do_write_index
+
+ The timestamp of the index file is now taken after the file is
+ closed, to help Windows, on which a stale timestamp is reported by
+ fstat() on a file that is opened for writing and data was written
+ but not yet closed.
+
+ Will cook in 'next'.
+
+
+* bw/submodule-has-commits-update (2017-05-01) 6 commits
+ - submodule: refactor logic to determine changed submodules
+ - submodule: improve submodule_has_commits
+ - submodule: change string_list changed_submodule_paths
+ - submodule: remove add_oid_to_argv()
+ - submodule: rename free_submodules_sha1s()
+ - submodule: rename add_sha1_to_array()
+
+
+* ja/i18n-cleanup (2017-05-01) 2 commits
+  (merged to 'next' on 2017-04-30 at 8002e53820)
+ + i18n: read-cache: typofix
+ + i18n: remove i18n from tag reflog message
+
+ Will merge to 'master'.
+
+
+* ls/travis-relays-for-windows-ci (2017-05-01) 2 commits
+ - travis-ci: handle Git for Windows CI status "failed" explicitly
+ - travis-ci: retry if Git for Windows CI returns HTTP error 502 or 503
+
+ Will merge to 'next' after a few CI run in 'pu'.
+
+
+* mb/diff-default-to-indent-heuristics (2017-05-01) 5 commits
+ - add--interactive: drop diff.indentHeuristic handling
+ - SQUASH
+ - diff: enable indent heuristic by default
+ - diff: have the diff-* builtins configure diff before initializing revisions
+ - diff: make the indent heuristic part of diff's basic configuration
+
+ Make the "indent" heuristics the default in "diff" and diff.indentHeuristics
+ configuration variable an escape hatch for those who do no want it.
+
+ The fix-up needs to be squashed in.
+
+
+* rg/doc-pull-typofix (2017-05-01) 1 commit
+  (merged to 'next' on 2017-04-30 at c2edb4d813)
+ + doc: git-pull.txt use US spelling, fix minor typo
+
+ Will merge to 'master'.
+
+
+* rg/doc-submittingpatches-wordfix (2017-05-01) 1 commit
+  (merged to 'next' on 2017-04-30 at 4065036588)
+ + doc: update SubmittingPatches
+
+ Will merge to 'master'.
+
+
+* sr/hooks-cwd-doc (2017-05-01) 1 commit
+  (merged to 'next' on 2017-04-30 at 063dd5cb02)
+ + githooks.txt: clarify push hooks are always executed in $GIT_DIR
+
+ Will merge to 'master'.
+
+
+* tb/dedup-crlf-tests (2017-05-01) 1 commit
+ - t0027: Some tests are not expensive
+
+ Will be rerolled.
 
 --------------------------------------------------
 [Stalled]
+
+* ja/doc-l10n (2017-03-20) 3 commits
+ - SQUASH???
+ - l10n: add git-add.txt to localized man pages
+ - l10n: introduce framework for localizing man pages
+
+ A proposal to use po4a to localize our manual pages.
+
 
 * sg/clone-refspec-from-command-line-config (2017-02-27) 1 commit
  - clone: respect configured fetch respecs during initial fetch
@@ -333,12 +330,20 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/repack-threads (2017-04-27) 1 commit
+ - repack: accept --threads=<n> and pass it down to pack-objects
+
+ "git repack" learned to accept the --threads=<n> option and pass it
+ to pack-objects.
+
+
 * jh/verify-index-checksum-only-in-fsck (2017-04-27) 1 commit
- - t1450: avoid use of "sed" on the index, which is a binary file
+  (merged to 'next' on 2017-04-28 at afb4c70061)
+ + t1450: avoid use of "sed" on the index, which is a binary file
 
  Update an unportable constructin a new test.
 
- Will merge to 'next' and then to 'master'.
+ Will cook in 'next'.
 
 
 * dt/gc-ignore-old-gc-logs (2017-04-24) 3 commits
@@ -350,7 +355,7 @@ of the repositories listed at
  An attempt to allow us notice "fishy" situation where we fail to
  remove the temporary directory used during the test.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * nd/fopen-errors (2017-04-23) 17 commits
@@ -391,31 +396,19 @@ of the repositories listed at
  avoid "git fetch" from a (recoverable) failure while "gc" is
  running in parallel.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* jk/complete-checkout-sans-dwim-remote (2017-04-23) 1 commit
-  (merged to 'next' on 2017-04-26 at 0c69cff69f)
- + completion: optionally disable checkout DWIM
-
- Completion for "git checkout <branch>" that auto-creates the branch
- out of a remote tracking branch can now be disabled, as this
- completion often gets in the way when completing to checkout an
- existing local branch that happens to share the same prefix with
- bunch of remote tracking branches.
-
- Will merge to 'master'.
-
-
-* js/larger-timestamps (2017-04-24) 8 commits
- - use uintmax_t for timestamps
- - date.c: abort if the system time cannot handle one of our timestamps
- - timestamp_t: introduce a new data type for timestamps
- - PRItime: introduce a new "printf format" for timestamps
- - parse_timestamp(): specify explicitly where we parse timestamps
- - t0006 & t5000: skip "far in the future" test when time_t is too limited
- - t0006 & t5000: prepare for 64-bit timestamps
- - ref-filter: avoid using `unsigned long` for catch-all data type
+* js/larger-timestamps (2017-04-27) 8 commits
+  (merged to 'next' on 2017-04-28 at b56a0d38cd)
+ + use uintmax_t for timestamps
+ + date.c: abort if the system time cannot handle one of our timestamps
+ + timestamp_t: a new data type for timestamps
+ + PRItime: introduce a new "printf format" for timestamps
+ + parse_timestamp(): specify explicitly where we parse timestamps
+ + t0006 & t5000: skip "far in the future" test when time_t is too limited
+ + t0006 & t5000: prepare for 64-bit timestamps
+ + ref-filter: avoid using `unsigned long` for catch-all data type
 
  Some platforms have ulong that is smaller than time_t, and our
  historical use of ulong for timestamp would mean they cannot
@@ -425,16 +418,7 @@ of the repositories listed at
  move), and then declare uintmax_t is the type to be used as the
  timestamp_t
 
- Will merge to 'next'.
-
-
-* ab/align-perf-descriptions (2017-04-23) 1 commit
-  (merged to 'next' on 2017-04-26 at 7d66e7019e)
- + t/perf: correctly align non-ASCII descriptions in output
-
- Output from perf tests have been updated to align their titles.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * ab/grep-pcre-v2 (2017-04-25) 20 commits
@@ -520,7 +504,7 @@ of the repositories listed at
 
  Conversion from uchar[20] to struct object_id continues.
 
- Needs review.
+ Reroll exists and needs to be picked up.
 
 
 * jk/no-null-sha1-in-cache-tree (2017-04-23) 1 commit
@@ -530,36 +514,21 @@ of the repositories listed at
  Tighten code to update cache-tree so that we won't accidentally
  write out any 0{40} entry in the tree object.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* rg/a-the-typo (2017-04-23) 1 commit
- - NEEDSSIGNOFF: fix minor typing mistakes
+* rg/a-the-typo (2017-05-01) 1 commit
+  (merged to 'next' on 2017-04-30 at a648cf2961)
+ + fix minor typos
 
  Typofix.
 
- Needs sign-off.
-
-
-* jk/prio-queue-avoid-swap-with-self (2017-04-24) 1 commit
-  (merged to 'next' on 2017-04-26 at 6a55996734)
- + prio_queue_reverse: don't swap elements with themselves
-
- Code clean-up.
-
  Will merge to 'master'.
 
 
-* jk/submodule-init-segv-fix (2017-04-24) 1 commit
-  (merged to 'next' on 2017-04-26 at 9a6eaaff89)
- + submodule_init: die cleanly on submodules without url defined
-
- Fix a segv in 'submodule init' when url is not given for a submodule.
-
- Will merge to 'master'.
-
-
-* rs/large-zip (2017-04-24) 5 commits
+* rs/large-zip (2017-05-01) 7 commits
+ - t5004: require 64-bit support for big ZIP tests
+ - archive-zip: set version field for big files correctly
   (merged to 'next' on 2017-04-26 at a6beab60f2)
  + archive-zip: support files bigger than 4GB
  + archive-zip: support archives bigger than 4GB
@@ -570,7 +539,7 @@ of the repositories listed at
  "git archive --format=zip" learned to use zip64 extension when
  necessary to go beyond the 4GB limit.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jc/checkout-working-tree-only (2017-04-27) 1 commit
@@ -598,14 +567,15 @@ of the repositories listed at
 
 
 * jt/use-trailer-api-in-commands (2017-04-26) 1 commit
- - sequencer: add newline before adding footers
+  (merged to 'next' on 2017-04-30 at 006c8d7ebd)
+ + sequencer: add newline before adding footers
 
  "git cherry-pick" and other uses of the sequencer machinery
  mishandled a trailer block whose last line is an incomplete line.
  This has been fixed so that an additional sign-off etc. are added
  after completing the existing incomplete line.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * nd/worktree-move (2017-04-20) 6 commits
@@ -638,6 +608,8 @@ of the repositories listed at
  looks more like "if it looks ugly and unusual, you do not have to
  use it".  Perhaps we can drop it?
 
+ Will discard.
+
 
 * df/dir-iter-remove-subtree (2017-04-19) 5 commits
  - remove_subtree(): reimplement using iterators
@@ -655,15 +627,17 @@ of the repositories listed at
  GSoC microproject.
 
 
-* ab/clone-no-tags (2017-04-19) 1 commit
-  (merged to 'next' on 2017-04-23 at c6329b0f7c)
+* ab/clone-no-tags (2017-05-01) 3 commits
+  (merged to 'next' on 2017-04-30 at 601649896a)
+ + tests: rename a test having to do with shallow submodules
  + clone: add a --no-tags option to clone without tags
+ + tests: change "cd ... && git fetch" to "cd &&\n\tgit fetch"
 
  "git clone" learned the "--no-tags" option not to fetch all tags
  initially, and also set up the tagopt not to follow any tags in
  subsequent fetches.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * bw/forking-and-threading (2017-04-25) 13 commits
@@ -686,7 +660,7 @@ of the repositories listed at
  The "run-command" API implementation has been made more robust
  against dead-locking in a threaded environment.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * sb/reset-recurse-submodules (2017-04-23) 4 commits
@@ -717,8 +691,8 @@ of the repositories listed at
  "git status" learns an option to report various operations
  (e.g. "merging") that the user is in the middle of.
 
- Waiting for final confirmation.
- cf. <xmqqwpajikd2.fsf@gitster.mtv.corp.google.com>
+ It is still unclear if the participants decided that it is OK to
+ spell "--inprogress" as a single word.
 
 
 * ab/grep-threading-cleanup (2017-04-16) 8 commits
@@ -766,14 +740,6 @@ of the repositories listed at
  cf. <xmqqshltxnwt.fsf@gitster.mtv.corp.google.com>
 
 
-* ja/doc-l10n (2017-03-20) 3 commits
- - SQUASH???
- - l10n: add git-add.txt to localized man pages
- - l10n: introduce framework for localizing man pages
-
- A proposal to use po4a to localize our manual pages.
-
-
 * nd/prune-in-worktree (2017-04-24) 12 commits
  - rev-list: expose and document --single-worktree
  - revision.c: --reflog add HEAD reflog from all worktrees
@@ -813,7 +779,7 @@ of the repositories listed at
  "git gc" did not interact well with "git worktree"-managed
  per-worktree refs.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jc/bundle (2016-03-03) 6 commits
