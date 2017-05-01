@@ -195,6 +195,12 @@ UI, Workflows & Features
    after it's created. This helps prevent a race between "git worktree
    add; git worktree lock" and "git worktree prune".
 
+ * Completion for "git checkout <branch>" that auto-creates the branch
+   out of a remote tracking branch can now be disabled, as this
+   completion often gets in the way when completing to checkout an
+   existing local branch that happens to share the same prefix with
+   bunch of remote tracking branches.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -324,6 +330,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * The internals of the refs API around the cached refs has been
    streamlined.
+
+ * Output from perf tests have been updated to align their titles.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -596,3 +604,5 @@ notes for details).
    (merge f17d642d3b ab/push-cas-doc-n-test later to maint).
    (merge 61e282425a ss/gitmodules-ignore-doc later to maint).
    (merge 8d3047cd5b ss/submodule-shallow-doc later to maint).
+   (merge 1f9e18b772 jk/prio-queue-avoid-swap-with-self later to maint).
+   (merge 627fde1025 jk/submodule-init-segv-fix later to maint).
