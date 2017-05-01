@@ -309,7 +309,7 @@ static void create_reflog_msg(const unsigned char *sha1, struct strbuf *sb)
 	if (rla) {
 		strbuf_addstr(sb, rla);
 	} else {
-		strbuf_addstr(sb, _("tag: tagging "));
+		strbuf_addstr(sb, "tag: tagging ");
 		strbuf_add_unique_abbrev(sb, sha1, DEFAULT_ABBREV);
 	}
 
@@ -317,14 +317,14 @@ static void create_reflog_msg(const unsigned char *sha1, struct strbuf *sb)
 	type = sha1_object_info(sha1, NULL);
 	switch (type) {
 	default:
-		strbuf_addstr(sb, _("object of unknown type"));
+		strbuf_addstr(sb, "object of unknown type");
 		break;
 	case OBJ_COMMIT:
 		if ((buf = read_sha1_file(sha1, &type, &size)) != NULL) {
 			subject_len = find_commit_subject(buf, &subject_start);
 			strbuf_insert(sb, sb->len, subject_start, subject_len);
 		} else {
-			strbuf_addstr(sb, _("commit object"));
+			strbuf_addstr(sb, "commit object");
 		}
 		free(buf);
 
@@ -332,13 +332,13 @@ static void create_reflog_msg(const unsigned char *sha1, struct strbuf *sb)
 			strbuf_addf(sb, ", %s", show_date(c->date, 0, DATE_MODE(SHORT)));
 		break;
 	case OBJ_TREE:
-		strbuf_addstr(sb, _("tree object"));
+		strbuf_addstr(sb, "tree object");
 		break;
 	case OBJ_BLOB:
-		strbuf_addstr(sb, _("blob object"));
+		strbuf_addstr(sb, "blob object");
 		break;
 	case OBJ_TAG:
-		strbuf_addstr(sb, _("other tag object"));
+		strbuf_addstr(sb, "other tag object");
 		break;
 	}
 	strbuf_addch(sb, ')');

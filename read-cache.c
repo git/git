@@ -2380,7 +2380,7 @@ static int should_delete_shared_index(const char *shared_index_path)
 	if (!expiration)
 		return 0;
 	if (stat(shared_index_path, &st))
-		return error_errno(_("could not stat '%s"), shared_index_path);
+		return error_errno(_("could not stat '%s'"), shared_index_path);
 	if (st.st_mtime > expiration)
 		return 0;
 
