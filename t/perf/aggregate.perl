@@ -88,6 +88,7 @@ for my $t (@tests) {
 sub read_descr {
 	my $name = shift;
 	open my $fh, "<", $name or return "<error reading description>";
+	binmode $fh, ":utf8" or die "PANIC on binmode: $!";
 	my $line = <$fh>;
 	close $fh or die "cannot close $name";
 	chomp $line;
@@ -146,6 +147,8 @@ for my $t (@subtests) {
 }
 my $totalwidth = 3*@dirs+$descrlen;
 $totalwidth += $_ for (@colwidth);
+
+binmode STDOUT, ":utf8" or die "PANIC on binmode: $!";
 
 printf "%-${descrlen}s", "Test";
 for my $i (0..$#dirs) {
