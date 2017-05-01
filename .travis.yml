@@ -61,6 +61,7 @@ matrix:
         - >
           docker run
           --interactive
+          --env DEVELOPER
           --env DEFAULT_TEST_TARGET
           --env GIT_PROVE_OPTS
           --env GIT_TEST_OPTS
