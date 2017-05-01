@@ -2461,7 +2461,7 @@ static const char *dwim_reverse_initial(struct scoreboard *sb)
 	 */
 	struct object *obj;
 	struct commit *head_commit;
-	unsigned char head_sha1[20];
+	struct object_id head_oid;
 
 	if (sb->revs->pending.nr != 1)
 		return NULL;
@@ -2473,9 +2473,9 @@ static const char *dwim_reverse_initial(struct scoreboard *sb)
 		return NULL;
 
 	/* Do we have HEAD? */
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_sha1, NULL))
+	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_oid.hash, NULL))
 		return NULL;
-	head_commit = lookup_commit_reference_gently(head_sha1, 1);
+	head_commit = lookup_commit_reference_gently(head_oid.hash, 1);
 	if (!head_commit)
 		return NULL;
 
