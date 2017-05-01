@@ -408,7 +408,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		} else if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die(_("more than two blobs given: '%s'"), name);
-			hashcpy(blob[blobs].oid.hash, obj->oid.hash);
+			oidcpy(&blob[blobs].oid, &obj->oid);
 			blob[blobs].name = name;
 			blob[blobs].mode = entry->mode;
 			blobs++;
