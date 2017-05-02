@@ -64,7 +64,6 @@ test_expect_success '"checkout <submodule>" honors submodule.*.ignore from .git/
 '
 
 KNOWN_FAILURE_DIRECTORY_SUBMODULE_CONFLICTS=1
-KNOWN_FAILURE_SUBMODULE_RECURSIVE_NESTED=1
 test_submodule_switch_recursing "git checkout --recurse-submodules"
 
 test_submodule_forced_switch_recursing "git checkout -f --recurse-submodules"

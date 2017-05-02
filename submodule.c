@@ -1446,7 +1446,7 @@ int submodule_move_head(const char *path,
 
 	argv_array_pushf(&cp.args, "--super-prefix=%s%s/",
 			get_super_prefix_or_empty(), path);
-	argv_array_pushl(&cp.args, "read-tree", NULL);
+	argv_array_pushl(&cp.args, "read-tree", "--recurse-submodules", NULL);
 
 	if (flags & SUBMODULE_MOVE_HEAD_DRY_RUN)
 		argv_array_push(&cp.args, "-n");
@@ -1474,6 +1474,7 @@ int submodule_move_head(const char *path,
 			cp.no_stdin = 1;
 			cp.dir = path;
 
+			prepare_submodule_repo_env(&cp.env_array);
 			argv_array_pushl(&cp.args, "update-ref", "HEAD", new, NULL);
 
 			if (run_command(&cp)) {

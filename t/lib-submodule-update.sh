@@ -787,11 +787,6 @@ test_submodule_switch_recursing () {
 	then
 		RESULTDS=failure
 	fi
-	RESULTR=success
-	if test "$KNOWN_FAILURE_SUBMODULE_RECURSIVE_NESTED" = 1
-	then
-		RESULTR=failure
-	fi
 	RESULTOI=success
 	if test "$KNOWN_FAILURE_SUBMODULE_OVERWRITE_IGNORED_UNTRACKED" = 1
 	then
@@ -1003,7 +998,7 @@ test_submodule_switch_recursing () {
 	'
 
 	# recursing deeper than one level doesn't work yet.
-	test_expect_$RESULTR "$command: modified submodule updates submodule recursively" '
+	test_expect_success "$command: modified submodule updates submodule recursively" '
 		prolog &&
 		reset_work_tree_to_interested add_nested_sub &&
 		(
