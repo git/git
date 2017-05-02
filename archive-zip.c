@@ -298,6 +298,7 @@ static int write_zip_entry(struct archiver_args *args,
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
 	unsigned int creator_version = 0;
+	unsigned int version_needed = 10;
 	size_t zip_dir_extra_size = ZIP_EXTRA_MTIME_SIZE;
 	size_t zip64_dir_extra_payload_size = 0;
 
@@ -382,8 +383,11 @@ static int write_zip_entry(struct archiver_args *args,
 	if (stream && size > 0x7fffffff)
 		need_zip64_extra = 1;
 
+	if (need_zip64_extra)
+		version_needed = 45;
+
 	copy_le32(header.magic, 0x04034b50);
-	copy_le16(header.version, 10);
+	copy_le16(header.version, version_needed);
 	copy_le16(header.flags, flags);
 	copy_le16(header.compression_method, method);
 	copy_le16(header.mtime, zip_time);
@@ -509,7 +513,7 @@ static int write_zip_entry(struct archiver_args *args,
 
 	strbuf_add_le(&zip_dir, 4, 0x02014b50);	/* magic */
 	strbuf_add_le(&zip_dir, 2, creator_version);
-	strbuf_add_le(&zip_dir, 2, 10);		/* version */
+	strbuf_add_le(&zip_dir, 2, version_needed);
 	strbuf_add_le(&zip_dir, 2, flags);
 	strbuf_add_le(&zip_dir, 2, method);
 	strbuf_add_le(&zip_dir, 2, zip_time);
