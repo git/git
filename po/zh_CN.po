@@ -598,7 +598,7 @@ msgstr "子模组 %s 损坏的补丁"
 #: apply.c:4274
 #, c-format
 msgid "unable to stat newly created file '%s'"
-msgstr "不能枚举新建文件 '%s' 的状态"
+msgstr "不能对新建文件 '%s' 调用 stat"
 
 #: apply.c:4282
 #, c-format
@@ -1461,7 +1461,7 @@ msgstr "%s 有多个取值"
 #: config.c:2384 config.c:2609
 #, c-format
 msgid "fstat on %s failed"
-msgstr "在 %s 上执行 fstat 失败"
+msgstr "对 %s 调用 fstat 失败"
 
 #: config.c:2502
 #, c-format
@@ -1702,7 +1702,7 @@ msgstr "不能从 '%s' 迁移 git 目录到 '%s'"
 #: entry.c:280
 #, c-format
 msgid "could not stat file '%s'"
-msgstr "不能获取文件 %s 的状态"
+msgstr "不能对文件 '%s' 调用 stat"
 
 #: fetch-pack.c:249
 msgid "git fetch-pack: expected shallow list"
@@ -1907,7 +1907,7 @@ msgstr "'%s'：无法读取 %s"
 #: grep.c:1813 builtin/clone.c:399 builtin/diff.c:81 builtin/rm.c:133
 #, c-format
 msgid "failed to stat '%s'"
-msgstr "无法枚举 '%s' 状态"
+msgstr "对 '%s' 调用 stat 失败"
 
 #: grep.c:1824
 #, c-format
@@ -2005,7 +2005,7 @@ msgstr ""
 
 #: ident.c:367
 msgid "no email was given and auto-detection is disabled"
-msgstr "未提供邮件地址且自动探测引用被禁用"
+msgstr "未提供邮件地址且自动探测被禁用"
 
 #: ident.c:372
 #, c-format
@@ -2511,7 +2511,7 @@ msgstr ""
 #: read-cache.c:2232
 #, c-format
 msgid "could not stat '%s"
-msgstr "不能获取 '%s' 的文件状态"
+msgstr "不能对 '%s' 调用 stat"
 
 #: read-cache.c:2245
 #, c-format
@@ -3626,7 +3626,7 @@ msgstr "submodule.fetchJobs 不允许为负值"
 #: submodule.c:1194
 #, c-format
 msgid "'%s' not recognized as a git repository"
-msgstr "'%s' 没有识别为一个 git 仓库"
+msgstr "无法将 '%s' 识别为一个 git 仓库"
 
 #: submodule.c:1332
 #, c-format
@@ -3727,7 +3727,7 @@ msgstr "不能自标准输入读取"
 #: trailer.c:949 builtin/am.c:44
 #, c-format
 msgid "could not stat %s"
-msgstr "不能获取 %s 的状态"
+msgstr "不能对 %s 调用 stat"
 
 #: trailer.c:951
 #, c-format
@@ -4658,7 +4658,7 @@ msgstr "编辑补丁失败"
 #: builtin/add.c:230
 #, c-format
 msgid "Could not stat '%s'"
-msgstr "不能查看文件状态 '%s'"
+msgstr "不能对 '%s' 调用 stat"
 
 #: builtin/add.c:232
 msgid "Empty patch. Aborted."
@@ -6472,7 +6472,7 @@ msgstr "设置为共享仓库"
 
 #: builtin/clone.c:93 builtin/clone.c:97
 msgid "pathspec"
-msgstr "路径"
+msgstr "路径规格"
 
 #: builtin/clone.c:93 builtin/clone.c:97
 msgid "initialize submodules in the clone"
@@ -6599,7 +6599,7 @@ msgstr "%s 存在且不是一个目录"
 #: builtin/clone.c:415
 #, c-format
 msgid "failed to stat %s\n"
-msgstr "无法枚举 %s 状态\n"
+msgstr "对 %s 调用 stat 失败\n"
 
 #: builtin/clone.c:437
 #, c-format
@@ -8318,12 +8318,12 @@ msgstr "git gc [<选项>]"
 #: builtin/gc.c:78
 #, c-format
 msgid "Failed to fstat %s: %s"
-msgstr "无法获取 %s 状态：%s"
+msgstr "对 %s 调用 fstat 失败：%s"
 
 #: builtin/gc.c:306
 #, c-format
 msgid "Can't stat %s"
-msgstr "不能获取 %s 状态"
+msgstr "不能对 %s 调用 stat"
 
 #: builtin/gc.c:315
 #, c-format
@@ -8971,7 +8971,7 @@ msgstr "包冲突（SHA1 不匹配）"
 
 #: builtin/index-pack.c:1165
 msgid "cannot fstat packfile"
-msgstr "不能枚举包文件状态"
+msgstr "不能对包文件调用 fstat"
 
 #: builtin/index-pack.c:1168
 msgid "pack has junk at the end"
@@ -9105,12 +9105,12 @@ msgstr "--verify 没有提供包文件名参数"
 #: builtin/init-db.c:54
 #, c-format
 msgid "cannot stat '%s'"
-msgstr "不能枚举 '%s' 状态"
+msgstr "不能对 '%s' 调用 stat"
 
 #: builtin/init-db.c:60
 #, c-format
 msgid "cannot stat template '%s'"
-msgstr "不能枚举模版 '%s' 状态"
+msgstr "不能对模版 '%s' 调用 stat"
 
 #: builtin/init-db.c:65
 #, c-format
@@ -13363,7 +13363,7 @@ msgstr "无法创建目录 %s"
 #: builtin/update-index.c:85
 #, c-format
 msgid "failed to stat %s"
-msgstr "无法枚举 %s 状态"
+msgstr "对 %s 调用 stat 失败"
 
 #: builtin/update-index.c:95
 #, c-format
