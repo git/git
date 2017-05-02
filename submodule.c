@@ -1468,15 +1468,15 @@ int submodule_move_head(const char *path,
 
 	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN)) {
 		if (new) {
-			struct child_process cp1 = CHILD_PROCESS_INIT;
+			child_process_init(&cp);
 			/* also set the HEAD accordingly */
-			cp1.git_cmd = 1;
-			cp1.no_stdin = 1;
-			cp1.dir = path;
+			cp.git_cmd = 1;
+			cp.no_stdin = 1;
+			cp.dir = path;
 
-			argv_array_pushl(&cp1.args, "update-ref", "HEAD", new, NULL);
+			argv_array_pushl(&cp.args, "update-ref", "HEAD", new, NULL);
 
-			if (run_command(&cp1)) {
+			if (run_command(&cp)) {
 				ret = -1;
 				goto out;
 			}
