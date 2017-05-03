@@ -666,7 +666,7 @@ static int is_expected_rev(const struct object_id *oid)
 	if (stat(filename, &st) || !S_ISREG(st.st_mode))
 		return 0;
 
-	fp = fopen(filename, "r");
+	fp = fopen_or_warn(filename, "r");
 	if (!fp)
 		return 0;
 

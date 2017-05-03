@@ -802,6 +802,7 @@ extern int xmkstemp(char *template);
 extern int xmkstemp_mode(char *template, int mode);
 extern char *xgetcwd(void);
 extern FILE *fopen_for_writing(const char *path);
+extern FILE *fopen_or_warn(const char *path, const char *mode);
 
 #define ALLOC_ARRAY(x, alloc) (x) = xmalloc(st_mult(sizeof(*(x)), (alloc)))
 #define REALLOC_ARRAY(x, alloc) (x) = xrealloc((x), st_mult(sizeof(*(x)), (alloc)))

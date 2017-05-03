@@ -251,7 +251,7 @@ static const char *skip_spaces(const char *s)
 static void read_remotes_file(struct remote *remote)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen(git_path("remotes/%s", remote->name), "r");
+	FILE *f = fopen_or_warn(git_path("remotes/%s", remote->name), "r");
 
 	if (!f)
 		return;
@@ -277,7 +277,7 @@ static void read_branches_file(struct remote *remote)
 {
 	char *frag;
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen(git_path("branches/%s", remote->name), "r");
+	FILE *f = fopen_or_warn(git_path("branches/%s", remote->name), "r");
 
 	if (!f)
 		return;

@@ -428,6 +428,17 @@ int warn_on_fopen_errors(const char *path)
 	return 0;
 }
 
+FILE *fopen_or_warn(const char *path, const char *mode)
+{
+	FILE *fp = fopen(path, mode);
+
+	if (fp)
+		return fp;
+
+	warn_on_fopen_errors(path);
+	return NULL;
+}
+
 int xmkstemp(char *template)
 {
 	int fd;

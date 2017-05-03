@@ -200,7 +200,7 @@ static struct rerere_id *new_rerere_id(unsigned char *sha1)
 static void read_rr(struct string_list *rr)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *in = fopen(git_path_merge_rr(), "r");
+	FILE *in = fopen_or_warn(git_path_merge_rr(), "r");
 
 	if (!in)
 		return;
