@@ -237,6 +237,7 @@ ifeq ($(uname_S),AIX)
 	NO_MKDTEMP = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_NSEC = YesPlease
+	NO_REGEX = NeedsStartEnd
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	INTERNAL_QSORT = UnfortunatelyYes
 	NEEDS_LIBICONV = YesPlease
