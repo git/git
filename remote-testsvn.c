@@ -124,10 +124,8 @@ static int note2mark_cb(const unsigned char *object_sha1,
 static void regenerate_marks(void)
 {
 	int ret;
-	FILE *marksfile = fopen(marksfilename, "w+");
+	FILE *marksfile = xfopen(marksfilename, "w+");
 
-	if (!marksfile)
-		die_errno("Couldn't create mark file %s.", marksfilename);
 	ret = for_each_note(NULL, 0, note2mark_cb, marksfile);
 	if (ret)
 		die("Regeneration of marks failed, returned %d.", ret);
@@ -148,9 +146,7 @@ static void check_or_regenerate_marks(int latestrev)
 	marksfile = fopen(marksfilename, "r");
 	if (!marksfile) {
 		regenerate_marks();
-		marksfile = fopen(marksfilename, "r");
-		if (!marksfile)
-			die_errno("cannot read marks file %s!", marksfilename);
+		marksfile = xfopen(marksfilename, "r");
 		fclose(marksfile);
 	} else {
 		strbuf_addf(&sb, ":%d ", latestrev);
