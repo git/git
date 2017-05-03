@@ -195,7 +195,8 @@ test_expect_success POSIXPERM,SANITY 'proper error on non-accessible files' '
 	chmod -r .git/config &&
 	test_when_finished "chmod +r .git/config" &&
 	echo "Error (-1) reading configuration file .git/config." >expect &&
-	test_expect_code 2 test-config configset_get_value foo.bar .git/config 2>actual &&
+	test_expect_code 2 test-config configset_get_value foo.bar .git/config 2>output &&
+	grep "^Error" output >actual &&
 	test_cmp expect actual
 '
 

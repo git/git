@@ -418,6 +418,16 @@ FILE *fopen_for_writing(const char *path)
 	return ret;
 }
 
+int warn_on_fopen_errors(const char *path)
+{
+	if (errno != ENOENT && errno != ENOTDIR) {
+		warn_on_inaccessible(path);
+		return -1;
+	}
+
+	return 0;
+}
+
 int xmkstemp(char *template)
 {
 	int fd;
