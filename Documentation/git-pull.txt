@@ -67,7 +67,7 @@ with uncommitted changes is discouraged: while possible, it leaves you
 in a state that may be hard to back out of in the case of a conflict.
 
 If any of the remote changes overlap with local uncommitted changes,
-the merge will be automatically cancelled and the work tree untouched.
+the merge will be automatically canceled and the work tree untouched.
 It is generally best to get any local changes in working order before
 pulling or stash them away with linkgit:git-stash[1].
 
@@ -210,7 +210,8 @@ EXAMPLES
   current branch:
 +
 ------------------------------------------------
-$ git pull, git pull origin
+$ git pull
+$ git pull origin
 ------------------------------------------------
 +
 Normally the branch merged in is the HEAD of the remote repository,
