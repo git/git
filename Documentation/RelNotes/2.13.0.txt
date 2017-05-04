@@ -606,3 +606,6 @@ notes for details).
    (merge 8d3047cd5b ss/submodule-shallow-doc later to maint).
    (merge 1f9e18b772 jk/prio-queue-avoid-swap-with-self later to maint).
    (merge 627fde1025 jk/submodule-init-segv-fix later to maint).
+   (merge d395745d81 rg/doc-pull-typofix later to maint).
+   (merge 01e60a9a22 rg/doc-submittingpatches-wordfix later to maint).
+   (merge 501d3cd7b8 sr/hooks-cwd-doc later to maint).
