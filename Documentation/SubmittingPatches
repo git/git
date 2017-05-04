@@ -51,7 +51,7 @@ If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
 That being said, patches which plainly describe the things that
 help reviewers check the patch, and future maintainers understand
-the code, are the most beautiful patches.  Descriptions that summarise
+the code, are the most beautiful patches.  Descriptions that summarize
 the point in the subject well, and describe the motivation for the
 change, the approach taken by the change, and if relevant how this
 differs substantially from the prior version, are all good things
@@ -87,7 +87,7 @@ patches separate from other documentation changes.
 Oh, another thing.  We are picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
 in templates/hooks--pre-commit.  To help ensure this does not happen,
-run git diff --check on your changes before you commit.
+run "git diff --check" on your changes before you commit.
 
 
 (2) Describe your changes well.
@@ -111,10 +111,10 @@ Improve...".
 
 The body should provide a meaningful commit message, which:
 
-  . explains the problem the change tries to solve, iow, what is wrong
+  . explains the problem the change tries to solve, i.e. what is wrong
     with the current code without the change.
 
-  . justifies the way the change solves the problem, iow, why the
+  . justifies the way the change solves the problem, i.e. why the
     result with the change is better.
 
   . alternate solutions considered but discarded, if any.
@@ -122,7 +122,7 @@ The body should provide a meaningful commit message, which:
 Describe your changes in imperative mood, e.g. "make xyzzy do frotz"
 instead of "[This patch] makes xyzzy do frotz" or "[I] changed xyzzy
 to do frotz", as if you are giving orders to the codebase to change
-its behaviour.  Try to make sure your explanation can be understood
+its behavior.  Try to make sure your explanation can be understood
 without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
@@ -261,7 +261,7 @@ smaller project it is a good discipline to follow it.
 The sign-off is a simple line at the end of the explanation for
 the patch, which certifies that you wrote it or otherwise have
 the right to pass it on as a open-source patch.  The rules are
-pretty simple: if you can certify the below:
+pretty simple: if you can certify the below D-C-O:
 
         Developer's Certificate of Origin 1.1
 
