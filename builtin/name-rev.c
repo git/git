@@ -28,6 +28,7 @@ static void name_rev(struct commit *commit,
 	struct rev_name *name = (struct rev_name *)commit->util;
 	struct commit_list *parents;
 	int parent_number = 1;
+	char *to_free = NULL;
 
 	parse_commit(commit);
 
@@ -35,7 +36,7 @@ static void name_rev(struct commit *commit,
 		return;
 
 	if (deref) {
-		tip_name = xstrfmt("%s^0", tip_name);
+		tip_name = to_free = xstrfmt("%s^0", tip_name);
 
 		if (generation)
 			die("generation: %d, but deref?", generation);
@@ -53,8 +54,10 @@ copy_data:
 		name->taggerdate = taggerdate;
 		name->generation = generation;
 		name->distance = distance;
-	} else
+	} else {
+		free(to_free);
 		return;
+	}
 
 	for (parents = commit->parents;
 			parents;
