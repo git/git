@@ -22,8 +22,10 @@ changed via the `core.hooksPath` configuration variable (see
 linkgit:git-config[1]).
 
 Before Git invokes a hook, it changes its working directory to either
-the root of the working tree in a non-bare repository, or to the
-$GIT_DIR in a bare repository.
+$GIT_DIR in a bare repository or the root of the working tree in a non-bare
+repository. An exception are hooks triggered during a push ('pre-receive',
+'update', 'post-receive', 'post-update', 'push-to-checkout') which are always
+executed in $GIT_DIR.
 
 Hooks can get their arguments via the environment, command-line
 arguments, and stdin. See the documentation for each hook below for
