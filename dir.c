@@ -1264,14 +1264,15 @@ enum exist_status {
  * the directory name; instead, use the case insensitive
  * directory hash.
  */
-static enum exist_status directory_exists_in_index_icase(const char *dirname, int len)
+static enum exist_status directory_exists_in_index_icase(struct index_state *istate,
+							 const char *dirname, int len)
 {
 	struct cache_entry *ce;
 
-	if (index_dir_exists(&the_index, dirname, len))
+	if (index_dir_exists(istate, dirname, len))
 		return index_directory;
 
-	ce = index_file_exists(&the_index, dirname, len, ignore_case);
+	ce = index_file_exists(istate, dirname, len, ignore_case);
 	if (ce && S_ISGITLINK(ce->ce_mode))
 		return index_gitdir;
 
@@ -1285,18 +1286,19 @@ static enum exist_status directory_exists_in_index_icase(const char *dirname, in
  * the files it contains) will sort with the '/' at the
  * end.
  */
-static enum exist_status directory_exists_in_index(const char *dirname, int len)
+static enum exist_status directory_exists_in_index(struct index_state *istate,
+						   const char *dirname, int len)
 {
 	int pos;
 
 	if (ignore_case)
-		return directory_exists_in_index_icase(dirname, len);
+		return directory_exists_in_index_icase(istate, dirname, len);
 
-	pos = index_name_pos(&the_index, dirname, len);
+	pos = index_name_pos(istate, dirname, len);
 	if (pos < 0)
 		pos = -pos-1;
-	while (pos < the_index.cache_nr) {
-		const struct cache_entry *ce = the_index.cache[pos++];
+	while (pos < istate->cache_nr) {
+		const struct cache_entry *ce = istate->cache[pos++];
 		unsigned char endchar;
 
 		if (strncmp(ce->name, dirname, len))
@@ -1351,7 +1353,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	const struct pathspec *pathspec)
 {
 	/* The "len-1" is to strip the final '/' */
-	switch (directory_exists_in_index(dirname, len-1)) {
+	switch (directory_exists_in_index(&the_index, dirname, len-1)) {
 	case index_directory:
 		return path_recurse;
 
@@ -1554,7 +1556,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	if ((dir->flags & DIR_COLLECT_KILLED_ONLY) &&
 	    (dtype == DT_DIR) &&
 	    !has_path_in_index &&
-	    (directory_exists_in_index(path->buf, path->len) == index_nonexistent))
+	    (directory_exists_in_index(&the_index, path->buf, path->len) == index_nonexistent))
 		return path_none;
 
 	exclude = is_excluded(dir, path->buf, &dtype);
