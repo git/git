@@ -1031,8 +1031,10 @@ char *mingw_getcwd(char *pointer, int len)
 			  HANDLE, LPWSTR, DWORD, DWORD);
 	DWORD ret = GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
 
-	if (ret < 0 || ret >= ARRAY_SIZE(cwd))
+	if (!ret || ret >= ARRAY_SIZE(cwd)) {
+		errno = ret ? ENAMETOOLONG : err_win_to_posix(GetLastError());
 		return NULL;
+	}
 	ret = GetLongPathNameW(cwd, wpointer, ARRAY_SIZE(wpointer));
 	if (!ret && GetLastError() == ERROR_ACCESS_DENIED &&
 		INIT_PROC_ADDR(GetFinalPathNameByHandleW)) {
