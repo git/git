@@ -21,13 +21,15 @@ struct subprocess_entry *subprocess_find_entry(struct hashmap *hashmap, const ch
 	return hashmap_get(hashmap, &key, NULL);
 }
 
-void subprocess_read_status(int fd, struct strbuf *status)
+int subprocess_read_status(int fd, struct strbuf *status)
 {
 	struct strbuf **pair;
 	char *line;
+	int len;
+
 	for (;;) {
-		line = packet_read_line(fd, NULL);
-		if (!line)
+		len = packet_read_line_gently(fd, NULL, &line);
+		if ((len < 0) || !line)
 			break;
 		pair = strbuf_split_str(line, '=', 2);
 		if (pair[0] && pair[0]->len && pair[1]) {
@@ -39,6 +41,8 @@ void subprocess_read_status(int fd, struct strbuf *status)
 		}
 		strbuf_list_free(pair);
 	}
+
+	return (len < 0) ? len : 0;
 }
 
 void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry)
