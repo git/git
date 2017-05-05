@@ -507,8 +507,8 @@ struct cmd2process {
 	unsigned int supported_capabilities;
 };
 
-static int cmd_process_map_initialized;
-static struct hashmap cmd_process_map;
+static int subprocess_map_initialized;
+static struct hashmap subprocess_map;
 
 static int cmd2process_cmp(const struct subprocess_entry *e1,
 			   const struct subprocess_entry *e2,
@@ -517,7 +517,7 @@ static int cmd2process_cmp(const struct subprocess_entry *e1,
 	return strcmp(e1->cmd, e2->cmd);
 }
 
-static struct subprocess_entry *find_multi_file_filter_entry(struct hashmap *hashmap, const char *cmd)
+static struct subprocess_entry *subprocess_find_entry(struct hashmap *hashmap, const char *cmd)
 {
 	struct subprocess_entry key;
 
@@ -526,7 +526,7 @@ static struct subprocess_entry *find_multi_file_filter_entry(struct hashmap *has
 	return hashmap_get(hashmap, &key, NULL);
 }
 
-static void read_multi_file_filter_status(int fd, struct strbuf *status)
+static void subprocess_read_status(int fd, struct strbuf *status)
 {
 	struct strbuf **pair;
 	char *line;
@@ -546,7 +546,7 @@ static void read_multi_file_filter_status(int fd, struct strbuf *status)
 	}
 }
 
-static void kill_multi_file_filter(struct hashmap *hashmap, struct subprocess_entry *entry)
+static void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry)
 {
 	if (!entry)
 		return;
@@ -558,10 +558,10 @@ static void kill_multi_file_filter(struct hashmap *hashmap, struct subprocess_en
 	hashmap_remove(hashmap, entry, NULL);
 }
 
-static void stop_multi_file_filter(struct child_process *process)
+static void subprocess_exit_handler(struct child_process *process)
 {
 	sigchain_push(SIGPIPE, SIG_IGN);
-	/* Closing the pipe signals the filter to initiate a shutdown. */
+	/* Closing the pipe signals the subprocess to initiate a shutdown. */
 	close(process->in);
 	close(process->out);
 	sigchain_pop(SIGPIPE);
@@ -630,7 +630,7 @@ done:
 }
 
 typedef int(*subprocess_start_fn)(struct subprocess_entry *entry);
-int start_multi_file_filter(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
+int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
 	subprocess_start_fn startfn)
 {
 	int err;
@@ -646,11 +646,11 @@ int start_multi_file_filter(struct hashmap *hashmap, struct subprocess_entry *en
 	process->in = -1;
 	process->out = -1;
 	process->clean_on_exit = 1;
-	process->clean_on_exit_handler = stop_multi_file_filter;
+	process->clean_on_exit_handler = subprocess_exit_handler;
 
 	err = start_command(process);
 	if (err) {
-		error("cannot fork to run external filter '%s'", cmd);
+		error("cannot fork to run subprocess '%s'", cmd);
 		return err;
 	}
 
@@ -658,8 +658,8 @@ int start_multi_file_filter(struct hashmap *hashmap, struct subprocess_entry *en
 
 	err = startfn(entry);
 	if (err) {
-		error("initialization for external filter '%s' failed", cmd);
-		kill_multi_file_filter(hashmap, entry);
+		error("initialization for subprocess '%s' failed", cmd);
+		subprocess_stop(hashmap, entry);
 		return err;
 	}
 
@@ -678,12 +678,12 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 	struct strbuf filter_status = STRBUF_INIT;
 	const char *filter_type;
 
-	if (!cmd_process_map_initialized) {
-		cmd_process_map_initialized = 1;
-		hashmap_init(&cmd_process_map, (hashmap_cmp_fn) cmd2process_cmp, 0);
+	if (!subprocess_map_initialized) {
+		subprocess_map_initialized = 1;
+		hashmap_init(&subprocess_map, (hashmap_cmp_fn) cmd2process_cmp, 0);
 		entry = NULL;
 	} else {
-		entry = (struct cmd2process *)find_multi_file_filter_entry(&cmd_process_map, cmd);
+		entry = (struct cmd2process *)subprocess_find_entry(&subprocess_map, cmd);
 	}
 
 	fflush(NULL);
@@ -692,7 +692,7 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 		entry = xmalloc(sizeof(*entry));
 		entry->supported_capabilities = 0;
 
-		if (start_multi_file_filter(&cmd_process_map, &entry->subprocess, cmd, start_multi_file_filter_fn)) {
+		if (subprocess_start(&subprocess_map, &entry->subprocess, cmd, start_multi_file_filter_fn)) {
 			free(entry);
 			return 0;
 		}
@@ -737,7 +737,7 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 	if (err)
 		goto done;
 
-	read_multi_file_filter_status(process->out, &filter_status);
+	subprocess_read_status(process->out, &filter_status);
 	err = strcmp(filter_status.buf, "success");
 	if (err)
 		goto done;
@@ -746,7 +746,7 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 	if (err)
 		goto done;
 
-	read_multi_file_filter_status(process->out, &filter_status);
+	subprocess_read_status(process->out, &filter_status);
 	err = strcmp(filter_status.buf, "success");
 
 done:
@@ -768,7 +768,7 @@ done:
 			 * Force shutdown and restart if another blob requires filtering.
 			 */
 			error("external filter '%s' failed", cmd);
-			kill_multi_file_filter(&cmd_process_map, &entry->subprocess);
+			subprocess_stop(&subprocess_map, &entry->subprocess);
 			free(entry);
 		}
 	} else {
