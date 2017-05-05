@@ -665,7 +665,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 		dir.untracked = the_index.untracked;
 	setup_standard_excludes(&dir);
 
-	fill_directory(&dir, &s->pathspec);
+	fill_directory(&dir, &the_index, &s->pathspec);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];

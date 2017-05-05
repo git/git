@@ -177,7 +177,9 @@ char *common_prefix(const struct pathspec *pathspec)
 	return len ? xmemdupz(pathspec->items[0].match, len) : NULL;
 }
 
-int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
+int fill_directory(struct dir_struct *dir,
+		   struct index_state *istate,
+		   const struct pathspec *pathspec)
 {
 	const char *prefix;
 	size_t prefix_len;
@@ -190,7 +192,7 @@ int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
 	prefix = prefix_len ? pathspec->items[0].match : "";
 
 	/* Read the directory and prune it */
-	read_directory(dir, &the_index, prefix, prefix_len, pathspec);
+	read_directory(dir, istate, prefix, prefix_len, pathspec);
 
 	return prefix_len;
 }

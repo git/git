@@ -333,7 +333,7 @@ static void show_files(struct dir_struct *dir)
 	if (show_others || show_killed) {
 		if (!show_others)
 			dir->flags |= DIR_COLLECT_KILLED_ONLY;
-		fill_directory(dir, &pathspec);
+		fill_directory(dir, &the_index, &pathspec);
 		if (show_others)
 			show_other_files(dir);
 		if (show_killed)

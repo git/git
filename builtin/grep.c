@@ -866,7 +866,7 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
 	if (exc_std)
 		setup_standard_excludes(&dir);
 
-	fill_directory(&dir, pathspec);
+	fill_directory(&dir, &the_index, pathspec);
 	for (i = 0; i < dir.nr; i++) {
 		if (!dir_path_match(dir.entries[i], pathspec, 0, NULL))
 			continue;

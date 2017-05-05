@@ -214,7 +214,9 @@ extern int match_pathspec(const struct pathspec *pathspec,
 extern int report_path_error(const char *ps_matched, const struct pathspec *pathspec, const char *prefix);
 extern int within_depth(const char *name, int namelen, int depth, int max_depth);
 
-extern int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec);
+extern int fill_directory(struct dir_struct *dir,
+			  struct index_state *istate,
+			  const struct pathspec *pathspec);
 extern int read_directory(struct dir_struct *, struct index_state *istate,
 			  const char *path, int len,
 			  const struct pathspec *pathspec);
