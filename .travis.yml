@@ -39,6 +39,11 @@ env:
 
 matrix:
   include:
+    - env: GETTEXT_POISON=YesPlease
+      os: linux
+      compiler:
+      addons:
+      before_install:
     - env: Windows
       os: linux
       compiler:
