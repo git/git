@@ -661,7 +661,7 @@ static struct cmd2process *start_multi_file_filter(struct hashmap *hashmap, cons
 done:
 	sigchain_pop(SIGPIPE);
 
-	if (err || errno == EPIPE) {
+	if (err) {
 		error("initialization for external filter '%s' failed", cmd);
 		kill_multi_file_filter(hashmap, entry);
 		return NULL;
@@ -752,7 +752,7 @@ static int apply_multi_file_filter(const char *path, const char *src, size_t len
 done:
 	sigchain_pop(SIGPIPE);
 
-	if (err || errno == EPIPE) {
+	if (err) {
 		if (!strcmp(filter_status.buf, "error")) {
 			/* The filter signaled a problem with the file. */
 		} else if (!strcmp(filter_status.buf, "abort")) {
