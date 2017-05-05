@@ -4,6 +4,7 @@
 #include "quote.h"
 #include "sigchain.h"
 #include "pkt-line.h"
+#include "sub-process.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -496,12 +497,6 @@ static int apply_single_file_filter(const char *path, const char *src, size_t le
 #define CAP_CLEAN    (1u<<0)
 #define CAP_SMUDGE   (1u<<1)
 
-struct subprocess_entry {
-	struct hashmap_entry ent; /* must be the first member! */
-	const char *cmd;
-	struct child_process process;
-};
-
 struct cmd2process {
 	struct subprocess_entry subprocess; /* must be the first member! */
 	unsigned int supported_capabilities;
@@ -509,65 +504,6 @@ struct cmd2process {
 
 static int subprocess_map_initialized;
 static struct hashmap subprocess_map;
-
-static int cmd2process_cmp(const struct subprocess_entry *e1,
-			   const struct subprocess_entry *e2,
-			   const void *unused)
-{
-	return strcmp(e1->cmd, e2->cmd);
-}
-
-static struct subprocess_entry *subprocess_find_entry(struct hashmap *hashmap, const char *cmd)
-{
-	struct subprocess_entry key;
-
-	hashmap_entry_init(&key, strhash(cmd));
-	key.cmd = cmd;
-	return hashmap_get(hashmap, &key, NULL);
-}
-
-static void subprocess_read_status(int fd, struct strbuf *status)
-{
-	struct strbuf **pair;
-	char *line;
-	for (;;) {
-		line = packet_read_line(fd, NULL);
-		if (!line)
-			break;
-		pair = strbuf_split_str(line, '=', 2);
-		if (pair[0] && pair[0]->len && pair[1]) {
-			/* the last "status=<foo>" line wins */
-			if (!strcmp(pair[0]->buf, "status=")) {
-				strbuf_reset(status);
-				strbuf_addbuf(status, pair[1]);
-			}
-		}
-		strbuf_list_free(pair);
-	}
-}
-
-static void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry)
-{
-	if (!entry)
-		return;
-
-	entry->process.clean_on_exit = 0;
-	kill(entry->process.pid, SIGTERM);
-	finish_command(&entry->process);
-
-	hashmap_remove(hashmap, entry, NULL);
-}
-
-static void subprocess_exit_handler(struct child_process *process)
-{
-	sigchain_push(SIGPIPE, SIG_IGN);
-	/* Closing the pipe signals the subprocess to initiate a shutdown. */
-	close(process->in);
-	close(process->out);
-	sigchain_pop(SIGPIPE);
-	/* Finish command will wait until the shutdown is complete. */
-	finish_command(process);
-}
 
 static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 {
@@ -627,44 +563,6 @@ done:
 	sigchain_pop(SIGPIPE);
 
 	return err;
-}
-
-typedef int(*subprocess_start_fn)(struct subprocess_entry *entry);
-int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
-	subprocess_start_fn startfn)
-{
-	int err;
-	struct child_process *process;
-	const char *argv[] = { cmd, NULL };
-
-	entry->cmd = cmd;
-	process = &entry->process;
-
-	child_process_init(process);
-	process->argv = argv;
-	process->use_shell = 1;
-	process->in = -1;
-	process->out = -1;
-	process->clean_on_exit = 1;
-	process->clean_on_exit_handler = subprocess_exit_handler;
-
-	err = start_command(process);
-	if (err) {
-		error("cannot fork to run subprocess '%s'", cmd);
-		return err;
-	}
-
-	hashmap_entry_init(entry, strhash(cmd));
-
-	err = startfn(entry);
-	if (err) {
-		error("initialization for subprocess '%s' failed", cmd);
-		subprocess_stop(hashmap, entry);
-		return err;
-	}
-
-	hashmap_add(hashmap, entry);
-	return 0;
 }
 
 static int apply_multi_file_filter(const char *path, const char *src, size_t len,
