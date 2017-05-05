@@ -1251,7 +1251,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout) {
 		char *sparse = git_pathdup("info/sparse-checkout");
-		if (add_excludes_from_file_to_list(sparse, "", 0, &el, 0) < 0)
+		if (add_excludes_from_file_to_list(sparse, "", 0, &el, NULL) < 0)
 			o->skip_sparse_checkout = 1;
 		else
 			o->el = &el;

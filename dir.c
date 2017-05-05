@@ -730,7 +730,7 @@ static void invalidate_directory(struct untracked_cache *uc,
 
 /*
  * Given a file with name "fname", read it (either from disk, or from
- * the index if "check_index" is non-zero), parse it and store the
+ * an index if 'istate' is non-null), parse it and store the
  * exclude rules in "el".
  *
  * If "ss" is not NULL, compute SHA-1 of the exclude file and fill
@@ -738,7 +738,8 @@ static void invalidate_directory(struct untracked_cache *uc,
  * ss_valid is non-zero, "ss" must contain good value as input.
  */
 static int add_excludes(const char *fname, const char *base, int baselen,
-			struct exclude_list *el, int check_index,
+			struct exclude_list *el,
+			struct index_state *istate,
 			struct sha1_stat *sha1_stat)
 {
 	struct stat st;
@@ -752,8 +753,8 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			warn_on_inaccessible(fname);
 		if (0 <= fd)
 			close(fd);
-		if (!check_index ||
-		    (buf = read_skip_worktree_file_from_index(&the_index, fname, &size, sha1_stat)) == NULL)
+		if (!istate ||
+		    (buf = read_skip_worktree_file_from_index(istate, fname, &size, sha1_stat)) == NULL)
 			return -1;
 		if (size == 0) {
 			free(buf);
@@ -785,15 +786,15 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		if (sha1_stat) {
 			int pos;
 			if (sha1_stat->valid &&
-			    !match_stat_data_racy(&the_index, &sha1_stat->stat, &st))
+			    !match_stat_data_racy(istate, &sha1_stat->stat, &st))
 				; /* no content change, ss->sha1 still good */
-			else if (check_index &&
-				 (pos = index_name_pos(&the_index, fname, strlen(fname))) >= 0 &&
-				 !ce_stage(the_index.cache[pos]) &&
-				 ce_uptodate(the_index.cache[pos]) &&
+			else if (istate &&
+				 (pos = index_name_pos(istate, fname, strlen(fname))) >= 0 &&
+				 !ce_stage(istate->cache[pos]) &&
+				 ce_uptodate(istate->cache[pos]) &&
 				 !would_convert_to_git(fname))
 				hashcpy(sha1_stat->sha1,
-					the_index.cache[pos]->oid.hash);
+					istate->cache[pos]->oid.hash);
 			else
 				hash_sha1_file(buf, size, "blob", sha1_stat->sha1);
 			fill_stat_data(&sha1_stat->stat, &st);
@@ -824,9 +825,9 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 
 int add_excludes_from_file_to_list(const char *fname, const char *base,
 				   int baselen, struct exclude_list *el,
-				   int check_index)
+				   struct index_state *istate)
 {
-	return add_excludes(fname, base, baselen, el, check_index, NULL);
+	return add_excludes(fname, base, baselen, el, istate, NULL);
 }
 
 struct exclude_list *add_exclude_list(struct dir_struct *dir,
@@ -858,7 +859,7 @@ static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
 	if (!dir->untracked)
 		dir->unmanaged_exclude_files++;
 	el = add_exclude_list(dir, EXC_FILE, fname);
-	if (add_excludes(fname, "", 0, el, 0, sha1_stat) < 0)
+	if (add_excludes(fname, "", 0, el, NULL, sha1_stat) < 0)
 		die("cannot use %s as an exclude file", fname);
 }
 
@@ -1166,7 +1167,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 			strbuf_addbuf(&sb, &dir->basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			el->src = strbuf_detach(&sb, NULL);
-			add_excludes(el->src, el->src, stk->baselen, el, 1,
+			add_excludes(el->src, el->src, stk->baselen, el, &the_index,
 				     untracked ? &sha1_stat : NULL);
 		}
 		/*
