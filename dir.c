@@ -1046,7 +1046,9 @@ static struct exclude *last_exclude_matching_from_lists(struct dir_struct *dir,
  * Loads the per-directory exclude list for the substring of base
  * which has a char length of baselen.
  */
-static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
+static void prep_exclude(struct dir_struct *dir,
+			 struct index_state *istate,
+			 const char *base, int baselen)
 {
 	struct exclude_list_group *group;
 	struct exclude_list *el;
@@ -1125,7 +1127,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 			int dt = DT_DIR;
 			dir->basebuf.buf[stk->baselen - 1] = 0;
 			dir->exclude = last_exclude_matching_from_lists(dir,
-									&the_index,
+									istate,
 				dir->basebuf.buf, stk->baselen - 1,
 				dir->basebuf.buf + current, &dt);
 			dir->basebuf.buf[stk->baselen - 1] = '/';
@@ -1167,7 +1169,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 			strbuf_addbuf(&sb, &dir->basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			el->src = strbuf_detach(&sb, NULL);
-			add_excludes(el->src, el->src, stk->baselen, el, &the_index,
+			add_excludes(el->src, el->src, stk->baselen, el, istate,
 				     untracked ? &sha1_stat : NULL);
 		}
 		/*
@@ -1209,7 +1211,7 @@ struct exclude *last_exclude_matching(struct dir_struct *dir,
 	const char *basename = strrchr(pathname, '/');
 	basename = (basename) ? basename+1 : pathname;
 
-	prep_exclude(dir, pathname, basename-pathname);
+	prep_exclude(dir, &the_index, pathname, basename-pathname);
 
 	if (dir->exclude)
 		return dir->exclude;
@@ -1695,10 +1697,10 @@ static int valid_cached_dir(struct dir_struct *dir,
 	 */
 	if (path->len && path->buf[path->len - 1] != '/') {
 		strbuf_addch(path, '/');
-		prep_exclude(dir, path->buf, path->len);
+		prep_exclude(dir, &the_index, path->buf, path->len);
 		strbuf_setlen(path, path->len - 1);
 	} else
-		prep_exclude(dir, path->buf, path->len);
+		prep_exclude(dir, &the_index, path->buf, path->len);
 
 	/* hopefully prep_exclude() haven't invalidated this entry... */
 	return untracked->valid;
