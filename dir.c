@@ -588,7 +588,8 @@ void add_exclude(const char *string, const char *base,
 	x->el = el;
 }
 
-static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
+static void *read_skip_worktree_file_from_index(const struct index_state *istate,
+						const char *path, size_t *size,
 						struct sha1_stat *sha1_stat)
 {
 	int pos, len;
@@ -597,12 +598,12 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 	void *data;
 
 	len = strlen(path);
-	pos = index_name_pos(&the_index, path, len);
+	pos = index_name_pos(istate, path, len);
 	if (pos < 0)
 		return NULL;
-	if (!ce_skip_worktree(the_index.cache[pos]))
+	if (!ce_skip_worktree(istate->cache[pos]))
 		return NULL;
-	data = read_sha1_file(the_index.cache[pos]->oid.hash, &type, &sz);
+	data = read_sha1_file(istate->cache[pos]->oid.hash, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -610,7 +611,7 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 	*size = xsize_t(sz);
 	if (sha1_stat) {
 		memset(&sha1_stat->stat, 0, sizeof(sha1_stat->stat));
-		hashcpy(sha1_stat->sha1, the_index.cache[pos]->oid.hash);
+		hashcpy(sha1_stat->sha1, istate->cache[pos]->oid.hash);
 	}
 	return data;
 }
@@ -751,7 +752,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		if (0 <= fd)
 			close(fd);
 		if (!check_index ||
-		    (buf = read_skip_worktree_file_from_index(fname, &size, sha1_stat)) == NULL)
+		    (buf = read_skip_worktree_file_from_index(&the_index, fname, &size, sha1_stat)) == NULL)
 			return -1;
 		if (size == 0) {
 			free(buf);
