@@ -961,7 +961,8 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 						       int pathlen,
 						       const char *basename,
 						       int *dtype,
-						       struct exclude_list *el)
+						       struct exclude_list *el,
+						       struct index_state *istate)
 {
 	struct exclude *exc = NULL; /* undecided */
 	int i;
@@ -976,7 +977,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
-				*dtype = get_dtype(NULL, &the_index, pathname, pathlen);
+				*dtype = get_dtype(NULL, istate, pathname, pathlen);
 			if (*dtype != DT_DIR)
 				continue;
 		}
@@ -1012,13 +1013,14 @@ int is_excluded_from_list(const char *pathname,
 			  struct exclude_list *el)
 {
 	struct exclude *exclude;
-	exclude = last_exclude_matching_from_list(pathname, pathlen, basename, dtype, el);
+	exclude = last_exclude_matching_from_list(pathname, pathlen, basename, dtype, el, &the_index);
 	if (exclude)
 		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return -1; /* undecided */
 }
 
 static struct exclude *last_exclude_matching_from_lists(struct dir_struct *dir,
+							struct index_state *istate,
 		const char *pathname, int pathlen, const char *basename,
 		int *dtype_p)
 {
@@ -1030,7 +1032,7 @@ static struct exclude *last_exclude_matching_from_lists(struct dir_struct *dir,
 		for (j = group->nr - 1; j >= 0; j--) {
 			exclude = last_exclude_matching_from_list(
 				pathname, pathlen, basename, dtype_p,
-				&group->el[j]);
+				&group->el[j], istate);
 			if (exclude)
 				return exclude;
 		}
@@ -1121,6 +1123,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 			int dt = DT_DIR;
 			dir->basebuf.buf[stk->baselen - 1] = 0;
 			dir->exclude = last_exclude_matching_from_lists(dir,
+									&the_index,
 				dir->basebuf.buf, stk->baselen - 1,
 				dir->basebuf.buf + current, &dt);
 			dir->basebuf.buf[stk->baselen - 1] = '/';
@@ -1209,7 +1212,7 @@ struct exclude *last_exclude_matching(struct dir_struct *dir,
 	if (dir->exclude)
 		return dir->exclude;
 
-	return last_exclude_matching_from_lists(dir, pathname, pathlen,
+	return last_exclude_matching_from_lists(dir, &the_index, pathname, pathlen,
 			basename, dtype_p);
 }
 
