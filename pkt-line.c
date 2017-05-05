@@ -315,7 +315,7 @@ static char *packet_read_line_generic(int fd,
 			      PACKET_READ_CHOMP_NEWLINE);
 	if (dst_len)
 		*dst_len = len;
-	return len ? packet_buffer : NULL;
+	return (len > 0) ? packet_buffer : NULL;
 }
 
 char *packet_read_line(int fd, int *len_p)
