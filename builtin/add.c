@@ -436,7 +436,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			     !file_exists(path))) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
-					if (is_excluded(&dir, path, &dtype))
+					if (is_excluded(&dir, &the_index, path, &dtype))
 						dir_add_ignored(&dir, &the_index,
 								path, pathspec.items[i].len);
 				} else

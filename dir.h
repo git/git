@@ -236,9 +236,12 @@ extern int match_pathname(const char *, int,
 			  const char *, int, int, unsigned);
 
 extern struct exclude *last_exclude_matching(struct dir_struct *dir,
+					     struct index_state *istate,
 					     const char *name, int *dtype);
 
-extern int is_excluded(struct dir_struct *dir, const char *name, int *dtype);
+extern int is_excluded(struct dir_struct *dir,
+		       struct index_state *istate,
+		       const char *name, int *dtype);
 
 extern struct exclude_list *add_exclude_list(struct dir_struct *dir,
 					     int group_type, const char *src);

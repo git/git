@@ -101,7 +101,8 @@ static int check_ignore(struct dir_struct *dir,
 		full_path = pathspec.items[i].match;
 		exclude = NULL;
 		if (!seen[i]) {
-			exclude = last_exclude_matching(dir, full_path, &dtype);
+			exclude = last_exclude_matching(dir, &the_index,
+							full_path, &dtype);
 		}
 		if (!quiet && (exclude || show_non_matching))
 			output_exclude(pathspec.items[i].original, exclude);

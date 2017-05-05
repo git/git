@@ -1204,19 +1204,20 @@ static void prep_exclude(struct dir_struct *dir,
  * undecided.
  */
 struct exclude *last_exclude_matching(struct dir_struct *dir,
-					     const char *pathname,
-					     int *dtype_p)
+				      struct index_state *istate,
+				      const char *pathname,
+				      int *dtype_p)
 {
 	int pathlen = strlen(pathname);
 	const char *basename = strrchr(pathname, '/');
 	basename = (basename) ? basename+1 : pathname;
 
-	prep_exclude(dir, &the_index, pathname, basename-pathname);
+	prep_exclude(dir, istate, pathname, basename-pathname);
 
 	if (dir->exclude)
 		return dir->exclude;
 
-	return last_exclude_matching_from_lists(dir, &the_index, pathname, pathlen,
+	return last_exclude_matching_from_lists(dir, istate, pathname, pathlen,
 			basename, dtype_p);
 }
 
@@ -1225,10 +1226,11 @@ struct exclude *last_exclude_matching(struct dir_struct *dir,
  * scans all exclude lists to determine whether pathname is excluded.
  * Returns 1 if true, otherwise 0.
  */
-int is_excluded(struct dir_struct *dir, const char *pathname, int *dtype_p)
+int is_excluded(struct dir_struct *dir, struct index_state *istate,
+		const char *pathname, int *dtype_p)
 {
 	struct exclude *exclude =
-		last_exclude_matching(dir, pathname, dtype_p);
+		last_exclude_matching(dir, istate, pathname, dtype_p);
 	if (exclude)
 		return exclude->flags & EXC_FLAG_NEGATIVE ? 0 : 1;
 	return 0;
@@ -1573,7 +1575,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	    (directory_exists_in_index(&the_index, path->buf, path->len) == index_nonexistent))
 		return path_none;
 
-	exclude = is_excluded(dir, path->buf, &dtype);
+	exclude = is_excluded(dir, &the_index, path->buf, &dtype);
 
 	/*
 	 * Excluded? If we don't explicitly want to show
