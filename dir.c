@@ -7,6 +7,7 @@
  * Copyright (C) Linus Torvalds, 2005-2006
  *		 Junio Hamano, 2005-2006
  */
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "dir.h"
 #include "attr.h"
@@ -596,12 +597,12 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 	void *data;
 
 	len = strlen(path);
-	pos = cache_name_pos(path, len);
+	pos = index_name_pos(&the_index, path, len);
 	if (pos < 0)
 		return NULL;
-	if (!ce_skip_worktree(active_cache[pos]))
+	if (!ce_skip_worktree(the_index.cache[pos]))
 		return NULL;
-	data = read_sha1_file(active_cache[pos]->oid.hash, &type, &sz);
+	data = read_sha1_file(the_index.cache[pos]->oid.hash, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -609,7 +610,7 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
 	*size = xsize_t(sz);
 	if (sha1_stat) {
 		memset(&sha1_stat->stat, 0, sizeof(sha1_stat->stat));
-		hashcpy(sha1_stat->sha1, active_cache[pos]->oid.hash);
+		hashcpy(sha1_stat->sha1, the_index.cache[pos]->oid.hash);
 	}
 	return data;
 }
@@ -785,12 +786,12 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			    !match_stat_data_racy(&the_index, &sha1_stat->stat, &st))
 				; /* no content change, ss->sha1 still good */
 			else if (check_index &&
-				 (pos = cache_name_pos(fname, strlen(fname))) >= 0 &&
-				 !ce_stage(active_cache[pos]) &&
-				 ce_uptodate(active_cache[pos]) &&
+				 (pos = index_name_pos(&the_index, fname, strlen(fname))) >= 0 &&
+				 !ce_stage(the_index.cache[pos]) &&
+				 ce_uptodate(the_index.cache[pos]) &&
 				 !would_convert_to_git(fname))
 				hashcpy(sha1_stat->sha1,
-					active_cache[pos]->oid.hash);
+					the_index.cache[pos]->oid.hash);
 			else
 				hash_sha1_file(buf, size, "blob", sha1_stat->sha1);
 			fill_stat_data(&sha1_stat->stat, &st);
@@ -1235,7 +1236,7 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 
 static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (cache_file_exists(pathname, len, ignore_case))
+	if (index_file_exists(&the_index, pathname, len, ignore_case))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
@@ -1244,7 +1245,7 @@ static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathna
 
 struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (!cache_name_is_other(pathname, len))
+	if (!index_name_is_other(&the_index, pathname, len))
 		return NULL;
 
 	ALLOC_GROW(dir->ignored, dir->ignored_nr+1, dir->ignored_alloc);
@@ -1266,10 +1267,10 @@ static enum exist_status directory_exists_in_index_icase(const char *dirname, in
 {
 	struct cache_entry *ce;
 
-	if (cache_dir_exists(dirname, len))
+	if (index_dir_exists(&the_index, dirname, len))
 		return index_directory;
 
-	ce = cache_file_exists(dirname, len, ignore_case);
+	ce = index_file_exists(&the_index, dirname, len, ignore_case);
 	if (ce && S_ISGITLINK(ce->ce_mode))
 		return index_gitdir;
 
@@ -1290,11 +1291,11 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
 	if (ignore_case)
 		return directory_exists_in_index_icase(dirname, len);
 
-	pos = cache_name_pos(dirname, len);
+	pos = index_name_pos(&the_index, dirname, len);
 	if (pos < 0)
 		pos = -pos-1;
-	while (pos < active_nr) {
-		const struct cache_entry *ce = active_cache[pos++];
+	while (pos < the_index.cache_nr) {
+		const struct cache_entry *ce = the_index.cache[pos++];
 		unsigned char endchar;
 
 		if (strncmp(ce->name, dirname, len))
@@ -1460,7 +1461,7 @@ static int get_index_dtype(const char *path, int len)
 	int pos;
 	const struct cache_entry *ce;
 
-	ce = cache_file_exists(path, len, 0);
+	ce = index_file_exists(&the_index, path, len, 0);
 	if (ce) {
 		if (!ce_uptodate(ce))
 			return DT_UNKNOWN;
@@ -1474,12 +1475,12 @@ static int get_index_dtype(const char *path, int len)
 	}
 
 	/* Try to look it up as a directory */
-	pos = cache_name_pos(path, len);
+	pos = index_name_pos(&the_index, path, len);
 	if (pos >= 0)
 		return DT_UNKNOWN;
 	pos = -pos-1;
-	while (pos < active_nr) {
-		ce = active_cache[pos++];
+	while (pos < the_index.cache_nr) {
+		ce = the_index.cache[pos++];
 		if (strncmp(ce->name, path, len))
 			break;
 		if (ce->name[len] > '/')
@@ -1522,7 +1523,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  int dtype, struct dirent *de)
 {
 	int exclude;
-	int has_path_in_index = !!cache_file_exists(path->buf, path->len, ignore_case);
+	int has_path_in_index = !!index_file_exists(&the_index, path->buf, path->len, ignore_case);
 
 	if (dtype == DT_UNKNOWN)
 		dtype = get_dtype(de, path->buf, path->len);
