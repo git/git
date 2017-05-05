@@ -48,7 +48,8 @@ struct cached_dir {
 static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	const char *path, int len, struct untracked_cache_dir *untracked,
 	int check_only, const struct pathspec *pathspec);
-static int get_dtype(struct dirent *de, const char *path, int len);
+static int get_dtype(struct dirent *de, struct index_state *istate,
+		     const char *path, int len);
 
 int fspathcmp(const char *a, const char *b)
 {
@@ -975,7 +976,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
-				*dtype = get_dtype(NULL, pathname, pathlen);
+				*dtype = get_dtype(NULL, &the_index, pathname, pathlen);
 			if (*dtype != DT_DIR)
 				continue;
 		}
@@ -1459,12 +1460,13 @@ static int exclude_matches_pathspec(const char *path, int pathlen,
 	return 0;
 }
 
-static int get_index_dtype(const char *path, int len)
+static int get_index_dtype(struct index_state *istate,
+			   const char *path, int len)
 {
 	int pos;
 	const struct cache_entry *ce;
 
-	ce = index_file_exists(&the_index, path, len, 0);
+	ce = index_file_exists(istate, path, len, 0);
 	if (ce) {
 		if (!ce_uptodate(ce))
 			return DT_UNKNOWN;
@@ -1478,12 +1480,12 @@ static int get_index_dtype(const char *path, int len)
 	}
 
 	/* Try to look it up as a directory */
-	pos = index_name_pos(&the_index, path, len);
+	pos = index_name_pos(istate, path, len);
 	if (pos >= 0)
 		return DT_UNKNOWN;
 	pos = -pos-1;
-	while (pos < the_index.cache_nr) {
-		ce = the_index.cache[pos++];
+	while (pos < istate->cache_nr) {
+		ce = istate->cache[pos++];
 		if (strncmp(ce->name, path, len))
 			break;
 		if (ce->name[len] > '/')
@@ -1497,14 +1499,15 @@ static int get_index_dtype(const char *path, int len)
 	return DT_UNKNOWN;
 }
 
-static int get_dtype(struct dirent *de, const char *path, int len)
+static int get_dtype(struct dirent *de, struct index_state *istate,
+		     const char *path, int len)
 {
 	int dtype = de ? DTYPE(de) : DT_UNKNOWN;
 	struct stat st;
 
 	if (dtype != DT_UNKNOWN)
 		return dtype;
-	dtype = get_index_dtype(path, len);
+	dtype = get_index_dtype(istate, path, len);
 	if (dtype != DT_UNKNOWN)
 		return dtype;
 	if (lstat(path, &st))
@@ -1529,7 +1532,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	int has_path_in_index = !!index_file_exists(&the_index, path->buf, path->len, ignore_case);
 
 	if (dtype == DT_UNKNOWN)
-		dtype = get_dtype(de, path->buf, path->len);
+		dtype = get_dtype(de, &the_index, path->buf, path->len);
 
 	/* Always exclude indexed files */
 	if (dtype != DT_DIR && has_path_in_index)
