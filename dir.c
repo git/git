@@ -46,7 +46,8 @@ struct cached_dir {
 };
 
 static enum path_treatment read_directory_recursive(struct dir_struct *dir,
-	const char *path, int len, struct untracked_cache_dir *untracked,
+	struct index_state *istate, const char *path, int len,
+	struct untracked_cache_dir *untracked,
 	int check_only, const struct pathspec *pathspec);
 static int get_dtype(struct dirent *de, struct index_state *istate,
 		     const char *path, int len);
@@ -1362,12 +1363,13 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
  *  (c) otherwise, we recurse into it.
  */
 static enum path_treatment treat_directory(struct dir_struct *dir,
+	struct index_state *istate,
 	struct untracked_cache_dir *untracked,
 	const char *dirname, int len, int baselen, int exclude,
 	const struct pathspec *pathspec)
 {
 	/* The "len-1" is to strip the final '/' */
-	switch (directory_exists_in_index(&the_index, dirname, len-1)) {
+	switch (directory_exists_in_index(istate, dirname, len-1)) {
 	case index_directory:
 		return path_recurse;
 
@@ -1392,7 +1394,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 
 	untracked = lookup_untracked(dir->untracked, untracked,
 				     dirname + baselen, len - baselen);
-	return read_directory_recursive(dir, dirname, len,
+	return read_directory_recursive(dir, istate, dirname, len,
 					untracked, 1, pathspec);
 }
 
@@ -1536,16 +1538,17 @@ static int get_dtype(struct dirent *de, struct index_state *istate,
 
 static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  struct untracked_cache_dir *untracked,
+					  struct index_state *istate,
 					  struct strbuf *path,
 					  int baselen,
 					  const struct pathspec *pathspec,
 					  int dtype, struct dirent *de)
 {
 	int exclude;
-	int has_path_in_index = !!index_file_exists(&the_index, path->buf, path->len, ignore_case);
+	int has_path_in_index = !!index_file_exists(istate, path->buf, path->len, ignore_case);
 
 	if (dtype == DT_UNKNOWN)
-		dtype = get_dtype(de, &the_index, path->buf, path->len);
+		dtype = get_dtype(de, istate, path->buf, path->len);
 
 	/* Always exclude indexed files */
 	if (dtype != DT_DIR && has_path_in_index)
@@ -1572,10 +1575,10 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	if ((dir->flags & DIR_COLLECT_KILLED_ONLY) &&
 	    (dtype == DT_DIR) &&
 	    !has_path_in_index &&
-	    (directory_exists_in_index(&the_index, path->buf, path->len) == index_nonexistent))
+	    (directory_exists_in_index(istate, path->buf, path->len) == index_nonexistent))
 		return path_none;
 
-	exclude = is_excluded(dir, &the_index, path->buf, &dtype);
+	exclude = is_excluded(dir, istate, path->buf, &dtype);
 
 	/*
 	 * Excluded? If we don't explicitly want to show
@@ -1589,7 +1592,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		return path_none;
 	case DT_DIR:
 		strbuf_addch(path, '/');
-		return treat_directory(dir, untracked, path->buf, path->len,
+		return treat_directory(dir, istate, untracked, path->buf, path->len,
 				       baselen, exclude, pathspec);
 	case DT_REG:
 	case DT_LNK:
@@ -1600,6 +1603,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 static enum path_treatment treat_path_fast(struct dir_struct *dir,
 					   struct untracked_cache_dir *untracked,
 					   struct cached_dir *cdir,
+					   struct index_state *istate,
 					   struct strbuf *path,
 					   int baselen,
 					   const struct pathspec *pathspec)
@@ -1618,7 +1622,7 @@ static enum path_treatment treat_path_fast(struct dir_struct *dir,
 		 * to its bottom. Verify again the same set of directories
 		 * with check_only set.
 		 */
-		return read_directory_recursive(dir, path->buf, path->len,
+		return read_directory_recursive(dir, istate, path->buf, path->len,
 						cdir->ucd, 1, pathspec);
 	/*
 	 * We get path_recurse in the first run when
@@ -1632,6 +1636,7 @@ static enum path_treatment treat_path_fast(struct dir_struct *dir,
 static enum path_treatment treat_path(struct dir_struct *dir,
 				      struct untracked_cache_dir *untracked,
 				      struct cached_dir *cdir,
+				      struct index_state *istate,
 				      struct strbuf *path,
 				      int baselen,
 				      const struct pathspec *pathspec)
@@ -1640,7 +1645,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 	struct dirent *de = cdir->de;
 
 	if (!de)
-		return treat_path_fast(dir, untracked, cdir, path,
+		return treat_path_fast(dir, untracked, cdir, istate, path,
 				       baselen, pathspec);
 	if (is_dot_or_dotdot(de->d_name) || !strcmp(de->d_name, ".git"))
 		return path_none;
@@ -1650,7 +1655,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 		return path_none;
 
 	dtype = DTYPE(de);
-	return treat_one_path(dir, untracked, path, baselen, pathspec, dtype, de);
+	return treat_one_path(dir, untracked, istate, path, baselen, pathspec, dtype, de);
 }
 
 static void add_untracked(struct untracked_cache_dir *dir, const char *name)
@@ -1781,9 +1786,9 @@ static void close_cached_dir(struct cached_dir *cdir)
  * Returns the most significant path_treatment value encountered in the scan.
  */
 static enum path_treatment read_directory_recursive(struct dir_struct *dir,
-				    const char *base, int baselen,
-				    struct untracked_cache_dir *untracked, int check_only,
-				    const struct pathspec *pathspec)
+	struct index_state *istate, const char *base, int baselen,
+	struct untracked_cache_dir *untracked, int check_only,
+	const struct pathspec *pathspec)
 {
 	struct cached_dir cdir;
 	enum path_treatment state, subdir_state, dir_state = path_none;
@@ -1791,7 +1796,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 
 	strbuf_add(&path, base, baselen);
 
-	if (open_cached_dir(&cdir, dir, untracked, &the_index, &path, check_only))
+	if (open_cached_dir(&cdir, dir, untracked, istate, &path, check_only))
 		goto out;
 
 	if (untracked)
@@ -1799,7 +1804,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 
 	while (!read_cached_dir(&cdir)) {
 		/* check how the file or directory should be treated */
-		state = treat_path(dir, untracked, &cdir, &path,
+		state = treat_path(dir, untracked, &cdir, istate, &path,
 				   baselen, pathspec);
 
 		if (state > dir_state)
@@ -1812,7 +1817,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 					      path.buf + baselen,
 					      path.len - baselen);
 			subdir_state =
-				read_directory_recursive(dir, path.buf,
+				read_directory_recursive(dir, istate, path.buf,
 							 path.len, ud,
 							 check_only, pathspec);
 			if (subdir_state > dir_state)
@@ -1834,18 +1839,18 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 		switch (state) {
 		case path_excluded:
 			if (dir->flags & DIR_SHOW_IGNORED)
-				dir_add_name(dir, &the_index, path.buf, path.len);
+				dir_add_name(dir, istate, path.buf, path.len);
 			else if ((dir->flags & DIR_SHOW_IGNORED_TOO) ||
 				((dir->flags & DIR_COLLECT_IGNORED) &&
 				exclude_matches_pathspec(path.buf, path.len,
 							 pathspec)))
-				dir_add_ignored(dir, &the_index, path.buf, path.len);
+				dir_add_ignored(dir, istate, path.buf, path.len);
 			break;
 
 		case path_untracked:
 			if (dir->flags & DIR_SHOW_IGNORED)
 				break;
-			dir_add_name(dir, &the_index, path.buf, path.len);
+			dir_add_name(dir, istate, path.buf, path.len);
 			if (cdir.fdir)
 				add_untracked(untracked, path.buf + baselen);
 			break;
@@ -1870,6 +1875,7 @@ static int cmp_name(const void *p1, const void *p2)
 }
 
 static int treat_leading_path(struct dir_struct *dir,
+			      struct index_state *istate,
 			      const char *path, int len,
 			      const struct pathspec *pathspec)
 {
@@ -1897,7 +1903,7 @@ static int treat_leading_path(struct dir_struct *dir,
 			break;
 		if (simplify_away(sb.buf, sb.len, pathspec))
 			break;
-		if (treat_one_path(dir, NULL, &sb, baselen, pathspec,
+		if (treat_one_path(dir, NULL, istate, &sb, baselen, pathspec,
 				   DT_DIR, NULL) == path_none)
 			break; /* do not recurse into it */
 		if (len <= baselen) {
@@ -2080,8 +2086,8 @@ int read_directory(struct dir_struct *dir, const char *path,
 		 * e.g. prep_exclude()
 		 */
 		dir->untracked = NULL;
-	if (!len || treat_leading_path(dir, path, len, pathspec))
-		read_directory_recursive(dir, path, len, untracked, 0, pathspec);
+	if (!len || treat_leading_path(dir, &the_index, path, len, pathspec))
+		read_directory_recursive(dir, &the_index, path, len, untracked, 0, pathspec);
 	QSORT(dir->entries, dir->nr, cmp_name);
 	QSORT(dir->ignored, dir->ignored_nr, cmp_name);
 	if (dir->untracked) {
