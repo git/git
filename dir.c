@@ -190,7 +190,7 @@ int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec)
 	prefix = prefix_len ? pathspec->items[0].match : "";
 
 	/* Read the directory and prune it */
-	read_directory(dir, prefix, prefix_len, pathspec);
+	read_directory(dir, &the_index, prefix, prefix_len, pathspec);
 
 	return prefix_len;
 }
@@ -2071,8 +2071,8 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	return root;
 }
 
-int read_directory(struct dir_struct *dir, const char *path,
-		   int len, const struct pathspec *pathspec)
+int read_directory(struct dir_struct *dir, struct index_state *istate,
+		   const char *path, int len, const struct pathspec *pathspec)
 {
 	struct untracked_cache_dir *untracked;
 
@@ -2086,8 +2086,8 @@ int read_directory(struct dir_struct *dir, const char *path,
 		 * e.g. prep_exclude()
 		 */
 		dir->untracked = NULL;
-	if (!len || treat_leading_path(dir, &the_index, path, len, pathspec))
-		read_directory_recursive(dir, &the_index, path, len, untracked, 0, pathspec);
+	if (!len || treat_leading_path(dir, istate, path, len, pathspec))
+		read_directory_recursive(dir, istate, path, len, untracked, 0, pathspec);
 	QSORT(dir->entries, dir->nr, cmp_name);
 	QSORT(dir->ignored, dir->ignored_nr, cmp_name);
 	if (dir->untracked) {
@@ -2101,12 +2101,12 @@ int read_directory(struct dir_struct *dir, const char *path,
 				 dir->untracked->gitignore_invalidated,
 				 dir->untracked->dir_invalidated,
 				 dir->untracked->dir_opened);
-		if (dir->untracked == the_index.untracked &&
+		if (dir->untracked == istate->untracked &&
 		    (dir->untracked->dir_opened ||
 		     dir->untracked->gitignore_invalidated ||
 		     dir->untracked->dir_invalidated))
-			the_index.cache_changed |= UNTRACKED_CHANGED;
-		if (dir->untracked != the_index.untracked) {
+			istate->cache_changed |= UNTRACKED_CHANGED;
+		if (dir->untracked != istate->untracked) {
 			free(dir->untracked);
 			dir->untracked = NULL;
 		}
