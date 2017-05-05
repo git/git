@@ -1664,6 +1664,7 @@ static void add_untracked(struct untracked_cache_dir *dir, const char *name)
 
 static int valid_cached_dir(struct dir_struct *dir,
 			    struct untracked_cache_dir *untracked,
+			    struct index_state *istate,
 			    struct strbuf *path,
 			    int check_only)
 {
@@ -1678,7 +1679,7 @@ static int valid_cached_dir(struct dir_struct *dir,
 		return 0;
 	}
 	if (!untracked->valid ||
-	    match_stat_data_racy(&the_index, &untracked->stat_data, &st)) {
+	    match_stat_data_racy(istate, &untracked->stat_data, &st)) {
 		if (untracked->valid)
 			invalidate_directory(dir->untracked, untracked);
 		fill_stat_data(&untracked->stat_data, &st);
@@ -1699,10 +1700,10 @@ static int valid_cached_dir(struct dir_struct *dir,
 	 */
 	if (path->len && path->buf[path->len - 1] != '/') {
 		strbuf_addch(path, '/');
-		prep_exclude(dir, &the_index, path->buf, path->len);
+		prep_exclude(dir, istate, path->buf, path->len);
 		strbuf_setlen(path, path->len - 1);
 	} else
-		prep_exclude(dir, &the_index, path->buf, path->len);
+		prep_exclude(dir, istate, path->buf, path->len);
 
 	/* hopefully prep_exclude() haven't invalidated this entry... */
 	return untracked->valid;
@@ -1711,12 +1712,13 @@ static int valid_cached_dir(struct dir_struct *dir,
 static int open_cached_dir(struct cached_dir *cdir,
 			   struct dir_struct *dir,
 			   struct untracked_cache_dir *untracked,
+			   struct index_state *istate,
 			   struct strbuf *path,
 			   int check_only)
 {
 	memset(cdir, 0, sizeof(*cdir));
 	cdir->untracked = untracked;
-	if (valid_cached_dir(dir, untracked, path, check_only))
+	if (valid_cached_dir(dir, untracked, istate, path, check_only))
 		return 0;
 	cdir->fdir = opendir(path->len ? path->buf : ".");
 	if (dir->untracked)
@@ -1789,7 +1791,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 
 	strbuf_add(&path, base, baselen);
 
-	if (open_cached_dir(&cdir, dir, untracked, &path, check_only))
+	if (open_cached_dir(&cdir, dir, untracked, &the_index, &path, check_only))
 		goto out;
 
 	if (untracked)
