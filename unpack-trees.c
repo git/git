@@ -1068,7 +1068,7 @@ static int clear_ce_flags_dir(struct cache_entry **cache, int nr,
 	struct cache_entry **cache_end;
 	int dtype = DT_DIR;
 	int ret = is_excluded_from_list(prefix->buf, prefix->len,
-					basename, &dtype, el);
+					basename, &dtype, el, &the_index);
 	int rc;
 
 	strbuf_addch(prefix, '/');
@@ -1171,7 +1171,7 @@ static int clear_ce_flags_1(struct cache_entry **cache, int nr,
 		/* Non-directory */
 		dtype = ce_to_dtype(ce);
 		ret = is_excluded_from_list(ce->name, ce_namelen(ce),
-					    name, &dtype, el);
+					    name, &dtype, el, &the_index);
 		if (ret < 0)
 			ret = defval;
 		if (ret > 0)
