@@ -219,7 +219,9 @@ extern int read_directory(struct dir_struct *, const char *path, int len, const 
 
 extern int is_excluded_from_list(const char *pathname, int pathlen, const char *basename,
 				 int *dtype, struct exclude_list *el);
-struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len);
+struct dir_entry *dir_add_ignored(struct dir_struct *dir,
+				  struct index_state *istate,
+				  const char *pathname, int len);
 
 /*
  * these implement the matching logic for dir.c:excluded_from_list and

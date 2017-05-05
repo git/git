@@ -1236,18 +1236,22 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 	return ent;
 }
 
-static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
+static struct dir_entry *dir_add_name(struct dir_struct *dir,
+				      struct index_state *istate,
+				      const char *pathname, int len)
 {
-	if (index_file_exists(&the_index, pathname, len, ignore_case))
+	if (index_file_exists(istate, pathname, len, ignore_case))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
-struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
+struct dir_entry *dir_add_ignored(struct dir_struct *dir,
+				  struct index_state *istate,
+				  const char *pathname, int len)
 {
-	if (!index_name_is_other(&the_index, pathname, len))
+	if (!index_name_is_other(istate, pathname, len))
 		return NULL;
 
 	ALLOC_GROW(dir->ignored, dir->ignored_nr+1, dir->ignored_alloc);
@@ -1819,18 +1823,18 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 		switch (state) {
 		case path_excluded:
 			if (dir->flags & DIR_SHOW_IGNORED)
-				dir_add_name(dir, path.buf, path.len);
+				dir_add_name(dir, &the_index, path.buf, path.len);
 			else if ((dir->flags & DIR_SHOW_IGNORED_TOO) ||
 				((dir->flags & DIR_COLLECT_IGNORED) &&
 				exclude_matches_pathspec(path.buf, path.len,
 							 pathspec)))
-				dir_add_ignored(dir, path.buf, path.len);
+				dir_add_ignored(dir, &the_index, path.buf, path.len);
 			break;
 
 		case path_untracked:
 			if (dir->flags & DIR_SHOW_IGNORED)
 				break;
-			dir_add_name(dir, path.buf, path.len);
+			dir_add_name(dir, &the_index, path.buf, path.len);
 			if (cdir.fdir)
 				add_untracked(untracked, path.buf + baselen);
 			break;
