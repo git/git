@@ -677,13 +677,13 @@ int verify_ref_format(const char *format)
  * by the "struct object" representation, set *eaten as well---it is a
  * signal from parse_object_buffer to us not to free the buffer.
  */
-static void *get_obj(const unsigned char *sha1, struct object **obj, unsigned long *sz, int *eaten)
+static void *get_obj(const struct object_id *oid, struct object **obj, unsigned long *sz, int *eaten)
 {
 	enum object_type type;
-	void *buf = read_sha1_file(sha1, &type, sz);
+	void *buf = read_sha1_file(oid->hash, &type, sz);
 
 	if (buf)
-		*obj = parse_object_buffer(sha1, type, *sz, buf, eaten);
+		*obj = parse_object_buffer(oid->hash, type, *sz, buf, eaten);
 	else
 		*obj = NULL;
 	return buf;
@@ -1293,7 +1293,7 @@ static void populate_value(struct ref_array_item *ref)
 	struct object *obj;
 	int eaten, i;
 	unsigned long size;
-	const unsigned char *tagged;
+	const struct object_id *tagged;
 
 	ref->value = xcalloc(used_atom_cnt, sizeof(struct atom_value));
 
@@ -1370,10 +1370,10 @@ static void populate_value(struct ref_array_item *ref)
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
 			const char *head;
-			unsigned char sha1[20];
+			struct object_id oid;
 
 			head = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-						  sha1, NULL);
+						  oid.hash, NULL);
 			if (head && !strcmp(ref->refname, head))
 				v->s = "*";
 			else
@@ -1415,7 +1415,7 @@ static void populate_value(struct ref_array_item *ref)
 	return;
 
  need_obj:
-	buf = get_obj(ref->objectname.hash, &obj, &size, &eaten);
+	buf = get_obj(&ref->objectname, &obj, &size, &eaten);
 	if (!buf)
 		die(_("missing object %s for %s"),
 		    oid_to_hex(&ref->objectname), ref->refname);
@@ -1438,7 +1438,7 @@ static void populate_value(struct ref_array_item *ref)
 	 * If it is a tag object, see if we use a value that derefs
 	 * the object, and if we do grab the object it refers to.
 	 */
-	tagged = ((struct tag *)obj)->tagged->oid.hash;
+	tagged = &((struct tag *)obj)->tagged->oid;
 
 	/*
 	 * NEEDSWORK: This derefs tag only once, which
@@ -1449,10 +1449,10 @@ static void populate_value(struct ref_array_item *ref)
 	buf = get_obj(tagged, &obj, &size, &eaten);
 	if (!buf)
 		die(_("missing object %s for %s"),
-		    sha1_to_hex(tagged), ref->refname);
+		    oid_to_hex(tagged), ref->refname);
 	if (!obj)
 		die(_("parse_object_buffer failed on %s for %s"),
-		    sha1_to_hex(tagged), ref->refname);
+		    oid_to_hex(tagged), ref->refname);
 	grab_values(ref->value, 1, obj, buf, size);
 	if (!eaten)
 		free(buf);
