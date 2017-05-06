@@ -417,7 +417,7 @@ static int find_common(struct fetch_pack_args *args,
 			if (skip_prefix(line, "shallow ", &arg)) {
 				if (get_oid_hex(arg, &oid))
 					die(_("invalid shallow line: %s"), line);
-				register_shallow(oid.hash);
+				register_shallow(&oid);
 				continue;
 			}
 			if (skip_prefix(line, "unshallow ", &arg)) {
@@ -428,7 +428,7 @@ static int find_common(struct fetch_pack_args *args,
 				/* make sure that it is parsed as shallow */
 				if (!parse_object(oid.hash))
 					die(_("error in object: %s"), line);
-				if (unregister_shallow(oid.hash))
+				if (unregister_shallow(&oid))
 					die(_("no shallow found: %s"), line);
 				continue;
 			}

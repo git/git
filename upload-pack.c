@@ -642,7 +642,7 @@ static void send_shallow(struct commit_list *result)
 		if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
 			packet_write_fmt(1, "shallow %s",
 					 oid_to_hex(&object->oid));
-			register_shallow(object->oid.hash);
+			register_shallow(&object->oid);
 			shallow_nr++;
 		}
 		result = result->next;
@@ -667,7 +667,7 @@ static void send_unshallow(const struct object_array *shallows)
 			 * parse and add the parents to the want list, then
 			 * re-register it.
 			 */
-			unregister_shallow(object->oid.hash);
+			unregister_shallow(&object->oid);
 			object->parsed = 0;
 			parse_commit_or_die((struct commit *)object);
 			parents = ((struct commit *)object)->parents;
@@ -679,7 +679,7 @@ static void send_unshallow(const struct object_array *shallows)
 			add_object_array(object, NULL, &extra_edge_obj);
 		}
 		/* make sure commit traversal conforms to client */
-		register_shallow(object->oid.hash);
+		register_shallow(&object->oid);
 	}
 }
 
@@ -883,7 +883,7 @@ static void receive_needs(void)
 		if (shallows.nr > 0) {
 			int i;
 			for (i = 0; i < shallows.nr; i++)
-				register_shallow(shallows.objects[i].item->oid.hash);
+				register_shallow(&shallows.objects[i].item->oid);
 		}
 
 	shallow_nr += shallows.nr;
