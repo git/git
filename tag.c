@@ -144,7 +144,7 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 	if (!strcmp(type, blob_type)) {
 		item->tagged = &lookup_blob(&oid)->object;
 	} else if (!strcmp(type, tree_type)) {
-		item->tagged = &lookup_tree(oid.hash)->object;
+		item->tagged = &lookup_tree(&oid)->object;
 	} else if (!strcmp(type, commit_type)) {
 		item->tagged = &lookup_commit(&oid)->object;
 	} else if (!strcmp(type, tag_type)) {

@@ -1453,9 +1453,9 @@ static void write_index_patch(const struct am_state *state)
 	FILE *fp;
 
 	if (!get_sha1_tree("HEAD", head.hash))
-		tree = lookup_tree(head.hash);
+		tree = lookup_tree(&head);
 	else
-		tree = lookup_tree(EMPTY_TREE_SHA1_BIN);
+		tree = lookup_tree(&empty_tree_oid);
 
 	fp = xfopen(am_path(state, "patch"), "w");
 	init_revisions(&rev_info, NULL);

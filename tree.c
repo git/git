@@ -110,7 +110,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 		len = tree_entry_len(&entry);
 		strbuf_add(base, entry.path, len);
 		strbuf_addch(base, '/');
-		retval = read_tree_1(lookup_tree(oid.hash),
+		retval = read_tree_1(lookup_tree(&oid),
 				     base, stage, pathspec,
 				     fn, context);
 		strbuf_setlen(base, oldlen);
@@ -184,11 +184,11 @@ int read_tree(struct tree *tree, int stage, struct pathspec *match)
 	return 0;
 }
 
-struct tree *lookup_tree(const unsigned char *sha1)
+struct tree *lookup_tree(const struct object_id *oid)
 {
-	struct object *obj = lookup_object(sha1);
+	struct object *obj = lookup_object(oid->hash);
 	if (!obj)
-		return create_object(sha1, alloc_tree_node());
+		return create_object(oid->hash, alloc_tree_node());
 	return object_as_type(obj, OBJ_TREE, 0);
 }
 

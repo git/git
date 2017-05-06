@@ -197,7 +197,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 			obj = &blob->object;
 		}
 	} else if (type == OBJ_TREE) {
-		struct tree *tree = lookup_tree(sha1);
+		struct tree *tree = lookup_tree(&oid);
 		if (tree) {
 			obj = &tree->object;
 			if (!tree->buffer)

@@ -358,7 +358,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			continue;
 
 		if (S_ISDIR(entry.mode)) {
-			obj = &lookup_tree(entry.oid->hash)->object;
+			obj = &lookup_tree(entry.oid)->object;
 			if (name)
 				put_object_name(options, obj, "%s%s/", name,
 					entry.path);

@@ -62,7 +62,7 @@ static int tree_is_complete(const struct object_id *oid)
 	int complete;
 	struct tree *tree;
 
-	tree = lookup_tree(oid->hash);
+	tree = lookup_tree(oid);
 	if (!tree)
 		return 0;
 	if (tree->object.flags & SEEN)

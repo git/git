@@ -67,7 +67,7 @@ static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 	}
 	if (!oidcmp(&two->object.oid, &shifted))
 		return two;
-	return lookup_tree(shifted.hash);
+	return lookup_tree(&shifted);
 }
 
 static struct commit *make_virtual_commit(struct tree *tree, const char *comment)
@@ -304,7 +304,7 @@ struct tree *write_tree_from_memory(struct merge_options *o)
 		return NULL;
 	}
 
-	result = lookup_tree(active_cache_tree->oid.hash);
+	result = lookup_tree(&active_cache_tree->oid);
 
 	return result;
 }
@@ -2042,7 +2042,7 @@ int merge_recursive(struct merge_options *o,
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 
-		tree = lookup_tree(EMPTY_TREE_SHA1_BIN);
+		tree = lookup_tree(&empty_tree_oid);
 		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
 	}
 

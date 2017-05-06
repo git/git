@@ -12,7 +12,7 @@ struct tree {
 	unsigned long size;
 };
 
-struct tree *lookup_tree(const unsigned char *sha1);
+struct tree *lookup_tree(const struct object_id *oid);
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
 

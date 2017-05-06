@@ -1312,7 +1312,7 @@ static struct object_list **process_tree(struct tree *tree,
 	while (tree_entry(&desc, &entry))
 		switch (object_type(entry.mode)) {
 		case OBJ_TREE:
-			p = process_tree(lookup_tree(entry.oid->hash), p);
+			p = process_tree(lookup_tree(entry.oid), p);
 			break;
 		case OBJ_BLOB:
 			p = process_blob(lookup_blob(entry.oid), p);

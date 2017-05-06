@@ -110,7 +110,7 @@ static void process_tree(struct rev_info *revs,
 
 		if (S_ISDIR(entry.mode))
 			process_tree(revs,
-				     lookup_tree(entry.oid->hash),
+				     lookup_tree(entry.oid),
 				     show, base, entry.path,
 				     cb_data);
 		else if (S_ISGITLINK(entry.mode))

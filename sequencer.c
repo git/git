@@ -344,7 +344,7 @@ static int read_oneliner(struct strbuf *buf,
 
 static struct tree *empty_tree(void)
 {
-	return lookup_tree(EMPTY_TREE_SHA1_BIN);
+	return lookup_tree(&empty_tree_oid);
 }
 
 static int error_dirty_index(struct replay_opts *opts)
