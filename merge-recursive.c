@@ -994,11 +994,11 @@ static int merge_file_1(struct merge_options *o,
 				return ret;
 			result->clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
-			result->clean = merge_submodule(result->oid.hash,
+			result->clean = merge_submodule(&result->oid,
 						       one->path,
-						       one->oid.hash,
-						       a->oid.hash,
-						       b->oid.hash,
+						       &one->oid,
+						       &a->oid,
+						       &b->oid,
 						       !o->call_depth);
 		} else if (S_ISLNK(a->mode)) {
 			oidcpy(&result->oid, &a->oid);
