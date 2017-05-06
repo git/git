@@ -55,14 +55,14 @@ struct collect_reflog_cb {
 #define STUDYING	(1u<<11)
 #define REACHABLE	(1u<<12)
 
-static int tree_is_complete(const unsigned char *sha1)
+static int tree_is_complete(const struct object_id *oid)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
 	int complete;
 	struct tree *tree;
 
-	tree = lookup_tree(sha1);
+	tree = lookup_tree(oid->hash);
 	if (!tree)
 		return 0;
 	if (tree->object.flags & SEEN)
@@ -73,7 +73,7 @@ static int tree_is_complete(const unsigned char *sha1)
 	if (!tree->buffer) {
 		enum object_type type;
 		unsigned long size;
-		void *data = read_sha1_file(sha1, &type, &size);
+		void *data = read_sha1_file(oid->hash, &type, &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;
@@ -85,7 +85,7 @@ static int tree_is_complete(const unsigned char *sha1)
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
 		if (!has_sha1_file(entry.oid->hash) ||
-		    (S_ISDIR(entry.mode) && !tree_is_complete(entry.oid->hash))) {
+		    (S_ISDIR(entry.mode) && !tree_is_complete(entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;
 		}
@@ -152,7 +152,7 @@ static int commit_is_complete(struct commit *commit)
 		for (i = 0; i < found.nr; i++) {
 			struct commit *c =
 				(struct commit *)found.objects[i].item;
-			if (!tree_is_complete(c->tree->object.oid.hash)) {
+			if (!tree_is_complete(&c->tree->object.oid)) {
 				is_incomplete = 1;
 				c->object.flags |= INCOMPLETE;
 			}
