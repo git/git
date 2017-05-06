@@ -446,7 +446,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	if (is_rebase_i(opts))
 		o.buffer_output = 2;
 
-	head_tree = parse_tree_indirect(head->hash);
+	head_tree = parse_tree_indirect(head);
 	next_tree = next ? next->tree : empty_tree();
 	base_tree = base ? base->tree : empty_tree();
 

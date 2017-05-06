@@ -232,9 +232,9 @@ void free_tree_buffer(struct tree *tree)
 	tree->object.parsed = 0;
 }
 
-struct tree *parse_tree_indirect(const unsigned char *sha1)
+struct tree *parse_tree_indirect(const struct object_id *oid)
 {
-	struct object *obj = parse_object(sha1);
+	struct object *obj = parse_object(oid->hash);
 	do {
 		if (!obj)
 			return NULL;

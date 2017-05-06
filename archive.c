@@ -369,7 +369,7 @@ static void parse_treeish_arg(const char **argv,
 		archive_time = time(NULL);
 	}
 
-	tree = parse_tree_indirect(oid.hash);
+	tree = parse_tree_indirect(&oid);
 	if (tree == NULL)
 		die("not a tree object");
 
@@ -383,7 +383,7 @@ static void parse_treeish_arg(const char **argv,
 		if (err || !S_ISDIR(mode))
 			die("current working directory is untracked");
 
-		tree = parse_tree_indirect(tree_oid.hash);
+		tree = parse_tree_indirect(&tree_oid);
 	}
 	ar_args->tree = tree;
 	ar_args->commit_sha1 = commit_sha1;

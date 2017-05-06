@@ -421,7 +421,7 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 
 	if (get_oid(tree_name, &oid))
 		die("tree-ish %s not found.", tree_name);
-	tree = parse_tree_indirect(oid.hash);
+	tree = parse_tree_indirect(&oid);
 	if (!tree)
 		die("bad tree-ish %s", tree_name);
 
