@@ -382,7 +382,7 @@ static int fast_forward_to(const struct object_id *to, const struct object_id *f
 	struct strbuf err = STRBUF_INIT;
 
 	read_cache();
-	if (checkout_fast_forward(from->hash, to->hash, 1))
+	if (checkout_fast_forward(from, to, 1))
 		return -1; /* the callee should have complained already */
 
 	strbuf_addf(&sb, _("%s: fast-forward"), _(action_name(opts)));

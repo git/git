@@ -1372,8 +1372,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			goto done;
 		}
 
-		if (checkout_fast_forward(head_commit->object.oid.hash,
-					  commit->object.oid.hash,
+		if (checkout_fast_forward(&head_commit->object.oid,
+					  &commit->object.oid,
 					  overwrite_ignore)) {
 			ret = 1;
 			goto done;
