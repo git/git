@@ -2633,7 +2633,7 @@ static int split_head_update(struct ref_update *update,
 	new_update = ref_transaction_add_update(
 			transaction, "HEAD",
 			update->flags | REF_LOG_ONLY | REF_NODEREF,
-			update->new_sha1, update->old_sha1,
+			update->new_oid.hash, update->old_oid.hash,
 			update->msg);
 
 	item->util = new_update;
@@ -2690,7 +2690,7 @@ static int split_symref_update(struct files_ref_store *refs,
 
 	new_update = ref_transaction_add_update(
 			transaction, referent, new_flags,
-			update->new_sha1, update->old_sha1,
+			update->new_oid.hash, update->old_oid.hash,
 			update->msg);
 
 	new_update->parent_update = update;
@@ -2729,10 +2729,10 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
 			 struct strbuf *err)
 {
 	if (!(update->flags & REF_HAVE_OLD) ||
-		   !hashcmp(oid->hash, update->old_sha1))
+		   !oidcmp(oid, &update->old_oid))
 		return 0;
 
-	if (is_null_sha1(update->old_sha1))
+	if (is_null_oid(&update->old_oid))
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference already exists",
 			    original_update_refname(update));
@@ -2740,13 +2740,13 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference is missing but expected %s",
 			    original_update_refname(update),
-			    sha1_to_hex(update->old_sha1));
+			    oid_to_hex(&update->old_oid));
 	else
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "is at %s but expected %s",
 			    original_update_refname(update),
 			    oid_to_hex(oid),
-			    sha1_to_hex(update->old_sha1));
+			    oid_to_hex(&update->old_oid));
 
 	return -1;
 }
@@ -2773,13 +2773,13 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 {
 	struct strbuf referent = STRBUF_INIT;
 	int mustexist = (update->flags & REF_HAVE_OLD) &&
-		!is_null_sha1(update->old_sha1);
+		!is_null_oid(&update->old_oid);
 	int ret;
 	struct ref_lock *lock;
 
 	files_assert_main_repository(refs, "lock_ref_for_update");
 
-	if ((update->flags & REF_HAVE_NEW) && is_null_sha1(update->new_sha1))
+	if ((update->flags & REF_HAVE_NEW) && is_null_oid(&update->new_oid))
 		update->flags |= REF_DELETING;
 
 	if (head_ref) {
@@ -2861,12 +2861,12 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	    !(update->flags & REF_DELETING) &&
 	    !(update->flags & REF_LOG_ONLY)) {
 		if (!(update->type & REF_ISSYMREF) &&
-		    !hashcmp(lock->old_oid.hash, update->new_sha1)) {
+		    !oidcmp(&lock->old_oid, &update->new_oid)) {
 			/*
 			 * The reference already has the desired
 			 * value, so we don't need to write it.
 			 */
-		} else if (write_ref_to_lockfile(lock, update->new_sha1,
+		} else if (write_ref_to_lockfile(lock, update->new_oid.hash,
 						 err)) {
 			char *write_err = strbuf_detach(err, NULL);
 
@@ -3002,7 +3002,7 @@ static int files_transaction_commit(struct ref_store *ref_store,
 			if (files_log_ref_write(refs,
 						lock->ref_name,
 						lock->old_oid.hash,
-						update->new_sha1,
+						update->new_oid.hash,
 						update->msg, update->flags,
 						err)) {
 				char *old_msg = strbuf_detach(err, NULL);
@@ -3151,7 +3151,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		struct ref_update *update = transaction->updates[i];
 
 		if ((update->flags & REF_HAVE_OLD) &&
-		    !is_null_sha1(update->old_sha1))
+		    !is_null_oid(&update->old_oid))
 			die("BUG: initial ref transaction with old_sha1 set");
 		if (refs_verify_refname_available(&refs->base, update->refname,
 						  &affected_refnames, NULL,
@@ -3172,8 +3172,9 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		struct ref_update *update = transaction->updates[i];
 
 		if ((update->flags & REF_HAVE_NEW) &&
-		    !is_null_sha1(update->new_sha1))
-			add_packed_ref(refs, update->refname, update->new_sha1);
+		    !is_null_oid(&update->new_oid))
+			add_packed_ref(refs, update->refname,
+				       update->new_oid.hash);
 	}
 
 	if (commit_packed_refs(refs)) {
