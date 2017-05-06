@@ -1536,7 +1536,7 @@ static int remote_exists(const char *path)
 	return ret;
 }
 
-static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
+static void fetch_symref(const char *path, char **symref, struct object_id *oid)
 {
 	char *url = xstrfmt("%s%s", repo->url, path);
 	struct strbuf buffer = STRBUF_INIT;
@@ -1549,7 +1549,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 
 	free(*symref);
 	*symref = NULL;
-	hashclr(sha1);
+	oidclr(oid);
 
 	if (buffer.len == 0)
 		return;
@@ -1561,15 +1561,15 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	if (skip_prefix(buffer.buf, "ref: ", &name)) {
 		*symref = xmemdupz(name, buffer.len - (name - buffer.buf));
 	} else {
-		get_sha1_hex(buffer.buf, sha1);
+		get_oid_hex(buffer.buf, oid);
 	}
 
 	strbuf_release(&buffer);
 }
 
-static int verify_merge_base(unsigned char *head_sha1, struct ref *remote)
+static int verify_merge_base(struct object_id *head_oid, struct ref *remote)
 {
-	struct commit *head = lookup_commit_or_die(head_sha1, "HEAD");
+	struct commit *head = lookup_commit_or_die(head_oid->hash, "HEAD");
 	struct commit *branch = lookup_commit_or_die(remote->old_oid.hash, remote->name);
 
 	return in_merge_bases(branch, head);
@@ -1579,7 +1579,7 @@ static int delete_remote_branch(const char *pattern, int force)
 {
 	struct ref *refs = remote_refs;
 	struct ref *remote_ref = NULL;
-	unsigned char head_sha1[20];
+	struct object_id head_oid;
 	char *symref = NULL;
 	int match;
 	int patlen = strlen(pattern);
@@ -1610,7 +1610,7 @@ static int delete_remote_branch(const char *pattern, int force)
 	 * Remote HEAD must be a symref (not exactly foolproof; a remote
 	 * symlink to a symref will look like a symref)
 	 */
-	fetch_symref("HEAD", &symref, head_sha1);
+	fetch_symref("HEAD", &symref, &head_oid);
 	if (!symref)
 		return error("Remote HEAD is not a symref");
 
@@ -1619,7 +1619,7 @@ static int delete_remote_branch(const char *pattern, int force)
 		if (!strcmp(remote_ref->name, symref))
 			return error("Remote branch %s is the current HEAD",
 				     remote_ref->name);
-		fetch_symref(symref, &symref, head_sha1);
+		fetch_symref(symref, &symref, &head_oid);
 	}
 
 	/* Run extra sanity checks if delete is not forced */
@@ -1627,10 +1627,10 @@ static int delete_remote_branch(const char *pattern, int force)
 		/* Remote HEAD must resolve to a known object */
 		if (symref)
 			return error("Remote HEAD symrefs too deep");
-		if (is_null_sha1(head_sha1))
+		if (is_null_oid(&head_oid))
 			return error("Unable to resolve remote HEAD");
-		if (!has_sha1_file(head_sha1))
-			return error("Remote HEAD resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", sha1_to_hex(head_sha1));
+		if (!has_object_file(&head_oid))
+			return error("Remote HEAD resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", oid_to_hex(&head_oid));
 
 		/* Remote branch must resolve to a known object */
 		if (is_null_oid(&remote_ref->old_oid))
@@ -1640,7 +1640,7 @@ static int delete_remote_branch(const char *pattern, int force)
 			return error("Remote branch %s resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", remote_ref->name, oid_to_hex(&remote_ref->old_oid));
 
 		/* Remote branch must be an ancestor of remote HEAD */
-		if (!verify_merge_base(head_sha1, remote_ref)) {
+		if (!verify_merge_base(&head_oid, remote_ref)) {
 			return error("The branch '%s' is not an ancestor "
 				     "of your current HEAD.\n"
 				     "If you are sure you want to delete it,"
