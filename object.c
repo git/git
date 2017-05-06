@@ -190,7 +190,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 
 	obj = NULL;
 	if (type == OBJ_BLOB) {
-		struct blob *blob = lookup_blob(sha1);
+		struct blob *blob = lookup_blob(oid.hash);
 		if (blob) {
 			if (parse_blob_buffer(blob, buffer, size))
 				return NULL;
@@ -251,8 +251,11 @@ struct object *parse_object(const unsigned char *sha1)
 	const unsigned char *repl = lookup_replace_object(sha1);
 	void *buffer;
 	struct object *obj;
+	struct object_id oid;
 
-	obj = lookup_object(sha1);
+	hashcpy(oid.hash, sha1);
+
+	obj = lookup_object(oid.hash);
 	if (obj && obj->parsed)
 		return obj;
 
@@ -263,7 +266,7 @@ struct object *parse_object(const unsigned char *sha1)
 			error("sha1 mismatch %s", sha1_to_hex(repl));
 			return NULL;
 		}
-		parse_blob_buffer(lookup_blob(sha1), NULL, 0);
+		parse_blob_buffer(lookup_blob(oid.hash), NULL, 0);
 		return lookup_object(sha1);
 	}
 

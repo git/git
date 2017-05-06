@@ -785,7 +785,7 @@ static int check_collison(struct object_entry *entry)
 
 static void sha1_object(const void *data, struct object_entry *obj_entry,
 			unsigned long size, enum object_type type,
-			const unsigned char *sha1)
+			const struct object_id *oid)
 {
 	void *new_data = NULL;
 	int collision_test_needed = 0;
@@ -794,7 +794,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 
 	if (startup_info->have_repository) {
 		read_lock();
-		collision_test_needed = has_sha1_file_with_flags(sha1, HAS_SHA1_QUICK);
+		collision_test_needed = has_sha1_file_with_flags(oid->hash, HAS_SHA1_QUICK);
 		read_unlock();
 	}
 
@@ -809,31 +809,31 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 		enum object_type has_type;
 		unsigned long has_size;
 		read_lock();
-		has_type = sha1_object_info(sha1, &has_size);
+		has_type = sha1_object_info(oid->hash, &has_size);
 		if (has_type < 0)
-			die(_("cannot read existing object info %s"), sha1_to_hex(sha1));
+			die(_("cannot read existing object info %s"), oid_to_hex(oid));
 		if (has_type != type || has_size != size)
-			die(_("SHA1 COLLISION FOUND WITH %s !"), sha1_to_hex(sha1));
-		has_data = read_sha1_file(sha1, &has_type, &has_size);
+			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
+		has_data = read_sha1_file(oid->hash, &has_type, &has_size);
 		read_unlock();
 		if (!data)
 			data = new_data = get_data_from_pack(obj_entry);
 		if (!has_data)
-			die(_("cannot read existing object %s"), sha1_to_hex(sha1));
+			die(_("cannot read existing object %s"), oid_to_hex(oid));
 		if (size != has_size || type != has_type ||
 		    memcmp(data, has_data, size) != 0)
-			die(_("SHA1 COLLISION FOUND WITH %s !"), sha1_to_hex(sha1));
+			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
 		free(has_data);
 	}
 
 	if (strict) {
 		read_lock();
 		if (type == OBJ_BLOB) {
-			struct blob *blob = lookup_blob(sha1);
+			struct blob *blob = lookup_blob(oid->hash);
 			if (blob)
 				blob->object.flags |= FLAG_CHECKED;
 			else
-				die(_("invalid blob object %s"), sha1_to_hex(sha1));
+				die(_("invalid blob object %s"), oid_to_hex(oid));
 		} else {
 			struct object *obj;
 			int eaten;
@@ -845,7 +845,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			 * we do not need to free the memory here, as the
 			 * buf is deleted by the caller.
 			 */
-			obj = parse_object_buffer(sha1, type, size, buf, &eaten);
+			obj = parse_object_buffer(oid->hash, type, size, buf, &eaten);
 			if (!obj)
 				die(_("invalid %s"), typename(type));
 			if (do_fsck_object &&
@@ -960,7 +960,7 @@ static void resolve_delta(struct object_entry *delta_obj,
 		       typename(delta_obj->real_type),
 		       delta_obj->idx.oid.hash);
 	sha1_object(result->data, NULL, result->size, delta_obj->real_type,
-		    delta_obj->idx.oid.hash);
+		    &delta_obj->idx.oid);
 	counter_lock();
 	nr_resolved_deltas++;
 	counter_unlock();
@@ -1149,7 +1149,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			nr_delays++;
 		} else
 			sha1_object(data, NULL, obj->size, obj->type,
-				    obj->idx.oid.hash);
+				    &obj->idx.oid);
 		free(data);
 		display_progress(progress, i+1);
 	}
@@ -1176,7 +1176,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			continue;
 		obj->real_type = obj->type;
 		sha1_object(NULL, obj, obj->size, obj->type,
-			    obj->idx.oid.hash);
+			    &obj->idx.oid);
 		nr_delays--;
 	}
 	if (nr_delays)
