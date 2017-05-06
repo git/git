@@ -2157,7 +2157,7 @@ static void am_abort(struct am_state *state)
 	am_rerere_clear();
 
 	curr_branch = resolve_refdup("HEAD", 0, curr_head.hash, NULL);
-	has_curr_head = !is_null_oid(&curr_head);
+	has_curr_head = curr_branch && !is_null_oid(&curr_head);
 	if (!has_curr_head)
 		hashcpy(curr_head.hash, EMPTY_TREE_SHA1_BIN);
 
