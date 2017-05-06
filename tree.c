@@ -58,7 +58,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 {
 	struct tree_desc desc;
 	struct name_entry entry;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int len, oldlen = base->len;
 	enum interesting retval = entry_not_interesting;
 
@@ -87,7 +87,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 		}
 
 		if (S_ISDIR(entry.mode))
-			hashcpy(sha1, entry.oid->hash);
+			oidcpy(&oid, entry.oid);
 		else if (S_ISGITLINK(entry.mode)) {
 			struct commit *commit;
 
@@ -102,7 +102,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 				    oid_to_hex(entry.oid),
 				    base->buf, entry.path);
 
-			hashcpy(sha1, commit->tree->object.oid.hash);
+			oidcpy(&oid, &commit->tree->object.oid);
 		}
 		else
 			continue;
@@ -110,7 +110,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 		len = tree_entry_len(&entry);
 		strbuf_add(base, entry.path, len);
 		strbuf_addch(base, '/');
-		retval = read_tree_1(lookup_tree(sha1),
+		retval = read_tree_1(lookup_tree(oid.hash),
 				     base, stage, pathspec,
 				     fn, context);
 		strbuf_setlen(base, oldlen);
