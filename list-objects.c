@@ -119,7 +119,7 @@ static void process_tree(struct rev_info *revs,
 					cb_data);
 		else
 			process_blob(revs,
-				     lookup_blob(entry.oid->hash),
+				     lookup_blob(entry.oid),
 				     show, base, entry.path,
 				     cb_data);
 	}

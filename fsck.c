@@ -365,7 +365,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
-			obj = &lookup_blob(entry.oid->hash)->object;
+			obj = &lookup_blob(entry.oid)->object;
 			if (name)
 				put_object_name(options, obj, "%s%s", name,
 					entry.path);

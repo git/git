@@ -168,7 +168,7 @@ static struct merge_list *create_entry(unsigned stage, unsigned mode, const stru
 	res->stage = stage;
 	res->path = path;
 	res->mode = mode;
-	res->blob = lookup_blob(oid->hash);
+	res->blob = lookup_blob(oid);
 	return res;
 }
 
