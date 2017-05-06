@@ -180,7 +180,7 @@ static int loop(struct walker *walker)
 			}
 		}
 		if (!obj->type)
-			parse_object(obj->oid.hash);
+			parse_object(&obj->oid);
 		if (process_object(walker, obj))
 			return -1;
 	}

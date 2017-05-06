@@ -142,7 +142,7 @@ static int tipcmp(const void *a_, const void *b_)
 
 static int name_ref(const char *path, const struct object_id *oid, int flags, void *cb_data)
 {
-	struct object *o = parse_object(oid->hash);
+	struct object *o = parse_object(oid);
 	struct name_ref_data *data = cb_data;
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
@@ -200,7 +200,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
 			break; /* broken repository */
-		o = parse_object(t->tagged->oid.hash);
+		o = parse_object(&t->tagged->oid);
 		deref = 1;
 		taggerdate = t->date;
 	}
@@ -385,7 +385,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		}
 
 		commit = NULL;
-		object = parse_object(oid.hash);
+		object = parse_object(&oid);
 		if (object) {
 			struct object *peeled = deref_tag(object, *argv, 0);
 			if (peeled && peeled->type == OBJ_COMMIT)

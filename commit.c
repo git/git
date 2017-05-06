@@ -21,7 +21,7 @@ const char *commit_type = "commit";
 struct commit *lookup_commit_reference_gently(const struct object_id *oid,
 					      int quiet)
 {
-	struct object *obj = deref_tag(parse_object(oid->hash), NULL, 0);
+	struct object *obj = deref_tag(parse_object(oid), NULL, 0);
 
 	if (!obj)
 		return NULL;
@@ -1589,7 +1589,7 @@ struct commit *get_merge_parent(const char *name)
 	struct object_id oid;
 	if (get_sha1(name, oid.hash))
 		return NULL;
-	obj = parse_object(oid.hash);
+	obj = parse_object(&oid);
 	commit = (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
 	if (commit && !commit->util)
 		set_merge_remote_desc(commit, name, obj);

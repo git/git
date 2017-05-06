@@ -78,7 +78,7 @@ static void cache_one_alternate(const char *refname,
 				void *vcache)
 {
 	struct alternate_object_cache *cache = vcache;
-	struct object *obj = parse_object(oid->hash);
+	struct object *obj = parse_object(oid);
 
 	if (!obj || (obj->flags & ALTERNATE))
 		return;
@@ -120,7 +120,7 @@ static void rev_list_push(struct commit *commit, int mark)
 
 static int rev_list_insert_ref(const char *refname, const struct object_id *oid)
 {
-	struct object *o = deref_tag(parse_object(oid->hash), refname, 0);
+	struct object *o = deref_tag(parse_object(oid), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		rev_list_push((struct commit *)o, SEEN);
@@ -137,7 +137,7 @@ static int rev_list_insert_ref_oid(const char *refname, const struct object_id *
 static int clear_marks(const char *refname, const struct object_id *oid,
 		       int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(oid->hash), refname, 0);
+	struct object *o = deref_tag(parse_object(oid), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		clear_commit_marks((struct commit *)o,
@@ -426,7 +426,7 @@ static int find_common(struct fetch_pack_args *args,
 				if (!lookup_object(oid.hash))
 					die(_("object not found: %s"), line);
 				/* make sure that it is parsed as shallow */
-				if (!parse_object(oid.hash))
+				if (!parse_object(&oid))
 					die(_("error in object: %s"), line);
 				if (unregister_shallow(&oid))
 					die(_("no shallow found: %s"), line);
@@ -557,14 +557,14 @@ static struct commit_list *complete;
 
 static int mark_complete(const struct object_id *oid)
 {
-	struct object *o = parse_object(oid->hash);
+	struct object *o = parse_object(oid);
 
 	while (o && o->type == OBJ_TAG) {
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
 			break; /* broken repository */
 		o->flags |= COMPLETE;
-		o = parse_object(t->tagged->oid.hash);
+		o = parse_object(&t->tagged->oid);
 	}
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
@@ -681,7 +681,7 @@ static int everything_local(struct fetch_pack_args *args,
 		if (!has_object_file(&ref->old_oid))
 			continue;
 
-		o = parse_object(ref->old_oid.hash);
+		o = parse_object(&ref->old_oid);
 		if (!o)
 			continue;
 

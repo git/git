@@ -126,7 +126,7 @@ static int commit_is_complete(struct commit *commit)
 		struct commit_list *parent;
 
 		c = (struct commit *)study.objects[--study.nr].item;
-		if (!c->object.parsed && !parse_object(c->object.oid.hash))
+		if (!c->object.parsed && !parse_object(&c->object.oid))
 			c->object.flags |= INCOMPLETE;
 
 		if (c->object.flags & INCOMPLETE) {

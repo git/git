@@ -181,7 +181,7 @@ void add_head_to_pending(struct rev_info *revs)
 	struct object *obj;
 	if (get_oid("HEAD", &oid))
 		return;
-	obj = parse_object(oid.hash);
+	obj = parse_object(&oid);
 	if (!obj)
 		return;
 	add_pending_object(revs, obj, "HEAD");
@@ -193,7 +193,7 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 {
 	struct object *object;
 
-	object = parse_object(oid->hash);
+	object = parse_object(oid);
 	if (!object) {
 		if (revs->ignore_missing)
 			return object;
@@ -228,7 +228,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 			add_pending_object(revs, object, tag->tag);
 		if (!tag->tagged)
 			die("bad tag");
-		object = parse_object(tag->tagged->oid.hash);
+		object = parse_object(&tag->tagged->oid);
 		if (!object) {
 			if (flags & UNINTERESTING)
 				return NULL;
@@ -1200,7 +1200,7 @@ static void handle_one_reflog_commit(struct object_id *oid, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	if (!is_null_oid(oid)) {
-		struct object *o = parse_object(oid->hash);
+		struct object *o = parse_object(oid);
 		if (o) {
 			o->flags |= cb->all_flags;
 			/* ??? CMDLINEFLAGS ??? */
@@ -1479,8 +1479,8 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 				verify_non_filename(revs->prefix, arg);
 			}
 
-			a_obj = parse_object(from_oid.hash);
-			b_obj = parse_object(oid.hash);
+			a_obj = parse_object(&from_oid);
+			b_obj = parse_object(&oid);
 			if (!a_obj || !b_obj) {
 			missing:
 				if (revs->ignore_missing)

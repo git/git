@@ -241,7 +241,7 @@ static int disambiguate_committish_only(const struct object_id *oid, void *cb_da
 		return 0;
 
 	/* We need to do this the hard way... */
-	obj = deref_tag(parse_object(oid->hash), NULL, 0);
+	obj = deref_tag(parse_object(oid), NULL, 0);
 	if (obj && obj->type == OBJ_COMMIT)
 		return 1;
 	return 0;
@@ -265,7 +265,7 @@ static int disambiguate_treeish_only(const struct object_id *oid, void *cb_data_
 		return 0;
 
 	/* We need to do this the hard way... */
-	obj = deref_tag(parse_object(oid->hash), NULL, 0);
+	obj = deref_tag(parse_object(oid), NULL, 0);
 	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_COMMIT))
 		return 1;
 	return 0;
@@ -776,7 +776,7 @@ struct object *peel_to_type(const char *name, int namelen,
 	if (name && !namelen)
 		namelen = strlen(name);
 	while (1) {
-		if (!o || (!o->parsed && !parse_object(o->oid.hash)))
+		if (!o || (!o->parsed && !parse_object(&o->oid)))
 			return NULL;
 		if (expected_type == OBJ_ANY || o->type == expected_type)
 			return o;
@@ -849,12 +849,12 @@ static int peel_onion(const char *name, int len, unsigned char *sha1,
 	if (get_sha1_1(name, sp - name - 2, outer.hash, lookup_flags))
 		return -1;
 
-	o = parse_object(outer.hash);
+	o = parse_object(&outer);
 	if (!o)
 		return -1;
 	if (!expected_type) {
 		o = deref_tag(o, name, sp - name - 2);
-		if (!o || (!o->parsed && !parse_object(o->oid.hash)))
+		if (!o || (!o->parsed && !parse_object(&o->oid)))
 			return -1;
 		hashcpy(sha1, o->oid.hash);
 		return 0;
@@ -981,7 +981,7 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 			  int flag, void *cb_data)
 {
 	struct commit_list **list = cb_data;
-	struct object *object = parse_object(oid->hash);
+	struct object *object = parse_object(oid);
 	if (!object)
 		return 0;
 	if (object->type == OBJ_TAG) {
@@ -1027,7 +1027,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 		int matches;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
-		if (!parse_object(commit->object.oid.hash))
+		if (!parse_object(&commit->object.oid))
 			continue;
 		buf = get_commit_buffer(commit, NULL);
 		p = strstr(buf, "\n\n");

@@ -683,7 +683,7 @@ static void *get_obj(const struct object_id *oid, struct object **obj, unsigned 
 	void *buf = read_sha1_file(oid->hash, &type, sz);
 
 	if (buf)
-		*obj = parse_object_buffer(oid->hash, type, *sz, buf, eaten);
+		*obj = parse_object_buffer(oid, type, *sz, buf, eaten);
 	else
 		*obj = NULL;
 	return buf;
@@ -1687,7 +1687,7 @@ static const struct object_id *match_points_at(struct oid_array *points_at,
 
 	if (oid_array_lookup(points_at, oid) >= 0)
 		return oid;
-	obj = parse_object(oid->hash);
+	obj = parse_object(oid);
 	if (!obj)
 		die(_("malformed object at '%s'"), refname);
 	if (obj->type == OBJ_TAG)

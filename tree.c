@@ -234,7 +234,7 @@ void free_tree_buffer(struct tree *tree)
 
 struct tree *parse_tree_indirect(const struct object_id *oid)
 {
-	struct object *obj = parse_object(oid->hash);
+	struct object *obj = parse_object(oid);
 	do {
 		if (!obj)
 			return NULL;
@@ -247,6 +247,6 @@ struct tree *parse_tree_indirect(const struct object_id *oid)
 		else
 			return NULL;
 		if (!obj->parsed)
-			parse_object(obj->oid.hash);
+			parse_object(&obj->oid);
 	} while (1);
 }

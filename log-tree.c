@@ -105,13 +105,13 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 			warning("invalid replace ref %s", refname);
 			return 0;
 		}
-		obj = parse_object(original_oid.hash);
+		obj = parse_object(&original_oid);
 		if (obj)
 			add_name_decoration(DECORATION_GRAFTED, "replaced", obj);
 		return 0;
 	}
 
-	obj = parse_object(oid->hash);
+	obj = parse_object(oid);
 	if (!obj)
 		return 0;
 
@@ -132,7 +132,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		if (!obj)
 			break;
 		if (!obj->parsed)
-			parse_object(obj->oid.hash);
+			parse_object(&obj->oid);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;

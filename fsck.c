@@ -461,7 +461,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 		return -1;
 
 	if (obj->type == OBJ_NONE)
-		parse_object(obj->oid.hash);
+		parse_object(&obj->oid);
 
 	switch (obj->type) {
 	case OBJ_BLOB:

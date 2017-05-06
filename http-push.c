@@ -724,7 +724,7 @@ static void one_remote_object(const struct object_id *oid)
 
 	obj = lookup_object(oid->hash);
 	if (!obj)
-		obj = parse_object(oid->hash);
+		obj = parse_object(oid);
 
 	/* Ignore remote objects that don't exist locally */
 	if (!obj)
@@ -1462,7 +1462,7 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 		return;
 	}
 
-	o = parse_object(ref->old_oid.hash);
+	o = parse_object(&ref->old_oid);
 	if (!o) {
 		fprintf(stderr,
 			"Unable to parse object %s for remote ref %s\n",

@@ -296,7 +296,7 @@ static int got_oid(const char *hex, struct object_id *oid)
 	if (!has_object_file(oid))
 		return -1;
 
-	o = parse_object(oid->hash);
+	o = parse_object(oid);
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
 	if (o->type == OBJ_COMMIT) {
@@ -334,7 +334,7 @@ static int reachable(struct commit *want)
 			break;
 		}
 		if (!commit->object.parsed)
-			parse_object(commit->object.oid.hash);
+			parse_object(&commit->object.oid);
 		if (commit->object.flags & REACHABLE)
 			continue;
 		commit->object.flags |= REACHABLE;
@@ -755,7 +755,7 @@ static void receive_needs(void)
 			struct object *object;
 			if (get_oid_hex(arg, &oid))
 				die("invalid shallow line: %s", line);
-			object = parse_object(oid.hash);
+			object = parse_object(&oid);
 			if (!object)
 				continue;
 			if (object->type != OBJ_COMMIT)
@@ -821,7 +821,7 @@ static void receive_needs(void)
 		if (parse_feature_request(features, "include-tag"))
 			use_include_tag = 1;
 
-		o = parse_object(oid_buf.hash);
+		o = parse_object(&oid_buf);
 		if (!o) {
 			packet_write_fmt(1,
 					 "ERR upload-pack: not our ref %s",
