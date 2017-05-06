@@ -355,7 +355,7 @@ static void check_one_mergetag(struct commit *commit,
 	int i;
 
 	hash_sha1_file(extra->value, extra->len, typename(OBJ_TAG), tag_oid.hash);
-	tag = lookup_tag(tag_oid.hash);
+	tag = lookup_tag(&tag_oid);
 	if (!tag)
 		die(_("bad mergetag in commit '%s'"), ref);
 	if (parse_tag_buffer(tag, extra->value, extra->len))

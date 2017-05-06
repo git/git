@@ -89,11 +89,11 @@ struct object *deref_tag_noverify(struct object *o)
 	return o;
 }
 
-struct tag *lookup_tag(const unsigned char *sha1)
+struct tag *lookup_tag(const struct object_id *oid)
 {
-	struct object *obj = lookup_object(sha1);
+	struct object *obj = lookup_object(oid->hash);
 	if (!obj)
-		return create_object(sha1, alloc_tag_node());
+		return create_object(oid->hash, alloc_tag_node());
 	return object_as_type(obj, OBJ_TAG, 0);
 }
 
@@ -148,7 +148,7 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 	} else if (!strcmp(type, commit_type)) {
 		item->tagged = &lookup_commit(&oid)->object;
 	} else if (!strcmp(type, tag_type)) {
-		item->tagged = &lookup_tag(oid.hash)->object;
+		item->tagged = &lookup_tag(&oid)->object;
 	} else {
 		error("Unknown type %s", type);
 		item->tagged = NULL;

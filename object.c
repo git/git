@@ -220,7 +220,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 			obj = &commit->object;
 		}
 	} else if (type == OBJ_TAG) {
-		struct tag *tag = lookup_tag(sha1);
+		struct tag *tag = lookup_tag(&oid);
 		if (tag) {
 			if (parse_tag_buffer(tag, buffer, size))
 			       return NULL;
