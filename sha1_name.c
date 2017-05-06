@@ -798,7 +798,7 @@ struct object *peel_to_type(const char *name, int namelen,
 static int peel_onion(const char *name, int len, unsigned char *sha1,
 		      unsigned lookup_flags)
 {
-	unsigned char outer[20];
+	struct object_id outer;
 	const char *sp;
 	unsigned int expected_type = 0;
 	struct object *o;
@@ -846,10 +846,10 @@ static int peel_onion(const char *name, int len, unsigned char *sha1,
 	else if (expected_type == OBJ_TREE)
 		lookup_flags |= GET_SHA1_TREEISH;
 
-	if (get_sha1_1(name, sp - name - 2, outer, lookup_flags))
+	if (get_sha1_1(name, sp - name - 2, outer.hash, lookup_flags))
 		return -1;
 
-	o = parse_object(outer);
+	o = parse_object(outer.hash);
 	if (!o)
 		return -1;
 	if (!expected_type) {
