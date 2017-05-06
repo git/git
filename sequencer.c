@@ -1222,7 +1222,7 @@ static struct todo_item *append_new_todo(struct todo_list *todo_list)
 
 static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 {
-	unsigned char commit_sha1[20];
+	struct object_id commit_oid;
 	char *end_of_object_name;
 	int i, saved, status, padding;
 
@@ -1271,7 +1271,7 @@ static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 	end_of_object_name = (char *) bol + strcspn(bol, " \t\n");
 	saved = *end_of_object_name;
 	*end_of_object_name = '\0';
-	status = get_sha1(bol, commit_sha1);
+	status = get_oid(bol, &commit_oid);
 	*end_of_object_name = saved;
 
 	item->arg = end_of_object_name + strspn(end_of_object_name, " \t");
@@ -1280,7 +1280,7 @@ static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 	if (status < 0)
 		return -1;
 
-	item->commit = lookup_commit_reference(commit_sha1);
+	item->commit = lookup_commit_reference(commit_oid.hash);
 	return !item->commit;
 }
 
@@ -2281,7 +2281,7 @@ static int single_pick(struct commit *cmit, struct replay_opts *opts)
 int sequencer_pick_revisions(struct replay_opts *opts)
 {
 	struct todo_list todo_list = TODO_LIST_INIT;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int i, res;
 
 	assert(opts->revs);
@@ -2289,16 +2289,16 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 		return -1;
 
 	for (i = 0; i < opts->revs->pending.nr; i++) {
-		unsigned char sha1[20];
+		struct object_id oid;
 		const char *name = opts->revs->pending.objects[i].name;
 
 		/* This happens when using --stdin. */
 		if (!strlen(name))
 			continue;
 
-		if (!get_sha1(name, sha1)) {
-			if (!lookup_commit_reference_gently(sha1, 1)) {
-				enum object_type type = sha1_object_info(sha1, NULL);
+		if (!get_oid(name, &oid)) {
+			if (!lookup_commit_reference_gently(oid.hash, 1)) {
+				enum object_type type = sha1_object_info(oid.hash, NULL);
 				return error(_("%s: can't cherry-pick a %s"),
 					name, typename(type));
 			}
@@ -2335,9 +2335,9 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 	if (walk_revs_populate_todo(&todo_list, opts) ||
 			create_seq_dir() < 0)
 		return -1;
-	if (get_sha1("HEAD", sha1) && (opts->action == REPLAY_REVERT))
+	if (get_oid("HEAD", &oid) && (opts->action == REPLAY_REVERT))
 		return error(_("can't revert as initial commit"));
-	if (save_head(sha1_to_hex(sha1)))
+	if (save_head(oid_to_hex(&oid)))
 		return -1;
 	if (save_opts(opts))
 		return -1;

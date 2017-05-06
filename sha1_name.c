@@ -722,14 +722,14 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1,
 static int get_parent(const char *name, int len,
 		      unsigned char *result, int idx)
 {
-	unsigned char sha1[20];
-	int ret = get_sha1_1(name, len, sha1, GET_SHA1_COMMITTISH);
+	struct object_id oid;
+	int ret = get_sha1_1(name, len, oid.hash, GET_SHA1_COMMITTISH);
 	struct commit *commit;
 	struct commit_list *p;
 
 	if (ret)
 		return ret;
-	commit = lookup_commit_reference(sha1);
+	commit = lookup_commit_reference(oid.hash);
 	if (parse_commit(commit))
 		return -1;
 	if (!idx) {
@@ -750,14 +750,14 @@ static int get_parent(const char *name, int len,
 static int get_nth_ancestor(const char *name, int len,
 			    unsigned char *result, int generation)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct commit *commit;
 	int ret;
 
-	ret = get_sha1_1(name, len, sha1, GET_SHA1_COMMITTISH);
+	ret = get_sha1_1(name, len, oid.hash, GET_SHA1_COMMITTISH);
 	if (ret)
 		return ret;
-	commit = lookup_commit_reference(sha1);
+	commit = lookup_commit_reference(oid.hash);
 	if (!commit)
 		return -1;
 

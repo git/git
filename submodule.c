@@ -896,17 +896,17 @@ int push_unpushed_submodules(struct oid_array *commits,
 	return ret;
 }
 
-static int is_submodule_commit_present(const char *path, unsigned char sha1[20])
+static int is_submodule_commit_present(const char *path, struct object_id *oid)
 {
 	int is_present = 0;
-	if (!add_submodule_odb(path) && lookup_commit_reference(sha1)) {
+	if (!add_submodule_odb(path) && lookup_commit_reference(oid->hash)) {
 		/* Even if the submodule is checked out and the commit is
 		 * present, make sure it is reachable from a ref. */
 		struct child_process cp = CHILD_PROCESS_INIT;
 		const char *argv[] = {"rev-list", "-n", "1", NULL, "--not", "--all", NULL};
 		struct strbuf buf = STRBUF_INIT;
 
-		argv[3] = sha1_to_hex(sha1);
+		argv[3] = oid_to_hex(oid);
 		cp.argv = argv;
 		prepare_submodule_repo_env(&cp.env_array);
 		cp.git_cmd = 1;
@@ -937,7 +937,7 @@ static void submodule_collect_changed_cb(struct diff_queue_struct *q,
 			 * being moved around. */
 			struct string_list_item *path;
 			path = unsorted_string_list_lookup(&changed_submodule_paths, p->two->path);
-			if (!path && !is_submodule_commit_present(p->two->path, p->two->oid.hash))
+			if (!path && !is_submodule_commit_present(p->two->path, &p->two->oid))
 				string_list_append(&changed_submodule_paths, xstrdup(p->two->path));
 		} else {
 			/* Submodule is new or was moved here */

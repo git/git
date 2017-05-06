@@ -466,7 +466,7 @@ static uint32_t *paint_alloc(struct paint_info *info)
  * UNINTERESTING or BOTTOM is hit. Set the id-th bit in ref_bitmap for
  * all walked commits.
  */
-static void paint_down(struct paint_info *info, const unsigned char *sha1,
+static void paint_down(struct paint_info *info, const struct object_id *oid,
 		       unsigned int id)
 {
 	unsigned int i, nr;
@@ -475,7 +475,7 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 	size_t bitmap_size = st_mult(sizeof(uint32_t), bitmap_nr);
 	uint32_t *tmp = xmalloc(bitmap_size); /* to be freed before return */
 	uint32_t *bitmap = paint_alloc(info);
-	struct commit *c = lookup_commit_reference_gently(sha1, 1);
+	struct commit *c = lookup_commit_reference_gently(oid->hash, 1);
 	if (!c)
 		return;
 	memset(bitmap, 0, bitmap_size);
@@ -604,7 +604,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	}
 
 	for (i = 0; i < ref->nr; i++)
-		paint_down(&pi, ref->oid[i].hash, i);
+		paint_down(&pi, ref->oid + i, i);
 
 	if (used) {
 		int bitmap_size = ((pi.nr_bits + 31) / 32) * sizeof(uint32_t);
