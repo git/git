@@ -488,7 +488,7 @@ static int is_index_unchanged(void)
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_oid.hash, NULL))
 		return error(_("could not resolve HEAD commit\n"));
 
-	head_commit = lookup_commit(head_oid.hash);
+	head_commit = lookup_commit(&head_oid);
 
 	/*
 	 * If head_commit is NULL, check_commit, called from
@@ -841,7 +841,7 @@ static int update_squash_messages(enum todo_command command,
 
 		if (get_oid("HEAD", &head))
 			return error(_("need a HEAD to fixup"));
-		if (!(head_commit = lookup_commit_reference(head.hash)))
+		if (!(head_commit = lookup_commit_reference(&head)))
 			return error(_("could not read HEAD"));
 		if (!(head_message = get_commit_buffer(head_commit, NULL)))
 			return error(_("could not read HEAD's commit message"));
@@ -1280,7 +1280,7 @@ static int parse_insn_line(struct todo_item *item, const char *bol, char *eol)
 	if (status < 0)
 		return -1;
 
-	item->commit = lookup_commit_reference(commit_oid.hash);
+	item->commit = lookup_commit_reference(&commit_oid);
 	return !item->commit;
 }
 
@@ -2297,7 +2297,7 @@ int sequencer_pick_revisions(struct replay_opts *opts)
 			continue;
 
 		if (!get_oid(name, &oid)) {
-			if (!lookup_commit_reference_gently(oid.hash, 1)) {
+			if (!lookup_commit_reference_gently(&oid, 1)) {
 				enum object_type type = sha1_object_info(oid.hash, NULL);
 				return error(_("%s: can't cherry-pick a %s"),
 					name, typename(type));

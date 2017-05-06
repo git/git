@@ -9,7 +9,7 @@ static struct rev_info log_tree_opt;
 
 static int diff_tree_commit_sha1(const struct object_id *oid)
 {
-	struct commit *commit = lookup_commit_reference(oid->hash);
+	struct commit *commit = lookup_commit_reference(oid);
 	if (!commit)
 		return -1;
 	return log_tree_commit(&log_tree_opt, commit);
@@ -23,7 +23,7 @@ static int stdin_diff_commit(struct commit *commit, const char *p)
 
 	/* Graft the fake parents locally to the commit */
 	while (isspace(*p++) && !parse_oid_hex(p, &oid, &p)) {
-		struct commit *parent = lookup_commit(oid.hash);
+		struct commit *parent = lookup_commit(&oid);
 		if (!pptr) {
 			/* Free the real parent list */
 			free_commit_list(commit->parents);

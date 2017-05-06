@@ -1763,8 +1763,8 @@ static int update_branch(struct branch *b)
 	if (!force_update && !is_null_oid(&old_oid)) {
 		struct commit *old_cmit, *new_cmit;
 
-		old_cmit = lookup_commit_reference_gently(old_oid.hash, 0);
-		new_cmit = lookup_commit_reference_gently(b->oid.hash, 0);
+		old_cmit = lookup_commit_reference_gently(&old_oid, 0);
+		new_cmit = lookup_commit_reference_gently(&b->oid, 0);
 		if (!old_cmit || !new_cmit)
 			return error("Branch %s is missing commits.", b->name);
 

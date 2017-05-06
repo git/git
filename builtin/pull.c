@@ -698,10 +698,10 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 {
 	struct commit_list *revs = NULL, *result;
 
-	commit_list_insert(lookup_commit_reference(curr_head->hash), &revs);
-	commit_list_insert(lookup_commit_reference(merge_head->hash), &revs);
+	commit_list_insert(lookup_commit_reference(curr_head), &revs);
+	commit_list_insert(lookup_commit_reference(merge_head), &revs);
 	if (!is_null_oid(fork_point))
-		commit_list_insert(lookup_commit_reference(fork_point->hash), &revs);
+		commit_list_insert(lookup_commit_reference(fork_point), &revs);
 
 	result = reduce_heads(get_octopus_merge_bases(revs));
 	free_commit_list(revs);
@@ -865,9 +865,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		struct commit_list *list = NULL;
 		struct commit *merge_head, *head;
 
-		head = lookup_commit_reference(orig_head.hash);
+		head = lookup_commit_reference(&orig_head);
 		commit_list_insert(head, &list);
-		merge_head = lookup_commit_reference(merge_heads.oid[0].hash);
+		merge_head = lookup_commit_reference(&merge_heads.oid[0]);
 		if (is_descendant_of(merge_head, list)) {
 			/* we can fast-forward this without invoking rebase */
 			opt_ff = "--ff-only";

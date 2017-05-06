@@ -1123,7 +1123,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (!branch || is_null_oid(&head_oid))
 		head_commit = NULL;
 	else
-		head_commit = lookup_commit_or_die(head_oid.hash, "HEAD");
+		head_commit = lookup_commit_or_die(&head_oid, "HEAD");
 
 	init_diff_ui_defaults();
 	git_config(git_merge_config, NULL);

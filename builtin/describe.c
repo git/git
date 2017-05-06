@@ -281,7 +281,7 @@ static void describe(const char *arg, int last_one)
 
 	if (get_oid(arg, &oid))
 		die(_("Not a valid object name %s"), arg);
-	cmit = lookup_commit_reference(oid.hash);
+	cmit = lookup_commit_reference(&oid);
 	if (!cmit)
 		die(_("%s is not a valid '%s' object"), arg, commit_type);
 
@@ -309,7 +309,7 @@ static void describe(const char *arg, int last_one)
 		struct commit *c;
 		struct commit_name *n = hashmap_iter_first(&names, &iter);
 		for (; n; n = hashmap_iter_next(&iter)) {
-			c = lookup_commit_reference_gently(n->peeled.hash, 1);
+			c = lookup_commit_reference_gently(&n->peeled, 1);
 			if (c)
 				c->util = n;
 		}

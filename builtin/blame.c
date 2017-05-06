@@ -2253,7 +2253,7 @@ static struct commit_list **append_parent(struct commit_list **tail, const struc
 {
 	struct commit *parent;
 
-	parent = lookup_commit_reference(oid->hash);
+	parent = lookup_commit_reference(oid);
 	if (!parent)
 		die("no such commit %s", oid_to_hex(oid));
 	return &commit_list_insert(parent, tail)->next;
@@ -2475,7 +2475,7 @@ static const char *dwim_reverse_initial(struct scoreboard *sb)
 	/* Do we have HEAD? */
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_oid.hash, NULL))
 		return NULL;
-	head_commit = lookup_commit_reference_gently(head_oid.hash, 1);
+	head_commit = lookup_commit_reference_gently(&head_oid, 1);
 	if (!head_commit)
 		return NULL;
 

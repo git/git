@@ -367,7 +367,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 			 * in terms of a tag (e.g. v2.0 from the range
 			 * "v1.0..v2.0")?
 			 */
-			struct commit *one = lookup_commit_reference(oid.hash);
+			struct commit *one = lookup_commit_reference(&oid);
 			struct object *obj;
 
 			if (e->item == &(one->object)) {

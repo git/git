@@ -1395,10 +1395,10 @@ static void prepare_show_merge(struct rev_info *revs)
 
 	if (get_oid("HEAD", &oid))
 		die("--merge without HEAD?");
-	head = lookup_commit_or_die(oid.hash, "HEAD");
+	head = lookup_commit_or_die(&oid, "HEAD");
 	if (get_oid("MERGE_HEAD", &oid))
 		die("--merge without MERGE_HEAD?");
-	other = lookup_commit_or_die(oid.hash, "MERGE_HEAD");
+	other = lookup_commit_or_die(&oid, "MERGE_HEAD");
 	add_pending_object(revs, &head->object, "HEAD");
 	add_pending_object(revs, &other->object, "MERGE_HEAD");
 	bases = get_merge_bases(head, other);
@@ -1500,10 +1500,10 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 
 				a = (a_obj->type == OBJ_COMMIT
 				     ? (struct commit *)a_obj
-				     : lookup_commit_reference(a_obj->oid.hash));
+				     : lookup_commit_reference(&a_obj->oid));
 				b = (b_obj->type == OBJ_COMMIT
 				     ? (struct commit *)b_obj
-				     : lookup_commit_reference(b_obj->oid.hash));
+				     : lookup_commit_reference(&b_obj->oid));
 				if (!a || !b)
 					goto missing;
 				exclude = get_merge_bases(a, b);

@@ -182,8 +182,11 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 
 struct object *parse_object_buffer(const unsigned char *sha1, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
 {
+	struct object_id oid;
 	struct object *obj;
 	*eaten_p = 0;
+
+	hashcpy(oid.hash, sha1);
 
 	obj = NULL;
 	if (type == OBJ_BLOB) {
@@ -206,7 +209,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 			}
 		}
 	} else if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(sha1);
+		struct commit *commit = lookup_commit(&oid);
 		if (commit) {
 			if (parse_commit_buffer(commit, buffer, size))
 				return NULL;

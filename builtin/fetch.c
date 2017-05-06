@@ -636,8 +636,8 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	}
 
-	current = lookup_commit_reference_gently(ref->old_oid.hash, 1);
-	updated = lookup_commit_reference_gently(ref->new_oid.hash, 1);
+	current = lookup_commit_reference_gently(&ref->old_oid, 1);
+	updated = lookup_commit_reference_gently(&ref->new_oid, 1);
 	if (!current || !updated) {
 		const char *msg;
 		const char *what;
@@ -770,7 +770,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				continue;
 			}
 
-			commit = lookup_commit_reference_gently(rm->old_oid.hash, 1);
+			commit = lookup_commit_reference_gently(&rm->old_oid,
+								1);
 			if (!commit)
 				rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
 

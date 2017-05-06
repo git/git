@@ -447,8 +447,8 @@ static void show_submodule_header(FILE *f, const char *path,
 	 * Attempt to lookup the commit references, and determine if this is
 	 * a fast forward or fast backwards update.
 	 */
-	*left = lookup_commit_reference(one->hash);
-	*right = lookup_commit_reference(two->hash);
+	*left = lookup_commit_reference(one);
+	*right = lookup_commit_reference(two);
 
 	/*
 	 * Warn about missing commits in the submodule project, but only if
@@ -634,7 +634,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 {
 	int *has_commit = data;
 
-	if (!lookup_commit_reference(oid->hash))
+	if (!lookup_commit_reference(oid))
 		*has_commit = 0;
 
 	return 0;
@@ -899,7 +899,7 @@ int push_unpushed_submodules(struct oid_array *commits,
 static int is_submodule_commit_present(const char *path, struct object_id *oid)
 {
 	int is_present = 0;
-	if (!add_submodule_odb(path) && lookup_commit_reference(oid->hash)) {
+	if (!add_submodule_odb(path) && lookup_commit_reference(oid)) {
 		/* Even if the submodule is checked out and the commit is
 		 * present, make sure it is reachable from a ref. */
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -1592,9 +1592,9 @@ int merge_submodule(struct object_id *result, const char *path,
 		return 0;
 	}
 
-	if (!(commit_base = lookup_commit_reference(base->hash)) ||
-	    !(commit_a = lookup_commit_reference(a->hash)) ||
-	    !(commit_b = lookup_commit_reference(b->hash))) {
+	if (!(commit_base = lookup_commit_reference(base)) ||
+	    !(commit_a = lookup_commit_reference(a)) ||
+	    !(commit_b = lookup_commit_reference(b))) {
 		MERGE_WARNING(path, "commits not present");
 		return 0;
 	}

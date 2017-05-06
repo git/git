@@ -328,7 +328,7 @@ static void replace_parents(struct strbuf *buf, int argc, const char **argv)
 		struct object_id oid;
 		if (get_oid(argv[i], &oid) < 0)
 			die(_("Not a valid object name: '%s'"), argv[i]);
-		lookup_commit_or_die(oid.hash, argv[i]);
+		lookup_commit_or_die(&oid, argv[i]);
 		strbuf_addf(&new_parents, "parent %s\n", oid_to_hex(&oid));
 	}
 
@@ -394,7 +394,7 @@ static int create_graft(int argc, const char **argv, int force)
 
 	if (get_oid(old_ref, &old) < 0)
 		die(_("Not a valid object name: '%s'"), old_ref);
-	commit = lookup_commit_or_die(old.hash, old_ref);
+	commit = lookup_commit_or_die(&old, old_ref);
 
 	buffer = get_commit_buffer(commit, &size);
 	strbuf_add(&buf, buffer, size);

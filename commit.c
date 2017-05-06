@@ -18,38 +18,38 @@ int save_commit_buffer = 1;
 
 const char *commit_type = "commit";
 
-struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
+struct commit *lookup_commit_reference_gently(const struct object_id *oid,
 					      int quiet)
 {
-	struct object *obj = deref_tag(parse_object(sha1), NULL, 0);
+	struct object *obj = deref_tag(parse_object(oid->hash), NULL, 0);
 
 	if (!obj)
 		return NULL;
 	return object_as_type(obj, OBJ_COMMIT, quiet);
 }
 
-struct commit *lookup_commit_reference(const unsigned char *sha1)
+struct commit *lookup_commit_reference(const struct object_id *oid)
 {
-	return lookup_commit_reference_gently(sha1, 0);
+	return lookup_commit_reference_gently(oid, 0);
 }
 
-struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_name)
+struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name)
 {
-	struct commit *c = lookup_commit_reference(sha1);
+	struct commit *c = lookup_commit_reference(oid);
 	if (!c)
 		die(_("could not parse %s"), ref_name);
-	if (hashcmp(sha1, c->object.oid.hash)) {
+	if (oidcmp(oid, &c->object.oid)) {
 		warning(_("%s %s is not a commit!"),
-			ref_name, sha1_to_hex(sha1));
+			ref_name, oid_to_hex(oid));
 	}
 	return c;
 }
 
-struct commit *lookup_commit(const unsigned char *sha1)
+struct commit *lookup_commit(const struct object_id *oid)
 {
-	struct object *obj = lookup_object(sha1);
+	struct object *obj = lookup_object(oid->hash);
 	if (!obj)
-		return create_object(sha1, alloc_commit_node());
+		return create_object(oid->hash, alloc_commit_node());
 	return object_as_type(obj, OBJ_COMMIT, 0);
 }
 
@@ -60,7 +60,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 
 	if (get_sha1_committish(name, oid.hash))
 		return NULL;
-	commit = lookup_commit_reference(oid.hash);
+	commit = lookup_commit_reference(&oid);
 	if (parse_commit(commit))
 		return NULL;
 	return commit;
@@ -350,7 +350,7 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 		 */
 		if (graft && (graft->nr_parent < 0 || grafts_replace_parents))
 			continue;
-		new_parent = lookup_commit(parent.hash);
+		new_parent = lookup_commit(&parent);
 		if (new_parent)
 			pptr = &commit_list_insert(new_parent, pptr)->next;
 	}
@@ -358,7 +358,7 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 		int i;
 		struct commit *new_parent;
 		for (i = 0; i < graft->nr_parent; i++) {
-			new_parent = lookup_commit(graft->parent[i].hash);
+			new_parent = lookup_commit(&graft->parent[i]);
 			if (!new_parent)
 				continue;
 			pptr = &commit_list_insert(new_parent, pptr)->next;
@@ -562,7 +562,7 @@ void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark)
 
 	for (i = 0; i < a->nr; i++) {
 		object = a->objects[i].item;
-		commit = lookup_commit_reference_gently(object->oid.hash, 1);
+		commit = lookup_commit_reference_gently(&object->oid, 1);
 		if (commit)
 			clear_commit_marks(commit, mark);
 	}
