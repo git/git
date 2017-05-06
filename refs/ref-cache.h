@@ -185,7 +185,7 @@ struct ref_entry *create_dir_entry(struct ref_cache *cache,
 				   int incomplete);
 
 struct ref_entry *create_ref_entry(const char *refname,
-				   const unsigned char *sha1, int flag,
+				   const struct object_id *oid, int flag,
 				   int check_name);
 
 /*
