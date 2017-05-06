@@ -563,7 +563,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 	diff_setup_done(&diff_opts);
 
 	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
+		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
 		diff_tree_sha1(parent->tree->object.oid.hash,
 			       origin->commit->tree->object.oid.hash,
@@ -633,7 +633,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 	diff_setup_done(&diff_opts);
 
 	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
+		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
 		diff_tree_sha1(parent->tree->object.oid.hash,
 			       origin->commit->tree->object.oid.hash,
@@ -1272,7 +1272,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 		DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 
 	if (is_null_oid(&target->commit->object.oid))
-		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
+		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
 		diff_tree_sha1(parent->tree->object.oid.hash,
 			       target->commit->tree->object.oid.hash,
