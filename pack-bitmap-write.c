@@ -73,7 +73,8 @@ void bitmap_writer_build_type_index(struct pack_idx_entry **index,
 			break;
 
 		default:
-			real_type = sha1_object_info(entry->idx.sha1, NULL);
+			real_type = sha1_object_info(entry->idx.oid.hash,
+						     NULL);
 			break;
 		}
 
@@ -96,7 +97,8 @@ void bitmap_writer_build_type_index(struct pack_idx_entry **index,
 
 		default:
 			die("Missing type information for %s (%d/%d)",
-			    sha1_to_hex(entry->idx.sha1), real_type, entry->type);
+			    oid_to_hex(&entry->idx.oid), real_type,
+			    entry->type);
 		}
 	}
 }
@@ -459,7 +461,7 @@ static inline void dump_bitmap(struct sha1file *f, struct ewah_bitmap *bitmap)
 static const unsigned char *sha1_access(size_t pos, void *table)
 {
 	struct pack_idx_entry **index = table;
-	return index[pos]->sha1;
+	return index[pos]->oid.hash;
 }
 
 static void write_selected_commits_v1(struct sha1file *f,

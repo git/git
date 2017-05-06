@@ -67,7 +67,7 @@ struct pack_idx_header {
  * Common part of object structure used for write_idx_file
  */
 struct pack_idx_entry {
-	unsigned char sha1[20];
+	struct object_id oid;
 	uint32_t crc32;
 	off_t offset;
 };

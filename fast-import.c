@@ -565,7 +565,7 @@ static struct object_entry *new_object(struct object_id *oid)
 		alloc_objects(object_entry_alloc);
 
 	e = blocks->next_free++;
-	hashcpy(e->idx.sha1, oid->hash);
+	oidcpy(&e->idx.oid, oid);
 	return e;
 }
 
@@ -574,7 +574,7 @@ static struct object_entry *find_object(struct object_id *oid)
 	unsigned int h = oid->hash[0] << 8 | oid->hash[1];
 	struct object_entry *e;
 	for (e = object_table[h]; e; e = e->next)
-		if (!hashcmp(oid->hash, e->idx.sha1))
+		if (!oidcmp(oid, &e->idx.oid))
 			return e;
 	return NULL;
 }
@@ -585,7 +585,7 @@ static struct object_entry *insert_object(struct object_id *oid)
 	struct object_entry *e = object_table[h];
 
 	while (e) {
-		if (!hashcmp(oid->hash, e->idx.sha1))
+		if (!oidcmp(oid, &e->idx.oid))
 			return e;
 		e = e->next;
 	}
@@ -1849,7 +1849,7 @@ static void dump_marks_helper(FILE *f,
 		for (k = 0; k < 1024; k++) {
 			if (m->data.marked[k])
 				fprintf(f, ":%" PRIuMAX " %s\n", base + k,
-					sha1_to_hex(m->data.marked[k]->idx.sha1));
+					oid_to_hex(&m->data.marked[k]->idx.oid));
 		}
 	}
 }
@@ -2389,7 +2389,7 @@ static void file_change_m(const char *p, struct branch *b)
 
 	if (*p == ':') {
 		oe = find_mark(parse_mark_ref_space(&p));
-		hashcpy(oid.hash, oe->idx.sha1);
+		oidcpy(&oid, &oe->idx.oid);
 	} else if (skip_prefix(p, "inline ", &p)) {
 		inline_data = 1;
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
@@ -2555,7 +2555,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	/* <dataref> or 'inline' */
 	if (*p == ':') {
 		oe = find_mark(parse_mark_ref_space(&p));
-		hashcpy(oid.hash, oe->idx.sha1);
+		oidcpy(&oid, &oe->idx.oid);
 	} else if (skip_prefix(p, "inline ", &p)) {
 		inline_data = 1;
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
@@ -2578,7 +2578,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		struct object_entry *commit_oe = find_mark(commit_mark);
 		if (commit_oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", commit_mark);
-		hashcpy(commit_oid.hash, commit_oe->idx.sha1);
+		oidcpy(&commit_oid, &commit_oe->idx.oid);
 	} else if (!get_oid(p, &commit_oid)) {
 		unsigned long size;
 		char *buf = read_object_with_reference(commit_oid.hash,
@@ -2683,8 +2683,8 @@ static int parse_from(struct branch *b)
 		struct object_entry *oe = find_mark(idnum);
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", idnum);
-		if (hashcmp(b->oid.hash, oe->idx.sha1)) {
-			hashcpy(b->oid.hash, oe->idx.sha1);
+		if (oidcmp(&b->oid, &oe->idx.oid)) {
+			oidcpy(&b->oid, &oe->idx.oid);
 			if (oe->pack_id != MAX_PACK_ID) {
 				unsigned long size;
 				char *buf = gfi_unpack_entry(oe, &size);
@@ -2727,7 +2727,7 @@ static struct hash_list *parse_merge(unsigned int *count)
 			struct object_entry *oe = find_mark(idnum);
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%" PRIuMAX " not a commit", idnum);
-			hashcpy(n->oid.hash, oe->idx.sha1);
+			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!get_oid(from, &n->oid)) {
 			unsigned long size;
 			char *buf = read_object_with_reference(n->oid.hash,
@@ -2884,7 +2884,7 @@ static void parse_new_tag(const char *arg)
 		from_mark = parse_mark_ref_eol(from);
 		oe = find_mark(from_mark);
 		type = oe->type;
-		hashcpy(oid.hash, oe->idx.sha1);
+		oidcpy(&oid, &oe->idx.oid);
 	} else if (!get_oid(from, &oid)) {
 		struct object_entry *oe = find_object(&oid);
 		if (!oe) {
@@ -3014,7 +3014,7 @@ static void parse_get_mark(const char *p)
 	if (!oe)
 		die("Unknown mark: %s", command_buf.buf);
 
-	xsnprintf(output, sizeof(output), "%s\n", sha1_to_hex(oe->idx.sha1));
+	xsnprintf(output, sizeof(output), "%s\n", oid_to_hex(&oe->idx.oid));
 	cat_blob_write(output, GIT_SHA1_HEXSZ + 1);
 }
 
@@ -3028,7 +3028,7 @@ static void parse_cat_blob(const char *p)
 		oe = find_mark(parse_mark_ref_eol(p));
 		if (!oe)
 			die("Unknown mark: %s", command_buf.buf);
-		hashcpy(oid.hash, oe->idx.sha1);
+		oidcpy(&oid, &oe->idx.oid);
 	} else {
 		if (parse_oid_hex(p, &oid, &p))
 			die("Invalid dataref: %s", command_buf.buf);
@@ -3100,7 +3100,7 @@ static struct object_entry *parse_treeish_dataref(const char **p)
 		e = find_mark(parse_mark_ref_space(p));
 		if (!e)
 			die("Unknown mark: %s", command_buf.buf);
-		hashcpy(oid.hash, e->idx.sha1);
+		oidcpy(&oid, &e->idx.oid);
 	} else {	/* <sha1> */
 		if (parse_oid_hex(*p, &oid, p))
 			die("Invalid dataref: %s", command_buf.buf);
@@ -3154,7 +3154,7 @@ static void parse_ls(const char *p, struct branch *b)
 	} else {
 		struct object_entry *e = parse_treeish_dataref(&p);
 		root = new_tree_entry();
-		hashcpy(root->versions[1].oid.hash, e->idx.sha1);
+		oidcpy(&root->versions[1].oid, &e->idx.oid);
 		if (!is_null_oid(&root->versions[1].oid))
 			root->versions[1].mode = S_IFDIR;
 		load_tree(root);
