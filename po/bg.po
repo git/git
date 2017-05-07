@@ -115,8 +115,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git master\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2017-04-30 18:50+0200\n"
-"PO-Revision-Date: 2017-04-30 18:55+0200\n"
+"POT-Creation-Date: 2017-05-05 09:35+0800\n"
+"PO-Revision-Date: 2017-05-07 09:24+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -1247,7 +1247,7 @@ msgstr "Файлът „%s“ не изглежда да е пратка на gi
 msgid "unrecognized header: %s%s (%d)"
 msgstr "непозната заглавна част: %s%s (%d)"
 
-#: bundle.c:87 sequencer.c:1339 sequencer.c:1760 builtin/commit.c:777
+#: bundle.c:87 sequencer.c:1341 sequencer.c:1767 builtin/commit.c:777
 #, c-format
 msgid "could not open '%s'"
 msgstr "„%s“ не може да се отвори"
@@ -1256,7 +1256,7 @@ msgstr "„%s“ не може да се отвори"
 msgid "Repository lacks these prerequisite commits:"
 msgstr "В хранилището липсват следните необходими подавания:"
 
-#: bundle.c:163 ref-filter.c:1852 sequencer.c:1162 sequencer.c:2299
+#: bundle.c:163 ref-filter.c:1852 sequencer.c:1162 sequencer.c:2321
 #: builtin/blame.c:2811 builtin/commit.c:1061 builtin/log.c:353
 #: builtin/log.c:897 builtin/log.c:1347 builtin/log.c:1673 builtin/log.c:1916
 #: builtin/merge.c:359 builtin/shortlog.c:176
@@ -1322,7 +1322,7 @@ msgstr "Командата „git index-pack“ не завърши успешн
 msgid "invalid color value: %.*s"
 msgstr "неправилна стойност за цвят: %.*s"
 
-#: commit.c:40 sequencer.c:1572 builtin/am.c:419 builtin/am.c:455
+#: commit.c:40 sequencer.c:1579 builtin/am.c:419 builtin/am.c:455
 #: builtin/am.c:1489 builtin/am.c:2126
 #, c-format
 msgid "could not parse %s"
@@ -2579,9 +2579,9 @@ msgstr ""
 "„GIT_INDEX_VERSION“.\n"
 "Ще се ползва версия %i"
 
-#: read-cache.c:2375
+#: read-cache.c:2375 sequencer.c:1350 sequencer.c:2048
 #, c-format
-msgid "could not stat '%s"
+msgid "could not stat '%s'"
 msgstr "неуспешно изпълнение на „stat“ върху „%s“"
 
 #: read-cache.c:2388
@@ -3056,12 +3056,12 @@ msgstr ""
 "пътища с „git add ПЪТ…“ или „git rm ПЪТ…“, след което\n"
 "подайте резултата с командата „git commit'“."
 
-#: sequencer.c:294 sequencer.c:1675
+#: sequencer.c:294 sequencer.c:1682
 #, c-format
 msgid "could not lock '%s'"
 msgstr "„%s“ не може да се заключи"
 
-#: sequencer.c:297 sequencer.c:1553 sequencer.c:1680 sequencer.c:1694
+#: sequencer.c:297 sequencer.c:1560 sequencer.c:1687 sequencer.c:1701
 #, c-format
 msgid "could not write to '%s'"
 msgstr "в „%s“ не може да се пише"
@@ -3071,12 +3071,12 @@ msgstr "в „%s“ не може да се пише"
 msgid "could not write eol to '%s'"
 msgstr "краят на ред не може да се запише в „%s“"
 
-#: sequencer.c:305 sequencer.c:1558 sequencer.c:1682
+#: sequencer.c:305 sequencer.c:1565 sequencer.c:1689
 #, c-format
 msgid "failed to finalize '%s'."
 msgstr "„%s“ не може да се завърши."
 
-#: sequencer.c:329 sequencer.c:814 sequencer.c:1579 builtin/am.c:257
+#: sequencer.c:329 sequencer.c:814 sequencer.c:1586 builtin/am.c:257
 #: builtin/commit.c:749 builtin/merge.c:1018
 #, c-format
 msgid "could not read '%s'"
@@ -3251,7 +3251,7 @@ msgstr "неуспешно извличане на съобщението за �
 msgid "%s: cannot parse parent commit %s"
 msgstr "%s: неразпозната стойност за родителското подаване „%s“"
 
-#: sequencer.c:1071 sequencer.c:1820
+#: sequencer.c:1071 sequencer.c:1827
 #, c-format
 msgid "could not rename '%s' to '%s'"
 msgstr "„%s“ не може да се преименува на „%s“"
@@ -3280,132 +3280,132 @@ msgstr "git %s: неуспешно изчитане на индекса"
 msgid "git %s: failed to refresh the index"
 msgstr "git %s: неуспешно обновяване на индекса"
 
-#: sequencer.c:1302
+#: sequencer.c:1303
 #, c-format
 msgid "invalid line %d: %.*s"
 msgstr "неправилен ред %d: %.*s"
 
-#: sequencer.c:1310
+#: sequencer.c:1311
 #, c-format
 msgid "cannot '%s' without a previous commit"
 msgstr "Без предишно подаване не може да се изпълни „%s“"
 
-#: sequencer.c:1342
+#: sequencer.c:1344
 #, c-format
 msgid "could not read '%s'."
 msgstr "от „%s“ не може да се чете."
 
-#: sequencer.c:1349
+#: sequencer.c:1356
 msgid "please fix this using 'git rebase --edit-todo'."
 msgstr "коригирайте това чрез „git rebase --edit-todo“."
 
-#: sequencer.c:1351
+#: sequencer.c:1358
 #, c-format
 msgid "unusable instruction sheet: '%s'"
 msgstr "неизползваем файл с описание на предстоящите действия: „%s“"
 
-#: sequencer.c:1356
+#: sequencer.c:1363
 msgid "no commits parsed."
 msgstr "никое от подаванията не може да се разпознае."
 
-#: sequencer.c:1367
+#: sequencer.c:1374
 msgid "cannot cherry-pick during a revert."
 msgstr ""
 "по време на отмяна на подаване не може да се извърши отбиране на подаване."
 
-#: sequencer.c:1369
+#: sequencer.c:1376
 msgid "cannot revert during a cherry-pick."
 msgstr "по време на отбиране не може да се извърши отмяна на подаване."
 
-#: sequencer.c:1432
+#: sequencer.c:1439
 #, c-format
 msgid "invalid key: %s"
 msgstr "неправилен ключ: „%s“"
 
-#: sequencer.c:1435
+#: sequencer.c:1442
 #, c-format
 msgid "invalid value for %s: %s"
 msgstr "неправилна стойност за „%s“: „%s“"
 
-#: sequencer.c:1492
+#: sequencer.c:1499
 #, c-format
 msgid "malformed options sheet: '%s'"
 msgstr "неправилен файл с опции: „%s“"
 
-#: sequencer.c:1530
+#: sequencer.c:1537
 msgid "a cherry-pick or revert is already in progress"
 msgstr ""
 "в момента вече се извършва отбиране на подавания или пребазиране на клона"
 
-#: sequencer.c:1531
+#: sequencer.c:1538
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
 msgstr "използвайте „git cherry-pick (--continue | --quit | --abort)“"
 
-#: sequencer.c:1534
+#: sequencer.c:1541
 #, c-format
 msgid "could not create sequencer directory '%s'"
 msgstr "директорията за секвенсора „%s“ не може да бъде създадена"
 
-#: sequencer.c:1548
+#: sequencer.c:1555
 msgid "could not lock HEAD"
 msgstr "указателят „HEAD“ не може да се заключи"
 
-#: sequencer.c:1604 sequencer.c:2159
+#: sequencer.c:1611 sequencer.c:2181
 msgid "no cherry-pick or revert in progress"
 msgstr ""
 "в момента не се извършва отбиране на подавания или пребазиране на клона"
 
-#: sequencer.c:1606
+#: sequencer.c:1613
 msgid "cannot resolve HEAD"
 msgstr "Подаването сочено от указателя „HEAD“ не може да бъде открито"
 
-#: sequencer.c:1608 sequencer.c:1642
+#: sequencer.c:1615 sequencer.c:1649
 msgid "cannot abort from a branch yet to be born"
 msgstr ""
 "действието не може да бъде преустановено, когато сте на клон, който тепърва "
 "предстои да бъде създаден"
 
-#: sequencer.c:1628 builtin/grep.c:910
+#: sequencer.c:1635 builtin/grep.c:910
 #, c-format
 msgid "cannot open '%s'"
 msgstr "„%s“ не може да бъде отворен"
 
-#: sequencer.c:1630
+#: sequencer.c:1637
 #, c-format
 msgid "cannot read '%s': %s"
 msgstr "„%s“ не може да бъде прочетен: %s"
 
-#: sequencer.c:1631
+#: sequencer.c:1638
 msgid "unexpected end of file"
 msgstr "неочакван край на файл"
 
-#: sequencer.c:1637
+#: sequencer.c:1644
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
 msgstr ""
 "запазеният преди започването на отбирането файл за указателя „HEAD“ — „%s“ е "
 "повреден"
 
-#: sequencer.c:1648
+#: sequencer.c:1655
 msgid "You seem to have moved HEAD. Not rewinding, check your HEAD!"
 msgstr ""
 "Изглежда указателят „HEAD“ е променен.  Проверете към какво сочи.\n"
 "Не се правят промени."
 
-#: sequencer.c:1785 sequencer.c:2058
+#: sequencer.c:1792 sequencer.c:2080
 msgid "cannot read HEAD"
 msgstr "указателят „HEAD“ не може да бъде прочетен"
 
-#: sequencer.c:1825 builtin/difftool.c:616
+#: sequencer.c:1832 builtin/difftool.c:616
 #, c-format
 msgid "could not copy '%s' to '%s'"
 msgstr "„%s“ не може да се копира като „%s“"
 
-#: sequencer.c:1841
+#: sequencer.c:1848
 msgid "could not read index"
 msgstr "индексът не може да бъде прочетен"
 
-#: sequencer.c:1846
+#: sequencer.c:1853
 #, c-format
 msgid ""
 "execution failed: %s\n"
@@ -3420,11 +3420,11 @@ msgstr ""
 "    git rebase --continue\n"
 "\n"
 
-#: sequencer.c:1852
+#: sequencer.c:1859
 msgid "and made changes to the index and/or the working tree\n"
 msgstr "и промени индекса и/или работното дърво\n"
 
-#: sequencer.c:1858
+#: sequencer.c:1865
 #, c-format
 msgid ""
 "execution succeeded: %s\n"
@@ -3441,17 +3441,17 @@ msgstr ""
 "    git rebase --continue\n"
 "\n"
 
-#: sequencer.c:1913 git-rebase.sh:169
+#: sequencer.c:1920 git-rebase.sh:169
 #, c-format
 msgid "Applied autostash."
 msgstr "Автоматично скатаното е приложено."
 
-#: sequencer.c:1925
+#: sequencer.c:1932
 #, c-format
 msgid "cannot store %s"
 msgstr "„%s“ не може да бъде запазен"
 
-#: sequencer.c:1927 git-rebase.sh:173
+#: sequencer.c:1934 git-rebase.sh:173
 #, c-format
 msgid ""
 "Applying autostash resulted in conflicts.\n"
@@ -3462,57 +3462,57 @@ msgstr ""
 "надеждно скатани.  Можете да пробвате да ги приложите чрез „git stash pop“\n"
 "или да ги изхвърлите чрез „git stash drop“, когато поискате.\n"
 
-#: sequencer.c:2009
+#: sequencer.c:2016
 #, c-format
 msgid "Stopped at %s...  %.*s\n"
 msgstr "Спиране при „%s“…  %.*s\n"
 
-#: sequencer.c:2036
+#: sequencer.c:2058
 #, c-format
 msgid "unknown command %d"
 msgstr "непозната команда %d"
 
-#: sequencer.c:2066
+#: sequencer.c:2088
 msgid "could not read orig-head"
 msgstr "указателят за „orig-head“ не може да се прочете"
 
-#: sequencer.c:2070
+#: sequencer.c:2092
 msgid "could not read 'onto'"
 msgstr "указателят за „onto“ не може да се прочете"
 
-#: sequencer.c:2077
+#: sequencer.c:2099
 #, c-format
 msgid "could not update %s"
 msgstr "„%s“ не може да се обнови"
 
-#: sequencer.c:2084
+#: sequencer.c:2106
 #, c-format
 msgid "could not update HEAD to %s"
 msgstr "„HEAD“ не може да бъде обновен до „%s“"
 
-#: sequencer.c:2168
+#: sequencer.c:2190
 msgid "cannot rebase: You have unstaged changes."
 msgstr "не може да пребазирате, защото има промени, които не са в индекса."
 
-#: sequencer.c:2173
+#: sequencer.c:2195
 msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "указателят „CHERRY_PICK_HEAD“ не може да бъде изтрит"
 
-#: sequencer.c:2182
+#: sequencer.c:2204
 msgid "cannot amend non-existing commit"
 msgstr "несъществуващо подаване не може да се поправи"
 
-#: sequencer.c:2184
+#: sequencer.c:2206
 #, c-format
 msgid "invalid file: '%s'"
 msgstr "неправилен файл: „%s“"
 
-#: sequencer.c:2186
+#: sequencer.c:2208
 #, c-format
 msgid "invalid contents: '%s'"
 msgstr "неправилно съдържание: „%s“"
 
-#: sequencer.c:2189
+#: sequencer.c:2211
 msgid ""
 "\n"
 "You have uncommitted changes in your working tree. Please, commit them\n"
@@ -3522,21 +3522,21 @@ msgstr ""
 "В работното дърво има неподадени промени.  Първо ги подайте, а след това\n"
 "отново изпълнете „git rebase --continue“."
 
-#: sequencer.c:2199
+#: sequencer.c:2221
 msgid "could not commit staged changes."
 msgstr "промените в индекса не могат да бъдат подадени."
 
-#: sequencer.c:2279
+#: sequencer.c:2301
 #, c-format
 msgid "%s: can't cherry-pick a %s"
 msgstr "%s: не може да се отбере „%s“"
 
-#: sequencer.c:2283
+#: sequencer.c:2305
 #, c-format
 msgid "%s: bad revision"
 msgstr "%s: неправилна версия"
 
-#: sequencer.c:2316
+#: sequencer.c:2338
 msgid "can't revert as initial commit"
 msgstr "първоначалното подаване не може да бъде отменено"
 
@@ -13376,7 +13376,7 @@ msgstr "директория за определянето на относите
 msgid "git submodule--helper list [--prefix=<path>] [<path>...]"
 msgstr "git submodule--helper list [--prefix=ПЪТ] [ПЪТ…]"
 
-#: builtin/submodule--helper.c:356 builtin/submodule--helper.c:382
+#: builtin/submodule--helper.c:356 builtin/submodule--helper.c:380
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
 msgstr "Във файла „.gitmodules“ не е открит адрес за пътя към подмодул „%s“"
@@ -13692,30 +13692,6 @@ msgstr "липсва съобщение за етикета"
 #, c-format
 msgid "The tag message has been left in %s\n"
 msgstr "Съобщението за етикета е запазено във файла „%s“\n"
-
-#: builtin/tag.c:312
-msgid "tag: tagging "
-msgstr "tag: етикиране "
-
-#: builtin/tag.c:320
-msgid "object of unknown type"
-msgstr "обект от непознат вид"
-
-#: builtin/tag.c:327
-msgid "commit object"
-msgstr "обект-подаване"
-
-#: builtin/tag.c:335
-msgid "tree object"
-msgstr "обект-дърво"
-
-#: builtin/tag.c:338
-msgid "blob object"
-msgstr "обект-blob"
-
-#: builtin/tag.c:341
-msgid "other tag object"
-msgstr "друг обект-етикет"
 
 #: builtin/tag.c:397
 msgid "list tag names"
