@@ -1,22 +1,16 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2017, #01; Mon, 1)
-X-master-at: d2bbb7c2bcf6e77ebfcabf4e12110fe6d5c91de6
-X-next-at: 07d810a77faeacef1f1f4c78e6e47457d65ebbe0
+Subject: What's cooking in git.git (May 2017, #02; Mon, 8)
+X-master-at: 4fa66c85f11bc5a541462ca5ae3246aa0ce02e74
+X-next-at: 57267f22770ebcdb20d119053d99e73c84a1c8da
 
-What's cooking in git.git (May 2017, #01; Mon, 1)
+What's cooking in git.git (May 2017, #02; Mon, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
-
-2.13-rc1 was tagged and we are now in a pre-release freeze.  The
-topics marked to be merged to 'next' in the list below may be merged
-to 'next' as usual, but the ones marked for 'master' may stay in
-'next' until the final release, unless they are small bug/doc fixes
-or hotfixes to topics that are already in -rc1 from now on.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,190 +20,179 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/align-perf-descriptions (2017-04-23) 1 commit
-  (merged to 'next' on 2017-04-26 at 7d66e7019e)
- + t/perf: correctly align non-ASCII descriptions in output
-
- Output from perf tests have been updated to align their titles.
-
-
-* jk/complete-checkout-sans-dwim-remote (2017-04-23) 1 commit
-  (merged to 'next' on 2017-04-26 at 0c69cff69f)
- + completion: optionally disable checkout DWIM
-
- Completion for "git checkout <branch>" that auto-creates the branch
- out of a remote tracking branch can now be disabled, as this
- completion often gets in the way when completing to checkout an
- existing local branch that happens to share the same prefix with
- bunch of remote tracking branches.
-
-
-* jk/prio-queue-avoid-swap-with-self (2017-04-24) 1 commit
-  (merged to 'next' on 2017-04-26 at 6a55996734)
- + prio_queue_reverse: don't swap elements with themselves
-
- Code clean-up.
-
-
-* jk/submodule-init-segv-fix (2017-04-24) 1 commit
-  (merged to 'next' on 2017-04-26 at 9a6eaaff89)
- + submodule_init: die cleanly on submodules without url defined
-
- Fix a segv in 'submodule init' when url is not given for a submodule.
-
-
-* ls/travis-stricter-linux32-builds (2017-04-27) 1 commit
-  (merged to 'next' on 2017-04-28 at b0a56aec83)
- + travis-ci: set DEVELOPER knob for Linux32 build
-
- 32-bit Linux build on Travis CI uses stricter compilation options.
-
-
-* ls/travis-win-fix-status (2017-04-26) 1 commit
-  (merged to 'next' on 2017-04-28 at 5c5e4d3278)
- + travis-ci: printf $STATUS as string
-
- Relaying status from Windows build by Travis CI was done with an
- unsafe invocation of printf.
-
-
-* sh/rebase-i-reread-todo-after-exec (2017-04-27) 1 commit
-  (merged to 'next' on 2017-04-28 at 1ea7e62026)
- + rebase -i: reread the todo list if `exec` touched it
-
- "git rebase -i" failed to re-read the todo list file when the
- command specified with the `exec` instruction updated it.
-
---------------------------------------------------
-[New Topics]
-
-* bw/submodule-with-bs-path (2017-05-01) 1 commit
- - t7400: add !CYGWIN prerequisite to 'add with \\ in path'
-
- A hotfix to a topic that is already in 'master'.
-
- Wait for a few days for Acks and then merge to 'master'.
-
-
-* jk/am-leakfix (2017-04-27) 3 commits
-  (merged to 'next' on 2017-04-30 at 78becd7a96)
- + am: shorten ident_split variable name in get_commit_info()
- + am: simplify allocations in get_commit_info()
- + am: fix commit buffer leak in get_commit_info()
-
- The codepath in "git am" that is used when running "git rebase"
- leaked memory held for the log message of the commits being rebased.
-
- Will cook in 'next'.
-
-
-* js/plug-leaks (2017-04-27) 13 commits
- - checkout: fix memory leak
- - cat-file: fix memory leak
- - mailinfo & mailsplit: check for EOF while parsing mails
- - status: close file descriptor after reading git-rebase-todo
- - difftool: close file descriptors after reading
- - http-backend: avoid memory leaks
- - SQUASH???
- - get_mail_commit_oid(): avoid resource leak
- - git_config_rename_section_in_file(): avoid resource leak
- - add_commit_patch_id(): avoid allocating memory unnecessarily
- - winansi: avoid buffer overrun
- - winansi: avoid use of uninitialized value
- - mingw: avoid memory leak when splitting PATH
-
- An attempt to fix memory leaks pointed out by Coverity.
-
- A reroll exists and needs to be picked up.  What's queued here is
- just an early parts of the first iteration.
-
-
-* sk/status-short-branch-color-config (2017-04-28) 2 commits
-  (merged to 'next' on 2017-04-30 at 2a7eb05d7b)
- + status: add color config slots for branch info in "--short --branch"
- + status: fix missing newline when comment chars are disabled
-
- The colors in which "git status --short --branch" showed the names
- of the current branch and its remote-tracking branch are now
- configurable.
-
- Will cook in 'next'.
-
-
-* jh/close-index-before-stat (2017-04-28) 1 commit
-  (merged to 'next' on 2017-04-30 at 918d4f3378)
- + read-cache: close index.lock in do_write_index
-
- The timestamp of the index file is now taken after the file is
- closed, to help Windows, on which a stale timestamp is reported by
- fstat() on a file that is opened for writing and data was written
- but not yet closed.
-
- Will cook in 'next'.
-
-
-* bw/submodule-has-commits-update (2017-05-01) 6 commits
- - submodule: refactor logic to determine changed submodules
- - submodule: improve submodule_has_commits
- - submodule: change string_list changed_submodule_paths
- - submodule: remove add_oid_to_argv()
- - submodule: rename free_submodules_sha1s()
- - submodule: rename add_sha1_to_array()
-
-
 * ja/i18n-cleanup (2017-05-01) 2 commits
   (merged to 'next' on 2017-04-30 at 8002e53820)
  + i18n: read-cache: typofix
  + i18n: remove i18n from tag reflog message
 
- Will merge to 'master'.
 
+* rg/a-the-typo (2017-05-01) 1 commit
+  (merged to 'next' on 2017-04-30 at a648cf2961)
+ + fix minor typos
 
-* ls/travis-relays-for-windows-ci (2017-05-01) 2 commits
- - travis-ci: handle Git for Windows CI status "failed" explicitly
- - travis-ci: retry if Git for Windows CI returns HTTP error 502 or 503
-
- Will merge to 'next' after a few CI run in 'pu'.
-
-
-* mb/diff-default-to-indent-heuristics (2017-05-01) 5 commits
- - add--interactive: drop diff.indentHeuristic handling
- - SQUASH
- - diff: enable indent heuristic by default
- - diff: have the diff-* builtins configure diff before initializing revisions
- - diff: make the indent heuristic part of diff's basic configuration
-
- Make the "indent" heuristics the default in "diff" and diff.indentHeuristics
- configuration variable an escape hatch for those who do no want it.
-
- The fix-up needs to be squashed in.
+ Typofix.
 
 
 * rg/doc-pull-typofix (2017-05-01) 1 commit
   (merged to 'next' on 2017-04-30 at c2edb4d813)
  + doc: git-pull.txt use US spelling, fix minor typo
 
- Will merge to 'master'.
-
 
 * rg/doc-submittingpatches-wordfix (2017-05-01) 1 commit
   (merged to 'next' on 2017-04-30 at 4065036588)
  + doc: update SubmittingPatches
-
- Will merge to 'master'.
 
 
 * sr/hooks-cwd-doc (2017-05-01) 1 commit
   (merged to 'next' on 2017-04-30 at 063dd5cb02)
  + githooks.txt: clarify push hooks are always executed in $GIT_DIR
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* jn/clone-add-empty-config-from-command-line (2017-05-02) 1 commit
+ - clone: handle empty config values in -c
+
+ "git clone --config var=val" is a way to populate the
+ per-repository configuration file of the new repository, but it did
+ not work well when val is an empty string.  This has been fixed.
+
+ Will merge to 'next'.
 
 
-* tb/dedup-crlf-tests (2017-05-01) 1 commit
- - t0027: Some tests are not expensive
+* jn/credential-doc-on-clear (2017-05-02) 1 commit
+ - credential doc: make multiple-helper behavior more prominent
 
- Will be rerolled.
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* sb/checkout-recurse-submodules (2017-05-04) 3 commits
+ - submodule: properly recurse for read-tree and checkout
+ - submodule: avoid auto-discovery in new working tree manipulator code
+ - submodule_move_head: reuse child_process structure for futher commands
+
+ "git checkout --recurse-submodules" did not quite work with a
+ submodule that itself has submodules. 
+
+ Will merge to 'next'.
+
+
+* ab/aix-needs-compat-regex (2017-05-04) 1 commit
+ - config.mak.uname: set NO_REGEX=NeedsStartEnd on AIX
+
+ Build fix.
+
+ Will merge to 'next'.
+
+
+* ja/do-not-ask-needless-questions (2017-05-04) 3 commits
+ - git-filter-branch: make the error msg when missing branch more open
+ - read-tree -m: make error message for merging 0 trees less smart aleck
+ - usability: don't ask questions if no reply is required
+
+ Git sometimes gives an advice in a rhetorical question that does
+ not require an answer, which can confuse new users and non native
+ speakers.  Attempt to rephrase them.
+
+ I lost track of the discussion on this topic.  Did we decide that
+ this is not a good idea?
+
+
+* ab/doc-replace-gmane-links (2017-05-08) 2 commits
+ - SQAUSH???
+ - doc: replace a couple of broken gmane links
+
+ The Web interface to gmane news archive is long gone, even though
+ the articles are still accessible via NTTP.  Replace the links with
+ ones to public-inbox.org.  Because their message identification is
+ based on the actual message-id, it is likely that it will be easier
+ to migrate away from it if/when necessary.
+
+
+* ab/fix-poison-tests (2017-05-08) 3 commits
+ - travis-ci: add job to run tests with GETTEXT_POISON
+ - travis-ci: setup "prove cache" in "script" step
+ - tests: fix tests broken under GETTEXT_POISON=YesPlease
+
+ Update tests to pass under GETTEXT_POISON (a mechanism to ensure
+ that output strings that should not be translated are not
+ translated by mistake), and tell TravisCI to run them.
+
+ Will merge to 'next' after a few rounds on 'pu'.
+
+
+* bw/dir-c-stops-relying-on-the-index (2017-05-06) 14 commits
+ - dir: convert fill_directory to take an index
+ - dir: convert read_directory to take an index
+ - dir: convert read_directory_recursive to take an index
+ - dir: convert open_cached_dir to take an index
+ - dir: convert is_excluded to take an index
+ - dir: convert prep_exclude to take an index
+ - dir: convert add_excludes to take an index
+ - dir: convert is_excluded_from_list to take an index
+ - dir: convert last_exclude_matching_from_list to take an index
+ - dir: convert dir_add* to take an index
+ - dir: convert get_dtype to take index
+ - dir: convert directory_exists_in_index to take index
+ - dir: convert read_skip_worktree_file_from_index to take an index
+ - dir: stop using the index compatibility macros
+
+ API update.
+
+ Will merge to 'next'.
+
+
+* jk/diff-submodule-diff-inline (2017-05-08) 1 commit
+ - diff: recurse into nested submodules for inline diff
+
+ "git diff --submodule=diff" didn't recurse into nested submodules.
+
+
+* jk/disable-pack-reuse-when-broken (2017-05-08) 1 commit
+ - pack-objects: disable pack reuse for object-selection options
+
+ "pack-objects" can stream a slice of an existing packfile out when
+ the pack bitmap can tell that the reachable objects are all needed
+ in the output, without inspecting individual objects.  This
+ strategy however would not work well when "--local" and other
+ options are in use, and need to be disabled.
+
+
+* js/eol-on-ourselves (2017-05-08) 7 commits
+ - t4051: mark supporting files as requiring LF-only line endings
+ - Fix the remaining tests that failed with core.autocrlf=true
+ - t4003, t4005, t4007 & t4008: handle CR/LF in t/README & t/diff-lib/README
+ - t3901: move supporting files into t/t3901/
+ - completion: mark bash script as LF-only
+ - git-new-workdir: mark script as LF-only
+ - Fix build with core.autocrlf=true
+
+ Make sure our tests would pass when the sources are checked out
+ with "platform native" line ending convention by default on
+ Windows.  Some "text" files out tests use and the test scripts
+ themselves that are meant to be run with /bin/sh, ought to be
+ checked out with eol=LF even on Windows.
+
+
+* nd/split-index-unshare (2017-05-08) 2 commits
+ - p3400: add perf tests for rebasing many changes
+ - split-index: add and use unshare_split_index()
+
+ Plug some leaks and updates internal API used to implement the
+ split index feature to make it easier to avoid such a leak in the
+ future.
+
+ Will merge to 'next'.
+
+
+* rs/checkout-am-fix-unborn (2017-05-08) 2 commits
+ - am: check return value of resolve_refdup before using hash
+ - checkout: check return value of resolve_refdup before using hash
+
+ A few codepaths in "checkout" and "am" working on an unborn branch
+ tried to access an uninitialized piece of memory.
 
 --------------------------------------------------
 [Stalled]
@@ -330,6 +313,123 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bw/submodule-with-bs-path (2017-05-01) 1 commit
+ - t7400: add !CYGWIN prerequisite to 'add with \\ in path'
+
+ A hotfix to a topic that is already in 'master'.
+
+ Wait for a few days for Acks and then merge to 'master'.
+
+
+* jk/am-leakfix (2017-04-27) 3 commits
+  (merged to 'next' on 2017-04-30 at 78becd7a96)
+ + am: shorten ident_split variable name in get_commit_info()
+ + am: simplify allocations in get_commit_info()
+ + am: fix commit buffer leak in get_commit_info()
+
+ The codepath in "git am" that is used when running "git rebase"
+ leaked memory held for the log message of the commits being rebased.
+
+ Will cook in 'next'.
+
+
+* js/plug-leaks (2017-05-08) 26 commits
+ - fixup! checkout: fix memory leak
+ - submodule_uses_worktrees(): plug memory leak
+ - show_worktree(): plug memory leak
+ - name-rev: avoid leaking memory in the `deref` case
+ - remote: plug memory leak in match_explicit()
+ - add_reflog_for_walk: avoid memory leak
+ - shallow: avoid memory leak
+ - line-log: avoid memory leak
+ - receive-pack: plug memory leak in update()
+ - fast-export: avoid leaking memory in handle_tag()
+ - mktree: plug memory leaks reported by Coverity
+ - pack-redundant: plug memory leak
+ - setup_discovered_git_dir(): plug memory leak
+ - setup_bare_git_dir(): help static analysis
+ - split_commit_in_progress(): simplify & fix memory leak
+ - checkout: fix memory leak
+ - cat-file: fix memory leak
+ - mailinfo & mailsplit: check for EOF while parsing
+ - status: close file descriptor after reading git-rebase-todo
+ - difftool: address a couple of resource/memory leaks
+ - get_mail_commit_oid(): avoid resource leak
+ - git_config_rename_section_in_file(): avoid resource leak
+ - add_commit_patch_id(): avoid allocating memory unnecessarily
+ - winansi: avoid buffer overrun
+ - winansi: avoid use of uninitialized value
+ - mingw: avoid memory leak when splitting PATH
+
+ Fix memory leaks pointed out by Coverity.
+
+ All looked sensible.
+
+
+* sk/status-short-branch-color-config (2017-04-28) 2 commits
+  (merged to 'next' on 2017-04-30 at 2a7eb05d7b)
+ + status: add color config slots for branch info in "--short --branch"
+ + status: fix missing newline when comment chars are disabled
+
+ The colors in which "git status --short --branch" showed the names
+ of the current branch and its remote-tracking branch are now
+ configurable.
+
+ Will cook in 'next'.
+
+
+* jh/close-index-before-stat (2017-04-28) 1 commit
+  (merged to 'next' on 2017-04-30 at 918d4f3378)
+ + read-cache: close index.lock in do_write_index
+
+ The timestamp of the index file is now taken after the file is
+ closed, to help Windows, on which a stale timestamp is reported by
+ fstat() on a file that is opened for writing and data was written
+ but not yet closed.
+
+ Will cook in 'next'.
+
+
+* bw/submodule-has-commits-update (2017-05-02) 6 commits
+  (merged to 'next' on 2017-05-08 at 57267f2277)
+ + submodule: refactor logic to determine changed submodules
+ + submodule: improve submodule_has_commits()
+ + submodule: change string_list changed_submodule_paths
+ + submodule: remove add_oid_to_argv()
+ + submodule: rename free_submodules_sha1s()
+ + submodule: rename add_sha1_to_array()
+
+ Code clean-up and duplicate removal.
+
+ Will cook in 'next'.
+
+
+* ls/travis-relays-for-windows-ci (2017-05-04) 2 commits
+ - travis-ci: retry if Git for Windows CI returns HTTP error 502 or 503
+ - travis-ci: handle Git for Windows CI status "failed" explicitly
+
+ Will merge to 'next' after a few CI run in 'pu'.
+
+
+* mb/diff-default-to-indent-heuristics (2017-05-02) 4 commits
+  (merged to 'next' on 2017-05-08 at 158f401a92)
+ + add--interactive: drop diff.indentHeuristic handling
+ + diff: enable indent heuristic by default
+ + diff: have the diff-* builtins configure diff before initializing revisions
+ + diff: make the indent heuristic part of diff's basic configuration
+
+ Make the "indent" heuristics the default in "diff" and diff.indentHeuristics
+ configuration variable an escape hatch for those who do no want it.
+
+ Will cook in 'next'.
+
+
+* tb/dedup-crlf-tests (2017-05-01) 1 commit
+ - t0027: Some tests are not expensive
+
+ Will be rerolled.
+
+
 * jc/repack-threads (2017-04-27) 1 commit
  - repack: accept --threads=<n> and pass it down to pack-objects
 
@@ -358,8 +458,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* nd/fopen-errors (2017-04-23) 17 commits
- - warn_failure_to_open_read_optional_path(): a new helper
+* nd/fopen-errors (2017-05-04) 21 commits
  - t1308: add a test case on open a config directory
  - config.c: handle error on failing to fopen()
  - xdiff-interface.c: report errno on failure to stat() or fopen()
@@ -370,22 +469,25 @@ of the repositories listed at
  - rerere.c: report error on failure to fopen()
  - remote.c: report error on failure to fopen()
  - commit.c: report error on failure to fopen() the graft file
+ - log: fix memory leak in open_next_file()
  - log: report errno on failure to fopen() a file
- - clone: use xfopen() instead of fopen()
  - blame: report error on open if graft_file is a directory
  - bisect: report on fopen() error
+ - ident.c: use fopen_or_warn()
+ - attr.c: use fopen_or_warn()
+ - wrapper.c: add fopen_or_warn()
+ - wrapper.c: add warn_on_fopen_errors()
  - config.mak.uname: set FREAD_READS_DIRECTORIES for Linux and FreeBSD
- - git_fopen: fix a sparse 'not declared' warning
+ - clone: use xfopen() instead of fopen()
+ - Use xfopen() in more places
 
  We often try to open a file for reading whose existence is
  optional, and silently ignore errors from open/fopen; report such
  errors if they are not due to missing files.
 
- Expecting a reroll that would be much simplified thanks to a higher
- level helper.
-
- cf. <xmqqk26e5swj.fsf@gitster.mtv.corp.google.com>
- cf. <CACsJy8D1LuH6qVp15MSkCM_oQphVUUK0r9SeKC5AzX+9Xi2dcw@mail.gmail.com>
+ Need to resurrect "git_fopen: fix a sparse 'not declared' warning".
+ It also seems to cause a test failure on MacOS X.
+ e.g. https://travis-ci.org/git/git/jobs/229585099#L3091
 
 
 * dt/raise-core-packed-git-limit (2017-04-20) 1 commit
@@ -399,7 +501,8 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* js/larger-timestamps (2017-04-27) 8 commits
+* js/larger-timestamps (2017-05-04) 9 commits
+ - archive-tar: fix a sparse 'constant too large' warning
   (merged to 'next' on 2017-04-28 at b56a0d38cd)
  + use uintmax_t for timestamps
  + date.c: abort if the system time cannot handle one of our timestamps
@@ -418,11 +521,12 @@ of the repositories listed at
  move), and then declare uintmax_t is the type to be used as the
  timestamp_t
 
+ The tip one from Ramsay needs to be replaced with a newer one.
+ cf. <70b431dc-c5cc-e376-b63e-6a58ee1385f1@ramsayjones.plus.com>
  Will cook in 'next'.
 
 
-* ab/grep-pcre-v2 (2017-04-25) 20 commits
- - SQUASH???
+* ab/grep-pcre-v2 (2017-05-02) 19 commits
  - Makefile & configure: make PCRE v2 the default PCRE implementation
  - grep: remove support for concurrent use of both PCRE v1 & v2
  - grep: add support for PCRE v2
@@ -447,7 +551,7 @@ of the repositories listed at
  can now be chosen to support "grep -P -e '<pattern>'" and friends.
 
 
-* bc/object-id (2017-04-23) 53 commits
+* bc/object-id (2017-05-08) 53 commits
  - object: convert parse_object* to take struct object_id
  - tree: convert parse_tree_indirect to struct object_id
  - sequencer: convert do_recursive_merge to struct object_id
@@ -504,7 +608,7 @@ of the repositories listed at
 
  Conversion from uchar[20] to struct object_id continues.
 
- Reroll exists and needs to be picked up.
+ Will merge to 'next'.
 
 
 * jk/no-null-sha1-in-cache-tree (2017-04-23) 1 commit
@@ -517,18 +621,10 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* rg/a-the-typo (2017-05-01) 1 commit
-  (merged to 'next' on 2017-04-30 at a648cf2961)
- + fix minor typos
-
- Typofix.
-
- Will merge to 'master'.
-
-
 * rs/large-zip (2017-05-01) 7 commits
- - t5004: require 64-bit support for big ZIP tests
- - archive-zip: set version field for big files correctly
+  (merged to 'next' on 2017-05-02 at a03574e49b)
+ + t5004: require 64-bit support for big ZIP tests
+ + archive-zip: set version field for big files correctly
   (merged to 'next' on 2017-04-26 at a6beab60f2)
  + archive-zip: support files bigger than 4GB
  + archive-zip: support archives bigger than 4GB
@@ -549,7 +645,7 @@ of the repositories listed at
  not update the index when doing its thing.
 
 
-* js/rebase-i-final (2017-04-27) 9 commits
+* js/rebase-i-final (2017-05-02) 10 commits
  - rebase -i: rearrange fixup/squash lines using the rebase--helper
  - t3415: test fixup with wrapped oneline
  - rebase -i: skip unnecessary picks using the rebase--helper
@@ -559,6 +655,7 @@ of the repositories listed at
  - rebase -i: do not invent onelines when expanding/collapsing SHA-1s
  - rebase -i: remove useless indentation
  - rebase -i: generate the script via rebase--helper
+ - t3415: verify that an empty instructionFormat is handled as before
 
  The final batch to "git rebase -i" updates to move more code from
  the shell script to C.
@@ -673,7 +770,8 @@ of the repositories listed at
 
 
 * ls/travis-doc-asciidoctor (2017-04-26) 4 commits
- - travis-ci: check AsciiDoc/AsciiDoctor stderr output
+  (merged to 'next' on 2017-05-04 at 813ba54fc3)
+ + travis-ci: check AsciiDoc/AsciiDoctor stderr output
   (merged to 'next' on 2017-04-19 at 359c32953b)
  + travis-ci: unset compiler for jobs that do not need one
  + travis-ci: parallelize documentation build
@@ -682,7 +780,7 @@ of the repositories listed at
  Have Travis CI format the documentation with both AsciiDoc and
  AsciiDoctor.
 
- Will merge to 'next' after a few CI run in 'pu'.
+ Will cook in 'next'.
 
 
 * mg/status-in-progress-info (2017-04-14) 1 commit
@@ -710,21 +808,22 @@ of the repositories listed at
  Needs review.
 
 
-* bp/sub-process-convert-filter (2017-04-23) 8 commits
+* bp/sub-process-convert-filter (2017-05-08) 10 commits
  - convert: update subprocess_read_status() to not die on EOF
  - sub-process: move sub-process functions into separate files
  - convert: rename reusable sub-process functions
  - convert: update generic functions to only use generic data structures
  - convert: separate generic structures and variables from the filter specific ones
- - convert: split start_multi_file_filter into two separate functions
- - convert: move packet_write_list() into pkt-line as packet_writel()
+ - convert: split start_multi_file_filter() into two separate functions
+ - convert: move packet_write_line() into pkt-line as packet_writel()
  - pkt-line: add packet_read_line_gently()
+ - pkt-line: fix packet_read_line() to handle len < 0 errors
+ - convert: remove erroneous tests for errno == EPIPE
 
  Code from "conversion using external process" codepath has been
  extracted to a separate sub-process.[ch] module.
 
- Reroll exists but needs a bit more work.
- cf. <20170407120354.17736-1-benpeart@microsoft.com>
+ Will merge to 'next'.
 
 
 * mg/name-rev-debug (2017-03-31) 4 commits
