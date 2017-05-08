@@ -28,12 +28,12 @@ static int write_tar_filter_archive(const struct archiver *ar,
 #if ULONG_MAX == 0xFFFFFFFF
 #define USTAR_MAX_SIZE ULONG_MAX
 #else
-#define USTAR_MAX_SIZE 077777777777ULL
+#define USTAR_MAX_SIZE 077777777777UL
 #endif
 #if TIME_MAX == 0xFFFFFFFF
 #define USTAR_MAX_MTIME TIME_MAX
 #else
-#define USTAR_MAX_MTIME 077777777777UL
+#define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
 /* writes out the whole block, but only if it is full */
