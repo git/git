@@ -418,6 +418,11 @@ FILE *fopen_for_writing(const char *path)
 	return ret;
 }
 
+static void warn_on_inaccessible(const char *path)
+{
+	warning_errno(_("unable to access '%s'"), path);
+}
+
 int warn_on_fopen_errors(const char *path)
 {
 	if (errno != ENOENT && errno != ENOTDIR) {
@@ -595,11 +600,6 @@ int rmdir_or_warn(const char *file)
 int remove_or_warn(unsigned int mode, const char *file)
 {
 	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
-}
-
-void warn_on_inaccessible(const char *path)
-{
-	warning_errno(_("unable to access '%s'"), path);
 }
 
 static int access_error_is_ok(int err, unsigned flag)
