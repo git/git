@@ -44,54 +44,62 @@ unreleased) version of Git, that is available from the 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v2.12.2/git.html[documentation for release 2.12.2]
+* link:v2.12.3/git.html[documentation for release 2.12.3]
 
 * release notes for
-  link:RelNotes/2.12.2.txt[2.12.2].
-  link:RelNotes/2.12.1.txt[2.12.1].
+  link:RelNotes/2.12.3.txt[2.12.3],
+  link:RelNotes/2.12.2.txt[2.12.2],
+  link:RelNotes/2.12.1.txt[2.12.1],
   link:RelNotes/2.12.0.txt[2.12].
 
 * link:v2.11.1/git.html[documentation for release 2.11.1]
 
 * release notes for
+  link:RelNotes/2.11.2.txt[2.11.2],
   link:RelNotes/2.11.1.txt[2.11.1],
   link:RelNotes/2.11.0.txt[2.11].
 
-* link:v2.10.2/git.html[documentation for release 2.10.2]
+* link:v2.10.3/git.html[documentation for release 2.10.3]
 
 * release notes for
+  link:RelNotes/2.10.3.txt[2.10.3],
   link:RelNotes/2.10.2.txt[2.10.2],
   link:RelNotes/2.10.1.txt[2.10.1],
   link:RelNotes/2.10.0.txt[2.10].
 
-* link:v2.9.3/git.html[documentation for release 2.9.3]
+* link:v2.9.4/git.html[documentation for release 2.9.4]
 
 * release notes for
+  link:RelNotes/2.9.4.txt[2.9.4],
   link:RelNotes/2.9.3.txt[2.9.3],
   link:RelNotes/2.9.2.txt[2.9.2],
   link:RelNotes/2.9.1.txt[2.9.1],
   link:RelNotes/2.9.0.txt[2.9].
 
-* link:v2.8.4/git.html[documentation for release 2.8.4]
+* link:v2.8.5/git.html[documentation for release 2.8.5]
 
 * release notes for
+  link:RelNotes/2.8.5.txt[2.8.5],
   link:RelNotes/2.8.4.txt[2.8.4],
   link:RelNotes/2.8.3.txt[2.8.3],
   link:RelNotes/2.8.2.txt[2.8.2],
   link:RelNotes/2.8.1.txt[2.8.1],
   link:RelNotes/2.8.0.txt[2.8].
 
-* link:v2.7.3/git.html[documentation for release 2.7.3]
+* link:v2.7.5/git.html[documentation for release 2.7.5]
 
 * release notes for
+  link:RelNotes/2.7.5.txt[2.7.5],
+  link:RelNotes/2.7.4.txt[2.7.4],
   link:RelNotes/2.7.3.txt[2.7.3],
   link:RelNotes/2.7.2.txt[2.7.2],
   link:RelNotes/2.7.1.txt[2.7.1],
   link:RelNotes/2.7.0.txt[2.7].
 
-* link:v2.6.6/git.html[documentation for release 2.6.6]
+* link:v2.6.7/git.html[documentation for release 2.6.7]
 
 * release notes for
+  link:RelNotes/2.6.7.txt[2.6.7],
   link:RelNotes/2.6.6.txt[2.6.6],
   link:RelNotes/2.6.5.txt[2.6.5],
   link:RelNotes/2.6.4.txt[2.6.4],
@@ -100,9 +108,10 @@ Documentation for older releases are available here:
   link:RelNotes/2.6.1.txt[2.6.1],
   link:RelNotes/2.6.0.txt[2.6].
 
-* link:v2.5.5/git.html[documentation for release 2.5.5]
+* link:v2.5.6/git.html[documentation for release 2.5.6]
 
 * release notes for
+  link:RelNotes/2.5.6.txt[2.5.6],
   link:RelNotes/2.5.5.txt[2.5.5],
   link:RelNotes/2.5.4.txt[2.5.4],
   link:RelNotes/2.5.3.txt[2.5.3],
@@ -110,9 +119,10 @@ Documentation for older releases are available here:
   link:RelNotes/2.5.1.txt[2.5.1],
   link:RelNotes/2.5.0.txt[2.5].
 
-* link:v2.4.11/git.html[documentation for release 2.4.11]
+* link:v2.4.12/git.html[documentation for release 2.4.12]
 
 * release notes for
+  link:RelNotes/2.4.12.txt[2.4.12],
   link:RelNotes/2.4.11.txt[2.4.11],
   link:RelNotes/2.4.10.txt[2.4.10],
   link:RelNotes/2.4.9.txt[2.4.9],
