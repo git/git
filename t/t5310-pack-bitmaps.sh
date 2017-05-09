@@ -20,11 +20,13 @@ has_any () {
 }
 
 test_expect_success 'setup repo with moderate-sized history' '
-	for i in $(test_seq 1 10); do
+	for i in $(test_seq 1 10)
+	do
 		test_commit $i
 	done &&
 	git checkout -b other HEAD~5 &&
-	for i in $(test_seq 1 10); do
+	for i in $(test_seq 1 10)
+	do
 		test_commit side-$i
 	done &&
 	git checkout master &&
@@ -104,7 +106,8 @@ test_expect_success 'clone from bitmapped repository' '
 '
 
 test_expect_success 'setup further non-bitmapped commits' '
-	for i in $(test_seq 1 10); do
+	for i in $(test_seq 1 10)
+	do
 		test_commit further-$i
 	done
 '
@@ -300,7 +303,8 @@ test_expect_success 'set up reusable pack' '
 
 test_expect_success 'pack reuse respects --honor-pack-keep' '
 	test_when_finished "rm -f .git/objects/pack/*.keep" &&
-	for i in .git/objects/pack/*.pack; do
+	for i in .git/objects/pack/*.pack
+	do
 		>${i%.pack}.keep
 	done &&
 	reusable_pack --honor-pack-keep >empty.pack &&
