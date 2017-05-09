@@ -100,6 +100,13 @@ static int is_console(int fd)
 	if (!fd) {
 		if (!GetConsoleMode(hcon, &mode))
 			return 0;
+		/*
+		 * This code path is only reached if there is no console
+		 * attached to stdout/stderr, i.e. we will not need to output
+		 * any text to any console, therefore we might just as well
+		 * use black as foreground color.
+		 */
+		sbi.wAttributes = 0;
 	} else if (!GetConsoleScreenBufferInfo(hcon, &sbi))
 		return 0;
 
@@ -128,6 +135,11 @@ static void write_console(unsigned char *str, size_t len)
 
 	/* convert utf-8 to utf-16 */
 	int wlen = xutftowcsn(wbuf, (char*) str, ARRAY_SIZE(wbuf), len);
+	if (wlen < 0) {
+		wchar_t *err = L"[invalid]";
+		WriteConsoleW(console, err, wcslen(err), &dummy, NULL);
+		return;
+	}
 
 	/* write directly to console */
 	WriteConsoleW(console, wbuf, wlen, &dummy, NULL);
