@@ -579,6 +579,13 @@ notes for details).
  * Many stale HTTP(s) links have been updated in our documentation.
    (merge 613416f0be jk/update-links-in-docs later to maint).
 
+ * "git-shell" rejects a request to serve a repository whose name
+   begins with a dash, which makes it no longer possible to get it
+   confused into spawning service programs like "git-upload-pack" with
+   an option like "--help", which in turn would spawn an interactive
+   pager, instead of working with the repository user asked to access
+   (i.e. the one whose name is "--help").
+
  * Other minor doc, test and build updates and code cleanups.
    (merge df2a6e38b7 jk/pager-in-use later to maint).
    (merge 75ec4a6cb0 ab/branch-list-doc later to maint).
