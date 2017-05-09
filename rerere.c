@@ -489,8 +489,9 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 	if (output) {
 		io.io.output = fopen(output, "w");
 		if (!io.io.output) {
+			error_errno("Could not write %s", output);
 			fclose(io.input);
-			return error_errno("Could not write %s", output);
+			return -1;
 		}
 	}
 
