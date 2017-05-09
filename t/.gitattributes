@@ -6,6 +6,7 @@ t[0-9][0-9][0-9][0-9]/* -whitespace
 /t4034/*/* eol=lf
 /t4013/* eol=lf
 /t4018/* eol=lf
+/t4051/* eol=lf
 /t4100/* eol=lf
 /t4101/* eol=lf
 /t4109/* eol=lf
