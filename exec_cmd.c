@@ -12,7 +12,7 @@ char *system_path(const char *path)
 #ifdef RUNTIME_PREFIX
 	static const char *prefix;
 #else
-	static const char *prefix = PREFIX;
+	static const char *prefix = FALLBACK_RUNTIME_PREFIX;
 #endif
 	struct strbuf d = STRBUF_INIT;
 
@@ -27,7 +27,7 @@ char *system_path(const char *path)
 	    !(prefix = strip_path_suffix(argv0_path, GIT_EXEC_PATH)) &&
 	    !(prefix = strip_path_suffix(argv0_path, BINDIR)) &&
 	    !(prefix = strip_path_suffix(argv0_path, "git"))) {
-		prefix = PREFIX;
+		prefix = FALLBACK_RUNTIME_PREFIX;
 		trace_printf("RUNTIME_PREFIX requested, "
 				"but prefix computation failed.  "
 				"Using static fallback '%s'.\n", prefix);
