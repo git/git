@@ -49,6 +49,8 @@ extern int is_submodule_initialized(const char *path);
  * Otherwise the return error code is the same as of resolve_gitdir_gently.
  */
 extern int is_submodule_populated_gently(const char *path, int *return_error_code);
+extern void die_in_unpopulated_submodule(const struct index_state *istate,
+					 const char *prefix);
 extern int parse_submodule_update_strategy(const char *value,
 		struct submodule_update_strategy *dst);
 extern const char *submodule_strategy_to_string(const struct submodule_update_strategy *s);

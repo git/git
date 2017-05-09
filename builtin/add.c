@@ -17,6 +17,7 @@
 #include "revision.h"
 #include "bulk-checkin.h"
 #include "argv-array.h"
+#include "submodule.h"
 
 static const char * const builtin_add_usage[] = {
 	N_("git add [<options>] [--] <pathspec>..."),
@@ -378,6 +379,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
+
+	die_in_unpopulated_submodule(&the_index, prefix);
 
 	/*
 	 * Check the "pathspec '%s' did not match any files" block
