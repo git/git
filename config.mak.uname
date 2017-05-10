@@ -110,6 +110,7 @@ ifeq ($(uname_S),Darwin)
 	BASIC_CFLAGS += -DPRECOMPOSE_UNICODE
 	BASIC_CFLAGS += -DPROTECT_HFS_DEFAULT=1
 	HAVE_BSD_SYSCTL = YesPlease
+	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
