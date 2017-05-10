@@ -5,7 +5,7 @@
 static int boolean = 0;
 static int integer = 0;
 static unsigned long magnitude = 0;
-static unsigned long timestamp;
+static timestamp_t timestamp;
 static int abbrev = 7;
 static int verbose = -1; /* unspecified */
 static int dry_run = 0, quiet = 0;
@@ -161,7 +161,7 @@ int cmd_main(int argc, const char **argv)
 	show(&expect, &ret, "boolean: %d", boolean);
 	show(&expect, &ret, "integer: %d", integer);
 	show(&expect, &ret, "magnitude: %lu", magnitude);
-	show(&expect, &ret, "timestamp: %lu", timestamp);
+	show(&expect, &ret, "timestamp: %"PRItime, timestamp);
 	show(&expect, &ret, "string: %s", string ? string : "(not set)");
 	show(&expect, &ret, "abbrev: %d", abbrev);
 	show(&expect, &ret, "verbose: %d", verbose);

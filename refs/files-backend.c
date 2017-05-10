@@ -2240,50 +2240,6 @@ static int files_create_symref(struct ref_store *ref_store,
 	return ret;
 }
 
-int set_worktree_head_symref(const char *gitdir, const char *target, const char *logmsg)
-{
-	/*
-	 * FIXME: this obviously will not work well for future refs
-	 * backends. This function needs to die.
-	 */
-	struct files_ref_store *refs =
-		files_downcast(get_main_ref_store(),
-			       REF_STORE_WRITE,
-			       "set_head_symref");
-
-	static struct lock_file head_lock;
-	struct ref_lock *lock;
-	struct strbuf head_path = STRBUF_INIT;
-	const char *head_rel;
-	int ret;
-
-	strbuf_addf(&head_path, "%s/HEAD", absolute_path(gitdir));
-	if (hold_lock_file_for_update(&head_lock, head_path.buf,
-				      LOCK_NO_DEREF) < 0) {
-		struct strbuf err = STRBUF_INIT;
-		unable_to_lock_message(head_path.buf, errno, &err);
-		error("%s", err.buf);
-		strbuf_release(&err);
-		strbuf_release(&head_path);
-		return -1;
-	}
-
-	/* head_rel will be "HEAD" for the main tree, "worktrees/wt/HEAD" for
-	   linked trees */
-	head_rel = remove_leading_path(head_path.buf,
-				       absolute_path(get_git_common_dir()));
-	/* to make use of create_symref_locked(), initialize ref_lock */
-	lock = xcalloc(1, sizeof(struct ref_lock));
-	lock->lk = &head_lock;
-	lock->ref_name = xstrdup(head_rel);
-
-	ret = create_symref_locked(refs, lock, head_rel, target, logmsg);
-
-	unlock_ref(lock); /* will free lock */
-	strbuf_release(&head_path);
-	return ret;
-}
-
 static int files_reflog_exists(struct ref_store *ref_store,
 			       const char *refname)
 {
@@ -2317,7 +2273,7 @@ static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *c
 {
 	struct object_id ooid, noid;
 	char *email_end, *message;
-	unsigned long timestamp;
+	timestamp_t timestamp;
 	int tz;
 	const char *p = sb->buf;
 
@@ -2327,7 +2283,7 @@ static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *c
 	    parse_oid_hex(p, &noid, &p) || *p++ != ' ' ||
 	    !(email_end = strchr(p, '>')) ||
 	    email_end[1] != ' ' ||
-	    !(timestamp = strtoul(email_end + 2, &message, 10)) ||
+	    !(timestamp = parse_timestamp(email_end + 2, &message, 10)) ||
 	    !message || message[0] != ' ' ||
 	    (message[1] != '+' && message[1] != '-') ||
 	    !isdigit(message[2]) || !isdigit(message[3]) ||
@@ -3198,7 +3154,7 @@ struct expire_reflog_cb {
 };
 
 static int expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
-			     const char *email, unsigned long timestamp, int tz,
+			     const char *email, timestamp_t timestamp, int tz,
 			     const char *message, void *cb_data)
 {
 	struct expire_reflog_cb *cb = cb_data;
@@ -3215,7 +3171,7 @@ static int expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 			printf("prune %s", message);
 	} else {
 		if (cb->newlog) {
-			fprintf(cb->newlog, "%s %s %s %lu %+05d\t%s",
+			fprintf(cb->newlog, "%s %s %s %"PRItime" %+05d\t%s",
 				oid_to_hex(ooid), oid_to_hex(noid),
 				email, timestamp, tz, message);
 			oidcpy(&cb->last_kept_oid, noid);

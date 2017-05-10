@@ -5,6 +5,7 @@ struct object_id;
 struct ref_store;
 struct strbuf;
 struct string_list;
+struct worktree;
 
 /*
  * Resolve a reference, recursively following symbolic refererences.
@@ -317,9 +318,9 @@ int safe_create_reflog(const char *refname, int force_create, struct strbuf *err
 
 /** Reads log for the value of ref during at_time. **/
 int read_ref_at(const char *refname, unsigned int flags,
-		unsigned long at_time, int cnt,
+		timestamp_t at_time, int cnt,
 		unsigned char *sha1, char **msg,
-		unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt);
+		timestamp_t *cutoff_time, int *cutoff_tz, int *cutoff_cnt);
 
 /** Check if a particular reflog exists */
 int refs_reflog_exists(struct ref_store *refs, const char *refname);
@@ -356,7 +357,7 @@ int delete_reflog(const char *refname);
 /* iterate over reflog entries */
 typedef int each_reflog_ent_fn(
 		struct object_id *old_oid, struct object_id *new_oid,
-		const char *committer, unsigned long timestamp,
+		const char *committer, timestamp_t timestamp,
 		int tz, const char *msg, void *cb_data);
 
 int refs_for_each_reflog_ent(struct ref_store *refs, const char *refname,
@@ -400,16 +401,6 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg);
 int refs_create_symref(struct ref_store *refs, const char *refname,
 		       const char *target, const char *logmsg);
 int create_symref(const char *refname, const char *target, const char *logmsg);
-
-/*
- * Update HEAD of the specified gitdir.
- * Similar to create_symref("relative-git-dir/HEAD", target, NULL), but
- * this can update the main working tree's HEAD regardless of where
- * $GIT_DIR points to.
- * Return 0 if successful, non-zero otherwise.
- * */
-int set_worktree_head_symref(const char *gitdir, const char *target,
-			     const char *logmsg);
 
 enum action_on_err {
 	UPDATE_REFS_MSG_ON_ERR,
@@ -616,7 +607,7 @@ typedef void reflog_expiry_prepare_fn(const char *refname,
 typedef int reflog_expiry_should_prune_fn(unsigned char *osha1,
 					  unsigned char *nsha1,
 					  const char *email,
-					  unsigned long timestamp, int tz,
+					  timestamp_t timestamp, int tz,
 					  const char *message, void *cb_data);
 typedef void reflog_expiry_cleanup_fn(void *cb_data);
 
@@ -655,5 +646,6 @@ struct ref_store *get_main_ref_store(void);
  * submodule==NULL.
  */
 struct ref_store *get_submodule_ref_store(const char *submodule);
+struct ref_store *get_worktree_ref_store(const struct worktree *wt);
 
 #endif /* REFS_H */

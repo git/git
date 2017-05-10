@@ -397,7 +397,7 @@ static int fsck_obj_buffer(const unsigned char *sha1, enum object_type type,
 static int default_refs;
 
 static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
-	unsigned long timestamp)
+	timestamp_t timestamp)
 {
 	struct object *obj;
 
@@ -407,7 +407,7 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 			if (timestamp && name_objects)
 				add_decoration(fsck_walk_options.object_names,
 					obj,
-					xstrfmt("%s@{%ld}", refname, timestamp));
+					xstrfmt("%s@{%"PRItime"}", refname, timestamp));
 			obj->used = 1;
 			mark_object_reachable(obj);
 		} else {
@@ -418,7 +418,7 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 }
 
 static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid,
-		const char *email, unsigned long timestamp, int tz,
+		const char *email, timestamp_t timestamp, int tz,
 		const char *message, void *cb_data)
 {
 	const char *refname = cb_data;
