@@ -90,8 +90,8 @@ You can include a config file from another by setting the special
 to be included. The variable takes a pathname as its value, and is
 subject to tilde expansion. These variables can be given multiple times.
 
-The included file is expanded immediately, as if its contents had been
-found at the location of the include directive. If the value of the
+The contents of the included file are inserted immediately, as if they
+had been found at the location of the include directive. If the value of the
 variable is a relative path, the path is considered to
 be relative to the configuration file in which the include directive
 was found.  See below for examples.
@@ -172,8 +172,8 @@ Example
 
 	[include]
 		path = /path/to/foo.inc ; include by absolute path
-		path = foo ; expand "foo" relative to the current file
-		path = ~/foo ; expand "foo" in your `$HOME` directory
+		path = foo ; find "foo" relative to the current file
+		path = ~/foo ; find "foo" in your `$HOME` directory
 
 	; include if $GIT_DIR is /path/to/foo/.git
 	[includeIf "gitdir:/path/to/foo/.git"]
