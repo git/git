@@ -187,6 +187,12 @@ Example
 	[includeIf "gitdir:~/to/group/"]
 		path = /path/to/foo.inc
 
+	; relative paths are always relative to the including
+	; file (if the condition is true); their location is not
+	; affected by the condition
+	[includeIf "gitdir:/path/to/group/"]
+		path = foo.inc
+
 Values
 ~~~~~~
 
