@@ -96,7 +96,10 @@ static inline int ps_strcmp(const struct pathspec_item *item,
 		return strcmp(s1, s2);
 }
 
-extern char *find_pathspecs_matching_against_index(const struct pathspec *pathspec);
-extern void add_pathspec_matches_against_index(const struct pathspec *pathspec, char *seen);
+extern void add_pathspec_matches_against_index(const struct pathspec *pathspec,
+					       const struct index_state *istate,
+					       char *seen);
+extern char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
+						   const struct index_state *istate);
 
 #endif /* PATHSPEC_H */

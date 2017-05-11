@@ -1,3 +1,4 @@
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "dir.h"
 #include "pathspec.h"
@@ -17,6 +18,7 @@
  * to use find_pathspecs_matching_against_index() instead.
  */
 void add_pathspec_matches_against_index(const struct pathspec *pathspec,
+					const struct index_state *istate,
 					char *seen)
 {
 	int num_unmatched = 0, i;
@@ -32,8 +34,8 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 			num_unmatched++;
 	if (!num_unmatched)
 		return;
-	for (i = 0; i < active_nr; i++) {
-		const struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
 		ce_path_match(ce, pathspec, seen);
 	}
 }
@@ -46,10 +48,11 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
  * nature of the "closest" (i.e. most specific) matches which each of the
  * given pathspecs achieves against all items in the index.
  */
-char *find_pathspecs_matching_against_index(const struct pathspec *pathspec)
+char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
+					    const struct index_state *istate)
 {
 	char *seen = xcalloc(pathspec->nr, 1);
-	add_pathspec_matches_against_index(pathspec, seen);
+	add_pathspec_matches_against_index(pathspec, istate, seen);
 	return seen;
 }
 
