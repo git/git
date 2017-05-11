@@ -4,6 +4,7 @@
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"
+#include "submodule.h"
 
 static int quiet, verbose, stdin_paths, show_non_matching, no_index;
 static const char * const check_ignore_usage[] = {
@@ -87,9 +88,10 @@ static int check_ignore(struct dir_struct *dir,
 	parse_pathspec(&pathspec,
 		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
 		       PATHSPEC_SYMLINK_LEADING_PATH |
-		       PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE |
 		       PATHSPEC_KEEP_ORDER,
 		       prefix, argv);
+
+	die_path_inside_submodule(&the_index, &pathspec);
 
 	/*
 	 * look for pathspecs matching entries in the index, since these
