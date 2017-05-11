@@ -172,8 +172,8 @@ Example
 
 	[include]
 		path = /path/to/foo.inc ; include by absolute path
-		path = foo ; find "foo" relative to the current file
-		path = ~/foo ; find "foo" in your `$HOME` directory
+		path = foo.inc ; find "foo.inc" relative to the current file
+		path = ~/foo.inc ; find "foo.inc" in your `$HOME` directory
 
 	; include if $GIT_DIR is /path/to/foo/.git
 	[includeIf "gitdir:/path/to/foo/.git"]
