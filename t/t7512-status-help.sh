@@ -101,7 +101,7 @@ test_expect_success 'short status when rebase in progress' '
 ## HEAD (no branch); REBASE-m
 UU main.txt
 EOF
-	git status --untracked-files=no --short --branch --inprogress >actual &&
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 
@@ -172,7 +172,7 @@ test_expect_success 'short status during rebase -i when conflicts unresolved' '
 ## HEAD (no branch); REBASE-i
 UU main.txt
 EOF
-	git status --untracked-files=no --short --branch --inprogress >actual &&
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 
@@ -650,7 +650,7 @@ test_expect_success 'short status in an am session: file already exists' '
 	cat >expected <<\EOF &&
 ## am_already_exists; AM
 EOF
-	git status --untracked-files=no --short --branch --inprogress >actual &&
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 
@@ -725,7 +725,7 @@ test_expect_success 'short status when bisecting' '
 	cat >expected <<EOF &&
 ## HEAD (no branch); BISECTING
 EOF
-	git status --untracked-files=no --short --branch --inprogress >actual &&
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 
@@ -792,7 +792,7 @@ test_expect_success 'short status when cherry-picking before resolving conflicts
 ## cherry_branch; CHERRY-PICKING
 UU main.txt
 EOF
-	git status --untracked-files=no --short --branch --inprogress >actual &&
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 
@@ -871,7 +871,7 @@ test_expect_success 'short status while reverting commit (conflicts)' '
 ## master; REVERTING
 UU to-revert.txt
 EOF
-	git status --untracked-files=no --short --branch --inprogress >actual &&
+	git status --untracked-files=no --short --branch --in-progress >actual &&
 	test_i18ncmp expected actual
 '
 

@@ -32,8 +32,7 @@ OPTIONS
 --branch::
 	Show the branch and tracking info even in short-format.
 
--p::
---inprogress::
+--in-progress::
 	When showing branch and tracking info in short-format,
 	show in-progress information (BISECTING, MERGING etc.), too.
 

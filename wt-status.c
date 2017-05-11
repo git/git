@@ -1739,7 +1739,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	if (!strcmp(s->branch, "HEAD")) {
 		color_fprintf(s->fp, color(WT_STATUS_NOBRANCH, s), "%s",
 			      LABEL(N_("HEAD (no branch)")));
-		goto inprogress;
+		goto in_progress;
 	}
 
 	skip_prefix(branch_name, "refs/heads/", &branch_name);
@@ -1750,7 +1750,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	if (stat_tracking_info(branch, &num_ours, &num_theirs, &base) < 0) {
 		if (!base)
-			goto inprogress;
+			goto in_progress;
 
 		upstream_is_gone = 1;
 	}
@@ -1761,7 +1761,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	free((char *)base);
 
 	if (!upstream_is_gone && !num_ours && !num_theirs)
-		goto inprogress;
+		goto in_progress;
 
 	color_fprintf(s->fp, header_color, " [");
 	if (upstream_is_gone) {
@@ -1781,8 +1781,8 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	color_fprintf(s->fp, header_color, "]");
 
- inprogress:
-	if (!s->show_inprogress)
+ in_progress:
+	if (!s->show_in_progress)
 		goto conclude;
 	memset(&state, 0, sizeof(state));
 	wt_status_get_state(&state,
