@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2017, #03; Wed, 10)
+Subject: What's cooking in git.git (May 2017, #04; Fri, 12)
 X-master-at: b06d3643105c8758ed019125a4399cb7efdcce2c
 X-next-at: 4ebf3021692df4cb51da8d806fbb8b909ee7e111
 
-What's cooking in git.git (May 2017, #03; Wed, 10)
+What's cooking in git.git (May 2017, #04; Fri, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,69 +12,114 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.13, together with maintenance releases for 9 maintenance
-tracks, has been tagged.  Let's wait for a few days to see if users
-find embarrassing regressions and then start the next cycle.  In the
-meantime, please pay closer attention to the topics that have been
-stalled or waiting to be reviewed for too long and think of ways to
-help moving them forward, before you start sending your new shiny
-toys to the list.
-
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jh/verify-index-checksum-only-in-fsck (2017-04-27) 1 commit
-  (merged to 'next' on 2017-04-28 at afb4c70061)
- + t1450: avoid use of "sed" on the index, which is a binary file
-
- Update an unportable constructin a new test.
-
---------------------------------------------------
 [New Topics]
 
-* ab/compat-regex-update (2017-05-09) 2 commits
- - compat/regex: update the gawk regex engine from upstream
- - compat/regex: add a README with a maintenance guide
+* bw/pathspec-sans-the-index (2017-05-12) 6 commits
+ - pathspec: convert find_pathspecs_matching_against_index to take an index
+ - pathspec: remove PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP
+ - ls-files: prevent prune_cache from overeagerly pruning submodules
+ - pathspec: remove PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE flag
+ - submodule: add die_in_unpopulated_submodule function
+ - pathspec: provide a more descriptive die message
+
+ Simplify parse_pathspec() codepath and stop it from looking at the
+ default in-core index.
+
+
+* jt/fetch-allow-tip-sha1-implicitly (2017-05-12) 1 commit
+ - fetch-pack: always allow fetching of literal SHA1s
+
+ There is no good reason why "git fetch $there $sha1" should fail
+ when the $sha1 names an object at the tip of an advertised ref,
+ even when the other side hasn't enabled allowTipSHA1InWant.
+
+
+* jc/read-tree-empty-with-m (2017-05-10) 1 commit
+ - read-tree: "read-tree -m --empty" does not make sense
+
+ "git read-tree -m" (no tree-ish) gave a nonsense suggestion "use
+ --empty if you want to clear the index".  With "-m", such a request
+ will still fail anyway, as you'd need to name at least one tree-ish
+ to be merged.
 
  Will merge to 'next'.
 
 
-* jc/apply-fix-mismerge (2017-05-08) 1 commit
-  (merged to 'next' on 2017-05-09 at e0b89532d0)
- + apply.c: fix whitespace-only mismerge
+* ab/perf-wildmatch (2017-05-12) 2 commits
+ - perf: add test showing exponential growth in path globbing
+ - perf: add function to setup a fresh test repo
 
- Will merge to 'master'.
-
-
-* jt/push-options-doc (2017-05-10) 2 commits
- - receive-pack: verify push options in cert
- - docs: correct receive.advertisePushOptions default
-
- The receive-pack program now makes sure that the push certificate
- records the same set of push options used for pushing.
+ Add perf-test for wildmatch.
 
  Will merge to 'next'.
 
 
-* dt/unpack-save-untracked-cache-extension (2017-05-09) 1 commit
- - DONTMERGE: unpack-trees: preserve index extensions
+* jk/doc-config-include (2017-05-12) 4 commits
+ - docs/config: consistify include.path examples
+ - docs/config: avoid the term "expand" for includes
+ - docs/config: give a relative includeIf example
+ - docs/config: clarify include/includeIf relationship
+
+ Clarify documentation for include.path and includeIf.<condition>.path
+ configuration variables.
+
+ Will merge to 'next'.
+
+
+* js/retire-old-remote-spec (2017-05-12) 11 commits
+ - PREVIEW: remove support for .git/remotes/ and .git/branches/
+ - PREVIEW: t0060: stop testing support for .git/remotes/ and .git/branches/
+ - PREVIEW: t5515: remove .git/remotes/ and .git/branches/ tests
+ - PREVIEW: remote: remove support for migrating ancient remotes
+ - PREVIEW: t5516: stop testing .git/branches/ functionality
+ - PREVIEW: t5510: convert .git/remotes/ test to use a regular remote
+ - Revert "Revert "Don't create the $GIT_DIR/branches directory on init""
+ - remote: warn loud and clear when .git/remotes/ is *still* used
+ - remote: warn loud and clear when .git/branches/ is *still* used
+ - Documentation: really deprecate .git/remotes/ and .git/branches/
+ - git-parse-remote: fix highly misleading man page
+
+ Stop reading from .git/remotes/ and .git/branches/, two old ways
+ that we have been supporting to configure short-hands for fetching
+ from remote repositories.
+
+
+* ab/grep-preparatory-cleanup (2017-05-12) 15 commits
+ - grep: add tests to fix blind spots with \0 patterns
+ - grep: prepare for testing binary regexes containing rx metacharacters
+ - SQUASH???
+ - grep: add a test helper function for less verbose -f \0 tests
+ - grep: add tests for grep pattern types being passed to submodules
+ - grep: amend submodule recursion test for regex engine testing
+ - grep: add tests for --threads=N and grep.threads
+ - SQUASH???
+ - grep: change non-ASCII -i test to stop using --debug
+ - grep: add a test for backreferences in PCRE patterns
+ - grep: add a test asserting that --perl-regexp dies when !PCRE
+ - log: add exhaustive tests for pattern style options & config
+ - test-lib: rename the LIBPCRE prerequisite to PCRE
+ - grep & rev-list doc: stop promising libpcre for --perl-regexp
+ - Makefile & configure: reword inaccurate comment about PCRE
+
+ (what is queued here is only the early part of a larger series)
 
 --------------------------------------------------
 [Stalled]
 
-* mg/status-in-progress-info (2017-04-14) 1 commit
+* mg/status-in-progress-info (2017-05-10) 2 commits
+ - status --short --inprogress: spell it as --in-progress
  - status: show in-progress info for short status
 
  "git status" learns an option to report various operations
  (e.g. "merging") that the user is in the middle of.
 
- It is still unclear if the participants decided that it is OK to
- spell "--inprogress" as a single word.
+ cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
 
 
 * mg/name-rev-debug (2017-03-31) 4 commits
@@ -144,39 +189,10 @@ of the repositories listed at
  Opinions?
 
 
-* ja/doc-l10n (2017-03-20) 3 commits
- . SQUASH???
- . l10n: add git-add.txt to localized man pages
- . l10n: introduce framework for localizing man pages
-
- A proposal to use po4a to localize our manual pages.
-
- Will discard.
- Has been stalled for too long.
-
-
 * ls/filter-process-delayed (2017-03-06) 1 commit
  - convert: add "status=delayed" to filter process protocol
 
- What's the status of this one???
- cf. <xmqq60jmnmef.fsf@junio-linux.mtv.corp.google.com>
-
-
-* jk/parse-options-no-no-no (2017-04-25) 2 commits
- . SQUASH???
- . parse-options: disallow double-negations of options starting with no-
-
- Command line options that begin with "--no-" (e.g. "--no-checkout"
- option of "git clone") can be negated by removing "--no-"; we
- historically also allowed prefixing an extra "no" to the option
- (e.g. "--no-no-checkout"), which made the command line look ugly
- and unusual.  This proposes to forbid it.
-
- While I agree there is no need to support "--no-no-checkout", this
- looks more like "if it looks ugly and unusual, you do not have to
- use it".  Perhaps we can drop it?
-
- Will discard.
+ Expecting a reroll.
 
 
 * sk/dash-is-previous (2017-03-01) 5 commits
@@ -191,46 +207,6 @@ of the repositories listed at
 
  Needs review.
  cf. <1488007487-12965-1-git-send-email-kannan.siddharth12@gmail.com>
-
-
-* pb/bisect (2017-02-18) 28 commits
- . fixup! bisect--helper: `bisect_next_check` & bisect_voc shell function in C
- . bisect--helper: remove the dequote in bisect_start()
- . bisect--helper: retire `--bisect-auto-next` subcommand
- . bisect--helper: retire `--bisect-autostart` subcommand
- . bisect--helper: retire `--bisect-write` subcommand
- . bisect--helper: `bisect_replay` shell function in C
- . bisect--helper: `bisect_log` shell function in C
- . bisect--helper: retire `--write-terms` subcommand
- . bisect--helper: retire `--check-expected-revs` subcommand
- . bisect--helper: `bisect_state` & `bisect_head` shell function in C
- . bisect--helper: `bisect_autostart` shell function in C
- . bisect--helper: retire `--next-all` subcommand
- . bisect--helper: retire `--bisect-clean-state` subcommand
- . bisect--helper: `bisect_next` and `bisect_auto_next` shell function in C
- . t6030: no cleanup with bad merge base
- . bisect--helper: `bisect_start` shell function partially in C
- . bisect--helper: `get_terms` & `bisect_terms` shell function in C
- . bisect--helper: `bisect_next_check` & bisect_voc shell function in C
- . bisect--helper: `check_and_set_terms` shell function in C
- . bisect--helper: `bisect_write` shell function in C
- . bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
- . bisect--helper: `bisect_reset` shell function in C
- . wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
- . t6030: explicitly test for bisection cleanup
- . bisect--helper: `bisect_clean_state` shell function in C
- . bisect--helper: `write_terms` shell function in C
- . bisect: rewrite `check_term_format` shell function in C
- . bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
-
- Move more parts of "git bisect" to C.
-
- Will discard.
- It has been in the stalled state for too long.
- Expecting a reroll.
- cf. <CAFZEwPPXPPHi8KiEGS9ggzNHDCGhuqMgH9Z8-Pf9GLshg8+LPA@mail.gmail.com>
- cf. <CAFZEwPM9RSTGN54dzaw9gO9iZmsYjJ_d1SjUD4EzSDDbmh-XuA@mail.gmail.com>
- cf. <CAFZEwPNUXcNY9Qdz=_B7q2kQuaecPzJtTMGdv8YMUPEz2vnp8A@mail.gmail.com>
 
 
 * sh/grep-tree-obj-tweak-output (2017-01-20) 2 commits
@@ -274,6 +250,36 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* ab/compat-regex-update (2017-05-12) 3 commits
+ - DONTMERGE compat/regex: make it compile with -Werror=int-to-pointer-cast
+ - compat/regex: update the gawk regex engine from upstream
+ - compat/regex: add a README with a maintenance guide
+
+ Update compat/regex we borrowed from gawk.  It seems that some
+ customizations we made to the older one were dropped by mistake.
+
+
+* jc/apply-fix-mismerge (2017-05-08) 1 commit
+  (merged to 'next' on 2017-05-09 at e0b89532d0)
+ + apply.c: fix whitespace-only mismerge
+
+ Will merge to 'master'.
+
+
+* jt/push-options-doc (2017-05-10) 2 commits
+ - receive-pack: verify push options in cert
+ - docs: correct receive.advertisePushOptions default
+
+ The receive-pack program now makes sure that the push certificate
+ records the same set of push options used for pushing.
+
+ Will merge to 'next'.
+
+
+* dt/unpack-save-untracked-cache-extension (2017-05-09) 1 commit
+ - DONTMERGE: unpack-trees: preserve index extensions
+
 
 * sg/clone-refspec-from-command-line-config (2017-05-09) 2 commits
  - git-clone --config order & fetching extra refs during initial clone
@@ -327,8 +333,8 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ja/do-not-ask-needless-questions (2017-05-04) 3 commits
- - git-filter-branch: make the error msg when missing branch more open
+* ja/do-not-ask-needless-questions (2017-05-12) 3 commits
+ - git-filter-branch: be more direct in an error message
  - read-tree -m: make error message for merging 0 trees less smart aleck
  - usability: don't ask questions if no reply is required
 
@@ -336,8 +342,7 @@ of the repositories listed at
  not require an answer, which can confuse new users and non native
  speakers.  Attempt to rephrase them.
 
- I lost track of the discussion on this topic.  Did we decide that
- this is not a good idea?
+ Will merge to 'next', after waiting for a few days.
 
 
 * ab/doc-replace-gmane-links (2017-05-09) 2 commits
@@ -353,7 +358,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ab/fix-poison-tests (2017-05-08) 3 commits
+* ab/fix-poison-tests (2017-05-11) 3 commits
  - travis-ci: add job to run tests with GETTEXT_POISON
  - travis-ci: setup "prove cache" in "script" step
  - tests: fix tests broken under GETTEXT_POISON=YesPlease
@@ -362,7 +367,7 @@ of the repositories listed at
  that output strings that should not be translated are not
  translated by mistake), and tell TravisCI to run them.
 
- Will merge to 'next' after a few rounds on 'pu'.
+ Will merge to 'next' after a few rounds in 'pu'.
 
 
 * bw/dir-c-stops-relying-on-the-index (2017-05-06) 14 commits
@@ -555,10 +560,10 @@ of the repositories listed at
  Kicked out of next; it seems it is still getting review suggestions?
 
 
-* tb/dedup-crlf-tests (2017-05-01) 1 commit
- - t0027: Some tests are not expensive
+* tb/dedup-crlf-tests (2017-05-10) 1 commit
+ - t0027: tests are not expensive; remove t0025
 
- Will be rerolled.
+ Will merge to 'next'.
 
 
 * jc/repack-threads (2017-04-27) 1 commit
@@ -645,34 +650,6 @@ of the repositories listed at
  timestamp_t
 
  Will merge to 'master'.
-
-
-* ab/grep-pcre-v2 (2017-05-02) 19 commits
- - Makefile & configure: make PCRE v2 the default PCRE implementation
- - grep: remove support for concurrent use of both PCRE v1 & v2
- - grep: add support for PCRE v2
- - grep: add support for the PCRE v1 JIT API
- - perf: add a performance comparison test of grep -E and -P
- - grep: change the internal PCRE code & header names to be PCRE1
- - grep: change the internal PCRE macro names to be PCRE1
- - test-lib: rename the LIBPCRE prerequisite to PCRE
- - grep: make grep.patternType=[pcre|pcre1] a synonym for "perl"
- - grep & rev-list doc: stop promising libpcre for --perl-regexp
- - log: add -P as a synonym for --perl-regexp
- - log: add exhaustive tests for pattern style options & config
- - grep: add a test for backreferences in PCRE patterns
- - Makefile & configure: reword outdated comment about PCRE
- - grep: remove redundant `regflags &= ~REG_EXTENDED` assignments
- - grep: remove redundant regflags assignment under PCRE
- - grep: submodule-related case statements should die if new fields are added
- - grep: add tests for grep pattern types being passed to submodules
- - grep: amend submodule recursion test in preparation for rx engine testing
-
- PCRE2, which has an API different from and incompatible with PCRE,
- can now be chosen to support "grep -P -e '<pattern>'" and friends.
-
- Need to make sure that fallback for those without pcre2 works
- without causing build failure.
 
 
 * bc/object-id (2017-05-08) 53 commits
@@ -864,21 +841,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ab/grep-threading-cleanup (2017-04-16) 8 commits
- - grep: given --threads with NO_PTHREADS=YesPlease, warn
- - pack-objects: fix buggy warning about threads under NO_PTHREADS=YesPlease
- - pack-object & index-pack: add test for --threads warning under NO_PTHREADS
- - tests: add a PTHREADS prerequisite
- - grep: skip pthreads overhead when using one thread
- - grep: don't redundantly compile throwaway patterns under threading
- - grep: add tests for --threads=N and grep.threads
- - grep: assert that threading is enabled when calling grep_{lock,unlock}
-
- Code cleanup.
-
- Needs review.
-
-
 * bp/sub-process-convert-filter (2017-05-08) 10 commits
  - convert: update subprocess_read_status() to not die on EOF
  - sub-process: move sub-process functions into separate files
@@ -937,3 +899,108 @@ of the repositories listed at
  per-worktree refs.
 
  Will merge to 'master'.
+
+--------------------------------------------------
+[Discarded]
+
+* ja/doc-l10n (2017-03-20) 3 commits
+ . SQUASH???
+ . l10n: add git-add.txt to localized man pages
+ . l10n: introduce framework for localizing man pages
+
+ A proposal to use po4a to localize our manual pages.
+
+
+* ab/grep-pcre-v2 (2017-05-02) 19 commits
+ . Makefile & configure: make PCRE v2 the default PCRE implementation
+ . grep: remove support for concurrent use of both PCRE v1 & v2
+ . grep: add support for PCRE v2
+ . grep: add support for the PCRE v1 JIT API
+ . perf: add a performance comparison test of grep -E and -P
+ . grep: change the internal PCRE code & header names to be PCRE1
+ . grep: change the internal PCRE macro names to be PCRE1
+ . test-lib: rename the LIBPCRE prerequisite to PCRE
+ . grep: make grep.patternType=[pcre|pcre1] a synonym for "perl"
+ . grep & rev-list doc: stop promising libpcre for --perl-regexp
+ . log: add -P as a synonym for --perl-regexp
+ . log: add exhaustive tests for pattern style options & config
+ . grep: add a test for backreferences in PCRE patterns
+ . Makefile & configure: reword outdated comment about PCRE
+ . grep: remove redundant `regflags &= ~REG_EXTENDED` assignments
+ . grep: remove redundant regflags assignment under PCRE
+ . grep: submodule-related case statements should die if new fields are added
+ . grep: add tests for grep pattern types being passed to submodules
+ . grep: amend submodule recursion test in preparation for rx engine testing
+
+ PCRE2, which has an API different from and incompatible with PCRE,
+ can now be chosen to support "grep -P -e '<pattern>'" and friends.
+
+
+* ab/grep-threading-cleanup (2017-04-16) 8 commits
+ . grep: given --threads with NO_PTHREADS=YesPlease, warn
+ . pack-objects: fix buggy warning about threads under NO_PTHREADS=YesPlease
+ . pack-object & index-pack: add test for --threads warning under NO_PTHREADS
+ . tests: add a PTHREADS prerequisite
+ . grep: skip pthreads overhead when using one thread
+ . grep: don't redundantly compile throwaway patterns under threading
+ . grep: add tests for --threads=N and grep.threads
+ . grep: assert that threading is enabled when calling grep_{lock,unlock}
+
+ Code cleanup.
+
+
+* pb/bisect (2017-02-18) 28 commits
+ . fixup! bisect--helper: `bisect_next_check` & bisect_voc shell function in C
+ . bisect--helper: remove the dequote in bisect_start()
+ . bisect--helper: retire `--bisect-auto-next` subcommand
+ . bisect--helper: retire `--bisect-autostart` subcommand
+ . bisect--helper: retire `--bisect-write` subcommand
+ . bisect--helper: `bisect_replay` shell function in C
+ . bisect--helper: `bisect_log` shell function in C
+ . bisect--helper: retire `--write-terms` subcommand
+ . bisect--helper: retire `--check-expected-revs` subcommand
+ . bisect--helper: `bisect_state` & `bisect_head` shell function in C
+ . bisect--helper: `bisect_autostart` shell function in C
+ . bisect--helper: retire `--next-all` subcommand
+ . bisect--helper: retire `--bisect-clean-state` subcommand
+ . bisect--helper: `bisect_next` and `bisect_auto_next` shell function in C
+ . t6030: no cleanup with bad merge base
+ . bisect--helper: `bisect_start` shell function partially in C
+ . bisect--helper: `get_terms` & `bisect_terms` shell function in C
+ . bisect--helper: `bisect_next_check` & bisect_voc shell function in C
+ . bisect--helper: `check_and_set_terms` shell function in C
+ . bisect--helper: `bisect_write` shell function in C
+ . bisect--helper: `is_expected_rev` & `check_expected_revs` shell function in C
+ . bisect--helper: `bisect_reset` shell function in C
+ . wrapper: move is_empty_file() and rename it as is_empty_or_missing_file()
+ . t6030: explicitly test for bisection cleanup
+ . bisect--helper: `bisect_clean_state` shell function in C
+ . bisect--helper: `write_terms` shell function in C
+ . bisect: rewrite `check_term_format` shell function in C
+ . bisect--helper: use OPT_CMDMODE instead of OPT_BOOL
+
+ Move more parts of "git bisect" to C.
+
+ Will discard.
+ It has been in the stalled state for too long.
+ Expecting a reroll.
+ cf. <CAFZEwPPXPPHi8KiEGS9ggzNHDCGhuqMgH9Z8-Pf9GLshg8+LPA@mail.gmail.com>
+ cf. <CAFZEwPM9RSTGN54dzaw9gO9iZmsYjJ_d1SjUD4EzSDDbmh-XuA@mail.gmail.com>
+ cf. <CAFZEwPNUXcNY9Qdz=_B7q2kQuaecPzJtTMGdv8YMUPEz2vnp8A@mail.gmail.com>
+
+
+* jk/parse-options-no-no-no (2017-04-25) 2 commits
+ . SQUASH???
+ . parse-options: disallow double-negations of options starting with no-
+
+ Command line options that begin with "--no-" (e.g. "--no-checkout"
+ option of "git clone") can be negated by removing "--no-"; we
+ historically also allowed prefixing an extra "no" to the option
+ (e.g. "--no-no-checkout"), which made the command line look ugly
+ and unusual.  This proposes to forbid it.
+
+ While I agree there is no need to support "--no-no-checkout", this
+ looks more like "if it looks ugly and unusual, you do not have to
+ use it".  Perhaps we can drop it?
+
+ Will discard.
