@@ -14,10 +14,6 @@ test_expect_success 'verify both methods build the same hashmaps' '
 	test_cmp sorted.single sorted.multi
 '
 
-test_expect_success 'multithreaded should be faster' '
-	test-lazy-init-name-hash --perf >out.perf
-'
-
 test_expect_success 'calibrate' '
 	entries=$(wc -l <out.single) &&
 
