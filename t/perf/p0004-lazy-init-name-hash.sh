@@ -8,10 +8,13 @@ test_checkout_worktree
 
 test_expect_success 'verify both methods build the same hashmaps' '
 	test-lazy-init-name-hash --dump --single >out.single &&
-	test-lazy-init-name-hash --dump --multi >out.multi &&
-	sort <out.single >sorted.single &&
-	sort <out.multi >sorted.multi &&
-	test_cmp sorted.single sorted.multi
+	if test-lazy-init-name-hash --dump --multi >out.multi
+	then
+		test_set_prereq REPO_BIG_ENOUGH_FOR_MULTI &&
+		sort <out.single >sorted.single &&
+		sort <out.multi >sorted.multi &&
+		test_cmp sorted.single sorted.multi
+	fi
 '
 
 test_expect_success 'calibrate' '
@@ -46,7 +49,7 @@ test_perf "single-threaded, $desc" "
 	test-lazy-init-name-hash --single --count=$count
 "
 
-test_perf "multi-threaded, $desc" "
+test_perf REPO_BIG_ENOUGH_FOR_MULTI "multi-threaded, $desc" "
 	test-lazy-init-name-hash --multi --count=$count
 "
 
