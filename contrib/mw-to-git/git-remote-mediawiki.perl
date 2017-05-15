@@ -73,6 +73,11 @@ my $export_media = run_git("config --get --bool remote.${remotename}.mediaexport
 chomp($export_media);
 $export_media = !($export_media eq 'false');
 
+# Change files extension for external tool compatibility
+my $file_ext = run_git("config --get --bool remote.${remotename}.fileextension");
+chomp($file_ext);
+$file_ext = (defined $file_ext) ? $file_ext : 'mw';
+
 my $wiki_login = run_git("config --get remote.${remotename}.mwLogin");
 # Note: mwPassword is discourraged. Use the credential system instead.
 my $wiki_passwd = run_git("config --get remote.${remotename}.mwPassword");
@@ -720,7 +725,7 @@ sub import_file_revision {
 	}
 	if ($content ne DELETED_CONTENT) {
 		print {*STDOUT} 'M 644 inline ' .
-		    fe_escape_path("${title}.mw") . "\n";
+		    fe_escape_path("${title}.${file_ext}") . "\n";
 		literal_data($content);
 		if (%mediafile) {
 			print {*STDOUT} 'M 644 inline '
@@ -729,7 +734,7 @@ sub import_file_revision {
 		}
 		print {*STDOUT} "\n\n";
 	} else {
-		print {*STDOUT} 'D ' . fe_escape_path("${title}.mw") . "\n";
+		print {*STDOUT} 'D ' . fe_escape_path("${title}.${file_ext}") . "\n";
 	}
 
 	# mediawiki revision number in the git note
