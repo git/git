@@ -235,8 +235,16 @@ FILES
 If not set explicitly with `--file`, there are four files where
 'git config' will search for configuration options:
 
+$PROGRAMDATA/Git/config::
+	(Windows-only) System-wide configuration file shared with other Git
+	implementations. Typically `$PROGRAMDATA` points to `C:\ProgramData`.
+
 $(prefix)/etc/gitconfig::
 	System-wide configuration file.
+	(Windows-only) This file contains only the settings which are
+	specific for this installation of Git for Windows and which should
+	not be shared with other Git implementations like JGit, libgit2.
+	`--system` will select this file.
 
 $XDG_CONFIG_HOME/git/config::
 	Second user-specific configuration file. If $XDG_CONFIG_HOME is not set
@@ -252,13 +260,6 @@ $XDG_CONFIG_HOME/git/config::
 
 $GIT_DIR/config::
 	Repository specific configuration file.
-
-On Windows, as there is no central `/etc/` directory, there is yet another
-config file (located at `$PROGRAMDATA/Git/config`), intended to contain
-settings for *all* Git-related software running on the machine. Consequently,
-this config file takes an even lower precedence than the
-`$(prefix)/etc/gitconfig` file. Typically `$PROGRAMDATA` points to
-`C:\ProgramData`.
 
 If no further options are given, all reading options will read all of these
 files that are available. If the global or the system-wide configuration
