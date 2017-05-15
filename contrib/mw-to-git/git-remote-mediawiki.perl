@@ -74,7 +74,7 @@ chomp($export_media);
 $export_media = !($export_media eq 'false');
 
 # Change files extension for external tool compatibility
-my $file_ext = run_git("config --get --bool remote.${remotename}.fileextension");
+my $file_ext = run_git("config --get remote.${remotename}.fileextension");
 chomp($file_ext);
 $file_ext = (defined $file_ext) ? $file_ext : 'mw';
 
