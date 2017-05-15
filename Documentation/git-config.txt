@@ -258,8 +258,7 @@ config file (located at `$PROGRAMDATA/Git/config`), intended to contain
 settings for *all* Git-related software running on the machine. Consequently,
 this config file takes an even lower precedence than the
 `$(prefix)/etc/gitconfig` file. Typically `$PROGRAMDATA` points to
-`C:\ProgramData` (on Windows XP the equivalent in `$ALLUSERSPROFILE` is used,
-i.e. `C:\Documents and Settings\All Users\Application Data\Git\config`).
+`C:\ProgramData`.
 
 If no further options are given, all reading options will read all of these
 files that are available. If the global or the system-wide configuration
