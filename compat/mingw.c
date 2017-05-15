@@ -3269,13 +3269,8 @@ const char *program_data_config(void)
 
 	if (!initialized) {
 		const char *env = mingw_getenv("PROGRAMDATA");
-		const char *extra = "";
-		if (!env) {
-			env = mingw_getenv("ALLUSERSPROFILE");
-			extra = "/Application Data";
-		}
 		if (env)
-			strbuf_addf(&path, "%s%s/Git/config", env, extra);
+			strbuf_addf(&path, "%s/Git/config", env);
 		initialized = 1;
 	}
 	return *path.buf ? path.buf : NULL;
