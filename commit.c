@@ -11,6 +11,7 @@
 #include "commit-slab.h"
 #include "prio-queue.h"
 #include "sha1-lookup.h"
+#include "wt-status.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -1648,10 +1649,9 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
 /*
  * Inspect the given string and determine the true "end" of the log message, in
  * order to find where to put a new Signed-off-by: line.  Ignored are
- * trailing comment lines and blank lines, and also the traditional
- * "Conflicts:" block that is not commented out, so that we can use
- * "git commit -s --amend" on an existing commit that forgot to remove
- * it.
+ * trailing comment lines and blank lines.  To support "git commit -s
+ * --amend" on an existing commit, we also ignore "Conflicts:".  To
+ * support "git commit -v", we truncate at cut lines.
  *
  * Returns the number of bytes from the tail to ignore, to be fed as
  * the second parameter to append_signoff().
@@ -1661,8 +1661,9 @@ int ignore_non_trailer(const char *buf, size_t len)
 	int boc = 0;
 	int bol = 0;
 	int in_old_conflicts_block = 0;
+	size_t cutoff = wt_status_locate_end(buf, len);
 
-	while (bol < len) {
+	while (bol < cutoff) {
 		const char *next_line = memchr(buf + bol, '\n', len - bol);
 
 		if (!next_line)
@@ -1688,5 +1689,5 @@ int ignore_non_trailer(const char *buf, size_t len)
 		}
 		bol = next_line - buf;
 	}
-	return boc ? len - boc : 0;
+	return boc ? len - boc : len - cutoff;
 }
