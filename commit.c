@@ -66,7 +66,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	return commit;
 }
 
-static unsigned long parse_commit_date(const char *buf, const char *tail)
+static timestamp_t parse_commit_date(const char *buf, const char *tail)
 {
 	const char *dateptr;
 
@@ -89,8 +89,8 @@ static unsigned long parse_commit_date(const char *buf, const char *tail)
 		/* nada */;
 	if (buf >= tail)
 		return 0;
-	/* dateptr < buf && buf[-1] == '\n', so strtoul will stop at buf-1 */
-	return strtoul(dateptr, NULL, 10);
+	/* dateptr < buf && buf[-1] == '\n', so parsing will stop at buf-1 */
+	return parse_timestamp(dateptr, NULL, 10);
 }
 
 static struct commit_graft **commit_graft;
@@ -473,8 +473,8 @@ struct commit_list * commit_list_insert_by_date(struct commit *item, struct comm
 
 static int commit_list_compare_by_date(const void *a, const void *b)
 {
-	unsigned long a_date = ((const struct commit_list *)a)->item->date;
-	unsigned long b_date = ((const struct commit_list *)b)->item->date;
+	timestamp_t a_date = ((const struct commit_list *)a)->item->date;
+	timestamp_t b_date = ((const struct commit_list *)b)->item->date;
 	if (a_date < b_date)
 		return 1;
 	if (a_date > b_date)
@@ -598,7 +598,7 @@ static void record_author_date(struct author_date_slab *author_date,
 	const char *ident_line;
 	size_t ident_len;
 	char *date_end;
-	unsigned long date;
+	timestamp_t date;
 
 	ident_line = find_commit_header(buffer, "author", &ident_len);
 	if (!ident_line)
@@ -607,7 +607,7 @@ static void record_author_date(struct author_date_slab *author_date,
 	    !ident.date_begin || !ident.date_end)
 		goto fail_exit; /* malformed "author" line */
 
-	date = strtoul(ident.date_begin, &date_end, 10);
+	date = parse_timestamp(ident.date_begin, &date_end, 10);
 	if (date_end != ident.date_end)
 		goto fail_exit; /* malformed date */
 	*(author_date_slab_at(author_date, commit)) = date;
@@ -621,8 +621,8 @@ static int compare_commits_by_author_date(const void *a_, const void *b_,
 {
 	const struct commit *a = a_, *b = b_;
 	struct author_date_slab *author_date = cb_data;
-	unsigned long a_date = *(author_date_slab_at(author_date, a));
-	unsigned long b_date = *(author_date_slab_at(author_date, b));
+	timestamp_t a_date = *(author_date_slab_at(author_date, a));
+	timestamp_t b_date = *(author_date_slab_at(author_date, b));
 
 	/* newer commits with larger date first */
 	if (a_date < b_date)

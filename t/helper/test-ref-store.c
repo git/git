@@ -156,10 +156,10 @@ static int cmd_for_each_reflog(struct ref_store *refs, const char **argv)
 }
 
 static int each_reflog(struct object_id *old_oid, struct object_id *new_oid,
-		       const char *committer, unsigned long timestamp,
+		       const char *committer, timestamp_t timestamp,
 		       int tz, const char *msg, void *cb_data)
 {
-	printf("%s %s %s %lu %d %s\n",
+	printf("%s %s %s %"PRItime" %d %s\n",
 	       oid_to_hex(old_oid), oid_to_hex(new_oid),
 	       committer, timestamp, tz, msg);
 	return 0;
