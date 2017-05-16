@@ -11,6 +11,7 @@
 #include "object.h"
 #include "tag.h"
 #include "submodule.h"
+#include "worktree.h"
 
 /*
  * List of all available backends
@@ -1477,32 +1478,32 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 	return 0;
 }
 
-struct submodule_hash_entry
+struct ref_store_hash_entry
 {
 	struct hashmap_entry ent; /* must be the first member! */
 
 	struct ref_store *refs;
 
-	/* NUL-terminated name of submodule: */
-	char submodule[FLEX_ARRAY];
+	/* NUL-terminated identifier of the ref store: */
+	char name[FLEX_ARRAY];
 };
 
-static int submodule_hash_cmp(const void *entry, const void *entry_or_key,
+static int ref_store_hash_cmp(const void *entry, const void *entry_or_key,
 			      const void *keydata)
 {
-	const struct submodule_hash_entry *e1 = entry, *e2 = entry_or_key;
-	const char *submodule = keydata ? keydata : e2->submodule;
+	const struct ref_store_hash_entry *e1 = entry, *e2 = entry_or_key;
+	const char *name = keydata ? keydata : e2->name;
 
-	return strcmp(e1->submodule, submodule);
+	return strcmp(e1->name, name);
 }
 
-static struct submodule_hash_entry *alloc_submodule_hash_entry(
-		const char *submodule, struct ref_store *refs)
+static struct ref_store_hash_entry *alloc_ref_store_hash_entry(
+		const char *name, struct ref_store *refs)
 {
-	struct submodule_hash_entry *entry;
+	struct ref_store_hash_entry *entry;
 
-	FLEX_ALLOC_STR(entry, submodule, submodule);
-	hashmap_entry_init(entry, strhash(submodule));
+	FLEX_ALLOC_STR(entry, name, name);
+	hashmap_entry_init(entry, strhash(name));
 	entry->refs = refs;
 	return entry;
 }
@@ -1513,20 +1514,23 @@ static struct ref_store *main_ref_store;
 /* A hashmap of ref_stores, stored by submodule name: */
 static struct hashmap submodule_ref_stores;
 
-/*
- * Return the ref_store instance for the specified submodule. If that
- * ref_store hasn't been initialized yet, return NULL.
- */
-static struct ref_store *lookup_submodule_ref_store(const char *submodule)
-{
-	struct submodule_hash_entry *entry;
+/* A hashmap of ref_stores, stored by worktree id: */
+static struct hashmap worktree_ref_stores;
 
-	if (!submodule_ref_stores.tablesize)
+/*
+ * Look up a ref store by name. If that ref_store hasn't been
+ * registered yet, return NULL.
+ */
+static struct ref_store *lookup_ref_store_map(struct hashmap *map,
+					      const char *name)
+{
+	struct ref_store_hash_entry *entry;
+
+	if (!map->tablesize)
 		/* It's initialized on demand in register_ref_store(). */
 		return NULL;
 
-	entry = hashmap_get_from_hash(&submodule_ref_stores,
-				      strhash(submodule), submodule);
+	entry = hashmap_get_from_hash(map, strhash(name), name);
 	return entry ? entry->refs : NULL;
 }
 
@@ -1553,29 +1557,24 @@ struct ref_store *get_main_ref_store(void)
 	if (main_ref_store)
 		return main_ref_store;
 
-	main_ref_store = ref_store_init(get_git_dir(),
-					(REF_STORE_READ |
-					 REF_STORE_WRITE |
-					 REF_STORE_ODB |
-					 REF_STORE_MAIN));
+	main_ref_store = ref_store_init(get_git_dir(), REF_STORE_ALL_CAPS);
 	return main_ref_store;
 }
 
 /*
- * Register the specified ref_store to be the one that should be used
- * for submodule. It is a fatal error to call this function twice for
- * the same submodule.
+ * Associate a ref store with a name. It is a fatal error to call this
+ * function twice for the same name.
  */
-static void register_submodule_ref_store(struct ref_store *refs,
-					 const char *submodule)
+static void register_ref_store_map(struct hashmap *map,
+				   const char *type,
+				   struct ref_store *refs,
+				   const char *name)
 {
-	if (!submodule_ref_stores.tablesize)
-		hashmap_init(&submodule_ref_stores, submodule_hash_cmp, 0);
+	if (!map->tablesize)
+		hashmap_init(map, ref_store_hash_cmp, 0);
 
-	if (hashmap_put(&submodule_ref_stores,
-			alloc_submodule_hash_entry(submodule, refs)))
-		die("BUG: ref_store for submodule '%s' initialized twice",
-		    submodule);
+	if (hashmap_put(map, alloc_ref_store_hash_entry(name, refs)))
+		die("BUG: %s ref_store '%s' initialized twice", type, name);
 }
 
 struct ref_store *get_submodule_ref_store(const char *submodule)
@@ -1592,7 +1591,7 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 		return get_main_ref_store();
 	}
 
-	refs = lookup_submodule_ref_store(submodule);
+	refs = lookup_ref_store_map(&submodule_ref_stores, submodule);
 	if (refs)
 		return refs;
 
@@ -1611,9 +1610,36 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	/* assume that add_submodule_odb() has been called */
 	refs = ref_store_init(submodule_sb.buf,
 			      REF_STORE_READ | REF_STORE_ODB);
-	register_submodule_ref_store(refs, submodule);
+	register_ref_store_map(&submodule_ref_stores, "submodule",
+			       refs, submodule);
 
 	strbuf_release(&submodule_sb);
+	return refs;
+}
+
+struct ref_store *get_worktree_ref_store(const struct worktree *wt)
+{
+	struct ref_store *refs;
+	const char *id;
+
+	if (wt->is_current)
+		return get_main_ref_store();
+
+	id = wt->id ? wt->id : "/";
+	refs = lookup_ref_store_map(&worktree_ref_stores, id);
+	if (refs)
+		return refs;
+
+	if (wt->id)
+		refs = ref_store_init(git_common_path("worktrees/%s", wt->id),
+				      REF_STORE_ALL_CAPS);
+	else
+		refs = ref_store_init(get_git_common_dir(),
+				      REF_STORE_ALL_CAPS);
+
+	if (refs)
+		register_ref_store_map(&worktree_ref_stores, "worktree",
+				       refs, id);
 	return refs;
 }
 
