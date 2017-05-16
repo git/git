@@ -13,5 +13,7 @@ do
 		dest=/pub/software/scm/git/ ;;
 	esac &&
 
-	$kup --host kup.kernel.org put "${s%.sig}.gz" "$s" "$dest" || exit
+	$kup --host git@gitolite.kernel.org --subcmd kup-server \
+	     put "${s%.sig}.gz" "$s" "$dest" ||
+	exit
 done
