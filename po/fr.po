@@ -711,7 +711,7 @@ msgstr ""
 
 #: apply.c:4929
 msgid "instead of applying the patch, output a summary for the input"
-msgstr "au lieu d'appliquer le patch, afficher un résumer de l'entrée"
+msgstr "au lieu d'appliquer le patch, afficher un résumé de l'entrée"
 
 #: apply.c:4931
 msgid "instead of applying the patch, see if the patch is applicable"
@@ -2960,7 +2960,7 @@ msgstr "échec de dup2(%d,%d)"
 #: send-pack.c:150
 #, c-format
 msgid "unable to parse remote unpack status: %s"
-msgstr "impossible d'analyser le status de dépaquetage remote : %s"
+msgstr "impossible d'analyser l'état de dépaquetage distant : %s"
 
 #: send-pack.c:152
 #, c-format
@@ -3646,7 +3646,7 @@ msgid ""
 "examine these refs and maybe delete them. Turn this message off by\n"
 "running \"git config advice.objectNameWarning false\""
 msgstr ""
-"Git ne créé normalement jamais de référence qui se termine par 40 caractères "
+"Git ne crée normalement jamais de référence qui se termine par 40 caractères "
 "hexa\n"
 "car elle serait ignorée si vous spécifiiez 40-hexa. Ces références\n"
 "peuvent être créées par erreur. Par exemple,\n"
@@ -4699,7 +4699,7 @@ msgstr "git add [<options>] [--] <chemin>..."
 #: builtin/add.c:80
 #, c-format
 msgid "unexpected diff status %c"
-msgstr "status de diff inattendu %c"
+msgstr "état de diff inattendu %c"
 
 #: builtin/add.c:85 builtin/commit.c:291
 msgid "updating files failed"
@@ -7277,7 +7277,7 @@ msgstr "Spécifier des chemins avec l'option -a n'a pas de sens."
 
 #: builtin/commit.c:1339 builtin/commit.c:1612
 msgid "show status concisely"
-msgstr "afficher le statut avec concision"
+msgstr "afficher l'état avec concision"
 
 #: builtin/commit.c:1341 builtin/commit.c:1614
 msgid "show branch information"
@@ -7294,7 +7294,7 @@ msgstr "sortie pour traitement automatique"
 
 #: builtin/commit.c:1346 builtin/commit.c:1618
 msgid "show status in long format (default)"
-msgstr "afficher le statut en format long (par défaut)"
+msgstr "afficher l'état en format long (par défaut)"
 
 #: builtin/commit.c:1349 builtin/commit.c:1621
 msgid "terminate entries with NUL"
@@ -7438,7 +7438,7 @@ msgstr "comment éliminer les espaces et les commentaires # du message"
 
 #: builtin/commit.c:1599
 msgid "include status in commit message template"
-msgstr "inclure le statut dans le modèle de message de validation"
+msgstr "inclure l'état dans le modèle de message de validation"
 
 #: builtin/commit.c:1601 builtin/merge.c:233 builtin/pull.c:166
 #: builtin/revert.c:112
@@ -9786,7 +9786,7 @@ msgstr "git ls-files [<options>] [<fichier>...]"
 
 #: builtin/ls-files.c:517
 msgid "identify the file status with tags"
-msgstr "identifier le statut de fichier avec les étiquettes"
+msgstr "identifier l'état de fichier avec les étiquettes"
 
 #: builtin/ls-files.c:519
 msgid "use lowercase letters for 'assume unchanged' files"
@@ -12287,7 +12287,7 @@ msgstr[1] "  Branches distantes :%s"
 
 #: builtin/remote.c:1181 builtin/remote.c:1207
 msgid " (status not queried)"
-msgstr " (statut non demandé)"
+msgstr " (état non demandé)"
 
 #: builtin/remote.c:1190
 msgid "  Local branch configured for 'git pull':"
@@ -12942,7 +12942,7 @@ msgstr "autoriser la suppression récursive"
 
 #: builtin/rm.c:247
 msgid "exit with a zero status even if nothing matched"
-msgstr "sortir avec un statut zéro même si rien ne correspondait"
+msgstr "sortir avec un état zéro même si rien ne correspondait"
 
 #: builtin/rm.c:308
 #, c-format
@@ -14316,7 +14316,7 @@ msgstr "Afficher différents types d'objets"
 
 #: common-cmds.h:36
 msgid "Show the working tree status"
-msgstr "Afficher le statut de la copie de travail"
+msgstr "Afficher l'état de la copie de travail"
 
 #: common-cmds.h:37
 msgid "Create, list, delete or verify a tag object signed with GPG"
@@ -14800,7 +14800,7 @@ msgstr "Impossible d'initialiser le remisage"
 
 #: git-stash.sh:295
 msgid "Cannot save the current status"
-msgstr "Impossible de sauver le statut courant"
+msgstr "Impossible de sauver l'état courant"
 
 #: git-stash.sh:296
 #, sh-format
@@ -14984,7 +14984,7 @@ msgstr "Entrée dans '$displaypath'"
 #: git-submodule.sh:361
 #, sh-format
 msgid "Stopping at '$displaypath'; script returned non-zero status."
-msgstr "Arrêt sur '$displaypath' ; le script a retourné un statut non nul."
+msgstr "Arrêt sur '$displaypath' ; le script a retourné un état non nul."
 
 #: git-submodule.sh:432
 #, sh-format
