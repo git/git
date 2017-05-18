@@ -1898,6 +1898,8 @@ static int apply_autostash(struct replay_opts *opts)
 	strbuf_trim(&stash_sha1);
 
 	child.git_cmd = 1;
+	child.no_stdout = 1;
+	child.no_stderr = 1;
 	argv_array_push(&child.args, "stash");
 	argv_array_push(&child.args, "apply");
 	argv_array_push(&child.args, stash_sha1.buf);
