@@ -1805,7 +1805,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	return dir_state;
 }
 
-static int cmp_name(const void *p1, const void *p2)
+int cmp_dir_entry(const void *p1, const void *p2)
 {
 	const struct dir_entry *e1 = *(const struct dir_entry **)p1;
 	const struct dir_entry *e2 = *(const struct dir_entry **)p2;
@@ -1814,7 +1814,7 @@ static int cmp_name(const void *p1, const void *p2)
 }
 
 /* check if *out lexically strictly contains *in */
-static int check_contains(const struct dir_entry *out, const struct dir_entry *in)
+int check_dir_entry_contains(const struct dir_entry *out, const struct dir_entry *in)
 {
 	return (out->len < in->len) &&
 		(out->name[out->len - 1] == '/') &&
@@ -2034,8 +2034,8 @@ int read_directory(struct dir_struct *dir, const char *path,
 		dir->untracked = NULL;
 	if (!len || treat_leading_path(dir, path, len, pathspec))
 		read_directory_recursive(dir, path, len, untracked, 0, pathspec);
-	QSORT(dir->entries, dir->nr, cmp_name);
-	QSORT(dir->ignored, dir->ignored_nr, cmp_name);
+	QSORT(dir->entries, dir->nr, cmp_dir_entry);
+	QSORT(dir->ignored, dir->ignored_nr, cmp_dir_entry);
 
 	/*
 	 * If DIR_SHOW_IGNORED_TOO is set, read_directory_recursive() will
@@ -2048,7 +2048,8 @@ int read_directory(struct dir_struct *dir, const char *path,
 
 		/* remove from dir->entries untracked contents of untracked dirs */
 		for (i = j = 0; j < dir->nr; j++) {
-			if (i && check_contains(dir->entries[i - 1], dir->entries[j])) {
+			if (i &&
+			    check_dir_entry_contains(dir->entries[i - 1], dir->entries[j])) {
 				free(dir->entries[j]);
 				dir->entries[j] = NULL;
 			} else {
