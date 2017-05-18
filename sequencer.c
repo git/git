@@ -2058,6 +2058,7 @@ cleanup_head_ref:
 				res = error(_("could not read orig-head"));
 				goto cleanup_head_ref;
 			}
+			strbuf_reset(&buf);
 			if (!read_oneliner(&buf, rebase_path_onto(), 0)) {
 				res = error(_("could not read 'onto'"));
 				goto cleanup_head_ref;
