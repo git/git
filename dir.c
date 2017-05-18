@@ -1747,7 +1747,10 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 			dir_state = state;
 
 		/* recurse into subdir if instructed by treat_path */
-		if (state == path_recurse) {
+		if ((state == path_recurse) ||
+			((state == path_untracked) &&
+			 (dir->flags & DIR_SHOW_IGNORED_TOO) &&
+			 (get_dtype(cdir.de, path.buf, path.len) == DT_DIR))) {
 			struct untracked_cache_dir *ud;
 			ud = lookup_untracked(dir->untracked, untracked,
 					      path.buf + baselen,
