@@ -90,7 +90,8 @@ static int builtin_diff_b_f(struct rev_info *revs,
 		     blob[0]->mode, canon_mode(st.st_mode),
 		     &blob[0]->item->oid, &null_oid,
 		     1, 0,
-		     path, path);
+		     blob[0]->path ? blob[0]->path : path,
+		     path);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;

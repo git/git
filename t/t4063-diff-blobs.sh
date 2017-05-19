@@ -81,11 +81,16 @@ test_expect_success 'diff blob against file' '
 test_expect_success 'index of blob-file diff' '
 	check_index $sha1_one $sha1_two
 '
-test_expect_failure 'blob-file diff uses filename as paths' '
+test_expect_success 'blob-file diff uses filename as paths' '
 	check_paths one two
 '
 test_expect_success FILEMODE 'blob-file diff shows mode change' '
 	check_mode 100644 100755
+'
+
+test_expect_success 'blob-file diff prefers filename to sha1' '
+	run_diff $sha1_one two &&
+	check_paths two two
 '
 
 test_done
