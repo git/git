@@ -1500,12 +1500,8 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 				struct commit *a, *b;
 				struct commit_list *exclude;
 
-				a = (a_obj->type == OBJ_COMMIT
-				     ? (struct commit *)a_obj
-				     : lookup_commit_reference(a_obj->oid.hash));
-				b = (b_obj->type == OBJ_COMMIT
-				     ? (struct commit *)b_obj
-				     : lookup_commit_reference(b_obj->oid.hash));
+				a = lookup_commit_reference(a_obj->oid.hash);
+				b = lookup_commit_reference(b_obj->oid.hash);
 				if (!a || !b)
 					goto missing;
 				exclude = get_merge_bases(a, b);
