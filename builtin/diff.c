@@ -29,8 +29,8 @@ static void stuff_change(struct diff_options *opt,
 			 const struct object_id *new_oid,
 			 int old_oid_valid,
 			 int new_oid_valid,
-			 const char *old_name,
-			 const char *new_name)
+			 const char *old_path,
+			 const char *new_path)
 {
 	struct diff_filespec *one, *two;
 
@@ -41,16 +41,16 @@ static void stuff_change(struct diff_options *opt,
 	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
 		SWAP(old_mode, new_mode);
 		SWAP(old_oid, new_oid);
-		SWAP(old_name, new_name);
+		SWAP(old_path, new_path);
 	}
 
 	if (opt->prefix &&
-	    (strncmp(old_name, opt->prefix, opt->prefix_length) ||
-	     strncmp(new_name, opt->prefix, opt->prefix_length)))
+	    (strncmp(old_path, opt->prefix, opt->prefix_length) ||
+	     strncmp(new_path, opt->prefix, opt->prefix_length)))
 		return;
 
-	one = alloc_filespec(old_name);
-	two = alloc_filespec(new_name);
+	one = alloc_filespec(old_path);
+	two = alloc_filespec(new_path);
 	fill_filespec(one, old_oid->hash, old_oid_valid, old_mode);
 	fill_filespec(two, new_oid->hash, new_oid_valid, new_mode);
 
