@@ -1433,6 +1433,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 {
 	struct object_context oc;
 	char *dotdot;
+	char *mark;
 	struct object *object;
 	unsigned char sha1[20];
 	int local_flags;
@@ -1529,33 +1530,33 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 		*dotdot = '.';
 	}
 
-	dotdot = strstr(arg, "^@");
-	if (dotdot && !dotdot[2]) {
-		*dotdot = 0;
+	mark = strstr(arg, "^@");
+	if (mark && !mark[2]) {
+		*mark = 0;
 		if (add_parents_only(revs, arg, flags, 0))
 			return 0;
-		*dotdot = '^';
+		*mark = '^';
 	}
-	dotdot = strstr(arg, "^!");
-	if (dotdot && !dotdot[2]) {
-		*dotdot = 0;
+	mark = strstr(arg, "^!");
+	if (mark && !mark[2]) {
+		*mark = 0;
 		if (!add_parents_only(revs, arg, flags ^ (UNINTERESTING | BOTTOM), 0))
-			*dotdot = '^';
+			*mark = '^';
 	}
-	dotdot = strstr(arg, "^-");
-	if (dotdot) {
+	mark = strstr(arg, "^-");
+	if (mark) {
 		int exclude_parent = 1;
 
-		if (dotdot[2]) {
+		if (mark[2]) {
 			char *end;
-			exclude_parent = strtoul(dotdot + 2, &end, 10);
+			exclude_parent = strtoul(mark + 2, &end, 10);
 			if (*end != '\0' || !exclude_parent)
 				return -1;
 		}
 
-		*dotdot = 0;
+		*mark = 0;
 		if (!add_parents_only(revs, arg, flags ^ (UNINTERESTING | BOTTOM), exclude_parent))
-			*dotdot = '^';
+			*mark = '^';
 	}
 
 	local_flags = 0;
