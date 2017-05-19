@@ -71,7 +71,7 @@ test_expect_success 'index of ranged tree:path diff' '
 test_expect_failure 'ranged tree:path diff uses filenames as paths' '
 	check_paths one two
 '
-test_expect_failure 'ranged tree:path diff shows mode change' '
+test_expect_success 'ranged tree:path diff shows mode change' '
 	check_mode 100644 100755
 '
 

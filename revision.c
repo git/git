@@ -1448,9 +1448,11 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	const char *a_name, *b_name;
 	struct object_id a_oid, b_oid;
 	struct object *a_obj, *b_obj;
+	struct object_context a_oc, b_oc;
 	unsigned int a_flags, b_flags;
 	int symmetric = 0;
 	unsigned int flags_exclude = flags ^ (UNINTERESTING | BOTTOM);
+	unsigned int oc_flags = GET_SHA1_COMMITTISH;
 
 	a_name = arg;
 	if (!*a_name)
@@ -1464,8 +1466,8 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	if (!*b_name)
 		b_name = "HEAD";
 
-	if (get_sha1_committish(a_name, a_oid.hash) ||
-	    get_sha1_committish(b_name, b_oid.hash))
+	if (get_sha1_with_context(a_name, oc_flags, a_oid.hash, &a_oc) ||
+	    get_sha1_with_context(b_name, oc_flags, b_oid.hash, &b_oc))
 		return -1;
 
 	if (!cant_be_filename) {
@@ -1507,8 +1509,8 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	b_obj->flags |= b_flags;
 	add_rev_cmdline(revs, a_obj, a_name, REV_CMD_LEFT, a_flags);
 	add_rev_cmdline(revs, b_obj, b_name, REV_CMD_RIGHT, b_flags);
-	add_pending_object(revs, a_obj, a_name);
-	add_pending_object(revs, b_obj, b_name);
+	add_pending_object_with_mode(revs, a_obj, a_name, a_oc.mode);
+	add_pending_object_with_mode(revs, b_obj, b_name, b_oc.mode);
 	return 0;
 }
 
