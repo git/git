@@ -1511,6 +1511,7 @@ static int get_sha1_with_context_1(const char *name,
 
 	memset(oc, 0, sizeof(*oc));
 	oc->mode = S_IFINVALID;
+	strbuf_init(&oc->symlink_path, 0);
 	ret = get_sha1_1(name, namelen, sha1, flags);
 	if (!ret)
 		return ret;
