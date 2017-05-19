@@ -1443,6 +1443,14 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 
 	flags = flags & UNINTERESTING ? flags | BOTTOM : flags & ~BOTTOM;
 
+	if (!cant_be_filename && !strcmp(arg, "..")) {
+		/*
+		 * Just ".."?  That is not a range but the
+		 * pathspec for the parent directory.
+		 */
+		return -1;
+	}
+
 	dotdot = strstr(arg, "..");
 	if (dotdot) {
 		unsigned char from_sha1[20];
@@ -1450,27 +1458,15 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 		const char *this = arg;
 		int symmetric = *next == '.';
 		unsigned int flags_exclude = flags ^ (UNINTERESTING | BOTTOM);
-		static const char head_by_default[] = "HEAD";
 		unsigned int a_flags;
 
 		*dotdot = 0;
 		next += symmetric;
 
 		if (!*next)
-			next = head_by_default;
+			next = "HEAD";
 		if (dotdot == arg)
-			this = head_by_default;
-		if (this == head_by_default && next == head_by_default &&
-		    !symmetric) {
-			/*
-			 * Just ".."?  That is not a range but the
-			 * pathspec for the parent directory.
-			 */
-			if (!cant_be_filename) {
-				*dotdot = '.';
-				return -1;
-			}
-		}
+			this = "HEAD";
 		if (!get_sha1_committish(this, from_sha1) &&
 		    !get_sha1_committish(next, sha1)) {
 			struct object *a_obj, *b_obj;
