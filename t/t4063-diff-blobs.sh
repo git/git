@@ -55,7 +55,7 @@ test_expect_success 'diff by tree:path (run)' '
 test_expect_success 'index of tree:path diff' '
 	check_index $sha1_one $sha1_two
 '
-test_expect_failure 'tree:path diff uses filenames as paths' '
+test_expect_success 'tree:path diff uses filenames as paths' '
 	check_paths one two
 '
 test_expect_success 'tree:path diff shows mode change' '
@@ -68,7 +68,7 @@ test_expect_success 'diff by ranged tree:path' '
 test_expect_success 'index of ranged tree:path diff' '
 	check_index $sha1_one $sha1_two
 '
-test_expect_failure 'ranged tree:path diff uses filenames as paths' '
+test_expect_success 'ranged tree:path diff uses filenames as paths' '
 	check_paths one two
 '
 test_expect_success 'ranged tree:path diff shows mode change' '

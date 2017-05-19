@@ -23,6 +23,11 @@
 static const char builtin_diff_usage[] =
 "git diff [<options>] [<commit> [<commit>]] [--] [<path>...]";
 
+static const char *blob_path(struct object_array_entry *entry)
+{
+	return entry->path ? entry->path : entry->name;
+}
+
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
 			 const struct object_id *old_oid,
@@ -110,7 +115,7 @@ static int builtin_diff_blobs(struct rev_info *revs,
 		     blob[0]->mode, blob[1]->mode,
 		     &blob[0]->item->oid, &blob[1]->item->oid,
 		     1, 1,
-		     blob[0]->name, blob[1]->name);
+		     blob_path(blob[0]), blob_path(blob[1]));
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
