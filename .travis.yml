@@ -39,6 +39,11 @@ env:
 
 matrix:
   include:
+    - env: GETTEXT_POISON=YesPlease
+      os: linux
+      compiler:
+      addons:
+      before_install:
     - env: Windows
       os: linux
       compiler:
@@ -135,12 +140,14 @@ before_install:
     p4 -V | grep Rev.;
     echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)";
     git-lfs version;
-    mkdir -p $HOME/travis-cache;
-    ln -s $HOME/travis-cache/.prove t/.prove;
 
 before_script: make --jobs=2
 
-script: make --quiet test
+script:
+  - >
+    mkdir -p $HOME/travis-cache;
+    ln -s $HOME/travis-cache/.prove t/.prove;
+    make --quiet test;
 
 after_failure:
   - >
