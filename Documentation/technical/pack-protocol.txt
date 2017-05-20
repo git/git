@@ -473,13 +473,10 @@ that it wants to update, it sends a line listing the obj-id currently on
 the server, the obj-id the client would like to update it to and the name
 of the reference.
 
-This list is followed by a flush-pkt. Then the push options are transmitted
-one per packet followed by another flush-pkt. After that the packfile that
-should contain all the objects that the server will need to complete the new
-references will be sent.
+This list is followed by a flush-pkt.
 
 ----
-  update-request    =  *shallow ( command-list | push-cert ) [packfile]
+  update-requests   =  *shallow ( command-list | push-cert )
 
   shallow           =  PKT-LINE("shallow" SP obj-id)
 
@@ -500,12 +497,35 @@ references will be sent.
 		      PKT-LINE("pusher" SP ident LF)
 		      PKT-LINE("pushee" SP url LF)
 		      PKT-LINE("nonce" SP nonce LF)
+		      *PKT-LINE("push-option" SP push-option LF)
 		      PKT-LINE(LF)
 		      *PKT-LINE(command LF)
 		      *PKT-LINE(gpg-signature-lines LF)
 		      PKT-LINE("push-cert-end" LF)
 
-  packfile          = "PACK" 28*(OCTET)
+  push-option       =  1*( VCHAR | SP )
+----
+
+If the server has advertised the 'push-options' capability and the client has
+specified 'push-options' as part of the capability list above, the client then
+sends its push options followed by a flush-pkt.
+
+----
+  push-options      =  *PKT-LINE(push-option) flush-pkt
+----
+
+For backwards compatibility with older Git servers, if the client sends a push
+cert and push options, it MUST send its push options both embedded within the
+push cert and after the push cert. (Note that the push options within the cert
+are prefixed, but the push options after the cert are not.) Both these lists
+MUST be the same, modulo the prefix.
+
+After that the packfile that
+should contain all the objects that the server will need to complete the new
+references will be sent.
+
+----
+  packfile          =  "PACK" 28*(OCTET)
 ----
 
 If the receiving end does not support delete-refs, the sending end MUST

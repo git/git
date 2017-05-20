@@ -473,7 +473,8 @@ static char *prepare_push_cert_nonce(const char *path, timestamp_t stamp)
  * after dropping "_commit" from its name and possibly moving it out
  * of commit.c
  */
-static char *find_header(const char *msg, size_t len, const char *key)
+static char *find_header(const char *msg, size_t len, const char *key,
+			 const char **next_line)
 {
 	int key_len = strlen(key);
 	const char *line = msg;
@@ -486,6 +487,8 @@ static char *find_header(const char *msg, size_t len, const char *key)
 		if (line + key_len < eol &&
 		    !memcmp(line, key, key_len) && line[key_len] == ' ') {
 			int offset = key_len + 1;
+			if (next_line)
+				*next_line = *eol ? eol + 1 : eol;
 			return xmemdupz(line + offset, (eol - line) - offset);
 		}
 		line = *eol ? eol + 1 : NULL;
@@ -495,7 +498,7 @@ static char *find_header(const char *msg, size_t len, const char *key)
 
 static const char *check_nonce(const char *buf, size_t len)
 {
-	char *nonce = find_header(buf, len, "nonce");
+	char *nonce = find_header(buf, len, "nonce", NULL);
 	timestamp_t stamp, ostamp;
 	char *bohmac, *expect = NULL;
 	const char *retval = NONCE_BAD;
@@ -572,6 +575,45 @@ static const char *check_nonce(const char *buf, size_t len)
 leave:
 	free(nonce);
 	free(expect);
+	return retval;
+}
+
+/*
+ * Return 1 if there is no push_cert or if the push options in push_cert are
+ * the same as those in the argument; 0 otherwise.
+ */
+static int check_cert_push_options(const struct string_list *push_options)
+{
+	const char *buf = push_cert.buf;
+	int len = push_cert.len;
+
+	char *option;
+	const char *next_line;
+	int options_seen = 0;
+
+	int retval = 1;
+
+	if (!len)
+		return 1;
+
+	while ((option = find_header(buf, len, "push-option", &next_line))) {
+		len -= (next_line - buf);
+		buf = next_line;
+		options_seen++;
+		if (options_seen > push_options->nr
+		    || strcmp(option,
+			      push_options->items[options_seen - 1].string)) {
+			retval = 0;
+			goto leave;
+		}
+		free(option);
+	}
+
+	if (options_seen != push_options->nr)
+		retval = 0;
+
+leave:
+	free(option);
 	return retval;
 }
 
@@ -1931,6 +1973,11 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 
 		if (use_push_options)
 			read_push_options(&push_options);
+		if (!check_cert_push_options(&push_options)) {
+			struct command *cmd;
+			for (cmd = commands; cmd; cmd = cmd->next)
+				cmd->error_string = "inconsistent push options";
+		}
 
 		prepare_shallow_info(&si, &shallow);
 		if (!si.nr_ours && !si.nr_theirs)
