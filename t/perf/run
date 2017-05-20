@@ -37,8 +37,15 @@ build_git_rev () {
 			cp "../../$config" "build/$rev/"
 		fi
 	done
-	(cd build/$rev && make $GIT_PERF_MAKE_OPTS) ||
-	die "failed to build revision '$mydir'"
+	(
+		cd build/$rev &&
+		if test -n "$GIT_PERF_MAKE_COMMAND"
+		then
+			sh -c "$GIT_PERF_MAKE_COMMAND"
+		else
+			make $GIT_PERF_MAKE_OPTS
+		fi
+	) || die "failed to build revision '$mydir'"
 }
 
 run_dirs_helper () {
