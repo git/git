@@ -1069,6 +1069,15 @@ static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 #define HAVE_VARIADIC_MACROS 1
 #endif
 
+#ifdef HAVE_VARIADIC_MACROS
+__attribute__((format (printf, 3, 4))) NORETURN
+void BUG_fl(const char *file, int line, const char *fmt, ...);
+#define BUG(...) BUG_fl(__FILE__, __LINE__, __VA_ARGS__)
+#else
+__attribute__((format (printf, 1, 2))) NORETURN
+void BUG(const char *fmt, ...);
+#endif
+
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
  * Returns 0 on success, which includes trying to unlink an object that does
