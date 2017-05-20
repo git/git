@@ -210,7 +210,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			die("failed to unpack tree object %s", arg);
 		stage++;
 	}
-	if (nr_trees == 0 && !read_empty)
+	if (!nr_trees && !read_empty && !opts.merge)
 		warning("read-tree: emptying the index with no arguments is deprecated; use --empty");
 	else if (nr_trees > 0 && read_empty)
 		die("passing trees as arguments contradicts --empty");
