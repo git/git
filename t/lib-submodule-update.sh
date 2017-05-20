@@ -73,6 +73,7 @@ create_lib_submodule_repo () {
 
 		git checkout -b "add_sub1" &&
 		git submodule add ../submodule_update_sub1 sub1 &&
+		git submodule add ../submodule_update_sub1 uninitialized_sub &&
 		git config -f .gitmodules submodule.sub1.ignore all &&
 		git config submodule.sub1.ignore all &&
 		git add .gitmodules &&
@@ -1212,14 +1213,31 @@ test_submodule_forced_switch_recursing () {
 		)
 	'
 	# Updating a submodule from an invalid sha1 updates
-	test_expect_success "$command: modified submodule does not update submodule work tree from invalid commit" '
+	test_expect_success "$command: modified submodule does update submodule work tree from invalid commit" '
 		prolog &&
 		reset_work_tree_to_interested invalid_sub1 &&
 		(
 			cd submodule_update &&
 			git branch -t valid_sub1 origin/valid_sub1 &&
-			test_must_fail $command valid_sub1 &&
-			test_superproject_content origin/invalid_sub1
+			$command valid_sub1 &&
+			test_superproject_content origin/valid_sub1 &&
+			test_submodule_content sub1 origin/valid_sub1
+		)
+	'
+
+	# Old versions of Git were buggy writing the .git link file
+	# (e.g. before f8eaa0ba98b and then moving the superproject repo
+	# whose submodules contained absolute paths)
+	test_expect_success "$command: updating submodules fixes .git links" '
+		prolog &&
+		reset_work_tree_to_interested add_sub1 &&
+		(
+			cd submodule_update &&
+			git branch -t modify_sub1 origin/modify_sub1 &&
+			echo "gitdir: bogus/path" >sub1/.git &&
+			$command modify_sub1 &&
+			test_superproject_content origin/modify_sub1 &&
+			test_submodule_content sub1 origin/modify_sub1
 		)
 	'
 }
