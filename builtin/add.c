@@ -400,7 +400,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		}
 
 		/* This picks up the paths that are not tracked */
-		baselen = fill_directory(&dir, &pathspec);
+		baselen = fill_directory(&dir, &the_index, &pathspec);
 		if (pathspec.nr)
 			seen = prune_directory(&dir, &pathspec, baselen);
 	}
@@ -436,8 +436,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			     !file_exists(path))) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
-					if (is_excluded(&dir, path, &dtype))
-						dir_add_ignored(&dir, path, pathspec.items[i].len);
+					if (is_excluded(&dir, &the_index, path, &dtype))
+						dir_add_ignored(&dir, &the_index,
+								path, pathspec.items[i].len);
 				} else
 					die(_("pathspec '%s' did not match any files"),
 					    pathspec.items[i].original);
