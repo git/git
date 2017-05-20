@@ -4,6 +4,29 @@ test_description='git grep in binary files'
 
 . ./test-lib.sh
 
+nul_match () {
+	matches=$1
+	flags=$2
+	pattern=$3
+	pattern_human=$(echo "$pattern" | sed 's/Q/<NUL>/g')
+
+	if test "$matches" = 1
+	then
+		test_expect_success "git grep -f f $flags '$pattern_human' a" "
+			printf '$pattern' | q_to_nul >f &&
+			git grep -f f $flags a
+		"
+	elif test "$matches" = 0
+	then
+		test_expect_success "git grep -f f $flags '$pattern_human' a" "
+			printf '$pattern' | q_to_nul >f &&
+			test_must_fail git grep -f f $flags a
+		"
+	else
+		test_expect_success "PANIC: Test framework error. Unknown matches value $matches" 'false'
+	fi
+}
+
 test_expect_success 'setup' "
 	echo 'binaryQfile' | q_to_nul >a &&
 	git add a &&
@@ -69,35 +92,12 @@ test_expect_failure 'git grep .fi a' '
 	git grep .fi a
 '
 
-test_expect_success 'git grep -F y<NUL>f a' "
-	printf 'yQf' | q_to_nul >f &&
-	git grep -f f -F a
-"
-
-test_expect_success 'git grep -F y<NUL>x a' "
-	printf 'yQx' | q_to_nul >f &&
-	test_must_fail git grep -f f -F a
-"
-
-test_expect_success 'git grep -Fi Y<NUL>f a' "
-	printf 'YQf' | q_to_nul >f &&
-	git grep -f f -Fi a
-"
-
-test_expect_success 'git grep -Fi Y<NUL>x a' "
-	printf 'YQx' | q_to_nul >f &&
-	test_must_fail git grep -f f -Fi a
-"
-
-test_expect_success 'git grep y<NUL>f a' "
-	printf 'yQf' | q_to_nul >f &&
-	git grep -f f a
-"
-
-test_expect_success 'git grep y<NUL>x a' "
-	printf 'yQx' | q_to_nul >f &&
-	test_must_fail git grep -f f a
-"
+nul_match 1 '-F' 'yQf'
+nul_match 0 '-F' 'yQx'
+nul_match 1 '-Fi' 'YQf'
+nul_match 0 '-Fi' 'YQx'
+nul_match 1 '' 'yQf'
+nul_match 0 '' 'yQx'
 
 test_expect_success 'grep respects binary diff attribute' '
 	echo text >t &&
