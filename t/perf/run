@@ -24,6 +24,7 @@ run_one_dir () {
 
 unpack_git_rev () {
 	rev=$1
+	echo "=== Unpacking $rev in build/$rev ==="
 	mkdir -p build/$rev
 	(cd "$(git rev-parse --show-cdup)" && git archive --format=tar $rev) |
 	(cd build/$rev && tar x)
@@ -37,6 +38,7 @@ build_git_rev () {
 			cp "../../$config" "build/$rev/"
 		fi
 	done
+	echo "=== Building $rev ==="
 	(
 		cd build/$rev &&
 		if test -n "$GIT_PERF_MAKE_COMMAND"
