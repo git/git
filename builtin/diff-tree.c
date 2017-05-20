@@ -9,7 +9,7 @@ static struct rev_info log_tree_opt;
 
 static int diff_tree_commit_sha1(const struct object_id *oid)
 {
-	struct commit *commit = lookup_commit_reference(oid->hash);
+	struct commit *commit = lookup_commit_reference(oid);
 	if (!commit)
 		return -1;
 	return log_tree_commit(&log_tree_opt, commit);
@@ -23,7 +23,7 @@ static int stdin_diff_commit(struct commit *commit, const char *p)
 
 	/* Graft the fake parents locally to the commit */
 	while (isspace(*p++) && !parse_oid_hex(p, &oid, &p)) {
-		struct commit *parent = lookup_commit(oid.hash);
+		struct commit *parent = lookup_commit(&oid);
 		if (!pptr) {
 			/* Free the real parent list */
 			free_commit_list(commit->parents);
@@ -44,7 +44,7 @@ static int stdin_diff_trees(struct tree *tree1, const char *p)
 	struct tree *tree2;
 	if (!isspace(*p++) || parse_oid_hex(p, &oid, &p) || *p)
 		return error("Need exactly two trees, separated by a space");
-	tree2 = lookup_tree(oid.hash);
+	tree2 = lookup_tree(&oid);
 	if (!tree2 || parse_tree(tree2))
 		return -1;
 	printf("%s %s\n", oid_to_hex(&tree1->object.oid),
@@ -67,7 +67,7 @@ static int diff_tree_stdin(char *line)
 	line[len-1] = 0;
 	if (parse_oid_hex(line, &oid, &p))
 		return -1;
-	obj = parse_object(oid.hash);
+	obj = parse_object(&oid);
 	if (!obj)
 		return -1;
 	if (obj->type == OBJ_COMMIT)

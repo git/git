@@ -23,13 +23,13 @@ static int read_empty;
 static struct tree *trees[MAX_UNPACK_TREES];
 static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 
-static int list_tree(unsigned char *sha1)
+static int list_tree(struct object_id *oid)
 {
 	struct tree *tree;
 
 	if (nr_trees >= MAX_UNPACK_TREES)
 		die("I cannot read more than %d trees", MAX_UNPACK_TREES);
-	tree = parse_tree_indirect(sha1);
+	tree = parse_tree_indirect(oid);
 	if (!tree)
 		return -1;
 	trees[nr_trees++] = tree;
@@ -121,7 +121,7 @@ static struct lock_file lock_file;
 int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 {
 	int i, stage = 0;
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct tree_desc t[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
 	int prefix_set = 0;
@@ -204,9 +204,9 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 
-		if (get_sha1(arg, sha1))
+		if (get_oid(arg, &oid))
 			die("Not a valid object name %s", arg);
-		if (list_tree(sha1) < 0)
+		if (list_tree(&oid) < 0)
 			die("failed to unpack tree object %s", arg);
 		stage++;
 	}

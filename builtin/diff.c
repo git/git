@@ -381,7 +381,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				add_head_to_pending(&rev);
 				if (!rev.pending.nr) {
 					struct tree *tree;
-					tree = lookup_tree(EMPTY_TREE_SHA1_BIN);
+					tree = lookup_tree(&empty_tree_oid);
 					add_pending_object(&rev, &tree->object, "HEAD");
 				}
 				break;
@@ -395,7 +395,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		const char *name = entry->name;
 		int flags = (obj->flags & UNINTERESTING);
 		if (!obj->parsed)
-			obj = parse_object(obj->oid.hash);
+			obj = parse_object(&obj->oid);
 		obj = deref_tag(obj, NULL, 0);
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
@@ -408,7 +408,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		} else if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die(_("more than two blobs given: '%s'"), name);
-			hashcpy(blob[blobs].oid.hash, obj->oid.hash);
+			oidcpy(&blob[blobs].oid, &obj->oid);
 			blob[blobs].name = name;
 			blob[blobs].mode = entry->mode;
 			blobs++;

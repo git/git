@@ -602,10 +602,10 @@ enum expire_reflog_flags {
  *     unlocked again.
  */
 typedef void reflog_expiry_prepare_fn(const char *refname,
-				      const unsigned char *sha1,
+				      const struct object_id *oid,
 				      void *cb_data);
-typedef int reflog_expiry_should_prune_fn(unsigned char *osha1,
-					  unsigned char *nsha1,
+typedef int reflog_expiry_should_prune_fn(struct object_id *ooid,
+					  struct object_id *noid,
 					  const char *email,
 					  timestamp_t timestamp, int tz,
 					  const char *message, void *cb_data);

@@ -225,7 +225,7 @@ int cache_tree_fully_valid(struct cache_tree *it)
 	int i;
 	if (!it)
 		return 0;
-	if (it->entry_count < 0 || !has_sha1_file(it->sha1))
+	if (it->entry_count < 0 || !has_sha1_file(it->oid.hash))
 		return 0;
 	for (i = 0; i < it->subtree_nr; i++) {
 		if (!cache_tree_fully_valid(it->down[i]->cache_tree))
@@ -253,7 +253,7 @@ static int update_one(struct cache_tree *it,
 
 	*skip_count = 0;
 
-	if (0 <= it->entry_count && has_sha1_file(it->sha1))
+	if (0 <= it->entry_count && has_sha1_file(it->oid.hash))
 		return it->entry_count;
 
 	/*
@@ -340,7 +340,7 @@ static int update_one(struct cache_tree *it,
 				die("cache-tree.c: '%.*s' in '%s' not found",
 				    entlen, path + baselen, path);
 			i += sub->count;
-			sha1 = sub->cache_tree->sha1;
+			sha1 = sub->cache_tree->oid.hash;
 			mode = S_IFDIR;
 			contains_ita = sub->cache_tree->entry_count < 0;
 			if (contains_ita) {
@@ -404,12 +404,13 @@ static int update_one(struct cache_tree *it,
 		unsigned char sha1[20];
 		hash_sha1_file(buffer.buf, buffer.len, tree_type, sha1);
 		if (has_sha1_file(sha1))
-			hashcpy(it->sha1, sha1);
+			hashcpy(it->oid.hash, sha1);
 		else
 			to_invalidate = 1;
 	} else if (dryrun)
-		hash_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1);
-	else if (write_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1)) {
+		hash_sha1_file(buffer.buf, buffer.len, tree_type,
+			       it->oid.hash);
+	else if (write_sha1_file(buffer.buf, buffer.len, tree_type, it->oid.hash)) {
 		strbuf_release(&buffer);
 		return -1;
 	}
@@ -419,7 +420,7 @@ static int update_one(struct cache_tree *it,
 #if DEBUG
 	fprintf(stderr, "cache-tree update-one (%d ent, %d subtree) %s\n",
 		it->entry_count, it->subtree_nr,
-		sha1_to_hex(it->sha1));
+		oid_to_hex(&it->oid));
 #endif
 	return i;
 }
@@ -459,14 +460,14 @@ static void write_one(struct strbuf *buffer, struct cache_tree *it,
 	if (0 <= it->entry_count)
 		fprintf(stderr, "cache-tree <%.*s> (%d ent, %d subtree) %s\n",
 			pathlen, path, it->entry_count, it->subtree_nr,
-			sha1_to_hex(it->sha1));
+			oid_to_hex(&it->oid));
 	else
 		fprintf(stderr, "cache-tree <%.*s> (%d subtree) invalid\n",
 			pathlen, path, it->subtree_nr);
 #endif
 
 	if (0 <= it->entry_count) {
-		strbuf_add(buffer, it->sha1, 20);
+		strbuf_add(buffer, it->oid.hash, 20);
 	}
 	for (i = 0; i < it->subtree_nr; i++) {
 		struct cache_tree_sub *down = it->down[i];
@@ -523,7 +524,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	if (0 <= it->entry_count) {
 		if (size < 20)
 			goto free_return;
-		hashcpy(it->sha1, (const unsigned char*)buf);
+		hashcpy(it->oid.hash, (const unsigned char*)buf);
 		buf += 20;
 		size -= 20;
 	}
@@ -532,7 +533,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	if (0 <= it->entry_count)
 		fprintf(stderr, "cache-tree <%s> (%d ent, %d subtree) %s\n",
 			*buffer, it->entry_count, subtree_nr,
-			sha1_to_hex(it->sha1));
+			oid_to_hex(&it->oid));
 	else
 		fprintf(stderr, "cache-tree <%s> (%d subtrees) invalid\n",
 			*buffer, subtree_nr);
@@ -643,10 +644,10 @@ int write_index_as_tree(unsigned char *sha1, struct index_state *index_state, co
 		subtree = cache_tree_find(index_state->cache_tree, prefix);
 		if (!subtree)
 			return WRITE_TREE_PREFIX_ERROR;
-		hashcpy(sha1, subtree->sha1);
+		hashcpy(sha1, subtree->oid.hash);
 	}
 	else
-		hashcpy(sha1, index_state->cache_tree->sha1);
+		hashcpy(sha1, index_state->cache_tree->oid.hash);
 
 	if (0 <= newfd)
 		rollback_lock_file(lock_file);
@@ -665,7 +666,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 	struct name_entry entry;
 	int cnt;
 
-	hashcpy(it->sha1, tree->object.oid.hash);
+	oidcpy(&it->oid, &tree->object.oid);
 	init_tree_desc(&desc, tree->buffer, tree->size);
 	cnt = 0;
 	while (tree_entry(&desc, &entry)) {
@@ -673,7 +674,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 			cnt++;
 		else {
 			struct cache_tree_sub *sub;
-			struct tree *subtree = lookup_tree(entry.oid->hash);
+			struct tree *subtree = lookup_tree(entry.oid);
 			if (!subtree->object.parsed)
 				parse_tree(subtree);
 			sub = cache_tree_sub(it, entry.path);
@@ -720,7 +721,7 @@ int cache_tree_matches_traversal(struct cache_tree *root,
 
 	it = find_cache_tree_from_traversal(root, info);
 	it = cache_tree_find(it, ent->path);
-	if (it && it->entry_count > 0 && !hashcmp(ent->oid->hash, it->sha1))
+	if (it && it->entry_count > 0 && !oidcmp(ent->oid, &it->oid))
 		return it->entry_count;
 	return 0;
 }
