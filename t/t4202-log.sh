@@ -418,7 +418,9 @@ test_expect_success 'log with various grep.patternType configurations & command-
 			git log --pretty=tformat:%s --perl-regexp \
 				--grep="[\d]\|" >actual.perl.long-arg &&
 			test_cmp expect.perl actual.perl.long-arg
-
+		else
+			test_must_fail git log --perl-regexp \
+				--grep="[\d]\|"
 		fi &&
 		test_cmp expect.fixed actual.fixed.long-arg &&
 		test_cmp expect.basic actual.basic.long-arg &&
