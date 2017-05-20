@@ -20,13 +20,13 @@ test_expect_success REGEX_LOCALE 'grep literal string, no -F' '
 	git grep -i "TILRAUN: HALLÓ HEIMUR!"
 '
 
-test_expect_success GETTEXT_LOCALE,LIBPCRE 'grep pcre utf-8 icase' '
+test_expect_success GETTEXT_LOCALE,PCRE 'grep pcre utf-8 icase' '
 	git grep --perl-regexp    "TILRAUN: H.lló Heimur!" &&
 	git grep --perl-regexp -i "TILRAUN: H.lló Heimur!" &&
 	git grep --perl-regexp -i "TILRAUN: H.LLÓ HEIMUR!"
 '
 
-test_expect_success GETTEXT_LOCALE,LIBPCRE 'grep pcre utf-8 string with "+"' '
+test_expect_success GETTEXT_LOCALE,PCRE 'grep pcre utf-8 string with "+"' '
 	test_write_lines "TILRAUN: Hallóó Heimur!" >file2 &&
 	git add file2 &&
 	git grep -l --perl-regexp "TILRAUN: H.lló+ Heimur!" >actual &&
