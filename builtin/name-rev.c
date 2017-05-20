@@ -15,7 +15,7 @@ typedef struct rev_name {
 	int distance;
 } rev_name;
 
-static long cutoff = LONG_MAX;
+static timestamp_t cutoff = TIME_MAX;
 
 /* How many generations are maximally preferred over _one_ merge traversal? */
 #define MERGE_TRAVERSAL_WEIGHT 65535
