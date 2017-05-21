@@ -248,6 +248,21 @@ must be used for each option.
 	commands and replies will be printed. Useful to debug TLS
 	connection and authentication problems.
 
+--batch-size=<num>::
+	Some email servers (e.g. smtp.163.com) limit the number emails to be
+	sent per session (connection) and this will lead to a faliure when
+	sending many messages.  With this option, send-email will disconnect after
+	sending $<num> messages and wait for a few seconds (see --relogin-delay)
+	and reconnect, to work around such a limit.  You may want to
+	use some form of credential helper to avoid having to retype
+	your password every time this happens.  Defaults to the
+	`sendemail.smtpBatchSize` configuration variable.
+
+--relogin-delay=<int>::
+	Waiting $<int> seconds before reconnecting to SMTP server. Used together
+	with --batch-size option.  Defaults to the `sendemail.smtpReloginDelay`
+	configuration variable.
+
 Automating
 ~~~~~~~~~~
 
