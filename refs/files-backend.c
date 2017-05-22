@@ -342,13 +342,18 @@ static void files_ref_path(struct files_ref_store *refs,
 
 /*
  * Get the packed_ref_cache for the specified files_ref_store,
- * creating it if necessary.
+ * creating and populating it if it hasn't been read before or if the
+ * file has been changed (according to its `validity` field) since it
+ * was last read. On the other hand, if we hold the lock, then assume
+ * that the file hasn't been changed out from under us, so skip the
+ * extra `stat()` call in `stat_validity_check()`.
  */
 static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *refs)
 {
 	const char *packed_refs_file = files_packed_refs_path(refs);
 
 	if (refs->packed &&
+	    !is_lock_file_locked(&refs->packed_refs_lock) &&
 	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
 		clear_packed_ref_cache(refs);
 
@@ -1288,10 +1293,11 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 			    flags, timeout_value) < 0)
 		return -1;
 	/*
-	 * Get the current packed-refs while holding the lock.  If the
-	 * packed-refs file has been modified since we last read it,
-	 * this will automatically invalidate the cache and re-read
-	 * the packed-refs file.
+	 * Get the current packed-refs while holding the lock. It is
+	 * important that we call `get_packed_ref_cache()` before
+	 * setting `packed_ref_cache->lock`, because otherwise the
+	 * former will see that the file is locked and assume that the
+	 * cache can't be stale.
 	 */
 	packed_ref_cache = get_packed_ref_cache(refs);
 	/* Increment the reference count to prevent it from being freed: */
