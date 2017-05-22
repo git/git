@@ -1705,7 +1705,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 int ref_update_reject_duplicates(struct string_list *refnames,
 				 struct strbuf *err)
 {
-	int i, n = refnames->nr;
+	size_t i, n = refnames->nr;
 
 	assert(err);
 
