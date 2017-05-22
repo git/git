@@ -1247,7 +1247,13 @@ struct ref_iterator *refs_ref_iterator_begin(
 	struct ref_iterator *iter;
 
 	iter = refs->be->iterator_begin(refs, prefix, flags);
-	iter = prefix_ref_iterator_begin(iter, prefix, trim);
+
+	/*
+	 * `iterator_begin()` already takes care of prefix, but we
+	 * might need to do some trimming:
+	 */
+	if (trim)
+		iter = prefix_ref_iterator_begin(iter, "", trim);
 
 	return iter;
 }
