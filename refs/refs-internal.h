@@ -170,6 +170,14 @@ int refs_read_raw_ref(struct ref_store *ref_store,
 		      struct strbuf *referent, unsigned int *type);
 
 /*
+ * Write an error to `err` and return a nonzero value iff the same
+ * refname appears multiple times in `refnames`. `refnames` must be
+ * sorted on entry to this function.
+ */
+int ref_update_reject_duplicates(struct string_list *refnames,
+				 struct strbuf *err);
+
+/*
  * Add a ref_update with the specified properties to transaction, and
  * return a pointer to the new object. This function does not verify
  * that refname is well-formed. new_sha1 and old_sha1 are only
