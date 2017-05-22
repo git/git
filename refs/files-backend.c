@@ -209,7 +209,9 @@ static const char *parse_ref_line(struct strbuf *line, struct object_id *oid)
 }
 
 /*
- * Read f, which is a packed-refs file, into dir.
+ * Read from `packed_refs_file` into a newly-allocated
+ * `packed_ref_cache` and return it. The return value will already
+ * have its reference count incremented.
  *
  * A comment line of the form "# pack-refs with: " may contain zero or
  * more traits. We interpret the traits as follows:
@@ -235,12 +237,26 @@ static const char *parse_ref_line(struct strbuf *line, struct object_id *oid)
  *      compatibility with older clients, but we do not require it
  *      (i.e., "peeled" is a no-op if "fully-peeled" is set).
  */
-static void read_packed_refs(FILE *f, struct ref_dir *dir)
+static struct packed_ref_cache *read_packed_refs(const char *packed_refs_file)
 {
+	FILE *f;
+	struct packed_ref_cache *packed_refs = xcalloc(1, sizeof(*packed_refs));
 	struct ref_entry *last = NULL;
 	struct strbuf line = STRBUF_INIT;
 	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
+	struct ref_dir *dir;
 
+	acquire_packed_ref_cache(packed_refs);
+	packed_refs->cache = create_ref_cache(NULL, NULL);
+	packed_refs->cache->root->flag &= ~REF_INCOMPLETE;
+
+	f = fopen(packed_refs_file, "r");
+	if (!f)
+		return packed_refs;
+
+	stat_validity_update(&packed_refs->validity, fileno(f));
+
+	dir = get_ref_dir(packed_refs->cache->root);
 	while (strbuf_getwholeline(&line, f, '\n') != EOF) {
 		struct object_id oid;
 		const char *refname;
@@ -287,7 +303,10 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 		}
 	}
 
+	fclose(f);
 	strbuf_release(&line);
+
+	return packed_refs;
 }
 
 static const char *files_packed_refs_path(struct files_ref_store *refs)
@@ -357,20 +376,9 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
 		clear_packed_ref_cache(refs);
 
-	if (!refs->packed) {
-		FILE *f;
+	if (!refs->packed)
+		refs->packed = read_packed_refs(packed_refs_file);
 
-		refs->packed = xcalloc(1, sizeof(*refs->packed));
-		acquire_packed_ref_cache(refs->packed);
-		refs->packed->cache = create_ref_cache(&refs->base, NULL);
-		refs->packed->cache->root->flag &= ~REF_INCOMPLETE;
-		f = fopen(packed_refs_file, "r");
-		if (f) {
-			stat_validity_update(&refs->packed->validity, fileno(f));
-			read_packed_refs(f, get_ref_dir(refs->packed->cache->root));
-			fclose(f);
-		}
-	}
 	return refs->packed;
 }
 
