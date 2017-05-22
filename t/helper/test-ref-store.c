@@ -93,12 +93,13 @@ static int cmd_create_symref(struct ref_store *refs, const char **argv)
 static int cmd_delete_refs(struct ref_store *refs, const char **argv)
 {
 	unsigned int flags = arg_flags(*argv++, "flags");
+	const char *msg = *argv++;
 	struct string_list refnames = STRING_LIST_INIT_NODUP;
 
 	while (*argv)
 		string_list_append(&refnames, *argv++);
 
-	return refs_delete_refs(refs, &refnames, flags);
+	return refs_delete_refs(refs, msg, &refnames, flags);
 }
 
 static int cmd_rename_ref(struct ref_store *refs, const char **argv)

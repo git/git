@@ -1902,15 +1902,16 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 	return refs->be->initial_transaction_commit(refs, transaction, err);
 }
 
-int refs_delete_refs(struct ref_store *refs, struct string_list *refnames,
-		     unsigned int flags)
+int refs_delete_refs(struct ref_store *refs, const char *msg,
+		     struct string_list *refnames, unsigned int flags)
 {
-	return refs->be->delete_refs(refs, refnames, flags);
+	return refs->be->delete_refs(refs, msg, refnames, flags);
 }
 
-int delete_refs(struct string_list *refnames, unsigned int flags)
+int delete_refs(const char *msg, struct string_list *refnames,
+		unsigned int flags)
 {
-	return refs_delete_refs(get_main_ref_store(), refnames, flags);
+	return refs_delete_refs(get_main_ref_store(), msg, refnames, flags);
 }
 
 int refs_rename_ref(struct ref_store *refs, const char *oldref,

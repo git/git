@@ -941,7 +941,7 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 		for (ref = stale_refs; ref; ref = ref->next)
 			string_list_append(&refnames, ref->name);
 
-		result = delete_refs(&refnames, 0);
+		result = delete_refs("fetch: prune", &refnames, 0);
 		string_list_clear(&refnames, 0);
 	}
 

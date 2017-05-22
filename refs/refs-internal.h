@@ -508,7 +508,7 @@ typedef int create_symref_fn(struct ref_store *ref_store,
 			     const char *ref_target,
 			     const char *refs_heads_master,
 			     const char *logmsg);
-typedef int delete_refs_fn(struct ref_store *ref_store,
+typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
 			   struct string_list *refnames, unsigned int flags);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,

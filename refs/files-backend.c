@@ -1595,7 +1595,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 	return ret;
 }
 
-static int files_delete_refs(struct ref_store *ref_store,
+static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 			     struct string_list *refnames, unsigned int flags)
 {
 	struct files_ref_store *refs =
@@ -1627,7 +1627,7 @@ static int files_delete_refs(struct ref_store *ref_store,
 	for (i = 0; i < refnames->nr; i++) {
 		const char *refname = refnames->items[i].string;
 
-		if (refs_delete_ref(&refs->base, NULL, refname, NULL, flags))
+		if (refs_delete_ref(&refs->base, msg, refname, NULL, flags))
 			result |= error(_("could not remove reference %s"), refname);
 	}
 

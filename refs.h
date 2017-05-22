@@ -331,7 +331,8 @@ int reflog_exists(const char *refname);
  * verify that the current value of the reference is old_sha1 before
  * deleting it. If old_sha1 is NULL, delete the reference if it
  * exists, regardless of its old value. It is an error for old_sha1 to
- * be NULL_SHA1. flags is passed through to ref_transaction_delete().
+ * be NULL_SHA1. msg and flags are passed through to
+ * ref_transaction_delete().
  */
 int refs_delete_ref(struct ref_store *refs, const char *msg,
 		    const char *refname,
@@ -343,12 +344,13 @@ int delete_ref(const char *msg, const char *refname,
 /*
  * Delete the specified references. If there are any problems, emit
  * errors but attempt to keep going (i.e., the deletes are not done in
- * an all-or-nothing transaction). flags is passed through to
+ * an all-or-nothing transaction). msg and flags are passed through to
  * ref_transaction_delete().
  */
-int refs_delete_refs(struct ref_store *refs, struct string_list *refnames,
-		     unsigned int flags);
-int delete_refs(struct string_list *refnames, unsigned int flags);
+int refs_delete_refs(struct ref_store *refs, const char *msg,
+		     struct string_list *refnames, unsigned int flags);
+int delete_refs(const char *msg, struct string_list *refnames,
+		unsigned int flags);
 
 /** Delete a reflog */
 int refs_delete_reflog(struct ref_store *refs, const char *refname);
