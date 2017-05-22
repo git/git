@@ -515,9 +515,10 @@ typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *logmsg);
 
 /*
- * Iterate over the references in the specified ref_store that are
- * within find_containing_dir(prefix). If prefix is NULL or the empty
- * string, iterate over all references in the submodule.
+ * Iterate over the references in `ref_store` whose names start with
+ * `prefix`. `prefix` is matched as a literal string, without regard
+ * for path separators. If prefix is NULL or the empty string, iterate
+ * over all references in `ref_store`.
  */
 typedef struct ref_iterator *ref_iterator_begin_fn(
 		struct ref_store *ref_store,
