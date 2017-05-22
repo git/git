@@ -1259,6 +1259,11 @@ struct ref_iterator *refs_ref_iterator_begin(
 {
 	struct ref_iterator *iter;
 
+	if (ref_paranoia < 0)
+		ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
+	if (ref_paranoia)
+		flags |= DO_FOR_EACH_INCLUDE_BROKEN;
+
 	iter = refs->be->iterator_begin(refs, prefix, flags);
 
 	/*
