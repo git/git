@@ -2850,7 +2850,8 @@ static int files_transaction_commit(struct ref_store *ref_store,
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE,
 			       "ref_transaction_commit");
-	int ret = 0, i;
+	size_t i;
+	int ret = 0;
 	struct string_list refs_to_delete = STRING_LIST_INIT_NODUP;
 	struct string_list_item *ref_to_delete;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
@@ -3057,7 +3058,8 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE,
 			       "initial_ref_transaction_commit");
-	int ret = 0, i;
+	size_t i;
+	int ret = 0;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 
 	assert(err);
