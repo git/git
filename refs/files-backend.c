@@ -2855,22 +2855,19 @@ static void files_transaction_cleanup(struct ref_transaction *transaction)
 	transaction->state = REF_TRANSACTION_CLOSED;
 }
 
-static int files_transaction_commit(struct ref_store *ref_store,
-				    struct ref_transaction *transaction,
-				    struct strbuf *err)
+static int files_transaction_prepare(struct ref_store *ref_store,
+				     struct ref_transaction *transaction,
+				     struct strbuf *err)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE,
-			       "ref_transaction_commit");
+			       "ref_transaction_prepare");
 	size_t i;
 	int ret = 0;
-	struct string_list refs_to_delete = STRING_LIST_INIT_NODUP;
-	struct string_list_item *ref_to_delete;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 	char *head_ref = NULL;
 	int head_type;
 	struct object_id head_oid;
-	struct strbuf sb = STRBUF_INIT;
 
 	assert(err);
 
@@ -2934,6 +2931,8 @@ static int files_transaction_commit(struct ref_store *ref_store,
 	 * that new values are valid, and write new values to the
 	 * lockfiles, ready to be activated. Only keep one lockfile
 	 * open at a time to avoid running out of file descriptors.
+	 * Note that lock_ref_for_update() might append more updates
+	 * to the transaction.
 	 */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
@@ -2941,7 +2940,38 @@ static int files_transaction_commit(struct ref_store *ref_store,
 		ret = lock_ref_for_update(refs, update, transaction,
 					  head_ref, &affected_refnames, err);
 		if (ret)
-			goto cleanup;
+			break;
+	}
+
+cleanup:
+	free(head_ref);
+	string_list_clear(&affected_refnames, 0);
+
+	if (ret)
+		files_transaction_cleanup(transaction);
+	else
+		transaction->state = REF_TRANSACTION_PREPARED;
+
+	return ret;
+}
+
+static int files_transaction_finish(struct ref_store *ref_store,
+				    struct ref_transaction *transaction,
+				    struct strbuf *err)
+{
+	struct files_ref_store *refs =
+		files_downcast(ref_store, 0, "ref_transaction_finish");
+	size_t i;
+	int ret = 0;
+	struct string_list refs_to_delete = STRING_LIST_INIT_NODUP;
+	struct string_list_item *ref_to_delete;
+	struct strbuf sb = STRBUF_INIT;
+
+	assert(err);
+
+	if (!transaction->nr) {
+		transaction->state = REF_TRANSACTION_CLOSED;
+		return 0;
 	}
 
 	/* Perform updates first so live commits remain referenced */
@@ -3022,7 +3052,6 @@ static int files_transaction_commit(struct ref_store *ref_store,
 
 cleanup:
 	files_transaction_cleanup(transaction);
-	strbuf_release(&sb);
 
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
@@ -3039,11 +3068,17 @@ cleanup:
 		}
 	}
 
+	strbuf_release(&sb);
 	string_list_clear(&refs_to_delete, 0);
-	free(head_ref);
-	string_list_clear(&affected_refnames, 0);
-
 	return ret;
+}
+
+static int files_transaction_abort(struct ref_store *ref_store,
+				   struct ref_transaction *transaction,
+				   struct strbuf *err)
+{
+	files_transaction_cleanup(transaction);
+	return 0;
 }
 
 static int ref_present(const char *refname,
@@ -3316,7 +3351,9 @@ struct ref_storage_be refs_be_files = {
 	"files",
 	files_ref_store_create,
 	files_init_db,
-	files_transaction_commit,
+	files_transaction_prepare,
+	files_transaction_finish,
+	files_transaction_abort,
 	files_initial_transaction_commit,
 
 	files_pack_refs,

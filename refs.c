@@ -853,6 +853,19 @@ void ref_transaction_free(struct ref_transaction *transaction)
 	if (!transaction)
 		return;
 
+	switch (transaction->state) {
+	case REF_TRANSACTION_OPEN:
+	case REF_TRANSACTION_CLOSED:
+		/* OK */
+		break;
+	case REF_TRANSACTION_PREPARED:
+		die("BUG: free called on a prepared reference transaction");
+		break;
+	default:
+		die("BUG: unexpected reference transaction state");
+		break;
+	}
+
 	for (i = 0; i < transaction->nr; i++) {
 		free(transaction->updates[i]->msg);
 		free(transaction->updates[i]);
@@ -1689,14 +1702,17 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 				  refs_heads_master, logmsg);
 }
 
-int ref_transaction_commit(struct ref_transaction *transaction,
-			   struct strbuf *err)
+int ref_transaction_prepare(struct ref_transaction *transaction,
+			    struct strbuf *err)
 {
 	struct ref_store *refs = transaction->ref_store;
 
 	switch (transaction->state) {
 	case REF_TRANSACTION_OPEN:
 		/* Good. */
+		break;
+	case REF_TRANSACTION_PREPARED:
+		die("BUG: prepare called twice on reference transaction");
 		break;
 	case REF_TRANSACTION_CLOSED:
 		die("BUG: prepare called on a closed reference transaction");
@@ -1712,7 +1728,59 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		return -1;
 	}
 
-	return refs->be->transaction_commit(refs, transaction, err);
+	return refs->be->transaction_prepare(refs, transaction, err);
+}
+
+int ref_transaction_abort(struct ref_transaction *transaction,
+			  struct strbuf *err)
+{
+	struct ref_store *refs = transaction->ref_store;
+	int ret = 0;
+
+	switch (transaction->state) {
+	case REF_TRANSACTION_OPEN:
+		/* No need to abort explicitly. */
+		break;
+	case REF_TRANSACTION_PREPARED:
+		ret = refs->be->transaction_abort(refs, transaction, err);
+		break;
+	case REF_TRANSACTION_CLOSED:
+		die("BUG: abort called on a closed reference transaction");
+		break;
+	default:
+		die("BUG: unexpected reference transaction state");
+		break;
+	}
+
+	ref_transaction_free(transaction);
+	return ret;
+}
+
+int ref_transaction_commit(struct ref_transaction *transaction,
+			   struct strbuf *err)
+{
+	struct ref_store *refs = transaction->ref_store;
+	int ret;
+
+	switch (transaction->state) {
+	case REF_TRANSACTION_OPEN:
+		/* Need to prepare first. */
+		ret = ref_transaction_prepare(transaction, err);
+		if (ret)
+			return ret;
+		break;
+	case REF_TRANSACTION_PREPARED:
+		/* Fall through to finish. */
+		break;
+	case REF_TRANSACTION_CLOSED:
+		die("BUG: commit called on a closed reference transaction");
+		break;
+	default:
+		die("BUG: unexpected reference transaction state");
+		break;
+	}
+
+	return refs->be->transaction_finish(refs, transaction, err);
 }
 
 int refs_verify_refname_available(struct ref_store *refs,
