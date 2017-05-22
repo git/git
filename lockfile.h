@@ -176,6 +176,14 @@ static inline int hold_lock_file_for_update(
 }
 
 /*
+ * Return a nonzero value iff `lk` is currently locked.
+ */
+static inline int is_lock_file_locked(struct lock_file *lk)
+{
+	return is_tempfile_active(&lk->tempfile);
+}
+
+/*
  * Append an appropriate error message to `buf` following the failure
  * of `hold_lock_file_for_update()` to lock `path`. `err` should be the
  * `errno` set by the failing call.
