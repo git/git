@@ -217,7 +217,7 @@ static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_lis
 }
 
 #ifdef HAVE_VARIADIC_MACROS
-void BUG_fl(const char *file, int line, const char *fmt, ...)
+NORETURN void BUG_fl(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -225,7 +225,7 @@ void BUG_fl(const char *file, int line, const char *fmt, ...)
 	va_end(ap);
 }
 #else
-void BUG(const char *fmt, ...)
+NORETURN void BUG(const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
