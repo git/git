@@ -2874,9 +2874,6 @@ static int files_transaction_commit(struct ref_store *ref_store,
 
 	assert(err);
 
-	if (transaction->state != REF_TRANSACTION_OPEN)
-		die("BUG: commit called for transaction that is not open");
-
 	if (!transaction->nr)
 		goto cleanup;
 
