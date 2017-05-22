@@ -427,6 +427,19 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *
  *     refname -- the name of the reference to be affected.
  *
+ *     new_sha1 -- the SHA-1 that should be set to be the new value of
+ *         the reference. Some functions allow this parameter to be
+ *         NULL, meaning that the reference is not changed, or
+ *         null_sha1, meaning that the reference should be deleted. A
+ *         copy of this value is made in the transaction.
+ *
+ *     old_sha1 -- the SHA-1 value that the reference must have before
+ *         the update. Some functions allow this parameter to be NULL,
+ *         meaning that the old value of the reference is not checked,
+ *         or null_sha1, meaning that the reference must not exist
+ *         before the update. A copy of this value is made in the
+ *         transaction.
+ *
  *     flags -- flags affecting the update, passed to
  *         update_ref_lock(). Can be REF_NODEREF, which means that
  *         symbolic references should not be followed.
