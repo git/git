@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='unpack-objects'
+test_description='test push with submodules'
 
 . ./test-lib.sh
 
@@ -27,7 +27,7 @@ test_expect_success setup '
 	)
 '
 
-test_expect_success push '
+test_expect_success 'push works with recorded gitlink' '
 	(
 		cd work &&
 		git push ../pub.git master
