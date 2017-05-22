@@ -2834,6 +2834,27 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	return 0;
 }
 
+/*
+ * Unlock any references in `transaction` that are still locked, and
+ * mark the transaction closed.
+ */
+static void files_transaction_cleanup(struct ref_transaction *transaction)
+{
+	size_t i;
+
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+		struct ref_lock *lock = update->backend_data;
+
+		if (lock) {
+			unlock_ref(lock);
+			update->backend_data = NULL;
+		}
+	}
+
+	transaction->state = REF_TRANSACTION_CLOSED;
+}
+
 static int files_transaction_commit(struct ref_store *ref_store,
 				    struct ref_transaction *transaction,
 				    struct strbuf *err)
@@ -2856,10 +2877,8 @@ static int files_transaction_commit(struct ref_store *ref_store,
 	if (transaction->state != REF_TRANSACTION_OPEN)
 		die("BUG: commit called for transaction that is not open");
 
-	if (!transaction->nr) {
-		transaction->state = REF_TRANSACTION_CLOSED;
-		return 0;
-	}
+	if (!transaction->nr)
+		goto cleanup;
 
 	/*
 	 * Fail if a refname appears more than once in the
@@ -3005,15 +3024,11 @@ static int files_transaction_commit(struct ref_store *ref_store,
 	clear_loose_ref_cache(refs);
 
 cleanup:
+	files_transaction_cleanup(transaction);
 	strbuf_release(&sb);
-	transaction->state = REF_TRANSACTION_CLOSED;
 
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
-		struct ref_lock *lock = update->backend_data;
-
-		if (lock)
-			unlock_ref(lock);
 
 		if (update->flags & REF_DELETED_LOOSE) {
 			/*
