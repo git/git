@@ -1455,6 +1455,32 @@ static void prune_refs(struct files_ref_store *refs, struct ref_to_prune *r)
 	}
 }
 
+/*
+ * Return true if the specified reference should be packed.
+ */
+static int should_pack_ref(const char *refname,
+			   const struct object_id *oid, unsigned int ref_flags,
+			   unsigned int pack_flags)
+{
+	/* Do not pack per-worktree refs: */
+	if (ref_type(refname) != REF_TYPE_NORMAL)
+		return 0;
+
+	/* Do not pack non-tags unless PACK_REFS_ALL is set: */
+	if (!(pack_flags & PACK_REFS_ALL) && !starts_with(refname, "refs/tags/"))
+		return 0;
+
+	/* Do not pack symbolic refs: */
+	if (ref_flags & REF_ISSYMREF)
+		return 0;
+
+	/* Do not pack broken refs: */
+	if (!ref_resolves_to_object(refname, oid, ref_flags))
+		return 0;
+
+	return 1;
+}
+
 static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 {
 	struct files_ref_store *refs =
@@ -1476,21 +1502,9 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		 * pruned, also add it to refs_to_prune.
 		 */
 		struct ref_entry *packed_entry;
-		int is_tag_ref = starts_with(iter->refname, "refs/tags/");
 
-		/* Do not pack per-worktree refs: */
-		if (ref_type(iter->refname) != REF_TYPE_NORMAL)
-			continue;
-
-		/* ALWAYS pack tags */
-		if (!(flags & PACK_REFS_ALL) && !is_tag_ref)
-			continue;
-
-		/* Do not pack symbolic or broken refs: */
-		if (iter->flags & REF_ISSYMREF)
-			continue;
-
-		if (!ref_resolves_to_object(iter->refname, iter->oid, iter->flags))
+		if (!should_pack_ref(iter->refname, iter->oid, iter->flags,
+				     flags))
 			continue;
 
 		/*
