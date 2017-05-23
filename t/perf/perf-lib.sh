@@ -78,6 +78,10 @@ if test -z "$GIT_PERF_LARGE_REPO"; then
 	GIT_PERF_LARGE_REPO=$TEST_DIRECTORY/..
 fi
 
+test_perf_do_repo_symlink_config_ () {
+	test_have_prereq SYMLINKS || git config core.symlinks false
+}
+
 test_perf_create_repo_from () {
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-create-repo"
@@ -102,15 +106,22 @@ test_perf_create_repo_from () {
 	) &&
 	(
 		cd "$repo" &&
-		"$MODERN_GIT" init -q && {
-			test_have_prereq SYMLINKS ||
-			git config core.symlinks false
-		} &&
+		"$MODERN_GIT" init -q &&
+		test_perf_do_repo_symlink_config_ &&
 		mv .git/hooks .git/hooks-disabled 2>/dev/null
 	) || error "failed to copy repository '$source' to '$repo'"
 }
 
 # call at least one of these to establish an appropriately-sized repository
+test_perf_fresh_repo () {
+	repo="${1:-$TRASH_DIRECTORY}"
+	"$MODERN_GIT" init -q "$repo" &&
+	(
+		cd "$repo" &&
+		test_perf_do_repo_symlink_config_
+	)
+}
+
 test_perf_default_repo () {
 	test_perf_create_repo_from "${1:-$TRASH_DIRECTORY}" "$GIT_PERF_REPO"
 }
