@@ -447,6 +447,14 @@ rebase::
 The commits are guaranteed to be listed in the order that they were
 processed by rebase.
 
+sendemail-validate
+~~~~~~~~~~~~~~~~~~
+
+This hook is invoked by 'git send-email'.  It takes a single parameter,
+the name of the file that holds the e-mail to be sent.  Exiting with a
+non-zero status causes 'git send-email' to abort before sending any
+e-mails.
+
 
 GIT
 ---
