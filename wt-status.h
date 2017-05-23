@@ -112,7 +112,7 @@ struct wt_status_state {
 	unsigned char cherry_pick_head_sha1[20];
 };
 
-void wt_status_truncate_message_at_cut_line(struct strbuf *);
+size_t wt_status_locate_end(const char *s, size_t len);
 void wt_status_add_cut_line(FILE *fp);
 void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
