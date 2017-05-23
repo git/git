@@ -2516,7 +2516,9 @@ proc toggle_or_diff {mode w args} {
 		if {$last_clicked ne {}} {
 			set lno [lindex $last_clicked 1]
 		} else {
-			if {[llength $file_lists($w)] == 0} {
+			if {![info exists file_lists]
+				|| ![info exists file_lists($w)]
+				|| [llength $file_lists($w)] == 0} {
 				set last_clicked {}
 				return
 			}
