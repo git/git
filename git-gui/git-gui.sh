@@ -2515,7 +2515,9 @@ proc toggle_or_diff {mode w args} {
 		if {$last_clicked ne {}} {
 			set lno [lindex $last_clicked 1]
 		} else {
-			if {[llength $file_lists($w)] == 0} {
+			if {![info exists file_lists]
+				|| ![info exists file_lists($w)]
+				|| [llength $file_lists($w)] == 0} {
 				set last_clicked {}
 				return
 			}
@@ -2529,7 +2531,13 @@ proc toggle_or_diff {mode w args} {
 		}
 	}
 
-	set path [lindex $file_lists($w) [expr {$lno - 1}]]
+	if {![info exists file_lists]
+		|| ![info exists file_lists($w)]
+		|| [llength $file_lists($w)] < $lno - 1} {
+		set path {}
+	} else {
+		set path [lindex $file_lists($w) [expr {$lno - 1}]]
+	}
 	if {$path eq {}} {
 		set last_clicked {}
 		return
