@@ -93,6 +93,7 @@ static struct used_atom {
 			unsigned int length;
 		} objectname;
 		struct refname_atom refname;
+		char *head;
 	} u;
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
@@ -287,6 +288,12 @@ static void if_atom_parser(struct used_atom *atom, const char *arg)
 	}
 }
 
+static void head_atom_parser(struct used_atom *atom, const char *arg)
+{
+	struct object_id unused;
+
+	atom->u.head = resolve_refdup("HEAD", RESOLVE_REF_READING, unused.hash, NULL);
+}
 
 static struct {
 	const char *name;
@@ -325,7 +332,7 @@ static struct {
 	{ "push", FIELD_STR, remote_ref_atom_parser },
 	{ "symref", FIELD_STR, refname_atom_parser },
 	{ "flag" },
-	{ "HEAD" },
+	{ "HEAD", FIELD_STR, head_atom_parser },
 	{ "color", FIELD_STR, color_atom_parser },
 	{ "align", FIELD_STR, align_atom_parser },
 	{ "end" },
@@ -1369,12 +1376,7 @@ static void populate_value(struct ref_array_item *ref)
 		} else if (!deref && grab_objectname(name, ref->objectname.hash, v, atom)) {
 			continue;
 		} else if (!strcmp(name, "HEAD")) {
-			const char *head;
-			struct object_id oid;
-
-			head = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-						  oid.hash, NULL);
-			if (head && !strcmp(ref->refname, head))
+			if (atom->u.head && !strcmp(ref->refname, atom->u.head))
 				v->s = "*";
 			else
 				v->s = " ";
