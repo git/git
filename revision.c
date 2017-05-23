@@ -1477,12 +1477,14 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 			if (!cant_be_filename) {
 				*dotdot = '.';
 				verify_non_filename(revs->prefix, arg);
+				*dotdot = '\0';
 			}
 
 			a_obj = parse_object(from_sha1);
 			b_obj = parse_object(sha1);
 			if (!a_obj || !b_obj) {
 			missing:
+				*dotdot = '.';
 				if (revs->ignore_missing)
 					return 0;
 				die(symmetric
@@ -1525,6 +1527,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 					REV_CMD_RIGHT, flags);
 			add_pending_object(revs, a_obj, this);
 			add_pending_object(revs, b_obj, next);
+			*dotdot = '.';
 			return 0;
 		}
 		*dotdot = '.';
