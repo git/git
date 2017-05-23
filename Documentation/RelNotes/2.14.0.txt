@@ -62,6 +62,9 @@ Performance, Internal Implementation, Development Support etc.
    move), and then declare uintmax_t is the type to be used as the
    timestamp_t.
 
+ * We can trigger Windows auto-build tester (credits: Dscho &
+   Microsoft) from our existing Travis CI tester now.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -91,7 +94,33 @@ notes for details).
    not work well when val is an empty string.  This has been fixed.
    (merge db4eca1fea jn/clone-add-empty-config-from-command-line later to maint).
 
+ * Setting "log.decorate=false" in the configuration file did not take
+   effect in v2.13, which has been corrected.
+   (merge c74271aae7 ah/log-decorate-default-to-auto later to maint).
+
+ * A few codepaths in "checkout" and "am" working on an unborn branch
+   tried to access an uninitialized piece of memory.
+   (merge 57e0ef0e0e rs/checkout-am-fix-unborn later to maint).
+
+ * The Web interface to gmane news archive is long gone, even though
+   the articles are still accessible via NTTP.  Replace the links with
+   ones to public-inbox.org.  Because their message identification is
+   based on the actual message-id, it is likely that it will be easier
+   to migrate away from it if/when necessary.
+   (merge 5840eb9d14 ab/doc-replace-gmane-links later to maint).
+
+ * The receive-pack program now makes sure that the push certificate
+   records the same set of push options used for pushing.
+   (merge cbaf82cc6b jt/push-options-doc later to maint).
+
+ * Tests have been updated to pass under GETTEXT_POISON (a mechanism
+   to ensure that output strings that should not be translated are
+   not translated by mistake), and TravisCI is told to run them.
+   (merge b8e188f6f5 ab/fix-poison-tests later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 515360f9e9 jn/credential-doc-on-clear later to maint).
    (merge 0e6d899fee ab/aix-needs-compat-regex later to maint).
    (merge e294e8959f jc/apply-fix-mismerge later to maint).
+   (merge 7f1b225153 bw/submodule-with-bs-path later to maint).
+   (merge c8f7c8b704 tb/dedup-crlf-tests later to maint).
