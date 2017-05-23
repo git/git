@@ -24,7 +24,7 @@ code.  For Git in general, a few rough rules are:
 
    "Once it _is_ in the tree, it's not really worth the patch noise to
    go and fix it up."
-   Cf. http://article.gmane.org/gmane.linux.kernel/943020
+   Cf. http://lkml.iu.edu/hypermail/linux/kernel/1001.3/01069.html
 
 Make your code readable and sensible, and don't try to be clever.
 
