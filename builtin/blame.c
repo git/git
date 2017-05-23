@@ -563,7 +563,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 	diff_setup_done(&diff_opts);
 
 	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
+		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
 		diff_tree_sha1(parent->tree->object.oid.hash,
 			       origin->commit->tree->object.oid.hash,
@@ -633,7 +633,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 	diff_setup_done(&diff_opts);
 
 	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
+		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
 		diff_tree_sha1(parent->tree->object.oid.hash,
 			       origin->commit->tree->object.oid.hash,
@@ -1272,7 +1272,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 		DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 
 	if (is_null_oid(&target->commit->object.oid))
-		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
+		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
 		diff_tree_sha1(parent->tree->object.oid.hash,
 			       target->commit->tree->object.oid.hash,
@@ -2253,7 +2253,7 @@ static struct commit_list **append_parent(struct commit_list **tail, const struc
 {
 	struct commit *parent;
 
-	parent = lookup_commit_reference(oid->hash);
+	parent = lookup_commit_reference(oid);
 	if (!parent)
 		die("no such commit %s", oid_to_hex(oid));
 	return &commit_list_insert(parent, tail)->next;
@@ -2461,7 +2461,7 @@ static const char *dwim_reverse_initial(struct scoreboard *sb)
 	 */
 	struct object *obj;
 	struct commit *head_commit;
-	unsigned char head_sha1[20];
+	struct object_id head_oid;
 
 	if (sb->revs->pending.nr != 1)
 		return NULL;
@@ -2473,9 +2473,9 @@ static const char *dwim_reverse_initial(struct scoreboard *sb)
 		return NULL;
 
 	/* Do we have HEAD? */
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_sha1, NULL))
+	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, head_oid.hash, NULL))
 		return NULL;
-	head_commit = lookup_commit_reference_gently(head_sha1, 1);
+	head_commit = lookup_commit_reference_gently(&head_oid, 1);
 	if (!head_commit)
 		return NULL;
 

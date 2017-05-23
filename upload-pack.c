@@ -286,19 +286,19 @@ static void create_pack_file(void)
 	die("git upload-pack: %s", abort_msg);
 }
 
-static int got_sha1(const char *hex, unsigned char *sha1)
+static int got_oid(const char *hex, struct object_id *oid)
 {
 	struct object *o;
 	int we_knew_they_have = 0;
 
-	if (get_sha1_hex(hex, sha1))
+	if (get_oid_hex(hex, oid))
 		die("git upload-pack: expected SHA1 object, got '%s'", hex);
-	if (!has_sha1_file(sha1))
+	if (!has_object_file(oid))
 		return -1;
 
-	o = parse_object(sha1);
+	o = parse_object(oid);
 	if (!o)
-		die("oops (%s)", sha1_to_hex(sha1));
+		die("oops (%s)", oid_to_hex(oid));
 	if (o->type == OBJ_COMMIT) {
 		struct commit_list *parents;
 		struct commit *commit = (struct commit *)o;
@@ -334,7 +334,7 @@ static int reachable(struct commit *want)
 			break;
 		}
 		if (!commit->object.parsed)
-			parse_object(commit->object.oid.hash);
+			parse_object(&commit->object.oid);
 		if (commit->object.flags & REACHABLE)
 			continue;
 		commit->object.flags |= REACHABLE;
@@ -382,8 +382,8 @@ static int ok_to_give_up(void)
 
 static int get_common_commits(void)
 {
-	unsigned char sha1[20];
-	char last_hex[41];
+	struct object_id oid;
+	char last_hex[GIT_MAX_HEXSZ + 1];
 	int got_common = 0;
 	int got_other = 0;
 	int sent_ready = 0;
@@ -416,11 +416,11 @@ static int get_common_commits(void)
 			continue;
 		}
 		if (skip_prefix(line, "have ", &arg)) {
-			switch (got_sha1(arg, sha1)) {
+			switch (got_oid(arg, &oid)) {
 			case -1: /* they have what we do not */
 				got_other = 1;
 				if (multi_ack && ok_to_give_up()) {
-					const char *hex = sha1_to_hex(sha1);
+					const char *hex = oid_to_hex(&oid);
 					if (multi_ack == 2) {
 						sent_ready = 1;
 						packet_write_fmt(1, "ACK %s ready\n", hex);
@@ -430,7 +430,7 @@ static int get_common_commits(void)
 				break;
 			default:
 				got_common = 1;
-				memcpy(last_hex, sha1_to_hex(sha1), 41);
+				memcpy(last_hex, oid_to_hex(&oid), 41);
 				if (multi_ack == 2)
 					packet_write_fmt(1, "ACK %s common\n", last_hex);
 				else if (multi_ack)
@@ -492,7 +492,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		goto error;
 
 	namebuf[0] = '^';
-	namebuf[41] = '\n';
+	namebuf[GIT_SHA1_HEXSZ + 1] = '\n';
 	for (i = get_max_object_index(); 0 < i; ) {
 		o = get_indexed_object(--i);
 		if (!o)
@@ -502,10 +502,10 @@ static int do_reachable_revlist(struct child_process *cmd,
 		if (!is_our_ref(o))
 			continue;
 		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd->in, namebuf, 42) < 0)
+		if (write_in_full(cmd->in, namebuf, GIT_SHA1_HEXSZ + 2) < 0)
 			goto error;
 	}
-	namebuf[40] = '\n';
+	namebuf[GIT_SHA1_HEXSZ] = '\n';
 	for (i = 0; i < src->nr; i++) {
 		o = src->objects[i].item;
 		if (is_our_ref(o)) {
@@ -516,7 +516,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		if (reachable && o->type == OBJ_COMMIT)
 			o->flags |= TMP_MARK;
 		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd->in, namebuf, 41) < 0)
+		if (write_in_full(cmd->in, namebuf, GIT_SHA1_HEXSZ + 1) < 0)
 			goto error;
 	}
 	close(cmd->in);
@@ -642,7 +642,7 @@ static void send_shallow(struct commit_list *result)
 		if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
 			packet_write_fmt(1, "shallow %s",
 					 oid_to_hex(&object->oid));
-			register_shallow(object->oid.hash);
+			register_shallow(&object->oid);
 			shallow_nr++;
 		}
 		result = result->next;
@@ -667,7 +667,7 @@ static void send_unshallow(const struct object_array *shallows)
 			 * parse and add the parents to the want list, then
 			 * re-register it.
 			 */
-			unregister_shallow(object->oid.hash);
+			unregister_shallow(&object->oid);
 			object->parsed = 0;
 			parse_commit_or_die((struct commit *)object);
 			parents = ((struct commit *)object)->parents;
@@ -679,7 +679,7 @@ static void send_unshallow(const struct object_array *shallows)
 			add_object_array(object, NULL, &extra_edge_obj);
 		}
 		/* make sure commit traversal conforms to client */
-		register_shallow(object->oid.hash);
+		register_shallow(&object->oid);
 	}
 }
 
@@ -742,7 +742,7 @@ static void receive_needs(void)
 	for (;;) {
 		struct object *o;
 		const char *features;
-		unsigned char sha1_buf[20];
+		struct object_id oid_buf;
 		char *line = packet_read_line(0, NULL);
 		const char *arg;
 
@@ -751,15 +751,15 @@ static void receive_needs(void)
 			break;
 
 		if (skip_prefix(line, "shallow ", &arg)) {
-			unsigned char sha1[20];
+			struct object_id oid;
 			struct object *object;
-			if (get_sha1_hex(arg, sha1))
+			if (get_oid_hex(arg, &oid))
 				die("invalid shallow line: %s", line);
-			object = parse_object(sha1);
+			object = parse_object(&oid);
 			if (!object)
 				continue;
 			if (object->type != OBJ_COMMIT)
-				die("invalid shallow object %s", sha1_to_hex(sha1));
+				die("invalid shallow object %s", oid_to_hex(&oid));
 			if (!(object->flags & CLIENT_SHALLOW)) {
 				object->flags |= CLIENT_SHALLOW;
 				add_object_array(object, NULL, &shallows);
@@ -785,8 +785,8 @@ static void receive_needs(void)
 		}
 		if (skip_prefix(line, "deepen-not ", &arg)) {
 			char *ref = NULL;
-			unsigned char sha1[20];
-			if (expand_ref(arg, strlen(arg), sha1, &ref) != 1)
+			struct object_id oid;
+			if (expand_ref(arg, strlen(arg), oid.hash, &ref) != 1)
 				die("git upload-pack: ambiguous deepen-not: %s", line);
 			string_list_append(&deepen_not, ref);
 			free(ref);
@@ -794,7 +794,7 @@ static void receive_needs(void)
 			continue;
 		}
 		if (!skip_prefix(line, "want ", &arg) ||
-		    get_sha1_hex(arg, sha1_buf))
+		    get_oid_hex(arg, &oid_buf))
 			die("git upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
 
@@ -821,13 +821,13 @@ static void receive_needs(void)
 		if (parse_feature_request(features, "include-tag"))
 			use_include_tag = 1;
 
-		o = parse_object(sha1_buf);
+		o = parse_object(&oid_buf);
 		if (!o) {
 			packet_write_fmt(1,
 					 "ERR upload-pack: not our ref %s",
-					 sha1_to_hex(sha1_buf));
+					 oid_to_hex(&oid_buf));
 			die("git upload-pack: not our ref %s",
-			    sha1_to_hex(sha1_buf));
+			    oid_to_hex(&oid_buf));
 		}
 		if (!(o->flags & WANTED)) {
 			o->flags |= WANTED;
@@ -883,7 +883,7 @@ static void receive_needs(void)
 		if (shallows.nr > 0) {
 			int i;
 			for (i = 0; i < shallows.nr; i++)
-				register_shallow(shallows.objects[i].item->oid.hash);
+				register_shallow(&shallows.objects[i].item->oid);
 		}
 
 	shallow_nr += shallows.nr;

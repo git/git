@@ -33,7 +33,7 @@ static int add_one_ref(const char *path, const struct object_id *oid,
 		return 0;
 	}
 
-	object = parse_object_or_die(oid->hash, path);
+	object = parse_object_or_die(oid, path);
 	add_pending_object(revs, object, "");
 
 	return 0;
@@ -82,13 +82,13 @@ static void add_recent_object(const struct object_id *oid,
 	switch (type) {
 	case OBJ_TAG:
 	case OBJ_COMMIT:
-		obj = parse_object_or_die(oid->hash, NULL);
+		obj = parse_object_or_die(oid, NULL);
 		break;
 	case OBJ_TREE:
-		obj = (struct object *)lookup_tree(oid->hash);
+		obj = (struct object *)lookup_tree(oid);
 		break;
 	case OBJ_BLOB:
-		obj = (struct object *)lookup_blob(oid->hash);
+		obj = (struct object *)lookup_blob(oid);
 		break;
 	default:
 		die("unknown object type for %s: %s",
