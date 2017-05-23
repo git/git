@@ -6,12 +6,9 @@
 #include "git-compat-util.h"
 #include "cache.h"
 
-static FILE *error_handle;
-
 void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
-	FILE *fh = error_handle ? error_handle : stderr;
 	char *p;
 
 	vsnprintf(msg, sizeof(msg), err, params);
@@ -19,7 +16,7 @@ void vreportf(const char *prefix, const char *err, va_list params)
 		if (iscntrl(*p) && *p != '\t' && *p != '\n')
 			*p = '?';
 	}
-	fprintf(fh, "%s%s\n", prefix, msg);
+	fprintf(stderr, "%s%s\n", prefix, msg);
 }
 
 static NORETURN void usage_builtin(const char *err, va_list params)
@@ -86,11 +83,6 @@ void (*get_warn_routine(void))(const char *warn, va_list params)
 void set_die_is_recursing_routine(int (*routine)(void))
 {
 	die_is_recursing = routine;
-}
-
-void set_error_handle(FILE *fh)
-{
-	error_handle = fh;
 }
 
 void NORETURN usagef(const char *err, ...)
