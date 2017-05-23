@@ -577,6 +577,18 @@ test_expect_success 'log.decorate configuration' '
 
 '
 
+test_expect_success 'log.decorate config parsing' '
+	git log --oneline --decorate=full >expect.full &&
+	git log --oneline --decorate=short >expect.short &&
+
+	test_config log.decorate full &&
+	test_config log.mailmap true &&
+	git log --oneline >actual &&
+	test_cmp expect.full actual &&
+	git log --oneline --decorate=short >actual &&
+	test_cmp expect.short actual
+'
+
 test_expect_success TTY 'log output on a TTY' '
 	git log --oneline --decorate >expect.short &&
 
