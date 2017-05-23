@@ -97,7 +97,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 {
 	int len = max_prefix_len;
 
-	if (len >= ent->len)
+	if (len > ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
 	if (!dir_path_match(ent, &pathspec, len, ps_matched))
@@ -238,7 +238,7 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 		strbuf_addstr(&name, super_prefix);
 	strbuf_addstr(&name, ce->name);
 
-	if (len >= ce_namelen(ce))
+	if (len > ce_namelen(ce))
 		die("git ls-files: internal error - cache entry not superset of prefix");
 
 	if (recurse_submodules && S_ISGITLINK(ce->ce_mode) &&
@@ -401,6 +401,25 @@ static void prune_cache(const char *prefix, size_t prefixlen)
 	memmove(active_cache, active_cache + pos,
 		(last - pos) * sizeof(struct cache_entry *));
 	active_nr = last - pos;
+}
+
+static int get_common_prefix_len(const char *common_prefix)
+{
+	int common_prefix_len;
+
+	if (!common_prefix)
+		return 0;
+
+	common_prefix_len = strlen(common_prefix);
+
+	/*
+	 * If the prefix has a trailing slash, strip it so that submodules wont
+	 * be pruned from the index.
+	 */
+	if (common_prefix[common_prefix_len - 1] == '/')
+		common_prefix_len--;
+
+	return common_prefix_len;
 }
 
 /*
@@ -624,8 +643,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		    "--error-unmatch");
 
 	parse_pathspec(&pathspec, 0,
-		       PATHSPEC_PREFER_CWD |
-		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP,
+		       PATHSPEC_PREFER_CWD,
 		       prefix, argv);
 
 	/*
@@ -637,7 +655,9 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		max_prefix = NULL;
 	else
 		max_prefix = common_prefix(&pathspec);
-	max_prefix_len = max_prefix ? strlen(max_prefix) : 0;
+	max_prefix_len = get_common_prefix_len(max_prefix);
+
+	prune_cache(max_prefix, max_prefix_len);
 
 	/* Treat unmatching pathspec elements as errors */
 	if (pathspec.nr && error_unmatch)
@@ -651,7 +671,6 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	      show_killed || show_modified || show_resolve_undo))
 		show_cached = 1;
 
-	prune_cache(max_prefix, max_prefix_len);
 	if (with_tree) {
 		/*
 		 * Basic sanity check; show-stages and show-unmerged
