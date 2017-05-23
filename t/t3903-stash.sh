@@ -865,7 +865,7 @@ test_expect_success 'stash push -p with pathspec shows no changes only once' '
 	git stash push -p foo >actual &&
 	echo "No local changes to save" >expect &&
 	git reset --hard HEAD~ &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'stash push with pathspec shows no changes when there are none' '
@@ -875,7 +875,7 @@ test_expect_success 'stash push with pathspec shows no changes when there are no
 	git stash push foo >actual &&
 	echo "No local changes to save" >expect &&
 	git reset --hard HEAD~ &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_expect_success 'stash push with pathspec not in the repository errors out' '

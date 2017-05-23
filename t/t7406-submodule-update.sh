@@ -447,7 +447,7 @@ test_expect_success 'submodule update - command run for initial population of su
 	EOF
 	rm -rf super/submodule &&
 	test_must_fail git -C super submodule update 2>actual &&
-	test_cmp expect actual &&
+	test_i18ncmp expect actual &&
 	git -C super submodule update --checkout
 '
 

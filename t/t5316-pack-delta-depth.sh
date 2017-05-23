@@ -82,12 +82,16 @@ test_expect_success 'packing produces a long delta' '
 	# Use --window=0 to make sure we are seeing reused deltas,
 	# not computing a new long chain.
 	pack=$(git pack-objects --all --window=0 </dev/null pack) &&
-	test 9 = "$(max_chain pack-$pack.pack)"
+	echo 9 >expect &&
+	max_chain pack-$pack.pack >actual &&
+	test_i18ncmp expect actual
 '
 
 test_expect_success '--depth limits depth' '
 	pack=$(git pack-objects --all --depth=5 </dev/null pack) &&
-	test 5 = "$(max_chain pack-$pack.pack)"
+	echo 5 >expect &&
+	max_chain pack-$pack.pack >actual &&
+	test_i18ncmp expect actual
 '
 
 test_done
