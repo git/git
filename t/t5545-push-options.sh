@@ -3,8 +3,6 @@
 test_description='pushing to a repository using push options'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-httpd.sh
-start_httpd
 
 mk_repo_pair () {
 	rm -rf workbench upstream &&
@@ -102,46 +100,6 @@ test_expect_success 'two push options work' '
 	test_cmp expect upstream/.git/hooks/post-receive.push_options
 '
 
-test_expect_success 'push option denied properly by http server' '
-	test_when_finished "rm -rf test_http_clone" &&
-	test_when_finished "rm -rf \"$HTTPD_DOCUMENT_ROOT_PATH\"/upstream.git" &&
-	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions false &&
-	git -C upstream config http.receivepack true &&
-	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
-	git clone "$HTTPD_URL"/smart/upstream test_http_clone &&
-	test_commit -C test_http_clone one &&
-	test_must_fail git -C test_http_clone push --push-option=asdf origin master 2>actual &&
-	test_i18ngrep "the receiving end does not support push options" actual &&
-	git -C test_http_clone push origin master
-'
-
-test_expect_success 'push options work properly across http' '
-	test_when_finished "rm -rf test_http_clone" &&
-	test_when_finished "rm -rf \"$HTTPD_DOCUMENT_ROOT_PATH\"/upstream.git" &&
-	mk_repo_pair &&
-	git -C upstream config receive.advertisePushOptions true &&
-	git -C upstream config http.receivepack true &&
-	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
-	git clone "$HTTPD_URL"/smart/upstream test_http_clone &&
-
-	test_commit -C test_http_clone one &&
-	git -C test_http_clone push origin master &&
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git rev-parse --verify master >expect &&
-	git -C test_http_clone rev-parse --verify master >actual &&
-	test_cmp expect actual &&
-
-	test_commit -C test_http_clone two &&
-	git -C test_http_clone push --push-option=asdf --push-option="more structured text" origin master &&
-	printf "asdf\nmore structured text\n" >expect &&
-	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options &&
-	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/post-receive.push_options &&
-
-	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git rev-parse --verify master >expect &&
-	git -C test_http_clone rev-parse --verify master >actual &&
-	test_cmp expect actual
-'
-
 test_expect_success 'push options and submodules' '
 	test_when_finished "rm -rf parent" &&
 	test_when_finished "rm -rf parent_upstream" &&
@@ -180,6 +138,49 @@ test_expect_success 'push options and submodules' '
 	test_cmp expect upstream/.git/hooks/post-receive.push_options &&
 	test_cmp expect parent_upstream/.git/hooks/pre-receive.push_options &&
 	test_cmp expect parent_upstream/.git/hooks/post-receive.push_options
+'
+
+. "$TEST_DIRECTORY"/lib-httpd.sh
+start_httpd
+
+test_expect_success 'push option denied properly by http server' '
+	test_when_finished "rm -rf test_http_clone" &&
+	test_when_finished "rm -rf \"$HTTPD_DOCUMENT_ROOT_PATH\"/upstream.git" &&
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions false &&
+	git -C upstream config http.receivepack true &&
+	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
+	git clone "$HTTPD_URL"/smart/upstream test_http_clone &&
+	test_commit -C test_http_clone one &&
+	test_must_fail git -C test_http_clone push --push-option=asdf origin master 2>actual &&
+	test_i18ngrep "the receiving end does not support push options" actual &&
+	git -C test_http_clone push origin master
+'
+
+test_expect_success 'push options work properly across http' '
+	test_when_finished "rm -rf test_http_clone" &&
+	test_when_finished "rm -rf \"$HTTPD_DOCUMENT_ROOT_PATH\"/upstream.git" &&
+	mk_repo_pair &&
+	git -C upstream config receive.advertisePushOptions true &&
+	git -C upstream config http.receivepack true &&
+	cp -R upstream/.git "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git &&
+	git clone "$HTTPD_URL"/smart/upstream test_http_clone &&
+
+	test_commit -C test_http_clone one &&
+	git -C test_http_clone push origin master &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git rev-parse --verify master >expect &&
+	git -C test_http_clone rev-parse --verify master >actual &&
+	test_cmp expect actual &&
+
+	test_commit -C test_http_clone two &&
+	git -C test_http_clone push --push-option=asdf --push-option="more structured text" origin master &&
+	printf "asdf\nmore structured text\n" >expect &&
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options &&
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/post-receive.push_options &&
+
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git rev-parse --verify master >expect &&
+	git -C test_http_clone rev-parse --verify master >actual &&
+	test_cmp expect actual
 '
 
 stop_httpd
