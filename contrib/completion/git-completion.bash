@@ -2813,7 +2813,7 @@ _git_show_branch ()
 _git_stash ()
 {
 	local save_opts='--all --keep-index --no-keep-index --quiet --patch --include-untracked'
-	local subcommands='save list show apply clear drop pop create branch'
+	local subcommands='push save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		case "$cur" in
@@ -2828,6 +2828,9 @@ _git_stash ()
 		esac
 	else
 		case "$subcommand,$cur" in
+		push,--*)
+			__gitcomp "$save_opts --message"
+			;;
 		save,--*)
 			__gitcomp "$save_opts"
 			;;
