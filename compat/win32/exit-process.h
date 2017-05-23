@@ -63,16 +63,18 @@ static int terminate_process_tree(HANDLE main_process, int exit_status)
 			break;
 	}
 
-	for (i = len - 1; i >= 0; i--) {
-		HANDLE process = pids[i] == pid ? main_process :
-			OpenProcess(PROCESS_TERMINATE, FALSE, pids[i]);
+	for (i = len - 1; i > 0; i--) {
+		HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, pids[i]);
 
 		if (process) {
-			if (!TerminateProcess(process, exit_status << 8))
+			if (!TerminateProcess(process, exit_status))
 				ret = -1;
 			CloseHandle(process);
 		}
 	}
+	if (!TerminateProcess(main_process, exit_status))
+		ret = -1;
+	CloseHandle(main_process);
 
 	return ret;
 }
