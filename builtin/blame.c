@@ -449,9 +449,7 @@ static struct origin *make_origin(struct commit *commit, const char *path)
  * Locate an existing origin or create a new one.
  * This moves the origin to front position in the commit util list.
  */
-static struct origin *get_origin(struct scoreboard *sb,
-				 struct commit *commit,
-				 const char *path)
+static struct origin *get_origin(struct commit *commit, const char *path)
 {
 	struct origin *o, *l;
 
@@ -499,8 +497,7 @@ static int fill_blob_sha1_and_mode(struct origin *origin)
  * We have an origin -- check if the same path exists in the
  * parent and return an origin structure to represent it.
  */
-static struct origin *find_origin(struct scoreboard *sb,
-				  struct commit *parent,
+static struct origin *find_origin(struct commit *parent,
 				  struct origin *origin)
 {
 	struct origin *porigin;
@@ -543,7 +540,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 
 	if (!diff_queued_diff.nr) {
 		/* The path is the same as parent */
-		porigin = get_origin(sb, parent, origin->path);
+		porigin = get_origin(parent, origin->path);
 		oidcpy(&porigin->blob_oid, &origin->blob_oid);
 		porigin->mode = origin->mode;
 	} else {
@@ -569,7 +566,7 @@ static struct origin *find_origin(struct scoreboard *sb,
 			die("internal error in blame::find_origin (%c)",
 			    p->status);
 		case 'M':
-			porigin = get_origin(sb, parent, origin->path);
+			porigin = get_origin(parent, origin->path);
 			oidcpy(&porigin->blob_oid, &p->one->oid);
 			porigin->mode = p->one->mode;
 			break;
@@ -588,8 +585,7 @@ static struct origin *find_origin(struct scoreboard *sb,
  * We have an origin -- find the path that corresponds to it in its
  * parent and return an origin structure to represent it.
  */
-static struct origin *find_rename(struct scoreboard *sb,
-				  struct commit *parent,
+static struct origin *find_rename(struct commit *parent,
 				  struct origin *origin)
 {
 	struct origin *porigin = NULL;
@@ -615,7 +611,7 @@ static struct origin *find_rename(struct scoreboard *sb,
 		struct diff_filepair *p = diff_queued_diff.queue[i];
 		if ((p->status == 'R' || p->status == 'C') &&
 		    !strcmp(p->two->path, origin->path)) {
-			porigin = get_origin(sb, parent, p->one->path);
+			porigin = get_origin(parent, p->one->path);
 			oidcpy(&porigin->blob_oid, &p->one->oid);
 			porigin->mode = p->one->mode;
 			break;
@@ -1270,7 +1266,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
 				/* find_move already dealt with this path */
 				continue;
 
-			norigin = get_origin(sb, parent, p->one->path);
+			norigin = get_origin(parent, p->one->path);
 			oidcpy(&norigin->blob_oid, &p->one->oid);
 			norigin->mode = p->one->mode;
 			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p);
@@ -1404,8 +1400,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 	 * common cases, then we look for renames in the second pass.
 	 */
 	for (pass = 0; pass < 2 - no_whole_file_rename; pass++) {
-		struct origin *(*find)(struct scoreboard *,
-				       struct commit *, struct origin *);
+		struct origin *(*find)(struct commit *, struct origin *);
 		find = pass ? find_rename : find_origin;
 
 		for (i = 0, sg = first_scapegoat(revs, commit);
@@ -1418,7 +1413,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				continue;
 			if (parse_commit(p))
 				continue;
-			porigin = find(sb, p, origin);
+			porigin = find(p, origin);
 			if (!porigin)
 				continue;
 			if (!oidcmp(&porigin->blob_oid, &origin->blob_oid)) {
@@ -2806,7 +2801,7 @@ parse_done:
 		sb.final_buf_size = o->file.size;
 	}
 	else {
-		o = get_origin(&sb, sb.final, path);
+		o = get_origin(sb.final, path);
 		if (fill_blob_sha1_and_mode(o))
 			die(_("no such path %s in %s"), path, final_commit_name);
 
