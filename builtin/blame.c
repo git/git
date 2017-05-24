@@ -328,12 +328,6 @@ static int compare_blame_suspect(const void *p1, const void *p2)
 	return s1->s_lno > s2->s_lno ? 1 : -1;
 }
 
-static struct blame_entry *blame_sort(struct blame_entry *head,
-				      int (*compare_fn)(const void *, const void *))
-{
-	return llist_mergesort (head, get_next_blame, set_next_blame, compare_fn);
-}
-
 static int compare_commits_by_reverse_commit_date(const void *a,
 						  const void *b,
 						  void *c)
@@ -395,6 +389,12 @@ struct blame_scoreboard {
 
 	void *found_guilty_entry_data;
 };
+
+static void blame_sort_final(struct blame_scoreboard *sb)
+{
+	sb->ent = llist_mergesort(sb->ent, get_next_blame, set_next_blame,
+				  compare_blame_final);
+}
 
 static void sanity_check_refcnt(struct blame_scoreboard *);
 
@@ -1378,7 +1378,8 @@ static int num_scapegoats(struct rev_info *revs, struct commit *commit, int reve
  */
 static void distribute_blame(struct blame_scoreboard *sb, struct blame_entry *blamed)
 {
-	blamed = blame_sort(blamed, compare_blame_suspect);
+	blamed = llist_mergesort(blamed, get_next_blame, set_next_blame,
+				 compare_blame_suspect);
 	while (blamed)
 	{
 		struct blame_origin *porigin = blamed->suspect;
@@ -2922,7 +2923,7 @@ parse_done:
 	if (incremental)
 		return 0;
 
-	sb.ent = blame_sort(sb.ent, compare_blame_final);
+	blame_sort_final(&sb);
 
 	blame_coalesce(&sb);
 
