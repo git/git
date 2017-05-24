@@ -381,6 +381,9 @@ struct blame_scoreboard {
 
 	/* use this file's contents as the final image */
 	const char *contents_from;
+
+	/* flags */
+	int reverse;
 };
 
 static void sanity_check_refcnt(struct blame_scoreboard *);
@@ -1339,7 +1342,8 @@ static void pass_whole_blame(struct blame_scoreboard *sb,
  * "parent" (and "porigin"), but what we mean is to find scapegoat to
  * exonerate ourselves.
  */
-static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit *commit)
+static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit *commit,
+					   int reverse)
 {
 	if (!reverse) {
 		if (revs->first_parent_only &&
@@ -1353,9 +1357,9 @@ static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit 
 	return lookup_decoration(&revs->children, &commit->object);
 }
 
-static int num_scapegoats(struct rev_info *revs, struct commit *commit)
+static int num_scapegoats(struct rev_info *revs, struct commit *commit, int reverse)
 {
-	struct commit_list *l = first_scapegoat(revs, commit);
+	struct commit_list *l = first_scapegoat(revs, commit, reverse);
 	return commit_list_count(l);
 }
 
@@ -1393,7 +1397,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	struct blame_entry *toosmall = NULL;
 	struct blame_entry *blames, **blametail = &blames;
 
-	num_sg = num_scapegoats(revs, commit);
+	num_sg = num_scapegoats(revs, commit, sb->reverse);
 	if (!num_sg)
 		goto finish;
 	else if (num_sg < ARRAY_SIZE(sg_buf))
@@ -1409,7 +1413,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 		struct blame_origin *(*find)(struct commit *, struct blame_origin *);
 		find = pass ? find_rename : find_origin;
 
-		for (i = 0, sg = first_scapegoat(revs, commit);
+		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct commit *p = sg->item;
@@ -1441,7 +1445,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	}
 
 	sb->num_commits++;
-	for (i = 0, sg = first_scapegoat(revs, commit);
+	for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 	     i < num_sg && sg;
 	     sg = sg->next, i++) {
 		struct blame_origin *porigin = sg_origin[i];
@@ -1462,7 +1466,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	if (opt & PICKAXE_BLAME_MOVE) {
 		filter_small(sb, &toosmall, &origin->suspects, sb->move_score);
 		if (origin->suspects) {
-			for (i = 0, sg = first_scapegoat(revs, commit);
+			for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 			     i < num_sg && sg;
 			     sg = sg->next, i++) {
 				struct blame_origin *porigin = sg_origin[i];
@@ -1489,7 +1493,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 		if (!origin->suspects)
 			goto finish;
 
-		for (i = 0, sg = first_scapegoat(revs, commit);
+		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct blame_origin *porigin = sg_origin[i];
@@ -1770,7 +1774,7 @@ static void assign_blame(struct blame_scoreboard *sb, int opt)
 		 */
 		blame_origin_incref(suspect);
 		parse_commit(commit);
-		if (reverse ||
+		if (sb->reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
 		     !(revs->max_age != -1 && commit->date < revs->max_age)))
 			pass_blame(sb, suspect, opt);
@@ -2739,6 +2743,7 @@ parse_done:
 
 	sb.revs = &revs;
 	sb.contents_from = contents_from;
+	sb.reverse = reverse;
 	if (!reverse) {
 		final_commit_name = prepare_final(&sb);
 		sb.commits.compare = compare_commits_by_commit_date;
