@@ -378,6 +378,9 @@ struct blame_scoreboard {
 	 */
 	unsigned move_score;
 	unsigned copy_score;
+
+	/* use this file's contents as the final image */
+	const char *contents_from;
 };
 
 static void sanity_check_refcnt(struct blame_scoreboard *);
@@ -2735,6 +2738,7 @@ parse_done:
 	sb.copy_score = BLAME_DEFAULT_COPY_SCORE;
 
 	sb.revs = &revs;
+	sb.contents_from = contents_from;
 	if (!reverse) {
 		final_commit_name = prepare_final(&sb);
 		sb.commits.compare = compare_commits_by_commit_date;
