@@ -115,6 +115,42 @@ enum diff_submodule_format {
 	DIFF_SUBMODULE_INLINE_DIFF
 };
 
+/*
+ * This struct is used when we need to buffer the output of the diff output.
+ *
+ * NEEDSWORK: Instead of storing a copy of the line, add an offset pointer
+ * into the pre/post image file. This pointer could be a union with the
+ * line pointer. By storing an offset into the file instead of the literal line,
+ * we can decrease the memory footprint for the buffered output. At first we
+ * may want to only have indirection for the content lines, but we could also
+ * enhance the state for emitting prefabricated lines, e.g. the similarity
+ * score line or hunk/file headers would only need to store a number or path
+ * and then the output can be constructed later on depending on state.
+ */
+struct diff_line {
+	const char *set;
+	const char *reset;
+	const char *line;
+	int len;
+	int sign;
+	int add_line_prefix;
+	enum {
+		/*
+		 * Emits [lineprefix][set][sign][reset] and then calls
+		 * ws_check_emit which will output "line", marked up
+		 * according to ws_rule.
+		 */
+		DIFF_LINE_WS,
+
+		/* Emits [lineprefix][set][sign] line [reset] */
+		DIFF_LINE_ASIS,
+
+		/* Reloads the ws_rule; line contains the file name */
+		DIFF_LINE_RELOAD_WS_RULE
+	} state;
+};
+#define DIFF_LINE_INIT {NULL, NULL, NULL, 0, 0, 0}
+
 struct diff_options {
 	const char *orderfile;
 	const char *pickaxe;
@@ -188,8 +224,13 @@ struct diff_options {
 	int diff_path_counter;
 
 	unsigned ws_rule;
+	int use_buffer;
+
+	struct diff_line *line_buffer;
+	int line_buffer_nr, line_buffer_alloc;
 };
 
+/* Emit [line_prefix] [set] line [reset] */
 void diff_emit_line(struct diff_options *o, const char *set, const char *reset,
 		    const char *line, int len);
 

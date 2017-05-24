@@ -516,54 +516,85 @@ static void check_blank_at_eof(mmfile_t *mf1, mmfile_t *mf2,
 	ecbdata->blank_at_eof_in_postimage = (at - l2) + 1;
 }
 
+static void emit_diff_line(struct diff_options *o,
+			   struct diff_line *e)
+{
+	const char *ws;
+	int has_trailing_newline, has_trailing_carriage_return;
+	int len = e->len;
+	FILE *file = o->file;
+
+	if (e->add_line_prefix)
+		fputs(diff_line_prefix(o), file);
+
+	switch (e->state) {
+	case DIFF_LINE_WS:
+		ws = diff_get_color(o->use_color, DIFF_WHITESPACE);
+		if (e->set)
+			fputs(e->set, file);
+		if (e->sign)
+			fputc(e->sign, file);
+		if (e->reset)
+			fputs(e->reset, file);
+		ws_check_emit(e->line, e->len, o->ws_rule,
+			      file, e->set, e->reset, ws);
+		return;
+	case DIFF_LINE_ASIS:
+		has_trailing_newline = (len > 0 && e->line[len-1] == '\n');
+		if (has_trailing_newline)
+			len--;
+		has_trailing_carriage_return = (len > 0 && e->line[len-1] == '\r');
+		if (has_trailing_carriage_return)
+			len--;
+
+		if (len || e->sign) {
+			if (e->set)
+				fputs(e->set, file);
+			if (e->sign)
+				fputc(e->sign, file);
+			fwrite(e->line, len, 1, file);
+			if (e->reset)
+				fputs(e->reset, file);
+		}
+		if (has_trailing_carriage_return)
+			fputc('\r', file);
+		if (has_trailing_newline)
+			fputc('\n', file);
+		return;
+	case DIFF_LINE_RELOAD_WS_RULE:
+		o->ws_rule = whitespace_rule(e->line);
+		return;
+	default:
+		die("BUG: malformatted buffered patch line: '%d'", e->state);
+	}
+}
+
+static void append_diff_line(struct diff_options *o,
+			     struct diff_line *e)
+{
+	struct diff_line *f;
+	ALLOC_GROW(o->line_buffer,
+		   o->line_buffer_nr + 1,
+		   o->line_buffer_alloc);
+	f = &o->line_buffer[o->line_buffer_nr++];
+
+	memcpy(f, e, sizeof(struct diff_line));
+	f->line = e->line ? xmemdupz(e->line, e->len) : NULL;
+}
 
 static void emit_line(struct diff_options *o,
 		      const char *set, const char *reset,
 		      int add_line_prefix, int markup_ws,
 		      int sign, const char *line, int len)
 {
-	const char *ws;
-	int has_trailing_newline, has_trailing_carriage_return;
-	FILE *file = o->file;
+	struct diff_line e = {set, reset, line,
+		len, sign, add_line_prefix,
+		markup_ws ? DIFF_LINE_WS : DIFF_LINE_ASIS};
 
-	if (add_line_prefix)
-		fputs(diff_line_prefix(o), file);
-
-	if (markup_ws) {
-		ws = diff_get_color(o->use_color, DIFF_WHITESPACE);
-
-		if (set)
-			fputs(set, file);
-		if (sign)
-			fputc(sign, file);
-		if (reset)
-			fputs(reset, file);
-		ws = diff_get_color(o->use_color, DIFF_WHITESPACE);
-		ws_check_emit(line, len, o->ws_rule,
-			      file, set, reset, ws);
-		return;
-	}
-
-	has_trailing_newline = (len > 0 && line[len-1] == '\n');
-	if (has_trailing_newline)
-		len--;
-	has_trailing_carriage_return = (len > 0 && line[len-1] == '\r');
-	if (has_trailing_carriage_return)
-		len--;
-
-	if (len || sign) {
-		if (set)
-			fputs(set, file);
-		if (sign)
-			fputc(sign, file);
-		fwrite(line, len, 1, file);
-		if (reset)
-			fputs(reset, file);
-	}
-	if (has_trailing_carriage_return)
-		fputc('\r', file);
-	if (has_trailing_newline)
-		fputc('\n', file);
+	if (o->use_buffer)
+		append_diff_line(o, &e);
+	else
+		emit_diff_line(o, &e);
 }
 
 static void emit_line_fmt(struct diff_options *o,
@@ -1172,6 +1203,18 @@ static void diff_words_flush(struct emit_callback *ecbdata)
 	if (ecbdata->diff_words->minus.text.size ||
 	    ecbdata->diff_words->plus.text.size)
 		diff_words_show(ecbdata->diff_words);
+
+	if (ecbdata->diff_words->opt->line_buffer_nr) {
+		int i;
+		for (i = 0; i < ecbdata->diff_words->opt->line_buffer_nr; i++)
+			append_diff_line(ecbdata->opt,
+				&ecbdata->diff_words->opt->line_buffer[i]);
+
+		for (i = 0; i < ecbdata->diff_words->opt->line_buffer_nr; i++)
+			free((void *)ecbdata->diff_words->opt->line_buffer[i].line);
+
+		ecbdata->diff_words->opt->line_buffer_nr = 0;
+	}
 }
 
 static void diff_filespec_load_driver(struct diff_filespec *one)
@@ -1207,6 +1250,11 @@ static void init_diff_words_data(struct emit_callback *ecbdata,
 		xcalloc(1, sizeof(struct diff_words_data));
 	ecbdata->diff_words->type = o->word_diff;
 	ecbdata->diff_words->opt = o;
+
+	o->line_buffer = NULL;
+	o->line_buffer_nr = 0;
+	o->line_buffer_alloc = 0;
+
 	if (!o->word_regex)
 		o->word_regex = userdiff_word_regex(one);
 	if (!o->word_regex)
@@ -1241,6 +1289,7 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 {
 	if (ecbdata->diff_words) {
 		diff_words_flush(ecbdata);
+		free (ecbdata->diff_words->opt->line_buffer);
 		free (ecbdata->diff_words->opt);
 		free (ecbdata->diff_words->minus.text.ptr);
 		free (ecbdata->diff_words->minus.orig);
@@ -2579,6 +2628,13 @@ static void builtin_diff(const char *name_a,
 			xecfg.ctxlen = strtoul(v, NULL, 10);
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
+		if (o->use_buffer) {
+			struct diff_line e = DIFF_LINE_INIT;
+			e.state = DIFF_LINE_RELOAD_WS_RULE;
+			e.line = name_b;
+			e.len = strlen(name_b);
+			append_diff_line(o, &e);
+		}
 		if (xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
 				  &xpp, &xecfg))
 			die("unable to generate diff for %s", one->path);
@@ -3458,6 +3514,10 @@ void diff_setup(struct diff_options *options)
 		options->a_prefix = "a/";
 		options->b_prefix = "b/";
 	}
+
+	options->line_buffer = NULL;
+	options->line_buffer_nr = 0;
+	options->line_buffer_alloc = 0;
 }
 
 void diff_setup_done(struct diff_options *options)
@@ -4796,10 +4856,35 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 {
 	int i;
 	struct diff_queue_struct *q = &diff_queued_diff;
+	/*
+	 * For testing purposes we want to make sure the diff machinery
+	 * works completely with the buffer. If there is anything emitted
+	 * outside the emit_diff_line, then the order is screwed
+	 * up and the tests will fail.
+	 *
+	 * TODO (later in this series):
+	 * We'll unset this flag in a later patch.
+	 */
+	o->use_buffer = 1;
+
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
 		if (check_pair_status(p))
 			diff_flush_patch(p, o);
+	}
+
+	if (o->use_buffer) {
+		for (i = 0; i < o->line_buffer_nr; i++)
+			emit_diff_line(o, &o->line_buffer[i]);
+
+		for (i = 0; i < o->line_buffer_nr; i++)
+			free((void *)o->line_buffer[i].line);
+
+		free(o->line_buffer);
+
+		o->line_buffer = NULL;
+		o->line_buffer_nr = 0;
+		o->line_buffer_alloc = 0;
 	}
 }
 
