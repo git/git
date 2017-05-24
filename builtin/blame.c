@@ -384,6 +384,7 @@ struct blame_scoreboard {
 
 	/* flags */
 	int reverse;
+	int show_root;
 };
 
 static void sanity_check_refcnt(struct blame_scoreboard *);
@@ -1784,7 +1785,7 @@ static void assign_blame(struct blame_scoreboard *sb, int opt)
 				mark_parents_uninteresting(commit);
 		}
 		/* treat root commit as boundary */
-		if (!commit->parents && !show_root)
+		if (!commit->parents && !sb->show_root)
 			commit->object.flags |= UNINTERESTING;
 
 		/* Take responsibility for the remaining entries */
@@ -2884,6 +2885,8 @@ parse_done:
 		sb.move_score = blame_move_score;
 	if (blame_copy_score)
 		sb.copy_score = blame_copy_score;
+
+	sb.show_root = show_root;
 
 	read_mailmap(&mailmap, NULL);
 
