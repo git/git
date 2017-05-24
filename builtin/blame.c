@@ -61,11 +61,6 @@ static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 #define DEBUG 0
 #endif
 
-/* stats */
-static int num_read_blob;
-static int num_get_patch;
-static int num_commits;
-
 #define PICKAXE_BLAME_MOVE		01
 #define PICKAXE_BLAME_COPY		02
 #define PICKAXE_BLAME_COPY_HARDER	04
@@ -151,13 +146,13 @@ static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b,
  * diff machinery
  */
 static void fill_origin_blob(struct diff_options *opt,
-			     struct blame_origin *o, mmfile_t *file)
+			     struct blame_origin *o, mmfile_t *file, int *num_read_blob)
 {
 	if (!o->file.ptr) {
 		enum object_type type;
 		unsigned long file_size;
 
-		num_read_blob++;
+		(*num_read_blob)++;
 		if (DIFF_OPT_TST(opt, ALLOW_TEXTCONV) &&
 		    textconv_object(o->path, o->mode, &o->blob_oid, 1, &file->ptr, &file_size))
 			;
@@ -375,6 +370,11 @@ struct blame_scoreboard {
 	/* look-up a line in the final buffer */
 	int num_lines;
 	int *lineno;
+
+	/* stats */
+	int num_read_blob;
+	int num_get_patch;
+	int num_commits;
 };
 
 static void sanity_check_refcnt(struct blame_scoreboard *);
@@ -934,9 +934,9 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 	d.offset = 0;
 	d.dstq = &newdest; d.srcq = &target->suspects;
 
-	fill_origin_blob(&sb->revs->diffopt, parent, &file_p);
-	fill_origin_blob(&sb->revs->diffopt, target, &file_o);
-	num_get_patch++;
+	fill_origin_blob(&sb->revs->diffopt, parent, &file_p, &sb->num_read_blob);
+	fill_origin_blob(&sb->revs->diffopt, target, &file_o, &sb->num_read_blob);
+	sb->num_get_patch++;
 
 	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d))
 		die("unable to generate diff (%s -> %s)",
@@ -1140,7 +1140,7 @@ static void find_move_in_parent(struct blame_scoreboard *sb,
 	if (!unblamed)
 		return; /* nothing remains for this target */
 
-	fill_origin_blob(&sb->revs->diffopt, parent, &file_p);
+	fill_origin_blob(&sb->revs->diffopt, parent, &file_p, &sb->num_read_blob);
 	if (!file_p.ptr)
 		return;
 
@@ -1269,7 +1269,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 			norigin = get_origin(parent, p->one->path);
 			oidcpy(&norigin->blob_oid, &p->one->oid);
 			norigin->mode = p->one->mode;
-			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p);
+			fill_origin_blob(&sb->revs->diffopt, norigin, &file_p, &sb->num_read_blob);
 			if (!file_p.ptr)
 				continue;
 
@@ -1434,7 +1434,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 		}
 	}
 
-	num_commits++;
+	sb->num_commits++;
 	for (i = 0, sg = first_scapegoat(revs, commit);
 	     i < num_sg && sg;
 	     sg = sg->next, i++) {
@@ -2818,7 +2818,7 @@ parse_done:
 			    oid_to_hex(&o->blob_oid),
 			    path);
 	}
-	num_read_blob++;
+	sb.num_read_blob++;
 	lno = prepare_lines(&sb);
 
 	if (lno && !range_list.nr)
@@ -2899,9 +2899,9 @@ parse_done:
 	}
 
 	if (show_stats) {
-		printf("num read blob: %d\n", num_read_blob);
-		printf("num get patch: %d\n", num_get_patch);
-		printf("num commits: %d\n", num_commits);
+		printf("num read blob: %d\n", sb.num_read_blob);
+		printf("num get patch: %d\n", sb.num_get_patch);
+		printf("num commits: %d\n", sb.num_commits);
 	}
 	return 0;
 }
