@@ -384,7 +384,7 @@ static void sanity_check_refcnt(struct blame_scoreboard *);
  * contiguous lines in the same origin (i.e. <commit, path> pair),
  * merge them together.
  */
-static void coalesce(struct blame_scoreboard *sb)
+static void blame_coalesce(struct blame_scoreboard *sb)
 {
 	struct blame_entry *ent, *next;
 
@@ -2885,7 +2885,7 @@ parse_done:
 
 	sb.ent = blame_sort(sb.ent, compare_blame_final);
 
-	coalesce(&sb);
+	blame_coalesce(&sb);
 
 	if (!(output_option & OUTPUT_PORCELAIN))
 		find_alignment(&sb, &output_option);
