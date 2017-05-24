@@ -2431,14 +2431,8 @@ static struct commit *find_single_final(struct rev_info *revs,
 	return found;
 }
 
-static char *prepare_final(struct blame_scoreboard *sb)
-{
-	const char *name;
-	sb->final = find_single_final(sb->revs, &name);
-	return xstrdup_or_null(name);
-}
-
-static const char *dwim_reverse_initial(struct blame_scoreboard *sb)
+static struct commit *dwim_reverse_initial(struct rev_info *revs,
+					   const char **name_p)
 {
 	/*
 	 * DWIM "git blame --reverse ONE -- PATH" as
@@ -2449,11 +2443,11 @@ static const char *dwim_reverse_initial(struct blame_scoreboard *sb)
 	struct commit *head_commit;
 	unsigned char head_sha1[20];
 
-	if (sb->revs->pending.nr != 1)
+	if (revs->pending.nr != 1)
 		return NULL;
 
 	/* Is that sole rev a committish? */
-	obj = sb->revs->pending.objects[0].item;
+	obj = revs->pending.objects[0].item;
 	obj = deref_tag(obj, NULL, 0);
 	if (obj->type != OBJ_COMMIT)
 		return NULL;
@@ -2467,17 +2461,19 @@ static const char *dwim_reverse_initial(struct blame_scoreboard *sb)
 
 	/* Turn "ONE" into "ONE..HEAD" then */
 	obj->flags |= UNINTERESTING;
-	add_pending_object(sb->revs, &head_commit->object, "HEAD");
+	add_pending_object(revs, &head_commit->object, "HEAD");
 
-	sb->final = (struct commit *)obj;
-	return sb->revs->pending.objects[0].name;
+	if (name_p)
+		*name_p = revs->pending.objects[0].name;
+	return (struct commit *)obj;
 }
 
-static char *prepare_initial(struct blame_scoreboard *sb)
+static struct commit *find_single_initial(struct rev_info *revs,
+					  const char **name_p)
 {
 	int i;
 	const char *final_commit_name = NULL;
-	struct rev_info *revs = sb->revs;
+	struct commit *found = NULL;
 
 	/*
 	 * There must be one and only one negative commit, and it must be
@@ -2490,19 +2486,22 @@ static char *prepare_initial(struct blame_scoreboard *sb)
 		obj = deref_tag(obj, NULL, 0);
 		if (obj->type != OBJ_COMMIT)
 			die("Non commit %s?", revs->pending.objects[i].name);
-		if (sb->final)
+		if (found)
 			die("More than one commit to dig up from, %s and %s?",
 			    revs->pending.objects[i].name,
 			    final_commit_name);
-		sb->final = (struct commit *) obj;
+		found = (struct commit *) obj;
 		final_commit_name = revs->pending.objects[i].name;
 	}
 
 	if (!final_commit_name)
-		final_commit_name = dwim_reverse_initial(sb);
+		found = dwim_reverse_initial(revs, &final_commit_name);
 	if (!final_commit_name)
 		die("No commit to dig up from?");
-	return xstrdup(final_commit_name);
+
+	if (name_p)
+		*name_p = final_commit_name;
+	return found;
 }
 
 static int blame_copy_callback(const struct option *option, const char *arg, int unset)
@@ -2546,7 +2545,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	struct blame_origin *o;
 	struct blame_entry *ent = NULL;
 	long dashdash_pos, lno;
-	char *final_commit_name = NULL;
+	const char *final_commit_name = NULL;
 	enum object_type type;
 	struct commit *final_commit = NULL;
 	struct progress_info pi = { NULL, 0 };
@@ -2755,14 +2754,15 @@ parse_done:
 	sb.revs = &revs;
 	sb.contents_from = contents_from;
 	sb.reverse = reverse;
+
 	if (!reverse) {
-		final_commit_name = prepare_final(&sb);
+		sb.final = find_single_final(&revs, &final_commit_name);
 		sb.commits.compare = compare_commits_by_commit_date;
 	}
 	else if (contents_from)
 		die(_("--contents and --reverse do not blend well."));
 	else {
-		final_commit_name = prepare_initial(&sb);
+		sb.final = find_single_initial(&revs, &final_commit_name);
 		sb.commits.compare = compare_commits_by_reverse_commit_date;
 		if (revs.first_parent_only)
 			revs.children.name = NULL;
@@ -2917,10 +2917,7 @@ parse_done:
 
 	if (!incremental)
 		setup_pager();
-
-	free(final_commit_name);
-
-	if (incremental)
+	else
 		return 0;
 
 	blame_sort_final(&sb);
