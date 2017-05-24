@@ -959,7 +959,7 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
  *
  * Compute how trivial the lines in the blame_entry are.
  */
-static unsigned ent_score(struct blame_scoreboard *sb, struct blame_entry *e)
+static unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e)
 {
 	unsigned score;
 	const char *cp, *ep;
@@ -995,7 +995,7 @@ static void copy_split_if_better(struct blame_scoreboard *sb,
 	if (!this[1].suspect)
 		return;
 	if (best_so_far[1].suspect) {
-		if (ent_score(sb, &this[1]) < ent_score(sb, &best_so_far[1]))
+		if (blame_entry_score(sb, &this[1]) < blame_entry_score(sb, &best_so_far[1]))
 			return;
 	}
 
@@ -1107,7 +1107,7 @@ static struct blame_entry **filter_small(struct blame_scoreboard *sb,
 	struct blame_entry *p = *source;
 	struct blame_entry *oldsmall = *small;
 	while (p) {
-		if (ent_score(sb, p) <= score_min) {
+		if (blame_entry_score(sb, p) <= score_min) {
 			*small = p;
 			small = &p->next;
 			p = *small;
@@ -1156,7 +1156,7 @@ static void find_move_in_parent(struct blame_scoreboard *sb,
 			next = e->next;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
 			if (split[1].suspect &&
-			    blame_move_score < ent_score(sb, &split[1])) {
+			    blame_move_score < blame_entry_score(sb, &split[1])) {
 				split_blame(blamed, &unblamedtail, split, e);
 			} else {
 				e->next = leftover;
@@ -1286,7 +1286,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 		for (j = 0; j < num_ents; j++) {
 			struct blame_entry *split = blame_list[j].split;
 			if (split[1].suspect &&
-			    blame_copy_score < ent_score(sb, &split[1])) {
+			    blame_copy_score < blame_entry_score(sb, &split[1])) {
 				split_blame(blamed, &unblamedtail, split,
 					    blame_list[j].ent);
 			} else {
@@ -2104,8 +2104,8 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 		num = e->lno + e->num_lines;
 		if (longest_dst_lines < num)
 			longest_dst_lines = num;
-		if (largest_score < ent_score(sb, e))
-			largest_score = ent_score(sb, e);
+		if (largest_score < blame_entry_score(sb, e))
+			largest_score = blame_entry_score(sb, e);
 	}
 	max_orig_digits = decimal_width(longest_src_lines);
 	max_digits = decimal_width(longest_dst_lines);
