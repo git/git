@@ -66,10 +66,6 @@ static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 #define PICKAXE_BLAME_COPY_HARDER	04
 #define PICKAXE_BLAME_COPY_HARDEST	010
 
-/*
- * blame for a blame_entry with score lower than these thresholds
- * is not passed to the parent using move/copy logic.
- */
 static unsigned blame_move_score;
 static unsigned blame_copy_score;
 #define BLAME_DEFAULT_MOVE_SCORE	20
@@ -375,6 +371,13 @@ struct blame_scoreboard {
 	int num_read_blob;
 	int num_get_patch;
 	int num_commits;
+
+	/*
+	 * blame for a blame_entry with score lower than these thresholds
+	 * is not passed to the parent using move/copy logic.
+	 */
+	unsigned move_score;
+	unsigned copy_score;
 };
 
 static void sanity_check_refcnt(struct blame_scoreboard *);
@@ -1156,7 +1159,7 @@ static void find_move_in_parent(struct blame_scoreboard *sb,
 			next = e->next;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
 			if (split[1].suspect &&
-			    blame_move_score < blame_entry_score(sb, &split[1])) {
+			    sb->move_score < blame_entry_score(sb, &split[1])) {
 				split_blame(blamed, &unblamedtail, split, e);
 			} else {
 				e->next = leftover;
@@ -1165,7 +1168,7 @@ static void find_move_in_parent(struct blame_scoreboard *sb,
 			decref_split(split);
 		}
 		*unblamedtail = NULL;
-		toosmall = filter_small(sb, toosmall, &unblamed, blame_move_score);
+		toosmall = filter_small(sb, toosmall, &unblamed, sb->move_score);
 	} while (unblamed);
 	target->suspects = reverse_blame(leftover, NULL);
 }
@@ -1286,7 +1289,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 		for (j = 0; j < num_ents; j++) {
 			struct blame_entry *split = blame_list[j].split;
 			if (split[1].suspect &&
-			    blame_copy_score < blame_entry_score(sb, &split[1])) {
+			    sb->copy_score < blame_entry_score(sb, &split[1])) {
 				split_blame(blamed, &unblamedtail, split,
 					    blame_list[j].ent);
 			} else {
@@ -1297,7 +1300,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 		}
 		free(blame_list);
 		*unblamedtail = NULL;
-		toosmall = filter_small(sb, toosmall, &unblamed, blame_copy_score);
+		toosmall = filter_small(sb, toosmall, &unblamed, sb->copy_score);
 	} while (unblamed);
 	target->suspects = reverse_blame(leftover, NULL);
 	diff_flush(&diff_opts);
@@ -1454,7 +1457,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	 * Optionally find moves in parents' files.
 	 */
 	if (opt & PICKAXE_BLAME_MOVE) {
-		filter_small(sb, &toosmall, &origin->suspects, blame_move_score);
+		filter_small(sb, &toosmall, &origin->suspects, sb->move_score);
 		if (origin->suspects) {
 			for (i = 0, sg = first_scapegoat(revs, commit);
 			     i < num_sg && sg;
@@ -1473,12 +1476,12 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	 * Optionally find copies from parents' files.
 	 */
 	if (opt & PICKAXE_BLAME_COPY) {
-		if (blame_copy_score > blame_move_score)
-			filter_small(sb, &toosmall, &origin->suspects, blame_copy_score);
-		else if (blame_copy_score < blame_move_score) {
+		if (sb->copy_score > sb->move_score)
+			filter_small(sb, &toosmall, &origin->suspects, sb->copy_score);
+		else if (sb->copy_score < sb->move_score) {
 			origin->suspects = blame_merge(origin->suspects, toosmall);
 			toosmall = NULL;
-			filter_small(sb, &toosmall, &origin->suspects, blame_copy_score);
+			filter_small(sb, &toosmall, &origin->suspects, sb->copy_score);
 		}
 		if (!origin->suspects)
 			goto finish;
@@ -2675,11 +2678,6 @@ parse_done:
 		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
 			PICKAXE_BLAME_COPY_HARDER);
 
-	if (!blame_move_score)
-		blame_move_score = BLAME_DEFAULT_MOVE_SCORE;
-	if (!blame_copy_score)
-		blame_copy_score = BLAME_DEFAULT_COPY_SCORE;
-
 	/*
 	 * We have collected options unknown to us in argv[1..unk]
 	 * which are to be passed to revision machinery if we are
@@ -2733,6 +2731,8 @@ parse_done:
 	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
 	memset(&sb, 0, sizeof(sb));
+	sb.move_score = BLAME_DEFAULT_MOVE_SCORE;
+	sb.copy_score = BLAME_DEFAULT_COPY_SCORE;
 
 	sb.revs = &revs;
 	if (!reverse) {
@@ -2870,6 +2870,11 @@ parse_done:
 
 	sb.ent = NULL;
 	sb.path = path;
+
+	if (blame_move_score)
+		sb.move_score = blame_move_score;
+	if (blame_copy_score)
+		sb.copy_score = blame_copy_score;
 
 	read_mailmap(&mailmap, NULL);
 
