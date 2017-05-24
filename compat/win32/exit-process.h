@@ -149,8 +149,10 @@ static int exit_process(HANDLE process, int exit_code)
 			 * killing the process tree via TerminateProcess().
 			 */
 			if (WaitForSingleObject(process, 10000) ==
-			    WAIT_OBJECT_0)
+			    WAIT_OBJECT_0) {
+				CloseHandle(process);
 				return 0;
+			}
 		}
 
 		return terminate_process_tree(process, exit_code);

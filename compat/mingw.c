@@ -1814,9 +1814,10 @@ int mingw_kill(pid_t pid, int sig)
 			}
 			ret = terminate_process_tree(h, 128 + sig);
 		}
-		CloseHandle(h);
-		if (ret)
+		if (ret) {
 			errno = err_win_to_posix(GetLastError());
+			CloseHandle(h);
+		}
 		return ret;
 	} else if (pid > 0 && sig == 0) {
 		HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
