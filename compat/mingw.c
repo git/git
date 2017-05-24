@@ -1523,8 +1523,9 @@ static void kill_child_processes_on_signal(void)
 	while (pinfo) {
 		struct pinfo_t *info = pinfo;
 		pinfo = pinfo->next;
-		exit_process(info->proc, status);
-		CloseHandle(info->proc);
+		if (exit_process(info->proc, status))
+			/* the handle is still valid in case of error */
+			CloseHandle(info->proc);
 		free(info);
 	}
 
