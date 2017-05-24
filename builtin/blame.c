@@ -653,14 +653,14 @@ static void dup_entry(struct blame_entry ***queue,
 	*queue = &dst->next;
 }
 
-static const char *nth_line(struct blame_scoreboard *sb, long lno)
+static const char *blame_nth_line(struct blame_scoreboard *sb, long lno)
 {
 	return sb->final_buf + sb->lineno[lno];
 }
 
 static const char *nth_line_cb(void *data, long lno)
 {
-	return nth_line((struct blame_scoreboard *)data, lno);
+	return blame_nth_line((struct blame_scoreboard *)data, lno);
 }
 
 /*
@@ -968,8 +968,8 @@ static unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entr
 		return e->score;
 
 	score = 1;
-	cp = nth_line(sb, e->lno);
-	ep = nth_line(sb, e->lno + e->num_lines);
+	cp = blame_nth_line(sb, e->lno);
+	ep = blame_nth_line(sb, e->lno + e->num_lines);
 	while (cp < ep) {
 		unsigned ch = *((unsigned char *)cp);
 		if (isalnum(ch))
@@ -1078,9 +1078,9 @@ static void find_copy_in_blob(struct blame_scoreboard *sb,
 	/*
 	 * Prepare mmfile that contains only the lines in ent.
 	 */
-	cp = nth_line(sb, ent->lno);
+	cp = blame_nth_line(sb, ent->lno);
 	file_o.ptr = (char *) cp;
-	file_o.size = nth_line(sb, ent->lno + ent->num_lines) - cp;
+	file_o.size = blame_nth_line(sb, ent->lno + ent->num_lines) - cp;
 
 	/*
 	 * file_o is a part of final image we are annotating.
@@ -1866,7 +1866,7 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 	       ent->num_lines);
 	emit_porcelain_details(suspect, repeat);
 
-	cp = nth_line(sb, ent->lno);
+	cp = blame_nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
 		if (cnt) {
@@ -1900,7 +1900,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	get_commit_info(suspect->commit, &ci, 1);
 	oid_to_hex_r(hex, &suspect->commit->object.oid);
 
-	cp = nth_line(sb, ent->lno);
+	cp = blame_nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
 		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? GIT_SHA1_HEXSZ : abbrev;
