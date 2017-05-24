@@ -353,7 +353,7 @@ static int compare_commits_by_reverse_commit_date(const void *a,
 /*
  * The current state of the blame assignment.
  */
-struct scoreboard {
+struct blame_scoreboard {
 	/* the final commit (i.e. where we started digging from) */
 	struct commit *final;
 	/* Priority queue for commits with unassigned blame records */
@@ -377,14 +377,14 @@ struct scoreboard {
 	int *lineno;
 };
 
-static void sanity_check_refcnt(struct scoreboard *);
+static void sanity_check_refcnt(struct blame_scoreboard *);
 
 /*
  * If two blame entries that are next to each other came from
  * contiguous lines in the same origin (i.e. <commit, path> pair),
  * merge them together.
  */
-static void coalesce(struct scoreboard *sb)
+static void coalesce(struct blame_scoreboard *sb)
 {
 	struct blame_entry *ent, *next;
 
@@ -410,7 +410,7 @@ static void coalesce(struct scoreboard *sb)
  * the commit priority queue of the score board.
  */
 
-static void queue_blames(struct scoreboard *sb, struct blame_origin *porigin,
+static void queue_blames(struct blame_scoreboard *sb, struct blame_origin *porigin,
 			 struct blame_entry *sorted)
 {
 	if (porigin->suspects)
@@ -653,14 +653,14 @@ static void dup_entry(struct blame_entry ***queue,
 	*queue = &dst->next;
 }
 
-static const char *nth_line(struct scoreboard *sb, long lno)
+static const char *nth_line(struct blame_scoreboard *sb, long lno)
 {
 	return sb->final_buf + sb->lineno[lno];
 }
 
 static const char *nth_line_cb(void *data, long lno)
 {
-	return nth_line((struct scoreboard *)data, lno);
+	return nth_line((struct blame_scoreboard *)data, lno);
 }
 
 /*
@@ -919,7 +919,7 @@ static int blame_chunk_cb(long start_a, long count_a,
  * for the lines it is suspected to its parent.  Run diff to find
  * which lines came from parent and pass blame for them.
  */
-static void pass_blame_to_parent(struct scoreboard *sb,
+static void pass_blame_to_parent(struct blame_scoreboard *sb,
 				 struct blame_origin *target,
 				 struct blame_origin *parent)
 {
@@ -959,7 +959,7 @@ static void pass_blame_to_parent(struct scoreboard *sb,
  *
  * Compute how trivial the lines in the blame_entry are.
  */
-static unsigned ent_score(struct scoreboard *sb, struct blame_entry *e)
+static unsigned ent_score(struct blame_scoreboard *sb, struct blame_entry *e)
 {
 	unsigned score;
 	const char *cp, *ep;
@@ -986,7 +986,7 @@ static unsigned ent_score(struct scoreboard *sb, struct blame_entry *e)
  * so far, by comparing this and best_so_far and copying this into
  * bst_so_far as needed.
  */
-static void copy_split_if_better(struct scoreboard *sb,
+static void copy_split_if_better(struct blame_scoreboard *sb,
 				 struct blame_entry *best_so_far,
 				 struct blame_entry *this)
 {
@@ -1020,7 +1020,7 @@ static void copy_split_if_better(struct scoreboard *sb,
  *
  * All line numbers are 0-based.
  */
-static void handle_split(struct scoreboard *sb,
+static void handle_split(struct blame_scoreboard *sb,
 			 struct blame_entry *ent,
 			 int tlno, int plno, int same,
 			 struct blame_origin *parent,
@@ -1039,7 +1039,7 @@ static void handle_split(struct scoreboard *sb,
 }
 
 struct handle_split_cb_data {
-	struct scoreboard *sb;
+	struct blame_scoreboard *sb;
 	struct blame_entry *ent;
 	struct blame_origin *parent;
 	struct blame_entry *split;
@@ -1063,7 +1063,7 @@ static int handle_split_cb(long start_a, long count_a,
  * we can pass blames to it.  file_p has the blob contents for
  * the parent.
  */
-static void find_copy_in_blob(struct scoreboard *sb,
+static void find_copy_in_blob(struct blame_scoreboard *sb,
 			      struct blame_entry *ent,
 			      struct blame_origin *parent,
 			      struct blame_entry *split,
@@ -1099,7 +1099,7 @@ static void find_copy_in_blob(struct scoreboard *sb,
  * Returns a pointer to the link pointing to the old head of the small list.
  */
 
-static struct blame_entry **filter_small(struct scoreboard *sb,
+static struct blame_entry **filter_small(struct blame_scoreboard *sb,
 					 struct blame_entry **small,
 					 struct blame_entry **source,
 					 unsigned score_min)
@@ -1126,7 +1126,7 @@ static struct blame_entry **filter_small(struct scoreboard *sb,
  * See if lines currently target is suspected for can be attributed to
  * parent.
  */
-static void find_move_in_parent(struct scoreboard *sb,
+static void find_move_in_parent(struct blame_scoreboard *sb,
 				struct blame_entry ***blamed,
 				struct blame_entry **toosmall,
 				struct blame_origin *target,
@@ -1202,7 +1202,7 @@ static struct blame_list *setup_blame_list(struct blame_entry *unblamed,
  * across file boundary from the parent commit.  porigin is the path
  * in the parent we already tried.
  */
-static void find_copy_in_parent(struct scoreboard *sb,
+static void find_copy_in_parent(struct blame_scoreboard *sb,
 				struct blame_entry ***blamed,
 				struct blame_entry **toosmall,
 				struct blame_origin *target,
@@ -1308,7 +1308,7 @@ static void find_copy_in_parent(struct scoreboard *sb,
  * The blobs of origin and porigin exactly match, so everything
  * origin is suspected for can be blamed on the parent.
  */
-static void pass_whole_blame(struct scoreboard *sb,
+static void pass_whole_blame(struct blame_scoreboard *sb,
 			     struct blame_origin *origin, struct blame_origin *porigin)
 {
 	struct blame_entry *e, *suspects;
@@ -1356,7 +1356,7 @@ static int num_scapegoats(struct rev_info *revs, struct commit *commit)
 /* Distribute collected unsorted blames to the respected sorted lists
  * in the various origins.
  */
-static void distribute_blame(struct scoreboard *sb, struct blame_entry *blamed)
+static void distribute_blame(struct blame_scoreboard *sb, struct blame_entry *blamed)
 {
 	blamed = blame_sort(blamed, compare_blame_suspect);
 	while (blamed)
@@ -1376,7 +1376,7 @@ static void distribute_blame(struct scoreboard *sb, struct blame_entry *blamed)
 
 #define MAXSG 16
 
-static void pass_blame(struct scoreboard *sb, struct blame_origin *origin, int opt)
+static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin, int opt)
 {
 	struct rev_info *revs = sb->revs;
 	int i, pass, num_sg;
@@ -1733,7 +1733,7 @@ static void found_guilty_entry(struct blame_entry *ent,
  * The main loop -- while we have blobs with lines whose true origin
  * is still unknown, pick one blob, and allow its lines to pass blames
  * to its parents. */
-static void assign_blame(struct scoreboard *sb, int opt)
+static void assign_blame(struct blame_scoreboard *sb, int opt)
 {
 	struct rev_info *revs = sb->revs;
 	struct commit *commit = prio_queue_get(&sb->commits);
@@ -1849,7 +1849,7 @@ static void emit_porcelain_details(struct blame_origin *suspect, int repeat)
 		write_filename_info(suspect);
 }
 
-static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
+static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 			   int opt)
 {
 	int repeat = opt & OUTPUT_LINE_PORCELAIN;
@@ -1888,7 +1888,7 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
 		putchar('\n');
 }
 
-static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
+static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int opt)
 {
 	int cnt;
 	const char *cp;
@@ -1967,7 +1967,7 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 	commit_info_destroy(&ci);
 }
 
-static void output(struct scoreboard *sb, int option)
+static void output(struct blame_scoreboard *sb, int option)
 {
 	struct blame_entry *ent;
 
@@ -2006,7 +2006,7 @@ static const char *get_next_line(const char *start, const char *end)
  * To allow quick access to the contents of nth line in the
  * final image, prepare an index in the scoreboard.
  */
-static int prepare_lines(struct scoreboard *sb)
+static int prepare_lines(struct blame_scoreboard *sb)
 {
 	const char *buf = sb->final_buf;
 	unsigned long len = sb->final_buf_size;
@@ -2066,7 +2066,7 @@ static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
  * How many columns do we need to show line numbers, authors,
  * and filenames?
  */
-static void find_alignment(struct scoreboard *sb, int *option)
+static void find_alignment(struct blame_scoreboard *sb, int *option)
 {
 	int longest_src_lines = 0;
 	int longest_dst_lines = 0;
@@ -2120,7 +2120,7 @@ static void find_alignment(struct scoreboard *sb, int *option)
  * For debugging -- origin is refcounted, and this asserts that
  * we do not underflow.
  */
-static void sanity_check_refcnt(struct scoreboard *sb)
+static void sanity_check_refcnt(struct blame_scoreboard *sb)
 {
 	int baa = 0;
 	struct blame_entry *ent;
@@ -2411,14 +2411,14 @@ static struct commit *find_single_final(struct rev_info *revs,
 	return found;
 }
 
-static char *prepare_final(struct scoreboard *sb)
+static char *prepare_final(struct blame_scoreboard *sb)
 {
 	const char *name;
 	sb->final = find_single_final(sb->revs, &name);
 	return xstrdup_or_null(name);
 }
 
-static const char *dwim_reverse_initial(struct scoreboard *sb)
+static const char *dwim_reverse_initial(struct blame_scoreboard *sb)
 {
 	/*
 	 * DWIM "git blame --reverse ONE -- PATH" as
@@ -2453,7 +2453,7 @@ static const char *dwim_reverse_initial(struct scoreboard *sb)
 	return sb->revs->pending.objects[0].name;
 }
 
-static char *prepare_initial(struct scoreboard *sb)
+static char *prepare_initial(struct blame_scoreboard *sb)
 {
 	int i;
 	const char *final_commit_name = NULL;
@@ -2522,7 +2522,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	const char *path;
-	struct scoreboard sb;
+	struct blame_scoreboard sb;
 	struct blame_origin *o;
 	struct blame_entry *ent = NULL;
 	long dashdash_pos, lno;
