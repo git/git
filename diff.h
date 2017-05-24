@@ -186,6 +186,8 @@ struct diff_options {
 	void *output_prefix_data;
 
 	int diff_path_counter;
+
+	unsigned ws_rule;
 };
 
 void diff_emit_line(struct diff_options *o, const char *set, const char *reset,
