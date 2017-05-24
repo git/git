@@ -385,6 +385,13 @@ extern size_t fill_textconv(struct userdiff_driver *driver,
  */
 extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 
+/*
+ * Prepare diff_filespec and convert it using diff textconv API
+ * if the textconv driver exists.
+ * Return 1 if the conversion succeeds, 0 otherwise.
+ */
+extern int textconv_object(const char *path, unsigned mode, const struct object_id *oid, int oid_valid, char **buf, unsigned long *buf_size);
+
 extern int parse_rename_score(const char **cp_p);
 
 extern long parse_algorithm_value(const char *value);
