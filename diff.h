@@ -188,6 +188,9 @@ struct diff_options {
 	int diff_path_counter;
 };
 
+void diff_emit_line(struct diff_options *o, const char *set, const char *reset,
+		    const char *line, int len);
+
 enum color_diff {
 	DIFF_RESET = 0,
 	DIFF_CONTEXT = 1,
