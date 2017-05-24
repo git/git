@@ -170,4 +170,6 @@ extern const char *blame_nth_line(struct blame_scoreboard *sb, long lno);
 extern void init_scoreboard(struct blame_scoreboard *sb);
 extern void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blame_origin **orig);
 
+extern struct blame_entry *blame_entry_prepend(struct blame_entry *head, long start, long end, struct blame_origin *o);
+
 #endif /* BLAME_H */
