@@ -386,6 +386,7 @@ struct blame_scoreboard {
 	int reverse;
 	int show_root;
 	int xdl_opts;
+	int no_whole_file_rename;
 };
 
 static void sanity_check_refcnt(struct blame_scoreboard *);
@@ -1411,7 +1412,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	 * The first pass looks for unrenamed path to optimize for
 	 * common cases, then we look for renames in the second pass.
 	 */
-	for (pass = 0; pass < 2 - no_whole_file_rename; pass++) {
+	for (pass = 0; pass < 2 - sb->no_whole_file_rename; pass++) {
 		struct blame_origin *(*find)(struct commit *, struct blame_origin *);
 		find = pass ? find_rename : find_origin;
 
@@ -2889,6 +2890,7 @@ parse_done:
 
 	sb.show_root = show_root;
 	sb.xdl_opts = xdl_opts;
+	sb.no_whole_file_rename = no_whole_file_rename;
 
 	read_mailmap(&mailmap, NULL);
 
