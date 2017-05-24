@@ -140,4 +140,19 @@ struct blame_scoreboard {
 	void *found_guilty_entry_data;
 };
 
+/*
+ * Origin is refcounted and usually we keep the blob contents to be
+ * reused.
+ */
+static inline struct blame_origin *blame_origin_incref(struct blame_origin *o)
+{
+	if (o)
+		o->refcnt++;
+	return o;
+}
+extern void blame_origin_decref(struct blame_origin *o);
+
+extern struct blame_origin *make_origin(struct commit *commit, const char *path);
+extern struct blame_origin *get_origin(struct commit *commit, const char *path);
+
 #endif /* BLAME_H */
