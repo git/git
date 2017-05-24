@@ -13,6 +13,9 @@
 #define PICKAXE_BLAME_COPY_HARDER	04
 #define PICKAXE_BLAME_COPY_HARDEST	010
 
+#define BLAME_DEFAULT_MOVE_SCORE	20
+#define BLAME_DEFAULT_COPY_SCORE	40
+
 /*
  * One blob in a commit that is being suspected
  */
@@ -158,14 +161,13 @@ static inline struct blame_origin *blame_origin_incref(struct blame_origin *o)
 }
 extern void blame_origin_decref(struct blame_origin *o);
 
-extern struct blame_origin *get_origin(struct commit *commit, const char *path);
-
-extern struct commit *fake_working_tree_commit(struct diff_options *opt, const char *path, const char *contents_from);
-
 extern void blame_coalesce(struct blame_scoreboard *sb);
 extern void blame_sort_final(struct blame_scoreboard *sb);
 extern unsigned blame_entry_score(struct blame_scoreboard *sb, struct blame_entry *e);
 extern void assign_blame(struct blame_scoreboard *sb, int opt);
 extern const char *blame_nth_line(struct blame_scoreboard *sb, long lno);
+
+extern void init_scoreboard(struct blame_scoreboard *sb);
+extern void setup_scoreboard(struct blame_scoreboard *sb, const char *path, struct blame_origin **orig);
 
 #endif /* BLAME_H */
