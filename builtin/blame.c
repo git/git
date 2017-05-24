@@ -2537,6 +2537,13 @@ static int blame_move_callback(const struct option *option, const char *arg, int
 	return 0;
 }
 
+void init_scoreboard(struct blame_scoreboard *sb)
+{
+	memset(sb, 0, sizeof(struct blame_scoreboard));
+	sb->move_score = BLAME_DEFAULT_MOVE_SCORE;
+	sb->copy_score = BLAME_DEFAULT_COPY_SCORE;
+}
+
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -2747,10 +2754,8 @@ parse_done:
 
 	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
-	memset(&sb, 0, sizeof(sb));
-	sb.move_score = BLAME_DEFAULT_MOVE_SCORE;
-	sb.copy_score = BLAME_DEFAULT_COPY_SCORE;
 
+	init_scoreboard(&sb);
 	sb.revs = &revs;
 	sb.contents_from = contents_from;
 	sb.reverse = reverse;
