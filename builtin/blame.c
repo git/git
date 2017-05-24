@@ -8,7 +8,6 @@
 #include "cache.h"
 #include "refs.h"
 #include "builtin.h"
-#include "blob.h"
 #include "commit.h"
 #include "tag.h"
 #include "tree-walk.h"
