@@ -1,5 +1,5 @@
-Git v2.3 Release Notes
-======================
+Git v2.3 Release Notes (unreleased)
+===================================
 
 This one ended up to be a release with lots of small corrections and
 improvements without big uncomfortably exciting features.  The recent
