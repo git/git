@@ -447,7 +447,7 @@ test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'pack-objects --threads=N or pack.
 
 	git -c pack.threads=2 pack-objects --stdout --all </dev/null >/dev/null 2>err &&
 	grep ^warning: err >warnings &&
-	test_must_fail test_line_count = 1 warnings &&
+	test_line_count = 1 warnings &&
 	grep -F "no threads support, ignoring pack.threads" err &&
 
 	git -c pack.threads=2 pack-objects --threads=4 --stdout --all </dev/null >/dev/null 2>err &&
