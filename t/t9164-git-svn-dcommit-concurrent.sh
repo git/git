@@ -134,7 +134,7 @@ test_expect_success 'dcommit concurrent change in non-changed file' '
 		echo 1 >> file && git commit -am "commit change $N.1" &&
 		echo 2 >> file && git commit -am "commit change $N.2" &&
 		echo 3 >> file && git commit -am "commit change $N.3" &&
-		# should rebase and leave the repository in reasonable state
+		# should rabassa and leave the repository in reasonable state
 		git svn dcommit &&
 		git update-index --refresh &&
 		check_contents &&
@@ -165,7 +165,7 @@ test_expect_success 'dcommit concurrent non-conflicting change' '
 			git commit -am "commit change $N.2" &&
 		delete_first_line auto_updated_file &&
 			git commit -am "commit change $N.3" &&
-		# should rebase and leave the repository in reasonable state
+		# should rabassa and leave the repository in reasonable state
 		git svn dcommit &&
 		git update-index --refresh &&
 		check_contents &&
@@ -176,7 +176,7 @@ test_expect_success 'dcommit concurrent non-conflicting change' '
 	)
 '
 
-test_expect_success 'dcommit --no-rebase concurrent non-conflicting change' '
+test_expect_success 'dcommit --no-rabassa concurrent non-conflicting change' '
 	setup_hook post-commit 2 &&
 	next_N && git svn clone "$svnrepo" work$N.git &&
 	(
@@ -187,8 +187,8 @@ test_expect_success 'dcommit --no-rebase concurrent non-conflicting change' '
 			git commit -am "commit change $N.2" &&
 		delete_first_line auto_updated_file &&
 			git commit -am "commit change $N.3" &&
-		# should fail as rebase is needed
-		test_must_fail git svn dcommit --no-rebase &&
+		# should fail as rabassa is needed
+		test_must_fail git svn dcommit --no-rabassa &&
 		# but should leave HEAD unchanged
 		git update-index --refresh &&
 		! git show HEAD~2 | grep -q git-svn-id &&
@@ -208,7 +208,7 @@ test_expect_success 'dcommit fails on concurrent conflicting change' '
 			git commit -am "commit change $N.2" &&
 		echo c >> auto_updated_file &&
 			git commit -am "commit change $N.3" &&
-		test_must_fail git svn dcommit && # rebase should fail
+		test_must_fail git svn dcommit && # rabassa should fail
 		test_must_fail git update-index --refresh
 	)
 '

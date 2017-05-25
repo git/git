@@ -427,10 +427,10 @@ test_expect_success '__gitcomp - trailing space - options' '
 
 test_expect_success '__gitcomp - trailing space - config keys' '
 	test_gitcomp "br" "branch. branch.autosetupmerge
-		branch.autosetuprebase browser." <<-\EOF
+		branch.autosetuprabassa browser." <<-\EOF
 	branch.Z
 	branch.autosetupmerge Z
-	branch.autosetuprebase Z
+	branch.autosetuprabassa Z
 	browser.Z
 	EOF
 '
@@ -444,7 +444,7 @@ test_expect_success '__gitcomp - option parameter' '
 '
 
 test_expect_success '__gitcomp - prefix' '
-	test_gitcomp "branch.me" "remote merge mergeoptions rebase" \
+	test_gitcomp "branch.me" "remote merge mergeoptions rabassa" \
 		"branch.maint." "me" <<-\EOF
 	branch.maint.merge Z
 	branch.maint.mergeoptions Z

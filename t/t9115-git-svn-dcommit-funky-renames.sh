@@ -60,29 +60,29 @@ test_expect_success 'add a file with plus signs' '
 	git svn dcommit
 	'
 
-test_expect_success 'clone the repository to test rebase' '
-	git svn clone "$svnrepo" test-rebase &&
+test_expect_success 'clone the repository to test rabassa' '
+	git svn clone "$svnrepo" test-rabassa &&
 	(
-		cd test-rebase &&
-		echo test-rebase >test-rebase &&
-		git add test-rebase &&
-		git commit -m test-rebase
+		cd test-rabassa &&
+		echo test-rabassa >test-rabassa &&
+		git add test-rabassa &&
+		git commit -m test-rabassa
 	)
 	'
 
-test_expect_success 'make a commit to test rebase' '
-		echo test-rebase-main > test-rebase-main &&
-		git add test-rebase-main &&
-		git commit -m test-rebase-main &&
+test_expect_success 'make a commit to test rabassa' '
+		echo test-rabassa-main > test-rabassa-main &&
+		git add test-rabassa-main &&
+		git commit -m test-rabassa-main &&
 		git svn dcommit
 	'
 
-test_expect_success 'git svn rebase works inside a fresh-cloned repository' '
+test_expect_success 'git svn rabassa works inside a fresh-cloned repository' '
 	(
-		cd test-rebase &&
-		git svn rebase &&
-		test -e test-rebase-main &&
-		test -e test-rebase
+		cd test-rabassa &&
+		git svn rabassa &&
+		test -e test-rabassa-main &&
+		test -e test-rabassa
 	)'
 
 # Without this, LC_ALL=C as set in test-lib.sh, and Cygwin converts

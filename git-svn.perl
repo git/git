@@ -108,7 +108,7 @@ $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
 	$_message, $_file, $_branch_dest,
 	$_template, $_shared,
-	$_version, $_fetch_all, $_no_rebase, $_fetch_parent,
+	$_version, $_fetch_all, $_no_rabassa, $_fetch_parent,
 	$_before, $_after,
 	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_parents, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
@@ -192,7 +192,7 @@ my %cmd = (
 			  'commit-url=s' => \$_commit_url,
 			  'set-svn-props=s' => \$_set_svn_props,
 			  'revision|r=i' => \$_revision,
-			  'no-rebase' => \$_no_rebase,
+			  'no-rabassa' => \$_no_rabassa,
 			  'mergeinfo=s' => \$_merge_info,
 			  'interactive|i' => \$_interactive,
 			%cmt_opts, %fc_opts } ],
@@ -263,7 +263,7 @@ my %cmd = (
 	                "Translate between SVN revision numbers and tree-ish",
 			{ 'B|before' => \$_before,
 			  'A|after' => \$_after } ],
-	'rebase' => [ \&cmd_rebase, "Fetch and rebase your working directory",
+	'rabassa' => [ \&cmd_rabassa, "Fetch and rabassa your working directory",
 			{ 'merge|m|M' => \$_merge,
 			  'verbose|v' => \$_verbose,
 			  'strategy|s=s' => \$_strategy,
@@ -804,7 +804,7 @@ sub populate_merge_info {
 	return undef;
 }
 
-sub dcommit_rebase {
+sub dcommit_rabassa {
 	my ($is_last, $current, $fetched_ref, $svn_error) = @_;
 	my @diff;
 
@@ -812,14 +812,14 @@ sub dcommit_rebase {
 		print STDERR "\nERROR from SVN:\n",
 				$svn_error->expanded_message, "\n";
 	}
-	unless ($_no_rebase) {
-		# we always want to rebase against the current HEAD,
+	unless ($_no_rabassa) {
+		# we always want to rabassa against the current HEAD,
 		# not any head that was passed to us
 		@diff = command('diff-tree', $current,
 	                   $fetched_ref, '--');
 		my @finish;
 		if (@diff) {
-			@finish = rebase_cmd();
+			@finish = rabassa_cmd();
 			print STDERR "W: $current and ", $fetched_ref,
 			             " differ, using @finish:\n",
 			             join("\n", @diff), "\n";
@@ -834,7 +834,7 @@ sub dcommit_rebase {
 	}
 	if ($svn_error) {
 		die "ERROR: Not all changes have been committed into SVN"
-			.($_no_rebase ? ".\n" : ", however the committed\n"
+			.($_no_rabassa ? ".\n" : ", however the committed\n"
 			."ones (if any) seem to be successfully integrated "
 			."into the working tree.\n")
 			."Please see the above messages for details.\n";
@@ -885,11 +885,11 @@ sub cmd_dcommit {
 		print "Committing to $url ...\n";
 	}
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
-	if ($_no_rebase && scalar(@$linear_refs) > 1) {
+	if ($_no_rabassa && scalar(@$linear_refs) > 1) {
 		warn "Attempting to commit more than one change while ",
-		     "--no-rebase is enabled.\n",
+		     "--no-rabassa is enabled.\n",
 		     "If these changes depend on each other, re-running ",
-		     "without --no-rebase may be required."
+		     "without --no-rabassa may be required."
 	}
 
 	if (defined $_interactive){
@@ -946,7 +946,7 @@ sub cmd_dcommit {
 						fatal "$parent is merged into revision $d, "
 							 ."but does not have git-svn metadata. "
 							 ."Either dcommit the branch or use a "
-							 ."local cherry-pick, FF merge, or rebase "
+							 ."local cherry-pick, FF merge, or rabassa "
 							 ."instead of an explicit merge commit.";
 					}
 
@@ -1013,7 +1013,7 @@ sub cmd_dcommit {
 			my $err_handler = $SVN::Error::handler;
 			$SVN::Error::handler = sub {
 				my $err = shift;
-				dcommit_rebase(1, $current_head, $gs->refname,
+				dcommit_rabassa(1, $current_head, $gs->refname,
 					$err);
 			};
 
@@ -1026,9 +1026,9 @@ sub cmd_dcommit {
 			$_fetch_all ? $gs->fetch_all : $gs->fetch;
 			$SVN::Error::handler = $err_handler;
 			$last_rev = $cmt_rev;
-			next if $_no_rebase;
+			next if $_no_rabassa;
 
-			my @diff = dcommit_rebase(@$linear_refs == 0, $d,
+			my @diff = dcommit_rabassa(@$linear_refs == 0, $d,
 						$gs->refname, undef);
 
 			$rewritten_parent = command_oneline(qw/rev-parse/,
@@ -1051,7 +1051,7 @@ sub cmd_dcommit {
 					  join("\n", @$linear_refs_), "\n",
 					  'If you are attempting to commit ',
 					  "merges, try running:\n\t",
-					  'git rebase --interactive',
+					  'git rabassa --interactive',
 					  '--preserve-merges ',
 					  $gs->refname,
 					  "\nBefore dcommitting";
@@ -1063,12 +1063,12 @@ sub cmd_dcommit {
 						  " $url_\n";
 					} else {
 						fatal
-						  "URL mismatch after rebase:",
+						  "URL mismatch after rabassa:",
 						  " $url_ != $expect_url";
 					}
 				}
 				if ($uuid_ ne $uuid) {
-					fatal "uuid mismatch after rebase: ",
+					fatal "uuid mismatch after rabassa: ",
 					      "$uuid_ != $uuid";
 				}
 				# remap parents
@@ -1250,7 +1250,7 @@ sub auto_create_empty_directories {
 	return !($var && $var eq 'false');
 }
 
-sub cmd_rebase {
+sub cmd_rabassa {
 	command_noisy(qw/update-index --refresh/);
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 	unless ($gs) {
@@ -1263,16 +1263,16 @@ sub cmd_rebase {
 		return;
 	}
 	if (command(qw/diff-index HEAD --/)) {
-		print STDERR "Cannot rebase with uncommitted changes:\n";
+		print STDERR "Cannot rabassa with uncommitted changes:\n";
 		command_noisy('status');
 		exit 1;
 	}
 	unless ($_local) {
-		# rebase will checkout for us, so no need to do it explicitly
+		# rabassa will checkout for us, so no need to do it explicitly
 		$_no_checkout = 'true';
 		$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	}
-	command_noisy(rebase_cmd(), $gs->refname);
+	command_noisy(rabassa_cmd(), $gs->refname);
 	if (auto_create_empty_directories($gs)) {
 		$gs->mkemptydirs;
 	}
@@ -1705,8 +1705,8 @@ sub cmd_gc {
 
 ########################### utility functions #########################
 
-sub rebase_cmd {
-	my @cmd = qw/rebase/;
+sub rabassa_cmd {
+	my @cmd = qw/rabassa/;
 	push @cmd, '-v' if $_verbose;
 	push @cmd, qw/--merge/ if $_merge;
 	push @cmd, "--strategy=$_strategy" if $_strategy;

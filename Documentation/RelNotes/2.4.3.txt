@@ -54,7 +54,7 @@ Fixes since v2.4.3
    variants were too loose and falsely triggered when "plink" appeared
    anywhere in the path (e.g. "/home/me/bin/uplink/ssh").
 
- * "git rebase -i" moved the "current" command from "todo" to "done" a
+ * "git rabassa -i" moved the "current" command from "todo" to "done" a
    bit too prematurely, losing a step when a "pick" did not even start.
 
  * "git add -e" did not allow the user to abort the operation by

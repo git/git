@@ -47,7 +47,7 @@ Fixes since v1.9.1
  * "git index-pack" used a wrong variable to name the keep-file in an
    error message when the file cannot be written or closed.
 
- * "rebase -i" produced a broken insn sheet when the title of a commit
+ * "rabassa -i" produced a broken insn sheet when the title of a commit
    happened to contain '\n' (or ended with '\c') due to a careless use
    of 'echo'.
 

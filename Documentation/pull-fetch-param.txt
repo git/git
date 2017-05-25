@@ -39,7 +39,7 @@ update.
 +
 [NOTE]
 When the remote branch you want to fetch is known to
-be rewound and rebased regularly, it is expected that
+be rewound and rabassad regularly, it is expected that
 its new tip will not be descendant of its previous tip
 (as stored in your remote-tracking branch the last time
 you fetched).  You would want

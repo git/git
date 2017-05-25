@@ -112,11 +112,11 @@
 /git-push
 /git-quiltimport
 /git-read-tree
-/git-rebase
-/git-rebase--am
-/git-rebase--helper
-/git-rebase--interactive
-/git-rebase--merge
+/git-rabassa
+/git-rabassa--am
+/git-rabassa--helper
+/git-rabassa--interactive
+/git-rabassa--merge
 /git-receive-pack
 /git-reflog
 /git-remote

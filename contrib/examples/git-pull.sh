@@ -17,7 +17,7 @@ q,quiet                    be more quiet
 progress                   force progress reporting
 
   Options related to merging
-r,rebase?false|true|preserve incorporate changes by rebasing rather than merging
+r,rabassa?false|true|preserve incorporate changes by rebasing rather than merging
 n!                         do not show a diffstat at the end of the merge
 stat                       show a diffstat at the end of the merge
 summary                    (synonym to --stat)
@@ -84,14 +84,14 @@ bool_or_string_config () {
 
 strategy_args= diffstat= no_commit= squash= no_ff= ff_only=
 log_arg= verbosity= progress= recurse_submodules= verify_signatures=
-merge_args= edit= rebase_args= all= append= upload_pack= force= tags= prune=
+merge_args= edit= rabassa_args= all= append= upload_pack= force= tags= prune=
 keep= depth= unshallow= update_shallow= refmap=
 curr_branch=$(git symbolic-ref -q HEAD)
 curr_branch_short="${curr_branch#refs/heads/}"
-rebase=$(bool_or_string_config branch.$curr_branch_short.rebase)
-if test -z "$rebase"
+rabassa=$(bool_or_string_config branch.$curr_branch_short.rabassa)
+if test -z "$rabassa"
 then
-	rebase=$(bool_or_string_config pull.rebase)
+	rabassa=$(bool_or_string_config pull.rabassa)
 fi
 
 # Setup default fast-forward options via `pull.ff`
@@ -151,14 +151,14 @@ do
 	-X*|--strategy-option=*)
 		merge_args="$merge_args $(git rev-parse --sq-quote "$1")"
 		;;
-	-r*|--rebase=*)
-		rebase="${1#*=}"
+	-r*|--rabassa=*)
+		rabassa="${1#*=}"
 		;;
-	--rebase)
-		rebase=true
+	--rabassa)
+		rabassa=true
 		;;
-	--no-rebase)
-		rebase=false
+	--no-rabassa)
+		rabassa=false
 		;;
 	--recurse-submodules)
 		recurse_submodules=--recurse-submodules
@@ -223,15 +223,15 @@ do
 	shift
 done
 
-case "$rebase" in
+case "$rabassa" in
 preserve)
-	rebase=true
-	rebase_args=--preserve-merges
+	rabassa=true
+	rabassa_args=--preserve-merges
 	;;
 true|false|'')
 	;;
 *)
-	echo "Invalid value for --rebase, should be true, false, or preserve"
+	echo "Invalid value for --rabassa, should be true, false, or preserve"
 	usage
 	exit 1
 	;;
@@ -240,9 +240,9 @@ esac
 error_on_no_merge_candidates () {
 	exec >&2
 
-	if test true = "$rebase"
+	if test true = "$rabassa"
 	then
-		op_type=rebase
+		op_type=rabassa
 		op_prep=against
 	else
 		op_type=merge
@@ -253,7 +253,7 @@ error_on_no_merge_candidates () {
 	remote=$(git config "branch.$curr_branch_short.remote")
 
 	if [ $# -gt 1 ]; then
-		if [ "$rebase" = true ]; then
+		if [ "$rabassa" = true ]; then
 			printf "There is no candidate for rebasing against "
 		else
 			printf "There are no candidates for merging "
@@ -276,7 +276,7 @@ error_on_no_merge_candidates () {
 	exit 1
 }
 
-test true = "$rebase" && {
+test true = "$rabassa" && {
 	if ! git rev-parse -q --verify HEAD >/dev/null
 	then
 		# On an unborn branch
@@ -285,7 +285,7 @@ test true = "$rebase" && {
 			die "$(gettext "updating an unborn branch with changes added to the index")"
 		fi
 	else
-		require_clean_work_tree "pull with rebase" "Please commit or stash them."
+		require_clean_work_tree "pull with rabassa" "Please commit or stash them."
 	fi
 	oldremoteref= &&
 	test -n "$curr_branch" &&
@@ -335,9 +335,9 @@ case "$merge_head" in
 	then
 		die "$(gettext "Cannot merge multiple branches into empty head")"
 	fi
-	if test true = "$rebase"
+	if test true = "$rabassa"
 	then
-		die "$(gettext "Cannot rebase onto multiple branches")"
+		die "$(gettext "Cannot rabassa onto multiple branches")"
 	fi
 	;;
 esac
@@ -356,7 +356,7 @@ then
 	exit
 fi
 
-if test true = "$rebase"
+if test true = "$rabassa"
 then
 	o=$(git show-branch --merge-base $curr_branch $merge_head $oldremoteref)
 	if test "$oldremoteref" = "$o"
@@ -365,9 +365,9 @@ then
 	fi
 fi
 
-case "$rebase" in
+case "$rabassa" in
 true)
-	eval="git-rebase $diffstat $strategy_args $merge_args $rebase_args $verbosity"
+	eval="git-rabassa $diffstat $strategy_args $merge_args $rabassa_args $verbosity"
 	eval="$eval $gpg_sign_args"
 	eval="$eval --onto $merge_head ${oldremoteref:-$merge_head}"
 	;;

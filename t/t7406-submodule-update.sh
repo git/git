@@ -6,7 +6,7 @@
 test_description='Test updating submodules
 
 This test verifies that "git submodule update" detaches the HEAD of the
-submodule and "git submodule update --rebase/--merge" does not detach the HEAD.
+submodule and "git submodule update --rabassa/--merge" does not detach the HEAD.
 '
 
 . ./test-lib.sh
@@ -44,7 +44,7 @@ test_expect_success 'setup a submodule tree' '
 	) &&
 	(cd super &&
 	 (cd submodule &&
-	  git pull --rebase origin
+	  git pull --rabassa origin
 	 ) &&
 	 git add submodule &&
 	 git commit -m "submodule update"
@@ -276,7 +276,7 @@ test_expect_success 'local config should override .gitmodules branch' '
 	)
 '
 
-test_expect_success 'submodule update --rebase staying on master' '
+test_expect_success 'submodule update --rabassa staying on master' '
 	(cd super/submodule &&
 	  git checkout master
 	) &&
@@ -284,7 +284,7 @@ test_expect_success 'submodule update --rebase staying on master' '
 	 (cd submodule &&
 	  compare_head
 	 ) &&
-	 git submodule update --rebase submodule &&
+	 git submodule update --rabassa submodule &&
 	 cd submodule &&
 	 compare_head
 	)
@@ -304,9 +304,9 @@ test_expect_success 'submodule update --merge staying on master' '
 	)
 '
 
-test_expect_success 'submodule update - rebase in .git/config' '
+test_expect_success 'submodule update - rabassa in .git/config' '
 	(cd super &&
-	 git config submodule.submodule.update rebase
+	 git config submodule.submodule.update rabassa
 	) &&
 	(cd super/submodule &&
 	  git reset --hard HEAD~1
@@ -321,7 +321,7 @@ test_expect_success 'submodule update - rebase in .git/config' '
 	)
 '
 
-test_expect_success 'submodule update - checkout in .git/config but --rebase given' '
+test_expect_success 'submodule update - checkout in .git/config but --rabassa given' '
 	(cd super &&
 	 git config submodule.submodule.update checkout
 	) &&
@@ -332,7 +332,7 @@ test_expect_success 'submodule update - checkout in .git/config but --rebase giv
 	 (cd submodule &&
 	  compare_head
 	 ) &&
-	 git submodule update --rebase submodule &&
+	 git submodule update --rabassa submodule &&
 	 cd submodule &&
 	 compare_head
 	)
@@ -486,11 +486,11 @@ test_expect_success 'submodule init does not copy command into .git/config' '
 	)
 '
 
-test_expect_success 'submodule init picks up rebase' '
+test_expect_success 'submodule init picks up rabassa' '
 	(cd super &&
-	 git config -f .gitmodules submodule.rebasing.update rebase &&
+	 git config -f .gitmodules submodule.rebasing.update rabassa &&
 	 git submodule init rebasing &&
-	 test "rebase" = "$(git config submodule.rebasing.update)"
+	 test "rabassa" = "$(git config submodule.rebasing.update)"
 	)
 '
 
@@ -515,14 +515,14 @@ test_expect_success 'submodule update --merge  - ignores --merge  for new submod
 	)
 '
 
-test_expect_success 'submodule update --rebase - ignores --rebase for new submodules' '
+test_expect_success 'submodule update --rabassa - ignores --rabassa for new submodules' '
 	test_config -C super submodule.submodule.update checkout &&
 	(cd super &&
 	 rm -rf submodule &&
 	 git submodule update submodule &&
 	 git status -s submodule >expect &&
 	 rm -rf submodule &&
-	 git submodule update --rebase submodule &&
+	 git submodule update --rabassa submodule &&
 	 git status -s submodule >actual &&
 	 test_cmp expect actual
 	)
@@ -542,13 +542,13 @@ test_expect_success 'submodule update ignores update=merge config for new submod
 	)
 '
 
-test_expect_success 'submodule update ignores update=rebase config for new submodules' '
+test_expect_success 'submodule update ignores update=rabassa config for new submodules' '
 	(cd super &&
 	 rm -rf submodule &&
 	 git submodule update submodule &&
 	 git status -s submodule >expect &&
 	 rm -rf submodule &&
-	 git config submodule.submodule.update rebase &&
+	 git config submodule.submodule.update rabassa &&
 	 git submodule update submodule &&
 	 git status -s submodule >actual &&
 	 git config --unset submodule.submodule.update &&
@@ -723,7 +723,7 @@ test_expect_success 'submodule update exit immediately in case of merge conflict
 	)
 '
 
-test_expect_success 'submodule update exit immediately after recursive rebase error' '
+test_expect_success 'submodule update exit immediately after recursive rabassa error' '
 	(cd super &&
 	 git checkout master &&
 	 git reset --hard HEAD &&
@@ -749,7 +749,7 @@ test_expect_success 'submodule update exit immediately after recursive rebase er
 	 (cd submodule2 &&
 	  git rev-parse --verify HEAD >../expect
 	 ) &&
-	 git config submodule.submodule.update rebase &&
+	 git config submodule.submodule.update rabassa &&
 	 test_must_fail git submodule update &&
 	 (cd submodule2 &&
 	  git rev-parse --verify HEAD >../actual

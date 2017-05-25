@@ -115,7 +115,7 @@ Updates since v1.6.1
 
 * "git mergetool" learned -y(--no-prompt) option to disable prompting.
 
-* "git rebase -i" can transplant a history down to root to elsewhere
+* "git rabassa -i" can transplant a history down to root to elsewhere
   with --root option.
 
 * "git reset --merge" is a new mode that works similar to the way

@@ -202,12 +202,12 @@ test_expect_success setup '
 '
 
 test_expect_success 'am applies patch correctly' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	test_tick &&
 	git am <patch1 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
@@ -215,94 +215,94 @@ test_expect_success 'am applies patch correctly' '
 
 test_expect_success 'am fails if index is dirty' '
 	test_when_finished "rm -f dirtyfile" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	echo dirtyfile >dirtyfile &&
 	git add dirtyfile &&
 	test_must_fail git am patch1 &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev first HEAD
 '
 
 test_expect_success 'am applies patch e-mail not in a mbox' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	git am patch1.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
 '
 
 test_expect_success 'am applies patch e-mail not in a mbox with CRLF' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	git am patch1-crlf.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
 '
 
 test_expect_success 'am applies patch e-mail with preceding whitespace' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	git am patch1-ws.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
 '
 
 test_expect_success 'am applies stgit patch' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f first &&
 	git am patch1-stgit.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am --patch-format=stgit applies stgit patch' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f first &&
 	git am --patch-format=stgit <patch1-stgit.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies stgit series' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f first &&
 	git am stgit-series/series &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am applies hg patch' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f first &&
 	git am patch1-hg.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'am --patch-format=hg applies hg patch' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f first &&
 	git am --patch-format=hg <patch1-hg.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	test_cmp_rev second^ HEAD^
@@ -310,7 +310,7 @@ test_expect_success 'am --patch-format=hg applies hg patch' '
 
 test_expect_success 'am with applypatch-msg hook' '
 	test_when_finished "rm -f .git/hooks/applypatch-msg" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	mkdir -p .git/hooks &&
@@ -319,7 +319,7 @@ test_expect_success 'am with applypatch-msg hook' '
 	echo hook-message >"$1"
 	EOF
 	git am patch1 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	echo hook-message >expected &&
 	git log -1 --format=format:%B >actual &&
@@ -330,7 +330,7 @@ test_expect_success 'am with applypatch-msg hook' '
 
 test_expect_success 'am with failing applypatch-msg hook' '
 	test_when_finished "rm -f .git/hooks/applypatch-msg" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	mkdir -p .git/hooks &&
@@ -338,14 +338,14 @@ test_expect_success 'am with failing applypatch-msg hook' '
 	exit 1
 	EOF
 	test_must_fail git am patch1 &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	git diff --exit-code first &&
 	test_cmp_rev first HEAD
 '
 
 test_expect_success 'am with pre-applypatch hook' '
 	test_when_finished "rm -f .git/hooks/pre-applypatch" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	mkdir -p .git/hooks &&
@@ -354,7 +354,7 @@ test_expect_success 'am with pre-applypatch hook' '
 	exit 0
 	EOF
 	git am patch1 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	git diff first..second >diff.expected &&
@@ -363,7 +363,7 @@ test_expect_success 'am with pre-applypatch hook' '
 
 test_expect_success 'am with failing pre-applypatch hook' '
 	test_when_finished "rm -f .git/hooks/pre-applypatch" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	mkdir -p .git/hooks &&
@@ -371,14 +371,14 @@ test_expect_success 'am with failing pre-applypatch hook' '
 	exit 1
 	EOF
 	test_must_fail git am patch1 &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev first HEAD
 '
 
 test_expect_success 'am with post-applypatch hook' '
 	test_when_finished "rm -f .git/hooks/post-applypatch" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	mkdir -p .git/hooks &&
@@ -388,7 +388,7 @@ test_expect_success 'am with post-applypatch hook' '
 	exit 0
 	EOF
 	git am patch1 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	test_cmp_rev second HEAD &&
 	git rev-parse second >head.expected &&
 	test_cmp head.expected head.actual &&
@@ -398,7 +398,7 @@ test_expect_success 'am with post-applypatch hook' '
 
 test_expect_success 'am with failing post-applypatch hook' '
 	test_when_finished "rm -f .git/hooks/post-applypatch" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	mkdir -p .git/hooks &&
@@ -407,7 +407,7 @@ test_expect_success 'am with failing post-applypatch hook' '
 	exit 1
 	EOF
 	git am patch1 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	git rev-parse second >head.expected &&
@@ -415,22 +415,22 @@ test_expect_success 'am with failing post-applypatch hook' '
 '
 
 test_expect_success 'am --scissors cuts the message at the scissors line' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout second &&
 	git am --scissors scissors-patch.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code scissors &&
 	test_cmp_rev scissors HEAD
 '
 
 test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout second &&
 	test_config mailinfo.scissors true &&
 	git am --no-scissors no-scissors-patch.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code no-scissors &&
 	test_cmp_rev no-scissors HEAD
 '
@@ -451,11 +451,11 @@ compare () {
 
 test_expect_success 'am changes committer and keeps author' '
 	test_tick &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	git am patch2 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	test "$(git rev-parse master^^)" = "$(git rev-parse HEAD^^)" &&
 	git diff --exit-code master..HEAD &&
 	git diff --exit-code master^..HEAD^ &&
@@ -466,7 +466,7 @@ test_expect_success 'am changes committer and keeps author' '
 '
 
 test_expect_success 'am --signoff adds Signed-off-by: line' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout -b master2 first &&
 	git am --signoff <patch2 &&
@@ -488,7 +488,7 @@ test_expect_success 'am stays in branch' '
 test_expect_success 'am --signoff does not add Signed-off-by: line if already there' '
 	git format-patch --stdout HEAD^ >patch3 &&
 	sed -e "/^Subject/ s,\[PATCH,Re: Re: Re: & 1/5 v2] [foo," patch3 >patch4 &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --signoff patch4 &&
@@ -503,27 +503,27 @@ test_expect_success 'am without --keep removes Re: and [PATCH] stuff' '
 '
 
 test_expect_success 'am --keep really keeps the subject' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --keep patch4 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git cat-file commit HEAD >actual &&
 	grep "Re: Re: Re: \[PATCH 1/5 v2\] \[foo\] third" actual
 '
 
 test_expect_success 'am --keep-non-patch really keeps the non-patch part' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --keep-non-patch patch4 &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git cat-file commit HEAD >actual &&
 	grep "^\[foo\] third" actual
 '
 
 test_expect_success 'setup am -3' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout -b base3way master2 &&
 	sed -n -e "3,\$p" msg >file &&
@@ -534,77 +534,77 @@ test_expect_success 'setup am -3' '
 '
 
 test_expect_success 'am -3 falls back to 3-way merge' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout -b lorem2 base3way &&
 	git am -3 lorem-move.patch &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code lorem
 '
 
 test_expect_success 'am -3 -p0 can read --no-prefix patch' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout -b lorem3 base3way &&
 	git am -3 -p0 lorem-zero.patch &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code lorem
 '
 
 test_expect_success 'am with config am.threeWay falls back to 3-way merge' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout -b lorem4 base3way &&
 	test_config am.threeWay 1 &&
 	git am lorem-move.patch &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code lorem
 '
 
 test_expect_success 'am with config am.threeWay overridden by --no-3way' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout -b lorem5 base3way &&
 	test_config am.threeWay 1 &&
 	test_must_fail git am --no-3way lorem-move.patch &&
-	test_path_is_dir .git/rebase-apply
+	test_path_is_dir .git/rabassa-apply
 '
 
 test_expect_success 'am can rename a file' '
 	grep "^rename from" rename.patch &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout lorem^0 &&
 	git am rename.patch &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git update-index --refresh &&
 	git diff --exit-code rename
 '
 
 test_expect_success 'am -3 can rename a file' '
 	grep "^rename from" rename.patch &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout lorem^0 &&
 	git am -3 rename.patch &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git update-index --refresh &&
 	git diff --exit-code rename
 '
 
 test_expect_success 'am -3 can rename a file after falling back to 3-way merge' '
 	grep "^rename from" rename-add.patch &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout lorem^0 &&
 	git am -3 rename-add.patch &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git update-index --refresh &&
 	git diff --exit-code rename
 '
 
 test_expect_success 'am -3 -q is quiet' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f lorem2 &&
 	git reset base3way --hard &&
 	git am -3 -q lorem-move.patch >output.out 2>&1 &&
@@ -612,109 +612,109 @@ test_expect_success 'am -3 -q is quiet' '
 '
 
 test_expect_success 'am pauses on conflict' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout lorem2^^ &&
 	test_must_fail git am lorem-move.patch &&
-	test -d .git/rebase-apply
+	test -d .git/rabassa-apply
 '
 
 test_expect_success 'am --skip works' '
 	echo goodbye >expected &&
 	git am --skip &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code lorem2^^ -- file &&
 	test_cmp expected another
 '
 
 test_expect_success 'am --abort removes a stray directory' '
-	mkdir .git/rebase-apply &&
+	mkdir .git/rabassa-apply &&
 	git am --abort &&
-	test_path_is_missing .git/rebase-apply
+	test_path_is_missing .git/rabassa-apply
 '
 
 test_expect_success 'am refuses patches when paused' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout lorem2^^ &&
 
 	test_must_fail git am lorem-move.patch &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev lorem2^^ HEAD &&
 
 	test_must_fail git am <lorem-move.patch &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev lorem2^^ HEAD
 '
 
 test_expect_success 'am --resolved works' '
 	echo goodbye >expected &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout lorem2^^ &&
 	test_must_fail git am lorem-move.patch &&
-	test -d .git/rebase-apply &&
+	test -d .git/rabassa-apply &&
 	echo resolved >>file &&
 	git add file &&
 	git am --resolved &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	test_cmp expected another
 '
 
 test_expect_success 'am --resolved fails if index has no changes' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout lorem2^^ &&
 	test_must_fail git am lorem-move.patch &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev lorem2^^ HEAD &&
 	test_must_fail git am --resolved &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev lorem2^^ HEAD
 '
 
 test_expect_success 'am --resolved fails if index has unmerged entries' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout second &&
 	test_must_fail git am -3 lorem-move.patch &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev second HEAD &&
 	test_must_fail git am --resolved >err &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev second HEAD &&
 	test_i18ngrep "still have unmerged paths" err
 '
 
 test_expect_success 'am takes patches from a Pine mailbox' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	cat pine patch1 | git am &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git diff --exit-code master^..HEAD
 '
 
 test_expect_success 'am fails on mail without patch' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	test_must_fail git am <failmail &&
 	git am --abort &&
-	test_path_is_missing .git/rebase-apply
+	test_path_is_missing .git/rabassa-apply
 '
 
 test_expect_success 'am fails on empty patch' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	echo "---" >>failmail &&
 	test_must_fail git am <failmail &&
 	git am --skip &&
-	test_path_is_missing .git/rebase-apply
+	test_path_is_missing .git/rabassa-apply
 '
 
 test_expect_success 'am works from stdin in subdirectory' '
 	rm -fr subdir &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	(
@@ -727,7 +727,7 @@ test_expect_success 'am works from stdin in subdirectory' '
 
 test_expect_success 'am works from file (relative path given) in subdirectory' '
 	rm -fr subdir &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	(
@@ -740,7 +740,7 @@ test_expect_success 'am works from file (relative path given) in subdirectory' '
 
 test_expect_success 'am works from file (absolute path given) in subdirectory' '
 	rm -fr subdir &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	P=$(pwd) &&
@@ -753,7 +753,7 @@ test_expect_success 'am works from file (absolute path given) in subdirectory' '
 '
 
 test_expect_success 'am --committer-date-is-author-date' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	test_tick &&
@@ -765,7 +765,7 @@ test_expect_success 'am --committer-date-is-author-date' '
 '
 
 test_expect_success 'am without --committer-date-is-author-date' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	test_tick &&
@@ -781,7 +781,7 @@ test_expect_success 'am without --committer-date-is-author-date' '
 # by test_tick that uses -0700 timezone; if this feature does not
 # work, we will see that instead of +0000.
 test_expect_success 'am --ignore-date' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	test_tick &&
@@ -793,7 +793,7 @@ test_expect_success 'am --ignore-date' '
 
 test_expect_success 'am into an unborn branch' '
 	git rev-parse first^{tree} >expected &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	rm -fr subdir &&
 	mkdir subdir &&
@@ -811,7 +811,7 @@ test_expect_success 'am into an unborn branch' '
 '
 
 test_expect_success 'am newline in subject' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	test_tick &&
@@ -821,7 +821,7 @@ test_expect_success 'am newline in subject' '
 '
 
 test_expect_success 'am -q is quiet' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	test_tick &&
@@ -830,7 +830,7 @@ test_expect_success 'am -q is quiet' '
 '
 
 test_expect_success 'am empty-file does not infloop' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	touch empty-file &&
 	test_tick &&
@@ -840,41 +840,41 @@ test_expect_success 'am empty-file does not infloop' '
 '
 
 test_expect_success 'am --message-id really adds the message id' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --message-id patch1.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git cat-file commit HEAD | tail -n1 >actual &&
 	grep Message-Id patch1.eml >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'am.messageid really adds the message id' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
 	test_config am.messageid true &&
 	git am patch1.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git cat-file commit HEAD | tail -n1 >actual &&
 	grep Message-Id patch1.eml >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'am --message-id -s signs off after the message id' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am -s --message-id patch1.eml &&
-	test_path_is_missing .git/rebase-apply &&
+	test_path_is_missing .git/rabassa-apply &&
 	git cat-file commit HEAD | tail -n2 | head -n1 >actual &&
 	grep Message-Id patch1.eml >expected &&
 	test_cmp expected actual
 '
 
 test_expect_success 'am -3 works with rerere' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 
 	# make patches one->two and two->three...
@@ -910,7 +910,7 @@ test_expect_success 'am -3 works with rerere' '
 '
 
 test_expect_success 'am -s unexpected trailer block' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	echo signed >file &&
 	git add file &&
@@ -958,7 +958,7 @@ test_expect_success 'am -s unexpected trailer block' '
 '
 
 test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f first &&
 	echo mboxrd >>file &&
 	git add file &&
@@ -980,7 +980,7 @@ test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
 test_expect_success 'am works with multi-line in-body headers' '
 	FORTY="String that has a length of more than forty characters" &&
 	LONG="$FORTY $FORTY" &&
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git checkout -f first &&
 	echo one >> file &&
 	git commit -am "$LONG

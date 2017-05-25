@@ -2,7 +2,7 @@
 	delete tempdir
 
 	'git subtree rejoin' option to do the same as --rejoin, eg. after a
-	  rebase
+	  rabassa
 
 	--prefix doesn't force the subtree correctly in merge/pull:
 	"-s subtree" should be given an explicit subtree option?

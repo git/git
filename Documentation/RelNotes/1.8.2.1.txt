@@ -90,7 +90,7 @@ Fixes since v1.8.2
  * The "--color=<when>" argument to the commands in the diff family
    was described poorly.
 
- * The arguments given to pre-rebase hook were not documented.
+ * The arguments given to pre-rabassa hook were not documented.
 
  * The v4 index format was not documented.
 

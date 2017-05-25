@@ -1,13 +1,13 @@
 #!/bin/sh
 
-test_description='Tests rebase performance'
+test_description='Tests rabassa performance'
 . ./perf-lib.sh
 
 test_perf_default_repo
 
 test_expect_success 'setup' '
 	git checkout -f -b base &&
-	git checkout -b to-rebase &&
+	git checkout -b to-rabassa &&
 	git checkout -b upstream &&
 	for i in $(seq 100)
 	do
@@ -24,13 +24,13 @@ test_expect_success 'setup' '
 		git commit -m commit$i-reverse unrelated-file$i ||
 		break
 	done &&
-	git checkout to-rebase &&
+	git checkout to-rabassa &&
 	test_commit our-patch interesting-file
 '
 
-test_perf 'rebase on top of a lot of unrelated changes' '
-	git rebase --onto upstream HEAD^ &&
-	git rebase --onto base HEAD^
+test_perf 'rabassa on top of a lot of unrelated changes' '
+	git rabassa --onto upstream HEAD^ &&
+	git rabassa --onto base HEAD^
 '
 
 test_done

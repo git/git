@@ -138,7 +138,7 @@ __git_zsh_cmd_common ()
 	mv:'move or rename a file, a directory, or a symlink'
 	pull:'fetch from and merge with another repository or a local branch'
 	push:'update remote refs along with associated objects'
-	rebase:'forward-port local commits to the updated upstream head'
+	rabassa:'forward-port local commits to the updated upstream head'
 	reset:'reset current HEAD to the specified state'
 	rm:'remove files from the working tree and from the index'
 	show:'show various types of objects'

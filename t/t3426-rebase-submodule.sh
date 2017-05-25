@@ -1,12 +1,12 @@
 #!/bin/sh
 
-test_description='rebase can handle submodules'
+test_description='rabassa can handle submodules'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-submodule-update.sh
-. "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rabassa.sh
 
-git_rebase () {
+git_rabassa () {
 	git status -su >expect &&
 	ls -1pR * >>expect &&
 	git checkout -b ours HEAD &&
@@ -17,12 +17,12 @@ git_rebase () {
 	git status -su >actual &&
 	ls -1pR * >>actual &&
 	test_cmp expect actual &&
-	git rebase "$1"
+	git rabassa "$1"
 }
 
-test_submodule_switch "git_rebase"
+test_submodule_switch "git_rabassa"
 
-git_rebase_interactive () {
+git_rabassa_interactive () {
 	git status -su >expect &&
 	ls -1pR * >>expect &&
 	git checkout -b ours HEAD &&
@@ -35,9 +35,9 @@ git_rebase_interactive () {
 	test_cmp expect actual &&
 	set_fake_editor &&
 	echo "fake-editor.sh" >.git/info/exclude &&
-	git rebase -i "$1"
+	git rabassa -i "$1"
 }
 
-test_submodule_switch "git_rebase_interactive"
+test_submodule_switch "git_rabassa_interactive"
 
 test_done

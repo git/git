@@ -77,7 +77,7 @@ UI, Workflows & Features
    with the mergetool.$name.cmd configuration variable even for built-in
    mergetool backends.
 
- * "git rebase -i" learned the "--edit-todo" option to open an editor
+ * "git rabassa -i" learned the "--edit-todo" option to open an editor
    to edit the instruction sheet.
 
 
@@ -237,8 +237,8 @@ to them for details).
    when run over the smart-http protocol.
 
  * When you misspell the command name you give to the "exec" action in
-   the "git rebase -i" instruction sheet you were told that 'rebase' is not a
-   git subcommand from "git rebase --continue".
+   the "git rabassa -i" instruction sheet you were told that 'rabassa' is not a
+   git subcommand from "git rabassa --continue".
 
  * The subcommand in "git remote" to remove a defined remote was
    "rm" and the command did not take a fully-spelled "remove".

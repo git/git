@@ -150,14 +150,14 @@ invoked after a commit is made.
 This hook is meant primarily for notification, and cannot affect
 the outcome of 'git commit'.
 
-pre-rebase
+pre-rabassa
 ~~~~~~~~~~
 
-This hook is called by 'git rebase' and can be used to prevent a
-branch from getting rebased.  The hook may be called with one or
+This hook is called by 'git rabassa' and can be used to prevent a
+branch from getting rabassad.  The hook may be called with one or
 two parameters.  The first parameter is the upstream from which
 the series was forked.  The second parameter is the branch being
-rebased, and is not set when rebasing the current branch.
+rabassad, and is not set when rebasing the current branch.
 
 post-checkout
 ~~~~~~~~~~~~~
@@ -418,9 +418,9 @@ post-rewrite
 ~~~~~~~~~~~~
 
 This hook is invoked by commands that rewrite commits (`git commit
---amend`, 'git-rebase'; currently 'git-filter-branch' does 'not' call
+--amend`, 'git-rabassa'; currently 'git-filter-branch' does 'not' call
 it!).  Its first argument denotes the command it was invoked by:
-currently one of `amend` or `rebase`.  Further command-dependent
+currently one of `amend` or `rabassa`.  Further command-dependent
 arguments may be passed in the future.
 
 The hook receives a list of the rewritten commits on stdin, in the
@@ -438,14 +438,14 @@ thus has access to these notes.
 
 The following command-specific comments apply:
 
-rebase::
+rabassa::
 	For the 'squash' and 'fixup' operation, all commits that were
 	squashed are listed as being rewritten to the squashed commit.
 	This means that there will be several lines sharing the same
 	'new-sha1'.
 +
 The commits are guaranteed to be listed in the order that they were
-processed by rebase.
+processed by rabassa.
 
 
 GIT

@@ -2,17 +2,17 @@
 #
 # Copyright (c) 2006, 2008 Junio C Hamano
 #
-# The "pre-rebase" hook is run just before "git rebase" starts doing
+# The "pre-rabassa" hook is run just before "git rabassa" starts doing
 # its job, and can prevent the command from running by exiting with
 # non-zero status.
 #
 # The hook is called with the following parameters:
 #
 # $1 -- the upstream the series was forked from.
-# $2 -- the branch being rebased (or empty when rebasing the current branch).
+# $2 -- the branch being rabassad (or empty when rebasing the current branch).
 #
 # This sample shows how to prevent topic branches that are already
-# merged to 'next' branch from getting rebased, because allowing it
+# merged to 'next' branch from getting rabassad, because allowing it
 # would result in rebasing already published history.
 
 publish=next
@@ -33,8 +33,8 @@ refs/heads/??/*)
 	;;
 esac
 
-# Now we are dealing with a topic branch being rebased
-# on top of master.  Is it OK to rebase it?
+# Now we are dealing with a topic branch being rabassad
+# on top of master.  Is it OK to rabassa it?
 
 # Does the topic really exist?
 git show-ref -q "$topic" || {
@@ -118,7 +118,7 @@ With this workflow, you would want to know:
 (1) ... if a topic branch has ever been merged to "next".  Young
     topic branches can have stupid mistakes you would rather
     clean up before publishing, and things that have not been
-    merged into other branches can be easily rebased without
+    merged into other branches can be easily rabassad without
     affecting other people.  But once it is published, you would
     not want to rewind it.
 
@@ -152,7 +152,7 @@ A, B and C are topic branches.
 
  * C has not merged to "next" at all.
 
-We would want to allow C to be rebased, refuse A, and encourage
+We would want to allow C to be rabassad, refuse A, and encourage
 B to be deleted.
 
 To compute (1):

@@ -1258,17 +1258,17 @@ static int git_default_branch_config(const char *var, const char *value)
 		git_branch_track = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "branch.autosetuprebase")) {
+	if (!strcmp(var, "branch.autosetuprabassa")) {
 		if (!value)
 			return config_error_nonbool(var);
 		else if (!strcmp(value, "never"))
-			autorebase = AUTOREBASE_NEVER;
+			autorabassa = AUTOREBASE_NEVER;
 		else if (!strcmp(value, "local"))
-			autorebase = AUTOREBASE_LOCAL;
+			autorabassa = AUTOREBASE_LOCAL;
 		else if (!strcmp(value, "remote"))
-			autorebase = AUTOREBASE_REMOTE;
+			autorabassa = AUTOREBASE_REMOTE;
 		else if (!strcmp(value, "always"))
-			autorebase = AUTOREBASE_ALWAYS;
+			autorabassa = AUTOREBASE_ALWAYS;
 		else
 			return error("malformed value for %s", var);
 		return 0;

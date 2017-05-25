@@ -42,7 +42,7 @@ test_expect_success 'SVN-side change outside of .git' '
 test_expect_success 'update git svn-cloned repo' '
 	(
 		cd g &&
-		git svn rebase &&
+		git svn rabassa &&
 		echo a > expect &&
 		echo b >> expect &&
 		test_cmp a expect &&
@@ -66,7 +66,7 @@ test_expect_success 'SVN-side change inside of .git' '
 test_expect_success 'update git svn-cloned repo' '
 	(
 		cd g &&
-		git svn rebase &&
+		git svn rabassa &&
 		echo a > expect &&
 		echo b >> expect &&
 		test_cmp a expect &&
@@ -89,7 +89,7 @@ test_expect_success 'SVN-side change in and out of .git' '
 test_expect_success 'update git svn-cloned repo again' '
 	(
 		cd g &&
-		git svn rebase &&
+		git svn rabassa &&
 		echo a > expect &&
 		echo b >> expect &&
 		echo c >> expect &&

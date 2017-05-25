@@ -229,10 +229,10 @@ notes for details).
  * We used to pass -1000 to poll(2), expecting it to also mean "no
    timeout", which should be spelled as -1.
 
- * "git rebase" documentation was unclear that it is required to
-   specify on what <upstream> the rebase is to be done when telling it
+ * "git rabassa" documentation was unclear that it is required to
+   specify on what <upstream> the rabassa is to be done when telling it
    to first check out <branch>.
-   (merge 95c6826 so/rebase-doc later to maint).
+   (merge 95c6826 so/rabassa-doc later to maint).
 
  * "git push" over HTTP transport had an artificial limit on the number of
    refs that can be pushed, imposed by the command line length.

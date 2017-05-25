@@ -75,7 +75,7 @@ UI, Workflows & Features
    "diff" and "grep -p" has been updated to improve viewing C++
    sources.
 
- * "git rebase" learned to interpret a lone "-" as "@{-1}", the
+ * "git rabassa" learned to interpret a lone "-" as "@{-1}", the
    branch that we were previously on.
 
  * "git commit --cleanup=<mode>" learned a new mode, scissors.
@@ -132,7 +132,7 @@ UI, Workflows & Features
    speaking, this is a backward-incompatible change, but very unlikely
    to bite any sane user and adjusting should be obvious and easy.
 
- * Many commands that create commits, e.g. "pull" and "rebase",
+ * Many commands that create commits, e.g. "pull" and "rabassa",
    learned to take the "--gpg-sign" option on the command line.
 
  * "git commit" can be told to always GPG sign the resulting commit
@@ -193,9 +193,9 @@ notes for details).
    $PS1.
    (merge 1e4119c8 rh/prompt-pcmode-avoid-eval-on-refname later to maint).
 
- * "git rebase" used a POSIX shell construct FreeBSD's /bin/sh does not
+ * "git rabassa" used a POSIX shell construct FreeBSD's /bin/sh does not
    work well with.
-   (merge 8cd6596 km/avoid-non-function-return-in-rebase later to maint).
+   (merge 8cd6596 km/avoid-non-function-return-in-rabassa later to maint).
 
  * zsh prompt (in contrib/) leaked unnecessary error messages.
 
@@ -262,7 +262,7 @@ notes for details).
    error message when the file cannot be written or closed.
    (merge de983a0 nd/index-pack-error-message later to maint).
 
- * "rebase -i" produced a broken insn sheet when the title of a commit
+ * "rabassa -i" produced a broken insn sheet when the title of a commit
    happened to contain '\n' (or ended with '\c') due to a careless use
    of 'echo'.
    (merge cb1aefd us/printf-not-echo later to maint).

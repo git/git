@@ -56,7 +56,7 @@ Let's see what that tells us:
 -----------------------------------------------------------
 
 Ok, I removed the "dangling commit" messages, because they are just
-messages about the fact that you probably have rebased etc, so they're not
+messages about the fact that you probably have rabassad etc, so they're not
 at all interesting. But what remains is still very useful. In particular,
 we now know which tree points to it!
 

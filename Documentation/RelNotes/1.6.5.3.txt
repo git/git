@@ -43,7 +43,7 @@ Fixes since v1.6.5.2
 
  * "git ls-remote" outside of a git repository over http was broken.
 
- * "git rebase -i" gave bogus error message when the command word was
+ * "git rabassa -i" gave bogus error message when the command word was
    misspelled.
 
  * "git receive-pack" that is run in response to "git push" did not run

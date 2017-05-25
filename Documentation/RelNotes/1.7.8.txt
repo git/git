@@ -85,7 +85,7 @@ Updates since v1.7.7
  * "git merge" learned the "--edit" option to allow users to edit the
    merge commit log message.
 
- * "git rebase -i" can be told to use special purpose editor suitable
+ * "git rabassa -i" can be told to use special purpose editor suitable
    only for its insn sheet via sequence.editor configuration variable.
 
  * "git send-email" learned to respond to "-h"(elp) requests.

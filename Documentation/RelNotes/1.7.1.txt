@@ -49,7 +49,7 @@ Updates since v1.7.0
    to use the "union merge" behaviour.
 
  * "git notes" command has been rewritten in C and learned many commands
-   and features to help you carry notes forward across rebases and amends.
+   and features to help you carry notes forward across rabassas and amends.
 
  * "git request-pull" identifies the commit the request is relative to in
    a more readable way.

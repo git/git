@@ -50,7 +50,7 @@ Foreign interfaces, subsystems and ports.
 
  * Cygwin port has been updated for more recent Cygwin 1.7.
 
- * "git rebase -i" now honors --strategy and -X options.
+ * "git rabassa -i" now honors --strategy and -X options.
 
  * Git-gui has been updated to its 0.18.0 version.
 
@@ -118,10 +118,10 @@ UI, Workflows & Features
    smaller than their true size, when expressed as deltas) to be
    reported.
 
- * "git rebase [-i]" used to leave just "rebase" as its reflog messages
+ * "git rabassa [-i]" used to leave just "rabassa" as its reflog messages
    for some operations. They have been reworded to be more informative.
 
- * In addition to the choice from "rebase, merge, or checkout-detach",
+ * In addition to the choice from "rabassa, merge, or checkout-detach",
    "submodule update" can allow a custom command to be used in to
    update the working tree of submodules via the "submodule.*.update"
    configuration variable.
@@ -154,8 +154,8 @@ UI, Workflows & Features
    information, when you push to a remote that is different from where
    you fetch from (i.e. a triangular workflow).
 
- * Having multiple "fixup!" on a line in the rebase instruction sheet
-   did not work very well with "git rebase -i --autosquash".
+ * Having multiple "fixup!" on a line in the rabassa instruction sheet
+   did not work very well with "git rabassa -i --autosquash".
 
  * "git log" learned the "--author-date-order" option, with which the
    output is topologically sorted and commits in parallel histories
@@ -172,7 +172,7 @@ UI, Workflows & Features
  * "git rm" gives a single message followed by list of paths to report
    multiple paths that cannot be removed.
 
- * "git rebase" can be told with ":/look for this string" syntax commits
+ * "git rabassa" can be told with ":/look for this string" syntax commits
    to replay the changes onto and where the work to be replayed begins.
 
  * Many tutorials teach users to set "color.ui" to "auto" as the first
@@ -193,7 +193,7 @@ UI, Workflows & Features
    like we warn when more than one refs/ hierarchies share the same
    name.
 
- * "git rebase" learned "--[no-]autostash" option to save local
+ * "git rabassa" learned "--[no-]autostash" option to save local
    changes instead of refusing to run (to which people's normal
    response was to stash them and re-run).  This introduced a corner
    case breakage to "git am --abort" but it has been fixed.
@@ -364,10 +364,10 @@ details).
    temporary path buffer used to create a name for lockfiles.
    (merge 2fbd4f9 mh/maint-lockfile-overflow later to maint).
 
- * Invocations of "git checkout" used internally by "git rebase" were
+ * Invocations of "git checkout" used internally by "git rabassa" were
    counted as "checkout", and affected later "git checkout -" to the
    the user to an unexpected place.
-   (merge 3bed291 rr/rebase-checkout-reflog later to maint).
+   (merge 3bed291 rr/rabassa-checkout-reflog later to maint).
 
  * The configuration variable column.ui was poorly documented.
    (merge 5e62cc1 rr/column-doc later to maint).
@@ -427,8 +427,8 @@ details).
    command was started.
 
  * The bash prompt code (in contrib/) displayed the name of the branch
-   being rebased when "rebase -i/-m/-p" modes are in use, but not the
-   plain vanilla "rebase".
+   being rabassad when "rabassa -i/-m/-p" modes are in use, but not the
+   plain vanilla "rabassa".
 
  * Handling of negative exclude pattern for directories "!dir" was
    broken in the update to v1.8.3.

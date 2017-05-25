@@ -1,8 +1,8 @@
 #!/bin/sh
 
-test_description='git rebase --whitespace=fix
+test_description='git rabassa --whitespace=fix
 
-This test runs git rebase --whitespace=fix and make sure that it works.
+This test runs git rabassa --whitespace=fix and make sure that it works.
 '
 
 . ./test-lib.sh
@@ -15,7 +15,7 @@ c
 
 EOF
 
-# expected contents in "file" after rebase
+# expected contents in "file" after rabassa
 cat >expect-first <<EOF
 a
 b
@@ -37,7 +37,7 @@ f
 
 EOF
 
-# expected contents in second revision after rebase
+# expected contents in second revision after rabassa
 cat >expect-second <<EOF
 a
 b
@@ -53,7 +53,7 @@ test_expect_success 'blank line at end of file; extend at end of file' '
 	git add file && git commit -m first &&
 	mv second file &&
 	git add file &&	git commit -m second &&
-	git rebase --whitespace=fix HEAD^^ &&
+	git rabassa --whitespace=fix HEAD^^ &&
 	git diff --exit-code HEAD^:file expect-first &&
 	test_cmp file expect-second
 '
@@ -80,7 +80,7 @@ sed -e's/ //g' <third >expect-third
 
 test_expect_success 'two blanks line at end of file; extend at end of file' '
 	cp third file && git add file && git commit -m third &&
-	git rebase --whitespace=fix HEAD^^ &&
+	git rabassa --whitespace=fix HEAD^^ &&
 	git diff --exit-code HEAD^:file expect-second &&
 	test_cmp file expect-third
 '
@@ -89,7 +89,7 @@ test_expect_success 'same, but do not remove trailing spaces' '
 	git config core.whitespace "-blank-at-eol" &&
 	git reset --hard HEAD^ &&
 	cp third file && git add file && git commit -m third &&
-	git rebase --whitespace=fix HEAD^^ &&
+	git rabassa --whitespace=fix HEAD^^ &&
 	git diff --exit-code HEAD^:file expect-second &&
 	test_cmp file third
 '
@@ -119,7 +119,7 @@ test_expect_success 'at beginning of file' '
 		echo $i
 	done >> file &&
 	git commit -m more file	&&
-	git rebase --whitespace=fix HEAD^^ &&
+	git rabassa --whitespace=fix HEAD^^ &&
 	test_cmp file expect-beginning
 '
 

@@ -11,10 +11,10 @@ Fixes since v1.8.4
 
  * In FreeBSD's and NetBSD's "sh", a return in a dot script in a
    function returns from the function, not only in the dot script,
-   breaking "git rebase" on these platforms (regression introduced
+   breaking "git rabassa" on these platforms (regression introduced
    in 1.8.4-rc1).
 
- * "git rebase -i" and other scripted commands were feeding a
+ * "git rabassa -i" and other scripted commands were feeding a
    random, data dependant error message to 'echo' and expecting it
    to come out literally.
 

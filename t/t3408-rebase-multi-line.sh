@@ -28,10 +28,10 @@ But otherwise with a sane description." &&
 
 '
 
-test_expect_success rebase '
+test_expect_success rabassa '
 
 	git checkout side &&
-	git rebase master &&
+	git rabassa master &&
 	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
 	git cat-file commit side@{1} | sed -e "1,/^\$/d" >expect &&
 	test_cmp expect actual

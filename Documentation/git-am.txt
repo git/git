@@ -162,7 +162,7 @@ default.   You can use `--no-utf8` to override this.
 	to the screen before exiting.  This overrides the
 	standard message informing you to use `--continue`
 	or `--skip` to handle the failure.  This is solely
-	for internal use between 'git rebase' and 'git am'.
+	for internal use between 'git rabassa' and 'git am'.
 
 --abort::
 	Restore the original branch and abort the patching operation.

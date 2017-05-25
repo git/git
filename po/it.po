@@ -4104,13 +4104,13 @@ msgstr "???"
 
 #: builtin/remote.c:991
 #, c-format
-msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
+msgid "invalid branch.%s.merge; cannot rabassa onto > 1 branch"
 msgstr ""
-"branch.%s.merge non valido; impossibile eseguire il rebase su > 1 branch"
+"branch.%s.merge non valido; impossibile eseguire il rabassa su > 1 branch"
 
 #: builtin/remote.c:998
 #, c-format
-msgid "rebases onto remote %s"
+msgid "rabassas onto remote %s"
 msgstr ""
 
 #: builtin/remote.c:1001
@@ -4771,7 +4771,7 @@ msgstr "l'opzione -d non è più supportata.  Non utilizzarla."
 
 #: git-am.sh:481
 #, sh-format
-msgid "previous rebase directory $dotest still exists but mbox given."
+msgid "previous rabassa directory $dotest still exists but mbox given."
 msgstr ""
 
 #: git-am.sh:486
@@ -5031,8 +5031,8 @@ msgid "Cannot merge multiple branches into empty head"
 msgstr "Impossibile eseguire il merge di branch multipli in un head vuoto"
 
 #: git-pull.sh:257
-msgid "Cannot rebase onto multiple branches"
-msgstr "Impossibile eseguire il rebase su branch multipli"
+msgid "Cannot rabassa onto multiple branches"
+msgstr "Impossibile eseguire il rabassa su branch multipli"
 
 #: git-stash.sh:51
 msgid "git stash clear with parameters is unimplemented"
@@ -5279,12 +5279,12 @@ msgstr ""
 
 #: git-submodule.sh:570
 #, sh-format
-msgid "Unable to rebase '$sha1' in submodule path '$sm_path'"
+msgid "Unable to rabassa '$sha1' in submodule path '$sm_path'"
 msgstr ""
 
 #: git-submodule.sh:571
 #, sh-format
-msgid "Submodule path '$sm_path': rebased into '$sha1'"
+msgid "Submodule path '$sm_path': rabassad into '$sha1'"
 msgstr ""
 
 #: git-submodule.sh:576

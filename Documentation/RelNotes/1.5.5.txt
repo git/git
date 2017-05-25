@@ -60,7 +60,7 @@ Updates since v1.5.4
    "foo".  Pattern "foo" also matches as before.
 
  * bash completion's prompt helper function can talk about
-   operation in-progress (e.g. merge, rebase, etc.).
+   operation in-progress (e.g. merge, rabassa, etc.).
 
  * Configuration variables "url.<usethis>.insteadof = <otherurl>" can be
    used to tell "git-fetch" and "git-push" to use different URL than what
@@ -200,8 +200,8 @@ this release, unless otherwise noted.
  * "git-http-push" did not allow deletion of remote ref with the usual
    "push <remote> :<branch>" syntax.
 
- * "git-rebase --abort" did not go back to the right location if
-   "git-reset" was run during the "git-rebase" session.
+ * "git-rabassa --abort" did not go back to the right location if
+   "git-reset" was run during the "git-rabassa" session.
 
  * "git imap-send" without setting imap.host did not error out but
    segfaulted.

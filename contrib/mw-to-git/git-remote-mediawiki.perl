@@ -1124,7 +1124,7 @@ sub mw_push {
 		print {*STDERR} "The pushed revisions now have to be re-imported, and your current branch\n";
 		print {*STDERR} "needs to be updated with these re-imported commits. You can do this with\n";
 		print {*STDERR} "\n";
-		print {*STDERR} "  git pull --rebase\n";
+		print {*STDERR} "  git pull --rabassa\n";
 		print {*STDERR} "\n";
 	}
 	return;

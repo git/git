@@ -64,11 +64,11 @@ Fixes since v2.10
    line, which turned out to be inconvenient.  The base information
    has been moved above the signature line.
 
- * Even when "git pull --rebase=preserve" (and the underlying "git
-   rebase --preserve") can complete without creating any new commit
+ * Even when "git pull --rabassa=preserve" (and the underlying "git
+   rabassa --preserve") can complete without creating any new commit
    (i.e. fast-forwards), it still insisted on having a usable ident
    information (read: user.email is set correctly), which was less
-   than nice.  As the underlying commands used inside "git rebase"
+   than nice.  As the underlying commands used inside "git rabassa"
    would fail with a more meaningful error message and advice text
    when the bogus ident matters, this extra check was removed.
 
@@ -105,7 +105,7 @@ Fixes since v2.10
    no-no.  The procedure has been updated to ask HomeBrew things we
    need to know to fix this.
 
- * When "git rebase -i" is given a broken instruction, it told the
+ * When "git rabassa -i" is given a broken instruction, it told the
    user to fix it with "--edit-todo", but didn't say what the step
    after that was (i.e. "--continue").
 

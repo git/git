@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git rebase - test patch id computation'
+test_description='git rabassa - test patch id computation'
 
 . ./test-lib.sh
 
@@ -79,7 +79,7 @@ do_tests () {
 		git add file &&
 		git commit -q -m "change big file again" &&
 		git checkout -q other^{} &&
-		git rebase master &&
+		git rabassa master &&
 		test_must_fail test -n "$(git rev-list master...HEAD~)"
 	'
 
@@ -89,8 +89,8 @@ do_tests () {
 		git reset -q --soft HEAD~2 &&
 		git commit -q -m squashed &&
 		git checkout -q other^{} &&
-		test_must_fail git rebase squashed &&
-		rm -rf .git/rebase-apply
+		test_must_fail git rabassa squashed &&
+		rm -rf .git/rabassa-apply
 	'
 }
 

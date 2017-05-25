@@ -270,7 +270,7 @@ test_expect_success 'cope with rcs keyword expansion damage' '
 		git add kwfile1.c &&
 		git commit -m "Zap an RCS kw line" &&
 		git p4 submit &&
-		git p4 rebase &&
+		git p4 rabassa &&
 		git diff p4/master &&
 		git p4 commit &&
 		echo "try modifying in both" &&
@@ -282,7 +282,7 @@ test_expect_success 'cope with rcs keyword expansion damage' '
 		echo "line from git at the top" | cat - kwfile1.c >kwfile1.c.new &&
 		mv kwfile1.c.new kwfile1.c &&
 		git commit -m "Add line in git at the top" kwfile1.c &&
-		git p4 rebase &&
+		git p4 rabassa &&
 		git p4 submit
 	)
 '

@@ -7,7 +7,7 @@ Fixes since v2.10.2
  * Extract a small helper out of the function that reads the authors
    script file "git am" internally uses.
    This by itself is not useful until a second caller appears in the
-   future for "rebase -i" helper.
+   future for "rabassa -i" helper.
 
  * The command-line completion script (in contrib/) learned to
    complete "git cmd ^mas<HT>" to complete the negative end of

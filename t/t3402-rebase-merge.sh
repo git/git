@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git rebase --merge test'
+test_description='git rabassa --merge test'
 
 . ./test-lib.sh
 
@@ -39,8 +39,8 @@ test_expect_success setup '
 	rm -f original &&
 	git commit -a -m"side edits once again." &&
 
-	git branch test-rebase side &&
-	git branch test-rebase-pick side &&
+	git branch test-rabassa side &&
+	git branch test-rabassa-pick side &&
 	git branch test-reference-pick side &&
 	git branch test-conflicts side &&
 	git checkout -b test-merge side
@@ -50,18 +50,18 @@ test_expect_success 'reference merge' '
 	git merge -s recursive -m "reference merge" master
 '
 
-PRE_REBASE=$(git rev-parse test-rebase)
-test_expect_success rebase '
-	git checkout test-rebase &&
-	GIT_TRACE=1 git rebase --merge master
+PRE_REBASE=$(git rev-parse test-rabassa)
+test_expect_success rabassa '
+	git checkout test-rabassa &&
+	GIT_TRACE=1 git rabassa --merge master
 '
 
-test_expect_success 'test-rebase@{1} is pre rebase' '
-	test $PRE_REBASE = $(git rev-parse test-rebase@{1})
+test_expect_success 'test-rabassa@{1} is pre rabassa' '
+	test $PRE_REBASE = $(git rev-parse test-rabassa@{1})
 '
 
-test_expect_success 'merge and rebase should match' '
-	git diff-tree -r test-rebase test-merge >difference &&
+test_expect_success 'merge and rabassa should match' '
+	git diff-tree -r test-rabassa test-merge >difference &&
 	if test -s difference
 	then
 		cat difference
@@ -71,31 +71,31 @@ test_expect_success 'merge and rebase should match' '
 	fi
 '
 
-test_expect_success 'rebase the other way' '
+test_expect_success 'rabassa the other way' '
 	git reset --hard master &&
-	git rebase --merge side
+	git rabassa --merge side
 '
 
-test_expect_success 'rebase -Xtheirs' '
+test_expect_success 'rabassa -Xtheirs' '
 	git checkout -b conflicting master~2 &&
 	echo "AB $T" >> original &&
 	git commit -mconflicting original &&
-	git rebase -Xtheirs master &&
+	git rabassa -Xtheirs master &&
 	grep AB original &&
 	! grep 11 original
 '
 
-test_expect_success 'rebase -Xtheirs from orphan' '
+test_expect_success 'rabassa -Xtheirs from orphan' '
 	git checkout --orphan orphan-conflicting master~2 &&
 	echo "AB $T" >> original &&
 	git commit -morphan-conflicting original &&
-	git rebase -Xtheirs master &&
+	git rabassa -Xtheirs master &&
 	grep AB original &&
 	! grep 11 original
 '
 
-test_expect_success 'merge and rebase should match' '
-	git diff-tree -r test-rebase test-merge >difference &&
+test_expect_success 'merge and rabassa should match' '
+	git diff-tree -r test-rabassa test-merge >difference &&
 	if test -s difference
 	then
 		cat difference
@@ -105,9 +105,9 @@ test_expect_success 'merge and rebase should match' '
 	fi
 '
 
-test_expect_success 'picking rebase' '
+test_expect_success 'picking rabassa' '
 	git reset --hard side &&
-	git rebase --merge --onto master side^^ &&
+	git rabassa --merge --onto master side^^ &&
 	mb=$(git merge-base master HEAD) &&
 	if test "$mb" = "$(git rev-parse master)"
 	then
@@ -128,7 +128,7 @@ test_expect_success 'picking rebase' '
 	esac
 '
 
-test_expect_success 'rebase -s funny -Xopt' '
+test_expect_success 'rabassa -s funny -Xopt' '
 	test_when_finished "rm -fr test-bin funny.was.run" &&
 	mkdir test-bin &&
 	cat >test-bin/git-merge-funny <<-EOF &&
@@ -144,12 +144,12 @@ test_expect_success 'rebase -s funny -Xopt' '
 	test_commit funny &&
 	(
 		PATH=./test-bin:$PATH
-		git rebase -s funny -Xopt master
+		git rabassa -s funny -Xopt master
 	) &&
 	test -f funny.was.run
 '
 
-test_expect_success 'rebase --skip works with two conflicts in a row' '
+test_expect_success 'rabassa --skip works with two conflicts in a row' '
 	git checkout second-side  &&
 	tr "[A-Z]" "[a-z]" <newfile >tmp &&
 	mv tmp newfile &&
@@ -157,9 +157,9 @@ test_expect_success 'rebase --skip works with two conflicts in a row' '
 	tr "[d-f]" "[D-F]" <newfile >tmp &&
 	mv tmp newfile &&
 	git commit -a -m"another edit conflicting with side" &&
-	test_must_fail git rebase --merge test-conflicts &&
-	test_must_fail git rebase --skip &&
-	git rebase --skip
+	test_must_fail git rabassa --merge test-conflicts &&
+	test_must_fail git rabassa --skip &&
+	git rabassa --skip
 '
 
 test_done

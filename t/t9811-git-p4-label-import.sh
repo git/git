@@ -122,7 +122,7 @@ test_expect_success 'export git tags to p4' '
 		git p4 submit &&
 		git tag -m "Another git tag" GIT_TAG_2 &&
 		git tag LIGHTWEIGHT_TAG &&
-		git p4 rebase --import-labels --verbose &&
+		git p4 rabassa --import-labels --verbose &&
 		git p4 submit --export-labels --verbose
 	) &&
 	(
@@ -140,7 +140,7 @@ test_expect_success 'export git tags to p4' '
 '
 
 # Export a tag from git where an affected file is deleted later on
-# Need to create git tags after rebase, since only then can the
+# Need to create git tags after rabassa, since only then can the
 # git commits be mapped to p4 changelists.
 test_expect_success 'export git tags to p4 with deletion' '
 	test_when_finished cleanup_git &&
@@ -157,7 +157,7 @@ test_expect_success 'export git tags to p4 with deletion' '
 		git commit -m "delete the deleted file" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
-		git p4 rebase --import-labels --verbose &&
+		git p4 rabassa --import-labels --verbose &&
 		git tag -m "tag on deleted file" GIT_TAG_ON_DELETED HEAD~1 &&
 		git tag -m "tag after deletion" GIT_TAG_AFTER_DELETION HEAD &&
 		git p4 submit --export-labels --verbose
@@ -202,7 +202,7 @@ test_expect_success 'use git config to enable import/export of tags' '
 		git config git-p4.exportLabels true &&
 		git config git-p4.importLabels true &&
 		git tag CFG_A_GIT_TAG &&
-		git p4 rebase --verbose &&
+		git p4 rabassa --verbose &&
 		git p4 submit --verbose &&
 		git tag &&
 		git tag | grep TAG_F1_1

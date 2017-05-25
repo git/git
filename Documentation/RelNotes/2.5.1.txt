@@ -21,7 +21,7 @@ Fixes since v2.5
    like "--pair <key>=<value>" with "pair=key=value" specification,
    which instead would have defined a "--pair=key <value>" option.
 
- * A "rebase" replays changes of the local branch on top of something
+ * A "rabassa" replays changes of the local branch on top of something
    else, as such they are placed in stage #3 and referred to as
    "theirs", while the changes in the new base, typically a foreign
    work, are placed in stage #2 and referred to as "ours".  Clarify

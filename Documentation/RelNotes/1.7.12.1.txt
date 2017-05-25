@@ -49,7 +49,7 @@ Fixes since v1.7.12
    configured to allow GET anonymously, while requiring authentication
    for POST.
 
- * The reflog entries left by "git rebase" and "git rebase -i" were
+ * The reflog entries left by "git rabassa" and "git rabassa -i" were
    inconsistent (the interactive one gave an abbreviated object name).
 
  * When "git push" triggered the automatic gc on the receiving end, a
@@ -119,7 +119,7 @@ Fixes since v1.7.12
 
  * Fallback 'getpass' implementation made unportable use of stdio API.
 
- * The "--rebase" option to "git pull" can be abbreviated to "-r",
+ * The "--rabassa" option to "git pull" can be abbreviated to "-r",
    but we didn't document it.
 
  * It was generally understood that "--long-option"s to many of our

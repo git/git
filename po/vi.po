@@ -1000,7 +1000,7 @@ msgstr "Chưa cài đặt nhánh %s như là thượng nguồn của nó."
 #: branch.c:93
 #, c-format
 msgid "Branch %s set up to track remote branch %s from %s by rebasing."
-msgstr "Nhánh %s cài đặt để theo dõi nhánh máy chủ %s từ %s bằng cách rebase."
+msgstr "Nhánh %s cài đặt để theo dõi nhánh máy chủ %s từ %s bằng cách rabassa."
 
 #: branch.c:94
 #, c-format
@@ -1010,7 +1010,7 @@ msgstr "Nhánh %s cài đặt để theo dõi nhánh máy chủ %s từ %s."
 #: branch.c:98
 #, c-format
 msgid "Branch %s set up to track local branch %s by rebasing."
-msgstr "Nhánh %s cài đặt để theo dõi nhánh nội bộ %s bằng cách rebase."
+msgstr "Nhánh %s cài đặt để theo dõi nhánh nội bộ %s bằng cách rabassa."
 
 #: branch.c:99
 #, c-format
@@ -1020,7 +1020,7 @@ msgstr "Nhánh %s cài đặt để theo dõi nhánh nội bộ %s."
 #: branch.c:104
 #, c-format
 msgid "Branch %s set up to track remote ref %s by rebasing."
-msgstr "Nhánh %s cài đặt để theo dõi nhánh máy chủ %s bằng cách rebase."
+msgstr "Nhánh %s cài đặt để theo dõi nhánh máy chủ %s bằng cách rabassa."
 
 #: branch.c:105
 #, c-format
@@ -1031,7 +1031,7 @@ msgstr "Nhánh %s cài đặt để theo dõi tham chiếu máy chủ %s."
 #, c-format
 msgid "Branch %s set up to track local ref %s by rebasing."
 msgstr ""
-"Nhánh %s cài đặt để theo dõi vết tham chiếu nội bộ %s bằng cách rebase."
+"Nhánh %s cài đặt để theo dõi vết tham chiếu nội bộ %s bằng cách rabassa."
 
 #: branch.c:110
 #, c-format
@@ -2869,8 +2869,8 @@ msgid "cherry-pick"
 msgstr "cherry-pick"
 
 #: sequencer.c:219
-msgid "rebase -i"
-msgstr "rebase -i"
+msgid "rabassa -i"
+msgstr "rabassa -i"
 
 #: sequencer.c:221
 #, c-format
@@ -2936,7 +2936,7 @@ msgid "%s: fast-forward"
 msgstr "%s: chuyển-tiếp-nhanh"
 
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
-#. * "rebase -i".
+#. * "rabassa -i".
 #.
 #: sequencer.c:470
 #, c-format
@@ -2965,7 +2965,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "bạn có các thay đổi so với trong bệ phóng trong thư mục làm việc của bạn.\n"
 "Nếu các thay đổi này là muốn squash vào lần chuyển giao kế trước, chạy:\n"
@@ -2978,7 +2978,7 @@ msgstr ""
 "\n"
 "Trong cả hai trường hợp, một khi bạn làm xong, tiếp tục bằng:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
 #: sequencer.c:694
 #, c-format
@@ -3034,7 +3034,7 @@ msgstr "không thể đọc phần chú thích (message) của HEAD"
 msgid "cannot write '%s'"
 msgstr "không thể ghi “%s”"
 
-#: sequencer.c:861 git-rebase--interactive.sh:445
+#: sequencer.c:861 git-rabassa--interactive.sh:445
 msgid "This is the 1st commit message:"
 msgstr "Đây là chú thích cho lần chuyển giao thứ nhất:"
 
@@ -3136,8 +3136,8 @@ msgid "could not read '%s'."
 msgstr "không thể đọc “%s”."
 
 #: sequencer.c:1356
-msgid "please fix this using 'git rebase --edit-todo'."
-msgstr "vui lòng sửa lỗi này bằng cách dùng “git rebase --edit-todo”."
+msgid "please fix this using 'git rabassa --edit-todo'."
+msgstr "vui lòng sửa lỗi này bằng cách dùng “git rabassa --edit-todo”."
 
 #: sequencer.c:1358
 #, c-format
@@ -3244,13 +3244,13 @@ msgid ""
 "execution failed: %s\n"
 "%sYou can fix the problem, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "thực thi gặp lỗi: %s\n"
 "%sBạn có thể sửa các trục trặc, và sau đó chạy lệnh\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 
 #: sequencer.c:1859
@@ -3264,17 +3264,17 @@ msgid ""
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "thực thi thành công: %s\n"
 "nhưng còn các thay đổi trong mục lục và/hoặc cây làm việc\n"
 "Chuyển giao hay tạm cất các thay đổi này đi, rồi chạy\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 
-#: sequencer.c:1920 git-rebase.sh:169
+#: sequencer.c:1920 git-rabassa.sh:169
 #, c-format
 msgid "Applied autostash."
 msgstr "Đã áp dụng autostash."
@@ -3284,7 +3284,7 @@ msgstr "Đã áp dụng autostash."
 msgid "cannot store %s"
 msgstr "không thử lưu “%s”"
 
-#: sequencer.c:1934 git-rebase.sh:173
+#: sequencer.c:1934 git-rabassa.sh:173
 #, c-format
 msgid ""
 "Applying autostash resulted in conflicts.\n"
@@ -3325,7 +3325,7 @@ msgid "could not update HEAD to %s"
 msgstr "không thể cập nhật HEAD thành %s"
 
 #: sequencer.c:2190
-msgid "cannot rebase: You have unstaged changes."
+msgid "cannot rabassa: You have unstaged changes."
 msgstr "không thể cải tổ: Bạn có các thay đổi chưa được đưa lên bệ phóng."
 
 #: sequencer.c:2195
@@ -3350,11 +3350,11 @@ msgstr "nội dung không hợp lệ: “%s”"
 msgid ""
 "\n"
 "You have uncommitted changes in your working tree. Please, commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
 "\n"
 "Bạn có các thay đổi chưa chuyển giao trong thư mục làm việc. Vui lòng\n"
-"chuyển giao chúng trước và sau đó chạy lệnh “git rebase --continue” lần nữa."
+"chuyển giao chúng trước và sau đó chạy lệnh “git rabassa --continue” lần nữa."
 
 #: sequencer.c:2221
 msgid "could not commit staged changes."
@@ -4266,8 +4266,8 @@ msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr "  (dùng \"git am --abort\" để phục hồi lại nhánh nguyên thủy)"
 
 #: wt-status.c:1189
-msgid "git-rebase-todo is missing."
-msgstr "thiếu git-rebase-todo"
+msgid "git-rabassa-todo is missing."
+msgstr "thiếu git-rabassa-todo"
 
 #: wt-status.c:1191
 msgid "No commands done."
@@ -4295,36 +4295,36 @@ msgid_plural "Next commands to do (%d remaining commands):"
 msgstr[0] "Lệnh cần làm kế tiếp (%d lệnh còn lại):"
 
 #: wt-status.c:1221
-msgid "  (use \"git rebase --edit-todo\" to view and edit)"
-msgstr "  (dùng lệnh \"git rebase --edit-todo\" để xem và sửa)"
+msgid "  (use \"git rabassa --edit-todo\" to view and edit)"
+msgstr "  (dùng lệnh \"git rabassa --edit-todo\" để xem và sửa)"
 
 #: wt-status.c:1234
 #, c-format
 msgid "You are currently rebasing branch '%s' on '%s'."
-msgstr "Bạn hiện nay đang thực hiện việc “rebase” nhánh “%s” trên “%s”."
+msgstr "Bạn hiện nay đang thực hiện việc “rabassa” nhánh “%s” trên “%s”."
 
 #: wt-status.c:1239
 msgid "You are currently rebasing."
-msgstr "Bạn hiện nay đang thực hiện việc “rebase” (“cải tổ”)."
+msgstr "Bạn hiện nay đang thực hiện việc “rabassa” (“cải tổ”)."
 
 #: wt-status.c:1253
-msgid "  (fix conflicts and then run \"git rebase --continue\")"
+msgid "  (fix conflicts and then run \"git rabassa --continue\")"
 msgstr ""
-"  (sửa các xung đột và sau đó chạy lệnh “cải tổ” \"git rebase --continue\")"
+"  (sửa các xung đột và sau đó chạy lệnh “cải tổ” \"git rabassa --continue\")"
 
 #: wt-status.c:1255
-msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  (dùng lệnh “cải tổ” \"git rebase --skip\" để bỏ qua lần vá này)"
+msgid "  (use \"git rabassa --skip\" to skip this patch)"
+msgstr "  (dùng lệnh “cải tổ” \"git rabassa --skip\" để bỏ qua lần vá này)"
 
 #: wt-status.c:1257
-msgid "  (use \"git rebase --abort\" to check out the original branch)"
+msgid "  (use \"git rabassa --abort\" to check out the original branch)"
 msgstr ""
-"  (dùng lệnh “cải tổ” \"git rebase --abort\" để check-out nhánh nguyên thủy)"
+"  (dùng lệnh “cải tổ” \"git rabassa --abort\" để check-out nhánh nguyên thủy)"
 
 #: wt-status.c:1263
-msgid "  (all conflicts fixed: run \"git rebase --continue\")"
+msgid "  (all conflicts fixed: run \"git rabassa --continue\")"
 msgstr ""
-"  (khi tất cả các xung đột đã sửa xong: chạy lệnh “cải tổ” \"git rebase --"
+"  (khi tất cả các xung đột đã sửa xong: chạy lệnh “cải tổ” \"git rabassa --"
 "continue\")"
 
 #: wt-status.c:1267
@@ -4333,30 +4333,30 @@ msgid ""
 "You are currently splitting a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện việc chia tách một lần chuyển giao trong khi "
-"đang “rebase” nhánh “%s” trên “%s”."
+"đang “rabassa” nhánh “%s” trên “%s”."
 
 #: wt-status.c:1272
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a commit during a rabassa."
 msgstr ""
 "Bạn hiện tại đang cắt đôi một lần chuyển giao trong khi đang thực hiện việc "
-"rebase."
+"rabassa."
 
 #: wt-status.c:1275
-msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
+msgid "  (Once your working directory is clean, run \"git rabassa --continue\")"
 msgstr ""
 "  (Một khi thư mục làm việc của bạn đã gọn gàng, chạy lệnh “cải tổ” \"git "
-"rebase --continue\")"
+"rabassa --continue\")"
 
 #: wt-status.c:1279
 #, c-format
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện việc sửa chữa một lần chuyển giao trong khi đang "
-"rebase nhánh “%s” trên “%s”."
+"rabassa nhánh “%s” trên “%s”."
 
 #: wt-status.c:1284
-msgid "You are currently editing a commit during a rebase."
-msgstr "Bạn hiện đang sửa một lần chuyển giao trong khi bạn thực hiện rebase."
+msgid "You are currently editing a commit during a rabassa."
+msgstr "Bạn hiện đang sửa một lần chuyển giao trong khi bạn thực hiện rabassa."
 
 #: wt-status.c:1287
 msgid "  (use \"git commit --amend\" to amend the current commit)"
@@ -4364,9 +4364,9 @@ msgstr "  (dùng \"git commit --amend\" để “tu bổ” lần chuyển giao 
 
 #: wt-status.c:1289
 msgid ""
-"  (use \"git rebase --continue\" once you are satisfied with your changes)"
+"  (use \"git rabassa --continue\" once you are satisfied with your changes)"
 msgstr ""
-"  (chạy lệnh “cải tổ” \"git rebase --continue\" một khi bạn cảm thấy hài "
+"  (chạy lệnh “cải tổ” \"git rabassa --continue\" một khi bạn cảm thấy hài "
 "lòng về những thay đổi của mình)"
 
 #: wt-status.c:1299
@@ -4427,12 +4427,12 @@ msgid "On branch "
 msgstr "Trên nhánh "
 
 #: wt-status.c:1549
-msgid "interactive rebase in progress; onto "
-msgstr "rebase ở chế độ tương tác đang được thực hiện; lên trên "
+msgid "interactive rabassa in progress; onto "
+msgstr "rabassa ở chế độ tương tác đang được thực hiện; lên trên "
 
 #: wt-status.c:1551
-msgid "rebase in progress; onto "
-msgstr "rebase đang được thực hiện: lên trên "
+msgid "rabassa in progress; onto "
+msgstr "rabassa đang được thực hiện: lên trên "
 
 #: wt-status.c:1556
 msgid "HEAD detached at "
@@ -4550,7 +4550,7 @@ msgstr "đằng sau "
 msgid "ahead "
 msgstr "phía trước "
 
-#. TRANSLATORS: the action is e.g. "pull with rebase"
+#. TRANSLATORS: the action is e.g. "pull with rabassa"
 #: wt-status.c:2280
 #, c-format
 msgid "cannot %s: You have unstaged changes."
@@ -5071,8 +5071,8 @@ msgid "GPG-sign commits"
 msgstr "lần chuyển giao ký-GPG"
 
 #: builtin/am.c:2318
-msgid "(internal use for git-rebase)"
-msgstr "(dùng nội bộ cho git-rebase)"
+msgid "(internal use for git-rabassa)"
+msgstr "(dùng nội bộ cho git-rabassa)"
 
 #: builtin/am.c:2333
 msgid ""
@@ -5088,8 +5088,8 @@ msgstr "gặp lỗi đọc bảng mục lục"
 
 #: builtin/am.c:2355
 #, c-format
-msgid "previous rebase directory %s still exists but mbox given."
-msgstr "thư mục rebase trước %s không sẵn có nhưng mbox lại đưa ra."
+msgid "previous rabassa directory %s still exists but mbox given."
+msgstr "thư mục rabassa trước %s không sẵn có nhưng mbox lại đưa ra."
 
 #: builtin/am.c:2379
 #, c-format
@@ -5421,7 +5421,7 @@ msgstr "Nhánh “%s” đã bị xóa (từng là %s)\n"
 
 #: builtin/branch.c:441
 #, c-format
-msgid "Branch %s is being rebased at %s"
+msgid "Branch %s is being rabassad at %s"
 msgstr "Nhánh %s đang được cải tổ lại tại %s"
 
 #: builtin/branch.c:445
@@ -11112,13 +11112,13 @@ msgstr "Các tùy chọn liên quan đến hòa trộn"
 msgid "incorporate changes by rebasing rather than merging"
 msgstr "các thay đổi hợp nhất bằng cải tổ thay vì hòa trộn"
 
-#: builtin/pull.c:148 builtin/rebase--helper.c:18 builtin/revert.c:120
+#: builtin/pull.c:148 builtin/rabassa--helper.c:18 builtin/revert.c:120
 msgid "allow fast-forward"
 msgstr "cho phép chuyển-tiếp-nhanh"
 
 #: builtin/pull.c:157
-msgid "automatically stash/stash pop before and after rebase"
-msgstr "tự động stash/stash pop tước và sau tu bổ (rebase)"
+msgid "automatically stash/stash pop before and after rabassa"
+msgstr "tự động stash/stash pop tước và sau tu bổ (rabassa)"
 
 #: builtin/pull.c:173
 msgid "Options related to fetching"
@@ -11174,7 +11174,7 @@ msgid "You are not currently on a branch."
 msgstr "Hiện tại bạn chẳng ở nhánh nào cả."
 
 #: builtin/pull.c:410 builtin/pull.c:425 git-parse-remote.sh:79
-msgid "Please specify which branch you want to rebase against."
+msgid "Please specify which branch you want to rabassa against."
 msgstr "Vui lòng chỉ định nhánh nào bạn muốn cải tổ lại."
 
 #: builtin/pull.c:412 builtin/pull.c:427 git-parse-remote.sh:82
@@ -11190,7 +11190,7 @@ msgstr "Xem git-pull(1) để biết thêm chi tiết."
 msgid "<remote>"
 msgstr "<máy chủ>"
 
-#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rebase.sh:456
+#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rabassa.sh:456
 #: git-parse-remote.sh:65
 msgid "<branch>"
 msgstr "<nhánh>"
@@ -11215,12 +11215,12 @@ msgstr ""
 "từ máy dịch vụ, nhưng không có nhánh nào như thế được lấy về."
 
 #: builtin/pull.c:754
-msgid "ignoring --verify-signatures for rebase"
-msgstr "bỏ qua --verify-signatures khi rebase"
+msgid "ignoring --verify-signatures for rabassa"
+msgstr "bỏ qua --verify-signatures khi rabassa"
 
 #: builtin/pull.c:801
-msgid "--[no-]autostash option is only valid with --rebase."
-msgstr "tùy chọn --[no-]autostash chỉ hợp lệ khi dùng với --rebase."
+msgid "--[no-]autostash option is only valid with --rabassa."
+msgstr "tùy chọn --[no-]autostash chỉ hợp lệ khi dùng với --rabassa."
 
 #: builtin/pull.c:809
 msgid "Updating an unborn branch with changes added to the index."
@@ -11229,8 +11229,8 @@ msgstr ""
 "bảng mục lục."
 
 #: builtin/pull.c:812
-msgid "pull with rebase"
-msgstr "pull với rebase"
+msgid "pull with rabassa"
+msgstr "pull với rabassa"
 
 #: builtin/pull.c:813
 msgid "please commit or stash them."
@@ -11270,8 +11270,8 @@ msgid "Cannot merge multiple branches into empty head."
 msgstr "Không thể hòa trộn nhiều nhánh vào trong một head trống rỗng."
 
 #: builtin/pull.c:862
-msgid "Cannot rebase onto multiple branches."
-msgstr "Không thể thực hiện lệnh rebase (cải tổ) trên nhiều nhánh."
+msgid "Cannot rabassa onto multiple branches."
+msgstr "Không thể thực hiện lệnh rabassa (cải tổ) trên nhiều nhánh."
 
 #: builtin/push.c:16
 msgid "git push [<options>] [<repository> [<refspec>...]]"
@@ -11651,16 +11651,16 @@ msgstr "bỏ qua áp dụng bộ lọc lấy ra (checkout) thưa thớt"
 msgid "debug unpack-trees"
 msgstr "gỡ lỗi “unpack-trees”"
 
-#: builtin/rebase--helper.c:7
-msgid "git rebase--helper [<options>]"
-msgstr "git rebase--helper [<các-tùy-chọn>]"
+#: builtin/rabassa--helper.c:7
+msgid "git rabassa--helper [<options>]"
+msgstr "git rabassa--helper [<các-tùy-chọn>]"
 
-#: builtin/rebase--helper.c:19
-msgid "continue rebase"
+#: builtin/rabassa--helper.c:19
+msgid "continue rabassa"
 msgstr "tiếp tục cải tổ"
 
-#: builtin/rebase--helper.c:21
-msgid "abort rebase"
+#: builtin/rabassa--helper.c:21
+msgid "abort rabassa"
 msgstr "bãi bỏ việc cải tổ"
 
 #: builtin/receive-pack.c:27
@@ -11967,18 +11967,18 @@ msgstr " ???"
 
 #: builtin/remote.c:957
 #, c-format
-msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
+msgid "invalid branch.%s.merge; cannot rabassa onto > 1 branch"
 msgstr "branch.%s.merge không hợp lệ; không thể cải tổ về phía > 1 nhánh"
 
 #: builtin/remote.c:965
 #, c-format
-msgid "rebases interactively onto remote %s"
-msgstr "thực hiện rebase một cách tương tác trên máy chủ %s"
+msgid "rabassas interactively onto remote %s"
+msgstr "thực hiện rabassa một cách tương tác trên máy chủ %s"
 
 #: builtin/remote.c:966
 #, c-format
-msgid "rebases onto remote %s"
-msgstr "thực hiện rebase trên máy chủ %s"
+msgid "rabassas onto remote %s"
+msgstr "thực hiện rabassa trên máy chủ %s"
 
 #: builtin/remote.c:969
 #, c-format
@@ -13165,8 +13165,8 @@ msgid "path into the working tree, across nested submodule boundaries"
 msgstr "đường dẫn đến cây làm việc, chéo biên giới mô-đun-con lồng nhau"
 
 #: builtin/submodule--helper.c:981
-msgid "rebase, merge, checkout or none"
-msgstr "rebase, merge, checkout hoặc không làm gì cả"
+msgid "rabassa, merge, checkout or none"
+msgstr "rabassa, merge, checkout hoặc không làm gì cả"
 
 #: builtin/submodule--helper.c:985
 msgid "Create a shallow clone truncated to the specified number of revisions"
@@ -14337,54 +14337,54 @@ msgstr "Đang thử hòa trộn đơn giản với $pretty_name"
 msgid "Simple merge did not work, trying automatic merge."
 msgstr "Hòa trộn đơn giản không làm việc, thử hòa trộn tự động."
 
-#: git-rebase.sh:58
+#: git-rabassa.sh:58
 msgid ""
-"When you have resolved this problem, run \"git rebase --continue\".\n"
-"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
-"To check out the original branch and stop rebasing, run \"git rebase --abort"
+"When you have resolved this problem, run \"git rabassa --continue\".\n"
+"If you prefer to skip this patch, run \"git rabassa --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rabassa --abort"
 "\"."
 msgstr ""
-"Khi bạn cần giải quyết vấn đề này hãy chạy lệnh \"git rebase --continue\".\n"
-"Nếu bạn có ý định bỏ qua miếng vá, thay vào đó bạn chạy \"git rebase --skip"
+"Khi bạn cần giải quyết vấn đề này hãy chạy lệnh \"git rabassa --continue\".\n"
+"Nếu bạn có ý định bỏ qua miếng vá, thay vào đó bạn chạy \"git rabassa --skip"
 "\".\n"
 "Để phục hồi lại thành nhánh nguyên thủy và dừng việc vá lại thì chạy \"git "
-"rebase --abort\"."
+"rabassa --abort\"."
 
-#: git-rebase.sh:158 git-rebase.sh:397
+#: git-rabassa.sh:158 git-rabassa.sh:397
 #, sh-format
 msgid "Could not move back to $head_name"
 msgstr "Không thể quay trở lại $head_name"
 
-#: git-rebase.sh:172
+#: git-rabassa.sh:172
 #, sh-format
 msgid "Cannot store $stash_sha1"
 msgstr "Không thể lưu $stash_sha1"
 
-#: git-rebase.sh:212
-msgid "The pre-rebase hook refused to rebase."
-msgstr "Móc (hook) pre-rebase từ chối rebase."
+#: git-rabassa.sh:212
+msgid "The pre-rabassa hook refused to rabassa."
+msgstr "Móc (hook) pre-rabassa từ chối rabassa."
 
-#: git-rebase.sh:217
-msgid "It looks like git-am is in progress. Cannot rebase."
+#: git-rabassa.sh:217
+msgid "It looks like git-am is in progress. Cannot rabassa."
 msgstr ""
 "Hình như đang trong quá trình thực hiện lệnh git-am. Không thể chạy lệnh "
-"rebase."
+"rabassa."
 
-#: git-rebase.sh:358
-msgid "No rebase in progress?"
-msgstr "Không có tiến trình rebase nào phải không?"
+#: git-rabassa.sh:358
+msgid "No rabassa in progress?"
+msgstr "Không có tiến trình rabassa nào phải không?"
 
-#: git-rebase.sh:369
-msgid "The --edit-todo action can only be used during interactive rebase."
+#: git-rabassa.sh:369
+msgid "The --edit-todo action can only be used during interactive rabassa."
 msgstr ""
-"Hành động “--edit-todo” chỉ có thể dùng trong quá trình “rebase” (sửa lịch "
+"Hành động “--edit-todo” chỉ có thể dùng trong quá trình “rabassa” (sửa lịch "
 "sử) tương tác."
 
-#: git-rebase.sh:376
+#: git-rabassa.sh:376
 msgid "Cannot read HEAD"
 msgstr "Không thể đọc HEAD"
 
-#: git-rebase.sh:379
+#: git-rabassa.sh:379
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
@@ -14392,85 +14392,85 @@ msgstr ""
 "Bạn phải sửa tất cả các lần hòa trộn xung đột và sau\n"
 "đó đánh dấu chúng là cần xử lý sử dụng lệnh git add"
 
-#: git-rebase.sh:419
+#: git-rabassa.sh:419
 #, sh-format
 msgid ""
 "It seems that there is already a $state_dir_base directory, and\n"
-"I wonder if you are in the middle of another rebase.  If that is the\n"
+"I wonder if you are in the middle of another rabassa.  If that is the\n"
 "case, please try\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "If that is not the case, please\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "and run me again.  I am stopping in case you still have something\n"
 "valuable there."
 msgstr ""
 "Hình như là ở đây sẵn có một thư mục $state_dir_base, và\n"
-"Tôi tự hỏi có phải bạn đang ở giữa một lệnh rebase khác. Nếu đúng là\n"
+"Tôi tự hỏi có phải bạn đang ở giữa một lệnh rabassa khác. Nếu đúng là\n"
 "như vậy, xin hãy thử\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "Nếu không phải thế, hãy thử\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "và chạy TÔI lần nữa. TÔI  dừng lại trong trường hợp bạn vẫn\n"
 "có một số thứ quý giá ở đây."
 
-#: git-rebase.sh:470
+#: git-rabassa.sh:470
 #, sh-format
 msgid "invalid upstream $upstream_name"
 msgstr "thượng nguồn không hợp lệ $upstream_name"
 
-#: git-rebase.sh:494
+#: git-rabassa.sh:494
 #, sh-format
 msgid "$onto_name: there are more than one merge bases"
 msgstr "$onto_name: ở đây có nhiều hơn một nền móng hòa trộn"
 
-#: git-rebase.sh:497 git-rebase.sh:501
+#: git-rabassa.sh:497 git-rabassa.sh:501
 #, sh-format
 msgid "$onto_name: there is no merge base"
 msgstr "$onto_name: ở đây không có nền móng hòa trộn nào"
 
-#: git-rebase.sh:506
+#: git-rabassa.sh:506
 #, sh-format
 msgid "Does not point to a valid commit: $onto_name"
 msgstr "Không chỉ đến một lần chuyển giao không hợp lệ: $onto_name"
 
-#: git-rebase.sh:529
+#: git-rabassa.sh:529
 #, sh-format
 msgid "fatal: no such branch: $branch_name"
 msgstr "nghiêm trọng: không có nhánh như thế: $branch_name"
 
-#: git-rebase.sh:562
+#: git-rabassa.sh:562
 msgid "Cannot autostash"
 msgstr "Không thể autostash"
 
-#: git-rebase.sh:567
+#: git-rabassa.sh:567
 #, sh-format
 msgid "Created autostash: $stash_abbrev"
 msgstr "Đã tạo autostash: $stash_abbrev"
 
-#: git-rebase.sh:571
+#: git-rabassa.sh:571
 msgid "Please commit or stash them."
 msgstr "Xin hãy chuyển giao hoặc tạm cất (stash) chúng."
 
-#: git-rebase.sh:591
+#: git-rabassa.sh:591
 #, sh-format
 msgid "Current branch $branch_name is up to date."
 msgstr "Nhánh hiện tại $branch_name đã được cập nhật rồi."
 
-#: git-rebase.sh:595
+#: git-rabassa.sh:595
 #, sh-format
-msgid "Current branch $branch_name is up to date, rebase forced."
-msgstr "Nhánh hiện tại $branch_name đã được cập nhật rồi, lệnh rebase ép buộc."
+msgid "Current branch $branch_name is up to date, rabassa forced."
+msgstr "Nhánh hiện tại $branch_name đã được cập nhật rồi, lệnh rabassa ép buộc."
 
-#: git-rebase.sh:606
+#: git-rabassa.sh:606
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "Thay đổi từ $mb thành $onto:"
 
-#: git-rebase.sh:615
+#: git-rabassa.sh:615
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr "Trước tiên, di chuyển head để xem lại các công việc trên đỉnh của nó…"
 
-#: git-rebase.sh:625
+#: git-rabassa.sh:625
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "Chuyển-tiếp-nhanh $branch_name thành $onto_name."
@@ -14832,13 +14832,13 @@ msgstr "Đường dẫn mô-đun-con “$displaypath”: đã checkout “$sha1�
 
 #: git-submodule.sh:688
 #, sh-format
-msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
+msgid "Unable to rabassa '$sha1' in submodule path '$displaypath'"
 msgstr "Không thể cải tổ “$sha1” trong đường dẫn mô-đun-con “$displaypath”"
 
 #: git-submodule.sh:689
 #, sh-format
-msgid "Submodule path '$displaypath': rebased into '$sha1'"
-msgstr "Đường dẫn mô-đun-con “$displaypath”: được rebase vào trong “$sha1”"
+msgid "Submodule path '$displaypath': rabassad into '$sha1'"
+msgstr "Đường dẫn mô-đun-con “$displaypath”: được rabassa vào trong “$sha1”"
 
 #: git-submodule.sh:694
 #, sh-format
@@ -14909,12 +14909,12 @@ msgstr "Url Mô-đun-con đồng bộ hóa cho “$displaypath”"
 msgid "See git-${cmd}(1) for details."
 msgstr "Xem git-${cmd}(1) để biết thêm chi tiết."
 
-#: git-rebase--interactive.sh:140
+#: git-rabassa--interactive.sh:140
 #, sh-format
 msgid "Rebasing ($new_count/$total)"
-msgstr "Đang rebase ($new_count/$total)"
+msgstr "Đang rabassa ($new_count/$total)"
 
-#: git-rebase--interactive.sh:156
+#: git-rabassa--interactive.sh:156
 msgid ""
 "\n"
 "Commands:\n"
@@ -14942,7 +14942,7 @@ msgstr ""
 "Những dòng này có thể đảo ngược thứ tự; chúng chạy từ trên đỉnh xuống dưới "
 "đáy.\n"
 
-#: git-rebase--interactive.sh:171
+#: git-rabassa--interactive.sh:171
 msgid ""
 "\n"
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
@@ -14951,7 +14951,7 @@ msgstr ""
 "Đừng xóa bất kỳ dòng nào. Dùng “drop” một cách rõ ràng để xóa bỏ một lần "
 "chuyển giao.\n"
 
-#: git-rebase--interactive.sh:175
+#: git-rabassa--interactive.sh:175
 msgid ""
 "\n"
 "If you remove a line here THAT COMMIT WILL BE LOST.\n"
@@ -14959,7 +14959,7 @@ msgstr ""
 "\n"
 "Nếu bạn xóa bỏ một dòng ở đây thì LẦN CHUYỂN GIAO ĐÓ SẼ MẤT.\n"
 
-#: git-rebase--interactive.sh:211
+#: git-rabassa--interactive.sh:211
 #, sh-format
 msgid ""
 "You can amend the commit now, with\n"
@@ -14968,7 +14968,7 @@ msgid ""
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "Bạn có thể tu bổ lần chuyển giao ngay bây giờ bằng:\n"
 "\n"
@@ -14976,84 +14976,84 @@ msgstr ""
 "\n"
 "Một khi đã hài lòng với những thay đổi của mình, thì chạy:\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:236
+#: git-rabassa--interactive.sh:236
 #, sh-format
 msgid "$sha1: not a commit that can be picked"
 msgstr "$sha1: không phải là lần chuyển giao mà có thể lấy ra được"
 
-#: git-rebase--interactive.sh:275
+#: git-rabassa--interactive.sh:275
 #, sh-format
 msgid "Invalid commit name: $sha1"
 msgstr "Tên lần chuyển giao không hợp lệ: $sha1"
 
-#: git-rebase--interactive.sh:317
+#: git-rabassa--interactive.sh:317
 msgid "Cannot write current commit's replacement sha1"
 msgstr "Không thể ghi lại sha1 thay thế của lần chuyển giao"
 
-#: git-rebase--interactive.sh:369
+#: git-rabassa--interactive.sh:369
 #, sh-format
 msgid "Fast-forward to $sha1"
 msgstr "Chuyển-tiếp-nhanh đến $sha1"
 
-#: git-rebase--interactive.sh:371
+#: git-rabassa--interactive.sh:371
 #, sh-format
 msgid "Cannot fast-forward to $sha1"
 msgstr "Không thể chuyển-tiếp-nhanh đến $sha1"
 
-#: git-rebase--interactive.sh:380
+#: git-rabassa--interactive.sh:380
 #, sh-format
 msgid "Cannot move HEAD to $first_parent"
 msgstr "Không thể di chuyển HEAD đến $first_parent"
 
-#: git-rebase--interactive.sh:385
+#: git-rabassa--interactive.sh:385
 #, sh-format
 msgid "Refusing to squash a merge: $sha1"
 msgstr "Từ chối squash lần hòa trộn: $sha1"
 
-#: git-rebase--interactive.sh:399
+#: git-rabassa--interactive.sh:399
 #, sh-format
 msgid "Error redoing merge $sha1"
 msgstr "Gặp lỗi khi hoàn lại bước hòa trộn $sha1"
 
-#: git-rebase--interactive.sh:407
+#: git-rabassa--interactive.sh:407
 #, sh-format
 msgid "Could not pick $sha1"
 msgstr "Không thể lấy ra $sha1"
 
-#: git-rebase--interactive.sh:416
+#: git-rabassa--interactive.sh:416
 #, sh-format
 msgid "This is the commit message #${n}:"
 msgstr "Đây là chú thích cho lần chuyển giao thứ #${n}:"
 
-#: git-rebase--interactive.sh:421
+#: git-rabassa--interactive.sh:421
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
 msgstr "Chú thích cho lần chuyển giao thứ #${n} sẽ bị bỏ qua:"
 
-#: git-rebase--interactive.sh:432
+#: git-rabassa--interactive.sh:432
 #, sh-format
 msgid "This is a combination of $count commit."
 msgid_plural "This is a combination of $count commits."
 msgstr[0] "Đây là tổ hợp của $count lần chuyển giao."
 
-#: git-rebase--interactive.sh:441
+#: git-rabassa--interactive.sh:441
 #, sh-format
 msgid "Cannot write $fixup_msg"
 msgstr "Không thể $fixup_msg"
 
-#: git-rebase--interactive.sh:444
+#: git-rabassa--interactive.sh:444
 msgid "This is a combination of 2 commits."
 msgstr "Đây là tổ hợp của 2 lần chuyển giao."
 
-#: git-rebase--interactive.sh:485 git-rebase--interactive.sh:528
-#: git-rebase--interactive.sh:531
+#: git-rabassa--interactive.sh:485 git-rabassa--interactive.sh:528
+#: git-rabassa--interactive.sh:531
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr "Không thể áp dụng $sha1… $rest"
 
-#: git-rebase--interactive.sh:559
+#: git-rabassa--interactive.sh:559
 #, sh-format
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
@@ -15069,75 +15069,75 @@ msgstr ""
 "này\n"
 "trước khi bạn có thể làm việc lại với lần chuyển giao."
 
-#: git-rebase--interactive.sh:574
+#: git-rabassa--interactive.sh:574
 #, sh-format
 msgid "Stopped at $sha1_abbrev... $rest"
 msgstr "Bị dừng tại $sha1_abbrev… $rest"
 
-#: git-rebase--interactive.sh:589
+#: git-rabassa--interactive.sh:589
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
 msgstr "Không “$squash_style” thể mà không có lần chuyển giao kế trước"
 
-#: git-rebase--interactive.sh:631
+#: git-rabassa--interactive.sh:631
 #, sh-format
 msgid "Executing: $rest"
 msgstr "Thực thi: $rest"
 
-#: git-rebase--interactive.sh:639
+#: git-rabassa--interactive.sh:639
 #, sh-format
 msgid "Execution failed: $rest"
 msgstr "Thực thi gặp lỗi: $rest"
 
-#: git-rebase--interactive.sh:641
+#: git-rabassa--interactive.sh:641
 msgid "and made changes to the index and/or the working tree"
 msgstr "và tạo các thay đổi bảng mục lục và/hay cây làm việc"
 
-#: git-rebase--interactive.sh:643
+#: git-rabassa--interactive.sh:643
 msgid ""
 "You can fix the problem, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "Bạn có thể sửa các trục trặc, và sau đó chạy lệnh “cải tổ”:\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
 #. TRANSLATORS: after these lines is a command to be issued by the user
-#: git-rebase--interactive.sh:656
+#: git-rabassa--interactive.sh:656
 #, sh-format
 msgid ""
 "Execution succeeded: $rest\n"
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "Thực thi thành công: $rest\n"
 "nhưng còn các thay đổi trong mục lục và/hoặc cây làm việc\n"
 "Chuyển giao hay tạm cất các thay đổi này đi, rồi chạy\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:667
+#: git-rabassa--interactive.sh:667
 #, sh-format
 msgid "Unknown command: $command $sha1 $rest"
 msgstr "Lệnh chưa biết: $command $sha1 $rest"
 
-#: git-rebase--interactive.sh:668
-msgid "Please fix this using 'git rebase --edit-todo'."
-msgstr "Vui lòng sửa lỗi này bằng cách dùng “git rebase --edit-todo”."
+#: git-rabassa--interactive.sh:668
+msgid "Please fix this using 'git rabassa --edit-todo'."
+msgstr "Vui lòng sửa lỗi này bằng cách dùng “git rabassa --edit-todo”."
 
-#: git-rebase--interactive.sh:703
+#: git-rabassa--interactive.sh:703
 #, sh-format
-msgid "Successfully rebased and updated $head_name."
+msgid "Successfully rabassad and updated $head_name."
 msgstr "Cài tổ và cập nhật $head_name một cách thành công."
 
-#: git-rebase--interactive.sh:750
+#: git-rabassa--interactive.sh:750
 msgid "Could not skip unnecessary pick commands"
 msgstr "Không thể bỏ qua các lệnh cậy (pick) không cần thiết"
 
-#: git-rebase--interactive.sh:908
+#: git-rabassa--interactive.sh:908
 #, sh-format
 msgid ""
 "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
@@ -15147,7 +15147,7 @@ msgstr ""
 "sau đây:\n"
 " - $line"
 
-#: git-rebase--interactive.sh:941
+#: git-rabassa--interactive.sh:941
 #, sh-format
 msgid ""
 "Warning: the command isn't recognized in the following line:\n"
@@ -15156,11 +15156,11 @@ msgstr ""
 "Cảnh báo: lệnh không nhận ra trong dòng sau đây:\n"
 " - $line"
 
-#: git-rebase--interactive.sh:980
+#: git-rabassa--interactive.sh:980
 msgid "could not detach HEAD"
 msgstr "không thể tách rời HEAD"
 
-#: git-rebase--interactive.sh:1018
+#: git-rabassa--interactive.sh:1018
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
@@ -15168,47 +15168,47 @@ msgstr ""
 "Cảnh báo: một số lần chuyển giao có lẽ đã bị xóa một cách tình cờ.\n"
 "Các lần chuyển giao bị xóa (từ mới đến cũ):"
 
-#: git-rebase--interactive.sh:1026
+#: git-rabassa--interactive.sh:1026
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rabassa.missingCommitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error."
 msgstr ""
 "Để tránh thông báo này, dùng \"drop\" một cách rõ ràng để xóa bỏ một lần "
 "chuyển giao.\n"
 "\n"
-"Dùng “git config rebase.missingCommitsCheck” để thay đổi mức độ của cảnh "
+"Dùng “git config rabassa.missingCommitsCheck” để thay đổi mức độ của cảnh "
 "báo.\n"
 "Cánh ứng xử có thể là: ignore, warn, error."
 
-#: git-rebase--interactive.sh:1037
+#: git-rabassa--interactive.sh:1037
 #, sh-format
 msgid ""
-"Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
+"Unrecognized setting $check_level for option rabassa.missingCommitsCheck. "
 "Ignoring."
 msgstr ""
-"Không thừa nhận cài đặt $check_level for option rebase.missingCommitsCheck. "
+"Không thừa nhận cài đặt $check_level for option rabassa.missingCommitsCheck. "
 "Nên bỏ qua."
 
-#: git-rebase--interactive.sh:1054
+#: git-rabassa--interactive.sh:1054
 msgid ""
-"You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
+"You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --"
 "continue'."
 msgstr ""
-"Bạn có thể sửa nó bằng “git rebase --edit-todo” và sau đó chạy “git rebase --"
+"Bạn có thể sửa nó bằng “git rabassa --edit-todo” và sau đó chạy “git rabassa --"
 "continue”."
 
-#: git-rebase--interactive.sh:1055
-msgid "Or you can abort the rebase with 'git rebase --abort'."
-msgstr "Hoặc là bạn có thể bãi bỏ lần cải tổ với lệnh “git rebase --abort”."
+#: git-rabassa--interactive.sh:1055
+msgid "Or you can abort the rabassa with 'git rabassa --abort'."
+msgstr "Hoặc là bạn có thể bãi bỏ lần cải tổ với lệnh “git rabassa --abort”."
 
-#: git-rebase--interactive.sh:1083
+#: git-rabassa--interactive.sh:1083
 msgid "Could not remove CHERRY_PICK_HEAD"
 msgstr "Không thể xóa bỏ CHERRY_PICK_HEAD"
 
-#: git-rebase--interactive.sh:1088
+#: git-rabassa--interactive.sh:1088
 #, sh-format
 msgid ""
 "You have staged changes in your working tree.\n"
@@ -15223,7 +15223,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "Bạn có các thay đổi so với trong bệ phóng trong\n"
 "thư mục làm việc của bạn. Nếu các thay đổi này là muốn\n"
@@ -15237,81 +15237,81 @@ msgstr ""
 "\n"
 "Trong cả hai trường hợp, một khi bạn làm xong, tiếp tục bằng:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
-#: git-rebase--interactive.sh:1105
+#: git-rabassa--interactive.sh:1105
 msgid "Error trying to find the author identity to amend commit"
 msgstr "Lỗi khi cố tìm định danh của tác giả để tu bổ lần chuyển giao"
 
-#: git-rebase--interactive.sh:1110
+#: git-rabassa--interactive.sh:1110
 msgid ""
 "You have uncommitted changes in your working tree. Please commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
 "Bạn có các thay đổi chưa chuyển giao trong thư mục làm việc.\n"
-"Vui lòng chuyển giao chúng và sau đó chạy lệnh “git rebase --continue” lần "
+"Vui lòng chuyển giao chúng và sau đó chạy lệnh “git rabassa --continue” lần "
 "nữa."
 
-#: git-rebase--interactive.sh:1115 git-rebase--interactive.sh:1119
+#: git-rabassa--interactive.sh:1115 git-rabassa--interactive.sh:1119
 msgid "Could not commit staged changes."
 msgstr "Không thể chuyển giao các thay đổi đã đưa lên bệ phóng."
 
-#: git-rebase--interactive.sh:1147
+#: git-rabassa--interactive.sh:1147
 msgid ""
 "\n"
-"You are editing the todo file of an ongoing interactive rebase.\n"
-"To continue rebase after editing, run:\n"
-"    git rebase --continue\n"
+"You are editing the todo file of an ongoing interactive rabassa.\n"
+"To continue rabassa after editing, run:\n"
+"    git rabassa --continue\n"
 "\n"
 msgstr ""
 "\n"
 "Bạn đang sửa tập tin todo của một lần cải tổ tương tác đang thực hiện.\n"
 "Để tiếp tục cải tổ sau khi sửa, chạy:\n"
-"    git rebase --continue\n"
+"    git rabassa --continue\n"
 "\n"
 
-#: git-rebase--interactive.sh:1155 git-rebase--interactive.sh:1313
+#: git-rabassa--interactive.sh:1155 git-rabassa--interactive.sh:1313
 msgid "Could not execute editor"
 msgstr "Không thể thực thi trình biên soạn"
 
-#: git-rebase--interactive.sh:1168
+#: git-rabassa--interactive.sh:1168
 #, sh-format
 msgid "Could not checkout $switch_to"
 msgstr "Không thể checkout $switch_to"
 
-#: git-rebase--interactive.sh:1173
+#: git-rabassa--interactive.sh:1173
 msgid "No HEAD?"
 msgstr "Không HEAD?"
 
-#: git-rebase--interactive.sh:1174
+#: git-rabassa--interactive.sh:1174
 #, sh-format
 msgid "Could not create temporary $state_dir"
 msgstr "Không thể tạo thư mục tạm thời $state_dir"
 
-#: git-rebase--interactive.sh:1176
+#: git-rabassa--interactive.sh:1176
 msgid "Could not mark as interactive"
 msgstr "Không thể đánh dấu là tương tác"
 
-#: git-rebase--interactive.sh:1186 git-rebase--interactive.sh:1191
+#: git-rabassa--interactive.sh:1186 git-rabassa--interactive.sh:1191
 msgid "Could not init rewritten commits"
 msgstr "Không thể khởi tạo các lần chuyển giao ghi lại"
 
-#: git-rebase--interactive.sh:1291
+#: git-rabassa--interactive.sh:1291
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 msgstr[0] "Cải tổ $shortrevisions vào $shortonto (các lệnh $todocount)"
 
-#: git-rebase--interactive.sh:1296
+#: git-rabassa--interactive.sh:1296
 msgid ""
 "\n"
-"However, if you remove everything, the rebase will be aborted.\n"
+"However, if you remove everything, the rabassa will be aborted.\n"
 "\n"
 msgstr ""
 "\n"
 "Tuy nhiên, nếu bạn xóa bỏ mọi thứ, việc cải tổ sẽ bị bãi bỏ.\n"
 
-#: git-rebase--interactive.sh:1303
+#: git-rabassa--interactive.sh:1303
 msgid "Note that empty commits are commented out"
 msgstr "Chú ý rằng lần chuyển giao trống rỗng là ghi chú"
 
@@ -15334,7 +15334,7 @@ msgstr ""
 "lỗi nghiêm trọng: $program_name không thể được dùng ngoaoif thư mục làm việc."
 
 #: git-sh-setup.sh:220
-msgid "Cannot rebase: You have unstaged changes."
+msgid "Cannot rabassa: You have unstaged changes."
 msgstr "Không thể cải tổ: Bạn có các thay đổi chưa được đưa lên bệ phóng."
 
 #: git-sh-setup.sh:223
@@ -15343,7 +15343,7 @@ msgstr ""
 "Không thể ghi lại các nhánh: Bạn có các thay đổi chưa được đưa lên bệ phóng."
 
 #: git-sh-setup.sh:226
-msgid "Cannot pull with rebase: You have unstaged changes."
+msgid "Cannot pull with rabassa: You have unstaged changes."
 msgstr ""
 "Không thể pull với cải tổ: Bạn có các thay đổi chưa được đưa lên bệ phóng."
 
@@ -15353,12 +15353,12 @@ msgid "Cannot $action: You have unstaged changes."
 msgstr "Không thể $action: Bạn có các thay đổi chưa được đưa lên bệ phóng."
 
 #: git-sh-setup.sh:242
-msgid "Cannot rebase: Your index contains uncommitted changes."
+msgid "Cannot rabassa: Your index contains uncommitted changes."
 msgstr ""
 "Không thể cải tổ: Mục lục của bạn có chứa các thay đổi chưa được chuyển giao."
 
 #: git-sh-setup.sh:245
-msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+msgid "Cannot pull with rabassa: Your index contains uncommitted changes."
 msgstr "Không thể pull với cải tổ: Bạn có các thay đổi chưa được chuyển giao."
 
 #: git-sh-setup.sh:248

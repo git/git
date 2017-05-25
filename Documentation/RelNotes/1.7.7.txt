@@ -90,7 +90,7 @@ Updates since v1.7.6
  * The "--decorate" option to "git log" and its family learned to
    highlight grafted and replaced commits.
 
- * "git rebase master topci" no longer spews usage hints after giving
+ * "git rabassa master topci" no longer spews usage hints after giving
    the "fatal: no such branch: topci" error message.
 
  * The recursive merge strategy implementation got a fairly large

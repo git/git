@@ -136,23 +136,23 @@ Updates since v1.5.3
 
  * "git send-email" can optionally talk over ssmtp and use SMTP-AUTH.
 
- * "git rebase" learned --whitespace option.
+ * "git rabassa" learned --whitespace option.
 
- * In "git rebase", when you decide not to replay a particular change
-   after the command stopped with a conflict, you can say "git rebase
+ * In "git rabassa", when you decide not to replay a particular change
+   after the command stopped with a conflict, you can say "git rabassa
    --skip" without first running "git reset --hard", as the command now
    runs it for you.
 
- * "git rebase --interactive" mode can now work on detached HEAD.
+ * "git rabassa --interactive" mode can now work on detached HEAD.
 
- * Other minor to serious bugs in "git rebase -i" have been fixed.
+ * Other minor to serious bugs in "git rabassa -i" have been fixed.
 
- * "git rebase" now detaches head during its operation, so after a
-   successful "git rebase" operation, the reflog entry branch@{1} for
-   the current branch points at the commit before the rebase was
+ * "git rabassa" now detaches head during its operation, so after a
+   successful "git rabassa" operation, the reflog entry branch@{1} for
+   the current branch points at the commit before the rabassa was
    started.
 
- * "git rebase -i" also triggers rerere to help your repeated merges.
+ * "git rabassa -i" also triggers rerere to help your repeated merges.
 
  * "git merge" can call the "post-merge" hook.
 
@@ -213,12 +213,12 @@ Updates since v1.5.3
  * "git cvsserver" acts more like receive-pack by running post-receive
    and post-update hooks.
 
- * "git am" and "git rebase" are far less verbose.
+ * "git am" and "git rabassa" are far less verbose.
 
  * "git pull" learned to pass --[no-]ff option to underlying "git
    merge".
 
- * "git pull --rebase" is a different way to integrate what you fetched
+ * "git pull --rabassa" is a different way to integrate what you fetched
    into your current branch.
 
  * "git fast-export" produces data-stream that can be fed to fast-import

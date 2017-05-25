@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Eric Wong
 #
 
-test_description='git rebase --merge --skip tests'
+test_description='git rabassa --merge --skip tests'
 
 . ./test-lib.sh
 
@@ -27,43 +27,43 @@ test_expect_success setup '
 	echo moo > cow &&
 	git add cow &&
 	git commit -m "this should not be skipped" &&
-	git branch pre-rebase skip-reference &&
+	git branch pre-rabassa skip-reference &&
 	git branch skip-merge skip-reference
 	'
 
-test_expect_success 'rebase with git am -3 (default)' '
-	test_must_fail git rebase master
+test_expect_success 'rabassa with git am -3 (default)' '
+	test_must_fail git rabassa master
 '
 
-test_expect_success 'rebase --skip can not be used with other options' '
-	test_must_fail git rebase -v --skip &&
-	test_must_fail git rebase --skip -v
+test_expect_success 'rabassa --skip can not be used with other options' '
+	test_must_fail git rabassa -v --skip &&
+	test_must_fail git rabassa --skip -v
 '
 
-test_expect_success 'rebase --skip with am -3' '
-	git rebase --skip
+test_expect_success 'rabassa --skip with am -3' '
+	git rabassa --skip
 	'
 
-test_expect_success 'rebase moves back to skip-reference' '
+test_expect_success 'rabassa moves back to skip-reference' '
 	test refs/heads/skip-reference = $(git symbolic-ref HEAD) &&
-	git branch post-rebase &&
-	git reset --hard pre-rebase &&
-	test_must_fail git rebase master &&
+	git branch post-rabassa &&
+	git reset --hard pre-rabassa &&
+	test_must_fail git rabassa master &&
 	echo "hello" > hello &&
 	git add hello &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test refs/heads/skip-reference = $(git symbolic-ref HEAD) &&
-	git reset --hard post-rebase
+	git reset --hard post-rabassa
 '
 
 test_expect_success 'checkout skip-merge' 'git checkout -f skip-merge'
 
-test_expect_success 'rebase with --merge' '
-	test_must_fail git rebase --merge master
+test_expect_success 'rabassa with --merge' '
+	test_must_fail git rabassa --merge master
 '
 
-test_expect_success 'rebase --skip with --merge' '
-	git rebase --skip
+test_expect_success 'rabassa --skip with --merge' '
+	git rabassa --skip
 '
 
 test_expect_success 'merge and reference trees equal' '

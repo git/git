@@ -40,7 +40,7 @@ committer-date-is-author-date    lie about committer date
 ignore-date     use current timestamp for author date
 rerere-autoupdate update the index with reused conflict resolution if possible
 S,gpg-sign?     GPG-sign commits
-rebasing*       (internal use for git-rebase)"
+rebasing*       (internal use for git-rabassa)"
 
 . git-sh-setup
 . git-sh-i18n
@@ -375,7 +375,7 @@ split_patches () {
 }
 
 prec=4
-dotest="$GIT_DIR/rebase-apply"
+dotest="$GIT_DIR/rabassa-apply"
 sign= utf8=t keep= keepcr= skip= interactive= resolved= rebasing= abort=
 messageid= resolvemsg= resume= scissors= no_inbody_headers=
 git_apply_opt=
@@ -499,7 +499,7 @@ then
 		false
 		;;
 	esac ||
-	die "$(eval_gettext "previous rebase directory \$dotest still exists but mbox given.")"
+	die "$(eval_gettext "previous rabassa directory \$dotest still exists but mbox given.")"
 	resume=yes
 
 	case "$skip,$abort" in
@@ -517,7 +517,7 @@ then
 	,t)
 		if test -f "$dotest/rebasing"
 		then
-			exec git rebase --abort
+			exec git rabassa --abort
 		fi
 		git rerere clear
 		if safe_to_abort
@@ -543,7 +543,7 @@ then
 else
 	# Possible stray $dotest directory in the independent-run
 	# case; in the --rebasing case, it is upto the caller
-	# (git-rebase--am) to take care of stray directories.
+	# (git-rabassa--am) to take care of stray directories.
 	if test -d "$dotest" && test -z "$rebasing"
 	then
 		case "$skip,$resolved,$abort" in
@@ -959,14 +959,14 @@ did you forget to use 'git add'?"
 done
 
 if test -s "$dotest"/rewritten; then
-    git notes copy --for-rewrite=rebase < "$dotest"/rewritten
+    git notes copy --for-rewrite=rabassa < "$dotest"/rewritten
     hook="$(git rev-parse --git-path hooks/post-rewrite)"
     if test -x "$hook"; then
-	"$hook" rebase < "$dotest"/rewritten
+	"$hook" rabassa < "$dotest"/rewritten
     fi
 fi
 
-# If am was called with --rebasing (from git-rebase--am), it's up to
+# If am was called with --rebasing (from git-rabassa--am), it's up to
 # the caller to take care of housekeeping.
 if ! test -f "$dotest/rebasing"
 then

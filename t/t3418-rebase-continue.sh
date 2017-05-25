@@ -1,10 +1,10 @@
 #!/bin/sh
 
-test_description='git rebase --continue tests'
+test_description='git rabassa --continue tests'
 
 . ./test-lib.sh
 
-. "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rabassa.sh
 
 set_fake_editor
 
@@ -18,54 +18,54 @@ test_expect_success 'setup' '
 	git checkout master
 '
 
-test_expect_success 'interactive rebase --continue works with touched file' '
-	rm -fr .git/rebase-* &&
+test_expect_success 'interactive rabassa --continue works with touched file' '
+	rm -fr .git/rabassa-* &&
 	git reset --hard &&
 	git checkout master &&
 
-	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	FAKE_LINES="edit 1" git rabassa -i HEAD^ &&
 	test-chmtime =-60 F1 &&
-	git rebase --continue
+	git rabassa --continue
 '
 
-test_expect_success 'non-interactive rebase --continue works with touched file' '
-	rm -fr .git/rebase-* &&
+test_expect_success 'non-interactive rabassa --continue works with touched file' '
+	rm -fr .git/rabassa-* &&
 	git reset --hard &&
 	git checkout master &&
 
-	test_must_fail git rebase --onto master master topic &&
+	test_must_fail git rabassa --onto master master topic &&
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	test-chmtime =-60 F1 &&
-	git rebase --continue
+	git rabassa --continue
 '
 
-test_expect_success 'non-interactive rebase --continue with rerere enabled' '
+test_expect_success 'non-interactive rabassa --continue with rerere enabled' '
 	test_config rerere.enabled true &&
-	test_when_finished "test_might_fail git rebase --abort" &&
+	test_when_finished "test_might_fail git rabassa --abort" &&
 	git reset --hard commit-new-file-F2-on-topic-branch &&
 	git checkout master &&
-	rm -fr .git/rebase-* &&
+	rm -fr .git/rabassa-* &&
 
-	test_must_fail git rebase --onto master master topic &&
+	test_must_fail git rabassa --onto master master topic &&
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	cp F2 F2.expected &&
-	git rebase --continue &&
+	git rabassa --continue &&
 
 	git reset --hard commit-new-file-F2-on-topic-branch &&
 	git checkout master &&
-	test_must_fail git rebase --onto master master topic &&
+	test_must_fail git rabassa --onto master master topic &&
 	test_cmp F2.expected F2
 '
 
-test_expect_success 'rebase --continue can not be used with other options' '
-	test_must_fail git rebase -v --continue &&
-	test_must_fail git rebase --continue -v
+test_expect_success 'rabassa --continue can not be used with other options' '
+	test_must_fail git rabassa -v --continue &&
+	test_must_fail git rabassa --continue -v
 '
 
-test_expect_success 'rebase --continue remembers merge strategy and options' '
-	rm -fr .git/rebase-* &&
+test_expect_success 'rabassa --continue remembers merge strategy and options' '
+	rm -fr .git/rabassa-* &&
 	git reset --hard commit-new-file-F2-on-topic-branch &&
 	test_commit "commit-new-file-F3-on-topic-branch" F3 32 &&
 	test_when_finished "rm -fr test-bin funny.was.run" &&
@@ -80,7 +80,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	chmod +x test-bin/git-merge-funny &&
 	(
 		PATH=./test-bin:$PATH
-		test_must_fail git rebase -s funny -Xopt master topic
+		test_must_fail git rabassa -s funny -Xopt master topic
 	) &&
 	test -f funny.was.run &&
 	rm funny.was.run &&
@@ -88,30 +88,30 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	git add F2 &&
 	(
 		PATH=./test-bin:$PATH
-		git rebase --continue
+		git rabassa --continue
 	) &&
 	test -f funny.was.run
 '
 
-test_expect_success 'rebase --continue remembers --rerere-autoupdate' '
-	rm -fr .git/rebase-* &&
+test_expect_success 'rabassa --continue remembers --rerere-autoupdate' '
+	rm -fr .git/rabassa-* &&
 	git reset --hard commit-new-file-F3-on-topic-branch &&
 	git checkout master &&
 	test_commit "commit-new-file-F3" F3 3 &&
 	git config rerere.enabled true &&
-	test_must_fail git rebase -m master topic &&
+	test_must_fail git rabassa -m master topic &&
 	echo "Resolved" >F2 &&
 	git add F2 &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	echo "Resolved" >F3 &&
 	git add F3 &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	git reset --hard topic@{1} &&
-	test_must_fail git rebase -m --rerere-autoupdate master &&
+	test_must_fail git rabassa -m --rerere-autoupdate master &&
 	test "$(cat F2)" = "Resolved" &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	test "$(cat F3)" = "Resolved" &&
-	git rebase --continue
+	git rabassa --continue
 '
 
 test_done

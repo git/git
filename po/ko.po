@@ -42,7 +42,7 @@
 #  | octopus      | 옥토퍼스 (병합 전략)                         |
 #  | pack         | 묶음                                         |
 #  | pathspec     | 경로명세                                     |
-#  | rebase       | 리베이스                                     |
+#  | rabassa       | 리베이스                                     |
 #  | ref          | 레퍼런스                                     |
 #  | repo         | 저장소                                       |
 #  | remote       | 리모트 (저장소)                              |
@@ -2652,8 +2652,8 @@ msgid "cherry-pick"
 msgstr "cherry-pick"
 
 #: sequencer.c:219
-msgid "rebase -i"
-msgstr "rebase -i"
+msgid "rabassa -i"
+msgstr "rabassa -i"
 
 #: sequencer.c:221
 #, c-format
@@ -2719,7 +2719,7 @@ msgid "%s: fast-forward"
 msgstr "%s: 정방향 진행"
 
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
-#. * "rebase -i".
+#. * "rabassa -i".
 #.
 #: sequencer.c:470
 #, c-format
@@ -2748,7 +2748,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "작업 폴더에 스테이징한 변경 사항이 있습니다.\n"
 "이 변경 사항을 이전 커밋에 합치려면,\n"
@@ -2762,7 +2762,7 @@ msgstr ""
 "\n"
 "어떤 경우이든, 마친 다음에 다음 명령으로 계속합니다:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
 #: sequencer.c:688
 #, c-format
@@ -2818,7 +2818,7 @@ msgstr "HEAD의 커밋 메시지를 읽을 수 없습니다"
 msgid "cannot write '%s'"
 msgstr "'%s'을(를) 쓸 수 없습니다"
 
-#: sequencer.c:855 git-rebase--interactive.sh:445
+#: sequencer.c:855 git-rabassa--interactive.sh:445
 msgid "This is the 1st commit message:"
 msgstr "1번째 커밋 메시지입니다:"
 
@@ -2919,8 +2919,8 @@ msgid "could not read '%s'."
 msgstr "'%s'에서 읽을 수 없습니다."
 
 #: sequencer.c:1341
-msgid "please fix this using 'git rebase --edit-todo'."
-msgstr "'git rebase --edit-todo' 명령으로 바로잡으십시오."
+msgid "please fix this using 'git rabassa --edit-todo'."
+msgstr "'git rabassa --edit-todo' 명령으로 바로잡으십시오."
 
 #: sequencer.c:1343
 #, c-format
@@ -3025,13 +3025,13 @@ msgid ""
 "execution failed: %s\n"
 "%sYou can fix the problem, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "실행 실패: %s\n"
 "%s문제를 바로잡고, 다음을 실행하십시오\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 
 #: sequencer.c:1844
@@ -3045,17 +3045,17 @@ msgid ""
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "실행 성공: %s\n"
 "하지만 변경 사항을 인덱스 및/또는 작업 폴더에 남겨둡니다.\n"
 "변경 사항을 커밋하거나 스태시에 넣으려면, 다음을 실행하십시오:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 
-#: sequencer.c:1905 git-rebase.sh:168
+#: sequencer.c:1905 git-rabassa.sh:168
 #, c-format
 msgid "Applied autostash."
 msgstr "자동스태시 적용."
@@ -3065,7 +3065,7 @@ msgstr "자동스태시 적용."
 msgid "cannot store %s"
 msgstr "%s을(를) 저장할 수 없습니다"
 
-#: sequencer.c:1919 git-rebase.sh:172
+#: sequencer.c:1919 git-rabassa.sh:172
 #, c-format
 msgid ""
 "Applying autostash resulted in conflicts.\n"
@@ -3105,7 +3105,7 @@ msgid "could not update HEAD to %s"
 msgstr "HEAD를 %s 위치로 업데이트할 수 없습니다"
 
 #: sequencer.c:2159
-msgid "cannot rebase: You have unstaged changes."
+msgid "cannot rabassa: You have unstaged changes."
 msgstr "리베이스할 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
 #: sequencer.c:2164
@@ -3130,11 +3130,11 @@ msgstr "잘못된 내용: '%s'"
 msgid ""
 "\n"
 "You have uncommitted changes in your working tree. Please, commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
 "\n"
 "작업 폴더에 커밋하지 않은 변경 사항이 있습니다. 이 사항을 먼저\n"
-"커밋하고 'git rebase --continue' 명령을 다시 실행하십시오."
+"커밋하고 'git rabassa --continue' 명령을 다시 실행하십시오."
 
 #: sequencer.c:2190
 msgid "could not commit staged changes."
@@ -3980,8 +3980,8 @@ msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr "  (원본 브랜치를 복구하려면 \"git am --abort\"를 사용하십시오)"
 
 #: wt-status.c:1176
-msgid "git-rebase-todo is missing."
-msgstr "git-rebase-todo가 없습니다."
+msgid "git-rabassa-todo is missing."
+msgstr "git-rabassa-todo가 없습니다."
 
 #: wt-status.c:1178
 msgid "No commands done."
@@ -4009,8 +4009,8 @@ msgid_plural "Next commands to do (%d remaining commands):"
 msgstr[0] "다음에 할 명령 (%d개 명령 남음):"
 
 #: wt-status.c:1208
-msgid "  (use \"git rebase --edit-todo\" to view and edit)"
-msgstr "  (보고 편집하려면 \"git rebase --edit-todo\"를 사용하십시오)"
+msgid "  (use \"git rabassa --edit-todo\" to view and edit)"
+msgstr "  (보고 편집하려면 \"git rabassa --edit-todo\"를 사용하십시오)"
 
 #: wt-status.c:1221
 #, c-format
@@ -4022,21 +4022,21 @@ msgid "You are currently rebasing."
 msgstr "현재 리베이스하는 중입니다."
 
 #: wt-status.c:1240
-msgid "  (fix conflicts and then run \"git rebase --continue\")"
-msgstr "  (충돌을 바로잡고 \"git rebase --continue\"를 사용하십시오)"
+msgid "  (fix conflicts and then run \"git rabassa --continue\")"
+msgstr "  (충돌을 바로잡고 \"git rabassa --continue\"를 사용하십시오)"
 
 #: wt-status.c:1242
-msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  (이 패치를 건너뛰려면 \"git rebase --skip\"을 사용하십시오)"
+msgid "  (use \"git rabassa --skip\" to skip this patch)"
+msgstr "  (이 패치를 건너뛰려면 \"git rabassa --skip\"을 사용하십시오)"
 
 #: wt-status.c:1244
-msgid "  (use \"git rebase --abort\" to check out the original branch)"
-msgstr "  (원본 브랜치를 가져오려면 \"git rebase --abort\"를 사용하십시오)"
+msgid "  (use \"git rabassa --abort\" to check out the original branch)"
+msgstr "  (원본 브랜치를 가져오려면 \"git rabassa --abort\"를 사용하십시오)"
 
 #: wt-status.c:1250
-msgid "  (all conflicts fixed: run \"git rebase --continue\")"
+msgid "  (all conflicts fixed: run \"git rabassa --continue\")"
 msgstr ""
-"  (모든 충돌을 바로잡았습니다: \"git rebase --continue\"를 실행하십시오)"
+"  (모든 충돌을 바로잡았습니다: \"git rabassa --continue\"를 실행하십시오)"
 
 #: wt-status.c:1254
 #, c-format
@@ -4045,12 +4045,12 @@ msgid ""
 msgstr "현재 '%s' 브랜치를 '%s' 위로 리베이스하는 중 커밋을 분리하는 중입니다."
 
 #: wt-status.c:1259
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a commit during a rabassa."
 msgstr "현재 리베이스하는 중 커밋을 분리하는 중입니다."
 
 #: wt-status.c:1262
-msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
-msgstr "  (작업 폴더가 깨끗해지면, \"git rebase --continue\"를 실행하십시오)"
+msgid "  (Once your working directory is clean, run \"git rabassa --continue\")"
+msgstr "  (작업 폴더가 깨끗해지면, \"git rabassa --continue\"를 실행하십시오)"
 
 #: wt-status.c:1266
 #, c-format
@@ -4058,7 +4058,7 @@ msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr "'%s' 브랜치를 '%s' 위로 리베이스하는 중 커밋을 편집하는 중입니다."
 
 #: wt-status.c:1271
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a commit during a rabassa."
 msgstr "리베이스 중에 커밋을 편집하는 중입니다."
 
 #: wt-status.c:1274
@@ -4067,8 +4067,8 @@ msgstr "  (현재 커밋을 수정하려면 \"git commit --amend\"을 사용하�
 
 #: wt-status.c:1276
 msgid ""
-"  (use \"git rebase --continue\" once you are satisfied with your changes)"
-msgstr "  (변경 사항에 만족할 때 \"git rebase --continue\"를 사용하십시오)"
+"  (use \"git rabassa --continue\" once you are satisfied with your changes)"
+msgstr "  (변경 사항에 만족할 때 \"git rabassa --continue\"를 사용하십시오)"
 
 #: wt-status.c:1286
 #, c-format
@@ -4124,11 +4124,11 @@ msgid "On branch "
 msgstr "현재 브랜치 "
 
 #: wt-status.c:1536
-msgid "interactive rebase in progress; onto "
+msgid "interactive rabassa in progress; onto "
 msgstr "대화형 리베이스 진행 중. 갈 위치는 "
 
 #: wt-status.c:1538
-msgid "rebase in progress; onto "
+msgid "rabassa in progress; onto "
 msgstr "리베이스 진행 중. 갈 위치는 "
 
 #: wt-status.c:1543
@@ -4250,7 +4250,7 @@ msgstr "다음 뒤에: "
 msgid "ahead "
 msgstr "다음 앞에: "
 
-#. TRANSLATORS: the action is e.g. "pull with rebase"
+#. TRANSLATORS: the action is e.g. "pull with rabassa"
 #: wt-status.c:2277
 #, c-format
 msgid "cannot %s: You have unstaged changes."
@@ -4761,8 +4761,8 @@ msgid "GPG-sign commits"
 msgstr "GPG 서명 커밋"
 
 #: builtin/am.c:2319
-msgid "(internal use for git-rebase)"
-msgstr "(git-rebase를 위한 내부 용도)"
+msgid "(internal use for git-rabassa)"
+msgstr "(git-rabassa를 위한 내부 용도)"
 
 #: builtin/am.c:2334
 msgid ""
@@ -4778,7 +4778,7 @@ msgstr "인덱스 읽기에 실패했습니다"
 
 #: builtin/am.c:2356
 #, c-format
-msgid "previous rebase directory %s still exists but mbox given."
+msgid "previous rabassa directory %s still exists but mbox given."
 msgstr "이전 리베이스 디렉터리 %s이(가) 아직 있고 mbox를 지정했습니다."
 
 #: builtin/am.c:2380
@@ -5181,7 +5181,7 @@ msgstr "(브랜치 없음)"
 
 #: builtin/branch.c:535
 #, c-format
-msgid "Branch %s is being rebased at %s"
+msgid "Branch %s is being rabassad at %s"
 msgstr "%s 브랜치를 %s 위치에 리베이스합니다"
 
 #: builtin/branch.c:539
@@ -10750,7 +10750,7 @@ msgid "allow fast-forward"
 msgstr "정방향 진행을 허용합니다"
 
 #: builtin/pull.c:157
-msgid "automatically stash/stash pop before and after rebase"
+msgid "automatically stash/stash pop before and after rabassa"
 msgstr "리베이스 전과 후에 stash 및 stash pop을 자동으로 합니다"
 
 #: builtin/pull.c:173
@@ -10801,7 +10801,7 @@ msgid "You are not currently on a branch."
 msgstr "현재 어떤 브랜치 위에도 있지 않습니다."
 
 #: builtin/pull.c:410 builtin/pull.c:425 git-parse-remote.sh:79
-msgid "Please specify which branch you want to rebase against."
+msgid "Please specify which branch you want to rabassa against."
 msgstr "어떤 브랜치를 대상으로 리베이스할지 지정하십시오."
 
 #: builtin/pull.c:412 builtin/pull.c:427 git-parse-remote.sh:82
@@ -10817,7 +10817,7 @@ msgstr "자세한 정보는 git-pull(1) 페이지를 참고하십시오."
 msgid "<remote>"
 msgstr "<리모트>"
 
-#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rebase.sh:455
+#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rabassa.sh:455
 #: git-parse-remote.sh:65
 msgid "<branch>"
 msgstr "<브랜치>"
@@ -10841,19 +10841,19 @@ msgstr ""
 "그런 레퍼런스를 가져오지 않았습니다."
 
 #: builtin/pull.c:754
-msgid "ignoring --verify-signatures for rebase"
+msgid "ignoring --verify-signatures for rabassa"
 msgstr "리베이스에 대해 --verify-signatures 옵션을 무시합니다"
 
 #: builtin/pull.c:801
-msgid "--[no-]autostash option is only valid with --rebase."
-msgstr "--[no-]autostash 옵션은 --rebase 옵션과 같이 써야 합니다."
+msgid "--[no-]autostash option is only valid with --rabassa."
+msgstr "--[no-]autostash 옵션은 --rabassa 옵션과 같이 써야 합니다."
 
 #: builtin/pull.c:809
 msgid "Updating an unborn branch with changes added to the index."
 msgstr "만들어지지 않은 브랜치를 인덱스에 추가된 변경 사항으로 업데이트합니다."
 
 #: builtin/pull.c:812
-msgid "pull with rebase"
+msgid "pull with rabassa"
 msgstr "리베이스로 풀하기"
 
 #: builtin/pull.c:813
@@ -10893,7 +10893,7 @@ msgid "Cannot merge multiple branches into empty head."
 msgstr "여러 브랜치를 빈 헤드로 병합할 수 없습니다."
 
 #: builtin/pull.c:862
-msgid "Cannot rebase onto multiple branches."
+msgid "Cannot rabassa onto multiple branches."
 msgstr "여러 브랜치로 리베이스할 수 없습니다."
 
 #: builtin/push.c:16
@@ -11568,17 +11568,17 @@ msgstr " ???"
 
 #: builtin/remote.c:955
 #, c-format
-msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
+msgid "invalid branch.%s.merge; cannot rabassa onto > 1 branch"
 msgstr "잘못된 branch.%s.merge 값. 여러 개 브랜치로 리베이스할 수 없습니다"
 
 #: builtin/remote.c:963
 #, c-format
-msgid "rebases interactively onto remote %s"
+msgid "rabassas interactively onto remote %s"
 msgstr "리모트 %s 위로 대화식으로 리베이스합니다"
 
 #: builtin/remote.c:964
 #, c-format
-msgid "rebases onto remote %s"
+msgid "rabassas onto remote %s"
 msgstr "리모트 %s 위로 리베이스합니다"
 
 #: builtin/remote.c:967
@@ -12759,8 +12759,8 @@ msgid "path into the working tree, across nested submodule boundaries"
 msgstr "작업 폴더로 가는 경로, 내장된 하위 모듈의 경계 통과"
 
 #: builtin/submodule--helper.c:968
-msgid "rebase, merge, checkout or none"
-msgstr "rebase, merge, checkout 또는 none"
+msgid "rabassa, merge, checkout or none"
+msgstr "rabassa, merge, checkout 또는 none"
 
 #: builtin/submodule--helper.c:972
 msgid "Create a shallow clone truncated to the specified number of revisions"
@@ -13891,49 +13891,49 @@ msgstr "$pretty_name에 간단한 병합 시도합니다"
 msgid "Simple merge did not work, trying automatic merge."
 msgstr "간단한 병합이 동작하지 않습니다. 자동 병합을 시도합니다."
 
-#: git-rebase.sh:57
+#: git-rabassa.sh:57
 msgid ""
-"When you have resolved this problem, run \"git rebase --continue\".\n"
-"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
-"To check out the original branch and stop rebasing, run \"git rebase --abort"
+"When you have resolved this problem, run \"git rabassa --continue\".\n"
+"If you prefer to skip this patch, run \"git rabassa --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rabassa --abort"
 "\"."
 msgstr ""
-"이 문제를 해결하면, \"\"git rebase --continue\"를 실행하십시오.\n"
-"이 패치를 건너뛰려면, 대신에 \"git rebase --skip\"을 실행하십시오.\n"
-"원래 브랜치를 체크아웃하고 리베이스를 중지하려면, \"git rebase --abort\"를 실"
+"이 문제를 해결하면, \"\"git rabassa --continue\"를 실행하십시오.\n"
+"이 패치를 건너뛰려면, 대신에 \"git rabassa --skip\"을 실행하십시오.\n"
+"원래 브랜치를 체크아웃하고 리베이스를 중지하려면, \"git rabassa --abort\"를 실"
 "행하십시오."
 
-#: git-rebase.sh:157 git-rebase.sh:396
+#: git-rabassa.sh:157 git-rabassa.sh:396
 #, sh-format
 msgid "Could not move back to $head_name"
 msgstr "'$head_name' 위치로 돌아갈 수 없습니다"
 
-#: git-rebase.sh:171
+#: git-rabassa.sh:171
 #, sh-format
 msgid "Cannot store $stash_sha1"
 msgstr "\"$stash_sha1\"을(를) 저장할 수 없습니다"
 
-#: git-rebase.sh:211
-msgid "The pre-rebase hook refused to rebase."
+#: git-rabassa.sh:211
+msgid "The pre-rabassa hook refused to rabassa."
 msgstr "리베이스 전 후크에서 리베이스를 거부했습니다."
 
-#: git-rebase.sh:216
-msgid "It looks like git-am is in progress. Cannot rebase."
+#: git-rabassa.sh:216
+msgid "It looks like git-am is in progress. Cannot rabassa."
 msgstr "git-am이 진행 중인 것처럼 보입니다. 리베이스할 수 없습니다."
 
-#: git-rebase.sh:357
-msgid "No rebase in progress?"
+#: git-rabassa.sh:357
+msgid "No rabassa in progress?"
 msgstr "리베이스가 진행 중이지 않습니다"
 
-#: git-rebase.sh:368
-msgid "The --edit-todo action can only be used during interactive rebase."
+#: git-rabassa.sh:368
+msgid "The --edit-todo action can only be used during interactive rabassa."
 msgstr "--edit-todo 동작은 대화형 리베이스에서만 사용할 수 있습니다."
 
-#: git-rebase.sh:375
+#: git-rabassa.sh:375
 msgid "Cannot read HEAD"
 msgstr "HEAD를 읽을 수 없습니다"
 
-#: git-rebase.sh:378
+#: git-rabassa.sh:378
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
@@ -13941,85 +13941,85 @@ msgstr ""
 "모든 병합 충돌을 편집하고 git add\n"
 "명령으로 해결되었다고 표시해야 합니다"
 
-#: git-rebase.sh:418
+#: git-rabassa.sh:418
 #, sh-format
 msgid ""
 "It seems that there is already a $state_dir_base directory, and\n"
-"I wonder if you are in the middle of another rebase.  If that is the\n"
+"I wonder if you are in the middle of another rabassa.  If that is the\n"
 "case, please try\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "If that is not the case, please\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "and run me again.  I am stopping in case you still have something\n"
 "valuable there."
 msgstr ""
 "이미 '$state_dir_base' 디렉터리가 있는 것으로 보아, 이미\n"
 "또 다른 리베이스 중에 있는 것 같습니다. 그러한 경우에는\n"
 "다음을 시도해 보십시오:\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "리베이스 중이 아니라면 다음을 시도하고,\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "이 명령을 다시 실행하십시오. 중요한 사항이 남아 있을 경우를\n"
 "대비해 여기서 멈춥니다."
 
-#: git-rebase.sh:469
+#: git-rabassa.sh:469
 #, sh-format
 msgid "invalid upstream $upstream_name"
 msgstr "잘못된 업스트림 $upstream_name"
 
-#: git-rebase.sh:493
+#: git-rabassa.sh:493
 #, sh-format
 msgid "$onto_name: there are more than one merge bases"
 msgstr "$onto_name: 여러 개의 병합 베이스가 있습니다"
 
-#: git-rebase.sh:496 git-rebase.sh:500
+#: git-rabassa.sh:496 git-rabassa.sh:500
 #, sh-format
 msgid "$onto_name: there is no merge base"
 msgstr "$onto_name: 병합 베이스가 없습니다"
 
-#: git-rebase.sh:505
+#: git-rabassa.sh:505
 #, sh-format
 msgid "Does not point to a valid commit: $onto_name"
 msgstr "올바른 커밋을 가리키지 않습니다: $onto_name"
 
-#: git-rebase.sh:528
+#: git-rabassa.sh:528
 #, sh-format
 msgid "fatal: no such branch: $branch_name"
 msgstr "치명적 이상: 그런 브랜치가 없습니다: $branch_name"
 
-#: git-rebase.sh:561
+#: git-rabassa.sh:561
 msgid "Cannot autostash"
 msgstr "자동 스태시를 할 수 없습니다"
 
-#: git-rebase.sh:566
+#: git-rabassa.sh:566
 #, sh-format
 msgid "Created autostash: $stash_abbrev"
 msgstr "자동 스태시를 만들었습니다: $stash_abbrev"
 
-#: git-rebase.sh:570
+#: git-rabassa.sh:570
 msgid "Please commit or stash them."
 msgstr "커밋하거나 스태시에 넣으십시오."
 
-#: git-rebase.sh:590
+#: git-rabassa.sh:590
 #, sh-format
 msgid "Current branch $branch_name is up to date."
 msgstr "현재 브랜치가 ($branch_name) 최신 상태입니다."
 
-#: git-rebase.sh:594
+#: git-rabassa.sh:594
 #, sh-format
-msgid "Current branch $branch_name is up to date, rebase forced."
+msgid "Current branch $branch_name is up to date, rabassa forced."
 msgstr "현재 브랜치가 ($branch_name) 최신 상태입니다. 강제 리베이스합니다."
 
-#: git-rebase.sh:605
+#: git-rabassa.sh:605
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "변경 사항 '$mb'에서 '$onto'(으)로:"
 
-#: git-rebase.sh:614
+#: git-rabassa.sh:614
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr "작업 사항을 다시 넣기 위해 먼저 헤드를 뒤로 돌립니다..."
 
-#: git-rebase.sh:624
+#: git-rabassa.sh:624
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "$branch_name 브랜치를 $onto_name 위치로 정방향 진행합니다."
@@ -14369,12 +14369,12 @@ msgstr "하위 모듈 경로 '$displaypath': '$sha1' 체크아웃"
 
 #: git-submodule.sh:674
 #, sh-format
-msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
+msgid "Unable to rabassa '$sha1' in submodule path '$displaypath'"
 msgstr "하위 모듈 경로 '$displaypath'에서 '$sha1'을(를) 리베이스할 수 없습니다"
 
 #: git-submodule.sh:675
 #, sh-format
-msgid "Submodule path '$displaypath': rebased into '$sha1'"
+msgid "Submodule path '$displaypath': rabassad into '$sha1'"
 msgstr "하위 모듈 경로 '$displaypath': '$sha1'(으)로 리베이스"
 
 #: git-submodule.sh:680
@@ -14442,12 +14442,12 @@ msgstr "하위 모듈 URL을 '$displaypath'에 대해 동기화"
 msgid "See git-${cmd}(1) for details."
 msgstr "자세한 정보는 git-${cmd}(1) 페이지를 참고하십시오."
 
-#: git-rebase--interactive.sh:140
+#: git-rabassa--interactive.sh:140
 #, sh-format
 msgid "Rebasing ($new_count/$total)"
 msgstr "리베이스중 ($new_count/$total)"
 
-#: git-rebase--interactive.sh:156
+#: git-rabassa--interactive.sh:156
 msgid ""
 "\n"
 "Commands:\n"
@@ -14473,7 +14473,7 @@ msgstr ""
 "\n"
 "이 줄은 순서를 바꿀 수 있습니다. 위에서 아래 순서로 실행합니다.\n"
 
-#: git-rebase--interactive.sh:171
+#: git-rabassa--interactive.sh:171
 msgid ""
 "\n"
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
@@ -14481,7 +14481,7 @@ msgstr ""
 "\n"
 "줄을 제거하지 않습니다. 커밋을 제거하려면 명시적으로 'drop'을 사용하십시오.\n"
 
-#: git-rebase--interactive.sh:175
+#: git-rabassa--interactive.sh:175
 msgid ""
 "\n"
 "If you remove a line here THAT COMMIT WILL BE LOST.\n"
@@ -14489,7 +14489,7 @@ msgstr ""
 "\n"
 "여기 줄을 제거하면 해당 커밋을 잃어버립니다!\n"
 
-#: git-rebase--interactive.sh:211
+#: git-rabassa--interactive.sh:211
 #, sh-format
 msgid ""
 "You can amend the commit now, with\n"
@@ -14498,7 +14498,7 @@ msgid ""
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "지금 다음 명령으로 커밋을 수정할 수 있습니다:\n"
 "\n"
@@ -14506,84 +14506,84 @@ msgstr ""
 "\n"
 "변경 사항에 만족하면, 다음을 실행하십시오:\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:236
+#: git-rabassa--interactive.sh:236
 #, sh-format
 msgid "$sha1: not a commit that can be picked"
 msgstr "$sha1: 빼오기가 가능한 커밋이 아닙니다"
 
-#: git-rebase--interactive.sh:275
+#: git-rabassa--interactive.sh:275
 #, sh-format
 msgid "Invalid commit name: $sha1"
 msgstr "잘못된 커밋 이름: $sha1"
 
-#: git-rebase--interactive.sh:317
+#: git-rabassa--interactive.sh:317
 msgid "Cannot write current commit's replacement sha1"
 msgstr "현재 커밋의 대체 sha1을 쓸 수 없습니다"
 
-#: git-rebase--interactive.sh:369
+#: git-rabassa--interactive.sh:369
 #, sh-format
 msgid "Fast-forward to $sha1"
 msgstr "정방향 진행, $sha1 위치로"
 
-#: git-rebase--interactive.sh:371
+#: git-rabassa--interactive.sh:371
 #, sh-format
 msgid "Cannot fast-forward to $sha1"
 msgstr "$sha1 위치로 정방향 진행할 수 없습니다"
 
-#: git-rebase--interactive.sh:380
+#: git-rabassa--interactive.sh:380
 #, sh-format
 msgid "Cannot move HEAD to $first_parent"
 msgstr "HEAD를 $first_parent 위치로 옮길 수 없습니다"
 
-#: git-rebase--interactive.sh:385
+#: git-rabassa--interactive.sh:385
 #, sh-format
 msgid "Refusing to squash a merge: $sha1"
 msgstr "병합 squash 거부: $sha1"
 
-#: git-rebase--interactive.sh:399
+#: git-rabassa--interactive.sh:399
 #, sh-format
 msgid "Error redoing merge $sha1"
 msgstr "$sha1 병합을 다시 하는데 오류"
 
-#: git-rebase--interactive.sh:407
+#: git-rabassa--interactive.sh:407
 #, sh-format
 msgid "Could not pick $sha1"
 msgstr "$sha1을 빼오기 할 수 없습니다"
 
-#: git-rebase--interactive.sh:416
+#: git-rabassa--interactive.sh:416
 #, sh-format
 msgid "This is the commit message #${n}:"
 msgstr "커밋 메시지 #${n}번입니다:"
 
-#: git-rebase--interactive.sh:421
+#: git-rabassa--interactive.sh:421
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
 msgstr "#${n}번째 커밋 메시지를 건너뜁니다:"
 
-#: git-rebase--interactive.sh:432
+#: git-rabassa--interactive.sh:432
 #, sh-format
 msgid "This is a combination of $count commit."
 msgid_plural "This is a combination of $count commits."
 msgstr[0] "커밋 $count개가 섞인 결과입니다."
 
-#: git-rebase--interactive.sh:441
+#: git-rabassa--interactive.sh:441
 #, sh-format
 msgid "Cannot write $fixup_msg"
 msgstr "$fixup_msg를 쓸 수 없습니다"
 
-#: git-rebase--interactive.sh:444
+#: git-rabassa--interactive.sh:444
 msgid "This is a combination of 2 commits."
 msgstr "커밋 2개가 섞인 결과입니다."
 
-#: git-rebase--interactive.sh:485 git-rebase--interactive.sh:528
-#: git-rebase--interactive.sh:531
+#: git-rabassa--interactive.sh:485 git-rabassa--interactive.sh:528
+#: git-rabassa--interactive.sh:531
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr "다음을 적용할(apply) 수 없습니다: $sha1... $rest"
 
-#: git-rebase--interactive.sh:559
+#: git-rabassa--interactive.sh:559
 #, sh-format
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
@@ -14596,75 +14596,75 @@ msgstr ""
 "대부분의 경우 빈 커밋 메시지 때문이거나, 또는 커밋 전 후크가 실패했기\n"
 "때문입니다. 커밋 메시지를 수정하기 전에 이 문제를 먼저 해결해야 합니다."
 
-#: git-rebase--interactive.sh:574
+#: git-rabassa--interactive.sh:574
 #, sh-format
 msgid "Stopped at $sha1_abbrev... $rest"
 msgstr "다음에서 멈춥니다: $sha1_abbrev... $rest"
 
-#: git-rebase--interactive.sh:589
+#: git-rabassa--interactive.sh:589
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
 msgstr "이전 커밋 없이 '$squash_style' 수행할 수 없습니다"
 
-#: git-rebase--interactive.sh:631
+#: git-rabassa--interactive.sh:631
 #, sh-format
 msgid "Executing: $rest"
 msgstr "실행 중: $rest"
 
-#: git-rebase--interactive.sh:639
+#: git-rabassa--interactive.sh:639
 #, sh-format
 msgid "Execution failed: $rest"
 msgstr "실행 실패: $rest"
 
-#: git-rebase--interactive.sh:641
+#: git-rabassa--interactive.sh:641
 msgid "and made changes to the index and/or the working tree"
 msgstr "그리고 인덱스 그리고/또는 작업 폴더에 변경 사항이 있습니다"
 
-#: git-rebase--interactive.sh:643
+#: git-rabassa--interactive.sh:643
 msgid ""
 "You can fix the problem, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "문제를 바로잡고, 다음을 실행하십시오\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
 #. TRANSLATORS: after these lines is a command to be issued by the user
-#: git-rebase--interactive.sh:656
+#: git-rabassa--interactive.sh:656
 #, sh-format
 msgid ""
 "Execution succeeded: $rest\n"
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "실행 성공: $rest\n"
 "하지만 변경 사항을 인덱스 및/또는 작업 폴더에 남겨둡니다.\n"
 "변경 사항을 커밋하거나 스태시에 넣으려면, 다음을 실행하십시오:\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:667
+#: git-rabassa--interactive.sh:667
 #, sh-format
 msgid "Unknown command: $command $sha1 $rest"
 msgstr "알 수 없는 명령: $command $sha1 $rest"
 
-#: git-rebase--interactive.sh:668
-msgid "Please fix this using 'git rebase --edit-todo'."
-msgstr "'git rebase --edit-todo' 명령으로 바로잡으십시오."
+#: git-rabassa--interactive.sh:668
+msgid "Please fix this using 'git rabassa --edit-todo'."
+msgstr "'git rabassa --edit-todo' 명령으로 바로잡으십시오."
 
-#: git-rebase--interactive.sh:703
+#: git-rabassa--interactive.sh:703
 #, sh-format
-msgid "Successfully rebased and updated $head_name."
+msgid "Successfully rabassad and updated $head_name."
 msgstr "성공적으로 리베이스했고 $head_name 업데이트했습니다."
 
-#: git-rebase--interactive.sh:750
+#: git-rabassa--interactive.sh:750
 msgid "Could not skip unnecessary pick commands"
 msgstr "불필요한 빼오기 명령을 건너뛸 수 없습니다"
 
-#: git-rebase--interactive.sh:908
+#: git-rabassa--interactive.sh:908
 #, sh-format
 msgid ""
 "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
@@ -14673,7 +14673,7 @@ msgstr ""
 "경고: 다음 줄에서 해당 SHA-1이 없거나 커밋이 아닙니다:\n"
 " - $line"
 
-#: git-rebase--interactive.sh:941
+#: git-rabassa--interactive.sh:941
 #, sh-format
 msgid ""
 "Warning: the command isn't recognized in the following line:\n"
@@ -14682,11 +14682,11 @@ msgstr ""
 "경고: 다음 줄에서 명령어가 무엇인지 알 수 없습니다:\n"
 " - $line"
 
-#: git-rebase--interactive.sh:980
+#: git-rabassa--interactive.sh:980
 msgid "could not detach HEAD"
 msgstr "HEAD는 분리할 수 없습니다"
 
-#: git-rebase--interactive.sh:1018
+#: git-rabassa--interactive.sh:1018
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
@@ -14694,47 +14694,47 @@ msgstr ""
 "경고: 일부 커밋이 의도치 않게 버려졌을 수도 있습니다.\n"
 "버려진 커밋 (최근에서 과거 순서):"
 
-#: git-rebase--interactive.sh:1026
+#: git-rabassa--interactive.sh:1026
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rabassa.missingCommitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error."
 msgstr ""
 "이 메시지를 보지 않으려면, \"drop\"을 사용해 명시적으로 커밋을 제거하십시"
 "오.\n"
 "\n"
-"'git config rebase.missingCommitsCheck' 명령으로 경고 단계를 바꿀 수 있습니"
+"'git config rabassa.missingCommitsCheck' 명령으로 경고 단계를 바꿀 수 있습니"
 "다.\n"
 "가능한 동작은: ignore, warn, error"
 
-#: git-rebase--interactive.sh:1037
+#: git-rabassa--interactive.sh:1037
 #, sh-format
 msgid ""
-"Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
+"Unrecognized setting $check_level for option rabassa.missingCommitsCheck. "
 "Ignoring."
 msgstr ""
-"rebase.missingCommitsCheck 옵션에 대해 인식할 수 없는 $check_level 설정. 무시"
+"rabassa.missingCommitsCheck 옵션에 대해 인식할 수 없는 $check_level 설정. 무시"
 "합니다."
 
-#: git-rebase--interactive.sh:1054
+#: git-rabassa--interactive.sh:1054
 msgid ""
-"You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
+"You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --"
 "continue'."
 msgstr ""
-"'git rebase --edit-todo' 명령으로 바로잡을 수 있고 'git rebase --continue' 명"
+"'git rabassa --edit-todo' 명령으로 바로잡을 수 있고 'git rabassa --continue' 명"
 "령을 실행합니다."
 
-#: git-rebase--interactive.sh:1055
-msgid "Or you can abort the rebase with 'git rebase --abort'."
-msgstr "아니면 'git rebase --abort' 명령으로 리베이스를 중지할 수도 있습니다."
+#: git-rabassa--interactive.sh:1055
+msgid "Or you can abort the rabassa with 'git rabassa --abort'."
+msgstr "아니면 'git rabassa --abort' 명령으로 리베이스를 중지할 수도 있습니다."
 
-#: git-rebase--interactive.sh:1079
+#: git-rabassa--interactive.sh:1079
 msgid "Could not remove CHERRY_PICK_HEAD"
 msgstr "CHERRY_PICK_HEAD를 제거할 수 없습니다"
 
-#: git-rebase--interactive.sh:1084
+#: git-rabassa--interactive.sh:1084
 #, sh-format
 msgid ""
 "You have staged changes in your working tree.\n"
@@ -14749,7 +14749,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "작업 폴더에 스테이징한 변경 사항이 있습니다.\n"
 "이 변경 사항을 이전 커밋에 합치려면,\n"
@@ -14763,81 +14763,81 @@ msgstr ""
 "\n"
 "어떤 경우이든, 마친 다음에 다음 명령으로 계속합니다:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
-#: git-rebase--interactive.sh:1101
+#: git-rabassa--interactive.sh:1101
 msgid "Error trying to find the author identity to amend commit"
 msgstr "커밋을 수정한 작성자 신원을 찾는데 오류"
 
-#: git-rebase--interactive.sh:1106
+#: git-rabassa--interactive.sh:1106
 msgid ""
 "You have uncommitted changes in your working tree. Please commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
 "작업 폴더에 커밋하지 않은 변경 사항이 있습니다. 이 사항을 먼저\n"
-"커밋하고 'git rebase --continue' 명령을 다시 실행하십시오."
+"커밋하고 'git rabassa --continue' 명령을 다시 실행하십시오."
 
-#: git-rebase--interactive.sh:1111 git-rebase--interactive.sh:1115
+#: git-rabassa--interactive.sh:1111 git-rabassa--interactive.sh:1115
 msgid "Could not commit staged changes."
 msgstr "스테이징한 변경 사항은 커밋할 수 없습니다."
 
-#: git-rebase--interactive.sh:1139
+#: git-rabassa--interactive.sh:1139
 msgid ""
 "\n"
-"You are editing the todo file of an ongoing interactive rebase.\n"
-"To continue rebase after editing, run:\n"
-"    git rebase --continue\n"
+"You are editing the todo file of an ongoing interactive rabassa.\n"
+"To continue rabassa after editing, run:\n"
+"    git rabassa --continue\n"
 "\n"
 msgstr ""
 "\n"
 "진행 중인 대화형 리베이스의 TODO 파일을 편집하는 중입니다.\n"
 "편집 뒤에 리베이스를 계속하려면 다음을 실행하십시오:\n"
-"    git rebase --continue\n"
+"    git rabassa --continue\n"
 "\n"
 
-#: git-rebase--interactive.sh:1147 git-rebase--interactive.sh:1305
+#: git-rabassa--interactive.sh:1147 git-rabassa--interactive.sh:1305
 msgid "Could not execute editor"
 msgstr "편집기를 실행할 수 없습니다"
 
-#: git-rebase--interactive.sh:1160
+#: git-rabassa--interactive.sh:1160
 #, sh-format
 msgid "Could not checkout $switch_to"
 msgstr "$switch_to를 체크아웃할 수 없습니다"
 
-#: git-rebase--interactive.sh:1165
+#: git-rabassa--interactive.sh:1165
 msgid "No HEAD?"
 msgstr "HEAD가 없습니다?"
 
-#: git-rebase--interactive.sh:1166
+#: git-rabassa--interactive.sh:1166
 #, sh-format
 msgid "Could not create temporary $state_dir"
 msgstr "임시로 $state_dir 디렉터리를 만들 수 없습니다"
 
-#: git-rebase--interactive.sh:1168
+#: git-rabassa--interactive.sh:1168
 msgid "Could not mark as interactive"
 msgstr "대화형으로 표시할 수 없습니다."
 
-#: git-rebase--interactive.sh:1178 git-rebase--interactive.sh:1183
+#: git-rabassa--interactive.sh:1178 git-rabassa--interactive.sh:1183
 msgid "Could not init rewritten commits"
 msgstr "다시 작성된 커밋을 초기화할 수 없습니다"
 
-#: git-rebase--interactive.sh:1283
+#: git-rabassa--interactive.sh:1283
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 msgstr[0] "리베이스 $shortrevisions, $shortonto 위로 (명령 $todocount개)"
 
-#: git-rebase--interactive.sh:1288
+#: git-rabassa--interactive.sh:1288
 msgid ""
 "\n"
-"However, if you remove everything, the rebase will be aborted.\n"
+"However, if you remove everything, the rabassa will be aborted.\n"
 "\n"
 msgstr ""
 "\n"
 "하지만 모두 제거할 경우, 리베이스를 중지합니다.\n"
 "\n"
 
-#: git-rebase--interactive.sh:1295
+#: git-rabassa--interactive.sh:1295
 msgid "Note that empty commits are commented out"
 msgstr "단 빈 커밋은 주석 처리되었습니다."
 
@@ -14857,7 +14857,7 @@ msgid "fatal: $program_name cannot be used without a working tree."
 msgstr "치명적: $program_name은 작업 폴더 없이 사용할 수 없습니다."
 
 #: git-sh-setup.sh:220
-msgid "Cannot rebase: You have unstaged changes."
+msgid "Cannot rabassa: You have unstaged changes."
 msgstr "리베이스할 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:223
@@ -14865,7 +14865,7 @@ msgid "Cannot rewrite branches: You have unstaged changes."
 msgstr "브랜치를 다시 쓸 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:226
-msgid "Cannot pull with rebase: You have unstaged changes."
+msgid "Cannot pull with rabassa: You have unstaged changes."
 msgstr ""
 "리베이스로 풀을 할 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
@@ -14875,11 +14875,11 @@ msgid "Cannot $action: You have unstaged changes."
 msgstr "$action 할 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:242
-msgid "Cannot rebase: Your index contains uncommitted changes."
+msgid "Cannot rabassa: Your index contains uncommitted changes."
 msgstr "리베이스할 수 없습니다: 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:245
-msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+msgid "Cannot pull with rabassa: Your index contains uncommitted changes."
 msgstr ""
 "리베이스로 풀을 할 수 없습니다: 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 

@@ -3,14 +3,14 @@ To:	git@vger.kernel.org
 Cc:	Petr Baudis <pasky@suse.cz>, Linus Torvalds <torvalds@osdl.org>
 Subject: Re: sending changesets from the middle of a git tree
 Date:	Sun, 14 Aug 2005 18:37:39 -0700
-Abstract: In this article, JC talks about how he rebases the
+Abstract: In this article, JC talks about how he rabassas the
  public "pu" branch using the core Git tools when he updates
- the "master" branch, and how "rebase" works.  Also discussed
+ the "master" branch, and how "rabassa" works.  Also discussed
  is how this applies to individual developers who sends patches
  upstream.
 Content-type: text/asciidoc
 
-How to rebase from an internal branch
+How to rabassa from an internal branch
 =====================================
 
 --------------------------------------
@@ -66,16 +66,16 @@ at "master" branch being the "maintainer" branch, and "pu"
 branch being the "contributor" branch.  Your work started at the
 tip of the "maintainer" branch some time ago, you made a lot of
 progress in the meantime, and now the maintainer branch has some
-other commits you do not have yet.  And "git rebase" was written
+other commits you do not have yet.  And "git rabassa" was written
 with the explicit purpose of helping to maintain branches like
 "pu".  You _could_ merge master to pu and keep going, but if you
 eventually want to cherrypick and merge some but not necessarily
 all changes back to the master branch, it often makes later
-operations for _you_ easier if you rebase (i.e. carry forward
-your changes) "pu" rather than merge.  So I ran "git rebase":
+operations for _you_ easier if you rabassa (i.e. carry forward
+your changes) "pu" rather than merge.  So I ran "git rabassa":
 
     $ git checkout pu
-    $ git rebase master pu
+    $ git rabassa master pu
 
 What this does is to pick all the commits since the current
 branch (note that I now am on "pu" branch) forked from the
@@ -95,7 +95,7 @@ anymore, so after doing this you will have dangling commit if
 you ran fsck-cache, which is normal.  After testing "pu", you
 can run "git prune" to get rid of those original three commits.
 
-While I am talking about "git rebase", I should talk about how
+While I am talking about "git rabassa", I should talk about how
 to do cherrypicking using only the core Git tools.
 
 Let's go back to the earlier picture, with different labels.
@@ -140,12 +140,12 @@ You fetch from upstream, but not merge.
 
 This leaves the updated upstream head in .git/FETCH_HEAD but
 does not touch your .git/HEAD or .git/refs/heads/master.
-You run "git rebase" now.
+You run "git rabassa" now.
 
-    $ git rebase FETCH_HEAD master
+    $ git rabassa FETCH_HEAD master
 
-Earlier, I said that rebase applies all the commits from your
-branch on top of the upstream head.  Well, I lied.  "git rebase"
+Earlier, I said that rabassa applies all the commits from your
+branch on top of the upstream head.  Well, I lied.  "git rabassa"
 is a bit smarter than that and notices that #2 and #3 need not
 be applied, so it only applies #1.  The commit ancestry graph
 becomes something like this:

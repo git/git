@@ -2601,8 +2601,8 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
-msgstr "у вас имеются проиндексированные изменения в рабочем каталоге. Если эти изменения должны быть объеденены с предыдущим коммитом, то запустите:\n\n  git commit --amend %s\n\nЕсли же они должны быть помещены в новый коммит, то запустите:\n\n  git commit %s\n\nВ любом случае, после того как вы закончите, продолжить перемещение можно выполнив:\n\n  git rebase --continue\n"
+"  git rabassa --continue\n"
+msgstr "у вас имеются проиндексированные изменения в рабочем каталоге. Если эти изменения должны быть объеденены с предыдущим коммитом, то запустите:\n\n  git commit --amend %s\n\nЕсли же они должны быть помещены в новый коммит, то запустите:\n\n  git commit %s\n\nВ любом случае, после того как вы закончите, продолжить перемещение можно выполнив:\n\n  git rabassa --continue\n"
 
 #: sequencer.c:567
 #, c-format
@@ -3494,8 +3494,8 @@ msgstr[2] "Следующая команда для выполнения (%d к�
 msgstr[3] "Следующая команда для выполнения (%d команд осталось):"
 
 #: wt-status.c:1202
-msgid "  (use \"git rebase --edit-todo\" to view and edit)"
-msgstr "  (используйте «git rebase --edit-todo», чтобы просмотреть и изменить)"
+msgid "  (use \"git rabassa --edit-todo\" to view and edit)"
+msgstr "  (используйте «git rabassa --edit-todo», чтобы просмотреть и изменить)"
 
 #: wt-status.c:1215
 #, c-format
@@ -3507,20 +3507,20 @@ msgid "You are currently rebasing."
 msgstr "Вы сейчас перемещаете ветку."
 
 #: wt-status.c:1234
-msgid "  (fix conflicts and then run \"git rebase --continue\")"
-msgstr "  (разрешите конфликты, затем запустите «git rebase --continue»)"
+msgid "  (fix conflicts and then run \"git rabassa --continue\")"
+msgstr "  (разрешите конфликты, затем запустите «git rabassa --continue»)"
 
 #: wt-status.c:1236
-msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  (используйте «git rebase --skip», чтобы пропустить этот патч)"
+msgid "  (use \"git rabassa --skip\" to skip this patch)"
+msgstr "  (используйте «git rabassa --skip», чтобы пропустить этот патч)"
 
 #: wt-status.c:1238
-msgid "  (use \"git rebase --abort\" to check out the original branch)"
-msgstr "  (используйте «git rebase --abort», чтобы перейти на оригинальную ветку)"
+msgid "  (use \"git rabassa --abort\" to check out the original branch)"
+msgstr "  (используйте «git rabassa --abort», чтобы перейти на оригинальную ветку)"
 
 #: wt-status.c:1244
-msgid "  (all conflicts fixed: run \"git rebase --continue\")"
-msgstr "  (все конфликты разрешены: запустите «git rebase --continue»)"
+msgid "  (all conflicts fixed: run \"git rabassa --continue\")"
+msgstr "  (все конфликты разрешены: запустите «git rabassa --continue»)"
 
 #: wt-status.c:1248
 #, c-format
@@ -3529,12 +3529,12 @@ msgid ""
 msgstr "Вы сейчас разделяете коммит при перемещении ветки  «%s» над «%s»."
 
 #: wt-status.c:1253
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a commit during a rabassa."
 msgstr "Вы сейчас разделяете коммит при перемещении ветки."
 
 #: wt-status.c:1256
-msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
-msgstr "(Как только ваш рабочий каталог будет чистый, запустите «git rebase --continue»)"
+msgid "  (Once your working directory is clean, run \"git rabassa --continue\")"
+msgstr "(Как только ваш рабочий каталог будет чистый, запустите «git rabassa --continue»)"
 
 #: wt-status.c:1260
 #, c-format
@@ -3542,7 +3542,7 @@ msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr "Вы сейчас редактируете коммит при перемещении ветки  «%s» над «%s»."
 
 #: wt-status.c:1265
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a commit during a rabassa."
 msgstr "Вы сейчас редактируете коммит при перемещении ветки."
 
 #: wt-status.c:1268
@@ -3550,8 +3550,8 @@ msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr "  (используйте «git commit --amend», чтобы исправить текущий коммит)"
 
 #: wt-status.c:1270
-msgid "  (use \"git rebase --continue\" once you are satisfied with your changes)"
-msgstr "  (используйте «git rebase --continue», когда будете довольны изменениями)"
+msgid "  (use \"git rabassa --continue\" once you are satisfied with your changes)"
+msgstr "  (используйте «git rabassa --continue», когда будете довольны изменениями)"
 
 #: wt-status.c:1280
 #, c-format
@@ -3605,11 +3605,11 @@ msgid "On branch "
 msgstr "На ветке "
 
 #: wt-status.c:1530
-msgid "interactive rebase in progress; onto "
+msgid "interactive rabassa in progress; onto "
 msgstr "интерактивное перемещение в процессе; над "
 
 #: wt-status.c:1532
-msgid "rebase in progress; onto "
+msgid "rabassa in progress; onto "
 msgstr "перемещение в процессе; над "
 
 #: wt-status.c:1537
@@ -3719,7 +3719,7 @@ msgstr "позади"
 msgid "ahead "
 msgstr "впереди "
 
-#. TRANSLATORS: the action is e.g. "pull with rebase"
+#. TRANSLATORS: the action is e.g. "pull with rabassa"
 #: wt-status.c:2270
 #, c-format
 msgid "cannot %s: You have unstaged changes."
@@ -4214,8 +4214,8 @@ msgid "GPG-sign commits"
 msgstr "подписать коммиты с помощью GPG"
 
 #: builtin/am.c:2319
-msgid "(internal use for git-rebase)"
-msgstr "(внутреннее использование для git-rebase)"
+msgid "(internal use for git-rabassa)"
+msgstr "(внутреннее использование для git-rabassa)"
 
 #: builtin/am.c:2334
 msgid ""
@@ -4229,7 +4229,7 @@ msgstr "сбой чтения индекса"
 
 #: builtin/am.c:2356
 #, c-format
-msgid "previous rebase directory %s still exists but mbox given."
+msgid "previous rabassa directory %s still exists but mbox given."
 msgstr "предыдущий каталог перемещения %s еще существует, но передан mbox."
 
 #: builtin/am.c:2380
@@ -4627,7 +4627,7 @@ msgstr "(нет ветки)"
 
 #: builtin/branch.c:544
 #, c-format
-msgid "Branch %s is being rebased at %s"
+msgid "Branch %s is being rabassad at %s"
 msgstr "Производится перемещение ветки %s на %s"
 
 #: builtin/branch.c:548
@@ -9881,7 +9881,7 @@ msgid "allow fast-forward"
 msgstr "разрешить перемотку вперед"
 
 #: builtin/pull.c:157
-msgid "automatically stash/stash pop before and after rebase"
+msgid "automatically stash/stash pop before and after rabassa"
 msgstr "автоматически выполнять stash/stash pop до и после перемещения"
 
 #: builtin/pull.c:173
@@ -9927,7 +9927,7 @@ msgid "You are not currently on a branch."
 msgstr "Вы сейчас ни на одной из веток."
 
 #: builtin/pull.c:410 builtin/pull.c:425 git-parse-remote.sh:79
-msgid "Please specify which branch you want to rebase against."
+msgid "Please specify which branch you want to rabassa against."
 msgstr "Пожалуйста, укажите на какую ветку вы хотите переместить изменения."
 
 #: builtin/pull.c:412 builtin/pull.c:427 git-parse-remote.sh:82
@@ -9943,7 +9943,7 @@ msgstr "Для дополнительной информации, смотрит
 msgid "<remote>"
 msgstr "<внешний-репозиторий>"
 
-#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rebase.sh:451
+#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rabassa.sh:451
 #: git-parse-remote.sh:65
 msgid "<branch>"
 msgstr "<ветка>"
@@ -9965,19 +9965,19 @@ msgid ""
 msgstr "Ваша конфигурация указывает, что нужно слить изменения со ссылкой\n«%s» из внешнего репозитория, но такая ссылка не была получена."
 
 #: builtin/pull.c:754
-msgid "ignoring --verify-signatures for rebase"
+msgid "ignoring --verify-signatures for rabassa"
 msgstr "игнорирование --verify-signatures при перемещении"
 
 #: builtin/pull.c:801
-msgid "--[no-]autostash option is only valid with --rebase."
-msgstr "--[no-]autostash можно использовать только вместе с --rebase."
+msgid "--[no-]autostash option is only valid with --rabassa."
+msgstr "--[no-]autostash можно использовать только вместе с --rabassa."
 
 #: builtin/pull.c:809
 msgid "Updating an unborn branch with changes added to the index."
 msgstr "Обновление еще не начавшейся ветки с изменениями, добавленными в индекс."
 
 #: builtin/pull.c:812
-msgid "pull with rebase"
+msgid "pull with rabassa"
 msgstr "получение с перемещением"
 
 #: builtin/pull.c:813
@@ -10008,7 +10008,7 @@ msgid "Cannot merge multiple branches into empty head."
 msgstr "Нельзя слить несколько веток в пустой указатель на ветку."
 
 #: builtin/pull.c:862
-msgid "Cannot rebase onto multiple branches."
+msgid "Cannot rabassa onto multiple branches."
 msgstr "Невозможно переместить над несколькими ветками."
 
 #: builtin/push.c:16
@@ -10598,17 +10598,17 @@ msgstr " ???"
 
 #: builtin/remote.c:955
 #, c-format
-msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
+msgid "invalid branch.%s.merge; cannot rabassa onto > 1 branch"
 msgstr "неправильный параметр конфигурации branch.%s.merge; невозможно переместить более чем над 1 веткой"
 
 #: builtin/remote.c:963
 #, c-format
-msgid "rebases interactively onto remote %s"
+msgid "rabassas interactively onto remote %s"
 msgstr "перемещается интерактивно над внешней веткой %s"
 
 #: builtin/remote.c:964
 #, c-format
-msgid "rebases onto remote %s"
+msgid "rabassas onto remote %s"
 msgstr "перемещается над внешней веткой %s"
 
 #: builtin/remote.c:967
@@ -11788,8 +11788,8 @@ msgid "path into the working tree, across nested submodule boundaries"
 msgstr "путь в рабочем каталоге, в пределах границ подмодуля"
 
 #: builtin/submodule--helper.c:952
-msgid "rebase, merge, checkout or none"
-msgstr "rebase, merge, checkout или none"
+msgid "rabassa, merge, checkout or none"
+msgstr "rabassa, merge, checkout или none"
 
 #: builtin/submodule--helper.c:956
 msgid "Create a shallow clone truncated to the specified number of revisions"
@@ -12839,131 +12839,131 @@ msgstr "Попытка простого слияния с $pretty_name"
 msgid "Simple merge did not work, trying automatic merge."
 msgstr "Простое слияние не удалось, попытка автоматического слияния."
 
-#: git-rebase.sh:56
+#: git-rabassa.sh:56
 msgid ""
-"When you have resolved this problem, run \"git rebase --continue\".\n"
-"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
-"To check out the original branch and stop rebasing, run \"git rebase --abort\"."
-msgstr "Когда вы разрешите этот конфликт, запустите «git rebase --continue».\nЕсли вы хотите пропустить этот патч, то запустите «git rebase --skip».\nЧтобы перейти на оригинальную ветку и остановить перемещение, запустите «git rebase --abort»."
+"When you have resolved this problem, run \"git rabassa --continue\".\n"
+"If you prefer to skip this patch, run \"git rabassa --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rabassa --abort\"."
+msgstr "Когда вы разрешите этот конфликт, запустите «git rabassa --continue».\nЕсли вы хотите пропустить этот патч, то запустите «git rabassa --skip».\nЧтобы перейти на оригинальную ветку и остановить перемещение, запустите «git rabassa --abort»."
 
-#: git-rebase.sh:156 git-rebase.sh:395
+#: git-rabassa.sh:156 git-rabassa.sh:395
 #, sh-format
 msgid "Could not move back to $head_name"
 msgstr "Не удалось перейти назад на $head_name"
 
-#: git-rebase.sh:167
+#: git-rabassa.sh:167
 msgid "Applied autostash."
 msgstr "Применено автоматическое прятанье."
 
-#: git-rebase.sh:170
+#: git-rabassa.sh:170
 #, sh-format
 msgid "Cannot store $stash_sha1"
 msgstr "Не удалось сохранить $stash_sha1"
 
-#: git-rebase.sh:171
+#: git-rabassa.sh:171
 msgid ""
 "Applying autostash resulted in conflicts.\n"
 "Your changes are safe in the stash.\n"
 "You can run \"git stash pop\" or \"git stash drop\" at any time.\n"
 msgstr "Применение автоматического прятанья вызвало конфликты.\nВаши изменения спрятаны и в безопасности.\nВы можете выполнить «git stash pop» или «git stash drop» в любой момент.\n"
 
-#: git-rebase.sh:210
-msgid "The pre-rebase hook refused to rebase."
-msgstr "Перехватчик pre-rebase отказал в перемещении."
+#: git-rabassa.sh:210
+msgid "The pre-rabassa hook refused to rabassa."
+msgstr "Перехватчик pre-rabassa отказал в перемещении."
 
-#: git-rebase.sh:215
-msgid "It looks like git-am is in progress. Cannot rebase."
+#: git-rabassa.sh:215
+msgid "It looks like git-am is in progress. Cannot rabassa."
 msgstr "Похоже, git-am выполняется. Перемещение невозможно."
 
-#: git-rebase.sh:356
-msgid "No rebase in progress?"
+#: git-rabassa.sh:356
+msgid "No rabassa in progress?"
 msgstr "Нет перемещения в процессе?"
 
-#: git-rebase.sh:367
-msgid "The --edit-todo action can only be used during interactive rebase."
+#: git-rabassa.sh:367
+msgid "The --edit-todo action can only be used during interactive rabassa."
 msgstr "Действие --edit-todo может использоваться только при интерактивном перемещении."
 
-#: git-rebase.sh:374
+#: git-rabassa.sh:374
 msgid "Cannot read HEAD"
 msgstr "Не удалось прочитать HEAD"
 
-#: git-rebase.sh:377
+#: git-rabassa.sh:377
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
 msgstr "Вы должны отредактировать все\nконфликты слияния, а потом пометить\nих как разрешенные с помощью git add"
 
-#: git-rebase.sh:414
+#: git-rabassa.sh:414
 #, sh-format
 msgid ""
 "It seems that there is already a $state_dir_base directory, and\n"
-"I wonder if you are in the middle of another rebase.  If that is the\n"
+"I wonder if you are in the middle of another rabassa.  If that is the\n"
 "case, please try\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "If that is not the case, please\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "and run me again.  I am stopping in case you still have something\n"
 "valuable there."
-msgstr "Похоже, каталог $state_dir_base уже существует и я предполагаю, что вы в процессе другого перемещения.  Если это так, попробуйте\n\t$cmd_live_rebase\nЕсли нет\n\t$cmd_clear_stale_rebase\nи запустите меня снова.  Я останавливаюсь, чтобы вы не потеряли что-то важное."
+msgstr "Похоже, каталог $state_dir_base уже существует и я предполагаю, что вы в процессе другого перемещения.  Если это так, попробуйте\n\t$cmd_live_rabassa\nЕсли нет\n\t$cmd_clear_stale_rabassa\nи запустите меня снова.  Я останавливаюсь, чтобы вы не потеряли что-то важное."
 
-#: git-rebase.sh:465
+#: git-rabassa.sh:465
 #, sh-format
 msgid "invalid upstream $upstream_name"
 msgstr "недействительная вышестоящая ветка $upstream_name"
 
-#: git-rebase.sh:489
+#: git-rabassa.sh:489
 #, sh-format
 msgid "$onto_name: there are more than one merge bases"
 msgstr "$onto_name: имеется больше одной базы слияния"
 
-#: git-rebase.sh:492 git-rebase.sh:496
+#: git-rabassa.sh:492 git-rabassa.sh:496
 #, sh-format
 msgid "$onto_name: there is no merge base"
 msgstr "$onto_name: нет базы слияния"
 
-#: git-rebase.sh:501
+#: git-rabassa.sh:501
 #, sh-format
 msgid "Does not point to a valid commit: $onto_name"
 msgstr "Не указывает на действительный коммит: $onto_name"
 
-#: git-rebase.sh:524
+#: git-rabassa.sh:524
 #, sh-format
 msgid "fatal: no such branch: $branch_name"
 msgstr "критическая ошибка: нет такой ветки: $branch_name"
 
-#: git-rebase.sh:557
+#: git-rabassa.sh:557
 msgid "Cannot autostash"
 msgstr "Не удалось выполнить автоматическое прятанье"
 
-#: git-rebase.sh:562
+#: git-rabassa.sh:562
 #, sh-format
 msgid "Created autostash: $stash_abbrev"
 msgstr "Изменения автоматически спрятаны: $stash_abbrev"
 
-#: git-rebase.sh:566
+#: git-rabassa.sh:566
 msgid "Please commit or stash them."
 msgstr "Сделайте коммит или спрячьте их."
 
-#: git-rebase.sh:586
+#: git-rabassa.sh:586
 #, sh-format
 msgid "Current branch $branch_name is up to date."
 msgstr "Текущая ветка $branch_name уже свежая."
 
-#: git-rebase.sh:590
+#: git-rabassa.sh:590
 #, sh-format
-msgid "Current branch $branch_name is up to date, rebase forced."
+msgid "Current branch $branch_name is up to date, rabassa forced."
 msgstr "Текущая ветка $branch_name уже свежая, принудительное перемещение."
 
-#: git-rebase.sh:601
+#: git-rabassa.sh:601
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "Изменения от $mb до $onto:"
 
-#: git-rebase.sh:610
+#: git-rabassa.sh:610
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr "Сначала перематываем указатель текущего коммита, чтобы применить ваши изменения поверх него…"
 
-#: git-rebase.sh:620
+#: git-rabassa.sh:620
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "Перемотана вперед $branch_name до $onto_name."
@@ -13286,12 +13286,12 @@ msgstr "Подмодуль по пути «$displaypath»: забрано сос
 
 #: git-submodule.sh:668
 #, sh-format
-msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
+msgid "Unable to rabassa '$sha1' in submodule path '$displaypath'"
 msgstr "Не удалось переместить «$sha1» для подмодуля по пути «$displaypath»"
 
 #: git-submodule.sh:669
 #, sh-format
-msgid "Submodule path '$displaypath': rebased into '$sha1'"
+msgid "Submodule path '$displaypath': rabassad into '$sha1'"
 msgstr "Подмодуль по пути «$displaypath»: перемещен над «$sha1»"
 
 #: git-submodule.sh:674
@@ -13358,12 +13358,12 @@ msgstr "Синхронизация url для подмодуля «$displaypath�
 msgid "See git-${cmd}(1) for details."
 msgstr "Для дополнительной информации, смотрите git-${cmd}(1)."
 
-#: git-rebase--interactive.sh:140
+#: git-rabassa--interactive.sh:140
 #, sh-format
 msgid "Rebasing ($new_count/$total)"
 msgstr "Перемещение ($new_count/$total)"
 
-#: git-rebase--interactive.sh:156
+#: git-rabassa--interactive.sh:156
 msgid ""
 "\n"
 "Commands:\n"
@@ -13378,19 +13378,19 @@ msgid ""
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr "\nКоманды:\n p, pick = использовать коммит\n r, reword = использовать коммит, но изменить сообщение коммита\n e, edit = использовать коммит, но остановиться для внесения правок\n s, squash = использовать коммит, но объединить его с предыдущим коммитом\n f, fixup = как «squash», но отбросить сообщение этого коммита\n x, exec = выполнить команду (остаток строки) с помощью командной оболочки\n d, drop = удалить коммит\n\nЭти строки могут быть перемещены; выполняются по очереди сверху вниз.\n"
 
-#: git-rebase--interactive.sh:171
+#: git-rabassa--interactive.sh:171
 msgid ""
 "\n"
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
 msgstr "\nНе удаляйте строки. Используйте «drop», чтобы явно удалить коммит.\n"
 
-#: git-rebase--interactive.sh:175
+#: git-rabassa--interactive.sh:175
 msgid ""
 "\n"
 "If you remove a line here THAT COMMIT WILL BE LOST.\n"
 msgstr "\nЕсли вы удалите строку здесь, то УКАЗАННЫЙ КОММИТ БУДЕТ УТЕРЯН.\n"
 
-#: git-rebase--interactive.sh:211
+#: git-rabassa--interactive.sh:211
 #, sh-format
 msgid ""
 "You can amend the commit now, with\n"
@@ -13399,64 +13399,64 @@ msgid ""
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
-"\tgit rebase --continue"
-msgstr "Теперь вы можете исправить коммит с помощью\n\n\tgit commit --amend $gpg_sign_opt_quoted\n\nКак только вы будете довольны результатом, запустите\n\n\tgit rebase --continue"
+"\tgit rabassa --continue"
+msgstr "Теперь вы можете исправить коммит с помощью\n\n\tgit commit --amend $gpg_sign_opt_quoted\n\nКак только вы будете довольны результатом, запустите\n\n\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:236
+#: git-rabassa--interactive.sh:236
 #, sh-format
 msgid "$sha1: not a commit that can be picked"
 msgstr "$sha1: не является коммитом, который можно взять"
 
-#: git-rebase--interactive.sh:275
+#: git-rabassa--interactive.sh:275
 #, sh-format
 msgid "Invalid commit name: $sha1"
 msgstr "Недопустимое имя коммита: $sha1"
 
-#: git-rebase--interactive.sh:317
+#: git-rabassa--interactive.sh:317
 msgid "Cannot write current commit's replacement sha1"
 msgstr "Не удалось записать замену sha1 текущего коммита"
 
-#: git-rebase--interactive.sh:369
+#: git-rabassa--interactive.sh:369
 #, sh-format
 msgid "Fast-forward to $sha1"
 msgstr "Перемотка вперед до $sha1"
 
-#: git-rebase--interactive.sh:371
+#: git-rabassa--interactive.sh:371
 #, sh-format
 msgid "Cannot fast-forward to $sha1"
 msgstr "Не удалось перемотать вперед до $sha1"
 
-#: git-rebase--interactive.sh:380
+#: git-rabassa--interactive.sh:380
 #, sh-format
 msgid "Cannot move HEAD to $first_parent"
 msgstr "Не удалось переместить HEAD на $first_parent"
 
-#: git-rebase--interactive.sh:385
+#: git-rabassa--interactive.sh:385
 #, sh-format
 msgid "Refusing to squash a merge: $sha1"
 msgstr "Нельзя уплотнить слияние: $sha1"
 
-#: git-rebase--interactive.sh:399
+#: git-rabassa--interactive.sh:399
 #, sh-format
 msgid "Error redoing merge $sha1"
 msgstr "Ошибка при повторении слияния $sha1"
 
-#: git-rebase--interactive.sh:407
+#: git-rabassa--interactive.sh:407
 #, sh-format
 msgid "Could not pick $sha1"
 msgstr "Не удалось взять $sha1"
 
-#: git-rebase--interactive.sh:416
+#: git-rabassa--interactive.sh:416
 #, sh-format
 msgid "This is the commit message #${n}:"
 msgstr "Это сообщение коммита номер #${n}:"
 
-#: git-rebase--interactive.sh:421
+#: git-rabassa--interactive.sh:421
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
 msgstr "Сообщение коммита номер #${n} будет пропущено:"
 
-#: git-rebase--interactive.sh:432
+#: git-rabassa--interactive.sh:432
 #, sh-format
 msgid "This is a combination of $count commit."
 msgid_plural "This is a combination of $count commits."
@@ -13465,26 +13465,26 @@ msgstr[1] "Это объединение $count коммитов"
 msgstr[2] "Это объединение $count коммитов"
 msgstr[3] "Это объединение $count коммитов"
 
-#: git-rebase--interactive.sh:440
+#: git-rabassa--interactive.sh:440
 #, sh-format
 msgid "Cannot write $fixup_msg"
 msgstr "Не удалось записать $fixup_msg"
 
-#: git-rebase--interactive.sh:443
+#: git-rabassa--interactive.sh:443
 msgid "This is a combination of 2 commits."
 msgstr "Это объединение 2 коммитов"
 
-#: git-rebase--interactive.sh:444
+#: git-rabassa--interactive.sh:444
 msgid "This is the 1st commit message:"
 msgstr "Это 1-е сообщение коммита:"
 
-#: git-rebase--interactive.sh:484 git-rebase--interactive.sh:527
-#: git-rebase--interactive.sh:530
+#: git-rabassa--interactive.sh:484 git-rabassa--interactive.sh:527
+#: git-rabassa--interactive.sh:530
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr "Не удалось применить $sha1… $rest"
 
-#: git-rebase--interactive.sh:558
+#: git-rabassa--interactive.sh:558
 #, sh-format
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
@@ -13493,120 +13493,120 @@ msgid ""
 "you are able to reword the commit."
 msgstr "Не удолось исправить коммит после успешного перехода на $sha1… $rest\nЭто произошло, скорее всего, из-за пустого сообщения коммита или из-за перехватчика перед коммитом. Если же это произошло из-за перехватчика перед коммитом, то вам нужно решить с ним проблему и повторить попытку снова."
 
-#: git-rebase--interactive.sh:573
+#: git-rabassa--interactive.sh:573
 #, sh-format
 msgid "Stopped at $sha1_abbrev... $rest"
 msgstr "Остановлено на $sha1_abbrev… $rest"
 
-#: git-rebase--interactive.sh:588
+#: git-rabassa--interactive.sh:588
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
 msgstr "Нельзя сделать «$squash_style» без указания предыдущего коммита"
 
-#: git-rebase--interactive.sh:630
+#: git-rabassa--interactive.sh:630
 #, sh-format
 msgid "Executing: $rest"
 msgstr "Выполнение: $rest"
 
-#: git-rebase--interactive.sh:638
+#: git-rabassa--interactive.sh:638
 #, sh-format
 msgid "Execution failed: $rest"
 msgstr "Не удалось выполнить: $rest"
 
-#: git-rebase--interactive.sh:640
+#: git-rabassa--interactive.sh:640
 msgid "and made changes to the index and/or the working tree"
 msgstr "и были сделаны изменения в индексе и/или в рабочем каталоге"
 
-#: git-rebase--interactive.sh:642
+#: git-rabassa--interactive.sh:642
 msgid ""
 "You can fix the problem, and then run\n"
 "\n"
-"\tgit rebase --continue"
-msgstr "Вы можете исправить ошибку, а затем запустить\n\n\tgit rebase --continue"
+"\tgit rabassa --continue"
+msgstr "Вы можете исправить ошибку, а затем запустить\n\n\tgit rabassa --continue"
 
 #. TRANSLATORS: after these lines is a command to be issued by the user
-#: git-rebase--interactive.sh:655
+#: git-rabassa--interactive.sh:655
 #, sh-format
 msgid ""
 "Execution succeeded: $rest\n"
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"\tgit rebase --continue"
-msgstr "Успешное выполнение: $rest\nно остались изменения в индексе и/или в рабочем каталоге\nСделайте коммит или спрячьте ваши изменения, а затем выполните\n\n\tgit rebase --continue"
+"\tgit rabassa --continue"
+msgstr "Успешное выполнение: $rest\nно остались изменения в индексе и/или в рабочем каталоге\nСделайте коммит или спрячьте ваши изменения, а затем выполните\n\n\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:666
+#: git-rabassa--interactive.sh:666
 #, sh-format
 msgid "Unknown command: $command $sha1 $rest"
 msgstr "Неопознанная команда: $command $sha1 $rest"
 
-#: git-rebase--interactive.sh:667
-msgid "Please fix this using 'git rebase --edit-todo'."
-msgstr "Пожалуйста исправьте это с помощью «git rebase --edit-todo»."
+#: git-rabassa--interactive.sh:667
+msgid "Please fix this using 'git rabassa --edit-todo'."
+msgstr "Пожалуйста исправьте это с помощью «git rabassa --edit-todo»."
 
-#: git-rebase--interactive.sh:702
+#: git-rabassa--interactive.sh:702
 #, sh-format
-msgid "Successfully rebased and updated $head_name."
+msgid "Successfully rabassad and updated $head_name."
 msgstr "Успешно перебазирован и обновлён $head_name."
 
-#: git-rebase--interactive.sh:749
+#: git-rabassa--interactive.sh:749
 msgid "Could not skip unnecessary pick commands"
 msgstr "Не удалось пропустить ненужные команды отбора (pick)"
 
-#: git-rebase--interactive.sh:907
+#: git-rabassa--interactive.sh:907
 #, sh-format
 msgid ""
 "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
 " - $line"
 msgstr "Внимание: не найден SHA-1 или он не указывает на коммит. На строке:\n - $line"
 
-#: git-rebase--interactive.sh:940
+#: git-rabassa--interactive.sh:940
 #, sh-format
 msgid ""
 "Warning: the command isn't recognized in the following line:\n"
 " - $line"
 msgstr "Внимание: команда не распознана на строке:\n - $line"
 
-#: git-rebase--interactive.sh:979
+#: git-rabassa--interactive.sh:979
 msgid "could not detach HEAD"
 msgstr "не удалось отделить HEAD"
 
-#: git-rebase--interactive.sh:1017
+#: git-rabassa--interactive.sh:1017
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
 msgstr "Внимание: некоторые коммиты могли быть отброшены по ошибке.\nОтброшенные коммиты (от новых к старым):"
 
-#: git-rebase--interactive.sh:1025
+#: git-rabassa--interactive.sh:1025
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of warnings.\n"
+"Use 'git config rabassa.missingCommitsCheck' to change the level of warnings.\n"
 "The possible behaviours are: ignore, warn, error."
-msgstr "Для избежания этого сообщения, используйте «drop» чтобы явно удалить коммит.\n\nИспользуйте опцию «git config rebase.missingCommitsCheck» для изменения количества предупреждений.\nВозможные значения: ignore, warn, error."
+msgstr "Для избежания этого сообщения, используйте «drop» чтобы явно удалить коммит.\n\nИспользуйте опцию «git config rabassa.missingCommitsCheck» для изменения количества предупреждений.\nВозможные значения: ignore, warn, error."
 
-#: git-rebase--interactive.sh:1036
+#: git-rabassa--interactive.sh:1036
 #, sh-format
 msgid ""
-"Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
+"Unrecognized setting $check_level for option rabassa.missingCommitsCheck. "
 "Ignoring."
-msgstr "Нераспознанная настройка $check_level для опции rebase.missingCommitsCheck. Игнорирую."
+msgstr "Нераспознанная настройка $check_level для опции rabassa.missingCommitsCheck. Игнорирую."
 
-#: git-rebase--interactive.sh:1053
+#: git-rabassa--interactive.sh:1053
 msgid ""
-"You can fix this with 'git rebase --edit-todo' and then run 'git rebase "
+"You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa "
 "--continue'."
-msgstr "Вы можете исправить это с помощью «git rebase --edit-todo», а потом запустив «git rebase --continue»."
+msgstr "Вы можете исправить это с помощью «git rabassa --edit-todo», а потом запустив «git rabassa --continue»."
 
-#: git-rebase--interactive.sh:1054
-msgid "Or you can abort the rebase with 'git rebase --abort'."
-msgstr "Или вы можете отменить процесс перебазирования с помощью «git rebase --abort»."
+#: git-rabassa--interactive.sh:1054
+msgid "Or you can abort the rabassa with 'git rabassa --abort'."
+msgstr "Или вы можете отменить процесс перебазирования с помощью «git rabassa --abort»."
 
-#: git-rebase--interactive.sh:1078
+#: git-rabassa--interactive.sh:1078
 msgid "Could not remove CHERRY_PICK_HEAD"
 msgstr "Не удалось удалить CHERRY_PICK_HEAD"
 
-#: git-rebase--interactive.sh:1083
+#: git-rabassa--interactive.sh:1083
 #, sh-format
 msgid ""
 "You have staged changes in your working tree.\n"
@@ -13621,59 +13621,59 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
-msgstr "У вас имеются проиндексированные изменения в рабочем каталоге.\nЕсли эти изменения должны быть объеденены с предыдущим коммитом, то запустите:\n\n  git commit --amend $gpg_sign_opt_quoted\n\nЕсли же они должны быть помещены в новый коммит, то запустите:\n\n  git commit $gpg_sign_opt_quoted\n\nВ любом случае, после того как вы закончите, продолжить перемещение можно выполнив:\n\n  git rebase --continue\n"
+"  git rabassa --continue\n"
+msgstr "У вас имеются проиндексированные изменения в рабочем каталоге.\nЕсли эти изменения должны быть объеденены с предыдущим коммитом, то запустите:\n\n  git commit --amend $gpg_sign_opt_quoted\n\nЕсли же они должны быть помещены в новый коммит, то запустите:\n\n  git commit $gpg_sign_opt_quoted\n\nВ любом случае, после того как вы закончите, продолжить перемещение можно выполнив:\n\n  git rabassa --continue\n"
 
-#: git-rebase--interactive.sh:1100
+#: git-rabassa--interactive.sh:1100
 msgid "Error trying to find the author identity to amend commit"
 msgstr "Произошла ошибка при поиске автора для исправления коммита"
 
-#: git-rebase--interactive.sh:1105
+#: git-rabassa--interactive.sh:1105
 msgid ""
 "You have uncommitted changes in your working tree. Please commit them\n"
-"first and then run 'git rebase --continue' again."
-msgstr "У вас имеются незакоммиченные изменения в рабочем каталоге. Сделайте коммит, а затем запустите «git rebase --continue» снова."
+"first and then run 'git rabassa --continue' again."
+msgstr "У вас имеются незакоммиченные изменения в рабочем каталоге. Сделайте коммит, а затем запустите «git rabassa --continue» снова."
 
-#: git-rebase--interactive.sh:1110 git-rebase--interactive.sh:1114
+#: git-rabassa--interactive.sh:1110 git-rabassa--interactive.sh:1114
 msgid "Could not commit staged changes."
 msgstr "Не удалось закоммитить проиндексированные изменения."
 
-#: git-rebase--interactive.sh:1138
+#: git-rabassa--interactive.sh:1138
 msgid ""
 "\n"
-"You are editing the todo file of an ongoing interactive rebase.\n"
-"To continue rebase after editing, run:\n"
-"    git rebase --continue\n"
+"You are editing the todo file of an ongoing interactive rabassa.\n"
+"To continue rabassa after editing, run:\n"
+"    git rabassa --continue\n"
 "\n"
-msgstr "\nВы сейчас редактируете файл со списком дел для интерактивного перемещения.\nДля продолжения перемещения, после редактирования файла запустите:\n    git rebase --continue\n\n"
+msgstr "\nВы сейчас редактируете файл со списком дел для интерактивного перемещения.\nДля продолжения перемещения, после редактирования файла запустите:\n    git rabassa --continue\n\n"
 
-#: git-rebase--interactive.sh:1146 git-rebase--interactive.sh:1304
+#: git-rabassa--interactive.sh:1146 git-rabassa--interactive.sh:1304
 msgid "Could not execute editor"
 msgstr "Не удалось запустить редактор"
 
-#: git-rebase--interactive.sh:1159
+#: git-rabassa--interactive.sh:1159
 #, sh-format
 msgid "Could not checkout $switch_to"
 msgstr "Не удалось перейти на версию $switch_to"
 
-#: git-rebase--interactive.sh:1164
+#: git-rabassa--interactive.sh:1164
 msgid "No HEAD?"
 msgstr "Нет указателя HEAD?"
 
-#: git-rebase--interactive.sh:1165
+#: git-rabassa--interactive.sh:1165
 #, sh-format
 msgid "Could not create temporary $state_dir"
 msgstr "Не удалось создать временный каталог $state_dir"
 
-#: git-rebase--interactive.sh:1167
+#: git-rabassa--interactive.sh:1167
 msgid "Could not mark as interactive"
 msgstr "Не удалось пометить как интерактивный"
 
-#: git-rebase--interactive.sh:1177 git-rebase--interactive.sh:1182
+#: git-rabassa--interactive.sh:1177 git-rabassa--interactive.sh:1182
 msgid "Could not init rewritten commits"
 msgstr "Не удалось инициализировать перезаписанные коммиты"
 
-#: git-rebase--interactive.sh:1282
+#: git-rabassa--interactive.sh:1282
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
@@ -13682,14 +13682,14 @@ msgstr[1] "Перемещение $shortrevisions над $shortonto ($todocount 
 msgstr[2] "Перемещение $shortrevisions над $shortonto ($todocount команд)"
 msgstr[3] "Перемещение $shortrevisions над $shortonto ($todocount команд)"
 
-#: git-rebase--interactive.sh:1287
+#: git-rabassa--interactive.sh:1287
 msgid ""
 "\n"
-"However, if you remove everything, the rebase will be aborted.\n"
+"However, if you remove everything, the rabassa will be aborted.\n"
 "\n"
 msgstr "\nНо если вы удалите все, то процесс перемещения будет будет прерван.\n\n"
 
-#: git-rebase--interactive.sh:1294
+#: git-rabassa--interactive.sh:1294
 msgid "Note that empty commits are commented out"
 msgstr "Заметьте, что пустые коммиты закомментированны"
 
@@ -13709,7 +13709,7 @@ msgid "fatal: $program_name cannot be used without a working tree."
 msgstr "критическая ошибка: $program_name нельзя использовать не имея рабочего каталога."
 
 #: git-sh-setup.sh:220
-msgid "Cannot rebase: You have unstaged changes."
+msgid "Cannot rabassa: You have unstaged changes."
 msgstr "Не удалось выполнить перемещение коммитов: У вас есть непроиндексированные изменения."
 
 #: git-sh-setup.sh:223
@@ -13717,7 +13717,7 @@ msgid "Cannot rewrite branches: You have unstaged changes."
 msgstr "Не удалось выполнить перезапись веток: У вас есть непроиндексированные изменения."
 
 #: git-sh-setup.sh:226
-msgid "Cannot pull with rebase: You have unstaged changes."
+msgid "Cannot pull with rabassa: You have unstaged changes."
 msgstr "Не удалось получить с перемещением: У вас есть непроиндексированные изменения."
 
 #: git-sh-setup.sh:229
@@ -13726,11 +13726,11 @@ msgid "Cannot $action: You have unstaged changes."
 msgstr "Не удалось выполнить $action: У вас есть непроиндексированные изменения."
 
 #: git-sh-setup.sh:242
-msgid "Cannot rebase: Your index contains uncommitted changes."
+msgid "Cannot rabassa: Your index contains uncommitted changes."
 msgstr "Не удалось выполнить перемещение коммитов: В вашем индексе есть незакоммиченные изменения."
 
 #: git-sh-setup.sh:245
-msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+msgid "Cannot pull with rabassa: Your index contains uncommitted changes."
 msgstr "Не удалось получить с перемещением: В вашем индексе есть незакоммиченные изменения."
 
 #: git-sh-setup.sh:248

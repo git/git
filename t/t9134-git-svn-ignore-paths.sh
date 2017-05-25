@@ -60,7 +60,7 @@ test_expect_success 'SVN-side change outside of www' '
 test_expect_success 'update git svn-cloned repo (config ignore)' '
 	(
 		cd g &&
-		git svn rebase &&
+		git svn rabassa &&
 		printf "test_qqq\nb\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
 		test_cmp expect2 expect &&
@@ -71,7 +71,7 @@ test_expect_success 'update git svn-cloned repo (config ignore)' '
 test_expect_success 'update git svn-cloned repo (option ignore)' '
 	(
 		cd c &&
-		git svn rebase --ignore-paths="^www" &&
+		git svn rabassa --ignore-paths="^www" &&
 		printf "test_qqq\nb\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
 		test_cmp expect2 expect &&
@@ -92,7 +92,7 @@ test_expect_success 'SVN-side change inside of ignored www' '
 test_expect_success 'update git svn-cloned repo (config ignore)' '
 	(
 		cd g &&
-		git svn rebase &&
+		git svn rabassa &&
 		printf "test_qqq\nb\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
 		test_cmp expect2 expect &&
@@ -103,7 +103,7 @@ test_expect_success 'update git svn-cloned repo (config ignore)' '
 test_expect_success 'update git svn-cloned repo (option ignore)' '
 	(
 		cd c &&
-		git svn rebase --ignore-paths="^www" &&
+		git svn rabassa --ignore-paths="^www" &&
 		printf "test_qqq\nb\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
 		test_cmp expect2 expect &&
@@ -125,7 +125,7 @@ test_expect_success 'SVN-side change in and out of ignored www' '
 test_expect_success 'update git svn-cloned repo again (config ignore)' '
 	(
 		cd g &&
-		git svn rebase &&
+		git svn rabassa &&
 		printf "test_qqq\nb\nygg\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
 		test_cmp expect2 expect &&
@@ -136,7 +136,7 @@ test_expect_success 'update git svn-cloned repo again (config ignore)' '
 test_expect_success 'update git svn-cloned repo again (option ignore)' '
 	(
 		cd c &&
-		git svn rebase --ignore-paths="^www" &&
+		git svn rabassa --ignore-paths="^www" &&
 		printf "test_qqq\nb\nygg\n" > expect &&
 		for i in */*.txt; do cat $i >> expect2; done &&
 		test_cmp expect2 expect &&

@@ -81,17 +81,17 @@ OPTIONS
 	the user can further edit the commit message.
 
 --fixup=<commit>::
-	Construct a commit message for use with `rebase --autosquash`.
+	Construct a commit message for use with `rabassa --autosquash`.
 	The commit message will be the subject line from the specified
-	commit with a prefix of "fixup! ".  See linkgit:git-rebase[1]
+	commit with a prefix of "fixup! ".  See linkgit:git-rabassa[1]
 	for details.
 
 --squash=<commit>::
-	Construct a commit message for use with `rebase --autosquash`.
+	Construct a commit message for use with `rabassa --autosquash`.
 	The commit message subject line is taken from the specified
 	commit with a prefix of "squash! ".  Can be used with additional
 	commit message options (`-m`/`-c`/`-C`/`-F`). See
-	linkgit:git-rebase[1] for details.
+	linkgit:git-rabassa[1] for details.
 
 --reset-author::
 	When used with -C/-c/--amend options, or when committing after a
@@ -245,7 +245,7 @@ but can be used to amend a merge commit.
 +
 You should understand the implications of rewriting history if you
 amend a commit that has already been published.  (See the "RECOVERING
-FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
+FROM UPSTREAM REBASE" section in linkgit:git-rabassa[1].)
 
 --no-post-rewrite::
 	Bypass the post-rewrite hook.

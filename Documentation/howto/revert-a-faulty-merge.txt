@@ -132,7 +132,7 @@ of revert" blindly without thinking..
                /                 \
        ---A---B                   A'--B'--C'
 
-In the history with rebased side branch, W (and M) are behind the merge
+In the history with rabassad side branch, W (and M) are behind the merge
 base of the updated branch and the tip of the mainline, and they should
 merge without the past faulty merge and its revert getting in the way.
 
@@ -199,8 +199,8 @@ from commit P (perhaps P is a branching-off point for yet another branch, and
 you want be able to merge the topic into both branches).
 
 The natural thing to do in this case is to checkout the A-B-C branch and use
-"rebase -i P" to change commit B.  However this does not rewrite commit A,
-because "rebase -i" by default fast-forwards over any initial commits selected
+"rabassa -i P" to change commit B.  However this does not rewrite commit A,
+because "rabassa -i" by default fast-forwards over any initial commits selected
 with the "pick" command.  So you end up with this:
 
  P---o---o---M---x---x---W---x
@@ -233,10 +233,10 @@ reverting W.  Mainline's history would look like this:
    A---B---C
 
 But if you don't actually need to change commit A, then you need some way to
-recreate it as a new commit with the same changes in it.  The rebase command's
+recreate it as a new commit with the same changes in it.  The rabassa command's
 --no-ff option provides a way to do this:
 
-    $ git rebase [-i] --no-ff P
+    $ git rabassa [-i] --no-ff P
 
 The --no-ff option creates a new branch A'-B'-C' with all-new commits (all the
 SHA IDs will be different) even if in the interactive case you only actually
@@ -253,7 +253,7 @@ to fix it up.  Let's revisit the situation discussed at the start of this howto:
 At this point, you can use --no-ff to recreate the topic branch:
 
     $ git checkout E
-    $ git rebase --no-ff P
+    $ git rabassa --no-ff P
 
 yielding
 

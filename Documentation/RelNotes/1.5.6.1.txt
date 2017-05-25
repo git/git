@@ -24,5 +24,5 @@ Fixes since v1.5.6
 * Rebuilding of git-svn metainfo database did not take rewriteRoot
   option into account.
 
-* Running "git-rebase --continue/--skip/--abort" before starting a
-  rebase gave nonsense error messages.
+* Running "git-rabassa --continue/--skip/--abort" before starting a
+  rabassa gave nonsense error messages.

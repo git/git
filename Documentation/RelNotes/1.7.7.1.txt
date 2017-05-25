@@ -56,5 +56,5 @@ Fixes since v1.7.7
    than 1kB.
 
  * When an "exec" insn failed after modifying the index and/or the working
-   tree during "rebase -i", we now check and warn that the changes need to
+   tree during "rabassa -i", we now check and warn that the changes need to
    be cleaned up.

@@ -2055,8 +2055,8 @@ This can happen, for example, if you:
 	- use `git reset --hard` to remove already-published commits, or
 	- use `git commit --amend` to replace already-published commits
 	  (as in <<fixing-a-mistake-by-rewriting-history>>), or
-	- use `git rebase` to rebase any already-published commits (as
-	  in <<using-git-rebase>>).
+	- use `git rabassa` to rabassa any already-published commits (as
+	  in <<using-git-rabassa>>).
 
 You may force `git push` to perform the update anyway by preceding the
 branch name with a plus sign:
@@ -2085,7 +2085,7 @@ intend to manage the branch.
 It's also possible for a push to fail in this way when other people have
 the right to push to the same repository.  In that case, the correct
 solution is to retry the push after first updating your work: either by a
-pull, or by a fetch followed by a rebase; see the
+pull, or by a fetch followed by a rabassa; see the
 <<setting-up-a-shared-repository,next section>> and
 linkgit:gitcvs-migration[7] for more.
 
@@ -2502,8 +2502,8 @@ We will introduce some tools that can help you do this, explain how to
 use them, and then explain some of the problems that can arise because
 you are rewriting history.
 
-[[using-git-rebase]]
-Keeping a patch series up to date using git rebase
+[[using-git-rabassa]]
+Keeping a patch series up to date using git rabassa
 --------------------------------------------------
 
 Suppose that you create a branch `mywork` on a remote-tracking branch
@@ -2547,15 +2547,15 @@ the result would create a new merge commit, like this:
 
 However, if you prefer to keep the history in mywork a simple series of
 commits without any merges, you may instead choose to use
-linkgit:git-rebase[1]:
+linkgit:git-rabassa[1]:
 
 -------------------------------------------------
 $ git checkout mywork
-$ git rebase origin
+$ git rabassa origin
 -------------------------------------------------
 
 This will remove each of your commits from mywork, temporarily saving
-them as patches (in a directory named `.git/rebase-apply`), update mywork to
+them as patches (in a directory named `.git/rabassa-apply`), update mywork to
 point at the latest version of origin, then apply each of the saved
 patches to the new mywork.  The result will look like:
 
@@ -2572,22 +2572,22 @@ to update the index with those contents, and then, instead of
 running `git commit`, just run
 
 -------------------------------------------------
-$ git rebase --continue
+$ git rabassa --continue
 -------------------------------------------------
 
 and Git will continue applying the rest of the patches.
 
 At any point you may use the `--abort` option to abort this process and
-return mywork to the state it had before you started the rebase:
+return mywork to the state it had before you started the rabassa:
 
 -------------------------------------------------
-$ git rebase --abort
+$ git rabassa --abort
 -------------------------------------------------
 
 If you need to reorder or edit a number of commits in a branch, it may
-be easier to use `git rebase -i`, which allows you to reorder and
+be easier to use `git rabassa -i`, which allows you to reorder and
 squash commits, as well as marking them for individual editing during
-the rebase.  See <<interactive-rebase>> for details, and
+the rabassa.  See <<interactive-rabassa>> for details, and
 <<reordering-patch-series>> for alternatives.
 
 [[rewriting-one-commit]]
@@ -2607,7 +2607,7 @@ This is useful for fixing typos in your last commit, or for adjusting
 the patch contents of a poorly staged commit.
 
 If you need to amend commits from deeper in your history, you can
-use <<interactive-rebase,interactive rebase's `edit` instruction>>.
+use <<interactive-rabassa,interactive rabassa's `edit` instruction>>.
 
 [[reordering-patch-series]]
 Reordering or selecting from a patch series
@@ -2629,11 +2629,11 @@ them again with linkgit:git-am[1]:
 $ git am *.patch
 -------------------------------------------------
 
-[[interactive-rebase]]
-Using interactive rebases
+[[interactive-rabassa]]
+Using interactive rabassas
 -------------------------
 
-You can also edit a patch series with an interactive rebase.  This is
+You can also edit a patch series with an interactive rabassa.  This is
 the same as <<reordering-patch-series,reordering a patch series using
 `format-patch`>>, so use whichever interface you like best.
 
@@ -2641,11 +2641,11 @@ Rebase your current HEAD on the last commit you want to retain as-is.
 For example, if you want to reorder the last 5 commits, use:
 
 -------------------------------------------------
-$ git rebase -i HEAD~5
+$ git rabassa -i HEAD~5
 -------------------------------------------------
 
 This will open your editor with a list of steps to be taken to perform
-your rebase.
+your rabassa.
 
 -------------------------------------------------
 pick deadbee The oneline of this commit
@@ -2666,26 +2666,26 @@ pick fa1afe1 The oneline of the next commit
 #
 # If you remove a line here THAT COMMIT WILL BE LOST.
 #
-# However, if you remove everything, the rebase will be aborted.
+# However, if you remove everything, the rabassa will be aborted.
 #
 # Note that empty commits are commented out
 -------------------------------------------------
 
 As explained in the comments, you can reorder commits, squash them
 together, edit commit messages, etc. by editing the list.  Once you
-are satisfied, save the list and close your editor, and the rebase
+are satisfied, save the list and close your editor, and the rabassa
 will begin.
 
-The rebase will stop where `pick` has been replaced with `edit` or
+The rabassa will stop where `pick` has been replaced with `edit` or
 when a step in the list fails to mechanically resolve conflicts and
 needs your help.  When you are done editing and/or resolving conflicts
-you can continue with `git rebase --continue`.  If you decide that
-things are getting too hairy, you can always bail out with `git rebase
---abort`.  Even after the rebase is complete, you can still recover
+you can continue with `git rabassa --continue`.  If you decide that
+things are getting too hairy, you can always bail out with `git rabassa
+--abort`.  Even after the rabassa is complete, you can still recover
 the original branch by using the <<reflogs,reflog>>.
 
 For a more detailed discussion of the procedure and additional tips,
-see the "INTERACTIVE MODE" section of linkgit:git-rebase[1].
+see the "INTERACTIVE MODE" section of linkgit:git-rabassa[1].
 
 [[patch-series-tools]]
 Other tools
@@ -2794,7 +2794,7 @@ make matters worse, the change in semantics in the problematic
 function may be just one small part of the changes in the upper
 line of development.
 
-On the other hand, if instead of merging at C you had rebased the
+On the other hand, if instead of merging at C you had rabassad the
 history between Z to B on top of A, you would have gotten this
 linear history:
 
@@ -3259,8 +3259,8 @@ Dangling objects
 The linkgit:git-fsck[1] command will sometimes complain about dangling
 objects.  They are not a problem.
 
-The most common cause of dangling objects is that you've rebased a
-branch, or you have pulled from somebody else who rebased a branch--see
+The most common cause of dangling objects is that you've rabassad a
+branch, or you have pulled from somebody else who rabassad a branch--see
 <<cleaning-up-history>>.  In that case, the old head of the original
 branch still exists, as does everything it pointed to. The branch
 pointer itself just doesn't, since you replaced it with another one.
@@ -3283,7 +3283,7 @@ up pointing to them, so they end up "dangling" in your repository.
 
 Generally, dangling objects aren't anything to worry about. They can
 even be very useful: if you screw something up, the dangling objects can
-be how you recover your old tree (say, you did a rebase, and realized
+be how you recover your old tree (say, you did a rabassa, and realized
 that you really didn't want to--you can look at what dangling objects
 you have, and decide to reset your head to some old dangling state).
 

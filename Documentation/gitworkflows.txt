@@ -39,7 +39,7 @@ To achieve this, try to split your work into small steps from the very
 beginning. It is always easier to squash a few commits together than
 to split one big commit into several.  Don't be afraid of making too
 small or imperfect steps along the way. You can always go back later
-and edit the commits with `git rebase --interactive` before you
+and edit the commits with `git rabassa --interactive` before you
 publish them.  You can use `git stash save --keep-index` to run the
 test suite independent of other uncommitted changes; see the EXAMPLES
 section of linkgit:git-stash[1].
@@ -157,11 +157,11 @@ Many things can then be done very naturally:
   do this "just habitually", see below.)
 
 * If you find you forked off the wrong branch and want to move it
-  "back in time", use linkgit:git-rebase[1].
+  "back in time", use linkgit:git-rabassa[1].
 
 Note that the last point clashes with the other two: a topic that has
-been merged elsewhere should not be rebased.  See the section on
-RECOVERING FROM UPSTREAM REBASE in linkgit:git-rebase[1].
+been merged elsewhere should not be rabassad.  See the section on
+RECOVERING FROM UPSTREAM REBASE in linkgit:git-rabassa[1].
 
 We should point out that "habitually" (regularly for no real reason)
 merging an integration branch into your topics -- and by extension,
@@ -435,16 +435,16 @@ See the linkgit:git-format-patch[1] and linkgit:git-send-email[1]
 manpages for further usage notes.
 
 If the maintainer tells you that your patch no longer applies to the
-current upstream, you will have to rebase your topic (you cannot use a
+current upstream, you will have to rabassa your topic (you cannot use a
 merge because you cannot format-patch merges):
 
 .format-patch/am: Keeping topics up to date
 [caption="Recipe: "]
 =====================================
-`git pull --rebase <url> <branch>`
+`git pull --rabassa <url> <branch>`
 =====================================
 
-You can then fix the conflicts during the rebase.  Presumably you have
+You can then fix the conflicts during the rabassa.  Presumably you have
 not published your topic other than by mail, so rebasing it is not a
 problem.
 
@@ -470,7 +470,7 @@ linkgit:gittutorial[7],
 linkgit:git-push[1],
 linkgit:git-pull[1],
 linkgit:git-merge[1],
-linkgit:git-rebase[1],
+linkgit:git-rabassa[1],
 linkgit:git-format-patch[1],
 linkgit:git-send-email[1],
 linkgit:git-am[1]

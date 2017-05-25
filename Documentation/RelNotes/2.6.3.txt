@@ -41,7 +41,7 @@ Fixes since v2.6.2
  * Work around "git p4" failing when the P4 depot records the contents
    in UTF-16 without UTF-16 BOM.
 
- * Recent update to "rebase -i" that tries to sanity check the edited
+ * Recent update to "rabassa -i" that tries to sanity check the edited
    insn sheet before it uses it has become too picky on Windows where
    CRLF left by the editor is turned into a trailing CR on the line
    read via the "read" built-in command.

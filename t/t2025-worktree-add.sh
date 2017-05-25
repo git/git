@@ -4,7 +4,7 @@ test_description='test git worktree add'
 
 . ./test-lib.sh
 
-. "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rabassa.sh
 
 test_expect_success 'setup' '
 	test_commit init
@@ -257,43 +257,43 @@ test_expect_success '"add" worktree with --checkout' '
 	test_cmp init.t swamp2/init.t
 '
 
-test_expect_success 'put a worktree under rebase' '
-	git worktree add under-rebase &&
+test_expect_success 'put a worktree under rabassa' '
+	git worktree add under-rabassa &&
 	(
-		cd under-rebase &&
+		cd under-rabassa &&
 		set_fake_editor &&
-		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
-		git worktree list | grep "under-rebase.*detached HEAD"
+		FAKE_LINES="edit 1" git rabassa -i HEAD^ &&
+		git worktree list | grep "under-rabassa.*detached HEAD"
 	)
 '
 
-test_expect_success 'add a worktree, checking out a rebased branch' '
-	test_must_fail git worktree add new-rebase under-rebase &&
-	! test -d new-rebase
+test_expect_success 'add a worktree, checking out a rabassad branch' '
+	test_must_fail git worktree add new-rabassa under-rabassa &&
+	! test -d new-rabassa
 '
 
-test_expect_success 'checking out a rebased branch from another worktree' '
+test_expect_success 'checking out a rabassad branch from another worktree' '
 	git worktree add new-place &&
-	test_must_fail git -C new-place checkout under-rebase
+	test_must_fail git -C new-place checkout under-rabassa
 '
 
-test_expect_success 'not allow to delete a branch under rebase' '
+test_expect_success 'not allow to delete a branch under rabassa' '
 	(
-		cd under-rebase &&
-		test_must_fail git branch -D under-rebase
+		cd under-rabassa &&
+		test_must_fail git branch -D under-rabassa
 	)
 '
 
-test_expect_success 'rename a branch under rebase not allowed' '
-	test_must_fail git branch -M under-rebase rebase-with-new-name
+test_expect_success 'rename a branch under rabassa not allowed' '
+	test_must_fail git branch -M under-rabassa rabassa-with-new-name
 '
 
 test_expect_success 'check out from current worktree branch ok' '
 	(
-		cd under-rebase &&
-		git checkout under-rebase &&
+		cd under-rabassa &&
+		git checkout under-rabassa &&
 		git checkout - &&
-		git rebase --abort
+		git rabassa --abort
 	)
 '
 

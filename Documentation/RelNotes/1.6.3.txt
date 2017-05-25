@@ -128,11 +128,11 @@ Updates since v1.6.2
 * git-imap-send learned to work around Thunderbird's inability to easily
   disable format=flowed with a new configuration, imap.preformattedHTML.
 
-* git-rebase can be told to rebase the series even if your branch is a
-  descendant of the commit you are rebasing onto with --force-rebase
+* git-rabassa can be told to rabassa the series even if your branch is a
+  descendant of the commit you are rebasing onto with --force-rabassa
   option.
 
-* git-rebase can be told to report diffstat with the --stat option.
+* git-rabassa can be told to report diffstat with the --stat option.
 
 * Output from git-remote command has been vastly improved.
 

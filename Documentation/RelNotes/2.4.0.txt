@@ -268,9 +268,9 @@ notes for details).
    the user could have made was to choose nothing.
    (merge a9c4641 ak/add-i-empty-candidates later to maint).
 
- * The todo list created by "git rebase -i" did not fully honor
+ * The todo list created by "git rabassa -i" did not fully honor
    core.abbrev settings.
-   (merge edb72d5 ks/rebase-i-abbrev later to maint).
+   (merge edb72d5 ks/rabassa-i-abbrev later to maint).
 
  * "git fetch" over a remote-helper that cannot respond to the "list"
    command could not fetch from a symbolic reference (e.g., HEAD).
@@ -409,10 +409,10 @@ notes for details).
    "git grep -h" was phrased poorly.
    (merge 77fdb8a nd/grep-exclude-standard-help-fix later to maint).
 
- * "git rebase -i" recently started to include the number of commits
+ * "git rabassa -i" recently started to include the number of commits
    in the todo list, but that output included extraneous whitespace on
    a platform that prepends leading whitespaces to its "wc -l" output.
-   (merge 2185d3b es/rebase-i-count-todo later to maint).
+   (merge 2185d3b es/rabassa-i-count-todo later to maint).
 
  * The borrowed code in the kwset API did not follow our usual
    convention to use "unsigned char" to store values that range from
@@ -502,7 +502,7 @@ notes for details).
    (merge 260d585 sg/completion-gitcomp-nl-for-refs later to maint).
    (merge 777c55a jc/report-path-error-to-dir later to maint).
    (merge fddfaf8 ph/push-doc-cas later to maint).
-   (merge d50d31e ss/pull-rebase-preserve later to maint).
+   (merge d50d31e ss/pull-rabassa-preserve later to maint).
    (merge c8c3f1d pt/enter-repo-comment-fix later to maint).
    (merge d7bfb9e jz/gitweb-conf-doc-fix later to maint).
    (merge f907282 jk/cherry-pick-docfix later to maint).

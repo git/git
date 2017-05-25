@@ -54,7 +54,7 @@ The opcode abbrevations are:
   C: create new ref
   D: delete existing ref
   U: fast-forward existing ref (no commit loss)
-  R: rewind/rebase existing ref (commit loss)
+  R: rewind/rabassa existing ref (commit loss)
 
 if no opcodes are listed before the "for" keyword then "U" (for
 fast-forward update only) is assumed as this is the most common

@@ -167,7 +167,7 @@ UI, Workflows & Features
  * "git push" will stop without doing anything if the new "pre-push"
    hook exists and exits with a failure.
 
- * When "git rebase" fails to generate patches to be applied (e.g. due
+ * When "git rabassa" fails to generate patches to be applied (e.g. due
    to oom), it failed to detect the failure and instead behaved as if
    there were nothing to do.  A workaround to use a temporary file has
    been applied, but we probably would want to revisit this later, as
@@ -180,7 +180,7 @@ UI, Workflows & Features
    you do not have any commits in your history, but it now gives you
    an empty index (to match non-existent commit you are not even on).
 
- * "git status" says what branch is being bisected or rebased when
+ * "git status" says what branch is being bisected or rabassad when
    able, not just "bisecting" or "rebasing".
 
  * "git submodule" started learning a new mode to integrate with the
@@ -382,7 +382,7 @@ details).
  * "git clone" used to allow --bare and --separate-git-dir=$there
    options at the same time, which was nonsensical.
 
- * "git rebase --preserve-merges" lost empty merges in recent versions
+ * "git rabassa --preserve-merges" lost empty merges in recent versions
    of Git.
 
  * "git merge --no-edit" computed who were involved in the work done

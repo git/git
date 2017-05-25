@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Tests rebase -i performance'
+test_description='Tests rabassa -i performance'
 . ./perf-lib.sh
 
 test_perf_default_repo
@@ -29,8 +29,8 @@ test_expect_success 'setup' '
 	git checkout -f $branch_merge^2
 '
 
-test_perf 'rebase -i' '
-	git rebase -i $branch_merge^
+test_perf 'rabassa -i' '
+	git rabassa -i $branch_merge^
 '
 
 test_done

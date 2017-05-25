@@ -19,7 +19,7 @@ test_expect_success 'setup test repository with old layout' '
 
 test_expect_success 'old layout continues to work' '
 	svn_cmd import -m- i "$svnrepo/b" &&
-	git svn rebase &&
+	git svn rabassa &&
 	echo a >> b/a &&
 	git add b/a &&
 	git commit -m- -a &&

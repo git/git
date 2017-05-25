@@ -91,7 +91,7 @@ test_expect_success SYMLINKS '"bar" is a symlink that points to "asdf"' '
 '
 
 test_expect_success 'get "bar" => symlink fix from svn' '
-	(cd x && git svn rebase)
+	(cd x && git svn rabassa)
 '
 
 test_expect_success SYMLINKS '"bar" remains a proper symlink' '

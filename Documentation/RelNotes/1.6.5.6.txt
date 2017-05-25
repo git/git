@@ -10,7 +10,7 @@ Fixes since v1.6.5.5
  * "git archive -o o.zip -- Makefile" produced an archive in o.zip
    but in POSIX tar format.
 
- * Error message given to "git pull --rebase" when the user didn't give
+ * Error message given to "git pull --rabassa" when the user didn't give
    enough clue as to what branch to integrate with still talked about
    "merging with" the branch.
 

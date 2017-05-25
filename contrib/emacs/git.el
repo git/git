@@ -1299,8 +1299,8 @@ The FILES list must be sorted."
        "\n")
       (when subject (insert subject "\n\n"))
       (cond (msg (insert msg "\n"))
-            ((file-readable-p ".git/rebase-apply/msg")
-             (insert-file-contents ".git/rebase-apply/msg"))
+            ((file-readable-p ".git/rabassa-apply/msg")
+             (insert-file-contents ".git/rabassa-apply/msg"))
             ((file-readable-p ".git/MERGE_MSG")
              (insert-file-contents ".git/MERGE_MSG")))
       ; delete empty lines at end
@@ -1326,9 +1326,9 @@ Set up git-specific `font-lock-keywords' for `log-edit-mode'."
           (coding-system (git-get-commits-coding-system))
           author-name author-email subject date)
       (when (eq 0 (buffer-size buffer))
-        (when (file-readable-p ".git/rebase-apply/info")
+        (when (file-readable-p ".git/rabassa-apply/info")
           (with-temp-buffer
-            (insert-file-contents ".git/rebase-apply/info")
+            (insert-file-contents ".git/rabassa-apply/info")
             (goto-char (point-min))
             (when (re-search-forward "^Author: \\(.*\\)\nEmail: \\(.*\\)$" nil t)
               (setq author-name (match-string 1))

@@ -92,7 +92,7 @@
 #   pull                             |  拉，拉取
 #   push                             |  推，推送
 #   reachable                        |  可达
-#   rebase                           |  变基
+#   rabassa                           |  变基
 #   ref                              |  引用
 #   reflog                           |  引用日志
 #   refspec                          |  引用规格
@@ -2961,8 +2961,8 @@ msgid "cherry-pick"
 msgstr "拣选"
 
 #: sequencer.c:219
-msgid "rebase -i"
-msgstr "rebase -i"
+msgid "rabassa -i"
+msgstr "rabassa -i"
 
 #: sequencer.c:221
 #, c-format
@@ -3027,7 +3027,7 @@ msgid "%s: fast-forward"
 msgstr "%s：快进"
 
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
-#. * "rebase -i".
+#. * "rabassa -i".
 #.
 #: sequencer.c:470
 #, c-format
@@ -3056,7 +3056,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "您的工作区中存在已暂存的修改\n"
 "如果这些修改需要被并入前一个提交，执行：\n"
@@ -3069,7 +3069,7 @@ msgstr ""
 "\n"
 "无论哪种情况，当您完成提交，继续执行：\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
 #: sequencer.c:694
 #, c-format
@@ -3125,7 +3125,7 @@ msgstr "不能读取 HEAD 的提交说明"
 msgid "cannot write '%s'"
 msgstr "不能写 '%s'"
 
-#: sequencer.c:861 git-rebase--interactive.sh:445
+#: sequencer.c:861 git-rabassa--interactive.sh:445
 msgid "This is the 1st commit message:"
 msgstr "这是第一个提交说明："
 
@@ -3225,8 +3225,8 @@ msgid "could not read '%s'."
 msgstr "不能读取 '%s'。"
 
 #: sequencer.c:1356
-msgid "please fix this using 'git rebase --edit-todo'."
-msgstr "请用 'git rebase --edit-todo' 来修改。"
+msgid "please fix this using 'git rabassa --edit-todo'."
+msgstr "请用 'git rabassa --edit-todo' 来修改。"
 
 #: sequencer.c:1358
 #, c-format
@@ -3332,13 +3332,13 @@ msgid ""
 "execution failed: %s\n"
 "%sYou can fix the problem, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "执行失败：%s\n"
 "%s您可以改正该问题，然后运行\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 
 #: sequencer.c:1859
@@ -3352,17 +3352,17 @@ msgid ""
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "执行成功：%s\n"
 "但是在索引和/或工作区中存在变更\n"
 "提交或暂存修改，然后运行\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 
-#: sequencer.c:1920 git-rebase.sh:169
+#: sequencer.c:1920 git-rabassa.sh:169
 #, c-format
 msgid "Applied autostash."
 msgstr "成功应用 autostash。"
@@ -3372,7 +3372,7 @@ msgstr "成功应用 autostash。"
 msgid "cannot store %s"
 msgstr "不能存储 %s"
 
-#: sequencer.c:1934 git-rebase.sh:173
+#: sequencer.c:1934 git-rabassa.sh:173
 #, c-format
 msgid ""
 "Applying autostash resulted in conflicts.\n"
@@ -3412,7 +3412,7 @@ msgid "could not update HEAD to %s"
 msgstr "不能更新 HEAD 为 %s"
 
 #: sequencer.c:2190
-msgid "cannot rebase: You have unstaged changes."
+msgid "cannot rabassa: You have unstaged changes."
 msgstr "不能变基：您有未暂存的变更。"
 
 #: sequencer.c:2195
@@ -3437,10 +3437,10 @@ msgstr "无效内容：'%s'"
 msgid ""
 "\n"
 "You have uncommitted changes in your working tree. Please, commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
 "\n"
-"您的工作区中有未提交的变更。请先提交然后再次运行 'git rebase --continue'。"
+"您的工作区中有未提交的变更。请先提交然后再次运行 'git rabassa --continue'。"
 
 #: sequencer.c:2221
 msgid "could not commit staged changes."
@@ -4329,8 +4329,8 @@ msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr "  （使用 \"git am --abort\" 恢复原有分支）"
 
 #: wt-status.c:1189
-msgid "git-rebase-todo is missing."
-msgstr "git-rebase-todo 丢失。"
+msgid "git-rabassa-todo is missing."
+msgstr "git-rabassa-todo 丢失。"
 
 #: wt-status.c:1191
 msgid "No commands done."
@@ -4361,8 +4361,8 @@ msgstr[1] "接下来要执行的命令（剩余 %d 条命令）："
 
 #  译者：注意保持前导空格
 #: wt-status.c:1221
-msgid "  (use \"git rebase --edit-todo\" to view and edit)"
-msgstr "  （使用 \"git rebase --edit-todo\" 来查看和编辑）"
+msgid "  (use \"git rabassa --edit-todo\" to view and edit)"
+msgstr "  （使用 \"git rabassa --edit-todo\" 来查看和编辑）"
 
 #: wt-status.c:1234
 #, c-format
@@ -4375,23 +4375,23 @@ msgstr "您在执行变基操作。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1253
-msgid "  (fix conflicts and then run \"git rebase --continue\")"
-msgstr "  （解决冲突，然后运行 \"git rebase --continue\"）"
+msgid "  (fix conflicts and then run \"git rabassa --continue\")"
+msgstr "  （解决冲突，然后运行 \"git rabassa --continue\"）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1255
-msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  （使用 \"git rebase --skip\" 跳过此补丁）"
+msgid "  (use \"git rabassa --skip\" to skip this patch)"
+msgstr "  （使用 \"git rabassa --skip\" 跳过此补丁）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1257
-msgid "  (use \"git rebase --abort\" to check out the original branch)"
-msgstr "  （使用 \"git rebase --abort\" 以检出原有分支）"
+msgid "  (use \"git rabassa --abort\" to check out the original branch)"
+msgstr "  （使用 \"git rabassa --abort\" 以检出原有分支）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1263
-msgid "  (all conflicts fixed: run \"git rebase --continue\")"
-msgstr "  （所有冲突已解决：运行 \"git rebase --continue\"）"
+msgid "  (all conflicts fixed: run \"git rabassa --continue\")"
+msgstr "  （所有冲突已解决：运行 \"git rabassa --continue\"）"
 
 #: wt-status.c:1267
 #, c-format
@@ -4400,13 +4400,13 @@ msgid ""
 msgstr "您在执行将分支 '%s' 变基到 '%s' 的操作时拆分提交。"
 
 #: wt-status.c:1272
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a commit during a rabassa."
 msgstr "您在执行变基操作时拆分提交。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1275
-msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
-msgstr "  （一旦您工作目录提交干净后，运行 \"git rebase --continue\"）"
+msgid "  (Once your working directory is clean, run \"git rabassa --continue\")"
+msgstr "  （一旦您工作目录提交干净后，运行 \"git rabassa --continue\"）"
 
 #: wt-status.c:1279
 #, c-format
@@ -4414,7 +4414,7 @@ msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr "您在执行将分支 '%s' 变基到 '%s' 的操作时编辑提交。"
 
 #: wt-status.c:1284
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a commit during a rabassa."
 msgstr "您在执行变基操作时编辑提交。"
 
 #  译者：注意保持前导空格
@@ -4425,8 +4425,8 @@ msgstr "  （使用 \"git commit --amend\" 修补当前提交）"
 #  译者：注意保持前导空格
 #: wt-status.c:1289
 msgid ""
-"  (use \"git rebase --continue\" once you are satisfied with your changes)"
-msgstr "  （当您对您的修改满意后执行 \"git rebase --continue\"）"
+"  (use \"git rabassa --continue\" once you are satisfied with your changes)"
+msgstr "  （当您对您的修改满意后执行 \"git rabassa --continue\"）"
 
 #: wt-status.c:1299
 #, c-format
@@ -4487,11 +4487,11 @@ msgid "On branch "
 msgstr "位于分支 "
 
 #: wt-status.c:1549
-msgid "interactive rebase in progress; onto "
+msgid "interactive rabassa in progress; onto "
 msgstr "交互式变基操作正在进行中；至 "
 
 #: wt-status.c:1551
-msgid "rebase in progress; onto "
+msgid "rabassa in progress; onto "
 msgstr "变基操作正在进行中；至 "
 
 #: wt-status.c:1556
@@ -4605,7 +4605,7 @@ msgstr "落后 "
 msgid "ahead "
 msgstr "领先 "
 
-#. TRANSLATORS: the action is e.g. "pull with rebase"
+#. TRANSLATORS: the action is e.g. "pull with rabassa"
 #: wt-status.c:2280
 #, c-format
 msgid "cannot %s: You have unstaged changes."
@@ -5109,8 +5109,8 @@ msgid "GPG-sign commits"
 msgstr "使用 GPG 签名提交"
 
 #: builtin/am.c:2318
-msgid "(internal use for git-rebase)"
-msgstr "（内部使用，用于 git-rebase）"
+msgid "(internal use for git-rabassa)"
+msgstr "（内部使用，用于 git-rabassa）"
 
 #: builtin/am.c:2333
 msgid ""
@@ -5126,7 +5126,7 @@ msgstr "无法读取索引"
 
 #: builtin/am.c:2355
 #, c-format
-msgid "previous rebase directory %s still exists but mbox given."
+msgid "previous rabassa directory %s still exists but mbox given."
 msgstr "之前的变基目录 %s 仍然存在，但却提供了 mbox。"
 
 #: builtin/am.c:2379
@@ -5455,7 +5455,7 @@ msgstr "已删除分支 %s（曾为 %s）。\n"
 
 #: builtin/branch.c:441
 #, c-format
-msgid "Branch %s is being rebased at %s"
+msgid "Branch %s is being rabassad at %s"
 msgstr "分支 %s 正被变基到 %s"
 
 #: builtin/branch.c:445
@@ -11037,12 +11037,12 @@ msgstr "和合并相关的选项"
 msgid "incorporate changes by rebasing rather than merging"
 msgstr "使用变基操作取代合并操作以合入修改"
 
-#: builtin/pull.c:148 builtin/rebase--helper.c:18 builtin/revert.c:120
+#: builtin/pull.c:148 builtin/rabassa--helper.c:18 builtin/revert.c:120
 msgid "allow fast-forward"
 msgstr "允许快进式"
 
 #: builtin/pull.c:157
-msgid "automatically stash/stash pop before and after rebase"
+msgid "automatically stash/stash pop before and after rabassa"
 msgstr "自动在变基操作前后执行 stash/stash pop"
 
 #: builtin/pull.c:173
@@ -11090,7 +11090,7 @@ msgid "You are not currently on a branch."
 msgstr "您当前不在一个分支上。"
 
 #: builtin/pull.c:410 builtin/pull.c:425 git-parse-remote.sh:79
-msgid "Please specify which branch you want to rebase against."
+msgid "Please specify which branch you want to rabassa against."
 msgstr "请指定您要变基到哪一个分支。"
 
 #: builtin/pull.c:412 builtin/pull.c:427 git-parse-remote.sh:82
@@ -11106,7 +11106,7 @@ msgstr "详见 git-pull(1)。"
 msgid "<remote>"
 msgstr "<远程>"
 
-#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rebase.sh:456
+#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rabassa.sh:456
 #: git-parse-remote.sh:65
 msgid "<branch>"
 msgstr "<分支>"
@@ -11130,19 +11130,19 @@ msgstr ""
 "但是没有获取到这个引用。"
 
 #: builtin/pull.c:754
-msgid "ignoring --verify-signatures for rebase"
+msgid "ignoring --verify-signatures for rabassa"
 msgstr "为变基操作忽略 --verify-signatures"
 
 #: builtin/pull.c:801
-msgid "--[no-]autostash option is only valid with --rebase."
-msgstr "--[no-]autostash 选项只在使用 --rebase 时有效。"
+msgid "--[no-]autostash option is only valid with --rabassa."
+msgstr "--[no-]autostash 选项只在使用 --rabassa 时有效。"
 
 #: builtin/pull.c:809
 msgid "Updating an unborn branch with changes added to the index."
 msgstr "更新尚未诞生的分支，变更添加至索引。"
 
 #: builtin/pull.c:812
-msgid "pull with rebase"
+msgid "pull with rabassa"
 msgstr "变基式拉取"
 
 #: builtin/pull.c:813
@@ -11181,7 +11181,7 @@ msgid "Cannot merge multiple branches into empty head."
 msgstr "无法将多个分支合并到空分支。"
 
 #: builtin/pull.c:862
-msgid "Cannot rebase onto multiple branches."
+msgid "Cannot rabassa onto multiple branches."
 msgstr "无法变基到多个分支。"
 
 #: builtin/push.c:16
@@ -11542,16 +11542,16 @@ msgstr "跳过应用稀疏检出过滤器"
 msgid "debug unpack-trees"
 msgstr "调试 unpack-trees"
 
-#: builtin/rebase--helper.c:7
-msgid "git rebase--helper [<options>]"
-msgstr "git rebase--helper [<选项>]"
+#: builtin/rabassa--helper.c:7
+msgid "git rabassa--helper [<options>]"
+msgstr "git rabassa--helper [<选项>]"
 
-#: builtin/rebase--helper.c:19
-msgid "continue rebase"
+#: builtin/rabassa--helper.c:19
+msgid "continue rabassa"
 msgstr "继续变基"
 
-#: builtin/rebase--helper.c:21
-msgid "abort rebase"
+#: builtin/rabassa--helper.c:21
+msgid "abort rabassa"
 msgstr "中止变基"
 
 #: builtin/receive-pack.c:27
@@ -11849,17 +11849,17 @@ msgstr " ???"
 
 #: builtin/remote.c:957
 #, c-format
-msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
+msgid "invalid branch.%s.merge; cannot rabassa onto > 1 branch"
 msgstr "无效的 branch.%s.merge，不能变基到一个以上的分支"
 
 #: builtin/remote.c:965
 #, c-format
-msgid "rebases interactively onto remote %s"
+msgid "rabassas interactively onto remote %s"
 msgstr "交互式变基到远程 %s"
 
 #: builtin/remote.c:966
 #, c-format
-msgid "rebases onto remote %s"
+msgid "rabassas onto remote %s"
 msgstr "变基到远程 %s"
 
 #: builtin/remote.c:969
@@ -13045,8 +13045,8 @@ msgid "path into the working tree, across nested submodule boundaries"
 msgstr "工作区中的路径，递归嵌套子模组"
 
 #: builtin/submodule--helper.c:981
-msgid "rebase, merge, checkout or none"
-msgstr "rebase、merge、checkout 或 none"
+msgid "rabassa, merge, checkout or none"
+msgstr "rabassa、merge、checkout 或 none"
 
 #: builtin/submodule--helper.c:985
 msgid "Create a shallow clone truncated to the specified number of revisions"
@@ -14195,48 +14195,48 @@ msgstr "尝试和 $pretty_name 的简单合并"
 msgid "Simple merge did not work, trying automatic merge."
 msgstr "简单合并未生效，尝试自动合并。"
 
-#: git-rebase.sh:58
+#: git-rabassa.sh:58
 msgid ""
-"When you have resolved this problem, run \"git rebase --continue\".\n"
-"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
-"To check out the original branch and stop rebasing, run \"git rebase --abort"
+"When you have resolved this problem, run \"git rabassa --continue\".\n"
+"If you prefer to skip this patch, run \"git rabassa --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rabassa --abort"
 "\"."
 msgstr ""
-"当您解决了此问题后，执行 \"git rebase --continue\"。\n"
-"如果您想跳过此补丁，则执行 \"git rebase --skip\"。\n"
-"要恢复原分支并停止变基，执行 \"git rebase --abort\"。"
+"当您解决了此问题后，执行 \"git rabassa --continue\"。\n"
+"如果您想跳过此补丁，则执行 \"git rabassa --skip\"。\n"
+"要恢复原分支并停止变基，执行 \"git rabassa --abort\"。"
 
-#: git-rebase.sh:158 git-rebase.sh:397
+#: git-rabassa.sh:158 git-rabassa.sh:397
 #, sh-format
 msgid "Could not move back to $head_name"
 msgstr "无法移回 $head_name"
 
-#: git-rebase.sh:172
+#: git-rabassa.sh:172
 #, sh-format
 msgid "Cannot store $stash_sha1"
 msgstr "无法保存 $stash_sha1"
 
-#: git-rebase.sh:212
-msgid "The pre-rebase hook refused to rebase."
-msgstr "钩子 pre-rebase 拒绝变基操作。"
+#: git-rabassa.sh:212
+msgid "The pre-rabassa hook refused to rabassa."
+msgstr "钩子 pre-rabassa 拒绝变基操作。"
 
-#: git-rebase.sh:217
-msgid "It looks like git-am is in progress. Cannot rebase."
+#: git-rabassa.sh:217
+msgid "It looks like git-am is in progress. Cannot rabassa."
 msgstr "似乎正处于在 git-am 的执行过程中。无法变基。"
 
-#: git-rebase.sh:358
-msgid "No rebase in progress?"
+#: git-rabassa.sh:358
+msgid "No rabassa in progress?"
 msgstr "没有正在进行的变基？"
 
-#: git-rebase.sh:369
-msgid "The --edit-todo action can only be used during interactive rebase."
+#: git-rabassa.sh:369
+msgid "The --edit-todo action can only be used during interactive rabassa."
 msgstr "动作 --edit-todo 只能用在交互式变基过程中。"
 
-#: git-rebase.sh:376
+#: git-rabassa.sh:376
 msgid "Cannot read HEAD"
 msgstr "不能读取 HEAD"
 
-#: git-rebase.sh:379
+#: git-rabassa.sh:379
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
@@ -14244,83 +14244,83 @@ msgstr ""
 "您必须编辑所有的合并冲突，然后通过 git add\n"
 "命令将它们标记为已解决"
 
-#: git-rebase.sh:419
+#: git-rabassa.sh:419
 #, sh-format
 msgid ""
 "It seems that there is already a $state_dir_base directory, and\n"
-"I wonder if you are in the middle of another rebase.  If that is the\n"
+"I wonder if you are in the middle of another rabassa.  If that is the\n"
 "case, please try\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "If that is not the case, please\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "and run me again.  I am stopping in case you still have something\n"
 "valuable there."
 msgstr ""
 "好像已有 $state_dir_base 目录，我怀疑您正处于另外一个变基操作\n"
 "过程中。 如果是这样，请执行\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "如果不是这样，请执行\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "然后再重新执行变基操作。 为避免丢失重要数据，我已经停止当前操作。"
 
-#: git-rebase.sh:470
+#: git-rabassa.sh:470
 #, sh-format
 msgid "invalid upstream $upstream_name"
 msgstr "无效的上游 $upstream_name"
 
-#: git-rebase.sh:494
+#: git-rabassa.sh:494
 #, sh-format
 msgid "$onto_name: there are more than one merge bases"
 msgstr "$onto_name: 有一个以上的合并基准"
 
-#: git-rebase.sh:497 git-rebase.sh:501
+#: git-rabassa.sh:497 git-rabassa.sh:501
 #, sh-format
 msgid "$onto_name: there is no merge base"
 msgstr "$onto_name: 没有合并基准"
 
-#: git-rebase.sh:506
+#: git-rabassa.sh:506
 #, sh-format
 msgid "Does not point to a valid commit: $onto_name"
 msgstr "没有指向一个有效的提交：$onto_name"
 
-#: git-rebase.sh:529
+#: git-rabassa.sh:529
 #, sh-format
 msgid "fatal: no such branch: $branch_name"
 msgstr "严重错误：无此分支：$branch_name"
 
-#: git-rebase.sh:562
+#: git-rabassa.sh:562
 msgid "Cannot autostash"
 msgstr "无法 autostash"
 
-#: git-rebase.sh:567
+#: git-rabassa.sh:567
 #, sh-format
 msgid "Created autostash: $stash_abbrev"
 msgstr "创建了 autostash: $stash_abbrev"
 
-#: git-rebase.sh:571
+#: git-rabassa.sh:571
 msgid "Please commit or stash them."
 msgstr "请提交或为它们保存进度。"
 
-#: git-rebase.sh:591
+#: git-rabassa.sh:591
 #, sh-format
 msgid "Current branch $branch_name is up to date."
 msgstr "当前分支 $branch_name 是最新的。"
 
-#: git-rebase.sh:595
+#: git-rabassa.sh:595
 #, sh-format
-msgid "Current branch $branch_name is up to date, rebase forced."
+msgid "Current branch $branch_name is up to date, rabassa forced."
 msgstr "当前分支 $branch_name 是最新的，强制变基。"
 
-#: git-rebase.sh:606
+#: git-rabassa.sh:606
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "变更从 $mb 到 $onto："
 
-#: git-rebase.sh:615
+#: git-rabassa.sh:615
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr "首先，回退分支以便在上面重放您的工作..."
 
-#: git-rebase.sh:625
+#: git-rabassa.sh:625
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "快进 $branch_name 至 $onto_name。"
@@ -14663,12 +14663,12 @@ msgstr "子模组路径 '$displaypath'：检出 '$sha1'"
 
 #: git-submodule.sh:688
 #, sh-format
-msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
+msgid "Unable to rabassa '$sha1' in submodule path '$displaypath'"
 msgstr "无法在子模组路径 '$displaypath' 中变基 '$sha1'"
 
 #: git-submodule.sh:689
 #, sh-format
-msgid "Submodule path '$displaypath': rebased into '$sha1'"
+msgid "Submodule path '$displaypath': rabassad into '$sha1'"
 msgstr "子模组路径 '$displaypath'：变基至 '$sha1'"
 
 #: git-submodule.sh:694
@@ -14738,12 +14738,12 @@ msgstr "为 '$displaypath' 同步子模组 url"
 msgid "See git-${cmd}(1) for details."
 msgstr "详见 git-${cmd}(1)。"
 
-#: git-rebase--interactive.sh:140
+#: git-rabassa--interactive.sh:140
 #, sh-format
 msgid "Rebasing ($new_count/$total)"
 msgstr "变基中（$new_count/$total）"
 
-#: git-rebase--interactive.sh:156
+#: git-rabassa--interactive.sh:156
 msgid ""
 "\n"
 "Commands:\n"
@@ -14770,7 +14770,7 @@ msgstr ""
 "这些行可以被重新排序；它们会被从上至下地执行。\n"
 "\n"
 
-#: git-rebase--interactive.sh:171
+#: git-rabassa--interactive.sh:171
 msgid ""
 "\n"
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
@@ -14778,7 +14778,7 @@ msgstr ""
 "\n"
 "不要删除任意一行。使用 'drop' 显式地删除一个提交。\n"
 
-#: git-rebase--interactive.sh:175
+#: git-rabassa--interactive.sh:175
 msgid ""
 "\n"
 "If you remove a line here THAT COMMIT WILL BE LOST.\n"
@@ -14786,7 +14786,7 @@ msgstr ""
 "\n"
 "如果您在这里删除一行，对应的提交将会丢失。\n"
 
-#: git-rebase--interactive.sh:211
+#: git-rabassa--interactive.sh:211
 #, sh-format
 msgid ""
 "You can amend the commit now, with\n"
@@ -14795,7 +14795,7 @@ msgid ""
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "您现在可以修补这个提交，使用\n"
 "\n"
@@ -14803,85 +14803,85 @@ msgstr ""
 "\n"
 "当您对变更感到满意，执行\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:236
+#: git-rabassa--interactive.sh:236
 #, sh-format
 msgid "$sha1: not a commit that can be picked"
 msgstr "$sha1：不是一个可以被拣选的提交"
 
-#: git-rebase--interactive.sh:275
+#: git-rabassa--interactive.sh:275
 #, sh-format
 msgid "Invalid commit name: $sha1"
 msgstr "无效的提交名：$sha1"
 
-#: git-rebase--interactive.sh:317
+#: git-rabassa--interactive.sh:317
 msgid "Cannot write current commit's replacement sha1"
 msgstr "不能写入当前提交的替代 sha1"
 
-#: git-rebase--interactive.sh:369
+#: git-rabassa--interactive.sh:369
 #, sh-format
 msgid "Fast-forward to $sha1"
 msgstr "快进到 $sha1"
 
-#: git-rebase--interactive.sh:371
+#: git-rabassa--interactive.sh:371
 #, sh-format
 msgid "Cannot fast-forward to $sha1"
 msgstr "不能快进到 $sha1"
 
-#: git-rebase--interactive.sh:380
+#: git-rabassa--interactive.sh:380
 #, sh-format
 msgid "Cannot move HEAD to $first_parent"
 msgstr "不能移动 HEAD 到 $first_parent"
 
-#: git-rebase--interactive.sh:385
+#: git-rabassa--interactive.sh:385
 #, sh-format
 msgid "Refusing to squash a merge: $sha1"
 msgstr "拒绝压缩一个合并：$sha1"
 
-#: git-rebase--interactive.sh:399
+#: git-rabassa--interactive.sh:399
 #, sh-format
 msgid "Error redoing merge $sha1"
 msgstr "无法重做合并 $sha1"
 
-#: git-rebase--interactive.sh:407
+#: git-rabassa--interactive.sh:407
 #, sh-format
 msgid "Could not pick $sha1"
 msgstr "不能拣选 $sha1"
 
-#: git-rebase--interactive.sh:416
+#: git-rabassa--interactive.sh:416
 #, sh-format
 msgid "This is the commit message #${n}:"
 msgstr "这是提交说明 #${n}："
 
-#: git-rebase--interactive.sh:421
+#: git-rabassa--interactive.sh:421
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
 msgstr "提交说明 #${n} 将被跳过："
 
-#: git-rebase--interactive.sh:432
+#: git-rabassa--interactive.sh:432
 #, sh-format
 msgid "This is a combination of $count commit."
 msgid_plural "This is a combination of $count commits."
 msgstr[0] "这是一个 $count 个提交的组合。"
 msgstr[1] "这是一个 $count 个提交的组合。"
 
-#: git-rebase--interactive.sh:441
+#: git-rabassa--interactive.sh:441
 #, sh-format
 msgid "Cannot write $fixup_msg"
 msgstr "不能写入 $fixup_msg"
 
-#: git-rebase--interactive.sh:444
+#: git-rabassa--interactive.sh:444
 msgid "This is a combination of 2 commits."
 msgstr "这是一个 2 个提交的组合。"
 
-#: git-rebase--interactive.sh:485 git-rebase--interactive.sh:528
-#: git-rebase--interactive.sh:531
+#: git-rabassa--interactive.sh:485 git-rabassa--interactive.sh:528
+#: git-rabassa--interactive.sh:531
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr "不能应用 $sha1... $rest"
 
-#: git-rebase--interactive.sh:559
+#: git-rabassa--interactive.sh:559
 #, sh-format
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
@@ -14894,75 +14894,75 @@ msgstr ""
 "这通常是因为空的提交说明，或者 pre-commit 钩子执行失败。如果是 pre-commit\n"
 "钩子执行失败，你可能需要在重写提交说明前解决这个问题。"
 
-#: git-rebase--interactive.sh:574
+#: git-rabassa--interactive.sh:574
 #, sh-format
 msgid "Stopped at $sha1_abbrev... $rest"
 msgstr "停止在 $sha1_abbrev... $rest"
 
-#: git-rebase--interactive.sh:589
+#: git-rabassa--interactive.sh:589
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
 msgstr "没有父提交的情况下不能 '$squash_style'"
 
-#: git-rebase--interactive.sh:631
+#: git-rabassa--interactive.sh:631
 #, sh-format
 msgid "Executing: $rest"
 msgstr "执行：$rest"
 
-#: git-rebase--interactive.sh:639
+#: git-rabassa--interactive.sh:639
 #, sh-format
 msgid "Execution failed: $rest"
 msgstr "执行失败：$rest"
 
-#: git-rebase--interactive.sh:641
+#: git-rabassa--interactive.sh:641
 msgid "and made changes to the index and/or the working tree"
 msgstr "并且修改索引和/或工作区"
 
 #  译者：注意保持前导空格
-#: git-rebase--interactive.sh:643
+#: git-rabassa--interactive.sh:643
 msgid ""
 "You can fix the problem, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "您可以解决这个问题，然后运行\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
 #. TRANSLATORS: after these lines is a command to be issued by the user
-#: git-rebase--interactive.sh:656
+#: git-rabassa--interactive.sh:656
 #, sh-format
 msgid ""
 "Execution succeeded: $rest\n"
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "执行成功：$rest\n"
 "但是在索引和/或工作区中存在变更。提交或暂存修改，然后运行\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:667
+#: git-rabassa--interactive.sh:667
 #, sh-format
 msgid "Unknown command: $command $sha1 $rest"
 msgstr "未知命令：$command $sha1 $rest"
 
-#: git-rebase--interactive.sh:668
-msgid "Please fix this using 'git rebase --edit-todo'."
-msgstr "要修改请使用命令 'git rebase --edit-todo'。"
+#: git-rabassa--interactive.sh:668
+msgid "Please fix this using 'git rabassa --edit-todo'."
+msgstr "要修改请使用命令 'git rabassa --edit-todo'。"
 
-#: git-rebase--interactive.sh:703
+#: git-rabassa--interactive.sh:703
 #, sh-format
-msgid "Successfully rebased and updated $head_name."
+msgid "Successfully rabassad and updated $head_name."
 msgstr "成功变基并更新 $head_name。"
 
-#: git-rebase--interactive.sh:750
+#: git-rabassa--interactive.sh:750
 msgid "Could not skip unnecessary pick commands"
 msgstr "不能跳过不必要的拣选命令"
 
-#: git-rebase--interactive.sh:908
+#: git-rabassa--interactive.sh:908
 #, sh-format
 msgid ""
 "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
@@ -14971,7 +14971,7 @@ msgstr ""
 "警告：缺失 SHA-1 或者在下面一行中不是一个提交：\n"
 " - $line"
 
-#: git-rebase--interactive.sh:941
+#: git-rabassa--interactive.sh:941
 #, sh-format
 msgid ""
 "Warning: the command isn't recognized in the following line:\n"
@@ -14980,52 +14980,52 @@ msgstr ""
 "警告：下面一行中的命令未能被识别：\n"
 " - $line"
 
-#: git-rebase--interactive.sh:980
+#: git-rabassa--interactive.sh:980
 msgid "could not detach HEAD"
 msgstr "不能检出为分离头指针"
 
-#: git-rebase--interactive.sh:1018
+#: git-rabassa--interactive.sh:1018
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
 msgstr "警告：一些提交可能被意外丢弃。丢弃的提交（从新到旧）："
 
-#: git-rebase--interactive.sh:1026
+#: git-rabassa--interactive.sh:1026
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rabassa.missingCommitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error."
 msgstr ""
 "为避免这条信息，使用 \"drop\" 指令显式地删除一个提交。\n"
 "\n"
-"使用 'git config rebase.missingCommitsCheck' 来修改警告级别。\n"
+"使用 'git config rabassa.missingCommitsCheck' 来修改警告级别。\n"
 "可选值有：ignore、warn、error。"
 
-#: git-rebase--interactive.sh:1037
+#: git-rabassa--interactive.sh:1037
 #, sh-format
 msgid ""
-"Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
+"Unrecognized setting $check_level for option rabassa.missingCommitsCheck. "
 "Ignoring."
-msgstr "选项 rebase.missingCommitsCheck 的值 $check_level 无法被识别。已忽略。"
+msgstr "选项 rabassa.missingCommitsCheck 的值 $check_level 无法被识别。已忽略。"
 
-#: git-rebase--interactive.sh:1054
+#: git-rabassa--interactive.sh:1054
 msgid ""
-"You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
+"You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --"
 "continue'."
 msgstr ""
-"您可以用 'git rebase --edit-todo' 修正问题然后执行 'git rebase --continue'。"
+"您可以用 'git rabassa --edit-todo' 修正问题然后执行 'git rabassa --continue'。"
 
-#: git-rebase--interactive.sh:1055
-msgid "Or you can abort the rebase with 'git rebase --abort'."
-msgstr "或者您可以使用 'git rebase --abort' 命令终止变基操作。"
+#: git-rabassa--interactive.sh:1055
+msgid "Or you can abort the rabassa with 'git rabassa --abort'."
+msgstr "或者您可以使用 'git rabassa --abort' 命令终止变基操作。"
 
-#: git-rebase--interactive.sh:1083
+#: git-rabassa--interactive.sh:1083
 msgid "Could not remove CHERRY_PICK_HEAD"
 msgstr "不能删除 CHERRY_PICK_HEAD"
 
-#: git-rebase--interactive.sh:1088
+#: git-rabassa--interactive.sh:1088
 #, sh-format
 msgid ""
 "You have staged changes in your working tree.\n"
@@ -15040,7 +15040,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "您已暂存了工作区的修改。如果这些修改要压缩到前一个提交，执行：\n"
 "\n"
@@ -15052,81 +15052,81 @@ msgstr ""
 "\n"
 "无论哪种情况，当您完成提交，继续执行：\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
-#: git-rebase--interactive.sh:1105
+#: git-rabassa--interactive.sh:1105
 msgid "Error trying to find the author identity to amend commit"
 msgstr "在修补提交中查找作者信息时遇到错误"
 
-#: git-rebase--interactive.sh:1110
+#: git-rabassa--interactive.sh:1110
 msgid ""
 "You have uncommitted changes in your working tree. Please commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
-"您的工作区中有未提交的变更。请先提交然后再次运行 'git rebase --continue'。"
+"您的工作区中有未提交的变更。请先提交然后再次运行 'git rabassa --continue'。"
 
-#: git-rebase--interactive.sh:1115 git-rebase--interactive.sh:1119
+#: git-rabassa--interactive.sh:1115 git-rabassa--interactive.sh:1119
 msgid "Could not commit staged changes."
 msgstr "不能提交暂存的修改。"
 
-#: git-rebase--interactive.sh:1147
+#: git-rabassa--interactive.sh:1147
 msgid ""
 "\n"
-"You are editing the todo file of an ongoing interactive rebase.\n"
-"To continue rebase after editing, run:\n"
-"    git rebase --continue\n"
+"You are editing the todo file of an ongoing interactive rabassa.\n"
+"To continue rabassa after editing, run:\n"
+"    git rabassa --continue\n"
 "\n"
 msgstr ""
 "\n"
 "您正在修改运行中的交互式变基的 todo 文件。若要在编辑结束后继续变基，\n"
 "请执行：\n"
-"    git rebase --continue\n"
+"    git rabassa --continue\n"
 "\n"
 
-#: git-rebase--interactive.sh:1155 git-rebase--interactive.sh:1313
+#: git-rabassa--interactive.sh:1155 git-rabassa--interactive.sh:1313
 msgid "Could not execute editor"
 msgstr "无法运行编辑器"
 
-#: git-rebase--interactive.sh:1168
+#: git-rabassa--interactive.sh:1168
 #, sh-format
 msgid "Could not checkout $switch_to"
 msgstr "不能检出 $switch_to"
 
-#: git-rebase--interactive.sh:1173
+#: git-rabassa--interactive.sh:1173
 msgid "No HEAD?"
 msgstr "没有 HEAD？"
 
-#: git-rebase--interactive.sh:1174
+#: git-rabassa--interactive.sh:1174
 #, sh-format
 msgid "Could not create temporary $state_dir"
 msgstr "不能创建临时 $state_dir"
 
-#: git-rebase--interactive.sh:1176
+#: git-rabassa--interactive.sh:1176
 msgid "Could not mark as interactive"
 msgstr "不能标记为交互式"
 
-#: git-rebase--interactive.sh:1186 git-rebase--interactive.sh:1191
+#: git-rabassa--interactive.sh:1186 git-rabassa--interactive.sh:1191
 msgid "Could not init rewritten commits"
 msgstr "不能对重写提交进行初始化"
 
-#: git-rebase--interactive.sh:1291
+#: git-rabassa--interactive.sh:1291
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 msgstr[0] "变基 $shortrevisions 到 $shortonto（$todocount 个提交）"
 msgstr[1] "变基 $shortrevisions 到 $shortonto（$todocount 个提交）"
 
-#: git-rebase--interactive.sh:1296
+#: git-rabassa--interactive.sh:1296
 msgid ""
 "\n"
-"However, if you remove everything, the rebase will be aborted.\n"
+"However, if you remove everything, the rabassa will be aborted.\n"
 "\n"
 msgstr ""
 "\n"
 "然而，如果您删除全部内容，变基操作将会终止。\n"
 "\n"
 
-#: git-rebase--interactive.sh:1303
+#: git-rabassa--interactive.sh:1303
 msgid "Note that empty commits are commented out"
 msgstr "注意空提交已被注释掉"
 
@@ -15146,7 +15146,7 @@ msgid "fatal: $program_name cannot be used without a working tree."
 msgstr "严重错误：$program_name 不能在没有工作区的情况下使用"
 
 #: git-sh-setup.sh:220
-msgid "Cannot rebase: You have unstaged changes."
+msgid "Cannot rabassa: You have unstaged changes."
 msgstr "不能变基：您有未暂存的变更。"
 
 #: git-sh-setup.sh:223
@@ -15154,7 +15154,7 @@ msgid "Cannot rewrite branches: You have unstaged changes."
 msgstr "不能重写分支：您有未暂存的变更。"
 
 #: git-sh-setup.sh:226
-msgid "Cannot pull with rebase: You have unstaged changes."
+msgid "Cannot pull with rabassa: You have unstaged changes."
 msgstr "无法通过变基方式拉取：您有未暂存的变更。"
 
 #: git-sh-setup.sh:229
@@ -15163,11 +15163,11 @@ msgid "Cannot $action: You have unstaged changes."
 msgstr "不能 $action：您有未暂存的变更。"
 
 #: git-sh-setup.sh:242
-msgid "Cannot rebase: Your index contains uncommitted changes."
+msgid "Cannot rabassa: Your index contains uncommitted changes."
 msgstr "不能变基：您的索引中包含未提交的变更。"
 
 #: git-sh-setup.sh:245
-msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+msgid "Cannot pull with rabassa: Your index contains uncommitted changes."
 msgstr "无法通过变基方式拉取：您的索引中包含未提交的变更。"
 
 #: git-sh-setup.sh:248

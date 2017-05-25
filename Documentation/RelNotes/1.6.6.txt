@@ -192,7 +192,7 @@ Updates since v1.6.5
 
  * "git mergetool" learned to use p4merge.
 
- * "git rebase -i" learned "reword" that acts like "edit" but immediately
+ * "git rabassa -i" learned "reword" that acts like "edit" but immediately
    starts an editor to tweak the log message without returning control to
    the shell, which is done by "edit" to give an opportunity to tweak the
    contents.

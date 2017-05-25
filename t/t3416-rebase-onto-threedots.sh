@@ -1,9 +1,9 @@
 #!/bin/sh
 
-test_description='git rebase --onto A...B'
+test_description='git rabassa --onto A...B'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY/lib-rebase.sh"
+. "$TEST_DIRECTORY/lib-rabassa.sh"
 
 # Rebase only the tip commit of "topic" on merge base between "master"
 # and "topic".  Cannot do this for "side" with "master" because there
@@ -42,64 +42,64 @@ test_expect_success setup '
 	test_commit K
 '
 
-test_expect_success 'rebase --onto master...topic' '
+test_expect_success 'rabassa --onto master...topic' '
 	git reset --hard &&
 	git checkout topic &&
 	git reset --hard G &&
 
-	git rebase --onto master...topic F &&
+	git rabassa --onto master...topic F &&
 	git rev-parse HEAD^1 >actual &&
 	git rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'rebase --onto master...' '
+test_expect_success 'rabassa --onto master...' '
 	git reset --hard &&
 	git checkout topic &&
 	git reset --hard G &&
 
-	git rebase --onto master... F &&
+	git rabassa --onto master... F &&
 	git rev-parse HEAD^1 >actual &&
 	git rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'rebase --onto master...side' '
+test_expect_success 'rabassa --onto master...side' '
 	git reset --hard &&
 	git checkout side &&
 	git reset --hard K &&
 
-	test_must_fail git rebase --onto master...side J
+	test_must_fail git rabassa --onto master...side J
 '
 
-test_expect_success 'rebase -i --onto master...topic' '
+test_expect_success 'rabassa -i --onto master...topic' '
 	git reset --hard &&
 	git checkout topic &&
 	git reset --hard G &&
 	set_fake_editor &&
-	EXPECT_COUNT=1 git rebase -i --onto master...topic F &&
+	EXPECT_COUNT=1 git rabassa -i --onto master...topic F &&
 	git rev-parse HEAD^1 >actual &&
 	git rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'rebase -i --onto master...' '
+test_expect_success 'rabassa -i --onto master...' '
 	git reset --hard &&
 	git checkout topic &&
 	git reset --hard G &&
 	set_fake_editor &&
-	EXPECT_COUNT=1 git rebase -i --onto master... F &&
+	EXPECT_COUNT=1 git rabassa -i --onto master... F &&
 	git rev-parse HEAD^1 >actual &&
 	git rev-parse C^0 >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'rebase -i --onto master...side' '
+test_expect_success 'rabassa -i --onto master...side' '
 	git reset --hard &&
 	git checkout side &&
 	git reset --hard K &&
 
-	test_must_fail git rebase -i --onto master...side J
+	test_must_fail git rabassa -i --onto master...side J
 '
 
 test_done

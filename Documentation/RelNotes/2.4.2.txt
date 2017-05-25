@@ -11,7 +11,7 @@ Fixes since v2.4.1
  * "hash-object --literally" introduced in v2.2 was not prepared to
    take a really long object type name.
 
- * "git rebase --quiet" was not quite quiet when there is nothing to
+ * "git rabassa --quiet" was not quite quiet when there is nothing to
    do.
 
  * The completion for "log --decorate=" parameter value was incorrect.

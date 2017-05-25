@@ -113,8 +113,8 @@ test_expect_success 'placeholder namespace conflict with directory' '
 	test $(find "$GIT_REPO"/6 -type f | wc -l) = "1"
 '
 
-# Prepare a second set of svn commits to test persistence during rebase.
-test_expect_success 'second set of svn commits and rebase' '
+# Prepare a second set of svn commits to test persistence during rabassa.
+test_expect_success 'second set of svn commits and rabassa' '
 	svn_cmd co "$svnrepo"/trunk "$SVN_TREE" &&
 	(
 		cd "$SVN_TREE" &&
@@ -127,20 +127,20 @@ test_expect_success 'second set of svn commits and rebase' '
 	rm -rf "$SVN_TREE" &&
 	(
 		cd "$GIT_REPO" &&
-		git svn rebase
+		git svn rabassa
 	)
 '
 
 # Check that --preserve-empty-dirs and --placeholder-file flag state
 # stays persistent over multiple invocations.
-test_expect_success 'flag persistence during subsqeuent rebase' '
+test_expect_success 'flag persistence during subsqeuent rabassa' '
 	test -f "$GIT_REPO"/7/.placeholder &&
 	test $(find "$GIT_REPO"/7 -type f | wc -l) = "1"
 '
 
 # Check that placeholder files are properly removed when unnecessary,
 # even across multiple invocations.
-test_expect_success 'placeholder list persistence during subsqeuent rebase' '
+test_expect_success 'placeholder list persistence during subsqeuent rabassa' '
 	test -f "$GIT_REPO"/1/file1.txt &&
 	test $(find "$GIT_REPO"/1 -type f | wc -l) = "1" &&
 

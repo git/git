@@ -129,7 +129,7 @@ UI, Workflows & Features
    condition holds.  This allows you to say "include this work-related
    bit only in the repositories under my ~/work/ directory".
 
- * Recent update to "rebase -i" started showing a message that is not
+ * Recent update to "rabassa -i" started showing a message that is not
    a warning with "warning:" prefix by mistake.  This has been fixed.
 
  * Recently we started passing the "--push-options" through the
@@ -186,7 +186,7 @@ UI, Workflows & Features
    size that can be expressed in size_t, which can be larger than
    ulong on some platforms.
 
- * "git rebase" learns "--signoff" option.
+ * "git rabassa" learns "--signoff" option.
 
  * The completion script (in contrib/) learned to complete "git push
    --delete b<TAB>" to complete branch name to be deleted.
@@ -214,7 +214,7 @@ Performance, Internal Implementation, Development Support etc.
  * The gitattributes machinery is being taught to work better in a
    multi-threaded environment.
 
- * "git rebase -i" starts using the recently updated "sequencer" code.
+ * "git rabassa -i" starts using the recently updated "sequencer" code.
 
  * Code and design clean-up for the refs API.
 
@@ -497,7 +497,7 @@ notes for details).
    aware of.  strbuf_getcwd() has been taught to cope with it better.
    (merge a54e938e5b rs/freebsd-getcwd-workaround later to maint).
 
- * A recent update to "rebase -i" stopped running hooks for the "git
+ * A recent update to "rabassa -i" stopped running hooks for the "git
    commit" command during "reword" action, which has been fixed.
 
  * Removing an entry from a notes tree and then looking another note

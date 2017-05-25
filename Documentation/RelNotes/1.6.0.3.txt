@@ -7,16 +7,16 @@ Fixes since v1.6.0.2
 * "git archive --format=zip" did not honor core.autocrlf while
   --format=tar did.
 
-* Continuing "git rebase -i" was very confused when the user left modified
+* Continuing "git rabassa -i" was very confused when the user left modified
   files in the working tree while resolving conflicts.
 
-* Continuing "git rebase -i" was also very confused when the user left
+* Continuing "git rabassa -i" was also very confused when the user left
   some staged changes in the index after "edit".
 
-* "git rebase -i" now honors the pre-rebase hook, just like the
-  other rebase implementations "git rebase" and "git rebase -m".
+* "git rabassa -i" now honors the pre-rabassa hook, just like the
+  other rabassa implementations "git rabassa" and "git rabassa -m".
 
-* "git rebase -i" incorrectly aborted when there is no commit to replay.
+* "git rabassa -i" incorrectly aborted when there is no commit to replay.
 
 * Behaviour of "git diff --quiet" was inconsistent with "diff --exit-code"
   with the output redirected to /dev/null.

@@ -57,7 +57,7 @@ UI, Workflows & Features
 
  * The prompt string generator (in contrib/completion/) learned to
    show how many changes there are in total and how many have been
-   replayed during a "git rebase" session.
+   replayed during a "git rabassa" session.
 
  * "git branch --vv" learned to paint the name of the branch it
    integrates with in a different color (color.branch.upstream,
@@ -127,7 +127,7 @@ UI, Workflows & Features
  * "git status" suggests users to look into using --untracked=no option
    when it takes too long.
 
- * "git status" shows a bit more information during a rebase/bisect
+ * "git status" shows a bit more information during a rabassa/bisect
    session.
 
  * "git fetch" learned to fetch a commit at the tip of an unadvertised
@@ -149,8 +149,8 @@ UI, Workflows & Features
    this submodule", once you express your interest in a submodule with
    "submodule init".  "submodule deinit" is the way to do so.
 
- * "git pull --rebase" learned to pass "-v/-q" options to underlying
-   "git rebase".
+ * "git pull --rabassa" learned to pass "-v/-q" options to underlying
+   "git rabassa".
 
  * The new "--follow-tags" option tells "git push" to push relevant
    annotated tags when pushing branches out.
@@ -375,7 +375,7 @@ details).
  * The "--color=<when>" argument to the commands in the diff family
    was described poorly.
 
- * The arguments given to the pre-rebase hook were not documented.
+ * The arguments given to the pre-rabassa hook were not documented.
 
  * The v4 index format was not documented.
 

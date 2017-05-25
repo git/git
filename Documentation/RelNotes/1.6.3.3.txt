@@ -26,7 +26,7 @@ Fixes since v1.6.3.2
  * low-level filelevel merge driver used return value from strdup()
    without checking if we ran out of memory.
 
- * "git rebase -i" left stray closing parenthesis in its reflog message.
+ * "git rabassa -i" left stray closing parenthesis in its reflog message.
 
  * "git remote show" did not show all the URLs associated with the named
    remote, even though "git remote -v" did.  Made them consistent by

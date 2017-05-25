@@ -92,8 +92,8 @@ Updates since v1.7.8
    - the branch description describing what the topic is about;
    - the contents of the annotated tag, when requesting to pull a tag.
 
- * "git pull" learned to notice 'pull.rebase' configuration variable,
-   which serves as a global fallback for setting 'branch.<name>.rebase'
+ * "git pull" learned to notice 'pull.rabassa' configuration variable,
+   which serves as a global fallback for setting 'branch.<name>.rabassa'
    configuration variable per branch.
 
  * "git tag" learned "--cleanup" option to control how the whitespaces

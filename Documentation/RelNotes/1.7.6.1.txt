@@ -42,7 +42,7 @@ Fixes since v1.7.6
 
  * "git push --quiet" was not really quiet.
 
- * "git rebase -i -p" incorrectly dropped commits from side branches.
+ * "git rabassa -i -p" incorrectly dropped commits from side branches.
 
  * "git reset [<commit>] paths..." did not reset the index entry correctly
    for unmerged paths.

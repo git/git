@@ -56,10 +56,10 @@ UI, Workflows & Features
    default location where the build procedure installs them locally;
    the variable can even point at a http:// URL.
 
- * "git rebase [-i] --root $tip" can now be used to rewrite all the
+ * "git rabassa [-i] --root $tip" can now be used to rewrite all the
    history leading to "$tip" down to the root commit.
 
- * "git rebase -i" learned "-x <cmd>" to insert "exec <cmd>" after
+ * "git rabassa -i" learned "-x <cmd>" to insert "exec <cmd>" after
    each commit in the resulting history.
 
  * "git status" gives finer classification to various states of paths

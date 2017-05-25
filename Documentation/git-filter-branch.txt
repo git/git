@@ -43,7 +43,7 @@ be able to easily push and distribute the rewritten branch on top of the
 original branch.  Please do not use this command if you do not know the
 full implications, and avoid using it anyway, if a simple single commit
 would suffice to fix your problem.  (See the "RECOVERING FROM UPSTREAM
-REBASE" section in linkgit:git-rebase[1] for further information about
+REBASE" section in linkgit:git-rabassa[1] for further information about
 rewriting published history.)
 
 Always verify that the rewritten version is correct: The original refs,
@@ -132,7 +132,7 @@ have all of them as parents.
 You can use the 'map' convenience function in this filter, and other
 convenience functions, too.  For example, calling 'skip_commit "$@"'
 will leave out the current commit (but not its changes! If you want
-that, use 'git rebase' instead).
+that, use 'git rabassa' instead).
 +
 You can also use the `git_commit_non_empty_tree "$@"` instead of
 `git commit-tree "$@"` if you don't wish to keep commits with a single parent
@@ -308,7 +308,7 @@ as their parents instead of the merge commit.
 *NOTE* the changes introduced by the commits, and which are not reverted
 by subsequent commits, will still be in the rewritten branch. If you want
 to throw out _changes_ together with the commits, you should use the
-interactive mode of 'git rebase'.
+interactive mode of 'git rabassa'.
 
 You can rewrite the commit log messages using `--msg-filter`.  For
 example, 'git svn-id' strings in a repository created by 'git svn' can

@@ -62,15 +62,15 @@ Fixes since v1.8.4.1
    preferred author name.
 
  * The commit object names in the insn sheet that was prepared at the
-   beginning of "rebase -i" session can become ambiguous as the
+   beginning of "rabassa -i" session can become ambiguous as the
    rebasing progresses and the repository gains more commits. Make
    sure the internal record is kept with full 40-hex object names.
 
- * "git rebase --preserve-merges" internally used the merge machinery
+ * "git rabassa --preserve-merges" internally used the merge machinery
    and as a side effect, left merge summary message in the log, but
    when rebasing, there should not be a need for merge summary.
 
- * "git rebase -i" forgot that the comment character can be
+ * "git rabassa -i" forgot that the comment character can be
    configurable while reading its insn sheet.
 
 Also contains a handful of trivial code clean-ups, documentation

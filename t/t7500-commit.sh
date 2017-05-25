@@ -249,7 +249,7 @@ test_expect_success 'commit -C empty respects --allow-empty-message' '
 	commit_msg_is ""
 '
 
-commit_for_rebase_autosquash_setup () {
+commit_for_rabassa_autosquash_setup () {
 	echo "first content line" >>foo &&
 	git add foo &&
 	cat >log <<EOF &&
@@ -267,52 +267,52 @@ EOF
 }
 
 test_expect_success 'commit --fixup provides correct one-line commit message' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	git commit --fixup HEAD~1 &&
 	commit_msg_is "fixup! target message subject line"
 '
 
 test_expect_success 'commit --squash works with -F' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	echo "log message from file" >msgfile &&
 	git commit --squash HEAD~1 -F msgfile  &&
 	commit_msg_is "squash! target message subject linelog message from file"
 '
 
 test_expect_success 'commit --squash works with -m' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	git commit --squash HEAD~1 -m "foo bar\nbaz" &&
 	commit_msg_is "squash! target message subject linefoo bar\nbaz"
 '
 
 test_expect_success 'commit --squash works with -C' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	git commit --squash HEAD~1 -C HEAD &&
 	commit_msg_is "squash! target message subject lineintermediate commit"
 '
 
 test_expect_success 'commit --squash works with -c' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	test_set_editor "$TEST_DIRECTORY"/t7500/edit-content &&
 	git commit --squash HEAD~1 -c HEAD &&
 	commit_msg_is "squash! target message subject lineedited commit"
 '
 
 test_expect_success 'commit --squash works with -C for same commit' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	git commit --squash HEAD -C HEAD &&
 	commit_msg_is "squash! intermediate commit"
 '
 
 test_expect_success 'commit --squash works with -c for same commit' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	test_set_editor "$TEST_DIRECTORY"/t7500/edit-content &&
 	git commit --squash HEAD -c HEAD &&
 	commit_msg_is "squash! edited commit"
 '
 
 test_expect_success 'commit --squash works with editor' '
-	commit_for_rebase_autosquash_setup &&
+	commit_for_rabassa_autosquash_setup &&
 	test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
 	git commit --squash HEAD~1 &&
 	commit_msg_is "squash! target message subject linecommit message"

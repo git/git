@@ -57,7 +57,7 @@ UI, Workflows & Features
    involved in the side topic you are merging in a comment in the merge
    commit template.
 
- * "git rebase" learned to optionally keep commits that do not
+ * "git rabassa" learned to optionally keep commits that do not
    introduce any change in the original history.
 
  * "git push --recurse-submodules" learned to optionally look into the

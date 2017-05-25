@@ -1,22 +1,22 @@
-git-rebase(1)
+git-rabassa(1)
 =============
 
 NAME
 ----
-git-rebase - Reapply commits on top of another base tip
+git-rabassa - Reapply commits on top of another base tip
 
 SYNOPSIS
 --------
 [verse]
-'git rebase' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
+'git rabassa' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
 	[<upstream> [<branch>]]
-'git rebase' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
+'git rabassa' [-i | --interactive] [options] [--exec <cmd>] [--onto <newbase>]
 	--root [<branch>]
-'git rebase' --continue | --skip | --abort | --quit | --edit-todo
+'git rabassa' --continue | --skip | --abort | --quit | --edit-todo
 
 DESCRIPTION
 -----------
-If <branch> is specified, 'git rebase' will perform an automatic
+If <branch> is specified, 'git rabassa' will perform an automatic
 `git checkout <branch>` before doing anything else.  Otherwise
 it remains on the current branch.
 
@@ -24,7 +24,7 @@ If <upstream> is not specified, the upstream configured in
 branch.<name>.remote and branch.<name>.merge options will be used (see
 linkgit:git-config[1] for details) and the `--fork-point` option is
 assumed.  If you are currently not on any branch or if the current
-branch does not have a configured upstream, the rebase will abort.
+branch does not have a configured upstream, the rabassa will abort.
 
 All changes made by commits in the current branch but that are not
 in <upstream> are saved to a temporary area.  This is the same set
@@ -46,10 +46,10 @@ with a different commit message or timestamp will be skipped).
 
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
-and run `git rebase --continue`.  Another option is to bypass the commit
-that caused the merge failure with `git rebase --skip`.  To check out the
-original <branch> and remove the .git/rebase-apply working files, use the
-command `git rebase --abort` instead.
+and run `git rabassa --continue`.  Another option is to bypass the commit
+that caused the merge failure with `git rabassa --skip`.  To check out the
+original <branch> and remove the .git/rabassa-apply working files, use the
+command `git rabassa --abort` instead.
 
 Assume the following history exists and the current branch is "topic":
 
@@ -62,8 +62,8 @@ Assume the following history exists and the current branch is "topic":
 From this point, the result of either of the following commands:
 
 
-    git rebase master
-    git rebase master topic
+    git rabassa master
+    git rabassa master topic
 
 would be:
 
@@ -74,12 +74,12 @@ would be:
 ------------
 
 *NOTE:* The latter form is just a short-hand of `git checkout topic`
-followed by `git rebase master`. When rebase exits `topic` will
+followed by `git rabassa master`. When rabassa exits `topic` will
 remain the checked-out branch.
 
 If the upstream branch already contains a change you have made (e.g.,
 because you mailed a patch which was applied upstream), then that commit
-will be skipped. For example, running `git rebase master` on the
+will be skipped. For example, running `git rabassa master` on the
 following history (in which `A'` and `A` introduce the same set of changes,
 but have different committer information):
 
@@ -99,7 +99,7 @@ will result in:
 
 Here is how you would transplant a topic branch based on one
 branch to another, to pretend that you forked the topic branch
-from the latter branch, using `rebase --onto`.
+from the latter branch, using `rabassa --onto`.
 
 First let's assume your 'topic' is based on branch 'next'.
 For example, a feature developed in 'topic' depends on some
@@ -127,10 +127,10 @@ more stable 'master' branch. We want our tree to look like this:
 
 We can get this using the following command:
 
-    git rebase --onto master next topic
+    git rabassa --onto master next topic
 
 
-Another example of --onto option is to rebase part of a
+Another example of --onto option is to rabassa part of a
 branch.  If we have the following situation:
 
 ------------
@@ -143,7 +143,7 @@ branch.  If we have the following situation:
 
 then the command
 
-    git rebase --onto master topicA topicB
+    git rabassa --onto master topicA topicB
 
 would result in:
 
@@ -157,7 +157,7 @@ would result in:
 
 This is useful when topicB does not depend on topicA.
 
-A range of commits could also be removed with rebase.  If we have
+A range of commits could also be removed with rabassa.  If we have
 the following situation:
 
 ------------
@@ -166,7 +166,7 @@ the following situation:
 
 then the command
 
-    git rebase --onto topicA~5 topicA~3 topicA
+    git rabassa --onto topicA~5 topicA~3 topicA
 
 would result in the removal of commits F and G:
 
@@ -178,7 +178,7 @@ This is useful if F and G were flawed in some way, or should not be
 part of topicA.  Note that the argument to --onto and the <upstream>
 parameter can be any valid commit-ish.
 
-In case of conflict, 'git rebase' will stop at the first problematic commit
+In case of conflict, 'git rabassa' will stop at the first problematic commit
 and leave conflict markers in the tree.  You can use 'git diff' to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
 file you edit, you need to tell Git that the conflict has been resolved,
@@ -192,35 +192,35 @@ After resolving the conflict manually and updating the index with the
 desired resolution, you can continue the rebasing process with
 
 
-    git rebase --continue
+    git rabassa --continue
 
 
-Alternatively, you can undo the 'git rebase' with
+Alternatively, you can undo the 'git rabassa' with
 
 
-    git rebase --abort
+    git rabassa --abort
 
 CONFIGURATION
 -------------
 
-rebase.stat::
+rabassa.stat::
 	Whether to show a diffstat of what changed upstream since the last
-	rebase. False by default.
+	rabassa. False by default.
 
-rebase.autoSquash::
+rabassa.autoSquash::
 	If set to true enable `--autosquash` option by default.
 
-rebase.autoStash::
+rabassa.autoStash::
 	If set to true enable `--autostash` option by default.
 
-rebase.missingCommitsCheck::
+rabassa.missingCommitsCheck::
 	If set to "warn", print warnings about removed commits in
 	interactive mode. If set to "error", print the warnings and
-	stop the rebase. If set to "ignore", no checking is
+	stop the rabassa. If set to "ignore", no checking is
 	done. "ignore" by default.
 
-rebase.instructionFormat::
-	Custom commit list format to use during an `--interactive` rebase.
+rabassa.instructionFormat::
+	Custom commit list format to use during an `--interactive` rabassa.
 
 OPTIONS
 -------
@@ -246,14 +246,14 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	Restart the rebasing process after having resolved a merge conflict.
 
 --abort::
-	Abort the rebase operation and reset HEAD to the original
-	branch. If <branch> was provided when the rebase operation was
+	Abort the rabassa operation and reset HEAD to the original
+	branch. If <branch> was provided when the rabassa operation was
 	started, then HEAD will be reset to <branch>. Otherwise HEAD
-	will be reset to where it was when the rebase operation was
+	will be reset to where it was when the rabassa operation was
 	started.
 
 --quit::
-	Abort the rebase operation but HEAD is not reset back to the
+	Abort the rabassa operation but HEAD is not reset back to the
 	original branch. The index and working tree are also left
 	unchanged as a result.
 
@@ -265,17 +265,17 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 	Restart the rebasing process by skipping the current patch.
 
 --edit-todo::
-	Edit the todo list during an interactive rebase.
+	Edit the todo list during an interactive rabassa.
 
 -m::
 --merge::
-	Use merging strategies to rebase.  When the recursive (default) merge
-	strategy is used, this allows rebase to be aware of renames on the
+	Use merging strategies to rabassa.  When the recursive (default) merge
+	strategy is used, this allows rabassa to be aware of renames on the
 	upstream side.
 +
-Note that a rebase merge works by replaying each commit from the working
+Note that a rabassa merge works by replaying each commit from the working
 branch on top of the <upstream> branch.  Because of this, when a merge
-conflict happens, the side reported as 'ours' is the so-far rebased
+conflict happens, the side reported as 'ours' is the so-far rabassad
 series, starting with <upstream>, and 'theirs' is the working branch.  In
 other words, the sides are swapped.
 
@@ -285,7 +285,7 @@ other words, the sides are swapped.
 	If there is no `-s` option 'git merge-recursive' is used
 	instead.  This implies --merge.
 +
-Because 'git rebase' replays each commit from the working branch
+Because 'git rabassa' replays each commit from the working branch
 on top of the <upstream> branch using the given strategy, using
 the 'ours' strategy simply discards all patches from the <branch>,
 which makes little sense.
@@ -312,18 +312,18 @@ which makes little sense.
 	Be verbose. Implies --stat.
 
 --stat::
-	Show a diffstat of what changed upstream since the last rebase. The
-	diffstat is also controlled by the configuration option rebase.stat.
+	Show a diffstat of what changed upstream since the last rabassa. The
+	diffstat is also controlled by the configuration option rabassa.stat.
 
 -n::
 --no-stat::
-	Do not show a diffstat as part of the rebase process.
+	Do not show a diffstat as part of the rabassa process.
 
 --no-verify::
-	This option bypasses the pre-rebase hook.  See also linkgit:githooks[5].
+	This option bypasses the pre-rabassa hook.  See also linkgit:githooks[5].
 
 --verify::
-	Allows the pre-rebase hook to run, which is the default.  This option can
+	Allows the pre-rabassa hook to run, which is the default.  This option can
 	be used to override --no-verify.  See also linkgit:githooks[5].
 
 -C<n>::
@@ -333,11 +333,11 @@ which makes little sense.
 	ever ignored.
 
 -f::
---force-rebase::
-	Force a rebase even if the current branch is up-to-date and
+--force-rabassa::
+	Force a rabassa even if the current branch is up-to-date and
 	the command without `--force` would return without doing anything.
 +
-You may find this (or --no-ff with an interactive rebase) helpful after
+You may find this (or --no-ff with an interactive rabassa) helpful after
 reverting a topic branch merge, as this option recreates the topic branch with
 fresh commits so it can be remerged successfully without needing to "revert
 the reversion" (see the
@@ -350,7 +350,7 @@ link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for details)
 	introduced by <branch>.
 +
 When --fork-point is active, 'fork_point' will be used instead of
-<upstream> to calculate the set of commits to rebase, where
+<upstream> to calculate the set of commits to rabassa, where
 'fork_point' is the result of `git merge-base --fork-point <upstream>
 <branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
 ends up being empty, the <upstream> will be used as a fallback.
@@ -367,22 +367,22 @@ default is `--no-fork-point`, otherwise the default is `--fork-point`.
 --committer-date-is-author-date::
 --ignore-date::
 	These flags are passed to 'git am' to easily change the dates
-	of the rebased commits (see linkgit:git-am[1]).
+	of the rabassad commits (see linkgit:git-am[1]).
 	Incompatible with the --interactive option.
 
 --signoff::
-	This flag is passed to 'git am' to sign off all the rebased
+	This flag is passed to 'git am' to sign off all the rabassad
 	commits (see linkgit:git-am[1]). Incompatible with the
 	--interactive option.
 
 -i::
 --interactive::
-	Make a list of the commits which are about to be rebased.  Let the
+	Make a list of the commits which are about to be rabassad.  Let the
 	user edit that list before rebasing.  This mode can also be used to
 	split commits (see SPLITTING COMMITS below).
 +
 The commit list format can be changed by setting the configuration option
-rebase.instructionFormat.  A customized instruction format will automatically
+rabassa.instructionFormat.  A customized instruction format will automatically
 have the long commit hash prepended to the format.
 
 -p::
@@ -404,11 +404,11 @@ idea unless you know what you are doing (see BUGS below).
 You may execute several commands by either using one instance of `--exec`
 with several commands:
 +
-	git rebase -i --exec "cmd1 && cmd2 && ..."
+	git rabassa -i --exec "cmd1 && cmd2 && ..."
 +
 or by giving more than one `--exec`:
 +
-	git rebase -i --exec "cmd1" --exec "cmd2" --exec ...
+	git rabassa -i --exec "cmd1" --exec "cmd2" --exec ...
 +
 If `--autosquash` is used, "exec" lines will not be appended for
 the intermediate commits, and will only appear at the end of each
@@ -419,7 +419,7 @@ without an explicit `--interactive`.
 
 --root::
 	Rebase all commits reachable from <branch>, instead of
-	limiting them with an <upstream>.  This allows you to rebase
+	limiting them with an <upstream>.  This allows you to rabassa
 	the root commit(s) on a branch.  When used with --onto, it
 	will skip changes already contained in <newbase> (instead of
 	<upstream>) whereas without --onto it will operate on every change.
@@ -431,7 +431,7 @@ without an explicit `--interactive`.
 --no-autosquash::
 	When the commit log message begins with "squash! ..." (or
 	"fixup! ..."), and there is a commit whose title begins with
-	the same ..., automatically modify the todo list of rebase -i
+	the same ..., automatically modify the todo list of rabassa -i
 	so that the commit marked for squashing comes right after the
 	commit to be modified, and change the action of the moved
 	commit from `pick` to `squash` (or `fixup`).  Ignores subsequent
@@ -441,23 +441,23 @@ without an explicit `--interactive`.
 This option is only valid when the `--interactive` option is used.
 +
 If the `--autosquash` option is enabled by default using the
-configuration variable `rebase.autoSquash`, this option can be
+configuration variable `rabassa.autoSquash`, this option can be
 used to override and disable this setting.
 
 --autostash::
 --no-autostash::
 	Automatically create a temporary stash before the operation
 	begins, and apply it after the operation ends.  This means
-	that you can run rebase on a dirty worktree.  However, use
+	that you can run rabassa on a dirty worktree.  However, use
 	with care: the final stash application after a successful
-	rebase might result in non-trivial conflicts.
+	rabassa might result in non-trivial conflicts.
 
 --no-ff::
-	With --interactive, cherry-pick all rebased commits instead of
+	With --interactive, cherry-pick all rabassad commits instead of
 	fast-forwarding over the unchanged ones.  This ensures that the
-	entire history of the rebased branch is composed of new commits.
+	entire history of the rabassad branch is composed of new commits.
 +
-Without --interactive, this is a synonym for --force-rebase.
+Without --interactive, this is a synonym for --force-rabassa.
 +
 You may find this helpful after reverting a topic branch merge, as this option
 recreates the topic branch with fresh commits so it can be remerged
@@ -469,14 +469,14 @@ include::merge-strategies.txt[]
 NOTES
 -----
 
-You should understand the implications of using 'git rebase' on a
+You should understand the implications of using 'git rabassa' on a
 repository that you share.  See also RECOVERING FROM UPSTREAM REBASE
 below.
 
-When the git-rebase command is run, it will first execute a "pre-rebase"
+When the git-rabassa command is run, it will first execute a "pre-rabassa"
 hook if one exists.  You can use this hook to do sanity checks and
-reject the rebase if it isn't appropriate.  Please see the template
-pre-rebase hook script for an example.
+reject the rabassa if it isn't appropriate.  Please see the template
+pre-rabassa hook script for an example.
 
 Upon completion, <branch> will be the current branch.
 
@@ -484,7 +484,7 @@ INTERACTIVE MODE
 ----------------
 
 Rebasing interactively means that you have a chance to edit the commits
-which are rebased.  You can reorder the commits, and you can
+which are rabassad.  You can reorder the commits, and you can
 remove them (weeding out bad or otherwise unwanted patches).
 
 The interactive mode is meant for this type of workflow:
@@ -509,13 +509,13 @@ b) independent fixup
 
 Sometimes the thing fixed in b.2. cannot be amended to the not-quite
 perfect commit it fixes, because that commit is buried deeply in a
-patch series.  That is exactly what interactive rebase is for: use it
+patch series.  That is exactly what interactive rabassa is for: use it
 after plenty of "a"s and "b"s, by rearranging and editing
 commits, and squashing multiple commits into one.
 
 Start it with the last commit you want to retain as-is:
 
-	git rebase -i <after-this-commit>
+	git rabassa -i <after-this-commit>
 
 An editor will be fired up with all the commits in your current branch
 (ignoring merge commits), which come after the given commit.  You can
@@ -528,12 +528,12 @@ pick fa1afe1 The oneline of the next commit
 ...
 -------------------------------------------
 
-The oneline descriptions are purely for your pleasure; 'git rebase' will
+The oneline descriptions are purely for your pleasure; 'git rabassa' will
 not look at them but at the commit names ("deadbee" and "fa1afe1" in this
 example), so do not delete or edit the names.
 
 By replacing the command "pick" with the command "edit", you can tell
-'git rebase' to stop after applying that commit, so that you can edit
+'git rabassa' to stop after applying that commit, so that you can edit
 the files and/or the commit message, amend the commit, and continue
 rebasing.
 
@@ -551,16 +551,16 @@ message for the folded commit is the concatenation of the commit
 messages of the first commit and of those with the "squash" command,
 but omits the commit messages of commits with the "fixup" command.
 
-'git rebase' will stop when "pick" has been replaced with "edit" or
+'git rabassa' will stop when "pick" has been replaced with "edit" or
 when a command fails due to merge errors. When you are done editing
-and/or resolving conflicts you can continue with `git rebase --continue`.
+and/or resolving conflicts you can continue with `git rabassa --continue`.
 
 For example, if you want to reorder the last 5 commits, such that what
 was HEAD~4 becomes the new HEAD. To achieve that, you would call
-'git rebase' like this:
+'git rabassa' like this:
 
 ----------------------
-$ git rebase -i HEAD~5
+$ git rabassa -i HEAD~5
 ----------------------
 
 And move the first patch to the end of the list.
@@ -575,11 +575,11 @@ You might want to preserve merges, if you have a history like this:
 ---o---O---P---Q
 ------------------
 
-Suppose you want to rebase the side branch starting at "A" to "Q". Make
+Suppose you want to rabassa the side branch starting at "A" to "Q". Make
 sure that the current HEAD is "B", and call
 
 -----------------------------
-$ git rebase -i -p --onto Q O
+$ git rabassa -i -p --onto Q O
 -----------------------------
 
 Reordering and editing commits usually creates untested intermediate
@@ -598,9 +598,9 @@ exec cd subdir; make test
 ...
 -------------------------------------------
 
-The interactive rebase will stop when a command fails (i.e. exits with
+The interactive rabassa will stop when a command fails (i.e. exits with
 non-0 status) to give you an opportunity to fix the problem. You can
-continue with `git rebase --continue`.
+continue with `git rabassa --continue`.
 
 The "exec" command launches the command in a shell (the one specified
 in `$SHELL`, or the default shell if `$SHELL` is not set), so you can
@@ -608,7 +608,7 @@ use shell features (like "cd", ">", ";" ...). The command is run from
 the root of the working tree.
 
 ----------------------------------
-$ git rebase -i --exec "make test"
+$ git rabassa -i --exec "make test"
 ----------------------------------
 
 This command lets you check that intermediate commits are compilable.
@@ -629,11 +629,11 @@ SPLITTING COMMITS
 -----------------
 
 In interactive mode, you can mark commits with the action "edit".  However,
-this does not necessarily mean that 'git rebase' expects the result of this
+this does not necessarily mean that 'git rabassa' expects the result of this
 edit to be exactly one commit.  Indeed, you can undo the commit, or you can
 add other commits.  This can be used to split a commit into two:
 
-- Start an interactive rebase with `git rebase -i <commit>^`, where
+- Start an interactive rabassa with `git rabassa -i <commit>^`, where
   <commit> is the commit you want to split.  In fact, any commit range
   will do, as long as it contains that commit.
 
@@ -652,7 +652,7 @@ add other commits.  This can be used to split a commit into two:
 
 - Repeat the last two steps until your working tree is clean.
 
-- Continue the rebase with `git rebase --continue`.
+- Continue the rabassa with `git rabassa --continue`.
 
 If you are not absolutely sure that the intermediate revisions are
 consistent (they compile, pass the testsuite, etc.) you should use
@@ -682,7 +682,7 @@ following:
 			    *---*---*  topic
 ------------
 
-If 'subsystem' is rebased against 'master', the following happens:
+If 'subsystem' is rabassad against 'master', the following happens:
 
 ------------
     o---o---o---o---o---o---o---o  master
@@ -706,19 +706,19 @@ to 'subsystem', the commits from 'subsystem' will remain duplicated forever:
 Such duplicates are generally frowned upon because they clutter up
 history, making it harder to follow.  To clean things up, you need to
 transplant the commits on 'topic' to the new 'subsystem' tip, i.e.,
-rebase 'topic'.  This becomes a ripple effect: anyone downstream from
-'topic' is forced to rebase too, and so on!
+rabassa 'topic'.  This becomes a ripple effect: anyone downstream from
+'topic' is forced to rabassa too, and so on!
 
 There are two kinds of fixes, discussed in the following subsections:
 
 Easy case: The changes are literally the same.::
 
-	This happens if the 'subsystem' rebase was a simple rebase and
+	This happens if the 'subsystem' rabassa was a simple rabassa and
 	had no conflicts.
 
 Hard case: The changes are not the same.::
 
-	This happens if the 'subsystem' rebase had conflicts, or used
+	This happens if the 'subsystem' rabassa had conflicts, or used
 	`--interactive` to omit, edit, squash, or fixup commits; or
 	if the upstream used one of `commit --amend`, `reset`, or
 	`filter-branch`.
@@ -728,14 +728,14 @@ The easy case
 ~~~~~~~~~~~~~
 
 Only works if the changes (patch IDs based on the diff contents) on
-'subsystem' are literally the same before and after the rebase
+'subsystem' are literally the same before and after the rabassa
 'subsystem' did.
 
-In that case, the fix is easy because 'git rebase' knows to skip
+In that case, the fix is easy because 'git rabassa' knows to skip
 changes that are already present in the new upstream.  So if you say
 (assuming you're on 'topic')
 ------------
-    $ git rebase subsystem
+    $ git rabassa subsystem
 ------------
 you will end up with the fixed history
 ------------
@@ -751,14 +751,14 @@ The hard case
 ~~~~~~~~~~~~~
 
 Things get more complicated if the 'subsystem' changes do not exactly
-correspond to the ones before the rebase.
+correspond to the ones before the rabassa.
 
 NOTE: While an "easy case recovery" sometimes appears to be successful
       even in the hard case, it may have unintended consequences.  For
-      example, a commit that was removed via `git rebase
+      example, a commit that was removed via `git rabassa
       --interactive` will be **resurrected**!
 
-The idea is to manually tell 'git rebase' "where the old 'subsystem'
+The idea is to manually tell 'git rabassa' "where the old 'subsystem'
 ended and your 'topic' began", that is, what the old merge-base
 between them was.  You will have to find a way to name the last commit
 of the old 'subsystem', for example:
@@ -773,7 +773,7 @@ of the old 'subsystem', for example:
 You can then transplant the old `subsystem..topic` to the new tip by
 saying (for the reflog case, and assuming you are on 'topic' already):
 ------------
-    $ git rebase --onto subsystem subsystem@{1}
+    $ git rabassa --onto subsystem subsystem@{1}
 ------------
 
 The ripple effect of a "hard case" recovery is especially bad:

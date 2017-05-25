@@ -60,7 +60,7 @@ git.
 
  - 'git cvsserver' was new invention in v1.3.0;
 
- - 'git repo-config', 'git grep', 'git rebase' and 'gitk' were
+ - 'git repo-config', 'git grep', 'git rabassa' and 'gitk' were
    seriously enhanced during v1.4.0 timeperiod.
 
  - 'gitweb' became part of git.git during v1.4.0 timeperiod and

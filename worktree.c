@@ -253,42 +253,42 @@ const char *is_worktree_locked(struct worktree *wt)
 	return wt->lock_reason;
 }
 
-int is_worktree_being_rebased(const struct worktree *wt,
+int is_worktree_being_rabassad(const struct worktree *wt,
 			      const char *target)
 {
 	struct wt_status_state state;
-	int found_rebase;
+	int found_rabassa;
 
 	memset(&state, 0, sizeof(state));
-	found_rebase = wt_status_check_rebase(wt, &state) &&
-		((state.rebase_in_progress ||
-		  state.rebase_interactive_in_progress) &&
+	found_rabassa = wt_status_check_rabassa(wt, &state) &&
+		((state.rabassa_in_progress ||
+		  state.rabassa_interactive_in_progress) &&
 		 state.branch &&
 		 starts_with(target, "refs/heads/") &&
 		 !strcmp(state.branch, target + strlen("refs/heads/")));
 	free(state.branch);
 	free(state.onto);
-	return found_rebase;
+	return found_rabassa;
 }
 
 int is_worktree_being_bisected(const struct worktree *wt,
 			       const char *target)
 {
 	struct wt_status_state state;
-	int found_rebase;
+	int found_rabassa;
 
 	memset(&state, 0, sizeof(state));
-	found_rebase = wt_status_check_bisect(wt, &state) &&
+	found_rabassa = wt_status_check_bisect(wt, &state) &&
 		state.branch &&
 		starts_with(target, "refs/heads/") &&
 		!strcmp(state.branch, target + strlen("refs/heads/"));
 	free(state.branch);
-	return found_rebase;
+	return found_rabassa;
 }
 
 /*
  * note: this function should be able to detect shared symref even if
- * HEAD is temporarily detached (e.g. in the middle of rebase or
+ * HEAD is temporarily detached (e.g. in the middle of rabassa or
  * bisect). New commands that do similar things should update this
  * function as well.
  */
@@ -314,7 +314,7 @@ const struct worktree *find_shared_symref(const char *symref,
 			continue;
 
 		if (wt->is_detached && !strcmp(symref, "HEAD")) {
-			if (is_worktree_being_rebased(wt, target)) {
+			if (is_worktree_being_rabassad(wt, target)) {
 				existing = wt;
 				break;
 			}

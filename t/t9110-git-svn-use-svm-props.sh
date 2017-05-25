@@ -54,8 +54,8 @@ test_expect_success 'find commit based on SVN revision number' "
 	    grep $(git rev-parse HEAD)
         "
 
-test_expect_success 'empty rebase' "
-	git svn rebase
+test_expect_success 'empty rabassa' "
+	git svn rabassa
 	"
 
 test_done

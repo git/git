@@ -58,7 +58,7 @@ test_expect_success 'reset unwinds back to r1' '
 test_expect_success 'refetch succeeds not ignoring any files' '
 	( cd g &&
 	  git svn fetch &&
-	  git svn rebase &&
+	  git svn rabassa &&
 	  fgrep "mod hidden" hid/hid.txt
 	)
 '

@@ -758,7 +758,7 @@ core.packedRefsTimeout::
 	retry for 1 second).
 
 sequence.editor::
-	Text editor used by `git rebase -i` for editing the rebase instruction file.
+	Text editor used by `git rabassa -i` for editing the rabassa instruction file.
 	The value is meant to be interpreted by the shell when it is used.
 	It can be overridden by the `GIT_SEQUENCE_EDITOR` environment variable.
 	When not configured the default commit message editor is used instead.
@@ -932,13 +932,13 @@ branch.autoSetupMerge::
 branch.autoSetupRebase::
 	When a new branch is created with 'git branch' or 'git checkout'
 	that tracks another branch, this variable tells Git to set
-	up pull to rebase instead of merge (see "branch.<name>.rebase").
-	When `never`, rebase is never automatically set to true.
-	When `local`, rebase is set to true for tracked branches of
+	up pull to rabassa instead of merge (see "branch.<name>.rabassa").
+	When `never`, rabassa is never automatically set to true.
+	When `local`, rabassa is set to true for tracked branches of
 	other local branches.
-	When `remote`, rebase is set to true for tracked branches of
+	When `remote`, rabassa is set to true for tracked branches of
 	remote-tracking branches.
-	When `always`, rebase will be set to true for all tracking
+	When `always`, rabassa will be set to true for all tracking
 	branches.
 	See "branch.autoSetupMerge" for details on how to set up a
 	branch to track another branch.
@@ -966,7 +966,7 @@ branch.<name>.pushRemote::
 
 branch.<name>.merge::
 	Defines, together with branch.<name>.remote, the upstream branch
-	for the given branch. It tells 'git fetch'/'git pull'/'git rebase' which
+	for the given branch. It tells 'git fetch'/'git pull'/'git rabassa' which
 	branch to merge and can also affect 'git push' (see push.default).
 	When in branch <name>, it tells 'git fetch' the default
 	refspec to be marked for merging in FETCH_HEAD. The value is
@@ -988,20 +988,20 @@ branch.<name>.mergeOptions::
 	option values containing whitespace characters are currently not
 	supported.
 
-branch.<name>.rebase::
-	When true, rebase the branch <name> on top of the fetched branch,
+branch.<name>.rabassa::
+	When true, rabassa the branch <name> on top of the fetched branch,
 	instead of merging the default branch from the default remote when
-	"git pull" is run. See "pull.rebase" for doing this in a non
+	"git pull" is run. See "pull.rabassa" for doing this in a non
 	branch-specific manner.
 +
-When preserve, also pass `--preserve-merges` along to 'git rebase'
+When preserve, also pass `--preserve-merges` along to 'git rabassa'
 so that locally committed merge commits will not be flattened
 by running 'git pull'.
 +
-When the value is `interactive`, the rebase is run in interactive mode.
+When the value is `interactive`, the rabassa is run in interactive mode.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
-it unless you understand the implications (see linkgit:git-rebase[1]
+it unless you understand the implications (see linkgit:git-rabassa[1]
 for details).
 
 branch.<name>.description::
@@ -1223,7 +1223,7 @@ commit.cleanup::
 commit.gpgSign::
 
 	A boolean to specify whether all commits should be GPG signed.
-	Use of this option when doing operations such as rebase can
+	Use of this option when doing operations such as rabassa can
 	result in a large number of commits being signed. It may be
 	convenient to use an agent to avoid typing your GPG passphrase
 	several times.
@@ -1749,7 +1749,7 @@ guitool.<name>.revPrompt::
 
 guitool.<name>.revUnmerged::
 	Show only unmerged branches in the 'revPrompt' subdialog.
-	This is useful for tools similar to merge or rebase, but not
+	This is useful for tools similar to merge or rabassa, but not
 	for things like checkout or reset.
 
 guitool.<name>.title::
@@ -2270,7 +2270,7 @@ displayed.
 
 notes.rewrite.<command>::
 	When rewriting commits with <command> (currently `amend` or
-	`rebase`) and this variable is set to `true`, Git
+	`rabassa`) and this variable is set to `true`, Git
 	automatically copies your notes from the original to the
 	rewritten commit.  Defaults to `true`, but see
 	"notes.rewriteRef" below.
@@ -2478,20 +2478,20 @@ pull.ff::
 	allowed (equivalent to giving the `--ff-only` option from the
 	command line). This setting overrides `merge.ff` when pulling.
 
-pull.rebase::
-	When true, rebase branches on top of the fetched branch, instead
+pull.rabassa::
+	When true, rabassa branches on top of the fetched branch, instead
 	of merging the default branch from the default remote when "git
-	pull" is run. See "branch.<name>.rebase" for setting this on a
+	pull" is run. See "branch.<name>.rabassa" for setting this on a
 	per-branch basis.
 +
-When preserve, also pass `--preserve-merges` along to 'git rebase'
+When preserve, also pass `--preserve-merges` along to 'git rabassa'
 so that locally committed merge commits will not be flattened
 by running 'git pull'.
 +
-When the value is `interactive`, the rebase is run in interactive mode.
+When the value is `interactive`, the rabassa is run in interactive mode.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
-it unless you understand the implications (see linkgit:git-rebase[1]
+it unless you understand the implications (see linkgit:git-rabassa[1]
 for details).
 
 pull.octopus::
@@ -2586,35 +2586,35 @@ push.recurseSubmodules::
 	is retained. You may override this configuration at time of push by
 	specifying '--recurse-submodules=check|on-demand|no'.
 
-rebase.stat::
+rabassa.stat::
 	Whether to show a diffstat of what changed upstream since the last
-	rebase. False by default.
+	rabassa. False by default.
 
-rebase.autoSquash::
+rabassa.autoSquash::
 	If set to true enable `--autosquash` option by default.
 
-rebase.autoStash::
+rabassa.autoStash::
 	When set to true, automatically create a temporary stash
 	before the operation begins, and apply it after the operation
-	ends.  This means that you can run rebase on a dirty worktree.
+	ends.  This means that you can run rabassa on a dirty worktree.
 	However, use with care: the final stash application after a
-	successful rebase might result in non-trivial conflicts.
+	successful rabassa might result in non-trivial conflicts.
 	Defaults to false.
 
-rebase.missingCommitsCheck::
-	If set to "warn", git rebase -i will print a warning if some
+rabassa.missingCommitsCheck::
+	If set to "warn", git rabassa -i will print a warning if some
 	commits are removed (e.g. a line was deleted), however the
-	rebase will still proceed. If set to "error", it will print
-	the previous warning and stop the rebase, 'git rebase
+	rabassa will still proceed. If set to "error", it will print
+	the previous warning and stop the rabassa, 'git rabassa
 	--edit-todo' can then be used to correct the error. If set to
 	"ignore", no checking is done.
 	To drop a commit without warning or error, use the `drop`
 	command in the todo-list.
 	Defaults to "ignore".
 
-rebase.instructionFormat::
+rabassa.instructionFormat::
 	A format string, as specified in linkgit:git-log[1], to be used for
-	the instruction list during an interactive rebase.  The format will automatically
+	the instruction list during an interactive rabassa.  The format will automatically
 	have the long commit hash prepended to the format.
 
 receive.advertiseAtomic::

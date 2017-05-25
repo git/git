@@ -2,9 +2,9 @@
 #
 # Copyright(C) 2008 Stephen Habermann & Andreas Ericsson
 #
-test_description='git rebase -p should preserve merges
+test_description='git rabassa -p should preserve merges
 
-Run "git rebase -p" and check that merges are properly carried along
+Run "git rabassa -p" and check that merges are properly carried along
 '
 . ./test-lib.sh
 
@@ -31,7 +31,7 @@ export GIT_AUTHOR_EMAIL
 #
 # Clone 4 (same as Clone 3)
 
-test_expect_success 'setup for merge-preserving rebase' \
+test_expect_success 'setup for merge-preserving rabassa' \
 	'echo First > A &&
 	git add A &&
 	git commit -m "Add A1" &&
@@ -85,34 +85,34 @@ test_expect_success '--continue works after a conflict' '
 	(
 	cd clone2 &&
 	git fetch &&
-	test_must_fail git rebase -p origin/topic &&
+	test_must_fail git rabassa -p origin/topic &&
 	test 2 = $(git ls-files B | wc -l) &&
 	echo Resolved again > B &&
-	test_must_fail git rebase --continue &&
-	grep "^@@@ " .git/rebase-merge/patch &&
+	test_must_fail git rabassa --continue &&
+	grep "^@@@ " .git/rabassa-merge/patch &&
 	git add B &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Add different" | wc -l) &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge origin" | wc -l)
 	)
 '
 
-test_expect_success 'rebase -p preserves no-ff merges' '
+test_expect_success 'rabassa -p preserves no-ff merges' '
 	(
 	cd clone3 &&
 	git fetch &&
-	git rebase -p origin/topic &&
+	git rabassa -p origin/topic &&
 	test 3 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge branch" | wc -l)
 	)
 '
 
-test_expect_success 'rebase -p ignores merge.log config' '
+test_expect_success 'rabassa -p ignores merge.log config' '
 	(
 	cd clone4 &&
 	git fetch &&
-	git -c merge.log=1 rebase -p origin/topic &&
+	git -c merge.log=1 rabassa -p origin/topic &&
 	echo >expected &&
 	git log --format="%b" -1 >current &&
 	test_cmp expected current

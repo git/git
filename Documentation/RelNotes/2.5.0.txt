@@ -242,9 +242,9 @@ notes for details).
    take a really long object type name.
    (merge 1427a7f jc/hash-object later to maint).
 
- * "git rebase --quiet" was not quite quiet when there is nothing to
+ * "git rabassa --quiet" was not quite quiet when there is nothing to
    do.
-   (merge 22946a9 jk/rebase-quiet-noop later to maint).
+   (merge 22946a9 jk/rabassa-quiet-noop later to maint).
 
  * The completion for "log --decorate=" parameter value was incorrect.
    (merge af16bda sg/complete-decorate-full-not-long later to maint).
@@ -309,9 +309,9 @@ notes for details).
    directory, instead of refusing to run.
    (merge 0615173 jc/diff-no-index-d-f later to maint).
 
- * "git rebase -i" moved the "current" command from "todo" to "done" a
+ * "git rabassa -i" moved the "current" command from "todo" to "done" a
    bit too prematurely, losing a step when a "pick" did not even start.
-   (merge 8cbc57c ph/rebase-i-redo later to maint).
+   (merge 8cbc57c ph/rabassa-i-redo later to maint).
 
  * The connection initiation code for "ssh" transport tried to absorb
    differences between the stock "ssh" and Putty-supplied "plink" and
@@ -388,9 +388,9 @@ notes for details).
    cryptic error message; it should be a silent no-op instead.
    (merge 0544574 jk/rerere-forget-check-enabled later to maint).
 
- * "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
+ * "git rabassa -i" fired post-rewrite hook when it shouldn't (namely,
    when it was told to stop sequencing with 'exec' insn).
-   (merge 141ff8f mm/rebase-i-post-rewrite-exec later to maint).
+   (merge 141ff8f mm/rabassa-i-post-rewrite-exec later to maint).
 
  * Clarify that "log --raw" and "log --format=raw" are unrelated
    concepts.
@@ -472,9 +472,9 @@ notes for details).
    support the capability.
    (merge eb86a50 me/fetch-into-shallow-safety later to maint).
 
- * "git rebase" did not exit with failure when format-patch it invoked
+ * "git rabassa" did not exit with failure when format-patch it invoked
    failed for whatever reason.
-   (merge 60d708b cb/rebase-am-exit-code later to maint).
+   (merge 60d708b cb/rabassa-am-exit-code later to maint).
 
  * Fix a small bug in our use of umask() return value.
    (merge 3096b2e jk/fix-refresh-utime later to maint).
@@ -509,9 +509,9 @@ notes for details).
    fork; we only need it on "Git" side when we spawn the pager.
    (merge 124b519 jc/unexport-git-pager-in-use-in-pager later to maint).
 
- * Abandoning an already applied change in "git rebase -i" with
+ * Abandoning an already applied change in "git rabassa -i" with
    "--continue" left CHERRY_PICK_HEAD and confused later steps.
-   (merge 0e0aff4 js/rebase-i-clean-up-upon-continue-to-skip later to maint).
+   (merge 0e0aff4 js/rabassa-i-clean-up-upon-continue-to-skip later to maint).
 
  * We used to ask libCURL to use the most secure authentication method
    available when talking to an HTTP proxy only when we were told to

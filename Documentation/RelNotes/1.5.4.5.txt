@@ -25,8 +25,8 @@ Fixes since v1.5.4.4
    from the Perl interpreter was issued because the script lacked proper
    error checking.
 
- * After "git rebase" stopped due to conflicts, if the user played with
-   "git reset" and friends, "git rebase --abort" failed to go back to the
+ * After "git rabassa" stopped due to conflicts, if the user played with
+   "git reset" and friends, "git rabassa --abort" failed to go back to the
    correct commit.
 
  * Additional work trees prepared with git-new-workdir (in contrib/) did
@@ -50,7 +50,7 @@ Fixes since v1.5.4.4
  * "git quiltimport" did not grok empty lines, lines in "file -pNNN"
    format to specify the prefix levels and lines with trailing comments.
 
- * "git rebase -m" triggered pre-commit verification, which made
-   "rebase --continue" impossible.
+ * "git rabassa -m" triggered pre-commit verification, which made
+   "rabassa --continue" impossible.
 
 As usual, it also comes with many documentation fixes and clarifications.

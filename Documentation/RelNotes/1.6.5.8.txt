@@ -7,7 +7,7 @@ Fixes since v1.6.5.7
 * "git count-objects" did not handle packfiles that are bigger than 4G on
   platforms with 32-bit off_t.
 
-* "git rebase -i" did not abort cleanly if it failed to launch the editor.
+* "git rabassa -i" did not abort cleanly if it failed to launch the editor.
 
 * "git blame" did not work well when commit lacked the author name.
 

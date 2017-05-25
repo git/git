@@ -32,35 +32,35 @@ static GIT_PATH_FUNC(git_path_opts_file, "sequencer/opts")
 static GIT_PATH_FUNC(git_path_head_file, "sequencer/head")
 static GIT_PATH_FUNC(git_path_abort_safety_file, "sequencer/abort-safety")
 
-static GIT_PATH_FUNC(rebase_path, "rebase-merge")
+static GIT_PATH_FUNC(rabassa_path, "rabassa-merge")
 /*
- * The file containing rebase commands, comments, and empty lines.
- * This file is created by "git rebase -i" then edited by the user. As
+ * The file containing rabassa commands, comments, and empty lines.
+ * This file is created by "git rabassa -i" then edited by the user. As
  * the lines are processed, they are removed from the front of this
  * file and written to the tail of 'done'.
  */
-static GIT_PATH_FUNC(rebase_path_todo, "rebase-merge/git-rebase-todo")
+static GIT_PATH_FUNC(rabassa_path_todo, "rabassa-merge/git-rabassa-todo")
 /*
- * The rebase command lines that have already been processed. A line
+ * The rabassa command lines that have already been processed. A line
  * is moved here when it is first handled, before any associated user
  * actions.
  */
-static GIT_PATH_FUNC(rebase_path_done, "rebase-merge/done")
+static GIT_PATH_FUNC(rabassa_path_done, "rabassa-merge/done")
 /*
  * The file to keep track of how many commands were already processed (e.g.
  * for the prompt).
  */
-static GIT_PATH_FUNC(rebase_path_msgnum, "rebase-merge/msgnum");
+static GIT_PATH_FUNC(rabassa_path_msgnum, "rabassa-merge/msgnum");
 /*
  * The file to keep track of how many commands are to be processed in total
  * (e.g. for the prompt).
  */
-static GIT_PATH_FUNC(rebase_path_msgtotal, "rebase-merge/end");
+static GIT_PATH_FUNC(rabassa_path_msgtotal, "rabassa-merge/end");
 /*
  * The commit message that is planned to be used for any changes that
  * need to be committed following a user interaction.
  */
-static GIT_PATH_FUNC(rebase_path_message, "rebase-merge/message")
+static GIT_PATH_FUNC(rabassa_path_message, "rabassa-merge/message")
 /*
  * The file into which is accumulated the suggested commit message for
  * squash/fixup commands. When the first of a series of squash/fixups
@@ -76,7 +76,7 @@ static GIT_PATH_FUNC(rebase_path_message, "rebase-merge/message")
  * Each time that a commit message is processed, this line is read and
  * updated. It is deleted just before the combined commit is made.
  */
-static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
+static GIT_PATH_FUNC(rabassa_path_squash_msg, "rabassa-merge/message-squash")
 /*
  * If the current series of squash/fixups has not yet included a squash
  * command, then this file exists and holds the commit message of the
@@ -84,65 +84,65 @@ static GIT_PATH_FUNC(rebase_path_squash_msg, "rebase-merge/message-squash")
  * command, then this can be used as the commit message of the combined
  * commit without opening the editor.)
  */
-static GIT_PATH_FUNC(rebase_path_fixup_msg, "rebase-merge/message-fixup")
+static GIT_PATH_FUNC(rabassa_path_fixup_msg, "rabassa-merge/message-fixup")
 /*
  * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
  * GIT_AUTHOR_DATE that will be used for the commit that is currently
- * being rebased.
+ * being rabassad.
  */
-static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
+static GIT_PATH_FUNC(rabassa_path_author_script, "rabassa-merge/author-script")
 /*
- * When an "edit" rebase command is being processed, the SHA1 of the
- * commit to be edited is recorded in this file.  When "git rebase
+ * When an "edit" rabassa command is being processed, the SHA1 of the
+ * commit to be edited is recorded in this file.  When "git rabassa
  * --continue" is executed, if there are any staged changes then they
  * will be amended to the HEAD commit, but only provided the HEAD
- * commit is still the commit to be edited.  When any other rebase
+ * commit is still the commit to be edited.  When any other rabassa
  * command is processed, this file is deleted.
  */
-static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
+static GIT_PATH_FUNC(rabassa_path_amend, "rabassa-merge/amend")
 /*
  * When we stop at a given patch via the "edit" command, this file contains
  * the abbreviated commit name of the corresponding patch.
  */
-static GIT_PATH_FUNC(rebase_path_stopped_sha, "rebase-merge/stopped-sha")
+static GIT_PATH_FUNC(rabassa_path_stopped_sha, "rabassa-merge/stopped-sha")
 /*
  * For the post-rewrite hook, we make a list of rewritten commits and
  * their new sha1s.  The rewritten-pending list keeps the sha1s of
  * commits that have been processed, but not committed yet,
  * e.g. because they are waiting for a 'squash' command.
  */
-static GIT_PATH_FUNC(rebase_path_rewritten_list, "rebase-merge/rewritten-list")
-static GIT_PATH_FUNC(rebase_path_rewritten_pending,
-	"rebase-merge/rewritten-pending")
+static GIT_PATH_FUNC(rabassa_path_rewritten_list, "rabassa-merge/rewritten-list")
+static GIT_PATH_FUNC(rabassa_path_rewritten_pending,
+	"rabassa-merge/rewritten-pending")
 /*
- * The following files are written by git-rebase just after parsing the
+ * The following files are written by git-rabassa just after parsing the
  * command-line (and are only consumed, not modified, by the sequencer).
  */
-static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
-static GIT_PATH_FUNC(rebase_path_orig_head, "rebase-merge/orig-head")
-static GIT_PATH_FUNC(rebase_path_verbose, "rebase-merge/verbose")
-static GIT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
-static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
-static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
-static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
-static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
+static GIT_PATH_FUNC(rabassa_path_gpg_sign_opt, "rabassa-merge/gpg_sign_opt")
+static GIT_PATH_FUNC(rabassa_path_orig_head, "rabassa-merge/orig-head")
+static GIT_PATH_FUNC(rabassa_path_verbose, "rabassa-merge/verbose")
+static GIT_PATH_FUNC(rabassa_path_head_name, "rabassa-merge/head-name")
+static GIT_PATH_FUNC(rabassa_path_onto, "rabassa-merge/onto")
+static GIT_PATH_FUNC(rabassa_path_autostash, "rabassa-merge/autostash")
+static GIT_PATH_FUNC(rabassa_path_strategy, "rabassa-merge/strategy")
+static GIT_PATH_FUNC(rabassa_path_strategy_opts, "rabassa-merge/strategy_opts")
 
-static inline int is_rebase_i(const struct replay_opts *opts)
+static inline int is_rabassa_i(const struct replay_opts *opts)
 {
 	return opts->action == REPLAY_INTERACTIVE_REBASE;
 }
 
 static const char *get_dir(const struct replay_opts *opts)
 {
-	if (is_rebase_i(opts))
-		return rebase_path();
+	if (is_rabassa_i(opts))
+		return rabassa_path();
 	return git_path_seq_dir();
 }
 
 static const char *get_todo_path(const struct replay_opts *opts)
 {
-	if (is_rebase_i(opts))
-		return rebase_path_todo();
+	if (is_rabassa_i(opts))
+		return rabassa_path_todo();
 	return git_path_todo_file();
 }
 
@@ -216,7 +216,7 @@ static const char *action_name(const struct replay_opts *opts)
 	case REPLAY_PICK:
 		return N_("cherry-pick");
 	case REPLAY_INTERACTIVE_REBASE:
-		return N_("rebase -i");
+		return N_("rabassa -i");
 	}
 	die(_("Unknown action: %d"), opts->action);
 }
@@ -266,7 +266,7 @@ static void print_advice(int show_hint, struct replay_opts *opts)
 		fprintf(stderr, "%s\n", msg);
 		/*
 		 * A conflict has occurred but the porcelain
-		 * (typically rebase --interactive) wants to take care
+		 * (typically rabassa --interactive) wants to take care
 		 * of the commit itself so remove CHERRY_PICK_HEAD
 		 */
 		unlink(git_path_cherry_pick_head());
@@ -443,7 +443,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	o.ancestor = base ? base_label : "(empty tree)";
 	o.branch1 = "HEAD";
 	o.branch2 = next ? next_label : "(empty tree)";
-	if (is_rebase_i(opts))
+	if (is_rabassa_i(opts))
 		o.buffer_output = 2;
 
 	head_tree = parse_tree_indirect(head);
@@ -456,7 +456,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	clean = merge_trees(&o,
 			    head_tree,
 			    next_tree, base_tree, &result);
-	if (is_rebase_i(opts) && clean <= 0)
+	if (is_rabassa_i(opts) && clean <= 0)
 		fputs(o.obuf.buf, stdout);
 	strbuf_release(&o.obuf);
 	if (clean < 0)
@@ -465,7 +465,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
 		/* TRANSLATORS: %s will be "revert", "cherry-pick" or
-		 * "rebase -i".
+		 * "rabassa -i".
 		 */
 		return error(_("%s: Unable to write new index file"),
 			_(action_name(opts)));
@@ -521,7 +521,7 @@ static int write_author_script(const char *message)
 		if (!*message || starts_with(message, "\n")) {
 missing_author:
 			/* Missing 'author' line? */
-			unlink(rebase_path_author_script());
+			unlink(rabassa_path_author_script());
 			return 0;
 		} else if (skip_prefix(message, "author ", &message))
 			break;
@@ -552,7 +552,7 @@ missing_author:
 			strbuf_addch(&buf, *(message++));
 		else
 			strbuf_addf(&buf, "'\\\\%c'", *(message++));
-	res = write_message(buf.buf, buf.len, rebase_path_author_script(), 1);
+	res = write_message(buf.buf, buf.len, rabassa_path_author_script(), 1);
 	strbuf_release(&buf);
 	return res;
 }
@@ -567,7 +567,7 @@ static int read_env_script(struct argv_array *env)
 	int i, count = 0;
 	char *p, *p2;
 
-	if (strbuf_read_file(&script, rebase_path_author_script(), 256) <= 0)
+	if (strbuf_read_file(&script, rabassa_path_author_script(), 256) <= 0)
 		return -1;
 
 	for (p = script.buf; *p; p++)
@@ -600,7 +600,7 @@ N_("you have staged changes in your working tree\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n");
+"  git rabassa --continue\n");
 
 #define ALLOW_EMPTY (1<<0)
 #define EDIT_MSG    (1<<1)
@@ -617,7 +617,7 @@ N_("you have staged changes in your working tree\n"
  * we had better say that the current user is responsible for that.
  *
  * An exception is when run_git_commit() is called during an
- * interactive rebase: in that case, we will want to retain the
+ * interactive rabassa: in that case, we will want to retain the
  * author metadata.
  */
 static int run_git_commit(const char *defmsg, struct replay_opts *opts,
@@ -628,7 +628,7 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 
 	cmd.git_cmd = 1;
 
-	if (is_rebase_i(opts)) {
+	if (is_rabassa_i(opts)) {
 		if (!(flags & EDIT_MSG)) {
 			cmd.stdout_to_stderr = 1;
 			cmd.err = -1;
@@ -806,13 +806,13 @@ static int update_squash_messages(enum todo_command command,
 	int count, res;
 	const char *message, *body;
 
-	if (file_exists(rebase_path_squash_msg())) {
+	if (file_exists(rabassa_path_squash_msg())) {
 		struct strbuf header = STRBUF_INIT;
 		char *eol, *p;
 
-		if (strbuf_read_file(&buf, rebase_path_squash_msg(), 2048) <= 0)
+		if (strbuf_read_file(&buf, rabassa_path_squash_msg(), 2048) <= 0)
 			return error(_("could not read '%s'"),
-				rebase_path_squash_msg());
+				rabassa_path_squash_msg());
 
 		p = buf.buf + 1;
 		eol = strchrnul(buf.buf, '\n');
@@ -847,10 +847,10 @@ static int update_squash_messages(enum todo_command command,
 
 		find_commit_subject(head_message, &body);
 		if (write_message(body, strlen(body),
-				  rebase_path_fixup_msg(), 0)) {
+				  rabassa_path_fixup_msg(), 0)) {
 			unuse_commit_buffer(head_commit, head_message);
 			return error(_("cannot write '%s'"),
-				     rebase_path_fixup_msg());
+				     rabassa_path_fixup_msg());
 		}
 
 		count = 2;
@@ -871,7 +871,7 @@ static int update_squash_messages(enum todo_command command,
 	find_commit_subject(message, &body);
 
 	if (command == TODO_SQUASH) {
-		unlink(rebase_path_fixup_msg());
+		unlink(rabassa_path_fixup_msg());
 		strbuf_addf(&buf, "\n%c ", comment_line_char);
 		strbuf_addf(&buf, _("This is the commit message #%d:"), count);
 		strbuf_addstr(&buf, "\n\n");
@@ -886,7 +886,7 @@ static int update_squash_messages(enum todo_command command,
 		return error(_("unknown command: %d"), command);
 	unuse_commit_buffer(commit, message);
 
-	res = write_message(buf.buf, buf.len, rebase_path_squash_msg(), 0);
+	res = write_message(buf.buf, buf.len, rabassa_path_squash_msg(), 0);
 	strbuf_release(&buf);
 	return res;
 }
@@ -896,9 +896,9 @@ static void flush_rewritten_pending(void) {
 	unsigned char newsha1[20];
 	FILE *out;
 
-	if (strbuf_read_file(&buf, rebase_path_rewritten_pending(), 82) > 0 &&
+	if (strbuf_read_file(&buf, rabassa_path_rewritten_pending(), 82) > 0 &&
 			!get_sha1("HEAD", newsha1) &&
-			(out = fopen(rebase_path_rewritten_list(), "a"))) {
+			(out = fopen(rabassa_path_rewritten_list(), "a"))) {
 		char *bol = buf.buf, *eol;
 
 		while (*bol) {
@@ -910,14 +910,14 @@ static void flush_rewritten_pending(void) {
 			bol = eol + 1;
 		}
 		fclose(out);
-		unlink(rebase_path_rewritten_pending());
+		unlink(rabassa_path_rewritten_pending());
 	}
 	strbuf_release(&buf);
 }
 
 static void record_in_rewritten(struct object_id *oid,
 		enum todo_command next_command) {
-	FILE *out = fopen(rebase_path_rewritten_pending(), "a");
+	FILE *out = fopen(rabassa_path_rewritten_pending(), "a");
 
 	if (!out)
 		return;
@@ -991,7 +991,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 	if (opts->allow_ff && !is_fixup(command) &&
 	    ((parent && !hashcmp(parent->object.oid.hash, head)) ||
 	     (!parent && unborn))) {
-		if (is_rebase_i(opts))
+		if (is_rabassa_i(opts))
 			write_author_script(msg.message);
 		res = fast_forward_to(commit->object.oid.hash, head, unborn,
 			opts);
@@ -1061,23 +1061,23 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			return -1;
 		flags |= AMEND_MSG;
 		if (!final_fixup)
-			msg_file = rebase_path_squash_msg();
-		else if (file_exists(rebase_path_fixup_msg())) {
+			msg_file = rabassa_path_squash_msg();
+		else if (file_exists(rabassa_path_fixup_msg())) {
 			flags |= CLEANUP_MSG;
-			msg_file = rebase_path_fixup_msg();
+			msg_file = rabassa_path_fixup_msg();
 		} else {
 			const char *dest = git_path_squash_msg();
 			unlink(dest);
-			if (copy_file(dest, rebase_path_squash_msg(), 0666))
+			if (copy_file(dest, rabassa_path_squash_msg(), 0666))
 				return error(_("could not rename '%s' to '%s'"),
-					     rebase_path_squash_msg(), dest);
+					     rabassa_path_squash_msg(), dest);
 			unlink(git_path_merge_msg());
 			msg_file = dest;
 			flags |= EDIT_MSG;
 		}
 	}
 
-	if (is_rebase_i(opts) && write_author_script(msg.message) < 0)
+	if (is_rabassa_i(opts) && write_author_script(msg.message) < 0)
 		res = -1;
 	else if (!opts->strategy || !strcmp(opts->strategy, "recursive") || command == TODO_REVERT) {
 		res = do_recursive_merge(base, next, base_label, next_label,
@@ -1139,8 +1139,8 @@ fast_forward_edit:
 		res = run_git_commit(msg_file, opts, flags);
 
 	if (!res && final_fixup) {
-		unlink(rebase_path_fixup_msg());
-		unlink(rebase_path_squash_msg());
+		unlink(rabassa_path_fixup_msg());
+		unlink(rabassa_path_squash_msg());
 	}
 
 leave:
@@ -1288,7 +1288,7 @@ static int parse_insn_buffer(char *buf, struct todo_list *todo_list)
 {
 	struct todo_item *item;
 	char *p = buf, *next_p;
-	int i, res = 0, fixup_okay = file_exists(rebase_path_done());
+	int i, res = 0, fixup_okay = file_exists(rabassa_path_done());
 
 	for (i = 1; *p; i++, p = next_p) {
 		char *eol = strchrnul(p, '\n');
@@ -1353,17 +1353,17 @@ static int read_populate_todo(struct todo_list *todo_list,
 
 	res = parse_insn_buffer(todo_list->buf.buf, todo_list);
 	if (res) {
-		if (is_rebase_i(opts))
+		if (is_rabassa_i(opts))
 			return error(_("please fix this using "
-				       "'git rebase --edit-todo'."));
+				       "'git rabassa --edit-todo'."));
 		return error(_("unusable instruction sheet: '%s'"), todo_file);
 	}
 
 	if (!todo_list->nr &&
-	    (!is_rebase_i(opts) || !file_exists(rebase_path_done())))
+	    (!is_rabassa_i(opts) || !file_exists(rabassa_path_done())))
 		return error(_("no commits parsed."));
 
-	if (!is_rebase_i(opts)) {
+	if (!is_rabassa_i(opts)) {
 		enum todo_command valid =
 			opts->action == REPLAY_PICK ? TODO_PICK : TODO_REVERT;
 		int i;
@@ -1377,11 +1377,11 @@ static int read_populate_todo(struct todo_list *todo_list,
 				return error(_("cannot revert during a cherry-pick."));
 	}
 
-	if (is_rebase_i(opts)) {
+	if (is_rabassa_i(opts)) {
 		struct todo_list done = TODO_LIST_INIT;
-		FILE *f = fopen(rebase_path_msgtotal(), "w");
+		FILE *f = fopen(rabassa_path_msgtotal(), "w");
 
-		if (strbuf_read_file(&done.buf, rebase_path_done(), 0) > 0 &&
+		if (strbuf_read_file(&done.buf, rabassa_path_done(), 0) > 0 &&
 				!parse_insn_buffer(done.buf.buf, &done))
 			todo_list->done_nr = count_commands(&done);
 		else
@@ -1450,10 +1450,10 @@ static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 	int i;
 
 	strbuf_reset(buf);
-	if (!read_oneliner(buf, rebase_path_strategy(), 0))
+	if (!read_oneliner(buf, rabassa_path_strategy(), 0))
 		return;
 	opts->strategy = strbuf_detach(buf, NULL);
-	if (!read_oneliner(buf, rebase_path_strategy_opts(), 0))
+	if (!read_oneliner(buf, rabassa_path_strategy_opts(), 0))
 		return;
 
 	opts->xopts_nr = split_cmdline(buf->buf, (const char ***)&opts->xopts);
@@ -1467,10 +1467,10 @@ static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 
 static int read_populate_opts(struct replay_opts *opts)
 {
-	if (is_rebase_i(opts)) {
+	if (is_rabassa_i(opts)) {
 		struct strbuf buf = STRBUF_INIT;
 
-		if (read_oneliner(&buf, rebase_path_gpg_sign_opt(), 1)) {
+		if (read_oneliner(&buf, rabassa_path_gpg_sign_opt(), 1)) {
 			if (!starts_with(buf.buf, "-S"))
 				strbuf_reset(&buf);
 			else {
@@ -1479,7 +1479,7 @@ static int read_populate_opts(struct replay_opts *opts)
 			}
 		}
 
-		if (file_exists(rebase_path_verbose()))
+		if (file_exists(rabassa_path_verbose()))
 			opts->verbose = 1;
 
 		read_strategy_opts(opts, &buf);
@@ -1672,10 +1672,10 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	int next = todo_list->current, offset, fd;
 
 	/*
-	 * rebase -i writes "git-rebase-todo" without the currently executing
+	 * rabassa -i writes "git-rabassa-todo" without the currently executing
 	 * command, appending it to "done" instead.
 	 */
-	if (is_rebase_i(opts))
+	if (is_rabassa_i(opts))
 		next++;
 
 	fd = hold_lock_file_for_update(&todo_lock, todo_path, 0);
@@ -1689,8 +1689,8 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	if (commit_lock_file(&todo_lock) < 0)
 		return error(_("failed to finalize '%s'."), todo_path);
 
-	if (is_rebase_i(opts)) {
-		const char *done_path = rebase_path_done();
+	if (is_rabassa_i(opts)) {
+		const char *done_path = rabassa_path_done();
 		int fd = open(done_path, O_CREAT | O_WRONLY | O_APPEND, 0666);
 		int prev_offset = !next ? 0 :
 			todo_list->items[next - 1].offset_in_buf;
@@ -1751,7 +1751,7 @@ static int make_patch(struct commit *commit, struct replay_opts *opts)
 	int res = 0;
 
 	p = short_commit_name(commit);
-	if (write_message(p, strlen(p), rebase_path_stopped_sha(), 1) < 0)
+	if (write_message(p, strlen(p), rabassa_path_stopped_sha(), 1) < 0)
 		return -1;
 
 	strbuf_addf(&buf, "%s/patch", get_dir(opts));
@@ -1793,7 +1793,7 @@ static int intend_to_amend(void)
 		return error(_("cannot read HEAD"));
 
 	p = sha1_to_hex(head);
-	return write_message(p, strlen(p), rebase_path_amend(), 1);
+	return write_message(p, strlen(p), rabassa_path_amend(), 1);
 }
 
 static int error_with_patch(struct commit *commit,
@@ -1813,7 +1813,7 @@ static int error_with_patch(struct commit *commit,
 			"\n"
 			"Once you are satisfied with your changes, run\n"
 			"\n"
-			"  git rebase --continue\n", gpg_sign_opt_quoted(opts));
+			"  git rabassa --continue\n", gpg_sign_opt_quoted(opts));
 	} else if (exit_code)
 		fprintf(stderr, "Could not apply %s... %.*s\n",
 			short_commit_name(commit), subject_len, subject);
@@ -1824,14 +1824,14 @@ static int error_with_patch(struct commit *commit,
 static int error_failed_squash(struct commit *commit,
 	struct replay_opts *opts, int subject_len, const char *subject)
 {
-	if (rename(rebase_path_squash_msg(), rebase_path_message()))
+	if (rename(rabassa_path_squash_msg(), rabassa_path_message()))
 		return error(_("could not rename '%s' to '%s'"),
-			rebase_path_squash_msg(), rebase_path_message());
-	unlink(rebase_path_fixup_msg());
+			rabassa_path_squash_msg(), rabassa_path_message());
+	unlink(rabassa_path_fixup_msg());
 	unlink(git_path_merge_msg());
-	if (copy_file(git_path_merge_msg(), rebase_path_message(), 0666))
+	if (copy_file(git_path_merge_msg(), rabassa_path_message(), 0666))
 		return error(_("could not copy '%s' to '%s'"),
-			     rebase_path_message(), git_path_merge_msg());
+			     rabassa_path_message(), git_path_merge_msg());
 	return error_with_patch(commit, subject, subject_len, opts, 1, 0);
 }
 
@@ -1848,13 +1848,13 @@ static int do_exec(const char *command_line)
 	if (discard_cache() < 0 || read_cache() < 0)
 		return error(_("could not read index"));
 
-	dirty = require_clean_work_tree("rebase", NULL, 1, 1);
+	dirty = require_clean_work_tree("rabassa", NULL, 1, 1);
 
 	if (status) {
 		warning(_("execution failed: %s\n%s"
 			  "You can fix the problem, and then run\n"
 			  "\n"
-			  "  git rebase --continue\n"
+			  "  git rabassa --continue\n"
 			  "\n"),
 			command_line,
 			dirty ? N_("and made changes to the index and/or the "
@@ -1867,7 +1867,7 @@ static int do_exec(const char *command_line)
 			  "left changes to the index and/or the working tree\n"
 			  "Commit or stash your changes, and then run\n"
 			  "\n"
-			  "  git rebase --continue\n"
+			  "  git rabassa --continue\n"
 			  "\n"), command_line);
 		status = 1;
 	}
@@ -1907,7 +1907,7 @@ static int apply_autostash(struct replay_opts *opts)
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
 
-	if (!read_oneliner(&stash_sha1, rebase_path_autostash(), 1)) {
+	if (!read_oneliner(&stash_sha1, rabassa_path_autostash(), 1)) {
 		strbuf_release(&stash_sha1);
 		return 0;
 	}
@@ -1977,9 +1977,9 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 		struct todo_item *item = todo_list->items + todo_list->current;
 		if (save_todo(todo_list, opts))
 			return -1;
-		if (is_rebase_i(opts)) {
+		if (is_rabassa_i(opts)) {
 			if (item->command != TODO_COMMENT) {
-				FILE *f = fopen(rebase_path_msgnum(), "w");
+				FILE *f = fopen(rabassa_path_msgnum(), "w");
 
 				todo_list->done_nr++;
 
@@ -1992,19 +1992,19 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 					todo_list->total_nr,
 					opts->verbose ? "\n" : "\r");
 			}
-			unlink(rebase_path_message());
-			unlink(rebase_path_author_script());
-			unlink(rebase_path_stopped_sha());
-			unlink(rebase_path_amend());
+			unlink(rabassa_path_message());
+			unlink(rabassa_path_author_script());
+			unlink(rabassa_path_stopped_sha());
+			unlink(rabassa_path_amend());
 		}
 		if (item->command <= TODO_SQUASH) {
-			if (is_rebase_i(opts))
+			if (is_rabassa_i(opts))
 				setenv("GIT_REFLOG_ACTION", reflog_message(opts,
 					command_to_string(item->command), NULL),
 					1);
 			res = do_pick_commit(item->command, item->commit,
 					opts, is_final_fixup(todo_list));
-			if (is_rebase_i(opts) && res < 0) {
+			if (is_rabassa_i(opts) && res < 0) {
 				/* Reschedule */
 				todo_list->current--;
 				if (save_todo(todo_list, opts))
@@ -2021,7 +2021,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 					item->arg, item->arg_len, opts, res,
 					!res);
 			}
-			if (is_rebase_i(opts) && !res)
+			if (is_rabassa_i(opts) && !res)
 				record_in_rewritten(&item->commit->object.oid,
 					peek_command(todo_list, 1));
 			if (res && is_fixup(item->command)) {
@@ -2029,7 +2029,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 					intend_to_amend();
 				return error_failed_squash(item->commit, opts,
 					item->arg_len, item->arg);
-			} else if (res && is_rebase_i(opts))
+			} else if (res && is_rabassa_i(opts))
 				return res | error_with_patch(item->commit,
 					item->arg, item->arg_len, opts, res,
 					item->command == TODO_REWORD);
@@ -2063,7 +2063,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 			return res;
 	}
 
-	if (is_rebase_i(opts)) {
+	if (is_rabassa_i(opts)) {
 		struct strbuf head_ref = STRBUF_INIT, buf = STRBUF_INIT;
 		struct stat st;
 
@@ -2071,7 +2071,7 @@ static int pick_commits(struct todo_list *todo_list, struct replay_opts *opts)
 		if (todo_list->current < todo_list->nr)
 			return 0;
 
-		if (read_oneliner(&head_ref, rebase_path_head_name(), 0) &&
+		if (read_oneliner(&head_ref, rabassa_path_head_name(), 0) &&
 				starts_with(head_ref.buf, "refs/")) {
 			const char *msg;
 			unsigned char head[20], orig[20];
@@ -2084,12 +2084,12 @@ cleanup_head_ref:
 				strbuf_release(&buf);
 				return res;
 			}
-			if (!read_oneliner(&buf, rebase_path_orig_head(), 0) ||
+			if (!read_oneliner(&buf, rabassa_path_orig_head(), 0) ||
 					get_sha1_hex(buf.buf, orig)) {
 				res = error(_("could not read orig-head"));
 				goto cleanup_head_ref;
 			}
-			if (!read_oneliner(&buf, rebase_path_onto(), 0)) {
+			if (!read_oneliner(&buf, rabassa_path_onto(), 0)) {
 				res = error(_("could not read 'onto'"));
 				goto cleanup_head_ref;
 			}
@@ -2122,7 +2122,7 @@ cleanup_head_ref:
 				DIFF_FORMAT_DIFFSTAT;
 			log_tree_opt.disable_stdin = 1;
 
-			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
+			if (read_oneliner(&buf, rabassa_path_orig_head(), 0) &&
 			    !get_sha1(buf.buf, orig.hash) &&
 			    !get_sha1("HEAD", head.hash)) {
 				diff_tree_sha1(orig.hash, head.hash,
@@ -2131,35 +2131,35 @@ cleanup_head_ref:
 			}
 		}
 		flush_rewritten_pending();
-		if (!stat(rebase_path_rewritten_list(), &st) &&
+		if (!stat(rabassa_path_rewritten_list(), &st) &&
 				st.st_size > 0) {
 			struct child_process child = CHILD_PROCESS_INIT;
 			const char *post_rewrite_hook =
 				find_hook("post-rewrite");
 
-			child.in = open(rebase_path_rewritten_list(), O_RDONLY);
+			child.in = open(rabassa_path_rewritten_list(), O_RDONLY);
 			child.git_cmd = 1;
 			argv_array_push(&child.args, "notes");
 			argv_array_push(&child.args, "copy");
-			argv_array_push(&child.args, "--for-rewrite=rebase");
+			argv_array_push(&child.args, "--for-rewrite=rabassa");
 			/* we don't care if this copying failed */
 			run_command(&child);
 
 			if (post_rewrite_hook) {
 				struct child_process hook = CHILD_PROCESS_INIT;
 
-				hook.in = open(rebase_path_rewritten_list(),
+				hook.in = open(rabassa_path_rewritten_list(),
 					O_RDONLY);
 				hook.stdout_to_stderr = 1;
 				argv_array_push(&hook.args, post_rewrite_hook);
-				argv_array_push(&hook.args, "rebase");
+				argv_array_push(&hook.args, "rabassa");
 				/* we don't care if this hook failed */
 				run_command(&hook);
 			}
 		}
 		apply_autostash(opts);
 
-		fprintf(stderr, "Successfully rebased and updated %s.\n",
+		fprintf(stderr, "Successfully rabassad and updated %s.\n",
 			head_ref.buf);
 
 		strbuf_release(&buf);
@@ -2188,7 +2188,7 @@ static int commit_staged_changes(struct replay_opts *opts)
 	unsigned int flags = ALLOW_EMPTY | EDIT_MSG;
 
 	if (has_unstaged_changes(1))
-		return error(_("cannot rebase: You have unstaged changes."));
+		return error(_("cannot rabassa: You have unstaged changes."));
 	if (!has_uncommitted_changes(0)) {
 		const char *cherry_pick_head = git_path_cherry_pick_head();
 
@@ -2197,30 +2197,30 @@ static int commit_staged_changes(struct replay_opts *opts)
 		return 0;
 	}
 
-	if (file_exists(rebase_path_amend())) {
+	if (file_exists(rabassa_path_amend())) {
 		struct strbuf rev = STRBUF_INIT;
 		unsigned char head[20], to_amend[20];
 
 		if (get_sha1("HEAD", head))
 			return error(_("cannot amend non-existing commit"));
-		if (!read_oneliner(&rev, rebase_path_amend(), 0))
-			return error(_("invalid file: '%s'"), rebase_path_amend());
+		if (!read_oneliner(&rev, rabassa_path_amend(), 0))
+			return error(_("invalid file: '%s'"), rabassa_path_amend());
 		if (get_sha1_hex(rev.buf, to_amend))
 			return error(_("invalid contents: '%s'"),
-				rebase_path_amend());
+				rabassa_path_amend());
 		if (hashcmp(head, to_amend))
 			return error(_("\nYou have uncommitted changes in your "
 				       "working tree. Please, commit them\n"
-				       "first and then run 'git rebase "
+				       "first and then run 'git rabassa "
 				       "--continue' again."));
 
 		strbuf_release(&rev);
 		flags |= AMEND_MSG;
 	}
 
-	if (run_git_commit(rebase_path_message(), opts, flags))
+	if (run_git_commit(rabassa_path_message(), opts, flags))
 		return error(_("could not commit staged changes."));
-	unlink(rebase_path_amend());
+	unlink(rabassa_path_amend());
 	return 0;
 }
 
@@ -2232,7 +2232,7 @@ int sequencer_continue(struct replay_opts *opts)
 	if (read_and_refresh_cache(opts))
 		return -1;
 
-	if (is_rebase_i(opts)) {
+	if (is_rabassa_i(opts)) {
 		if (commit_staged_changes(opts))
 			return -1;
 	} else if (!file_exists(get_todo_path(opts)))
@@ -2242,7 +2242,7 @@ int sequencer_continue(struct replay_opts *opts)
 	if ((res = read_populate_todo(&todo_list, opts)))
 		goto release_todo_list;
 
-	if (!is_rebase_i(opts)) {
+	if (!is_rabassa_i(opts)) {
 		/* Verify that the conflict has been resolved */
 		if (file_exists(git_path_cherry_pick_head()) ||
 		    file_exists(git_path_revert_head())) {
@@ -2255,11 +2255,11 @@ int sequencer_continue(struct replay_opts *opts)
 			goto release_todo_list;
 		}
 		todo_list.current++;
-	} else if (file_exists(rebase_path_stopped_sha())) {
+	} else if (file_exists(rabassa_path_stopped_sha())) {
 		struct strbuf buf = STRBUF_INIT;
 		struct object_id oid;
 
-		if (read_oneliner(&buf, rebase_path_stopped_sha(), 1) &&
+		if (read_oneliner(&buf, rabassa_path_stopped_sha(), 1) &&
 		    !get_sha1_committish(buf.buf, oid.hash))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);

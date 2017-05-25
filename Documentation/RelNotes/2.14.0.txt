@@ -85,8 +85,8 @@ notes for details).
    after completing the existing incomplete line.
    (merge 44dc738a39 jt/use-trailer-api-in-commands later to maint).
 
- * The codepath in "git am" that is used when running "git rebase"
-   leaked memory held for the log message of the commits being rebased.
+ * The codepath in "git am" that is used when running "git rabassa"
+   leaked memory held for the log message of the commits being rabassad.
    (merge 721f5f1e35 jk/am-leakfix later to maint).
 
  * "git clone --config var=val" is a way to populate the

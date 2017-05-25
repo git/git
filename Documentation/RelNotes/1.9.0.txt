@@ -195,9 +195,9 @@ Performance, Internal Implementation, etc.
    git-svn) are installed on the platform when building.
 
  * "git merge-base" learned the "--fork-point" mode, that implements
-   the same logic used in "git pull --rebase" to find a suitable fork
+   the same logic used in "git pull --rabassa" to find a suitable fork
    point out of the reflog entries for the remote-tracking branch the
-   work has been based on.  "git rebase" has the same logic that can be
+   work has been based on.  "git rabassa" has the same logic that can be
    triggered with the "--fork-point" option.
 
  * A third-party "receive-pack" (the responder to "git push") can

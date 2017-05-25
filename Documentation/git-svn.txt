@@ -143,7 +143,7 @@ the same local time zone.
 	cause skipping of all matching paths from checkout from SVN.
 	The `--ignore-paths` option should match for every 'fetch'
 	(including automatic fetches due to 'clone', 'dcommit',
-	'rebase', etc) on a given repository.
+	'rabassa', etc) on a given repository.
 +
 [verse]
 config key: svn-remote.<name>.ignore-paths
@@ -172,7 +172,7 @@ Skip "branches" and "tags" of first level directories;;
 	cause the inclusion of only matching paths from checkout from SVN.
 	The `--include-paths` option should match for every 'fetch'
 	(including automatic fetches due to 'clone', 'dcommit',
-	'rebase', etc) on a given repository. `--ignore-paths` takes
+	'rabassa', etc) on a given repository. `--ignore-paths` takes
 	precedence over `--include-paths`.
 +
 [verse]
@@ -193,7 +193,7 @@ config key: svn-remote.<name>.include-paths
 	'init' and 'fetch' commands accept; with the exception of
 	`--fetch-all` and `--parent`.  After a repository is cloned,
 	the 'fetch' command will be able to update revisions without
-	affecting the working tree; and the 'rebase' command will be
+	affecting the working tree; and the 'rabassa' command will be
 	able to update the working tree with the latest changes.
 
 --preserve-empty-dirs;;
@@ -207,19 +207,19 @@ config key: svn-remote.<name>.include-paths
 	Set the name of placeholder files created by --preserve-empty-dirs.
 	Default: ".gitignore"
 
-'rebase'::
+'rabassa'::
 	This fetches revisions from the SVN parent of the current HEAD
-	and rebases the current (uncommitted to SVN) work against it.
+	and rabassas the current (uncommitted to SVN) work against it.
 +
 This works similarly to `svn update` or 'git pull' except that
-it preserves linear history with 'git rebase' instead of
+it preserves linear history with 'git rabassa' instead of
 'git merge' for ease of dcommitting with 'git svn'.
 +
-This accepts all options that 'git svn fetch' and 'git rebase'
+This accepts all options that 'git svn fetch' and 'git rabassa'
 accept.  However, `--fetch-all` only fetches from the current
 [svn-remote], and not all [svn-remote] definitions.
 +
-Like 'git rebase'; this requires that the working tree be clean
+Like 'git rabassa'; this requires that the working tree be clean
 and have no uncommitted changes.
 +
 This automatically updates the rev_map if needed (see
@@ -227,12 +227,12 @@ This automatically updates the rev_map if needed (see
 
 -l;;
 --local;;
-	Do not fetch remotely; only run 'git rebase' against the
+	Do not fetch remotely; only run 'git rabassa' against the
 	last fetched commit from the upstream SVN.
 
 'dcommit'::
 	Commit each diff from the current branch directly to the SVN
-	repository, and then rebase or reset (depending on whether or
+	repository, and then rabassa or reset (depending on whether or
 	not there is a diff between SVN and head).  This will create
 	a revision in SVN for each commit in Git.
 +
@@ -242,8 +242,8 @@ branch, not on the current branch.
 +
 Use of 'dcommit' is preferred to 'set-tree' (below).
 +
---no-rebase;;
-	After committing, do not rebase or reset.
+--no-rabassa;;
+	After committing, do not rabassa or reset.
 --commit-url <URL>;;
 	Commit to this SVN URL (the full path).  This is intended to
 	allow existing 'git svn' repositories created with one transport
@@ -429,7 +429,7 @@ Any other arguments are passed directly to 'git log'
 	Attempts to recreate empty directories that core Git cannot track
 	based on information in $GIT_DIR/svn/<refname>/unhandled.log files.
 	Empty directories are automatically recreated when using
-	"git svn clone" and "git svn rebase", so "mkdirs" is intended
+	"git svn clone" and "git svn rabassa", so "mkdirs" is intended
 	for use after commands like "git checkout" or "git reset".
 	(See the svn-remote.<name>.automkdirs config file option for
 	more information.)
@@ -494,7 +494,7 @@ This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
 +
 Only the rev_map and refs/remotes/git-svn are changed (see
 '$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
-Follow 'reset' with a 'fetch' and then 'git reset' or 'git rebase' to
+Follow 'reset' with a 'fetch' and then 'git reset' or 'git rabassa' to
 move local branches onto the new tree.
 
 -r <n>;;
@@ -527,12 +527,12 @@ git svn fetch
        r2---r3---A---B master
 ------------
 +
-Then fixup "master" with 'git rebase'.
+Then fixup "master" with 'git rabassa'.
 Do NOT use 'git merge' or your history will not be compatible with a
 future 'dcommit'!
 +
 [verse]
-git rebase --onto remotes/git-svn A^ master
+git rabassa --onto remotes/git-svn A^ master
 +
 ------------
     r1---r2'--r3' remotes/git-svn
@@ -640,20 +640,20 @@ config key: svn.authorsProg
 --strategy=<strategy>::
 -p::
 --preserve-merges::
-	These are only used with the 'dcommit' and 'rebase' commands.
+	These are only used with the 'dcommit' and 'rabassa' commands.
 +
-Passed directly to 'git rebase' when using 'dcommit' if a
+Passed directly to 'git rabassa' when using 'dcommit' if a
 'git reset' cannot be used (see 'dcommit').
 
 -n::
 --dry-run::
-	This can be used with the 'dcommit', 'rebase', 'branch' and
+	This can be used with the 'dcommit', 'rabassa', 'branch' and
 	'tag' commands.
 +
 For 'dcommit', print out the series of Git arguments that would show
 which diffs would be committed to SVN.
 +
-For 'rebase', display the local branch associated with the upstream svn
+For 'rabassa', display the local branch associated with the upstream svn
 repository associated with the current branch and the URL of svn
 repository that will be fetched from.
 +
@@ -661,7 +661,7 @@ For 'branch' and 'tag', display the urls that will be used for copying when
 creating the branch or tag.
 
 --use-log-author::
-	When retrieving svn commits into Git (as part of 'fetch', 'rebase', or
+	When retrieving svn commits into Git (as part of 'fetch', 'rabassa', or
 	'dcommit' operations), look for the first `From:` or `Signed-off-by:` line
 	in the log message and use that as the author string.
 +
@@ -795,7 +795,7 @@ svn.pathnameencoding::
 	Valid encodings are the ones supported by Perl's Encode module.
 
 svn-remote.<name>.automkdirs::
-	Normally, the "git svn clone" and "git svn rebase" commands
+	Normally, the "git svn clone" and "git svn rabassa" commands
 	attempt to recreate empty directories that are in the
 	Subversion repository.  If this option is set to "false", then
 	empty directories will only be created if the "git svn mkdirs"
@@ -827,9 +827,9 @@ Tracking and contributing to the trunk of a Subversion-managed project
 	git branch
 # Do some work and commit locally to Git:
 	git commit ...
-# Something is committed to SVN, rebase your local changes against the
+# Something is committed to SVN, rabassa your local changes against the
 # latest changes in SVN:
-	git svn rebase
+	git svn rabassa
 # Now commit your changes (that were committed previously using Git) to SVN,
 # as well as automatically updating your working HEAD:
 	git svn dcommit
@@ -853,7 +853,7 @@ Tracking and contributing to an entire Subversion-managed project
 # with the appropriate name):
 	git reset --hard svn/trunk
 # You may only dcommit to one branch/tag/trunk at a time.  The usage
-# of dcommit/rebase/show-ignore should be the same as above.
+# of dcommit/rabassa/show-ignore should be the same as above.
 ------------------------------------------------------------------------
 
 The initial 'git svn clone' can be quite time-consuming
@@ -882,12 +882,12 @@ have each person clone that repository with 'git clone':
 # --stdlayout/-T/-b/-t/--prefix options as were used on server)
 	git svn init http://svn.example.com/project [options...]
 # Pull the latest changes from Subversion
-	git svn rebase
+	git svn rabassa
 ------------------------------------------------------------------------
 
 REBASE VS. PULL/MERGE
 ---------------------
-Prefer to use 'git svn rebase' or 'git rebase', rather than
+Prefer to use 'git svn rabassa' or 'git rabassa', rather than
 'git pull' or 'git merge' to synchronize unintegrated commits with a 'git svn'
 branch. Doing so will keep the history of unintegrated commits linear with
 respect to the upstream SVN repository and allow the use of the preferred
@@ -987,7 +987,7 @@ any 'git svn' metadata, or config.  So repositories created and managed with
 using 'git svn' should use 'rsync' for cloning, if cloning is to be done
 at all.
 
-Since 'dcommit' uses rebase internally, any Git branches you 'git push' to
+Since 'dcommit' uses rabassa internally, any Git branches you 'git push' to
 before 'dcommit' on will require forcing an overwrite of the existing ref
 on the remote repository.  This is generally considered bad practice,
 see the linkgit:git-push[1] documentation for details.
@@ -1123,13 +1123,13 @@ $GIT_DIR/svn/\*\*/.rev_map.*::
 	end of every commit (see the 'svn.noMetadata' section above for
 	details).
 +
-'git svn fetch' and 'git svn rebase' automatically update the rev_map
+'git svn fetch' and 'git svn rabassa' automatically update the rev_map
 if it is missing or not up to date.  'git svn reset' automatically
 rewinds it.
 
 SEE ALSO
 --------
-linkgit:git-rebase[1]
+linkgit:git-rabassa[1]
 
 GIT
 ---

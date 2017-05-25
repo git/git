@@ -43,7 +43,7 @@ Fixes since v1.7.4.1
    to update the upstream branch it forked from is now called "upstream".
    The old name "tracking" is and will be supported.
 
- * "git submodule update" used to honor the --merge/--rebase option (or
+ * "git submodule update" used to honor the --merge/--rabassa option (or
    corresponding configuration variables) even for a newly cloned
    subproject, which made no sense (so/submodule-no-update-first-time).
 

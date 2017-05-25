@@ -176,7 +176,7 @@ details).
  * Update "remote tracking branch" in the documentation to
    "remote-tracking branch".
 
- * "git pull --rebase" run while the HEAD is detached tried to find
+ * "git pull --rabassa" run while the HEAD is detached tried to find
    the upstream branch of the detached HEAD (which by definition
    does not exist) and emitted unnecessary error messages.
 

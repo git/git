@@ -49,8 +49,8 @@ test_expect_success 'more emptiness' '
 	svn_cmd mkdir -m "bang bang"  "$svnrepo"/"! !"
 '
 
-test_expect_success 'git svn rebase creates empty directory' '
-	( cd cloned && git svn rebase ) &&
+test_expect_success 'git svn rabassa creates empty directory' '
+	( cd cloned && git svn rabassa ) &&
 	test -d cloned/"! !"
 '
 
@@ -141,7 +141,7 @@ test_expect_success 'git svn gc-ed files work' '
 		then
 			svn_cmd mkdir -m gz "$svnrepo"/gz &&
 			git reset --hard $(git rev-list HEAD | tail -1) &&
-			git svn rebase &&
+			git svn rabassa &&
 			test -f "$unhandled".gz &&
 			test -f "$unhandled" &&
 			for i in a b c "weird file name" gz "! !"

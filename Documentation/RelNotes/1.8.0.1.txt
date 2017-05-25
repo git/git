@@ -31,7 +31,7 @@ Fixes since v1.8.0
    to clarify that these are not a remote entity, but unhyphenated
    spelling snuck in to a few places since then.
 
- * "git pull --rebase" run while the HEAD is detached tried to find
+ * "git pull --rabassa" run while the HEAD is detached tried to find
    the upstream branch of the detached HEAD (which by definition
    does not exist) and emitted unnecessary error messages.
 

@@ -210,14 +210,14 @@ test_expect_success 'clone a void' '
 	test_cmp target-6/.git/config target-7/.git/config
 '
 
-test_expect_success 'clone respects global branch.autosetuprebase' '
+test_expect_success 'clone respects global branch.autosetuprabassa' '
 	(
 		test_config="$HOME/.gitconfig" &&
-		git config -f "$test_config" branch.autosetuprebase remote &&
+		git config -f "$test_config" branch.autosetuprabassa remote &&
 		rm -fr dst &&
 		git clone src dst &&
 		cd dst &&
-		actual="z$(git config branch.master.rebase)" &&
+		actual="z$(git config branch.master.rabassa)" &&
 		test ztrue = $actual
 	)
 '

@@ -44,8 +44,8 @@ Fixes since v2.6.3
    computing the object name of the target of symbolic link, which may
    not even exist or may be a directory.
 
- * There was no way to defeat a configured rebase.autostash variable
-   from the command line, as "git rebase --no-autostash" was missing.
+ * There was no way to defeat a configured rabassa.autostash variable
+   from the command line, as "git rabassa --no-autostash" was missing.
 
  * Allow "git interpret-trailers" to run outside of a Git repository.
 

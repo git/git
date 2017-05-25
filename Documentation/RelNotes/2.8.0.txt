@@ -40,8 +40,8 @@ UI, Workflows & Features
    cannot be set in the config file per project), this safety can be
    disabled.
 
- * "git pull --rebase" has been extended to allow invoking
-   "rebase -i".
+ * "git pull --rabassa" has been extended to allow invoking
+   "rabassa -i".
 
  * "git p4" learned to cope with the type of a file getting changed.
 
@@ -308,7 +308,7 @@ notes for details).
    IIRC, we do test that no Perl warnings are given to the server log,
    so this should have been caught if our test coverage were good.
 
- * "git rebase", unlike all other callers of "gc --auto", did not
+ * "git rabassa", unlike all other callers of "gc --auto", did not
    ignore the exit code from "gc --auto".
 
  * Many codepaths that run "gc --auto" before exiting kept packfiles

@@ -119,7 +119,7 @@ CREATING REPLACEMENT OBJECTS
 ----------------------------
 
 linkgit:git-filter-branch[1], linkgit:git-hash-object[1] and
-linkgit:git-rebase[1], among other git commands, can be used to create
+linkgit:git-rabassa[1], among other git commands, can be used to create
 replacement objects from existing objects. The `--edit` option can
 also be used with 'git replace' to create a replacement object by
 editing an existing object.
@@ -144,7 +144,7 @@ SEE ALSO
 --------
 linkgit:git-hash-object[1]
 linkgit:git-filter-branch[1]
-linkgit:git-rebase[1]
+linkgit:git-rabassa[1]
 linkgit:git-tag[1]
 linkgit:git-branch[1]
 linkgit:git-commit[1]

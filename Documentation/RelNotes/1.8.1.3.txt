@@ -35,7 +35,7 @@ Fixes since v1.8.1.2
  * We forgot to close the file descriptor reading from "gpg" output,
    killing "git log --show-signature" on a long history.
 
- * "git rebase --preserve-merges" lost empty merges in recent versions
+ * "git rabassa --preserve-merges" lost empty merges in recent versions
    of Git.
 
  * Rebasing the history of superproject with change in the submodule

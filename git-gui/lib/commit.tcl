@@ -267,7 +267,7 @@ proc commit_commitmsg {curHEAD msg_p} {
 	global pch_error
 
 	if {$is_detached
-	    && ![file exists [gitdir rebase-merge head-name]]
+	    && ![file exists [gitdir rabassa-merge head-name]]
 	    && 	[is_config_true gui.warndetachedcommit]} {
 		set msg [mc "You are about to commit on a detached head.\
 This is a potentially dangerous thing to do because if you switch\

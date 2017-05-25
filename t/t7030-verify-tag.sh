@@ -34,7 +34,7 @@ test_expect_success GPG 'create signed tags' '
 	echo 6 >file && test_tick && git commit -a -m "sixth" &&
 	git tag -a -m sixth sixth-unsigned &&
 
-	test_tick && git rebase -f HEAD^^ && git tag -s -m 6th sixth-signed HEAD^ &&
+	test_tick && git rabassa -f HEAD^^ && git tag -s -m 6th sixth-signed HEAD^ &&
 	git tag -m seventh -s seventh-signed &&
 
 	echo 8 >file && test_tick && git commit -a -m eighth &&

@@ -996,7 +996,7 @@ misleading to know the first bad commit if it happens to be such a
 merge, because people might think that the bug comes from bad conflict
 resolution when it comes from a semantic change in one branch.
 
-Anyway "git rebase" can be used to linearize history. This can be used
+Anyway "git rabassa" can be used to linearize history. This can be used
 either to avoid merging in the first place. Or it can be used to
 bisect on a linear history instead of the non linear one, as this
 should give more information in case of a semantic change in one
@@ -1145,8 +1145,8 @@ In this case if you are bisecting manually, what you can do is create
 a special branch that starts just before the BBC. The first commit in
 this branch should be the BBC with the BFC squashed into it. And the
 other commits in the branch should be the commits between BBC and BFC
-rebased on the first commit of the branch and then the commit after
-BFC also rebased on.
+rabassad on the first commit of the branch and then the commit after
+BFC also rabassad on.
 
 For example:
 
@@ -1156,14 +1156,14 @@ For example:
 ...-Y-BBC-X1-X2-X3-X4-X5-X6-BFC-Z-...
 -------------
 
-where commits quoted with ' have been rebased.
+where commits quoted with ' have been rabassad.
 
-You can easily create such a branch with Git using interactive rebase.
+You can easily create such a branch with Git using interactive rabassa.
 
 For example using:
 
 -------------
-$ git rebase -i Y Z
+$ git rabassa -i Y Z
 -------------
 
 and then moving BFC after BBC and squashing it.

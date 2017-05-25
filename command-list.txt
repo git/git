@@ -104,7 +104,7 @@ git-pull                                mainporcelain           remote
 git-push                                mainporcelain           remote
 git-quiltimport                         foreignscminterface
 git-read-tree                           plumbingmanipulators
-git-rebase                              mainporcelain           history
+git-rabassa                              mainporcelain           history
 git-receive-pack                        synchelpers
 git-reflog                              ancillarymanipulators
 git-remote                              ancillarymanipulators

@@ -44,7 +44,7 @@ UI, Workflows & Features
  * "git p4" now allows P4 author names to be mapped to Git author
    names.
 
- * "git rebase -x" can be used without passing "-i" option.
+ * "git rabassa -x" can be used without passing "-i" option.
 
  * "git -c credential.<var>=<value> submodule" can now be used to
    propagate configuration variables related to credential helper
@@ -73,7 +73,7 @@ UI, Workflows & Features
 
  * Shell completion (in contrib/) updates.
 
- * The commit object name reported when "rebase -i" stops has been
+ * The commit object name reported when "rabassa -i" stops has been
    shortened.
 
  * "git worktree add" can be given "--no-checkout" option to only
@@ -81,8 +81,8 @@ UI, Workflows & Features
 
  * "git mergetools" learned to drive ExamDiff.
 
- * "git pull --rebase" learned "--[no-]autostash" option, so that
-   the rebase.autostash configuration variable set to true can be
+ * "git pull --rabassa" learned "--[no-]autostash" option, so that
+   the rabassa.autostash configuration variable set to true can be
    overridden from the command line.
 
  * When "git log" shows the log message indented by 4-spaces, the
@@ -141,7 +141,7 @@ UI, Workflows & Features
 
  * The experimental "multiple worktree" feature gains more safety to
    forbid operations on a branch that is checked out or being actively
-   worked on elsewhere, by noticing that e.g. it is being rebased.
+   worked on elsewhere, by noticing that e.g. it is being rabassad.
 
  * "git format-patch" learned a new "--base" option to record what
    (public, well-known) commit the original series was built on in
@@ -235,7 +235,7 @@ Performance, Internal Implementation, Development Support etc.
    test-parse-options program so that a caller can tell what it
    expects in its output, so that these repetitions can be cleaned up.
 
- * Add perf test for "rebase -i".
+ * Add perf test for "rabassa -i".
 
  * Common mistakes when writing gitlink: in our documentation are
    found by "make check-docs".
@@ -410,7 +410,7 @@ notes for details).
 
  * UI consistency improvements for "git mergetool".
 
- * "git rebase -m" could be asked to rebase an entire branch starting
+ * "git rabassa -m" could be asked to rabassa an entire branch starting
    from the root, but failed by assuming that there always is a parent
    commit to the first commit on the branch.
 
@@ -431,7 +431,7 @@ notes for details).
 
  * "git commit-tree" plumbing command required the user to always sign
    its result when the user sets the commit.gpgsign configuration
-   variable, which was an ancient mistake.  Rework "git rebase" that
+   variable, which was an ancient mistake.  Rework "git rabassa" that
    relied on this mistake so that it reads commit.gpgsign and pass (or
    not pass) the -S option to "git commit-tree" to keep the end-user
    expectation the same, while teaching "git commit-tree" to ignore
@@ -464,7 +464,7 @@ notes for details).
  * "git fsck" learned to catch NUL byte in a commit object as
    potential error and warn.
 
- * Portability enhancement for "rebase -i" to help platforms whose
+ * Portability enhancement for "rabassa -i" to help platforms whose
    shell does not like "for i in <empty>" (which is not POSIX-kosher).
 
  * On Windows, .git and optionally any files whose name starts with a
@@ -499,10 +499,10 @@ notes for details).
    haven't finished reading it.
    (merge f4beed6 fc/fast-import-broken-marks-file later to maint).
 
- * "git rebase -i", after it fails to auto-resolve the conflict, had
+ * "git rabassa -i", after it fails to auto-resolve the conflict, had
    an unnecessary call to "git rerere" from its very early days, which
    was spotted recently; the call has been removed.
-   (merge 7063693 js/rebase-i-dedup-call-to-rerere later to maint).
+   (merge 7063693 js/rabassa-i-dedup-call-to-rerere later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge cd82b7a pa/cherry-pick-doc-typo later to maint).

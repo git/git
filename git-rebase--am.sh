@@ -1,4 +1,4 @@
-# This shell script fragment is sourced by git-rebase to implement
+# This shell script fragment is sourced by git-rabassa to implement
 # its default, fast, patch-based, non-interactive mode.
 #
 # Copyright (c) 2010 Junio C Hamano.
@@ -13,7 +13,7 @@
 # construct and continue to run the statements that follow such a "return".
 # As a work-around, we introduce an extra layer of a function
 # here, and immediately call it after defining it.
-git_rebase__am () {
+git_rabassa__am () {
 
 case "$action" in
 continue)
@@ -29,7 +29,7 @@ skip)
 	;;
 esac
 
-if test -z "$rebase_root"
+if test -z "$rabassa_root"
 	# this is now equivalent to ! -z "$upstream"
 then
 	revisions=$upstream...$orig_head
@@ -49,17 +49,17 @@ then
 		${restrict_revision+^$restrict_revision}
 	ret=$?
 else
-	rm -f "$GIT_DIR/rebased-patches"
+	rm -f "$GIT_DIR/rabassad-patches"
 
 	git format-patch -k --stdout --full-index --cherry-pick --right-only \
 		--src-prefix=a/ --dst-prefix=b/ --no-renames --no-cover-letter \
 		"$revisions" ${restrict_revision+^$restrict_revision} \
-		>"$GIT_DIR/rebased-patches"
+		>"$GIT_DIR/rabassad-patches"
 	ret=$?
 
 	if test 0 != $ret
 	then
-		rm -f "$GIT_DIR/rebased-patches"
+		rm -f "$GIT_DIR/rabassad-patches"
 		case "$head_name" in
 		refs/heads/*)
 			git checkout -q "$head_name"
@@ -76,16 +76,16 @@ else
 
 		    $revisions
 
-		As a result, git cannot rebase them.
+		As a result, git cannot rabassa them.
 		EOF
 		return $ret
 	fi
 
 	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" \
-		${gpg_sign_opt:+"$gpg_sign_opt"} <"$GIT_DIR/rebased-patches"
+		${gpg_sign_opt:+"$gpg_sign_opt"} <"$GIT_DIR/rabassad-patches"
 	ret=$?
 
-	rm -f "$GIT_DIR/rebased-patches"
+	rm -f "$GIT_DIR/rabassad-patches"
 fi
 
 if test 0 != $ret
@@ -98,4 +98,4 @@ move_to_original_branch
 
 }
 # ... and then we call the whole thing.
-git_rebase__am
+git_rabassa__am

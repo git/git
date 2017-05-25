@@ -255,7 +255,7 @@ test_expect_success 'submit works with no p4/master' '
 	)
 '
 
-# The sync/rebase part post-submit will engage detect-branches
+# The sync/rabassa part post-submit will engage detect-branches
 # machinery which will not do anything in this particular test.
 test_expect_success 'submit works with two branches' '
 	test_when_finished cleanup_git &&

@@ -25,7 +25,7 @@ test_expect_success setup '
 
 '
 
-test_expect_success 'rebase with a dirty submodule' '
+test_expect_success 'rabassa with a dirty submodule' '
 
 	(cd submodule &&
 	 echo 3rd line >> file &&
@@ -40,7 +40,7 @@ test_expect_success 'rebase with a dirty submodule' '
 	git commit -m update file &&
 	CURRENT=$(cd submodule && git rev-parse HEAD) &&
 	EXPECTED=$(git rev-parse HEAD~2:submodule) &&
-	GIT_TRACE=1 git rebase --onto HEAD~2 HEAD^ &&
+	GIT_TRACE=1 git rabassa --onto HEAD~2 HEAD^ &&
 	STORED=$(git rev-parse HEAD:submodule) &&
 	test $EXPECTED = $STORED &&
 	test $CURRENT = $(cd submodule && git rev-parse HEAD)
@@ -53,17 +53,17 @@ echo $EDITOR_TEXT
 EOF
 chmod a+x fake-editor.sh
 
-test_expect_success 'interactive rebase with a dirty submodule' '
+test_expect_success 'interactive rabassa with a dirty submodule' '
 
 	test submodule = $(git diff --name-only) &&
 	HEAD=$(git rev-parse HEAD) &&
 	GIT_EDITOR="\"$(pwd)/fake-editor.sh\"" EDITOR_TEXT="pick $HEAD" \
-		git rebase -i HEAD^ &&
+		git rabassa -i HEAD^ &&
 	test submodule = $(git diff --name-only)
 
 '
 
-test_expect_success 'rebase with dirty file and submodule fails' '
+test_expect_success 'rabassa with dirty file and submodule fails' '
 
 	echo yet another line >> file &&
 	test_tick &&
@@ -72,7 +72,7 @@ test_expect_success 'rebase with dirty file and submodule fails' '
 	test_tick &&
 	git commit -m rewrite file &&
 	echo dirty > file &&
-	test_must_fail git rebase --onto HEAD~2 HEAD^
+	test_must_fail git rabassa --onto HEAD~2 HEAD^
 
 '
 
@@ -104,7 +104,7 @@ test_expect_success 'rebasing submodule that should conflict' '
 	test_tick &&
 	git commit -m fourth &&
 
-	test_must_fail git rebase --onto HEAD^^ HEAD^ HEAD^0 &&
+	test_must_fail git rabassa --onto HEAD^^ HEAD^ HEAD^0 &&
 	git ls-files -s submodule >actual &&
 	(
 		cd submodule &&

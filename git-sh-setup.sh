@@ -108,12 +108,12 @@ fi
 # Set the name of the end-user facing command in the reflog when the
 # script may update refs.  When GIT_REFLOG_ACTION is already set, this
 # will not overwrite it, so that a scripted Porcelain (e.g. "git
-# rebase") can set it to its own name (e.g. "rebase") and then call
+# rabassa") can set it to its own name (e.g. "rabassa") and then call
 # another scripted Porcelain (e.g. "git am") and a call to this
 # function in the latter will keep the name of the end-user facing
-# program (e.g. "rebase") in GIT_REFLOG_ACTION, ensuring whatever it
+# program (e.g. "rabassa") in GIT_REFLOG_ACTION, ensuring whatever it
 # does will be record as actions done as part of the end-user facing
-# operation (e.g. "rebase").
+# operation (e.g. "rabassa").
 #
 # NOTE NOTE NOTE: consequently, after assigning a specific message to
 # GIT_REFLOG_ACTION when calling a "git" command to record a custom
@@ -216,14 +216,14 @@ require_clean_work_tree () {
 	then
 		action=$1
 		case "$action" in
-		rebase)
-			gettextln "Cannot rebase: You have unstaged changes." >&2
+		rabassa)
+			gettextln "Cannot rabassa: You have unstaged changes." >&2
 			;;
 		"rewrite branches")
 			gettextln "Cannot rewrite branches: You have unstaged changes." >&2
 			;;
-		"pull with rebase")
-			gettextln "Cannot pull with rebase: You have unstaged changes." >&2
+		"pull with rabassa")
+			gettextln "Cannot pull with rabassa: You have unstaged changes." >&2
 			;;
 		*)
 			eval_gettextln "Cannot \$action: You have unstaged changes." >&2
@@ -238,11 +238,11 @@ require_clean_work_tree () {
 		then
 			action=$1
 			case "$action" in
-			rebase)
-				gettextln "Cannot rebase: Your index contains uncommitted changes." >&2
+			rabassa)
+				gettextln "Cannot rabassa: Your index contains uncommitted changes." >&2
 				;;
-			"pull with rebase")
-				gettextln "Cannot pull with rebase: Your index contains uncommitted changes." >&2
+			"pull with rabassa")
+				gettextln "Cannot pull with rabassa: Your index contains uncommitted changes." >&2
 				;;
 			*)
 				eval_gettextln "Cannot \$action: Your index contains uncommitted changes." >&2

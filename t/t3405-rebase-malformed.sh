@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='rebase should handle arbitrary git message'
+test_description='rabassa should handle arbitrary git message'
 
 . ./test-lib.sh
 
@@ -53,17 +53,17 @@ test_expect_success setup '
 	git commit -m "Second commit"
 '
 
-test_expect_success 'rebase commit with multi-line subject' '
+test_expect_success 'rabassa commit with multi-line subject' '
 
-	git rebase master multi-line-subject &&
+	git rabassa master multi-line-subject &&
 	git cat-file commit HEAD | sed -e "1,/^\$/d" >F1 &&
 
 	test_cmp F0 F1 &&
 	test_cmp F F0
 '
 
-test_expect_success 'rebase commit with diff in message' '
-	git rebase master diff-in-message &&
+test_expect_success 'rabassa commit with diff in message' '
+	git rabassa master diff-in-message &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >G1 &&
 	test_cmp G0 G1 &&
 	test_cmp G G0

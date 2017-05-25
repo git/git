@@ -4,7 +4,7 @@ test_description='auto squash'
 
 . ./test-lib.sh
 
-. "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rabassa.sh
 
 test_expect_success setup '
 	echo 0 >file0 &&
@@ -33,7 +33,7 @@ test_auto_fixup () {
 
 	git tag $1 &&
 	test_tick &&
-	git rebase $2 -i HEAD^^^ &&
+	git rabassa $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code $1 &&
@@ -46,10 +46,10 @@ test_expect_success 'auto fixup (option)' '
 '
 
 test_expect_success 'auto fixup (config)' '
-	git config rebase.autosquash true &&
+	git config rabassa.autosquash true &&
 	test_auto_fixup final-fixup-config-true &&
 	test_must_fail test_auto_fixup fixup-config-true-no --no-autosquash &&
-	git config rebase.autosquash false &&
+	git config rabassa.autosquash false &&
 	test_must_fail test_auto_fixup final-fixup-config-false
 '
 
@@ -62,7 +62,7 @@ test_auto_squash () {
 
 	git tag $1 &&
 	test_tick &&
-	git rebase $2 -i HEAD^^^ &&
+	git rabassa $2 -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code $1 &&
@@ -75,10 +75,10 @@ test_expect_success 'auto squash (option)' '
 '
 
 test_expect_success 'auto squash (config)' '
-	git config rebase.autosquash true &&
+	git config rabassa.autosquash true &&
 	test_auto_squash final-squash-config-true &&
 	test_must_fail test_auto_squash squash-config-true-no --no-autosquash &&
-	git config rebase.autosquash false &&
+	git config rabassa.autosquash false &&
 	test_must_fail test_auto_squash final-squash-config-false
 '
 
@@ -90,7 +90,7 @@ test_expect_success 'misspelled auto squash' '
 	git commit -m "squash! forst" &&
 	git tag final-missquash &&
 	test_tick &&
-	git rebase --autosquash -i HEAD^^^ &&
+	git rabassa --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 4 actual &&
 	git diff --exit-code final-missquash &&
@@ -109,7 +109,7 @@ test_expect_success 'auto squash that matches 2 commits' '
 	git commit -m "squash! first" &&
 	git tag final-multisquash &&
 	test_tick &&
-	git rebase --autosquash -i HEAD~4 &&
+	git rabassa --autosquash -i HEAD~4 &&
 	git log --oneline >actual &&
 	test_line_count = 4 actual &&
 	git diff --exit-code final-multisquash &&
@@ -130,7 +130,7 @@ test_expect_success 'auto squash that matches a commit after the squash' '
 	git commit -m "third commit" &&
 	git tag final-presquash &&
 	test_tick &&
-	git rebase --autosquash -i HEAD~4 &&
+	git rabassa --autosquash -i HEAD~4 &&
 	git log --oneline >actual &&
 	test_line_count = 5 actual &&
 	git diff --exit-code final-presquash &&
@@ -147,7 +147,7 @@ test_expect_success 'auto squash that matches a sha1' '
 	git commit -m "squash! $(git rev-parse --short HEAD^)" &&
 	git tag final-shasquash &&
 	test_tick &&
-	git rebase --autosquash -i HEAD^^^ &&
+	git rabassa --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-shasquash &&
@@ -163,7 +163,7 @@ test_expect_success 'auto squash that matches longer sha1' '
 	git commit -m "squash! $(git rev-parse --short=11 HEAD^)" &&
 	git tag final-longshasquash &&
 	test_tick &&
-	git rebase --autosquash -i HEAD^^^ &&
+	git rabassa --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-longshasquash &&
@@ -179,7 +179,7 @@ test_auto_commit_flags () {
 	git commit --$1 first-commit &&
 	git tag final-commit-$1 &&
 	test_tick &&
-	git rebase --autosquash -i HEAD^^^ &&
+	git rabassa --autosquash -i HEAD^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-commit-$1 &&
@@ -209,7 +209,7 @@ test_auto_fixup_fixup () {
 	test_tick &&
 	(
 		set_cat_todo_editor &&
-		test_must_fail git rebase --autosquash -i HEAD^^^^ >actual &&
+		test_must_fail git rabassa --autosquash -i HEAD^^^^ >actual &&
 		cat >expected <<-EOF &&
 		pick $(git rev-parse --short HEAD^^^) first commit
 		$1 $(git rev-parse --short HEAD^) $1! first
@@ -218,7 +218,7 @@ test_auto_fixup_fixup () {
 		EOF
 		test_cmp expected actual
 	) &&
-	git rebase --autosquash -i HEAD^^^^ &&
+	git rabassa --autosquash -i HEAD^^^^ &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual
 	git diff --exit-code "final-$1-$2" &&
@@ -252,7 +252,7 @@ test_expect_success C_LOCALE_OUTPUT 'squash! fixup!' '
 
 test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
 	git reset --hard base &&
-	git config --add rebase.instructionFormat "[%an @ %ar] %s"  &&
+	git config --add rabassa.instructionFormat "[%an @ %ar] %s"  &&
 	echo 2 >file1 &&
 	git add -u &&
 	test_tick &&
@@ -263,7 +263,7 @@ test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
 	git commit -m "squash! $(git log -n 1 --format=%s HEAD~2)" &&
 	git tag final-squash-instFmt &&
 	test_tick &&
-	git rebase --autosquash -i HEAD~4 &&
+	git rabassa --autosquash -i HEAD~4 &&
 	git log --oneline >actual &&
 	test_line_count = 3 actual &&
 	git diff --exit-code final-squash-instFmt &&
@@ -290,8 +290,8 @@ test_expect_failure 'autosquash with multiple empty patches' '
 	(
 		set_backup_editor &&
 		GIT_USE_REBASE_HELPER=false \
-		git rebase -i --force-rebase --autosquash HEAD~4 &&
-		grep empty2 .git/backup-git-rebase-todo
+		git rabassa -i --force-rabassa --autosquash HEAD~4 &&
+		grep empty2 .git/backup-git-rabassa-todo
 	)
 '
 
@@ -299,7 +299,7 @@ test_expect_success 'extra spaces after fixup!' '
 	base=$(git rev-parse HEAD) &&
 	test_commit to-fixup &&
 	git commit --allow-empty -m "fixup!  to-fixup" &&
-	git rebase -i --autosquash --keep-empty HEAD~2 &&
+	git rabassa -i --autosquash --keep-empty HEAD~2 &&
 	parent=$(git rev-parse HEAD^) &&
 	test $base = $parent
 '

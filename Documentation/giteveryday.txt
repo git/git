@@ -56,7 +56,7 @@ following commands.
 
   * linkgit:git-merge[1] to merge between local branches.
 
-  * linkgit:git-rebase[1] to maintain topic branches.
+  * linkgit:git-rabassa[1] to maintain topic branches.
 
   * linkgit:git-tag[1] to mark a known point.
 
@@ -278,7 +278,7 @@ $ git checkout -b topic/one master
 $ git am -3 -i -s ./+to-apply <4>
 $ compile/test
 $ git checkout -b hold/linus && git am -3 -i -s ./+hold-linus <5>
-$ git checkout topic/one && git rebase master <6>
+$ git checkout topic/one && git rabassa master <6>
 $ git checkout pu && git reset --hard next <7>
 $ git merge topic/one topic/two && git merge hold/linus <8>
 $ git checkout maint
@@ -300,7 +300,7 @@ and `pu` (potential updates).
 that are not quite ready (other mail readers are available).
 <4> apply them, interactively, with your sign-offs.
 <5> create topic branch as needed and apply, again with sign-offs.
-<6> rebase internal topic branch that has not been merged to the
+<6> rabassa internal topic branch that has not been merged to the
 master or exposed as a part of a stable branch.
 <7> restart `pu` every time from the next.
 <8> and bundle topic branches still cooking.

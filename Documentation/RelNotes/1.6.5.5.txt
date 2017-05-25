@@ -39,7 +39,7 @@ Fixes since v1.6.5.4
    "git pull" is given precedence over reading the actual pack data to
    prevent garbled progress message on the user's terminal.
 
- * "git rebase" got confused when the log message began with certain
+ * "git rabassa" got confused when the log message began with certain
    strings that looked like Subject:, Date: or From: header.
 
  * "git reset" accidentally run in .git/ directory checked out the

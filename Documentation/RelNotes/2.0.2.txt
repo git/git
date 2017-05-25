@@ -28,5 +28,5 @@ Git v2.0.2 Release Notes
    object has been updated to reduce the need for this double-reading,
    and to allow the caller find the length of the object.
 
- * During "git rebase --merge", a conflicted patch could not be
+ * During "git rabassa --merge", a conflicted patch could not be
    skipped with "--skip" if the next one also conflicted.

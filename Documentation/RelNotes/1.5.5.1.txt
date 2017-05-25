@@ -37,7 +37,7 @@ Fixes since v1.5.5
    complaining.
 
  * when given a commit log message whose first paragraph consists of
-   multiple lines, "git rebase" squashed it into a single line.
+   multiple lines, "git rabassa" squashed it into a single line.
 
  * "git remote add $bogus_name $url" did not complain properly.
 

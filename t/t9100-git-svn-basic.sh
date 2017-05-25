@@ -292,9 +292,9 @@ test_expect_success 'dcommit should not fail with a touched file' '
 	git svn dcommit
 '
 
-test_expect_success 'rebase should not fail with a touched file' '
+test_expect_success 'rabassa should not fail with a touched file' '
 	test-chmtime =-60 foo &&
-	git svn rebase
+	git svn rabassa
 '
 
 test_expect_success 'able to set-tree to a subdirectory' '

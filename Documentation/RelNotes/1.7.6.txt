@@ -95,10 +95,10 @@ Updates since v1.7.5
  * "git read-tree -m" learned "--dry-run" option that reports if a merge
    would fail without touching the index nor the working tree.
 
- * "git rebase" that does not specify on top of which branch to rebase
+ * "git rabassa" that does not specify on top of which branch to rabassa
    the current branch now uses @{upstream} of the current branch.
 
- * "git rebase" finished either normally or with --abort did not
+ * "git rabassa" finished either normally or with --abort did not
    update the reflog for HEAD to record the event to come back to
    where it started from.
 

@@ -9,7 +9,7 @@ USAGE="[--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <re
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] deinit [-f|--force] (--all| [--] <path>...)
-   or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--] [<path>...]
+   or: $dashless [--quiet] update [--init] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rabassa] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--recursive] [--] [<path>...]
@@ -531,8 +531,8 @@ cmd_update()
 		-f|--force)
 			force=$1
 			;;
-		-r|--rebase)
-			update="rebase"
+		-r|--rabassa)
+			update="rabassa"
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
@@ -628,7 +628,7 @@ cmd_update()
 		then
 			subsha1=
 			case "$update_module" in
-			merge | rebase | none)
+			merge | rabassa | none)
 				update_module=checkout ;;
 			esac
 		else
@@ -683,10 +683,10 @@ cmd_update()
 				die_msg="$(eval_gettext "Unable to checkout '\$sha1' in submodule path '\$displaypath'")"
 				say_msg="$(eval_gettext "Submodule path '\$displaypath': checked out '\$sha1'")"
 				;;
-			rebase)
-				command="git rebase"
-				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$displaypath'")"
-				say_msg="$(eval_gettext "Submodule path '\$displaypath': rebased into '\$sha1'")"
+			rabassa)
+				command="git rabassa"
+				die_msg="$(eval_gettext "Unable to rabassa '\$sha1' in submodule path '\$displaypath'")"
+				say_msg="$(eval_gettext "Submodule path '\$displaypath': rabassad into '\$sha1'")"
 				must_die_on_failure=yes
 				;;
 			merge)

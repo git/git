@@ -28,31 +28,31 @@ test_expect_success 'setup' '
 '
 
 test_expect_success TTY '--3way overrides --no-3way' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout renamed-file &&
 
 	# Applying side1 will fail as the file has been renamed.
 	test_must_fail git am --no-3way side[12].eml &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_cmp_rev renamed-file HEAD &&
 	test -z "$(git ls-files -u)" &&
 
 	# Applying side1 with am --3way will succeed due to the threeway-merge.
 	# Applying side2 will fail as --3way does not apply to it.
 	test_must_fail test_terminal git am --3way </dev/zero &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test side1 = "$(cat file2)"
 '
 
 test_expect_success '--no-quiet overrides --quiet' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 
 	# Applying side1 will be quiet.
 	test_must_fail git am --quiet side[123].eml >out &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_i18ngrep ! "^Applying: " out &&
 	echo side1 >file &&
 	git add file &&
@@ -65,12 +65,12 @@ test_expect_success '--no-quiet overrides --quiet' '
 '
 
 test_expect_success '--signoff overrides --no-signoff' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 
 	test_must_fail git am --no-signoff side[12].eml &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	echo side1 >file &&
 	git add file &&
 	git am --signoff --continue &&
@@ -85,17 +85,17 @@ test_expect_success '--signoff overrides --no-signoff' '
 '
 
 test_expect_success TTY '--reject overrides --no-reject' '
-	rm -fr .git/rebase-apply &&
+	rm -fr .git/rabassa-apply &&
 	git reset --hard &&
 	git checkout first &&
 	rm -f file.rej &&
 
 	test_must_fail git am --no-reject side1.eml &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_path_is_missing file.rej &&
 
 	test_must_fail test_terminal git am --reject </dev/zero &&
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	test_path_is_file file.rej
 '
 

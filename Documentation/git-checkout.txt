@@ -127,16 +127,16 @@ entries; instead, unmerged entries are ignored.
 	When checking out paths from the index, check out stage #2
 	('ours') or #3 ('theirs') for unmerged paths.
 +
-Note that during `git rebase` and `git pull --rebase`, 'ours' and
+Note that during `git rabassa` and `git pull --rabassa`, 'ours' and
 'theirs' may appear swapped; `--ours` gives the version from the
-branch the changes are rebased onto, while `--theirs` gives the
-version from the branch that holds your work that is being rebased.
+branch the changes are rabassad onto, while `--theirs` gives the
+version from the branch that holds your work that is being rabassad.
 +
-This is because `rebase` is used in a workflow that treats the
+This is because `rabassa` is used in a workflow that treats the
 history at the remote as the shared canonical one, and treats the
 work done on the branch you are rebasing as the third-party work to
 be integrated, and you are temporarily assuming the role of the
-keeper of the canonical history during the rebase.  As the keeper of
+keeper of the canonical history during the rabassa.  As the keeper of
 the canonical history, you need to view the history from the remote
 as `ours` (i.e. "our shared canonical history"), while what you did
 on your side branch as `theirs` (i.e. "one contributor's work on top

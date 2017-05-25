@@ -1084,17 +1084,17 @@ static int split_commit_in_progress(struct wt_status *s)
 	int split_in_progress = 0;
 	char *head = read_line_from_git_path("HEAD");
 	char *orig_head = read_line_from_git_path("ORIG_HEAD");
-	char *rebase_amend = read_line_from_git_path("rebase-merge/amend");
-	char *rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
+	char *rabassa_amend = read_line_from_git_path("rabassa-merge/amend");
+	char *rabassa_orig_head = read_line_from_git_path("rabassa-merge/orig-head");
 
-	if (!head || !orig_head || !rebase_amend || !rebase_orig_head ||
+	if (!head || !orig_head || !rabassa_amend || !rabassa_orig_head ||
 	    !s->branch || strcmp(s->branch, "HEAD"))
 		return split_in_progress;
 
-	if (!strcmp(rebase_amend, rebase_orig_head)) {
-		if (strcmp(head, rebase_amend))
+	if (!strcmp(rabassa_amend, rabassa_orig_head)) {
+		if (strcmp(head, rabassa_amend))
 			split_in_progress = 1;
-	} else if (strcmp(orig_head, rebase_orig_head)) {
+	} else if (strcmp(orig_head, rabassa_orig_head)) {
 		split_in_progress = 1;
 	}
 
@@ -1103,8 +1103,8 @@ static int split_commit_in_progress(struct wt_status *s)
 
 	free(head);
 	free(orig_head);
-	free(rebase_amend);
-	free(rebase_orig_head);
+	free(rabassa_amend);
+	free(rabassa_orig_head);
 	return split_in_progress;
 }
 
@@ -1148,7 +1148,7 @@ static void abbrev_sha1_in_line(struct strbuf *line)
 	strbuf_list_free(split);
 }
 
-static int read_rebase_todolist(const char *fname, struct string_list *lines)
+static int read_rabassa_todolist(const char *fname, struct string_list *lines)
 {
 	struct strbuf line = STRBUF_INIT;
 	FILE *f = fopen(git_path("%s", fname), "r");
@@ -1171,22 +1171,22 @@ static int read_rebase_todolist(const char *fname, struct string_list *lines)
 	return 0;
 }
 
-static void show_rebase_information(struct wt_status *s,
+static void show_rabassa_information(struct wt_status *s,
 					struct wt_status_state *state,
 					const char *color)
 {
-	if (state->rebase_interactive_in_progress) {
+	if (state->rabassa_interactive_in_progress) {
 		int i;
 		int nr_lines_to_show = 2;
 
 		struct string_list have_done = STRING_LIST_INIT_DUP;
 		struct string_list yet_to_do = STRING_LIST_INIT_DUP;
 
-		read_rebase_todolist("rebase-merge/done", &have_done);
-		if (read_rebase_todolist("rebase-merge/git-rebase-todo",
+		read_rabassa_todolist("rabassa-merge/done", &have_done);
+		if (read_rabassa_todolist("rabassa-merge/git-rabassa-todo",
 					 &yet_to_do))
 			status_printf_ln(s, color,
-				_("git-rebase-todo is missing."));
+				_("git-rabassa-todo is missing."));
 		if (have_done.nr == 0)
 			status_printf_ln(s, color, _("No commands done."));
 		else {
@@ -1202,7 +1202,7 @@ static void show_rebase_information(struct wt_status *s,
 				status_printf_ln(s, color, "   %s", have_done.items[i].string);
 			if (have_done.nr > nr_lines_to_show && s->hints)
 				status_printf_ln(s, color,
-					_("  (see more in file %s)"), git_path("rebase-merge/done"));
+					_("  (see more in file %s)"), git_path("rabassa-merge/done"));
 		}
 
 		if (yet_to_do.nr == 0)
@@ -1218,14 +1218,14 @@ static void show_rebase_information(struct wt_status *s,
 				status_printf_ln(s, color, "   %s", yet_to_do.items[i].string);
 			if (s->hints)
 				status_printf_ln(s, color,
-					_("  (use \"git rebase --edit-todo\" to view and edit)"));
+					_("  (use \"git rabassa --edit-todo\" to view and edit)"));
 		}
 		string_list_clear(&yet_to_do, 0);
 		string_list_clear(&have_done, 0);
 	}
 }
 
-static void print_rebase_state(struct wt_status *s,
+static void print_rabassa_state(struct wt_status *s,
 				struct wt_status_state *state,
 				const char *color)
 {
@@ -1239,28 +1239,28 @@ static void print_rebase_state(struct wt_status *s,
 				 _("You are currently rebasing."));
 }
 
-static void show_rebase_in_progress(struct wt_status *s,
+static void show_rabassa_in_progress(struct wt_status *s,
 				struct wt_status_state *state,
 				const char *color)
 {
 	struct stat st;
 
-	show_rebase_information(s, state, color);
+	show_rabassa_information(s, state, color);
 	if (has_unmerged(s)) {
-		print_rebase_state(s, state, color);
+		print_rabassa_state(s, state, color);
 		if (s->hints) {
 			status_printf_ln(s, color,
-				_("  (fix conflicts and then run \"git rebase --continue\")"));
+				_("  (fix conflicts and then run \"git rabassa --continue\")"));
 			status_printf_ln(s, color,
-				_("  (use \"git rebase --skip\" to skip this patch)"));
+				_("  (use \"git rabassa --skip\" to skip this patch)"));
 			status_printf_ln(s, color,
-				_("  (use \"git rebase --abort\" to check out the original branch)"));
+				_("  (use \"git rabassa --abort\" to check out the original branch)"));
 		}
-	} else if (state->rebase_in_progress || !stat(git_path_merge_msg(), &st)) {
-		print_rebase_state(s, state, color);
+	} else if (state->rabassa_in_progress || !stat(git_path_merge_msg(), &st)) {
+		print_rabassa_state(s, state, color);
 		if (s->hints)
 			status_printf_ln(s, color,
-				_("  (all conflicts fixed: run \"git rebase --continue\")"));
+				_("  (all conflicts fixed: run \"git rabassa --continue\")"));
 	} else if (split_commit_in_progress(s)) {
 		if (state->branch)
 			status_printf_ln(s, color,
@@ -1269,10 +1269,10 @@ static void show_rebase_in_progress(struct wt_status *s,
 					 state->onto);
 		else
 			status_printf_ln(s, color,
-					 _("You are currently splitting a commit during a rebase."));
+					 _("You are currently splitting a commit during a rabassa."));
 		if (s->hints)
 			status_printf_ln(s, color,
-				_("  (Once your working directory is clean, run \"git rebase --continue\")"));
+				_("  (Once your working directory is clean, run \"git rabassa --continue\")"));
 	} else {
 		if (state->branch)
 			status_printf_ln(s, color,
@@ -1281,12 +1281,12 @@ static void show_rebase_in_progress(struct wt_status *s,
 					 state->onto);
 		else
 			status_printf_ln(s, color,
-					 _("You are currently editing a commit during a rebase."));
+					 _("You are currently editing a commit during a rabassa."));
 		if (s->hints && !s->amend) {
 			status_printf_ln(s, color,
 				_("  (use \"git commit --amend\" to amend the current commit)"));
 			status_printf_ln(s, color,
-				_("  (use \"git rebase --continue\" once you are satisfied with your changes)"));
+				_("  (use \"git rabassa --continue\" once you are satisfied with your changes)"));
 		}
 	}
 	wt_longstatus_print_trailer(s);
@@ -1348,7 +1348,7 @@ static void show_bisect_in_progress(struct wt_status *s,
 }
 
 /*
- * Extract branch information from rebase/bisect
+ * Extract branch information from rabassa/bisect
  */
 static char *get_branch(const struct worktree *wt, const char *path)
 {
@@ -1370,7 +1370,7 @@ static char *get_branch(const struct worktree *wt, const char *path)
 	else if (!get_oid_hex(sb.buf, &oid)) {
 		strbuf_reset(&sb);
 		strbuf_add_unique_abbrev(&sb, oid.hash, DEFAULT_ABBREV);
-	} else if (!strcmp(sb.buf, "detached HEAD")) /* rebase */
+	} else if (!strcmp(sb.buf, "detached HEAD")) /* rabassa */
 		goto got_nothing;
 	else			/* bisect */
 		;
@@ -1445,28 +1445,28 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 	strbuf_release(&cb.buf);
 }
 
-int wt_status_check_rebase(const struct worktree *wt,
+int wt_status_check_rabassa(const struct worktree *wt,
 			   struct wt_status_state *state)
 {
 	struct stat st;
 
-	if (!stat(worktree_git_path(wt, "rebase-apply"), &st)) {
-		if (!stat(worktree_git_path(wt, "rebase-apply/applying"), &st)) {
+	if (!stat(worktree_git_path(wt, "rabassa-apply"), &st)) {
+		if (!stat(worktree_git_path(wt, "rabassa-apply/applying"), &st)) {
 			state->am_in_progress = 1;
-			if (!stat(worktree_git_path(wt, "rebase-apply/patch"), &st) && !st.st_size)
+			if (!stat(worktree_git_path(wt, "rabassa-apply/patch"), &st) && !st.st_size)
 				state->am_empty_patch = 1;
 		} else {
-			state->rebase_in_progress = 1;
-			state->branch = get_branch(wt, "rebase-apply/head-name");
-			state->onto = get_branch(wt, "rebase-apply/onto");
+			state->rabassa_in_progress = 1;
+			state->branch = get_branch(wt, "rabassa-apply/head-name");
+			state->onto = get_branch(wt, "rabassa-apply/onto");
 		}
-	} else if (!stat(worktree_git_path(wt, "rebase-merge"), &st)) {
-		if (!stat(worktree_git_path(wt, "rebase-merge/interactive"), &st))
-			state->rebase_interactive_in_progress = 1;
+	} else if (!stat(worktree_git_path(wt, "rabassa-merge"), &st)) {
+		if (!stat(worktree_git_path(wt, "rabassa-merge/interactive"), &st))
+			state->rabassa_interactive_in_progress = 1;
 		else
-			state->rebase_in_progress = 1;
-		state->branch = get_branch(wt, "rebase-merge/head-name");
-		state->onto = get_branch(wt, "rebase-merge/onto");
+			state->rabassa_in_progress = 1;
+		state->branch = get_branch(wt, "rabassa-merge/head-name");
+		state->onto = get_branch(wt, "rabassa-merge/onto");
 	} else
 		return 0;
 	return 1;
@@ -1493,7 +1493,7 @@ void wt_status_get_state(struct wt_status_state *state,
 
 	if (!stat(git_path_merge_head(), &st)) {
 		state->merge_in_progress = 1;
-	} else if (wt_status_check_rebase(NULL, state)) {
+	} else if (wt_status_check_rabassa(NULL, state)) {
 		;		/* all set */
 	} else if (!stat(git_path_cherry_pick_head(), &st) &&
 			!get_oid("CHERRY_PICK_HEAD", &oid)) {
@@ -1519,8 +1519,8 @@ static void wt_longstatus_print_state(struct wt_status *s,
 		show_merge_in_progress(s, state, state_color);
 	else if (state->am_in_progress)
 		show_am_in_progress(s, state, state_color);
-	else if (state->rebase_in_progress || state->rebase_interactive_in_progress)
-		show_rebase_in_progress(s, state, state_color);
+	else if (state->rabassa_in_progress || state->rabassa_interactive_in_progress)
+		show_rabassa_in_progress(s, state, state_color);
 	else if (state->cherry_pick_in_progress)
 		show_cherry_pick_in_progress(s, state, state_color);
 	else if (state->revert_in_progress)
@@ -1544,11 +1544,11 @@ static void wt_longstatus_print(struct wt_status *s)
 		const char *branch_name = s->branch;
 		if (!strcmp(branch_name, "HEAD")) {
 			branch_status_color = color(WT_STATUS_NOBRANCH, s);
-			if (state.rebase_in_progress || state.rebase_interactive_in_progress) {
-				if (state.rebase_interactive_in_progress)
-					on_what = _("interactive rebase in progress; onto ");
+			if (state.rabassa_in_progress || state.rabassa_interactive_in_progress) {
+				if (state.rabassa_interactive_in_progress)
+					on_what = _("interactive rabassa in progress; onto ");
 				else
-					on_what = _("rebase in progress; onto ");
+					on_what = _("rabassa in progress; onto ");
 				branch_name = state.onto;
 			} else if (state.detached_from) {
 				branch_name = state.detached_from;
@@ -1881,7 +1881,7 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
 		if (!strcmp(s->branch, "HEAD")) {
 			fprintf(s->fp, "# branch.head %s%c", "(detached)", eol);
 
-			if (state.rebase_in_progress || state.rebase_interactive_in_progress)
+			if (state.rabassa_in_progress || state.rabassa_interactive_in_progress)
 				branch_name = state.onto;
 			else if (state.detached_from)
 				branch_name = state.detached_from;
@@ -2276,7 +2276,7 @@ int require_clean_work_tree(const char *action, const char *hint, int ignore_sub
 	rollback_lock_file(lock_file);
 
 	if (has_unstaged_changes(ignore_submodules)) {
-		/* TRANSLATORS: the action is e.g. "pull with rebase" */
+		/* TRANSLATORS: the action is e.g. "pull with rabassa" */
 		error(_("cannot %s: You have unstaged changes."), _(action));
 		err = 1;
 	}

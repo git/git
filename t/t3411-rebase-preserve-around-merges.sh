@@ -3,14 +3,14 @@
 # Copyright (c) 2008 Stephen Haberman
 #
 
-test_description='git rebase preserve merges
+test_description='git rabassa preserve merges
 
-This test runs git rebase with -p and tries to squash a commit from after
+This test runs git rabassa with -p and tries to squash a commit from after
 a merge to before the merge.
 '
 . ./test-lib.sh
 
-. "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rabassa.sh
 
 set_fake_editor
 
@@ -37,7 +37,7 @@ test_expect_success 'setup' '
 #        -- C1 --
 #
 test_expect_success 'squash F1 into D1' '
-	FAKE_LINES="1 squash 4 2 3" git rebase -i -p B1 &&
+	FAKE_LINES="1 squash 4 2 3" git rabassa -i -p B1 &&
 	test "$(git rev-parse HEAD^2)" = "$(git rev-parse C1)" &&
 	test "$(git rev-parse HEAD~2)" = "$(git rev-parse B1)" &&
 	git tag E2
@@ -53,9 +53,9 @@ test_expect_success 'squash F1 into D1' '
 #      \         /
 #        -- I1 --
 #
-# And rebase G1..M1 onto E2
+# And rabassa G1..M1 onto E2
 
-test_expect_success 'rebase two levels of merge' '
+test_expect_success 'rabassa two levels of merge' '
 	git checkout A1 &&
 	test_commit G1 &&
 	test_commit H1 &&
@@ -66,7 +66,7 @@ test_expect_success 'rebase two levels of merge' '
 	git checkout -b branch2 G1 &&
 	test_commit L1 &&
 	test_merge M1 K1 &&
-	GIT_EDITOR=: git rebase -i -p E2 &&
+	GIT_EDITOR=: git rabassa -i -p E2 &&
 	test "$(git rev-parse HEAD~3)" = "$(git rev-parse E2)" &&
 	test "$(git rev-parse HEAD~2)" = "$(git rev-parse HEAD^2^2~2)" &&
 	test "$(git rev-parse HEAD^2^1^1)" = "$(git rev-parse HEAD^2^2^1)"

@@ -807,7 +807,7 @@ enum branch_track {
 	BRANCH_TRACK_OVERRIDE
 };
 
-enum rebase_setup_type {
+enum rabassa_setup_type {
 	AUTOREBASE_NEVER = 0,
 	AUTOREBASE_LOCAL,
 	AUTOREBASE_REMOTE,
@@ -824,7 +824,7 @@ enum push_default_type {
 };
 
 extern enum branch_track git_branch_track;
-extern enum rebase_setup_type autorebase;
+extern enum rabassa_setup_type autorabassa;
 extern enum push_default_type push_default;
 
 enum object_creation_mode {

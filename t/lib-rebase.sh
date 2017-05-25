@@ -1,4 +1,4 @@
-# Helper functions used by interactive rebase tests.
+# Helper functions used by interactive rabassa tests.
 
 # After setting the fake editor with this function, you can
 #
@@ -6,7 +6,7 @@
 # - amend the commit message with $FAKE_COMMIT_AMEND
 # - check that non-commit messages have a certain line count with $EXPECT_COUNT
 # - check the commit count in the commit message header with $EXPECT_HEADER_COUNT
-# - rewrite a rebase -i script as directed by $FAKE_LINES.
+# - rewrite a rabassa -i script as directed by $FAKE_LINES.
 #   $FAKE_LINES consists of a sequence of words separated by spaces.
 #   The following word combinations are possible:
 #
@@ -42,7 +42,7 @@ set_fake_editor () {
 	test -z "$FAKE_LINES" && exit
 	grep -v '^#' < "$1" > "$1".tmp
 	rm -f "$1"
-	echo 'rebase -i script before editing:'
+	echo 'rabassa -i script before editing:'
 	cat "$1".tmp
 	action=pick
 	for line in $FAKE_LINES; do
@@ -65,18 +65,18 @@ set_fake_editor () {
 			action=pick;;
 		esac
 	done
-	echo 'rebase -i script after editing:'
+	echo 'rabassa -i script after editing:'
 	cat "$1"
 	EOF
 
 	test_set_editor "$(pwd)/fake-editor.sh"
 }
 
-# After set_cat_todo_editor, rebase -i will write the todo list (ignoring
+# After set_cat_todo_editor, rabassa -i will write the todo list (ignoring
 # blank lines and comments) to stdout, and exit failure (so you should run
 # it with test_must_fail).  This can be used to verify the expected user
 # experience, for todo list changes that do not affect the outcome of
-# rebase; or as an extra check in addition to checking the outcome.
+# rabassa; or as an extra check in addition to checking the outcome.
 
 set_cat_todo_editor () {
 	write_script fake-editor.sh <<-\EOF
@@ -96,8 +96,8 @@ test_linear_range () {
 	test "$expected" = "$*"
 }
 
-reset_rebase () {
-	test_might_fail git rebase --abort &&
+reset_rabassa () {
+	test_might_fail git rabassa --abort &&
 	git reset --hard &&
 	git clean -f
 }

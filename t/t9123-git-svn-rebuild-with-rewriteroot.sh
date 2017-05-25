@@ -25,7 +25,7 @@ test_expect_success 'remove rev_map' '
 	'
 
 test_expect_success 'rebuild rev_map' '
-	git svn rebase >/dev/null
+	git svn rabassa >/dev/null
 	'
 
 test_done

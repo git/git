@@ -1077,7 +1077,7 @@ __git_whitespacelist="nowarn warn error error-all fix"
 _git_am ()
 {
 	__git_find_repo_path
-	if [ -d "$__git_repo_path"/rebase-apply ]; then
+	if [ -d "$__git_repo_path"/rabassa-apply ]; then
 		__gitcomp "--skip --continue --resolved --abort"
 		return
 	fi
@@ -1921,7 +1921,7 @@ _git_pull ()
 		;;
 	--*)
 		__gitcomp "
-			--rebase --no-rebase
+			--rabassa --no-rabassa
 			$__git_merge_options
 			$__git_fetch_options
 		"
@@ -1987,14 +1987,14 @@ _git_push ()
 	__git_complete_remote_or_refspec
 }
 
-_git_rebase ()
+_git_rabassa ()
 {
 	__git_find_repo_path
-	if [ -f "$__git_repo_path"/rebase-merge/interactive ]; then
+	if [ -f "$__git_repo_path"/rabassa-merge/interactive ]; then
 		__gitcomp "--continue --skip --abort --quit --edit-todo"
 		return
-	elif [ -d "$__git_repo_path"/rebase-apply ] || \
-	     [ -d "$__git_repo_path"/rebase-merge ]; then
+	elif [ -d "$__git_repo_path"/rabassa-apply ] || \
+	     [ -d "$__git_repo_path"/rabassa-merge ]; then
 		__gitcomp "--continue --skip --abort --quit"
 		return
 	fi
@@ -2014,7 +2014,7 @@ _git_rebase ()
 			--fork-point --no-fork-point
 			--autostash --no-autostash
 			--verify --no-verify
-			--keep-empty --root --force-rebase --no-ff
+			--keep-empty --root --force-rabassa --no-ff
 			--exec
 			"
 
@@ -2180,7 +2180,7 @@ _git_config ()
 		__git_complete_refs
 		return
 		;;
-	branch.*.rebase)
+	branch.*.rabassa)
 		__gitcomp "false true preserve interactive"
 		return
 		;;
@@ -2276,13 +2276,13 @@ _git_config ()
 		;;
 	branch.*.*)
 		local pfx="${cur%.*}." cur_="${cur##*.}"
-		__gitcomp "remote pushremote merge mergeoptions rebase" "$pfx" "$cur_"
+		__gitcomp "remote pushremote merge mergeoptions rabassa" "$pfx" "$cur_"
 		return
 		;;
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
-		__gitcomp_nl_append $'autosetupmerge\nautosetuprebase\n' "$pfx" "$cur_"
+		__gitcomp_nl_append $'autosetupmerge\nautosetuprabassa\n' "$pfx" "$cur_"
 		return
 		;;
 	guitool.*.*)
@@ -2347,7 +2347,7 @@ _git_config ()
 		apply.ignorewhitespace
 		apply.whitespace
 		branch.autosetupmerge
-		branch.autosetuprebase
+		branch.autosetuprabassa
 		browser.
 		clean.requireForce
 		color.branch
@@ -2553,7 +2553,7 @@ _git_config ()
 		notes.displayRef
 		notes.rewrite.
 		notes.rewrite.amend
-		notes.rewrite.rebase
+		notes.rewrite.rabassa
 		notes.rewriteMode
 		notes.rewriteRef
 		pack.compression
@@ -2571,8 +2571,8 @@ _git_config ()
 		pull.twohead
 		push.default
 		push.followTags
-		rebase.autosquash
-		rebase.stat
+		rabassa.autosquash
+		rabassa.stat
 		receive.autogc
 		receive.denyCurrentBranch
 		receive.denyDeleteCurrent
@@ -2889,7 +2889,7 @@ _git_submodule ()
 		__gitcomp "
 			--init --remote --no-fetch
 			--recommend-shallow --no-recommend-shallow
-			--force --rebase --merge --reference --depth --recursive --jobs
+			--force --rabassa --merge --reference --depth --recursive --jobs
 		"
 		;;
 	summary,--*)
@@ -2906,7 +2906,7 @@ _git_submodule ()
 _git_svn ()
 {
 	local subcommands="
-		init fetch clone rebase dcommit log find-rev
+		init fetch clone rabassa dcommit log find-rev
 		set-tree commit-diff info create-ignore propget
 		proplist show-ignore show-externals branch tag blame
 		migrate mkdirs reset gc
@@ -2947,7 +2947,7 @@ _git_svn ()
 		dcommit,--*)
 			__gitcomp "
 				--merge --strategy= --verbose --dry-run
-				--fetch-all --no-rebase --commit-url
+				--fetch-all --no-rabassa --commit-url
 				--revision --interactive $cmt_opts $fc_opts
 				"
 			;;
@@ -2965,7 +2965,7 @@ _git_svn ()
 				--authors-file= --color
 				"
 			;;
-		rebase,--*)
+		rabassa,--*)
 			__gitcomp "
 				--merge --verbose --strategy= --local
 				--fetch-all --dry-run $fc_opts

@@ -103,7 +103,7 @@ Updates since v1.6.3
  * "add" and "update" subcommands to "git submodule" learned --reference
    option to use local clone with references.
 
- * "git submodule update" learned --rebase option to update checked
+ * "git submodule update" learned --rabassa option to update checked
    out submodules by rebasing the local changes.
 
  * "gitweb" can optionally use gravatar to adorn author/committer names.
@@ -136,7 +136,7 @@ v1.6.3.X series.
    section header has a variable definition on the same line, lost
    that variable definition.
 
- * "git rebase -p --onto" used to always leave side branches of a merge
+ * "git rabassa -p --onto" used to always leave side branches of a merge
    intact, even when both branches are subject to rewriting.
 
  * "git repack" used to faithfully follow grafts and considered true

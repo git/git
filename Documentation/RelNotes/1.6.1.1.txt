@@ -50,7 +50,7 @@ Fixes since v1.6.1
 * "git read-tree -m -u" hence branch switching incorrectly lost a
   subdirectory in rare cases.
 
-* "git rebase -i" issued an unnecessary error message upon a user error of
+* "git rabassa -i" issued an unnecessary error message upon a user error of
   marking the first commit to be "squash"ed.
 
 * "git shortlog" did not format a commit message with multi-line

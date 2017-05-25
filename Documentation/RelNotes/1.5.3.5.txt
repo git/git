@@ -22,7 +22,7 @@ Fixes since v1.5.3.4
 
  * "git-add -i" did not handle single line hunks correctly.
 
- * "git-rebase -i" and "git-stash apply" failed if external diff
+ * "git-rabassa -i" and "git-stash apply" failed if external diff
    drivers were used for one or more files in a commit.  They now
    avoid calling the external diff drivers.
 
@@ -90,5 +90,5 @@ Fixes since v1.5.3.4
  * "git-send-pack $remote frotz" segfaulted when there is nothing
    named 'frotz' on the local end.
 
- * "git-rebase --interactive" did not handle its "--strategy" option
+ * "git-rabassa --interactive" did not handle its "--strategy" option
    properly.

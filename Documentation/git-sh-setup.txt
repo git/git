@@ -77,7 +77,7 @@ require_clean_work_tree <action> [<hint>]::
 	<action>: <reason>. <hint>`, and dies.  Example:
 +
 ----------------
-require_clean_work_tree rebase "Please commit or stash them."
+require_clean_work_tree rabassa "Please commit or stash them."
 ----------------
 
 get_author_ident_from_commit::

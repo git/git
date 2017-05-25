@@ -244,7 +244,7 @@ static int add(int argc, const char **argv)
 struct branch_info {
 	char *remote_name;
 	struct string_list merge;
-	enum { NO_REBASE, NORMAL_REBASE, INTERACTIVE_REBASE } rebase;
+	enum { NO_REBASE, NORMAL_REBASE, INTERACTIVE_REBASE } rabassa;
 };
 
 static struct string_list branch_list = STRING_LIST_INIT_NODUP;
@@ -273,7 +273,7 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 		} else if (strip_suffix(key, ".merge", &key_len)) {
 			name = xmemdupz(key, key_len);
 			type = MERGE;
-		} else if (strip_suffix(key, ".rebase", &key_len)) {
+		} else if (strip_suffix(key, ".rabassa", &key_len)) {
 			name = xmemdupz(key, key_len);
 			type = REBASE;
 		} else
@@ -302,11 +302,11 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 		} else {
 			int v = git_config_maybe_bool(orig_key, value);
 			if (v >= 0)
-				info->rebase = v;
+				info->rabassa = v;
 			else if (!strcmp(value, "preserve"))
-				info->rebase = NORMAL_REBASE;
+				info->rabassa = NORMAL_REBASE;
 			else if (!strcmp(value, "interactive"))
-				info->rebase = INTERACTIVE_REBASE;
+				info->rabassa = INTERACTIVE_REBASE;
 		}
 	}
 	return 0;
@@ -883,7 +883,7 @@ struct show_info {
 	struct string_list *list;
 	struct ref_states *states;
 	int width, width2;
-	int any_rebase;
+	int any_rabassa;
 };
 
 static int add_remote_to_show_info(struct string_list_item *item, void *cb_data)
@@ -936,8 +936,8 @@ static int add_local_to_show_info(struct string_list_item *branch_item, void *cb
 		return 0;
 	if ((n = strlen(branch_item->string)) > show_info->width)
 		show_info->width = n;
-	if (branch_info->rebase)
-		show_info->any_rebase = 1;
+	if (branch_info->rabassa)
+		show_info->any_rabassa = 1;
 
 	item = string_list_insert(show_info->list, branch_item->string);
 	item->util = branch_info;
@@ -953,19 +953,19 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	int width = show_info->width + 4;
 	int i;
 
-	if (branch_info->rebase && branch_info->merge.nr > 1) {
-		error(_("invalid branch.%s.merge; cannot rebase onto > 1 branch"),
+	if (branch_info->rabassa && branch_info->merge.nr > 1) {
+		error(_("invalid branch.%s.merge; cannot rabassa onto > 1 branch"),
 			item->string);
 		return 0;
 	}
 
 	printf("    %-*s ", show_info->width, item->string);
-	if (branch_info->rebase) {
-		printf_ln(branch_info->rebase == INTERACTIVE_REBASE
-			  ? _("rebases interactively onto remote %s")
-			  : _("rebases onto remote %s"), merge->items[0].string);
+	if (branch_info->rabassa) {
+		printf_ln(branch_info->rabassa == INTERACTIVE_REBASE
+			  ? _("rabassas interactively onto remote %s")
+			  : _("rabassas onto remote %s"), merge->items[0].string);
 		return 0;
-	} else if (show_info->any_rebase) {
+	} else if (show_info->any_rabassa) {
 		printf_ln(_(" merges with remote %s"), merge->items[0].string);
 		width++;
 	} else {
@@ -1184,7 +1184,7 @@ static int show(int argc, const char **argv)
 
 		/* git pull info */
 		info.width = 0;
-		info.any_rebase = 0;
+		info.any_rabassa = 0;
 		for_each_string_list(&branch_list, add_local_to_show_info, &info);
 		if (info.list->nr)
 			printf_ln(Q_("  Local branch configured for 'git pull':",

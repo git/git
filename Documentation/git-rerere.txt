@@ -38,7 +38,7 @@ its working state.
 'clear'::
 
 Reset the metadata used by rerere if a merge resolution is to be
-aborted.  Calling 'git am [--skip|--abort]' or 'git rebase [--skip|--abort]'
+aborted.  Calling 'git am [--skip|--abort]' or 'git rabassa [--skip|--abort]'
 will automatically invoke this command.
 
 'forget' <pathspec>::
@@ -189,7 +189,7 @@ actual merge later with the updated master and topic branch, as long
 as the recorded resolution is still applicable.
 
 The information 'git rerere' records is also used when running
-'git rebase'.  After blowing away the test merge and continuing
+'git rabassa'.  After blowing away the test merge and continuing
 development on the topic branch:
 
 ------------
@@ -197,18 +197,18 @@ development on the topic branch:
              /
     o---o---o---*---o---o---o---o   master
 
-	$ git rebase master topic
+	$ git rabassa master topic
 
 				  o---*---o-------o---o topic
 				 /
     o---o---o---*---o---o---o---o   master
 ------------
 
-you could run `git rebase master topic`, to bring yourself
+you could run `git rabassa master topic`, to bring yourself
 up-to-date before your topic is ready to be sent upstream.
 This would result in falling back to a three-way merge, and it
 would conflict the same way as the test merge you resolved earlier.
-'git rerere' will be run by 'git rebase' to help you resolve this
+'git rerere' will be run by 'git rabassa' to help you resolve this
 conflict.
 
 GIT

@@ -33,9 +33,9 @@ UI, Workflows & Features
  * In addition to %(subject), %(body), "log --pretty=format:..."
    learned a new placeholder %(trailers).
 
- * "git rebase" learned "--quit" option, which allows a user to
-   remove the metadata left by an earlier "git rebase" that was
-   manually aborted without using "git rebase --abort".
+ * "git rabassa" learned "--quit" option, which allows a user to
+   remove the metadata left by an earlier "git rabassa" that was
+   manually aborted without using "git rabassa --abort".
 
  * "git clone --reference $there --recurse-submodules $super" has been
    taught to guess repositories usable as references for submodules of
@@ -178,7 +178,7 @@ Performance, Internal Implementation, Development Support etc.
    breaking the rendering done by AsciiDoc.
 
  * The sequencer machinery has been further enhanced so that a later
-   set of patches can start using it to reimplement "rebase -i".
+   set of patches can start using it to reimplement "rabassa -i".
 
  * Update the definition of the MacOSX test environment used by
    TravisCI.
@@ -272,9 +272,9 @@ notes for details).
  * A pathname that begins with "//" or "\\" on Windows is special but
    path normalization logic was unaware of it.
 
- * "git pull --rebase", when there is no new commits on our side since
+ * "git pull --rabassa", when there is no new commits on our side since
    we forked from the upstream, should be able to fast-forward without
-   invoking "git rebase", but it didn't.
+   invoking "git rabassa", but it didn't.
 
  * The way to specify hotkeys to "xxdiff" that is used by "git
    mergetool" has been modernized to match recent versions of xxdiff.
@@ -352,7 +352,7 @@ notes for details).
  * "git blame --porcelain" misidentified the "previous" <commit, path>
    pair (aka "source") when contents came from two or more files.
 
- * "git rebase -i" with a recent update started showing an incorrect
+ * "git rabassa -i" with a recent update started showing an incorrect
    count when squashing more than 10 commits.
 
  * "git <cmd> @{push}" on a detached HEAD used to segfault; it has
@@ -406,12 +406,12 @@ notes for details).
  * "git fsck --connectivity-check" was not working at all.
    (merge a2b22854bd jk/fsck-connectivity-check-fix later to maint).
 
- * After starting "git rebase -i", which first opens the user's editor
+ * After starting "git rabassa -i", which first opens the user's editor
    to edit the series of patches to apply, but before saving the
    contents of that file, "git status" failed to show the current
-   state (i.e. you are in an interactive rebase session, but you have
+   state (i.e. you are in an interactive rabassa session, but you have
    applied no steps yet) correctly.
-   (merge df9ded4984 js/status-pre-rebase-i later to maint).
+   (merge df9ded4984 js/status-pre-rabassa-i later to maint).
 
  * Test tweak for FreeBSD where /usr/bin/unzip is unsuitable to run
    our tests but /usr/local/bin/unzip is usable.

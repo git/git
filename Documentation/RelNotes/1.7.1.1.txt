@@ -32,7 +32,7 @@ Fixes since v1.7.1
 
  * "git bundle --stdin" segfaulted.
 
- * "git checkout" and "git rebase" overwrote paths that are marked "assume
+ * "git checkout" and "git rabassa" overwrote paths that are marked "assume
    unchanged".
 
  * "git commit --amend" on a commit with an invalid author-name line that
@@ -70,7 +70,7 @@ Fixes since v1.7.1
    ignored the option itself, resulting in a bogus attempt to merge
    unrelated commit.
 
- * "git rebase" did not faithfully reproduce a malformed author ident, that
+ * "git rabassa" did not faithfully reproduce a malformed author ident, that
    is often seen in a repository converted from foreign SCMs.
 
  * "git reset --hard" started from a wrong directory and a working tree in

@@ -33,7 +33,7 @@ Fixes since v1.7.7.1
    different from the default, potentially giving different results from
    "git diff | diffstat" and confusing the users.
 
- * "git pull" and "git rebase" did not work well even when GIT_WORK_TREE is
+ * "git pull" and "git rabassa" did not work well even when GIT_WORK_TREE is
    set correctly with GIT_DIR if the current directory is outside the working
    tree.
 

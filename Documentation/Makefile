@@ -49,7 +49,7 @@ ARTICLES += git-bisect-lk2009
 # with their own formatting rules.
 SP_ARTICLES += user-manual
 SP_ARTICLES += howto/new-command
-SP_ARTICLES += howto/revert-branch-rebase
+SP_ARTICLES += howto/revert-branch-rabassa
 SP_ARTICLES += howto/using-merge-subtree
 SP_ARTICLES += howto/using-signed-tag-in-pull-request
 SP_ARTICLES += howto/use-git-daemon
@@ -60,7 +60,7 @@ SP_ARTICLES += howto/revert-a-faulty-merge
 SP_ARTICLES += howto/recover-corrupted-blob-object
 SP_ARTICLES += howto/recover-corrupted-object-harder
 SP_ARTICLES += howto/rebuild-from-update-hook
-SP_ARTICLES += howto/rebase-from-internal-branch
+SP_ARTICLES += howto/rabassa-from-internal-branch
 SP_ARTICLES += howto/keep-canonical-history-correct
 SP_ARTICLES += howto/maintain-git
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))

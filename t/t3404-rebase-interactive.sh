@@ -3,9 +3,9 @@
 # Copyright (c) 2007 Johannes E. Schindelin
 #
 
-test_description='git rebase interactive
+test_description='git rabassa interactive
 
-This test runs git rebase "interactively", by faking an edit, and verifies
+This test runs git rabassa "interactively", by faking an edit, and verifies
 that the result still makes sense.
 
 Initial setup:
@@ -27,7 +27,7 @@ Initial setup:
 '
 . ./test-lib.sh
 
-. "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rabassa.sh
 
 # WARNING: Modifications to the initial repository can change the SHA ID used
 # in the expect2 file for the 'stop on conflicting pick' test.
@@ -67,15 +67,15 @@ test_expect_success 'setup' '
 SHELL=
 export SHELL
 
-test_expect_success 'rebase --keep-empty' '
+test_expect_success 'rabassa --keep-empty' '
 	git checkout -b emptybranch master &&
 	git commit --allow-empty -m "empty" &&
-	git rebase --keep-empty -i HEAD~2 &&
+	git rabassa --keep-empty -i HEAD~2 &&
 	git log --oneline >actual &&
 	test_line_count = 6 actual
 '
 
-test_expect_success 'rebase -i with the exec command' '
+test_expect_success 'rabassa -i with the exec command' '
 	git checkout master &&
 	(
 	set_fake_editor &&
@@ -83,13 +83,13 @@ test_expect_success 'rebase -i with the exec command' '
 		2 exec_>touch-two exec_false exec_>touch-three
 		3 4 exec_>\"touch-file__name_with_spaces\";_>touch-after-semicolon 5" &&
 	export FAKE_LINES &&
-	test_must_fail git rebase -i A
+	test_must_fail git rabassa -i A
 	) &&
 	test_path_is_file touch-one &&
 	test_path_is_file touch-two &&
 	test_path_is_missing touch-three " (should have stopped before)" &&
 	test_cmp_rev C HEAD &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test_path_is_file touch-three &&
 	test_path_is_file "touch-file  name with spaces" &&
 	test_path_is_file touch-after-semicolon &&
@@ -97,39 +97,39 @@ test_expect_success 'rebase -i with the exec command' '
 	rm -f touch-*
 '
 
-test_expect_success 'rebase -i with the exec command runs from tree root' '
+test_expect_success 'rabassa -i with the exec command runs from tree root' '
 	git checkout master &&
 	mkdir subdir && (cd subdir &&
 	set_fake_editor &&
 	FAKE_LINES="1 exec_>touch-subdir" \
-		git rebase -i HEAD^
+		git rabassa -i HEAD^
 	) &&
 	test_path_is_file touch-subdir &&
 	rm -fr subdir
 '
 
-test_expect_success 'rebase -i with the exec command checks tree cleanness' '
+test_expect_success 'rabassa -i with the exec command checks tree cleanness' '
 	git checkout master &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES="exec_echo_foo_>file1 1" git rebase -i HEAD^ &&
+	test_must_fail env FAKE_LINES="exec_echo_foo_>file1 1" git rabassa -i HEAD^ &&
 	test_cmp_rev master^ HEAD &&
 	git reset --hard &&
-	git rebase --continue
+	git rabassa --continue
 '
 
-test_expect_success 'rebase -i with exec of inexistent command' '
+test_expect_success 'rabassa -i with exec of inexistent command' '
 	git checkout master &&
-	test_when_finished "git rebase --abort" &&
+	test_when_finished "git rabassa --abort" &&
 	set_fake_editor &&
 	test_must_fail env FAKE_LINES="exec_this-command-does-not-exist 1" \
-	git rebase -i HEAD^ >actual 2>&1 &&
-	! grep "Maybe git-rebase is broken" actual
+	git rabassa -i HEAD^ >actual 2>&1 &&
+	! grep "Maybe git-rabassa is broken" actual
 '
 
 test_expect_success 'no changes are a nop' '
 	git checkout branch2 &&
 	set_fake_editor &&
-	git rebase -i F &&
+	git rabassa -i F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
 	test $(git rev-parse I) = $(git rev-parse HEAD)
 '
@@ -139,7 +139,7 @@ test_expect_success 'test the [branch] option' '
 	git rm file6 &&
 	git commit -m "stop here" &&
 	set_fake_editor &&
-	git rebase -i F branch2 &&
+	git rabassa -i F branch2 &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
 	test $(git rev-parse I) = $(git rev-parse branch2) &&
 	test $(git rev-parse I) = $(git rev-parse HEAD)
@@ -148,30 +148,30 @@ test_expect_success 'test the [branch] option' '
 test_expect_success 'test --onto <branch>' '
 	git checkout -b test-onto branch2 &&
 	set_fake_editor &&
-	git rebase -i --onto branch1 F &&
+	git rabassa -i --onto branch1 F &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/test-onto" &&
 	test $(git rev-parse HEAD^) = $(git rev-parse branch1) &&
 	test $(git rev-parse I) = $(git rev-parse branch2)
 '
 
-test_expect_success 'rebase on top of a non-conflicting commit' '
+test_expect_success 'rabassa on top of a non-conflicting commit' '
 	git checkout branch1 &&
 	git tag original-branch1 &&
 	set_fake_editor &&
-	git rebase -i branch2 &&
+	git rabassa -i branch2 &&
 	test file6 = $(git diff --name-only original-branch1) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
 	test $(git rev-parse I) = $(git rev-parse branch2) &&
 	test $(git rev-parse I) = $(git rev-parse HEAD~2)
 '
 
-test_expect_success 'reflog for the branch shows state before rebase' '
+test_expect_success 'reflog for the branch shows state before rabassa' '
 	test $(git rev-parse branch1@{1}) = $(git rev-parse original-branch1)
 '
 
 test_expect_success 'exchange two commits' '
 	set_fake_editor &&
-	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
+	FAKE_LINES="2 1" git rabassa -i HEAD~2 &&
 	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test G = $(git cat-file commit HEAD | sed -ne \$p)
 '
@@ -197,32 +197,32 @@ EOF
 test_expect_success 'stop on conflicting pick' '
 	git tag new-branch1 &&
 	set_fake_editor &&
-	test_must_fail git rebase -i master &&
+	test_must_fail git rabassa -i master &&
 	test "$(git rev-parse HEAD~3)" = "$(git rev-parse master)" &&
-	test_cmp expect .git/rebase-merge/patch &&
+	test_cmp expect .git/rabassa-merge/patch &&
 	test_cmp expect2 file1 &&
 	test "$(git diff --name-status |
 		sed -n -e "/^U/s/^U[^a-z]*//p")" = file1 &&
-	test 4 = $(grep -v "^#" < .git/rebase-merge/done | wc -l) &&
-	test 0 = $(grep -c "^[^#]" < .git/rebase-merge/git-rebase-todo)
+	test 4 = $(grep -v "^#" < .git/rabassa-merge/done | wc -l) &&
+	test 0 = $(grep -c "^[^#]" < .git/rabassa-merge/git-rabassa-todo)
 '
 
 test_expect_success 'abort' '
-	git rebase --abort &&
+	git rabassa --abort &&
 	test $(git rev-parse new-branch1) = $(git rev-parse HEAD) &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch1" &&
-	test_path_is_missing .git/rebase-merge
+	test_path_is_missing .git/rabassa-merge
 '
 
 test_expect_success 'abort with error when new base cannot be checked out' '
 	git rm --cached file1 &&
 	git commit -m "remove file in base" &&
 	set_fake_editor &&
-	test_must_fail git rebase -i master > output 2>&1 &&
+	test_must_fail git rabassa -i master > output 2>&1 &&
 	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" \
 		output &&
 	test_i18ngrep "file1" output &&
-	test_path_is_missing .git/rebase-merge &&
+	test_path_is_missing .git/rabassa-merge &&
 	git reset --hard HEAD^
 '
 
@@ -233,7 +233,7 @@ test_expect_success 'retain authorship' '
 	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
 	git tag twerp &&
 	set_fake_editor &&
-	git rebase -i --onto master HEAD^ &&
+	git rabassa -i --onto master HEAD^ &&
 	git show HEAD | grep "^Author: Twerp Snog"
 '
 
@@ -244,10 +244,10 @@ test_expect_success 'retain authorship w/ conflicts' '
 	GIT_AUTHOR_NAME=AttributeMe \
 	test_commit b conflict b conflict-b &&
 	set_fake_editor &&
-	test_must_fail git rebase -i conflict-a &&
+	test_must_fail git rabassa -i conflict-a &&
 	echo resolved >conflict &&
 	git add conflict &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $(git rev-parse conflict-a^0) = $(git rev-parse HEAD^) &&
 	git show >out &&
 	grep AttributeMe out
@@ -261,7 +261,7 @@ test_expect_success 'squash' '
 	echo "******************************" &&
 	set_fake_editor &&
 	FAKE_LINES="1 squash 2" EXPECT_HEADER_COUNT=2 \
-		git rebase -i --onto master HEAD~2 &&
+		git rabassa -i --onto master HEAD~2 &&
 	test B = $(cat file7) &&
 	test $(git rev-parse HEAD^) = $(git rev-parse master)
 '
@@ -273,7 +273,7 @@ test_expect_success 'retain authorship when squashing' '
 test_expect_success '-p handles "no changes" gracefully' '
 	HEAD=$(git rev-parse HEAD) &&
 	set_fake_editor &&
-	git rebase -i -p HEAD^ &&
+	git rabassa -i -p HEAD^ &&
 	git update-index --refresh &&
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD -- &&
@@ -283,7 +283,7 @@ test_expect_success '-p handles "no changes" gracefully' '
 test_expect_failure 'exchange two commits with -p' '
 	git checkout H &&
 	set_fake_editor &&
-	FAKE_LINES="2 1" git rebase -i -p HEAD~2 &&
+	FAKE_LINES="2 1" git rabassa -i -p HEAD~2 &&
 	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test G = $(git cat-file commit HEAD | sed -ne \$p)
 '
@@ -315,10 +315,10 @@ test_expect_success 'preserve merges with -p' '
 	echo E > file1 &&
 	test_tick &&
 	git commit -m M file1 &&
-	git checkout -b to-be-rebased &&
+	git checkout -b to-be-rabassad &&
 	test_tick &&
 	set_fake_editor &&
-	git rebase -i -p --onto branch1 master &&
+	git rabassa -i -p --onto branch1 master &&
 	git update-index --refresh &&
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD -- &&
@@ -333,11 +333,11 @@ test_expect_success 'preserve merges with -p' '
 
 test_expect_success 'edit ancestor with -p' '
 	set_fake_editor &&
-	FAKE_LINES="1 2 edit 3 4" git rebase -i -p HEAD~3 &&
+	FAKE_LINES="1 2 edit 3 4" git rabassa -i -p HEAD~3 &&
 	echo 2 > unrelated-file &&
 	test_tick &&
 	git commit -m L2-modified --amend unrelated-file &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	git update-index --refresh &&
 	git diff-files --quiet &&
 	git diff-index --quiet --cached HEAD -- &&
@@ -347,10 +347,10 @@ test_expect_success 'edit ancestor with -p' '
 test_expect_success '--continue tries to commit' '
 	test_tick &&
 	set_fake_editor &&
-	test_must_fail git rebase -i --onto new-branch1 HEAD^ &&
+	test_must_fail git rabassa -i --onto new-branch1 HEAD^ &&
 	echo resolved > file1 &&
 	git add file1 &&
-	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
+	FAKE_COMMIT_MESSAGE="chouette!" git rabassa --continue &&
 	test $(git rev-parse HEAD^) = $(git rev-parse new-branch1) &&
 	git show HEAD | grep chouette
 '
@@ -359,10 +359,10 @@ test_expect_success 'verbose flag is heeded, even after --continue' '
 	git reset --hard master@{1} &&
 	test_tick &&
 	set_fake_editor &&
-	test_must_fail git rebase -v -i --onto new-branch1 HEAD^ &&
+	test_must_fail git rabassa -v -i --onto new-branch1 HEAD^ &&
 	echo resolved > file1 &&
 	git add file1 &&
-	git rebase --continue > output &&
+	git rabassa --continue > output &&
 	grep "^ file1 | 2 +-$" output
 '
 
@@ -371,7 +371,7 @@ test_expect_success C_LOCALE_OUTPUT 'multi-squash only fires up editor once' '
 	set_fake_editor &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 squash 2 squash 3 squash 4" \
 		EXPECT_HEADER_COUNT=4 \
-		git rebase -i $base &&
+		git rabassa -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l)
 '
@@ -381,10 +381,10 @@ test_expect_success C_LOCALE_OUTPUT 'multi-fixup does not fire up editor' '
 	base=$(git rev-parse HEAD~4) &&
 	set_fake_editor &&
 	FAKE_COMMIT_AMEND="NEVER" FAKE_LINES="1 fixup 2 fixup 3 fixup 4" \
-		git rebase -i $base &&
+		git rabassa -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 0 = $(git show | grep NEVER | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout to-be-rabassad &&
 	git branch -D multi-fixup
 '
 
@@ -392,14 +392,14 @@ test_expect_success 'commit message used after conflict' '
 	git checkout -b conflict-fixup conflict-branch &&
 	base=$(git rev-parse HEAD~4) &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES="1 fixup 3 fixup 4" git rebase -i $base &&
+	test_must_fail env FAKE_LINES="1 fixup 3 fixup 4" git rabassa -i $base &&
 	echo three > conflict &&
 	git add conflict &&
 	FAKE_COMMIT_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
-		git rebase --continue &&
+		git rabassa --continue &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout to-be-rabassad &&
 	git branch -D conflict-fixup
 '
 
@@ -407,14 +407,14 @@ test_expect_success 'commit message retained after conflict' '
 	git checkout -b conflict-squash conflict-branch &&
 	base=$(git rev-parse HEAD~4) &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES="1 fixup 3 squash 4" git rebase -i $base &&
+	test_must_fail env FAKE_LINES="1 fixup 3 squash 4" git rabassa -i $base &&
 	echo three > conflict &&
 	git add conflict &&
 	FAKE_COMMIT_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
-		git rebase --continue &&
+		git rabassa --continue &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 2 = $(git show | grep TWICE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout to-be-rabassad &&
 	git branch -D conflict-squash
 '
 
@@ -432,10 +432,10 @@ test_expect_success C_LOCALE_OUTPUT 'squash and fixup generate correct log messa
 	set_fake_editor &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="1 fixup 2 squash 3 fixup 4" \
 		EXPECT_HEADER_COUNT=4 \
-		git rebase -i $base &&
+		git rabassa -i $base &&
 	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
 	test_cmp expect-squash-fixup actual-squash-fixup &&
-	git checkout to-be-rebased &&
+	git checkout to-be-rabassad &&
 	git branch -D squash-fixup
 '
 
@@ -445,10 +445,10 @@ test_expect_success C_LOCALE_OUTPUT 'squash ignores comments' '
 	set_fake_editor &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="# 1 # squash 2 # squash 3 # squash 4 #" \
 		EXPECT_HEADER_COUNT=4 \
-		git rebase -i $base &&
+		git rabassa -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout to-be-rabassad &&
 	git branch -D skip-comments
 '
 
@@ -458,10 +458,10 @@ test_expect_success C_LOCALE_OUTPUT 'squash ignores blank lines' '
 	set_fake_editor &&
 	FAKE_COMMIT_AMEND="ONCE" FAKE_LINES="> 1 > squash 2 > squash 3 > squash 4 >" \
 		EXPECT_HEADER_COUNT=4 \
-		git rebase -i $base &&
+		git rabassa -i $base &&
 	test $base = $(git rev-parse HEAD^) &&
 	test 1 = $(git show | grep ONCE | wc -l) &&
-	git checkout to-be-rebased &&
+	git checkout to-be-rabassad &&
 	git branch -D skip-blank-lines
 '
 
@@ -470,7 +470,7 @@ test_expect_success 'squash works as expected' '
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
 	FAKE_LINES="1 squash 3 2" EXPECT_HEADER_COUNT=2 \
-		git rebase -i HEAD~3 &&
+		git rabassa -i HEAD~3 &&
 	test $one = $(git rev-parse HEAD~2)
 '
 
@@ -478,13 +478,13 @@ test_expect_success 'interrupted squash works as expected' '
 	git checkout -b interrupted-squash conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES="1 squash 3 2" git rebase -i HEAD~3 &&
+	test_must_fail env FAKE_LINES="1 squash 3 2" git rabassa -i HEAD~3 &&
 	(echo one; echo two; echo four) > conflict &&
 	git add conflict &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	echo resolved > conflict &&
 	git add conflict &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $one = $(git rev-parse HEAD~2)
 '
 
@@ -492,16 +492,16 @@ test_expect_success 'interrupted squash works as expected (case 2)' '
 	git checkout -b interrupted-squash2 conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES="3 squash 1 2" git rebase -i HEAD~3 &&
+	test_must_fail env FAKE_LINES="3 squash 1 2" git rabassa -i HEAD~3 &&
 	(echo one; echo four) > conflict &&
 	git add conflict &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	(echo one; echo two; echo four) > conflict &&
 	git add conflict &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	echo resolved > conflict &&
 	git add conflict &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $one = $(git rev-parse HEAD~2)
 '
 
@@ -513,10 +513,10 @@ test_expect_success '--continue tries to commit, even for "edit"' '
 	parent=$(git rev-parse HEAD^) &&
 	test_tick &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	FAKE_LINES="edit 1" git rabassa -i HEAD^ &&
 	echo edited > file7 &&
 	git add file7 &&
-	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
+	FAKE_COMMIT_MESSAGE="chouette!" git rabassa --continue &&
 	test edited = $(git show HEAD:file7) &&
 	git show HEAD | grep chouette &&
 	test $parent = $(git rev-parse HEAD^)
@@ -526,49 +526,49 @@ test_expect_success 'aborted --continue does not squash commits after "edit"' '
 	old=$(git rev-parse HEAD) &&
 	test_tick &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	FAKE_LINES="edit 1" git rabassa -i HEAD^ &&
 	echo "edited again" > file7 &&
 	git add file7 &&
-	test_must_fail env FAKE_COMMIT_MESSAGE=" " git rebase --continue &&
+	test_must_fail env FAKE_COMMIT_MESSAGE=" " git rabassa --continue &&
 	test $old = $(git rev-parse HEAD) &&
-	git rebase --abort
+	git rabassa --abort
 '
 
 test_expect_success 'auto-amend only edited commits after "edit"' '
 	test_tick &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
+	FAKE_LINES="edit 1" git rabassa -i HEAD^ &&
 	echo "edited again" > file7 &&
 	git add file7 &&
 	FAKE_COMMIT_MESSAGE="edited file7 again" git commit &&
 	echo "and again" > file7 &&
 	git add file7 &&
 	test_tick &&
-	test_must_fail env FAKE_COMMIT_MESSAGE="and again" git rebase --continue &&
-	git rebase --abort
+	test_must_fail env FAKE_COMMIT_MESSAGE="and again" git rabassa --continue &&
+	git rabassa --abort
 '
 
 test_expect_success 'clean error after failed "exec"' '
 	test_tick &&
-	test_when_finished "git rebase --abort || :" &&
+	test_when_finished "git rabassa --abort || :" &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES="1 exec_false" git rebase -i HEAD^ &&
+	test_must_fail env FAKE_LINES="1 exec_false" git rabassa -i HEAD^ &&
 	echo "edited again" > file7 &&
 	git add file7 &&
-	test_must_fail git rebase --continue 2>error &&
+	test_must_fail git rabassa --continue 2>error &&
 	test_i18ngrep "you have staged changes in your working tree" error
 '
 
-test_expect_success 'rebase a detached HEAD' '
+test_expect_success 'rabassa a detached HEAD' '
 	grandparent=$(git rev-parse HEAD~2) &&
 	git checkout $(git rev-parse HEAD) &&
 	test_tick &&
 	set_fake_editor &&
-	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
+	FAKE_LINES="2 1" git rabassa -i HEAD~2 &&
 	test $grandparent = $(git rev-parse HEAD~2)
 '
 
-test_expect_success 'rebase a commit violating pre-commit' '
+test_expect_success 'rabassa a commit violating pre-commit' '
 
 	mkdir -p .git/hooks &&
 	write_script .git/hooks/pre-commit <<-\EOF &&
@@ -580,11 +580,11 @@ test_expect_success 'rebase a commit violating pre-commit' '
 	git commit -m doesnt-verify --no-verify file1 &&
 	test_tick &&
 	set_fake_editor &&
-	FAKE_LINES=2 git rebase -i HEAD~2
+	FAKE_LINES=2 git rabassa -i HEAD~2
 
 '
 
-test_expect_success 'rebase with a file named HEAD in worktree' '
+test_expect_success 'rabassa with a file named HEAD in worktree' '
 
 	rm -fr .git/hooks &&
 	git reset --hard &&
@@ -602,7 +602,7 @@ test_expect_success 'rebase with a file named HEAD in worktree' '
 	) &&
 
 	set_fake_editor &&
-	FAKE_LINES="1 squash 2" git rebase -i to-be-rebased &&
+	FAKE_LINES="1 squash 2" git rabassa -i to-be-rabassad &&
 	test "$(git show -s --pretty=format:%an)" = "Squashed Away"
 
 '
@@ -614,12 +614,12 @@ test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 		--author="Somebody else <somebody@else.com>" &&
 	test $(git rev-parse branch3) != $(git rev-parse branch4) &&
 	set_fake_editor &&
-	git rebase -i branch3 &&
+	git rabassa -i branch3 &&
 	test $(git rev-parse branch3) = $(git rev-parse branch4)
 
 '
 
-test_expect_success 'submodule rebase setup' '
+test_expect_success 'submodule rabassa setup' '
 	git checkout A &&
 	mkdir sub &&
 	(
@@ -642,9 +642,9 @@ test_expect_success 'submodule rebase setup' '
 	git commit -a -m "Three changes submodule"
 '
 
-test_expect_success 'submodule rebase -i' '
+test_expect_success 'submodule rabassa -i' '
 	set_fake_editor &&
-	FAKE_LINES="1 squash 2 3" git rebase -i A
+	FAKE_LINES="1 squash 2 3" git rabassa -i A
 '
 
 test_expect_success 'submodule conflict setup' '
@@ -660,21 +660,21 @@ test_expect_success 'submodule conflict setup' '
 	git tag submodule-topic
 '
 
-test_expect_success 'rebase -i continue with only submodule staged' '
+test_expect_success 'rabassa -i continue with only submodule staged' '
 	set_fake_editor &&
-	test_must_fail git rebase -i submodule-base &&
+	test_must_fail git rabassa -i submodule-base &&
 	git add sub &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $(git rev-parse submodule-base) != $(git rev-parse HEAD)
 '
 
-test_expect_success 'rebase -i continue with unstaged submodule' '
+test_expect_success 'rabassa -i continue with unstaged submodule' '
 	git checkout submodule-topic &&
 	git reset --hard &&
 	set_fake_editor &&
-	test_must_fail git rebase -i submodule-base &&
+	test_must_fail git rabassa -i submodule-base &&
 	git reset &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $(git rev-parse submodule-base) = $(git rev-parse HEAD)
 '
 
@@ -685,7 +685,7 @@ test_expect_success 'avoid unnecessary reset' '
 	git update-index --refresh &&
 	HEAD=$(git rev-parse HEAD) &&
 	set_fake_editor &&
-	git rebase -i HEAD~4 &&
+	git rabassa -i HEAD~4 &&
 	test $HEAD = $(git rev-parse HEAD) &&
 	MTIME=$(test-chmtime -v +0 file3 | sed 's/[^0-9].*$//') &&
 	test 123456789 = $MTIME
@@ -694,27 +694,27 @@ test_expect_success 'avoid unnecessary reset' '
 test_expect_success 'reword' '
 	git checkout -b reword-branch master &&
 	set_fake_editor &&
-	FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" git rebase -i A &&
+	FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" git rabassa -i A &&
 	git show HEAD | grep "E changed" &&
 	test $(git rev-parse master) != $(git rev-parse HEAD) &&
 	test $(git rev-parse master^) = $(git rev-parse HEAD^) &&
-	FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" git rebase -i A &&
+	FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" git rabassa -i A &&
 	git show HEAD^ | grep "D changed" &&
-	FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" git rebase -i A &&
+	FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" git rabassa -i A &&
 	git show HEAD~3 | grep "B changed" &&
-	FAKE_LINES="1 reword 2 3 4" FAKE_COMMIT_MESSAGE="C changed" git rebase -i A &&
+	FAKE_LINES="1 reword 2 3 4" FAKE_COMMIT_MESSAGE="C changed" git rabassa -i A &&
 	git show HEAD~2 | grep "C changed"
 '
 
-test_expect_success 'rebase -i can copy notes' '
-	git config notes.rewrite.rebase true &&
+test_expect_success 'rabassa -i can copy notes' '
+	git config notes.rewrite.rabassa true &&
 	git config notes.rewriteRef "refs/notes/*" &&
 	test_commit n1 &&
 	test_commit n2 &&
 	test_commit n3 &&
 	git notes add -m"a note" n3 &&
 	set_fake_editor &&
-	git rebase -i --onto n1 n2 &&
+	git rabassa -i --onto n1 n2 &&
 	test "a note" = "$(git notes show HEAD)"
 '
 
@@ -724,31 +724,31 @@ an earlier note
 a note
 EOF
 
-test_expect_success 'rebase -i can copy notes over a fixup' '
+test_expect_success 'rabassa -i can copy notes over a fixup' '
 	git reset --hard n3 &&
 	git notes add -m"an earlier note" n2 &&
 	set_fake_editor &&
-	GIT_NOTES_REWRITE_MODE=concatenate FAKE_LINES="1 fixup 2" git rebase -i n1 &&
+	GIT_NOTES_REWRITE_MODE=concatenate FAKE_LINES="1 fixup 2" git rabassa -i n1 &&
 	git notes show > output &&
 	test_cmp expect output
 '
 
-test_expect_success 'rebase while detaching HEAD' '
+test_expect_success 'rabassa while detaching HEAD' '
 	git symbolic-ref HEAD &&
 	grandparent=$(git rev-parse HEAD~2) &&
 	test_tick &&
 	set_fake_editor &&
-	FAKE_LINES="2 1" git rebase -i HEAD~2 HEAD^0 &&
+	FAKE_LINES="2 1" git rabassa -i HEAD~2 HEAD^0 &&
 	test $grandparent = $(git rev-parse HEAD~2) &&
 	test_must_fail git symbolic-ref HEAD
 '
 
-test_tick # Ensure that the rebased commits get a different timestamp.
+test_tick # Ensure that the rabassad commits get a different timestamp.
 test_expect_success 'always cherry-pick with --no-ff' '
 	git checkout no-ff-branch &&
 	git tag original-no-ff-branch &&
 	set_fake_editor &&
-	git rebase -i --no-ff A &&
+	git rabassa -i --no-ff A &&
 	touch empty &&
 	for p in 0 1 2
 	do
@@ -777,16 +777,16 @@ test_expect_success 'set up commits with funny messages' '
 	git commit -a -m "another commit"
 '
 
-test_expect_success 'rebase-i history with funny messages' '
+test_expect_success 'rabassa-i history with funny messages' '
 	git rev-list A..funny >expect &&
 	test_tick &&
 	set_fake_editor &&
-	FAKE_LINES="1 2 3 4" git rebase -i A &&
+	FAKE_LINES="1 2 3 4" git rabassa -i A &&
 	git rev-list A.. >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'prepare for rebase -i --exec' '
+test_expect_success 'prepare for rabassa -i --exec' '
 	git checkout master &&
 	git checkout -b execute &&
 	test_commit one_exec main.txt one_exec &&
@@ -794,73 +794,73 @@ test_expect_success 'prepare for rebase -i --exec' '
 	test_commit three_exec main.txt three_exec
 '
 
-test_expect_success 'running "git rebase -i --exec git show HEAD"' '
+test_expect_success 'running "git rabassa -i --exec git show HEAD"' '
 	set_fake_editor &&
-	git rebase -i --exec "git show HEAD" HEAD~2 >actual &&
+	git rabassa -i --exec "git show HEAD" HEAD~2 >actual &&
 	(
 		FAKE_LINES="1 exec_git_show_HEAD 2 exec_git_show_HEAD" &&
 		export FAKE_LINES &&
-		git rebase -i HEAD~2 >expect
+		git rabassa -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
 	test_cmp expected actual
 '
 
-test_expect_success 'running "git rebase --exec git show HEAD -i"' '
+test_expect_success 'running "git rabassa --exec git show HEAD -i"' '
 	git reset --hard execute &&
 	set_fake_editor &&
-	git rebase --exec "git show HEAD" -i HEAD~2 >actual &&
+	git rabassa --exec "git show HEAD" -i HEAD~2 >actual &&
 	(
 		FAKE_LINES="1 exec_git_show_HEAD 2 exec_git_show_HEAD" &&
 		export FAKE_LINES &&
-		git rebase -i HEAD~2 >expect
+		git rabassa -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
 	test_cmp expected actual
 '
 
-test_expect_success 'running "git rebase -ix git show HEAD"' '
+test_expect_success 'running "git rabassa -ix git show HEAD"' '
 	git reset --hard execute &&
 	set_fake_editor &&
-	git rebase -ix "git show HEAD" HEAD~2 >actual &&
+	git rabassa -ix "git show HEAD" HEAD~2 >actual &&
 	(
 		FAKE_LINES="1 exec_git_show_HEAD 2 exec_git_show_HEAD" &&
 		export FAKE_LINES &&
-		git rebase -i HEAD~2 >expect
+		git rabassa -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
 	test_cmp expected actual
 '
 
 
-test_expect_success 'rebase -ix with several <CMD>' '
+test_expect_success 'rabassa -ix with several <CMD>' '
 	git reset --hard execute &&
 	set_fake_editor &&
-	git rebase -ix "git show HEAD; pwd" HEAD~2 >actual &&
+	git rabassa -ix "git show HEAD; pwd" HEAD~2 >actual &&
 	(
 		FAKE_LINES="1 exec_git_show_HEAD;_pwd 2 exec_git_show_HEAD;_pwd" &&
 		export FAKE_LINES &&
-		git rebase -i HEAD~2 >expect
+		git rabassa -i HEAD~2 >expect
 	) &&
 	sed -e "1,9d" expect >expected &&
 	test_cmp expected actual
 '
 
-test_expect_success 'rebase -ix with several instances of --exec' '
+test_expect_success 'rabassa -ix with several instances of --exec' '
 	git reset --hard execute &&
 	set_fake_editor &&
-	git rebase -i --exec "git show HEAD" --exec "pwd" HEAD~2 >actual &&
+	git rabassa -i --exec "git show HEAD" --exec "pwd" HEAD~2 >actual &&
 	(
 		FAKE_LINES="1 exec_git_show_HEAD exec_pwd 2
 				exec_git_show_HEAD exec_pwd" &&
 		export FAKE_LINES &&
-		git rebase -i HEAD~2 >expect
+		git rabassa -i HEAD~2 >expect
 	) &&
 	sed -e "1,11d" expect >expected &&
 	test_cmp expected actual
 '
 
-test_expect_success C_LOCALE_OUTPUT 'rebase -ix with --autosquash' '
+test_expect_success C_LOCALE_OUTPUT 'rabassa -ix with --autosquash' '
 	git reset --hard execute &&
 	git checkout -b autosquash &&
 	echo second >second.txt &&
@@ -872,42 +872,42 @@ test_expect_success C_LOCALE_OUTPUT 'rebase -ix with --autosquash' '
 	set_fake_editor &&
 	(
 		git checkout -b autosquash_actual &&
-		git rebase -i --exec "git show HEAD" --autosquash HEAD~4 >actual
+		git rabassa -i --exec "git show HEAD" --autosquash HEAD~4 >actual
 	) &&
 	git checkout autosquash &&
 	(
 		git checkout -b autosquash_expected &&
 		FAKE_LINES="1 fixup 3 fixup 4 exec_git_show_HEAD 2 exec_git_show_HEAD" &&
 		export FAKE_LINES &&
-		git rebase -i HEAD~4 >expect
+		git rabassa -i HEAD~4 >expect
 	) &&
 	sed -e "1,13d" expect >expected &&
 	test_cmp expected actual
 '
 
-test_expect_success 'rebase --exec works without -i ' '
+test_expect_success 'rabassa --exec works without -i ' '
 	git reset --hard execute &&
 	rm -rf exec_output &&
-	EDITOR="echo >invoked_editor" git rebase --exec "echo a line >>exec_output"  HEAD~2 2>actual &&
-	test_i18ngrep  "Successfully rebased and updated" actual &&
+	EDITOR="echo >invoked_editor" git rabassa --exec "echo a line >>exec_output"  HEAD~2 2>actual &&
+	test_i18ngrep  "Successfully rabassad and updated" actual &&
 	test_line_count = 2 exec_output &&
 	test_path_is_missing invoked_editor
 '
 
-test_expect_success 'rebase -i --exec without <CMD>' '
+test_expect_success 'rabassa -i --exec without <CMD>' '
 	git reset --hard execute &&
 	set_fake_editor &&
-	test_must_fail git rebase -i --exec 2>tmp &&
+	test_must_fail git rabassa -i --exec 2>tmp &&
 	sed -e "1d" tmp >actual &&
-	test_must_fail git rebase -h >expected &&
+	test_must_fail git rabassa -h >expected &&
 	test_cmp expected actual &&
 	git checkout master
 '
 
-test_expect_success 'rebase -i --root re-order and drop commits' '
+test_expect_success 'rabassa -i --root re-order and drop commits' '
 	git checkout E &&
 	set_fake_editor &&
-	FAKE_LINES="3 1 2 5" git rebase -i --root &&
+	FAKE_LINES="3 1 2 5" git rabassa -i --root &&
 	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test B = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test A = $(git cat-file commit HEAD^^ | sed -ne \$p) &&
@@ -915,71 +915,71 @@ test_expect_success 'rebase -i --root re-order and drop commits' '
 	test 0 = $(git cat-file commit HEAD^^^ | grep -c ^parent\ )
 '
 
-test_expect_success 'rebase -i --root retain root commit author and message' '
+test_expect_success 'rabassa -i --root retain root commit author and message' '
 	git checkout A &&
 	echo B >file7 &&
 	git add file7 &&
 	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
 	set_fake_editor &&
-	FAKE_LINES="2" git rebase -i --root &&
+	FAKE_LINES="2" git rabassa -i --root &&
 	git cat-file commit HEAD | grep -q "^author Twerp Snog" &&
 	git cat-file commit HEAD | grep -q "^different author$"
 '
 
-test_expect_success 'rebase -i --root temporary sentinel commit' '
+test_expect_success 'rabassa -i --root temporary sentinel commit' '
 	git checkout B &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES="2" git rebase -i --root &&
+	test_must_fail env FAKE_LINES="2" git rabassa -i --root &&
 	git cat-file commit HEAD | grep "^tree 4b825dc642cb" &&
-	git rebase --abort
+	git rabassa --abort
 '
 
-test_expect_success 'rebase -i --root fixup root commit' '
+test_expect_success 'rabassa -i --root fixup root commit' '
 	git checkout B &&
 	set_fake_editor &&
-	FAKE_LINES="1 fixup 2" git rebase -i --root &&
+	FAKE_LINES="1 fixup 2" git rabassa -i --root &&
 	test A = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test B = $(git show HEAD:file1) &&
 	test 0 = $(git cat-file commit HEAD | grep -c ^parent\ )
 '
 
-test_expect_success C_LOCALE_OUTPUT 'rebase --edit-todo does not work on non-interactive rebase' '
+test_expect_success C_LOCALE_OUTPUT 'rabassa --edit-todo does not work on non-interactive rabassa' '
 	git reset --hard &&
 	git checkout conflict-branch &&
 	set_fake_editor &&
-	test_must_fail git rebase --onto HEAD~2 HEAD~ &&
-	test_must_fail git rebase --edit-todo &&
-	git rebase --abort
+	test_must_fail git rabassa --onto HEAD~2 HEAD~ &&
+	test_must_fail git rabassa --edit-todo &&
+	git rabassa --abort
 '
 
-test_expect_success 'rebase --edit-todo can be used to modify todo' '
+test_expect_success 'rabassa --edit-todo can be used to modify todo' '
 	git reset --hard &&
 	git checkout no-conflict-branch^0 &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1 2 3" git rebase -i HEAD~3 &&
-	FAKE_LINES="2 1" git rebase --edit-todo &&
-	git rebase --continue &&
+	FAKE_LINES="edit 1 2 3" git rabassa -i HEAD~3 &&
+	FAKE_LINES="2 1" git rabassa --edit-todo &&
+	git rabassa --continue &&
 	test M = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test L = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
-test_expect_success 'rebase -i produces readable reflog' '
+test_expect_success 'rabassa -i produces readable reflog' '
 	git reset --hard &&
 	git branch -f branch-reflog-test H &&
 	set_fake_editor &&
-	git rebase -i --onto I F branch-reflog-test &&
+	git rabassa -i --onto I F branch-reflog-test &&
 	cat >expect <<-\EOF &&
-	rebase -i (finish): returning to refs/heads/branch-reflog-test
-	rebase -i (pick): H
-	rebase -i (pick): G
-	rebase -i (start): checkout I
+	rabassa -i (finish): returning to refs/heads/branch-reflog-test
+	rabassa -i (pick): H
+	rabassa -i (pick): G
+	rabassa -i (start): checkout I
 	EOF
 	git reflog -n4 HEAD |
 	sed "s/[^:]*: //" >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'rebase -i respects core.commentchar' '
+test_expect_success 'rabassa -i respects core.commentchar' '
 	git reset --hard &&
 	git checkout E^0 &&
 	test_config core.commentchar "\\" &&
@@ -988,44 +988,44 @@ test_expect_success 'rebase -i respects core.commentchar' '
 	mv "$1.tmp" "$1"
 	EOF
 	test_set_editor "$(pwd)/remove-all-but-first.sh" &&
-	git rebase -i B &&
+	git rabassa -i B &&
 	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
 
-test_expect_success 'rebase -i respects core.commentchar=auto' '
+test_expect_success 'rabassa -i respects core.commentchar=auto' '
 	test_config core.commentchar auto &&
 	write_script copy-edit-script.sh <<-\EOF &&
 	cp "$1" edit-script
 	EOF
 	test_set_editor "$(pwd)/copy-edit-script.sh" &&
-	test_when_finished "git rebase --abort || :" &&
-	git rebase -i HEAD^ &&
+	test_when_finished "git rabassa --abort || :" &&
+	git rabassa -i HEAD^ &&
 	test -z "$(grep -ve "^#" -e "^\$" -e "^pick" edit-script)"
 '
 
-test_expect_success 'rebase -i, with <onto> and <upstream> specified as :/quuxery' '
-	test_when_finished "git branch -D torebase" &&
-	git checkout -b torebase branch1 &&
+test_expect_success 'rabassa -i, with <onto> and <upstream> specified as :/quuxery' '
+	test_when_finished "git branch -D torabassa" &&
+	git checkout -b torabassa branch1 &&
 	upstream=$(git rev-parse ":/J") &&
 	onto=$(git rev-parse ":/A") &&
-	git rebase --onto $onto $upstream &&
+	git rabassa --onto $onto $upstream &&
 	git reset --hard branch1 &&
-	git rebase --onto ":/A" ":/J" &&
+	git rabassa --onto ":/A" ":/J" &&
 	git checkout branch1
 '
 
-test_expect_success 'rebase -i with --strategy and -X' '
+test_expect_success 'rabassa -i with --strategy and -X' '
 	git checkout -b conflict-merge-use-theirs conflict-branch &&
 	git reset --hard HEAD^ &&
 	echo five >conflict &&
 	echo Z >file1 &&
 	git commit -a -m "one file conflict" &&
-	EDITOR=true git rebase -i --strategy=recursive -Xours conflict-branch &&
+	EDITOR=true git rabassa -i --strategy=recursive -Xours conflict-branch &&
 	test $(git show conflict-branch:conflict) = $(cat conflict) &&
 	test $(cat file1) = Z
 '
 
-test_expect_success 'interrupted rebase -i with --strategy and -X' '
+test_expect_success 'interrupted rabassa -i with --strategy and -X' '
 	git checkout -b conflict-merge-use-theirs-interrupted conflict-branch &&
 	git reset --hard HEAD^ &&
 	>breakpoint &&
@@ -1035,18 +1035,18 @@ test_expect_success 'interrupted rebase -i with --strategy and -X' '
 	echo Z >file1 &&
 	git commit -a -m "one file conflict" &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1 2" git rebase -i --strategy=recursive -Xours conflict-branch &&
-	git rebase --continue &&
+	FAKE_LINES="edit 1 2" git rabassa -i --strategy=recursive -Xours conflict-branch &&
+	git rabassa --continue &&
 	test $(git show conflict-branch:conflict) = $(cat conflict) &&
 	test $(cat file1) = Z
 '
 
-test_expect_success 'rebase -i error on commits with \ in message' '
+test_expect_success 'rabassa -i error on commits with \ in message' '
 	current_head=$(git rev-parse HEAD) &&
-	test_when_finished "git rebase --abort; git reset --hard $current_head; rm -f error" &&
+	test_when_finished "git rabassa --abort; git reset --hard $current_head; rm -f error" &&
 	test_commit TO-REMOVE will-conflict old-content &&
 	test_commit "\temp" will-conflict new-content dummy &&
-	test_must_fail env EDITOR=true git rebase -i HEAD^ --onto HEAD^^ 2>error &&
+	test_must_fail env EDITOR=true git rabassa -i HEAD^ --onto HEAD^^ 2>error &&
 	test_expect_code 1 grep  "	emp" error
 '
 
@@ -1063,21 +1063,21 @@ test_expect_success 'short SHA-1 setup' '
 '
 
 test_expect_success 'short SHA-1 collide' '
-	test_when_finished "reset_rebase && git checkout master" &&
+	test_when_finished "reset_rabassa && git checkout master" &&
 	git checkout collide &&
 	(
 	unset test_tick &&
 	test_tick &&
 	set_fake_editor &&
 	FAKE_COMMIT_MESSAGE="collide2 ac4f2ee" \
-	FAKE_LINES="reword 1 2" git rebase -i HEAD~2
+	FAKE_LINES="reword 1 2" git rabassa -i HEAD~2
 	)
 '
 
 test_expect_success 'respect core.abbrev' '
 	git config core.abbrev 12 &&
 	set_cat_todo_editor &&
-	test_must_fail git rebase -i HEAD~4 >todo-list &&
+	test_must_fail git rabassa -i HEAD~4 >todo-list &&
 	test 4 = $(grep -c "pick [0-9a-f]\{12,\}" todo-list)
 '
 
@@ -1086,58 +1086,58 @@ test_expect_success 'todo count' '
 		cat "$1"
 	EOF
 	test_set_editor "$(pwd)/dump-raw.sh" &&
-	git rebase -i HEAD~4 >actual &&
+	git rabassa -i HEAD~4 >actual &&
 	test_i18ngrep "^# Rebase ..* onto ..* ([0-9]" actual
 '
 
-test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
+test_expect_success 'rabassa -i commits that overwrite untracked files (pick)' '
 	git checkout --force branch2 &&
 	git clean -f &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1 2" git rebase -i A &&
+	FAKE_LINES="edit 1 2" git rabassa -i A &&
 	test_cmp_rev HEAD F &&
 	test_path_is_missing file6 &&
 	>file6 &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	test_cmp_rev HEAD F &&
 	rm file6 &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test_cmp_rev HEAD I
 '
 
-test_expect_success 'rebase -i commits that overwrite untracked files (squash)' '
+test_expect_success 'rabassa -i commits that overwrite untracked files (squash)' '
 	git checkout --force branch2 &&
 	git clean -f &&
 	git tag original-branch2 &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1 squash 2" git rebase -i A &&
+	FAKE_LINES="edit 1 squash 2" git rabassa -i A &&
 	test_cmp_rev HEAD F &&
 	test_path_is_missing file6 &&
 	>file6 &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	test_cmp_rev HEAD F &&
 	rm file6 &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
 	git reset --hard original-branch2
 '
 
-test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
+test_expect_success 'rabassa -i commits that overwrite untracked files (no ff)' '
 	git checkout --force branch2 &&
 	git clean -f &&
 	set_fake_editor &&
-	FAKE_LINES="edit 1 2" git rebase -i --no-ff A &&
+	FAKE_LINES="edit 1 2" git rabassa -i --no-ff A &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
 	test_path_is_missing file6 &&
 	>file6 &&
-	test_must_fail git rebase --continue &&
+	test_must_fail git rabassa --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
 	rm file6 &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '
 
-test_expect_success 'rebase --continue removes CHERRY_PICK_HEAD' '
+test_expect_success 'rabassa --continue removes CHERRY_PICK_HEAD' '
 	git checkout -b commit-to-skip &&
 	for double in X 3 1
 	do
@@ -1150,42 +1150,42 @@ test_expect_success 'rebase --continue removes CHERRY_PICK_HEAD' '
 	git reset --hard HEAD~2 &&
 	git cherry-pick seq-onto &&
 	set_fake_editor &&
-	test_must_fail env FAKE_LINES= git rebase -i seq-onto &&
-	test -d .git/rebase-merge &&
-	git rebase --continue &&
+	test_must_fail env FAKE_LINES= git rabassa -i seq-onto &&
+	test -d .git/rabassa-merge &&
+	git rabassa --continue &&
 	git diff --exit-code seq-onto &&
-	test ! -d .git/rebase-merge &&
+	test ! -d .git/rabassa-merge &&
 	test ! -f .git/CHERRY_PICK_HEAD
 '
 
-rebase_setup_and_clean () {
+rabassa_setup_and_clean () {
 	test_when_finished "
 		git checkout master &&
 		test_might_fail git branch -D $1 &&
-		test_might_fail git rebase --abort
+		test_might_fail git rabassa --abort
 	" &&
 	git checkout -b $1 master
 }
 
 test_expect_success 'drop' '
-	rebase_setup_and_clean drop-test &&
+	rabassa_setup_and_clean drop-test &&
 	set_fake_editor &&
-	FAKE_LINES="1 drop 2 3 drop 4 5" git rebase -i --root &&
+	FAKE_LINES="1 drop 2 3 drop 4 5" git rabassa -i --root &&
 	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test C = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test A = $(git cat-file commit HEAD^^ | sed -ne \$p)
 '
 
 cat >expect <<EOF
-Successfully rebased and updated refs/heads/missing-commit.
+Successfully rabassad and updated refs/heads/missing-commit.
 EOF
 
-test_expect_success 'rebase -i respects rebase.missingCommitsCheck = ignore' '
-	test_config rebase.missingCommitsCheck ignore &&
-	rebase_setup_and_clean missing-commit &&
+test_expect_success 'rabassa -i respects rabassa.missingCommitsCheck = ignore' '
+	test_config rabassa.missingCommitsCheck ignore &&
+	rabassa_setup_and_clean missing-commit &&
 	set_fake_editor &&
 	FAKE_LINES="1 2 3 4" \
-		git rebase -i --root 2>actual &&
+		git rabassa -i --root 2>actual &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test_i18ncmp expect actual
 '
@@ -1196,18 +1196,18 @@ Dropped commits (newer to older):
  - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
 To avoid this message, use "drop" to explicitly remove a commit.
 
-Use 'git config rebase.missingCommitsCheck' to change the level of warnings.
+Use 'git config rabassa.missingCommitsCheck' to change the level of warnings.
 The possible behaviours are: ignore, warn, error.
 
-Successfully rebased and updated refs/heads/missing-commit.
+Successfully rabassad and updated refs/heads/missing-commit.
 EOF
 
-test_expect_success 'rebase -i respects rebase.missingCommitsCheck = warn' '
-	test_config rebase.missingCommitsCheck warn &&
-	rebase_setup_and_clean missing-commit &&
+test_expect_success 'rabassa -i respects rabassa.missingCommitsCheck = warn' '
+	test_config rabassa.missingCommitsCheck warn &&
+	rabassa_setup_and_clean missing-commit &&
 	set_fake_editor &&
 	FAKE_LINES="1 2 3 4" \
-		git rebase -i --root 2>actual &&
+		git rabassa -i --root 2>actual &&
 	test_i18ncmp expect actual &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p)
 '
@@ -1219,25 +1219,25 @@ Dropped commits (newer to older):
  - $(git rev-list --pretty=oneline --abbrev-commit -1 master~2)
 To avoid this message, use "drop" to explicitly remove a commit.
 
-Use 'git config rebase.missingCommitsCheck' to change the level of warnings.
+Use 'git config rabassa.missingCommitsCheck' to change the level of warnings.
 The possible behaviours are: ignore, warn, error.
 
-You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'.
-Or you can abort the rebase with 'git rebase --abort'.
+You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --continue'.
+Or you can abort the rabassa with 'git rabassa --abort'.
 EOF
 
-test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
-	test_config rebase.missingCommitsCheck error &&
-	rebase_setup_and_clean missing-commit &&
+test_expect_success 'rabassa -i respects rabassa.missingCommitsCheck = error' '
+	test_config rabassa.missingCommitsCheck error &&
+	rabassa_setup_and_clean missing-commit &&
 	set_fake_editor &&
 	test_must_fail env FAKE_LINES="1 2 4" \
-		git rebase -i --root 2>actual &&
+		git rabassa -i --root 2>actual &&
 	test_i18ncmp expect actual &&
-	cp .git/rebase-merge/git-rebase-todo.backup \
-		.git/rebase-merge/git-rebase-todo &&
+	cp .git/rabassa-merge/git-rabassa-todo.backup \
+		.git/rabassa-merge/git-rabassa-todo &&
 	FAKE_LINES="1 2 drop 3 4 drop 5" \
-		git rebase --edit-todo &&
-	git rebase --continue &&
+		git rabassa --edit-todo &&
+	git rabassa --continue &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
@@ -1246,24 +1246,24 @@ cat >expect <<EOF
 Warning: the command isn't recognized in the following line:
  - badcmd $(git rev-list --oneline -1 master~1)
 
-You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'.
-Or you can abort the rebase with 'git rebase --abort'.
+You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --continue'.
+Or you can abort the rabassa with 'git rabassa --abort'.
 EOF
 
 test_expect_success 'static check of bad command' '
-	rebase_setup_and_clean bad-cmd &&
+	rabassa_setup_and_clean bad-cmd &&
 	set_fake_editor &&
 	test_must_fail env FAKE_LINES="1 2 3 bad 4 5" \
-		git rebase -i --root 2>actual &&
+		git rabassa -i --root 2>actual &&
 	test_i18ncmp expect actual &&
-	FAKE_LINES="1 2 3 drop 4 5" git rebase --edit-todo &&
-	git rebase --continue &&
+	FAKE_LINES="1 2 3 drop 4 5" git rabassa --edit-todo &&
+	git rabassa --continue &&
 	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test C = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
 
 test_expect_success 'tabs and spaces are accepted in the todolist' '
-	rebase_setup_and_clean indented-comment &&
+	rabassa_setup_and_clean indented-comment &&
 	write_script add-indent.sh <<-\EOF &&
 	(
 		# Turn single spaces into space/tab mix
@@ -1273,7 +1273,7 @@ test_expect_success 'tabs and spaces are accepted in the todolist' '
 	mv "$1.new" "$1"
 	EOF
 	test_set_editor "$(pwd)/add-indent.sh" &&
-	git rebase -i HEAD^^^ &&
+	git rabassa -i HEAD^^^ &&
 	test E = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
@@ -1281,18 +1281,18 @@ cat >expect <<EOF
 Warning: the SHA-1 is missing or isn't a commit in the following line:
  - edit XXXXXXX False commit
 
-You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'.
-Or you can abort the rebase with 'git rebase --abort'.
+You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --continue'.
+Or you can abort the rabassa with 'git rabassa --abort'.
 EOF
 
 test_expect_success 'static check of bad SHA-1' '
-	rebase_setup_and_clean bad-sha &&
+	rabassa_setup_and_clean bad-sha &&
 	set_fake_editor &&
 	test_must_fail env FAKE_LINES="1 2 edit fakesha 3 4 5 #" \
-		git rebase -i --root 2>actual &&
+		git rabassa -i --root 2>actual &&
 	test_i18ncmp expect actual &&
-	FAKE_LINES="1 2 4 5 6" git rebase --edit-todo &&
-	git rebase --continue &&
+	FAKE_LINES="1 2 4 5 6" git rabassa --edit-todo &&
+	git rabassa --continue &&
 	test E = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
@@ -1304,14 +1304,14 @@ test_expect_success 'editor saves as CR/LF' '
 	EOF
 	(
 		test_set_editor "$(pwd)/add-crs.sh" &&
-		git rebase -i HEAD^
+		git rabassa -i HEAD^
 	)
 '
 
 SQ="'"
-test_expect_success 'rebase -i --gpg-sign=<key-id>' '
+test_expect_success 'rabassa -i --gpg-sign=<key-id>' '
 	set_fake_editor &&
-	FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" HEAD^ \
+	FAKE_LINES="edit 1" git rabassa -i --gpg-sign="\"S I Gner\"" HEAD^ \
 		>out 2>err &&
 	test_i18ngrep "$SQ-S\"S I Gner\"$SQ" err
 '

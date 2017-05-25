@@ -210,7 +210,7 @@ cat >test/expect <<EOF
     octopus  merges with remote topic-a
                 and with remote topic-b
                 and with remote topic-c
-    rebase  rebases onto remote master
+    rabassa  rabassas onto remote master
   Local refs configured for 'git push':
     master pushes to master   (local out of date)
     master pushes to upstream (create)
@@ -234,11 +234,11 @@ test_expect_success 'show' '
 		git commit -m update file &&
 		git checkout master &&
 		git branch --track octopus origin/master &&
-		git branch --track rebase origin/master &&
+		git branch --track rabassa origin/master &&
 		git branch -d -r origin/master &&
 		git config --add remote.two.url ../two &&
 		git config --add remote.two.pushurl ../three &&
-		git config branch.rebase.rebase true &&
+		git config branch.rabassa.rabassa true &&
 		git config branch.octopus.merge "topic-a topic-b topic-c" &&
 		(
 			cd ../one &&
@@ -252,7 +252,7 @@ test_expect_success 'show' '
 		git config --add remote.two.push +refs/heads/ahead:refs/heads/master &&
 		git config --add remote.two.push refs/heads/master:refs/heads/another &&
 		git remote show origin two >output &&
-		git branch -d rebase octopus &&
+		git branch -d rabassa octopus &&
 		test_i18ncmp expect output
 	)
 '

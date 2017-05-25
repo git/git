@@ -272,7 +272,7 @@ test_expect_success 'submit from detached head' '
 		git commit -m "add detached_head" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
-		git p4 rebase &&
+		git p4 rabassa &&
 		git log p4/master | grep detached_head
 	)
 '

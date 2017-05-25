@@ -18,7 +18,7 @@ equivalent to those in the range `<limit>..<head>`.
 The equivalence test is based on the diff, after removing whitespace
 and line numbers.  git-cherry therefore detects when commits have been
 "copied" by means of linkgit:git-cherry-pick[1], linkgit:git-am[1] or
-linkgit:git-rebase[1].
+linkgit:git-rabassa[1].
 
 Outputs the SHA1 of every commit in `<limit>..<head>`, prefixed with
 `-` for commits that have an equivalent in <upstream>, and `+` for
@@ -96,7 +96,7 @@ $ git cherry origin/master topic
 ------------
 
 Here, we see that the commits A and C (marked with `-`) can be
-dropped from your `topic` branch when you rebase it on top of
+dropped from your `topic` branch when you rabassa it on top of
 `origin/master`, while the commit B (marked with `+`) still needs to
 be kept so that it will be sent to be applied to `origin/master`.
 

@@ -50,7 +50,7 @@ Updates since v1.7.3
    addresses instead of the names of authors.
 
  * "git commit" learned the --fixup and --squash options to help later invocation
-   of interactive rebase.
+   of interactive rabassa.
 
  * Command line options to "git cvsimport" whose names are in capital
    letters (-A, -M, -R and -S) can now be specified as the default in
@@ -99,7 +99,7 @@ Updates since v1.7.3
    also several notes merge strategies for automatically resolving
    notes merge conflicts.
 
- * "git rebase --autosquash" can use SHA-1 object names to name the
+ * "git rabassa --autosquash" can use SHA-1 object names to name the
    commit which is to be fixed up (e.g. "fixup! e83c5163").
 
  * The default "recursive" merge strategy learned the --rename-threshold
@@ -146,7 +146,7 @@ release, unless otherwise noted.
 
  * "git push --progress" shows progress indicators now.
 
- * "git rebase -i" showed a confusing error message when given a
+ * "git rabassa -i" showed a confusing error message when given a
    branch name that does not exist.
 
  * "git repack" places its temporary packs under $GIT_OBJECT_DIRECTORY/pack

@@ -25,11 +25,11 @@ Fixes since v1.7.2.2
  * Running "git log" with an incorrect option started pager nevertheless,
    forcing the user to dismiss it.
 
- * "git rebase" did not work well when the user has diff.renames
+ * "git rabassa" did not work well when the user has diff.renames
    configuration variable set.
 
- * An earlier (and rather old) fix to "git rebase" against a rebased
-   upstream broke a more normal, non rebased upstream case rather badly,
+ * An earlier (and rather old) fix to "git rabassa" against a rabassad
+   upstream broke a more normal, non rabassad upstream case rather badly,
    attempting to re-apply patches that are already accepted upstream.
 
  * "git submodule sync" forgot to update the superproject's config file

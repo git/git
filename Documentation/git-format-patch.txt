@@ -390,12 +390,12 @@ One way to test if your MUA is set up correctly is:
 If it does not apply correctly, there can be various reasons.
 
 * The patch itself does not apply cleanly.  That is _bad_ but
-  does not have much to do with your MUA.  You might want to rebase
-  the patch with linkgit:git-rebase[1] before regenerating it in
+  does not have much to do with your MUA.  You might want to rabassa
+  the patch with linkgit:git-rabassa[1] before regenerating it in
   this case.
 
 * The MUA corrupted your patch; "am" would complain that
-  the patch does not apply.  Look in the .git/rebase-apply/ subdirectory and
+  the patch does not apply.  Look in the .git/rabassa-apply/ subdirectory and
   see what 'patch' file contains and check for the common
   corruption patterns mentioned above.
 

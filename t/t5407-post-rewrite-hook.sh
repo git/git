@@ -53,14 +53,14 @@ test_expect_success 'git commit --amend --no-post-rewrite' '
 	test ! -f post-rewrite.data
 '
 
-test_expect_success 'git rebase' '
+test_expect_success 'git rabassa' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_must_fail git rebase --onto A B &&
+	test_must_fail git rabassa --onto A B &&
 	echo C > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)
@@ -68,41 +68,41 @@ test_expect_success 'git rebase' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase --skip' '
+test_expect_success 'git rabassa --skip' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_must_fail git rebase --onto A B &&
-	test_must_fail git rebase --skip &&
+	test_must_fail git rabassa --onto A B &&
+	test_must_fail git rabassa --skip &&
 	echo D > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse D) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input
 '
 
-test_expect_success 'git rebase --skip the last one' '
+test_expect_success 'git rabassa --skip the last one' '
 	git reset --hard F &&
 	clear_hook_input &&
-	test_must_fail git rebase --onto D A &&
-	git rebase --skip &&
-	echo rebase >expected.args &&
+	test_must_fail git rabassa --onto D A &&
+	git rabassa --skip &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse E) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input
 '
 
-test_expect_success 'git rebase -m' '
+test_expect_success 'git rabassa -m' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_must_fail git rebase -m --onto A B &&
+	test_must_fail git rabassa -m --onto A B &&
 	echo C > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)
@@ -110,44 +110,44 @@ test_expect_success 'git rebase -m' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase -m --skip' '
+test_expect_success 'git rabassa -m --skip' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_must_fail git rebase --onto A B &&
-	test_must_fail git rebase --skip &&
+	test_must_fail git rabassa --onto A B &&
+	test_must_fail git rabassa --skip &&
 	echo D > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse D) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input
 '
 
-. "$TEST_DIRECTORY"/lib-rebase.sh
+. "$TEST_DIRECTORY"/lib-rabassa.sh
 
 set_fake_editor
 
 # Helper to work around the lack of one-shot exporting for
 # test_must_fail (as it is a shell function)
-test_fail_interactive_rebase () {
+test_fail_interactive_rabassa () {
 	(
 		FAKE_LINES="$1" &&
 		shift &&
 		export FAKE_LINES &&
-		test_must_fail git rebase -i "$@"
+		test_must_fail git rabassa -i "$@"
 	)
 }
 
-test_expect_success 'git rebase -i (unchanged)' '
+test_expect_success 'git rabassa -i (unchanged)' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_fail_interactive_rebase "1 2" --onto A B &&
+	test_fail_interactive_rabassa "1 2" --onto A B &&
 	echo C > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)
@@ -155,28 +155,28 @@ test_expect_success 'git rebase -i (unchanged)' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase -i (skip)' '
+test_expect_success 'git rabassa -i (skip)' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_fail_interactive_rebase "2" --onto A B &&
+	test_fail_interactive_rabassa "2" --onto A B &&
 	echo D > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse D) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input
 '
 
-test_expect_success 'git rebase -i (squash)' '
+test_expect_success 'git rabassa -i (squash)' '
 	git reset --hard D &&
 	clear_hook_input &&
-	test_fail_interactive_rebase "1 squash 2" --onto A B &&
+	test_fail_interactive_rabassa "1 squash 2" --onto A B &&
 	echo C > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD)
 	$(git rev-parse D) $(git rev-parse HEAD)
@@ -184,11 +184,11 @@ test_expect_success 'git rebase -i (squash)' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase -i (fixup without conflict)' '
+test_expect_success 'git rabassa -i (fixup without conflict)' '
 	git reset --hard D &&
 	clear_hook_input &&
-	FAKE_LINES="1 fixup 2" git rebase -i B &&
-	echo rebase >expected.args &&
+	FAKE_LINES="1 fixup 2" git rabassa -i B &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD)
 	$(git rev-parse D) $(git rev-parse HEAD)
@@ -196,15 +196,15 @@ test_expect_success 'git rebase -i (fixup without conflict)' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase -i (double edit)' '
+test_expect_success 'git rabassa -i (double edit)' '
 	git reset --hard D &&
 	clear_hook_input &&
-	FAKE_LINES="edit 1 edit 2" git rebase -i B &&
-	git rebase --continue &&
+	FAKE_LINES="edit 1 edit 2" git rabassa -i B &&
+	git rabassa --continue &&
 	echo something > foo &&
 	git add foo &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)
@@ -212,16 +212,16 @@ test_expect_success 'git rebase -i (double edit)' '
 	verify_hook_input
 '
 
-test_expect_success 'git rebase -i (exec)' '
+test_expect_success 'git rabassa -i (exec)' '
 	git reset --hard D &&
 	clear_hook_input &&
-	FAKE_LINES="edit 1 exec_false 2" git rebase -i B &&
+	FAKE_LINES="edit 1 exec_false 2" git rabassa -i B &&
 	echo something >bar &&
 	git add bar &&
 	# Fails because of exec false
-	test_must_fail git rebase --continue &&
-	git rebase --continue &&
-	echo rebase >expected.args &&
+	test_must_fail git rabassa --continue &&
+	git rabassa --continue &&
+	echo rabassa >expected.args &&
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)

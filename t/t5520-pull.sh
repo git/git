@@ -10,7 +10,7 @@ modify () {
 }
 
 test_pull_autostash () {
-	git reset --hard before-rebase &&
+	git reset --hard before-rabassa &&
 	echo dirty >new_file &&
 	git add new_file &&
 	git pull "$@" . copy &&
@@ -20,7 +20,7 @@ test_pull_autostash () {
 }
 
 test_pull_autostash_fail () {
-	git reset --hard before-rebase &&
+	git reset --hard before-rabassa &&
 	echo dirty >new_file &&
 	git add new_file &&
 	test_must_fail git pull "$@" . copy 2>err &&
@@ -241,39 +241,39 @@ test_expect_success 'fast-forward fails with conflicting work tree' '
 	test "$(git rev-parse third)" = "$(git rev-parse second)"
 '
 
-test_expect_success '--rebase' '
-	git branch to-rebase &&
+test_expect_success '--rabassa' '
+	git branch to-rabassa &&
 	echo modified again > file &&
 	git commit -m file file &&
-	git checkout to-rebase &&
+	git checkout to-rabassa &&
 	echo new > file2 &&
 	git add file2 &&
 	git commit -m "new file" &&
-	git tag before-rebase &&
-	git pull --rebase . copy &&
+	git tag before-rabassa &&
+	git pull --rabassa . copy &&
 	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)"
 '
 
-test_expect_success '--rebase fast forward' '
-	git reset --hard before-rebase &&
+test_expect_success '--rabassa fast forward' '
+	git reset --hard before-rabassa &&
 	git checkout -b ff &&
 	echo another modification >file &&
 	git commit -m third file &&
 
-	git checkout to-rebase &&
-	git pull --rebase . ff &&
+	git checkout to-rabassa &&
+	git pull --rabassa . ff &&
 	test "$(git rev-parse HEAD)" = "$(git rev-parse ff)" &&
 
-	# The above only validates the result.  Did we actually bypass rebase?
+	# The above only validates the result.  Did we actually bypass rabassa?
 	git reflog -1 >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
-	echo "OBJID HEAD@{0}: pull --rebase . ff: Fast-forward" >reflog.expected &&
+	echo "OBJID HEAD@{0}: pull --rabassa . ff: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
 '
 
-test_expect_success '--rebase with conflicts shows advice' '
-	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
+test_expect_success '--rabassa with conflicts shows advice' '
+	test_when_finished "git rabassa --abort; git checkout -f to-rabassa" &&
 	git checkout -b seq &&
 	test_seq 5 >seq.txt &&
 	git add seq.txt &&
@@ -286,121 +286,121 @@ test_expect_success '--rebase with conflicts shows advice' '
 	echo conflicting >>seq.txt &&
 	test_tick &&
 	git commit -m "Create conflict" seq.txt &&
-	test_must_fail git pull --rebase . seq 2>err >out &&
+	test_must_fail git pull --rabassa . seq 2>err >out &&
 	test_i18ngrep "When you have resolved this problem" out
 '
 
-test_expect_success 'failed --rebase shows advice' '
-	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
+test_expect_success 'failed --rabassa shows advice' '
+	test_when_finished "git rabassa --abort; git checkout -f to-rabassa" &&
 	git checkout -b diverging &&
 	test_commit attributes .gitattributes "* text=auto" attrs &&
 	sha1="$(printf "1\\r\\n" | git hash-object -w --stdin)" &&
 	git update-index --cacheinfo 0644 $sha1 file &&
 	git commit -m v1-with-cr &&
 	# force checkout because `git reset --hard` will not leave clean `file`
-	git checkout -f -b fails-to-rebase HEAD^ &&
+	git checkout -f -b fails-to-rabassa HEAD^ &&
 	test_commit v2-without-cr file "2" file2-lf &&
-	test_must_fail git pull --rebase . diverging 2>err >out &&
+	test_must_fail git pull --rabassa . diverging 2>err >out &&
 	test_i18ngrep "When you have resolved this problem" out
 '
 
-test_expect_success '--rebase fails with multiple branches' '
-	git reset --hard before-rebase &&
-	test_must_fail git pull --rebase . copy master 2>err &&
-	test "$(git rev-parse HEAD)" = "$(git rev-parse before-rebase)" &&
-	test_i18ngrep "Cannot rebase onto multiple branches" err &&
+test_expect_success '--rabassa fails with multiple branches' '
+	git reset --hard before-rabassa &&
+	test_must_fail git pull --rabassa . copy master 2>err &&
+	test "$(git rev-parse HEAD)" = "$(git rev-parse before-rabassa)" &&
+	test_i18ngrep "Cannot rabassa onto multiple branches" err &&
 	test modified = "$(git show HEAD:file)"
 '
 
-test_expect_success 'pull --rebase succeeds with dirty working directory and rebase.autostash set' '
-	test_config rebase.autostash true &&
-	test_pull_autostash --rebase
+test_expect_success 'pull --rabassa succeeds with dirty working directory and rabassa.autostash set' '
+	test_config rabassa.autostash true &&
+	test_pull_autostash --rabassa
 '
 
-test_expect_success 'pull --rebase --autostash & rebase.autostash=true' '
-	test_config rebase.autostash true &&
-	test_pull_autostash --rebase --autostash
+test_expect_success 'pull --rabassa --autostash & rabassa.autostash=true' '
+	test_config rabassa.autostash true &&
+	test_pull_autostash --rabassa --autostash
 '
 
-test_expect_success 'pull --rebase --autostash & rebase.autostash=false' '
-	test_config rebase.autostash false &&
-	test_pull_autostash --rebase --autostash
+test_expect_success 'pull --rabassa --autostash & rabassa.autostash=false' '
+	test_config rabassa.autostash false &&
+	test_pull_autostash --rabassa --autostash
 '
 
-test_expect_success 'pull --rebase --autostash & rebase.autostash unset' '
-	test_unconfig rebase.autostash &&
-	test_pull_autostash --rebase --autostash
+test_expect_success 'pull --rabassa --autostash & rabassa.autostash unset' '
+	test_unconfig rabassa.autostash &&
+	test_pull_autostash --rabassa --autostash
 '
 
-test_expect_success 'pull --rebase --no-autostash & rebase.autostash=true' '
-	test_config rebase.autostash true &&
-	test_pull_autostash_fail --rebase --no-autostash
+test_expect_success 'pull --rabassa --no-autostash & rabassa.autostash=true' '
+	test_config rabassa.autostash true &&
+	test_pull_autostash_fail --rabassa --no-autostash
 '
 
-test_expect_success 'pull --rebase --no-autostash & rebase.autostash=false' '
-	test_config rebase.autostash false &&
-	test_pull_autostash_fail --rebase --no-autostash
+test_expect_success 'pull --rabassa --no-autostash & rabassa.autostash=false' '
+	test_config rabassa.autostash false &&
+	test_pull_autostash_fail --rabassa --no-autostash
 '
 
-test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
-	test_unconfig rebase.autostash &&
-	test_pull_autostash_fail --rebase --no-autostash
+test_expect_success 'pull --rabassa --no-autostash & rabassa.autostash unset' '
+	test_unconfig rabassa.autostash &&
+	test_pull_autostash_fail --rabassa --no-autostash
 '
 
 for i in --autostash --no-autostash
 do
-	test_expect_success "pull $i (without --rebase) is illegal" '
+	test_expect_success "pull $i (without --rabassa) is illegal" '
 		test_must_fail git pull $i . copy 2>err &&
-		test_i18ngrep "only valid with --rebase" err
+		test_i18ngrep "only valid with --rabassa" err
 	'
 done
 
-test_expect_success 'pull.rebase' '
-	git reset --hard before-rebase &&
-	test_config pull.rebase true &&
+test_expect_success 'pull.rabassa' '
+	git reset --hard before-rabassa &&
+	test_config pull.rabassa true &&
 	git pull . copy &&
 	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)"
 '
 
-test_expect_success 'pull --autostash & pull.rebase=true' '
-	test_config pull.rebase true &&
+test_expect_success 'pull --autostash & pull.rabassa=true' '
+	test_config pull.rabassa true &&
 	test_pull_autostash --autostash
 '
 
-test_expect_success 'pull --no-autostash & pull.rebase=true' '
-	test_config pull.rebase true &&
+test_expect_success 'pull --no-autostash & pull.rabassa=true' '
+	test_config pull.rabassa true &&
 	test_pull_autostash_fail --no-autostash
 '
 
-test_expect_success 'branch.to-rebase.rebase' '
-	git reset --hard before-rebase &&
-	test_config branch.to-rebase.rebase true &&
+test_expect_success 'branch.to-rabassa.rabassa' '
+	git reset --hard before-rabassa &&
+	test_config branch.to-rabassa.rabassa true &&
 	git pull . copy &&
 	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)"
 '
 
-test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
-	git reset --hard before-rebase &&
-	test_config pull.rebase true &&
-	test_config branch.to-rebase.rebase false &&
+test_expect_success 'branch.to-rabassa.rabassa should override pull.rabassa' '
+	git reset --hard before-rabassa &&
+	test_config pull.rabassa true &&
+	test_config branch.to-rabassa.rabassa false &&
 	git pull . copy &&
 	test "$(git rev-parse HEAD^)" != "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)"
 '
 
-test_expect_success "pull --rebase warns on --verify-signatures" '
-	git reset --hard before-rebase &&
-	git pull --rebase --verify-signatures . copy 2>err &&
+test_expect_success "pull --rabassa warns on --verify-signatures" '
+	git reset --hard before-rabassa &&
+	git pull --rabassa --verify-signatures . copy 2>err &&
 	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)" &&
-	test_i18ngrep "ignoring --verify-signatures for rebase" err
+	test_i18ngrep "ignoring --verify-signatures for rabassa" err
 '
 
-test_expect_success "pull --rebase does not warn on --no-verify-signatures" '
-	git reset --hard before-rebase &&
-	git pull --rebase --no-verify-signatures . copy 2>err &&
+test_expect_success "pull --rabassa does not warn on --no-verify-signatures" '
+	git reset --hard before-rabassa &&
+	git pull --rabassa --no-verify-signatures . copy 2>err &&
 	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
 	test new = "$(git show HEAD:file2)" &&
 	test_i18ngrep ! "verify-signatures" err
@@ -408,104 +408,104 @@ test_expect_success "pull --rebase does not warn on --no-verify-signatures" '
 
 # add a feature branch, keep-merge, that is merged into master, so the
 # test can try preserving the merge commit (or not) with various
-# --rebase flags/pull.rebase settings.
+# --rabassa flags/pull.rabassa settings.
 test_expect_success 'preserve merge setup' '
-	git reset --hard before-rebase &&
+	git reset --hard before-rabassa &&
 	git checkout -b keep-merge second^ &&
 	test_commit file3 &&
-	git checkout to-rebase &&
+	git checkout to-rabassa &&
 	git merge keep-merge &&
-	git tag before-preserve-rebase
+	git tag before-preserve-rabassa
 '
 
-test_expect_success 'pull.rebase=false create a new merge commit' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase false &&
+test_expect_success 'pull.rabassa=false create a new merge commit' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa false &&
 	git pull . copy &&
-	test "$(git rev-parse HEAD^1)" = "$(git rev-parse before-preserve-rebase)" &&
+	test "$(git rev-parse HEAD^1)" = "$(git rev-parse before-preserve-rabassa)" &&
 	test "$(git rev-parse HEAD^2)" = "$(git rev-parse copy)" &&
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success 'pull.rebase=true flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase true &&
+test_expect_success 'pull.rabassa=true flattens keep-merge' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa true &&
 	git pull . copy &&
 	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success 'pull.rebase=1 is treated as true and flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase 1 &&
+test_expect_success 'pull.rabassa=1 is treated as true and flattens keep-merge' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa 1 &&
 	git pull . copy &&
 	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success 'pull.rebase=preserve rebases and merges keep-merge' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase preserve &&
+test_expect_success 'pull.rabassa=preserve rabassas and merges keep-merge' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa preserve &&
 	git pull . copy &&
 	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
 	test "$(git rev-parse HEAD^2)" = "$(git rev-parse keep-merge)"
 '
 
-test_expect_success 'pull.rebase=interactive' '
+test_expect_success 'pull.rabassa=interactive' '
 	write_script "$TRASH_DIRECTORY/fake-editor" <<-\EOF &&
 	echo I was here >fake.out &&
 	false
 	EOF
 	test_set_editor "$TRASH_DIRECTORY/fake-editor" &&
-	test_must_fail git pull --rebase=interactive . copy &&
+	test_must_fail git pull --rabassa=interactive . copy &&
 	test "I was here" = "$(cat fake.out)"
 '
 
-test_expect_success 'pull.rebase=invalid fails' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase invalid &&
+test_expect_success 'pull.rabassa=invalid fails' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa invalid &&
 	! git pull . copy
 '
 
-test_expect_success '--rebase=false create a new merge commit' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase true &&
-	git pull --rebase=false . copy &&
-	test "$(git rev-parse HEAD^1)" = "$(git rev-parse before-preserve-rebase)" &&
+test_expect_success '--rabassa=false create a new merge commit' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa true &&
+	git pull --rabassa=false . copy &&
+	test "$(git rev-parse HEAD^1)" = "$(git rev-parse before-preserve-rabassa)" &&
 	test "$(git rev-parse HEAD^2)" = "$(git rev-parse copy)" &&
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success '--rebase=true rebases and flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase preserve &&
-	git pull --rebase=true . copy &&
+test_expect_success '--rabassa=true rabassas and flattens keep-merge' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa preserve &&
+	git pull --rabassa=true . copy &&
 	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success '--rebase=preserve rebases and merges keep-merge' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase true &&
-	git pull --rebase=preserve . copy &&
+test_expect_success '--rabassa=preserve rabassas and merges keep-merge' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa true &&
+	git pull --rabassa=preserve . copy &&
 	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
 	test "$(git rev-parse HEAD^2)" = "$(git rev-parse keep-merge)"
 '
 
-test_expect_success '--rebase=invalid fails' '
-	git reset --hard before-preserve-rebase &&
-	! git pull --rebase=invalid . copy
+test_expect_success '--rabassa=invalid fails' '
+	git reset --hard before-preserve-rabassa &&
+	! git pull --rabassa=invalid . copy
 '
 
-test_expect_success '--rebase overrides pull.rebase=preserve and flattens keep-merge' '
-	git reset --hard before-preserve-rebase &&
-	test_config pull.rebase preserve &&
-	git pull --rebase . copy &&
+test_expect_success '--rabassa overrides pull.rabassa=preserve and flattens keep-merge' '
+	git reset --hard before-preserve-rabassa &&
+	test_config pull.rabassa preserve &&
+	git pull --rabassa . copy &&
 	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
 	test file3 = "$(git show HEAD:file3.t)"
 '
 
-test_expect_success '--rebase with rebased upstream' '
+test_expect_success '--rabassa with rabassad upstream' '
 
 	git remote add -f me . &&
 	git checkout copy &&
@@ -513,57 +513,57 @@ test_expect_success '--rebase with rebased upstream' '
 	git reset --hard HEAD^ &&
 	echo conflicting modification > file &&
 	git commit -m conflict file &&
-	git checkout to-rebase &&
+	git checkout to-rabassa &&
 	echo file > file2 &&
-	git commit -m to-rebase file2 &&
-	git tag to-rebase-orig &&
-	git pull --rebase me copy &&
+	git commit -m to-rabassa file2 &&
+	git tag to-rabassa-orig &&
+	git pull --rabassa me copy &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = "$(cat file2)"
 
 '
 
-test_expect_success '--rebase -f with rebased upstream' '
-	test_when_finished "test_might_fail git rebase --abort" &&
-	git reset --hard to-rebase-orig &&
-	git pull --rebase -f me copy &&
+test_expect_success '--rabassa -f with rabassad upstream' '
+	test_when_finished "test_might_fail git rabassa --abort" &&
+	git reset --hard to-rabassa-orig &&
+	git pull --rabassa -f me copy &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = "$(cat file2)"
 '
 
-test_expect_success '--rebase with rebased default upstream' '
+test_expect_success '--rabassa with rabassad default upstream' '
 
 	git update-ref refs/remotes/me/copy copy-orig &&
-	git checkout --track -b to-rebase2 me/copy &&
-	git reset --hard to-rebase-orig &&
-	git pull --rebase &&
+	git checkout --track -b to-rabassa2 me/copy &&
+	git reset --hard to-rabassa-orig &&
+	git pull --rabassa &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = "$(cat file2)"
 
 '
 
-test_expect_success 'rebased upstream + fetch + pull --rebase' '
+test_expect_success 'rabassad upstream + fetch + pull --rabassa' '
 
 	git update-ref refs/remotes/me/copy copy-orig &&
-	git reset --hard to-rebase-orig &&
-	git checkout --track -b to-rebase3 me/copy &&
-	git reset --hard to-rebase-orig &&
+	git reset --hard to-rabassa-orig &&
+	git checkout --track -b to-rabassa3 me/copy &&
+	git reset --hard to-rabassa-orig &&
 	git fetch &&
-	git pull --rebase &&
+	git pull --rabassa &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = "$(cat file2)"
 
 '
 
-test_expect_success 'pull --rebase dies early with dirty working directory' '
+test_expect_success 'pull --rabassa dies early with dirty working directory' '
 
-	git checkout to-rebase &&
+	git checkout to-rabassa &&
 	git update-ref refs/remotes/me/copy copy^ &&
 	COPY="$(git rev-parse --verify me/copy)" &&
-	git rebase --onto $COPY copy &&
-	test_config branch.to-rebase.remote me &&
-	test_config branch.to-rebase.merge refs/heads/copy &&
-	test_config branch.to-rebase.rebase true &&
+	git rabassa --onto $COPY copy &&
+	test_config branch.to-rabassa.remote me &&
+	test_config branch.to-rabassa.merge refs/heads/copy &&
+	test_config branch.to-rabassa.rabassa true &&
 	echo dirty >> file &&
 	git add file &&
 	test_must_fail git pull &&
@@ -574,18 +574,18 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 
 '
 
-test_expect_success 'pull --rebase works on branch yet to be born' '
+test_expect_success 'pull --rabassa works on branch yet to be born' '
 	git rev-parse master >expect &&
 	mkdir empty_repo &&
 	(cd empty_repo &&
 	 git init &&
-	 git pull --rebase .. master &&
+	 git pull --rabassa .. master &&
 	 git rev-parse HEAD >../actual
 	) &&
 	test_cmp expect actual
 '
 
-test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
+test_expect_success 'pull --rabassa fails on unborn branch with staged changes' '
 	test_when_finished "rm -rf empty_repo2" &&
 	git init empty_repo2 &&
 	(
@@ -593,7 +593,7 @@ test_expect_success 'pull --rebase fails on unborn branch with staged changes' '
 		echo staged-file >staged-file &&
 		git add staged-file &&
 		test "$(git ls-files)" = staged-file &&
-		test_must_fail git pull --rebase .. master 2>err &&
+		test_must_fail git pull --rabassa .. master 2>err &&
 		test "$(git ls-files)" = staged-file &&
 		test "$(git show :staged-file)" = staged-file &&
 		test_i18ngrep "unborn branch with changes added to the index" err
@@ -621,16 +621,16 @@ test_expect_success 'setup for detecting upstreamed changes' '
 	)
 '
 
-test_expect_success 'git pull --rebase detects upstreamed changes' '
+test_expect_success 'git pull --rabassa detects upstreamed changes' '
 	(cd dst &&
-	 git pull --rebase &&
+	 git pull --rabassa &&
 	 test -z "$(git ls-files -u)"
 	)
 '
 
 test_expect_success 'setup for avoiding reapplying old patches' '
 	(cd dst &&
-	 test_might_fail git rebase --abort &&
+	 test_might_fail git rabassa --abort &&
 	 git reset --hard origin/master
 	) &&
 	git clone --bare src src-replace.git &&
@@ -650,16 +650,16 @@ test_expect_success 'setup for avoiding reapplying old patches' '
 	)
 '
 
-test_expect_success 'git pull --rebase does not reapply old patches' '
+test_expect_success 'git pull --rabassa does not reapply old patches' '
 	(cd dst &&
-	 test_must_fail git pull --rebase &&
-	 test 1 = $(find .git/rebase-apply -name "000*" | wc -l)
+	 test_must_fail git pull --rabassa &&
+	 test 1 = $(find .git/rabassa-apply -name "000*" | wc -l)
 	)
 '
 
-test_expect_success 'git pull --rebase against local branch' '
-	git checkout -b copy2 to-rebase-orig &&
-	git pull --rebase . to-rebase &&
+test_expect_success 'git pull --rabassa against local branch' '
+	git checkout -b copy2 to-rabassa-orig &&
+	git pull --rabassa . to-rabassa &&
 	test "conflicting modification" = "$(cat file)" &&
 	test file = "$(cat file2)"
 '

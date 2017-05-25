@@ -23,7 +23,7 @@ Fixes since v1.6.6
  * "git grep -L" didn't show empty files (they should never match, and
    they should always appear in -L output as unmatching).
 
- * "git rebase -i" did not abort cleanly if it failed to launch the editor.
+ * "git rabassa -i" did not abort cleanly if it failed to launch the editor.
 
  * "git reset --hard" did not work correctly when GIT_WORK_TREE environment
    variable is used to point at the root of the true work tree.

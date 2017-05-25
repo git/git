@@ -19,7 +19,7 @@
 #include "lockfile.h"
 #include "wt-status.h"
 
-enum rebase_type {
+enum rabassa_type {
 	REBASE_INVALID = -1,
 	REBASE_FALSE = 0,
 	REBASE_TRUE,
@@ -28,15 +28,15 @@ enum rebase_type {
 };
 
 /**
- * Parses the value of --rebase. If value is a false value, returns
+ * Parses the value of --rabassa. If value is a false value, returns
  * REBASE_FALSE. If value is a true value, returns REBASE_TRUE. If value is
  * "preserve", returns REBASE_PRESERVE. If value is a invalid value, dies with
  * a fatal error if fatal is true, otherwise returns REBASE_INVALID.
  */
-static enum rebase_type parse_config_rebase(const char *key, const char *value,
+static enum rabassa_type parse_config_rabassa(const char *key, const char *value,
 		int fatal)
 {
-	int v = git_config_maybe_bool("pull.rebase", value);
+	int v = git_config_maybe_bool("pull.rabassa", value);
 
 	if (!v)
 		return REBASE_FALSE;
@@ -56,14 +56,14 @@ static enum rebase_type parse_config_rebase(const char *key, const char *value,
 }
 
 /**
- * Callback for --rebase, which parses arg with parse_config_rebase().
+ * Callback for --rabassa, which parses arg with parse_config_rabassa().
  */
-static int parse_opt_rebase(const struct option *opt, const char *arg, int unset)
+static int parse_opt_rabassa(const struct option *opt, const char *arg, int unset)
 {
-	enum rebase_type *value = opt->value;
+	enum rabassa_type *value = opt->value;
 
 	if (arg)
-		*value = parse_config_rebase("--rebase", arg, 0);
+		*value = parse_config_rabassa("--rabassa", arg, 0);
 	else
 		*value = unset ? REBASE_FALSE : REBASE_TRUE;
 	return *value == REBASE_INVALID ? -1 : 0;
@@ -78,8 +78,8 @@ static const char * const pull_usage[] = {
 static int opt_verbosity;
 static char *opt_progress;
 
-/* Options passed to git-merge or git-rebase */
-static enum rebase_type opt_rebase = -1;
+/* Options passed to git-merge or git-rabassa */
+static enum rabassa_type opt_rabassa = -1;
 static char *opt_diffstat;
 static char *opt_log;
 static char *opt_squash;
@@ -117,12 +117,12 @@ static struct option pull_options[] = {
 		N_("force progress reporting"),
 		PARSE_OPT_NOARG),
 
-	/* Options passed to git-merge or git-rebase */
+	/* Options passed to git-merge or git-rabassa */
 	OPT_GROUP(N_("Options related to merging")),
-	{ OPTION_CALLBACK, 'r', "rebase", &opt_rebase,
+	{ OPTION_CALLBACK, 'r', "rabassa", &opt_rabassa,
 	  "false|true|preserve|interactive",
 	  N_("incorporate changes by rebasing rather than merging"),
-	  PARSE_OPT_OPTARG, parse_opt_rebase },
+	  PARSE_OPT_OPTARG, parse_opt_rabassa },
 	OPT_PASSTHRU('n', NULL, &opt_diffstat, NULL,
 		N_("do not show a diffstat at the end of the merge"),
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG),
@@ -154,7 +154,7 @@ static struct option pull_options[] = {
 		N_("verify that the named commit has a valid GPG signature"),
 		PARSE_OPT_NOARG),
 	OPT_BOOL(0, "autostash", &opt_autostash,
-		N_("automatically stash/stash pop before and after rebase")),
+		N_("automatically stash/stash pop before and after rabassa")),
 	OPT_PASSTHRU_ARGV('s', "strategy", &opt_strategies, N_("strategy"),
 		N_("merge strategy to use"),
 		0),
@@ -285,22 +285,22 @@ static const char *config_get_ff(void)
 }
 
 /**
- * Returns the default configured value for --rebase. It first looks for the
- * value of "branch.$curr_branch.rebase", where $curr_branch is the current
+ * Returns the default configured value for --rabassa. It first looks for the
+ * value of "branch.$curr_branch.rabassa", where $curr_branch is the current
  * branch, and if HEAD is detached or the configuration key does not exist,
- * looks for the value of "pull.rebase". If both configuration keys do not
+ * looks for the value of "pull.rabassa". If both configuration keys do not
  * exist, returns REBASE_FALSE.
  */
-static enum rebase_type config_get_rebase(void)
+static enum rabassa_type config_get_rabassa(void)
 {
 	struct branch *curr_branch = branch_get("HEAD");
 	const char *value;
 
 	if (curr_branch) {
-		char *key = xstrfmt("branch.%s.rebase", curr_branch->name);
+		char *key = xstrfmt("branch.%s.rabassa", curr_branch->name);
 
 		if (!git_config_get_value(key, &value)) {
-			enum rebase_type ret = parse_config_rebase(key, value, 1);
+			enum rabassa_type ret = parse_config_rabassa(key, value, 1);
 			free(key);
 			return ret;
 		}
@@ -308,8 +308,8 @@ static enum rebase_type config_get_rebase(void)
 		free(key);
 	}
 
-	if (!git_config_get_value("pull.rebase", &value))
-		return parse_config_rebase("pull.rebase", value, 1);
+	if (!git_config_get_value("pull.rabassa", &value))
+		return parse_config_rabassa("pull.rabassa", value, 1);
 
 	return REBASE_FALSE;
 }
@@ -319,7 +319,7 @@ static enum rebase_type config_get_rebase(void)
  */
 static int git_pull_config(const char *var, const char *value, void *cb)
 {
-	if (!strcmp(var, "rebase.autostash")) {
+	if (!strcmp(var, "rabassa.autostash")) {
 		config_autostash = git_config_bool(var, value);
 		return 0;
 	}
@@ -393,7 +393,7 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 	const char *remote = curr_branch ? curr_branch->remote_name : NULL;
 
 	if (*refspecs) {
-		if (opt_rebase)
+		if (opt_rabassa)
 			fprintf_ln(stderr, _("There is no candidate for rebasing against among the refs that you just fetched."));
 		else
 			fprintf_ln(stderr, _("There are no candidates for merging among the refs that you just fetched."));
@@ -406,8 +406,8 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			repo);
 	} else if (!curr_branch) {
 		fprintf_ln(stderr, _("You are not currently on a branch."));
-		if (opt_rebase)
-			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
+		if (opt_rabassa)
+			fprintf_ln(stderr, _("Please specify which branch you want to rabassa against."));
 		else
 			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
 		fprintf_ln(stderr, _("See git-pull(1) for details."));
@@ -421,8 +421,8 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			remote_name = _("<remote>");
 
 		fprintf_ln(stderr, _("There is no tracking information for the current branch."));
-		if (opt_rebase)
-			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
+		if (opt_rabassa)
+			fprintf_ln(stderr, _("Please specify which branch you want to rabassa against."));
 		else
 			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
 		fprintf_ln(stderr, _("See git-pull(1) for details."));
@@ -647,7 +647,7 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
  * current branch forked from its remote tracking branch. Returns 0 on success,
  * -1 on failure.
  */
-static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
+static int get_rabassa_fork_point(struct object_id *fork_point, const char *repo,
 		const char *refspec)
 {
 	int ret;
@@ -714,10 +714,10 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 
 /**
  * Given the current HEAD SHA1, the merge head returned from git-fetch and the
- * fork point calculated by get_rebase_fork_point(), runs git-rebase with the
+ * fork point calculated by get_rabassa_fork_point(), runs git-rabassa with the
  * appropriate arguments and returns its exit status.
  */
-static int run_rebase(const struct object_id *curr_head,
+static int run_rabassa(const struct object_id *curr_head,
 		const struct object_id *merge_head,
 		const struct object_id *fork_point)
 {
@@ -729,15 +729,15 @@ static int run_rebase(const struct object_id *curr_head,
 		if (!is_null_oid(fork_point) && !oidcmp(&oct_merge_base, fork_point))
 			fork_point = NULL;
 
-	argv_array_push(&args, "rebase");
+	argv_array_push(&args, "rabassa");
 
 	/* Shared options */
 	argv_push_verbosity(&args);
 
-	/* Options passed to git-rebase */
-	if (opt_rebase == REBASE_PRESERVE)
+	/* Options passed to git-rabassa */
+	if (opt_rabassa == REBASE_PRESERVE)
 		argv_array_push(&args, "--preserve-merges");
-	else if (opt_rebase == REBASE_INTERACTIVE)
+	else if (opt_rabassa == REBASE_INTERACTIVE)
 		argv_array_push(&args, "--interactive");
 	if (opt_diffstat)
 		argv_array_push(&args, opt_diffstat);
@@ -751,7 +751,7 @@ static int run_rebase(const struct object_id *curr_head,
 		argv_array_push(&args, "--autostash");
 	if (opt_verify_signatures &&
 	    !strcmp(opt_verify_signatures, "--verify-signatures"))
-		warning(_("ignoring --verify-signatures for rebase"));
+		warning(_("ignoring --verify-signatures for rabassa"));
 
 	argv_array_push(&args, "--onto");
 	argv_array_push(&args, oid_to_hex(merge_head));
@@ -771,7 +771,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	const char *repo, **refspecs;
 	struct oid_array merge_heads = OID_ARRAY_INIT;
 	struct object_id orig_head, curr_head;
-	struct object_id rebase_fork_point;
+	struct object_id rabassa_fork_point;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -783,8 +783,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!opt_ff)
 		opt_ff = xstrdup_or_null(config_get_ff());
 
-	if (opt_rebase < 0)
-		opt_rebase = config_get_rebase();
+	if (opt_rabassa < 0)
+		opt_rabassa = config_get_rabassa();
 
 	git_config(git_pull_config, NULL);
 
@@ -797,10 +797,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (get_oid("HEAD", &orig_head))
 		oidclr(&orig_head);
 
-	if (!opt_rebase && opt_autostash != -1)
-		die(_("--[no-]autostash option is only valid with --rebase."));
+	if (!opt_rabassa && opt_autostash != -1)
+		die(_("--[no-]autostash option is only valid with --rabassa."));
 
-	if (opt_rebase) {
+	if (opt_rabassa) {
 		int autostash = config_autostash;
 		if (opt_autostash != -1)
 			autostash = opt_autostash;
@@ -809,11 +809,11 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			die(_("Updating an unborn branch with changes added to the index."));
 
 		if (!autostash)
-			require_clean_work_tree(N_("pull with rebase"),
+			require_clean_work_tree(N_("pull with rabassa"),
 				_("please commit or stash them."), 1, 0);
 
-		if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
-			oidclr(&rebase_fork_point);
+		if (get_rabassa_fork_point(&rabassa_fork_point, repo, *refspecs))
+			oidclr(&rabassa_fork_point);
 	}
 
 	if (run_fetch(repo, refspecs))
@@ -858,10 +858,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			die(_("Cannot merge multiple branches into empty head."));
 		return pull_into_void(merge_heads.oid, &curr_head);
 	}
-	if (opt_rebase && merge_heads.nr > 1)
-		die(_("Cannot rebase onto multiple branches."));
+	if (opt_rabassa && merge_heads.nr > 1)
+		die(_("Cannot rabassa onto multiple branches."));
 
-	if (opt_rebase) {
+	if (opt_rabassa) {
 		struct commit_list *list = NULL;
 		struct commit *merge_head, *head;
 
@@ -869,11 +869,11 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		commit_list_insert(head, &list);
 		merge_head = lookup_commit_reference(merge_heads.oid[0].hash);
 		if (is_descendant_of(merge_head, list)) {
-			/* we can fast-forward this without invoking rebase */
+			/* we can fast-forward this without invoking rabassa */
 			opt_ff = "--ff-only";
 			return run_merge();
 		}
-		return run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+		return run_rabassa(&curr_head, merge_heads.oid, &rabassa_fork_point);
 	} else {
 		return run_merge();
 	}

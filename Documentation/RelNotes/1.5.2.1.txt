@@ -32,7 +32,7 @@ Fixes since v1.5.2
   - git-svn misbehaved when the subversion repository did not
     provide MD5 checksums for files.
 
-  - git rebase (and git am) misbehaved on commits that have '\n'
+  - git rabassa (and git am) misbehaved on commits that have '\n'
     (literally backslash and en, not a linefeed) in the title.
 
   - code to decode base85 used in binary patches had one error

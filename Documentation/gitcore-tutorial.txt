@@ -1532,7 +1532,7 @@ like this:
    public repository is stored in `.git/refs/remotes/origin/master`.
 
 4. Use `git cherry origin` to see which ones of your patches
-   were accepted, and/or use `git rebase origin` to port your
+   were accepted, and/or use `git rabassa origin` to port your
    unmerged changes forward to the updated upstream.
 
 5. Use `git format-patch origin` to prepare patches for e-mail

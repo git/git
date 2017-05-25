@@ -7,30 +7,30 @@ SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
 OPTIONS_STUCKLONG=t
 OPTIONS_SPEC="\
-git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] [<upstream>] [<branch>]
-git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] --root [<branch>]
-git-rebase --continue | --abort | --skip | --edit-todo
+git rabassa [-i] [options] [--exec <cmd>] [--onto <newbase>] [<upstream>] [<branch>]
+git rabassa [-i] [options] [--exec <cmd>] [--onto <newbase>] --root [<branch>]
+git-rabassa --continue | --abort | --skip | --edit-todo
 --
  Available options are
 v,verbose!         display a diffstat of what changed upstream
 q,quiet!           be quiet. implies --no-stat
 autostash          automatically stash/stash pop before and after
 fork-point         use 'merge-base --fork-point' to refine upstream
-onto=!             rebase onto given branch instead of upstream
+onto=!             rabassa onto given branch instead of upstream
 p,preserve-merges! try to recreate merges instead of ignoring them
 s,strategy=!       use the given merge strategy
 no-ff!             cherry-pick all commits, even if unchanged
-m,merge!           use merging strategies to rebase
-i,interactive!     let the user edit the list of commits to rebase
+m,merge!           use merging strategies to rabassa
+i,interactive!     let the user edit the list of commits to rabassa
 x,exec=!           add exec lines after each commit of the editable list
-k,keep-empty	   preserve empty commits during rebase
-f,force-rebase!    force rebase even if branch is up to date
+k,keep-empty	   preserve empty commits during rabassa
+f,force-rabassa!    force rabassa even if branch is up to date
 X,strategy-option=! pass the argument through to the merge strategy
 stat!              display a diffstat of what changed upstream
 n,no-stat!         do not show diffstat of what changed upstream
-verify             allow pre-rebase hook to run
+verify             allow pre-rabassa hook to run
 rerere-autoupdate  allow rerere to update index with resolved conflicts
-root!              rebase all reachable commits up to the root(s)
+root!              rabassa all reachable commits up to the root(s)
 autosquash         move commits that begin with squash!/fixup! under -i
 committer-date-is-author-date! passed to 'git am'
 ignore-date!       passed to 'git am'
@@ -43,21 +43,21 @@ S,gpg-sign?        GPG-sign commits
 continue!          continue
 abort!             abort and check out the original branch
 skip!              skip current patch and continue
-edit-todo!         edit the todo list during an interactive rebase
+edit-todo!         edit the todo list during an interactive rabassa
 quit!              abort but keep HEAD where it is
 "
 . git-sh-setup
-set_reflog_action rebase
+set_reflog_action rabassa
 require_work_tree_exists
 cd_to_toplevel
 
 LF='
 '
-ok_to_skip_pre_rebase=
+ok_to_skip_pre_rabassa=
 resolvemsg="
-$(gettext 'When you have resolved this problem, run "git rebase --continue".
-If you prefer to skip this patch, run "git rebase --skip" instead.
-To check out the original branch and stop rebasing, run "git rebase --abort".')
+$(gettext 'When you have resolved this problem, run "git rabassa --continue".
+If you prefer to skip this patch, run "git rabassa --skip" instead.
+To check out the original branch and stop rebasing, run "git rabassa --abort".')
 "
 unset onto
 unset restrict_revision
@@ -65,29 +65,29 @@ cmd=
 strategy=
 strategy_opts=
 do_merge=
-merge_dir="$GIT_DIR"/rebase-merge
-apply_dir="$GIT_DIR"/rebase-apply
+merge_dir="$GIT_DIR"/rabassa-merge
+apply_dir="$GIT_DIR"/rabassa-apply
 verbose=
 diffstat=
-test "$(git config --bool rebase.stat)" = true && diffstat=t
-autostash="$(git config --bool rebase.autostash || echo false)"
+test "$(git config --bool rabassa.stat)" = true && diffstat=t
+autostash="$(git config --bool rabassa.autostash || echo false)"
 fork_point=auto
 git_am_opt=
-rebase_root=
-force_rebase=
+rabassa_root=
+force_rabassa=
 allow_rerere_autoupdate=
-# Non-empty if a rebase was in progress when 'git rebase' was invoked
+# Non-empty if a rabassa was in progress when 'git rabassa' was invoked
 in_progress=
 # One of {am, merge, interactive}
 type=
-# One of {"$GIT_DIR"/rebase-apply, "$GIT_DIR"/rebase-merge}
+# One of {"$GIT_DIR"/rabassa-apply, "$GIT_DIR"/rabassa-merge}
 state_dir=
 # One of {'', continue, skip, abort}, as parsed from command line
 action=
 preserve_merges=
 autosquash=
 keep_empty=
-test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
+test "$(git config --bool rabassa.autosquash)" = "true" && autosquash=t
 case "$(git config --bool commit.gpgsign)" in
 true)	gpg_sign_opt=-S ;;
 *)	gpg_sign_opt= ;;
@@ -98,9 +98,9 @@ read_basic_state () {
 	test -f "$state_dir/onto" &&
 	head_name=$(cat "$state_dir"/head-name) &&
 	onto=$(cat "$state_dir"/onto) &&
-	# We always write to orig-head, but interactive rebase used to write to
+	# We always write to orig-head, but interactive rabassa used to write to
 	# head. Fall back to reading from head to cover for the case that the
-	# user upgraded git with an ongoing interactive rebase.
+	# user upgraded git with an ongoing interactive rabassa.
 	if test -f "$state_dir"/orig-head
 	then
 		orig_head=$(cat "$state_dir"/orig-head)
@@ -149,11 +149,11 @@ output () {
 move_to_original_branch () {
 	case "$head_name" in
 	refs/*)
-		message="rebase finished: $head_name onto $onto"
+		message="rabassa finished: $head_name onto $onto"
 		git update-ref -m "$message" \
 			$head_name $(git rev-parse HEAD) $orig_head &&
 		git symbolic-ref \
-			-m "rebase finished: returning to $head_name" \
+			-m "rabassa finished: returning to $head_name" \
 			HEAD $head_name ||
 		die "$(eval_gettext "Could not move back to \$head_name")"
 		;;
@@ -178,24 +178,24 @@ You can run "git stash pop" or "git stash drop" at any time.
 	fi
 }
 
-finish_rebase () {
+finish_rabassa () {
 	apply_autostash &&
 	{ git gc --auto || true; } &&
 	rm -rf "$state_dir"
 }
 
-run_specific_rebase () {
-	if [ "$interactive_rebase" = implied ]; then
+run_specific_rabassa () {
+	if [ "$interactive_rabassa" = implied ]; then
 		GIT_EDITOR=:
 		export GIT_EDITOR
 		autosquash=
 	fi
-	. git-rebase--$type
+	. git-rabassa--$type
 	ret=$?
 	if test $ret -eq 0
 	then
-		finish_rebase
-	elif test $ret -eq 2 # special exit status for rebase -i
+		finish_rabassa
+	elif test $ret -eq 2 # special exit status for rabassa -i
 	then
 		apply_autostash &&
 		rm -rf "$state_dir" &&
@@ -204,17 +204,17 @@ run_specific_rebase () {
 	exit $ret
 }
 
-run_pre_rebase_hook () {
-	if test -z "$ok_to_skip_pre_rebase" &&
-	   test -x "$(git rev-parse --git-path hooks/pre-rebase)"
+run_pre_rabassa_hook () {
+	if test -z "$ok_to_skip_pre_rabassa" &&
+	   test -x "$(git rev-parse --git-path hooks/pre-rabassa)"
 	then
-		"$(git rev-parse --git-path hooks/pre-rebase)" ${1+"$@"} ||
-		die "$(gettext "The pre-rebase hook refused to rebase.")"
+		"$(git rev-parse --git-path hooks/pre-rabassa)" ${1+"$@"} ||
+		die "$(gettext "The pre-rabassa hook refused to rabassa.")"
 	fi
 }
 
 test -f "$apply_dir"/applying &&
-	die "$(gettext "It looks like git-am is in progress. Cannot rebase.")"
+	die "$(gettext "It looks like git-am is in progress. Cannot rabassa.")"
 
 if test -d "$apply_dir"
 then
@@ -225,7 +225,7 @@ then
 	if test -f "$merge_dir"/interactive
 	then
 		type=interactive
-		interactive_rebase=explicit
+		interactive_rabassa=explicit
 	else
 		type=merge
 	fi
@@ -238,10 +238,10 @@ while test $# != 0
 do
 	case "$1" in
 	--no-verify)
-		ok_to_skip_pre_rebase=yes
+		ok_to_skip_pre_rabassa=yes
 		;;
 	--verify)
-		ok_to_skip_pre_rebase=
+		ok_to_skip_pre_rabassa=
 		;;
 	--continue|--skip|--abort|--quit|--edit-todo)
 		test $total_argc -eq 2 || usage
@@ -252,17 +252,17 @@ do
 		;;
 	--exec=*)
 		cmd="${cmd}exec ${1#--exec=}${LF}"
-		test -z "$interactive_rebase" && interactive_rebase=implied
+		test -z "$interactive_rabassa" && interactive_rabassa=implied
 		;;
 	--interactive)
-		interactive_rebase=explicit
+		interactive_rabassa=explicit
 		;;
 	--keep-empty)
 		keep_empty=yes
 		;;
 	--preserve-merges)
 		preserve_merges=t
-		test -z "$interactive_rebase" && interactive_rebase=implied
+		test -z "$interactive_rabassa" && interactive_rabassa=implied
 		;;
 	--autosquash)
 		autosquash=t
@@ -315,7 +315,7 @@ do
 		git_am_opt="$git_am_opt --whitespace=${1#--whitespace=}"
 		case "${1#--whitespace=}" in
 		fix|strip)
-			force_rebase=t
+			force_rabassa=t
 			;;
 		esac
 		;;
@@ -324,16 +324,16 @@ do
 		;;
 	--committer-date-is-author-date|--ignore-date|--signoff|--no-signoff)
 		git_am_opt="$git_am_opt $1"
-		force_rebase=t
+		force_rabassa=t
 		;;
 	-C*)
 		git_am_opt="$git_am_opt $1"
 		;;
 	--root)
-		rebase_root=t
+		rabassa_root=t
 		;;
-	--force-rebase|--no-ff)
-		force_rebase=t
+	--force-rabassa|--no-ff)
+		force_rabassa=t
 		;;
 	--rerere-autoupdate|--no-rerere-autoupdate)
 		allow_rerere_autoupdate="$1"
@@ -355,18 +355,18 @@ test $# -gt 2 && usage
 
 if test -n "$action"
 then
-	test -z "$in_progress" && die "$(gettext "No rebase in progress?")"
-	# Only interactive rebase uses detailed reflog messages
-	if test "$type" = interactive && test "$GIT_REFLOG_ACTION" = rebase
+	test -z "$in_progress" && die "$(gettext "No rabassa in progress?")"
+	# Only interactive rabassa uses detailed reflog messages
+	if test "$type" = interactive && test "$GIT_REFLOG_ACTION" = rabassa
 	then
-		GIT_REFLOG_ACTION="rebase -i ($action)"
+		GIT_REFLOG_ACTION="rabassa -i ($action)"
 		export GIT_REFLOG_ACTION
 	fi
 fi
 
 if test "$action" = "edit-todo" && test "$type" != "interactive"
 then
-	die "$(gettext "The --edit-todo action can only be used during interactive rebase.")"
+	die "$(gettext "The --edit-todo action can only be used during interactive rabassa.")"
 fi
 
 case "$action" in
@@ -381,57 +381,57 @@ mark them as resolved using git add")"
 		exit 1
 	}
 	read_basic_state
-	run_specific_rebase
+	run_specific_rabassa
 	;;
 skip)
 	output git reset --hard HEAD || exit $?
 	read_basic_state
-	run_specific_rebase
+	run_specific_rabassa
 	;;
 abort)
 	git rerere clear
 	read_basic_state
 	case "$head_name" in
 	refs/*)
-		git symbolic-ref -m "rebase: aborting" HEAD $head_name ||
+		git symbolic-ref -m "rabassa: aborting" HEAD $head_name ||
 		die "$(eval_gettext "Could not move back to \$head_name")"
 		;;
 	esac
 	output git reset --hard $orig_head
-	finish_rebase
+	finish_rabassa
 	exit
 	;;
 quit)
 	exec rm -rf "$state_dir"
 	;;
 edit-todo)
-	run_specific_rebase
+	run_specific_rabassa
 	;;
 esac
 
-# Make sure no rebase is in progress
+# Make sure no rabassa is in progress
 if test -n "$in_progress"
 then
 	state_dir_base=${state_dir##*/}
-	cmd_live_rebase="git rebase (--continue | --abort | --skip)"
-	cmd_clear_stale_rebase="rm -fr \"$state_dir\""
+	cmd_live_rabassa="git rabassa (--continue | --abort | --skip)"
+	cmd_clear_stale_rabassa="rm -fr \"$state_dir\""
 	die "
 $(eval_gettext 'It seems that there is already a $state_dir_base directory, and
-I wonder if you are in the middle of another rebase.  If that is the
+I wonder if you are in the middle of another rabassa.  If that is the
 case, please try
-	$cmd_live_rebase
+	$cmd_live_rabassa
 If that is not the case, please
-	$cmd_clear_stale_rebase
+	$cmd_clear_stale_rabassa
 and run me again.  I am stopping in case you still have something
 valuable there.')"
 fi
 
-if test -n "$rebase_root" && test -z "$onto"
+if test -n "$rabassa_root" && test -z "$onto"
 then
-	test -z "$interactive_rebase" && interactive_rebase=implied
+	test -z "$interactive_rabassa" && interactive_rabassa=implied
 fi
 
-if test -n "$interactive_rebase"
+if test -n "$interactive_rabassa"
 then
 	type=interactive
 	state_dir="$merge_dir"
@@ -444,7 +444,7 @@ else
 	state_dir="$apply_dir"
 fi
 
-if test -z "$rebase_root"
+if test -z "$rabassa_root"
 then
 	case "$#" in
 	0)
@@ -452,8 +452,8 @@ then
 			--verify -q @{upstream} 2>/dev/null)
 		then
 			. git-parse-remote
-			error_on_missing_default_upstream "rebase" "rebase" \
-				"against" "git rebase $(gettext '<branch>')"
+			error_on_missing_default_upstream "rabassa" "rabassa" \
+				"against" "git rabassa $(gettext '<branch>')"
 		fi
 
 		test "$fork_point" = auto && fork_point=t
@@ -482,7 +482,7 @@ else
 	upstream_arg=--root
 fi
 
-# Make sure the branch to rebase onto is valid.
+# Make sure the branch to rabassa onto is valid.
 onto_name=${onto-"$upstream_name"}
 case "$onto_name" in
 *...*)
@@ -507,14 +507,14 @@ case "$onto_name" in
 	;;
 esac
 
-# If the branch to rebase is given, that is the branch we will rebase
-# $branch_name -- branch being rebased, or HEAD (already detached)
+# If the branch to rabassa is given, that is the branch we will rabassa
+# $branch_name -- branch being rabassad, or HEAD (already detached)
 # $orig_head -- commit object name of tip of the branch before rebasing
 # $head_name -- refs/heads/<that-branch> or "detached HEAD"
 switch_to=
 case "$#" in
 1)
-	# Is it "rebase other $branchname" or "rebase other $commit"?
+	# Is it "rabassa other $branchname" or "rabassa other $commit"?
 	branch_name="$1"
 	switch_to="$1"
 
@@ -568,36 +568,36 @@ then
 	git reset --hard
 fi
 
-require_clean_work_tree "rebase" "$(gettext "Please commit or stash them.")"
+require_clean_work_tree "rabassa" "$(gettext "Please commit or stash them.")"
 
 # Now we are rebasing commits $upstream..$orig_head (or with --root,
 # everything leading up to $orig_head) on top of $onto
 
 # Check if we are already based on $onto with linear history,
 # but this should be done only when upstream and onto are the same
-# and if this is not an interactive rebase.
+# and if this is not an interactive rabassa.
 mb=$(git merge-base "$onto" "$orig_head")
 if test "$type" != interactive && test "$upstream" = "$onto" &&
 	test "$mb" = "$onto" && test -z "$restrict_revision" &&
 	# linear history?
 	! (git rev-list --parents "$onto".."$orig_head" | sane_grep " .* ") > /dev/null
 then
-	if test -z "$force_rebase"
+	if test -z "$force_rabassa"
 	then
 		# Lazily switch to the target branch if needed...
 		test -z "$switch_to" ||
 		GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $switch_to" \
 			git checkout -q "$switch_to" --
 		say "$(eval_gettext "Current branch \$branch_name is up to date.")"
-		finish_rebase
+		finish_rabassa
 		exit 0
 	else
-		say "$(eval_gettext "Current branch \$branch_name is up to date, rebase forced.")"
+		say "$(eval_gettext "Current branch \$branch_name is up to date, rabassa forced.")"
 	fi
 fi
 
 # If a hook exists, give it a chance to interrupt
-run_pre_rebase_hook "$upstream_arg" "$@"
+run_pre_rabassa_hook "$upstream_arg" "$@"
 
 if test -n "$diffstat"
 then
@@ -609,7 +609,7 @@ then
 	GIT_PAGER='' git diff --stat --summary "$mb" "$onto"
 fi
 
-test "$type" = interactive && run_specific_rebase
+test "$type" = interactive && run_specific_rabassa
 
 # Detach HEAD and reset the tree
 say "$(gettext "First, rewinding head to replay your work on top of it...")"
@@ -624,15 +624,15 @@ if test "$mb" = "$orig_head"
 then
 	say "$(eval_gettext "Fast-forwarded \$branch_name to \$onto_name.")"
 	move_to_original_branch
-	finish_rebase
+	finish_rabassa
 	exit 0
 fi
 
-if test -n "$rebase_root"
+if test -n "$rabassa_root"
 then
 	revisions="$onto..$orig_head"
 else
 	revisions="${restrict_revision-$upstream}..$orig_head"
 fi
 
-run_specific_rebase
+run_specific_rabassa

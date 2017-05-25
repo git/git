@@ -482,7 +482,7 @@ exclude;;
 	<<def_tree_object,trees>> to the trees or <<def_blob_object,blobs>>
 	that they contain.
 
-[[def_rebase]]rebase::
+[[def_rabassa]]rabassa::
 	To reapply a series of changes from a <<def_branch,branch>> to a
 	different base, and reset the <<def_head,head>> of that branch
 	to the result.
@@ -646,7 +646,7 @@ The most notable example is `HEAD`.
 
 [[def_upstream_branch]]upstream branch::
 	The default <<def_branch,branch>> that is merged into the branch in
-	question (or the branch in question is rebased onto). It is configured
+	question (or the branch in question is rabassad onto). It is configured
 	via branch.<name>.remote and branch.<name>.merge. If the upstream branch
 	of 'A' is 'origin/B' sometimes we say "'A' is tracking 'origin/B'".
 

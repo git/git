@@ -313,7 +313,7 @@ The options `--contains`, `--no-contains`, `--merged` and `--no-merged`
 serve four related but different purposes:
 
 - `--contains <commit>` is used to find all branches which will need
-  special attention if <commit> were to be rebased or amended, since those
+  special attention if <commit> were to be rabassad or amended, since those
   branches contain the specified <commit>.
 
 - `--no-contains <commit>` is the inverse of that, i.e. branches that don't

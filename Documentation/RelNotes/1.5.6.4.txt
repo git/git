@@ -36,7 +36,7 @@ Fixes since v1.5.6.3
 * "git-mailinfo" (hence "git-am") did not correctly handle in-body [PATCH]
   line to override the commit title taken from the mail Subject header.
 
-* "git-rebase -i -p" lost parents that are not involved in the history
+* "git-rabassa -i -p" lost parents that are not involved in the history
   being rewritten.
 
 * "git-rm" lost track of where the index file was when GIT_DIR was

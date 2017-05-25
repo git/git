@@ -18,7 +18,7 @@ Fixes since v1.6.4
    more than one merge-bases, and merging of these merge-bases involves
    a rename/rename or a rename/add conflict.
 
- * "git pull --rebase" did not use the right fork point when the
+ * "git pull --rabassa" did not use the right fork point when the
    repository has already fetched from the upstream that rewinds the
    branch it is based on in an earlier fetch.
 

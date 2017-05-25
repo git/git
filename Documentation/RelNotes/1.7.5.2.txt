@@ -51,7 +51,7 @@ Fixes since v1.7.5.1
  * "git-p4" (in contrib) used a wrong base image while merge a file that
    was added on both branches differently.
 
- * "git rebase -i -p" failed to preserve the history when there is a
+ * "git rabassa -i -p" failed to preserve the history when there is a
    redundant merge created with the --no-ff option.
 
 And other minor fixes and documentation updates.

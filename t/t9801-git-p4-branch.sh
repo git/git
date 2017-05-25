@@ -221,7 +221,7 @@ test_expect_success 'git p4 clone simple branches' '
 		p4 submit -d "update file2 in branch1" &&
 		cd "$git" &&
 		git reset --hard p4/depot/branch1 &&
-		git p4 rebase &&
+		git p4 rabassa &&
 		grep file2_ file2
 	)
 '
@@ -587,7 +587,7 @@ test_expect_success 'git p4 clone simple branches with base folder on server sid
 		p4 submit -d "update file2 in branch1" &&
 		cd "$git" &&
 		git reset --hard p4/depot/branch1 &&
-		git p4 rebase &&
+		git p4 rabassa &&
 		grep file2_ file2
 	)
 '

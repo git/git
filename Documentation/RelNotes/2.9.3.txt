@@ -15,7 +15,7 @@ Fixes since v2.9.2
    logic does not apply to "git grep", i.e. searching in the working
    tree files.  But we did so by mistake, which has been corrected.
 
- * "git rebase -i --autostash" did not restore the auto-stashed change
+ * "git rabassa -i --autostash" did not restore the auto-stashed change
    when the operation was aborted.
 
  * "git commit --amend --allow-empty-message -S" for a commit without
@@ -90,8 +90,8 @@ Fixes since v2.9.2
    too ancient FreeBSD releases.
 
  * "git status" learned to suggest "merge --abort" during a conflicted
-   merge, just like it already suggests "rebase --abort" during a
-   conflicted rebase.
+   merge, just like it already suggests "rabassa --abort" during a
+   conflicted rabassa.
 
  * The .c/.h sources are marked as such in our .gitattributes file so
    that "git diff -W" and friends would work better.

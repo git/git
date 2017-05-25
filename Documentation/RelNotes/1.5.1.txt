@@ -203,7 +203,7 @@ These are all in v1.5.0.x series.
 
   - The main documentation did not link to git-remote documentation.
 
-  - Clarified introductory text of git-rebase documentation.
+  - Clarified introductory text of git-rabassa documentation.
 
   - Converted remaining mentions of update-index on Porcelain
     documents to git-add/git-rm.

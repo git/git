@@ -109,7 +109,7 @@ Updates since v1.6.6
  * "git am --resolved" has a synonym "git am --continue".
 
  * "git branch --set-upstream" can be used to update the (surprise!) upstream,
-   i.e. where the branch is supposed to pull and merge from (or rebase onto).
+   i.e. where the branch is supposed to pull and merge from (or rabassa onto).
 
  * "git checkout A...B" is a way to detach HEAD at the merge base between
    A and B.
@@ -158,13 +158,13 @@ Updates since v1.6.6
    lets you configure your "forker" branch to later pull from "forkee"
    branch at "origin".
 
- * "git rebase --onto A...B" means the history is replayed on top of the
+ * "git rabassa --onto A...B" means the history is replayed on top of the
    merge base between A and B.
 
- * "git rebase -i" learned new action "fixup" that squashes the change
+ * "git rabassa -i" learned new action "fixup" that squashes the change
    but does not affect existing log message.
 
- * "git rebase -i" also learned --autosquash option that is useful
+ * "git rabassa -i" also learned --autosquash option that is useful
    together with the new "fixup" action.
 
  * "git remote" learned set-url subcommand that updates (surprise!) url

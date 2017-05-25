@@ -36,7 +36,7 @@ Fixes since v1.7.11.3
    any comparison that involves a file "-" at the root level
    incorrectly read from the standard input.
 
- * We did not have test to make sure "git rebase" without extra options
+ * We did not have test to make sure "git rabassa" without extra options
    filters out an empty commit in the original history.
 
  * "git fast-export" produced an input stream for fast-import without

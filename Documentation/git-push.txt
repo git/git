@@ -178,15 +178,15 @@ already exists on the remote side.
 This option overrides this restriction if the current value of the
 remote ref is the expected value.  "git push" fails otherwise.
 +
-Imagine that you have to rebase what you have already published.
+Imagine that you have to rabassa what you have already published.
 You will have to bypass the "must fast-forward" rule in order to
-replace the history you originally published with the rebased history.
+replace the history you originally published with the rabassad history.
 If somebody else built on top of your original history while you are
 rebasing, the tip of the branch at the remote may advance with her
 commit, and blindly pushing with `--force` will lose her work.
 +
 This option allows you to say that you expect the history you are
-updating is what you rebased and want to replace. If the remote ref
+updating is what you rabassad and want to replace. If the remote ref
 still points at the commit you specified, you can be sure that no
 other people did anything to the ref. It is like taking a "lease" on
 the ref without explicitly locking it, and the remote ref is updated
@@ -250,7 +250,7 @@ more tedious like:
 +
 	git fetch              # update 'master' from remote
 	git tag base master    # mark our base point
-	git rebase -i master   # rewrite some commits
+	git rabassa -i master   # rewrite some commits
 	git push --force-with-lease=master:base master:master
 +
 I.e. create a `base` tag for versions of the upstream code that you've
@@ -476,8 +476,8 @@ and B.
 Updating A with the resulting merge commit will fast-forward and your
 push will be accepted.
 
-Alternatively, you can rebase your change between X and B on top of A,
-with "git pull --rebase", and push the result back.  The rebase will
+Alternatively, you can rabassa your change between X and B on top of A,
+with "git pull --rabassa", and push the result back.  The rabassa will
 create a new commit D that builds the change between X and B on top of
 A.
 

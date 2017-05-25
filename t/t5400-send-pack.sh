@@ -44,7 +44,7 @@ test_expect_success setup '
 	    git update-index --add mozart/is/pink &&
 	    tree=$(git write-tree) &&
 	    commit=$(echo "Rebase #$i" | git commit-tree $tree -p $parent) &&
-	    git update-ref refs/tags/rebase$i $commit &&
+	    git update-ref refs/tags/rabassa$i $commit &&
 	    parent=$commit || return 1
 	done &&
 	git update-ref HEAD "$commit" &&

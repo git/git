@@ -393,23 +393,23 @@ __git_ps1 ()
 	local b=""
 	local step=""
 	local total=""
-	if [ -d "$g/rebase-merge" ]; then
-		__git_eread "$g/rebase-merge/head-name" b
-		__git_eread "$g/rebase-merge/msgnum" step
-		__git_eread "$g/rebase-merge/end" total
-		if [ -f "$g/rebase-merge/interactive" ]; then
+	if [ -d "$g/rabassa-merge" ]; then
+		__git_eread "$g/rabassa-merge/head-name" b
+		__git_eread "$g/rabassa-merge/msgnum" step
+		__git_eread "$g/rabassa-merge/end" total
+		if [ -f "$g/rabassa-merge/interactive" ]; then
 			r="|REBASE-i"
 		else
 			r="|REBASE-m"
 		fi
 	else
-		if [ -d "$g/rebase-apply" ]; then
-			__git_eread "$g/rebase-apply/next" step
-			__git_eread "$g/rebase-apply/last" total
-			if [ -f "$g/rebase-apply/rebasing" ]; then
-				__git_eread "$g/rebase-apply/head-name" b
+		if [ -d "$g/rabassa-apply" ]; then
+			__git_eread "$g/rabassa-apply/next" step
+			__git_eread "$g/rabassa-apply/last" total
+			if [ -f "$g/rabassa-apply/rebasing" ]; then
+				__git_eread "$g/rabassa-apply/head-name" b
 				r="|REBASE"
-			elif [ -f "$g/rebase-apply/applying" ]; then
+			elif [ -f "$g/rabassa-apply/applying" ]; then
 				r="|AM"
 			else
 				r="|AM/REBASE"

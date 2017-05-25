@@ -13,7 +13,7 @@ Fixes since v1.7.8.4
  * "git grep -P" (when PCRE is enabled in the build) did not match the
    beginning and the end of the line correctly with ^ and $.
 
- * "git rebase -m" tried to run "git notes copy" needlessly when
+ * "git rabassa -m" tried to run "git notes copy" needlessly when
    nothing was rewritten.
 
 Also contains minor fixes and documentation updates.

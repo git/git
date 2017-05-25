@@ -426,7 +426,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	free(to_free);
 }
 
-static void reject_rebase_or_bisect_branch(const char *target)
+static void reject_rabassa_or_bisect_branch(const char *target)
 {
 	struct worktree **worktrees = get_worktrees(0);
 	int i;
@@ -437,8 +437,8 @@ static void reject_rebase_or_bisect_branch(const char *target)
 		if (!wt->is_detached)
 			continue;
 
-		if (is_worktree_being_rebased(wt, target))
-			die(_("Branch %s is being rebased at %s"),
+		if (is_worktree_being_rabassad(wt, target))
+			die(_("Branch %s is being rabassad at %s"),
 			    target, wt->path);
 
 		if (is_worktree_being_bisected(wt, target))
@@ -478,7 +478,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 
 	validate_new_branchname(newname, &newref, force, clobber_head_ok);
 
-	reject_rebase_or_bisect_branch(oldref.buf);
+	reject_rabassa_or_bisect_branch(oldref.buf);
 
 	strbuf_addf(&logmsg, "Branch: renamed %s to %s",
 		 oldref.buf, newref.buf);

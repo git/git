@@ -112,7 +112,7 @@ There are multiple schools of thought about the "trunk" management.
     ---o---o---A---X---Y---Z---B---C
 ------------
 +
-with `git pull --rebase` or something.
+with `git pull --rabassa` or something.
 
  2. Some projects tolerate merges in their history, but do not worry
     too much about the first-parent order, and allow fast-forward

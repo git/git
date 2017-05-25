@@ -1242,8 +1242,8 @@ char *get_head_description(void)
 	struct wt_status_state state;
 	memset(&state, 0, sizeof(state));
 	wt_status_get_state(&state, 1);
-	if (state.rebase_in_progress ||
-	    state.rebase_interactive_in_progress)
+	if (state.rabassa_in_progress ||
+	    state.rabassa_interactive_in_progress)
 		strbuf_addf(&desc, _("(no branch, rebasing %s)"),
 			    state.branch);
 	else if (state.bisect_in_progress)

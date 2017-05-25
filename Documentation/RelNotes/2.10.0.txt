@@ -9,7 +9,7 @@ Updates since v2.9
 
 UI, Workflows & Features
 
- * "git pull --rebase --verify-signature" learned to warn the user
+ * "git pull --rabassa --verify-signature" learned to warn the user
    that "--verify-signature" is a no-op when rebasing.
 
  * An upstream project can make a recommendation to shallowly clone
@@ -94,8 +94,8 @@ UI, Workflows & Features
    receiving end so that hooks can read and react to them.
 
  * "git status" learned to suggest "merge --abort" during a conflicted
-   merge, just like it already suggests "rebase --abort" during a
-   conflicted rebase.
+   merge, just like it already suggests "rabassa --abort" during a
+   conflicted rabassa.
 
  * "git jump" script (in contrib/) has been updated a bit.
    (merge a91e692 jk/git-jump later to maint).
@@ -256,7 +256,7 @@ Performance, Internal Implementation, Development Support etc.
  * Documentation has been updated to show better example usage
    of the updated "text=auto" attribute.
 
- * A few tests that specifically target "git rebase -i" have been
+ * A few tests that specifically target "git rabassa -i" have been
    added.
 
  * Dumb http transport on the client side has been optimized.
@@ -302,7 +302,7 @@ Performance, Internal Implementation, Development Support etc.
    these write(2)s are batched.
    (merge b36045c ew/http-backend-batch-headers later to maint).
 
- * When "git rebase" tries to compare set of changes on the updated
+ * When "git rabassa" tries to compare set of changes on the updated
    upstream and our own branch, it computes patch-id for all of these
    changes and attempts to find matches. This has been optimized by
    lazily computing the full patch-id (which is expensive) to be
@@ -428,7 +428,7 @@ notes for details).
    so.
 
  * Add a test to specify the desired behaviour that currently is not
-   available in "git rebase -Xsubtree=...".
+   available in "git rabassa -Xsubtree=...".
 
  * More mark-up updates to typeset strings that are expected to
    literally typed by the end user in fixed-width font.
@@ -437,7 +437,7 @@ notes for details).
    any message body could have misidentified where the header of the
    commit object ends.
 
- * "git rebase -i --autostash" did not restore the auto-stashed change
+ * "git rabassa -i --autostash" did not restore the auto-stashed change
    when the operation was aborted.
 
  * Git does not know what the contents in the index should be for a

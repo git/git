@@ -40,7 +40,7 @@ Fixes since v2.7
  * Asking gitweb for a nonexistent commit left a warning in the server
    log.
 
- * "git rebase", unlike all other callers of "gc --auto", did not
+ * "git rabassa", unlike all other callers of "gc --auto", did not
    ignore the exit code from "gc --auto".
 
  * Many codepaths that run "gc --auto" before exiting kept packfiles

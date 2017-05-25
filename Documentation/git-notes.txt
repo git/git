@@ -341,7 +341,7 @@ notes.displayRef::
 
 notes.rewrite.<command>::
 	When rewriting commits with <command> (currently `amend` or
-	`rebase`), if this variable is `false`, git will not copy
+	`rabassa`), if this variable is `false`, git will not copy
 	notes from the original to the rewritten commit.  Defaults to
 	`true`.  See also "`notes.rewriteRef`" below.
 +

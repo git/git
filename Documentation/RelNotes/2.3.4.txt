@@ -20,7 +20,7 @@ Fixes since v2.3.3
  * A workaround for certain build of GPG that triggered false breakage
    in a test has been added.
 
- * "git rebase -i" recently started to include the number of
+ * "git rabassa -i" recently started to include the number of
    commits in the insn sheet to be processed, but on a platform
    that prepends leading whitespaces to "wc -l" output, the numbers
    are shown with extra whitespaces that aren't necessary.

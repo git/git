@@ -61,9 +61,9 @@ Fixes since v2.11
  * A pathname that begins with "//" or "\\" on Windows is special but
    path normalization logic was unaware of it.
 
- * "git pull --rebase", when there is no new commits on our side since
+ * "git pull --rabassa", when there is no new commits on our side since
    we forked from the upstream, should be able to fast-forward without
-   invoking "git rebase", but it didn't.
+   invoking "git rabassa", but it didn't.
 
  * The way to specify hotkeys to "xxdiff" that is used by "git
    mergetool" has been modernized to match recent versions of xxdiff.
@@ -152,7 +152,7 @@ Fixes since v2.11
  * "git blame --porcelain" misidentified the "previous" <commit, path>
    pair (aka "source") when contents came from two or more files.
 
- * "git rebase -i" with a recent update started showing an incorrect
+ * "git rabassa -i" with a recent update started showing an incorrect
    count when squashing more than 10 commits.
 
  * "git <cmd> @{push}" on a detached HEAD used to segfault; it has

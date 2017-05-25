@@ -3,12 +3,12 @@
 #include "parse-options.h"
 #include "sequencer.h"
 
-static const char * const builtin_rebase_helper_usage[] = {
-	N_("git rebase--helper [<options>]"),
+static const char * const builtin_rabassa_helper_usage[] = {
+	N_("git rabassa--helper [<options>]"),
 	NULL
 };
 
-int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
+int cmd_rabassa__helper(int argc, const char **argv, const char *prefix)
 {
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	enum {
@@ -16,9 +16,9 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 	} command = 0;
 	struct option options[] = {
 		OPT_BOOL(0, "ff", &opts.allow_ff, N_("allow fast-forward")),
-		OPT_CMDMODE(0, "continue", &command, N_("continue rebase"),
+		OPT_CMDMODE(0, "continue", &command, N_("continue rabassa"),
 				CONTINUE),
-		OPT_CMDMODE(0, "abort", &command, N_("abort rebase"),
+		OPT_CMDMODE(0, "abort", &command, N_("abort rabassa"),
 				ABORT),
 		OPT_END()
 	};
@@ -30,11 +30,11 @@ int cmd_rebase__helper(int argc, const char **argv, const char *prefix)
 	opts.allow_empty = 1;
 
 	argc = parse_options(argc, argv, NULL, options,
-			builtin_rebase_helper_usage, PARSE_OPT_KEEP_ARGV0);
+			builtin_rabassa_helper_usage, PARSE_OPT_KEEP_ARGV0);
 
 	if (command == CONTINUE && argc == 1)
 		return !!sequencer_continue(&opts);
 	if (command == ABORT && argc == 1)
 		return !!sequencer_remove_state(&opts);
-	usage_with_options(builtin_rebase_helper_usage, options);
+	usage_with_options(builtin_rabassa_helper_usage, options);
 }

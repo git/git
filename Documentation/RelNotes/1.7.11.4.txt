@@ -10,7 +10,7 @@ Fixes since v1.7.11.3
  * The advise() function did not use varargs correctly to format
    its message.
 
- * When "git am" failed, old timers knew to check .git/rebase-apply/patch
+ * When "git am" failed, old timers knew to check .git/rabassa-apply/patch
    to see what went wrong, but we never told the users about it.
 
  * "git commit-tree" learned a more natural "-p <parent> <tree>" order
@@ -19,7 +19,7 @@ Fixes since v1.7.11.3
  * "git diff --no-ext-diff" did not output anything for a typechange
    filepair when GIT_EXTERNAL_DIFF is in effect.
 
- * In 1.7.9 era, we taught "git rebase" about the raw timestamp format
+ * In 1.7.9 era, we taught "git rabassa" about the raw timestamp format
    but we did not teach the same trick to "filter-branch", which rolled
    a similar logic on its own.
 

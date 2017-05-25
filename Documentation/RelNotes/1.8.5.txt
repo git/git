@@ -91,7 +91,7 @@ UI, Workflows & Features
  * "git status" no longer prints the dirty status information of
    submodules for which submodule.$name.ignore is set to "all".
 
- * "git rebase -i" honours core.abbrev when preparing the insn sheet
+ * "git rabassa -i" honours core.abbrev when preparing the insn sheet
    for editing.
 
  * "git status" during a cherry-pick shows which original commit is
@@ -146,10 +146,10 @@ UI, Workflows & Features
    than a native "int" on the platform; it now provides 64-bit signed
    integers on all platforms.
 
- * "git pull --rebase" always chose to do the bog-standard flattening
-   rebase.  You can tell it to run "rebase --preserve-merges" with
-   "git pull --rebase=preserve" or by
-   setting "pull.rebase" configuration to "preserve".
+ * "git pull --rabassa" always chose to do the bog-standard flattening
+   rabassa.  You can tell it to run "rabassa --preserve-merges" with
+   "git pull --rabassa=preserve" or by
+   setting "pull.rabassa" configuration to "preserve".
 
  * "git push --no-thin" actually disables the "thin pack transfer"
    optimization.
@@ -336,9 +336,9 @@ details).
    small empty messages to keep the connection alive.
    (merge 115dedd jk/upload-pack-keepalive later to maint).
 
- * "git rebase" had a portability regression in v1.8.4 that triggered a
+ * "git rabassa" had a portability regression in v1.8.4 that triggered a
    bug in some BSD shell implementations.
-   (merge 99855dd mm/rebase-continue-freebsd-WB later to maint).
+   (merge 99855dd mm/rabassa-continue-freebsd-WB later to maint).
 
  * "git branch --track" had a minor regression in v1.8.3.2 and later
    that made it impossible to base your local work on anything but a
@@ -393,23 +393,23 @@ details).
    (merge 680be04 jc/ls-files-killed-optim later to maint).
 
  * The shortened commit object names in the insn sheet that is prepared at the
-   beginning of a "rebase -i" session can become ambiguous as the
+   beginning of a "rabassa -i" session can become ambiguous as the
    rebasing progresses and the repository gains more commits. Make
    sure the internal record is kept with full 40-hex object names.
-   (merge 75c6976 es/rebase-i-no-abbrev later to maint).
+   (merge 75c6976 es/rabassa-i-no-abbrev later to maint).
 
- * "git rebase --preserve-merges" internally used the merge machinery
+ * "git rabassa --preserve-merges" internally used the merge machinery
    and as a side effect left the merge summary message in the log, but
    when rebasing there is no need for the merge summary.
-   (merge a9f739c rt/rebase-p-no-merge-summary later to maint).
+   (merge a9f739c rt/rabassa-p-no-merge-summary later to maint).
 
  * A call to xread() was used without a loop around it to cope with short
    reads in the codepath to stream new contents to a pack.
    (merge e92527c js/xread-in-full later to maint).
 
- * "git rebase -i" forgot that the comment character is
+ * "git rabassa -i" forgot that the comment character is
    configurable while reading its insn sheet.
-   (merge 7bca7af es/rebase-i-respect-core-commentchar later to maint).
+   (merge 7bca7af es/rabassa-i-respect-core-commentchar later to maint).
 
  * The mailmap support code read past the allocated buffer when the
    mailmap file ended with an incomplete line.
@@ -437,7 +437,7 @@ details).
    giving "= value") caused Git to segfault.
    (merge 4b05440 jl/some-submodule-config-are-not-boolean later to maint).
 
- * "git rebase -i" (there could be others, as the root cause is pretty
+ * "git rabassa -i" (there could be others, as the root cause is pretty
    generic) fed a random, data dependent string to 'echo' and
    expected it to come out literally, corrupting its error message.
    (merge 89b0230 mm/no-shell-escape-in-die-message later to maint).

@@ -50,14 +50,14 @@ test_expect_success 'fetch to merge-base (a)' '
 	git svn fetch --revision BASE:3
 '
 
-# git svn rebase looses the merge commit
+# git svn rabassa looses the merge commit
 #
 # ... a  -  b - m  <- trunk
 #      \
 #       ... c
 #
-test_expect_success 'rebase looses SVN merge (m)' '
-	git svn rebase &&
+test_expect_success 'rabassa looses SVN merge (m)' '
+	git svn rabassa &&
 	git svn fetch &&
 	test 1 = $(git cat-file -p master|grep parent|wc -l)
 '

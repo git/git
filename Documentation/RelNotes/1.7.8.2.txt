@@ -64,7 +64,7 @@ Fixes since v1.7.8.1
  * "git push -v" forgot how to be verbose by mistake. It now properly
    becomes verbose when asked to.
 
- * When a "reword" action in "git rebase -i" failed to run "commit --amend",
+ * When a "reword" action in "git rabassa -i" failed to run "commit --amend",
    we did not give the control back to the user to resolve the situation, and
    instead kept the original commit log message.
 

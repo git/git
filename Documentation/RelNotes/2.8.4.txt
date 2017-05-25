@@ -13,7 +13,7 @@ Fixes since v2.8.3
    dot are now marked as hidden, with a core.hideDotFiles knob to
    customize this behaviour.
 
- * Portability enhancement for "rebase -i" to help platforms whose
+ * Portability enhancement for "rabassa -i" to help platforms whose
    shell does not like "for i in <empty>" (which is not POSIX-kosher).
 
  * "git fsck" learned to catch NUL byte in a commit object as

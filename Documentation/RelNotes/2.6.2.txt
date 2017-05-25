@@ -23,7 +23,7 @@ Fixes since v2.6.1
    useless "HEAD detached at HEAD", instead of saying at which exact
    commit.
 
- * "git rebase -i" had a minor regression recently, which stopped
+ * "git rabassa -i" had a minor regression recently, which stopped
    considering a line that begins with an indented '#' in its insn
    sheet not a comment, which is now fixed.
 

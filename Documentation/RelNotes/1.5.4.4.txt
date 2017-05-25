@@ -14,10 +14,10 @@ Fixes since v1.5.4.3
  * "git http-push" had an invalid memory access that could lead it to
    segfault.
 
- * When "git rebase -i" gave control back to the user for a commit that is
+ * When "git rabassa -i" gave control back to the user for a commit that is
    marked to be edited, it just said "modify it with commit --amend",
    without saying what to do to continue after modifying it.  Give an
-   explicit instruction to run "rebase --continue" to be more helpful.
+   explicit instruction to run "rabassa --continue" to be more helpful.
 
  * "git send-email" in 1.5.4.3 issued a bogus empty In-Reply-To: header.
 
@@ -61,6 +61,6 @@ Fixes since v1.5.4.3
  * The reset command in "git fast-import" data stream was documented to
    end with an optional LF, but it actually required one.
 
- * "git svn dcommit/rebase" did not honor --rewrite-root option.
+ * "git svn dcommit/rabassa" did not honor --rewrite-root option.
 
 Also included are a handful documentation updates.

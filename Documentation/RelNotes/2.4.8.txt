@@ -4,7 +4,7 @@ Git v2.4.8 Release Notes
 Fixes since v2.4.7
 ------------------
 
- * Abandoning an already applied change in "git rebase -i" with
+ * Abandoning an already applied change in "git rabassa -i" with
    "--continue" left CHERRY_PICK_HEAD and confused later steps.
 
  * Various fixes around "git am" that applies a patch to a history

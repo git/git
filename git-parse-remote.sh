@@ -75,8 +75,8 @@ error_on_missing_default_upstream () {
 		gettextln "There is no tracking information for the current branch."
 	fi
 	case "$op_type" in
-	rebase)
-		gettextln "Please specify which branch you want to rebase against."
+	rabassa)
+		gettextln "Please specify which branch you want to rabassa against."
 		;;
 	merge)
 		gettextln "Please specify which branch you want to merge with."

@@ -33,7 +33,7 @@ Updates since v1.5.5
 * "git clone" was rewritten in C.  This will hopefully help cloning a
   repository with insane number of refs.
 
-* "git rebase --onto $there $from $branch" used to switch to the tip of
+* "git rabassa --onto $there $from $branch" used to switch to the tip of
   $branch only to immediately reset back to $from, smudging work tree
   files unnecessarily.  This has been optimized.
 
@@ -51,8 +51,8 @@ Updates since v1.5.5
   does its work on a detached HEAD.
 
 * "git branch" (and "git checkout -b") can be told to set up
-  branch.<name>.rebase automatically, so that later you can say "git pull"
-  and magically cause "git pull --rebase" to happen.
+  branch.<name>.rabassa automatically, so that later you can say "git pull"
+  and magically cause "git pull --rabassa" to happen.
 
 * "git branch --merged" and "git branch --no-merged" can be used to list
   branches that have already been merged (or not yet merged) to the

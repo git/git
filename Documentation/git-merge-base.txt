@@ -166,10 +166,10 @@ where `origin/master` used to point at commits B3, B2, B1 and now it
 points at B, and your `topic` branch was started on top of it back
 when `origin/master` was at B3. This mode uses the reflog of
 `origin/master` to find B3 as the fork point, so that the `topic`
-can be rebased on top of the updated `origin/master` by:
+can be rabassad on top of the updated `origin/master` by:
 
     $ fork_point=$(git merge-base --fork-point origin/master topic)
-    $ git rebase --onto origin/master $fork_point topic
+    $ git rabassa --onto origin/master $fork_point topic
 
 
 See also

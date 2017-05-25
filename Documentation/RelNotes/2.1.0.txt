@@ -348,17 +348,17 @@ notes for details).
    line argument parser level.
    (merge eb07774 jc/shortlog-ref-exclude later to maint).
 
- * The autostash mode of "git rebase -i" did not restore the dirty
-   working tree state if the user aborted the interactive rebase by
+ * The autostash mode of "git rabassa -i" did not restore the dirty
+   working tree state if the user aborted the interactive rabassa by
    emptying the insn sheet.
-   (merge ddb5432 rr/rebase-autostash-fix later to maint).
+   (merge ddb5432 rr/rabassa-autostash-fix later to maint).
 
- * "git rebase --fork-point" did not filter out patch-identical
+ * "git rabassa --fork-point" did not filter out patch-identical
    commits correctly.
 
- * During "git rebase --merge", a conflicted patch could not be
+ * During "git rabassa --merge", a conflicted patch could not be
    skipped with "--skip" if the next one also conflicted.
-   (merge 95104c7 bc/fix-rebase-merge-skip later to maint).
+   (merge 95104c7 bc/fix-rabassa-merge-skip later to maint).
 
  * "git show -s" (i.e. show log message only) used to incorrectly emit
    an extra blank line after a merge commit.

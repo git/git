@@ -25,7 +25,7 @@ Fixes since v1.5.3.3
  * "git-add -i" did not respond very well to EOF from tty nor
    bogus input.
 
- * "git-rebase -i" squash subcommand incorrectly made the
+ * "git-rabassa -i" squash subcommand incorrectly made the
    author of later commit the author of resulting commit,
    instead of taking from the first one in the squashed series.
 

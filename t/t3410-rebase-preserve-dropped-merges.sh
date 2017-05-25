@@ -3,9 +3,9 @@
 # Copyright (c) 2008 Stephen Haberman
 #
 
-test_description='git rebase preserve merges
+test_description='git rabassa preserve merges
 
-This test runs git rebase with preserve merges and ensures commits
+This test runs git rabassa with preserve merges and ensures commits
 dropped by the --cherry-pick flag have their childrens parents
 rewritten.
 '
@@ -50,7 +50,7 @@ test_expect_success 'skip same-resolution merges with -p' '
 	test_must_fail git merge E &&
 	test_commit J file1 23 &&
 	test_commit K file7 file7 &&
-	git rebase -i -p L &&
+	git rabassa -i -p L &&
 	test $(git rev-parse HEAD^^) = $(git rev-parse L) &&
 	test "23" = "$(cat file1)" &&
 	test "I" = "$(cat file6)" &&
@@ -72,10 +72,10 @@ test_expect_success 'keep different-resolution merges with -p' '
 	test_must_fail git merge E &&
 	test_commit J2 file1 24 &&
 	test_commit K2 file7 file7 &&
-	test_must_fail git rebase -i -p L2 &&
+	test_must_fail git rabassa -i -p L2 &&
 	echo 234 > file1 &&
 	git add file1 &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	test $(git rev-parse HEAD^^^) = $(git rev-parse L2) &&
 	test "234" = "$(cat file1)" &&
 	test "I" = "$(cat file6)" &&

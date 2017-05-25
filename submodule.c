@@ -291,7 +291,7 @@ int parse_submodule_update_strategy(const char *value,
 		dst->type = SM_UPDATE_NONE;
 	else if (!strcmp(value, "checkout"))
 		dst->type = SM_UPDATE_CHECKOUT;
-	else if (!strcmp(value, "rebase"))
+	else if (!strcmp(value, "rabassa"))
 		dst->type = SM_UPDATE_REBASE;
 	else if (!strcmp(value, "merge"))
 		dst->type = SM_UPDATE_MERGE;
@@ -312,7 +312,7 @@ const char *submodule_strategy_to_string(const struct submodule_update_strategy 
 	case SM_UPDATE_MERGE:
 		return "merge";
 	case SM_UPDATE_REBASE:
-		return "rebase";
+		return "rabassa";
 	case SM_UPDATE_NONE:
 		return "none";
 	case SM_UPDATE_UNSPECIFIED:

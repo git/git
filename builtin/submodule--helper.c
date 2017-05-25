@@ -978,7 +978,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 			      "submodule boundaries")),
 		OPT_STRING(0, "update", &update,
 			   N_("string"),
-			   N_("rebase, merge, checkout or none")),
+			   N_("rabassa, merge, checkout or none")),
 		OPT_STRING_LIST(0, "reference", &suc.references, N_("repo"),
 			   N_("reference repository")),
 		OPT_STRING(0, "depth", &suc.depth, "<depth>",

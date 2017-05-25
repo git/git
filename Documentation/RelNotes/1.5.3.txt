@@ -42,7 +42,7 @@ Updates since v1.5.2
   - "git stash" allows you to quickly save away your work in
     progress and replay it later on an updated state.
 
-  - "git rebase" learned an "interactive" mode that let you
+  - "git rabassa" learned an "interactive" mode that let you
     pick and reorder which commits to rebuild.
 
   - "git fsck" can save its findings in $GIT_DIR/lost-found, without a
@@ -363,4 +363,4 @@ this release, unless otherwise noted.
     inconsistency was introduced somewhere in v1.3.0 series but now has
     been corrected.
 
-  - "git rebase -m" incorrectly displayed commits that were skipped.
+  - "git rabassa -m" incorrectly displayed commits that were skipped.

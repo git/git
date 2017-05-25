@@ -52,14 +52,14 @@ Fixes since v1.7.11.5
    working tree and taking data from an object that happens to have
    name 0{40} recorded in a tree.
 
- * The "--rebase" option to "git pull" can be abbreviated to "-r",
+ * The "--rabassa" option to "git pull" can be abbreviated to "-r",
    but we didn't document it.
 
  * When "git push" triggered the automatic gc on the receiving end, a
    message from "git prune" that said it was removing cruft leaked to
    the standard output, breaking the communication protocol.
 
- * The reflog entries left by "git rebase" and "git rebase -i" were
+ * The reflog entries left by "git rabassa" and "git rabassa -i" were
    inconsistent (the interactive one gave an abbreviated object name).
 
  * "git send-email" did not unquote encoded words that appear on the

@@ -46,7 +46,7 @@ test_expect_success 'am with dos files without --keep-cr' '
 	git format-patch -k initial..master &&
 	test_must_fail git am -k -3 000*.patch &&
 	git am --abort &&
-	rm -rf .git/rebase-apply 000*.patch
+	rm -rf .git/rabassa-apply 000*.patch
 '
 
 test_expect_success 'am with dos files with --keep-cr' '
@@ -68,7 +68,7 @@ test_expect_success 'am with dos files config am.keepcr overridden by --no-keep-
 	git format-patch -k initial..master &&
 	test_must_fail git am -k -3 --no-keep-cr 000*.patch &&
 	git am --abort &&
-	rm -rf .git/rebase-apply 000*.patch
+	rm -rf .git/rabassa-apply 000*.patch
 '
 
 test_expect_success 'am with dos files with --keep-cr continue' '

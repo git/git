@@ -43,7 +43,7 @@ actually affected all git commands, now only affects "git config".
 GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
 not different from GIT_CONFIG in a useful way, is removed.
 
-The ".dotest" temporary area "git am" and "git rebase" use is now moved
+The ".dotest" temporary area "git am" and "git rabassa" use is now moved
 inside the $GIT_DIR, to avoid mistakes of adding it to the project by
 accident.
 
@@ -196,7 +196,7 @@ Updates since v1.5.6
   history and the user killed the UI; the process is killed when the UI goes
   away now.
 
-* git-rebase records the original tip of branch in ORIG_HEAD before it is
+* git-rabassa records the original tip of branch in ORIG_HEAD before it is
   rewound.
 
 * "git rerere" can be told to update the index with auto-reused resolution
@@ -252,7 +252,7 @@ this release, unless otherwise noted.
    and that are only in the working tree, by staging both in the index
    after moving such a path.
 
- * "git-rebase -i -p" rewrote the parents to wrong ones when amending
+ * "git-rabassa -i -p" rewrote the parents to wrong ones when amending
    (either edit or squash) was involved, and did not work correctly
    when fast forwarding.
 

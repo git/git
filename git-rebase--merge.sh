@@ -1,4 +1,4 @@
-# This shell script fragment is sourced by git-rebase to implement
+# This shell script fragment is sourced by git-rabassa to implement
 # its merge-based non-interactive mode that copes well with renamed
 # files.
 #
@@ -95,9 +95,9 @@ finish_rb_merge () {
 	move_to_original_branch
 	if test -s "$state_dir"/rewritten
 	then
-		git notes copy --for-rewrite=rebase <"$state_dir"/rewritten
+		git notes copy --for-rewrite=rabassa <"$state_dir"/rewritten
 		hook="$(git rev-parse --git-path hooks/post-rewrite)"
-		test -x "$hook" && "$hook" rebase <"$state_dir"/rewritten
+		test -x "$hook" && "$hook" rabassa <"$state_dir"/rewritten
 	fi
 	say All done.
 }
@@ -111,7 +111,7 @@ finish_rb_merge () {
 # construct and continue to run the statements that follow such a "return".
 # As a work-around, we introduce an extra layer of a function
 # here, and immediately call it after defining it.
-git_rebase__merge () {
+git_rabassa__merge () {
 
 case "$action" in
 continue)
@@ -166,4 +166,4 @@ finish_rb_merge
 
 }
 # ... and then we call the whole thing.
-git_rebase__merge
+git_rabassa__merge

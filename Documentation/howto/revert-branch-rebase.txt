@@ -104,12 +104,12 @@ $ git diff master..revert-c99
 
 says nothing.
 
-Then we rebase the 'pu' branch as usual.
+Then we rabassa the 'pu' branch as usual.
 
 ------------------------------------------------
 $ git checkout pu
 $ git tag pu-anchor pu
-$ git rebase master
+$ git rabassa master
 * Applying: Redo "revert" using three-way merge machinery.
 First trying simple merge strategy to cherry-pick.
 * Applying: Remove git-apply-patch-script.
@@ -128,7 +128,7 @@ First trying simple merge strategy to cherry-pick.
 ------------------------------------------------
 
 The temporary tag 'pu-anchor' is me just being careful, in case 'git
-rebase' screws up.  After this, I can do these for sanity check:
+rabassa' screws up.  After this, I can do these for sanity check:
 
 ------------------------------------------------
 $ git diff pu-anchor..pu ;# make sure we got the master fix.

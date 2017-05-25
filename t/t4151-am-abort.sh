@@ -120,7 +120,7 @@ test_expect_success 'am -3 stops on conflict on unborn branch' '
 '
 
 test_expect_success 'am -3 --skip clears index on unborn branch' '
-	test_path_is_dir .git/rebase-apply &&
+	test_path_is_dir .git/rabassa-apply &&
 	echo tmpfile >tmpfile &&
 	git add tmpfile &&
 	git am --skip &&

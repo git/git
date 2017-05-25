@@ -2166,8 +2166,8 @@ class P4Submit(Command, P4UserMap):
                 sync.branch = self.branch
             sync.run([])
 
-            rebase = P4Rebase()
-            rebase.rebase()
+            rabassa = P4Rebase()
+            rabassa.rabassa()
 
         else:
             if len(applied) == 0:
@@ -2181,7 +2181,7 @@ class P4Submit(Command, P4UserMap):
                         star = " "
                     print star, read_pipe(["git", "show", "-s",
                                            "--format=format:%h %s",  c])
-                print "You will have to do 'git p4 sync' and rebase."
+                print "You will have to do 'git p4 sync' and rabassa."
 
         if gitConfigBool("git-p4.exportLabels"):
             self.exportLabels = True
@@ -3571,16 +3571,16 @@ class P4Rebase(Command):
         ]
         self.importLabels = False
         self.description = ("Fetches the latest revision from perforce and "
-                            + "rebases the current work (branch) against it")
+                            + "rabassas the current work (branch) against it")
 
     def run(self, args):
         sync = P4Sync()
         sync.importLabels = self.importLabels
         sync.run([])
 
-        return self.rebase()
+        return self.rabassa()
 
-    def rebase(self):
+    def rabassa(self):
         if os.system("git update-index --refresh") != 0:
             die("Some files in your working directory are modified and different than what is in your index. You can use git update-index <filename> to bring the index up-to-date or stash away all your changes with git stash.");
         if len(read_pipe("git diff-index HEAD --")) > 0:
@@ -3588,14 +3588,14 @@ class P4Rebase(Command):
 
         [upstream, settings] = findUpstreamBranchPoint()
         if len(upstream) == 0:
-            die("Cannot find upstream branchpoint for rebase")
+            die("Cannot find upstream branchpoint for rabassa")
 
         # the branchpoint may be p4/foo~3, so strip off the parent
         upstream = re.sub("~[0-9]+$", "", upstream)
 
         print "Rebasing the current branch onto %s" % upstream
         oldHead = read_pipe("git rev-parse HEAD").strip()
-        system("git rebase %s" % upstream)
+        system("git rabassa %s" % upstream)
         system("git diff-tree --stat --summary -M %s HEAD --" % oldHead)
         return True
 
@@ -3729,7 +3729,7 @@ commands = {
     "submit" : P4Submit,
     "commit" : P4Submit,
     "sync" : P4Sync,
-    "rebase" : P4Rebase,
+    "rabassa" : P4Rebase,
     "clone" : P4Clone,
     "rollback" : P4RollBack,
     "branches" : P4Branches

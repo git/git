@@ -3,7 +3,7 @@
 # Copyright (c) 2013 Ramkumar Ramachandra
 #
 
-test_description='git rebase --autostash tests'
+test_description='git rabassa --autostash tests'
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -33,52 +33,52 @@ test_expect_success setup '
 	git commit -m "related commit"
 '
 
-testrebase() {
+testrabassa() {
 	type=$1
 	dotest=$2
 
-	test_expect_success "rebase$type: dirty worktree, --no-autostash" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: dirty worktree, --no-autostash" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		test_when_finished git checkout feature-branch &&
 		echo dirty >>file3 &&
-		test_must_fail git rebase$type --no-autostash unrelated-onto-branch
+		test_must_fail git rabassa$type --no-autostash unrelated-onto-branch
 	'
 
-	test_expect_success "rebase$type: dirty worktree, non-conflicting rebase" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: dirty worktree, non-conflicting rabassa" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		echo dirty >>file3 &&
-		git rebase$type unrelated-onto-branch &&
+		git rabassa$type unrelated-onto-branch &&
 		grep unrelated file4 &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
 
-	test_expect_success "rebase$type: dirty index, non-conflicting rebase" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: dirty index, non-conflicting rabassa" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		echo dirty >>file3 &&
 		git add file3 &&
-		git rebase$type unrelated-onto-branch &&
+		git rabassa$type unrelated-onto-branch &&
 		grep unrelated file4 &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
 
-	test_expect_success "rebase$type: conflicting rebase" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: conflicting rabassa" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		echo dirty >>file3 &&
-		test_must_fail git rebase$type related-onto-branch &&
+		test_must_fail git rabassa$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
 		! grep dirty file3 &&
 		rm -rf $dotest &&
@@ -86,61 +86,61 @@ testrebase() {
 		git checkout feature-branch
 	'
 
-	test_expect_success "rebase$type: --continue" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: --continue" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		echo dirty >>file3 &&
-		test_must_fail git rebase$type related-onto-branch &&
+		test_must_fail git rabassa$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
 		! grep dirty file3 &&
 		echo "conflicting-plus-goodbye" >file2 &&
 		git add file2 &&
-		git rebase --continue &&
+		git rabassa --continue &&
 		test_path_is_missing $dotest/autostash &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
 
-	test_expect_success "rebase$type: --skip" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: --skip" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		echo dirty >>file3 &&
-		test_must_fail git rebase$type related-onto-branch &&
+		test_must_fail git rabassa$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
 		! grep dirty file3 &&
-		git rebase --skip &&
+		git rabassa --skip &&
 		test_path_is_missing $dotest/autostash &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
 
-	test_expect_success "rebase$type: --abort" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: --abort" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		echo dirty >>file3 &&
-		test_must_fail git rebase$type related-onto-branch &&
+		test_must_fail git rabassa$type related-onto-branch &&
 		test_path_is_file $dotest/autostash &&
 		! grep dirty file3 &&
-		git rebase --abort &&
+		git rabassa --abort &&
 		test_path_is_missing $dotest/autostash &&
 		grep dirty file3 &&
 		git checkout feature-branch
 	'
 
-	test_expect_success "rebase$type: non-conflicting rebase, conflicting stash" '
-		test_config rebase.autostash true &&
+	test_expect_success "rabassa$type: non-conflicting rabassa, conflicting stash" '
+		test_config rabassa.autostash true &&
 		git reset --hard &&
-		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
+		git checkout -b rabassad-feature-branch feature-branch &&
+		test_when_finished git branch -D rabassad-feature-branch &&
 		echo dirty >file4 &&
 		git add file4 &&
-		git rebase$type unrelated-onto-branch &&
+		git rabassa$type unrelated-onto-branch &&
 		test_path_is_missing $dotest &&
 		git reset --hard &&
 		grep unrelated file4 &&
@@ -151,33 +151,33 @@ testrebase() {
 	'
 }
 
-test_expect_success "rebase: fast-forward rebase" '
-	test_config rebase.autostash true &&
+test_expect_success "rabassa: fast-forward rabassa" '
+	test_config rabassa.autostash true &&
 	git reset --hard &&
 	git checkout -b behind-feature-branch feature-branch~1 &&
 	test_when_finished git branch -D behind-feature-branch &&
 	echo dirty >>file1 &&
-	git rebase feature-branch &&
+	git rabassa feature-branch &&
 	grep dirty file1 &&
 	git checkout feature-branch
 '
 
-test_expect_success "rebase: noop rebase" '
-	test_config rebase.autostash true &&
+test_expect_success "rabassa: noop rabassa" '
+	test_config rabassa.autostash true &&
 	git reset --hard &&
 	git checkout -b same-feature-branch feature-branch &&
 	test_when_finished git branch -D same-feature-branch &&
 	echo dirty >>file1 &&
-	git rebase feature-branch &&
+	git rabassa feature-branch &&
 	grep dirty file1 &&
 	git checkout feature-branch
 '
 
-testrebase "" .git/rebase-apply
-testrebase " --merge" .git/rebase-merge
-testrebase " --interactive" .git/rebase-merge
+testrabassa "" .git/rabassa-apply
+testrabassa " --merge" .git/rabassa-merge
+testrabassa " --interactive" .git/rabassa-merge
 
-test_expect_success 'abort rebase -i with --autostash' '
+test_expect_success 'abort rabassa -i with --autostash' '
 	test_when_finished "git reset --hard" &&
 	echo uncommitted-content >file0 &&
 	(
@@ -185,7 +185,7 @@ test_expect_success 'abort rebase -i with --autostash' '
 			echo >"$1"
 		EOF
 		test_set_editor "$(pwd)/abort-editor.sh" &&
-		test_must_fail git rebase -i --autostash HEAD^ &&
+		test_must_fail git rabassa -i --autostash HEAD^ &&
 		rm -f abort-editor.sh
 	) &&
 	echo uncommitted-content >expected &&
@@ -197,7 +197,7 @@ test_expect_success 'restore autostash on editor failure' '
 	echo uncommitted-content >file0 &&
 	(
 		test_set_editor "false" &&
-		test_must_fail git rebase -i --autostash HEAD^
+		test_must_fail git rabassa -i --autostash HEAD^
 	) &&
 	echo uncommitted-content >expected &&
 	test_cmp expected file0
@@ -212,7 +212,7 @@ test_expect_success 'autostash is saved on editor failure with conflict' '
 			exit 1
 		EOF
 		test_set_editor "$(pwd)/abort-editor.sh" &&
-		test_must_fail git rebase -i --autostash HEAD^ &&
+		test_must_fail git rabassa -i --autostash HEAD^ &&
 		rm -f abort-editor.sh
 	) &&
 	echo conflicting-content >expected &&

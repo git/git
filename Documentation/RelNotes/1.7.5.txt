@@ -39,7 +39,7 @@ Updates since v1.7.4
    any branch or tag.
 
  * "git cherry-pick" and "git revert" can be told to use a custom merge
-   strategy, similar to "git rebase".
+   strategy, similar to "git rabassa".
 
  * "git cherry-pick" remembers which commit failed to apply when it is
    stopped by conflicts, making it unnecessary to use "commit -c $commit"

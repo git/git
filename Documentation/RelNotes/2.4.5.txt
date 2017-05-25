@@ -21,7 +21,7 @@ Fixes since v2.4.4
    old objects in the reachability chain from them, which sometimes
    showed unnecessary error messages that are alarming.
 
- * "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
+ * "git rabassa -i" fired post-rewrite hook when it shouldn't (namely,
    when it was told to stop sequencing with 'exec' insn).
 
 Also contains typofixes, documentation updates and trivial code

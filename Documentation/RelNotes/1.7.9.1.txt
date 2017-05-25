@@ -47,7 +47,7 @@ Fixes since v1.7.9
  * When "git push" fails to update any refs, the client side did not
    report an error correctly to the end user.
 
- * "rebase" and "commit --amend" failed to work on commits with ancient
+ * "rabassa" and "commit --amend" failed to work on commits with ancient
    timestamps near year 1970.
 
  * When asking for a tag to be pulled, "request-pull" did not show the

@@ -55,7 +55,7 @@ Fixes since v2.3.1
  * "git fetch" over a remote-helper that cannot respond to "list"
    command could not fetch from a symbolic reference e.g. HEAD.
 
- * The insn sheet "git rebase -i" creates did not fully honor
+ * The insn sheet "git rabassa -i" creates did not fully honor
    core.abbrev settings.
 
  * The tests that wanted to see that file becomes unreadable after

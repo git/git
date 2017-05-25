@@ -22,7 +22,7 @@ test_check_precond
 
 test_git_reimport () {
 	git -c remote.origin.dumbPush=true push &&
-	git -c remote.origin.mediaImport=true pull --rebase
+	git -c remote.origin.mediaImport=true pull --rabassa
 }
 
 # Don't bother with permissions, be administrator by default

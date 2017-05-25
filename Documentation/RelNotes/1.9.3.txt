@@ -11,7 +11,7 @@ Fixes since v1.9.2
    interface, used an unsafe construct when showing the branch name in
    $PS1.
 
- * "git rebase" used a POSIX shell construct FreeBSD /bin/sh does not
+ * "git rabassa" used a POSIX shell construct FreeBSD /bin/sh does not
    work well with.
 
  * Some more Unicode codepoints defined in Unicode 6.3 as having

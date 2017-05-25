@@ -231,7 +231,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * The require_clean_work_tree() helper was recreated in C when "git
    pull" was rewritten from shell; the helper is now made available to
-   other callers in preparation for upcoming "rebase -i" work.
+   other callers in preparation for upcoming "rabassa -i" work.
 
  * "git upload-pack" had its code cleaned-up and performance improved
    by reducing use of timestamp-ordered commit-list, which was
@@ -242,7 +242,7 @@ Performance, Internal Implementation, Development Support etc.
    directory, when we know we are operating outside any repository.
 
  * Update of the sequencer codebase to make it reusable to reimplement
-   "rebase -i" continues.
+   "rabassa -i" continues.
 
  * Git generally does not explicitly close file descriptors that were
    open in the parent process when spawning a child process, but most
@@ -345,11 +345,11 @@ notes for details).
 
  * More i18n.
 
- * Even when "git pull --rebase=preserve" (and the underlying "git
-   rebase --preserve") can complete without creating any new commits
+ * Even when "git pull --rabassa=preserve" (and the underlying "git
+   rabassa --preserve") can complete without creating any new commits
    (i.e. fast-forwards), it still insisted on having usable ident
    information (read: user.email is set correctly), which was less
-   than nice.  As the underlying commands used inside "git rebase"
+   than nice.  As the underlying commands used inside "git rabassa"
    would fail with a more meaningful error message and advice text
    when the bogus ident matters, this extra check was removed.
 
@@ -390,7 +390,7 @@ notes for details).
    no-no.  The procedure has been updated to ask HomeBrew things we
    need to know to fix this.
 
- * When "git rebase -i" is given a broken instruction, it told the
+ * When "git rabassa -i" is given a broken instruction, it told the
    user to fix it with "--edit-todo", but didn't say what the step
    after that was (i.e. "--continue").
 
@@ -509,7 +509,7 @@ notes for details).
    repository, in a worktree that is connected to the bare
    repository.  The check has been corrected to allow it.
 
- * "git rebase" immediately after "git clone" failed to find the fork
+ * "git rabassa" immediately after "git clone" failed to find the fork
    point from the upstream.
 
  * When fetching from a remote that has many tags that are irrelevant
@@ -574,15 +574,15 @@ notes for details).
    caused the command to segfault when on an unborn branch.
    (merge 84679d470d jc/for-each-ref-head-segfault-fix later to maint).
 
- * "git rebase -i" did not work well with the core.commentchar
+ * "git rabassa -i" did not work well with the core.commentchar
    configuration variable for two reasons, both of which have been
    fixed.
-   (merge 882cd23777 js/rebase-i-commentchar-fix later to maint).
+   (merge 882cd23777 js/rabassa-i-commentchar-fix later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge 5c238e29a8 jk/common-main later to maint).
    (merge 5a5749e45b ak/pre-receive-hook-template-modefix later to maint).
-   (merge 6d834ac8f1 jk/rebase-config-insn-fmt-docfix later to maint).
+   (merge 6d834ac8f1 jk/rabassa-config-insn-fmt-docfix later to maint).
    (merge de9f7fa3b0 rs/commit-pptr-simplify later to maint).
    (merge 4259d693fc sc/fmt-merge-msg-doc-markup-fix later to maint).
    (merge 28fab7b23d nd/test-helpers later to maint).

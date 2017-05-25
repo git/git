@@ -142,7 +142,7 @@ static void am_state_init(struct am_state *state)
 
 	memset(state, 0, sizeof(*state));
 
-	state->dir = git_pathdup("rebase-apply");
+	state->dir = git_pathdup("rabassa-apply");
 
 	state->prec = 4;
 
@@ -506,7 +506,7 @@ static int run_post_rewrite_hook(const struct am_state *state)
 		return 0;
 
 	argv_array_push(&cp.args, hook);
-	argv_array_push(&cp.args, "rebase");
+	argv_array_push(&cp.args, "rabassa");
 
 	cp.in = xopen(am_path(state, "rewritten"), O_RDONLY);
 	cp.stdout_to_stderr = 1;
@@ -523,18 +523,18 @@ static int run_post_rewrite_hook(const struct am_state *state)
  *
  * Returns 0 on success, -1 on failure.
  */
-static int copy_notes_for_rebase(const struct am_state *state)
+static int copy_notes_for_rabassa(const struct am_state *state)
 {
 	struct notes_rewrite_cfg *c;
 	struct strbuf sb = STRBUF_INIT;
 	const char *invalid_line = _("Malformed input line: '%s'.");
-	const char *msg = "Notes added by 'git rebase'";
+	const char *msg = "Notes added by 'git rabassa'";
 	FILE *fp;
 	int ret = 0;
 
 	assert(state->rebasing);
 
-	c = init_copy_notes_for_rewrite("rebase");
+	c = init_copy_notes_for_rewrite("rabassa");
 	if (!c)
 		return 0;
 
@@ -1474,7 +1474,7 @@ static void write_index_patch(const struct am_state *state)
  *
  * Will always return 0 as the patch should never be skipped.
  */
-static int parse_mail_rebase(struct am_state *state, const char *mail)
+static int parse_mail_rabassa(struct am_state *state, const char *mail)
 {
 	struct commit *commit;
 	struct object_id commit_oid;
@@ -1831,7 +1831,7 @@ static void am_run(struct am_state *state, int resume)
 			int skip;
 
 			if (state->rebasing)
-				skip = parse_mail_rebase(state, mail);
+				skip = parse_mail_rabassa(state, mail);
 			else
 				skip = parse_mail(state, mail);
 
@@ -1899,7 +1899,7 @@ next:
 
 	if (!is_empty_file(am_path(state, "rewritten"))) {
 		assert(state->rebasing);
-		copy_notes_for_rebase(state);
+		copy_notes_for_rabassa(state);
 		run_post_rewrite_hook(state);
 	}
 
@@ -2309,7 +2309,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		  N_("GPG-sign commits"),
 		  PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,
-			N_("(internal use for git-rebase)")),
+			N_("(internal use for git-rabassa)")),
 		OPT_END()
 	};
 
@@ -2346,7 +2346,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		 *    unattended.
 		 */
 		if (argc || (resume == RESUME_FALSE && !isatty(0)))
-			die(_("previous rebase directory %s still exists but mbox given."),
+			die(_("previous rabassa directory %s still exists but mbox given."),
 				state.dir);
 
 		if (resume == RESUME_FALSE)

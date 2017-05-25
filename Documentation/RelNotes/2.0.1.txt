@@ -92,8 +92,8 @@ Git v2.0.1 Release Notes
    identical to the above pipeline, was not accepted at the command
    line argument parser level.
 
- * The autostash mode of "git rebase -i" did not restore the dirty
-   working tree state if the user aborted the interactive rebase by
+ * The autostash mode of "git rabassa -i" did not restore the dirty
+   working tree state if the user aborted the interactive rabassa by
    emptying the insn sheet.
 
  * "git show -s" (i.e. show log message only) used to incorrectly emit

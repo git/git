@@ -1,5 +1,5 @@
-# This shell script fragment is sourced by git-rebase to implement
-# its interactive mode.  "git rebase --interactive" makes it easy
+# This shell script fragment is sourced by git-rabassa to implement
+# its interactive mode.  "git rabassa --interactive" makes it easy
 # to fix up commits in the middle of a series and rearrange commits.
 #
 # Copyright (c) 2006 Johannes E. Schindelin
@@ -7,13 +7,13 @@
 # The original idea comes from Eric W. Biederman, in
 # https://public-inbox.org/git/m1odwkyuf5.fsf_-_@ebiederm.dsl.xmission.com/
 #
-# The file containing rebase commands, comments, and empty lines.
-# This file is created by "git rebase -i" then edited by the user.  As
+# The file containing rabassa commands, comments, and empty lines.
+# This file is created by "git rabassa -i" then edited by the user.  As
 # the lines are processed, they are removed from the front of this
 # file and written to the tail of $done.
-todo="$state_dir"/git-rebase-todo
+todo="$state_dir"/git-rabassa-todo
 
-# The rebase command lines that have already been processed.  A line
+# The rabassa command lines that have already been processed.  A line
 # is moved here when it is first handled, before any associated user
 # actions.
 done="$state_dir"/done
@@ -59,14 +59,14 @@ msgnum="$state_dir"/msgnum
 
 # A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
 # GIT_AUTHOR_DATE that will be used for the commit that is currently
-# being rebased.
+# being rabassad.
 author_script="$state_dir"/author-script
 
-# When an "edit" rebase command is being processed, the SHA1 of the
-# commit to be edited is recorded in this file.  When "git rebase
+# When an "edit" rabassa command is being processed, the SHA1 of the
+# commit to be edited is recorded in this file.  When "git rabassa
 # --continue" is executed, if there are any staged changes then they
 # will be amended to the HEAD commit, but only provided the HEAD
-# commit is still the commit to be edited.  When any other rebase
+# commit is still the commit to be edited.  When any other rabassa
 # command is processed, this file is deleted.
 amend="$state_dir"/amend
 
@@ -118,8 +118,8 @@ orig_reflog_action="$GIT_REFLOG_ACTION"
 
 comment_for_reflog () {
 	case "$orig_reflog_action" in
-	''|rebase*)
-		GIT_REFLOG_ACTION="rebase -i ($1)"
+	''|rabassa*)
+		GIT_REFLOG_ACTION="rabassa -i ($1)"
 		export GIT_REFLOG_ACTION
 		;;
 	esac
@@ -215,7 +215,7 @@ You can amend the commit now, with
 
 Once you are satisfied with your changes, run
 
-	git rebase --continue")"
+	git rabassa --continue")"
 	warn
 	exit $2
 }
@@ -271,7 +271,7 @@ pick_one () {
 	ff=--ff
 
 	case "$1" in -n) sha1=$2; ff= ;; *) sha1=$1 ;; esac
-	case "$force_rebase" in '') ;; ?*) ff= ;; esac
+	case "$force_rabassa" in '') ;; ?*) ff= ;; esac
 	output git rev-parse --verify $sha1 || die "$(eval_gettext "Invalid commit name: \$sha1")"
 
 	if is_empty_commit "$sha1"
@@ -516,9 +516,9 @@ do_pick () {
 		# without committing (-n).  Finally, update the sentinel again
 		# to include these changes.  If the cherry-pick results in a
 		# conflict, this means our behaviour is similar to a standard
-		# failed cherry-pick during rebase, with a dirty index to
+		# failed cherry-pick during rabassa, with a dirty index to
 		# resolve before manually running git commit --amend then git
-		# rebase --continue.
+		# rabassa --continue.
 		git commit --allow-empty --allow-empty-message --amend \
 			   --no-post-rewrite -n -q -C $sha1 &&
 			pick_one -n $sha1 &&
@@ -633,7 +633,7 @@ you are able to reword the commit.")"
 		status=$?
 		# Run in subshell because require_clean_work_tree can die.
 		dirty=f
-		(require_clean_work_tree "rebase" 2>/dev/null) || dirty=t
+		(require_clean_work_tree "rabassa" 2>/dev/null) || dirty=t
 		if test "$status" -ne 0
 		then
 			warn "$(eval_gettext "Execution failed: \$rest")"
@@ -643,7 +643,7 @@ you are able to reword the commit.")"
 			warn "$(gettext "\
 You can fix the problem, and then run
 
-	git rebase --continue")"
+	git rabassa --continue")"
 			warn
 			if test $status -eq 127		# command not found
 			then
@@ -658,14 +658,14 @@ Execution succeeded: \$rest
 but left changes to the index and/or the working tree
 Commit or stash your changes, and then run
 
-	git rebase --continue")"
+	git rabassa --continue")"
 			warn
 			exit 1
 		fi
 		;;
 	*)
 		warn "$(eval_gettext "Unknown command: \$command \$sha1 \$rest")"
-		fixtodo="$(gettext "Please fix this using 'git rebase --edit-todo'.")"
+		fixtodo="$(gettext "Please fix this using 'git rabassa --edit-todo'.")"
 		if git rev-parse --verify -q "$sha1" >/dev/null
 		then
 			die_with_patch $sha1 "$fixtodo"
@@ -692,15 +692,15 @@ Commit or stash your changes, and then run
 	} &&
 	{
 		test -s "$rewritten_list" &&
-		git notes copy --for-rewrite=rebase < "$rewritten_list" ||
+		git notes copy --for-rewrite=rabassa < "$rewritten_list" ||
 		true # we don't care if this copying failed
 	} &&
 	hook="$(git rev-parse --git-path hooks/post-rewrite)"
 	if test -x "$hook" && test -s "$rewritten_list"; then
-		"$hook" rebase < "$rewritten_list"
+		"$hook" rabassa < "$rewritten_list"
 		true # we don't care if this hook failed
 	fi &&
-		warn "$(eval_gettext "Successfully rebased and updated \$head_name.")"
+		warn "$(eval_gettext "Successfully rabassad and updated \$head_name.")"
 
 	return 1 # not failure; just to break the do_rest loop
 }
@@ -982,14 +982,14 @@ checkout_onto () {
 }
 
 get_missing_commit_check_level () {
-	check_level=$(git config --get rebase.missingCommitsCheck)
+	check_level=$(git config --get rabassa.missingCommitsCheck)
 	check_level=${check_level:-ignore}
 	# Don't be case sensitive
 	printf '%s' "$check_level" | tr 'A-Z' 'a-z'
 }
 
 # Check if the user dropped some commits by mistake
-# Behaviour determined by rebase.missingCommitsCheck.
+# Behaviour determined by rabassa.missingCommitsCheck.
 # Check if there is an unrecognized command or a
 # bad SHA-1 in a command.
 check_todo_list () {
@@ -1026,7 +1026,7 @@ Dropped commits (newer to older):")"
 			warn "$(gettext "\
 To avoid this message, use \"drop\" to explicitly remove a commit.
 
-Use 'git config rebase.missingCommitsCheck' to change the level of warnings.
+Use 'git config rabassa.missingCommitsCheck' to change the level of warnings.
 The possible behaviours are: ignore, warn, error.")"
 			warn
 		fi
@@ -1034,7 +1034,7 @@ The possible behaviours are: ignore, warn, error.")"
 	ignore)
 		;;
 	*)
-		warn "$(eval_gettext "Unrecognized setting \$check_level for option rebase.missingCommitsCheck. Ignoring.")"
+		warn "$(eval_gettext "Unrecognized setting \$check_level for option rabassa.missingCommitsCheck. Ignoring.")"
 		;;
 	esac
 
@@ -1046,13 +1046,13 @@ The possible behaviours are: ignore, warn, error.")"
 	if test $raise_error = t
 	then
 		# Checkout before the first commit of the
-		# rebase: this way git rebase --continue
+		# rabassa: this way git rabassa --continue
 		# will work correctly as it expects HEAD to be
 		# placed before the commit of the next action
 		checkout_onto
 
-		warn "$(gettext "You can fix this with 'git rebase --edit-todo' and then run 'git rebase --continue'.")"
-		die "$(gettext "Or you can abort the rebase with 'git rebase --abort'.")"
+		warn "$(gettext "You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --continue'.")"
+		die "$(gettext "Or you can abort the rabassa with 'git rabassa --abort'.")"
 	fi
 }
 
@@ -1065,13 +1065,13 @@ The possible behaviours are: ignore, warn, error.")"
 # construct and continue to run the statements that follow such a "return".
 # As a work-around, we introduce an extra layer of a function
 # here, and immediately call it after defining it.
-git_rebase__interactive () {
+git_rabassa__interactive () {
 
 case "$action" in
 continue)
 	if test ! -d "$rewritten"
 	then
-		exec git rebase--helper ${force_rebase:+--no-ff} --continue
+		exec git rabassa--helper ${force_rabassa:+--no-ff} --continue
 	fi
 	# do we have anything to commit?
 	if git diff-index --cached --quiet HEAD --
@@ -1098,7 +1098,7 @@ If they are meant to go into a new commit, run:
 
 In both cases, once you're done, continue with:
 
-  git rebase --continue
+  git rabassa --continue
 ")"
 		fi
 		. "$author_script" ||
@@ -1109,7 +1109,7 @@ In both cases, once you're done, continue with:
 			test "$current_head" = $(cat "$amend") ||
 			die "$(gettext "\
 You have uncommitted changes in your working tree. Please commit them
-first and then run 'git rebase --continue' again.")"
+first and then run 'git rabassa --continue' again.")"
 			do_with_author git commit --amend --no-verify -F "$msg" -e \
 				${gpg_sign_opt:+"$gpg_sign_opt"} ||
 				die "$(gettext "Could not commit staged changes.")"
@@ -1125,7 +1125,7 @@ first and then run 'git rebase --continue' again.")"
 		record_in_rewritten "$(cat "$state_dir"/stopped-sha)"
 	fi
 
-	require_clean_work_tree "rebase"
+	require_clean_work_tree "rabassa"
 	do_rest
 	return 0
 	;;
@@ -1134,7 +1134,7 @@ skip)
 
 	if test ! -d "$rewritten"
 	then
-		exec git rebase--helper ${force_rebase:+--no-ff} --continue
+		exec git rabassa--helper ${force_rabassa:+--no-ff} --continue
 	fi
 	do_rest
 	return 0
@@ -1145,9 +1145,9 @@ edit-todo)
 	collapse_todo_ids
 	append_todo_help
 	gettext "
-You are editing the todo file of an ongoing interactive rebase.
-To continue rebase after editing, run:
-    git rebase --continue
+You are editing the todo file of an ongoing interactive rabassa.
+To continue rabassa after editing, run:
+    git rabassa --continue
 
 " | git stripspace --comment-lines >>"$todo"
 
@@ -1177,7 +1177,7 @@ mkdir -p "$state_dir" || die "$(eval_gettext "Could not create temporary \$state
 write_basic_state
 if test t = "$preserve_merges"
 then
-	if test -z "$rebase_root"
+	if test -z "$rabassa_root"
 	then
 		mkdir "$rewritten" &&
 		for c in $(git merge-base --all $orig_head $upstream)
@@ -1200,7 +1200,7 @@ fi
 
 shorthead=$(git rev-parse --short $orig_head)
 shortonto=$(git rev-parse --short $onto)
-if test -z "$rebase_root"
+if test -z "$rabassa_root"
 	# this is now equivalent to ! -z "$upstream"
 then
 	shortupstream=$(git rev-parse --short $upstream)
@@ -1210,7 +1210,7 @@ else
 	revisions=$onto...$orig_head
 	shortrevisions=$shorthead
 fi
-format=$(git config --get rebase.instructionFormat)
+format=$(git config --get rabassa.instructionFormat)
 # the 'rev-list .. | sed' requires %m to parse; the instruction requires %H to parse
 git rev-list $merges_option --format="%m%H ${format:-%s}" \
 	--reverse --left-right --topo-order \
@@ -1230,7 +1230,7 @@ do
 	then
 		printf '%s\n' "${comment_out}pick $sha1 $rest" >>"$todo"
 	else
-		if test -z "$rebase_root"
+		if test -z "$rabassa_root"
 		then
 			preserve=t
 			for p in $(git rev-list --parents -1 $sha1 | cut -d' ' -s -f2-)
@@ -1294,7 +1294,7 @@ $comment_char $(eval_ngettext \
 EOF
 append_todo_help
 gettext "
-However, if you remove everything, the rebase will be aborted.
+However, if you remove everything, the rabassa will be aborted.
 
 " | git stripspace --comment-lines >>"$todo"
 
@@ -1319,16 +1319,16 @@ check_todo_list
 
 expand_todo_ids
 
-test -d "$rewritten" || test -n "$force_rebase" || skip_unnecessary_picks
+test -d "$rewritten" || test -n "$force_rabassa" || skip_unnecessary_picks
 
 checkout_onto
-if test -z "$rebase_root" && test ! -d "$rewritten"
+if test -z "$rabassa_root" && test ! -d "$rewritten"
 then
-	require_clean_work_tree "rebase"
-	exec git rebase--helper ${force_rebase:+--no-ff} --continue
+	require_clean_work_tree "rabassa"
+	exec git rabassa--helper ${force_rabassa:+--no-ff} --continue
 fi
 do_rest
 
 }
 # ... and then we call the whole thing.
-git_rebase__interactive
+git_rabassa__interactive

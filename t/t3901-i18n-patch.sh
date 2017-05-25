@@ -88,8 +88,8 @@ test_expect_success 'format-patch output (UTF-8)' '
 	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD=20=C3=B3=C3=BA?=" out-u2
 '
 
-test_expect_success 'rebase (U/U)' '
-	# We want the result of rebase in UTF-8
+test_expect_success 'rabassa (U/U)' '
+	# We want the result of rabassa in UTF-8
 	git config i18n.commitencoding UTF-8 &&
 
 	# The test is about logoutputencoding not affecting the
@@ -102,35 +102,35 @@ test_expect_success 'rebase (U/U)' '
 	# we want UTF-8 encoded name.
 	. "$TEST_DIRECTORY"/t3901-utf8.txt &&
 	git checkout -b test &&
-	git rebase master &&
+	git rabassa master &&
 
 	check_encoding 2
 '
 
-test_expect_success 'rebase (U/L)' '
+test_expect_success 'rabassa (U/L)' '
 	git config i18n.commitencoding UTF-8 &&
 	git config i18n.logoutputencoding ISO8859-1 &&
 	. "$TEST_DIRECTORY"/t3901-utf8.txt &&
 
 	git reset --hard side &&
-	git rebase master &&
+	git rabassa master &&
 
 	check_encoding 2
 '
 
-test_expect_success !MINGW 'rebase (L/L)' '
+test_expect_success !MINGW 'rabassa (L/L)' '
 	# In this test we want ISO-8859-1 encoded commits as the result
 	git config i18n.commitencoding ISO8859-1 &&
 	git config i18n.logoutputencoding ISO8859-1 &&
 	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git rebase master &&
+	git rabassa master &&
 
 	check_encoding 2 8859
 '
 
-test_expect_success !MINGW 'rebase (L/U)' '
+test_expect_success !MINGW 'rabassa (L/U)' '
 	# This is pathological -- use UTF-8 as intermediate form
 	# to get ISO-8859-1 results.
 	git config i18n.commitencoding ISO8859-1 &&
@@ -138,7 +138,7 @@ test_expect_success !MINGW 'rebase (L/U)' '
 	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git rebase master &&
+	git rabassa master &&
 
 	check_encoding 2 8859
 '
@@ -204,41 +204,41 @@ test_expect_success !MINGW 'cherry-pick(L/U)' '
 	check_encoding 3 8859
 '
 
-test_expect_success 'rebase --merge (U/U)' '
+test_expect_success 'rabassa --merge (U/U)' '
 	git config i18n.commitencoding UTF-8 &&
 	git config i18n.logoutputencoding UTF-8 &&
 	. "$TEST_DIRECTORY"/t3901-utf8.txt &&
 
 	git reset --hard side &&
-	git rebase --merge master &&
+	git rabassa --merge master &&
 
 	check_encoding 2
 '
 
-test_expect_success 'rebase --merge (U/L)' '
+test_expect_success 'rabassa --merge (U/L)' '
 	git config i18n.commitencoding UTF-8 &&
 	git config i18n.logoutputencoding ISO8859-1 &&
 	. "$TEST_DIRECTORY"/t3901-utf8.txt &&
 
 	git reset --hard side &&
-	git rebase --merge master &&
+	git rabassa --merge master &&
 
 	check_encoding 2
 '
 
-test_expect_success 'rebase --merge (L/L)' '
+test_expect_success 'rabassa --merge (L/L)' '
 	# In this test we want ISO-8859-1 encoded commits as the result
 	git config i18n.commitencoding ISO8859-1 &&
 	git config i18n.logoutputencoding ISO8859-1 &&
 	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git rebase --merge master &&
+	git rabassa --merge master &&
 
 	check_encoding 2 8859
 '
 
-test_expect_success 'rebase --merge (L/U)' '
+test_expect_success 'rabassa --merge (L/U)' '
 	# This is pathological -- use UTF-8 as intermediate form
 	# to get ISO-8859-1 results.
 	git config i18n.commitencoding ISO8859-1 &&
@@ -246,7 +246,7 @@ test_expect_success 'rebase --merge (L/U)' '
 	. "$TEST_DIRECTORY"/t3901-8859-1.txt &&
 
 	git reset --hard side &&
-	git rebase --merge master &&
+	git rabassa --merge master &&
 
 	check_encoding 2 8859
 '

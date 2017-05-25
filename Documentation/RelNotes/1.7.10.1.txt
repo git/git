@@ -72,7 +72,7 @@ Fixes since v1.7.10
    $there using the upstream information to a remote unreleated to
    $there.
 
- * Giving "--continue" to a conflicted "rebase -i" session skipped a
+ * Giving "--continue" to a conflicted "rabassa -i" session skipped a
    commit that only results in changes to submodules.
 
 Also contains minor fixes and documentation updates.

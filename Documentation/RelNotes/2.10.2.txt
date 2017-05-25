@@ -89,7 +89,7 @@ Fixes since v2.10.1
    reopsitory, in a worktree that is connected to the bare
    repository.  The check has been corrected to allow it.
 
- * "git rebase" immediately after "git clone" failed to find the fork
+ * "git rabassa" immediately after "git clone" failed to find the fork
    point from the upstream.
 
  * When fetching from a remote that has many tags that are irrelevant

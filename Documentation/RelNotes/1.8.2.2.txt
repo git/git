@@ -14,8 +14,8 @@ Fixes since v1.8.2.1
  * The new core.commentchar configuration was not applied to a few
    places.
 
- * "git pull --rebase" did not pass "-v/-q" options to underlying
-   "git rebase".
+ * "git pull --rabassa" did not pass "-v/-q" options to underlying
+   "git rabassa".
 
  * When receive-pack detects error in the pack header it received in
    order to decide which of unpack-objects or index-pack to run, it

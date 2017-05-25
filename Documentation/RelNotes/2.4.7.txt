@@ -43,7 +43,7 @@ Fixes since v2.4.6
 
  * Fix a small bug in our use of umask() return value.
 
- * "git rebase" did not exit with failure when format-patch it invoked
+ * "git rabassa" did not exit with failure when format-patch it invoked
    failed for whatever reason.
 
  * Disable "have we lost a race with competing repack?" check while

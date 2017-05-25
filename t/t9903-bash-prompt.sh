@@ -165,7 +165,7 @@ test_expect_success 'prompt - inside bare repository' '
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - interactive rebase' '
+test_expect_success 'prompt - interactive rabassa' '
 	printf " (b1|REBASE-i 2/3)" >expected &&
 	write_script fake_editor.sh <<-\EOF &&
 		echo "exec echo" >"$1"
@@ -176,28 +176,28 @@ test_expect_success 'prompt - interactive rebase' '
 	test_set_editor "$TRASH_DIRECTORY/fake_editor.sh" &&
 	git checkout b1 &&
 	test_when_finished "git checkout master" &&
-	git rebase -i HEAD^ &&
-	test_when_finished "git rebase --abort" &&
+	git rabassa -i HEAD^ &&
+	test_when_finished "git rabassa --abort" &&
 	__git_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - rebase merge' '
+test_expect_success 'prompt - rabassa merge' '
 	printf " (b2|REBASE-m 1/3)" >expected &&
 	git checkout b2 &&
 	test_when_finished "git checkout master" &&
-	test_must_fail git rebase --merge b1 b2 &&
-	test_when_finished "git rebase --abort" &&
+	test_must_fail git rabassa --merge b1 b2 &&
+	test_when_finished "git rabassa --abort" &&
 	__git_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - rebase' '
+test_expect_success 'prompt - rabassa' '
 	printf " (b2|REBASE 1/3)" >expected &&
 	git checkout b2 &&
 	test_when_finished "git checkout master" &&
-	test_must_fail git rebase b1 b2 &&
-	test_when_finished "git rebase --abort" &&
+	test_must_fail git rabassa b1 b2 &&
+	test_when_finished "git rabassa --abort" &&
 	__git_ps1 >"$actual" &&
 	test_cmp expected "$actual"
 '

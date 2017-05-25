@@ -91,14 +91,14 @@ test_expect_success 'multiple dcommit from git svn will not clobber svn' "
 	"
 
 
-test_expect_success 'check that rebase really failed' '
-	test -d .git/rebase-apply
+test_expect_success 'check that rabassa really failed' '
+	test -d .git/rabassa-apply
 '
 
-test_expect_success 'resolve, continue the rebase and dcommit' "
+test_expect_success 'resolve, continue the rabassa and dcommit' "
 	echo clobber and I really mean it > file &&
 	git update-index file &&
-	git rebase --continue &&
+	git rabassa --continue &&
 	git svn dcommit
 	"
 

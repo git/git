@@ -2884,8 +2884,8 @@ msgid "cherry-pick"
 msgstr "cherry-pick"
 
 #: sequencer.c:219
-msgid "rebase -i"
-msgstr "rebase -i"
+msgid "rabassa -i"
+msgstr "rabassa -i"
 
 #: sequencer.c:221
 #, c-format
@@ -2951,7 +2951,7 @@ msgid "%s: fast-forward"
 msgstr "%s: snabbspola"
 
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
-#. * "rebase -i".
+#. * "rabassa -i".
 #.
 #: sequencer.c:470
 #, c-format
@@ -2980,7 +2980,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "du har köade ändringar i din arbetskatalog.\n"
 "Om ändringarna skall läggas in i föregående incheckning, kör:\n"
@@ -2993,7 +2993,7 @@ msgstr ""
 "\n"
 "Oavsett vilket, när du är färdig fortsätter du med:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
 #: sequencer.c:694
 #, c-format
@@ -3049,7 +3049,7 @@ msgstr "kunde inte läsa HEAD:s incheckningsmeddelande"
 msgid "cannot write '%s'"
 msgstr "kan inte skriva \"%s\""
 
-#: sequencer.c:861 git-rebase--interactive.sh:445
+#: sequencer.c:861 git-rabassa--interactive.sh:445
 msgid "This is the 1st commit message:"
 msgstr "Det här är 1:a incheckningsmeddelandet:"
 
@@ -3149,8 +3149,8 @@ msgid "could not read '%s'."
 msgstr "kunde inte läsa \"%s\"."
 
 #: sequencer.c:1356
-msgid "please fix this using 'git rebase --edit-todo'."
-msgstr "rätta det med \"git rebase --edit-todo\"."
+msgid "please fix this using 'git rabassa --edit-todo'."
+msgstr "rätta det med \"git rabassa --edit-todo\"."
 
 #: sequencer.c:1358
 #, c-format
@@ -3257,13 +3257,13 @@ msgid ""
 "execution failed: %s\n"
 "%sYou can fix the problem, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "körningen misslyckades: %s\n"
 "%sDu kan rätta problemet och sedan köra\n"
 "\n"
-"\tgit rebase --continue\n"
+"\tgit rabassa --continue\n"
 "\n"
 
 #: sequencer.c:1859
@@ -3277,17 +3277,17 @@ msgid ""
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 "\n"
 msgstr ""
 "körningen lyckades: %s\n"
 "men lämnade kvar ändringar i indexet och/eller arbetskatalogen\n"
 "Checka in eller utför \"stash\" på ändringarna och kör sedan\n"
 "\n"
-"\tgit rebase --continue\n"
+"\tgit rabassa --continue\n"
 "\n"
 
-#: sequencer.c:1920 git-rebase.sh:169
+#: sequencer.c:1920 git-rabassa.sh:169
 #, c-format
 msgid "Applied autostash."
 msgstr "Tillämpade autostash."
@@ -3297,7 +3297,7 @@ msgstr "Tillämpade autostash."
 msgid "cannot store %s"
 msgstr "kan inte spara %s"
 
-#: sequencer.c:1934 git-rebase.sh:173
+#: sequencer.c:1934 git-rabassa.sh:173
 #, c-format
 msgid ""
 "Applying autostash resulted in conflicts.\n"
@@ -3337,7 +3337,7 @@ msgid "could not update HEAD to %s"
 msgstr "kunde inte uppdatera HEAD till %s"
 
 #: sequencer.c:2190
-msgid "cannot rebase: You have unstaged changes."
+msgid "cannot rabassa: You have unstaged changes."
 msgstr "kan inte ombasera: Du har oköade ändringar."
 
 #: sequencer.c:2195
@@ -3362,11 +3362,11 @@ msgstr "ogiltigt innehåll: \"%s\""
 msgid ""
 "\n"
 "You have uncommitted changes in your working tree. Please, commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
 "\n"
 "Du har ändringar i arbetskatalogen som inte checkats in. Checka in dem\n"
-"först och kör sedan \"git rebase --continute\" igen."
+"först och kör sedan \"git rabassa --continute\" igen."
 
 #: sequencer.c:2221
 msgid "could not commit staged changes."
@@ -4263,8 +4263,8 @@ msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr "  (använd \"git am --abort\" för att återställa ursprungsgrenen)"
 
 #: wt-status.c:1189
-msgid "git-rebase-todo is missing."
-msgstr "git-rebase-todo saknas."
+msgid "git-rabassa-todo is missing."
+msgstr "git-rabassa-todo saknas."
 
 #: wt-status.c:1191
 msgid "No commands done."
@@ -4294,8 +4294,8 @@ msgstr[0] "Nästa kommando att utföra (%d kommando återstår):"
 msgstr[1] "Följande kommandon att utföra (%d kommandon återstår):"
 
 #: wt-status.c:1221
-msgid "  (use \"git rebase --edit-todo\" to view and edit)"
-msgstr "  (använd \"git rebase --edit-todo\" för att visa och redigera)"
+msgid "  (use \"git rabassa --edit-todo\" to view and edit)"
+msgstr "  (använd \"git rabassa --edit-todo\" för att visa och redigera)"
 
 #: wt-status.c:1234
 #, c-format
@@ -4307,20 +4307,20 @@ msgid "You are currently rebasing."
 msgstr "Du håller på med en ombasering."
 
 #: wt-status.c:1253
-msgid "  (fix conflicts and then run \"git rebase --continue\")"
-msgstr "  (rätta konflikter och kör sedan \"git rebase --continue\")"
+msgid "  (fix conflicts and then run \"git rabassa --continue\")"
+msgstr "  (rätta konflikter och kör sedan \"git rabassa --continue\")"
 
 #: wt-status.c:1255
-msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  (använd \"git rebase --skip\" för att hoppa över patchen)"
+msgid "  (use \"git rabassa --skip\" to skip this patch)"
+msgstr "  (använd \"git rabassa --skip\" för att hoppa över patchen)"
 
 #: wt-status.c:1257
-msgid "  (use \"git rebase --abort\" to check out the original branch)"
-msgstr "  (använd \"git rebase --abort\" för att checka ut ursprungsgrenen)"
+msgid "  (use \"git rabassa --abort\" to check out the original branch)"
+msgstr "  (använd \"git rabassa --abort\" för att checka ut ursprungsgrenen)"
 
 #: wt-status.c:1263
-msgid "  (all conflicts fixed: run \"git rebase --continue\")"
-msgstr "  (alla konflikter rättade: kör \"git rebase --continue\")"
+msgid "  (all conflicts fixed: run \"git rabassa --continue\")"
+msgstr "  (alla konflikter rättade: kör \"git rabassa --continue\")"
 
 #: wt-status.c:1267
 #, c-format
@@ -4331,12 +4331,12 @@ msgstr ""
 "ovanpå \"%s\"."
 
 #: wt-status.c:1272
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a commit during a rabassa."
 msgstr "Du håller på att dela upp en incheckning i en ombasering."
 
 #: wt-status.c:1275
-msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
-msgstr "  (Så fort din arbetskatalog är ren, kör \"git rebase --continue\")"
+msgid "  (Once your working directory is clean, run \"git rabassa --continue\")"
+msgstr "  (Så fort din arbetskatalog är ren, kör \"git rabassa --continue\")"
 
 #: wt-status.c:1279
 #, c-format
@@ -4346,7 +4346,7 @@ msgstr ""
 "ovanpå \"%s\"."
 
 #: wt-status.c:1284
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a commit during a rabassa."
 msgstr "Du håller på att redigera en incheckning under en ombasering."
 
 #: wt-status.c:1287
@@ -4356,8 +4356,8 @@ msgstr ""
 
 #: wt-status.c:1289
 msgid ""
-"  (use \"git rebase --continue\" once you are satisfied with your changes)"
-msgstr "  (använd \"git rebase --continue\" när du är nöjd med dina ändringar)"
+"  (use \"git rabassa --continue\" once you are satisfied with your changes)"
+msgstr "  (använd \"git rabassa --continue\" när du är nöjd med dina ändringar)"
 
 #: wt-status.c:1299
 #, c-format
@@ -4414,11 +4414,11 @@ msgid "On branch "
 msgstr "På grenen "
 
 #: wt-status.c:1549
-msgid "interactive rebase in progress; onto "
+msgid "interactive rabassa in progress; onto "
 msgstr "interaktiv ombasering pågår; ovanpå"
 
 #: wt-status.c:1551
-msgid "rebase in progress; onto "
+msgid "rabassa in progress; onto "
 msgstr "ombasering pågår; ovanpå"
 
 #: wt-status.c:1556
@@ -4532,7 +4532,7 @@ msgstr "efter "
 msgid "ahead "
 msgstr "före "
 
-#. TRANSLATORS: the action is e.g. "pull with rebase"
+#. TRANSLATORS: the action is e.g. "pull with rabassa"
 #: wt-status.c:2280
 #, c-format
 msgid "cannot %s: You have unstaged changes."
@@ -5042,8 +5042,8 @@ msgid "GPG-sign commits"
 msgstr "GPG-signera incheckningar"
 
 #: builtin/am.c:2318
-msgid "(internal use for git-rebase)"
-msgstr "(används internt av git-rebase)"
+msgid "(internal use for git-rabassa)"
+msgstr "(används internt av git-rabassa)"
 
 #: builtin/am.c:2333
 msgid ""
@@ -5059,8 +5059,8 @@ msgstr "misslyckades läsa indexet"
 
 #: builtin/am.c:2355
 #, c-format
-msgid "previous rebase directory %s still exists but mbox given."
-msgstr "tidigare rebase-katalog %s finns fortfarande, men mbox angavs."
+msgid "previous rabassa directory %s still exists but mbox given."
+msgstr "tidigare rabassa-katalog %s finns fortfarande, men mbox angavs."
 
 #: builtin/am.c:2379
 #, c-format
@@ -5390,7 +5390,7 @@ msgstr "Tog bort grenen %s (var %s).\n"
 
 #: builtin/branch.c:441
 #, c-format
-msgid "Branch %s is being rebased at %s"
+msgid "Branch %s is being rabassad at %s"
 msgstr "Grenen %s ombaseras på %s"
 
 #: builtin/branch.c:445
@@ -11040,12 +11040,12 @@ msgstr "Alternativ gällande sammanslagning"
 msgid "incorporate changes by rebasing rather than merging"
 msgstr "inlemma ändringar genom ombasering i stället för sammanslagning"
 
-#: builtin/pull.c:148 builtin/rebase--helper.c:18 builtin/revert.c:120
+#: builtin/pull.c:148 builtin/rabassa--helper.c:18 builtin/revert.c:120
 msgid "allow fast-forward"
 msgstr "tillåt snabbspolning"
 
 #: builtin/pull.c:157
-msgid "automatically stash/stash pop before and after rebase"
+msgid "automatically stash/stash pop before and after rabassa"
 msgstr "utför automatiskt stash/stash pop före och efter ombasering"
 
 #: builtin/pull.c:173
@@ -11100,7 +11100,7 @@ msgid "You are not currently on a branch."
 msgstr "Du är inte på någon gren för närvarande."
 
 #: builtin/pull.c:410 builtin/pull.c:425 git-parse-remote.sh:79
-msgid "Please specify which branch you want to rebase against."
+msgid "Please specify which branch you want to rabassa against."
 msgstr "Ange vilken gren du vill ombasera mot."
 
 #: builtin/pull.c:412 builtin/pull.c:427 git-parse-remote.sh:82
@@ -11116,7 +11116,7 @@ msgstr "Se git-pull(1) för detaljer."
 msgid "<remote>"
 msgstr "<fjärr>"
 
-#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rebase.sh:456
+#: builtin/pull.c:415 builtin/pull.c:430 builtin/pull.c:435 git-rabassa.sh:456
 #: git-parse-remote.sh:65
 msgid "<branch>"
 msgstr "<gren>"
@@ -11140,19 +11140,19 @@ msgstr ""
 "från fjärren, men någon sådan referens togs inte emot."
 
 #: builtin/pull.c:754
-msgid "ignoring --verify-signatures for rebase"
+msgid "ignoring --verify-signatures for rabassa"
 msgstr "ignorera --verify-signatures för ombasering"
 
 #: builtin/pull.c:801
-msgid "--[no-]autostash option is only valid with --rebase."
-msgstr "--[no-]autostash är endast giltig med --rebase."
+msgid "--[no-]autostash option is only valid with --rabassa."
+msgstr "--[no-]autostash är endast giltig med --rabassa."
 
 #: builtin/pull.c:809
 msgid "Updating an unborn branch with changes added to the index."
 msgstr "Uppdaterar en ofödd gren med ändringar som lagts till i indexet."
 
 #: builtin/pull.c:812
-msgid "pull with rebase"
+msgid "pull with rabassa"
 msgstr "pull med ombasering"
 
 #: builtin/pull.c:813
@@ -11192,7 +11192,7 @@ msgid "Cannot merge multiple branches into empty head."
 msgstr "Kan inte slå ihop flera grenar i ett tomt huvud."
 
 #: builtin/pull.c:862
-msgid "Cannot rebase onto multiple branches."
+msgid "Cannot rabassa onto multiple branches."
 msgstr "Kan inte ombasera ovanpå flera grenar."
 
 #: builtin/push.c:16
@@ -11566,16 +11566,16 @@ msgstr "hoppa över att applicera filter för gles utcheckning"
 msgid "debug unpack-trees"
 msgstr "felsök unpack-trees"
 
-#: builtin/rebase--helper.c:7
-msgid "git rebase--helper [<options>]"
-msgstr "git rebase--helper [<flaggor>]"
+#: builtin/rabassa--helper.c:7
+msgid "git rabassa--helper [<options>]"
+msgstr "git rabassa--helper [<flaggor>]"
 
-#: builtin/rebase--helper.c:19
-msgid "continue rebase"
+#: builtin/rabassa--helper.c:19
+msgid "continue rabassa"
 msgstr "fortsätt ombasering"
 
-#: builtin/rebase--helper.c:21
-msgid "abort rebase"
+#: builtin/rabassa--helper.c:21
+msgid "abort rabassa"
 msgstr "avbryt ombasering"
 
 #: builtin/receive-pack.c:27
@@ -11884,17 +11884,17 @@ msgstr " ???"
 
 #: builtin/remote.c:957
 #, c-format
-msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
+msgid "invalid branch.%s.merge; cannot rabassa onto > 1 branch"
 msgstr "ogiltig branch.%s.merge; kan inte ombasera över > 1 gren"
 
 #: builtin/remote.c:965
 #, c-format
-msgid "rebases interactively onto remote %s"
+msgid "rabassas interactively onto remote %s"
 msgstr "ombaseras interaktivt på fjärren %s"
 
 #: builtin/remote.c:966
 #, c-format
-msgid "rebases onto remote %s"
+msgid "rabassas onto remote %s"
 msgstr "ombaseras på fjärren %s"
 
 #: builtin/remote.c:969
@@ -13085,8 +13085,8 @@ msgid "path into the working tree, across nested submodule boundaries"
 msgstr "sökväg inuti arbetskatalogen, genom nästlade undermodulgränser"
 
 #: builtin/submodule--helper.c:981
-msgid "rebase, merge, checkout or none"
-msgstr "rebase, merge, checkout eller none"
+msgid "rabassa, merge, checkout or none"
+msgstr "rabassa, merge, checkout eller none"
 
 #: builtin/submodule--helper.c:985
 msgid "Create a shallow clone truncated to the specified number of revisions"
@@ -14255,48 +14255,48 @@ msgstr "Försök enkel sammanslagning med $pretty_name"
 msgid "Simple merge did not work, trying automatic merge."
 msgstr "Enkel sammanslagning misslyckades, försöker automatisk sammanslagning."
 
-#: git-rebase.sh:58
+#: git-rabassa.sh:58
 msgid ""
-"When you have resolved this problem, run \"git rebase --continue\".\n"
-"If you prefer to skip this patch, run \"git rebase --skip\" instead.\n"
-"To check out the original branch and stop rebasing, run \"git rebase --abort"
+"When you have resolved this problem, run \"git rabassa --continue\".\n"
+"If you prefer to skip this patch, run \"git rabassa --skip\" instead.\n"
+"To check out the original branch and stop rebasing, run \"git rabassa --abort"
 "\"."
 msgstr ""
-"När du har löst problemet kör du \"git rebase --continue\".\n"
-"Om du vill hoppa över patchen kör du istället \"git rebase --skip\".\n"
-"För att återställa originalgrenen och avbryta kör du \"git rebase --abort\"."
+"När du har löst problemet kör du \"git rabassa --continue\".\n"
+"Om du vill hoppa över patchen kör du istället \"git rabassa --skip\".\n"
+"För att återställa originalgrenen och avbryta kör du \"git rabassa --abort\"."
 
-#: git-rebase.sh:158 git-rebase.sh:397
+#: git-rabassa.sh:158 git-rabassa.sh:397
 #, sh-format
 msgid "Could not move back to $head_name"
 msgstr "Kunde inte flytta tillbaka till $head_name"
 
-#: git-rebase.sh:172
+#: git-rabassa.sh:172
 #, sh-format
 msgid "Cannot store $stash_sha1"
 msgstr "Kan inte spara $stash_sha1"
 
-#: git-rebase.sh:212
-msgid "The pre-rebase hook refused to rebase."
-msgstr "Kroken pre-rebase vägrade ombaseringen."
+#: git-rabassa.sh:212
+msgid "The pre-rabassa hook refused to rabassa."
+msgstr "Kroken pre-rabassa vägrade ombaseringen."
 
-#: git-rebase.sh:217
-msgid "It looks like git-am is in progress. Cannot rebase."
+#: git-rabassa.sh:217
+msgid "It looks like git-am is in progress. Cannot rabassa."
 msgstr "Det verkar som en git-am körs. Kan inte ombasera."
 
-#: git-rebase.sh:358
-msgid "No rebase in progress?"
+#: git-rabassa.sh:358
+msgid "No rabassa in progress?"
 msgstr "Ingen ombasering pågår?"
 
-#: git-rebase.sh:369
-msgid "The --edit-todo action can only be used during interactive rebase."
+#: git-rabassa.sh:369
+msgid "The --edit-todo action can only be used during interactive rabassa."
 msgstr "Åtgärden --edit-todo kan endast användas under interaktiv ombasering."
 
-#: git-rebase.sh:376
+#: git-rabassa.sh:376
 msgid "Cannot read HEAD"
 msgstr "Kan inte läsa HEAD"
 
-#: git-rebase.sh:379
+#: git-rabassa.sh:379
 msgid ""
 "You must edit all merge conflicts and then\n"
 "mark them as resolved using git add"
@@ -14304,86 +14304,86 @@ msgstr ""
 "Du måste redigera alla sammanslagningskonflikter och\n"
 "därefter markera dem som lösta med git add"
 
-#: git-rebase.sh:419
+#: git-rabassa.sh:419
 #, sh-format
 msgid ""
 "It seems that there is already a $state_dir_base directory, and\n"
-"I wonder if you are in the middle of another rebase.  If that is the\n"
+"I wonder if you are in the middle of another rabassa.  If that is the\n"
 "case, please try\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "If that is not the case, please\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "and run me again.  I am stopping in case you still have something\n"
 "valuable there."
 msgstr ""
 "Det verkar som katalogen $state_dir_base redan existerar, och\n"
 "jag undrar om du redan är mitt i en annan ombasering. Om så är\n"
 "fallet, försök\n"
-"\t$cmd_live_rebase\n"
+"\t$cmd_live_rabassa\n"
 "Om så inte är fallet, kör\n"
-"\t$cmd_clear_stale_rebase\n"
+"\t$cmd_clear_stale_rabassa\n"
 "och kör programmet igen. Jag avslutar ifall du fortfarande har\n"
 "något av värde där."
 
-#: git-rebase.sh:470
+#: git-rabassa.sh:470
 #, sh-format
 msgid "invalid upstream $upstream_name"
 msgstr "ogiltig uppström $upstream_name"
 
-#: git-rebase.sh:494
+#: git-rabassa.sh:494
 #, sh-format
 msgid "$onto_name: there are more than one merge bases"
 msgstr "$onto_name: mer än en sammanslagningsbas finns"
 
-#: git-rebase.sh:497 git-rebase.sh:501
+#: git-rabassa.sh:497 git-rabassa.sh:501
 #, sh-format
 msgid "$onto_name: there is no merge base"
 msgstr "$onto_name: ingen sammanslagningsbas finns"
 
-#: git-rebase.sh:506
+#: git-rabassa.sh:506
 #, sh-format
 msgid "Does not point to a valid commit: $onto_name"
 msgstr "Peka på en giltig incheckning: $onto_name"
 
-#: git-rebase.sh:529
+#: git-rabassa.sh:529
 #, sh-format
 msgid "fatal: no such branch: $branch_name"
 msgstr "ödesdigert: ingen sådan gren: $branch_name"
 
-#: git-rebase.sh:562
+#: git-rabassa.sh:562
 msgid "Cannot autostash"
 msgstr "Kan inte utföra \"autostash\""
 
-#: git-rebase.sh:567
+#: git-rabassa.sh:567
 #, sh-format
 msgid "Created autostash: $stash_abbrev"
 msgstr "Skapade autostash: $stash_abbrev"
 
-#: git-rebase.sh:571
+#: git-rabassa.sh:571
 msgid "Please commit or stash them."
 msgstr "Checka in eller använd \"stash\" på dem."
 
-#: git-rebase.sh:591
+#: git-rabassa.sh:591
 #, sh-format
 msgid "Current branch $branch_name is up to date."
 msgstr "Aktuell gren $branch_name är à jour."
 
-#: git-rebase.sh:595
+#: git-rabassa.sh:595
 #, sh-format
-msgid "Current branch $branch_name is up to date, rebase forced."
+msgid "Current branch $branch_name is up to date, rabassa forced."
 msgstr "Aktuell gren $branch_name är à jour, ombasering framtvingad."
 
-#: git-rebase.sh:606
+#: git-rabassa.sh:606
 #, sh-format
 msgid "Changes from $mb to $onto:"
 msgstr "Ändringar från $mb till $onto:"
 
-#: git-rebase.sh:615
+#: git-rabassa.sh:615
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr ""
 "Först, spolar tillbaka huvudet för att spela av ditt arbete ovanpå det..."
 
-#: git-rebase.sh:625
+#: git-rabassa.sh:625
 #, sh-format
 msgid "Fast-forwarded $branch_name to $onto_name."
 msgstr "Snabbspolade $branch_name till $onto_name."
@@ -14737,12 +14737,12 @@ msgstr "Undermodulsökvägen \"$displaypath\": checkade ut \"$sha1\""
 
 #: git-submodule.sh:688
 #, sh-format
-msgid "Unable to rebase '$sha1' in submodule path '$displaypath'"
+msgid "Unable to rabassa '$sha1' in submodule path '$displaypath'"
 msgstr "Kan inte ombasera \"$sha1\" i undermodulsökvägen \"$displaypath\""
 
 #: git-submodule.sh:689
 #, sh-format
-msgid "Submodule path '$displaypath': rebased into '$sha1'"
+msgid "Submodule path '$displaypath': rabassad into '$sha1'"
 msgstr "Undermodulsökvägen \"$displaypath\": ombaserade in i \"$sha1\""
 
 #: git-submodule.sh:694
@@ -14812,12 +14812,12 @@ msgstr "Synkroniserar undermodul-url för \"$displaypath\""
 msgid "See git-${cmd}(1) for details."
 msgstr "Se git-${cmd}(1) för detaljer."
 
-#: git-rebase--interactive.sh:140
+#: git-rabassa--interactive.sh:140
 #, sh-format
 msgid "Rebasing ($new_count/$total)"
 msgstr "Ombaserar ($new_count/$total)"
 
-#: git-rebase--interactive.sh:156
+#: git-rabassa--interactive.sh:156
 msgid ""
 "\n"
 "Commands:\n"
@@ -14843,7 +14843,7 @@ msgstr ""
 "\n"
 "Du kan byta ordning på raderna, de utförs uppifrån och ned.\n"
 
-#: git-rebase--interactive.sh:171
+#: git-rabassa--interactive.sh:171
 msgid ""
 "\n"
 "Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
@@ -14852,7 +14852,7 @@ msgstr ""
 "Ta inte bort rader. Använd \"drop\" för att specifikt förkasta en "
 "incheckning.\n"
 
-#: git-rebase--interactive.sh:175
+#: git-rabassa--interactive.sh:175
 msgid ""
 "\n"
 "If you remove a line here THAT COMMIT WILL BE LOST.\n"
@@ -14860,7 +14860,7 @@ msgstr ""
 "\n"
 "Om du tar bort en rad KOMMER DEN INCHECKNINGEN ATT FÖRLORAS.\n"
 
-#: git-rebase--interactive.sh:211
+#: git-rabassa--interactive.sh:211
 #, sh-format
 msgid ""
 "You can amend the commit now, with\n"
@@ -14869,7 +14869,7 @@ msgid ""
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "Du kan utöka incheckningen nu, med\n"
 "\n"
@@ -14877,85 +14877,85 @@ msgstr ""
 "\n"
 "När du är nöjd med dina ändringar kör du\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:236
+#: git-rabassa--interactive.sh:236
 #, sh-format
 msgid "$sha1: not a commit that can be picked"
 msgstr "$sha1: inte en incheckning som kan väljas"
 
-#: git-rebase--interactive.sh:275
+#: git-rabassa--interactive.sh:275
 #, sh-format
 msgid "Invalid commit name: $sha1"
 msgstr "Felaktigt incheckningsnamn: $sha1"
 
-#: git-rebase--interactive.sh:317
+#: git-rabassa--interactive.sh:317
 msgid "Cannot write current commit's replacement sha1"
 msgstr "Kan inte skriva ersättnings-sha1 för aktuell incheckning"
 
-#: git-rebase--interactive.sh:369
+#: git-rabassa--interactive.sh:369
 #, sh-format
 msgid "Fast-forward to $sha1"
 msgstr "Snabbspolade till $sha1"
 
-#: git-rebase--interactive.sh:371
+#: git-rabassa--interactive.sh:371
 #, sh-format
 msgid "Cannot fast-forward to $sha1"
 msgstr "Kan inte snabbspola till $sha1"
 
-#: git-rebase--interactive.sh:380
+#: git-rabassa--interactive.sh:380
 #, sh-format
 msgid "Cannot move HEAD to $first_parent"
 msgstr "Kan inte flytta HEAD till $first_parent"
 
-#: git-rebase--interactive.sh:385
+#: git-rabassa--interactive.sh:385
 #, sh-format
 msgid "Refusing to squash a merge: $sha1"
 msgstr "Vägrar utföra \"squash\" på en sammanslagning: $sha1"
 
-#: git-rebase--interactive.sh:399
+#: git-rabassa--interactive.sh:399
 #, sh-format
 msgid "Error redoing merge $sha1"
 msgstr "Fel när sammanslagningen $sha1 skulle göras om"
 
-#: git-rebase--interactive.sh:407
+#: git-rabassa--interactive.sh:407
 #, sh-format
 msgid "Could not pick $sha1"
 msgstr "Kunde inte välja $sha1"
 
-#: git-rebase--interactive.sh:416
+#: git-rabassa--interactive.sh:416
 #, sh-format
 msgid "This is the commit message #${n}:"
 msgstr "Det här är incheckningsmeddelande ${n}:"
 
-#: git-rebase--interactive.sh:421
+#: git-rabassa--interactive.sh:421
 #, sh-format
 msgid "The commit message #${n} will be skipped:"
 msgstr "Incheckningsmeddelande ${n} kommer hoppas över:"
 
-#: git-rebase--interactive.sh:432
+#: git-rabassa--interactive.sh:432
 #, sh-format
 msgid "This is a combination of $count commit."
 msgid_plural "This is a combination of $count commits."
 msgstr[0] "Det här är en kombination av $count incheckning."
 msgstr[1] "Det här är en kombination av $count incheckningar."
 
-#: git-rebase--interactive.sh:441
+#: git-rabassa--interactive.sh:441
 #, sh-format
 msgid "Cannot write $fixup_msg"
 msgstr "Kan inte skriva $fixup_msg"
 
-#: git-rebase--interactive.sh:444
+#: git-rabassa--interactive.sh:444
 msgid "This is a combination of 2 commits."
 msgstr "Det här är en kombination av 2 incheckningar."
 
-#: git-rebase--interactive.sh:485 git-rebase--interactive.sh:528
-#: git-rebase--interactive.sh:531
+#: git-rabassa--interactive.sh:485 git-rabassa--interactive.sh:528
+#: git-rabassa--interactive.sh:531
 #, sh-format
 msgid "Could not apply $sha1... $rest"
 msgstr "kunde inte tillämpa $sha1... $rest"
 
-#: git-rebase--interactive.sh:559
+#: git-rabassa--interactive.sh:559
 #, sh-format
 msgid ""
 "Could not amend commit after successfully picking $sha1... $rest\n"
@@ -14969,75 +14969,75 @@ msgstr ""
 "pre-commit-kroken misslyckades. Om pre-commit-kroken misslyckades kanske\n"
 "du måste lösa problemet innan du kan skriva om incheckningsmeddelandet."
 
-#: git-rebase--interactive.sh:574
+#: git-rabassa--interactive.sh:574
 #, sh-format
 msgid "Stopped at $sha1_abbrev... $rest"
 msgstr "Stoppade på $sha1_abbrev... $rest"
 
-#: git-rebase--interactive.sh:589
+#: git-rabassa--interactive.sh:589
 #, sh-format
 msgid "Cannot '$squash_style' without a previous commit"
 msgstr "Kan inte utföra \"$squash_style\" utan en föregående incheckning"
 
-#: git-rebase--interactive.sh:631
+#: git-rabassa--interactive.sh:631
 #, sh-format
 msgid "Executing: $rest"
 msgstr "Kör: $rest"
 
-#: git-rebase--interactive.sh:639
+#: git-rabassa--interactive.sh:639
 #, sh-format
 msgid "Execution failed: $rest"
 msgstr "Körning misslyckades: $rest"
 
-#: git-rebase--interactive.sh:641
+#: git-rabassa--interactive.sh:641
 msgid "and made changes to the index and/or the working tree"
 msgstr "och gjorde ändringar till indexet och/eller arbetskatalogen"
 
-#: git-rebase--interactive.sh:643
+#: git-rabassa--interactive.sh:643
 msgid ""
 "You can fix the problem, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "Du kan rätta problemet och sedan köra\n"
 "\n"
-"\tgit rebase --continue\""
+"\tgit rabassa --continue\""
 
 #. TRANSLATORS: after these lines is a command to be issued by the user
-#: git-rebase--interactive.sh:656
+#: git-rabassa--interactive.sh:656
 #, sh-format
 msgid ""
 "Execution succeeded: $rest\n"
 "but left changes to the index and/or the working tree\n"
 "Commit or stash your changes, and then run\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 msgstr ""
 "Körningen lyckades: $rest\n"
 "men lämnade kvar ändringar i indexet och/eller arbetskatalogen\n"
 "Checka in eller utför \"stash\" på ändringarna och kör sedan\n"
 "\n"
-"\tgit rebase --continue"
+"\tgit rabassa --continue"
 
-#: git-rebase--interactive.sh:667
+#: git-rabassa--interactive.sh:667
 #, sh-format
 msgid "Unknown command: $command $sha1 $rest"
 msgstr "Okänt kommando: $command $sha1 $rest"
 
-#: git-rebase--interactive.sh:668
-msgid "Please fix this using 'git rebase --edit-todo'."
-msgstr "Rätta det med \"git rebase --edit-todo\"."
+#: git-rabassa--interactive.sh:668
+msgid "Please fix this using 'git rabassa --edit-todo'."
+msgstr "Rätta det med \"git rabassa --edit-todo\"."
 
-#: git-rebase--interactive.sh:703
+#: git-rabassa--interactive.sh:703
 #, sh-format
-msgid "Successfully rebased and updated $head_name."
+msgid "Successfully rabassad and updated $head_name."
 msgstr "Lyckades ombasera och uppdatera $head_name."
 
-#: git-rebase--interactive.sh:750
+#: git-rabassa--interactive.sh:750
 msgid "Could not skip unnecessary pick commands"
 msgstr "Kunde inte hoppa över onödiga \"pick\"-kommandon"
 
-#: git-rebase--interactive.sh:908
+#: git-rabassa--interactive.sh:908
 #, sh-format
 msgid ""
 "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
@@ -15046,7 +15046,7 @@ msgstr ""
 "Varning: SHA-1 saknas eller inte en incheckning på följande rad:\n"
 " - $line"
 
-#: git-rebase--interactive.sh:941
+#: git-rabassa--interactive.sh:941
 #, sh-format
 msgid ""
 "Warning: the command isn't recognized in the following line:\n"
@@ -15055,11 +15055,11 @@ msgstr ""
 "Varning: kommandot kändes inte igen på följande rad:\n"
 " - $line"
 
-#: git-rebase--interactive.sh:980
+#: git-rabassa--interactive.sh:980
 msgid "could not detach HEAD"
 msgstr "kunde inte koppla från HEAD"
 
-#: git-rebase--interactive.sh:1018
+#: git-rabassa--interactive.sh:1018
 msgid ""
 "Warning: some commits may have been dropped accidentally.\n"
 "Dropped commits (newer to older):"
@@ -15067,11 +15067,11 @@ msgstr ""
 "Varning: vissa incheckningar kan av misstag ha tappats.\n"
 "Tappade incheckningar (nyaste först):"
 
-#: git-rebase--interactive.sh:1026
+#: git-rabassa--interactive.sh:1026
 msgid ""
 "To avoid this message, use \"drop\" to explicitly remove a commit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rabassa.missingCommitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error."
 msgstr ""
@@ -15079,36 +15079,36 @@ msgstr ""
 "explicit\n"
 "kasta en incheckning.\n"
 "\n"
-"Använd \"git config rebase.missingCommitsCheck\" för att ändra "
+"Använd \"git config rabassa.missingCommitsCheck\" för att ändra "
 "varningsnivån.\n"
 "Möjliga bettenden är: \"ignore\" (ignorera), \"warn\" (varna), \"error"
 "\" (fel)."
 
-#: git-rebase--interactive.sh:1037
+#: git-rabassa--interactive.sh:1037
 #, sh-format
 msgid ""
-"Unrecognized setting $check_level for option rebase.missingCommitsCheck. "
+"Unrecognized setting $check_level for option rabassa.missingCommitsCheck. "
 "Ignoring."
 msgstr ""
-"Okänt val $check_level för flaggan rebase.missingCommitsCheck. Ignorerar."
+"Okänt val $check_level för flaggan rabassa.missingCommitsCheck. Ignorerar."
 
-#: git-rebase--interactive.sh:1054
+#: git-rabassa--interactive.sh:1054
 msgid ""
-"You can fix this with 'git rebase --edit-todo' and then run 'git rebase --"
+"You can fix this with 'git rabassa --edit-todo' and then run 'git rabassa --"
 "continue'."
 msgstr ""
-"Du kan rätta detta med \"git rebase --edit-todo\" följt av \"git rebase --"
+"Du kan rätta detta med \"git rabassa --edit-todo\" följt av \"git rabassa --"
 "continue\"."
 
-#: git-rebase--interactive.sh:1055
-msgid "Or you can abort the rebase with 'git rebase --abort'."
-msgstr "Eller så kan du avbryta ombaseringen med \"git rebase --abort\"."
+#: git-rabassa--interactive.sh:1055
+msgid "Or you can abort the rabassa with 'git rabassa --abort'."
+msgstr "Eller så kan du avbryta ombaseringen med \"git rabassa --abort\"."
 
-#: git-rebase--interactive.sh:1083
+#: git-rabassa--interactive.sh:1083
 msgid "Could not remove CHERRY_PICK_HEAD"
 msgstr "Kunde inte ta bort CHERRY_PICK_HEAD"
 
-#: git-rebase--interactive.sh:1088
+#: git-rabassa--interactive.sh:1088
 #, sh-format
 msgid ""
 "You have staged changes in your working tree.\n"
@@ -15123,7 +15123,7 @@ msgid ""
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 msgstr ""
 "Du har köade ändringar i din arbetskatalog.\n"
 "Om det är meningen att ändringarna\n"
@@ -15137,82 +15137,82 @@ msgstr ""
 "\n"
 "Oavsett vilket, när du är färdig fortsätter du med:\n"
 "\n"
-"  git rebase --continue\n"
+"  git rabassa --continue\n"
 
-#: git-rebase--interactive.sh:1105
+#: git-rabassa--interactive.sh:1105
 msgid "Error trying to find the author identity to amend commit"
 msgstr "Fel vid försök att hitta författaridentitet för att utöka incheckning"
 
-#: git-rebase--interactive.sh:1110
+#: git-rabassa--interactive.sh:1110
 msgid ""
 "You have uncommitted changes in your working tree. Please commit them\n"
-"first and then run 'git rebase --continue' again."
+"first and then run 'git rabassa --continue' again."
 msgstr ""
 "Du har ändringar i arbetskatalogen som inte checkats in. Checka in dem\n"
-"först och kör sedan \"git rebase --continute\" igen."
+"först och kör sedan \"git rabassa --continute\" igen."
 
-#: git-rebase--interactive.sh:1115 git-rebase--interactive.sh:1119
+#: git-rabassa--interactive.sh:1115 git-rabassa--interactive.sh:1119
 msgid "Could not commit staged changes."
 msgstr "Kunde inte checka in köade ändringar."
 
-#: git-rebase--interactive.sh:1147
+#: git-rabassa--interactive.sh:1147
 msgid ""
 "\n"
-"You are editing the todo file of an ongoing interactive rebase.\n"
-"To continue rebase after editing, run:\n"
-"    git rebase --continue\n"
+"You are editing the todo file of an ongoing interactive rabassa.\n"
+"To continue rabassa after editing, run:\n"
+"    git rabassa --continue\n"
 "\n"
 msgstr ""
 "\n"
 "Du redigerar \"todo\"-filen för en pågående interaktiv ombasering.\n"
 "För att forsätta ombasera efter redigeringen, kör:\n"
-"    git rebase --continue\n"
+"    git rabassa --continue\n"
 "\n"
 
-#: git-rebase--interactive.sh:1155 git-rebase--interactive.sh:1313
+#: git-rabassa--interactive.sh:1155 git-rabassa--interactive.sh:1313
 msgid "Could not execute editor"
 msgstr "Kunde inte starta textredigerare"
 
-#: git-rebase--interactive.sh:1168
+#: git-rabassa--interactive.sh:1168
 #, sh-format
 msgid "Could not checkout $switch_to"
 msgstr "Kunde inte checka ut $switch_to"
 
-#: git-rebase--interactive.sh:1173
+#: git-rabassa--interactive.sh:1173
 msgid "No HEAD?"
 msgstr "Inget HEAD?"
 
-#: git-rebase--interactive.sh:1174
+#: git-rabassa--interactive.sh:1174
 #, sh-format
 msgid "Could not create temporary $state_dir"
 msgstr "Kunde inte skapa temporär $state_dir"
 
-#: git-rebase--interactive.sh:1176
+#: git-rabassa--interactive.sh:1176
 msgid "Could not mark as interactive"
 msgstr "Kunde inte markera som interaktiv"
 
-#: git-rebase--interactive.sh:1186 git-rebase--interactive.sh:1191
+#: git-rabassa--interactive.sh:1186 git-rabassa--interactive.sh:1191
 msgid "Could not init rewritten commits"
 msgstr "Kunde inte initiera omskrivna incheckningar"
 
-#: git-rebase--interactive.sh:1291
+#: git-rabassa--interactive.sh:1291
 #, sh-format
 msgid "Rebase $shortrevisions onto $shortonto ($todocount command)"
 msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 msgstr[0] "Ombasera $shortrevisions på $shortonto ($todocount incheckning)"
 msgstr[1] "Ombasera $shortrevisions på $shortonto ($todocount incheckningar)"
 
-#: git-rebase--interactive.sh:1296
+#: git-rabassa--interactive.sh:1296
 msgid ""
 "\n"
-"However, if you remove everything, the rebase will be aborted.\n"
+"However, if you remove everything, the rabassa will be aborted.\n"
 "\n"
 msgstr ""
 "\n"
 "Ombaseringen kommer dock att avbrytas om du tar bort allting.\n"
 "\n"
 
-#: git-rebase--interactive.sh:1303
+#: git-rabassa--interactive.sh:1303
 msgid "Note that empty commits are commented out"
 msgstr "Observera att tomma incheckningar är utkommenterade"
 
@@ -15232,7 +15232,7 @@ msgid "fatal: $program_name cannot be used without a working tree."
 msgstr "ödesdigetrt: $program_name kan inte användas utan arbetskatalog."
 
 #: git-sh-setup.sh:220
-msgid "Cannot rebase: You have unstaged changes."
+msgid "Cannot rabassa: You have unstaged changes."
 msgstr "Kan inte ombasera: Du har oköade ändringar."
 
 #: git-sh-setup.sh:223
@@ -15240,7 +15240,7 @@ msgid "Cannot rewrite branches: You have unstaged changes."
 msgstr "Kan inte skriva om grenar: Du har oköade ändringar."
 
 #: git-sh-setup.sh:226
-msgid "Cannot pull with rebase: You have unstaged changes."
+msgid "Cannot pull with rabassa: You have unstaged changes."
 msgstr "Kan inte hämta med ombasering: Du har oköade ändringar."
 
 #: git-sh-setup.sh:229
@@ -15249,12 +15249,12 @@ msgid "Cannot $action: You have unstaged changes."
 msgstr "Kan inte $action: Du har oköade ändringar."
 
 #: git-sh-setup.sh:242
-msgid "Cannot rebase: Your index contains uncommitted changes."
+msgid "Cannot rabassa: Your index contains uncommitted changes."
 msgstr ""
 "Kan inte ombasera: Ditt index innehåller ändringar som inte checkats in."
 
 #: git-sh-setup.sh:245
-msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+msgid "Cannot pull with rabassa: Your index contains uncommitted changes."
 msgstr ""
 "Kan inte hämta med ombasering: Ditt index innehåller oincheckade ändringar."
 

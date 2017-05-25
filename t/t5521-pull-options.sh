@@ -19,13 +19,13 @@ test_expect_success 'git pull -q' '
 	test_must_be_empty out)
 '
 
-test_expect_success 'git pull -q --rebase' '
+test_expect_success 'git pull -q --rabassa' '
 	mkdir clonedqrb &&
 	(cd clonedqrb && git init &&
-	git pull -q --rebase "../parent" >out 2>err &&
+	git pull -q --rabassa "../parent" >out 2>err &&
 	test_must_be_empty err &&
 	test_must_be_empty out &&
-	git pull -q --rebase "../parent" >out 2>err &&
+	git pull -q --rabassa "../parent" >out 2>err &&
 	test_must_be_empty err &&
 	test_must_be_empty out)
 '
@@ -38,10 +38,10 @@ test_expect_success 'git pull' '
 	test_must_be_empty out)
 '
 
-test_expect_success 'git pull --rebase' '
+test_expect_success 'git pull --rabassa' '
 	mkdir clonedrb &&
 	(cd clonedrb && git init &&
-	git pull --rebase "../parent" >out 2>err &&
+	git pull --rabassa "../parent" >out 2>err &&
 	test -s err &&
 	test_must_be_empty out)
 '
@@ -54,10 +54,10 @@ test_expect_success 'git pull -v' '
 	test_must_be_empty out)
 '
 
-test_expect_success 'git pull -v --rebase' '
+test_expect_success 'git pull -v --rabassa' '
 	mkdir clonedvrb &&
 	(cd clonedvrb && git init &&
-	git pull -v --rebase "../parent" >out 2>err &&
+	git pull -v --rabassa "../parent" >out 2>err &&
 	test -s err &&
 	test_must_be_empty out)
 '

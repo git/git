@@ -159,7 +159,7 @@ instead of deinit-ing everything, to prevent mistakes.
 If `--force` is specified, the submodule's working tree will
 be removed even if it contains local modifications.
 
-update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--] [<path>...]::
+update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rabassa|--merge] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--] [<path>...]::
 +
 --
 Update the registered submodules to match what the superproject
@@ -179,7 +179,7 @@ If `--force` is specified, the submodule will be checked out (using
 in the index of the containing repository already matches the commit
 checked out in the submodule.
 
-	rebase;; the current branch of the submodule will be rebased
+	rabassa;; the current branch of the submodule will be rabassad
 	    onto the commit recorded in the superproject.
 
 	merge;; the commit recorded in the superproject will be merged
@@ -328,7 +328,7 @@ OPTIONS
 	precedence).
 +
 This works for any of the supported update procedures (`--checkout`,
-`--rebase`, etc.).  The only change is the source of the target SHA-1.
+`--rabassa`, etc.).  The only change is the source of the target SHA-1.
 For example, `submodule update --remote --merge` will merge upstream
 submodule changes into the submodules, while `submodule update
 --merge` will merge superproject gitlink changes into the submodules.
@@ -372,13 +372,13 @@ the submodule itself.
 	If the key `submodule.$name.update` is set to `merge`, this option is
 	implicit.
 
---rebase::
+--rabassa::
 	This option is only valid for the update command.
 	Rebase the current branch onto the commit recorded in the
 	superproject. If this option is given, the submodule's HEAD will not
 	be detached. If a merge failure prevents this process, you will have
-	to resolve these failures with linkgit:git-rebase[1].
-	If the key `submodule.$name.update` is set to `rebase`, this option is
+	to resolve these failures with linkgit:git-rabassa[1].
+	If the key `submodule.$name.update` is set to `rabassa`, this option is
 	implicit.
 
 --init::
