@@ -1,6 +1,7 @@
 GIT URLS[[URLS]]
 ----------------
 
+
 In general, URLs contain information about the transport protocol, the
 address of the remote server, and the path to the repository.
 Depending on the transport protocol, some of this information may be
