@@ -369,7 +369,7 @@ static void compile_pcre1_regexp(struct grep_pat *p, const struct grep_opt *opt)
 	if (!p->pcre1_extra_info && error)
 		die("%s", error);
 
-#ifdef PCRE_CONFIG_JIT
+#ifdef GIT_PCRE1_USE_JIT
 	pcre_config(PCRE_CONFIG_JIT, &p->pcre1_jit_on);
 	if (p->pcre1_jit_on == 1) {
 		p->pcre1_jit_stack = pcre_jit_stack_alloc(1, 1024 * 1024);
@@ -391,7 +391,7 @@ static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
 	if (eflags & REG_NOTBOL)
 		flags |= PCRE_NOTBOL;
 
-#ifdef PCRE_CONFIG_JIT
+#ifdef GIT_PCRE1_USE_JIT
 	if (p->pcre1_jit_on) {
 		ret = pcre_jit_exec(p->pcre1_regexp, p->pcre1_extra_info, line,
 				    eol - line, 0, flags, ovector,
@@ -418,7 +418,7 @@ static int pcre1match(struct grep_pat *p, const char *line, const char *eol,
 static void free_pcre1_regexp(struct grep_pat *p)
 {
 	pcre_free(p->pcre1_regexp);
-#ifdef PCRE_CONFIG_JIT
+#ifdef GIT_PCRE1_USE_JIT
 	if (p->pcre1_jit_on) {
 		pcre_free_study(p->pcre1_extra_info);
 		pcre_jit_stack_free(p->pcre1_jit_stack);
