@@ -155,11 +155,12 @@ proc unmerged_files {files} {
 }
 
 proc parseviewargs {n arglist} {
-    global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
+    global vdatemode vauthordatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
     global vinlinediff
     global worddiff git_version
 
     set vdatemode($n) 0
+    set vauthordatemode($n) 0
     set vmergeonly($n) 0
     set vinlinediff($n) 0
     set glflags {}
@@ -181,6 +182,12 @@ proc parseviewargs {n arglist} {
 	    "-d" -
 	    "--date-order" {
 		set vdatemode($n) 1
+		# remove from origargs in case we hit an unknown option
+		set origargs [lreplace $origargs $i $i]
+		incr i -1
+	    }
+	    "--author-date-order" {
+		set vauthordatemode($n) 1
 		# remove from origargs in case we hit an unknown option
 		set origargs [lreplace $origargs $i $i]
 		incr i -1
@@ -691,17 +698,21 @@ proc seeds {v} {
 }
 
 proc newvarc {view id} {
-    global varcid varctok parents children vdatemode
+    global varcid varctok parents children vdatemode vauthordatemode
     global vupptr vdownptr vleftptr vbackptr varcrow varcix varcstart
     global commitdata commitinfo vseedcount varccommits vlastins
 
     set a [llength $varctok($view)]
     set vid $view,$id
-    if {[llength $children($vid)] == 0 || $vdatemode($view)} {
+    if {[llength $children($vid)] == 0 || $vdatemode($view) || $vauthordatemode($view)} {
 	if {![info exists commitinfo($id)]} {
 	    parsecommit $id $commitdata($id) 1
 	}
-	set cdate [lindex [lindex $commitinfo($id) 4] 0]
+	if {$vauthordatemode($view)} {
+	    set cdate [lindex [lindex $commitinfo($id) 2] 0]
+	} else {
+	    set cdate [lindex [lindex $commitinfo($id) 4] 0]
+	}
 	if {![string is integer -strict $cdate]} {
 	    set cdate 0
 	}
@@ -801,7 +812,7 @@ proc splitvarc {p v} {
 
 proc renumbervarc {a v} {
     global parents children varctok varcstart varccommits
-    global vupptr vdownptr vleftptr vbackptr vlastins varcid vtokmod vdatemode
+    global vupptr vdownptr vleftptr vbackptr vlastins varcid vtokmod vdatemode vauthordatemode
 
     set t1 [clock clicks -milliseconds]
     set todo {}
@@ -837,7 +848,7 @@ proc renumbervarc {a v} {
 				      $children($v,$id)]
 	}
 	set oldtok [lindex $varctok($v) $a]
-	if {!$vdatemode($v)} {
+	if {!($vdatemode($v) || $vauthordatemode($v))} {
 	    set tok {}
 	} else {
 	    set tok $oldtok
@@ -1415,7 +1426,7 @@ proc check_interest {id scripts} {
 
 proc getcommitlines {fd inst view updating}  {
     global cmitlisted leftover
-    global commitidx commitdata vdatemode
+    global commitidx commitdata vdatemode vauthordatemode
     global parents children curview hlview
     global idpending ordertok
     global varccommits varcid varctok vtokmod vfilelimit vshortids
@@ -1557,7 +1568,7 @@ proc getcommitlines {fd inst view updating}  {
 	} elseif {$a == 0 && [llength $children($vid)] == 1} {
 	    set k [lindex $children($vid) 0]
 	    if {[llength $parents($view,$k)] == 1 &&
-		(!$vdatemode($view) ||
+		(!($vdatemode($view) || $vauthordatemode($view)) ||
 		 $varcid($view,$k) == [llength $varctok($view)] - 1)} {
 		set a $varcid($view,$k)
 	    }
@@ -4120,6 +4131,7 @@ set known_view_options {
     {skip      t10  .  "--skip=*"       {mc "Number to skip:"}}
     {misc_lbl  l    +  {}               {mc "Miscellaneous options:"}}
     {dorder    b    *. {"--date-order" "-d"}      {mc "Strictly sort by date"}}
+    {daorder   b    .  "--author-date-order"      {mc "Strictly sort by author date"}}
     {lright    b    .  "--left-right"   {mc "Mark branch sides"}}
     {first     b    .  "--first-parent" {mc "Limit to first parent"}}
     {smplhst   b    .  "--simplify-by-decoration"   {mc "Simple history"}}
@@ -12587,6 +12599,7 @@ if {$cmdline_files ne {} || $revtreeargs ne {} || $revtreeargscmd ne {}} {
     set viewperm(1) 0
     set viewchanged(1) 0
     set vdatemode(1) 0
+    set vauthordatemode(1) 0
     addviewmenu 1
     .bar.view entryconf [mca "&Edit view..."] -state normal
     .bar.view entryconf [mca "&Delete view"] -state normal
