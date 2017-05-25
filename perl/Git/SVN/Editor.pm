@@ -147,7 +147,7 @@ sub url_path {
 	$path = $self->repo_path($path);
 	if ($self->{url} =~ m#^https?://#) {
 		# characters are taken from subversion/libsvn_subr/path.c
-		$path =~ s#([^~a-zA-Z0-9_./!$&'()*+,-])#sprintf("%%%02X",ord($1))#eg;
+		$path =~ s#([^~a-zA-Z0-9_./!$&'()*+,-]@)#sprintf("%%%02X",ord($1))#eg;
 	}
 	$self->{url} . '/' . $path;
 }
