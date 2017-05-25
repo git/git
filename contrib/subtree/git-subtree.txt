@@ -69,7 +69,7 @@ COMMANDS
 add::
 	Create the <prefix> subtree by importing its contents
 	from the given <commit> or <repository> and remote <ref>.
-	A new commit is created	automatically, joining the imported
+	A new commit is created automatically, joining the imported
 	project's history with your own.  With '--squash', imports
 	only a single commit from the subproject, rather than its
 	entire history.
