@@ -1,7 +1,8 @@
 #!/bin/sh
 
-sites='ko repo github2 sfjp sf.net gob-private '
+sites='ko repo github2 sfjp sf.net'
 nexts='ko repo github2 '
+mirrors='github gob-private'
 
 push_retry () {
 	sites=$1
@@ -38,8 +39,11 @@ push_retry "$sites" "$@"
 
 case "$#,$*" in
 0,* | 1,-n)
-	printf "github mirror: "
-	git push github "$@" || exit $?
+	for mirror in $mirrors
+	do
+		printf "$mirror mirror: "
+		git push $mirror "$@" || exit $?
+	done
 	for topic in htmldocs manpages
 	do
 		printf "%s: " "$topic"
