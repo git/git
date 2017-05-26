@@ -141,6 +141,10 @@ int check_filename(const char *prefix, const char *arg)
 		if (!*arg) /* ":/" is root dir, always exists */
 			return 1;
 		prefix = NULL;
+	} else if (skip_prefix(arg, ":!", &arg) ||
+		   skip_prefix(arg, ":^", &arg)) {
+		if (!*arg) /* excluding everything is silly, but allowed */
+			return 1;
 	}
 
 	if (prefix)

@@ -52,6 +52,19 @@ test_expect_success 'git log HEAD -- :/' '
 	test_cmp expected actual
 '
 
+test_expect_success '"git log :^sub" is not ambiguous' '
+	git log :^sub
+'
+
+test_expect_success '"git log :^does-not-exist" does not match anything' '
+	test_must_fail git log :^does-not-exist
+'
+
+test_expect_success  '"git log :!" behaves the same as :^' '
+	git log :!sub &&
+	test_must_fail git log :!does-not-exist
+'
+
 test_expect_success 'command line pathspec parsing for "git log"' '
 	git reset --hard &&
 	>a &&
