@@ -304,7 +304,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 				N_("reset HEAD, index and working tree"), MERGE),
 		OPT_SET_INT(0, "keep", &reset_type,
 				N_("reset HEAD but keep local changes"), KEEP),
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules,
+		{ OPTION_CALLBACK, 0, "recurse-submodules", NULL,
 			    "reset", "control recursive updating of submodules",
 			    PARSE_OPT_OPTARG, option_parse_recurse_submodules },
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
