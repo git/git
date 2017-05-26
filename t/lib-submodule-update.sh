@@ -781,8 +781,9 @@ test_submodule_forced_switch () {
 # - Removing a submodule with a git directory absorbs the submodules
 #   git directory first into the superproject.
 
-test_submodule_switch_recursing () {
-	command="$1"
+test_submodule_switch_recursing_with_args () {
+	cmd_args="$1"
+	command="git $cmd_args --recurse-submodules"
 	RESULTDS=success
 	if test "$KNOWN_FAILURE_DIRECTORY_SUBMODULE_CONFLICTS" = 1
 	then
@@ -1021,8 +1022,9 @@ test_submodule_switch_recursing () {
 # Test that submodule contents are updated when switching between commits
 # that change a submodule, but throwing away local changes in
 # the superproject as well as the submodule is allowed.
-test_submodule_forced_switch_recursing () {
-	command="$1"
+test_submodule_forced_switch_recursing_with_args () {
+	cmd_args="$1"
+	command="git $cmd_args --recurse-submodules"
 	RESULT=success
 	if test "$KNOWN_FAILURE_DIRECTORY_SUBMODULE_CONFLICTS" = 1
 	then
