@@ -29,6 +29,12 @@ test_expect_success '"git log -- :/a" should not be ambiguous' '
 	git log -- :/a
 '
 
+# This differs from the ":/a" check above in that :/in looks like a pathspec,
+# but doesn't match an actual file.
+test_expect_success '"git log :/in" should not be ambiguous' '
+	git log :/in
+'
+
 test_expect_success '"git log :" should be ambiguous' '
 	test_must_fail git log : 2>error &&
 	test_i18ngrep ambiguous error
