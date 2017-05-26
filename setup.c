@@ -137,10 +137,9 @@ int check_filename(const char *prefix, const char *arg)
 	char *to_free = NULL;
 	struct stat st;
 
-	if (starts_with(arg, ":/")) {
-		if (arg[2] == '\0') /* ":/" is root dir, always exists */
+	if (skip_prefix(arg, ":/", &arg)) {
+		if (!*arg) /* ":/" is root dir, always exists */
 			return 1;
-		arg += 2;
 		prefix = NULL;
 	}
 
