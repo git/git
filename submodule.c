@@ -153,7 +153,8 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	}
 }
 
-int submodule_config(const char *var, const char *value, void *cb)
+/* For loading from the .gitmodules file. */
+static int git_modules_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "submodule.fetchjobs")) {
 		parallel_jobs = git_config_int(var, value);
@@ -167,6 +168,12 @@ int submodule_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	return 0;
+}
+
+/* Loads all submodule settings from the config */
+int submodule_config(const char *var, const char *value, void *cb)
+{
+	return git_modules_config(var, value, cb);
 }
 
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
@@ -222,7 +229,8 @@ void gitmodules_config(void)
 		}
 
 		if (!gitmodules_is_unmerged)
-			git_config_from_file(submodule_config, gitmodules_path.buf, NULL);
+			git_config_from_file(git_modules_config,
+				gitmodules_path.buf, NULL);
 		strbuf_release(&gitmodules_path);
 	}
 }
@@ -233,7 +241,7 @@ void gitmodules_config_sha1(const unsigned char *commit_sha1)
 	unsigned char sha1[20];
 
 	if (gitmodule_sha1_from_commit(commit_sha1, sha1, &rev)) {
-		git_config_from_blob_sha1(submodule_config, rev.buf,
+		git_config_from_blob_sha1(git_modules_config, rev.buf,
 					  sha1, NULL);
 	}
 	strbuf_release(&rev);
