@@ -257,10 +257,13 @@ static void fscache_clear(void)
 {
 	struct hashmap_iter iter;
 	struct fsentry *fse;
-	while ((fse = hashmap_iter_first(&map, &iter))) {
+	hashmap_disallow_rehash(&map, 1);
+	hashmap_iter_init(&map, &iter);
+	while ((fse = hashmap_iter_next(&iter))) {
 		fscache_remove(fse);
 		fsentry_release(fse);
 	}
+	hashmap_disallow_rehash(&map, 0);
 }
 
 /*
