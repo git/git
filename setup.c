@@ -186,6 +186,24 @@ static void NORETURN die_verify_filename(const char *prefix,
 }
 
 /*
+ * Check for arguments that don't resolve as actual files,
+ * but which look sufficiently like pathspecs that we'll consider
+ * them such for the purposes of rev/pathspec DWIM parsing.
+ */
+static int looks_like_pathspec(const char *arg)
+{
+	/* anything with a wildcard character */
+	if (!no_wildcard(arg))
+		return 1;
+
+	/* long-form pathspec magic */
+	if (starts_with(arg, ":("))
+		return 1;
+
+	return 0;
+}
+
+/*
  * Verify a filename that we got as an argument for a pathspec
  * entry. Note that a filename that begins with "-" never verifies
  * as true, because even if such a filename were to exist, we want
@@ -211,7 +229,7 @@ void verify_filename(const char *prefix,
 {
 	if (*arg == '-')
 		die("bad flag '%s' used after filename", arg);
-	if (check_filename(prefix, arg) || !no_wildcard(arg))
+	if (check_filename(prefix, arg) || looks_like_pathspec(arg))
 		return;
 	die_verify_filename(prefix, arg, diagnose_misspelt_rev);
 }
