@@ -18,7 +18,7 @@
 #include "worktree.h"
 
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
-static int config_update_recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
+static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int parallel_jobs = 1;
 static struct string_list changed_submodule_paths = STRING_LIST_INIT_DUP;
 static int initialized_fetch_ref_tips;
@@ -167,6 +167,32 @@ int submodule_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	return 0;
+}
+
+int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
+						     const char *arg, int unset)
+{
+	if (unset) {
+		config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
+		return 0;
+	}
+	if (arg)
+		config_update_recurse_submodules =
+			parse_update_recurse_submodules_arg(opt->long_name,
+							    arg);
+	else
+		config_update_recurse_submodules = RECURSE_SUBMODULES_ON;
+
+	return 0;
+}
+
+void load_submodule_cache(void)
+{
+	if (config_update_recurse_submodules == RECURSE_SUBMODULES_OFF)
+		return;
+
+	gitmodules_config();
+	git_config(submodule_config, NULL);
 }
 
 void gitmodules_config(void)
@@ -594,11 +620,6 @@ done:
 void set_config_fetch_recurse_submodules(int value)
 {
 	config_fetch_recurse_submodules = value;
-}
-
-void set_config_update_recurse_submodules(int value)
-{
-	config_update_recurse_submodules = value;
 }
 
 int should_update_submodules(void)
