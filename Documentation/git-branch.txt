@@ -99,7 +99,7 @@ OPTIONS
 
 -f::
 --force::
-	Reset <branchname> to <startpoint> if <branchname> exists
+	Reset <branchname> to <start-point> if <branchname> exists
 	already. Without `-f` 'git branch' refuses to change an existing branch.
 	In combination with `-d` (or `--delete`), allow deleting the
 	branch irrespective of its merged status. In combination with
