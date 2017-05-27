@@ -2403,6 +2403,8 @@ _git_config ()
 		core.autocrlf
 		core.bare
 		core.bigFileThreshold
+		core.checkStat
+		core.commentChar
 		core.compression
 		core.createObject
 		core.deltaBaseCacheLimit
@@ -2412,6 +2414,8 @@ _git_config ()
 		core.fileMode
 		core.fsyncobjectfiles
 		core.gitProxy
+		core.hideDotFiles
+		core.hooksPath
 		core.ignoreStat
 		core.ignorecase
 		core.logAllRefUpdates
@@ -2419,14 +2423,20 @@ _git_config ()
 		core.notesRef
 		core.packedGitLimit
 		core.packedGitWindowSize
+		core.packedRefsTimeout
 		core.pager
+		core.precomposeUnicode
 		core.preferSymlinkRefs
 		core.preloadindex
+		core.protectHFS
+		core.protectNTFS
 		core.quotepath
 		core.repositoryFormatVersion
 		core.safecrlf
 		core.sharedRepository
 		core.sparseCheckout
+		core.splitIndex
+		core.sshCommand
 		core.symlinks
 		core.trustctime
 		core.untrackedCache
