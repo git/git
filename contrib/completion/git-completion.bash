@@ -2343,6 +2343,7 @@ _git_config ()
 		advice.statusHints
 		alias.
 		am.keepcr
+		am.threeWay
 		apply.ignorewhitespace
 		apply.whitespace
 		branch.autosetupmerge
