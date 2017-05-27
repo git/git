@@ -2452,6 +2452,9 @@ _git_config ()
 		core.warnAmbiguousRefs
 		core.whitespace
 		core.worktree
+		credential.helper
+		credential.useHttpPath
+		credential.username
 		diff.autorefreshindex
 		diff.external
 		diff.ignoreSubmodules
