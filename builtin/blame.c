@@ -1561,13 +1561,13 @@ finish:
 struct commit_info {
 	struct strbuf author;
 	struct strbuf author_mail;
-	unsigned long author_time;
+	timestamp_t author_time;
 	struct strbuf author_tz;
 
 	/* filled only when asked for details */
 	struct strbuf committer;
 	struct strbuf committer_mail;
-	unsigned long committer_time;
+	timestamp_t committer_time;
 	struct strbuf committer_tz;
 
 	struct strbuf summary;
@@ -1578,7 +1578,7 @@ struct commit_info {
  */
 static void get_ac_line(const char *inbuf, const char *what,
 	struct strbuf *name, struct strbuf *mail,
-	unsigned long *time, struct strbuf *tz)
+	timestamp_t *time, struct strbuf *tz)
 {
 	struct ident_split ident;
 	size_t len, maillen, namelen;
@@ -1727,11 +1727,11 @@ static int emit_one_suspect_detail(struct origin *suspect, int repeat)
 	get_commit_info(suspect->commit, &ci, 1);
 	printf("author %s\n", ci.author.buf);
 	printf("author-mail %s\n", ci.author_mail.buf);
-	printf("author-time %lu\n", ci.author_time);
+	printf("author-time %"PRItime"\n", ci.author_time);
 	printf("author-tz %s\n", ci.author_tz.buf);
 	printf("committer %s\n", ci.committer.buf);
 	printf("committer-mail %s\n", ci.committer_mail.buf);
-	printf("committer-time %lu\n", ci.committer_time);
+	printf("committer-time %"PRItime"\n", ci.committer_time);
 	printf("committer-tz %s\n", ci.committer_tz.buf);
 	printf("summary %s\n", ci.summary.buf);
 	if (suspect->commit->object.flags & UNINTERESTING)
@@ -1837,14 +1837,14 @@ static void assign_blame(struct scoreboard *sb, int opt)
 	stop_progress(&pi.progress);
 }
 
-static const char *format_time(unsigned long time, const char *tz_str,
+static const char *format_time(timestamp_t time, const char *tz_str,
 			       int show_raw_time)
 {
 	static struct strbuf time_buf = STRBUF_INIT;
 
 	strbuf_reset(&time_buf);
 	if (show_raw_time) {
-		strbuf_addf(&time_buf, "%lu %s", time, tz_str);
+		strbuf_addf(&time_buf, "%"PRItime" %s", time, tz_str);
 	}
 	else {
 		const char *time_str;

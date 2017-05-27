@@ -101,7 +101,7 @@ test_expect_success '--amend option with empty author' '
 	echo "Empty author test" >>foo &&
 	test_tick &&
 	test_must_fail git commit -a -m "empty author" --amend 2>err &&
-	grep "empty ident" err
+	test_i18ngrep "empty ident" err
 '
 
 test_expect_success '--amend option with missing author' '
@@ -114,7 +114,7 @@ test_expect_success '--amend option with missing author' '
 	echo "Missing author test" >>foo &&
 	test_tick &&
 	test_must_fail git commit -a -m "malformed author" --amend 2>err &&
-	grep "empty ident" err
+	test_i18ngrep "empty ident" err
 '
 
 test_expect_success '--reset-author makes the commit ours even with --amend option' '

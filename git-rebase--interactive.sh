@@ -5,7 +5,7 @@
 # Copyright (c) 2006 Johannes E. Schindelin
 #
 # The original idea comes from Eric W. Biederman, in
-# http://article.gmane.org/gmane.comp.version-control.git/22407
+# https://public-inbox.org/git/m1odwkyuf5.fsf_-_@ebiederm.dsl.xmission.com/
 #
 # The file containing rebase commands, comments, and empty lines.
 # This file is created by "git rebase -i" then edited by the user.  As

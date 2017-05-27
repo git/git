@@ -14,14 +14,33 @@ COMMIT=$2
 
 gfwci () {
 	local CURL_ERROR_CODE HTTP_CODE
-	exec 3>&1
+	CONTENT_FILE=$(mktemp -t "git-windows-ci-XXXXXX")
+	while test -z $HTTP_CODE
+	do
 	HTTP_CODE=$(curl \
 		-H "Authentication: Bearer $GFW_CI_TOKEN" \
 		--silent --retry 5 --write-out '%{HTTP_CODE}' \
-		--output >(sed "$(printf '1s/^\xef\xbb\xbf//')" >cat >&3) \
+		--output >(sed "$(printf '1s/^\xef\xbb\xbf//')" >$CONTENT_FILE) \
 		"https://git-for-windows-ci.azurewebsites.net/api/TestNow?$1" \
 	)
 	CURL_ERROR_CODE=$?
+		# The GfW CI web app sometimes returns HTTP errors of
+		# "502 bad gateway" or "503 service unavailable".
+		# We also need to check the HTTP content because the GfW web
+		# app seems to pass through (error) results from other Azure
+		# calls with HTTP code 200.
+		# Wait a little and retry if we detect this error. More info:
+		# https://docs.microsoft.com/en-in/azure/app-service-web/app-service-web-troubleshoot-http-502-http-503
+		if test $HTTP_CODE -eq 502 ||
+		   test $HTTP_CODE -eq 503 ||
+		   grep "502 - Web server received an invalid response" $CONTENT_FILE >/dev/null
+		then
+			sleep 10
+			HTTP_CODE=
+		fi
+	done
+	cat $CONTENT_FILE
+	rm $CONTENT_FILE
 	if test $CURL_ERROR_CODE -ne 0
 	then
 		return $CURL_ERROR_CODE
@@ -61,7 +80,8 @@ do
 	case "$STATUS" in
 	inProgress|postponed|notStarted) sleep 10               ;; # continue
 		 "completed: succeeded") RESULT="success"; break;; # success
-	*) echo "Unhandled status: $STATUS";               break;; # failure
+		    "completed: failed")                   break;; # failure
+	*) echo "Unhandled status: $STATUS";               break;; # unknown
 	esac
 done
 

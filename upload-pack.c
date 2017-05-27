@@ -35,7 +35,7 @@ static const char * const upload_pack_usage[] = {
 #define CLIENT_SHALLOW	(1u << 18)
 #define HIDDEN_REF	(1u << 19)
 
-static unsigned long oldest_have;
+static timestamp_t oldest_have;
 
 static int deepen_relative;
 static int multi_ack;
@@ -735,7 +735,7 @@ static void receive_needs(void)
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 	int depth = 0;
 	int has_non_tip = 0;
-	unsigned long deepen_since = 0;
+	timestamp_t deepen_since = 0;
 	int deepen_rev_list = 0;
 
 	shallow_nr = 0;
@@ -775,7 +775,7 @@ static void receive_needs(void)
 		}
 		if (skip_prefix(line, "deepen-since ", &arg)) {
 			char *end = NULL;
-			deepen_since = strtoul(arg, &end, 0);
+			deepen_since = parse_timestamp(arg, &end, 0);
 			if (!end || *end || !deepen_since ||
 			    /* revisions.c's max_age -1 is special */
 			    deepen_since == -1)
@@ -863,7 +863,7 @@ static void receive_needs(void)
 
 		argv_array_push(&av, "rev-list");
 		if (deepen_since)
-			argv_array_pushf(&av, "--max-age=%lu", deepen_since);
+			argv_array_pushf(&av, "--max-age=%"PRItime, deepen_since);
 		if (deepen_not.nr) {
 			argv_array_push(&av, "--not");
 			for (i = 0; i < deepen_not.nr; i++) {

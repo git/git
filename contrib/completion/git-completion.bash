@@ -1319,6 +1319,7 @@ _git_clone ()
 			--template=
 			--depth
 			--single-branch
+			--no-tags
 			--branch
 			--recurse-submodules
 			--no-single-branch
@@ -2387,7 +2388,9 @@ _git_config ()
 		color.status.added
 		color.status.changed
 		color.status.header
+		color.status.localBranch
 		color.status.nobranch
+		color.status.remoteBranch
 		color.status.unmerged
 		color.status.untracked
 		color.status.updated

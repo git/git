@@ -27,6 +27,9 @@ check_dir() {
 	test_cmp expect actual
 }
 
+test_lazy_prereq UNZIP_ZIP64_SUPPORT '
+	"$GIT_UNZIP" -v | grep ZIP64_SUPPORT
+'
 
 # bsdtar/libarchive versions before 3.1.3 consider a tar file with a
 # global pax header that is not followed by a file record as corrupt.
@@ -153,6 +156,53 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 	expr 65536 + 256 >expect &&
 	"$ZIPINFO" many.zip | head -2 | sed -n "2s/.* //p" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
+	'zip archive bigger than 4GB' '
+	# build string containing 65536 characters
+	s=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef &&
+	s=$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s &&
+	s=$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s$s &&
+
+	# create blob with a length of 65536 + 1 bytes
+	blob=$(echo $s | git hash-object -w --stdin) &&
+
+	# create tree containing 65500 entries of that blob
+	for i in $(test_seq 1 65500)
+	do
+		echo "100644 blob $blob	$i"
+	done >tree &&
+	tree=$(git mktree <tree) &&
+
+	# zip it, creating an archive a bit bigger than 4GB
+	git archive -0 -o many-big.zip $tree &&
+
+	"$GIT_UNZIP" -t many-big.zip 9999 65500 &&
+	"$GIT_UNZIP" -t many-big.zip
+'
+
+test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
+	'zip archive with files bigger than 4GB' '
+	# Pack created with:
+	#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
+	mkdir -p .git/objects/pack &&
+	(
+		cd .git/objects/pack &&
+		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
+	) &&
+	blob=754a93d6fada4c6873360e6cb4b209132271ab0e &&
+	size=$(expr 4100 "*" 1024 "*" 1024) &&
+
+	# create a tree containing the file
+	tree=$(echo "100644 blob $blob	big-file" | git mktree) &&
+
+	# zip it, creating an archive with a file bigger than 4GB
+	git archive -o big.zip $tree &&
+
+	"$GIT_UNZIP" -t big.zip &&
+	"$ZIPINFO" big.zip >big.lst &&
+	grep $size big.lst
 '
 
 test_done

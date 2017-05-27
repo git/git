@@ -20,7 +20,7 @@
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int parallel_jobs = 1;
-static struct string_list changed_submodule_paths = STRING_LIST_INIT_NODUP;
+static struct string_list changed_submodule_paths = STRING_LIST_INIT_DUP;
 static int initialized_fetch_ref_tips;
 static struct oid_array ref_tips_before_fetch;
 static struct oid_array ref_tips_after_fetch;
@@ -617,6 +617,94 @@ const struct submodule *submodule_from_ce(const struct cache_entry *ce)
 	return submodule_from_path(null_sha1, ce->name);
 }
 
+static struct oid_array *submodule_commits(struct string_list *submodules,
+					   const char *path)
+{
+	struct string_list_item *item;
+
+	item = string_list_insert(submodules, path);
+	if (item->util)
+		return (struct oid_array *) item->util;
+
+	/* NEEDSWORK: should we have oid_array_init()? */
+	item->util = xcalloc(1, sizeof(struct oid_array));
+	return (struct oid_array *) item->util;
+}
+
+static void collect_changed_submodules_cb(struct diff_queue_struct *q,
+					  struct diff_options *options,
+					  void *data)
+{
+	int i;
+	struct string_list *changed = data;
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		struct oid_array *commits;
+		if (!S_ISGITLINK(p->two->mode))
+			continue;
+
+		if (S_ISGITLINK(p->one->mode)) {
+			/*
+			 * NEEDSWORK: We should honor the name configured in
+			 * the .gitmodules file of the commit we are examining
+			 * here to be able to correctly follow submodules
+			 * being moved around.
+			 */
+			commits = submodule_commits(changed, p->two->path);
+			oid_array_append(commits, &p->two->oid);
+		} else {
+			/* Submodule is new or was moved here */
+			/*
+			 * NEEDSWORK: When the .git directories of submodules
+			 * live inside the superprojects .git directory some
+			 * day we should fetch new submodules directly into
+			 * that location too when config or options request
+			 * that so they can be checked out from there.
+			 */
+			continue;
+		}
+	}
+}
+
+/*
+ * Collect the paths of submodules in 'changed' which have changed based on
+ * the revisions as specified in 'argv'.  Each entry in 'changed' will also
+ * have a corresponding 'struct oid_array' (in the 'util' field) which lists
+ * what the submodule pointers were updated to during the change.
+ */
+static void collect_changed_submodules(struct string_list *changed,
+				       struct argv_array *argv)
+{
+	struct rev_info rev;
+	const struct commit *commit;
+
+	init_revisions(&rev, NULL);
+	setup_revisions(argv->argc, argv->argv, &rev, NULL);
+	if (prepare_revision_walk(&rev))
+		die("revision walk setup failed");
+
+	while ((commit = get_revision(&rev))) {
+		struct rev_info diff_rev;
+
+		init_revisions(&diff_rev, NULL);
+		diff_rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
+		diff_rev.diffopt.format_callback = collect_changed_submodules_cb;
+		diff_rev.diffopt.format_callback_data = changed;
+		diff_tree_combined_merge(commit, 1, &diff_rev);
+	}
+
+	reset_revision_walk();
+}
+
+static void free_submodules_oids(struct string_list *submodules)
+{
+	struct string_list_item *item;
+	for_each_string_list_item(item, submodules)
+		oid_array_clear((struct oid_array *) item->util);
+	string_list_clear(submodules, 1);
+}
+
 static int has_remote(const char *refname, const struct object_id *oid,
 		      int flags, void *cb_data)
 {
@@ -644,10 +732,44 @@ static int submodule_has_commits(const char *path, struct oid_array *commits)
 {
 	int has_commit = 1;
 
+	/*
+	 * Perform a cheap, but incorrect check for the existance of 'commits'.
+	 * This is done by adding the submodule's object store to the in-core
+	 * object store, and then querying for each commit's existance.  If we
+	 * do not have the commit object anywhere, there is no chance we have
+	 * it in the object store of the correct submodule and have it
+	 * reachable from a ref, so we can fail early without spawning rev-list
+	 * which is expensive.
+	 */
 	if (add_submodule_odb(path))
 		return 0;
 
 	oid_array_for_each_unique(commits, check_has_commit, &has_commit);
+
+	if (has_commit) {
+		/*
+		 * Even if the submodule is checked out and the commit is
+		 * present, make sure it exists in the submodule's object store
+		 * and that it is reachable from a ref.
+		 */
+		struct child_process cp = CHILD_PROCESS_INIT;
+		struct strbuf out = STRBUF_INIT;
+
+		argv_array_pushl(&cp.args, "rev-list", "-n", "1", NULL);
+		oid_array_for_each_unique(commits, append_oid_to_argv, &cp.args);
+		argv_array_pushl(&cp.args, "--not", "--all", NULL);
+
+		prepare_submodule_repo_env(&cp.env_array);
+		cp.git_cmd = 1;
+		cp.no_stdin = 1;
+		cp.dir = path;
+
+		if (capture_command(&cp, &out, GIT_MAX_HEXSZ + 1) || out.len)
+			has_commit = 0;
+
+		strbuf_release(&out);
+	}
+
 	return has_commit;
 }
 
@@ -695,67 +817,12 @@ static int submodule_needs_pushing(const char *path, struct oid_array *commits)
 	return 0;
 }
 
-static struct oid_array *submodule_commits(struct string_list *submodules,
-					    const char *path)
-{
-	struct string_list_item *item;
-
-	item = string_list_insert(submodules, path);
-	if (item->util)
-		return (struct oid_array *) item->util;
-
-	/* NEEDSWORK: should we have oid_array_init()? */
-	item->util = xcalloc(1, sizeof(struct oid_array));
-	return (struct oid_array *) item->util;
-}
-
-static void collect_submodules_from_diff(struct diff_queue_struct *q,
-					 struct diff_options *options,
-					 void *data)
-{
-	int i;
-	struct string_list *submodules = data;
-
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		struct oid_array *commits;
-		if (!S_ISGITLINK(p->two->mode))
-			continue;
-		commits = submodule_commits(submodules, p->two->path);
-		oid_array_append(commits, &p->two->oid);
-	}
-}
-
-static void find_unpushed_submodule_commits(struct commit *commit,
-		struct string_list *needs_pushing)
-{
-	struct rev_info rev;
-
-	init_revisions(&rev, NULL);
-	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
-	rev.diffopt.format_callback = collect_submodules_from_diff;
-	rev.diffopt.format_callback_data = needs_pushing;
-	diff_tree_combined_merge(commit, 1, &rev);
-}
-
-static void free_submodules_sha1s(struct string_list *submodules)
-{
-	struct string_list_item *item;
-	for_each_string_list_item(item, submodules)
-		oid_array_clear((struct oid_array *) item->util);
-	string_list_clear(submodules, 1);
-}
-
 int find_unpushed_submodules(struct oid_array *commits,
 		const char *remotes_name, struct string_list *needs_pushing)
 {
-	struct rev_info rev;
-	struct commit *commit;
 	struct string_list submodules = STRING_LIST_INIT_DUP;
 	struct string_list_item *submodule;
 	struct argv_array argv = ARGV_ARRAY_INIT;
-
-	init_revisions(&rev, NULL);
 
 	/* argv.argv[0] will be ignored by setup_revisions */
 	argv_array_push(&argv, "find_unpushed_submodules");
@@ -763,23 +830,18 @@ int find_unpushed_submodules(struct oid_array *commits,
 	argv_array_push(&argv, "--not");
 	argv_array_pushf(&argv, "--remotes=%s", remotes_name);
 
-	setup_revisions(argv.argc, argv.argv, &rev, NULL);
-	if (prepare_revision_walk(&rev))
-		die("revision walk setup failed");
-
-	while ((commit = get_revision(&rev)) != NULL)
-		find_unpushed_submodule_commits(commit, &submodules);
-
-	reset_revision_walk();
-	argv_array_clear(&argv);
+	collect_changed_submodules(&submodules, &argv);
 
 	for_each_string_list_item(submodule, &submodules) {
-		struct oid_array *commits = (struct oid_array *) submodule->util;
+		struct oid_array *commits = submodule->util;
+		const char *path = submodule->string;
 
-		if (submodule_needs_pushing(submodule->string, commits))
-			string_list_insert(needs_pushing, submodule->string);
+		if (submodule_needs_pushing(path, commits))
+			string_list_insert(needs_pushing, path);
 	}
-	free_submodules_sha1s(&submodules);
+
+	free_submodules_oids(&submodules);
+	argv_array_clear(&argv);
 
 	return needs_pushing->nr;
 }
@@ -896,125 +958,56 @@ int push_unpushed_submodules(struct oid_array *commits,
 	return ret;
 }
 
-static int is_submodule_commit_present(const char *path, unsigned char sha1[20])
+static int append_oid_to_array(const char *ref, const struct object_id *oid,
+			       int flags, void *data)
 {
-	int is_present = 0;
-	if (!add_submodule_odb(path) && lookup_commit_reference(sha1)) {
-		/* Even if the submodule is checked out and the commit is
-		 * present, make sure it is reachable from a ref. */
-		struct child_process cp = CHILD_PROCESS_INIT;
-		const char *argv[] = {"rev-list", "-n", "1", NULL, "--not", "--all", NULL};
-		struct strbuf buf = STRBUF_INIT;
-
-		argv[3] = sha1_to_hex(sha1);
-		cp.argv = argv;
-		prepare_submodule_repo_env(&cp.env_array);
-		cp.git_cmd = 1;
-		cp.no_stdin = 1;
-		cp.dir = path;
-		if (!capture_command(&cp, &buf, 1024) && !buf.len)
-			is_present = 1;
-
-		strbuf_release(&buf);
-	}
-	return is_present;
-}
-
-static void submodule_collect_changed_cb(struct diff_queue_struct *q,
-					 struct diff_options *options,
-					 void *data)
-{
-	int i;
-	for (i = 0; i < q->nr; i++) {
-		struct diff_filepair *p = q->queue[i];
-		if (!S_ISGITLINK(p->two->mode))
-			continue;
-
-		if (S_ISGITLINK(p->one->mode)) {
-			/* NEEDSWORK: We should honor the name configured in
-			 * the .gitmodules file of the commit we are examining
-			 * here to be able to correctly follow submodules
-			 * being moved around. */
-			struct string_list_item *path;
-			path = unsorted_string_list_lookup(&changed_submodule_paths, p->two->path);
-			if (!path && !is_submodule_commit_present(p->two->path, p->two->oid.hash))
-				string_list_append(&changed_submodule_paths, xstrdup(p->two->path));
-		} else {
-			/* Submodule is new or was moved here */
-			/* NEEDSWORK: When the .git directories of submodules
-			 * live inside the superprojects .git directory some
-			 * day we should fetch new submodules directly into
-			 * that location too when config or options request
-			 * that so they can be checked out from there. */
-			continue;
-		}
-	}
-}
-
-static int add_sha1_to_array(const char *ref, const struct object_id *oid,
-			     int flags, void *data)
-{
-	oid_array_append(data, oid);
+	struct oid_array *array = data;
+	oid_array_append(array, oid);
 	return 0;
 }
 
 void check_for_new_submodule_commits(struct object_id *oid)
 {
 	if (!initialized_fetch_ref_tips) {
-		for_each_ref(add_sha1_to_array, &ref_tips_before_fetch);
+		for_each_ref(append_oid_to_array, &ref_tips_before_fetch);
 		initialized_fetch_ref_tips = 1;
 	}
 
 	oid_array_append(&ref_tips_after_fetch, oid);
 }
 
-static int add_oid_to_argv(const struct object_id *oid, void *data)
-{
-	argv_array_push(data, oid_to_hex(oid));
-	return 0;
-}
-
 static void calculate_changed_submodule_paths(void)
 {
-	struct rev_info rev;
-	struct commit *commit;
 	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct string_list changed_submodules = STRING_LIST_INIT_DUP;
+	const struct string_list_item *item;
 
 	/* No need to check if there are no submodules configured */
 	if (!submodule_from_path(NULL, NULL))
 		return;
 
-	init_revisions(&rev, NULL);
 	argv_array_push(&argv, "--"); /* argv[0] program name */
 	oid_array_for_each_unique(&ref_tips_after_fetch,
-				   add_oid_to_argv, &argv);
+				   append_oid_to_argv, &argv);
 	argv_array_push(&argv, "--not");
 	oid_array_for_each_unique(&ref_tips_before_fetch,
-				   add_oid_to_argv, &argv);
-	setup_revisions(argv.argc, argv.argv, &rev, NULL);
-	if (prepare_revision_walk(&rev))
-		die("revision walk setup failed");
+				   append_oid_to_argv, &argv);
 
 	/*
 	 * Collect all submodules (whether checked out or not) for which new
 	 * commits have been recorded upstream in "changed_submodule_paths".
 	 */
-	while ((commit = get_revision(&rev))) {
-		struct commit_list *parent = commit->parents;
-		while (parent) {
-			struct diff_options diff_opts;
-			diff_setup(&diff_opts);
-			DIFF_OPT_SET(&diff_opts, RECURSIVE);
-			diff_opts.output_format |= DIFF_FORMAT_CALLBACK;
-			diff_opts.format_callback = submodule_collect_changed_cb;
-			diff_setup_done(&diff_opts);
-			diff_tree_sha1(parent->item->object.oid.hash, commit->object.oid.hash, "", &diff_opts);
-			diffcore_std(&diff_opts);
-			diff_flush(&diff_opts);
-			parent = parent->next;
-		}
+	collect_changed_submodules(&changed_submodules, &argv);
+
+	for_each_string_list_item(item, &changed_submodules) {
+		struct oid_array *commits = item->util;
+		const char *path = item->string;
+
+		if (!submodule_has_commits(path, commits))
+			string_list_append(&changed_submodule_paths, path);
 	}
 
+	free_submodules_oids(&changed_submodules);
 	argv_array_clear(&argv);
 	oid_array_clear(&ref_tips_before_fetch);
 	oid_array_clear(&ref_tips_after_fetch);

@@ -10,7 +10,7 @@
 
 typedef struct rev_name {
 	const char *tip_name;
-	unsigned long taggerdate;
+	timestamp_t taggerdate;
 	int generation;
 	int distance;
 } rev_name;
@@ -21,7 +21,7 @@ static long cutoff = LONG_MAX;
 #define MERGE_TRAVERSAL_WEIGHT 65535
 
 static void name_rev(struct commit *commit,
-		const char *tip_name, unsigned long taggerdate,
+		const char *tip_name, timestamp_t taggerdate,
 		int generation, int distance,
 		int deref)
 {
@@ -146,7 +146,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 	struct name_ref_data *data = cb_data;
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
-	unsigned long taggerdate = ULONG_MAX;
+	timestamp_t taggerdate = TIME_MAX;
 
 	if (data->tags_only && !starts_with(path, "refs/tags/"))
 		return 0;

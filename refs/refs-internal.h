@@ -482,6 +482,10 @@ struct ref_store;
 #define REF_STORE_WRITE		(1 << 1) /* can perform update operations */
 #define REF_STORE_ODB		(1 << 2) /* has access to object database */
 #define REF_STORE_MAIN		(1 << 3)
+#define REF_STORE_ALL_CAPS	(REF_STORE_READ | \
+				 REF_STORE_WRITE | \
+				 REF_STORE_ODB | \
+				 REF_STORE_MAIN)
 
 /*
  * Initialize the ref_store for the specified gitdir. These functions

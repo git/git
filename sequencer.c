@@ -1045,6 +1045,7 @@ static int do_pick_commit(enum todo_command command, struct commit *commit,
 			strbuf_addstr(&msgbuf, p);
 
 		if (opts->record_origin) {
+			strbuf_complete_line(&msgbuf);
 			if (!has_conforming_footer(&msgbuf, NULL, 0))
 				strbuf_addch(&msgbuf, '\n');
 			strbuf_addstr(&msgbuf, cherry_picked_prefix);
@@ -2357,6 +2358,9 @@ void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag)
 				getenv("GIT_COMMITTER_EMAIL")));
 	strbuf_addch(&sob, '\n');
 
+	if (!ignore_footer)
+		strbuf_complete_line(msgbuf);
+
 	/*
 	 * If the whole message buffer is equal to the sob, pretend that we
 	 * found a conforming footer with a matching sob
@@ -2375,13 +2379,6 @@ void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag)
 			/*
 			 * The buffer is completely empty.  Leave foom for
 			 * the title and body to be filled in by the user.
-			 */
-			append_newlines = "\n\n";
-		} else if (msgbuf->buf[len - 1] != '\n') {
-			/*
-			 * Incomplete line.  Complete the line and add a
-			 * blank one so that there is an empty line between
-			 * the message body and the sob.
 			 */
 			append_newlines = "\n\n";
 		} else if (len == 1) {

@@ -110,6 +110,8 @@ static void init_log_defaults(void)
 {
 	init_grep_defaults();
 	init_diff_ui_defaults();
+
+	decoration_style = auto_decoration_style();
 }
 
 static void cmd_log_init_defaults(struct rev_info *rev)
@@ -410,8 +412,6 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		if (decoration_style < 0)
 			decoration_style = 0; /* maybe warn? */
 		return 0;
-	} else {
-		decoration_style = auto_decoration_style();
 	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
@@ -910,8 +910,8 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 static void gen_message_id(struct rev_info *info, char *base)
 {
 	struct strbuf buf = STRBUF_INIT;
-	strbuf_addf(&buf, "%s.%lu.git.%s", base,
-		    (unsigned long) time(NULL),
+	strbuf_addf(&buf, "%s.%"PRItime".git.%s", base,
+		    (timestamp_t) time(NULL),
 		    git_committer_info(IDENT_NO_NAME|IDENT_NO_DATE|IDENT_STRICT));
 	info->message_id = strbuf_detach(&buf, NULL);
 }
