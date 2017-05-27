@@ -2455,6 +2455,7 @@ _git_config ()
 		credential.helper
 		credential.useHttpPath
 		credential.username
+		credentialCache.ignoreSIGHUP
 		diff.autorefreshindex
 		diff.external
 		diff.ignoreSubmodules
