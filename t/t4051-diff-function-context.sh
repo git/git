@@ -72,7 +72,8 @@ test_expect_success 'setup' '
 
 	# overlap function context of 1st change and -u context of 2nd change
 	grep -v "delete me from hello" <"$dir/hello.c" >file.c &&
-	sed 2p <"$dir/dummy.c" >>file.c &&
+	sed "2a\\
+	     extra line" <"$dir/dummy.c" >>file.c &&
 	commit_and_tag changed_hello_dummy file.c &&
 
 	git checkout initial &&
