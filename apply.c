@@ -2802,9 +2802,10 @@ static void update_image(struct apply_state *state,
 			img->line + applied_pos + preimage_limit,
 			(img->nr - (applied_pos + preimage_limit)) *
 			sizeof(*img->line));
-	memcpy(img->line + applied_pos,
-	       postimage->line,
-	       postimage->nr * sizeof(*img->line));
+	if (postimage->nr)
+		memcpy(img->line + applied_pos,
+			postimage->line,
+			postimage->nr * sizeof(*img->line));
 	if (!state->allow_overlap)
 		for (i = 0; i < postimage->nr; i++)
 			img->line[applied_pos + i].flag |= LINE_PATCHED;
