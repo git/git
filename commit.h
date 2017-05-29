@@ -45,18 +45,18 @@ enum decoration_type {
 void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
 const struct name_decoration *get_name_decoration(const struct object *obj);
 
-struct commit *lookup_commit(const unsigned char *sha1);
-struct commit *lookup_commit_reference(const unsigned char *sha1);
-struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
+struct commit *lookup_commit(const struct object_id *oid);
+struct commit *lookup_commit_reference(const struct object_id *oid);
+struct commit *lookup_commit_reference_gently(const struct object_id *oid,
 					      int quiet);
 struct commit *lookup_commit_reference_by_name(const char *name);
 
 /*
- * Look up object named by "sha1", dereference tag as necessary,
- * get a commit and return it. If "sha1" does not dereference to
+ * Look up object named by "oid", dereference tag as necessary,
+ * get a commit and return it. If "oid" does not dereference to
  * a commit, use ref_name to report an error and die.
  */
-struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_name);
+struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name);
 
 int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size);
 int parse_commit_gently(struct commit *item, int quiet_on_missing);
@@ -263,8 +263,8 @@ extern struct commit_list *get_merge_bases_many_dirty(struct commit *one, int n,
 
 struct oid_array;
 struct ref;
-extern int register_shallow(const unsigned char *sha1);
-extern int unregister_shallow(const unsigned char *sha1);
+extern int register_shallow(const struct object_id *oid);
+extern int unregister_shallow(const struct object_id *oid);
 extern int for_each_commit_graft(each_commit_graft_fn, void *);
 extern int is_repository_shallow(void);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,

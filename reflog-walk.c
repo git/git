@@ -238,13 +238,13 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 	do {
 		reflog = &commit_reflog->reflogs->items[commit_reflog->recno];
 		commit_reflog->recno--;
-		logobj = parse_object(reflog->ooid.hash);
+		logobj = parse_object(&reflog->ooid);
 	} while (commit_reflog->recno && (logobj && logobj->type != OBJ_COMMIT));
 
-	if (!logobj && commit_reflog->recno >= 0 && is_null_sha1(reflog->ooid.hash)) {
+	if (!logobj && commit_reflog->recno >= 0 && is_null_oid(&reflog->ooid)) {
 		/* a root commit, but there are still more entries to show */
 		reflog = &commit_reflog->reflogs->items[commit_reflog->recno];
-		logobj = parse_object(reflog->noid.hash);
+		logobj = parse_object(&reflog->noid);
 	}
 
 	if (!logobj || logobj->type != OBJ_COMMIT) {

@@ -130,13 +130,13 @@ struct ref_update {
 	/*
 	 * If (flags & REF_HAVE_NEW), set the reference to this value:
 	 */
-	unsigned char new_sha1[20];
+	struct object_id new_oid;
 
 	/*
 	 * If (flags & REF_HAVE_OLD), check that the reference
 	 * previously had this value:
 	 */
-	unsigned char old_sha1[20];
+	struct object_id old_oid;
 
 	/*
 	 * One or more of REF_HAVE_NEW, REF_HAVE_OLD, REF_NODEREF,

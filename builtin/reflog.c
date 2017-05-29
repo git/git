@@ -55,14 +55,14 @@ struct collect_reflog_cb {
 #define STUDYING	(1u<<11)
 #define REACHABLE	(1u<<12)
 
-static int tree_is_complete(const unsigned char *sha1)
+static int tree_is_complete(const struct object_id *oid)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
 	int complete;
 	struct tree *tree;
 
-	tree = lookup_tree(sha1);
+	tree = lookup_tree(oid);
 	if (!tree)
 		return 0;
 	if (tree->object.flags & SEEN)
@@ -73,7 +73,7 @@ static int tree_is_complete(const unsigned char *sha1)
 	if (!tree->buffer) {
 		enum object_type type;
 		unsigned long size;
-		void *data = read_sha1_file(sha1, &type, &size);
+		void *data = read_sha1_file(oid->hash, &type, &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;
@@ -85,7 +85,7 @@ static int tree_is_complete(const unsigned char *sha1)
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
 		if (!has_sha1_file(entry.oid->hash) ||
-		    (S_ISDIR(entry.mode) && !tree_is_complete(entry.oid->hash))) {
+		    (S_ISDIR(entry.mode) && !tree_is_complete(entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;
 		}
@@ -126,7 +126,7 @@ static int commit_is_complete(struct commit *commit)
 		struct commit_list *parent;
 
 		c = (struct commit *)study.objects[--study.nr].item;
-		if (!c->object.parsed && !parse_object(c->object.oid.hash))
+		if (!c->object.parsed && !parse_object(&c->object.oid))
 			c->object.flags |= INCOMPLETE;
 
 		if (c->object.flags & INCOMPLETE) {
@@ -152,7 +152,7 @@ static int commit_is_complete(struct commit *commit)
 		for (i = 0; i < found.nr; i++) {
 			struct commit *c =
 				(struct commit *)found.objects[i].item;
-			if (!tree_is_complete(c->tree->object.oid.hash)) {
+			if (!tree_is_complete(&c->tree->object.oid)) {
 				is_incomplete = 1;
 				c->object.flags |= INCOMPLETE;
 			}
@@ -186,13 +186,13 @@ static int commit_is_complete(struct commit *commit)
 	return !is_incomplete;
 }
 
-static int keep_entry(struct commit **it, unsigned char *sha1)
+static int keep_entry(struct commit **it, struct object_id *oid)
 {
 	struct commit *commit;
 
-	if (is_null_sha1(sha1))
+	if (is_null_oid(oid))
 		return 1;
-	commit = lookup_commit_reference_gently(sha1, 1);
+	commit = lookup_commit_reference_gently(oid, 1);
 	if (!commit)
 		return 0;
 
@@ -251,17 +251,17 @@ static void mark_reachable(struct expire_reflog_policy_cb *cb)
 	cb->mark_list = leftover;
 }
 
-static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit, unsigned char *sha1)
+static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit, struct object_id *oid)
 {
 	/*
 	 * We may or may not have the commit yet - if not, look it
 	 * up using the supplied sha1.
 	 */
 	if (!commit) {
-		if (is_null_sha1(sha1))
+		if (is_null_oid(oid))
 			return 0;
 
-		commit = lookup_commit_reference_gently(sha1, 1);
+		commit = lookup_commit_reference_gently(oid, 1);
 
 		/* Not a commit -- keep it */
 		if (!commit)
@@ -283,7 +283,7 @@ static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit
 /*
  * Return true iff the specified reflog entry should be expired.
  */
-static int should_expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+static int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 				    const char *email, timestamp_t timestamp, int tz,
 				    const char *message, void *cb_data)
 {
@@ -295,13 +295,13 @@ static int should_expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 
 	old = new = NULL;
 	if (cb->cmd.stalefix &&
-	    (!keep_entry(&old, osha1) || !keep_entry(&new, nsha1)))
+	    (!keep_entry(&old, ooid) || !keep_entry(&new, noid)))
 		return 1;
 
 	if (timestamp < cb->cmd.expire_unreachable) {
 		if (cb->unreachable_expire_kind == UE_ALWAYS)
 			return 1;
-		if (unreachable(cb, old, osha1) || unreachable(cb, new, nsha1))
+		if (unreachable(cb, old, ooid) || unreachable(cb, new, noid))
 			return 1;
 	}
 
@@ -318,7 +318,7 @@ static int push_tip_to_list(const char *refname, const struct object_id *oid,
 	struct commit *tip_commit;
 	if (flags & REF_ISSYMREF)
 		return 0;
-	tip_commit = lookup_commit_reference_gently(oid->hash, 1);
+	tip_commit = lookup_commit_reference_gently(oid, 1);
 	if (!tip_commit)
 		return 0;
 	commit_list_insert(tip_commit, list);
@@ -326,7 +326,7 @@ static int push_tip_to_list(const char *refname, const struct object_id *oid,
 }
 
 static void reflog_expiry_prepare(const char *refname,
-				  const unsigned char *sha1,
+				  const struct object_id *oid,
 				  void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
@@ -335,7 +335,7 @@ static void reflog_expiry_prepare(const char *refname,
 		cb->tip_commit = NULL;
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
-		cb->tip_commit = lookup_commit_reference_gently(sha1, 1);
+		cb->tip_commit = lookup_commit_reference_gently(oid, 1);
 		if (!cb->tip_commit)
 			cb->unreachable_expire_kind = UE_ALWAYS;
 		else

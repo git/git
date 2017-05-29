@@ -478,7 +478,7 @@ static int oneway_diff(const struct cache_entry * const *src,
 }
 
 static int diff_cache(struct rev_info *revs,
-		      const unsigned char *tree_sha1,
+		      const struct object_id *tree_oid,
 		      const char *tree_name,
 		      int cached)
 {
@@ -486,10 +486,10 @@ static int diff_cache(struct rev_info *revs,
 	struct tree_desc t;
 	struct unpack_trees_options opts;
 
-	tree = parse_tree_indirect(tree_sha1);
+	tree = parse_tree_indirect(tree_oid);
 	if (!tree)
 		return error("bad tree object %s",
-			     tree_name ? tree_name : sha1_to_hex(tree_sha1));
+			     tree_name ? tree_name : oid_to_hex(tree_oid));
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
 	opts.index_only = cached;
@@ -512,7 +512,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 	struct object_array_entry *ent;
 
 	ent = revs->pending.objects;
-	if (diff_cache(revs, ent->item->oid.hash, ent->name, cached))
+	if (diff_cache(revs, &ent->item->oid, ent->name, cached))
 		exit(128);
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "c/", cached ? "i/" : "w/");
@@ -522,7 +522,7 @@ int run_diff_index(struct rev_info *revs, int cached)
 	return 0;
 }
 
-int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
+int do_diff_cache(const struct object_id *tree_oid, struct diff_options *opt)
 {
 	struct rev_info revs;
 
@@ -530,7 +530,7 @@ int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
 	copy_pathspec(&revs.prune_data, &opt->pathspec);
 	revs.diffopt = *opt;
 
-	if (diff_cache(&revs, tree_sha1, NULL, 1))
+	if (diff_cache(&revs, tree_oid, NULL, 1))
 		exit(128);
 	return 0;
 }

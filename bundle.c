@@ -12,11 +12,11 @@
 
 static const char bundle_signature[] = "# v2 git bundle\n";
 
-static void add_to_ref_list(const unsigned char *sha1, const char *name,
+static void add_to_ref_list(const struct object_id *oid, const char *name,
 		struct ref_list *list)
 {
 	ALLOC_GROW(list->list, list->nr + 1, list->alloc);
-	hashcpy(list->list[list->nr].sha1, sha1);
+	oidcpy(&list->list[list->nr].oid, oid);
 	list->list[list->nr].name = xstrdup(name);
 	list->nr++;
 }
@@ -40,8 +40,9 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 	/* The bundle header ends with an empty line */
 	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
 	       buf.len && buf.buf[0] != '\n') {
-		unsigned char sha1[20];
+		struct object_id oid;
 		int is_prereq = 0;
+		const char *p;
 
 		if (*buf.buf == '-') {
 			is_prereq = 1;
@@ -54,9 +55,9 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 		 * Prerequisites have object name that is optionally
 		 * followed by SP and subject line.
 		 */
-		if (get_sha1_hex(buf.buf, sha1) ||
-		    (buf.len > 40 && !isspace(buf.buf[40])) ||
-		    (!is_prereq && buf.len <= 40)) {
+		if (parse_oid_hex(buf.buf, &oid, &p) ||
+		    (*p && !isspace(*p)) ||
+		    (!is_prereq && !*p)) {
 			if (report_path)
 				error(_("unrecognized header: %s%s (%d)"),
 				      (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
@@ -64,9 +65,9 @@ static int parse_bundle_header(int fd, struct bundle_header *header,
 			break;
 		} else {
 			if (is_prereq)
-				add_to_ref_list(sha1, "", &header->prerequisites);
+				add_to_ref_list(&oid, "", &header->prerequisites);
 			else
-				add_to_ref_list(sha1, buf.buf + 41, &header->references);
+				add_to_ref_list(&oid, p + 1, &header->references);
 		}
 	}
 
@@ -115,7 +116,7 @@ static int list_refs(struct ref_list *r, int argc, const char **argv)
 			if (j == argc)
 				continue;
 		}
-		printf("%s %s\n", sha1_to_hex(r->list[i].sha1),
+		printf("%s %s\n", oid_to_hex(&r->list[i].oid),
 				r->list[i].name);
 	}
 	return 0;
@@ -141,7 +142,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 	init_revisions(&revs, NULL);
 	for (i = 0; i < p->nr; i++) {
 		struct ref_list_entry *e = p->list + i;
-		struct object *o = parse_object(e->sha1);
+		struct object *o = parse_object(&e->oid);
 		if (o) {
 			o->flags |= PREREQ_MARK;
 			add_pending_object(&revs, o, e->name);
@@ -149,7 +150,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 		}
 		if (++ret == 1)
 			error("%s", message);
-		error("%s %s", sha1_to_hex(e->sha1), e->name);
+		error("%s %s", oid_to_hex(&e->oid), e->name);
 	}
 	if (revs.pending.nr != p->nr)
 		return ret;
@@ -285,16 +286,18 @@ static int compute_and_write_prerequisites(int bundle_fd,
 		return -1;
 	rls_fout = xfdopen(rls.out, "r");
 	while (strbuf_getwholeline(&buf, rls_fout, '\n') != EOF) {
-		unsigned char sha1[20];
+		struct object_id oid;
 		if (buf.len > 0 && buf.buf[0] == '-') {
 			write_or_die(bundle_fd, buf.buf, buf.len);
-			if (!get_sha1_hex(buf.buf + 1, sha1)) {
-				struct object *object = parse_object_or_die(sha1, buf.buf);
+			if (!get_oid_hex(buf.buf + 1, &oid)) {
+				struct object *object = parse_object_or_die(&oid,
+									    buf.buf);
 				object->flags |= UNINTERESTING;
 				add_pending_object(revs, object, buf.buf);
 			}
-		} else if (!get_sha1_hex(buf.buf, sha1)) {
-			struct object *object = parse_object_or_die(sha1, buf.buf);
+		} else if (!get_oid_hex(buf.buf, &oid)) {
+			struct object *object = parse_object_or_die(&oid,
+								    buf.buf);
 			object->flags |= SHOWN;
 		}
 	}
@@ -366,7 +369,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 			 * in terms of a tag (e.g. v2.0 from the range
 			 * "v1.0..v2.0")?
 			 */
-			struct commit *one = lookup_commit_reference(oid.hash);
+			struct commit *one = lookup_commit_reference(&oid);
 			struct object *obj;
 
 			if (e->item == &(one->object)) {
@@ -378,7 +381,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 				 * end up triggering "empty bundle"
 				 * error.
 				 */
-				obj = parse_object_or_die(oid.hash, e->name);
+				obj = parse_object_or_die(&oid, e->name);
 				obj->flags |= SHOWN;
 				add_pending_object(revs, obj, e->name);
 			}

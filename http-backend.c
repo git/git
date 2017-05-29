@@ -431,7 +431,7 @@ static int show_text_ref(const char *name, const struct object_id *oid,
 {
 	const char *name_nons = strip_namespace(name);
 	struct strbuf *buf = cb_data;
-	struct object *o = parse_object(oid->hash);
+	struct object *o = parse_object(oid);
 	if (!o)
 		return 0;
 

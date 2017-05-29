@@ -5,16 +5,16 @@
 
 static int notes_cache_match_validity(const char *ref, const char *validity)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct commit *commit;
 	struct pretty_print_context pretty_ctx;
 	struct strbuf msg = STRBUF_INIT;
 	int ret;
 
-	if (read_ref(ref, sha1) < 0)
+	if (read_ref(ref, oid.hash) < 0)
 		return 0;
 
-	commit = lookup_commit_reference_gently(sha1, 1);
+	commit = lookup_commit_reference_gently(&oid, 1);
 	if (!commit)
 		return 0;
 
@@ -46,8 +46,7 @@ void notes_cache_init(struct notes_cache *c, const char *name,
 
 int notes_cache_write(struct notes_cache *c)
 {
-	unsigned char tree_sha1[20];
-	unsigned char commit_sha1[20];
+	struct object_id tree_oid, commit_oid;
 
 	if (!c || !c->tree.initialized || !c->tree.update_ref ||
 	    !*c->tree.update_ref)
@@ -55,19 +54,19 @@ int notes_cache_write(struct notes_cache *c)
 	if (!c->tree.dirty)
 		return 0;
 
-	if (write_notes_tree(&c->tree, tree_sha1))
+	if (write_notes_tree(&c->tree, tree_oid.hash))
 		return -1;
-	if (commit_tree(c->validity, strlen(c->validity), tree_sha1, NULL,
-			commit_sha1, NULL, NULL) < 0)
+	if (commit_tree(c->validity, strlen(c->validity), tree_oid.hash, NULL,
+			commit_oid.hash, NULL, NULL) < 0)
 		return -1;
-	if (update_ref("update notes cache", c->tree.update_ref, commit_sha1,
+	if (update_ref("update notes cache", c->tree.update_ref, commit_oid.hash,
 		       NULL, 0, UPDATE_REFS_QUIET_ON_ERR) < 0)
 		return -1;
 
 	return 0;
 }
 
-char *notes_cache_get(struct notes_cache *c, unsigned char key_sha1[20],
+char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
 		      size_t *outsize)
 {
 	const unsigned char *value_sha1;
@@ -75,7 +74,7 @@ char *notes_cache_get(struct notes_cache *c, unsigned char key_sha1[20],
 	char *value;
 	unsigned long size;
 
-	value_sha1 = get_note(&c->tree, key_sha1);
+	value_sha1 = get_note(&c->tree, key_oid->hash);
 	if (!value_sha1)
 		return NULL;
 	value = read_sha1_file(value_sha1, &type, &size);
@@ -84,12 +83,12 @@ char *notes_cache_get(struct notes_cache *c, unsigned char key_sha1[20],
 	return value;
 }
 
-int notes_cache_put(struct notes_cache *c, unsigned char key_sha1[20],
+int notes_cache_put(struct notes_cache *c, struct object_id *key_oid,
 		    const char *data, size_t size)
 {
-	unsigned char value_sha1[20];
+	struct object_id value_oid;
 
-	if (write_sha1_file(data, size, "blob", value_sha1) < 0)
+	if (write_sha1_file(data, size, "blob", value_oid.hash) < 0)
 		return -1;
-	return add_note(&c->tree, key_sha1, value_sha1, NULL);
+	return add_note(&c->tree, key_oid->hash, value_oid.hash, NULL);
 }
