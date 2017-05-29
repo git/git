@@ -434,7 +434,7 @@ occur with:
 git init depot
 cd depot
 git config git-p4.branchList main:branch1
-git p4 clone --detect-branches //depot@all .
+git p4 sync --detect-branches //depot@all
 ----
 
 
