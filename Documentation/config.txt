@@ -79,14 +79,20 @@ escape sequences) are invalid.
 Includes
 ~~~~~~~~
 
-You can include a config file from another by setting the special
-`include.path` variable to the name of the file to be included. The
-variable takes a pathname as its value, and is subject to tilde
-expansion. `include.path` can be given multiple times.
+The `include` and `includeIf` sections allow you to include config
+directives from another source. These sections behave identically to
+each other with the exception that `includeIf` sections may be ignored
+if their condition does not evaluate to true; see "Conditional includes"
+below.
 
-The included file is expanded immediately, as if its contents had been
-found at the location of the include directive. If the value of the
-`include.path` variable is a relative path, the path is considered to
+You can include a config file from another by setting the special
+`include.path` (or `includeIf.*.path`) variable to the name of the file
+to be included. The variable takes a pathname as its value, and is
+subject to tilde expansion. These variables can be given multiple times.
+
+The contents of the included file are inserted immediately, as if they
+had been found at the location of the include directive. If the value of the
+variable is a relative path, the path is considered to
 be relative to the configuration file in which the include directive
 was found.  See below for examples.
 
@@ -95,8 +101,7 @@ Conditional includes
 
 You can include a config file from another conditionally by setting a
 `includeIf.<condition>.path` variable to the name of the file to be
-included. The variable's value is treated the same way as
-`include.path`. `includeIf.<condition>.path` can be given multiple times.
+included.
 
 The condition starts with a keyword followed by a colon and some data
 whose format and meaning depends on the keyword. Supported keywords
@@ -167,8 +172,8 @@ Example
 
 	[include]
 		path = /path/to/foo.inc ; include by absolute path
-		path = foo ; expand "foo" relative to the current file
-		path = ~/foo ; expand "foo" in your `$HOME` directory
+		path = foo.inc ; find "foo.inc" relative to the current file
+		path = ~/foo.inc ; find "foo.inc" in your `$HOME` directory
 
 	; include if $GIT_DIR is /path/to/foo/.git
 	[includeIf "gitdir:/path/to/foo/.git"]
@@ -181,6 +186,12 @@ Example
 	; include for all repositories inside $HOME/to/group
 	[includeIf "gitdir:~/to/group/"]
 		path = /path/to/foo.inc
+
+	; relative paths are always relative to the including
+	; file (if the condition is true); their location is not
+	; affected by the condition
+	[includeIf "gitdir:/path/to/group/"]
+		path = foo.inc
 
 Values
 ~~~~~~
