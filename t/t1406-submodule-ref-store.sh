@@ -31,7 +31,7 @@ test_expect_success 'create_symref() not allowed' '
 '
 
 test_expect_success 'delete_refs() not allowed' '
-	test_must_fail $RUN delete-refs 0 FOO refs/tags/new-tag
+	test_must_fail $RUN delete-refs 0 nothing FOO refs/tags/new-tag
 '
 
 test_expect_success 'rename_refs() not allowed' '
