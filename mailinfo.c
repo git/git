@@ -882,7 +882,10 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 	for (;;) {
 		int peek;
 
-		peek = fgetc(in); ungetc(peek, in);
+		peek = fgetc(in);
+		if (peek == EOF)
+			break;
+		ungetc(peek, in);
 		if (peek != ' ' && peek != '\t')
 			break;
 		if (strbuf_getline_lf(&continuation, in))
@@ -1099,6 +1102,10 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 
 	do {
 		peek = fgetc(mi->input);
+		if (peek == EOF) {
+			fclose(cmitmsg);
+			return error("empty patch: '%s'", patch);
+		}
 	} while (isspace(peek));
 	ungetc(peek, mi->input);
 
