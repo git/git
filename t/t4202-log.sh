@@ -1540,4 +1540,13 @@ test_expect_success 'log --source paints tag names' '
 	test_cmp expect actual
 '
 
+test_expect_success 'log --source paints symmetric ranges' '
+	cat >expect <<-\EOF &&
+	09e12a9	source-b three
+	8e393e1	source-a two
+	EOF
+	git log --oneline --source source-a...source-b >actual &&
+	test_cmp expect actual
+'
+
 test_done

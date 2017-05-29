@@ -1511,6 +1511,7 @@ static int get_sha1_with_context_1(const char *name,
 
 	memset(oc, 0, sizeof(*oc));
 	oc->mode = S_IFINVALID;
+	strbuf_init(&oc->symlink_path, 0);
 	ret = get_sha1_1(name, namelen, sha1, flags);
 	if (!ret)
 		return ret;
@@ -1549,7 +1550,8 @@ static int get_sha1_with_context_1(const char *name,
 			namelen = strlen(cp);
 		}
 
-		strlcpy(oc->path, cp, sizeof(oc->path));
+		if (flags & GET_SHA1_RECORD_PATH)
+			oc->path = xstrdup(cp);
 
 		if (!active_cache)
 			read_cache();
@@ -1612,7 +1614,8 @@ static int get_sha1_with_context_1(const char *name,
 				}
 			}
 			hashcpy(oc->tree, tree_sha1);
-			strlcpy(oc->path, filename, sizeof(oc->path));
+			if (flags & GET_SHA1_RECORD_PATH)
+				oc->path = xstrdup(filename);
 
 			free(new_filename);
 			return ret;
@@ -1638,9 +1641,9 @@ void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 	get_sha1_with_context_1(name, GET_SHA1_ONLY_TO_DIE, prefix, sha1, &oc);
 }
 
-int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *orc)
+int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *oc)
 {
 	if (flags & GET_SHA1_FOLLOW_SYMLINKS && flags & GET_SHA1_ONLY_TO_DIE)
 		die("BUG: incompatible flags for get_sha1_with_context");
-	return get_sha1_with_context_1(str, flags, NULL, sha1, orc);
+	return get_sha1_with_context_1(str, flags, NULL, sha1, oc);
 }
