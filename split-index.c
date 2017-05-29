@@ -73,10 +73,17 @@ void move_cache_to_base_index(struct index_state *istate)
 	int i;
 
 	/*
-	 * do not delete old si->base, its index entries may be shared
-	 * with istate->cache[]. Accept a bit of leaking here because
-	 * this code is only used by short-lived update-index.
+	 * If "si" is shared with another index_state (e.g. by
+	 * unpack-trees code), we will need to duplicate split_index
+	 * struct. It's not happening now though, luckily.
 	 */
+	assert(si->refcount <= 1);
+
+	unshare_split_index(istate, 0);
+	if (si->base) {
+		discard_index(si->base);
+		free(si->base);
+	}
 	si->base = xcalloc(1, sizeof(*si->base));
 	si->base->version = istate->version;
 	/* zero timestamp disables racy test in ce_write_index() */
@@ -275,11 +282,41 @@ void finish_writing_split_index(struct index_state *istate)
 	istate->cache_nr = si->saved_cache_nr;
 }
 
+void unshare_split_index(struct index_state *istate, int discard)
+{
+	struct split_index *si = istate->split_index;
+	int i;
+
+	if (!si || !si->base)
+		return;
+
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		struct cache_entry *new = NULL;
+
+		if (!ce->index ||
+		    ce->index > si->base->cache_nr ||
+		    ce != si->base->cache[ce->index - 1])
+			continue;
+
+		if (!discard) {
+			int len = ce_namelen(ce);
+			new = xcalloc(1, cache_entry_size(len));
+			copy_cache_entry(new, ce);
+			memcpy(new->name, ce->name, len);
+			new->index = 0;
+		}
+		istate->cache[i] = new;
+	}
+}
+
+
 void discard_split_index(struct index_state *istate)
 {
 	struct split_index *si = istate->split_index;
 	if (!si)
 		return;
+	unshare_split_index(istate, 0);
 	istate->split_index = NULL;
 	si->refcount--;
 	if (si->refcount)
@@ -328,14 +365,8 @@ void add_split_index(struct index_state *istate)
 
 void remove_split_index(struct index_state *istate)
 {
-	if (istate->split_index) {
-		/*
-		 * can't discard_split_index(&the_index); because that
-		 * will destroy split_index->base->cache[], which may
-		 * be shared with the_index.cache[]. So yeah we're
-		 * leaking a bit here.
-		 */
-		istate->split_index = NULL;
-		istate->cache_changed |= SOMETHING_CHANGED;
-	}
+	if (!istate->split_index)
+		return;
+	discard_split_index(istate);
+	istate->cache_changed |= SOMETHING_CHANGED;
 }
