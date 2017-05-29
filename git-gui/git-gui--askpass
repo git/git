@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# This is a trivial implementation of an SSH_ASKPASS handler.
+# This is a trivial implementation of an GIT_ASKPASS / SSH_ASKPASS handler.
 # Git-gui uses this script if none are already configured.
 
 package require Tk
@@ -12,7 +12,7 @@ set yesno  0
 set rc     255
 
 if {$argc < 1} {
-	set prompt "Enter your OpenSSH passphrase:"
+	set prompt "Enter your password / passphrase:"
 } else {
 	set prompt [join $argv " "]
 	if {[regexp -nocase {\(yes\/no\)\?\s*$} $prompt]} {
@@ -60,7 +60,7 @@ proc finish {} {
 	set ::rc 0
 }
 
-wm title . "OpenSSH"
+wm title . "Git Authentication"
 tk::PlaceWindow .
 vwait rc
 exit $rc
