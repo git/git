@@ -45,7 +45,7 @@ test_expect_success push '
 	test "$rev" = "$(git rev-parse --verify refs/heads/to-push)"
 '
 
-test_expect_failure 'remote nick cannot contain backslashes' '
+test_expect_success 'remote nick cannot contain backslashes' '
 	BACKSLASHED="$(pwd | tr / \\\\)" &&
 	git ls-remote "$BACKSLASHED" >out 2>err &&
 	test_i18ngrep ! "unable to access" err
