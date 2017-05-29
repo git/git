@@ -345,6 +345,9 @@ p4 revision specifier on the end:
 
 "//depot/my/project@1,6"::
     Import only changes 1 through 6.
+    
+"//depot/my/project@2012/01/01,2017/01/01"::
+    Import only changes made from 01.01.2012 til 01.01.2017. The format is yyyy/mm/dd.
 
 "//depot/proj1@all //depot/proj2@all"::
     Import all changes from both named depot paths into a single
