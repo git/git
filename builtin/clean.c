@@ -857,6 +857,38 @@ static void interactive_main_loop(void)
 	}
 }
 
+static void correct_untracked_entries(struct dir_struct *dir)
+{
+	int src, dst, ign;
+
+	for (src = dst = ign = 0; src < dir->nr; src++) {
+		/* skip paths in ignored[] that cannot be inside entries[src] */
+		while (ign < dir->ignored_nr &&
+		       0 <= cmp_dir_entry(&dir->entries[src], &dir->ignored[ign]))
+			ign++;
+
+		if (ign < dir->ignored_nr &&
+		    check_dir_entry_contains(dir->entries[src], dir->ignored[ign])) {
+			/* entries[src] contains an ignored path, so we drop it */
+			free(dir->entries[src]);
+		} else {
+			struct dir_entry *ent = dir->entries[src++];
+
+			/* entries[src] does not contain an ignored path, so we keep it */
+			dir->entries[dst++] = ent;
+
+			/* then discard paths in entries[] contained inside entries[src] */
+			while (src < dir->nr &&
+			       check_dir_entry_contains(ent, dir->entries[src]))
+				free(dir->entries[src++]);
+
+			/* compensate for the outer loop's loop control */
+			src--;
+		}
+	}
+	dir->nr = dst;
+}
+
 int cmd_clean(int argc, const char **argv, const char *prefix)
 {
 	int i, res;
@@ -916,6 +948,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
+	if (remove_directories)
+		dir.flags |= DIR_SHOW_IGNORED_TOO | DIR_KEEP_UNTRACKED_CONTENTS;
+
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 
@@ -931,6 +966,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		       prefix, argv);
 
 	fill_directory(&dir, &the_index, &pathspec);
+	correct_untracked_entries(&dir);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
@@ -957,6 +993,12 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		rel = relative_path(ent->name, prefix, &buf);
 		string_list_append(&del_list, rel);
 	}
+
+	for (i = 0; i < dir.nr; i++)
+		free(dir.entries[i]);
+
+	for (i = 0; i < dir.ignored_nr; i++)
+		free(dir.ignored[i]);
 
 	if (interactive && del_list.nr > 0)
 		interactive_main_loop();
