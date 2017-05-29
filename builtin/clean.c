@@ -683,7 +683,7 @@ static int filter_by_patterns_cmd(void)
 		for_each_string_list_item(item, &del_list) {
 			int dtype = DT_UNKNOWN;
 
-			if (is_excluded(&dir, item->string, &dtype)) {
+			if (is_excluded(&dir, &the_index, item->string, &dtype)) {
 				*item->string = '\0';
 				changed++;
 			}
@@ -930,7 +930,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_PREFER_CWD,
 		       prefix, argv);
 
-	fill_directory(&dir, &pathspec);
+	fill_directory(&dir, &the_index, &pathspec);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
