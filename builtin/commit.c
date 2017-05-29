@@ -1739,7 +1739,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (verbose || /* Truncate the message just before the diff, if any. */
 	    cleanup_mode == CLEANUP_SCISSORS)
-		wt_status_truncate_message_at_cut_line(&sb);
+		strbuf_setlen(&sb, wt_status_locate_end(sb.buf, sb.len));
 
 	if (cleanup_mode != CLEANUP_NONE)
 		strbuf_stripspace(&sb, cleanup_mode == CLEANUP_ALL);
