@@ -208,7 +208,8 @@ static int write_entry(struct cache_entry *ce,
 		sub = submodule_from_ce(ce);
 		if (sub)
 			return submodule_move_head(ce->name,
-				NULL, oid_to_hex(&ce->oid), SUBMODULE_MOVE_HEAD_FORCE);
+				NULL, oid_to_hex(&ce->oid),
+				state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		break;
 	default:
 		return error("unknown file mode for %s in index", path);
@@ -282,12 +283,11 @@ int checkout_entry(struct cache_entry *ce,
 					unlink_or_warn(ce->name);
 
 				return submodule_move_head(ce->name,
-					NULL, oid_to_hex(&ce->oid),
-					SUBMODULE_MOVE_HEAD_FORCE);
+					NULL, oid_to_hex(&ce->oid), 0);
 			} else
 				return submodule_move_head(ce->name,
 					"HEAD", oid_to_hex(&ce->oid),
-					SUBMODULE_MOVE_HEAD_FORCE);
+					state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		}
 
 		if (!changed)
