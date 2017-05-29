@@ -334,7 +334,7 @@ core.fileMode::
 	is to be honored.
 +
 Some filesystems lose the executable bit when a file that is
-marked as executable is checked out, or checks out an
+marked as executable is checked out, or checks out a
 non-executable file with executable bit on.
 linkgit:git-clone[1] or linkgit:git-init[1] probe the filesystem
 to see if it handles the executable bit correctly
