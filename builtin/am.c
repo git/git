@@ -2319,6 +2319,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage_with_options(usage, options);
+
 	git_config(git_am_config, NULL);
 
 	am_state_init(&state);
