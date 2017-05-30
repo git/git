@@ -26,6 +26,8 @@ static const char *env_names[] = {
 static char *orig_env[4];
 static int save_restore_env_balance;
 
+static void list_builtins(void);
+
 static void save_env_before_alias(void)
 {
 	int i;
@@ -232,6 +234,9 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			}
 			(*argv)++;
 			(*argc)--;
+		} else if (!strcmp(cmd, "--list-builtins")) {
+			list_builtins();
+			exit(0);
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(git_usage_string);
@@ -527,6 +532,13 @@ static struct cmd_struct *get_builtin(const char *s)
 int is_builtin(const char *s)
 {
 	return !!get_builtin(s);
+}
+
+static void list_builtins(void)
+{
+	int i;
+	for (i = 0; i < ARRAY_SIZE(commands); i++)
+		printf("%s\n", commands[i].cmd);
 }
 
 #ifdef STRIP_EXTENSION
