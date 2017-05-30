@@ -3239,7 +3239,7 @@ static void run_diff_cmd(const char *pgm,
 		fprintf(o->file, "* Unmerged path %s\n", name);
 }
 
-static void diff_fill_sha1_info(struct diff_filespec *one)
+static void diff_fill_oid_info(struct diff_filespec *one)
 {
 	if (DIFF_FILE_VALID(one)) {
 		if (!one->oid_valid) {
@@ -3298,8 +3298,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		return;
 	}
 
-	diff_fill_sha1_info(one);
-	diff_fill_sha1_info(two);
+	diff_fill_oid_info(one);
+	diff_fill_oid_info(two);
 
 	if (!pgm &&
 	    DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two) &&
@@ -3344,8 +3344,8 @@ static void run_diffstat(struct diff_filepair *p, struct diff_options *o,
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
 
-	diff_fill_sha1_info(p->one);
-	diff_fill_sha1_info(p->two);
+	diff_fill_oid_info(p->one);
+	diff_fill_oid_info(p->two);
 
 	builtin_diffstat(name, other, p->one, p->two, diffstat, o, p);
 }
@@ -3368,8 +3368,8 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 	if (o->prefix_length)
 		strip_prefix(o->prefix_length, &name, &other);
 
-	diff_fill_sha1_info(p->one);
-	diff_fill_sha1_info(p->two);
+	diff_fill_oid_info(p->one);
+	diff_fill_oid_info(p->two);
 
 	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
 }
@@ -4616,8 +4616,8 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		if (DIFF_PAIR_UNMERGED(p))
 			continue;
 
-		diff_fill_sha1_info(p->one);
-		diff_fill_sha1_info(p->two);
+		diff_fill_oid_info(p->one);
+		diff_fill_oid_info(p->two);
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));
 		len2 = remove_space(p->two->path, strlen(p->two->path));
