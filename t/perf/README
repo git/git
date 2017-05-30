@@ -106,6 +106,7 @@ sources perf-lib.sh:
 
 After that you will want to use some of the following:
 
+	test_perf_fresh_repo    # sets up an empty repository
 	test_perf_default_repo  # sets up a "normal" repository
 	test_perf_large_repo    # sets up a "large" repository
 
