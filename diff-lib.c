@@ -101,7 +101,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 		unsigned dirty_submodule = 0;
-		const unsigned char *old_sha1, *new_sha1;
+		const struct object_id *old_oid, *new_oid;
 
 		if (diff_can_quit_early(&revs->diffopt))
 			break;
@@ -233,12 +233,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 		}
 		oldmode = ce->ce_mode;
-		old_sha1 = ce->oid.hash;
-		new_sha1 = changed ? null_sha1 : ce->oid.hash;
+		old_oid = &ce->oid;
+		new_oid = changed ? &null_oid : &ce->oid;
 		diff_change(&revs->diffopt, oldmode, newmode,
-			    old_sha1, new_sha1,
-			    !is_null_sha1(old_sha1),
-			    !is_null_sha1(new_sha1),
+			    old_oid->hash, new_oid->hash,
+			    !is_null_oid(old_oid),
+			    !is_null_oid(new_oid),
 			    ce->name, 0, dirty_submodule);
 
 	}
