@@ -724,7 +724,7 @@ static int merge_commit(struct notes_merge_options *o)
 	if (!o->local_ref)
 		die(_("failed to resolve NOTES_MERGE_REF"));
 
-	if (notes_merge_commit(o, t, partial, oid.hash))
+	if (notes_merge_commit(o, t, partial, &oid))
 		die(_("failed to finalize notes merge"));
 
 	/* Reuse existing commit message in reflog message */
@@ -842,9 +842,9 @@ static int merge(int argc, const char **argv, const char *prefix)
 		    remote_ref.buf, default_notes_ref());
 	strbuf_add(&(o.commit_msg), msg.buf + 7, msg.len - 7); /* skip "notes: " */
 
-	result = notes_merge(&o, t, result_oid.hash);
+	result = notes_merge(&o, t, &result_oid);
 
-	if (result >= 0) /* Merge resulted (trivially) in result_sha1 */
+	if (result >= 0) /* Merge resulted (trivially) in result_oid */
 		/* Update default notes ref with new commit */
 		update_ref(msg.buf, default_notes_ref(), result_oid.hash, NULL,
 			   0, UPDATE_REFS_DIE_ON_ERR);
