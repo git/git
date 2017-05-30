@@ -264,12 +264,12 @@ static void diff_index_show_file(struct rev_info *revs,
 }
 
 static int get_stat_data(const struct cache_entry *ce,
-			 const unsigned char **sha1p,
+			 const struct object_id **oidp,
 			 unsigned int *modep,
 			 int cached, int match_missing,
 			 unsigned *dirty_submodule, struct diff_options *diffopt)
 {
-	const unsigned char *sha1 = ce->oid.hash;
+	const struct object_id *oid = &ce->oid;
 	unsigned int mode = ce->ce_mode;
 
 	if (!cached && !ce_uptodate(ce)) {
@@ -280,7 +280,7 @@ static int get_stat_data(const struct cache_entry *ce,
 			return -1;
 		else if (changed) {
 			if (match_missing) {
-				*sha1p = sha1;
+				*oidp = oid;
 				*modep = mode;
 				return 0;
 			}
@@ -290,11 +290,11 @@ static int get_stat_data(const struct cache_entry *ce,
 						    0, dirty_submodule);
 		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
-			sha1 = null_sha1;
+			oid = &null_oid;
 		}
 	}
 
-	*sha1p = sha1;
+	*oidp = oid;
 	*modep = mode;
 	return 0;
 }
@@ -303,7 +303,7 @@ static void show_new_file(struct rev_info *revs,
 			  const struct cache_entry *new,
 			  int cached, int match_missing)
 {
-	const unsigned char *sha1;
+	const struct object_id *oid;
 	unsigned int mode;
 	unsigned dirty_submodule = 0;
 
@@ -311,11 +311,11 @@ static void show_new_file(struct rev_info *revs,
 	 * New file in the index: it might actually be different in
 	 * the working tree.
 	 */
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
+	if (get_stat_data(new, &oid, &mode, cached, match_missing,
 	    &dirty_submodule, &revs->diffopt) < 0)
 		return;
 
-	diff_index_show_file(revs, "+", new, sha1, !is_null_sha1(sha1), mode, dirty_submodule);
+	diff_index_show_file(revs, "+", new, oid->hash, !is_null_oid(oid), mode, dirty_submodule);
 }
 
 static int show_modified(struct rev_info *revs,
@@ -325,10 +325,10 @@ static int show_modified(struct rev_info *revs,
 			 int cached, int match_missing)
 {
 	unsigned int mode, oldmode;
-	const unsigned char *sha1;
+	const struct object_id *oid;
 	unsigned dirty_submodule = 0;
 
-	if (get_stat_data(new, &sha1, &mode, cached, match_missing,
+	if (get_stat_data(new, &oid, &mode, cached, match_missing,
 			  &dirty_submodule, &revs->diffopt) < 0) {
 		if (report_missing)
 			diff_index_show_file(revs, "-", old,
@@ -338,7 +338,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	if (revs->combine_merges && !cached &&
-	    (hashcmp(sha1, old->oid.hash) || oidcmp(&old->oid, &new->oid))) {
+	    (oidcmp(oid, &old->oid) || oidcmp(&old->oid, &new->oid))) {
 		struct combine_diff_path *p;
 		int pathlen = ce_namelen(new);
 
@@ -362,12 +362,12 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old->ce_mode;
-	if (mode == oldmode && !hashcmp(sha1, old->oid.hash) && !dirty_submodule &&
+	if (mode == oldmode && !oidcmp(oid, &old->oid) && !dirty_submodule &&
 	    !DIFF_OPT_TST(&revs->diffopt, FIND_COPIES_HARDER))
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
-		    old->oid.hash, sha1, 1, !is_null_sha1(sha1),
+		    old->oid.hash, oid->hash, 1, !is_null_oid(oid),
 		    old->name, 0, dirty_submodule);
 	return 0;
 }
