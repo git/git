@@ -114,8 +114,8 @@ static struct object_id uninitialized = {
 };
 
 static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
-						 const unsigned char *base,
-						 const unsigned char *remote,
+						 const struct object_id *base,
+						 const struct object_id *remote,
 						 int *num_changes)
 {
 	struct diff_options opt;
@@ -123,13 +123,13 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 	int i, len = 0;
 
 	trace_printf("\tdiff_tree_remote(base = %.7s, remote = %.7s)\n",
-	       sha1_to_hex(base), sha1_to_hex(remote));
+	       oid_to_hex(base), oid_to_hex(remote));
 
 	diff_setup(&opt);
 	DIFF_OPT_SET(&opt, RECURSIVE);
 	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&opt);
-	diff_tree_sha1(base, remote, "", &opt);
+	diff_tree_sha1(base->hash, remote->hash, "", &opt);
 	diffcore_std(&opt);
 
 	changes = xcalloc(diff_queued_diff.nr, sizeof(struct notes_merge_pair));
@@ -179,20 +179,20 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 
 static void diff_tree_local(struct notes_merge_options *o,
 			    struct notes_merge_pair *changes, int len,
-			    const unsigned char *base,
-			    const unsigned char *local)
+			    const struct object_id *base,
+			    const struct object_id *local)
 {
 	struct diff_options opt;
 	int i;
 
 	trace_printf("\tdiff_tree_local(len = %i, base = %.7s, local = %.7s)\n",
-	       len, sha1_to_hex(base), sha1_to_hex(local));
+	       len, oid_to_hex(base), oid_to_hex(local));
 
 	diff_setup(&opt);
 	DIFF_OPT_SET(&opt, RECURSIVE);
 	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&opt);
-	diff_tree_sha1(base, local, "", &opt);
+	diff_tree_sha1(base->hash, local->hash, "", &opt);
 	diffcore_std(&opt);
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {
@@ -505,16 +505,17 @@ static int merge_changes(struct notes_merge_options *o,
 }
 
 static int merge_from_diffs(struct notes_merge_options *o,
-			    const unsigned char *base,
-			    const unsigned char *local,
-			    const unsigned char *remote, struct notes_tree *t)
+			    const struct object_id *base,
+			    const struct object_id *local,
+			    const struct object_id *remote,
+			    struct notes_tree *t)
 {
 	struct notes_merge_pair *changes;
 	int num_changes, conflicts;
 
 	trace_printf("\tmerge_from_diffs(base = %.7s, local = %.7s, "
-	       "remote = %.7s)\n", sha1_to_hex(base), sha1_to_hex(local),
-	       sha1_to_hex(remote));
+	       "remote = %.7s)\n", oid_to_hex(base), oid_to_hex(local),
+	       oid_to_hex(remote));
 
 	changes = diff_tree_remote(o, base, remote, &num_changes);
 	diff_tree_local(o, changes, num_changes, base, local);
@@ -636,8 +637,8 @@ int notes_merge(struct notes_merge_options *o,
 		goto found_result;
 	}
 
-	result = merge_from_diffs(o, base_tree_oid->hash, local->tree->object.oid.hash,
-				  remote->tree->object.oid.hash, local_tree);
+	result = merge_from_diffs(o, base_tree_oid, &local->tree->object.oid,
+				  &remote->tree->object.oid, local_tree);
 
 	if (result != 0) { /* non-trivial merge (with or without conflicts) */
 		/* Commit (partial) result */
