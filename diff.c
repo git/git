@@ -3030,13 +3030,13 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			/* we can borrow from the file in the work tree */
 			temp->name = name;
 			if (!one->oid_valid)
-				sha1_to_hex_r(temp->hex, null_sha1);
+				oid_to_hex_r(temp->hex, &null_oid);
 			else
 				oid_to_hex_r(temp->hex, &one->oid);
 			/* Even though we may sometimes borrow the
 			 * contents from the work tree, we always want
 			 * one->mode.  mode is trustworthy even when
-			 * !(one->sha1_valid), as long as
+			 * !(one->oid_valid), as long as
 			 * DIFF_FILE_VALID(one).
 			 */
 			xsnprintf(temp->mode, sizeof(temp->mode), "%06o", one->mode);
