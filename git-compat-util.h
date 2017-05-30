@@ -450,7 +450,6 @@ extern void (*get_error_routine(void))(const char *err, va_list params);
 extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 extern void (*get_warn_routine(void))(const char *warn, va_list params);
 extern void set_die_is_recursing_routine(int (*routine)(void));
-extern void set_error_handle(FILE *);
 
 extern int starts_with(const char *str, const char *prefix);
 
