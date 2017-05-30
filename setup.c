@@ -147,7 +147,7 @@ int check_filename(const char *prefix, const char *arg)
 		name = arg;
 	if (!lstat(name, &st))
 		return 1; /* file exists */
-	if (errno == ENOENT || errno == ENOTDIR)
+	if (is_missing_file_error(errno))
 		return 0; /* file does not exist */
 	die_errno("failed to stat '%s'", arg);
 }

@@ -3741,7 +3741,7 @@ static int check_to_create(struct apply_state *state,
 			return 0;
 
 		return EXISTS_IN_WORKTREE;
-	} else if ((errno != ENOENT) && (errno != ENOTDIR)) {
+	} else if (!is_missing_file_error(errno)) {
 		return error_errno("%s", new_name);
 	}
 	return 0;

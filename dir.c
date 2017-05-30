@@ -2235,7 +2235,7 @@ int remove_path(const char *name)
 {
 	char *slash;
 
-	if (unlink(name) && errno != ENOENT && errno != ENOTDIR)
+	if (unlink(name) && !is_missing_file_error(errno))
 		return -1;
 
 	slash = strrchr(name, '/');
