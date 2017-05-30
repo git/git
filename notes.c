@@ -1215,7 +1215,7 @@ void free_notes(struct notes_tree *t)
  * (raw != 0) gives the %N userformat; otherwise, the note message is given
  * for human consumption.
  */
-static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
+static void format_note(struct notes_tree *t, const struct object_id *object_oid,
 			struct strbuf *sb, const char *output_encoding, int raw)
 {
 	static const char utf8[] = "utf-8";
@@ -1229,7 +1229,7 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (!t->initialized)
 		init_notes(t, NULL, NULL, 0);
 
-	oid = get_note(t, object_sha1);
+	oid = get_note(t, object_oid->hash);
 	if (!oid)
 		return;
 
@@ -1277,13 +1277,13 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	free(msg);
 }
 
-void format_display_notes(const unsigned char *object_sha1,
+void format_display_notes(const struct object_id *object_oid,
 			  struct strbuf *sb, const char *output_encoding, int raw)
 {
 	int i;
 	assert(display_notes_trees);
 	for (i = 0; display_notes_trees[i]; i++)
-		format_note(display_notes_trees[i], object_sha1, sb,
+		format_note(display_notes_trees[i], object_oid, sb,
 			    output_encoding, raw);
 }
 

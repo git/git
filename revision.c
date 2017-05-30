@@ -2908,7 +2908,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	if (opt->show_notes) {
 		if (!buf.len)
 			strbuf_addstr(&buf, message);
-		format_display_notes(commit->object.oid.hash, &buf, encoding, 1);
+		format_display_notes(&commit->object.oid, &buf, encoding, 1);
 	}
 
 	/*

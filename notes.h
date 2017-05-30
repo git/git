@@ -277,7 +277,7 @@ void init_display_notes(struct display_notes_opt *opt);
  *
  * You *must* call init_display_notes() before using this function.
  */
-void format_display_notes(const unsigned char *object_sha1,
+void format_display_notes(const struct object_id *object_oid,
 			  struct strbuf *sb, const char *output_encoding, int raw);
 
 /*
