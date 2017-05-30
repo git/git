@@ -31,8 +31,8 @@ typedef void (*change_fn_t)(struct diff_options *options,
 
 typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
-		    const unsigned char *sha1,
-		    int sha1_valid,
+		    const struct object_id *oid,
+		    int oid_valid,
 		    const char *fullpath, unsigned dirty_submodule);
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
@@ -247,8 +247,8 @@ extern int diff_can_quit_early(struct diff_options *);
 extern void diff_addremove(struct diff_options *,
 			   int addremove,
 			   unsigned mode,
-			   const unsigned char *sha1,
-			   int sha1_valid,
+			   const struct object_id *oid,
+			   int oid_valid,
 			   const char *fullpath, unsigned dirty_submodule);
 
 extern void diff_change(struct diff_options *,

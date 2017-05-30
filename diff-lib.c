@@ -210,14 +210,14 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 					continue;
 				}
 				diff_addremove(&revs->diffopt, '-', ce->ce_mode,
-					       ce->oid.hash,
+					       &ce->oid,
 					       !is_null_oid(&ce->oid),
 					       ce->name, 0);
 				continue;
 			} else if (revs->diffopt.ita_invisible_in_index &&
 				   ce_intent_to_add(ce)) {
 				diff_addremove(&revs->diffopt, '+', ce->ce_mode,
-					       EMPTY_BLOB_SHA1_BIN, 0,
+					       &empty_tree_oid, 0,
 					       ce->name, 0);
 				continue;
 			}
@@ -260,7 +260,7 @@ static void diff_index_show_file(struct rev_info *revs,
 				 unsigned dirty_submodule)
 {
 	diff_addremove(&revs->diffopt, prefix[0], mode,
-		       oid->hash, oid_valid, ce->name, dirty_submodule);
+		       oid, oid_valid, ce->name, dirty_submodule);
 }
 
 static int get_stat_data(const struct cache_entry *ce,

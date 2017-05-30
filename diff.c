@@ -5081,8 +5081,8 @@ static int is_submodule_ignored(const char *path, struct diff_options *options)
 
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
-		    const unsigned char *sha1,
-		    int sha1_valid,
+		    const struct object_id *oid,
+		    int oid_valid,
 		    const char *concatpath, unsigned dirty_submodule)
 {
 	struct diff_filespec *one, *two;
@@ -5114,9 +5114,9 @@ void diff_addremove(struct diff_options *options,
 	two = alloc_filespec(concatpath);
 
 	if (addremove != '+')
-		fill_filespec(one, sha1, sha1_valid, mode);
+		fill_filespec(one, oid->hash, oid_valid, mode);
 	if (addremove != '-') {
-		fill_filespec(two, sha1, sha1_valid, mode);
+		fill_filespec(two, oid->hash, oid_valid, mode);
 		two->dirty_submodule = dirty_submodule;
 	}
 

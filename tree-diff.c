@@ -78,21 +78,21 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 			1, 1, p->path, 0, 0);
 	}
 	else {
-		const unsigned char *sha1;
+		const struct object_id *oid;
 		unsigned int mode;
 		int addremove;
 
 		if (p->mode) {
 			addremove = '+';
-			sha1 = p->oid.hash;
+			oid = &p->oid;
 			mode = p->mode;
 		} else {
 			addremove = '-';
-			sha1 = p0->oid.hash;
+			oid = &p0->oid;
 			mode = p0->mode;
 		}
 
-		opt->add_remove(opt, addremove, mode, sha1, 1, p->path, 0);
+		opt->add_remove(opt, addremove, mode, oid, 1, p->path, 0);
 	}
 
 	return 0;	/* we are done with p */
