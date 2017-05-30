@@ -132,7 +132,7 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
  */
 static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	int nparent, const struct strbuf *base, const char *path, int pathlen,
-	unsigned mode, const unsigned char *sha1)
+	unsigned mode, const struct object_id *oid)
 {
 	struct combine_diff_path *p;
 	size_t len = st_add(base->len, pathlen);
@@ -162,7 +162,7 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	memcpy(p->path + base->len, path, pathlen);
 	p->path[len] = 0;
 	p->mode = mode;
-	hashcpy(p->oid.hash, sha1 ? sha1 : null_sha1);
+	oidcpy(&p->oid, oid ? oid : &null_oid);
 
 	return p;
 }
@@ -221,7 +221,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 	if (emitthis) {
 		int keep;
 		struct combine_diff_path *pprev = p;
-		p = path_appendnew(p, nparent, base, path, pathlen, mode, oid ? oid->hash : NULL);
+		p = path_appendnew(p, nparent, base, path, pathlen, mode, oid);
 
 		for (i = 0; i < nparent; ++i) {
 			/*
