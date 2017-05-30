@@ -1119,7 +1119,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	return 0;
 }
 
-const unsigned char *get_note(struct notes_tree *t,
+const struct object_id *get_note(struct notes_tree *t,
 		const unsigned char *object_sha1)
 {
 	struct leaf_node *found;
@@ -1128,7 +1128,7 @@ const unsigned char *get_note(struct notes_tree *t,
 		t = &default_notes_tree;
 	assert(t->initialized);
 	found = note_tree_find(t, t->root, 0, object_sha1);
-	return found ? found->val_oid.hash : NULL;
+	return found ? &found->val_oid : NULL;
 }
 
 int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
@@ -1219,7 +1219,7 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 			struct strbuf *sb, const char *output_encoding, int raw)
 {
 	static const char utf8[] = "utf-8";
-	const unsigned char *sha1;
+	const struct object_id *oid;
 	char *msg, *msg_p;
 	unsigned long linelen, msglen;
 	enum object_type type;
@@ -1229,11 +1229,11 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (!t->initialized)
 		init_notes(t, NULL, NULL, 0);
 
-	sha1 = get_note(t, object_sha1);
-	if (!sha1)
+	oid = get_note(t, object_sha1);
+	if (!oid)
 		return;
 
-	if (!(msg = read_sha1_file(sha1, &type, &msglen)) || type != OBJ_BLOB) {
+	if (!(msg = read_sha1_file(oid->hash, &type, &msglen)) || type != OBJ_BLOB) {
 		free(msg);
 		return;
 	}
@@ -1291,14 +1291,14 @@ int copy_note(struct notes_tree *t,
 	      const unsigned char *from_obj, const unsigned char *to_obj,
 	      int force, combine_notes_fn combine_notes)
 {
-	const unsigned char *note = get_note(t, from_obj);
-	const unsigned char *existing_note = get_note(t, to_obj);
+	const struct object_id *note = get_note(t, from_obj);
+	const struct object_id *existing_note = get_note(t, to_obj);
 
 	if (!force && existing_note)
 		return 1;
 
 	if (note)
-		return add_note(t, to_obj, note, combine_notes);
+		return add_note(t, to_obj, note->hash, combine_notes);
 	else if (existing_note)
 		return add_note(t, to_obj, null_sha1, combine_notes);
 

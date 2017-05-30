@@ -140,7 +140,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  *
  * Return NULL if the given object has no notes.
  */
-const unsigned char *get_note(struct notes_tree *t,
+const struct object_id *get_note(struct notes_tree *t,
 		const unsigned char *object_sha1);
 
 /*

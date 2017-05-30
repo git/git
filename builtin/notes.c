@@ -351,7 +351,7 @@ static int list(int argc, const char **argv, const char *prefix)
 {
 	struct notes_tree *t;
 	unsigned char object[20];
-	const unsigned char *note;
+	const struct object_id *note;
 	int retval = -1;
 	struct option options[] = {
 		OPT_END()
@@ -372,7 +372,7 @@ static int list(int argc, const char **argv, const char *prefix)
 			die(_("failed to resolve '%s' as a valid ref."), argv[0]);
 		note = get_note(t, object);
 		if (note) {
-			puts(sha1_to_hex(note));
+			puts(oid_to_hex(note));
 			retval = 0;
 		} else
 			retval = error(_("no note found for object %s."),
@@ -392,7 +392,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	struct notes_tree *t;
 	unsigned char object[20], new_note[20];
-	const unsigned char *note;
+	const struct object_id *note;
 	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
 	struct option options[] = {
 		{ OPTION_CALLBACK, 'm', "message", &d, N_("message"),
@@ -453,7 +453,7 @@ static int add(int argc, const char **argv, const char *prefix)
 			sha1_to_hex(object));
 	}
 
-	prepare_note_data(object, &d, note);
+	prepare_note_data(object, &d, note->hash);
 	if (d.buf.len || allow_empty) {
 		write_note_data(&d, new_note);
 		if (add_note(t, object, new_note, combine_notes_overwrite))
@@ -474,7 +474,7 @@ static int add(int argc, const char **argv, const char *prefix)
 static int copy(int argc, const char **argv, const char *prefix)
 {
 	int retval = 0, force = 0, from_stdin = 0;
-	const unsigned char *from_note, *note;
+	const struct object_id *from_note, *note;
 	const char *object_ref;
 	unsigned char object[20], from_obj[20];
 	struct notes_tree *t;
@@ -539,7 +539,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 		goto out;
 	}
 
-	if (add_note(t, object, from_note, combine_notes_overwrite))
+	if (add_note(t, object, from_note->hash, combine_notes_overwrite))
 		die("BUG: combine_notes_overwrite failed");
 	commit_notes(t, "Notes added by 'git notes copy'");
 out:
@@ -553,7 +553,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	struct notes_tree *t;
 	unsigned char object[20], new_note[20];
-	const unsigned char *note;
+	const struct object_id *note;
 	char *logmsg;
 	const char * const *usage;
 	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
@@ -598,13 +598,13 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	t = init_notes_check(argv[0], NOTES_INIT_WRITABLE);
 	note = get_note(t, object);
 
-	prepare_note_data(object, &d, edit ? note : NULL);
+	prepare_note_data(object, &d, edit && note ? note->hash : NULL);
 
 	if (note && !edit) {
 		/* Append buf to previous note contents */
 		unsigned long size;
 		enum object_type type;
-		char *prev_buf = read_sha1_file(note, &type, &size);
+		char *prev_buf = read_sha1_file(note->hash, &type, &size);
 
 		strbuf_grow(&d.buf, size + 1);
 		if (d.buf.len && prev_buf && size)
@@ -638,7 +638,7 @@ static int show(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	struct notes_tree *t;
 	unsigned char object[20];
-	const unsigned char *note;
+	const struct object_id *note;
 	int retval;
 	struct option options[] = {
 		OPT_END()
@@ -664,7 +664,7 @@ static int show(int argc, const char **argv, const char *prefix)
 		retval = error(_("no note found for object %s."),
 			       sha1_to_hex(object));
 	else {
-		const char *show_args[3] = {"show", sha1_to_hex(note), NULL};
+		const char *show_args[3] = {"show", oid_to_hex(note), NULL};
 		retval = execv_git_cmd(show_args);
 	}
 	free_notes(t);

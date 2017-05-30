@@ -53,15 +53,15 @@ static void terminate_batch(void)
 /* NOTE: 'ref' refers to a git reference, while 'rev' refers to a svn revision. */
 static char *read_ref_note(const unsigned char sha1[20])
 {
-	const unsigned char *note_sha1;
+	const struct object_id *note_oid;
 	char *msg = NULL;
 	unsigned long msglen;
 	enum object_type type;
 
 	init_notes(NULL, notes_ref, NULL, 0);
-	if (!(note_sha1 = get_note(NULL, sha1)))
+	if (!(note_oid = get_note(NULL, sha1)))
 		return NULL;	/* note tree not found */
-	if (!(msg = read_sha1_file(note_sha1, &type, &msglen)))
+	if (!(msg = read_sha1_file(note_oid->hash, &type, &msglen)))
 		error("Empty notes tree. %s", notes_ref);
 	else if (!msglen || type != OBJ_BLOB) {
 		error("Note contains unusable content. "
