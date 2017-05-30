@@ -1336,7 +1336,7 @@ static struct combine_diff_path *find_paths_generic(const struct object_id *oid,
 			opt->output_format = stat_opt;
 		else
 			opt->output_format = DIFF_FORMAT_NO_OUTPUT;
-		diff_tree_sha1(parents->oid[i].hash, oid->hash, "", opt);
+		diff_tree_oid(&parents->oid[i], oid, "", opt);
 		diffcore_std(opt);
 		paths = intersect_paths(paths, i, num_parent);
 
@@ -1463,7 +1463,7 @@ void diff_tree_combined(const struct object_id *oid,
 		if (stat_opt) {
 			diffopts.output_format = stat_opt;
 
-			diff_tree_sha1(parents->oid[0].hash, oid->hash, "", &diffopts);
+			diff_tree_oid(&parents->oid[0], oid, "", &diffopts);
 			diffcore_std(&diffopts);
 			if (opt->orderfile)
 				diffcore_order(opt->orderfile);

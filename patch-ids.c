@@ -17,8 +17,8 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
 		return -1;
 
 	if (commit->parents)
-		diff_tree_sha1(commit->parents->item->object.oid.hash,
-			       commit->object.oid.hash, "", options);
+		diff_tree_oid(&commit->parents->item->object.oid,
+			      &commit->object.oid, "", options);
 	else
 		diff_root_tree_oid(&commit->object.oid, "", options);
 	diffcore_std(options);

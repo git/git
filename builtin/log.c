@@ -1043,9 +1043,9 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	diff_setup_done(&opts);
 
-	diff_tree_sha1(origin->tree->object.oid.hash,
-		       head->tree->object.oid.hash,
-		       "", &opts);
+	diff_tree_oid(&origin->tree->object.oid,
+		      &head->tree->object.oid,
+		      "", &opts);
 	diffcore_std(&opts);
 	diff_flush(&opts);
 

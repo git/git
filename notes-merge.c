@@ -129,7 +129,7 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 	DIFF_OPT_SET(&opt, RECURSIVE);
 	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&opt);
-	diff_tree_sha1(base->hash, remote->hash, "", &opt);
+	diff_tree_oid(base, remote, "", &opt);
 	diffcore_std(&opt);
 
 	changes = xcalloc(diff_queued_diff.nr, sizeof(struct notes_merge_pair));
@@ -192,7 +192,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 	DIFF_OPT_SET(&opt, RECURSIVE);
 	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&opt);
-	diff_tree_sha1(base->hash, local->hash, "", &opt);
+	diff_tree_oid(base, local, "", &opt);
 	diffcore_std(&opt);
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {

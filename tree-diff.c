@@ -419,7 +419,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	 * load parents first, as they are probably already cached.
 	 *
 	 * ( log_tree_diff() parses commit->parent before calling here via
-	 *   diff_tree_sha1(parent, commit) )
+	 *   diff_tree_oid(parent, commit) )
 	 */
 	for (i = 0; i < nparent; ++i)
 		tptree[i] = fill_tree_descriptor(&tp[i], parents_sha1[i]);
@@ -694,7 +694,9 @@ static int ll_diff_tree_sha1(const unsigned char *old, const unsigned char *new,
 	return 0;
 }
 
-int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *base_str, struct diff_options *opt)
+int diff_tree_oid(const struct object_id *old_oid,
+		  const struct object_id *new_oid,
+		  const char *base_str, struct diff_options *opt)
 {
 	struct strbuf base;
 	int retval;
@@ -702,9 +704,9 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 	strbuf_init(&base, PATH_MAX);
 	strbuf_addstr(&base, base_str);
 
-	retval = ll_diff_tree_sha1(old, new, &base, opt);
+	retval = ll_diff_tree_sha1(old_oid->hash, new_oid->hash, &base, opt);
 	if (!*base_str && DIFF_OPT_TST(opt, FOLLOW_RENAMES) && diff_might_be_rename())
-		try_to_follow_renames(old, new, &base, opt);
+		try_to_follow_renames(old_oid->hash, new_oid->hash, &base, opt);
 
 	strbuf_release(&base);
 
@@ -713,5 +715,5 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 
 int diff_root_tree_oid(const struct object_id *new_oid, const char *base, struct diff_options *opt)
 {
-	return diff_tree_sha1(NULL, new_oid->hash, base, opt);
+	return diff_tree_oid(NULL, new_oid, base, opt);
 }

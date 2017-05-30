@@ -174,7 +174,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 		swap = 1;
 	oid[swap] = &ent0->item->oid;
 	oid[1 - swap] = &ent1->item->oid;
-	diff_tree_sha1(oid[0]->hash, oid[1]->hash, "", &revs->diffopt);
+	diff_tree_oid(oid[0], oid[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
 }

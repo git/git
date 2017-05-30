@@ -49,8 +49,8 @@ static int stdin_diff_trees(struct tree *tree1, const char *p)
 		return -1;
 	printf("%s %s\n", oid_to_hex(&tree1->object.oid),
 			  oid_to_hex(&tree2->object.oid));
-	diff_tree_sha1(tree1->object.oid.hash, tree2->object.oid.hash,
-		       "", &log_tree_opt.diffopt);
+	diff_tree_oid(&tree1->object.oid, &tree2->object.oid,
+		      "", &log_tree_opt.diffopt);
 	log_tree_diff_flush(&log_tree_opt);
 	return 0;
 }
@@ -148,9 +148,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		if (tree2->flags & UNINTERESTING) {
 			SWAP(tree2, tree1);
 		}
-		diff_tree_sha1(tree1->oid.hash,
-			       tree2->oid.hash,
-			       "", &opt->diffopt);
+		diff_tree_oid(&tree1->oid, &tree2->oid, "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 		break;
 	}
