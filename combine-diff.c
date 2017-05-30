@@ -1384,7 +1384,7 @@ static struct combine_diff_path *find_paths_multitree(
 }
 
 
-void diff_tree_combined(const unsigned char *sha1,
+void diff_tree_combined(const struct object_id *oid,
 			const struct oid_array *parents,
 			int dense,
 			struct rev_info *rev)
@@ -1448,11 +1448,11 @@ void diff_tree_combined(const unsigned char *sha1,
 		 * diff(sha1,parent_i) for all i to do the job, specifically
 		 * for parent0.
 		 */
-		paths = find_paths_generic(sha1, parents, &diffopts);
+		paths = find_paths_generic(oid->hash, parents, &diffopts);
 	}
 	else {
 		int stat_opt;
-		paths = find_paths_multitree(sha1, parents, &diffopts);
+		paths = find_paths_multitree(oid->hash, parents, &diffopts);
 
 		/*
 		 * show stat against the first parent even
@@ -1463,7 +1463,7 @@ void diff_tree_combined(const unsigned char *sha1,
 		if (stat_opt) {
 			diffopts.output_format = stat_opt;
 
-			diff_tree_sha1(parents->oid[0].hash, sha1, "", &diffopts);
+			diff_tree_sha1(parents->oid[0].hash, oid->hash, "", &diffopts);
 			diffcore_std(&diffopts);
 			if (opt->orderfile)
 				diffcore_order(opt->orderfile);
@@ -1539,6 +1539,6 @@ void diff_tree_combined_merge(const struct commit *commit, int dense,
 		oid_array_append(&parents, &parent->item->object.oid);
 		parent = parent->next;
 	}
-	diff_tree_combined(commit->object.oid.hash, &parents, dense, rev);
+	diff_tree_combined(&commit->object.oid, &parents, dense, rev);
 	oid_array_clear(&parents);
 }
