@@ -20,7 +20,7 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
 		diff_tree_sha1(commit->parents->item->object.oid.hash,
 			       commit->object.oid.hash, "", options);
 	else
-		diff_root_tree_sha1(commit->object.oid.hash, "", options);
+		diff_root_tree_oid(&commit->object.oid, "", options);
 	diffcore_std(options);
 	return diff_flush_patch_id(options, oid, diff_header_only);
 }
