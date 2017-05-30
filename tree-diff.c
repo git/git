@@ -577,7 +577,9 @@ static inline int diff_might_be_rename(void)
 		!DIFF_FILE_VALID(diff_queued_diff.queue[0]->one);
 }
 
-static void try_to_follow_renames(const unsigned char *old, const unsigned char *new, struct strbuf *base, struct diff_options *opt)
+static void try_to_follow_renames(const struct object_id *old_oid,
+				  const struct object_id *new_oid,
+				  struct strbuf *base, struct diff_options *opt)
 {
 	struct diff_options diff_opts;
 	struct diff_queue_struct *q = &diff_queued_diff;
@@ -615,7 +617,7 @@ static void try_to_follow_renames(const unsigned char *old, const unsigned char 
 	diff_opts.break_opt = opt->break_opt;
 	diff_opts.rename_score = opt->rename_score;
 	diff_setup_done(&diff_opts);
-	ll_diff_tree_sha1(old, new, base, &diff_opts);
+	ll_diff_tree_sha1(old_oid->hash, new_oid->hash, base, &diff_opts);
 	diffcore_std(&diff_opts);
 	clear_pathspec(&diff_opts.pathspec);
 
@@ -706,7 +708,7 @@ int diff_tree_oid(const struct object_id *old_oid,
 
 	retval = ll_diff_tree_sha1(old_oid->hash, new_oid->hash, &base, opt);
 	if (!*base_str && DIFF_OPT_TST(opt, FOLLOW_RENAMES) && diff_might_be_rename())
-		try_to_follow_renames(old_oid->hash, new_oid->hash, &base, opt);
+		try_to_follow_renames(old_oid, new_oid, &base, opt);
 
 	strbuf_release(&base);
 
