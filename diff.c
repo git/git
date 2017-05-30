@@ -4584,7 +4584,7 @@ static void patch_id_add_mode(git_SHA_CTX *ctx, unsigned mode)
 }
 
 /* returns 0 upon success, and writes result into sha1 */
-static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1, int diff_header_only)
+static int diff_get_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
@@ -4656,9 +4656,9 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1, 
 		if (diff_filespec_is_binary(p->one) ||
 		    diff_filespec_is_binary(p->two)) {
 			git_SHA1_Update(&ctx, oid_to_hex(&p->one->oid),
-					40);
+					GIT_SHA1_HEXSZ);
 			git_SHA1_Update(&ctx, oid_to_hex(&p->two->oid),
-					40);
+					GIT_SHA1_HEXSZ);
 			continue;
 		}
 
@@ -4671,15 +4671,15 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1, 
 				     p->one->path);
 	}
 
-	git_SHA1_Final(sha1, &ctx);
+	git_SHA1_Final(oid->hash, &ctx);
 	return 0;
 }
 
-int diff_flush_patch_id(struct diff_options *options, unsigned char *sha1, int diff_header_only)
+int diff_flush_patch_id(struct diff_options *options, struct object_id *oid, int diff_header_only)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	int result = diff_get_patch_id(options, sha1, diff_header_only);
+	int result = diff_get_patch_id(options, oid, diff_header_only);
 
 	for (i = 0; i < q->nr; i++)
 		diff_free_filepair(q->queue[i]);
