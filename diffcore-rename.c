@@ -60,7 +60,7 @@ static int add_rename_dst(struct diff_filespec *two)
 		memmove(rename_dst + first + 1, rename_dst + first,
 			(rename_dst_nr - first - 1) * sizeof(*rename_dst));
 	rename_dst[first].two = alloc_filespec(two->path);
-	fill_filespec(rename_dst[first].two, two->oid.hash, two->oid_valid,
+	fill_filespec(rename_dst[first].two, &two->oid, two->oid_valid,
 		      two->mode);
 	rename_dst[first].pair = NULL;
 	return 0;

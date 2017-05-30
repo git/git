@@ -2702,13 +2702,13 @@ void free_filespec(struct diff_filespec *spec)
 	}
 }
 
-void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
-		   int sha1_valid, unsigned short mode)
+void fill_filespec(struct diff_filespec *spec, const struct object_id *oid,
+		   int oid_valid, unsigned short mode)
 {
 	if (mode) {
 		spec->mode = canon_mode(mode);
-		hashcpy(spec->oid.hash, sha1);
-		spec->oid_valid = sha1_valid;
+		oidcpy(&spec->oid, oid);
+		spec->oid_valid = oid_valid;
 	}
 }
 
@@ -5114,9 +5114,9 @@ void diff_addremove(struct diff_options *options,
 	two = alloc_filespec(concatpath);
 
 	if (addremove != '+')
-		fill_filespec(one, oid->hash, oid_valid, mode);
+		fill_filespec(one, oid, oid_valid, mode);
 	if (addremove != '-') {
-		fill_filespec(two, oid->hash, oid_valid, mode);
+		fill_filespec(two, oid, oid_valid, mode);
 		two->dirty_submodule = dirty_submodule;
 	}
 
@@ -5153,8 +5153,8 @@ void diff_change(struct diff_options *options,
 
 	one = alloc_filespec(concatpath);
 	two = alloc_filespec(concatpath);
-	fill_filespec(one, old_oid->hash, old_oid_valid, old_mode);
-	fill_filespec(two, new_oid->hash, new_oid_valid, new_mode);
+	fill_filespec(one, old_oid, old_oid_valid, old_mode);
+	fill_filespec(two, new_oid, new_oid_valid, new_mode);
 	one->dirty_submodule = old_dirty_submodule;
 	two->dirty_submodule = new_dirty_submodule;
 	p = diff_queue(&diff_queued_diff, one, two);

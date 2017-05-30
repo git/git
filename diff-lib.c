@@ -409,7 +409,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 		struct diff_filepair *pair;
 		pair = diff_unmerge(&revs->diffopt, idx->name);
 		if (tree)
-			fill_filespec(pair->one, tree->oid.hash, 1,
+			fill_filespec(pair->one, &tree->oid, 1,
 				      tree->ce_mode);
 		return;
 	}
