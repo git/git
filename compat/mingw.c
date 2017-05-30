@@ -270,6 +270,7 @@ int mingw_core_config(const char *var, const char *value)
 	return 0;
 }
 
+static DWORD symlink_file_flags = 0, symlink_directory_flags = 1;
 DECLARE_PROC_ADDR(kernel32.dll, BOOLEAN, CreateSymbolicLinkW, LPCWSTR, LPCWSTR, DWORD);
 
 enum phantom_symlink_result {
@@ -314,7 +315,8 @@ static enum phantom_symlink_result process_phantom_symlink(
 		return PHANTOM_SYMLINK_DONE;
 
 	/* otherwise recreate the symlink with directory flag */
-	if (DeleteFileW(wlink) && CreateSymbolicLinkW(wlink, wtarget, 1))
+	if (DeleteFileW(wlink) &&
+	    CreateSymbolicLinkW(wlink, wtarget, symlink_directory_flags))
 		return PHANTOM_SYMLINK_DIRECTORY;
 
 	errno = err_win_to_posix(GetLastError());
@@ -2607,7 +2609,7 @@ int symlink(const char *target, const char *link)
 			wtarget[len] = '\\';
 
 	/* create file symlink */
-	if (!CreateSymbolicLinkW(wlink, wtarget, 0)) {
+	if (!CreateSymbolicLinkW(wlink, wtarget, symlink_file_flags)) {
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
@@ -3129,6 +3131,24 @@ static void maybe_redirect_std_handles(void)
 				  GENERIC_WRITE, FILE_FLAG_NO_BUFFERING);
 }
 
+static void adjust_symlink_flags(void)
+{
+	/*
+	 * Starting with Windows 10 Build 14972, symbolic links can be created
+	 * using CreateSymbolicLink() without elevation by passing the flag
+	 * SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE (0x02) as last
+	 * parameter, provided the Developer Mode has been enabled. Some
+	 * earlier Windows versions complain about this flag with an
+	 * ERROR_INVALID_PARAMETER, hence we have to test the build number
+	 * specifically.
+	 */
+	if (GetVersion() >= 14972 << 16) {
+		symlink_file_flags |= 2;
+		symlink_directory_flags |= 2;
+	}
+
+}
+
 #if defined(_MSC_VER)
 
 #ifdef _DEBUG
@@ -3168,6 +3188,7 @@ int msc_startup(int argc, wchar_t **w_argv, wchar_t **w_env)
 #endif
 
 	maybe_redirect_std_handles();
+	adjust_symlink_flags();
 
 	/* determine size of argv conversion buffer */
 	maxlen = wcslen(_wpgmptr);
@@ -3234,6 +3255,7 @@ void mingw_startup(void)
 	_startupinfo si;
 
 	maybe_redirect_std_handles();
+	adjust_symlink_flags();
 
 	/* get wide char arguments and environment */
 	si.newmode = 0;
