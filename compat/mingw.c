@@ -270,7 +270,7 @@ int mingw_core_config(const char *var, const char *value)
 	return 0;
 }
 
-DECLARE_PROC_ADDR(kernel32.dll, BOOL, CreateSymbolicLinkW, LPCWSTR, LPCWSTR, DWORD);
+DECLARE_PROC_ADDR(kernel32.dll, BOOLEAN, CreateSymbolicLinkW, LPCWSTR, LPCWSTR, DWORD);
 
 enum phantom_symlink_result {
 	PHANTOM_SYMLINK_RETRY,
