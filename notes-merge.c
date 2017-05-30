@@ -22,21 +22,21 @@ void init_notes_merge_options(struct notes_merge_options *o)
 	o->verbosity = NOTES_MERGE_VERBOSITY_DEFAULT;
 }
 
-static int path_to_sha1(const char *path, unsigned char *sha1)
+static int path_to_oid(const char *path, struct object_id *oid)
 {
-	char hex_sha1[40];
+	char hex_oid[GIT_SHA1_HEXSZ];
 	int i = 0;
-	while (*path && i < 40) {
+	while (*path && i < GIT_SHA1_HEXSZ) {
 		if (*path != '/')
-			hex_sha1[i++] = *path;
+			hex_oid[i++] = *path;
 		path++;
 	}
-	if (*path || i != 40)
+	if (*path || i != GIT_SHA1_HEXSZ)
 		return -1;
-	return get_sha1_hex(hex_sha1, sha1);
+	return get_oid_hex(hex_oid, oid);
 }
 
-static int verify_notes_filepair(struct diff_filepair *p, unsigned char *sha1)
+static int verify_notes_filepair(struct diff_filepair *p, struct object_id *oid)
 {
 	switch (p->status) {
 	case DIFF_STATUS_MODIFIED:
@@ -54,7 +54,7 @@ static int verify_notes_filepair(struct diff_filepair *p, unsigned char *sha1)
 		return -1;
 	}
 	assert(!strcmp(p->one->path, p->two->path));
-	return path_to_sha1(p->one->path, sha1);
+	return path_to_oid(p->one->path, oid);
 }
 
 static struct notes_merge_pair *find_notes_merge_pair_pos(
@@ -140,7 +140,7 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 		int occupied;
 		struct object_id obj;
 
-		if (verify_notes_filepair(p, obj.hash)) {
+		if (verify_notes_filepair(p, &obj)) {
 			trace_printf("\t\tCannot merge entry '%s' (%c): "
 			       "%.7s -> %.7s. Skipping!\n", p->one->path,
 			       p->status, oid_to_hex(&p->one->oid),
@@ -201,7 +201,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 		int match;
 		struct object_id obj;
 
-		if (verify_notes_filepair(p, obj.hash)) {
+		if (verify_notes_filepair(p, &obj)) {
 			trace_printf("\t\tCannot merge entry '%s' (%c): "
 			       "%.7s -> %.7s. Skipping!\n", p->one->path,
 			       p->status, oid_to_hex(&p->one->oid),
