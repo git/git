@@ -60,7 +60,22 @@ You can set the following variables (also in your config.mak):
 
     GIT_PERF_MAKE_OPTS
 	Options to use when automatically building a git tree for
-	performance testing.  E.g., -j6 would be useful.
+	performance testing. E.g., -j6 would be useful. Passed
+	directly to make as "make $GIT_PERF_MAKE_OPTS".
+
+    GIT_PERF_MAKE_COMMAND
+	An arbitrary command that'll be run in place of the make
+	command, if set the GIT_PERF_MAKE_OPTS variable is
+	ignored. Useful in cases where source tree changes might
+	require issuing a different make command to different
+	revisions.
+
+	This can be (ab)used to monkeypatch or otherwise change the
+	tree about to be built. Note that the build directory can be
+	re-used for subsequent runs so the make command might get
+	executed multiple times on the same tree, but don't count on
+	any of that, that's an implementation detail that might change
+	in the future.
 
     GIT_PERF_REPO
     GIT_PERF_LARGE_REPO
