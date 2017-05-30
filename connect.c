@@ -71,7 +71,7 @@ static void parse_one_symref_info(struct string_list *symref, const char *val, i
 	    check_refname_format(target, REFNAME_ALLOW_ONELEVEL))
 		/* "symref=bogus:pair */
 		goto reject;
-	item = string_list_append(symref, sym);
+	item = string_list_append_nodup(symref, sym);
 	item->util = target;
 	return;
 reject:
