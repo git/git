@@ -292,11 +292,11 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
 		    git_path(NOTES_MERGE_WORKTREE));
 }
 
-static void write_buf_to_worktree(const unsigned char *obj,
+static void write_buf_to_worktree(const struct object_id *obj,
 				  const char *buf, unsigned long size)
 {
 	int fd;
-	char *path = git_pathdup(NOTES_MERGE_WORKTREE "/%s", sha1_to_hex(obj));
+	char *path = git_pathdup(NOTES_MERGE_WORKTREE "/%s", oid_to_hex(obj));
 	if (safe_create_leading_directories_const(path))
 		die_errno("unable to create directory for '%s'", path);
 
@@ -320,19 +320,19 @@ static void write_buf_to_worktree(const unsigned char *obj,
 	free(path);
 }
 
-static void write_note_to_worktree(const unsigned char *obj,
-				   const unsigned char *note)
+static void write_note_to_worktree(const struct object_id *obj,
+				   const struct object_id *note)
 {
 	enum object_type type;
 	unsigned long size;
-	void *buf = read_sha1_file(note, &type, &size);
+	void *buf = read_sha1_file(note->hash, &type, &size);
 
 	if (!buf)
 		die("cannot read note %s for object %s",
-		    sha1_to_hex(note), sha1_to_hex(obj));
+		    oid_to_hex(note), oid_to_hex(obj));
 	if (type != OBJ_BLOB)
 		die("blob expected in note %s for object %s",
-		    sha1_to_hex(note), sha1_to_hex(obj));
+		    oid_to_hex(note), oid_to_hex(obj));
 	write_buf_to_worktree(obj, buf, size);
 	free(buf);
 }
@@ -358,7 +358,7 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
 	if ((status < 0) || !result_buf.ptr)
 		die("Failed to execute internal merge");
 
-	write_buf_to_worktree(p->obj.hash, result_buf.ptr, result_buf.size);
+	write_buf_to_worktree(&p->obj, result_buf.ptr, result_buf.size);
 	free(result_buf.ptr);
 
 	return status;
@@ -393,7 +393,7 @@ static int merge_one_change_manual(struct notes_merge_options *o,
 				"deleted in %s and modified in %s. Version from %s "
 				"left in tree.\n",
 				oid_to_hex(&p->obj), lref, rref, rref);
-		write_note_to_worktree(p->obj.hash, p->remote.hash);
+		write_note_to_worktree(&p->obj, &p->remote);
 	} else if (is_null_oid(&p->remote)) {
 		/* D/F conflict, checkout p->local */
 		assert(!is_null_oid(&p->local));
@@ -402,7 +402,7 @@ static int merge_one_change_manual(struct notes_merge_options *o,
 				"deleted in %s and modified in %s. Version from %s "
 				"left in tree.\n",
 				oid_to_hex(&p->obj), rref, lref, lref);
-		write_note_to_worktree(p->obj.hash, p->local.hash);
+		write_note_to_worktree(&p->obj, &p->local);
 	} else {
 		/* "regular" conflict, checkout result of ll_merge() */
 		const char *reason = "content";
