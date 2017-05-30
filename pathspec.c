@@ -1,3 +1,4 @@
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "dir.h"
 #include "pathspec.h"
@@ -17,6 +18,7 @@
  * to use find_pathspecs_matching_against_index() instead.
  */
 void add_pathspec_matches_against_index(const struct pathspec *pathspec,
+					const struct index_state *istate,
 					char *seen)
 {
 	int num_unmatched = 0, i;
@@ -32,8 +34,8 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 			num_unmatched++;
 	if (!num_unmatched)
 		return;
-	for (i = 0; i < active_nr; i++) {
-		const struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
 		ce_path_match(ce, pathspec, seen);
 	}
 }
@@ -46,10 +48,11 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
  * nature of the "closest" (i.e. most specific) matches which each of the
  * given pathspecs achieves against all items in the index.
  */
-char *find_pathspecs_matching_against_index(const struct pathspec *pathspec)
+char *find_pathspecs_matching_against_index(const struct pathspec *pathspec,
+					    const struct index_state *istate)
 {
 	char *seen = xcalloc(pathspec->nr, 1);
-	add_pathspec_matches_against_index(pathspec, seen);
+	add_pathspec_matches_against_index(pathspec, istate, seen);
 	return seen;
 }
 
@@ -386,65 +389,6 @@ static const char *parse_element_magic(unsigned *magic, int *prefix_len,
 		return parse_short_magic(magic, elem);
 }
 
-static void strip_submodule_slash_cheap(struct pathspec_item *item)
-{
-	if (item->len >= 1 && item->match[item->len - 1] == '/') {
-		int i = cache_name_pos(item->match, item->len - 1);
-
-		if (i >= 0 && S_ISGITLINK(active_cache[i]->ce_mode)) {
-			item->len--;
-			item->match[item->len] = '\0';
-		}
-	}
-}
-
-static void strip_submodule_slash_expensive(struct pathspec_item *item)
-{
-	int i;
-
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		int ce_len = ce_namelen(ce);
-
-		if (!S_ISGITLINK(ce->ce_mode))
-			continue;
-
-		if (item->len <= ce_len || item->match[ce_len] != '/' ||
-		    memcmp(ce->name, item->match, ce_len))
-			continue;
-
-		if (item->len == ce_len + 1) {
-			/* strip trailing slash */
-			item->len--;
-			item->match[item->len] = '\0';
-		} else {
-			die(_("Pathspec '%s' is in submodule '%.*s'"),
-			    item->original, ce_len, ce->name);
-		}
-	}
-}
-
-static void die_inside_submodule_path(struct pathspec_item *item)
-{
-	int i;
-
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		int ce_len = ce_namelen(ce);
-
-		if (!S_ISGITLINK(ce->ce_mode))
-			continue;
-
-		if (item->len < ce_len ||
-		    !(item->match[ce_len] == '/' || item->match[ce_len] == '\0') ||
-		    memcmp(ce->name, item->match, ce_len))
-			continue;
-
-		die(_("Pathspec '%s' is in submodule '%.*s'"),
-		    item->original, ce_len, ce->name);
-	}
-}
-
 /*
  * Perform the initialization of a pathspec_item based on a pathspec element.
  */
@@ -517,12 +461,6 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 		item->original = xstrdup(elt);
 	}
 
-	if (flags & PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP)
-		strip_submodule_slash_cheap(item);
-
-	if (flags & PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE)
-		strip_submodule_slash_expensive(item);
-
 	if (magic & PATHSPEC_LITERAL) {
 		item->nowildcard_len = item->len;
 	} else {
@@ -547,15 +485,7 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 	/* sanity checks, pathspec matchers assume these are sane */
 	if (item->nowildcard_len > item->len ||
 	    item->prefix         > item->len) {
-		/*
-		 * This case can be triggered by the user pointing us to a
-		 * pathspec inside a submodule, which is an input error.
-		 * Detect that here and complain, but fallback in the
-		 * non-submodule case to a BUG, as we have no idea what
-		 * would trigger that.
-		 */
-		die_inside_submodule_path(item);
-		die ("BUG: item->nowildcard_len > item->len || item->prefix > item->len)");
+		die ("BUG: error initializing pathspec_item");
 	}
 }
 
