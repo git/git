@@ -51,7 +51,7 @@ static void terminate_batch(void)
 }
 
 /* NOTE: 'ref' refers to a git reference, while 'rev' refers to a svn revision. */
-static char *read_ref_note(const unsigned char sha1[20])
+static char *read_ref_note(const struct object_id *oid)
 {
 	const struct object_id *note_oid;
 	char *msg = NULL;
@@ -59,7 +59,7 @@ static char *read_ref_note(const unsigned char sha1[20])
 	enum object_type type;
 
 	init_notes(NULL, notes_ref, NULL, 0);
-	if (!(note_oid = get_note(NULL, sha1)))
+	if (!(note_oid = get_note(NULL, oid)))
 		return NULL;	/* note tree not found */
 	if (!(msg = read_sha1_file(note_oid->hash, &type, &msglen)))
 		error("Empty notes tree. %s", notes_ref);
@@ -174,15 +174,15 @@ static int cmd_import(const char *line)
 	int code;
 	int dumpin_fd;
 	char *note_msg;
-	unsigned char head_sha1[20];
+	struct object_id head_oid;
 	unsigned int startrev;
 	struct child_process svndump_proc = CHILD_PROCESS_INIT;
 	const char *command = "svnrdump";
 
-	if (read_ref(private_ref, head_sha1))
+	if (read_ref(private_ref, head_oid.hash))
 		startrev = 0;
 	else {
-		note_msg = read_ref_note(head_sha1);
+		note_msg = read_ref_note(&head_oid);
 		if(note_msg == NULL) {
 			warning("No note found for %s.", private_ref);
 			startrev = 0;

@@ -160,7 +160,7 @@ int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
 	int ret = 0;
 	int i;
 	for (i = 0; c->trees[i]; i++)
-		ret = copy_note(c->trees[i], from_obj->hash, to_obj->hash, 1, c->combine) || ret;
+		ret = copy_note(c->trees[i], from_obj, to_obj, 1, c->combine) || ret;
 	return ret;
 }
 

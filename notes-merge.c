@@ -444,14 +444,14 @@ static int merge_one_change(struct notes_merge_options *o,
 		if (o->verbosity >= 2)
 			printf("Using remote notes for %s\n",
 						oid_to_hex(&p->obj));
-		if (add_note(t, p->obj.hash, p->remote.hash, combine_notes_overwrite))
+		if (add_note(t, &p->obj, &p->remote, combine_notes_overwrite))
 			die("BUG: combine_notes_overwrite failed");
 		return 0;
 	case NOTES_MERGE_RESOLVE_UNION:
 		if (o->verbosity >= 2)
 			printf("Concatenating local and remote notes for %s\n",
 							oid_to_hex(&p->obj));
-		if (add_note(t, p->obj.hash, p->remote.hash, combine_notes_concatenate))
+		if (add_note(t, &p->obj, &p->remote, combine_notes_concatenate))
 			die("failed to concatenate notes "
 			    "(combine_notes_concatenate)");
 		return 0;
@@ -459,7 +459,7 @@ static int merge_one_change(struct notes_merge_options *o,
 		if (o->verbosity >= 2)
 			printf("Concatenating unique lines in local and remote "
 				"notes for %s\n", oid_to_hex(&p->obj));
-		if (add_note(t, p->obj.hash, p->remote.hash, combine_notes_cat_sort_uniq))
+		if (add_note(t, &p->obj, &p->remote, combine_notes_cat_sort_uniq))
 			die("failed to concatenate notes "
 			    "(combine_notes_cat_sort_uniq)");
 		return 0;
@@ -491,7 +491,7 @@ static int merge_changes(struct notes_merge_options *o,
 			   !oidcmp(&p->local, &p->base)) {
 			/* no local change; adopt remote change */
 			trace_printf("\t\t\tno local change, adopted remote\n");
-			if (add_note(t, p->obj.hash, p->remote.hash,
+			if (add_note(t, &p->obj, &p->remote,
 				     combine_notes_overwrite))
 				die("BUG: combine_notes_overwrite failed");
 		} else {
@@ -693,12 +693,12 @@ int notes_merge_commit(struct notes_merge_options *o,
 	baselen = path.len;
 	while ((e = readdir(dir)) != NULL) {
 		struct stat st;
-		unsigned char obj_sha1[20], blob_sha1[20];
+		struct object_id obj_oid, blob_oid;
 
 		if (is_dot_or_dotdot(e->d_name))
 			continue;
 
-		if (strlen(e->d_name) != 40 || get_sha1_hex(e->d_name, obj_sha1)) {
+		if (get_oid_hex(e->d_name, &obj_oid)) {
 			if (o->verbosity >= 3)
 				printf("Skipping non-SHA1 entry '%s%s'\n",
 					path.buf, e->d_name);
@@ -709,14 +709,14 @@ int notes_merge_commit(struct notes_merge_options *o,
 		/* write file as blob, and add to partial_tree */
 		if (stat(path.buf, &st))
 			die_errno("Failed to stat '%s'", path.buf);
-		if (index_path(blob_sha1, path.buf, &st, HASH_WRITE_OBJECT))
+		if (index_path(blob_oid.hash, path.buf, &st, HASH_WRITE_OBJECT))
 			die("Failed to write blob object from '%s'", path.buf);
-		if (add_note(partial_tree, obj_sha1, blob_sha1, NULL))
+		if (add_note(partial_tree, &obj_oid, &blob_oid, NULL))
 			die("Failed to add resolved note '%s' to notes tree",
 			    path.buf);
 		if (o->verbosity >= 4)
 			printf("Added resolved note for object %s: %s\n",
-				sha1_to_hex(obj_sha1), sha1_to_hex(blob_sha1));
+				oid_to_hex(&obj_oid), oid_to_hex(&blob_oid));
 		strbuf_setlen(&path, baselen);
 	}
 

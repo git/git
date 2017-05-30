@@ -1086,8 +1086,8 @@ void init_display_notes(struct display_notes_opt *opt)
 	string_list_clear(&display_notes_refs, 0);
 }
 
-int add_note(struct notes_tree *t, const unsigned char *object_sha1,
-		const unsigned char *note_sha1, combine_notes_fn combine_notes)
+int add_note(struct notes_tree *t, const struct object_id *object_oid,
+		const struct object_id *note_oid, combine_notes_fn combine_notes)
 {
 	struct leaf_node *l;
 
@@ -1098,8 +1098,8 @@ int add_note(struct notes_tree *t, const unsigned char *object_sha1,
 	if (!combine_notes)
 		combine_notes = t->combine_notes;
 	l = (struct leaf_node *) xmalloc(sizeof(struct leaf_node));
-	hashcpy(l->key_oid.hash, object_sha1);
-	hashcpy(l->val_oid.hash, note_sha1);
+	oidcpy(&l->key_oid, object_oid);
+	oidcpy(&l->val_oid, note_oid);
 	return note_tree_insert(t, t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
 }
 
@@ -1120,14 +1120,14 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 }
 
 const struct object_id *get_note(struct notes_tree *t,
-		const unsigned char *object_sha1)
+		const struct object_id *oid)
 {
 	struct leaf_node *found;
 
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	found = note_tree_find(t, t->root, 0, object_sha1);
+	found = note_tree_find(t, t->root, 0, oid->hash);
 	return found ? &found->val_oid : NULL;
 }
 
@@ -1229,7 +1229,7 @@ static void format_note(struct notes_tree *t, const struct object_id *object_oid
 	if (!t->initialized)
 		init_notes(t, NULL, NULL, 0);
 
-	oid = get_note(t, object_oid->hash);
+	oid = get_note(t, object_oid);
 	if (!oid)
 		return;
 
@@ -1288,7 +1288,7 @@ void format_display_notes(const struct object_id *object_oid,
 }
 
 int copy_note(struct notes_tree *t,
-	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      const struct object_id *from_obj, const struct object_id *to_obj,
 	      int force, combine_notes_fn combine_notes)
 {
 	const struct object_id *note = get_note(t, from_obj);
@@ -1298,9 +1298,9 @@ int copy_note(struct notes_tree *t,
 		return 1;
 
 	if (note)
-		return add_note(t, to_obj, note->hash, combine_notes);
+		return add_note(t, to_obj, note, combine_notes);
 	else if (existing_note)
-		return add_note(t, to_obj, null_sha1, combine_notes);
+		return add_note(t, to_obj, &null_oid, combine_notes);
 
 	return 0;
 }

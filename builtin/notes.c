@@ -309,7 +309,7 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 		if (rewrite_cmd)
 			err = copy_note_for_rewrite(c, &from_obj, &to_obj);
 		else
-			err = copy_note(t, from_obj.hash, to_obj.hash, force,
+			err = copy_note(t, &from_obj, &to_obj, force,
 					combine_notes_overwrite);
 
 		if (err) {
@@ -370,7 +370,7 @@ static int list(int argc, const char **argv, const char *prefix)
 	if (argc) {
 		if (get_oid(argv[0], &object))
 			die(_("failed to resolve '%s' as a valid ref."), argv[0]);
-		note = get_note(t, object.hash);
+		note = get_note(t, &object);
 		if (note) {
 			puts(oid_to_hex(note));
 			retval = 0;
@@ -427,7 +427,7 @@ static int add(int argc, const char **argv, const char *prefix)
 		die(_("failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check("add", NOTES_INIT_WRITABLE);
-	note = get_note(t, object.hash);
+	note = get_note(t, &object);
 
 	if (note) {
 		if (!force) {
@@ -456,7 +456,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	prepare_note_data(&object, &d, note->hash);
 	if (d.buf.len || allow_empty) {
 		write_note_data(&d, new_note.hash);
-		if (add_note(t, object.hash, new_note.hash, combine_notes_overwrite))
+		if (add_note(t, &object, &new_note, combine_notes_overwrite))
 			die("BUG: combine_notes_overwrite failed");
 		commit_notes(t, "Notes added by 'git notes add'");
 	} else {
@@ -518,7 +518,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 		die(_("failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check("copy", NOTES_INIT_WRITABLE);
-	note = get_note(t, object.hash);
+	note = get_note(t, &object);
 
 	if (note) {
 		if (!force) {
@@ -532,14 +532,14 @@ static int copy(int argc, const char **argv, const char *prefix)
 			oid_to_hex(&object));
 	}
 
-	from_note = get_note(t, from_obj.hash);
+	from_note = get_note(t, &from_obj);
 	if (!from_note) {
 		retval = error(_("missing notes on source object %s. Cannot "
 			       "copy."), oid_to_hex(&from_obj));
 		goto out;
 	}
 
-	if (add_note(t, object.hash, from_note->hash, combine_notes_overwrite))
+	if (add_note(t, &object, from_note, combine_notes_overwrite))
 		die("BUG: combine_notes_overwrite failed");
 	commit_notes(t, "Notes added by 'git notes copy'");
 out:
@@ -596,7 +596,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		die(_("failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check(argv[0], NOTES_INIT_WRITABLE);
-	note = get_note(t, object.hash);
+	note = get_note(t, &object);
 
 	prepare_note_data(&object, &d, edit && note ? note->hash : NULL);
 
@@ -616,7 +616,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 
 	if (d.buf.len || allow_empty) {
 		write_note_data(&d, new_note.hash);
-		if (add_note(t, object.hash, new_note.hash, combine_notes_overwrite))
+		if (add_note(t, &object, &new_note, combine_notes_overwrite))
 			die("BUG: combine_notes_overwrite failed");
 		logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
 	} else {
@@ -658,7 +658,7 @@ static int show(int argc, const char **argv, const char *prefix)
 		die(_("failed to resolve '%s' as a valid ref."), object_ref);
 
 	t = init_notes_check("show", 0);
-	note = get_note(t, object.hash);
+	note = get_note(t, &object);
 
 	if (!note)
 		retval = error(_("no note found for object %s."),

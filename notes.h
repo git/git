@@ -121,8 +121,8 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-int add_note(struct notes_tree *t, const unsigned char *object_sha1,
-		const unsigned char *note_sha1, combine_notes_fn combine_notes);
+int add_note(struct notes_tree *t, const struct object_id *object_oid,
+		const struct object_id *note_oid, combine_notes_fn combine_notes);
 
 /*
  * Remove the given note object from the given notes_tree structure
@@ -141,7 +141,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  * Return NULL if the given object has no notes.
  */
 const struct object_id *get_note(struct notes_tree *t,
-		const unsigned char *object_sha1);
+		const struct object_id *object_oid);
 
 /*
  * Copy a note from one object to another in the given notes_tree.
@@ -156,7 +156,7 @@ const struct object_id *get_note(struct notes_tree *t,
  * zero.
  */
 int copy_note(struct notes_tree *t,
-	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      const struct object_id *from_obj, const struct object_id *to_obj,
 	      int force, combine_notes_fn combine_notes);
 
 /*
