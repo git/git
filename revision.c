@@ -414,9 +414,9 @@ static void file_add_remove(struct diff_options *options,
 
 static void file_change(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
-		 const unsigned char *old_sha1,
-		 const unsigned char *new_sha1,
-		 int old_sha1_valid, int new_sha1_valid,
+		 const struct object_id *old_oid,
+		 const struct object_id *new_oid,
+		 int old_oid_valid, int new_oid_valid,
 		 const char *fullpath,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {

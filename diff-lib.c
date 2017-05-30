@@ -236,7 +236,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		old_oid = &ce->oid;
 		new_oid = changed ? &null_oid : &ce->oid;
 		diff_change(&revs->diffopt, oldmode, newmode,
-			    old_oid->hash, new_oid->hash,
+			    old_oid, new_oid,
 			    !is_null_oid(old_oid),
 			    !is_null_oid(new_oid),
 			    ce->name, 0, dirty_submodule);
@@ -367,7 +367,7 @@ static int show_modified(struct rev_info *revs,
 		return 0;
 
 	diff_change(&revs->diffopt, oldmode, mode,
-		    old->oid.hash, oid->hash, 1, !is_null_oid(oid),
+		    &old->oid, oid, 1, !is_null_oid(oid),
 		    old->name, 0, dirty_submodule);
 	return 0;
 }

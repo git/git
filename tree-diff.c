@@ -74,7 +74,7 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 {
 	struct combine_diff_parent *p0 = &p->parent[0];
 	if (p->mode && p0->mode) {
-		opt->change(opt, p0->mode, p->mode, p0->oid.hash, p->oid.hash,
+		opt->change(opt, p0->mode, p->mode, &p0->oid, &p->oid,
 			1, 1, p->path, 0, 0);
 	}
 	else {

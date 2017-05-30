@@ -23,9 +23,9 @@ typedef int (*pathchange_fn_t)(struct diff_options *options,
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
-		 const unsigned char *old_sha1,
-		 const unsigned char *new_sha1,
-		 int old_sha1_valid, int new_sha1_valid,
+		 const struct object_id *old_oid,
+		 const struct object_id *new_oid,
+		 int old_oid_valid, int new_oid_valid,
 		 const char *fullpath,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule);
 
@@ -253,10 +253,9 @@ extern void diff_addremove(struct diff_options *,
 
 extern void diff_change(struct diff_options *,
 			unsigned mode1, unsigned mode2,
-			const unsigned char *sha1,
-			const unsigned char *sha2,
-			int sha1_valid,
-			int sha2_valid,
+			const struct object_id *old_oid,
+			const struct object_id *new_oid,
+			int old_oid_valid, int new_oid_valid,
 			const char *fullpath,
 			unsigned dirty_submodule1, unsigned dirty_submodule2);
 

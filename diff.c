@@ -5127,9 +5127,9 @@ void diff_addremove(struct diff_options *options,
 
 void diff_change(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
-		 const unsigned char *old_sha1,
-		 const unsigned char *new_sha1,
-		 int old_sha1_valid, int new_sha1_valid,
+		 const struct object_id *old_oid,
+		 const struct object_id *new_oid,
+		 int old_oid_valid, int new_oid_valid,
 		 const char *concatpath,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule)
 {
@@ -5142,8 +5142,8 @@ void diff_change(struct diff_options *options,
 
 	if (DIFF_OPT_TST(options, REVERSE_DIFF)) {
 		SWAP(old_mode, new_mode);
-		SWAP(old_sha1, new_sha1);
-		SWAP(old_sha1_valid, new_sha1_valid);
+		SWAP(old_oid, new_oid);
+		SWAP(old_oid_valid, new_oid_valid);
 		SWAP(old_dirty_submodule, new_dirty_submodule);
 	}
 
@@ -5153,8 +5153,8 @@ void diff_change(struct diff_options *options,
 
 	one = alloc_filespec(concatpath);
 	two = alloc_filespec(concatpath);
-	fill_filespec(one, old_sha1, old_sha1_valid, old_mode);
-	fill_filespec(two, new_sha1, new_sha1_valid, new_mode);
+	fill_filespec(one, old_oid->hash, old_oid_valid, old_mode);
+	fill_filespec(two, new_oid->hash, new_oid_valid, new_mode);
 	one->dirty_submodule = old_dirty_submodule;
 	two->dirty_submodule = new_dirty_submodule;
 	p = diff_queue(&diff_queued_diff, one, two);
