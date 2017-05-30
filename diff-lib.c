@@ -255,12 +255,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 static void diff_index_show_file(struct rev_info *revs,
 				 const char *prefix,
 				 const struct cache_entry *ce,
-				 const unsigned char *sha1, int sha1_valid,
+				 const struct object_id *oid, int oid_valid,
 				 unsigned int mode,
 				 unsigned dirty_submodule)
 {
 	diff_addremove(&revs->diffopt, prefix[0], mode,
-		       sha1, sha1_valid, ce->name, dirty_submodule);
+		       oid->hash, oid_valid, ce->name, dirty_submodule);
 }
 
 static int get_stat_data(const struct cache_entry *ce,
@@ -315,7 +315,7 @@ static void show_new_file(struct rev_info *revs,
 	    &dirty_submodule, &revs->diffopt) < 0)
 		return;
 
-	diff_index_show_file(revs, "+", new, oid->hash, !is_null_oid(oid), mode, dirty_submodule);
+	diff_index_show_file(revs, "+", new, oid, !is_null_oid(oid), mode, dirty_submodule);
 }
 
 static int show_modified(struct rev_info *revs,
@@ -332,7 +332,7 @@ static int show_modified(struct rev_info *revs,
 			  &dirty_submodule, &revs->diffopt) < 0) {
 		if (report_missing)
 			diff_index_show_file(revs, "-", old,
-					     old->oid.hash, 1, old->ce_mode,
+					     &old->oid, 1, old->ce_mode,
 					     0);
 		return -1;
 	}
@@ -426,7 +426,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * Something removed from the tree?
 	 */
 	if (!idx) {
-		diff_index_show_file(revs, "-", tree, tree->oid.hash, 1,
+		diff_index_show_file(revs, "-", tree, &tree->oid, 1,
 				     tree->ce_mode, 0);
 		return;
 	}
