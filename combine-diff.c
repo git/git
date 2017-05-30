@@ -1364,22 +1364,22 @@ static struct combine_diff_path *find_paths_multitree(
 	struct diff_options *opt)
 {
 	int i, nparent = parents->nr;
-	const unsigned char **parents_sha1;
+	const struct object_id **parents_oid;
 	struct combine_diff_path paths_head;
 	struct strbuf base;
 
-	ALLOC_ARRAY(parents_sha1, nparent);
+	ALLOC_ARRAY(parents_oid, nparent);
 	for (i = 0; i < nparent; i++)
-		parents_sha1[i] = parents->oid[i].hash;
+		parents_oid[i] = &parents->oid[i];
 
 	/* fake list head, so worker can assume it is non-NULL */
 	paths_head.next = NULL;
 
 	strbuf_init(&base, PATH_MAX);
-	diff_tree_paths(&paths_head, oid->hash, parents_sha1, nparent, &base, opt);
+	diff_tree_paths(&paths_head, oid, parents_oid, nparent, &base, opt);
 
 	strbuf_release(&base);
-	free(parents_sha1);
+	free(parents_oid);
 	return paths_head.next;
 }
 
