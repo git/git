@@ -58,7 +58,7 @@ static int verify_notes_filepair(struct diff_filepair *p, unsigned char *sha1)
 }
 
 static struct notes_merge_pair *find_notes_merge_pair_pos(
-		struct notes_merge_pair *list, int len, unsigned char *obj,
+		struct notes_merge_pair *list, int len, struct object_id *obj,
 		int insert_new, int *occupied)
 {
 	/*
@@ -75,7 +75,7 @@ static struct notes_merge_pair *find_notes_merge_pair_pos(
 	int i = last_index < len ? last_index : len - 1;
 	int prev_cmp = 0, cmp = -1;
 	while (i >= 0 && i < len) {
-		cmp = hashcmp(obj, list[i].obj.hash);
+		cmp = oidcmp(obj, &list[i].obj);
 		if (!cmp) /* obj belongs @ i */
 			break;
 		else if (cmp < 0 && prev_cmp <= 0) /* obj belongs < i */
@@ -138,19 +138,19 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 		struct diff_filepair *p = diff_queued_diff.queue[i];
 		struct notes_merge_pair *mp;
 		int occupied;
-		unsigned char obj[20];
+		struct object_id obj;
 
-		if (verify_notes_filepair(p, obj)) {
+		if (verify_notes_filepair(p, obj.hash)) {
 			trace_printf("\t\tCannot merge entry '%s' (%c): "
 			       "%.7s -> %.7s. Skipping!\n", p->one->path,
 			       p->status, oid_to_hex(&p->one->oid),
 			       oid_to_hex(&p->two->oid));
 			continue;
 		}
-		mp = find_notes_merge_pair_pos(changes, len, obj, 1, &occupied);
+		mp = find_notes_merge_pair_pos(changes, len, &obj, 1, &occupied);
 		if (occupied) {
 			/* We've found an addition/deletion pair */
-			assert(!hashcmp(mp->obj.hash, obj));
+			assert(!oidcmp(&mp->obj, &obj));
 			if (is_null_oid(&p->one->oid)) { /* addition */
 				assert(is_null_oid(&mp->remote));
 				oidcpy(&mp->remote, &p->two->oid);
@@ -160,7 +160,7 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 			} else
 				assert(!"Invalid existing change recorded");
 		} else {
-			hashcpy(mp->obj.hash, obj);
+			oidcpy(&mp->obj, &obj);
 			oidcpy(&mp->base, &p->one->oid);
 			oidcpy(&mp->local, &uninitialized);
 			oidcpy(&mp->remote, &p->two->oid);
@@ -199,25 +199,25 @@ static void diff_tree_local(struct notes_merge_options *o,
 		struct diff_filepair *p = diff_queued_diff.queue[i];
 		struct notes_merge_pair *mp;
 		int match;
-		unsigned char obj[20];
+		struct object_id obj;
 
-		if (verify_notes_filepair(p, obj)) {
+		if (verify_notes_filepair(p, obj.hash)) {
 			trace_printf("\t\tCannot merge entry '%s' (%c): "
 			       "%.7s -> %.7s. Skipping!\n", p->one->path,
 			       p->status, oid_to_hex(&p->one->oid),
 			       oid_to_hex(&p->two->oid));
 			continue;
 		}
-		mp = find_notes_merge_pair_pos(changes, len, obj, 0, &match);
+		mp = find_notes_merge_pair_pos(changes, len, &obj, 0, &match);
 		if (!match) {
 			trace_printf("\t\tIgnoring local-only change for %s: "
-			       "%.7s -> %.7s\n", sha1_to_hex(obj),
+			       "%.7s -> %.7s\n", oid_to_hex(&obj),
 			       oid_to_hex(&p->one->oid),
 			       oid_to_hex(&p->two->oid));
 			continue;
 		}
 
-		assert(!hashcmp(mp->obj.hash, obj));
+		assert(!oidcmp(&mp->obj, &obj));
 		if (is_null_oid(&p->two->oid)) { /* deletion */
 			/*
 			 * Either this is a true deletion (1), or it is part
