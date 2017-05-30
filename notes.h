@@ -202,8 +202,8 @@ int copy_note(struct notes_tree *t,
  * - copy_note()
  * - free_notes()
  */
-typedef int each_note_fn(const unsigned char *object_sha1,
-		const unsigned char *note_sha1, char *note_path,
+typedef int each_note_fn(const struct object_id *object_oid,
+		const struct object_id *note_oid, char *note_path,
 		void *cb_data);
 int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
 		void *cb_data);

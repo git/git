@@ -610,7 +610,7 @@ redo:
 				if (path[path_len - 1] != '/')
 					path[path_len++] = '/';
 				path[path_len] = '\0';
-				ret = fn(l->key_oid.hash, l->val_oid.hash,
+				ret = fn(&l->key_oid, &l->val_oid,
 					 path,
 					 cb_data);
 			}
@@ -627,7 +627,7 @@ redo:
 			l = (struct leaf_node *) CLR_PTR_TYPE(p);
 			construct_path_with_fanout(l->key_oid.hash, fanout,
 						   path);
-			ret = fn(l->key_oid.hash, l->val_oid.hash, path,
+			ret = fn(&l->key_oid, &l->val_oid, path,
 				 cb_data);
 			break;
 		}
@@ -698,7 +698,7 @@ static int tree_write_stack_finish_subtree(struct tree_write_stack *tws)
 
 static int write_each_note_helper(struct tree_write_stack *tws,
 		const char *path, unsigned int mode,
-		const unsigned char *sha1)
+		const struct object_id *oid)
 {
 	size_t path_len = strlen(path);
 	unsigned int n = 0;
@@ -728,7 +728,7 @@ static int write_each_note_helper(struct tree_write_stack *tws,
 
 	/* Finally add given entry to the current tree object */
 	write_tree_entry(&tws->buf, mode, path + 3 * n, path_len - (3 * n),
-			 sha1);
+			 oid->hash);
 
 	return 0;
 }
@@ -748,7 +748,7 @@ static int write_each_non_note_until(const char *note_path,
 			; /* do nothing, prefer note to non-note */
 		else {
 			ret = write_each_note_helper(d->root, n->path, n->mode,
-						     n->oid.hash);
+						     &n->oid);
 			if (ret)
 				return ret;
 		}
@@ -758,8 +758,8 @@ static int write_each_non_note_until(const char *note_path,
 	return 0;
 }
 
-static int write_each_note(const unsigned char *object_sha1,
-		const unsigned char *note_sha1, char *note_path,
+static int write_each_note(const struct object_id *object_oid,
+		const struct object_id *note_oid, char *note_path,
 		void *cb_data)
 {
 	struct write_each_note_data *d =
@@ -777,7 +777,7 @@ static int write_each_note(const unsigned char *object_sha1,
 
 	/* Weave non-note entries into note entries */
 	return  write_each_non_note_until(note_path, d) ||
-		write_each_note_helper(d->root, note_path, mode, note_sha1);
+		write_each_note_helper(d->root, note_path, mode, note_oid);
 }
 
 struct note_delete_list {
@@ -785,20 +785,20 @@ struct note_delete_list {
 	const unsigned char *sha1;
 };
 
-static int prune_notes_helper(const unsigned char *object_sha1,
-		const unsigned char *note_sha1, char *note_path,
+static int prune_notes_helper(const struct object_id *object_oid,
+		const struct object_id *note_oid, char *note_path,
 		void *cb_data)
 {
 	struct note_delete_list **l = (struct note_delete_list **) cb_data;
 	struct note_delete_list *n;
 
-	if (has_sha1_file(object_sha1))
+	if (has_object_file(object_oid))
 		return 0; /* nothing to do for this note */
 
 	/* failed to find object => prune this note */
 	n = (struct note_delete_list *) xmalloc(sizeof(*n));
 	n->next = *l;
-	n->sha1 = object_sha1;
+	n->sha1 = object_oid->hash;
 	*l = n;
 	return 0;
 }

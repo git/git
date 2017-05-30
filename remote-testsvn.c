@@ -99,8 +99,8 @@ static int parse_rev_note(const char *msg, struct rev_note *res)
 	return -1;
 }
 
-static int note2mark_cb(const unsigned char *object_sha1,
-		const unsigned char *note_sha1, char *note_path,
+static int note2mark_cb(const struct object_id *object_oid,
+		const struct object_id *note_oid, char *note_path,
 		void *cb_data)
 {
 	FILE *file = (FILE *)cb_data;
@@ -109,14 +109,14 @@ static int note2mark_cb(const unsigned char *object_sha1,
 	enum object_type type;
 	struct rev_note note;
 
-	if (!(msg = read_sha1_file(note_sha1, &type, &msglen)) ||
+	if (!(msg = read_sha1_file(note_oid->hash, &type, &msglen)) ||
 			!msglen || type != OBJ_BLOB) {
 		free(msg);
 		return 1;
 	}
 	if (parse_rev_note(msg, &note))
 		return 2;
-	if (fprintf(file, ":%d %s\n", note.rev_nr, sha1_to_hex(object_sha1)) < 1)
+	if (fprintf(file, ":%d %s\n", note.rev_nr, oid_to_hex(object_oid)) < 1)
 		return 3;
 	return 0;
 }
