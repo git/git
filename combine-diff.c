@@ -1311,7 +1311,7 @@ static const char *path_path(void *obj)
 
 
 /* find set of paths that every parent touches */
-static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
+static struct combine_diff_path *find_paths_generic(const struct object_id *oid,
 	const struct oid_array *parents, struct diff_options *opt)
 {
 	struct combine_diff_path *paths = NULL;
@@ -1336,7 +1336,7 @@ static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
 			opt->output_format = stat_opt;
 		else
 			opt->output_format = DIFF_FORMAT_NO_OUTPUT;
-		diff_tree_sha1(parents->oid[i].hash, sha1, "", opt);
+		diff_tree_sha1(parents->oid[i].hash, oid->hash, "", opt);
 		diffcore_std(opt);
 		paths = intersect_paths(paths, i, num_parent);
 
@@ -1360,7 +1360,7 @@ static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
  * rename/copy detection, etc, comparing all trees simultaneously (= faster).
  */
 static struct combine_diff_path *find_paths_multitree(
-	const unsigned char *sha1, const struct oid_array *parents,
+	const struct object_id *oid, const struct oid_array *parents,
 	struct diff_options *opt)
 {
 	int i, nparent = parents->nr;
@@ -1376,7 +1376,7 @@ static struct combine_diff_path *find_paths_multitree(
 	paths_head.next = NULL;
 
 	strbuf_init(&base, PATH_MAX);
-	diff_tree_paths(&paths_head, sha1, parents_sha1, nparent, &base, opt);
+	diff_tree_paths(&paths_head, oid->hash, parents_sha1, nparent, &base, opt);
 
 	strbuf_release(&base);
 	free(parents_sha1);
@@ -1448,11 +1448,11 @@ void diff_tree_combined(const struct object_id *oid,
 		 * diff(sha1,parent_i) for all i to do the job, specifically
 		 * for parent0.
 		 */
-		paths = find_paths_generic(oid->hash, parents, &diffopts);
+		paths = find_paths_generic(oid, parents, &diffopts);
 	}
 	else {
 		int stat_opt;
-		paths = find_paths_multitree(oid->hash, parents, &diffopts);
+		paths = find_paths_multitree(oid, parents, &diffopts);
 
 		/*
 		 * show stat against the first parent even
