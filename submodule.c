@@ -16,6 +16,7 @@
 #include "quote.h"
 #include "remote.h"
 #include "worktree.h"
+#include "parse-options.h"
 
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
@@ -170,10 +171,28 @@ static int git_modules_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-/* Loads all submodule settings from the config */
+/* Loads all submodule settings from the config. */
 int submodule_config(const char *var, const char *value, void *cb)
 {
-	return git_modules_config(var, value, cb);
+	if (!strcmp(var, "submodule.recurse")) {
+		int v = git_config_bool(var, value) ?
+			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+		config_update_recurse_submodules = v;
+		return 0;
+	} else {
+		return git_modules_config(var, value, cb);
+	}
+}
+
+/* Cheap function that only determines if we're interested in submodules at all */
+int git_default_submodule_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "submodule.recurse")) {
+		int v = git_config_bool(var, value) ?
+			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+		config_update_recurse_submodules = v;
+	}
+	return 0;
 }
 
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
