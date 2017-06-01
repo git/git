@@ -883,6 +883,7 @@ core.abbrev::
 	computed based on the approximate number of packed objects
 	in your repository, which hopefully is enough for
 	abbreviated object names to stay unique for some time.
+	The minimum length is 4.
 
 add.ignoreErrors::
 add.ignore-errors (deprecated)::
