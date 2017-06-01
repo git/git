@@ -153,9 +153,6 @@ while (1) {
 		die "bad command '$command'";
 	}
 
-	print $debug "OUT: " . length($output) . " ";
-	$debug->flush();
-
 	if ( $pathname eq "error.r" ) {
 		print $debug "[ERROR]\n";
 		$debug->flush();
@@ -177,6 +174,9 @@ while (1) {
 			$debug->flush();
 			die "${command} write error";
 		}
+
+		print $debug "OUT: " . length($output) . " ";
+		$debug->flush();
 
 		while ( length($output) > 0 ) {
 			my $packet = substr( $output, 0, $MAX_PACKET_CONTENT_SIZE );
