@@ -1354,7 +1354,7 @@ EOF
 		}
 
 		require Net::SMTP;
-		my $use_net_smtp_ssl = version->parse($Net::SMTP::VERSION) < version->parse("1.28");
+		my $use_net_smtp_ssl = version->parse($Net::SMTP::VERSION) < version->parse("2.34");
 		$smtp_domain ||= maildomain();
 
 		if ($smtp_encryption eq 'ssl') {
