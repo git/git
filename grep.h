@@ -5,7 +5,9 @@
 #include <pcre.h>
 #ifdef PCRE_CONFIG_JIT
 #if PCRE_MAJOR >= 8 && PCRE_MINOR >= 32
+#ifndef NO_LIBPCRE1_JIT
 #define GIT_PCRE1_USE_JIT
+#endif
 #endif
 #endif
 #ifndef PCRE_STUDY_JIT_COMPILE
