@@ -772,6 +772,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct oid_array merge_heads = OID_ARRAY_INIT;
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
+	int autostash;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -800,8 +801,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!opt_rebase && opt_autostash != -1)
 		die(_("--[no-]autostash option is only valid with --rebase."));
 
+	autostash = config_autostash;
 	if (opt_rebase) {
-		int autostash = config_autostash;
 		if (opt_autostash != -1)
 			autostash = opt_autostash;
 
@@ -862,16 +863,18 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		die(_("Cannot rebase onto multiple branches."));
 
 	if (opt_rebase) {
-		struct commit_list *list = NULL;
-		struct commit *merge_head, *head;
+		if (!autostash) {
+			struct commit_list *list = NULL;
+			struct commit *merge_head, *head;
 
-		head = lookup_commit_reference(&orig_head);
-		commit_list_insert(head, &list);
-		merge_head = lookup_commit_reference(&merge_heads.oid[0]);
-		if (is_descendant_of(merge_head, list)) {
-			/* we can fast-forward this without invoking rebase */
-			opt_ff = "--ff-only";
-			return run_merge();
+			head = lookup_commit_reference(&orig_head);
+			commit_list_insert(head, &list);
+			merge_head = lookup_commit_reference(&merge_heads.oid[0]);
+			if (is_descendant_of(merge_head, list)) {
+				/* we can fast-forward this without invoking rebase */
+				opt_ff = "--ff-only";
+				return run_merge();
+			}
 		}
 		return run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
 	} else {
