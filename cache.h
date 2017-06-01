@@ -1543,16 +1543,20 @@ extern int ident_cmp(const struct ident_split *, const struct ident_split *);
 struct checkout {
 	struct index_state *istate;
 	const char *base_dir;
+	struct delayed_checkout *delayed_checkout;
 	int base_dir_len;
 	unsigned force:1,
 		 quiet:1,
 		 not_new:1,
 		 refresh_cache:1;
 };
-#define CHECKOUT_INIT { NULL, "" }
+#define CHECKOUT_INIT { NULL, "", NULL }
+
 
 #define TEMPORARY_FILENAME_LENGTH 25
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
+extern void enable_delayed_checkout(struct checkout *state);
+extern int finish_delayed_checkout(struct checkout *state);
 
 struct cache_def {
 	struct strbuf path;

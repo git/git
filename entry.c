@@ -137,6 +137,81 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
 	return result;
 }
 
+void enable_delayed_checkout(struct checkout *state)
+{
+	if (!state->delayed_checkout) {
+		state->delayed_checkout = xmalloc(sizeof(*state->delayed_checkout));
+		state->delayed_checkout->state = CE_CAN_DELAY;
+		string_list_init(&state->delayed_checkout->filters, 0);
+		string_list_init(&state->delayed_checkout->paths, 0);
+	}
+}
+
+static int remove_available_paths(struct string_list_item *item, void *cb_data)
+{
+	struct string_list *available_paths = cb_data;
+	return !string_list_has_string(available_paths, item->string);
+}
+
+int finish_delayed_checkout(struct checkout *state)
+{
+	int errs = 0;
+	struct string_list_item *filter, *path;
+	struct delayed_checkout *dco = state->delayed_checkout;
+
+	if (!state->delayed_checkout) {
+		return errs;
+	}
+
+	while (dco->filters.nr > 0) {
+		for_each_string_list_item(filter, &dco->filters) {
+			struct string_list available_paths;
+			string_list_init(&available_paths, 0);
+
+			if (!async_query_available_blobs(filter->string, &available_paths)) {
+				/* Filter reported an error */
+				errs = 1;
+				filter->string = "";
+				continue;
+			}
+			if (available_paths.nr <= 0) {
+				/* Filter responded with no entries. That means
+				   the filter is done and we can remove the
+				   filter from the list (see
+				   "string_list_remove_empty_items" call below).
+				*/
+				filter->string = "";
+				continue;
+			}
+
+			/* In dco->paths we store a list of all delayed paths.
+			   The filter just send us a list of available paths.
+			   Remove them from the list.
+			*/
+			filter_string_list(&dco->paths, 0,
+				&remove_available_paths, &available_paths);
+
+			for_each_string_list_item(path, &available_paths) {
+				struct cache_entry* ce = index_file_exists(
+					state->istate, path->string,
+					strlen(path->string), 0);
+				dco->state = CE_RETRY;
+				errs |= (ce ? checkout_entry(ce, state, NULL) : 1);
+			}
+		}
+		string_list_remove_empty_items(&dco->filters, 0);
+	}
+	string_list_clear(&dco->filters, 0);
+
+	/* At this point we should not have any delayed paths anymore. */
+	errs |= dco->paths.nr;
+
+	free(dco);
+	state->delayed_checkout = NULL;
+
+	return errs;
+}
+
 static int write_entry(struct cache_entry *ce,
 		       char *path, const struct checkout *state, int to_tempfile)
 {
@@ -179,11 +254,36 @@ static int write_entry(struct cache_entry *ce,
 		/*
 		 * Convert from git internal format to working tree format
 		 */
-		if (ce_mode_s_ifmt == S_IFREG &&
-		    convert_to_working_tree(ce->name, new, size, &buf)) {
-			free(new);
-			new = strbuf_detach(&buf, &newsize);
-			size = newsize;
+		if (ce_mode_s_ifmt == S_IFREG) {
+			struct delayed_checkout *dco = state->delayed_checkout;
+			if (dco && dco->state != CE_NO_DELAY) {
+				/* Do not send the blob in case of a retry. */
+				if (dco->state == CE_RETRY) {
+					new = NULL;
+					size = 0;
+				}
+				ret = async_convert_to_working_tree(
+					ce->name, new, size, &buf, dco);
+				if (ret && dco->state == CE_DELAYED) {
+					free(new);
+					/* Reset the state of the next blob */
+					dco->state = CE_CAN_DELAY;
+					goto finish;
+				}
+			} else
+				ret = convert_to_working_tree(
+					ce->name, new, size, &buf);
+
+			if (ret) {
+				free(new);
+				new = strbuf_detach(&buf, &newsize);
+				size = newsize;
+			}
+			/*
+			 * No "else" here as errors from convert are OK at this
+			 * point. If the error would have been fatal (e.g.
+			 * filter is required), then we would have died already.
+			 */
 		}
 
 		fd = open_output_fd(path, ce, to_tempfile);

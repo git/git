@@ -425,8 +425,8 @@ packet:          git< capability=clean
 packet:          git< capability=smudge
 packet:          git< 0000
 ------------------------
-Supported filter capabilities in version 2 are "clean" and
-"smudge".
+Supported filter capabilities in version 2 are "clean", "smudge",
+and "delay".
 
 Afterwards Git sends a list of "key=value" pairs terminated with
 a flush packet. The list will contain at least the filter command
@@ -512,11 +512,68 @@ the protocol then Git will stop the filter process and restart it
 with the next file that needs to be processed. Depending on the
 `filter.<driver>.required` flag Git will interpret that as error.
 
-After the filter has processed a blob it is expected to wait for
-the next "key=value" list containing a command. Git will close
+After the filter has processed a command it is expected to wait for
+a "key=value" list containing the next command. Git will close
 the command pipe on exit. The filter is expected to detect EOF
 and exit gracefully on its own. Git will wait until the filter
 process has stopped.
+
+Delay
+^^^^^
+
+If the filter supports the "delay" capability, then Git can send the
+flag "can-delay" after the filter command and pathname. This flag
+denotes that the filter can delay filtering the current blob (e.g. to
+compensate network latencies) by responding with no content but with
+the status "delayed" and a flush packet.
+------------------------
+packet:          git> command=smudge
+packet:          git> pathname=path/testfile.dat
+packet:          git> can-delay=1
+packet:          git> 0000
+packet:          git> CONTENT
+packet:          git> 0000
+packet:          git< status=delayed
+packet:          git< 0000
+------------------------
+
+If the filter supports the "delay" capability then it must support the
+"list_available_blobs" command. If Git sends this command, then the
+filter is expected to return a list of pathnames of blobs that are
+available. The list must be terminated with a flush packet followed
+by a "success" status that is also terminated with a flush packet. If
+no blobs for the delayed paths are available, yet, then the filter is
+expected to block the response until at least one blob becomes
+available. The filter can tell Git that it has no more delayed blobs
+by sending an empty list.
+------------------------
+packet:          git> command=list_available_blobs
+packet:          git> 0000
+packet:          git< pathname=path/testfile.dat
+packet:          git< pathname=path/otherfile.dat
+packet:          git< 0000
+packet:          git< status=success
+packet:          git< 0000
+------------------------
+
+After Git received the pathnames, it will request the corresponding
+blobs again. These requests contain a pathname and an empty content
+section. The filter is expected to respond with the smudged content
+in the usual way as explained above.
+------------------------
+packet:          git> command=smudge
+packet:          git> pathname=path/testfile.dat
+packet:          git> 0000
+packet:          git> 0000  # empty content!
+packet:          git< status=success
+packet:          git< 0000
+packet:          git< SMUDGED_CONTENT
+packet:          git< 0000
+packet:          git< 0000  # empty list, keep "status=success" unchanged!
+------------------------
+
+Example
+^^^^^^^
 
 A long running filter demo implementation can be found in
 `contrib/long-running-filter/example.pl` located in the Git
