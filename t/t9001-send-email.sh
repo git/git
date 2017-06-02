@@ -1953,4 +1953,12 @@ test_expect_success $PREREQ 'invoke hook' '
 	)
 '
 
+test_expect_success $PREREQ 'test that send-email works outside a repo' '
+	nongit git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		"$(pwd)/0001-add-master.patch"
+'
+
 test_done
