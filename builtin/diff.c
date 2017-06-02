@@ -20,14 +20,13 @@
 #define DIFF_NO_INDEX_EXPLICIT 1
 #define DIFF_NO_INDEX_IMPLICIT 2
 
-struct blobinfo {
-	struct object_id oid;
-	const char *name;
-	unsigned mode;
-};
-
 static const char builtin_diff_usage[] =
 "git diff [<options>] [<commit> [<commit>]] [--] [<path>...]";
+
+static const char *blob_path(struct object_array_entry *entry)
+{
+	return entry->path ? entry->path : entry->name;
+}
 
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
@@ -35,8 +34,8 @@ static void stuff_change(struct diff_options *opt,
 			 const struct object_id *new_oid,
 			 int old_oid_valid,
 			 int new_oid_valid,
-			 const char *old_name,
-			 const char *new_name)
+			 const char *old_path,
+			 const char *new_path)
 {
 	struct diff_filespec *one, *two;
 
@@ -47,16 +46,16 @@ static void stuff_change(struct diff_options *opt,
 	if (DIFF_OPT_TST(opt, REVERSE_DIFF)) {
 		SWAP(old_mode, new_mode);
 		SWAP(old_oid, new_oid);
-		SWAP(old_name, new_name);
+		SWAP(old_path, new_path);
 	}
 
 	if (opt->prefix &&
-	    (strncmp(old_name, opt->prefix, opt->prefix_length) ||
-	     strncmp(new_name, opt->prefix, opt->prefix_length)))
+	    (strncmp(old_path, opt->prefix, opt->prefix_length) ||
+	     strncmp(new_path, opt->prefix, opt->prefix_length)))
 		return;
 
-	one = alloc_filespec(old_name);
-	two = alloc_filespec(new_name);
+	one = alloc_filespec(old_path);
+	two = alloc_filespec(new_path);
 	fill_filespec(one, old_oid->hash, old_oid_valid, old_mode);
 	fill_filespec(two, new_oid->hash, new_oid_valid, new_mode);
 
@@ -65,7 +64,7 @@ static void stuff_change(struct diff_options *opt,
 
 static int builtin_diff_b_f(struct rev_info *revs,
 			    int argc, const char **argv,
-			    struct blobinfo *blob)
+			    struct object_array_entry **blob)
 {
 	/* Blob vs file in the working tree*/
 	struct stat st;
@@ -84,14 +83,15 @@ static int builtin_diff_b_f(struct rev_info *revs,
 
 	diff_set_mnemonic_prefix(&revs->diffopt, "o/", "w/");
 
-	if (blob[0].mode == S_IFINVALID)
-		blob[0].mode = canon_mode(st.st_mode);
+	if (blob[0]->mode == S_IFINVALID)
+		blob[0]->mode = canon_mode(st.st_mode);
 
 	stuff_change(&revs->diffopt,
-		     blob[0].mode, canon_mode(st.st_mode),
-		     &blob[0].oid, &null_oid,
+		     blob[0]->mode, canon_mode(st.st_mode),
+		     &blob[0]->item->oid, &null_oid,
 		     1, 0,
-		     path, path);
+		     blob[0]->path ? blob[0]->path : path,
+		     path);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -99,24 +99,24 @@ static int builtin_diff_b_f(struct rev_info *revs,
 
 static int builtin_diff_blobs(struct rev_info *revs,
 			      int argc, const char **argv,
-			      struct blobinfo *blob)
+			      struct object_array_entry **blob)
 {
 	unsigned mode = canon_mode(S_IFREG | 0644);
 
 	if (argc > 1)
 		usage(builtin_diff_usage);
 
-	if (blob[0].mode == S_IFINVALID)
-		blob[0].mode = mode;
+	if (blob[0]->mode == S_IFINVALID)
+		blob[0]->mode = mode;
 
-	if (blob[1].mode == S_IFINVALID)
-		blob[1].mode = mode;
+	if (blob[1]->mode == S_IFINVALID)
+		blob[1]->mode = mode;
 
 	stuff_change(&revs->diffopt,
-		     blob[0].mode, blob[1].mode,
-		     &blob[0].oid, &blob[1].oid,
+		     blob[0]->mode, blob[1]->mode,
+		     &blob[0]->item->oid, &blob[1]->item->oid,
 		     1, 1,
-		     blob[0].name, blob[1].name);
+		     blob_path(blob[0]), blob_path(blob[1]));
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return 0;
@@ -259,7 +259,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	struct object_array ent = OBJECT_ARRAY_INIT;
 	int blobs = 0, paths = 0;
-	struct blobinfo blob[2];
+	struct object_array_entry *blob[2];
 	int nongit = 0, no_index = 0;
 	int result = 0;
 
@@ -408,9 +408,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		} else if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die(_("more than two blobs given: '%s'"), name);
-			oidcpy(&blob[blobs].oid, &obj->oid);
-			blob[blobs].name = name;
-			blob[blobs].mode = entry->mode;
+			blob[blobs] = entry;
 			blobs++;
 
 		} else {
