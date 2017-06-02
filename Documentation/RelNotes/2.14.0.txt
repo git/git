@@ -110,6 +110,9 @@ Performance, Internal Implementation, Development Support etc.
    operations now, which would speed up "git status" (as long as the
    cache is properly invalidated).
 
+ * The internal implementation of "git grep" has seen some clean-up.
+   (merge 8df4c2953f ab/grep-preparatory-cleanup later to maint).
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -263,6 +266,23 @@ notes for details).
    when needed.  Recent versions of Net::SMTP can do TLS natively.
    (merge 0ead000c3a dk/send-email-avoid-net-smtp-ssl-when-able later to maint).
 
+ * "foo\bar\baz" in "git fetch foo\bar\baz", even though there is no
+   slashes in it, cannot be a nickname for a remote on Windows, as
+   that is likely to be a pathname on a local filesystem.
+   (merge d9244ecf4f js/bs-is-a-dir-sep-on-windows later to maint).
+
+ * "git clean -d" used to clean directories that has ignored files,
+   even though the command should not lose ignored ones without "-x".
+   "git status --ignored"  did not list ignored and untracked files
+   without "-uall".  These have been corrected.
+   (merge 6b1db43109 sl/clean-d-ignored-fix later to maint).
+
+ * The result from "git diff" that compares two blobs, e.g. "git diff
+   $commit1:$path $commit2:$path", used to be shown with the full
+   object name as given on the command line, but it is more natural to
+   use the $path in the output and use it to look up .gitattributes.
+   (merge 30d005c020 jk/diff-blob later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 515360f9e9 jn/credential-doc-on-clear later to maint).
    (merge 0e6d899fee ab/aix-needs-compat-regex later to maint).
@@ -272,3 +292,7 @@ notes for details).
    (merge 449456ad47 sg/core-filemode-doc-typofix later to maint).
    (merge ba4dce784e km/log-showsignature-doc later to maint).
    (merge c5a9157393 jh/memihash-opt later to maint).
+   (merge 80f4cd8046 ab/ref-filter-no-contains later to maint).
+   (merge b275da816c ah/doc-interpret-trailers-ifexists later to maint).
+   (merge fc7a5edb55 ah/doc-pretty-format-fix later to maint).
+   (merge 7e95fcb4b5 sb/t5531-update-desc later to maint).
