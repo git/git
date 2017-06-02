@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2017, #01; Thu, 1)
-X-master-at: 0339965c70d68fd3831c9a5306443c869de3f6a8
-X-next-at: b5e676d57ee80a379101c2e968b23f2342b77f7a
+Subject: What's cooking in git.git (Jun 2017, #02; Fri, 2)
+X-master-at: 826c06412e429a091d32d0e1b26e77da33fc1ce9
+X-next-at: 4b9c06c7d442bdd2a0056b5372cc385eaee2012e
 
-What's cooking in git.git (Jun 2017, #01; Thu, 1)
+What's cooking in git.git (Jun 2017, #02; Fri, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -27,161 +27,64 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* dk/send-email-avoid-net-smtp-ssl-when-able (2017-05-20) 1 commit
-  (merged to 'next' on 2017-05-23 at fc59b8a1d4)
- + send-email: Net::SMTP::SSL is obsolete, use only when necessary
+* ab/grep-preparatory-cleanup (2017-05-26) 31 commits
+  (merged to 'next' on 2017-05-29 at f2cfa89d3e)
+ + grep: assert that threading is enabled when calling grep_{lock,unlock}
+ + grep: given --threads with NO_PTHREADS=YesPlease, warn
+ + pack-objects: fix buggy warning about threads
+ + pack-objects & index-pack: add test for --threads warning
+ + test-lib: add a PTHREADS prerequisite
+ + grep: move is_fixed() earlier to avoid forward declaration
+ + grep: change internal *pcre* variable & function names to be *pcre1*
+ + grep: change the internal PCRE macro names to be PCRE1
+ + grep: factor test for \0 in grep patterns into a function
+ + grep: remove redundant regflags assignments
+ + grep: catch a missing enum in switch statement
+ + perf: add a comparison test of log --grep regex engines with -F
+ + perf: add a comparison test of log --grep regex engines
+ + perf: add a comparison test of grep regex engines with -F
+ + perf: add a comparison test of grep regex engines
+ + perf: emit progress output when unpacking & building
+ + perf: add a GIT_PERF_MAKE_COMMAND for when *_MAKE_OPTS won't do
+ + grep: add tests to fix blind spots with \0 patterns
+ + grep: prepare for testing binary regexes containing rx metacharacters
+ + grep: add a test helper function for less verbose -f \0 tests
+ + grep: add tests for grep pattern types being passed to submodules
+ + grep: amend submodule recursion test for regex engine testing
+ + grep: add tests for --threads=N and grep.threads
+ + grep: change non-ASCII -i test to stop using --debug
+ + grep: add a test for backreferences in PCRE patterns
+ + grep: add a test asserting that --perl-regexp dies when !PCRE
+ + log: make --regexp-ignore-case work with --perl-regexp
+ + log: add exhaustive tests for pattern style options & config
+ + test-lib: rename the LIBPCRE prerequisite to PCRE
+ + grep & rev-list doc: stop promising libpcre for --perl-regexp
+ + Makefile & configure: reword inaccurate comment about PCRE
+ (this branch is used by ab/pcre-v2 and sb/submodule-blanket-recursive.)
 
- "git send-email" now uses Net::SMTP::SSL, which is obsolete, only
- when needed.  Recent versions of Net::SMTP can do TLS natively.
-
- This is somewhat broken; a fix will be merged to 'master' shortly.
-
-
-* ab/conditional-config-with-symlinks (2017-05-17) 1 commit
-  (merged to 'next' on 2017-05-23 at 6162222c2e)
- + config: match both symlink & realpath versions in IncludeIf.gitdir:*
-
- The recently introduced "[includeIf "gitdir:$dir"] path=..."
- mechansim has further been taught to take symlinks into account.
- The directory "$dir" specified in "gitdir:$dir" may be a symlink to
- a real location, not something that $(getcwd) may return.  In such
- a case, a realpath of "$dir" is compared with the real path of the
- current repository to determine if the contents from the named path
- should be included.
-
-
-* ab/perf-wildmatch (2017-05-12) 2 commits
-  (merged to 'next' on 2017-05-23 at 0adb7dac31)
- + perf: add test showing exponential growth in path globbing
- + perf: add function to setup a fresh test repo
-
- Add perf-test for wildmatch.
-
-
-* bp/sub-process-convert-filter (2017-05-15) 11 commits
-  (merged to 'next' on 2017-05-23 at 89f5420a82)
- + convert: update subprocess_read_status() to not die on EOF
- + sub-process: move sub-process functions into separate files
- + convert: rename reusable sub-process functions
- + convert: update generic functions to only use generic data structures
- + convert: separate generic structures and variables from the filter specific ones
- + convert: split start_multi_file_filter() into two separate functions
- + pkt-line: annotate packet_writel with LAST_ARG_MUST_BE_NULL
- + convert: move packet_write_line() into pkt-line as packet_writel()
- + pkt-line: add packet_read_line_gently()
- + pkt-line: fix packet_read_line() to handle len < 0 errors
- + convert: remove erroneous tests for errno == EPIPE
-
- Code from "conversion using external process" codepath has been
- extracted to a separate sub-process.[ch] module.
+ The internal implementation of "git grep" has seen some clean-up.
 
 
-* bw/forking-and-threading (2017-05-15) 14 commits
-  (merged to 'next' on 2017-05-23 at 79a6a59851)
- + usage.c: drop set_error_handle()
- + run-command: restrict PATH search to executable files
- + run-command: expose is_executable function
- + run-command: block signals between fork and execve
- + run-command: add note about forking and threading
- + run-command: handle dup2 and close errors in child
- + run-command: eliminate calls to error handling functions in child
- + run-command: don't die in child when duping /dev/null
- + run-command: prepare child environment before forking
- + string-list: add string_list_remove function
- + run-command: use the async-signal-safe execv instead of execvp
- + run-command: prepare command before forking
- + t0061: run_command executes scripts without a #! line
- + t5550: use write_script to generate post-update hook
+* ab/ref-filter-no-contains (2017-05-23) 1 commit
+  (merged to 'next' on 2017-05-29 at 5d39fd2961)
+ + tag: duplicate mention of --contains should mention --no-contains
 
- The "run-command" API implementation has been made more robust
- against dead-locking in a threaded environment.
+ Doc update to a recent topic.
 
 
-* bw/pathspec-sans-the-index (2017-05-12) 6 commits
-  (merged to 'next' on 2017-05-23 at 45c8ef3115)
- + pathspec: convert find_pathspecs_matching_against_index to take an index
- + pathspec: remove PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP
- + ls-files: prevent prune_cache from overeagerly pruning submodules
- + pathspec: remove PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE flag
- + submodule: add die_in_unpopulated_submodule function
- + pathspec: provide a more descriptive die message
+* ah/doc-interpret-trailers-ifexists (2017-05-23) 1 commit
+  (merged to 'next' on 2017-05-29 at cb353c1d21)
+ + Documentation: fix reference to ifExists for interpret-trailers
 
- Simplify parse_pathspec() codepath and stop it from looking at the
- default in-core index.
+ Documentation fix.
 
 
-* dt/unpack-save-untracked-cache-extension (2017-05-20) 1 commit
-  (merged to 'next' on 2017-05-23 at 3196d093d6)
- + unpack-trees: preserve index extensions
+* ah/doc-pretty-format-fix (2017-05-23) 1 commit
+  (merged to 'next' on 2017-05-29 at 6e3e8fd80d)
+ + Documentation: fix formatting typo in pretty-formats.txt
 
- When "git checkout", "git merge", etc. manipulates the in-core
- index, various pieces of information in the index extensions are
- discarded from the original state, as it is usually not the case
- that they are kept up-to-date and in-sync with the operation on the
- main index.  The untracked cache extension is copied across these
- operations now, which would speed up "git status" (as long as the
- cache is properly invalidated).
+ Documentation fix.
 
-
-* jc/name-rev-lw-tag (2017-03-29) 2 commits
-  (merged to 'next' on 2017-05-23 at 3f88b6d73c)
- + name-rev: favor describing with tags and use committer date to tiebreak
- + name-rev: refactor logic to see if a new candidate is a better name
- (this branch is used by mg/name-rev-debug.)
-
- "git describe --contains" penalized light-weight tags so much that
- they were almost never considered.  Instead, give them about the
- same chance to be considered as an annotated tag that is the same
- age as the underlying commit would.
-
-
-* jc/skip-test-in-the-middle (2017-05-18) 2 commits
-  (merged to 'next' on 2017-05-23 at 6c962b353b)
- + t5545: enhance test coverage when no http server is installed
- + test: allow skipping the remainder
-
- A recent update to t5545-push-options.sh started skipping all the
- tests in the script when a web server testing is disabled or
- unavailable, not just the ones that require a web server.  Non HTTP
- tests have been salvaged to always run in this script.
-
-
-* jh/memihash-opt (2017-05-16) 5 commits
-  (merged to 'next' on 2017-05-23 at 2f0293e8b8)
- + p0004: don't error out if test repo is too small
- + p0004: don't abort if multi-threaded is too slow
- + p0004: use test_perf
- + p0004: avoid using pipes
- + p0004: simplify calls of test-lazy-init-name-hash
-
- perf-test update.
-
-
-* js/larger-timestamps (2017-05-20) 1 commit
-  (merged to 'next' on 2017-05-23 at 16f7c9e677)
- + name-rev: change a "long" variable to timestamp_t
-
- A follow-up hotfix for a topic already in 'master'.
-
-
-* jt/fetch-allow-tip-sha1-implicitly (2017-05-16) 1 commit
-  (merged to 'next' on 2017-05-23 at 690ed987df)
- + fetch-pack: always allow fetching of literal SHA1s
-
- There is no good reason why "git fetch $there $sha1" should fail
- when the $sha1 names an object at the tip of an advertised ref,
- even when the other side hasn't enabled allowTipSHA1InWant.
-
-
-* jt/send-email-validate-hook (2017-05-16) 1 commit
-  (merged to 'next' on 2017-05-23 at 89848cb9ac)
- + send-email: support validate hook
-
- "git send-email" learned to run sendemail-validate hook to inspect
- and reject a message before sending it out.
-
---------------------------------------------------
-[New Topics]
 
 * dk/send-email-avoid-net-smtp-ssl-when-able (2017-06-01) 1 commit
   (merged to 'next' on 2017-06-01 at 3ff3ddfac7)
@@ -189,7 +92,193 @@ of the repositories listed at
 
  A hotfix to a topic in 'master'.
 
+
+* jk/diff-blob (2017-05-24) 15 commits
+  (merged to 'next' on 2017-05-29 at 5ecc979cc7)
+ + diff: use blob path for blob/file diffs
+ + diff: use pending "path" if it is available
+ + diff: use the word "path" instead of "name" for blobs
+ + diff: pass whole pending entry in blobinfo
+ + handle_revision_arg: record paths for pending objects
+ + handle_revision_arg: record modes for "a..b" endpoints
+ + t4063: add tests of direct blob diffs
+ + get_sha1_with_context: dynamically allocate oc->path
+ + get_sha1_with_context: always initialize oc->symlink_path
+ + sha1_name: consistently refer to object_context as "oc"
+ + handle_revision_arg: add handle_dotdot() helper
+ + handle_revision_arg: hoist ".." check out of range parsing
+ + handle_revision_arg: stop using "dotdot" as a generic pointer
+ + handle_revision_arg: simplify commit reference lookups
+ + handle_revision_arg: reset "dotdot" consistently
+
+ The result from "git diff" that compares two blobs, e.g. "git diff
+ $commit1:$path $commit2:$path", used to be shown with the full
+ object name as given on the command line, but it is more natural to
+ use the $path in the output and use it to look up .gitattributes.
+
+
+* js/bs-is-a-dir-sep-on-windows (2017-05-26) 2 commits
+  (merged to 'next' on 2017-05-26 at 450b39f726)
+ + Windows: do not treat a path with backslashes as a remote's nick name
+ + mingw.h: permit arguments with side effects for is_dir_sep
+
+ "foo\bar\baz" in "git fetch foo\bar\baz", even though there is no
+ slashes in it, cannot be a nickname for a remote on Windows, as
+ that is likely to be a pathname on a local filesystem.
+
+
+* jt/send-email-validate-hook (2017-06-02) 1 commit
+  (merged to 'next' on 2017-06-02 at 32055bc433)
+ + send-email: check for repo before invoking hook
+
+ A hotfix for a topic already in 'master'.
+
+
+* rs/mingw-path-lookup-simplify (2017-05-23) 1 commit
+  (merged to 'next' on 2017-05-29 at 4365139a7f)
+ + mingw: simplify PATH handling
+
+ Code simplification.
+
+
+* sb/t5531-update-desc (2017-05-23) 1 commit
+  (merged to 'next' on 2017-05-29 at 67a91db3cf)
+ + t5531: fix test description
+
+ The description strings for a few tests have been updated.
+
+
+* sl/clean-d-ignored-fix (2017-05-24) 6 commits
+  (merged to 'next' on 2017-05-29 at 837c255ae8)
+ + clean: teach clean -d to preserve ignored paths
+ + dir: expose cmp_name() and check_contains()
+ + dir: hide untracked contents of untracked dirs
+ + dir: recurse into untracked dirs for ignored files
+ + t7061: status --ignored should search untracked dirs
+ + t7300: clean -d should skip dirs with ignored files
+
+ "git clean -d" used to clean directories that has ignored files,
+ even though the command should not lose ignored ones without "-x".
+ "git status --ignored"  did not list ignored and untracked files
+ without "-uall".  These have been corrected.
+
+--------------------------------------------------
+[New Topics]
+
+* ad/pull-remote-doc (2017-06-02) 1 commit
+  (merged to 'next' on 2017-06-02 at 32915e88db)
+ + docs: fix formatting and grammar
+
+ Docfix.
+
  Will merge to 'master'.
+
+
+* jc/diff-tree-stale-comment (2017-06-02) 1 commit
+ - diff-tree: update stale in-code comments
+
+ Comment fix.
+
+ Will merge to 'next'.
+
+
+* jc/noent-notdir (2017-05-30) 2 commits
+ - treewide: use is_missing_file_error() where ENOENT and ENOTDIR are checked
+ - compat-util: is_missing_file_error()
+
+ Our code often opens a path to an optional file, to work on its
+ contents when we can successfully open it.  We can ignore a failure
+ to open if such an optional file does not exist, but we do want to
+ report a failure in opening for other reasons (e.g. we got an I/O
+ error, or the file is there, but we lack the permission to open).
+
+ The exact errors we need to ignore are ENOENT (obviously) and
+ ENOTDIR (less obvious).  Instead of repeating comparison of errno
+ with these two constants, introduce a helper function to do so.
+
+ Will merge to 'next'.
+
+
+* rf/completion (2017-06-02) 6 commits
+ - completion: add git config credentialCache.ignoreSIGHUP
+ - completion: add git config credential completions
+ - completion: add git config advice completions
+ - completion: add git config am.threeWay completion
+ - completion: add git config core completions
+ - completion: add git config gc completions
+ (this branch uses rf/completion-config-commit.)
+
+ Completion updates.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
+
+* mg/status-in-progress-info (2017-05-10) 2 commits
+ - status --short --inprogress: spell it as --in-progress
+ - status: show in-progress info for short status
+
+ "git status" learns an option to report various operations
+ (e.g. "merging") that the user is in the middle of.
+
+ cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
+
+
+* mg/name-rev-debug (2017-03-31) 2 commits
+ - describe: pass --debug down to name-rev
+ - name-rev: provide debug output
+
+ "git describe --debug --contains" did not add any meaningful
+ information, even though without "--contains" it did.
+
+ Will discard for now.
+ cf. <c85bc2a1-56d8-8a02-6089-2b8cb3d39e99@grubix.eu>
+
+
+* nd/worktree-move (2017-04-20) 6 commits
+ - worktree remove: new command
+ - worktree move: refuse to move worktrees with submodules
+ - worktree move: accept destination as directory
+ - worktree move: new command
+ - worktree.c: add update_worktree_location()
+ - worktree.c: add validate_worktree()
+
+ "git worktree" learned move and remove subcommands.
+
+ Expecting a reroll.
+ cf. <20170420101024.7593-1-pclouds@gmail.com>
+ cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
+ cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
+
+
+* sk/dash-is-previous (2017-03-01) 5 commits
+ . revert.c: delegate handling of "-" shorthand to setup_revisions
+ . sha1_name.c: teach get_sha1_1 "-" shorthand for "@{-1}"
+ . revision.c: args starting with "-" might be a revision
+ . revision.c: swap if/else blocks
+ . revision.c: do not update argv with unknown option
+
+ A dash "-" can be written to mean "the branch that was previously
+ checked out" in more places.
+
+ Ejected, as it seems that making -.. to mean @{-1}..HEAD etc. are
+ going too far.
+
+--------------------------------------------------
+[Cooking]
+
+* ls/filter-process-delayed (2017-06-01) 5 commits
+ - convert: add "status=delayed" to filter process protocol
+ - convert: move multiple file filter error handling to separate function
+ - t0021: write "OUT" only on success
+ - t0021: make debug log file name configurable
+ - t0021: keep filter log files on comparison
+
+ The filter-process interface learned to allow a process with long
+ latency give a "delayed" response.
+
+ Needs review.
 
 
 * ah/doc-rev-parse-short-default (2017-06-01) 1 commit
@@ -204,6 +293,7 @@ of the repositories listed at
 * rf/completion-config-commit (2017-05-30) 1 commit
   (merged to 'next' on 2017-06-01 at cea32e0486)
  + completion: add completions for git config commit
+ (this branch is used by rf/completion.)
 
  Completion update.
 
@@ -277,7 +367,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* pw/rebase-i-regression-fix (2017-06-01) 1 commit
+* pw/rebase-i-regression-fix-tests (2017-06-01) 1 commit
  - rebase -i: add test for reflog message
 
  Just the first one of three? new tests that follows up a regression
@@ -296,7 +386,6 @@ of the repositories listed at
  - submodule test invocation: only pass additional arguments
  - submodule recursing: do not write a config variable twice
  - Merge branch 'ab/grep-preparatory-cleanup' into sb/submodule-blanket-recursive
- (this branch uses ab/grep-preparatory-cleanup; is tangled with ab/pcre-v2.)
 
  Many commands learned to pay attention to submodule.recurse
  configuration.
@@ -317,102 +406,21 @@ of the repositories listed at
 
  Will merge to 'master'.
 
---------------------------------------------------
-[Stalled]
 
-* mg/status-in-progress-info (2017-05-10) 2 commits
- - status --short --inprogress: spell it as --in-progress
- - status: show in-progress info for short status
-
- "git status" learns an option to report various operations
- (e.g. "merging") that the user is in the middle of.
-
- cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
-
-
-* mg/name-rev-debug (2017-03-31) 2 commits
- - describe: pass --debug down to name-rev
- - name-rev: provide debug output
-
- "git describe --debug --contains" did not add any meaningful
- information, even though without "--contains" it did.
-
- Will discard for now.
- cf. <c85bc2a1-56d8-8a02-6089-2b8cb3d39e99@grubix.eu>
-
-
-* nd/worktree-move (2017-04-20) 6 commits
- - worktree remove: new command
- - worktree move: refuse to move worktrees with submodules
- - worktree move: accept destination as directory
- - worktree move: new command
- - worktree.c: add update_worktree_location()
- - worktree.c: add validate_worktree()
-
- "git worktree" learned move and remove subcommands.
-
- Expecting a reroll.
- cf. <20170420101024.7593-1-pclouds@gmail.com>
- cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
- cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
-
-
-* ls/filter-process-delayed (2017-03-06) 1 commit
- - convert: add "status=delayed" to filter process protocol
-
- Expecting a reroll.
- cf. <04ECEBE5-CAC8-4344-B07A-6B7A7C795C94@gmail.com>
-
-
-* sk/dash-is-previous (2017-03-01) 5 commits
- . revert.c: delegate handling of "-" shorthand to setup_revisions
- . sha1_name.c: teach get_sha1_1 "-" shorthand for "@{-1}"
- . revision.c: args starting with "-" might be a revision
- . revision.c: swap if/else blocks
- . revision.c: do not update argv with unknown option
-
- A dash "-" can be written to mean "the branch that was previously
- checked out" in more places.
-
- Ejected, as it seems that making -.. to mean @{-1}..HEAD etc. are
- going too far.
-
---------------------------------------------------
-[Cooking]
-
-* ab/pcre-v2 (2017-05-26) 7 commits
+* ab/pcre-v2 (2017-06-02) 8 commits
  - grep: add support for PCRE v2
+ - grep: un-break building with PCRE >= 8.32 without --enable-jit
  - grep: un-break building with PCRE < 8.20
  - grep: un-break building with PCRE < 8.32
  - grep: add support for the PCRE v1 JIT API
  - log: add -P as a synonym for --perl-regexp
  - grep: skip pthreads overhead when using one thread
  - grep: don't redundantly compile throwaway patterns under threading
- (this branch uses ab/grep-preparatory-cleanup; is tangled with sb/submodule-blanket-recursive.)
 
  Update "perl-compatible regular expression" support to enable JIT
  and also allow linking with the newer PCRE v2 library.
 
- Waiting for a fix-up.
- cf. <CACBZZX6YFKTLKxep2oW0_HrX+kNJ2PX5G4UCboB+4yosmLqr5g@mail.gmail.com>
-
-
-* ab/ref-filter-no-contains (2017-05-23) 1 commit
-  (merged to 'next' on 2017-05-29 at 5d39fd2961)
- + tag: duplicate mention of --contains should mention --no-contains
-
- Doc update to a recent topic.
-
- Will merge to 'master'.
-
-
-* rs/mingw-path-lookup-simplify (2017-05-23) 1 commit
-  (merged to 'next' on 2017-05-29 at 4365139a7f)
- + mingw: simplify PATH handling
-
- Code simplification.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * ab/sha1dc-maint (2017-05-22) 1 commit
@@ -485,33 +493,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ah/doc-interpret-trailers-ifexists (2017-05-23) 1 commit
-  (merged to 'next' on 2017-05-29 at cb353c1d21)
- + Documentation: fix reference to ifExists for interpret-trailers
-
- Documentation fix.
-
- Will merge to 'master'.
-
-
-* ah/doc-pretty-format-fix (2017-05-23) 1 commit
-  (merged to 'next' on 2017-05-29 at 6e3e8fd80d)
- + Documentation: fix formatting typo in pretty-formats.txt
-
- Documentation fix.
-
- Will merge to 'master'.
-
-
-* sb/t5531-update-desc (2017-05-23) 1 commit
-  (merged to 'next' on 2017-05-29 at 67a91db3cf)
- + t5531: fix test description
-
- The description strings for a few tests have been updated.
-
- Will merge to 'master'.
-
-
 * mh/packed-ref-store-prep (2017-05-24) 26 commits
   (merged to 'next' on 2017-05-29 at e4f5e06b4c)
  + cache_ref_iterator_begin(): avoid priming unneeded directories
@@ -547,23 +528,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sl/clean-d-ignored-fix (2017-05-24) 6 commits
-  (merged to 'next' on 2017-05-29 at 837c255ae8)
- + clean: teach clean -d to preserve ignored paths
- + dir: expose cmp_name() and check_contains()
- + dir: hide untracked contents of untracked dirs
- + dir: recurse into untracked dirs for ignored files
- + t7061: status --ignored should search untracked dirs
- + t7300: clean -d should skip dirs with ignored files
-
- "git clean -d" used to clean directories that has ignored files,
- even though the command should not lose ignored ones without "-x".
- "git status --ignored"  did not list ignored and untracked files
- without "-uall".  These have been corrected.
-
- Will merge to 'master'.
-
-
 * ab/sha1dc (2017-05-22) 2 commits
  - sha1collisiondetection: automatically enable when submodule is populated
  - sha1dc: optionally use sha1collisiondetection as a submodule
@@ -578,51 +542,18 @@ of the repositories listed at
  submodule is not yet fully known, but this lets us dip our toes.
 
 
-* bp/fsmonitor (2017-05-26) 6 commits
+* bp/fsmonitor (2017-06-02) 6 commits
  - fsmonitor: add a sample query-fsmonitor hook script for Watchman
- - fsmonitor: add documentation for the fsmonitor extension.
+ - fsmonitor: add documentation for the fsmonitor extension
  - fsmonitor: add test cases for fsmonitor extension
  - fsmonitor: teach git to optionally utilize a file system monitor to speed up detecting new or changed files.
  - dir: make lookup_untracked() available outside of dir.c
  - bswap: add 64 bit endianness helper get_be64
 
+ We learned to talk to watchman to speed up "git status".
 
-* jk/diff-blob (2017-05-24) 15 commits
-  (merged to 'next' on 2017-05-29 at 5ecc979cc7)
- + diff: use blob path for blob/file diffs
- + diff: use pending "path" if it is available
- + diff: use the word "path" instead of "name" for blobs
- + diff: pass whole pending entry in blobinfo
- + handle_revision_arg: record paths for pending objects
- + handle_revision_arg: record modes for "a..b" endpoints
- + t4063: add tests of direct blob diffs
- + get_sha1_with_context: dynamically allocate oc->path
- + get_sha1_with_context: always initialize oc->symlink_path
- + sha1_name: consistently refer to object_context as "oc"
- + handle_revision_arg: add handle_dotdot() helper
- + handle_revision_arg: hoist ".." check out of range parsing
- + handle_revision_arg: stop using "dotdot" as a generic pointer
- + handle_revision_arg: simplify commit reference lookups
- + handle_revision_arg: reset "dotdot" consistently
-
- The result from "git diff" that compares two blobs, e.g. "git diff
- $commit1:$path $commit2:$path", used to be shown with the full
- object name as given on the command line, but it is more natural to
- use the $path in the output and use it to look up .gitattributes.
-
- Will merge to 'master'.
-
-
-* js/bs-is-a-dir-sep-on-windows (2017-05-26) 2 commits
-  (merged to 'next' on 2017-05-26 at 450b39f726)
- + Windows: do not treat a path with backslashes as a remote's nick name
- + mingw.h: permit arguments with side effects for is_dir_sep
-
- "foo\bar\baz" in "git fetch foo\bar\baz", even though there is no
- slashes in it, cannot be a nickname for a remote on Windows, as
- that is likely to be a pathname on a local filesystem.
-
- Will merge to 'master'.
+ Waiting for discussion to settle.
+ cf. <20170601155105.28356-1-benpeart@microsoft.com>
 
 
 * sb/diff-color-move (2017-06-01) 17 commits
@@ -698,46 +629,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ab/grep-preparatory-cleanup (2017-05-26) 31 commits
-  (merged to 'next' on 2017-05-29 at f2cfa89d3e)
- + grep: assert that threading is enabled when calling grep_{lock,unlock}
- + grep: given --threads with NO_PTHREADS=YesPlease, warn
- + pack-objects: fix buggy warning about threads
- + pack-objects & index-pack: add test for --threads warning
- + test-lib: add a PTHREADS prerequisite
- + grep: move is_fixed() earlier to avoid forward declaration
- + grep: change internal *pcre* variable & function names to be *pcre1*
- + grep: change the internal PCRE macro names to be PCRE1
- + grep: factor test for \0 in grep patterns into a function
- + grep: remove redundant regflags assignments
- + grep: catch a missing enum in switch statement
- + perf: add a comparison test of log --grep regex engines with -F
- + perf: add a comparison test of log --grep regex engines
- + perf: add a comparison test of grep regex engines with -F
- + perf: add a comparison test of grep regex engines
- + perf: emit progress output when unpacking & building
- + perf: add a GIT_PERF_MAKE_COMMAND for when *_MAKE_OPTS won't do
- + grep: add tests to fix blind spots with \0 patterns
- + grep: prepare for testing binary regexes containing rx metacharacters
- + grep: add a test helper function for less verbose -f \0 tests
- + grep: add tests for grep pattern types being passed to submodules
- + grep: amend submodule recursion test for regex engine testing
- + grep: add tests for --threads=N and grep.threads
- + grep: change non-ASCII -i test to stop using --debug
- + grep: add a test for backreferences in PCRE patterns
- + grep: add a test asserting that --perl-regexp dies when !PCRE
- + log: make --regexp-ignore-case work with --perl-regexp
- + log: add exhaustive tests for pattern style options & config
- + test-lib: rename the LIBPCRE prerequisite to PCRE
- + grep & rev-list doc: stop promising libpcre for --perl-regexp
- + Makefile & configure: reword inaccurate comment about PCRE
- (this branch is used by ab/pcre-v2 and sb/submodule-blanket-recursive.)
-
- The internal implementation of "git grep" has seen some clean-up.
-
- Will merge to 'master'.
-
-
 * sg/clone-refspec-from-command-line-config (2017-06-01) 2 commits
  - Documentation/clone: document ignored configuration variables
  - clone: respect additional configured fetch refspecs during initial fetch
@@ -761,7 +652,7 @@ of the repositories listed at
  fstat() on a file that is opened for writing and data was written
  but not yet closed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * mb/diff-default-to-indent-heuristics (2017-05-09) 4 commits
@@ -780,9 +671,8 @@ of the repositories listed at
  cf. <20170509033258.q7auj5p5lxs4tggd@sigill.intra.peff.net>
 
 
-* nd/fopen-errors (2017-05-30) 14 commits
+* nd/fopen-errors (2017-06-02) 13 commits
  - mingw_fopen: report ENOENT for invalid file names
- - SQUASH??? use test_i18ngrep and add it at the end
  - mingw: verify that paths are not mistaken for remote nicknames
  - log: fix memory leak in open_next_file()
  - rerere.c: move error_errno() closer to the source system call
@@ -800,7 +690,7 @@ of the repositories listed at
  optional, and silently ignore errors from open/fopen; report such
  errors if they are not due to missing files.
 
- Waiting for an Ack to the SQUASH fix or a reroll of the tip commits.
+ Will merge to 'next'.
 
 
 * js/rebase-i-final (2017-05-02) 10 commits
