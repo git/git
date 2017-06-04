@@ -2395,8 +2395,11 @@ _git_config ()
 		color.status.untracked
 		color.status.updated
 		color.ui
+		commit.cleanup
+		commit.gpgSign
 		commit.status
 		commit.template
+		commit.verbose
 		core.abbrev
 		core.askpass
 		core.attributesfile
