@@ -150,7 +150,7 @@ int check_filename(const char *prefix, const char *arg)
 		free(to_free);
 		return 1; /* file exists */
 	}
-	if (errno == ENOENT || errno == ENOTDIR) {
+	if (is_missing_file_error(errno)) {
 		free(to_free);
 		return 0; /* file does not exist */
 	}
