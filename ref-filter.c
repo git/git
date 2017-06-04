@@ -1258,13 +1258,17 @@ char *get_head_description(void)
 			    state.branch);
 	else if (state.detached_from) {
 		if (state.detached_at)
-			/* TRANSLATORS: make sure this matches
-			   "HEAD detached at " in wt-status.c */
+			/*
+			 * TRANSLATORS: make sure this matches "HEAD
+			 * detached at " in wt-status.c
+			 */
 			strbuf_addf(&desc, _("(HEAD detached at %s)"),
 				state.detached_from);
 		else
-			/* TRANSLATORS: make sure this matches
-			   "HEAD detached from " in wt-status.c */
+			/*
+			 * TRANSLATORS: make sure this matches "HEAD
+			 * detached from " in wt-status.c
+			 */
 			strbuf_addf(&desc, _("(HEAD detached from %s)"),
 				state.detached_from);
 	}
