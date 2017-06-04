@@ -354,7 +354,7 @@ test_expect_failure 'combine diff coalesce three parents' '
 '
 
 # Test for a bug reported at
-# http://thread.gmane.org/gmane.comp.version-control.git/224410
+# https://public-inbox.org/git/20130515143508.GO25742@login.drsnuggles.stderr.nl/
 # where a delete lines were missing from combined diff output when they
 # occurred exactly before the context lines of a later change.
 test_expect_success 'combine diff missing delete bug' '
