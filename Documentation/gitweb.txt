@@ -84,7 +84,7 @@ separator (rules for Perl's "`split(" ", $line)`").
 
 * Fields use modified URI encoding, defined in RFC 3986, section 2.1
 (Percent-Encoding), or rather "Query string encoding" (see
-http://en.wikipedia.org/wiki/Query_string#URL_encoding[]), the difference
+https://en.wikipedia.org/wiki/Query_string#URL_encoding[]), the difference
 being that SP (" ") can be encoded as "{plus}" (and therefore "{plus}" has to be
 also percent-encoded).
 +
