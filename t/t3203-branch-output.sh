@@ -236,7 +236,7 @@ test_expect_success 'git branch --format option' '
 	Refname is refs/heads/ref-to-remote
 	EOF
 	git branch --format="Refname is %(refname)" >actual &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
 
 test_done
