@@ -302,6 +302,9 @@ static int grep_cmd_config(const char *var, const char *value, void *cb)
 #endif
 	}
 
+	if (!strcmp(var, "submodule.recurse"))
+		recurse_submodules = git_config_bool(var, value);
+
 	return st;
 }
 

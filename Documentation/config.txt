@@ -3091,6 +3091,11 @@ submodule.active::
 	submodule's path to determine if the submodule is of interest to git
 	commands.
 
+submodule.recurse::
+	Specifies if commands recurse into submodules by default. This
+	applies to all commands that have a `--recurse-submodules` option.
+	Defaults to false.
+
 submodule.fetchJobs::
 	Specifies how many submodules are fetched/cloned at the same time.
 	A positive integer allows up to that number of submodules fetched

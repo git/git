@@ -126,6 +126,27 @@ test_expect_success 'push succeeds if submodule commit not on remote but using o
 	)
 '
 
+test_expect_success 'push succeeds if submodule commit not on remote but using auto-on-demand via submodule.recurse config' '
+	(
+		cd work/gar/bage &&
+		>recurse-on-demand-from-submodule-recurse-config &&
+		git add recurse-on-demand-from-submodule-recurse-config &&
+		git commit -m "Recurse submodule.recurse from config junk"
+	) &&
+	(
+		cd work &&
+		git add gar/bage &&
+		git commit -m "Recurse submodule.recurse from config for gar/bage" &&
+		git -c submodule.recurse push ../pub.git master &&
+		# Check that the supermodule commit got there
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master &&
+		# Check that the submodule commit got there too
+		cd gar/bage &&
+		git diff --quiet origin/master master
+	)
+'
+
 test_expect_success 'push recurse-submodules on command line overrides config' '
 	(
 		cd work/gar/bage &&
