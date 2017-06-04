@@ -230,7 +230,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 			die("bad tag");
 		object = parse_object(tag->tagged->oid.hash);
 		if (!object) {
-			if (flags & UNINTERESTING)
+			if (revs->ignore_missing_links || (flags & UNINTERESTING))
 				return NULL;
 			die("bad object %s", oid_to_hex(&tag->tagged->oid));
 		}
