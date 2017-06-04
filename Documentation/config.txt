@@ -3236,6 +3236,13 @@ url.<base>.insteadOf::
 	the best alternative for the particular user, even for a
 	never-before-seen repository on the site.  When more than one
 	insteadOf strings match a given URL, the longest match is used.
++
+Note that any protocol restrictions will be applied to the rewritten
+URL. If the rewrite changes the URL to use a custom protocol or remote
+helper, you may need to adjust the `protocol.*.allow` config to permit
+the request.  In particular, protocols you expect to use for submodules
+must be set to `always` rather than the default of `user`. See the
+description of `protocol.allow` above.
 
 url.<base>.pushInsteadOf::
 	Any URL that starts with this value will not be pushed to;
