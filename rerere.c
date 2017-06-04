@@ -200,7 +200,7 @@ static struct rerere_id *new_rerere_id(unsigned char *sha1)
 static void read_rr(struct string_list *rr)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *in = fopen(git_path_merge_rr(), "r");
+	FILE *in = fopen_or_warn(git_path_merge_rr(), "r");
 
 	if (!in)
 		return;
@@ -484,13 +484,14 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 	io.input = fopen(path, "r");
 	io.io.wrerror = 0;
 	if (!io.input)
-		return error("Could not open %s", path);
+		return error_errno("Could not open %s", path);
 
 	if (output) {
 		io.io.output = fopen(output, "w");
 		if (!io.io.output) {
+			error_errno("Could not write %s", output);
 			fclose(io.input);
-			return error("Could not write %s", output);
+			return -1;
 		}
 	}
 

@@ -133,7 +133,7 @@ static int read_pack_info_file(const char *infofile)
 	char line[1000];
 	int old_cnt = 0;
 
-	fp = fopen(infofile, "r");
+	fp = fopen_or_warn(infofile, "r");
 	if (!fp)
 		return 1; /* nonexistent is not an error. */
 

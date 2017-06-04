@@ -360,7 +360,7 @@ static void copy_alternates(struct strbuf *src, struct strbuf *dst,
 	 * to turn entries with paths relative to the original
 	 * absolute, so that they can be used in the new repository.
 	 */
-	FILE *in = fopen(src->buf, "r");
+	FILE *in = xfopen(src->buf, "r");
 	struct strbuf line = STRBUF_INIT;
 
 	while (strbuf_getline(&line, in) != EOF) {

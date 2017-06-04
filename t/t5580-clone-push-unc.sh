@@ -1,10 +1,10 @@
 #!/bin/sh
 
-test_description='various UNC path tests (Windows-only)'
+test_description='various Windows-only path tests'
 . ./test-lib.sh
 
 if ! test_have_prereq MINGW; then
-	skip_all='skipping UNC path tests, requires Windows'
+	skip_all='skipping Windows-only path tests'
 	test_done
 fi
 
@@ -43,6 +43,12 @@ test_expect_success push '
 	) &&
 	rev="$(git -C clone rev-parse --verify refs/heads/to-push)" &&
 	test "$rev" = "$(git rev-parse --verify refs/heads/to-push)"
+'
+
+test_expect_success 'remote nick cannot contain backslashes' '
+	BACKSLASHED="$(pwd | tr / \\\\)" &&
+	git ls-remote "$BACKSLASHED" >out 2>err &&
+	test_i18ngrep ! "unable to access" err
 '
 
 test_done

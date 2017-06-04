@@ -168,7 +168,7 @@ bad_graft_data:
 
 static int read_graft_file(const char *graft_file)
 {
-	FILE *fp = fopen(graft_file, "r");
+	FILE *fp = fopen_or_warn(graft_file, "r");
 	struct strbuf buf = STRBUF_INIT;
 	if (!fp)
 		return -1;

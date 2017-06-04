@@ -720,16 +720,13 @@ void git_attr_set_direction(enum git_attr_direction new_direction,
 
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 {
-	FILE *fp = fopen(path, "r");
+	FILE *fp = fopen_or_warn(path, "r");
 	struct attr_stack *res;
 	char buf[2048];
 	int lineno = 0;
 
-	if (!fp) {
-		if (errno != ENOENT && errno != ENOTDIR)
-			warn_on_inaccessible(path);
+	if (!fp)
 		return NULL;
-	}
 	res = xcalloc(1, sizeof(*res));
 	while (fgets(buf, sizeof(buf), fp)) {
 		char *bufp = buf;

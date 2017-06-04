@@ -423,6 +423,8 @@ FILE *mingw_fopen (const char *filename, const char *otype)
 		return NULL;
 	}
 	file = _wfopen(wfilename, wotype);
+	if (!file && GetLastError() == ERROR_INVALID_NAME)
+		errno = ENOENT;
 	if (file && hide && set_hidden_flag(wfilename, 1))
 		warning("could not mark '%s' as hidden.", filename);
 	return file;
