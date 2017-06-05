@@ -66,4 +66,49 @@ Fixes since v2.13
  * The shell completion script (in contrib/) learned "git stash" has
    a new "push" subcommand.
 
+ * Travis CI gained a task to format the documentation with both
+   AsciiDoc and AsciiDoctor.
+
+ * Update the C style recommendation for notes for translators, as
+   recent versions of gettext tools can work with our style of
+   multi-line comments.
+
+ * "git clone --config var=val" is a way to populate the
+   per-repository configuration file of the new repository, but it did
+   not work well when val is an empty string.  This has been fixed.
+
+ * A few codepaths in "checkout" and "am" working on an unborn branch
+   tried to access an uninitialized piece of memory.
+
+ * "git for-each-ref --format=..." with %(HEAD) in the format used to
+   resolve the HEAD symref as many times as it had processed refs,
+   which was wasteful, and "git branch" shared the same problem.
+
+ * "git interpret-trailers", when used as GIT_EDITOR for "git commit
+   -v", looked for and appended to a trailer block at the very end,
+   i.e. at the end of the "diff" output.  The command has been
+   corrected to pay attention to the cut-mark line "commit -v" adds to
+   the buffer---the real trailer block should appear just before it.
+
+ * A test allowed both "git push" and "git receive-pack" on the other
+   end write their traces into the same file.  This is OK on platforms
+   that allows atomically appending to a file opened with O_APPEND,
+   but on other platforms led to a mangled output, causing
+   intermittent test failures.  This has been fixed by disabling
+   traces from "receive-pack" in the test.
+
+ * "foo\bar\baz" in "git fetch foo\bar\baz", even though there is no
+   slashes in it, cannot be a nickname for a remote on Windows, as
+   that is likely to be a pathname on a local filesystem.
+
+ * The "collision detecting" SHA-1 implementation shipped with 2.13
+   was quite broken on some big-endian platforms and/or platforms that
+   do not like unaligned fetches.  Update to the upstream code which
+   has already fixed these issues.
+
+ * "git am -h" triggered a BUG().
+
+ * The interaction of "url.*.insteadOf" and custom URL scheme's
+   whitelisting is now documented better.
+
 Also contains various documentation updates and code clean-ups.
