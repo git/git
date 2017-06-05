@@ -58,7 +58,7 @@ OPTIONS
 	specifying `dir` will record not just a file `dir/file1`
 	modified in the working tree, a file `dir/file2` added to
 	the working tree, but also a file `dir/file3` removed from
-	the working tree.  Note that older versions of Git used
+	the working tree).  Note that older versions of Git used
 	to ignore removed files; use `--no-all` option if you want
 	to add modified or new files but ignore removed	ones.
 
