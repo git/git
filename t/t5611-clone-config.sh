@@ -19,6 +19,14 @@ test_expect_success 'clone -c can set multi-keys' '
 	test_cmp expect actual
 '
 
+test_expect_success 'clone -c can set multi-keys, including some empty' '
+	rm -rf child &&
+	git clone -c credential.helper= -c credential.helper=hi . child &&
+	printf "%s\n" "" hi >expect &&
+	git --git-dir=child/.git config --get-all credential.helper >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'clone -c without a value is boolean true' '
 	rm -rf child &&
 	git clone -c core.foo . child &&
