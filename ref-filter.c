@@ -1672,6 +1672,68 @@ static int filter_pattern_match(struct ref_filter *filter, const char *refname)
 }
 
 /*
+ * Find the longest prefix of pattern we can pass to
+ * `for_each_fullref_in()`, namely the part of pattern preceding the
+ * first glob character. (Note that `for_each_fullref_in()` is
+ * perfectly happy working with a prefix that doesn't end at a
+ * pathname component boundary.)
+ */
+static void find_longest_prefix(struct strbuf *out, const char *pattern)
+{
+	const char *p;
+
+	for (p = pattern; *p && !is_glob_special(*p); p++)
+		;
+
+	strbuf_add(out, pattern, p - pattern);
+}
+
+/*
+ * This is the same as for_each_fullref_in(), but it tries to iterate
+ * only over the patterns we'll care about. Note that it _doesn't_ do a full
+ * pattern match, so the callback still has to match each ref individually.
+ */
+static int for_each_fullref_in_pattern(struct ref_filter *filter,
+				       each_ref_fn cb,
+				       void *cb_data,
+				       int broken)
+{
+	struct strbuf prefix = STRBUF_INIT;
+	int ret;
+
+	if (!filter->match_as_path) {
+		/*
+		 * in this case, the patterns are applied after
+		 * prefixes like "refs/heads/" etc. are stripped off,
+		 * so we have to look at everything:
+		 */
+		return for_each_fullref_in("", cb, cb_data, broken);
+	}
+
+	if (!filter->name_patterns[0]) {
+		/* no patterns; we have to look at everything */
+		return for_each_fullref_in("", cb, cb_data, broken);
+	}
+
+	if (filter->name_patterns[1]) {
+		/*
+		 * multiple patterns; in theory this could still work as long
+		 * as the patterns are disjoint. We'd just make multiple calls
+		 * to for_each_ref(). But if they're not disjoint, we'd end up
+		 * reporting the same ref multiple times. So let's punt on that
+		 * for now.
+		 */
+		return for_each_fullref_in("", cb, cb_data, broken);
+	}
+
+	find_longest_prefix(&prefix, filter->name_patterns[0]);
+
+	ret = for_each_fullref_in(prefix.buf, cb, cb_data, broken);
+	strbuf_release(&prefix);
+	return ret;
+}
+
+/*
  * Given a ref (sha1, refname), check if the ref belongs to the array
  * of sha1s. If the given ref is a tag, check if the given tag points
  * at one of the sha1s in the given sha1 array.
@@ -1917,7 +1979,7 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 		else if (filter->kind == FILTER_REFS_TAGS)
 			ret = for_each_fullref_in("refs/tags/", ref_filter_handler, &ref_cbdata, broken);
 		else if (filter->kind & FILTER_REFS_ALL)
-			ret = for_each_fullref_in("", ref_filter_handler, &ref_cbdata, broken);
+			ret = for_each_fullref_in_pattern(filter, ref_filter_handler, &ref_cbdata, broken);
 		if (!ret && (filter->kind & FILTER_REFS_DETACHED_HEAD))
 			head_ref(ref_filter_handler, &ref_cbdata);
 	}

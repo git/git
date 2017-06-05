@@ -185,8 +185,7 @@ struct ref_entry *create_dir_entry(struct ref_cache *cache,
 				   int incomplete);
 
 struct ref_entry *create_ref_entry(const char *refname,
-				   const struct object_id *oid, int flag,
-				   int check_name);
+				   const struct object_id *oid, int flag);
 
 /*
  * Return a pointer to a new `ref_cache`. Its top-level starts out
@@ -194,7 +193,8 @@ struct ref_entry *create_ref_entry(const char *refname,
  * function called to fill in incomplete directories in the
  * `ref_cache` when they are accessed. If it is NULL, then the whole
  * `ref_cache` must be filled (including clearing its directories'
- * `REF_INCOMPLETE` bits) before it is used.
+ * `REF_INCOMPLETE` bits) before it is used, and `refs` can be NULL,
+ * too.
  */
 struct ref_cache *create_ref_cache(struct ref_store *refs,
 				   fill_ref_dir_fn *fill_ref_dir);

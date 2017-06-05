@@ -143,30 +143,71 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 
 /*
- * A ref_transaction represents a collection of ref updates
- * that should succeed or fail together.
+ * A ref_transaction represents a collection of reference updates that
+ * should succeed or fail together.
  *
  * Calling sequence
  * ----------------
+ *
  * - Allocate and initialize a `struct ref_transaction` by calling
  *   `ref_transaction_begin()`.
  *
- * - List intended ref updates by calling functions like
- *   `ref_transaction_update()` and `ref_transaction_create()`.
+ * - Specify the intended ref updates by calling one or more of the
+ *   following functions:
+ *   - `ref_transaction_update()`
+ *   - `ref_transaction_create()`
+ *   - `ref_transaction_delete()`
+ *   - `ref_transaction_verify()`
  *
- * - Call `ref_transaction_commit()` to execute the transaction.
- *   If this succeeds, the ref updates will have taken place and
- *   the transaction cannot be rolled back.
+ * - Then either:
  *
- * - Instead of `ref_transaction_commit`, use
- *   `initial_ref_transaction_commit()` if the ref database is known
- *   to be empty (e.g. during clone).  This is likely to be much
- *   faster.
+ *   - Optionally call `ref_transaction_prepare()` to prepare the
+ *     transaction. This locks all references, checks preconditions,
+ *     etc. but doesn't finalize anything. If this step fails, the
+ *     transaction has been closed and can only be freed. If this step
+ *     succeeds, then `ref_transaction_commit()` is almost certain to
+ *     succeed. However, you can still call `ref_transaction_abort()`
+ *     if you decide not to commit the transaction after all.
  *
- * - At any time call `ref_transaction_free()` to discard the
- *   transaction and free associated resources.  In particular,
- *   this rolls back the transaction if it has not been
- *   successfully committed.
+ *   - Call `ref_transaction_commit()` to execute the transaction,
+ *     make the changes permanent, and release all locks. If you
+ *     haven't already called `ref_transaction_prepare()`, then
+ *     `ref_transaction_commit()` calls it for you.
+ *
+ *   Or
+ *
+ *   - Call `initial_ref_transaction_commit()` if the ref database is
+ *     known to be empty and have no other writers (e.g. during
+ *     clone). This is likely to be much faster than
+ *     `ref_transaction_commit()`. `ref_transaction_prepare()` should
+ *     *not* be called before `initial_ref_transaction_commit()`.
+ *
+ * - Then finally, call `ref_transaction_free()` to free the
+ *   `ref_transaction` data structure.
+ *
+ * At any time before calling `ref_transaction_commit()`, you can call
+ * `ref_transaction_abort()` to abort the transaction, rollback any
+ * locks, and free any associated resources (including the
+ * `ref_transaction` data structure).
+ *
+ * Putting it all together, a complete reference update looks like
+ *
+ *         struct ref_transaction *transaction;
+ *         struct strbuf err = STRBUF_INIT;
+ *         int ret = 0;
+ *
+ *         transaction = ref_store_transaction_begin(refs, &err);
+ *         if (!transaction ||
+ *             ref_transaction_update(...) ||
+ *             ref_transaction_create(...) ||
+ *             ...etc... ||
+ *             ref_transaction_commit(transaction, &err)) {
+ *                 error("%s", err.buf);
+ *                 ret = -1;
+ *         }
+ *         ref_transaction_free(transaction);
+ *         strbuf_release(&err);
+ *         return ret;
  *
  * Error handling
  * --------------
@@ -183,8 +224,9 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
  * -------
  *
  * Note that no locks are taken, and no refs are read, until
- * `ref_transaction_commit` is called.  So `ref_transaction_verify`
- * won't report a verification failure until the commit is attempted.
+ * `ref_transaction_prepare()` or `ref_transaction_commit()` is
+ * called. So, for example, `ref_transaction_verify()` won't report a
+ * verification failure until the commit is attempted.
  */
 struct ref_transaction;
 
@@ -331,7 +373,8 @@ int reflog_exists(const char *refname);
  * verify that the current value of the reference is old_sha1 before
  * deleting it. If old_sha1 is NULL, delete the reference if it
  * exists, regardless of its old value. It is an error for old_sha1 to
- * be NULL_SHA1. flags is passed through to ref_transaction_delete().
+ * be NULL_SHA1. msg and flags are passed through to
+ * ref_transaction_delete().
  */
 int refs_delete_ref(struct ref_store *refs, const char *msg,
 		    const char *refname,
@@ -343,12 +386,13 @@ int delete_ref(const char *msg, const char *refname,
 /*
  * Delete the specified references. If there are any problems, emit
  * errors but attempt to keep going (i.e., the deletes are not done in
- * an all-or-nothing transaction). flags is passed through to
+ * an all-or-nothing transaction). msg and flags are passed through to
  * ref_transaction_delete().
  */
-int refs_delete_refs(struct ref_store *refs, struct string_list *refnames,
-		     unsigned int flags);
-int delete_refs(struct string_list *refnames, unsigned int flags);
+int refs_delete_refs(struct ref_store *refs, const char *msg,
+		     struct string_list *refnames, unsigned int flags);
+int delete_refs(const char *msg, struct string_list *refnames,
+		unsigned int flags);
 
 /** Delete a reflog */
 int refs_delete_reflog(struct ref_store *refs, const char *refname);
@@ -426,6 +470,19 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *         from ref_transaction_begin().
  *
  *     refname -- the name of the reference to be affected.
+ *
+ *     new_sha1 -- the SHA-1 that should be set to be the new value of
+ *         the reference. Some functions allow this parameter to be
+ *         NULL, meaning that the reference is not changed, or
+ *         null_sha1, meaning that the reference should be deleted. A
+ *         copy of this value is made in the transaction.
+ *
+ *     old_sha1 -- the SHA-1 value that the reference must have before
+ *         the update. Some functions allow this parameter to be NULL,
+ *         meaning that the old value of the reference is not checked,
+ *         or null_sha1, meaning that the reference must not exist
+ *         before the update. A copy of this value is made in the
+ *         transaction.
  *
  *     flags -- flags affecting the update, passed to
  *         update_ref_lock(). Can be REF_NODEREF, which means that
@@ -508,18 +565,46 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 			   unsigned int flags,
 			   struct strbuf *err);
 
-/*
- * Commit all of the changes that have been queued in transaction, as
- * atomically as possible.
- *
- * Returns 0 for success, or one of the below error codes for errors.
- */
 /* Naming conflict (for example, the ref names A and A/B conflict). */
 #define TRANSACTION_NAME_CONFLICT -1
 /* All other errors. */
 #define TRANSACTION_GENERIC_ERROR -2
+
+/*
+ * Perform the preparatory stages of commiting `transaction`. Acquire
+ * any needed locks, check preconditions, etc.; basically, do as much
+ * as possible to ensure that the transaction will be able to go
+ * through, stopping just short of making any irrevocable or
+ * user-visible changes. The updates that this function prepares can
+ * be finished up by calling `ref_transaction_commit()` or rolled back
+ * by calling `ref_transaction_abort()`.
+ *
+ * On success, return 0 and leave the transaction in "prepared" state.
+ * On failure, abort the transaction, write an error message to `err`,
+ * and return one of the `TRANSACTION_*` constants.
+ *
+ * Callers who don't need such fine-grained control over commiting
+ * reference transactions should just call `ref_transaction_commit()`.
+ */
+int ref_transaction_prepare(struct ref_transaction *transaction,
+			    struct strbuf *err);
+
+/*
+ * Commit all of the changes that have been queued in transaction, as
+ * atomically as possible. On success, return 0 and leave the
+ * transaction in "closed" state. On failure, roll back the
+ * transaction, write an error message to `err`, and return one of the
+ * `TRANSACTION_*` constants
+ */
 int ref_transaction_commit(struct ref_transaction *transaction,
 			   struct strbuf *err);
+
+/*
+ * Abort `transaction`, which has been begun and possibly prepared,
+ * but not yet committed.
+ */
+int ref_transaction_abort(struct ref_transaction *transaction,
+			  struct strbuf *err);
 
 /*
  * Like ref_transaction_commit(), but optimized for creating
@@ -536,7 +621,7 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 				   struct strbuf *err);
 
 /*
- * Free an existing transaction and all associated data.
+ * Free `*transaction` and all associated data.
  */
 void ref_transaction_free(struct ref_transaction *transaction);
 
