@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Adapted from: http://planzero.org/blog/2012/10/24/hosting_an_admin-friendly_git_server_with_git-shell
+
+# comment out or adapt if you want to allow non-root users to create new repositories
+# If the user is not root
+if [ "$USERNAME" != "root" ]
+then
+  # Display a notice and stop
+  echo "Sorry, only root can use this command."
+  exit 1
+fi
+
+# If no project name is given
+if [ $# -eq 0 ]
+then
+  # Display usage and stop
+  echo "Usage: create <project.git>"
+  exit 1
+fi
+
+# Set the project name, adding .git if necessary
+extension=".git"
+project=$(echo "$*")
+
+if [ "${project/$extension}" = "$project" ];
+then
+  project=$project$extension
+fi
+
+# Create and initialize the project
+mkdir "$project" && \
+cd "$project" && \
+git --bare init
+echo "$project repository created. Check with 'list'"
