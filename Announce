@@ -95,8 +95,6 @@ cat <<\EOF
 
   url = https://kernel.googlesource.com/pub/scm/git/git
   url = git://repo.or.cz/alt-git.git
-  url = git://git.sourceforge.jp/gitroot/git-core/git.git
-  url = git://git-core.git.sourceforge.net/gitroot/git-core/git-core
   url = https://github.com/gitster/git
 EOF
 

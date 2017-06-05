@@ -1,6 +1,7 @@
 #!/bin/sh
 
-sites='ko repo github2 sfjp sf.net'
+#sites='ko repo github2 sfjp sf.net'
+sites='ko repo github2'
 nexts='ko repo github2 '
 mirrors='github gob-private'
 
