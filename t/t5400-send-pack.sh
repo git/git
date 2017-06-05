@@ -288,7 +288,10 @@ test_expect_success 'receive-pack de-dupes .have lines' '
 	$shared .have
 	EOF
 
-	GIT_TRACE_PACKET=$(pwd)/trace git push fork HEAD:foo &&
+	GIT_TRACE_PACKET=$(pwd)/trace \
+	    git push \
+		--receive-pack="unset GIT_TRACE_PACKET; git-receive-pack" \
+		fork HEAD:foo &&
 	extract_ref_advertisement <trace >refs &&
 	test_cmp expect refs
 '
