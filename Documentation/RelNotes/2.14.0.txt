@@ -18,6 +18,10 @@ Backward compatibility notes.
    might still be cases that need to be addressed--bug reports are
    greatly appreciated.
 
+ * The experiment to improve the hunk-boundary selection of textual
+   diff output has finished, and the "indent heuristics" has now
+   become the default.
+
 
 Updates since v2.13
 -------------------
@@ -46,7 +50,7 @@ UI, Workflows & Features
 
  * "git send-email" learned to run sendemail-validate hook to inspect
    and reject a message before sending it out.
-   (merge 6489660b4b jt/send-email-validate-hook later to maint).
+   (merge 177409e589 jt/send-email-validate-hook later to maint).
 
  * There is no good reason why "git fetch $there $sha1" should fail
    when the $sha1 names an object at the tip of an advertised ref,
@@ -59,6 +63,9 @@ UI, Workflows & Features
    a case, a realpath of "$dir" is compared with the real path of the
    current repository to determine if the contents from the named path
    should be included.
+
+ * Make the "indent" heuristics the default in "diff" and diff.indentHeuristics
+   configuration variable an escape hatch for those who do no want it.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -76,7 +83,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * Travis CI gained a task to format the documentation with both
    AsciiDoc and AsciiDoctor.
-   (merge 505ad91304 ls/travis-doc-asciidoctor later to maint).
 
  * Some platforms have ulong that is smaller than time_t, and our
    historical use of ulong for timestamp would mean they cannot
@@ -116,7 +122,12 @@ Performance, Internal Implementation, Development Support etc.
  * Update the C style recommendation for notes for translators, as
    recent versions of gettext tools can work with our style of
    multi-line comments.
-   (merge 66f5f6dca9 ab/c-translators-comment-style later to maint).
+
+ * The implementation of "ref" API around the "packed refs" have been
+   cleaned up, in preparation for further changes.
+
+ * The internal logic used in "git blame" has been libified to make it
+   easier to use by cgit.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -136,40 +147,32 @@ notes for details).
    mishandled a trailer block whose last line is an incomplete line.
    This has been fixed so that an additional sign-off etc. are added
    after completing the existing incomplete line.
-   (merge 44dc738a39 jt/use-trailer-api-in-commands later to maint).
 
  * The codepath in "git am" that is used when running "git rebase"
    leaked memory held for the log message of the commits being rebased.
-   (merge 721f5f1e35 jk/am-leakfix later to maint).
 
  * "git clone --config var=val" is a way to populate the
    per-repository configuration file of the new repository, but it did
    not work well when val is an empty string.  This has been fixed.
-   (merge db4eca1fea jn/clone-add-empty-config-from-command-line later to maint).
 
  * Setting "log.decorate=false" in the configuration file did not take
    effect in v2.13, which has been corrected.
-   (merge c74271aae7 ah/log-decorate-default-to-auto later to maint).
 
  * A few codepaths in "checkout" and "am" working on an unborn branch
    tried to access an uninitialized piece of memory.
-   (merge 57e0ef0e0e rs/checkout-am-fix-unborn later to maint).
 
  * The Web interface to gmane news archive is long gone, even though
    the articles are still accessible via NTTP.  Replace the links with
    ones to public-inbox.org.  Because their message identification is
    based on the actual message-id, it is likely that it will be easier
    to migrate away from it if/when necessary.
-   (merge 5840eb9d14 ab/doc-replace-gmane-links later to maint).
 
  * The receive-pack program now makes sure that the push certificate
    records the same set of push options used for pushing.
-   (merge cbaf82cc6b jt/push-options-doc later to maint).
 
  * Tests have been updated to pass under GETTEXT_POISON (a mechanism
    to ensure that output strings that should not be translated are
    not translated by mistake), and TravisCI is told to run them.
-   (merge b8e188f6f5 ab/fix-poison-tests later to maint).
 
  * "git checkout --recurse-submodules" did not quite work with a
    submodule that itself has submodules.
@@ -185,58 +188,47 @@ notes for details).
    in the output, without inspecting individual objects.  This
    strategy however would not work well when "--local" and other
    options are in use, and need to be disabled.
-   (merge da5a1f8100 jk/disable-pack-reuse-when-broken later to maint).
 
  * Fix memory leaks pointed out by Coverity (and people).
-   (merge 443a12f37b js/plug-leaks later to maint).
 
  * "git read-tree -m" (no tree-ish) gave a nonsense suggestion "use
    --empty if you want to clear the index".  With "-m", such a request
    will still fail anyway, as you'd need to name at least one tree-ish
    to be merged.
-   (merge b9b10d3681 jc/read-tree-empty-with-m later to maint).
 
  * Make sure our tests would pass when the sources are checked out
    with "platform native" line ending convention by default on
    Windows.  Some "text" files out tests use and the test scripts
    themselves that are meant to be run with /bin/sh, ought to be
    checked out with eol=LF even on Windows.
-   (merge 2779f66505 js/eol-on-ourselves later to maint).
 
  * Introduce the BUG() macro to improve die("BUG: ...").
    (merge 3d7dd2d3b6 jk/bug-to-abort later to maint).
 
  * Clarify documentation for include.path and includeIf.<condition>.path
    configuration variables.
-   (merge ce933ebd5a jk/doc-config-include later to maint).
 
  * Git sometimes gives an advice in a rhetorical question that does
    not require an answer, which can confuse new users and non native
    speakers.  Attempt to rephrase them.
-   (merge 6963893943 ja/do-not-ask-needless-questions later to maint).
 
  * A few http:// links that are redirected to https:// in the
    documentation have been updated to https:// links.
-   (merge 5e68729fd9 jk/update-links-in-docs later to maint).
 
  * "git for-each-ref --format=..." with %(HEAD) in the format used to
    resolve the HEAD symref as many times as it had processed refs,
    which was wasteful, and "git branch" shared the same problem.
-   (merge 613a0e52ea kn/ref-filter-branch-list later to maint).
 
  * Regression fix to topic recently merged to 'master'.
-   (merge d096d7f1ef pw/rebase-i-regression-fix later to maint).
 
  * The shell completion script (in contrib/) learned "git stash" has
    a new "push" subcommand.
-   (merge 3851e4483f tg/stash-push-fixup later to maint).
 
  * "git interpret-trailers", when used as GIT_EDITOR for "git commit
    -v", looked for and appended to a trailer block at the very end,
    i.e. at the end of the "diff" output.  The command has been
    corrected to pay attention to the cut-mark line "commit -v" adds to
    the buffer---the real trailer block should appear just before it.
-   (merge d76650b8d1 bm/interpret-trailers-cut-line-is-eom later to maint).
 
  * A test allowed both "git push" and "git receive-pack" on the other
    end write their traces into the same file.  This is OK on platforms
@@ -244,12 +236,10 @@ notes for details).
    but on other platforms led to a mangled output, causing
    intermittent test failures.  This has been fixed by disabling
    traces from "receive-pack" in the test.
-   (merge 71406ed4d6 jk/alternate-ref-optim later to maint).
 
  * Tag objects, which are not reachable from any ref, that point at
    missing objects were mishandled by "git gc" and friends (they
    should silently be ignored instead)
-   (merge a3ba6bf10a jk/ignore-broken-tags-when-ignoring-missing-links later to maint).
 
  * "git describe --contains" penalized light-weight tags so much that
    they were almost never considered.  Instead, give them about the
@@ -269,12 +259,11 @@ notes for details).
 
  * "git send-email" now uses Net::SMTP::SSL, which is obsolete, only
    when needed.  Recent versions of Net::SMTP can do TLS natively.
-   (merge 0ead000c3a dk/send-email-avoid-net-smtp-ssl-when-able later to maint).
+   (merge bfbfc9a953 dk/send-email-avoid-net-smtp-ssl-when-able later to maint).
 
  * "foo\bar\baz" in "git fetch foo\bar\baz", even though there is no
    slashes in it, cannot be a nickname for a remote on Windows, as
    that is likely to be a pathname on a local filesystem.
-   (merge d9244ecf4f js/bs-is-a-dir-sep-on-windows later to maint).
 
  * "git clean -d" used to clean directories that has ignored files,
    even though the command should not lose ignored ones without "-x".
@@ -292,30 +281,26 @@ notes for details).
    was quite broken on some big-endian platforms and/or platforms that
    do not like unaligned fetches.  Update to the upstream code which
    has already fixed these issues.
-   (merge a0103914c2 ab/sha1dc-maint later to maint).
 
  * "git am -h" triggered a BUG().
-   (merge f3a2fffe06 jk/unbreak-am-h later to maint).
 
  * The interaction of "url.*.insteadOf" and custom URL scheme's
    whitelisting is now documented better.
-   (merge 2c9a2ae285 jk/url-insteadof-config later to maint).
+
+ * The timestamp of the index file is now taken after the file is
+   closed, to help Windows, on which a stale timestamp is reported by
+   fstat() on a file that is opened for writing and data was written
+   but not yet closed.
+   (merge 9f41c7a6b3 jh/close-index-before-stat later to maint).
+
+ * "git pull --rebase --autostash" didn't auto-stash when the local history
+   fast-forwards to the upstream.
+   (merge f15e7cf5cc tb/pull-ff-rebase-autostash later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge 515360f9e9 jn/credential-doc-on-clear later to maint).
-   (merge 0e6d899fee ab/aix-needs-compat-regex later to maint).
-   (merge e294e8959f jc/apply-fix-mismerge later to maint).
-   (merge 7f1b225153 bw/submodule-with-bs-path later to maint).
-   (merge c8f7c8b704 tb/dedup-crlf-tests later to maint).
-   (merge 449456ad47 sg/core-filemode-doc-typofix later to maint).
-   (merge ba4dce784e km/log-showsignature-doc later to maint).
    (merge c5a9157393 jh/memihash-opt later to maint).
-   (merge 80f4cd8046 ab/ref-filter-no-contains later to maint).
-   (merge b275da816c ah/doc-interpret-trailers-ifexists later to maint).
-   (merge fc7a5edb55 ah/doc-pretty-format-fix later to maint).
-   (merge 7e95fcb4b5 sb/t5531-update-desc later to maint).
-   (merge b8f354f294 sd/t3200-typofix later to maint).
-   (merge ba746ff9c9 ah/doc-filter-branch-export-env later to maint).
    (merge 44e2ff09ce ab/t3070-test-dedup later to maint).
    (merge 9ee4aa95db rf/completion-config-commit later to maint).
-   (merge fb87327aee ah/doc-rev-parse-short-default later to maint).
+   (merge ef4fe5617e jk/connect-symref-info-leak-fix later to maint).
+   (merge a56eea28c4 jk/drop-free-refspecs later to maint).
+   (merge 0c79cee697 ad/pull-remote-doc later to maint).
