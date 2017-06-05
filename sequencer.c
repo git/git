@@ -464,7 +464,8 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
-		/* TRANSLATORS: %s will be "revert", "cherry-pick" or
+		/*
+		 * TRANSLATORS: %s will be "revert", "cherry-pick" or
 		 * "rebase -i".
 		 */
 		return error(_("%s: Unable to write new index file"),
