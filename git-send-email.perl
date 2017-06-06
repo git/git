@@ -1580,7 +1580,7 @@ foreach my $t (@files) {
 	# Now parse the message body
 	while(<$fh>) {
 		$message .=  $_;
-		if (/^(Signed-off-by|Cc): ([^>]*>?)/i) {
+		if (/^((?:Signed-off|Acked|Reviewed|Reported|Tested|Suggested)-by|Cc): ([^>]*>?)/i) {
 			chomp;
 			my ($what, $c) = ($1, $2);
 			chomp $c;
