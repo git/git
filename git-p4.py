@@ -2700,11 +2700,20 @@ class P4Sync(Command, P4UserMap):
             def streamP4FilesCbSelf(entry):
                 self.streamP4FilesCb(entry)
 
-            fileArgs = ['%s#%s' % (f['path'], f['rev']) for f in filesToRead]
+            maxOpenFiles = 256 #still hitting the limit if I call int(os.popen("ulimit -Sn").read())
+            readAtTime = max([1, len(filesToRead)])
+            if maxOpenFiles != 0 and maxOpenFiles < len(filesToRead):
+                readAtTime = maxOpenFiles
 
-            p4CmdList(["-x", "-", "print"],
-                      stdin=fileArgs,
-                      cb=streamP4FilesCbSelf)
+            readSoFar = 0
+            fileArgs = ['%s#%s' % (f['path'], f['rev']) for f in filesToRead]
+            while readSoFar < len(fileArgs):
+                subsetFilesToRead = fileArgs[readSoFar:min([readSoFar+readAtTime, len(fileArgs)])]
+                readSoFar += readAtTime
+
+                p4CmdList(["-x", "-", "print"],
+                          stdin=subsetFilesToRead,
+                          cb=streamP4FilesCbSelf)
 
             # do the last chunk
             if self.stream_file.has_key('depotFile'):
