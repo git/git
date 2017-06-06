@@ -205,10 +205,13 @@ run_specific_rebase () {
 }
 
 run_pre_rebase_hook () {
+	hooks_path=$(git config --get core.hooksPath)
+	hooks_path="${hooks_path:-$(git rev-parse --git-path hooks)}"
+	hook="${hooks_path}/pre-rebase"
 	if test -z "$ok_to_skip_pre_rebase" &&
-	   test -x "$(git rev-parse --git-path hooks/pre-rebase)"
+	   test -x "$hook"
 	then
-		"$(git rev-parse --git-path hooks/pre-rebase)" ${1+"$@"} ||
+		"$hook" ${1+"$@"} ||
 		die "$(gettext "The pre-rebase hook refused to rebase.")"
 	fi
 }

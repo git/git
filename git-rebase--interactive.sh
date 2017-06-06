@@ -695,11 +695,15 @@ Commit or stash your changes, and then run
 		git notes copy --for-rewrite=rebase < "$rewritten_list" ||
 		true # we don't care if this copying failed
 	} &&
-	hook="$(git rev-parse --git-path hooks/post-rewrite)"
-	if test -x "$hook" && test -s "$rewritten_list"; then
-		"$hook" rebase < "$rewritten_list"
-		true # we don't care if this hook failed
-	fi &&
+	{
+		hooks_path=$(git config --get core.hooksPath)
+		hooks_path="${hooks_path:-$(git rev-parse --git-path hooks)}"
+		hook="${hooks_path}/post-rewrite"
+		if test -x "$hook" && test -s "$rewritten_list"; then
+			"$hook" rebase < "$rewritten_list"
+			true # we don't care if this hook failed
+		fi
+	} &&
 		warn "$(eval_gettext "Successfully rebased and updated \$head_name.")"
 
 	return 1 # not failure; just to break the do_rest loop
