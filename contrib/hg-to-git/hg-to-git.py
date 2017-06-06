@@ -19,7 +19,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 """
 
-import os, os.path, sys
+import os, os.path, sys, shutil
 import tempfile, pickle, getopt
 import re
 
@@ -36,6 +36,12 @@ hgchildren = {}
 hgparents = {}
 # Current branch for each hg revision
 hgbranch = {}
+# Tags for each hg revision
+hgtags = {}
+# Authors for each hg revision
+hgauthor = {}
+# Dates for each hg revision
+hgdate = {}
 # Number of new changesets converted from hg
 hgnewcsets = 0
 
@@ -59,23 +65,22 @@ required:
 
 #------------------------------------------------------------------------------
 
-def getgitenv(user, date):
-    env = ''
-    elems = re.compile('(.*?)\s+<(.*)>').match(user)
+authorpattern = re.compile('(.*?)\s+<(.*)>')
+def setgitenv(author, date):
+    elems = authorpattern.match(author)
     if elems:
-        env += 'export GIT_AUTHOR_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_COMMITTER_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_AUTHOR_EMAIL="%s" ;' % elems.group(2)
-        env += 'export GIT_COMMITTER_EMAIL="%s" ;' % elems.group(2)
+        os.environ['GIT_AUTHOR_NAME'] = elems.group(1)
+        os.environ['GIT_COMMITTER_NAME'] = elems.group(1)
+        os.environ['GIT_AUTHOR_EMAIL'] = elems.group(2)
+        os.environ['GIT_COMMITTER_EMAIL'] = elems.group(2)
     else:
-        env += 'export GIT_AUTHOR_NAME="%s" ;' % user
-        env += 'export GIT_COMMITTER_NAME="%s" ;' % user
-        env += 'export GIT_AUTHOR_EMAIL= ;'
-        env += 'export GIT_COMMITTER_EMAIL= ;'
+        os.environ['GIT_AUTHOR_NAME'] = author
+        os.environ['GIT_COMMITTER_NAME'] = author
+        os.environ['GIT_AUTHOR_EMAIL'] = author + '@example.com'
+        os.environ['GIT_COMMITTER_EMAIL'] = author + '@example.com'
 
-    env += 'export GIT_AUTHOR_DATE="%s" ;' % date
-    env += 'export GIT_COMMITTER_DATE="%s" ;' % date
-    return env
+    os.environ['GIT_AUTHOR_DATE'] = date
+    os.environ['GIT_COMMITTER_DATE'] = date
 
 #------------------------------------------------------------------------------
 
@@ -120,129 +125,134 @@ if verbose:
 
 # Calculate the branches
 if verbose:
-    print 'analysing the branches...'
-hgchildren["0"] = ()
-hgparents["0"] = (None, None)
-hgbranch["0"] = "master"
-for cset in range(1, int(tip) + 1):
-    hgchildren[str(cset)] = ()
-    prnts = os.popen('hg log -r %d --template "{parents}"' % cset).read().strip().split(' ')
-    prnts = map(lambda x: x[:x.find(':')], prnts)
-    if prnts[0] != '':
-        parent = prnts[0].strip()
-    else:
-        parent = str(cset - 1)
-    hgchildren[parent] += ( str(cset), )
-    if len(prnts) > 1:
-        mparent = prnts[1].strip()
-        hgchildren[mparent] += ( str(cset), )
-    else:
-        mparent = None
+    print 'analyzing the branches...'
 
-    hgparents[str(cset)] = (parent, mparent)
+# Read all revs' details in at once.
+for line in os.popen('hg log --template "{rev}\\0{date|isodatesec}\\0{author}\\0{branch}\\0{tags}\\0{parents}\\n"').read().split('\n'):
+    if line == '':
+        continue
 
-    if mparent:
-        # For merge changesets, take either one, preferably the 'master' branch
-        if hgbranch[mparent] == 'master':
-            hgbranch[str(cset)] = 'master'
-        else:
-            hgbranch[str(cset)] = hgbranch[parent]
+    linesplit = line.split('\0')
+    cset = linesplit[0]
+    date = linesplit[1]
+    author = linesplit[2]
+    branch = linesplit[3]
+    tags = linesplit[4].strip()
+    parents = linesplit[5].strip()
+
+    if parents == '':
+        rev = int(cset)
+        parents = [ str(rev - 1) ] if rev > 0 else []
     else:
-        # Normal changesets
-        # For first children, take the parent branch, for the others create a new branch
-        if hgchildren[parent][0] == str(cset):
-            hgbranch[str(cset)] = hgbranch[parent]
-        else:
-            hgbranch[str(cset)] = "branch-" + str(cset)
+        parents = parents.split(' ')
+        parents = map(lambda x: x[:x.find(':')], parents)
+
+    hgbranch[cset] = branch
+    hgdate[cset] = date
+    hgauthor[cset] = author
+    hgtags[cset] = [t for t in tags.split(' ') if t != 'tip' and t != '']
+
+    if not cset in hgchildren:
+        hgchildren[cset] = []
+    hgparents[cset] = []
+
+    for p in parents:
+        if not p in hgchildren:
+            hgchildren[p] = []
+        hgchildren[p] += [ cset ]
+        hgparents[cset] +=  [ p ]
 
 if not hgvers.has_key("0"):
     print 'creating repository'
     os.system('git init')
 
 # loop through every hg changeset
-for cset in range(int(tip) + 1):
+for rev in range(int(tip) + 1):
+    cset = str(rev)
 
     # incremental, already seen
-    if hgvers.has_key(str(cset)):
+    if hgvers.has_key(cset):
         continue
     hgnewcsets += 1
 
     # get info
-    log_data = os.popen('hg log -r %d --template "{tags}\n{date|date}\n{author}\n"' % cset).readlines()
-    tag = log_data[0].strip()
-    date = log_data[1].strip()
-    user = log_data[2].strip()
-    parent = hgparents[str(cset)][0]
-    mparent = hgparents[str(cset)][1]
+    tags = hgtags[cset]
+    date = hgdate[cset]
+    author = hgauthor[cset]
+    parents = hgparents[cset]
 
     #get comment
     (fdcomment, filecomment) = tempfile.mkstemp()
-    csetcomment = os.popen('hg log -r %d --template "{desc}"' % cset).read().strip()
+    csetcomment = os.popen('hg log -r %d --template "{desc}"' % rev).read()
     os.write(fdcomment, csetcomment)
     os.close(fdcomment)
 
     print '-----------------------------------------'
     print 'cset:', cset
-    print 'branch:', hgbranch[str(cset)]
-    print 'user:', user
+    print 'branch:', hgbranch[cset]
+    print 'author:', author
     print 'date:', date
     print 'comment:', csetcomment
-    if parent:
-	print 'parent:', parent
-    if mparent:
-        print 'mparent:', mparent
-    if tag:
-        print 'tag:', tag
+    for p in parents:
+        print 'parent:', p
+    for t in tags:
+        print 'tag:', t
     print '-----------------------------------------'
 
-    # checkout the parent if necessary
-    if cset != 0:
-        if hgbranch[str(cset)] == "branch-" + str(cset):
-            print 'creating new branch', hgbranch[str(cset)]
-            os.system('git checkout -b %s %s' % (hgbranch[str(cset)], hgvers[parent]))
-        else:
-            print 'checking out branch', hgbranch[str(cset)]
-            os.system('git checkout %s' % hgbranch[str(cset)])
+    # set head to the first parent
+    if rev != 0:
+        if verbose:
+            print 'checking out branch', hgbranch[cset]
+        os.system('git checkout -f %s' % hgvers[parents[0]])
 
     # merge
-    if mparent:
-        if hgbranch[parent] == hgbranch[str(cset)]:
-            otherbranch = hgbranch[mparent]
-        else:
-            otherbranch = hgbranch[parent]
-        print 'merging', otherbranch, 'into', hgbranch[str(cset)]
-        os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
+    if len(parents) > 1:
+        if verbose:
+            print 'merging', [hgbranch[p] for p in parents]
+        vers = [hgvers[p] for p in parents]
+        del vers[0]
+        os.system('git merge --no-commit -s ours "" %s' % (" ".join(vers)))
 
     # remove everything except .git and .hg directories
-    os.system('find . \( -path "./.hg" -o -path "./.git" \) -prune -o ! -name "." -print | xargs rm -rf')
+    if verbose:
+        print 'cleaning out working directory'
+    for f in os.listdir("."):
+        if os.path.isfile(f):
+            os.remove(f)
+        elif f != ".hg" and f != ".git":
+            shutil.rmtree(f)
 
     # repopulate with checkouted files
-    os.system('hg update -C %d' % cset)
+    if verbose:
+        print 'updating working directory to r%d' % rev
+    os.system('hg update -C %d' % rev)
 
-    # add new files
-    os.system('git ls-files -x .hg --others | git update-index --add --stdin')
-    # delete removed files
-    os.system('git ls-files -x .hg --deleted | git update-index --remove --stdin')
+    # add new files and delete removed files
+    if verbose:
+        print 'updating git index to match working directory'
+    os.system('git ls-files -x .hg --others | git -c core.autocrlf=false update-index --add --stdin')
+    os.system('git ls-files -x .hg --deleted | git -c core.autocrlf=false update-index --remove --stdin')
 
     # commit
-    os.system(getgitenv(user, date) + 'git commit --allow-empty --allow-empty-message -a -F %s' % filecomment)
+    if verbose:
+        print 'committing'
+    setgitenv(author, date)
+    os.system('git -c core.autocrlf=false commit%s --allow-empty --allow-empty-message -a -F "%s"' % (' --quiet' if not verbose else '', filecomment))
     os.unlink(filecomment)
 
     # tag
-    if tag and tag != 'tip':
-        os.system(getgitenv(user, date) + 'git tag %s' % tag)
-
-    # delete branch if not used anymore...
-    if mparent and len(hgchildren[str(cset)]):
-        print "Deleting unused branch:", otherbranch
-        os.system('git branch -d %s' % otherbranch)
+    for tag in tags:
+        os.system('git tag %s' % tag)
 
     # retrieve and record the version
     vvv = os.popen('git show --quiet --pretty=format:%H').read()
     print 'record', cset, '->', vvv
-    hgvers[str(cset)] = vvv
+    hgvers[cset] = vvv
+    os.system('git branch -f %s %s' % (hgbranch[cset], vvv))
 
 if hgnewcsets >= opt_nrepack and opt_nrepack != -1:
+    if verbose:
+        print 'repacking git repo'
     os.system('git repack -a -d')
 
 # write the state for incrementals
