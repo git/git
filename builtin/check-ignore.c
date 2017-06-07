@@ -153,8 +153,6 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		if (argc > 0)
 			die(_("cannot specify pathnames with --stdin"));
 	} else {
-		if (nul_term_line)
-			die(_("-z only makes sense with --stdin"));
 		if (argc == 0)
 			die(_("no path specified"));
 	}
