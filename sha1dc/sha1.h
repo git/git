@@ -61,9 +61,9 @@ void SHA1DCInit(SHA1_CTX*);
     Function to enable safe SHA-1 hashing:
     Collision attacks are thwarted by hashing a detected near-collision block 3 times.
     Think of it as extending SHA-1 from 80-steps to 240-steps for such blocks:
-	The best collision attacks against SHA-1 have complexity about 2^60,
-	thus for 240-steps an immediate lower-bound for the best cryptanalytic attacks would be 2^180.
-	An attacker would be better off using a generic birthday search of complexity 2^80.
+        The best collision attacks against SHA-1 have complexity about 2^60,
+        thus for 240-steps an immediate lower-bound for the best cryptanalytic attacks would be 2^180.
+        An attacker would be better off using a generic birthday search of complexity 2^80.
 
    Enabling safe SHA-1 hashing will result in the correct SHA-1 hash for messages where no collision attack was detected,
    but it will result in a different SHA-1 hash for messages where a collision attack was detected.
