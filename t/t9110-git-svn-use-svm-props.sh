@@ -21,8 +21,8 @@ uuid=161ce429-a9dd-4828-af4a-52023f968c89
 
 bar_url=http://mayonaise/svnrepo/bar
 test_expect_success 'verify metadata for /bar' "
-	git cat-file commit refs/remotes/bar | \
-	   grep '^git-svn-id: $bar_url@12 $uuid$' &&
+	git cat-file commit refs/remotes/bar >out &&
+	   grep '^git-svn-id: $bar_url@12 $uuid$' out &&
 	git cat-file commit refs/remotes/bar~1 | \
 	   grep '^git-svn-id: $bar_url@11 $uuid$' &&
 	git cat-file commit refs/remotes/bar~2 | \
