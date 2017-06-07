@@ -267,7 +267,7 @@ error_on_no_merge_candidates () {
 		echo "for your current branch, you must specify a branch on the command line."
 	elif [ -z "$curr_branch" -o -z "$upstream" ]; then
 		. git-parse-remote
-		error_on_missing_default_upstream "pull" $op_type $op_prep \
+		error_on_missing_default_upstream "pull" $op_type \
 			"git pull <remote> <branch>"
 	else
 		echo "Your configuration specifies to $op_type $op_prep the ref '${upstream#refs/heads/}'"
