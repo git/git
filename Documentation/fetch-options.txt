@@ -44,7 +44,10 @@ the current repository has the same history as the source repository.
 
 ifndef::git-pull[]
 --dry-run::
-	Show what would be done, without making any changes.
+	Show what would be done, without making any changes. Note that
+	new remote objects are downloaded and stored locally but no
+	references are updated to point to them. This change is invisible
+	but should speed up a subsequent fetch.
 endif::git-pull[]
 
 -f::
