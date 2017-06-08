@@ -81,7 +81,7 @@ USAGE: git mw preview [--remote|-r <remote name>] [--autoload|-a]
                       <blob> | <filename>
 
 DESCRIPTION:
-Preview is an utiliy to preview local content of a mediawiki repo as if it was
+Preview is an utility to preview local content of a mediawiki repo as if it was
 pushed on the remote.
 
 For that, preview searches for the remote name of the current branch's
