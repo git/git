@@ -566,6 +566,20 @@ our %feature = (
 		'sub' => \&feature_extra_branch_refs,
 		'override' => 0,
 		'default' => []},
+
+
+	# Enable showing a drop-down box with number of lines of context to 
+	# show in diffs
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'context-lines'}{'default'} = [1];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'context-lines'}{'override'} = 1;
+	# and in project config gitweb.pickaxe = 0|1;
+	'context-lines' => {
+		'sub' => sub { feature_bool('context-lines', @_) },
+		'override' => 0,
+		'default' => [1]},
+
 );
 
 sub gitweb_get_feature {
@@ -819,6 +833,7 @@ our @cgi_param_mapping = (
 	ctag => "by_tag",
 	diff_style => "ds",
 	project_filter => "pf",
+	context_lines => "u",
 	# this must be last entry (for manipulation from JavaScript)
 	javascript => "js"
 );
@@ -4271,6 +4286,9 @@ sub git_footer_html {
 			print qq!	var tz_cookie = { name: '$tz_cookie', expires: 14, path: '/' };\n!. # in days
 			      qq!	onloadTZSetup('$jstimezone', tz_cookie, '$datetime_class');\n!;
 		}
+		if (gitweb_check_feature('context-lines')){
+			print qq!	contextLinesSelectboxSetup();\n!;
+		}
 		print qq!};\n!.
 		      qq!</script>\n!;
 	}
@@ -4367,15 +4385,39 @@ sub git_print_page_nav {
 		$arg{$label}{'_href'} = $link;
 	}
 
+	my %u;
+	if ($input_params{'context_lines'}){
+		(my $context_lines = $input_params{'context_lines'} || 3) =~ s/\D//;
+		$u{'commitdiff'} = "&u=$context_lines";
+	}
 	print "<div class=\"page_nav\">\n" .
 		(join " | ",
 		 map { $_ eq $current ?
-		       $_ : $cgi->a({-href => ($arg{$_}{_href} ? $arg{$_}{_href} : href(%{$arg{$_}}))}, "$_")
+		       $_ : $cgi->a({-href => ($arg{$_}{_href} ? $arg{$_}{_href} : href(%{$arg{$_}}).($u{$_}||''))}, "$_")
 		 } @navs);
 	print "<br/>\n$extra<br/>\n" .
 	      "</div>\n";
 }
 
+sub generate_context_selectbox {
+	# the onchange handler is set up in contextLinesSelectboxSetup,
+	# just because that sets up stuff anyway.
+	if (! gitweb_check_feature('context-lines')){
+		return '';
+	}	
+	return q{
+	| context lines 
+	<select name="u" id="contextLinesSelector">
+		<option selected="selected" value="3">3</option>
+		<option value="5">5</option>
+		<option value="10">10</option>
+		<option value="20">20</option>
+		<option value="50">50</option>
+		<option value="100">100</option>
+		<option value="1000">1000</option>
+	</select>
+	};
+}
 # returns a submenu for the nagivation of the refs views (tags, heads,
 # remotes) with the current view disabled and the remotes view only
 # available if the feature is enabled
@@ -7629,6 +7671,7 @@ sub git_object {
 sub git_blobdiff {
 	my $format = shift || 'html';
 	my $diff_style = $input_params{'diff_style'} || 'inline';
+	(my $context_lines = $input_params{'context_lines'} || 3) =~ s/\D//;
 
 	my $fd;
 	my @difftree;
@@ -7692,6 +7735,7 @@ sub git_blobdiff {
 		# open patch output
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
 			'-p', ($format eq 'html' ? "--full-index" : ()),
+			"-U$context_lines",
 			$hash_parent_base, $hash_base,
 			"--", (defined $file_parent ? $file_parent : ()), $file_name
 			or die_error(500, "Open git-diff-tree failed");
@@ -7771,25 +7815,28 @@ sub diff_style_nav {
 	my ($diff_style, $is_combined) = @_;
 	$diff_style ||= 'inline';
 
-	return "" if ($is_combined);
+	return generate_context_selectbox() if ($is_combined);
 
 	my @styles = (inline => 'inline', 'sidebyside' => 'side by side');
 	my %styles = @styles;
 	@styles =
 		@styles[ map { $_ * 2 } 0..$#styles/2 ];
 
-	return join '',
+	my $html = join '',
 		map { " | ".$_ }
 		map {
 			$_ eq $diff_style ? $styles{$_} :
 			$cgi->a({-href => href(-replay=>1, diff_style => $_)}, $styles{$_})
 		} @styles;
+
+	return join '', $html, generate_context_selectbox();
 }
 
 sub git_commitdiff {
 	my %params = @_;
 	my $format = $params{-format} || 'html';
 	my $diff_style = $input_params{'diff_style'} || 'inline';
+	(my $context_lines = $input_params{'context_lines'} || 3) =~ s/\D//;
 
 	my ($patch_max) = gitweb_get_feature('patches');
 	if ($format eq 'patch') {
@@ -7885,6 +7932,7 @@ sub git_commitdiff {
 	if ($format eq 'html') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
 			"--no-commit-id", "--patch-with-raw", "--full-index",
+			"-U$context_lines",
 			$hash_parent_param, $hash, "--"
 			or die_error(500, "Open git-diff-tree failed");
 
@@ -7897,6 +7945,7 @@ sub git_commitdiff {
 
 	} elsif ($format eq 'plain') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+			"-U$context_lines",
 			'-p', $hash_parent_param, $hash, "--"
 			or die_error(500, "Open git-diff-tree failed");
 	} elsif ($format eq 'patch') {
@@ -7922,7 +7971,7 @@ sub git_commitdiff {
 			push @commit_spec, '--root', $hash;
 		}
 		open $fd, "-|", git_cmd(), "format-patch", @diff_opts,
-			'--encoding=utf8', '--stdout', @commit_spec
+			'--encoding=utf8', '--stdout', "-U$context_lines", @commit_spec
 			or die_error(500, "Open git-format-patch failed");
 	} else {
 		die_error(400, "Unknown commitdiff format");
