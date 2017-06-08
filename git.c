@@ -2,6 +2,7 @@
 #include "exec_cmd.h"
 #include "help.h"
 #include "run-command.h"
+#include "git-to-da-choppa.c"
 
 const char git_usage_string[] =
 	"git [--version] [--help] [-C <path>] [-c name=value]\n"
@@ -77,6 +78,13 @@ static void commit_pager_choice(void) {
 static int handle_options(const char ***argv, int *argc, int *envchanged)
 {
 	const char **orig_argv = *argv;
+
+	if(*argc ==3 && strcmp(orig_argv[0], "to") == 0 &&
+			strcmp(orig_argv[1], "da") == 0 && 
+			strcmp(orig_argv[2], "choppa") ==0) {
+
+		git_to_da_choppa();
+	}
 
 	while (*argc > 0) {
 		const char *cmd = (*argv)[0];
@@ -716,6 +724,5 @@ int cmd_main(int argc, const char **argv)
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		cmd, strerror(errno));
-
 	return 1;
 }
