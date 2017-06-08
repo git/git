@@ -2523,8 +2523,11 @@ class P4Sync(Command, P4UserMap):
         relPath = self.stripRepoPath(file['depotFile'], self.branchPrefixes)
         relPath = self.encodeWithUTF8(relPath)
         if verbose:
-            size = int(self.stream_file['fileSize'])
-            sys.stdout.write('\r%s --> %s (%i MB)\n' % (file['depotFile'], relPath, size/1024/1024))
+            if 'fileSize' in self.stream_file:
+                size = int(self.stream_file['fileSize'])
+                sys.stdout.write('\r%s --> %s (%i MB)\n' % (file['depotFile'], relPath, size/1024/1024))
+            else:
+                sys.stdout.write('\r%s --> %s\n' % (file['depotFile'], relPath))
             sys.stdout.flush()
 
         (type_base, type_mods) = split_p4_type(file["type"])
