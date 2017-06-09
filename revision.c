@@ -1777,11 +1777,11 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->max_parents = 1;
 	} else if (starts_with(arg, "--min-parents=")) {
 		revs->min_parents = atoi(arg+14);
-	} else if (starts_with(arg, "--no-min-parents")) {
+	} else if (!strcmp(arg, "--no-min-parents")) {
 		revs->min_parents = 0;
 	} else if (starts_with(arg, "--max-parents=")) {
 		revs->max_parents = atoi(arg+14);
-	} else if (starts_with(arg, "--no-max-parents")) {
+	} else if (!strcmp(arg, "--no-max-parents")) {
 		revs->max_parents = -1;
 	} else if (!strcmp(arg, "--boundary")) {
 		revs->boundary = 1;
