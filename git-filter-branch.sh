@@ -81,11 +81,12 @@ set_ident () {
 	finish_ident COMMITTER
 }
 
-USAGE="[--env-filter <command>] [--tree-filter <command>]
-	[--index-filter <command>] [--parent-filter <command>]
-	[--msg-filter <command>] [--commit-filter <command>]
-	[--tag-name-filter <command>] [--subdirectory-filter <directory>]
-	[--original <namespace>] [-d <directory>] [-f | --force]
+USAGE="[--setup <command>] [--env-filter <command>]
+	[--tree-filter <command>] [--index-filter <command>]
+	[--parent-filter <command>] [--msg-filter <command>]
+	[--commit-filter <command>] [--tag-name-filter <command>]
+	[--subdirectory-filter <directory>] [--original <namespace>]
+	[-d <directory>] [-f | --force]
 	[<rev-list options>...]"
 
 OPTIONS_SPEC=
@@ -96,6 +97,7 @@ if [ "$(is_bare_repository)" = false ]; then
 fi
 
 tempdir=.git-rewrite
+filter_setup=
 filter_env=
 filter_tree=
 filter_index=
@@ -147,6 +149,9 @@ do
 	case "$ARG" in
 	-d)
 		tempdir="$OPTARG"
+		;;
+	--setup)
+		filter_setup="$OPTARG"
 		;;
 	--env-filter)
 		filter_env="$OPTARG"
@@ -316,6 +321,9 @@ then
 else
 	need_index=
 fi
+
+eval "$filter_setup" < /dev/null ||
+	die "filter setup failed: $filter_setup"
 
 while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
