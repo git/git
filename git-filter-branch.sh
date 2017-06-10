@@ -87,7 +87,7 @@ USAGE="[--setup <command>] [--env-filter <command>]
 	[--commit-filter <command>] [--tag-name-filter <command>]
 	[--subdirectory-filter <directory>] [--original <namespace>]
 	[-d <directory>] [-f | --force]
-	[<rev-list options>...]"
+	[--] [<rev-list options>...]"
 
 OPTIONS_SPEC=
 . git-sh-setup
