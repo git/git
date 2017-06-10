@@ -1322,6 +1322,7 @@ _git_clone ()
 			--no-tags
 			--branch
 			--recurse-submodules
+                       --recursive
 			--no-single-branch
 			--shallow-submodules
 			"
