@@ -431,7 +431,8 @@ static int get_common_prefix_len(const char *common_prefix)
  * that were given from the command line.  We are not
  * going to write this index out.
  */
-void overlay_tree_on_cache(const char *tree_name, const char *prefix)
+void overlay_tree_on_index(struct index_state *istate,
+			   const char *tree_name, const char *prefix)
 {
 	struct tree *tree;
 	struct object_id oid;
@@ -446,8 +447,8 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 		die("bad tree-ish %s", tree_name);
 
 	/* Hoist the unmerged entries up to stage #3 to make room */
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
 		if (!ce_stage(ce))
 			continue;
 		ce->ce_flags |= CE_STAGEMASK;
@@ -460,11 +461,11 @@ void overlay_tree_on_cache(const char *tree_name, const char *prefix)
 			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
 	} else
 		memset(&pathspec, 0, sizeof(pathspec));
-	if (read_tree(tree, 1, &pathspec, &the_index))
+	if (read_tree(tree, 1, &pathspec, istate))
 		die("unable to read tree entries %s", tree_name);
 
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
 		switch (ce_stage(ce)) {
 		case 0:
 			last_stage0 = ce;
@@ -679,7 +680,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		 */
 		if (show_stage || show_unmerged)
 			die("ls-files --with-tree is incompatible with -s or -u");
-		overlay_tree_on_cache(with_tree, max_prefix);
+		overlay_tree_on_index(&the_index, with_tree, max_prefix);
 	}
 	show_files(&dir);
 	if (show_resolve_undo)
