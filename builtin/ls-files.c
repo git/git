@@ -329,7 +329,7 @@ static int ce_excluded(struct dir_struct *dir, struct index_state *istate,
 	return is_excluded(dir, istate, ce->name, &dtype);
 }
 
-static void show_files(struct dir_struct *dir)
+static void show_files(struct index_state *istate, struct dir_struct *dir)
 {
 	int i;
 
@@ -337,33 +337,33 @@ static void show_files(struct dir_struct *dir)
 	if (show_others || show_killed) {
 		if (!show_others)
 			dir->flags |= DIR_COLLECT_KILLED_ONLY;
-		fill_directory(dir, &the_index, &pathspec);
+		fill_directory(dir, istate, &pathspec);
 		if (show_others)
-			show_other_files(&the_index, dir);
+			show_other_files(istate, dir);
 		if (show_killed)
-			show_killed_files(&the_index, dir);
+			show_killed_files(istate, dir);
 	}
 	if (show_cached || show_stage) {
-		for (i = 0; i < active_nr; i++) {
-			const struct cache_entry *ce = active_cache[i];
+		for (i = 0; i < istate->cache_nr; i++) {
+			const struct cache_entry *ce = istate->cache[i];
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, &the_index, ce))
+			    !ce_excluded(dir, istate, ce))
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
-			show_ce_entry(&the_index, ce_stage(ce) ? tag_unmerged :
+			show_ce_entry(istate, ce_stage(ce) ? tag_unmerged :
 				(ce_skip_worktree(ce) ? tag_skip_worktree : tag_cached), ce);
 		}
 	}
 	if (show_deleted || show_modified) {
-		for (i = 0; i < active_nr; i++) {
-			const struct cache_entry *ce = active_cache[i];
+		for (i = 0; i < istate->cache_nr; i++) {
+			const struct cache_entry *ce = istate->cache[i];
 			struct stat st;
 			int err;
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, &the_index, ce))
+			    !ce_excluded(dir, istate, ce))
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
@@ -371,9 +371,9 @@ static void show_files(struct dir_struct *dir)
 				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
-				show_ce_entry(&the_index, tag_removed, ce);
-			if (show_modified && ce_modified(ce, &st, 0))
-				show_ce_entry(&the_index, tag_modified, ce);
+				show_ce_entry(istate, tag_removed, ce);
+			if (show_modified && ie_modified(istate, ce, &st, 0))
+				show_ce_entry(istate, tag_modified, ce);
 		}
 	}
 }
@@ -686,7 +686,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			die("ls-files --with-tree is incompatible with -s or -u");
 		overlay_tree_on_index(&the_index, with_tree, max_prefix);
 	}
-	show_files(&dir);
+	show_files(&the_index, &dir);
 	if (show_resolve_undo)
 		show_ru_info(&the_index);
 
