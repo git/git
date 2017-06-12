@@ -321,10 +321,11 @@ static void show_ru_info(const struct index_state *istate)
 	}
 }
 
-static int ce_excluded(struct dir_struct *dir, const struct cache_entry *ce)
+static int ce_excluded(struct dir_struct *dir, struct index_state *istate,
+		       const struct cache_entry *ce)
 {
 	int dtype = ce_to_dtype(ce);
-	return is_excluded(dir, &the_index, ce->name, &dtype);
+	return is_excluded(dir, istate, ce->name, &dtype);
 }
 
 static void show_files(struct dir_struct *dir)
@@ -345,7 +346,7 @@ static void show_files(struct dir_struct *dir)
 		for (i = 0; i < active_nr; i++) {
 			const struct cache_entry *ce = active_cache[i];
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, ce))
+			    !ce_excluded(dir, &the_index, ce))
 				continue;
 			if (show_unmerged && !ce_stage(ce))
 				continue;
@@ -361,7 +362,7 @@ static void show_files(struct dir_struct *dir)
 			struct stat st;
 			int err;
 			if ((dir->flags & DIR_SHOW_IGNORED) &&
-			    !ce_excluded(dir, ce))
+			    !ce_excluded(dir, &the_index, ce))
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
