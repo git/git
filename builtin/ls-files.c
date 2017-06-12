@@ -292,14 +292,14 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 	strbuf_release(&name);
 }
 
-static void show_ru_info(void)
+static void show_ru_info(const struct index_state *istate)
 {
 	struct string_list_item *item;
 
-	if (!the_index.resolve_undo)
+	if (!istate->resolve_undo)
 		return;
 
-	for_each_string_list_item(item, the_index.resolve_undo) {
+	for_each_string_list_item(item, istate->resolve_undo) {
 		const char *path = item->string;
 		struct resolve_undo_info *ui = item->util;
 		int i, len;
@@ -685,7 +685,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	}
 	show_files(&dir);
 	if (show_resolve_undo)
-		show_ru_info();
+		show_ru_info(&the_index);
 
 	if (ps_matched) {
 		int bad;
