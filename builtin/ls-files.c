@@ -232,7 +232,8 @@ static void show_gitlink(const struct cache_entry *ce)
 		exit(status);
 }
 
-static void show_ce_entry(const char *tag, const struct cache_entry *ce)
+static void show_ce_entry(const struct index_state *istate,
+			  const char *tag, const struct cache_entry *ce)
 {
 	struct strbuf name = STRBUF_INIT;
 	int len = max_prefix_len;
@@ -276,7 +277,7 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 			       find_unique_abbrev(ce->oid.hash, abbrev),
 			       ce_stage(ce));
 		}
-		write_eolinfo(&the_index, ce, ce->name);
+		write_eolinfo(istate, ce, ce->name);
 		write_name(ce->name);
 		if (debug_mode) {
 			const struct stat_data *sd = &ce->ce_stat_data;
@@ -352,7 +353,7 @@ static void show_files(struct dir_struct *dir)
 				continue;
 			if (ce->ce_flags & CE_UPDATE)
 				continue;
-			show_ce_entry(ce_stage(ce) ? tag_unmerged :
+			show_ce_entry(&the_index, ce_stage(ce) ? tag_unmerged :
 				(ce_skip_worktree(ce) ? tag_skip_worktree : tag_cached), ce);
 		}
 	}
@@ -370,9 +371,9 @@ static void show_files(struct dir_struct *dir)
 				continue;
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
-				show_ce_entry(tag_removed, ce);
+				show_ce_entry(&the_index, tag_removed, ce);
 			if (show_modified && ce_modified(ce, &st, 0))
-				show_ce_entry(tag_modified, ce);
+				show_ce_entry(&the_index, tag_modified, ce);
 		}
 	}
 }
