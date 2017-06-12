@@ -1338,7 +1338,10 @@ class P4Submit(Command, P4UserMap):
                                      "restoring the workspace to the state before the shelve"),
                 optparse.make_option("--update-shelve", dest="update_shelve", action="store", type="int",
                                      metavar="CHANGELIST",
-                                     help="update an existing shelved changelist, implies --shelve")
+                                     help="update an existing shelved changelist, implies --shelve"),
+                optparse.make_option("--sync-revision", dest="sync_revision", action="store", type="str",
+                                     metavar="SYNCREVISION",
+                                     help="sync to a custom revision with p4 sync, before a commit")
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -1354,6 +1357,7 @@ class P4Submit(Command, P4UserMap):
         self.exportLabels = False
         self.p4HasMoveCommand = p4_has_move_command()
         self.branch = None
+        self.sync_revison = None
 
         if gitConfig('git-p4.largeFileSystem'):
             die("Large file system not supported for git-p4 submit command. Please remove it from config.")
@@ -2042,15 +2046,22 @@ class P4Submit(Command, P4UserMap):
             os.makedirs(self.clientPath)
 
         chdir(self.clientPath, is_client_path=True)
+
+
+        print "Obtained is %s" % self.sync_revision
+
+        if re.match(r'^@\d+', self.sync_revision) is None:
+            self.sync_revision = ''
+
         if self.dry_run:
             print "Would synchronize p4 checkout in %s" % self.clientPath
         else:
             print "Synchronizing p4 checkout..."
             if new_client_dir:
                 # old one was destroyed, and maybe nobody told p4
-                p4_sync("...", "-f")
+                p4_sync(' ', "//..." + self.sync_revision, "-f")
             else:
-                p4_sync("...")
+                p4_sync(' ', "//..." + self.sync_revision)
         self.check()
 
         commits = []
