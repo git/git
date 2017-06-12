@@ -108,13 +108,14 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	write_name(ent->name);
 }
 
-static void show_other_files(struct dir_struct *dir)
+static void show_other_files(const struct index_state *istate,
+			     const struct dir_struct *dir)
 {
 	int i;
 
 	for (i = 0; i < dir->nr; i++) {
 		struct dir_entry *ent = dir->entries[i];
-		if (!cache_name_is_other(ent->name, ent->len))
+		if (!index_name_is_other(istate, ent->name, ent->len))
 			continue;
 		show_dir_entry(tag_other, ent);
 	}
@@ -336,7 +337,7 @@ static void show_files(struct dir_struct *dir)
 			dir->flags |= DIR_COLLECT_KILLED_ONLY;
 		fill_directory(dir, &the_index, &pathspec);
 		if (show_others)
-			show_other_files(dir);
+			show_other_files(&the_index, dir);
 		if (show_killed)
 			show_killed_files(&the_index, dir);
 	}
