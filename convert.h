@@ -4,6 +4,8 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
+struct index_state;
+
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,
 	SAFE_CRLF_FAIL = 1,
@@ -33,7 +35,8 @@ enum eol {
 };
 
 extern enum eol core_eol;
-extern const char *get_cached_convert_stats_ascii(const char *path);
+extern const char *get_cached_convert_stats_ascii(const struct index_state *istate,
+						  const char *path);
 extern const char *get_wt_convert_stats_ascii(const char *path);
 extern const char *get_convert_attr_ascii(const char *path);
 
