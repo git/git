@@ -46,7 +46,8 @@ extern int convert_to_git(const struct index_state *istate,
 			  struct strbuf *dst, enum safe_crlf checksafe);
 extern int convert_to_working_tree(const char *path, const char *src,
 				   size_t len, struct strbuf *dst);
-extern int renormalize_buffer(const char *path, const char *src, size_t len,
+extern int renormalize_buffer(const struct index_state *istate,
+			      const char *path, const char *src, size_t len,
 			      struct strbuf *dst);
 static inline int would_convert_to_git(const struct index_state *istate,
 				       const char *path)
