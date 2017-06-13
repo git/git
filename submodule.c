@@ -1363,7 +1363,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
-	prepare_submodule_repo_env_no_git_dir(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env_array);
 
 	cp.git_cmd = 1;
 	argv_array_pushl(&cp.args, "diff-index", "--quiet",
@@ -1380,7 +1380,7 @@ static int submodule_has_dirty_index(const struct submodule *sub)
 static void submodule_reset_index(const char *path)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	prepare_submodule_repo_env_no_git_dir(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env_array);
 
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
@@ -1438,7 +1438,7 @@ int submodule_move_head(const char *path,
 		}
 	}
 
-	prepare_submodule_repo_env_no_git_dir(&cp.env_array);
+	prepare_submodule_repo_env(&cp.env_array);
 
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
@@ -1446,7 +1446,7 @@ int submodule_move_head(const char *path,
 
 	argv_array_pushf(&cp.args, "--super-prefix=%s%s/",
 			get_super_prefix_or_empty(), path);
-	argv_array_pushl(&cp.args, "read-tree", NULL);
+	argv_array_pushl(&cp.args, "read-tree", "--recurse-submodules", NULL);
 
 	if (flags & SUBMODULE_MOVE_HEAD_DRY_RUN)
 		argv_array_push(&cp.args, "-n");
@@ -1468,15 +1468,16 @@ int submodule_move_head(const char *path,
 
 	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN)) {
 		if (new) {
-			struct child_process cp1 = CHILD_PROCESS_INIT;
+			child_process_init(&cp);
 			/* also set the HEAD accordingly */
-			cp1.git_cmd = 1;
-			cp1.no_stdin = 1;
-			cp1.dir = path;
+			cp.git_cmd = 1;
+			cp.no_stdin = 1;
+			cp.dir = path;
 
-			argv_array_pushl(&cp1.args, "update-ref", "HEAD", new, NULL);
+			prepare_submodule_repo_env(&cp.env_array);
+			argv_array_pushl(&cp.args, "update-ref", "HEAD", new, NULL);
 
-			if (run_command(&cp1)) {
+			if (run_command(&cp)) {
 				ret = -1;
 				goto out;
 			}
