@@ -2169,10 +2169,10 @@ static int write_error(const char *filename)
 	return 4;
 }
 
-static int store_write_section(int fd, const char *key)
+struct strbuf store_create_section(const char *key)
 {
 	const char *dot;
-	int i, success;
+	int i;
 	struct strbuf sb = STRBUF_INIT;
 
 	dot = memchr(key, '.', store.baselen);
@@ -2187,6 +2187,15 @@ static int store_write_section(int fd, const char *key)
 	} else {
 		strbuf_addf(&sb, "[%.*s]\n", store.baselen, key);
 	}
+
+	return sb;
+}
+
+static int store_write_section(int fd, const char *key)
+{
+	int success;
+
+	struct strbuf sb = store_create_section(key);
 
 	success = write_in_full(fd, sb.buf, sb.len) == sb.len;
 	strbuf_release(&sb);
