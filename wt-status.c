@@ -1066,7 +1066,8 @@ static void show_am_in_progress(struct wt_status *s,
 static char *read_line_from_git_path(const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *fp = fopen(git_path("%s", filename), "r");
+	FILE *fp = fopen_or_warn(git_path("%s", filename), "r");
+
 	if (!fp) {
 		strbuf_release(&buf);
 		return NULL;

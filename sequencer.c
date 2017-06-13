@@ -899,8 +899,8 @@ static void flush_rewritten_pending(void) {
 	FILE *out;
 
 	if (strbuf_read_file(&buf, rebase_path_rewritten_pending(), 82) > 0 &&
-			!get_sha1("HEAD", newsha1) &&
-			(out = fopen(rebase_path_rewritten_list(), "a"))) {
+	    !get_sha1("HEAD", newsha1) &&
+	    (out = fopen_or_warn(rebase_path_rewritten_list(), "a"))) {
 		char *bol = buf.buf, *eol;
 
 		while (*bol) {
@@ -919,7 +919,7 @@ static void flush_rewritten_pending(void) {
 
 static void record_in_rewritten(struct object_id *oid,
 		enum todo_command next_command) {
-	FILE *out = fopen(rebase_path_rewritten_pending(), "a");
+	FILE *out = fopen_or_warn(rebase_path_rewritten_pending(), "a");
 
 	if (!out)
 		return;
@@ -1381,7 +1381,7 @@ static int read_populate_todo(struct todo_list *todo_list,
 
 	if (is_rebase_i(opts)) {
 		struct todo_list done = TODO_LIST_INIT;
-		FILE *f = fopen(rebase_path_msgtotal(), "w");
+		FILE *f = fopen_or_warn(rebase_path_msgtotal(), "w");
 
 		if (strbuf_read_file(&done.buf, rebase_path_done(), 0) > 0 &&
 				!parse_insn_buffer(done.buf.buf, &done))

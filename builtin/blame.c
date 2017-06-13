@@ -481,7 +481,7 @@ static void output(struct blame_scoreboard *sb, int option)
  */
 static int read_ancestry(const char *graft_file)
 {
-	FILE *fp = fopen(graft_file, "r");
+	FILE *fp = fopen_or_warn(graft_file, "r");
 	struct strbuf buf = STRBUF_INIT;
 	if (!fp)
 		return -1;

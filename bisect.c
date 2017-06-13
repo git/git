@@ -438,10 +438,7 @@ static void read_bisect_paths(struct argv_array *array)
 {
 	struct strbuf str = STRBUF_INIT;
 	const char *filename = git_path_bisect_names();
-	FILE *fp = fopen(filename, "r");
-
-	if (!fp)
-		die_errno(_("Could not open file '%s'"), filename);
+	FILE *fp = xfopen(filename, "r");
 
 	while (strbuf_getline_lf(&str, fp) != EOF) {
 		strbuf_trim(&str);
@@ -669,7 +666,7 @@ static int is_expected_rev(const struct object_id *oid)
 	if (stat(filename, &st) || !S_ISREG(st.st_mode))
 		return 0;
 
-	fp = fopen(filename, "r");
+	fp = fopen_or_warn(filename, "r");
 	if (!fp)
 		return 0;
 

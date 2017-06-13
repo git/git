@@ -85,8 +85,15 @@ test_expect_success 'use branch.<name>.remote if possible' '
 '
 
 test_expect_success 'confuses pattern as remote when no remote specified' '
-	cat >exp <<-\EOF &&
-	fatal: '\''refs*master'\'' does not appear to be a git repository
+	if test_have_prereq MINGW
+	then
+		# Windows does not like asterisks in pathname
+		does_not_exist=master
+	else
+		does_not_exist="refs*master"
+	fi &&
+	cat >exp <<-EOF &&
+	fatal: '\''$does_not_exist'\'' does not appear to be a git repository
 	fatal: Could not read from remote repository.
 
 	Please make sure you have the correct access rights
@@ -98,7 +105,7 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 	# fetch <branch>.
 	# We could just as easily have used "master"; the "*" emphasizes its
 	# role as a pattern.
-	test_must_fail git ls-remote refs*master >actual 2>&1 &&
+	test_must_fail git ls-remote "$does_not_exist" >actual 2>&1 &&
 	test_i18ncmp exp actual
 '
 
