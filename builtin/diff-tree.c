@@ -128,9 +128,11 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	}
 
 	/*
-	 * NOTE! We expect "a ^b" to be equal to "a..b", so we
-	 * reverse the order of the objects if the second one
-	 * is marked UNINTERESTING.
+	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
+	 * perfectly valid for revision range parser to yield "b ^a",
+	 * which means the same thing. If we get the latter, i.e. the
+	 * second one is marked UNINTERESTING, we recover the original
+	 * order the user gave, i.e. "a..b", by swapping the trees.
 	 */
 	nr_sha1 = opt->pending.nr;
 	switch (nr_sha1) {
