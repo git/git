@@ -239,31 +239,12 @@ static void fscache_add(struct fsentry *fse)
 }
 
 /*
- * Removes a directory listing from the cache.
- */
-static void fscache_remove(struct fsentry *fse)
-{
-	if (fse->list)
-		fse = fse->list;
-
-	for (; fse; fse = fse->next)
-		hashmap_remove(&map, fse, NULL);
-}
-
-/*
  * Clears the cache.
  */
 static void fscache_clear(void)
 {
-	struct hashmap_iter iter;
-	struct fsentry *fse;
-	hashmap_disallow_rehash(&map, 1);
-	hashmap_iter_init(&map, &iter);
-	while ((fse = hashmap_iter_next(&iter))) {
-		fscache_remove(fse);
-		fsentry_release(fse);
-	}
-	hashmap_disallow_rehash(&map, 0);
+	hashmap_free(&map, 1);
+	hashmap_init(&map, (hashmap_cmp_fn)fsentry_cmp, 0);
 }
 
 /*
