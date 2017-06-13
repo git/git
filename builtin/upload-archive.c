@@ -22,7 +22,7 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	struct argv_array sent_argv = ARGV_ARRAY_INIT;
 	const char *arg_cmd = "argument ";
 
-	if (argc != 2)
+	if (argc != 2 || !strcmp(argv[1], "-h"))
 		usage(upload_archive_usage);
 
 	if (!enter_repo(argv[1], 0))
@@ -75,6 +75,9 @@ static ssize_t process_input(int child_fd, int band)
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
 	struct child_process writer = { argv };
+
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(upload_archive_usage);
 
 	/*
 	 * Set up sideband subprocess.
