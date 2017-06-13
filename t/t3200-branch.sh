@@ -378,6 +378,217 @@ EOF
 	test_cmp expect actual
 '
 
+test_expect_success 'git branch -c dumps usage' '
+	test_expect_code 128 git branch -c 2>err &&
+	test_i18ngrep "branch name required" err
+'
+
+test_expect_success 'git branch --copy dumps usage' '
+	test_expect_code 128 git branch --copy 2>err &&
+	test_i18ngrep "branch name required" err
+'
+
+test_expect_success 'git branch -c d e should work' '
+	git branch -l d &&
+	git reflog exists refs/heads/d &&
+	git config branch.d.dummy Hello &&
+	git branch -c d e &&
+	git reflog exists refs/heads/d &&
+	git reflog exists refs/heads/e &&
+	echo Hello >expect &&
+	git config branch.e.dummy >actual &&
+	test_cmp expect actual &&
+	echo Hello >expect &&
+	git config branch.d.dummy >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch --copy is a synonym for -c' '
+	git branch -l copy &&
+	git reflog exists refs/heads/copy &&
+	git config branch.copy.dummy Hello &&
+	git branch --copy copy copy-to &&
+	git reflog exists refs/heads/copy &&
+	git reflog exists refs/heads/copy-to &&
+	echo Hello >expect &&
+	git config branch.copy.dummy >actual &&
+	test_cmp expect actual &&
+	echo Hello >expect &&
+	git config branch.copy-to.dummy >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git branch -c ee ef should copy and checkout branch ef' '
+	git checkout -b ee &&
+	git reflog exists refs/heads/ee &&
+	git config branch.ee.dummy Hello &&
+	git branch -c ee ef &&
+	git reflog exists refs/heads/ee &&
+	git reflog exists refs/heads/ef &&
+	test $(git config branch.ee.dummy) = Hello &&
+	test $(git config branch.ef.dummy) = Hello &&
+	test $(git rev-parse --abbrev-ref HEAD) = ef
+'
+
+test_expect_success 'git branch -c f/f g/g should work' '
+	git branch -l f/f &&
+	git reflog exists refs/heads/f/f &&
+	git config branch.f/f.dummy Hello &&
+	git branch -c f/f g/g &&
+	git reflog exists refs/heads/f/f &&
+	git reflog exists refs/heads/g/g &&
+	test $(git config branch.f/f.dummy) = Hello &&
+	test $(git config branch.g/g.dummy) = Hello
+'
+
+test_expect_success 'git branch -c m2 m2 should work' '
+	git branch -l m2 &&
+	git reflog exists refs/heads/m2 &&
+	git config branch.m2.dummy Hello &&
+	git branch -c m2 m2 &&
+	git reflog exists refs/heads/m2 &&
+	test $(git config branch.m2.dummy) = Hello
+'
+
+test_expect_success 'git branch -c zz zz/zz should fail' '
+	git branch -l zz &&
+	git reflog exists refs/heads/zz &&
+	test_must_fail git branch -c zz zz/zz
+'
+
+test_expect_success 'git branch -c b/b b should fail' '
+	git branch -l b/b &&
+	test_must_fail git branch -c b/b b
+'
+
+test_expect_success 'git branch -C o/q o/p should work when o/p exists' '
+	git branch -l o/q &&
+	git reflog exists refs/heads/o/q &&
+	git reflog exists refs/heads/o/p &&
+	git branch -C o/q o/p
+'
+
+test_expect_success 'git branch -c -f o/q o/p should work when o/p exists' '
+	git reflog exists refs/heads/o/q &&
+	git reflog exists refs/heads/o/p &&
+	git branch -c -f o/q o/p
+'
+
+test_expect_success 'git branch -c qq rr/qq should fail when r exists' '
+	git branch qq &&
+	git branch rr &&
+	test_must_fail git branch -c qq rr/qq
+'
+
+test_expect_success 'git branch -C b1 b2 should fail when b2 is checked out' '
+	git branch b1 &&
+	git checkout -b b2 &&
+	test_must_fail git branch -C b1 b2
+'
+
+test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' '
+	git checkout -b c1 &&
+	git branch c2 &&
+	git branch -C c1 c2 &&
+	test $(git rev-parse --abbrev-ref HEAD) = c2
+'
+
+test_expect_success 'git branch -C c1 c2 should add entries to .git/logs/HEAD' '
+	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
+	grep "$msg$" .git/logs/HEAD
+'
+
+test_expect_success 'git branch -C master should work when master is checked out' '
+	git checkout master &&
+	git branch -C master
+'
+
+test_expect_success 'git branch -C master master should work when master is checked out' '
+	git checkout master &&
+	git branch -C master master
+'
+
+test_expect_success 'git branch -C master5 master5 should work when master is checked out' '
+	git checkout master &&
+	git branch master5 &&
+	git branch -C master5 master5
+'
+
+test_expect_success 'git branch -C ab cd should overwrite existing config for cd' '
+	git branch -l cd &&
+	git reflog exists refs/heads/cd &&
+	git config branch.cd.dummy CD &&
+	git branch -l ab &&
+	git reflog exists refs/heads/ab &&
+	git config branch.ab.dummy AB &&
+	git branch -C ab cd &&
+	git reflog exists refs/heads/ab &&
+	git reflog exists refs/heads/cd &&
+	test $(git config branch.ab.dummy) = AB &&
+	test $(git config branch.cd.dummy) = AB
+'
+
+test_expect_success 'git branch -c correctly copies multiple config sections' '
+	FOO=1 &&
+	export FOO &&
+	test_when_finished "git checkout master" &&
+	git checkout -b source2 master &&
+
+	# Assert that a config file with multiple config sections has
+	# those sections preserved...
+	cat >expect <<-\EOF &&
+	branch.source2.key1=value1
+	branch.dest2.key1=value1
+	more.gar.b=age
+	branch.source2.key2=value2
+	branch.dest2.key2=value2
+	EOF
+	cat >config.branch <<\EOF &&
+;; Comment for source2
+[branch "source2"]
+	;; Comment for the source2 value
+	key1 = value1
+;; Comment for more.gar
+[more "gar"]
+	;; Comment for the more.gar value
+	b = age
+	;; Comment for source, again
+[branch "source2"]
+	;; Comment for the source2 value, again
+	key2 = value2
+EOF
+	cat config.branch >>.git/config &&
+	git branch -c source2 dest2 &&
+	git config -f .git/config -l | grep -F -e source2 -e dest2 -e more.gar >actual &&
+	test_cmp expect actual &&
+
+	# ...and that the comments and formatting for those sections
+	# is also preserved.
+	cat >expect <<\EOF &&
+;; Comment for source2
+[branch "source2"]
+	;; Comment for the source2 value
+	key1 = value1
+;; Comment for more.gar
+[branch "dest2"]
+	;; Comment for the source2 value
+	key1 = value1
+;; Comment for more.gar
+[more "gar"]
+	;; Comment for the more.gar value
+	b = age
+	;; Comment for source, again
+[branch "source2"]
+	;; Comment for the source2 value, again
+	key2 = value2
+[branch "dest2"]
+	;; Comment for the source2 value, again
+	key2 = value2
+EOF
+	grep -A 9001 "Comment for source2" .git/config >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'deleting a symref' '
 	git branch target &&
 	git symbolic-ref refs/heads/symref refs/heads/target &&
