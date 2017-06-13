@@ -1,0 +1,37 @@
+Git v2.13.2 Release Notes
+=========================
+
+Fixes since v2.13.1
+-------------------
+
+ * The "collision detecting" SHA-1 implementation shipped with 2.13.1
+   was still broken on some platforms.  Update to the upstream code
+   again to take their fix.
+
+ * "git checkout --recurse-submodules" did not quite work with a
+   submodule that itself has submodules.
+
+ * Introduce the BUG() macro to improve die("BUG: ...").
+
+ * The "run-command" API implementation has been made more robust
+   against dead-locking in a threaded environment.
+
+ * A recent update to t5545-push-options.sh started skipping all the
+   tests in the script when a web server testing is disabled or
+   unavailable, not just the ones that require a web server.  Non HTTP
+   tests have been salvaged to always run in this script.
+
+ * "git clean -d" used to clean directories that has ignored files,
+   even though the command should not lose ignored ones without "-x".
+   "git status --ignored"  did not list ignored and untracked files
+   without "-uall".  These have been corrected.
+
+ * The timestamp of the index file is now taken after the file is
+   closed, to help Windows, on which a stale timestamp is reported by
+   fstat() on a file that is opened for writing and data was written
+   but not yet closed.
+
+ * "git pull --rebase --autostash" didn't auto-stash when the local history
+   fast-forwards to the upstream.
+
+Also contains various documentation updates and code clean-ups.

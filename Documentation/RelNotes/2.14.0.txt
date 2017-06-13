@@ -67,6 +67,9 @@ UI, Workflows & Features
  * Make the "indent" heuristics the default in "diff" and diff.indentHeuristics
    configuration variable an escape hatch for those who do no want it.
 
+ * Many commands learned to pay attention to submodule.recurse
+   configuration.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -129,6 +132,20 @@ Performance, Internal Implementation, Development Support etc.
  * The internal logic used in "git blame" has been libified to make it
    easier to use by cgit.
 
+ * Our code often opens a path to an optional file, to work on its
+   contents when we can successfully open it.  We can ignore a failure
+   to open if such an optional file does not exist, but we do want to
+   report a failure in opening for other reasons (e.g. we got an I/O
+   error, or the file is there, but we lack the permission to open).
+
+   The exact errors we need to ignore are ENOENT (obviously) and
+   ENOTDIR (less obvious).  Instead of repeating comparison of errno
+   with these two constants, introduce a helper function to do so.
+
+ * We often try to open a file for reading whose existence is
+   optional, and silently ignore errors from open/fopen; report such
+   errors if they are not due to missing files.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -176,7 +193,6 @@ notes for details).
 
  * "git checkout --recurse-submodules" did not quite work with a
    submodule that itself has submodules.
-   (merge 218c883783 sb/checkout-recurse-submodules later to maint).
 
  * Plug some leaks and updates internal API used to implement the
    split index feature to make it easier to avoid such a leak in the
@@ -203,7 +219,6 @@ notes for details).
    checked out with eol=LF even on Windows.
 
  * Introduce the BUG() macro to improve die("BUG: ...").
-   (merge 3d7dd2d3b6 jk/bug-to-abort later to maint).
 
  * Clarify documentation for include.path and includeIf.<condition>.path
    configuration variables.
@@ -249,17 +264,14 @@ notes for details).
 
  * The "run-command" API implementation has been made more robust
    against dead-locking in a threaded environment.
-   (merge e3f43ce765 bw/forking-and-threading later to maint).
 
  * A recent update to t5545-push-options.sh started skipping all the
    tests in the script when a web server testing is disabled or
    unavailable, not just the ones that require a web server.  Non HTTP
    tests have been salvaged to always run in this script.
-   (merge 2e397e4ddf jc/skip-test-in-the-middle later to maint).
 
  * "git send-email" now uses Net::SMTP::SSL, which is obsolete, only
    when needed.  Recent versions of Net::SMTP can do TLS natively.
-   (merge bfbfc9a953 dk/send-email-avoid-net-smtp-ssl-when-able later to maint).
 
  * "foo\bar\baz" in "git fetch foo\bar\baz", even though there is no
    slashes in it, cannot be a nickname for a remote on Windows, as
@@ -269,7 +281,6 @@ notes for details).
    even though the command should not lose ignored ones without "-x".
    "git status --ignored"  did not list ignored and untracked files
    without "-uall".  These have been corrected.
-   (merge 6b1db43109 sl/clean-d-ignored-fix later to maint).
 
  * The result from "git diff" that compares two blobs, e.g. "git diff
    $commit1:$path $commit2:$path", used to be shown with the full
@@ -291,16 +302,12 @@ notes for details).
    closed, to help Windows, on which a stale timestamp is reported by
    fstat() on a file that is opened for writing and data was written
    but not yet closed.
-   (merge 9f41c7a6b3 jh/close-index-before-stat later to maint).
 
  * "git pull --rebase --autostash" didn't auto-stash when the local history
    fast-forwards to the upstream.
-   (merge f15e7cf5cc tb/pull-ff-rebase-autostash later to maint).
+
+ * A flaky test has been corrected.
+   (merge 7c2115aa07 jk/pack-idx-corruption-safety later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge c5a9157393 jh/memihash-opt later to maint).
-   (merge 44e2ff09ce ab/t3070-test-dedup later to maint).
-   (merge 9ee4aa95db rf/completion-config-commit later to maint).
-   (merge ef4fe5617e jk/connect-symref-info-leak-fix later to maint).
-   (merge a56eea28c4 jk/drop-free-refspecs later to maint).
-   (merge 0c79cee697 ad/pull-remote-doc later to maint).
+   (merge 8ba74bfd7c jc/diff-tree-stale-comment later to maint).
