@@ -39,6 +39,12 @@ extern void stage_updated_gitmodules(void);
 extern void set_diffopt_flags_from_submodule_config(struct diff_options *,
 		const char *path);
 extern int submodule_config(const char *var, const char *value, void *cb);
+extern int git_default_submodule_config(const char *var, const char *value, void *cb);
+
+struct option;
+int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
+						     const char *arg, int unset);
+void load_submodule_cache(void);
 extern void gitmodules_config(void);
 extern void gitmodules_config_sha1(const unsigned char *commit_sha1);
 extern int is_submodule_initialized(const char *path);
@@ -69,7 +75,6 @@ extern void show_submodule_inline_diff(FILE *f, const char *path,
 		const char *del, const char *add, const char *reset,
 		const struct diff_options *opt);
 extern void set_config_fetch_recurse_submodules(int value);
-extern void set_config_update_recurse_submodules(int value);
 /* Check if we want to update any submodule.*/
 extern int should_update_submodules(void);
 /*

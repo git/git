@@ -16,9 +16,10 @@
 #include "quote.h"
 #include "remote.h"
 #include "worktree.h"
+#include "parse-options.h"
 
 static int config_fetch_recurse_submodules = RECURSE_SUBMODULES_ON_DEMAND;
-static int config_update_recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
+static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int parallel_jobs = 1;
 static struct string_list changed_submodule_paths = STRING_LIST_INIT_DUP;
 static int initialized_fetch_ref_tips;
@@ -153,7 +154,8 @@ void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
 	}
 }
 
-int submodule_config(const char *var, const char *value, void *cb)
+/* For loading from the .gitmodules file. */
+static int git_modules_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "submodule.fetchjobs")) {
 		parallel_jobs = git_config_int(var, value);
@@ -167,6 +169,56 @@ int submodule_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	return 0;
+}
+
+/* Loads all submodule settings from the config. */
+int submodule_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "submodule.recurse")) {
+		int v = git_config_bool(var, value) ?
+			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+		config_update_recurse_submodules = v;
+		return 0;
+	} else {
+		return git_modules_config(var, value, cb);
+	}
+}
+
+/* Cheap function that only determines if we're interested in submodules at all */
+int git_default_submodule_config(const char *var, const char *value, void *cb)
+{
+	if (!strcmp(var, "submodule.recurse")) {
+		int v = git_config_bool(var, value) ?
+			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+		config_update_recurse_submodules = v;
+	}
+	return 0;
+}
+
+int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
+						     const char *arg, int unset)
+{
+	if (unset) {
+		config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
+		return 0;
+	}
+	if (arg)
+		config_update_recurse_submodules =
+			parse_update_recurse_submodules_arg(opt->long_name,
+							    arg);
+	else
+		config_update_recurse_submodules = RECURSE_SUBMODULES_ON;
+
+	return 0;
+}
+
+void load_submodule_cache(void)
+{
+	if (config_update_recurse_submodules == RECURSE_SUBMODULES_OFF)
+		return;
+
+	gitmodules_config();
+	git_config(submodule_config, NULL);
 }
 
 void gitmodules_config(void)
@@ -196,7 +248,8 @@ void gitmodules_config(void)
 		}
 
 		if (!gitmodules_is_unmerged)
-			git_config_from_file(submodule_config, gitmodules_path.buf, NULL);
+			git_config_from_file(git_modules_config,
+				gitmodules_path.buf, NULL);
 		strbuf_release(&gitmodules_path);
 	}
 }
@@ -207,7 +260,7 @@ void gitmodules_config_sha1(const unsigned char *commit_sha1)
 	unsigned char sha1[20];
 
 	if (gitmodule_sha1_from_commit(commit_sha1, sha1, &rev)) {
-		git_config_from_blob_sha1(submodule_config, rev.buf,
+		git_config_from_blob_sha1(git_modules_config, rev.buf,
 					  sha1, NULL);
 	}
 	strbuf_release(&rev);
@@ -658,11 +711,6 @@ done:
 void set_config_fetch_recurse_submodules(int value)
 {
 	config_fetch_recurse_submodules = value;
-}
-
-void set_config_update_recurse_submodules(int value)
-{
-	config_update_recurse_submodules = value;
 }
 
 int should_update_submodules(void)
