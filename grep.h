@@ -191,7 +191,7 @@ struct grep_source {
 	char *name;
 
 	enum grep_source_type {
-		GREP_SOURCE_SHA1,
+		GREP_SOURCE_OID,
 		GREP_SOURCE_FILE,
 		GREP_SOURCE_BUF,
 		GREP_SOURCE_SUBMODULE,

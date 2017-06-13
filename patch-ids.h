@@ -3,7 +3,7 @@
 
 struct patch_id {
 	struct hashmap_entry ent;
-	unsigned char patch_id[GIT_MAX_RAWSZ];
+	struct object_id patch_id;
 	struct commit *commit;
 };
 
@@ -13,7 +13,7 @@ struct patch_ids {
 };
 
 int commit_patch_id(struct commit *commit, struct diff_options *options,
-		    unsigned char *sha1, int);
+		    struct object_id *oid, int);
 int init_patch_ids(struct patch_ids *);
 int free_patch_ids(struct patch_ids *);
 struct patch_id *add_commit_patch_id(struct commit *, struct patch_ids *);

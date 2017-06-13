@@ -302,7 +302,7 @@ static char *grab_blob(const struct object_id *oid, unsigned int mode,
 		return xcalloc(1, 1);
 	} else if (textconv) {
 		struct diff_filespec *df = alloc_filespec(path);
-		fill_filespec(df, oid->hash, 1, mode);
+		fill_filespec(df, oid, 1, mode);
 		*size = fill_textconv(textconv, df, &blob);
 		free_filespec(df);
 	} else {
@@ -1022,7 +1022,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 						   &result_size, NULL, NULL);
 		} else if (textconv) {
 			struct diff_filespec *df = alloc_filespec(elem->path);
-			fill_filespec(df, null_sha1, 0, st.st_mode);
+			fill_filespec(df, &null_oid, 0, st.st_mode);
 			result_size = fill_textconv(textconv, df, &result);
 			free_filespec(df);
 		} else if (0 <= (fd = open(elem->path, O_RDONLY))) {
@@ -1311,7 +1311,7 @@ static const char *path_path(void *obj)
 
 
 /* find set of paths that every parent touches */
-static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
+static struct combine_diff_path *find_paths_generic(const struct object_id *oid,
 	const struct oid_array *parents, struct diff_options *opt)
 {
 	struct combine_diff_path *paths = NULL;
@@ -1336,7 +1336,7 @@ static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
 			opt->output_format = stat_opt;
 		else
 			opt->output_format = DIFF_FORMAT_NO_OUTPUT;
-		diff_tree_sha1(parents->oid[i].hash, sha1, "", opt);
+		diff_tree_oid(&parents->oid[i], oid, "", opt);
 		diffcore_std(opt);
 		paths = intersect_paths(paths, i, num_parent);
 
@@ -1360,31 +1360,31 @@ static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
  * rename/copy detection, etc, comparing all trees simultaneously (= faster).
  */
 static struct combine_diff_path *find_paths_multitree(
-	const unsigned char *sha1, const struct oid_array *parents,
+	const struct object_id *oid, const struct oid_array *parents,
 	struct diff_options *opt)
 {
 	int i, nparent = parents->nr;
-	const unsigned char **parents_sha1;
+	const struct object_id **parents_oid;
 	struct combine_diff_path paths_head;
 	struct strbuf base;
 
-	ALLOC_ARRAY(parents_sha1, nparent);
+	ALLOC_ARRAY(parents_oid, nparent);
 	for (i = 0; i < nparent; i++)
-		parents_sha1[i] = parents->oid[i].hash;
+		parents_oid[i] = &parents->oid[i];
 
 	/* fake list head, so worker can assume it is non-NULL */
 	paths_head.next = NULL;
 
 	strbuf_init(&base, PATH_MAX);
-	diff_tree_paths(&paths_head, sha1, parents_sha1, nparent, &base, opt);
+	diff_tree_paths(&paths_head, oid, parents_oid, nparent, &base, opt);
 
 	strbuf_release(&base);
-	free(parents_sha1);
+	free(parents_oid);
 	return paths_head.next;
 }
 
 
-void diff_tree_combined(const unsigned char *sha1,
+void diff_tree_combined(const struct object_id *oid,
 			const struct oid_array *parents,
 			int dense,
 			struct rev_info *rev)
@@ -1448,11 +1448,11 @@ void diff_tree_combined(const unsigned char *sha1,
 		 * diff(sha1,parent_i) for all i to do the job, specifically
 		 * for parent0.
 		 */
-		paths = find_paths_generic(sha1, parents, &diffopts);
+		paths = find_paths_generic(oid, parents, &diffopts);
 	}
 	else {
 		int stat_opt;
-		paths = find_paths_multitree(sha1, parents, &diffopts);
+		paths = find_paths_multitree(oid, parents, &diffopts);
 
 		/*
 		 * show stat against the first parent even
@@ -1463,7 +1463,7 @@ void diff_tree_combined(const unsigned char *sha1,
 		if (stat_opt) {
 			diffopts.output_format = stat_opt;
 
-			diff_tree_sha1(parents->oid[0].hash, sha1, "", &diffopts);
+			diff_tree_oid(&parents->oid[0], oid, "", &diffopts);
 			diffcore_std(&diffopts);
 			if (opt->orderfile)
 				diffcore_order(opt->orderfile);
@@ -1539,6 +1539,6 @@ void diff_tree_combined_merge(const struct commit *commit, int dense,
 		oid_array_append(&parents, &parent->item->object.oid);
 		parent = parent->next;
 	}
-	diff_tree_combined(commit->object.oid.hash, &parents, dense, rev);
+	diff_tree_combined(&commit->object.oid, &parents, dense, rev);
 	oid_array_clear(&parents);
 }

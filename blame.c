@@ -556,9 +556,9 @@ static struct blame_origin *find_origin(struct commit *parent,
 	if (is_null_oid(&origin->commit->object.oid))
 		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
-		diff_tree_sha1(parent->tree->object.oid.hash,
-			       origin->commit->tree->object.oid.hash,
-			       "", &diff_opts);
+		diff_tree_oid(&parent->tree->object.oid,
+			      &origin->commit->tree->object.oid,
+			      "", &diff_opts);
 	diffcore_std(&diff_opts);
 
 	if (!diff_queued_diff.nr) {
@@ -625,9 +625,9 @@ static struct blame_origin *find_rename(struct commit *parent,
 	if (is_null_oid(&origin->commit->object.oid))
 		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
-		diff_tree_sha1(parent->tree->object.oid.hash,
-			       origin->commit->tree->object.oid.hash,
-			       "", &diff_opts);
+		diff_tree_oid(&parent->tree->object.oid,
+			      &origin->commit->tree->object.oid,
+			      "", &diff_opts);
 	diffcore_std(&diff_opts);
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {
@@ -1247,7 +1247,7 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 	/* Try "find copies harder" on new path if requested;
 	 * we do not want to use diffcore_rename() actually to
 	 * match things up; find_copies_harder is set only to
-	 * force diff_tree_sha1() to feed all filepairs to diff_queue,
+	 * force diff_tree_oid() to feed all filepairs to diff_queue,
 	 * and this code needs to be after diff_setup_done(), which
 	 * usually makes find-copies-harder imply copy detection.
 	 */
@@ -1259,9 +1259,9 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 	if (is_null_oid(&target->commit->object.oid))
 		do_diff_cache(&parent->tree->object.oid, &diff_opts);
 	else
-		diff_tree_sha1(parent->tree->object.oid.hash,
-			       target->commit->tree->object.oid.hash,
-			       "", &diff_opts);
+		diff_tree_oid(&parent->tree->object.oid,
+			      &target->commit->tree->object.oid,
+			      "", &diff_opts);
 
 	if (!DIFF_OPT_TST(&diff_opts, FIND_COPIES_HARDER))
 		diffcore_std(&diff_opts);

@@ -56,8 +56,8 @@ static void stuff_change(struct diff_options *opt,
 
 	one = alloc_filespec(old_path);
 	two = alloc_filespec(new_path);
-	fill_filespec(one, old_oid->hash, old_oid_valid, old_mode);
-	fill_filespec(two, new_oid->hash, new_oid_valid, new_mode);
+	fill_filespec(one, old_oid, old_oid_valid, old_mode);
+	fill_filespec(two, new_oid, new_oid_valid, new_mode);
 
 	diff_queue(&diff_queued_diff, one, two);
 }
@@ -174,7 +174,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 		swap = 1;
 	oid[swap] = &ent0->item->oid;
 	oid[1 - swap] = &ent1->item->oid;
-	diff_tree_sha1(oid[0]->hash, oid[1]->hash, "", &revs->diffopt);
+	diff_tree_oid(oid[0], oid[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
 }
@@ -194,7 +194,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	for (i = 1; i < ents; i++)
 		oid_array_append(&parents, &ent[i].item->oid);
-	diff_tree_combined(ent[0].item->oid.hash, &parents,
+	diff_tree_combined(&ent[0].item->oid, &parents,
 			   revs->dense_combined_merges, revs);
 	oid_array_clear(&parents);
 	return 0;
