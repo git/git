@@ -341,6 +341,47 @@ test_expect_success 'config information was renamed, too' '
 	test_must_fail git config branch.s/s.dummy
 '
 
+test_expect_success 'git branch -m correctly renames multiple config sections' '
+	test_when_finished "git checkout master" &&
+	git checkout -b source master &&
+
+	# Assert that a config file with multiple config sections has
+	# those sections preserved...
+	cat >expect <<-\EOF &&
+	branch.dest.key1=value1
+	some.gar.b=age
+	branch.dest.key2=value2
+	EOF
+	cat >config.branch <<\EOF &&
+;; Note the lack of -\EOF above & mixed indenting here. This is
+;; intentional, we are also testing that the formatting of copied
+;; sections is preserved.
+
+;; Comment for source. Tabs
+[branch "source"]
+	;; Comment for the source value
+	key1 = value1
+;; Comment for some.gar. Spaces
+[some "gar"]
+    ;; Comment for the some.gar value
+    b = age
+;; Comment for source, again. Mixed tabs/spaces.
+[branch "source"]
+    ;; Comment for the source value, again
+	key2 = value2
+EOF
+	cat config.branch >>.git/config &&
+	git branch -m source dest &&
+	git config -f .git/config -l | grep -F -e source -e dest -e some.gar >actual &&
+	test_cmp expect actual &&
+
+	# ...and that the comments for those sections are also
+	# preserved.
+	cat config.branch | sed "s/\"source\"/\"dest\"/" >expect &&
+	sed -n -e "/Note the lack/,\$p" .git/config >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'deleting a symref' '
 	git branch target &&
 	git symbolic-ref refs/heads/symref refs/heads/target &&
