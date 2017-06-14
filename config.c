@@ -218,8 +218,6 @@ static int include_by_gitdir(const struct config_options *opts,
 
 	if (opts->git_dir)
 		git_dir = opts->git_dir;
-	else if (have_git_dir())
-		git_dir = get_git_dir();
 	else
 		goto done;
 
@@ -1525,8 +1523,6 @@ static int do_git_config_sequence(const struct config_options *opts,
 
 	if (opts->commondir)
 		repo_config = mkpathdup("%s/config", opts->commondir);
-	else if (have_git_dir())
-		repo_config = git_pathdup("config");
 	else
 		repo_config = NULL;
 
@@ -1564,9 +1560,9 @@ static int do_git_config_sequence(const struct config_options *opts,
 	return ret;
 }
 
-int git_config_with_options(config_fn_t fn, void *data,
-			    struct git_config_source *config_source,
-			    const struct config_options *opts)
+int config_with_options(config_fn_t fn, void *data,
+			struct git_config_source *config_source,
+			const struct config_options *opts)
 {
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
 
@@ -1597,9 +1593,14 @@ static void git_config_raw(config_fn_t fn, void *data)
 	struct config_options opts = {0};
 
 	opts.respect_includes = 1;
-	if (git_config_with_options(fn, data, NULL, &opts) < 0)
+	if (have_git_dir()) {
+		opts.commondir = get_git_common_dir();
+		opts.git_dir = get_git_dir();
+	}
+
+	if (config_with_options(fn, data, NULL, &opts) < 0)
 		/*
-		 * git_config_with_options() normally returns only
+		 * config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
 		 * non-fatal potential errors are guarded by "if"
 		 * statements that are entered only when no error is
@@ -1659,7 +1660,7 @@ void read_early_config(config_fn_t cb, void *data)
 		opts.git_dir = gitdir.buf;
 	}
 
-	git_config_with_options(cb, data, NULL, &opts);
+	config_with_options(cb, data, NULL, &opts);
 
 	strbuf_release(&commondir);
 	strbuf_release(&gitdir);

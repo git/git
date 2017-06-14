@@ -243,8 +243,8 @@ static int get_value(const char *key_, const char *regex_)
 		}
 	}
 
-	git_config_with_options(collect_config, &values,
-				&given_config_source, &config_options);
+	config_with_options(collect_config, &values,
+			    &given_config_source, &config_options);
 
 	ret = !values.nr;
 
@@ -321,8 +321,8 @@ static void get_color(const char *var, const char *def_color)
 	get_color_slot = var;
 	get_color_found = 0;
 	parsed_color[0] = '\0';
-	git_config_with_options(git_get_color_config, NULL,
-				&given_config_source, &config_options);
+	config_with_options(git_get_color_config, NULL,
+			    &given_config_source, &config_options);
 
 	if (!get_color_found && def_color) {
 		if (color_parse(def_color, parsed_color) < 0)
@@ -353,8 +353,8 @@ static int get_colorbool(const char *var, int print)
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
-	git_config_with_options(git_get_colorbool_config, NULL,
-				&given_config_source, &config_options);
+	config_with_options(git_get_colorbool_config, NULL,
+			    &given_config_source, &config_options);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -442,8 +442,8 @@ static int get_urlmatch(const char *var, const char *url)
 		show_keys = 1;
 	}
 
-	git_config_with_options(urlmatch_config_entry, &config,
-				&given_config_source, &config_options);
+	config_with_options(urlmatch_config_entry, &config,
+			    &given_config_source, &config_options);
 
 	ret = !values.nr;
 
@@ -539,6 +539,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_options.respect_includes = !given_config_source.file;
 	else
 		config_options.respect_includes = respect_includes_opt;
+	if (!nongit) {
+		config_options.commondir = get_git_common_dir();
+		config_options.git_dir = get_git_dir();
+	}
 
 	if (end_null) {
 		term = '\0';
@@ -583,9 +587,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
-		if (git_config_with_options(show_all_config, NULL,
-					    &given_config_source,
-					    &config_options) < 0) {
+		if (config_with_options(show_all_config, NULL,
+					&given_config_source,
+					&config_options) < 0) {
 			if (given_config_source.file)
 				die_errno("unable to read config file '%s'",
 					  given_config_source.file);
