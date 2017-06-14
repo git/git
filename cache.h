@@ -11,7 +11,6 @@
 #include "string-list.h"
 #include "pack-revindex.h"
 #include "hash.h"
-#include "config.h"
 
 #ifndef platform_SHA_CTX
 /*

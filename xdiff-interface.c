@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "xdiff-interface.h"
 #include "xdiff/xtypes.h"
 #include "xdiff/xdiffi.h"

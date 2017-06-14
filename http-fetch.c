@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "exec_cmd.h"
 #include "http.h"
 #include "walker.h"

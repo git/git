@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "color.h"
 #include "parse-options.h"
 #include "urlmatch.h"

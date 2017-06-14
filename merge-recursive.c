@@ -4,6 +4,7 @@
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
 #include "cache.h"
+#include "config.h"
 #include "advice.h"
 #include "lockfile.h"
 #include "cache-tree.h"

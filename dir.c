@@ -8,6 +8,7 @@
  *		 Junio Hamano, 2005-2006
  */
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "attr.h"
 #include "refs.h"

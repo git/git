@@ -6,6 +6,7 @@
  * Based on git-verify-tag
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "commit.h"
 #include "run-command.h"

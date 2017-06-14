@@ -8,6 +8,7 @@
  * are.
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"

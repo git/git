@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "hashmap.h"
 #include "lockfile.h"
 #include "iterator.h"

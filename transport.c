@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "transport.h"
 #include "run-command.h"
 #include "pkt-line.h"

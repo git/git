@@ -4,6 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "cache.h"
+#include "config.h"
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
