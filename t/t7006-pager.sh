@@ -391,7 +391,7 @@ test_expect_success TTY 'core.pager in repo config works and retains cwd' '
 	)
 '
 
-test_expect_failure TTY 'core.pager is found via alias in subdirectory' '
+test_expect_success TTY 'core.pager is found via alias in subdirectory' '
 	sane_unset GIT_PAGER &&
 	test_config core.pager "cat >via-alias" &&
 	(
