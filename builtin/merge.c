@@ -7,6 +7,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "parse-options.h"
 #include "builtin.h"
 #include "lockfile.h"

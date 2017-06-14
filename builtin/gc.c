@@ -11,6 +11,7 @@
  */
 
 #include "builtin.h"
+#include "config.h"
 #include "tempfile.h"
 #include "lockfile.h"
 #include "parse-options.h"

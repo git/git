@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 
 struct config_alias_data {
 	const char *alias;

@@ -2,6 +2,7 @@
  * "git push"
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "run-command.h"
 #include "builtin.h"

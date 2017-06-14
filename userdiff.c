@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "userdiff.h"
 #include "attr.h"
 

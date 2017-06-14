@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Linus Torvalds
  */
 #include "cache.h"
+#include "config.h"
 
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;

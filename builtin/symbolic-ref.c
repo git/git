@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 #include "cache.h"
 #include "refs.h"
 #include "parse-options.h"

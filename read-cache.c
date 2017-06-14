@@ -5,6 +5,7 @@
  */
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "tempfile.h"
 #include "lockfile.h"
 #include "cache-tree.h"

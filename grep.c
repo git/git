@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "grep.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"

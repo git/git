@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "pkt-line.h"
 #include "run-command.h"
 #include "strbuf.h"

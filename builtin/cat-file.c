@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "parse-options.h"
 #include "userdiff.h"

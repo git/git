@@ -2,6 +2,7 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 #include "cache.h"
+#include "config.h"
 #include "tempfile.h"
 #include "quote.h"
 #include "diff.h"

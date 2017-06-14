@@ -6,6 +6,7 @@
  *
  */
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "exec_cmd.h"
 #include "strbuf.h"

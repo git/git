@@ -9,6 +9,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "refs.h"
 #include "parse-options.h"

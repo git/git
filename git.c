@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 #include "exec_cmd.h"
 #include "help.h"
 #include "run-command.h"

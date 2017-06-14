@@ -4,6 +4,7 @@
  * Based on git-am.sh by Junio C Hamano.
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "parse-options.h"
