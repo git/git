@@ -459,6 +459,21 @@ Any other arguments are passed directly to 'git log'
 	(URL) may be omitted if you are working from a 'git svn'-aware
 	repository (that has been `init`-ed with 'git svn').
 	The -r<revision> option is required for this.
++
+The commit message is supplied either directly with the `-m` or `-F`
+option, or indirectly from the tag or commit when the second tree-ish
+denotes such an object, or it is requested by invoking an editor (see
+`--edit` option below).
+
+-m <msg>;;
+--message=<msg>;;
+	Use the given `msg` as the commit message. This option
+	disables the `--edit` option.
+
+-F <filename>;;
+--file=<filename>;;
+	Take the commit message from the given file. This option
+	disables the `--edit` option.
 
 'info'::
 	Shows information about a file or directory similar to what
