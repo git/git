@@ -30,6 +30,7 @@ enum config_origin_type {
 
 struct config_options {
 	unsigned int respect_includes : 1;
+	const char *commondir;
 	const char *git_dir;
 };
 
