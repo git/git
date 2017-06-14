@@ -229,7 +229,7 @@ From a clean working directory:
 
 -------------------------------------------------
 $ echo "* text=auto" >.gitattributes
-$ rm .git/index     # Remove the index to re-scan the working directory
+$ git read-tree --empty   # Clean index, force re-scan of working directory
 $ git add .
 $ git status        # Show files that will be normalized
 $ git commit -m "Introduce end-of-line normalization"
