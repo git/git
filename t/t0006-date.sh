@@ -56,6 +56,7 @@ check_show unix-local "$TIME" '1466000000'
 check_show 'format:%z' "$TIME" '+0200'
 check_show 'format-local:%z' "$TIME" '+0000'
 check_show 'format:%Z' "$TIME" ''
+check_show 'format-local:%Z' "$TIME" 'UTC'
 check_show 'format:%%z' "$TIME" '%z'
 check_show 'format-local:%%z' "$TIME" '%z'
 
