@@ -121,7 +121,7 @@ Performance and Compression Tuning
 
 --depth=<n>::
 	Maximum delta depth, for blob and tree deltification.
-	Default is 10.
+	Default is 50.
 
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
