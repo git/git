@@ -1845,6 +1845,7 @@ struct object_info {
 	off_t *disk_sizep;
 	unsigned char *delta_base_sha1;
 	struct strbuf *typename;
+	void **contentp;
 
 	/* Response */
 	enum {
@@ -1878,6 +1879,13 @@ struct object_info {
 
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
 extern int packed_object_info(struct packed_git *pack, off_t offset, struct object_info *);
+
+/*
+ * Returns 1 if sha1 is the hash of a known missing blob. If size is not NULL,
+ * also returns its size.
+ */
+extern int in_missing_blob_manifest(const unsigned char *sha1,
+				    unsigned long *size);
 
 /* Dumb servers support */
 extern int update_server_info(int);
