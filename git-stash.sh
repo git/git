@@ -19,6 +19,7 @@ OPTIONS_SPEC=
 START_DIR=$(pwd)
 . git-sh-setup
 require_work_tree
+prefix=$(git rev-parse --show-prefix) || exit 1
 cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
@@ -272,6 +273,8 @@ push_stash () {
 		esac
 		shift
 	done
+
+	eval "set $(git rev-parse --sq --prefix "$prefix" -- "$@")"
 
 	if test -n "$patch_mode" && test -n "$untracked"
 	then
