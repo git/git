@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "submodule-config.h"
 #include "submodule.h"
 #include "dir.h"

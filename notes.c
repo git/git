@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "notes.h"
 #include "blob.h"
 #include "tree.h"

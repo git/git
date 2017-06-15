@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 
 int advice_push_update_rejected = 1;
 int advice_push_non_ff_current = 1;

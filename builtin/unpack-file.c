@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 
 static char *create_temp_file(unsigned char *sha1)
 {

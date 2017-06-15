@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
