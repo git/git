@@ -51,6 +51,12 @@ check_show iso-local "$TIME" '2016-06-15 14:13:20 +0000'
 check_show raw-local "$TIME" '1466000000 +0000'
 check_show unix-local "$TIME" '1466000000'
 
+check_show 'format:%z' "$TIME" '+0200'
+check_show 'format-local:%z' "$TIME" '+0000'
+check_show 'format:%Z' "$TIME" ''
+check_show 'format:%%z' "$TIME" '%z'
+check_show 'format-local:%%z' "$TIME" '%z'
+
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
 check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" LONG_IS_64BIT
