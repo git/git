@@ -610,6 +610,19 @@ struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec)
 	return parse_refspec_internal(nr_refspec, refspec, 1, 0);
 }
 
+void add_and_parse_fetch_refspec(struct remote *remote, const char *refspec)
+{
+	struct refspec *rs;
+
+	add_fetch_refspec(remote, refspec);
+	rs = parse_fetch_refspec(1, &refspec);
+	REALLOC_ARRAY(remote->fetch, remote->fetch_refspec_nr);
+	remote->fetch[remote->fetch_refspec_nr - 1] = *rs;
+
+	/* Not free_refspecs(), as we copied its pointers above */
+	free(rs);
+}
+
 struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
 {
 	return parse_refspec_internal(nr_refspec, refspec, 0, 0);
