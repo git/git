@@ -7,7 +7,7 @@
 
 /*
  * Generic implementation of background process infrastructure.
- * See Documentation/technical/api-background-process.txt.
+ * See: Documentation/technical/api-sub-process.txt
  */
 
  /* data structures */
