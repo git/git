@@ -70,6 +70,12 @@ static struct tm *time_to_tm(timestamp_t time, int tz)
 	return gmtime(&t);
 }
 
+static struct tm *time_to_tm_local(timestamp_t time)
+{
+	time_t t = time;
+	return localtime(&t);
+}
+
 /*
  * What value of "tz" was in effect back then at "time" in the
  * local timezone?
@@ -214,7 +220,10 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 		return timebuf.buf;
 	}
 
-	tm = time_to_tm(time, tz);
+	if (mode->local)
+		tm = time_to_tm_local(time);
+	else
+		tm = time_to_tm(time, tz);
 	if (!tm) {
 		tm = time_to_tm(0, 0);
 		tz = 0;
@@ -246,7 +255,8 @@ const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
 			month_names[tm->tm_mon], tm->tm_year + 1900,
 			tm->tm_hour, tm->tm_min, tm->tm_sec, tz);
 	else if (mode->type == DATE_STRFTIME)
-		strbuf_addftime(&timebuf, mode->strftime_fmt, tm);
+		strbuf_addftime(&timebuf, mode->strftime_fmt, tm, tz,
+				mode->local ? NULL : "");
 	else
 		strbuf_addf(&timebuf, "%.3s %.3s %d %02d:%02d:%02d %d%c%+05d",
 				weekday_names[tm->tm_wday],
