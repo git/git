@@ -226,8 +226,7 @@ int parse_tree_gently(struct tree *item, int quiet_on_missing)
 
 void free_tree_buffer(struct tree *tree)
 {
-	free(tree->buffer);
-	tree->buffer = NULL;
+	FREE_AND_NULL(tree->buffer);
 	tree->size = 0;
 	tree->object.parsed = 0;
 }

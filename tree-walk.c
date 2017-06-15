@@ -479,8 +479,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 	for (i = 0; i < n; i++)
 		free_extended_entry(tx + i);
 	free(tx);
-	free(traverse_path);
-	info->traverse_path = NULL;
+	FREE_AND_NULL(traverse_path);
 	strbuf_release(&base);
 	return error;
 }
