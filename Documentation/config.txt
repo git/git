@@ -348,6 +348,9 @@ advice.*::
 	rmHints::
 		In case of failure in the output of linkgit:git-rm[1],
 		show directions on how to proceed from the current state.
+	addEmbeddedRepo::
+		Advice on what to do when you've accidentally added one
+		git repo inside of another.
 --
 
 core.fileMode::
