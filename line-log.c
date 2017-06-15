@@ -610,8 +610,7 @@ parse_lines(struct commit *commit, const char *prefix, struct string_list *args)
 		line_log_data_insert(&ranges, full_name, begin, end);
 
 		free_filespec(spec);
-		free(ends);
-		ends = NULL;
+		FREE_AND_NULL(ends);
 	}
 
 	for (p = ranges; p; p = p->next)

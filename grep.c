@@ -1778,8 +1778,7 @@ void grep_source_clear_data(struct grep_source *gs)
 	case GREP_SOURCE_FILE:
 	case GREP_SOURCE_SHA1:
 	case GREP_SOURCE_SUBMODULE:
-		free(gs->buf);
-		gs->buf = NULL;
+		FREE_AND_NULL(gs->buf);
 		gs->size = 0;
 		break;
 	case GREP_SOURCE_BUF:

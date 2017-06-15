@@ -2944,8 +2944,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 				       head_oid.hash, &head_type);
 
 	if (head_ref && !(head_type & REF_ISSYMREF)) {
-		free(head_ref);
-		head_ref = NULL;
+		FREE_AND_NULL(head_ref);
 	}
 
 	/*

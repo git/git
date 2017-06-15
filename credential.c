@@ -93,8 +93,7 @@ static void credential_apply_config(struct credential *c)
 	c->configured = 1;
 
 	if (!c->use_http_path && proto_is_http(c->protocol)) {
-		free(c->path);
-		c->path = NULL;
+		FREE_AND_NULL(c->path);
 	}
 }
 

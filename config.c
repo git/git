@@ -395,8 +395,7 @@ static int git_config_parse_key_1(const char *key, char **store_key, int *basele
 
 out_free_ret_1:
 	if (store_key) {
-		free(*store_key);
-		*store_key = NULL;
+		FREE_AND_NULL(*store_key);
 	}
 	return -CONFIG_INVALID_KEY;
 }

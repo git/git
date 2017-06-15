@@ -1888,8 +1888,7 @@ int discard_index(struct index_state *istate)
 	free_name_hash(istate);
 	cache_tree_free(&(istate->cache_tree));
 	istate->initialized = 0;
-	free(istate->cache);
-	istate->cache = NULL;
+	FREE_AND_NULL(istate->cache);
 	istate->cache_alloc = 0;
 	discard_split_index(istate);
 	free_untracked_cache(istate->untracked);
@@ -2603,8 +2602,7 @@ void *read_blob_data_from_index(const struct index_state *istate,
 
 void stat_validity_clear(struct stat_validity *sv)
 {
-	free(sv->sd);
-	sv->sd = NULL;
+	FREE_AND_NULL(sv->sd);
 }
 
 int stat_validity_check(struct stat_validity *sv, const char *path)
