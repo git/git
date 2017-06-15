@@ -140,8 +140,7 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	/* if last->next is !NULL - it is a pre-allocated memory, we can reuse */
 	p = last->next;
 	if (p && (alloclen > (intptr_t)p->next)) {
-		free(p);
-		p = NULL;
+		FREE_AND_NULL(p);
 	}
 
 	if (!p) {
@@ -559,8 +558,7 @@ struct combine_diff_path *diff_tree_paths(
 	 * (see path_appendnew() for details about why)
 	 */
 	if (p->next) {
-		free(p->next);
-		p->next = NULL;
+		FREE_AND_NULL(p->next);
 	}
 
 	return p;

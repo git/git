@@ -610,8 +610,7 @@ char *compute_alternate_path(const char *path, struct strbuf *err)
 
 out:
 	if (seen_error) {
-		free(ref_git);
-		ref_git = NULL;
+		FREE_AND_NULL(ref_git);
 	}
 
 	return ref_git;

@@ -35,8 +35,7 @@ int oid_array_lookup(struct oid_array *array, const struct object_id *oid)
 
 void oid_array_clear(struct oid_array *array)
 {
-	free(array->oid);
-	array->oid = NULL;
+	FREE_AND_NULL(array->oid);
 	array->nr = 0;
 	array->alloc = 0;
 	array->sorted = 0;

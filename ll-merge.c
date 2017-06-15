@@ -209,8 +209,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	result->size = st.st_size;
 	result->ptr = xmallocz(result->size);
 	if (read_in_full(fd, result->ptr, result->size) != result->size) {
-		free(result->ptr);
-		result->ptr = NULL;
+		FREE_AND_NULL(result->ptr);
 		result->size = 0;
 	}
  close_bad:

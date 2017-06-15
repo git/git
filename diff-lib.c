@@ -179,8 +179,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				free(dpath);
 				continue;
 			}
-			free(dpath);
-			dpath = NULL;
+			FREE_AND_NULL(dpath);
 
 			/*
 			 * Show the diff for the 'ce' if we found the one

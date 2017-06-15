@@ -66,8 +66,7 @@ static char *read_ref_note(const unsigned char sha1[20])
 	else if (!msglen || type != OBJ_BLOB) {
 		error("Note contains unusable content. "
 			"Is something else using this notes tree? %s", notes_ref);
-		free(msg);
-		msg = NULL;
+		FREE_AND_NULL(msg);
 	}
 	free_notes(NULL);
 	return msg;

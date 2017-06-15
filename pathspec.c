@@ -662,7 +662,6 @@ void clear_pathspec(struct pathspec *pathspec)
 			attr_check_free(pathspec->items[i].attr_check);
 	}
 
-	free(pathspec->items);
-	pathspec->items = NULL;
+	FREE_AND_NULL(pathspec->items);
 	pathspec->nr = 0;
 }

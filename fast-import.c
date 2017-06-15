@@ -1063,8 +1063,7 @@ discard_pack:
 		close(pack_data->pack_fd);
 		unlink_or_warn(pack_data->pack_name);
 	}
-	free(pack_data);
-	pack_data = NULL;
+	FREE_AND_NULL(pack_data);
 	running = 0;
 
 	/* We can't carry a delta across packfiles. */
@@ -1149,8 +1148,7 @@ static int store_object(
 
 		/* We cannot carry a delta into the new pack. */
 		if (delta) {
-			free(delta);
-			delta = NULL;
+			FREE_AND_NULL(delta);
 
 			git_deflate_init(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;

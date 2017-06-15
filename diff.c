@@ -1218,8 +1218,7 @@ static void free_diff_words_data(struct emit_callback *ecbdata)
 			regfree(ecbdata->diff_words->word_regex);
 			free(ecbdata->diff_words->word_regex);
 		}
-		free(ecbdata->diff_words);
-		ecbdata->diff_words = NULL;
+		FREE_AND_NULL(ecbdata->diff_words);
 	}
 }
 
@@ -2951,8 +2950,7 @@ void diff_free_filespec_blob(struct diff_filespec *s)
 void diff_free_filespec_data(struct diff_filespec *s)
 {
 	diff_free_filespec_blob(s);
-	free(s->cnt_data);
-	s->cnt_data = NULL;
+	FREE_AND_NULL(s->cnt_data);
 }
 
 static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
