@@ -6,6 +6,8 @@
 
 #include "string-list.h"
 
+struct index_state;
+
 enum safe_crlf {
 	SAFE_CRLF_FALSE = 0,
 	SAFE_CRLF_FAIL = 1,
@@ -50,12 +52,14 @@ struct delayed_checkout {
 };
 
 extern enum eol core_eol;
-extern const char *get_cached_convert_stats_ascii(const char *path);
+extern const char *get_cached_convert_stats_ascii(const struct index_state *istate,
+						  const char *path);
 extern const char *get_wt_convert_stats_ascii(const char *path);
 extern const char *get_convert_attr_ascii(const char *path);
 
 /* returns 1 if *dst was used */
-extern int convert_to_git(const char *path, const char *src, size_t len,
+extern int convert_to_git(const struct index_state *istate,
+			  const char *path, const char *src, size_t len,
 			  struct strbuf *dst, enum safe_crlf checksafe);
 extern int convert_to_working_tree(const char *path, const char *src,
 				   size_t len, struct strbuf *dst);
@@ -63,14 +67,17 @@ extern int async_convert_to_working_tree(const char *path, const char *src,
 					 size_t len, struct strbuf *dst,
 					 void *dco);
 extern int async_query_available_blobs(const char *cmd, struct string_list *delayed_paths);
-extern int renormalize_buffer(const char *path, const char *src, size_t len,
+extern int renormalize_buffer(const struct index_state *istate,
+			      const char *path, const char *src, size_t len,
 			      struct strbuf *dst);
-static inline int would_convert_to_git(const char *path)
+static inline int would_convert_to_git(const struct index_state *istate,
+				       const char *path)
 {
-	return convert_to_git(path, NULL, 0, NULL, 0);
+	return convert_to_git(istate, path, NULL, 0, NULL, 0);
 }
 /* Precondition: would_convert_to_git_filter_fd(path) == true */
-extern void convert_to_git_filter_fd(const char *path, int fd,
+extern void convert_to_git_filter_fd(const struct index_state *istate,
+				     const char *path, int fd,
 				     struct strbuf *dst,
 				     enum safe_crlf checksafe);
 extern int would_convert_to_git_filter_fd(const char *path);
