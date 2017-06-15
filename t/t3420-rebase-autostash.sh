@@ -45,7 +45,7 @@ create_expected_success_am() {
 }
 
 create_expected_success_interactive() {
-	cr=$'\r' &&
+	cr=$(echo . | tr '.' '\015') &&
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
 	HEAD is now at $(git rev-parse --short feature-branch) third commit
@@ -103,7 +103,7 @@ create_expected_failure_am() {
 }
 
 create_expected_failure_interactive() {
-	cr=$'\r' &&
+	cr=$(echo . | tr '.' '\015') &&
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
 	HEAD is now at $(git rev-parse --short feature-branch) third commit
