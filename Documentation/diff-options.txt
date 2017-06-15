@@ -231,6 +231,38 @@ ifdef::git-diff[]
 endif::git-diff[]
 	It is the same as `--color=never`.
 
+--color-moved[=<mode>]::
+	Moved lines of code are colored differently.
+ifdef::git-diff[]
+	It can be changed by the `diff.colorMoved` configuration setting.
+endif::git-diff[]
+	The <mode> defaults to 'no' if the option is not given
+	and to 'adjacentbounds' if the option with no mode is given.
+	The mode must be one of:
++
+--
+no::
+	Moved lines are not highlighted.
+nobounds::
+	Any line that is added in one location and was removed
+	in another location will be colored with 'color.diff.newmoved'.
+	Similarly 'color.diff.oldmoved' will be used for removed lines
+	that are added somewhere else in the diff.
+allbounds::
+	Based on 'nobounds'. Additionally blocks of moved code are
+	detected and the first and last line of a block will be highlighted
+	using 'color.diff.newMovedAlternate' or
+	'color.diff.oldMovedAlternate'.
+adjacentbounds::
+	The same as 'allbounds' except that highlighting is only performed
+	at adjacent block boundaries of blocks that have the same sign.
+alternate::
+	Based on 'nobounds'. Additionally blocks of moved code are
+	detected. If moved blocks are adjacent mark one of them with the
+	alternative move color using 'color.diff.newMovedAlternate' or
+	'color.diff.oldMovedAlternate'.
+--
+
 --word-diff[=<mode>]::
 	Show a word diff, using the <mode> to delimit changed words.
 	By default, words are delimited by whitespace; see

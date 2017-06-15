@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
@@ -37,6 +38,7 @@ static int verbose;
 static int show_progress = -1;
 static int show_dangling = 1;
 static int name_objects;
+static int missing_blob_ok;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
@@ -92,6 +94,9 @@ static int fsck_config(const char *var, const char *value, void *cb)
 		fsck_set_msg_type(&fsck_obj_options, var, value);
 		return 0;
 	}
+
+	if (!strcmp(var, "core.missingblobcommand"))
+		missing_blob_ok = 1;
 
 	return git_default_config(var, value, cb);
 }
@@ -222,6 +227,9 @@ static void check_reachable_object(struct object *obj)
 	if (!(obj->flags & HAS_OBJ)) {
 		if (has_sha1_pack(obj->oid.hash))
 			return; /* it is in pack - forget about it */
+		if (missing_blob_ok && obj->type == OBJ_BLOB &&
+		    in_missing_blob_manifest(obj->oid.hash, NULL))
+			return;
 		printf("missing %s %s\n", printable_type(obj),
 			describe_object(obj));
 		errors_found |= ERROR_REACHABLE;

@@ -5,6 +5,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "attr.h"
 #include "xdiff-interface.h"
 #include "run-command.h"
@@ -209,8 +210,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	result->size = st.st_size;
 	result->ptr = xmallocz(result->size);
 	if (read_in_full(fd, result->ptr, result->size) != result->size) {
-		free(result->ptr);
-		result->ptr = NULL;
+		FREE_AND_NULL(result->ptr);
 		result->size = 0;
 	}
  close_bad:
@@ -339,7 +339,7 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
 static void normalize_file(mmfile_t *mm, const char *path)
 {
 	struct strbuf strbuf = STRBUF_INIT;
-	if (renormalize_buffer(path, mm->ptr, mm->size, &strbuf)) {
+	if (renormalize_buffer(&the_index, path, mm->ptr, mm->size, &strbuf)) {
 		free(mm->ptr);
 		mm->size = strbuf.len;
 		mm->ptr = strbuf_detach(&strbuf, NULL);

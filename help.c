@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "run-command.h"
@@ -9,6 +10,7 @@
 #include "column.h"
 #include "version.h"
 #include "refs.h"
+#include "parse-options.h"
 
 void add_cmdname(struct cmdnames *cmds, const char *name, int len)
 {
@@ -267,9 +269,8 @@ static void add_cmd_list(struct cmdnames *cmds, struct cmdnames *old)
 
 	for (i = 0; i < old->cnt; i++)
 		cmds->names[cmds->cnt++] = old->names[i];
-	free(old->names);
+	FREE_AND_NULL(old->names);
 	old->cnt = 0;
-	old->names = NULL;
 }
 
 /* An empirically derived magic number */
@@ -289,7 +290,7 @@ const char *help_unknown_cmd(const char *cmd)
 	memset(&other_cmds, 0, sizeof(other_cmds));
 	memset(&aliases, 0, sizeof(aliases));
 
-	git_config(git_unknown_cmd_config, NULL);
+	read_early_config(git_unknown_cmd_config, NULL);
 
 	load_command_list("git-", &main_cmds, &other_cmds);
 
@@ -383,16 +384,30 @@ const char *help_unknown_cmd(const char *cmd)
 
 int cmd_version(int argc, const char **argv, const char *prefix)
 {
+	int build_options = 0;
+	const char * const usage[] = {
+		N_("git version [<options>]"),
+		NULL
+	};
+	struct option options[] = {
+		OPT_BOOL(0, "build-options", &build_options,
+			 "also print build options"),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
 	/*
 	 * The format of this string should be kept stable for compatibility
 	 * with external projects that rely on the output of "git version".
+	 *
+	 * Always show the version, even if other options are given.
 	 */
 	printf("git version %s\n", git_version_string);
-	while (*++argv) {
-		if (!strcmp(*argv, "--build-options")) {
-			printf("sizeof-long: %d\n", (int)sizeof(long));
-			/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
-		}
+
+	if (build_options) {
+		printf("sizeof-long: %d\n", (int)sizeof(long));
+		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
 	}
 	return 0;
 }

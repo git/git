@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "hashmap.h"
 #include "lockfile.h"
 #include "iterator.h"
@@ -1341,6 +1342,18 @@ int for_each_ref_in_submodule(const char *submodule, const char *prefix,
 				    prefix, fn, cb_data);
 }
 
+int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
+				  each_ref_fn fn, void *cb_data,
+				  unsigned int broken)
+{
+	unsigned int flag = 0;
+
+	if (broken)
+		flag = DO_FOR_EACH_INCLUDE_BROKEN;
+	return do_for_each_ref(get_submodule_ref_store(submodule),
+			       prefix, fn, 0, flag, cb_data);
+}
+
 int for_each_replace_ref(each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_ref(get_main_ref_store(),
@@ -2031,4 +2044,15 @@ int refs_rename_ref(struct ref_store *refs, const char *oldref,
 int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 {
 	return refs_rename_ref(get_main_ref_store(), oldref, newref, logmsg);
+}
+
+int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
+		    const char *newref, const char *logmsg)
+{
+	return refs->be->copy_ref(refs, oldref, newref, logmsg);
+}
+
+int copy_existing_ref(const char *oldref, const char *newref, const char *logmsg)
+{
+	return refs_copy_existing_ref(get_main_ref_store(), oldref, newref, logmsg);
 }

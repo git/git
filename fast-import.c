@@ -154,6 +154,7 @@ Format of STDIN stream:
 
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "object.h"
 #include "blob.h"
@@ -280,7 +281,7 @@ struct recent_command {
 };
 
 /* Configured limits on output */
-static unsigned long max_depth = 10;
+static unsigned long max_depth = 50;
 static off_t max_packsize;
 static int unpack_limit = 100;
 static int force_update;
@@ -1063,8 +1064,7 @@ discard_pack:
 		close(pack_data->pack_fd);
 		unlink_or_warn(pack_data->pack_name);
 	}
-	free(pack_data);
-	pack_data = NULL;
+	FREE_AND_NULL(pack_data);
 	running = 0;
 
 	/* We can't carry a delta across packfiles. */
@@ -1149,8 +1149,7 @@ static int store_object(
 
 		/* We cannot carry a delta into the new pack. */
 		if (delta) {
-			free(delta);
-			delta = NULL;
+			FREE_AND_NULL(delta);
 
 			git_deflate_init(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;

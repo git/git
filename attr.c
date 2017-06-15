@@ -9,6 +9,7 @@
 
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "exec_cmd.h"
 #include "attr.h"
 #include "dir.h"
@@ -638,13 +639,11 @@ void attr_check_reset(struct attr_check *check)
 
 void attr_check_clear(struct attr_check *check)
 {
-	free(check->items);
-	check->items = NULL;
+	FREE_AND_NULL(check->items);
 	check->alloc = 0;
 	check->nr = 0;
 
-	free(check->all_attrs);
-	check->all_attrs = NULL;
+	FREE_AND_NULL(check->all_attrs);
 	check->all_attrs_nr = 0;
 
 	drop_attr_stack(&check->stack);

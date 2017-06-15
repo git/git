@@ -1,4 +1,5 @@
 #include "../cache.h"
+#include "../config.h"
 #include "../refs.h"
 #include "refs-internal.h"
 #include "ref-cache.h"
@@ -370,6 +371,18 @@ static void files_ref_path(struct files_ref_store *refs,
 }
 
 /*
+ * Check that the packed refs cache (if any) still reflects the
+ * contents of the file. If not, clear the cache.
+ */
+static void validate_packed_ref_cache(struct files_ref_store *refs)
+{
+	if (refs->packed &&
+	    !stat_validity_check(&refs->packed->validity,
+				 files_packed_refs_path(refs)))
+		clear_packed_ref_cache(refs);
+}
+
+/*
  * Get the packed_ref_cache for the specified files_ref_store,
  * creating and populating it if it hasn't been read before or if the
  * file has been changed (according to its `validity` field) since it
@@ -381,10 +394,8 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 {
 	const char *packed_refs_file = files_packed_refs_path(refs);
 
-	if (refs->packed &&
-	    !is_lock_file_locked(&refs->packed_refs_lock) &&
-	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
-		clear_packed_ref_cache(refs);
+	if (!is_lock_file_locked(&refs->packed_refs_lock))
+		validate_packed_ref_cache(refs);
 
 	if (!refs->packed)
 		refs->packed = read_packed_refs(packed_refs_file);
@@ -1311,13 +1322,17 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 			    &refs->packed_refs_lock, files_packed_refs_path(refs),
 			    flags, timeout_value) < 0)
 		return -1;
+
 	/*
-	 * Get the current packed-refs while holding the lock. It is
-	 * important that we call `get_packed_ref_cache()` before
-	 * setting `packed_ref_cache->lock`, because otherwise the
-	 * former will see that the file is locked and assume that the
-	 * cache can't be stale.
+	 * Now that we hold the `packed-refs` lock, make sure that our
+	 * cache matches the current version of the file. Normally
+	 * `get_packed_ref_cache()` does that for us, but that
+	 * function assumes that when the file is locked, any existing
+	 * cache is still valid. We've just locked the file, but it
+	 * might have changed the moment *before* we locked it.
 	 */
+	validate_packed_ref_cache(refs);
+
 	packed_ref_cache = get_packed_ref_cache(refs);
 	/* Increment the reference count to prevent it from being freed: */
 	acquire_packed_ref_cache(packed_ref_cache);
@@ -1733,9 +1748,9 @@ static int commit_ref_update(struct files_ref_store *refs,
 			     const struct object_id *oid, const char *logmsg,
 			     struct strbuf *err);
 
-static int files_rename_ref(struct ref_store *ref_store,
+static int files_copy_or_rename_ref(struct ref_store *ref_store,
 			    const char *oldrefname, const char *newrefname,
-			    const char *logmsg)
+			    const char *logmsg, int copy)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "rename_ref");
@@ -1767,8 +1782,12 @@ static int files_rename_ref(struct ref_store *ref_store,
 	}
 
 	if (flag & REF_ISSYMREF) {
-		ret = error("refname %s is a symbolic ref, renaming it is not supported",
-			    oldrefname);
+		if (copy)
+			ret = error("refname %s is a symbolic ref, copying it is not supported",
+				    oldrefname);
+		else
+			ret = error("refname %s is a symbolic ref, renaming it is not supported",
+				    oldrefname);
 		goto out;
 	}
 	if (!refs_rename_ref_available(&refs->base, oldrefname, newrefname)) {
@@ -1776,13 +1795,19 @@ static int files_rename_ref(struct ref_store *ref_store,
 		goto out;
 	}
 
-	if (log && rename(sb_oldref.buf, tmp_renamed_log.buf)) {
+	if (!copy && log && rename(sb_oldref.buf, tmp_renamed_log.buf)) {
 		ret = error("unable to move logfile logs/%s to logs/"TMP_RENAMED_LOG": %s",
 			    oldrefname, strerror(errno));
 		goto out;
 	}
 
-	if (refs_delete_ref(&refs->base, logmsg, oldrefname,
+	if (copy && log && copy_file(tmp_renamed_log.buf, sb_oldref.buf, 0644)) {
+		ret = error("unable to copy logfile logs/%s to logs/"TMP_RENAMED_LOG": %s",
+			    oldrefname, strerror(errno));
+		goto out;
+	}
+
+	if (!copy && refs_delete_ref(&refs->base, logmsg, oldrefname,
 			    orig_oid.hash, REF_NODEREF)) {
 		error("unable to delete old %s", oldrefname);
 		goto rollback;
@@ -1795,7 +1820,7 @@ static int files_rename_ref(struct ref_store *ref_store,
 	 * the safety anyway; we want to delete the reference whatever
 	 * its current value.
 	 */
-	if (!refs_read_ref_full(&refs->base, newrefname,
+	if (!copy && !refs_read_ref_full(&refs->base, newrefname,
 				RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 				oid.hash, NULL) &&
 	    refs_delete_ref(&refs->base, NULL, newrefname,
@@ -1826,7 +1851,10 @@ static int files_rename_ref(struct ref_store *ref_store,
 	lock = lock_ref_sha1_basic(refs, newrefname, NULL, NULL, NULL,
 				   REF_NODEREF, NULL, &err);
 	if (!lock) {
-		error("unable to rename '%s' to '%s': %s", oldrefname, newrefname, err.buf);
+		if (copy)
+			error("unable to copy '%s' to '%s': %s", oldrefname, newrefname, err.buf);
+		else
+			error("unable to rename '%s' to '%s': %s", oldrefname, newrefname, err.buf);
 		strbuf_release(&err);
 		goto rollback;
 	}
@@ -1875,6 +1903,22 @@ static int files_rename_ref(struct ref_store *ref_store,
 	strbuf_release(&tmp_renamed_log);
 
 	return ret;
+}
+
+static int files_rename_ref(struct ref_store *ref_store,
+			    const char *oldrefname, const char *newrefname,
+			    const char *logmsg)
+{
+	return files_copy_or_rename_ref(ref_store, oldrefname,
+				 newrefname, logmsg, 0);
+}
+
+static int files_copy_ref(struct ref_store *ref_store,
+			    const char *oldrefname, const char *newrefname,
+			    const char *logmsg)
+{
+	return files_copy_or_rename_ref(ref_store, oldrefname,
+				 newrefname, logmsg, 1);
 }
 
 static int close_ref(struct ref_lock *lock)
@@ -2944,8 +2988,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 				       head_oid.hash, &head_type);
 
 	if (head_ref && !(head_type & REF_ISSYMREF)) {
-		free(head_ref);
-		head_ref = NULL;
+		FREE_AND_NULL(head_ref);
 	}
 
 	/*
@@ -3383,6 +3426,7 @@ struct ref_storage_be refs_be_files = {
 	files_create_symref,
 	files_delete_refs,
 	files_rename_ref,
+	files_copy_ref,
 
 	files_ref_iterator_begin,
 	files_read_raw_ref,

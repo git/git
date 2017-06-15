@@ -189,6 +189,10 @@ objects from the source repository into a pack in the cloned repository.
 	values are given for the same key, each value will be written to
 	the config file. This makes it safe, for example, to add
 	additional fetch refspecs to the origin remote.
+	Note that due to limitations of the current implementation some
+	configuration variables don't take effect during the initial
+	fetch and checkout.  Configuration variables known to not take
+	effect are: `remote.<name>.mirror` and `remote.<name>.tagOpt`.
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the

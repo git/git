@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "refs.h"
 #include "notes-utils.h"
@@ -158,7 +159,7 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 }
 
 int copy_note_for_rewrite(struct notes_rewrite_cfg *c,
-			  const unsigned char *from_obj, const unsigned char *to_obj)
+			  const struct object_id *from_obj, const struct object_id *to_obj)
 {
 	int ret = 0;
 	int i;

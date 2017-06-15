@@ -139,6 +139,8 @@ struct untracked_cache {
 	int gitignore_invalidated;
 	int dir_invalidated;
 	int dir_opened;
+	/* fsmonitor invalidation data */
+	unsigned int use_fsmonitor : 1;
 };
 
 struct dir_struct {
@@ -196,6 +198,9 @@ struct dir_struct {
 	struct sha1_stat ss_excludes_file;
 	unsigned unmanaged_exclude_files;
 };
+
+/*Count the number of slashes for string s*/
+extern int count_slashes(const char *s);
 
 /*
  * The ordering of these constants is significant, with
@@ -354,4 +359,7 @@ extern void connect_work_tree_and_git_dir(const char *work_tree, const char *git
 extern void relocate_gitdir(const char *path,
 			    const char *old_git_dir,
 			    const char *new_git_dir);
+struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
+					     struct untracked_cache_dir *dir,
+					     const char *name, int len);
 #endif

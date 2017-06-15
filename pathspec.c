@@ -1,5 +1,6 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "pathspec.h"
 #include "attr.h"
@@ -662,7 +663,6 @@ void clear_pathspec(struct pathspec *pathspec)
 			attr_check_free(pathspec->items[i].attr_check);
 	}
 
-	free(pathspec->items);
-	pathspec->items = NULL;
+	FREE_AND_NULL(pathspec->items);
 	pathspec->nr = 0;
 }

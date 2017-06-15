@@ -7,6 +7,7 @@
 #include "tree-walk.h"
 #include "pathspec.h"
 #include "object.h"
+#include "hashmap.h"
 
 struct rev_info;
 struct diff_options;
@@ -23,16 +24,16 @@ typedef int (*pathchange_fn_t)(struct diff_options *options,
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
-		 const unsigned char *old_sha1,
-		 const unsigned char *new_sha1,
-		 int old_sha1_valid, int new_sha1_valid,
+		 const struct object_id *old_oid,
+		 const struct object_id *new_oid,
+		 int old_oid_valid, int new_oid_valid,
 		 const char *fullpath,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule);
 
 typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
-		    const unsigned char *sha1,
-		    int sha1_valid,
+		    const struct object_id *oid,
+		    int oid_valid,
 		    const char *fullpath, unsigned dirty_submodule);
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
@@ -115,6 +116,42 @@ enum diff_submodule_format {
 	DIFF_SUBMODULE_INLINE_DIFF
 };
 
+/*
+ * This struct is used when we need to buffer the output of the diff output.
+ *
+ * NEEDSWORK: Instead of storing a copy of the line, add an offset pointer
+ * into the pre/post image file. This pointer could be a union with the
+ * line pointer. By storing an offset into the file instead of the literal line,
+ * we can decrease the memory footprint for the buffered output. At first we
+ * may want to only have indirection for the content lines, but we could also
+ * enhance the state for emitting prefabricated lines, e.g. the similarity
+ * score line or hunk/file headers would only need to store a number or path
+ * and then the output can be constructed later on depending on state.
+ */
+struct diff_line {
+	const char *set;
+	const char *reset;
+	const char *line;
+	int len;
+	int sign;
+	int add_line_prefix;
+	enum {
+		/*
+		 * Emits [lineprefix][set][sign][reset] and then calls
+		 * ws_check_emit which will output "line", marked up
+		 * according to ws_rule.
+		 */
+		DIFF_LINE_WS,
+
+		/* Emits [lineprefix][set][sign] line [reset] */
+		DIFF_LINE_ASIS,
+
+		/* Reloads the ws_rule; line contains the file name */
+		DIFF_LINE_RELOAD_WS_RULE
+	} state;
+};
+#define DIFF_LINE_INIT {NULL, NULL, NULL, 0, 0, 0}
+
 struct diff_options {
 	const char *orderfile;
 	const char *pickaxe;
@@ -186,7 +223,25 @@ struct diff_options {
 	void *output_prefix_data;
 
 	int diff_path_counter;
+
+	unsigned ws_rule;
+	int use_buffer;
+
+	struct diff_line *line_buffer;
+	int line_buffer_nr, line_buffer_alloc;
+
+	enum {
+		MOVED_LINES_NO = 0,
+		MOVED_LINES_BOUNDARY_NO = 1,
+		MOVED_LINES_BOUNDARY_ALL = 2,
+		MOVED_LINES_BOUNDARY_ADJACENT = 3,
+		MOVED_LINES_ALTERNATE = 4,
+	} color_moved;
 };
+
+/* Emit [line_prefix] [set] line [reset] */
+void diff_emit_line(struct diff_options *o, const char *set, const char *reset,
+		    const char *line, int len);
 
 enum color_diff {
 	DIFF_RESET = 0,
@@ -197,7 +252,11 @@ enum color_diff {
 	DIFF_FILE_NEW = 5,
 	DIFF_COMMIT = 6,
 	DIFF_WHITESPACE = 7,
-	DIFF_FUNCINFO = 8
+	DIFF_FUNCINFO = 8,
+	DIFF_FILE_OLD_MOVED = 9,
+	DIFF_FILE_OLD_MOVED_ALT = 10,
+	DIFF_FILE_NEW_MOVED = 11,
+	DIFF_FILE_NEW_MOVED_ALT = 12
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
@@ -210,13 +269,14 @@ const char *diff_line_prefix(struct diff_options *);
 extern const char mime_boundary_leader[];
 
 extern struct combine_diff_path *diff_tree_paths(
-	struct combine_diff_path *p, const unsigned char *sha1,
-	const unsigned char **parent_sha1, int nparent,
+	struct combine_diff_path *p, const struct object_id *oid,
+	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
-extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
-			  const char *base, struct diff_options *opt);
-extern int diff_root_tree_sha1(const unsigned char *new, const char *base,
-                               struct diff_options *opt);
+extern int diff_tree_oid(const struct object_id *old_oid,
+			 const struct object_id *new_oid,
+			 const char *base, struct diff_options *opt);
+extern int diff_root_tree_oid(const struct object_id *new_oid, const char *base,
+			      struct diff_options *opt);
 
 struct combine_diff_path {
 	struct combine_diff_path *next;
@@ -236,7 +296,7 @@ struct combine_diff_path {
 extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			      int dense, struct rev_info *);
 
-extern void diff_tree_combined(const unsigned char *sha1, const struct oid_array *parents, int dense, struct rev_info *rev);
+extern void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, int dense, struct rev_info *rev);
 
 extern void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
 
@@ -247,16 +307,15 @@ extern int diff_can_quit_early(struct diff_options *);
 extern void diff_addremove(struct diff_options *,
 			   int addremove,
 			   unsigned mode,
-			   const unsigned char *sha1,
-			   int sha1_valid,
+			   const struct object_id *oid,
+			   int oid_valid,
 			   const char *fullpath, unsigned dirty_submodule);
 
 extern void diff_change(struct diff_options *,
 			unsigned mode1, unsigned mode2,
-			const unsigned char *sha1,
-			const unsigned char *sha2,
-			int sha1_valid,
-			int sha2_valid,
+			const struct object_id *old_oid,
+			const struct object_id *new_oid,
+			int old_oid_valid, int new_oid_valid,
 			const char *fullpath,
 			unsigned dirty_submodule1, unsigned dirty_submodule2);
 
@@ -355,7 +414,7 @@ extern int run_diff_files(struct rev_info *revs, unsigned int option);
 extern int run_diff_index(struct rev_info *revs, int cached);
 
 extern int do_diff_cache(const struct object_id *, struct diff_options *);
-extern int diff_flush_patch_id(struct diff_options *, unsigned char *, int);
+extern int diff_flush_patch_id(struct diff_options *, struct object_id *, int);
 
 extern int diff_result_code(struct diff_options *, int);
 
@@ -396,8 +455,8 @@ extern int parse_rename_score(const char **cp_p);
 
 extern long parse_algorithm_value(const char *value);
 
-extern int print_stat_summary(FILE *fp, int files,
-			      int insertions, int deletions);
+extern void print_stat_summary(FILE *fp, int files,
+			       int insertions, int deletions);
 extern void setup_diff_pager(struct diff_options *);
 
 #endif /* DIFF_H */

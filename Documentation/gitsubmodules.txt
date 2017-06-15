@@ -1,0 +1,214 @@
+gitsubmodules(7)
+================
+
+NAME
+----
+gitsubmodules - mounting one repository inside another
+
+SYNOPSIS
+--------
+.gitmodules, $GIT_DIR/config
+------------------
+git submodule
+git <command> --recurse-submodules
+------------------
+
+DESCRIPTION
+-----------
+
+A submodule is another Git repository tracked in a subdirectory of your
+repository. The tracked repository has its own history, which does not
+interfere with the history of the current repository.
+
+Submodules are composed from a so-called `gitlink` tree entry
+in the main repository that refers to a particular commit object
+within the inner repository.
+
+Additionally to the gitlink entry the `.gitmodules` file (see
+linkgit:gitmodules[5]) at the root of the source tree contains
+information needed for submodules. The only required information
+is the path setting, which estabishes a logical name for the submodule.
+
+The usual git configuration (see linkgit:git-config[1]) can be used to
+override settings given by the `.gitmodules` file.
+
+Submodules can be used for two different use cases:
+
+1. Using another project that stands on its own.
+  When you want to use a third party library, submodules allow you to
+  have a clean history for your own project as well as for the library.
+  This also allows for updating the third party library as needed.
+
+2. Artificially split a (logically single) project into multiple
+   repositories and tying them back together. This can be used to
+   overcome deficiences in the data model of Git, such as:
+
+* To have finer grained access control.
+  The design principles of Git do not allow for partial repositories to be
+  checked out or transferred. A repository is the smallest unit that a user
+  can be given access to. Submodules are separate repositories, such that
+  you can restrict access to parts of your project via the use of submodules.
+* In its current form Git scales up poorly for very large repositories that
+  change a lot, as the history grows very large. For that you may want to look
+  at shallow clone, sparse checkout, or git-LFS.
+  However you can also use submodules to e.g. hold large binary assets
+  and these repositories are then shallowly cloned such that you do not
+  have a large history locally.
+
+The data model
+--------------
+
+A submodule can be considered its own autonomous repository, that has a
+worktree and a git directory at a different place than the superproject.
+
+The superproject only records the commit object name in its tree, such that
+any other information, e.g. where to obtain a copy from, is not recorded
+in the core data structures of Git. The porcelain layer of Git however
+makes use of the `.gitmodules` file that gives hints where and how to
+obtain a copy of the submodule git repository from.
+
+Submodule operations can be configured using the following mechanisms
+(from highest to lowest precedence):
+
+ * the command line for those commands that support taking submodule specs.
+
+ * the configuration file `$GIT_DIR/config`.
+
+ * the configuration file `config` found in the `refs/submodule/config` branch.
+   This can be used to overwrite the upstream configuration in the `.gitmodules`
+   file without changing the history of the project.
+   Useful options here are overwriting the base, where relative URLs apply to,
+   when mirroring only parts of the larger collection of submodules.
+
+ * the `.gitmodules` file inside the repository. A project usually includes this
+   file to suggest defaults for the upstream collection of repositories.
+
+On the location of the git directory
+------------------------------------
+
+Since v1.7.7 of Git, the git directory of submodules is stored inside the
+superprojects git directory at $GIT_DIR/modules/<submodule-name>
+This location allows for the working tree to be non existent while keeping
+the history around. So we can use `git-rm` on a submodule without loosing
+information that may only be local; it is also possible to checkout the
+superproject before and after the deletion of the submodule without the
+need to reclone the submodule as it is kept locally.
+
+Workflow for a third party library
+----------------------------------
+
+  # add the submodule
+  git submodule add <url> <path>
+
+  # occasionally update the submodule to a new version:
+  git -C <path> checkout <new version>
+  git add <path>
+  git commit -m "update submodule to new version"
+
+  # see the discussion below on deleting submodules
+
+
+Workflow for an artifically split repo
+--------------------------------------
+
+  # Enable recursion for relevant commands, such that
+  # regular commands recurse into submodules by default
+  git config --global submodule.recurse true
+
+  # Unlike the other commands below clone still needs
+  # its own recurse flag:
+  git clone --recurse <URL> <directory>
+  cd <directory>
+
+  # Get to know the code:
+  git grep foo
+  git ls-files
+
+  # Get new code
+  git fetch
+  git pull --rebase
+
+  # change worktree
+  git checkout
+  git reset
+
+Deleting a submodule
+--------------------
+
+Deleting a submodule can happen on different levels:
+
+1) Removing it from the local working tree without tampering with
+   the history of the superproject.
+
+You may no longer need the submodule, but still want to keep it recorded
+in the superproject history as others may have use for it.
+--
+  git submodule deinit <submodule path>
+--
+will remove the configuration entries
+as well as the work
+
+2) Remove it from history:
+--
+   git rm <submodule>
+--
+
+3) Remove the submodules git directory:
+
+When you also want to free up the disk space that the submodules git
+directory uses, you have to delete it manually. It is found in
+`$GIT_DIR/modules`.
+The steps 1 and 2 can be undone via `git submodule init` or
+`git revert`, respectively.  This step may incur data loss,
+and cannot be undone. That is why there is no builtin.
+
+Other mechanisms
+----------------
+
+Git repositories are allowed to be kept inside other repositories without
+the need to use submodules. This however does not enable cross-repository
+versioning as the inner repository is unaware of the outer repository,
+which in turn ignores the inner.
+
+Submodules are not to be confused with remotes, which are other
+repositories of the same project; submodules are meant for
+different projects you would like to make part of your source tree,
+while the history of the two projects still stays completely
+independent and you cannot modify the contents of the submodule
+from within the main project.
+If you want to merge the project histories and want to treat the
+aggregated whole as a single project from then on, you may want to
+add a remote for the other project and use the 'subtree' merge strategy,
+instead of treating the other project as a submodule. Directories
+that come from both projects can be cloned and checked out as a whole
+if you choose to go that route.
+
+Third party tools
+-----------------
+
+There are a variety of third party tools that manage multiple repositories
+and their relationships to each other, such as Androids repo tool or git-slave.
+Often these tools lack cross repository versioning.
+
+https://source.android.com/source/using-repo
+
+http://gitslave.sourceforge.net/
+
+Implementation details
+----------------------
+
+When cloning or pulling a repository containing submodules the submodules
+will not be checked out by default; You can instruct 'clone' to recurse
+into submodules. The 'init' and 'update' subcommands of 'git submodule'
+will maintain submodules checked out and at an appropriate revision in
+your working tree. Alternatively you can set 'submodule.recurse' to have
+'checkout' recursing into submodules.
+
+
+SEE ALSO
+--------
+linkgit:git-submodule[1], linkgit:gitmodules[5].
+
+GIT
+---
+Part of the linkgit:git[1] suite

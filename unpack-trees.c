@@ -1,5 +1,6 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -379,6 +380,7 @@ static int check_updates(struct unpack_trees_options *o)
 	if (should_update_submodules() && o->update && !o->dry_run)
 		reload_gitmodules_file(index, &state);
 
+	enable_delayed_checkout(&state);
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
@@ -393,6 +395,7 @@ static int check_updates(struct unpack_trees_options *o)
 			}
 		}
 	}
+	errs |= finish_delayed_checkout(&state);
 	stop_progress(&progress);
 	if (o->update)
 		git_attr_set_direction(GIT_ATTR_CHECKIN, NULL);
@@ -417,6 +420,7 @@ static int apply_sparse_checkout(struct index_state *istate,
 		ce->ce_flags &= ~CE_SKIP_WORKTREE;
 	if (was_skip_worktree != ce_skip_worktree(ce)) {
 		ce->ce_flags |= CE_UPDATE_IN_BASE;
+		ce->ce_flags |= CE_FSMONITOR_DIRTY;
 		istate->cache_changed |= CE_ENTRY_CHANGED;
 	}
 

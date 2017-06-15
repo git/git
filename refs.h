@@ -303,7 +303,10 @@ int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
 int for_each_ref_submodule(const char *submodule,
 			   each_ref_fn fn, void *cb_data);
 int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-		each_ref_fn fn, void *cb_data);
+			      each_ref_fn fn, void *cb_data);
+int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
+				  each_ref_fn fn, void *cb_data,
+				  unsigned int broken);
 int for_each_tag_ref_submodule(const char *submodule,
 			       each_ref_fn fn, void *cb_data);
 int for_each_branch_ref_submodule(const char *submodule,
@@ -440,7 +443,14 @@ char *shorten_unambiguous_ref(const char *refname, int strict);
 /** rename ref, return 0 on success **/
 int refs_rename_ref(struct ref_store *refs, const char *oldref,
 		    const char *newref, const char *logmsg);
-int rename_ref(const char *oldref, const char *newref, const char *logmsg);
+int rename_ref(const char *oldref, const char *newref,
+			const char *logmsg);
+
+/** copy ref, return 0 on success **/
+int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
+		    const char *newref, const char *logmsg);
+int copy_existing_ref(const char *oldref, const char *newref,
+			const char *logmsg);
 
 int refs_create_symref(struct ref_store *refs, const char *refname,
 		       const char *target, const char *logmsg);
