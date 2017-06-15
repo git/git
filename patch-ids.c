@@ -11,18 +11,18 @@ static int patch_id_defined(struct commit *commit)
 }
 
 int commit_patch_id(struct commit *commit, struct diff_options *options,
-		    unsigned char *sha1, int diff_header_only)
+		    struct object_id *oid, int diff_header_only)
 {
 	if (!patch_id_defined(commit))
 		return -1;
 
 	if (commit->parents)
-		diff_tree_sha1(commit->parents->item->object.oid.hash,
-			       commit->object.oid.hash, "", options);
+		diff_tree_oid(&commit->parents->item->object.oid,
+			      &commit->object.oid, "", options);
 	else
-		diff_root_tree_sha1(commit->object.oid.hash, "", options);
+		diff_root_tree_oid(&commit->object.oid, "", options);
 	diffcore_std(options);
-	return diff_flush_patch_id(options, sha1, diff_header_only);
+	return diff_flush_patch_id(options, oid, diff_header_only);
 }
 
 /*
@@ -39,15 +39,15 @@ static int patch_id_cmp(struct patch_id *a,
 			struct patch_id *b,
 			struct diff_options *opt)
 {
-	if (is_null_sha1(a->patch_id) &&
-	    commit_patch_id(a->commit, opt, a->patch_id, 0))
+	if (is_null_oid(&a->patch_id) &&
+	    commit_patch_id(a->commit, opt, &a->patch_id, 0))
 		return error("Could not get patch ID for %s",
 			oid_to_hex(&a->commit->object.oid));
-	if (is_null_sha1(b->patch_id) &&
-	    commit_patch_id(b->commit, opt, b->patch_id, 0))
+	if (is_null_oid(&b->patch_id) &&
+	    commit_patch_id(b->commit, opt, &b->patch_id, 0))
 		return error("Could not get patch ID for %s",
 			oid_to_hex(&b->commit->object.oid));
-	return hashcmp(a->patch_id, b->patch_id);
+	return oidcmp(&a->patch_id, &b->patch_id);
 }
 
 int init_patch_ids(struct patch_ids *ids)
@@ -71,13 +71,13 @@ static int init_patch_id_entry(struct patch_id *patch,
 			       struct commit *commit,
 			       struct patch_ids *ids)
 {
-	unsigned char header_only_patch_id[GIT_MAX_RAWSZ];
+	struct object_id header_only_patch_id;
 
 	patch->commit = commit;
-	if (commit_patch_id(commit, &ids->diffopts, header_only_patch_id, 1))
+	if (commit_patch_id(commit, &ids->diffopts, &header_only_patch_id, 1))
 		return -1;
 
-	hashmap_entry_init(patch, sha1hash(header_only_patch_id));
+	hashmap_entry_init(patch, sha1hash(header_only_patch_id.hash));
 	return 0;
 }
 

@@ -342,7 +342,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 
 #ifndef NO_PTHREADS
 	if (num_threads) {
-		add_work(opt, GREP_SOURCE_SHA1, pathbuf.buf, path, oid);
+		add_work(opt, GREP_SOURCE_OID, pathbuf.buf, path, oid);
 		strbuf_release(&pathbuf);
 		return 0;
 	} else
@@ -351,7 +351,7 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
 		struct grep_source gs;
 		int hit;
 
-		grep_source_init(&gs, GREP_SOURCE_SHA1, pathbuf.buf, path, oid);
+		grep_source_init(&gs, GREP_SOURCE_OID, pathbuf.buf, path, oid);
 		strbuf_release(&pathbuf);
 		hit = grep_source(opt, &gs);
 
@@ -587,7 +587,7 @@ static int grep_submodule_launch(struct grep_opt *opt,
 	 * with the object's name: 'tree-name:filename'.  In order to
 	 * provide uniformity of output we want to pass the name of the
 	 * parent project's object name to the submodule so the submodule can
-	 * prefix its output with the parent's name and not its own SHA1.
+	 * prefix its output with the parent's name and not its own OID.
 	 */
 	if (gs->identifier && end_of_base)
 		argv_array_pushf(&cp.args, "--parent-basename=%.*s",
@@ -600,12 +600,12 @@ static int grep_submodule_launch(struct grep_opt *opt,
 		 * If there is a tree identifier for the submodule, add the
 		 * rev after adding the submodule options but before the
 		 * pathspecs.  To do this we listen for the '--' and insert the
-		 * sha1 before pushing the '--' onto the child process argv
+		 * oid before pushing the '--' onto the child process argv
 		 * array.
 		 */
 		if (gs->identifier &&
 		    !strcmp("--", submodule_options.argv[i])) {
-			argv_array_push(&cp.args, sha1_to_hex(gs->identifier));
+			argv_array_push(&cp.args, oid_to_hex(gs->identifier));
 		}
 
 		argv_array_push(&cp.args, submodule_options.argv[i]);
@@ -635,11 +635,11 @@ static int grep_submodule_launch(struct grep_opt *opt,
 
 /*
  * Prep grep structures for a submodule grep
- * sha1: the sha1 of the submodule or NULL if using the working tree
+ * oid: the oid of the submodule or NULL if using the working tree
  * filename: name of the submodule including tree name of parent
  * path: location of the submodule
  */
-static int grep_submodule(struct grep_opt *opt, const unsigned char *sha1,
+static int grep_submodule(struct grep_opt *opt, const struct object_id *oid,
 			  const char *filename, const char *path)
 {
 	if (!is_submodule_initialized(path))
@@ -649,7 +649,7 @@ static int grep_submodule(struct grep_opt *opt, const unsigned char *sha1,
 		 * If searching history, check for the presense of the
 		 * submodule's gitdir before skipping the submodule.
 		 */
-		if (sha1) {
+		if (oid) {
 			const struct submodule *sub =
 					submodule_from_path(null_sha1, path);
 			if (sub)
@@ -664,7 +664,7 @@ static int grep_submodule(struct grep_opt *opt, const unsigned char *sha1,
 
 #ifndef NO_PTHREADS
 	if (num_threads) {
-		add_work(opt, GREP_SOURCE_SUBMODULE, filename, path, sha1);
+		add_work(opt, GREP_SOURCE_SUBMODULE, filename, path, oid);
 		return 0;
 	} else
 #endif
@@ -673,7 +673,7 @@ static int grep_submodule(struct grep_opt *opt, const unsigned char *sha1,
 		int hit;
 
 		grep_source_init(&gs, GREP_SOURCE_SUBMODULE,
-				 filename, path, sha1);
+				 filename, path, oid);
 		hit = grep_submodule_launch(opt, &gs);
 
 		grep_source_clear(&gs);
@@ -792,7 +792,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 					 check_attr);
 			free(data);
 		} else if (recurse_submodules && S_ISGITLINK(entry.mode)) {
-			hit |= grep_submodule(opt, entry.oid->hash, base->buf,
+			hit |= grep_submodule(opt, entry.oid, base->buf,
 					      base->buf + tn_len);
 		}
 

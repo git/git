@@ -2130,8 +2130,8 @@ cleanup_head_ref:
 			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
 			    !get_sha1(buf.buf, orig.hash) &&
 			    !get_sha1("HEAD", head.hash)) {
-				diff_tree_sha1(orig.hash, head.hash,
-					       "", &log_tree_opt.diffopt);
+				diff_tree_oid(&orig, &head, "",
+					      &log_tree_opt.diffopt);
 				log_tree_diff_flush(&log_tree_opt);
 			}
 		}
