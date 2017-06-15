@@ -303,7 +303,10 @@ int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
 int for_each_ref_submodule(const char *submodule,
 			   each_ref_fn fn, void *cb_data);
 int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-		each_ref_fn fn, void *cb_data);
+			      each_ref_fn fn, void *cb_data);
+int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
+				  each_ref_fn fn, void *cb_data,
+				  unsigned int broken);
 int for_each_tag_ref_submodule(const char *submodule,
 			       each_ref_fn fn, void *cb_data);
 int for_each_branch_ref_submodule(const char *submodule,

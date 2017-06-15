@@ -298,11 +298,11 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			 * you haven't already checked for via a
 			 * prefix check, whether via this
 			 * `prefix_ref_iterator` or upstream in
-			 * `iter0`). So if there wouldn't be at least
-			 * one character left in the refname after
-			 * trimming, report it as a bug:
+			 * `iter0`. So consider it a bug if we are
+			 * asked to trim off more characters than the
+			 * refname contains:
 			 */
-			if (strlen(iter->iter0->refname) <= iter->trim)
+			if (strlen(iter->iter0->refname) < iter->trim)
 				die("BUG: attempt to trim too many characters");
 			iter->base.refname = iter->iter0->refname + iter->trim;
 		} else {
