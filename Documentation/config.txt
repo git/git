@@ -390,6 +390,16 @@ The default is false, except linkgit:git-clone[1] or linkgit:git-init[1]
 will probe and set core.ignoreCase true if appropriate when the repository
 is created.
 
+core.missingBlobCommand::
+	If set, whenever a blob in the local repo is attempted to be
+	read but is missing, invoke this shell command to generate or
+	obtain that blob before reporting an error. This shell command
+	should take one or more hashes, each terminated by a newline, as
+	standard input, and (if successful) should write the
+	corresponding objects to the local repo (packed or loose).
++
+If set, fsck will not treat a missing blob as an error condition.
+
 core.precomposeUnicode::
 	This option is only used by Mac OS implementation of Git.
 	When core.precomposeUnicode=true, Git reverts the unicode decomposition
