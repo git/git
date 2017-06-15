@@ -1,14 +1,28 @@
 #include "cache.h"
 
+struct config_alias_data {
+	const char *alias;
+	char *v;
+};
+
+static int config_alias_cb(const char *key, const char *value, void *d)
+{
+	struct config_alias_data *data = d;
+	const char *p;
+
+	if (skip_prefix(key, "alias.", &p) && !strcmp(p, data->alias))
+		return git_config_string((const char **)&data->v, key, value);
+
+	return 0;
+}
+
 char *alias_lookup(const char *alias)
 {
-	char *v = NULL;
-	struct strbuf key = STRBUF_INIT;
-	strbuf_addf(&key, "alias.%s", alias);
-	if (git_config_key_is_valid(key.buf))
-		git_config_get_string(key.buf, &v);
-	strbuf_release(&key);
-	return v;
+	struct config_alias_data data = { alias, NULL };
+
+	read_early_config(config_alias_cb, &data);
+
+	return data.v;
 }
 
 #define SPLIT_CMDLINE_BAD_ENDING 1
