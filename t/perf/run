@@ -34,6 +34,7 @@ unpack_git_rev () {
 	(cd "$(git rev-parse --show-cdup)" && git archive --format=tar $rev) |
 	(cd build/$rev && tar x)
 }
+
 build_git_rev () {
 	rev=$1
 	for config in config.mak config.mak.autogen config.status
@@ -91,6 +92,26 @@ run_dirs () {
 		shift
 	done
 }
+
+get_var_from_env_or_config () {
+	env_var="$1"
+	conf_var="$2"
+	# $3 can be set to a default value
+
+	# Do nothing if the env variable is already set
+	eval "test -z \"\${$env_var+x}\"" || return
+
+	# Check if the variable is in the config file
+	test -n "$GIT_PERF_CONFIG_FILE" &&
+	conf_value=$(git config -f "$GIT_PERF_CONFIG_FILE" "$conf_var") &&
+	eval "$env_var=\"$conf_value\"" || {
+		test -n "${3+x}" &&
+		eval "$env_var=\"$3\""
+	}
+}
+
+get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf.repeatCount" 3
+export GIT_PERF_REPEAT_COUNT
 
 GIT_PERF_AGGREGATING_LATER=t
 export GIT_PERF_AGGREGATING_LATER

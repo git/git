@@ -59,9 +59,6 @@ perf_results_dir=$TEST_OUTPUT_DIRECTORY/test-results
 mkdir -p "$perf_results_dir"
 rm -f "$perf_results_dir"/$(basename "$0" .sh).subtests
 
-if test -z "$GIT_PERF_REPEAT_COUNT"; then
-	GIT_PERF_REPEAT_COUNT=3
-fi
 die_if_build_dir_not_repo () {
 	if ! ( cd "$TEST_DIRECTORY/.." &&
 		    git rev-parse --build-dir >/dev/null 2>&1 ); then
