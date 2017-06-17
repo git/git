@@ -481,7 +481,7 @@ parse_flags_and_rev()
 
 	case $# in
 		0)
-			have_stash || die "$(gettext "No stash found.")"
+			have_stash || die "$(gettext "No stash entries found.")"
 			set -- ${ref_stash}@{0}
 		;;
 		1)
@@ -573,7 +573,7 @@ apply_stash () {
 		GIT_INDEX_FILE="$TMPindex" git-read-tree "$u_tree" &&
 		GIT_INDEX_FILE="$TMPindex" git checkout-index --all &&
 		rm -f "$TMPindex" ||
-		die "$(gettext "Could not restore untracked files from stash")"
+		die "$(gettext "Could not restore untracked files from stash entry")"
 	fi
 
 	eval "
@@ -627,7 +627,7 @@ pop_stash() {
 		drop_stash "$@"
 	else
 		status=$?
-		say "$(gettext "The stash is kept in case you need it again.")"
+		say "$(gettext "The stash entry is kept in case you need it again.")"
 		exit $status
 	fi
 }
