@@ -1126,7 +1126,7 @@ static const char *quote_arg_msvc(const char *arg)
 
 #include "quote.h"
 
-static const char *quote_arg_sh(const char *arg)
+static const char *quote_arg_msys2(const char *arg)
 {
 	struct strbuf buf = STRBUF_INIT;
 	const char *p2 = arg, *p;
@@ -1528,6 +1528,34 @@ static void kill_child_processes_on_signal(void)
 	LeaveCriticalSection(&pinfo_cs);
 }
 
+static int is_msys2_sh(const char *cmd)
+{
+	if (cmd && !strcmp(cmd, "sh")) {
+		static int ret = -1;
+		char *p;
+
+		if (ret >= 0)
+			return ret;
+
+		p = path_lookup(cmd, 0);
+		if (!p)
+			ret = 0;
+		else {
+			size_t len = strlen(p);
+			ret = len > 15 &&
+				is_dir_sep(p[len - 15]) &&
+				!strncasecmp(p + len - 14, "usr", 3) &&
+				is_dir_sep(p[len - 11]) &&
+				!strncasecmp(p + len - 10, "bin", 3) &&
+				is_dir_sep(p[len - 7]) &&
+				!strcasecmp(p + len - 6, "sh.exe");
+			free(p);
+		}
+		return ret;
+	}
+	return 0;
+}
+
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaenv,
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
@@ -1542,7 +1570,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	HANDLE cons;
 	const char *strace_env;
 	const char *(*quote_arg)(const char *arg) =
-		*argv && !strcmp("sh", *argv) ? quote_arg_sh : quote_arg_msvc;
+		is_msys2_sh(*argv) ? quote_arg_msys2 : quote_arg_msvc;
 
 	if (!atexit_handler_initialized) {
 		atexit_handler_initialized = 1;
