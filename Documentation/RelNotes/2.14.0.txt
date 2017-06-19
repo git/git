@@ -70,6 +70,22 @@ UI, Workflows & Features
  * Many commands learned to pay attention to submodule.recurse
    configuration.
 
+ * The convention for a command line is to follow "git cmdname
+   --options" with revisions followed by an optional "--"
+   disambiguator and then finally pathspecs.  When "--" is not there,
+   we make sure early ones are all interpretable as revs (and do not
+   look like paths) and later ones are the other way around.  A
+   pathspec with "magic" (e.g. ":/p/a/t/h" that matches p/a/t/h from
+   the top-level of the working tree, no matter what subdirectory you
+   are working from) are conservatively judged as "not a path", which
+   required disambiguation more often.  The command line parser
+   learned to say "it's a pathspec" a bit more often when the syntax
+   looks like so.
+   (merge 2cb47ab695 jk/pathspec-magic-disambiguation later to maint).
+
+ * Update "perl-compatible regular expression" support to enable JIT
+   and also allow linking with the newer PCRE v2 library.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -145,6 +161,12 @@ Performance, Internal Implementation, Development Support etc.
  * We often try to open a file for reading whose existence is
    optional, and silently ignore errors from open/fopen; report such
    errors if they are not due to missing files.
+
+ * When an existing repository is used for t/perf testing, we first
+   create bit-for-bit copy of it, which may grab a transient state of
+   the repository and freeze it into the repository used for testing,
+   which then may cause Git operations to fail.  Single out "the index
+   being locked" case and forcibly drop the lock from the copy.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -309,5 +331,12 @@ notes for details).
  * A flaky test has been corrected.
    (merge 7c2115aa07 jk/pack-idx-corruption-safety later to maint).
 
+ * "git $cmd -h" for builtin commands calls the implementation of the
+   command (i.e. cmd_$cmd() function) without doing any repository
+   set-up, and the commands that expect RUN_SETUP is done by the Git
+   potty needs to be prepared to show the help text without barfing.
+   (merge d691551192 jk/consistent-h later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 8ba74bfd7c jc/diff-tree-stale-comment later to maint).
+   (merge 68602c01fd sb/submodule-rm-absorb later to maint).
