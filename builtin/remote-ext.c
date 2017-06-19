@@ -3,6 +3,9 @@
 #include "run-command.h"
 #include "pkt-line.h"
 
+static const char usage_msg[] =
+	"git remote-ext <remote> <url>";
+
 /*
  * URL syntax:
  *	'command [arg1 [arg2 [...]]]'	Invoke command with given arguments.
@@ -193,7 +196,7 @@ static int command_loop(const char *child)
 int cmd_remote_ext(int argc, const char **argv, const char *prefix)
 {
 	if (argc != 3)
-		die("Expected two arguments");
+		usage(usage_msg);
 
 	return command_loop(argv[2]);
 }

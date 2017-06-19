@@ -104,6 +104,9 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	struct setup_revision_opt s_r_opt;
 	int read_stdin = 0;
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(diff_tree_usage);
+
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	init_revisions(opt, prefix);
 	gitmodules_config();

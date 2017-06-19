@@ -20,6 +20,9 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	int result;
 	unsigned options = 0;
 
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(diff_files_usage);
+
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 	init_revisions(&rev, prefix);
 	gitmodules_config();
