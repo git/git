@@ -1066,7 +1066,7 @@ char *mingw_getcwd(char *pointer, int len)
  * See http://msdn2.microsoft.com/en-us/library/17w5ykft(vs.71).aspx
  * (Parsing C++ Command-Line Arguments)
  */
-static const char *quote_arg(const char *arg)
+static const char *quote_arg_msvc(const char *arg)
 {
 	/* count chars to quote */
 	int len = 0, n = 0;
@@ -1119,6 +1119,37 @@ static const char *quote_arg(const char *arg)
 	*d++ = '"';
 	*d++ = 0;
 	return q;
+}
+
+#include "quote.h"
+
+static const char *quote_arg_sh(const char *arg)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *p2 = arg, *p;
+
+	for (p = arg; *p; p++) {
+		int ws = isspace(*p);
+		if (!ws && *p != '\\' && *p != '"')
+			continue;
+		if (!buf.len)
+			strbuf_addch(&buf, '"');
+		if (p != p2)
+			strbuf_add(&buf, p2, p - p2);
+		if (!ws)
+			strbuf_addch(&buf, '\\');
+		p2 = p;
+	}
+
+	if (p == arg)
+		strbuf_addch(&buf, '"');
+	else if (!buf.len)
+		return arg;
+	else
+		strbuf_add(&buf, p2, p - p2),
+
+	strbuf_addch(&buf, '"');
+	return strbuf_detach(&buf, 0);
 }
 
 static const char *parse_interpreter(const char *cmd)
@@ -1547,6 +1578,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	BOOL ret;
 	HANDLE cons;
 	const char *strace_env;
+	const char *(*quote_arg)(const char *arg) =
+		*argv && !strcmp("sh", *argv) ? quote_arg_sh : quote_arg_msvc;
 
 	if (!atexit_handler_initialized) {
 		atexit_handler_initialized = 1;
