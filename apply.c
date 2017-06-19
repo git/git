@@ -762,17 +762,6 @@ static char *find_name_traditional(struct apply_state *state,
 	return find_name_common(state, line, def, p_value, line + len, 0);
 }
 
-static int count_slashes(const char *cp)
-{
-	int cnt = 0;
-	char ch;
-
-	while ((ch = *cp++))
-		if (ch == '/')
-			cnt++;
-	return cnt;
-}
-
 /*
  * Given the string after "--- " or "+++ ", guess the appropriate
  * p_value for the given patch.

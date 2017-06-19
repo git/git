@@ -197,6 +197,9 @@ struct dir_struct {
 	unsigned unmanaged_exclude_files;
 };
 
+/*Count the number of slashes for string s*/
+extern int count_slashes(const char *s);
+
 /*
  * The ordering of these constants is significant, with
  * higher-numbered match types signifying "closer" (i.e. more
