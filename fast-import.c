@@ -280,7 +280,7 @@ struct recent_command {
 };
 
 /* Configured limits on output */
-static unsigned long max_depth = 10;
+static unsigned long max_depth = 50;
 static off_t max_packsize;
 static int unpack_limit = 100;
 static int force_update;
