@@ -33,7 +33,62 @@ test_expect_success setup '
 	git commit -m "related commit"
 '
 
-testrebase() {
+create_expected_success_am () {
+	cat >expected <<-EOF
+	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
+	HEAD is now at $(git rev-parse --short feature-branch) third commit
+	First, rewinding head to replay your work on top of it...
+	Applying: second commit
+	Applying: third commit
+	Applied autostash.
+	EOF
+}
+
+create_expected_success_interactive () {
+	q_to_cr >expected <<-EOF
+	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
+	HEAD is now at $(git rev-parse --short feature-branch) third commit
+	Rebasing (1/2)QRebasing (2/2)QApplied autostash.
+	Successfully rebased and updated refs/heads/rebased-feature-branch.
+	EOF
+}
+
+create_expected_success_merge () {
+	cat >expected <<-EOF
+	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
+	HEAD is now at $(git rev-parse --short feature-branch) third commit
+	First, rewinding head to replay your work on top of it...
+	Merging unrelated-onto-branch with HEAD~1
+	Merging:
+	$(git rev-parse --short unrelated-onto-branch) unrelated commit
+	$(git rev-parse --short feature-branch^) second commit
+	found 1 common ancestor:
+	$(git rev-parse --short feature-branch~2) initial commit
+	[detached HEAD $(git rev-parse --short rebased-feature-branch~1)] second commit
+	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:14:13 2005 -0700
+	 2 files changed, 2 insertions(+)
+	 create mode 100644 file1
+	 create mode 100644 file2
+	Committed: 0001 second commit
+	Merging unrelated-onto-branch with HEAD~0
+	Merging:
+	$(git rev-parse --short rebased-feature-branch~1) second commit
+	$(git rev-parse --short feature-branch) third commit
+	found 1 common ancestor:
+	$(git rev-parse --short feature-branch~1) second commit
+	[detached HEAD $(git rev-parse --short rebased-feature-branch)] third commit
+	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:15:13 2005 -0700
+	 1 file changed, 1 insertion(+)
+	 create mode 100644 file3
+	Committed: 0002 third commit
+	All done.
+	Applied autostash.
+	EOF
+}
+
+testrebase () {
 	type=$1
 	dotest=$2
 
@@ -51,12 +106,18 @@ testrebase() {
 		test_config rebase.autostash true &&
 		git reset --hard &&
 		git checkout -b rebased-feature-branch feature-branch &&
-		test_when_finished git branch -D rebased-feature-branch &&
 		echo dirty >>file3 &&
-		git rebase$type unrelated-onto-branch &&
+		git rebase$type unrelated-onto-branch >actual 2>&1 &&
 		grep unrelated file4 &&
 		grep dirty file3 &&
 		git checkout feature-branch
+	'
+
+	test_expect_success "rebase$type --autostash: check output" '
+		test_when_finished git branch -D rebased-feature-branch &&
+		suffix=${type#\ --} && suffix=${suffix:-am} &&
+		create_expected_success_$suffix &&
+		test_cmp expected actual
 	'
 
 	test_expect_success "rebase$type: dirty index, non-conflicting rebase" '
