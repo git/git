@@ -43,6 +43,11 @@ test_expect_success clone '
 	git clone "file://$UNCPATH" clone
 '
 
+test_expect_failure 'clone with backslashed path' '
+	BACKSLASHED="$(echo "$UNCPATH" | tr / \\\\)" &&
+	git clone "$BACKSLASHED" backslashed
+'
+
 test_expect_success push '
 	(
 		cd clone &&
