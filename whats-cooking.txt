@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2017, #04; Tue, 13)
-X-master-at: 02a2850ad58eff6de70eb2dc5f96345c463857ac
-X-next-at: 1d7a3356d075f99e85512d28ce621fe2de69778c
+Subject: What's cooking in git.git (Jun 2017, #05; Mon, 19)
+X-master-at: 05ec6e13aaf33b6a647e1321203a770e697eea9a
+X-next-at: 0b547a2794f32e58c5c5c23c1b30b5e3920b2855
 
-What's cooking in git.git (Jun 2017, #04; Tue, 13)
+What's cooking in git.git (Jun 2017, #05; Mon, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,301 +20,31 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/diff-tree-stale-comment (2017-06-02) 1 commit
-  (merged to 'next' on 2017-06-04 at bffae281d2)
- + diff-tree: update stale in-code comments
+* ab/pcre-v2 (2017-06-02) 8 commits
+  (merged to 'next' on 2017-06-13 at 34bf49ee44)
+ + grep: add support for PCRE v2
+ + grep: un-break building with PCRE >= 8.32 without --enable-jit
+ + grep: un-break building with PCRE < 8.20
+ + grep: un-break building with PCRE < 8.32
+ + grep: add support for the PCRE v1 JIT API
+ + log: add -P as a synonym for --perl-regexp
+ + grep: skip pthreads overhead when using one thread
+ + grep: don't redundantly compile throwaway patterns under threading
+
+ Update "perl-compatible regular expression" support to enable JIT
+ and also allow linking with the newer PCRE v2 library.
+
+
+* ab/perf-remove-index-lock (2017-06-05) 1 commit
+  (merged to 'next' on 2017-06-13 at c532e59233)
+ + perf: work around the tested repo having an index.lock
+
+ When an existing repository is used for t/perf testing, we first
+ create bit-for-bit copy of it, which may grab a transient state of
+ the repository and freeze it into the repository used for testing,
+ which then may cause Git operations to fail.  Single out "the index
+ being locked" case and forcibly drop the lock from the copy.
 
- Comment fix.
-
-
-* jc/noent-notdir (2017-05-30) 2 commits
-  (merged to 'next' on 2017-06-04 at 7cb4efbc3c)
- + treewide: use is_missing_file_error() where ENOENT and ENOTDIR are checked
- + compat-util: is_missing_file_error()
-
- Our code often opens a path to an optional file, to work on its
- contents when we can successfully open it.  We can ignore a failure
- to open if such an optional file does not exist, but we do want to
- report a failure in opening for other reasons (e.g. we got an I/O
- error, or the file is there, but we lack the permission to open).
-
- The exact errors we need to ignore are ENOENT (obviously) and
- ENOTDIR (less obvious).  Instead of repeating comparison of errno
- with these two constants, introduce a helper function to do so.
-
-
-* jk/pack-idx-corruption-safety (2017-06-07) 1 commit
-  (merged to 'next' on 2017-06-07 at 31f94e174d)
- + t5313: make extended-table test more deterministic
-
- A flaky test has been corrected.
-
-
-* nd/fopen-errors (2017-06-02) 13 commits
-  (merged to 'next' on 2017-06-04 at 7a755e73bb)
- + mingw_fopen: report ENOENT for invalid file names
- + mingw: verify that paths are not mistaken for remote nicknames
- + log: fix memory leak in open_next_file()
- + rerere.c: move error_errno() closer to the source system call
- + print errno when reporting a system call error
- + wrapper.c: make warn_on_inaccessible() static
- + wrapper.c: add and use fopen_or_warn()
- + wrapper.c: add and use warn_on_fopen_errors()
- + config.mak.uname: set FREAD_READS_DIRECTORIES for Darwin, too
- + config.mak.uname: set FREAD_READS_DIRECTORIES for Linux and FreeBSD
- + clone: use xfopen() instead of fopen()
- + use xfopen() in more places
- + git_fopen: fix a sparse 'not declared' warning
-
- We often try to open a file for reading whose existence is
- optional, and silently ignore errors from open/fopen; report such
- errors if they are not due to missing files.
-
-
-* rf/completion (2017-06-02) 6 commits
-  (merged to 'next' on 2017-06-04 at dde1e34703)
- + completion: add git config credentialCache.ignoreSIGHUP
- + completion: add git config credential completions
- + completion: add git config advice completions
- + completion: add git config am.threeWay completion
- + completion: add git config core completions
- + completion: add git config gc completions
-
- Completion updates.
-
-
-* sb/submodule-blanket-recursive (2017-06-01) 9 commits
-  (merged to 'next' on 2017-06-04 at 418bb03032)
- + builtin/fetch.c: respect 'submodule.recurse' option
- + builtin/push.c: respect 'submodule.recurse' option
- + builtin/grep.c: respect 'submodule.recurse' option
- + Introduce 'submodule.recurse' option for worktree manipulators
- + submodule loading: separate code path for .gitmodules and config overlay
- + reset/checkout/read-tree: unify config callback for submodule recursion
- + submodule test invocation: only pass additional arguments
- + submodule recursing: do not write a config variable twice
- + Merge branch 'ab/grep-preparatory-cleanup' into sb/submodule-blanket-recursive
-
- Many commands learned to pay attention to submodule.recurse
- configuration.
-
- It is not known if a simple "yes/no" is sufficient in the longer
- term, and what should happen when --recurse-submodules option starts
- taking "recurse into them how?" parameter, though.
-
---------------------------------------------------
-[New Topics]
-
-* js/alias-early-config (2017-06-13) 6 commits
- - Use the early config machinery to expand aliases
- - t7006: demonstrate a problem with aliases in subdirectories
- - t1308: relax the test verifying that empty alias values are disallowed
- - help: use early config when autocorrecting aliases
- - config: report correct line number upon error
- - discover_git_directory(): avoid setting invalid git_dir
-
- The code to pick up and execute command alias definition from the
- configuration used to switch to the top of the working tree and
- then come back when the expanded alias was executed, which was
- unnecessarilyl complex.  Attempt to simplify the logic by using the
- early-config mechanism that does not chdir around.
-
- Waiting for discussion to settle.
-
-
-* pc/dir-count-slashes (2017-06-12) 1 commit
- - dir: create function count_slashes()
-
- Three instances of the same helper function have been consolidated
- to one.
-
- Will merge to 'next'.
-
-
-* sb/t4005-modernize (2017-06-10) 1 commit
- - t4005: modernize style and drop hard coded sha1
-
- Test clean-up.
-
- Will merge to 'next'.
-
-
-* ah/filter-branch-setup (2017-06-12) 2 commits
- - filter-branch: add [--] to usage
- - filter-branch: add `--setup` step
-
- "filter-branch" learned a pseudo filter "--setup" that can be used
- to define a common function/variable that can be used by other
- filters.
-
- Will merge to 'next'.
-
-
-* bw/config-h (2017-06-13) 4 commits
- - config: don't implicitly use gitdir
- - config: don't include config.h by default
- - config: remove git_config_iter
- - config: create config.h
-
- Code clean-up.
-
-
-* bw/ls-files-sans-the-index (2017-06-13) 17 commits
- - ls-files: factor out tag calculation
- - ls-files: factor out debug info into a function
- - ls-files: convert show_files to take an index
- - ls-files: convert show_ce_entry to take an index
- - ls-files: convert prune_cache to take an index
- - ls-files: convert ce_excluded to take an index
- - ls-files: convert show_ru_info to take an index
- - ls-files: convert show_other_files to take an index
- - ls-files: convert show_killed_files to take an index
- - ls-files: convert write_eolinfo to take an index
- - ls-files: convert overlay_tree_on_cache to take an index
- - tree: convert read_tree to take an index parameter
- - convert: convert renormalize_buffer to take an index
- - convert: convert convert_to_git to take an index
- - convert: convert convert_to_git_filter_fd to take an index
- - convert: convert crlf_to_git to take an index
- - convert: convert get_cached_convert_stats_ascii to take an index
-
- Code clean-up.
-
-
-* jc/pretty-add-again (2017-06-13) 1 commit
- - add_again() off-by-one error in custom format
-
-
-* jk/warn-add-gitlink (2017-06-13) 2 commits
- - t: move "git add submodule" into test blocks
- - add: warn when adding an embedded repository
-
- Using "git add d/i/r" when d/i/r is the top of the working tree of
- a separate repository would create a gitlink in the index, which
- would appear as a not-quite-initialized submodule to others.  We
- learned to give warnings when this happens.
-
-
-* km/test-mailinfo-b-failure (2017-06-12) 1 commit
- - t5100: add some more mailinfo tests
-
- New tests.
-
- Will merge to 'next'.
-
-
-* ls/github (2017-06-13) 1 commit
- - Configure Git contribution guidelines for github.com
-
- Help contributors that visit us at GitHub.
-
- Will merge to 'next'.
-
-
-* mh/fast-import-raise-default-depth (2017-06-12) 1 commit
- - fast-import: increase the default pack depth to 50
-
- "fast-import" uses a default pack chain depth that is consistent
- with other parts of the system.
-
- Will merge to 'next'.
-
-
-* mh/packed-ref-store-prep (2017-06-12) 1 commit
- - lock_packed_refs(): fix cache validity check
-
- Bugfix for a topic that is (only) in 'master'.
-
- Will merge to 'next'.
-
-
-* ps/stash-push-pathspec-fix (2017-06-13) 1 commit
- - git-stash: fix pushing stash with pathspec from subdir
-
- "git stash push <pathspec>" did not work from a subdirectory at all.
- Bugfix for a topic in v2.13
-
- Will merge to 'next'.
-
-
-* sb/submodule-doc (2017-06-13) 1 commit
- - submodules: overhaul documentation
-
- Doc update.
-
-
-* sd/t3200-branch-m-test (2017-06-13) 1 commit
- - t3200: add test for single parameter passed to -m option
-
- New test.
-
- Will merge to 'next'.
-
-
-* sd/branch-copy (2017-06-13) 3 commits
- - branch: add a --copy (-c) option to go with --move (-m)
- - branch: add test for -m renaming multiple config sections
- - config: create a function to format section headers
-
- "git branch" learned "-c/-C" to create and switch to a new branch
- by copying an existing one.
-
-
---------------------------------------------------
-[Stalled]
-
-* mg/status-in-progress-info (2017-05-10) 2 commits
- - status --short --inprogress: spell it as --in-progress
- - status: show in-progress info for short status
-
- "git status" learns an option to report various operations
- (e.g. "merging") that the user is in the middle of.
-
- cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
-
-
-* mg/name-rev-debug (2017-03-31) 2 commits
- - describe: pass --debug down to name-rev
- - name-rev: provide debug output
-
- "git describe --debug --contains" did not add any meaningful
- information, even though without "--contains" it did.
-
- Will discard for now.
- cf. <c85bc2a1-56d8-8a02-6089-2b8cb3d39e99@grubix.eu>
-
-
-* nd/worktree-move (2017-04-20) 6 commits
- - worktree remove: new command
- - worktree move: refuse to move worktrees with submodules
- - worktree move: accept destination as directory
- - worktree move: new command
- - worktree.c: add update_worktree_location()
- - worktree.c: add validate_worktree()
-
- "git worktree" learned move and remove subcommands.
-
- Expecting a reroll.
- cf. <20170420101024.7593-1-pclouds@gmail.com>
- cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
- cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
-
-
-* sk/dash-is-previous (2017-03-01) 5 commits
- . revert.c: delegate handling of "-" shorthand to setup_revisions
- . sha1_name.c: teach get_sha1_1 "-" shorthand for "@{-1}"
- . revision.c: args starting with "-" might be a revision
- . revision.c: swap if/else blocks
- . revision.c: do not update argv with unknown option
-
- A dash "-" can be written to mean "the branch that was previously
- checked out" in more places.
-
- Ejected, as it seems that making -.. to mean @{-1}..HEAD etc. are
- going too far.
-
---------------------------------------------------
-[Cooking]
 
 * bw/object-id (2017-06-05) 33 commits
   (merged to 'next' on 2017-06-13 at 0582278759)
@@ -354,67 +84,6 @@ of the repositories listed at
 
  Conversion from uchar[20] to struct object_id continues.
 
- Will merge to 'master'.
-
-
-* rs/strbuf-addftime-zZ (2017-06-10) 2 commits
- - date: use localtime() for "-local" time formats
- - strbuf: let strbuf_addftime handle %z and %Z itself
-
- As there is no portable way to pass timezone information to
- strftime, some output format from "git log" and friends are
- impossible to produce.  Teach our own strbuf_addftime to replace %z
- and %Z with caller-supplied values to help working around this.
-
- Will merge to 'next'.
-
-
-* sb/submodule-rm-absorb (2017-06-04) 1 commit
-  (merged to 'next' on 2017-06-13 at ed902e8fb4)
- + Documentation/git-rm: correct submodule description
-
- Doc update to a recently graduated topic.
-
- Will merge to 'master'.
-
-
-* sg/revision-parser-skip-prefix (2017-06-12) 5 commits
- - revision.c: use skip_prefix() in handle_revision_pseudo_opt()
- - revision.c: use skip_prefix() in handle_revision_opt()
- - revision.c: stricter parsing of '--early-output'
- - revision.c: stricter parsing of '--no-{min,max}-parents'
- - revision.h: turn rev_info.early_output back into an unsigned int
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* ab/perf-remove-index-lock (2017-06-05) 1 commit
-  (merged to 'next' on 2017-06-13 at c532e59233)
- + perf: work around the tested repo having an index.lock
-
- When an existing repository is used for t/perf testing, we first
- create bit-for-bit copy of it, which may grab a transient state of
- the repository and freeze it into the repository used for testing,
- which then may cause Git operations to fail.  Single out "the index
- being locked" case and forcibly drop the lock from the copy.
-
- Will merge to 'master'.
-
-
-* ls/filter-process-delayed (2017-06-01) 5 commits
- - convert: add "status=delayed" to filter process protocol
- - convert: move multiple file filter error handling to separate function
- - t0021: write "OUT" only on success
- - t0021: make debug log file name configurable
- - t0021: keep filter log files on comparison
-
- The filter-process interface learned to allow a process with long
- latency give a "delayed" response.
-
- Needs review.
-
 
 * jk/consistent-h (2017-06-05) 8 commits
   (merged to 'next' on 2017-06-13 at e09c1fe968)
@@ -431,34 +100,6 @@ of the repositories listed at
  command (i.e. cmd_$cmd() function) without doing any repository
  set-up, and the commands that expect RUN_SETUP is done by the Git
  potty needs to be prepared to show the help text without barfing.
-
- Will merge to 'master'.
-
-
-* pw/rebase-i-regression-fix-tests (2017-06-01) 1 commit
- - rebase -i: add test for reflog message
-
- Just the first one of three? new tests that follows up a regression
- fix.
-
- Expecting a portable update.
-
-
-* ab/pcre-v2 (2017-06-02) 8 commits
-  (merged to 'next' on 2017-06-13 at 34bf49ee44)
- + grep: add support for PCRE v2
- + grep: un-break building with PCRE >= 8.32 without --enable-jit
- + grep: un-break building with PCRE < 8.20
- + grep: un-break building with PCRE < 8.32
- + grep: add support for the PCRE v1 JIT API
- + log: add -P as a synonym for --perl-regexp
- + grep: skip pthreads overhead when using one thread
- + grep: don't redundantly compile throwaway patterns under threading
-
- Update "perl-compatible regular expression" support to enable JIT
- and also allow linking with the newer PCRE v2 library.
-
- Will merge to 'master'.
 
 
 * jk/pathspec-magic-disambiguation (2017-05-29) 6 commits
@@ -482,7 +123,445 @@ of the repositories listed at
  learned to say "it's a pathspec" a bit more often when the syntax
  looks like so.
 
+
+* sb/submodule-rm-absorb (2017-06-04) 1 commit
+  (merged to 'next' on 2017-06-13 at ed902e8fb4)
+ + Documentation/git-rm: correct submodule description
+
+ Doc update to a recently graduated topic.
+
+--------------------------------------------------
+[New Topics]
+
+* ab/free-and-null (2017-06-16) 6 commits
+ - *.[ch] refactoring: make use of the FREE_AND_NULL() macro
+ - coccinelle: make use of the "expression" FREE_AND_NULL() rule
+ - coccinelle: add a rule to make "expression" code use FREE_AND_NULL()
+ - coccinelle: make use of the "type" FREE_AND_NULL() rule
+ - coccinelle: add a rule to make "type" code use FREE_AND_NULL()
+ - git-compat-util: add a FREE_AND_NULL() wrapper around free(ptr); ptr = NULL
+
+ A common pattern to free a piece of memory and assign NULL to the
+ pointer that used to point at it has been replaced with a new
+ FREE_AND_NULL() macro.
+
+ Will merge to 'next'.
+
+
+* ab/wildmatch-glob-slash-test (2017-06-15) 1 commit
+ - wildmatch test: cover a blind spot in "/" matching
+
+ A new test to show the interaction between the pattern [^a-z]
+ (which matches '/') and a slash in a path has been added.  The
+ pattern should not match the slash with "pathmatch", but should
+ with "wildmatch".
+
+ Will merge to 'next'.
+
+
+* ah/doc-gitattributes-empty-index (2017-06-15) 1 commit
+ - doc: do not use `rm .git/index` when normalizing line endings
+
+ An example in documentation that does not work in multi worktree
+ configuration has been corrected.
+
+ Will merge to 'next'.
+
+
+* jk/diff-highlight-module (2017-06-15) 1 commit
+ - diff-highlight: split code into module
+
+ The 'diff-highlight' program (in contrib/) has been restructured
+ for easier reuse by an external project 'diff-so-fancy'.
+
+ Will merge to 'next'.
+
+
+* jt/unify-object-info (2017-06-15) 4 commits
+ - sha1_file, fsck: add missing blob support
+ - sha1_file: consolidate storage-agnostic object fns
+ - sha1_file: move delta base cache code up
+ - sha1_file: teach packed_object_info about typename
+
+ Code clean-ups.
+
+ I seem to have made a mistake during my review of the previous
+ one, and took this one in a wrong direction.  A better organization
+ was suggested.
+ cf. <20170617121934.a6onn7f2luhkuuym@sigill.intra.peff.net>
+
+
+* rs/pretty-add-again (2017-06-15) 1 commit
+ - pretty: recalculate duplicate short hashes
+
+ The pretty-format specifiers like '%h', '%t', etc. had an
+ optimization that no longer works correctly.  In preparation/hope
+ of getting it correctly implemented, first discard the optimization
+ that is broken.
+
+ Will merge to 'next'.
+
+
+* sg/doc-pretty-formats (2017-06-15) 1 commit
+ - docs/pretty-formats: stress that %- removes all preceding line-feeds
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* sn/reset-doc-typofix (2017-06-15) 1 commit
+ - doc: git-reset: fix a trivial typo
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* nd/fopen-errors (2017-06-15) 1 commit
+  (merged to 'next' on 2017-06-15 at 86bcb7c082)
+ + configure.ac: loosen FREAD_READS_DIRECTORIES test program
+
+ Hotfix for a topic that is already in 'master'.
+
+ Will merge to 'next'.
+
+
+* da/mergetools-meld-output-opt-on-macos (2017-06-18) 1 commit
+ - mergetools/meld: improve compatibiilty with Meld on macOS X
+
+ "git mergetool" learned to work around a wrapper MacOS X adds
+ around underlying meld.
+
+ Will merge to 'next'.
+
+
+* ks/status-initial-commit (2017-06-18) 4 commits
+ - SQUASH???
+ - Add test for the new status message
+ - SQUASH???
+ - Contextually notify user about an initial commit
+
+ "git status" has long shown essentially the same message as "git
+ commit"; the message it gives while preparing for the root commit,
+ i.e. "Initial commit", was hard to understand for some new users.
+ Now it says "No commits yet" to stress more on the current status
+ (rather than the commit the user is preparing for, which is more in
+ line with the focus of "git commit").
+
+ Expecting a reroll.
+ cf. <20170619024123.5438-1-kaarticsivaraam91196@gmail.com>
+
+
+* lb/status-stash-count (2017-06-18) 3 commits
+ - glossary: define 'stash entry'
+ - status: add optional stash count information
+ - stash: update documentation to use 'stash entry'
+
+ "git status" learned to optionally give how many stash entries the
+ user has in its output.
+
+ Will merge to 'next'.
+
+
+* mh/packed-ref-store (2017-06-18) 28 commits
+ - read_packed_refs(): die if `packed-refs` contains bogus data
+ - repack_without_refs(): don't lock or unlock the packed refs
+ - commit_packed_refs(): remove call to `packed_refs_unlock()`
+ - clear_packed_ref_cache(): don't protest if the lock is held
+ - packed_refs_unlock(), packed_refs_is_locked(): new functions
+ - packed_refs_lock(): report errors via a `struct strbuf *err`
+ - packed_refs_lock(): function renamed from lock_packed_refs()
+ - commit_packed_refs(): use a staging file separate from the lockfile
+ - commit_packed_refs(): report errors rather than dying
+ - packed_ref_store: make class into a subclass of `ref_store`
+ - packed-backend: new module for handling packed references
+ - packed_read_raw_ref(): new function, replacing `resolve_packed_ref()`
+ - packed_ref_store: support iteration
+ - packed_peel_ref(): new function, extracted from `files_peel_ref()`
+ - repack_without_refs(): take a `packed_ref_store *` parameter
+ - get_packed_ref(): take a `packed_ref_store *` parameter
+ - rollback_packed_refs(): take a `packed_ref_store *` parameter
+ - commit_packed_refs(): take a `packed_ref_store *` parameter
+ - lock_packed_refs(): take a `packed_ref_store *` parameter
+ - add_packed_ref(): take a `packed_ref_store *` parameter
+ - get_packed_refs(): take a `packed_ref_store *` parameter
+ - get_packed_ref_cache(): take a `packed_ref_store *` parameter
+ - validate_packed_ref_cache(): take a `packed_ref_store *` parameter
+ - clear_packed_ref_cache(): take a `packed_ref_store *` parameter
+ - packed_ref_store: move `packed_refs_lock` member here
+ - packed_ref_store: move `packed_refs_path` here
+ - packed_ref_store: new struct
+ - add_packed_ref(): teach function to overwrite existing refs
+ (this branch uses mh/packed-ref-store-prep.)
+
+ The "ref-store" code reorganization continues.
+
+ Seems to break the promise that packed-refs are covered by loose
+ refs and the former that points at a missing garbage is not an
+ error.
+ cf. <20170619195330.fhjlfiqmcwhgttaa@sigill.intra.peff.net>
+
+--------------------------------------------------
+[Stalled]
+
+* mg/status-in-progress-info (2017-05-10) 2 commits
+ - status --short --inprogress: spell it as --in-progress
+ - status: show in-progress info for short status
+
+ "git status" learns an option to report various operations
+ (e.g. "merging") that the user is in the middle of.
+
+ cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
+
+
+* nd/worktree-move (2017-04-20) 6 commits
+ - worktree remove: new command
+ - worktree move: refuse to move worktrees with submodules
+ - worktree move: accept destination as directory
+ - worktree move: new command
+ - worktree.c: add update_worktree_location()
+ - worktree.c: add validate_worktree()
+
+ "git worktree" learned move and remove subcommands.
+
+ Expecting a reroll.
+ cf. <20170420101024.7593-1-pclouds@gmail.com>
+ cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
+ cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
+
+--------------------------------------------------
+[Cooking]
+
+* js/alias-early-config (2017-06-15) 6 commits
+ - alias: use the early config machinery to expand aliases
+ - t7006: demonstrate a problem with aliases in subdirectories
+ - t1308: relax the test verifying that empty alias values are disallowed
+ - help: use early config when autocorrecting aliases
+ - config: report correct line number upon error
+ - discover_git_directory(): avoid setting invalid git_dir
+ (this branch is used by bw/config-h.)
+
+ The code to pick up and execute command alias definition from the
+ configuration used to switch to the top of the working tree and
+ then come back when the expanded alias was executed, which was
+ unnecessarilyl complex.  Attempt to simplify the logic by using the
+ early-config mechanism that does not chdir around.
+
+ Will merge to 'next'.
+
+
+* pc/dir-count-slashes (2017-06-12) 1 commit
+  (merged to 'next' on 2017-06-19 at 57351a2771)
+ + dir: create function count_slashes()
+
+ Three instances of the same helper function have been consolidated
+ to one.
+
  Will merge to 'master'.
+
+
+* sb/t4005-modernize (2017-06-10) 1 commit
+  (merged to 'next' on 2017-06-19 at beedeb757b)
+ + t4005: modernize style and drop hard coded sha1
+
+ Test clean-up.
+
+ Will merge to 'master'.
+
+
+* ah/filter-branch-setup (2017-06-12) 2 commits
+  (merged to 'next' on 2017-06-19 at f3440f2c1a)
+ + filter-branch: add [--] to usage
+ + filter-branch: add `--setup` step
+
+ "filter-branch" learned a pseudo filter "--setup" that can be used
+ to define a common function/variable that can be used by other
+ filters.
+
+ Will merge to 'master'.
+
+
+* bw/config-h (2017-06-15) 6 commits
+ - config: don't implicitly use gitdir or commondir
+ - config: respect commondir
+ - setup: teach discover_git_directory to respect the commondir
+ - config: don't include config.h by default
+ - config: remove git_config_iter
+ - config: create config.h
+ (this branch uses js/alias-early-config.)
+
+ Fix configuration codepath to pay proper attention to commondir
+ that is used in multi-worktree situation, and isolate config API
+ into its own header file.
+
+ Will merge to 'next'.
+
+
+* bw/ls-files-sans-the-index (2017-06-13) 17 commits
+ - ls-files: factor out tag calculation
+ - ls-files: factor out debug info into a function
+ - ls-files: convert show_files to take an index
+ - ls-files: convert show_ce_entry to take an index
+ - ls-files: convert prune_cache to take an index
+ - ls-files: convert ce_excluded to take an index
+ - ls-files: convert show_ru_info to take an index
+ - ls-files: convert show_other_files to take an index
+ - ls-files: convert show_killed_files to take an index
+ - ls-files: convert write_eolinfo to take an index
+ - ls-files: convert overlay_tree_on_cache to take an index
+ - tree: convert read_tree to take an index parameter
+ - convert: convert renormalize_buffer to take an index
+ - convert: convert convert_to_git to take an index
+ - convert: convert convert_to_git_filter_fd to take an index
+ - convert: convert crlf_to_git to take an index
+ - convert: convert get_cached_convert_stats_ascii to take an index
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jk/warn-add-gitlink (2017-06-15) 2 commits
+ - t: move "git add submodule" into test blocks
+ - add: warn when adding an embedded repository
+
+ Using "git add d/i/r" when d/i/r is the top of the working tree of
+ a separate repository would create a gitlink in the index, which
+ would appear as a not-quite-initialized submodule to others.  We
+ learned to give warnings when this happens.
+
+ Will merge to 'next'.
+
+
+* km/test-mailinfo-b-failure (2017-06-12) 1 commit
+  (merged to 'next' on 2017-06-19 at badc2c2337)
+ + t5100: add some more mailinfo tests
+
+ New tests.
+
+ Will merge to 'master'.
+
+
+* ls/github (2017-06-13) 1 commit
+  (merged to 'next' on 2017-06-19 at 4d2024615f)
+ + Configure Git contribution guidelines for github.com
+
+ Help contributors that visit us at GitHub.
+
+ Will merge to 'master'.
+
+
+* mh/fast-import-raise-default-depth (2017-06-12) 1 commit
+  (merged to 'next' on 2017-06-19 at 7093c07b8e)
+ + fast-import: increase the default pack depth to 50
+
+ "fast-import" uses a default pack chain depth that is consistent
+ with other parts of the system.
+
+ Will merge to 'master'.
+
+
+* mh/packed-ref-store-prep (2017-06-18) 3 commits
+ - prefix_ref_iterator_advance(): relax the check of trim length
+ - for_each_bisect_ref(): don't trim refnames
+ - lock_packed_refs(): fix cache validity check
+ (this branch is used by mh/packed-ref-store.)
+
+ Bugfix for a topic that is (only) in 'master'.
+
+ Will merge the first two to 'next'.
+
+
+* ps/stash-push-pathspec-fix (2017-06-13) 1 commit
+  (merged to 'next' on 2017-06-19 at 866c9035e0)
+ + git-stash: fix pushing stash with pathspec from subdir
+
+ "git stash push <pathspec>" did not work from a subdirectory at all.
+ Bugfix for a topic in v2.13
+
+ Will merge to 'master'.
+
+
+* sb/submodule-doc (2017-06-13) 1 commit
+ - submodules: overhaul documentation
+
+ Doc update.
+
+ Waiting for discussion to settle.
+
+
+* sd/t3200-branch-m-test (2017-06-13) 1 commit
+  (merged to 'next' on 2017-06-19 at 0fd712c46e)
+ + t3200: add test for single parameter passed to -m option
+
+ New test.
+
+ Will merge to 'master'.
+
+
+* sd/branch-copy (2017-06-18) 3 commits
+ - branch: add a --copy (-c) option to go with --move (-m)
+ - branch: add test for -m renaming multiple config sections
+ - config: create a function to format section headers
+
+ "git branch" learned "-c/-C" to create and switch to a new branch
+ by copying an existing one.
+
+ Has a bit of interaction with two other topics, so perhaps needs to
+ wait for them to stabilize a bit more.
+
+
+* rs/strbuf-addftime-zZ (2017-06-15) 3 commits
+  (merged to 'next' on 2017-06-19 at 77480669f0)
+ + date: use localtime() for "-local" time formats
+ + t0006: check --date=format zone offsets
+ + strbuf: let strbuf_addftime handle %z and %Z itself
+
+ As there is no portable way to pass timezone information to
+ strftime, some output format from "git log" and friends are
+ impossible to produce.  Teach our own strbuf_addftime to replace %z
+ and %Z with caller-supplied values to help working around this.
+
+ Will merge to 'master'.
+
+
+* sg/revision-parser-skip-prefix (2017-06-12) 5 commits
+  (merged to 'next' on 2017-06-19 at 0a90bec767)
+ + revision.c: use skip_prefix() in handle_revision_pseudo_opt()
+ + revision.c: use skip_prefix() in handle_revision_opt()
+ + revision.c: stricter parsing of '--early-output'
+ + revision.c: stricter parsing of '--no-{min,max}-parents'
+ + revision.h: turn rev_info.early_output back into an unsigned int
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* ls/filter-process-delayed (2017-06-01) 5 commits
+ - convert: add "status=delayed" to filter process protocol
+ - convert: move multiple file filter error handling to separate function
+ - t0021: write "OUT" only on success
+ - t0021: make debug log file name configurable
+ - t0021: keep filter log files on comparison
+
+ The filter-process interface learned to allow a process with long
+ latency give a "delayed" response.
+
+ Needs review.
+
+
+* pw/rebase-i-regression-fix-tests (2017-06-19) 4 commits
+ - rebase: add more regression tests for console output
+ - rebase: add regression tests for console output
+ - rebase -i: add test for reflog message
+ - sequencer: print autostash messages to stderr
+
+ Fix a recent regression to "git rebase -i" and add tests that would
+ have caught it and others.
+
+ Will merge to 'next'.
 
 
 * ab/sha1dc (2017-06-07) 2 commits
@@ -534,7 +613,7 @@ of the repositories listed at
  the same as deleted lines elsewhere differently from genuinely new
  lines.
 
- Are we happy with these changes?
+ Is any more update coming?
 
 
 * xz/send-email-batch-size (2017-05-23) 1 commit
@@ -548,7 +627,7 @@ of the repositories listed at
  cf. <CACBZZX5GYV50rjg9X602JHqFPaoofH9TwDf_-r_MDu8-rmNV6Q@mail.gmail.com>
 
 
-* sg/clone-refspec-from-command-line-config (2017-06-01) 2 commits
+* sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
  - Documentation/clone: document ignored configuration variables
  - clone: respect additional configured fetch refspecs during initial fetch
 
@@ -558,9 +637,10 @@ of the repositories listed at
  e.g. these configuration variables could be fetch refspecs.
 
  Are we happy with these two?
+ cf. <20170617112228.vugswym4o4owf6wj@sigill.intra.peff.net>
 
 
-* js/rebase-i-final (2017-05-02) 10 commits
+* js/rebase-i-final (2017-06-15) 10 commits
  - rebase -i: rearrange fixup/squash lines using the rebase--helper
  - t3415: test fixup with wrapped oneline
  - rebase -i: skip unnecessary picks using the rebase--helper
@@ -576,23 +656,25 @@ of the repositories listed at
  the shell script to C.
 
  Expecting a reroll.
- This is at its v4.
- cf. <cover.1493414945.git.johannes.schindelin@gmx.de>
+ This is at its v5.
+ cf. <cover.1497444257.git.johannes.schindelin@gmx.de>
 
+--------------------------------------------------
+[Discarded]
 
 * nd/prune-in-worktree (2017-04-24) 12 commits
- - rev-list: expose and document --single-worktree
- - revision.c: --reflog add HEAD reflog from all worktrees
- - files-backend: make reflog iterator go through per-worktree reflog
- - revision.c: --all adds HEAD from all worktrees
- - refs: remove dead for_each_*_submodule()
- - revision.c: use refs_for_each*() instead of for_each_*_submodule()
- - refs: add refs_head_ref()
- - refs: move submodule slash stripping code to get_submodule_ref_store
- - refs.c: refactor get_submodule_ref_store(), share common free block
- - revision.c: --indexed-objects add objects from all worktrees
- - revision.c: refactor add_index_objects_to_pending()
- - revision.h: new flag in struct rev_info wrt. worktree-related refs
+ . rev-list: expose and document --single-worktree
+ . revision.c: --reflog add HEAD reflog from all worktrees
+ . files-backend: make reflog iterator go through per-worktree reflog
+ . revision.c: --all adds HEAD from all worktrees
+ . refs: remove dead for_each_*_submodule()
+ . revision.c: use refs_for_each*() instead of for_each_*_submodule()
+ . refs: add refs_head_ref()
+ . refs: move submodule slash stripping code to get_submodule_ref_store
+ . refs.c: refactor get_submodule_ref_store(), share common free block
+ . revision.c: --indexed-objects add objects from all worktrees
+ . revision.c: refactor add_index_objects_to_pending()
+ . revision.h: new flag in struct rev_info wrt. worktree-related refs
 
  "git gc" and friends when multiple worktrees are used off of a
  single repository did not consider the index and per-worktree refs
@@ -600,6 +682,31 @@ of the repositories listed at
  objects that are in use only in other worktrees to be subject to
  garbage collection.
 
- Expecting a reroll.
- Has been waiting for nd/worktree-kill-parse-ref to settle.
- cf. <CACsJy8ADCVBiLoPg_Tz0L6CMdh_eFmK4RYzfQ-PmUgBK7w9e=A@mail.gmail.com>
+
+* jc/pretty-add-again (2017-06-13) 1 commit
+ . add_again() off-by-one error in custom format
+
+
+* sk/dash-is-previous (2017-03-01) 5 commits
+ . revert.c: delegate handling of "-" shorthand to setup_revisions
+ . sha1_name.c: teach get_sha1_1 "-" shorthand for "@{-1}"
+ . revision.c: args starting with "-" might be a revision
+ . revision.c: swap if/else blocks
+ . revision.c: do not update argv with unknown option
+
+ A dash "-" can be written to mean "the branch that was previously
+ checked out" in more places.
+
+ Ejected, as it seems that making -.. to mean @{-1}..HEAD etc. are
+ going too far.
+
+
+* mg/name-rev-debug (2017-03-31) 2 commits
+ . describe: pass --debug down to name-rev
+ . name-rev: provide debug output
+
+ "git describe --debug --contains" did not add any meaningful
+ information, even though without "--contains" it did.
+
+ Will discard for now.
+ cf. <c85bc2a1-56d8-8a02-6089-2b8cb3d39e99@grubix.eu>
