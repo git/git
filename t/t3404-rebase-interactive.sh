@@ -169,6 +169,13 @@ test_expect_success 'reflog for the branch shows state before rebase' '
 	test $(git rev-parse branch1@{1}) = $(git rev-parse original-branch1)
 '
 
+test_expect_success 'reflog for the branch shows correct finish message' '
+	printf "rebase -i (finish): refs/heads/branch1 onto %s\n" \
+		"$(git rev-parse branch2)" >expected &&
+	git log -g --pretty=%gs -1 refs/heads/branch1 >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'exchange two commits' '
 	set_fake_editor &&
 	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
