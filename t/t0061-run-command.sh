@@ -178,4 +178,14 @@ test_expect_success 'GIT_TRACE with environment variables' '
 	)
 '
 
+test_expect_success MINGW 'verify curlies are quoted properly' '
+	: force the rev-parse through the MSYS2 Bash &&
+	git -c alias.r="!git rev-parse" r -- a{b}c >actual &&
+	cat >expect <<-\EOF &&
+	--
+	a{b}c
+	EOF
+	test_cmp expect actual
+'
+
 test_done
