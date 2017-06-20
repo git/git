@@ -98,7 +98,6 @@ char *git_work_tree_cfg;
 static char *work_tree;
 
 static const char *namespace;
-static size_t namespace_len;
 
 static const char *super_prefix;
 
@@ -190,7 +189,6 @@ void setup_git_env(void)
 	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
 							  : "refs/replace/");
 	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
-	namespace_len = strlen(namespace);
 	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
 	if (shallow_file)
 		set_alternate_shallow_file(shallow_file, 0);
@@ -231,9 +229,10 @@ const char *get_git_namespace(void)
 
 const char *strip_namespace(const char *namespaced_ref)
 {
-	if (!starts_with(namespaced_ref, get_git_namespace()))
-		return NULL;
-	return namespaced_ref + namespace_len;
+	const char *out;
+	if (skip_prefix(namespaced_ref, get_git_namespace(), &out))
+		return out;
+	return NULL;
 }
 
 const char *get_super_prefix(void)
