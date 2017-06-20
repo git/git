@@ -160,7 +160,7 @@ static char *git_path_from_env(const char *envvar, const char *git_dir,
 	return xstrdup(value);
 }
 
-static void setup_git_env(void)
+void setup_git_env(void)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *gitfile;
@@ -205,28 +205,27 @@ int is_bare_repository(void)
 int have_git_dir(void)
 {
 	return startup_info->have_repository
-		|| git_dir
-		|| getenv(GIT_DIR_ENVIRONMENT);
+		|| git_dir;
 }
 
 const char *get_git_dir(void)
 {
 	if (!git_dir)
-		setup_git_env();
+		BUG("git environment hasn't been setup");
 	return git_dir;
 }
 
 const char *get_git_common_dir(void)
 {
 	if (!git_dir)
-		setup_git_env();
+		BUG("git environment hasn't been setup");
 	return git_common_dir;
 }
 
 const char *get_git_namespace(void)
 {
 	if (!namespace)
-		setup_git_env();
+		BUG("git environment hasn't been setup");
 	return namespace;
 }
 
@@ -276,7 +275,7 @@ const char *get_git_work_tree(void)
 char *get_object_directory(void)
 {
 	if (!git_object_dir)
-		setup_git_env();
+		BUG("git environment hasn't been setup");
 	return git_object_dir;
 }
 
@@ -316,14 +315,14 @@ int odb_pack_keep(const char *name)
 char *get_index_file(void)
 {
 	if (!git_index_file)
-		setup_git_env();
+		BUG("git environment hasn't been setup");
 	return git_index_file;
 }
 
 char *get_graft_file(void)
 {
 	if (!git_graft_file)
-		setup_git_env();
+		BUG("git environment hasn't been setup");
 	return git_graft_file;
 }
 
