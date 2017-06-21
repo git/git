@@ -380,4 +380,12 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	test_cmp expected diff
 '
 
+test_expect_success 'hunk-editing handles custom comment char' '
+	git reset --hard &&
+	echo change >>file &&
+	test_config core.commentChar "\$" &&
+	echo e | GIT_EDITOR=true git add -p &&
+	git diff --exit-code
+'
+
 test_done

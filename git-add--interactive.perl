@@ -1097,7 +1097,7 @@ EOF2
 
 	open $fh, '<', $hunkfile
 		or die sprintf(__("failed to open hunk edit file for reading: %s"), $!);
-	my @newtext = grep { !/^$comment_line_char/ } <$fh>;
+	my @newtext = grep { !/^\Q$comment_line_char\E/ } <$fh>;
 	close $fh;
 	unlink $hunkfile;
 
