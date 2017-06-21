@@ -154,6 +154,7 @@ Format of STDIN stream:
 
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "object.h"
 #include "blob.h"

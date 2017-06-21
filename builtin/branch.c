@@ -6,6 +6,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "color.h"
 #include "refs.h"
 #include "commit.h"

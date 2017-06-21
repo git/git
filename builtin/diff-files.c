@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "config.h"
 #include "diff.h"
 #include "commit.h"
 #include "revision.h"

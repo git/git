@@ -2,6 +2,7 @@
  * "git fetch"
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "commit.h"
 #include "builtin.h"

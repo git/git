@@ -6,6 +6,7 @@
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "parse-options.h"
 #include "exec_cmd.h"

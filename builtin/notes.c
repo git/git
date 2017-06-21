@@ -8,6 +8,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "notes.h"
 #include "blob.h"
