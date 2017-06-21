@@ -1152,6 +1152,7 @@ sub prompt_yesno {
 	while (1) {
 		print colored $prompt_color, $prompt;
 		my $line = prompt_single_character;
+		return undef unless defined $line;
 		return 0 if $line =~ /^n/i;
 		return 1 if $line =~ /^y/i;
 	}
