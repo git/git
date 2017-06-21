@@ -174,10 +174,9 @@ void merge_base_index(struct index_state *istate)
 
 	ewah_free(si->delete_bitmap);
 	ewah_free(si->replace_bitmap);
-	free(si->saved_cache);
+	FREE_AND_NULL(si->saved_cache);
 	si->delete_bitmap  = NULL;
 	si->replace_bitmap = NULL;
-	si->saved_cache	   = NULL;
 	si->saved_cache_nr = 0;
 }
 

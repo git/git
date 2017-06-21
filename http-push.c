@@ -291,8 +291,7 @@ static void start_mkcol(struct transfer_request *request)
 		request->state = RUN_MKCOL;
 	} else {
 		request->state = ABORTED;
-		free(request->url);
-		request->url = NULL;
+		FREE_AND_NULL(request->url);
 	}
 }
 #endif
@@ -409,8 +408,7 @@ static void start_put(struct transfer_request *request)
 		request->state = RUN_PUT;
 	} else {
 		request->state = ABORTED;
-		free(request->url);
-		request->url = NULL;
+		FREE_AND_NULL(request->url);
 	}
 }
 
@@ -432,8 +430,7 @@ static void start_move(struct transfer_request *request)
 		request->state = RUN_MOVE;
 	} else {
 		request->state = ABORTED;
-		free(request->url);
-		request->url = NULL;
+		FREE_AND_NULL(request->url);
 	}
 }
 
@@ -526,8 +523,7 @@ static void finish_request(struct transfer_request *request)
 
 	/* URL is reused for MOVE after PUT */
 	if (request->state != RUN_PUT) {
-		free(request->url);
-		request->url = NULL;
+		FREE_AND_NULL(request->url);
 	}
 
 	if (request->state == RUN_MKCOL) {
@@ -803,8 +799,7 @@ xml_start_tag(void *userData, const char *name, const char **atts)
 	}
 	xsnprintf(ctx->name + old_namelen, ctx->len - old_namelen, ".%s", c);
 
-	free(ctx->cdata);
-	ctx->cdata = NULL;
+	FREE_AND_NULL(ctx->cdata);
 
 	ctx->userFunc(ctx, 0);
 }
@@ -932,8 +927,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 		free(lock->token);
 		free(lock->owner);
 		free(url);
-		free(lock);
-		lock = NULL;
+		FREE_AND_NULL(lock);
 	} else {
 		lock->url = url;
 		lock->start_time = time(NULL);
@@ -1105,8 +1099,7 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 			ls->dentry_flags |= IS_DIR;
 		}
 	} else if (!strcmp(ctx->name, DAV_PROPFIND_RESP)) {
-		free(ls->dentry_name);
-		ls->dentry_name = NULL;
+		FREE_AND_NULL(ls->dentry_name);
 		ls->dentry_flags = 0;
 	}
 }
@@ -1547,8 +1540,7 @@ static void fetch_symref(const char *path, char **symref, struct object_id *oid)
 		    curl_errorstr);
 	free(url);
 
-	free(*symref);
-	*symref = NULL;
+	FREE_AND_NULL(*symref);
 	oidclr(oid);
 
 	if (buffer.len == 0)
