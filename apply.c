@@ -8,6 +8,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "blob.h"
 #include "delta.h"
 #include "diff.h"
@@ -2267,7 +2268,7 @@ static int read_old_data(struct stat *st, const char *path, struct strbuf *buf)
 	case S_IFREG:
 		if (strbuf_read_file(buf, path, st->st_size) != st->st_size)
 			return error(_("unable to open or read %s"), path);
-		convert_to_git(path, buf->buf, buf->len, buf, 0);
+		convert_to_git(&the_index, path, buf->buf, buf->len, buf, 0);
 		return 0;
 	default:
 		return -1;

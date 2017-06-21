@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "config.h"
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {

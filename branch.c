@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "cache.h"
+#include "config.h"
 #include "branch.h"
 #include "refs.h"
 #include "remote.h"

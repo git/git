@@ -703,6 +703,12 @@ test_expect_success 'invalid unit' '
 	test_i18ngrep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
 '
 
+test_expect_success 'line number is reported correctly' '
+	printf "[bool]\n\tvar\n" >invalid &&
+	test_must_fail git config -f invalid --path bool.var 2>actual &&
+	test_i18ngrep "line 2" actual
+'
+
 test_expect_success 'invalid stdin config' '
 	echo "[broken" | test_must_fail git config --list --file - >output 2>&1 &&
 	test_i18ngrep "bad config line 1 in standard input" output

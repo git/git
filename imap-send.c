@@ -23,6 +23,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "credential.h"
 #include "exec_cmd.h"
 #include "run-command.h"
