@@ -86,6 +86,10 @@ UI, Workflows & Features
  * Update "perl-compatible regular expression" support to enable JIT
    and also allow linking with the newer PCRE v2 library.
 
+ * "filter-branch" learned a pseudo filter "--setup" that can be used
+   to define a common function/variable that can be used by other
+   filters.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -167,6 +171,13 @@ Performance, Internal Implementation, Development Support etc.
    the repository and freeze it into the repository used for testing,
    which then may cause Git operations to fail.  Single out "the index
    being locked" case and forcibly drop the lock from the copy.
+
+ * Three instances of the same helper function have been consolidated
+   to one.
+   (merge e0556a928f pc/dir-count-slashes later to maint).
+
+ * "fast-import" uses a default pack chain depth that is consistent
+   with other parts of the system.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -337,6 +348,23 @@ notes for details).
    potty needs to be prepared to show the help text without barfing.
    (merge d691551192 jk/consistent-h later to maint).
 
+ * Help contributors that visit us at GitHub.
+   (merge 0b1bb0c032 ls/github later to maint).
+
+ * "git stash push <pathspec>" did not work from a subdirectory at all.
+   Bugfix for a topic in v2.13
+   (merge 22fc703ec9 ps/stash-push-pathspec-fix later to maint).
+
+ * As there is no portable way to pass timezone information to
+   strftime, some output format from "git log" and friends are
+   impossible to produce.  Teach our own strbuf_addftime to replace %z
+   and %Z with caller-supplied values to help working around this.
+   (merge 6eced3ec5e rs/strbuf-addftime-zZ later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 8ba74bfd7c jc/diff-tree-stale-comment later to maint).
    (merge 68602c01fd sb/submodule-rm-absorb later to maint).
+   (merge 68241cb9dd sb/t4005-modernize later to maint).
+   (merge ae52d57f0b km/test-mailinfo-b-failure later to maint).
+   (merge 8b1d9136e1 sg/revision-parser-skip-prefix later to maint).
+   (merge bb8efa1772 sd/t3200-branch-m-test later to maint).
