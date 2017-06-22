@@ -2977,11 +2977,15 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 
 int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi, unsigned flags)
 {
+	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	struct pack_entry e;
 	int rtype;
 	const unsigned char *real = (flags & OBJECT_INFO_LOOKUP_REPLACE) ?
 				    lookup_replace_object(sha1) :
 				    sha1;
+
+	if (!oi)
+		oi = &blank_oi;
 
 	if (!(flags & OBJECT_INFO_SKIP_CACHED)) {
 		struct cached_object *co = find_cached_object(real);
@@ -3019,6 +3023,13 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi,
 				return -1;
 		}
 	}
+
+	if (oi == &blank_oi)
+		/*
+		 * We know that the caller doesn't actually need the
+		 * information below, so return early.
+		 */
+		return 0;
 
 	rtype = packed_object_info(e.p, e.offset, oi);
 	if (rtype < 0) {
