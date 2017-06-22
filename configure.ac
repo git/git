@@ -922,9 +922,9 @@ AC_CACHE_CHECK([whether system succeeds to read fopen'ed directory],
 [
 AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
-		[[char c;
+		[[
 		FILE *f = fopen(".", "r");
-		return f && fread(&c, 1, 1, f)]])],
+		return f)]])],
 	[ac_cv_fread_reads_directories=no],
 	[ac_cv_fread_reads_directories=yes])
 ])

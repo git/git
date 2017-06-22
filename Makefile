@@ -19,7 +19,8 @@ all::
 # have been written to the final string if enough space had been available.
 #
 # Define FREAD_READS_DIRECTORIES if you are on a system which succeeds
-# when attempting to read from an fopen'ed directory.
+# when attempting to read from an fopen'ed directory (or even to fopen
+# it at all).
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # This also implies BLK_SHA1.
