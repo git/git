@@ -4,6 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "blob.h"
 #include "tree.h"
@@ -643,7 +644,7 @@ static int grep_submodule_launch(struct grep_opt *opt,
 static int grep_submodule(struct grep_opt *opt, const struct object_id *oid,
 			  const char *filename, const char *path)
 {
-	if (!is_submodule_initialized(path))
+	if (!is_submodule_active(the_repository, path))
 		return 0;
 	if (!is_submodule_populated_gently(path, NULL)) {
 		/*

@@ -283,21 +283,17 @@ void gitmodules_config_sha1(const unsigned char *commit_sha1)
 }
 
 /*
- * NEEDSWORK: With the addition of different configuration options to determine
- * if a submodule is of interests, the validity of this function's name comes
- * into question.  Once the dust has settled and more concrete terminology is
- * decided upon, come up with a more proper name for this function.  One
- * potential candidate could be 'is_submodule_active()'.
- *
  * Determine if a submodule has been initialized at a given 'path'
  */
-int is_submodule_initialized(const char *path)
+int is_submodule_active(struct repository *repo, const char *path)
 {
 	int ret = 0;
 	char *key = NULL;
 	char *value = NULL;
 	const struct string_list *sl;
-	const struct submodule *module = submodule_from_path(null_sha1, path);
+	const struct submodule *module;
+
+	module = submodule_from_cache(repo, null_sha1, path);
 
 	/* early return if there isn't a path->module mapping */
 	if (!module)
@@ -305,14 +301,14 @@ int is_submodule_initialized(const char *path)
 
 	/* submodule.<name>.active is set */
 	key = xstrfmt("submodule.%s.active", module->name);
-	if (!git_config_get_bool(key, &ret)) {
+	if (!repo_config_get_bool(repo, key, &ret)) {
 		free(key);
 		return ret;
 	}
 	free(key);
 
 	/* submodule.active is set */
-	sl = git_config_get_value_multi("submodule.active");
+	sl = repo_config_get_value_multi(repo, "submodule.active");
 	if (sl) {
 		struct pathspec ps;
 		struct argv_array args = ARGV_ARRAY_INIT;
@@ -332,7 +328,7 @@ int is_submodule_initialized(const char *path)
 
 	/* fallback to checking if the URL is set */
 	key = xstrfmt("submodule.%s.url", module->name);
-	ret = !git_config_get_string(key, &value);
+	ret = !repo_config_get_string(repo, key, &value);
 
 	free(value);
 	free(key);
@@ -1532,7 +1528,7 @@ int submodule_move_head(const char *path,
 	const struct submodule *sub;
 	int *error_code_ptr, error_code;
 
-	if (!is_submodule_initialized(path))
+	if (!is_submodule_active(the_repository, path))
 		return 0;
 
 	if (flags & SUBMODULE_MOVE_HEAD_FORCE)
