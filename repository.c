@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "repository.h"
+#include "config.h"
 
 /* The main repository */
 static struct repository the_repo;
@@ -156,4 +157,10 @@ void repo_clear(struct repository *repo)
 	repo->index_file = NULL;
 	free(repo->worktree);
 	repo->worktree = NULL;
+
+	if (repo->config) {
+		git_configset_clear(repo->config);
+		free(repo->config);
+		repo->config = NULL;
+	}
 }
