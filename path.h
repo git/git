@@ -43,6 +43,14 @@ extern void strbuf_repo_git_path(struct strbuf *sb,
 				 const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 
+extern char *repo_worktree_path(const struct repository *repo,
+				const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
+extern void strbuf_repo_worktree_path(struct strbuf *sb,
+				      const struct repository *repo,
+				      const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
+
 extern void report_linked_checkout_garbage(void);
 
 /*
