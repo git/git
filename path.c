@@ -416,6 +416,27 @@ static void do_git_path(const struct repository *repo,
 	strbuf_cleanup_path(buf);
 }
 
+char *repo_git_path(const struct repository *repo,
+		    const char *fmt, ...)
+{
+	struct strbuf path = STRBUF_INIT;
+	va_list args;
+	va_start(args, fmt);
+	do_git_path(repo, NULL, &path, fmt, args);
+	va_end(args);
+	return strbuf_detach(&path, NULL);
+}
+
+void strbuf_repo_git_path(struct strbuf *sb,
+			  const struct repository *repo,
+			  const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	do_git_path(repo, NULL, sb, fmt, args);
+	va_end(args);
+}
+
 char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
 {
 	va_list args;
