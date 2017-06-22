@@ -11,6 +11,7 @@
 #include "string-list.h"
 #include "pack-revindex.h"
 #include "hash.h"
+#include "sha1-array.h"
 
 #ifndef platform_SHA_CTX
 /*
@@ -1579,6 +1580,16 @@ extern struct alternate_object_database {
 	struct strbuf scratch;
 	size_t base_len;
 
+	/*
+	 * Used to store the results of readdir(3) calls when searching
+	 * for unique abbreviated hashes.  This cache is never
+	 * invalidated, thus it's racy and not necessarily accurate.
+	 * That's fine for its purpose; don't use it for tasks requiring
+	 * greater accuracy!
+	 */
+	char loose_objects_subdir_seen[256];
+	struct oid_array loose_objects_cache;
+
 	char path[FLEX_ARRAY];
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
@@ -1797,6 +1808,12 @@ typedef int each_loose_cruft_fn(const char *basename,
 typedef int each_loose_subdir_fn(int nr,
 				 const char *path,
 				 void *data);
+int for_each_file_in_obj_subdir(int subdir_nr,
+				struct strbuf *path,
+				each_loose_object_fn obj_cb,
+				each_loose_cruft_fn cruft_cb,
+				each_loose_subdir_fn subdir_cb,
+				void *data);
 int for_each_loose_file_in_objdir(const char *path,
 				  each_loose_object_fn obj_cb,
 				  each_loose_cruft_fn cruft_cb,
