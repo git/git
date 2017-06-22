@@ -60,7 +60,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	const char *path = force_path;
 
 	if (unknown_type)
-		flags |= LOOKUP_UNKNOWN_OBJECT;
+		flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (get_sha1_with_context(obj_name, GET_SHA1_RECORD_PATH,
 				  oid.hash, &obj_context))
