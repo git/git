@@ -411,7 +411,8 @@ static void do_git_path(const struct repository *repo,
 		strbuf_addch(buf, '/');
 	gitdir_len = buf->len;
 	strbuf_vaddf(buf, fmt, args);
-	adjust_git_path(repo, buf, gitdir_len);
+	if (!wt)
+		adjust_git_path(repo, buf, gitdir_len);
 	strbuf_cleanup_path(buf);
 }
 
