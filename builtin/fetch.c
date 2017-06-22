@@ -249,9 +249,11 @@ static void find_non_local_tags(struct transport *transport,
 		 */
 		if (ends_with(ref->name, "^{}")) {
 			if (item &&
-			    !has_object_file_with_flags(&ref->old_oid, HAS_SHA1_QUICK) &&
+			    !has_object_file_with_flags(&ref->old_oid,
+							OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, ref->old_oid.hash) &&
-			    !has_sha1_file_with_flags(item->util, HAS_SHA1_QUICK) &&
+			    !has_sha1_file_with_flags(item->util,
+						      OBJECT_INFO_QUICK) &&
 			    !will_fetch(head, item->util))
 				item->util = NULL;
 			item = NULL;
@@ -265,7 +267,7 @@ static void find_non_local_tags(struct transport *transport,
 		 * fetch.
 		 */
 		if (item &&
-		    !has_sha1_file_with_flags(item->util, HAS_SHA1_QUICK) &&
+		    !has_sha1_file_with_flags(item->util, OBJECT_INFO_QUICK) &&
 		    !will_fetch(head, item->util))
 			item->util = NULL;
 
@@ -286,7 +288,7 @@ static void find_non_local_tags(struct transport *transport,
 	 * checked to see if it needs fetching.
 	 */
 	if (item &&
-	    !has_sha1_file_with_flags(item->util, HAS_SHA1_QUICK) &&
+	    !has_sha1_file_with_flags(item->util, OBJECT_INFO_QUICK) &&
 	    !will_fetch(head, item->util))
 		item->util = NULL;
 

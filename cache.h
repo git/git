@@ -1268,15 +1268,10 @@ int read_loose_object(const char *path,
 		      void **contents);
 
 /*
- * Return true iff we have an object named sha1, whether local or in
- * an alternate object database, and whether packed or loose.  This
- * function does not respect replace references.
- *
- * If the QUICK flag is set, do not re-check the pack directory
- * when we cannot find the object (this means we may give a false
- * negative answer if another process is simultaneously repacking).
+ * Convenience for sha1_object_info_extended() with a NULL struct
+ * object_info. OBJECT_INFO_SKIP_CACHED is automatically set; pass
+ * nonzero flags to also set other flags.
  */
-#define HAS_SHA1_QUICK 0x1
 extern int has_sha1_file_with_flags(const unsigned char *sha1, int flags);
 static inline int has_sha1_file(const unsigned char *sha1)
 {

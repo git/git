@@ -3494,18 +3494,10 @@ int has_sha1_pack(const unsigned char *sha1)
 
 int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 {
-	struct pack_entry e;
-
 	if (!startup_info->have_repository)
 		return 0;
-	if (find_pack_entry(sha1, &e))
-		return 1;
-	if (has_loose_object(sha1))
-		return 1;
-	if (flags & HAS_SHA1_QUICK)
-		return 0;
-	reprepare_packed_git();
-	return find_pack_entry(sha1, &e);
+	return sha1_object_info_extended(sha1, NULL,
+					 flags | OBJECT_INFO_SKIP_CACHED) >= 0;
 }
 
 int has_object_file(const struct object_id *oid)
