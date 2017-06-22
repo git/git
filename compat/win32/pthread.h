@@ -32,6 +32,7 @@ typedef int pthread_mutexattr_t;
 #define pthread_mutexattr_settype(a, t) 0
 #define PTHREAD_MUTEX_RECURSIVE 0
 
+#ifdef GIT_WIN_XP_SUPPORT
 /*
  * Implement simple condition variable for Windows threads, based on ACE
  * implementation.
@@ -47,6 +48,9 @@ typedef struct {
 	HANDLE sema;
 	HANDLE continue_broadcast;
 } pthread_cond_t;
+#else
+typedef CONDITION_VARIABLE pthread_cond_t;
+#endif
 
 extern int pthread_cond_init(pthread_cond_t *cond, const void *unused);
 extern int pthread_cond_destroy(pthread_cond_t *cond);
