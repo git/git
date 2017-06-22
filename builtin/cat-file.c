@@ -56,7 +56,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	struct object_context obj_context;
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct strbuf sb = STRBUF_INIT;
-	unsigned flags = LOOKUP_REPLACE_OBJECT;
+	unsigned flags = OBJECT_INFO_LOOKUP_REPLACE;
 	const char *path = force_path;
 
 	if (unknown_type)
@@ -337,7 +337,8 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	struct strbuf buf = STRBUF_INIT;
 
 	if (!data->skip_object_info &&
-	    sha1_object_info_extended(data->oid.hash, &data->info, LOOKUP_REPLACE_OBJECT) < 0) {
+	    sha1_object_info_extended(data->oid.hash, &data->info,
+				      OBJECT_INFO_LOOKUP_REPLACE) < 0) {
 		printf("%s missing\n",
 		       obj_name ? obj_name : oid_to_hex(&data->oid));
 		fflush(stdout);

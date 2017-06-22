@@ -1205,12 +1205,12 @@ extern char *xdg_config_home(const char *filename);
  */
 extern char *xdg_cache_home(const char *filename);
 
-/* object replacement */
-#define LOOKUP_REPLACE_OBJECT 1
-extern void *read_sha1_file_extended(const unsigned char *sha1, enum object_type *type, unsigned long *size, unsigned flag);
+extern void *read_sha1_file_extended(const unsigned char *sha1,
+				     enum object_type *type,
+				     unsigned long *size, int lookup_replace);
 static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
-	return read_sha1_file_extended(sha1, type, size, LOOKUP_REPLACE_OBJECT);
+	return read_sha1_file_extended(sha1, type, size, 1);
 }
 
 /*
@@ -1230,13 +1230,6 @@ static inline const unsigned char *lookup_replace_object(const unsigned char *sh
 	if (!check_replace_refs)
 		return sha1;
 	return do_lookup_replace_object(sha1);
-}
-
-static inline const unsigned char *lookup_replace_object_extended(const unsigned char *sha1, unsigned flag)
-{
-	if (!(flag & LOOKUP_REPLACE_OBJECT))
-		return sha1;
-	return lookup_replace_object(sha1);
 }
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
@@ -1865,6 +1858,8 @@ struct object_info {
  */
 #define OBJECT_INFO_INIT {NULL}
 
+/* Invoke lookup_replace_object() on the given hash */
+#define OBJECT_INFO_LOOKUP_REPLACE 1
 /* Allow reading from a loose object file of unknown/bogus type */
 #define OBJECT_INFO_ALLOW_UNKNOWN_TYPE 2
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
