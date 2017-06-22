@@ -1081,7 +1081,7 @@ EOF2
 
 	open $fh, '<', $hunkfile
 		or die sprintf(__("failed to open hunk edit file for reading: %s"), $!);
-	my @newtext = grep { !/^$comment_line_char/ } <$fh>;
+	my @newtext = grep { !/^\Q$comment_line_char\E/ } <$fh>;
 	close $fh;
 	unlink $hunkfile;
 
@@ -1136,6 +1136,7 @@ sub prompt_yesno {
 	while (1) {
 		print colored $prompt_color, $prompt;
 		my $line = prompt_single_character;
+		return undef unless defined $line;
 		return 0 if $line =~ /^n/i;
 		return 1 if $line =~ /^y/i;
 	}
