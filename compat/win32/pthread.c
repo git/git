@@ -57,6 +57,8 @@ pthread_t pthread_self(void)
 	return t;
 }
 
+#ifdef GIT_WIN_XP_SUPPORT
+
 int pthread_cond_init(pthread_cond_t *cond, const void *unused)
 {
 	cond->waiters = 0;
@@ -194,3 +196,41 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
 	}
 	return 0;
 }
+
+#else // GIT_WIN_XP_SUPPORT
+
+WINBASEAPI VOID WINAPI InitializeConditionVariable (PCONDITION_VARIABLE ConditionVariable);
+WINBASEAPI VOID WINAPI WakeConditionVariable (PCONDITION_VARIABLE ConditionVariable);
+WINBASEAPI VOID WINAPI WakeAllConditionVariable (PCONDITION_VARIABLE ConditionVariable);
+WINBASEAPI WINBOOL WINAPI SleepConditionVariableCS (PCONDITION_VARIABLE ConditionVariable, PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds);
+
+int pthread_cond_init(pthread_cond_t *cond, const void *unused)
+{
+	InitializeConditionVariable(cond);
+	return 0;
+}
+
+int pthread_cond_destroy(pthread_cond_t *cond)
+{
+	return 0;
+}
+
+int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex)
+{
+	SleepConditionVariableCS(cond, mutex, INFINITE);
+	return 0;
+}
+
+int pthread_cond_signal(pthread_cond_t *cond)
+{
+	WakeConditionVariable(cond);
+	return 0;
+}
+
+int pthread_cond_broadcast(pthread_cond_t *cond)
+{
+	WakeAllConditionVariable(cond);
+	return 0;
+}
+
+#endif // GIT_WIN_XP_SUPPORT
