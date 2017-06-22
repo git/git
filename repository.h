@@ -43,6 +43,13 @@ struct repository {
 	 */
 	char *worktree;
 
+	/*
+	 * Path from the root of the top-level superproject down to this
+	 * repository.  This is only non-NULL if the repository is initialized
+	 * as a submodule of another repository.
+	 */
+	char *submodule_prefix;
+
 	/* Subsystems */
 	/*
 	 * Repository's config which contains key-value pairs from the usual
@@ -80,6 +87,9 @@ extern struct repository *the_repository;
 extern void repo_set_gitdir(struct repository *repo, const char *path);
 extern void repo_set_worktree(struct repository *repo, const char *path);
 extern int repo_init(struct repository *repo, const char *gitdir, const char *worktree);
+extern int repo_submodule_init(struct repository *submodule,
+			       struct repository *superproject,
+			       const char *path);
 extern void repo_clear(struct repository *repo);
 
 extern int repo_read_index(struct repository *repo);
