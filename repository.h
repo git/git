@@ -3,6 +3,7 @@
 
 struct config_set;
 struct index_state;
+struct submodule_cache;
 
 struct repository {
 	/* Environment */
@@ -49,6 +50,9 @@ struct repository {
 	 * ~/.gitconfig, XDG config file and the global /etc/gitconfig)
 	 */
 	struct config_set *config;
+
+	/* Repository's submodule config as defined by '.gitmodules' */
+	struct submodule_cache *submodule_cache;
 
 	/*
 	 * Repository's in-memory index.

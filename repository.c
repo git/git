@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
+#include "submodule-config.h"
 
 /* The main repository */
 static struct repository the_repo;
@@ -162,6 +163,11 @@ void repo_clear(struct repository *repo)
 		git_configset_clear(repo->config);
 		free(repo->config);
 		repo->config = NULL;
+	}
+
+	if (repo->submodule_cache) {
+		submodule_cache_free(repo->submodule_cache);
+		repo->submodule_cache = NULL;
 	}
 
 	if (repo->index) {
