@@ -1,6 +1,8 @@
 #ifndef PATH_H
 #define PATH_H
 
+struct repository;
+
 /*
  * Return a statically allocated filename, either generically (mkpath), in
  * the repository directory (git_path), or in a submodule's repository
@@ -17,8 +19,10 @@ extern char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 extern void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
-extern void strbuf_git_common_path(struct strbuf *sb, const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+extern void strbuf_git_common_path(struct strbuf *sb,
+				   const struct repository *repo,
+				   const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
 extern char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
 extern int strbuf_git_path_submodule(struct strbuf *sb, const char *path,
