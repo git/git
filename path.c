@@ -345,8 +345,6 @@ static void update_common_dir(struct strbuf *buf, int git_dir_len,
 {
 	char *base = buf->buf + git_dir_len;
 	init_common_trie();
-	if (!common_dir)
-		common_dir = get_git_common_dir();
 	if (trie_find(&common_trie, base, check_common, NULL) > 0)
 		replace_dir(buf, git_dir_len, common_dir);
 }
@@ -387,7 +385,7 @@ static void adjust_git_path(struct strbuf *buf, int git_dir_len)
 	else if (git_hooks_path && dir_prefix(base, "hooks"))
 		replace_dir(buf, git_dir_len + 5, git_hooks_path);
 	else if (the_repository->different_commondir)
-		update_common_dir(buf, git_dir_len, NULL);
+		update_common_dir(buf, git_dir_len, get_git_common_dir());
 }
 
 static void do_git_path(const struct worktree *wt, struct strbuf *buf,
