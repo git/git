@@ -178,7 +178,7 @@ testrebase () {
 		test_when_finished git branch -D rebased-feature-branch &&
 		suffix=${type#\ --} && suffix=${suffix:-am} &&
 		create_expected_success_$suffix &&
-		test_cmp expected actual
+		test_i18ncmp expected actual
 	'
 
 	test_expect_success "rebase$type: dirty index, non-conflicting rebase" '
@@ -275,7 +275,7 @@ testrebase () {
 		test_when_finished git branch -D rebased-feature-branch &&
 		suffix=${type#\ --} && suffix=${suffix:-am} &&
 		create_expected_failure_$suffix &&
-		test_cmp expected actual
+		test_i18ncmp expected actual
 	'
 }
 
