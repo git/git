@@ -428,9 +428,9 @@ static struct ref_dir *get_packed_ref_dir(struct packed_ref_cache *packed_ref_ca
 	return get_ref_dir(packed_ref_cache->cache->root);
 }
 
-static struct ref_dir *get_packed_refs(struct files_ref_store *refs)
+static struct ref_dir *get_packed_refs(struct packed_ref_store *refs)
 {
-	return get_packed_ref_dir(get_packed_ref_cache(refs->packed_ref_store));
+	return get_packed_ref_dir(get_packed_ref_cache(refs));
 }
 
 /*
@@ -451,7 +451,7 @@ static void add_packed_ref(struct files_ref_store *refs,
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
 		die("Reference has invalid format: '%s'", refname);
 
-	packed_refs = get_packed_refs(refs);
+	packed_refs = get_packed_refs(refs->packed_ref_store);
 	packed_entry = find_ref_entry(packed_refs, refname);
 	if (packed_entry) {
 		/* Overwrite the existing entry: */
@@ -593,7 +593,7 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
 static struct ref_entry *get_packed_ref(struct files_ref_store *refs,
 					const char *refname)
 {
-	return find_ref_entry(get_packed_refs(refs), refname);
+	return find_ref_entry(get_packed_refs(refs->packed_ref_store), refname);
 }
 
 /*
@@ -1634,7 +1634,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 		unable_to_lock_message(refs->packed_ref_store->path, errno, err);
 		return -1;
 	}
-	packed = get_packed_refs(refs);
+	packed = get_packed_refs(refs->packed_ref_store);
 
 	/* Remove refnames from the cache */
 	for_each_string_list_item(refname, refnames)
