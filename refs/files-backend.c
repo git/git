@@ -29,7 +29,7 @@ struct files_ref_store {
 
 	struct ref_cache *loose;
 
-	struct packed_ref_store *packed_ref_store;
+	struct ref_store *packed_ref_store;
 };
 
 static void clear_loose_ref_cache(struct files_ref_store *refs)
@@ -312,8 +312,8 @@ stat_ref:
 	if (lstat(path, &st) < 0) {
 		if (errno != ENOENT)
 			goto out;
-		if (packed_read_raw_ref(refs->packed_ref_store, refname,
-					sha1, referent, type)) {
+		if (refs_read_raw_ref(refs->packed_ref_store, refname,
+				      sha1, referent, type)) {
 			errno = ENOENT;
 			goto out;
 		}
@@ -352,8 +352,8 @@ stat_ref:
 		 * ref is supposed to be, there could still be a
 		 * packed ref:
 		 */
-		if (packed_read_raw_ref(refs->packed_ref_store, refname,
-					sha1, referent, type)) {
+		if (refs_read_raw_ref(refs->packed_ref_store, refname,
+				      sha1, referent, type)) {
 			errno = EISDIR;
 			goto out;
 		}
@@ -684,7 +684,7 @@ static int files_peel_ref(struct ref_store *ref_store,
 	 * have REF_KNOWS_PEELED.
 	 */
 	if (flag & REF_ISPACKED &&
-	    !packed_peel_ref(refs->packed_ref_store, refname, sha1))
+	    !refs_peel_ref(refs->packed_ref_store, refname, sha1))
 		return 0;
 
 	return peel_object(base, sha1);
@@ -805,8 +805,8 @@ static struct ref_iterator *files_ref_iterator_begin(
 	 * ones in files_ref_iterator_advance(), after we have merged
 	 * the packed and loose references.
 	 */
-	packed_iter = packed_ref_iterator_begin(
-			refs->packed_ref_store, prefix,
+	packed_iter = refs_ref_iterator_begin(
+			refs->packed_ref_store, prefix, 0,
 			DO_FOR_EACH_INCLUDE_BROKEN);
 
 	iter->iter0 = overlay_ref_iterator_begin(loose_iter, packed_iter);
