@@ -199,10 +199,16 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
 
 #else // GIT_WIN_XP_SUPPORT
 
-WINBASEAPI VOID WINAPI InitializeConditionVariable (PCONDITION_VARIABLE ConditionVariable);
-WINBASEAPI VOID WINAPI WakeConditionVariable (PCONDITION_VARIABLE ConditionVariable);
-WINBASEAPI VOID WINAPI WakeAllConditionVariable (PCONDITION_VARIABLE ConditionVariable);
-WINBASEAPI WINBOOL WINAPI SleepConditionVariableCS (PCONDITION_VARIABLE ConditionVariable, PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds);
+WINBASEAPI VOID WINAPI
+InitializeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+WINBASEAPI VOID WINAPI
+WakeConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+WINBASEAPI VOID WINAPI
+WakeAllConditionVariable(PCONDITION_VARIABLE ConditionVariable);
+WINBASEAPI WINBOOL WINAPI
+SleepConditionVariableCS(PCONDITION_VARIABLE ConditionVariable,
+                         PCRITICAL_SECTION CriticalSection,
+                         DWORD dwMilliseconds);
 
 int pthread_cond_init(pthread_cond_t *cond, const void *unused)
 {
