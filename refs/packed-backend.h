@@ -14,7 +14,7 @@ int lock_packed_refs(struct ref_store *ref_store, int flags);
 void add_packed_ref(struct ref_store *ref_store,
 		    const char *refname, const struct object_id *oid);
 
-int commit_packed_refs(struct ref_store *ref_store);
+int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err);
 
 int repack_without_refs(struct ref_store *ref_store,
 			struct string_list *refnames, struct strbuf *err);

@@ -494,15 +494,19 @@ static struct ref_iterator *packed_ref_iterator_begin(
 
 /*
  * Write an entry to the packed-refs file for the specified refname.
- * If peeled is non-NULL, write it as the entry's peeled value.
+ * If peeled is non-NULL, write it as the entry's peeled value. On
+ * error, return a nonzero value and leave errno set at the value left
+ * by the failing call to `fprintf()`.
  */
-static void write_packed_entry(FILE *fh, const char *refname,
-			       const unsigned char *sha1,
-			       const unsigned char *peeled)
+static int write_packed_entry(FILE *fh, const char *refname,
+			      const unsigned char *sha1,
+			      const unsigned char *peeled)
 {
-	fprintf_or_die(fh, "%s %s\n", sha1_to_hex(sha1), refname);
-	if (peeled)
-		fprintf_or_die(fh, "^%s\n", sha1_to_hex(peeled));
+	if (fprintf(fh, "%s %s\n", sha1_to_hex(sha1), refname) < 0 ||
+	    (peeled && fprintf(fh, "^%s\n", sha1_to_hex(peeled)) < 0))
+		return -1;
+
+	return 0;
 }
 
 int lock_packed_refs(struct ref_store *ref_store, int flags)
@@ -551,49 +555,74 @@ static const char PACKED_REFS_HEADER[] =
 /*
  * Write the current version of the packed refs cache from memory to
  * disk. The packed-refs file must already be locked for writing (see
- * lock_packed_refs()). Return zero on success. On errors, set errno
- * and return a nonzero value.
+ * lock_packed_refs()). Return zero on success. On errors, rollback
+ * the lockfile, write an error message to `err`, and return a nonzero
+ * value.
  */
-int commit_packed_refs(struct ref_store *ref_store)
+int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 {
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
 				"commit_packed_refs");
 	struct packed_ref_cache *packed_ref_cache =
 		get_packed_ref_cache(refs);
-	int ok, error = 0;
-	int save_errno = 0;
+	int ok;
+	int ret = -1;
 	FILE *out;
 	struct ref_iterator *iter;
 
 	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: packed-refs not locked");
+		die("BUG: commit_packed_refs() called when unlocked");
 
 	out = fdopen_lock_file(&refs->lock, "w");
-	if (!out)
-		die_errno("unable to fdopen packed-refs descriptor");
+	if (!out) {
+		strbuf_addf(err, "unable to fdopen packed-refs tempfile: %s",
+			    strerror(errno));
+		goto error;
+	}
 
-	fprintf_or_die(out, "%s", PACKED_REFS_HEADER);
+	if (fprintf(out, "%s", PACKED_REFS_HEADER) < 0) {
+		strbuf_addf(err, "error writing to %s: %s",
+			    get_lock_file_path(&refs->lock), strerror(errno));
+		goto error;
+	}
 
 	iter = cache_ref_iterator_begin(packed_ref_cache->cache, NULL, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		struct object_id peeled;
 		int peel_error = ref_iterator_peel(iter, &peeled);
 
-		write_packed_entry(out, iter->refname, iter->oid->hash,
-				   peel_error ? NULL : peeled.hash);
+		if (write_packed_entry(out, iter->refname, iter->oid->hash,
+				       peel_error ? NULL : peeled.hash)) {
+			strbuf_addf(err, "error writing to %s: %s",
+				    get_lock_file_path(&refs->lock),
+				    strerror(errno));
+			ref_iterator_abort(iter);
+			goto error;
+		}
 	}
 
-	if (ok != ITER_DONE)
-		die("error while iterating over references");
+	if (ok != ITER_DONE) {
+		strbuf_addf(err, "unable to write packed-refs file: "
+			    "error iterating over old contents");
+		goto error;
+	}
 
 	if (commit_lock_file(&refs->lock)) {
-		save_errno = errno;
-		error = -1;
+		strbuf_addf(err, "error overwriting %s: %s",
+			    refs->path, strerror(errno));
+		goto out;
 	}
+
+	ret = 0;
+	goto out;
+
+error:
+	rollback_lock_file(&refs->lock);
+
+out:
 	release_packed_ref_cache(packed_ref_cache);
-	errno = save_errno;
-	return error;
+	return ret;
 }
 
 /*
@@ -629,7 +658,7 @@ int repack_without_refs(struct ref_store *ref_store,
 				"repack_without_refs");
 	struct ref_dir *packed;
 	struct string_list_item *refname;
-	int ret, needs_repacking = 0, removed = 0;
+	int needs_repacking = 0, removed = 0;
 
 	packed_assert_main_repository(refs, "repack_without_refs");
 	assert(err);
@@ -666,11 +695,7 @@ int repack_without_refs(struct ref_store *ref_store,
 	}
 
 	/* Write what remains */
-	ret = commit_packed_refs(&refs->base);
-	if (ret)
-		strbuf_addf(err, "unable to overwrite old ref-pack file: %s",
-			    strerror(errno));
-	return ret;
+	return commit_packed_refs(&refs->base, err);
 }
 
 static int packed_init_db(struct ref_store *ref_store, struct strbuf *err)

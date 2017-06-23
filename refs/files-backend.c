@@ -1095,6 +1095,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	struct ref_iterator *iter;
 	int ok;
 	struct ref_to_prune *refs_to_prune = NULL;
+	struct strbuf err = STRBUF_INIT;
 
 	lock_packed_refs(refs->packed_ref_store, LOCK_DIE_ON_ERROR);
 
@@ -1129,10 +1130,11 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	if (ok != ITER_DONE)
 		die("error while iterating over references");
 
-	if (commit_packed_refs(refs->packed_ref_store))
-		die_errno("unable to overwrite old ref-pack file");
+	if (commit_packed_refs(refs->packed_ref_store, &err))
+		die("unable to overwrite old ref-pack file: %s", err.buf);
 
 	prune_refs(refs, refs_to_prune);
+	strbuf_release(&err);
 	return 0;
 }
 
@@ -2693,9 +2695,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 				       &update->new_oid);
 	}
 
-	if (commit_packed_refs(refs->packed_ref_store)) {
-		strbuf_addf(err, "unable to commit packed-refs file: %s",
-			    strerror(errno));
+	if (commit_packed_refs(refs->packed_ref_store, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;
 	}
