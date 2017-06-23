@@ -1014,6 +1014,18 @@ out:
 	return ret;
 }
 
+static int packed_peel_ref(struct packed_ref_store *refs,
+			   const char *refname, unsigned char *sha1)
+{
+	struct ref_entry *r = get_packed_ref(refs, refname);
+
+	if (!r || peel_entry(r, 0))
+		return -1;
+
+	hashcpy(sha1, r->u.value.peeled.hash);
+	return 0;
+}
+
 static int files_peel_ref(struct ref_store *ref_store,
 			  const char *refname, unsigned char *sha1)
 {
@@ -1044,17 +1056,9 @@ static int files_peel_ref(struct ref_store *ref_store,
 	 * be expensive and (b) loose references anyway usually do not
 	 * have REF_KNOWS_PEELED.
 	 */
-	if (flag & REF_ISPACKED) {
-		struct ref_entry *r =
-			get_packed_ref(refs->packed_ref_store, refname);
-
-		if (r) {
-			if (peel_entry(r, 0))
-				return -1;
-			hashcpy(sha1, r->u.value.peeled.hash);
-			return 0;
-		}
-	}
+	if (flag & REF_ISPACKED &&
+	    !packed_peel_ref(refs->packed_ref_store, refname, sha1))
+		return 0;
 
 	return peel_object(base, sha1);
 }
