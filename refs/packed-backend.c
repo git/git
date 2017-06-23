@@ -69,6 +69,13 @@ struct packed_ref_store {
 	 * thus the enclosing `packed_ref_store`) must not be freed.
 	 */
 	struct lock_file lock;
+
+	/*
+	 * Temporary file used when rewriting new contents to the
+	 * "packed-refs" file. Note that this (and thus the enclosing
+	 * `packed_ref_store`) must not be freed.
+	 */
+	struct tempfile tempfile;
 };
 
 struct ref_store *packed_ref_store_create(const char *path,
@@ -523,10 +530,16 @@ int lock_packed_refs(struct ref_store *ref_store, int flags)
 		timeout_configured = 1;
 	}
 
+	/*
+	 * Note that we close the lockfile immediately because we
+	 * don't write new content to it, but rather to a separate
+	 * tempfile.
+	 */
 	if (hold_lock_file_for_update_timeout(
 			    &refs->lock,
 			    refs->path,
-			    flags, timeout_value) < 0)
+			    flags, timeout_value) < 0 ||
+	    close_lock_file(&refs->lock))
 		return -1;
 
 	/*
@@ -568,13 +581,23 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 		get_packed_ref_cache(refs);
 	int ok;
 	int ret = -1;
+	struct strbuf sb = STRBUF_INIT;
 	FILE *out;
 	struct ref_iterator *iter;
 
 	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: commit_packed_refs() called when unlocked");
 
-	out = fdopen_lock_file(&refs->lock, "w");
+	strbuf_addf(&sb, "%s.new", refs->path);
+	if (create_tempfile(&refs->tempfile, sb.buf) < 0) {
+		strbuf_addf(err, "unable to create file %s: %s",
+			    sb.buf, strerror(errno));
+		strbuf_release(&sb);
+		goto out;
+	}
+	strbuf_release(&sb);
+
+	out = fdopen_tempfile(&refs->tempfile, "w");
 	if (!out) {
 		strbuf_addf(err, "unable to fdopen packed-refs tempfile: %s",
 			    strerror(errno));
@@ -583,7 +606,7 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 
 	if (fprintf(out, "%s", PACKED_REFS_HEADER) < 0) {
 		strbuf_addf(err, "error writing to %s: %s",
-			    get_lock_file_path(&refs->lock), strerror(errno));
+			    get_tempfile_path(&refs->tempfile), strerror(errno));
 		goto error;
 	}
 
@@ -595,7 +618,7 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 		if (write_packed_entry(out, iter->refname, iter->oid->hash,
 				       peel_error ? NULL : peeled.hash)) {
 			strbuf_addf(err, "error writing to %s: %s",
-				    get_lock_file_path(&refs->lock),
+				    get_tempfile_path(&refs->tempfile),
 				    strerror(errno));
 			ref_iterator_abort(iter);
 			goto error;
@@ -603,13 +626,13 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	}
 
 	if (ok != ITER_DONE) {
-		strbuf_addf(err, "unable to write packed-refs file: "
+		strbuf_addf(err, "unable to rewrite packed-refs file: "
 			    "error iterating over old contents");
 		goto error;
 	}
 
-	if (commit_lock_file(&refs->lock)) {
-		strbuf_addf(err, "error overwriting %s: %s",
+	if (rename_tempfile(&refs->tempfile, refs->path)) {
+		strbuf_addf(err, "error replacing %s: %s",
 			    refs->path, strerror(errno));
 		goto out;
 	}
@@ -618,9 +641,10 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	goto out;
 
 error:
-	rollback_lock_file(&refs->lock);
+	delete_tempfile(&refs->tempfile);
 
 out:
+	rollback_lock_file(&refs->lock);
 	release_packed_ref_cache(packed_ref_cache);
 	return ret;
 }
