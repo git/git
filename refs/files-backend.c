@@ -55,6 +55,9 @@ struct packed_ref_cache {
 struct packed_ref_store {
 	unsigned int store_flags;
 
+	/* The path of the "packed-refs" file: */
+	char *path;
+
 	/*
 	 * A cache of the values read from the `packed-refs` file, if
 	 * it might still be current; otherwise, NULL.
@@ -62,11 +65,13 @@ struct packed_ref_store {
 	struct packed_ref_cache *cache;
 };
 
-static struct packed_ref_store *packed_ref_store_create(unsigned int store_flags)
+static struct packed_ref_store *packed_ref_store_create(
+		const char *path, unsigned int store_flags)
 {
 	struct packed_ref_store *refs = xcalloc(1, sizeof(*refs));
 
 	refs->store_flags = store_flags;
+	refs->path = xstrdup(path);
 	return refs;
 }
 
@@ -80,7 +85,6 @@ struct files_ref_store {
 
 	char *gitdir;
 	char *gitcommondir;
-	char *packed_refs_path;
 
 	struct ref_cache *loose;
 
@@ -155,8 +159,8 @@ static struct ref_store *files_ref_store_create(const char *gitdir,
 	get_common_dir_noenv(&sb, gitdir);
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	strbuf_addf(&sb, "%s/packed-refs", refs->gitcommondir);
-	refs->packed_refs_path = strbuf_detach(&sb, NULL);
-	refs->packed_ref_store = packed_ref_store_create(flags);
+	refs->packed_ref_store = packed_ref_store_create(sb.buf, flags);
+	strbuf_release(&sb);
 
 	return ref_store;
 }
@@ -344,11 +348,6 @@ static struct packed_ref_cache *read_packed_refs(const char *packed_refs_file)
 	return packed_refs;
 }
 
-static const char *files_packed_refs_path(struct files_ref_store *refs)
-{
-	return refs->packed_refs_path;
-}
-
 static void files_reflog_path(struct files_ref_store *refs,
 			      struct strbuf *sb,
 			      const char *refname)
@@ -402,7 +401,7 @@ static void validate_packed_ref_cache(struct files_ref_store *refs)
 {
 	if (refs->packed_ref_store->cache &&
 	    !stat_validity_check(&refs->packed_ref_store->cache->validity,
-				 files_packed_refs_path(refs)))
+				 refs->packed_ref_store->path))
 		clear_packed_ref_cache(refs);
 }
 
@@ -416,7 +415,7 @@ static void validate_packed_ref_cache(struct files_ref_store *refs)
  */
 static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *refs)
 {
-	const char *packed_refs_file = files_packed_refs_path(refs);
+	const char *packed_refs_file = refs->packed_ref_store->path;
 
 	if (!is_lock_file_locked(&refs->packed_refs_lock))
 		validate_packed_ref_cache(refs);
@@ -1353,7 +1352,7 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 	}
 
 	if (hold_lock_file_for_update_timeout(
-			    &refs->packed_refs_lock, files_packed_refs_path(refs),
+			    &refs->packed_refs_lock, refs->packed_ref_store->path,
 			    flags, timeout_value) < 0)
 		return -1;
 
@@ -1634,7 +1633,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 		return 0; /* no refname exists in packed refs */
 
 	if (lock_packed_refs(refs, 0)) {
-		unable_to_lock_message(files_packed_refs_path(refs), errno, err);
+		unable_to_lock_message(refs->packed_ref_store->path, errno, err);
 		return -1;
 	}
 	packed = get_packed_refs(refs);
