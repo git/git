@@ -439,19 +439,19 @@ static struct ref_dir *get_packed_refs(struct packed_ref_store *refs)
  * (see lock_packed_refs()). To actually write the packed-refs file,
  * call commit_packed_refs().
  */
-static void add_packed_ref(struct files_ref_store *refs,
+static void add_packed_ref(struct packed_ref_store *refs,
 			   const char *refname, const struct object_id *oid)
 {
 	struct ref_dir *packed_refs;
 	struct ref_entry *packed_entry;
 
-	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
+	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: packed refs not locked");
 
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
 		die("Reference has invalid format: '%s'", refname);
 
-	packed_refs = get_packed_refs(refs->packed_ref_store);
+	packed_refs = get_packed_refs(refs);
 	packed_entry = find_ref_entry(packed_refs, refname);
 	if (packed_entry) {
 		/* Overwrite the existing entry: */
@@ -1580,7 +1580,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		 * we don't copy the peeled status, because we want it
 		 * to be re-peeled.
 		 */
-		add_packed_ref(refs, iter->refname, iter->oid);
+		add_packed_ref(refs->packed_ref_store, iter->refname, iter->oid);
 
 		/* Schedule the loose reference for pruning if requested. */
 		if ((flags & PACK_REFS_PRUNE)) {
@@ -3210,7 +3210,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 
 		if ((update->flags & REF_HAVE_NEW) &&
 		    !is_null_oid(&update->new_oid))
-			add_packed_ref(refs, update->refname,
+			add_packed_ref(refs->packed_ref_store, update->refname,
 				       &update->new_oid);
 	}
 
