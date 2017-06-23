@@ -405,24 +405,22 @@ static void validate_packed_ref_cache(struct packed_ref_store *refs)
 }
 
 /*
- * Get the packed_ref_cache for the specified files_ref_store,
+ * Get the packed_ref_cache for the specified packed_ref_store,
  * creating and populating it if it hasn't been read before or if the
  * file has been changed (according to its `validity` field) since it
  * was last read. On the other hand, if we hold the lock, then assume
  * that the file hasn't been changed out from under us, so skip the
  * extra `stat()` call in `stat_validity_check()`.
  */
-static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *refs)
+static struct packed_ref_cache *get_packed_ref_cache(struct packed_ref_store *refs)
 {
-	const char *packed_refs_file = refs->packed_ref_store->path;
+	if (!is_lock_file_locked(&refs->lock))
+		validate_packed_ref_cache(refs);
 
-	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
-		validate_packed_ref_cache(refs->packed_ref_store);
+	if (!refs->cache)
+		refs->cache = read_packed_refs(refs->path);
 
-	if (!refs->packed_ref_store->cache)
-		refs->packed_ref_store->cache = read_packed_refs(packed_refs_file);
-
-	return refs->packed_ref_store->cache;
+	return refs->cache;
 }
 
 static struct ref_dir *get_packed_ref_dir(struct packed_ref_cache *packed_ref_cache)
@@ -432,7 +430,7 @@ static struct ref_dir *get_packed_ref_dir(struct packed_ref_cache *packed_ref_ca
 
 static struct ref_dir *get_packed_refs(struct files_ref_store *refs)
 {
-	return get_packed_ref_dir(get_packed_ref_cache(refs));
+	return get_packed_ref_dir(get_packed_ref_cache(refs->packed_ref_store));
 }
 
 /*
@@ -1152,7 +1150,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 	loose_iter = cache_ref_iterator_begin(get_loose_ref_cache(refs),
 					      prefix, 1);
 
-	iter->packed_ref_cache = get_packed_ref_cache(refs);
+	iter->packed_ref_cache = get_packed_ref_cache(refs->packed_ref_store);
 	acquire_packed_ref_cache(iter->packed_ref_cache);
 	packed_iter = cache_ref_iterator_begin(iter->packed_ref_cache->cache,
 					       prefix, 0);
@@ -1366,7 +1364,7 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 	 */
 	validate_packed_ref_cache(refs->packed_ref_store);
 
-	packed_ref_cache = get_packed_ref_cache(refs);
+	packed_ref_cache = get_packed_ref_cache(refs->packed_ref_store);
 	/* Increment the reference count to prevent it from being freed: */
 	acquire_packed_ref_cache(packed_ref_cache);
 	return 0;
@@ -1381,7 +1379,7 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 static int commit_packed_refs(struct files_ref_store *refs)
 {
 	struct packed_ref_cache *packed_ref_cache =
-		get_packed_ref_cache(refs);
+		get_packed_ref_cache(refs->packed_ref_store);
 	int ok, error = 0;
 	int save_errno = 0;
 	FILE *out;
@@ -1427,7 +1425,7 @@ static int commit_packed_refs(struct files_ref_store *refs)
 static void rollback_packed_refs(struct files_ref_store *refs)
 {
 	struct packed_ref_cache *packed_ref_cache =
-		get_packed_ref_cache(refs);
+		get_packed_ref_cache(refs->packed_ref_store);
 
 	files_assert_main_repository(refs, "rollback_packed_refs");
 
