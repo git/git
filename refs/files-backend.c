@@ -414,15 +414,16 @@ static struct ref_dir *get_packed_refs(struct files_ref_store *refs)
 }
 
 /*
- * Add a reference to the in-memory packed reference cache.  This may
- * only be called while the packed-refs file is locked (see
- * lock_packed_refs()).  To actually write the packed-refs file, call
- * commit_packed_refs().
+ * Add or overwrite a reference in the in-memory packed reference
+ * cache. This may only be called while the packed-refs file is locked
+ * (see lock_packed_refs()). To actually write the packed-refs file,
+ * call commit_packed_refs().
  */
 static void add_packed_ref(struct files_ref_store *refs,
 			   const char *refname, const struct object_id *oid)
 {
-	struct packed_ref_cache *packed_ref_cache = get_packed_ref_cache(refs);
+	struct ref_dir *packed_refs;
+	struct ref_entry *packed_entry;
 
 	if (!is_lock_file_locked(&refs->packed_refs_lock))
 		die("BUG: packed refs not locked");
@@ -430,8 +431,17 @@ static void add_packed_ref(struct files_ref_store *refs,
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
 		die("Reference has invalid format: '%s'", refname);
 
-	add_ref_entry(get_packed_ref_dir(packed_ref_cache),
-		      create_ref_entry(refname, oid, REF_ISPACKED));
+	packed_refs = get_packed_refs(refs);
+	packed_entry = find_ref_entry(packed_refs, refname);
+	if (packed_entry) {
+		/* Overwrite the existing entry: */
+		oidcpy(&packed_entry->u.value.oid, oid);
+		packed_entry->flag = REF_ISPACKED;
+		oidclr(&packed_entry->u.value.peeled);
+	} else {
+		packed_entry = create_ref_entry(refname, oid, REF_ISPACKED);
+		add_ref_entry(packed_refs, packed_entry);
+	}
 }
 
 /*
@@ -1527,12 +1537,10 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		files_downcast(ref_store, REF_STORE_WRITE | REF_STORE_ODB,
 			       "pack_refs");
 	struct ref_iterator *iter;
-	struct ref_dir *packed_refs;
 	int ok;
 	struct ref_to_prune *refs_to_prune = NULL;
 
 	lock_packed_refs(refs, LOCK_DIE_ON_ERROR);
-	packed_refs = get_packed_refs(refs);
 
 	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
@@ -1541,8 +1549,6 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		 * in the packed ref cache. If the reference should be
 		 * pruned, also add it to refs_to_prune.
 		 */
-		struct ref_entry *packed_entry;
-
 		if (!should_pack_ref(iter->refname, iter->oid, iter->flags,
 				     flags))
 			continue;
@@ -1553,17 +1559,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 		 * we don't copy the peeled status, because we want it
 		 * to be re-peeled.
 		 */
-		packed_entry = find_ref_entry(packed_refs, iter->refname);
-		if (packed_entry) {
-			/* Overwrite existing packed entry with info from loose entry */
-			packed_entry->flag = REF_ISPACKED;
-			oidcpy(&packed_entry->u.value.oid, iter->oid);
-		} else {
-			packed_entry = create_ref_entry(iter->refname, iter->oid,
-							REF_ISPACKED);
-			add_ref_entry(packed_refs, packed_entry);
-		}
-		oidclr(&packed_entry->u.value.peeled);
+		add_packed_ref(refs, iter->refname, iter->oid);
 
 		/* Schedule the loose reference for pruning if requested. */
 		if ((flags & PACK_REFS_PRUNE)) {
