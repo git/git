@@ -1063,10 +1063,102 @@ static int files_peel_ref(struct ref_store *ref_store,
 	return peel_object(base, sha1);
 }
 
+struct packed_ref_iterator {
+	struct ref_iterator base;
+
+	struct packed_ref_cache *cache;
+	struct ref_iterator *iter0;
+	unsigned int flags;
+};
+
+static int packed_ref_iterator_advance(struct ref_iterator *ref_iterator)
+{
+	struct packed_ref_iterator *iter =
+		(struct packed_ref_iterator *)ref_iterator;
+	int ok;
+
+	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
+		if (iter->flags & DO_FOR_EACH_PER_WORKTREE_ONLY &&
+		    ref_type(iter->iter0->refname) != REF_TYPE_PER_WORKTREE)
+			continue;
+
+		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
+		    !ref_resolves_to_object(iter->iter0->refname,
+					    iter->iter0->oid,
+					    iter->iter0->flags))
+			continue;
+
+		iter->base.refname = iter->iter0->refname;
+		iter->base.oid = iter->iter0->oid;
+		iter->base.flags = iter->iter0->flags;
+		return ITER_OK;
+	}
+
+	iter->iter0 = NULL;
+	if (ref_iterator_abort(ref_iterator) != ITER_DONE)
+		ok = ITER_ERROR;
+
+	return ok;
+}
+
+static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
+				   struct object_id *peeled)
+{
+	struct packed_ref_iterator *iter =
+		(struct packed_ref_iterator *)ref_iterator;
+
+	return ref_iterator_peel(iter->iter0, peeled);
+}
+
+static int packed_ref_iterator_abort(struct ref_iterator *ref_iterator)
+{
+	struct packed_ref_iterator *iter =
+		(struct packed_ref_iterator *)ref_iterator;
+	int ok = ITER_DONE;
+
+	if (iter->iter0)
+		ok = ref_iterator_abort(iter->iter0);
+
+	release_packed_ref_cache(iter->cache);
+	base_ref_iterator_free(ref_iterator);
+	return ok;
+}
+
+static struct ref_iterator_vtable packed_ref_iterator_vtable = {
+	packed_ref_iterator_advance,
+	packed_ref_iterator_peel,
+	packed_ref_iterator_abort
+};
+
+static struct ref_iterator *packed_ref_iterator_begin(
+		struct packed_ref_store *refs,
+		const char *prefix, unsigned int flags)
+{
+	struct packed_ref_iterator *iter;
+	struct ref_iterator *ref_iterator;
+
+	iter = xcalloc(1, sizeof(*iter));
+	ref_iterator = &iter->base;
+	base_ref_iterator_init(ref_iterator, &packed_ref_iterator_vtable);
+
+	/*
+	 * Note that get_packed_ref_cache() internally checks whether
+	 * the packed-ref cache is up to date with what is on disk,
+	 * and re-reads it if not.
+	 */
+
+	iter->cache = get_packed_ref_cache(refs);
+	acquire_packed_ref_cache(iter->cache);
+	iter->iter0 = cache_ref_iterator_begin(iter->cache->cache, prefix, 0);
+
+	iter->flags = flags;
+
+	return ref_iterator;
+}
+
 struct files_ref_iterator {
 	struct ref_iterator base;
 
-	struct packed_ref_cache *packed_ref_cache;
 	struct ref_iterator *iter0;
 	unsigned int flags;
 };
@@ -1119,7 +1211,6 @@ static int files_ref_iterator_abort(struct ref_iterator *ref_iterator)
 	if (iter->iter0)
 		ok = ref_iterator_abort(iter->iter0);
 
-	release_packed_ref_cache(iter->packed_ref_cache);
 	base_ref_iterator_free(ref_iterator);
 	return ok;
 }
@@ -1161,18 +1252,28 @@ static struct ref_iterator *files_ref_iterator_begin(
 	 * (If they've already been read, that's OK; we only need to
 	 * guarantee that they're read before the packed refs, not
 	 * *how much* before.) After that, we call
-	 * get_packed_ref_cache(), which internally checks whether the
-	 * packed-ref cache is up to date with what is on disk, and
-	 * re-reads it if not.
+	 * packed_ref_iterator_begin(), which internally checks
+	 * whether the packed-ref cache is up to date with what is on
+	 * disk, and re-reads it if not.
 	 */
 
 	loose_iter = cache_ref_iterator_begin(get_loose_ref_cache(refs),
 					      prefix, 1);
 
-	iter->packed_ref_cache = get_packed_ref_cache(refs->packed_ref_store);
-	acquire_packed_ref_cache(iter->packed_ref_cache);
-	packed_iter = cache_ref_iterator_begin(iter->packed_ref_cache->cache,
-					       prefix, 0);
+	/*
+	 * The packed-refs file might contain broken references, for
+	 * example an old version of a reference that points at an
+	 * object that has since been garbage-collected. This is OK as
+	 * long as there is a corresponding loose reference that
+	 * overrides it, and we don't want to emit an error message in
+	 * this case. So ask the packed_ref_store for all of its
+	 * references, and (if needed) do our own check for broken
+	 * ones in files_ref_iterator_advance(), after we have merged
+	 * the packed and loose references.
+	 */
+	packed_iter = packed_ref_iterator_begin(
+			refs->packed_ref_store, prefix,
+			DO_FOR_EACH_INCLUDE_BROKEN);
 
 	iter->iter0 = overlay_ref_iterator_begin(loose_iter, packed_iter);
 	iter->flags = flags;
