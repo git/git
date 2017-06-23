@@ -516,7 +516,7 @@ static int write_packed_entry(FILE *fh, const char *refname,
 	return 0;
 }
 
-int packed_refs_lock(struct ref_store *ref_store, int flags)
+int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 {
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
@@ -538,9 +538,15 @@ int packed_refs_lock(struct ref_store *ref_store, int flags)
 	if (hold_lock_file_for_update_timeout(
 			    &refs->lock,
 			    refs->path,
-			    flags, timeout_value) < 0 ||
-	    close_lock_file(&refs->lock))
+			    flags, timeout_value) < 0) {
+		unable_to_lock_message(refs->path, errno, err);
 		return -1;
+	}
+
+	if (close_lock_file(&refs->lock)) {
+		strbuf_addf(err, "unable to close %s: %s", refs->path, strerror(errno));
+		return -1;
+	}
 
 	/*
 	 * Now that we hold the `packed-refs` lock, make sure that our
@@ -699,10 +705,9 @@ int repack_without_refs(struct ref_store *ref_store,
 	if (!needs_repacking)
 		return 0; /* no refname exists in packed refs */
 
-	if (packed_refs_lock(&refs->base, 0)) {
-		unable_to_lock_message(refs->path, errno, err);
+	if (packed_refs_lock(&refs->base, 0, err))
 		return -1;
-	}
+
 	packed = get_packed_refs(refs);
 
 	/* Remove refnames from the cache */
