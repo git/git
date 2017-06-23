@@ -9,7 +9,7 @@ struct ref_store *packed_ref_store_create(const char *path,
  * hold_lock_file_for_update(). Return 0 on success. On errors, set
  * errno appropriately and return a nonzero value.
  */
-int lock_packed_refs(struct ref_store *ref_store, int flags);
+int packed_refs_lock(struct ref_store *ref_store, int flags);
 
 void add_packed_ref(struct ref_store *ref_store,
 		    const char *refname, const struct object_id *oid);
