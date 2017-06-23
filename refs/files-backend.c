@@ -1435,18 +1435,17 @@ static int commit_packed_refs(struct packed_ref_store *refs)
  * in-memory packed reference cache.  (The packed-refs file will be
  * read anew if it is needed again after this function is called.)
  */
-static void rollback_packed_refs(struct files_ref_store *refs)
+static void rollback_packed_refs(struct packed_ref_store *refs)
 {
-	struct packed_ref_cache *packed_ref_cache =
-		get_packed_ref_cache(refs->packed_ref_store);
+	struct packed_ref_cache *packed_ref_cache = get_packed_ref_cache(refs);
 
-	files_assert_main_repository(refs, "rollback_packed_refs");
+	packed_assert_main_repository(refs, "rollback_packed_refs");
 
-	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
+	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: packed-refs not locked");
-	rollback_lock_file(&refs->packed_ref_store->lock);
+	rollback_lock_file(&refs->lock);
 	release_packed_ref_cache(packed_ref_cache);
-	clear_packed_ref_cache(refs->packed_ref_store);
+	clear_packed_ref_cache(refs);
 }
 
 struct ref_to_prune {
@@ -1658,7 +1657,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 		 * All packed entries disappeared while we were
 		 * acquiring the lock.
 		 */
-		rollback_packed_refs(refs);
+		rollback_packed_refs(refs->packed_ref_store);
 		return 0;
 	}
 
