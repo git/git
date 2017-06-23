@@ -121,15 +121,15 @@ static int release_packed_ref_cache(struct packed_ref_cache *packed_refs)
 	}
 }
 
-static void clear_packed_ref_cache(struct files_ref_store *refs)
+static void clear_packed_ref_cache(struct packed_ref_store *refs)
 {
-	if (refs->packed_ref_store->cache) {
-		struct packed_ref_cache *packed_refs = refs->packed_ref_store->cache;
+	if (refs->cache) {
+		struct packed_ref_cache *cache = refs->cache;
 
-		if (is_lock_file_locked(&refs->packed_ref_store->lock))
+		if (is_lock_file_locked(&refs->lock))
 			die("BUG: packed-ref cache cleared while locked");
-		refs->packed_ref_store->cache = NULL;
-		release_packed_ref_cache(packed_refs);
+		refs->cache = NULL;
+		release_packed_ref_cache(cache);
 	}
 }
 
@@ -402,7 +402,7 @@ static void validate_packed_ref_cache(struct files_ref_store *refs)
 	if (refs->packed_ref_store->cache &&
 	    !stat_validity_check(&refs->packed_ref_store->cache->validity,
 				 refs->packed_ref_store->path))
-		clear_packed_ref_cache(refs);
+		clear_packed_ref_cache(refs->packed_ref_store);
 }
 
 /*
@@ -1436,7 +1436,7 @@ static void rollback_packed_refs(struct files_ref_store *refs)
 		die("BUG: packed-refs not locked");
 	rollback_lock_file(&refs->packed_ref_store->lock);
 	release_packed_ref_cache(packed_ref_cache);
-	clear_packed_ref_cache(refs);
+	clear_packed_ref_cache(refs->packed_ref_store);
 }
 
 struct ref_to_prune {
