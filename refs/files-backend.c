@@ -82,6 +82,19 @@ static struct packed_ref_store *packed_ref_store_create(
 }
 
 /*
+ * Die if refs is not the main ref store. caller is used in any
+ * necessary error messages.
+ */
+static void packed_assert_main_repository(struct packed_ref_store *refs,
+					  const char *caller)
+{
+	if (refs->store_flags & REF_STORE_MAIN)
+		return;
+
+	die("BUG: operation %s only allowed for main ref store", caller);
+}
+
+/*
  * Future: need to be in "struct repository"
  * when doing a full libification.
  */
@@ -1335,13 +1348,13 @@ static void write_packed_entry(FILE *fh, const char *refname,
  * hold_lock_file_for_update(). Return 0 on success. On errors, set
  * errno appropriately and return a nonzero value.
  */
-static int lock_packed_refs(struct files_ref_store *refs, int flags)
+static int lock_packed_refs(struct packed_ref_store *refs, int flags)
 {
 	static int timeout_configured = 0;
 	static int timeout_value = 1000;
 	struct packed_ref_cache *packed_ref_cache;
 
-	files_assert_main_repository(refs, "lock_packed_refs");
+	packed_assert_main_repository(refs, "lock_packed_refs");
 
 	if (!timeout_configured) {
 		git_config_get_int("core.packedrefstimeout", &timeout_value);
@@ -1349,8 +1362,8 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 	}
 
 	if (hold_lock_file_for_update_timeout(
-			    &refs->packed_ref_store->lock,
-			    refs->packed_ref_store->path,
+			    &refs->lock,
+			    refs->path,
 			    flags, timeout_value) < 0)
 		return -1;
 
@@ -1362,9 +1375,9 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 	 * cache is still valid. We've just locked the file, but it
 	 * might have changed the moment *before* we locked it.
 	 */
-	validate_packed_ref_cache(refs->packed_ref_store);
+	validate_packed_ref_cache(refs);
 
-	packed_ref_cache = get_packed_ref_cache(refs->packed_ref_store);
+	packed_ref_cache = get_packed_ref_cache(refs);
 	/* Increment the reference count to prevent it from being freed: */
 	acquire_packed_ref_cache(packed_ref_cache);
 	return 0;
@@ -1561,7 +1574,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	int ok;
 	struct ref_to_prune *refs_to_prune = NULL;
 
-	lock_packed_refs(refs, LOCK_DIE_ON_ERROR);
+	lock_packed_refs(refs->packed_ref_store, LOCK_DIE_ON_ERROR);
 
 	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
@@ -1630,7 +1643,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 	if (!needs_repacking)
 		return 0; /* no refname exists in packed refs */
 
-	if (lock_packed_refs(refs, 0)) {
+	if (lock_packed_refs(refs->packed_ref_store, 0)) {
 		unable_to_lock_message(refs->packed_ref_store->path, errno, err);
 		return -1;
 	}
@@ -3198,7 +3211,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		}
 	}
 
-	if (lock_packed_refs(refs, 0)) {
+	if (lock_packed_refs(refs->packed_ref_store, 0)) {
 		strbuf_addf(err, "unable to lock packed-refs file: %s",
 			    strerror(errno));
 		ret = TRANSACTION_GENERIC_ERROR;
