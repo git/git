@@ -53,20 +53,6 @@ static int shown_url = 0;
 static int refmap_alloc, refmap_nr;
 static const char **refmap_array;
 
-static int option_parse_recurse_submodules(const struct option *opt,
-				   const char *arg, int unset)
-{
-	if (unset) {
-		recurse_submodules = RECURSE_SUBMODULES_OFF;
-	} else {
-		if (arg)
-			recurse_submodules = parse_fetch_recurse_submodules_arg(opt->long_name, arg);
-		else
-			recurse_submodules = RECURSE_SUBMODULES_ON;
-	}
-	return 0;
-}
-
 static int git_fetch_config(const char *k, const char *v, void *cb)
 {
 	if (!strcmp(k, "fetch.prune")) {
@@ -115,9 +101,9 @@ static struct option builtin_fetch_options[] = {
 		    N_("number of submodules fetched in parallel")),
 	OPT_BOOL('p', "prune", &prune,
 		 N_("prune remote-tracking branches no longer on remote")),
-	{ OPTION_CALLBACK, 0, "recurse-submodules", NULL, N_("on-demand"),
+	{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules, N_("on-demand"),
 		    N_("control recursive fetching of submodules"),
-		    PARSE_OPT_OPTARG, option_parse_recurse_submodules },
+		    PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules },
 	OPT_BOOL(0, "dry-run", &dry_run,
 		 N_("dry run")),
 	OPT_BOOL('k', "keep", &keep, N_("keep downloaded pack")),
