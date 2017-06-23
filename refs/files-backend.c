@@ -1389,21 +1389,21 @@ static int lock_packed_refs(struct packed_ref_store *refs, int flags)
  * lock_packed_refs()). Return zero on success. On errors, set errno
  * and return a nonzero value
  */
-static int commit_packed_refs(struct files_ref_store *refs)
+static int commit_packed_refs(struct packed_ref_store *refs)
 {
 	struct packed_ref_cache *packed_ref_cache =
-		get_packed_ref_cache(refs->packed_ref_store);
+		get_packed_ref_cache(refs);
 	int ok, error = 0;
 	int save_errno = 0;
 	FILE *out;
 	struct ref_iterator *iter;
 
-	files_assert_main_repository(refs, "commit_packed_refs");
+	packed_assert_main_repository(refs, "commit_packed_refs");
 
-	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
+	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: packed-refs not locked");
 
-	out = fdopen_lock_file(&refs->packed_ref_store->lock, "w");
+	out = fdopen_lock_file(&refs->lock, "w");
 	if (!out)
 		die_errno("unable to fdopen packed-refs descriptor");
 
@@ -1421,7 +1421,7 @@ static int commit_packed_refs(struct files_ref_store *refs)
 	if (ok != ITER_DONE)
 		die("error while iterating over references");
 
-	if (commit_lock_file(&refs->packed_ref_store->lock)) {
+	if (commit_lock_file(&refs->lock)) {
 		save_errno = errno;
 		error = -1;
 	}
@@ -1607,7 +1607,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	if (ok != ITER_DONE)
 		die("error while iterating over references");
 
-	if (commit_packed_refs(refs))
+	if (commit_packed_refs(refs->packed_ref_store))
 		die_errno("unable to overwrite old ref-pack file");
 
 	prune_refs(refs, refs_to_prune);
@@ -1663,7 +1663,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 	}
 
 	/* Write what remains */
-	ret = commit_packed_refs(refs);
+	ret = commit_packed_refs(refs->packed_ref_store);
 	if (ret)
 		strbuf_addf(err, "unable to overwrite old ref-pack file: %s",
 			    strerror(errno));
@@ -3227,7 +3227,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 				       &update->new_oid);
 	}
 
-	if (commit_packed_refs(refs)) {
+	if (commit_packed_refs(refs->packed_ref_store)) {
 		strbuf_addf(err, "unable to commit packed-refs file: %s",
 			    strerror(errno));
 		ret = TRANSACTION_GENERIC_ERROR;
