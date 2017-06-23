@@ -62,6 +62,12 @@ struct packed_ref_store {
 	 * it might still be current; otherwise, NULL.
 	 */
 	struct packed_ref_cache *cache;
+
+	/*
+	 * Lock used for the "packed-refs" file. Note that this (and
+	 * thus the enclosing `packed_ref_store`) must not be freed.
+	 */
+	struct lock_file lock;
 };
 
 static struct packed_ref_store *packed_ref_store_create(
@@ -86,12 +92,6 @@ struct files_ref_store {
 	char *gitcommondir;
 
 	struct ref_cache *loose;
-
-	/*
-	 * Lock used for the "packed-refs" file. Note that this (and
-	 * thus the enclosing `files_ref_store`) must not be freed.
-	 */
-	struct lock_file packed_refs_lock;
 
 	struct packed_ref_store *packed_ref_store;
 };
@@ -125,7 +125,7 @@ static void clear_packed_ref_cache(struct files_ref_store *refs)
 	if (refs->packed_ref_store->cache) {
 		struct packed_ref_cache *packed_refs = refs->packed_ref_store->cache;
 
-		if (is_lock_file_locked(&refs->packed_refs_lock))
+		if (is_lock_file_locked(&refs->packed_ref_store->lock))
 			die("BUG: packed-ref cache cleared while locked");
 		refs->packed_ref_store->cache = NULL;
 		release_packed_ref_cache(packed_refs);
@@ -416,7 +416,7 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 {
 	const char *packed_refs_file = refs->packed_ref_store->path;
 
-	if (!is_lock_file_locked(&refs->packed_refs_lock))
+	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
 		validate_packed_ref_cache(refs);
 
 	if (!refs->packed_ref_store->cache)
@@ -447,7 +447,7 @@ static void add_packed_ref(struct files_ref_store *refs,
 	struct ref_dir *packed_refs;
 	struct ref_entry *packed_entry;
 
-	if (!is_lock_file_locked(&refs->packed_refs_lock))
+	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
 		die("BUG: packed refs not locked");
 
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
@@ -1351,7 +1351,8 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 	}
 
 	if (hold_lock_file_for_update_timeout(
-			    &refs->packed_refs_lock, refs->packed_ref_store->path,
+			    &refs->packed_ref_store->lock,
+			    refs->packed_ref_store->path,
 			    flags, timeout_value) < 0)
 		return -1;
 
@@ -1388,10 +1389,10 @@ static int commit_packed_refs(struct files_ref_store *refs)
 
 	files_assert_main_repository(refs, "commit_packed_refs");
 
-	if (!is_lock_file_locked(&refs->packed_refs_lock))
+	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
 		die("BUG: packed-refs not locked");
 
-	out = fdopen_lock_file(&refs->packed_refs_lock, "w");
+	out = fdopen_lock_file(&refs->packed_ref_store->lock, "w");
 	if (!out)
 		die_errno("unable to fdopen packed-refs descriptor");
 
@@ -1409,7 +1410,7 @@ static int commit_packed_refs(struct files_ref_store *refs)
 	if (ok != ITER_DONE)
 		die("error while iterating over references");
 
-	if (commit_lock_file(&refs->packed_refs_lock)) {
+	if (commit_lock_file(&refs->packed_ref_store->lock)) {
 		save_errno = errno;
 		error = -1;
 	}
@@ -1430,9 +1431,9 @@ static void rollback_packed_refs(struct files_ref_store *refs)
 
 	files_assert_main_repository(refs, "rollback_packed_refs");
 
-	if (!is_lock_file_locked(&refs->packed_refs_lock))
+	if (!is_lock_file_locked(&refs->packed_ref_store->lock))
 		die("BUG: packed-refs not locked");
-	rollback_lock_file(&refs->packed_refs_lock);
+	rollback_lock_file(&refs->packed_ref_store->lock);
 	release_packed_ref_cache(packed_ref_cache);
 	clear_packed_ref_cache(refs);
 }
