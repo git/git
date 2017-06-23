@@ -322,7 +322,7 @@ static struct ref_dir *get_packed_refs(struct packed_ref_store *refs)
 /*
  * Add or overwrite a reference in the in-memory packed reference
  * cache. This may only be called while the packed-refs file is locked
- * (see lock_packed_refs()). To actually write the packed-refs file,
+ * (see packed_refs_lock()). To actually write the packed-refs file,
  * call commit_packed_refs().
  */
 void add_packed_ref(struct ref_store *ref_store,
@@ -516,11 +516,11 @@ static int write_packed_entry(FILE *fh, const char *refname,
 	return 0;
 }
 
-int lock_packed_refs(struct ref_store *ref_store, int flags)
+int packed_refs_lock(struct ref_store *ref_store, int flags)
 {
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
-				"lock_packed_refs");
+				"packed_refs_lock");
 	static int timeout_configured = 0;
 	static int timeout_value = 1000;
 	struct packed_ref_cache *packed_ref_cache;
@@ -568,7 +568,7 @@ static const char PACKED_REFS_HEADER[] =
 /*
  * Write the current version of the packed refs cache from memory to
  * disk. The packed-refs file must already be locked for writing (see
- * lock_packed_refs()). Return zero on success. On errors, rollback
+ * packed_refs_lock()). Return zero on success. On errors, rollback
  * the lockfile, write an error message to `err`, and return a nonzero
  * value.
  */
@@ -699,7 +699,7 @@ int repack_without_refs(struct ref_store *ref_store,
 	if (!needs_repacking)
 		return 0; /* no refname exists in packed refs */
 
-	if (lock_packed_refs(&refs->base, 0)) {
+	if (packed_refs_lock(&refs->base, 0)) {
 		unable_to_lock_message(refs->path, errno, err);
 		return -1;
 	}
