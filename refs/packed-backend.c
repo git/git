@@ -51,6 +51,8 @@ static int release_packed_ref_cache(struct packed_ref_cache *packed_refs)
  * `ref_store`.
  */
 struct packed_ref_store {
+	struct ref_store base;
+
 	unsigned int store_flags;
 
 	/* The path of the "packed-refs" file: */
@@ -69,14 +71,17 @@ struct packed_ref_store {
 	struct lock_file lock;
 };
 
-struct packed_ref_store *packed_ref_store_create(
-		const char *path, unsigned int store_flags)
+struct ref_store *packed_ref_store_create(const char *path,
+					  unsigned int store_flags)
 {
 	struct packed_ref_store *refs = xcalloc(1, sizeof(*refs));
+	struct ref_store *ref_store = (struct ref_store *)refs;
 
+	base_ref_store_init(ref_store, &refs_be_packed);
 	refs->store_flags = store_flags;
+
 	refs->path = xstrdup(path);
-	return refs;
+	return ref_store;
 }
 
 /*
@@ -90,6 +95,31 @@ static void packed_assert_main_repository(struct packed_ref_store *refs,
 		return;
 
 	die("BUG: operation %s only allowed for main ref store", caller);
+}
+
+/*
+ * Downcast `ref_store` to `packed_ref_store`. Die if `ref_store` is
+ * not a `packed_ref_store`. Also die if `packed_ref_store` doesn't
+ * support at least the flags specified in `required_flags`. `caller`
+ * is used in any necessary error messages.
+ */
+static struct packed_ref_store *packed_downcast(struct ref_store *ref_store,
+						unsigned int required_flags,
+						const char *caller)
+{
+	struct packed_ref_store *refs;
+
+	if (ref_store->be != &refs_be_packed)
+		die("BUG: ref_store is type \"%s\" not \"packed\" in %s",
+		    ref_store->be->name, caller);
+
+	refs = (struct packed_ref_store *)ref_store;
+
+	if ((refs->store_flags & required_flags) != required_flags)
+		die("BUG: unallowed operation (%s), requires %x, has %x\n",
+		    caller, required_flags, refs->store_flags);
+
+	return refs;
 }
 
 static void clear_packed_ref_cache(struct packed_ref_store *refs)
@@ -288,9 +318,12 @@ static struct ref_dir *get_packed_refs(struct packed_ref_store *refs)
  * (see lock_packed_refs()). To actually write the packed-refs file,
  * call commit_packed_refs().
  */
-void add_packed_ref(struct packed_ref_store *refs,
+void add_packed_ref(struct ref_store *ref_store,
 		    const char *refname, const struct object_id *oid)
 {
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_WRITE,
+				"add_packed_ref");
 	struct ref_dir *packed_refs;
 	struct ref_entry *packed_entry;
 
@@ -323,10 +356,13 @@ static struct ref_entry *get_packed_ref(struct packed_ref_store *refs,
 	return find_ref_entry(get_packed_refs(refs), refname);
 }
 
-int packed_read_raw_ref(struct packed_ref_store *refs,
-			const char *refname, unsigned char *sha1,
-			struct strbuf *referent, unsigned int *type)
+static int packed_read_raw_ref(struct ref_store *ref_store,
+			       const char *refname, unsigned char *sha1,
+			       struct strbuf *referent, unsigned int *type)
 {
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_READ, "read_raw_ref");
+
 	struct ref_entry *entry;
 
 	*type = 0;
@@ -342,9 +378,12 @@ int packed_read_raw_ref(struct packed_ref_store *refs,
 	return 0;
 }
 
-int packed_peel_ref(struct packed_ref_store *refs,
-		    const char *refname, unsigned char *sha1)
+static int packed_peel_ref(struct ref_store *ref_store,
+			   const char *refname, unsigned char *sha1)
 {
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_READ | REF_STORE_ODB,
+				"peel_ref");
 	struct ref_entry *r = get_packed_ref(refs, refname);
 
 	if (!r || peel_entry(r, 0))
@@ -421,12 +460,18 @@ static struct ref_iterator_vtable packed_ref_iterator_vtable = {
 	packed_ref_iterator_abort
 };
 
-struct ref_iterator *packed_ref_iterator_begin(
-		struct packed_ref_store *refs,
+static struct ref_iterator *packed_ref_iterator_begin(
+		struct ref_store *ref_store,
 		const char *prefix, unsigned int flags)
 {
+	struct packed_ref_store *refs;
 	struct packed_ref_iterator *iter;
 	struct ref_iterator *ref_iterator;
+	unsigned int required_flags = REF_STORE_READ;
+
+	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN))
+		required_flags |= REF_STORE_ODB;
+	refs = packed_downcast(ref_store, required_flags, "ref_iterator_begin");
 
 	iter = xcalloc(1, sizeof(*iter));
 	ref_iterator = &iter->base;
@@ -460,13 +505,14 @@ static void write_packed_entry(FILE *fh, const char *refname,
 		fprintf_or_die(fh, "^%s\n", sha1_to_hex(peeled));
 }
 
-int lock_packed_refs(struct packed_ref_store *refs, int flags)
+int lock_packed_refs(struct ref_store *ref_store, int flags)
 {
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
+				"lock_packed_refs");
 	static int timeout_configured = 0;
 	static int timeout_value = 1000;
 	struct packed_ref_cache *packed_ref_cache;
-
-	packed_assert_main_repository(refs, "lock_packed_refs");
 
 	if (!timeout_configured) {
 		git_config_get_int("core.packedrefstimeout", &timeout_value);
@@ -508,16 +554,17 @@ static const char PACKED_REFS_HEADER[] =
  * lock_packed_refs()). Return zero on success. On errors, set errno
  * and return a nonzero value.
  */
-int commit_packed_refs(struct packed_ref_store *refs)
+int commit_packed_refs(struct ref_store *ref_store)
 {
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
+				"commit_packed_refs");
 	struct packed_ref_cache *packed_ref_cache =
 		get_packed_ref_cache(refs);
 	int ok, error = 0;
 	int save_errno = 0;
 	FILE *out;
 	struct ref_iterator *iter;
-
-	packed_assert_main_repository(refs, "commit_packed_refs");
 
 	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: packed-refs not locked");
@@ -574,9 +621,12 @@ static void rollback_packed_refs(struct packed_ref_store *refs)
  *
  * The refs in 'refnames' needn't be sorted. `err` must not be NULL.
  */
-int repack_without_refs(struct packed_ref_store *refs,
+int repack_without_refs(struct ref_store *ref_store,
 			struct string_list *refnames, struct strbuf *err)
 {
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
+				"repack_without_refs");
 	struct ref_dir *packed;
 	struct string_list_item *refname;
 	int ret, needs_repacking = 0, removed = 0;
@@ -596,7 +646,7 @@ int repack_without_refs(struct packed_ref_store *refs,
 	if (!needs_repacking)
 		return 0; /* no refname exists in packed refs */
 
-	if (lock_packed_refs(refs, 0)) {
+	if (lock_packed_refs(&refs->base, 0)) {
 		unable_to_lock_message(refs->path, errno, err);
 		return -1;
 	}
@@ -616,9 +666,151 @@ int repack_without_refs(struct packed_ref_store *refs,
 	}
 
 	/* Write what remains */
-	ret = commit_packed_refs(refs);
+	ret = commit_packed_refs(&refs->base);
 	if (ret)
 		strbuf_addf(err, "unable to overwrite old ref-pack file: %s",
 			    strerror(errno));
 	return ret;
 }
+
+static int packed_init_db(struct ref_store *ref_store, struct strbuf *err)
+{
+	/* Nothing to do. */
+	return 0;
+}
+
+static int packed_transaction_prepare(struct ref_store *ref_store,
+				      struct ref_transaction *transaction,
+				      struct strbuf *err)
+{
+	die("BUG: not implemented yet");
+}
+
+static int packed_transaction_abort(struct ref_store *ref_store,
+				    struct ref_transaction *transaction,
+				    struct strbuf *err)
+{
+	die("BUG: not implemented yet");
+}
+
+static int packed_transaction_finish(struct ref_store *ref_store,
+				     struct ref_transaction *transaction,
+				     struct strbuf *err)
+{
+	die("BUG: not implemented yet");
+}
+
+static int packed_initial_transaction_commit(struct ref_store *ref_store,
+					    struct ref_transaction *transaction,
+					    struct strbuf *err)
+{
+	return ref_transaction_commit(transaction, err);
+}
+
+static int packed_delete_refs(struct ref_store *ref_store, const char *msg,
+			     struct string_list *refnames, unsigned int flags)
+{
+	die("BUG: not implemented yet");
+}
+
+static int packed_pack_refs(struct ref_store *ref_store, unsigned int flags)
+{
+	/*
+	 * Packed refs are already packed. It might be that loose refs
+	 * are packed *into* a packed refs store, but that is done by
+	 * updating the packed references via a transaction.
+	 */
+	return 0;
+}
+
+static int packed_create_symref(struct ref_store *ref_store,
+			       const char *refname, const char *target,
+			       const char *logmsg)
+{
+	die("BUG: packed reference store does not support symrefs");
+}
+
+static int packed_rename_ref(struct ref_store *ref_store,
+			    const char *oldrefname, const char *newrefname,
+			    const char *logmsg)
+{
+	die("BUG: packed reference store does not support renaming references");
+}
+
+static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_store)
+{
+	return empty_ref_iterator_begin();
+}
+
+static int packed_for_each_reflog_ent(struct ref_store *ref_store,
+				      const char *refname,
+				      each_reflog_ent_fn fn, void *cb_data)
+{
+	return 0;
+}
+
+static int packed_for_each_reflog_ent_reverse(struct ref_store *ref_store,
+					      const char *refname,
+					      each_reflog_ent_fn fn,
+					      void *cb_data)
+{
+	return 0;
+}
+
+static int packed_reflog_exists(struct ref_store *ref_store,
+			       const char *refname)
+{
+	return 0;
+}
+
+static int packed_create_reflog(struct ref_store *ref_store,
+			       const char *refname, int force_create,
+			       struct strbuf *err)
+{
+	die("BUG: packed reference store does not support reflogs");
+}
+
+static int packed_delete_reflog(struct ref_store *ref_store,
+			       const char *refname)
+{
+	return 0;
+}
+
+static int packed_reflog_expire(struct ref_store *ref_store,
+				const char *refname, const unsigned char *sha1,
+				unsigned int flags,
+				reflog_expiry_prepare_fn prepare_fn,
+				reflog_expiry_should_prune_fn should_prune_fn,
+				reflog_expiry_cleanup_fn cleanup_fn,
+				void *policy_cb_data)
+{
+	return 0;
+}
+
+struct ref_storage_be refs_be_packed = {
+	NULL,
+	"packed",
+	packed_ref_store_create,
+	packed_init_db,
+	packed_transaction_prepare,
+	packed_transaction_finish,
+	packed_transaction_abort,
+	packed_initial_transaction_commit,
+
+	packed_pack_refs,
+	packed_peel_ref,
+	packed_create_symref,
+	packed_delete_refs,
+	packed_rename_ref,
+
+	packed_ref_iterator_begin,
+	packed_read_raw_ref,
+
+	packed_reflog_iterator_begin,
+	packed_for_each_reflog_ent,
+	packed_for_each_reflog_ent_reverse,
+	packed_reflog_exists,
+	packed_create_reflog,
+	packed_delete_reflog,
+	packed_reflog_expire
+};
