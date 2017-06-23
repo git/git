@@ -609,27 +609,23 @@ static struct ref_entry *get_packed_ref(struct packed_ref_store *refs,
 	return find_ref_entry(get_packed_refs(refs), refname);
 }
 
-/*
- * A loose ref file doesn't exist; check for a packed ref.
- */
-static int resolve_packed_ref(struct files_ref_store *refs,
-			      const char *refname,
-			      unsigned char *sha1, unsigned int *flags)
+static int packed_read_raw_ref(struct packed_ref_store *refs,
+			       const char *refname, unsigned char *sha1,
+			       struct strbuf *referent, unsigned int *type)
 {
 	struct ref_entry *entry;
 
-	/*
-	 * The loose reference file does not exist; check for a packed
-	 * reference.
-	 */
-	entry = get_packed_ref(refs->packed_ref_store, refname);
-	if (entry) {
-		hashcpy(sha1, entry->u.value.oid.hash);
-		*flags |= REF_ISPACKED;
-		return 0;
+	*type = 0;
+
+	entry = get_packed_ref(refs, refname);
+	if (!entry) {
+		errno = ENOENT;
+		return -1;
 	}
-	/* refname is not a packed reference. */
-	return -1;
+
+	hashcpy(sha1, entry->u.value.oid.hash);
+	*type = REF_ISPACKED;
+	return 0;
 }
 
 static int files_read_raw_ref(struct ref_store *ref_store,
@@ -675,7 +671,8 @@ stat_ref:
 	if (lstat(path, &st) < 0) {
 		if (errno != ENOENT)
 			goto out;
-		if (resolve_packed_ref(refs, refname, sha1, type)) {
+		if (packed_read_raw_ref(refs->packed_ref_store, refname,
+					sha1, referent, type)) {
 			errno = ENOENT;
 			goto out;
 		}
@@ -714,7 +711,8 @@ stat_ref:
 		 * ref is supposed to be, there could still be a
 		 * packed ref:
 		 */
-		if (resolve_packed_ref(refs, refname, sha1, type)) {
+		if (packed_read_raw_ref(refs->packed_ref_store, refname,
+					sha1, referent, type)) {
 			errno = EISDIR;
 			goto out;
 		}
