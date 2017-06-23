@@ -607,7 +607,6 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	struct packed_ref_cache *packed_ref_cache =
 		get_packed_ref_cache(refs);
 	int ok;
-	int ret = -1;
 	struct strbuf sb = STRBUF_INIT;
 	FILE *out;
 	struct ref_iterator *iter;
@@ -620,7 +619,7 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 		strbuf_addf(err, "unable to create file %s: %s",
 			    sb.buf, strerror(errno));
 		strbuf_release(&sb);
-		goto out;
+		return -1;
 	}
 	strbuf_release(&sb);
 
@@ -661,18 +660,14 @@ int commit_packed_refs(struct ref_store *ref_store, struct strbuf *err)
 	if (rename_tempfile(&refs->tempfile, refs->path)) {
 		strbuf_addf(err, "error replacing %s: %s",
 			    refs->path, strerror(errno));
-		goto out;
+		return -1;
 	}
 
-	ret = 0;
-	goto out;
+	return 0;
 
 error:
 	delete_tempfile(&refs->tempfile);
-
-out:
-	packed_refs_unlock(ref_store);
-	return ret;
+	return -1;
 }
 
 /*
@@ -706,6 +701,7 @@ int repack_without_refs(struct ref_store *ref_store,
 	struct ref_dir *packed;
 	struct string_list_item *refname;
 	int needs_repacking = 0, removed = 0;
+	int ret;
 
 	packed_assert_main_repository(refs, "repack_without_refs");
 	assert(err);
@@ -741,7 +737,9 @@ int repack_without_refs(struct ref_store *ref_store,
 	}
 
 	/* Write what remains */
-	return commit_packed_refs(&refs->base, err);
+	ret = commit_packed_refs(&refs->base, err);
+	packed_refs_unlock(ref_store);
+	return ret;
 }
 
 static int packed_init_db(struct ref_store *ref_store, struct strbuf *err)

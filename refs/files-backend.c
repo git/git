@@ -1132,6 +1132,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 
 	if (commit_packed_refs(refs->packed_ref_store, &err))
 		die("unable to overwrite old ref-pack file: %s", err.buf);
+	packed_refs_unlock(refs->packed_ref_store);
 
 	prune_refs(refs, refs_to_prune);
 	strbuf_release(&err);
@@ -2699,6 +2700,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	}
 
 cleanup:
+	packed_refs_unlock(refs->packed_ref_store);
 	transaction->state = REF_TRANSACTION_CLOSED;
 	string_list_clear(&affected_refnames, 0);
 	return ret;
