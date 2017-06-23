@@ -603,10 +603,10 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
  * Return the ref_entry for the given refname from the packed
  * references.  If it does not exist, return NULL.
  */
-static struct ref_entry *get_packed_ref(struct files_ref_store *refs,
+static struct ref_entry *get_packed_ref(struct packed_ref_store *refs,
 					const char *refname)
 {
-	return find_ref_entry(get_packed_refs(refs->packed_ref_store), refname);
+	return find_ref_entry(get_packed_refs(refs), refname);
 }
 
 /*
@@ -622,7 +622,7 @@ static int resolve_packed_ref(struct files_ref_store *refs,
 	 * The loose reference file does not exist; check for a packed
 	 * reference.
 	 */
-	entry = get_packed_ref(refs, refname);
+	entry = get_packed_ref(refs->packed_ref_store, refname);
 	if (entry) {
 		hashcpy(sha1, entry->u.value.oid.hash);
 		*flags |= REF_ISPACKED;
@@ -1045,7 +1045,9 @@ static int files_peel_ref(struct ref_store *ref_store,
 	 * have REF_KNOWS_PEELED.
 	 */
 	if (flag & REF_ISPACKED) {
-		struct ref_entry *r = get_packed_ref(refs, refname);
+		struct ref_entry *r =
+			get_packed_ref(refs->packed_ref_store, refname);
+
 		if (r) {
 			if (peel_entry(r, 0))
 				return -1;
@@ -1632,7 +1634,7 @@ static int repack_without_refs(struct files_ref_store *refs,
 
 	/* Look for a packed ref */
 	for_each_string_list_item(refname, refnames) {
-		if (get_packed_ref(refs, refname->string)) {
+		if (get_packed_ref(refs->packed_ref_store, refname->string)) {
 			needs_repacking = 1;
 			break;
 		}
