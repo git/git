@@ -11,6 +11,9 @@ struct ref_store *packed_ref_store_create(const char *path,
  */
 int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err);
 
+void packed_refs_unlock(struct ref_store *ref_store);
+int packed_refs_is_locked(struct ref_store *ref_store);
+
 void add_packed_ref(struct ref_store *ref_store,
 		    const char *refname, const struct object_id *oid);
 

@@ -564,6 +564,29 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	return 0;
 }
 
+void packed_refs_unlock(struct ref_store *ref_store)
+{
+	struct packed_ref_store *refs = packed_downcast(
+			ref_store,
+			REF_STORE_READ | REF_STORE_WRITE,
+			"packed_refs_unlock");
+
+	if (!is_lock_file_locked(&refs->lock))
+		die("BUG: packed_refs_unlock() called when not locked");
+	rollback_lock_file(&refs->lock);
+	release_packed_ref_cache(refs->cache);
+}
+
+int packed_refs_is_locked(struct ref_store *ref_store)
+{
+	struct packed_ref_store *refs = packed_downcast(
+			ref_store,
+			REF_STORE_READ | REF_STORE_WRITE,
+			"packed_refs_is_locked");
+
+	return is_lock_file_locked(&refs->lock);
+}
+
 /*
  * The packed-refs header line that we write out.  Perhaps other
  * traits will be added later.  The trailing space is required.
@@ -650,8 +673,7 @@ error:
 	delete_tempfile(&refs->tempfile);
 
 out:
-	rollback_lock_file(&refs->lock);
-	release_packed_ref_cache(packed_ref_cache);
+	packed_refs_unlock(ref_store);
 	return ret;
 }
 
@@ -662,14 +684,11 @@ out:
  */
 static void rollback_packed_refs(struct packed_ref_store *refs)
 {
-	struct packed_ref_cache *packed_ref_cache = get_packed_ref_cache(refs);
-
 	packed_assert_main_repository(refs, "rollback_packed_refs");
 
 	if (!is_lock_file_locked(&refs->lock))
 		die("BUG: packed-refs not locked");
-	rollback_lock_file(&refs->lock);
-	release_packed_ref_cache(packed_ref_cache);
+	packed_refs_unlock(&refs->base);
 	clear_packed_ref_cache(refs);
 }
 
