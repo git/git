@@ -296,7 +296,6 @@ notes for details).
    they were almost never considered.  Instead, give them about the
    same chance to be considered as an annotated tag that is the same
    age as the underlying commit would.
-   (merge ef1e74065c jc/name-rev-lw-tag later to maint).
 
  * The "run-command" API implementation has been made more robust
    against dead-locking in a threaded environment.
@@ -322,7 +321,6 @@ notes for details).
    $commit1:$path $commit2:$path", used to be shown with the full
    object name as given on the command line, but it is more natural to
    use the $path in the output and use it to look up .gitattributes.
-   (merge 30d005c020 jk/diff-blob later to maint).
 
  * The "collision detecting" SHA-1 implementation shipped with 2.13
    was quite broken on some big-endian platforms and/or platforms that
@@ -343,7 +341,6 @@ notes for details).
    fast-forwards to the upstream.
 
  * A flaky test has been corrected.
-   (merge 7c2115aa07 jk/pack-idx-corruption-safety later to maint).
 
  * "git $cmd -h" for builtin commands calls the implementation of the
    command (i.e. cmd_$cmd() function) without doing any repository
@@ -352,11 +349,9 @@ notes for details).
    (merge d691551192 jk/consistent-h later to maint).
 
  * Help contributors that visit us at GitHub.
-   (merge 0b1bb0c032 ls/github later to maint).
 
  * "git stash push <pathspec>" did not work from a subdirectory at all.
    Bugfix for a topic in v2.13
-   (merge 22fc703ec9 ps/stash-push-pathspec-fix later to maint).
 
  * As there is no portable way to pass timezone information to
    strftime, some output format from "git log" and friends are
@@ -391,11 +386,4 @@ notes for details).
    (merge dc8441fdb4 bw/config-h later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge 8ba74bfd7c jc/diff-tree-stale-comment later to maint).
-   (merge 68602c01fd sb/submodule-rm-absorb later to maint).
    (merge 68241cb9dd sb/t4005-modernize later to maint).
-   (merge ae52d57f0b km/test-mailinfo-b-failure later to maint).
-   (merge 8b1d9136e1 sg/revision-parser-skip-prefix later to maint).
-   (merge bb8efa1772 sd/t3200-branch-m-test later to maint).
-   (merge 8abc09c0e3 sg/doc-pretty-formats later to maint).
-   (merge 680b469e83 sn/reset-doc-typofix later to maint).
