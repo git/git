@@ -139,7 +139,13 @@ test_expect_success 'bogus offset into v2 extended table' '
 test_expect_success 'bogus offset inside v2 extended table' '
 	# We need two objects here, so we can plausibly require
 	# an extended table (if the first object were larger than 2^31).
-	do_pack "$object $(git rev-parse HEAD)" --index-version=2 &&
+	#
+	# Note that the value is important here. We want $object as
+	# the second entry in sorted-sha1 order. The sha1 of 1485 starts
+	# with "000", which sorts before that of $object (which starts
+	# with "fff").
+	second=$(echo 1485 | git hash-object -w --stdin) &&
+	do_pack "$object $second" --index-version=2 &&
 
 	# We have to make extra room for the table, so we cannot
 	# just munge in place as usual.
