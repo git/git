@@ -109,7 +109,6 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 
 		if (!alt->loose_objects_subdir_seen[subdir_nr]) {
 			struct strbuf *buf = alt_scratch_buf(alt);
-			strbuf_addf(buf, "%02x/", subdir_nr);
 			for_each_file_in_obj_subdir(subdir_nr, buf,
 						    append_loose_object,
 						    NULL, NULL,

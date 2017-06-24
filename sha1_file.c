@@ -3742,15 +3742,22 @@ int for_each_file_in_obj_subdir(int subdir_nr,
 				each_loose_subdir_fn subdir_cb,
 				void *data)
 {
-	size_t baselen = path->len;
-	DIR *dir = opendir(path->buf);
+	size_t origlen, baselen;
+	DIR *dir;
 	struct dirent *de;
 	int r = 0;
 
+	origlen = path->len;
+	strbuf_complete(path, '/');
+	strbuf_addf(path, "%02x", subdir_nr);
+	baselen = path->len;
+
+	dir = opendir(path->buf);
 	if (!dir) {
-		if (errno == ENOENT)
-			return 0;
-		return error_errno("unable to open %s", path->buf);
+		if (errno != ENOENT)
+			r = error_errno("unable to open %s", path->buf);
+		strbuf_setlen(path, origlen);
+		return r;
 	}
 
 	while ((de = readdir(dir))) {
@@ -3788,6 +3795,8 @@ int for_each_file_in_obj_subdir(int subdir_nr,
 	if (!r && subdir_cb)
 		r = subdir_cb(subdir_nr, path->buf, data);
 
+	strbuf_setlen(path, origlen);
+
 	return r;
 }
 
@@ -3797,15 +3806,12 @@ int for_each_loose_file_in_objdir_buf(struct strbuf *path,
 			    each_loose_subdir_fn subdir_cb,
 			    void *data)
 {
-	size_t baselen = path->len;
 	int r = 0;
 	int i;
 
 	for (i = 0; i < 256; i++) {
-		strbuf_addf(path, "/%02x", i);
 		r = for_each_file_in_obj_subdir(i, path, obj_cb, cruft_cb,
 						subdir_cb, data);
-		strbuf_setlen(path, baselen);
 		if (r)
 			break;
 	}
