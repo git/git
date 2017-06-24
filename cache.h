@@ -1333,13 +1333,18 @@ static inline int hex2chr(const char *s)
 
 struct object_context {
 	unsigned char tree[20];
-	char path[PATH_MAX];
 	unsigned mode;
 	/*
 	 * symlink_path is only used by get_tree_entry_follow_symlinks,
 	 * and only for symlinks that point outside the repository.
 	 */
 	struct strbuf symlink_path;
+	/*
+	 * If GET_SHA1_RECORD_PATH is set, this will record path (if any)
+	 * found when resolving the name. The caller is responsible for
+	 * releasing the memory.
+	 */
+	char *path;
 };
 
 #define GET_SHA1_QUIETLY           01
@@ -1349,6 +1354,7 @@ struct object_context {
 #define GET_SHA1_TREEISH          020
 #define GET_SHA1_BLOB             040
 #define GET_SHA1_FOLLOW_SYMLINKS 0100
+#define GET_SHA1_RECORD_PATH     0200
 #define GET_SHA1_ONLY_TO_DIE    04000
 
 #define GET_SHA1_DISAMBIGUATORS \
@@ -1363,7 +1369,7 @@ extern int get_sha1_tree(const char *str, unsigned char *sha1);
 extern int get_sha1_treeish(const char *str, unsigned char *sha1);
 extern int get_sha1_blob(const char *str, unsigned char *sha1);
 extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
-extern int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *orc);
+extern int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *oc);
 
 extern int get_oid(const char *str, struct object_id *oid);
 
