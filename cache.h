@@ -1805,10 +1805,10 @@ typedef int each_loose_object_fn(const struct object_id *oid,
 typedef int each_loose_cruft_fn(const char *basename,
 				const char *path,
 				void *data);
-typedef int each_loose_subdir_fn(int nr,
+typedef int each_loose_subdir_fn(unsigned int nr,
 				 const char *path,
 				 void *data);
-int for_each_file_in_obj_subdir(int subdir_nr,
+int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 				struct strbuf *path,
 				each_loose_object_fn obj_cb,
 				each_loose_cruft_fn cruft_cb,

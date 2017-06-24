@@ -3735,7 +3735,7 @@ void assert_sha1_type(const unsigned char *sha1, enum object_type expect)
 		    typename(expect));
 }
 
-int for_each_file_in_obj_subdir(int subdir_nr,
+int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 				struct strbuf *path,
 				each_loose_object_fn obj_cb,
 				each_loose_cruft_fn cruft_cb,
@@ -3746,6 +3746,9 @@ int for_each_file_in_obj_subdir(int subdir_nr,
 	DIR *dir;
 	struct dirent *de;
 	int r = 0;
+
+	if (subdir_nr > 0xff)
+		BUG("invalid loose object subdirectory: %x", subdir_nr);
 
 	origlen = path->len;
 	strbuf_complete(path, '/');
