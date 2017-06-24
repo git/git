@@ -667,11 +667,9 @@ void diffcore_rename(struct diff_options *options)
 	for (i = 0; i < rename_dst_nr; i++)
 		free_filespec(rename_dst[i].two);
 
-	free(rename_dst);
-	rename_dst = NULL;
+	FREE_AND_NULL(rename_dst);
 	rename_dst_nr = rename_dst_alloc = 0;
-	free(rename_src);
-	rename_src = NULL;
+	FREE_AND_NULL(rename_src);
 	rename_src_nr = rename_src_alloc = 0;
 	return;
 }

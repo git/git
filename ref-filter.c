@@ -1891,8 +1891,7 @@ void ref_array_clear(struct ref_array *array)
 
 	for (i = 0; i < array->nr; i++)
 		free_array_item(array->items[i]);
-	free(array->items);
-	array->items = NULL;
+	FREE_AND_NULL(array->items);
 	array->nr = array->alloc = 0;
 }
 
