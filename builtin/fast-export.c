@@ -5,6 +5,7 @@
  */
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "commit.h"
 #include "object.h"

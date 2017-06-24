@@ -4,6 +4,7 @@
  * Copyright (C) 2006 Johannes Schindelin
  */
 #include "builtin.h"
+#include "config.h"
 #include "pathspec.h"
 #include "lockfile.h"
 #include "dir.h"

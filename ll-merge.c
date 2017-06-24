@@ -5,6 +5,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "attr.h"
 #include "xdiff-interface.h"
 #include "run-command.h"

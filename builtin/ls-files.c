@@ -6,6 +6,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "config.h"
 #include "quote.h"
 #include "dir.h"
 #include "builtin.h"
