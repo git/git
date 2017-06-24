@@ -1,16 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2017, #06; Thu, 22)
-X-master-at: 5402b1352f5181247405fbff1887008a0cb3b04a
-X-next-at: bc1a90f0778b337f20670d4cbce0a6e2c034cbf5
+Subject: What's cooking in git.git (Jun 2017, #07; Sat, 24)
+X-master-at: e629a7d28a405e48fae6b064a781a10e885159fc
+X-next-at: dfeb3b8721fab9939e46c1aea15c813423fe1de3
 
-What's cooking in git.git (Jun 2017, #06; Thu, 22)
+What's cooking in git.git (Jun 2017, #07; Sat, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+A new maintenance release v2.13.2 has been tagged with various fixes
+that have been already in the 'master' branch.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,117 +23,18 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ah/filter-branch-setup (2017-06-12) 2 commits
-  (merged to 'next' on 2017-06-19 at f3440f2c1a)
- + filter-branch: add [--] to usage
- + filter-branch: add `--setup` step
+* ab/free-and-null (2017-06-16) 6 commits
+  (merged to 'next' on 2017-06-21 at a1825fabd8)
+ + *.[ch] refactoring: make use of the FREE_AND_NULL() macro
+ + coccinelle: make use of the "expression" FREE_AND_NULL() rule
+ + coccinelle: add a rule to make "expression" code use FREE_AND_NULL()
+ + coccinelle: make use of the "type" FREE_AND_NULL() rule
+ + coccinelle: add a rule to make "type" code use FREE_AND_NULL()
+ + git-compat-util: add a FREE_AND_NULL() wrapper around free(ptr); ptr = NULL
 
- "filter-branch" learned a pseudo filter "--setup" that can be used
- to define a common function/variable that can be used by other
- filters.
-
-
-* km/test-mailinfo-b-failure (2017-06-12) 1 commit
-  (merged to 'next' on 2017-06-19 at badc2c2337)
- + t5100: add some more mailinfo tests
-
- New tests.
-
-
-* ls/github (2017-06-13) 1 commit
-  (merged to 'next' on 2017-06-19 at 4d2024615f)
- + Configure Git contribution guidelines for github.com
-
- Help contributors that visit us at GitHub.
-
-
-* mh/fast-import-raise-default-depth (2017-06-12) 1 commit
-  (merged to 'next' on 2017-06-19 at 7093c07b8e)
- + fast-import: increase the default pack depth to 50
-
- "fast-import" uses a default pack chain depth that is consistent
- with other parts of the system.
-
-
-* nd/fopen-errors (2017-06-15) 1 commit
-  (merged to 'next' on 2017-06-15 at 86bcb7c082)
- + configure.ac: loosen FREAD_READS_DIRECTORIES test program
-
- Hotfix for a topic that is already in 'master'.
-
-
-* pc/dir-count-slashes (2017-06-12) 1 commit
-  (merged to 'next' on 2017-06-19 at 57351a2771)
- + dir: create function count_slashes()
-
- Three instances of the same helper function have been consolidated
- to one.
-
-
-* ps/stash-push-pathspec-fix (2017-06-13) 1 commit
-  (merged to 'next' on 2017-06-19 at 866c9035e0)
- + git-stash: fix pushing stash with pathspec from subdir
-
- "git stash push <pathspec>" did not work from a subdirectory at all.
- Bugfix for a topic in v2.13
-
-
-* rs/strbuf-addftime-zZ (2017-06-15) 3 commits
-  (merged to 'next' on 2017-06-19 at 77480669f0)
- + date: use localtime() for "-local" time formats
- + t0006: check --date=format zone offsets
- + strbuf: let strbuf_addftime handle %z and %Z itself
-
- As there is no portable way to pass timezone information to
- strftime, some output format from "git log" and friends are
- impossible to produce.  Teach our own strbuf_addftime to replace %z
- and %Z with caller-supplied values to help working around this.
-
-
-* sb/t4005-modernize (2017-06-10) 1 commit
-  (merged to 'next' on 2017-06-19 at beedeb757b)
- + t4005: modernize style and drop hard coded sha1
-
- Test clean-up.
-
-
-* sd/t3200-branch-m-test (2017-06-13) 1 commit
-  (merged to 'next' on 2017-06-19 at 0fd712c46e)
- + t3200: add test for single parameter passed to -m option
-
- New test.
-
-
-* sg/revision-parser-skip-prefix (2017-06-12) 5 commits
-  (merged to 'next' on 2017-06-19 at 0a90bec767)
- + revision.c: use skip_prefix() in handle_revision_pseudo_opt()
- + revision.c: use skip_prefix() in handle_revision_opt()
- + revision.c: stricter parsing of '--early-output'
- + revision.c: stricter parsing of '--no-{min,max}-parents'
- + revision.h: turn rev_info.early_output back into an unsigned int
-
- Code clean-up.
-
---------------------------------------------------
-[New Topics]
-
-* mh/packed-ref-store-prep-extra (2017-06-18) 1 commit
- - prefix_ref_iterator_advance(): relax the check of trim length
- (this branch uses mh/packed-ref-store-prep; is tangled with mh/packed-ref-store.)
-
- Split out of mh/packed-ref-store-prep; will drop.
-
-
-* ab/die-errors-in-threaded (2017-06-21) 1 commit
- - die(): stop hiding errors due to overzealous recursion guard
-
- Traditionally, the default die() routine had a code to prevent it
- from getting called multiple times, which interacted badly when a
- threaded program used it (one downside is that the real error may
- be hidden and instead the only error message given to the user may
- end up being "die recursion detected", which is not very useful).
-
- Will merge to 'next'.
+ A common pattern to free a piece of memory and assign NULL to the
+ pointer that used to point at it has been replaced with a new
+ FREE_AND_NULL() macro.
 
 
 * ab/pcre-v2 (2017-06-21) 1 commit
@@ -139,10 +43,234 @@ of the repositories listed at
 
  Hotfix for a topic already in 'master'.
 
+
+* ab/wildmatch-glob-slash-test (2017-06-15) 1 commit
+  (merged to 'next' on 2017-06-21 at 8f4a056f5f)
+ + wildmatch test: cover a blind spot in "/" matching
+
+ A new test to show the interaction between the pattern [^a-z]
+ (which matches '/') and a slash in a path has been added.  The
+ pattern should not match the slash with "pathmatch", but should
+ with "wildmatch".
+
+
+* ah/doc-gitattributes-empty-index (2017-06-15) 1 commit
+  (merged to 'next' on 2017-06-21 at f1dc92557b)
+ + doc: do not use `rm .git/index` when normalizing line endings
+
+ An example in documentation that does not work in multi worktree
+ configuration has been corrected.
+
+
+* bw/config-h (2017-06-15) 6 commits
+  (merged to 'next' on 2017-06-21 at 15c5f34034)
+ + config: don't implicitly use gitdir or commondir
+ + config: respect commondir
+ + setup: teach discover_git_directory to respect the commondir
+ + config: don't include config.h by default
+ + config: remove git_config_iter
+ + config: create config.h
+ (this branch is used by bw/repo-object; uses js/alias-early-config.)
+
+ Fix configuration codepath to pay proper attention to commondir
+ that is used in multi-worktree situation, and isolate config API
+ into its own header file.
+
+
+* bw/ls-files-sans-the-index (2017-06-13) 17 commits
+  (merged to 'next' on 2017-06-21 at 39ce64f6c7)
+ + ls-files: factor out tag calculation
+ + ls-files: factor out debug info into a function
+ + ls-files: convert show_files to take an index
+ + ls-files: convert show_ce_entry to take an index
+ + ls-files: convert prune_cache to take an index
+ + ls-files: convert ce_excluded to take an index
+ + ls-files: convert show_ru_info to take an index
+ + ls-files: convert show_other_files to take an index
+ + ls-files: convert show_killed_files to take an index
+ + ls-files: convert write_eolinfo to take an index
+ + ls-files: convert overlay_tree_on_cache to take an index
+ + tree: convert read_tree to take an index parameter
+ + convert: convert renormalize_buffer to take an index
+ + convert: convert convert_to_git to take an index
+ + convert: convert convert_to_git_filter_fd to take an index
+ + convert: convert crlf_to_git to take an index
+ + convert: convert get_cached_convert_stats_ascii to take an index
+ (this branch is used by bw/repo-object.)
+
+ Code clean-up.
+
+
+* da/mergetools-meld-output-opt-on-macos (2017-06-18) 1 commit
+  (merged to 'next' on 2017-06-21 at de00cce3c0)
+ + mergetools/meld: improve compatibiilty with Meld on macOS X
+
+ "git mergetool" learned to work around a wrapper MacOS X adds
+ around underlying meld.
+
+
+* jk/diff-highlight-module (2017-06-15) 1 commit
+  (merged to 'next' on 2017-06-21 at e418062ad2)
+ + diff-highlight: split code into module
+
+ The 'diff-highlight' program (in contrib/) has been restructured
+ for easier reuse by an external project 'diff-so-fancy'.
+
+
+* jk/warn-add-gitlink (2017-06-15) 2 commits
+  (merged to 'next' on 2017-06-21 at 7210ddbb2e)
+ + t: move "git add submodule" into test blocks
+ + add: warn when adding an embedded repository
+
+ Using "git add d/i/r" when d/i/r is the top of the working tree of
+ a separate repository would create a gitlink in the index, which
+ would appear as a not-quite-initialized submodule to others.  We
+ learned to give warnings when this happens.
+
+
+* js/alias-early-config (2017-06-15) 6 commits
+  (merged to 'next' on 2017-06-21 at ca4995aac2)
+ + alias: use the early config machinery to expand aliases
+ + t7006: demonstrate a problem with aliases in subdirectories
+ + t1308: relax the test verifying that empty alias values are disallowed
+ + help: use early config when autocorrecting aliases
+ + config: report correct line number upon error
+ + discover_git_directory(): avoid setting invalid git_dir
+ (this branch is used by bw/config-h and bw/repo-object.)
+
+ The code to pick up and execute command alias definition from the
+ configuration used to switch to the top of the working tree and
+ then come back when the expanded alias was executed, which was
+ unnecessarilyl complex.  Attempt to simplify the logic by using the
+ early-config mechanism that does not chdir around.
+
+
+* rs/pretty-add-again (2017-06-15) 1 commit
+  (merged to 'next' on 2017-06-21 at 5128ad3632)
+ + pretty: recalculate duplicate short hashes
+
+ The pretty-format specifiers like '%h', '%t', etc. had an
+ optimization that no longer works correctly.  In preparation/hope
+ of getting it correctly implemented, first discard the optimization
+ that is broken.
+
+
+* sg/doc-pretty-formats (2017-06-15) 1 commit
+  (merged to 'next' on 2017-06-21 at 011df65cf5)
+ + docs/pretty-formats: stress that %- removes all preceding line-feeds
+
+ Doc update.
+
+
+* sn/reset-doc-typofix (2017-06-15) 1 commit
+  (merged to 'next' on 2017-06-21 at 3e629ac2cb)
+ + doc: git-reset: fix a trivial typo
+
+ Doc update.
+
+--------------------------------------------------
+[New Topics]
+
+* ab/wildmatch (2017-06-23) 4 commits
+ - SQUASH???
+ - wildmatch: make use of the interface for precompiling wildmatch() patterns
+ - wildmatch: add interface for precompiling wildmatch() patterns
+ - wildmatch: remove unused wildopts parameter
+
+ Prepare the wildmatch API for future enhancements to allow a
+ pattern that is repeatedly matched against many strings to be
+ precompiled.
+
+
+* ah/doc-pretty-color-auto-prefix (2017-06-24) 1 commit
+ - doc: clarify syntax for %C(auto,...) in pretty formats
+
+ Doc update.
+
+ Will merge to 'next'.
+
+
+* cc/shared-index-permfix (2017-06-23) 3 commits
+ - t1700: make sure split-index respects core.sharedrepository
+ - t1301: move modebits() to test-lib-functions.sh
+ - read-cache: use shared perms when writing shared index
+
+ The split index code did not honor core.sharedrepository setting
+ correctly.
+
+ Expecting a reroll.
+ cf. <xmqqwp82bb39.fsf@gitster.mtv.corp.google.com>
+ The test looked flakey.
+
+
+* ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
+ - pathspec: die on empty strings as pathspec
+ - t0027: do not use an empty string as a pathspec element
+
+ The final step to make an empty string as a pathspec element
+ illegal.  We started this by first deprecating and warning a
+ pathspec that has such an element in 2.11 (Nov 2016).
+
+ Hopefully we can merge this down to the 'master' by the end of the
+ year?  A deprecation warning period that is about 1 year does not
+ sound too bad.
+
+ Will merge to 'next.
+
+
+* sb/pull-rebase-submodule (2017-06-23) 3 commits
+ - pull: optionally rebase submodules (remote submodule changes only)
+ - builtin/fetch: parse recurse-submodules-default at default options parsing
+ - builtin/fetch: factor submodule recurse parsing out to submodule config
+
+ "git pull --rebase --recurse-submodules" learns to rebase the
+ branch in the submodules to an updated base.
+
+--------------------------------------------------
+[Stalled]
+
+* mg/status-in-progress-info (2017-05-10) 2 commits
+ - status --short --inprogress: spell it as --in-progress
+ - status: show in-progress info for short status
+
+ "git status" learns an option to report various operations
+ (e.g. "merging") that the user is in the middle of.
+
+ cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
+
+
+* nd/worktree-move (2017-04-20) 6 commits
+ - worktree remove: new command
+ - worktree move: refuse to move worktrees with submodules
+ - worktree move: accept destination as directory
+ - worktree move: new command
+ - worktree.c: add update_worktree_location()
+ - worktree.c: add validate_worktree()
+
+ "git worktree" learned move and remove subcommands.
+
+ Expecting a reroll.
+ cf. <20170420101024.7593-1-pclouds@gmail.com>
+ cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
+ cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
+
+--------------------------------------------------
+[Cooking]
+
+* ab/die-errors-in-threaded (2017-06-21) 1 commit
+  (merged to 'next' on 2017-06-24 at 135fc4b963)
+ + die(): stop hiding errors due to overzealous recursion guard
+
+ Traditionally, the default die() routine had a code to prevent it
+ from getting called multiple times, which interacted badly when a
+ threaded program used it (one downside is that the real error may
+ be hidden and instead the only error message given to the user may
+ end up being "die recursion detected", which is not very useful).
+
  Will merge to 'master'.
 
 
-* bw/repo-object (2017-06-22) 21 commits
+* bw/repo-object (2017-06-23) 21 commits
  - ls-files: use repository object
  - repository: enable initialization of submodules
  - submodule: convert is_submodule_initialized to work on a repository
@@ -163,12 +291,13 @@ of the repositories listed at
  - environment: remove namespace_len variable
  - setup: add comment indicating a hack
  - setup: don't perform lazy initialization of repository state
- - Merge branches 'bw/ls-files-sans-the-index' and 'bw/config-h' into HEAD
- (this branch uses bw/config-h, bw/ls-files-sans-the-index and js/alias-early-config.)
+ - Merge branches 'bw/ls-files-sans-the-index' and 'bw/config-h' into bw/repo-object
 
  Introduce a "repository" object to eventually make it easier to
  work in multiple repositories (the primary focus is to work with
  the superproject and its submodules) in a single process.
+
+ Will merge to 'next'.
 
 
 * dt/raise-core-packed-git-limit (2017-06-21) 1 commit
@@ -211,20 +340,20 @@ of the repositories listed at
 
 
 * ks/submodule-add-doc (2017-06-22) 1 commit
- - Documentation/git-submodule: cleanup "add" section
+  (merged to 'next' on 2017-06-24 at 26309b38f2)
+ + Documentation/git-submodule: cleanup "add" section
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* pw/unquote-path-in-git-pm (2017-06-22) 5 commits
+* pw/unquote-path-in-git-pm (2017-06-24) 5 commits
  - git-add--interactive.perl: Use unquote_path() from Git.pm
  - Add tests for Git::unquote_path()
  - Git::unquote_path() throw an exception on bad path
  - Git::unquote_path() Handle '\a'
  - Git.pm: add unquote_path()
- (this branch uses rs/sha1-name-readdir-optim.)
 
  Code refactoring.
 
@@ -233,93 +362,17 @@ of the repositories listed at
  result looked mostly OK.
 
 
-* rs/sha1-name-readdir-optim (2017-06-22) 1 commit
+* rs/sha1-name-readdir-optim (2017-06-24) 4 commits
+ - sha1_file: guard against invalid loose subdirectory numbers
+ - sha1_file: let for_each_file_in_obj_subdir() handle subdir names
+ - p4205: add perf test script for pretty log formats
  - sha1_name: cache readdir(3) results in find_short_object_filename()
- (this branch is used by pw/unquote-path-in-git-pm.)
 
  Optimize "what are the object names already taken in an alternate
  object database?" query that is used to derive the length of prefix
  an object name is uniquely abbreviated to.
 
- It would be nice to have some numbers, though.
-
---------------------------------------------------
-[Stalled]
-
-* mg/status-in-progress-info (2017-05-10) 2 commits
- - status --short --inprogress: spell it as --in-progress
- - status: show in-progress info for short status
-
- "git status" learns an option to report various operations
- (e.g. "merging") that the user is in the middle of.
-
- cf. <xmqqmvakcdqw.fsf@gitster.mtv.corp.google.com>
-
-
-* nd/worktree-move (2017-04-20) 6 commits
- - worktree remove: new command
- - worktree move: refuse to move worktrees with submodules
- - worktree move: accept destination as directory
- - worktree move: new command
- - worktree.c: add update_worktree_location()
- - worktree.c: add validate_worktree()
-
- "git worktree" learned move and remove subcommands.
-
- Expecting a reroll.
- cf. <20170420101024.7593-1-pclouds@gmail.com>
- cf. <20170421145916.mknekgqzhxffu7di@sigill.intra.peff.net>
- cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
-
---------------------------------------------------
-[Cooking]
-
-* ab/free-and-null (2017-06-16) 6 commits
-  (merged to 'next' on 2017-06-21 at a1825fabd8)
- + *.[ch] refactoring: make use of the FREE_AND_NULL() macro
- + coccinelle: make use of the "expression" FREE_AND_NULL() rule
- + coccinelle: add a rule to make "expression" code use FREE_AND_NULL()
- + coccinelle: make use of the "type" FREE_AND_NULL() rule
- + coccinelle: add a rule to make "type" code use FREE_AND_NULL()
- + git-compat-util: add a FREE_AND_NULL() wrapper around free(ptr); ptr = NULL
-
- A common pattern to free a piece of memory and assign NULL to the
- pointer that used to point at it has been replaced with a new
- FREE_AND_NULL() macro.
-
- Will merge to 'master'.
-
-
-* ab/wildmatch-glob-slash-test (2017-06-15) 1 commit
-  (merged to 'next' on 2017-06-21 at 8f4a056f5f)
- + wildmatch test: cover a blind spot in "/" matching
-
- A new test to show the interaction between the pattern [^a-z]
- (which matches '/') and a slash in a path has been added.  The
- pattern should not match the slash with "pathmatch", but should
- with "wildmatch".
-
- Will merge to 'master'.
-
-
-* ah/doc-gitattributes-empty-index (2017-06-15) 1 commit
-  (merged to 'next' on 2017-06-21 at f1dc92557b)
- + doc: do not use `rm .git/index` when normalizing line endings
-
- An example in documentation that does not work in multi worktree
- configuration has been corrected.
-
- Will merge to 'master'.
-
-
-* jk/diff-highlight-module (2017-06-15) 1 commit
-  (merged to 'next' on 2017-06-21 at e418062ad2)
- + diff-highlight: split code into module
-
- The 'diff-highlight' program (in contrib/) has been restructured
- for easier reuse by an external project 'diff-so-fancy'.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * jt/unify-object-info (2017-06-21) 8 commits
@@ -335,50 +388,12 @@ of the repositories listed at
  Code clean-ups.
 
  Looked sensible to me.  Any further comments?
-
-
-* rs/pretty-add-again (2017-06-15) 1 commit
-  (merged to 'next' on 2017-06-21 at 5128ad3632)
- + pretty: recalculate duplicate short hashes
-
- The pretty-format specifiers like '%h', '%t', etc. had an
- optimization that no longer works correctly.  In preparation/hope
- of getting it correctly implemented, first discard the optimization
- that is broken.
-
- Will merge to 'master'.
-
-
-* sg/doc-pretty-formats (2017-06-15) 1 commit
-  (merged to 'next' on 2017-06-21 at 011df65cf5)
- + docs/pretty-formats: stress that %- removes all preceding line-feeds
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* sn/reset-doc-typofix (2017-06-15) 1 commit
-  (merged to 'next' on 2017-06-21 at 3e629ac2cb)
- + doc: git-reset: fix a trivial typo
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* da/mergetools-meld-output-opt-on-macos (2017-06-18) 1 commit
-  (merged to 'next' on 2017-06-21 at de00cce3c0)
- + mergetools/meld: improve compatibiilty with Meld on macOS X
-
- "git mergetool" learned to work around a wrapper MacOS X adds
- around underlying meld.
-
- Will merge to 'master'.
+ cf. <20170624124522.p2dnwdah75e4ngya@sigill.intra.peff.net>
 
 
 * ks/status-initial-commit (2017-06-21) 1 commit
- - status: contextually notify user about an initial commit
+  (merged to 'next' on 2017-06-24 at 940ffd5816)
+ + status: contextually notify user about an initial commit
 
  "git status" has long shown essentially the same message as "git
  commit"; the message it gives while preparing for the root commit,
@@ -387,7 +402,7 @@ of the repositories listed at
  (rather than the commit the user is preparing for, which is more in
  line with the focus of "git commit").
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * lb/status-stash-count (2017-06-18) 3 commits
@@ -402,8 +417,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mh/packed-ref-store (2017-06-19) 29 commits
- - SQUASH???
+* mh/packed-ref-store (2017-06-23) 29 commits
  - read_packed_refs(): die if `packed-refs` contains bogus data
  - repack_without_refs(): don't lock or unlock the packed refs
  - commit_packed_refs(): remove call to `packed_refs_unlock()`
@@ -432,89 +446,10 @@ of the repositories listed at
  - packed_ref_store: move `packed_refs_path` here
  - packed_ref_store: new struct
  - add_packed_ref(): teach function to overwrite existing refs
+ - t1408: add a test of stale packed refs covered by loose refs
  (this branch uses mh/packed-ref-store-prep; is tangled with mh/packed-ref-store-prep-extra.)
 
  The "ref-store" code reorganization continues.
-
- Seems to break the promise that packed-refs are covered by loose
- refs and the former that points at a missing garbage is not an
- error.
- cf. <20170619195330.fhjlfiqmcwhgttaa@sigill.intra.peff.net>
-
-
-* js/alias-early-config (2017-06-15) 6 commits
-  (merged to 'next' on 2017-06-21 at ca4995aac2)
- + alias: use the early config machinery to expand aliases
- + t7006: demonstrate a problem with aliases in subdirectories
- + t1308: relax the test verifying that empty alias values are disallowed
- + help: use early config when autocorrecting aliases
- + config: report correct line number upon error
- + discover_git_directory(): avoid setting invalid git_dir
- (this branch is used by bw/config-h and bw/repo-object.)
-
- The code to pick up and execute command alias definition from the
- configuration used to switch to the top of the working tree and
- then come back when the expanded alias was executed, which was
- unnecessarilyl complex.  Attempt to simplify the logic by using the
- early-config mechanism that does not chdir around.
-
- Will merge to 'master'.
-
-
-* bw/config-h (2017-06-15) 6 commits
-  (merged to 'next' on 2017-06-21 at 15c5f34034)
- + config: don't implicitly use gitdir or commondir
- + config: respect commondir
- + setup: teach discover_git_directory to respect the commondir
- + config: don't include config.h by default
- + config: remove git_config_iter
- + config: create config.h
- (this branch is used by bw/repo-object; uses js/alias-early-config.)
-
- Fix configuration codepath to pay proper attention to commondir
- that is used in multi-worktree situation, and isolate config API
- into its own header file.
-
- Will merge to 'master'.
-
-
-* bw/ls-files-sans-the-index (2017-06-13) 17 commits
-  (merged to 'next' on 2017-06-21 at 39ce64f6c7)
- + ls-files: factor out tag calculation
- + ls-files: factor out debug info into a function
- + ls-files: convert show_files to take an index
- + ls-files: convert show_ce_entry to take an index
- + ls-files: convert prune_cache to take an index
- + ls-files: convert ce_excluded to take an index
- + ls-files: convert show_ru_info to take an index
- + ls-files: convert show_other_files to take an index
- + ls-files: convert show_killed_files to take an index
- + ls-files: convert write_eolinfo to take an index
- + ls-files: convert overlay_tree_on_cache to take an index
- + tree: convert read_tree to take an index parameter
- + convert: convert renormalize_buffer to take an index
- + convert: convert convert_to_git to take an index
- + convert: convert convert_to_git_filter_fd to take an index
- + convert: convert crlf_to_git to take an index
- + convert: convert get_cached_convert_stats_ascii to take an index
- (this branch is used by bw/repo-object.)
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/warn-add-gitlink (2017-06-15) 2 commits
-  (merged to 'next' on 2017-06-21 at 7210ddbb2e)
- + t: move "git add submodule" into test blocks
- + add: warn when adding an embedded repository
-
- Using "git add d/i/r" when d/i/r is the top of the working tree of
- a separate repository would create a gitlink in the index, which
- would appear as a not-quite-initialized submodule to others.  We
- learned to give warnings when this happens.
-
- Will merge to 'master'.
 
 
 * mh/packed-ref-store-prep (2017-06-18) 2 commits
@@ -558,10 +493,13 @@ of the repositories listed at
  The filter-process interface learned to allow a process with long
  latency give a "delayed" response.
 
- Needs review.
+ Getting reviewed.
+ cf. <20170624142301.c5jl7xxf4ici3cug@sigill.intra.peff.net>
 
 
-* pw/rebase-i-regression-fix-tests (2017-06-19) 4 commits
+* pw/rebase-i-regression-fix-tests (2017-06-23) 5 commits
+  (merged to 'next' on 2017-06-23 at 835ae762f5)
+ + t3420: fix under GETTEXT_POISON build
   (merged to 'next' on 2017-06-22 at d1dde1672a)
  + rebase: add more regression tests for console output
  + rebase: add regression tests for console output
@@ -583,8 +521,13 @@ of the repositories listed at
  submodule.
 
  Will keep in 'pu'.
- Impact to the various build and release infrastructure of using
- submodule is not yet fully known, but this lets us dip our toes.
+ cf. <xmqqefuab571.fsf@gitster.mtv.corp.google.com>
+
+ The only nit I may have is that we may possibly want to turn this
+ on in .travis.yml on MacOS before we move it forward (otherwise
+ we'd be shipping bundled one and submodule one without doing any
+ build on that platform)?  Other than that, the topic seems ready to
+ be merged down.
 
 
 * bp/fsmonitor (2017-06-12) 6 commits
@@ -597,10 +540,10 @@ of the repositories listed at
 
  We learned to talk to watchman to speed up "git status".
 
- Waiting for discussion to settle.
+ No more comments or updates?
 
 
-* sb/diff-color-move (2017-06-21) 25 commits
+* sb/diff-color-move (2017-06-23) 25 commits
  - diff: document the new --color-moved setting
  - diff.c: add dimming to moved line detection
  - diff.c: color moved lines differently, plain mode
@@ -615,9 +558,9 @@ of the repositories listed at
  - diff.c: emit_diff_symbol learns DIFF_SYMBOL_REWRITE_DIFF
  - diff.c: emit_diff_symbol learns about DIFF_SYMBOL_BINARY_FILES
  - diff.c: emit_diff_symbol learns DIFF_SYMBOL_HEADER
- - diff.c: emit_diff_symbol learns DIFF_SYMBOL_FILEPAIR
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_FILEPAIR_{PLUS, MINUS}
  - diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_INCOMPLETE
- - diff.c: emit_diff_symbol learns DIFF_SYMBOL_WORDS{_PORCELAIN}
+ - diff.c: emit_diff_symbol learns DIFF_SYMBOL_WORDS[_PORCELAIN]
  - diff.c: migrate emit_line_checked to use emit_diff_symbol
  - diff.c: emit_diff_symbol learns DIFF_SYMBOL_NO_LF_EOF
  - diff.c: emit_diff_symbol learns DIFF_SYMBOL_CONTEXT_FRAGINFO
@@ -631,8 +574,6 @@ of the repositories listed at
  the same as deleted lines elsewhere differently from genuinely new
  lines.
 
- Is any more update coming?
-
 
 * xz/send-email-batch-size (2017-05-23) 1 commit
  - send-email: --batch-size to work around some SMTP server limit
@@ -643,6 +584,11 @@ of the repositories listed at
 
  Waiting for response.
  cf. <CACBZZX5GYV50rjg9X602JHqFPaoofH9TwDf_-r_MDu8-rmNV6Q@mail.gmail.com>
+ cf. <xmqqo9tfff2w.fsf@gitster.mtv.corp.google.com>
+
+ """I thought your wish (which I found reasonable) was to record
+ whatever information that would help us in the future in the log
+ message?  I was waiting for that to happen."""
 
 
 * sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
@@ -655,8 +601,9 @@ of the repositories listed at
  variables take effect while the initial clone is happening,
  e.g. these configuration variables could be fetch refspecs.
 
- Are we happy with these two?
+ Waiting for a response.
  cf. <20170617112228.vugswym4o4owf6wj@sigill.intra.peff.net>
+ cf. <xmqqmv8zhdap.fsf@gitster.mtv.corp.google.com>
 
 
 * js/rebase-i-final (2017-06-15) 10 commits
@@ -681,6 +628,13 @@ of the repositories listed at
 --------------------------------------------------
 [Discarded]
 
+* mh/packed-ref-store-prep-extra (2017-06-18) 1 commit
+ . prefix_ref_iterator_advance(): relax the check of trim length
+ (this branch uses mh/packed-ref-store-prep; is tangled with mh/packed-ref-store.)
+
+ Split out of mh/packed-ref-store-prep.
+
+
 * nd/prune-in-worktree (2017-04-24) 12 commits
  . rev-list: expose and document --single-worktree
  . revision.c: --reflog add HEAD reflog from all worktrees
@@ -700,32 +654,3 @@ of the repositories listed at
  of other worktrees as the root for reachability traversal, making
  objects that are in use only in other worktrees to be subject to
  garbage collection.
-
-
-* jc/pretty-add-again (2017-06-13) 1 commit
- . add_again() off-by-one error in custom format
-
-
-* sk/dash-is-previous (2017-03-01) 5 commits
- . revert.c: delegate handling of "-" shorthand to setup_revisions
- . sha1_name.c: teach get_sha1_1 "-" shorthand for "@{-1}"
- . revision.c: args starting with "-" might be a revision
- . revision.c: swap if/else blocks
- . revision.c: do not update argv with unknown option
-
- A dash "-" can be written to mean "the branch that was previously
- checked out" in more places.
-
- Ejected, as it seems that making -.. to mean @{-1}..HEAD etc. are
- going too far.
-
-
-* mg/name-rev-debug (2017-03-31) 2 commits
- . describe: pass --debug down to name-rev
- . name-rev: provide debug output
-
- "git describe --debug --contains" did not add any meaningful
- information, even though without "--contains" it did.
-
- Will discard for now.
- cf. <c85bc2a1-56d8-8a02-6089-2b8cb3d39e99@grubix.eu>
