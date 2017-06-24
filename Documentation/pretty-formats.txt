@@ -213,8 +213,8 @@ If you add a `+` (plus sign) after '%' of a placeholder, a line-feed
 is inserted immediately before the expansion if and only if the
 placeholder expands to a non-empty string.
 
-If you add a `-` (minus sign) after '%' of a placeholder, line-feeds that
-immediately precede the expansion are deleted if and only if the
+If you add a `-` (minus sign) after '%' of a placeholder, all consecutive
+line-feeds immediately preceding the expansion are deleted if and only if the
 placeholder expands to an empty string.
 
 If you add a ` ` (space) after '%' of a placeholder, a space
