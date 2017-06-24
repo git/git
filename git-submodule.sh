@@ -213,7 +213,8 @@ cmd_add()
 		die "$(eval_gettext "'\$sm_path' already exists in the index and is not a submodule")"
 	fi
 
-	if test -z "$force" && ! git add --dry-run --ignore-missing "$sm_path" > /dev/null 2>&1
+	if test -z "$force" &&
+		! git add --dry-run --ignore-missing --no-warn-embedded-repo "$sm_path" > /dev/null 2>&1
 	then
 		eval_gettextln "The following path is ignored by one of your .gitignore files:
 \$sm_path
@@ -267,7 +268,7 @@ or you are unsure what this means choose another name with the '--name' option."
 	fi
 	git config submodule."$sm_name".url "$realrepo"
 
-	git add $force "$sm_path" ||
+	git add --no-warn-embedded-repo $force "$sm_path" ||
 	die "$(eval_gettext "Failed to add submodule '\$sm_path'")"
 
 	git config -f .gitmodules submodule."$sm_name".path "$sm_path" &&
