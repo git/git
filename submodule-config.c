@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "submodule-config.h"
 #include "submodule.h"
@@ -15,6 +16,7 @@
 struct submodule_cache {
 	struct hashmap for_path;
 	struct hashmap for_name;
+	unsigned initialized:1;
 };
 
 /*
@@ -30,9 +32,6 @@ enum lookup_type {
 	lookup_name,
 	lookup_path
 };
-
-static struct submodule_cache the_submodule_cache;
-static int is_cache_init;
 
 static int config_path_cmp(const struct submodule_entry *a,
 			   const struct submodule_entry *b,
@@ -50,10 +49,16 @@ static int config_name_cmp(const struct submodule_entry *a,
 	       hashcmp(a->config->gitmodules_sha1, b->config->gitmodules_sha1);
 }
 
-static void cache_init(struct submodule_cache *cache)
+static struct submodule_cache *submodule_cache_alloc(void)
+{
+	return xcalloc(1, sizeof(struct submodule_cache));
+}
+
+static void submodule_cache_init(struct submodule_cache *cache)
 {
 	hashmap_init(&cache->for_path, (hashmap_cmp_fn) config_path_cmp, 0);
 	hashmap_init(&cache->for_name, (hashmap_cmp_fn) config_name_cmp, 0);
+	cache->initialized = 1;
 }
 
 static void free_one_config(struct submodule_entry *entry)
@@ -65,10 +70,13 @@ static void free_one_config(struct submodule_entry *entry)
 	free(entry->config);
 }
 
-static void cache_free(struct submodule_cache *cache)
+static void submodule_cache_clear(struct submodule_cache *cache)
 {
 	struct hashmap_iter iter;
 	struct submodule_entry *entry;
+
+	if (!cache->initialized)
+		return;
 
 	/*
 	 * We iterate over the name hash here to be symmetric with the
@@ -81,6 +89,13 @@ static void cache_free(struct submodule_cache *cache)
 
 	hashmap_free(&cache->for_path, 1);
 	hashmap_free(&cache->for_name, 1);
+	cache->initialized = 0;
+}
+
+void submodule_cache_free(struct submodule_cache *cache)
+{
+	submodule_cache_clear(cache);
+	free(cache);
 }
 
 static unsigned int hash_sha1_string(const unsigned char *sha1,
@@ -494,43 +509,62 @@ out:
 	return submodule;
 }
 
-static void ensure_cache_init(void)
+static void submodule_cache_check_init(struct repository *repo)
 {
-	if (is_cache_init)
+	if (repo->submodule_cache && repo->submodule_cache->initialized)
 		return;
 
-	cache_init(&the_submodule_cache);
-	is_cache_init = 1;
+	if (!repo->submodule_cache)
+		repo->submodule_cache = submodule_cache_alloc();
+
+	submodule_cache_init(repo->submodule_cache);
 }
 
-int parse_submodule_config_option(const char *var, const char *value)
+int submodule_config_option(struct repository *repo,
+			    const char *var, const char *value)
 {
 	struct parse_config_parameter parameter;
-	parameter.cache = &the_submodule_cache;
+
+	submodule_cache_check_init(repo);
+
+	parameter.cache = repo->submodule_cache;
 	parameter.treeish_name = NULL;
 	parameter.gitmodules_sha1 = null_sha1;
 	parameter.overwrite = 1;
 
-	ensure_cache_init();
 	return parse_config(var, value, &parameter);
+}
+
+int parse_submodule_config_option(const char *var, const char *value)
+{
+	return submodule_config_option(the_repository, var, value);
 }
 
 const struct submodule *submodule_from_name(const unsigned char *treeish_name,
 		const char *name)
 {
-	ensure_cache_init();
-	return config_from(&the_submodule_cache, treeish_name, name, lookup_name);
+	submodule_cache_check_init(the_repository);
+	return config_from(the_repository->submodule_cache, treeish_name, name, lookup_name);
 }
 
 const struct submodule *submodule_from_path(const unsigned char *treeish_name,
 		const char *path)
 {
-	ensure_cache_init();
-	return config_from(&the_submodule_cache, treeish_name, path, lookup_path);
+	submodule_cache_check_init(the_repository);
+	return config_from(the_repository->submodule_cache, treeish_name, path, lookup_path);
+}
+
+const struct submodule *submodule_from_cache(struct repository *repo,
+					     const unsigned char *treeish_name,
+					     const char *key)
+{
+	submodule_cache_check_init(repo);
+	return config_from(repo->submodule_cache, treeish_name,
+			   key, lookup_path);
 }
 
 void submodule_free(void)
 {
-	cache_free(&the_submodule_cache);
-	is_cache_init = 0;
+	if (the_repository->submodule_cache)
+		submodule_cache_clear(the_repository->submodule_cache);
 }
