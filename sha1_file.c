@@ -3735,22 +3735,32 @@ void assert_sha1_type(const unsigned char *sha1, enum object_type expect)
 		    typename(expect));
 }
 
-static int for_each_file_in_obj_subdir(int subdir_nr,
-				       struct strbuf *path,
-				       each_loose_object_fn obj_cb,
-				       each_loose_cruft_fn cruft_cb,
-				       each_loose_subdir_fn subdir_cb,
-				       void *data)
+int for_each_file_in_obj_subdir(unsigned int subdir_nr,
+				struct strbuf *path,
+				each_loose_object_fn obj_cb,
+				each_loose_cruft_fn cruft_cb,
+				each_loose_subdir_fn subdir_cb,
+				void *data)
 {
-	size_t baselen = path->len;
-	DIR *dir = opendir(path->buf);
+	size_t origlen, baselen;
+	DIR *dir;
 	struct dirent *de;
 	int r = 0;
 
+	if (subdir_nr > 0xff)
+		BUG("invalid loose object subdirectory: %x", subdir_nr);
+
+	origlen = path->len;
+	strbuf_complete(path, '/');
+	strbuf_addf(path, "%02x", subdir_nr);
+	baselen = path->len;
+
+	dir = opendir(path->buf);
 	if (!dir) {
-		if (errno == ENOENT)
-			return 0;
-		return error_errno("unable to open %s", path->buf);
+		if (errno != ENOENT)
+			r = error_errno("unable to open %s", path->buf);
+		strbuf_setlen(path, origlen);
+		return r;
 	}
 
 	while ((de = readdir(dir))) {
@@ -3788,6 +3798,8 @@ static int for_each_file_in_obj_subdir(int subdir_nr,
 	if (!r && subdir_cb)
 		r = subdir_cb(subdir_nr, path->buf, data);
 
+	strbuf_setlen(path, origlen);
+
 	return r;
 }
 
@@ -3797,15 +3809,12 @@ int for_each_loose_file_in_objdir_buf(struct strbuf *path,
 			    each_loose_subdir_fn subdir_cb,
 			    void *data)
 {
-	size_t baselen = path->len;
 	int r = 0;
 	int i;
 
 	for (i = 0; i < 256; i++) {
-		strbuf_addf(path, "/%02x", i);
 		r = for_each_file_in_obj_subdir(i, path, obj_cb, cruft_cb,
 						subdir_cb, data);
-		strbuf_setlen(path, baselen);
 		if (r)
 			break;
 	}
