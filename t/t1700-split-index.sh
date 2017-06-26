@@ -370,4 +370,34 @@ test_expect_success 'check splitIndex.sharedIndexExpire set to "never" and "now"
 	test $(ls .git/sharedindex.* | wc -l) -le 2
 '
 
+while read -r mode modebits
+do
+	test_expect_success POSIXPERM "split index respects core.sharedrepository $mode" '
+		# Remove existing shared index files
+		git config core.splitIndex false &&
+		git update-index --force-remove one &&
+		rm -f .git/sharedindex.* &&
+		# Create one new shared index file
+		git config core.sharedrepository "$mode" &&
+		git config core.splitIndex true &&
+		: >one &&
+		git update-index --add one &&
+		echo "$modebits" >expect &&
+		test_modebits .git/index >actual &&
+		test_cmp expect actual &&
+		shared=$(ls .git/sharedindex.*) &&
+		case "$shared" in
+		*" "*)
+			# we have more than one???
+			false ;;
+		*)
+			test_modebits "$shared" >actual &&
+			test_cmp expect actual ;;
+		esac
+	'
+done <<\EOF
+0666 -rw-rw-rw-
+0642 -rw-r---w-
+EOF
+
 test_done
