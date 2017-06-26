@@ -1608,4 +1608,36 @@ test_expect_success 'git commit -m will commit a staged but ignored submodule' '
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
+test_expect_success 'show stash info with "--show-stash"' '
+	git reset --hard &&
+	git stash clear &&
+	echo 1 >file &&
+	git add file &&
+	git stash &&
+	git status >expected_default &&
+	git status --show-stash >expected_with_stash &&
+	test_i18ngrep "^Your stash currently has 1 entry$" expected_with_stash
+'
+
+test_expect_success 'no stash info with "--show-stash --no-show-stash"' '
+	git status --show-stash --no-show-stash >expected_without_stash &&
+	test_cmp expected_default expected_without_stash
+'
+
+test_expect_success '"status.showStash=false" weaker than "--show-stash"' '
+	git -c status.showStash=false status --show-stash >actual &&
+	test_cmp expected_with_stash actual
+'
+
+test_expect_success '"status.showStash=true" weaker than "--no-show-stash"' '
+	git -c status.showStash=true status --no-show-stash >actual &&
+	test_cmp expected_without_stash actual
+'
+
+test_expect_success 'no additionnal info if no stash entries' '
+	git stash clear &&
+	git -c status.showStash=true status >actual &&
+	test_cmp expected_without_stash actual
+'
+
 test_done
