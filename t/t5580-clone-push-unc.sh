@@ -25,7 +25,7 @@ esac
 
 test_expect_success 'clone into absolute path lacking a drive prefix' '
 	USINGBACKSLASHES="$(echo "$WITHOUTDRIVE"/without-drive-prefix |
-		tr / \\)" &&
+		tr / \\\\)" &&
 	git clone . "$USINGBACKSLASHES" &&
 	test -f without-drive-prefix/.git/HEAD
 '
@@ -41,6 +41,11 @@ test_expect_success setup '
 
 test_expect_success clone '
 	git clone "file://$UNCPATH" clone
+'
+
+test_expect_success 'clone with backslashed path' '
+	BACKSLASHED="$(echo "$UNCPATH" | tr / \\\\)" &&
+	git clone "$BACKSLASHED" backslashed
 '
 
 test_expect_success push '
