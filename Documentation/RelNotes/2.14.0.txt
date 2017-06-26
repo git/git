@@ -83,13 +83,16 @@ UI, Workflows & Features
    and also allow linking with the newer PCRE v2 library.
 
  * "filter-branch" learned a pseudo filter "--setup" that can be used
-   to define a common function/variable that can be used by other
+   to define common functions/variables that can be used by other
    filters.
 
  * Using "git add d/i/r" when d/i/r is the top of the working tree of
    a separate repository would create a gitlink in the index, which
    would appear as a not-quite-initialized submodule to others.  We
    learned to give warnings when this happens.
+
+ * "git status" learned to optionally give how many stash entries the
+   user has in its output.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -385,5 +388,12 @@ notes for details).
    into its own header file.
    (merge dc8441fdb4 bw/config-h later to maint).
 
+ * "git add -p" were updated in 2.12 timeframe to cope with custom
+   core.commentchar but the implementation was buggy and a
+   metacharacter like $ and * did not work.
+   (merge d85d7ecb80 jk/add-p-commentchar-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 68241cb9dd sb/t4005-modernize later to maint).
+   (merge 4fced24712 ks/t7508-indent-fix later to maint).
+   (merge 968b1fe263 mb/reword-autocomplete-message later to maint).
