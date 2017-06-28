@@ -25,9 +25,9 @@ press Alt-l
 
 gitk will auto create dir 'gitk/review' and 'gitk/stats' under current repo,
 
-if current user email is gvvvv@163.com, all reviews by him will saved in gitk/review/gvvvv@163.com
+if current user email is gvvvv@163.com, all reviews by him will saved in gitk/review/gvvvv@163.com,
 
-gitk/stats for future use
+after git commit, git push, git pull, dir gitk/ should be pushed or pulled , then others can see it,
 
-after git commit, git push, git pull, dir gitk/ should be pushed or pulled , then others can see it
+gitk/stats is for future use.
 
