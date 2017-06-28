@@ -2,12 +2,477 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright © 2005-2016 Paul Mackerras.  All rights reserved.
+# Copyright ? 2005-2016 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
 package require Tk
+
+####################### code review comment ##########################
+#
+# hotkey: <Key-c> (or right click cflist) show commnt window (click file on cflist first), cflist is right bottom window list of changed files in commits
+#         <Key-l> reload comments
+#
+# auto create files: gitk/reviews/gvvvv@163.com
+#
+#          file format: commit: 39f611311b50cbe94f6ce9ec3ec37e3804265094
+#                       filepath: src/index.js:100
+#                       content: review contents ...
+#                       review contents review contents
+#                       ----------------------------------
+#                       next ...
+#
+# review files should be commited and pushed together with code
+#
+
+# XXX: latest version code in: git\mingw32\bin\gitk
+namespace eval Comments {
+
+    namespace eval V {
+        # set yes to eable debug
+        variable DEBUG no
+
+        variable comment_sign " @ "
+        variable comment_lists {}
+        variable username
+        variable root_dir ./gitk
+        variable stats_dir $root_dir/stats
+        variable reviews_dir $root_dir/reviews
+        variable reviews_sep "----------------------------------"
+    }
+
+    proc init {} {
+        if $V::DEBUG {
+            console show
+        }
+
+        if {![file exists $V::root_dir]} {
+            file mkdir $V::root_dir
+        }
+
+        if {![file exists $V::stats_dir]} {
+            file mkdir $V::stats_dir
+        }
+
+        if {![file exists $V::reviews_dir]} {
+            file mkdir $V::reviews_dir
+        }
+
+        set V::username [get_current_user]
+
+        exec git add $V::root_dir
+    }
+
+    proc db_is_row_sep {row} {
+        return [expr {$row == $V::reviews_sep}]
+    }
+
+    proc db_get_keys {row ks m} {
+        set lastk [lindex $ks [expr [llength $ks] - 1]]
+
+        foreach k $ks {
+            set k2 $k:
+            set pos [expr [string length $k2] - 1]
+            if {[string range $row 0 $pos] == $k2} {
+                dict set m $k [string trim [string range $row [expr $pos + 1] [string length $row]]]
+                return $m
+            }
+        }
+
+        if {$row != "" && ![db_is_row_sep $row]} { 
+            dict set m $lastk "[dict get $m $lastk]\n$row"
+        }
+
+        return $m
+    }
+
+    proc get_review_file {{username ""}} {
+        set filename $username
+
+        if {$filename == ""} {
+            # XXX: can't modify params?
+            set $filename $V::username
+        }
+
+        return $V::reviews_dir/$V::username
+    }
+
+    proc get_current_user {} {
+        if {[catch {set username [exec git config --get user.email]} status]
+            || $username == ""} {
+            tk_messageBox -type ok -icon error \
+                -title Error \
+                -message "please set name/email with 'git config' first [when $status {return " ($status)"}]"
+            exit 1
+        }
+
+        return $username
+    }
+
+    proc load_comments {} {
+        global treediffs diffids api_token
+        global commitinfo currentid displayorder numcommits statusw
+
+        set V::comment_lists {}
+        $statusw conf -text "loading comments..."
+
+        log loading-comments
+
+        foreach f [exec ls $V::reviews_dir] {
+            set comment {}
+
+            set fp [open $V::reviews_dir/$f]
+            set file_content [read $fp]
+            close $fp
+
+            if {$file_content != ""} {
+                set rows [split $file_content "\n"]
+
+                foreach row $rows {
+                    log $row
+
+                    if {[db_is_row_sep $row]} {
+                        dict set comment username $f
+                        lappend V::comment_lists $comment
+                        set comment {}
+                        continue
+                    }
+
+                    set comment [db_get_keys $row {commit filepath content} $comment]
+                }
+            }
+        }
+
+        log loading-comments-end
+
+        if {$V::comment_lists == {}} return
+
+        $statusw conf -text ""
+
+        run reloadcommits
+    }
+
+    # show on canv2
+    proc append_commit_comment {id name} {
+
+        set last $name
+
+        each_dict $V::comment_lists {{commit} {
+            if {$id != $commit} {
+                continue
+            }
+
+            set last "$last$V::comment_sign"
+        }}
+
+        return $last
+    }
+
+    proc show_filelist_comments {current_commit_id fl} {
+
+        each_dict $V::comment_lists {{commit filepath} {
+            if { $commit != $current_commit_id } {
+                continue
+            }
+
+            # show on cflist
+            set pos [lsearch $fl $filepath]
+            if { $pos == -1 } {
+                set pos [lsearch $fl "$filepath$V::comment_sign*"]
+            }
+
+            if { $pos > -1 } {
+                lset fl $pos "[lindex $fl $pos]$V::comment_sign"
+            }
+        }}
+
+        return $fl
+    }
+
+    # event in sel_flist
+    proc show_comment {} {
+        global currentid sha1string
+        global treediffs diffids cmitmode
+        global flist_menu_file
+
+        set last ""
+
+        each_dict $V::comment_lists {{commit content username filepath} {
+            if { $sha1string == $commit && $flist_menu_file == $filepath } {
+                set last "$last \n\n Author: $username \n File: $filepath \n\n $content\n$V::reviews_sep"
+            }
+        }}
+
+        close_comment_pop
+
+        if {$last != ""} {
+            popup_show_comment "" $last
+        }
+    }
+
+    proc show_comment_window {} {
+        global currentid sha1string
+        # XXX: just when right click on cflist, 
+        #      flist_menu_file will change by pop_flist_menu
+        #      added set_flist_menu_file to sel_flist when click on cflist
+        global flist_menu_file
+
+        if {![info exists flist_menu_file] || $flist_menu_file == ""} return
+
+        set pop_up_label "Comment: $flist_menu_file "
+        popup_input_comment $pop_up_label
+    }
+
+    proc set_flist_menu_file {w x y} {
+        global cmitmode flist_menu_file treediffs diffids
+
+        stopfinding
+        set l [lindex [split [$w index "@$x,$y"] "."] 0]
+        if {$l <= 1} {
+            set flist_menu_file ""
+            return no
+        }
+        if {$cmitmode eq "tree"} {
+            set e [linetoelt $l]
+            if {[string index $e end] eq "/"} { 
+                set flist_menu_file ""
+                return no
+            }
+        } else {
+            set e [lindex $treediffs($diffids) [expr {$l-2}]]
+        }
+        set flist_menu_file [remove_comment_sign $e]
+        return $e
+    }
+
+    proc save_comment {} {
+        global currentid sha1string api_token
+        global flist_menu_file statusw
+
+        set content [string trim [.top.input_text get 1.0 end]]
+
+        if { $content == "" } {
+            # give -parent to the popup, or the popup will auto close
+            tk_messageBox -type ok -parent .top -icon error -title Error -message "Please enter comment"
+            return
+        }
+
+        set username [get_current_user]
+        set comment_body "commit: $sha1string\nfilepath: $flist_menu_file\ncontent: $content\n$V::reviews_sep"
+
+        close_comment_pop
+
+        $statusw conf -text "saving comment..."
+
+        set fd [open [get_review_file] a]
+        puts $fd $comment_body
+        close $fd
+
+        $statusw conf -text ""
+
+        load_comments
+    }
+
+    proc cancel_comment {} {
+        set content [string trim [.top.input_text get 1.0 end]]
+
+        if { $content != "" } {
+            # give -parent to the popup, or the popup will auto close
+            # if {![confirm "Comment entered, still cancel it?" .top]}
+            if {![confirm_popup "Comment entered, still cancel it?" .top]} {
+                return
+            }
+        }
+
+        close_comment_pop
+    }
+
+    proc append_comment_sign {f} {
+        return "$f$V::comment_sign"
+    }
+
+    proc search_treediffs {fs fname} {
+        set i 0
+        foreach f $fs {
+            if {[remove_comment_sign $f] == $fname} {
+                return $i
+            }
+            incr i
+        }
+        return -1
+    }
+
+    proc remove_comment_sign {f} {
+        return [string trimright $f $V::comment_sign]
+    }
+
+    # show on progresscanv
+    proc progress {token total current} {
+        global fprogcoord
+        # upvar #0 $token state
+        # set progresscoords [list 0 [expr {1.0 * $m / $n}]]
+        # set rprogcoord [expr {1.0 * $m / $n}]
+        set fprogcoord [expr {$current * 1.0 / $total}]
+        adjustprogress
+    }
+
+    proc hide_progress {} {
+        global fprogcoord statusw
+
+        set fprogcoord 0
+        adjustprogress
+
+        $statusw conf -text ""
+    }
+
+
+    namespace eval Util {
+
+        namespace export *
+
+        proc fn {params body} {
+            list apply [list $params $body]
+        }
+
+        proc when {pred then} {
+            if {$pred != "" 
+                && $pred != 0
+                && $pred != no
+            } {
+                return [uplevel 1 $then]
+            }
+            return ""
+        }
+
+        # http://wiki.tcl.tk/4884
+        # map {string length} {a bb cc dddd}
+        # map {apply {x {return [string length $x]:$x}}} {a bb ccc dddd}
+        proc map {prefix xs} {
+            set result {}
+            foreach item $xs {
+                lappend result [{*}$prefix $item]
+            }
+            return $result
+        }
+
+        proc each_dict {dt fn} {
+            set fn2 ""
+            set ks [lindex $fn 0]
+
+            foreach row $dt {
+                set body {}
+                foreach k $ks {
+                    set v [string map {\" \\" \\ /} [dict get $row $k]]
+                    lappend body "set $k \"$v\";"
+                }
+
+                set fbody [list {*}$body [lindex $fn 1]]
+                set fn2 "uplevel 1 {$fbody}"
+
+                # after linsert fn will like {set e {10;} set d {100;}}, have to add {*}
+                eval {*}$fn2
+            }
+
+            log "each_dict $fn2"
+        }
+
+        # can't work, have to source in wish
+        proc reload {} {
+            source bin/gitk
+        }
+
+        # http://antirez.com/articoli/tclmisunderstood.html
+        foreach o [list + - * /] {
+            proc $o {a b} [list expr "\$a $o \$b"]
+        }
+
+        proc log {str {to_file no}} {
+            if !$Comments::V::DEBUG {
+                return
+            }
+
+            # how to get parent fn name?
+            puts --------------------------
+            if !$to_file {
+                puts $str
+            } else {
+                set fd [open "~/gitk.log" w]
+                puts $fd $str
+                close $fd
+            }
+        }
+
+        proc split_on_word {sep input {tempsep "\001"}} {
+          split [ string map [list $sep $tempsep]  $input ]  $tempsep]
+        }
+
+        proc map_keys {l} {
+            set ls {}
+            foreach {k v} $l {
+                lappend ls $k
+            }
+            return $ls
+        }
+
+        proc popup_input_comment { label_str } {
+            popup_entry $label_str "" {
+              button .top.btn_ok -width 30 -text "Ok" -command { Comments::save_comment }
+              button .top.btn_cancel -width 30 -text "Cancel" -command { Comments::cancel_comment }
+              pack .top.btn_ok
+              pack .top.btn_cancel
+            }
+        }
+        proc popup_show_comment { label_str content } {
+            popup_entry $label_str $content {
+                button .top.btn_ok -width 30 -text "Close" -command { destroy .top }
+                pack .top.btn_ok
+            }
+        }
+
+        proc popup_entry { label_str content on_pack_end } {
+          close_comment_pop
+
+          set top [toplevel .top]
+          set input_title [label $top.input_title -text $label_str]
+          set input_text [text $top.input_text -width 60 -height 20]
+
+          if { $content != "" } {
+              $input_text insert 1.0 $content
+          }
+
+          wm geometry $top +700+30
+          wm attributes $top -topmost 1
+
+          pack $input_title
+          pack $input_text
+
+          if { $on_pack_end != "" } {
+              uplevel 1 $on_pack_end
+          }
+        }
+
+        proc close_comment_pop {} {
+            destroy .top
+        }
+
+        # use confirm_popup instead
+        proc confirm {msg {parent .}} {
+            set answer [tk_messageBox -parent $parent -message $msg -type yesno -icon question]
+            return $answer
+
+            switch -- $answer {
+                yes exit
+                no {tk_messageBox -message "no" \
+                        -type ok}
+            }
+        }
+    }
+
+    namespace import Util::*
+}
+
+####################### code review comment ##########################
 
 proc hasworktree {} {
     return [expr {[exec git rev-parse --is-bare-repository] == "false" &&
@@ -615,6 +1080,11 @@ proc reloadcommits {} {
     unset -nocomplain targetid
     setcanvscroll
     getcommits $selid
+
+    # hack
+    # if {!$get_comments_reload} {
+    #    after 1000 load_comments
+    # }
     return 0
 }
 
@@ -1729,6 +2199,11 @@ proc parsecommit {id contents listed} {
 	set diff [string range $comment $i+1 end]
 	set comment [string range $comment 0 $i-1]
     }
+
+    # hack
+    set auname [Comments::append_commit_comment $id $auname]
+    set comname [Comments::append_commit_comment $id $comname]
+
     set commitinfo($id) [list $headline $auname $audate \
 			     $comname $comdate $comment $hasnote $diff]
 }
@@ -2626,6 +3101,10 @@ proc makewindow {} {
     bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
     bind $ctext <Button-1> {focus %W}
     bind $ctext <<Selection>> rehighlight_search_results
+    # hack <Key-c> will response to Ctrl aslo
+    bind . <M2-c> Comments::show_comment_window
+    bind . <M2-l> Comments::load_comments
+
     for {set i 1} {$i < 10} {incr i} {
 	bind . <$M1B-Key-$i> [list go_to_parent $i]
     }
@@ -2676,7 +3155,9 @@ proc makewindow {} {
 
     global flist_menu
     set flist_menu .flistctxmenu
+    # hack
     makemenu $flist_menu {
+	{mc "Comment it ..." command {Comments::show_comment_window}}
 	{mc "Highlight this too" command {flist_hl 0}}
 	{mc "Highlight this only" command {flist_hl 1}}
 	{mc "External diff" command {external_diff}}
@@ -3037,9 +3518,7 @@ proc about {} {
     make_transient $w .
     message $w.m -text [mc "
 Gitk - a commit viewer for git
-
 Copyright \u00a9 2005-2016 Paul Mackerras
-
 Use and redistribute under the terms of the GNU General Public License"] \
 	    -justify center -aspect 400 -border 2 -bg $bgcolor -relief groove
     pack $w.m -side top -fill x -padx 2 -pady 2
@@ -3068,7 +3547,6 @@ proc keys {} {
     make_transient $w .
     message $w.m -text "
 [mc "Gitk key bindings:"]
-
 [mc "<%s-Q>		Quit" $M1T]
 [mc "<%s-W>		Close window" $M1T]
 [mc "<Home>		Move to first commit"]
@@ -3476,10 +3954,18 @@ proc sel_flist {w x y} {
 
     if {$cmitmode eq "tree"} return
     if {![info exists cflist_top]} return
+
+    # hack
+    Comments::set_flist_menu_file $w $x $y
+
+    # hack
+    Comments::show_comment
+
     set l [lindex [split [$w index "@$x,$y"] "."] 0]
     $cflist tag remove highlight $cflist_top.0 "$cflist_top.0 lineend"
     $cflist tag add highlight $l.0 "$l.0 lineend"
     set cflist_top $l
+
     if {$l == 1} {
 	$ctext yview 1.0
     } else {
@@ -3492,16 +3978,9 @@ proc pop_flist_menu {w X Y x y} {
     global ctext cflist cmitmode flist_menu flist_menu_file
     global treediffs diffids
 
-    stopfinding
-    set l [lindex [split [$w index "@$x,$y"] "."] 0]
-    if {$l <= 1} return
-    if {$cmitmode eq "tree"} {
-	set e [linetoelt $l]
-	if {[string index $e end] eq "/"} return
-    } else {
-	set e [lindex $treediffs($diffids) [expr {$l-2}]]
-    }
-    set flist_menu_file $e
+    # hack
+    if {[Comments::set_flist_menu_file $w $x $y] == no} return
+
     set xdiffstate "normal"
     if {$cmitmode eq "tree"} {
 	set xdiffstate "disabled"
@@ -3538,7 +4017,7 @@ proc pop_diff_menu {w X Y x y} {
     stopfinding
     set f [find_ctext_fileinfo $diff_menu_line]
     if {$f eq {}} return
-    set flist_menu_file [lindex $f 0]
+    set flist_menu_file [Comments::remove_comment_sign [lindex $f 0]]
     set diff_menu_filebase [lindex $f 1]
     tk_popup $diff_menu $X $Y
 }
@@ -5995,6 +6474,7 @@ proc drawlineseg {id row endrow arrowlow} {
 	    assigncolor $id
 	    set t [$canv create line $coords -width [linewidth $id] \
 		       -fill $colormap($id) -tags lines.$id -arrow $arrow]
+		       
 	    $canv lower $t
 	    bindline $t $id
 	    set lines [linsert $lines $i [list $row $le $t]]
@@ -6090,6 +6570,7 @@ proc drawparentlinks {id row} {
 	} else {
 	    lappend coords $x2 $y2
 	}
+	
 	set t [$canv create line $coords -width [linewidth $p] \
 		   -fill $colormap($p) -tags lines.$p]
 	$canv lower $t
@@ -7910,6 +8391,8 @@ proc gettreediffline {gdtf ids} {
 	return [expr {$nr >= $max? 2: 1}]
     }
     close $gdtf
+    # hack
+    set treediff [Comments::show_filelist_comments $ids $treediff]
     set treediffs($ids) $treediff
     unset treepending
     if {$cmitmode eq "tree" && [llength $diffids] == 1} {
@@ -8043,7 +8526,9 @@ proc makediffhdr {fname ids} {
 
     set fname [encoding convertfrom $fname]
     set diffencoding [get_path_encoding $fname]
-    set i [lsearch -exact $treediffs($ids) $fname]
+    # hack
+    # set i [lsearch -exact $treediffs($ids) $fname]
+    set i [Comments::search_treediffs $treediffs($ids) $fname]
     if {$i >= 0} {
 	setinlist difffilestart $i $curdiffstart
     }
@@ -8156,7 +8641,8 @@ proc parseblobdiffline {ids line} {
 	lappend ctext_file_names $fname
 	lappend ctext_file_lines [lindex [split $curdiffstart "."] 0]
 	$ctext insert end "$line\n" filesep
-	set i [lsearch -exact $treediffs($ids) $fname]
+        # hack
+        set i [Comments::search_treediffs $treediffs($ids) $fname]
 	if {$i >= 0} {
 	    setinlist difffilestart $i $curdiffstart
 	}
@@ -8206,7 +8692,8 @@ proc parseblobdiffline {ids line} {
 		set fname [lindex $fname 0]
 	    }
 	    set fname [encoding convertfrom $fname]
-	    set i [lsearch -exact $treediffs($ids) $fname]
+            # hack
+            set i [Comments::search_treediffs $treediffs($ids) $fname]
 	    if {$i >= 0} {
 		setinlist difffilestart $i $curdiffstart
 	    }
@@ -12612,8 +13099,13 @@ if {[tk windowingsystem] eq "win32"} {
 
 getcommits {}
 
+# hack
+Comments::init
+after 1000 Comments::load_comments
+
 # Local variables:
 # mode: tcl
 # indent-tabs-mode: t
 # tab-width: 8
 # End:
+
