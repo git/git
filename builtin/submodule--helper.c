@@ -4,7 +4,6 @@
 #include "quote.h"
 #include "pathspec.h"
 #include "dir.h"
-#include "utf8.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "string-list.h"
@@ -298,7 +297,7 @@ static int module_list(int argc, const char **argv, const char *prefix)
 		else
 			printf("%06o %s %d\t", ce->ce_mode, sha1_to_hex(ce->sha1), ce_stage(ce));
 
-		utf8_fprintf(stdout, "%s\n", ce->name);
+		fprintf(stdout, "%s\n", ce->name);
 	}
 	return 0;
 }
@@ -887,7 +886,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 		return 1;
 
 	for_each_string_list_item(item, &suc.projectlines)
-		utf8_fprintf(stdout, "%s", item->string);
+		fprintf(stdout, "%s", item->string);
 
 	return 0;
 }
