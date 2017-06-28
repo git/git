@@ -235,7 +235,7 @@ pathmatch 1 abcXdefXghi '*X*i'
 pathmatch 1 ab/cXd/efXg/hi '*/*X*/*/*i'
 pathmatch 1 ab/cXd/efXg/hi '*Xg*i'
 
-# Case-sensitivy features
+# Case-sensitivity features
 match 0 x 'a' '[A-Z]'
 match 1 x 'A' '[A-Z]'
 match 0 x 'A' '[a-z]'

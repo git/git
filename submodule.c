@@ -857,9 +857,9 @@ static int submodule_has_commits(const char *path, struct oid_array *commits)
 	int has_commit = 1;
 
 	/*
-	 * Perform a cheap, but incorrect check for the existance of 'commits'.
+	 * Perform a cheap, but incorrect check for the existence of 'commits'.
 	 * This is done by adding the submodule's object store to the in-core
-	 * object store, and then querying for each commit's existance.  If we
+	 * object store, and then querying for each commit's existence.  If we
 	 * do not have the commit object anywhere, there is no chance we have
 	 * it in the object store of the correct submodule and have it
 	 * reachable from a ref, so we can fail early without spawning rev-list

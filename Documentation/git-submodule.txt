@@ -134,7 +134,7 @@ you can also just use `git submodule update --init` without
 the explicit 'init' step if you do not intend to customize
 any submodule locations.
 +
-See the add subcommand for the defintion of default remote.
+See the add subcommand for the definition of default remote.
 
 deinit [-f|--force] (--all|[--] <path>...)::
 	Unregister the given submodules, i.e. remove the whole

@@ -918,7 +918,7 @@ static void sha1recompress_fast_ ## t (uint32_t ihvin[5], uint32_t ihvout[5], co
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable: 4127)  /* Complier complains about the checks in the above macro being constant. */
+#pragma warning(disable: 4127)  /* Compiler complains about the checks in the above macro being constant. */
 #endif
 
 #ifdef DOSTORESTATE0

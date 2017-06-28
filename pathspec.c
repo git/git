@@ -603,7 +603,7 @@ void parse_pathspec(struct pathspec *pathspec,
 
 	/*
 	 * If everything is an exclude pattern, add one positive pattern
-	 * that matches everyting. We allocated an extra one for this.
+	 * that matches everything. We allocated an extra one for this.
 	 */
 	if (nr_exclude == n) {
 		int plen = (!(flags & PATHSPEC_PREFER_CWD)) ? 0 : prefixlen;

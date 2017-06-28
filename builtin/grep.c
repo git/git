@@ -648,7 +648,7 @@ static int grep_submodule(struct grep_opt *opt, const struct object_id *oid,
 		return 0;
 	if (!is_submodule_populated_gently(path, NULL)) {
 		/*
-		 * If searching history, check for the presense of the
+		 * If searching history, check for the presence of the
 		 * submodule's gitdir before skipping the submodule.
 		 */
 		if (oid) {
