@@ -541,7 +541,7 @@ test_expect_success 'fsck --name-objects' '
 		remove_loose_object $(git rev-parse julius:caesar.t) &&
 		test_must_fail git fsck --name-objects >out &&
 		tree=$(git rev-parse --verify julius:) &&
-		grep "$tree (\(refs/heads/master\|HEAD\)@{[0-9]*}:" out
+		egrep "$tree \((refs/heads/master|HEAD)@\{[0-9]*\}:" out
 	)
 '
 
