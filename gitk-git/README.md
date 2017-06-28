@@ -1,7 +1,7 @@
 
 # gitk with simple file based code review comment
 
-just override Git\mingw32\bin\gitk (or old version: Git\bin\gitk) with this gitk
+just override Git\mingw32\bin\gitk (or old version: Git\bin\gitk) with this gitk: https://github.com/ghosthamlet/git/blob/master/gitk-git/gitk
 
 # useage
 
