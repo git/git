@@ -174,28 +174,18 @@ static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, st
 		/* fall through */
 
 	case GREP_PATTERN_TYPE_BRE:
-		opt->fixed = 0;
-		opt->pcre1 = 0;
-		opt->pcre2 = 0;
 		break;
 
 	case GREP_PATTERN_TYPE_ERE:
-		opt->fixed = 0;
-		opt->pcre1 = 0;
-		opt->pcre2 = 0;
 		opt->regflags |= REG_EXTENDED;
 		break;
 
 	case GREP_PATTERN_TYPE_FIXED:
 		opt->fixed = 1;
-		opt->pcre1 = 0;
-		opt->pcre2 = 0;
 		break;
 
 	case GREP_PATTERN_TYPE_PCRE:
-		opt->fixed = 0;
 #ifdef USE_LIBPCRE2
-		opt->pcre1 = 0;
 		opt->pcre2 = 1;
 #else
 		/*
@@ -205,7 +195,6 @@ static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, st
 		 * "cannot use Perl-compatible regexes[...]".
 		 */
 		opt->pcre1 = 1;
-		opt->pcre2 = 0;
 #endif
 		break;
 	}
