@@ -626,8 +626,6 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	    has_null(p->pattern, p->patternlen) ||
 	    is_fixed(p->pattern, p->patternlen))
 		p->fixed = !icase || ascii_only;
-	else
-		p->fixed = 0;
 
 	if (p->fixed) {
 		p->kws = kwsalloc(icase ? tolower_trans_tbl : NULL);
