@@ -347,10 +347,16 @@ case $(uname -s) in
 			/usr/bin/find "$@"
 		}
 	fi
-	# git sees Windows-style pwd
-	pwd () {
-		builtin pwd -W
-	}
+	# On Windows, Git wants Windows paths. But /usr/bin/pwd spits out
+	# Unix-style paths. At least in Bash, we have a builtin pwd that
+	# understands the -W option to force "mixed" paths, i.e. with drive
+	# prefix but still with forward slashes. Let's use that, if available.
+	if type builtin >/dev/null 2>&1
+	then
+		pwd () {
+			builtin pwd -W
+		}
+	fi
 	is_absolute_path () {
 		case "$1" in
 		[/\\]* | [A-Za-z]:*)
