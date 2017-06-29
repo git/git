@@ -38,7 +38,6 @@ void init_grep_defaults(void)
 	opt->regflags = REG_NEWLINE;
 	opt->max_depth = -1;
 	opt->pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
-	opt->extended_regexp_option = 0;
 	color_set(opt->color_context, "");
 	color_set(opt->color_filename, "");
 	color_set(opt->color_function, "");
