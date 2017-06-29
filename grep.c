@@ -593,7 +593,7 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int err;
-	int regflags = REG_NEWLINE;
+	int regflags = 0;
 
 	basic_regex_quote_buf(&sb, p->pattern);
 	if (opt->ignore_case)
