@@ -10,6 +10,7 @@
 /test-scrap-cache-tree
 /test-genrandom
 /test-hashmap
+/test-helper
 /test-index-version
 /test-lazy-init-name-hash
 /test-line-buffer
