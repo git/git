@@ -188,6 +188,15 @@ struct diff_options {
 	int diff_path_counter;
 };
 
+void diff_emit_submodule_del(struct diff_options *o, const char *line);
+void diff_emit_submodule_add(struct diff_options *o, const char *line);
+void diff_emit_submodule_untracked(struct diff_options *o, const char *path);
+void diff_emit_submodule_modified(struct diff_options *o, const char *path);
+void diff_emit_submodule_header(struct diff_options *o, const char *header);
+void diff_emit_submodule_error(struct diff_options *o, const char *err);
+void diff_emit_submodule_pipethrough(struct diff_options *o,
+				     const char *line, int len);
+
 enum color_diff {
 	DIFF_RESET = 0,
 	DIFF_CONTEXT = 1,

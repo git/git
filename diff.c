@@ -561,6 +561,13 @@ static void emit_line(struct diff_options *o, const char *set, const char *reset
 }
 
 enum diff_symbol {
+	DIFF_SYMBOL_SUBMODULE_ADD,
+	DIFF_SYMBOL_SUBMODULE_DEL,
+	DIFF_SYMBOL_SUBMODULE_UNTRACKED,
+	DIFF_SYMBOL_SUBMODULE_MODIFIED,
+	DIFF_SYMBOL_SUBMODULE_HEADER,
+	DIFF_SYMBOL_SUBMODULE_ERROR,
+	DIFF_SYMBOL_SUBMODULE_PIPETHROUGH,
 	DIFF_SYMBOL_REWRITE_DIFF,
 	DIFF_SYMBOL_BINARY_FILES,
 	DIFF_SYMBOL_HEADER,
@@ -625,6 +632,9 @@ static void emit_diff_symbol(struct diff_options *o, enum diff_symbol s,
 		emit_line_0(o, context, reset, '\\',
 			    nneof, strlen(nneof));
 		break;
+	case DIFF_SYMBOL_SUBMODULE_HEADER:
+	case DIFF_SYMBOL_SUBMODULE_ERROR:
+	case DIFF_SYMBOL_SUBMODULE_PIPETHROUGH:
 	case DIFF_SYMBOL_CONTEXT_FRAGINFO:
 		emit_line(o, "", "", line, len);
 		break;
@@ -701,9 +711,66 @@ static void emit_diff_symbol(struct diff_options *o, enum diff_symbol s,
 		reset = diff_get_color_opt(o, DIFF_RESET);
 		emit_line(o, fraginfo, reset, line, len);
 		break;
+	case DIFF_SYMBOL_SUBMODULE_ADD:
+		set = diff_get_color_opt(o, DIFF_FILE_NEW);
+		reset = diff_get_color_opt(o, DIFF_RESET);
+		emit_line(o, set, reset, line, len);
+		break;
+	case DIFF_SYMBOL_SUBMODULE_DEL:
+		set = diff_get_color_opt(o, DIFF_FILE_OLD);
+		reset = diff_get_color_opt(o, DIFF_RESET);
+		emit_line(o, set, reset, line, len);
+		break;
+	case DIFF_SYMBOL_SUBMODULE_UNTRACKED:
+		fprintf(o->file, "%sSubmodule %s contains untracked content\n",
+			diff_line_prefix(o), line);
+		break;
+	case DIFF_SYMBOL_SUBMODULE_MODIFIED:
+		fprintf(o->file, "%sSubmodule %s contains modified content\n",
+			diff_line_prefix(o), line);
+		break;
 	default:
 		die("BUG: unknown diff symbol");
 	}
+}
+
+void diff_emit_submodule_del(struct diff_options *o, const char *line)
+{
+	emit_diff_symbol(o, DIFF_SYMBOL_SUBMODULE_DEL, line, strlen(line), 0);
+}
+
+void diff_emit_submodule_add(struct diff_options *o, const char *line)
+{
+	emit_diff_symbol(o, DIFF_SYMBOL_SUBMODULE_ADD, line, strlen(line), 0);
+}
+
+void diff_emit_submodule_untracked(struct diff_options *o, const char *path)
+{
+	emit_diff_symbol(o, DIFF_SYMBOL_SUBMODULE_UNTRACKED,
+			 path, strlen(path), 0);
+}
+
+void diff_emit_submodule_modified(struct diff_options *o, const char *path)
+{
+	emit_diff_symbol(o, DIFF_SYMBOL_SUBMODULE_MODIFIED,
+			 path, strlen(path), 0);
+}
+
+void diff_emit_submodule_header(struct diff_options *o, const char *header)
+{
+	emit_diff_symbol(o, DIFF_SYMBOL_SUBMODULE_HEADER,
+			 header, strlen(header), 0);
+}
+
+void diff_emit_submodule_error(struct diff_options *o, const char *err)
+{
+	emit_diff_symbol(o, DIFF_SYMBOL_SUBMODULE_ERROR, err, strlen(err), 0);
+}
+
+void diff_emit_submodule_pipethrough(struct diff_options *o,
+				     const char *line, int len)
+{
+	emit_diff_symbol(o, DIFF_SYMBOL_SUBMODULE_PIPETHROUGH, line, len, 0);
 }
 
 static int new_blank_line_at_eof(struct emit_callback *ecbdata, const char *line, int len)
@@ -2467,24 +2534,16 @@ static void builtin_diff(const char *name_a,
 	if (o->submodule_format == DIFF_SUBMODULE_LOG &&
 	    (!one->mode || S_ISGITLINK(one->mode)) &&
 	    (!two->mode || S_ISGITLINK(two->mode))) {
-		const char *del = diff_get_color_opt(o, DIFF_FILE_OLD);
-		const char *add = diff_get_color_opt(o, DIFF_FILE_NEW);
-		show_submodule_summary(o->file, one->path ? one->path : two->path,
-				line_prefix,
+		show_submodule_summary(o, one->path ? one->path : two->path,
 				&one->oid, &two->oid,
-				two->dirty_submodule,
-				meta, del, add, reset);
+				two->dirty_submodule);
 		return;
 	} else if (o->submodule_format == DIFF_SUBMODULE_INLINE_DIFF &&
 		   (!one->mode || S_ISGITLINK(one->mode)) &&
 		   (!two->mode || S_ISGITLINK(two->mode))) {
-		const char *del = diff_get_color_opt(o, DIFF_FILE_OLD);
-		const char *add = diff_get_color_opt(o, DIFF_FILE_NEW);
-		show_submodule_inline_diff(o->file, one->path ? one->path : two->path,
-				line_prefix,
+		show_submodule_inline_diff(o, one->path ? one->path : two->path,
 				&one->oid, &two->oid,
-				two->dirty_submodule,
-				meta, del, add, reset, o);
+				two->dirty_submodule);
 		return;
 	}
 
