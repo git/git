@@ -63,14 +63,6 @@ add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--dep
 	to the changeset to be committed next to the current
 	project: the current project is termed the "superproject".
 +
-This requires at least one argument: <repository>. The optional
-argument <path> is the relative location for the cloned submodule
-to exist in the superproject. If <path> is not given, the
-"humanish" part of the source repository is used ("repo" for
-"/path/to/repo.git" and "foo" for "host.xz:foo/.git").
-The <path> is also used as the submodule's logical name in its
-configuration entries unless `--name` is used to specify a logical name.
-+
 <repository> is the URL of the new submodule's origin repository.
 This may be either an absolute URL, or (if it begins with ./
 or ../), the location relative to the superproject's default remote
@@ -87,21 +79,22 @@ If the superproject doesn't have a default remote configured
 the superproject is its own authoritative upstream and the current
 working directory is used instead.
 +
-<path> is the relative location for the cloned submodule to
-exist in the superproject. If <path> does not exist, then the
-submodule is created by cloning from the named URL. If <path> does
-exist and is already a valid Git repository, then this is added
-to the changeset without cloning. This second form is provided
-to ease creating a new submodule from scratch, and presumes
-the user will later push the submodule to the given URL.
+The optional argument <path> is the relative location for the cloned
+submodule to exist in the superproject. If <path> is not given, the
+canonical part of the source repository is used ("repo" for
+"/path/to/repo.git" and "foo" for "host.xz:foo/.git"). If <path>
+exists and is already a valid Git repository, then it is staged
+for commit without cloning. The <path> is also used as the submodule's
+logical name in its configuration entries unless `--name` is used
+to specify a logical name.
 +
-In either case, the given URL is recorded into .gitmodules for
-use by subsequent users cloning the superproject. If the URL is
-given relative to the superproject's repository, the presumption
-is the superproject and submodule repositories will be kept
-together in the same relative location, and only the
-superproject's URL needs to be provided: git-submodule will correctly
-locate the submodule using the relative URL in .gitmodules.
+The given URL is recorded into `.gitmodules` for use by subsequent users
+cloning the superproject. If the URL is given relative to the
+superproject's repository, the presumption is the superproject and
+submodule repositories will be kept together in the same relative
+location, and only the superproject's URL needs to be provided.
+git-submodule will correctly locate the submodule using the relative
+URL in `.gitmodules`.
 
 status [--cached] [--recursive] [--] [<path>...]::
 	Show the status of the submodules. This will print the SHA-1 of the
@@ -123,7 +116,7 @@ too (and can also report changes to a submodule's work tree).
 init [--] [<path>...]::
 	Initialize the submodules recorded in the index (which were
 	added and committed elsewhere) by setting `submodule.$name.url`
-	in .git/config. It uses the same setting from .gitmodules as
+	in .git/config. It uses the same setting from `.gitmodules` as
 	a template. If the URL is relative, it will be resolved using
 	the default remote. If there is no default remote, the current
 	repository will be assumed to be upstream.
@@ -197,7 +190,7 @@ configuration variable:
 	none;; the submodule is not updated.
 
 If the submodule is not yet initialized, and you just want to use the
-setting as stored in .gitmodules, you can automatically initialize the
+setting as stored in `.gitmodules`, you can automatically initialize the
 submodule with the `--init` option.
 
 If `--recursive` is specified, this command will recurse into the
@@ -220,7 +213,7 @@ foreach [--recursive] <command>::
 	Evaluates an arbitrary shell command in each checked out submodule.
 	The command has access to the variables $name, $path, $sha1 and
 	$toplevel:
-	$name is the name of the relevant submodule section in .gitmodules,
+	$name is the name of the relevant submodule section in `.gitmodules`,
 	$path is the name of the submodule directory relative to the
 	superproject, $sha1 is the commit as recorded in the superproject,
 	and $toplevel is the absolute path to the top-level of the superproject.
@@ -242,7 +235,7 @@ git submodule foreach 'echo $path `git rev-parse HEAD`'
 
 sync [--recursive] [--] [<path>...]::
 	Synchronizes submodules' remote URL configuration setting
-	to the value specified in .gitmodules. It will only affect those
+	to the value specified in `.gitmodules`. It will only affect those
 	submodules which already have a URL entry in .git/config (that is the
 	case when they are initialized or freshly added). This is useful when
 	submodule URLs change upstream and you need to update your local
@@ -413,7 +406,7 @@ for linkgit:git-clone[1]'s `--reference` and `--shared` options carefully.
 --[no-]recommend-shallow::
 	This option is only valid for the update command.
 	The initial clone of a submodule will use the recommended
-	`submodule.<name>.shallow` as provided by the .gitmodules file
+	`submodule.<name>.shallow` as provided by the `.gitmodules` file
 	by default. To ignore the suggestions use `--no-recommend-shallow`.
 
 -j <n>::
@@ -429,7 +422,7 @@ for linkgit:git-clone[1]'s `--reference` and `--shared` options carefully.
 
 FILES
 -----
-When initializing submodules, a .gitmodules file in the top-level directory
+When initializing submodules, a `.gitmodules` file in the top-level directory
 of the containing repository is used to find the url of each submodule.
 This file should be formatted in the same way as `$GIT_DIR/config`. The key
 to each submodule url is "submodule.$name.url".  See linkgit:gitmodules[5]
