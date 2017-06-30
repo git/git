@@ -10,7 +10,7 @@ static const char * const prune_packed_usage[] = {
 
 static struct progress *progress;
 
-static int prune_subdir(int nr, const char *path, void *data)
+static int prune_subdir(unsigned int nr, const char *path, void *data)
 {
 	int *opts = data;
 	display_progress(progress, nr + 1);

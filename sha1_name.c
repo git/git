@@ -78,10 +78,19 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 	/* otherwise, current can be discarded and candidate is still good */
 }
 
+static int append_loose_object(const struct object_id *oid, const char *path,
+			       void *data)
+{
+	oid_array_append(data, oid);
+	return 0;
+}
+
+static int match_sha(unsigned, const unsigned char *, const unsigned char *);
+
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
+	int subdir_nr = ds->bin_pfx.hash[0];
 	struct alternate_object_database *alt;
-	char hex[GIT_MAX_HEXSZ];
 	static struct alternate_object_database *fakeent;
 
 	if (!fakeent) {
@@ -96,29 +105,29 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 	}
 	fakeent->next = alt_odb_list;
 
-	xsnprintf(hex, sizeof(hex), "%.2s", ds->hex_pfx);
 	for (alt = fakeent; alt && !ds->ambiguous; alt = alt->next) {
-		struct strbuf *buf = alt_scratch_buf(alt);
-		struct dirent *de;
-		DIR *dir;
+		int pos;
 
-		strbuf_addf(buf, "%.2s/", ds->hex_pfx);
-		dir = opendir(buf->buf);
-		if (!dir)
-			continue;
-
-		while (!ds->ambiguous && (de = readdir(dir)) != NULL) {
-			struct object_id oid;
-
-			if (strlen(de->d_name) != GIT_SHA1_HEXSZ - 2)
-				continue;
-			if (memcmp(de->d_name, ds->hex_pfx + 2, ds->len - 2))
-				continue;
-			memcpy(hex + 2, de->d_name, GIT_SHA1_HEXSZ - 2);
-			if (!get_oid_hex(hex, &oid))
-				update_candidates(ds, &oid);
+		if (!alt->loose_objects_subdir_seen[subdir_nr]) {
+			struct strbuf *buf = alt_scratch_buf(alt);
+			for_each_file_in_obj_subdir(subdir_nr, buf,
+						    append_loose_object,
+						    NULL, NULL,
+						    &alt->loose_objects_cache);
+			alt->loose_objects_subdir_seen[subdir_nr] = 1;
 		}
-		closedir(dir);
+
+		pos = oid_array_lookup(&alt->loose_objects_cache, &ds->bin_pfx);
+		if (pos < 0)
+			pos = -1 - pos;
+		while (!ds->ambiguous && pos < alt->loose_objects_cache.nr) {
+			const struct object_id *oid;
+			oid = alt->loose_objects_cache.oid + pos;
+			if (!match_sha(ds->len, ds->bin_pfx.hash, oid->hash))
+				break;
+			update_candidates(ds, oid);
+			pos++;
+		}
 	}
 }
 
