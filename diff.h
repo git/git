@@ -186,6 +186,8 @@ struct diff_options {
 	void *output_prefix_data;
 
 	int diff_path_counter;
+
+	struct emitted_diff_symbols *emitted_symbols;
 };
 
 void diff_emit_submodule_del(struct diff_options *o, const char *line);
