@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "transport.h"
 #include "run-command.h"
 #include "pkt-line.h"
@@ -87,7 +88,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport, int for_pus
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct ref_list_entry *e = data->header.references.list + i;
 		struct ref *ref = alloc_ref(e->name);
-		hashcpy(ref->old_oid.hash, e->sha1);
+		oidcpy(&ref->old_oid, &e->oid);
 		ref->next = result;
 		result = ref;
 	}
@@ -1145,8 +1146,7 @@ void transport_unlock_pack(struct transport *transport)
 {
 	if (transport->pack_lockfile) {
 		unlink_or_warn(transport->pack_lockfile);
-		free(transport->pack_lockfile);
-		transport->pack_lockfile = NULL;
+		FREE_AND_NULL(transport->pack_lockfile);
 	}
 }
 

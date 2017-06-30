@@ -23,16 +23,16 @@ typedef int (*pathchange_fn_t)(struct diff_options *options,
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
-		 const unsigned char *old_sha1,
-		 const unsigned char *new_sha1,
-		 int old_sha1_valid, int new_sha1_valid,
+		 const struct object_id *old_oid,
+		 const struct object_id *new_oid,
+		 int old_oid_valid, int new_oid_valid,
 		 const char *fullpath,
 		 unsigned old_dirty_submodule, unsigned new_dirty_submodule);
 
 typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
-		    const unsigned char *sha1,
-		    int sha1_valid,
+		    const struct object_id *oid,
+		    int oid_valid,
 		    const char *fullpath, unsigned dirty_submodule);
 
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
@@ -210,13 +210,14 @@ const char *diff_line_prefix(struct diff_options *);
 extern const char mime_boundary_leader[];
 
 extern struct combine_diff_path *diff_tree_paths(
-	struct combine_diff_path *p, const unsigned char *sha1,
-	const unsigned char **parent_sha1, int nparent,
+	struct combine_diff_path *p, const struct object_id *oid,
+	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
-extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
-			  const char *base, struct diff_options *opt);
-extern int diff_root_tree_sha1(const unsigned char *new, const char *base,
-                               struct diff_options *opt);
+extern int diff_tree_oid(const struct object_id *old_oid,
+			 const struct object_id *new_oid,
+			 const char *base, struct diff_options *opt);
+extern int diff_root_tree_oid(const struct object_id *new_oid, const char *base,
+			      struct diff_options *opt);
 
 struct combine_diff_path {
 	struct combine_diff_path *next;
@@ -236,7 +237,7 @@ struct combine_diff_path {
 extern void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			      int dense, struct rev_info *);
 
-extern void diff_tree_combined(const unsigned char *sha1, const struct oid_array *parents, int dense, struct rev_info *rev);
+extern void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, int dense, struct rev_info *rev);
 
 extern void diff_tree_combined_merge(const struct commit *commit, int dense, struct rev_info *rev);
 
@@ -247,16 +248,15 @@ extern int diff_can_quit_early(struct diff_options *);
 extern void diff_addremove(struct diff_options *,
 			   int addremove,
 			   unsigned mode,
-			   const unsigned char *sha1,
-			   int sha1_valid,
+			   const struct object_id *oid,
+			   int oid_valid,
 			   const char *fullpath, unsigned dirty_submodule);
 
 extern void diff_change(struct diff_options *,
 			unsigned mode1, unsigned mode2,
-			const unsigned char *sha1,
-			const unsigned char *sha2,
-			int sha1_valid,
-			int sha2_valid,
+			const struct object_id *old_oid,
+			const struct object_id *new_oid,
+			int old_oid_valid, int new_oid_valid,
 			const char *fullpath,
 			unsigned dirty_submodule1, unsigned dirty_submodule2);
 
@@ -354,8 +354,8 @@ extern const char *diff_aligned_abbrev(const struct object_id *sha1, int);
 extern int run_diff_files(struct rev_info *revs, unsigned int option);
 extern int run_diff_index(struct rev_info *revs, int cached);
 
-extern int do_diff_cache(const unsigned char *, struct diff_options *);
-extern int diff_flush_patch_id(struct diff_options *, unsigned char *, int);
+extern int do_diff_cache(const struct object_id *, struct diff_options *);
+extern int diff_flush_patch_id(struct diff_options *, struct object_id *, int);
 
 extern int diff_result_code(struct diff_options *, int);
 
@@ -384,6 +384,13 @@ extern size_t fill_textconv(struct userdiff_driver *driver,
  * can be passed to fill_textconv().
  */
 extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
+
+/*
+ * Prepare diff_filespec and convert it using diff textconv API
+ * if the textconv driver exists.
+ * Return 1 if the conversion succeeds, 0 otherwise.
+ */
+extern int textconv_object(const char *path, unsigned mode, const struct object_id *oid, int oid_valid, char **buf, unsigned long *buf_size);
 
 extern int parse_rename_score(const char **cp_p);
 

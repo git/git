@@ -72,7 +72,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 	unsigned mode;
 	enum object_type mode_type; /* object type derived from mode */
 	enum object_type obj_type; /* object type derived from sha */
-	char *path;
+	char *path, *to_free = NULL;
 	unsigned char sha1[20];
 
 	ptr = buf;
@@ -102,7 +102,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 		struct strbuf p_uq = STRBUF_INIT;
 		if (unquote_c_style(&p_uq, path, NULL))
 			die("invalid quoting");
-		path = strbuf_detach(&p_uq, NULL);
+		path = to_free = strbuf_detach(&p_uq, NULL);
 	}
 
 	/*
@@ -136,6 +136,7 @@ static void mktree_line(char *buf, size_t len, int nul_term_line, int allow_miss
 	}
 
 	append_to_tree(mode, sha1, path);
+	free(to_free);
 }
 
 int cmd_mktree(int ac, const char **av, const char *prefix)

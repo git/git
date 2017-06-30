@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds 2006
  */
 #include "builtin.h"
+#include "config.h"
 #include "lockfile.h"
 #include "dir.h"
 #include "cache-tree.h"
@@ -129,7 +130,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		ce = active_cache[pos];
 
 		if (lstat(ce->name, &st) < 0) {
-			if (errno != ENOENT && errno != ENOTDIR)
+			if (!is_missing_file_error(errno))
 				warning_errno(_("failed to stat '%s'"), ce->name);
 			/* It already vanished from the working tree */
 			continue;
@@ -271,8 +272,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		die(_("index file corrupt"));
 
 	parse_pathspec(&pathspec, 0,
-		       PATHSPEC_PREFER_CWD |
-		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP,
+		       PATHSPEC_PREFER_CWD,
 		       prefix, argv);
 	refresh_index(&the_index, REFRESH_QUIET, &pathspec, NULL, NULL);
 

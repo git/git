@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
@@ -882,7 +883,10 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 	for (;;) {
 		int peek;
 
-		peek = fgetc(in); ungetc(peek, in);
+		peek = fgetc(in);
+		if (peek == EOF)
+			break;
+		ungetc(peek, in);
 		if (peek != ' ' && peek != '\t')
 			break;
 		if (strbuf_getline_lf(&continuation, in))
@@ -916,8 +920,7 @@ again:
 		/* we hit an end boundary */
 		/* pop the current boundary off the stack */
 		strbuf_release(*(mi->content_top));
-		free(*(mi->content_top));
-		*(mi->content_top) = NULL;
+		FREE_AND_NULL(*(mi->content_top));
 
 		/* technically won't happen as is_multipart_boundary()
 		   will fail first.  But just in case..
@@ -1099,6 +1102,10 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 
 	do {
 		peek = fgetc(mi->input);
+		if (peek == EOF) {
+			fclose(cmitmsg);
+			return error("empty patch: '%s'", patch);
+		}
 	} while (isspace(peek));
 	ungetc(peek, mi->input);
 

@@ -2,6 +2,7 @@
  * "git fetch"
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "commit.h"
 #include "builtin.h"
@@ -73,6 +74,13 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		fetch_prune_config = git_config_bool(k, v);
 		return 0;
 	}
+
+	if (!strcmp(k, "submodule.recurse")) {
+		int r = git_config_bool(k, v) ?
+			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+		recurse_submodules = r;
+	}
+
 	return git_default_config(k, v, cb);
 }
 
@@ -636,8 +644,8 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	}
 
-	current = lookup_commit_reference_gently(ref->old_oid.hash, 1);
-	updated = lookup_commit_reference_gently(ref->new_oid.hash, 1);
+	current = lookup_commit_reference_gently(&ref->old_oid, 1);
+	updated = lookup_commit_reference_gently(&ref->new_oid, 1);
 	if (!current || !updated) {
 		const char *msg;
 		const char *what;
@@ -770,7 +778,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				continue;
 			}
 
-			commit = lookup_commit_reference_gently(rm->old_oid.hash, 1);
+			commit = lookup_commit_reference_gently(&rm->old_oid,
+								1);
 			if (!commit)
 				rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
 
@@ -940,7 +949,7 @@ static int prune_refs(struct refspec *refs, int ref_count, struct ref *ref_map,
 		for (ref = stale_refs; ref; ref = ref->next)
 			string_list_append(&refnames, ref->name);
 
-		result = delete_refs(&refnames, 0);
+		result = delete_refs("fetch: prune", &refnames, 0);
 		string_list_clear(&refnames, 0);
 	}
 

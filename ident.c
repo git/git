@@ -6,6 +6,7 @@
  * Copyright (C) 2005 Linus Torvalds
  */
 #include "cache.h"
+#include "config.h"
 
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
@@ -72,12 +73,10 @@ static int add_mailname_host(struct strbuf *buf)
 	FILE *mailname;
 	struct strbuf mailnamebuf = STRBUF_INIT;
 
-	mailname = fopen("/etc/mailname", "r");
-	if (!mailname) {
-		if (errno != ENOENT)
-			warning_errno("cannot open /etc/mailname");
+	mailname = fopen_or_warn("/etc/mailname", "r");
+	if (!mailname)
 		return -1;
-	}
+
 	if (strbuf_getline(&mailnamebuf, mailname) == EOF) {
 		if (ferror(mailname))
 			warning_errno("cannot read /etc/mailname");

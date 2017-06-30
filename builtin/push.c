@@ -2,6 +2,7 @@
  * "git push"
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "run-command.h"
 #include "builtin.h"
@@ -498,6 +499,10 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		const char *value;
 		if (!git_config_get_value("push.recursesubmodules", &value))
 			recurse_submodules = parse_push_recurse_submodules_arg(k, value);
+	} else if (!strcmp(k, "submodule.recurse")) {
+		int val = git_config_bool(k, v) ?
+			RECURSE_SUBMODULES_ON_DEMAND : RECURSE_SUBMODULES_OFF;
+		recurse_submodules = val;
 	}
 
 	return git_default_config(k, v, NULL);

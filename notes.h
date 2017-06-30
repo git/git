@@ -121,8 +121,8 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-int add_note(struct notes_tree *t, const unsigned char *object_sha1,
-		const unsigned char *note_sha1, combine_notes_fn combine_notes);
+int add_note(struct notes_tree *t, const struct object_id *object_oid,
+		const struct object_id *note_oid, combine_notes_fn combine_notes);
 
 /*
  * Remove the given note object from the given notes_tree structure
@@ -140,8 +140,8 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  *
  * Return NULL if the given object has no notes.
  */
-const unsigned char *get_note(struct notes_tree *t,
-		const unsigned char *object_sha1);
+const struct object_id *get_note(struct notes_tree *t,
+		const struct object_id *object_oid);
 
 /*
  * Copy a note from one object to another in the given notes_tree.
@@ -156,7 +156,7 @@ const unsigned char *get_note(struct notes_tree *t,
  * zero.
  */
 int copy_note(struct notes_tree *t,
-	      const unsigned char *from_obj, const unsigned char *to_obj,
+	      const struct object_id *from_obj, const struct object_id *to_obj,
 	      int force, combine_notes_fn combine_notes);
 
 /*
@@ -202,8 +202,8 @@ int copy_note(struct notes_tree *t,
  * - copy_note()
  * - free_notes()
  */
-typedef int each_note_fn(const unsigned char *object_sha1,
-		const unsigned char *note_sha1, char *note_path,
+typedef int each_note_fn(const struct object_id *object_oid,
+		const struct object_id *note_oid, char *note_path,
 		void *cb_data);
 int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
 		void *cb_data);
@@ -277,7 +277,7 @@ void init_display_notes(struct display_notes_opt *opt);
  *
  * You *must* call init_display_notes() before using this function.
  */
-void format_display_notes(const unsigned char *object_sha1,
+void format_display_notes(const struct object_id *object_oid,
 			  struct strbuf *sb, const char *output_encoding, int raw);
 
 /*

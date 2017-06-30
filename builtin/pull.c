@@ -6,6 +6,7 @@
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "parse-options.h"
 #include "exec_cmd.h"
@@ -337,8 +338,7 @@ static void get_merge_heads(struct oid_array *merge_heads)
 	struct strbuf sb = STRBUF_INIT;
 	struct object_id oid;
 
-	if (!(fp = fopen(filename, "r")))
-		die_errno(_("could not open '%s' for reading"), filename);
+	fp = xfopen(filename, "r");
 	while (strbuf_getline_lf(&sb, fp) != EOF) {
 		if (get_oid_hex(sb.buf, &oid))
 			continue;  /* invalid line: does not start with SHA1 */
@@ -523,7 +523,7 @@ static int pull_into_void(const struct object_id *merge_head,
 	 * index/worktree changes that the user already made on the unborn
 	 * branch.
 	 */
-	if (checkout_fast_forward(EMPTY_TREE_SHA1_BIN, merge_head->hash, 0))
+	if (checkout_fast_forward(&empty_tree_oid, merge_head, 0))
 		return 1;
 
 	if (update_ref("initial pull", "HEAD", merge_head->hash, curr_head->hash, 0, UPDATE_REFS_DIE_ON_ERR))
@@ -698,10 +698,10 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 {
 	struct commit_list *revs = NULL, *result;
 
-	commit_list_insert(lookup_commit_reference(curr_head->hash), &revs);
-	commit_list_insert(lookup_commit_reference(merge_head->hash), &revs);
+	commit_list_insert(lookup_commit_reference(curr_head), &revs);
+	commit_list_insert(lookup_commit_reference(merge_head), &revs);
 	if (!is_null_oid(fork_point))
-		commit_list_insert(lookup_commit_reference(fork_point->hash), &revs);
+		commit_list_insert(lookup_commit_reference(fork_point), &revs);
 
 	result = reduce_heads(get_octopus_merge_bases(revs));
 	free_commit_list(revs);
@@ -772,6 +772,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	struct oid_array merge_heads = OID_ARRAY_INIT;
 	struct object_id orig_head, curr_head;
 	struct object_id rebase_fork_point;
+	int autostash;
 
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
@@ -800,8 +801,8 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!opt_rebase && opt_autostash != -1)
 		die(_("--[no-]autostash option is only valid with --rebase."));
 
+	autostash = config_autostash;
 	if (opt_rebase) {
-		int autostash = config_autostash;
 		if (opt_autostash != -1)
 			autostash = opt_autostash;
 
@@ -839,7 +840,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			"fast-forwarding your working tree from\n"
 			"commit %s."), oid_to_hex(&orig_head));
 
-		if (checkout_fast_forward(orig_head.hash, curr_head.hash, 0))
+		if (checkout_fast_forward(&orig_head, &curr_head, 0))
 			die(_("Cannot fast-forward your working tree.\n"
 				"After making sure that you saved anything precious from\n"
 				"$ git diff %s\n"
@@ -862,16 +863,18 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		die(_("Cannot rebase onto multiple branches."));
 
 	if (opt_rebase) {
-		struct commit_list *list = NULL;
-		struct commit *merge_head, *head;
+		if (!autostash) {
+			struct commit_list *list = NULL;
+			struct commit *merge_head, *head;
 
-		head = lookup_commit_reference(orig_head.hash);
-		commit_list_insert(head, &list);
-		merge_head = lookup_commit_reference(merge_heads.oid[0].hash);
-		if (is_descendant_of(merge_head, list)) {
-			/* we can fast-forward this without invoking rebase */
-			opt_ff = "--ff-only";
-			return run_merge();
+			head = lookup_commit_reference(&orig_head);
+			commit_list_insert(head, &list);
+			merge_head = lookup_commit_reference(&merge_heads.oid[0]);
+			if (is_descendant_of(merge_head, list)) {
+				/* we can fast-forward this without invoking rebase */
+				opt_ff = "--ff-only";
+				return run_merge();
+			}
 		}
 		return run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
 	} else {

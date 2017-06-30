@@ -208,6 +208,50 @@ test_expect_success 'cherry-pick -x -s adds sob even when trailing sob exists fo
 	test_cmp expect actual
 '
 
+test_expect_success 'cherry-pick -x handles commits with no NL at end of message' '
+	pristine_detach initial &&
+	printf "title\n\nSigned-off-by: A <a@example.com>" >msg &&
+	sha1=$(git commit-tree -p initial mesg-with-footer^{tree} <msg) &&
+	git cherry-pick -x $sha1 &&
+	git log -1 --pretty=format:%B >actual &&
+
+	printf "\n(cherry picked from commit %s)\n" $sha1 >>msg &&
+	test_cmp msg actual
+'
+
+test_expect_success 'cherry-pick -x handles commits with no footer and no NL at end of message' '
+	pristine_detach initial &&
+	printf "title\n\nnot a footer" >msg &&
+	sha1=$(git commit-tree -p initial mesg-with-footer^{tree} <msg) &&
+	git cherry-pick -x $sha1 &&
+	git log -1 --pretty=format:%B >actual &&
+
+	printf "\n\n(cherry picked from commit %s)\n" $sha1 >>msg &&
+	test_cmp msg actual
+'
+
+test_expect_success 'cherry-pick -s handles commits with no NL at end of message' '
+	pristine_detach initial &&
+	printf "title\n\nSigned-off-by: A <a@example.com>" >msg &&
+	sha1=$(git commit-tree -p initial mesg-with-footer^{tree} <msg) &&
+	git cherry-pick -s $sha1 &&
+	git log -1 --pretty=format:%B >actual &&
+
+	printf "\nSigned-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>\n" >>msg &&
+	test_cmp msg actual
+'
+
+test_expect_success 'cherry-pick -s handles commits with no footer and no NL at end of message' '
+	pristine_detach initial &&
+	printf "title\n\nnot a footer" >msg &&
+	sha1=$(git commit-tree -p initial mesg-with-footer^{tree} <msg) &&
+	git cherry-pick -s $sha1 &&
+	git log -1 --pretty=format:%B >actual &&
+
+	printf "\n\nSigned-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>\n" >>msg &&
+	test_cmp msg actual
+'
+
 test_expect_success 'cherry-pick -x treats "(cherry picked from..." line as part of footer' '
 	pristine_detach initial &&
 	sha1=$(git rev-parse mesg-with-cherry-footer^0) &&

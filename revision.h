@@ -74,8 +74,9 @@ struct rev_info {
 	/* topo-sort */
 	enum rev_sort_order sort_order;
 
-	unsigned int	early_output:1,
-			ignore_missing:1,
+	unsigned int early_output;
+
+	unsigned int	ignore_missing:1,
 			ignore_missing_links:1;
 
 	/* Traversal flags */
@@ -181,8 +182,8 @@ struct rev_info {
 	/* special limits */
 	int skip_count;
 	int max_count;
-	unsigned long max_age;
-	unsigned long min_age;
+	timestamp_t max_age;
+	timestamp_t min_age;
 	int min_parents;
 	int max_parents;
 	int (*include_check)(struct commit *, void *);
@@ -263,9 +264,9 @@ extern void show_object_with_name(FILE *, struct object *, const char *);
 
 extern void add_pending_object(struct rev_info *revs,
 			       struct object *obj, const char *name);
-extern void add_pending_sha1(struct rev_info *revs,
-			     const char *name, const unsigned char *sha1,
-			     unsigned int flags);
+extern void add_pending_oid(struct rev_info *revs,
+			    const char *name, const struct object_id *oid,
+			    unsigned int flags);
 
 extern void add_head_to_pending(struct rev_info *);
 extern void add_reflogs_to_pending(struct rev_info *, unsigned int flags);

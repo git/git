@@ -7,6 +7,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "parse-options.h"
 #include "builtin.h"
 #include "lockfile.h"
@@ -415,7 +416,7 @@ static void finish(struct commit *head_commit,
 			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 		opts.detect_rename = DIFF_DETECT_RENAME;
 		diff_setup_done(&opts);
-		diff_tree_sha1(head->hash, new_head->hash, "", &opts);
+		diff_tree_oid(head, new_head, "", &opts);
 		diffcore_std(&opts);
 		diff_flush(&opts);
 	}
@@ -605,13 +606,13 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	opts.verbose_update = 1;
 	opts.trivial_merges_only = 1;
 	opts.merge = 1;
-	trees[nr_trees] = parse_tree_indirect(common->hash);
+	trees[nr_trees] = parse_tree_indirect(common);
 	if (!trees[nr_trees++])
 		return -1;
-	trees[nr_trees] = parse_tree_indirect(head->hash);
+	trees[nr_trees] = parse_tree_indirect(head);
 	if (!trees[nr_trees++])
 		return -1;
-	trees[nr_trees] = parse_tree_indirect(one->hash);
+	trees[nr_trees] = parse_tree_indirect(one);
 	if (!trees[nr_trees++])
 		return -1;
 	opts.fn = threeway_merge;
@@ -839,9 +840,7 @@ static int suggest_conflicts(void)
 	struct strbuf msgbuf = STRBUF_INIT;
 
 	filename = git_path_merge_msg();
-	fp = fopen(filename, "a");
-	if (!fp)
-		die_errno(_("Could not open '%s' for writing"), filename);
+	fp = xfopen(filename, "a");
 
 	append_conflicts_hint(&msgbuf);
 	fputs(msgbuf.buf, fp);
@@ -1123,7 +1122,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (!branch || is_null_oid(&head_oid))
 		head_commit = NULL;
 	else
-		head_commit = lookup_commit_or_die(head_oid.hash, "HEAD");
+		head_commit = lookup_commit_or_die(&head_oid, "HEAD");
 
 	init_diff_ui_defaults();
 	git_config(git_merge_config, NULL);
@@ -1372,8 +1371,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			goto done;
 		}
 
-		if (checkout_fast_forward(head_commit->object.oid.hash,
-					  commit->object.oid.hash,
+		if (checkout_fast_forward(&head_commit->object.oid,
+					  &commit->object.oid,
 					  overwrite_ignore)) {
 			ret = 1;
 			goto done;

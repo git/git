@@ -273,6 +273,29 @@ test_expect_success SYMLINKS 'conditional include, relative path with symlinks' 
 	)
 '
 
+test_expect_success SYMLINKS 'conditional include, gitdir matching symlink' '
+	ln -s foo bar &&
+	(
+		cd bar &&
+		echo "[includeIf \"gitdir:bar/\"]path=bar7" >>.git/config &&
+		echo "[test]seven=7" >.git/bar7 &&
+		echo 7 >expect &&
+		git config test.seven >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success SYMLINKS 'conditional include, gitdir matching symlink, icase' '
+	(
+		cd bar &&
+		echo "[includeIf \"gitdir/i:BAR/\"]path=bar8" >>.git/config &&
+		echo "[test]eight=8" >.git/bar8 &&
+		echo 8 >expect &&
+		git config test.eight >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'include cycles are detected' '
 	cat >.gitconfig <<-\EOF &&
 	[test]value = gitconfig

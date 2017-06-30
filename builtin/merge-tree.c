@@ -161,14 +161,14 @@ static int both_empty(struct name_entry *a, struct name_entry *b)
 	return !(a->oid || b->oid);
 }
 
-static struct merge_list *create_entry(unsigned stage, unsigned mode, const unsigned char *sha1, const char *path)
+static struct merge_list *create_entry(unsigned stage, unsigned mode, const struct object_id *oid, const char *path)
 {
 	struct merge_list *res = xcalloc(1, sizeof(*res));
 
 	res->stage = stage;
 	res->path = path;
 	res->mode = mode;
-	res->blob = lookup_blob(sha1);
+	res->blob = lookup_blob(oid);
 	return res;
 }
 
@@ -188,8 +188,8 @@ static void resolve(const struct traverse_info *info, struct name_entry *ours, s
 		return;
 
 	path = traverse_path(info, result);
-	orig = create_entry(2, ours->mode, ours->oid->hash, path);
-	final = create_entry(0, result->mode, result->oid->hash, path);
+	orig = create_entry(2, ours->mode, ours->oid, path);
+	final = create_entry(0, result->mode, result->oid, path);
 
 	final->link = orig;
 
@@ -239,7 +239,7 @@ static struct merge_list *link_entry(unsigned stage, const struct traverse_info 
 		path = entry->path;
 	else
 		path = traverse_path(info, n);
-	link = create_entry(stage, n->mode, n->oid->hash, path);
+	link = create_entry(stage, n->mode, n->oid, path);
 	link->link = entry;
 	return link;
 }

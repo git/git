@@ -126,6 +126,12 @@ can be used.
 	'git diff-{asterisk}'). In contrast to the `--sq-quote` option,
 	the command input is still interpreted as usual.
 
+--short[=length]::
+	Same as `--verify` but shortens the object name to a unique
+	prefix with at least `length` characters. The minimum length
+	is 4, the default is the effective value of the `core.abbrev`
+	configuration variable (see linkgit:git-config[1]).
+
 --not::
 	When showing object names, prefix them with '{caret}' and
 	strip '{caret}' prefix from the object names that already have
@@ -135,12 +141,6 @@ can be used.
 	A non-ambiguous short name of the objects name.
 	The option core.warnAmbiguousRefs is used to select the strict
 	abbreviation mode.
-
---short::
---short=number::
-	Instead of outputting the full SHA-1 values of object names try to
-	abbreviate them to a shorter unique name. When no length is specified
-	7 is used. The minimum length is 4.
 
 --symbolic::
 	Usually the object names are output in SHA-1 form (with

@@ -281,7 +281,7 @@ test_expect_success 'submodule add with ./, /.. and // in path' '
 	test_cmp empty untracked
 '
 
-test_expect_success 'submodule add with \\ in path' '
+test_expect_success !CYGWIN 'submodule add with \\ in path' '
 	test_when_finished "rm -rf parent sub\\with\\backslash" &&
 
 	# Initialize a repo with a backslash in its name

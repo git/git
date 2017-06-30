@@ -124,6 +124,43 @@ test_expect_success GPG 'signed push sends push certificate' '
 	test_cmp expect dst/push-cert-status
 '
 
+test_expect_success GPG 'inconsistent push options in signed push not allowed' '
+	# First, invoke receive-pack with dummy input to obtain its preamble.
+	prepare_dst &&
+	git -C dst config receive.certnonceseed sekrit &&
+	git -C dst config receive.advertisepushoptions 1 &&
+	printf xxxx | test_might_fail git receive-pack dst >preamble &&
+
+	# Then, invoke push. Simulate a receive-pack that sends the preamble we
+	# obtained, followed by a dummy packet.
+	write_script myscript <<-\EOF &&
+		cat preamble &&
+		printf xxxx &&
+		cat >push
+	EOF
+	test_might_fail git push --push-option="foo" --push-option="bar" \
+		--receive-pack="\"$(pwd)/myscript\"" --signed dst --delete ff &&
+
+	# Replay the push output on a fresh dst, checking that ff is truly
+	# deleted.
+	prepare_dst &&
+	git -C dst config receive.certnonceseed sekrit &&
+	git -C dst config receive.advertisepushoptions 1 &&
+	git receive-pack dst <push &&
+	test_must_fail git -C dst rev-parse ff &&
+
+	# Tweak the push output to make the push option outside the cert
+	# different, then replay it on a fresh dst, checking that ff is not
+	# deleted.
+	perl -pe "s/([^ ])bar/\$1baz/" push >push.tweak &&
+	prepare_dst &&
+	git -C dst config receive.certnonceseed sekrit &&
+	git -C dst config receive.advertisepushoptions 1 &&
+	git receive-pack dst <push.tweak >out &&
+	git -C dst rev-parse ff &&
+	grep "inconsistent push options" out
+'
+
 test_expect_success GPG 'fail without key and heed user.signingkey' '
 	prepare_dst &&
 	mkdir -p dst/.git/hooks &&

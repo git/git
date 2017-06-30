@@ -137,6 +137,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->untracked.strdup_strings = 1;
 	s->ignored.strdup_strings = 1;
 	s->show_branch = -1;  /* unspecified */
+	s->show_stash = 0;
 	s->display_comment_prefix = 0;
 }
 
@@ -665,7 +666,7 @@ static void wt_status_collect_untracked(struct wt_status *s)
 		dir.untracked = the_index.untracked;
 	setup_standard_excludes(&dir);
 
-	fill_directory(&dir, &s->pathspec);
+	fill_directory(&dir, &the_index, &s->pathspec);
 
 	for (i = 0; i < dir.nr; i++) {
 		struct dir_entry *ent = dir.entries[i];
@@ -801,6 +802,27 @@ static void wt_longstatus_print_changed(struct wt_status *s)
 	wt_longstatus_print_trailer(s);
 }
 
+static int stash_count_refs(struct object_id *ooid, struct object_id *noid,
+			    const char *email, timestamp_t timestamp, int tz,
+			    const char *message, void *cb_data)
+{
+	int *c = cb_data;
+	(*c)++;
+	return 0;
+}
+
+static void wt_longstatus_print_stash_summary(struct wt_status *s)
+{
+	int stash_count = 0;
+
+	for_each_reflog_ent("refs/stash", stash_count_refs, &stash_count);
+	if (stash_count > 0)
+		status_printf_ln(s, GIT_COLOR_NORMAL,
+				 Q_("Your stash currently has %d entry",
+				    "Your stash currently has %d entries", stash_count),
+				 stash_count);
+}
+
 static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncommitted)
 {
 	struct child_process sm_summary = CHILD_PROCESS_INIT;
@@ -896,17 +918,18 @@ conclude:
 	status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
 }
 
-void wt_status_truncate_message_at_cut_line(struct strbuf *buf)
+size_t wt_status_locate_end(const char *s, size_t len)
 {
 	const char *p;
 	struct strbuf pattern = STRBUF_INIT;
 
 	strbuf_addf(&pattern, "\n%c %s", comment_line_char, cut_line);
-	if (starts_with(buf->buf, pattern.buf + 1))
-		strbuf_setlen(buf, 0);
-	else if ((p = strstr(buf->buf, pattern.buf)))
-		strbuf_setlen(buf, p - buf->buf + 1);
+	if (starts_with(s, pattern.buf + 1))
+		len = 0;
+	else if ((p = strstr(s, pattern.buf)))
+		len = p - s + 1;
 	strbuf_release(&pattern);
+	return len;
 }
 
 void wt_status_add_cut_line(FILE *fp)
@@ -1002,7 +1025,7 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "%c",
 				 comment_line_char);
 	else
-		fputs("", s->fp);
+		fputs("\n", s->fp);
 }
 
 static int has_unmerged(struct wt_status *s)
@@ -1065,7 +1088,8 @@ static void show_am_in_progress(struct wt_status *s,
 static char *read_line_from_git_path(const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *fp = fopen(git_path("%s", filename), "r");
+	FILE *fp = fopen_or_warn(git_path("%s", filename), "r");
+
 	if (!fp) {
 		strbuf_release(&buf);
 		return NULL;
@@ -1082,29 +1106,29 @@ static char *read_line_from_git_path(const char *filename)
 static int split_commit_in_progress(struct wt_status *s)
 {
 	int split_in_progress = 0;
-	char *head = read_line_from_git_path("HEAD");
-	char *orig_head = read_line_from_git_path("ORIG_HEAD");
-	char *rebase_amend = read_line_from_git_path("rebase-merge/amend");
-	char *rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
+	char *head, *orig_head, *rebase_amend, *rebase_orig_head;
 
-	if (!head || !orig_head || !rebase_amend || !rebase_orig_head ||
+	if ((!s->amend && !s->nowarn && !s->workdir_dirty) ||
 	    !s->branch || strcmp(s->branch, "HEAD"))
-		return split_in_progress;
+		return 0;
 
-	if (!strcmp(rebase_amend, rebase_orig_head)) {
-		if (strcmp(head, rebase_amend))
-			split_in_progress = 1;
-	} else if (strcmp(orig_head, rebase_orig_head)) {
+	head = read_line_from_git_path("HEAD");
+	orig_head = read_line_from_git_path("ORIG_HEAD");
+	rebase_amend = read_line_from_git_path("rebase-merge/amend");
+	rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
+
+	if (!head || !orig_head || !rebase_amend || !rebase_orig_head)
+		; /* fall through, no split in progress */
+	else if (!strcmp(rebase_amend, rebase_orig_head))
+		split_in_progress = !!strcmp(head, rebase_amend);
+	else if (strcmp(orig_head, rebase_orig_head))
 		split_in_progress = 1;
-	}
-
-	if (!s->amend && !s->nowarn && !s->workdir_dirty)
-		split_in_progress = 0;
 
 	free(head);
 	free(orig_head);
 	free(rebase_amend);
 	free(rebase_orig_head);
+
 	return split_in_progress;
 }
 
@@ -1168,6 +1192,7 @@ static int read_rebase_todolist(const char *fname, struct string_list *lines)
 		abbrev_sha1_in_line(&line);
 		string_list_append(lines, line.buf);
 	}
+	fclose(f);
 	return 0;
 }
 
@@ -1387,7 +1412,7 @@ struct grab_1st_switch_cbdata {
 };
 
 static int grab_1st_switch(struct object_id *ooid, struct object_id *noid,
-			   const char *email, unsigned long timestamp, int tz,
+			   const char *email, timestamp_t timestamp, int tz,
 			   const char *message, void *cb_data)
 {
 	struct grab_1st_switch_cbdata *cb = cb_data;
@@ -1428,7 +1453,7 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 	    /* sha1 is a commit? match without further lookup */
 	    (!oidcmp(&cb.noid, &oid) ||
 	     /* perhaps sha1 is a tag, try to dereference to a commit */
-	     ((commit = lookup_commit_reference_gently(oid.hash, 1)) != NULL &&
+	     ((commit = lookup_commit_reference_gently(&oid, 1)) != NULL &&
 	      !oidcmp(&cb.noid, &commit->object.oid)))) {
 		const char *from = ref;
 		if (!skip_prefix(from, "refs/tags/", &from))
@@ -1639,6 +1664,8 @@ static void wt_longstatus_print(struct wt_status *s)
 		} else
 			printf(_("nothing to commit, working tree clean\n"));
 	}
+	if(s->show_stash)
+		wt_longstatus_print_stash_summary(s);
 }
 
 static void wt_shortstatus_unmerged(struct string_list_item *it,

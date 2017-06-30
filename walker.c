@@ -47,12 +47,12 @@ static int process_tree(struct walker *walker, struct tree *tree)
 		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode)) {
-			struct tree *tree = lookup_tree(entry.oid->hash);
+			struct tree *tree = lookup_tree(entry.oid);
 			if (tree)
 				obj = &tree->object;
 		}
 		else {
-			struct blob *blob = lookup_blob(entry.oid->hash);
+			struct blob *blob = lookup_blob(entry.oid);
 			if (blob)
 				obj = &blob->object;
 		}
@@ -180,7 +180,7 @@ static int loop(struct walker *walker)
 			}
 		}
 		if (!obj->type)
-			parse_object(obj->oid.hash);
+			parse_object(&obj->oid);
 		if (process_object(walker, obj))
 			return -1;
 	}
@@ -206,7 +206,7 @@ static int interpret_target(struct walker *walker, char *target, unsigned char *
 static int mark_complete(const char *path, const struct object_id *oid,
 			 int flag, void *cb_data)
 {
-	struct commit *commit = lookup_commit_reference_gently(oid->hash, 1);
+	struct commit *commit = lookup_commit_reference_gently(oid, 1);
 
 	if (commit) {
 		commit->object.flags |= COMPLETE;

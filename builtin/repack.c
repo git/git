@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "parse-options.h"
 #include "run-command.h"
@@ -155,6 +156,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int keep_unreachable = 0;
 	const char *window = NULL, *window_memory = NULL;
 	const char *depth = NULL;
+	const char *threads = NULL;
 	const char *max_pack_size = NULL;
 	int no_reuse_delta = 0, no_reuse_object = 0;
 	int no_update_server_info = 0;
@@ -190,6 +192,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				N_("same as the above, but limit memory size instead of entries count")),
 		OPT_STRING(0, "depth", &depth, N_("n"),
 				N_("limits the maximum delta depth")),
+		OPT_STRING(0, "threads", &threads, N_("n"),
+				N_("limits the maximum number of threads")),
 		OPT_STRING(0, "max-pack-size", &max_pack_size, N_("bytes"),
 				N_("maximum size of each packfile")),
 		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
@@ -234,6 +238,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		argv_array_pushf(&cmd.args, "--window-memory=%s", window_memory);
 	if (depth)
 		argv_array_pushf(&cmd.args, "--depth=%s", depth);
+	if (threads)
+		argv_array_pushf(&cmd.args, "--threads=%s", threads);
 	if (max_pack_size)
 		argv_array_pushf(&cmd.args, "--max-pack-size=%s", max_pack_size);
 	if (no_reuse_delta)

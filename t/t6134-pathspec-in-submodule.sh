@@ -21,16 +21,12 @@ EOF
 test_expect_success 'error message for path inside submodule' '
 	echo a >sub/a &&
 	test_must_fail git add sub/a 2>actual &&
-	test_cmp expect actual
+	test_i18ncmp expect actual
 '
-
-cat <<EOF >expect
-fatal: Pathspec '.' is in submodule 'sub'
-EOF
 
 test_expect_success 'error message for path inside submodule from within submodule' '
 	test_must_fail git -C sub add . 2>actual &&
-	test_cmp expect actual
+	test_i18ngrep "in unpopulated submodule" actual
 '
 
 test_done

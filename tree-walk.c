@@ -589,7 +589,6 @@ enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_s
 	int i;
 
 	init_tree_desc(&t, NULL, 0UL);
-	strbuf_init(result_path, 0);
 	strbuf_addstr(&namebuf, name);
 	hashcpy(current_tree_sha1, tree_sha1);
 
@@ -1075,7 +1074,7 @@ match_wildcards:
 		 * later on.
 		 * max_depth is ignored but we may consider support it
 		 * in future, see
-		 * http://thread.gmane.org/gmane.comp.version-control.git/163757/focus=163840
+		 * https://public-inbox.org/git/7vmxo5l2g4.fsf@alter.siamese.dyndns.org/
 		 */
 		if (ps->recursive && S_ISDIR(entry->mode))
 			return entry_interesting;

@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "pathspec.h"
@@ -233,8 +234,7 @@ static int module_list_compute(int argc, const char **argv,
 	int i, result = 0;
 	char *ps_matched = NULL;
 	parse_pathspec(pathspec, 0,
-		       PATHSPEC_PREFER_FULL |
-		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP,
+		       PATHSPEC_PREFER_FULL,
 		       prefix, argv);
 
 	if (pathspec->nr)
@@ -1222,9 +1222,8 @@ static struct cmd_struct commands[] = {
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	if (argc < 2)
-		die(_("submodule--helper subcommand must be "
-		      "called with a subcommand"));
+	if (argc < 2 || !strcmp(argv[1], "-h"))
+		usage("git submodule--helper <command>");
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		if (!strcmp(argv[1], commands[i].cmd)) {

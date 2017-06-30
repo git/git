@@ -20,11 +20,13 @@ has_any () {
 }
 
 test_expect_success 'setup repo with moderate-sized history' '
-	for i in $(test_seq 1 10); do
+	for i in $(test_seq 1 10)
+	do
 		test_commit $i
 	done &&
 	git checkout -b other HEAD~5 &&
-	for i in $(test_seq 1 10); do
+	for i in $(test_seq 1 10)
+	do
 		test_commit side-$i
 	done &&
 	git checkout master &&
@@ -104,7 +106,8 @@ test_expect_success 'clone from bitmapped repository' '
 '
 
 test_expect_success 'setup further non-bitmapped commits' '
-	for i in $(test_seq 1 10); do
+	for i in $(test_seq 1 10)
+	do
 		test_commit further-$i
 	done
 '
@@ -289,4 +292,43 @@ test_expect_success 'splitting packs does not generate bogus bitmaps' '
 	git -C no-bitmaps.git fetch .. HEAD
 '
 
+test_expect_success 'set up reusable pack' '
+	rm -f .git/objects/pack/*.keep &&
+	git repack -adb &&
+	reusable_pack () {
+		git for-each-ref --format="%(objectname)" |
+		git pack-objects --delta-base-offset --revs --stdout "$@"
+	}
+'
+
+test_expect_success 'pack reuse respects --honor-pack-keep' '
+	test_when_finished "rm -f .git/objects/pack/*.keep" &&
+	for i in .git/objects/pack/*.pack
+	do
+		>${i%.pack}.keep
+	done &&
+	reusable_pack --honor-pack-keep >empty.pack &&
+	git index-pack empty.pack &&
+	>expect &&
+	git show-index <empty.idx >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pack reuse respects --local' '
+	mv .git/objects/pack/* alt.git/objects/pack/ &&
+	test_when_finished "mv alt.git/objects/pack/* .git/objects/pack/" &&
+	reusable_pack --local >empty.pack &&
+	git index-pack empty.pack &&
+	>expect &&
+	git show-index <empty.idx >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pack reuse respects --incremental' '
+	reusable_pack --incremental >empty.pack &&
+	git index-pack empty.pack &&
+	>expect &&
+	git show-index <empty.idx >actual &&
+	test_cmp expect actual
+'
 test_done

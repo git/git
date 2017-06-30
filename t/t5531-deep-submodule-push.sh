@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='unpack-objects'
+test_description='test push with submodules'
 
 . ./test-lib.sh
 
@@ -27,7 +27,7 @@ test_expect_success setup '
 	)
 '
 
-test_expect_success push '
+test_expect_success 'push works with recorded gitlink' '
 	(
 		cd work &&
 		git push ../pub.git master
@@ -117,6 +117,27 @@ test_expect_success 'push succeeds if submodule commit not on remote but using o
 		git add gar/bage &&
 		git commit -m "Recurse on-demand from config for gar/bage" &&
 		git -c push.recurseSubmodules=on-demand push ../pub.git master &&
+		# Check that the supermodule commit got there
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master &&
+		# Check that the submodule commit got there too
+		cd gar/bage &&
+		git diff --quiet origin/master master
+	)
+'
+
+test_expect_success 'push succeeds if submodule commit not on remote but using auto-on-demand via submodule.recurse config' '
+	(
+		cd work/gar/bage &&
+		>recurse-on-demand-from-submodule-recurse-config &&
+		git add recurse-on-demand-from-submodule-recurse-config &&
+		git commit -m "Recurse submodule.recurse from config junk"
+	) &&
+	(
+		cd work &&
+		git add gar/bage &&
+		git commit -m "Recurse submodule.recurse from config for gar/bage" &&
+		git -c submodule.recurse push ../pub.git master &&
 		# Check that the supermodule commit got there
 		git fetch ../pub.git &&
 		git diff --quiet FETCH_HEAD master &&

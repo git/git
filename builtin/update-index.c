@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"
@@ -257,7 +258,7 @@ static int remove_one_path(const char *path)
  */
 static int process_lstat_error(const char *path, int err)
 {
-	if (err == ENOENT || err == ENOTDIR)
+	if (is_missing_file_error(err))
 		return remove_one_path(path);
 	return error("lstat(\"%s\"): %s", path, strerror(err));
 }

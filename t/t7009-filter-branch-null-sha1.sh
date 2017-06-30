@@ -31,6 +31,12 @@ test_expect_success 'setup: bring HEAD and index in sync' '
 	git commit -a -m "back to normal"
 '
 
+test_expect_success 'noop filter-branch complains' '
+	test_must_fail git filter-branch \
+		--force --prune-empty \
+		--index-filter "true"
+'
+
 test_expect_success 'filter commands are still checked' '
 	test_must_fail git filter-branch \
 		--force --prune-empty \

@@ -6,6 +6,7 @@
  *
  */
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "exec_cmd.h"
 #include "strbuf.h"
@@ -214,11 +215,10 @@ static int include_by_gitdir(const struct config_options *opts,
 	struct strbuf pattern = STRBUF_INIT;
 	int ret = 0, prefix;
 	const char *git_dir;
+	int already_tried_absolute = 0;
 
 	if (opts->git_dir)
 		git_dir = opts->git_dir;
-	else if (have_git_dir())
-		git_dir = get_git_dir();
 	else
 		goto done;
 
@@ -226,6 +226,7 @@ static int include_by_gitdir(const struct config_options *opts,
 	strbuf_add(&pattern, cond, cond_len);
 	prefix = prepare_include_condition_pattern(&pattern);
 
+again:
 	if (prefix < 0)
 		goto done;
 
@@ -245,6 +246,20 @@ static int include_by_gitdir(const struct config_options *opts,
 	ret = !wildmatch(pattern.buf + prefix, text.buf + prefix,
 			 icase ? WM_CASEFOLD : 0, NULL);
 
+	if (!ret && !already_tried_absolute) {
+		/*
+		 * We've tried e.g. matching gitdir:~/work, but if
+		 * ~/work is a symlink to /mnt/storage/work
+		 * strbuf_realpath() will expand it, so the rule won't
+		 * match. Let's match against a
+		 * strbuf_add_absolute_path() version of the path,
+		 * which'll do the right thing
+		 */
+		strbuf_reset(&text);
+		strbuf_add_absolute_path(&text, git_dir);
+		already_tried_absolute = 1;
+		goto again;
+	}
 done:
 	strbuf_release(&pattern);
 	strbuf_release(&text);
@@ -379,8 +394,7 @@ static int git_config_parse_key_1(const char *key, char **store_key, int *basele
 
 out_free_ret_1:
 	if (store_key) {
-		free(*store_key);
-		*store_key = NULL;
+		FREE_AND_NULL(*store_key);
 	}
 	return -CONFIG_INVALID_KEY;
 }
@@ -588,7 +602,8 @@ static int get_value(config_fn_t fn, void *data, struct strbuf *name)
 	 */
 	cf->linenr--;
 	ret = fn(name->buf, value, data);
-	cf->linenr++;
+	if (ret >= 0)
+		cf->linenr++;
 	return ret;
 }
 
@@ -1422,7 +1437,7 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 	int ret = -1;
 	FILE *f;
 
-	f = fopen(filename, "r");
+	f = fopen_or_warn(filename, "r");
 	if (f) {
 		flockfile(f);
 		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename, filename, f, data);
@@ -1529,10 +1544,8 @@ static int do_git_config_sequence(const struct config_options *opts,
 	char *user_config = expand_user_path("~/.gitconfig", 0);
 	char *repo_config;
 
-	if (opts->git_dir)
-		repo_config = mkpathdup("%s/config", opts->git_dir);
-	else if (have_git_dir())
-		repo_config = git_pathdup("config");
+	if (opts->commondir)
+		repo_config = mkpathdup("%s/config", opts->commondir);
 	else
 		repo_config = NULL;
 
@@ -1563,9 +1576,9 @@ static int do_git_config_sequence(const struct config_options *opts,
 	return ret;
 }
 
-int git_config_with_options(config_fn_t fn, void *data,
-			    struct git_config_source *config_source,
-			    const struct config_options *opts)
+int config_with_options(config_fn_t fn, void *data,
+			struct git_config_source *config_source,
+			const struct config_options *opts)
 {
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
 
@@ -1596,9 +1609,14 @@ static void git_config_raw(config_fn_t fn, void *data)
 	struct config_options opts = {0};
 
 	opts.respect_includes = 1;
-	if (git_config_with_options(fn, data, NULL, &opts) < 0)
+	if (have_git_dir()) {
+		opts.commondir = get_git_common_dir();
+		opts.git_dir = get_git_dir();
+	}
+
+	if (config_with_options(fn, data, NULL, &opts) < 0)
 		/*
-		 * git_config_with_options() normally returns only
+		 * config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
 		 * non-fatal potential errors are guarded by "if"
 		 * statements that are entered only when no error is
@@ -1637,11 +1655,13 @@ static void configset_iter(struct config_set *cs, config_fn_t fn, void *data)
 void read_early_config(config_fn_t cb, void *data)
 {
 	struct config_options opts = {0};
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf commondir = STRBUF_INIT;
+	struct strbuf gitdir = STRBUF_INIT;
 
 	opts.respect_includes = 1;
 
-	if (have_git_dir())
+	if (have_git_dir()) {
+		opts.commondir = get_git_common_dir();
 		opts.git_dir = get_git_dir();
 	/*
 	 * When setup_git_directory() was not yet asked to discover the
@@ -1651,12 +1671,15 @@ void read_early_config(config_fn_t cb, void *data)
 	 * notably, the current working directory is still the same after the
 	 * call).
 	 */
-	else if (discover_git_directory(&buf))
-		opts.git_dir = buf.buf;
+	} else if (!discover_git_directory(&commondir, &gitdir)) {
+		opts.commondir = commondir.buf;
+		opts.git_dir = gitdir.buf;
+	}
 
-	git_config_with_options(cb, data, NULL, &opts);
+	config_with_options(cb, data, NULL, &opts);
 
-	strbuf_release(&buf);
+	strbuf_release(&commondir);
+	strbuf_release(&gitdir);
 }
 
 static void git_config_check_init(void);
@@ -1730,15 +1753,18 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	return 0;
 }
 
-static int config_set_element_cmp(const struct config_set_element *e1,
-				 const struct config_set_element *e2, const void *unused)
+static int config_set_element_cmp(const void *unused_cmp_data,
+				  const struct config_set_element *e1,
+				  const struct config_set_element *e2,
+				  const void *unused_keydata)
 {
 	return strcmp(e1->key, e2->key);
 }
 
 void git_configset_init(struct config_set *cs)
 {
-	hashmap_init(&cs->config_hash, (hashmap_cmp_fn)config_set_element_cmp, 0);
+	hashmap_init(&cs->config_hash, (hashmap_cmp_fn)config_set_element_cmp,
+		     NULL, 0);
 	cs->hash_initialized = 1;
 	cs->list.nr = 0;
 	cs->list.alloc = 0;
@@ -1965,7 +1991,7 @@ int git_config_get_expiry(const char *key, const char **output)
 	if (ret)
 		return ret;
 	if (strcmp(*output, "now")) {
-		unsigned long now = approxidate("now");
+		timestamp_t now = approxidate("now");
 		if (approxidate(*output) >= now)
 			git_die_config(key, _("Invalid %s: '%s'"), key, *output);
 	}
@@ -2621,7 +2647,7 @@ int git_config_rename_section_in_file(const char *config_filename,
 	struct lock_file *lock;
 	int out_fd;
 	char buf[1024];
-	FILE *config_file;
+	FILE *config_file = NULL;
 	struct stat st;
 
 	if (new_name && !section_name_is_ok(new_name)) {
@@ -2640,6 +2666,9 @@ int git_config_rename_section_in_file(const char *config_filename,
 	}
 
 	if (!(config_file = fopen(config_filename, "rb"))) {
+		ret = warn_on_fopen_errors(config_filename);
+		if (ret)
+			goto out;
 		/* no config file means nothing to rename, no error */
 		goto commit_and_out;
 	}
@@ -2703,11 +2732,14 @@ int git_config_rename_section_in_file(const char *config_filename,
 		}
 	}
 	fclose(config_file);
+	config_file = NULL;
 commit_and_out:
 	if (commit_lock_file(lock) < 0)
 		ret = error_errno("could not write config file %s",
 				  config_filename);
 out:
+	if (config_file)
+		fclose(config_file);
 	rollback_lock_file(lock);
 out_no_rollback:
 	free(filename_buf);

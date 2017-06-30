@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "diff.h"
 #include "commit.h"
 #include "tag.h"
@@ -105,13 +106,13 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 			warning("invalid replace ref %s", refname);
 			return 0;
 		}
-		obj = parse_object(original_oid.hash);
+		obj = parse_object(&original_oid);
 		if (obj)
 			add_name_decoration(DECORATION_GRAFTED, "replaced", obj);
 		return 0;
 	}
 
-	obj = parse_object(oid->hash);
+	obj = parse_object(oid);
 	if (!obj)
 		return 0;
 
@@ -132,7 +133,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		if (!obj)
 			break;
 		if (!obj->parsed)
-			parse_object(obj->oid.hash);
+			parse_object(&obj->oid);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
@@ -140,7 +141,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 
 static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
 {
-	struct commit *commit = lookup_commit(graft->oid.hash);
+	struct commit *commit = lookup_commit(&graft->oid);
 	if (!commit)
 		return 0;
 	add_name_decoration(DECORATION_GRAFTED, "grafted", &commit->object);
@@ -184,7 +185,7 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 {
 	const struct name_decoration *list, *head = NULL;
 	const char *branch_name = NULL;
-	unsigned char unused[20];
+	struct object_id unused;
 	int rru_flags;
 
 	/* First find HEAD */
@@ -197,7 +198,7 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 		return NULL;
 
 	/* Now resolve and find the matching current branch */
-	branch_name = resolve_ref_unsafe("HEAD", 0, unused, &rru_flags);
+	branch_name = resolve_ref_unsafe("HEAD", 0, unused.hash, &rru_flags);
 	if (!(rru_flags & REF_ISSYMREF))
 		return NULL;
 
@@ -456,13 +457,13 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	strbuf_release(&signature);
 }
 
-static int which_parent(const unsigned char *sha1, const struct commit *commit)
+static int which_parent(const struct object_id *oid, const struct commit *commit)
 {
 	int nth;
 	const struct commit_list *parent;
 
 	for (nth = 0, parent = commit->parents; parent; parent = parent->next) {
-		if (!hashcmp(parent->item->object.oid.hash, sha1))
+		if (!oidcmp(&parent->item->object.oid, oid))
 			return nth;
 		nth++;
 	}
@@ -481,14 +482,14 @@ static void show_one_mergetag(struct commit *commit,
 			      void *data)
 {
 	struct rev_info *opt = (struct rev_info *)data;
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct tag *tag;
 	struct strbuf verify_message;
 	int status, nth;
 	size_t payload_size, gpg_message_offset;
 
-	hash_sha1_file(extra->value, extra->len, typename(OBJ_TAG), sha1);
-	tag = lookup_tag(sha1);
+	hash_sha1_file(extra->value, extra->len, typename(OBJ_TAG), oid.hash);
+	tag = lookup_tag(&oid);
 	if (!tag)
 		return; /* error message already given */
 
@@ -500,7 +501,7 @@ static void show_one_mergetag(struct commit *commit,
 			  &commit->parents->next->item->object.oid))
 		strbuf_addf(&verify_message,
 			    "merged tag '%s'\n", tag->tag);
-	else if ((nth = which_parent(tag->tagged->oid.hash, commit)) < 0)
+	else if ((nth = which_parent(&tag->tagged->oid, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
 				    tag->tag, tag->tagged->oid.hash);
 	else
@@ -536,7 +537,7 @@ void show_log(struct rev_info *opt)
 	struct strbuf msgbuf = STRBUF_INIT;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
-	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : 40;
+	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : GIT_SHA1_HEXSZ;
 	const char *extra_headers = opt->extra_headers;
 	struct pretty_print_context ctx = {0};
 
@@ -655,7 +656,7 @@ void show_log(struct rev_info *opt)
 		struct strbuf notebuf = STRBUF_INIT;
 
 		raw = (opt->commit_format == CMIT_FMT_USERFORMAT);
-		format_display_notes(commit->object.oid.hash, &notebuf,
+		format_display_notes(&commit->object.oid, &notebuf,
 				     get_log_output_encoding(), raw);
 		ctx.notes_message = notebuf.len
 			? strbuf_detach(&notebuf, NULL)
@@ -803,7 +804,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	parents = get_saved_parents(opt, commit);
 	if (!parents) {
 		if (opt->show_root_diff) {
-			diff_root_tree_sha1(oid->hash, "", &opt->diffopt);
+			diff_root_tree_oid(oid, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 		}
 		return !opt->loginfo;
@@ -822,8 +823,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			 * we merged _in_.
 			 */
 			parse_commit_or_die(parents->item);
-			diff_tree_sha1(parents->item->tree->object.oid.hash,
-				       oid->hash, "", &opt->diffopt);
+			diff_tree_oid(&parents->item->tree->object.oid,
+				      oid, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 			return !opt->loginfo;
 		}
@@ -837,8 +838,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		struct commit *parent = parents->item;
 
 		parse_commit_or_die(parent);
-		diff_tree_sha1(parent->tree->object.oid.hash,
-			       oid->hash, "", &opt->diffopt);
+		diff_tree_oid(&parent->tree->object.oid,
+			      oid, "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 
 		showed_log |= !opt->loginfo;

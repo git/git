@@ -67,7 +67,7 @@ struct pack_idx_header {
  * Common part of object structure used for write_idx_file
  */
 struct pack_idx_entry {
-	unsigned char sha1[20];
+	struct object_id oid;
 	uint32_t crc32;
 	off_t offset;
 };
@@ -75,7 +75,7 @@ struct pack_idx_entry {
 
 struct progress;
 /* Note, the data argument could be NULL if object type is blob */
-typedef int (*verify_fn)(const unsigned char*, enum object_type, unsigned long, void*, int*);
+typedef int (*verify_fn)(const struct object_id *, enum object_type, unsigned long, void*, int*);
 
 extern const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
 extern int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);

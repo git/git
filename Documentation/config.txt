@@ -79,14 +79,20 @@ escape sequences) are invalid.
 Includes
 ~~~~~~~~
 
-You can include a config file from another by setting the special
-`include.path` variable to the name of the file to be included. The
-variable takes a pathname as its value, and is subject to tilde
-expansion. `include.path` can be given multiple times.
+The `include` and `includeIf` sections allow you to include config
+directives from another source. These sections behave identically to
+each other with the exception that `includeIf` sections may be ignored
+if their condition does not evaluate to true; see "Conditional includes"
+below.
 
-The included file is expanded immediately, as if its contents had been
-found at the location of the include directive. If the value of the
-`include.path` variable is a relative path, the path is considered to
+You can include a config file from another by setting the special
+`include.path` (or `includeIf.*.path`) variable to the name of the file
+to be included. The variable takes a pathname as its value, and is
+subject to tilde expansion. These variables can be given multiple times.
+
+The contents of the included file are inserted immediately, as if they
+had been found at the location of the include directive. If the value of the
+variable is a relative path, the path is considered to
 be relative to the configuration file in which the include directive
 was found.  See below for examples.
 
@@ -95,8 +101,7 @@ Conditional includes
 
 You can include a config file from another conditionally by setting a
 `includeIf.<condition>.path` variable to the name of the file to be
-included. The variable's value is treated the same way as
-`include.path`. `includeIf.<condition>.path` can be given multiple times.
+included.
 
 The condition starts with a keyword followed by a colon and some data
 whose format and meaning depends on the keyword. Supported keywords
@@ -140,6 +145,16 @@ A few more notes on matching via `gitdir` and `gitdir/i`:
 
  * Symlinks in `$GIT_DIR` are not resolved before matching.
 
+ * Both the symlink & realpath versions of paths will be matched
+   outside of `$GIT_DIR`. E.g. if ~/git is a symlink to
+   /mnt/storage/git, both `gitdir:~/git` and `gitdir:/mnt/storage/git`
+   will match.
++
+This was not the case in the initial release of this feature in
+v2.13.0, which only matched the realpath version. Configuration that
+wants to be compatible with the initial release of this feature needs
+to either specify only the realpath version, or both versions.
+
  * Note that "../" is not special and will match literally, which is
    unlikely what you want.
 
@@ -167,8 +182,8 @@ Example
 
 	[include]
 		path = /path/to/foo.inc ; include by absolute path
-		path = foo ; expand "foo" relative to the current file
-		path = ~/foo ; expand "foo" in your `$HOME` directory
+		path = foo.inc ; find "foo.inc" relative to the current file
+		path = ~/foo.inc ; find "foo.inc" in your `$HOME` directory
 
 	; include if $GIT_DIR is /path/to/foo/.git
 	[includeIf "gitdir:/path/to/foo/.git"]
@@ -181,6 +196,12 @@ Example
 	; include for all repositories inside $HOME/to/group
 	[includeIf "gitdir:~/to/group/"]
 		path = /path/to/foo.inc
+
+	; relative paths are always relative to the including
+	; file (if the condition is true); their location is not
+	; affected by the condition
+	[includeIf "gitdir:/path/to/group/"]
+		path = foo.inc
 
 Values
 ~~~~~~
@@ -327,6 +348,9 @@ advice.*::
 	rmHints::
 		In case of failure in the output of linkgit:git-rm[1],
 		show directions on how to proceed from the current state.
+	addEmbeddedRepo::
+		Advice on what to do when you've accidentally added one
+		git repo inside of another.
 --
 
 core.fileMode::
@@ -334,7 +358,7 @@ core.fileMode::
 	is to be honored.
 +
 Some filesystems lose the executable bit when a file that is
-marked as executable is checked out, or checks out an
+marked as executable is checked out, or checks out a
 non-executable file with executable bit on.
 linkgit:git-clone[1] or linkgit:git-init[1] probe the filesystem
 to see if it handles the executable bit correctly
@@ -662,7 +686,8 @@ core.packedGitLimit::
 	bytes at once to complete an operation it will unmap existing
 	regions to reclaim virtual address space within the process.
 +
-Default is 256 MiB on 32 bit platforms and 8 GiB on 64 bit platforms.
+Default is 256 MiB on 32 bit platforms and 32 TiB (effectively
+unlimited) on 64 bit platforms.
 This should be reasonable for all users/operating systems, except on
 the largest projects.  You probably do not need to adjust this value.
 +
@@ -862,6 +887,7 @@ core.abbrev::
 	computed based on the approximate number of packed objects
 	in your repository, which hopefully is enough for
 	abbreviated object names to stay unique for some time.
+	The minimum length is 4.
 
 add.ignoreErrors::
 add.ignore-errors (deprecated)::
@@ -1137,7 +1163,10 @@ color.status.<slot>::
 	`untracked` (files which are not tracked by Git),
 	`branch` (the current branch),
 	`nobranch` (the color the 'no branch' warning is shown in, defaulting
-	to red), or
+	to red),
+	`localBranch` or `remoteBranch` (the local and remote branch names,
+	respectively, when branch and tracking information is displayed in the
+	status short-format), or
 	`unmerged` (files which have unmerged changes).
 
 color.ui::
@@ -2140,6 +2169,10 @@ log.showRoot::
 	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
 	normally hide the root commit will now show it. True by default.
 
+log.showSignature::
+	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
+	linkgit:git-whatchanged[1] assume `--show-signature`.
+
 log.mailmap::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
 	linkgit:git-whatchanged[1] assume `--use-mailmap`.
@@ -2591,7 +2624,7 @@ rebase.autoSquash::
 	If set to true enable `--autosquash` option by default.
 
 rebase.autoStash::
-	When set to true, automatically create a temporary stash
+	When set to true, automatically create a temporary stash entry
 	before the operation begins, and apply it after the operation
 	ends.  This means that you can run rebase on a dirty worktree.
 	However, use with care: the final stash application after a
@@ -2620,9 +2653,8 @@ receive.advertiseAtomic::
 	capability, set this variable to false.
 
 receive.advertisePushOptions::
-	By default, git-receive-pack will advertise the push options
-	capability to its clients. If you don't want to advertise this
-	capability, set this variable to false.
+	When set to true, git-receive-pack will advertise the push options
+	capability to its clients. False by default.
 
 receive.autogc::
 	By default, git-receive-pack will run "git-gc --auto" after
@@ -2964,6 +2996,11 @@ status.displayCommentPrefix::
 	behavior of linkgit:git-status[1] in Git 1.8.4 and previous.
 	Defaults to false.
 
+status.showStash::
+	If set to true, linkgit:git-status[1] will display the number of
+	entries currently stashed away.
+	Defaults to false.
+
 status.showUntrackedFiles::
 	By default, linkgit:git-status[1] and linkgit:git-commit[1] show
 	files which are not currently tracked by Git. Directories which
@@ -3001,12 +3038,12 @@ status.submoduleSummary::
 
 stash.showPatch::
 	If this is set to true, the `git stash show` command without an
-	option will show the stash in patch form.  Defaults to false.
+	option will show the stash entry in patch form.  Defaults to false.
 	See description of 'show' command in linkgit:git-stash[1].
 
 stash.showStat::
 	If this is set to true, the `git stash show` command without an
-	option will show diffstat of the stash.  Defaults to true.
+	option will show diffstat of the stash entry.  Defaults to true.
 	See description of 'show' command in linkgit:git-stash[1].
 
 submodule.<name>.url::
@@ -3062,6 +3099,11 @@ submodule.active::
 	A repeated field which contains a pathspec used to match against a
 	submodule's path to determine if the submodule is of interest to git
 	commands.
+
+submodule.recurse::
+	Specifies if commands recurse into submodules by default. This
+	applies to all commands that have a `--recurse-submodules` option.
+	Defaults to false.
 
 submodule.fetchJobs::
 	Specifies how many submodules are fetched/cloned at the same time.
@@ -3208,6 +3250,13 @@ url.<base>.insteadOf::
 	the best alternative for the particular user, even for a
 	never-before-seen repository on the site.  When more than one
 	insteadOf strings match a given URL, the longest match is used.
++
+Note that any protocol restrictions will be applied to the rewritten
+URL. If the rewrite changes the URL to use a custom protocol or remote
+helper, you may need to adjust the `protocol.*.allow` config to permit
+the request.  In particular, protocols you expect to use for submodules
+must be set to `always` rather than the default of `user`. See the
+description of `protocol.allow` above.
 
 url.<base>.pushInsteadOf::
 	Any URL that starts with this value will not be pushed to;

@@ -52,7 +52,7 @@ struct diff_filespec {
 
 extern struct diff_filespec *alloc_filespec(const char *);
 extern void free_filespec(struct diff_filespec *);
-extern void fill_filespec(struct diff_filespec *, const unsigned char *,
+extern void fill_filespec(struct diff_filespec *, const struct object_id *,
 			  int, unsigned short);
 
 #define CHECK_SIZE_ONLY 1

@@ -6,12 +6,9 @@
 #include "git-compat-util.h"
 #include "cache.h"
 
-static FILE *error_handle;
-
 void vreportf(const char *prefix, const char *err, va_list params)
 {
 	char msg[4096];
-	FILE *fh = error_handle ? error_handle : stderr;
 	char *p;
 
 	vsnprintf(msg, sizeof(msg), err, params);
@@ -19,7 +16,7 @@ void vreportf(const char *prefix, const char *err, va_list params)
 		if (iscntrl(*p) && *p != '\t' && *p != '\n')
 			*p = '?';
 	}
-	fprintf(fh, "%s%s\n", prefix, msg);
+	fprintf(stderr, "%s%s\n", prefix, msg);
 }
 
 static NORETURN void usage_builtin(const char *err, va_list params)
@@ -86,11 +83,6 @@ void (*get_warn_routine(void))(const char *warn, va_list params)
 void set_die_is_recursing_routine(int (*routine)(void))
 {
 	die_is_recursing = routine;
-}
-
-void set_error_handle(FILE *fh)
-{
-	error_handle = fh;
 }
 
 void NORETURN usagef(const char *err, ...)
@@ -201,3 +193,35 @@ void warning(const char *warn, ...)
 	warn_routine(warn, params);
 	va_end(params);
 }
+
+static NORETURN void BUG_vfl(const char *file, int line, const char *fmt, va_list params)
+{
+	char prefix[256];
+
+	/* truncation via snprintf is OK here */
+	if (file)
+		snprintf(prefix, sizeof(prefix), "BUG: %s:%d: ", file, line);
+	else
+		snprintf(prefix, sizeof(prefix), "BUG: ");
+
+	vreportf(prefix, fmt, params);
+	abort();
+}
+
+#ifdef HAVE_VARIADIC_MACROS
+NORETURN void BUG_fl(const char *file, int line, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	BUG_vfl(file, line, fmt, ap);
+	va_end(ap);
+}
+#else
+NORETURN void BUG(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	BUG_vfl(NULL, 0, fmt, ap);
+	va_end(ap);
+}
+#endif

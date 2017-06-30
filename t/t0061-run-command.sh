@@ -26,6 +26,47 @@ test_expect_success 'run_command can run a command' '
 	test_cmp empty err
 '
 
+test_expect_success !MINGW 'run_command can run a script without a #! line' '
+	cat >hello <<-\EOF &&
+	cat hello-script
+	EOF
+	chmod +x hello &&
+	test-run-command run-command ./hello >actual 2>err &&
+
+	test_cmp hello-script actual &&
+	test_cmp empty err
+'
+
+test_expect_success 'run_command does not try to execute a directory' '
+	test_when_finished "rm -rf bin1 bin2" &&
+	mkdir -p bin1/greet bin2 &&
+	write_script bin2/greet <<-\EOF &&
+	cat bin2/greet
+	EOF
+
+	PATH=$PWD/bin1:$PWD/bin2:$PATH \
+		test-run-command run-command greet >actual 2>err &&
+	test_cmp bin2/greet actual &&
+	test_cmp empty err
+'
+
+test_expect_success POSIXPERM 'run_command passes over non-executable file' '
+	test_when_finished "rm -rf bin1 bin2" &&
+	mkdir -p bin1 bin2 &&
+	write_script bin1/greet <<-\EOF &&
+	cat bin1/greet
+	EOF
+	chmod -x bin1/greet &&
+	write_script bin2/greet <<-\EOF &&
+	cat bin2/greet
+	EOF
+
+	PATH=$PWD/bin1:$PWD/bin2:$PATH \
+		test-run-command run-command greet >actual 2>err &&
+	test_cmp bin2/greet actual &&
+	test_cmp empty err
+'
+
 test_expect_success POSIXPERM 'run_command reports EACCES' '
 	cat hello-script >hello.sh &&
 	chmod -x hello.sh &&

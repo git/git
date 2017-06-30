@@ -9,7 +9,7 @@ git-repack - Pack unpacked objects in a repository
 SYNOPSIS
 --------
 [verse]
-'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [--window=<n>] [--depth=<n>]
+'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [--window=<n>] [--depth=<n>] [--threads=<n>]
 
 DESCRIPTION
 -----------
@@ -91,6 +91,9 @@ other objects in that pack they already have locally.
 	affects the performance on the unpacker side, because delta data needs
 	to be applied that many times to get to the necessary object.
 	The default value for --window is 10 and --depth is 50.
+
+--threads=<n>::
+	This option is passed through to `git pack-objects`.
 
 --window-memory=<n>::
 	This option provides an additional limit on top of `--window`;

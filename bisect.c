@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
@@ -438,10 +439,7 @@ static void read_bisect_paths(struct argv_array *array)
 {
 	struct strbuf str = STRBUF_INIT;
 	const char *filename = git_path_bisect_names();
-	FILE *fp = fopen(filename, "r");
-
-	if (!fp)
-		die_errno(_("Could not open file '%s'"), filename);
+	FILE *fp = xfopen(filename, "r");
 
 	while (strbuf_getline_lf(&str, fp) != EOF) {
 		strbuf_trim(&str);
@@ -546,7 +544,7 @@ static unsigned get_prn(unsigned count) {
 
 /*
  * Custom integer square root from
- * http://en.wikipedia.org/wiki/Integer_square_root
+ * https://en.wikipedia.org/wiki/Integer_square_root
  */
 static int sqrti(int val)
 {
@@ -669,7 +667,7 @@ static int is_expected_rev(const struct object_id *oid)
 	if (stat(filename, &st) || !S_ISREG(st.st_mode))
 		return 0;
 
-	fp = fopen(filename, "r");
+	fp = fopen_or_warn(filename, "r");
 	if (!fp)
 		return 0;
 
@@ -705,7 +703,7 @@ static int bisect_checkout(const unsigned char *bisect_rev, int no_checkout)
 
 static struct commit *get_commit_reference(const struct object_id *oid)
 {
-	struct commit *r = lookup_commit_reference(oid->hash);
+	struct commit *r = lookup_commit_reference(oid);
 	if (!r)
 		die(_("Not a valid commit name %s"), oid_to_hex(oid));
 	return r;
@@ -995,8 +993,10 @@ int bisect_next_all(const char *prefix, int no_checkout)
 
 	steps_msg = xstrfmt(Q_("(roughly %d step)", "(roughly %d steps)",
 		  steps), steps);
-	/* TRANSLATORS: the last %s will be replaced with
-	   "(roughly %d steps)" translation */
+	/*
+	 * TRANSLATORS: the last %s will be replaced with "(roughly %d
+	 * steps)" translation.
+	 */
 	printf(Q_("Bisecting: %d revision left to test after this %s\n",
 		  "Bisecting: %d revisions left to test after this %s\n",
 		  nr), nr, steps_msg);

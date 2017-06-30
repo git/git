@@ -3,6 +3,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "hashmap.h"
 #include "lockfile.h"
 #include "iterator.h"
@@ -11,6 +12,7 @@
 #include "object.h"
 #include "tag.h"
 #include "submodule.h"
+#include "worktree.h"
 
 /*
  * List of all available backends
@@ -713,7 +715,7 @@ int is_branch(const char *refname)
 
 struct read_ref_at_cb {
 	const char *refname;
-	unsigned long at_time;
+	timestamp_t at_time;
 	int cnt;
 	int reccnt;
 	unsigned char *sha1;
@@ -722,15 +724,15 @@ struct read_ref_at_cb {
 	unsigned char osha1[20];
 	unsigned char nsha1[20];
 	int tz;
-	unsigned long date;
+	timestamp_t date;
 	char **msg;
-	unsigned long *cutoff_time;
+	timestamp_t *cutoff_time;
 	int *cutoff_tz;
 	int *cutoff_cnt;
 };
 
 static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
-		const char *email, unsigned long timestamp, int tz,
+		const char *email, timestamp_t timestamp, int tz,
 		const char *message, void *cb_data)
 {
 	struct read_ref_at_cb *cb = cb_data;
@@ -777,7 +779,7 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 }
 
 static int read_ref_at_ent_oldest(struct object_id *ooid, struct object_id *noid,
-				  const char *email, unsigned long timestamp,
+				  const char *email, timestamp_t timestamp,
 				  int tz, const char *message, void *cb_data)
 {
 	struct read_ref_at_cb *cb = cb_data;
@@ -797,9 +799,9 @@ static int read_ref_at_ent_oldest(struct object_id *ooid, struct object_id *noid
 	return 1;
 }
 
-int read_ref_at(const char *refname, unsigned int flags, unsigned long at_time, int cnt,
+int read_ref_at(const char *refname, unsigned int flags, timestamp_t at_time, int cnt,
 		unsigned char *sha1, char **msg,
-		unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
+		timestamp_t *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
 {
 	struct read_ref_at_cb cb;
 
@@ -847,10 +849,23 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err)
 
 void ref_transaction_free(struct ref_transaction *transaction)
 {
-	int i;
+	size_t i;
 
 	if (!transaction)
 		return;
+
+	switch (transaction->state) {
+	case REF_TRANSACTION_OPEN:
+	case REF_TRANSACTION_CLOSED:
+		/* OK */
+		break;
+	case REF_TRANSACTION_PREPARED:
+		die("BUG: free called on a prepared reference transaction");
+		break;
+	default:
+		die("BUG: unexpected reference transaction state");
+		break;
+	}
 
 	for (i = 0; i < transaction->nr; i++) {
 		free(transaction->updates[i]->msg);
@@ -882,9 +897,9 @@ struct ref_update *ref_transaction_add_update(
 	update->flags = flags;
 
 	if (flags & REF_HAVE_NEW)
-		hashcpy(update->new_sha1, new_sha1);
+		hashcpy(update->new_oid.hash, new_sha1);
 	if (flags & REF_HAVE_OLD)
-		hashcpy(update->old_sha1, old_sha1);
+		hashcpy(update->old_oid.hash, old_sha1);
 	update->msg = xstrdup_or_null(msg);
 	return update;
 }
@@ -1245,8 +1260,19 @@ struct ref_iterator *refs_ref_iterator_begin(
 {
 	struct ref_iterator *iter;
 
+	if (ref_paranoia < 0)
+		ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
+	if (ref_paranoia)
+		flags |= DO_FOR_EACH_INCLUDE_BROKEN;
+
 	iter = refs->be->iterator_begin(refs, prefix, flags);
-	iter = prefix_ref_iterator_begin(iter, prefix, trim);
+
+	/*
+	 * `iterator_begin()` already takes care of prefix, but we
+	 * might need to do some trimming:
+	 */
+	if (trim)
+		iter = prefix_ref_iterator_begin(iter, "", trim);
 
 	return iter;
 }
@@ -1314,6 +1340,18 @@ int for_each_ref_in_submodule(const char *submodule, const char *prefix,
 {
 	return refs_for_each_ref_in(get_submodule_ref_store(submodule),
 				    prefix, fn, cb_data);
+}
+
+int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
+				  each_ref_fn fn, void *cb_data,
+				  unsigned int broken)
+{
+	unsigned int flag = 0;
+
+	if (broken)
+		flag = DO_FOR_EACH_INCLUDE_BROKEN;
+	return do_for_each_ref(get_submodule_ref_store(submodule),
+			       prefix, fn, 0, flag, cb_data);
 }
 
 int for_each_replace_ref(each_ref_fn fn, void *cb_data)
@@ -1477,32 +1515,33 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 	return 0;
 }
 
-struct submodule_hash_entry
+struct ref_store_hash_entry
 {
 	struct hashmap_entry ent; /* must be the first member! */
 
 	struct ref_store *refs;
 
-	/* NUL-terminated name of submodule: */
-	char submodule[FLEX_ARRAY];
+	/* NUL-terminated identifier of the ref store: */
+	char name[FLEX_ARRAY];
 };
 
-static int submodule_hash_cmp(const void *entry, const void *entry_or_key,
+static int ref_store_hash_cmp(const void *unused_cmp_data,
+			      const void *entry, const void *entry_or_key,
 			      const void *keydata)
 {
-	const struct submodule_hash_entry *e1 = entry, *e2 = entry_or_key;
-	const char *submodule = keydata ? keydata : e2->submodule;
+	const struct ref_store_hash_entry *e1 = entry, *e2 = entry_or_key;
+	const char *name = keydata ? keydata : e2->name;
 
-	return strcmp(e1->submodule, submodule);
+	return strcmp(e1->name, name);
 }
 
-static struct submodule_hash_entry *alloc_submodule_hash_entry(
-		const char *submodule, struct ref_store *refs)
+static struct ref_store_hash_entry *alloc_ref_store_hash_entry(
+		const char *name, struct ref_store *refs)
 {
-	struct submodule_hash_entry *entry;
+	struct ref_store_hash_entry *entry;
 
-	FLEX_ALLOC_STR(entry, submodule, submodule);
-	hashmap_entry_init(entry, strhash(submodule));
+	FLEX_ALLOC_STR(entry, name, name);
+	hashmap_entry_init(entry, strhash(name));
 	entry->refs = refs;
 	return entry;
 }
@@ -1513,20 +1552,23 @@ static struct ref_store *main_ref_store;
 /* A hashmap of ref_stores, stored by submodule name: */
 static struct hashmap submodule_ref_stores;
 
-/*
- * Return the ref_store instance for the specified submodule. If that
- * ref_store hasn't been initialized yet, return NULL.
- */
-static struct ref_store *lookup_submodule_ref_store(const char *submodule)
-{
-	struct submodule_hash_entry *entry;
+/* A hashmap of ref_stores, stored by worktree id: */
+static struct hashmap worktree_ref_stores;
 
-	if (!submodule_ref_stores.tablesize)
+/*
+ * Look up a ref store by name. If that ref_store hasn't been
+ * registered yet, return NULL.
+ */
+static struct ref_store *lookup_ref_store_map(struct hashmap *map,
+					      const char *name)
+{
+	struct ref_store_hash_entry *entry;
+
+	if (!map->tablesize)
 		/* It's initialized on demand in register_ref_store(). */
 		return NULL;
 
-	entry = hashmap_get_from_hash(&submodule_ref_stores,
-				      strhash(submodule), submodule);
+	entry = hashmap_get_from_hash(map, strhash(name), name);
 	return entry ? entry->refs : NULL;
 }
 
@@ -1553,29 +1595,24 @@ struct ref_store *get_main_ref_store(void)
 	if (main_ref_store)
 		return main_ref_store;
 
-	main_ref_store = ref_store_init(get_git_dir(),
-					(REF_STORE_READ |
-					 REF_STORE_WRITE |
-					 REF_STORE_ODB |
-					 REF_STORE_MAIN));
+	main_ref_store = ref_store_init(get_git_dir(), REF_STORE_ALL_CAPS);
 	return main_ref_store;
 }
 
 /*
- * Register the specified ref_store to be the one that should be used
- * for submodule. It is a fatal error to call this function twice for
- * the same submodule.
+ * Associate a ref store with a name. It is a fatal error to call this
+ * function twice for the same name.
  */
-static void register_submodule_ref_store(struct ref_store *refs,
-					 const char *submodule)
+static void register_ref_store_map(struct hashmap *map,
+				   const char *type,
+				   struct ref_store *refs,
+				   const char *name)
 {
-	if (!submodule_ref_stores.tablesize)
-		hashmap_init(&submodule_ref_stores, submodule_hash_cmp, 0);
+	if (!map->tablesize)
+		hashmap_init(map, ref_store_hash_cmp, NULL, 0);
 
-	if (hashmap_put(&submodule_ref_stores,
-			alloc_submodule_hash_entry(submodule, refs)))
-		die("BUG: ref_store for submodule '%s' initialized twice",
-		    submodule);
+	if (hashmap_put(map, alloc_ref_store_hash_entry(name, refs)))
+		die("BUG: %s ref_store '%s' initialized twice", type, name);
 }
 
 struct ref_store *get_submodule_ref_store(const char *submodule)
@@ -1592,7 +1629,7 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 		return get_main_ref_store();
 	}
 
-	refs = lookup_submodule_ref_store(submodule);
+	refs = lookup_ref_store_map(&submodule_ref_stores, submodule);
 	if (refs)
 		return refs;
 
@@ -1611,9 +1648,36 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 	/* assume that add_submodule_odb() has been called */
 	refs = ref_store_init(submodule_sb.buf,
 			      REF_STORE_READ | REF_STORE_ODB);
-	register_submodule_ref_store(refs, submodule);
+	register_ref_store_map(&submodule_ref_stores, "submodule",
+			       refs, submodule);
 
 	strbuf_release(&submodule_sb);
+	return refs;
+}
+
+struct ref_store *get_worktree_ref_store(const struct worktree *wt)
+{
+	struct ref_store *refs;
+	const char *id;
+
+	if (wt->is_current)
+		return get_main_ref_store();
+
+	id = wt->id ? wt->id : "/";
+	refs = lookup_ref_store_map(&worktree_ref_stores, id);
+	if (refs)
+		return refs;
+
+	if (wt->id)
+		refs = ref_store_init(git_common_path("worktrees/%s", wt->id),
+				      REF_STORE_ALL_CAPS);
+	else
+		refs = ref_store_init(get_git_common_dir(),
+				      REF_STORE_ALL_CAPS);
+
+	if (refs)
+		register_ref_store_map(&worktree_ref_stores, "worktree",
+				       refs, id);
 	return refs;
 }
 
@@ -1657,10 +1721,48 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 				  refs_heads_master, logmsg);
 }
 
-int ref_transaction_commit(struct ref_transaction *transaction,
-			   struct strbuf *err)
+int ref_update_reject_duplicates(struct string_list *refnames,
+				 struct strbuf *err)
+{
+	size_t i, n = refnames->nr;
+
+	assert(err);
+
+	for (i = 1; i < n; i++) {
+		int cmp = strcmp(refnames->items[i - 1].string,
+				 refnames->items[i].string);
+
+		if (!cmp) {
+			strbuf_addf(err,
+				    "multiple updates for ref '%s' not allowed.",
+				    refnames->items[i].string);
+			return 1;
+		} else if (cmp > 0) {
+			die("BUG: ref_update_reject_duplicates() received unsorted list");
+		}
+	}
+	return 0;
+}
+
+int ref_transaction_prepare(struct ref_transaction *transaction,
+			    struct strbuf *err)
 {
 	struct ref_store *refs = transaction->ref_store;
+
+	switch (transaction->state) {
+	case REF_TRANSACTION_OPEN:
+		/* Good. */
+		break;
+	case REF_TRANSACTION_PREPARED:
+		die("BUG: prepare called twice on reference transaction");
+		break;
+	case REF_TRANSACTION_CLOSED:
+		die("BUG: prepare called on a closed reference transaction");
+		break;
+	default:
+		die("BUG: unexpected reference transaction state");
+		break;
+	}
 
 	if (getenv(GIT_QUARANTINE_ENVIRONMENT)) {
 		strbuf_addstr(err,
@@ -1668,7 +1770,59 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		return -1;
 	}
 
-	return refs->be->transaction_commit(refs, transaction, err);
+	return refs->be->transaction_prepare(refs, transaction, err);
+}
+
+int ref_transaction_abort(struct ref_transaction *transaction,
+			  struct strbuf *err)
+{
+	struct ref_store *refs = transaction->ref_store;
+	int ret = 0;
+
+	switch (transaction->state) {
+	case REF_TRANSACTION_OPEN:
+		/* No need to abort explicitly. */
+		break;
+	case REF_TRANSACTION_PREPARED:
+		ret = refs->be->transaction_abort(refs, transaction, err);
+		break;
+	case REF_TRANSACTION_CLOSED:
+		die("BUG: abort called on a closed reference transaction");
+		break;
+	default:
+		die("BUG: unexpected reference transaction state");
+		break;
+	}
+
+	ref_transaction_free(transaction);
+	return ret;
+}
+
+int ref_transaction_commit(struct ref_transaction *transaction,
+			   struct strbuf *err)
+{
+	struct ref_store *refs = transaction->ref_store;
+	int ret;
+
+	switch (transaction->state) {
+	case REF_TRANSACTION_OPEN:
+		/* Need to prepare first. */
+		ret = ref_transaction_prepare(transaction, err);
+		if (ret)
+			return ret;
+		break;
+	case REF_TRANSACTION_PREPARED:
+		/* Fall through to finish. */
+		break;
+	case REF_TRANSACTION_CLOSED:
+		die("BUG: commit called on a closed reference transaction");
+		break;
+	default:
+		die("BUG: unexpected reference transaction state");
+		break;
+	}
+
+	return refs->be->transaction_finish(refs, transaction, err);
 }
 
 int refs_verify_refname_available(struct ref_store *refs,
@@ -1870,15 +2024,16 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 	return refs->be->initial_transaction_commit(refs, transaction, err);
 }
 
-int refs_delete_refs(struct ref_store *refs, struct string_list *refnames,
-		     unsigned int flags)
+int refs_delete_refs(struct ref_store *refs, const char *msg,
+		     struct string_list *refnames, unsigned int flags)
 {
-	return refs->be->delete_refs(refs, refnames, flags);
+	return refs->be->delete_refs(refs, msg, refnames, flags);
 }
 
-int delete_refs(struct string_list *refnames, unsigned int flags)
+int delete_refs(const char *msg, struct string_list *refnames,
+		unsigned int flags)
 {
-	return refs_delete_refs(get_main_ref_store(), refnames, flags);
+	return refs_delete_refs(get_main_ref_store(), msg, refnames, flags);
 }
 
 int refs_rename_ref(struct ref_store *refs, const char *oldref,

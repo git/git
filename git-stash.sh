@@ -19,6 +19,7 @@ OPTIONS_SPEC=
 START_DIR=$(pwd)
 . git-sh-setup
 require_work_tree
+prefix=$(git rev-parse --show-prefix) || exit 1
 cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
@@ -273,6 +274,8 @@ push_stash () {
 		shift
 	done
 
+	eval "set $(git rev-parse --sq --prefix "$prefix" -- "$@")"
+
 	if test -n "$patch_mode" && test -n "$untracked"
 	then
 		die "$(gettext "Can't use --patch and --include-untracked or --all at the same time")"
@@ -481,7 +484,7 @@ parse_flags_and_rev()
 
 	case $# in
 		0)
-			have_stash || die "$(gettext "No stash found.")"
+			have_stash || die "$(gettext "No stash entries found.")"
 			set -- ${ref_stash}@{0}
 		;;
 		1)
@@ -573,7 +576,7 @@ apply_stash () {
 		GIT_INDEX_FILE="$TMPindex" git-read-tree "$u_tree" &&
 		GIT_INDEX_FILE="$TMPindex" git checkout-index --all &&
 		rm -f "$TMPindex" ||
-		die "$(gettext "Could not restore untracked files from stash")"
+		die "$(gettext "Could not restore untracked files from stash entry")"
 	fi
 
 	eval "
@@ -627,7 +630,7 @@ pop_stash() {
 		drop_stash "$@"
 	else
 		status=$?
-		say "$(gettext "The stash is kept in case you need it again.")"
+		say "$(gettext "The stash entry is kept in case you need it again.")"
 		exit $status
 	fi
 }

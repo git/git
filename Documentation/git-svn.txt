@@ -95,6 +95,10 @@ If you still want the old default, you can get it by passing
 `--prefix ""` on the command line (`--prefix=""` may not work if
 your Perl's Getopt::Long is < v2.37).
 
+--ignore-refs=<regex>;;
+	When passed to 'init' or 'clone' this regular expression will
+	be preserved as a config key.  See 'fetch' for a description
+	of `--ignore-refs`.
 --ignore-paths=<regex>;;
 	When passed to 'init' or 'clone' this regular expression will
 	be preserved as a config key.  See 'fetch' for a description
@@ -137,6 +141,18 @@ the same local time zone.
 
 --parent;;
 	Fetch only from the SVN parent of the current HEAD.
+
+--ignore-refs=<regex>;;
+	Ignore refs for branches or tags matching the Perl regular
+	expression. A "negative look-ahead assertion" like
+	`^refs/remotes/origin/(?!tags/wanted-tag|wanted-branch).*$`
+	can be used to allow only certain refs.
++
+[verse]
+config key: svn-remote.<name>.ignore-refs
++
+If the ignore-refs configuration key is set, and the command-line
+option is also given, both regular expressions will be used.
 
 --ignore-paths=<regex>;;
 	This allows one to specify a Perl regular expression that will
@@ -443,6 +459,21 @@ Any other arguments are passed directly to 'git log'
 	(URL) may be omitted if you are working from a 'git svn'-aware
 	repository (that has been `init`-ed with 'git svn').
 	The -r<revision> option is required for this.
++
+The commit message is supplied either directly with the `-m` or `-F`
+option, or indirectly from the tag or commit when the second tree-ish
+denotes such an object, or it is requested by invoking an editor (see
+`--edit` option below).
+
+-m <msg>;;
+--message=<msg>;;
+	Use the given `msg` as the commit message. This option
+	disables the `--edit` option.
+
+-F <filename>;;
+--file=<filename>;;
+	Take the commit message from the given file. This option
+	disables the `--edit` option.
 
 'info'::
 	Shows information about a file or directory similar to what

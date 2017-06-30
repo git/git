@@ -31,9 +31,11 @@ check_show () {
 	format=$1
 	time=$2
 	expect=$3
-	test_expect_success $4 "show date ($format:$time)" '
+	prereqs=$4
+	zone=$5
+	test_expect_success $prereqs "show date ($format:$time)" '
 		echo "$time -> $expect" >expect &&
-		test-date show:$format "$time" >actual &&
+		TZ=${zone:-$TZ} test-date show:"$format" "$time" >actual &&
 		test_cmp expect actual
 	'
 }
@@ -51,10 +53,20 @@ check_show iso-local "$TIME" '2016-06-15 14:13:20 +0000'
 check_show raw-local "$TIME" '1466000000 +0000'
 check_show unix-local "$TIME" '1466000000'
 
+check_show 'format:%z' "$TIME" '+0200'
+check_show 'format-local:%z' "$TIME" '+0000'
+check_show 'format:%Z' "$TIME" ''
+check_show 'format-local:%Z' "$TIME" 'UTC'
+check_show 'format:%%z' "$TIME" '%z'
+check_show 'format-local:%%z' "$TIME" '%z'
+
+check_show 'format:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 16:13:20'
+check_show 'format-local:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 09:13:20' '' EST5
+
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
-check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" LONG_IS_64BIT
-check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" LONG_IS_64BIT
+check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" TIME_IS_64BIT,TIME_T_IS_64BIT
+check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" TIME_IS_64BIT,TIME_T_IS_64BIT
 
 check_parse() {
 	echo "$1 -> $2" >expect

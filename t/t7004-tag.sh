@@ -87,7 +87,7 @@ test_expect_success 'creating a tag with --create-reflog should create reflog' '
 	git tag --create-reflog tag_with_reflog &&
 	git reflog exists refs/tags/tag_with_reflog &&
 	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success 'annotated tag with --create-reflog has correct message' '
@@ -98,7 +98,7 @@ test_expect_success 'annotated tag with --create-reflog has correct message' '
 	git tag -m "annotated tag" --create-reflog tag_with_reflog &&
 	git reflog exists refs/tags/tag_with_reflog &&
 	sed -e "s/^.*	//" .git/logs/refs/tags/tag_with_reflog >actual &&
-	test_cmp expected actual
+	test_i18ncmp expected actual
 '
 
 test_expect_success '--create-reflog does not create reflog on failure' '

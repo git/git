@@ -1,14 +1,14 @@
 /*
  *  The order of the following two lines is important.
  *
- *  FREAD_READS_DIRECTORIES is undefined before including git-compat-util.h
+ *  SUPPRESS_FOPEN_REDEFINITION is defined before including git-compat-util.h
  *  to avoid the redefinition of fopen within git-compat-util.h. This is
  *  necessary since fopen is a macro on some platforms which may be set
  *  based on compiler options. For example, on AIX fopen is set to fopen64
  *  when _LARGE_FILES is defined. The previous technique of merely undefining
  *  fopen after including git-compat-util.h is inadequate in this case.
  */
-#undef FREAD_READS_DIRECTORIES
+#define SUPPRESS_FOPEN_REDEFINITION
 #include "../git-compat-util.h"
 
 FILE *git_fopen(const char *path, const char *mode)

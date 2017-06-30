@@ -8,6 +8,7 @@
  * are.
  */
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"
@@ -169,7 +170,7 @@ static void setup_git_env(void)
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
 	if (!git_dir) {
 		if (!startup_info->have_repository)
-			die("BUG: setup_git_env called without repository");
+			BUG("setup_git_env called without repository");
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	}
 	gitfile = read_gitfile(git_dir);
@@ -217,6 +218,8 @@ const char *get_git_dir(void)
 
 const char *get_git_common_dir(void)
 {
+	if (!git_dir)
+		setup_git_env();
 	return git_common_dir;
 }
 

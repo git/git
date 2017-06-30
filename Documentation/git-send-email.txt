@@ -377,6 +377,7 @@ have been specified, in which case default to 'compose'.
 	Currently, validation means the following:
 +
 --
+		*	Invoke the sendemail-validate hook if present (see linkgit:githooks[5]).
 		*	Warn of patches that contain lines longer than 998 characters; this
 			is due to SMTP limits as described by http://www.ietf.org/rfc/rfc2821.txt.
 --

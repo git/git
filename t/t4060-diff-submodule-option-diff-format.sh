@@ -643,9 +643,11 @@ test_expect_success 'deleted submodule' '
 	test_cmp expected actual
 '
 
-test_create_repo sm2 &&
-head7=$(add_file sm2 foo8 foo9) &&
-git add sm2
+test_expect_success 'create second submodule' '
+	test_create_repo sm2 &&
+	head7=$(add_file sm2 foo8 foo9) &&
+	git add sm2
+'
 
 test_expect_success 'multiple submodules' '
 	git diff-index -p --submodule=diff HEAD >actual &&
@@ -771,6 +773,47 @@ test_expect_success 'diff --submodule=diff with moved nested submodule HEAD' '
 	+nested content
 	EOF
 	git -C sm2 diff --submodule=diff >actual 2>err &&
+	test_must_be_empty err &&
+	test_cmp expected actual
+'
+
+test_expect_success 'diff --submodule=diff recurses into nested submodules' '
+	cat >expected <<-EOF &&
+	Submodule sm2 contains modified content
+	Submodule sm2 a5a65c9..280969a:
+	diff --git a/sm2/.gitmodules b/sm2/.gitmodules
+	new file mode 100644
+	index 0000000..3a816b8
+	--- /dev/null
+	+++ b/sm2/.gitmodules
+	@@ -0,0 +1,3 @@
+	+[submodule "nested"]
+	+	path = nested
+	+	url = ../sm2
+	Submodule nested 0000000...b55928c (new submodule)
+	diff --git a/sm2/nested/file b/sm2/nested/file
+	new file mode 100644
+	index 0000000..ca281f5
+	--- /dev/null
+	+++ b/sm2/nested/file
+	@@ -0,0 +1 @@
+	+nested content
+	diff --git a/sm2/nested/foo8 b/sm2/nested/foo8
+	new file mode 100644
+	index 0000000..db9916b
+	--- /dev/null
+	+++ b/sm2/nested/foo8
+	@@ -0,0 +1 @@
+	+foo8
+	diff --git a/sm2/nested/foo9 b/sm2/nested/foo9
+	new file mode 100644
+	index 0000000..9c3b4f6
+	--- /dev/null
+	+++ b/sm2/nested/foo9
+	@@ -0,0 +1 @@
+	+foo9
+	EOF
+	git diff --submodule=diff >actual 2>err &&
 	test_must_be_empty err &&
 	test_cmp expected actual
 '

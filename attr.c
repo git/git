@@ -9,6 +9,7 @@
 
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
+#include "config.h"
 #include "exec_cmd.h"
 #include "attr.h"
 #include "dir.h"
@@ -75,9 +76,10 @@ struct attr_hash_entry {
 };
 
 /* attr_hashmap comparison function */
-static int attr_hash_entry_cmp(const struct attr_hash_entry *a,
+static int attr_hash_entry_cmp(void *unused_cmp_data,
+			       const struct attr_hash_entry *a,
 			       const struct attr_hash_entry *b,
-			       void *unused)
+			       void *unused_keydata)
 {
 	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
 }
@@ -85,7 +87,7 @@ static int attr_hash_entry_cmp(const struct attr_hash_entry *a,
 /* Initialize an 'attr_hashmap' object */
 static void attr_hashmap_init(struct attr_hashmap *map)
 {
-	hashmap_init(&map->map, (hashmap_cmp_fn) attr_hash_entry_cmp, 0);
+	hashmap_init(&map->map, (hashmap_cmp_fn) attr_hash_entry_cmp, NULL, 0);
 }
 
 /*
@@ -638,13 +640,11 @@ void attr_check_reset(struct attr_check *check)
 
 void attr_check_clear(struct attr_check *check)
 {
-	free(check->items);
-	check->items = NULL;
+	FREE_AND_NULL(check->items);
 	check->alloc = 0;
 	check->nr = 0;
 
-	free(check->all_attrs);
-	check->all_attrs = NULL;
+	FREE_AND_NULL(check->all_attrs);
 	check->all_attrs_nr = 0;
 
 	drop_attr_stack(&check->stack);
@@ -720,16 +720,13 @@ void git_attr_set_direction(enum git_attr_direction new_direction,
 
 static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 {
-	FILE *fp = fopen(path, "r");
+	FILE *fp = fopen_or_warn(path, "r");
 	struct attr_stack *res;
 	char buf[2048];
 	int lineno = 0;
 
-	if (!fp) {
-		if (errno != ENOENT && errno != ENOTDIR)
-			warn_on_inaccessible(path);
+	if (!fp)
 		return NULL;
-	}
 	res = xcalloc(1, sizeof(*res));
 	while (fgets(buf, sizeof(buf), fp)) {
 		char *bufp = buf;

@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "tempfile.h"
 #include "credential.h"
 #include "unix-socket.h"
@@ -8,7 +9,7 @@ static struct tempfile socket_file;
 
 struct credential_cache_entry {
 	struct credential item;
-	unsigned long expiration;
+	timestamp_t expiration;
 };
 static struct credential_cache_entry *entries;
 static int entries_nr;
@@ -47,12 +48,12 @@ static void remove_credential(const struct credential *c)
 		e->expiration = 0;
 }
 
-static int check_expirations(void)
+static timestamp_t check_expirations(void)
 {
-	static unsigned long wait_for_entry_until;
+	static timestamp_t wait_for_entry_until;
 	int i = 0;
-	unsigned long now = time(NULL);
-	unsigned long next = (unsigned long)-1;
+	timestamp_t now = time(NULL);
+	timestamp_t next = TIME_MAX;
 
 	/*
 	 * Initially give the client 30 seconds to actually contact us
@@ -159,7 +160,7 @@ static void serve_one_client(FILE *in, FILE *out)
 static int serve_cache_loop(int fd)
 {
 	struct pollfd pfd;
-	unsigned long wakeup;
+	timestamp_t wakeup;
 
 	wakeup = check_expirations();
 	if (!wakeup)
