@@ -11,7 +11,7 @@ int cmd_main(int argc, const char **argv)
 	result = strcmp_offset(argv[1], argv[2], &offset);
 
 	/*
-	 * Because differnt CRTs behave differently, only rely on signs
+	 * Because different CRTs behave differently, only rely on signs
 	 * of the result values.
 	 */
 	result = (result < 0 ? -1 :

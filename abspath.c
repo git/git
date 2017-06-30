@@ -183,7 +183,7 @@ char *strbuf_realpath(struct strbuf *resolved, const char *path,
 
 			/*
 			 * use the symlink as the remaining components that
-			 * need to be resloved
+			 * need to be resolved
 			 */
 			strbuf_swap(&symlink, &remaining);
 		}

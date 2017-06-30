@@ -54,7 +54,7 @@ UI, Workflows & Features
    even when the other side hasn't enabled allowTipSHA1InWant.
 
  * The recently introduced "[includeIf "gitdir:$dir"] path=..."
-   mechansim has further been taught to take symlinks into account.
+   mechanism has further been taught to take symlinks into account.
    The directory "$dir" specified in "gitdir:$dir" may be a symlink to
    a real location, not something that $(getcwd) may return.  In such
    a case, a realpath of "$dir" is compared with the real path of the

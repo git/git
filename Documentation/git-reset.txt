@@ -294,7 +294,7 @@ $ git reset --keep start                    <3>
 
 Split a commit apart into a sequence of commits::
 +
-Suppose that you have created lots of logically separate changes and commited
+Suppose that you have created lots of logically separate changes and committed
 them together. Then, later you decide that it might be better to have each
 logical chunk associated with its own commit. You can use git reset to rewind
 history without changing the contents of your local files, and then successively
