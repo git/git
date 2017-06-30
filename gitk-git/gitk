@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright ? 2005-2016 Paul Mackerras.  All rights reserved.
+# Copyright @ 2005-2016 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -21,7 +21,6 @@ package require Tk
 #                       next ...
 #
 # review files should be commited and pushed together with code
-#
 
 # XXX: latest version code in: git\mingw32\bin\gitk
 namespace eval Comments {
@@ -1078,10 +1077,6 @@ proc reloadcommits {} {
     setcanvscroll
     getcommits $selid
 
-    # hack
-    # if {!$get_comments_reload} {
-    #    after 1000 load_comments
-    # }
     return 0
 }
 
@@ -13105,4 +13100,3 @@ after 1000 Comments::load_comments
 # indent-tabs-mode: t
 # tab-width: 8
 # End:
-
