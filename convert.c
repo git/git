@@ -507,13 +507,21 @@ static struct hashmap subprocess_map;
 
 static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 {
-	int err;
+	int err, i;
 	struct cmd2process *entry = (struct cmd2process *)subprocess;
 	struct string_list cap_list = STRING_LIST_INIT_NODUP;
 	char *cap_buf;
 	const char *cap_name;
 	struct child_process *process = &subprocess->process;
 	const char *cmd = subprocess->cmd;
+
+	static const struct {
+		const char *name;
+		unsigned int cap;
+	} known_caps[] = {
+		{ "clean",  CAP_CLEAN  },
+		{ "smudge", CAP_SMUDGE },
+	};
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
@@ -533,7 +541,15 @@ static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 	if (err)
 		goto done;
 
-	err = packet_writel(process->in, "capability=clean", "capability=smudge", NULL);
+	for (i = 0; i < ARRAY_SIZE(known_caps); ++i) {
+		err = packet_write_fmt_gently(
+			process->in, "capability=%s\n", known_caps[i].name);
+		if (err)
+			goto done;
+	}
+	err = packet_flush_gently(process->in);
+	if (err)
+		goto done;
 
 	for (;;) {
 		cap_buf = packet_read_line(process->out, NULL);
@@ -545,16 +561,15 @@ static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 			continue;
 
 		cap_name = cap_list.items[1].string;
-		if (!strcmp(cap_name, "clean")) {
-			entry->supported_capabilities |= CAP_CLEAN;
-		} else if (!strcmp(cap_name, "smudge")) {
-			entry->supported_capabilities |= CAP_SMUDGE;
-		} else {
-			warning(
-				"external filter '%s' requested unsupported filter capability '%s'",
-				cmd, cap_name
-			);
-		}
+		i = ARRAY_SIZE(known_caps) - 1;
+		while (i >= 0 && strcmp(cap_name, known_caps[i].name))
+			i--;
+
+		if (i >= 0)
+			entry->supported_capabilities |= known_caps[i].cap;
+		else
+			warning("external filter '%s' requested unsupported filter capability '%s'",
+			cmd, cap_name);
 
 		string_list_clear(&cap_list, 0);
 	}
