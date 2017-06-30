@@ -163,6 +163,30 @@ extern int git_configset_get_bool_or_int(struct config_set *cs, const char *key,
 extern int git_configset_get_maybe_bool(struct config_set *cs, const char *key, int *dest);
 extern int git_configset_get_pathname(struct config_set *cs, const char *key, const char **dest);
 
+/* Functions for reading a repository's config */
+struct repository;
+extern void repo_config(struct repository *repo, config_fn_t fn, void *data);
+extern int repo_config_get_value(struct repository *repo,
+				 const char *key, const char **value);
+extern const struct string_list *repo_config_get_value_multi(struct repository *repo,
+							     const char *key);
+extern int repo_config_get_string_const(struct repository *repo,
+					const char *key, const char **dest);
+extern int repo_config_get_string(struct repository *repo,
+				  const char *key, char **dest);
+extern int repo_config_get_int(struct repository *repo,
+			       const char *key, int *dest);
+extern int repo_config_get_ulong(struct repository *repo,
+				 const char *key, unsigned long *dest);
+extern int repo_config_get_bool(struct repository *repo,
+				const char *key, int *dest);
+extern int repo_config_get_bool_or_int(struct repository *repo,
+				       const char *key, int *is_bool, int *dest);
+extern int repo_config_get_maybe_bool(struct repository *repo,
+				      const char *key, int *dest);
+extern int repo_config_get_pathname(struct repository *repo,
+				    const char *key, const char **dest);
+
 extern int git_config_get_value(const char *key, const char **value);
 extern const struct string_list *git_config_get_value_multi(const char *key);
 extern void git_config_clear(void);

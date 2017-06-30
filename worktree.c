@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "repository.h"
 #include "refs.h"
 #include "strbuf.h"
 #include "worktree.h"
@@ -76,7 +77,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	if (!id)
 		die("Missing linked worktree name");
 
-	strbuf_git_common_path(&path, "worktrees/%s/gitdir", id);
+	strbuf_git_common_path(&path, the_repository, "worktrees/%s/gitdir", id);
 	if (strbuf_read_file(&worktree_path, path.buf, 0) <= 0)
 		/* invalid gitdir file */
 		goto done;
