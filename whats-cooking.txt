@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2017, #08; Wed, 28)
-X-master-at: e0aaa1b6532cfce93d87af9bc813fb2e7a7ce9d7
-X-next-at: 1cf373c61ae85f2e2e7e489e31d4b7eebf850f1f
+Subject: What's cooking in git.git (Jun 2017, #09; Fri, 30)
+X-master-at: 5116f791c12dda6b6c22fa85b600a8e30dfa168a
+X-next-at: 7f5404b183d51b3e3066c995608b78ea314ee660
 
-What's cooking in git.git (Jun 2017, #08; Wed, 28)
+What's cooking in git.git (Jun 2017, #09; Fri, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,67 +20,22 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* dt/raise-core-packed-git-limit (2017-06-21) 1 commit
-  (merged to 'next' on 2017-06-22 at bc1a90f077)
- + docs: update 64-bit core.packedGitLimit default
+* ab/die-errors-in-threaded (2017-06-21) 1 commit
+  (merged to 'next' on 2017-06-24 at 135fc4b963)
+ + die(): stop hiding errors due to overzealous recursion guard
 
- Doc update for a topic already in 'master'.
-
-
-* jk/add-p-commentchar-fix (2017-06-21) 2 commits
-  (merged to 'next' on 2017-06-22 at 5a1d464e6d)
- + add--interactive: quote commentChar regex
- + add--interactive: handle EOF in prompt_yesno
-
- "git add -p" were updated in 2.12 timeframe to cope with custom
- core.commentchar but the implementation was buggy and a
- metacharacter like $ and * did not work.
+ Traditionally, the default die() routine had a code to prevent it
+ from getting called multiple times, which interacted badly when a
+ threaded program used it (one downside is that the real error may
+ be hidden and instead the only error message given to the user may
+ end up being "die recursion detected", which is not very useful).
 
 
-* ks/t7508-indent-fix (2017-06-21) 1 commit
-  (merged to 'next' on 2017-06-22 at d12526967b)
- + t7508: fix a broken indentation
+* ah/doc-pretty-color-auto-prefix (2017-06-24) 1 commit
+  (merged to 'next' on 2017-06-26 at d7489fc831)
+ + doc: clarify syntax for %C(auto,...) in pretty formats
 
- Cosmetic update to a test.
-
-
-* lb/status-stash-count (2017-06-18) 3 commits
-  (merged to 'next' on 2017-06-22 at 86bc2f2213)
- + glossary: define 'stash entry'
- + status: add optional stash count information
- + stash: update documentation to use 'stash entry'
-
- "git status" learned to optionally give how many stash entries the
- user has in its output.
-
-
-* mb/reword-autocomplete-message (2017-06-21) 1 commit
-  (merged to 'next' on 2017-06-22 at 878888a743)
- + auto-correct: tweak phrasing
-
- Message update.
-
-
-* mh/packed-ref-store-prep (2017-06-18) 2 commits
-  (merged to 'next' on 2017-06-22 at 3f7a4da1e8)
- + for_each_bisect_ref(): don't trim refnames
- + lock_packed_refs(): fix cache validity check
- (this branch is used by mh/packed-ref-store and mh/packed-ref-store-prep-extra.)
-
- Bugfix for a topic that is (only) in 'master'.
-
---------------------------------------------------
-[New Topics]
-
-* ab/strbuf-addftime-tzname-boolify (2017-06-24) 3 commits
- - REWORD ONLY SQUASH
- - strbuf: change an always NULL/"" strbuf_addftime() param to bool
- - strbuf.h comment: discuss strbuf_addftime() arguments in order
-
- strbuf_addftime() is further getting tweaked.
-
- Waiting for a response.
- cf. <xmqqk2419rhg.fsf@gitster.mtv.corp.google.com>
+ Doc update.
 
 
 * jc/pack-bitmap-unaligned (2017-06-26) 1 commit
@@ -89,16 +44,37 @@ of the repositories listed at
 
  An unaligned 32-bit access in pack-bitmap code ahs been corrected.
 
- Will merge to 'master'.
+
+* ks/status-initial-commit (2017-06-21) 1 commit
+  (merged to 'next' on 2017-06-24 at 940ffd5816)
+ + status: contextually notify user about an initial commit
+
+ "git status" has long shown essentially the same message as "git
+ commit"; the message it gives while preparing for the root commit,
+ i.e. "Initial commit", was hard to understand for some new users.
+ Now it says "No commits yet" to stress more on the current status
+ (rather than the commit the user is preparing for, which is more in
+ line with the focus of "git commit").
 
 
-* mt/p4-parse-G-output (2017-06-27) 1 commit
- . git-p4: parse marshal output "p4 -G" in p4 changes
+* ks/submodule-add-doc (2017-06-22) 1 commit
+  (merged to 'next' on 2017-06-24 at 26309b38f2)
+ + Documentation/git-submodule: cleanup "add" section
 
- Use "p4 -G" to make "p4 changes" output more Python-friendly
- to parse.
+ Doc update.
 
- Needs review/ack from git-p4 folks.
+
+* pw/rebase-i-regression-fix-tests (2017-06-23) 5 commits
+  (merged to 'next' on 2017-06-23 at 835ae762f5)
+ + t3420: fix under GETTEXT_POISON build
+  (merged to 'next' on 2017-06-22 at d1dde1672a)
+ + rebase: add more regression tests for console output
+ + rebase: add regression tests for console output
+ + rebase -i: add test for reflog message
+ + sequencer: print autostash messages to stderr
+
+ Fix a recent regression to "git rebase -i" and add tests that would
+ have caught it and others.
 
 
 * rs/apply-validate-input (2017-06-27) 3 commits
@@ -109,8 +85,6 @@ of the repositories listed at
 
  Tighten error checks for invalid "git apply" input.
 
- Will merge to 'master'.
-
 
 * vs/typofixes (2017-06-27) 1 commit
   (merged to 'next' on 2017-06-28 at 3d11e0b3fa)
@@ -118,39 +92,50 @@ of the repositories listed at
 
  Many typofixes.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
-
-* aw/contrib-subtree-doc-asciidoctor (2017-06-27) 1 commit
- - subtree: honour USE_ASCIIDOCTOR when set
-
- The Makefile rule in contrib/subtree for building documentation
- learned to honour USE_ASCIIDOCTOR just like the main documentation
- set does.
-
- Will merge to 'next'.
-
-
-* js/fsck-name-object (2017-06-28) 1 commit
- - t1450: use egrep for regexp "alternation"
-
- Test fix.
-
- Will merge to 'next'.
-
-
-* jc/utf8-fprintf (2017-06-28) 1 commit
- - submodule--helper: do not call utf8_fprintf() unnecessarily
+* ab/grep-lose-opt-regflags (2017-06-30) 6 commits
+ - grep: remove redundant REG_NEWLINE when compiling fixed regex
+ - grep: remove regflags from the public grep_opt API
+ - grep: remove redundant and verbose re-assignments to 0
+ - grep: remove redundant "fixed" field re-assignment to 0
+ - grep: adjust a redundant grep pattern type assignment
+ - grep: remove redundant double assignment to 0
 
  Code cleanup.
 
  Will merge to 'next'.
 
 
-* rs/free-and-null (2017-06-28) 1 commit
- - coccinelle: polish FREE_AND_NULL rules
+* ks/commit-assuming-only-warning-removal (2017-06-30) 2 commits
+ - commit-template: distinguish status information unconditionally
+ - commit-template: remove outdated notice about explicit paths
 
- Code cleanup.
+ An old message shown in the commit log template was removed, as it
+ has outlived its usefulness.
+
+ Will merge to 'next'.
+
+
+* sb/hashmap-customize-comparison (2017-06-30) 3 commits
+ - hashmap: migrate documentation from Documentation/technical into header
+ - patch-ids.c: use hashmap correctly
+ - hashmap.h: compare function has access to a data field
+ (this branch is used by sb/diff-color-move.)
+
+ Update the hashmap API so that data to customize the behaviour of
+ the comparison function can be specified at the time a hashmap is
+ initialized.  This fixes a bug in patch-ids that may have caused
+ segfault.
+
+
+* sb/merge-recursive-code-cleanup (2017-06-30) 1 commit
+ - merge-recursive: use DIFF_XDL_SET macro
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -234,21 +219,67 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ab/strbuf-addftime-tzname-boolify (2017-06-24) 3 commits
+ - REWORD ONLY SQUASH
+ - strbuf: change an always NULL/"" strbuf_addftime() param to bool
+ - strbuf.h comment: discuss strbuf_addftime() arguments in order
+
+ strbuf_addftime() is further getting tweaked.
+
+ Waiting for a response.
+ cf. <xmqqk2419rhg.fsf@gitster.mtv.corp.google.com>
+
+
+* mt/p4-parse-G-output (2017-06-27) 1 commit
+ . git-p4: parse marshal output "p4 -G" in p4 changes
+
+ Use "p4 -G" to make "p4 changes" output more Python-friendly
+ to parse.
+
+ Needs review/ack from git-p4 folks.
+
+
+* aw/contrib-subtree-doc-asciidoctor (2017-06-27) 1 commit
+  (merged to 'next' on 2017-06-30 at af23bd111b)
+ + subtree: honour USE_ASCIIDOCTOR when set
+
+ The Makefile rule in contrib/subtree for building documentation
+ learned to honour USE_ASCIIDOCTOR just like the main documentation
+ set does.
+
+ Will merge to 'master'.
+
+
+* js/fsck-name-object (2017-06-28) 1 commit
+  (merged to 'next' on 2017-06-30 at 9a08514cf2)
+ + t1450: use egrep for regexp "alternation"
+
+ Test fix.
+
+ Will merge to 'master'.
+
+
+* jc/utf8-fprintf (2017-06-28) 1 commit
+  (merged to 'next' on 2017-06-30 at a8cc490818)
+ + submodule--helper: do not call utf8_fprintf() unnecessarily
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rs/free-and-null (2017-06-29) 1 commit
+ - coccinelle: polish FREE_AND_NULL rules
+
+ Code cleanup.
+
+
 * ab/wildmatch (2017-06-23) 1 commit
  - wildmatch: remove unused wildopts parameter
 
  Prepare the wildmatch API for future enhancements to allow a
  pattern that is repeatedly matched against many strings to be
  precompiled.
-
-
-* ah/doc-pretty-color-auto-prefix (2017-06-24) 1 commit
-  (merged to 'next' on 2017-06-26 at d7489fc831)
- + doc: clarify syntax for %C(auto,...) in pretty formats
-
- Doc update.
-
- Will merge to 'master'.
 
 
 * cc/shared-index-permfix (2017-06-25) 3 commits
@@ -276,7 +307,7 @@ of the repositories listed at
  year?  A deprecation warning period that is about 1 year does not
  sound too bad.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * sb/pull-rebase-submodule (2017-06-27) 4 commits
@@ -287,19 +318,6 @@ of the repositories listed at
 
  "git pull --rebase --recurse-submodules" learns to rebase the
  branch in the submodules to an updated base.
-
-
-* ab/die-errors-in-threaded (2017-06-21) 1 commit
-  (merged to 'next' on 2017-06-24 at 135fc4b963)
- + die(): stop hiding errors due to overzealous recursion guard
-
- Traditionally, the default die() routine had a code to prevent it
- from getting called multiple times, which interacted badly when a
- threaded program used it (one downside is that the real error may
- be hidden and instead the only error message given to the user may
- end up being "die recursion detected", which is not very useful).
-
- Will merge to 'master'.
 
 
 * bw/repo-object (2017-06-23) 21 commits
@@ -333,27 +351,15 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ks/submodule-add-doc (2017-06-22) 1 commit
-  (merged to 'next' on 2017-06-24 at 26309b38f2)
- + Documentation/git-submodule: cleanup "add" section
-
- Doc update.
-
- Will merge to 'master'.
-
-
-* pw/unquote-path-in-git-pm (2017-06-24) 5 commits
- - git-add--interactive.perl: Use unquote_path() from Git.pm
- - Add tests for Git::unquote_path()
- - Git::unquote_path() throw an exception on bad path
- - Git::unquote_path() Handle '\a'
- - Git.pm: add unquote_path()
+* pw/unquote-path-in-git-pm (2017-06-30) 4 commits
+ - t9700: add tests for Git::unquote_path()
+ - Git::unquote_path(): throw an exception on bad path
+ - Git::unquote_path(): handle '\a'
+ - add -i: move unquote_path() to Git.pm
 
  Code refactoring.
 
- Expecting a reroll.
- The structure of the series has a bit to be desired, but the end
- result looked mostly OK.
+ Will merge to 'next'.
 
 
 * rs/sha1-name-readdir-optim (2017-06-24) 4 commits
@@ -382,20 +388,6 @@ of the repositories listed at
  + sha1_file: teach packed_object_info about typename
 
  Code clean-ups.
-
- Will merge to 'master'.
-
-
-* ks/status-initial-commit (2017-06-21) 1 commit
-  (merged to 'next' on 2017-06-24 at 940ffd5816)
- + status: contextually notify user about an initial commit
-
- "git status" has long shown essentially the same message as "git
- commit"; the message it gives while preparing for the root commit,
- i.e. "Initial commit", was hard to understand for some new users.
- Now it says "No commits yet" to stress more on the current status
- (rather than the commit the user is preparing for, which is more in
- line with the focus of "git commit").
 
  Will merge to 'master'.
 
@@ -457,8 +449,9 @@ of the repositories listed at
  and possibly rebasing on them.
 
 
-* ls/filter-process-delayed (2017-06-27) 6 commits
+* ls/filter-process-delayed (2017-06-30) 7 commits
  - convert: add "status=delayed" to filter process protocol
+ - convert: refactor capabilities negotiation
  - convert: move multiple file filter error handling to separate function
  - convert: put the flags field before the flag itself for consistent style
  - t0021: write "OUT <size>" only on success
@@ -468,24 +461,7 @@ of the repositories listed at
  The filter-process interface learned to allow a process with long
  latency give a "delayed" response.
 
- Getting reviewed.
- cf. <20170624142301.c5jl7xxf4ici3cug@sigill.intra.peff.net>
- cf. <xmqqzicu4lnq.fsf@gitster.mtv.corp.google.com>
-
-
-* pw/rebase-i-regression-fix-tests (2017-06-23) 5 commits
-  (merged to 'next' on 2017-06-23 at 835ae762f5)
- + t3420: fix under GETTEXT_POISON build
-  (merged to 'next' on 2017-06-22 at d1dde1672a)
- + rebase: add more regression tests for console output
- + rebase: add regression tests for console output
- + rebase -i: add test for reflog message
- + sequencer: print autostash messages to stderr
-
- Fix a recent regression to "git rebase -i" and add tests that would
- have caught it and others.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * ab/sha1dc (2017-06-27) 3 commits
@@ -513,13 +489,7 @@ of the repositories listed at
  No more comments or updates?
 
 
-* sb/diff-color-move (2017-06-27) 31 commits
- - diff.c: detect blocks despite whitespace changes
- - diff.c: omit uninteresting moved lines
- - Documentation/diff: reword color moved
- - diff.c: better reporting on color.moved bogus configuration
- - diff.c: change the default for move coloring to zebra
- - diff.c: factor out shrinking of potential moved line blocks
+* sb/diff-color-move (2017-06-30) 26 commits
  - diff: document the new --color-moved setting
  - diff.c: add dimming to moved line detection
  - diff.c: color moved lines differently, plain mode
@@ -545,13 +515,15 @@ of the repositories listed at
  - diff.c: factor out diff_flush_patch_all_file_pairs
  - diff.c: move line ending check into emit_hunk_header
  - diff.c: readability fix
+ - Merge branch 'sb/hashmap-customize-comparison' into sb/diff-color-move
+ (this branch uses sb/hashmap-customize-comparison.)
 
  "git diff" has been taught to optionally paint new lines that are
  the same as deleted lines elsewhere differently from genuinely new
  lines.
 
- Expecting an evantual reroll.
- cf. <20170628005651.8110-1-sbeller@google.com>
+ Looking good.
+ cf. <CAGZ79kaK00CpXOtXnx_u7_KHbZq4Mz8vWHKy2a8p1gQ8ogE-OA@mail.gmail.com>
 
 --------------------------------------------------
 [Discarded]
@@ -590,5 +562,3 @@ of the repositories listed at
  + coccinelle: add a rule to make "expression" code use FREE_AND_NULL()
 
  The coccinelle rule for free-and-null refactoring got simplified.
-
-
