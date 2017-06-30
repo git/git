@@ -35,10 +35,10 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
  * the side of safety.  The actual value being negative does not have
  * any significance; only that it is non-zero matters.
  */
-static int patch_id_cmp(const void *unused_cmp_data,
+static int patch_id_cmp(struct diff_options *opt,
 			struct patch_id *a,
 			struct patch_id *b,
-			struct diff_options *opt)
+			const void *unused_keydata)
 {
 	if (is_null_oid(&a->patch_id) &&
 	    commit_patch_id(a->commit, opt, &a->patch_id, 0))
@@ -59,7 +59,7 @@ int init_patch_ids(struct patch_ids *ids)
 	DIFF_OPT_SET(&ids->diffopts, RECURSIVE);
 	diff_setup_done(&ids->diffopts);
 	hashmap_init(&ids->patches, (hashmap_cmp_fn)patch_id_cmp,
-		     NULL, 256);
+		     &ids->diffopts, 256);
 	return 0;
 }
 
@@ -95,7 +95,7 @@ struct patch_id *has_commit_patch_id(struct commit *commit,
 	if (init_patch_id_entry(&patch, commit, ids))
 		return NULL;
 
-	return hashmap_get(&ids->patches, &patch, &ids->diffopts);
+	return hashmap_get(&ids->patches, &patch, NULL);
 }
 
 struct patch_id *add_commit_patch_id(struct commit *commit,
