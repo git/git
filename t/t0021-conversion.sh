@@ -701,4 +701,120 @@ test_expect_success PERL 'invalid process filter must fail (and not hang!)' '
 	)
 '
 
+test_expect_success PERL 'delayed checkout in process filter' '
+	test_config_global filter.a.process "rot13-filter.pl a.log clean smudge delay" &&
+	test_config_global filter.a.required true &&
+	test_config_global filter.b.process "rot13-filter.pl b.log clean smudge delay" &&
+	test_config_global filter.b.required true &&
+
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+		echo "*.a filter=a" >.gitattributes &&
+		echo "*.b filter=b" >>.gitattributes &&
+		cp "$TEST_ROOT/test.o" test.a &&
+		cp "$TEST_ROOT/test.o" test-delay10.a &&
+		cp "$TEST_ROOT/test.o" test-delay11.a &&
+		cp "$TEST_ROOT/test.o" test-delay20.a &&
+		cp "$TEST_ROOT/test.o" test-delay10.b &&
+		git add . &&
+		git commit -m "test commit"
+	) &&
+
+	S=$(file_size "$TEST_ROOT/test.o") &&
+	cat >a.exp <<-EOF &&
+		START
+		init handshake complete
+		IN: smudge test.a $S [OK] -- OUT: $S . [OK]
+		IN: smudge test-delay10.a $S [OK] -- [DELAYED]
+		IN: smudge test-delay11.a $S [OK] -- [DELAYED]
+		IN: smudge test-delay20.a $S [OK] -- [DELAYED]
+		IN: list_available_blobs test-delay10.a test-delay11.a [OK]
+		IN: smudge test-delay10.a 0 [OK] -- OUT: $S . [OK]
+		IN: smudge test-delay11.a 0 [OK] -- OUT: $S . [OK]
+		IN: list_available_blobs test-delay20.a [OK]
+		IN: smudge test-delay20.a 0 [OK] -- OUT: $S . [OK]
+		IN: list_available_blobs [OK]
+		STOP
+	EOF
+	cat >b.exp <<-EOF &&
+		START
+		init handshake complete
+		IN: smudge test-delay10.b $S [OK] -- [DELAYED]
+		IN: list_available_blobs test-delay10.b [OK]
+		IN: smudge test-delay10.b 0 [OK] -- OUT: $S . [OK]
+		IN: list_available_blobs [OK]
+		STOP
+	EOF
+
+	rm -rf repo-cloned &&
+	filter_git clone repo repo-cloned &&
+	test_cmp_count a.exp repo-cloned/a.log &&
+	test_cmp_count b.exp repo-cloned/b.log &&
+
+	(
+		cd repo-cloned &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay11.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay20.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.b &&
+
+		rm *.a *.b &&
+		filter_git checkout . &&
+		test_cmp_count ../a.exp a.log &&
+		test_cmp_count ../b.exp b.log &&
+
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay11.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay20.a &&
+		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.b
+	)
+'
+
+test_expect_success PERL 'missing file in delayed checkout' '
+	test_config_global filter.bug.process "rot13-filter.pl bug.log clean smudge delay" &&
+	test_config_global filter.bug.required true &&
+
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+		echo "*.a filter=bug" >.gitattributes &&
+		cp "$TEST_ROOT/test.o" missing-delay.a
+		git add . &&
+		git commit -m "test commit"
+	) &&
+
+	rm -rf repo-cloned &&
+	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
+	cat git-stderr.log &&
+	grep "error: .missing-delay\.a. was not filtered properly" git-stderr.log
+'
+
+test_expect_success PERL 'invalid file in delayed checkout' '
+	test_config_global filter.bug.process "rot13-filter.pl bug.log clean smudge delay" &&
+	test_config_global filter.bug.required true &&
+
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+		echo "*.a filter=bug" >.gitattributes &&
+		cp "$TEST_ROOT/test.o" invalid-delay.a &&
+		cp "$TEST_ROOT/test.o" unfiltered
+		git add . &&
+		git commit -m "test commit"
+	) &&
+
+	rm -rf repo-cloned &&
+	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
+	grep "error: external filter .* signaled that .unfiltered. is now available although it has not been delayed earlier" git-stderr.log
+'
+
 test_done
