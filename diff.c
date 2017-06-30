@@ -561,6 +561,11 @@ static void emit_line(struct diff_options *o, const char *set, const char *reset
 }
 
 enum diff_symbol {
+	DIFF_SYMBOL_BINARY_DIFF_HEADER,
+	DIFF_SYMBOL_BINARY_DIFF_HEADER_DELTA,
+	DIFF_SYMBOL_BINARY_DIFF_HEADER_LITERAL,
+	DIFF_SYMBOL_BINARY_DIFF_BODY,
+	DIFF_SYMBOL_BINARY_DIFF_FOOTER,
 	DIFF_SYMBOL_SUBMODULE_ADD,
 	DIFF_SYMBOL_SUBMODULE_DEL,
 	DIFF_SYMBOL_SUBMODULE_UNTRACKED,
@@ -635,6 +640,7 @@ static void emit_diff_symbol(struct diff_options *o, enum diff_symbol s,
 	case DIFF_SYMBOL_SUBMODULE_HEADER:
 	case DIFF_SYMBOL_SUBMODULE_ERROR:
 	case DIFF_SYMBOL_SUBMODULE_PIPETHROUGH:
+	case DIFF_SYMBOL_BINARY_DIFF_BODY:
 	case DIFF_SYMBOL_CONTEXT_FRAGINFO:
 		emit_line(o, "", "", line, len);
 		break;
@@ -705,6 +711,19 @@ static void emit_diff_symbol(struct diff_options *o, enum diff_symbol s,
 	case DIFF_SYMBOL_BINARY_FILES:
 	case DIFF_SYMBOL_HEADER:
 		fprintf(o->file, "%s", line);
+		break;
+	case DIFF_SYMBOL_BINARY_DIFF_HEADER:
+		fprintf(o->file, "%sGIT binary patch\n", diff_line_prefix(o));
+		break;
+	case DIFF_SYMBOL_BINARY_DIFF_HEADER_DELTA:
+		fprintf(o->file, "%sdelta %s\n", diff_line_prefix(o), line);
+		break;
+	case DIFF_SYMBOL_BINARY_DIFF_HEADER_LITERAL:
+		fprintf(o->file, "%sliteral %s\n", diff_line_prefix(o), line);
+		break;
+	case DIFF_SYMBOL_BINARY_DIFF_FOOTER:
+		fputs(diff_line_prefix(o), o->file);
+		fputc('\n', o->file);
 		break;
 	case DIFF_SYMBOL_REWRITE_DIFF:
 		fraginfo = diff_get_color(o->use_color, DIFF_FRAGINFO);
@@ -2390,8 +2409,8 @@ static unsigned char *deflate_it(char *data,
 	return deflated;
 }
 
-static void emit_binary_diff_body(FILE *file, mmfile_t *one, mmfile_t *two,
-				  const char *prefix)
+static void emit_binary_diff_body(struct diff_options *o,
+				  mmfile_t *one, mmfile_t *two)
 {
 	void *cp;
 	void *delta;
@@ -2420,13 +2439,18 @@ static void emit_binary_diff_body(FILE *file, mmfile_t *one, mmfile_t *two,
 	}
 
 	if (delta && delta_size < deflate_size) {
-		fprintf(file, "%sdelta %lu\n", prefix, orig_size);
+		char *s = xstrfmt("%lu", orig_size);
+		emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_HEADER_DELTA,
+				 s, strlen(s), 0);
+		free(s);
 		free(deflated);
 		data = delta;
 		data_size = delta_size;
-	}
-	else {
-		fprintf(file, "%sliteral %lu\n", prefix, two->size);
+	} else {
+		char *s = xstrfmt("%lu", two->size);
+		emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_HEADER_LITERAL,
+				 s, strlen(s), 0);
+		free(s);
 		free(delta);
 		data = deflated;
 		data_size = deflate_size;
@@ -2435,8 +2459,9 @@ static void emit_binary_diff_body(FILE *file, mmfile_t *one, mmfile_t *two,
 	/* emit data encoded in base85 */
 	cp = data;
 	while (data_size) {
+		int len;
 		int bytes = (52 < data_size) ? 52 : data_size;
-		char line[70];
+		char line[71];
 		data_size -= bytes;
 		if (bytes <= 26)
 			line[0] = bytes + 'A' - 1;
@@ -2444,20 +2469,24 @@ static void emit_binary_diff_body(FILE *file, mmfile_t *one, mmfile_t *two,
 			line[0] = bytes - 26 + 'a' - 1;
 		encode_85(line + 1, cp, bytes);
 		cp = (char *) cp + bytes;
-		fprintf(file, "%s", prefix);
-		fputs(line, file);
-		fputc('\n', file);
+
+		len = strlen(line);
+		line[len++] = '\n';
+		line[len] = '\0';
+
+		emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_BODY,
+				 line, len, 0);
 	}
-	fprintf(file, "%s\n", prefix);
+	emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_FOOTER, NULL, 0, 0);
 	free(data);
 }
 
-static void emit_binary_diff(FILE *file, mmfile_t *one, mmfile_t *two,
-			     const char *prefix)
+static void emit_binary_diff(struct diff_options *o,
+			     mmfile_t *one, mmfile_t *two)
 {
-	fprintf(file, "%sGIT binary patch\n", prefix);
-	emit_binary_diff_body(file, one, two, prefix);
-	emit_binary_diff_body(file, two, one, prefix);
+	emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_HEADER, NULL, 0, 0);
+	emit_binary_diff_body(o, one, two);
+	emit_binary_diff_body(o, two, one);
 }
 
 int diff_filespec_is_binary(struct diff_filespec *one)
@@ -2643,7 +2672,7 @@ static void builtin_diff(const char *name_a,
 		emit_diff_symbol(o, DIFF_SYMBOL_HEADER, header.buf, header.len, 0);
 		strbuf_reset(&header);
 		if (DIFF_OPT_TST(o, BINARY))
-			emit_binary_diff(o->file, &mf1, &mf2, line_prefix);
+			emit_binary_diff(o, &mf1, &mf2);
 		else {
 			strbuf_addf(&sb, "%sBinary files %s and %s differ\n",
 				    diff_line_prefix(o), lbl[0], lbl[1]);
