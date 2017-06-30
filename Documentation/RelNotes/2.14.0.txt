@@ -94,6 +94,12 @@ UI, Workflows & Features
  * "git status" learned to optionally give how many stash entries the
    user has in its output.
 
+ * "git status" has long shown essentially the same message as "git
+   commit"; the message it gives while preparing for the root commit,
+   i.e. "Initial commit", was hard to understand for some new users.
+   Now it says "No commits yet" to stress more on the current status
+   (rather than the commit the user is preparing for, which is more in
+   line with the focus of "git commit").
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -189,6 +195,12 @@ Performance, Internal Implementation, Development Support etc.
  * A common pattern to free a piece of memory and assign NULL to the
    pointer that used to point at it has been replaced with a new
    FREE_AND_NULL() macro.
+
+ * Traditionally, the default die() routine had a code to prevent it
+   from getting called multiple times, which interacted badly when a
+   threaded program used it (one downside is that the real error may
+   be hidden and instead the only error message given to the user may
+   end up being "die recursion detected", which is not very useful).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -393,7 +405,18 @@ notes for details).
    metacharacter like $ and * did not work.
    (merge d85d7ecb80 jk/add-p-commentchar-fix later to maint).
 
+ * A recent regression in "git rebase -i" has been fixed and tests
+   that would have caught it and others have been added.
+   (merge adf16c08cb pw/rebase-i-regression-fix-tests later to maint).
+
+ * An unaligned 32-bit access in pack-bitmap code ahs been corrected.
+   (merge da41c942b3 jc/pack-bitmap-unaligned later to maint).
+
+ * Tighten error checks for invalid "git apply" input.
+   (merge d70e9c5c8c rs/apply-validate-input later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 68241cb9dd sb/t4005-modernize later to maint).
    (merge 4fced24712 ks/t7508-indent-fix later to maint).
    (merge 968b1fe263 mb/reword-autocomplete-message later to maint).
+   (merge 8592c95cdf ah/doc-pretty-color-auto-prefix later to maint).
