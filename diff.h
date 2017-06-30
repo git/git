@@ -192,6 +192,7 @@ struct diff_options {
 		COLOR_MOVED_NO = 0,
 		COLOR_MOVED_PLAIN = 1,
 		COLOR_MOVED_ZEBRA = 2,
+		COLOR_MOVED_ZEBRA_DIM = 3,
 	} color_moved;
 	#define COLOR_MOVED_DEFAULT COLOR_MOVED_ZEBRA
 	#define COLOR_MOVED_MIN_BLOCK_LENGTH 3
@@ -218,8 +219,12 @@ enum color_diff {
 	DIFF_FUNCINFO = 8,
 	DIFF_FILE_OLD_MOVED = 9,
 	DIFF_FILE_OLD_MOVED_ALT = 10,
-	DIFF_FILE_NEW_MOVED = 11,
-	DIFF_FILE_NEW_MOVED_ALT = 12
+	DIFF_FILE_OLD_MOVED_DIM = 11,
+	DIFF_FILE_OLD_MOVED_ALT_DIM = 12,
+	DIFF_FILE_NEW_MOVED = 13,
+	DIFF_FILE_NEW_MOVED_ALT = 14,
+	DIFF_FILE_NEW_MOVED_DIM = 15,
+	DIFF_FILE_NEW_MOVED_ALT_DIM = 16
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
