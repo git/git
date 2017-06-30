@@ -11,9 +11,6 @@ package require Tk
 
 ####################### code review comment ##########################
 #
-# hotkey: <Key-c> (or right click cflist) show commnt window (click file on cflist first), cflist is right bottom window list of changed files in commits
-#         <Key-l> reload comments
-#
 # auto create files: gitk/reviews/gvvvv@163.com
 #
 #          file format: commit: 39f611311b50cbe94f6ce9ec3ec37e3804265094
@@ -60,8 +57,6 @@ namespace eval Comments {
         }
 
         set V::username [get_current_user]
-
-        exec git add $V::root_dir
     }
 
     proc db_is_row_sep {row} {
@@ -270,6 +265,8 @@ namespace eval Comments {
         close $fd
 
         $statusw conf -text ""
+
+        exec git add $V::root_dir
 
         load_comments
     }
