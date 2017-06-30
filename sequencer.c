@@ -1922,7 +1922,7 @@ static int apply_autostash(struct replay_opts *opts)
 	argv_array_push(&child.args, "apply");
 	argv_array_push(&child.args, stash_sha1.buf);
 	if (!run_command(&child))
-		printf(_("Applied autostash.\n"));
+		fprintf(stderr, _("Applied autostash.\n"));
 	else {
 		struct child_process store = CHILD_PROCESS_INIT;
 
@@ -1936,10 +1936,11 @@ static int apply_autostash(struct replay_opts *opts)
 		if (run_command(&store))
 			ret = error(_("cannot store %s"), stash_sha1.buf);
 		else
-			printf(_("Applying autostash resulted in conflicts.\n"
-				"Your changes are safe in the stash.\n"
-				"You can run \"git stash pop\" or"
-				" \"git stash drop\" at any time.\n"));
+			fprintf(stderr,
+				_("Applying autostash resulted in conflicts.\n"
+				  "Your changes are safe in the stash.\n"
+				  "You can run \"git stash pop\" or"
+				  " \"git stash drop\" at any time.\n"));
 	}
 
 	strbuf_release(&stash_sha1);
