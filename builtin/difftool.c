@@ -131,10 +131,12 @@ struct working_tree_entry {
 };
 
 static int working_tree_entry_cmp(const void *unused_cmp_data,
-				  struct working_tree_entry *a,
-				  struct working_tree_entry *b,
-				  void *unused_keydata)
+				  const void *entry,
+				  const void *entry_or_key,
+				  const void *unused_keydata)
 {
+	const struct working_tree_entry *a = entry;
+	const struct working_tree_entry *b = entry_or_key;
 	return strcmp(a->path, b->path);
 }
 
@@ -149,9 +151,13 @@ struct pair_entry {
 };
 
 static int pair_cmp(const void *unused_cmp_data,
-		    struct pair_entry *a, struct pair_entry *b,
-		    void *unused_keydata)
+		    const void *entry,
+		    const void *entry_or_key,
+		    const void *unused_keydata)
 {
+	const struct pair_entry *a = entry;
+	const struct pair_entry *b = entry_or_key;
+
 	return strcmp(a->path, b->path);
 }
 
@@ -179,9 +185,13 @@ struct path_entry {
 };
 
 static int path_entry_cmp(const void *unused_cmp_data,
-			  struct path_entry *a, struct path_entry *b,
-			  void *key)
+			  const void *entry,
+			  const void *entry_or_key,
+			  const void *key)
 {
+	const struct path_entry *a = entry;
+	const struct path_entry *b = entry_or_key;
+
 	return strcmp(a->path, key ? key : b->path);
 }
 
@@ -372,10 +382,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	rdir_len = rdir.len;
 	wtdir_len = wtdir.len;
 
-	hashmap_init(&working_tree_dups,
-		     (hashmap_cmp_fn)working_tree_entry_cmp, NULL, 0);
-	hashmap_init(&submodules, (hashmap_cmp_fn)pair_cmp, NULL, 0);
-	hashmap_init(&symlinks2, (hashmap_cmp_fn)pair_cmp, NULL, 0);
+	hashmap_init(&working_tree_dups, working_tree_entry_cmp, NULL, 0);
+	hashmap_init(&submodules, pair_cmp, NULL, 0);
+	hashmap_init(&symlinks2, pair_cmp, NULL, 0);
 
 	child.no_stdin = 1;
 	child.git_cmd = 1;
@@ -585,10 +594,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * in the common case of --symlinks and the difftool updating
 	 * files through the symlink.
 	 */
-	hashmap_init(&wt_modified, (hashmap_cmp_fn)path_entry_cmp,
-		     NULL, wtindex.cache_nr);
-	hashmap_init(&tmp_modified, (hashmap_cmp_fn)path_entry_cmp,
-		     NULL, wtindex.cache_nr);
+	hashmap_init(&wt_modified, path_entry_cmp, NULL, wtindex.cache_nr);
+	hashmap_init(&tmp_modified, path_entry_cmp, NULL, wtindex.cache_nr);
 
 	for (i = 0; i < wtindex.cache_nr; i++) {
 		struct hashmap_entry dummy;
