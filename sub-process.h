@@ -21,8 +21,8 @@ struct subprocess_entry {
 /* subprocess functions */
 
 extern int cmd2process_cmp(const void *unused_cmp_data,
-			   const struct subprocess_entry *e1,
-			   const struct subprocess_entry *e2,
+			   const void *e1,
+			   const void *e2,
 			   const void *unused_keydata);
 
 typedef int(*subprocess_start_fn)(struct subprocess_entry *entry);
