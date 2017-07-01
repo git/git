@@ -1150,23 +1150,15 @@ static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 	if (!refnames->nr)
 		return 0;
 
-	result = repack_without_refs(refs->packed_ref_store, refnames, &err);
-	if (result) {
-		/*
-		 * If we failed to rewrite the packed-refs file, then
-		 * it is unsafe to try to remove loose refs, because
-		 * doing so might expose an obsolete packed value for
-		 * a reference that might even point at an object that
-		 * has been garbage collected.
-		 */
-		if (refnames->nr == 1)
-			error(_("could not delete reference %s: %s"),
-			      refnames->items[0].string, err.buf);
-		else
-			error(_("could not delete references: %s"), err.buf);
+	if (packed_refs_lock(refs->packed_ref_store, 0, &err))
+		goto error;
 
-		goto out;
+	if (repack_without_refs(refs->packed_ref_store, refnames, &err)) {
+		packed_refs_unlock(refs->packed_ref_store);
+		goto error;
 	}
+
+	packed_refs_unlock(refs->packed_ref_store);
 
 	for (i = 0; i < refnames->nr; i++) {
 		const char *refname = refnames->items[i].string;
@@ -1175,9 +1167,24 @@ static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 			result |= error(_("could not remove reference %s"), refname);
 	}
 
-out:
 	strbuf_release(&err);
 	return result;
+
+error:
+	/*
+	 * If we failed to rewrite the packed-refs file, then it is
+	 * unsafe to try to remove loose refs, because doing so might
+	 * expose an obsolete packed value for a reference that might
+	 * even point at an object that has been garbage collected.
+	 */
+	if (refnames->nr == 1)
+		error(_("could not delete reference %s: %s"),
+		      refnames->items[0].string, err.buf);
+	else
+		error(_("could not delete references: %s"), err.buf);
+
+	strbuf_release(&err);
+	return -1;
 }
 
 /*
@@ -2569,10 +2576,18 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		}
 	}
 
-	if (repack_without_refs(refs->packed_ref_store, &refs_to_delete, err)) {
+	if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;
 	}
+
+	if (repack_without_refs(refs->packed_ref_store, &refs_to_delete, err)) {
+		ret = TRANSACTION_GENERIC_ERROR;
+		packed_refs_unlock(refs->packed_ref_store);
+		goto cleanup;
+	}
+
+	packed_refs_unlock(refs->packed_ref_store);
 
 	/* Delete the reflogs of any references that were deleted: */
 	for_each_string_list_item(ref_to_delete, &refs_to_delete) {

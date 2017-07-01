@@ -671,24 +671,11 @@ error:
 }
 
 /*
- * Rollback the lockfile for the packed-refs file, and discard the
- * in-memory packed reference cache.  (The packed-refs file will be
- * read anew if it is needed again after this function is called.)
- */
-static void rollback_packed_refs(struct packed_ref_store *refs)
-{
-	packed_assert_main_repository(refs, "rollback_packed_refs");
-
-	if (!is_lock_file_locked(&refs->lock))
-		die("BUG: packed-refs not locked");
-	packed_refs_unlock(&refs->base);
-	clear_packed_ref_cache(refs);
-}
-
-/*
  * Rewrite the packed-refs file, omitting any refs listed in
  * 'refnames'. On error, leave packed-refs unchanged, write an error
- * message to 'err', and return a nonzero value.
+ * message to 'err', and return a nonzero value. The packed refs lock
+ * must be held when calling this function; it will still be held when
+ * the function returns.
  *
  * The refs in 'refnames' needn't be sorted. `err` must not be NULL.
  */
@@ -701,10 +688,12 @@ int repack_without_refs(struct ref_store *ref_store,
 	struct ref_dir *packed;
 	struct string_list_item *refname;
 	int needs_repacking = 0, removed = 0;
-	int ret;
 
 	packed_assert_main_repository(refs, "repack_without_refs");
 	assert(err);
+
+	if (!is_lock_file_locked(&refs->lock))
+		die("BUG: repack_without_refs called without holding lock");
 
 	/* Look for a packed ref */
 	for_each_string_list_item(refname, refnames) {
@@ -718,9 +707,6 @@ int repack_without_refs(struct ref_store *ref_store,
 	if (!needs_repacking)
 		return 0; /* no refname exists in packed refs */
 
-	if (packed_refs_lock(&refs->base, 0, err))
-		return -1;
-
 	packed = get_packed_refs(refs);
 
 	/* Remove refnames from the cache */
@@ -732,14 +718,12 @@ int repack_without_refs(struct ref_store *ref_store,
 		 * All packed entries disappeared while we were
 		 * acquiring the lock.
 		 */
-		rollback_packed_refs(refs);
+		clear_packed_ref_cache(refs);
 		return 0;
 	}
 
 	/* Write what remains */
-	ret = commit_packed_refs(&refs->base, err);
-	packed_refs_unlock(ref_store);
-	return ret;
+	return commit_packed_refs(&refs->base, err);
 }
 
 static int packed_init_db(struct ref_store *ref_store, struct strbuf *err)
