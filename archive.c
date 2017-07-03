@@ -358,7 +358,7 @@ static void parse_treeish_arg(const char **argv,
 		free(ref);
 	}
 
-	if (get_sha1(name, oid.hash))
+	if (get_oid(name, &oid))
 		die("Not a valid object name");
 
 	commit = lookup_commit_reference_gently(&oid, 1);
