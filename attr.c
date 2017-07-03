@@ -76,9 +76,10 @@ struct attr_hash_entry {
 };
 
 /* attr_hashmap comparison function */
-static int attr_hash_entry_cmp(const struct attr_hash_entry *a,
+static int attr_hash_entry_cmp(void *unused_cmp_data,
+			       const struct attr_hash_entry *a,
 			       const struct attr_hash_entry *b,
-			       void *unused)
+			       void *unused_keydata)
 {
 	return (a->keylen != b->keylen) || strncmp(a->key, b->key, a->keylen);
 }
@@ -86,7 +87,7 @@ static int attr_hash_entry_cmp(const struct attr_hash_entry *a,
 /* Initialize an 'attr_hashmap' object */
 static void attr_hashmap_init(struct attr_hashmap *map)
 {
-	hashmap_init(&map->map, (hashmap_cmp_fn) attr_hash_entry_cmp, 0);
+	hashmap_init(&map->map, (hashmap_cmp_fn) attr_hash_entry_cmp, NULL, 0);
 }
 
 /*
