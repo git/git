@@ -70,6 +70,8 @@ ancestor() {
 case $(uname -s) in
 *MINGW*)
 	;;
+*CYGWIN*)
+	;;
 *)
 	test_set_prereq POSIX
 	;;
