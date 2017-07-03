@@ -70,6 +70,7 @@ static int continue_current_merge;
 static int allow_unrelated_histories;
 static int show_progress = -1;
 static int default_to_upstream = 1;
+static int signoff;
 static const char *sign_commit;
 
 static struct strategy all_strategy[] = {
@@ -233,6 +234,7 @@ static struct option builtin_merge_options[] = {
 	{ OPTION_STRING, 'S', "gpg-sign", &sign_commit, N_("key-id"),
 	  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 	OPT_BOOL(0, "overwrite-ignore", &overwrite_ignore, N_("update ignored files (default)")),
+	OPT_BOOL(0, "signoff", &signoff, N_("add Signed-off-by:")),
 	OPT_END()
 };
 
@@ -775,6 +777,8 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	strbuf_stripspace(&msg, 0 < option_edit);
 	if (!msg.len)
 		abort_commit(remoteheads, _("Empty commit message."));
+	if (signoff)
+		append_signoff(&msg, ignore_non_trailer(msg.buf, msg.len), 0);
 	strbuf_release(&merge_msg);
 	strbuf_addbuf(&merge_msg, &msg);
 	strbuf_release(&msg);
