@@ -56,20 +56,20 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 	}
 
 	while (i < argc) {
-		unsigned char sha1[20];
+		struct object_id oid;
 		const char *name = argv[i++];
-		if (get_sha1(name, sha1)) {
+		if (get_oid(name, &oid)) {
 			had_error = !!error("tag '%s' not found.", name);
 			continue;
 		}
 
-		if (gpg_verify_tag(sha1, name, flags)) {
+		if (gpg_verify_tag(oid.hash, name, flags)) {
 			had_error = 1;
 			continue;
 		}
 
 		if (fmt_pretty)
-			pretty_print_ref(name, sha1, fmt_pretty);
+			pretty_print_ref(name, oid.hash, fmt_pretty);
 	}
 	return had_error;
 }
