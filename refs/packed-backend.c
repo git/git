@@ -794,6 +794,13 @@ static int packed_rename_ref(struct ref_store *ref_store,
 	die("BUG: packed reference store does not support renaming references");
 }
 
+static int packed_copy_ref(struct ref_store *ref_store,
+			   const char *oldrefname, const char *newrefname,
+			   const char *logmsg)
+{
+	die("BUG: packed reference store does not support copying references");
+}
+
 static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_store)
 {
 	return empty_ref_iterator_begin();
@@ -859,6 +866,7 @@ struct ref_storage_be refs_be_packed = {
 	packed_create_symref,
 	packed_delete_refs,
 	packed_rename_ref,
+	packed_copy_ref,
 
 	packed_ref_iterator_begin,
 	packed_read_raw_ref,

@@ -552,6 +552,9 @@ typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
+typedef int copy_ref_fn(struct ref_store *ref_store,
+			  const char *oldref, const char *newref,
+			  const char *logmsg);
 
 /*
  * Iterate over the references in `ref_store` whose names start with
@@ -650,6 +653,7 @@ struct ref_storage_be {
 	create_symref_fn *create_symref;
 	delete_refs_fn *delete_refs;
 	rename_ref_fn *rename_ref;
+	copy_ref_fn *copy_ref;
 
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
