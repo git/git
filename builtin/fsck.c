@@ -738,12 +738,12 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	heads = 0;
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
-		unsigned char sha1[20];
-		if (!get_sha1(arg, sha1)) {
-			struct object *obj = lookup_object(sha1);
+		struct object_id oid;
+		if (!get_oid(arg, &oid)) {
+			struct object *obj = lookup_object(oid.hash);
 
 			if (!obj || !(obj->flags & HAS_OBJ)) {
-				error("%s: object missing", sha1_to_hex(sha1));
+				error("%s: object missing", oid_to_hex(&oid));
 				errors_found |= ERROR_OBJECT;
 				continue;
 			}
