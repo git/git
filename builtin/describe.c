@@ -143,7 +143,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 			return 0;
 
 		for_each_string_list_item(item, &exclude_patterns) {
-			if (!wildmatch(item->string, path + 10, 0, NULL))
+			if (!wildmatch(item->string, path + 10, 0))
 				return 0;
 		}
 	}
@@ -159,7 +159,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 			return 0;
 
 		for_each_string_list_item(item, &patterns) {
-			if (!wildmatch(item->string, path + 10, 0, NULL))
+			if (!wildmatch(item->string, path + 10, 0))
 				break;
 
 			/* If we get here, no pattern matched. */
