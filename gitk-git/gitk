@@ -11,7 +11,7 @@ package require Tk
 
 ####################### code review comment ##########################
 #
-# auto create files: gitk/reviews/gvvvv@163.com
+# auto create files like: gitk/reviews/gvvvv@163.com
 #
 #          file format: commit: 39f611311b50cbe94f6ce9ec3ec37e3804265094
 #                       filepath: src/index.js:100
@@ -22,7 +22,6 @@ package require Tk
 #
 # review files should be commited and pushed together with code
 
-# XXX: latest version code in: git\mingw32\bin\gitk
 namespace eval Comments {
 
     namespace eval V {
@@ -430,7 +429,7 @@ namespace eval Comments {
             }
         }
 
-        proc popup_entry { label_str content on_pack_end } {
+        proc popup_entry { label_str content {on_pack_end ""} } {
           close_comment_pop
 
           set top [toplevel .top]
