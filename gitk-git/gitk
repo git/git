@@ -105,7 +105,7 @@ namespace eval Comments {
     }
 
     proc load_comments {} {
-        global treediffs diffids api_token
+        global diffids api_token
         global commitinfo currentid displayorder numcommits statusw
 
         set V::comment_lists {}
@@ -140,9 +140,9 @@ namespace eval Comments {
 
         log loading-comments-end
 
-        if {$V::comment_lists == {}} return
-
         $statusw conf -text ""
+
+        if {$V::comment_lists == {}} return
 
         run reloadcommits
     }
@@ -187,7 +187,7 @@ namespace eval Comments {
     # event in sel_flist
     proc show_comment {} {
         global currentid sha1string
-        global treediffs diffids cmitmode
+        global diffids cmitmode
         global flist_menu_file
 
         set last ""
@@ -234,6 +234,10 @@ namespace eval Comments {
                 return no
             }
         } else {
+            if {![info exists treediffs] || ![info exists treediffs($diffids)]} {
+                return no
+            }
+
             set e [lindex $treediffs($diffids) [expr {$l-2}]]
         }
         set flist_menu_file [remove_comment_sign $e]
@@ -13093,7 +13097,7 @@ getcommits {}
 
 # hack
 Comments::init
-after 1000 Comments::load_comments
+after 2000 Comments::load_comments
 
 # Local variables:
 # mode: tcl
