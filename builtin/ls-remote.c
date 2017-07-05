@@ -24,7 +24,7 @@ static int tail_match(const char **pattern, const char *path)
 
 	pathbuf = xstrfmt("/%s", path);
 	while ((p = *(pattern++)) != NULL) {
-		if (!wildmatch(p, pathbuf, 0, NULL)) {
+		if (!wildmatch(p, pathbuf, 0)) {
 			free(pathbuf);
 			return 1;
 		}

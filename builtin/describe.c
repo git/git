@@ -54,8 +54,10 @@ static const char *prio_names[] = {
 	N_("head"), N_("lightweight"), N_("annotated"),
 };
 
-static int commit_name_cmp(const struct commit_name *cn1,
-		const struct commit_name *cn2, const void *peeled)
+static int commit_name_cmp(const void *unused_cmp_data,
+			   const struct commit_name *cn1,
+			   const struct commit_name *cn2,
+			   const void *peeled)
 {
 	return oidcmp(&cn1->peeled, peeled ? peeled : &cn2->peeled);
 }
@@ -143,7 +145,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 			return 0;
 
 		for_each_string_list_item(item, &exclude_patterns) {
-			if (!wildmatch(item->string, path + 10, 0, NULL))
+			if (!wildmatch(item->string, path + 10, 0))
 				return 0;
 		}
 	}
@@ -159,7 +161,7 @@ static int get_name(const char *path, const struct object_id *oid, int flag, voi
 			return 0;
 
 		for_each_string_list_item(item, &patterns) {
-			if (!wildmatch(item->string, path + 10, 0, NULL))
+			if (!wildmatch(item->string, path + 10, 0))
 				break;
 
 			/* If we get here, no pattern matched. */
@@ -501,7 +503,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		return cmd_name_rev(args.argc, args.argv, prefix);
 	}
 
-	hashmap_init(&names, (hashmap_cmp_fn) commit_name_cmp, 0);
+	hashmap_init(&names, (hashmap_cmp_fn) commit_name_cmp, NULL, 0);
 	for_each_rawref(get_name, NULL);
 	if (!names.size && !always)
 		die(_("No names found, cannot describe anything."));

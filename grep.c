@@ -35,10 +35,8 @@ void init_grep_defaults(void)
 	memset(opt, 0, sizeof(*opt));
 	opt->relative = 1;
 	opt->pathname = 1;
-	opt->regflags = REG_NEWLINE;
 	opt->max_depth = -1;
 	opt->pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED;
-	opt->extended_regexp_option = 0;
 	color_set(opt->color_context, "");
 	color_set(opt->color_filename, "");
 	color_set(opt->color_function, "");
@@ -79,10 +77,7 @@ int grep_config(const char *var, const char *value, void *cb)
 		return -1;
 
 	if (!strcmp(var, "grep.extendedregexp")) {
-		if (git_config_bool(var, value))
-			opt->extended_regexp_option = 1;
-		else
-			opt->extended_regexp_option = 0;
+		opt->extended_regexp_option = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -157,7 +152,6 @@ void grep_init(struct grep_opt *opt, const char *prefix)
 	opt->linenum = def->linenum;
 	opt->max_depth = def->max_depth;
 	opt->pathname = def->pathname;
-	opt->regflags = def->regflags;
 	opt->relative = def->relative;
 	opt->output = def->output;
 
@@ -173,33 +167,41 @@ void grep_init(struct grep_opt *opt, const char *prefix)
 
 static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, struct grep_opt *opt)
 {
+	/*
+	 * When committing to the pattern type by setting the relevant
+	 * fields in grep_opt it's generally not necessary to zero out
+	 * the fields we're not choosing, since they won't have been
+	 * set by anything. The extended_regexp_option field is the
+	 * only exception to this.
+	 *
+	 * This is because in the process of parsing grep.patternType
+	 * & grep.extendedRegexp we set opt->pattern_type_option and
+	 * opt->extended_regexp_option, respectively. We then
+	 * internally use opt->extended_regexp_option to see if we're
+	 * compiling an ERE. It must be unset if that's not actually
+	 * the case.
+	 */
+	if (pattern_type != GREP_PATTERN_TYPE_ERE &&
+	    opt->extended_regexp_option)
+		opt->extended_regexp_option = 0;
+
 	switch (pattern_type) {
 	case GREP_PATTERN_TYPE_UNSPECIFIED:
 		/* fall through */
 
 	case GREP_PATTERN_TYPE_BRE:
-		opt->fixed = 0;
-		opt->pcre1 = 0;
-		opt->pcre2 = 0;
 		break;
 
 	case GREP_PATTERN_TYPE_ERE:
-		opt->fixed = 0;
-		opt->pcre1 = 0;
-		opt->pcre2 = 0;
-		opt->regflags |= REG_EXTENDED;
+		opt->extended_regexp_option = 1;
 		break;
 
 	case GREP_PATTERN_TYPE_FIXED:
 		opt->fixed = 1;
-		opt->pcre1 = 0;
-		opt->pcre2 = 0;
 		break;
 
 	case GREP_PATTERN_TYPE_PCRE:
-		opt->fixed = 0;
 #ifdef USE_LIBPCRE2
-		opt->pcre1 = 0;
 		opt->pcre2 = 1;
 #else
 		/*
@@ -209,7 +211,6 @@ static void grep_set_pattern_type_option(enum grep_pattern_type pattern_type, st
 		 * "cannot use Perl-compatible regexes[...]".
 		 */
 		opt->pcre1 = 1;
-		opt->pcre2 = 0;
 #endif
 		break;
 	}
@@ -222,6 +223,11 @@ void grep_commit_pattern_type(enum grep_pattern_type pattern_type, struct grep_o
 	else if (opt->pattern_type_option != GREP_PATTERN_TYPE_UNSPECIFIED)
 		grep_set_pattern_type_option(opt->pattern_type_option, opt);
 	else if (opt->extended_regexp_option)
+		/*
+		 * This branch *must* happen after setting from the
+		 * opt->pattern_type_option above, we don't want
+		 * grep.extendedRegexp to override grep.patternType!
+		 */
 		grep_set_pattern_type_option(GREP_PATTERN_TYPE_ERE, opt);
 }
 
@@ -587,7 +593,7 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int err;
-	int regflags = opt->regflags;
+	int regflags = 0;
 
 	basic_regex_quote_buf(&sb, p->pattern);
 	if (opt->ignore_case)
@@ -606,12 +612,12 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
-	int icase, ascii_only;
+	int ascii_only;
 	int err;
+	int regflags = REG_NEWLINE;
 
 	p->word_regexp = opt->word_regexp;
 	p->ignore_case = opt->ignore_case;
-	icase	       = opt->regflags & REG_ICASE || p->ignore_case;
 	ascii_only     = !has_non_ascii(p->pattern);
 
 	/*
@@ -629,12 +635,10 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	if (opt->fixed ||
 	    has_null(p->pattern, p->patternlen) ||
 	    is_fixed(p->pattern, p->patternlen))
-		p->fixed = !icase || ascii_only;
-	else
-		p->fixed = 0;
+		p->fixed = !p->ignore_case || ascii_only;
 
 	if (p->fixed) {
-		p->kws = kwsalloc(icase ? tolower_trans_tbl : NULL);
+		p->kws = kwsalloc(p->ignore_case ? tolower_trans_tbl : NULL);
 		kwsincr(p->kws, p->pattern, p->patternlen);
 		kwsprep(p->kws);
 		return;
@@ -658,7 +662,11 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 		return;
 	}
 
-	err = regcomp(&p->regexp, p->pattern, opt->regflags);
+	if (p->ignore_case)
+		regflags |= REG_ICASE;
+	if (opt->extended_regexp_option)
+		regflags |= REG_EXTENDED;
+	err = regcomp(&p->regexp, p->pattern, regflags);
 	if (err) {
 		char errbuf[1024];
 		regerror(err, &p->regexp, errbuf, 1024);

@@ -133,7 +133,10 @@ struct remotes_hash_key {
 	int len;
 };
 
-static int remotes_hash_cmp(const struct remote *a, const struct remote *b, const struct remotes_hash_key *key)
+static int remotes_hash_cmp(const void *unused_cmp_data,
+			    const struct remote *a,
+			    const struct remote *b,
+			    const struct remotes_hash_key *key)
 {
 	if (key)
 		return strncmp(a->name, key->str, key->len) || a->name[key->len];
@@ -144,7 +147,7 @@ static int remotes_hash_cmp(const struct remote *a, const struct remote *b, cons
 static inline void init_remotes_hash(void)
 {
 	if (!remotes_hash.cmpfn)
-		hashmap_init(&remotes_hash, (hashmap_cmp_fn)remotes_hash_cmp, 0);
+		hashmap_init(&remotes_hash, (hashmap_cmp_fn)remotes_hash_cmp, NULL, 0);
 }
 
 static struct remote *make_remote(const char *name, int len)
@@ -609,6 +612,19 @@ int valid_fetch_refspec(const char *fetch_refspec_str)
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec)
 {
 	return parse_refspec_internal(nr_refspec, refspec, 1, 0);
+}
+
+void add_and_parse_fetch_refspec(struct remote *remote, const char *refspec)
+{
+	struct refspec *rs;
+
+	add_fetch_refspec(remote, refspec);
+	rs = parse_fetch_refspec(1, &refspec);
+	REALLOC_ARRAY(remote->fetch, remote->fetch_refspec_nr);
+	remote->fetch[remote->fetch_refspec_nr - 1] = *rs;
+
+	/* Not free_refspecs(), as we copied its pointers above */
+	free(rs);
 }
 
 struct refspec *parse_push_refspec(int nr_refspec, const char **refspec)
@@ -1078,7 +1094,7 @@ static int try_explicit_object_name(const char *name,
 		return 0;
 	}
 
-	if (get_sha1(name, oid.hash))
+	if (get_oid(name, &oid))
 		return -1;
 
 	if (match) {
@@ -2294,8 +2310,8 @@ static int parse_push_cas_option(struct push_cas_option *cas, const char *arg, i
 	if (!*colon)
 		entry->use_tracking = 1;
 	else if (!colon[1])
-		hashclr(entry->expect);
-	else if (get_sha1(colon + 1, entry->expect))
+		oidclr(&entry->expect);
+	else if (get_oid(colon + 1, &entry->expect))
 		return error("cannot parse expected object name '%s'", colon + 1);
 	return 0;
 }
@@ -2342,7 +2358,7 @@ static void apply_cas(struct push_cas_option *cas,
 			continue;
 		ref->expect_old_sha1 = 1;
 		if (!entry->use_tracking)
-			hashcpy(ref->old_oid_expect.hash, cas->entry[i].expect);
+			oidcpy(&ref->old_oid_expect, &entry->expect);
 		else if (remote_tracking(remote, ref->name, &ref->old_oid_expect))
 			oidclr(&ref->old_oid_expect);
 		return;

@@ -2210,11 +2210,11 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->xdl_opts |= value;
 	}
 	else if (!strcmp(s, "ignore-space-change"))
-		o->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
+		DIFF_XDL_SET(o, IGNORE_WHITESPACE_CHANGE);
 	else if (!strcmp(s, "ignore-all-space"))
-		o->xdl_opts |= XDF_IGNORE_WHITESPACE;
+		DIFF_XDL_SET(o, IGNORE_WHITESPACE);
 	else if (!strcmp(s, "ignore-space-at-eol"))
-		o->xdl_opts |= XDF_IGNORE_WHITESPACE_AT_EOL;
+		DIFF_XDL_SET(o, IGNORE_WHITESPACE_AT_EOL);
 	else if (!strcmp(s, "renormalize"))
 		o->renormalize = 1;
 	else if (!strcmp(s, "no-renormalize"))

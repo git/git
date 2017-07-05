@@ -271,6 +271,18 @@ test_expect_success C_LOCALE_OUTPUT 'autosquash with custom inst format' '
 	test 2 = $(git cat-file commit HEAD^ | grep squash | wc -l)
 '
 
+test_expect_success 'autosquash with empty custom instructionFormat' '
+	git reset --hard base &&
+	test_commit empty-instructionFormat-test &&
+	(
+		set_cat_todo_editor &&
+		test_must_fail git -c rebase.instructionFormat= \
+			rebase --autosquash  --force -i HEAD^ >actual &&
+		git log -1 --format="pick %h %s" >expect &&
+		test_cmp expect actual
+	)
+'
+
 set_backup_editor () {
 	write_script backup-editor.sh <<-\EOF
 	cp "$1" .git/backup-"$(basename "$1")"
@@ -278,7 +290,7 @@ set_backup_editor () {
 	test_set_editor "$PWD/backup-editor.sh"
 }
 
-test_expect_failure 'autosquash with multiple empty patches' '
+test_expect_success 'autosquash with multiple empty patches' '
 	test_tick &&
 	git commit --allow-empty -m "empty" &&
 	test_tick &&
@@ -299,6 +311,20 @@ test_expect_success 'extra spaces after fixup!' '
 	base=$(git rev-parse HEAD) &&
 	test_commit to-fixup &&
 	git commit --allow-empty -m "fixup!  to-fixup" &&
+	git rebase -i --autosquash --keep-empty HEAD~2 &&
+	parent=$(git rev-parse HEAD^) &&
+	test $base = $parent
+'
+
+test_expect_success 'wrapped original subject' '
+	if test -d .git/rebase-merge; then git rebase --abort; fi &&
+	base=$(git rev-parse HEAD) &&
+	echo "wrapped subject" >wrapped &&
+	git add wrapped &&
+	test_tick &&
+	git commit --allow-empty -m "$(printf "To\nfixup")" &&
+	test_tick &&
+	git commit --allow-empty -m "fixup! To fixup" &&
 	git rebase -i --autosquash --keep-empty HEAD~2 &&
 	parent=$(git rev-parse HEAD^) &&
 	test $base = $parent

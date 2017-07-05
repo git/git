@@ -170,6 +170,7 @@ struct ref *ref_remove_duplicates(struct ref *ref_map);
 int valid_fetch_refspec(const char *refspec);
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
 extern struct refspec *parse_push_refspec(int nr_refspec, const char **refspec);
+void add_and_parse_fetch_refspec(struct remote *remote, const char *refspec);
 
 void free_refspec(int nr_refspec, struct refspec *refspec);
 
@@ -282,7 +283,7 @@ struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fet
 struct push_cas_option {
 	unsigned use_tracking_for_rest:1;
 	struct push_cas {
-		unsigned char expect[20];
+		struct object_id expect;
 		unsigned use_tracking:1;
 		char *refname;
 	} *entry;

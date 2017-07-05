@@ -4,6 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "cache.h"
+#include "repository.h"
 #include "config.h"
 #include "blob.h"
 #include "tree.h"
@@ -643,7 +644,7 @@ static int grep_submodule_launch(struct grep_opt *opt,
 static int grep_submodule(struct grep_opt *opt, const struct object_id *oid,
 			  const char *filename, const char *path)
 {
-	if (!is_submodule_initialized(path))
+	if (!is_submodule_active(the_repository, path))
 		return 0;
 	if (!is_submodule_populated_gently(path, NULL)) {
 		/*
@@ -652,7 +653,7 @@ static int grep_submodule(struct grep_opt *opt, const struct object_id *oid,
 		 */
 		if (oid) {
 			const struct submodule *sub =
-					submodule_from_path(null_sha1, path);
+					submodule_from_path(&null_oid, path);
 			if (sub)
 				path = git_path("modules/%s", sub->name);
 
@@ -861,7 +862,7 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 		/* load the gitmodules file for this rev */
 		if (recurse_submodules) {
 			submodule_free();
-			gitmodules_config_sha1(real_obj->oid.hash);
+			gitmodules_config_oid(&real_obj->oid);
 		}
 		if (grep_object(opt, pathspec, real_obj, list->objects[i].name, list->objects[i].path)) {
 			hit = 1;
@@ -1169,8 +1170,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 	if (!opt.pattern_list)
 		die(_("no pattern given."));
-	if (!opt.fixed && opt.ignore_case)
-		opt.regflags |= REG_ICASE;
 
 	/*
 	 * We have to find "--" in a separate pass, because its presence
@@ -1206,8 +1205,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			break;
 		}
 
-		if (get_sha1_with_context(arg, GET_SHA1_RECORD_PATH,
-					  oid.hash, &oc)) {
+		if (get_oid_with_context(arg, GET_OID_RECORD_PATH,
+					 &oid, &oc)) {
 			if (seen_dashdash)
 				die(_("unable to resolve revision: %s"), arg);
 			break;

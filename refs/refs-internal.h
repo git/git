@@ -77,6 +77,15 @@
  */
 int refname_is_safe(const char *refname);
 
+/*
+ * Helper function: return true if refname, which has the specified
+ * oid and flags, can be resolved to an object in the database. If the
+ * referred-to object does not exist, emit a warning and return false.
+ */
+int ref_resolves_to_object(const char *refname,
+			   const struct object_id *oid,
+			   unsigned int flags);
+
 enum peel_status {
 	/* object was peeled successfully: */
 	PEEL_PEELED = 0,
@@ -543,6 +552,9 @@ typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
+typedef int copy_ref_fn(struct ref_store *ref_store,
+			  const char *oldref, const char *newref,
+			  const char *logmsg);
 
 /*
  * Iterate over the references in `ref_store` whose names start with
@@ -641,6 +653,7 @@ struct ref_storage_be {
 	create_symref_fn *create_symref;
 	delete_refs_fn *delete_refs;
 	rename_ref_fn *rename_ref;
+	copy_ref_fn *copy_ref;
 
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
@@ -655,6 +668,7 @@ struct ref_storage_be {
 };
 
 extern struct ref_storage_be refs_be_files;
+extern struct ref_storage_be refs_be_packed;
 
 /*
  * A representation of the reference store for the main repository or

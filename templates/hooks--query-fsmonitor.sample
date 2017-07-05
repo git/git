@@ -1,0 +1,76 @@
+#!/bin/sh
+#
+# An example hook script to integrate Watchman
+# (https://facebook.github.io/watchman/) with git to provide fast
+# git status.
+#
+# The hook is passed a version (currently 1) and a time in nanoseconds
+# formatted as a string and outputs to stdout all files that have been
+# modified since the given time. Paths must be relative to the root of
+# the working tree and separated by a single NUL.
+#
+# To enable this hook, rename this file to "query-fsmonitor"
+
+# check the hook interface version
+if [ "$1" -eq 1 ]
+then
+	# convert nanoseconds to seconds
+	time_t=$(($2/1000000000))
+else
+	echo -e "Unsupported query-fsmonitor hook version.\nFalling back to scanning...\n" >&2
+	exit 1;
+fi
+
+# Convert unix style paths to what Watchman expects
+case "$(uname -s)" in
+MINGW*|MSYS_NT*)
+  GIT_WORK_TREE="$(cygpath -aw "$PWD" | sed 's,\\,/,g')"
+  ;;
+*)
+  GIT_WORK_TREE="$PWD"
+  ;;
+esac
+
+# In the query expression below we're asking for names of files that
+# changed since $time_t but were not transient (ie created after
+# $time_t but no longer exist).
+#
+# To accomplish this, we're using the "since" generator to use the
+# recency index to select candidate nodes and "fields" to limit the
+# output to file names only. Then we're using the "expression" term to
+# further constrain the results.
+#
+# The category of transient files that we want to ignore will have a
+# creation clock (cclock) newer than $time_t value and will also not
+# currently exist.
+
+echo  "[\"query\", \"$GIT_WORK_TREE\", { \
+	\"since\": $time_t, \
+	\"fields\": [\"name\"], \
+	\"expression\": [\"not\", [\"allof\", [\"since\", $time_t, \"cclock\"], [\"not\", \"exists\"]]] \
+	}]" | \
+	watchman -j |
+	perl -0666 -e '
+		use strict;
+		use warnings;
+
+		my $stdin = <>;
+		die "Watchman: command returned no output.\nFalling back to scanning...\n" if $stdin eq "";
+		die "Watchman: command returned invalid output: $stdin\nFalling back to scanning...\n" unless $stdin =~ /^\{/;
+
+		my $json_pkg;
+		eval {
+			require JSON::XS;
+			$json_pkg = "JSON::XS";
+			1;
+		} or do {
+			require JSON::PP;
+			$json_pkg = "JSON::PP";
+		};
+
+		my $o = $json_pkg->new->utf8->decode($stdin);
+		die "Watchman: $o->{error}.\nFalling back to scanning...\n" if $o->{error};
+
+		local $, = "\0";
+		print @{$o->{files}};
+	'

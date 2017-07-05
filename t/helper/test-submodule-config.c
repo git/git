@@ -41,7 +41,7 @@ int cmd_main(int argc, const char **argv)
 	git_config(git_test_config, NULL);
 
 	while (*arg) {
-		unsigned char commit_sha1[20];
+		struct object_id commit_oid;
 		const struct submodule *submodule;
 		const char *commit;
 		const char *path_or_name;
@@ -50,14 +50,14 @@ int cmd_main(int argc, const char **argv)
 		path_or_name = arg[1];
 
 		if (commit[0] == '\0')
-			hashclr(commit_sha1);
-		else if (get_sha1(commit, commit_sha1) < 0)
+			oidclr(&commit_oid);
+		else if (get_oid(commit, &commit_oid) < 0)
 			die_usage(argc, argv, "Commit not found.");
 
 		if (lookup_name) {
-			submodule = submodule_from_name(commit_sha1, path_or_name);
+			submodule = submodule_from_name(&commit_oid, path_or_name);
 		} else
-			submodule = submodule_from_path(commit_sha1, path_or_name);
+			submodule = submodule_from_path(&commit_oid, path_or_name);
 		if (!submodule)
 			die_usage(argc, argv, "Submodule not found.");
 

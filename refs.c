@@ -174,6 +174,24 @@ int refname_is_safe(const char *refname)
 	return 1;
 }
 
+/*
+ * Return true if refname, which has the specified oid and flags, can
+ * be resolved to an object in the database. If the referred-to object
+ * does not exist, emit a warning and return false.
+ */
+int ref_resolves_to_object(const char *refname,
+			   const struct object_id *oid,
+			   unsigned int flags)
+{
+	if (flags & REF_ISBROKEN)
+		return 0;
+	if (!has_sha1_file(oid->hash)) {
+		error("%s does not point to a valid object!", refname);
+		return 0;
+	}
+	return 1;
+}
+
 char *refs_resolve_refdup(struct ref_store *refs,
 			  const char *refname, int resolve_flags,
 			  unsigned char *sha1, int *flags)
@@ -230,7 +248,7 @@ static int filter_refs(const char *refname, const struct object_id *oid,
 {
 	struct ref_filter *filter = (struct ref_filter *)data;
 
-	if (wildmatch(filter->pattern, refname, 0, NULL))
+	if (wildmatch(filter->pattern, refname, 0))
 		return 0;
 	return filter->fn(refname, oid, flags, filter->cb_data);
 }
@@ -818,7 +836,7 @@ int read_ref_at(const char *refname, unsigned int flags, timestamp_t at_time, in
 	for_each_reflog_ent_reverse(refname, read_ref_at_ent, &cb);
 
 	if (!cb.reccnt) {
-		if (flags & GET_SHA1_QUIETLY)
+		if (flags & GET_OID_QUIETLY)
 			exit(128);
 		else
 			die("Log for %s is empty.", refname);
@@ -1525,7 +1543,8 @@ struct ref_store_hash_entry
 	char name[FLEX_ARRAY];
 };
 
-static int ref_store_hash_cmp(const void *entry, const void *entry_or_key,
+static int ref_store_hash_cmp(const void *unused_cmp_data,
+			      const void *entry, const void *entry_or_key,
 			      const void *keydata)
 {
 	const struct ref_store_hash_entry *e1 = entry, *e2 = entry_or_key;
@@ -1608,7 +1627,7 @@ static void register_ref_store_map(struct hashmap *map,
 				   const char *name)
 {
 	if (!map->tablesize)
-		hashmap_init(map, ref_store_hash_cmp, 0);
+		hashmap_init(map, ref_store_hash_cmp, NULL, 0);
 
 	if (hashmap_put(map, alloc_ref_store_hash_entry(name, refs)))
 		die("BUG: %s ref_store '%s' initialized twice", type, name);
@@ -2044,4 +2063,15 @@ int refs_rename_ref(struct ref_store *refs, const char *oldref,
 int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 {
 	return refs_rename_ref(get_main_ref_store(), oldref, newref, logmsg);
+}
+
+int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
+		    const char *newref, const char *logmsg)
+{
+	return refs->be->copy_ref(refs, oldref, newref, logmsg);
+}
+
+int copy_existing_ref(const char *oldref, const char *newref, const char *logmsg)
+{
+	return refs_copy_existing_ref(get_main_ref_store(), oldref, newref, logmsg);
 }

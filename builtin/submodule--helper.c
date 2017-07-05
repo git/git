@@ -1,11 +1,11 @@
 #include "builtin.h"
+#include "repository.h"
 #include "cache.h"
 #include "config.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "pathspec.h"
 #include "dir.h"
-#include "utf8.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "string-list.h"
@@ -280,7 +280,7 @@ static void module_list_active(struct module_list *list)
 	for (i = 0; i < list->nr; i++) {
 		const struct cache_entry *ce = list->entries[i];
 
-		if (!is_submodule_initialized(ce->name))
+		if (!is_submodule_active(the_repository, ce->name))
 			continue;
 
 		ALLOC_GROW(active_modules.entries,
@@ -326,7 +326,7 @@ static int module_list(int argc, const char **argv, const char *prefix)
 			printf("%06o %s %d\t", ce->ce_mode,
 			       oid_to_hex(&ce->oid), ce_stage(ce));
 
-		utf8_fprintf(stdout, "%s\n", ce->name);
+		fprintf(stdout, "%s\n", ce->name);
 	}
 	return 0;
 }
@@ -350,7 +350,7 @@ static void init_submodule(const char *path, const char *prefix, int quiet)
 	} else
 		displaypath = xstrdup(path);
 
-	sub = submodule_from_path(null_sha1, path);
+	sub = submodule_from_path(&null_oid, path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -362,7 +362,7 @@ static void init_submodule(const char *path, const char *prefix, int quiet)
 	 *
 	 * Set active flag for the submodule being initialized
 	 */
-	if (!is_submodule_initialized(path)) {
+	if (!is_submodule_active(the_repository, path)) {
 		strbuf_reset(&sb);
 		strbuf_addf(&sb, "submodule.%s.active", sub->name);
 		git_config_set_gently(sb.buf, "true");
@@ -476,7 +476,7 @@ static int module_name(int argc, const char **argv, const char *prefix)
 		usage(_("git submodule--helper name <path>"));
 
 	gitmodules_config();
-	sub = submodule_from_path(null_sha1, argv[1]);
+	sub = submodule_from_path(&null_oid, argv[1]);
 
 	if (!sub)
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -795,7 +795,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		goto cleanup;
 	}
 
-	sub = submodule_from_path(null_sha1, ce->name);
+	sub = submodule_from_path(&null_oid, ce->name);
 
 	if (suc->recursive_prefix)
 		displaypath = relative_path(suc->recursive_prefix,
@@ -817,7 +817,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	}
 
 	/* Check if the submodule has been initialized. */
-	if (!is_submodule_initialized(ce->name)) {
+	if (!is_submodule_active(the_repository, ce->name)) {
 		next_submodule_warn_missing(suc, out, displaypath);
 		goto cleanup;
 	}
@@ -1038,7 +1038,7 @@ static int update_clone(int argc, const char **argv, const char *prefix)
 		return 1;
 
 	for_each_string_list_item(item, &suc.projectlines)
-		utf8_fprintf(stdout, "%s", item->string);
+		fprintf(stdout, "%s", item->string);
 
 	return 0;
 }
@@ -1060,7 +1060,7 @@ static const char *remote_submodule_branch(const char *path)
 	gitmodules_config();
 	git_config(submodule_config, NULL);
 
-	sub = submodule_from_path(null_sha1, path);
+	sub = submodule_from_path(&null_oid, path);
 	if (!sub)
 		return NULL;
 
@@ -1193,7 +1193,7 @@ static int is_active(int argc, const char **argv, const char *prefix)
 
 	gitmodules_config();
 
-	return !is_submodule_initialized(argv[1]);
+	return !is_submodule_active(the_repository, argv[1]);
 }
 
 #define SUPPORT_SUPER_PREFIX (1<<0)
