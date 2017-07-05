@@ -158,7 +158,7 @@ int repo_submodule_init(struct repository *submodule,
 	struct strbuf worktree = STRBUF_INIT;
 	int ret = 0;
 
-	sub = submodule_from_cache(superproject, null_sha1, path);
+	sub = submodule_from_cache(superproject, &null_oid, path);
 	if (!sub) {
 		ret = -1;
 		goto out;

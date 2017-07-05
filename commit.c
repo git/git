@@ -59,7 +59,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	struct object_id oid;
 	struct commit *commit;
 
-	if (get_sha1_committish(name, oid.hash))
+	if (get_oid_committish(name, &oid))
 		return NULL;
 	commit = lookup_commit_reference(&oid);
 	if (parse_commit(commit))
@@ -1587,7 +1587,7 @@ struct commit *get_merge_parent(const char *name)
 	struct object *obj;
 	struct commit *commit;
 	struct object_id oid;
-	if (get_sha1(name, oid.hash))
+	if (get_oid(name, &oid))
 		return NULL;
 	obj = parse_object(&oid);
 	commit = (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);

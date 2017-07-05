@@ -283,7 +283,7 @@ struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fet
 struct push_cas_option {
 	unsigned use_tracking_for_rest:1;
 	struct push_cas {
-		unsigned char expect[20];
+		struct object_id expect;
 		unsigned use_tracking:1;
 		char *refname;
 	} *entry;

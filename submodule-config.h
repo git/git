@@ -37,15 +37,15 @@ extern int parse_submodule_config_option(const char *var, const char *value);
 extern int submodule_config_option(struct repository *repo,
 				   const char *var, const char *value);
 extern const struct submodule *submodule_from_name(
-		const unsigned char *commit_or_tree, const char *name);
+		const struct object_id *commit_or_tree, const char *name);
 extern const struct submodule *submodule_from_path(
-		const unsigned char *commit_or_tree, const char *path);
+		const struct object_id *commit_or_tree, const char *path);
 extern const struct submodule *submodule_from_cache(struct repository *repo,
-						    const unsigned char *treeish_name,
+						    const struct object_id *treeish_name,
 						    const char *key);
-extern int gitmodule_sha1_from_commit(const unsigned char *commit_sha1,
-				      unsigned char *gitmodules_sha1,
-				      struct strbuf *rev);
+extern int gitmodule_oid_from_commit(const struct object_id *commit_oid,
+				     struct object_id *gitmodules_oid,
+				     struct strbuf *rev);
 extern void submodule_free(void);
 
 #endif /* SUBMODULE_CONFIG_H */

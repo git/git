@@ -441,19 +441,19 @@ static int parse_config(const char *var, const char *value, void *data)
 	return ret;
 }
 
-int gitmodule_sha1_from_commit(const unsigned char *treeish_name,
-				      unsigned char *gitmodules_sha1,
+int gitmodule_oid_from_commit(const struct object_id *treeish_name,
+				      struct object_id *gitmodules_oid,
 				      struct strbuf *rev)
 {
 	int ret = 0;
 
-	if (is_null_sha1(treeish_name)) {
-		hashclr(gitmodules_sha1);
+	if (is_null_oid(treeish_name)) {
+		oidclr(gitmodules_oid);
 		return 1;
 	}
 
-	strbuf_addf(rev, "%s:.gitmodules", sha1_to_hex(treeish_name));
-	if (get_sha1(rev->buf, gitmodules_sha1) >= 0)
+	strbuf_addf(rev, "%s:.gitmodules", oid_to_hex(treeish_name));
+	if (get_oid(rev->buf, gitmodules_oid) >= 0)
 		ret = 1;
 
 	return ret;
@@ -464,13 +464,13 @@ int gitmodule_sha1_from_commit(const unsigned char *treeish_name,
  * revisions.
  */
 static const struct submodule *config_from(struct submodule_cache *cache,
-		const unsigned char *treeish_name, const char *key,
+		const struct object_id *treeish_name, const char *key,
 		enum lookup_type lookup_type)
 {
 	struct strbuf rev = STRBUF_INIT;
 	unsigned long config_size;
 	char *config = NULL;
-	unsigned char sha1[20];
+	struct object_id oid;
 	enum object_type type;
 	const struct submodule *submodule = NULL;
 	struct parse_config_parameter parameter;
@@ -490,28 +490,28 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		return entry->config;
 	}
 
-	if (!gitmodule_sha1_from_commit(treeish_name, sha1, &rev))
+	if (!gitmodule_oid_from_commit(treeish_name, &oid, &rev))
 		goto out;
 
 	switch (lookup_type) {
 	case lookup_name:
-		submodule = cache_lookup_name(cache, sha1, key);
+		submodule = cache_lookup_name(cache, oid.hash, key);
 		break;
 	case lookup_path:
-		submodule = cache_lookup_path(cache, sha1, key);
+		submodule = cache_lookup_path(cache, oid.hash, key);
 		break;
 	}
 	if (submodule)
 		goto out;
 
-	config = read_sha1_file(sha1, &type, &config_size);
+	config = read_sha1_file(oid.hash, &type, &config_size);
 	if (!config || type != OBJ_BLOB)
 		goto out;
 
 	/* fill the submodule config into the cache */
 	parameter.cache = cache;
-	parameter.treeish_name = treeish_name;
-	parameter.gitmodules_sha1 = sha1;
+	parameter.treeish_name = treeish_name->hash;
+	parameter.gitmodules_sha1 = oid.hash;
 	parameter.overwrite = 0;
 	git_config_from_mem(parse_config, CONFIG_ORIGIN_SUBMODULE_BLOB, rev.buf,
 			config, config_size, &parameter);
@@ -520,9 +520,9 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 
 	switch (lookup_type) {
 	case lookup_name:
-		return cache_lookup_name(cache, sha1, key);
+		return cache_lookup_name(cache, oid.hash, key);
 	case lookup_path:
-		return cache_lookup_path(cache, sha1, key);
+		return cache_lookup_path(cache, oid.hash, key);
 	default:
 		return NULL;
 	}
@@ -564,14 +564,14 @@ int parse_submodule_config_option(const char *var, const char *value)
 	return submodule_config_option(the_repository, var, value);
 }
 
-const struct submodule *submodule_from_name(const unsigned char *treeish_name,
+const struct submodule *submodule_from_name(const struct object_id *treeish_name,
 		const char *name)
 {
 	submodule_cache_check_init(the_repository);
 	return config_from(the_repository->submodule_cache, treeish_name, name, lookup_name);
 }
 
-const struct submodule *submodule_from_path(const unsigned char *treeish_name,
+const struct submodule *submodule_from_path(const struct object_id *treeish_name,
 		const char *path)
 {
 	submodule_cache_check_init(the_repository);
@@ -579,7 +579,7 @@ const struct submodule *submodule_from_path(const unsigned char *treeish_name,
 }
 
 const struct submodule *submodule_from_cache(struct repository *repo,
-					     const unsigned char *treeish_name,
+					     const struct object_id *treeish_name,
 					     const char *key)
 {
 	submodule_cache_check_init(repo);

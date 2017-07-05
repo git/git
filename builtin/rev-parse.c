@@ -274,7 +274,7 @@ static int try_difference(const char *arg)
 		return 0;
 	}
 
-	if (!get_sha1_committish(this, oid.hash) && !get_sha1_committish(next, end.hash)) {
+	if (!get_oid_committish(this, &oid) && !get_oid_committish(next, &end)) {
 		show_rev(NORMAL, &end, next);
 		show_rev(symmetric ? NORMAL : REVERSED, &oid, this);
 		if (symmetric) {
@@ -328,7 +328,7 @@ static int try_parent_shorthands(const char *arg)
 		return 0;
 
 	*dotdot = 0;
-	if (get_sha1_committish(arg, oid.hash)) {
+	if (get_oid_committish(arg, &oid)) {
 		*dotdot = '^';
 		return 0;
 	}
@@ -702,7 +702,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
 				quiet = 1;
-				flags |= GET_SHA1_QUIETLY;
+				flags |= GET_OID_QUIETLY;
 				continue;
 			}
 			if (opt_with_value(arg, "--short", &arg)) {
@@ -911,7 +911,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			name++;
 			type = REVERSED;
 		}
-		if (!get_sha1_with_context(name, flags, oid.hash, &unused)) {
+		if (!get_oid_with_context(name, flags, &oid, &unused)) {
 			if (verify)
 				revs_count++;
 			else
