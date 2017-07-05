@@ -194,6 +194,33 @@ test_expect_success 'notice d/f conflict with existing ref' '
 	test_must_fail git branch foo/bar/baz/lots/of/extra/components
 '
 
+test_expect_success 'reject packed-refs with unterminated line' '
+	cp .git/packed-refs .git/packed-refs.bak &&
+	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
+	printf "%s" "$HEAD refs/zzzzz" >>.git/packed-refs &&
+	echo "fatal: unterminated line in .git/packed-refs: $HEAD refs/zzzzz" >expected_err &&
+	test_must_fail git for-each-ref >out 2>err &&
+	test_cmp expected_err err
+'
+
+test_expect_success 'reject packed-refs containing junk' '
+	cp .git/packed-refs .git/packed-refs.bak &&
+	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
+	printf "%s\n" "bogus content" >>.git/packed-refs &&
+	echo "fatal: unexpected line in .git/packed-refs: bogus content" >expected_err &&
+	test_must_fail git for-each-ref >out 2>err &&
+	test_cmp expected_err err
+'
+
+test_expect_success 'reject packed-refs with a short SHA-1' '
+	cp .git/packed-refs .git/packed-refs.bak &&
+	test_when_finished "mv .git/packed-refs.bak .git/packed-refs" &&
+	printf "%.7s %s\n" $HEAD refs/zzzzz >>.git/packed-refs &&
+	printf "fatal: unexpected line in .git/packed-refs: %.7s %s\n" $HEAD refs/zzzzz >expected_err &&
+	test_must_fail git for-each-ref >out 2>err &&
+	test_cmp expected_err err
+'
+
 test_expect_success 'timeout if packed-refs.lock exists' '
 	LOCK=.git/packed-refs.lock &&
 	>"$LOCK" &&
