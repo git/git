@@ -1160,13 +1160,12 @@ extern char *xdg_config_home(const char *filename);
  */
 extern char *xdg_cache_home(const char *filename);
 
-/* object replacement */
-#define LOOKUP_REPLACE_OBJECT 1
-#define LOOKUP_UNKNOWN_OBJECT 2
-extern void *read_sha1_file_extended(const unsigned char *sha1, enum object_type *type, unsigned long *size, unsigned flag);
+extern void *read_sha1_file_extended(const unsigned char *sha1,
+				     enum object_type *type,
+				     unsigned long *size, int lookup_replace);
 static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
-	return read_sha1_file_extended(sha1, type, size, LOOKUP_REPLACE_OBJECT);
+	return read_sha1_file_extended(sha1, type, size, 1);
 }
 
 /*
@@ -1186,13 +1185,6 @@ static inline const unsigned char *lookup_replace_object(const unsigned char *sh
 	if (!check_replace_refs)
 		return sha1;
 	return do_lookup_replace_object(sha1);
-}
-
-static inline const unsigned char *lookup_replace_object_extended(const unsigned char *sha1, unsigned flag)
-{
-	if (!(flag & LOOKUP_REPLACE_OBJECT))
-		return sha1;
-	return lookup_replace_object(sha1);
 }
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
@@ -1231,15 +1223,10 @@ int read_loose_object(const char *path,
 		      void **contents);
 
 /*
- * Return true iff we have an object named sha1, whether local or in
- * an alternate object database, and whether packed or loose.  This
- * function does not respect replace references.
- *
- * If the QUICK flag is set, do not re-check the pack directory
- * when we cannot find the object (this means we may give a false
- * negative answer if another process is simultaneously repacking).
+ * Convenience for sha1_object_info_extended() with a NULL struct
+ * object_info. OBJECT_INFO_SKIP_CACHED is automatically set; pass
+ * nonzero flags to also set other flags.
  */
-#define HAS_SHA1_QUICK 0x1
 extern int has_sha1_file_with_flags(const unsigned char *sha1, int flags);
 static inline int has_sha1_file(const unsigned char *sha1)
 {
@@ -1806,6 +1793,7 @@ struct object_info {
 	off_t *disk_sizep;
 	unsigned char *delta_base_sha1;
 	struct strbuf *typename;
+	void **contentp;
 
 	/* Response */
 	enum {
@@ -1837,6 +1825,14 @@ struct object_info {
  */
 #define OBJECT_INFO_INIT {NULL}
 
+/* Invoke lookup_replace_object() on the given hash */
+#define OBJECT_INFO_LOOKUP_REPLACE 1
+/* Allow reading from a loose object file of unknown/bogus type */
+#define OBJECT_INFO_ALLOW_UNKNOWN_TYPE 2
+/* Do not check cached storage */
+#define OBJECT_INFO_SKIP_CACHED 4
+/* Do not retry packed storage after checking packed and loose storage */
+#define OBJECT_INFO_QUICK 8
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *, unsigned flags);
 extern int packed_object_info(struct packed_git *pack, off_t offset, struct object_info *);
 
