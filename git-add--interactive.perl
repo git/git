@@ -3,7 +3,7 @@
 use 5.008;
 use strict;
 use warnings;
-use Git;
+use Git qw(unquote_path);
 use Git::I18N;
 
 binmode(STDOUT, ":raw");
@@ -173,47 +173,6 @@ if (!defined $GIT_DIR) {
 	exit(1); # rev-parse would have already said "not a git repo"
 }
 chomp($GIT_DIR);
-
-my %cquote_map = (
- "b" => chr(8),
- "t" => chr(9),
- "n" => chr(10),
- "v" => chr(11),
- "f" => chr(12),
- "r" => chr(13),
- "\\" => "\\",
- "\042" => "\042",
-);
-
-sub unquote_path {
-	local ($_) = @_;
-	my ($retval, $remainder);
-	if (!/^\042(.*)\042$/) {
-		return $_;
-	}
-	($_, $retval) = ($1, "");
-	while (/^([^\\]*)\\(.*)$/) {
-		$remainder = $2;
-		$retval .= $1;
-		for ($remainder) {
-			if (/^([0-3][0-7][0-7])(.*)$/) {
-				$retval .= chr(oct($1));
-				$_ = $2;
-				last;
-			}
-			if (/^([\\\042btnvfr])(.*)$/) {
-				$retval .= $cquote_map{$1};
-				$_ = $2;
-				last;
-			}
-			# This is malformed -- just return it as-is for now.
-			return $_[0];
-		}
-		$_ = $remainder;
-	}
-	$retval .= $_;
-	return $retval;
-}
 
 sub refresh {
 	my $fh;
