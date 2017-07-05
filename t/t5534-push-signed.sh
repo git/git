@@ -119,8 +119,11 @@ test_expect_success GPG 'signed push sends push certificate' '
 		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" dst/push-cert
 	) >expect &&
 
-	grep "$(git rev-parse noop ff) refs/heads/ff" dst/push-cert &&
-	grep "$(git rev-parse noop noff) refs/heads/noff" dst/push-cert &&
+	noop=$(git rev-parse noop) &&
+	ff=$(git rev-parse ff) &&
+	noff=$(git rev-parse noff) &&
+	grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
 '
 
@@ -200,8 +203,11 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" dst/push-cert
 	) >expect &&
 
-	grep "$(git rev-parse noop ff) refs/heads/ff" dst/push-cert &&
-	grep "$(git rev-parse noop noff) refs/heads/noff" dst/push-cert &&
+	noop=$(git rev-parse noop) &&
+	ff=$(git rev-parse ff) &&
+	noff=$(git rev-parse noff) &&
+	grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
 '
 
