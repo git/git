@@ -202,6 +202,14 @@ Performance, Internal Implementation, Development Support etc.
    be hidden and instead the only error message given to the user may
    end up being "die recursion detected", which is not very useful).
 
+ * Introduce a "repository" object to eventually make it easier to
+   work in multiple repositories (the primary focus is to work with
+   the superproject and its submodules) in a single process.
+
+ * Optimize "what are the object names already taken in an alternate
+   object database?" query that is used to derive the length of prefix
+   an object name is uniquely abbreviated to.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -414,6 +422,10 @@ notes for details).
 
  * Tighten error checks for invalid "git apply" input.
    (merge d70e9c5c8c rs/apply-validate-input later to maint).
+
+ * The split index code did not honor core.sharedrepository setting
+   correctly.
+   (merge 3ee83f48e5 cc/shared-index-permfix later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge 68241cb9dd sb/t4005-modernize later to maint).
