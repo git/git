@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2017, #09; Fri, 30)
-X-master-at: 5116f791c12dda6b6c22fa85b600a8e30dfa168a
-X-next-at: 7f5404b183d51b3e3066c995608b78ea314ee660
+Subject: What's cooking in git.git (Jul 2017, #01; Wed, 5)
+X-master-at: 50ff9ea4a0770c8b1bfe3f98f09728427c0c6cc7
+X-next-at: b4debfe1a1bbbf047b7c2b69802448ce45df5f2f
 
-What's cooking in git.git (Jun 2017, #09; Fri, 30)
+What's cooking in git.git (Jul 2017, #01; Wed, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,122 +20,181 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/die-errors-in-threaded (2017-06-21) 1 commit
-  (merged to 'next' on 2017-06-24 at 135fc4b963)
- + die(): stop hiding errors due to overzealous recursion guard
+* bw/repo-object (2017-06-23) 21 commits
+  (merged to 'next' on 2017-06-26 at ed9c0b77c3)
+ + ls-files: use repository object
+ + repository: enable initialization of submodules
+ + submodule: convert is_submodule_initialized to work on a repository
+ + submodule: add repo_read_gitmodules
+ + submodule-config: store the_submodule_cache in the_repository
+ + repository: add index_state to struct repo
+ + config: read config from a repository object
+ + path: add repo_worktree_path and strbuf_repo_worktree_path
+ + path: add repo_git_path and strbuf_repo_git_path
+ + path: worktree_git_path() should not use file relocation
+ + path: convert do_git_path to take a 'struct repository'
+ + path: convert strbuf_git_common_path to take a 'struct repository'
+ + path: always pass in commondir to update_common_dir
+ + path: create path.h
+ + environment: store worktree in the_repository
+ + environment: place key repository state in the_repository
+ + repository: introduce the repository object
+ + environment: remove namespace_len variable
+ + setup: add comment indicating a hack
+ + setup: don't perform lazy initialization of repository state
+ + Merge branches 'bw/ls-files-sans-the-index' and 'bw/config-h' into bw/repo-object
 
- Traditionally, the default die() routine had a code to prevent it
- from getting called multiple times, which interacted badly when a
- threaded program used it (one downside is that the real error may
- be hidden and instead the only error message given to the user may
- end up being "die recursion detected", which is not very useful).
-
-
-* ah/doc-pretty-color-auto-prefix (2017-06-24) 1 commit
-  (merged to 'next' on 2017-06-26 at d7489fc831)
- + doc: clarify syntax for %C(auto,...) in pretty formats
-
- Doc update.
-
-
-* jc/pack-bitmap-unaligned (2017-06-26) 1 commit
-  (merged to 'next' on 2017-06-28 at ad026b12a3)
- + pack-bitmap: don't perform unaligned memory access
-
- An unaligned 32-bit access in pack-bitmap code ahs been corrected.
-
-
-* ks/status-initial-commit (2017-06-21) 1 commit
-  (merged to 'next' on 2017-06-24 at 940ffd5816)
- + status: contextually notify user about an initial commit
-
- "git status" has long shown essentially the same message as "git
- commit"; the message it gives while preparing for the root commit,
- i.e. "Initial commit", was hard to understand for some new users.
- Now it says "No commits yet" to stress more on the current status
- (rather than the commit the user is preparing for, which is more in
- line with the focus of "git commit").
+ Introduce a "repository" object to eventually make it easier to
+ work in multiple repositories (the primary focus is to work with
+ the superproject and its submodules) in a single process.
 
 
-* ks/submodule-add-doc (2017-06-22) 1 commit
-  (merged to 'next' on 2017-06-24 at 26309b38f2)
- + Documentation/git-submodule: cleanup "add" section
+* cc/shared-index-permfix (2017-06-25) 3 commits
+  (merged to 'next' on 2017-06-26 at bb41584bf0)
+ + t1700: make sure split-index respects core.sharedrepository
+ + t1301: move modebits() to test-lib-functions.sh
+ + read-cache: use shared perms when writing shared index
 
- Doc update.
-
-
-* pw/rebase-i-regression-fix-tests (2017-06-23) 5 commits
-  (merged to 'next' on 2017-06-23 at 835ae762f5)
- + t3420: fix under GETTEXT_POISON build
-  (merged to 'next' on 2017-06-22 at d1dde1672a)
- + rebase: add more regression tests for console output
- + rebase: add regression tests for console output
- + rebase -i: add test for reflog message
- + sequencer: print autostash messages to stderr
-
- Fix a recent regression to "git rebase -i" and add tests that would
- have caught it and others.
+ The split index code did not honor core.sharedrepository setting
+ correctly.
 
 
-* rs/apply-validate-input (2017-06-27) 3 commits
-  (merged to 'next' on 2017-06-28 at 81e006b50e)
- + apply: check git diffs for mutually exclusive header lines
- + apply: check git diffs for invalid file modes
- + apply: check git diffs for missing old filenames
+* jt/unify-object-info (2017-06-26) 8 commits
+  (merged to 'next' on 2017-06-26 at 540ea81983)
+ + sha1_file: refactor has_sha1_file_with_flags
+ + sha1_file: do not access pack if unneeded
+ + sha1_file: teach sha1_object_info_extended more flags
+ + sha1_file: refactor read_object
+ + sha1_file: move delta base cache code up
+ + sha1_file: rename LOOKUP_REPLACE_OBJECT
+ + sha1_file: rename LOOKUP_UNKNOWN_OBJECT
+ + sha1_file: teach packed_object_info about typename
 
- Tighten error checks for invalid "git apply" input.
+ Code clean-ups.
 
 
-* vs/typofixes (2017-06-27) 1 commit
-  (merged to 'next' on 2017-06-28 at 3d11e0b3fa)
- + Spelling fixes
+* rs/sha1-name-readdir-optim (2017-06-24) 4 commits
+  (merged to 'next' on 2017-06-26 at a70587f2b9)
+ + sha1_file: guard against invalid loose subdirectory numbers
+ + sha1_file: let for_each_file_in_obj_subdir() handle subdir names
+ + p4205: add perf test script for pretty log formats
+ + sha1_name: cache readdir(3) results in find_short_object_filename()
 
- Many typofixes.
+ Optimize "what are the object names already taken in an alternate
+ object database?" query that is used to derive the length of prefix
+ an object name is uniquely abbreviated to.
 
 --------------------------------------------------
 [New Topics]
 
-* ab/grep-lose-opt-regflags (2017-06-30) 6 commits
- - grep: remove redundant REG_NEWLINE when compiling fixed regex
- - grep: remove regflags from the public grep_opt API
- - grep: remove redundant and verbose re-assignments to 0
- - grep: remove redundant "fixed" field re-assignment to 0
- - grep: adjust a redundant grep pattern type assignment
- - grep: remove redundant double assignment to 0
+* bc/object-id (2017-07-04) 12 commits
+ - sha1_name: convert GET_SHA1* flags to GET_OID*
+ - sha1_name: convert get_sha1* to get_oid*
+ - Convert remaining callers of get_sha1 to get_oid.
+ - builtin/verify-tag: convert to struct object_id
+ - builtin/unpack-file: convert to struct object_id
+ - bisect: convert bisect_checkout to struct object_id
+ - builtin/update_ref: convert to struct object_id
+ - sequencer: convert to struct object_id
+ - remote: convert struct push_cas to struct object_id
+ - submodule: convert submodule config lookup to use object_id
+ - builtin/merge-tree: convert remaining caller of get_sha1 to object_id
+ - builtin/fsck: convert remaining caller of get_sha1 to object_id
 
- Code cleanup.
-
- Will merge to 'next'.
-
-
-* ks/commit-assuming-only-warning-removal (2017-06-30) 2 commits
- - commit-template: distinguish status information unconditionally
- - commit-template: remove outdated notice about explicit paths
-
- An old message shown in the commit log template was removed, as it
- has outlived its usefulness.
-
- Will merge to 'next'.
+ Conversion from uchar[20] to struct object_id continues.
 
 
-* sb/hashmap-customize-comparison (2017-06-30) 3 commits
- - hashmap: migrate documentation from Documentation/technical into header
- - patch-ids.c: use hashmap correctly
- - hashmap.h: compare function has access to a data field
- (this branch is used by sb/diff-color-move.)
+* jk/reflog-walk (2017-07-05) 7 commits
+ - reflog-walk: stop using fake parents
+ - rev-list: check reflog_info before showing usage
+ - get_revision_1(): replace do-while with an early return
+ - log: do not free parents when walking reflog
+ - [SQUASH LOG MESSAGE ONLY] t1414: document some reflog-walk oddities
+ - t1414: document some reflog-walk oddities
+ - Merge branch 'jk/reflog-walk-maint' into jk/reflog-walk
+ (this branch uses jk/reflog-walk-maint.)
 
- Update the hashmap API so that data to customize the behaviour of
- the comparison function can be specified at the time a hashmap is
- initialized.  This fixes a bug in patch-ids that may have caused
- segfault.
+ Numerous bugs in walking of reflogs via "log -g" and friends have
+ been fixed.
 
 
-* sb/merge-recursive-code-cleanup (2017-06-30) 1 commit
- - merge-recursive: use DIFF_XDL_SET macro
+* jk/reflog-walk-maint (2017-07-05) 1 commit
+ - reflog-walk: skip over double-null oid due to HEAD rename
+ (this branch is used by jk/reflog-walk.)
 
- Code clean-up.
+ After "git branch --move" of the currently checked out branch, the
+ code to walk the reflog of HEAD via "log -g" and friends
+ incorrectly stopped at the reflog entry that records the renaming
+ of the branch.
 
- Will merge to 'next'.
+
+* js/t5534-rev-parse-gives-multi-line-output-fix (2017-07-05) 1 commit
+  (merged to 'next' on 2017-07-05 at 5f964c44ba)
+ + t5534: fix misleading grep invocation
+
+ A few tests that tried to verify the contents of push certificates
+ did not use 'git rev-parse' to formulate the line to look for in
+ the certificate correctly.
+
+ Will merge to 'master'.
+
+
+* rs/apply-avoid-over-reading (2017-07-01) 1 commit
+  (merged to 'next' on 2017-07-05 at 35730f3a47)
+ + apply: use starts_with() in gitdiff_verify_name()
+
+ Code clean-up to fix possible buffer over-reading.
+
+ Will merge to 'master'.
+
+
+* sb/hashmap-cleanup (2017-07-05) 10 commits
+ - t/helper/test-hashmap: use custom data instead of duplicate cmp functions
+ - name-hash.c: drop hashmap_cmp_fn cast
+ - submodule-config.c: drop hashmap_cmp_fn cast
+ - remote.c: drop hashmap_cmp_fn cast
+ - patch-ids.c: drop hashmap_cmp_fn cast
+ - convert/sub-process: drop cast to hashmap_cmp_fn
+ - config.c: drop hashmap_cmp_fn cast
+ - builtin/describe: drop hashmap_cmp_fn cast
+ - builtin/difftool.c: drop hashmap_cmp_fn cast
+ - attr.c: drop hashmap_cmp_fn cast
+ (this branch uses sb/hashmap-customize-comparison; is tangled with sb/diff-color-move.)
+
+ Many uses of comparision callback function the hashmap API uses
+ cast the callback function type when registering it to
+ hashmap_init(), which defeats the compile time type checking when
+ the callback interface changes (e.g. gaining more parameters).
+ The callback implementations have been updated to take "void *"
+ pointers and cast them to the type they expect instead.
+
+ Will wait for feedback, then merge to and cook in 'next'.
+
+
+* tb/push-to-cygwin-unc-path (2017-07-05) 1 commit
+ - cygwin: allow pushing to UNC paths
+
+ On Cygwin, similar to Windows, "git push //server/share/repository"
+ ought to mean a repository on a network share that can be accessed
+ locally, but this did not work correctly due to stripping the double
+ slashes at the beginning.
+
+ This may need to be heavily tested before it gets unleashed to the
+ wild, as the change is at a fairly low-level code and would affect
+ not just the code to decide if the push destination is local.  There
+ may be unexpected fallouts in the path normalization.
+
+ Will wait for feedback, then merge to and cook in 'next'.
+
+
+* ab/sha1dc-maint (2017-07-03) 1 commit
+  (merged to 'next' on 2017-07-05 at ac69c90b7e)
+ + sha1dc: update from upstream
+ (this branch is used by ab/sha1dc.)
+
+ Update the sha1dc again to fix portability glitches.
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -166,20 +225,15 @@ of the repositories listed at
  cf. <d0e81b1e-5869-299e-f462-4d43dc997bd1@ramsayjones.plus.com>
 
 
-* xz/send-email-batch-size (2017-05-23) 1 commit
- - send-email: --batch-size to work around some SMTP server limit
+* xz/send-email-batch-size (2017-07-05) 1 commit
+  (merged to 'next' on 2017-07-05 at 92f3c31fbd)
+ + send-email: --batch-size to work around some SMTP server limit
 
  "git send-email" learned to overcome some SMTP server limitation
  that does not allow many pieces of e-mails to be sent over a single
  session.
 
- Waiting for a response.
- cf. <CACBZZX5GYV50rjg9X602JHqFPaoofH9TwDf_-r_MDu8-rmNV6Q@mail.gmail.com>
- cf. <xmqqo9tfff2w.fsf@gitster.mtv.corp.google.com>
-
- """I thought your wish (which I found reasonable) was to record
- whatever information that would help us in the future in the log
- message?  I was waiting for that to happen."""
+ Will merge to 'master'.
 
 
 * sg/clone-refspec-from-command-line-config (2017-06-16) 2 commits
@@ -219,19 +273,65 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ab/strbuf-addftime-tzname-boolify (2017-06-24) 3 commits
- - REWORD ONLY SQUASH
- - strbuf: change an always NULL/"" strbuf_addftime() param to bool
- - strbuf.h comment: discuss strbuf_addftime() arguments in order
+* ab/grep-lose-opt-regflags (2017-06-30) 6 commits
+  (merged to 'next' on 2017-07-05 at 375c0b92ea)
+ + grep: remove redundant REG_NEWLINE when compiling fixed regex
+ + grep: remove regflags from the public grep_opt API
+ + grep: remove redundant and verbose re-assignments to 0
+ + grep: remove redundant "fixed" field re-assignment to 0
+ + grep: adjust a redundant grep pattern type assignment
+ + grep: remove redundant double assignment to 0
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* ks/commit-assuming-only-warning-removal (2017-06-30) 2 commits
+  (merged to 'next' on 2017-07-05 at 462a72df95)
+ + commit-template: distinguish status information unconditionally
+ + commit-template: remove outdated notice about explicit paths
+
+ An old message shown in the commit log template was removed, as it
+ has outlived its usefulness.
+
+ Will merge to 'master'.
+
+
+* sb/hashmap-customize-comparison (2017-06-30) 3 commits
+ - hashmap: migrate documentation from Documentation/technical into header
+ - patch-ids.c: use hashmap correctly
+ - hashmap.h: compare function has access to a data field
+ (this branch is used by sb/diff-color-move and sb/hashmap-cleanup.)
+
+ Update the hashmap API so that data to customize the behaviour of
+ the comparison function can be specified at the time a hashmap is
+ initialized.
+
+ Will merge to 'next'.
+
+
+* sb/merge-recursive-code-cleanup (2017-06-30) 1 commit
+  (merged to 'next' on 2017-07-05 at 4228240520)
+ + merge-recursive: use DIFF_XDL_SET macro
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* ab/strbuf-addftime-tzname-boolify (2017-07-01) 2 commits
+  (merged to 'next' on 2017-07-05 at 81e6795eb3)
+ + strbuf: change an always NULL/"" strbuf_addftime() param to bool
+ + strbuf.h comment: discuss strbuf_addftime() arguments in order
 
  strbuf_addftime() is further getting tweaked.
 
- Waiting for a response.
- cf. <xmqqk2419rhg.fsf@gitster.mtv.corp.google.com>
+ Will merge to 'master'.
 
 
-* mt/p4-parse-G-output (2017-06-27) 1 commit
- . git-p4: parse marshal output "p4 -G" in p4 changes
+* mt/p4-parse-G-output (2017-07-05) 1 commit
+ - git-p4: parse marshal output "p4 -G" in p4 changes
 
  Use "p4 -G" to make "p4 changes" output more Python-friendly
  to parse.
@@ -282,18 +382,6 @@ of the repositories listed at
  precompiled.
 
 
-* cc/shared-index-permfix (2017-06-25) 3 commits
-  (merged to 'next' on 2017-06-26 at bb41584bf0)
- + t1700: make sure split-index respects core.sharedrepository
- + t1301: move modebits() to test-lib-functions.sh
- + read-cache: use shared perms when writing shared index
-
- The split index code did not honor core.sharedrepository setting
- correctly.
-
- Will merge to 'master'.
-
-
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
   (merged to 'next' on 2017-06-26 at d026281517)
  + pathspec: die on empty strings as pathspec
@@ -320,112 +408,54 @@ of the repositories listed at
  branch in the submodules to an updated base.
 
 
-* bw/repo-object (2017-06-23) 21 commits
-  (merged to 'next' on 2017-06-26 at ed9c0b77c3)
- + ls-files: use repository object
- + repository: enable initialization of submodules
- + submodule: convert is_submodule_initialized to work on a repository
- + submodule: add repo_read_gitmodules
- + submodule-config: store the_submodule_cache in the_repository
- + repository: add index_state to struct repo
- + config: read config from a repository object
- + path: add repo_worktree_path and strbuf_repo_worktree_path
- + path: add repo_git_path and strbuf_repo_git_path
- + path: worktree_git_path() should not use file relocation
- + path: convert do_git_path to take a 'struct repository'
- + path: convert strbuf_git_common_path to take a 'struct repository'
- + path: always pass in commondir to update_common_dir
- + path: create path.h
- + environment: store worktree in the_repository
- + environment: place key repository state in the_repository
- + repository: introduce the repository object
- + environment: remove namespace_len variable
- + setup: add comment indicating a hack
- + setup: don't perform lazy initialization of repository state
- + Merge branches 'bw/ls-files-sans-the-index' and 'bw/config-h' into bw/repo-object
-
- Introduce a "repository" object to eventually make it easier to
- work in multiple repositories (the primary focus is to work with
- the superproject and its submodules) in a single process.
-
- Will merge to 'master'.
-
-
 * pw/unquote-path-in-git-pm (2017-06-30) 4 commits
- - t9700: add tests for Git::unquote_path()
- - Git::unquote_path(): throw an exception on bad path
- - Git::unquote_path(): handle '\a'
- - add -i: move unquote_path() to Git.pm
+  (merged to 'next' on 2017-07-05 at 538ab4d599)
+ + t9700: add tests for Git::unquote_path()
+ + Git::unquote_path(): throw an exception on bad path
+ + Git::unquote_path(): handle '\a'
+ + add -i: move unquote_path() to Git.pm
 
  Code refactoring.
 
- Will merge to 'next'.
-
-
-* rs/sha1-name-readdir-optim (2017-06-24) 4 commits
-  (merged to 'next' on 2017-06-26 at a70587f2b9)
- + sha1_file: guard against invalid loose subdirectory numbers
- + sha1_file: let for_each_file_in_obj_subdir() handle subdir names
- + p4205: add perf test script for pretty log formats
- + sha1_name: cache readdir(3) results in find_short_object_filename()
-
- Optimize "what are the object names already taken in an alternate
- object database?" query that is used to derive the length of prefix
- an object name is uniquely abbreviated to.
-
  Will merge to 'master'.
 
 
-* jt/unify-object-info (2017-06-26) 8 commits
-  (merged to 'next' on 2017-06-26 at 540ea81983)
- + sha1_file: refactor has_sha1_file_with_flags
- + sha1_file: do not access pack if unneeded
- + sha1_file: teach sha1_object_info_extended more flags
- + sha1_file: refactor read_object
- + sha1_file: move delta base cache code up
- + sha1_file: rename LOOKUP_REPLACE_OBJECT
- + sha1_file: rename LOOKUP_UNKNOWN_OBJECT
- + sha1_file: teach packed_object_info about typename
-
- Code clean-ups.
-
- Will merge to 'master'.
-
-
-* mh/packed-ref-store (2017-06-23) 29 commits
- - read_packed_refs(): die if `packed-refs` contains bogus data
- - repack_without_refs(): don't lock or unlock the packed refs
- - commit_packed_refs(): remove call to `packed_refs_unlock()`
- - clear_packed_ref_cache(): don't protest if the lock is held
- - packed_refs_unlock(), packed_refs_is_locked(): new functions
- - packed_refs_lock(): report errors via a `struct strbuf *err`
- - packed_refs_lock(): function renamed from lock_packed_refs()
- - commit_packed_refs(): use a staging file separate from the lockfile
- - commit_packed_refs(): report errors rather than dying
- - packed_ref_store: make class into a subclass of `ref_store`
- - packed-backend: new module for handling packed references
- - packed_read_raw_ref(): new function, replacing `resolve_packed_ref()`
- - packed_ref_store: support iteration
- - packed_peel_ref(): new function, extracted from `files_peel_ref()`
- - repack_without_refs(): take a `packed_ref_store *` parameter
- - get_packed_ref(): take a `packed_ref_store *` parameter
- - rollback_packed_refs(): take a `packed_ref_store *` parameter
- - commit_packed_refs(): take a `packed_ref_store *` parameter
- - lock_packed_refs(): take a `packed_ref_store *` parameter
- - add_packed_ref(): take a `packed_ref_store *` parameter
- - get_packed_refs(): take a `packed_ref_store *` parameter
- - get_packed_ref_cache(): take a `packed_ref_store *` parameter
- - validate_packed_ref_cache(): take a `packed_ref_store *` parameter
- - clear_packed_ref_cache(): take a `packed_ref_store *` parameter
- - packed_ref_store: move `packed_refs_lock` member here
- - packed_ref_store: move `packed_refs_path` here
- - packed_ref_store: new struct
- - add_packed_ref(): teach function to overwrite existing refs
- - t1408: add a test of stale packed refs covered by loose refs
+* mh/packed-ref-store (2017-07-03) 30 commits
+  (merged to 'next' on 2017-07-05 at 6c68c603cc)
+ + read_packed_refs(): die if `packed-refs` contains bogus data
+ + t3210: add some tests of bogus packed-refs file contents
+ + repack_without_refs(): don't lock or unlock the packed refs
+ + commit_packed_refs(): remove call to `packed_refs_unlock()`
+ + clear_packed_ref_cache(): don't protest if the lock is held
+ + packed_refs_unlock(), packed_refs_is_locked(): new functions
+ + packed_refs_lock(): report errors via a `struct strbuf *err`
+ + packed_refs_lock(): function renamed from lock_packed_refs()
+ + commit_packed_refs(): use a staging file separate from the lockfile
+ + commit_packed_refs(): report errors rather than dying
+ + packed_ref_store: make class into a subclass of `ref_store`
+ + packed-backend: new module for handling packed references
+ + packed_read_raw_ref(): new function, replacing `resolve_packed_ref()`
+ + packed_ref_store: support iteration
+ + packed_peel_ref(): new function, extracted from `files_peel_ref()`
+ + repack_without_refs(): take a `packed_ref_store *` parameter
+ + get_packed_ref(): take a `packed_ref_store *` parameter
+ + rollback_packed_refs(): take a `packed_ref_store *` parameter
+ + commit_packed_refs(): take a `packed_ref_store *` parameter
+ + lock_packed_refs(): take a `packed_ref_store *` parameter
+ + add_packed_ref(): take a `packed_ref_store *` parameter
+ + get_packed_refs(): take a `packed_ref_store *` parameter
+ + get_packed_ref_cache(): take a `packed_ref_store *` parameter
+ + validate_packed_ref_cache(): take a `packed_ref_store *` parameter
+ + clear_packed_ref_cache(): take a `packed_ref_store *` parameter
+ + packed_ref_store: move `packed_refs_lock` member here
+ + packed_ref_store: move `packed_refs_path` here
+ + packed_ref_store: new struct
+ + add_packed_ref(): teach function to overwrite existing refs
+ + t1408: add a test of stale packed refs covered by loose refs
 
  The "ref-store" code reorganization continues.
 
- Is this now ready for 'next'?
+ Will merge to 'master'.
 
 
 * sb/submodule-doc (2017-06-22) 1 commit
@@ -433,7 +463,7 @@ of the repositories listed at
 
  Doc update.
 
- Waiting for discussion to settle.
+ What's the status of this thing?
 
 
 * sd/branch-copy (2017-06-18) 3 commits
@@ -450,30 +480,31 @@ of the repositories listed at
 
 
 * ls/filter-process-delayed (2017-06-30) 7 commits
- - convert: add "status=delayed" to filter process protocol
- - convert: refactor capabilities negotiation
- - convert: move multiple file filter error handling to separate function
- - convert: put the flags field before the flag itself for consistent style
- - t0021: write "OUT <size>" only on success
- - t0021: make debug log file name configurable
- - t0021: keep filter log files on comparison
+  (merged to 'next' on 2017-07-05 at a35e644082)
+ + convert: add "status=delayed" to filter process protocol
+ + convert: refactor capabilities negotiation
+ + convert: move multiple file filter error handling to separate function
+ + convert: put the flags field before the flag itself for consistent style
+ + t0021: write "OUT <size>" only on success
+ + t0021: make debug log file name configurable
+ + t0021: keep filter log files on comparison
 
  The filter-process interface learned to allow a process with long
  latency give a "delayed" response.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ab/sha1dc (2017-06-27) 3 commits
+* ab/sha1dc (2017-07-03) 2 commits
  - sha1collisiondetection: automatically enable when submodule is populated
  - sha1dc: optionally use sha1collisiondetection as a submodule
- - sha1dc: correct endian detection for Solaris (and others?)
+ (this branch uses ab/sha1dc-maint.)
 
  The "collission-detecting" implementation of SHA-1 hash we borrowed
  from is replaced by directly binding the upstream project as our
  submodule.  Glitches on minority platforms are still being worked out.
 
- Will keep in 'pu'.
+ Will merge to 'next'.
 
 
 * bp/fsmonitor (2017-06-12) 6 commits
@@ -516,14 +547,13 @@ of the repositories listed at
  - diff.c: move line ending check into emit_hunk_header
  - diff.c: readability fix
  - Merge branch 'sb/hashmap-customize-comparison' into sb/diff-color-move
- (this branch uses sb/hashmap-customize-comparison.)
+ (this branch uses sb/hashmap-customize-comparison; is tangled with sb/hashmap-cleanup.)
 
  "git diff" has been taught to optionally paint new lines that are
  the same as deleted lines elsewhere differently from genuinely new
  lines.
 
- Looking good.
- cf. <CAGZ79kaK00CpXOtXnx_u7_KHbZq4Mz8vWHKy2a8p1gQ8ogE-OA@mail.gmail.com>
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Discarded]
