@@ -38,6 +38,22 @@ static int read_one_reflog(struct object_id *ooid, struct object_id *noid,
 	return 0;
 }
 
+static void free_complete_reflog(struct complete_reflogs *array)
+{
+	int i;
+
+	if (!array)
+		return;
+
+	for (i = 0; i < array->nr; i++) {
+		free(array->items[i].email);
+		free(array->items[i].message);
+	}
+	free(array->items);
+	free(array->ref);
+	free(array);
+}
+
 static struct complete_reflogs *read_complete_reflog(const char *ref)
 {
 	struct complete_reflogs *reflogs =
@@ -189,20 +205,14 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 			if (ret > 1)
 				free(b);
 			else if (ret == 1) {
-				if (reflogs) {
-					free(reflogs->ref);
-					free(reflogs);
-				}
+				free_complete_reflog(reflogs);
 				free(branch);
 				branch = b;
 				reflogs = read_complete_reflog(branch);
 			}
 		}
 		if (!reflogs || reflogs->nr == 0) {
-			if (reflogs) {
-				free(reflogs->ref);
-				free(reflogs);
-			}
+			free_complete_reflog(reflogs);
 			free(branch);
 			return -1;
 		}
