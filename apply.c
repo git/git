@@ -976,8 +976,7 @@ static int gitdiff_verify_name(struct apply_state *state,
 		}
 		free(another);
 	} else {
-		/* expect "/dev/null" */
-		if (memcmp("/dev/null", line, 9) || line[9] != '\n')
+		if (!starts_with(line, "/dev/null\n"))
 			return error(_("git apply: bad git-diff - expected /dev/null on line %d"), state->linenr);
 	}
 
