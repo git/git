@@ -1714,15 +1714,18 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 	return 0;
 }
 
-static int config_set_element_cmp(const struct config_set_element *e1,
-				 const struct config_set_element *e2, const void *unused)
+static int config_set_element_cmp(const void *unused_cmp_data,
+				  const struct config_set_element *e1,
+				  const struct config_set_element *e2,
+				  const void *unused_keydata)
 {
 	return strcmp(e1->key, e2->key);
 }
 
 void git_configset_init(struct config_set *cs)
 {
-	hashmap_init(&cs->config_hash, (hashmap_cmp_fn)config_set_element_cmp, 0);
+	hashmap_init(&cs->config_hash, (hashmap_cmp_fn)config_set_element_cmp,
+		     NULL, 0);
 	cs->hash_initialized = 1;
 	cs->list.nr = 0;
 	cs->list.alloc = 0;

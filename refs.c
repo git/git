@@ -1543,7 +1543,8 @@ struct ref_store_hash_entry
 	char name[FLEX_ARRAY];
 };
 
-static int ref_store_hash_cmp(const void *entry, const void *entry_or_key,
+static int ref_store_hash_cmp(const void *unused_cmp_data,
+			      const void *entry, const void *entry_or_key,
 			      const void *keydata)
 {
 	const struct ref_store_hash_entry *e1 = entry, *e2 = entry_or_key;
@@ -1626,7 +1627,7 @@ static void register_ref_store_map(struct hashmap *map,
 				   const char *name)
 {
 	if (!map->tablesize)
-		hashmap_init(map, ref_store_hash_cmp, 0);
+		hashmap_init(map, ref_store_hash_cmp, NULL, 0);
 
 	if (hashmap_put(map, alloc_ref_store_hash_entry(name, refs)))
 		die("BUG: %s ref_store '%s' initialized twice", type, name);

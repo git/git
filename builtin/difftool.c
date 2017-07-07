@@ -130,8 +130,10 @@ struct working_tree_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int working_tree_entry_cmp(struct working_tree_entry *a,
-				  struct working_tree_entry *b, void *keydata)
+static int working_tree_entry_cmp(const void *unused_cmp_data,
+				  struct working_tree_entry *a,
+				  struct working_tree_entry *b,
+				  void *unused_keydata)
 {
 	return strcmp(a->path, b->path);
 }
@@ -146,7 +148,9 @@ struct pair_entry {
 	const char path[FLEX_ARRAY];
 };
 
-static int pair_cmp(struct pair_entry *a, struct pair_entry *b, void *keydata)
+static int pair_cmp(const void *unused_cmp_data,
+		    struct pair_entry *a, struct pair_entry *b,
+		    void *unused_keydata)
 {
 	return strcmp(a->path, b->path);
 }
@@ -174,7 +178,9 @@ struct path_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int path_entry_cmp(struct path_entry *a, struct path_entry *b, void *key)
+static int path_entry_cmp(const void *unused_cmp_data,
+			  struct path_entry *a, struct path_entry *b,
+			  void *key)
 {
 	return strcmp(a->path, key ? key : b->path);
 }
@@ -367,9 +373,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	wtdir_len = wtdir.len;
 
 	hashmap_init(&working_tree_dups,
-		     (hashmap_cmp_fn)working_tree_entry_cmp, 0);
-	hashmap_init(&submodules, (hashmap_cmp_fn)pair_cmp, 0);
-	hashmap_init(&symlinks2, (hashmap_cmp_fn)pair_cmp, 0);
+		     (hashmap_cmp_fn)working_tree_entry_cmp, NULL, 0);
+	hashmap_init(&submodules, (hashmap_cmp_fn)pair_cmp, NULL, 0);
+	hashmap_init(&symlinks2, (hashmap_cmp_fn)pair_cmp, NULL, 0);
 
 	child.no_stdin = 1;
 	child.git_cmd = 1;
@@ -580,9 +586,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	 * files through the symlink.
 	 */
 	hashmap_init(&wt_modified, (hashmap_cmp_fn)path_entry_cmp,
-		     wtindex.cache_nr);
+		     NULL, wtindex.cache_nr);
 	hashmap_init(&tmp_modified, (hashmap_cmp_fn)path_entry_cmp,
-		     wtindex.cache_nr);
+		     NULL, wtindex.cache_nr);
 
 	for (i = 0; i < wtindex.cache_nr; i++) {
 		struct hashmap_entry dummy;
