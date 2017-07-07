@@ -101,6 +101,11 @@ UI, Workflows & Features
    (rather than the commit the user is preparing for, which is more in
    line with the focus of "git commit").
 
+ * "git send-email" learned to overcome some SMTP server limitation
+   that does not allow many pieces of e-mails to be sent over a single
+   session.
+
+
 Performance, Internal Implementation, Development Support etc.
 
  * The default packed-git limit value has been raised on larger
@@ -427,8 +432,27 @@ notes for details).
    correctly.
    (merge 3ee83f48e5 cc/shared-index-permfix later to maint).
 
+ * The Makefile rule in contrib/subtree for building documentation
+   learned to honour USE_ASCIIDOCTOR just like the main documentation
+   set does.
+   (merge fdc1ad97c1 aw/contrib-subtree-doc-asciidoctor later to maint).
+
+ * Update the sha1dc again to fix portability glitches.
+   (merge 9936c1b52a ab/sha1dc-maint later to maint).
+
+ * Code clean-up to fix possible buffer over-reading.
+   (merge 8bc172e5f2 rs/apply-avoid-over-reading later to maint).
+
+ * A few tests that tried to verify the contents of push certificates
+   did not use 'git rev-parse' to formulate the line to look for in
+   the certificate correctly.
+   (merge 8722947e5c js/t5534-rev-parse-gives-multi-line-output-fix later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 68241cb9dd sb/t4005-modernize later to maint).
    (merge 4fced24712 ks/t7508-indent-fix later to maint).
    (merge 968b1fe263 mb/reword-autocomplete-message later to maint).
    (merge 8592c95cdf ah/doc-pretty-color-auto-prefix later to maint).
+   (merge 73fc2aadc7 js/fsck-name-object later to maint).
+   (merge dc4b4a61ba jc/utf8-fprintf later to maint).
+   (merge c2d4b4cd06 sb/merge-recursive-code-cleanup later to maint).
