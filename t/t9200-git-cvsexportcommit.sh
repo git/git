@@ -11,6 +11,13 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
+case "$PWD" in
+*:*)
+	skip_all='cvs would get confused by the colon in `pwd`; skipping tests'
+	test_done
+	;;
+esac
+
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
