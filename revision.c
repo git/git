@@ -3111,11 +3111,11 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 
 static struct commit *get_revision_1(struct rev_info *revs)
 {
-	if (!revs->commits)
-		return NULL;
-
-	do {
+	while (1) {
 		struct commit *commit = pop_commit(&revs->commits);
+
+		if (!commit)
+			return NULL;
 
 		if (revs->reflog_info) {
 			save_parents(revs, commit);
@@ -3150,8 +3150,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 				track_linear(revs, commit);
 			return commit;
 		}
-	} while (revs->commits);
-	return NULL;
+	}
 }
 
 /*
