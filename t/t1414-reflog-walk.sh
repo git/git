@@ -34,19 +34,19 @@ test_expect_success 'reflog walk shows expected logs' '
 	test_cmp expect.all actual
 '
 
-test_expect_failure 'reflog can limit with --no-merges' '
+test_expect_success 'reflog can limit with --no-merges' '
 	grep -v merge expect.all >expect &&
 	do_walk --no-merges >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'reflog can limit with pathspecs' '
+test_expect_success 'reflog can limit with pathspecs' '
 	grep two expect.all >expect &&
 	do_walk -- two.t >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'pathspec limiting handles merges' '
+test_expect_success 'pathspec limiting handles merges' '
 	# we pick up:
 	#   - the initial commit of one
 	#   - the checkout back to commit one
@@ -56,14 +56,14 @@ test_expect_failure 'pathspec limiting handles merges' '
 	test_cmp expect actual
 '
 
-test_expect_failure '--parents shows true parents' '
+test_expect_success '--parents shows true parents' '
 	# convert newlines to spaces
 	echo $(git rev-parse HEAD HEAD^1 HEAD^2) >expect &&
 	git rev-list -g --parents -1 HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_failure 'walking multiple reflogs shows all' '
+test_expect_success 'walking multiple reflogs shows all' '
 	# We expect to see all entries for all reflogs, but interleaved by
 	# date, with order on the command line breaking ties. We
 	# can use "sort" on the separate lists to generate this,
@@ -91,7 +91,7 @@ test_expect_success 'date-limiting does not interfere with other logs' '
 	test_cmp expect.all actual
 '
 
-test_expect_failure 'walk prefers reflog to ref tip' '
+test_expect_success 'walk prefers reflog to ref tip' '
 	head=$(git rev-parse HEAD) &&
 	one=$(git rev-parse one) &&
 	ident="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" &&
