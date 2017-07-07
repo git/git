@@ -20,4 +20,6 @@ extern void get_reflog_selector(struct strbuf *sb,
 		const struct date_mode *dmode, int force_date,
 		int shorten);
 
+extern int reflog_walk_empty(struct reflog_walk_info *walk);
+
 #endif

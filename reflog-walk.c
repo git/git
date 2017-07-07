@@ -365,3 +365,8 @@ void show_reflog_message(struct reflog_walk_info *reflog_info, int oneline,
 		strbuf_release(&selector);
 	}
 }
+
+int reflog_walk_empty(struct reflog_walk_info *info)
+{
+	return !info || !info->reflogs.nr;
+}

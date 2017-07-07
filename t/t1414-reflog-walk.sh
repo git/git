@@ -102,4 +102,8 @@ test_expect_failure 'walk prefers reflog to ref tip' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list -g complains when there are no reflogs' '
+	test_must_fail git rev-list -g
+'
+
 test_done
