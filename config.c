@@ -238,7 +238,7 @@ again:
 	}
 
 	ret = !wildmatch(pattern.buf + prefix, text.buf + prefix,
-			 icase ? WM_CASEFOLD : 0, NULL);
+			 icase ? WM_CASEFOLD : 0);
 
 	if (!ret && !already_tried_absolute) {
 		/*
