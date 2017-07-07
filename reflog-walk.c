@@ -259,6 +259,8 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 		/* a root commit, but there are still more entries to show */
 		reflog = &commit_reflog->reflogs->items[commit_reflog->recno];
 		logobj = parse_object(&reflog->noid);
+		if (!logobj)
+			logobj = parse_object(&reflog->ooid);
 	}
 
 	if (!logobj || logobj->type != OBJ_COMMIT) {
