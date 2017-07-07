@@ -91,6 +91,32 @@ test_expect_success 'date-limiting does not interfere with other logs' '
 	test_cmp expect.all actual
 '
 
+test_expect_success 'min/max age uses entry date to limit' '
+	# Flip between commits one and two so each ref update actually
+	# does something (and does not get optimized out). We know
+	# that the timestamps of those commits will be before our "min".
+
+	git update-ref -m before refs/heads/minmax one &&
+
+	test_tick &&
+	min=$test_tick &&
+	git update-ref -m min refs/heads/minmax two &&
+
+	test_tick &&
+	max=$test_tick &&
+	git update-ref -m max refs/heads/minmax one &&
+
+	test_tick &&
+	git update-ref -m after refs/heads/minmax two &&
+
+	cat >expect <<-\EOF &&
+	max
+	min
+	EOF
+	git log -g --since=$min --until=$max --format=%gs minmax >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'walk prefers reflog to ref tip' '
 	head=$(git rev-parse HEAD) &&
 	one=$(git rev-parse one) &&

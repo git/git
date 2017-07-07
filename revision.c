@@ -2965,6 +2965,18 @@ static inline int want_ancestry(const struct rev_info *revs)
 	return (revs->rewrite_parents || revs->children.name);
 }
 
+/*
+ * Return a timestamp to be used for --since/--until comparisons for this
+ * commit, based on the revision options.
+ */
+static timestamp_t comparison_date(const struct rev_info *revs,
+				   struct commit *commit)
+{
+	return revs->reflog_info ?
+		get_reflog_timestamp(revs->reflog_info) :
+		commit->date;
+}
+
 enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
@@ -2975,8 +2987,9 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 		return commit_show;
 	if (commit->object.flags & UNINTERESTING)
 		return commit_ignore;
-	if (revs->min_age != -1 && (commit->date > revs->min_age))
-		return commit_ignore;
+	if (revs->min_age != -1 &&
+	    comparison_date(revs, commit) > revs->min_age)
+			return commit_ignore;
 	if (revs->min_parents || (revs->max_parents >= 0)) {
 		int n = commit_list_count(commit->parents);
 		if ((n < revs->min_parents) ||
@@ -3130,7 +3143,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		 */
 		if (!revs->limited) {
 			if (revs->max_age != -1 &&
-			    (commit->date < revs->max_age))
+			    comparison_date(revs, commit) < revs->max_age)
 				continue;
 
 			if (revs->reflog_info)

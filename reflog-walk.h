@@ -13,6 +13,7 @@ extern void show_reflog_message(struct reflog_walk_info *info, int,
 extern void get_reflog_message(struct strbuf *sb,
 		struct reflog_walk_info *reflog_info);
 extern const char *get_reflog_ident(struct reflog_walk_info *reflog_info);
+extern timestamp_t get_reflog_timestamp(struct reflog_walk_info *reflog_info);
 extern void get_reflog_selector(struct strbuf *sb,
 		struct reflog_walk_info *reflog_info,
 		const struct date_mode *dmode, int force_date,
