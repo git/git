@@ -177,4 +177,8 @@ test_expect_success 'showing multiple reflogs works' '
 	git log -g HEAD HEAD >actual
 '
 
+test_expect_success 'showing multiple reflogs with an old date' '
+	git log -g HEAD@{1979-01-01} HEAD >actual
+'
+
 test_done

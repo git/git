@@ -215,10 +215,6 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	if (recno < 0) {
 		commit_reflog->recno = get_reflog_recno_by_time(reflogs, timestamp);
 		if (commit_reflog->recno < 0) {
-			if (reflogs) {
-				free(reflogs->ref);
-				free(reflogs);
-			}
 			free(commit_reflog);
 			return -1;
 		}
