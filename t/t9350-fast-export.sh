@@ -94,7 +94,12 @@ test_expect_success 'fast-export --show-original-ids | git fast-import' '
 	test $MUSS = $(git rev-parse --verify refs/tags/muss)
 '
 
-test_expect_success 'iso-8859-1' '
+test_lazy_prereq UTF8_ONLY_ENV '
+	. "$TEST_DIRECTORY"/t3901/8859-1.txt &&
+	! git var GIT_AUTHOR_IDENT | grep "Áéí"
+'
+
+test_expect_success !UTF8_ONLY_ENV 'iso-8859-1' '
 
 	git config i18n.commitencoding ISO8859-1 &&
 	# use author and committer name in ISO-8859-1 to match it.
@@ -110,6 +115,11 @@ test_expect_success 'iso-8859-1' '
 		 grep "Áéí óú" actual)
 
 '
+
+# The subsequent tests validate timestamps, and we may just have skipped a tick
+test_have_prereq !UTF8_ONLY_ENV ||
+test_tick
+
 test_expect_success 'import/export-marks' '
 
 	git checkout -b marks master &&
@@ -224,7 +234,7 @@ GIT_COMMITTER_NAME='C O Mitter'; export GIT_COMMITTER_NAME
 
 test_expect_success 'setup copies' '
 
-	git config --unset i18n.commitencoding &&
+	{ git config --unset i18n.commitencoding || :; } &&
 	git checkout -b copy rein &&
 	git mv file file3 &&
 	git commit -m move1 &&
