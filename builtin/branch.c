@@ -331,8 +331,9 @@ static char *build_format(struct ref_filter *filter, int maxwidth, const char *r
 	struct strbuf local = STRBUF_INIT;
 	struct strbuf remote = STRBUF_INIT;
 
-	strbuf_addf(&fmt, "%%(if)%%(HEAD)%%(then)* %s%%(else)  %%(end)",
+	strbuf_addf(&local, "%%(if)%%(HEAD)%%(then)* %s%%(else)  %%(end)",
 		    branch_get_color(BRANCH_COLOR_CURRENT));
+	strbuf_addf(&remote, "  ");
 
 	if (filter->verbose) {
 		struct strbuf obname = STRBUF_INIT;
