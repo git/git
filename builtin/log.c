@@ -372,7 +372,10 @@ static int cmd_log_walk(struct rev_info *rev)
 			 */
 			rev->max_count++;
 		if (!rev->reflog_info) {
-			/* we allow cycles in reflog ancestry */
+			/*
+			 * We may show a given commit multiple times when
+			 * walking the reflogs.
+			 */
 			free_commit_buffer(commit);
 		}
 		free_commit_list(commit->parents);
