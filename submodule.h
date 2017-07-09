@@ -94,6 +94,10 @@ extern int merge_submodule(struct object_id *result, const char *path,
 			   const struct object_id *base,
 			   const struct object_id *a,
 			   const struct object_id *b, int search);
+
+/* Checks if there are submodule changes in a..b. */
+extern int submodule_touches_in_range(struct object_id *a,
+				      struct object_id *b);
 extern int find_unpushed_submodules(struct oid_array *commits,
 				    const char *remotes_name,
 				    struct string_list *needs_pushing);

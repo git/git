@@ -86,12 +86,12 @@ OPTIONS
 
 --[no-]recurse-submodules[=yes|on-demand|no]::
 	This option controls if new commits of all populated submodules should
-	be fetched too (see linkgit:git-config[1] and linkgit:gitmodules[5]).
-	That might be necessary to get the data needed for merging submodule
-	commits, a feature Git learned in 1.7.3. Notice that the result of a
-	merge will not be checked out in the submodule, "git submodule update"
-	has to be called afterwards to bring the work tree up to date with the
-	merge result.
+	be fetched and updated, too (see linkgit:git-config[1] and
+	linkgit:gitmodules[5]).
++
+If the checkout is done via rebase, local submodule commits are rebased as well.
++
+If the update is done via merge, the submodule conflicts are resolved and checked out.
 
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

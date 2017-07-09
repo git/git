@@ -16,6 +16,8 @@
 #include "dir.h"
 #include "refs.h"
 #include "revision.h"
+#include "submodule.h"
+#include "submodule-config.h"
 #include "tempfile.h"
 #include "lockfile.h"
 #include "wt-status.h"
@@ -78,6 +80,7 @@ static const char * const pull_usage[] = {
 /* Shared options */
 static int opt_verbosity;
 static char *opt_progress;
+static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 
 /* Options passed to git-merge or git-rebase */
 static enum rebase_type opt_rebase = -1;
@@ -102,7 +105,6 @@ static char *opt_upload_pack;
 static int opt_force;
 static char *opt_tags;
 static char *opt_prune;
-static char *opt_recurse_submodules;
 static char *max_children;
 static int opt_dry_run;
 static char *opt_keep;
@@ -117,6 +119,10 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "progress", &opt_progress, NULL,
 		N_("force progress reporting"),
 		PARSE_OPT_NOARG),
+	{ OPTION_CALLBACK, 0, "recurse-submodules",
+		   &recurse_submodules, N_("on-demand"),
+		   N_("control for recursive fetching of submodules"),
+		   PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules },
 
 	/* Options passed to git-merge or git-rebase */
 	OPT_GROUP(N_("Options related to merging")),
@@ -188,10 +194,6 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU('p', "prune", &opt_prune, NULL,
 		N_("prune remote-tracking branches no longer on remote"),
 		PARSE_OPT_NOARG),
-	OPT_PASSTHRU(0, "recurse-submodules", &opt_recurse_submodules,
-		N_("on-demand"),
-		N_("control recursive fetching of submodules"),
-		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU('j', "jobs", &max_children, N_("n"),
 		N_("number of submodules pulled in parallel"),
 		PARSE_OPT_OPTARG),
@@ -484,8 +486,20 @@ static int run_fetch(const char *repo, const char **refspecs)
 		argv_array_push(&args, opt_tags);
 	if (opt_prune)
 		argv_array_push(&args, opt_prune);
-	if (opt_recurse_submodules)
-		argv_array_push(&args, opt_recurse_submodules);
+	if (recurse_submodules != RECURSE_SUBMODULES_DEFAULT)
+		switch (recurse_submodules) {
+		case RECURSE_SUBMODULES_ON:
+			argv_array_push(&args, "--recurse-submodules=on");
+			break;
+		case RECURSE_SUBMODULES_OFF:
+			argv_array_push(&args, "--recurse-submodules=no");
+			break;
+		case RECURSE_SUBMODULES_ON_DEMAND:
+			argv_array_push(&args, "--recurse-submodules=on-demand");
+			break;
+		default:
+			BUG("submodule recursion option not understood");
+		}
 	if (max_children)
 		argv_array_push(&args, max_children);
 	if (opt_dry_run)
@@ -530,6 +544,30 @@ static int pull_into_void(const struct object_id *merge_head,
 		return 1;
 
 	return 0;
+}
+
+static int rebase_submodules(void)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	argv_array_pushl(&cp.args, "submodule", "update",
+				   "--recursive", "--rebase", NULL);
+
+	return run_command(&cp);
+}
+
+static int update_submodules(void)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.git_cmd = 1;
+	cp.no_stdin = 1;
+	argv_array_pushl(&cp.args, "submodule", "update",
+				   "--recursive", "--checkout", NULL);
+
+	return run_command(&cp);
 }
 
 /**
@@ -863,6 +901,11 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		die(_("Cannot rebase onto multiple branches."));
 
 	if (opt_rebase) {
+		int ret = 0;
+		if ((recurse_submodules == RECURSE_SUBMODULES_ON ||
+		     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) &&
+		    submodule_touches_in_range(&rebase_fork_point, &curr_head))
+			die(_("cannot rebase with locally recorded submodule modifications"));
 		if (!autostash) {
 			struct commit_list *list = NULL;
 			struct commit *merge_head, *head;
@@ -873,11 +916,21 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 			if (is_descendant_of(merge_head, list)) {
 				/* we can fast-forward this without invoking rebase */
 				opt_ff = "--ff-only";
-				return run_merge();
+				ret = run_merge();
 			}
 		}
-		return run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+		ret = run_rebase(&curr_head, merge_heads.oid, &rebase_fork_point);
+
+		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
+			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
+			ret = rebase_submodules();
+
+		return ret;
 	} else {
-		return run_merge();
+		int ret = run_merge();
+		if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON ||
+			     recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
+			ret = update_submodules();
+		return ret;
 	}
 }
