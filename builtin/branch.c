@@ -331,8 +331,9 @@ static char *build_format(struct ref_filter *filter, int maxwidth, const char *r
 	struct strbuf local = STRBUF_INIT;
 	struct strbuf remote = STRBUF_INIT;
 
-	strbuf_addf(&local, "%%(if)%%(HEAD)%%(then)* %s%%(else)  %%(end)",
-		    branch_get_color(BRANCH_COLOR_CURRENT));
+	strbuf_addf(&local, "%%(if)%%(HEAD)%%(then)* %s%%(else)  %s%%(end)",
+		    branch_get_color(BRANCH_COLOR_CURRENT),
+		    branch_get_color(BRANCH_COLOR_LOCAL));
 	strbuf_addf(&remote, "  ");
 
 	if (filter->verbose) {
