@@ -19,15 +19,27 @@ htmldir ?= $(prefix)/share/doc/git-doc
 INSTALL  ?= install
 RM       ?= rm -f
 
-ASCIIDOC = asciidoc
-XMLTO    = xmlto
+ASCIIDOC         = asciidoc
+ASCIIDOC_CONF    = -f ../../Documentation/asciidoc.conf
+ASCIIDOC_HTML    = xhtml11
+ASCIIDOC_DOCBOOK = docbook
+ASCIIDOC_EXTRA   =
+XMLTO            = xmlto
+
+ifdef USE_ASCIIDOCTOR
+ASCIIDOC         = asciidoctor
+ASCIIDOC_CONF    =
+ASCIIDOC_HTML    = xhtml5
+ASCIIDOC_DOCBOOK = docbook45
+ASCIIDOC_EXTRA  += -I../../Documentation -rasciidoctor-extensions
+ASCIIDOC_EXTRA  += -alitdd='&\#x2d;&\#x2d;'
+endif
 
 ifndef SHELL_PATH
 	SHELL_PATH = /bin/sh
 endif
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
-ASCIIDOC_CONF = ../../Documentation/asciidoc.conf
 MANPAGE_XSL   = ../../Documentation/manpage-normal.xsl
 
 GIT_SUBTREE_SH := git-subtree.sh
@@ -65,12 +77,12 @@ $(GIT_SUBTREE_DOC): $(GIT_SUBTREE_XML)
 	$(XMLTO) -m $(MANPAGE_XSL) man $^
 
 $(GIT_SUBTREE_XML): $(GIT_SUBTREE_TXT)
-	$(ASCIIDOC) -b docbook -d manpage -f $(ASCIIDOC_CONF) \
-		-agit_version=$(GIT_VERSION) $^
+	$(ASCIIDOC) -b $(ASCIIDOC_DOCBOOK) -d manpage $(ASCIIDOC_CONF) \
+		-agit_version=$(GIT_VERSION) $(ASCIIDOC_EXTRA) $^
 
 $(GIT_SUBTREE_HTML): $(GIT_SUBTREE_TXT)
-	$(ASCIIDOC) -b xhtml11 -d manpage -f $(ASCIIDOC_CONF) \
-		-agit_version=$(GIT_VERSION) $^
+	$(ASCIIDOC) -b $(ASCIIDOC_HTML) -d manpage $(ASCIIDOC_CONF) \
+		-agit_version=$(GIT_VERSION) $(ASCIIDOC_EXTRA) $^
 
 $(GIT_SUBTREE_TEST): $(GIT_SUBTREE)
 	cp $< $@
