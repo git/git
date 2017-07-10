@@ -991,6 +991,10 @@ ifdef DEVELOPER
 CFLAGS += $(DEVELOPER_CFLAGS)
 endif
 
+ifdef SANITIZE
+BASIC_CFLAGS += -fsanitize=$(SANITIZE) -fno-sanitize-recover=$(SANITIZE)
+endif
+
 ifndef sysconfdir
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
