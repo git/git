@@ -210,8 +210,8 @@ size_t ewah_add(struct ewah_bitmap *self, eword_t word)
 void ewah_set(struct ewah_bitmap *self, size_t i)
 {
 	const size_t dist =
-		(i + BITS_IN_EWORD) / BITS_IN_EWORD -
-		(self->bit_size + BITS_IN_EWORD - 1) / BITS_IN_EWORD;
+		DIV_ROUND_UP(i + 1, BITS_IN_EWORD) -
+		DIV_ROUND_UP(self->bit_size, BITS_IN_EWORD);
 
 	assert(i >= self->bit_size);
 

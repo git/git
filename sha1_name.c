@@ -489,10 +489,9 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 		 * We now know we have on the order of 2^len objects, which
 		 * expects a collision at 2^(len/2). But we also care about hex
 		 * chars, not bits, and there are 4 bits per hex. So all
-		 * together we need to divide by 2; but we also want to round
-		 * odd numbers up, hence adding one before dividing.
+		 * together we need to divide by 2 and round up.
 		 */
-		len = (len + 1) / 2;
+		len = DIV_ROUND_UP(len, 2);
 		/*
 		 * For very small repos, we stick with our regular fallback.
 		 */

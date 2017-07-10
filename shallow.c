@@ -443,7 +443,7 @@ struct paint_info {
 
 static uint32_t *paint_alloc(struct paint_info *info)
 {
-	unsigned nr = (info->nr_bits + 31) / 32;
+	unsigned nr = DIV_ROUND_UP(info->nr_bits, 32);
 	unsigned size = nr * sizeof(uint32_t);
 	void *p;
 	if (!info->pool_count || size > info->end - info->free) {
@@ -471,7 +471,7 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 {
 	unsigned int i, nr;
 	struct commit_list *head = NULL;
-	int bitmap_nr = (info->nr_bits + 31) / 32;
+	int bitmap_nr = DIV_ROUND_UP(info->nr_bits, 32);
 	size_t bitmap_size = st_mult(sizeof(uint32_t), bitmap_nr);
 	struct commit *c = lookup_commit_reference_gently(oid, 1);
 	uint32_t *tmp; /* to be freed before return */
@@ -611,7 +611,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 		paint_down(&pi, ref->oid + i, i);
 
 	if (used) {
-		int bitmap_size = ((pi.nr_bits + 31) / 32) * sizeof(uint32_t);
+		int bitmap_size = DIV_ROUND_UP(pi.nr_bits, 32) * sizeof(uint32_t);
 		memset(used, 0, sizeof(*used) * info->shallow->nr);
 		for (i = 0; i < nr_shallow; i++) {
 			const struct commit *c = lookup_commit(&oid[shallow[i]]);
@@ -672,7 +672,7 @@ static void post_assign_shallow(struct shallow_info *info,
 	struct commit *c;
 	uint32_t **bitmap;
 	int dst, i, j;
-	int bitmap_nr = (info->ref->nr + 31) / 32;
+	int bitmap_nr = DIV_ROUND_UP(info->ref->nr, 32);
 	struct commit_array ca;
 
 	trace_printf_key(&trace_shallow, "shallow: post_assign_shallow\n");
