@@ -438,7 +438,7 @@ static int append_matching_ref(const char *refname, const struct object_id *oid,
 			slash--;
 	if (!*tail)
 		return 0;
-	if (wildmatch(match_ref_pattern, tail, 0, NULL))
+	if (wildmatch(match_ref_pattern, tail, 0))
 		return 0;
 	if (starts_with(refname, "refs/heads/"))
 		return append_head_ref(refname, oid, flag, cb_data);
