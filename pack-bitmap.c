@@ -627,7 +627,7 @@ static void show_objects_for_type(
 			sha1 = nth_packed_object_sha1(bitmap_git.pack, entry->nr);
 
 			if (bitmap_git.hashes)
-				hash = ntohl(bitmap_git.hashes[entry->nr]);
+				hash = get_be32(bitmap_git.hashes + entry->nr);
 
 			show_reach(sha1, object_type, 0, hash, bitmap_git.pack, entry->offset);
 		}
