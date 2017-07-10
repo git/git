@@ -1,16 +1,25 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #02; Fri, 7)
-X-master-at: 8b2efe2a0fd93b8721879f796d848a9ce785647f
-X-next-at: a9c46e097be495732ddb19ee1f57e62e5b35db6c
+Subject: What's cooking in git.git (Jul 2017, #03; Mon, 10)
+X-master-at: 117ddefdb4dfd9b40ae60967a7327754d8ce7a87
+X-next-at: 49757e11198e539fd1f865512274d30d99f2fcdb
 
-What's cooking in git.git (Jul 2017, #02; Fri, 7)
+What's cooking in git.git (Jul 2017, #03; Mon, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
+
+We also have tons of small updates in preparation for 2.13.3 on
+'maint'.  All of them are topics that have been merged to 'master'
+more than a few days ago, but I do not know how well they are tested
+in the field by people using 'master' in their everyday workflow.
+Ideally, our release process wants to see more people using 'next'
+in their everyday workflow to keep 'master' more stable than any
+tagged release, but I do not have a good idea on how to encourage
+it more than we currently do.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,90 +29,52 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/sha1dc-maint (2017-07-03) 1 commit
-  (merged to 'next' on 2017-07-05 at ac69c90b7e)
- + sha1dc: update from upstream
- (this branch is used by ab/sha1dc.)
+* ab/sha1dc (2017-07-03) 2 commits
+  (merged to 'next' on 2017-07-06 at 5a783032b7)
+ + sha1collisiondetection: automatically enable when submodule is populated
+ + sha1dc: optionally use sha1collisiondetection as a submodule
 
- Update the sha1dc again to fix portability glitches.
-
-
-* ab/strbuf-addftime-tzname-boolify (2017-07-01) 2 commits
-  (merged to 'next' on 2017-07-05 at 81e6795eb3)
- + strbuf: change an always NULL/"" strbuf_addftime() param to bool
- + strbuf.h comment: discuss strbuf_addftime() arguments in order
-
- strbuf_addftime() is further getting tweaked.
+ The "collission-detecting" implementation of SHA-1 hash we borrowed
+ from is replaced by directly binding the upstream project as our
+ submodule.  Glitches on minority platforms are still being worked out.
 
 
-* aw/contrib-subtree-doc-asciidoctor (2017-06-27) 1 commit
-  (merged to 'next' on 2017-06-30 at af23bd111b)
- + subtree: honour USE_ASCIIDOCTOR when set
+* ab/wildmatch (2017-06-23) 1 commit
+  (merged to 'next' on 2017-07-07 at 34482a9a4f)
+ + wildmatch: remove unused wildopts parameter
 
- The Makefile rule in contrib/subtree for building documentation
- learned to honour USE_ASCIIDOCTOR just like the main documentation
- set does.
+ Minor code cleanup.
 
 
-* jc/utf8-fprintf (2017-06-28) 1 commit
-  (merged to 'next' on 2017-06-30 at a8cc490818)
- + submodule--helper: do not call utf8_fprintf() unnecessarily
+* bb/unicode-10.0 (2017-07-07) 1 commit
+  (merged to 'next' on 2017-07-07 at a9c46e097b)
+ + unicode: update the width tables to Unicode 10
 
- Code cleanup.
-
-
-* js/fsck-name-object (2017-06-28) 1 commit
-  (merged to 'next' on 2017-06-30 at 9a08514cf2)
- + t1450: use egrep for regexp "alternation"
-
- Test fix.
+ Update the character width tables.
 
 
-* js/t5534-rev-parse-gives-multi-line-output-fix (2017-07-05) 1 commit
-  (merged to 'next' on 2017-07-05 at 5f964c44ba)
- + t5534: fix misleading grep invocation
+* jk/reflog-walk-maint (2017-07-07) 4 commits
+  (merged to 'next' on 2017-07-07 at 611554ba2f)
+ + reflog-walk: include all fields when freeing complete_reflogs
+ + reflog-walk: don't free reflogs added to cache
+ + reflog-walk: duplicate strings in complete_reflogs list
+  (merged to 'next' on 2017-07-06 at 7408dd80a1)
+ + reflog-walk: skip over double-null oid due to HEAD rename
+ (this branch is used by jk/reflog-walk.)
 
- A few tests that tried to verify the contents of push certificates
- did not use 'git rev-parse' to formulate the line to look for in
- the certificate correctly.
-
-
-* rs/apply-avoid-over-reading (2017-07-01) 1 commit
-  (merged to 'next' on 2017-07-05 at 35730f3a47)
- + apply: use starts_with() in gitdiff_verify_name()
-
- Code clean-up to fix possible buffer over-reading.
-
-
-* sb/merge-recursive-code-cleanup (2017-06-30) 1 commit
-  (merged to 'next' on 2017-07-05 at 4228240520)
- + merge-recursive: use DIFF_XDL_SET macro
-
- Code clean-up.
+ After "git branch --move" of the currently checked out branch, the
+ code to walk the reflog of HEAD via "log -g" and friends
+ incorrectly stopped at the reflog entry that records the renaming
+ of the branch.
 
 
-* xz/send-email-batch-size (2017-07-05) 1 commit
-  (merged to 'next' on 2017-07-05 at 92f3c31fbd)
- + send-email: --batch-size to work around some SMTP server limit
+* ks/commit-assuming-only-warning-removal (2017-06-30) 2 commits
+  (merged to 'next' on 2017-07-05 at 462a72df95)
+ + commit-template: distinguish status information unconditionally
+ + commit-template: remove outdated notice about explicit paths
 
- "git send-email" learned to overcome some SMTP server limitation
- that does not allow many pieces of e-mails to be sent over a single
- session.
-
---------------------------------------------------
-[New Topics]
-
-* jc/allow-lazy-cas (2017-07-06) 1 commit
- - push: disable lazy --force-with-lease by default
-
- Because "git push --force-with-lease[=<ref>]" that relies on the
- stability of remote-tracking branches is unsafe when something
- fetches into the repository behind user's back, it is now disabled
- by default.  A new configuration variable can be used to enable it
- by users who know what they are doing.  This would pave the way to
- possibly turn `--force` into `--force-with-lease`.
-
- Will wait for feedback, then merge to and cook in 'next'.
+ An old message shown in the commit log template was removed, as it
+ has outlived its usefulness.
 
 
 * ks/typofix-commit-c-comment (2017-07-06) 1 commit
@@ -112,14 +83,126 @@ of the repositories listed at
 
  Typofix.
 
+
+* pw/unquote-path-in-git-pm (2017-06-30) 4 commits
+  (merged to 'next' on 2017-07-05 at 538ab4d599)
+ + t9700: add tests for Git::unquote_path()
+ + Git::unquote_path(): throw an exception on bad path
+ + Git::unquote_path(): handle '\a'
+ + add -i: move unquote_path() to Git.pm
+
+ Code refactoring.
+
+
+* rs/free-and-null (2017-06-29) 1 commit
+  (merged to 'next' on 2017-07-06 at 9c9e1d59a2)
+ + coccinelle: polish FREE_AND_NULL rules
+
+ Code cleanup.
+
+--------------------------------------------------
+[New Topics]
+
+* kn/ref-filter-branch-list (2017-07-10) 4 commits
+  (merged to 'next' on 2017-07-10 at 35fd25c0dd)
+ + ref-filter.c: drop return from void function
+ + branch: set remote color in ref-filter branch immediately
+ + branch: use BRANCH_COLOR_LOCAL in ref-filter format
+ + branch: only perform HEAD check for local branches
+
+ The rewrite of "git branch --list" using for-each-ref's internals
+ that happened in v2.13 regressed its handling of color.branch.local;
+ this has been fixed.
+
  Will merge to 'master'.
 
 
-* bb/unicode-10.0 (2017-07-07) 1 commit
-  (merged to 'next' on 2017-07-07 at a9c46e097b)
- + unicode: update the width tables to Unicode 10
+* rs/apply-avoid-over-reading (2017-07-09) 1 commit
+  (merged to 'next' on 2017-07-10 at 2d8191ec3f)
+ + apply: use strcmp(3) for comparing strings in gitdiff_verify_name()
 
- Update the character width tables.
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rs/progress-overall-throughput-at-the-end (2017-07-09) 1 commit
+ - progress: show overall rate in last update
+
+ The progress meter did not give a useful output when we haven't had
+ 0.5 seconds to measure the throughput during the interval.  Instead
+ show the overall throughput rate at the end, which is a much more
+ useful number.
+
+ Will merge to 'next'.
+
+
+* rs/sha1-file-micro-optim (2017-07-09) 2 commits
+ - SQUASH???
+ - sha1_file: add slash once in for_each_file_in_obj_subdir()
+
+ Code cleanup.
+
+ Perhaps drop.
+ cf. <f59c8256-716b-9305-2a4f-d4fe49f666ff@web.de>
+
+
+* rs/urlmatch-cleanup (2017-07-09) 1 commit
+  (merged to 'next' on 2017-07-10 at 2dd3e7cab0)
+ + urlmatch: use hex2chr() in append_normalized_escapes()
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rs/use-div-round-up (2017-07-10) 1 commit
+  (merged to 'next' on 2017-07-10 at accb7919da)
+ + use DIV_ROUND_UP
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* rs/wt-status-cleanup (2017-07-10) 1 commit
+  (merged to 'next' on 2017-07-10 at d8939f683a)
+ + wt-status: use separate variable for result of shorten_unambiguous_ref
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* ks/prepare-commit-msg-sample (2017-07-10) 3 commits
+ - hook: add sign-off using "interpret-trailers"
+ - hook: name the positional variables
+ - hook: cleanup script
+
+ Remove an example that is now obsolete from a sample hook,
+ and improve an old example in it that added a sign-off manually
+ to use the interpret-trailers command.
+
+
+* jk/build-with-asan (2017-07-10) 5 commits
+  (merged to 'next' on 2017-07-10 at 49757e1119)
+ + Makefile: disable unaligned loads with UBSan
+ + Makefile: turn off -fomit-frame-pointer with sanitizers
+ + Makefile: add helper for compiling with -fsanitize
+ + test-lib: turn on ASan abort_on_error by default
+ + test-lib: set ASAN_OPTIONS variable before we run git
+
+ The build procedure has been improved to allow building and testing
+ Git with address sanitizer more easily.
+
+ Will merge to 'master'.
+
+
+* ks/fix-rebase-doc-picture (2017-07-10) 1 commit
+  (merged to 'next' on 2017-07-10 at 3acb856b17)
+ + doc: correct a mistake in an illustration
+
+ Doc update.
 
  Will merge to 'master'.
 
@@ -189,6 +272,19 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/allow-lazy-cas (2017-07-06) 1 commit
+ - push: disable lazy --force-with-lease by default
+
+ Because "git push --force-with-lease[=<ref>]" that relies on the
+ stability of remote-tracking branches is unsafe when something
+ fetches into the repository behind user's back, it is now disabled
+ by default.  A new configuration variable can be used to enable it
+ by users who know what they are doing.  This would pave the way to
+ possibly turn `--force` into `--force-with-lease`.
+
+ Will wait for feedback, then merge to and cook in 'next'.
+
+
 * bc/object-id (2017-07-04) 12 commits
  - sha1_name: convert GET_SHA1* flags to GET_OID*
  - sha1_name: convert get_sha1* to get_oid*
@@ -205,39 +301,26 @@ of the repositories listed at
 
  Conversion from uchar[20] to struct object_id continues.
 
+ Expecting a reroll.
+ cf. <20170707212201.ofdgjaips2tw3koy@genre.crustytoothpaste.net>
 
-* jk/reflog-walk (2017-07-07) 8 commits
- - reflog-walk: apply --since/--until to reflog dates
- - reflog-walk: stop using fake parents
- - rev-list: check reflog_info before showing usage
- - get_revision_1(): replace do-while with an early return
- - log: do not free parents when walking reflog
- - revision: disallow reflog walking with revs->limited
- - t1414: document some reflog-walk oddities
- - Merge branch 'jk/reflog-walk-maint' into jk/reflog-walk
- (this branch uses jk/reflog-walk-maint.)
+
+* jk/reflog-walk (2017-07-09) 9 commits
+  (merged to 'next' on 2017-07-09 at 7449e964c6)
+ + reflog-walk: apply --since/--until to reflog dates
+ + reflog-walk: stop using fake parents
+ + rev-list: check reflog_info before showing usage
+ + get_revision_1(): replace do-while with an early return
+ + log: do not free parents when walking reflog
+ + log: clarify comment about reflog cycles
+ + revision: disallow reflog walking with revs->limited
+ + t1414: document some reflog-walk oddities
+ + Merge branch 'jk/reflog-walk-maint' into jk/reflog-walk
 
  Numerous bugs in walking of reflogs via "log -g" and friends have
  been fixed.
 
- Will wait for feedback, then merge to and cook in 'next'.
-
-
-* jk/reflog-walk-maint (2017-07-07) 4 commits
-  (merged to 'next' on 2017-07-07 at 611554ba2f)
- + reflog-walk: include all fields when freeing complete_reflogs
- + reflog-walk: don't free reflogs added to cache
- + reflog-walk: duplicate strings in complete_reflogs list
-  (merged to 'next' on 2017-07-06 at 7408dd80a1)
- + reflog-walk: skip over double-null oid due to HEAD rename
- (this branch is used by jk/reflog-walk.)
-
- After "git branch --move" of the currently checked out branch, the
- code to walk the reflog of HEAD via "log -g" and friends
- incorrectly stopped at the reflog entry that records the renaming
- of the branch.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * sb/hashmap-cleanup (2017-07-05) 10 commits
@@ -260,7 +343,7 @@ of the repositories listed at
  The callback implementations have been updated to take "void *"
  pointers and cast them to the type they expect instead.
 
- Will wait for feedback, then merge to and cook in 'next'.
+ Will merge to 'next'.
 
 
 * tb/push-to-cygwin-unc-path (2017-07-05) 1 commit
@@ -276,7 +359,7 @@ of the repositories listed at
  not just the code to decide if the push destination is local.  There
  may be unexpected fallouts in the path normalization.
 
- Will wait for feedback, then merge to and cook in 'next'.
+ Will merge to 'next'.
 
 
 * ab/grep-lose-opt-regflags (2017-06-30) 6 commits
@@ -289,17 +372,6 @@ of the repositories listed at
  + grep: remove redundant double assignment to 0
 
  Code cleanup.
-
- Will merge to 'master'.
-
-
-* ks/commit-assuming-only-warning-removal (2017-06-30) 2 commits
-  (merged to 'next' on 2017-07-05 at 462a72df95)
- + commit-template: distinguish status information unconditionally
- + commit-template: remove outdated notice about explicit paths
-
- An old message shown in the commit log template was removed, as it
- has outlived its usefulness.
 
  Will merge to 'master'.
 
@@ -328,24 +400,6 @@ of the repositories listed at
  It still seems to break when merged to 'pu'.
 
 
-* rs/free-and-null (2017-06-29) 1 commit
-  (merged to 'next' on 2017-07-06 at 9c9e1d59a2)
- + coccinelle: polish FREE_AND_NULL rules
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* ab/wildmatch (2017-06-23) 1 commit
-  (merged to 'next' on 2017-07-07 at 34482a9a4f)
- + wildmatch: remove unused wildopts parameter
-
- Minor code cleanup.
-
- Will merge to 'master'.
-
-
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
   (merged to 'next' on 2017-06-26 at d026281517)
  + pathspec: die on empty strings as pathspec
@@ -363,25 +417,14 @@ of the repositories listed at
 
 
 * sb/pull-rebase-submodule (2017-06-27) 4 commits
- - builtin/fetch cleanup: always set default value for submodule recursing
- - pull: optionally rebase submodules (remote submodule changes only)
- - builtin/fetch: parse recurse-submodules-default at default options parsing
- - builtin/fetch: factor submodule recurse parsing out to submodule config
+  (merged to 'next' on 2017-07-09 at 48d2c3a51c)
+ + builtin/fetch cleanup: always set default value for submodule recursing
+ + pull: optionally rebase submodules (remote submodule changes only)
+ + builtin/fetch: parse recurse-submodules-default at default options parsing
+ + builtin/fetch: factor submodule recurse parsing out to submodule config
 
  "git pull --rebase --recurse-submodules" learns to rebase the
  branch in the submodules to an updated base.
-
- Will merge to 'next'.
-
-
-* pw/unquote-path-in-git-pm (2017-06-30) 4 commits
-  (merged to 'next' on 2017-07-05 at 538ab4d599)
- + t9700: add tests for Git::unquote_path()
- + Git::unquote_path(): throw an exception on bad path
- + Git::unquote_path(): handle '\a'
- + add -i: move unquote_path() to Git.pm
-
- Code refactoring.
 
  Will merge to 'master'.
 
@@ -425,11 +468,12 @@ of the repositories listed at
 
 
 * sb/submodule-doc (2017-06-22) 1 commit
- - submodules: overhaul documentation
+  (merged to 'next' on 2017-07-09 at fda0ceec31)
+ + submodules: overhaul documentation
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sd/branch-copy (2017-06-18) 3 commits
@@ -460,18 +504,6 @@ of the repositories listed at
 
  The filter-process interface learned to allow a process with long
  latency give a "delayed" response.
-
- Will merge to 'master'.
-
-
-* ab/sha1dc (2017-07-03) 2 commits
-  (merged to 'next' on 2017-07-06 at 5a783032b7)
- + sha1collisiondetection: automatically enable when submodule is populated
- + sha1dc: optionally use sha1collisiondetection as a submodule
-
- The "collission-detecting" implementation of SHA-1 hash we borrowed
- from is replaced by directly binding the upstream project as our
- submodule.  Glitches on minority platforms are still being worked out.
 
  Will merge to 'master'.
 
