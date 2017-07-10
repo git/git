@@ -166,14 +166,14 @@ apply_autostash () {
 		stash_sha1=$(cat "$state_dir/autostash")
 		if git stash apply $stash_sha1 2>&1 >/dev/null
 		then
-			echo "$(gettext 'Applied autostash.')"
+			echo "$(gettext 'Applied autostash.')" >&2
 		else
 			git stash store -m "autostash" -q $stash_sha1 ||
 			die "$(eval_gettext "Cannot store \$stash_sha1")"
 			gettext 'Applying autostash resulted in conflicts.
 Your changes are safe in the stash.
 You can run "git stash pop" or "git stash drop" at any time.
-'
+' >&2
 		fi
 	fi
 }
