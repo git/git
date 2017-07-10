@@ -105,6 +105,9 @@ UI, Workflows & Features
    that does not allow many pieces of e-mails to be sent over a single
    session.
 
+ * An old message shown in the commit log template was removed, as it
+   has outlived its usefulness.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -448,6 +451,15 @@ notes for details).
    the certificate correctly.
    (merge 8722947e5c js/t5534-rev-parse-gives-multi-line-output-fix later to maint).
 
+ * Update the character width tables.
+   (merge 7560aacd7c bb/unicode-10.0 later to maint).
+
+ * After "git branch --move" of the currently checked out branch, the
+   code to walk the reflog of HEAD via "log -g" and friends
+   incorrectly stopped at the reflog entry that records the renaming
+   of the branch.
+   (merge e30d463d45 jk/reflog-walk-maint later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 68241cb9dd sb/t4005-modernize later to maint).
    (merge 4fced24712 ks/t7508-indent-fix later to maint).
@@ -456,3 +468,5 @@ notes for details).
    (merge 73fc2aadc7 js/fsck-name-object later to maint).
    (merge dc4b4a61ba jc/utf8-fprintf later to maint).
    (merge c2d4b4cd06 sb/merge-recursive-code-cleanup later to maint).
+   (merge 3f9c637ec7 pw/unquote-path-in-git-pm later to maint).
+   (merge 669638fe7a ks/typofix-commit-c-comment later to maint).
