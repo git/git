@@ -8564,7 +8564,7 @@ msgstr "\"auto-gc\" Modus aktivieren"
 #: builtin/gc.c:362
 msgid "force running gc even if there may be another gc running"
 msgstr ""
-"Ausführung von \"git gc\" erwzingen, selbst wenn ein anderes\n"
+"Ausführung von \"git gc\" erzwingen, selbst wenn ein anderes\n"
 "\"git gc\" bereits ausgeführt wird"
 
 #: builtin/gc.c:379

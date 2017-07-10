@@ -198,7 +198,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * The 'diff-highlight' program (in contrib/) has been restructured
    for easier reuse by an external project 'diff-so-fancy'.
-   (merge 0c977dbc81 jk/diff-highlight-module later to maint).
 
  * A common pattern to free a piece of memory and assign NULL to the
    pointer that used to point at it has been replaced with a new
@@ -392,24 +391,20 @@ notes for details).
 
  * "git mergetool" learned to work around a wrapper MacOS X adds
    around underlying meld.
-   (merge 0af85f84bd da/mergetools-meld-output-opt-on-macos later to maint).
 
  * An example in documentation that does not work in multi worktree
    configuration has been corrected.
-   (merge 773a88914f ah/doc-gitattributes-empty-index later to maint).
 
  * The pretty-format specifiers like '%h', '%t', etc. had an
    optimization that no longer works correctly.  In preparation/hope
    of getting it correctly implemented, first discard the optimization
    that is broken.
-   (merge fe9e2aefd4 rs/pretty-add-again later to maint).
 
  * The code to pick up and execute command alias definition from the
    configuration used to switch to the top of the working tree and
    then come back when the expanded alias was executed, which was
    unnecessarilyl complex.  Attempt to simplify the logic by using the
    early-config mechanism that does not chdir around.
-   (merge a9bcf6586d js/alias-early-config later to maint).
 
  * Fix configuration codepath to pay proper attention to commondir
    that is used in multi-worktree situation, and isolate config API
@@ -419,29 +414,22 @@ notes for details).
  * "git add -p" were updated in 2.12 timeframe to cope with custom
    core.commentchar but the implementation was buggy and a
    metacharacter like $ and * did not work.
-   (merge d85d7ecb80 jk/add-p-commentchar-fix later to maint).
 
  * A recent regression in "git rebase -i" has been fixed and tests
    that would have caught it and others have been added.
-   (merge adf16c08cb pw/rebase-i-regression-fix-tests later to maint).
 
  * An unaligned 32-bit access in pack-bitmap code ahs been corrected.
-   (merge da41c942b3 jc/pack-bitmap-unaligned later to maint).
 
  * Tighten error checks for invalid "git apply" input.
-   (merge d70e9c5c8c rs/apply-validate-input later to maint).
 
  * The split index code did not honor core.sharedrepository setting
    correctly.
-   (merge 3ee83f48e5 cc/shared-index-permfix later to maint).
 
  * The Makefile rule in contrib/subtree for building documentation
    learned to honour USE_ASCIIDOCTOR just like the main documentation
    set does.
-   (merge fdc1ad97c1 aw/contrib-subtree-doc-asciidoctor later to maint).
 
  * Update the sha1dc again to fix portability glitches.
-   (merge 9936c1b52a ab/sha1dc-maint later to maint).
 
  * Code clean-up to fix possible buffer over-reading.
    (merge 8bc172e5f2 rs/apply-avoid-over-reading later to maint).
@@ -449,7 +437,6 @@ notes for details).
  * A few tests that tried to verify the contents of push certificates
    did not use 'git rev-parse' to formulate the line to look for in
    the certificate correctly.
-   (merge 8722947e5c js/t5534-rev-parse-gives-multi-line-output-fix later to maint).
 
  * Update the character width tables.
    (merge 7560aacd7c bb/unicode-10.0 later to maint).
@@ -461,12 +448,5 @@ notes for details).
    (merge e30d463d45 jk/reflog-walk-maint later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge 68241cb9dd sb/t4005-modernize later to maint).
-   (merge 4fced24712 ks/t7508-indent-fix later to maint).
-   (merge 968b1fe263 mb/reword-autocomplete-message later to maint).
-   (merge 8592c95cdf ah/doc-pretty-color-auto-prefix later to maint).
-   (merge 73fc2aadc7 js/fsck-name-object later to maint).
-   (merge dc4b4a61ba jc/utf8-fprintf later to maint).
-   (merge c2d4b4cd06 sb/merge-recursive-code-cleanup later to maint).
    (merge 3f9c637ec7 pw/unquote-path-in-git-pm later to maint).
    (merge 669638fe7a ks/typofix-commit-c-comment later to maint).
