@@ -61,7 +61,8 @@ require Exporter;
                 remote_refs prompt
                 get_tz_offset get_record
                 credential credential_read credential_write
-                temp_acquire temp_is_locked temp_release temp_reset temp_path);
+                temp_acquire temp_is_locked temp_release temp_reset temp_path
+                unquote_path);
 
 
 =head1 DESCRIPTION
@@ -1449,6 +1450,57 @@ sub prefix_lines {
 	my $string = join("\n", @_);
 	$string =~ s/^/$prefix/mg;
 	return $string;
+}
+
+=item unquote_path ( PATH )
+
+Unquote a quoted path containing c-escapes as returned by ls-files etc.
+when not using -z or when parsing the output of diff -u.
+
+=cut
+
+{
+	my %cquote_map = (
+		"a" => chr(7),
+		"b" => chr(8),
+		"t" => chr(9),
+		"n" => chr(10),
+		"v" => chr(11),
+		"f" => chr(12),
+		"r" => chr(13),
+		"\\" => "\\",
+		"\042" => "\042",
+	);
+
+	sub unquote_path {
+		local ($_) = @_;
+		my ($retval, $remainder);
+		if (!/^\042(.*)\042$/) {
+			return $_;
+		}
+		($_, $retval) = ($1, "");
+		while (/^([^\\]*)\\(.*)$/) {
+			$remainder = $2;
+			$retval .= $1;
+			for ($remainder) {
+				if (/^([0-3][0-7][0-7])(.*)$/) {
+					$retval .= chr(oct($1));
+					$_ = $2;
+					last;
+				}
+				if (/^([\\\042abtnvfr])(.*)$/) {
+					$retval .= $cquote_map{$1};
+					$_ = $2;
+					last;
+				}
+				# This is malformed
+				throw Error::Simple("invalid quoted path $_[0]");
+			}
+			$_ = $remainder;
+		}
+		$retval .= $_;
+		return $retval;
+	}
 }
 
 =item get_comment_line_char ( )
