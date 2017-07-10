@@ -210,6 +210,7 @@ struct patch {
 	unsigned ws_rule;
 	int lines_added, lines_deleted;
 	int score;
+	int extension_linenr; /* first line specifying delete/new/rename/copy */
 	unsigned int is_toplevel_relative:1;
 	unsigned int inaccurate_eof:1;
 	unsigned int is_binary:1;
@@ -1011,20 +1012,27 @@ static int gitdiff_newname(struct apply_state *state,
 				   DIFF_NEW_NAME);
 }
 
+static int parse_mode_line(const char *line, int linenr, unsigned int *mode)
+{
+	char *end;
+	*mode = strtoul(line, &end, 8);
+	if (end == line || !isspace(*end))
+		return error(_("invalid mode on line %d: %s"), linenr, line);
+	return 0;
+}
+
 static int gitdiff_oldmode(struct apply_state *state,
 			   const char *line,
 			   struct patch *patch)
 {
-	patch->old_mode = strtoul(line, NULL, 8);
-	return 0;
+	return parse_mode_line(line, state->linenr, &patch->old_mode);
 }
 
 static int gitdiff_newmode(struct apply_state *state,
 			   const char *line,
 			   struct patch *patch)
 {
-	patch->new_mode = strtoul(line, NULL, 8);
-	return 0;
+	return parse_mode_line(line, state->linenr, &patch->new_mode);
 }
 
 static int gitdiff_delete(struct apply_state *state,
@@ -1138,7 +1146,7 @@ static int gitdiff_index(struct apply_state *state,
 	memcpy(patch->new_sha1_prefix, line, len);
 	patch->new_sha1_prefix[len] = 0;
 	if (*ptr == ' ')
-		patch->old_mode = strtoul(ptr+1, NULL, 8);
+		return gitdiff_oldmode(state, ptr + 1, patch);
 	return 0;
 }
 
@@ -1322,6 +1330,18 @@ static char *git_header_name(struct apply_state *state,
 	}
 }
 
+static int check_header_line(struct apply_state *state, struct patch *patch)
+{
+	int extensions = (patch->is_delete == 1) + (patch->is_new == 1) +
+			 (patch->is_rename == 1) + (patch->is_copy == 1);
+	if (extensions > 1)
+		return error(_("inconsistent header lines %d and %d"),
+			     patch->extension_linenr, state->linenr);
+	if (extensions && !patch->extension_linenr)
+		patch->extension_linenr = state->linenr;
+	return 0;
+}
+
 /* Verify that we recognize the lines following a git header */
 static int parse_git_header(struct apply_state *state,
 			    const char *line,
@@ -1387,6 +1407,8 @@ static int parse_git_header(struct apply_state *state,
 				continue;
 			res = p->fn(state, line + oplen, patch);
 			if (res < 0)
+				return -1;
+			if (check_header_line(state, patch))
 				return -1;
 			if (res > 0)
 				return offset;
@@ -1585,7 +1607,8 @@ static int find_header(struct apply_state *state,
 				patch->old_name = xstrdup(patch->def_name);
 				patch->new_name = xstrdup(patch->def_name);
 			}
-			if (!patch->is_delete && !patch->new_name) {
+			if ((!patch->new_name && !patch->is_delete) ||
+			    (!patch->old_name && !patch->is_new)) {
 				error(_("git diff header lacks filename information "
 					     "(line %d)"), state->linenr);
 				return -128;
