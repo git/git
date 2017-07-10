@@ -41,7 +41,7 @@ GIT_BUILD_DIR="$TEST_DIRECTORY"/..
 # the noise level. This needs to happen at the start of the script,
 # before we even do our "did we build git yet" check (since we don't
 # want that one to complain to stderr).
-: ${ASAN_OPTIONS=detect_leaks=0}
+: ${ASAN_OPTIONS=detect_leaks=0:abort_on_error=1}
 export ASAN_OPTIONS
 
 ################################################################
