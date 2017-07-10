@@ -264,12 +264,6 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s)
 extern void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2);
 
 /**
- * Copy part of the buffer from a given position till a given length to the
- * end of the buffer.
- */
-extern void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len);
-
-/**
  * This function can be used to expand a format string containing
  * placeholders. To that end, it parses the string and calls the specified
  * function for every percent sign found.
