@@ -113,6 +113,9 @@ get_var_from_env_or_config () {
 get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf.repeatCount" 3
 export GIT_PERF_REPEAT_COUNT
 
+get_var_from_env_or_config "GIT_PERF_DIRS_OR_REVS" "perf.dirsOrRevs"
+set -- $GIT_PERF_DIRS_OR_REVS "$@"
+
 GIT_PERF_AGGREGATING_LATER=t
 export GIT_PERF_AGGREGATING_LATER
 
