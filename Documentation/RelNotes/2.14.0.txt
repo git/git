@@ -447,6 +447,15 @@ notes for details).
    of the branch.
    (merge e30d463d45 jk/reflog-walk-maint later to maint).
 
+ * The rewrite of "git branch --list" using for-each-ref's internals
+   that happened in v2.13 regressed its handling of color.branch.local;
+   this has been fixed.
+   (merge 5b5c9c3e19 kn/ref-filter-branch-list later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 3f9c637ec7 pw/unquote-path-in-git-pm later to maint).
    (merge 669638fe7a ks/typofix-commit-c-comment later to maint).
+   (merge 5053313562 rs/urlmatch-cleanup later to maint).
+   (merge 42c78a216e rs/use-div-round-up later to maint).
+   (merge 5e8d2729ae rs/wt-status-cleanup later to maint).
+   (merge 01826066b0 ks/fix-rebase-doc-picture later to maint).
