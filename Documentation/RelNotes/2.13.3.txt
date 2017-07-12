@@ -50,4 +50,13 @@ Fixes since v2.13.2
    did not use 'git rev-parse' to formulate the line to look for in
    the certificate correctly.
 
+ * After "git branch --move" of the currently checked out branch, the
+   code to walk the reflog of HEAD via "log -g" and friends
+   incorrectly stopped at the reflog entry that records the renaming
+   of the branch.
+
+ * The rewrite of "git branch --list" using for-each-ref's internals
+   that happened in v2.13 regressed its handling of color.branch.local;
+   this has been fixed.
+
 Also contains various documentation updates and code clean-ups.
