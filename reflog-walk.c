@@ -38,6 +38,22 @@ static int read_one_reflog(struct object_id *ooid, struct object_id *noid,
 	return 0;
 }
 
+static void free_complete_reflog(struct complete_reflogs *array)
+{
+	int i;
+
+	if (!array)
+		return;
+
+	for (i = 0; i < array->nr; i++) {
+		free(array->items[i].email);
+		free(array->items[i].message);
+	}
+	free(array->items);
+	free(array->ref);
+	free(array);
+}
+
 static struct complete_reflogs *read_complete_reflog(const char *ref)
 {
 	struct complete_reflogs *reflogs =
@@ -136,6 +152,7 @@ struct reflog_walk_info {
 void init_reflog_walk(struct reflog_walk_info **info)
 {
 	*info = xcalloc(1, sizeof(struct reflog_walk_info));
+	(*info)->complete_reflogs.strdup_strings = 1;
 }
 
 int add_reflog_for_walk(struct reflog_walk_info *info,
@@ -188,20 +205,14 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 			if (ret > 1)
 				free(b);
 			else if (ret == 1) {
-				if (reflogs) {
-					free(reflogs->ref);
-					free(reflogs);
-				}
+				free_complete_reflog(reflogs);
 				free(branch);
 				branch = b;
 				reflogs = read_complete_reflog(branch);
 			}
 		}
 		if (!reflogs || reflogs->nr == 0) {
-			if (reflogs) {
-				free(reflogs->ref);
-				free(reflogs);
-			}
+			free_complete_reflog(reflogs);
 			free(branch);
 			return -1;
 		}
@@ -214,10 +225,6 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	if (recno < 0) {
 		commit_reflog->recno = get_reflog_recno_by_time(reflogs, timestamp);
 		if (commit_reflog->recno < 0) {
-			if (reflogs) {
-				free(reflogs->ref);
-				free(reflogs);
-			}
 			free(commit_reflog);
 			return -1;
 		}
@@ -259,6 +266,8 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 		/* a root commit, but there are still more entries to show */
 		reflog = &commit_reflog->reflogs->items[commit_reflog->recno];
 		logobj = parse_object(reflog->noid.hash);
+		if (!logobj)
+			logobj = parse_object(reflog->ooid.hash);
 	}
 
 	if (!logobj || logobj->type != OBJ_COMMIT) {
