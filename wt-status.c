@@ -1763,6 +1763,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	const char *branch_color_remote = color(WT_STATUS_REMOTE_BRANCH, s);
 
 	const char *base;
+	char *short_base;
 	const char *branch_name;
 	int num_ours, num_theirs;
 	int upstream_is_gone = 0;
@@ -1797,10 +1798,10 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		upstream_is_gone = 1;
 	}
 
-	base = shorten_unambiguous_ref(base, 0);
+	short_base = shorten_unambiguous_ref(base, 0);
 	color_fprintf(s->fp, header_color, "...");
-	color_fprintf(s->fp, branch_color_remote, "%s", base);
-	free((char *)base);
+	color_fprintf(s->fp, branch_color_remote, "%s", short_base);
+	free(short_base);
 
 	if (!upstream_is_gone && !num_ours && !num_theirs)
 		goto conclude;
