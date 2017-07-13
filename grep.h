@@ -162,7 +162,6 @@ struct grep_opt {
 	char color_match_selected[COLOR_MAXLEN];
 	char color_selected[COLOR_MAXLEN];
 	char color_sep[COLOR_MAXLEN];
-	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
 	unsigned last_shown;
