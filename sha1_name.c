@@ -500,10 +500,10 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 	}
 
 	sha1_to_hex_r(hex, sha1);
-	if (len == 40 || !len)
-		return 40;
+	if (len == GIT_SHA1_HEXSZ || !len)
+		return GIT_SHA1_HEXSZ;
 	exists = has_sha1_file(sha1);
-	while (len < 40) {
+	while (len < GIT_SHA1_HEXSZ) {
 		struct object_id oid_ret;
 		status = get_short_oid(hex, len, &oid_ret, GET_OID_QUIETLY);
 		if (exists
