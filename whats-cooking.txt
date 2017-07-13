@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #03; Mon, 10)
-X-master-at: 117ddefdb4dfd9b40ae60967a7327754d8ce7a87
-X-next-at: 49757e11198e539fd1f865512274d30d99f2fcdb
+Subject: What's cooking in git.git (Jul 2017, #04; Thu, 13)
+X-master-at: f3da2b79be9565779e4f76dc5812c68e156afdf0
+X-next-at: d933b75aa4527621ff2f4d20b22127619c6d28ba
 
-What's cooking in git.git (Jul 2017, #03; Mon, 10)
+What's cooking in git.git (Jul 2017, #04; Thu, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,14 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-We also have tons of small updates in preparation for 2.13.3 on
-'maint'.  All of them are topics that have been merged to 'master'
-more than a few days ago, but I do not know how well they are tested
-in the field by people using 'master' in their everyday workflow.
-Ideally, our release process wants to see more people using 'next'
-in their everyday workflow to keep 'master' more stable than any
-tagged release, but I do not have a good idea on how to encourage
-it more than we currently do.
+A maintenance release for 2.13.x series, and the first preview for
+2.14 series -rc0, have been tagged.  Let's close the 'master' except
+for obvious fixes and clean-ups and concentrate on regressions from
+now on.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -29,159 +25,16 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/sha1dc (2017-07-03) 2 commits
-  (merged to 'next' on 2017-07-06 at 5a783032b7)
- + sha1collisiondetection: automatically enable when submodule is populated
- + sha1dc: optionally use sha1collisiondetection as a submodule
-
- The "collission-detecting" implementation of SHA-1 hash we borrowed
- from is replaced by directly binding the upstream project as our
- submodule.  Glitches on minority platforms are still being worked out.
-
-
-* ab/wildmatch (2017-06-23) 1 commit
-  (merged to 'next' on 2017-07-07 at 34482a9a4f)
- + wildmatch: remove unused wildopts parameter
-
- Minor code cleanup.
-
-
-* bb/unicode-10.0 (2017-07-07) 1 commit
-  (merged to 'next' on 2017-07-07 at a9c46e097b)
- + unicode: update the width tables to Unicode 10
-
- Update the character width tables.
-
-
-* jk/reflog-walk-maint (2017-07-07) 4 commits
-  (merged to 'next' on 2017-07-07 at 611554ba2f)
- + reflog-walk: include all fields when freeing complete_reflogs
- + reflog-walk: don't free reflogs added to cache
- + reflog-walk: duplicate strings in complete_reflogs list
-  (merged to 'next' on 2017-07-06 at 7408dd80a1)
- + reflog-walk: skip over double-null oid due to HEAD rename
- (this branch is used by jk/reflog-walk.)
-
- After "git branch --move" of the currently checked out branch, the
- code to walk the reflog of HEAD via "log -g" and friends
- incorrectly stopped at the reflog entry that records the renaming
- of the branch.
-
-
-* ks/commit-assuming-only-warning-removal (2017-06-30) 2 commits
-  (merged to 'next' on 2017-07-05 at 462a72df95)
- + commit-template: distinguish status information unconditionally
- + commit-template: remove outdated notice about explicit paths
-
- An old message shown in the commit log template was removed, as it
- has outlived its usefulness.
-
-
-* ks/typofix-commit-c-comment (2017-07-06) 1 commit
-  (merged to 'next' on 2017-07-07 at 64e98fc832)
- + builtin/commit.c: fix a typo in the comment
-
- Typofix.
-
-
-* pw/unquote-path-in-git-pm (2017-06-30) 4 commits
-  (merged to 'next' on 2017-07-05 at 538ab4d599)
- + t9700: add tests for Git::unquote_path()
- + Git::unquote_path(): throw an exception on bad path
- + Git::unquote_path(): handle '\a'
- + add -i: move unquote_path() to Git.pm
-
- Code refactoring.
-
-
-* rs/free-and-null (2017-06-29) 1 commit
-  (merged to 'next' on 2017-07-06 at 9c9e1d59a2)
- + coccinelle: polish FREE_AND_NULL rules
+* ab/grep-lose-opt-regflags (2017-06-30) 6 commits
+  (merged to 'next' on 2017-07-05 at 375c0b92ea)
+ + grep: remove redundant REG_NEWLINE when compiling fixed regex
+ + grep: remove regflags from the public grep_opt API
+ + grep: remove redundant and verbose re-assignments to 0
+ + grep: remove redundant "fixed" field re-assignment to 0
+ + grep: adjust a redundant grep pattern type assignment
+ + grep: remove redundant double assignment to 0
 
  Code cleanup.
-
---------------------------------------------------
-[New Topics]
-
-* kn/ref-filter-branch-list (2017-07-10) 4 commits
-  (merged to 'next' on 2017-07-10 at 35fd25c0dd)
- + ref-filter.c: drop return from void function
- + branch: set remote color in ref-filter branch immediately
- + branch: use BRANCH_COLOR_LOCAL in ref-filter format
- + branch: only perform HEAD check for local branches
-
- The rewrite of "git branch --list" using for-each-ref's internals
- that happened in v2.13 regressed its handling of color.branch.local;
- this has been fixed.
-
- Will merge to 'master'.
-
-
-* rs/apply-avoid-over-reading (2017-07-09) 1 commit
-  (merged to 'next' on 2017-07-10 at 2d8191ec3f)
- + apply: use strcmp(3) for comparing strings in gitdiff_verify_name()
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* rs/progress-overall-throughput-at-the-end (2017-07-09) 1 commit
- - progress: show overall rate in last update
-
- The progress meter did not give a useful output when we haven't had
- 0.5 seconds to measure the throughput during the interval.  Instead
- show the overall throughput rate at the end, which is a much more
- useful number.
-
- Will merge to 'next'.
-
-
-* rs/sha1-file-micro-optim (2017-07-09) 2 commits
- - SQUASH???
- - sha1_file: add slash once in for_each_file_in_obj_subdir()
-
- Code cleanup.
-
- Perhaps drop.
- cf. <f59c8256-716b-9305-2a4f-d4fe49f666ff@web.de>
-
-
-* rs/urlmatch-cleanup (2017-07-09) 1 commit
-  (merged to 'next' on 2017-07-10 at 2dd3e7cab0)
- + urlmatch: use hex2chr() in append_normalized_escapes()
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* rs/use-div-round-up (2017-07-10) 1 commit
-  (merged to 'next' on 2017-07-10 at accb7919da)
- + use DIV_ROUND_UP
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* rs/wt-status-cleanup (2017-07-10) 1 commit
-  (merged to 'next' on 2017-07-10 at d8939f683a)
- + wt-status: use separate variable for result of shorten_unambiguous_ref
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* ks/prepare-commit-msg-sample (2017-07-10) 3 commits
- - hook: add sign-off using "interpret-trailers"
- - hook: name the positional variables
- - hook: cleanup script
-
- Remove an example that is now obsolete from a sample hook,
- and improve an old example in it that added a sign-off manually
- to use the interpret-trailers command.
 
 
 * jk/build-with-asan (2017-07-10) 5 commits
@@ -195,7 +48,17 @@ of the repositories listed at
  The build procedure has been improved to allow building and testing
  Git with address sanitizer more easily.
 
- Will merge to 'master'.
+
+* kn/ref-filter-branch-list (2017-07-10) 4 commits
+  (merged to 'next' on 2017-07-10 at 35fd25c0dd)
+ + ref-filter.c: drop return from void function
+ + branch: set remote color in ref-filter branch immediately
+ + branch: use BRANCH_COLOR_LOCAL in ref-filter format
+ + branch: only perform HEAD check for local branches
+
+ The rewrite of "git branch --list" using for-each-ref's internals
+ that happened in v2.13 regressed its handling of color.branch.local;
+ this has been fixed.
 
 
 * ks/fix-rebase-doc-picture (2017-07-10) 1 commit
@@ -204,7 +67,121 @@ of the repositories listed at
 
  Doc update.
 
+
+* rs/apply-avoid-over-reading (2017-07-09) 1 commit
+  (merged to 'next' on 2017-07-10 at 2d8191ec3f)
+ + apply: use strcmp(3) for comparing strings in gitdiff_verify_name()
+
+ Code cleanup.
+
+
+* rs/urlmatch-cleanup (2017-07-09) 1 commit
+  (merged to 'next' on 2017-07-10 at 2dd3e7cab0)
+ + urlmatch: use hex2chr() in append_normalized_escapes()
+
+ Code cleanup.
+
+
+* rs/use-div-round-up (2017-07-10) 1 commit
+  (merged to 'next' on 2017-07-10 at accb7919da)
+ + use DIV_ROUND_UP
+
+ Code cleanup.
+
+
+* rs/wt-status-cleanup (2017-07-10) 1 commit
+  (merged to 'next' on 2017-07-10 at d8939f683a)
+ + wt-status: use separate variable for result of shorten_unambiguous_ref
+
+ Code cleanup.
+
+
+* sb/hashmap-customize-comparison (2017-06-30) 3 commits
+  (merged to 'next' on 2017-07-06 at cc420805f3)
+ + hashmap: migrate documentation from Documentation/technical into header
+ + patch-ids.c: use hashmap correctly
+ + hashmap.h: compare function has access to a data field
+ (this branch is used by sb/diff-color-move and sb/hashmap-cleanup.)
+
+ Update the hashmap API so that data to customize the behaviour of
+ the comparison function can be specified at the time a hashmap is
+ initialized.
+
+
+* sb/pull-rebase-submodule (2017-06-27) 4 commits
+  (merged to 'next' on 2017-07-09 at 48d2c3a51c)
+ + builtin/fetch cleanup: always set default value for submodule recursing
+ + pull: optionally rebase submodules (remote submodule changes only)
+ + builtin/fetch: parse recurse-submodules-default at default options parsing
+ + builtin/fetch: factor submodule recurse parsing out to submodule config
+
+ "git pull --rebase --recurse-submodules" learns to rebase the
+ branch in the submodules to an updated base.
+
+
+* sb/submodule-doc (2017-06-22) 1 commit
+  (merged to 'next' on 2017-07-09 at fda0ceec31)
+ + submodules: overhaul documentation
+
+ Doc update.
+
+--------------------------------------------------
+[New Topics]
+
+* jn/hooks-pre-rebase-sample-fix (2017-07-11) 1 commit
+  (merged to 'next' on 2017-07-12 at ed86887454)
+ + pre-rebase hook: capture documentation in a <<here document
+
+ Code clean-up, that makes us in sync with Debian by one patch.
+
  Will merge to 'master'.
+
+
+* jk/gc-pre-detach-under-hook (2017-07-12) 1 commit
+  (merged to 'next' on 2017-07-12 at 9cf44c2b07)
+ + gc: run pre-detach operations under lock
+
+ We run an early part of "git gc" that deals with refs before
+ daemonising (and not under lock) even when running a background
+ auto-gc, which caused multiple gc processes attempting to run the
+ early part at the same time.  This is now prevented by running the
+ early part also under the GC lock.
+
+ Will merge to 'master'.
+
+
+* jk/ref-filter-colors (2017-07-13) 15 commits
+ - ref-filter: consult want_color() before emitting colors
+ - pretty: respect color settings for %C placeholders
+ - rev-list: pass diffopt->use_colors through to pretty-print
+ - for-each-ref: load config earlier
+ - color: check color.ui in git_default_config()
+ - ref-filter: pass ref_format struct to atom parsers
+ - ref-filter: factor out the parsing of sorting atoms
+ - ref-filter: make parse_ref_filter_atom a private function
+ - ref-filter: provide a function for parsing sort options
+ - ref-filter: move need_color_reset_at_eol into ref_format
+ - ref-filter: abstract ref format into its own struct
+ - ref-filter: simplify automatic color reset
+ - t: use test_decode_color rather than literal ANSI codes
+ - docs/for-each-ref: update pointer to color syntax
+ - check return value of verify_ref_format()
+
+ "%C(color name)" in the pretty print format always produced ANSI
+ color escape codes, which was an early design mistake.  They now
+ honor the configuration (e.g. "color.ui = never") and also tty-ness
+ of the output medium.
+
+ Will merge to and cook in 'next'.
+
+
+* sb/object-id (2017-07-13) 2 commits
+ - tag: convert gpg_verify_tag to use struct object_id
+ - commit: convert lookup_commit_graft to struct object_id
+
+ Conversion from uchar[20] to struct object_id continues.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -272,6 +249,39 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rs/progress-overall-throughput-at-the-end (2017-07-09) 1 commit
+  (merged to 'next' on 2017-07-11 at f5168e975b)
+ + progress: show overall rate in last update
+
+ The progress meter did not give a useful output when we haven't had
+ 0.5 seconds to measure the throughput during the interval.  Instead
+ show the overall throughput rate at the end, which is a much more
+ useful number.
+
+ Will merge to 'master'.
+
+
+* rs/sha1-file-micro-optim (2017-07-09) 2 commits
+ - SQUASH???
+ - sha1_file: add slash once in for_each_file_in_obj_subdir()
+
+ Code cleanup.
+
+ Perhaps drop.
+ cf. <f59c8256-716b-9305-2a4f-d4fe49f666ff@web.de>
+
+
+* ks/prepare-commit-msg-sample (2017-07-12) 4 commits
+ - hook: add a simple first example
+ - hook: add sign-off using "interpret-trailers"
+ - hook: name the positional variables
+ - hook: cleanup script
+
+ Remove an example that is now obsolete from a sample hook,
+ and improve an old example in it that added a sign-off manually
+ to use the interpret-trailers command.
+
+
 * jc/allow-lazy-cas (2017-07-06) 1 commit
  - push: disable lazy --force-with-lease by default
 
@@ -283,6 +293,11 @@ of the repositories listed at
  possibly turn `--force` into `--force-with-lease`.
 
  Will wait for feedback, then merge to and cook in 'next'.
+
+ Independent from disabling the feature by default, this stirred up
+ a discussion to replace the DWIM heuristics with a better one, which
+ deserves to be its own topic.
+ cf. <alpine.DEB.2.21.1.1707131435220.4193@virtualbox>
 
 
 * bc/object-id (2017-07-04) 12 commits
@@ -324,17 +339,17 @@ of the repositories listed at
 
 
 * sb/hashmap-cleanup (2017-07-05) 10 commits
- - t/helper/test-hashmap: use custom data instead of duplicate cmp functions
- - name-hash.c: drop hashmap_cmp_fn cast
- - submodule-config.c: drop hashmap_cmp_fn cast
- - remote.c: drop hashmap_cmp_fn cast
- - patch-ids.c: drop hashmap_cmp_fn cast
- - convert/sub-process: drop cast to hashmap_cmp_fn
- - config.c: drop hashmap_cmp_fn cast
- - builtin/describe: drop hashmap_cmp_fn cast
- - builtin/difftool.c: drop hashmap_cmp_fn cast
- - attr.c: drop hashmap_cmp_fn cast
- (this branch uses sb/hashmap-customize-comparison; is tangled with sb/diff-color-move.)
+  (merged to 'next' on 2017-07-12 at ce31d06165)
+ + t/helper/test-hashmap: use custom data instead of duplicate cmp functions
+ + name-hash.c: drop hashmap_cmp_fn cast
+ + submodule-config.c: drop hashmap_cmp_fn cast
+ + remote.c: drop hashmap_cmp_fn cast
+ + patch-ids.c: drop hashmap_cmp_fn cast
+ + convert/sub-process: drop cast to hashmap_cmp_fn
+ + config.c: drop hashmap_cmp_fn cast
+ + builtin/describe: drop hashmap_cmp_fn cast
+ + builtin/difftool.c: drop hashmap_cmp_fn cast
+ + attr.c: drop hashmap_cmp_fn cast
 
  Many uses of comparision callback function the hashmap API uses
  cast the callback function type when registering it to
@@ -343,11 +358,12 @@ of the repositories listed at
  The callback implementations have been updated to take "void *"
  pointers and cast them to the type they expect instead.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * tb/push-to-cygwin-unc-path (2017-07-05) 1 commit
- - cygwin: allow pushing to UNC paths
+  (merged to 'next' on 2017-07-11 at 4d9c3f82bd)
+ + cygwin: allow pushing to UNC paths
 
  On Cygwin, similar to Windows, "git push //server/share/repository"
  ought to mean a repository on a network share that can be accessed
@@ -359,45 +375,18 @@ of the repositories listed at
  not just the code to decide if the push destination is local.  There
  may be unexpected fallouts in the path normalization.
 
- Will merge to 'next'.
-
-
-* ab/grep-lose-opt-regflags (2017-06-30) 6 commits
-  (merged to 'next' on 2017-07-05 at 375c0b92ea)
- + grep: remove redundant REG_NEWLINE when compiling fixed regex
- + grep: remove regflags from the public grep_opt API
- + grep: remove redundant and verbose re-assignments to 0
- + grep: remove redundant "fixed" field re-assignment to 0
- + grep: adjust a redundant grep pattern type assignment
- + grep: remove redundant double assignment to 0
-
- Code cleanup.
-
  Will merge to 'master'.
 
 
-* sb/hashmap-customize-comparison (2017-06-30) 3 commits
-  (merged to 'next' on 2017-07-06 at cc420805f3)
- + hashmap: migrate documentation from Documentation/technical into header
- + patch-ids.c: use hashmap correctly
- + hashmap.h: compare function has access to a data field
- (this branch is used by sb/diff-color-move and sb/hashmap-cleanup.)
-
- Update the hashmap API so that data to customize the behaviour of
- the comparison function can be specified at the time a hashmap is
- initialized.
-
- Will merge to 'master'.
-
-
-* mt/p4-parse-G-output (2017-07-05) 1 commit
- . git-p4: parse marshal output "p4 -G" in p4 changes
+* mt/p4-parse-G-output (2017-07-13) 3 commits
+ - git-p4: filter for {'code':'info'} in p4CmdList
+ - git-p4: parse marshal output "p4 -G" in p4 changes
+ - git-p4: git-p4 tests with p4 triggers
 
  Use "p4 -G" to make "p4 changes" output more Python-friendly
  to parse.
 
- Needs review/ack from git-p4 folks.
- It still seems to break when merged to 'pu'.
+ Wait to see Travis is OK with this and merge to 'next'
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
@@ -414,19 +403,6 @@ of the repositories listed at
  sound too bad.
 
  Will cook in 'next'.
-
-
-* sb/pull-rebase-submodule (2017-06-27) 4 commits
-  (merged to 'next' on 2017-07-09 at 48d2c3a51c)
- + builtin/fetch cleanup: always set default value for submodule recursing
- + pull: optionally rebase submodules (remote submodule changes only)
- + builtin/fetch: parse recurse-submodules-default at default options parsing
- + builtin/fetch: factor submodule recurse parsing out to submodule config
-
- "git pull --rebase --recurse-submodules" learns to rebase the
- branch in the submodules to an updated base.
-
- Will merge to 'master'.
 
 
 * mh/packed-ref-store (2017-07-03) 30 commits
@@ -464,16 +440,7 @@ of the repositories listed at
 
  The "ref-store" code reorganization continues.
 
- Will merge to 'master'.
-
-
-* sb/submodule-doc (2017-06-22) 1 commit
-  (merged to 'next' on 2017-07-09 at fda0ceec31)
- + submodules: overhaul documentation
-
- Doc update.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * sd/branch-copy (2017-06-18) 3 commits
@@ -505,7 +472,7 @@ of the repositories listed at
  The filter-process interface learned to allow a process with long
  latency give a "delayed" response.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * bp/fsmonitor (2017-06-12) 6 commits
@@ -550,13 +517,12 @@ of the repositories listed at
  + diff.c: move line ending check into emit_hunk_header
  + diff.c: readability fix
  + Merge branch 'sb/hashmap-customize-comparison' into sb/diff-color-move
- (this branch uses sb/hashmap-customize-comparison; is tangled with sb/hashmap-cleanup.)
 
  "git diff" has been taught to optionally paint new lines that are
  the same as deleted lines elsewhere differently from genuinely new
  lines.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 --------------------------------------------------
 [Discarded]
