@@ -2084,11 +2084,7 @@ void format_ref_array_item(struct ref_array_item *info, const char *format,
 	}
 	if (need_color_reset_at_eol) {
 		struct atom_value resetv;
-		char color[COLOR_MAXLEN] = "";
-
-		if (color_parse("reset", color) < 0)
-			die("BUG: couldn't parse 'reset' as a color");
-		resetv.s = color;
+		resetv.s = GIT_COLOR_RESET;
 		append_atom(&resetv, &state);
 	}
 	if (state.stack->prev)
