@@ -79,6 +79,9 @@ struct ref_format {
 	 */
 	const char *format;
 	int quote_style;
+
+	/* Internal state to ref-filter */
+	int need_color_reset_at_eol;
 };
 
 #define REF_FORMAT_INIT { NULL, 0 }

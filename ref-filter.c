@@ -97,7 +97,6 @@ static struct used_atom {
 	} u;
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
-static int need_color_reset_at_eol;
 
 static void color_atom_parser(struct used_atom *atom, const char *color_value)
 {
@@ -661,7 +660,7 @@ int verify_ref_format(struct ref_format *format)
 {
 	const char *cp, *sp;
 
-	need_color_reset_at_eol = 0;
+	format->need_color_reset_at_eol = 0;
 	for (cp = format->format; *cp && (sp = find_next(cp)); ) {
 		const char *color, *ep = strchr(sp, ')');
 		int at;
@@ -673,7 +672,7 @@ int verify_ref_format(struct ref_format *format)
 		cp = ep + 1;
 
 		if (skip_prefix(used_atom[at].name, "color:", &color))
-			need_color_reset_at_eol = !!strcmp(color, "reset");
+			format->need_color_reset_at_eol = !!strcmp(color, "reset");
 	}
 	return 0;
 }
@@ -2083,7 +2082,7 @@ void format_ref_array_item(struct ref_array_item *info,
 		sp = cp + strlen(cp);
 		append_literal(cp, sp, &state);
 	}
-	if (need_color_reset_at_eol) {
+	if (format->need_color_reset_at_eol) {
 		struct atom_value resetv;
 		resetv.s = GIT_COLOR_RESET;
 		append_atom(&resetv, &state);
