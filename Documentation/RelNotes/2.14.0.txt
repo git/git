@@ -108,6 +108,9 @@ UI, Workflows & Features
  * An old message shown in the commit log template was removed, as it
    has outlived its usefulness.
 
+ * "git pull --rebase --recurse-submodules" learns to rebase the
+   branch in the submodules to an updated base.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -216,6 +219,10 @@ Performance, Internal Implementation, Development Support etc.
  * Optimize "what are the object names already taken in an alternate
    object database?" query that is used to derive the length of prefix
    an object name is uniquely abbreviated to.
+
+ * The hashmap API has been updated so that data to customize the
+   behaviour of the comparison function can be specified at the time a
+   hashmap is initialized.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -432,7 +439,7 @@ notes for details).
  * Update the sha1dc again to fix portability glitches.
 
  * Code clean-up to fix possible buffer over-reading.
-   (merge 8bc172e5f2 rs/apply-avoid-over-reading later to maint).
+   (merge 2d105451c0 rs/apply-avoid-over-reading later to maint).
 
  * A few tests that tried to verify the contents of push certificates
    did not use 'git rev-parse' to formulate the line to look for in
@@ -445,16 +452,17 @@ notes for details).
    code to walk the reflog of HEAD via "log -g" and friends
    incorrectly stopped at the reflog entry that records the renaming
    of the branch.
-   (merge e30d463d45 jk/reflog-walk-maint later to maint).
 
  * The rewrite of "git branch --list" using for-each-ref's internals
    that happened in v2.13 regressed its handling of color.branch.local;
    this has been fixed.
-   (merge 5b5c9c3e19 kn/ref-filter-branch-list later to maint).
+
+ * The build procedure has been improved to allow building and testing
+   Git with address sanitizer more easily.
+   (merge 566cf0b3bd jk/build-with-asan later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
    (merge 3f9c637ec7 pw/unquote-path-in-git-pm later to maint).
-   (merge 669638fe7a ks/typofix-commit-c-comment later to maint).
    (merge 5053313562 rs/urlmatch-cleanup later to maint).
    (merge 42c78a216e rs/use-div-round-up later to maint).
    (merge 5e8d2729ae rs/wt-status-cleanup later to maint).
