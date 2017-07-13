@@ -1078,7 +1078,7 @@ static int try_explicit_object_name(const char *name,
 		return 0;
 	}
 
-	if (get_sha1(name, oid.hash))
+	if (get_oid(name, &oid))
 		return -1;
 
 	if (match) {

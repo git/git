@@ -1026,7 +1026,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	t->dirty = 0;
 
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
-	    get_sha1_treeish(notes_ref, object_oid.hash))
+	    get_oid_treeish(notes_ref, &object_oid))
 		return;
 	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, object_oid.hash))
 		die("Cannot use notes ref %s", notes_ref);

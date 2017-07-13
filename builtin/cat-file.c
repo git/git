@@ -63,8 +63,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	if (unknown_type)
 		flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
-	if (get_sha1_with_context(obj_name, GET_SHA1_RECORD_PATH,
-				  oid.hash, &obj_context))
+	if (get_oid_with_context(obj_name, GET_SHA1_RECORD_PATH,
+				 &oid, &obj_context))
 		die("Not a valid object name %s", obj_name);
 
 	if (!path)
@@ -364,7 +364,7 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 	int flags = opt->follow_symlinks ? GET_SHA1_FOLLOW_SYMLINKS : 0;
 	enum follow_symlinks_result result;
 
-	result = get_sha1_with_context(obj_name, flags, data->oid.hash, &ctx);
+	result = get_oid_with_context(obj_name, flags, &data->oid, &ctx);
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:

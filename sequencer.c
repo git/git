@@ -2130,8 +2130,8 @@ cleanup_head_ref:
 			log_tree_opt.disable_stdin = 1;
 
 			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
-			    !get_sha1(buf.buf, orig.hash) &&
-			    !get_sha1("HEAD", head.hash)) {
+			    !get_oid(buf.buf, &orig) &&
+			    !get_oid("HEAD", &head)) {
 				diff_tree_oid(&orig, &head, "",
 					      &log_tree_opt.diffopt);
 				log_tree_diff_flush(&log_tree_opt);
@@ -2267,7 +2267,7 @@ int sequencer_continue(struct replay_opts *opts)
 		struct object_id oid;
 
 		if (read_oneliner(&buf, rebase_path_stopped_sha(), 1) &&
-		    !get_sha1_committish(buf.buf, oid.hash))
+		    !get_oid_committish(buf.buf, &oid))
 			record_in_rewritten(&oid, peek_command(&todo_list, 0));
 		strbuf_release(&buf);
 	}

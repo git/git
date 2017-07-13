@@ -219,8 +219,8 @@ static void parse_args(struct pathspec *pathspec,
 		 * has to be unambiguous. If there is a single argument, it
 		 * can not be a tree
 		 */
-		else if ((!argv[1] && !get_sha1_committish(argv[0], unused.hash)) ||
-			 (argv[1] && !get_sha1_treeish(argv[0], unused.hash))) {
+		else if ((!argv[1] && !get_oid_committish(argv[0], &unused)) ||
+			 (argv[1] && !get_oid_treeish(argv[0], &unused))) {
 			/*
 			 * Ok, argv[0] looks like a commit/tree; it should not
 			 * be a filename.
@@ -310,13 +310,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	load_submodule_cache();
 
-	unborn = !strcmp(rev, "HEAD") && get_sha1("HEAD", oid.hash);
+	unborn = !strcmp(rev, "HEAD") && get_oid("HEAD", &oid);
 	if (unborn) {
 		/* reset on unborn branch: treat as reset to empty tree */
 		hashcpy(oid.hash, EMPTY_TREE_SHA1_BIN);
 	} else if (!pathspec.nr) {
 		struct commit *commit;
-		if (get_sha1_committish(rev, oid.hash))
+		if (get_oid_committish(rev, &oid))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
 		commit = lookup_commit_reference(&oid);
 		if (!commit)
@@ -324,7 +324,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		oidcpy(&oid, &commit->object.oid);
 	} else {
 		struct tree *tree;
-		if (get_sha1_treeish(rev, oid.hash))
+		if (get_oid_treeish(rev, &oid))
 			die(_("Failed to resolve '%s' as a valid tree."), rev);
 		tree = parse_tree_indirect(&oid);
 		if (!tree)

@@ -50,7 +50,7 @@ static int show_reference(const char *refname, const struct object_id *oid,
 			struct object_id object;
 			enum object_type obj_type, repl_type;
 
-			if (get_sha1(refname, object.hash))
+			if (get_oid(refname, &object))
 				return error("Failed to resolve '%s' as a valid ref.", refname);
 
 			obj_type = sha1_object_info(object.hash, NULL);
@@ -365,7 +365,7 @@ static void check_one_mergetag(struct commit *commit,
 	/* iterate over new parents */
 	for (i = 1; i < mergetag_data->argc; i++) {
 		struct object_id oid;
-		if (get_sha1(mergetag_data->argv[i], oid.hash) < 0)
+		if (get_oid(mergetag_data->argv[i], &oid) < 0)
 			die(_("Not a valid object name: '%s'"), mergetag_data->argv[i]);
 		if (!oidcmp(&tag->tagged->oid, &oid))
 			return; /* found */

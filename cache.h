@@ -1305,16 +1305,15 @@ struct object_context {
 	GET_SHA1_TREE | GET_SHA1_TREEISH | \
 	GET_SHA1_BLOB)
 
-extern int get_sha1(const char *str, unsigned char *sha1);
-extern int get_sha1_commit(const char *str, unsigned char *sha1);
-extern int get_sha1_committish(const char *str, unsigned char *sha1);
-extern int get_sha1_tree(const char *str, unsigned char *sha1);
-extern int get_sha1_treeish(const char *str, unsigned char *sha1);
-extern int get_sha1_blob(const char *str, unsigned char *sha1);
-extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
-extern int get_sha1_with_context(const char *str, unsigned flags, unsigned char *sha1, struct object_context *oc);
-
 extern int get_oid(const char *str, struct object_id *oid);
+extern int get_oid_commit(const char *str, struct object_id *oid);
+extern int get_oid_committish(const char *str, struct object_id *oid);
+extern int get_oid_tree(const char *str, struct object_id *oid);
+extern int get_oid_treeish(const char *str, struct object_id *oid);
+extern int get_oid_blob(const char *str, struct object_id *oid);
+extern void maybe_die_on_misspelt_object_name(const char *name, const char *prefix);
+extern int get_oid_with_context(const char *str, unsigned flags, struct object_id *oid, struct object_context *oc);
+
 
 typedef int each_abbrev_fn(const struct object_id *oid, void *);
 extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
