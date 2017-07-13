@@ -6,6 +6,7 @@
  *
  */
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "exec_cmd.h"
 #include "strbuf.h"
@@ -217,8 +218,6 @@ static int include_by_gitdir(const struct config_options *opts,
 
 	if (opts->git_dir)
 		git_dir = opts->git_dir;
-	else if (have_git_dir())
-		git_dir = get_git_dir();
 	else
 		goto done;
 
@@ -1522,10 +1521,10 @@ static int do_git_config_sequence(const struct config_options *opts,
 	char *user_config = expand_user_path("~/.gitconfig", 0);
 	char *repo_config;
 
-	if (opts->git_dir)
+	if (opts->commondir)
+		repo_config = mkpathdup("%s/config", opts->commondir);
+	else if (opts->git_dir)
 		repo_config = mkpathdup("%s/config", opts->git_dir);
-	else if (have_git_dir())
-		repo_config = git_pathdup("config");
 	else
 		repo_config = NULL;
 
@@ -1563,9 +1562,9 @@ static int do_git_config_sequence(const struct config_options *opts,
 	return ret;
 }
 
-int git_config_with_options(config_fn_t fn, void *data,
-			    struct git_config_source *config_source,
-			    const struct config_options *opts)
+int config_with_options(config_fn_t fn, void *data,
+			struct git_config_source *config_source,
+			const struct config_options *opts)
 {
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
 
@@ -1596,9 +1595,14 @@ static void git_config_raw(config_fn_t fn, void *data)
 	struct config_options opts = {0};
 
 	opts.respect_includes = 1;
-	if (git_config_with_options(fn, data, NULL, &opts) < 0)
+	if (have_git_dir()) {
+		opts.commondir = get_git_common_dir();
+		opts.git_dir = get_git_dir();
+	}
+
+	if (config_with_options(fn, data, NULL, &opts) < 0)
 		/*
-		 * git_config_with_options() normally returns only
+		 * config_with_options() normally returns only
 		 * zero, as most errors are fatal, and
 		 * non-fatal potential errors are guarded by "if"
 		 * statements that are entered only when no error is
@@ -1637,11 +1641,13 @@ static void configset_iter(struct config_set *cs, config_fn_t fn, void *data)
 void read_early_config(config_fn_t cb, void *data)
 {
 	struct config_options opts = {0};
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf commondir = STRBUF_INIT;
+	struct strbuf gitdir = STRBUF_INIT;
 
 	opts.respect_includes = 1;
 
-	if (have_git_dir())
+	if (have_git_dir()) {
+		opts.commondir = get_git_common_dir();
 		opts.git_dir = get_git_dir();
 	/*
 	 * When setup_git_directory() was not yet asked to discover the
@@ -1651,12 +1657,15 @@ void read_early_config(config_fn_t cb, void *data)
 	 * notably, the current working directory is still the same after the
 	 * call).
 	 */
-	else if (discover_git_directory(&buf))
-		opts.git_dir = buf.buf;
+	} else if (!discover_git_directory(&commondir, &gitdir)) {
+		opts.commondir = commondir.buf;
+		opts.git_dir = gitdir.buf;
+	}
 
-	git_config_with_options(cb, data, NULL, &opts);
+	config_with_options(cb, data, NULL, &opts);
 
-	strbuf_release(&buf);
+	strbuf_release(&commondir);
+	strbuf_release(&gitdir);
 }
 
 static void git_config_check_init(void);

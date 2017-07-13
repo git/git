@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "attr.h"
 #include "quote.h"
 #include "parse-options.h"

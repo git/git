@@ -2,6 +2,7 @@
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
 #include "cache.h"
+#include "config.h"
 #include "tar.h"
 #include "archive.h"
 #include "streaming.h"

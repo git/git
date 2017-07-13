@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "object.h"

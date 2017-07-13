@@ -7,6 +7,7 @@
  * creation etc.
  */
 #include "cache.h"
+#include "config.h"
 #include "string-list.h"
 #include "lockfile.h"
 #include "delta.h"

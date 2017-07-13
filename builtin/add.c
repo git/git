@@ -4,6 +4,7 @@
  * Copyright (C) 2006 Linus Torvalds
  */
 #include "cache.h"
+#include "config.h"
 #include "builtin.h"
 #include "lockfile.h"
 #include "dir.h"

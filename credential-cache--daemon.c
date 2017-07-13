@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "tempfile.h"
 #include "credential.h"
 #include "unix-socket.h"

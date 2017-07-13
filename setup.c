@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "string-list.h"
 
@@ -945,19 +946,21 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 	}
 }
 
-const char *discover_git_directory(struct strbuf *gitdir)
+int discover_git_directory(struct strbuf *commondir,
+			   struct strbuf *gitdir)
 {
 	struct strbuf dir = STRBUF_INIT, err = STRBUF_INIT;
 	size_t gitdir_offset = gitdir->len, cwd_len;
+	size_t commondir_offset = commondir->len;
 	struct repository_format candidate;
 
 	if (strbuf_getcwd(&dir))
-		return NULL;
+		return -1;
 
 	cwd_len = dir.len;
 	if (setup_git_directory_gently_1(&dir, gitdir, 0) <= 0) {
 		strbuf_release(&dir);
-		return NULL;
+		return -1;
 	}
 
 	/*
@@ -973,8 +976,10 @@ const char *discover_git_directory(struct strbuf *gitdir)
 		strbuf_insert(gitdir, gitdir_offset, dir.buf, dir.len);
 	}
 
+	get_common_dir(commondir, gitdir->buf + gitdir_offset);
+
 	strbuf_reset(&dir);
-	strbuf_addf(&dir, "%s/config", gitdir->buf + gitdir_offset);
+	strbuf_addf(&dir, "%s/config", commondir->buf + commondir_offset);
 	read_repository_format(&candidate, dir.buf);
 	strbuf_release(&dir);
 
@@ -982,11 +987,12 @@ const char *discover_git_directory(struct strbuf *gitdir)
 		warning("ignoring git dir '%s': %s",
 			gitdir->buf + gitdir_offset, err.buf);
 		strbuf_release(&err);
+		strbuf_setlen(commondir, commondir_offset);
 		strbuf_setlen(gitdir, gitdir_offset);
-		return NULL;
+		return -1;
 	}
 
-	return gitdir->buf + gitdir_offset;
+	return 0;
 }
 
 const char *setup_git_directory_gently(int *nongit_ok)

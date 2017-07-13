@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "xdiff/xdiff.h"
 #include "xdiff-interface.h"
 #include "parse-options.h"
