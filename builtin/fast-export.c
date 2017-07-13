@@ -93,8 +93,9 @@ struct anonymized_entry {
 	size_t anon_len;
 };
 
-static int anonymized_entry_cmp(const void *va, const void *vb,
-				const void *data)
+static int anonymized_entry_cmp(const void *unused_cmp_data,
+				const void *va, const void *vb,
+				const void *unused_keydata)
 {
 	const struct anonymized_entry *a = va, *b = vb;
 	return a->orig_len != b->orig_len ||
@@ -113,7 +114,7 @@ static const void *anonymize_mem(struct hashmap *map,
 	struct anonymized_entry key, *ret;
 
 	if (!map->cmpfn)
-		hashmap_init(map, anonymized_entry_cmp, 0);
+		hashmap_init(map, anonymized_entry_cmp, NULL, 0);
 
 	hashmap_entry_init(&key, memhash(orig, *len));
 	key.orig = orig;

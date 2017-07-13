@@ -13,14 +13,18 @@ static const char *get_value(const struct test_entry *e)
 	return e->key + strlen(e->key) + 1;
 }
 
-static int test_entry_cmp(const struct test_entry *e1,
-		const struct test_entry *e2, const char* key)
+static int test_entry_cmp(const void *unused_cmp_data,
+			  const struct test_entry *e1,
+			  const struct test_entry *e2,
+			  const char* key)
 {
 	return strcmp(e1->key, key ? key : e2->key);
 }
 
-static int test_entry_cmp_icase(const struct test_entry *e1,
-		const struct test_entry *e2, const char* key)
+static int test_entry_cmp_icase(const void *unused_cmp_data,
+				const struct test_entry *e1,
+				const struct test_entry *e2,
+				const char* key)
 {
 	return strcasecmp(e1->key, key ? key : e2->key);
 }
@@ -92,7 +96,8 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 	if (method & TEST_ADD) {
 		/* test adding to the map */
 		for (j = 0; j < rounds; j++) {
-			hashmap_init(&map, (hashmap_cmp_fn) test_entry_cmp, 0);
+			hashmap_init(&map, (hashmap_cmp_fn) test_entry_cmp,
+				     NULL, 0);
 
 			/* add entries */
 			for (i = 0; i < TEST_SIZE; i++) {
@@ -104,7 +109,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 		}
 	} else {
 		/* test map lookups */
-		hashmap_init(&map, (hashmap_cmp_fn) test_entry_cmp, 0);
+		hashmap_init(&map, (hashmap_cmp_fn) test_entry_cmp, NULL, 0);
 
 		/* fill the map (sparsely if specified) */
 		j = (method & TEST_SPARSE) ? TEST_SIZE / 10 : TEST_SIZE;
@@ -147,7 +152,7 @@ int cmd_main(int argc, const char **argv)
 	/* init hash map */
 	icase = argc > 1 && !strcmp("ignorecase", argv[1]);
 	hashmap_init(&map, (hashmap_cmp_fn) (icase ? test_entry_cmp_icase
-			: test_entry_cmp), 0);
+			: test_entry_cmp), NULL, 0);
 
 	/* process commands from stdin */
 	while (fgets(line, sizeof(line), stdin)) {

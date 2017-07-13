@@ -2275,7 +2275,8 @@ static int delta_base_cache_key_eq(const struct delta_base_cache_key *a,
 	return a->p == b->p && a->base_offset == b->base_offset;
 }
 
-static int delta_base_cache_hash_cmp(const void *va, const void *vb,
+static int delta_base_cache_hash_cmp(const void *unused_cmp_data,
+				     const void *va, const void *vb,
 				     const void *vkey)
 {
 	const struct delta_base_cache_entry *a = va, *b = vb;
@@ -2360,7 +2361,7 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	list_add_tail(&ent->lru, &delta_base_cache_lru);
 
 	if (!delta_base_cache.cmpfn)
-		hashmap_init(&delta_base_cache, delta_base_cache_hash_cmp, 0);
+		hashmap_init(&delta_base_cache, delta_base_cache_hash_cmp, NULL, 0);
 	hashmap_entry_init(ent, pack_entry_hash(p, base_offset));
 	hashmap_add(&delta_base_cache, ent);
 }
