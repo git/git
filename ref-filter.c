@@ -2114,6 +2114,12 @@ void pretty_print_ref(const char *name, const unsigned char *sha1,
 	free_array_item(ref_item);
 }
 
+static int parse_sorting_atom(const char *atom)
+{
+	const char *end = atom + strlen(atom);
+	return parse_ref_filter_atom(atom, end);
+}
+
 /*  If no sorting option is given, use refname to sort as default */
 struct ref_sorting *ref_default_sorting(void)
 {
@@ -2122,14 +2128,13 @@ struct ref_sorting *ref_default_sorting(void)
 	struct ref_sorting *sorting = xcalloc(1, sizeof(*sorting));
 
 	sorting->next = NULL;
-	sorting->atom = parse_ref_filter_atom(cstr_name, cstr_name + strlen(cstr_name));
+	sorting->atom = parse_sorting_atom(cstr_name);
 	return sorting;
 }
 
 void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *arg)
 {
 	struct ref_sorting *s;
-	int len;
 
 	s = xcalloc(1, sizeof(*s));
 	s->next = *sorting_tail;
@@ -2142,8 +2147,7 @@ void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *arg)
 	if (skip_prefix(arg, "version:", &arg) ||
 	    skip_prefix(arg, "v:", &arg))
 		s->version = 1;
-	len = strlen(arg);
-	s->atom = parse_ref_filter_atom(arg, arg+len);
+	s->atom = parse_sorting_atom(arg);
 }
 
 int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset)
