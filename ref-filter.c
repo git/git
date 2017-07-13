@@ -98,7 +98,7 @@ static struct used_atom {
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
 
-static void color_atom_parser(struct used_atom *atom, const char *color_value)
+static void color_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *color_value)
 {
 	if (!color_value)
 		die(_("expected format: %%(color:<color>)"));
@@ -126,7 +126,7 @@ static void refname_atom_parser_internal(struct refname_atom *atom,
 		die(_("unrecognized %%(%s) argument: %s"), name, arg);
 }
 
-static void remote_ref_atom_parser(struct used_atom *atom, const char *arg)
+static void remote_ref_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	struct string_list params = STRING_LIST_INIT_DUP;
 	int i;
@@ -160,28 +160,28 @@ static void remote_ref_atom_parser(struct used_atom *atom, const char *arg)
 	string_list_clear(&params, 0);
 }
 
-static void body_atom_parser(struct used_atom *atom, const char *arg)
+static void body_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (arg)
 		die(_("%%(body) does not take arguments"));
 	atom->u.contents.option = C_BODY_DEP;
 }
 
-static void subject_atom_parser(struct used_atom *atom, const char *arg)
+static void subject_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (arg)
 		die(_("%%(subject) does not take arguments"));
 	atom->u.contents.option = C_SUB;
 }
 
-static void trailers_atom_parser(struct used_atom *atom, const char *arg)
+static void trailers_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (arg)
 		die(_("%%(trailers) does not take arguments"));
 	atom->u.contents.option = C_TRAILERS;
 }
 
-static void contents_atom_parser(struct used_atom *atom, const char *arg)
+static void contents_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (!arg)
 		atom->u.contents.option = C_BARE;
@@ -201,7 +201,7 @@ static void contents_atom_parser(struct used_atom *atom, const char *arg)
 		die(_("unrecognized %%(contents) argument: %s"), arg);
 }
 
-static void objectname_atom_parser(struct used_atom *atom, const char *arg)
+static void objectname_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (!arg)
 		atom->u.objectname.option = O_FULL;
@@ -218,7 +218,7 @@ static void objectname_atom_parser(struct used_atom *atom, const char *arg)
 		die(_("unrecognized %%(objectname) argument: %s"), arg);
 }
 
-static void refname_atom_parser(struct used_atom *atom, const char *arg)
+static void refname_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	refname_atom_parser_internal(&atom->u.refname, arg, atom->name);
 }
@@ -234,7 +234,7 @@ static align_type parse_align_position(const char *s)
 	return -1;
 }
 
-static void align_atom_parser(struct used_atom *atom, const char *arg)
+static void align_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	struct align *align = &atom->u.align;
 	struct string_list params = STRING_LIST_INIT_DUP;
@@ -273,7 +273,7 @@ static void align_atom_parser(struct used_atom *atom, const char *arg)
 	string_list_clear(&params, 0);
 }
 
-static void if_atom_parser(struct used_atom *atom, const char *arg)
+static void if_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	if (!arg) {
 		atom->u.if_then_else.cmp_status = COMPARE_NONE;
@@ -287,7 +287,7 @@ static void if_atom_parser(struct used_atom *atom, const char *arg)
 	}
 }
 
-static void head_atom_parser(struct used_atom *atom, const char *arg)
+static void head_atom_parser(const struct ref_format *format, struct used_atom *atom, const char *arg)
 {
 	struct object_id unused;
 
@@ -297,7 +297,7 @@ static void head_atom_parser(struct used_atom *atom, const char *arg)
 static struct {
 	const char *name;
 	cmp_type cmp_type;
-	void (*parser)(struct used_atom *atom, const char *arg);
+	void (*parser)(const struct ref_format *format, struct used_atom *atom, const char *arg);
 } valid_atom[] = {
 	{ "refname" , FIELD_STR, refname_atom_parser },
 	{ "objecttype" },
@@ -364,7 +364,8 @@ struct atom_value {
 /*
  * Used to parse format string and sort specifiers
  */
-static int parse_ref_filter_atom(const char *atom, const char *ep)
+static int parse_ref_filter_atom(const struct ref_format *format,
+				 const char *atom, const char *ep)
 {
 	const char *sp;
 	const char *arg;
@@ -412,7 +413,7 @@ static int parse_ref_filter_atom(const char *atom, const char *ep)
 		arg = used_atom[at].name + (arg - atom) + 1;
 	memset(&used_atom[at].u, 0, sizeof(used_atom[at].u));
 	if (valid_atom[i].parser)
-		valid_atom[i].parser(&used_atom[at], arg);
+		valid_atom[i].parser(format, &used_atom[at], arg);
 	if (*atom == '*')
 		need_tagged = 1;
 	if (!strcmp(valid_atom[i].name, "symref"))
@@ -668,7 +669,7 @@ int verify_ref_format(struct ref_format *format)
 		if (!ep)
 			return error(_("malformed format string %s"), sp);
 		/* sp points at "%(" and ep points at the closing ")" */
-		at = parse_ref_filter_atom(sp + 2, ep);
+		at = parse_ref_filter_atom(format, sp + 2, ep);
 		cp = ep + 1;
 
 		if (skip_prefix(used_atom[at].name, "color:", &color))
@@ -2075,7 +2076,9 @@ void format_ref_array_item(struct ref_array_item *info,
 		ep = strchr(sp, ')');
 		if (cp < sp)
 			append_literal(cp, sp, &state);
-		get_ref_atom_value(info, parse_ref_filter_atom(sp + 2, ep), &atomv);
+		get_ref_atom_value(info,
+				   parse_ref_filter_atom(format, sp + 2, ep),
+				   &atomv);
 		atomv->handler(atomv, &state);
 	}
 	if (*cp) {
@@ -2116,8 +2119,13 @@ void pretty_print_ref(const char *name, const unsigned char *sha1,
 
 static int parse_sorting_atom(const char *atom)
 {
+	/*
+	 * This parses an atom using a dummy ref_format, since we don't
+	 * actually care about the formatting details.
+	 */
+	struct ref_format dummy = REF_FORMAT_INIT;
 	const char *end = atom + strlen(atom);
-	return parse_ref_filter_atom(atom, end);
+	return parse_ref_filter_atom(&dummy, atom, end);
 }
 
 /*  If no sorting option is given, use refname to sort as default */
