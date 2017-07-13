@@ -51,7 +51,9 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 		flags |= GPG_VERIFY_VERBOSE;
 
 	if (fmt_pretty) {
-		verify_ref_format(fmt_pretty);
+		if (verify_ref_format(fmt_pretty))
+			usage_with_options(verify_tag_usage,
+					   verify_tag_options);
 		flags |= GPG_VERIFY_OMIT_STATUS;
 	}
 

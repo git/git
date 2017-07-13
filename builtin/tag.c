@@ -53,7 +53,8 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, con
 			format = "%(refname:lstrip=2)";
 	}
 
-	verify_ref_format(format);
+	if (verify_ref_format(format))
+		die(_("unable to parse format string"));
 	filter->with_commit_tag_algo = 1;
 	filter_refs(&array, filter, FILTER_REFS_TAGS);
 	ref_array_sort(sorting, &array);
@@ -501,8 +502,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (cmdmode == 'd')
 		return for_each_tag_name(argv, delete_tag, NULL);
 	if (cmdmode == 'v') {
-		if (format)
-			verify_ref_format(format);
+		if (format && verify_ref_format(format))
+			usage_with_options(git_tag_usage, options);
 		return for_each_tag_name(argv, verify_tag, format);
 	}
 
