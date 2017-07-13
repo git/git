@@ -61,8 +61,9 @@ test_format () {
 # Feed to --format to provide predictable colored sequences.
 AUTO_COLOR='%C(auto,red)foo%C(auto,reset)'
 has_color () {
-	printf '\033[31mfoo\033[m\n' >expect &&
-	test_cmp expect "$1"
+	test_decode_color <"$1" >decoded &&
+	echo "<RED>foo<RESET>" >expect &&
+	test_cmp expect decoded
 }
 
 has_no_color () {
@@ -170,19 +171,27 @@ $added
 
 EOF
 
-test_format colors %Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy <<EOF
-commit $head2
-[31mfoo[32mbar[34mbaz[mxyzzy
-commit $head1
-[31mfoo[32mbar[34mbaz[mxyzzy
-EOF
+test_expect_success 'basic colors' '
+	cat >expect <<-EOF &&
+	commit $head2
+	<RED>foo<GREEN>bar<BLUE>baz<RESET>xyzzy
+	EOF
+	format="%Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy" &&
+	git rev-list --format="$format" -1 master >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
 
-test_format advanced-colors '%C(red yellow bold)foo%C(reset)' <<EOF
-commit $head2
-[1;31;43mfoo[m
-commit $head1
-[1;31;43mfoo[m
-EOF
+test_expect_success 'advanced colors' '
+	cat >expect <<-EOF &&
+	commit $head2
+	<BOLD;RED;BYELLOW>foo<RESET>
+	EOF
+	format="%C(red yellow bold)foo%C(reset)" &&
+	git rev-list --format="$format" -1 master >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual
+'
 
 test_expect_success '%C(auto,...) does not enable color by default' '
 	git log --format=$AUTO_COLOR -1 >actual &&
@@ -224,8 +233,9 @@ test_expect_success '%C(auto,...) respects --color=auto (stdout not tty)' '
 '
 
 test_expect_success '%C(auto) respects --color' '
-	git log --color --format="%C(auto)%H" -1 >actual &&
-	printf "\\033[33m%s\\033[m\\n" $(git rev-parse HEAD) >expect &&
+	git log --color --format="%C(auto)%H" -1 >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	echo "<YELLOW>$(git rev-parse HEAD)<RESET>" >expect &&
 	test_cmp expect actual
 '
 

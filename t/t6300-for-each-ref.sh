@@ -412,20 +412,18 @@ test_expect_success 'Check for invalid refname format' '
 	test_must_fail git for-each-ref --format="%(refname:INVALID)"
 '
 
-get_color ()
-{
-	git config --get-color no.such.slot "$1"
-}
-
 cat >expected <<EOF
-$(git rev-parse --short refs/heads/master) $(get_color green)master$(get_color reset)
-$(git rev-parse --short refs/remotes/origin/master) $(get_color green)origin/master$(get_color reset)
-$(git rev-parse --short refs/tags/testtag) $(get_color green)testtag$(get_color reset)
-$(git rev-parse --short refs/tags/two) $(get_color green)two$(get_color reset)
+$(git rev-parse --short refs/heads/master) <GREEN>master<RESET>
+$(git rev-parse --short refs/remotes/origin/master) <GREEN>origin/master<RESET>
+$(git rev-parse --short refs/tags/testtag) <GREEN>testtag<RESET>
+$(git rev-parse --short refs/tags/two) <GREEN>two<RESET>
 EOF
 
 test_expect_success 'Check %(color:...) ' '
-	git for-each-ref --format="%(objectname:short) %(color:green)%(refname:short)" >actual &&
+	git for-each-ref \
+		--format="%(objectname:short) %(color:green)%(refname:short)" \
+		>actual.raw &&
+	test_decode_color <actual.raw >actual &&
 	test_cmp expected actual
 '
 
