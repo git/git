@@ -299,9 +299,6 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_color_config(var, value, cb) < 0)
-		return -1;
-
 	return git_diff_basic_config(var, value, cb);
 }
 
