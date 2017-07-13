@@ -7,6 +7,7 @@
 #include "../run-command.h"
 #include "../cache.h"
 #include "win32/exit-process.h"
+#include "../config.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
