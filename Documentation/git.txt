@@ -696,6 +696,23 @@ of clones and fetches.
 	which feed potentially-untrusted URLS to git commands.  See
 	linkgit:git-config[1] for more details.
 
+`GIT_REDIRECT_STDIN`::
+`GIT_REDIRECT_STDOUT`::
+`GIT_REDIRECT_STDERR`::
+	(EXPERIMENTAL) Windows-only: allow redirecting the standard
+	input/output/error handles. This is particularly useful in
+	multi-threaded applications where the canonical way to pass
+	standard handles via `CreateProcess()` is not an option because
+	it would require the handles to be marked inheritable (and
+	consequently *every* spawned process would inherit them, possibly
+	blocking regular Git operations). The primary intended use case
+	is to use named pipes for communication.
++
+Two special values are supported: `off` will simply close the
+corresponding standard handle, and if `GIT_REDIRECT_STDERR` is
+`2>&1`, standard error will be redirected to the same handle as
+standard output.
+
 Discussion[[Discussion]]
 ------------------------
 
