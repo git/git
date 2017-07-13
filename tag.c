@@ -33,7 +33,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, unsigned flags)
 	return ret;
 }
 
-int gpg_verify_tag(const unsigned char *sha1, const char *name_to_report,
+int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 		unsigned flags)
 {
 	enum object_type type;
@@ -41,20 +41,20 @@ int gpg_verify_tag(const unsigned char *sha1, const char *name_to_report,
 	unsigned long size;
 	int ret;
 
-	type = sha1_object_info(sha1, NULL);
+	type = sha1_object_info(oid->hash, NULL);
 	if (type != OBJ_TAG)
 		return error("%s: cannot verify a non-tag object of type %s.",
 				name_to_report ?
 				name_to_report :
-				find_unique_abbrev(sha1, DEFAULT_ABBREV),
+				find_unique_abbrev(oid->hash, DEFAULT_ABBREV),
 				typename(type));
 
-	buf = read_sha1_file(sha1, &type, &size);
+	buf = read_sha1_file(oid->hash, &type, &size);
 	if (!buf)
 		return error("%s: unable to read file.",
 				name_to_report ?
 				name_to_report :
-				find_unique_abbrev(sha1, DEFAULT_ABBREV));
+				find_unique_abbrev(oid->hash, DEFAULT_ABBREV));
 
 	ret = run_gpg_verify(buf, size, flags);
 

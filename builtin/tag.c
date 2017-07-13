@@ -111,7 +111,7 @@ static int verify_tag(const char *name, const char *ref,
 	if (fmt_pretty)
 		flags = GPG_VERIFY_OMIT_STATUS;
 
-	if (gpg_verify_tag(oid->hash, name, flags))
+	if (gpg_verify_tag(oid, name, flags))
 		return -1;
 
 	if (fmt_pretty)
