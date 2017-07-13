@@ -59,7 +59,10 @@ test_format () {
 }
 
 # Feed to --format to provide predictable colored sequences.
+BASIC_COLOR='%Credfoo%Creset'
+COLOR='%C(red)foo%C(reset)'
 AUTO_COLOR='%C(auto,red)foo%C(auto,reset)'
+ALWAYS_COLOR='%C(always,red)foo%C(always,reset)'
 has_color () {
 	test_decode_color <"$1" >decoded &&
 	echo "<RED>foo<RESET>" >expect &&
@@ -177,7 +180,7 @@ test_expect_success 'basic colors' '
 	<RED>foo<GREEN>bar<BLUE>baz<RESET>xyzzy
 	EOF
 	format="%Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy" &&
-	git rev-list --format="$format" -1 master >actual.raw &&
+	git rev-list --color --format="$format" -1 master >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -188,48 +191,61 @@ test_expect_success 'advanced colors' '
 	<BOLD;RED;BYELLOW>foo<RESET>
 	EOF
 	format="%C(red yellow bold)foo%C(reset)" &&
-	git rev-list --format="$format" -1 master >actual.raw &&
+	git rev-list --color --format="$format" -1 master >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success '%C(auto,...) does not enable color by default' '
-	git log --format=$AUTO_COLOR -1 >actual &&
-	has_no_color actual
-'
-
-test_expect_success '%C(auto,...) enables colors for color.diff' '
-	git -c color.diff=always log --format=$AUTO_COLOR -1 >actual &&
-	has_color actual
-'
-
-test_expect_success '%C(auto,...) enables colors for color.ui' '
-	git -c color.ui=always log --format=$AUTO_COLOR -1 >actual &&
-	has_color actual
-'
-
-test_expect_success '%C(auto,...) respects --color' '
-	git log --format=$AUTO_COLOR -1 --color >actual &&
-	has_color actual
-'
-
-test_expect_success '%C(auto,...) respects --no-color' '
-	git -c color.ui=always log --format=$AUTO_COLOR -1 --no-color >actual &&
-	has_no_color actual
-'
-
-test_expect_success TTY '%C(auto,...) respects --color=auto (stdout is tty)' '
-	test_terminal env TERM=vt100 \
-		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
-	has_color actual
-'
-
-test_expect_success '%C(auto,...) respects --color=auto (stdout not tty)' '
-	(
-		TERM=vt100 && export TERM &&
-		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
+for spec in \
+	"%Cred:$BASIC_COLOR" \
+	"%C(...):$COLOR" \
+	"%C(auto,...):$AUTO_COLOR"
+do
+	desc=${spec%%:*}
+	color=${spec#*:}
+	test_expect_success "$desc does not enable color by default" '
+		git log --format=$color -1 >actual &&
 		has_no_color actual
-	)
+	'
+
+	test_expect_success "$desc enables colors for color.diff" '
+		git -c color.diff=always log --format=$color -1 >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc enables colors for color.ui" '
+		git -c color.ui=always log --format=$color -1 >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc respects --color" '
+		git log --format=$color -1 --color >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc respects --no-color" '
+		git -c color.ui=always log --format=$color -1 --no-color >actual &&
+		has_no_color actual
+	'
+
+	test_expect_success TTY "$desc respects --color=auto (stdout is tty)" '
+		test_terminal env TERM=vt100 \
+			git log --format=$color -1 --color=auto >actual &&
+		has_color actual
+	'
+
+	test_expect_success "$desc respects --color=auto (stdout not tty)" '
+		(
+			TERM=vt100 && export TERM &&
+			git log --format=$color -1 --color=auto >actual &&
+			has_no_color actual
+		)
+	'
+done
+
+test_expect_success '%C(always,...) enables color even without tty' '
+	git log --format=$ALWAYS_COLOR -1 >actual &&
+	has_color actual
 '
 
 test_expect_success '%C(auto) respects --color' '
