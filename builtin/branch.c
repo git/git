@@ -409,6 +409,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 
 	if (!format->format)
 		format->format = to_free = build_format(filter, maxwidth, remote_prefix);
+	format->use_color = branch_use_color;
 
 	if (verify_ref_format(format))
 		die(_("unable to parse format string"));

@@ -104,6 +104,12 @@ static void color_atom_parser(const struct ref_format *format, struct used_atom 
 		die(_("expected format: %%(color:<color>)"));
 	if (color_parse(color_value, atom->u.color) < 0)
 		die(_("unrecognized color: %%(color:%s)"), color_value);
+	/*
+	 * We check this after we've parsed the color, which lets us complain
+	 * about syntactically bogus color names even if they won't be used.
+	 */
+	if (!want_color(format->use_color))
+		color_parse("", atom->u.color);
 }
 
 static void refname_atom_parser_internal(struct refname_atom *atom,
@@ -675,6 +681,8 @@ int verify_ref_format(struct ref_format *format)
 		if (skip_prefix(used_atom[at].name, "color:", &color))
 			format->need_color_reset_at_eol = !!strcmp(color, "reset");
 	}
+	if (format->need_color_reset_at_eol && !want_color(format->use_color))
+		format->need_color_reset_at_eol = 0;
 	return 0;
 }
 
