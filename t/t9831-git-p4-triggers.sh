@@ -66,7 +66,7 @@ test_expect_failure 'import with extra info lines from verbose p4 trigger' '
 	)
 '
 
-test_expect_failure 'submit description with extra info lines from verbose p4 change trigger' '
+test_expect_success 'submit description with extra info lines from verbose p4 change trigger' '
 	test_when_finished cleanup_git &&
 	(
 		p4 triggers -i <<-EOF
