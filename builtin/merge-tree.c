@@ -347,12 +347,12 @@ static void merge_trees(struct tree_desc t[3], const char *base)
 
 static void *get_tree_descriptor(struct tree_desc *desc, const char *rev)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	void *buf;
 
-	if (get_sha1(rev, sha1))
+	if (get_oid(rev, &oid))
 		die("unknown rev %s", rev);
-	buf = fill_tree_descriptor(desc, sha1);
+	buf = fill_tree_descriptor(desc, oid.hash);
 	if (!buf)
 		die("%s is not a tree", rev);
 	return buf;
