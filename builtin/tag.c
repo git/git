@@ -32,7 +32,8 @@ static const char * const git_tag_usage[] = {
 static unsigned int colopts;
 static int force_sign_annotate;
 
-static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, const char *format)
+static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
+		     struct ref_format *format)
 {
 	struct ref_array array;
 	char *to_free = NULL;
@@ -43,14 +44,14 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, con
 	if (filter->lines == -1)
 		filter->lines = 0;
 
-	if (!format) {
+	if (!format->format) {
 		if (filter->lines) {
 			to_free = xstrfmt("%s %%(contents:lines=%d)",
 					  "%(align:15)%(refname:lstrip=2)%(end)",
 					  filter->lines);
-			format = to_free;
+			format->format = to_free;
 		} else
-			format = "%(refname:lstrip=2)";
+			format->format = "%(refname:lstrip=2)";
 	}
 
 	if (verify_ref_format(format))
@@ -60,7 +61,7 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting, con
 	ref_array_sort(sorting, &array);
 
 	for (i = 0; i < array.nr; i++)
-		show_ref_array_item(array.items[i], format, 0);
+		show_ref_array_item(array.items[i], format);
 	ref_array_clear(&array);
 	free(to_free);
 
@@ -106,17 +107,17 @@ static int verify_tag(const char *name, const char *ref,
 		      const struct object_id *oid, const void *cb_data)
 {
 	int flags;
-	const char *fmt_pretty = cb_data;
+	const struct ref_format *format = cb_data;
 	flags = GPG_VERIFY_VERBOSE;
 
-	if (fmt_pretty)
+	if (format->format)
 		flags = GPG_VERIFY_OMIT_STATUS;
 
 	if (gpg_verify_tag(oid->hash, name, flags))
 		return -1;
 
-	if (fmt_pretty)
-		pretty_print_ref(name, oid->hash, fmt_pretty);
+	if (format->format)
+		pretty_print_ref(name, oid->hash, format);
 
 	return 0;
 }
@@ -393,7 +394,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	struct strbuf err = STRBUF_INIT;
 	struct ref_filter filter;
 	static struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
-	const char *format = NULL;
+	struct ref_format format = REF_FORMAT_INIT;
 	int icase = 0;
 	struct option options[] = {
 		OPT_CMDMODE('l', "list", &cmdmode, N_("list tag names"), 'l'),
@@ -432,7 +433,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			N_("print only tags of the object"), PARSE_OPT_LASTARG_DEFAULT,
 			parse_opt_object_name, (intptr_t) "HEAD"
 		},
-		OPT_STRING(  0 , "format", &format, N_("format"), N_("format to use for the output")),
+		OPT_STRING(  0 , "format", &format.format, N_("format"),
+			   N_("format to use for the output")),
 		OPT_BOOL('i', "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
 		OPT_END()
 	};
@@ -484,7 +486,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			run_column_filter(colopts, &copts);
 		}
 		filter.name_patterns = argv;
-		ret = list_tags(&filter, sorting, format);
+		ret = list_tags(&filter, sorting, &format);
 		if (column_active(colopts))
 			stop_column_filter();
 		return ret;
@@ -502,9 +504,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (cmdmode == 'd')
 		return for_each_tag_name(argv, delete_tag, NULL);
 	if (cmdmode == 'v') {
-		if (format && verify_ref_format(format))
+		if (format.format && verify_ref_format(&format))
 			usage_with_options(git_tag_usage, options);
-		return for_each_tag_name(argv, verify_tag, format);
+		return for_each_tag_name(argv, verify_tag, &format);
 	}
 
 	if (msg.given || msgfile) {
