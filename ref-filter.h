@@ -116,6 +116,8 @@ void format_ref_array_item(struct ref_array_item *info,
 			   struct strbuf *final_buf);
 /*  Print the ref using the given format and quote_style */
 void show_ref_array_item(struct ref_array_item *info, const struct ref_format *format);
+/*  Parse a single sort specifier and add it to the list */
+void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *atom);
 /*  Callback function for parsing the sort option */
 int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset);
 /*  Default sort option based on refname */
