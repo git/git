@@ -245,6 +245,17 @@ test_expect_success '%C(auto) respects --no-color' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list %C(auto,...) respects --color' '
+	git rev-list --color --format="%C(auto,green)foo%C(auto,reset)" \
+		-1 HEAD >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	cat >expect <<-EOF &&
+	commit $(git rev-parse HEAD)
+	<GREEN>foo<RESET>
+	EOF
+	test_cmp expect actual
+'
+
 iconv -f utf-8 -t $test_encoding > commit-msg <<EOF
 Test printing of complex bodies
 
