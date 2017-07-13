@@ -364,7 +364,7 @@ struct atom_value {
 /*
  * Used to parse format string and sort specifiers
  */
-int parse_ref_filter_atom(const char *atom, const char *ep)
+static int parse_ref_filter_atom(const char *atom, const char *ep)
 {
 	const char *sp;
 	const char *arg;
