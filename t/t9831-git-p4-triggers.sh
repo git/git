@@ -20,7 +20,7 @@ test_expect_success 'init depot' '
 	)
 '
 
-test_expect_failure 'clone with extra info lines from verbose p4 trigger' '
+test_expect_success 'clone with extra info lines from verbose p4 trigger' '
 	test_when_finished cleanup_git &&
 	(
 		p4 triggers -i <<-EOF
@@ -38,7 +38,7 @@ test_expect_failure 'clone with extra info lines from verbose p4 trigger' '
 	)
 '
 
-test_expect_failure 'import with extra info lines from verbose p4 trigger' '
+test_expect_success 'import with extra info lines from verbose p4 trigger' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$cli" &&
