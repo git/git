@@ -54,6 +54,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	format.format = "%(objectname) %(objecttype)\t%(refname)";
 
+	git_config(git_default_config, NULL);
+
 	parse_options(argc, argv, prefix, opts, for_each_ref_usage, 0);
 	if (maxcount < 0) {
 		error("invalid --count argument: `%d'", maxcount);
@@ -70,9 +72,6 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		sorting = ref_default_sorting();
 	sorting->ignore_case = icase;
 	filter.ignore_case = icase;
-
-	/* for warn_ambiguous_refs */
-	git_config(git_default_config, NULL);
 
 	filter.name_patterns = argv;
 	filter.match_as_path = 1;
