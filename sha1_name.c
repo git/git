@@ -390,23 +390,23 @@ static int get_short_oid(const char *name, int len, struct object_id *oid,
 {
 	int status;
 	struct disambiguate_state ds;
-	int quietly = !!(flags & GET_SHA1_QUIETLY);
+	int quietly = !!(flags & GET_OID_QUIETLY);
 
 	if (init_object_disambiguation(name, len, &ds) < 0)
 		return -1;
 
-	if (HAS_MULTI_BITS(flags & GET_SHA1_DISAMBIGUATORS))
+	if (HAS_MULTI_BITS(flags & GET_OID_DISAMBIGUATORS))
 		die("BUG: multiple get_short_oid disambiguator flags");
 
-	if (flags & GET_SHA1_COMMIT)
+	if (flags & GET_OID_COMMIT)
 		ds.fn = disambiguate_commit_only;
-	else if (flags & GET_SHA1_COMMITTISH)
+	else if (flags & GET_OID_COMMITTISH)
 		ds.fn = disambiguate_committish_only;
-	else if (flags & GET_SHA1_TREE)
+	else if (flags & GET_OID_TREE)
 		ds.fn = disambiguate_tree_only;
-	else if (flags & GET_SHA1_TREEISH)
+	else if (flags & GET_OID_TREEISH)
 		ds.fn = disambiguate_treeish_only;
-	else if (flags & GET_SHA1_BLOB)
+	else if (flags & GET_OID_BLOB)
 		ds.fn = disambiguate_blob_only;
 	else
 		ds.fn = default_disambiguate_hint;
@@ -505,7 +505,7 @@ int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 	exists = has_sha1_file(sha1);
 	while (len < 40) {
 		struct object_id oid_ret;
-		status = get_short_oid(hex, len, &oid_ret, GET_SHA1_QUIETLY);
+		status = get_short_oid(hex, len, &oid_ret, GET_OID_QUIETLY);
 		if (exists
 		    ? !status
 		    : status == SHORT_NAME_NOT_FOUND) {
@@ -662,9 +662,9 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 	if (!refs_found)
 		return -1;
 
-	if (warn_ambiguous_refs && !(flags & GET_SHA1_QUIETLY) &&
+	if (warn_ambiguous_refs && !(flags & GET_OID_QUIETLY) &&
 	    (refs_found > 1 ||
-	     !get_short_oid(str, len, &tmp_oid, GET_SHA1_QUIETLY)))
+	     !get_short_oid(str, len, &tmp_oid, GET_OID_QUIETLY)))
 		warning(warn_msg, len, str);
 
 	if (reflog_len) {
@@ -709,13 +709,13 @@ static int get_oid_basic(const char *str, int len, struct object_id *oid,
 				}
 			}
 			if (at_time) {
-				if (!(flags & GET_SHA1_QUIETLY)) {
+				if (!(flags & GET_OID_QUIETLY)) {
 					warning("Log for '%.*s' only goes "
 						"back to %s.", len, str,
 						show_date(co_time, co_tz, DATE_MODE(RFC2822)));
 				}
 			} else {
-				if (flags & GET_SHA1_QUIETLY) {
+				if (flags & GET_OID_QUIETLY) {
 					exit(128);
 				}
 				die("Log for '%.*s' only has %d entries.",
@@ -732,7 +732,7 @@ static int get_parent(const char *name, int len,
 		      struct object_id *result, int idx)
 {
 	struct object_id oid;
-	int ret = get_oid_1(name, len, &oid, GET_SHA1_COMMITTISH);
+	int ret = get_oid_1(name, len, &oid, GET_OID_COMMITTISH);
 	struct commit *commit;
 	struct commit_list *p;
 
@@ -763,7 +763,7 @@ static int get_nth_ancestor(const char *name, int len,
 	struct commit *commit;
 	int ret;
 
-	ret = get_oid_1(name, len, &oid, GET_SHA1_COMMITTISH);
+	ret = get_oid_1(name, len, &oid, GET_OID_COMMITTISH);
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(&oid);
@@ -849,11 +849,11 @@ static int peel_onion(const char *name, int len, struct object_id *oid,
 	else
 		return -1;
 
-	lookup_flags &= ~GET_SHA1_DISAMBIGUATORS;
+	lookup_flags &= ~GET_OID_DISAMBIGUATORS;
 	if (expected_type == OBJ_COMMIT)
-		lookup_flags |= GET_SHA1_COMMITTISH;
+		lookup_flags |= GET_OID_COMMITTISH;
 	else if (expected_type == OBJ_TREE)
-		lookup_flags |= GET_SHA1_TREEISH;
+		lookup_flags |= GET_OID_TREEISH;
 
 	if (get_oid_1(name, sp - name - 2, &outer, lookup_flags))
 		return -1;
@@ -904,7 +904,7 @@ static int peel_onion(const char *name, int len, struct object_id *oid,
 static int get_describe_name(const char *name, int len, struct object_id *oid)
 {
 	const char *cp;
-	unsigned flags = GET_SHA1_QUIETLY | GET_SHA1_COMMIT;
+	unsigned flags = GET_OID_QUIETLY | GET_OID_COMMIT;
 
 	for (cp = name + len - 1; name + 2 <= cp; cp--) {
 		char ch = *cp;
@@ -1361,35 +1361,35 @@ int get_oid(const char *name, struct object_id *oid)
 int get_oid_committish(const char *name, struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(name, GET_SHA1_COMMITTISH,
+	return get_oid_with_context(name, GET_OID_COMMITTISH,
 				    oid, &unused);
 }
 
 int get_oid_treeish(const char *name, struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(name, GET_SHA1_TREEISH,
+	return get_oid_with_context(name, GET_OID_TREEISH,
 				    oid, &unused);
 }
 
 int get_oid_commit(const char *name, struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(name, GET_SHA1_COMMIT,
+	return get_oid_with_context(name, GET_OID_COMMIT,
 				    oid, &unused);
 }
 
 int get_oid_tree(const char *name, struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(name, GET_SHA1_TREE,
+	return get_oid_with_context(name, GET_OID_TREE,
 				    oid, &unused);
 }
 
 int get_oid_blob(const char *name, struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(name, GET_SHA1_BLOB,
+	return get_oid_with_context(name, GET_OID_BLOB,
 				    oid, &unused);
 }
 
@@ -1505,10 +1505,10 @@ static int get_oid_with_context_1(const char *name,
 	int ret, bracket_depth;
 	int namelen = strlen(name);
 	const char *cp;
-	int only_to_die = flags & GET_SHA1_ONLY_TO_DIE;
+	int only_to_die = flags & GET_OID_ONLY_TO_DIE;
 
 	if (only_to_die)
-		flags |= GET_SHA1_QUIETLY;
+		flags |= GET_OID_QUIETLY;
 
 	memset(oc, 0, sizeof(*oc));
 	oc->mode = S_IFINVALID;
@@ -1551,7 +1551,7 @@ static int get_oid_with_context_1(const char *name,
 			namelen = strlen(cp);
 		}
 
-		if (flags & GET_SHA1_RECORD_PATH)
+		if (flags & GET_OID_RECORD_PATH)
 			oc->path = xstrdup(cp);
 
 		if (!active_cache)
@@ -1590,8 +1590,8 @@ static int get_oid_with_context_1(const char *name,
 		int len = cp - name;
 		unsigned sub_flags = flags;
 
-		sub_flags &= ~GET_SHA1_DISAMBIGUATORS;
-		sub_flags |= GET_SHA1_TREEISH;
+		sub_flags &= ~GET_OID_DISAMBIGUATORS;
+		sub_flags |= GET_OID_TREEISH;
 
 		if (!get_oid_1(name, len, &tree_oid, sub_flags)) {
 			const char *filename = cp+1;
@@ -1600,7 +1600,7 @@ static int get_oid_with_context_1(const char *name,
 			new_filename = resolve_relative_path(filename);
 			if (new_filename)
 				filename = new_filename;
-			if (flags & GET_SHA1_FOLLOW_SYMLINKS) {
+			if (flags & GET_OID_FOLLOW_SYMLINKS) {
 				ret = get_tree_entry_follow_symlinks(tree_oid.hash,
 					filename, oid->hash, &oc->symlink_path,
 					&oc->mode);
@@ -1615,7 +1615,7 @@ static int get_oid_with_context_1(const char *name,
 				}
 			}
 			hashcpy(oc->tree, tree_oid.hash);
-			if (flags & GET_SHA1_RECORD_PATH)
+			if (flags & GET_OID_RECORD_PATH)
 				oc->path = xstrdup(filename);
 
 			free(new_filename);
@@ -1639,12 +1639,12 @@ void maybe_die_on_misspelt_object_name(const char *name, const char *prefix)
 {
 	struct object_context oc;
 	struct object_id oid;
-	get_oid_with_context_1(name, GET_SHA1_ONLY_TO_DIE, prefix, &oid, &oc);
+	get_oid_with_context_1(name, GET_OID_ONLY_TO_DIE, prefix, &oid, &oc);
 }
 
 int get_oid_with_context(const char *str, unsigned flags, struct object_id *oid, struct object_context *oc)
 {
-	if (flags & GET_SHA1_FOLLOW_SYMLINKS && flags & GET_SHA1_ONLY_TO_DIE)
+	if (flags & GET_OID_FOLLOW_SYMLINKS && flags & GET_OID_ONLY_TO_DIE)
 		die("BUG: incompatible flags for get_sha1_with_context");
 	return get_oid_with_context_1(str, flags, NULL, oid, oc);
 }

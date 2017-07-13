@@ -702,7 +702,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
 				quiet = 1;
-				flags |= GET_SHA1_QUIETLY;
+				flags |= GET_OID_QUIETLY;
 				continue;
 			}
 			if (opt_with_value(arg, "--short", &arg)) {

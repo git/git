@@ -1453,7 +1453,7 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	unsigned int a_flags, b_flags;
 	int symmetric = 0;
 	unsigned int flags_exclude = flags ^ (UNINTERESTING | BOTTOM);
-	unsigned int oc_flags = GET_SHA1_COMMITTISH | GET_SHA1_RECORD_PATH;
+	unsigned int oc_flags = GET_OID_COMMITTISH | GET_OID_RECORD_PATH;
 
 	a_name = arg;
 	if (!*a_name)
@@ -1549,7 +1549,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	int local_flags;
 	const char *arg = arg_;
 	int cant_be_filename = revarg_opt & REVARG_CANNOT_BE_FILENAME;
-	unsigned get_sha1_flags = GET_SHA1_RECORD_PATH;
+	unsigned get_sha1_flags = GET_OID_RECORD_PATH;
 
 	flags = flags & UNINTERESTING ? flags | BOTTOM : flags & ~BOTTOM;
 
@@ -1600,7 +1600,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 	}
 
 	if (revarg_opt & REVARG_COMMITTISH)
-		get_sha1_flags |= GET_SHA1_COMMITTISH;
+		get_sha1_flags |= GET_OID_COMMITTISH;
 
 	if (get_oid_with_context(arg, get_sha1_flags, &oid, &oc))
 		return revs->ignore_missing ? 0 : -1;
