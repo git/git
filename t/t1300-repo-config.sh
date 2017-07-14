@@ -1075,7 +1075,7 @@ test_expect_success 'git -c works with aliases of builtins' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'aliases can be CamelCased' '
+test_expect_success 'aliases can be CamelCased' '
 	test_config alias.CamelCased "rev-parse HEAD" &&
 	git CamelCased >out &&
 	git rev-parse HEAD >expect &&
