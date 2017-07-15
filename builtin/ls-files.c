@@ -378,8 +378,7 @@ static void prune_index(struct index_state *istate,
 		}
 		last = next;
 	}
-	memmove(istate->cache, istate->cache + pos,
-		(last - pos) * sizeof(struct cache_entry *));
+	MOVE_ARRAY(istate->cache, istate->cache + pos, last - pos);
 	istate->cache_nr = last - pos;
 }
 

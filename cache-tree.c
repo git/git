@@ -131,9 +131,8 @@ static int do_invalidate_path(struct cache_tree *it, const char *path)
 			 * move 4 and 5 up one place (2 entries)
 			 * 2 = 6 - 3 - 1 = subtree_nr - pos - 1
 			 */
-			memmove(it->down+pos, it->down+pos+1,
-				sizeof(struct cache_tree_sub *) *
-				(it->subtree_nr - pos - 1));
+			MOVE_ARRAY(it->down + pos, it->down + pos + 1,
+				   it->subtree_nr - pos - 1);
 			it->subtree_nr--;
 		}
 		return 1;
