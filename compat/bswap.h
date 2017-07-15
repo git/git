@@ -166,10 +166,10 @@ static inline uint64_t git_bswap64(uint64_t x)
 	(*((unsigned char *)(p) + 0) << 8) | \
 	(*((unsigned char *)(p) + 1) << 0) )
 #define get_be32(p)	( \
-	(*((unsigned char *)(p) + 0) << 24) | \
-	(*((unsigned char *)(p) + 1) << 16) | \
-	(*((unsigned char *)(p) + 2) <<  8) | \
-	(*((unsigned char *)(p) + 3) <<  0) )
+	((uint32_t)*((unsigned char *)(p) + 0) << 24) | \
+	((uint32_t)*((unsigned char *)(p) + 1) << 16) | \
+	((uint32_t)*((unsigned char *)(p) + 2) <<  8) | \
+	((uint32_t)*((unsigned char *)(p) + 3) <<  0) )
 #define put_be32(p, v)	do { \
 	unsigned int __v = (v); \
 	*((unsigned char *)(p) + 0) = __v >> 24; \
