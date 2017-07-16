@@ -221,7 +221,7 @@ static void objectname_atom_parser(struct used_atom *atom, const char *arg)
 
 static void refname_atom_parser(struct used_atom *atom, const char *arg)
 {
-	return refname_atom_parser_internal(&atom->u.refname, arg, atom->name);
+	refname_atom_parser_internal(&atom->u.refname, arg, atom->name);
 }
 
 static align_type parse_align_position(const char *s)
@@ -1624,7 +1624,7 @@ static int match_pattern(const struct ref_filter *filter, const char *refname)
 	       skip_prefix(refname, "refs/", &refname));
 
 	for (; *patterns; patterns++) {
-		if (!wildmatch(*patterns, refname, flags, NULL))
+		if (!wildmatch(*patterns, refname, flags))
 			return 1;
 	}
 	return 0;
@@ -1655,7 +1655,7 @@ static int match_name_as_path(const struct ref_filter *filter, const char *refna
 		     refname[plen] == '/' ||
 		     p[plen-1] == '/'))
 			return 1;
-		if (!wildmatch(p, refname, WM_PATHNAME, NULL))
+		if (!wildmatch(p, refname, WM_PATHNAME))
 			return 1;
 	}
 	return 0;
@@ -1891,8 +1891,7 @@ void ref_array_clear(struct ref_array *array)
 
 	for (i = 0; i < array->nr; i++)
 		free_array_item(array->items[i]);
-	free(array->items);
-	array->items = NULL;
+	FREE_AND_NULL(array->items);
 	array->nr = array->alloc = 0;
 }
 

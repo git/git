@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "column.h"
 #include "string-list.h"
 #include "parse-options.h"

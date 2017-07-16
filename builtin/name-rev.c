@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "tag.h"
 #include "refs.h"
@@ -129,7 +130,7 @@ static int subpath_matches(const char *path, const char *filter)
 	const char *subpath = path;
 
 	while (subpath) {
-		if (!wildmatch(filter, subpath, 0, NULL))
+		if (!wildmatch(filter, subpath, 0))
 			return subpath - path;
 		subpath = strchr(subpath, '/');
 		if (subpath)

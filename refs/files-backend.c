@@ -1,4 +1,5 @@
 #include "../cache.h"
+#include "../config.h"
 #include "../refs.h"
 #include "refs-internal.h"
 #include "ref-cache.h"
@@ -370,6 +371,18 @@ static void files_ref_path(struct files_ref_store *refs,
 }
 
 /*
+ * Check that the packed refs cache (if any) still reflects the
+ * contents of the file. If not, clear the cache.
+ */
+static void validate_packed_ref_cache(struct files_ref_store *refs)
+{
+	if (refs->packed &&
+	    !stat_validity_check(&refs->packed->validity,
+				 files_packed_refs_path(refs)))
+		clear_packed_ref_cache(refs);
+}
+
+/*
  * Get the packed_ref_cache for the specified files_ref_store,
  * creating and populating it if it hasn't been read before or if the
  * file has been changed (according to its `validity` field) since it
@@ -381,10 +394,8 @@ static struct packed_ref_cache *get_packed_ref_cache(struct files_ref_store *ref
 {
 	const char *packed_refs_file = files_packed_refs_path(refs);
 
-	if (refs->packed &&
-	    !is_lock_file_locked(&refs->packed_refs_lock) &&
-	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
-		clear_packed_ref_cache(refs);
+	if (!is_lock_file_locked(&refs->packed_refs_lock))
+		validate_packed_ref_cache(refs);
 
 	if (!refs->packed)
 		refs->packed = read_packed_refs(packed_refs_file);
@@ -1311,13 +1322,17 @@ static int lock_packed_refs(struct files_ref_store *refs, int flags)
 			    &refs->packed_refs_lock, files_packed_refs_path(refs),
 			    flags, timeout_value) < 0)
 		return -1;
+
 	/*
-	 * Get the current packed-refs while holding the lock. It is
-	 * important that we call `get_packed_ref_cache()` before
-	 * setting `packed_ref_cache->lock`, because otherwise the
-	 * former will see that the file is locked and assume that the
-	 * cache can't be stale.
+	 * Now that we hold the `packed-refs` lock, make sure that our
+	 * cache matches the current version of the file. Normally
+	 * `get_packed_ref_cache()` does that for us, but that
+	 * function assumes that when the file is locked, any existing
+	 * cache is still valid. We've just locked the file, but it
+	 * might have changed the moment *before* we locked it.
 	 */
+	validate_packed_ref_cache(refs);
+
 	packed_ref_cache = get_packed_ref_cache(refs);
 	/* Increment the reference count to prevent it from being freed: */
 	acquire_packed_ref_cache(packed_ref_cache);
@@ -2944,8 +2959,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 				       head_oid.hash, &head_type);
 
 	if (head_ref && !(head_type & REF_ISSYMREF)) {
-		free(head_ref);
-		head_ref = NULL;
+		FREE_AND_NULL(head_ref);
 	}
 
 	/*

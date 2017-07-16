@@ -264,7 +264,7 @@ notes for details).
    needed it so far.
 
  * Git 2.11 had a minor regression in "merge --ff-only" that competed
-   with another process that simultanously attempted to update the
+   with another process that simultaneously attempted to update the
    index. We used to explain what went wrong with an error message,
    but the new code silently failed.  The error message has been
    resurrected.

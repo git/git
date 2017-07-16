@@ -348,6 +348,9 @@ advice.*::
 	rmHints::
 		In case of failure in the output of linkgit:git-rm[1],
 		show directions on how to proceed from the current state.
+	addEmbeddedRepo::
+		Advice on what to do when you've accidentally added one
+		git repo inside of another.
 --
 
 core.fileMode::
@@ -683,7 +686,8 @@ core.packedGitLimit::
 	bytes at once to complete an operation it will unmap existing
 	regions to reclaim virtual address space within the process.
 +
-Default is 256 MiB on 32 bit platforms and 8 GiB on 64 bit platforms.
+Default is 256 MiB on 32 bit platforms and 32 TiB (effectively
+unlimited) on 64 bit platforms.
 This should be reasonable for all users/operating systems, except on
 the largest projects.  You probably do not need to adjust this value.
 +
@@ -2620,7 +2624,7 @@ rebase.autoSquash::
 	If set to true enable `--autosquash` option by default.
 
 rebase.autoStash::
-	When set to true, automatically create a temporary stash
+	When set to true, automatically create a temporary stash entry
 	before the operation begins, and apply it after the operation
 	ends.  This means that you can run rebase on a dirty worktree.
 	However, use with care: the final stash application after a
@@ -2942,6 +2946,16 @@ sendemail.xmailer::
 sendemail.signedoffcc (deprecated)::
 	Deprecated alias for `sendemail.signedoffbycc`.
 
+sendemail.smtpBatchSize::
+	Number of messages to be sent per connection, after that a relogin
+	will happen.  If the value is 0 or undefined, send all messages in
+	one connection.
+	See also the `--batch-size` option of linkgit:git-send-email[1].
+
+sendemail.smtpReloginDelay::
+	Seconds wait before reconnecting to smtp server.
+	See also the `--relogin-delay` option of linkgit:git-send-email[1].
+
 showbranch.default::
 	The default set of branches for linkgit:git-show-branch[1].
 	See linkgit:git-show-branch[1].
@@ -2992,6 +3006,11 @@ status.displayCommentPrefix::
 	behavior of linkgit:git-status[1] in Git 1.8.4 and previous.
 	Defaults to false.
 
+status.showStash::
+	If set to true, linkgit:git-status[1] will display the number of
+	entries currently stashed away.
+	Defaults to false.
+
 status.showUntrackedFiles::
 	By default, linkgit:git-status[1] and linkgit:git-commit[1] show
 	files which are not currently tracked by Git. Directories which
@@ -3029,12 +3048,12 @@ status.submoduleSummary::
 
 stash.showPatch::
 	If this is set to true, the `git stash show` command without an
-	option will show the stash in patch form.  Defaults to false.
+	option will show the stash entry in patch form.  Defaults to false.
 	See description of 'show' command in linkgit:git-stash[1].
 
 stash.showStat::
 	If this is set to true, the `git stash show` command without an
-	option will show diffstat of the stash.  Defaults to true.
+	option will show diffstat of the stash entry.  Defaults to true.
 	See description of 'show' command in linkgit:git-stash[1].
 
 submodule.<name>.url::

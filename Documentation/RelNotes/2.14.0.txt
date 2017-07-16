@@ -38,26 +38,23 @@ UI, Workflows & Features
 
  * "git archive --format=zip" learned to use zip64 extension when
    necessary to go beyond the 4GB limit.
-   (merge 867e40ff3a rs/large-zip later to maint).
 
  * "git reset" learned "--recurse-submodules" option.
 
  * "git diff --submodule=diff" now recurses into nested submodules.
-   (merge 5a5221427c jk/diff-submodule-diff-inline later to maint).
 
  * "git repack" learned to accept the --threads=<n> option and pass it
    to pack-objects.
 
  * "git send-email" learned to run sendemail-validate hook to inspect
    and reject a message before sending it out.
-   (merge 177409e589 jt/send-email-validate-hook later to maint).
 
  * There is no good reason why "git fetch $there $sha1" should fail
    when the $sha1 names an object at the tip of an advertised ref,
    even when the other side hasn't enabled allowTipSHA1InWant.
 
  * The recently introduced "[includeIf "gitdir:$dir"] path=..."
-   mechansim has further been taught to take symlinks into account.
+   mechanism has further been taught to take symlinks into account.
    The directory "$dir" specified in "gitdir:$dir" may be a symlink to
    a real location, not something that $(getcwd) may return.  In such
    a case, a realpath of "$dir" is compared with the real path of the
@@ -70,6 +67,50 @@ UI, Workflows & Features
  * Many commands learned to pay attention to submodule.recurse
    configuration.
 
+ * The convention for a command line is to follow "git cmdname
+   --options" with revisions followed by an optional "--"
+   disambiguator and then finally pathspecs.  When "--" is not there,
+   we make sure early ones are all interpretable as revs (and do not
+   look like paths) and later ones are the other way around.  A
+   pathspec with "magic" (e.g. ":/p/a/t/h" that matches p/a/t/h from
+   the top-level of the working tree, no matter what subdirectory you
+   are working from) are conservatively judged as "not a path", which
+   required disambiguation more often.  The command line parser
+   learned to say "it's a pathspec" a bit more often when the syntax
+   looks like so.
+
+ * Update "perl-compatible regular expression" support to enable JIT
+   and also allow linking with the newer PCRE v2 library.
+
+ * "filter-branch" learned a pseudo filter "--setup" that can be used
+   to define common functions/variables that can be used by other
+   filters.
+
+ * Using "git add d/i/r" when d/i/r is the top of the working tree of
+   a separate repository would create a gitlink in the index, which
+   would appear as a not-quite-initialized submodule to others.  We
+   learned to give warnings when this happens.
+
+ * "git status" learned to optionally give how many stash entries the
+   user has in its output.
+
+ * "git status" has long shown essentially the same message as "git
+   commit"; the message it gives while preparing for the root commit,
+   i.e. "Initial commit", was hard to understand for some new users.
+   Now it says "No commits yet" to stress more on the current status
+   (rather than the commit the user is preparing for, which is more in
+   line with the focus of "git commit").
+
+ * "git send-email" learned to overcome some SMTP server limitation
+   that does not allow many pieces of e-mails to be sent over a single
+   session.
+
+ * An old message shown in the commit log template was removed, as it
+   has outlived its usefulness.
+
+ * "git pull --rebase --recurse-submodules" learns to rebase the
+   branch in the submodules to an updated base.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -79,7 +120,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * Code to update the cache-tree has been tightened so that we won't
    accidentally write out any 0{40} entry in the tree object.
-   (merge a96d3cc3f6 jk/no-null-sha1-in-cache-tree later to maint).
 
  * Attempt to allow us notice "fishy" situation where we fail to
    remove the temporary directory used during the test.
@@ -102,14 +142,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * Simplify parse_pathspec() codepath and stop it from looking at the
    default in-core index.
-   (merge 08de9151a8 bw/pathspec-sans-the-index later to maint).
 
  * Add perf-test for wildmatch.
-   (merge 62ca75a6b9 ab/perf-wildmatch later to maint).
 
  * Code from "conversion using external process" codepath has been
    extracted to a separate sub-process.[ch] module.
-   (merge 4f2a2e9f0e bp/sub-process-convert-filter later to maint).
 
  * When "git checkout", "git merge", etc. manipulates the in-core
    index, various pieces of information in the index extensions are
@@ -120,7 +157,6 @@ Performance, Internal Implementation, Development Support etc.
    cache is properly invalidated).
 
  * The internal implementation of "git grep" has seen some clean-up.
-   (merge 8df4c2953f ab/grep-preparatory-cleanup later to maint).
 
  * Update the C style recommendation for notes for translators, as
    recent versions of gettext tools can work with our style of
@@ -145,6 +181,48 @@ Performance, Internal Implementation, Development Support etc.
  * We often try to open a file for reading whose existence is
    optional, and silently ignore errors from open/fopen; report such
    errors if they are not due to missing files.
+
+ * When an existing repository is used for t/perf testing, we first
+   create bit-for-bit copy of it, which may grab a transient state of
+   the repository and freeze it into the repository used for testing,
+   which then may cause Git operations to fail.  Single out "the index
+   being locked" case and forcibly drop the lock from the copy.
+
+ * Three instances of the same helper function have been consolidated
+   to one.
+
+ * "fast-import" uses a default pack chain depth that is consistent
+   with other parts of the system.
+
+ * A new test to show the interaction between the pattern [^a-z]
+   (which matches '/') and a slash in a path has been added.  The
+   pattern should not match the slash with "pathmatch", but should
+   with "wildmatch".
+
+ * The 'diff-highlight' program (in contrib/) has been restructured
+   for easier reuse by an external project 'diff-so-fancy'.
+
+ * A common pattern to free a piece of memory and assign NULL to the
+   pointer that used to point at it has been replaced with a new
+   FREE_AND_NULL() macro.
+
+ * Traditionally, the default die() routine had a code to prevent it
+   from getting called multiple times, which interacted badly when a
+   threaded program used it (one downside is that the real error may
+   be hidden and instead the only error message given to the user may
+   end up being "die recursion detected", which is not very useful).
+
+ * Introduce a "repository" object to eventually make it easier to
+   work in multiple repositories (the primary focus is to work with
+   the superproject and its submodules) in a single process.
+
+ * Optimize "what are the object names already taken in an alternate
+   object database?" query that is used to derive the length of prefix
+   an object name is uniquely abbreviated to.
+
+ * The hashmap API has been updated so that data to customize the
+   behaviour of the comparison function can be specified at the time a
+   hashmap is initialized.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -193,11 +271,6 @@ notes for details).
 
  * "git checkout --recurse-submodules" did not quite work with a
    submodule that itself has submodules.
-
- * Plug some leaks and updates internal API used to implement the
-   split index feature to make it easier to avoid such a leak in the
-   future.
-   (merge de950c5773 nd/split-index-unshare later to maint).
 
  * "pack-objects" can stream a slice of an existing packfile out when
    the pack bitmap can tell that the reachable objects are all needed
@@ -260,7 +333,6 @@ notes for details).
    they were almost never considered.  Instead, give them about the
    same chance to be considered as an annotated tag that is the same
    age as the underlying commit would.
-   (merge ef1e74065c jc/name-rev-lw-tag later to maint).
 
  * The "run-command" API implementation has been made more robust
    against dead-locking in a threaded environment.
@@ -286,7 +358,6 @@ notes for details).
    $commit1:$path $commit2:$path", used to be shown with the full
    object name as given on the command line, but it is more natural to
    use the $path in the output and use it to look up .gitattributes.
-   (merge 30d005c020 jk/diff-blob later to maint).
 
  * The "collision detecting" SHA-1 implementation shipped with 2.13
    was quite broken on some big-endian platforms and/or platforms that
@@ -307,7 +378,92 @@ notes for details).
    fast-forwards to the upstream.
 
  * A flaky test has been corrected.
-   (merge 7c2115aa07 jk/pack-idx-corruption-safety later to maint).
+
+ * "git $cmd -h" for builtin commands calls the implementation of the
+   command (i.e. cmd_$cmd() function) without doing any repository
+   set-up, and the commands that expect RUN_SETUP is done by the Git
+   potty needs to be prepared to show the help text without barfing.
+   (merge d691551192 jk/consistent-h later to maint).
+
+ * Help contributors that visit us at GitHub.
+
+ * "git stash push <pathspec>" did not work from a subdirectory at all.
+   Bugfix for a topic in v2.13
+
+ * As there is no portable way to pass timezone information to
+   strftime, some output format from "git log" and friends are
+   impossible to produce.  Teach our own strbuf_addftime to replace %z
+   and %Z with caller-supplied values to help working around this.
+   (merge 6eced3ec5e rs/strbuf-addftime-zZ later to maint).
+
+ * "git mergetool" learned to work around a wrapper MacOS X adds
+   around underlying meld.
+
+ * An example in documentation that does not work in multi worktree
+   configuration has been corrected.
+
+ * The pretty-format specifiers like '%h', '%t', etc. had an
+   optimization that no longer works correctly.  In preparation/hope
+   of getting it correctly implemented, first discard the optimization
+   that is broken.
+
+ * The code to pick up and execute command alias definition from the
+   configuration used to switch to the top of the working tree and
+   then come back when the expanded alias was executed, which was
+   unnecessarilyl complex.  Attempt to simplify the logic by using the
+   early-config mechanism that does not chdir around.
+
+ * Fix configuration codepath to pay proper attention to commondir
+   that is used in multi-worktree situation, and isolate config API
+   into its own header file.
+   (merge dc8441fdb4 bw/config-h later to maint).
+
+ * "git add -p" were updated in 2.12 timeframe to cope with custom
+   core.commentchar but the implementation was buggy and a
+   metacharacter like $ and * did not work.
+
+ * A recent regression in "git rebase -i" has been fixed and tests
+   that would have caught it and others have been added.
+
+ * An unaligned 32-bit access in pack-bitmap code ahs been corrected.
+
+ * Tighten error checks for invalid "git apply" input.
+
+ * The split index code did not honor core.sharedrepository setting
+   correctly.
+
+ * The Makefile rule in contrib/subtree for building documentation
+   learned to honour USE_ASCIIDOCTOR just like the main documentation
+   set does.
+
+ * Update the sha1dc again to fix portability glitches.
+
+ * Code clean-up to fix possible buffer over-reading.
+   (merge 2d105451c0 rs/apply-avoid-over-reading later to maint).
+
+ * A few tests that tried to verify the contents of push certificates
+   did not use 'git rev-parse' to formulate the line to look for in
+   the certificate correctly.
+
+ * Update the character width tables.
+   (merge 7560aacd7c bb/unicode-10.0 later to maint).
+
+ * After "git branch --move" of the currently checked out branch, the
+   code to walk the reflog of HEAD via "log -g" and friends
+   incorrectly stopped at the reflog entry that records the renaming
+   of the branch.
+
+ * The rewrite of "git branch --list" using for-each-ref's internals
+   that happened in v2.13 regressed its handling of color.branch.local;
+   this has been fixed.
+
+ * The build procedure has been improved to allow building and testing
+   Git with address sanitizer more easily.
+   (merge 566cf0b3bd jk/build-with-asan later to maint).
 
  * Other minor doc, test and build updates and code cleanups.
-   (merge 8ba74bfd7c jc/diff-tree-stale-comment later to maint).
+   (merge 3f9c637ec7 pw/unquote-path-in-git-pm later to maint).
+   (merge 5053313562 rs/urlmatch-cleanup later to maint).
+   (merge 42c78a216e rs/use-div-round-up later to maint).
+   (merge 5e8d2729ae rs/wt-status-cleanup later to maint).
+   (merge 01826066b0 ks/fix-rebase-doc-picture later to maint).

@@ -108,7 +108,14 @@ test_perf_create_repo_from () {
 		cd "$repo" &&
 		"$MODERN_GIT" init -q &&
 		test_perf_do_repo_symlink_config_ &&
-		mv .git/hooks .git/hooks-disabled 2>/dev/null
+		mv .git/hooks .git/hooks-disabled 2>/dev/null &&
+		if test -f .git/index.lock
+		then
+			# We may be copying a repo that can't run "git
+			# status" due to a locked index. Since we have
+			# a copy it's fine to remove the lock.
+			rm .git/index.lock
+		fi
 	) || error "failed to copy repository '$source' to '$repo'"
 }
 

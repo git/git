@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "string-list.h"
 #include "rerere.h"
@@ -39,9 +40,8 @@ static void free_rerere_dirs(void)
 		free(rerere_dir[i]->status);
 		free(rerere_dir[i]);
 	}
-	free(rerere_dir);
+	FREE_AND_NULL(rerere_dir);
 	rerere_dir_nr = rerere_dir_alloc = 0;
-	rerere_dir = NULL;
 }
 
 static void free_rerere_id(struct string_list_item *item)

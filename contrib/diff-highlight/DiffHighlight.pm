@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+package DiffHighlight;
 
 use 5.008;
 use warnings FATAL => 'all';
@@ -29,13 +29,14 @@ my @removed;
 my @added;
 my $in_hunk;
 
-# Some scripts may not realize that SIGPIPE is being ignored when launching the
-# pager--for instance scripts written in Python.
-$SIG{PIPE} = 'DEFAULT';
+our $line_cb = sub { print @_ };
+our $flush_cb = sub { local $| = 1 };
 
-while (<>) {
+sub handle_line {
+	local $_ = shift;
+
 	if (!$in_hunk) {
-		print;
+		$line_cb->($_);
 		$in_hunk = /^$GRAPH*$COLOR*\@\@ /;
 	}
 	elsif (/^$GRAPH*$COLOR*-/) {
@@ -49,7 +50,7 @@ while (<>) {
 		@removed = ();
 		@added = ();
 
-		print;
+		$line_cb->($_);
 		$in_hunk = /^$GRAPH*$COLOR*[\@ ]/;
 	}
 
@@ -62,15 +63,22 @@ while (<>) {
 	# place to flush. Flushing on a blank line is a heuristic that
 	# happens to match git-log output.
 	if (!length) {
-		local $| = 1;
+		$flush_cb->();
 	}
 }
 
-# Flush any queued hunk (this can happen when there is no trailing context in
-# the final diff of the input).
-show_hunk(\@removed, \@added);
+sub flush {
+	# Flush any queued hunk (this can happen when there is no trailing
+	# context in the final diff of the input).
+	show_hunk(\@removed, \@added);
+}
 
-exit 0;
+sub highlight_stdin {
+	while (<STDIN>) {
+		handle_line($_);
+	}
+	flush();
+}
 
 # Ideally we would feed the default as a human-readable color to
 # git-config as the fallback value. But diff-highlight does
@@ -88,7 +96,7 @@ sub show_hunk {
 
 	# If one side is empty, then there is nothing to compare or highlight.
 	if (!@$a || !@$b) {
-		print @$a, @$b;
+		$line_cb->(@$a, @$b);
 		return;
 	}
 
@@ -97,17 +105,17 @@ sub show_hunk {
 	# stupid, and only handle multi-line hunks that remove and add the same
 	# number of lines.
 	if (@$a != @$b) {
-		print @$a, @$b;
+		$line_cb->(@$a, @$b);
 		return;
 	}
 
 	my @queue;
 	for (my $i = 0; $i < @$a; $i++) {
 		my ($rm, $add) = highlight_pair($a->[$i], $b->[$i]);
-		print $rm;
+		$line_cb->($rm);
 		push @queue, $add;
 	}
-	print @queue;
+	$line_cb->(@queue);
 }
 
 sub highlight_pair {

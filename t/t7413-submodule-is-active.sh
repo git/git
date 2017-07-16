@@ -2,7 +2,7 @@
 
 test_description='Test submodule--helper is-active
 
-This test verifies that `git submodue--helper is-active` correclty identifies
+This test verifies that `git submodue--helper is-active` correctly identifies
 submodules which are "active" and interesting to the user.
 '
 

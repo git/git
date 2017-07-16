@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
@@ -276,6 +277,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
 	const char *show_progress = NULL;
+
+	if (argc == 2 && !strcmp(argv[1], "-h"))
+		usage(rev_list_usage);
 
 	git_config(git_default_config, NULL);
 	init_revisions(&revs, prefix);

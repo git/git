@@ -69,15 +69,15 @@ int notes_cache_write(struct notes_cache *c)
 char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
 		      size_t *outsize)
 {
-	const unsigned char *value_sha1;
+	const struct object_id *value_oid;
 	enum object_type type;
 	char *value;
 	unsigned long size;
 
-	value_sha1 = get_note(&c->tree, key_oid->hash);
-	if (!value_sha1)
+	value_oid = get_note(&c->tree, key_oid);
+	if (!value_oid)
 		return NULL;
-	value = read_sha1_file(value_sha1, &type, &size);
+	value = read_sha1_file(value_oid->hash, &type, &size);
 
 	*outsize = size;
 	return value;
@@ -90,5 +90,5 @@ int notes_cache_put(struct notes_cache *c, struct object_id *key_oid,
 
 	if (write_sha1_file(data, size, "blob", value_oid.hash) < 0)
 		return -1;
-	return add_note(&c->tree, key_oid->hash, value_oid.hash, NULL);
+	return add_note(&c->tree, key_oid, &value_oid, NULL);
 }

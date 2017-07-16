@@ -2964,7 +2964,7 @@ class StaticRecipientsEnvironmentMixin(Environment):
 
 
 class CLIRecipientsEnvironmentMixin(Environment):
-    """Mixin storing recipients information comming from the
+    """Mixin storing recipients information coming from the
     command-line."""
 
     def __init__(self, cli_recipients=None, **kw):

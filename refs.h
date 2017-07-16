@@ -303,7 +303,10 @@ int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
 int for_each_ref_submodule(const char *submodule,
 			   each_ref_fn fn, void *cb_data);
 int for_each_ref_in_submodule(const char *submodule, const char *prefix,
-		each_ref_fn fn, void *cb_data);
+			      each_ref_fn fn, void *cb_data);
+int for_each_fullref_in_submodule(const char *submodule, const char *prefix,
+				  each_ref_fn fn, void *cb_data,
+				  unsigned int broken);
 int for_each_tag_ref_submodule(const char *submodule,
 			       each_ref_fn fn, void *cb_data);
 int for_each_branch_ref_submodule(const char *submodule,
@@ -571,7 +574,7 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 #define TRANSACTION_GENERIC_ERROR -2
 
 /*
- * Perform the preparatory stages of commiting `transaction`. Acquire
+ * Perform the preparatory stages of committing `transaction`. Acquire
  * any needed locks, check preconditions, etc.; basically, do as much
  * as possible to ensure that the transaction will be able to go
  * through, stopping just short of making any irrevocable or
@@ -583,7 +586,7 @@ int ref_transaction_verify(struct ref_transaction *transaction,
  * On failure, abort the transaction, write an error message to `err`,
  * and return one of the `TRANSACTION_*` constants.
  *
- * Callers who don't need such fine-grained control over commiting
+ * Callers who don't need such fine-grained control over committing
  * reference transactions should just call `ref_transaction_commit()`.
  */
 int ref_transaction_prepare(struct ref_transaction *transaction,

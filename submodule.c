@@ -1,4 +1,6 @@
 #include "cache.h"
+#include "repository.h"
+#include "config.h"
 #include "submodule-config.h"
 #include "submodule.h"
 #include "dir.h"
@@ -254,6 +256,20 @@ void gitmodules_config(void)
 	}
 }
 
+static int gitmodules_cb(const char *var, const char *value, void *data)
+{
+	struct repository *repo = data;
+	return submodule_config_option(repo, var, value);
+}
+
+void repo_read_gitmodules(struct repository *repo)
+{
+	char *gitmodules_path = repo_worktree_path(repo, ".gitmodules");
+
+	git_config_from_file(gitmodules_cb, gitmodules_path, repo);
+	free(gitmodules_path);
+}
+
 void gitmodules_config_sha1(const unsigned char *commit_sha1)
 {
 	struct strbuf rev = STRBUF_INIT;
@@ -267,21 +283,17 @@ void gitmodules_config_sha1(const unsigned char *commit_sha1)
 }
 
 /*
- * NEEDSWORK: With the addition of different configuration options to determine
- * if a submodule is of interests, the validity of this function's name comes
- * into question.  Once the dust has settled and more concrete terminology is
- * decided upon, come up with a more proper name for this function.  One
- * potential candidate could be 'is_submodule_active()'.
- *
  * Determine if a submodule has been initialized at a given 'path'
  */
-int is_submodule_initialized(const char *path)
+int is_submodule_active(struct repository *repo, const char *path)
 {
 	int ret = 0;
 	char *key = NULL;
 	char *value = NULL;
 	const struct string_list *sl;
-	const struct submodule *module = submodule_from_path(null_sha1, path);
+	const struct submodule *module;
+
+	module = submodule_from_cache(repo, null_sha1, path);
 
 	/* early return if there isn't a path->module mapping */
 	if (!module)
@@ -289,14 +301,14 @@ int is_submodule_initialized(const char *path)
 
 	/* submodule.<name>.active is set */
 	key = xstrfmt("submodule.%s.active", module->name);
-	if (!git_config_get_bool(key, &ret)) {
+	if (!repo_config_get_bool(repo, key, &ret)) {
 		free(key);
 		return ret;
 	}
 	free(key);
 
 	/* submodule.active is set */
-	sl = git_config_get_value_multi("submodule.active");
+	sl = repo_config_get_value_multi(repo, "submodule.active");
 	if (sl) {
 		struct pathspec ps;
 		struct argv_array args = ARGV_ARRAY_INIT;
@@ -316,7 +328,7 @@ int is_submodule_initialized(const char *path)
 
 	/* fallback to checking if the URL is set */
 	key = xstrfmt("submodule.%s.url", module->name);
-	ret = !git_config_get_string(key, &value);
+	ret = !repo_config_get_string(repo, key, &value);
 
 	free(value);
 	free(key);
@@ -845,9 +857,9 @@ static int submodule_has_commits(const char *path, struct oid_array *commits)
 	int has_commit = 1;
 
 	/*
-	 * Perform a cheap, but incorrect check for the existance of 'commits'.
+	 * Perform a cheap, but incorrect check for the existence of 'commits'.
 	 * This is done by adding the submodule's object store to the in-core
-	 * object store, and then querying for each commit's existance.  If we
+	 * object store, and then querying for each commit's existence.  If we
 	 * do not have the commit object anywhere, there is no chance we have
 	 * it in the object store of the correct submodule and have it
 	 * reachable from a ref, so we can fail early without spawning rev-list
@@ -1124,6 +1136,32 @@ static void calculate_changed_submodule_paths(void)
 	oid_array_clear(&ref_tips_before_fetch);
 	oid_array_clear(&ref_tips_after_fetch);
 	initialized_fetch_ref_tips = 0;
+}
+
+int submodule_touches_in_range(struct object_id *excl_oid,
+			       struct object_id *incl_oid)
+{
+	struct string_list subs = STRING_LIST_INIT_DUP;
+	struct argv_array args = ARGV_ARRAY_INIT;
+	int ret;
+
+	gitmodules_config();
+	/* No need to check if there are no submodules configured */
+	if (!submodule_from_path(NULL, NULL))
+		return 0;
+
+	argv_array_push(&args, "--"); /* args[0] program name */
+	argv_array_push(&args, oid_to_hex(incl_oid));
+	argv_array_push(&args, "--not");
+	argv_array_push(&args, oid_to_hex(excl_oid));
+
+	collect_changed_submodules(&subs, &args);
+	ret = subs.nr;
+
+	argv_array_clear(&args);
+
+	free_submodules_oids(&subs);
+	return ret;
 }
 
 struct submodule_parallel_fetch {
@@ -1516,7 +1554,7 @@ int submodule_move_head(const char *path,
 	const struct submodule *sub;
 	int *error_code_ptr, error_code;
 
-	if (!is_submodule_initialized(path))
+	if (!is_submodule_active(the_repository, path))
 		return 0;
 
 	if (flags & SUBMODULE_MOVE_HEAD_FORCE)

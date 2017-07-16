@@ -34,4 +34,21 @@ Fixes since v2.13.1
  * "git pull --rebase --autostash" didn't auto-stash when the local history
    fast-forwards to the upstream.
 
+ * "git describe --contains" penalized light-weight tags so much that
+   they were almost never considered.  Instead, give them about the
+   same chance to be considered as an annotated tag that is the same
+   age as the underlying commit would.
+
+ * The result from "git diff" that compares two blobs, e.g. "git diff
+   $commit1:$path $commit2:$path", used to be shown with the full
+   object name as given on the command line, but it is more natural to
+   use the $path in the output and use it to look up .gitattributes.
+
+ * A flaky test has been corrected.
+
+ * Help contributors that visit us at GitHub.
+
+ * "git stash push <pathspec>" did not work from a subdirectory at all.
+   Bugfix for a topic in v2.13
+
 Also contains various documentation updates and code clean-ups.

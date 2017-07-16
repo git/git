@@ -244,7 +244,7 @@ test_expect_success 'setup and absorb a submodule' '
 	test_cmp expect out
 '
 
-test_expect_success 'describe chokes on severly broken submodules' '
+test_expect_success 'describe chokes on severely broken submodules' '
 	mv .git/modules/sub1/ .git/modules/sub_moved &&
 	test_must_fail git describe --dirty
 '

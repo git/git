@@ -5,6 +5,7 @@
  */
 
 #include "cache.h"
+#include "config.h"
 #include "dir.h"
 #include "builtin.h"
 #include "parse-options.h"

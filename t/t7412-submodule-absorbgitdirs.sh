@@ -33,7 +33,7 @@ test_expect_success 'absorb the git dir' '
 	test_cmp expect.2 actual.2
 '
 
-test_expect_success 'absorbing does not fail for deinitalized submodules' '
+test_expect_success 'absorbing does not fail for deinitialized submodules' '
 	test_when_finished "git submodule update --init" &&
 	git submodule deinit --all &&
 	git submodule absorbgitdirs &&

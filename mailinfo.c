@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
@@ -57,17 +58,17 @@ static void parse_bogus_from(struct mailinfo *mi, const struct strbuf *line)
 static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 {
 	int c;
-	int take_next_litterally = 0;
+	int take_next_literally = 0;
 
 	strbuf_addch(outbuf, '(');
 
 	while ((c = *in++) != 0) {
-		if (take_next_litterally == 1) {
-			take_next_litterally = 0;
+		if (take_next_literally == 1) {
+			take_next_literally = 0;
 		} else {
 			switch (c) {
 			case '\\':
-				take_next_litterally = 1;
+				take_next_literally = 1;
 				continue;
 			case '(':
 				in = unquote_comment(outbuf, in);
@@ -87,15 +88,15 @@ static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 static const char *unquote_quoted_string(struct strbuf *outbuf, const char *in)
 {
 	int c;
-	int take_next_litterally = 0;
+	int take_next_literally = 0;
 
 	while ((c = *in++) != 0) {
-		if (take_next_litterally == 1) {
-			take_next_litterally = 0;
+		if (take_next_literally == 1) {
+			take_next_literally = 0;
 		} else {
 			switch (c) {
 			case '\\':
-				take_next_litterally = 1;
+				take_next_literally = 1;
 				continue;
 			case '"':
 				return in;
@@ -919,8 +920,7 @@ again:
 		/* we hit an end boundary */
 		/* pop the current boundary off the stack */
 		strbuf_release(*(mi->content_top));
-		free(*(mi->content_top));
-		*(mi->content_top) = NULL;
+		FREE_AND_NULL(*(mi->content_top));
 
 		/* technically won't happen as is_multipart_boundary()
 		   will fail first.  But just in case..

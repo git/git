@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "config.h"
 #include "lockfile.h"
 #include "sequencer.h"
 #include "dir.h"
@@ -1211,8 +1212,7 @@ struct todo_list {
 static void todo_list_release(struct todo_list *todo_list)
 {
 	strbuf_release(&todo_list->buf);
-	free(todo_list->items);
-	todo_list->items = NULL;
+	FREE_AND_NULL(todo_list->items);
 	todo_list->nr = todo_list->alloc = 0;
 }
 
@@ -1922,7 +1922,7 @@ static int apply_autostash(struct replay_opts *opts)
 	argv_array_push(&child.args, "apply");
 	argv_array_push(&child.args, stash_sha1.buf);
 	if (!run_command(&child))
-		printf(_("Applied autostash.\n"));
+		fprintf(stderr, _("Applied autostash.\n"));
 	else {
 		struct child_process store = CHILD_PROCESS_INIT;
 
@@ -1936,10 +1936,11 @@ static int apply_autostash(struct replay_opts *opts)
 		if (run_command(&store))
 			ret = error(_("cannot store %s"), stash_sha1.buf);
 		else
-			printf(_("Applying autostash resulted in conflicts.\n"
-				"Your changes are safe in the stash.\n"
-				"You can run \"git stash pop\" or"
-				" \"git stash drop\" at any time.\n"));
+			fprintf(stderr,
+				_("Applying autostash resulted in conflicts.\n"
+				  "Your changes are safe in the stash.\n"
+				  "You can run \"git stash pop\" or"
+				  " \"git stash drop\" at any time.\n"));
 	}
 
 	strbuf_release(&stash_sha1);
@@ -2130,8 +2131,8 @@ cleanup_head_ref:
 			if (read_oneliner(&buf, rebase_path_orig_head(), 0) &&
 			    !get_sha1(buf.buf, orig.hash) &&
 			    !get_sha1("HEAD", head.hash)) {
-				diff_tree_sha1(orig.hash, head.hash,
-					       "", &log_tree_opt.diffopt);
+				diff_tree_oid(&orig, &head, "",
+					      &log_tree_opt.diffopt);
 				log_tree_diff_flush(&log_tree_opt);
 			}
 		}
