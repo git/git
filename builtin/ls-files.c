@@ -362,7 +362,7 @@ static void prune_index(struct index_state *istate,
 	int pos;
 	unsigned int first, last;
 
-	if (!prefix)
+	if (!prefix || !istate->cache_nr)
 		return;
 	pos = index_name_pos(istate, prefix, prefixlen);
 	if (pos < 0)
