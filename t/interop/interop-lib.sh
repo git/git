@@ -4,6 +4,10 @@
 . ../../GIT-BUILD-OPTIONS
 INTEROP_ROOT=$(pwd)
 BUILD_ROOT=$INTEROP_ROOT/build
+case "$PATH" in
+*\;*) PATH_SEP=\; ;;
+*) PATH_SEP=: ;;
+esac
 
 build_version () {
 	if test -z "$1"
@@ -57,7 +61,7 @@ wrap_git () {
 	write_script "$1" <<-EOF
 	GIT_EXEC_PATH="$2"
 	export GIT_EXEC_PATH
-	PATH="$2:\$PATH"
+	PATH="$2$PATH_SEP\$PATH"
 	export GIT_EXEC_PATH
 	exec git "\$@"
 	EOF
@@ -71,7 +75,7 @@ generate_wrappers () {
 	echo >&2 fatal: test tried to run generic git
 	exit 1
 	EOF
-	PATH=$(pwd)/.bin:$PATH
+	PATH=$(pwd)/.bin$PATH_SEP$PATH
 }
 
 VERSION_A=${GIT_TEST_VERSION_A:-$VERSION_A}
