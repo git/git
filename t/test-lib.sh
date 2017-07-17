@@ -15,6 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/ .
 
+# On Unix/Linux, the path separator is the colon, on other systems it
+# may be different, though. On Windows, for example, it is a semicolon.
+# If the PATH variable contains semicolons, it is pretty safe to assume
+# that the path separator is a semicolon.
+case "$PATH" in
+*\;*) PATH_SEP=\; ;;
+*) PATH_SEP=: ;;
+esac
+
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 if test -z "$TEST_DIRECTORY"
@@ -58,7 +67,7 @@ fi
 export PERL_PATH SHELL_PATH
 
 test -z "$MSVC_DEPS" ||
-PATH="$GIT_BUILD_DIR/$MSVC_DEPS/bin:$PATH"
+PATH="$GIT_BUILD_DIR/$MSVC_DEPS/bin$PATH_SEP$PATH"
 
 ################################################################
 # It appears that people try to run tests without building...
@@ -922,7 +931,7 @@ then
 		done
 	done
 	IFS=$OLDIFS
-	PATH=$GIT_VALGRIND/bin:$PATH
+	PATH=$GIT_VALGRIND/bin$PATH_SEP$PATH
 	GIT_EXEC_PATH=$GIT_VALGRIND/bin
 	export GIT_VALGRIND
 	GIT_VALGRIND_MODE="$valgrind"
@@ -934,7 +943,7 @@ elif test -n "$GIT_TEST_INSTALLED"
 then
 	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
 	error "Cannot run git from $GIT_TEST_INSTALLED."
-	PATH=$GIT_TEST_INSTALLED:$GIT_BUILD_DIR/t/helper:$PATH
+	PATH=$GIT_TEST_INSTALLED$PATH_SEP$GIT_BUILD_DIR/t/helper$PATH_SEP$PATH
 	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
 else # normal case, use ../bin-wrappers only unless $with_dashes:
 	git_bin_dir="$GIT_BUILD_DIR/bin-wrappers"
@@ -946,11 +955,11 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 		fi
 		with_dashes=t
 	fi
-	PATH="$git_bin_dir:$PATH"
+	PATH="$git_bin_dir$PATH_SEP$PATH"
 	GIT_EXEC_PATH=$GIT_BUILD_DIR
 	if test -n "$with_dashes"
 	then
-		PATH="$GIT_BUILD_DIR:$PATH"
+		PATH="$GIT_BUILD_DIR$PATH_SEP$PATH"
 	fi
 fi
 GIT_TEMPLATE_DIR="$GIT_BUILD_DIR"/templates/blt
