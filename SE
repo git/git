@@ -1,0 +1,35 @@
+#!/bin/sh
+
+me='Junio C Hamano <gitster@pobox.com>'
+smtp='/usr/bin/msmtp'
+
+#to='junkio@cox.net'
+#smtp=/var/tmp/smtp-server
+
+while case $# in 0) break ;; esac
+do
+	case "$1" in
+	--dry-run | -n)
+		dryrun=--dry-run
+		;;
+	--)
+		shift
+		break
+		;;
+	-*)
+		echo >&2 "? $1"
+		exit 1
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
+git send-email \
+	--from="$me" \
+	--envelope-sender="$me" \
+	--smtp-server=$smtp \
+	$dryrun \
+	"$@"

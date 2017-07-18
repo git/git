@@ -1,0 +1,163 @@
+#!/bin/sh
+# Announcement message skelton
+#
+tmpbase=/var/tmp/git-announce.$$
+trap 'rm -f $tmpbase.*' 0
+branch=${1?branch}
+previous=${2?previous}
+commit=${3-"$1"}
+
+relname=$(git describe "$commit") &&
+vername=$(expr "$relname" : 'v\(.*\)') || exit $?
+
+git rev-parse --verify "$previous" >/dev/null || exit $?
+
+case "$branch" in
+maint)
+	kind="The latest maintenance release" ;;
+mainto/* | maint-[0-9]*)
+	kind="A maintenance release" ;;
+master)
+	kind="The latest feature release" ;;
+esac
+
+case "$vername" in
+*-rc[0-9]*)
+	rpmroot=testing
+	case "$vername" in
+	*-rc0)
+		kind="An early preview release"
+		;;
+	*)
+		kind="A release candidate"
+		;;
+	esac
+	for_testing=" for testing"
+	;;
+*)
+	for_testing=
+	rpmroot='RPMS/$arch'
+	;;
+esac
+
+vername=$(echo "$vername" | tr "-" ".")
+
+git log --use-mailmap --format='%aN,' "$previous" | sort -u >"$tmpbase.prev"
+git log --use-mailmap --format='%aN,' "$previous..$commit" | sort -u >"$tmpbase.this"
+comm -12 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.old"
+comm -13 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.new"
+
+all=$(wc -l <"$tmpbase.this")
+new=$(wc -l <"$tmpbase.new")
+cnt=$(git rev-list --no-merges "$previous..$commit" | wc -l)
+
+cat <<EOF
+To: git@vger.kernel.org
+Cc: Linux Kernel <linux-kernel@vger.kernel.org>
+Bcc: lwn@lwn.net
+Subject: [ANNOUNCE] Git $relname
+
+EOF
+
+(
+	echo "$kind Git $relname is now available$for_testing at the usual places."
+	if test "$branch" = master
+	then
+		cat <<-EOF
+		It is comprised of $cnt non-merge commits since $previous,
+		contributed by $all people, $new of which are new faces.
+		EOF
+	fi
+) | fmt -68
+
+cat <<EOF
+
+The tarballs are found at:
+
+    https://www.kernel.org/pub/software/scm/git/${for_testing:+testing/}
+
+EOF
+
+(
+	cat <<-EOF
+	The following public repositories all have a copy of
+	the '$relname' tag and
+	EOF
+	case "$branch" in
+	maint-* | mainto/*)
+		echo "some of them have"
+		;;
+	esac
+	echo "the '$branch' branch that the tag points at:"
+) | fmt -68
+
+cat <<\EOF
+
+  url = https://kernel.googlesource.com/pub/scm/git/git
+  url = git://repo.or.cz/alt-git.git
+  url = https://github.com/gitster/git
+EOF
+
+fmt_people () {
+	# Yes, I don't perform well without 2 or more people.
+	# Sue me. The heading says "are as follows" anyway ;-).
+	sed -e '${
+		s/^/and /
+		s/,$/./
+	}' "$1" |
+	fmt -66 |
+	sed -e 's/^/  /'
+
+}
+
+if test "$branch" = master
+then
+	cat <<-EOF
+
+	New contributors whose contributions weren't in $previous are as follows.
+	Welcome to the Git development community!
+
+	$(fmt_people "$tmpbase.new")
+
+	Returning contributors who helped this release are as follows.
+	Thanks for your continued support.
+
+	$(fmt_people "$tmpbase.old")
+	EOF
+fi
+
+cat <<EOF
+
+----------------------------------------------------------------
+
+EOF
+
+case "$(git ls-tree ${branch} RelNotes)" in
+120000' '*)
+	RelNotes=$(git cat-file blob "${branch}:RelNotes")
+	;;
+*)
+	RelNotes=RelNotes
+	;;
+esac &&
+git cat-file blob "${branch}:$RelNotes" |
+case "$relname" in
+*-*)
+	sed -e 's/^Git .* Release Notes$/& (draft)/' \
+	    -e 's/^=============/&========/'
+	;;
+*)
+	cat
+	;;
+esac
+
+cat <<EOF
+
+----------------------------------------------------------------
+
+Changes since $previous are as follows:
+
+EOF
+
+git log --no-merges "$previous".."$branch" |
+git shortlog

@@ -1,0 +1,248 @@
+#!/usr/bin/perl -w
+#
+# Update an older edition of What's Cooking with the latest data.
+#
+# Usage: UWC [--keep-master] [ old [ new ] ]
+#
+# Giving no parameter is the same as giving a single "-" to the command.
+#
+# The command reads the old edition of (annotated) "What's Cooking"
+# message from "old", and "new".  If "old" is "-", it is read from
+# the standard input.  If "new" is not specified, WC script is run
+# and its output is used.
+#
+# An annotated "What's Cooking" message can have group header (a line
+# that has the group name enclosed in "[" and "]"), and annotatation
+# paragraphs after each topic's commit list, in addition to the bare
+# "WC" output.
+#
+# The group headers, topics in each group and their order in the group,
+# and annotation to topics are preserved from the "old" message.  The
+# list of commits in each topic is replaced with the one taken from the
+# "new" message.  Any topic in "new" that did not exist in "old" appear
+# in "New Topics" group.  Also, topics that do not appear in the "new"
+# message are marked with <<deleted>>, topics whose commit list are
+# different from "old" are marked with <<updated from...>>>.
+#
+# Typically the maintainer would place the What's Cooking message
+# previously sent in a buffer in Emacs, and filter the buffer contents
+# with this script, to prepare an up-to-date message.
+
+my $keep_master = 1;
+
+sub parse_whats_cooking {
+	my ($fh) = @_;
+	my $head = undef;
+	my $group = undef;
+	my %wc = ("group list" => [], "topic hash" => {});
+	my $topic;
+	my $skipping_comment = 0;
+
+	while (<$fh>) {
+		if (/^-{40,}$/) {
+			# Group separator
+			next;
+		}
+
+		if (!defined $head) {
+			if (/^Here are the topics that have been/) {
+				$head = $_;
+			}
+			next;
+		}
+
+		if (/^<<.*>>$/) {
+			next;
+		}
+
+		if ($skipping_comment) {
+			if (/^>>$/) {
+				$skipping_comment = 0;
+			}
+			next;
+		}
+
+		if (!$skipping_comment && /^<</) {
+			$skipping_comment = 1;
+			next;
+		}
+
+		if (/^\[(.*)\]$/) {
+			$group = $1;
+			push @{$wc{"group list"}}, $group;
+			$wc{" $group"} = [];
+			$topic = undef;
+			next;
+		}
+
+		if (!defined $group) {
+			if (/^\* (\S+) (\(.*\) \d+ commits?)$/) {
+				# raw output
+				$group = "Misc";
+				push @{$wc{"group list"}}, $group;
+				$wc{" $group"} = [];
+			} else {
+				$head .= $_;
+				next;
+			}
+		}
+
+		if (/^\* (\S+) (\(.*\) \d+ commits?)$/) {
+			$topic = +{
+				topic => $1,
+				head => $_,
+				names => "",
+				text => "",
+			};
+			$wc{"topic hash"}{$topic->{"topic"}} = $topic;
+			push @{$wc{" $group"}}, $topic;
+			next;
+		}
+
+		if (/^ [-+.?*] / || /^   \S/) {
+			$topic->{"names"} .= $_;
+			next;
+		}
+		$topic->{"text"} .= $_;
+	}
+
+	for ($head) {
+		s/\A\s+//s;
+		s/\s+\Z//s;
+	}
+	$wc{"head text"} = $head;
+	for $topic (values %{$wc{"topic hash"}}) {
+		for ($topic->{"text"}) {
+			s/\A\s+//s;
+			s/\s+\Z//s;
+		}
+	}
+	return \%wc;
+}
+
+sub print_whats_cooking {
+	my ($wc) = @_;
+
+	print $wc->{"head text"}, "\n";
+
+	for my $group (@{$wc->{"group list"}}) {
+		print "\n", "-" x 64, "\n";
+		print "[$group]\n";
+		for my $topic (@{$wc->{" $group"}}) {
+			next if ($topic->{"head"} eq '');
+			print "\n", $topic->{"head"};
+			print $topic->{"names"};
+			if ($topic->{"text"} ne '') {
+				print "\n", $topic->{"text"}, "\n";
+			}
+		}
+	}
+}
+
+sub delete_topic {
+	my ($wc, $topic) = @_;
+	$topic->{"status"} = "deleted";
+}
+
+sub merge_whats_cooking {
+	my ($old_wc, $new_wc) = @_;
+	my $group;
+	my @gone = ();
+
+	for $group (@{$old_wc->{"group list"}}) {
+		for my $topic (@{$old_wc->{" $group"}}) {
+			my $name = $topic->{"topic"};
+			my $newtopic = delete $new_wc->{"topic hash"}{$name};
+
+			if (!defined $newtopic) {
+				push @gone, +{ @{[ %$topic ]} };
+				$topic->{"text"} = "";
+				$topic->{"names"} = "";
+				$topic->{"head"} = "";
+				next;
+			}
+			if (($newtopic->{"names"} ne $topic->{"names"}) ||
+			    ($newtopic->{"head"} ne $topic->{"head"})) {
+				my $text = ("<<updated from\n" .
+					    $topic->{"head"} .
+					    $topic->{"names"} . ">>");
+
+				if ($topic->{"text"} ne '') {
+					$text .= "\n\n" . $topic->{"text"};
+				}
+				for ($text) {
+					s/\A\s+//s;
+					s/\s+\Z//s;
+				}
+				$topic->{"text"} = $text;
+				$topic->{"names"} = $newtopic->{"names"};
+				$topic->{"head"} = $newtopic->{"head"};
+			}
+		}
+	}
+
+
+	$group = 'Graduated to "master"';
+	if (!$keep_master) {
+		print STDERR "Not Keeping Master\n";
+		my $o = delete $old_wc->{" $group"};
+		for (@$o) {
+			print STDERR " Dropping: ", $_->{'topic'}, "\n";
+		}
+		print STDERR "Gone are\n";
+		for (@gone) {
+			print STDERR " Gone: ", $_->{'topic'}, "\n";
+		}
+	}
+	if (@gone) {
+		if (!exists $old_wc->{" $group"}) {
+			unshift @{$old_wc->{"group list"}}, $group;
+			$old_wc->{" $group"} = [];
+		}
+		push @{$old_wc->{" $group"}}, @gone;
+	}
+	if (%{$new_wc->{"topic hash"}}) {
+		$group = "New Topics";
+		if (!exists $old_wc->{" $group"}) {
+			unshift @{$old_wc->{"group list"}}, $group;
+			$old_wc->{" $group"} = [];
+		}
+		for my $topic (values %{$new_wc->{"topic hash"}}) {
+			my $name = $topic->{"topic"};
+			$old_wc->{"topic hash"}{$name} = $topic;
+			push @{$old_wc->{" $group"}}, $topic;
+			$topic->{"text"} = $topic->{"text"};
+		}
+	}
+}
+
+if (@ARGV == 0) {
+	@ARGV = ('-');
+} elsif ($ARGV[0] eq '--keep-master') {
+	$keep_master = 1;
+	shift;
+}
+if (@ARGV != 2 && @ARGV != 1) {
+	die "Usage: $0 old [new]\n";
+}
+
+my ($old_wc, $new_wc);
+
+if ($ARGV[0] eq '-') {
+	*FH = *STDIN;
+} else {
+	open FH, "$ARGV[0]";
+}
+$old_wc = parse_whats_cooking(\*FH);
+close FH;
+
+if (@ARGV > 1) {
+	open FH, "$ARGV[1]";
+} else {
+	open FH, "Meta/WC generate |";
+}
+$new_wc = parse_whats_cooking(\*FH);
+close FH;
+
+merge_whats_cooking($old_wc, $new_wc);
+print_whats_cooking($old_wc);

@@ -1,0 +1,55 @@
+#!/bin/sh
+
+#sites='ko repo github2 sfjp sf.net'
+sites='ko repo github2'
+nexts='ko repo github2 '
+mirrors='github gob-private'
+
+push_retry () {
+	sites=$1
+	shift
+	while :
+	do
+		failed=
+		for remote in $sites
+		do
+			printf "%s: " "$remote"
+			git push --follow-tags "$remote" "$@" || failed="$failed$remote "
+		done
+
+		if test -z "$failed"
+		then
+			break
+		elif test "x$sites" = "x$failed"
+		then
+			echo >&2 "Failed to push to: $sites"
+			exit 1
+		fi
+		sites="$failed"
+	done
+}
+
+case " $* " in
+*' +next '*)
+	push_retry "$nexts" "$@"
+	exit $?
+	;;
+esac
+
+push_retry "$sites" "$@"
+
+case "$#,$*" in
+0,* | 1,-n)
+	for mirror in $mirrors
+	do
+		printf "$mirror mirror: "
+		git push $mirror "$@" || exit $?
+	done
+	for topic in htmldocs manpages
+	do
+		printf "%s: " "$topic"
+		( cd ../git-$topic.git && git push "$@") || exit
+	done
+	test "$1" = '-n' || ( cd ../git-htmldocs.git && git push gh-pages )
+	;;
+esac

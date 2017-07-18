@@ -1,0 +1,47 @@
+#!/bin/sh
+
+Meta/Make gitweb/gitweb.cgi
+
+cd gitweb &&
+DEST=`cd ../../index && /bin/pwd` || exit
+
+differs=
+rsrc='gitweb.cgi gitweb.css git-favicon.png'
+
+for r in $rsrc
+do
+
+	test -f "$DEST/$r" && diff -u "$DEST/$r" "$r" && continue
+	differs="$differs$r "
+done
+
+case "$differs" in
+'')
+	echo Up to date. ;;
+*)
+	while echo -n 'Update [y/N]? '
+	do
+		read ans
+		case "$ans" in
+		[Yy])
+			ans=y
+			break ;;
+		'' | [Nn])
+			ans=n
+			break ;;
+		esac
+	done
+	case "$ans" in
+	y)	;;
+	*)	exit
+	esac
+esac
+
+for r in $differs
+do
+	cp "$r" "$DEST/$r"
+	case "$r" in
+	gitweb.cgi)
+		chmod +x "$DEST/$r"
+	esac
+done

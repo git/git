@@ -1,0 +1,73 @@
+#!/bin/sh
+# Replace patch series
+
+usage="$0 branch [base-branch] <patchfile"
+
+if test -d .dotest
+then
+	echo >&2 "still in the middle of rebase/am"
+	exit 1
+fi
+
+case "$#,$1" in
+1,--continue)
+	;;
+*)
+	rm -f .rp-state
+	target_branch="$1"
+	case $# in
+	1)
+		base_branch=master
+		;;
+	2)
+		base_branch=$(git rev-parse --verify "$2") || exit
+		;;
+	*)
+		echo >&2 "$usage"
+		exit 1
+		;;
+	esac
+
+	# find branch point
+	branch_point=$(git merge-base "$base_branch" "$target_branch") || {
+		echo >&2 "failed to compute the branch point"
+		exit 1
+	}
+
+	# safety -- never rewind/replace what's merged to next
+	in_branch=$(git rev-list $branch_point..$target_branch) &&
+	not_in_next=$(git rev-list $branch_point..$target_branch ^next) &&
+	test "z$in_branch" = "z$not_in_next" || {
+		echo >&2 "should not be rewinding part of $target_branch that is already in next"
+		exit 1
+	}
+
+	# detach the HEAD
+	git checkout "$branch_point" || {
+		echo >&2 "detaching the head at $branch_point"
+		exit 1
+	}
+
+	{
+		echo "target_branch=$target_branch"
+		echo "branch_point=$branch_point"
+	} >.rp-state
+	# apply patches
+	git am -3 -s -u || {
+		echo >&2 "finish the am and say $0 --continue"
+		exit 1
+	}
+	;;
+esac
+
+branch_point=$(sed -ne 's/^branch_point=//p' .rp-state) &&
+target_branch=$(sed -ne 's/^target_branch=//p' .rp-state) || {
+	echo >&2 "no replace-patch session"
+	exit 1
+}
+rm -f .rp-state
+
+git branch -f "$target_branch" HEAD
+git checkout "$target_branch"
+git -p show-branch "$target_branch@{1}" "$target_branch"
+git diff --stat -p "$target_branch@{1}" "$target_branch"

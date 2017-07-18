@@ -1,0 +1,291 @@
+#!/bin/sh
+
+if test -z "$GIT"
+then
+	case "$(git version 2>/dev/null)" in
+	"git version"*)
+		GIT=git ;;
+	*)
+		echo >&2 "No git to bootstrap"
+		exit 1 ;;
+	esac
+fi
+
+inst_prefix=$(
+	IFS=:
+	for p in $PATH
+	do
+		probed=${p%/git-active/bin}
+		if test "$probed" != "$p"
+		then
+			echo "$probed"
+			exit
+		fi
+	done
+	echo $HOME
+)
+
+LANG=C
+
+: ${O=-O2}
+
+for cv in PYTHON_PATH=python TCL_PATH=tclsh TCLTKPATH=wish
+do
+	cmd=${cv#*=}
+	var=${cv%=*}
+	eval $(
+		if test -f "/usr/bin/$cmd"
+		then
+			break
+		fi
+		for p in /usr/bin /usr/local/bin
+		do
+			if test -f "$p/$cmd"
+			then
+				echo "$var=$p/$cmd; export $var"
+				break
+			fi
+			found=$(find "$p/$cmd"* -type f 2>/dev/null | head -n 1)
+			if test -f "$found"
+			then
+				echo "$var=$found; export $var"
+				break
+			fi
+		done
+	)
+done
+
+Wall="-Wall -Wvla -Wdeclaration-after-statement -Wno-format-zero-length${Wall+ $Wall}"
+tests= jobs= skip= oldtest= with_dash= testpen=
+clean=:
+
+case `uname` in
+OpenBSD)
+	O="-fgnu89-inline"
+	skip="t9402"
+	;;
+NetBSD)
+	OLD_ICONV=YesPlease; export OLD_ICONV
+	skip="t5000 t9402"
+	;;
+FreeBSD)
+	OLD_ICONV=YesPlease; export OLD_ICONV
+	skip="t5560"
+	;;
+SunOS)
+	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
+	NO_PEDANTIC=CannotDo Wall=
+	;;
+esac
+
+determine_branch () {
+	expr "$($GIT symbolic-ref HEAD 2>/dev/null)" : 'refs/heads/\(.*\)' ||
+	echo detached
+}
+
+determine_version () {
+	v=`$GIT describe HEAD`
+	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
+		echo >&2 "You are on 'snap' but $v is not an official version."
+		exit 1
+	}
+	echo "$v"
+}
+
+determine_long_version () {
+	$GIT describe HEAD 2>/dev/null || echo unknown-g00000000 |
+	sed -e 's/-/./g'
+}
+
+BUILTIN_CLEAN_FIX=8687f777
+if ! git merge-base --is-ancestor $BUILTIN_CLEAN_FIX HEAD
+then
+	NO_PEDANTIC=YesPlease
+fi
+
+case "$NO_PEDANTIC" in
+?*)	;;
+'')
+	# PEDANT="-Wtypedef-redefinition $PEDANT"
+	PEDANT="-Werror -Wold-style-definition $PEDANT"
+	PEDANT="-Wpointer-arith -Woverflow -Wunused $PEDANT"
+	PEDANT="-Wold-style-declaration -Wstrict-prototypes $PEDANT"
+	;;
+esac
+
+while case $# in 0) break ;; esac
+do 
+	case "$1" in
+	--pedantic)
+		echo >&2 "(no need to say --pedantic)"
+		;;
+	-j*)
+		case "$NO_JOBS" in
+		?*)	jobs= ;;
+		'')	jobs=$1 ;;
+		esac
+		;;
+	-noprove | --noprove)
+		oldtest=t
+		;;
+	-loose | --loose)
+		PEDANT= Wall=
+		;;
+	--memtrash)
+		testpen=testpen.$$
+		;;
+	--memtrash=*)
+		testpen=testpen.${1#--memtrash=}
+		;;
+	--locale=*)
+		LANG=${1#*=}
+		;;
+	--test=*)
+		tests=$(
+			cd t &&
+			IFS="$IFS,"
+			for t in ${1#*=}
+			do
+				eval echo "t$t-*.sh"
+			done | tr '\012' ' '
+		)
+		;;
+	--long)
+		GIT_TEST_LONG=YesPlease
+		export GIT_TEST_LONG
+		;;
+	--dash)
+		with_dash=y
+		;;
+	--)
+		shift
+		break
+		;;
+	-*)
+		echo >&2 "Eh $1?"
+		exit 1
+		;;
+	*)
+		break
+		;;		
+	esac
+	shift
+done
+
+if test -n "$testpen"
+then
+	for TRASH in /dev/shm /tmp ""
+	do
+		if test -n "$TRASH" &&
+		   mkdir -p "$TRASH/$testpen" 2>/dev/null &&
+		   test -w "$TRASH/$testpen"
+		then
+			testpen=$(cd "$TRASH/$testpen" && /bin/pwd)
+			TRASH="--root=$testpen"
+			clean="$clean; rmdir '$testpen'"
+			break
+		fi
+	done
+	GIT_TEST_OPTS="$TRASH${GIT_TEST_OPTS+" $GIT_TEST_OPTS"}"
+	export GIT_TEST_OPTS
+fi
+
+O="${PEDANT}${PEDANT:+ }$O"
+
+test -f /bin/dash || with_dash=
+
+if test -z "$tests" && test -n "$skip"
+then
+	GIT_SKIP_TESTS="${GIT_SKIP_TESTS:-$skip}"
+	export GIT_SKIP_TESTS
+fi
+if test -z "$oldtest" &&
+   sh -c 'prove --version >/dev/null 2>&1' &&
+   sh -c 'prove --exec : >/dev/null 2>&1'
+then
+	# --state=slow,save
+	DEFAULT_TEST_TARGET=prove
+	GIT_PROVE_OPTS="${GIT_PROVE_OPTS:+$GIT_PROVE_OPTS }--timer $jobs"
+	export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
+fi
+
+LC_ALL=$LANG
+export LANG LC_ALL
+
+branch=$(determine_branch)
+
+case "$branch" in
+next | maint | master | pu | jch)
+	prefix="$inst_prefix/git-$branch"
+	;;
+snap)
+	v=$(determine_version)
+	prefix="$inst_prefix/git-snap-$v"
+	;;
+*)
+	prefix="$inst_prefix/git-test" ;;
+esac
+
+clean="$clean; rm -f version"
+determine_long_version >version
+
+set "prefix=$prefix" "$@"
+if test -n "$with_dash" && test -f /bin/dash
+then
+	set "SHELL_PATH=/bin/dash" "$@"
+fi
+
+if grep >/dev/null DC_SHA1 Makefile
+then
+	SHA1IMPLEMENTATION=DC_SHA1=YesPlease
+elif grep >/dev/null BLK_SHA1 Makefile
+then
+	SHA1IMPLEMENTATION=BLK_SHA1=YesPlease
+else
+	SHA1IMPLEMENTATION=
+fi
+
+set	MAN_BASE_URL='"http://www.kernel.org/pub/software/scm/git/docs/"' \
+	MAN_BOLD_LITERAL=YesPlease \
+	$SHA1IMPLEMENTATION \
+	GNU_ROFF=YesPlease \
+	"$@"
+
+# Platform hack
+if test -z "${make:+set}" && {
+	test -x /usr/local/bin/gmake ||
+	test -x /usr/pkg/bin/gmake ||
+	test -x /usr/bin/gmake
+}
+then
+	make=gmake
+fi
+if test -f /bin/ginstall
+then
+	set INSTALL=ginstall "$@"
+fi
+
+CFLAGS="$O $Wall -g"
+OK_TO_USE_CFLAGS=Yes
+if test -n "${NO_CFLAGS+set}"
+then
+	unset OK_TO_USE_CFLAGS
+fi
+
+unset	SSH_AGENT_PID SSH_CLIENT SSH_TTY SSH_AUTH_SOCK SSH_CONNECTION \
+	GPG_AGENT_INFO GNOME_KEYRING_CONTROL GNOME_KEYRING_PID \
+	XDG_SESSION_COOKIE XDG_SESSION_PATH XDG_SEAT_PATH  XDG_DATA_DIRS \
+	PGPPATH AUTO_PROXY WINDOWID SESSION_MANAGER XDG_CONFIG_DIRS STY \
+	GDMSESSION KRB5CCNAME GNOME_DESKTOP_SESSION_ID \
+	DBUS_SESSION_BUS_ADDRESS LESSOPEN WINDOW DISPLAY GTK_IM_MODULE \
+	XDG_CURRENT_DESKTOP LESSCLOSE XAUTHORITY
+
+${make-make} \
+     $jobs \
+     ETC_GITCONFIG=$prefix/etc/gitconfig \
+     ${OK_TO_USE_CFLAGS+"CFLAGS=$CFLAGS"} \
+     ${tests:+"T=$tests"} \
+     "$@"
+status=$?
+eval "$clean"
+exit $status

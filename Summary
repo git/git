@@ -1,0 +1,47 @@
+#!/bin/sh
+
+tmp=.git/summary-$$
+trap 'rm -f $tmp-*' 0
+
+since="$1"
+until="$2"
+
+case 0 in
+1)
+	bottom=$(git rev-parse master@{"$1"})
+	top=$(git rev-parse master@{"$2"})
+	;;
+0)
+	git rev-list --first-parent --since="$since" --until="$until" \
+		master >"$tmp-1" &&
+	bottom=$(tail -n 1 "$tmp-1") &&
+	top=$(head -n 1 "$tmp-1") &&
+	rm -f "$tmp-1"
+	;;
+esac
+
+num_patches=$(git rev-list --no-merges $bottom..$top | wc -l)
+git shortlog -s -n --no-merges $bottom..$top >"$tmp-0.txt"
+num_contrib=$(wc -l <"$tmp-0.txt")
+
+summary=$(git diff --stat -M $bottom..$top | tail -n 1)
+num_files=$(expr "$summary" : ' *\([1-9][0-9]*\) files changed')
+num_added=$(expr "$summary" : '.*changed, \([1-9][0-9]*\) insertions')
+num_deleted=$(expr "$summary" : '.*, \([1-9][0-9]*\) deletions')
+
+cat <<EOF
+During the period of $since .. $until:
+
+	Number of contributors  : $num_contrib
+	Number of change sets   : $num_patches
+	Number of changed files : $num_files
+	Number of added lines   : $num_added
+	Number of deleted lines : $num_deleted
+
+Changes during this period are as follows:
+
+EOF
+
+git shortlog -w72,2,4 --no-merges $bottom..$top
+
+git diff --dirstat $bottom..$top

@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+# Feed whats-cooking to this to find what to merge to 'master'
+
+sub merged {
+	my ($topic, $base) = @_;
+	my $fh;
+	(open $fh, "-|", qw(git rev-list), "^$base", $topic)
+	    or die "$!";
+	my $count = 0;
+	while (<$fh>) {
+		$count++;
+	}
+	(close $fh)
+	    or die "$! (after $count for $topic)";
+	return $count;
+}
+
+my ($topic, $topic_date, $last);
+my (@candidate);
+
+while (<>) {
+	if (/^\* ([a-z][a-z]\/[-a-zA-Z0-9_]+) \(([-0-9]{10})\) \d+ commit/) {
+		$topic = $last = $1;
+		$topic_date = $2;
+		next;
+	}
+	if (defined $topic) {
+		if (/^  \(merged to 'next' on ([-0-9]{10}) at/) {
+			push @candidate, [$topic, $1, $topic_date, ""];
+			next;
+		}
+		$topic = undef;
+		$topic_date = undef;
+	}
+	if (defined $last && @candidate && $candidate[-1][0] eq $last) {
+		if (/Will merge to 'master'/i) {
+			$candidate[-1][3] = "*";
+		}
+	}
+}
+
+for $topic (sort { ($a->[1] cmp $b->[1]) || ($a->[2] cmp $b->[2]) } @candidate) {
+	my $count = merged($topic->[0], 'master');
+	if ($count) {
+		print "$topic->[1] $topic->[2] ($count)	$topic->[3]$topic->[0]\n";
+	}
+}

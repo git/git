@@ -1,0 +1,17 @@
+#!/bin/sh
+
+j="-j 8"
+version=$(git describe --exact) &&
+label=$(echo "$version" | sed -e 's|^v||') &&
+version=$(echo "$label" | sed -e 's|-|.|g') || exit
+
+make clean && make $j CFLAGS="-O2 -Wno-format-zero-length" dist &&
+
+ASCIIDOC_NO_ROFF=YesPlease \
+ASCIIDOC8=YesPlease \
+MAN_BASE_URL="git-htmldocs/" \
+make $j dist-doc || exit
+# The above used to be
+# MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
+
+exit $?

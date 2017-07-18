@@ -1,0 +1,19 @@
+#!/bin/sh
+
+rm="rm -f -v"
+case "$1" in -n) rm="echo # rm" ;; esac
+
+for s in git-*.sign
+do
+	test -f "$s" &&
+	v=$(expr "$s" : '^git-\(.*\)\.sign$') &&
+	$rm git-$v.tar.gz &&
+	$rm git-$v.tar.sig &&
+	$rm git-htmldocs-$v.tar.gz &&
+	$rm git-htmldocs-$v.tar.sig &&
+	$rm git-manpages-$v.tar.gz &&
+	$rm git-manpages-$v.tar.sig &&
+	$rm "$s"
+done
+
+
