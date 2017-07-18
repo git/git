@@ -196,11 +196,12 @@ whitespace::
 verbatim::
 	Do not change the message at all.
 scissors::
-	Same as `whitespace`, except that everything from (and
-	including) the line
-	"`# ------------------------ >8 ------------------------`"
-	is truncated if the message is to be edited. "`#`" can be
-	customized with core.commentChar.
+	Same as `whitespace` except that everything from (and including)
+	the line found below is truncated, if the message is to be edited.
+	"`#`" can be customized with core.commentChar.
+
+		# ------------------------ >8 ------------------------
+
 default::
 	Same as `strip` if the message is to be edited.
 	Otherwise `whitespace`.
