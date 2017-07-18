@@ -1,5 +1,5 @@
-git-multimail (version 1.2.0)
-=============================
+git-multimail 1.3.0
+===================
 
 .. image:: https://travis-ci.org/git-multimail/git-multimail.svg?branch=master
     :target: https://travis-ci.org/git-multimail/git-multimail
@@ -127,6 +127,13 @@ changes of this type, please consider sharing them with the
 community.)
 
 
+Troubleshooting/FAQ
+-------------------
+
+Please read `<doc/troubleshooting.rst>`__ for frequently asked
+questions and common issues with git-multimail.
+
+
 Configuration
 -------------
 
@@ -134,19 +141,16 @@ By default, git-multimail mostly takes its configuration from the
 following ``git config`` settings:
 
 multimailhook.environment
-
     This describes the general environment of the repository. In most
     cases, you do not need to specify a value for this variable:
     `git-multimail` will autodetect which environment to use.
     Currently supported values:
 
-    * generic
-
+    generic
       the username of the pusher is read from $USER or $USERNAME and
       the repository name is derived from the repository's path.
 
-    * gitolite
-
+    gitolite
       the username of the pusher is read from $GL_USER, the repository
       name is read from $GL_REPO, and the From: header value is
       optionally read from gitolite.conf (see multimailhook.from).
@@ -154,8 +158,7 @@ multimailhook.environment
       For more information about gitolite and git-multimail, read
       `<doc/gitolite.rst>`__
 
-    * stash
-
+    stash
       Environment to use when ``git-multimail`` is ran as an Atlassian
       BitBucket Server (formerly known as Atlassian Stash) hook.
 
@@ -169,8 +172,7 @@ multimailhook.environment
       and repo come from these two command line flags, which must be
       specified.
 
-    * gerrit
-
+    gerrit
       Environment to use when ``git-multimail`` is ran as a
       ``ref-updated`` Gerrit hook.
 
@@ -205,14 +207,12 @@ multimailhook.environment
     * If none of the above apply, then ``generic`` is used.
 
 multimailhook.repoName
-
     A short name of this Git repository, to be used in various places
     in the notification email text.  The default is to use $GL_REPO
     for gitolite repositories, or otherwise to derive this value from
     the repository path name.
 
 multimailhook.mailingList
-
     The list of email addresses to which notification emails should be
     sent, as RFC 2822 email addresses separated by commas.  This
     configuration option can be multivalued.  Leave it unset or set it
@@ -221,7 +221,6 @@ multimailhook.mailingList
     specific types of notification email.
 
 multimailhook.refchangeList
-
     The list of email addresses to which summary emails about
     reference changes should be sent, as RFC 2822 email addresses
     separated by commas.  This configuration option can be
@@ -231,7 +230,6 @@ multimailhook.refchangeList
     multimailhook.mailingList is set.
 
 multimailhook.announceList
-
     The list of email addresses to which emails about new annotated
     tags should be sent, as RFC 2822 email addresses separated by
     commas.  This configuration option can be multivalued.  The
@@ -241,7 +239,6 @@ multimailhook.announceList
     even if one of the other values is set.
 
 multimailhook.commitList
-
     The list of email addresses to which emails about individual new
     commits should be sent, as RFC 2822 email addresses separated by
     commas.  This configuration option can be multivalued.  The
@@ -251,7 +248,6 @@ multimailhook.commitList
     multimailhook.mailingList is set.
 
 multimailhook.announceShortlog
-
     If this option is set to true, then emails about changes to
     annotated tags include a shortlog of changes since the previous
     tag.  This can be useful if the annotated tags represent releases;
@@ -261,7 +257,6 @@ multimailhook.announceShortlog
     rather than useful.  Default is false.
 
 multimailhook.commitEmailFormat
-
     The format of email messages for the individual commits, can be "text" or
     "html". In the latter case, the emails will include diffs using colorized
     HTML instead of plain text used by default. Note that this  currently the
@@ -274,8 +269,43 @@ multimailhook.commitEmailFormat
     the message starting with ``+++`` or ``---`` colored in red or
     green).
 
-multimailhook.refchangeShowGraph
+    By default, all the message is HTML-escaped. See
+    ``multimailhook.htmlInIntro`` to change this behavior.
 
+multimailhook.commitBrowseURL
+    Used to generate a link to an online repository browser in commit
+    emails. This variable must be a string. Format directives like
+    ``%(<variable>)s`` will be expanded the same way as template
+    strings. In particular, ``%(id)s`` will be replaced by the full
+    Git commit identifier (40-chars hexadecimal).
+
+    If the string does not contain any format directive, then
+    ``%(id)s`` will be automatically added to the string. If you don't
+    want ``%(id)s`` to be automatically added, use the empty format
+    directive ``%()s`` anywhere in the string.
+
+    For example, a suitable value for the git-multimail project itself
+    would be
+    ``https://github.com/git-multimail/git-multimail/commit/%(id)s``.
+
+multimailhook.htmlInIntro, multimailhook.htmlInFooter
+    When generating an HTML message, git-multimail escapes any HTML
+    sequence by default. This means that if a template contains HTML
+    like ``<a href="foo">link</a>``, the reader will see the HTML
+    source code and not a proper link.
+
+    Set ``multimailhook.htmlInIntro`` to true to allow writting HTML
+    formatting in introduction templates. Similarly, set
+    ``multimailhook.htmlInFooter`` for HTML in the footer.
+
+    Variables expanded in the template are still escaped. For example,
+    if a repository's path contains a ``<``, it will be rendered as
+    such in the message.
+
+    Read `<doc/customizing-emails.rst>`__ for more details and
+    examples.
+
+multimailhook.refchangeShowGraph
     If this option is set to true, then summary emails about reference
     changes will additionally include:
 
@@ -287,7 +317,6 @@ multimailhook.refchangeShowGraph
     specified in graphOpts.  The default is false.
 
 multimailhook.refchangeShowLog
-
     If this option is set to true, then summary emails about reference
     changes will include a detailed log of the added commits in
     addition to the one line summary.  The log is generated by running
@@ -295,71 +324,80 @@ multimailhook.refchangeShowLog
     Default is false.
 
 multimailhook.mailer
-
     This option changes the way emails are sent.  Accepted values are:
 
-    - sendmail (the default): use the command ``/usr/sbin/sendmail`` or
+    * **sendmail (the default)**: use the command ``/usr/sbin/sendmail`` or
       ``/usr/lib/sendmail`` (or sendmailCommand, if configured).  This
       mode can be further customized via the following options:
 
-      * multimailhook.sendmailCommand
+      multimailhook.sendmailCommand
+          The command used by mailer ``sendmail`` to send emails.  Shell
+          quoting is allowed in the value of this setting, but remember that
+          Git requires double-quotes to be escaped; e.g.::
 
-        The command used by mailer ``sendmail`` to send emails.  Shell
-        quoting is allowed in the value of this setting, but remember that
-        Git requires double-quotes to be escaped; e.g.::
+              git config multimailhook.sendmailcommand '/usr/sbin/sendmail -oi -t -F \"Git Repo\"'
 
-             git config multimailhook.sendmailcommand '/usr/sbin/sendmail -oi -t -F \"Git Repo\"'
+          Default is '/usr/sbin/sendmail -oi -t' or
+          '/usr/lib/sendmail -oi -t' (depending on which file is
+          present and executable).
 
-        Default is '/usr/sbin/sendmail -oi -t' or
-        '/usr/lib/sendmail -oi -t' (depending on which file is
-        present and executable).
+      multimailhook.envelopeSender
+          If set then pass this value to sendmail via the -f option to set
+          the envelope sender address.
 
-      * multimailhook.envelopeSender
-
-        If set then pass this value to sendmail via the -f option to set
-        the envelope sender address.
-
-    - smtp: use Python's smtplib.  This is useful when the sendmail
+    * **smtp**: use Python's smtplib.  This is useful when the sendmail
       command is not available on the system.  This mode can be
       further customized via the following options:
 
-      * multimailhook.smtpServer
+      multimailhook.smtpServer
+          The name of the SMTP server to connect to.  The value can
+          also include a colon and a port number; e.g.,
+          ``mail.example.com:25``.  Default is 'localhost' using port 25.
 
-        The name of the SMTP server to connect to.  The value can
-        also include a colon and a port number; e.g.,
-        ``mail.example.com:25``.  Default is 'localhost' using port 25.
+      multimailhook.smtpUser, multimailhook.smtpPass
+          Server username and password. Required if smtpEncryption is 'ssl'.
+          Note that the username and password currently need to be
+          set cleartext in the configuration file, which is not
+          recommended. If you need to use this option, be sure your
+          configuration file is read-only.
 
-      * multimailhook.smtpUser
-      * multimailhook.smtpPass
-
-        Server username and password. Required if smtpEncryption is 'ssl'.
-        Note that the username and password currently need to be
-        set cleartext in the configuration file, which is not
-        recommended. If you need to use this option, be sure your
-        configuration file is read-only.
-
-      * multimailhook.envelopeSender
-
+      multimailhook.envelopeSender
         The sender address to be passed to the SMTP server.  If
         unset, then the value of multimailhook.from is used.
 
-      * multimailhook.smtpServerTimeout
-
+      multimailhook.smtpServerTimeout
         Timeout in seconds.
 
-      * multimailhook.smtpEncryption
+      multimailhook.smtpEncryption
+        Set the security type. Allowed values: ``none``, ``ssl``, ``tls`` (starttls).
+        Default is ``none``.
 
-        Set the security type. Allowed values: none, ssl, tls.
-        Default=none.
+      multimailhook.smtpCACerts
+        Set the path to a list of trusted CA certificate to verify the
+        server certificate, only supported when ``smtpEncryption`` is
+        ``tls``. If unset or empty, the server certificate is not
+        verified. If it targets a file containing a list of trusted CA
+        certificates (PEM format) these CAs will be used to verify the
+        server certificate. For debian, you can set
+        ``/etc/ssl/certs/ca-certificates.crt`` for using the system
+        trusted CAs. For self-signed server, you can add your server
+        certificate to the system store::
 
-      * multimailhook.smtpServerDebugLevel
+            cd /usr/local/share/ca-certificates/
+            openssl s_client -starttls smtp \
+                   -connect mail.example.net:587 -showcerts \
+                   </dev/null 2>/dev/null \
+                 | openssl x509 -outform PEM >mail.example.net.crt
+            update-ca-certificates
 
+        and used the updated ``/etc/ssl/certs/ca-certificates.crt``. Or
+        directly use your ``/path/to/mail.example.net.crt``. Default is
+        unset.
+
+      multimailhook.smtpServerDebugLevel
         Integer number. Set to greater than 0 to activate debugging.
 
-multimailhook.from
-multimailhook.fromCommit
-multimailhook.fromRefchange
-
+multimailhook.from, multimailhook.fromCommit, multimailhook.fromRefchange
     If set, use this value in the From: field of generated emails.
     ``fromCommit`` is used for commit emails, ``fromRefchange`` is
     used for refchange emails, and ``from`` is used as fall-back in
@@ -372,7 +410,7 @@ multimailhook.fromRefchange
     - The value ``pusher``, in which case the pusher's address (if
       available) will be used.
 
-    - The value ``author`` (meaningful only for replyToCommit), in which
+    - The value ``author`` (meaningful only for ``fromCommit``), in which
       case the commit author's address will be used.
 
     If config values are unset, the value of the From: header is
@@ -396,14 +434,12 @@ multimailhook.fromRefchange
     3. Use the value of multimailhook.envelopeSender.
 
 multimailhook.administrator
-
     The name and/or email address of the administrator of the Git
     repository; used in FOOTER_TEMPLATE.  Default is
     multimailhook.envelopesender if it is set; otherwise a generic
     string is used.
 
 multimailhook.emailPrefix
-
     All emails have this string prepended to their subjects, to aid
     email filtering (though filtering based on the X-Git-* email
     headers is probably more robust).  Default is the short name of
@@ -411,16 +447,14 @@ multimailhook.emailPrefix
     value to the empty string to suppress the email prefix.
 
 multimailhook.emailMaxLines
-
     The maximum number of lines that should be included in the body of
     a generated email.  If not specified, there is no limit.  Lines
     beyond the limit are suppressed and counted, and a final line is
     added indicating the number of suppressed lines.
 
 multimailhook.emailMaxLineLength
-
     The maximum length of a line in the email body.  Lines longer than
-    this limit are truncated to this length with a trailing `` [...]``
+    this limit are truncated to this length with a trailing ``[...]``
     added to indicate the missing text.  The default is 500, because
     (a) diffs with longer lines are probably from binary files, for
     which a diff is useless, and (b) even if a text file has such long
@@ -428,7 +462,6 @@ multimailhook.emailMaxLineLength
     truncation, set this option to 0.
 
 multimailhook.maxCommitEmails
-
     The maximum number of commit emails to send for a given change.
     When the number of patches is larger that this value, only the
     summary refchange email is sent.  This can avoid accidental
@@ -436,14 +469,12 @@ multimailhook.maxCommitEmails
     emails limit, set this option to 0.  The default is 500.
 
 multimailhook.emailStrictUTF8
-
     If this boolean option is set to `true`, then the main part of the
     email body is forced to be valid UTF-8.  Any characters that are
     not valid UTF-8 are converted to the Unicode replacement
     character, U+FFFD.  The default is `true`.
 
 multimailhook.diffOpts
-
     Options passed to ``git diff-tree`` when generating the summary
     information for ReferenceChange emails.  Default is ``--stat
     --summary --find-copies-harder``.  Add -p to those options to
@@ -452,7 +483,6 @@ multimailhook.diffOpts
     details.
 
 multimailhook.graphOpts
-
     Options passed to ``git log --graph`` when generating graphs for the
     reference change summary emails (used only if refchangeShowGraph
     is true).  The default is '--oneline --decorate'.
@@ -460,7 +490,6 @@ multimailhook.graphOpts
     Shell quoting is allowed; see logOpts for details.
 
 multimailhook.logOpts
-
     Options passed to ``git log`` to generate additional info for
     reference change emails (used only if refchangeShowLog is set).
     For example, adding -p will show each commit's complete diff.  The
@@ -479,7 +508,6 @@ multimailhook.logOpts
               logopts = --pretty=format:\"%h %aN <%aE>%n%s%n%n%b%n\"
 
 multimailhook.commitLogOpts
-
     Options passed to ``git log`` to generate additional info for
     revision change emails.  For example, adding --ignore-all-spaces
     will suppress whitespace changes.  The default options are ``-C
@@ -487,26 +515,21 @@ multimailhook.commitLogOpts
     multimailhook.logOpts for details.
 
 multimailhook.dateSubstitute
-
     String to use as a substitute for ``Date:`` in the output of ``git
     log`` while formatting commit messages. This is usefull to avoid
     emitting a line that can be interpreted by mailers as the start of
     a cited message (Zimbra webmail in particular). Defaults to
-    ``CommitDate: ``. Set to an empty string or ``none`` to deactivate
+    ``CommitDate:``. Set to an empty string or ``none`` to deactivate
     the behavior.
 
 multimailhook.emailDomain
-
     Domain name appended to the username of the person doing the push
     to convert it into an email address
     (via ``"%s@%s" % (username, emaildomain)``). More complicated
     schemes can be implemented by overriding Environment and
     overriding its get_pusher_email() method.
 
-multimailhook.replyTo
-multimailhook.replyToCommit
-multimailhook.replyToRefchange
-
+multimailhook.replyTo, multimailhook.replyToCommit, multimailhook.replyToRefchange
     Addresses to use in the Reply-To: field for commit emails
     (replyToCommit) and refchange emails (replyToRefchange).
     multimailhook.replyTo is used as default when replyToCommit or
@@ -519,32 +542,24 @@ multimailhook.replyToRefchange
     commit emails.
 
 multimailhook.quiet
-
     Do not output the list of email recipients from the hook
 
 multimailhook.stdout
-
     For debugging, send emails to stdout rather than to the
     mailer.  Equivalent to the --stdout command line option
 
 multimailhook.scanCommitForCc
-
     If this option is set to true, than recipients from lines in commit body
     that starts with ``CC:`` will be added to CC list.
     Default: false
 
 multimailhook.combineWhenSingleCommit
-
     If this option is set to true and a single new commit is pushed to
     a branch, combine the summary and commit email messages into a
     single email.
     Default: true
 
-multimailhook.refFilterInclusionRegex
-multimailhook.refFilterExclusionRegex
-multimailhook.refFilterDoSendRegex
-multimailhook.refFilterDontSendRegex
-
+multimailhook.refFilterInclusionRegex, multimailhook.refFilterExclusionRegex, multimailhook.refFilterDoSendRegex, multimailhook.refFilterDontSendRegex
     **Warning:** these options are experimental. They should work, but
     the user-interface is not stable yet (in particular, the option
     names may change). If you want to participate in stabilizing the
@@ -626,14 +641,16 @@ git-multimail is mostly customized via an "environment" that describes
 the local environment in which Git is running.  Two types of
 environment are built in:
 
-* GenericEnvironment: a stand-alone Git repository.
+GenericEnvironment
+    a stand-alone Git repository.
 
-* GitoliteEnvironment: a Git repository that is managed by gitolite
-  [3]_.  For such repositories, the identity of the pusher is read from
-  environment variable $GL_USER, the name of the repository is read
-  from $GL_REPO (if it is not overridden by multimailhook.reponame),
-  and the From: header value is optionally read from gitolite.conf
-  (see multimailhook.from).
+GitoliteEnvironment
+    a Git repository that is managed by gitolite
+    [3]_.  For such repositories, the identity of the pusher is read from
+    environment variable $GL_USER, the name of the repository is read
+    from $GL_REPO (if it is not overridden by multimailhook.reponame),
+    and the From: header value is optionally read from gitolite.conf
+    (see multimailhook.from).
 
 By default, git-multimail assumes GitoliteEnvironment if $GL_USER and
 $GL_REPO are set, and otherwise assumes GenericEnvironment.

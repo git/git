@@ -1,0 +1,60 @@
+#!/bin/sh
+
+inst_prefix=$(
+	IFS=:
+	for p in $PATH
+	do
+		probed=${p%/git-active/bin}
+		if test "$probed" != "$p"
+		then
+			echo "$probed"
+			exit
+		fi
+	done
+	echo $HOME
+)
+
+for v in maint master next pu jch
+do
+	installed=$(
+		test -f "$inst_prefix/git-$v/bin/git" &&
+		"$inst_prefix/git-$v/bin/git" version
+	)
+	dirty=
+	if version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
+	then
+		:
+	elif version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)\.dirty$')
+	then
+		dirty=" (with changes)"
+	elif version=v$(expr "$installed" : \
+			'git version \(.*\)\.rc[0-9]*$')
+	then
+		version="$version"-$(expr "$installed" : \
+			'git version .*\.\(rc[0-9]*\)$')
+	else
+		version=v$(expr "$installed" : 'git version \(.*\)')
+	fi
+
+	version=$(git rev-parse --verify "$version^0" 2>/dev/null)
+	revision=$(git show-ref -s --verify "refs/heads/$v")
+	if test "z$version" = "z$revision"
+	then
+		in= out=
+		installed=$dirty
+	elif test -z "$version"
+	then
+		in="[41;37m" out="[m"
+		installed="	none"
+	else
+		installed=$(git describe $version)
+		case "$dirty" in
+		'')
+			;;
+		?*)
+			installed="$installed$dirty"
+		esac
+		in="[41;37m" out="[m" installed="	$installed"
+	fi
+	echo "$in$v$out	$(git describe refs/heads/$v)$installed"
+done

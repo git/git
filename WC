@@ -1,0 +1,56 @@
+#!/bin/sh
+# Prepare "What's cooking in git.git"
+
+master_at=$(git rev-parse --verify refs/heads/master)
+next_at=$(git rev-parse --verify refs/heads/next)
+
+keep_master=
+case "$1" in
+generate)
+	echo Here are the topics that have been
+	echo
+	Meta/git-topic.perl --base=master | sed -e 's/^\*./\n*/'
+	exit
+	;;
+keep)
+	keep_master=--keep-master
+	;;
+esac
+
+eval $(LC_ALL=C date +"monthname=%b month=%m year=%Y date=%d dow=%a")
+
+lead="whats/cooking/$year/$month"
+issue=$(
+	cd Meta &&
+	git ls-tree -r --name-only HEAD "$lead"  | tail -n 1
+)
+if test -n "$issue"
+then
+	issue=$( expr "$issue" : '.*/0*\([1-9][0-9]*\)\.txt$' )
+	issue=$(( $issue + 1 ))
+else
+	issue=1
+fi
+issue=$( printf "%02d" $issue )
+mkdir -p "Meta/$lead"
+
+exec >"Meta/$lead/$issue.txt"
+
+cat <<EOF
+To: git@vger.kernel.org
+Subject: What's cooking in git.git ($monthname $year, #$issue; $dow, $date)
+X-master-at: $master_at
+X-next-at: $next_at
+
+What's cooking in git.git ($monthname $year, #$issue; $dow, $date)
+--------------------------------------------------
+
+EOF
+
+last=$(
+	cd Meta &&
+	git ls-tree -r --name-only HEAD "whats/cooking"  | tail -n 1
+)
+
+sed -e 's/^\[New Topics\]$/[Old New Topics]/' "Meta/$last" |
+Meta/UWC $keep_master

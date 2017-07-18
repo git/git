@@ -1,0 +1,310 @@
+#!/bin/sh
+
+accept_rerere="--rerere-autoupdate" generate=no update= diff= edit= stop_at_cut=
+while case "$#,$1" in 0,*) break;; *,-*) ;; esac
+do
+	case "$1" in
+	-n)	accept_rerere= ;;
+	-e)	edit=t ;;
+	-c)	stop_at_cut=1 ;;
+	-c?*)	stop_at_cut=${1#-c} ;;
+	-d)	update=${2?"diff with what?"}
+		diff=yes
+		generate=yes
+		shift ;;
+	-u)	update=${2?"update what?"}
+		generate=yes
+		shift ;;
+	*)	generate=yes
+		break ;;
+	esac
+	shift
+done
+
+annotate_merge () {
+	test -f Meta/whats-cooking.txt || return 0
+
+	perl -e '
+		sub wildo_match {
+			s/^\s*//;
+			if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
+			    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
+			    /^Can wait in / || /^Still / ||
+			    /^Needs? / || /^Expecting / || /^May want to /) {
+				return 1;
+			}
+			return 0;
+		}
+
+		sub read_message {
+			my ($fh, $branch) = @_;
+			my ($in_section, $in_desc);
+			my @msg = ();
+			while (<$fh>) {
+				chomp;
+				if (/^\* \Q$branch\E /) {
+					$in_section = 1;
+					next;
+				}
+				last if (/^[-*\[]/ && $in_section);
+				next unless $in_section;
+				s/^\s+//;
+				if (/^$/) {
+					$in_desc = 1;
+				}
+				next unless ($in_section && $in_desc);
+				next if (/Originally merged to '\''next'\'' on ([-0-9]+)/);
+				last if (wildo_match($_));
+				push @msg, "$_\n";
+			}
+			return ($in_section, @msg);
+		}
+
+		my ($branch) = $ARGV[0];
+		my ($fh, $in_section, @msg);
+		if (open $fh, "<", "Meta/whats-cooking.txt") {
+			($in_section, @msg) = read_message($fh, $branch);
+		}
+		if (!@msg) {
+			open my $revs, "-|",
+				qw(git -C Meta rev-list -32 HEAD -- whats-cooking.txt);
+			while (my $rev = <$revs>) {
+				chomp($rev);
+				open $fh, "-|",
+				qw(git -C Meta cat-file blob), "$rev:whats-cooking.txt";
+				($in_section, @msg) = read_message($fh, $branch);
+				last if (@msg);
+			}
+		}
+		if (@msg) {
+			open(my $fh, "-|", qw(git cat-file commit HEAD));
+			my @original = (<$fh>);
+			close $fh;
+			my @final;
+			$in_section = 0;
+			for (@original) {
+				if (!$in_section) {
+					$in_section = 1 if (/^$/);
+					next;
+				}
+				if (/^Conflicts:$/ && $in_section == 2) {
+					$in_section = 3;
+				}
+
+				if ($in_section == 3) {
+					$_ = "# $_";
+				}
+				push @final, $_;
+				if (/^$/ && $in_section == 1) {
+					push @final, @msg;
+					push @final, "\n";
+					$in_section = 2;
+				}
+			}
+			open($fh, "|-", qw(git commit --amend -F -));
+			print $fh @final;
+			close $fh;
+		}
+	' "$1"
+}
+
+case "$generate" in
+no)
+	accept_rerere () {
+		if ! git write-tree 2>/dev/null >/dev/null
+		then
+			git rerere remaining
+			return 1
+		else
+			GIT_EDITOR=: git commit --no-verify
+			echo "Accepted previous resolution"
+			return 0
+		fi
+	}
+
+	mark_cut () {
+		test -n "$stop_at_cut" && return
+
+		count_since_last_cut=$(( $count_since_last_cut + 1 ))
+		test -z "$prev_cut" && return
+		git commit --allow-empty -m "$prev_cut"
+		prev_cut=
+	}
+
+	cut_seen=0 prev_cut= count_since_last_cut=0
+	while read branch eh
+	do
+		case "$branch" in '###') cut_seen=$(( $cut_seen + 1 )) ;; esac
+		if test -n "$stop_at_cut" && test $stop_at_cut -le $cut_seen
+		then
+			continue ;# slurp the remainder and skip
+		fi
+
+		case "$branch" in
+		'###')
+			if test "$count_since_last_cut" = 0
+			then
+				prev_cut=
+			else
+				echo >&2 "$branch $eh"
+				prev_cut="$branch $eh"
+				count_since_last_cut=0
+			fi
+			continue ;;
+		'#'* | '')
+			continue ;;
+		esac
+
+		case "$eh" in
+		"" | "#"*)
+			echo >&2 "* $branch"
+
+			save=$(git rev-parse --verify HEAD) &&
+			tip=$(git rev-parse --verify "$branch^0") &&
+			mb=$(git merge-base "$tip" "$save") ||
+			exit
+
+			test "$mb" = "$tip" && continue
+
+			mark_cut
+
+			rebuild=$(git config "branch.$branch.rebuild" || :)
+
+			GIT_EDITOR=: git merge $rebuild $accept_rerere --edit "$branch" ||
+			accept_rerere ||
+			exit
+
+			annotate_merge "$branch" || exit
+			test -z "$edit" ||
+			git commit --amend || exit
+
+			this=$(git rev-parse --verify HEAD)
+			if test "$this" = "$save"
+			then
+				:
+			elif git show-ref -q --verify "refs/merge-fix/$branch"
+			then
+				echo >&2 "Fixing up the merge"
+				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
+				git diff --stat HEAD &&
+				GIT_EDITOR=: git commit --amend -a || exit
+			fi
+			;;
+		pick" "*)
+			echo >&2 "* $eh"
+
+			mark_cut
+
+			git cherry-pick "$branch" || exit ;;
+		*) echo >&2 "Eh? $branch $eh"; exit ;;
+		esac
+	done
+	exit
+esac
+
+if test -n "$update" && test $# = 0
+then
+	set x $(sed -n -e '2s/^# //p' <"$update") &&
+	shift
+fi
+
+# Generation (or updating)
+
+x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+x40="$x40$x40$x40$x40$x40$x40$x40$x40"
+LF='
+'
+
+show_merge () {
+	case "$msg" in
+	"Merge branch '"*"'"*)
+		branch=$(expr "$msg" : "Merge branch '\(.*\)'")
+		merge_hier=heads/
+		;;
+	"Merge remote branch '"*"'"*)
+		branch=$(expr "$msg" : "Merge remote branch '\(.*\)'")
+		merge_hier=
+		;;
+	*)
+		echo 2>&1 "Huh?: $msg"
+		return
+		;;
+	esac &&
+	tip=$(git rev-parse --verify "refs/$merge_hier$branch" 2>/dev/null) &&
+	merged=$(git name-rev --refs="refs/$merge_hier$branch" "$other" 2>/dev/null) &&
+	merged=$(expr "$merged" : "$x40 \(.*\)") &&
+	test "$merged" != undefined || {
+		other=$(git log -1 --pretty='format:%s' $other) &&
+		merged="$branch :rebased? $other"
+	}
+}
+
+show_pick () {
+	case "$msg" in
+	"### "* | "###")
+		merged="$msg$LF"
+		;;
+	*)
+		merged="$(git rev-parse --verify "$commit") pick $msg"
+		;;
+	esac
+
+}
+
+generate () {
+	PROGRAM=$1
+	shift
+	echo '#!/bin/sh'
+	echo "# $1"
+	echo 'case "$#,$1" in'
+	echo '1,-u|1,-d)'
+	echo "	exec $PROGRAM" '"$1" "$0"'
+	echo 'esac'
+	echo "$PROGRAM" '"$@" <<\EOF'
+	git log --no-decorate --pretty=oneline --first-parent "$1" |
+	{
+		series=
+		while read commit msg
+		do
+			if other=$(git rev-parse -q --verify "$commit^2")
+			then
+				show_merge
+			else
+				show_pick
+			fi
+
+			if test -z "$series"
+			then
+				series="$merged"
+			else
+				series="$merged$LF$series"
+			fi
+		done
+		echo "$series"
+	}
+	echo EOF
+}
+
+if test -z "$update"
+then
+	generate "$0" "$@"
+elif test -z "$diff"
+then
+	generate "$0" "$@" | diff -w -u "$update" -
+	if test $? = 0
+	then
+		echo >&2 "No changes."
+	else
+		echo >&2 -n "Update [y/N]? "
+		read yesno
+		case "$yesno" in
+		[Yy]*)
+			generate "$0" "$@" |
+			sed -e 's/ :rebased?.*//' >"$update" ;;
+		*)
+			echo >&2 "No update then." ;;
+		esac
+	fi
+else
+	generate "$0" "$@" | diff -w -u "$update" -
+fi

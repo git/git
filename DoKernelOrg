@@ -1,0 +1,177 @@
+#!/bin/sh
+
+exec 3>&2 >./:all.log 2>&1
+
+ln_or_cp () {
+	ln -f "$@" || cp -f "$@"
+}
+
+STAGE= narch= arch= master= jobs= rpm=t final= clean_stage=
+G=/pub/software/scm/git
+THIS=$(git describe HEAD)
+
+while case "$1" in -*) ;; *) break ;; esac
+do
+	case "$1" in
+	--master) master=t ;;
+	--slave) master=f ;;
+	-j*) jobs="$1" ;;
+	--dist-only) rpm=f ;;
+	--stage=?*) STAGE=${1#--stage=} ;;
+	--clean-stage) clean_stage=t ;;
+	--final) final=t ;;
+	--pub=?*) G=${1#--pub=} ;;
+	*) echo >&3 "Eh? $1"; exit 1 ;;
+	esac
+	shift
+done
+
+while test -n "$STAGE" && test "$STAGE" != "${STAGE%/}"
+do
+	STAGE="${STAGE%/}"
+done
+
+if test -n "$clean_stage" && test -d "$STAGE/$G"
+then
+	echo -n "Remove $STAGE/$G [y/N]? "
+	read yesno
+	case "$yesno" in
+	[yY])
+		rm -fr "$STAGE/$G" &&
+		mkdir -p "$STAGE/$G" || exit ;;
+	*)
+		echo "Not removing, then"
+		exit 0 ;;
+	esac
+fi
+
+if test -z "$master"
+then
+	case "$(hostname)" in
+	hera.kernel.org) master=t ;;
+	*) master=f ;;
+	esac
+fi
+
+if test t = "$master"
+then
+	narch='x86_64 i386 i686'
+	if test -z "$final"
+	then
+		case "$STAGE" in
+		?*)	final=f ;;
+		'')	final=t ;;
+		esac
+	fi
+else
+	if test t != "$rpm"
+	then
+		echo >&3 "'--dist-only' only makes sense on the master machine"
+		exit 1
+	fi
+	if test t = "$final"
+	then
+		echo >&3 "'--final' only makes sense on the master machine"
+		exit 1
+	fi
+fi
+
+eval $(rpm --showrc | sed -ne '
+	s/^-14: dist[ 	]*\./dist=/p
+	s/^-11= _target_cpu[ 	]*/arch=/p
+') && test -n "$dist" && test -n "$arch" || exit 1
+
+d='
+MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
+ASCIIDOC_NO_ROFF=YesPlease
+ASCIIDOC8=YesPlease
+BLK_SHA1=YesPlease
+GNU_ROFF=YesPlease
+'
+
+rm -f version
+echo "* Building $THIS"
+
+make $jobs git &&
+V=`./git --version | sed -e 's/git version //'` || exit
+
+make $jobs dist || exit
+
+if test t = "$rpm"
+then
+	NEEDS_CRYPTO_WITH_SSL=YesPlease make $jobs $d rpm || exit
+fi
+
+if test t != "$master"
+then
+	(
+		cd "$HOME/rpms/" &&
+		tar cf "TARPIT/$V.$arch.$dist.tar" \
+			RPMS/$arch/*-$V-*.$dist.$arch.rpm &&
+		ls -ld $HOME/rpms/TARPIT/$V.$arch.$dist.tar
+	) || exit
+	make clean
+	echo >&2 "Done -- move RPMS to the master machine."
+	echo >&2 "scp $HOME/rpms/TARPIT/$V.$arch.$dist.tar master.kernel.org:rpms/TARPIT"
+	echo >&2 "sha1sum -c <<\EOF"
+	(cd $HOME/rpms && sha1sum TARPIT/$V.$arch.$dist.tar) >&2
+	echo >&2 "EOF"
+	exit
+fi
+
+make $jobs $d dist-doc || exit
+
+mkdir -p "$STAGE$G" &&
+ln_or_cp git-$V.tar.gz "$STAGE$G/." &&
+ln_or_cp git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz "$STAGE$G/." &&
+mkdir -p "$STAGE$G/docs/v$V" &&
+tar Cxf "$STAGE$G/docs/v$V" "$STAGE$G/git-htmldocs-$V.tar.gz" || exit
+
+case "$V" in
+*.rc[0-9]* | *-rc[0-9]*)
+	mkdir -p "$STAGE$G/testing" || exit
+	for a in $narch
+	do
+		for rr in $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm
+		do
+			test -f "$rr" || continue
+			ln_or_cp "$rr" "$STAGE$G/testing/." || exit
+		done
+	done
+	ln_or_cp $HOME/rpms/SRPMS/git-$V-*.src.rpm "$STAGE$G/testing/." || exit
+	;;
+*)
+	mkdir -p "$STAGE$G/RPMS/$arch" "$STAGE$G/RPMS/SRPMS" || exit
+	for a in $narch
+	do
+		mkdir -p "$STAGE$G/RPMS/$a" || exit
+		for rr in $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm
+		do
+			test -f "$rr" || continue
+			ln_or_cp "$rr" "$STAGE$G/RPMS/$a/." || exit
+		done
+	done
+	ln_or_cp $HOME/rpms/SRPMS/git-$V-*.src.rpm "$STAGE$G/RPMS/SRPMS/." || exit
+esac
+
+make clean
+
+if test t = "$final"
+then
+	if test -n "$STAGE"
+	then
+		(
+			cd "$STAGE$G" &&
+			find . ! -type d -print0 | cpio -0plumda "$G" ||
+			find . ! -type d -print0 | cpio -0pumda "$G"
+		)
+	fi || exit
+	if test -f /usr/local/bin/yummy
+	then
+		for a in $narch
+		do
+			/usr/local/bin/yummy "$G/RPMS/$a"
+		done
+		/usr/local/bin/yummy "$G/RPMS/SRPMS"
+	fi
+fi

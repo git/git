@@ -1,0 +1,78 @@
+#!/bin/sh
+
+for range in $(
+	prev_branch=
+	{
+		git for-each-ref --format='%(refname)' refs/heads/maint-* |
+		perl -e '
+			sub compare_dotted_version {
+				my (@ours) = split(/\./, $_[0]);
+				my (@theirs) = split(/\./, $_[1]);
+				my ($i, $diff);
+
+				for ($i = 0; $i < @ours && $i < @theirs; $i++) {
+					$diff = $ours[$i] - $theirs[$i];
+					return $diff if ($diff);
+				}
+				return 1 if ($i < @ours);
+				return -1 if ($i < @theirs);
+				return 0;
+			}
+			my @maint = ();
+			while (<STDIN>) {
+				next unless s|^refs/heads/||;
+				chomp;
+				my ($v) = ($_ =~ /^maint-(.*)$/);
+				push @maint, [$v, $_];
+			}
+			for (map { $_->[1] }
+			     sort { compare_dotted_version($a->[0], $b->[0]) }
+			     @maint) {
+				print "$_\n";
+			}
+		'
+		cat <<-EOF
+		maint
+		master
+		next
+		EOF
+	} |
+	while read branch
+	do
+		if test -n "$prev_branch"
+		then
+			echo "$branch..$prev_branch"
+		fi
+		prev_branch=$branch
+	done
+) pu..jch
+do
+	lg=$(git log --oneline "$range")
+	if test -n "$lg"
+	then
+		echo "*** $range ***"
+		echo "$lg"
+	fi
+done
+
+if	next_tree=$(git rev-parse next^{tree}) &&
+	next_equiv=$(git rev-list --first-parent master..pu |
+		xargs -n1 sh -c '
+			echo $(git rev-parse $1^{tree}) $1
+		' - | sed -n -e "s/^$next_tree //p"
+	) &&
+	test -n "$next_equiv"
+then
+	jch=$(git rev-list --first-parent master..jch | wc -l) &&
+	pu=$(git rev-list --first-parent master..pu | wc -l) &&
+	next=$(git rev-list --first-parent master..$next_equiv | wc -l) &&
+	if test $jch -le $next
+	then
+		echo "master..$jch..jch..$next..next..$pu..pu"
+	else
+		echo "master..$next..next..$jch..jch..$pu..pu"
+	fi
+elif match_next=$(git rev-parse 'jch^{/^### match next$}' 2>/dev/null)
+then
+	git diff --stat "$match_next" next
+fi

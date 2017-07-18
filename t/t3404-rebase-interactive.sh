@@ -555,10 +555,9 @@ test_expect_success 'rebase a detached HEAD' '
 test_expect_success 'rebase a commit violating pre-commit' '
 
 	mkdir -p .git/hooks &&
-	PRE_COMMIT=.git/hooks/pre-commit &&
-	echo "#!/bin/sh" > $PRE_COMMIT &&
-	echo "test -z \"\$(git diff --cached --check)\"" >> $PRE_COMMIT &&
-	chmod a+x $PRE_COMMIT &&
+	write_script .git/hooks/pre-commit <<-\EOF &&
+	test -z "$(git diff --cached --check)"
+	EOF
 	echo "monde! " >> file1 &&
 	test_tick &&
 	test_must_fail git commit -m doesnt-verify file1 &&

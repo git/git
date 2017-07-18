@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Run this script _after_ making a proposed merge into a copy of
+# the target branch (e.g. "master") to see if it contains unrelated
+# merging back from the upstream.
+#
+F=`git diff-tree -r --name-only HEAD^ HEAD`
+echo "The topic modifies these paths:"
+echo "$F" | sed -e 's/^/	/'
+
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+git rev-list --parents master..HEAD^2 |
+sed -ne "/^$_x40 $_x40 $_x40/p" |
+while read merge first second
+do
+	echo
+	# First is the previous cvs topic tip, second is what was merged into
+	# it.  Does the merge have anything to do with adjust the topic to
+	# updated upstream?
+	git name-rev "$merge"
+	out=`git diff-tree --stat "$merge^" "$merge" -- $F`
+	case "$out" in
+	'')
+		echo "* Nothing to do with the topic" ;;
+	*)
+		echo "$out" ;;
+	esac
+done

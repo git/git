@@ -818,6 +818,47 @@ test_expect_success 'submodule add --name allows to replace a submodule with ano
 	)
 '
 
+test_expect_success 'recursive relative submodules stay relative' '
+	test_when_finished "rm -rf super clone2 subsub sub3" &&
+	mkdir subsub &&
+	(
+		cd subsub &&
+		git init &&
+		>t &&
+		git add t &&
+		git commit -m "initial commit"
+	) &&
+	mkdir sub3 &&
+	(
+		cd sub3 &&
+		git init &&
+		>t &&
+		git add t &&
+		git commit -m "initial commit" &&
+		git submodule add ../subsub dirdir/subsub &&
+		git commit -m "add submodule subsub"
+	) &&
+	mkdir super &&
+	(
+		cd super &&
+		git init &&
+		>t &&
+		git add t &&
+		git commit -m "initial commit" &&
+		git submodule add ../sub3 &&
+		git commit -m "add submodule sub"
+	) &&
+	git clone super clone2 &&
+	(
+		cd clone2 &&
+		git submodule update --init --recursive &&
+		echo "gitdir: ../.git/modules/sub3" >./sub3/.git_expect &&
+		echo "gitdir: ../../../.git/modules/sub3/modules/dirdir/subsub" >./sub3/dirdir/subsub/.git_expect
+	) &&
+	test_cmp clone2/sub3/.git_expect clone2/sub3/.git &&
+	test_cmp clone2/sub3/dirdir/subsub/.git_expect clone2/sub3/dirdir/subsub/.git
+'
+
 test_expect_success 'submodule add with an existing name fails unless forced' '
 	(
 		cd addtest2 &&

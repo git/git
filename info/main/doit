@@ -1,0 +1,20 @@
+#!/bin/sh
+
+HERE=`dirname "$0"`
+
+case "$1" in
+compare | '')
+	diff -u "$HERE/mailmap" .mailmap
+	diff -ru "$HERE/remotes" .git/remotes
+	;;
+save)
+	cp .mailmap "$HERE/mailmap"
+	cp -a .git/remotes "$HERE"
+	;;
+restore)
+	cp "$HERE/mailmap" .mailmap
+	cp -a "$HERE/remotes" .git/.
+	;;
+*)
+	echo >&2 "usage: $0 [compare|save|restore]"
+esac

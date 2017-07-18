@@ -1,0 +1,55 @@
+#!/bin/sh
+
+GIT_DIR=.git
+dotest="$GIT_DIR/rebase-apply"
+
+prec=4 &&
+this=$(cat 2>/dev/null "$dotest/next") &&
+msgnum=$(printf "%0${prec}d" $this) &&
+test -f "$dotest/$msgnum" &&
+message_id=$(sed -ne '
+	/^[ 	]/{
+		# Append continuation line to hold space
+		H
+		# Swap hold and pattern
+		x
+		# Remove the LF, making it a single line
+		s/\n//
+		# Swap hold and pattern back
+		x
+		# Discard the pattern and go on
+		n
+	}
+	# Hold this new line, and look at what is in the hold space
+	x
+	# Is it the Message-ID line?  If so, spit it out and finish.
+	/^[Mm][Ee][Ss][Ss][Aa][Gg][Ee]-[Ii][Dd]:[ 	]*/{
+		s///p
+		q
+	}
+	# Otherwise, check if this new line is empty
+	x
+	# Is it?  Then we are done with the header
+	/^$/b end
+	# Otherwise we need to hold onto this header line
+	x
+	# And start the next cycle
+	b
+: end
+	# ??? do we want to check if we held onto the last message-id line
+	# and process it here if we did???
+	q
+' "$dotest/$msgnum") &&
+
+if	test -n "$message_id" &&
+	head=$(git rev-parse --verify HEAD 2>/dev/null)
+then
+	echo "$head $message_id" >>"$GIT_DIR"/am.log &&
+	(
+		GIT_NOTES_REF=refs/notes/amlog
+		export GIT_NOTES_REF
+		git notes add -f -m "Message-Id: $message_id" "$head"
+		blob=$(git notes list "$head") &&
+		git notes append -m "$head" $blob
+	)
+fi

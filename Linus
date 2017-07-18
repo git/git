@@ -1,0 +1,114 @@
+#!/bin/sh
+# How much of the very original version from Linus survive?
+
+_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+
+summary=
+while case $# in 0) break ;; esac
+do
+	case "$1" in
+	-s | --summary)
+		summary=t
+		;;
+	-*)
+		echo >&2 "$1: unknown option"
+		exit 1
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
+if test $# = 0
+then
+	this=HEAD
+else
+	this=$1
+	shift
+fi
+
+if test $# = 0
+then
+	initial=e83c5163316f89bfbde7d9ab23ca2e25604af290
+	range="..$this"
+else
+	initial=$1
+	range="$initial..$this"
+	shift
+fi
+
+this=$(git rev-parse --verify "$this^0") &&
+initial=$(git rev-parse --verify "$initial^0") || exit
+
+tmp="/var/tmp/Linus.$$"
+trap 'rm -f "$tmp".*' 0
+
+# We blame each file in the initial revision pretending as if it is a
+# direct descendant of the given version, and also pretend that the
+# latter is a root commit.  This way, lines in the initial revision
+# that survived to the other version can be identified (they will be
+# attributed to the other version).
+graft="$tmp.graft" &&
+{
+	echo "$initial $this"
+	echo "$this"
+} >"$graft" || exit
+
+opts='-C -C -C -w'
+
+show () {
+	s=$1 t=$2 n=$3
+	p=$(($s * 100 / $t))
+	c=$(($s * 10000 / $t - $p * 100))
+	printf "%12d %12d %s (%d.%02d%%)\n" $s $t $n $p $c
+}
+
+empty_tree=$(git hash-object -t tree -w --stdin </dev/null)
+
+git diff-tree -r --raw $empty_tree $initial -- "$@" |
+while read mode_old mode_new sha1_old sha1_new op name
+do
+	git blame $opts --porcelain -S "$graft" "$this..$initial" -- "$name" |
+	sed -ne "s/^\($_x40\) .*/\1/p" |
+	sort |
+	uniq -c | {
+		# There are only two commits in the fake history, so
+		# there will be at most two output from the above.
+		read cnt1 commit1
+		read cnt2 commit2
+		if test -z "$commit2"
+		then
+			cnt2=0
+		fi
+		if test "$initial" != "$commit1"
+		then
+			cnt_surviving=$cnt1
+		else
+			cnt_surviving=$cnt2
+		fi
+		cnt_total=$(( $cnt1 + $cnt2 ))
+		echo "$cnt_surviving $cnt_total	$name"
+	}
+done | {
+	total=0
+	surviving=0
+	test -n "$summary" ||
+	printf "%12s %12s %s (survival%%)\n" surviving original path
+	while read s t n
+	do
+		total=$(( $total + $t )) surviving=$(( $surviving + $s ))
+		test -n "$summary" ||
+		show $s $t $n
+	done
+	if test -n "$summary"
+	then
+		echo $surviving $total
+	else
+		label=Total
+		show $surviving $total $label
+	fi
+
+}

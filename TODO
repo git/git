@@ -1,0 +1,35 @@
+The GIT To-Do File
+==================
+
+The latest copy of this document is found at 
+
+    http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
+    http://repo.or.cz/w/alt-git.git?a=blob;hb=todo;f=TODO
+
+----------------------------------------------------------------
+
+gmane=http://thread.gmane.org/gmane.comp.version-control.git/
+
+* Teach pack protocol to transfer estimated pack size and history
+  depth to allow receiving end make more intelligent decision between
+  unpack-objects and index-pack.
+
+  $gmane/173610
+
+* Audit use of symbolic-ref without -m in our scripts and for each
+  case decide if leaving a reflog entry for the HEAD is desirable.
+  If so, add them.
+
+  $gmane/172516
+
+* "git status" on intent-to-add index entries (say "I" in the first
+  column instead of "A" for short status, add "(needs 'git add')" at the
+  end of "new file: $path " in long status).
+
+  $gmane/170658
+
+* synopsys: use {} instead of () for grouping alternatives (Jari Aalto)
+  $gmane/72243
+
+* "[alias] st = status" and "cd .git && git st" (Jeff King)
+  $gmane/72327

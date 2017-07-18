@@ -1,0 +1,83 @@
+#!/bin/sh
+# Merge later...
+
+: "${target:=maint}" "${here:=master}"
+
+# Read from RelNotes and find mergeable topics
+search_topics () {
+	tmp=/tmp/ML.$$
+	trap 'rm -f "$tmp"' 0
+	git rev-list --parents --first-parent $target..$here >"$tmp"
+
+	x40='[0-9a-f]'
+	x40="$x40$x40$x40$x40$x40"
+	x40="$x40$x40$x40$x40$x40$x40$x40$x40"
+	sed -n -e 's/^   (merge \([0-9a-f]*\) \([^ ]*\) later to maint.*/\1 \2/p' |
+	while read sha1 topic
+	do
+		if ! full_sha1=$(git rev-parse --verify "$sha1")
+		then
+			echo >&2 "Not found: $sha1 $topic"
+			continue
+		fi
+
+		comment=
+		if ! git show-ref --quiet --verify "refs/heads/$topic"
+		then
+			comment="$topic gone"
+			tip=$full_sha1 topic=$sha1
+		elif tip=$(git rev-parse --verify "refs/heads/$topic") &&
+		     test "$tip" != "$full_sha1"
+		then
+			echo >&2 "$topic # $tip moved from $sha1"
+			continue
+		fi
+
+		ago= lg=0
+		fp=$(
+		    sed -ne "s/^\($x40\) $x40 $tip"'$/\1/p' "$tmp"
+		) &&
+		test -n "$fp" &&
+		ago=$(
+		    git show -s --format='%ar' $fp
+		) &&
+		lg=$(git log --oneline $target..$tip | wc -l)
+		if test $lg != 0
+		then
+			echo "$topic # $lg${ago+ ($ago)}${comment+ $comment}"
+		else
+			echo "# $topic already merged${ago+ ($ago)}${comment+ $comment}"
+		fi
+	done
+}
+
+while	case "$#,$1" in
+	0,*)
+		break ;;
+	*,-t)
+		target=${2?"-t target???"}
+		git show-ref --quiet --verify "refs/heads/$target" || {
+			echo >&2 "$target: no such branch"
+			exit 1
+		}
+		shift ;;
+	*)
+		break ;;
+	esac
+do
+	shift
+done
+
+case $# in
+0)
+	search_topics
+	exit $?
+	;;
+esac
+
+for topic
+do
+	sha1=$(git rev-parse --short $topic)
+	echo "   (merge $sha1 $topic later to maint)."
+done
+

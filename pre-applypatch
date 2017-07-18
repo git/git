@@ -1,0 +1,32 @@
+#!/bin/sh
+
+. git-sh-setup
+
+# Avoid duplicated test numbers --- checking 'pu' is enough
+# as we will usually add, but never remove them.
+added=$(
+	git diff-index --cached --name-only --diff-filter=A HEAD -- t |
+	sed -ne 's|t/\(t[0-9][0-9][0-9][0-9]\)-.*\.sh$|\1|p'
+)
+if test -n "$added"
+then
+	bad=
+	exists=$(
+		git ls-tree --name-only pu:t |
+		sed -ne 's|^\(t[0-9][0-9][0-9][0-9]\)-.*\.sh$|\1|p' |
+		tr "\012" " "
+	)
+	for a in $added
+	do
+		case " $exists " in
+		*" $a "*)
+			echo >&2 "Test number $a already taken"
+			bad=1
+			;;
+		esac
+	done
+	if test -n "$bad"
+	then
+		: exit 1
+	fi
+fi

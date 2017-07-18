@@ -1,0 +1,227 @@
+#!/bin/sh
+
+NWD=contrib/workdir/git-new-workdir
+
+inst_prefix=$(
+	IFS=:
+	for p in $PATH
+	do
+		probed=${p%/git-active/bin}
+		if test "$probed" != "$p"
+		then
+			echo "$probed"
+			exit
+		fi
+	done
+	echo $HOME
+)
+
+force= with_dash= test_long= M= install= nodoc= notest= bootstrap= branches= jobs=
+scratch= noprove=
+while	case "$1" in
+	--pedantic | --locale=* | --loose) M="$M $1" ;;
+	--force) force=$1 ;;
+	--dash) with_dash=y ;;
+	--long) test_long=--long ;;
+	--noinstall) install=noinstall ;;
+	--nodoc) nodoc=y ;;
+	--notest) notest=y ;;
+	--test=*) test="$1" ;;
+	--scratch) scratch=y ;;
+	--bootstrap) bootstrap=y ;;
+	--base=*) BUILDBASE=${1#*=} ;;
+	--branches=*) branches=${1#*=} ;;
+	--noprove) noprove=$1 ;;
+	-j*) jobs=$1 ;;
+	--) shift; break ;;
+	-*) echo >&2 "Unknown option: $1"; exit 1 ;;
+	*) break ;;
+	esac
+do
+	shift
+done
+
+sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
+
+GIT_TEST_CHAIN_LINT=1
+export GIT_TEST_CHAIN_LINT
+
+GIT_PROVE_OPTS="${GIT_PROVE_OPTS:+$GIT_PROVE_OPTS }--state=slow,save"
+export GIT_PROVE_OPTS
+
+test -f /bin/dash || with_dash=
+if test -z "$BUILDBASE"
+then
+	if test -d "$inst_prefix/buildfarm"
+	then
+		BUILDBASE="$inst_prefix/buildfarm"
+	elif test -d "../buildfarm"
+	then
+		BUILDBASE=../buildfarm
+	else
+		echo >&2 "Buildbase unknown"
+		exit 1
+	fi
+fi
+test -n "$branches" || branches='next master maint jch pu'
+test -n "$jobs" || jobs=-j2
+
+find_installed () {
+	branch=$1
+	test -f "$inst_prefix/git-$branch/bin/git" &&
+	installed=$($inst_prefix/git-$branch/bin/git version) &&
+	if version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
+	then
+		:
+	elif version=v$(expr "$installed" : \
+		'git version \(.*\)\.rc[0-9]*$')
+	then
+		version="$version"-$(expr "$installed" : \
+			'git version .*\.\(rc[0-9]*\)$')
+	else
+		version=v$(expr "$installed" : 'git version \(.*\)')
+	fi &&
+	git rev-parse --verify "$version^0" 2>/dev/null
+}
+
+installed_source_trees=" "
+for branch in $branches
+do
+	if	v=$(find_installed $branch) &&
+		test -n "$v" &&
+		v=$(git rev-parse --verify "$v^{tree}" 2>/dev/null)
+	then
+		installed_source_trees="$installed_source_trees$v "
+	fi
+done
+
+for branch in $branches
+do
+	echo "** $branch **"
+	revision=$(git show-ref -s --verify "refs/heads/$branch") || {
+		echo "** No $branch"
+		continue
+	}
+
+	if test ! -d "$BUILDBASE/$branch"
+	then
+		if test -z "$bootstrap"
+		then
+			echo "** No $BUILDBASE/$branch"
+			continue
+		fi
+		"$NWD" . "$BUILDBASE/$branch" $branch &&
+		ln -s "$(pwd)/Meta" "$BUILDBASE/$branch/Meta" || {
+			echo "** Failed to bootstrap $BUILDBASE/$branch"
+			continue
+		}
+	fi
+
+	private=$(git rev-parse -q --verify private-$branch 2>/dev/null)
+	case $? in 0|1) ;; *) exit $? ;; esac
+
+	version=$(find_installed $branch)
+	if	test "z$version" = "z$revision"
+	then
+		echo "* up-to-date version is already installed from $branch"
+		test -n "$force" || continue
+	fi
+
+	vtree=$(git rev-parse --verify "$version^{tree}")
+	rtree=$(git rev-parse --verify "$revision^{tree}")
+	(
+		skip_test=$notest skip_doc=$nodoc
+		case "$force" in
+		?*)
+			;;
+		'')
+			for xtree in $installed_source_trees $vtree
+			do
+				if test "z$xtree" = "z$rtree" ||
+					git diff --quiet "$xtree" "$rtree" -- . \
+					':!GIT-VERSION-GEN' \
+					':!RelNotes' \
+					':!Documentation/'
+				then
+					skip_test=1
+					break
+				fi
+			done
+
+			dvtree=$(git rev-parse --verify "$version:Documentation/")
+			drtree=$(git rev-parse --verify "$revision:Documentation/")
+			if test "z$dvtree" = "z$drtree"
+			then
+				skip_doc=1
+			fi
+			;;
+		esac
+
+		case "$skip_test" in
+		?*)	dotest= ;;
+		'')	dotest=test ;;
+		esac
+
+		cd "$BUILDBASE/$branch"
+		git reset --hard  &&
+		case "$(git symbolic-ref HEAD)" in
+		"refs/heads/$branch")
+			: ;;
+		*)
+			git checkout "$branch" &&
+			git reset --hard || exit
+		esac &&
+
+		case "$scratch" in
+		'')
+			;;
+		y)
+			saveMeta=$(readlink Meta)
+			Meta/Make distclean
+			git clean -f -x
+			ln -s "$saveMeta" Meta
+			;;
+		esac &&
+
+		case "$private" in
+		'')
+			;;
+		?*)
+			git merge --squash --no-commit "$private" || {
+				echo >&2 "** Cannot apply private edition changes"
+				git reset --hard
+			}
+			;;
+		esac &&
+
+		save=$(git rev-parse HEAD) &&
+
+		Meta/Make $M $noprove ${test+"$test"} $jobs $test_long --memtrash \
+		    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
+
+		{
+			test -n "$skip_doc" ||
+			if test "$save" = "$(git rev-parse HEAD)"
+			then
+				Meta/Make $M $jobs -- doc &&
+				Meta/Make $M -- install-man install-html
+			else
+				echo >&2 "Head moved--not installing docs"
+			fi
+		} &&
+
+		{
+			test z$install = znoinstall ||
+			if test "$save" = "$(git rev-parse HEAD)"
+			then
+				Meta/Make $M -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" install
+			else
+				echo >&2 "Head moved--not installing"
+			fi
+		} || exit $?
+
+		git reset --hard
+	) </dev/null || exit $?
+
+	installed_source_trees="$installed_source_trees$rtree "
+done

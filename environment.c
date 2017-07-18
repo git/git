@@ -25,11 +25,9 @@ int log_all_ref_updates = -1; /* unspecified */
 int warn_ambiguous_refs = 1;
 int warn_on_object_refname_ambiguity = 1;
 int ref_paranoia = -1;
-int repository_format_version;
 int repository_format_precious_objects;
 const char *git_commit_encoding;
 const char *git_log_output_encoding;
-int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
 const char *apply_default_ignorewhitespace;
 const char *git_attributes_file;
@@ -323,4 +321,25 @@ const char *get_log_output_encoding(void)
 const char *get_commit_output_encoding(void)
 {
 	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+}
+
+static int the_shared_repository = PERM_UMASK;
+static int need_shared_repository_from_config = 1;
+
+void set_shared_repository(int value)
+{
+	the_shared_repository = value;
+	need_shared_repository_from_config = 0;
+}
+
+int get_shared_repository(void)
+{
+	if (need_shared_repository_from_config) {
+		const char *var = "core.sharedrepository";
+		const char *value;
+		if (!git_config_get_value(var, &value))
+			the_shared_repository = git_config_perm(var, value);
+		need_shared_repository_from_config = 0;
+	}
+	return the_shared_repository;
 }

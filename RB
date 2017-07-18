@@ -1,0 +1,48 @@
+#!/bin/sh
+
+master_sha1=`git rev-parse --verify refs/heads/master`
+LF='
+'
+(cd .git/refs/heads && find -type f) |
+sed -n \
+    -e 's/^\.\///' \
+    -e '/^[^\/][^\/]\//p' |
+while read topic
+do
+	case " $* " in
+	*' '"$topic"' '*)
+		echo >&2 "* Skipping $topic"
+		continue ;;
+	esac
+
+	rebase= done= not_done= trouble= date=
+	topic_sha1=`git rev-parse --verify "refs/heads/$topic"`
+
+	date=`
+		git rev-list -1 --pretty "$topic" |
+		sed -ne 's/^Date: *\(.*\)/ (\1)/p'
+	`
+	only_next_1=`git rev-list ^master "^$topic" next | sort`
+	only_next_2=`git rev-list ^master           next | sort`
+	rebase=
+	if test "$only_next_1" = "$only_next_2"
+	then
+		not_in_topic=`git rev-list "^$topic" master`
+		if test -z "$not_in_topic"
+		then
+			:; # already up-to-date.
+		else
+			rebase=" (can be rebased)"
+		fi
+	fi
+	if test -n "$rebase"
+	then
+		echo "Rebasing $topic to pick up:"
+		git rev-list --pretty=oneline "^$topic" master |
+		sed -e 's/^[0-9a-f]* / * /'
+		git checkout "$topic" &&
+		git rebase master || break;
+	fi
+done
+
+

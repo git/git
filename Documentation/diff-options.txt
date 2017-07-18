@@ -26,12 +26,12 @@ ifndef::git-format-patch[]
 ifdef::git-diff[]
 	This is the default.
 endif::git-diff[]
-endif::git-format-patch[]
 
 -s::
 --no-patch::
 	Suppress diff output. Useful for commands like `git show` that
 	show the patch by default, or to cancel the effect of `--patch`.
+endif::git-format-patch[]
 
 -U<n>::
 --unified=<n>::

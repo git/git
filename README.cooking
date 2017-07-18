@@ -1,0 +1,17 @@
+The compare-cooking.perl script is meant to help viewing the differences
+between periodical "What's cooking" messages, and can be used as an
+external diff driver by:
+
+    $ git config diff.whatscooking.command ./compare-cooking.perl
+
+to produce this section in your .git/config
+
+    [diff "whatscooking"]
+	command = ./compare-cooking.perl
+
+You can use e.g.
+
+    $ git log -p --ext-diff whats-cooking.txt
+    $ git show --ext-diff whats-cooking.txt
+
+to review the history.

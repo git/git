@@ -1,0 +1,18 @@
+#!/bin/sh
+
+BASE=${1-HEAD}
+
+(
+	echo pu
+	sed -ne 's/^\* \([^ ]*\) ([-0-9]*) [1-9][0-9]* commits\{0,1\}$/\1/p' \
+		Meta/whats-cooking.txt |
+	while read branch
+	do
+		git show-ref "refs/heads/$branch" >/dev/null &&
+		echo "$branch"
+	done
+	git -C Meta/ cat-file blob "${BASE}:whats-cooking.txt" |
+	sed -ne 's/^X-master-at: / --not /p' -e '/^$/q' 
+) |
+xargs git shortlog -s -e --no-merges |
+sed -e 's/.*</    </' -e '$q' -e 's/$/,/'

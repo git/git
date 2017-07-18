@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use Getopt::Long;
+
+sub parsing () { 1; }
+sub waiting () { 2; }
+my $state = parsing;
+
+my @more;
+my $append;
+my $debug;
+
+sub find_author {
+	my $map = shift;
+	for my $name (@_) {
+		my $fh;
+		print STDERR "Checking <$name>..."
+		    if ($debug);
+		if (!open($fh, "-|",
+			  qw(git log -1 --no-merges),
+			  '--format=%an <%ae>',
+			  "--author=$name",
+			  "--all")) {
+			print STDERR "opening pipe to read from git log failed\n"
+			    if ($debug);
+			$map->{$name} = $name;
+			next;
+		}
+		my $line = <$fh>;
+		if ($line) {
+			chomp $line;
+			print STDERR "read <$line> from git log\n"
+			    if ($debug);
+			$map->{$name} = $line;
+		} else {
+			print STDERR "read false ($line) from git log\n"
+			    if ($debug);
+			$map->{$name} = $name;
+		}
+	}
+}
+
+sub accumulate {
+	push @more, [@_];
+}
+
+sub add_more_bylines {
+	if (!defined $append) {
+		my %names = map { $_->[1] => 1 } @more;
+		my %map = ();
+		my @append;
+		find_author(\%map, keys (%names));
+		for (@more) {
+			my ($tag, $name) = @$_;
+			$tag = ucfirst($tag);
+			push @append, "$tag: $map{$name}";
+		}
+		if (@append) {
+			$append = join("\n", @append) . "\n";
+		} else {
+			$append = "";
+		}
+	}
+	print $append;
+}
+
+my $check_only;
+
+exit 1 unless (GetOptions("signed-off-by=s" => \&accumulate,
+			  "acked-by=s" => \&accumulate,
+			  "reviewed-by=s" => \&accumulate,
+			  "tested-by=s" => \&accumulate,
+			  "helped-by=s" => \&accumulate,
+			  "check-only!" => \$check_only,
+			  "debug!" => \$debug,
+	       ));
+
+if ($check_only) {
+	add_more_bylines();
+	exit 0;
+}
+
+while (<>) {
+	if ($state == parsing) {
+		if (/^[-A-Za-z]+-by: /i || /^Cc: /i) {
+			$state = waiting;
+		}
+	} elsif ($state == waiting) {
+		if (/^[-A-Za-z]+-by: /i || /^Cc: /i) {
+			$state = waiting;
+		} else {
+			add_more_bylines();
+			$state = parsing;
+		}
+	}
+	print;
+}

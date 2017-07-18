@@ -1,0 +1,375 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Time::Local;
+
+################################################################
+
+sub seconds_in_a_week () {
+	return 7 * 24 * 3600;
+}
+
+# Convert seconds from epoch to datestring and dow
+sub seconds_to_date {
+	my $time = shift;
+	my @time = localtime($time);
+	return (sprintf("%04d-%02d-%02d",
+			$time[5]+1900, $time[4]+1, $time[3]),
+		$time[6]);
+}
+
+sub date_to_seconds {
+	my $datestring = shift;
+	my ($year, $mon, $mday) = ($datestring =~ /^(\d{4})-(\d{2})-(\d{2})$/);
+	unless (defined $year && defined $mon && defined $mday &&
+		1 <= $mon && $mon <= 12 &&
+		1 <= $mday && $mday <= 31) {
+		die "Bad datestring specification: $datestring";
+	}
+	return timelocal(0, 0, 0, $mday, $mon - 1, $year - 1900);
+}
+
+sub next_date {
+	my $datestring = shift;
+	my $time = date_to_seconds($datestring);
+	return seconds_to_date($time + 3600 * 36);
+}
+
+sub prev_date {
+	my $datestring = shift;
+	my $time = date_to_seconds($datestring);
+	return seconds_to_date($time - 3600 * 12);
+}
+
+sub beginning_of_reporting_week {
+	my ($datestring, $bow) = @_;
+	my ($date, $dow) = seconds_to_date(date_to_seconds($datestring));
+	do {
+		($date, $dow) = prev_date($date);
+	} while ($dow != $bow);
+	return $date;
+}
+
+sub bow {
+	my ($week, $bow) = @_;
+	my $time;
+	if (!defined $week) {
+		$time = time;
+	} elsif ($week =~ /^\d+$/) {
+		$time = time - seconds_in_a_week * $week;
+	} else {
+		$time = date_to_seconds($week);
+	}
+	my ($datestring, $dow) = seconds_to_date($time);
+	return beginning_of_reporting_week($datestring, $bow);
+}
+
+sub date_within {
+	my ($date, $bottom, $top) = @_;
+	return ($bottom le $date && $date le $top);
+}
+
+################################################################
+
+my $verbose = 0;
+my $quiet = 0;
+my $reporting_date;
+my $weeks;
+my $bow = 0;
+my $bottom_date;
+
+if (!GetOptions(
+	     "verbose!" => \$verbose,
+	     "quiet!" => \$quiet,
+	     "date=s" => \$reporting_date,
+	     "weeks=i" => \$weeks,
+	     "bow=i" => \$bow,
+    )) {
+	print STDERR "$0 [-v|-q] [-d date] [-w weeks] [-b bow]\n";
+	exit 1;
+}
+
+if ($verbose && $quiet) {
+	print STDERR "Which? Verbose, or Quiet?\n";
+	exit 1;
+}
+
+if (!defined $reporting_date) {
+	($reporting_date, my $dow) = seconds_to_date(time);
+	while ($dow != $bow) {
+		($reporting_date, $dow) = next_date($reporting_date);
+	}
+}
+
+$bottom_date = beginning_of_reporting_week($reporting_date, $bow);
+
+if (!defined $weeks || $weeks < 0) {
+	$weeks = 0;
+}
+
+for (my $i = 0; $i < $weeks; $i++) {
+	for (my $j = 0; $j < 7; $j++) {
+		($bottom_date, undef) = prev_date($bottom_date);
+	}
+}
+($bottom_date, undef) = next_date($bottom_date);
+
+my $cull_old = "--since=" . date_to_seconds($bottom_date);
+
+sub plural {
+	my ($number, $singular, $plural) = @_;
+	return ($number == 1) ? "$number $singular": "$number $plural";
+}
+
+sub fmt_join {
+	my ($leader, $limit, $joiner, @ary) = @_;
+	my @result = ();
+	my $width = 0;
+	my $wj = length($joiner);
+	my $wl = length($leader);
+
+	for my $item (@ary) {
+		my $need_joiner;
+		if ($width == 0) {
+			$width += $wl;
+			push @result, $leader;
+			$need_joiner = 0;
+		} else {
+			$need_joiner = 1;
+		}
+		my $len = length($item);
+		if (($need_joiner ? $wj : 0) + $len + $width < $limit) {
+			if ($need_joiner) {
+				$width += $wj;
+				push @result, $joiner;
+			}
+			$width += $len;
+			push @result, $item;
+		} else {
+			if ($width) {
+				push @result, "\n";
+				$width = 0;
+			}
+			$width += $wl;
+			push @result, $leader;
+			$width += $len;
+			push @result, $item;
+		}
+	}
+	push @result, "\n" unless ($result[-1] eq "\n");
+	return join("", @result);
+}
+
+################################################################
+# Collection
+
+# Map sha1 to patch information [$sha1, $author, $subject]
+# or merge information [$sha1, undef, $branch].
+my %patch;
+
+# $dates{"YYYY-MM-DD"} exists iff something happened
+my %dates;
+
+# List of $sha1 of patches applied, grouped by date
+my %patch_by_date;
+
+# List of $sha1 of merges, grouped by date
+my %merge_by_branch_date;
+
+# List of tags, grouped by date
+my %tag_by_date;
+
+# List of integration branches.
+my @integrate = (['master', ', to include in the next release'],
+		 ['next', ' for public testing'],
+		 ['maint', ', to include in the maintenance release'],
+);
+
+# Collect individial patch application
+open I, "-|", ("git", "log",
+	       "--pretty=%ci %H %an <%ae>\001%s",
+	       $cull_old, "--glob=refs/heads",
+	       "--no-merges") or die;
+
+while (<I>) {
+	my ($date, $sha1, $rest) = /^([-0-9]+) [:0-9]+ [-+][0-9]{4} ([0-9a-f]+) (.*)$/;
+	next unless date_within($date, $bottom_date, $reporting_date);
+
+	$patch_by_date{$date} ||= [];
+	push @{$patch_by_date{$date}}, $sha1;
+	my ($name, $subject) = split(/\001/, $rest, 2);
+	$patch{$sha1} = [$sha1, $name, $subject];
+	$dates{$date}++;
+}
+close (I) or die;
+
+for my $branch (map { $_->[0] } @integrate) {
+	open I, "-|", ("git", "log", "--pretty=%ci %H %s",
+		       $cull_old,
+		       "--first-parent",
+		       "--merges",
+		       $branch) or die;
+	while (<I>) {
+		my ($date, $sha1, $rest) = /^([-0-9]+) [:0-9]+ [-+][0-9]{4} ([0-9a-f]+) (.*)$/;
+		next unless date_within($date, $bottom_date, $reporting_date);
+		my $msg = $rest;
+		$msg =~ s/^Merge branch //;
+		$msg =~ s/ into \Q$branch\E$//;
+		$msg =~ s/^'(.*)'$/$1/;
+
+		next if (grep { $_ eq $msg } map { $_->[0] } @integrate);
+
+		$merge_by_branch_date{$branch} ||= {};
+		$merge_by_branch_date{$branch}{$date} ||= [];
+		push @{$merge_by_branch_date{$branch}{$date}}, $sha1;
+		$patch{$sha1} = [$sha1, undef, $msg];
+		$dates{$date}++;
+	}
+	close (I) or die;
+}
+
+open I, "-|", ("git", "for-each-ref",
+	       "--format=%(refname:short) %(taggerdate:iso)",
+	       "refs/tags") or die;
+while (<I>) {
+	my ($tagname, $tagdate) = /^(\S+) ([-0-9]+) [:0-9]+ [-+][0-9]{4}$/;
+	
+	if (!defined $tagdate || 
+	    !date_within($tagdate, $bottom_date, $reporting_date)) {
+		next;
+	}
+	$dates{$tagdate}++;
+	$tag_by_date{$tagdate} ||= [];
+	push @{$tag_by_date{$tagdate}}, $tagname;
+}
+
+################################################################
+# Summarize
+
+my $sep = ""; 
+my @dates = sort keys %dates;
+
+sub day_summary {
+	my ($date, $total_names, $total_merges, $total_patches, $total_tags) = @_;
+	return if (!exists $dates{$date});
+
+	print "$sep$date\n" if (!$quiet);
+	if (exists $tag_by_date{$date}) {
+		for my $tagname (@{$tag_by_date{$date}}) {
+			$$total_tags++;
+			print "Tagged $tagname.\n" if (!$quiet);
+		}
+	}
+
+	if (exists $patch_by_date{$date}) {
+		my $count = scalar @{$patch_by_date{$date}};
+		my %names = ();
+		for my $patch (map { $patch{$_} } (@{$patch_by_date{$date}})) {
+			my $name = $patch->[1];
+			$names{$name}++;
+			$total_names->{$name}++;
+		}
+		my $people = scalar @{[keys %names]};
+		$$total_patches += $count;
+
+		$count = plural($count, "patch", "patches");
+		$people = plural($people, "person", "people");
+		print "Queued $count from $people.\n" if (!$quiet);
+		if ($verbose) {
+			for my $patch (map { $patch{$_} } @{$patch_by_date{$date}}) {
+				print "  $patch->[2]\n";
+			}
+		}
+	}
+
+	for my $branch_data (@integrate) {
+		my ($branch, $purpose) = @{$branch_data};
+		next unless (exists $merge_by_branch_date{$branch}{$date});
+		my $merges = $merge_by_branch_date{$branch}{$date};
+		my $count = scalar @$merges;
+		next unless $count;
+
+		$total_merges->{$branch} ||= 0;
+		$total_merges->{$branch} += $count;
+		$count = plural($count, "topic", "topics");
+		print "Merged $count to '$branch' branch$purpose.\n" if (!$quiet);
+		if ($verbose) {
+			my @pieces = map { $patch{$_}->[2] . "," } @$merges;
+			$pieces[-1] =~ s/,$/./;
+			print fmt_join("  ", 72, " ", @pieces);
+		}
+	}
+	$sep = "\n" if (!$quiet);
+}
+
+sub range_summary {
+	my ($range, $bottom, $date, $total_n, $total_m, $total_p, $total_t) = @_;
+	(my $last_date, undef) = prev_date($date);
+
+	print "$sep$range $bottom..$last_date\n";
+
+	if ($total_t) {
+		my $count = plural($total_t, "release", "releases");
+		print "Tagged $count.\n";
+	}
+	if ($total_p) {
+		my $people = plural(scalar @{[keys %{$total_n}]}, "person", "people");
+		my$count = plural($total_p, "patch", "patches");
+		print "Queued $count from $people.\n";
+	}
+	for my $branch_data (@integrate) {
+		my ($branch, $purpose) = @{$branch_data};
+		next unless $total_m->{$branch};
+		my $count = plural($total_m->{$branch}, "merge", "merges");
+		print "Made $count to '$branch' branch$purpose.\n";
+	}
+	$sep = "\n";
+}
+
+sub weekly_summary {
+	my ($bottom, $total_names, $total_merges,
+	    $total_patches, $total_tags) = @_;
+	my $date = $bottom;
+	my $shown = 0;
+
+	my ($total_p, $total_t, %total_n, %total_m) = (0, 0);
+	for (my $i = 0; $i < 7; $i++) {
+		day_summary($date, \%total_n, \%total_m,
+			    \$total_p, \$total_t);
+		($date, undef) = next_date($date);
+	}
+	for my $name (keys %total_n) {
+		$total_names->{$name}++;
+		$shown++;
+	}
+	for my $merge (keys %total_m) {
+		$total_merges->{$merge}++;
+		$shown++;
+	}
+	$$total_patches += $total_p;
+	$$total_tags += $total_t;
+	if ($shown) {
+		range_summary("Week of", $bottom, $date,
+			      \%total_n, \%total_m, $total_p, $total_t);
+	}
+	return $date;
+}
+
+my %total_names;
+my %total_merges;
+my $total_patches = 0;
+my $total_tags = 0;
+
+my $date;
+for ($date = $bottom_date; $date le $reporting_date; ) {
+	$date = weekly_summary($date, \%total_names, \%total_merges,
+			       \$total_patches, \$total_tags);
+}
+
+if ($weeks) {
+	range_summary("Between", $bottom_date, $date,
+		      \%total_names, \%total_merges,
+		      $total_patches, $total_tags);
+}

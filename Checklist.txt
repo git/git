@@ -1,0 +1,66 @@
+Release checklist.
+
+	: shell; THIS=1.5.2.3
+	: shell; PREV=1.5.2.2
+
+ - The usual build/test, locally and on k.org private.
+
+ - "git shortlog -s v$PREV..maint" and update .mailmap
+
+ - Update Documentation/RelNotes/$THIS.txt, make sure RelNotes
+   points to it, update GIT-VERSION-GEN.
+
+ - Proofread RelNotes.
+
+ - Commit "GIT $THIS"; create signed tag v$THIS with "GIT
+   $THIS".
+
+ - Push to builder:
+
+	: shell; git push builders tag $THIS
+	: shell; git push builders
+
+ - Build on builder; take resulting RPM tarball to k.org;
+
+	: builder; cd git.git
+	: builder; git checkout maint && Meta/DoKernelOrg maint
+	: builder; cd .. && scp $THIS.tar master.kernel.org:.
+
+ - Push to k.org private:
+
+	: shell; git push ko-private tag $THIS
+	: shell; git push ko-private
+
+ - Build on k.org:
+
+	: k.org; cd rpms && tar xf ../$THIS.tar
+	: k.org; cd ../git.git
+	: k.org; git checkout maint && Meta/DoKernelOrg maint
+
+ - Merge in 'maint' to 'master', and update the "stale" list of
+   documents in 'master':
+
+	: shell; git checkout master
+	: shell; git merge maint
+	: shell; edit Documentation/git.txt
+	: shell; git commit
+
+ - Push the results out:
+
+	: shell; git push ko tag $THIS
+	: shell; git push repo tag $THIS
+	: shell; git push ko
+	: shell; git push repo
+
+ - Extract the documentation on k.org:
+
+	: k.org; cd /pub/software/scm/git/docs
+	: k.org; mkdir v$THIS && cd v$THIS
+	: k.org; tar zxf ../../git-htmldocs-$THIS.tar.gz
+
+ - Prepare and send out the announce:
+
+	: shell; Meta/Announce maint $PREV
+
+ - Update Meta/MaintNotes and send it out (when releasing from
+   'master').

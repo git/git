@@ -1,0 +1,76 @@
+#!/bin/sh
+# Prepare "What's in git.git"
+
+maint_at=$(git rev-parse --verify refs/heads/maint)
+master_at=$(git rev-parse --verify refs/heads/master)
+maint_was=$(git rev-parse --verify refs/hold/sa/maint)
+master_was=$(git rev-parse --verify refs/hold/sa/master)
+
+log () {
+	git shortlog -w76,2,4 --no-merges "$@"
+}
+
+one () {
+	git show -s --pretty="format:%h (%s)" "$1"
+}
+
+eval $(LC_ALL=C date +"monthname=%b month=%m year=%Y date=%d dow=%a")
+
+lead="whats/in/$year/$month"
+issue=$(
+	cd Meta &&
+	git ls-tree -r --name-only HEAD "$lead"  | tail -n 1
+)
+if test -n "$issue"
+then
+	issue=$( expr "$issue" : '.*/0*\([1-9][0-9]*\)\.txt$' )
+	issue=$(( $issue + 1 ))
+else
+	issue=1
+fi
+issue=$( printf "%02d" $issue )
+
+mkdir -p "Meta/$lead"
+exec >"Meta/$lead/$issue.txt"
+
+cat <<EOF
+To: git@vger.kernel.org
+Subject: What's in git.git ($monthname $year, #$issue; $dow, $date)
+X-maint-at: $maint_at
+X-master-at: $master_at
+X-maint-was: $maint_was
+X-master-was: $master_was
+
+What's in git.git ($monthname $year, #$issue; $dow, $date)
+
+  maint $(one maint)
+ master $(one master)
+------------------------------------------------------------------------
+
+BLURB HERE
+EOF
+
+tagged=`git rev-parse --not --verify hold/sa/maint`
+list=`git rev-list $tagged refs/heads/maint 2>/dev/null`
+a=
+if test -n "$list"
+then
+	echo
+	echo "* The 'maint' branch has these fixes since the last announcement."
+	echo
+	log $tagged heads/maint
+	a='
+  in addition to the above.'
+else
+	a=.
+fi
+
+tagged=`git rev-parse --not --verify hold/sa/master`
+list=`git rev-list $tagged refs/heads/master 2>/dev/null`
+if test -n "$list"
+then
+	echo
+	echo "* The 'master' branch has these since the last announcement$a"
+	echo
+	log $tagged heads/master ^heads/maint
+fi

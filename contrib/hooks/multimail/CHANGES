@@ -1,3 +1,38 @@
+Release 1.3.0
+=============
+
+* New options multimailhook.htmlInIntro and multimailhook.htmlInFooter
+  now allow using HTML in the introduction and footer of emails (e.g.
+  for a more pleasant formatting or to insert a link to the commit on
+  a web interface).
+
+* A new option multimailhook.commitBrowseURL gives a simpler (and less
+  flexible) way to add a link to a web interface for commit emails
+  than multimailhook.htmlInIntro and multimailhook.htmlInFooter.
+
+* A new public function config.add_config_parameters was added to
+  allow custom hooks to set specific Git configuration variables
+  without modifying the configuration files. See an example in
+  post-receive.example.
+
+* Error handling for SMTP has been improved (we used to print Python
+  backtraces for legitimate errors).
+
+* The SMTP mailer can now check TLS certificates when the newly added
+  configuration variable multimailhook.smtpCACerts.
+
+* Python 3 portability has been improved.
+
+* The documentation's formatting has been improved.
+
+* The testsuite has been improved (we now use pyflakes to check for
+  errors in the code).
+
+This version has been tested with Python 2.4 and 2.6 to 3.5, and Git
+v1.7.10-406-gdc801e7, 2.1.4 and 2.8.1.339.g3ad15fd.
+
+No change since 1.3 RC1.
+
 Release 1.2.0
 =============
 

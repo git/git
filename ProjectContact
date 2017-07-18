@@ -1,0 +1,58 @@
+#!/bin/sh
+
+header=
+while :
+do
+	case $# in 0) break ;; esac
+	case "$1" in
+	-b)	header=Bcc ;;
+	-c)	header=Cc ;;
+	-*)	echo >&2 "Unknown option $1"
+		exit 1 ;;
+	*)	break ;;
+	esac
+	shift
+done
+
+case $# in
+0) match='*' ;;
+1) match="*$1*"; shift ;;
+esac
+for p
+do
+	match="$match|*$p*"
+done
+
+{
+iis=
+iis2=',
+ '
+while read address name
+do
+	case "$address" in
+	'#'*)	continue ;;
+	esac
+	case "$name" in
+	$match)	;;
+	*)	continue ;;
+	esac
+	item="$name <$address>"
+	if test -z "$header"
+	then
+		echo "$iis$item"
+	elif test -z "$iis"
+	then
+		printf "$header: $item"
+		iis="$iis2"
+	else
+		printf "$iis$item"
+	fi
+done
+if test -n "$header"
+then
+	printf '\n'
+fi
+} <<\EOF
+linux-kernel@vger.kernel.org	Linux Kernel
+ask@perl.org			Perl5-porters at perl
+EOF

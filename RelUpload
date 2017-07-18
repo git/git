@@ -1,0 +1,19 @@
+#!/bin/sh
+
+kup=../kup/kup
+
+for s in git-*.sig
+do
+	test -f "$s" &&
+	v=$(expr "$s" : '^git.*-\([^-]*\)\.tar\.sig$') &&
+	case "$v" in
+	*.rc[0-9]*)
+		dest=/pub/software/scm/git/testing/ ;;
+	*)
+		dest=/pub/software/scm/git/ ;;
+	esac &&
+
+	$kup --host git@gitolite.kernel.org --subcmd kup-server \
+	     put "${s%.sig}.gz" "$s" "$dest" ||
+	exit
+done
