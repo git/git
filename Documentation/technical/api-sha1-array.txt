@@ -1,0 +1,76 @@
+sha1-array API
+==============
+
+The sha1-array API provides storage and manipulation of sets of SHA-1
+identifiers. The emphasis is on storage and processing efficiency,
+making them suitable for large lists. Note that the ordering of items is
+not preserved over some operations.
+
+Data Structures
+---------------
+
+`struct sha1_array`::
+
+	A single array of SHA-1 hashes. This should be initialized by
+	assignment from `SHA1_ARRAY_INIT`.  The `sha1` member contains
+	the actual data. The `nr` member contains the number of items in
+	the set.  The `alloc` and `sorted` members are used internally,
+	and should not be needed by API callers.
+
+Functions
+---------
+
+`sha1_array_append`::
+	Add an item to the set. The sha1 will be placed at the end of
+	the array (but note that some operations below may lose this
+	ordering).
+
+`sha1_array_lookup`::
+	Perform a binary search of the array for a specific sha1.
+	If found, returns the offset (in number of elements) of the
+	sha1. If not found, returns a negative integer. If the array is
+	not sorted, this function has the side effect of sorting it.
+
+`sha1_array_clear`::
+	Free all memory associated with the array and return it to the
+	initial, empty state.
+
+`sha1_array_for_each_unique`::
+	Efficiently iterate over each unique element of the list,
+	executing the callback function for each one. If the array is
+	not sorted, this function has the side effect of sorting it.
+
+Examples
+--------
+
+-----------------------------------------
+void print_callback(const unsigned char sha1[20],
+		    void *data)
+{
+	printf("%s\n", sha1_to_hex(sha1));
+}
+
+void some_func(void)
+{
+	struct sha1_array hashes = SHA1_ARRAY_INIT;
+	unsigned char sha1[20];
+
+	/* Read objects into our set */
+	while (read_object_from_stdin(sha1))
+		sha1_array_append(&hashes, sha1);
+
+	/* Check if some objects are in our set */
+	while (read_object_from_stdin(sha1)) {
+		if (sha1_array_lookup(&hashes, sha1) >= 0)
+			printf("it's in there!\n");
+
+	/*
+	 * Print the unique set of objects. We could also have
+	 * avoided adding duplicate objects in the first place,
+	 * but we would end up re-sorting the array repeatedly.
+	 * Instead, this will sort once and then skip duplicates
+	 * in linear time.
+	 */
+	sha1_array_for_each_unique(&hashes, print_callback, NULL);
+}
+-----------------------------------------

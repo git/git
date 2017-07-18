@@ -1,0 +1,1305 @@
+#! /usr/bin/env python
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+""" gitview
+GUI browser for git repository
+This program is based on bzrk by Scott James Remnant <scott@ubuntu.com>
+"""
+__copyright__ = "Copyright (C) 2006 Hewlett-Packard Development Company, L.P."
+__copyright__ = "Copyright (C) 2007 Aneesh Kumar K.V <aneesh.kumar@gmail.com"
+__author__    = "Aneesh Kumar K.V <aneesh.kumar@gmail.com>"
+
+
+import sys
+import os
+import gtk
+import pygtk
+import pango
+import re
+import time
+import gobject
+import cairo
+import math
+import string
+import fcntl
+
+have_gtksourceview2 = False
+have_gtksourceview = False
+try:
+    import gtksourceview2
+    have_gtksourceview2 = True
+except ImportError:
+    try:
+        import gtksourceview
+        have_gtksourceview = True
+    except ImportError:
+        print "Running without gtksourceview2 or gtksourceview module"
+
+re_ident = re.compile('(author|committer) (?P<ident>.*) (?P<epoch>\d+) (?P<tz>[+-]\d{4})')
+
+def list_to_string(args, skip):
+	count = len(args)
+	i = skip
+	str_arg=" "
+	while (i < count ):
+		str_arg = str_arg + args[i]
+		str_arg = str_arg + " "
+		i = i+1
+
+	return str_arg
+
+def show_date(epoch, tz):
+	secs = float(epoch)
+	tzsecs = float(tz[1:3]) * 3600
+	tzsecs += float(tz[3:5]) * 60
+	if (tz[0] == "+"):
+		secs += tzsecs
+	else:
+		secs -= tzsecs
+
+	return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(secs))
+
+def get_source_buffer_and_view():
+	if have_gtksourceview2:
+		buffer = gtksourceview2.Buffer()
+		slm = gtksourceview2.LanguageManager()
+		gsl = slm.get_language("diff")
+		buffer.set_highlight_syntax(True)
+		buffer.set_language(gsl)
+		view = gtksourceview2.View(buffer)
+	elif have_gtksourceview:
+		buffer = gtksourceview.SourceBuffer()
+		slm = gtksourceview.SourceLanguagesManager()
+		gsl = slm.get_language_from_mime_type("text/x-patch")
+		buffer.set_highlight(True)
+		buffer.set_language(gsl)
+		view = gtksourceview.SourceView(buffer)
+	else:
+		buffer = gtk.TextBuffer()
+		view = gtk.TextView(buffer)
+	return (buffer, view)
+
+
+class CellRendererGraph(gtk.GenericCellRenderer):
+	"""Cell renderer for directed graph.
+
+	This module contains the implementation of a custom GtkCellRenderer that
+	draws part of the directed graph based on the lines suggested by the code
+	in graph.py.
+
+	Because we're shiny, we use Cairo to do this, and because we're naughty
+	we cheat and draw over the bits of the TreeViewColumn that are supposed to
+	just be for the background.
+
+	Properties:
+	node              (column, colour, [ names ]) tuple to draw revision node,
+	in_lines          (start, end, colour) tuple list to draw inward lines,
+	out_lines         (start, end, colour) tuple list to draw outward lines.
+	"""
+
+	__gproperties__ = {
+	"node":         ( gobject.TYPE_PYOBJECT, "node",
+			  "revision node instruction",
+			  gobject.PARAM_WRITABLE
+			),
+	"in-lines":     ( gobject.TYPE_PYOBJECT, "in-lines",
+			  "instructions to draw lines into the cell",
+			  gobject.PARAM_WRITABLE
+			),
+	"out-lines":    ( gobject.TYPE_PYOBJECT, "out-lines",
+			  "instructions to draw lines out of the cell",
+			  gobject.PARAM_WRITABLE
+			),
+	}
+
+	def do_set_property(self, property, value):
+		"""Set properties from GObject properties."""
+		if property.name == "node":
+			self.node = value
+		elif property.name == "in-lines":
+			self.in_lines = value
+		elif property.name == "out-lines":
+			self.out_lines = value
+		else:
+			raise AttributeError, "no such property: '%s'" % property.name
+
+	def box_size(self, widget):
+		"""Calculate box size based on widget's font.
+
+		Cache this as it's probably expensive to get.  It ensures that we
+		draw the graph at least as large as the text.
+		"""
+		try:
+			return self._box_size
+		except AttributeError:
+			pango_ctx = widget.get_pango_context()
+			font_desc = widget.get_style().font_desc
+			metrics = pango_ctx.get_metrics(font_desc)
+
+			ascent = pango.PIXELS(metrics.get_ascent())
+			descent = pango.PIXELS(metrics.get_descent())
+
+			self._box_size = ascent + descent + 6
+			return self._box_size
+
+	def set_colour(self, ctx, colour, bg, fg):
+		"""Set the context source colour.
+
+		Picks a distinct colour based on an internal wheel; the bg
+		parameter provides the value that should be assigned to the 'zero'
+		colours and the fg parameter provides the multiplier that should be
+		applied to the foreground colours.
+		"""
+		colours = [
+		    ( 1.0, 0.0, 0.0 ),
+		    ( 1.0, 1.0, 0.0 ),
+		    ( 0.0, 1.0, 0.0 ),
+		    ( 0.0, 1.0, 1.0 ),
+		    ( 0.0, 0.0, 1.0 ),
+		    ( 1.0, 0.0, 1.0 ),
+		    ]
+
+		colour %= len(colours)
+		red   = (colours[colour][0] * fg) or bg
+		green = (colours[colour][1] * fg) or bg
+		blue  = (colours[colour][2] * fg) or bg
+
+		ctx.set_source_rgb(red, green, blue)
+
+	def on_get_size(self, widget, cell_area):
+		"""Return the size we need for this cell.
+
+		Each cell is drawn individually and is only as wide as it needs
+		to be, we let the TreeViewColumn take care of making them all
+		line up.
+		"""
+		box_size = self.box_size(widget)
+
+		cols = self.node[0]
+		for start, end, colour in self.in_lines + self.out_lines:
+			cols = int(max(cols, start, end))
+
+		(column, colour, names) = self.node
+		names_len = 0
+		if (len(names) != 0):
+			for item in names:
+				names_len += len(item)
+
+		width = box_size * (cols + 1 ) + names_len
+		height = box_size
+
+		# FIXME I have no idea how to use cell_area properly
+		return (0, 0, width, height)
+
+	def on_render(self, window, widget, bg_area, cell_area, exp_area, flags):
+		"""Render an individual cell.
+
+		Draws the cell contents using cairo, taking care to clip what we
+		do to within the background area so we don't draw over other cells.
+		Note that we're a bit naughty there and should really be drawing
+		in the cell_area (or even the exposed area), but we explicitly don't
+		want any gutter.
+
+		We try and be a little clever, if the line we need to draw is going
+		to cross other columns we actually draw it as in the .---' style
+		instead of a pure diagonal ... this reduces confusion by an
+		incredible amount.
+		"""
+		ctx = window.cairo_create()
+		ctx.rectangle(bg_area.x, bg_area.y, bg_area.width, bg_area.height)
+		ctx.clip()
+
+		box_size = self.box_size(widget)
+
+		ctx.set_line_width(box_size / 8)
+		ctx.set_line_cap(cairo.LINE_CAP_SQUARE)
+
+		# Draw lines into the cell
+		for start, end, colour in self.in_lines:
+			ctx.move_to(cell_area.x + box_size * start + box_size / 2,
+					bg_area.y - bg_area.height / 2)
+
+			if start - end > 1:
+				ctx.line_to(cell_area.x + box_size * start, bg_area.y)
+				ctx.line_to(cell_area.x + box_size * end + box_size, bg_area.y)
+			elif start - end < -1:
+				ctx.line_to(cell_area.x + box_size * start + box_size,
+						bg_area.y)
+				ctx.line_to(cell_area.x + box_size * end, bg_area.y)
+
+			ctx.line_to(cell_area.x + box_size * end + box_size / 2,
+					bg_area.y + bg_area.height / 2)
+
+			self.set_colour(ctx, colour, 0.0, 0.65)
+			ctx.stroke()
+
+		# Draw lines out of the cell
+		for start, end, colour in self.out_lines:
+			ctx.move_to(cell_area.x + box_size * start + box_size / 2,
+					bg_area.y + bg_area.height / 2)
+
+			if start - end > 1:
+				ctx.line_to(cell_area.x + box_size * start,
+						bg_area.y + bg_area.height)
+				ctx.line_to(cell_area.x + box_size * end + box_size,
+						bg_area.y + bg_area.height)
+			elif start - end < -1:
+				ctx.line_to(cell_area.x + box_size * start + box_size,
+						bg_area.y + bg_area.height)
+				ctx.line_to(cell_area.x + box_size * end,
+						bg_area.y + bg_area.height)
+
+			ctx.line_to(cell_area.x + box_size * end + box_size / 2,
+					bg_area.y + bg_area.height / 2 + bg_area.height)
+
+			self.set_colour(ctx, colour, 0.0, 0.65)
+			ctx.stroke()
+
+		# Draw the revision node in the right column
+		(column, colour, names) = self.node
+		ctx.arc(cell_area.x + box_size * column + box_size / 2,
+				cell_area.y + cell_area.height / 2,
+				box_size / 4, 0, 2 * math.pi)
+
+
+		self.set_colour(ctx, colour, 0.0, 0.5)
+		ctx.stroke_preserve()
+
+		self.set_colour(ctx, colour, 0.5, 1.0)
+		ctx.fill_preserve()
+
+		if (len(names) != 0):
+			name = " "
+			for item in names:
+				name = name + item + " "
+
+			ctx.set_font_size(13)
+			if (flags & 1):
+				self.set_colour(ctx, colour, 0.5, 1.0)
+			else:
+				self.set_colour(ctx, colour, 0.0, 0.5)
+			ctx.show_text(name)
+
+class Commit(object):
+	""" This represent a commit object obtained after parsing the git-rev-list
+	output """
+
+	__slots__ = ['children_sha1', 'message', 'author', 'date', 'committer',
+				 'commit_date', 'commit_sha1', 'parent_sha1']
+
+	children_sha1 = {}
+
+	def __init__(self, commit_lines):
+		self.message		= ""
+		self.author		= ""
+		self.date		= ""
+		self.committer		= ""
+		self.commit_date	= ""
+		self.commit_sha1	= ""
+		self.parent_sha1	= [ ]
+		self.parse_commit(commit_lines)
+
+
+	def parse_commit(self, commit_lines):
+
+		# First line is the sha1 lines
+		line = string.strip(commit_lines[0])
+		sha1 = re.split(" ", line)
+		self.commit_sha1 = sha1[0]
+		self.parent_sha1 = sha1[1:]
+
+		#build the child list
+		for parent_id in self.parent_sha1:
+			try:
+				Commit.children_sha1[parent_id].append(self.commit_sha1)
+			except KeyError:
+				Commit.children_sha1[parent_id] = [self.commit_sha1]
+
+		# IF we don't have parent
+		if (len(self.parent_sha1) == 0):
+			self.parent_sha1 = [0]
+
+		for line in commit_lines[1:]:
+			m = re.match("^ ", line)
+			if (m != None):
+				# First line of the commit message used for short log
+				if self.message == "":
+					self.message = string.strip(line)
+				continue
+
+			m = re.match("tree", line)
+			if (m != None):
+				continue
+
+			m = re.match("parent", line)
+			if (m != None):
+				continue
+
+			m = re_ident.match(line)
+			if (m != None):
+				date = show_date(m.group('epoch'), m.group('tz'))
+				if m.group(1) == "author":
+					self.author = m.group('ident')
+					self.date = date
+				elif m.group(1) == "committer":
+					self.committer = m.group('ident')
+					self.commit_date = date
+
+				continue
+
+	def get_message(self, with_diff=0):
+		if (with_diff == 1):
+			message = self.diff_tree()
+		else:
+			fp = os.popen("git cat-file commit " + self.commit_sha1)
+			message = fp.read()
+			fp.close()
+
+		return message
+
+	def diff_tree(self):
+		fp = os.popen("git diff-tree --pretty --cc  -v -p --always " +  self.commit_sha1)
+		diff = fp.read()
+		fp.close()
+		return diff
+
+class AnnotateWindow(object):
+	"""Annotate window.
+	This object represents and manages a single window containing the
+	annotate information of the file
+	"""
+
+	def __init__(self):
+		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		self.window.set_border_width(0)
+		self.window.set_title("Git repository browser annotation window")
+		self.prev_read = ""
+
+		# Use two thirds of the screen by default
+		screen = self.window.get_screen()
+		monitor = screen.get_monitor_geometry(0)
+		width = int(monitor.width * 0.66)
+		height = int(monitor.height * 0.66)
+		self.window.set_default_size(width, height)
+
+	def add_file_data(self, filename, commit_sha1, line_num):
+		fp = os.popen("git cat-file blob " + commit_sha1 +":"+filename)
+		i = 1;
+		for line in fp.readlines():
+			line = string.rstrip(line)
+			self.model.append(None, ["HEAD", filename, line, i])
+			i = i+1
+		fp.close()
+
+		# now set the cursor position
+		self.treeview.set_cursor(line_num-1)
+		self.treeview.grab_focus()
+
+	def _treeview_cursor_cb(self, *args):
+		"""Callback for when the treeview cursor changes."""
+		(path, col) = self.treeview.get_cursor()
+		commit_sha1 = self.model[path][0]
+		commit_msg = ""
+		fp = os.popen("git cat-file commit " + commit_sha1)
+		for line in fp.readlines():
+			commit_msg =  commit_msg + line
+		fp.close()
+
+		self.commit_buffer.set_text(commit_msg)
+
+	def _treeview_row_activated(self, *args):
+		"""Callback for when the treeview row gets selected."""
+		(path, col) = self.treeview.get_cursor()
+		commit_sha1 = self.model[path][0]
+		filename    = self.model[path][1]
+		line_num    = self.model[path][3]
+
+		window = AnnotateWindow();
+		fp = os.popen("git rev-parse "+ commit_sha1 + "~1")
+		commit_sha1 = string.strip(fp.readline())
+		fp.close()
+		window.annotate(filename, commit_sha1, line_num)
+
+	def data_ready(self, source, condition):
+		while (1):
+			try :
+				# A simple readline doesn't work
+				# a readline bug ??
+				buffer = source.read(100)
+
+			except:
+				# resource temporary not available
+				return True
+
+			if (len(buffer) == 0):
+				gobject.source_remove(self.io_watch_tag)
+				source.close()
+				return False
+
+			if (self.prev_read != ""):
+				buffer = self.prev_read + buffer
+				self.prev_read = ""
+
+			if (buffer[len(buffer) -1] != '\n'):
+				try:
+					newline_index = buffer.rindex("\n")
+				except ValueError:
+					newline_index = 0
+
+				self.prev_read = buffer[newline_index:(len(buffer))]
+				buffer = buffer[0:newline_index]
+
+			for buff in buffer.split("\n"):
+				annotate_line = re.compile('^([0-9a-f]{40}) (.+) (.+) (.+)$')
+				m = annotate_line.match(buff)
+				if not m:
+					annotate_line = re.compile('^(filename) (.+)$')
+					m = annotate_line.match(buff)
+					if not m:
+						continue
+					filename = m.group(2)
+				else:
+					self.commit_sha1 = m.group(1)
+					self.source_line = int(m.group(2))
+					self.result_line = int(m.group(3))
+					self.count	    = int(m.group(4))
+					#set the details only when we have the file name
+					continue
+
+				while (self.count > 0):
+					# set at result_line + count-1 the sha1 as commit_sha1
+					self.count = self.count - 1
+					iter = self.model.iter_nth_child(None, self.result_line + self.count-1)
+					self.model.set(iter, 0, self.commit_sha1, 1, filename, 3, self.source_line)
+
+
+	def annotate(self, filename, commit_sha1, line_num):
+		# verify the commit_sha1 specified has this filename
+
+		fp = os.popen("git ls-tree "+ commit_sha1 + " -- " + filename)
+		line = string.strip(fp.readline())
+		if line == '':
+			# pop up the message the file is not there as a part of the commit
+			fp.close()
+			dialog = gtk.MessageDialog(parent=None, flags=0,
+					type=gtk.MESSAGE_WARNING, buttons=gtk.BUTTONS_CLOSE,
+					message_format=None)
+			dialog.set_markup("The file %s is not present in the parent commit %s" % (filename, commit_sha1))
+			dialog.run()
+			dialog.destroy()
+			return
+
+		fp.close()
+
+		vpan = gtk.VPaned();
+		self.window.add(vpan);
+		vpan.show()
+
+		scrollwin = gtk.ScrolledWindow()
+		scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrollwin.set_shadow_type(gtk.SHADOW_IN)
+		vpan.pack1(scrollwin, True, True);
+		scrollwin.show()
+
+		self.model = gtk.TreeStore(str, str, str, int)
+		self.treeview = gtk.TreeView(self.model)
+		self.treeview.set_rules_hint(True)
+		self.treeview.set_search_column(0)
+		self.treeview.connect("cursor-changed", self._treeview_cursor_cb)
+		self.treeview.connect("row-activated", self._treeview_row_activated)
+		scrollwin.add(self.treeview)
+		self.treeview.show()
+
+		cell = gtk.CellRendererText()
+		cell.set_property("width-chars", 10)
+		cell.set_property("ellipsize", pango.ELLIPSIZE_END)
+		column = gtk.TreeViewColumn("Commit")
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "text", 0)
+		self.treeview.append_column(column)
+
+		cell = gtk.CellRendererText()
+		cell.set_property("width-chars", 20)
+		cell.set_property("ellipsize", pango.ELLIPSIZE_END)
+		column = gtk.TreeViewColumn("File Name")
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "text", 1)
+		self.treeview.append_column(column)
+
+		cell = gtk.CellRendererText()
+		cell.set_property("width-chars", 20)
+		cell.set_property("ellipsize", pango.ELLIPSIZE_END)
+		column = gtk.TreeViewColumn("Data")
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "text", 2)
+		self.treeview.append_column(column)
+
+		# The commit message window
+		scrollwin = gtk.ScrolledWindow()
+		scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrollwin.set_shadow_type(gtk.SHADOW_IN)
+		vpan.pack2(scrollwin, True, True);
+		scrollwin.show()
+
+		commit_text = gtk.TextView()
+		self.commit_buffer = gtk.TextBuffer()
+		commit_text.set_buffer(self.commit_buffer)
+		scrollwin.add(commit_text)
+		commit_text.show()
+
+		self.window.show()
+
+		self.add_file_data(filename, commit_sha1, line_num)
+
+		fp = os.popen("git blame --incremental -C -C -- " + filename + " " + commit_sha1)
+		flags = fcntl.fcntl(fp.fileno(), fcntl.F_GETFL)
+		fcntl.fcntl(fp.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
+		self.io_watch_tag = gobject.io_add_watch(fp, gobject.IO_IN, self.data_ready)
+
+
+class DiffWindow(object):
+	"""Diff window.
+	This object represents and manages a single window containing the
+	differences between two revisions on a branch.
+	"""
+
+	def __init__(self):
+		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+		self.window.set_border_width(0)
+		self.window.set_title("Git repository browser diff window")
+
+		# Use two thirds of the screen by default
+		screen = self.window.get_screen()
+		monitor = screen.get_monitor_geometry(0)
+		width = int(monitor.width * 0.66)
+		height = int(monitor.height * 0.66)
+		self.window.set_default_size(width, height)
+
+
+		self.construct()
+
+	def construct(self):
+		"""Construct the window contents."""
+		vbox = gtk.VBox()
+		self.window.add(vbox)
+		vbox.show()
+
+		menu_bar = gtk.MenuBar()
+		save_menu = gtk.ImageMenuItem(gtk.STOCK_SAVE)
+		save_menu.connect("activate", self.save_menu_response, "save")
+		save_menu.show()
+		menu_bar.append(save_menu)
+		vbox.pack_start(menu_bar, expand=False, fill=True)
+		menu_bar.show()
+
+		hpan = gtk.HPaned()
+
+		scrollwin = gtk.ScrolledWindow()
+		scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrollwin.set_shadow_type(gtk.SHADOW_IN)
+		hpan.pack1(scrollwin, True, True)
+		scrollwin.show()
+
+		(self.buffer, sourceview) = get_source_buffer_and_view()
+
+		sourceview.set_editable(False)
+		sourceview.modify_font(pango.FontDescription("Monospace"))
+		scrollwin.add(sourceview)
+		sourceview.show()
+
+		# The file hierarchy: a scrollable treeview
+		scrollwin = gtk.ScrolledWindow()
+		scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrollwin.set_shadow_type(gtk.SHADOW_IN)
+		scrollwin.set_size_request(20, -1)
+		hpan.pack2(scrollwin, True, True)
+		scrollwin.show()
+
+		self.model = gtk.TreeStore(str, str, str)
+		self.treeview = gtk.TreeView(self.model)
+		self.treeview.set_search_column(1)
+		self.treeview.connect("cursor-changed", self._treeview_clicked)
+		scrollwin.add(self.treeview)
+		self.treeview.show()
+
+		cell = gtk.CellRendererText()
+		cell.set_property("width-chars", 20)
+		column = gtk.TreeViewColumn("Select to annotate")
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "text", 0)
+		self.treeview.append_column(column)
+
+		vbox.pack_start(hpan, expand=True, fill=True)
+		hpan.show()
+
+	def _treeview_clicked(self, *args):
+		"""Callback for when the treeview cursor changes."""
+		(path, col) = self.treeview.get_cursor()
+		specific_file = self.model[path][1]
+		commit_sha1 =  self.model[path][2]
+		if specific_file ==  None :
+			return
+		elif specific_file ==  "" :
+			specific_file =  None
+
+		window = AnnotateWindow();
+		window.annotate(specific_file, commit_sha1, 1)
+
+
+	def commit_files(self, commit_sha1, parent_sha1):
+		self.model.clear()
+		add  = self.model.append(None, [ "Added", None, None])
+		dele = self.model.append(None, [ "Deleted", None, None])
+		mod  = self.model.append(None, [ "Modified", None, None])
+		diff_tree = re.compile('^(:.{6}) (.{6}) (.{40}) (.{40}) (A|D|M)\s(.+)$')
+		fp = os.popen("git diff-tree -r --no-commit-id " + parent_sha1 + " " + commit_sha1)
+		while 1:
+			line = string.strip(fp.readline())
+			if line == '':
+				break
+			m = diff_tree.match(line)
+			if not m:
+				continue
+
+			attr = m.group(5)
+			filename = m.group(6)
+			if attr == "A":
+				self.model.append(add,  [filename, filename, commit_sha1])
+			elif attr == "D":
+				self.model.append(dele, [filename, filename, commit_sha1])
+			elif attr == "M":
+				self.model.append(mod,  [filename, filename, commit_sha1])
+		fp.close()
+
+		self.treeview.expand_all()
+
+	def set_diff(self, commit_sha1, parent_sha1, encoding):
+		"""Set the differences showed by this window.
+		Compares the two trees and populates the window with the
+		differences.
+		"""
+		# Diff with the first commit or the last commit shows nothing
+		if (commit_sha1 == 0 or parent_sha1 == 0 ):
+			return
+
+		fp = os.popen("git diff-tree -p " + parent_sha1 + " " + commit_sha1)
+		self.buffer.set_text(unicode(fp.read(), encoding).encode('utf-8'))
+		fp.close()
+		self.commit_files(commit_sha1, parent_sha1)
+		self.window.show()
+
+	def save_menu_response(self, widget, string):
+		dialog = gtk.FileChooserDialog("Save..", None, gtk.FILE_CHOOSER_ACTION_SAVE,
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+					gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+		dialog.set_default_response(gtk.RESPONSE_OK)
+		response = dialog.run()
+		if response == gtk.RESPONSE_OK:
+			patch_buffer = self.buffer.get_text(self.buffer.get_start_iter(),
+					self.buffer.get_end_iter())
+			fp = open(dialog.get_filename(), "w")
+			fp.write(patch_buffer)
+			fp.close()
+		dialog.destroy()
+
+class GitView(object):
+	""" This is the main class
+	"""
+	version = "0.9"
+
+	def __init__(self, with_diff=0):
+		self.with_diff = with_diff
+		self.window =	gtk.Window(gtk.WINDOW_TOPLEVEL)
+		self.window.set_border_width(0)
+		self.window.set_title("Git repository browser")
+
+		self.get_encoding()
+		self.get_bt_sha1()
+
+		# Use three-quarters of the screen by default
+		screen = self.window.get_screen()
+		monitor = screen.get_monitor_geometry(0)
+		width = int(monitor.width * 0.75)
+		height = int(monitor.height * 0.75)
+		self.window.set_default_size(width, height)
+
+		# FIXME AndyFitz!
+		icon = self.window.render_icon(gtk.STOCK_INDEX, gtk.ICON_SIZE_BUTTON)
+		self.window.set_icon(icon)
+
+		self.accel_group = gtk.AccelGroup()
+		self.window.add_accel_group(self.accel_group)
+		self.accel_group.connect_group(0xffc2, 0, gtk.ACCEL_LOCKED, self.refresh);
+		self.accel_group.connect_group(0xffc1, 0, gtk.ACCEL_LOCKED, self.maximize);
+		self.accel_group.connect_group(0xffc8, 0, gtk.ACCEL_LOCKED, self.fullscreen);
+		self.accel_group.connect_group(0xffc9, 0, gtk.ACCEL_LOCKED, self.unfullscreen);
+
+		self.window.add(self.construct())
+
+	def refresh(self, widget, event=None, *arguments, **keywords):
+		self.get_encoding()
+		self.get_bt_sha1()
+		Commit.children_sha1 = {}
+		self.set_branch(sys.argv[without_diff:])
+		self.window.show()
+		return True
+
+	def maximize(self, widget, event=None, *arguments, **keywords):
+		self.window.maximize()
+		return True
+
+	def fullscreen(self, widget, event=None, *arguments, **keywords):
+		self.window.fullscreen()
+		return True
+
+	def unfullscreen(self, widget, event=None, *arguments, **keywords):
+		self.window.unfullscreen()
+		return True
+
+	def get_bt_sha1(self):
+		""" Update the bt_sha1 dictionary with the
+		respective sha1 details """
+
+		self.bt_sha1 = { }
+		ls_remote = re.compile('^(.{40})\trefs/([^^]+)(?:\\^(..))?$');
+		fp = os.popen('git ls-remote "${GIT_DIR-.git}"')
+		while 1:
+			line = string.strip(fp.readline())
+			if line == '':
+				break
+			m = ls_remote.match(line)
+			if not m:
+				continue
+			(sha1, name) = (m.group(1), m.group(2))
+			if not self.bt_sha1.has_key(sha1):
+				self.bt_sha1[sha1] = []
+			self.bt_sha1[sha1].append(name)
+		fp.close()
+
+	def get_encoding(self):
+		fp = os.popen("git config --get i18n.commitencoding")
+		self.encoding=string.strip(fp.readline())
+		fp.close()
+		if (self.encoding == ""):
+			self.encoding = "utf-8"
+
+
+	def construct(self):
+		"""Construct the window contents."""
+		vbox = gtk.VBox()
+		paned = gtk.VPaned()
+		paned.pack1(self.construct_top(), resize=False, shrink=True)
+		paned.pack2(self.construct_bottom(), resize=False, shrink=True)
+		menu_bar = gtk.MenuBar()
+		menu_bar.set_pack_direction(gtk.PACK_DIRECTION_RTL)
+		help_menu = gtk.MenuItem("Help")
+		menu = gtk.Menu()
+		about_menu = gtk.MenuItem("About")
+		menu.append(about_menu)
+		about_menu.connect("activate", self.about_menu_response, "about")
+		about_menu.show()
+		help_menu.set_submenu(menu)
+		help_menu.show()
+		menu_bar.append(help_menu)
+		menu_bar.show()
+		vbox.pack_start(menu_bar, expand=False, fill=True)
+		vbox.pack_start(paned, expand=True, fill=True)
+		paned.show()
+		vbox.show()
+		return vbox
+
+
+	def construct_top(self):
+		"""Construct the top-half of the window."""
+		vbox = gtk.VBox(spacing=6)
+		vbox.set_border_width(12)
+		vbox.show()
+
+
+		scrollwin = gtk.ScrolledWindow()
+		scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrollwin.set_shadow_type(gtk.SHADOW_IN)
+		vbox.pack_start(scrollwin, expand=True, fill=True)
+		scrollwin.show()
+
+		self.treeview = gtk.TreeView()
+		self.treeview.set_rules_hint(True)
+		self.treeview.set_search_column(4)
+		self.treeview.connect("cursor-changed", self._treeview_cursor_cb)
+		scrollwin.add(self.treeview)
+		self.treeview.show()
+
+		cell = CellRendererGraph()
+		column = gtk.TreeViewColumn()
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "node", 1)
+		column.add_attribute(cell, "in-lines", 2)
+		column.add_attribute(cell, "out-lines", 3)
+		self.treeview.append_column(column)
+
+		cell = gtk.CellRendererText()
+		cell.set_property("width-chars", 65)
+		cell.set_property("ellipsize", pango.ELLIPSIZE_END)
+		column = gtk.TreeViewColumn("Message")
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "text", 4)
+		self.treeview.append_column(column)
+
+		cell = gtk.CellRendererText()
+		cell.set_property("width-chars", 40)
+		cell.set_property("ellipsize", pango.ELLIPSIZE_END)
+		column = gtk.TreeViewColumn("Author")
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "text", 5)
+		self.treeview.append_column(column)
+
+		cell = gtk.CellRendererText()
+		cell.set_property("ellipsize", pango.ELLIPSIZE_END)
+		column = gtk.TreeViewColumn("Date")
+		column.set_resizable(True)
+		column.pack_start(cell, expand=True)
+		column.add_attribute(cell, "text", 6)
+		self.treeview.append_column(column)
+
+		return vbox
+
+	def about_menu_response(self, widget, string):
+		dialog = gtk.AboutDialog()
+		dialog.set_name("Gitview")
+		dialog.set_version(GitView.version)
+		dialog.set_authors(["Aneesh Kumar K.V <aneesh.kumar@gmail.com>"])
+		dialog.set_website("http://www.kernel.org/pub/software/scm/git/")
+		dialog.set_copyright("Use and distribute under the terms of the GNU General Public License")
+		dialog.set_wrap_license(True)
+		dialog.run()
+		dialog.destroy()
+
+
+	def construct_bottom(self):
+		"""Construct the bottom half of the window."""
+		vbox = gtk.VBox(False, spacing=6)
+		vbox.set_border_width(12)
+		(width, height) = self.window.get_size()
+		vbox.set_size_request(width, int(height / 2.5))
+		vbox.show()
+
+		self.table = gtk.Table(rows=4, columns=4)
+		self.table.set_row_spacings(6)
+		self.table.set_col_spacings(6)
+		vbox.pack_start(self.table, expand=False, fill=True)
+		self.table.show()
+
+		align = gtk.Alignment(0.0, 0.5)
+		label = gtk.Label()
+		label.set_markup("<b>Revision:</b>")
+		align.add(label)
+		self.table.attach(align, 0, 1, 0, 1, gtk.FILL, gtk.FILL)
+		label.show()
+		align.show()
+
+		align = gtk.Alignment(0.0, 0.5)
+		self.revid_label = gtk.Label()
+		self.revid_label.set_selectable(True)
+		align.add(self.revid_label)
+		self.table.attach(align, 1, 2, 0, 1, gtk.EXPAND | gtk.FILL, gtk.FILL)
+		self.revid_label.show()
+		align.show()
+
+		align = gtk.Alignment(0.0, 0.5)
+		label = gtk.Label()
+		label.set_markup("<b>Committer:</b>")
+		align.add(label)
+		self.table.attach(align, 0, 1, 1, 2, gtk.FILL, gtk.FILL)
+		label.show()
+		align.show()
+
+		align = gtk.Alignment(0.0, 0.5)
+		self.committer_label = gtk.Label()
+		self.committer_label.set_selectable(True)
+		align.add(self.committer_label)
+		self.table.attach(align, 1, 2, 1, 2, gtk.EXPAND | gtk.FILL, gtk.FILL)
+		self.committer_label.show()
+		align.show()
+
+		align = gtk.Alignment(0.0, 0.5)
+		label = gtk.Label()
+		label.set_markup("<b>Timestamp:</b>")
+		align.add(label)
+		self.table.attach(align, 0, 1, 2, 3, gtk.FILL, gtk.FILL)
+		label.show()
+		align.show()
+
+		align = gtk.Alignment(0.0, 0.5)
+		self.timestamp_label = gtk.Label()
+		self.timestamp_label.set_selectable(True)
+		align.add(self.timestamp_label)
+		self.table.attach(align, 1, 2, 2, 3, gtk.EXPAND | gtk.FILL, gtk.FILL)
+		self.timestamp_label.show()
+		align.show()
+
+		align = gtk.Alignment(0.0, 0.5)
+		label = gtk.Label()
+		label.set_markup("<b>Parents:</b>")
+		align.add(label)
+		self.table.attach(align, 0, 1, 3, 4, gtk.FILL, gtk.FILL)
+		label.show()
+		align.show()
+		self.parents_widgets = []
+
+		align = gtk.Alignment(0.0, 0.5)
+		label = gtk.Label()
+		label.set_markup("<b>Children:</b>")
+		align.add(label)
+		self.table.attach(align, 2, 3, 3, 4, gtk.FILL, gtk.FILL)
+		label.show()
+		align.show()
+		self.children_widgets = []
+
+		scrollwin = gtk.ScrolledWindow()
+		scrollwin.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrollwin.set_shadow_type(gtk.SHADOW_IN)
+		vbox.pack_start(scrollwin, expand=True, fill=True)
+		scrollwin.show()
+
+		(self.message_buffer, sourceview) = get_source_buffer_and_view()
+
+		sourceview.set_editable(False)
+		sourceview.modify_font(pango.FontDescription("Monospace"))
+		scrollwin.add(sourceview)
+		sourceview.show()
+
+		return vbox
+
+	def _treeview_cursor_cb(self, *args):
+		"""Callback for when the treeview cursor changes."""
+		(path, col) = self.treeview.get_cursor()
+		commit = self.model[path][0]
+
+		if commit.committer is not None:
+			committer = commit.committer
+			timestamp = commit.commit_date
+			message   =  commit.get_message(self.with_diff)
+			revid_label = commit.commit_sha1
+		else:
+			committer = ""
+			timestamp = ""
+			message = ""
+			revid_label = ""
+
+		self.revid_label.set_text(revid_label)
+		self.committer_label.set_text(committer)
+		self.timestamp_label.set_text(timestamp)
+		self.message_buffer.set_text(unicode(message, self.encoding).encode('utf-8'))
+
+		for widget in self.parents_widgets:
+			self.table.remove(widget)
+
+		self.parents_widgets = []
+		self.table.resize(4 + len(commit.parent_sha1) - 1, 4)
+		for idx, parent_id in enumerate(commit.parent_sha1):
+			self.table.set_row_spacing(idx + 3, 0)
+
+			align = gtk.Alignment(0.0, 0.0)
+			self.parents_widgets.append(align)
+			self.table.attach(align, 1, 2, idx + 3, idx + 4,
+					gtk.EXPAND | gtk.FILL, gtk.FILL)
+			align.show()
+
+			hbox = gtk.HBox(False, 0)
+			align.add(hbox)
+			hbox.show()
+
+			label = gtk.Label(parent_id)
+			label.set_selectable(True)
+			hbox.pack_start(label, expand=False, fill=True)
+			label.show()
+
+			image = gtk.Image()
+			image.set_from_stock(gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU)
+			image.show()
+
+			button = gtk.Button()
+			button.add(image)
+			button.set_relief(gtk.RELIEF_NONE)
+			button.connect("clicked", self._go_clicked_cb, parent_id)
+			hbox.pack_start(button, expand=False, fill=True)
+			button.show()
+
+			image = gtk.Image()
+			image.set_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU)
+			image.show()
+
+			button = gtk.Button()
+			button.add(image)
+			button.set_relief(gtk.RELIEF_NONE)
+			button.set_sensitive(True)
+			button.connect("clicked", self._show_clicked_cb,
+					commit.commit_sha1, parent_id, self.encoding)
+			hbox.pack_start(button, expand=False, fill=True)
+			button.show()
+
+		# Populate with child details
+		for widget in self.children_widgets:
+			self.table.remove(widget)
+
+		self.children_widgets = []
+		try:
+			child_sha1 = Commit.children_sha1[commit.commit_sha1]
+		except KeyError:
+			# We don't have child
+			child_sha1 = [ 0 ]
+
+		if ( len(child_sha1) > len(commit.parent_sha1)):
+			self.table.resize(4 + len(child_sha1) - 1, 4)
+
+		for idx, child_id in enumerate(child_sha1):
+			self.table.set_row_spacing(idx + 3, 0)
+
+			align = gtk.Alignment(0.0, 0.0)
+			self.children_widgets.append(align)
+			self.table.attach(align, 3, 4, idx + 3, idx + 4,
+					gtk.EXPAND | gtk.FILL, gtk.FILL)
+			align.show()
+
+			hbox = gtk.HBox(False, 0)
+			align.add(hbox)
+			hbox.show()
+
+			label = gtk.Label(child_id)
+			label.set_selectable(True)
+			hbox.pack_start(label, expand=False, fill=True)
+			label.show()
+
+			image = gtk.Image()
+			image.set_from_stock(gtk.STOCK_JUMP_TO, gtk.ICON_SIZE_MENU)
+			image.show()
+
+			button = gtk.Button()
+			button.add(image)
+			button.set_relief(gtk.RELIEF_NONE)
+			button.connect("clicked", self._go_clicked_cb, child_id)
+			hbox.pack_start(button, expand=False, fill=True)
+			button.show()
+
+			image = gtk.Image()
+			image.set_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU)
+			image.show()
+
+			button = gtk.Button()
+			button.add(image)
+			button.set_relief(gtk.RELIEF_NONE)
+			button.set_sensitive(True)
+			button.connect("clicked", self._show_clicked_cb,
+					child_id, commit.commit_sha1, self.encoding)
+			hbox.pack_start(button, expand=False, fill=True)
+			button.show()
+
+	def _destroy_cb(self, widget):
+		"""Callback for when a window we manage is destroyed."""
+		self.quit()
+
+
+	def quit(self):
+		"""Stop the GTK+ main loop."""
+		gtk.main_quit()
+
+	def run(self, args):
+		self.set_branch(args)
+		self.window.connect("destroy", self._destroy_cb)
+		self.window.show()
+		gtk.main()
+
+	def set_branch(self, args):
+		"""Fill in different windows with info from the reposiroty"""
+		fp = os.popen("git rev-parse --sq --default HEAD " + list_to_string(args, 1))
+		git_rev_list_cmd = fp.read()
+		fp.close()
+		fp = os.popen("git rev-list  --header --topo-order --parents " + git_rev_list_cmd)
+		self.update_window(fp)
+
+	def update_window(self, fp):
+		commit_lines = []
+
+		self.model = gtk.ListStore(gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,
+				gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, str, str, str)
+
+		# used for cursor positioning
+		self.index = {}
+
+		self.colours = {}
+		self.nodepos = {}
+		self.incomplete_line = {}
+		self.commits = []
+
+		index = 0
+		last_colour = 0
+		last_nodepos = -1
+		out_line = []
+		input_line = fp.readline()
+		while (input_line != ""):
+			# The commit header ends with '\0'
+			# This NULL is immediately followed by the sha1 of the
+			# next commit
+			if (input_line[0] != '\0'):
+				commit_lines.append(input_line)
+				input_line = fp.readline()
+				continue;
+
+			commit = Commit(commit_lines)
+			if (commit != None ):
+				self.commits.append(commit)
+
+			# Skip the '\0
+			commit_lines = []
+			commit_lines.append(input_line[1:])
+			input_line = fp.readline()
+
+		fp.close()
+
+		for commit in self.commits:
+			(out_line, last_colour, last_nodepos) = self.draw_graph(commit,
+										index, out_line,
+										last_colour,
+										last_nodepos)
+			self.index[commit.commit_sha1] = index
+			index += 1
+
+		self.treeview.set_model(self.model)
+		self.treeview.show()
+
+	def draw_graph(self, commit, index, out_line, last_colour, last_nodepos):
+		in_line=[]
+
+		#   |   -> outline
+		#   X
+		#   |\  <- inline
+
+		# Reset nodepostion
+		if (last_nodepos > 5):
+			last_nodepos = -1
+
+		# Add the incomplete lines of the last cell in this
+		try:
+			colour = self.colours[commit.commit_sha1]
+		except KeyError:
+			self.colours[commit.commit_sha1] = last_colour+1
+			last_colour = self.colours[commit.commit_sha1]
+			colour =   self.colours[commit.commit_sha1]
+
+		try:
+			node_pos = self.nodepos[commit.commit_sha1]
+		except KeyError:
+			self.nodepos[commit.commit_sha1] = last_nodepos+1
+			last_nodepos = self.nodepos[commit.commit_sha1]
+			node_pos =  self.nodepos[commit.commit_sha1]
+
+		#The first parent always continue on the same line
+		try:
+			# check we already have the value
+			tmp_node_pos = self.nodepos[commit.parent_sha1[0]]
+		except KeyError:
+			self.colours[commit.parent_sha1[0]] = colour
+			self.nodepos[commit.parent_sha1[0]] = node_pos
+
+		for sha1 in self.incomplete_line.keys():
+			if (sha1 != commit.commit_sha1):
+				self.draw_incomplete_line(sha1, node_pos,
+						out_line, in_line, index)
+			else:
+				del self.incomplete_line[sha1]
+
+
+		for parent_id in commit.parent_sha1:
+			try:
+				tmp_node_pos = self.nodepos[parent_id]
+			except KeyError:
+				self.colours[parent_id] = last_colour+1
+				last_colour = self.colours[parent_id]
+				self.nodepos[parent_id] = last_nodepos+1
+				last_nodepos = self.nodepos[parent_id]
+
+			in_line.append((node_pos, self.nodepos[parent_id],
+						self.colours[parent_id]))
+			self.add_incomplete_line(parent_id)
+
+		try:
+			branch_tag = self.bt_sha1[commit.commit_sha1]
+		except KeyError:
+			branch_tag = [ ]
+
+
+		node = (node_pos, colour, branch_tag)
+
+		self.model.append([commit, node, out_line, in_line,
+				commit.message, commit.author, commit.date])
+
+		return (in_line, last_colour, last_nodepos)
+
+	def add_incomplete_line(self, sha1):
+		try:
+			self.incomplete_line[sha1].append(self.nodepos[sha1])
+		except KeyError:
+			self.incomplete_line[sha1] = [self.nodepos[sha1]]
+
+	def draw_incomplete_line(self, sha1, node_pos, out_line, in_line, index):
+		for idx, pos in enumerate(self.incomplete_line[sha1]):
+			if(pos == node_pos):
+				#remove the straight line and add a slash
+				if ((pos, pos, self.colours[sha1]) in out_line):
+					out_line.remove((pos, pos, self.colours[sha1]))
+				out_line.append((pos, pos+0.5, self.colours[sha1]))
+				self.incomplete_line[sha1][idx] = pos = pos+0.5
+			try:
+				next_commit = self.commits[index+1]
+				if (next_commit.commit_sha1 == sha1 and pos != int(pos)):
+				# join the line back to the node point
+				# This need to be done only if we modified it
+					in_line.append((pos, pos-0.5, self.colours[sha1]))
+					continue;
+			except IndexError:
+				pass
+			in_line.append((pos, pos, self.colours[sha1]))
+
+
+	def _go_clicked_cb(self, widget, revid):
+		"""Callback for when the go button for a parent is clicked."""
+		try:
+			self.treeview.set_cursor(self.index[revid])
+		except KeyError:
+			dialog = gtk.MessageDialog(parent=None, flags=0,
+					type=gtk.MESSAGE_WARNING, buttons=gtk.BUTTONS_CLOSE,
+					message_format=None)
+			dialog.set_markup("Revision <b>%s</b> not present in the list" % revid)
+			# revid == 0 is the parent of the first commit
+			if (revid != 0 ):
+				dialog.format_secondary_text("Try running gitview without any options")
+			dialog.run()
+			dialog.destroy()
+
+		self.treeview.grab_focus()
+
+	def _show_clicked_cb(self, widget,  commit_sha1, parent_sha1, encoding):
+		"""Callback for when the show button for a parent is clicked."""
+		window = DiffWindow()
+		window.set_diff(commit_sha1, parent_sha1, encoding)
+		self.treeview.grab_focus()
+
+without_diff = 0
+if __name__ == "__main__":
+
+	if (len(sys.argv) > 1 ):
+		if (sys.argv[1] == "--without-diff"):
+			without_diff = 1
+
+	view = GitView( without_diff != 1)
+	view.run(sys.argv[without_diff:])

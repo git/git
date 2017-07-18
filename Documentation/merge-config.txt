@@ -1,0 +1,77 @@
+merge.conflictStyle::
+	Specify the style in which conflicted hunks are written out to
+	working tree files upon merge.  The default is "merge", which
+	shows a `<<<<<<<` conflict marker, changes made by one side,
+	a `=======` marker, changes made by the other side, and then
+	a `>>>>>>>` marker.  An alternate style, "diff3", adds a `|||||||`
+	marker and the original text before the `=======` marker.
+
+merge.defaultToUpstream::
+	If merge is called without any commit argument, merge the upstream
+	branches configured for the current branch by using their last
+	observed values stored in their remote-tracking branches.
+	The values of the `branch.<current branch>.merge` that name the
+	branches at the remote named by `branch.<current branch>.remote`
+	are consulted, and then they are mapped via `remote.<remote>.fetch`
+	to their corresponding remote-tracking branches, and the tips of
+	these tracking branches are merged.
+
+merge.ff::
+	By default, Git does not create an extra merge commit when merging
+	a commit that is a descendant of the current commit. Instead, the
+	tip of the current branch is fast-forwarded. When set to `false`,
+	this variable tells Git to create an extra merge commit in such
+	a case (equivalent to giving the `--no-ff` option from the command
+	line). When set to `only`, only such fast-forward merges are
+	allowed (equivalent to giving the `--ff-only` option from the
+	command line).
+
+include::fmt-merge-msg-config.txt[]
+
+merge.renameLimit::
+	The number of files to consider when performing rename detection
+	during a merge; if not specified, defaults to the value of
+	diff.renameLimit.
+
+merge.renormalize::
+	Tell Git that canonical representation of files in the
+	repository has changed over time (e.g. earlier commits record
+	text files with CRLF line endings, but recent ones use LF line
+	endings).  In such a repository, Git can convert the data
+	recorded in commits to a canonical form before performing a
+	merge to reduce unnecessary conflicts.  For more information,
+	see section "Merging branches with differing checkin/checkout
+	attributes" in linkgit:gitattributes[5].
+
+merge.stat::
+	Whether to print the diffstat between ORIG_HEAD and the merge result
+	at the end of the merge.  True by default.
+
+merge.tool::
+	Controls which merge tool is used by linkgit:git-mergetool[1].
+	The list below shows the valid built-in values.
+	Any other value is treated as a custom merge tool and requires
+	that a corresponding mergetool.<tool>.cmd variable is defined.
+
+include::mergetools-merge.txt[]
+
+merge.verbosity::
+	Controls the amount of output shown by the recursive merge
+	strategy.  Level 0 outputs nothing except a final error
+	message if conflicts were detected. Level 1 outputs only
+	conflicts, 2 outputs conflicts and file changes.  Level 5 and
+	above outputs debugging information.  The default is level 2.
+	Can be overridden by the 'GIT_MERGE_VERBOSITY' environment variable.
+
+merge.<driver>.name::
+	Defines a human-readable name for a custom low-level
+	merge driver.  See linkgit:gitattributes[5] for details.
+
+merge.<driver>.driver::
+	Defines the command that implements a custom low-level
+	merge driver.  See linkgit:gitattributes[5] for details.
+
+merge.<driver>.recursive::
+	Names a low-level merge driver to be used when
+	performing an internal merge between common ancestors.
+	See linkgit:gitattributes[5] for details.

@@ -1,0 +1,71 @@
+<repository>::
+	The "remote" repository that is the source of a fetch
+	or pull operation.  This parameter can be either a URL
+	(see the section <<URLS,GIT URLS>> below) or the name
+	of a remote (see the section <<REMOTES,REMOTES>> below).
+
+ifndef::git-pull[]
+<group>::
+	A name referring to a list of repositories as the value
+	of remotes.<group> in the configuration file.
+	(See linkgit:git-config[1]).
+endif::git-pull[]
+
+<refspec>::
+	Specifies which refs to fetch and which local refs to update.
+	When no <refspec>s appear on the command line, the refs to fetch
+	are read from `remote.<repository>.fetch` variables instead
+ifndef::git-pull[]
+	(see <<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> below).
+endif::git-pull[]
+ifdef::git-pull[]
+	(see linkgit:git-fetch[1]).
+endif::git-pull[]
++
+The format of a <refspec> parameter is an optional plus
+`+`, followed by the source ref <src>, followed
+by a colon `:`, followed by the destination ref <dst>.
+The colon can be omitted when <dst> is empty.
++
+`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
+it requests fetching everything up to the given tag.
++
+The remote ref that matches <src>
+is fetched, and if <dst> is not empty string, the local
+ref that matches it is fast-forwarded using <src>.
+If the optional plus `+` is used, the local ref
+is updated even if it does not result in a fast-forward
+update.
++
+[NOTE]
+When the remote branch you want to fetch is known to
+be rewound and rebased regularly, it is expected that
+its new tip will not be descendant of its previous tip
+(as stored in your remote-tracking branch the last time
+you fetched).  You would want
+to use the `+` sign to indicate non-fast-forward updates
+will be needed for such branches.  There is no way to
+determine or declare that a branch will be made available
+in a repository with this behavior; the pulling user simply
+must know this is the expected usage pattern for a branch.
+ifdef::git-pull[]
++
+[NOTE]
+There is a difference between listing multiple <refspec>
+directly on 'git pull' command line and having multiple
+`remote.<repository>.fetch` entries in your configuration
+for a <repository> and running a
+'git pull' command without any explicit <refspec> parameters.
+<refspec>s listed explicitly on the command line are always
+merged into the current branch after fetching.  In other words,
+if you list more than one remote ref, 'git pull' will create
+an Octopus merge.  On the other hand, if you do not list any
+explicit <refspec> parameter on the command line, 'git pull'
+will fetch all the <refspec>s it finds in the
+`remote.<repository>.fetch` configuration and merge
+only the first <refspec> found into the current branch.
+This is because making an
+Octopus from remote refs is rarely done, while keeping track
+of multiple remote heads in one-go by fetching more than one
+is often useful.
+endif::git-pull[]

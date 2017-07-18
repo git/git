@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+use strict;
+
+package Frotz;
+sub new {
+	my $class = shift;
+	return bless {}, $class;
+}
+
+__END__
+=head1 NAME
+
+frotz - Frotz
+
+=head1 SYNOPSIS
+
+  use frotz;
+
+  $nitfol = new Frotz();
+
+=cut

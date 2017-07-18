@@ -1,0 +1,20 @@
+Git v1.8.5.2 Release Notes
+==========================
+
+Fixes since v1.8.5.1
+--------------------
+
+ * "git diff -- ':(icase)makefile'" was unnecessarily rejected at the
+   command line parser.
+
+ * "git cat-file --batch-check=ok" did not check the existence of
+   the named object.
+
+ * "git am --abort" sometimes complained about not being able to write
+   a tree with an 0{40} object in it.
+
+ * Two processes creating loose objects at the same time could have
+   failed unnecessarily when the name of their new objects started
+   with the same byte value, due to a race condition.
+
+Also contains typofixes, documentation updates and trivial code clean-ups.

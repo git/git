@@ -1,0 +1,118 @@
+git-commit-tree(1)
+==================
+
+NAME
+----
+git-commit-tree - Create a new commit object
+
+
+SYNOPSIS
+--------
+[verse]
+'git commit-tree' <tree> [(-p <parent>)...]
+'git commit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
+		  [(-F <file>)...] <tree>
+
+
+DESCRIPTION
+-----------
+This is usually not what an end user wants to run directly.  See
+linkgit:git-commit[1] instead.
+
+Creates a new commit object based on the provided tree object and
+emits the new commit object id on stdout. The log message is read
+from the standard input, unless `-m` or `-F` options are given.
+
+A commit object may have any number of parents. With exactly one
+parent, it is an ordinary commit. Having more than one parent makes
+the commit a merge between several lines of history. Initial (root)
+commits have no parents.
+
+While a tree represents a particular directory state of a working
+directory, a commit represents that state in "time", and explains how
+to get there.
+
+Normally a commit would identify a new "HEAD" state, and while Git
+doesn't care where you save the note about that state, in practice we
+tend to just write the result to the file that is pointed at by
+`.git/HEAD`, so that we can always see what the last committed
+state was.
+
+OPTIONS
+-------
+<tree>::
+	An existing tree object
+
+-p <parent>::
+	Each '-p' indicates the id of a parent commit object.
+
+-m <message>::
+	A paragraph in the commit log message. This can be given more than
+	once and each <message> becomes its own paragraph.
+
+-F <file>::
+	Read the commit log message from the given file. Use `-` to read
+	from the standard input.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
+
+--no-gpg-sign::
+	Countermand `commit.gpgSign` configuration variable that is
+	set to force each and every commit to be signed.
+
+
+Commit Information
+------------------
+
+A commit encapsulates:
+
+- all parent object ids
+- author name, email and date
+- committer name and email and the commit time.
+
+While parent object ids are provided on the command line, author and
+committer information is taken from the following environment variables,
+if set:
+
+	GIT_AUTHOR_NAME
+	GIT_AUTHOR_EMAIL
+	GIT_AUTHOR_DATE
+	GIT_COMMITTER_NAME
+	GIT_COMMITTER_EMAIL
+	GIT_COMMITTER_DATE
+
+(nb "<", ">" and "\n"s are stripped)
+
+In case (some of) these environment variables are not set, the information
+is taken from the configuration items user.name and user.email, or, if not
+present, the environment variable EMAIL, or, if that is not set,
+system user name and the hostname used for outgoing mail (taken
+from `/etc/mailname` and falling back to the fully qualified hostname when
+that file does not exist).
+
+A commit comment is read from stdin. If a changelog
+entry is not provided via "<" redirection, 'git commit-tree' will just wait
+for one to be entered and terminated with ^D.
+
+include::date-formats.txt[]
+
+Discussion
+----------
+
+include::i18n.txt[]
+
+FILES
+-----
+/etc/mailname
+
+SEE ALSO
+--------
+linkgit:git-write-tree[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

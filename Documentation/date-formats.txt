@@ -1,0 +1,26 @@
+DATE FORMATS
+------------
+
+The GIT_AUTHOR_DATE, GIT_COMMITTER_DATE environment variables
+ifdef::git-commit[]
+and the `--date` option
+endif::git-commit[]
+support the following date formats:
+
+Git internal format::
+	It is `<unix timestamp> <time zone offset>`, where `<unix
+	timestamp>` is the number of seconds since the UNIX epoch.
+	`<time zone offset>` is a positive or negative offset from UTC.
+	For example CET (which is 2 hours ahead UTC) is `+0200`.
+
+RFC 2822::
+	The standard email format as described by RFC 2822, for example
+	`Thu, 07 Apr 2005 22:13:13 +0200`.
+
+ISO 8601::
+	Time and date specified by the ISO 8601 standard, for example
+	`2005-04-07T22:13:13`. The parser accepts a space instead of the
+	`T` character as well.
++
+NOTE: In addition, the date part is accepted in the following formats:
+`YYYY.MM.DD`, `MM/DD/YYYY` and `DD.MM.YYYY`.

@@ -1,0 +1,78 @@
+Git v1.7.10.1 Release Notes
+===========================
+
+Additions since v1.7.10
+-----------------------
+
+Localization message files for Danish and German have been added.
+
+
+Fixes since v1.7.10
+-------------------
+
+ * "git add -p" is not designed to deal with unmerged paths but did
+   not exclude them and tried to apply funny patches only to fail.
+
+ * "git blame" started missing quite a few changes from the origin
+   since we stopped using the diff minimization by default in v1.7.2
+   era.
+
+ * When PATH contains an unreadable directory, alias expansion code
+   did not kick in, and failed with an error that said "git-subcmd"
+   was not found.
+
+ * "git clean -d -f" (not "-d -f -f") is supposed to protect nested
+   working trees of independent git repositories that exist in the
+   current project working tree from getting removed, but the
+   protection applied only to such working trees that are at the
+   top-level of the current project by mistake.
+
+ * "git commit --author=$name" did not tell the name that was being
+   recorded in the resulting commit to hooks, even though it does do
+   so when the end user overrode the authorship via the
+   "GIT_AUTHOR_NAME" environment variable.
+
+ * When "git commit --template F" errors out because the user did not
+   touch the message, it claimed that it aborts due to "empty
+   message", which was utterly wrong.
+
+ * The regexp configured with diff.wordregex was incorrectly reused
+   across files.
+
+ * An age-old corner case bug in combine diff (only triggered with -U0
+   and the hunk at the beginning of the file needs to be shown) has
+   been fixed.
+
+ * Rename detection logic used to match two empty files as renames
+   during merge-recursive, leading to unnatural mismerges.
+
+ * The parser in "fast-import" did not diagnose ":9" style references
+   that is not followed by required SP/LF as an error.
+
+ * When "git fetch" encounters repositories with too many references,
+   the command line of "fetch-pack" that is run by a helper
+   e.g. remote-curl, may fail to hold all of them. Now such an
+   internal invocation can feed the references through the standard
+   input of "fetch-pack".
+
+ * "git fetch" that recurses into submodules on demand did not check
+   if it needs to go into submodules when non branches (most notably,
+   tags) are fetched.
+
+ * "log -p --graph" used with "--stat" had a few formatting error.
+
+ * Running "notes merge --commit" failed to perform correctly when run
+   from any directory inside $GIT_DIR/.  When "notes merge" stops with
+   conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
+   to resolve it.
+
+ * The 'push to upstream' implementation was broken in some corner
+   cases. "git push $there" without refspec, when the current branch
+   is set to push to a remote different from $there, used to push to
+   $there using the upstream information to a remote unreleated to
+   $there.
+
+ * Giving "--continue" to a conflicted "rebase -i" session skipped a
+   commit that only results in changes to submodules.
+
+Also contains minor fixes and documentation updates.

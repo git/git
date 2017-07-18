@@ -1,0 +1,61 @@
+Git v1.8.2.2 Release Notes
+==========================
+
+Fixes since v1.8.2.1
+--------------------
+
+ * Zsh completion forgot that '%' character used to signal untracked
+   files needs to be escaped with another '%'.
+
+ * A commit object whose author or committer ident are malformed
+   crashed some code that trusted that a name, an email and an
+   timestamp can always be found in it.
+
+ * The new core.commentchar configuration was not applied to a few
+   places.
+
+ * "git pull --rebase" did not pass "-v/-q" options to underlying
+   "git rebase".
+
+ * When receive-pack detects error in the pack header it received in
+   order to decide which of unpack-objects or index-pack to run, it
+   returned without closing the error stream, which led to a hang
+   sideband thread.
+
+ * "git diff --diff-algorithm=algo" was understood by the command line
+   parser, but "git diff --diff-algorithm algo" was not.
+
+ * "git log -S/-G" started paying attention to textconv filter, but
+   there was no way to disable this.  Make it honor --no-textconv
+   option.
+
+ * "git merge $(git rev-parse v1.8.2)" behaved quite differently from
+   "git merge v1.8.2", as if v1.8.2 were written as v1.8.2^0 and did
+   not pay much attention to the annotated tag payload.  Make the code
+   notice the type of the tag object, in addition to the dwim_ref()
+   based classification the current code uses (i.e. the name appears
+   in refs/tags/) to decide when to special case merging of tags.
+
+ * "git cherry-pick" and "git revert" can take more than one commit
+   on the command line these days, but it was not mentioned on the usage
+   text.
+
+ * Perl scripts like "git-svn" closed (not redirecting to /dev/null)
+   the standard error stream, which is not a very smart thing to do.
+   Later open may return file descriptor #2 for unrelated purpose, and
+   error reporting code may write into them.
+
+ * "git apply --whitespace=fix" was not prepared to see a line getting
+   longer after fixing whitespaces (e.g. tab-in-indent aka Python).
+
+ * "git diff/log --cc" did not work well with options that ignore
+   whitespace changes.
+
+ * Documentation on setting up a http server that requires
+   authentication only on the push but not fetch has been clarified.
+
+ * A few bugfixes to "git rerere" working on corner case merge
+   conflicts have been applied.
+
+ * "git bundle" did not like a bundle created using a commit without
+   any message as its one of the prerequisites.

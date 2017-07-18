@@ -1,0 +1,241 @@
+Git v1.8.1 Release Notes
+========================
+
+Backward compatibility notes
+----------------------------
+
+In the next major release (not *this* one), we will change the
+behavior of the "git push" command.
+
+When "git push [$there]" does not say what to push, we have used the
+traditional "matching" semantics so far (all your branches were sent
+to the remote as long as there already are branches of the same name
+over there).  We will use the "simple" semantics that pushes the
+current branch to the branch with the same name, only when the current
+branch is set to integrate with that remote branch.  There is a user
+preference configuration variable "push.default" to change this, and
+"git push" will warn about the upcoming change until you set this
+variable in this release.
+
+"git branch --set-upstream" is deprecated and may be removed in a
+relatively distant future.  "git branch [-u|--set-upstream-to]" has
+been introduced with a saner order of arguments to replace it.
+
+
+Updates since v1.8.0
+--------------------
+
+UI, Workflows & Features
+
+ * Command-line completion scripts for tcsh and zsh have been added.
+
+ * "git-prompt" scriptlet (in contrib/completion) can be told to paint
+   pieces of the hints in the prompt string in colors.
+
+ * Some documentation pages that used to ship only in the plain text
+   format are now formatted in HTML as well.
+
+ * We used to have a workaround for a bug in ancient "less" that
+   causes it to exit without any output when the terminal is resized.
+   The bug has been fixed in "less" version 406 (June 2007), and the
+   workaround has been removed in this release.
+
+ * When "git checkout" checks out a branch, it tells the user how far
+   behind (or ahead) the new branch is relative to the remote tracking
+   branch it builds upon.  The message now also advises how to sync
+   them up by pushing or pulling.  This can be disabled with the
+   advice.statusHints configuration variable.
+
+ * "git config --get" used to diagnose presence of multiple
+   definitions of the same variable in the same configuration file as
+   an error, but it now applies the "last one wins" rule used by the
+   internal configuration logic.  Strictly speaking, this may be an
+   API regression but it is expected that nobody will notice it in
+   practice.
+
+ * A new configuration variable "diff.context" can be used to
+   give the default number of context lines in the patch output, to
+   override the hardcoded default of 3 lines.
+
+ * "git format-patch" learned the "--notes=<ref>" option to give
+   notes for the commit after the three-dash lines in its output.
+
+ * "git log -p -S<string>" now looks for the <string> after applying
+   the textconv filter (if defined); earlier it inspected the contents
+   of the blobs without filtering.
+
+ * "git log --grep=<pcre>" learned to honor the "grep.patterntype"
+   configuration set to "perl".
+
+ * "git replace -d <object>" now interprets <object> as an extended
+   SHA-1 (e.g. HEAD~4 is allowed), instead of only accepting full hex
+   object name.
+
+ * "git rm $submodule" used to punt on removing a submodule working
+   tree to avoid losing the repository embedded in it.  Because
+   recent git uses a mechanism to separate the submodule repository
+   from the submodule working tree, "git rm" learned to detect this
+   case and removes the submodule working tree when it is safe to do so.
+
+ * "git send-email" used to prompt for the sender address, even when
+   the committer identity is well specified (e.g. via user.name and
+   user.email configuration variables).  The command no longer gives
+   this prompt when not necessary.
+
+ * "git send-email" did not allow non-address garbage strings to
+   appear after addresses on Cc: lines in the patch files (and when
+   told to pick them up to find more recipients), e.g.
+
+     Cc: Stable Kernel <stable@k.org> # for v3.2 and up
+
+   The command now strips " # for v3.2 and up" part before adding the
+   remainder of this line to the list of recipients.
+
+ * "git submodule add" learned to add a new submodule at the same
+   path as the path where an unrelated submodule was bound to in an
+   existing revision via the "--name" option.
+
+ * "git submodule sync" learned the "--recursive" option.
+
+ * "diff.submodule" configuration variable can be used to give custom
+   default value to the "git diff --submodule" option.
+
+ * "git symbolic-ref" learned the "-d $symref" option to delete the
+   named symbolic ref, which is more intuitive way to spell it than
+   "update-ref -d --no-deref $symref".
+
+
+Foreign Interface
+
+ * "git cvsimport" can be told to record timezones (other than GMT)
+   per-author via its author info file.
+
+ * The remote helper interface to interact with subversion
+   repositories (one of the GSoC 2012 projects) has been merged.
+
+ * A new remote-helper interface for Mercurial has been added to
+   contrib/remote-helpers.
+
+ * The documentation for git(1) was pointing at a page at an external
+   site for the list of authors that no longer existed.  The link has
+   been updated to point at an alternative site.
+
+
+Performance, Internal Implementation, etc.
+
+ * Compilation on Cygwin with newer header files are supported now.
+
+ * A couple of low-level implementation updates on MinGW.
+
+ * The logic to generate the initial advertisement from "upload-pack"
+   (i.e. what is invoked by "git fetch" on the other side of the
+   connection) to list what refs are available in the repository has
+   been optimized.
+
+ * The logic to find set of attributes that match a given path has
+   been optimized.
+
+ * Use preloadindex in "git diff-index" and "git update-index", which
+   has a nice speedup on systems with slow stat calls (and even on
+   Linux).
+
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.8.0
+------------------
+
+Unless otherwise noted, all the fixes since v1.8.0 in the maintenance
+track are contained in this release (see release notes to them for
+details).
+
+ * The configuration parser had an unnecessary hardcoded limit on
+   variable names that was not checked consistently.
+
+ * The "say" function in the test scaffolding incorrectly allowed
+   "echo" to interpret "\a" as if it were a C-string asking for a
+   BEL output.
+
+ * "git mergetool" feeds /dev/null as a common ancestor when dealing
+   with an add/add conflict, but p4merge backend cannot handle
+   it. Work it around by passing a temporary empty file.
+
+ * "git log -F -E --grep='<ere>'" failed to use the given <ere>
+   pattern as extended regular expression, and instead looked for the
+   string literally.
+
+ * "git grep -e pattern <tree>" asked the attribute system to read
+   "<tree>:.gitattributes" file in the working tree, which was
+   nonsense.
+
+ * A symbolic ref refs/heads/SYM was not correctly removed with "git
+   branch -d SYM"; the command removed the ref pointed by SYM
+   instead.
+
+ * Update "remote tracking branch" in the documentation to
+   "remote-tracking branch".
+
+ * "git pull --rebase" run while the HEAD is detached tried to find
+   the upstream branch of the detached HEAD (which by definition
+   does not exist) and emitted unnecessary error messages.
+
+ * The refs/replace hierarchy was not mentioned in the
+   repository-layout docs.
+
+ * Various rfc2047 quoting issues around a non-ASCII name on the
+   From: line in the output from format-patch have been corrected.
+
+ * Sometimes curl_multi_timeout() function suggested a wrong timeout
+   value when there is no file descriptor to wait on and the http
+   transport ended up sleeping for minutes in select(2) system call.
+   A workaround has been added for this.
+
+ * For a fetch refspec (or the result of applying wildcard on one),
+   we always want the RHS to map to something inside "refs/"
+   hierarchy, but the logic to check it was not exactly right.
+   (merge 5c08c1f jc/maint-fetch-tighten-refname-check later to maint).
+
+ * "git diff -G<pattern>" did not honor textconv filter when looking
+   for changes.
+
+ * Some HTTP servers ask for auth only during the actual packing phase
+   (not in ls-remote phase); this is not really a recommended
+   configuration, but the clients used to fail to authenticate with
+   such servers.
+   (merge 2e736fd jk/maint-http-half-auth-fetch later to maint).
+
+ * "git p4" used to try expanding malformed "$keyword$" that spans
+   across multiple lines.
+
+ * Syntax highlighting in "gitweb" was not quite working.
+
+ * RSS feed from "gitweb" had a xss hole in its title output.
+
+ * "git config --path $key" segfaulted on "[section] key" (a boolean
+   "true" spelled without "=", not "[section] key = true").
+
+ * "git checkout -b foo" while on an unborn branch did not say
+   "Switched to a new branch 'foo'" like other cases.
+
+ * Various codepaths have workaround for a common misconfiguration to
+   spell "UTF-8" as "utf8", but it was not used uniformly.  Most
+   notably, mailinfo (which is used by "git am") lacked this support.
+
+ * We failed to mention a file without any content change but whose
+   permission bit was modified, or (worse yet) a new file without any
+   content in the "git diff --stat" output.
+
+ * When "--stat-count" hides a diffstat for binary contents, the total
+   number of added and removed lines at the bottom was computed
+   incorrectly.
+
+ * When "--stat-count" hides a diffstat for unmerged paths, the total
+   number of affected files at the bottom of the "diff --stat" output
+   was computed incorrectly.
+
+ * "diff --shortstat" miscounted the total number of affected files
+   when there were unmerged paths.
+
+ * "update-ref -d --deref SYM" to delete a ref through a symbolic ref
+   that points to it did not remove it correctly.

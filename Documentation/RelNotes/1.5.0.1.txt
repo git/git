@@ -1,0 +1,42 @@
+GIT v1.5.0.1 Release Notes
+==========================
+
+Fixes since v1.5.0
+------------------
+
+* Documentation updates
+
+  - Clarifications and corrections to 1.5.0 release notes.
+
+  - The main documentation did not link to git-remote documentation.
+
+  - Clarified introductory text of git-rebase documentation.
+
+  - Converted remaining mentions of update-index on Porcelain
+    documents to git-add/git-rm.
+
+  - Some i18n.* configuration variables were incorrectly
+    described as core.*; fixed.
+
+* Bugfixes
+
+  - git-add and git-update-index on a filesystem on which
+    executable bits are unreliable incorrectly reused st_mode
+    bits even when the path changed between symlink and regular
+    file.
+
+  - git-daemon marks the listening sockets with FD_CLOEXEC so
+    that it won't be leaked into the children.
+
+  - segfault from git-blame when the mandatory pathname
+    parameter was missing was fixed; usage() message is given
+    instead.
+
+  - git-rev-list did not read $GIT_DIR/config file, which means
+    that did not honor i18n.logoutputencoding correctly.
+
+* Tweaks
+
+  - sliding mmap() inefficiently mmaped the same region of a
+    packfile with an access pattern that used objects in the
+    reverse order.  This has been made more efficient.

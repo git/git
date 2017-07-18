@@ -1,0 +1,22 @@
+diff_cmd () {
+	"$merge_tool_path" -f emerge-files-command "$LOCAL" "$REMOTE"
+}
+
+merge_cmd () {
+	if $base_present
+	then
+		"$merge_tool_path" \
+			-f emerge-files-with-ancestor-command \
+			"$LOCAL" "$REMOTE" "$BASE" \
+			"$(basename "$MERGED")"
+	else
+		"$merge_tool_path" \
+			-f emerge-files-command \
+			"$LOCAL" "$REMOTE" \
+			"$(basename "$MERGED")"
+	fi
+}
+
+translate_merge_tool_path() {
+	echo emacs
+}

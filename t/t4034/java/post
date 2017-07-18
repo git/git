@@ -1,0 +1,19 @@
+Foo() : x(0&42) { bar(x); }
+cout<<"Hello World?\n"<<endl;
+(1) (-1e10) (0xabcdef) 'y'
+[x] x->y x.y
+!x ~x x++ x-- x*y x&y
+x*y x/y x%y
+x+y x-y
+x<<y x>>y
+x<y x<=y x>y x>=y
+x==y x!=y
+x&y
+x^y
+x|y
+x&&y
+x||y
+x?y:z
+x=y x+=y x-=y x*=y x/=y x%=y x<<=y x>>=y x&=y x^=y x|=y
+x,y
+x::y

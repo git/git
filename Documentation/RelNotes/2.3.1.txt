@@ -1,0 +1,52 @@
+Git v2.3.1 Release Notes
+========================
+
+Fixes since v2.3
+----------------
+
+ * The interactive "show a list and let the user choose from it"
+   interface "add -i" used showed and prompted to the user even when
+   the candidate list was empty, against which the only "choice" the
+   user could have made was to choose nothing.
+
+ * "git apply --whitespace=fix" used to under-allocate the memory
+   when the fix resulted in a longer text than the original patch.
+
+ * "git log --help" used to show rev-list options that are irrelevant
+   to the "log" command.
+
+ * The error message from "git commit", when a non-existing author
+   name was given as value to the "--author=" parameter, has been
+   reworded to avoid misunderstanding.
+
+ * A broken pack .idx file in the receiving repository prevented the
+   dumb http transport from fetching a good copy of it from the other
+   side.
+
+ * The documentation incorrectly said that C(opy) and R(ename) are the
+   only ones that can be followed by the score number in the output in
+   the --raw format.
+
+ * Fix a misspelled conditional that is always true.
+
+ * Code to read branch name from various files in .git/ directory
+   would have misbehaved if the code to write them left an empty file.
+
+ * The "git push" documentation made the "--repo=<there>" option
+   easily misunderstood.
+
+ * After attempting and failing a password-less authentication
+   (e.g. kerberos), libcURL refuses to fall back to password based
+   Basic authentication without a bit of help/encouragement.
+
+ * Setting diff.submodule to 'log' made "git format-patch" produce
+   broken patches.
+
+ * "git rerere" (invoked internally from many mergy operations) did
+   not correctly signal errors when told to update the working tree
+   files and failed to do so for whatever reason.
+
+ * "git blame HEAD -- missing" failed to correctly say "HEAD" when it
+   tried to say "No such path 'missing' in HEAD".
+
+Also contains typofixes, documentation updates and trivial code clean-ups.

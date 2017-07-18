@@ -1,0 +1,14 @@
+Git v1.7.3.1 Release Notes
+==========================
+
+Fixes since v1.7.3
+------------------
+
+ * "git stash show stash@{$n}" was accidentally broken in 1.7.3 ("git
+   stash show" without any argument still worked, though).
+
+ * "git stash branch $branch stash@{$n}" was accidentally broken in
+   1.7.3 and started dropping the named stash even when branch creation
+   failed.
+
+And other minor fixes and documentation updates.

@@ -1,0 +1,271 @@
+#! /usr/bin/env python
+
+"""Migrate a post-receive-email configuration to be usable with git_multimail.py.
+
+See README.migrate-from-post-receive-email for more information.
+
+"""
+
+import sys
+import optparse
+
+from git_multimail import CommandError
+from git_multimail import Config
+from git_multimail import read_output
+
+
+OLD_NAMES = [
+    'mailinglist',
+    'announcelist',
+    'envelopesender',
+    'emailprefix',
+    'showrev',
+    'emailmaxlines',
+    'diffopts',
+    'scancommitforcc',
+    ]
+
+NEW_NAMES = [
+    'environment',
+    'reponame',
+    'mailinglist',
+    'refchangelist',
+    'commitlist',
+    'announcelist',
+    'announceshortlog',
+    'envelopesender',
+    'administrator',
+    'emailprefix',
+    'emailmaxlines',
+    'diffopts',
+    'emaildomain',
+    'scancommitforcc',
+    ]
+
+
+INFO = """\
+
+SUCCESS!
+
+Your post-receive-email configuration has been converted to
+git-multimail format.  Please see README and
+README.migrate-from-post-receive-email to learn about other
+git-multimail configuration possibilities.
+
+For example, git-multimail has the following new options with no
+equivalent in post-receive-email.  You might want to read about them
+to see if they would be useful in your situation:
+
+"""
+
+
+def _check_old_config_exists(old):
+    """Check that at least one old configuration value is set."""
+
+    for name in OLD_NAMES:
+        if name in old:
+            return True
+
+    return False
+
+
+def _check_new_config_clear(new):
+    """Check that none of the new configuration names are set."""
+
+    retval = True
+    for name in NEW_NAMES:
+        if name in new:
+            if retval:
+                sys.stderr.write('INFO: The following configuration values already exist:\n\n')
+            sys.stderr.write('    "%s.%s"\n' % (new.section, name))
+            retval = False
+
+    return retval
+
+
+def erase_values(config, names):
+    for name in names:
+        if name in config:
+            try:
+                sys.stderr.write('...unsetting "%s.%s"\n' % (config.section, name))
+                config.unset_all(name)
+            except CommandError:
+                sys.stderr.write(
+                    '\nWARNING: could not unset "%s.%s".  '
+                    'Perhaps it is not set at the --local level?\n\n'
+                    % (config.section, name)
+                    )
+
+
+def is_section_empty(section, local):
+    """Return True iff the specified configuration section is empty.
+
+    Iff local is True, use the --local option when invoking 'git
+    config'."""
+
+    if local:
+        local_option = ['--local']
+    else:
+        local_option = []
+
+    try:
+        read_output(
+            ['git', 'config']
+            + local_option
+            + ['--get-regexp', '^%s\.' % (section,)]
+            )
+    except CommandError, e:
+        if e.retcode == 1:
+            # This means that no settings were found.
+            return True
+        else:
+            raise
+    else:
+        return False
+
+
+def remove_section_if_empty(section):
+    """If the specified configuration section is empty, delete it."""
+
+    try:
+        empty = is_section_empty(section, local=True)
+    except CommandError:
+        # Older versions of git do not support the --local option, so
+        # if the first attempt fails, try without --local.
+        try:
+            empty = is_section_empty(section, local=False)
+        except CommandError:
+            sys.stderr.write(
+                '\nINFO: If configuration section "%s.*" is empty, you might want '
+                'to delete it.\n\n'
+                % (section,)
+                )
+            return
+
+    if empty:
+        sys.stderr.write('...removing section "%s.*"\n' % (section,))
+        read_output(['git', 'config', '--remove-section', section])
+    else:
+        sys.stderr.write(
+            '\nINFO: Configuration section "%s.*" still has contents.  '
+            'It will not be deleted.\n\n'
+            % (section,)
+            )
+
+
+def migrate_config(strict=False, retain=False, overwrite=False):
+    old = Config('hooks')
+    new = Config('multimailhook')
+    if not _check_old_config_exists(old):
+        sys.exit(
+            'Your repository has no post-receive-email configuration.  '
+            'Nothing to do.'
+            )
+    if not _check_new_config_clear(new):
+        if overwrite:
+            sys.stderr.write('\nWARNING: Erasing the above values...\n\n')
+            erase_values(new, NEW_NAMES)
+        else:
+            sys.exit(
+                '\nERROR: Refusing to overwrite existing values.  Use the --overwrite\n'
+                'option to continue anyway.'
+                )
+
+    name = 'showrev'
+    if name in old:
+        msg = 'git-multimail does not support "%s.%s"' % (old.section, name,)
+        if strict:
+            sys.exit(
+                'ERROR: %s.\n'
+                'Please unset that value then try again, or run without --strict.'
+                % (msg,)
+                )
+        else:
+            sys.stderr.write('\nWARNING: %s (ignoring).\n\n' % (msg,))
+
+    for name in ['mailinglist', 'announcelist']:
+        if name in old:
+            sys.stderr.write(
+                '...copying "%s.%s" to "%s.%s"\n' % (old.section, name, new.section, name)
+                )
+            new.set_recipients(name, old.get_recipients(name))
+
+    if strict:
+        sys.stderr.write(
+            '...setting "%s.commitlist" to the empty string\n' % (new.section,)
+            )
+        new.set_recipients('commitlist', '')
+        sys.stderr.write(
+            '...setting "%s.announceshortlog" to "true"\n' % (new.section,)
+            )
+        new.set('announceshortlog', 'true')
+
+    for name in ['envelopesender', 'emailmaxlines', 'diffopts', 'scancommitforcc']:
+        if name in old:
+            sys.stderr.write(
+                '...copying "%s.%s" to "%s.%s"\n' % (old.section, name, new.section, name)
+                )
+            new.set(name, old.get(name))
+
+    name = 'emailprefix'
+    if name in old:
+        sys.stderr.write(
+            '...copying "%s.%s" to "%s.%s"\n' % (old.section, name, new.section, name)
+            )
+        new.set(name, old.get(name))
+    elif strict:
+        sys.stderr.write(
+            '...setting "%s.%s" to "[SCM]" to preserve old subject lines\n'
+            % (new.section, name)
+            )
+        new.set(name, '[SCM]')
+
+    if not retain:
+        erase_values(old, OLD_NAMES)
+        remove_section_if_empty(old.section)
+
+    sys.stderr.write(INFO)
+    for name in NEW_NAMES:
+        if name not in OLD_NAMES:
+            sys.stderr.write('    "%s.%s"\n' % (new.section, name,))
+    sys.stderr.write('\n')
+
+
+def main(args):
+    parser = optparse.OptionParser(
+        description=__doc__,
+        usage='%prog [OPTIONS]',
+        )
+
+    parser.add_option(
+        '--strict', action='store_true', default=False,
+        help=(
+            'Slavishly configure git-multimail as closely as possible to '
+            'the post-receive-email configuration.  Default is to turn '
+            'on some new features that have no equivalent in post-receive-email.'
+            ),
+        )
+    parser.add_option(
+        '--retain', action='store_true', default=False,
+        help=(
+            'Retain the post-receive-email configuration values.  '
+            'Default is to delete them after the new values are set.'
+            ),
+        )
+    parser.add_option(
+        '--overwrite', action='store_true', default=False,
+        help=(
+            'Overwrite any existing git-multimail configuration settings.  '
+            'Default is to abort if such settings already exist.'
+            ),
+        )
+
+    (options, args) = parser.parse_args(args)
+
+    if args:
+        parser.error('Unexpected arguments: %s' % (' '.join(args),))
+
+    migrate_config(strict=options.strict, retain=options.retain, overwrite=options.overwrite)
+
+
+main(sys.argv[1:])

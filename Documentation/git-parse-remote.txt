@@ -1,0 +1,23 @@
+git-parse-remote(1)
+===================
+
+NAME
+----
+git-parse-remote - Routines to help parsing remote repository access parameters
+
+
+SYNOPSIS
+--------
+[verse]
+'. "$(git --exec-path)/git-parse-remote"'
+
+DESCRIPTION
+-----------
+This script is included in various scripts to supply
+routines to parse files under $GIT_DIR/remotes/ and
+$GIT_DIR/branches/ and configuration variables that are related
+to fetching, pulling and pushing.
+
+GIT
+---
+Part of the linkgit:git[1] suite

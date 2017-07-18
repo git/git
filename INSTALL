@@ -1,0 +1,223 @@
+
+		Git installation
+
+Normally you can just do "make" followed by "make install", and that
+will install the git programs in your own ~/bin/ directory.  If you want
+to do a global install, you can do
+
+	$ make prefix=/usr all doc info ;# as yourself
+	# make prefix=/usr install install-doc install-html install-info ;# as root
+
+(or prefix=/usr/local, of course).  Just like any program suite
+that uses $prefix, the built results have some paths encoded,
+which are derived from $prefix, so "make all; make prefix=/usr
+install" would not work.
+
+The beginning of the Makefile documents many variables that affect the way
+git is built.  You can override them either from the command line, or in a
+config.mak file.
+
+Alternatively you can use autoconf generated ./configure script to
+set up install paths (via config.mak.autogen), so you can write instead
+
+	$ make configure ;# as yourself
+	$ ./configure --prefix=/usr ;# as yourself
+	$ make all doc ;# as yourself
+	# make install install-doc install-html;# as root
+
+If you're willing to trade off (much) longer build time for a later
+faster git you can also do a profile feedback build with
+
+	$ make prefix=/usr profile
+	# make prefix=/usr PROFILE=BUILD install
+
+This will run the complete test suite as training workload and then
+rebuild git with the generated profile feedback. This results in a git
+which is a few percent faster on CPU intensive workloads.  This
+may be a good tradeoff for distribution packagers.
+
+Alternatively you can run profile feedback only with the git benchmark
+suite. This runs significantly faster than the full test suite, but
+has less coverage:
+
+	$ make prefix=/usr profile-fast
+	# make prefix=/usr PROFILE=BUILD install
+
+Or if you just want to install a profile-optimized version of git into
+your home directory, you could run:
+
+	$ make profile-install
+
+or
+	$ make profile-fast-install
+
+As a caveat: a profile-optimized build takes a *lot* longer since the
+git tree must be built twice, and in order for the profiling
+measurements to work properly, ccache must be disabled and the test
+suite has to be run using only a single CPU.  In addition, the profile
+feedback build stage currently generates a lot of additional compiler
+warnings.
+
+Issues of note:
+
+ - Ancient versions of GNU Interactive Tools (pre-4.9.2) installed a
+   program "git", whose name conflicts with this program.  But with
+   version 4.9.2, after long hiatus without active maintenance (since
+   around 1997), it changed its name to gnuit and the name conflict is no
+   longer a problem.
+
+   NOTE: When compiled with backward compatibility option, the GNU
+   Interactive Tools package still can install "git", but you can build it
+   with --disable-transition option to avoid this.
+
+ - You can use git after building but without installing if you want
+   to test drive it.  Simply run git found in bin-wrappers directory
+   in the build directory, or prepend that directory to your $PATH.
+   This however is less efficient than running an installed git, as
+   you always need an extra fork+exec to run any git subcommand.
+
+   It is still possible to use git without installing by setting a few
+   environment variables, which was the way this was done
+   traditionally.  But using git found in bin-wrappers directory in
+   the build directory is far simpler.  As a historical reference, the
+   old way went like this:
+
+	GIT_EXEC_PATH=`pwd`
+	PATH=`pwd`:$PATH
+	GITPERLLIB=`pwd`/perl/blib/lib
+	export GIT_EXEC_PATH PATH GITPERLLIB
+
+ - Git is reasonably self-sufficient, but does depend on a few external
+   programs and libraries.  Git can be used without most of them by adding
+   the approriate "NO_<LIBRARY>=YesPlease" to the make command line or
+   config.mak file.
+
+	- "zlib", the compression library. Git won't build without it.
+
+	- "ssh" is used to push and pull over the net.
+
+	- A POSIX-compliant shell is required to run many scripts needed
+	  for everyday use (e.g. "bisect", "pull").
+
+	- "Perl" version 5.8 or later is needed to use some of the
+	  features (e.g. preparing a partial commit using "git add -i/-p",
+	  interacting with svn repositories with "git svn").  If you can
+	  live without these, use NO_PERL.  Note that recent releases of
+	  Redhat/Fedora are reported to ship Perl binary package with some
+	  core modules stripped away (see http://lwn.net/Articles/477234/),
+	  so you might need to install additional packages other than Perl
+	  itself, e.g. Time::HiRes.
+
+	- git-imap-send needs the OpenSSL library to talk IMAP over SSL if
+	  you are using libcurl older than 7.34.0.  Otherwise you can use
+	  NO_OPENSSL without losing git-imap-send.
+
+	  By default, git uses OpenSSL for SHA1 but it will use its own
+	  library (inspired by Mozilla's) with either NO_OPENSSL or
+	  BLK_SHA1.  Also included is a version optimized for PowerPC
+	  (PPC_SHA1).
+
+	- "libcurl" library is used by git-http-fetch, git-fetch, and, if
+	  the curl version >= 7.34.0, for git-imap-send.  You might also
+	  want the "curl" executable for debugging purposes. If you do not
+	  use http:// or https:// repositories, and do not want to put
+	  patches into an IMAP mailbox, you do not have to have them
+	  (use NO_CURL).
+
+	- "expat" library; git-http-push uses it for remote lock
+	  management over DAV.  Similar to "curl" above, this is optional
+	  (with NO_EXPAT).
+
+	- "wish", the Tcl/Tk windowing shell is used in gitk to show the
+	  history graphically, and in git-gui.  If you don't want gitk or
+	  git-gui, you can use NO_TCLTK.
+
+	- A gettext library is used by default for localizing Git. The
+	  primary target is GNU libintl, but the Solaris gettext
+	  implementation also works.
+
+	  We need a gettext.h on the system for C code, gettext.sh (or
+	  Solaris gettext(1)) for shell scripts, and libintl-perl for Perl
+	  programs.
+
+	  Set NO_GETTEXT to disable localization support and make Git only
+	  use English. Under autoconf the configure script will do this
+	  automatically if it can't find libintl on the system.
+
+	- Python version 2.4 or later (but not 3.x, which is not
+	  supported by Perforce) is needed to use the git-p4 interface
+	  to Perforce.
+
+ - Some platform specific issues are dealt with Makefile rules,
+   but depending on your specific installation, you may not
+   have all the libraries/tools needed, or you may have
+   necessary libraries at unusual locations.  Please look at the
+   top of the Makefile to see what can be adjusted for your needs.
+   You can place local settings in config.mak and the Makefile
+   will include them.  Note that config.mak is not distributed;
+   the name is reserved for local settings.
+
+ - To build and install documentation suite, you need to have
+   the asciidoc/xmlto toolchain.  Because not many people are
+   inclined to install the tools, the default build target
+   ("make all") does _not_ build them.
+
+   "make doc" builds documentation in man and html formats; there are
+   also "make man", "make html" and "make info". Note that "make html"
+   requires asciidoc, but not xmlto. "make man" (and thus make doc)
+   requires both.
+
+   "make install-doc" installs documentation in man format only; there
+   are also "make install-man", "make install-html" and "make
+   install-info".
+
+   Building and installing the info file additionally requires
+   makeinfo and docbook2X.  Version 0.8.3 is known to work.
+
+   Building and installing the pdf file additionally requires
+   dblatex.  Version >= 0.2.7 is known to work.
+
+   All formats require at least asciidoc 8.4.1.
+
+   There are also "make quick-install-doc", "make quick-install-man"
+   and "make quick-install-html" which install preformatted man pages
+   and html documentation. To use these build targets, you need to
+   clone two separate git-htmldocs and git-manpages repositories next
+   to the clone of git itself.
+
+   It has been reported that docbook-xsl version 1.72 and 1.73 are
+   buggy; 1.72 misformats manual pages for callouts, and 1.73 needs
+   the patch in contrib/patches/docbook-xsl-manpages-charmap.patch
+
+   Users attempting to build the documentation on Cygwin may need to ensure
+   that the /etc/xml/catalog file looks something like this:
+
+   <?xml version="1.0"?>
+   <!DOCTYPE catalog PUBLIC
+      "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+      "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"
+   >
+   <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+     <rewriteURI
+       uriStartString = "http://docbook.sourceforge.net/release/xsl/current"
+       rewritePrefix = "/usr/share/sgml/docbook/xsl-stylesheets"
+     />
+     <rewriteURI
+       uriStartString="http://www.oasis-open.org/docbook/xml/4.5"
+       rewritePrefix="/usr/share/sgml/docbook/xml-dtd-4.5"
+     />
+  </catalog>
+
+  This can be achieved with the following two xmlcatalog commands:
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+        http://docbook.sourceforge.net/release/xsl/current \
+        /usr/share/sgml/docbook/xsl-stylesheets \
+     /etc/xml/catalog
+
+  xmlcatalog --noout \
+     --add rewriteURI \
+         http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
+         /usr/share/sgml/docbook/xml-dtd-4.5 \
+     /etc/xml/catalog

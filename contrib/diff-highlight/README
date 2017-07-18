@@ -1,0 +1,193 @@
+diff-highlight
+==============
+
+Line oriented diffs are great for reviewing code, because for most
+hunks, you want to see the old and the new segments of code next to each
+other. Sometimes, though, when an old line and a new line are very
+similar, it's hard to immediately see the difference.
+
+You can use "--color-words" to highlight only the changed portions of
+lines. However, this can often be hard to read for code, as it loses
+the line structure, and you end up with oddly formatted bits.
+
+Instead, this script post-processes the line-oriented diff, finds pairs
+of lines, and highlights the differing segments.  It's currently very
+simple and stupid about doing these tasks. In particular:
+
+  1. It will only highlight hunks in which the number of removed and
+     added lines is the same, and it will pair lines within the hunk by
+     position (so the first removed line is compared to the first added
+     line, and so forth). This is simple and tends to work well in
+     practice. More complex changes don't highlight well, so we tend to
+     exclude them due to the "same number of removed and added lines"
+     restriction. Or even if we do try to highlight them, they end up
+     not highlighting because of our "don't highlight if the whole line
+     would be highlighted" rule.
+
+  2. It will find the common prefix and suffix of two lines, and
+     consider everything in the middle to be "different". It could
+     instead do a real diff of the characters between the two lines and
+     find common subsequences. However, the point of the highlight is to
+     call attention to a certain area. Even if some small subset of the
+     highlighted area actually didn't change, that's OK. In practice it
+     ends up being more readable to just have a single blob on the line
+     showing the interesting bit.
+
+The goal of the script is therefore not to be exact about highlighting
+changes, but to call attention to areas of interest without being
+visually distracting.  Non-diff lines and existing diff coloration is
+preserved; the intent is that the output should look exactly the same as
+the input, except for the occasional highlight.
+
+Use
+---
+
+You can try out the diff-highlight program with:
+
+---------------------------------------------
+git log -p --color | /path/to/diff-highlight
+---------------------------------------------
+
+If you want to use it all the time, drop it in your $PATH and put the
+following in your git configuration:
+
+---------------------------------------------
+[pager]
+	log = diff-highlight | less
+	show = diff-highlight | less
+	diff = diff-highlight | less
+---------------------------------------------
+
+
+Color Config
+------------
+
+You can configure the highlight colors and attributes using git's
+config. The colors for "old" and "new" lines can be specified
+independently. There are two "modes" of configuration:
+
+  1. You can specify a "highlight" color and a matching "reset" color.
+     This will retain any existing colors in the diff, and apply the
+     "highlight" and "reset" colors before and after the highlighted
+     portion.
+
+  2. You can specify a "normal" color and a "highlight" color. In this
+     case, existing colors are dropped from that line. The non-highlighted
+     bits of the line get the "normal" color, and the highlights get the
+     "highlight" color.
+
+If no "new" colors are specified, they default to the "old" colors. If
+no "old" colors are specified, the default is to reverse the foreground
+and background for highlighted portions.
+
+Examples:
+
+---------------------------------------------
+# Underline highlighted portions
+[color "diff-highlight"]
+oldHighlight = ul
+oldReset = noul
+---------------------------------------------
+
+---------------------------------------------
+# Varying background intensities
+[color "diff-highlight"]
+oldNormal = "black #f8cbcb"
+oldHighlight = "black #ffaaaa"
+newNormal = "black #cbeecb"
+newHighlight = "black #aaffaa"
+---------------------------------------------
+
+
+Bugs
+----
+
+Because diff-highlight relies on heuristics to guess which parts of
+changes are important, there are some cases where the highlighting is
+more distracting than useful. Fortunately, these cases are rare in
+practice, and when they do occur, the worst case is simply a little
+extra highlighting. This section documents some cases known to be
+sub-optimal, in case somebody feels like working on improving the
+heuristics.
+
+1. Two changes on the same line get highlighted in a blob. For example,
+   highlighting:
+
+----------------------------------------------
+-foo(buf, size);
++foo(obj->buf, obj->size);
+----------------------------------------------
+
+   yields (where the inside of "+{}" would be highlighted):
+
+----------------------------------------------
+-foo(buf, size);
++foo(+{obj->buf, obj->}size);
+----------------------------------------------
+
+   whereas a more semantically meaningful output would be:
+
+----------------------------------------------
+-foo(buf, size);
++foo(+{obj->}buf, +{obj->}size);
+----------------------------------------------
+
+   Note that doing this right would probably involve a set of
+   content-specific boundary patterns, similar to word-diff. Otherwise
+   you get junk like:
+
+-----------------------------------------------------
+-this line has some -{i}nt-{ere}sti-{ng} text on it
++this line has some +{fa}nt+{a}sti+{c} text on it
+-----------------------------------------------------
+
+   which is less readable than the current output.
+
+2. The multi-line matching assumes that lines in the pre- and post-image
+   match by position. This is often the case, but can be fooled when a
+   line is removed from the top and a new one added at the bottom (or
+   vice versa). Unless the lines in the middle are also changed, diffs
+   will show this as two hunks, and it will not get highlighted at all
+   (which is good). But if the lines in the middle are changed, the
+   highlighting can be misleading. Here's a pathological case:
+
+-----------------------------------------------------
+-one
+-two
+-three
+-four
++two 2
++three 3
++four 4
++five 5
+-----------------------------------------------------
+
+   which gets highlighted as:
+
+-----------------------------------------------------
+-one
+-t-{wo}
+-three
+-f-{our}
++two 2
++t+{hree 3}
++four 4
++f+{ive 5}
+-----------------------------------------------------
+
+   because it matches "two" to "three 3", and so forth. It would be
+   nicer as:
+
+-----------------------------------------------------
+-one
+-two
+-three
+-four
++two +{2}
++three +{3}
++four +{4}
++five 5
+-----------------------------------------------------
+
+   which would probably involve pre-matching the lines into pairs
+   according to some heuristic.

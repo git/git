@@ -1,0 +1,167 @@
+git-diff-tree(1)
+================
+
+NAME
+----
+git-diff-tree - Compares the content and mode of blobs found via two tree objects
+
+
+SYNOPSIS
+--------
+[verse]
+'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
+	      [-t] [-r] [-c | --cc] [--root] [<common diff options>]
+	      <tree-ish> [<tree-ish>] [<path>...]
+
+DESCRIPTION
+-----------
+Compares the content and mode of the blobs found via two tree objects.
+
+If there is only one <tree-ish> given, the commit is compared with its parents
+(see --stdin below).
+
+Note that 'git diff-tree' can use the tree encapsulated in a commit object.
+
+OPTIONS
+-------
+include::diff-options.txt[]
+
+<tree-ish>::
+	The id of a tree object.
+
+<path>...::
+	If provided, the results are limited to a subset of files
+	matching one of these prefix strings.
+	i.e., file matches `/^<pattern1>|<pattern2>|.../`
+	Note that this parameter does not provide any wildcard or regexp
+	features.
+
+-r::
+        recurse into sub-trees
+
+-t::
+	show tree entry itself as well as subtrees.  Implies -r.
+
+--root::
+	When '--root' is specified the initial commit will be shown as a big
+	creation event. This is equivalent to a diff against the NULL tree.
+
+--stdin::
+	When '--stdin' is specified, the command does not take
+	<tree-ish> arguments from the command line.  Instead, it
+	reads lines containing either two <tree>, one <commit>, or a
+	list of <commit> from its standard input.  (Use a single space
+	as separator.)
++
+When two trees are given, it compares the first tree with the second.
+When a single commit is given, it compares the commit with its
+parents.  The remaining commits, when given, are used as if they are
+parents of the first commit.
++
+When comparing two trees, the ID of both trees (separated by a space
+and terminated by a newline) is printed before the difference.  When
+comparing commits, the ID of the first (or only) commit, followed by a
+newline, is printed.
++
+The following flags further affect the behavior when comparing
+commits (but not trees).
+
+-m::
+	By default, 'git diff-tree --stdin' does not show
+	differences for merge commits.  With this flag, it shows
+	differences to that commit from all of its parents. See
+	also '-c'.
+
+-s::
+	By default, 'git diff-tree --stdin' shows differences,
+	either in machine-readable form (without '-p') or in patch
+	form (with '-p').  This output can be suppressed.  It is
+	only useful with '-v' flag.
+
+-v::
+	This flag causes 'git diff-tree --stdin' to also show
+	the commit message before the differences.
+
+include::pretty-options.txt[]
+
+--no-commit-id::
+	'git diff-tree' outputs a line with the commit ID when
+	applicable.  This flag suppressed the commit ID output.
+
+-c::
+	This flag changes the way a merge commit is displayed
+	(which means it is useful only when the command is given
+	one <tree-ish>, or '--stdin').  It shows the differences
+	from each of the parents to the merge result simultaneously
+	instead of showing pairwise diff between a parent and the
+	result one at a time (which is what the '-m' option does).
+	Furthermore, it lists only files which were modified
+	from all parents.
+
+--cc::
+	This flag changes the way a merge commit patch is displayed,
+	in a similar way to the '-c' option. It implies the '-c'
+	and '-p' options and further compresses the patch output
+	by omitting uninteresting hunks whose the contents in the parents
+	have only two variants and the merge result picks one of them
+	without modification.  When all hunks are uninteresting, the commit
+	itself and the commit log message is not shown, just like in any other
+	"empty diff" case.
+
+--always::
+	Show the commit itself and the commit log message even
+	if the diff itself is empty.
+
+
+include::pretty-formats.txt[]
+
+
+Limiting Output
+---------------
+If you're only interested in differences in a subset of files, for
+example some architecture-specific files, you might do:
+
+	git diff-tree -r <tree-ish> <tree-ish> arch/ia64 include/asm-ia64
+
+and it will only show you what changed in those two directories.
+
+Or if you are searching for what changed in just `kernel/sched.c`, just do
+
+	git diff-tree -r <tree-ish> <tree-ish> kernel/sched.c
+
+and it will ignore all differences to other files.
+
+The pattern is always the prefix, and is matched exactly.  There are no
+wildcards.  Even stricter, it has to match a complete path component.
+I.e. "foo" does not pick up `foobar.h`.  "foo" does match `foo/bar.h`
+so it can be used to name subdirectories.
+
+An example of normal usage is:
+
+  torvalds@ppc970:~/git> git diff-tree --abbrev 5319e4
+  :100664 100664 ac348b... a01513...	git-fsck-objects.c
+
+which tells you that the last commit changed just one file (it's from
+this one:
+
+-----------------------------------------------------------------------------
+commit 3c6f7ca19ad4043e9e72fa94106f352897e651a8
+tree 5319e4d609cdd282069cc4dce33c1db559539b03
+parent b4e628ea30d5ab3606119d2ea5caeab141d38df7
+author Linus Torvalds <torvalds@ppc970.osdl.org> Sat Apr 9 12:02:30 2005
+committer Linus Torvalds <torvalds@ppc970.osdl.org> Sat Apr 9 12:02:30 2005
+
+Make "git-fsck-objects" print out all the root commits it finds.
+
+Once I do the reference tracking, I'll also make it print out all the
+HEAD commits it finds, which is even more interesting.
+-----------------------------------------------------------------------------
+
+in case you care).
+
+
+include::diff-format.txt[]
+
+GIT
+---
+Part of the linkgit:git[1] suite

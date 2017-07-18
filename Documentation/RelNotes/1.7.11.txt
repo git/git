@@ -1,0 +1,139 @@
+Git v1.7.11 Release Notes
+=========================
+
+Updates since v1.7.10
+---------------------
+
+UI, Workflows & Features
+
+ * A new mode for push, "simple", which is a cross between "current"
+   and "upstream", has been introduced. "git push" without any refspec
+   will push the current branch out to the same name at the remote
+   repository only when it is set to track the branch with the same
+   name over there.  The plan is to make this mode the new default
+   value when push.default is not configured.
+
+ * A couple of commands learned the "--column" option to produce
+   columnar output.
+
+ * A third-party tool "git subtree" is distributed in contrib/
+
+ * A remote helper that acts as a proxy and caches ssl session for the
+   https:// transport is added to the contrib/ area.
+
+ * Error messages given when @{u} is used for a branch without its
+   upstream configured have been clarified.
+
+ * Even with the "-q"uiet option, "checkout" used to report setting up
+   tracking.  Also "branch" learned the "-q"uiet option to squelch
+   informational message.
+
+ * Your build platform may support hardlinks but you may prefer not to
+   use them, e.g. when installing to DESTDIR to make a tarball and
+   untarring on a filesystem that has poor support for hardlinks.
+   There is a Makefile option NO_INSTALL_HARDLINKS for you.
+
+ * The smart-http backend used to always override GIT_COMMITTER_*
+   variables with REMOTE_USER and REMOTE_ADDR, but these variables are
+   now preserved when set.
+
+ * "git am" learned the "--include" option, which is an opposite of
+   existing the "--exclude" option.
+
+ * When "git am -3" needs to fall back to an application of the patch
+   to a synthesized preimage followed by a 3-way merge, the paths that
+   needed such treatment are now reported to the end user, so that the
+   result in them can be eyeballed with extra care.
+
+ * The output from "diff/log --stat" used to always allocate 4 columns
+   to show the number of modified lines, but not anymore.
+
+ * "git difftool" learned the "--dir-diff" option to spawn external
+   diff tools that can compare two directory hierarchies at a time
+   after populating two temporary directories, instead of running an
+   instance of the external tool once per a file pair.
+
+ * The "fmt-merge-msg" command learned to list the primary contributors
+   involved in the side topic you are merging in a comment in the merge
+   commit template.
+
+ * "git rebase" learned to optionally keep commits that do not
+   introduce any change in the original history.
+
+ * "git push --recurse-submodules" learned to optionally look into the
+   histories of submodules bound to the superproject and push them
+   out.
+
+ * A 'snapshot' request to "gitweb" honors If-Modified-Since: header,
+   based on the commit date.
+
+ * "gitweb" learned to highlight the patch it outputs even more.
+
+Foreign Interface
+
+ * "git svn" used to die with unwanted SIGPIPE when talking with an HTTP
+   server that uses keep-alive.
+
+ * "git svn" learned to use platform specific authentication
+   providers, e.g. gnome-keyring, kwallet, etc.
+
+ * "git p4" has been moved out of the contrib/ area and has seen more
+   work on importing labels as tags from (and exporting tags as labels
+   to) p4.
+
+Performance and Internal Implementation (please report possible regressions)
+
+ * Bash completion script (in contrib/) have been cleaned up to make
+   future work on it simpler.
+
+ * An experimental "version 4" format of the index file has been
+   introduced to reduce on-disk footprint and I/O overhead.
+
+ * "git archive" learned to produce its output without reading the
+   blob object it writes out in memory in its entirety.
+
+ * "git index-pack" that runs when fetching or pushing objects to
+   complete the packfile on the receiving end learned to use multiple
+   threads to do its job when available.
+
+ * The code to compute hash values for lines used by the internal diff
+   engine was optimized on little-endian machines, using the same
+   trick the kernel folks came up with.
+
+ * "git apply" had some memory leaks plugged.
+
+ * Setting up a revision traversal with many starting points was
+   inefficient as these were placed in a date-order priority queue
+   one-by-one.  Now they are collected in the queue unordered first,
+   and sorted immediately before getting used.
+
+ * More lower-level commands learned to use the streaming API to read
+   from the object store without keeping everything in core.
+
+ * The weighting parameters to suggestion command name typo have been
+   tweaked, so that "git tags" will suggest "tag?" and not "stage?".
+
+ * Because "sh" on the user's PATH may be utterly broken on some
+   systems, run-command API now uses SHELL_PATH, not /bin/sh, when
+   spawning an external command (not applicable to Windows port).
+
+ * The API to iterate over the refs/ hierarchy has been tweaked to
+   allow walking only a subset of it more efficiently.
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.7.10
+-------------------
+
+Unless otherwise noted, all the fixes since v1.7.10 in the maintenance
+releases are contained in this release (see release notes to them for
+details).
+
+ * "git submodule init" used to report "registered for path ..."
+   even for submodules that were registered earlier.
+   (cherry-pick c1c259e jl/submodule-report-new-path-once later to maint).
+
+ * "git diff --stat" used to fully count a binary file with modified
+   execution bits whose contents is unmodified, which was not quite
+   right.

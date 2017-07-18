@@ -1,0 +1,4 @@
+*           whitespace=indent-with-non-tab,trailing-space,space-before-tab,tabwidth=4
+*           encoding=US-ASCII
+git-gui.sh  encoding=UTF-8
+/po/*.po    encoding=UTF-8

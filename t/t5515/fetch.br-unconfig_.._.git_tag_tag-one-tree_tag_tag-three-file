@@ -1,0 +1,7 @@
+# br-unconfig ../.git tag tag-one-tree tag tag-three-file
+22feea448b023a2d864ef94b013735af34d238ba	not-for-merge	tag 'tag-one-tree' of ../
+0e3b14047d3ee365f4f2a1b673db059c3972589c	not-for-merge	tag 'tag-three-file' of ../
+6c9dec2b923228c9ff994c6cfe4ae16c12408dc5	not-for-merge	tag 'tag-master' of ../
+8e32a6d901327a23ef831511badce7bf3bf46689	not-for-merge	tag 'tag-one' of ../
+c61a82b60967180544e3c19f819ddbd0c9f89899	not-for-merge	tag 'tag-three' of ../
+525b7fb068d59950d185a8779dc957c77eed73ba	not-for-merge	tag 'tag-two' of ../

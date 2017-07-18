@@ -1,0 +1,9 @@
+Git v1.8.5.1 Release Notes
+==========================
+
+Fixes since v1.8.5
+------------------
+
+ * "git submodule init" copied "submodule.$name.update" settings from
+   .gitmodules to .git/config without making sure if the suggested
+   value was sensible.

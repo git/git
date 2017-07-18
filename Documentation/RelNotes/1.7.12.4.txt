@@ -1,0 +1,23 @@
+Git 1.7.12.4 Release Notes
+==========================
+
+Fixes since v1.7.12.3
+---------------------
+
+ * "git fetch" over the dumb-http revision walker could segfault when
+   curl's multi interface was used.
+
+ * It was possible to give specific paths for "asciidoc" and other
+   tools in the documentation toolchain, but not for "xmlto".
+
+ * "gitweb" did not give the correct committer timezone in its feed
+   output due to a typo.
+
+ * The "-Xours" (and similarly -Xtheirs) backend option to "git
+   merge -s recursive" was ignored for binary files.  Now it is
+   honored.
+
+ * The "binary" synthetic attribute made "diff" to treat the path as
+   binary, but not "merge".
+
+Also contains many documentation updates.

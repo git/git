@@ -1,0 +1,317 @@
+config API
+==========
+
+The config API gives callers a way to access Git configuration files
+(and files which have the same syntax). See linkgit:git-config[1] for a
+discussion of the config file syntax.
+
+General Usage
+-------------
+
+Config files are parsed linearly, and each variable found is passed to a
+caller-provided callback function. The callback function is responsible
+for any actions to be taken on the config option, and is free to ignore
+some options. It is not uncommon for the configuration to be parsed
+several times during the run of a Git program, with different callbacks
+picking out different variables useful to themselves.
+
+A config callback function takes three parameters:
+
+- the name of the parsed variable. This is in canonical "flat" form: the
+  section, subsection, and variable segments will be separated by dots,
+  and the section and variable segments will be all lowercase. E.g.,
+  `core.ignorecase`, `diff.SomeType.textconv`.
+
+- the value of the found variable, as a string. If the variable had no
+  value specified, the value will be NULL (typically this means it
+  should be interpreted as boolean true).
+
+- a void pointer passed in by the caller of the config API; this can
+  contain callback-specific data
+
+A config callback should return 0 for success, or -1 if the variable
+could not be parsed properly.
+
+Basic Config Querying
+---------------------
+
+Most programs will simply want to look up variables in all config files
+that Git knows about, using the normal precedence rules. To do this,
+call `git_config` with a callback function and void data pointer.
+
+`git_config` will read all config sources in order of increasing
+priority. Thus a callback should typically overwrite previously-seen
+entries with new ones (e.g., if both the user-wide `~/.gitconfig` and
+repo-specific `.git/config` contain `color.ui`, the config machinery
+will first feed the user-wide one to the callback, and then the
+repo-specific one; by overwriting, the higher-priority repo-specific
+value is left at the end).
+
+The `git_config_with_options` function lets the caller examine config
+while adjusting some of the default behavior of `git_config`. It should
+almost never be used by "regular" Git code that is looking up
+configuration variables. It is intended for advanced callers like
+`git-config`, which are intentionally tweaking the normal config-lookup
+process. It takes two extra parameters:
+
+`filename`::
+If this parameter is non-NULL, it specifies the name of a file to
+parse for configuration, rather than looking in the usual files. Regular
+`git_config` defaults to `NULL`.
+
+`respect_includes`::
+Specify whether include directives should be followed in parsed files.
+Regular `git_config` defaults to `1`.
+
+Reading Specific Files
+----------------------
+
+To read a specific file in git-config format, use
+`git_config_from_file`. This takes the same callback and data parameters
+as `git_config`.
+
+Querying For Specific Variables
+-------------------------------
+
+For programs wanting to query for specific variables in a non-callback
+manner, the config API provides two functions `git_config_get_value`
+and `git_config_get_value_multi`. They both read values from an internal
+cache generated previously from reading the config files.
+
+`int git_config_get_value(const char *key, const char **value)`::
+
+	Finds the highest-priority value for the configuration variable `key`,
+	stores the pointer to it in `value` and returns 0. When the
+	configuration variable `key` is not found, returns 1 without touching
+	`value`. The caller should not free or modify `value`, as it is owned
+	by the cache.
+
+`const struct string_list *git_config_get_value_multi(const char *key)`::
+
+	Finds and returns the value list, sorted in order of increasing priority
+	for the configuration variable `key`. When the configuration variable
+	`key` is not found, returns NULL. The caller should not free or modify
+	the returned pointer, as it is owned by the cache.
+
+`void git_config_clear(void)`::
+
+	Resets and invalidates the config cache.
+
+The config API also provides type specific API functions which do conversion
+as well as retrieval for the queried variable, including:
+
+`int git_config_get_int(const char *key, int *dest)`::
+
+	Finds and parses the value to an integer for the configuration variable
+	`key`. Dies on error; otherwise, stores the value of the parsed integer in
+	`dest` and returns 0. When the configuration variable `key` is not found,
+	returns 1 without touching `dest`.
+
+`int git_config_get_ulong(const char *key, unsigned long *dest)`::
+
+	Similar to `git_config_get_int` but for unsigned longs.
+
+`int git_config_get_bool(const char *key, int *dest)`::
+
+	Finds and parses the value into a boolean value, for the configuration
+	variable `key` respecting keywords like "true" and "false". Integer
+	values are converted into true/false values (when they are non-zero or
+	zero, respectively). Other values cause a die(). If parsing is successful,
+	stores the value of the parsed result in `dest` and returns 0. When the
+	configuration variable `key` is not found, returns 1 without touching
+	`dest`.
+
+`int git_config_get_bool_or_int(const char *key, int *is_bool, int *dest)`::
+
+	Similar to `git_config_get_bool`, except that integers are copied as-is,
+	and `is_bool` flag is unset.
+
+`int git_config_get_maybe_bool(const char *key, int *dest)`::
+
+	Similar to `git_config_get_bool`, except that it returns -1 on error
+	rather than dying.
+
+`int git_config_get_string_const(const char *key, const char **dest)`::
+
+	Allocates and copies the retrieved string into the `dest` parameter for
+	the configuration variable `key`; if NULL string is given, prints an
+	error message and returns -1. When the configuration variable `key` is
+	not found, returns 1 without touching `dest`.
+
+`int git_config_get_string(const char *key, char **dest)`::
+
+	Similar to `git_config_get_string_const`, except that retrieved value
+	copied into the `dest` parameter is a mutable string.
+
+`int git_config_get_pathname(const char *key, const char **dest)`::
+
+	Similar to `git_config_get_string`, but expands `~` or `~user` into
+	the user's home directory when found at the beginning of the path.
+
+`git_die_config(const char *key, const char *err, ...)`::
+
+	First prints the error message specified by the caller in `err` and then
+	dies printing the line number and the file name of the highest priority
+	value for the configuration variable `key`.
+
+`void git_die_config_linenr(const char *key, const char *filename, int linenr)`::
+
+	Helper function which formats the die error message according to the
+	parameters entered. Used by `git_die_config()`. It can be used by callers
+	handling `git_config_get_value_multi()` to print the correct error message
+	for the desired value.
+
+See test-config.c for usage examples.
+
+Value Parsing Helpers
+---------------------
+
+To aid in parsing string values, the config API provides callbacks with
+a number of helper functions, including:
+
+`git_config_int`::
+Parse the string to an integer, including unit factors. Dies on error;
+otherwise, returns the parsed result.
+
+`git_config_ulong`::
+Identical to `git_config_int`, but for unsigned longs.
+
+`git_config_bool`::
+Parse a string into a boolean value, respecting keywords like "true" and
+"false". Integer values are converted into true/false values (when they
+are non-zero or zero, respectively). Other values cause a die(). If
+parsing is successful, the return value is the result.
+
+`git_config_bool_or_int`::
+Same as `git_config_bool`, except that integers are returned as-is, and
+an `is_bool` flag is unset.
+
+`git_config_maybe_bool`::
+Same as `git_config_bool`, except that it returns -1 on error rather
+than dying.
+
+`git_config_string`::
+Allocates and copies the value string into the `dest` parameter; if no
+string is given, prints an error message and returns -1.
+
+`git_config_pathname`::
+Similar to `git_config_string`, but expands `~` or `~user` into the
+user's home directory when found at the beginning of the path.
+
+Include Directives
+------------------
+
+By default, the config parser does not respect include directives.
+However, a caller can use the special `git_config_include` wrapper
+callback to support them. To do so, you simply wrap your "real" callback
+function and data pointer in a `struct config_include_data`, and pass
+the wrapper to the regular config-reading functions. For example:
+
+-------------------------------------------
+int read_file_with_include(const char *file, config_fn_t fn, void *data)
+{
+	struct config_include_data inc = CONFIG_INCLUDE_INIT;
+	inc.fn = fn;
+	inc.data = data;
+	return git_config_from_file(git_config_include, file, &inc);
+}
+-------------------------------------------
+
+`git_config` respects includes automatically. The lower-level
+`git_config_from_file` does not.
+
+Custom Configsets
+-----------------
+
+A `config_set` can be used to construct an in-memory cache for
+config-like files that the caller specifies (i.e., files like `.gitmodules`,
+`~/.gitconfig` etc.). For example,
+
+---------------------------------------
+struct config_set gm_config;
+git_configset_init(&gm_config);
+int b;
+/* we add config files to the config_set */
+git_configset_add_file(&gm_config, ".gitmodules");
+git_configset_add_file(&gm_config, ".gitmodules_alt");
+
+if (!git_configset_get_bool(gm_config, "submodule.frotz.ignore", &b)) {
+	/* hack hack hack */
+}
+
+/* when we are done with the configset */
+git_configset_clear(&gm_config);
+----------------------------------------
+
+Configset API provides functions for the above mentioned work flow, including:
+
+`void git_configset_init(struct config_set *cs)`::
+
+	Initializes the config_set `cs`.
+
+`int git_configset_add_file(struct config_set *cs, const char *filename)`::
+
+	Parses the file and adds the variable-value pairs to the `config_set`,
+	dies if there is an error in parsing the file. Returns 0 on success, or
+	-1 if the file does not exist or is inaccessible. The user has to decide
+	if he wants to free the incomplete configset or continue using it when
+	the function returns -1.
+
+`int git_configset_get_value(struct config_set *cs, const char *key, const char **value)`::
+
+	Finds the highest-priority value for the configuration variable `key`
+	and config set `cs`, stores the pointer to it in `value` and returns 0.
+	When the configuration variable `key` is not found, returns 1 without
+	touching `value`. The caller should not free or modify `value`, as it
+	is owned by the cache.
+
+`const struct string_list *git_configset_get_value_multi(struct config_set *cs, const char *key)`::
+
+	Finds and returns the value list, sorted in order of increasing priority
+	for the configuration variable `key` and config set `cs`. When the
+	configuration variable `key` is not found, returns NULL. The caller
+	should not free or modify the returned pointer, as it is owned by the cache.
+
+`void git_configset_clear(struct config_set *cs)`::
+
+	Clears `config_set` structure, removes all saved variable-value pairs.
+
+In addition to above functions, the `config_set` API provides type specific
+functions in the vein of `git_config_get_int` and family but with an extra
+parameter, pointer to struct `config_set`.
+They all behave similarly to the `git_config_get*()` family described in
+"Querying For Specific Variables" above.
+
+Writing Config Files
+--------------------
+
+Git gives multiple entry points in the Config API to write config values to
+files namely `git_config_set_in_file` and `git_config_set`, which write to
+a specific config file or to `.git/config` respectively. They both take a
+key/value pair as parameter.
+In the end they both call `git_config_set_multivar_in_file` which takes four
+parameters:
+
+- the name of the file, as a string, to which key/value pairs will be written.
+
+- the name of key, as a string. This is in canonical "flat" form: the section,
+  subsection, and variable segments will be separated by dots, and the section
+  and variable segments will be all lowercase.
+  E.g., `core.ignorecase`, `diff.SomeType.textconv`.
+
+- the value of the variable, as a string. If value is equal to NULL, it will
+  remove the matching key from the config file.
+
+- the value regex, as a string. It will disregard key/value pairs where value
+  does not match.
+
+- a multi_replace value, as an int. If value is equal to zero, nothing or only
+  one matching key/value is replaced, else all matching key/values (regardless
+  how many) are removed, before the new pair is written.
+
+It returns 0 on success.
+
+Also, there are functions `git_config_rename_section` and
+`git_config_rename_section_in_file` with parameters `old_name` and `new_name`
+for renaming or removing sections in the config files. If NULL is passed
+through `new_name` parameter, the section will be removed from the config file.

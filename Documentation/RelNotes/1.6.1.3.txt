@@ -1,0 +1,28 @@
+GIT v1.6.1.3 Release Notes
+==========================
+
+Fixes since v1.6.1.2
+--------------------
+
+* "git diff --binary | git apply" pipeline did not work well when
+  a binary blob is changed to a symbolic link.
+
+* Some combinations of -b/-w/--ignore-space-at-eol to "git diff" did
+  not work as expected.
+
+* "git grep" did not pass the -I (ignore binary) option when
+  calling out an external grep program.
+
+* "git log" and friends include HEAD to the set of starting points
+  when --all is given.  This makes a difference when you are not
+  on any branch.
+
+* "git mv" to move an untracked file to overwrite a tracked
+  contents misbehaved.
+
+* "git merge -s octopus" with many potential merge bases did not
+  work correctly.
+
+* RPM binary package installed the html manpages in a wrong place.
+
+Also includes minor documentation fixes and updates.

@@ -1,0 +1,94 @@
+include::urls.txt[]
+
+REMOTES[[REMOTES]]
+------------------
+
+The name of one of the following can be used instead
+of a URL as `<repository>` argument:
+
+* a remote in the Git configuration file: `$GIT_DIR/config`,
+* a file in the `$GIT_DIR/remotes` directory, or
+* a file in the `$GIT_DIR/branches` directory.
+
+All of these also allow you to omit the refspec from the command line
+because they each contain a refspec which git will use by default.
+
+Named remote in configuration file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can choose to provide the name of a remote which you had previously
+configured using linkgit:git-remote[1], linkgit:git-config[1]
+or even by a manual edit to the `$GIT_DIR/config` file.  The URL of
+this remote will be used to access the repository.  The refspec
+of this remote will be used by default when you do
+not provide a refspec on the command line.  The entry in the
+config file would appear like this:
+
+------------
+	[remote "<name>"]
+		url = <url>
+		pushurl = <pushurl>
+		push = <refspec>
+		fetch = <refspec>
+------------
+
+The `<pushurl>` is used for pushes only. It is optional and defaults
+to `<url>`.
+
+Named file in `$GIT_DIR/remotes`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can choose to provide the name of a
+file in `$GIT_DIR/remotes`.  The URL
+in this file will be used to access the repository.  The refspec
+in this file will be used as default when you do not
+provide a refspec on the command line.  This file should have the
+following format:
+
+------------
+	URL: one of the above URL format
+	Push: <refspec>
+	Pull: <refspec>
+
+------------
+
+`Push:` lines are used by 'git push' and
+`Pull:` lines are used by 'git pull' and 'git fetch'.
+Multiple `Push:` and `Pull:` lines may
+be specified for additional branch mappings.
+
+Named file in `$GIT_DIR/branches`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can choose to provide the name of a
+file in `$GIT_DIR/branches`.
+The URL in this file will be used to access the repository.
+This file should have the following format:
+
+
+------------
+	<url>#<head>
+------------
+
+`<url>` is required; `#<head>` is optional.
+
+Depending on the operation, git will use one of the following
+refspecs, if you don't provide one on the command line.
+`<branch>` is the name of this file in `$GIT_DIR/branches` and
+`<head>` defaults to `master`.
+
+git fetch uses:
+
+------------
+	refs/heads/<head>:refs/heads/<branch>
+------------
+
+git push uses:
+
+------------
+	HEAD:refs/heads/<head>
+------------
+
+
+
+

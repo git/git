@@ -1,0 +1,5 @@
+"Subject: " isn't in the static array "header", and thus
+memcmp("Subject: ", header[i], 7) will never match.
+
+Signed-off-by: Lukas Sandström <lukass@etek.chalmers.se>
+Signed-off-by: Junio C Hamano <gitster@pobox.com>

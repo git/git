@@ -1,0 +1,63 @@
+Git v2.2.2 Release Notes
+========================
+
+Fixes since v2.2.1
+------------------
+
+ * "git checkout $treeish $path", when $path in the index and the
+   working tree already matched what is in $treeish at the $path,
+   still overwrote the $path unnecessarily.
+
+ * "git config --get-color" did not parse its command line arguments
+   carefully.
+
+ * open() emulated on Windows platforms did not give EISDIR upon
+   an attempt to open a directory for writing.
+
+ * A few code paths used abs() when they should have used labs() on
+   long integers.
+
+ * "gitweb" used to depend on a behaviour recent CGI.pm deprecated.
+
+ * "git init" (hence "git clone") initialized the per-repository
+   configuration file .git/config with x-bit by mistake.
+
+ * Git 2.0 was supposed to make the "simple" mode for the default of
+   "git push", but it didn't.
+
+ * "Everyday" document had a broken link.
+
+ * The build procedure did not bother fixing perl and python scripts
+   when NO_PERL and NO_PYTHON build-time configuration changed.
+
+ * The code that reads the reflog from the newer to the older entries
+   did not handle an entry that crosses a boundary of block it uses to
+   read them correctly.
+
+ * "git apply" was described in the documentation to take --ignore-date
+   option, which it does not.
+
+ * Traditionally we tried to avoid interpreting date strings given by
+   the user as future dates, e.g. GIT_COMMITTER_DATE=2014-12-10 when
+   used early November 2014 was taken as "October 12, 2014" because it
+   is likely that a date in the future, December 10, is a mistake.
+   This heuristics has been loosened to allow people to express future
+   dates (most notably, --until=<date> may want to be far in the
+   future) and we no longer tiebreak by future-ness of the date when
+
+    (1) ISO-like format is used, and
+    (2) the string can make sense interpreted as both y-m-d and y-d-m.
+
+   Git may still have to use the heuristics to tiebreak between dd/mm/yy
+   and mm/dd/yy, though.
+
+ * The code to abbreviate an object name to its short unique prefix
+   has been optimized when no abbreviation was requested.
+
+ * "git add --ignore-errors ..." did not ignore an error to
+   give a file that did not exist.
+
+ * Git did not correctly read an overlong refname from a packed refs
+   file.
+
+Also contains typofixes, documentation updates and trivial code clean-ups.

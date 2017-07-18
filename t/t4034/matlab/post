@@ -1,0 +1,9 @@
+(0) (-0e10) 'y';
+[x] {x} x.y;
+~x;
+x*y x.*y x/y x./y x^y x.^y x.\y x.';
+x+y x-y;
+x&y x&&y x|y x||y;
+x<y x<=y x>y x>=y;
+x==y x~=y;
+x,y;

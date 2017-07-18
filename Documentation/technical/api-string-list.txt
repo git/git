@@ -1,0 +1,209 @@
+string-list API
+===============
+
+The string_list API offers a data structure and functions to handle
+sorted and unsorted string lists.  A "sorted" list is one whose
+entries are sorted by string value in `strcmp()` order.
+
+The 'string_list' struct used to be called 'path_list', but was renamed
+because it is not specific to paths.
+
+The caller:
+
+. Allocates and clears a `struct string_list` variable.
+
+. Initializes the members. You might want to set the flag `strdup_strings`
+  if the strings should be strdup()ed. For example, this is necessary
+  when you add something like git_path("..."), since that function returns
+  a static buffer that will change with the next call to git_path().
++
+If you need something advanced, you can manually malloc() the `items`
+member (you need this if you add things later) and you should set the
+`nr` and `alloc` members in that case, too.
+
+. Adds new items to the list, using `string_list_append`,
+  `string_list_append_nodup`, `string_list_insert`,
+  `string_list_split`, and/or `string_list_split_in_place`.
+
+. Can check if a string is in the list using `string_list_has_string` or
+  `unsorted_string_list_has_string` and get it from the list using
+  `string_list_lookup` for sorted lists.
+
+. Can sort an unsorted list using `string_list_sort`.
+
+. Can remove duplicate items from a sorted list using
+  `string_list_remove_duplicates`.
+
+. Can remove individual items of an unsorted list using
+  `unsorted_string_list_delete_item`.
+
+. Can remove items not matching a criterion from a sorted or unsorted
+  list using `filter_string_list`, or remove empty strings using
+  `string_list_remove_empty_items`.
+
+. Finally it should free the list using `string_list_clear`.
+
+Example:
+
+----
+struct string_list list = STRING_LIST_INIT_NODUP;
+int i;
+
+string_list_append(&list, "foo");
+string_list_append(&list, "bar");
+for (i = 0; i < list.nr; i++)
+	printf("%s\n", list.items[i].string)
+----
+
+NOTE: It is more efficient to build an unsorted list and sort it
+afterwards, instead of building a sorted list (`O(n log n)` instead of
+`O(n^2)`).
++
+However, if you use the list to check if a certain string was added
+already, you should not do that (using unsorted_string_list_has_string()),
+because the complexity would be quadratic again (but with a worse factor).
+
+Functions
+---------
+
+* General ones (works with sorted and unsorted lists as well)
+
+`string_list_init`::
+
+	Initialize the members of the string_list, set `strdup_strings`
+	member according to the value of the second parameter.
+
+`filter_string_list`::
+
+	Apply a function to each item in a list, retaining only the
+	items for which the function returns true.  If free_util is
+	true, call free() on the util members of any items that have
+	to be deleted.  Preserve the order of the items that are
+	retained.
+
+`string_list_remove_empty_items`::
+
+	Remove any empty strings from the list.  If free_util is true,
+	call free() on the util members of any items that have to be
+	deleted.  Preserve the order of the items that are retained.
+
+`print_string_list`::
+
+	Dump a string_list to stdout, useful mainly for debugging purposes. It
+	can take an optional header argument and it writes out the
+	string-pointer pairs of the string_list, each one in its own line.
+
+`string_list_clear`::
+
+	Free a string_list. The `string` pointer of the items will be freed in
+	case the `strdup_strings` member of the string_list is set. The second
+	parameter controls if the `util` pointer of the items should be freed
+	or not.
+
+* Functions for sorted lists only
+
+`string_list_has_string`::
+
+	Determine if the string_list has a given string or not.
+
+`string_list_insert`::
+
+	Insert a new element to the string_list. The returned pointer can be
+	handy if you want to write something to the `util` pointer of the
+	string_list_item containing the just added string. If the given
+	string already exists the insertion will be skipped and the
+	pointer to the existing item returned.
++
+Since this function uses xrealloc() (which die()s if it fails) if the
+list needs to grow, it is safe not to check the pointer. I.e. you may
+write `string_list_insert(...)->util = ...;`.
+
+`string_list_lookup`::
+
+	Look up a given string in the string_list, returning the containing
+	string_list_item. If the string is not found, NULL is returned.
+
+`string_list_remove_duplicates`::
+
+	Remove all but the first of consecutive entries that have the
+	same string value.  If free_util is true, call free() on the
+	util members of any items that have to be deleted.
+
+* Functions for unsorted lists only
+
+`string_list_append`::
+
+	Append a new string to the end of the string_list.  If
+	`strdup_string` is set, then the string argument is copied;
+	otherwise the new `string_list_entry` refers to the input
+	string.
+
+`string_list_append_nodup`::
+
+	Append a new string to the end of the string_list.  The new
+	`string_list_entry` always refers to the input string, even if
+	`strdup_string` is set.  This function can be used to hand
+	ownership of a malloc()ed string to a `string_list` that has
+	`strdup_string` set.
+
+`string_list_sort`::
+
+	Sort the list's entries by string value in `strcmp()` order.
+
+`unsorted_string_list_has_string`::
+
+	It's like `string_list_has_string()` but for unsorted lists.
+
+`unsorted_string_list_lookup`::
+
+	It's like `string_list_lookup()` but for unsorted lists.
++
+The above two functions need to look through all items, as opposed to their
+counterpart for sorted lists, which performs a binary search.
+
+`unsorted_string_list_delete_item`::
+
+	Remove an item from a string_list. The `string` pointer of the items
+	will be freed in case the `strdup_strings` member of the string_list
+	is set. The third parameter controls if the `util` pointer of the
+	items should be freed or not.
+
+`string_list_split`::
+`string_list_split_in_place`::
+
+	Split a string into substrings on a delimiter character and
+	append the substrings to a `string_list`.  If `maxsplit` is
+	non-negative, then split at most `maxsplit` times.  Return the
+	number of substrings appended to the list.
++
+`string_list_split` requires a `string_list` that has `strdup_strings`
+set to true; it leaves the input string untouched and makes copies of
+the substrings in newly-allocated memory.
+`string_list_split_in_place` requires a `string_list` that has
+`strdup_strings` set to false; it splits the input string in place,
+overwriting the delimiter characters with NULs and creating new
+string_list_items that point into the original string (the original
+string must therefore not be modified or freed while the `string_list`
+is in use).
+
+
+Data structures
+---------------
+
+* `struct string_list_item`
+
+Represents an item of the list. The `string` member is a pointer to the
+string, and you may use the `util` member for any purpose, if you want.
+
+* `struct string_list`
+
+Represents the list itself.
+
+. The array of items are available via the `items` member.
+. The `nr` member contains the number of items stored in the list.
+. The `alloc` member is used to avoid reallocating at every insertion.
+  You should not tamper with it.
+. Setting the `strdup_strings` member to 1 will strdup() the strings
+  before adding them, see above.
+. The `compare_strings_fn` member is used to specify a custom compare
+  function, otherwise `strcmp()` is used as the default function.

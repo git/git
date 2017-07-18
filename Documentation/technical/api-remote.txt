@@ -1,0 +1,127 @@
+Remotes configuration API
+=========================
+
+The API in remote.h gives access to the configuration related to
+remotes. It handles all three configuration mechanisms historically
+and currently used by Git, and presents the information in a uniform
+fashion. Note that the code also handles plain URLs without any
+configuration, giving them just the default information.
+
+struct remote
+-------------
+
+`name`::
+
+	The user's nickname for the remote
+
+`url`::
+
+	An array of all of the url_nr URLs configured for the remote
+
+`pushurl`::
+
+	An array of all of the pushurl_nr push URLs configured for the remote
+
+`push`::
+
+	 An array of refspecs configured for pushing, with
+	 push_refspec being the literal strings, and push_refspec_nr
+	 being the quantity.
+
+`fetch`::
+
+	An array of refspecs configured for fetching, with
+	fetch_refspec being the literal strings, and fetch_refspec_nr
+	being the quantity.
+
+`fetch_tags`::
+
+	The setting for whether to fetch tags (as a separate rule from
+	the configured refspecs); -1 means never to fetch tags, 0
+	means to auto-follow tags based on the default heuristic, 1
+	means to always auto-follow tags, and 2 means to fetch all
+	tags.
+
+`receivepack`, `uploadpack`::
+
+	The configured helper programs to run on the remote side, for
+	Git-native protocols.
+
+`http_proxy`::
+
+	The proxy to use for curl (http, https, ftp, etc.) URLs.
+
+`http_proxy_authmethod`::
+
+	The method used for authenticating against `http_proxy`.
+
+struct remotes can be found by name with remote_get(), and iterated
+through with for_each_remote(). remote_get(NULL) will return the
+default remote, given the current branch and configuration.
+
+struct refspec
+--------------
+
+A struct refspec holds the parsed interpretation of a refspec.  If it
+will force updates (starts with a '+'), force is true.  If it is a
+pattern (sides end with '*') pattern is true.  src and dest are the
+two sides (including '*' characters if present); if there is only one
+side, it is src, and dst is NULL; if sides exist but are empty (i.e.,
+the refspec either starts or ends with ':'), the corresponding side is
+"".
+
+An array of strings can be parsed into an array of struct refspecs
+using parse_fetch_refspec() or parse_push_refspec().
+
+remote_find_tracking(), given a remote and a struct refspec with
+either src or dst filled out, will fill out the other such that the
+result is in the "fetch" specification for the remote (note that this
+evaluates patterns and returns a single result).
+
+struct branch
+-------------
+
+Note that this may end up moving to branch.h
+
+struct branch holds the configuration for a branch. It can be looked
+up with branch_get(name) for "refs/heads/{name}", or with
+branch_get(NULL) for HEAD.
+
+It contains:
+
+`name`::
+
+	The short name of the branch.
+
+`refname`::
+
+	The full path for the branch ref.
+
+`remote_name`::
+
+	The name of the remote listed in the configuration.
+
+`merge_name`::
+
+	An array of the "merge" lines in the configuration.
+
+`merge`::
+
+	An array of the struct refspecs used for the merge lines. That
+	is, merge[i]->dst is a local tracking ref which should be
+	merged into this branch by default.
+
+`merge_nr`::
+
+	The number of merge configurations
+
+branch_has_merge_config() returns true if the given branch has merge
+configuration given.
+
+Other stuff
+-----------
+
+There is other stuff in remote.h that is related, in general, to the
+process of interacting with remotes.
+
+(Daniel Barkalow)

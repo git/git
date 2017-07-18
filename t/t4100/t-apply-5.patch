@@ -1,0 +1,612 @@
+diff a/Documentation/git-rpull.txt b/Documentation/git-rpull.txt
+--- a/Documentation/git-rpull.txt
++++ /dev/null
+@@ -1,50 +0,0 @@
+-git-rpull(1)
+-============
+-v0.1, May 2005
+-
+-NAME
+-----
+-git-rpull - Pulls from a remote repository over ssh connection
+-
+-
+-
+-SYNOPSIS
+---------
+-'git-rpull' [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url
+-
+-DESCRIPTION
+------------
+-Pulls from a remote repository over ssh connection, invoking git-rpush on
+-the other end.
+-
+-OPTIONS
+--------
+--c::
+-	Get the commit objects.
+--t::
+-	Get trees associated with the commit objects.
+--a::
+-	Get all the objects.
+--d::
+-	Do not check for delta base objects (use this option
+-	only when you know the remote repository is not
+-	deltified).
+---recover::
+-	Check dependency of deltified object more carefully than
+-	usual, to recover after earlier pull that was interrupted.
+--v::
+-	Report what is downloaded.
+-
+-
+-Author
+-------
+-Written by Linus Torvalds <torvalds@osdl.org>
+-
+-Documentation
+---------------
+-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+-
+-GIT
+----
+-Part of the link:git.html[git] suite
+-
+diff a/Documentation/git-rpush.txt b/Documentation/git-rpush.txt
+--- a/Documentation/git-rpush.txt
++++ /dev/null
+@@ -1,30 +0,0 @@
+-git-rpush(1)
+-============
+-v0.1, May 2005
+-
+-NAME
+-----
+-git-rpush - Helper "server-side" program used by git-rpull
+-
+-
+-SYNOPSIS
+---------
+-'git-rpush'
+-
+-DESCRIPTION
+------------
+-Helper "server-side" program used by git-rpull.
+-
+-
+-Author
+-------
+-Written by Linus Torvalds <torvalds@osdl.org>
+-
+-Documentation
+---------------
+-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+-
+-GIT
+----
+-Part of the link:git.html[git] suite
+-
+diff a/Documentation/git-ssh-pull.txt b/Documentation/git-ssh-pull.txt
+--- /dev/null
++++ b/Documentation/git-ssh-pull.txt
+@@ -0,0 +1,50 @@
++git-ssh-pull(1)
++===============
++v0.1, May 2005
++
++NAME
++----
++git-ssh-pull - Pulls from a remote repository over ssh connection
++
++
++
++SYNOPSIS
++--------
++'git-ssh-pull' [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url
++
++DESCRIPTION
++-----------
++Pulls from a remote repository over ssh connection, invoking git-ssh-push
++on the other end.
++
++OPTIONS
++-------
++-c::
++	Get the commit objects.
++-t::
++	Get trees associated with the commit objects.
++-a::
++	Get all the objects.
++-d::
++	Do not check for delta base objects (use this option
++	only when you know the remote repository is not
++	deltified).
++--recover::
++	Check dependency of deltified object more carefully than
++	usual, to recover after earlier pull that was interrupted.
++-v::
++	Report what is downloaded.
++
++
++Author
++------
++Written by Linus Torvalds <torvalds@osdl.org>
++
++Documentation
++--------------
++Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
++
++GIT
++---
++Part of the link:git.html[git] suite
++
+diff a/Documentation/git-ssh-push.txt b/Documentation/git-ssh-push.txt
+--- /dev/null
++++ b/Documentation/git-ssh-push.txt
+@@ -0,0 +1,30 @@
++git-ssh-push(1)
++===============
++v0.1, May 2005
++
++NAME
++----
++git-ssh-push - Helper "server-side" program used by git-ssh-pull
++
++
++SYNOPSIS
++--------
++'git-ssh-push'
++
++DESCRIPTION
++-----------
++Helper "server-side" program used by git-ssh-pull.
++
++
++Author
++------
++Written by Linus Torvalds <torvalds@osdl.org>
++
++Documentation
++--------------
++Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
++
++GIT
++---
++Part of the link:git.html[git] suite
++
+diff a/Documentation/git.txt b/Documentation/git.txt
+--- a/Documentation/git.txt
++++ b/Documentation/git.txt
+@@ -148,7 +148,7 @@ link:git-resolve-script.html[git-resolve
+ link:git-tag-script.html[git-tag-script]::
+ 	An example script to create a tag object signed with GPG
+ 
+-link:git-rpull.html[git-rpull]::
++link:git-ssh-pull.html[git-ssh-pull]::
+ 	Pulls from a remote repository over ssh connection
+ 
+ Interogators:
+@@ -156,8 +156,8 @@ Interogators:
+ link:git-diff-helper.html[git-diff-helper]::
+ 	Generates patch format output for git-diff-*
+ 
+-link:git-rpush.html[git-rpush]::
+-	Helper "server-side" program used by git-rpull
++link:git-ssh-push.html[git-ssh-push]::
++	Helper "server-side" program used by git-ssh-pull
+ 
+ 
+ 
+diff a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -30,7 +30,7 @@ PROG=   git-update-index git-diff-files
+ 	git-checkout-cache git-diff-tree git-rev-tree git-ls-files \
+ 	git-check-files git-ls-tree git-merge-base git-merge-cache \
+ 	git-unpack-file git-export git-diff-cache git-convert-cache \
+-	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
++	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
+ 	git-diff-helper git-tar-tree git-local-pull git-write-blob \
+ 	git-get-tar-commit-id git-mkdelta git-apply git-stripspace
+ 
+@@ -105,8 +105,8 @@ git-diff-cache: diff-cache.c
+ git-convert-cache: convert-cache.c
+ git-http-pull: http-pull.c pull.c
+ git-local-pull: local-pull.c pull.c
+-git-rpush: rsh.c
+-git-rpull: rsh.c pull.c
++git-ssh-push: rsh.c
++git-ssh-pull: rsh.c pull.c
+ git-rev-list: rev-list.c
+ git-mktag: mktag.c
+ git-diff-helper: diff-helper.c
+diff a/rpull.c b/rpull.c
+--- a/rpull.c
++++ /dev/null
+@@ -1,83 +0,0 @@
+-#include "cache.h"
+-#include "commit.h"
+-#include "rsh.h"
+-#include "pull.h"
+-
+-static int fd_in;
+-static int fd_out;
+-
+-static unsigned char remote_version = 0;
+-static unsigned char local_version = 1;
+-
+-int fetch(unsigned char *sha1)
+-{
+-	int ret;
+-	signed char remote;
+-	char type = 'o';
+-	if (has_sha1_file(sha1))
+-		return 0;
+-	write(fd_out, &type, 1);
+-	write(fd_out, sha1, 20);
+-	if (read(fd_in, &remote, 1) < 1)
+-		return -1;
+-	if (remote < 0)
+-		return remote;
+-	ret = write_sha1_from_fd(sha1, fd_in);
+-	if (!ret)
+-		pull_say("got %s\n", sha1_to_hex(sha1));
+-	return ret;
+-}
+-
+-int get_version(void)
+-{
+-	char type = 'v';
+-	write(fd_out, &type, 1);
+-	write(fd_out, &local_version, 1);
+-	if (read(fd_in, &remote_version, 1) < 1) {
+-		return error("Couldn't read version from remote end");
+-	}
+-	return 0;
+-}
+-
+-int main(int argc, char **argv)
+-{
+-	char *commit_id;
+-	char *url;
+-	int arg = 1;
+-
+-	while (arg < argc && argv[arg][0] == '-') {
+-		if (argv[arg][1] == 't') {
+-			get_tree = 1;
+-		} else if (argv[arg][1] == 'c') {
+-			get_history = 1;
+-		} else if (argv[arg][1] == 'd') {
+-			get_delta = 0;
+-		} else if (!strcmp(argv[arg], "--recover")) {
+-			get_delta = 2;
+-		} else if (argv[arg][1] == 'a') {
+-			get_all = 1;
+-			get_tree = 1;
+-			get_history = 1;
+-		} else if (argv[arg][1] == 'v') {
+-			get_verbosely = 1;
+-		}
+-		arg++;
+-	}
+-	if (argc < arg + 2) {
+-		usage("git-rpull [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url");
+-		return 1;
+-	}
+-	commit_id = argv[arg];
+-	url = argv[arg + 1];
+-
+-	if (setup_connection(&fd_in, &fd_out, "git-rpush", url, arg, argv + 1))
+-		return 1;
+-
+-	if (get_version())
+-		return 1;
+-
+-	if (pull(commit_id))
+-		return 1;
+-
+-	return 0;
+-}
+diff a/rpush.c b/rpush.c
+--- a/rpush.c
++++ /dev/null
+@@ -1,104 +0,0 @@
+-#include "cache.h"
+-#include "rsh.h"
+-#include <sys/socket.h>
+-#include <errno.h>
+-
+-unsigned char local_version = 1;
+-unsigned char remote_version = 0;
+-
+-int serve_object(int fd_in, int fd_out) {
+-	ssize_t size;
+-	int posn = 0;
+-	char sha1[20];
+-	unsigned long objsize;
+-	void *buf;
+-	signed char remote;
+-	do {
+-		size = read(fd_in, sha1 + posn, 20 - posn);
+-		if (size < 0) {
+-			perror("git-rpush: read ");
+-			return -1;
+-		}
+-		if (!size)
+-			return -1;
+-		posn += size;
+-	} while (posn < 20);
+-	
+-	/* fprintf(stderr, "Serving %s\n", sha1_to_hex(sha1)); */
+-	remote = 0;
+-	
+-	buf = map_sha1_file(sha1, &objsize);
+-	
+-	if (!buf) {
+-		fprintf(stderr, "git-rpush: could not find %s\n", 
+-			sha1_to_hex(sha1));
+-		remote = -1;
+-	}
+-	
+-	write(fd_out, &remote, 1);
+-	
+-	if (remote < 0)
+-		return 0;
+-	
+-	posn = 0;
+-	do {
+-		size = write(fd_out, buf + posn, objsize - posn);
+-		if (size <= 0) {
+-			if (!size) {
+-				fprintf(stderr, "git-rpush: write closed");
+-			} else {
+-				perror("git-rpush: write ");
+-			}
+-			return -1;
+-		}
+-		posn += size;
+-	} while (posn < objsize);
+-	return 0;
+-}
+-
+-int serve_version(int fd_in, int fd_out)
+-{
+-	if (read(fd_in, &remote_version, 1) < 1)
+-		return -1;
+-	write(fd_out, &local_version, 1);
+-	return 0;
+-}
+-
+-void service(int fd_in, int fd_out) {
+-	char type;
+-	int retval;
+-	do {
+-		retval = read(fd_in, &type, 1);
+-		if (retval < 1) {
+-			if (retval < 0)
+-				perror("rpush: read ");
+-			return;
+-		}
+-		if (type == 'v' && serve_version(fd_in, fd_out))
+-			return;
+-		if (type == 'o' && serve_object(fd_in, fd_out))
+-			return;
+-	} while (1);
+-}
+-
+-int main(int argc, char **argv)
+-{
+-	int arg = 1;
+-        char *commit_id;
+-        char *url;
+-	int fd_in, fd_out;
+-	while (arg < argc && argv[arg][0] == '-') {
+-                arg++;
+-        }
+-        if (argc < arg + 2) {
+-		usage("git-rpush [-c] [-t] [-a] commit-id url");
+-                return 1;
+-        }
+-	commit_id = argv[arg];
+-	url = argv[arg + 1];
+-	if (setup_connection(&fd_in, &fd_out, "git-rpull", url, arg, argv + 1))
+-		return 1;
+-
+-	service(fd_in, fd_out);
+-	return 0;
+-}
+diff a/ssh-pull.c b/ssh-pull.c
+--- /dev/null
++++ b/ssh-pull.c
+@@ -0,0 +1,83 @@
++#include "cache.h"
++#include "commit.h"
++#include "rsh.h"
++#include "pull.h"
++
++static int fd_in;
++static int fd_out;
++
++static unsigned char remote_version = 0;
++static unsigned char local_version = 1;
++
++int fetch(unsigned char *sha1)
++{
++	int ret;
++	signed char remote;
++	char type = 'o';
++	if (has_sha1_file(sha1))
++		return 0;
++	write(fd_out, &type, 1);
++	write(fd_out, sha1, 20);
++	if (read(fd_in, &remote, 1) < 1)
++		return -1;
++	if (remote < 0)
++		return remote;
++	ret = write_sha1_from_fd(sha1, fd_in);
++	if (!ret)
++		pull_say("got %s\n", sha1_to_hex(sha1));
++	return ret;
++}
++
++int get_version(void)
++{
++	char type = 'v';
++	write(fd_out, &type, 1);
++	write(fd_out, &local_version, 1);
++	if (read(fd_in, &remote_version, 1) < 1) {
++		return error("Couldn't read version from remote end");
++	}
++	return 0;
++}
++
++int main(int argc, char **argv)
++{
++	char *commit_id;
++	char *url;
++	int arg = 1;
++
++	while (arg < argc && argv[arg][0] == '-') {
++		if (argv[arg][1] == 't') {
++			get_tree = 1;
++		} else if (argv[arg][1] == 'c') {
++			get_history = 1;
++		} else if (argv[arg][1] == 'd') {
++			get_delta = 0;
++		} else if (!strcmp(argv[arg], "--recover")) {
++			get_delta = 2;
++		} else if (argv[arg][1] == 'a') {
++			get_all = 1;
++			get_tree = 1;
++			get_history = 1;
++		} else if (argv[arg][1] == 'v') {
++			get_verbosely = 1;
++		}
++		arg++;
++	}
++	if (argc < arg + 2) {
++		usage("git-ssh-pull [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url");
++		return 1;
++	}
++	commit_id = argv[arg];
++	url = argv[arg + 1];
++
++	if (setup_connection(&fd_in, &fd_out, "git-ssh-push", url, arg, argv + 1))
++		return 1;
++
++	if (get_version())
++		return 1;
++
++	if (pull(commit_id))
++		return 1;
++
++	return 0;
++}
+diff a/ssh-push.c b/ssh-push.c
+--- /dev/null
++++ b/ssh-push.c
+@@ -0,0 +1,104 @@
++#include "cache.h"
++#include "rsh.h"
++#include <sys/socket.h>
++#include <errno.h>
++
++unsigned char local_version = 1;
++unsigned char remote_version = 0;
++
++int serve_object(int fd_in, int fd_out) {
++	ssize_t size;
++	int posn = 0;
++	char sha1[20];
++	unsigned long objsize;
++	void *buf;
++	signed char remote;
++	do {
++		size = read(fd_in, sha1 + posn, 20 - posn);
++		if (size < 0) {
++			perror("git-ssh-push: read ");
++			return -1;
++		}
++		if (!size)
++			return -1;
++		posn += size;
++	} while (posn < 20);
++	
++	/* fprintf(stderr, "Serving %s\n", sha1_to_hex(sha1)); */
++	remote = 0;
++	
++	buf = map_sha1_file(sha1, &objsize);
++	
++	if (!buf) {
++		fprintf(stderr, "git-ssh-push: could not find %s\n", 
++			sha1_to_hex(sha1));
++		remote = -1;
++	}
++	
++	write(fd_out, &remote, 1);
++	
++	if (remote < 0)
++		return 0;
++	
++	posn = 0;
++	do {
++		size = write(fd_out, buf + posn, objsize - posn);
++		if (size <= 0) {
++			if (!size) {
++				fprintf(stderr, "git-ssh-push: write closed");
++			} else {
++				perror("git-ssh-push: write ");
++			}
++			return -1;
++		}
++		posn += size;
++	} while (posn < objsize);
++	return 0;
++}
++
++int serve_version(int fd_in, int fd_out)
++{
++	if (read(fd_in, &remote_version, 1) < 1)
++		return -1;
++	write(fd_out, &local_version, 1);
++	return 0;
++}
++
++void service(int fd_in, int fd_out) {
++	char type;
++	int retval;
++	do {
++		retval = read(fd_in, &type, 1);
++		if (retval < 1) {
++			if (retval < 0)
++				perror("git-ssh-push: read ");
++			return;
++		}
++		if (type == 'v' && serve_version(fd_in, fd_out))
++			return;
++		if (type == 'o' && serve_object(fd_in, fd_out))
++			return;
++	} while (1);
++}
++
++int main(int argc, char **argv)
++{
++	int arg = 1;
++        char *commit_id;
++        char *url;
++	int fd_in, fd_out;
++	while (arg < argc && argv[arg][0] == '-') {
++                arg++;
++        }
++        if (argc < arg + 2) {
++		usage("git-ssh-push [-c] [-t] [-a] commit-id url");
++                return 1;
++        }
++	commit_id = argv[arg];
++	url = argv[arg + 1];
++	if (setup_connection(&fd_in, &fd_out, "git-ssh-pull", url, arg, argv + 1))
++		return 1;
++
++	service(fd_in, fd_out);
++	return 0;
++}

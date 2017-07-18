@@ -1,0 +1,21 @@
+GIT v1.6.2.5 Release Notes
+==========================
+
+Fixes since v1.6.2.4
+--------------------
+
+* "git apply" mishandled if you fed a git generated patch that renames
+  file A to B and file B to A at the same time.
+
+* "git diff -c -p" (and "diff --cc") did not expect to see submodule
+  differences and instead refused to work.
+
+* "git grep -e '('" segfaulted, instead of diagnosing a mismatched
+  parentheses error.
+
+* "git fetch" generated packs with offset-delta encoding when both ends of
+  the connection are capable of producing one; this cannot be read by
+  ancient git and the user should be able to disable this by setting
+  repack.usedeltabaseoffset configuration to false.
+
+

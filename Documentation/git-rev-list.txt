@@ -1,0 +1,121 @@
+git-rev-list(1)
+===============
+
+NAME
+----
+git-rev-list - Lists commit objects in reverse chronological order
+
+
+SYNOPSIS
+--------
+[verse]
+'git rev-list' [ --max-count=<number> ]
+	     [ --skip=<number> ]
+	     [ --max-age=<timestamp> ]
+	     [ --min-age=<timestamp> ]
+	     [ --sparse ]
+	     [ --merges ]
+	     [ --no-merges ]
+	     [ --min-parents=<number> ]
+	     [ --no-min-parents ]
+	     [ --max-parents=<number> ]
+	     [ --no-max-parents ]
+	     [ --first-parent ]
+	     [ --remove-empty ]
+	     [ --full-history ]
+	     [ --not ]
+	     [ --all ]
+	     [ --branches[=<pattern>] ]
+	     [ --tags[=<pattern>] ]
+	     [ --remotes[=<pattern>] ]
+	     [ --glob=<glob-pattern> ]
+	     [ --ignore-missing ]
+	     [ --stdin ]
+	     [ --quiet ]
+	     [ --topo-order ]
+	     [ --parents ]
+	     [ --timestamp ]
+	     [ --left-right ]
+	     [ --left-only ]
+	     [ --right-only ]
+	     [ --cherry-mark ]
+	     [ --cherry-pick ]
+	     [ --encoding=<encoding> ]
+	     [ --(author|committer|grep)=<pattern> ]
+	     [ --regexp-ignore-case | -i ]
+	     [ --extended-regexp | -E ]
+	     [ --fixed-strings | -F ]
+	     [ --date=<format>]
+	     [ [ --objects | --objects-edge | --objects-edge-aggressive ]
+	       [ --unpacked ] ]
+	     [ --pretty | --header ]
+	     [ --bisect ]
+	     [ --bisect-vars ]
+	     [ --bisect-all ]
+	     [ --merge ]
+	     [ --reverse ]
+	     [ --walk-reflogs ]
+	     [ --no-walk ] [ --do-walk ]
+	     [ --count ]
+	     [ --use-bitmap-index ]
+	     <commit>... [ \-- <paths>... ]
+
+DESCRIPTION
+-----------
+
+List commits that are reachable by following the `parent` links from the
+given commit(s), but exclude commits that are reachable from the one(s)
+given with a '{caret}' in front of them.  The output is given in reverse
+chronological order by default.
+
+You can think of this as a set operation.  Commits given on the command
+line form a set of commits that are reachable from any of them, and then
+commits reachable from any of the ones given with '{caret}' in front are
+subtracted from that set.  The remaining commits are what comes out in the
+command's output.  Various other options and paths parameters can be used
+to further limit the result.
+
+Thus, the following command:
+
+-----------------------------------------------------------------------
+	$ git rev-list foo bar ^baz
+-----------------------------------------------------------------------
+
+means "list all the commits which are reachable from 'foo' or 'bar', but
+not from 'baz'".
+
+A special notation "'<commit1>'..'<commit2>'" can be used as a
+short-hand for "{caret}'<commit1>' '<commit2>'". For example, either of
+the following may be used interchangeably:
+
+-----------------------------------------------------------------------
+	$ git rev-list origin..HEAD
+	$ git rev-list HEAD ^origin
+-----------------------------------------------------------------------
+
+Another special notation is "'<commit1>'...'<commit2>'" which is useful
+for merges.  The resulting set of commits is the symmetric difference
+between the two operands.  The following two commands are equivalent:
+
+-----------------------------------------------------------------------
+	$ git rev-list A B --not $(git merge-base --all A B)
+	$ git rev-list A...B
+-----------------------------------------------------------------------
+
+'rev-list' is a very essential Git command, since it
+provides the ability to build and traverse commit ancestry graphs. For
+this reason, it has a lot of different options that enables it to be
+used by commands as different as 'git bisect' and
+'git repack'.
+
+OPTIONS
+-------
+
+:git-rev-list: 1
+include::rev-list-options.txt[]
+
+include::pretty-formats.txt[]
+
+GIT
+---
+Part of the linkgit:git[1] suite

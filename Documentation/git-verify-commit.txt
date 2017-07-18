@@ -1,0 +1,32 @@
+git-verify-commit(1)
+====================
+
+NAME
+----
+git-verify-commit - Check the GPG signature of commits
+
+SYNOPSIS
+--------
+[verse]
+'git verify-commit' <commit>...
+
+DESCRIPTION
+-----------
+Validates the gpg signature created by 'git commit -S'.
+
+OPTIONS
+-------
+--raw::
+	Print the raw gpg status output to standard error instead of the normal
+	human-readable output.
+
+-v::
+--verbose::
+	Print the contents of the commit object before validating it.
+
+<commit>...::
+	SHA-1 identifiers of Git commit objects.
+
+GIT
+---
+Part of the linkgit:git[1] suite

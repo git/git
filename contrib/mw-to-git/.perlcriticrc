@@ -1,0 +1,28 @@
+# These 3 rules demand to add the s, m and x flag to *every* regexp. This is
+# overkill and would be harmful for readability.
+[-RegularExpressions::RequireExtendedFormatting]
+[-RegularExpressions::RequireDotMatchAnything]
+[-RegularExpressions::RequireLineBoundaryMatching]
+
+# This rule says that builtin functions should not be called with parentheses
+# e.g.: (taken from CPAN's documentation)
+# open($handle, '>', $filename); #not ok
+# open $handle, '>', $filename;  #ok
+# Applying such a rule would mean modifying a huge number of lines for a
+# question of style.
+[-CodeLayout::ProhibitParensWithBuiltins]
+
+# This rule states that each system call should have its return value checked
+# The problem is that it includes the print call. Checking every print call's
+# return value would be harmful to the code readabilty.
+# This configuration keeps all default function but print.
+[InputOutput::RequireCheckedSyscalls]
+functions = open say close
+
+# This rules demands to add a dependancy for the Readonly module. This is not
+# wished.
+[-ValuesAndExpressions::ProhibitConstantPragma]
+
+# This rule is not really useful (rather a question of style) and produces many
+# warnings among the code.
+[-ValuesAndExpressions::ProhibitNoisyQuotes]

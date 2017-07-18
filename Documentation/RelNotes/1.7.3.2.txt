@@ -1,0 +1,5 @@
+Git v1.7.3.2 Release Notes
+==========================
+
+This is primarily to push out many documentation fixes accumulated since
+the 1.7.3.1 release.

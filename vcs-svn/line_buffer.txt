@@ -1,0 +1,77 @@
+line_buffer API
+===============
+
+The line_buffer library provides a convenient interface for
+mostly-line-oriented input.
+
+Each line is not permitted to exceed 10000 bytes.  The provided
+functions are not thread-safe or async-signal-safe, and like
+`fgets()`, they generally do not function correctly if interrupted
+by a signal without SA_RESTART set.
+
+Calling sequence
+----------------
+
+The calling program:
+
+ - initializes a `struct line_buffer` to LINE_BUFFER_INIT
+ - specifies a file to read with `buffer_init`
+ - processes input with `buffer_read_line`, `buffer_skip_bytes`,
+   and `buffer_copy_bytes`
+ - closes the file with `buffer_deinit`, perhaps to start over and
+   read another file.
+
+When finished, the caller can use `buffer_reset` to deallocate
+resources.
+
+Using temporary files
+---------------------
+
+Temporary files provide a place to store data that should not outlive
+the calling program.  A program
+
+ - initializes a `struct line_buffer` to LINE_BUFFER_INIT
+ - requests a temporary file with `buffer_tmpfile_init`
+ - acquires an output handle by calling `buffer_tmpfile_rewind`
+ - uses standard I/O functions like `fprintf` and `fwrite` to fill
+   the temporary file
+ - declares writing is over with `buffer_tmpfile_prepare_to_read`
+ - can re-read what was written with `buffer_read_line`,
+   `buffer_copy_bytes`, and so on
+ - can reuse the temporary file by calling `buffer_tmpfile_rewind`
+   again
+ - removes the temporary file with `buffer_deinit`, perhaps to
+   reuse the line_buffer for some other file.
+
+When finished, the calling program can use `buffer_reset` to deallocate
+resources.
+
+Functions
+---------
+
+`buffer_init`, `buffer_fdinit`::
+	Open the named file or file descriptor for input.
+	buffer_init(buf, NULL) prepares to read from stdin.
+	On failure, returns -1 (with errno indicating the nature
+	of the failure).
+
+`buffer_deinit`::
+	Stop reading from the current file (closing it unless
+	it was stdin).  Returns nonzero if `fclose` fails or
+	the error indicator was set.
+
+`buffer_read_line`::
+	Read a line and strip off the trailing newline.
+	On failure or end of file, returns NULL.
+
+`buffer_copy_bytes`::
+	Read `len` bytes of input and dump them to the standard output
+	stream.  Returns early for error or end of file.
+
+`buffer_skip_bytes`::
+	Discards `len` bytes from the input stream (stopping early
+	if necessary because of an error or eof).  Return value is
+	the number of bytes successfully read.
+
+`buffer_reset`::
+	Deallocates non-static buffers.

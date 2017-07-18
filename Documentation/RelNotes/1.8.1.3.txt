@@ -1,0 +1,47 @@
+Git 1.8.1.3 Release Notes
+=========================
+
+Fixes since v1.8.1.2
+--------------------
+
+ * The attribute mechanism didn't allow limiting attributes to be
+   applied to only a single directory itself with "path/" like the
+   exclude mechanism does.  The fix for this in 1.8.1.2 had
+   performance degradations.
+
+ * Command line completion code was inadvertently made incompatible with
+   older versions of bash by using a newer array notation.
+
+ * Scripts to test bash completion was inherently flaky as it was
+   affected by whatever random things the user may have on $PATH.
+
+ * A fix was added to the build procedure to work around buggy
+   versions of ccache broke the auto-generation of dependencies, which
+   unfortunately is still relevant because some people use ancient
+   distros.
+
+ * We used to stuff "user@" and then append what we read from
+   /etc/mailname to come up with a default e-mail ident, but a bug
+   lost the "user@" part.
+
+ * "git am" did not parse datestamp correctly from Hg generated patch,
+   when it is run in a locale outside C (or en).
+
+ * Attempt to "branch --edit-description" an existing branch, while
+   being on a detached HEAD, errored out.
+
+ * "git cherry-pick" did not replay a root commit to an unborn branch.
+
+ * We forgot to close the file descriptor reading from "gpg" output,
+   killing "git log --show-signature" on a long history.
+
+ * "git rebase --preserve-merges" lost empty merges in recent versions
+   of Git.
+
+ * Rebasing the history of superproject with change in the submodule
+   has been broken since v1.7.12.
+
+ * A failure to push due to non-ff while on an unborn branch
+   dereferenced a NULL pointer when showing an error message.
+
+Also contains various documentation fixes.

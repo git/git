@@ -1,0 +1,4 @@
+string& get::it::RIGHT(char *ptr)
+{
+	ChangeMe;
+}

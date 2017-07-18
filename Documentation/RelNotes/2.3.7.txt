@@ -1,0 +1,21 @@
+Git v2.3.7 Release Notes
+========================
+
+Fixes since v2.3.6
+------------------
+
+ * An earlier update to the parser that disects a URL broke an
+   address, followed by a colon, followed by an empty string (instead
+   of the port number), e.g. ssh://example.com:/path/to/repo.
+
+ * The completion script (in contrib/) contaminated global namespace
+   and clobbered on a shell variable $x.
+
+ * The "git push --signed" protocol extension did not limit what the
+   "nonce" that is a server-chosen string can contain or how long it
+   can be, which was unnecessarily lax.  Limit both the length and the
+   alphabet to a reasonably small space that can still have enough
+   entropy.
+
+Also contains typofixes, documentation updates and trivial code
+clean-ups.

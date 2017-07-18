@@ -1,0 +1,5 @@
+ t/t0000-basic.sh |    0 
+ t/test-lib.sh    |    0 
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+ mode change 100644 => 100755 t/t0000-basic.sh
+ mode change 100644 => 100755 t/test-lib.sh

@@ -1,0 +1,5 @@
+diff -urN -X /usr/people/jes/exclude-linux linux-2.6.12-rc2-mm3-vanilla/post image.txt linux-2.6.12-rc2-mm3/post image.txt
+--- linux-2.6.12-rc2-mm3-vanilla/post image.txt 1969-12-31 16:00:00 -08:00
++++ linux-2.6.12-rc2-mm3/post image.txt 2005-04-12 02:14:06 -07:00
+@@ -0,0 +1 @@
++postimage

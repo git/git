@@ -1,0 +1,47 @@
+git-check-mailmap(1)
+====================
+
+NAME
+----
+git-check-mailmap - Show canonical names and email addresses of contacts
+
+
+SYNOPSIS
+--------
+[verse]
+'git check-mailmap' [options] <contact>...
+
+
+DESCRIPTION
+-----------
+
+For each ``Name $$<user@host>$$'' or ``$$<user@host>$$'' from the command-line
+or standard input (when using `--stdin`), look up the person's canonical name
+and email address (see "Mapping Authors" below). If found, print them;
+otherwise print the input as-is.
+
+
+OPTIONS
+-------
+--stdin::
+	Read contacts, one per line, from the standard input after exhausting
+	contacts provided on the command-line.
+
+
+OUTPUT
+------
+
+For each contact, a single line is output, terminated by a newline.  If the
+name is provided or known to the 'mailmap', ``Name $$<user@host>$$'' is
+printed; otherwise only ``$$<user@host>$$'' is printed.
+
+
+MAPPING AUTHORS
+---------------
+
+include::mailmap.txt[]
+
+
+GIT
+---
+Part of the linkgit:git[1] suite

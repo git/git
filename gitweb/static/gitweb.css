@@ -1,0 +1,686 @@
+body {
+	font-family: sans-serif;
+	font-size: small;
+	border: solid #d9d8d1;
+	border-width: 1px;
+	margin: 10px;
+	background-color: #ffffff;
+	color: #000000;
+}
+
+a {
+	color: #0000cc;
+}
+
+a:hover, a:visited, a:active {
+	color: #880000;
+}
+
+span.cntrl {
+	border: dashed #aaaaaa;
+	border-width: 1px;
+	padding: 0px 2px 0px 2px;
+	margin:  0px 2px 0px 2px;
+}
+
+img.logo {
+	float: right;
+	border-width: 0px;
+}
+
+img.avatar {
+	vertical-align: middle;
+}
+
+img.blob {
+	max-height: 100%;
+	max-width: 100%;
+}
+
+a.list img.avatar {
+	border-style: none;
+}
+
+div.page_header {
+	height: 25px;
+	padding: 8px;
+	font-size: 150%;
+	font-weight: bold;
+	background-color: #d9d8d1;
+}
+
+div.page_header a:visited, a.header {
+	color: #0000cc;
+}
+
+div.page_header a:hover {
+	color: #880000;
+}
+
+div.page_nav {
+	padding: 8px;
+}
+
+div.page_nav a:visited {
+	color: #0000cc;
+}
+
+div.page_path {
+	padding: 8px;
+	font-weight: bold;
+	border: solid #d9d8d1;
+	border-width: 0px 0px 1px;
+}
+
+div.page_footer {
+	height: 22px;
+	padding: 4px 8px;
+	background-color: #d9d8d1;
+}
+
+div.page_footer_text {
+	line-height: 22px;
+	float: left;
+	color: #555555;
+	font-style: italic;
+}
+
+div#generating_info {
+	margin: 4px;
+	font-size: smaller;
+	text-align: center;
+	color: #505050;
+}
+
+div.page_body {
+	padding: 8px;
+	font-family: monospace;
+}
+
+div.title, a.title {
+	display: block;
+	padding: 6px 8px;
+	font-weight: bold;
+	background-color: #edece6;
+	text-decoration: none;
+	color: #000000;
+}
+
+div.readme {
+	padding: 8px;
+}
+
+a.title:hover {
+	background-color: #d9d8d1;
+}
+
+div.title_text {
+	padding: 6px 0px;
+	border: solid #d9d8d1;
+	border-width: 0px 0px 1px;
+	font-family: monospace;
+}
+
+div.log_body {
+	padding: 8px 8px 8px 150px;
+}
+
+span.age {
+	position: relative;
+	float: left;
+	width: 142px;
+	font-style: italic;
+}
+
+span.signoff {
+	color: #888888;
+}
+
+div.log_link {
+	padding: 0px 8px;
+	font-size: 70%;
+	font-family: sans-serif;
+	font-style: normal;
+	position: relative;
+	float: left;
+	width: 136px;
+}
+
+div.list_head {
+	padding: 6px 8px 4px;
+	border: solid #d9d8d1;
+	border-width: 1px 0px 0px;
+	font-style: italic;
+}
+
+.author_date, .author {
+	font-style: italic;
+}
+
+div.author_date {
+	padding: 8px;
+	border: solid #d9d8d1;
+	border-width: 0px 0px 1px 0px;
+}
+
+a.list {
+	text-decoration: none;
+	color: #000000;
+}
+
+a.subject, a.name {
+	font-weight: bold;
+}
+
+table.tags a.subject {
+	font-weight: normal;
+}
+
+a.list:hover {
+	text-decoration: underline;
+	color: #880000;
+}
+
+a.text {
+	text-decoration: none;
+	color: #0000cc;
+}
+
+a.text:visited {
+	text-decoration: none;
+	color: #880000;
+}
+
+a.text:hover {
+	text-decoration: underline;
+	color: #880000;
+}
+
+table {
+	padding: 8px 4px;
+	border-spacing: 0;
+}
+
+table.diff_tree {
+	font-family: monospace;
+}
+
+table.combined.diff_tree th {
+	text-align: center;
+}
+
+table.combined.diff_tree td {
+	padding-right: 24px;
+}
+
+table.combined.diff_tree th.link,
+table.combined.diff_tree td.link {
+	padding: 0px 2px;
+}
+
+table.combined.diff_tree td.nochange a {
+	color: #6666ff;
+}
+
+table.combined.diff_tree td.nochange a:hover,
+table.combined.diff_tree td.nochange a:visited {
+	color: #d06666;
+}
+
+table.blame {
+	border-collapse: collapse;
+}
+
+table.blame td {
+	padding: 0px 5px;
+	font-size: 100%;
+	vertical-align: top;
+}
+
+th {
+	padding: 2px 5px;
+	font-size: 100%;
+	text-align: left;
+}
+
+/* do not change row style on hover for 'blame' view */
+tr.light,
+table.blame .light:hover {
+	background-color: #ffffff;
+}
+
+tr.dark,
+table.blame .dark:hover {
+	background-color: #f6f6f0;
+}
+
+/* currently both use the same, but it can change */
+tr.light:hover,
+tr.dark:hover {
+	background-color: #edece6;
+}
+
+/* boundary commits in 'blame' view */
+/* and commits without "previous" */
+tr.boundary td.sha1,
+tr.no-previous td.linenr {
+	font-weight: bold;
+}
+
+/* for 'blame_incremental', during processing */
+tr.color1 { background-color: #f6fff6; }
+tr.color2 { background-color: #f6f6ff; }
+tr.color3 { background-color: #fff6f6; }
+
+td {
+	padding: 2px 5px;
+	font-size: 100%;
+	vertical-align: top;
+}
+
+td.link, td.selflink {
+	padding: 2px 5px;
+	font-family: sans-serif;
+	font-size: 70%;
+}
+
+td.selflink {
+	padding-right: 0px;
+}
+
+td.sha1 {
+	font-family: monospace;
+}
+
+.error {
+	color: red;
+	background-color: yellow;
+}
+
+td.current_head {
+	text-decoration: underline;
+}
+
+td.category {
+	background-color: #d9d8d1;
+	border-top: 1px solid #000000;
+	border-left: 1px solid #000000;
+	font-weight: bold;
+}
+
+table.diff_tree span.file_status.new {
+	color: #008000;
+}
+
+table.diff_tree span.file_status.deleted {
+	color: #c00000;
+}
+
+table.diff_tree span.file_status.moved,
+table.diff_tree span.file_status.mode_chnge {
+	color: #777777;
+}
+
+table.diff_tree span.file_status.copied {
+  color: #70a070;
+}
+
+/* noage: "No commits" */
+table.project_list td.noage {
+	color: #808080;
+	font-style: italic;
+}
+
+/* age2: 60*60*24*2 <= age */
+table.project_list td.age2, table.blame td.age2 {
+	font-style: italic;
+}
+
+/* age1: 60*60*2 <= age < 60*60*24*2 */
+table.project_list td.age1 {
+	color: #009900;
+	font-style: italic;
+}
+
+table.blame td.age1 {
+	color: #009900;
+	background: transparent;
+}
+
+/* age0: age < 60*60*2 */
+table.project_list td.age0 {
+	color: #009900;
+	font-style: italic;
+	font-weight: bold;
+}
+
+table.blame td.age0 {
+	color: #009900;
+	background: transparent;
+	font-weight: bold;
+}
+
+td.pre, div.pre, div.diff {
+	font-family: monospace;
+	font-size: 12px;
+	white-space: pre;
+}
+
+td.mode {
+	font-family: monospace;
+}
+
+/* progress of blame_interactive */
+div#progress_bar {
+	height: 2px;
+	margin-bottom: -2px;
+	background-color: #d8d9d0;
+}
+div#progress_info {
+	float: right;
+	text-align: right;
+}
+
+/* format of (optional) objects size in 'tree' view */
+td.size {
+	font-family: monospace;
+	text-align: right;
+}
+
+/* styling of diffs (patchsets): commitdiff and blobdiff views */
+div.diff.header,
+div.diff.extended_header {
+	white-space: normal;
+}
+
+div.diff.header {
+	font-weight: bold;
+
+	background-color: #edece6;
+
+	margin-top: 4px;
+	padding: 4px 0px 2px 0px;
+	border: solid #d9d8d1;
+	border-width: 1px 0px 1px 0px;
+}
+
+div.diff.header a.path {
+	text-decoration: underline;
+}
+
+div.diff.extended_header,
+div.diff.extended_header a.path,
+div.diff.extended_header a.hash {
+	color: #777777;
+}
+
+div.diff.extended_header .info {
+	color: #b0b0b0;
+}
+
+div.diff.extended_header {
+	background-color: #f6f5ee;
+	padding: 2px 0px 2px 0px;
+}
+
+div.diff a.list,
+div.diff a.path,
+div.diff a.hash {
+	text-decoration: none;
+}
+
+div.diff a.list:hover,
+div.diff a.path:hover,
+div.diff a.hash:hover {
+	text-decoration: underline;
+}
+
+div.diff.to_file a.path,
+div.diff.to_file {
+	color: #007000;
+}
+
+div.diff.add {
+	color: #008800;
+}
+
+div.diff.add span.marked {
+	background-color: #aaffaa;
+}
+
+div.diff.from_file a.path,
+div.diff.from_file {
+	color: #aa0000;
+}
+
+div.diff.rem {
+	color: #cc0000;
+}
+
+div.diff.rem span.marked {
+	background-color: #ffaaaa;
+}
+
+div.diff.chunk_header a,
+div.diff.chunk_header {
+	color: #990099;
+}
+
+div.diff.chunk_header {
+	border: dotted #ffe0ff;
+	border-width: 1px 0px 0px 0px;
+	margin-top: 2px;
+}
+
+div.diff.chunk_header span.chunk_info {
+	background-color: #ffeeff;
+}
+
+div.diff.chunk_header span.section {
+	color: #aa22aa;
+}
+
+div.diff.incomplete {
+	color: #cccccc;
+}
+
+div.diff.nodifferences {
+	font-weight: bold;
+	color: #600000;
+}
+
+/* side-by-side diff */
+div.chunk_block {
+	overflow: hidden;
+}
+
+div.chunk_block div.old {
+	float: left;
+	width: 50%;
+	overflow: hidden;
+}
+
+div.chunk_block div.new {
+	margin-left: 50%;
+	width: 50%;
+}
+
+div.chunk_block.rem div.old div.diff.rem {
+	background-color: #fff5f5;
+}
+div.chunk_block.add div.new div.diff.add {
+	background-color: #f8fff8;
+}
+div.chunk_block.chg div     div.diff {
+	background-color: #fffff0;
+}
+div.chunk_block.ctx div     div.diff.ctx {
+	color: #404040;
+}
+
+
+div.index_include {
+	border: solid #d9d8d1;
+	border-width: 0px 0px 1px;
+	padding: 12px 8px;
+}
+
+div.search {
+	font-size: 100%;
+	font-weight: normal;
+	margin: 4px 8px;
+	float: right;
+	top: 56px;
+	right: 12px
+}
+
+div.projsearch {
+	text-align: center;
+	margin: 20px 0px;
+}
+
+div.projsearch form {
+	margin-bottom: 2px;
+}
+
+td.linenr {
+	text-align: right;
+}
+
+a.linenr {
+	color: #999999;
+	text-decoration: none
+}
+
+a.rss_logo {
+	float: right;
+	padding: 3px 5px;
+	line-height: 10px;
+	border: 1px solid;
+	border-color: #fcc7a5 #7d3302 #3e1a01 #ff954e;
+	color: #ffffff;
+	background-color: #ff6600;
+	font-weight: bold;
+	font-family: sans-serif;
+	font-size: 70%;
+	text-align: center;
+	text-decoration: none;
+}
+
+a.rss_logo:hover {
+	background-color: #ee5500;
+}
+
+a.rss_logo.generic {
+	background-color: #ff8800;
+}
+
+a.rss_logo.generic:hover {
+	background-color: #ee7700;
+}
+
+span.refs span {
+	padding: 0px 4px;
+	font-size: 70%;
+	font-weight: normal;
+	border: 1px solid;
+	background-color: #ffaaff;
+	border-color: #ffccff #ff00ee #ff00ee #ffccff;
+}
+
+span.refs span a {
+	text-decoration: none;
+	color: inherit;
+}
+
+span.refs span a:hover {
+	text-decoration: underline;
+}
+
+span.refs span.indirect {
+	font-style: italic;
+}
+
+span.refs span.ref {
+	background-color: #aaaaff;
+	border-color: #ccccff #0033cc #0033cc #ccccff;
+}
+
+span.refs span.tag {
+	background-color: #ffffaa;
+	border-color: #ffffcc #ffee00 #ffee00 #ffffcc;
+}
+
+span.refs span.head {
+	background-color: #aaffaa;
+	border-color: #ccffcc #00cc33 #00cc33 #ccffcc;
+}
+
+span.atnight {
+	color: #cc0000;
+}
+
+span.match {
+	color: #e00000;
+}
+
+div.binary {
+	font-style: italic;
+}
+
+div.remote {
+	margin: .5em;
+	border: 1px solid #d9d8d1;
+	display: inline-block;
+}
+
+/* JavaScript-based timezone manipulation */
+
+.popup { /* timezone selection UI */
+	position: absolute;
+	/* "top: 0; right: 0;" would be better, if not for bugs in browsers */
+	top: 0; left: 0;
+	border: 1px solid;
+	padding: 2px;
+	background-color: #f0f0f0;
+	font-style: normal;
+	color: #000000;
+	cursor: auto;
+}
+
+.close-button { /* close timezone selection UI without selecting */
+	/* float doesn't work within absolutely positioned container,
+	 * if width of container is not set explicitly */
+	/* float: right; */
+	position: absolute;
+	top: 0px; right: 0px;
+	border:  1px solid green;
+	margin:  1px 1px 1px 1px;
+	padding-bottom: 2px;
+	width:     12px;
+	height:    10px;
+	font-size:  9px;
+	font-weight: bold;
+	text-align: center;
+	background-color: #fff0f0;
+	cursor: pointer;
+}
+
+
+/* Style definition generated by highlight 2.4.5, http://www.andre-simon.de/ */
+
+/* Highlighting theme definition: */
+
+.num    { color:#2928ff; }
+.esc    { color:#ff00ff; }
+.str    { color:#ff0000; }
+.dstr   { color:#818100; }
+.slc    { color:#838183; font-style:italic; }
+.com    { color:#838183; font-style:italic; }
+.dir    { color:#008200; }
+.sym    { color:#000000; }
+.line   { color:#555555; }
+.kwa    { color:#000000; font-weight:bold; }
+.kwb    { color:#830000; }
+.kwc    { color:#000000; font-weight:bold; }
+.kwd    { color:#010181; }

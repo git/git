@@ -1,0 +1,23 @@
+Git v1.7.8.4 Release Notes
+==========================
+
+Fixes since v1.7.8.3
+--------------------
+
+ * The code to look up attributes for paths reused entries from a wrong
+   directory when two paths in question are in adjacent directories and
+   the name of the one directory is a prefix of the other.
+
+ * A wildcard that matches deeper hierarchy given to the "diff-index" command,
+   e.g. "git diff-index HEAD -- '*.txt'", incorrectly reported additions of
+   matching files even when there is no change.
+
+ * When producing a "thin pack" (primarily used in bundles and smart
+   HTTP transfers) out of a fully packed repository, we unnecessarily
+   avoided sending recent objects as a delta against objects we know
+   the other side has.
+
+ * "git send-email" did not properly treat sendemail.multiedit as a
+   boolean (e.g. setting it to "false" did not turn it off).
+
+Also contains minor fixes and documentation updates.

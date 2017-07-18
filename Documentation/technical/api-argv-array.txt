@@ -1,0 +1,65 @@
+argv-array API
+==============
+
+The argv-array API allows one to dynamically build and store
+NULL-terminated lists.  An argv-array maintains the invariant that the
+`argv` member always points to a non-NULL array, and that the array is
+always NULL-terminated at the element pointed to by `argv[argc]`. This
+makes the result suitable for passing to functions expecting to receive
+argv from main(), or the link:api-run-command.html[run-command API].
+
+The link:api-string-list.html[string-list API] is similar, but cannot be
+used for these purposes; instead of storing a straight string pointer,
+it contains an item structure with a `util` field that is not compatible
+with the traditional argv interface.
+
+Each `argv_array` manages its own memory. Any strings pushed into the
+array are duplicated, and all memory is freed by argv_array_clear().
+
+Data Structures
+---------------
+
+`struct argv_array`::
+
+	A single array. This should be initialized by assignment from
+	`ARGV_ARRAY_INIT`, or by calling `argv_array_init`. The `argv`
+	member contains the actual array; the `argc` member contains the
+	number of elements in the array, not including the terminating
+	NULL.
+
+Functions
+---------
+
+`argv_array_init`::
+	Initialize an array. This is no different than assigning from
+	`ARGV_ARRAY_INIT`.
+
+`argv_array_push`::
+	Push a copy of a string onto the end of the array.
+
+`argv_array_pushl`::
+	Push a list of strings onto the end of the array. The arguments
+	should be a list of `const char *` strings, terminated by a NULL
+	argument.
+
+`argv_array_pushf`::
+	Format a string and push it onto the end of the array. This is a
+	convenience wrapper combining `strbuf_addf` and `argv_array_push`.
+
+`argv_array_pushv`::
+	Push a null-terminated array of strings onto the end of the array.
+
+`argv_array_pop`::
+	Remove the final element from the array. If there are no
+	elements in the array, do nothing.
+
+`argv_array_clear`::
+	Free all memory associated with the array and return it to the
+	initial, empty state.
+
+`argv_array_detach`::
+	Disconnect the `argv` member from the `argv_array` struct and
+	return it. The caller is responsible for freeing the memory used
+	by the array, and by the strings it references. After detaching,
+	the `argv_array` is in a reinitialized state and can be pushed
+	into again.

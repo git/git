@@ -1,0 +1,95 @@
+git-ls-remote(1)
+================
+
+NAME
+----
+git-ls-remote - List references in a remote repository
+
+
+SYNOPSIS
+--------
+[verse]
+'git ls-remote' [--heads] [--tags] [--refs] [--upload-pack=<exec>]
+	      [-q | --quiet] [--exit-code] [--get-url]
+	      [--symref] [<repository> [<refs>...]]
+
+DESCRIPTION
+-----------
+Displays references available in a remote repository along with the associated
+commit IDs.
+
+
+OPTIONS
+-------
+-h::
+--heads::
+-t::
+--tags::
+	Limit to only refs/heads and refs/tags, respectively.
+	These options are _not_ mutually exclusive; when given
+	both, references stored in refs/heads and refs/tags are
+	displayed.
+
+--refs::
+	Do not show peeled tags or pseudorefs like HEAD	in the output.
+
+-q::
+--quiet::
+	Do not print remote URL to stderr.
+
+--upload-pack=<exec>::
+	Specify the full path of 'git-upload-pack' on the remote
+	host. This allows listing references from repositories accessed via
+	SSH and where the SSH daemon does not use the PATH configured by the
+	user.
+
+--exit-code::
+	Exit with status "2" when no matching refs are found in the remote
+	repository. Usually the command exits with status "0" to indicate
+	it successfully talked with the remote repository, whether it
+	found any matching refs.
+
+--get-url::
+	Expand the URL of the given remote repository taking into account any
+	"url.<base>.insteadOf" config setting (See linkgit:git-config[1]) and
+	exit without talking to the remote.
+
+--symref::
+	In addition to the object pointed by it, show the underlying
+	ref pointed by it when showing a symbolic ref.  Currently,
+	upload-pack only shows the symref HEAD, so it will be the only
+	one shown by ls-remote.
+
+<repository>::
+	The "remote" repository to query.  This parameter can be
+	either a URL or the name of a remote (see the GIT URLS and
+	REMOTES sections of linkgit:git-fetch[1]).
+
+<refs>...::
+	When unspecified, all references, after filtering done
+	with --heads and --tags, are shown.  When <refs>... are
+	specified, only references matching the given patterns
+	are displayed.
+
+EXAMPLES
+--------
+
+	$ git ls-remote --tags ./.
+	d6602ec5194c87b0fc87103ca4d67251c76f233a	refs/tags/v0.99
+	f25a265a342aed6041ab0cc484224d9ca54b6f41	refs/tags/v0.99.1
+	7ceca275d047c90c0c7d5afb13ab97efdf51bd6e	refs/tags/v0.99.3
+	c5db5456ae3b0873fc659c19fafdde22313cc441	refs/tags/v0.99.2
+	0918385dbd9656cab0d1d81ba7453d49bbc16250	refs/tags/junio-gpg-pub
+	$ git ls-remote http://www.kernel.org/pub/scm/git/git.git master pu rc
+	5fe978a5381f1fbad26a80e682ddd2a401966740	refs/heads/master
+	c781a84b5204fb294c9ccc79f8b3baceeb32c061	refs/heads/pu
+	$ git remote add korg http://www.kernel.org/pub/scm/git/git.git
+	$ git ls-remote --tags korg v\*
+	d6602ec5194c87b0fc87103ca4d67251c76f233a	refs/tags/v0.99
+	f25a265a342aed6041ab0cc484224d9ca54b6f41	refs/tags/v0.99.1
+	c5db5456ae3b0873fc659c19fafdde22313cc441	refs/tags/v0.99.2
+	7ceca275d047c90c0c7d5afb13ab97efdf51bd6e	refs/tags/v0.99.3
+
+GIT
+---
+Part of the linkgit:git[1] suite

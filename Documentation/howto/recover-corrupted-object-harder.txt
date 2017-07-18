@@ -1,0 +1,479 @@
+Date: Wed, 16 Oct 2013 04:34:01 -0400
+From: Jeff King <peff@peff.net>
+Subject: pack corruption post-mortem
+Abstract: Recovering a corrupted object when no good copy is available.
+Content-type: text/asciidoc
+
+How to recover an object from scratch
+=====================================
+
+I was recently presented with a repository with a corrupted packfile,
+and was asked if the data was recoverable. This post-mortem describes
+the steps I took to investigate and fix the problem. I thought others
+might find the process interesting, and it might help somebody in the
+same situation.
+
+********************************
+Note: In this case, no good copy of the repository was available. For
+the much easier case where you can get the corrupted object from
+elsewhere, see link:recover-corrupted-blob-object.html[this howto].
+********************************
+
+I started with an fsck, which found a problem with exactly one object
+(I've used $pack and $obj below to keep the output readable, and also
+because I'll refer to them later):
+
+-----------
+    $ git fsck
+    error: $pack SHA1 checksum mismatch
+    error: index CRC mismatch for object $obj from $pack at offset 51653873
+    error: inflate: data stream error (incorrect data check)
+    error: cannot unpack $obj from $pack at offset 51653873
+-----------
+
+The pack checksum failing means a byte is munged somewhere, and it is
+presumably in the object mentioned (since both the index checksum and
+zlib were failing).
+
+Reading the zlib source code, I found that "incorrect data check" means
+that the adler-32 checksum at the end of the zlib data did not match the
+inflated data. So stepping the data through zlib would not help, as it
+did not fail until the very end, when we realize the CRC does not match.
+The problematic bytes could be anywhere in the object data.
+
+The first thing I did was pull the broken data out of the packfile. I
+needed to know how big the object was, which I found out with:
+
+------------
+    $ git show-index <$idx | cut -d' ' -f1 | sort -n | grep -A1 51653873
+    51653873
+    51664736
+------------
+
+Show-index gives us the list of objects and their offsets. We throw away
+everything but the offsets, and then sort them so that our interesting
+offset (which we got from the fsck output above) is followed immediately
+by the offset of the next object. Now we know that the object data is
+10863 bytes long, and we can grab it with:
+
+------------
+  dd if=$pack of=object bs=1 skip=51653873 count=10863
+------------
+
+I inspected a hexdump of the data, looking for any obvious bogosity
+(e.g., a 4K run of zeroes would be a good sign of filesystem
+corruption). But everything looked pretty reasonable.
+
+Note that the "object" file isn't fit for feeding straight to zlib; it
+has the git packed object header, which is variable-length. We want to
+strip that off so we can start playing with the zlib data directly. You
+can either work your way through it manually (the format is described in
+link:../technical/pack-format.html[Documentation/technical/pack-format.txt]),
+or you can walk through it in a debugger. I did the latter, creating a
+valid pack like:
+
+------------
+    # pack magic and version
+    printf 'PACK\0\0\0\2' >tmp.pack
+    # pack has one object
+    printf '\0\0\0\1' >>tmp.pack
+    # now add our object data
+    cat object >>tmp.pack
+    # and then append the pack trailer
+    /path/to/git.git/test-sha1 -b <tmp.pack >trailer
+    cat trailer >>tmp.pack
+------------
+
+and then running "git index-pack tmp.pack" in the debugger (stop at
+unpack_raw_entry). Doing this, I found that there were 3 bytes of header
+(and the header itself had a sane type and size). So I stripped those
+off with:
+
+------------
+    dd if=object of=zlib bs=1 skip=3
+------------
+
+I ran the result through zlib's inflate using a custom C program. And
+while it did report the error, I did get the right number of output
+bytes (i.e., it matched git's size header that we decoded above). But
+feeding the result back to "git hash-object" didn't produce the same
+sha1. So there were some wrong bytes, but I didn't know which. The file
+happened to be C source code, so I hoped I could notice something
+obviously wrong with it, but I didn't. I even got it to compile!
+
+I also tried comparing it to other versions of the same path in the
+repository, hoping that there would be some part of the diff that didn't
+make sense. Unfortunately, this happened to be the only revision of this
+particular file in the repository, so I had nothing to compare against.
+
+So I took a different approach. Working under the guess that the
+corruption was limited to a single byte, I wrote a program to munge each
+byte individually, and try inflating the result. Since the object was
+only 10K compressed, that worked out to about 2.5M attempts, which took
+a few minutes.
+
+The program I used is here:
+
+----------------------------------------------
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
+#include <zlib.h>
+
+static int try_zlib(unsigned char *buf, int len)
+{
+	/* make this absurdly large so we don't have to loop */
+	static unsigned char out[1024*1024];
+	z_stream z;
+	int ret;
+
+	memset(&z, 0, sizeof(z));
+	inflateInit(&z);
+
+	z.next_in = buf;
+	z.avail_in = len;
+	z.next_out = out;
+	z.avail_out = sizeof(out);
+
+	ret = inflate(&z, 0);
+	inflateEnd(&z);
+	return ret >= 0;
+}
+
+/* eye candy */
+static int counter = 0;
+static void progress(int sig)
+{
+	fprintf(stderr, "\r%d", counter);
+	alarm(1);
+}
+
+int main(void)
+{
+	/* oversized so we can read the whole buffer in */
+	unsigned char buf[1024*1024];
+	int len;
+	unsigned i, j;
+
+	signal(SIGALRM, progress);
+	alarm(1);
+
+	len = read(0, buf, sizeof(buf));
+	for (i = 0; i < len; i++) {
+		unsigned char c = buf[i];
+		for (j = 0; j <= 0xff; j++) {
+			buf[i] = j;
+
+			counter++;
+			if (try_zlib(buf, len))
+				printf("i=%d, j=%x\n", i, j);
+		}
+		buf[i] = c;
+	}
+
+	alarm(0);
+	fprintf(stderr, "\n");
+	return 0;
+}
+----------------------------------------------
+
+I compiled and ran with:
+
+-------
+  gcc -Wall -Werror -O3 munge.c -o munge -lz
+  ./munge <zlib
+-------
+
+
+There were a few false positives early on (if you write "no data" in the
+zlib header, zlib thinks it's just fine :) ). But I got a hit about
+halfway through:
+
+-------
+  i=5642, j=c7
+-------
+
+I let it run to completion, and got a few more hits at the end (where it
+was munging the CRC to match our broken data). So there was a good
+chance this middle hit was the source of the problem.
+
+I confirmed by tweaking the byte in a hex editor, zlib inflating the
+result (no errors!), and then piping the output into "git hash-object",
+which reported the sha1 of the broken object. Success!
+
+I fixed the packfile itself with:
+
+-------
+  chmod +w $pack
+  printf '\xc7' | dd of=$pack bs=1 seek=51659518 conv=notrunc
+  chmod -w $pack
+-------
+
+The `\xc7` comes from the replacement byte our "munge" program found.
+The offset 51659518 is derived by taking the original object offset
+(51653873), adding the replacement offset found by "munge" (5642), and
+then adding back in the 3 bytes of git header we stripped.
+
+After that, "git fsck" ran clean.
+
+As for the corruption itself, I was lucky that it was indeed a single
+byte. In fact, it turned out to be a single bit. The byte 0xc7 was
+corrupted to 0xc5. So presumably it was caused by faulty hardware, or a
+cosmic ray.
+
+And the aborted attempt to look at the inflated output to see what was
+wrong? I could have looked forever and never found it. Here's the diff
+between what the corrupted data inflates to, versus the real data:
+
+--------------
+  -       cp = strtok (arg, "+");
+  +       cp = strtok (arg, ".");
+--------------
+
+It tweaked one byte and still ended up as valid, readable C that just
+happened to do something totally different! One takeaway is that on a
+less unlucky day, looking at the zlib output might have actually been
+helpful, as most random changes would actually break the C code.
+
+But more importantly, git's hashing and checksumming noticed a problem
+that easily could have gone undetected in another system. The result
+still compiled, but would have caused an interesting bug (that would
+have been blamed on some random commit).
+
+
+The adventure continues...
+--------------------------
+
+I ended up doing this again! Same entity, new hardware. The assumption
+at this point is that the old disk corrupted the packfile, and then the
+corruption was migrated to the new hardware (because it was done by
+rsync or similar, and no fsck was done at the time of migration).
+
+This time, the affected blob was over 20 megabytes, which was far too
+large to do a brute-force on. I followed the instructions above to
+create the `zlib` file. I then used the `inflate` program below to pull
+the corrupted data from that. Examining that output gave me a hint about
+where in the file the corruption was. But now I was working with the
+file itself, not the zlib contents. So knowing the sha1 of the object
+and the approximate area of the corruption, I used the `sha1-munge`
+program below to brute-force the correct byte.
+
+Here's the inflate program (it's essentially `gunzip` but without the
+`.gz` header processing):
+
+--------------------------
+#include <stdio.h>
+#include <string.h>
+#include <zlib.h>
+#include <stdlib.h>
+
+int main(int argc, char **argv)
+{
+	/*
+	 * oversized so we can read the whole buffer in;
+	 * this could actually be switched to streaming
+	 * to avoid any memory limitations
+	 */
+	static unsigned char buf[25 * 1024 * 1024];
+	static unsigned char out[25 * 1024 * 1024];
+	int len;
+	z_stream z;
+	int ret;
+
+	len = read(0, buf, sizeof(buf));
+	memset(&z, 0, sizeof(z));
+	inflateInit(&z);
+
+	z.next_in = buf;
+	z.avail_in = len;
+	z.next_out = out;
+	z.avail_out = sizeof(out);
+
+	ret = inflate(&z, 0);
+	if (ret != Z_OK && ret != Z_STREAM_END)
+		fprintf(stderr, "initial inflate failed (%d)\n", ret);
+
+	fprintf(stderr, "outputting %lu bytes", z.total_out);
+	fwrite(out, 1, z.total_out, stdout);
+	return 0;
+}
+--------------------------
+
+And here is the `sha1-munge` program:
+
+--------------------------
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
+#include <openssl/sha.h>
+#include <stdlib.h>
+
+/* eye candy */
+static int counter = 0;
+static void progress(int sig)
+{
+	fprintf(stderr, "\r%d", counter);
+	alarm(1);
+}
+
+static const signed char hexval_table[256] = {
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 00-07 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 08-0f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 10-17 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 18-1f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 20-27 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 28-2f */
+	  0,  1,  2,  3,  4,  5,  6,  7,		/* 30-37 */
+	  8,  9, -1, -1, -1, -1, -1, -1,		/* 38-3f */
+	 -1, 10, 11, 12, 13, 14, 15, -1,		/* 40-47 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 48-4f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 50-57 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 58-5f */
+	 -1, 10, 11, 12, 13, 14, 15, -1,		/* 60-67 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 68-67 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 70-77 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 78-7f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 80-87 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 88-8f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 90-97 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 98-9f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* a0-a7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* a8-af */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* b0-b7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* b8-bf */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* c0-c7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* c8-cf */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* d0-d7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* d8-df */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* e0-e7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* e8-ef */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* f0-f7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* f8-ff */
+};
+
+static inline unsigned int hexval(unsigned char c)
+{
+return hexval_table[c];
+}
+
+static int get_sha1_hex(const char *hex, unsigned char *sha1)
+{
+	int i;
+	for (i = 0; i < 20; i++) {
+		unsigned int val;
+		/*
+		 * hex[1]=='\0' is caught when val is checked below,
+		 * but if hex[0] is NUL we have to avoid reading
+		 * past the end of the string:
+		 */
+		if (!hex[0])
+			return -1;
+		val = (hexval(hex[0]) << 4) | hexval(hex[1]);
+		if (val & ~0xff)
+			return -1;
+		*sha1++ = val;
+		hex += 2;
+	}
+	return 0;
+}
+
+int main(int argc, char **argv)
+{
+	/* oversized so we can read the whole buffer in */
+	static unsigned char buf[25 * 1024 * 1024];
+	char header[32];
+	int header_len;
+	unsigned char have[20], want[20];
+	int start, len;
+	SHA_CTX orig;
+	unsigned i, j;
+
+	if (!argv[1] || get_sha1_hex(argv[1], want)) {
+		fprintf(stderr, "usage: sha1-munge <sha1> [start] <file.in\n");
+		return 1;
+	}
+
+	if (argv[2])
+		start = atoi(argv[2]);
+	else
+		start = 0;
+
+	len = read(0, buf, sizeof(buf));
+	header_len = sprintf(header, "blob %d", len) + 1;
+	fprintf(stderr, "using header: %s\n", header);
+
+	/*
+	 * We keep a running sha1 so that if you are munging
+	 * near the end of the file, we do not have to re-sha1
+	 * the unchanged earlier bytes
+	 */
+	SHA1_Init(&orig);
+	SHA1_Update(&orig, header, header_len);
+	if (start)
+		SHA1_Update(&orig, buf, start);
+
+	signal(SIGALRM, progress);
+	alarm(1);
+
+	for (i = start; i < len; i++) {
+		unsigned char c;
+		SHA_CTX x;
+
+#if 0
+		/*
+		 * deletion -- this would not actually work in practice,
+		 * I think, because we've already committed to a
+		 * particular size in the header. Ditto for addition
+		 * below. In those cases, you'd have to do the whole
+		 * sha1 from scratch, or possibly keep three running
+		 * "orig" sha1 computations going.
+		 */
+		memcpy(&x, &orig, sizeof(x));
+		SHA1_Update(&x, buf + i + 1, len - i - 1);
+		SHA1_Final(have, &x);
+		if (!memcmp(have, want, 20))
+			printf("i=%d, deletion\n", i);
+#endif
+
+		/*
+		 * replacement -- note that this tries each of the 256
+		 * possible bytes. If you suspect a single-bit flip,
+		 * it would be much shorter to just try the 8
+		 * bit-flipped variants.
+		 */
+		c = buf[i];
+		for (j = 0; j <= 0xff; j++) {
+			buf[i] = j;
+
+			memcpy(&x, &orig, sizeof(x));
+			SHA1_Update(&x, buf + i, len - i);
+			SHA1_Final(have, &x);
+			if (!memcmp(have, want, 20))
+				printf("i=%d, j=%02x\n", i, j);
+		}
+		buf[i] = c;
+
+#if 0
+		/* addition */
+		for (j = 0; j <= 0xff; j++) {
+			unsigned char extra = j;
+			memcpy(&x, &orig, sizeof(x));
+			SHA1_Update(&x, &extra, 1);
+			SHA1_Update(&x, buf + i, len - i);
+			SHA1_Final(have, &x);
+			if (!memcmp(have, want, 20))
+				printf("i=%d, addition=%02x", i, j);
+		}
+#endif
+
+		SHA1_Update(&orig, buf + i, 1);
+		counter++;
+	}
+
+	alarm(0);
+	fprintf(stderr, "\r%d\n", counter);
+	return 0;
+}
+--------------------------

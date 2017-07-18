@@ -1,0 +1,59 @@
+GIT v1.6.1.1 Release Notes
+==========================
+
+Fixes since v1.6.1
+------------------
+
+* "git add frotz/nitfol" when "frotz" is a submodule should have errored
+  out, but it didn't.
+
+* "git apply" took file modes from the patch text and updated the mode
+  bits of the target tree even when the patch was not about mode changes.
+
+* "git bisect view" on Cygwin did not launch gitk
+
+* "git checkout $tree" did not trigger an error.
+
+* "git commit" tried to remove COMMIT_EDITMSG from the work tree by mistake.
+
+* "git describe --all" complained when a commit is described with a tag,
+  which was nonsense.
+
+* "git diff --no-index --" did not trigger no-index (aka "use git-diff as
+  a replacement of diff on untracked files") behaviour.
+
+* "git format-patch -1 HEAD" on a root commit failed to produce patch
+  text.
+
+* "git fsck branch" did not work as advertised; instead it behaved the same
+  way as "git fsck".
+
+* "git log --pretty=format:%s" did not handle a multi-line subject the
+  same way as built-in log listers (i.e. shortlog, --pretty=oneline, etc.)
+
+* "git daemon", and "git merge-file" are more careful when freopen fails
+  and barf, instead of going on and writing to unopened filehandle.
+
+* "git http-push" did not like some RFC 4918 compliant DAV server
+  responses.
+
+* "git merge -s recursive" mistakenly overwritten an untracked file in the
+  work tree upon delete/modify conflict.
+
+* "git merge -s recursive" didn't leave the index unmerged for entries with
+  rename/delete conflicts.
+
+* "git merge -s recursive" clobbered untracked files in the work tree.
+
+* "git mv -k" with more than one erroneous paths misbehaved.
+
+* "git read-tree -m -u" hence branch switching incorrectly lost a
+  subdirectory in rare cases.
+
+* "git rebase -i" issued an unnecessary error message upon a user error of
+  marking the first commit to be "squash"ed.
+
+* "git shortlog" did not format a commit message with multi-line
+  subject correctly.
+
+Many documentation updates.

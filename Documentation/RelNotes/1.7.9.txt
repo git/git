@@ -1,0 +1,112 @@
+Git v1.7.9 Release Notes
+========================
+
+Updates since v1.7.8
+--------------------
+
+ * gitk updates accumulated since early 2011.
+
+ * git-gui updated to 0.16.0.
+
+ * git-p4 (in contrib/) updates.
+
+ * Git uses gettext to translate its most common interface messages
+   into the user's language if translations are available and the
+   locale is appropriately set. Distributors can drop new PO files
+   in po/ to add new translations.
+
+ * The code to handle username/password for HTTP transactions used in
+   "git push" & "git fetch" learned to talk "credential API" to
+   external programs to cache or store them, to allow integration with
+   platform native keychain mechanisms.
+
+ * The input prompts in the terminal use our own getpass() replacement
+   when possible. HTTP transactions used to ask for the username without
+   echoing back what was typed, but with this change you will see it as
+   you type.
+
+ * The internals of "revert/cherry-pick" have been tweaked to prepare
+   building more generic "sequencer" on top of the implementation that
+   drives them.
+
+ * "git rev-parse FETCH_HEAD" after "git fetch" without specifying
+   what to fetch from the command line will now show the commit that
+   would be merged if the command were "git pull".
+
+ * "git add" learned to stream large files directly into a packfile
+   instead of writing them into individual loose object files.
+
+ * "git checkout -B <current branch> <elsewhere>" is a more intuitive
+   way to spell "git reset --keep <elsewhere>".
+
+ * "git checkout" and "git merge" learned "--no-overwrite-ignore" option
+   to tell Git that untracked and ignored files are not expendable.
+
+ * "git commit --amend" learned "--no-edit" option to say that the
+   user is amending the tree being recorded, without updating the
+   commit log message.
+
+ * "git commit" and "git reset" re-learned the optimization to prime
+   the cache-tree information in the index, which makes it faster to
+   write a tree object out after the index entries are updated.
+
+ * "git commit" detects and rejects an attempt to stuff NUL byte in
+   the commit log message.
+
+ * "git commit" learned "-S" to GPG-sign the commit; this can be shown
+   with the "--show-signature" option to "git log".
+
+ * fsck and prune are relatively lengthy operations that still go
+   silent while making the end-user wait. They learned to give progress
+   output like other slow operations.
+
+ * The set of built-in function-header patterns for various languages
+   knows MATLAB.
+
+ * "git log --format='<format>'" learned new %g[nNeE] specifiers to
+   show information from the reflog entries when walking the reflog
+   (i.e. with "-g").
+
+ * "git pull" can be used to fetch and merge an annotated/signed tag,
+   instead of the tip of a topic branch. The GPG signature from the
+   signed tag is recorded in the resulting merge commit for later
+   auditing.
+
+ * "git log" learned "--show-signature" option to show the signed tag
+   that was merged that is embedded in the merge commit. It also can
+   show the signature made on the commit with "git commit -S".
+
+ * "git branch --edit-description" can be used to add descriptive text
+   to explain what a topic branch is about.
+
+ * "git fmt-merge-msg" learned to take the branch description into
+   account when preparing a merge summary that "git merge" records
+   when merging a local branch.
+
+ * "git request-pull" has been updated to convey more information
+   useful for integrators to decide if a topic is worth merging and
+   what is pulled is indeed what the requestor asked to pull,
+   including:
+
+   - the tip of the branch being requested to be merged;
+   - the branch description describing what the topic is about;
+   - the contents of the annotated tag, when requesting to pull a tag.
+
+ * "git pull" learned to notice 'pull.rebase' configuration variable,
+   which serves as a global fallback for setting 'branch.<name>.rebase'
+   configuration variable per branch.
+
+ * "git tag" learned "--cleanup" option to control how the whitespaces
+   and empty lines in tag message are cleaned up.
+
+ * "gitweb" learned to show side-by-side diff.
+
+Also contains minor documentation updates and code clean-ups.
+
+
+Fixes since v1.7.8
+------------------
+
+Unless otherwise noted, all the fixes since v1.7.8 in the maintenance
+releases are contained in this release (see release notes to them for
+details).

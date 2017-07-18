@@ -1,0 +1,1 @@
+/* Intentionally empty file to support building git with MSVC */

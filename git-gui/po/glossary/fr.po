@@ -1,0 +1,166 @@
+# translation of fr.po to French
+# Translation of git-gui glossary to French
+# Copyright (C) 2008 Shawn Pearce, et al.
+#
+# Christian Couder <chriscool@tuxfamily.org>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: fr\n"
+"POT-Creation-Date: 2008-01-15 21:04+0100\n"
+"PO-Revision-Date: 2008-01-15 21:17+0100\n"
+"Last-Translator: Christian Couder <chriscool@tuxfamily.org>\n"
+"Language-Team: French\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms:  nplurals=2; plural=(n > 1);\n"
+
+#. "English Definition (Dear translator: This file will never be visible to the user! It should only serve as a tool for you, the translator. Nothing more.)"
+msgid "English Term (Dear translator: This file will never be visible to the user!)"
+msgstr ""
+
+#. ""
+msgid "amend"
+msgstr "corriger"
+
+#. ""
+msgid "annotate"
+msgstr "annoter"
+
+#. "A 'branch' is an active line of development."
+msgid "branch [noun]"
+msgstr "branche"
+
+#. ""
+msgid "branch [verb]"
+msgstr "créer une branche"
+
+#. ""
+msgid "checkout [noun]"
+msgstr "emprunt"
+
+#. "The action of updating the working tree to a revision which was stored in the object database."
+msgid "checkout [verb]"
+msgstr "emprunter"
+
+#. ""
+msgid "clone [verb]"
+msgstr "cloner"
+
+#. "A single point in the git history."
+msgid "commit [noun]"
+msgstr "commit"
+
+#. "The action of storing a new snapshot of the project's state in the git history."
+msgid "commit [verb]"
+msgstr "commiter"
+
+#. ""
+msgid "diff [noun]"
+msgstr "différence"
+
+#. ""
+msgid "diff [verb]"
+msgstr "comparer"
+
+#. "A fast-forward is a special type of merge where you have a revision and you are merging another branch's changes that happen to be a descendant of what you have."
+msgid "fast forward merge"
+msgstr "fusion par avance rapide"
+
+#. "Fetching a branch means to get the branch's head from a remote repository, to find out which objects are missing from the local object database, and to get them, too."
+msgid "fetch"
+msgstr "récupérer"
+
+#. "A collection of files. The index is a stored version of your working tree."
+msgid "index (in git-gui: staging area)"
+msgstr "pré-commit"
+
+#. "A successful merge results in the creation of a new commit representing the result of the merge."
+msgid "merge [noun]"
+msgstr "fusion"
+
+#. "To bring the contents of another branch into the current branch."
+msgid "merge [verb]"
+msgstr "fusionner"
+
+#. ""
+msgid "message"
+msgstr "message"
+
+#. "Deletes all stale tracking branches under <name>. These stale branches have already been removed from the remote repository referenced by <name>, but are still locally available in 'remotes/<name>'."
+msgid "prune"
+msgstr "nettoyer"
+
+#. "Pulling a branch means to fetch it and merge it."
+msgid "pull"
+msgstr "tirer"
+
+#. "Pushing a branch means to get the branch's head ref from a remote repository, and ... (well, can someone please explain it for mere mortals?)"
+msgid "push"
+msgstr "pousser"
+
+#. ""
+msgid "redo"
+msgstr "refaire"
+
+#. "An other repository ('remote'). One might have a set of remotes whose branches one tracks."
+msgid "remote"
+msgstr "référentiel distant"
+
+#. "A collection of refs (?) together with an object database containing all objects which are reachable from the refs... (oops, you've lost me here. Again, please an explanation for mere mortals?)"
+msgid "repository"
+msgstr "référentiel"
+
+#. ""
+msgid "reset"
+msgstr "réinitialiser"
+
+#. ""
+msgid "revert"
+msgstr "inverser"
+
+#. "A particular state of files and directories which was stored in the object database."
+msgid "revision"
+msgstr "révision"
+
+#. ""
+msgid "sign off"
+msgstr "signer"
+
+#. ""
+msgid "staging area"
+msgstr "pré-commit"
+
+#. ""
+msgid "status"
+msgstr "état"
+
+#. "A ref pointing to a tag or commit object"
+msgid "tag [noun]"
+msgstr "marque"
+
+#. ""
+msgid "tag [verb]"
+msgstr "marquer"
+
+#. "A regular git branch that is used to follow changes from another repository."
+msgid "tracking branch"
+msgstr "branche de suivi"
+
+#. ""
+msgid "undo"
+msgstr "défaire"
+
+#. ""
+msgid "update"
+msgstr "mise à jour"
+
+#. ""
+msgid "verify"
+msgstr "vérifier"
+
+#. "The tree of actual checked out files."
+msgid "working copy, working tree"
+msgstr "copie de travail, arborescence de travail"
+

@@ -1,0 +1,122 @@
+git-diff-index(1)
+=================
+
+NAME
+----
+git-diff-index - Compare a tree to the working tree or index
+
+
+SYNOPSIS
+--------
+[verse]
+'git diff-index' [-m] [--cached] [<common diff options>] <tree-ish> [<path>...]
+
+DESCRIPTION
+-----------
+Compares the content and mode of the blobs found in a tree object
+with the corresponding tracked files in the working tree, or with the
+corresponding paths in the index.  When <path> arguments are present,
+compares only paths matching those patterns.  Otherwise all tracked
+files are compared.
+
+OPTIONS
+-------
+include::diff-options.txt[]
+
+<tree-ish>::
+	The id of a tree object to diff against.
+
+--cached::
+	do not consider the on-disk file at all
+
+-m::
+	By default, files recorded in the index but not checked
+	out are reported as deleted.  This flag makes
+	'git diff-index' say that all non-checked-out files are up
+	to date.
+
+include::diff-format.txt[]
+
+Operating Modes
+---------------
+You can choose whether you want to trust the index file entirely
+(using the '--cached' flag) or ask the diff logic to show any files
+that don't match the stat state as being "tentatively changed".  Both
+of these operations are very useful indeed.
+
+Cached Mode
+-----------
+If '--cached' is specified, it allows you to ask:
+
+	show me the differences between HEAD and the current index
+	contents (the ones I'd write using 'git write-tree')
+
+For example, let's say that you have worked on your working directory, updated
+some files in the index and are ready to commit. You want to see exactly
+*what* you are going to commit, without having to write a new tree
+object and compare it that way, and to do that, you just do
+
+	git diff-index --cached HEAD
+
+Example: let's say I had renamed `commit.c` to `git-commit.c`, and I had
+done an `update-index` to make that effective in the index file.
+`git diff-files` wouldn't show anything at all, since the index file
+matches my working directory. But doing a 'git diff-index' does:
+
+  torvalds@ppc970:~/git> git diff-index --cached HEAD
+  -100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        commit.c
+  +100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        git-commit.c
+
+You can see easily that the above is a rename.
+
+In fact, `git diff-index --cached` *should* always be entirely equivalent to
+actually doing a 'git write-tree' and comparing that. Except this one is much
+nicer for the case where you just want to check where you are.
+
+So doing a `git diff-index --cached` is basically very useful when you are
+asking yourself "what have I already marked for being committed, and
+what's the difference to a previous tree".
+
+Non-cached Mode
+---------------
+The "non-cached" mode takes a different approach, and is potentially
+the more useful of the two in that what it does can't be emulated with
+a 'git write-tree' + 'git diff-tree'. Thus that's the default mode.
+The non-cached version asks the question:
+
+  show me the differences between HEAD and the currently checked out
+  tree - index contents _and_ files that aren't up-to-date
+
+which is obviously a very useful question too, since that tells you what
+you *could* commit. Again, the output matches the 'git diff-tree -r'
+output to a tee, but with a twist.
+
+The twist is that if some file doesn't match the index, we don't have
+a backing store thing for it, and we use the magic "all-zero" sha1 to
+show that. So let's say that you have edited `kernel/sched.c`, but
+have not actually done a 'git update-index' on it yet - there is no
+"object" associated with the new state, and you get:
+
+  torvalds@ppc970:~/v2.6/linux> git diff-index --abbrev HEAD
+  :100644 100664 7476bb... 000000...      kernel/sched.c
+
+i.e., it shows that the tree has changed, and that `kernel/sched.c` has is
+not up-to-date and may contain new stuff. The all-zero sha1 means that to
+get the real diff, you need to look at the object in the working directory
+directly rather than do an object-to-object diff.
+
+NOTE: As with other commands of this type, 'git diff-index' does not
+actually look at the contents of the file at all. So maybe
+`kernel/sched.c` hasn't actually changed, and it's just that you
+touched it. In either case, it's a note that you need to
+'git update-index' it to make the index be in sync.
+
+NOTE: You can have a mixture of files show up as "has been updated"
+and "is still dirty in the working directory" together. You can always
+tell which file is in which state, since the "has been updated" ones
+show a valid sha1, and the "not in sync with the index" ones will
+always have the special all-zero sha1.
+
+GIT
+---
+Part of the linkgit:git[1] suite

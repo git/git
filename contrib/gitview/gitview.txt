@@ -1,0 +1,57 @@
+gitview(1)
+==========
+
+NAME
+----
+gitview - A GTK based repository browser for git
+
+SYNOPSIS
+--------
+[verse]
+'gitview' [options] [args]
+
+DESCRIPTION
+---------
+
+Dependencies:
+
+* Python 2.4
+* PyGTK 2.8 or later
+* PyCairo 1.0 or later
+
+OPTIONS
+-------
+--without-diff::
+
+	If the user doesn't want to list the commit diffs in the main window.
+	This may speed up the repository browsing.
+
+<args>::
+
+	All the valid option for linkgit:git-rev-list[1].
+
+Key Bindings
+------------
+F4::
+	To maximize the window
+
+F5::
+	To reread references.
+
+F11::
+	Full screen
+
+F12::
+	Leave full screen
+
+EXAMPLES
+--------
+
+gitview v2.6.12.. include/scsi drivers/scsi::
+
+	Show as the changes since version v2.6.12 that changed any file in the
+	include/scsi or drivers/scsi subdirectories
+
+gitview --since=2.weeks.ago::
+
+	Show the changes during the last two weeks

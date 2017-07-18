@@ -1,0 +1,164 @@
+GIT bitmap v1 format
+====================
+
+	- A header appears at the beginning:
+
+		4-byte signature: {'B', 'I', 'T', 'M'}
+
+		2-byte version number (network byte order)
+			The current implementation only supports version 1
+			of the bitmap index (the same one as JGit).
+
+		2-byte flags (network byte order)
+
+			The following flags are supported:
+
+			- BITMAP_OPT_FULL_DAG (0x1) REQUIRED
+			This flag must always be present. It implies that the bitmap
+			index has been generated for a packfile with full closure
+			(i.e. where every single object in the packfile can find
+			 its parent links inside the same packfile). This is a
+			requirement for the bitmap index format, also present in JGit,
+			that greatly reduces the complexity of the implementation.
+
+			- BITMAP_OPT_HASH_CACHE (0x4)
+			If present, the end of the bitmap file contains
+			`N` 32-bit name-hash values, one per object in the
+			pack. The format and meaning of the name-hash is
+			described below.
+
+		4-byte entry count (network byte order)
+
+			The total count of entries (bitmapped commits) in this bitmap index.
+
+		20-byte checksum
+
+			The SHA1 checksum of the pack this bitmap index belongs to.
+
+	- 4 EWAH bitmaps that act as type indexes
+
+		Type indexes are serialized after the hash cache in the shape
+		of four EWAH bitmaps stored consecutively (see Appendix A for
+		the serialization format of an EWAH bitmap).
+
+		There is a bitmap for each Git object type, stored in the following
+		order:
+
+			- Commits
+			- Trees
+			- Blobs
+			- Tags
+
+		In each bitmap, the `n`th bit is set to true if the `n`th object
+		in the packfile is of that type.
+
+		The obvious consequence is that the OR of all 4 bitmaps will result
+		in a full set (all bits set), and the AND of all 4 bitmaps will
+		result in an empty bitmap (no bits set).
+
+	- N entries with compressed bitmaps, one for each indexed commit
+
+		Where `N` is the total amount of entries in this bitmap index.
+		Each entry contains the following:
+
+		- 4-byte object position (network byte order)
+			The position **in the index for the packfile** where the
+			bitmap for this commit is found.
+
+		- 1-byte XOR-offset
+			The xor offset used to compress this bitmap. For an entry
+			in position `x`, a XOR offset of `y` means that the actual
+			bitmap representing this commit is composed by XORing the
+			bitmap for this entry with the bitmap in entry `x-y` (i.e.
+			the bitmap `y` entries before this one).
+
+			Note that this compression can be recursive. In order to
+			XOR this entry with a previous one, the previous entry needs
+			to be decompressed first, and so on.
+
+			The hard-limit for this offset is 160 (an entry can only be
+			xor'ed against one of the 160 entries preceding it). This
+			number is always positive, and hence entries are always xor'ed
+			with **previous** bitmaps, not bitmaps that will come afterwards
+			in the index.
+
+		- 1-byte flags for this bitmap
+			At the moment the only available flag is `0x1`, which hints
+			that this bitmap can be re-used when rebuilding bitmap indexes
+			for the repository.
+
+		- The compressed bitmap itself, see Appendix A.
+
+== Appendix A: Serialization format for an EWAH bitmap
+
+Ewah bitmaps are serialized in the same protocol as the JAVAEWAH
+library, making them backwards compatible with the JGit
+implementation:
+
+	- 4-byte number of bits of the resulting UNCOMPRESSED bitmap
+
+	- 4-byte number of words of the COMPRESSED bitmap, when stored
+
+	- N x 8-byte words, as specified by the previous field
+
+		This is the actual content of the compressed bitmap.
+
+	- 4-byte position of the current RLW for the compressed
+		bitmap
+
+All words are stored in network byte order for their corresponding
+sizes.
+
+The compressed bitmap is stored in a form of run-length encoding, as
+follows.  It consists of a concatenation of an arbitrary number of
+chunks.  Each chunk consists of one or more 64-bit words
+
+     H  L_1  L_2  L_3 .... L_M
+
+H is called RLW (run length word).  It consists of (from lower to higher
+order bits):
+
+     - 1 bit: the repeated bit B
+
+     - 32 bits: repetition count K (unsigned)
+
+     - 31 bits: literal word count M (unsigned)
+
+The bitstream represented by the above chunk is then:
+
+     - K repetitions of B
+
+     - The bits stored in `L_1` through `L_M`.  Within a word, bits at
+       lower order come earlier in the stream than those at higher
+       order.
+
+The next word after `L_M` (if any) must again be a RLW, for the next
+chunk.  For efficient appending to the bitstream, the EWAH stores a
+pointer to the last RLW in the stream.
+
+
+== Appendix B: Optional Bitmap Sections
+
+These sections may or may not be present in the `.bitmap` file; their
+presence is indicated by the header flags section described above.
+
+Name-hash cache
+---------------
+
+If the BITMAP_OPT_HASH_CACHE flag is set, the end of the bitmap contains
+a cache of 32-bit values, one per object in the pack. The value at
+position `i` is the hash of the pathname at which the `i`th object
+(counting in index order) in the pack can be found.  This can be fed
+into the delta heuristics to compare objects with similar pathnames.
+
+The hash algorithm used is:
+
+    hash = 0;
+    while ((c = *name++))
+	    if (!isspace(c))
+		    hash = (hash >> 2) + (c << 24);
+
+Note that this hashing scheme is tied to the BITMAP_OPT_HASH_CACHE flag.
+If implementations want to choose a different hashing scheme, they are
+free to do so, but MUST allocate a new header flag (because comparing
+hashes made under two different schemes would be pointless).

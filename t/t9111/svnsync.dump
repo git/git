@@ -1,0 +1,560 @@
+SVN-fs-dump-format-version: 2
+
+UUID: b4bfe35e-f256-4096-874c-08c5639ecad7
+
+Revision-number: 0
+Prop-content-length: 240
+Content-length: 240
+
+K 18
+svn:sync-from-uuid
+V 36
+161ce429-a9dd-4828-af4a-52023f968c89
+K 10
+svn:author
+V 7
+svnsync
+K 24
+svn:sync-last-merged-rev
+V 2
+12
+K 8
+svn:date
+V 27
+2007-02-17T05:10:52.017552Z
+K 17
+svn:sync-from-url
+V 24
+http://mayonaise/svnrepo
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 120
+Content-length: 120
+
+K 7
+svn:log
+V 18
+import for git-svn
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:10:52.108847Z
+PROPS-END
+
+Node-path: bar
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: bar/zzz
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4
+Text-content-md5: 33b02bc15ce9557d2dd8484d58f95ac4
+Content-length: 14
+
+PROPS-END
+zzz
+
+
+Node-path: dir
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: dir/a
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: dir/a/b
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: dir/a/b/c
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: dir/a/b/c/d
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: dir/a/b/c/d/e
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: dir/a/b/c/d/e/file
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 9
+Text-content-md5: 3fd46fe46fcdcf062c802ca60dc826d5
+Content-length: 19
+
+PROPS-END
+deep dir
+
+
+Node-path: exec.sh
+Node-kind: file
+Node-action: add
+Prop-content-length: 35
+Text-content-length: 10
+Text-content-md5: 3e2b31c72181b87149ff995e7202c0e3
+Content-length: 45
+
+K 14
+svn:executable
+V 0
+
+PROPS-END
+#!/bin/sh
+
+
+Node-path: foo
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4
+Text-content-md5: d3b07384d113edec49eaa6238ad5ff00
+Content-length: 14
+
+PROPS-END
+foo
+
+
+Node-path: foo.link
+Node-kind: file
+Node-action: add
+Prop-content-length: 33
+Text-content-length: 8
+Text-content-md5: 1043146e49ef02cab12eef865cb34ff3
+Content-length: 41
+
+K 11
+svn:special
+V 1
+*
+PROPS-END
+link foo
+
+Revision-number: 2
+Prop-content-length: 135
+Content-length: 135
+
+K 7
+svn:log
+V 33
+try a deep --rmdir with a commit
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:10:54.847015Z
+PROPS-END
+
+Node-path: dir/file
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: dir/a/b/c/d/e/file
+Text-content-length: 9
+Text-content-md5: 3fd46fe46fcdcf062c802ca60dc826d5
+Content-length: 9
+
+deep dir
+
+
+Node-path: dir/a
+Node-action: delete
+
+
+Node-path: file
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: dir/a/b/c/d/e/file
+Text-content-length: 9
+Text-content-md5: 3fd46fe46fcdcf062c802ca60dc826d5
+Content-length: 9
+
+deep dir
+
+
+Revision-number: 3
+Prop-content-length: 136
+Content-length: 136
+
+K 7
+svn:log
+V 34
+remove executable bit from a file
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:10:58.232691Z
+PROPS-END
+
+Node-path: exec.sh
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 10
+Text-content-md5: 3e2b31c72181b87149ff995e7202c0e3
+Content-length: 20
+
+PROPS-END
+#!/bin/sh
+
+
+Revision-number: 4
+Prop-content-length: 131
+Content-length: 131
+
+K 7
+svn:log
+V 29
+add executable bit back file
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:10:59.666560Z
+PROPS-END
+
+Node-path: exec.sh
+Node-kind: file
+Node-action: change
+Prop-content-length: 36
+Text-content-length: 10
+Text-content-md5: 3e2b31c72181b87149ff995e7202c0e3
+Content-length: 46
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+#!/bin/sh
+
+
+Revision-number: 5
+Prop-content-length: 154
+Content-length: 154
+
+K 7
+svn:log
+V 52
+executable file becomes a symlink to bar/zzz (file)
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:00.676495Z
+PROPS-END
+
+Node-path: exec.sh
+Node-kind: file
+Node-action: change
+Prop-content-length: 33
+Text-content-length: 12
+Text-content-md5: f138693371665cc117742508761d684d
+Content-length: 45
+
+K 11
+svn:special
+V 1
+*
+PROPS-END
+link bar/zzz
+
+Revision-number: 6
+Prop-content-length: 168
+Content-length: 168
+
+K 7
+svn:log
+V 66
+new symlink is added to a file that was also just made executable
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:01.686891Z
+PROPS-END
+
+Node-path: bar/zzz
+Node-kind: file
+Node-action: change
+Prop-content-length: 36
+Text-content-length: 4
+Text-content-md5: 33b02bc15ce9557d2dd8484d58f95ac4
+Content-length: 40
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+zzz
+
+
+Node-path: exec-2.sh
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: exec.sh
+Text-content-length: 12
+Text-content-md5: f138693371665cc117742508761d684d
+Content-length: 12
+
+link bar/zzz
+
+Revision-number: 7
+Prop-content-length: 136
+Content-length: 136
+
+K 7
+svn:log
+V 34
+modify a symlink to become a file
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:02.677035Z
+PROPS-END
+
+Node-path: exec-2.sh
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 9
+Text-content-md5: 8e92eff9e911886cede27d420f89c735
+Content-length: 19
+
+PROPS-END
+git help
+
+
+Revision-number: 8
+Prop-content-length: 109
+Content-length: 109
+
+K 7
+svn:log
+V 8
+éï∏
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:03.676862Z
+PROPS-END
+
+Node-path: exec-2.sh
+Node-kind: file
+Node-action: change
+Text-content-length: 17
+Text-content-md5: 49881954063cf26ca48c212396a957ca
+Content-length: 17
+
+git help
+# hello
+
+
+Revision-number: 9
+Prop-content-length: 130
+Content-length: 130
+
+K 7
+svn:log
+V 28
+/bar/d should be in the log
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:07.686552Z
+PROPS-END
+
+Node-path: bar/d
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4
+Text-content-md5: 0bee89b07a248e27c83fc3d5951213c1
+Content-length: 14
+
+PROPS-END
+abc
+
+
+Revision-number: 10
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 20
+add a new directory
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:08.405953Z
+PROPS-END
+
+Node-path: bar/newdir
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: bar/newdir/dir
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4
+Text-content-md5: 9cd599a3523898e6a12e13ec787da50a
+Content-length: 14
+
+PROPS-END
+new
+
+
+Revision-number: 11
+Prop-content-length: 133
+Content-length: 133
+
+K 7
+svn:log
+V 31
+modify a file in new directory
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:09.126645Z
+PROPS-END
+
+Node-path: bar/newdir/dir
+Node-kind: file
+Node-action: change
+Text-content-length: 8
+Text-content-md5: a950e20332358e523a5e9d571e47fa64
+Content-length: 8
+
+new
+foo
+
+
+Revision-number: 12
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 14
+update /bar/d
+
+K 10
+svn:author
+V 7
+svnsync
+K 8
+svn:date
+V 27
+2007-02-17T05:11:09.846221Z
+PROPS-END
+
+Node-path: bar/d
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: 7abb78de7f2756ca8b511cbc879fd5e7
+Content-length: 4
+
+cba

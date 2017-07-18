@@ -1,0 +1,82 @@
+#!/bin/sh
+
+case "$1" in
+	--help)
+		echo "usage: $0 [other_git_tree...] [--] [test_scripts]"
+		exit 0
+		;;
+esac
+
+die () {
+	echo >&2 "error: $*"
+	exit 1
+}
+
+run_one_dir () {
+	if test $# -eq 0; then
+		set -- p????-*.sh
+	fi
+	echo "=== Running $# tests in ${GIT_TEST_INSTALLED:-this tree} ==="
+	for t in "$@"; do
+		./$t $GIT_TEST_OPTS
+	done
+}
+
+unpack_git_rev () {
+	rev=$1
+	mkdir -p build/$rev
+	(cd "$(git rev-parse --show-cdup)" && git archive --format=tar $rev) |
+	(cd build/$rev && tar x)
+}
+build_git_rev () {
+	rev=$1
+	cp ../../config.mak build/$rev/config.mak
+	(cd build/$rev && make $GIT_PERF_MAKE_OPTS) ||
+	die "failed to build revision '$mydir'"
+}
+
+run_dirs_helper () {
+	mydir=${1%/}
+	shift
+	while test $# -gt 0 -a "$1" != -- -a ! -f "$1"; do
+		shift
+	done
+	if test $# -gt 0 -a "$1" = --; then
+		shift
+	fi
+	if [ ! -d "$mydir" ]; then
+		rev=$(git rev-parse --verify "$mydir" 2>/dev/null) ||
+		die "'$mydir' is neither a directory nor a valid revision"
+		if [ ! -d build/$rev ]; then
+			unpack_git_rev $rev
+		fi
+		build_git_rev $rev
+		mydir=build/$rev
+	fi
+	if test "$mydir" = .; then
+		unset GIT_TEST_INSTALLED
+	else
+		GIT_TEST_INSTALLED="$mydir/bin-wrappers"
+		export GIT_TEST_INSTALLED
+	fi
+	run_one_dir "$@"
+}
+
+run_dirs () {
+	while test $# -gt 0 -a "$1" != -- -a ! -f "$1"; do
+		run_dirs_helper "$@"
+		shift
+	done
+}
+
+GIT_PERF_AGGREGATING_LATER=t
+export GIT_PERF_AGGREGATING_LATER
+
+cd "$(dirname $0)"
+. ../../GIT-BUILD-OPTIONS
+
+if test $# = 0 -o "$1" = -- -o -f "$1"; then
+	set -- . "$@"
+fi
+run_dirs "$@"
+./aggregate.perl "$@"

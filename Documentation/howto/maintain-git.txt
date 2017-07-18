@@ -1,0 +1,449 @@
+From: Junio C Hamano <gitster@pobox.com>
+Date: Wed, 21 Nov 2007 16:32:55 -0800
+Subject: Addendum to "MaintNotes"
+Abstract: Imagine that Git development is racing along as usual, when our friendly
+ neighborhood maintainer is struck down by a wayward bus. Out of the
+ hordes of suckers (loyal developers), you have been tricked (chosen) to
+ step up as the new maintainer. This howto will show you "how to" do it.
+Content-type: text/asciidoc
+
+How to maintain Git
+===================
+
+Activities
+----------
+
+The maintainer's Git time is spent on three activities.
+
+ - Communication (45%)
+
+   Mailing list discussions on general design, fielding user
+   questions, diagnosing bug reports; reviewing, commenting on,
+   suggesting alternatives to, and rejecting patches.
+
+ - Integration (50%)
+
+   Applying new patches from the contributors while spotting and
+   correcting minor mistakes, shuffling the integration and
+   testing branches, pushing the results out, cutting the
+   releases, and making announcements.
+
+ - Own development (5%)
+
+   Scratching my own itch and sending proposed patch series out.
+
+The Policy
+----------
+
+The policy on Integration is informally mentioned in "A Note
+from the maintainer" message, which is periodically posted to
+this mailing list after each feature release is made.
+
+ - Feature releases are numbered as vX.Y.0 and are meant to
+   contain bugfixes and enhancements in any area, including
+   functionality, performance and usability, without regression.
+
+ - One release cycle for a feature release is expected to last for
+   eight to ten weeks.
+
+ - Maintenance releases are numbered as vX.Y.Z and are meant
+   to contain only bugfixes for the corresponding vX.Y.0 feature
+   release and earlier maintenance releases vX.Y.W (W < Z).
+
+ - 'master' branch is used to prepare for the next feature
+   release. In other words, at some point, the tip of 'master'
+   branch is tagged with vX.Y.0.
+
+ - 'maint' branch is used to prepare for the next maintenance
+   release.  After the feature release vX.Y.0 is made, the tip
+   of 'maint' branch is set to that release, and bugfixes will
+   accumulate on the branch, and at some point, the tip of the
+   branch is tagged with vX.Y.1, vX.Y.2, and so on.
+
+ - 'next' branch is used to publish changes (both enhancements
+   and fixes) that (1) have worthwhile goal, (2) are in a fairly
+   good shape suitable for everyday use, (3) but have not yet
+   demonstrated to be regression free.  New changes are tested
+   in 'next' before merged to 'master'.
+
+ - 'pu' branch is used to publish other proposed changes that do
+   not yet pass the criteria set for 'next'.
+
+ - The tips of 'master' and 'maint' branches will not be rewound to
+   allow people to build their own customization on top of them.
+   Early in a new development cycle, 'next' is rewound to the tip of
+   'master' once, but otherwise it will not be rewound until the end
+   of the cycle.
+
+ - Usually 'master' contains all of 'maint' and 'next' contains all
+   of 'master'.  'pu' contains all the topics merged to 'next', but
+   is rebuilt directly on 'master'.
+
+ - The tip of 'master' is meant to be more stable than any
+   tagged releases, and the users are encouraged to follow it.
+
+ - The 'next' branch is where new action takes place, and the
+   users are encouraged to test it so that regressions and bugs
+   are found before new topics are merged to 'master'.
+
+Note that before v1.9.0 release, the version numbers used to be
+structured slightly differently.  vX.Y.Z were feature releases while
+vX.Y.Z.W were maintenance releases for vX.Y.Z.
+
+
+A Typical Git Day
+-----------------
+
+A typical Git day for the maintainer implements the above policy
+by doing the following:
+
+ - Scan mailing list.  Respond with review comments, suggestions
+   etc.  Kibitz.  Collect potentially usable patches from the
+   mailing list.  Patches about a single topic go to one mailbox (I
+   read my mail in Gnus, and type \C-o to save/append messages in
+   files in mbox format).
+
+ - Write his own patches to address issues raised on the list but
+   nobody has stepped up solving.  Send it out just like other
+   contributors do, and pick them up just like patches from other
+   contributors (see above).
+
+ - Review the patches in the saved mailboxes.  Edit proposed log
+   message for typofixes and clarifications, and add Acks
+   collected from the list.  Edit patch to incorporate "Oops,
+   that should have been like this" fixes from the discussion.
+
+ - Classify the collected patches and handle 'master' and
+   'maint' updates:
+
+   - Obviously correct fixes that pertain to the tip of 'maint'
+     are directly applied to 'maint'.
+
+   - Obviously correct fixes that pertain to the tip of 'master'
+     are directly applied to 'master'.
+
+   - Other topics are not handled in this step.
+
+   This step is done with "git am".
+
+     $ git checkout master    ;# or "git checkout maint"
+     $ git am -sc3 mailbox
+     $ make test
+
+   In practice, almost no patch directly goes to 'master' or
+   'maint'.
+
+ - Review the last issue of "What's cooking" message, review the
+   topics ready for merging (topic->master and topic->maint).  Use
+   "Meta/cook -w" script (where Meta/ contains a checkout of the
+   'todo' branch) to aid this step.
+
+   And perform the merge.  Use "Meta/Reintegrate -e" script (see
+   later) to aid this step.
+
+     $ Meta/cook -w last-issue-of-whats-cooking.mbox
+
+     $ git checkout master    ;# or "git checkout maint"
+     $ echo ai/topic | Meta/Reintegrate -e ;# "git merge ai/topic"
+     $ git log -p ORIG_HEAD.. ;# final review
+     $ git diff ORIG_HEAD..   ;# final review
+     $ make test              ;# final review
+
+ - Handle the remaining patches:
+
+   - Anything unobvious that is applicable to 'master' (in other
+     words, does not depend on anything that is still in 'next'
+     and not in 'master') is applied to a new topic branch that
+     is forked from the tip of 'master'.  This includes both
+     enhancements and unobvious fixes to 'master'.  A topic
+     branch is named as ai/topic where "ai" is two-letter string
+     named after author's initial and "topic" is a descriptive name
+     of the topic (in other words, "what's the series is about").
+
+   - An unobvious fix meant for 'maint' is applied to a new
+     topic branch that is forked from the tip of 'maint'.  The
+     topic is named as ai/maint-topic.
+
+   - Changes that pertain to an existing topic are applied to
+     the branch, but:
+
+     - obviously correct ones are applied first;
+
+     - questionable ones are discarded or applied to near the tip;
+
+   - Replacement patches to an existing topic are accepted only
+     for commits not in 'next'.
+
+   The above except the "replacement" are all done with:
+
+     $ git checkout ai/topic ;# or "git checkout -b ai/topic master"
+     $ git am -sc3 mailbox
+
+   while patch replacement is often done by:
+
+     $ git format-patch ai/topic~$n..ai/topic ;# export existing
+
+   then replace some parts with the new patch, and reapplying:
+
+     $ git checkout ai/topic
+     $ git reset --hard ai/topic~$n
+     $ git am -sc3 -s 000*.txt
+
+   The full test suite is always run for 'maint' and 'master'
+   after patch application; for topic branches the tests are run
+   as time permits.
+
+ - Merge maint to master as needed:
+
+     $ git checkout master
+     $ git merge maint
+     $ make test
+
+ - Merge master to next as needed:
+
+     $ git checkout next
+     $ git merge master
+     $ make test
+
+ - Review the last issue of "What's cooking" again and see if topics
+   that are ready to be merged to 'next' are still in good shape
+   (e.g. has there any new issue identified on the list with the
+   series?)
+
+ - Prepare 'jch' branch, which is used to represent somewhere
+   between 'master' and 'pu' and often is slightly ahead of 'next'.
+
+     $ Meta/Reintegrate master..pu >Meta/redo-jch.sh
+
+   The result is a script that lists topics to be merged in order to
+   rebuild 'pu' as the input to Meta/Reintegrate script.  Remove
+   later topics that should not be in 'jch' yet.  Add a line that
+   consists of '### match next' before the name of the first topic
+   in the output that should be in 'jch' but not in 'next' yet.
+
+ - Now we are ready to start merging topics to 'next'.  For each
+   branch whose tip is not merged to 'next', one of three things can
+   happen:
+
+   - The commits are all next-worthy; merge the topic to next;
+   - The new parts are of mixed quality, but earlier ones are
+     next-worthy; merge the early parts to next;
+   - Nothing is next-worthy; do not do anything.
+
+   This step is aided with Meta/redo-jch.sh script created earlier.
+   If a topic that was already in 'next' gained a patch, the script
+   would list it as "ai/topic~1".  To include the new patch to the
+   updated 'next', drop the "~1" part; to keep it excluded, do not
+   touch the line.  If a topic that was not in 'next' should be
+   merged to 'next', add it at the end of the list.  Then:
+
+     $ git checkout -B jch master
+     $ Meta/redo-jch.sh -c1
+
+   to rebuild the 'jch' branch from scratch.  "-c1" tells the script
+   to stop merging at the first line that begins with '###'
+   (i.e. the "### match next" line you added earlier).
+
+   At this point, build-test the result.  It may reveal semantic
+   conflicts (e.g. a topic renamed a variable, another added a new
+   reference to the variable under its old name), in which case
+   prepare an appropriate merge-fix first (see appendix), and
+   rebuild the 'jch' branch from scratch, starting at the tip of
+   'master'.
+
+   Then do the same to 'next'
+
+     $ git checkout next
+     $ sh Meta/redo-jch.sh -c1 -e
+
+   The "-e" option allows the merge message that comes from the
+   history of the topic and the comments in the "What's cooking" to
+   be edited.  The resulting tree should match 'jch' as the same set
+   of topics are merged on 'master'; otherwise there is a mismerge.
+   Investigate why and do not proceed until the mismerge is found
+   and rectified.
+
+     $ git diff jch next
+
+   When all is well, clean up the redo-jch.sh script with
+
+     $ sh Meta/redo-jch.sh -u
+
+   This removes topics listed in the script that have already been
+   merged to 'master'.  This may lose '### match next' marker;
+   add it again to the appropriate place when it happens.
+
+ - Rebuild 'pu'.
+
+     $ Meta/Reintegrate master..pu >Meta/redo-pu.sh
+
+   Edit the result by adding new topics that are not still in 'pu'
+   in the script.  Then
+
+     $ git checkout -B pu jch
+     $ sh Meta/redo-pu.sh
+
+   When all is well, clean up the redo-pu.sh script with
+
+     $ sh Meta/redo-pu.sh -u
+
+   Double check by running
+
+     $ git branch --no-merged pu
+
+   to see there is no unexpected leftover topics.
+
+   At this point, build-test the result for semantic conflicts, and
+   if there are, prepare an appropriate merge-fix first (see
+   appendix), and rebuild the 'pu' branch from scratch, starting at
+   the tip of 'jch'.
+
+ - Update "What's cooking" message to review the updates to
+   existing topics, newly added topics and graduated topics.
+
+   This step is helped with Meta/cook script.
+
+     $ Meta/cook
+
+   This script inspects the history between master..pu, finds tips
+   of topic branches, compares what it found with the current
+   contents in Meta/whats-cooking.txt, and updates that file.
+   Topics not listed in the file but are found in master..pu are
+   added to the "New topics" section, topics listed in the file that
+   are no longer found in master..pu are moved to the "Graduated to
+   master" section, and topics whose commits changed their states
+   (e.g. used to be only in 'pu', now merged to 'next') are updated
+   with change markers "<<" and ">>".
+
+   Look for lines enclosed in "<<" and ">>"; they hold contents from
+   old file that are replaced by this integration round.  After
+   verifying them, remove the old part.  Review the description for
+   each topic and update its doneness and plan as needed.  To review
+   the updated plan, run
+
+     $ Meta/cook -w
+
+   which will pick up comments given to the topics, such as "Will
+   merge to 'next'", etc. (see Meta/cook script to learn what kind
+   of phrases are supported).
+
+ - Compile, test and install all four (five) integration branches;
+   Meta/Dothem script may aid this step.
+
+ - Format documentation if the 'master' branch was updated;
+   Meta/dodoc.sh script may aid this step.
+
+ - Push the integration branches out to public places; Meta/pushall
+   script may aid this step.
+
+Observations
+------------
+
+Some observations to be made.
+
+ * Each topic is tested individually, and also together with other
+   topics cooking first in 'pu', then in 'jch' and then in 'next'.
+   Until it matures, no part of it is merged to 'master'.
+
+ * A topic already in 'next' can get fixes while still in
+   'next'.  Such a topic will have many merges to 'next' (in
+   other words, "git log --first-parent next" will show many
+   "Merge branch 'ai/topic' to next" for the same topic.
+
+ * An unobvious fix for 'maint' is cooked in 'next' and then
+   merged to 'master' to make extra sure it is Ok and then
+   merged to 'maint'.
+
+ * Even when 'next' becomes empty (in other words, all topics
+   prove stable and are merged to 'master' and "git diff master
+   next" shows empty), it has tons of merge commits that will
+   never be in 'master'.
+
+ * In principle, "git log --first-parent master..next" should
+   show nothing but merges (in practice, there are fixup commits
+   and reverts that are not merges).
+
+ * Commits near the tip of a topic branch that are not in 'next'
+   are fair game to be discarded, replaced or rewritten.
+   Commits already merged to 'next' will not be.
+
+ * Being in the 'next' branch is not a guarantee for a topic to
+   be included in the next feature release.  Being in the
+   'master' branch typically is.
+
+
+Appendix
+--------
+
+Preparing a "merge-fix"
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A merge of two topics may not textually conflict but still have
+conflict at the semantic level. A classic example is for one topic
+to rename an variable and all its uses, while another topic adds a
+new use of the variable under its old name. When these two topics
+are merged together, the reference to the variable newly added by
+the latter topic will still use the old name in the result.
+
+The Meta/Reintegrate script that is used by redo-jch and redo-pu
+scripts implements a crude but usable way to work this issue around.
+When the script merges branch $X, it checks if "refs/merge-fix/$X"
+exists, and if so, the effect of it is squashed into the result of
+the mechanical merge.  In other words,
+
+     $ echo $X | Meta/Reintegrate
+
+is roughly equivalent to this sequence:
+
+     $ git merge --rerere-autoupdate $X
+     $ git commit
+     $ git cherry-pick -n refs/merge-fix/$X
+     $ git commit --amend
+
+The goal of this "prepare a merge-fix" step is to come up with a
+commit that can be squashed into a result of mechanical merge to
+correct semantic conflicts.
+
+After finding that the result of merging branch "ai/topic" to an
+integration branch had such a semantic conflict, say pu~4, check the
+problematic merge out on a detached HEAD, edit the working tree to
+fix the semantic conflict, and make a separate commit to record the
+fix-up:
+
+     $ git checkout pu~4
+     $ git show -s --pretty=%s ;# double check
+     Merge branch 'ai/topic' to pu
+     $ edit
+     $ git commit -m 'merge-fix/ai/topic' -a
+
+Then make a reference "refs/merge-fix/ai/topic" to point at this
+result:
+
+     $ git update-ref refs/merge-fix/ai/topic HEAD
+
+Then double check the result by asking Meta/Reintegrate to redo the
+merge:
+
+     $ git checkout pu~5 ;# the parent of the problem merge
+     $ echo ai/topic | Meta/Reintegrate
+     $ git diff pu~4
+
+This time, because you prepared refs/merge-fix/ai/topic, the
+resulting merge should have been tweaked to include the fix for the
+semantic conflict.
+
+Note that this assumes that the order in which conflicting branches
+are merged does not change.  If the reason why merging ai/topic
+branch needs this merge-fix is because another branch merged earlier
+to the integration branch changed the underlying assumption ai/topic
+branch made (e.g. ai/topic branch added a site to refer to a
+variable, while the other branch renamed that variable and adjusted
+existing use sites), and if you changed redo-jch (or redo-pu) script
+to merge ai/topic branch before the other branch, then the above
+merge-fix should not be applied while merging ai/topic, but should
+instead be applied while merging the other branch.  You would need
+to move the fix to apply to the other branch, perhaps like this:
+
+      $ mf=refs/merge-fix
+      $ git update-ref $mf/$the_other_branch $mf/ai/topic
+      $ git update-ref -d $mf/ai/topic

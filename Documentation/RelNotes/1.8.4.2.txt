@@ -1,0 +1,77 @@
+Git v1.8.4.2 Release Notes
+==========================
+
+Fixes since v1.8.4.1
+--------------------
+
+ * "git clone" gave some progress messages to the standard output, not
+   to the standard error, and did not allow suppressing them with the
+   "--no-progress" option.
+
+ * "format-patch --from=<whom>" forgot to omit unnecessary in-body
+   from line, i.e. when <whom> is the same as the real author.
+
+ * "git shortlog" used to choke and die when there is a malformed
+   commit (e.g. missing authors); it now simply ignore such a commit
+   and keeps going.
+
+ * "git merge-recursive" did not parse its "--diff-algorithm=" command
+   line option correctly.
+
+ * "git branch --track" had a minor regression in v1.8.3.2 and later
+   that made it impossible to base your local work on anything but a
+   local branch of the upstream repository you are tracking from.
+
+ * "git ls-files -k" needs to crawl only the part of the working tree
+   that may overlap the paths in the index to find killed files, but
+   shared code with the logic to find all the untracked files, which
+   made it unnecessarily inefficient.
+
+ * When there is no sufficient overlap between old and new history
+   during a "git fetch" into a shallow repository, objects that the
+   sending side knows the receiving end has were unnecessarily sent.
+
+ * When running "fetch -q", a long silence while the sender side
+   computes the set of objects to send can be mistaken by proxies as
+   dropped connection.  The server side has been taught to send a
+   small empty messages to keep the connection alive.
+
+ * When the webserver responds with "405 Method Not Allowed", "git
+   http-backend" should tell the client what methods are allowed with
+   the "Allow" header.
+
+ * "git cvsserver" computed the permission mode bits incorrectly for
+   executable files.
+
+ * The implementation of "add -i" has a crippling code to work around
+   ActiveState Perl limitation but it by mistake also triggered on Git
+   for Windows where MSYS perl is used.
+
+ * We made sure that we notice the user-supplied GIT_DIR is actually a
+   gitfile, but did not do the same when the default ".git" is a
+   gitfile.
+
+ * When an object is not found after checking the packfiles and then
+   loose object directory, read_sha1_file() re-checks the packfiles to
+   prevent racing with a concurrent repacker; teach the same logic to
+   has_sha1_file().
+
+ * "git commit --author=$name", when $name is not in the canonical
+   "A. U. Thor <au.thor@example.xz>" format, looks for a matching name
+   from existing history, but did not consult mailmap to grab the
+   preferred author name.
+
+ * The commit object names in the insn sheet that was prepared at the
+   beginning of "rebase -i" session can become ambiguous as the
+   rebasing progresses and the repository gains more commits. Make
+   sure the internal record is kept with full 40-hex object names.
+
+ * "git rebase --preserve-merges" internally used the merge machinery
+   and as a side effect, left merge summary message in the log, but
+   when rebasing, there should not be a need for merge summary.
+
+ * "git rebase -i" forgot that the comment character can be
+   configurable while reading its insn sheet.
+
+Also contains a handful of trivial code clean-ups, documentation
+updates, updates to the test suite, etc.
