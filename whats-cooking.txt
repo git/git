@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #04; Thu, 13)
-X-master-at: f3da2b79be9565779e4f76dc5812c68e156afdf0
-X-next-at: d933b75aa4527621ff2f4d20b22127619c6d28ba
+Subject: What's cooking in git.git (Jul 2017, #05; Tue, 18)
+X-master-at: cac25fc330fc26050dcbc92c4bfff169a4848e93
+X-next-at: a5a5890e50e4d3c12611adc886e44b2c07a74a76
 
-What's cooking in git.git (Jul 2017, #04; Thu, 13)
+What's cooking in git.git (Jul 2017, #05; Tue, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -25,118 +25,6 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/grep-lose-opt-regflags (2017-06-30) 6 commits
-  (merged to 'next' on 2017-07-05 at 375c0b92ea)
- + grep: remove redundant REG_NEWLINE when compiling fixed regex
- + grep: remove regflags from the public grep_opt API
- + grep: remove redundant and verbose re-assignments to 0
- + grep: remove redundant "fixed" field re-assignment to 0
- + grep: adjust a redundant grep pattern type assignment
- + grep: remove redundant double assignment to 0
-
- Code cleanup.
-
-
-* jk/build-with-asan (2017-07-10) 5 commits
-  (merged to 'next' on 2017-07-10 at 49757e1119)
- + Makefile: disable unaligned loads with UBSan
- + Makefile: turn off -fomit-frame-pointer with sanitizers
- + Makefile: add helper for compiling with -fsanitize
- + test-lib: turn on ASan abort_on_error by default
- + test-lib: set ASAN_OPTIONS variable before we run git
-
- The build procedure has been improved to allow building and testing
- Git with address sanitizer more easily.
-
-
-* kn/ref-filter-branch-list (2017-07-10) 4 commits
-  (merged to 'next' on 2017-07-10 at 35fd25c0dd)
- + ref-filter.c: drop return from void function
- + branch: set remote color in ref-filter branch immediately
- + branch: use BRANCH_COLOR_LOCAL in ref-filter format
- + branch: only perform HEAD check for local branches
-
- The rewrite of "git branch --list" using for-each-ref's internals
- that happened in v2.13 regressed its handling of color.branch.local;
- this has been fixed.
-
-
-* ks/fix-rebase-doc-picture (2017-07-10) 1 commit
-  (merged to 'next' on 2017-07-10 at 3acb856b17)
- + doc: correct a mistake in an illustration
-
- Doc update.
-
-
-* rs/apply-avoid-over-reading (2017-07-09) 1 commit
-  (merged to 'next' on 2017-07-10 at 2d8191ec3f)
- + apply: use strcmp(3) for comparing strings in gitdiff_verify_name()
-
- Code cleanup.
-
-
-* rs/urlmatch-cleanup (2017-07-09) 1 commit
-  (merged to 'next' on 2017-07-10 at 2dd3e7cab0)
- + urlmatch: use hex2chr() in append_normalized_escapes()
-
- Code cleanup.
-
-
-* rs/use-div-round-up (2017-07-10) 1 commit
-  (merged to 'next' on 2017-07-10 at accb7919da)
- + use DIV_ROUND_UP
-
- Code cleanup.
-
-
-* rs/wt-status-cleanup (2017-07-10) 1 commit
-  (merged to 'next' on 2017-07-10 at d8939f683a)
- + wt-status: use separate variable for result of shorten_unambiguous_ref
-
- Code cleanup.
-
-
-* sb/hashmap-customize-comparison (2017-06-30) 3 commits
-  (merged to 'next' on 2017-07-06 at cc420805f3)
- + hashmap: migrate documentation from Documentation/technical into header
- + patch-ids.c: use hashmap correctly
- + hashmap.h: compare function has access to a data field
- (this branch is used by sb/diff-color-move and sb/hashmap-cleanup.)
-
- Update the hashmap API so that data to customize the behaviour of
- the comparison function can be specified at the time a hashmap is
- initialized.
-
-
-* sb/pull-rebase-submodule (2017-06-27) 4 commits
-  (merged to 'next' on 2017-07-09 at 48d2c3a51c)
- + builtin/fetch cleanup: always set default value for submodule recursing
- + pull: optionally rebase submodules (remote submodule changes only)
- + builtin/fetch: parse recurse-submodules-default at default options parsing
- + builtin/fetch: factor submodule recurse parsing out to submodule config
-
- "git pull --rebase --recurse-submodules" learns to rebase the
- branch in the submodules to an updated base.
-
-
-* sb/submodule-doc (2017-06-22) 1 commit
-  (merged to 'next' on 2017-07-09 at fda0ceec31)
- + submodules: overhaul documentation
-
- Doc update.
-
---------------------------------------------------
-[New Topics]
-
-* jn/hooks-pre-rebase-sample-fix (2017-07-11) 1 commit
-  (merged to 'next' on 2017-07-12 at ed86887454)
- + pre-rebase hook: capture documentation in a <<here document
-
- Code clean-up, that makes us in sync with Debian by one patch.
-
- Will merge to 'master'.
-
-
 * jk/gc-pre-detach-under-hook (2017-07-12) 1 commit
   (merged to 'next' on 2017-07-12 at 9cf44c2b07)
  + gc: run pre-detach operations under lock
@@ -147,41 +35,179 @@ of the repositories listed at
  early part at the same time.  This is now prevented by running the
  early part also under the GC lock.
 
- Will merge to 'master'.
+
+* jn/hooks-pre-rebase-sample-fix (2017-07-11) 1 commit
+  (merged to 'next' on 2017-07-12 at ed86887454)
+ + pre-rebase hook: capture documentation in a <<here document
+
+ Code clean-up, that makes us in sync with Debian by one patch.
 
 
-* jk/ref-filter-colors (2017-07-13) 15 commits
- - ref-filter: consult want_color() before emitting colors
- - pretty: respect color settings for %C placeholders
- - rev-list: pass diffopt->use_colors through to pretty-print
- - for-each-ref: load config earlier
- - color: check color.ui in git_default_config()
- - ref-filter: pass ref_format struct to atom parsers
- - ref-filter: factor out the parsing of sorting atoms
- - ref-filter: make parse_ref_filter_atom a private function
- - ref-filter: provide a function for parsing sort options
- - ref-filter: move need_color_reset_at_eol into ref_format
- - ref-filter: abstract ref format into its own struct
- - ref-filter: simplify automatic color reset
- - t: use test_decode_color rather than literal ANSI codes
- - docs/for-each-ref: update pointer to color syntax
- - check return value of verify_ref_format()
+* rs/progress-overall-throughput-at-the-end (2017-07-09) 1 commit
+  (merged to 'next' on 2017-07-11 at f5168e975b)
+ + progress: show overall rate in last update
 
- "%C(color name)" in the pretty print format always produced ANSI
- color escape codes, which was an early design mistake.  They now
- honor the configuration (e.g. "color.ui = never") and also tty-ness
- of the output medium.
-
- Will merge to and cook in 'next'.
+ The progress meter did not give a useful output when we haven't had
+ 0.5 seconds to measure the throughput during the interval.  Instead
+ show the overall throughput rate at the end, which is a much more
+ useful number.
 
 
-* sb/object-id (2017-07-13) 2 commits
- - tag: convert gpg_verify_tag to use struct object_id
- - commit: convert lookup_commit_graft to struct object_id
+* tb/push-to-cygwin-unc-path (2017-07-05) 1 commit
+  (merged to 'next' on 2017-07-11 at 4d9c3f82bd)
+ + cygwin: allow pushing to UNC paths
+
+ On Cygwin, similar to Windows, "git push //server/share/repository"
+ ought to mean a repository on a network share that can be accessed
+ locally, but this did not work correctly due to stripping the double
+ slashes at the beginning.
+
+ This may need to be heavily tested before it gets unleashed to the
+ wild, as the change is at a fairly low-level code and would affect
+ not just the code to decide if the push destination is local.  There
+ may be unexpected fallouts in the path normalization.
+
+--------------------------------------------------
+[New Topics]
+
+* jk/c99 (2017-07-18) 2 commits
+  (merged to 'next' on 2017-07-18 at 1cfc30f7c1)
+ + clean.c: use designated initializer
+ + strbuf: use designated initializers in STRBUF_INIT
+
+ Start using selected c99 constructs in small, stable and
+ essentialpart of the system to catch people who care about
+ older compilers that do not grok them.
+
+ Will cook in 'next'.
+
+
+* jk/check-ref-format-oor-fix (2017-07-14) 1 commit
+ - check-ref-format: require a repository for --branch
+
+ Objected...
+ cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
+
+
+* bw/grep-recurse-submodules (2017-07-18) 10 commits
+ - grep: recurse in-process using 'struct repository'
+ - submodule: merge repo_read_gitmodules and gitmodules_config
+ - submodule: check for unmerged .gitmodules outside of config parsing
+ - submodule: check for unstaged .gitmodules outside of config parsing
+ - submodule: remove fetch.recursesubmodules from submodule-config parsing
+ - submodule: remove submodule.fetchjobs from submodule-config parsing
+ - config: add config_from_gitmodules
+ - cache.h: add GITMODULES_FILE macro
+ - repository: have the_repository use the_index
+ - repo_read_index: don't discard the index
+
+
+* bw/object-id (2017-07-17) 3 commits
+  (merged to 'next' on 2017-07-18 at 90d27c0e7c)
+ + receive-pack: don't access hash of NULL object_id pointer
+ + notes: don't access hash of NULL object_id pointer
+ + tree-diff: don't access hash of NULL object_id pointer
 
  Conversion from uchar[20] to struct object_id continues.
 
+ Will merge to 'master'.
+
+
+* ew/fd-cloexec-fix (2017-07-17) 1 commit
+  (merged to 'next' on 2017-07-18 at a3de1b1998)
+ + set FD_CLOEXEC properly when O_CLOEXEC is not supported
+
+ Portability/fallback fix.
+
+ Will merge to 'master'.
+
+
+* jk/build-with-asan (2017-07-17) 1 commit
+  (merged to 'next' on 2017-07-18 at f92636c616)
+ + Makefile: allow combining UBSan with other sanitizers
+
+ A recent update made it easier to use "-fsanitize=" option while
+ compiling but supported only one sanitize option.  Allow more than
+ one to be combined, joined with a comma, like "make SANITIZE=foo,bar".
+
+ Will merge to 'master'.
+
+
+* jk/test-copy-bytes-fix (2017-07-17) 1 commit
+  (merged to 'next' on 2017-07-18 at c32c264e96)
+ + t: handle EOF in test_copy_bytes()
+
+ A test fix.
+
+ Will merge to 'master'.
+
+
+* js/alias-case-sensitivity (2017-07-17) 2 commits
+  (merged to 'next' on 2017-07-18 at 31641a39f2)
+ + alias: compare alias name *case-insensitively*
+ + t1300: demonstrate that CamelCased aliases regressed
+
+ A recent update broke an alias that contained an uppercase letter.
+
+ Will merge to 'master'.
+
+
+* ks/commit-abort-on-empty-message-fix (2017-07-17) 1 commit
+ - commit: check for empty message before the check for untouched template
+
+ "git commit" when seeing an totally empty message said "you did not
+ edit the message", which is clearly wrong.  The message has been
+ corrected.
+
  Will merge to 'next'.
+
+
+* ks/doc-fixes (2017-07-17) 1 commit
+ - doc: camelCase the i18n config variables to improve readability
+
+ Will merge to 'next'.
+
+
+* rs/bswap-ubsan-fix (2017-07-17) 2 commits
+ - bswap: convert get_be16, get_be32 and put_be32 to inline functions
+ - bswap: convert to unsigned before shifting in get_be32
+
+ Will merge to 'next'.
+
+
+* rs/move-array (2017-07-17) 4 commits
+ - ls-files: don't try to prune an empty index
+ - apply: use COPY_ARRAY and MOVE_ARRAY in update_image()
+ - use MOVE_ARRAY
+ - add MOVE_ARRAY
+
+ Will merge to 'next'.
+
+
+* rs/stat-data-unaligned-reads-fix (2017-07-17) 1 commit
+ - dir: support platforms that require aligned reads
+
+ Will merge to 'next'.
+
+
+* wd/rebase-conflict-guide (2017-07-17) 1 commit
+ - rebase: make resolve message clearer for inexperienced users
+
+ Will merge to 'next'.
+
+
+* hb/gitweb-project-list (2017-07-18) 1 commit
+ - gitweb: skip unreadable subdirectories
+
+ When a directory is not readable, "gitweb" fails to build the
+ project list.  Work this around by skipping such a directory.
+
+ Undecided.
+
+ It might end up hiding a problem under the rug and a better
+ solution might be to loudly complain to the administrator pointing
+ out the problematic directory, but this will at least make it
+ "work".
 
 --------------------------------------------------
 [Stalled]
@@ -249,14 +275,39 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* rs/progress-overall-throughput-at-the-end (2017-07-09) 1 commit
-  (merged to 'next' on 2017-07-11 at f5168e975b)
- + progress: show overall rate in last update
+* jk/ref-filter-colors (2017-07-13) 15 commits
+  (merged to 'next' on 2017-07-18 at 75d4eb7ecf)
+ + ref-filter: consult want_color() before emitting colors
+ + pretty: respect color settings for %C placeholders
+ + rev-list: pass diffopt->use_colors through to pretty-print
+ + for-each-ref: load config earlier
+ + color: check color.ui in git_default_config()
+ + ref-filter: pass ref_format struct to atom parsers
+ + ref-filter: factor out the parsing of sorting atoms
+ + ref-filter: make parse_ref_filter_atom a private function
+ + ref-filter: provide a function for parsing sort options
+ + ref-filter: move need_color_reset_at_eol into ref_format
+ + ref-filter: abstract ref format into its own struct
+ + ref-filter: simplify automatic color reset
+ + t: use test_decode_color rather than literal ANSI codes
+ + docs/for-each-ref: update pointer to color syntax
+ + check return value of verify_ref_format()
 
- The progress meter did not give a useful output when we haven't had
- 0.5 seconds to measure the throughput during the interval.  Instead
- show the overall throughput rate at the end, which is a much more
- useful number.
+ "%C(color name)" in the pretty print format always produced ANSI
+ color escape codes, which was an early design mistake.  They now
+ honor the configuration (e.g. "color.ui = never") and also tty-ness
+ of the output medium.
+
+ Will cook in 'next'.
+
+
+* sb/object-id (2017-07-13) 2 commits
+  (merged to 'next' on 2017-07-18 at e4df0ba3b1)
+ + tag: convert gpg_verify_tag to use struct object_id
+ + commit: convert lookup_commit_graft to struct object_id
+ (this branch is used by bc/object-id.)
+
+ Conversion from uchar[20] to struct object_id continues.
 
  Will merge to 'master'.
 
@@ -272,14 +323,17 @@ of the repositories listed at
 
 
 * ks/prepare-commit-msg-sample (2017-07-12) 4 commits
- - hook: add a simple first example
- - hook: add sign-off using "interpret-trailers"
- - hook: name the positional variables
- - hook: cleanup script
+  (merged to 'next' on 2017-07-18 at 48d9650a30)
+ + hook: add a simple first example
+ + hook: add sign-off using "interpret-trailers"
+ + hook: name the positional variables
+ + hook: cleanup script
 
  Remove an example that is now obsolete from a sample hook,
  and improve an old example in it that added a sign-off manually
  to use the interpret-trailers command.
+
+ Will cook in 'next'.
 
 
 * jc/allow-lazy-cas (2017-07-06) 1 commit
@@ -300,24 +354,25 @@ of the repositories listed at
  cf. <alpine.DEB.2.21.1.1707131435220.4193@virtualbox>
 
 
-* bc/object-id (2017-07-04) 12 commits
- - sha1_name: convert GET_SHA1* flags to GET_OID*
- - sha1_name: convert get_sha1* to get_oid*
- - Convert remaining callers of get_sha1 to get_oid.
- - builtin/verify-tag: convert to struct object_id
- - builtin/unpack-file: convert to struct object_id
- - bisect: convert bisect_checkout to struct object_id
- - builtin/update_ref: convert to struct object_id
- - sequencer: convert to struct object_id
- - remote: convert struct push_cas to struct object_id
- - submodule: convert submodule config lookup to use object_id
- - builtin/merge-tree: convert remaining caller of get_sha1 to object_id
- - builtin/fsck: convert remaining caller of get_sha1 to object_id
+* bc/object-id (2017-07-17) 12 commits
+  (merged to 'next' on 2017-07-18 at fd161056e4)
+ + sha1_name: convert uses of 40 to GIT_SHA1_HEXSZ
+ + sha1_name: convert GET_SHA1* flags to GET_OID*
+ + sha1_name: convert get_sha1* to get_oid*
+ + Convert remaining callers of get_sha1 to get_oid.
+ + builtin/unpack-file: convert to struct object_id
+ + bisect: convert bisect_checkout to struct object_id
+ + builtin/update_ref: convert to struct object_id
+ + sequencer: convert to struct object_id
+ + remote: convert struct push_cas to struct object_id
+ + submodule: convert submodule config lookup to use object_id
+ + builtin/merge-tree: convert remaining caller of get_sha1 to object_id
+ + builtin/fsck: convert remaining caller of get_sha1 to object_id
+ (this branch uses sb/object-id.)
 
  Conversion from uchar[20] to struct object_id continues.
 
- Expecting a reroll.
- cf. <20170707212201.ofdgjaips2tw3koy@genre.crustytoothpaste.net>
+ Will merge to 'master'.
 
 
 * jk/reflog-walk (2017-07-09) 9 commits
@@ -361,32 +416,16 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* tb/push-to-cygwin-unc-path (2017-07-05) 1 commit
-  (merged to 'next' on 2017-07-11 at 4d9c3f82bd)
- + cygwin: allow pushing to UNC paths
-
- On Cygwin, similar to Windows, "git push //server/share/repository"
- ought to mean a repository on a network share that can be accessed
- locally, but this did not work correctly due to stripping the double
- slashes at the beginning.
-
- This may need to be heavily tested before it gets unleashed to the
- wild, as the change is at a fairly low-level code and would affect
- not just the code to decide if the push destination is local.  There
- may be unexpected fallouts in the path normalization.
-
- Will merge to 'master'.
-
-
 * mt/p4-parse-G-output (2017-07-13) 3 commits
- - git-p4: filter for {'code':'info'} in p4CmdList
- - git-p4: parse marshal output "p4 -G" in p4 changes
- - git-p4: git-p4 tests with p4 triggers
+  (merged to 'next' on 2017-07-18 at e065b689d4)
+ + git-p4: filter for {'code':'info'} in p4CmdList
+ + git-p4: parse marshal output "p4 -G" in p4 changes
+ + git-p4: git-p4 tests with p4 triggers
 
  Use "p4 -G" to make "p4 changes" output more Python-friendly
  to parse.
 
- Wait to see Travis is OK with this and merge to 'next'
+ Will merge to 'master'.
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
@@ -444,19 +483,20 @@ of the repositories listed at
 
 
 * sd/branch-copy (2017-06-18) 3 commits
- - branch: add a --copy (-c) option to go with --move (-m)
- - branch: add test for -m renaming multiple config sections
- - config: create a function to format section headers
+  (merged to 'next' on 2017-07-18 at 5e3b9357ea)
+ + branch: add a --copy (-c) option to go with --move (-m)
+ + branch: add test for -m renaming multiple config sections
+ + config: create a function to format section headers
 
  "git branch" learned "-c/-C" to create and switch to a new branch
  by copying an existing one.
 
- Undecided.
+ Will cook in 'next'.
 
  I personally do not think "branch --copy master backup" while on
  "master" that switches to "backup" is a good UI, and I *will* say
  "I told you so" when users complain after we merge this down to
- 'next' and eventually to 'master'.
+ 'master'.
 
 
 * ls/filter-process-delayed (2017-06-30) 7 commits
