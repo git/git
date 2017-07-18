@@ -4,7 +4,9 @@
 #include "submodule-config.h"
 
 /* The main repository */
-static struct repository the_repo;
+static struct repository the_repo = {
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &the_index, 0, 0
+};
 struct repository *the_repository = &the_repo;
 
 static char *git_path_from_env(const char *envvar, const char *git_dir,
