@@ -100,6 +100,11 @@ configuration variable documented in linkgit:git-config[1].
 --ignored::
 	Show ignored files as well.
 
+--show-ignored-directory::
+    Show directories that are ignored, instead of individual files.
+    Does not recurse into excluded directories when listing all
+    untracked files.
+
 -z::
 	Terminate entries with NUL, instead of LF.  This implies
 	the `--porcelain=v1` output format if no other format is given.
