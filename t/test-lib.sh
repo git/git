@@ -1624,6 +1624,10 @@ test_lazy_prereq UNZIP '
 	test $? -ne 127
 '
 
+test_lazy_prereq BUSYBOX '
+	case "$($SHELL --help 2>&1)" in *BusyBox*) true;; *) false;; esac
+'
+
 run_with_limited_cmdline () {
 	(ulimit -s 128 && "$@")
 }
