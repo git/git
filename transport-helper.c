@@ -120,10 +120,10 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->in = -1;
 	helper->out = -1;
 	helper->err = 0;
-	argv_array_pushf(&helper->args, "git-remote-%s", data->name);
+	argv_array_pushf(&helper->args, "remote-%s", data->name);
 	argv_array_push(&helper->args, transport->remote->name);
 	argv_array_push(&helper->args, remove_ext_force(transport->url));
-	helper->git_cmd = 0;
+	helper->git_cmd = 1;
 	helper->silent_exec_failure = 1;
 
 	if (have_git_dir())
