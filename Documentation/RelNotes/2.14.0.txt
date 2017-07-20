@@ -120,6 +120,9 @@ UI, Workflows & Features
  * "git log" learned -P as a synonym for --perl-regexp, "git grep"
    already had such a synonym.
 
+ * "git log" didn't understand --regexp-ignore-case when combined with
+   --perl-regexp. This has been fixed.
+
 Performance, Internal Implementation, Development Support etc.
 
  * The default packed-git limit value has been raised on larger
