@@ -241,6 +241,13 @@ Performance, Internal Implementation, Development Support etc.
    it. For now a non-submodule copy of the same code is also shipped
    as part of the tree.
 
+ * A recent update made it easier to use "-fsanitize=" option while
+   compiling but supported only one sanitize option.  Allow more than
+   one to be combined, joined with a comma, like "make SANITIZE=foo,bar".
+
+ * Use "p4 -G" to make "p4 changes" output more Python-friendly
+   to parse.
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -497,9 +504,14 @@ notes for details).
    early part also under the GC lock.
    (merge c45af94dbc jk/gc-pre-detach-under-hook later to maint).
 
+ * A recent update broke an alias that contained an uppercase letter.
+   (merge 643df7e234 js/alias-case-sensitivity later to maint).
+
  * Other minor doc, test and build updates and code cleanups.
    (merge 3f9c637ec7 pw/unquote-path-in-git-pm later to maint).
    (merge 5053313562 rs/urlmatch-cleanup later to maint).
    (merge 42c78a216e rs/use-div-round-up later to maint).
    (merge 5e8d2729ae rs/wt-status-cleanup later to maint).
    (merge 01826066b0 ks/fix-rebase-doc-picture later to maint).
+   (merge f7f6dc340e jk/test-copy-bytes-fix later to maint).
+   (merge 9fb9495dae ew/fd-cloexec-fix later to maint).
