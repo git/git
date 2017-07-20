@@ -1476,6 +1476,12 @@ case $uname_s in
 	test_set_prereq SED_STRIPS_CR
 	test_set_prereq GREP_STRIPS_CR
 	GIT_TEST_CMP="test-tool cmp"
+	if ! type iconv >/dev/null 2>&1
+	then
+		iconv () {
+			test-tool iconv "$@"
+		}
+	fi
 	;;
 *CYGWIN*)
 	test_set_prereq POSIXPERM
