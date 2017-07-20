@@ -117,6 +117,8 @@ UI, Workflows & Features
  * "git pull --rebase --recurse-submodules" learns to rebase the
    branch in the submodules to an updated base.
 
+ * "git log" learned -P as a synonym for --perl-regexp, "git grep"
+   already had such a synonym.
 
 Performance, Internal Implementation, Development Support etc.
 
