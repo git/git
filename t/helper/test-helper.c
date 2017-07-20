@@ -2,6 +2,7 @@
 #include "strbuf.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "utf8.h"
 
 static const char * const test_helper_usage[] = {
 	N_("test-helper [<options>]"),
@@ -46,14 +47,54 @@ static int cmp(int argc, const char **argv)
 	}
 }
 
+static int iconv_(int argc, const char **argv)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char *from = NULL, *to = NULL, *p;
+	int len, ret;
+	const char * const iconv_usage[] = {
+		N_("test-helper --iconv [<options>]"),
+		NULL
+	};
+	struct option options[] = {
+		OPT_STRING('f', "from-code", &from, "encoding", "from"),
+		OPT_STRING('t', "to-code", &to, "encoding", "to"),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, NULL, options,
+			iconv_usage, 0);
+
+	if (argc > 1 || !from || !to)
+		usage_with_options(iconv_usage, options);
+
+	if (!argc) {
+		if (strbuf_read(&buf, 0, 2048) < 0)
+			die_errno("Could not read from stdin");
+	} else if (strbuf_read_file(&buf, argv[0], 2048) < 0)
+		die_errno("Could not read from '%s'", argv[0]);
+
+	p = reencode_string_len(buf.buf, buf.len, to, from, &len);
+	if (!p)
+		die_errno("Could not reencode");
+	ret = write(1, p, len);
+
+	strbuf_release(&buf);
+	free(p);
+
+	return ret;
+}
+
 int cmd_main(int argc, const char **argv)
 {
 	enum mode {
-		CMP = 1
+		CMP = 1, ICONV
 	} command = 0;
 	struct option options[] = {
 		OPT_CMDMODE(0, "cmp", &command,
 			N_("compare files (ignoring LF vs CR/LF)"), CMP),
+		OPT_CMDMODE(0, "iconv", &command,
+			N_("act as drop-in replacement for `iconv`"), ICONV),
 		OPT_END()
 	};
 
@@ -63,6 +104,8 @@ int cmd_main(int argc, const char **argv)
 
 	if (command == CMP)
 		return !!cmp(argc, argv);
+	if (command == ICONV)
+		return !!iconv_(argc, argv);
 
 	die("unhandled mode");
 }
