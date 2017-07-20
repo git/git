@@ -999,6 +999,7 @@ test_copy_bytes () {
 			my $s;
 			my $nread = sysread(STDIN, $s, $len);
 			die "cannot read: $!" unless defined($nread);
+			last unless $nread;
 			print $s;
 			$len -= $nread;
 		}
