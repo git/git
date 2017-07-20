@@ -13,6 +13,7 @@
 #include <sspi.h>
 #include "win32/fscache.h"
 #include "../attr.h"
+#include "../string-list.h"
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -1569,6 +1570,65 @@ static char *lookup_prog(const char *dir, int dirlen, const char *cmd,
 	return NULL;
 }
 
+static char *path_lookup(const char *cmd, int exe_only);
+
+static char *is_busybox_applet(const char *cmd)
+{
+	static struct string_list applets = STRING_LIST_INIT_DUP;
+	static char *busybox_path;
+	static int busybox_path_initialized;
+
+	/* Avoid infinite loop */
+	if (!strncasecmp(cmd, "busybox", 7) &&
+	    (!cmd[7] || !strcasecmp(cmd + 7, ".exe")))
+		return NULL;
+
+	if (!busybox_path_initialized) {
+		busybox_path = path_lookup("busybox.exe", 1);
+		busybox_path_initialized = 1;
+	}
+
+	/* Assume that sh is compiled in... */
+	if (!busybox_path || !strcasecmp(cmd, "sh"))
+		return xstrdup_or_null(busybox_path);
+
+	if (!applets.nr) {
+		struct child_process cp = CHILD_PROCESS_INIT;
+		struct strbuf buf = STRBUF_INIT;
+		char *p;
+
+		strvec_pushl(&cp.args, busybox_path, "--help", NULL);
+
+		if (capture_command(&cp, &buf, 2048)) {
+			string_list_append(&applets, "");
+			return NULL;
+		}
+
+		/* parse output */
+		p = strstr(buf.buf, "Currently defined functions:\n");
+		if (!p) {
+			warning("Could not parse output of busybox --help");
+			string_list_append(&applets, "");
+			return NULL;
+		}
+		p = strchrnul(p, '\n');
+		for (;;) {
+			size_t len;
+
+			p += strspn(p, "\n\t ,");
+			len = strcspn(p, "\n\t ,");
+			if (!len)
+				break;
+			p[len] = '\0';
+			string_list_insert(&applets, p);
+			p = p + len + 1;
+		}
+	}
+
+	return string_list_has_string(&applets, cmd) ?
+		xstrdup(busybox_path) : NULL;
+}
+
 /*
  * Determines the absolute path of cmd using the split path in path.
  * If cmd contains a slash or backslash, no lookup is performed.
@@ -1596,6 +1656,9 @@ static char *path_lookup(const char *cmd, int exe_only)
 			break;
 		path = sep + 1;
 	}
+
+	if (!prog && !isexe)
+		prog = is_busybox_applet(cmd);
 
 	return prog;
 }
