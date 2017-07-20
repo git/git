@@ -1022,10 +1022,15 @@ ifdef DEVELOPER
 CFLAGS += $(DEVELOPER_CFLAGS)
 endif
 
+comma := ,
+empty :=
+space := $(empty) $(empty)
+
 ifdef SANITIZE
+SANITIZERS := $(foreach flag,$(subst $(comma),$(space),$(SANITIZE)),$(flag))
 BASIC_CFLAGS += -fsanitize=$(SANITIZE) -fno-sanitize-recover=$(SANITIZE)
 BASIC_CFLAGS += -fno-omit-frame-pointer
-ifeq ($(SANITIZE),undefined)
+ifneq ($(filter undefined,$(SANITIZERS)),)
 BASIC_CFLAGS += -DNO_UNALIGNED_LOADS
 endif
 endif
