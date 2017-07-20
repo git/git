@@ -235,6 +235,11 @@ Performance, Internal Implementation, Development Support etc.
    behaviour of the comparison function can be specified at the time a
    hashmap is initialized.
 
+ * The "collision detecting" SHA-1 implementation shipped with 2.13 is
+   now integrated into git.git as a submodule (the first submodule to
+   ship with git.git). Clone git.git with --recurse-submodules to get
+   it. For now a non-submodule copy of the same code is also shipped
+   as part of the tree.
 
 Also contains various documentation updates and code clean-ups.
 
