@@ -1700,8 +1700,8 @@ static int is_msys2_sh(const char *cmd)
 }
 
 static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaenv,
-			      const char *dir,
-			      int prepend_cmd, int fhin, int fhout, int fherr)
+			      const char *dir, const char *prepend_cmd,
+			      int fhin, int fhout, int fherr)
 {
 	static int restrict_handle_inheritance = -1;
 	STARTUPINFOEXW si;
@@ -1792,9 +1792,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	/* concatenate argv, quoting args as we go */
 	strbuf_init(&args, 0);
 	if (prepend_cmd) {
-		char *quoted = (char *)quote_arg(cmd);
+		char *quoted = (char *)quote_arg(prepend_cmd);
 		strbuf_addstr(&args, quoted);
-		if (quoted != cmd)
+		if (quoted != prepend_cmd)
 			free(quoted);
 	}
 	for (; *argv; argv++) {
@@ -1953,7 +1953,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	return (pid_t)pi.dwProcessId;
 }
 
-static pid_t mingw_spawnv(const char *cmd, const char **argv, int prepend_cmd)
+static pid_t mingw_spawnv(const char *cmd, const char **argv,
+			  const char *prepend_cmd)
 {
 	return mingw_spawnve_fd(cmd, argv, NULL, NULL, prepend_cmd, 0, 1, 2);
 }
@@ -1981,14 +1982,14 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **deltaenv,
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve_fd(iprog, argv, deltaenv, dir, 1,
+				pid = mingw_spawnve_fd(iprog, argv, deltaenv, dir, interpr,
 						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve_fd(prog, argv, deltaenv, dir, 0,
+			pid = mingw_spawnve_fd(prog, argv, deltaenv, dir, NULL,
 					       fhin, fhout, fherr);
 		free(prog);
 	}
@@ -2016,7 +2017,7 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 		argv2[0] = (char *)cmd;	/* full path to the script file */
 		COPY_ARRAY(&argv2[1], &argv[1], argc);
 		exec_id = trace2_exec(prog, argv2);
-		pid = mingw_spawnv(prog, argv2, 1);
+		pid = mingw_spawnv(prog, argv2, interpr);
 		if (pid >= 0) {
 			int status;
 			if (waitpid(pid, &status, 0) < 0)
@@ -2040,7 +2041,7 @@ int mingw_execv(const char *cmd, char *const *argv)
 		int exec_id;
 
 		exec_id = trace2_exec(cmd, (const char **)argv);
-		pid = mingw_spawnv(cmd, (const char **)argv, 0);
+		pid = mingw_spawnv(cmd, (const char **)argv, NULL);
 		if (pid < 0) {
 			trace2_exec_result(exec_id, -1);
 			return -1;
