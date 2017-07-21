@@ -248,6 +248,15 @@ Performance, Internal Implementation, Development Support etc.
  * Use "p4 -G" to make "p4 changes" output more Python-friendly
    to parse.
 
+ * We started using "%" PRItime, imitating "%" PRIuMAX and friends, as
+   a way to format the internal timestamp value, but this does not
+   play well with gettext(1) i18n framework, and causes "make pot"
+   that is run by the l10n coordinator to create a broken po/git.pot
+   file.  This is a possible workaround for that problem.
+
+ * It turns out that Cygwin also needs the fopen() wrapper that
+   returns failure when a directory is opened for reading.
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -480,7 +489,7 @@ notes for details).
 
  * The build procedure has been improved to allow building and testing
    Git with address sanitizer more easily.
-   (merge 566cf0b3bd jk/build-with-asan later to maint).
+   (merge 425ca6710b jk/build-with-asan later to maint).
 
  * On Cygwin, similar to Windows, "git push //server/share/repository"
    ought to mean a repository on a network share that can be accessed
@@ -515,3 +524,4 @@ notes for details).
    (merge 01826066b0 ks/fix-rebase-doc-picture later to maint).
    (merge f7f6dc340e jk/test-copy-bytes-fix later to maint).
    (merge 9fb9495dae ew/fd-cloexec-fix later to maint).
+   (merge 3a33fe5c97 ks/doc-fixes later to maint).
