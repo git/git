@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2017, #05; Tue, 18)
-X-master-at: cac25fc330fc26050dcbc92c4bfff169a4848e93
-X-next-at: a5a5890e50e4d3c12611adc886e44b2c07a74a76
+Subject: What's cooking in git.git (Jul 2017, #06; Thu, 20)
+X-master-at: 981adb928e5ebe8bbf84d80a8f8fb3a4cbc30afd
+X-next-at: 6ee059e2f3ee8b8553e8fe6adb297897e619ac91
 
-What's cooking in git.git (Jul 2017, #05; Tue, 18)
+What's cooking in git.git (Jul 2017, #06; Thu, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,10 +12,11 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-A maintenance release for 2.13.x series, and the first preview for
-2.14 series -rc0, have been tagged.  Let's close the 'master' except
-for obvious fixes and clean-ups and concentrate on regressions from
-now on.
+Tagging of -rc1 is delayed, waiting for a resolution on the l10n
+issues around '"%"PRItime' custome format specifier, which naturally
+cannot be handled by gettext(1) suite nicely.  I think what is queued
+on 'pu' based on Dscho's suggestion is a usable workaround, and I
+plan to use it unless I hear better ideas in the comint 10+ hours.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,101 +26,11 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/gc-pre-detach-under-hook (2017-07-12) 1 commit
-  (merged to 'next' on 2017-07-12 at 9cf44c2b07)
- + gc: run pre-detach operations under lock
-
- We run an early part of "git gc" that deals with refs before
- daemonising (and not under lock) even when running a background
- auto-gc, which caused multiple gc processes attempting to run the
- early part at the same time.  This is now prevented by running the
- early part also under the GC lock.
-
-
-* jn/hooks-pre-rebase-sample-fix (2017-07-11) 1 commit
-  (merged to 'next' on 2017-07-12 at ed86887454)
- + pre-rebase hook: capture documentation in a <<here document
-
- Code clean-up, that makes us in sync with Debian by one patch.
-
-
-* rs/progress-overall-throughput-at-the-end (2017-07-09) 1 commit
-  (merged to 'next' on 2017-07-11 at f5168e975b)
- + progress: show overall rate in last update
-
- The progress meter did not give a useful output when we haven't had
- 0.5 seconds to measure the throughput during the interval.  Instead
- show the overall throughput rate at the end, which is a much more
- useful number.
-
-
-* tb/push-to-cygwin-unc-path (2017-07-05) 1 commit
-  (merged to 'next' on 2017-07-11 at 4d9c3f82bd)
- + cygwin: allow pushing to UNC paths
-
- On Cygwin, similar to Windows, "git push //server/share/repository"
- ought to mean a repository on a network share that can be accessed
- locally, but this did not work correctly due to stripping the double
- slashes at the beginning.
-
- This may need to be heavily tested before it gets unleashed to the
- wild, as the change is at a fairly low-level code and would affect
- not just the code to decide if the push destination is local.  There
- may be unexpected fallouts in the path normalization.
-
---------------------------------------------------
-[New Topics]
-
-* jk/c99 (2017-07-18) 2 commits
-  (merged to 'next' on 2017-07-18 at 1cfc30f7c1)
- + clean.c: use designated initializer
- + strbuf: use designated initializers in STRBUF_INIT
-
- Start using selected c99 constructs in small, stable and
- essentialpart of the system to catch people who care about
- older compilers that do not grok them.
-
- Will cook in 'next'.
-
-
-* jk/check-ref-format-oor-fix (2017-07-14) 1 commit
- - check-ref-format: require a repository for --branch
-
- Objected...
- cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
-
-
-* bw/grep-recurse-submodules (2017-07-18) 10 commits
- - grep: recurse in-process using 'struct repository'
- - submodule: merge repo_read_gitmodules and gitmodules_config
- - submodule: check for unmerged .gitmodules outside of config parsing
- - submodule: check for unstaged .gitmodules outside of config parsing
- - submodule: remove fetch.recursesubmodules from submodule-config parsing
- - submodule: remove submodule.fetchjobs from submodule-config parsing
- - config: add config_from_gitmodules
- - cache.h: add GITMODULES_FILE macro
- - repository: have the_repository use the_index
- - repo_read_index: don't discard the index
-
-
-* bw/object-id (2017-07-17) 3 commits
-  (merged to 'next' on 2017-07-18 at 90d27c0e7c)
- + receive-pack: don't access hash of NULL object_id pointer
- + notes: don't access hash of NULL object_id pointer
- + tree-diff: don't access hash of NULL object_id pointer
-
- Conversion from uchar[20] to struct object_id continues.
-
- Will merge to 'master'.
-
-
 * ew/fd-cloexec-fix (2017-07-17) 1 commit
   (merged to 'next' on 2017-07-18 at a3de1b1998)
  + set FD_CLOEXEC properly when O_CLOEXEC is not supported
 
  Portability/fallback fix.
-
- Will merge to 'master'.
 
 
 * jk/build-with-asan (2017-07-17) 1 commit
@@ -130,16 +41,12 @@ of the repositories listed at
  compiling but supported only one sanitize option.  Allow more than
  one to be combined, joined with a comma, like "make SANITIZE=foo,bar".
 
- Will merge to 'master'.
-
 
 * jk/test-copy-bytes-fix (2017-07-17) 1 commit
   (merged to 'next' on 2017-07-18 at c32c264e96)
  + t: handle EOF in test_copy_bytes()
 
  A test fix.
-
- Will merge to 'master'.
 
 
 * js/alias-case-sensitivity (2017-07-17) 2 commits
@@ -149,65 +56,79 @@ of the repositories listed at
 
  A recent update broke an alias that contained an uppercase letter.
 
- Will merge to 'master'.
+
+* mt/p4-parse-G-output (2017-07-13) 3 commits
+  (merged to 'next' on 2017-07-18 at e065b689d4)
+ + git-p4: filter for {'code':'info'} in p4CmdList
+ + git-p4: parse marshal output "p4 -G" in p4 changes
+ + git-p4: git-p4 tests with p4 triggers
+
+ Use "p4 -G" to make "p4 changes" output more Python-friendly
+ to parse.
+
+--------------------------------------------------
+[New Topics]
+
+* bw/push-options-recursively-to-submodules (2017-07-20) 1 commit
+ - submodule--helper: teach push-check to handle HEAD
+
+ "git push --recurse-submodules $there HEAD:$target" was not
+ propagated down to the submodules, but now it is.
+
+ Will merge to and cook in 'next'.
 
 
-* ks/commit-abort-on-empty-message-fix (2017-07-17) 1 commit
- - commit: check for empty message before the check for untouched template
+* jc/http-sslkey-and-ssl-cert-are-paths (2017-07-20) 1 commit
+  (merged to 'next' on 2017-07-20 at 5489304b99)
+ + http.c: http.sslcert and http.sslkey are both pathnames
 
- "git commit" when seeing an totally empty message said "you did not
- edit the message", which is clearly wrong.  The message has been
- corrected.
+ The http.{sslkey,sslCert} configuration variables are to be
+ interpreted as a pathname that honors "~[username]/" prefix, but
+ weren't, which has been fixed.
 
- Will merge to 'next'.
-
-
-* ks/doc-fixes (2017-07-17) 1 commit
- - doc: camelCase the i18n config variables to improve readability
-
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* rs/bswap-ubsan-fix (2017-07-17) 2 commits
- - bswap: convert get_be16, get_be32 and put_be32 to inline functions
- - bswap: convert to unsigned before shifting in get_be32
+* jc/po-pritime-fix (2017-07-20) 1 commit
+ - Makefile: help gettext tools to cope with our custom PRItime format
 
- Will merge to 'next'.
+ We started using "%" PRItime, imitating "%" PRIuMAX and friends, as
+ a way to format the internal timestamp value, but this does not
+ play well with gettext(1) i18n framework, and causes "make pot"
+ that is run by the l10n coordinator to create a broken po/git.pot
+ file.  This is a possible workaround for that problem.
 
-
-* rs/move-array (2017-07-17) 4 commits
- - ls-files: don't try to prune an empty index
- - apply: use COPY_ARRAY and MOVE_ARRAY in update_image()
- - use MOVE_ARRAY
- - add MOVE_ARRAY
-
- Will merge to 'next'.
+ Will fast-track to 2.14-rc1 once we hear positive result.
 
 
-* rs/stat-data-unaligned-reads-fix (2017-07-17) 1 commit
- - dir: support platforms that require aligned reads
+* jt/fsck-code-cleanup (2017-07-20) 2 commits
+  (merged to 'next' on 2017-07-20 at f7045a8c47)
+ + object: remove "used" field from struct object
+ + fsck: remove redundant parse_tree() invocation
 
- Will merge to 'next'.
+ Code clean-up.
 
-
-* wd/rebase-conflict-guide (2017-07-17) 1 commit
- - rebase: make resolve message clearer for inexperienced users
-
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* hb/gitweb-project-list (2017-07-18) 1 commit
- - gitweb: skip unreadable subdirectories
+* rs/pack-objects-pbase-cleanup (2017-07-20) 1 commit
+  (merged to 'next' on 2017-07-20 at a6b618559b)
+ + pack-objects: remove unnecessary NULL check
 
- When a directory is not readable, "gitweb" fails to build the
- project list.  Work this around by skipping such a directory.
+ Code clean-up.
 
- Undecided.
+ Will cook in 'next'.
 
- It might end up hiding a problem under the rug and a better
- solution might be to loudly complain to the administrator pointing
- out the problematic directory, but this will at least make it
- "work".
+
+* st/lib-gpg-kill-stray-agent (2017-07-20) 1 commit
+  (merged to 'next' on 2017-07-20 at 8ea68c483f)
+ + t: lib-gpg: flush gpg agent on startup
+
+ Some versions of GnuPG fails to kill gpg-agent it auto-spawned
+ and such a left-over agent can interfere with a test.  Work it
+ around by attempting to kill one before starting a new test.
+
+ Will cook in 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -275,6 +196,123 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/c99 (2017-07-18) 2 commits
+  (merged to 'next' on 2017-07-18 at 1cfc30f7c1)
+ + clean.c: use designated initializer
+ + strbuf: use designated initializers in STRBUF_INIT
+
+ Start using selected c99 constructs in small, stable and
+ essentialpart of the system to catch people who care about
+ older compilers that do not grok them.
+
+ Will cook in 'next'.
+
+
+* jk/check-ref-format-oor-fix (2017-07-14) 1 commit
+ - check-ref-format: require a repository for --branch
+
+ Objected...
+ cf. <20170717172709.GL93855@aiede.mtv.corp.google.com>
+
+
+* bw/grep-recurse-submodules (2017-07-18) 10 commits
+ - grep: recurse in-process using 'struct repository'
+ - submodule: merge repo_read_gitmodules and gitmodules_config
+ - submodule: check for unmerged .gitmodules outside of config parsing
+ - submodule: check for unstaged .gitmodules outside of config parsing
+ - submodule: remove fetch.recursesubmodules from submodule-config parsing
+ - submodule: remove submodule.fetchjobs from submodule-config parsing
+ - config: add config_from_gitmodules
+ - cache.h: add GITMODULES_FILE macro
+ - repository: have the_repository use the_index
+ - repo_read_index: don't discard the index
+
+
+* bw/object-id (2017-07-17) 3 commits
+  (merged to 'next' on 2017-07-18 at 90d27c0e7c)
+ + receive-pack: don't access hash of NULL object_id pointer
+ + notes: don't access hash of NULL object_id pointer
+ + tree-diff: don't access hash of NULL object_id pointer
+
+ Conversion from uchar[20] to struct object_id continues.
+
+ Will cook in 'next'.
+
+
+* ks/commit-abort-on-empty-message-fix (2017-07-17) 1 commit
+ - commit: check for empty message before the check for untouched template
+
+ "git commit" when seeing an totally empty message said "you did not
+ edit the message", which is clearly wrong.  The message has been
+ corrected.
+
+ Will merge to and cook in 'next'.
+
+
+* ks/doc-fixes (2017-07-18) 2 commits
+  (merged to 'next' on 2017-07-20 at c34b00d0a0)
+ + doc: reformat the paragraph containing the 'cut-line'
+ + doc: camelCase the i18n config variables to improve readability
+
+ Doc clean-up.
+
+ Will merge to 'master'.
+
+
+* rs/bswap-ubsan-fix (2017-07-17) 2 commits
+  (merged to 'next' on 2017-07-20 at ce6bad07b0)
+ + bswap: convert get_be16, get_be32 and put_be32 to inline functions
+ + bswap: convert to unsigned before shifting in get_be32
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* rs/move-array (2017-07-17) 4 commits
+  (merged to 'next' on 2017-07-20 at f3086cd20e)
+ + ls-files: don't try to prune an empty index
+ + apply: use COPY_ARRAY and MOVE_ARRAY in update_image()
+ + use MOVE_ARRAY
+ + add MOVE_ARRAY
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* rs/stat-data-unaligned-reads-fix (2017-07-17) 1 commit
+  (merged to 'next' on 2017-07-20 at e7d3782823)
+ + dir: support platforms that require aligned reads
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* wd/rebase-conflict-guide (2017-07-17) 1 commit
+  (merged to 'next' on 2017-07-20 at c78e758b23)
+ + rebase: make resolve message clearer for inexperienced users
+
+ Code clean-up.
+
+ Will cook in 'next'.
+
+
+* hb/gitweb-project-list (2017-07-18) 1 commit
+ - gitweb: skip unreadable subdirectories
+
+ When a directory is not readable, "gitweb" fails to build the
+ project list.  Work this around by skipping such a directory.
+
+ Undecided.
+
+ It might end up hiding a problem under the rug and a better
+ solution might be to loudly complain to the administrator pointing
+ out the problematic directory, but this will at least make it
+ "work".
+
+
 * jk/ref-filter-colors (2017-07-13) 15 commits
   (merged to 'next' on 2017-07-18 at 75d4eb7ecf)
  + ref-filter: consult want_color() before emitting colors
@@ -309,7 +347,7 @@ of the repositories listed at
 
  Conversion from uchar[20] to struct object_id continues.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * rs/sha1-file-micro-optim (2017-07-09) 2 commits
@@ -346,7 +384,7 @@ of the repositories listed at
  by users who know what they are doing.  This would pave the way to
  possibly turn `--force` into `--force-with-lease`.
 
- Will wait for feedback, then merge to and cook in 'next'.
+ Undecided.
 
  Independent from disabling the feature by default, this stirred up
  a discussion to replace the DWIM heuristics with a better one, which
@@ -372,7 +410,7 @@ of the repositories listed at
 
  Conversion from uchar[20] to struct object_id continues.
 
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jk/reflog-walk (2017-07-09) 9 commits
@@ -414,18 +452,6 @@ of the repositories listed at
  pointers and cast them to the type they expect instead.
 
  Will cook in 'next'.
-
-
-* mt/p4-parse-G-output (2017-07-13) 3 commits
-  (merged to 'next' on 2017-07-18 at e065b689d4)
- + git-p4: filter for {'code':'info'} in p4CmdList
- + git-p4: parse marshal output "p4 -G" in p4 changes
- + git-p4: git-p4 tests with p4 triggers
-
- Use "p4 -G" to make "p4 changes" output more Python-friendly
- to parse.
-
- Will merge to 'master'.
 
 
 * ex/deprecate-empty-pathspec-as-match-all (2017-06-23) 2 commits
@@ -480,6 +506,7 @@ of the repositories listed at
  The "ref-store" code reorganization continues.
 
  Will cook in 'next'.
+ cf. <CAGZ79kY=N5H2q1SB9ZEtt1EvuAQg+bqVBZNoXE6nLgtoUd2txA@mail.gmail.com>
 
 
 * sd/branch-copy (2017-06-18) 3 commits
